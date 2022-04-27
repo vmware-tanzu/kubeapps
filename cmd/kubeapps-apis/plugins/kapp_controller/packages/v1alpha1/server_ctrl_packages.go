@@ -7,7 +7,6 @@ import (
 	"context"
 	"fmt"
 	"strings"
-	"sync"
 	"time"
 
 	packagingv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/packaging/v1alpha1"
@@ -285,7 +284,7 @@ func (s *Server) GetInstalledPackageSummaries(ctx context.Context, request *core
 		cluster = s.globalPackagingCluster
 	}
 
-	// retrieve the list of installed packages
+	// retrieve the paginated list of installed packages
 	// TODO(agamez): we should be paginating this request rather than requesting everything every time
 	pkgInstalls, err := s.getPkgInstalls(ctx, cluster, namespace)
 	if err != nil {
@@ -293,83 +292,147 @@ func (s *Server) GetInstalledPackageSummaries(ctx context.Context, request *core
 	}
 
 	// paginate the list of results
-	installedPkgSummaries := make([]*corev1.InstalledPackageSummary, len(pkgInstalls))
+	installedPkgSummaries := []*corev1.InstalledPackageSummary{}
 
-	// create the waiting group for processing each item aynchronously
-	var wg sync.WaitGroup
-
-	// TODO(agamez): DRY up this logic (cf GetAvailablePackageSummaries)
 	if len(pkgInstalls) > 0 {
 		startAt := -1
 		if pageSize > 0 {
 			startAt = int(pageSize) * pageOffset
-		}
-		for i, pkgInstall := range pkgInstalls {
-			wg.Add(1)
-			if startAt <= i {
-				go func(i int, pkgInstall *packagingv1alpha1.PackageInstall) error {
-					defer wg.Done()
-					// fetch additional information from the package metadata
-					// TODO(agamez): if the repository where the package belongs to is not installed, it will throw an error;
-					// decide whether we should ignore it or it is ok with returning an error
-					pkgMetadata, err := s.getPkgMetadata(ctx, cluster, pkgInstall.ObjectMeta.Namespace, pkgInstall.Spec.PackageRef.RefName)
-					if err != nil {
-						return statuserror.FromK8sError("get", "PackageMetadata", pkgInstall.Spec.PackageRef.RefName, err)
-					}
-
-					// Use the field selector to return only Package CRs that match on the spec.refName.
-					fieldSelector := fmt.Sprintf("spec.refName=%s", pkgInstall.Spec.PackageRef.RefName)
-					pkgs, err := s.getPkgsWithFieldSelector(ctx, cluster, pkgInstall.ObjectMeta.Namespace, fieldSelector)
-					if err != nil {
-						return statuserror.FromK8sError("get", "Package", "", err)
-					}
-					pkgVersionsMap, err := getPkgVersionsMap(pkgs)
-					if err != nil {
-						return err
-					}
-
-					// generate the installedPackageSummary from the fetched information
-					installedPackageSummary, err := s.buildInstalledPackageSummary(pkgInstall, pkgMetadata, pkgVersionsMap, cluster)
-					if err != nil {
-						return status.Errorf(codes.Internal, fmt.Sprintf("unable to create the InstalledPackageSummary: %v", err))
-					}
-
-					// append the availablePackageSummary to the slice
-					installedPkgSummaries[i] = installedPackageSummary
-
-					return nil
-				}(i, pkgInstall)
+			if startAt > len(pkgInstalls) {
+				return nil, status.Errorf(codes.InvalidArgument, "invalid pagination arguments %v", request.GetPaginationOptions())
 			}
-			// if we've reached the end of the page, stop iterating
-			if pageSize > 0 && len(installedPkgSummaries) == int(pageSize) {
-				break
+			pkgInstalls = pkgInstalls[startAt:]
+			if len(pkgInstalls) > int(pageSize) {
+				pkgInstalls = pkgInstalls[:pageSize]
 			}
 		}
-	}
-	// Wait until each goroutine has finished
-	wg.Wait()
 
-	// TODO(agamez): the slice with make is filled with <nil>, in case of an error in the
-	// i goroutine, the i-th <nil> stub will remain. Check if 'errgroup' works here, but I haven't
-	// been able so far.
-	// An alternative is using channels to perform a fine-grained control... but not sure if it worths
-	// However, should we just return an error if so? See https://github.com/vmware-tanzu/kubeapps/pull/3784#discussion_r754836475
-	// filter out <nil> values
-	installedPkgSummariesNilSafe := []*corev1.InstalledPackageSummary{}
-	for _, installedPkgSummary := range installedPkgSummaries {
-		if installedPkgSummary != nil {
-			installedPkgSummariesNilSafe = append(installedPkgSummariesNilSafe, installedPkgSummary)
+		// Collect a set of all package names with their corresponding package
+		// metadata and package version data.
+		// Complication 1: PackageMetadata and Package resources are not CRs,
+		// but rather aggregated API resources, which means a PackageInstall in
+		// namespace "default" may refer to a Package (and metadata) in the same
+		// "default" namespace, or from the global namespace.
+		// Complication 2: PackageMetadata and Package resources for can be
+		// present in different namespaces with the same name and different
+		// versions etc.
+		// With this in mind, we create a data structure that records the
+		// metadata and versions per package refName per namespace.
+		// TODO(minelson) move this struct initialization out.
+		type pkgMetaAndVersionsData struct {
+			meta     *datapackagingv1alpha1.PackageMetadata
+			versions map[string]*datapackagingv1alpha1.Package
+		}
+		pkgDatas := make(map[string]map[string]*pkgMetaAndVersionsData)
+		for _, pkgInstall := range pkgInstalls {
+			pkgDataForNamespaces, ok := pkgDatas[pkgInstall.Spec.PackageRef.RefName]
+			if !ok {
+				pkgDataForNamespaces = map[string]*pkgMetaAndVersionsData{}
+				pkgDatas[pkgInstall.Spec.PackageRef.RefName] = pkgDataForNamespaces
+			}
+			// As each package install could potentially be from a pkg in the same
+			// namespace or a package in the global namespace, we track both.
+			for _, ns := range []string{pkgInstall.Namespace, s.globalPackagingNamespace} {
+				pkgData, ok := pkgDataForNamespaces[ns]
+				if !ok {
+					pkgData = &pkgMetaAndVersionsData{
+						versions: make(map[string]*datapackagingv1alpha1.Package),
+					}
+					pkgDataForNamespaces[ns] = pkgData
+				}
+				_, ok = pkgData.versions[pkgInstall.Status.Version]
+				if !ok {
+					pkgData.versions[pkgInstall.Status.Version] = nil
+				}
+			}
+		}
+
+		// First get all the package metadatas for the namespace (or across
+		// namespaces) and filter to match the pkgInstalls. While filtering, we
+		// populate the collected package data with the metadata.
+		pkgMetadatas, err := s.getPkgMetadatas(ctx, cluster, namespace)
+		if err != nil {
+			return nil, statuserror.FromK8sError("get", "PackageMetadata", "", err)
+		}
+		for _, pm := range pkgMetadatas {
+			if pkgDataForNamespaces, ok := pkgDatas[pm.Name]; ok {
+				if pkgData, ok := pkgDataForNamespaces[pm.Namespace]; ok {
+					pkgData.meta = pm
+				}
+			}
+		}
+
+		// Create a channel to receive all packages available in the namespace
+		// (or across namespaces) Using a buffered channel so that we don't
+		// block the network request if we can't process fast enough.
+		getPkgsChannel := make(chan *datapackagingv1alpha1.Package, PACKAGES_CHANNEL_BUFFER_SIZE)
+		var getPkgsError error
+		go func() {
+			getPkgsError = s.getPkgs(ctx, cluster, namespace, getPkgsChannel)
+		}()
+
+		// For each package, we check if we need it to populate our
+		// package data.
+		pkgsForVersionMap := []*datapackagingv1alpha1.Package{}
+		for pkg := range getPkgsChannel {
+			pkgDataForNamespaces, ok := pkgDatas[pkg.Spec.RefName]
+			if !ok {
+				continue
+			}
+			pkgData, ok := pkgDataForNamespaces[pkg.Namespace]
+			if !ok {
+				continue
+			}
+			pkgsForVersionMap = append(pkgsForVersionMap, pkg)
+			_, ok = pkgData.versions[pkg.Spec.Version]
+			if !ok {
+				continue
+			}
+			pkgData.versions[pkg.Spec.Version] = pkg
+		}
+
+		// Verify no error during go routine.
+		if getPkgsError != nil {
+			return nil, statuserror.FromK8sError("get", "Package", "", err)
+		}
+
+		// Calculate the version map for all packages that we're interested
+		// in for this paginated call.
+		// TODO(minelson): Check if getPkgVersionsMap currently handles packages
+		// in different namespaces (suspect not).
+		pkgVersionsMap, err := getPkgVersionsMap(pkgsForVersionMap)
+		if err != nil {
+			return nil, status.Errorf(codes.Internal, fmt.Sprintf("unable to calculate package versions map: %v", err))
+		}
+
+		// We now have all the data we need to return the result:
+		for _, pkgi := range pkgInstalls {
+			pkgName := pkgi.Spec.PackageRef.RefName
+			pkgDataForNamespaces := pkgDatas[pkgName]
+			// Check if there was package metadata for the specific namespace.
+			pkgData := pkgDataForNamespaces[pkgi.Namespace]
+			if pkgData.meta == nil {
+				pkgData = pkgDataForNamespaces[s.globalPackagingNamespace]
+			}
+			// generate the installedPackageSummary from the fetched information
+			installedPackageSummary, err := s.buildInstalledPackageSummary(pkgi, pkgData.meta, pkgVersionsMap, cluster)
+			if err != nil {
+				return nil, status.Errorf(codes.Internal, fmt.Sprintf("unable to create the InstalledPackageSummary: %v", err))
+			}
+
+			// append the availablePackageSummary to the slice
+			installedPkgSummaries = append(installedPkgSummaries, installedPackageSummary)
 		}
 	}
 
 	// Only return a next page token if the request was for pagination and
 	// the results are a full page.
 	nextPageToken := ""
-	if pageSize > 0 && len(installedPkgSummariesNilSafe) == int(pageSize) {
+	if pageSize > 0 && len(installedPkgSummaries) == int(pageSize) {
 		nextPageToken = fmt.Sprintf("%d", pageOffset+1)
 	}
 	response := &corev1.GetInstalledPackageSummariesResponse{
-		InstalledPackageSummaries: installedPkgSummariesNilSafe,
+		InstalledPackageSummaries: installedPkgSummaries,
 		NextPageToken:             nextPageToken,
 	}
 	return response, nil

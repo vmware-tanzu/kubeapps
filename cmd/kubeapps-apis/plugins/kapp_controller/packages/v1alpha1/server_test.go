@@ -1330,6 +1330,101 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 		expectedStatusCode codes.Code
 	}{
 		{
+			name: "it returns an error if a non-existent page is requested",
+			request: &corev1.GetInstalledPackageSummariesRequest{
+				Context: defaultContext,
+				PaginationOptions: &corev1.PaginationOptions{
+					PageToken: "2",
+					PageSize:  2,
+				},
+			},
+			existingObjects: []runtime.Object{
+				&datapackagingv1alpha1.PackageMetadata{
+					TypeMeta: metav1.TypeMeta{
+						Kind:       pkgMetadataResource,
+						APIVersion: datapackagingAPIVersion,
+					},
+					ObjectMeta: metav1.ObjectMeta{
+						Namespace: "default",
+						Name:      "tetris.foo.example.com",
+					},
+					Spec: datapackagingv1alpha1.PackageMetadataSpec{
+						DisplayName:        "Classic Tetris",
+						IconSVGBase64:      "Tm90IHJlYWxseSBTVkcK",
+						ShortDescription:   "A great game for arcade gamers",
+						LongDescription:    "A few sentences but not really a readme",
+						Categories:         []string{"logging", "daemon-set"},
+						Maintainers:        []datapackagingv1alpha1.Maintainer{{Name: "person1"}, {Name: "person2"}},
+						SupportDescription: "Some support information",
+						ProviderName:       "Tetris inc.",
+					},
+				},
+				&datapackagingv1alpha1.Package{
+					TypeMeta: metav1.TypeMeta{
+						Kind:       pkgResource,
+						APIVersion: datapackagingAPIVersion,
+					},
+					ObjectMeta: metav1.ObjectMeta{
+						Namespace: "default",
+						Name:      "tetris.foo.example.com.1.2.3",
+					},
+					Spec: datapackagingv1alpha1.PackageSpec{
+						RefName:                         "tetris.foo.example.com",
+						Version:                         "1.2.3",
+						Licenses:                        []string{"my-license"},
+						ReleaseNotes:                    "release notes",
+						CapactiyRequirementsDescription: "capacity description",
+						ReleasedAt:                      metav1.Time{time.Date(1984, time.June, 6, 0, 0, 0, 0, time.UTC)},
+					},
+				},
+				&packagingv1alpha1.PackageInstall{
+					TypeMeta: metav1.TypeMeta{
+						Kind:       pkgInstallResource,
+						APIVersion: packagingAPIVersion,
+					},
+					ObjectMeta: metav1.ObjectMeta{
+						Namespace: "default",
+						Name:      "my-installation",
+					},
+					Spec: packagingv1alpha1.PackageInstallSpec{
+						ServiceAccountName: "default",
+						PackageRef: &packagingv1alpha1.PackageRef{
+							RefName: "tetris.foo.example.com",
+							VersionSelection: &vendirversions.VersionSelectionSemver{
+								Constraints: "1.2.3",
+							},
+						},
+						Values: []packagingv1alpha1.PackageInstallValues{{
+							SecretRef: &packagingv1alpha1.PackageInstallValuesSecretRef{
+								Name: "my-installation-default-values",
+							},
+						},
+						},
+						Paused:     false,
+						Canceled:   false,
+						SyncPeriod: &metav1.Duration{(time.Second * 30)},
+						NoopDelete: false,
+					},
+					Status: packagingv1alpha1.PackageInstallStatus{
+						GenericStatus: kappctrlv1alpha1.GenericStatus{
+							ObservedGeneration: 1,
+							Conditions: []kappctrlv1alpha1.AppCondition{{
+								Type:    kappctrlv1alpha1.ReconcileSucceeded,
+								Status:  k8scorev1.ConditionTrue,
+								Reason:  "baz",
+								Message: "qux",
+							}},
+							FriendlyDescription: "foo",
+							UsefulErrorMessage:  "Deployed",
+						},
+						Version:              "1.2.3",
+						LastAttemptedVersion: "1.2.3",
+					},
+				},
+			},
+			expectedStatusCode: codes.InvalidArgument,
+		},
+		{
 			name:    "it returns carvel empty installed package summary when no package install is present",
 			request: &corev1.GetInstalledPackageSummariesRequest{Context: defaultContext},
 			existingObjects: []runtime.Object{
@@ -1494,7 +1589,135 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 			},
 		},
 		{
-			name: "it returns carvel installed package from different namespaces if context.namespace=='' ",
+			name: "it returns carvel installed package summary with complete metadata from global namespace",
+			// Request in test has to use empty namespace to search across all
+			// namespaces since in real life the metadata and package resources
+			// are not actual CRs but aggregated APIs that return data across
+			// namespaces.
+			request: &corev1.GetInstalledPackageSummariesRequest{
+				Context: &corev1.Context{
+					Namespace: "",
+					Cluster:   defaultContext.Cluster,
+				},
+			},
+			existingObjects: []runtime.Object{
+				&datapackagingv1alpha1.PackageMetadata{
+					TypeMeta: metav1.TypeMeta{
+						Kind:       pkgMetadataResource,
+						APIVersion: datapackagingAPIVersion,
+					},
+					ObjectMeta: metav1.ObjectMeta{
+						Namespace: globalPackagingNamespace,
+						Name:      "tetris.foo.example.com",
+					},
+					Spec: datapackagingv1alpha1.PackageMetadataSpec{
+						DisplayName:        "Classic Tetris",
+						IconSVGBase64:      "Tm90IHJlYWxseSBTVkcK",
+						ShortDescription:   "A great game for arcade gamers",
+						LongDescription:    "A few sentences but not really a readme",
+						Categories:         []string{"logging", "daemon-set"},
+						Maintainers:        []datapackagingv1alpha1.Maintainer{{Name: "person1"}, {Name: "person2"}},
+						SupportDescription: "Some support information",
+						ProviderName:       "Tetris inc.",
+					},
+				},
+				&datapackagingv1alpha1.Package{
+					TypeMeta: metav1.TypeMeta{
+						Kind:       pkgResource,
+						APIVersion: datapackagingAPIVersion,
+					},
+					ObjectMeta: metav1.ObjectMeta{
+						Namespace: globalPackagingNamespace,
+						Name:      "tetris.foo.example.com.1.2.3",
+					},
+					Spec: datapackagingv1alpha1.PackageSpec{
+						RefName:                         "tetris.foo.example.com",
+						Version:                         "1.2.3",
+						Licenses:                        []string{"my-license"},
+						ReleaseNotes:                    "release notes",
+						CapactiyRequirementsDescription: "capacity description",
+						ReleasedAt:                      metav1.Time{time.Date(1984, time.June, 6, 0, 0, 0, 0, time.UTC)},
+					},
+				},
+				&packagingv1alpha1.PackageInstall{
+					TypeMeta: metav1.TypeMeta{
+						Kind:       pkgInstallResource,
+						APIVersion: packagingAPIVersion,
+					},
+					ObjectMeta: metav1.ObjectMeta{
+						Namespace: "default",
+						Name:      "my-installation",
+					},
+					Spec: packagingv1alpha1.PackageInstallSpec{
+						ServiceAccountName: "default",
+						PackageRef: &packagingv1alpha1.PackageRef{
+							RefName: "tetris.foo.example.com",
+							VersionSelection: &vendirversions.VersionSelectionSemver{
+								Constraints: "1.2.3",
+							},
+						},
+						Values: []packagingv1alpha1.PackageInstallValues{{
+							SecretRef: &packagingv1alpha1.PackageInstallValuesSecretRef{
+								Name: "my-installation-default-values",
+							},
+						},
+						},
+						Paused:     false,
+						Canceled:   false,
+						SyncPeriod: &metav1.Duration{(time.Second * 30)},
+						NoopDelete: false,
+					},
+					Status: packagingv1alpha1.PackageInstallStatus{
+						GenericStatus: kappctrlv1alpha1.GenericStatus{
+							ObservedGeneration: 1,
+							Conditions: []kappctrlv1alpha1.AppCondition{{
+								Type:    kappctrlv1alpha1.ReconcileSucceeded,
+								Status:  k8scorev1.ConditionTrue,
+								Reason:  "baz",
+								Message: "qux",
+							}},
+							FriendlyDescription: "foo",
+							UsefulErrorMessage:  "Deployed",
+						},
+						Version:              "1.2.3",
+						LastAttemptedVersion: "1.2.3",
+					},
+				},
+			},
+			expectedPackages: []*corev1.InstalledPackageSummary{
+				{
+					InstalledPackageRef: &corev1.InstalledPackageReference{
+						Context:    defaultContext,
+						Plugin:     &pluginDetail,
+						Identifier: "my-installation",
+					},
+					Name:           "my-installation",
+					PkgDisplayName: "Classic Tetris",
+					LatestVersion: &corev1.PackageAppVersion{
+						PkgVersion: "1.2.3",
+						AppVersion: "1.2.3",
+					},
+					IconUrl:             "data:image/svg+xml;base64,Tm90IHJlYWxseSBTVkcK",
+					ShortDescription:    "A great game for arcade gamers",
+					PkgVersionReference: &corev1.VersionReference{Version: "1.2.3"},
+					CurrentVersion: &corev1.PackageAppVersion{
+						PkgVersion: "1.2.3",
+						AppVersion: "1.2.3",
+					},
+					LatestMatchingVersion: &corev1.PackageAppVersion{
+						PkgVersion: "1.2.3",
+						AppVersion: "1.2.3",
+					},
+					Status: &corev1.InstalledPackageStatus{
+						Ready:      true,
+						Reason:     corev1.InstalledPackageStatus_STATUS_REASON_INSTALLED,
+						UserReason: "Deployed",
+					},
+				},
+			},
+		},
+		{
+			name: "it returns carvel installed package from different namespaces if context.namespace==''",
 			request: &corev1.GetInstalledPackageSummariesRequest{
 				Context: &corev1.Context{
 					Namespace: "",
@@ -2144,6 +2367,7 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 							unstructuredObjects...,
 						)).Build(), nil
 				},
+				globalPackagingNamespace: globalPackagingNamespace,
 			}
 
 			response, err := s.GetInstalledPackageSummaries(context.Background(), tc.request)
