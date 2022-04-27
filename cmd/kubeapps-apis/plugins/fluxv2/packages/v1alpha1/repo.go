@@ -870,14 +870,11 @@ func isHelmRepositoryReady(repo sourcev1.HelmRepository) (complete bool, success
 	readyCond := meta.FindStatusCondition(repo.GetConditions(), fluxmeta.ReadyCondition)
 	if readyCond != nil {
 		if readyCond.Reason != "" {
-			// this could be something like
-			// "reason": "ChartPullFailed"
-			// i.e. not super-useful
+			// this could be something like "reason": "Succeeded" i.e. not super-useful
 			reason = readyCond.Reason
 		}
 		if readyCond.Message != "" {
-			// whereas this could be something like:
-			// "message": 'invalid chart URL format'
+			// whereas this could be something like: "message": 'invalid chart URL format'
 			// i.e. a little more useful, so we'll just return them both
 			reason += ": " + readyCond.Message
 		}

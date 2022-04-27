@@ -5,6 +5,7 @@ package main
 
 import (
 	"context"
+	"math"
 	"strings"
 	"testing"
 	"time"
@@ -854,12 +855,27 @@ func TestKindClusterUpdatePackageRepository(t *testing.T) {
 				tc.expectedDetail.Detail.PackageRepoRef.Context.Namespace = repoNamespace
 			}
 
-			// TODO: every once in a while (very infrequently) I get
+			// every once in a while (very infrequently) I get
 			// rpc error: code = Internal desc = unable to update the HelmRepository
 			// 'test-nsrp/my-podinfo-2' due to 'Operation cannot be fulfilled on
 			// helmrepositories.source.toolkit.fluxcd.io "my-podinfo-2": the object has been modified;
 			// please apply your changes to the latest version and try again
-			resp, err := fluxPluginReposClient.UpdatePackageRepository(grpcCtx, tc.request)
+			// the loop below takes care of this scenario
+			var i, maxRetries = 0, 5
+			var resp *corev1.UpdatePackageRepositoryResponse
+			for ; i < maxRetries; i++ {
+				resp, err = fluxPluginReposClient.UpdatePackageRepository(grpcCtx, tc.request)
+				if err != nil && strings.Contains(err.Error(), " the object has been modified; please apply your changes to the latest version and try again") {
+					waitTime := int64(math.Pow(2, float64(i)))
+					t.Logf("Retrying update in [%d] sec due to %s...", waitTime, err.Error())
+					time.Sleep(time.Duration(waitTime) * time.Second)
+				} else {
+					break
+				}
+			}
+			if i == maxRetries {
+				t.Fatalf("Update retries exhaused for repository [%s], last error: [%v]", tc.repoName, err)
+			}
 			if got, want := status.Code(err), tc.expectedStatusCode; got != want {
 				t.Fatalf("got: %v, want: %v", err, want)
 			}

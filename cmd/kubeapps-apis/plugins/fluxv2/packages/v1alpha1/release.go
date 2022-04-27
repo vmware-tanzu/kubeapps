@@ -596,36 +596,6 @@ func isHelmReleaseReady(rel helmv2.HelmRelease) (ready bool, status corev1.Insta
 	isInstallFailed := false
 	readyCond := meta.FindStatusCondition(rel.GetConditions(), fluxmeta.ReadyCondition)
 
-	log.Infof("isHelmReleaseReady: [%s/%s] %s", rel.Name, rel.Namespace, common.PrettyPrint(rel))
-
-	// notice, with flux v2beta1 I am seeing this:
-	//  "status": {
-	//	  "observedGeneration": 1,
-	//	  "conditions": [
-	//	  {
-	//		"type": "Ready",
-	//		"status": "False",
-	//		"lastTransitionTime": "2022-04-27T02:13:42Z",
-	//		"reason": "InstallFailed",
-	//		"message": "install retries exhausted"
-	//	  },
-	//  ...
-	//  }
-	// which immediately translates to "install failed" due to reason string
-	// very quickly followed by this:
-	// "status": {
-	//	"observedGeneration": 2,
-	//	"conditions": [
-	//	  {
-	//		"type": "Ready",
-	//		"status": "False",
-	//		"lastTransitionTime": "2022-04-27T02:13:44Z",
-	//		"reason": "ArtifactFailed",
-	//		"message": "HelmChart 'default/test-12-1qaf-my-podinfo-12' is not ready"
-	//	  }
-	//	],
-	// which must translate to the same
-
 	if readyCond != nil {
 		if readyCond.Reason != "" {
 			// this could be something like
