@@ -5534,6 +5534,63 @@ func TestGetInstalledPackageResourceRefs(t *testing.T) {
 				Context: defaultContext,
 			},
 		},
+		{
+			name: "returns NotFound if the app configmap is not yet available",
+			request: &corev1.GetInstalledPackageResourceRefsRequest{
+				InstalledPackageRef: &corev1.InstalledPackageReference{
+					Context:    defaultContext,
+					Plugin:     &pluginDetail,
+					Identifier: "my-installation",
+				},
+			},
+			existingObjects: []runtime.Object{
+				&packagingv1alpha1.PackageInstall{
+					TypeMeta: metav1.TypeMeta{
+						Kind:       pkgInstallResource,
+						APIVersion: packagingAPIVersion,
+					},
+					ObjectMeta: metav1.ObjectMeta{
+						Namespace: "default",
+						Name:      "my-installation",
+					},
+					Spec: packagingv1alpha1.PackageInstallSpec{
+						ServiceAccountName: "default",
+						PackageRef: &packagingv1alpha1.PackageRef{
+							RefName: "tetris.foo.example.com",
+							VersionSelection: &vendirversions.VersionSelectionSemver{
+								Constraints: "1.2.3",
+							},
+						},
+						Values: []packagingv1alpha1.PackageInstallValues{{
+							SecretRef: &packagingv1alpha1.PackageInstallValuesSecretRef{
+								Name: "my-installation-default-values",
+							},
+						},
+						},
+						Paused:     false,
+						Canceled:   false,
+						SyncPeriod: &metav1.Duration{(time.Second * 30)},
+						NoopDelete: false,
+					},
+					Status: packagingv1alpha1.PackageInstallStatus{
+						GenericStatus: kappctrlv1alpha1.GenericStatus{
+							ObservedGeneration: 1,
+							Conditions: []kappctrlv1alpha1.AppCondition{{
+								Type:    kappctrlv1alpha1.ReconcileSucceeded,
+								Status:  k8scorev1.ConditionTrue,
+								Reason:  "baz",
+								Message: "qux",
+							}},
+							FriendlyDescription: "foo",
+							UsefulErrorMessage:  "foo",
+						},
+						Version:              "1.2.3",
+						LastAttemptedVersion: "1.2.3",
+					},
+				},
+			},
+			expectedStatusCode: codes.NotFound,
+		},
 	}
 
 	for _, tc := range testCases {
