@@ -6,8 +6,6 @@
 FROM bitnami/golang:1.17.6 as builder
 WORKDIR /go/src/github.com/vmware-tanzu/kubeapps
 COPY go.mod go.sum ./
-COPY pkg pkg
-COPY cmd cmd
 ARG VERSION="devel"
 
 ARG BUF_VERSION="1.0.0-rc11"
@@ -18,6 +16,11 @@ RUN curl -sSL "https://github.com/bufbuild/buf/releases/download/v$BUF_VERSION/b
 RUN --mount=type=cache,target=/go/pkg/mod  \
     --mount=type=cache,target=/root/.cache/go-build \
     go mod download
+
+# We don't copy the pkg and cmd directories until here so the above layers can
+# be reused.
+COPY pkg pkg
+COPY cmd cmd
 
 # Lint the proto files to detect errors at build time
 RUN /tmp/buf lint ./cmd/kubeapps-apis

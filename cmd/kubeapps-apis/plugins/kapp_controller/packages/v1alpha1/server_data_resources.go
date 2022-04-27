@@ -6,14 +6,13 @@ package main
 import (
 	"context"
 	"fmt"
-	"time"
+	"strings"
 
 	ctlres "github.com/k14s/kapp/pkg/kapp/resources"
 	kappctrlv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
 	packagingv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/packaging/v1alpha1"
 	datapackagingv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/apis/datapackaging/v1alpha1"
 	corev1 "github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
-	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/pkg/k8sutils"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -425,22 +424,6 @@ func (s *Server) inspectKappK8sResources(ctx context.Context, cluster, namespace
 	// As per https://github.com/vmware-tanzu/carvel-kapp-controller/blob/v0.32.0/pkg/deploy/kapp.go#L151
 	appName := fmt.Sprintf("%s-ctrl", packageId)
 
-	_, dynClient, err := s.GetClients(ctx, cluster)
-	if err != nil {
-		return nil, status.Errorf(codes.Internal, "unable to get the k8s client: '%v'", err)
-	}
-
-	gvr := schema.GroupVersionResource{Group: "", Version: "v1", Resource: "configmaps"}
-	resource := dynClient.Resource(gvr).Namespace(namespace)
-
-	// In order to be able to fetch the resources created by the kapp-controller, we need to fetch a ConfigMap
-	// that contains the label (the application id) used for query the k8s resources.
-	// We actively wait for this ConfigMap to be present in the cluster before returning the list of resources
-	err = k8sutils.WaitForResource(ctx, resource, appName, time.Second*1, time.Second*time.Duration(s.pluginConfig.timeoutSeconds))
-	if err != nil {
-		return nil, status.Errorf(codes.Internal, "timeout exceeded (%v s) waiting for resource to be installed: '%v'", s.pluginConfig.timeoutSeconds, err)
-	}
-
 	refs := []*corev1.ResourceRef{}
 
 	// Get the Kapp different clients
@@ -458,6 +441,15 @@ func (s *Server) inspectKappK8sResources(ctx context.Context, cluster, namespace
 	// Fetch the GroupVersions used by the app
 	usedGVs, err := app.UsedGVs()
 	if err != nil {
+		// TODO(minelson): We can't currently use `errors.IsNotFound(err)` here.
+		// See https://github.com/vmware-tanzu/carvel-kapp/issues/498
+		// Instead we need to match on the error string :/
+		if strings.Contains(err.Error(), fmt.Sprintf("configmaps %q not found", appName)) {
+			// We want to return a NotFound here because the dashboard already
+			// handles this case, knowing that the references may not be
+			// available immediately.
+			return nil, status.Errorf(codes.NotFound, "App not found: %+v", err)
+		}
 		return nil, err
 	}
 
