@@ -9,7 +9,7 @@ This guide will explain how you can use an existing OAuth2 provider, including O
 
 For this guide, we assume that you have a Kubernetes cluster that is properly configured to use an OIDC Identity Provider (IdP) to handle the authentication to your cluster. You can read [more information about the Kubernetes API server's configuration options for OIDC](https://kubernetes.io/docs/reference/access-authn-authz/authentication/#openid-connect-tokens). This allows that the Kubernetes API server itself to trust tokens from the identity provider. Some hosted Kubernetes services are already configured to accept access_tokens from their identity provider as bearer tokens (see GKE below).
 
-Alternatively, if you do not have access to configure your cluster's API server, you can [install and configure Pinniped in your cluster to trust your identity provider and configure Kubeapps to proxy requests via Pinniped](./using-an-OIDC-provider-with-pinniped.md).
+Alternatively, if you do not have access to configure your cluster's API server, you can [install and configure Pinniped in your cluster to trust your identity provider and configure Kubeapps to proxy requests via Pinniped](../howto/OIDC/using-an-OIDC-provider-with-pinniped.md).
 
 There are several Identity Providers (IdP) that can be used in a Kubernetes cluster. The steps of this guide have been validated using the following providers:
 
@@ -33,11 +33,11 @@ For Kubeapps to use an Identity Provider it's necessary to configure at least th
 
 Kubeapps uses [OAuth2 Proxy](https://github.com/oauth2-proxy/oauth2-proxy) to handle the OAuth2/OpenIDConnect authentication. The following sections explain how you can find the parameters above for some of the identity providers tested. If you have configured your cluster to use an Identity Provider you will already know some of these parameters. More detailed information can be found on the [OAuth2 Proxy Auth configuration page](https://oauth2-proxy.github.io/oauth2-proxy/docs/configuration/overview).
 
-- [VMware Cloud Services](./OIDC/OAuth2OIDC-VMware-cloud-services.md)
-- [Azure Active Directory](./OIDC/OAuth2OIDC-azure-active-directory.md)
-- [Google OpenID Connect](./OIDC/OAuth2OIDC-google-openid-connect.md)
-- [Keycloak](./OIDC/OAuth2OIDC-keycloak.md)
-- [Dex](./OIDC/OAuth2OIDC-dex.md)
+- [VMware Cloud Services](../howto/OIDC/OAuth2OIDC-VMware-cloud-services.md)
+- [Azure Active Directory](../howto/OIDC/OAuth2OIDC-azure-active-directory.md)
+- [Google OpenID Connect](../howto/OIDC/OAuth2OIDC-google-openid-connect.md)
+- [Keycloak](../howto/OIDC/OAuth2OIDC-keycloak.md)
+- [Dex](../howto/OIDC/OAuth2OIDC-dex.md)
 
 For a complete worked example of this process on a specific Kubernetes environment, one of the Kubeapps developers has written a series detailing the installation of [Kubeapps on a set of VMware TKG clusters with OpenID Connect](https://liveandletlearn.net/post/kubeapps-on-tkg-management-cluster/).
 
@@ -51,11 +51,11 @@ Once the proxy is accessible, you will be redirected to the identity provider to
 
 The next sections explain how you can deploy this proxy either using the Kubeapps chart or manually:
 
-- [Using Kubeapps chart](./OIDC/OAuth2OIDC-oauth2-proxy.md#using-the-chart)
-- [Manual deployment](./OIDC/OAuth2OIDC-oauth2-proxy.md#manual-deployment)
+- [Using Kubeapps chart](../howto/OIDC/OAuth2OIDC-oauth2-proxy.md#using-the-chart)
+- [Manual deployment](../howto/OIDC/OAuth2OIDC-oauth2-proxy.md#manual-deployment)
 
 ## Troubleshoothing
 
 If you find after configuring your OIDC/OAuth2 setup following the above instructions, that although you can successfully authenticate with your provider you are nonetheless unable to login to Kubeapps but instead see a 403 or 401 request in the browser's debugger, then you will need to investigate _why_ the Kubernetes cluster is not accepting your credential.
 
-Visit the [debugging auth failures when using OIDC](./OIDC/OAuth2OIDC-debugging.md) page for more information.
+Visit the [debugging auth failures when using OIDC](../howto/OIDC/OAuth2OIDC-debugging.md) page for more information.
