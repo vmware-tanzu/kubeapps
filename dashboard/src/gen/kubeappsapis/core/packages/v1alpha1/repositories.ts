@@ -313,6 +313,15 @@ export interface UpdatePackageRepositoryRequest {
 }
 
 /**
+ * DeletePackageRepositoryRequest
+ *
+ * Request for DeletePackageRepository
+ */
+export interface DeletePackageRepositoryRequest {
+  packageRepoRef?: PackageRepositoryReference;
+}
+
+/**
  * PackageRepositoryReference
  *
  * A PackageRepositoryReference has the minimum information required to
@@ -519,6 +528,13 @@ export interface GetPackageRepositorySummariesResponse {
 export interface UpdatePackageRepositoryResponse {
   packageRepoRef?: PackageRepositoryReference;
 }
+
+/**
+ * DeletePackageRepositoryResponse
+ *
+ * Response for DeletePackageRepository
+ */
+export interface DeletePackageRepositoryResponse {}
 
 const baseAddPackageRepositoryRequest: object = {
   name: "",
@@ -1679,6 +1695,73 @@ export const UpdatePackageRepositoryRequest = {
   },
 };
 
+const baseDeletePackageRepositoryRequest: object = {};
+
+export const DeletePackageRepositoryRequest = {
+  encode(
+    message: DeletePackageRepositoryRequest,
+    writer: _m0.Writer = _m0.Writer.create(),
+  ): _m0.Writer {
+    if (message.packageRepoRef !== undefined) {
+      PackageRepositoryReference.encode(message.packageRepoRef, writer.uint32(10).fork()).ldelim();
+    }
+    return writer;
+  },
+
+  decode(input: _m0.Reader | Uint8Array, length?: number): DeletePackageRepositoryRequest {
+    const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = {
+      ...baseDeletePackageRepositoryRequest,
+    } as DeletePackageRepositoryRequest;
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1:
+          message.packageRepoRef = PackageRepositoryReference.decode(reader, reader.uint32());
+          break;
+        default:
+          reader.skipType(tag & 7);
+          break;
+      }
+    }
+    return message;
+  },
+
+  fromJSON(object: any): DeletePackageRepositoryRequest {
+    const message = {
+      ...baseDeletePackageRepositoryRequest,
+    } as DeletePackageRepositoryRequest;
+    if (object.packageRepoRef !== undefined && object.packageRepoRef !== null) {
+      message.packageRepoRef = PackageRepositoryReference.fromJSON(object.packageRepoRef);
+    } else {
+      message.packageRepoRef = undefined;
+    }
+    return message;
+  },
+
+  toJSON(message: DeletePackageRepositoryRequest): unknown {
+    const obj: any = {};
+    message.packageRepoRef !== undefined &&
+      (obj.packageRepoRef = message.packageRepoRef
+        ? PackageRepositoryReference.toJSON(message.packageRepoRef)
+        : undefined);
+    return obj;
+  },
+
+  fromPartial(object: DeepPartial<DeletePackageRepositoryRequest>): DeletePackageRepositoryRequest {
+    const message = {
+      ...baseDeletePackageRepositoryRequest,
+    } as DeletePackageRepositoryRequest;
+    if (object.packageRepoRef !== undefined && object.packageRepoRef !== null) {
+      message.packageRepoRef = PackageRepositoryReference.fromPartial(object.packageRepoRef);
+    } else {
+      message.packageRepoRef = undefined;
+    }
+    return message;
+  },
+};
+
 const basePackageRepositoryReference: object = { identifier: "" };
 
 export const PackageRepositoryReference = {
@@ -2585,6 +2668,50 @@ export const UpdatePackageRepositoryResponse = {
   },
 };
 
+const baseDeletePackageRepositoryResponse: object = {};
+
+export const DeletePackageRepositoryResponse = {
+  encode(_: DeletePackageRepositoryResponse, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
+    return writer;
+  },
+
+  decode(input: _m0.Reader | Uint8Array, length?: number): DeletePackageRepositoryResponse {
+    const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = {
+      ...baseDeletePackageRepositoryResponse,
+    } as DeletePackageRepositoryResponse;
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        default:
+          reader.skipType(tag & 7);
+          break;
+      }
+    }
+    return message;
+  },
+
+  fromJSON(_: any): DeletePackageRepositoryResponse {
+    const message = {
+      ...baseDeletePackageRepositoryResponse,
+    } as DeletePackageRepositoryResponse;
+    return message;
+  },
+
+  toJSON(_: DeletePackageRepositoryResponse): unknown {
+    const obj: any = {};
+    return obj;
+  },
+
+  fromPartial(_: DeepPartial<DeletePackageRepositoryResponse>): DeletePackageRepositoryResponse {
+    const message = {
+      ...baseDeletePackageRepositoryResponse,
+    } as DeletePackageRepositoryResponse;
+    return message;
+  },
+};
+
 /** Each repositories v1alpha1 plugin must implement at least the following rpcs: */
 export interface RepositoriesService {
   AddPackageRepository(
@@ -2603,6 +2730,10 @@ export interface RepositoriesService {
     request: DeepPartial<UpdatePackageRepositoryRequest>,
     metadata?: grpc.Metadata,
   ): Promise<UpdatePackageRepositoryResponse>;
+  DeletePackageRepository(
+    request: DeepPartial<DeletePackageRepositoryRequest>,
+    metadata?: grpc.Metadata,
+  ): Promise<DeletePackageRepositoryResponse>;
 }
 
 export class RepositoriesServiceClientImpl implements RepositoriesService {
@@ -2614,6 +2745,7 @@ export class RepositoriesServiceClientImpl implements RepositoriesService {
     this.GetPackageRepositoryDetail = this.GetPackageRepositoryDetail.bind(this);
     this.GetPackageRepositorySummaries = this.GetPackageRepositorySummaries.bind(this);
     this.UpdatePackageRepository = this.UpdatePackageRepository.bind(this);
+    this.DeletePackageRepository = this.DeletePackageRepository.bind(this);
   }
 
   AddPackageRepository(
@@ -2656,6 +2788,17 @@ export class RepositoriesServiceClientImpl implements RepositoriesService {
     return this.rpc.unary(
       RepositoriesServiceUpdatePackageRepositoryDesc,
       UpdatePackageRepositoryRequest.fromPartial(request),
+      metadata,
+    );
+  }
+
+  DeletePackageRepository(
+    request: DeepPartial<DeletePackageRepositoryRequest>,
+    metadata?: grpc.Metadata,
+  ): Promise<DeletePackageRepositoryResponse> {
+    return this.rpc.unary(
+      RepositoriesServiceDeletePackageRepositoryDesc,
+      DeletePackageRepositoryRequest.fromPartial(request),
       metadata,
     );
   }
@@ -2745,6 +2888,28 @@ export const RepositoriesServiceUpdatePackageRepositoryDesc: UnaryMethodDefiniti
     deserializeBinary(data: Uint8Array) {
       return {
         ...UpdatePackageRepositoryResponse.decode(data),
+        toObject() {
+          return this;
+        },
+      };
+    },
+  } as any,
+};
+
+export const RepositoriesServiceDeletePackageRepositoryDesc: UnaryMethodDefinitionish = {
+  methodName: "DeletePackageRepository",
+  service: RepositoriesServiceDesc,
+  requestStream: false,
+  responseStream: false,
+  requestType: {
+    serializeBinary() {
+      return DeletePackageRepositoryRequest.encode(this).finish();
+    },
+  } as any,
+  responseType: {
+    deserializeBinary(data: Uint8Array) {
+      return {
+        ...DeletePackageRepositoryResponse.decode(data),
         toObject() {
           return this;
         },

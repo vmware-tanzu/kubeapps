@@ -609,6 +609,29 @@ func (s *Server) UpdatePackageRepository(ctx context.Context, request *corev1.Up
 	}
 }
 
+// DeletePackageRepository deletes a package repository based on the request.
+func (s *Server) DeletePackageRepository(ctx context.Context, request *corev1.DeletePackageRepositoryRequest) (*corev1.DeletePackageRepositoryResponse, error) {
+	log.Infof("+fluxv2 DeletePackageRepository [%v]", request)
+	if request == nil || request.PackageRepoRef == nil {
+		return nil, status.Errorf(codes.InvalidArgument, "no request PackageRepoRef provided")
+	}
+
+	repoRef := request.PackageRepoRef
+	cluster := repoRef.GetContext().GetCluster()
+	if cluster != "" && cluster != s.kubeappsCluster {
+		return nil, status.Errorf(
+			codes.Unimplemented,
+			"not supported yet: request.packageRepoRef.Context.Cluster: [%v]",
+			cluster)
+	}
+
+	if err := s.deleteRepo(ctx, repoRef); err != nil {
+		return nil, err
+	} else {
+		return &corev1.DeletePackageRepositoryResponse{}, nil
+	}
+}
+
 // This endpoint exists only for integration unit tests
 func (s *Server) SetUserManagedSecrets(ctx context.Context, request *v1alpha1.SetUserManagedSecretsRequest) (*v1alpha1.SetUserManagedSecretsResponse, error) {
 	log.Infof("+fluxv2 SetUserManagedSecrets [%t]", request.Value)

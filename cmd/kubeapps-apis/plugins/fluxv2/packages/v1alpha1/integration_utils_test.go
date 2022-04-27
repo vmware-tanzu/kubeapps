@@ -220,6 +220,9 @@ func kubeAddHelmRepository(t *testing.T, name, url, namespace, secretName string
 
 func kubeWaitUntilHelmRepositoryIsReady(t *testing.T, name, namespace string) error {
 	t.Logf("+kubeWaitUntilHelmRepositoryIsReady(%s,%s)", name, namespace)
+	defer func() {
+		t.Logf("-kubeWaitUntilHelmRepositoryIsReady(%s,%s)", name, namespace)
+	}()
 
 	if ifc, err := kubeGetCtrlClient(); err != nil {
 		return err
@@ -248,11 +251,14 @@ func kubeWaitUntilHelmRepositoryIsReady(t *testing.T, name, namespace string) er
 					} else {
 						hour, minute, second := time.Now().Clock()
 						complete, success, reason := isHelmRepositoryReady(*repo)
-						t.Logf("[%d:%d:%d] Got event: type: [%v], reason [%s]", hour, minute, second, event.Type, reason)
-						if complete && success {
-							return nil
-						} else if complete && !success {
-							return errors.New(reason)
+						t.Logf("[%d:%d:%d] Got event: type: [%v], name: [%s/%s], complete: [%t], success: [%t], reason: [%s]",
+							hour, minute, second, event.Type, repo.Namespace, repo.Name, complete, success, reason)
+						if name == repo.Name && namespace == repo.Namespace {
+							if complete && success {
+								return nil
+							} else if complete && !success {
+								return errors.New(reason)
+							}
 						}
 					}
 				}
@@ -276,6 +282,21 @@ func kubeDeleteHelmRepository(t *testing.T, name, namespace string) error {
 		return err
 	} else {
 		return ifc.Delete(ctx, repo)
+	}
+}
+
+func kubeExistsHelmRepository(t *testing.T, name, namespace string) (bool, error) {
+	t.Logf("+kubeExistsHelmRepository(%s,%s)", name, namespace)
+	ctx, cancel := context.WithTimeout(context.Background(), defaultContextTimeout)
+	defer cancel()
+	key := types.NamespacedName{Name: name, Namespace: namespace}
+	var repo sourcev1.HelmRepository
+	if ifc, err := kubeGetCtrlClient(); err != nil {
+		return false, err
+	} else if err = ifc.Get(ctx, key, &repo); err == nil {
+		return true, nil
+	} else {
+		return false, nil
 	}
 }
 

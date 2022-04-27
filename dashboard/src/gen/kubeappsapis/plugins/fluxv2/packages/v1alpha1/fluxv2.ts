@@ -27,10 +27,12 @@ import {
   GetPackageRepositoryDetailRequest,
   GetPackageRepositorySummariesRequest,
   UpdatePackageRepositoryRequest,
+  DeletePackageRepositoryRequest,
   AddPackageRepositoryResponse,
   GetPackageRepositoryDetailResponse,
   GetPackageRepositorySummariesResponse,
   UpdatePackageRepositoryResponse,
+  DeletePackageRepositoryResponse,
 } from "../../../../../kubeappsapis/core/packages/v1alpha1/repositories";
 import { BrowserHeaders } from "browser-headers";
 
@@ -562,6 +564,10 @@ export interface FluxV2RepositoriesService {
     request: DeepPartial<UpdatePackageRepositoryRequest>,
     metadata?: grpc.Metadata,
   ): Promise<UpdatePackageRepositoryResponse>;
+  DeletePackageRepository(
+    request: DeepPartial<DeletePackageRepositoryRequest>,
+    metadata?: grpc.Metadata,
+  ): Promise<DeletePackageRepositoryResponse>;
   /** this endpoint only exists for the purpose of integration tests */
   SetUserManagedSecrets(
     request: DeepPartial<SetUserManagedSecretsRequest>,
@@ -578,6 +584,7 @@ export class FluxV2RepositoriesServiceClientImpl implements FluxV2RepositoriesSe
     this.GetPackageRepositoryDetail = this.GetPackageRepositoryDetail.bind(this);
     this.GetPackageRepositorySummaries = this.GetPackageRepositorySummaries.bind(this);
     this.UpdatePackageRepository = this.UpdatePackageRepository.bind(this);
+    this.DeletePackageRepository = this.DeletePackageRepository.bind(this);
     this.SetUserManagedSecrets = this.SetUserManagedSecrets.bind(this);
   }
 
@@ -621,6 +628,17 @@ export class FluxV2RepositoriesServiceClientImpl implements FluxV2RepositoriesSe
     return this.rpc.unary(
       FluxV2RepositoriesServiceUpdatePackageRepositoryDesc,
       UpdatePackageRepositoryRequest.fromPartial(request),
+      metadata,
+    );
+  }
+
+  DeletePackageRepository(
+    request: DeepPartial<DeletePackageRepositoryRequest>,
+    metadata?: grpc.Metadata,
+  ): Promise<DeletePackageRepositoryResponse> {
+    return this.rpc.unary(
+      FluxV2RepositoriesServiceDeletePackageRepositoryDesc,
+      DeletePackageRepositoryRequest.fromPartial(request),
       metadata,
     );
   }
@@ -722,6 +740,28 @@ export const FluxV2RepositoriesServiceUpdatePackageRepositoryDesc: UnaryMethodDe
     deserializeBinary(data: Uint8Array) {
       return {
         ...UpdatePackageRepositoryResponse.decode(data),
+        toObject() {
+          return this;
+        },
+      };
+    },
+  } as any,
+};
+
+export const FluxV2RepositoriesServiceDeletePackageRepositoryDesc: UnaryMethodDefinitionish = {
+  methodName: "DeletePackageRepository",
+  service: FluxV2RepositoriesServiceDesc,
+  requestStream: false,
+  responseStream: false,
+  requestType: {
+    serializeBinary() {
+      return DeletePackageRepositoryRequest.encode(this).finish();
+    },
+  } as any,
+  responseType: {
+    deserializeBinary(data: Uint8Array) {
+      return {
+        ...DeletePackageRepositoryResponse.decode(data),
         toObject() {
           return this;
         },

@@ -2977,4 +2977,24 @@ var (
 			AppVersion: version,
 		}
 	}
+
+	delete_repo_req_1 = &corev1.DeletePackageRepositoryRequest{
+		PackageRepoRef: repoRefInReq("repo-1", "namespace-1"),
+	}
+
+	delete_repo_req_2 = &corev1.DeletePackageRepositoryRequest{
+		PackageRepoRef: repoRefInReq("repo-kaka", "namespace-kaka"),
+	}
+
+	delete_repo_req_3 = &corev1.DeletePackageRepositoryRequest{
+		PackageRepoRef: repoRefInReq("my-podinfo", "TBD"),
+	}
+
+	delete_repo_req_4 = &corev1.DeletePackageRepositoryRequest{
+		PackageRepoRef: repoRefInReq("my-podinfo-2", "TBD"),
+	}
+
+	delete_repo_req_5 = &corev1.DeletePackageRepositoryRequest{
+		PackageRepoRef: repoRefInReq("my-podinfo-3", "TBD"),
+	}
 )

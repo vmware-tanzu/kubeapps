@@ -595,13 +595,15 @@ func isHelmReleaseReady(rel helmv2.HelmRelease) (ready bool, status corev1.Insta
 
 	isInstallFailed := false
 	readyCond := meta.FindStatusCondition(rel.GetConditions(), fluxmeta.ReadyCondition)
+
 	if readyCond != nil {
 		if readyCond.Reason != "" {
 			// this could be something like
 			// "reason": "InstallFailed"
 			// i.e. not super-useful
 			userReason = readyCond.Reason
-			if userReason == helmv2.InstallFailedReason {
+			if userReason == helmv2.InstallFailedReason ||
+				userReason == helmv2.UpgradeFailedReason {
 				isInstallFailed = true
 			}
 		}

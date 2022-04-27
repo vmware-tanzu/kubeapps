@@ -554,6 +554,29 @@ func (s *Server) updateRepo(ctx context.Context, repoRef *corev1.PackageReposito
 	}, nil
 }
 
+func (s *Server) deleteRepo(ctx context.Context, repoRef *corev1.PackageRepositoryReference) error {
+	client, err := s.getClient(ctx, repoRef.Context.Namespace)
+	if err != nil {
+		return err
+	}
+
+	log.V(4).Infof("Deleting repo: [%s]", repoRef.Identifier)
+
+	repo := &sourcev1.HelmRepository{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      repoRef.Identifier,
+			Namespace: repoRef.Context.Namespace,
+		},
+	}
+
+	// TODO (gfichtenholt) secrets, if applicable for kubeapps-managed secrets environment
+
+	if err = client.Delete(ctx, repo); err != nil {
+		return statuserror.FromK8sError("delete", "HelmRepository", repoRef.Identifier, err)
+	}
+	return nil
+}
+
 //
 // implements plug-in specific cache-related functionality
 //
@@ -847,14 +870,11 @@ func isHelmRepositoryReady(repo sourcev1.HelmRepository) (complete bool, success
 	readyCond := meta.FindStatusCondition(repo.GetConditions(), fluxmeta.ReadyCondition)
 	if readyCond != nil {
 		if readyCond.Reason != "" {
-			// this could be something like
-			// "reason": "ChartPullFailed"
-			// i.e. not super-useful
+			// this could be something like "reason": "Succeeded" i.e. not super-useful
 			reason = readyCond.Reason
 		}
 		if readyCond.Message != "" {
-			// whereas this could be something like:
-			// "message": 'invalid chart URL format'
+			// whereas this could be something like: "message": 'invalid chart URL format'
 			// i.e. a little more useful, so we'll just return them both
 			reason += ": " + readyCond.Message
 		}

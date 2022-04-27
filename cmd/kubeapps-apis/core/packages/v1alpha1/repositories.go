@@ -182,6 +182,34 @@ func (s repositoriesServer) UpdatePackageRepository(ctx context.Context, request
 	return response, nil
 }
 
+// DeletePackageRepository deletes a package repository using configured plugins.
+func (s repositoriesServer) DeletePackageRepository(ctx context.Context, request *packages.DeletePackageRepositoryRequest) (*packages.DeletePackageRepositoryResponse, error) {
+	contextMsg := fmt.Sprintf("(cluster=%q, namespace=%q, id=%q)",
+		request.GetPackageRepoRef().GetContext().GetCluster(),
+		request.GetPackageRepoRef().GetContext().GetNamespace(),
+		request.GetPackageRepoRef().GetIdentifier())
+	log.Infof("+core DeletePackageRepository %s", contextMsg)
+
+	if request.GetPackageRepoRef().GetPlugin() == nil {
+		return nil, status.Errorf(codes.InvalidArgument, "Unable to retrieve the plugin (missing PackageRepoRef.Plugin)")
+	}
+
+	// Retrieve the plugin with server matching the requested plugin name
+	pluginWithServer := s.getPluginWithServer(request.PackageRepoRef.Plugin)
+	if pluginWithServer == nil {
+		return nil, status.Errorf(codes.Internal, "Unable to get the plugin %v", request.PackageRepoRef.Plugin)
+	}
+
+	// Get the response from the requested plugin
+	response, err := pluginWithServer.server.DeletePackageRepository(ctx, request)
+	if err != nil {
+		return nil, status.Errorf(status.Convert(err).Code(), "Unable to delete the package repository %q using the plugin %q: %v",
+			request.PackageRepoRef.Identifier, request.PackageRepoRef.Plugin.Name, err)
+	}
+
+	return response, nil
+}
+
 // getPluginWithServer returns the *pkgPluginsWithServer from a given packagesServer
 // matching the plugin name
 func (s repositoriesServer) getPluginWithServer(plugin *v1alpha1.Plugin) *repoPluginsWithServer {

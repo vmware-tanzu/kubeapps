@@ -2025,6 +2025,117 @@ func TestUpdatePackageRepository(t *testing.T) {
 	}
 }
 
+func TestDeletePackageRepository(t *testing.T) {
+	testCases := []struct {
+		name               string
+		request            *corev1.DeletePackageRepositoryRequest
+		repoIndex          string
+		repoName           string
+		repoNamespace      string
+		oldRepoSecret      *apiv1.Secret
+		newRepoSecret      *apiv1.Secret
+		pending            bool
+		expectedStatusCode codes.Code
+		userManagedSecrets bool
+	}{
+		{
+			name:               "delete repository",
+			request:            delete_repo_req_1,
+			repoIndex:          testYaml("valid-index.yaml"),
+			repoName:           "repo-1",
+			repoNamespace:      "namespace-1",
+			expectedStatusCode: codes.OK,
+		},
+		{
+			name:               "returns not found if package repo doesn't exist",
+			request:            delete_repo_req_2,
+			repoIndex:          testYaml("valid-index.yaml"),
+			repoName:           "repo-1",
+			repoNamespace:      "namespace-1",
+			expectedStatusCode: codes.NotFound,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			oldSecretRef := ""
+			secrets := []runtime.Object{}
+			if tc.oldRepoSecret != nil {
+				oldSecretRef = tc.oldRepoSecret.Name
+				secrets = append(secrets, tc.oldRepoSecret)
+			}
+			if tc.newRepoSecret != nil {
+				secrets = append(secrets, tc.newRepoSecret)
+			}
+			var repo *sourcev1.HelmRepository
+			if !tc.pending {
+				var ts *httptest.Server
+				var err error
+				ts, repo, err = newRepoWithIndex(tc.repoIndex, tc.repoName, tc.repoNamespace, nil, oldSecretRef)
+				if err != nil {
+					t.Fatalf("%+v", err)
+				}
+				defer ts.Close()
+			} else {
+				repoSpec := &sourcev1.HelmRepositorySpec{
+					URL:      "https://example.repo.com/charts",
+					Interval: metav1.Duration{Duration: 1 * time.Minute},
+				}
+				repoStatus := &sourcev1.HelmRepositoryStatus{
+					Conditions: []metav1.Condition{
+						{
+							LastTransitionTime: metav1.Time{Time: lastTransitionTime},
+							Type:               fluxmeta.ReadyCondition,
+							Status:             metav1.ConditionUnknown,
+							Reason:             fluxmeta.ProgressingReason,
+							Message:            "reconciliation in progress",
+						},
+					},
+				}
+				repo1 := newRepo(tc.repoName, tc.repoNamespace, repoSpec, repoStatus)
+				repo = &repo1
+			}
+			// update to the repo in a failed state will be tested in integration test
+
+			// the index.yaml will contain links to charts but for the purposes
+			// of this test they do not matter
+			s, _, err := newServerWithRepos(t, []sourcev1.HelmRepository{*repo}, nil, secrets)
+			if err != nil {
+				t.Fatalf("error instantiating the server: %v", err)
+			}
+			s.pluginConfig.UserManagedSecrets = tc.userManagedSecrets
+
+			ctx := context.Background()
+			ctrlClient, err := s.clientGetter.ControllerRuntime(ctx, s.kubeappsCluster)
+			if err != nil {
+				t.Fatal(err)
+			}
+			nsname := types.NamespacedName{
+				Namespace: tc.request.PackageRepoRef.Context.Namespace,
+				Name:      tc.request.PackageRepoRef.Identifier,
+			}
+			var actualRepo sourcev1.HelmRepository
+			if tc.expectedStatusCode == codes.OK {
+				if err = ctrlClient.Get(ctx, nsname, &actualRepo); err != nil {
+					t.Fatal(err)
+				}
+			}
+
+			_, err = s.DeletePackageRepository(ctx, tc.request)
+			if got, want := status.Code(err), tc.expectedStatusCode; got != want {
+				t.Fatalf("got: %+v, want: %+v, err: %+v", got, want, err)
+			}
+
+			if tc.expectedStatusCode == codes.OK {
+				// check the repository CRD is gone from the cluster
+				if err = ctrlClient.Get(ctx, nsname, &actualRepo); err == nil {
+					t.Fatalf("Expected repository [%s] is deleted but it still exists", nsname)
+				}
+			}
+		})
+	}
+}
+
 func newRepo(name string, namespace string, spec *sourcev1.HelmRepositorySpec, status *sourcev1.HelmRepositoryStatus) sourcev1.HelmRepository {
 	helmRepository := sourcev1.HelmRepository{
 		TypeMeta: metav1.TypeMeta{
