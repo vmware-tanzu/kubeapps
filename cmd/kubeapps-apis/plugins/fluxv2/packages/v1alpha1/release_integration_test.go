@@ -5,6 +5,7 @@ package main
 
 import (
 	"context"
+	"math"
 	"strings"
 	"testing"
 	"time"
@@ -247,27 +248,33 @@ func TestKindClusterUpdateInstalledPackage(t *testing.T) {
 				t, tc.integrationTestCreatePackageSpec, fluxPluginClient, grpcContext)
 			tc.request.InstalledPackageRef = installedRef
 
-			// this is to try and avoid intermittent
-			// rpc error: code = Internal desc = unable to update the HelmRelease
-			// 'test-12-i7a4/my-podinfo-12' due to 'Operation cannot be fulfilled on
-			// helmreleases.helm.toolkit.fluxcd.io "my-podinfo-12": the object has been
-			// modified; please apply your changes to the latest version and try again'
-			t.Logf("Waiting 5s for release [%s] to come to quiescent state",
-				tc.integrationTestCreatePackageSpec.request.Name)
-			time.Sleep(5 * time.Second)
-
 			ctx := grpcContext
 			if tc.unauthorized {
 				ctx = context.TODO()
 			}
-			_, err := fluxPluginClient.UpdateInstalledPackage(ctx, tc.request)
-			if tc.unauthorized {
-				if status.Code(err) != codes.Unauthenticated {
-					t.Fatalf("Expected Unathenticated, got: %v", status.Code(err))
+
+			// TODO Every once in a while (very infrequently, like 1 out of 25 tries)
+			// I get rpc error: code = Internal desc = unable to update the HelmRelease
+			// 'test-12-i7a4/my-podinfo-12' due to 'Operation cannot be fulfilled on
+			// helmreleases.helm.toolkit.fluxcd.io "my-podinfo-12": the object has been
+			// modified; please apply your changes to the latest version and try again'
+			// ... so this is the reason for the loop loop with retries
+			for i := 0; i < 5; i++ {
+				_, err := fluxPluginClient.UpdateInstalledPackage(ctx, tc.request)
+				if tc.unauthorized {
+					if status.Code(err) != codes.Unauthenticated {
+						t.Fatalf("Expected Unathenticated, got: %v", status.Code(err))
+					}
+					return // done, nothing more to check
+				} else if err != nil {
+					if strings.Contains(err.Error(), " the object has been modified; please apply your changes to the latest version and try again") {
+						waitTime := int64(math.Pow(2, float64(i)))
+						t.Logf("Waiting [%d] sec due to %s...", waitTime, err.Error())
+						time.Sleep(time.Duration(waitTime) * time.Second)
+					} else {
+						t.Fatalf("%+v", err)
+					}
 				}
-				return // done, nothing more to check
-			} else if err != nil {
-				t.Fatalf("%+v", err)
 			}
 
 			actualRespAfterUpdate, actualRefsAfterUpdate :=

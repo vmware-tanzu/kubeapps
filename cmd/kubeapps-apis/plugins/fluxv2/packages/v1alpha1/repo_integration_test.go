@@ -824,13 +824,6 @@ func TestKindClusterUpdatePackageRepository(t *testing.T) {
 					if err.Error() != "Failed: failed to fetch Helm repository index: failed to cache index to temporary file: failed to fetch http://fluxv2plugin-testdata-svc.default.svc.cluster.local:80/podinfo-basic-auth/index.yaml : 401 Unauthorized" {
 						t.Fatalf("%v", err)
 					}
-					// TODO try and find a better way to wait until repo state stops changing to avoid
-					// rpc error: code = Internal desc = unable to update the HelmRepository
-					// 'test-nsrp/my-podinfo-2' due to 'Operation cannot be fulfilled on
-					// helmrepositories.source.toolkit.fluxcd.io "my-podinfo-2": the object has been modified;
-					// please apply your changes to the latest version and try again
-					t.Logf("Waiting 1s for repository [%s] to come to quiescent state", tc.repoName)
-					time.Sleep(1 * time.Second)
 				}
 			}
 
@@ -861,6 +854,11 @@ func TestKindClusterUpdatePackageRepository(t *testing.T) {
 				tc.expectedDetail.Detail.PackageRepoRef.Context.Namespace = repoNamespace
 			}
 
+			// TODO: every once in a while (very infrequently) I get
+			// rpc error: code = Internal desc = unable to update the HelmRepository
+			// 'test-nsrp/my-podinfo-2' due to 'Operation cannot be fulfilled on
+			// helmrepositories.source.toolkit.fluxcd.io "my-podinfo-2": the object has been modified;
+			// please apply your changes to the latest version and try again
 			resp, err := fluxPluginReposClient.UpdatePackageRepository(grpcCtx, tc.request)
 			if got, want := status.Code(err), tc.expectedStatusCode; got != want {
 				t.Fatalf("got: %v, want: %v", err, want)
@@ -1046,13 +1044,6 @@ func TestKindClusterDeletePackageRepository(t *testing.T) {
 					if err.Error() != "Failed: failed to fetch Helm repository index: failed to cache index to temporary file: failed to fetch http://fluxv2plugin-testdata-svc.default.svc.cluster.local:80/podinfo-basic-auth/index.yaml : 401 Unauthorized" {
 						t.Fatalf("%v", err)
 					}
-					// TODO try and find a better way to wait until repo state stops changing to avoid
-					// rpc error: code = Internal desc = unable to update the HelmRepository
-					// 'test-nsrp/my-podinfo-2' due to 'Operation cannot be fulfilled on
-					// helmrepositories.source.toolkit.fluxcd.io "my-podinfo-2": the object has been modified;
-					// please apply your changes to the latest version and try again
-					t.Logf("Waiting 1s for repository [%s] to come to quiescent state", tc.repoName)
-					time.Sleep(1 * time.Second)
 				}
 			}
 
