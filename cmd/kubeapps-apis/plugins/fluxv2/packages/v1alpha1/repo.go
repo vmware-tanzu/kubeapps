@@ -562,17 +562,34 @@ func (s *Server) deleteRepo(ctx context.Context, repoRef *corev1.PackageReposito
 
 	log.V(4).Infof("Deleting repo: [%s]", repoRef.Identifier)
 
+	// delete secrets, if applicable, for kubeapps-managed secrets environment
+	var deleteSecret string
+	if !s.pluginConfig.UserManagedSecrets {
+		key := types.NamespacedName{Namespace: repoRef.Context.Namespace, Name: repoRef.Identifier}
+		var repo sourcev1.HelmRepository
+		if err = client.Get(ctx, key, &repo); err != nil {
+			return statuserror.FromK8sError("get", "HelmRepository", repoRef.Identifier, err)
+		}
+		if repo.Spec.SecretRef != nil && repo.Spec.SecretRef.Name != "" {
+			deleteSecret = repo.Spec.SecretRef.Name
+		}
+	}
+
 	repo := &sourcev1.HelmRepository{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      repoRef.Identifier,
 			Namespace: repoRef.Context.Namespace,
 		},
 	}
-
-	// TODO (gfichtenholt) secrets, if applicable for kubeapps-managed secrets environment
-
 	if err = client.Delete(ctx, repo); err != nil {
 		return statuserror.FromK8sError("delete", "HelmRepository", repoRef.Identifier, err)
+	} else if deleteSecret != "" {
+		typedClient, err := s.clientGetter.Typed(ctx, s.kubeappsCluster)
+		if err != nil {
+			return err
+		} else if err = typedClient.CoreV1().Secrets(repoRef.Context.Namespace).Delete(ctx, deleteSecret, metav1.DeleteOptions{}); err != nil {
+			return statuserror.FromK8sError("delete", "secret", deleteSecret, err)
+		}
 	}
 	return nil
 }

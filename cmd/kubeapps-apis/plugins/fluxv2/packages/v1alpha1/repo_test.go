@@ -2054,6 +2054,15 @@ func TestDeletePackageRepository(t *testing.T) {
 			repoNamespace:      "namespace-1",
 			expectedStatusCode: codes.NotFound,
 		},
+		{
+			name:               "delete repo also deletes the corresponding secret in kubeapps managed env",
+			request:            delete_repo_req_1,
+			repoIndex:          testYaml("valid-index.yaml"),
+			repoName:           "repo-1",
+			repoNamespace:      "namespace-1",
+			oldRepoSecret:      newBasicAuthSecret("secret-1", "namespace-1", "foo", "bar"),
+			expectedStatusCode: codes.OK,
+		},
 	}
 
 	for _, tc := range testCases {
@@ -2129,7 +2138,16 @@ func TestDeletePackageRepository(t *testing.T) {
 			if tc.expectedStatusCode == codes.OK {
 				// check the repository CRD is gone from the cluster
 				if err = ctrlClient.Get(ctx, nsname, &actualRepo); err == nil {
-					t.Fatalf("Expected repository [%s] is deleted but it still exists", nsname)
+					t.Fatalf("Expected repository [%s] to have been deleted but still exists", nsname)
+				}
+				// check the secret is gone too in kubeapps-managed secrets env
+				if !s.pluginConfig.UserManagedSecrets && tc.oldRepoSecret != nil {
+					typedCli, err := s.clientGetter.Typed(ctx, KubeappsCluster)
+					if err != nil {
+						t.Fatal(err)
+					} else if _, err = typedCli.CoreV1().Secrets(nsname.Namespace).Get(ctx, tc.oldRepoSecret.Name, metav1.GetOptions{}); err == nil {
+						t.Fatalf("Secret [%s] was expected to have been deleted but still exists", tc.oldRepoSecret.Name)
+					}
 				}
 			}
 		})
