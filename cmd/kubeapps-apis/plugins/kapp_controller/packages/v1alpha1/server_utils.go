@@ -283,7 +283,7 @@ func testMetadataMatchesCategories(metadata *datapackagingv1alpha1.PackageMetada
 	intersection := true
 	for _, category := range categories {
 		if _, ok := metadataCategoriesHash[category]; !ok {
-			intersection = false
+			return false
 		}
 	}
 
