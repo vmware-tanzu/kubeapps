@@ -546,3 +546,201 @@ func TestPrereleasesVersionSelection(t *testing.T) {
 		})
 	}
 }
+
+func TestFilterMetadatas(t *testing.T) {
+	testCases := []struct {
+		name              string
+		metadatas         []*datapackagingv1alpha1.PackageMetadata
+		filterOptions     corev1.FilterOptions
+		expectedMetadatas []*datapackagingv1alpha1.PackageMetadata
+	}{
+		{
+			name: "filters out non-matching metadatas",
+			metadatas: []*datapackagingv1alpha1.PackageMetadata{
+				{
+					Spec: datapackagingv1alpha1.PackageMetadataSpec{
+						DisplayName: "my foo game",
+					},
+				},
+				{
+					Spec: datapackagingv1alpha1.PackageMetadataSpec{
+						DisplayName: "my bar game",
+					},
+				},
+				{
+					Spec: datapackagingv1alpha1.PackageMetadataSpec{
+						DisplayName: "my zed game",
+					},
+				},
+			},
+			filterOptions: corev1.FilterOptions{
+				Query: "bar",
+			},
+			expectedMetadatas: []*datapackagingv1alpha1.PackageMetadata{
+				{
+					Spec: datapackagingv1alpha1.PackageMetadataSpec{
+						DisplayName: "my bar game",
+					},
+				},
+			},
+		},
+		{
+			name: "matches display name",
+			metadatas: []*datapackagingv1alpha1.PackageMetadata{
+				{
+					Spec: datapackagingv1alpha1.PackageMetadataSpec{
+						DisplayName: "my foo game",
+					},
+				},
+			},
+			filterOptions: corev1.FilterOptions{
+				Query: "foo",
+			},
+			expectedMetadatas: []*datapackagingv1alpha1.PackageMetadata{
+				{
+					Spec: datapackagingv1alpha1.PackageMetadataSpec{
+						DisplayName: "my foo game",
+					},
+				},
+			},
+		},
+		{
+			name: "matches short description",
+			metadatas: []*datapackagingv1alpha1.PackageMetadata{
+				{
+					Spec: datapackagingv1alpha1.PackageMetadataSpec{
+						ShortDescription: "A game with a lot of foo",
+					},
+				},
+			},
+			filterOptions: corev1.FilterOptions{
+				Query: "foo",
+			},
+			expectedMetadatas: []*datapackagingv1alpha1.PackageMetadata{
+				{
+					Spec: datapackagingv1alpha1.PackageMetadataSpec{
+						ShortDescription: "A game with a lot of foo",
+					},
+				},
+			},
+		},
+		{
+			name: "matches long description",
+			metadatas: []*datapackagingv1alpha1.PackageMetadata{
+				{
+					Spec: datapackagingv1alpha1.PackageMetadataSpec{
+						LongDescription: "A game with a lot of foo and other stuff",
+					},
+				},
+			},
+			filterOptions: corev1.FilterOptions{
+				Query: "foo",
+			},
+			expectedMetadatas: []*datapackagingv1alpha1.PackageMetadata{
+				{
+					Spec: datapackagingv1alpha1.PackageMetadataSpec{
+						LongDescription: "A game with a lot of foo and other stuff",
+					},
+				},
+			},
+		},
+		{
+			name: "matches case insensitively",
+			metadatas: []*datapackagingv1alpha1.PackageMetadata{
+				{
+					Spec: datapackagingv1alpha1.PackageMetadataSpec{
+						DisplayName: "my fOo game",
+					},
+				},
+			},
+			filterOptions: corev1.FilterOptions{
+				Query: "FoO",
+			},
+			expectedMetadatas: []*datapackagingv1alpha1.PackageMetadata{
+				{
+					Spec: datapackagingv1alpha1.PackageMetadataSpec{
+						DisplayName: "my fOo game",
+					},
+				},
+			},
+		},
+		{
+			name: "matches a single category",
+			metadatas: []*datapackagingv1alpha1.PackageMetadata{
+				{
+					Spec: datapackagingv1alpha1.PackageMetadataSpec{
+						Categories: []string{"category1", "category2", "category3"},
+					},
+				},
+				{
+					Spec: datapackagingv1alpha1.PackageMetadataSpec{
+						Categories: []string{"category4", "category5", "category6"},
+					},
+				},
+			},
+			filterOptions: corev1.FilterOptions{
+				Categories: []string{"category5"},
+			},
+			expectedMetadatas: []*datapackagingv1alpha1.PackageMetadata{
+				{
+					Spec: datapackagingv1alpha1.PackageMetadataSpec{
+						Categories: []string{"category4", "category5", "category6"},
+					},
+				},
+			},
+		},
+		{
+			name: "matches multiple categories",
+			metadatas: []*datapackagingv1alpha1.PackageMetadata{
+				{
+					Spec: datapackagingv1alpha1.PackageMetadataSpec{
+						Categories: []string{"category1", "category2", "category3"},
+					},
+				},
+				{
+					Spec: datapackagingv1alpha1.PackageMetadataSpec{
+						Categories: []string{"category4", "category5", "category6"},
+					},
+				},
+			},
+			filterOptions: corev1.FilterOptions{
+				Categories: []string{"category2", "category3"},
+			},
+			expectedMetadatas: []*datapackagingv1alpha1.PackageMetadata{
+				{
+					Spec: datapackagingv1alpha1.PackageMetadataSpec{
+						Categories: []string{"category1", "category2", "category3"},
+					},
+				},
+			},
+		},
+		{
+			name: "does not match unless metadata has all categories from filter",
+			metadatas: []*datapackagingv1alpha1.PackageMetadata{
+				{
+					Spec: datapackagingv1alpha1.PackageMetadataSpec{
+						Categories: []string{"category1", "category2", "category3"},
+					},
+				},
+				{
+					Spec: datapackagingv1alpha1.PackageMetadataSpec{
+						Categories: []string{"category4", "category5", "category6"},
+					},
+				},
+			},
+			filterOptions: corev1.FilterOptions{
+				Categories: []string{"category6", "category3"},
+			},
+			expectedMetadatas: []*datapackagingv1alpha1.PackageMetadata{},
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			if got, want := FilterMetadatas(tc.metadatas, &tc.filterOptions), tc.expectedMetadatas; !cmp.Equal(want, got) {
+				t.Errorf("mismatch in '%s': %s", tc.name, cmp.Diff(want, got))
+			}
+		})
+	}
+
+}

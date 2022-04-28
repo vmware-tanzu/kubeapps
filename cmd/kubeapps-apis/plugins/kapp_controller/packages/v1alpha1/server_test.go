@@ -150,6 +150,7 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 		existingObjects    []runtime.Object
 		expectedPackages   []*corev1.AvailablePackageSummary
 		paginationOptions  corev1.PaginationOptions
+		filterOptions      corev1.FilterOptions
 		expectedStatusCode codes.Code
 	}{
 		{
@@ -827,6 +828,108 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 				},
 			},
 		},
+		{
+			name: "it returns carvel package summaries filtered by a query",
+			filterOptions: corev1.FilterOptions{
+				Query: "tetr",
+			},
+			existingObjects: []runtime.Object{
+				&datapackagingv1alpha1.PackageMetadata{
+					TypeMeta: metav1.TypeMeta{
+						Kind:       pkgMetadataResource,
+						APIVersion: datapackagingAPIVersion,
+					},
+					ObjectMeta: metav1.ObjectMeta{
+						Namespace: "default",
+						Name:      "tetris.foo.example.com",
+					},
+					Spec: datapackagingv1alpha1.PackageMetadataSpec{
+						DisplayName:        "Classic Tetris",
+						IconSVGBase64:      "Tm90IHJlYWxseSBTVkcK",
+						ShortDescription:   "A great game for arcade gamers",
+						LongDescription:    "A few sentences but not really a readme",
+						Categories:         []string{"logging", "daemon-set"},
+						Maintainers:        []datapackagingv1alpha1.Maintainer{{Name: "person1"}, {Name: "person2"}},
+						SupportDescription: "Some support information",
+						ProviderName:       "Tetris inc.",
+					},
+				},
+				&datapackagingv1alpha1.PackageMetadata{
+					TypeMeta: metav1.TypeMeta{
+						Kind:       pkgMetadataResource,
+						APIVersion: datapackagingAPIVersion,
+					},
+					ObjectMeta: metav1.ObjectMeta{
+						Namespace: "default",
+						Name:      "tombi.foo.example.com",
+					},
+					Spec: datapackagingv1alpha1.PackageMetadataSpec{
+						DisplayName:        "Tombi!",
+						IconSVGBase64:      "Tm90IHJlYWxseSBTVkcK",
+						ShortDescription:   "An awesome game from the 90's",
+						LongDescription:    "Tombi! is an open world platform-adventure game with RPG elements.",
+						Categories:         []string{"platforms", "rpg"},
+						Maintainers:        []datapackagingv1alpha1.Maintainer{{Name: "person1"}, {Name: "person2"}},
+						SupportDescription: "Some support information",
+						ProviderName:       "Tombi!",
+					},
+				},
+				&datapackagingv1alpha1.Package{
+					TypeMeta: metav1.TypeMeta{
+						Kind:       pkgResource,
+						APIVersion: datapackagingAPIVersion,
+					},
+					ObjectMeta: metav1.ObjectMeta{
+						Namespace: "default",
+						Name:      "tetris.foo.example.com.1.2.3",
+					},
+					Spec: datapackagingv1alpha1.PackageSpec{
+						RefName:                         "tetris.foo.example.com",
+						Version:                         "1.2.3",
+						Licenses:                        []string{"my-license"},
+						ReleaseNotes:                    "release notes",
+						CapactiyRequirementsDescription: "capacity description",
+						ReleasedAt:                      metav1.Time{time.Date(1984, time.June, 6, 0, 0, 0, 0, time.UTC)},
+					},
+				},
+				&datapackagingv1alpha1.Package{
+					TypeMeta: metav1.TypeMeta{
+						Kind:       pkgResource,
+						APIVersion: datapackagingAPIVersion,
+					},
+					ObjectMeta: metav1.ObjectMeta{
+						Namespace: "default",
+						Name:      "tombi.foo.example.com.1.2.5",
+					},
+					Spec: datapackagingv1alpha1.PackageSpec{
+						RefName:                         "tombi.foo.example.com",
+						Version:                         "1.2.5",
+						Licenses:                        []string{"my-license"},
+						ReleaseNotes:                    "release notes",
+						CapactiyRequirementsDescription: "capacity description",
+						ReleasedAt:                      metav1.Time{time.Date(1997, time.December, 25, 0, 0, 0, 0, time.UTC)},
+					},
+				},
+			},
+			expectedPackages: []*corev1.AvailablePackageSummary{
+				{
+					AvailablePackageRef: &corev1.AvailablePackageReference{
+						Context:    defaultContext,
+						Plugin:     &pluginDetail,
+						Identifier: "tetris.foo.example.com",
+					},
+					Name:        "tetris.foo.example.com",
+					DisplayName: "Classic Tetris",
+					LatestVersion: &corev1.PackageAppVersion{
+						PkgVersion: "1.2.3",
+						AppVersion: "1.2.3",
+					},
+					IconUrl:          "data:image/svg+xml;base64,Tm90IHJlYWxseSBTVkcK",
+					ShortDescription: "A great game for arcade gamers",
+					Categories:       []string{"logging", "daemon-set"},
+				},
+			},
+		},
 	}
 
 	for _, tc := range testCases {
@@ -855,6 +958,7 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 			response, err := s.GetAvailablePackageSummaries(context.Background(), &corev1.GetAvailablePackageSummariesRequest{
 				Context:           defaultContext,
 				PaginationOptions: &tc.paginationOptions,
+				FilterOptions:     &tc.filterOptions,
 			})
 
 			if got, want := status.Code(err), tc.expectedStatusCode; got != want {
