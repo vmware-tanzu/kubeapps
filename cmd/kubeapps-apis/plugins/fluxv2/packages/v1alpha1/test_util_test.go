@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"crypto/subtle"
-	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -242,24 +241,6 @@ func newBasicAuthTlsSecret(name, namespace, user, password string, pub, priv, ca
 	}
 	if password != "" {
 		s.Data["password"] = []byte(password)
-	}
-	return s
-}
-
-func newDockerConfigJSONSecret(name, namespace, server, username, password, email string) *apiv1.Secret {
-	// ref https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/
-	authStr := base64.StdEncoding.EncodeToString([]byte(fmt.Sprintf("%s:%s", username, password)))
-	configStr := fmt.Sprintf("{\"auths\":{\"%s\":{\"username\":\"%s\",\"password\":\"%s\",\"email\":\"%s\",\"auth\":\"%s\"}}}",
-		server, username, password, email, authStr)
-	s := &apiv1.Secret{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      name,
-			Namespace: namespace,
-		},
-		Type: apiv1.SecretTypeDockerConfigJson,
-		Data: map[string][]byte{
-			".dockerconfigjson": []byte(base64.StdEncoding.EncodeToString([]byte(configStr))),
-		},
 	}
 	return s
 }

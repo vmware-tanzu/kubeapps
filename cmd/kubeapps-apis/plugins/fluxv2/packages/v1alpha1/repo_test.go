@@ -1292,12 +1292,9 @@ func TestAddPackageRepository(t *testing.T) {
 			statusCode: codes.Unimplemented,
 		},
 		{
-			name:                  "package repository with docker config JSON authentication",
-			request:               add_repo_req_12,
-			expectedResponse:      add_repo_expected_resp,
-			expectedRepo:          &add_repo_2,
-			expectedCreatedSecret: newDockerConfigJSONSecret("bar-", "foo", "your.private.registry.example.com", "janedoe", "xxxxxxxx", "jdoe@example.com"),
-			statusCode:            codes.OK,
+			name:       "package repository with docker config JSON authentication",
+			request:    add_repo_req_12,
+			statusCode: codes.Unimplemented,
 		},
 		{
 			name:               "package repository with basic auth and existing secret",
@@ -2141,7 +2138,7 @@ func TestDeletePackageRepository(t *testing.T) {
 					t.Fatalf("Expected repository [%s] to have been deleted but still exists", nsname)
 				}
 				// check the secret is gone too in kubeapps-managed secrets env
-				if !s.pluginConfig.UserManagedSecrets && tc.oldRepoSecret != nil {
+				if !tc.userManagedSecrets && tc.oldRepoSecret != nil {
 					typedCli, err := s.clientGetter.Typed(ctx, KubeappsCluster)
 					if err != nil {
 						t.Fatal(err)

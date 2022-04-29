@@ -386,13 +386,33 @@ func (s *Server) validateRepoUserManagedSecrets(
 		// check that the specified secret exists
 		if typedClient, err := s.clientGetter.Typed(ctx, s.kubeappsCluster); err != nil {
 			return "", err
-		} else if _, err = typedClient.CoreV1().Secrets(repoName.Namespace).Get(ctx, secretRef, metav1.GetOptions{}); err != nil {
+		} else if secret, err := typedClient.CoreV1().Secrets(repoName.Namespace).Get(ctx, secretRef, metav1.GetOptions{}); err != nil {
 			return "", statuserror.FromK8sError("get", "secret", secretRef, err)
+		} else {
+			// also check that the data in the opaque secret corresponds
+			// to specified auth type, e.g. if AuthType is
+			// PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_BASIC_AUTH,
+			// check that the secret has "username" and "password" fields, etc.
+			// it appears flux does not care about the k8s secret type (opaque vs tls vs basic-auth, etc.)
+			// https://github.com/fluxcd/source-controller/blob/bc5a47e821562b1c4f9731acd929b8d9bd23b3a8/controllers/helmrepository_controller.go#L357
+			if secretRefTls != "" && secret.Data["caFile"] == nil {
+				return "", status.Errorf(codes.Internal, "Specified opaque secret missing field 'caFile'")
+			}
+			if secretRefAuth != "" {
+				switch auth.Type {
+				case corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_BASIC_AUTH:
+					if secret.Data["username"] == nil || secret.Data["password"] == nil {
+						return "", status.Errorf(codes.Internal, "Specified secret [%s] missing fields 'username' and/or 'password'", secretRef)
+					}
+				case corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_TLS:
+					if secret.Data["keyFile"] == nil || secret.Data["certFile"] == nil {
+						return "", status.Errorf(codes.Internal, "Specified secret [%s] missing fields 'keyFile' and/or 'certFile'", secretRef)
+					}
+				default:
+					return "", status.Errorf(codes.Internal, "Package repository authentication type %q is not supported", auth.Type)
+				}
+			}
 		}
-		// TODO (gfichtenholt) also check that the data in the opaque secret corresponds
-		// to specified auth type, e.g. if AuthType is
-		// PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_BASIC_AUTH,
-		// check that the secret has "username" and "password" fields, etc.
 
 		// TODO (gfichtenholt)
 		// ref https://github.com/vmware-tanzu/kubeapps/pull/4353#discussion_r816332595
@@ -400,6 +420,7 @@ func (s *Server) validateRepoUserManagedSecrets(
 		// https://kubernetes.io/docs/concepts/configuration/secret/#secret-types
 		// If so, that cause certain validation to be done on the data (ie. ensuring that
 		//	the "username" and "password" fields are present).
+		// pretty sure that flux does not care about secret type, just what is in the data map.
 	}
 	return secretRef, nil
 }
@@ -1002,15 +1023,10 @@ func newSecretFromTlsConfigAndAuth(repoName types.NamespacedName,
 			} else {
 				return nil, status.Errorf(codes.Internal, "TLS Cert/Key configuration is missing")
 			}
-		case corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_BEARER, corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_CUSTOM:
+		case corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_BEARER,
+			corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_CUSTOM,
+			corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_DOCKER_CONFIG_JSON:
 			return nil, status.Errorf(codes.Unimplemented, "Package repository authentication type %q is not supported", auth.Type)
-		case corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_DOCKER_CONFIG_JSON:
-			if dc := auth.GetDockerCreds(); dc != nil {
-				secret.Type = apiv1.SecretTypeDockerConfigJson
-				secret.Data[".dockerconfigjson"] = common.DockerCredentialsToSecretData(dc)
-			} else {
-				return nil, status.Errorf(codes.Internal, "Docker credentials configuration is missing")
-			}
 		case corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_UNSPECIFIED:
 			return nil, nil
 		default:
@@ -1051,11 +1067,6 @@ func getRepoTlsConfigAndAuthWithUserManagedSecrets(secret *apiv1.Secret) (*corev
 			auth.PackageRepoAuthOneOf = &corev1.PackageRepositoryAuth_SecretRef{
 				SecretRef: &corev1.SecretKeyReference{Name: secret.Name},
 			}
-		}
-	} else if _, ok := secret.Data[".dockerconfigjson"]; ok {
-		auth.Type = corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_DOCKER_CONFIG_JSON
-		auth.PackageRepoAuthOneOf = &corev1.PackageRepositoryAuth_SecretRef{
-			SecretRef: &corev1.SecretKeyReference{Name: secret.Name},
 		}
 	} else {
 		log.Warning("Unrecognized type of secret [%s]", secret.Name)
@@ -1098,15 +1109,6 @@ func getRepoTlsConfigAndAuthWithKubeappsManagedSecrets(secret *apiv1.Secret) (*c
 					Password: string(pwd),
 				},
 			}
-		}
-	} else if configStr, ok := secret.Data[".dockerconfigjson"]; ok {
-		dc, err := common.SecretDataToDockerCredentials(string(configStr))
-		if err != nil {
-			return nil, nil, err
-		}
-		auth.Type = corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_DOCKER_CONFIG_JSON
-		auth.PackageRepoAuthOneOf = &corev1.PackageRepositoryAuth_DockerCreds{
-			DockerCreds: dc,
 		}
 	} else {
 		log.Warning("Unrecognized type of secret [%s]", secret.Name)

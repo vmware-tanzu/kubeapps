@@ -200,7 +200,7 @@ func TestKindClusterAddPackageRepository(t *testing.T) {
 			expectedStatusCode: codes.OK,
 		},
 		{
-			testName:           "package repository with basic auth",
+			testName:           "package repository with basic auth  (kubeapps managed secrets)",
 			request:            add_repo_req_16,
 			expectedResponse:   add_repo_expected_resp_3,
 			expectedStatusCode: codes.OK,
