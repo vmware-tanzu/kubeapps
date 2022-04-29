@@ -60,7 +60,7 @@ require (
 	github.com/itchyny/gojq v0.12.7
 	github.com/jinzhu/copier v0.3.5
 	github.com/k14s/kapp v0.46.0
-	github.com/lib/pq v1.10.4
+	github.com/lib/pq v1.10.5
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/opencontainers/image-spec v1.0.3-0.20211202183452-c5a74bcca799
 	github.com/sirupsen/logrus v1.8.1
