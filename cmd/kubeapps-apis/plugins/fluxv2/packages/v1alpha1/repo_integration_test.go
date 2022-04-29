@@ -200,7 +200,7 @@ func TestKindClusterAddPackageRepository(t *testing.T) {
 			expectedStatusCode: codes.OK,
 		},
 		{
-			testName:           "package repository with basic auth  (kubeapps managed secrets)",
+			testName:           "package repository with basic auth (kubeapps managed secrets)",
 			request:            add_repo_req_16,
 			expectedResponse:   add_repo_expected_resp_3,
 			expectedStatusCode: codes.OK,
@@ -990,6 +990,14 @@ func TestKindClusterDeletePackageRepository(t *testing.T) {
 			expectedStatusCode: codes.PermissionDenied,
 			unauthorized:       true,
 		},
+		{
+			name:               "delete repo also deletes the corresponding secret in kubeapps managed env",
+			request:            delete_repo_req_6,
+			repoName:           "my-podinfo-4",
+			repoUrl:            podinfo_basic_auth_repo_url,
+			oldSecret:          newBasicAuthSecret("secret-1", "namespace-1", "foo", "bar"),
+			expectedStatusCode: codes.OK,
+		},
 	}
 
 	adminAcctName := "test-delete-repo-admin-" + randSeq(4)
@@ -1106,6 +1114,23 @@ func TestKindClusterDeletePackageRepository(t *testing.T) {
 				} else {
 					t.Logf("Waiting 1s for repository [%s] to be deleted, attempt [%d/%d]...", tc.repoName, i+1, maxWait)
 					time.Sleep(1 * time.Second)
+				}
+			}
+
+			// check the secret is gone too in kubeapps-managed secrets env
+			if !tc.userManagedSecrets && tc.oldSecret != nil {
+				for i := 0; i <= maxWait; i++ {
+					exists, err := kubeExistsSecret(t, tc.oldSecret.Name, repoNamespace)
+					if err != nil {
+						t.Fatal(err)
+					} else if !exists {
+						break
+					} else if i == maxWait {
+						t.Fatalf("Timed out waiting for delete of secret [%s], last error: [%v]", tc.oldSecret.Name, err)
+					} else {
+						t.Logf("Waiting 1s for secret [%s] to be deleted, attempt [%d/%d]...", tc.oldSecret.Name, i+1, maxWait)
+						time.Sleep(1 * time.Second)
+					}
 				}
 			}
 		})

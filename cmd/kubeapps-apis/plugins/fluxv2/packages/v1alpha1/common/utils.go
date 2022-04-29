@@ -115,10 +115,10 @@ func NamespacedName(obj ctrlclient.Object) (*types.NamespacedName, error) {
 }
 
 // "Local" in the sense of no namespace is specified
-func NewLocalOpaqueSecret(name string) *apiv1.Secret {
+func NewLocalOpaqueSecret(ownerRepo types.NamespacedName) *apiv1.Secret {
 	return &apiv1.Secret{
 		ObjectMeta: metav1.ObjectMeta{
-			GenerateName: name,
+			GenerateName: ownerRepo.Name + "-",
 		},
 		Type: apiv1.SecretTypeOpaque,
 		Data: map[string][]byte{},

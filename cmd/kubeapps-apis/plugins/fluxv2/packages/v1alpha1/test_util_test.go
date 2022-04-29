@@ -245,6 +245,20 @@ func newBasicAuthTlsSecret(name, namespace, user, password string, pub, priv, ca
 	return s
 }
 
+func setSecretOwnerRef(repoName string, secret *apiv1.Secret) *apiv1.Secret {
+	tRue := true
+	secret.OwnerReferences = []metav1.OwnerReference{
+		{
+			APIVersion:         "source.toolkit.fluxcd.io/v1beta2",
+			Kind:               "HelmRepository",
+			Name:               repoName,
+			Controller:         &tRue,
+			BlockOwnerDeletion: &tRue,
+		},
+	}
+	return secret
+}
+
 func availableRef(id, namespace string) *corev1.AvailablePackageReference {
 	return &corev1.AvailablePackageReference{
 		Identifier: id,

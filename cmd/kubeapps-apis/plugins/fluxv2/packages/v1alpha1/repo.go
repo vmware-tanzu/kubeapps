@@ -28,6 +28,7 @@ import (
 	apiv1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/sets"
 	log "k8s.io/klog/v2"
@@ -209,11 +210,15 @@ func (s *Server) newRepo(ctx context.Context, targetName types.NamespacedName, u
 	var secretRef string
 	var err error
 	if s.pluginConfig.UserManagedSecrets {
-		if secretRef, err = s.validateRepoUserManagedSecrets(ctx, targetName, tlsConfig, auth); err != nil {
+		if secretRef, err = s.validateRepoUserManagedSecret(ctx, targetName, tlsConfig, auth); err != nil {
 			return nil, err
 		}
 	} else {
-		if secretRef, err = s.createRepoKubeappsManagedSecrets(ctx, targetName, tlsConfig, auth); err != nil {
+		// a bit of catch 22: I need to create a secret first, so that I can create a repo that references it
+		// but then I need to set the owner reference on this secret to the repo. In has to be done
+		// in that order because to set an owner ref you need object (i.e. repo) UID, which you only get
+		// once the object's been created
+		if secretRef, err = s.createRepoKubeappsManagedSecret(ctx, targetName, tlsConfig, auth); err != nil {
 			return nil, err
 		}
 	}
@@ -227,6 +232,11 @@ func (s *Server) newRepo(ctx context.Context, targetName types.NamespacedName, u
 	} else if err = client.Create(ctx, fluxRepo); err != nil {
 		return nil, statuserror.FromK8sError("create", "HelmRepository", targetName.String(), err)
 	} else {
+		if !s.pluginConfig.UserManagedSecrets {
+			if err = s.setOwnerReferencesForRepoSecret(ctx, fluxRepo); err != nil {
+				return nil, err
+			}
+		}
 		return &corev1.PackageRepositoryReference{
 			Context: &corev1.Context{
 				Namespace: fluxRepo.Namespace,
@@ -346,7 +356,7 @@ func (s *Server) repoSummaries(ctx context.Context, namespace string) ([]*corev1
 	return summaries, nil
 }
 
-func (s *Server) validateRepoUserManagedSecrets(
+func (s *Server) validateRepoUserManagedSecret(
 	ctx context.Context,
 	repoName types.NamespacedName,
 	tlsConfig *corev1.PackageRepositoryTlsConfig,
@@ -425,7 +435,7 @@ func (s *Server) validateRepoUserManagedSecrets(
 	return secretRef, nil
 }
 
-func (s *Server) createRepoKubeappsManagedSecrets(
+func (s *Server) createRepoKubeappsManagedSecret(
 	ctx context.Context,
 	repoName types.NamespacedName,
 	tlsConfig *corev1.PackageRepositoryTlsConfig,
@@ -444,10 +454,47 @@ func (s *Server) createRepoKubeappsManagedSecrets(
 		} else if secret, err = typedClient.CoreV1().Secrets(repoName.Namespace).Create(ctx, secret, metav1.CreateOptions{}); err != nil {
 			return "", statuserror.FromK8sError("create", "secret", secret.GetName(), err)
 		} else {
+			log.Infof("Created secret: %s", common.PrettyPrint(secret))
 			secretRef = secret.GetName()
 		}
 	}
 	return secretRef, nil
+}
+
+// using owner references on the secret so that it can be
+// (1) cleaned up automatically and/or
+// (2) enable some control (ie. if I add a secret manually
+//   via kubectl before running kubeapps, it won't get deleted just
+// because Kubeapps is deleting it)?
+// see https://github.com/vmware-tanzu/kubeapps/pull/4630#discussion_r861446394 for details
+func (s *Server) setOwnerReferencesForRepoSecret(
+	ctx context.Context,
+	repo *sourcev1.HelmRepository) error {
+
+	if repo.Spec.SecretRef != nil {
+		if typedClient, err := s.clientGetter.Typed(ctx, s.kubeappsCluster); err != nil {
+			return err
+		} else {
+			secretsInterface := typedClient.CoreV1().Secrets(repo.Namespace)
+			if secret, err := secretsInterface.Get(ctx, repo.Spec.SecretRef.Name, metav1.GetOptions{}); err != nil {
+				return statuserror.FromK8sError("get", "secrets", repo.Spec.SecretRef.Name, err)
+			} else {
+				secret.OwnerReferences = []metav1.OwnerReference{
+					*metav1.NewControllerRef(
+						repo,
+						schema.GroupVersionKind{
+							Group:   sourcev1.GroupVersion.Group,
+							Version: sourcev1.GroupVersion.Version,
+							Kind:    sourcev1.HelmRepositoryKind,
+						}),
+				}
+				if _, err := secretsInterface.Update(ctx, secret, metav1.UpdateOptions{}); err != nil {
+					return statuserror.FromK8sError("update", "secrets", repo.Spec.SecretRef.Name, err)
+				}
+			}
+		}
+	}
+	return nil
 }
 
 func (s *Server) updateRepoKubeappsManagedSecrets(
@@ -461,7 +508,6 @@ func (s *Server) updateRepoKubeappsManagedSecrets(
 	if err != nil {
 		return "", err
 	}
-
 	secretRef := ""
 	typedClient, err := s.clientGetter.Typed(ctx, s.kubeappsCluster)
 	if err != nil {
@@ -532,7 +578,7 @@ func (s *Server) updateRepo(ctx context.Context, repoRef *corev1.PackageReposito
 
 	var secretRef string
 	if s.pluginConfig.UserManagedSecrets {
-		if secretRef, err = s.validateRepoUserManagedSecrets(ctx, key, tlsConfig, auth); err != nil {
+		if secretRef, err = s.validateRepoUserManagedSecret(ctx, key, tlsConfig, auth); err != nil {
 			return nil, err
 		}
 	} else {
@@ -561,6 +607,13 @@ func (s *Server) updateRepo(ctx context.Context, repoRef *corev1.PackageReposito
 	}
 	if err = client.Update(ctx, repo); err != nil {
 		return nil, statuserror.FromK8sError("update", "HelmRepository", key.String(), err)
+	} else {
+		if !s.pluginConfig.UserManagedSecrets {
+			// new secret => will need to set the owner
+			if err = s.setOwnerReferencesForRepoSecret(ctx, repo); err != nil {
+				return nil, err
+			}
+		}
 	}
 
 	log.V(4).Infof("Updated repository: %s", common.PrettyPrint(repo))
@@ -583,18 +636,8 @@ func (s *Server) deleteRepo(ctx context.Context, repoRef *corev1.PackageReposito
 
 	log.V(4).Infof("Deleting repo: [%s]", repoRef.Identifier)
 
-	// delete secrets, if applicable, for kubeapps-managed secrets environment
-	var deleteSecret string
-	if !s.pluginConfig.UserManagedSecrets {
-		key := types.NamespacedName{Namespace: repoRef.Context.Namespace, Name: repoRef.Identifier}
-		var repo sourcev1.HelmRepository
-		if err = client.Get(ctx, key, &repo); err != nil {
-			return statuserror.FromK8sError("get", "HelmRepository", repoRef.Identifier, err)
-		}
-		if repo.Spec.SecretRef != nil && repo.Spec.SecretRef.Name != "" {
-			deleteSecret = repo.Spec.SecretRef.Name
-		}
-	}
+	// For kubeapps-managed secrets environment secrets will be deleted (garbage-collected)
+	// when the owner repo is deleted
 
 	repo := &sourcev1.HelmRepository{
 		ObjectMeta: metav1.ObjectMeta{
@@ -604,15 +647,9 @@ func (s *Server) deleteRepo(ctx context.Context, repoRef *corev1.PackageReposito
 	}
 	if err = client.Delete(ctx, repo); err != nil {
 		return statuserror.FromK8sError("delete", "HelmRepository", repoRef.Identifier, err)
-	} else if deleteSecret != "" {
-		typedClient, err := s.clientGetter.Typed(ctx, s.kubeappsCluster)
-		if err != nil {
-			return err
-		} else if err = typedClient.CoreV1().Secrets(repoRef.Context.Namespace).Delete(ctx, deleteSecret, metav1.DeleteOptions{}); err != nil {
-			return statuserror.FromK8sError("delete", "secret", deleteSecret, err)
-		}
+	} else {
+		return nil
 	}
-	return nil
 }
 
 //
@@ -997,7 +1034,7 @@ func newSecretFromTlsConfigAndAuth(repoName types.NamespacedName,
 		}
 		caCert := tlsConfig.GetCertAuthority()
 		if caCert != "" {
-			secret = common.NewLocalOpaqueSecret(repoName.Name + "-")
+			secret = common.NewLocalOpaqueSecret(repoName)
 			secret.Data["caFile"] = []byte(caCert)
 		}
 	}
@@ -1006,7 +1043,7 @@ func newSecretFromTlsConfigAndAuth(repoName types.NamespacedName,
 			return nil, status.Errorf(codes.InvalidArgument, "SecretRef may not be used with kubeapps managed secrets")
 		}
 		if secret == nil {
-			secret = common.NewLocalOpaqueSecret(repoName.Name + "-")
+			secret = common.NewLocalOpaqueSecret(repoName)
 		}
 		switch auth.Type {
 		case corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_BASIC_AUTH:
