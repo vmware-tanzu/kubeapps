@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"crypto/subtle"
-	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -246,22 +245,18 @@ func newBasicAuthTlsSecret(name, namespace, user, password string, pub, priv, ca
 	return s
 }
 
-func newDockerConfigJSONSecret(name, namespace, server, username, password, email string) *apiv1.Secret {
-	// ref https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/
-	authStr := base64.StdEncoding.EncodeToString([]byte(fmt.Sprintf("%s:%s", username, password)))
-	configStr := fmt.Sprintf("{\"auths\":{\"%s\":{\"username\":\"%s\",\"password\":\"%s\",\"email\":\"%s\",\"auth\":\"%s\"}}}",
-		server, username, password, email, authStr)
-	s := &apiv1.Secret{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      name,
-			Namespace: namespace,
-		},
-		Type: apiv1.SecretTypeDockerConfigJson,
-		Data: map[string][]byte{
-			".dockerconfigjson": []byte(base64.StdEncoding.EncodeToString([]byte(configStr))),
+func setSecretOwnerRef(repoName string, secret *apiv1.Secret) *apiv1.Secret {
+	tRue := true
+	secret.OwnerReferences = []metav1.OwnerReference{
+		{
+			APIVersion:         "source.toolkit.fluxcd.io/v1beta2",
+			Kind:               "HelmRepository",
+			Name:               repoName,
+			Controller:         &tRue,
+			BlockOwnerDeletion: &tRue,
 		},
 	}
-	return s
+	return secret
 }
 
 func availableRef(id, namespace string) *corev1.AvailablePackageReference {

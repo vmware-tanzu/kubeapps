@@ -1237,7 +1237,7 @@ func TestAddPackageRepository(t *testing.T) {
 			request:               add_repo_req_6(ca),
 			expectedResponse:      add_repo_expected_resp,
 			expectedRepo:          &add_repo_2,
-			expectedCreatedSecret: newTlsSecret("bar-", "foo", nil, nil, ca),
+			expectedCreatedSecret: setSecretOwnerRef("bar", newTlsSecret("bar-", "foo", nil, nil, ca)),
 			statusCode:            codes.OK,
 		},
 		{
@@ -1261,7 +1261,7 @@ func TestAddPackageRepository(t *testing.T) {
 			userManagedSecrets: true,
 		},
 		{
-			name:       "failes when package repository links to non-existing secret (kubeapps managed secrets)",
+			name:       "fails when package repository links to non-existing secret (kubeapps managed secrets)",
 			request:    add_repo_req_7,
 			statusCode: codes.InvalidArgument,
 		},
@@ -1270,7 +1270,7 @@ func TestAddPackageRepository(t *testing.T) {
 			request:               add_repo_req_8,
 			expectedResponse:      add_repo_expected_resp,
 			expectedRepo:          &add_repo_4,
-			expectedCreatedSecret: newBasicAuthSecret("bar-", "foo", "baz", "zot"),
+			expectedCreatedSecret: setSecretOwnerRef("bar", newBasicAuthSecret("bar-", "foo", "baz", "zot")),
 			statusCode:            codes.OK,
 		},
 		{
@@ -1278,7 +1278,7 @@ func TestAddPackageRepository(t *testing.T) {
 			request:               add_repo_req_9(pub, priv),
 			expectedResponse:      add_repo_expected_resp,
 			expectedRepo:          &add_repo_2,
-			expectedCreatedSecret: newTlsSecret("bar-", "foo", pub, priv, nil),
+			expectedCreatedSecret: setSecretOwnerRef("bar", newTlsSecret("bar-", "foo", pub, priv, nil)),
 			statusCode:            codes.OK,
 		},
 		{
@@ -1292,12 +1292,9 @@ func TestAddPackageRepository(t *testing.T) {
 			statusCode: codes.Unimplemented,
 		},
 		{
-			name:                  "package repository with docker config JSON authentication",
-			request:               add_repo_req_12,
-			expectedResponse:      add_repo_expected_resp,
-			expectedRepo:          &add_repo_2,
-			expectedCreatedSecret: newDockerConfigJSONSecret("bar-", "foo", "your.private.registry.example.com", "janedoe", "xxxxxxxx", "jdoe@example.com"),
-			statusCode:            codes.OK,
+			name:       "package repository with docker config JSON authentication",
+			request:    add_repo_req_12,
+			statusCode: codes.Unimplemented,
 		},
 		{
 			name:               "package repository with basic auth and existing secret",
@@ -2129,7 +2126,7 @@ func TestDeletePackageRepository(t *testing.T) {
 			if tc.expectedStatusCode == codes.OK {
 				// check the repository CRD is gone from the cluster
 				if err = ctrlClient.Get(ctx, nsname, &actualRepo); err == nil {
-					t.Fatalf("Expected repository [%s] is deleted but it still exists", nsname)
+					t.Fatalf("Expected repository [%s] to have been deleted but still exists", nsname)
 				}
 			}
 		})

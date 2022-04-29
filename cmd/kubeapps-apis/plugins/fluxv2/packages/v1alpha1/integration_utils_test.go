@@ -691,6 +691,18 @@ func kubeDeleteSecret(t *testing.T, namespace, name string) error {
 		metav1.DeleteOptions{})
 }
 
+func kubeExistsSecret(t *testing.T, namespace, name string) (bool, error) {
+	t.Logf("+kubeExistsSecret(%s, %s)", namespace, name)
+	typedClient, err := kubeGetTypedClient()
+	if err != nil {
+		return false, err
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), defaultContextTimeout)
+	defer cancel()
+	_, err = typedClient.CoreV1().Secrets(namespace).Get(ctx, name, metav1.GetOptions{})
+	return err == nil, nil
+}
+
 func kubePortForwardToRedis(t *testing.T) error {
 	t.Logf("+kubePortForwardToRedis")
 	defer t.Logf("-kubePortForwardToRedis")

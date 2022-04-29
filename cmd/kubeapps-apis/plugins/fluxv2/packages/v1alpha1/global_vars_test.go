@@ -2997,4 +2997,8 @@ var (
 	delete_repo_req_5 = &corev1.DeletePackageRepositoryRequest{
 		PackageRepoRef: repoRefInReq("my-podinfo-3", "TBD"),
 	}
+
+	delete_repo_req_6 = &corev1.DeletePackageRepositoryRequest{
+		PackageRepoRef: repoRefInReq("my-podinfo-4", "TBD"),
+	}
 )
