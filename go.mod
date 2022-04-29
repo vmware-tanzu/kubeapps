@@ -49,7 +49,7 @@ require (
 	github.com/distribution/distribution v2.8.1+incompatible
 	github.com/fluxcd/helm-controller/api v0.20.1
 	github.com/fluxcd/pkg/apis/meta v0.12.2
-	github.com/fluxcd/source-controller/api v0.24.2
+	github.com/fluxcd/source-controller/api v0.24.3
 	github.com/go-redis/redis/v8 v8.11.5
 	github.com/go-redis/redismock/v8 v8.0.6
 	github.com/google/go-cmp v0.5.8
@@ -60,7 +60,7 @@ require (
 	github.com/itchyny/gojq v0.12.7
 	github.com/jinzhu/copier v0.3.5
 	github.com/k14s/kapp v0.46.0
-	github.com/lib/pq v1.10.4
+	github.com/lib/pq v1.10.5
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/opencontainers/image-spec v1.0.3-0.20211202183452-c5a74bcca799
 	github.com/sirupsen/logrus v1.8.1
