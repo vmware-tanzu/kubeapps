@@ -58,6 +58,7 @@ reset-dev-kubeapps:
 deploy-kapp-controller:
 	kubectl --kubeconfig=${CLUSTER_CONFIG} apply -f https://github.com/vmware-tanzu/carvel-kapp-controller/releases/download/v0.35.0/release.yml
 	kubectl --kubeconfig=${CLUSTER_CONFIG} apply -f https://raw.githubusercontent.com/vmware-tanzu/carvel-kapp-controller/develop/examples/packaging-with-repo/package-repository.yml
+	kubectl --kubeconfig=${CLUSTER_CONFIG} apply -f ./docs/howto/manifests/tce-package-repository.yaml
 
 # Add the flux controllers used for testing the kubeapps-apis integration.
 deploy-flux-controllers:

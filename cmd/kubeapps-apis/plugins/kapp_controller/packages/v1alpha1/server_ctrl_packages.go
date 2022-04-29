@@ -47,14 +47,15 @@ func (s *Server) GetAvailablePackageSummaries(ctx context.Context, request *core
 		cluster = s.globalPackagingCluster
 	}
 	// fetch all the package metadatas
-	// TODO(minelson): We should be grabbing only the requested page
-	// of results here.
 	pkgMetadatas, err := s.getPkgMetadatas(ctx, cluster, namespace)
 	if err != nil {
 		return nil, statuserror.FromK8sError("get", "PackageMetadata", "", err)
 	}
-	// Until the above request uses the pagination, update the slice
-	// to be the correct page of results.
+
+	// Filter the package metadatas using any specified filter.
+	pkgMetadatas = FilterMetadatas(pkgMetadatas, request.GetFilterOptions())
+
+	// Update the slice to be the correct page of results.
 	startAt := 0
 	if pageSize > 0 {
 		startAt = int(pageSize) * pageOffset
@@ -79,7 +80,7 @@ func (s *Server) GetAvailablePackageSummaries(ctx context.Context, request *core
 	// Skip through the packages until we get to the first item in our
 	// paginated results.
 	currentPkg := <-getPkgsChannel
-	for currentPkg != nil && currentPkg.Spec.RefName != pkgMetadatas[0].Name {
+	for currentPkg != nil && len(pkgMetadatas) > 0 && currentPkg.Spec.RefName != pkgMetadatas[0].Name {
 		currentPkg = <-getPkgsChannel
 	}
 
