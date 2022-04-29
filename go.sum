@@ -587,8 +587,8 @@ github.com/fluxcd/pkg/apis/kustomize v0.3.3 h1:bPN29SdVzWl0yhgivuf/83IAe2R6vUuDV
 github.com/fluxcd/pkg/apis/kustomize v0.3.3/go.mod h1:5HTOFZfQFVMMqR2rvuxpbZhpb+sQpcTT6RCQZOhjFzA=
 github.com/fluxcd/pkg/apis/meta v0.12.2 h1:AiKAZxLyPtV150y63WC+mL1Qm4x5qWQmW6r4mLy1i8c=
 github.com/fluxcd/pkg/apis/meta v0.12.2/go.mod h1:Z26X5uTU5LxAyWETGueRQY7TvdPaGfKU7Wye9bdUlho=
-github.com/fluxcd/source-controller/api v0.24.2 h1:zxAnWhNDF1zQMLc7dNqOdRjCiyQAoWPnSedGycyG8NA=
-github.com/fluxcd/source-controller/api v0.24.2/go.mod h1:+raHSQaSGlk1PqgLc0joVk1KTnf1K/lQcgxdEdZ/mk8=
+github.com/fluxcd/source-controller/api v0.24.3 h1:4HMXDxqjpxSo5RfTP3k9w8w7CgDn8/Gd9/jMrY6URiw=
+github.com/fluxcd/source-controller/api v0.24.3/go.mod h1:+raHSQaSGlk1PqgLc0joVk1KTnf1K/lQcgxdEdZ/mk8=
 github.com/flynn/go-shlex v0.0.0-20150515145356-3f9db97f8568/go.mod h1:xEzjJPgXI435gkrCt3MPfRiAkVrwSbHsst4LCFVfpJc=
 github.com/fogleman/gg v1.2.1-0.20190220221249-0403632d5b90/go.mod h1:R/bRT+9gY/C5z7JzPU0zXsXHKM4/ayA+zqcVNZzPa1k=
 github.com/form3tech-oss/jwt-go v3.2.2+incompatible/go.mod h1:pbq4aXjuKjdthFRnoDwaVPLA+WlJuPGy+QneDUgJi2k=
@@ -1666,8 +1666,8 @@ github.com/vmware-tanzu/carvel-kapp-controller/cli v0.0.0-20220203213126-e7c5dc7
 github.com/vmware-tanzu/carvel-kapp-controller/cli v0.0.0-20220203213126-e7c5dc77af08/go.mod h1:MvMJjqhXm64jCJtD/Etzd3FhuvZwO/jmXYXLLrinskw=
 github.com/vmware-tanzu/carvel-vendir v0.23.0/go.mod h1:l35I00eXhYiIaZdOPeGX/zrj0WGfimSSqj81PrxGpAw=
 github.com/vmware-tanzu/carvel-vendir v0.24.0/go.mod h1:Ls3P88J5x+i6ruw/gXgo3brIOGyfGqyzUCAofOuXRFc=
-github.com/vmware-tanzu/carvel-vendir v0.26.0 h1:Q98tPnH9WUAWE2vJSAP0lsHGsfwGjfW2y+JUOEiJ/Yk=
-github.com/vmware-tanzu/carvel-vendir v0.26.0/go.mod h1:JcuNNVONFbZTbm/GjtGiWUfFrt17YBQzeGT9+gY1+yY=
+github.com/vmware-tanzu/carvel-vendir v0.27.0 h1:Y+syvFQviFOmNmmYR+bsY5j9EMvDMPBdHGnwGW35QdU=
+github.com/vmware-tanzu/carvel-vendir v0.27.0/go.mod h1:PJiUiNTKLH5iSphBdGteECXQ9LOyNM2hx+BRFSB4PzE=
 github.com/vmware/govmomi v0.20.3/go.mod h1:URlwyTFZX72RmxtxuaFL2Uj3fD1JTvZdx59bHWk6aFU=
 github.com/willf/bitset v1.1.11-0.20200630133818-d5bec3311243/go.mod h1:RjeCKbqT1RxIR/KWY6phxZiaY1IyutSBfGjNPySAYV4=
 github.com/willf/bitset v1.1.11/go.mod h1:83CECat5yLh5zVOf4P1ErAgKA5UDvKtgyUABdr3+MjI=
