@@ -73,13 +73,13 @@ require (
 	github.com/srwiley/rasterx v0.0.0-20220128185129-2efea2b9ea41
 	github.com/stretchr/testify v1.7.1
 	github.com/urfave/negroni/v2 v2.0.2
-	github.com/vmware-tanzu/carvel-kapp-controller v0.35.0
+	github.com/vmware-tanzu/carvel-kapp-controller v0.36.1
 	github.com/vmware-tanzu/carvel-kapp-controller/cli v0.0.0-20220203213126-e7c5dc77af08
 	github.com/vmware-tanzu/carvel-vendir v0.27.0
 	golang.org/x/net v0.0.0-20220412020605-290c469a71a5
 	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c
 	google.golang.org/genproto v0.0.0-20220407144326-9054f6ed7bac
-	google.golang.org/grpc v1.45.0
+	google.golang.org/grpc v1.46.0
 	google.golang.org/grpc/cmd/protoc-gen-go-grpc v1.2.0
 	google.golang.org/protobuf v1.28.0
 	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b
