@@ -296,7 +296,7 @@ authProxy:
  emailDomain: "*"
  ## Additional flags for oauth2-proxy
  ##
- additionalFlags:
+ extraFlags:
   - --ssl-insecure-skip-verify
   - --cookie-secure=false
   - --scope=openid email groups
