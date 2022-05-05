@@ -7,7 +7,7 @@ Kubeapps is a web-based UI for launching and managing applications on Kubernetes
 [Overview of Kubeapps](https://github.com/vmware-tanzu/kubeapps)
 
 
-                           
+
 ## TL;DR
 
 ```bash
@@ -588,7 +588,7 @@ Once you have installed Kubeapps follow the [Getting Started Guide](https://gith
 | -------------------------------------- | ---------------------------------------------------------------------------- | ------------- |
 | `postgresql.enabled`                   | Deploy a PostgreSQL server to satisfy the applications database requirements | `true`        |
 | `postgresql.architecture`              | PostgreSQL architecture (`standalone` or `replication`)                      | `replication` |
-| `postgresql.auth.password`             | Password for the custom user to create                                       | `""`          |
+| `postgresql.auth.postgresPassword`     | Password for 'postgres' user                                                 | `""`          |
 | `postgresql.auth.database`             | Name for a custom database to create                                         | `assets`      |
 | `postgresql.auth.existingSecret`       | Name of existing secret to use for PostgreSQL credentials                    | `""`          |
 | `postgresql.persistence.enabled`       | Enable persistence on PostgreSQL using PVC(s)                                | `false`       |
@@ -891,7 +891,7 @@ helm install kubeapps bitnami/kubeapps \
   # ... other OIDC and ingress flags
   --set authProxy.oauthLoginURI="/subpath/oauth2/login" \
   --set authProxy.oauthLogoutURI="/subpath/oauth2/logout" \
-  --set authProxy.additionalFlags="{<other flags>,--proxy-prefix=/subpath/oauth2}"
+  --set authProxy.extraFlags="{<other flags>,--proxy-prefix=/subpath/oauth2}"
 ```
 
 ### Can Kubeapps install apps into more than one cluster?
