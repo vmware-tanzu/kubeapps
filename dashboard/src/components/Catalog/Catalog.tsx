@@ -134,7 +134,16 @@ export default function Catalog() {
         searchFilter,
       ),
     );
-  }, [dispatch, nextPageToken, size, cluster, namespace, reposFilter, searchFilter]);
+  }, [
+    dispatch,
+    nextPageToken,
+    size,
+    cluster,
+    namespace,
+    reposFilter,
+    searchFilter,
+    hasFinishedFetching,
+  ]);
 
   // hasLoadedFirstPage is used to not bump the current page until the first page is fully
   // requested first
