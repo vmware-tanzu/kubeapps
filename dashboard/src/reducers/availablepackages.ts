@@ -76,7 +76,9 @@ const packageReducer = (
       return {
         ...state,
         isFetching: false,
-        // TODO(minelson): Can we remove hasFinishedFetching ?
+        // TODO(minelson): Something is triggering a new request even after
+        // hasFinishedFetching is true, the response for which resets it.
+        // Or it could be that double requests are sent (seen in server logs)
         hasFinishedFetching: isLastPage,
         nextPageToken: action.payload.response.nextPageToken,
         categories: action.payload.response.categories,

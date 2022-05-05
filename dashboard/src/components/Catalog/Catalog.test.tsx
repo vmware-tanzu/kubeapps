@@ -530,14 +530,30 @@ describe("pagination and package fetching", () => {
     );
 
     expect(wrapper.find(PackageCatalogItem).length).toBe(2);
-    expect(fetchAvailablePackageSummaries).toHaveBeenCalledWith(
-      "default-cluster",
-      "kubeapps",
-      "",
-      "nextPageToken",
-      20,
-      "",
+  });
+
+  it("does not fetch again after finishing pagination", () => {
+    const fetchAvailablePackageSummaries = jest.fn();
+    actions.availablepackages.fetchAvailablePackageSummaries = fetchAvailablePackageSummaries;
+
+    const packages = {
+      ...defaultPackageState,
+      hasFinishedFetching: true,
+      isFetching: false,
+      items: [availablePkgSummary1],
+    } as any;
+    const wrapper = mountWrapper(
+      getStore({ ...populatedState, packages: packages } as IStoreState),
+      <MemoryRouter initialEntries={[routePathParam]}>
+        <Route path={routePath}>
+          <Catalog />
+        </Route>
+      </MemoryRouter>,
     );
+
+    expect(wrapper.find(CatalogItems).prop("isFirstPage")).toBe(false);
+    expect(wrapper.find(PackageCatalogItem).length).toBe(1);
+    expect(fetchAvailablePackageSummaries).not.toHaveBeenCalled();
   });
 
   describe("pagination", () => {

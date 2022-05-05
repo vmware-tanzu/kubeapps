@@ -121,6 +121,9 @@ export default function Catalog() {
   const searchFilter = filters[filterNames.SEARCH]?.toString().replace(tmpStrRegex, ",") || "";
   const reposFilter = filters[filterNames.REPO]?.join(",") || "";
   useEffect(() => {
+    if (hasFinishedFetching) {
+      return;
+    }
     dispatch(
       actions.availablepackages.fetchAvailablePackageSummaries(
         cluster,
