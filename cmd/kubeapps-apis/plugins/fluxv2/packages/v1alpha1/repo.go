@@ -40,12 +40,12 @@ const (
 	// https://fluxcd.io/docs/components/helm/api/
 	fluxHelmRepositories   = "helmrepositories"
 	fluxHelmRepositoryList = "HelmRepositoryList"
+	redactedString         = "REDACTED"
 )
 
 var (
 	// default poll interval is 10 min
 	defaultPollInterval = metav1.Duration{Duration: 10 * time.Minute}
-	redactedString      = "REDACTED"
 )
 
 // returns a list of HelmRepositories from all namespaces (cluster-wide), excluding

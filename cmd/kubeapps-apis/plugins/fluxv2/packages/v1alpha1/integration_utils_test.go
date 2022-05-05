@@ -218,6 +218,20 @@ func kubeAddHelmRepository(t *testing.T, name, url, namespace, secretName string
 	}
 }
 
+func kubeAddHelmRepositoryAndCleanup(t *testing.T, name, url, namespace, secretName string, interval time.Duration) error {
+	t.Logf("+kubeAddHelmRepositoryAndCleanup(%s,%s)", name, namespace)
+	err := kubeAddHelmRepository(t, name, url, namespace, secretName, interval)
+	if err == nil {
+		t.Cleanup(func() {
+			err := kubeDeleteHelmRepository(t, name, namespace)
+			if err != nil {
+				t.Logf("Failed to delete helm repository [%s] due to [%v]", name, err)
+			}
+		})
+	}
+	return err
+}
+
 func kubeGetHelmRepository(t *testing.T, name, namespace string) (*sourcev1.HelmRepository, error) {
 	t.Logf("+kubeGetHelmRepository(%s,%s)", name, namespace)
 
@@ -622,7 +636,7 @@ func kubeDeleteServiceAccountWithRoleBindings(t *testing.T, name, namespace stri
 	return nil
 }
 
-func kubeCreateNamespace(t *testing.T, namespace string) error {
+func kubeCreateNamespaceAndCleanup(t *testing.T, namespace string) error {
 	t.Logf("+kubeCreateNamespace(%s)", namespace)
 	typedClient, err := kubeGetTypedClient()
 	if err != nil {
@@ -630,14 +644,20 @@ func kubeCreateNamespace(t *testing.T, namespace string) error {
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), defaultContextTimeout)
 	defer cancel()
-	_, err = typedClient.CoreV1().Namespaces().Create(
+	if _, err = typedClient.CoreV1().Namespaces().Create(
 		ctx,
 		&apiv1.Namespace{
 			ObjectMeta: metav1.ObjectMeta{
 				Name: namespace,
 			},
 		},
-		metav1.CreateOptions{})
+		metav1.CreateOptions{}); err == nil {
+		t.Cleanup(func() {
+			if err := kubeDeleteNamespace(t, namespace); err != nil {
+				t.Logf("Failed to delete namespace [%s] due to [%v]", namespace, err)
+			}
+		})
+	}
 	return err
 }
 
@@ -682,6 +702,21 @@ func kubeCreateSecret(t *testing.T, secret *apiv1.Secret) error {
 		secret,
 		metav1.CreateOptions{})
 	return err
+}
+
+func kubeCreateSecretAndCleanup(t *testing.T, secret *apiv1.Secret) error {
+	t.Logf("+kubeCreateSecretAndCleanup(%s, %s)", secret.Namespace, secret.Name)
+	err := kubeCreateSecret(t, secret)
+	if err != nil {
+		return err
+	}
+	t.Cleanup(func() {
+		err := kubeDeleteSecret(t, "default", secret.Name)
+		if err != nil {
+			t.Logf("Failed to delete secret [%s] due to [%v]", secret.Name, err)
+		}
+	})
+	return nil
 }
 
 func kubeDeleteSecret(t *testing.T, namespace, name string) error {

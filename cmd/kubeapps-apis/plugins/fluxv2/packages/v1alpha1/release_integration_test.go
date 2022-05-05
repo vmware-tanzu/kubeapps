@@ -551,14 +551,9 @@ func TestKindClusterRBAC_ReadRelease(t *testing.T) {
 	}
 
 	ns1 := "test-ns1-" + randSeq(4)
-	if err := kubeCreateNamespace(t, ns1); err != nil {
+	if err := kubeCreateNamespaceAndCleanup(t, ns1); err != nil {
 		t.Fatal(err)
 	}
-	t.Cleanup(func() {
-		if err := kubeDeleteNamespace(t, ns1); err != nil {
-			t.Logf("Failed to delete namespace [%s] due to [%v]", ns1, err)
-		}
-	})
 
 	adminAcctName := "test-release-rbac-admin-" + randSeq(4)
 	grpcCtxAdmin, err := newGrpcAdminContext(t, adminAcctName, "default")
@@ -901,25 +896,13 @@ func TestKindClusterRBAC_CreateRelease(t *testing.T) {
 	}
 
 	ns1 := "test-ns1-" + randSeq(4)
-	if err := kubeCreateNamespace(t, ns1); err != nil {
+	if err := kubeCreateNamespaceAndCleanup(t, ns1); err != nil {
 		t.Fatal(err)
 	}
-	t.Cleanup(func() {
-		if err := kubeDeleteNamespace(t, ns1); err != nil {
-			t.Logf("Failed to delete namespace [%s] due to [%v]", ns1, err)
-		}
-	})
-
-	err = kubeAddHelmRepository(t, "podinfo", podinfo_repo_url, ns1, "", 0)
+	err = kubeAddHelmRepositoryAndCleanup(t, "podinfo", podinfo_repo_url, ns1, "", 0)
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Cleanup(func() {
-		err = kubeDeleteHelmRepository(t, "podinfo", ns1)
-		if err != nil {
-			t.Logf("Failed to delete helm source due to [%v]", err)
-		}
-	})
 
 	err = kubeWaitUntilHelmRepositoryIsReady(t, "podinfo", ns1)
 	if err != nil {
@@ -934,15 +917,9 @@ func TestKindClusterRBAC_CreateRelease(t *testing.T) {
 	}
 
 	ns2 := "test-ns2-" + randSeq(4)
-	if err := kubeCreateNamespace(t, ns2); err != nil {
+	if err := kubeCreateNamespaceAndCleanup(t, ns2); err != nil {
 		t.Fatal(err)
 	}
-	t.Cleanup(func() {
-		if err := kubeDeleteNamespace(t, ns2); err != nil {
-			t.Logf("Failed to delete namespace [%s] due to [%v]", ns2, err)
-		}
-	})
-
 	out := kubectlCanI(t, loserAcctName, "default", "get", "helmcharts", ns2)
 	if out != "no" {
 		t.Errorf("Expected [no], got [%s]", out)
@@ -1052,15 +1029,9 @@ func TestKindClusterRBAC_UpdateRelease(t *testing.T) {
 	}
 
 	ns1 := "test-ns1-" + randSeq(4)
-	if err := kubeCreateNamespace(t, ns1); err != nil {
+	if err := kubeCreateNamespaceAndCleanup(t, ns1); err != nil {
 		t.Fatal(err)
 	}
-	t.Cleanup(func() {
-		if err := kubeDeleteNamespace(t, ns1); err != nil {
-			t.Logf("Failed to delete namespace [%s] due to [%v]", ns1, err)
-		}
-	})
-
 	tc := integrationTestCreatePackageSpec{
 		testName: "test chart RBAC",
 		repoUrl:  podinfo_repo_url,
@@ -1188,15 +1159,9 @@ func TestKindClusterRBAC_DeleteRelease(t *testing.T) {
 	}
 
 	ns1 := "test-ns1-" + randSeq(4)
-	if err := kubeCreateNamespace(t, ns1); err != nil {
+	if err := kubeCreateNamespaceAndCleanup(t, ns1); err != nil {
 		t.Fatal(err)
 	}
-	t.Cleanup(func() {
-		if err := kubeDeleteNamespace(t, ns1); err != nil {
-			t.Logf("Failed to delete namespace [%s] due to [%v]", ns1, err)
-		}
-	})
-
 	tc := integrationTestCreatePackageSpec{
 		testName: "test chart RBAC",
 		repoUrl:  podinfo_repo_url,
@@ -1279,16 +1244,10 @@ func TestKindClusterRBAC_DeleteRelease(t *testing.T) {
 func createAndWaitForHelmRelease(t *testing.T, tc integrationTestCreatePackageSpec, fluxPluginClient fluxplugin.FluxV2PackagesServiceClient, grpcContext context.Context) *corev1.InstalledPackageReference {
 	availablePackageRef := tc.request.AvailablePackageRef
 	idParts := strings.Split(availablePackageRef.Identifier, "/")
-	err := kubeAddHelmRepository(t, idParts[0], tc.repoUrl, availablePackageRef.Context.Namespace, "", tc.repoInterval)
+	err := kubeAddHelmRepositoryAndCleanup(t, idParts[0], tc.repoUrl, availablePackageRef.Context.Namespace, "", tc.repoInterval)
 	if err != nil {
 		t.Fatalf("%+v", err)
 	}
-	t.Cleanup(func() {
-		err = kubeDeleteHelmRepository(t, idParts[0], availablePackageRef.Context.Namespace)
-		if err != nil {
-			t.Logf("Failed to delete helm source due to [%v]", err)
-		}
-	})
 
 	// need to wait until repo is indexed by flux plugin
 	const maxWait = 25
@@ -1316,14 +1275,9 @@ func createAndWaitForHelmRelease(t *testing.T, tc integrationTestCreatePackageSp
 
 		if !tc.noPreCreateNs {
 			// per https://github.com/vmware-tanzu/kubeapps/pull/3640#issuecomment-950383123
-			if err := kubeCreateNamespace(t, tc.request.TargetContext.Namespace); err != nil {
+			if err := kubeCreateNamespaceAndCleanup(t, tc.request.TargetContext.Namespace); err != nil {
 				t.Fatal(err)
 			}
-			t.Cleanup(func() {
-				if err = kubeDeleteNamespace(t, tc.request.TargetContext.Namespace); err != nil {
-					t.Logf("Failed to delete namespace [%s] due to [%v]", tc.request.TargetContext.Namespace, err)
-				}
-			})
 		}
 	}
 
