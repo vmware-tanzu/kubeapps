@@ -218,6 +218,37 @@ func kubeAddHelmRepository(t *testing.T, name, url, namespace, secretName string
 	}
 }
 
+func kubeAddHelmRepositoryAndCleanup(t *testing.T, name, url, namespace, secretName string, interval time.Duration) error {
+	t.Logf("+kubeAddHelmRepositoryAndCleanup(%s,%s)", name, namespace)
+	err := kubeAddHelmRepository(t, name, url, namespace, secretName, interval)
+	if err == nil {
+		t.Cleanup(func() {
+			err := kubeDeleteHelmRepository(t, name, namespace)
+			if err != nil {
+				t.Logf("Failed to delete helm repository [%s] due to [%v]", name, err)
+			}
+		})
+	}
+	return err
+}
+
+func kubeGetHelmRepository(t *testing.T, name, namespace string) (*sourcev1.HelmRepository, error) {
+	t.Logf("+kubeGetHelmRepository(%s,%s)", name, namespace)
+
+	ctx, cancel := context.WithTimeout(context.Background(), defaultContextTimeout)
+	defer cancel()
+	if ifc, err := kubeGetCtrlClient(); err != nil {
+		return nil, err
+	} else {
+		var repo sourcev1.HelmRepository
+		key := types.NamespacedName{Namespace: namespace, Name: name}
+		if err := ifc.Get(ctx, key, &repo); err != nil {
+			return nil, err
+		}
+		return &repo, nil
+	}
+}
+
 func kubeWaitUntilHelmRepositoryIsReady(t *testing.T, name, namespace string) error {
 	t.Logf("+kubeWaitUntilHelmRepositoryIsReady(%s,%s)", name, namespace)
 	defer func() {
@@ -605,7 +636,7 @@ func kubeDeleteServiceAccountWithRoleBindings(t *testing.T, name, namespace stri
 	return nil
 }
 
-func kubeCreateNamespace(t *testing.T, namespace string) error {
+func kubeCreateNamespaceAndCleanup(t *testing.T, namespace string) error {
 	t.Logf("+kubeCreateNamespace(%s)", namespace)
 	typedClient, err := kubeGetTypedClient()
 	if err != nil {
@@ -613,14 +644,20 @@ func kubeCreateNamespace(t *testing.T, namespace string) error {
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), defaultContextTimeout)
 	defer cancel()
-	_, err = typedClient.CoreV1().Namespaces().Create(
+	if _, err = typedClient.CoreV1().Namespaces().Create(
 		ctx,
 		&apiv1.Namespace{
 			ObjectMeta: metav1.ObjectMeta{
 				Name: namespace,
 			},
 		},
-		metav1.CreateOptions{})
+		metav1.CreateOptions{}); err == nil {
+		t.Cleanup(func() {
+			if err := kubeDeleteNamespace(t, namespace); err != nil {
+				t.Logf("Failed to delete namespace [%s] due to [%v]", namespace, err)
+			}
+		})
+	}
 	return err
 }
 
@@ -639,31 +676,21 @@ func kubeDeleteNamespace(t *testing.T, namespace string) error {
 	return err
 }
 
-func kubeGetSecret(t *testing.T, namespace, name, dataKey string) (string, error) {
-	t.Logf("+kubeGetSecret(%s, %s, %s)", namespace, name, dataKey)
-	typedClient, err := kubeGetTypedClient()
-	if err != nil {
-		return "", err
-	}
-	ctx, cancel := context.WithTimeout(context.Background(), defaultContextTimeout)
-	defer cancel()
-	secret, err := typedClient.CoreV1().Secrets(namespace).Get(
-		ctx,
-		name,
-		metav1.GetOptions{})
-	if err != nil {
-		return "", err
-	} else {
+func kubeGetSecretToken(t *testing.T, namespace, name, dataKey string) (string, error) {
+	t.Logf("+kubeGetSecretToken(%s, %s, %s)", namespace, name, dataKey)
+	if secret, err := kubeGetSecret(t, namespace, name); err == nil && secret != nil {
 		token := secret.Data[dataKey]
 		if token == nil {
 			return "", errors.New("No data found")
 		}
 		return string(token), nil
+	} else {
+		return "", err
 	}
 }
 
 func kubeCreateSecret(t *testing.T, secret *apiv1.Secret) error {
-	t.Logf("+kubeCreateSecret(%s, %s", secret.Namespace, secret.Name)
+	t.Logf("+kubeCreateSecret(%s, %s)", secret.Namespace, secret.Name)
 	typedClient, err := kubeGetTypedClient()
 	if err != nil {
 		return err
@@ -675,6 +702,21 @@ func kubeCreateSecret(t *testing.T, secret *apiv1.Secret) error {
 		secret,
 		metav1.CreateOptions{})
 	return err
+}
+
+func kubeCreateSecretAndCleanup(t *testing.T, secret *apiv1.Secret) error {
+	t.Logf("+kubeCreateSecretAndCleanup(%s, %s)", secret.Namespace, secret.Name)
+	err := kubeCreateSecret(t, secret)
+	if err != nil {
+		return err
+	}
+	t.Cleanup(func() {
+		err := kubeDeleteSecret(t, "default", secret.Name)
+		if err != nil {
+			t.Logf("Failed to delete secret [%s] due to [%v]", secret.Name, err)
+		}
+	})
+	return nil
 }
 
 func kubeDeleteSecret(t *testing.T, namespace, name string) error {
@@ -691,16 +733,29 @@ func kubeDeleteSecret(t *testing.T, namespace, name string) error {
 		metav1.DeleteOptions{})
 }
 
-func kubeExistsSecret(t *testing.T, namespace, name string) (bool, error) {
-	t.Logf("+kubeExistsSecret(%s, %s)", namespace, name)
+func kubeGetSecret(t *testing.T, namespace, name string) (*apiv1.Secret, error) {
+	t.Logf("+kubeGetSecret(%s, %s)", namespace, name)
 	typedClient, err := kubeGetTypedClient()
 	if err != nil {
-		return false, err
+		return nil, err
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), defaultContextTimeout)
 	defer cancel()
-	_, err = typedClient.CoreV1().Secrets(namespace).Get(ctx, name, metav1.GetOptions{})
-	return err == nil, nil
+	secret, err := typedClient.CoreV1().Secrets(namespace).Get(
+		ctx,
+		name,
+		metav1.GetOptions{})
+	if err != nil {
+		return nil, err
+	} else {
+		return secret, nil
+	}
+}
+
+func kubeExistsSecret(t *testing.T, namespace, name string) (bool, error) {
+	t.Logf("+kubeExistsSecret(%s, %s)", namespace, name)
+	secret, err := kubeGetSecret(t, namespace, name)
+	return err == nil && secret != nil, nil
 }
 
 func kubePortForwardToRedis(t *testing.T) error {
@@ -953,7 +1008,7 @@ func newRedisClientForIntegrationTest(t *testing.T) (*redis.Client, error) {
 	if err := kubePortForwardToRedis(t); err != nil {
 		return nil, fmt.Errorf("kubePortForwardToRedis failed due to %+v", err)
 	}
-	redisPwd, err := kubeGetSecret(t, "kubeapps", "kubeapps-redis", "redis-password")
+	redisPwd, err := kubeGetSecretToken(t, "kubeapps", "kubeapps-redis", "redis-password")
 	if err != nil {
 		return nil, fmt.Errorf("%v", err)
 	}

@@ -1504,14 +1504,14 @@ func TestGetPackageRepositoryDetail(t *testing.T) {
 			userManagedSecrets: true,
 		},
 		{
-			name:               "it returns package repository detail with TLS cert aurthority (kubeapps managed secrets)",
+			name:               "it returns package repository detail with TLS cert authority (kubeapps managed secrets)",
 			repoIndex:          testYaml("valid-index.yaml"),
 			repoName:           "repo-1",
 			repoNamespace:      "namespace-1",
 			repoSecret:         newTlsSecret("secret-1", "namespace-1", nil, nil, ca),
 			request:            get_repo_detail_req_1,
 			expectedStatusCode: codes.OK,
-			expectedResponse:   get_repo_detail_resp_6a(ca),
+			expectedResponse:   get_repo_detail_resp_6a,
 		},
 		{
 			name:               "get package repository with pending status",
@@ -1552,7 +1552,7 @@ func TestGetPackageRepositoryDetail(t *testing.T) {
 			repoSecret:         newTlsSecret("secret-1", "namespace-1", pub, priv, nil),
 			request:            get_repo_detail_req_1,
 			expectedStatusCode: codes.OK,
-			expectedResponse:   get_repo_detail_resp_9a(pub, priv),
+			expectedResponse:   get_repo_detail_resp_9a,
 		},
 		{
 			name:               "it returns package repository detail with basic authentication",
@@ -1873,7 +1873,7 @@ func TestUpdatePackageRepository(t *testing.T) {
 			request:            update_repo_req_8(pub, priv),
 			expectedStatusCode: codes.OK,
 			expectedResponse:   update_repo_resp_1,
-			expectedDetail:     update_repo_detail_8(pub, priv),
+			expectedDetail:     update_repo_detail_8,
 		},
 		{
 			name:               "update repository unset TLS cert/key (kubeapps-managed secrets)",
@@ -1905,6 +1905,17 @@ func TestUpdatePackageRepository(t *testing.T) {
 			request:            update_repo_req_1,
 			expectedStatusCode: codes.Internal,
 			pending:            true,
+		},
+		{
+			name:               "updates url for repo preserve secret in kubeapps managed env",
+			repoIndex:          testYaml("valid-index.yaml"),
+			repoName:           "repo-1",
+			repoNamespace:      "namespace-1",
+			oldRepoSecret:      newBasicAuthSecret("secret-1", "namespace-1", "foo", "bar"),
+			request:            update_repo_req_16,
+			expectedStatusCode: codes.OK,
+			expectedResponse:   update_repo_resp_1,
+			expectedDetail:     update_repo_detail_15,
 		},
 	}
 
