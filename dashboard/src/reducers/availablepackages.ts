@@ -12,6 +12,7 @@ import { NamespaceAction } from "../actions/namespace";
 export const initialState: IPackageState = {
   isFetching: false,
   hasFinishedFetching: false,
+  nextPageToken: "",
   items: [],
   categories: [],
   selected: {
@@ -67,13 +68,17 @@ const packageReducer = (
     case getType(actions.availablepackages.requestSelectedAvailablePackageVersions):
       return { ...state, isFetching: true };
     case getType(actions.availablepackages.receiveAvailablePackageSummaries): {
-      const isLastPage =
-        action.payload.page >= parseInt(action.payload.response.nextPageToken) ||
-        action.payload.response.nextPageToken === "";
+      // Note that the same condition identifies *before* we've fetched
+      // the first page and *after* we've fetched the last page. In both
+      // cases, the nextPageToken is empty. Since we have just fetched a
+      // page, only one option is possible.
+      const isLastPage = action.payload.response.nextPageToken === "";
       return {
         ...state,
         isFetching: false,
+        // TODO(minelson): Can we remove hasFinishedFetching ?
         hasFinishedFetching: isLastPage,
+        nextPageToken: action.payload.response.nextPageToken,
         categories: action.payload.response.categories,
         items: uniqBy(
           [...state.items, ...action.payload.response.availablePackageSummaries],
@@ -104,6 +109,7 @@ const packageReducer = (
         ...state,
         hasFinishedFetching: false,
         items: [],
+        nextPageToken: "",
       };
     case getType(actions.availablepackages.createErrorPackage):
       return {

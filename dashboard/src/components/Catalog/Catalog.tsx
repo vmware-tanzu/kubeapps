@@ -79,6 +79,7 @@ export default function Catalog() {
   const {
     packages: {
       hasFinishedFetching,
+      nextPageToken,
       selected: { error },
       items: availablePackageSummaries,
       categories,
@@ -94,7 +95,10 @@ export default function Catalog() {
   const dispatch = useDispatch();
 
   const [filters, setFilters] = React.useState(initialFilterState());
-  const [page, setPage] = React.useState(0);
+  // pageNum is only used to avoid flicker in the CatalogItems.
+  // It is no longer used for pagination which is handled by the server's
+  // opaque nextPageToken etc.
+  const [pageNum, setPageNum] = React.useState(0);
   const [hasRequestedFirstPage, setHasRequestedFirstPage] = React.useState(false);
   const [hasLoadedFirstPage, setHasLoadedFirstPage] = React.useState(false);
 
@@ -122,12 +126,12 @@ export default function Catalog() {
         cluster,
         namespace,
         reposFilter,
-        page,
+        nextPageToken,
         size,
         searchFilter,
       ),
     );
-  }, [dispatch, page, size, cluster, namespace, reposFilter, searchFilter]);
+  }, [dispatch, nextPageToken, size, cluster, namespace, reposFilter, searchFilter]);
 
   // hasLoadedFirstPage is used to not bump the current page until the first page is fully
   // requested first
@@ -195,7 +199,7 @@ export default function Catalog() {
 
   // detect changes in cluster/ns/repos/search and reset the current package list
   useEffect(() => {
-    setPage(0);
+    setPageNum(0);
     dispatch(actions.availablepackages.resetAvailablePackageSummaries());
     dispatch(actions.availablepackages.resetSelectedAvailablePackageDetail());
   }, [dispatch, cluster, namespace, reposFilter, searchFilter]);
@@ -250,7 +254,7 @@ export default function Catalog() {
     .filter(
       c =>
         filters[filterNames.CATEGORY].length === 0 ||
-        intersection(filters[filterNames.CATEGORY], getOperatorCategories(c)).length,
+        intersection(filters[filterNames.CATEGORY], getOperatorCategories(c)).length > 0,
     );
 
   // Required to have the latest value of page
@@ -267,7 +271,7 @@ export default function Catalog() {
         cluster,
         namespace,
         reposFilter,
-        page,
+        nextPageToken,
         size,
         searchFilter,
       ),
@@ -275,7 +279,7 @@ export default function Catalog() {
   };
 
   const increaseRequestedPage = () => {
-    setPage(page + 1);
+    setPageNum(pageNum + 1);
   };
 
   const observeBorder = (node: any) => {
@@ -457,7 +461,7 @@ export default function Catalog() {
                       csvs={filteredCSVs}
                       cluster={cluster}
                       namespace={namespace}
-                      page={page}
+                      isFirstPage={pageNum === 1}
                       hasLoadedFirstPage={hasLoadedFirstPage}
                       hasFinishedFetching={hasFinishedFetching}
                     />

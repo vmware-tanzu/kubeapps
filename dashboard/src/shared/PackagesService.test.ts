@@ -16,7 +16,7 @@ import PackagesService from "./PackagesService";
 
 const cluster = "cluster-name";
 const namespace = "namespace-name";
-const defaultPage = 1;
+const defaultPageToken = "defaultPageToken";
 const defaultSize = 0;
 describe("App", () => {
   beforeEach(() => {
@@ -39,7 +39,7 @@ describe("App", () => {
           cluster: cluster,
           namespace: namespace,
           repos: "",
-          page: defaultPage,
+          nextPageToken: defaultPageToken,
           size: defaultSize,
           query: "",
         },
@@ -49,7 +49,7 @@ describe("App", () => {
             query: "",
             repositories: [],
           },
-          paginationOptions: { pageToken: defaultPage.toString(), pageSize: defaultSize },
+          paginationOptions: { pageToken: defaultPageToken, pageSize: defaultSize },
         },
       },
       {
@@ -58,7 +58,7 @@ describe("App", () => {
           cluster: cluster,
           namespace: namespace,
           repos: "",
-          page: defaultPage,
+          nextPageToken: defaultPageToken,
           size: defaultSize,
           query: "cms",
         },
@@ -68,7 +68,7 @@ describe("App", () => {
             query: "cms",
             repositories: [],
           },
-          paginationOptions: { pageToken: defaultPage.toString(), pageSize: defaultSize },
+          paginationOptions: { pageToken: defaultPageToken, pageSize: defaultSize },
         },
       },
       {
@@ -77,7 +77,7 @@ describe("App", () => {
           cluster: cluster,
           namespace: namespace,
           repos: "repo1,repo2",
-          page: defaultPage,
+          nextPageToken: defaultPageToken,
           size: defaultSize,
           query: "",
         },
@@ -87,7 +87,7 @@ describe("App", () => {
             query: "",
             repositories: ["repo1", "repo2"],
           },
-          paginationOptions: { pageToken: defaultPage.toString(), pageSize: defaultSize },
+          paginationOptions: { pageToken: defaultPageToken, pageSize: defaultSize },
         },
       },
       {
@@ -96,7 +96,7 @@ describe("App", () => {
           cluster: cluster,
           namespace: namespace,
           repos: "repo1,repo2",
-          page: defaultPage,
+          nextPageToken: defaultPageToken,
           size: defaultSize,
           query: "cms",
         },
@@ -106,7 +106,7 @@ describe("App", () => {
             query: "cms",
             repositories: ["repo1", "repo2"],
           },
-          paginationOptions: { pageToken: defaultPage.toString(), pageSize: defaultSize },
+          paginationOptions: { pageToken: defaultPageToken, pageSize: defaultSize },
         },
       },
     ].forEach(t => {
@@ -128,7 +128,7 @@ describe("App", () => {
           t.args.cluster,
           t.args.namespace,
           t.args.repos,
-          t.args.page,
+          t.args.nextPageToken,
           t.args.size,
           t.args.query,
         );
