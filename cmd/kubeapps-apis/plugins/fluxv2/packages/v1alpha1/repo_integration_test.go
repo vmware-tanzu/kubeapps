@@ -15,6 +15,7 @@ import (
 	corev1 "github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
 	plugins "github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/core/plugins/v1alpha1"
 	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/plugins/fluxv2/packages/v1alpha1"
+	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/fluxv2/packages/v1alpha1/common"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	apiv1 "k8s.io/api/core/v1"
@@ -918,7 +919,9 @@ func TestKindClusterUpdatePackageRepository(t *testing.T) {
 				}
 			}
 			if actualDetail.Detail.Status.Reason != corev1.PackageRepositoryStatus_STATUS_REASON_SUCCESS {
-				t.Fatalf("Timed out waiting for repository [%q] reconcile successfully after the update", tc.repoName)
+				repo, _ := kubeGetHelmRepository(t, tc.repoName, repoNamespace)
+				t.Fatalf("Timed out waiting for repository [%q] reconcile successfully after the update:\n%s",
+					tc.repoName, common.PrettyPrint(repo))
 			}
 
 			opts1 := cmpopts.IgnoreUnexported(
@@ -1132,6 +1135,229 @@ func TestKindClusterDeletePackageRepository(t *testing.T) {
 						time.Sleep(1 * time.Second)
 					}
 				}
+			}
+		})
+	}
+}
+
+func TestKindClusterUpdatePackageRepoSecretUnchanged(t *testing.T) {
+	_, fluxPluginReposClient, err := checkEnv(t)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	testCases := []struct {
+		name               string
+		request            *corev1.UpdatePackageRepositoryRequest
+		repoName           string
+		repoUrl            string
+		expectedResponse   *corev1.UpdatePackageRepositoryResponse
+		expectedDetail     *corev1.GetPackageRepositoryDetailResponse
+		expectedStatusCode codes.Code
+		oldSecret          *apiv1.Secret
+	}{
+		{
+			name:               "updates url for repo preserve secret in kubeapps managed env",
+			request:            update_repo_req_17,
+			repoName:           "my-podinfo-6",
+			repoUrl:            podinfo_basic_auth_repo_url,
+			oldSecret:          newBasicAuthSecret("secret-1", "TBD", "foo", "bar"),
+			expectedStatusCode: codes.OK,
+			expectedResponse:   update_repo_resp_6,
+			expectedDetail:     update_repo_detail_16,
+		},
+	}
+
+	adminAcctName := "test-update-repo-admin-" + randSeq(4)
+	grpcAdmin, err := newGrpcAdminContext(t, adminAcctName, "default")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			repoNamespace := "test-" + randSeq(4)
+
+			if err := kubeCreateNamespace(t, repoNamespace); err != nil {
+				t.Fatal(err)
+			}
+			t.Cleanup(func() {
+				if err := kubeDeleteNamespace(t, repoNamespace); err != nil {
+					t.Logf("Failed to delete namespace [%s] due to [%v]", repoNamespace, err)
+				}
+			})
+
+			oldSecretName := ""
+			if tc.oldSecret != nil {
+				tc.oldSecret.Namespace = repoNamespace
+				if err := kubeCreateSecret(t, tc.oldSecret); err != nil {
+					t.Fatalf("%v", err)
+				}
+				oldSecretName = tc.oldSecret.GetName()
+			}
+
+			if err = kubeAddHelmRepository(t, tc.repoName, tc.repoUrl, repoNamespace, oldSecretName, 0); err != nil {
+				t.Fatal(err)
+			}
+			t.Cleanup(func() {
+				if err = kubeDeleteHelmRepository(t, tc.repoName, repoNamespace); err != nil {
+					t.Logf("Failed to delete helm source due to [%v]", err)
+				}
+			})
+			// wait until this repo reaches 'Ready' state so that long indexation process kicks in
+			err := kubeWaitUntilHelmRepositoryIsReady(t, tc.repoName, repoNamespace)
+			if err != nil {
+				t.Fatalf("%v", err)
+			}
+
+			grpcCtx, cancel := context.WithTimeout(grpcAdmin, defaultContextTimeout)
+			defer cancel()
+
+			oldValue, err := fluxPluginReposClient.SetUserManagedSecrets(
+				grpcCtx, &v1alpha1.SetUserManagedSecretsRequest{Value: false})
+			if err != nil {
+				t.Fatal(err)
+			}
+			t.Cleanup(func() {
+				fluxPluginReposClient.SetUserManagedSecrets(
+					grpcCtx, &v1alpha1.SetUserManagedSecretsRequest{Value: oldValue.Value})
+			})
+
+			tc.request.PackageRepoRef.Context.Namespace = repoNamespace
+			if tc.expectedResponse != nil {
+				tc.expectedResponse.PackageRepoRef.Context.Namespace = repoNamespace
+			}
+			if tc.expectedDetail != nil {
+				tc.expectedDetail.Detail.PackageRepoRef.Context.Namespace = repoNamespace
+			}
+
+			repoBeforeUpdate, err := kubeGetHelmRepository(t, tc.repoName, repoNamespace)
+			if err != nil {
+				t.Fatal(err)
+			}
+			repoVersionBeforeUpdate := repoBeforeUpdate.ResourceVersion
+			secretNameBeforeUpdate := repoBeforeUpdate.Spec.SecretRef.Name
+			secretBeforeUpdate, err := kubeGetSecret(t, repoNamespace, secretNameBeforeUpdate)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if secretBeforeUpdate.Type != apiv1.SecretTypeOpaque {
+				t.Fatalf("Unexpected secret type: %s", secretBeforeUpdate.Type)
+			}
+			secretVersionBeforeUpdate := secretBeforeUpdate.ResourceVersion
+
+			// every once in a while (very infrequently) I get
+			// rpc error: code = Internal desc = unable to update the HelmRepository
+			// 'test-nsrp/my-podinfo-2' due to 'Operation cannot be fulfilled on
+			// helmrepositories.source.toolkit.fluxcd.io "my-podinfo-2": the object has been modified;
+			// please apply your changes to the latest version and try again
+			// the loop below takes care of this scenario
+			var i, maxRetries = 0, 5
+			var resp *corev1.UpdatePackageRepositoryResponse
+			for ; i < maxRetries; i++ {
+				resp, err = fluxPluginReposClient.UpdatePackageRepository(grpcCtx, tc.request)
+				if err != nil && strings.Contains(err.Error(), " the object has been modified; please apply your changes to the latest version and try again") {
+					waitTime := int64(math.Pow(2, float64(i)))
+					t.Logf("Retrying update in [%d] sec due to %s...", waitTime, err.Error())
+					time.Sleep(time.Duration(waitTime) * time.Second)
+				} else {
+					break
+				}
+			}
+			if i == maxRetries {
+				t.Fatalf("Update retries exhaused for repository [%s], last error: [%v]", tc.repoName, err)
+			}
+			if got, want := status.Code(err), tc.expectedStatusCode; got != want {
+				t.Fatalf("got: %v, want: %v", err, want)
+			}
+			if tc.expectedStatusCode != codes.OK {
+				// we are done
+				return
+			}
+
+			repoAfterUpdate, err := kubeGetHelmRepository(t, tc.repoName, repoNamespace)
+			if err != nil {
+				t.Fatal(err)
+			}
+			repoVersionAfterUpdate := repoAfterUpdate.ResourceVersion
+			if repoVersionBeforeUpdate == repoVersionAfterUpdate {
+				t.Fatalf("Expected repo version be different update")
+			}
+			secretNameAfterUpdate := repoAfterUpdate.Spec.SecretRef.Name
+			if secretNameAfterUpdate != secretNameBeforeUpdate {
+				t.Fatalf("Expected secret to be the same after update")
+			}
+			secretAfterUpdate, err := kubeGetSecret(t, repoNamespace, oldSecretName)
+			if err != nil {
+				t.Fatal(err)
+			}
+			secretVersionAfterUpdate := secretAfterUpdate.ResourceVersion
+			if secretVersionAfterUpdate != secretVersionBeforeUpdate {
+				t.Fatalf("Expected secret version to be the same after update")
+			}
+
+			opts := cmpopts.IgnoreUnexported(
+				corev1.Context{},
+				corev1.PackageRepositoryReference{},
+				plugins.Plugin{},
+				corev1.UpdatePackageRepositoryResponse{},
+			)
+
+			if got, want := resp, tc.expectedResponse; !cmp.Equal(want, got, opts) {
+				t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opts, opts))
+			}
+
+			var actualDetail *corev1.GetPackageRepositoryDetailResponse
+			for i := 0; i < 10; i++ {
+				actualDetail, err = fluxPluginReposClient.GetPackageRepositoryDetail(
+					grpcCtx,
+					&corev1.GetPackageRepositoryDetailRequest{
+						PackageRepoRef: &corev1.PackageRepositoryReference{
+							Context: &corev1.Context{
+								Namespace: repoNamespace,
+							},
+							Identifier: tc.repoName,
+						},
+					})
+				if got, want := status.Code(err), codes.OK; got != want {
+					t.Fatalf("got: %v, want: %v", err, want)
+				}
+				if actualDetail.Detail.Status.Reason == corev1.PackageRepositoryStatus_STATUS_REASON_SUCCESS {
+					break
+				} else {
+					t.Logf("Waiting 2s for repository reconciliation to complete successfully...")
+					time.Sleep(2 * time.Second)
+				}
+			}
+			if actualDetail.Detail.Status.Reason != corev1.PackageRepositoryStatus_STATUS_REASON_SUCCESS {
+				repo, _ := kubeGetHelmRepository(t, tc.repoName, repoNamespace)
+				t.Fatalf("Timed out waiting for repository [%q] reconcile successfully after the update:\n%s",
+					tc.repoName, common.PrettyPrint(repo))
+			}
+
+			opts1 := cmpopts.IgnoreUnexported(
+				corev1.Context{},
+				corev1.PackageRepositoryReference{},
+				plugins.Plugin{},
+				corev1.GetPackageRepositoryDetailResponse{},
+				corev1.PackageRepositoryDetail{},
+				corev1.PackageRepositoryStatus{},
+				corev1.PackageRepositoryAuth{},
+				corev1.PackageRepositoryTlsConfig{},
+				corev1.SecretKeyReference{},
+				corev1.UsernamePassword{},
+			)
+
+			opts2 := cmpopts.IgnoreFields(corev1.PackageRepositoryStatus{}, "UserReason")
+
+			if got, want := actualDetail, tc.expectedDetail; !cmp.Equal(want, got, opts1, opts2) {
+				t.Fatalf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opts, opts1, opts2))
+			}
+
+			if !strings.HasPrefix(actualDetail.GetDetail().Status.UserReason, tc.expectedDetail.Detail.Status.UserReason) {
+				t.Errorf("unexpected response (status.UserReason): (-want +got):\n- %s\n+ %s",
+					tc.expectedDetail.Detail.Status.UserReason,
+					actualDetail.GetDetail().Status.UserReason)
 			}
 		})
 	}

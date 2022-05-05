@@ -249,8 +249,8 @@ func setSecretOwnerRef(repoName string, secret *apiv1.Secret) *apiv1.Secret {
 	tRue := true
 	secret.OwnerReferences = []metav1.OwnerReference{
 		{
-			APIVersion:         "source.toolkit.fluxcd.io/v1beta2",
-			Kind:               "HelmRepository",
+			APIVersion:         sourcev1.GroupVersion.String(),
+			Kind:               sourcev1.HelmRepositoryKind,
 			Name:               repoName,
 			Controller:         &tRue,
 			BlockOwnerDeletion: &tRue,

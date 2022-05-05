@@ -2179,26 +2179,24 @@ var (
 		},
 	}
 
-	get_repo_detail_resp_6a = func(ca []byte) *corev1.GetPackageRepositoryDetailResponse {
-		return &corev1.GetPackageRepositoryDetailResponse{
-			Detail: &corev1.PackageRepositoryDetail{
-				PackageRepoRef:  get_repo_detail_package_resp_ref,
-				Name:            "repo-1",
-				Description:     "",
-				NamespaceScoped: false,
-				Type:            "helm",
-				Url:             "https://example.repo.com/charts",
-				Interval:        60,
-				Auth:            &corev1.PackageRepositoryAuth{PassCredentials: false},
-				TlsConfig: &corev1.PackageRepositoryTlsConfig{
-					InsecureSkipVerify: false,
-					PackageRepoTlsConfigOneOf: &corev1.PackageRepositoryTlsConfig_CertAuthority{
-						CertAuthority: string(ca),
-					},
+	get_repo_detail_resp_6a = &corev1.GetPackageRepositoryDetailResponse{
+		Detail: &corev1.PackageRepositoryDetail{
+			PackageRepoRef:  get_repo_detail_package_resp_ref,
+			Name:            "repo-1",
+			Description:     "",
+			NamespaceScoped: false,
+			Type:            "helm",
+			Url:             "https://example.repo.com/charts",
+			Interval:        60,
+			Auth:            &corev1.PackageRepositoryAuth{PassCredentials: false},
+			TlsConfig: &corev1.PackageRepositoryTlsConfig{
+				InsecureSkipVerify: false,
+				PackageRepoTlsConfigOneOf: &corev1.PackageRepositoryTlsConfig_CertAuthority{
+					CertAuthority: redactedString,
 				},
-				Status: podinfo_repo_status_2,
 			},
-		}
+			Status: podinfo_repo_status_2,
+		},
 	}
 
 	get_repo_detail_resp_7 = &corev1.GetPackageRepositoryDetailResponse{
@@ -2259,20 +2257,18 @@ var (
 		},
 	}
 
-	get_repo_detail_resp_9a = func(pub, priv []byte) *corev1.GetPackageRepositoryDetailResponse {
-		return &corev1.GetPackageRepositoryDetailResponse{
-			Detail: &corev1.PackageRepositoryDetail{
-				PackageRepoRef:  get_repo_detail_package_resp_ref,
-				Name:            "repo-1",
-				Description:     "",
-				NamespaceScoped: false,
-				Type:            "helm",
-				Url:             "https://example.repo.com/charts",
-				Interval:        60,
-				Auth:            tls_auth(pub, priv),
-				Status:          podinfo_repo_status_2,
-			},
-		}
+	get_repo_detail_resp_9a = &corev1.GetPackageRepositoryDetailResponse{
+		Detail: &corev1.PackageRepositoryDetail{
+			PackageRepoRef:  get_repo_detail_package_resp_ref,
+			Name:            "repo-1",
+			Description:     "",
+			NamespaceScoped: false,
+			Type:            "helm",
+			Url:             "https://example.repo.com/charts",
+			Interval:        60,
+			Auth:            tls_auth_redacted,
+			Status:          podinfo_repo_status_2,
+		},
 	}
 
 	get_repo_detail_req_6 = &corev1.GetPackageRepositoryDetailRequest{
@@ -2302,7 +2298,7 @@ var (
 			Type:            "helm",
 			Url:             "https://example.repo.com/charts",
 			Interval:        60,
-			Auth:            foo_bar_auth,
+			Auth:            foo_bar_auth_redacted,
 			Status:          podinfo_repo_status_2,
 		},
 	}
@@ -2384,7 +2380,7 @@ var (
 			Type:            "helm",
 			Url:             podinfo_basic_auth_repo_url,
 			Interval:        600,
-			Auth:            foo_bar_auth,
+			Auth:            foo_bar_auth_redacted,
 			Status:          podinfo_repo_status_1,
 		},
 	}
@@ -2631,6 +2627,18 @@ var (
 		Auth:           foo_bar_auth,
 	}
 
+	update_repo_req_16 = &corev1.UpdatePackageRepositoryRequest{
+		PackageRepoRef: repoRefInReq("repo-1", "namespace-1"),
+		Url:            "http://newurl.com",
+		Auth:           foo_bar_auth_redacted,
+	}
+
+	update_repo_req_17 = &corev1.UpdatePackageRepositoryRequest{
+		PackageRepoRef: repoRefInReq("my-podinfo-6", "TBD"),
+		Url:            podinfo_basic_auth_repo_url,
+		Auth:           foo_bar_auth_redacted,
+	}
+
 	update_repo_resp_1 = &corev1.UpdatePackageRepositoryResponse{
 		PackageRepoRef: repoRef("repo-1", "namespace-1"),
 	}
@@ -2649,6 +2657,10 @@ var (
 
 	update_repo_resp_5 = &corev1.UpdatePackageRepositoryResponse{
 		PackageRepoRef: repoRefWithId("my-podinfo-5"),
+	}
+
+	update_repo_resp_6 = &corev1.UpdatePackageRepositoryResponse{
+		PackageRepoRef: repoRefWithId("my-podinfo-6"),
 	}
 
 	update_repo_detail_1 = &corev1.GetPackageRepositoryDetailResponse{
@@ -2757,20 +2769,18 @@ var (
 		},
 	}
 
-	update_repo_detail_8 = func(pub, priv []byte) *corev1.GetPackageRepositoryDetailResponse {
-		return &corev1.GetPackageRepositoryDetailResponse{
-			Detail: &corev1.PackageRepositoryDetail{
-				PackageRepoRef:  get_repo_detail_package_resp_ref,
-				Name:            "repo-1",
-				Description:     "",
-				NamespaceScoped: false,
-				Type:            "helm",
-				Url:             "https://example.repo.com/charts",
-				Interval:        600,
-				Auth:            tls_auth(pub, priv),
-				Status:          repo_status_pending,
-			},
-		}
+	update_repo_detail_8 = &corev1.GetPackageRepositoryDetailResponse{
+		Detail: &corev1.PackageRepositoryDetail{
+			PackageRepoRef:  get_repo_detail_package_resp_ref,
+			Name:            "repo-1",
+			Description:     "",
+			NamespaceScoped: false,
+			Type:            "helm",
+			Url:             "https://example.repo.com/charts",
+			Interval:        600,
+			Auth:            tls_auth_redacted,
+			Status:          repo_status_pending,
+		},
 	}
 
 	update_repo_detail_9 = &corev1.GetPackageRepositoryDetailResponse{
@@ -2796,7 +2806,7 @@ var (
 			Type:            "helm",
 			Url:             "https://example.repo.com/charts",
 			Interval:        600,
-			Auth:            foo_bar_auth,
+			Auth:            foo_bar_auth_redacted,
 			Status:          repo_status_pending,
 		},
 	}
@@ -2810,7 +2820,7 @@ var (
 			Type:            "helm",
 			Url:             podinfo_basic_auth_repo_url,
 			Interval:        600,
-			Auth:            foo_bar_auth,
+			Auth:            foo_bar_auth_redacted,
 			Status:          podinfo_repo_status_1,
 		},
 	}
@@ -2824,7 +2834,7 @@ var (
 			Type:            "helm",
 			Url:             podinfo_basic_auth_repo_url,
 			Interval:        600,
-			Auth:            foo_bar_auth,
+			Auth:            foo_bar_auth_redacted,
 			Status:          podinfo_repo_status_1,
 		},
 	}
@@ -2852,7 +2862,35 @@ var (
 			Type:            "helm",
 			Url:             podinfo_basic_auth_repo_url,
 			Interval:        600,
-			Auth:            foo_bar_auth,
+			Auth:            foo_bar_auth_redacted,
+			Status:          podinfo_repo_status_1,
+		},
+	}
+
+	update_repo_detail_15 = &corev1.GetPackageRepositoryDetailResponse{
+		Detail: &corev1.PackageRepositoryDetail{
+			PackageRepoRef:  get_repo_detail_package_resp_ref,
+			Name:            "repo-1",
+			Description:     "",
+			NamespaceScoped: false,
+			Type:            "helm",
+			Url:             "http://newurl.com",
+			Interval:        600,
+			Auth:            foo_bar_auth_redacted,
+			Status:          repo_status_pending,
+		},
+	}
+
+	update_repo_detail_16 = &corev1.GetPackageRepositoryDetailResponse{
+		Detail: &corev1.PackageRepositoryDetail{
+			PackageRepoRef:  repoRefWithId("my-podinfo-6"),
+			Name:            "my-podinfo-6",
+			Description:     "",
+			NamespaceScoped: false,
+			Type:            "helm",
+			Url:             podinfo_basic_auth_repo_url,
+			Interval:        600,
+			Auth:            foo_bar_auth_redacted,
 			Status:          podinfo_repo_status_1,
 		},
 	}
@@ -2863,6 +2901,16 @@ var (
 			UsernamePassword: &corev1.UsernamePassword{
 				Username: "foo",
 				Password: "bar",
+			},
+		},
+	}
+
+	foo_bar_auth_redacted = &corev1.PackageRepositoryAuth{
+		Type: corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_BASIC_AUTH,
+		PackageRepoAuthOneOf: &corev1.PackageRepositoryAuth_UsernamePassword{
+			UsernamePassword: &corev1.UsernamePassword{
+				Username: redactedString,
+				Password: redactedString,
 			},
 		},
 	}
@@ -2878,6 +2926,8 @@ var (
 			},
 		}
 	}
+
+	tls_auth_redacted = tls_auth([]byte(redactedString), []byte(redactedString))
 
 	secret_1_auth = &corev1.PackageRepositoryAuth{
 		Type: corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_BASIC_AUTH,

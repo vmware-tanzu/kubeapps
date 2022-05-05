@@ -509,10 +509,10 @@ func TestKindClusterDeleteInstalledPackage(t *testing.T) {
 					t.Errorf("expected pod with prefix [%s] not found in namespace [%s], pods found: [%v]",
 						tc.expectedPodPrefix, tc.request.TargetContext.Namespace, pods)
 				} else if i == maxWait {
-					t.Fatalf("Timed out waiting for garbage collection, of [%s], last error: [%v]", pods[0], err)
+					t.Fatalf("Timed out waiting for garbage collection of pod [%s]", pods[0])
 				} else {
-					t.Logf("Waiting 2s for garbage collection of [%s], attempt [%d/%d]...", pods[0], i+1, maxWait)
-					time.Sleep(2 * time.Second)
+					t.Logf("Waiting 3s for garbage collection of pod [%s], attempt [%d/%d]...", pods[0], i+1, maxWait)
+					time.Sleep(3 * time.Second)
 				}
 			}
 		})
