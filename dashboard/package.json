@@ -47,7 +47,7 @@
     "protobufjs": "^6.11.2",
     "qs": "^6.10.3",
     "react": "^17.0.2",
-    "react-ace": "^9.5.0",
+    "react-ace": "^10.1.0",
     "react-compound-slider": "^3.3.1",
     "react-copy-to-clipboard": "^5.0.4",
     "react-diff-viewer": "^3.1.1",
