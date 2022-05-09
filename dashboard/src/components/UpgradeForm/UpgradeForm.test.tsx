@@ -447,7 +447,7 @@ it("triggers an upgrade when submitting the form", async () => {
   const updateInstalledPackage = jest.fn();
   actions.installedpackages.updateInstalledPackage = updateInstalledPackage;
 
-  const appValues = 'initial: "values"\n"foo": "bar"\n';
+  const appValues = 'initial: values\n"foo": "bar"\n';
   const state = {
     ...defaultStore,
     apps: {
@@ -611,7 +611,7 @@ describe("when receiving new props", () => {
       defaultValues: "foo: bar\n",
       deployedValues: "foo: BAR\nmy: var\n",
       newDefaultValues: "foo: bar",
-      result: 'foo: "BAR"\n"my": "var"\n',
+      result: 'foo: BAR\n"my": "var"\n',
     },
     {
       description: "should delete an element in the defaults",
@@ -638,9 +638,9 @@ describe("when receiving new props", () => {
 `,
       result: [
         `foo:`,
-        `  - foo1: `,
+        `  - foo1:`,
         `    bar1: value1`,
-        `  - "foo2": `,
+        `  - "foo2":`,
         `    "bar2": "value2"`,
         ``,
       ].join("\n"),
@@ -663,14 +663,14 @@ describe("when receiving new props", () => {
   - foo2:
     bar2: value2
 `,
-      result: [`foo:`, `  - foo1: `, `    bar1: value1`, ``].join("\n"),
+      result: [`foo:`, `  - foo1:`, `    bar1: value1`, ``].join("\n"),
     },
     {
       description: "set a value with dots and slashes in the key",
       defaultValues: "foo.bar/foobar: ",
       deployedValues: "foo.bar/foobar: value",
       newDefaultValues: "foo.bar/foobar: ",
-      result: 'foo.bar/foobar: "value"\n',
+      result: "foo.bar/foobar: value\n",
     },
   ].forEach(t => {
     it(t.description, () => {
@@ -721,7 +721,7 @@ it("shows, by default, the default values of the deployed package plus any modif
   const defaultValues = "initial: values";
   const deployedValues = "# A comment\nfoo: bar\n";
   const currentValues = "foo: not-bar";
-  const expectedValues = '# A comment\nfoo: "not-bar"\n';
+  const expectedValues = "# A comment\nfoo: not-bar\n";
 
   const state = {
     ...defaultStore,
