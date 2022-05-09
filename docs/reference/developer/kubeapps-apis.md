@@ -123,12 +123,12 @@ func (s packagesServer) GetAvailablePackageDetail(ctx context.Context, request *
 ```
 
 Similar implementations of querying functions like `GetAvailablePackageSummaries` in the same file collect the relevant available package summaries from each packaging plugin
-and return the aggregated results. So our Kubeapps UI (or any UI using the client) can benefit from using the single *core* packages client to query and interact with packages
- from *different* packaging systems, such as Carvel and Flux.
+and return the aggregated results. So our Kubeapps UI (or any UI using the client) can benefit from using the single _core_ packages client to query and interact with packages
+from _different_ packaging systems, such as Carvel and Flux.
 
-It is worth noting that a plugin that satisfies the core packages interface isn't restricted to *only* those methods. Similar to go interfaces, the plugin is free to implement
- other functionality in addition to the interface requirements. The Helm plugin uses this to include additional functionality for rolling back an installed package - something
- which is not necessary for Carvel or Flux. This extra functionality is available on the Helm-specific gRPC client.
+It is worth noting that a plugin that satisfies the core packages interface isn't restricted to _only_ those methods. Similar to go interfaces, the plugin is free to implement
+other functionality in addition to the interface requirements. The Helm plugin uses this to include additional functionality for rolling back an installed package - something
+which is not necessary for Carvel or Flux. This extra functionality is available on the Helm-specific gRPC client.
 
 ### Authentication/Authorization
 

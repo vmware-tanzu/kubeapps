@@ -106,6 +106,7 @@ yarn upgrade
 ```
 
 Note: If there are certain dependencies which cannot be updated currently, `yarn upgrade-interactive` allows selecting just certain items for upgrade.
+
 #### Golang dependencies
 
 Check the outdated [golang dependencies](../../go.mod) by running the following (from [How to upgrade and downgrade dependencies](https://github.com/golang/go/wiki/Modules#how-to-upgrade-and-downgrade-dependencies)):

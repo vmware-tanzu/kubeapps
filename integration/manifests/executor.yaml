@@ -23,7 +23,7 @@ spec:
             - /dev/null
           image: kubeapps/integration-tests-pw:v1.0.1
           name: integration
-          # TODO (castelblanque) Adjust properly the resources. 
+          # TODO (castelblanque) Adjust properly the resources.
           # Current values are not empirically demonstrated.
           resources:
             requests:
