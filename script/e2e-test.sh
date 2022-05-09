@@ -441,7 +441,7 @@ kubectl create role view-secrets -n ${GLOBAL_REPOS_NS} --verb=get,list,watch --r
 kubectl create rolebinding global-repos-secrets-read -n ${GLOBAL_REPOS_NS} --role=view-secrets --serviceaccount kubeapps:kubeapps-edit
 
 ## Give the cluster some time to avoid issues like
-## https://circleci.com/gh/kubeapps/kubeapps/16102
+## https://circleci.com/gh/vmware-tanzu/kubeapps/16102
 retry_while "kubectl get -n kubeapps serviceaccount kubeapps-operator -o name" "5" "1"
 retry_while "kubectl get -n kubeapps serviceaccount kubeapps-view -o name" "5" "1"
 retry_while "kubectl get -n kubeapps serviceaccount kubeapps-edit -o name" "5" "1"
