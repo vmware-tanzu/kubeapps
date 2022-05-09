@@ -76,7 +76,7 @@ echo "Charts deployment key (public)"
 cat circleci-charts-deploymentkey.pub
 
 # COPY THIS CONTENT TO CIRCLECI (hostname: github.com):
-## https://app.circleci.com/settings/project/github/kubeapps/kubeapps/ssh
+## https://app.circleci.com/settings/project/github/vmware-tanzu/kubeapps/ssh
 echo "Kubeapps deployment key (private)"
 cat circleci-kubeapps-deploymentkey
 

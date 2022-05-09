@@ -34,7 +34,7 @@ Note that "pulling" from GitHub is a paid feature that users may don't have. In 
 
 ![image](../img/swaggerhub-merge-api.png)
 
-> Kubeapps maintainers can compare directly against https://raw.githubusercontent.com/kubeapps/kubeapps/main/dashboard/public/openapi.yaml
+> Kubeapps maintainers can compare directly against https://raw.githubusercontent.com/vmware-tanzu/kubeapps/main/dashboard/public/openapi.yaml
 
 ### Sending a PR
 
