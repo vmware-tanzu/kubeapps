@@ -45,8 +45,10 @@ export default function ErrorAlert({ error, children }: IErrorAlert) {
   }
   return (
     <Alert theme="danger">
-      {messages}
-      {children}
+      <>
+        {messages}
+        {children}
+      </>
     </Alert>
   );
 }
