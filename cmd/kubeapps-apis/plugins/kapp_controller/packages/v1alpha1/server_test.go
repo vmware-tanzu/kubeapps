@@ -1512,7 +1512,7 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 					Status: packagingv1alpha1.PackageInstallStatus{
 						GenericStatus: kappctrlv1alpha1.GenericStatus{
 							ObservedGeneration: 1,
-							Conditions: []kappctrlv1alpha1.AppCondition{{
+							Conditions: []kappctrlv1alpha1.Condition{{
 								Type:    kappctrlv1alpha1.ReconcileSucceeded,
 								Status:  k8scorev1.ConditionTrue,
 								Reason:  "baz",
@@ -1646,7 +1646,7 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 					Status: packagingv1alpha1.PackageInstallStatus{
 						GenericStatus: kappctrlv1alpha1.GenericStatus{
 							ObservedGeneration: 1,
-							Conditions: []kappctrlv1alpha1.AppCondition{{
+							Conditions: []kappctrlv1alpha1.Condition{{
 								Type:    kappctrlv1alpha1.ReconcileSucceeded,
 								Status:  k8scorev1.ConditionTrue,
 								Reason:  "baz",
@@ -1774,7 +1774,7 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 					Status: packagingv1alpha1.PackageInstallStatus{
 						GenericStatus: kappctrlv1alpha1.GenericStatus{
 							ObservedGeneration: 1,
-							Conditions: []kappctrlv1alpha1.AppCondition{{
+							Conditions: []kappctrlv1alpha1.Condition{{
 								Type:    kappctrlv1alpha1.ReconcileSucceeded,
 								Status:  k8scorev1.ConditionTrue,
 								Reason:  "baz",
@@ -1936,7 +1936,7 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 					Status: packagingv1alpha1.PackageInstallStatus{
 						GenericStatus: kappctrlv1alpha1.GenericStatus{
 							ObservedGeneration: 1,
-							Conditions: []kappctrlv1alpha1.AppCondition{{
+							Conditions: []kappctrlv1alpha1.Condition{{
 								Type:    kappctrlv1alpha1.ReconcileSucceeded,
 								Status:  k8scorev1.ConditionTrue,
 								Reason:  "baz",
@@ -1980,7 +1980,7 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 					Status: packagingv1alpha1.PackageInstallStatus{
 						GenericStatus: kappctrlv1alpha1.GenericStatus{
 							ObservedGeneration: 1,
-							Conditions: []kappctrlv1alpha1.AppCondition{{
+							Conditions: []kappctrlv1alpha1.Condition{{
 								Type:    kappctrlv1alpha1.ReconcileSucceeded,
 								Status:  k8scorev1.ConditionTrue,
 								Reason:  "baz",
@@ -2270,7 +2270,7 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 					Status: packagingv1alpha1.PackageInstallStatus{
 						GenericStatus: kappctrlv1alpha1.GenericStatus{
 							ObservedGeneration: 1,
-							Conditions: []kappctrlv1alpha1.AppCondition{{
+							Conditions: []kappctrlv1alpha1.Condition{{
 								Type:    kappctrlv1alpha1.ReconcileSucceeded,
 								Status:  k8scorev1.ConditionTrue,
 								Reason:  "baz",
@@ -2405,7 +2405,7 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 					Status: packagingv1alpha1.PackageInstallStatus{
 						GenericStatus: kappctrlv1alpha1.GenericStatus{
 							ObservedGeneration: 1,
-							Conditions: []kappctrlv1alpha1.AppCondition{{
+							Conditions: []kappctrlv1alpha1.Condition{{
 								Type:    kappctrlv1alpha1.ReconcileSucceeded,
 								Status:  k8scorev1.ConditionTrue,
 								Reason:  "baz",
@@ -2612,7 +2612,7 @@ func TestGetInstalledPackageDetail(t *testing.T) {
 					Status: packagingv1alpha1.PackageInstallStatus{
 						GenericStatus: kappctrlv1alpha1.GenericStatus{
 							ObservedGeneration: 1,
-							Conditions: []kappctrlv1alpha1.AppCondition{{
+							Conditions: []kappctrlv1alpha1.Condition{{
 								Type:    kappctrlv1alpha1.ReconcileSucceeded,
 								Status:  k8scorev1.ConditionTrue,
 								Reason:  "baz",
@@ -2810,7 +2810,7 @@ fetchStderr
 					Status: packagingv1alpha1.PackageInstallStatus{
 						GenericStatus: kappctrlv1alpha1.GenericStatus{
 							ObservedGeneration: 1,
-							Conditions: []kappctrlv1alpha1.AppCondition{{
+							Conditions: []kappctrlv1alpha1.Condition{{
 								Type:    kappctrlv1alpha1.ReconcileSucceeded,
 								Status:  k8scorev1.ConditionTrue,
 								Reason:  "baz",
@@ -5066,7 +5066,7 @@ func TestUpdateInstalledPackage(t *testing.T) {
 					Status: packagingv1alpha1.PackageInstallStatus{
 						GenericStatus: kappctrlv1alpha1.GenericStatus{
 							ObservedGeneration: 1,
-							Conditions: []kappctrlv1alpha1.AppCondition{{
+							Conditions: []kappctrlv1alpha1.Condition{{
 								Type:    kappctrlv1alpha1.ReconcileSucceeded,
 								Status:  k8scorev1.ConditionTrue,
 								Reason:  "baz",
@@ -5131,7 +5131,7 @@ func TestUpdateInstalledPackage(t *testing.T) {
 				Status: packagingv1alpha1.PackageInstallStatus{
 					GenericStatus: kappctrlv1alpha1.GenericStatus{
 						ObservedGeneration: 1,
-						Conditions: []kappctrlv1alpha1.AppCondition{{
+						Conditions: []kappctrlv1alpha1.Condition{{
 							Type:    kappctrlv1alpha1.ReconcileSucceeded,
 							Status:  k8scorev1.ConditionTrue,
 							Reason:  "baz",
@@ -5241,7 +5241,7 @@ func TestUpdateInstalledPackage(t *testing.T) {
 					Status: packagingv1alpha1.PackageInstallStatus{
 						GenericStatus: kappctrlv1alpha1.GenericStatus{
 							ObservedGeneration: 1,
-							Conditions: []kappctrlv1alpha1.AppCondition{{
+							Conditions: []kappctrlv1alpha1.Condition{{
 								Type:    kappctrlv1alpha1.ReconcileSucceeded,
 								Status:  k8scorev1.ConditionTrue,
 								Reason:  "baz",
@@ -5373,7 +5373,7 @@ func TestDeleteInstalledPackage(t *testing.T) {
 					Status: packagingv1alpha1.PackageInstallStatus{
 						GenericStatus: kappctrlv1alpha1.GenericStatus{
 							ObservedGeneration: 1,
-							Conditions: []kappctrlv1alpha1.AppCondition{{
+							Conditions: []kappctrlv1alpha1.Condition{{
 								Type:    kappctrlv1alpha1.ReconcileSucceeded,
 								Status:  k8scorev1.ConditionTrue,
 								Reason:  "baz",
@@ -5443,7 +5443,7 @@ func TestDeleteInstalledPackage(t *testing.T) {
 					Status: packagingv1alpha1.PackageInstallStatus{
 						GenericStatus: kappctrlv1alpha1.GenericStatus{
 							ObservedGeneration: 1,
-							Conditions: []kappctrlv1alpha1.AppCondition{{
+							Conditions: []kappctrlv1alpha1.Condition{{
 								Type:    kappctrlv1alpha1.ReconcileSucceeded,
 								Status:  k8scorev1.ConditionTrue,
 								Reason:  "baz",
@@ -5565,7 +5565,7 @@ func TestGetInstalledPackageResourceRefs(t *testing.T) {
 					Status: packagingv1alpha1.PackageInstallStatus{
 						GenericStatus: kappctrlv1alpha1.GenericStatus{
 							ObservedGeneration: 1,
-							Conditions: []kappctrlv1alpha1.AppCondition{{
+							Conditions: []kappctrlv1alpha1.Condition{{
 								Type:    kappctrlv1alpha1.ReconcileSucceeded,
 								Status:  k8scorev1.ConditionTrue,
 								Reason:  "baz",
@@ -5679,7 +5679,7 @@ func TestGetInstalledPackageResourceRefs(t *testing.T) {
 					Status: packagingv1alpha1.PackageInstallStatus{
 						GenericStatus: kappctrlv1alpha1.GenericStatus{
 							ObservedGeneration: 1,
-							Conditions: []kappctrlv1alpha1.AppCondition{{
+							Conditions: []kappctrlv1alpha1.Condition{{
 								Type:    kappctrlv1alpha1.ReconcileSucceeded,
 								Status:  k8scorev1.ConditionTrue,
 								Reason:  "baz",

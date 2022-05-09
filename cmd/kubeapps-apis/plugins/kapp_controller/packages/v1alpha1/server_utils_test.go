@@ -231,14 +231,14 @@ func TestLatestMatchingVersion(t *testing.T) {
 func TestStatusReasonForKappStatus(t *testing.T) {
 	tests := []struct {
 		name                 string
-		status               kappctrlv1alpha1.AppConditionType
+		status               kappctrlv1alpha1.ConditionType
 		expectedStatusReason corev1.InstalledPackageStatus_StatusReason
 	}{
-		{"ReconcileSucceeded", kappctrlv1alpha1.AppConditionType("ReconcileSucceeded"), corev1.InstalledPackageStatus_STATUS_REASON_INSTALLED},
-		{"ValuesSchemaCheckFailed", kappctrlv1alpha1.AppConditionType("ValuesSchemaCheckFailed"), corev1.InstalledPackageStatus_STATUS_REASON_FAILED},
-		{"ReconcileFailed", kappctrlv1alpha1.AppConditionType("ReconcileFailed"), corev1.InstalledPackageStatus_STATUS_REASON_FAILED},
-		{"Reconciling", kappctrlv1alpha1.AppConditionType("Reconciling"), corev1.InstalledPackageStatus_STATUS_REASON_PENDING},
-		{"Unknown", kappctrlv1alpha1.AppConditionType("foo"), corev1.InstalledPackageStatus_STATUS_REASON_UNSPECIFIED},
+		{"ReconcileSucceeded", kappctrlv1alpha1.ConditionType("ReconcileSucceeded"), corev1.InstalledPackageStatus_STATUS_REASON_INSTALLED},
+		{"ValuesSchemaCheckFailed", kappctrlv1alpha1.ConditionType("ValuesSchemaCheckFailed"), corev1.InstalledPackageStatus_STATUS_REASON_FAILED},
+		{"ReconcileFailed", kappctrlv1alpha1.ConditionType("ReconcileFailed"), corev1.InstalledPackageStatus_STATUS_REASON_FAILED},
+		{"Reconciling", kappctrlv1alpha1.ConditionType("Reconciling"), corev1.InstalledPackageStatus_STATUS_REASON_PENDING},
+		{"Unknown", kappctrlv1alpha1.ConditionType("foo"), corev1.InstalledPackageStatus_STATUS_REASON_UNSPECIFIED},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -253,14 +253,14 @@ func TestStatusReasonForKappStatus(t *testing.T) {
 func TestUserReasonForKappStatus(t *testing.T) {
 	tests := []struct {
 		name               string
-		status             kappctrlv1alpha1.AppConditionType
+		status             kappctrlv1alpha1.ConditionType
 		expectedUserReason string
 	}{
-		{"ReconcileSucceeded", kappctrlv1alpha1.AppConditionType("ReconcileSucceeded"), "Deployed"},
-		{"ValuesSchemaCheckFailed", kappctrlv1alpha1.AppConditionType("ValuesSchemaCheckFailed"), "Reconcile failed"},
-		{"ReconcileFailed", kappctrlv1alpha1.AppConditionType("ReconcileFailed"), "Reconcile failed"},
-		{"Reconciling", kappctrlv1alpha1.AppConditionType("Reconciling"), "Reconciling"},
-		{"Unknown", kappctrlv1alpha1.AppConditionType("foo"), "Unknown"},
+		{"ReconcileSucceeded", kappctrlv1alpha1.ConditionType("ReconcileSucceeded"), "Deployed"},
+		{"ValuesSchemaCheckFailed", kappctrlv1alpha1.ConditionType("ValuesSchemaCheckFailed"), "Reconcile failed"},
+		{"ReconcileFailed", kappctrlv1alpha1.ConditionType("ReconcileFailed"), "Reconcile failed"},
+		{"Reconciling", kappctrlv1alpha1.ConditionType("Reconciling"), "Reconciling"},
+		{"Unknown", kappctrlv1alpha1.ConditionType("foo"), "Unknown"},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
