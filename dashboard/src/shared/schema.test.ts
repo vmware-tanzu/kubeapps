@@ -295,6 +295,27 @@ describe("setValue", () => {
   [
     {
       description: "should set a value",
+      values: 'foo: "bar"',
+      path: "foo",
+      newValue: "BAR",
+      result: 'foo: "BAR"\n',
+    },
+    {
+      description: "should set a value preserving the existing scalar quotation (simple)",
+      values: "foo: 'bar'",
+      path: "foo",
+      newValue: "BAR",
+      result: "foo: 'BAR'\n",
+    },
+    {
+      description: "should set a value preserving the existing scalar quotation (double)",
+      values: 'foo: "bar"',
+      path: "foo",
+      newValue: "BAR",
+      result: 'foo: "BAR"\n',
+    },
+    {
+      description: "should set a value preserving the existing scalar quotation (none)",
       values: "foo: bar",
       path: "foo",
       newValue: "BAR",
