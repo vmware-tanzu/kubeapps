@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
-	"strconv"
 	"strings"
 
 	"github.com/gorilla/mux"
@@ -53,29 +52,9 @@ type rel struct {
 	Links selfLink    `json:"links"`
 }
 
-type meta struct {
-	TotalPages int `json:"totalPages"`
-}
-
 // count is used to parse the result of a $count operation in the database
 type count struct {
 	Count int
-}
-
-// getPageAndSizeParams extracts the page number and the page size of a request. Default (page,size) = (1, 0) if not set
-func getPageAndSizeParams(req *http.Request) (int, int) {
-	pageNumber := req.FormValue("page")
-	pageSize := req.FormValue("size")
-
-	// if page is a non-positive int or 0, defaults to 1
-	pageNumberInt, err := strconv.ParseUint(pageNumber, 10, 64)
-	if err != nil || pageNumberInt == 0 {
-		pageNumberInt = 1
-	}
-	// ParseUint will return 0 if size is a not positive integer
-	pageSizeInt, _ := strconv.ParseUint(pageSize, 10, 64)
-
-	return int(pageNumberInt), int(pageSizeInt)
 }
 
 func extractDecodedNamespaceAndRepoAndVersionParams(params Params) (string, string, string, string, error) {
@@ -295,30 +274,6 @@ func getChartVersionSchema(w http.ResponseWriter, req *http.Request, params Para
 	}
 
 	w.Write([]byte(files.Schema))
-}
-
-// listChartsWithFilters returns the list of repos that contains the given chart and the latest version found
-func listChartsWithFilters(w http.ResponseWriter, req *http.Request, params Params) {
-	namespace, repo, _, paramErr, err := extractDecodedNamespaceAndRepoAndVersionParams(params)
-	if err != nil {
-		handleDecodeError(paramErr, w, err)
-		return
-	}
-	cq := extractChartQueryFromRequest(namespace, repo, req)
-
-	pageNumber, pageSize := getPageAndSizeParams(req)
-	charts, totalPages, err := manager.GetPaginatedChartListWithFilters(cq, pageNumber, pageSize)
-	if err != nil {
-		log.Errorf("could not find charts with the given namespace=%s, chartName=%s, version=%s, appversion=%s, repos=%s, categories=%s, searchQuery=%s: %v",
-			cq.Namespace, cq.ChartName, cq.Version, cq.AppVersion, cq.Repos, cq.Categories, cq.SearchQuery,
-		)
-		// continue to return empty list
-	}
-
-	chartResponse := charts
-	cl := newChartListResponse(chartResponse)
-
-	response.NewDataResponseWithMeta(cl, meta{TotalPages: totalPages}).Write(w)
 }
 
 func newChartResponse(c *models.Chart) *apiResponse {
