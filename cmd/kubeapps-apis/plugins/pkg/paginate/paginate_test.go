@@ -21,7 +21,7 @@ func TestPageOffsetFromPageToken(t *testing.T) {
 	}
 
 	_, err = PageOffsetFromPageToken("not a number")
-	if got, want := status.Code(err), codes.Unknown; got != want {
+	if got, want := status.Code(err), codes.InvalidArgument; got != want {
 		t.Fatalf("got: %+v, want: %+v, err: %+v", got, want, err)
 	}
 

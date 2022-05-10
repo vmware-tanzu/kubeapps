@@ -160,7 +160,7 @@ func Test_GetChartsWithFilters(t *testing.T) {
 		WithArgs("namespace", "kubeapps", "foo", parametrizedJsonbLiteral).
 		WillReturnRows(sqlmock.NewRows([]string{"info"}).AddRow(dbChartJSON))
 
-	charts, _, err := pgManager.GetPaginatedChartListWithFilters(ChartQuery{Namespace: "namespace", ChartName: "foo", Version: version, AppVersion: appVersion}, 1, 0)
+	charts, err := pgManager.GetPaginatedChartListWithFilters(ChartQuery{Namespace: "namespace", ChartName: "foo", Version: version, AppVersion: appVersion}, 1, 0)
 	if err != nil {
 		t.Errorf("Found error %v", err)
 	}
@@ -200,7 +200,7 @@ func Test_GetChartsWithFilters_withSlashes(t *testing.T) {
 		WithArgs("namespace", "kubeapps", "fo%2Fo", parametrizedJsonbLiteral).
 		WillReturnRows(sqlmock.NewRows([]string{"info"}).AddRow(dbChartJSON))
 
-	charts, _, err := pgManager.GetPaginatedChartListWithFilters(ChartQuery{Namespace: "namespace", ChartName: "fo%2Fo", Version: version, AppVersion: appVersion}, 1, 0)
+	charts, err := pgManager.GetPaginatedChartListWithFilters(ChartQuery{Namespace: "namespace", ChartName: "fo%2Fo", Version: version, AppVersion: appVersion}, 1, 0)
 	if err != nil {
 		t.Errorf("Found error %v", err)
 	}
@@ -281,107 +281,95 @@ func Test_GetPaginatedChartList(t *testing.T) {
 		{ID: "fo%2Fo", ChartVersions: []models.ChartVersion{{Digest: "321"}}},
 	}
 	tests := []struct {
-		name               string
-		namespace          string
-		repo               string
-		pageNumber         int
-		pageSize           int
-		expectedCharts     []*models.Chart
-		expectedTotalPages int
+		name            string
+		namespace       string
+		repo            string
+		startItemNumber int
+		pageSize        int
+		expectedCharts  []*models.Chart
 	}{
 		{
-			name:               "one page with duplicates with repo",
-			namespace:          "other-namespace",
-			repo:               "bitnami",
-			pageNumber:         1,
-			pageSize:           100,
-			expectedCharts:     availableCharts,
-			expectedTotalPages: 1,
+			name:            "one page with duplicates with repo",
+			namespace:       "other-namespace",
+			repo:            "bitnami",
+			startItemNumber: 0,
+			pageSize:        100,
+			expectedCharts:  availableCharts,
 		},
 		{
-			name:               "one page with duplicates",
-			namespace:          "other-namespace",
-			repo:               "",
-			pageNumber:         1,
-			pageSize:           100,
-			expectedCharts:     availableCharts,
-			expectedTotalPages: 1,
+			name:            "one page with duplicates",
+			namespace:       "other-namespace",
+			repo:            "",
+			startItemNumber: 0,
+			pageSize:        100,
+			expectedCharts:  availableCharts,
 		},
 		{
-			name:               "repo has many charts with pagination (2 pages)",
-			namespace:          "other-namespace",
-			repo:               "",
-			pageNumber:         2,
-			pageSize:           2,
-			expectedCharts:     []*models.Chart{availableCharts[2], availableCharts[3]},
-			expectedTotalPages: 2,
+			name:            "repo has many charts with pagination (2 pages)",
+			namespace:       "other-namespace",
+			repo:            "",
+			startItemNumber: 2,
+			pageSize:        2,
+			expectedCharts:  []*models.Chart{availableCharts[2], availableCharts[3]},
 		},
 		{
-			name:               "repo has many charts with pagination (non existing page)",
-			namespace:          "other-namespace",
-			repo:               "",
-			pageNumber:         3,
-			pageSize:           2,
-			expectedCharts:     []*models.Chart{},
-			expectedTotalPages: 2,
+			name:            "repo has many charts with pagination (non existing page)",
+			namespace:       "other-namespace",
+			repo:            "",
+			startItemNumber: 5,
+			pageSize:        2,
+			expectedCharts:  []*models.Chart{},
 		},
 		{
-			name:               "repo has many charts with pagination (out of range size)",
-			namespace:          "other-namespace",
-			repo:               "",
-			pageNumber:         1,
-			pageSize:           100,
-			expectedCharts:     availableCharts,
-			expectedTotalPages: 1,
+			name:            "repo has many charts with pagination (out of range size)",
+			namespace:       "other-namespace",
+			repo:            "",
+			startItemNumber: 0,
+			pageSize:        100,
+			expectedCharts:  availableCharts,
 		},
 		{
-			name:               "repo has many charts with pagination (w/ page, w size)",
-			namespace:          "other-namespace",
-			repo:               "",
-			pageSize:           3,
-			expectedCharts:     []*models.Chart{availableCharts[0], availableCharts[1], availableCharts[2]},
-			expectedTotalPages: 2,
+			name:           "repo has many charts with pagination (w/ startItem, w size)",
+			namespace:      "other-namespace",
+			repo:           "",
+			pageSize:       3,
+			expectedCharts: []*models.Chart{availableCharts[0], availableCharts[1], availableCharts[2]},
 		},
 		{
-			name:               "repo has many charts with pagination (w/ page, w zero size)",
-			namespace:          "other-namespace",
-			repo:               "",
-			pageNumber:         2,
-			pageSize:           0,
-			expectedCharts:     availableCharts,
-			expectedTotalPages: 1,
+			name:            "repo has many charts with pagination (w/ startItem, w zero size)",
+			namespace:       "other-namespace",
+			repo:            "",
+			startItemNumber: 2,
+			pageSize:        0,
+			expectedCharts:  availableCharts,
 		},
 		{
-			name:               "repo has many charts with pagination (w/ wrong page, w/ size)",
-			namespace:          "other-namespace",
-			repo:               "",
-			pageNumber:         -2,
-			pageSize:           2,
-			expectedCharts:     []*models.Chart{availableCharts[0], availableCharts[1]},
-			expectedTotalPages: 2,
+			name:            "repo has many charts with pagination (w/ wrong page, w/ size)",
+			namespace:       "other-namespace",
+			repo:            "",
+			startItemNumber: -2,
+			pageSize:        2,
+			expectedCharts:  []*models.Chart{availableCharts[0], availableCharts[1]},
 		},
 		{
-			name:               "repo has many charts with pagination (w/ page, w/o size)",
-			namespace:          "other-namespace",
-			repo:               "",
-			pageNumber:         2,
-			expectedCharts:     availableCharts,
-			expectedTotalPages: 1,
+			name:            "repo has many charts with pagination (w/ page, w/o size)",
+			namespace:       "other-namespace",
+			repo:            "",
+			startItemNumber: 2,
+			expectedCharts:  availableCharts,
 		},
 		{
-			name:               "repo has many charts with pagination (w/o page, w/ size)",
-			namespace:          "other-namespace",
-			repo:               "",
-			pageSize:           2,
-			expectedCharts:     []*models.Chart{availableCharts[0], availableCharts[1]},
-			expectedTotalPages: 2,
+			name:           "repo has many charts with pagination (w/o page, w/ size)",
+			namespace:      "other-namespace",
+			repo:           "",
+			pageSize:       2,
+			expectedCharts: []*models.Chart{availableCharts[0], availableCharts[1]},
 		},
 		{
-			name:               "repo has many charts with pagination (w/o page, w/o size)",
-			namespace:          "other-namespace",
-			repo:               "",
-			expectedCharts:     availableCharts,
-			expectedTotalPages: 1,
+			name:           "repo has many charts with pagination (w/o page, w/o size)",
+			namespace:      "other-namespace",
+			repo:           "",
+			expectedCharts: availableCharts,
 		},
 	}
 	for _, tt := range tests {
@@ -411,12 +399,9 @@ func Test_GetPaginatedChartList(t *testing.T) {
 			mock.ExpectQuery("^SELECT count(.+) FROM").
 				WillReturnRows(rowCount)
 
-			charts, totalPages, err := pgManager.GetPaginatedChartListWithFilters(ChartQuery{Namespace: tt.namespace, Repos: []string{tt.repo}}, tt.pageNumber, tt.pageSize)
+			charts, err := pgManager.GetPaginatedChartListWithFilters(ChartQuery{Namespace: tt.namespace, Repos: []string{tt.repo}}, tt.startItemNumber, tt.pageSize)
 			if err != nil {
 				t.Fatalf("Found error %v", err)
-			}
-			if totalPages != tt.expectedTotalPages {
-				t.Errorf("Unexpected number of pages, got %d expecting %d", totalPages, tt.expectedTotalPages)
 			}
 			if tt.pageSize > 0 {
 				if len(charts) > tt.pageSize {

@@ -16,7 +16,7 @@ export default class PackagesService {
     cluster: string,
     namespace: string,
     repos: string,
-    page: number,
+    paginationToken: string,
     size: number,
     query?: string,
   ): Promise<GetAvailablePackageSummariesResponse> {
@@ -26,7 +26,7 @@ export default class PackagesService {
         query: query,
         repositories: repos ? repos.split(",") : [],
       },
-      paginationOptions: { pageSize: size, pageToken: page.toString() },
+      paginationOptions: { pageSize: size, pageToken: paginationToken },
     });
   }
 

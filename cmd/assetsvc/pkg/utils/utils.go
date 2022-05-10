@@ -14,7 +14,7 @@ type AssetManager interface {
 	GetChart(namespace, chartID string) (models.Chart, error)
 	GetChartVersion(namespace, chartID, version string) (models.Chart, error)
 	GetChartFiles(namespace, filesID string) (models.ChartFiles, error)
-	GetPaginatedChartListWithFilters(cq ChartQuery, pageNumber, pageSize int) ([]*models.Chart, int, error)
+	GetPaginatedChartListWithFilters(cq ChartQuery, startItemNumber, pageSize int) ([]*models.Chart, error)
 	GetAllChartCategories(cq ChartQuery) ([]*models.ChartCategory, error)
 }
 

@@ -38,7 +38,7 @@ func (s *Server) GetAvailablePackageSummaries(ctx context.Context, request *core
 
 	// Retrieve additional parameters from the request
 	pageSize := request.GetPaginationOptions().GetPageSize()
-	pageOffset, err := paginate.PageOffsetFromAvailableRequest(request)
+	itemOffset, err := paginate.ItemOffsetFromPageToken(request.GetPaginationOptions().GetPageToken())
 	if err != nil {
 		return nil, err
 	}
@@ -58,7 +58,7 @@ func (s *Server) GetAvailablePackageSummaries(ctx context.Context, request *core
 	// Update the slice to be the correct page of results.
 	startAt := 0
 	if pageSize > 0 {
-		startAt = int(pageSize) * pageOffset
+		startAt = itemOffset
 		if startAt > len(pkgMetadatas) {
 			return nil, status.Errorf(codes.InvalidArgument, "invalid pagination arguments %v", request.GetPaginationOptions())
 		}
@@ -137,7 +137,7 @@ func (s *Server) GetAvailablePackageSummaries(ctx context.Context, request *core
 	// the results are a full page.
 	nextPageToken := ""
 	if pageSize > 0 && len(availablePackageSummaries) == int(pageSize) {
-		nextPageToken = fmt.Sprintf("%d", pageOffset+1)
+		nextPageToken = fmt.Sprintf("%d", itemOffset+int(pageSize))
 	}
 	response := &corev1.GetAvailablePackageSummariesResponse{
 		AvailablePackageSummaries: availablePackageSummaries,
@@ -275,7 +275,7 @@ func (s *Server) GetInstalledPackageSummaries(ctx context.Context, request *core
 
 	// Retrieve additional parameters from the request
 	pageSize := request.GetPaginationOptions().GetPageSize()
-	pageOffset, err := paginate.PageOffsetFromInstalledRequest(request)
+	itemOffset, err := paginate.ItemOffsetFromPageToken(request.GetPaginationOptions().GetPageToken())
 	if err != nil {
 		return nil, err
 	}
@@ -298,7 +298,7 @@ func (s *Server) GetInstalledPackageSummaries(ctx context.Context, request *core
 	if len(pkgInstalls) > 0 {
 		startAt := -1
 		if pageSize > 0 {
-			startAt = int(pageSize) * pageOffset
+			startAt = itemOffset
 			if startAt > len(pkgInstalls) {
 				return nil, status.Errorf(codes.InvalidArgument, "invalid pagination arguments %v", request.GetPaginationOptions())
 			}
@@ -430,7 +430,7 @@ func (s *Server) GetInstalledPackageSummaries(ctx context.Context, request *core
 	// the results are a full page.
 	nextPageToken := ""
 	if pageSize > 0 && len(installedPkgSummaries) == int(pageSize) {
-		nextPageToken = fmt.Sprintf("%d", pageOffset+1)
+		nextPageToken = fmt.Sprintf("%d", itemOffset+int(pageSize))
 	}
 	response := &corev1.GetInstalledPackageSummariesResponse{
 		InstalledPackageSummaries: installedPkgSummaries,

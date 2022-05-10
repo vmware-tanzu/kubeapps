@@ -68,7 +68,7 @@ Prior to the Kubeapps chart version 7.1.0, the auth proxy configuration did not 
 To avoid this issue, you can do one of the following:
 
 - upgrade the Kubeapps chart to version 7.1.0+ which sets a default of `--cookie-refresh=2m` and exposes the value in the chart values as `authProxy.cookieRefresh`.
-- update Kubeapps by adding the option `--cookie-refresh=2m` to `authProxy.additionalFlags`.
+- update Kubeapps by adding the option `--cookie-refresh=2m` to `authProxy.extraFlags`.
 
 The duration for the refresh must be less than the access/openid expiration time configured in the OAuth2/OIDC provider.
 

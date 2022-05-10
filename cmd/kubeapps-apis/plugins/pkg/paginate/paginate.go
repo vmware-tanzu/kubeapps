@@ -23,7 +23,8 @@ func PageOffsetFromPageToken(pageToken string) (int, error) {
 	}
 	offset, err := strconv.ParseUint(pageToken, 10, 0)
 	if err != nil {
-		return 0, err
+		return 0, status.Errorf(codes.InvalidArgument, "unable to interpret page token %q: %v",
+			pageToken, err)
 	}
 	return int(offset), nil
 }
@@ -31,8 +32,7 @@ func PageOffsetFromPageToken(pageToken string) (int, error) {
 func PageOffsetFromInstalledRequest(request *corev1.GetInstalledPackageSummariesRequest) (int, error) {
 	offset, err := PageOffsetFromPageToken(request.GetPaginationOptions().GetPageToken())
 	if err != nil {
-		return 0, status.Errorf(codes.InvalidArgument, "unable to intepret page token %q: %v",
-			request.GetPaginationOptions().GetPageToken(), err)
+		return 0, err
 	} else {
 		return offset, nil
 	}
@@ -41,9 +41,16 @@ func PageOffsetFromInstalledRequest(request *corev1.GetInstalledPackageSummaries
 func PageOffsetFromAvailableRequest(request *corev1.GetAvailablePackageSummariesRequest) (int, error) {
 	offset, err := PageOffsetFromPageToken(request.GetPaginationOptions().GetPageToken())
 	if err != nil {
-		return 0, status.Errorf(codes.InvalidArgument, "unable to intepret page token %q: %v",
-			request.GetPaginationOptions().GetPageToken(), err)
+		return 0, err
 	} else {
 		return offset, nil
 	}
+}
+
+// Plugins should be designed to use an offset to the next item, rather than the
+// next page of items.
+// Until we have a need for more structure, this can be an integer number and so
+// is parsed in exactly the same way as a page offset.
+func ItemOffsetFromPageToken(pageToken string) (int, error) {
+	return PageOffsetFromPageToken(pageToken)
 }
