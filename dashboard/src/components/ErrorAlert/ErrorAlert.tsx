@@ -3,6 +3,7 @@
 
 import Alert from "components/js/Alert";
 import RpcErrorMessage from "components/RpcErrorMessage";
+import { ReactNode } from "react";
 import { RpcError } from "shared/RpcError";
 import { CustomError } from "shared/types";
 import "./ErrorAlert.css";
@@ -32,7 +33,7 @@ function buildMessages(errors: Error[]): JSX.Element[] {
 
 // Extension of Alert component for showing more meaningful Errors
 export default function ErrorAlert({ error, children }: IErrorAlert) {
-  let messages: any[];
+  let messages: ReactNode[];
   if (error instanceof CustomError) {
     messages = [createWrap(error.message, 0, false)];
     if (error.causes) {
@@ -45,10 +46,8 @@ export default function ErrorAlert({ error, children }: IErrorAlert) {
   }
   return (
     <Alert theme="danger">
-      <>
-        {messages}
-        {children}
-      </>
+      {messages}
+      {children}
     </Alert>
   );
 }
