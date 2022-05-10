@@ -1,6 +1,6 @@
 baseURL: "https://template.dev/"
 languageCode: "en-us"
-title: "Template"
+title: "Kubeapps"
 theme: "template"
 outputs:
   home: [ "HTML", "REDIRECTS" ]
@@ -10,14 +10,14 @@ markup:
   highlight:
     anchorLineNos: false
     codeFences: true
-    guessSyntax: false
+    guessSyntax: true
     hl_Lines: ""
     lineAnchors: ""
     lineNoStart: 1
     lineNos: false
     lineNumbersInTable: true
     noClasses: true
-    style: native
+    style: friendly
     tabWidth: 4
 menu:
   docs:
@@ -33,19 +33,32 @@ menu:
   - name: Update Images
     url: /docs/contributing/
 params:
-  twitter_url: "https://twitter.com/"
-  github_url: "https://github.com/"
-  slack_url: "https://slack.com/"
-  github_base_url: "https://github.com/smalltalk-ai/vmware-open-source-template"
-  use_advanced_docs: true
+  Docs_search_api_key: none
+  Docs_search_index_name: none
+  Use_advanced_docs: none
+  author: Kubeapps
+  description: Kubeapps website
+  docs_latest: latest
   docs_right_sidebar: true
   docs_search: false
-  docs_search_index_name: index_name
   docs_search_api_key: api_key
+  docs_search_index_name: index_name
   docs_versioning: false
-  docs_latest: latest
+  github_base_url: "https://github.com/vmware-tanzu/kubeapps"
+  github_url: "https://github.com/vmware-tanzu/kubeapps/"
+  googleSiteVerification: xxxx
+  gtmId: GTM-1874455-13
+  oneTrustId: 3b23306b-6d55-4552-bcf0-1c1276db55e9-test
+  sitename: Kubeapps
+  slack_url: "https://kubernetes.slack.com/messages/kubeapps"
+  twitter: vmwmarketplace
+  twitter_url: "https://twitter.com/vmwmarketplace"
+  use_advanced_docs: true
   docs_versions:
     - latest
+privacy:
+  youtube:
+    privacyEnhanced: true
 mediaTypes:
   "text/netlify":
     delimiter: ""
