@@ -71,7 +71,7 @@ authProxy:
   provider: oidc
   clientID: <MY-APPLICATION-ID>
   clientSecret: <MY-SECRET>
-  additionalFlags:
+  extraFlags:
     - --oidc-issuer-url=https://login.microsoftonline.com/<MY-TENANT-ID>/v2.0 # required for azure
     - --scope=openid email 6dae42f8-4368-4678-94ff-3960e28e3630/user.read # required for azure, exactly this string without modification
 ```

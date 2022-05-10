@@ -7,7 +7,6 @@ import (
 	"encoding/base64"
 	"errors"
 	"fmt"
-	"math"
 	"strings"
 
 	_ "github.com/lib/pq"
@@ -44,34 +43,22 @@ func (m *PostgresAssetManager) GetAllChartCategories(cq ChartQuery) ([]*models.C
 	return chartsCategories, nil
 }
 
-func (m *PostgresAssetManager) GetPaginatedChartList(whereQuery string, whereQueryParams []interface{}, pageNumber, pageSize int) ([]*models.Chart, int, error) {
-	// Default (pageNumber,pageSize) = (1, 0) as in the handler.go
-	if pageNumber <= 0 {
-		pageNumber = 1
-	}
-
+func (m *PostgresAssetManager) GetPaginatedChartList(whereQuery string, whereQueryParams []interface{}, startItemNumber, pageSize int) ([]*models.Chart, error) {
 	paginationClause := ""
 	if pageSize > 0 {
-		offset := (pageNumber - 1) * pageSize
-		paginationClause = fmt.Sprintf("LIMIT %d OFFSET %d", pageSize, offset)
+		paginationClause = fmt.Sprintf("LIMIT %d", pageSize)
+	}
+	if startItemNumber > 0 {
+		paginationClause = fmt.Sprintf("%s OFFSET %d", paginationClause, startItemNumber)
 	}
 
 	dbQuery := fmt.Sprintf("SELECT info FROM %s %s ORDER BY (info->>'name') ASC %s", dbutils.ChartTable, whereQuery, paginationClause)
 	charts, err := m.QueryAllCharts(dbQuery, whereQueryParams...)
 	if err != nil {
-		return nil, 0, err
+		return nil, err
 	}
 
-	numPages := 1
-	if pageSize > 0 {
-		dbCountQuery := fmt.Sprintf("SELECT count(info) FROM %s %s", dbutils.ChartTable, whereQuery)
-		count, err := m.QueryCount(dbCountQuery, whereQueryParams...)
-		if err != nil {
-			return nil, 0, err
-		}
-		numPages = int(math.Ceil(float64(count) / float64(pageSize)))
-	}
-	return charts, numPages, nil
+	return charts, nil
 }
 
 func (m *PostgresAssetManager) GetChart(namespace, chartID string) (models.Chart, error) {
@@ -185,13 +172,13 @@ func (m *PostgresAssetManager) GetChartFilesWithFallback(namespace, filesID stri
 	return chartFiles, nil
 }
 
-func (m *PostgresAssetManager) GetPaginatedChartListWithFilters(cq ChartQuery, pageNumber, pageSize int) ([]*models.Chart, int, error) {
+func (m *PostgresAssetManager) GetPaginatedChartListWithFilters(cq ChartQuery, startItemNumber, pageSize int) ([]*models.Chart, error) {
 	whereQuery, whereQueryParams := m.GenerateWhereClause(cq)
-	charts, numPages, err := m.GetPaginatedChartList(whereQuery, whereQueryParams, pageNumber, pageSize)
+	charts, err := m.GetPaginatedChartList(whereQuery, whereQueryParams, startItemNumber, pageSize)
 	if err != nil {
-		return []*models.Chart{}, 0, err
+		return nil, err
 	}
-	return charts, numPages, nil
+	return charts, nil
 }
 
 func (m *PostgresAssetManager) GenerateWhereClause(cq ChartQuery) (string, []interface{}) {

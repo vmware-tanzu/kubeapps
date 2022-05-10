@@ -210,14 +210,14 @@ func makeChartRowsJSON(t *testing.T, charts []*models.Chart, pageToken string, p
 	}
 
 	if pageToken != "" {
-		pageOffset, err := paginate.PageOffsetFromPageToken(pageToken)
+		itemOffset, err := paginate.ItemOffsetFromPageToken(pageToken)
 		if err != nil {
 			t.Fatalf("%+v", err)
 		}
 		if pageSize == 0 {
 			t.Fatalf("pagesize must be > 0 when using a page token")
 		}
-		rowsJSON = rowsJSON[((pageOffset - 1) * pageSize):]
+		rowsJSON = rowsJSON[itemOffset:]
 	}
 	if pageSize > 0 && pageSize < len(rowsJSON) {
 		rowsJSON = rowsJSON[0:pageSize]
@@ -502,7 +502,7 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 					Namespace: globalPackagingNamespace,
 				},
 				PaginationOptions: &corev1.PaginationOptions{
-					PageToken: "2",
+					PageToken: "1",
 					PageSize:  1,
 				},
 			},
@@ -531,7 +531,7 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 						},
 					},
 				},
-				NextPageToken: "3",
+				NextPageToken: "2",
 				Categories:    []string{"cat1"},
 			},
 		},
@@ -708,12 +708,6 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 				mock.ExpectQuery("SELECT info FROM").
 					WithArgs(tc.expectDBQueryNamespace, server.globalPackagingNamespace).
 					WillReturnRows(rows)
-
-				if tc.request.GetPaginationOptions().GetPageSize() > 0 {
-					mock.ExpectQuery("SELECT count").
-						WithArgs(tc.request.Context.Namespace, server.globalPackagingNamespace).
-						WillReturnRows(sqlmock.NewRows([]string{"count"}).AddRow(3))
-				}
 			}
 
 			availablePackageSummaries, err := server.GetAvailablePackageSummaries(context.Background(), tc.request)
@@ -1575,7 +1569,7 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 						},
 					},
 				},
-				NextPageToken: "3",
+				NextPageToken: "2",
 			},
 		},
 		{
