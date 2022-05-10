@@ -24,6 +24,7 @@ Apart from the basic functionality tests run by the chart tests, this project co
 These tests are based on [Puppeteer](https://github.com/GoogleChrome/puppeteer). Puppeteer is a NodeJS library that provides a high-level API to control Chrome or Chromium (in headless mode by default).
 
 On top of Puppeteer, we are using the `jest-puppeteer` module that allows us to run these tests using the same syntax as in the rest of the unit tests that we have in the project.
+
 > NOTE: this information is now outdated. We are using [playwright](https://playwright.dev) instead. This documentation will be eventually updated accordingly.
 
 The aforementioned [integration](../../../integration) folder is self-contained, that is, it contains every required dependency to run the browser tests in a separate [package.json](../../integration/package.json). Furthermore, a [Dockerfile](../../../integration/Dockerfile) is used to generate an image with [all the dependencies](https://github.com/puppeteer/puppeteer/blob/main/docs/troubleshooting.md#chrome-headless-doesnt-launch-on-unix) needed to run the browser tests.

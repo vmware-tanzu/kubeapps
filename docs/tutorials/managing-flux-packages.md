@@ -22,7 +22,6 @@ Historically, Kubeapps was initially developed to solely manage [Helm Charts](ht
 
 > **TIP**: Find more information about the architectural evolution at [this video](https://www.youtube.com/watch?v=rS2AhcIPQEs) and [this technical documentation](../developer/kubeapps-apis.md).
 
-
 [Flux](https://fluxcd.io/) is a set of continuous and progressive delivery solutions for Kubernetes that are open and extensible. In particular, the Flux helm-controller allows you to [manage Helm chart releases](https://fluxcd.io/docs/guides/helmreleases/) declaratively with Kubernetes manifests. Similarly, the [Flux HelmRepository](https://fluxcd.io/docs/guides/helmreleases/#helm-repository) can be used to manage Helm repositories declaratively.
 
 This guide walks you through the process of using Kubeapps for configuring and deploying Helm charts via Flux.
@@ -49,8 +48,8 @@ kubectl --namespace flux-system get pod
 
 The two custom resources that are relevant for our Kubeapps integration are:
 
- - [HelmRepository](https://fluxcd.io/docs/guides/helmreleases/#helm-repository) stores a reference to a traditional Helm repository and fetches the repository index on an interval, similar to Kubeapps' built-in `AppRepository` resource.
- - [HelmRelease](https://fluxcd.io/docs/guides/helmreleases/#define-a-helm-release) defines the intended state of a Helm release, supporting a multitude of features, the most important of which for our purposes is a semver version option, so that the Flux reconciliation process will always ensure that the latest matching version is installed.
+- [HelmRepository](https://fluxcd.io/docs/guides/helmreleases/#helm-repository) stores a reference to a traditional Helm repository and fetches the repository index on an interval, similar to Kubeapps' built-in `AppRepository` resource.
+- [HelmRelease](https://fluxcd.io/docs/guides/helmreleases/#define-a-helm-release) defines the intended state of a Helm release, supporting a multitude of features, the most important of which for our purposes is a semver version option, so that the Flux reconciliation process will always ensure that the latest matching version is installed.
 
 ## Using Kubeapps to manage Flux Helm releases
 

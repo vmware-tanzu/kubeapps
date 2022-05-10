@@ -1,10 +1,9 @@
 ---
 name: Feature request
 about: Suggest a new feature for Kubeapps
-title: ''
+title: ""
 labels: kind/feature
-assignees: ''
-
+assignees: ""
 ---
 
 **Summary**
@@ -17,7 +16,7 @@ Reasons behind this change and why it's relevant now. "The why"
 A clear and concise description of what you want to happen, including all scenarios.
 
 **Acceptance criteria**
-A formalized list of conditions that ensure that the feature can be considered as finished. 
+A formalized list of conditions that ensure that the feature can be considered as finished.
 
 **Additional context**
 Add any other context or screenshots about the feature request here.
