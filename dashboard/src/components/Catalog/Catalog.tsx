@@ -266,7 +266,7 @@ export default function Catalog() {
     .filter(
       c =>
         filters[filterNames.CATEGORY].length === 0 ||
-        intersection(filters[filterNames.CATEGORY], getOperatorCategories(c)).length > 0,
+        intersection(filters[filterNames.CATEGORY], getOperatorCategories(c)).length,
     );
 
   // Required to have the latest value of page
