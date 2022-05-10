@@ -47,7 +47,7 @@ require (
 	github.com/cppforlife/go-cli-ui v0.0.0-20200716203538-1e47f820817f
 	github.com/disintegration/imaging v1.6.2
 	github.com/distribution/distribution v2.8.1+incompatible
-	github.com/fluxcd/helm-controller/api v0.20.1
+	github.com/fluxcd/helm-controller/api v0.21.0
 	github.com/fluxcd/pkg/apis/meta v0.13.0
 	github.com/fluxcd/source-controller/api v0.24.3
 	github.com/go-redis/redis/v8 v8.11.5
@@ -85,8 +85,8 @@ require (
 	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b
 	helm.sh/helm/v3 v3.8.2
 	k8s.io/api v0.23.5
-	k8s.io/apiextensions-apiserver v0.23.5
-	k8s.io/apimachinery v0.23.5
+	k8s.io/apiextensions-apiserver v0.23.6
+	k8s.io/apimachinery v0.23.6
 	k8s.io/apiserver v0.23.5
 	k8s.io/cli-runtime v0.23.5
 	k8s.io/client-go v0.23.5
