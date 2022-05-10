@@ -24,7 +24,7 @@ const { createAction } = deprecated;
 export const requestAvailablePackageSummaries = createAction(
   "REQUEST_AVAILABLE_PACKAGE_SUMMARIES",
   resolve => {
-    return (page?: number) => resolve(page);
+    return (paginationToken: string) => resolve(paginationToken);
   },
 );
 
@@ -103,22 +103,22 @@ export function fetchAvailablePackageSummaries(
   cluster: string,
   namespace: string,
   repos: string,
-  page: number,
+  paginationToken: string,
   size: number,
   query?: string,
 ): ThunkAction<Promise<void>, IStoreState, null, PackagesAction> {
   return async dispatch => {
-    dispatch(requestAvailablePackageSummaries(page));
+    dispatch(requestAvailablePackageSummaries(paginationToken));
     try {
       const response = await PackagesService.getAvailablePackageSummaries(
         cluster,
         namespace,
         repos,
-        page,
+        paginationToken,
         size,
         query,
       );
-      dispatch(receiveAvailablePackageSummaries({ response, page }));
+      dispatch(receiveAvailablePackageSummaries({ response, paginationToken }));
     } catch (e: any) {
       dispatch(createErrorPackage(new FetchError(e.message)));
     }
