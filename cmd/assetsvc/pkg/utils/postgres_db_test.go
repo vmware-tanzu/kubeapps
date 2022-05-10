@@ -4,7 +4,7 @@
 // Currently these tests will be skipped entirely unless the
 // ENABLE_PG_INTEGRATION_TESTS env var is set.
 // Run the local postgres with
-// docker run --publish 5432:5432 -e ALLOW_EMPTY_PASSWORD=yes bitnami/postgresql:14.2.0-debian-10-r35
+// docker run --publish 5432:5432 -e ALLOW_EMPTY_PASSWORD=yes bitnami/postgresql:14.2.0-debian-10-r88
 // in another terminal.
 package utils
 
@@ -374,13 +374,10 @@ func TestGetPaginatedChartList(t *testing.T) {
 				}
 			}
 
-			charts, numPages, err := pam.GetPaginatedChartListWithFilters(ChartQuery{Namespace: tc.namespace, Repos: []string{tc.repo}}, 1, 10)
+			charts, err := pam.GetPaginatedChartListWithFilters(ChartQuery{Namespace: tc.namespace, Repos: []string{tc.repo}}, 0, 10)
 
 			if got, want := err, tc.expectedErr; got != want {
 				t.Fatalf("In '"+tc.name+"': "+"got err: %+v, want: %+v", got, want)
-			}
-			if got, want := numPages, tc.expectedNumPages; got != want {
-				t.Fatalf("In '"+tc.name+"': "+"got numPages: %+v, want: %+v", got, want)
 			}
 			if got, want := charts, tc.expectedCharts; !cmp.Equal(want, got) {
 				t.Errorf("In '"+tc.name+"': "+"mismatch (-want +got):\n%s", cmp.Diff(want, got))
@@ -496,7 +493,7 @@ func TestGetChartsWithFilters(t *testing.T) {
 				}
 			}
 
-			charts, _, err := pam.GetPaginatedChartListWithFilters(ChartQuery{Namespace: tc.namespace, ChartName: tc.chartName, Version: tc.chartVersion, AppVersion: tc.appVersion}, 1, 0)
+			charts, err := pam.GetPaginatedChartListWithFilters(ChartQuery{Namespace: tc.namespace, ChartName: tc.chartName, Version: tc.chartVersion, AppVersion: tc.appVersion}, 0, 0)
 			if err != nil {
 				t.Fatalf("%+v", err)
 			}
