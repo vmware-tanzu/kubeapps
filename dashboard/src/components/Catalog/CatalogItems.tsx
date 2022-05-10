@@ -15,7 +15,7 @@ export interface ICatalogItemsProps {
   csvs: IClusterServiceVersion[];
   cluster: string;
   namespace: string;
-  page: number;
+  isFirstPage: boolean;
   hasLoadedFirstPage: boolean;
   hasFinishedFetching: boolean;
 }
@@ -25,7 +25,7 @@ export default function CatalogItems({
   csvs,
   cluster,
   namespace,
-  page,
+  isFirstPage,
   hasLoadedFirstPage,
   hasFinishedFetching,
 }: ICatalogItemsProps) {
@@ -76,7 +76,7 @@ export default function CatalogItems({
   );
 
   const sortedItems =
-    !hasLoadedFirstPage && page === 1
+    !hasLoadedFirstPage && isFirstPage
       ? []
       : packageItems
           .concat(crdItems)

@@ -39,7 +39,7 @@ authProxy:
   clientSecret: <your app secret>
   cookieSecret: <your random seed string for secure cookies>
   scope: openid email group_names
-  additionalFlags:
+  extraFlags:
     # VMware Cloud Services has different endpoints for production and staging:
     # To use the staging endpoints, replace:
     # 'gaz.csp-vidm-prod.com' with 'gaz-preview.csp-vidm-prod.com'

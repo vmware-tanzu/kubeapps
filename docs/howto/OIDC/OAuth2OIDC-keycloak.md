@@ -297,7 +297,7 @@ authProxy:
   provider: oidc
   clientID: kubeapps
   clientSecret: 5b824b57-dc17-4ac8-8043-947d5edcfb03
-
+ extraFlags:
   ## cookieSecret is used by oauth2-proxy to encrypt any credentials so that it requires
   ## no storage. Note that it must be a particular number of bytes. Recommend using the
   ## following to generate a cookieSecret as per the oauth2 configuration documentation
@@ -308,7 +308,6 @@ authProxy:
   emailDomain: "*"
   ## Additional flags for oauth2-proxy
   ##
-  additionalFlags:
     - --ssl-insecure-skip-verify
     - --cookie-secure=false
     - --scope=openid email groups

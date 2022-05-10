@@ -255,6 +255,28 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 			},
 			statusCode: codes.NotFound,
 		},
+		{
+			name: "it should defer to the plugin pagination and sorting for a single plugin",
+			configuredPlugins: []pkgPluginsWithServer{
+				mockedPackagingPlugin1,
+			},
+			request: &corev1.GetAvailablePackageSummariesRequest{
+				Context: &corev1.Context{
+					Cluster:   "",
+					Namespace: globalPackagingNamespace,
+				},
+			},
+
+			expectedResponse: &corev1.GetAvailablePackageSummariesResponse{
+				AvailablePackageSummaries: []*corev1.AvailablePackageSummary{
+					plugin_test.MakeAvailablePackageSummary("pkg-2", mockedPackagingPlugin1.plugin),
+					plugin_test.MakeAvailablePackageSummary("pkg-1", mockedPackagingPlugin1.plugin),
+				},
+				Categories:    []string{"cat-1"},
+				NextPageToken: "1",
+			},
+			statusCode: codes.OK,
+		},
 	}
 
 	for _, tc := range testCases {
