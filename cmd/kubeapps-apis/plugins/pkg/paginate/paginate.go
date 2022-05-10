@@ -6,7 +6,6 @@ package paginate
 import (
 	"strconv"
 
-	corev1 "github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
@@ -17,6 +16,7 @@ import (
 // contains an offset to the item, not the page so we can
 // aggregate paginated results. Same as helm plug-in.
 // Update this when helm plug-in does so
+// TODO(minelson) This will be removed once the core pagination is updated.
 func PageOffsetFromPageToken(pageToken string) (int, error) {
 	if pageToken == "" {
 		return 0, nil
@@ -27,24 +27,6 @@ func PageOffsetFromPageToken(pageToken string) (int, error) {
 			pageToken, err)
 	}
 	return int(offset), nil
-}
-
-func PageOffsetFromInstalledRequest(request *corev1.GetInstalledPackageSummariesRequest) (int, error) {
-	offset, err := PageOffsetFromPageToken(request.GetPaginationOptions().GetPageToken())
-	if err != nil {
-		return 0, err
-	} else {
-		return offset, nil
-	}
-}
-
-func PageOffsetFromAvailableRequest(request *corev1.GetAvailablePackageSummariesRequest) (int, error) {
-	offset, err := PageOffsetFromPageToken(request.GetPaginationOptions().GetPageToken())
-	if err != nil {
-		return 0, err
-	} else {
-		return offset, nil
-	}
 }
 
 // Plugins should be designed to use an offset to the next item, rather than the
