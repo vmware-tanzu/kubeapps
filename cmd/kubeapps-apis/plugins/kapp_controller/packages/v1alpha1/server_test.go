@@ -623,7 +623,7 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 			},
 		},
 		{
-			name: "it returns paginated carvel package summaries with an offset",
+			name: "it returns paginated carvel package summaries with an item offset (not a page offset)",
 			existingObjects: []runtime.Object{
 				&datapackagingv1alpha1.PackageMetadata{
 					TypeMeta: metav1.TypeMeta{
@@ -665,6 +665,26 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 						ProviderName:       "Tombi!",
 					},
 				},
+				&datapackagingv1alpha1.PackageMetadata{
+					TypeMeta: metav1.TypeMeta{
+						Kind:       pkgMetadataResource,
+						APIVersion: datapackagingAPIVersion,
+					},
+					ObjectMeta: metav1.ObjectMeta{
+						Namespace: "default",
+						Name:      "tunotherone.foo.example.com",
+					},
+					Spec: datapackagingv1alpha1.PackageMetadataSpec{
+						DisplayName:        "Tunotherone!",
+						IconSVGBase64:      "Tm90IHJlYWxseSBTVkcK",
+						ShortDescription:   "Another awesome game from the 90's",
+						LongDescription:    "Tunotherone! is another open world platform-adventure game with RPG elements.",
+						Categories:         []string{"platforms", "rpg"},
+						Maintainers:        []datapackagingv1alpha1.Maintainer{{Name: "person1"}, {Name: "person2"}},
+						SupportDescription: "Some support information",
+						ProviderName:       "tunotherone",
+					},
+				},
 				&datapackagingv1alpha1.Package{
 					TypeMeta: metav1.TypeMeta{
 						Kind:       pkgResource,
@@ -701,10 +721,28 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 						ReleasedAt:                      metav1.Time{time.Date(1997, time.December, 25, 0, 0, 0, 0, time.UTC)},
 					},
 				},
+				&datapackagingv1alpha1.Package{
+					TypeMeta: metav1.TypeMeta{
+						Kind:       pkgResource,
+						APIVersion: datapackagingAPIVersion,
+					},
+					ObjectMeta: metav1.ObjectMeta{
+						Namespace: "default",
+						Name:      "tunotherone.foo.example.com.3.2.5",
+					},
+					Spec: datapackagingv1alpha1.PackageSpec{
+						RefName:                         "tunotherone.foo.example.com",
+						Version:                         "3.2.5",
+						Licenses:                        []string{"my-license"},
+						ReleaseNotes:                    "release notes",
+						CapactiyRequirementsDescription: "capacity description",
+						ReleasedAt:                      metav1.Time{time.Date(1997, time.December, 25, 0, 0, 0, 0, time.UTC)},
+					},
+				},
 			},
 			paginationOptions: corev1.PaginationOptions{
 				PageToken: "1",
-				PageSize:  1,
+				PageSize:  2,
 			},
 			expectedPackages: []*corev1.AvailablePackageSummary{
 				{
@@ -721,6 +759,22 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 					},
 					IconUrl:          "data:image/svg+xml;base64,Tm90IHJlYWxseSBTVkcK",
 					ShortDescription: "An awesome game from the 90's",
+					Categories:       []string{"platforms", "rpg"},
+				},
+				{
+					AvailablePackageRef: &corev1.AvailablePackageReference{
+						Context:    defaultContext,
+						Plugin:     &pluginDetail,
+						Identifier: "tunotherone.foo.example.com",
+					},
+					Name:        "tunotherone.foo.example.com",
+					DisplayName: "Tunotherone!",
+					LatestVersion: &corev1.PackageAppVersion{
+						PkgVersion: "3.2.5",
+						AppVersion: "3.2.5",
+					},
+					IconUrl:          "data:image/svg+xml;base64,Tm90IHJlYWxseSBTVkcK",
+					ShortDescription: "Another awesome game from the 90's",
 					Categories:       []string{"platforms", "rpg"},
 				},
 			},
@@ -1512,7 +1566,7 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 					Status: packagingv1alpha1.PackageInstallStatus{
 						GenericStatus: kappctrlv1alpha1.GenericStatus{
 							ObservedGeneration: 1,
-							Conditions: []kappctrlv1alpha1.AppCondition{{
+							Conditions: []kappctrlv1alpha1.Condition{{
 								Type:    kappctrlv1alpha1.ReconcileSucceeded,
 								Status:  k8scorev1.ConditionTrue,
 								Reason:  "baz",
@@ -1646,7 +1700,7 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 					Status: packagingv1alpha1.PackageInstallStatus{
 						GenericStatus: kappctrlv1alpha1.GenericStatus{
 							ObservedGeneration: 1,
-							Conditions: []kappctrlv1alpha1.AppCondition{{
+							Conditions: []kappctrlv1alpha1.Condition{{
 								Type:    kappctrlv1alpha1.ReconcileSucceeded,
 								Status:  k8scorev1.ConditionTrue,
 								Reason:  "baz",
@@ -1774,7 +1828,7 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 					Status: packagingv1alpha1.PackageInstallStatus{
 						GenericStatus: kappctrlv1alpha1.GenericStatus{
 							ObservedGeneration: 1,
-							Conditions: []kappctrlv1alpha1.AppCondition{{
+							Conditions: []kappctrlv1alpha1.Condition{{
 								Type:    kappctrlv1alpha1.ReconcileSucceeded,
 								Status:  k8scorev1.ConditionTrue,
 								Reason:  "baz",
@@ -1936,7 +1990,7 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 					Status: packagingv1alpha1.PackageInstallStatus{
 						GenericStatus: kappctrlv1alpha1.GenericStatus{
 							ObservedGeneration: 1,
-							Conditions: []kappctrlv1alpha1.AppCondition{{
+							Conditions: []kappctrlv1alpha1.Condition{{
 								Type:    kappctrlv1alpha1.ReconcileSucceeded,
 								Status:  k8scorev1.ConditionTrue,
 								Reason:  "baz",
@@ -1980,7 +2034,7 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 					Status: packagingv1alpha1.PackageInstallStatus{
 						GenericStatus: kappctrlv1alpha1.GenericStatus{
 							ObservedGeneration: 1,
-							Conditions: []kappctrlv1alpha1.AppCondition{{
+							Conditions: []kappctrlv1alpha1.Condition{{
 								Type:    kappctrlv1alpha1.ReconcileSucceeded,
 								Status:  k8scorev1.ConditionTrue,
 								Reason:  "baz",
@@ -2270,7 +2324,7 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 					Status: packagingv1alpha1.PackageInstallStatus{
 						GenericStatus: kappctrlv1alpha1.GenericStatus{
 							ObservedGeneration: 1,
-							Conditions: []kappctrlv1alpha1.AppCondition{{
+							Conditions: []kappctrlv1alpha1.Condition{{
 								Type:    kappctrlv1alpha1.ReconcileSucceeded,
 								Status:  k8scorev1.ConditionTrue,
 								Reason:  "baz",
@@ -2405,7 +2459,7 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 					Status: packagingv1alpha1.PackageInstallStatus{
 						GenericStatus: kappctrlv1alpha1.GenericStatus{
 							ObservedGeneration: 1,
-							Conditions: []kappctrlv1alpha1.AppCondition{{
+							Conditions: []kappctrlv1alpha1.Condition{{
 								Type:    kappctrlv1alpha1.ReconcileSucceeded,
 								Status:  k8scorev1.ConditionTrue,
 								Reason:  "baz",
@@ -2612,7 +2666,7 @@ func TestGetInstalledPackageDetail(t *testing.T) {
 					Status: packagingv1alpha1.PackageInstallStatus{
 						GenericStatus: kappctrlv1alpha1.GenericStatus{
 							ObservedGeneration: 1,
-							Conditions: []kappctrlv1alpha1.AppCondition{{
+							Conditions: []kappctrlv1alpha1.Condition{{
 								Type:    kappctrlv1alpha1.ReconcileSucceeded,
 								Status:  k8scorev1.ConditionTrue,
 								Reason:  "baz",
@@ -2810,7 +2864,7 @@ fetchStderr
 					Status: packagingv1alpha1.PackageInstallStatus{
 						GenericStatus: kappctrlv1alpha1.GenericStatus{
 							ObservedGeneration: 1,
-							Conditions: []kappctrlv1alpha1.AppCondition{{
+							Conditions: []kappctrlv1alpha1.Condition{{
 								Type:    kappctrlv1alpha1.ReconcileSucceeded,
 								Status:  k8scorev1.ConditionTrue,
 								Reason:  "baz",
@@ -5066,7 +5120,7 @@ func TestUpdateInstalledPackage(t *testing.T) {
 					Status: packagingv1alpha1.PackageInstallStatus{
 						GenericStatus: kappctrlv1alpha1.GenericStatus{
 							ObservedGeneration: 1,
-							Conditions: []kappctrlv1alpha1.AppCondition{{
+							Conditions: []kappctrlv1alpha1.Condition{{
 								Type:    kappctrlv1alpha1.ReconcileSucceeded,
 								Status:  k8scorev1.ConditionTrue,
 								Reason:  "baz",
@@ -5131,7 +5185,7 @@ func TestUpdateInstalledPackage(t *testing.T) {
 				Status: packagingv1alpha1.PackageInstallStatus{
 					GenericStatus: kappctrlv1alpha1.GenericStatus{
 						ObservedGeneration: 1,
-						Conditions: []kappctrlv1alpha1.AppCondition{{
+						Conditions: []kappctrlv1alpha1.Condition{{
 							Type:    kappctrlv1alpha1.ReconcileSucceeded,
 							Status:  k8scorev1.ConditionTrue,
 							Reason:  "baz",
@@ -5241,7 +5295,7 @@ func TestUpdateInstalledPackage(t *testing.T) {
 					Status: packagingv1alpha1.PackageInstallStatus{
 						GenericStatus: kappctrlv1alpha1.GenericStatus{
 							ObservedGeneration: 1,
-							Conditions: []kappctrlv1alpha1.AppCondition{{
+							Conditions: []kappctrlv1alpha1.Condition{{
 								Type:    kappctrlv1alpha1.ReconcileSucceeded,
 								Status:  k8scorev1.ConditionTrue,
 								Reason:  "baz",
@@ -5373,7 +5427,7 @@ func TestDeleteInstalledPackage(t *testing.T) {
 					Status: packagingv1alpha1.PackageInstallStatus{
 						GenericStatus: kappctrlv1alpha1.GenericStatus{
 							ObservedGeneration: 1,
-							Conditions: []kappctrlv1alpha1.AppCondition{{
+							Conditions: []kappctrlv1alpha1.Condition{{
 								Type:    kappctrlv1alpha1.ReconcileSucceeded,
 								Status:  k8scorev1.ConditionTrue,
 								Reason:  "baz",
@@ -5443,7 +5497,7 @@ func TestDeleteInstalledPackage(t *testing.T) {
 					Status: packagingv1alpha1.PackageInstallStatus{
 						GenericStatus: kappctrlv1alpha1.GenericStatus{
 							ObservedGeneration: 1,
-							Conditions: []kappctrlv1alpha1.AppCondition{{
+							Conditions: []kappctrlv1alpha1.Condition{{
 								Type:    kappctrlv1alpha1.ReconcileSucceeded,
 								Status:  k8scorev1.ConditionTrue,
 								Reason:  "baz",
@@ -5565,7 +5619,7 @@ func TestGetInstalledPackageResourceRefs(t *testing.T) {
 					Status: packagingv1alpha1.PackageInstallStatus{
 						GenericStatus: kappctrlv1alpha1.GenericStatus{
 							ObservedGeneration: 1,
-							Conditions: []kappctrlv1alpha1.AppCondition{{
+							Conditions: []kappctrlv1alpha1.Condition{{
 								Type:    kappctrlv1alpha1.ReconcileSucceeded,
 								Status:  k8scorev1.ConditionTrue,
 								Reason:  "baz",
@@ -5679,7 +5733,7 @@ func TestGetInstalledPackageResourceRefs(t *testing.T) {
 					Status: packagingv1alpha1.PackageInstallStatus{
 						GenericStatus: kappctrlv1alpha1.GenericStatus{
 							ObservedGeneration: 1,
-							Conditions: []kappctrlv1alpha1.AppCondition{{
+							Conditions: []kappctrlv1alpha1.Condition{{
 								Type:    kappctrlv1alpha1.ReconcileSucceeded,
 								Status:  k8scorev1.ConditionTrue,
 								Reason:  "baz",

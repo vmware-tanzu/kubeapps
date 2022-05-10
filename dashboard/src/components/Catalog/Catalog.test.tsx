@@ -36,6 +36,7 @@ const defaultPackageState = {
   selected: {} as IPackageState["selected"],
   items: [],
   categories: [],
+  nextPageToken: "",
   size: 20,
 } as IPackageState;
 const defaultProps = {
@@ -464,14 +465,14 @@ describe("pagination and package fetching", () => {
       </MemoryRouter>,
     );
 
-    expect(wrapper.find(CatalogItems).prop("page")).toBe(0);
+    expect(wrapper.find(CatalogItems).prop("isFirstPage")).toBe(false);
     expect(wrapper.find(PackageCatalogItem).length).toBe(0);
     expect(fetchAvailablePackageSummaries).toHaveBeenNthCalledWith(
       1,
       "default-cluster",
       "kubeapps",
       "",
-      0,
+      "",
       20,
       "",
     );
@@ -496,13 +497,13 @@ describe("pagination and package fetching", () => {
       </MemoryRouter>,
     );
 
-    expect(wrapper.find(CatalogItems).prop("page")).toBe(0);
+    expect(wrapper.find(CatalogItems).prop("isFirstPage")).toBe(false);
     expect(wrapper.find(PackageCatalogItem).length).toBe(1);
     expect(fetchAvailablePackageSummaries).toHaveBeenCalledWith(
       "default-cluster",
       "kubeapps",
       "",
-      0,
+      "",
       20,
       "",
     );
@@ -517,6 +518,29 @@ describe("pagination and package fetching", () => {
       hasFinishedFetching: true,
       isFetching: false,
       items: [availablePkgSummary1, availablePkgSummary2],
+      nextPageToken: "nextPageToken",
+    } as IPackageState;
+    const wrapper = mountWrapper(
+      getStore({ ...populatedState, packages: packages } as IStoreState),
+      <MemoryRouter initialEntries={[routePathParam]}>
+        <Route path={routePath}>
+          <Catalog />
+        </Route>
+      </MemoryRouter>,
+    );
+
+    expect(wrapper.find(PackageCatalogItem).length).toBe(2);
+  });
+
+  it("does not fetch again after finishing pagination", () => {
+    const fetchAvailablePackageSummaries = jest.fn();
+    actions.availablepackages.fetchAvailablePackageSummaries = fetchAvailablePackageSummaries;
+
+    const packages = {
+      ...defaultPackageState,
+      hasFinishedFetching: true,
+      isFetching: false,
+      items: [availablePkgSummary1],
     } as any;
     const wrapper = mountWrapper(
       getStore({ ...populatedState, packages: packages } as IStoreState),
@@ -527,22 +551,15 @@ describe("pagination and package fetching", () => {
       </MemoryRouter>,
     );
 
-    expect(wrapper.find(CatalogItems).prop("page")).toBe(0);
-    expect(wrapper.find(PackageCatalogItem).length).toBe(2);
-    expect(fetchAvailablePackageSummaries).toHaveBeenCalledWith(
-      "default-cluster",
-      "kubeapps",
-      "",
-      0,
-      20,
-      "",
-    );
+    expect(wrapper.find(CatalogItems).prop("isFirstPage")).toBe(false);
+    expect(wrapper.find(PackageCatalogItem).length).toBe(1);
+    expect(fetchAvailablePackageSummaries).not.toHaveBeenCalled();
   });
 
   describe("pagination", () => {
     let spyOnUseState: jest.SpyInstance;
     const setState = jest.fn();
-    const setPage = jest.fn();
+    const setPageNum = jest.fn();
 
     beforeEach(() => {
       spyOnUseState = jest
@@ -554,8 +571,8 @@ describe("pagination and package fetching", () => {
             return [true, setState];
           }
           if (init === 0) {
-            // Mocking the result of setPage to ensure it's called
-            return [0, setPage];
+            // Mocking the result of setPageNum to ensure it's called
+            return [0, setPageNum];
           }
           return [init, setState];
         });
@@ -590,7 +607,7 @@ describe("pagination and package fetching", () => {
           </Route>
         </MemoryRouter>,
       );
-      expect(setPage).toHaveBeenCalledWith(0);
+      expect(setPageNum).toHaveBeenCalledWith(0);
     });
     // TODO(agamez): add a test case covering it "resets page when one of the filters changes"
     // https://github.com/vmware-tanzu/kubeapps/pull/2264/files/0d3c77448543668255809bf05039aca704cf729f..22343137efb1c2292b0aa4795f02124306cb055e#r565486271

@@ -64,24 +64,31 @@ func (s packagesServer) GetAvailablePackageSummaries(ctx context.Context, reques
 		return nil, status.Errorf(codes.InvalidArgument, "Unable to intepret page token %q: %v", request.GetPaginationOptions().GetPageToken(), err)
 	}
 
-	// TODO(agamez): temporarily fetching all the results (size=0) and then paginate them
-	// ideally, paginate each plugin request and then aggregate results.
-	requestN := request
-	requestN.PaginationOptions = &packages.PaginationOptions{
-		PageToken: "0",
-		PageSize:  0,
+	if len(s.pluginsWithServers) > 1 {
+		// TODO(agamez): if there is more than one packaging plugin, we are
+		// temporarily fetching all the results (size=0) and then paginate them
+		// ideally, paginate each plugin request and then aggregate results.
+		request.PaginationOptions = &packages.PaginationOptions{
+			PageToken: "0",
+			PageSize:  0,
+		}
 	}
 
 	pkgs := []*packages.AvailablePackageSummary{}
 	categories := []string{}
 
+	// Only return a next page token if the request was for pagination and
+	// the results are a full page.
+	nextPageToken := ""
+
 	// TODO: We can do these in parallel in separate go routines.
 	for _, p := range s.pluginsWithServers {
 		if pageSize == 0 || len(pkgs) <= (pageOffset*int(pageSize)+int(pageSize)) {
-			response, err := p.server.GetAvailablePackageSummaries(ctx, requestN)
+			response, err := p.server.GetAvailablePackageSummaries(ctx, request)
 			if err != nil {
 				return nil, status.Errorf(status.Convert(err).Code(), "Invalid GetAvailablePackageSummaries response from the plugin %v: %v", p.plugin.Name, err)
 			}
+			nextPageToken = response.NextPageToken
 
 			categories = append(categories, response.Categories...)
 
@@ -99,29 +106,29 @@ func (s packagesServer) GetAvailablePackageSummaries(ctx context.Context, reques
 	// Delete duplicate categories and sort by name
 	From(categories).Distinct().OrderBy(func(i interface{}) interface{} { return i }).ToSlice(&categories)
 
-	// Only return a next page token if the request was for pagination and
-	// the results are a full page.
-	nextPageToken := ""
-	if pageSize > 0 {
-		// Using https://github.com/ahmetb/go-linq for simplicity
-		From(pkgs).
-			// Order by package name, regardless of the plugin
-			OrderBy(func(pkg interface{}) interface{} {
-				return pkg.(*packages.AvailablePackageSummary).Name + pkg.(*packages.AvailablePackageSummary).AvailablePackageRef.Plugin.Name
-			}).
-			Skip(pageOffset * int(pageSize)).
-			Take(int(pageSize)).
-			ToSlice(&pkgs)
+	if len(s.pluginsWithServers) > 1 {
+		nextPageToken = ""
+		if pageSize > 0 {
+			// Using https://github.com/ahmetb/go-linq for simplicity
+			From(pkgs).
+				// Order by package name, regardless of the plugin
+				OrderBy(func(pkg interface{}) interface{} {
+					return pkg.(*packages.AvailablePackageSummary).Name + pkg.(*packages.AvailablePackageSummary).AvailablePackageRef.Plugin.Name
+				}).
+				Skip(pageOffset * int(pageSize)).
+				Take(int(pageSize)).
+				ToSlice(&pkgs)
 
-		if len(pkgs) == int(pageSize) {
-			nextPageToken = fmt.Sprintf("%d", pageOffset+1)
+			if len(pkgs) == int(pageSize) {
+				nextPageToken = fmt.Sprintf("%d", pageOffset+1)
+			}
+		} else {
+			From(pkgs).
+				// Order by package name, regardless of the plugin
+				OrderBy(func(pkg interface{}) interface{} {
+					return pkg.(*packages.AvailablePackageSummary).Name + pkg.(*packages.AvailablePackageSummary).AvailablePackageRef.Plugin.Name
+				}).ToSlice(&pkgs)
 		}
-	} else {
-		From(pkgs).
-			// Order by package name, regardless of the plugin
-			OrderBy(func(pkg interface{}) interface{} {
-				return pkg.(*packages.AvailablePackageSummary).Name + pkg.(*packages.AvailablePackageSummary).AvailablePackageRef.Plugin.Name
-			}).ToSlice(&pkgs)
 	}
 
 	return &packages.GetAvailablePackageSummariesResponse{

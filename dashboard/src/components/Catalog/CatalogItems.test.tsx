@@ -63,7 +63,7 @@ const defaultProps = {
   cluster: "default",
   namespace: "default",
   hasLoadedFirstPage: true,
-  page: 1,
+  isFirstPage: true,
   hasFinishedFetching: true,
 } as ICatalogItemsProps;
 const populatedProps = {
@@ -91,7 +91,7 @@ it("shows a message if no items are passed and it stopped fetching", () => {
 it("no items if it's fetching and it's the first page (prevents showing incomplete list during the first render)", () => {
   const wrapper = mountWrapper(
     defaultStore,
-    <CatalogItems {...populatedProps} hasLoadedFirstPage={false} page={1} />,
+    <CatalogItems {...populatedProps} hasLoadedFirstPage={false} isFirstPage={true} />,
   );
   const items = wrapper.find(CatalogItem);
   expect(items).toHaveLength(0);
@@ -100,7 +100,7 @@ it("no items if it's fetching and it's the first page (prevents showing incomple
 it("show items if it's fetching but it is NOT the first page (allow pagination without scrolling issues)", () => {
   const wrapper = mountWrapper(
     defaultStore,
-    <CatalogItems {...populatedProps} hasLoadedFirstPage={false} page={2} />,
+    <CatalogItems {...populatedProps} hasLoadedFirstPage={false} isFirstPage={false} />,
   );
   const items = wrapper.find(CatalogItem);
   expect(items).toHaveLength(3);
