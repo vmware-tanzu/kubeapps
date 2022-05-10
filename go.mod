@@ -44,7 +44,7 @@ require (
 	github.com/Masterminds/semver/v3 v3.1.1
 	github.com/ahmetb/go-linq/v3 v3.2.0
 	github.com/containerd/containerd v1.6.3
-	github.com/cppforlife/go-cli-ui v0.0.0-20200716203538-1e47f820817f
+	github.com/cppforlife/go-cli-ui v0.0.0-20220428182907-73db60c7611a
 	github.com/disintegration/imaging v1.6.2
 	github.com/distribution/distribution v2.8.1+incompatible
 	github.com/fluxcd/helm-controller/api v0.21.0
@@ -75,9 +75,9 @@ require (
 	github.com/urfave/negroni/v2 v2.0.2
 	github.com/vmware-tanzu/carvel-kapp-controller v0.36.1
 	github.com/vmware-tanzu/carvel-vendir v0.27.0
-	golang.org/x/net v0.0.0-20220412020605-290c469a71a5
+	golang.org/x/net v0.0.0-20220425223048-2871e0cb64e4
 	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c
-	google.golang.org/genproto v0.0.0-20220407144326-9054f6ed7bac
+	google.golang.org/genproto v0.0.0-20220505152158-f39f71e6c8f3
 	google.golang.org/grpc v1.46.0
 	google.golang.org/grpc/cmd/protoc-gen-go-grpc v1.2.0
 	google.golang.org/protobuf v1.28.0
