@@ -47,7 +47,7 @@ params:
   github_base_url: "https://github.com/vmware-tanzu/kubeapps"
   github_url: "https://github.com/vmware-tanzu/kubeapps/"
   googleSiteVerification: xxxx
-  gtmId: GTM-1874455-13
+  gtmId: UA-1874455-13
   oneTrustId: 3b23306b-6d55-4552-bcf0-1c1276db55e9-test
   sitename: Kubeapps
   slack_url: "https://kubernetes.slack.com/messages/kubeapps"
