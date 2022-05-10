@@ -4,11 +4,11 @@
 		<a href="{{ .Site.BaseURL }}"><img class="image" src="/img/kubeapps-logo.svg" alt="Logo" /></a>
 		<ul class="desktop-links">
 			<li><a href="/" {{ if (eq .RelPermalink "/")  }}class="active"{{ end }}>Home</a></li>
-			<li><a href="/plugins/" {{ if (eq .RelPermalink "/plugins/")  }}class="active"{{ end }}>Plugins</a></li>
 			<li><a href="/community/" {{ if (eq .RelPermalink "/community/")  }}class="active"{{ end }}>Community</a></li>
 			<li><a href="/resources/" {{ if (eq .RelPermalink "/resources/")  }}class="active"{{ end }}>Resources</a></li>
-			<li><a href="/blog/" {{ if or (eq .Page.Section "posts") (eq .Page.Section "tags") }}class="active"{{ end }}>Blog</a></li>
 			<li><a href="/docs/{{ $latest }}" {{ if (eq .Page.Section "docs") }}class="active"{{ end }}>Documentation</a></li>
+			<li><a target="_blank" rel="noopener" href="{{ .Site.Params.slack_url }}" ><img src="/img/slack.png" />Slack</a></li>
+			<li><a target="_blank" rel="noopener" href="{{ .Site.Params.github_url }}" ><img src="/img/github.svg" />GitHub</a></li>
 		</ul>
 		<button type="button" class="mobile" onclick="mobileNavToggle()">
 			<img class="collapsed-icon" src="/img/hamburger.svg" alt="Mobile nav icon">
@@ -17,10 +17,8 @@
 		<div id="mobile-menu" class="mobile-menu mobile">
 			<ul class="header-links">
 				<li><a href="/" {{ if (eq .RelPermalink "/")  }}class="active"{{ end }}>Home</a></li>
-				<li><a href="/plugins/" {{ if (eq .RelPermalink "/plugins/")  }}class="active"{{ end }}>Plugins</a></li>
 				<li><a href="/community/" {{ if (eq .RelPermalink "/community/")  }}class="active"{{ end }}>Community</a></li>
 				<li><a href="/resources/" {{ if (eq .RelPermalink "/resources/")  }}class="active"{{ end }}>Resources</a></li>
-				<li><a href="/blog/" {{ if or (eq .Page.Section "posts") (eq .Page.Section "tags") }}class="active"{{ end }}>Blog</a></li>
 				<li><a href="/docs/{{ $latest }}" {{ if (eq .Page.Section "docs") }}class="active"{{ end }}>Documentation</a></li>
 			</ul>
 			<div class="social">
