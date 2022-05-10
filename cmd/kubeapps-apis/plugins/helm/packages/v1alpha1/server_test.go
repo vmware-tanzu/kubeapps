@@ -11,6 +11,7 @@ import (
 	"net/url"
 	"os"
 	"regexp"
+	"runtime"
 	"sort"
 	"strings"
 	"testing"
@@ -44,7 +45,7 @@ import (
 	"helm.sh/helm/v3/pkg/storage"
 	"helm.sh/helm/v3/pkg/storage/driver"
 	authorizationv1 "k8s.io/api/authorization/v1"
-	"k8s.io/apimachinery/pkg/runtime"
+	k8sruntime "k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	dynfake "k8s.io/client-go/dynamic/fake"
 	typfake "k8s.io/client-go/kubernetes/fake"
@@ -83,7 +84,7 @@ func TestGetClient(t *testing.T) {
 		return clientgetter.NewBuilder().
 			WithTyped(typfake.NewSimpleClientset()).
 			WithDynamic(dynfake.NewSimpleDynamicClientWithCustomListKinds(
-				runtime.NewScheme(),
+				k8sruntime.NewScheme(),
 				map[schema.GroupVersionResource]string{
 					{Group: "foo", Version: "bar", Resource: "baz"}: "PackageList",
 				},
@@ -226,9 +227,9 @@ func makeChartRowsJSON(t *testing.T, charts []*models.Chart, pageToken string, p
 }
 
 // makeServer returns a server backed with an sql mock and a cleanup function
-func makeServer(t *testing.T, authorized bool, actionConfig *action.Configuration, objects ...runtime.Object) (*Server, sqlmock.Sqlmock, func()) {
+func makeServer(t *testing.T, authorized bool, actionConfig *action.Configuration, objects ...k8sruntime.Object) (*Server, sqlmock.Sqlmock, func()) {
 	// Creating the dynamic client
-	scheme := runtime.NewScheme()
+	scheme := k8sruntime.NewScheme()
 	err := v1alpha1.AddToScheme(scheme)
 	if err != nil {
 		t.Fatalf("%+v", err)
@@ -243,7 +244,7 @@ func makeServer(t *testing.T, authorized bool, actionConfig *action.Configuratio
 
 	// Creating an authorized clientGetter
 	clientSet := typfake.NewSimpleClientset()
-	clientSet.PrependReactor("create", "selfsubjectaccessreviews", func(action k8stesting.Action) (handled bool, ret runtime.Object, err error) {
+	clientSet.PrependReactor("create", "selfsubjectaccessreviews", func(action k8stesting.Action) (handled bool, ret k8sruntime.Object, err error) {
 		return true, &authorizationv1.SelfSubjectAccessReview{
 			Status: authorizationv1.SubjectAccessReviewStatus{Allowed: authorized},
 		}, nil
@@ -1184,6 +1185,10 @@ core:
 	opts := cmpopts.IgnoreUnexported(pkgutils.VersionsInSummary{})
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
+			// TODO(agamez): env vars and file paths should be handled properly for Windows operating system
+			if runtime.GOOS == "windows" {
+				t.Skip("Skipping in a Windows OS")
+			}
 			filename := ""
 			if tc.pluginYAMLConf != nil {
 				pluginJSONConf, err := yaml.YAMLToJSON(tc.pluginYAMLConf)
