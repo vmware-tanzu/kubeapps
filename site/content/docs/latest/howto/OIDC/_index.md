@@ -4,4 +4,4 @@ cascade:
   layout: docs
 ---
 
-{{%  readfile file="/content/docs/latest/howto/oidc/using-an-OIDC-provider-with-pinniped.md" %}}
+{{%  readfile file="/content/docs/latest/howto/OIDC/using-an-OIDC-provider-with-pinniped.md" %}}
