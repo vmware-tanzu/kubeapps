@@ -55,3 +55,4 @@ outputFormats:
   REDIRECTS:
     mediaType: "text/netlify"
     baseName: "_redirects"
+enableRobotsTXT: true

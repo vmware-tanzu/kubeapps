@@ -6,4 +6,4 @@ cascade:
 
 # Kubeapps documentation
 
-Go to [this section](./latest/) to get started.
+Explore the [latest version docs](./latest/) to get started.

@@ -2,9 +2,9 @@ toc:
   - title: About Kubeapps
     subfolderitems:
       - page: What is Kubeapps
-        url: /readme
+        url: /project/readme
       - page: Kubeapps chart
-        url: /chart-readme
+        url: /project/chart-readme
 
   - title: Tutorials
     subfolderitems:
@@ -78,16 +78,16 @@ toc:
   - title: About the project
     subfolderitems:
       - page: Adopters
-        url: /adopters
+        url: /project/adopters
       - page: Code of Conduct
-        url: /code_of-_onduct
+        url: /project/code-of-conduct
       - page: Contributing
-        url: /contributing
+        url: /project/contributing
       - page: Governance
-        url: /governance
+        url: /project/governance
       - page: Maintainers
-        url: /maintainers
+        url: /project/maintainers
       - page: Roadmap
-        url: /roadmap
+        url: /project/roadmap
       - page: Security
-        url: /security
+        url: /project/security
