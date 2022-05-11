@@ -22,9 +22,9 @@
 				<li><a href="/docs/{{ $latest }}" {{ if (eq .Page.Section "docs") }}class="active"{{ end }}>Documentation</a></li>
 			</ul>
 			<div class="social">
-				<a target="_blank" rel="noopener" href="#"><img src="/img/twitter.png" />Twitter</a>
-				<a target="_blank" rel="noopener" href="#"><img src="/img/github.svg" />GitHub</a>
-				<a target="_blank" rel="noopener" href="#"><img src="/img/slack.png" />Slack</a>
+				<a target="_blank" rel="noopener" href="{{ .Site.Params.twitter_url }}"><img src="/img/twitter.png" />Twitter</a>
+				<a target="_blank" rel="noopener" href="{{ .Site.Params.github_url }}"><img src="/img/github.svg" />GitHub</a>
+				<a target="_blank" rel="noopener" href="{{ .Site.Params.slack_url }}"><img src="/img/slack.png" />Slack</a>
 			</div>
 		</div>
 	</div>
