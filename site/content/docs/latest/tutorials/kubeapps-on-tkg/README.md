@@ -1,9 +1,3 @@
----
-version: latest
-cascade:
-  layout: docs
----
-
 # Deploy and Configure Kubeapps on VMware Tanzu™ Kubernetes Grid™
 
 [VMware Tanzu™ Kubernetes Grid™ (TKG)](https://tanzu.vmware.com/kubernetes-grid) is an enterprise-ready Kubernetes runtime that streamlines operations across a multi-cloud infrastructure. It can run both on-premise in vSphere and in the public cloud and includes signed and supported versions of open source applications to provide all the key services required for a production Kubernetes environment.

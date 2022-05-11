@@ -1,9 +1,3 @@
----
-version: latest
-cascade:
-  layout: docs
----
-
 # Kubeapps tutorials
 
 This section of our documentation contains step-by-step tutorials to help outline what Kubeapps is capable of while helping you achieve specific aims, such as installing Kubeapps or managing different packages.
