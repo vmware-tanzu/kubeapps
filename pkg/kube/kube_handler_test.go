@@ -15,6 +15,7 @@ import (
 	"net/url"
 	"os"
 	"path"
+	"runtime"
 	"strings"
 	"testing"
 
@@ -25,7 +26,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	k8sErrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime"
+	k8sruntime "k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/discovery"
 	fakecoreclientset "k8s.io/client-go/kubernetes/fake"
@@ -60,8 +61,8 @@ func (f *fakeHTTPCli) Do(r *http.Request) (*http.Response, error) {
 
 const kubeappsNamespace = "kubeapps"
 
-func makeAppRepoObjects(reposPerNamespace map[string][]repoStub) []runtime.Object {
-	objects := []runtime.Object{}
+func makeAppRepoObjects(reposPerNamespace map[string][]repoStub) []k8sruntime.Object {
+	objects := []k8sruntime.Object{}
 	for namespace, repoStubs := range reposPerNamespace {
 		for _, repoStub := range repoStubs {
 			appRepo := &v1alpha1.AppRepository{
@@ -75,14 +76,14 @@ func makeAppRepoObjects(reposPerNamespace map[string][]repoStub) []runtime.Objec
 				authHeader.SecretKeyRef.LocalObjectReference.Name = secretNameForRepo(repoStub.name)
 				appRepo.Spec.Auth.Header = authHeader
 			}
-			objects = append(objects, runtime.Object(appRepo))
+			objects = append(objects, k8sruntime.Object(appRepo))
 		}
 	}
 	return objects
 }
 
-func makeSecretObjects(secretsPerNamespace map[string][]secretStub) []runtime.Object {
-	objects := []runtime.Object{}
+func makeSecretObjects(secretsPerNamespace map[string][]secretStub) []k8sruntime.Object {
+	objects := []k8sruntime.Object{}
 	for namespace, secretsStubs := range secretsPerNamespace {
 		for _, secretStub := range secretsStubs {
 			secret := &corev1.Secret{
@@ -91,21 +92,21 @@ func makeSecretObjects(secretsPerNamespace map[string][]secretStub) []runtime.Ob
 					Namespace: namespace,
 				},
 			}
-			objects = append(objects, runtime.Object(secret))
+			objects = append(objects, k8sruntime.Object(secret))
 		}
 	}
 	return objects
 }
 
-func makeSecretsForRepos(reposPerNamespace map[string][]repoStub, kubeappsNamespace string) []runtime.Object {
-	objects := []runtime.Object{}
+func makeSecretsForRepos(reposPerNamespace map[string][]repoStub, kubeappsNamespace string) []k8sruntime.Object {
+	objects := []k8sruntime.Object{}
 	for namespace, repoStubs := range reposPerNamespace {
 		for _, repoStub := range repoStubs {
 			// Only create secrets if it's a private repo.
 			if !repoStub.private {
 				continue
 			}
-			var appRepo runtime.Object = &corev1.Secret{
+			var appRepo k8sruntime.Object = &corev1.Secret{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      secretNameForRepo(repoStub.name),
 					Namespace: namespace,
@@ -116,7 +117,7 @@ func makeSecretsForRepos(reposPerNamespace map[string][]repoStub, kubeappsNamesp
 			// Only create a copy of the secret in the kubeapps namespace if the app repo
 			// is in a user namespace.
 			if namespace != kubeappsNamespace {
-				var appRepo runtime.Object = &corev1.Secret{
+				var appRepo k8sruntime.Object = &corev1.Secret{
 					ObjectMeta: metav1.ObjectMeta{
 						Name:      KubeappsSecretNameForRepo(repoStub.name, namespace),
 						Namespace: kubeappsNamespace,
@@ -1017,7 +1018,7 @@ func TestGetNamespaces(t *testing.T) {
 			userClientSet.Clientset.Fake.PrependReactor(
 				"create",
 				"selfsubjectaccessreviews",
-				func(action k8stesting.Action) (handled bool, ret runtime.Object, err error) {
+				func(action k8stesting.Action) (handled bool, ret k8sruntime.Object, err error) {
 					mysar := &authorizationv1.SelfSubjectAccessReview{
 						Status: authorizationv1.SubjectAccessReviewStatus{
 							Allowed: tc.allowed,
@@ -1074,7 +1075,7 @@ func setClientsetData(cs fakeCombinedClientset, namespaceNames []existingNs, err
 	cs.Clientset.Fake.PrependReactor(
 		"list",
 		"namespaces",
-		func(action k8stesting.Action) (bool, runtime.Object, error) {
+		func(action k8stesting.Action) (bool, k8sruntime.Object, error) {
 			return true, &corev1.NamespaceList{Items: namespaces}, err
 		},
 	)
@@ -1903,7 +1904,7 @@ func TestCanI(t *testing.T) {
 			userClientSet.Clientset.Fake.PrependReactor(
 				"create",
 				"selfsubjectaccessreviews",
-				func(action k8stesting.Action) (handled bool, ret runtime.Object, err error) {
+				func(action k8stesting.Action) (handled bool, ret k8sruntime.Object, err error) {
 					mysar := &authorizationv1.SelfSubjectAccessReview{
 						Status: authorizationv1.SubjectAccessReviewStatus{
 							Allowed: tc.allowed,
@@ -2108,6 +2109,10 @@ func TestParseClusterConfig(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
+			// TODO(agamez): env vars and file paths should be handled properly for Windows operating system
+			if runtime.GOOS == "windows" {
+				t.Skip("Skipping in a Windows OS")
+			}
 			path := createConfigFile(t, tc.configJSON)
 			defer os.Remove(path)
 

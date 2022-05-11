@@ -7,7 +7,7 @@ Kubeapps is a web-based UI for launching and managing applications on Kubernetes
 [Overview of Kubeapps](https://github.com/vmware-tanzu/kubeapps)
 
 
-                           
+
 ## TL;DR
 
 ```bash
@@ -20,7 +20,7 @@ helm install kubeapps --namespace kubeapps bitnami/kubeapps
 
 ## Introduction
 
-[![CircleCI](https://circleci.com/gh/kubeapps/kubeapps/tree/main.svg?style=svg)](https://circleci.com/gh/kubeapps/kubeapps/tree/main)
+[![CircleCI](https://circleci.com/gh/vmware-tanzu/kubeapps/tree/main.svg?style=svg)](https://circleci.com/gh/vmware-tanzu/kubeapps/tree/main)
 
 This chart bootstraps a [Kubeapps](https://kubeapps.com) deployment on a [Kubernetes](https://kubernetes.io) cluster using the [Helm](https://helm.sh) package manager.
 
@@ -121,7 +121,7 @@ Once you have installed Kubeapps follow the [Getting Started Guide](https://gith
 | ------------------------------------------------ | ----------------------------------------------------------------------------------------- | ---------------------- |
 | `frontend.image.registry`                        | NGINX image registry                                                                      | `docker.io`            |
 | `frontend.image.repository`                      | NGINX image repository                                                                    | `bitnami/nginx`        |
-| `frontend.image.tag`                             | NGINX image tag (immutable tags are recommended)                                          | `1.21.6-debian-10-r80` |
+| `frontend.image.tag`                             | NGINX image tag (immutable tags are recommended)                                          | `1.21.6-debian-10-r93` |
 | `frontend.image.pullPolicy`                      | NGINX image pull policy                                                                   | `IfNotPresent`         |
 | `frontend.image.pullSecrets`                     | NGINX image pull secrets                                                                  | `[]`                   |
 | `frontend.image.debug`                           | Enable image debug mode                                                                   | `false`                |
@@ -502,7 +502,7 @@ Once you have installed Kubeapps follow the [Getting Started Guide](https://gith
 | `authProxy.enabled`                               | Specifies whether Kubeapps should configure OAuth login/logout                           | `false`                |
 | `authProxy.image.registry`                        | OAuth2 Proxy image registry                                                              | `docker.io`            |
 | `authProxy.image.repository`                      | OAuth2 Proxy image repository                                                            | `bitnami/oauth2-proxy` |
-| `authProxy.image.tag`                             | OAuth2 Proxy image tag (immutable tags are recommended)                                  | `7.2.1-debian-10-r114` |
+| `authProxy.image.tag`                             | OAuth2 Proxy image tag (immutable tags are recommended)                                  | `7.2.1-debian-10-r126` |
 | `authProxy.image.pullPolicy`                      | OAuth2 Proxy image pull policy                                                           | `IfNotPresent`         |
 | `authProxy.image.pullSecrets`                     | OAuth2 Proxy image pull secrets                                                          | `[]`                   |
 | `authProxy.external`                              | Use an external Auth Proxy instead of deploying its own one                              | `false`                |
@@ -577,7 +577,7 @@ Once you have installed Kubeapps follow the [Getting Started Guide](https://gith
 | `rbac.create`             | Specifies whether RBAC resources should be created                            | `true`                 |
 | `testImage.registry`      | NGINX image registry                                                          | `docker.io`            |
 | `testImage.repository`    | NGINX image repository                                                        | `bitnami/nginx`        |
-| `testImage.tag`           | NGINX image tag (immutable tags are recommended)                              | `1.21.6-debian-10-r80` |
+| `testImage.tag`           | NGINX image tag (immutable tags are recommended)                              | `1.21.6-debian-10-r93` |
 | `testImage.pullPolicy`    | NGINX image pull policy                                                       | `IfNotPresent`         |
 | `testImage.pullSecrets`   | NGINX image pull secrets                                                      | `[]`                   |
 
@@ -588,7 +588,7 @@ Once you have installed Kubeapps follow the [Getting Started Guide](https://gith
 | -------------------------------------- | ---------------------------------------------------------------------------- | ------------- |
 | `postgresql.enabled`                   | Deploy a PostgreSQL server to satisfy the applications database requirements | `true`        |
 | `postgresql.architecture`              | PostgreSQL architecture (`standalone` or `replication`)                      | `replication` |
-| `postgresql.auth.password`             | Password for the custom user to create                                       | `""`          |
+| `postgresql.auth.postgresPassword`     | Password for 'postgres' user                                                 | `""`          |
 | `postgresql.auth.database`             | Name for a custom database to create                                         | `assets`      |
 | `postgresql.auth.existingSecret`       | Name of existing secret to use for PostgreSQL credentials                    | `""`          |
 | `postgresql.persistence.enabled`       | Enable persistence on PostgreSQL using PVC(s)                                | `false`       |
@@ -891,7 +891,7 @@ helm install kubeapps bitnami/kubeapps \
   # ... other OIDC and ingress flags
   --set authProxy.oauthLoginURI="/subpath/oauth2/login" \
   --set authProxy.oauthLogoutURI="/subpath/oauth2/logout" \
-  --set authProxy.additionalFlags="{<other flags>,--proxy-prefix=/subpath/oauth2}"
+  --set authProxy.extraFlags="{<other flags>,--proxy-prefix=/subpath/oauth2}"
 ```
 
 ### Can Kubeapps install apps into more than one cluster?

@@ -8,13 +8,13 @@ parameters:
     default: "1.18"
   NODE_VERSION:
     type: string
-    default: "16.14.2"
+    default: "16.15.0"
   RUST_VERSION:
     type: string
-    default: "1.59.0"
+    default: "1.60.0"
   DOCKER_VERSION:
     type: string
-    default: "20.10.11"
+    default: "20.10.14"
   HELM_VERSION_MIN:
     type: "string"
     default: "v3.2.0"
@@ -23,31 +23,31 @@ parameters:
     default: "v3.8.1"
   OLM_VERSION:
     type: "string"
-    default: "v0.20.0"
+    default: "v0.21.1"
   KAPP_CONTROLLER_VERSION:
     type: "string"
-    default: "v0.32.0"
+    default: "v0.36.1"
   MKCERT_VERSION:
     type: "string"
-    default: "v1.4.3"
+    default: "v1.4.4"
   KUBECTL_VERSION:
     type: "string"
-    default: "v1.22.8"
+    default: "v1.22.9"
   GITHUB_VERSION:
     type: "string"
-    default: "2.4.0"
+    default: "2.9.0"
   SEMVER_VERSION:
     type: "string"
     default: "3.3.0"
   KIND_VERSION:
     type: "string"
-    default: "v0.11.1"
+    default: "v0.12.0"
   K8S_KIND_VERSION:
     type: "string"
-    default: "v1.21.1@sha256:69860bda5563ac81e3c0057d654b5253219618a22ec3a346306239bba8cfa1a6"
+    default: "v1.22.7@sha256:1dfd72d193bf7da64765fd2f2898f78663b9ba366c2aa74be1fd7498a1873166"
   POSTGRESQL_VERSION:
     type: "string"
-    default: "14.2.0-debian-10-r45"
+    default: "14.2.0-debian-10-r88"
   GKE_STABLE_VERSION:
     type: "string"
     default: "1.20"
@@ -56,7 +56,7 @@ parameters:
     default: "1.21"
   DEFAULT_MACHINE_IMG:
     type: "string"
-    default: "ubuntu-2004:202111-02"
+    default: "ubuntu-2004:202201-02"
   IMAGES_TO_PUSH:
     type: "string"
     default: "kubeapps/apprepository-controller kubeapps/dashboard kubeapps/asset-syncer kubeapps/assetsvc kubeapps/kubeops kubeapps/pinniped-proxy kubeapps/kubeapps-apis"

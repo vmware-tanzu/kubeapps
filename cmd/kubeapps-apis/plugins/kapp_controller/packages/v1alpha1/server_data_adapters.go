@@ -8,7 +8,6 @@ import (
 	"strings"
 	"time"
 
-	kappctrlinstalled "github.com/vmware-tanzu/carvel-kapp-controller/cli/pkg/kctrl/cmd/package/installed"
 	kappctrlv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
 	packagingv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/packaging/v1alpha1"
 	datapackagingv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/apis/datapackaging/v1alpha1"
@@ -163,7 +162,7 @@ func (s *Server) buildInstalledPackageSummary(pkgInstall *packagingv1alpha1.Pack
 		IconUrl: iconStringBuilder.String(),
 		InstalledPackageRef: &corev1.InstalledPackageReference{
 			Context: &corev1.Context{
-				Namespace: pkgMetadata.Namespace,
+				Namespace: pkgInstall.Namespace,
 				Cluster:   cluster,
 			},
 			Plugin:     &pluginDetail,
@@ -295,13 +294,17 @@ func (s *Server) buildInstalledPackageDetail(pkgInstall *packagingv1alpha1.Packa
 }
 
 func (s *Server) buildSecret(installedPackageName, values, targetNamespace string) (*k8scorev1.Secret, error) {
+	// Using this pattern as per:
+	// https://github.com/vmware-tanzu/carvel-kapp-controller/blob/v0.36.1/cli/pkg/kctrl/cmd/package/installed/created_resource_annotations.go#L19
+	kappctrlSecretName := "%s-%s-values"
+
 	return &k8scorev1.Secret{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       k8scorev1.ResourceSecrets.String(),
 			APIVersion: k8scorev1.SchemeGroupVersion.WithResource(k8scorev1.ResourceSecrets.String()).String(),
 		},
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      fmt.Sprintf(kappctrlinstalled.SecretName, installedPackageName, targetNamespace),
+			Name:      fmt.Sprintf(kappctrlSecretName, installedPackageName, targetNamespace),
 			Namespace: targetNamespace,
 		},
 		Data: map[string][]byte{

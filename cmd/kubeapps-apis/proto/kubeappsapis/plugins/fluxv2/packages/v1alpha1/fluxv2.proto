@@ -109,6 +109,12 @@ service FluxV2RepositoriesService {
      };
   }
 
+  rpc DeletePackageRepository(kubeappsapis.core.packages.v1alpha1.DeletePackageRepositoryRequest) returns (kubeappsapis.core.packages.v1alpha1.DeletePackageRepositoryResponse) {
+    option (google.api.http) = {
+      delete: "/plugins/fluxv2/packages/v1alpha1/repositories/plugin/{package_repo_ref.plugin.name}/{package_repo_ref.plugin.version}/c/{package_repo_ref.context.cluster}/ns/{package_repo_ref.context.namespace}/{package_repo_ref.identifier=**}"
+    };
+  }
+
   // this endpoint only exists for the purpose of integration tests
   rpc SetUserManagedSecrets(SetUserManagedSecretsRequest) returns (SetUserManagedSecretsResponse) {
   }

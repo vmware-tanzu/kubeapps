@@ -168,7 +168,7 @@ func (s *Server) GetAvailablePackageSummaries(ctx context.Context, request *core
 			request.Context.Cluster)
 	}
 
-	pageOffset, err := paginate.PageOffsetFromAvailableRequest(request)
+	itemOffset, err := paginate.ItemOffsetFromPageToken(request.GetPaginationOptions().GetPageToken())
 	if err != nil {
 		return nil, err
 	}
@@ -180,7 +180,7 @@ func (s *Server) GetAvailablePackageSummaries(ctx context.Context, request *core
 
 	pageSize := request.GetPaginationOptions().GetPageSize()
 	packageSummaries, err := filterAndPaginateCharts(
-		request.GetFilterOptions(), pageSize, pageOffset, charts)
+		request.GetFilterOptions(), pageSize, itemOffset, charts)
 	if err != nil {
 		return nil, err
 	}
@@ -194,7 +194,7 @@ func (s *Server) GetAvailablePackageSummaries(ctx context.Context, request *core
 	// the results are a full page.
 	nextPageToken := ""
 	if pageSize > 0 && len(packageSummaries) == int(pageSize) {
-		nextPageToken = fmt.Sprintf("%d", pageOffset+1)
+		nextPageToken = fmt.Sprintf("%d", itemOffset+int(pageSize))
 	}
 
 	return &corev1.GetAvailablePackageSummariesResponse{
@@ -291,7 +291,7 @@ func (s *Server) GetAvailablePackageVersions(ctx context.Context, request *corev
 // GetInstalledPackageSummaries returns the installed packages managed by the 'fluxv2' plugin
 func (s *Server) GetInstalledPackageSummaries(ctx context.Context, request *corev1.GetInstalledPackageSummariesRequest) (*corev1.GetInstalledPackageSummariesResponse, error) {
 	log.Infof("+fluxv2 GetInstalledPackageSummaries [%v]", request)
-	pageOffset, err := paginate.PageOffsetFromInstalledRequest(request)
+	itemOffset, err := paginate.ItemOffsetFromPageToken(request.GetPaginationOptions().GetPageToken())
 	if err != nil {
 		return nil, err
 	}
@@ -306,7 +306,7 @@ func (s *Server) GetInstalledPackageSummaries(ctx context.Context, request *core
 
 	pageSize := request.GetPaginationOptions().GetPageSize()
 	installedPkgSummaries, err := s.paginatedInstalledPkgSummaries(
-		ctx, request.GetContext().GetNamespace(), pageSize, pageOffset)
+		ctx, request.GetContext().GetNamespace(), pageSize, itemOffset)
 	if err != nil {
 		return nil, err
 	}
@@ -315,7 +315,7 @@ func (s *Server) GetInstalledPackageSummaries(ctx context.Context, request *core
 	// the results are a full page.
 	nextPageToken := ""
 	if pageSize > 0 && len(installedPkgSummaries) == int(pageSize) {
-		nextPageToken = fmt.Sprintf("%d", pageOffset+1)
+		nextPageToken = fmt.Sprintf("%d", itemOffset+int(pageSize))
 	}
 
 	response := &corev1.GetInstalledPackageSummariesResponse{
@@ -606,6 +606,29 @@ func (s *Server) UpdatePackageRepository(ctx context.Context, request *corev1.Up
 		return &corev1.UpdatePackageRepositoryResponse{
 			PackageRepoRef: responseRef,
 		}, nil
+	}
+}
+
+// DeletePackageRepository deletes a package repository based on the request.
+func (s *Server) DeletePackageRepository(ctx context.Context, request *corev1.DeletePackageRepositoryRequest) (*corev1.DeletePackageRepositoryResponse, error) {
+	log.Infof("+fluxv2 DeletePackageRepository [%v]", request)
+	if request == nil || request.PackageRepoRef == nil {
+		return nil, status.Errorf(codes.InvalidArgument, "no request PackageRepoRef provided")
+	}
+
+	repoRef := request.PackageRepoRef
+	cluster := repoRef.GetContext().GetCluster()
+	if cluster != "" && cluster != s.kubeappsCluster {
+		return nil, status.Errorf(
+			codes.Unimplemented,
+			"not supported yet: request.packageRepoRef.Context.Cluster: [%v]",
+			cluster)
+	}
+
+	if err := s.deleteRepo(ctx, repoRef); err != nil {
+		return nil, err
+	} else {
+		return &corev1.DeletePackageRepositoryResponse{}, nil
 	}
 }
 

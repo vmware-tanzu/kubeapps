@@ -255,7 +255,7 @@ func (r *HelmRepo) Charts(fetchLatestOnly bool) ([]models.Chart, error) {
 		return []models.Chart{}, err
 	}
 	if len(charts) == 0 {
-		return []models.Chart{}, fmt.Errorf("no charts in repository index")
+		return []models.Chart{}, nil
 	}
 
 	return filterCharts(unescapeChartsData(charts), r.filter)

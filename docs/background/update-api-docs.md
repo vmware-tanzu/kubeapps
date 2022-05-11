@@ -1,6 +1,6 @@
 # Update the Kubeapps API documentation
 
-The Kubeapps API docs are defined using the [OpenAPI Specification](https://www.openapis.org). The latest develoment file is located at [/dashboard/public/openapi.yaml](../../main/dashboard/public/openapi.yaml).
+The Kubeapps API docs are defined using the [OpenAPI Specification](https://www.openapis.org). The latest develoment file is located at [/dashboard/public/openapi.yaml](../../dashboard/public/openapi.yaml).
 However, to make them more accessible to the users, they are hosted in [SwaggerHub](https://swagger.io/tools/swaggerhub) as well as integrated into the Kubeapps dashboard once installed.
 
 If you are interested in the Kubeapps API, please [reach out to us](https://kubernetes.slack.com/messages/kubeapps) for further information.
@@ -34,7 +34,7 @@ Note that "pulling" from GitHub is a paid feature that users may don't have. In 
 
 ![image](../img/swaggerhub-merge-api.png)
 
-> Kubeapps maintainers can compare directly against https://raw.githubusercontent.com/kubeapps/kubeapps/main/dashboard/public/openapi.yaml
+> Kubeapps maintainers can compare directly against [the raw file content](https://raw.githubusercontent.com/vmware-tanzu/kubeapps/main/dashboard/public/openapi.yaml).
 
 ### Sending a PR
 
@@ -45,4 +45,4 @@ Finally, after pushing the changes in the desired branch of your fork, it is pos
 ## Versioning policy
 
 Kubeapps API is still in a very initial stage and it likely subject to changes. Wherefore, for the sake of simplicity, we are not publishing new versions in SwaggerHub. Instead, we will keep just the latest version and will overwrite it with upcoming changes.
-Note that the [openapi.yaml](../../main/dashboard/public/openapi.yaml) file corresponding to each Kubeapps version can still be downloaded as part of the normal [Kubeapps releases page](https://github.com/vmware-tanzu/kubeapps/releases).
+Note that the [openapi.yaml](../../dashboard/public/openapi.yaml) file corresponding to each Kubeapps version can still be downloaded as part of the normal [Kubeapps releases page](https://github.com/vmware-tanzu/kubeapps/releases).

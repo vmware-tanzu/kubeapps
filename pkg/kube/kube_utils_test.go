@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"runtime"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
@@ -344,7 +345,10 @@ func TestGetProxyConfig(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-
+			// TODO(agamez): env vars and file paths should be handled properly for Windows operating system
+			if runtime.GOOS == "windows" {
+				t.Skip("Skipping in a Windows OS")
+			}
 			// Set the env for the test ensuring to restore after.
 			originalValues := map[string]string{}
 			for _, key := range proxyVars {

@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"io/fs"
 	"path/filepath"
+	"runtime"
 	"testing"
 	"testing/fstest"
 
@@ -242,6 +243,10 @@ func TestListOSFiles(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
+			// TODO(agamez): env vars and file paths should be handled properly for Windows operating system
+			if runtime.GOOS == "windows" {
+				t.Skip("Skipping in a Windows OS")
+			}
 			fs := createTestFS(t, tc.filenames)
 
 			got, err := listSOFiles(fs, tc.pluginsDirs)

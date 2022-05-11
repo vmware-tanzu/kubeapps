@@ -79,7 +79,7 @@ func (s *Server) getReleaseInCluster(ctx context.Context, key types.NamespacedNa
 	return &rel, nil
 }
 
-func (s *Server) paginatedInstalledPkgSummaries(ctx context.Context, namespace string, pageSize int32, pageOffset int) ([]*corev1.InstalledPackageSummary, error) {
+func (s *Server) paginatedInstalledPkgSummaries(ctx context.Context, namespace string, pageSize int32, itemOffset int) ([]*corev1.InstalledPackageSummary, error) {
 	releasesFromCluster, err := s.listReleasesInCluster(ctx, namespace)
 	if err != nil {
 		return nil, err
@@ -89,7 +89,7 @@ func (s *Server) paginatedInstalledPkgSummaries(ctx context.Context, namespace s
 	if len(releasesFromCluster) > 0 {
 		startAt := -1
 		if pageSize > 0 {
-			startAt = int(pageSize) * pageOffset
+			startAt = itemOffset
 		}
 
 		for i, r := range releasesFromCluster {
@@ -595,13 +595,15 @@ func isHelmReleaseReady(rel helmv2.HelmRelease) (ready bool, status corev1.Insta
 
 	isInstallFailed := false
 	readyCond := meta.FindStatusCondition(rel.GetConditions(), fluxmeta.ReadyCondition)
+
 	if readyCond != nil {
 		if readyCond.Reason != "" {
 			// this could be something like
 			// "reason": "InstallFailed"
 			// i.e. not super-useful
 			userReason = readyCond.Reason
-			if userReason == helmv2.InstallFailedReason {
+			if userReason == helmv2.InstallFailedReason ||
+				userReason == helmv2.UpgradeFailedReason {
 				isInstallFailed = true
 			}
 		}

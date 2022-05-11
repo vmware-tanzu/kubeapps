@@ -92,14 +92,9 @@ func TestKindClusterGetAvailablePackageSummariesForLargeReposAndTinyRedis(t *tes
 		for ; totalRepos < MAX_REPOS_NEVER && evictedRepos.Len() == 0; totalRepos++ {
 			repo := fmt.Sprintf("bitnami-%d", totalRepos)
 			// this is to make sure we allow enough time for repository to be created and come to ready state
-			if err = kubeAddHelmRepository(t, repo, "https://charts.bitnami.com/bitnami", "default", "", 0); err != nil {
+			if err = kubeAddHelmRepositoryAndCleanup(t, repo, "https://charts.bitnami.com/bitnami", "default", "", 0); err != nil {
 				t.Fatalf("%v", err)
 			}
-			t.Cleanup(func() {
-				if err = kubeDeleteHelmRepository(t, repo, "default"); err != nil {
-					t.Logf("%v", err)
-				}
-			})
 			// wait until this repo have been indexed and cached up to 10 minutes
 			ctx, cancel := context.WithTimeout(context.Background(), time.Minute*10)
 			defer cancel()
@@ -183,14 +178,9 @@ func TestKindClusterGetAvailablePackageSummariesForLargeReposAndTinyRedis(t *tes
 		for ; totalRepos < MAX_REPOS_NEVER && evictedRepos.Len() == evictedCopy.Len(); totalRepos++ {
 			repo := fmt.Sprintf("bitnami-%d", totalRepos)
 			// this is to make sure we allow enough time for repository to be created and come to ready state
-			if err = kubeAddHelmRepository(t, repo, "https://charts.bitnami.com/bitnami", "default", "", 0); err != nil {
+			if err = kubeAddHelmRepositoryAndCleanup(t, repo, "https://charts.bitnami.com/bitnami", "default", "", 0); err != nil {
 				t.Fatalf("%v", err)
 			}
-			t.Cleanup(func() {
-				if err = kubeDeleteHelmRepository(t, repo, "default"); err != nil {
-					t.Logf("%v", err)
-				}
-			})
 			// wait until this repo have been indexed and cached up to 10 minutes
 			ctx, cancel := context.WithTimeout(context.Background(), time.Minute*10)
 			defer cancel()
@@ -277,18 +267,11 @@ func TestKindClusterRepoAndChartRBAC(t *testing.T) {
 
 	for _, n := range names {
 		nm, ns := n.Name, n.Namespace
-		if err := kubeCreateNamespace(t, ns); err != nil {
+		if err := kubeCreateNamespaceAndCleanup(t, ns); err != nil {
 			t.Fatal(err)
-		} else if err = kubeAddHelmRepository(t, nm, podinfo_repo_url, ns, "", 0); err != nil {
+		} else if err = kubeAddHelmRepositoryAndCleanup(t, nm, podinfo_repo_url, ns, "", 0); err != nil {
 			t.Fatal(err)
 		}
-		t.Cleanup(func() {
-			if err = kubeDeleteHelmRepository(t, nm, ns); err != nil {
-				t.Logf("Failed to delete helm source due to [%v]", err)
-			} else if err := kubeDeleteNamespace(t, ns); err != nil {
-				t.Logf("Failed to delete namespace [%s] due to [%v]", ns, err)
-			}
-		})
 		// wait until this repo reaches 'Ready'
 		if err = kubeWaitUntilHelmRepositoryIsReady(t, nm, ns); err != nil {
 			t.Fatal(err)

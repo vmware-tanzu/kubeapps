@@ -197,7 +197,7 @@ func passesFilter(chart models.Chart, filters *corev1.FilterOptions) bool {
 	return ok
 }
 
-func filterAndPaginateCharts(filters *corev1.FilterOptions, pageSize int32, pageOffset int, charts map[string][]models.Chart) ([]*corev1.AvailablePackageSummary, error) {
+func filterAndPaginateCharts(filters *corev1.FilterOptions, pageSize int32, itemOffset int, charts map[string][]models.Chart) ([]*corev1.AvailablePackageSummary, error) {
 	// this loop is here for 3 reasons:
 	// 1) to convert from []interface{} which is what the generic cache implementation
 	// returns for cache hits to a typed array object.
@@ -208,7 +208,7 @@ func filterAndPaginateCharts(filters *corev1.FilterOptions, pageSize int32, page
 	i := 0
 	startAt := -1
 	if pageSize > 0 {
-		startAt = int(pageSize) * pageOffset
+		startAt = itemOffset
 	}
 	for _, packages := range charts {
 		for _, chart := range packages {

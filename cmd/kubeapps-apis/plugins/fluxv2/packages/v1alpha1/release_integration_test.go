@@ -5,6 +5,7 @@ package main
 
 import (
 	"context"
+	"math"
 	"strings"
 	"testing"
 	"time"
@@ -247,27 +248,39 @@ func TestKindClusterUpdateInstalledPackage(t *testing.T) {
 				t, tc.integrationTestCreatePackageSpec, fluxPluginClient, grpcContext)
 			tc.request.InstalledPackageRef = installedRef
 
-			// this is to try and avoid intermittent
-			// rpc error: code = Internal desc = unable to update the HelmRelease
-			// 'test-12-i7a4/my-podinfo-12' due to 'Operation cannot be fulfilled on
-			// helmreleases.helm.toolkit.fluxcd.io "my-podinfo-12": the object has been
-			// modified; please apply your changes to the latest version and try again'
-			t.Logf("Waiting 5s for release [%s] to come to quiescent state",
-				tc.integrationTestCreatePackageSpec.request.Name)
-			time.Sleep(5 * time.Second)
-
 			ctx := grpcContext
 			if tc.unauthorized {
 				ctx = context.TODO()
 			}
-			_, err := fluxPluginClient.UpdateInstalledPackage(ctx, tc.request)
-			if tc.unauthorized {
-				if status.Code(err) != codes.Unauthenticated {
-					t.Fatalf("Expected Unathenticated, got: %v", status.Code(err))
+
+			// Every once in a while (very infrequently, like 1 out of 25 tries)
+			// I get rpc error: code = Internal desc = unable to update the HelmRelease
+			// 'test-12-i7a4/my-podinfo-12' due to 'Operation cannot be fulfilled on
+			// helmreleases.helm.toolkit.fluxcd.io "my-podinfo-12": the object has been
+			// modified; please apply your changes to the latest version and try again'
+			// ... so this is the reason for the loop loop with retries
+			var i, maxRetries = 0, 5
+			for ; i < maxRetries; i++ {
+				_, err := fluxPluginClient.UpdateInstalledPackage(ctx, tc.request)
+				if tc.unauthorized {
+					if status.Code(err) != codes.Unauthenticated {
+						t.Fatalf("Expected Unathenticated, got: %v", status.Code(err))
+					}
+					return // done, nothing more to check
+				} else if err != nil {
+					if strings.Contains(err.Error(), " the object has been modified; please apply your changes to the latest version and try again") {
+						waitTime := int64(math.Pow(2, float64(i)))
+						t.Logf("Retrying update in [%d] sec due to %s...", waitTime, err.Error())
+						time.Sleep(time.Duration(waitTime) * time.Second)
+					} else {
+						t.Fatalf("%+v", err)
+					}
+				} else {
+					break
 				}
-				return // done, nothing more to check
-			} else if err != nil {
-				t.Fatalf("%+v", err)
+			}
+			if i == maxRetries {
+				t.Fatalf("Update retries exhaused for package [%s], last error: [%v]", installedRef, err)
 			}
 
 			actualRespAfterUpdate, actualRefsAfterUpdate :=
@@ -496,10 +509,10 @@ func TestKindClusterDeleteInstalledPackage(t *testing.T) {
 					t.Errorf("expected pod with prefix [%s] not found in namespace [%s], pods found: [%v]",
 						tc.expectedPodPrefix, tc.request.TargetContext.Namespace, pods)
 				} else if i == maxWait {
-					t.Fatalf("Timed out waiting for garbage collection, of [%s], last error: [%v]", pods[0], err)
+					t.Fatalf("Timed out waiting for garbage collection of pod [%s]", pods[0])
 				} else {
-					t.Logf("Waiting 2s for garbage collection of [%s], attempt [%d/%d]...", pods[0], i+1, maxWait)
-					time.Sleep(2 * time.Second)
+					t.Logf("Waiting 3s for garbage collection of pod [%s], attempt [%d/%d]...", pods[0], i+1, maxWait)
+					time.Sleep(3 * time.Second)
 				}
 			}
 		})
@@ -538,14 +551,9 @@ func TestKindClusterRBAC_ReadRelease(t *testing.T) {
 	}
 
 	ns1 := "test-ns1-" + randSeq(4)
-	if err := kubeCreateNamespace(t, ns1); err != nil {
+	if err := kubeCreateNamespaceAndCleanup(t, ns1); err != nil {
 		t.Fatal(err)
 	}
-	t.Cleanup(func() {
-		if err := kubeDeleteNamespace(t, ns1); err != nil {
-			t.Logf("Failed to delete namespace [%s] due to [%v]", ns1, err)
-		}
-	})
 
 	adminAcctName := "test-release-rbac-admin-" + randSeq(4)
 	grpcCtxAdmin, err := newGrpcAdminContext(t, adminAcctName, "default")
@@ -888,25 +896,13 @@ func TestKindClusterRBAC_CreateRelease(t *testing.T) {
 	}
 
 	ns1 := "test-ns1-" + randSeq(4)
-	if err := kubeCreateNamespace(t, ns1); err != nil {
+	if err := kubeCreateNamespaceAndCleanup(t, ns1); err != nil {
 		t.Fatal(err)
 	}
-	t.Cleanup(func() {
-		if err := kubeDeleteNamespace(t, ns1); err != nil {
-			t.Logf("Failed to delete namespace [%s] due to [%v]", ns1, err)
-		}
-	})
-
-	err = kubeAddHelmRepository(t, "podinfo", podinfo_repo_url, ns1, "", 0)
+	err = kubeAddHelmRepositoryAndCleanup(t, "podinfo", podinfo_repo_url, ns1, "", 0)
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Cleanup(func() {
-		err = kubeDeleteHelmRepository(t, "podinfo", ns1)
-		if err != nil {
-			t.Logf("Failed to delete helm source due to [%v]", err)
-		}
-	})
 
 	err = kubeWaitUntilHelmRepositoryIsReady(t, "podinfo", ns1)
 	if err != nil {
@@ -921,15 +917,9 @@ func TestKindClusterRBAC_CreateRelease(t *testing.T) {
 	}
 
 	ns2 := "test-ns2-" + randSeq(4)
-	if err := kubeCreateNamespace(t, ns2); err != nil {
+	if err := kubeCreateNamespaceAndCleanup(t, ns2); err != nil {
 		t.Fatal(err)
 	}
-	t.Cleanup(func() {
-		if err := kubeDeleteNamespace(t, ns2); err != nil {
-			t.Logf("Failed to delete namespace [%s] due to [%v]", ns2, err)
-		}
-	})
-
 	out := kubectlCanI(t, loserAcctName, "default", "get", "helmcharts", ns2)
 	if out != "no" {
 		t.Errorf("Expected [no], got [%s]", out)
@@ -1039,15 +1029,9 @@ func TestKindClusterRBAC_UpdateRelease(t *testing.T) {
 	}
 
 	ns1 := "test-ns1-" + randSeq(4)
-	if err := kubeCreateNamespace(t, ns1); err != nil {
+	if err := kubeCreateNamespaceAndCleanup(t, ns1); err != nil {
 		t.Fatal(err)
 	}
-	t.Cleanup(func() {
-		if err := kubeDeleteNamespace(t, ns1); err != nil {
-			t.Logf("Failed to delete namespace [%s] due to [%v]", ns1, err)
-		}
-	})
-
 	tc := integrationTestCreatePackageSpec{
 		testName: "test chart RBAC",
 		repoUrl:  podinfo_repo_url,
@@ -1175,15 +1159,9 @@ func TestKindClusterRBAC_DeleteRelease(t *testing.T) {
 	}
 
 	ns1 := "test-ns1-" + randSeq(4)
-	if err := kubeCreateNamespace(t, ns1); err != nil {
+	if err := kubeCreateNamespaceAndCleanup(t, ns1); err != nil {
 		t.Fatal(err)
 	}
-	t.Cleanup(func() {
-		if err := kubeDeleteNamespace(t, ns1); err != nil {
-			t.Logf("Failed to delete namespace [%s] due to [%v]", ns1, err)
-		}
-	})
-
 	tc := integrationTestCreatePackageSpec{
 		testName: "test chart RBAC",
 		repoUrl:  podinfo_repo_url,
@@ -1266,16 +1244,10 @@ func TestKindClusterRBAC_DeleteRelease(t *testing.T) {
 func createAndWaitForHelmRelease(t *testing.T, tc integrationTestCreatePackageSpec, fluxPluginClient fluxplugin.FluxV2PackagesServiceClient, grpcContext context.Context) *corev1.InstalledPackageReference {
 	availablePackageRef := tc.request.AvailablePackageRef
 	idParts := strings.Split(availablePackageRef.Identifier, "/")
-	err := kubeAddHelmRepository(t, idParts[0], tc.repoUrl, availablePackageRef.Context.Namespace, "", tc.repoInterval)
+	err := kubeAddHelmRepositoryAndCleanup(t, idParts[0], tc.repoUrl, availablePackageRef.Context.Namespace, "", tc.repoInterval)
 	if err != nil {
 		t.Fatalf("%+v", err)
 	}
-	t.Cleanup(func() {
-		err = kubeDeleteHelmRepository(t, idParts[0], availablePackageRef.Context.Namespace)
-		if err != nil {
-			t.Logf("Failed to delete helm source due to [%v]", err)
-		}
-	})
 
 	// need to wait until repo is indexed by flux plugin
 	const maxWait = 25
@@ -1303,14 +1275,9 @@ func createAndWaitForHelmRelease(t *testing.T, tc integrationTestCreatePackageSp
 
 		if !tc.noPreCreateNs {
 			// per https://github.com/vmware-tanzu/kubeapps/pull/3640#issuecomment-950383123
-			if err := kubeCreateNamespace(t, tc.request.TargetContext.Namespace); err != nil {
+			if err := kubeCreateNamespaceAndCleanup(t, tc.request.TargetContext.Namespace); err != nil {
 				t.Fatal(err)
 			}
-			t.Cleanup(func() {
-				if err = kubeDeleteNamespace(t, tc.request.TargetContext.Namespace); err != nil {
-					t.Logf("Failed to delete namespace [%s] due to [%v]", tc.request.TargetContext.Namespace, err)
-				}
-			})
 		}
 	}
 
@@ -1443,8 +1410,8 @@ func waitUntilInstallCompletes(
 	expectInstallFailure bool) (
 	actualDetailResp *corev1.GetInstalledPackageDetailResponse,
 	actualRefsResp *corev1.GetInstalledPackageResourceRefsResponse) {
-	const maxWait = 30
-	for i := 0; i <= maxWait; i++ {
+	var i, maxRetries = 0, 30
+	for ; i < maxRetries; i++ {
 		grpcContext, cancel := context.WithTimeout(grpcContext, defaultContextTimeout)
 		defer cancel()
 		resp2, err := fluxPluginClient.GetInstalledPackageDetail(
@@ -1468,14 +1435,16 @@ func waitUntilInstallCompletes(
 			}
 		}
 		t.Logf("Waiting 2s until install completes due to: [%s], userReason: [%s], attempt: [%d/%d]...",
-			resp2.InstalledPackageDetail.Status.Reason, resp2.InstalledPackageDetail.Status.UserReason, i+1, maxWait)
+			resp2.InstalledPackageDetail.Status.Reason, resp2.InstalledPackageDetail.Status.UserReason, i+1, maxRetries)
 		time.Sleep(2 * time.Second)
 	}
 
-	if actualDetailResp == nil {
+	if i == maxRetries {
 		t.Fatalf("Timed out waiting for task to complete")
+	} else if actualDetailResp == nil {
+		t.Fatalf("Unexpected state: actual detail response is nil")
 	} else if actualDetailResp.InstalledPackageDetail.Status.Ready {
-		t.Logf("Getting installed package resource refs for [%s]...", installedPackageRef.Identifier)
+		t.Logf("Install succeeded. Now getting installed package resource refs for [%s]...", installedPackageRef.Identifier)
 		grpcContext, cancel := context.WithTimeout(grpcContext, defaultContextTimeout)
 		defer cancel()
 		var err error
@@ -1486,7 +1455,9 @@ func waitUntilInstallCompletes(
 			t.Fatalf("%+v", err)
 		}
 	} else {
-		t.Logf("Installed completed with [%s], userReason: [%s]",
+		t.Logf("Install of [%s/%s] completed with [%s], userReason: [%s]",
+			installedPackageRef.Context.Namespace,
+			installedPackageRef.Identifier,
 			actualDetailResp.InstalledPackageDetail.Status.Reason,
 			actualDetailResp.InstalledPackageDetail.Status.UserReason,
 		)

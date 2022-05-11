@@ -1237,7 +1237,7 @@ func TestAddPackageRepository(t *testing.T) {
 			request:               add_repo_req_6(ca),
 			expectedResponse:      add_repo_expected_resp,
 			expectedRepo:          &add_repo_2,
-			expectedCreatedSecret: newTlsSecret("bar-", "foo", nil, nil, ca),
+			expectedCreatedSecret: setSecretOwnerRef("bar", newTlsSecret("bar-", "foo", nil, nil, ca)),
 			statusCode:            codes.OK,
 		},
 		{
@@ -1261,7 +1261,7 @@ func TestAddPackageRepository(t *testing.T) {
 			userManagedSecrets: true,
 		},
 		{
-			name:       "failes when package repository links to non-existing secret (kubeapps managed secrets)",
+			name:       "fails when package repository links to non-existing secret (kubeapps managed secrets)",
 			request:    add_repo_req_7,
 			statusCode: codes.InvalidArgument,
 		},
@@ -1270,7 +1270,7 @@ func TestAddPackageRepository(t *testing.T) {
 			request:               add_repo_req_8,
 			expectedResponse:      add_repo_expected_resp,
 			expectedRepo:          &add_repo_4,
-			expectedCreatedSecret: newBasicAuthSecret("bar-", "foo", "baz", "zot"),
+			expectedCreatedSecret: setSecretOwnerRef("bar", newBasicAuthSecret("bar-", "foo", "baz", "zot")),
 			statusCode:            codes.OK,
 		},
 		{
@@ -1278,7 +1278,7 @@ func TestAddPackageRepository(t *testing.T) {
 			request:               add_repo_req_9(pub, priv),
 			expectedResponse:      add_repo_expected_resp,
 			expectedRepo:          &add_repo_2,
-			expectedCreatedSecret: newTlsSecret("bar-", "foo", pub, priv, nil),
+			expectedCreatedSecret: setSecretOwnerRef("bar", newTlsSecret("bar-", "foo", pub, priv, nil)),
 			statusCode:            codes.OK,
 		},
 		{
@@ -1292,12 +1292,9 @@ func TestAddPackageRepository(t *testing.T) {
 			statusCode: codes.Unimplemented,
 		},
 		{
-			name:                  "package repository with docker config JSON authentication",
-			request:               add_repo_req_12,
-			expectedResponse:      add_repo_expected_resp,
-			expectedRepo:          &add_repo_2,
-			expectedCreatedSecret: newDockerConfigJSONSecret("bar-", "foo", "your.private.registry.example.com", "janedoe", "xxxxxxxx", "jdoe@example.com"),
-			statusCode:            codes.OK,
+			name:       "package repository with docker config JSON authentication",
+			request:    add_repo_req_12,
+			statusCode: codes.Unimplemented,
 		},
 		{
 			name:               "package repository with basic auth and existing secret",
@@ -1507,14 +1504,14 @@ func TestGetPackageRepositoryDetail(t *testing.T) {
 			userManagedSecrets: true,
 		},
 		{
-			name:               "it returns package repository detail with TLS cert aurthority (kubeapps managed secrets)",
+			name:               "it returns package repository detail with TLS cert authority (kubeapps managed secrets)",
 			repoIndex:          testYaml("valid-index.yaml"),
 			repoName:           "repo-1",
 			repoNamespace:      "namespace-1",
 			repoSecret:         newTlsSecret("secret-1", "namespace-1", nil, nil, ca),
 			request:            get_repo_detail_req_1,
 			expectedStatusCode: codes.OK,
-			expectedResponse:   get_repo_detail_resp_6a(ca),
+			expectedResponse:   get_repo_detail_resp_6a,
 		},
 		{
 			name:               "get package repository with pending status",
@@ -1555,7 +1552,7 @@ func TestGetPackageRepositoryDetail(t *testing.T) {
 			repoSecret:         newTlsSecret("secret-1", "namespace-1", pub, priv, nil),
 			request:            get_repo_detail_req_1,
 			expectedStatusCode: codes.OK,
-			expectedResponse:   get_repo_detail_resp_9a(pub, priv),
+			expectedResponse:   get_repo_detail_resp_9a,
 		},
 		{
 			name:               "it returns package repository detail with basic authentication",
@@ -1876,7 +1873,7 @@ func TestUpdatePackageRepository(t *testing.T) {
 			request:            update_repo_req_8(pub, priv),
 			expectedStatusCode: codes.OK,
 			expectedResponse:   update_repo_resp_1,
-			expectedDetail:     update_repo_detail_8(pub, priv),
+			expectedDetail:     update_repo_detail_8,
 		},
 		{
 			name:               "update repository unset TLS cert/key (kubeapps-managed secrets)",
@@ -1908,6 +1905,17 @@ func TestUpdatePackageRepository(t *testing.T) {
 			request:            update_repo_req_1,
 			expectedStatusCode: codes.Internal,
 			pending:            true,
+		},
+		{
+			name:               "updates url for repo preserve secret in kubeapps managed env",
+			repoIndex:          testYaml("valid-index.yaml"),
+			repoName:           "repo-1",
+			repoNamespace:      "namespace-1",
+			oldRepoSecret:      newBasicAuthSecret("secret-1", "namespace-1", "foo", "bar"),
+			request:            update_repo_req_16,
+			expectedStatusCode: codes.OK,
+			expectedResponse:   update_repo_resp_1,
+			expectedDetail:     update_repo_detail_15,
 		},
 	}
 
@@ -2019,6 +2027,117 @@ func TestUpdatePackageRepository(t *testing.T) {
 					t.Fatal(err)
 				} else if _, err = typedClient.CoreV1().Secrets(tc.repoNamespace).Get(ctx, tc.oldRepoSecret.Name, metav1.GetOptions{}); err == nil {
 					t.Fatalf("Expected secret [%q] to have been deleted", tc.oldRepoSecret.Name)
+				}
+			}
+		})
+	}
+}
+
+func TestDeletePackageRepository(t *testing.T) {
+	testCases := []struct {
+		name               string
+		request            *corev1.DeletePackageRepositoryRequest
+		repoIndex          string
+		repoName           string
+		repoNamespace      string
+		oldRepoSecret      *apiv1.Secret
+		newRepoSecret      *apiv1.Secret
+		pending            bool
+		expectedStatusCode codes.Code
+		userManagedSecrets bool
+	}{
+		{
+			name:               "delete repository",
+			request:            delete_repo_req_1,
+			repoIndex:          testYaml("valid-index.yaml"),
+			repoName:           "repo-1",
+			repoNamespace:      "namespace-1",
+			expectedStatusCode: codes.OK,
+		},
+		{
+			name:               "returns not found if package repo doesn't exist",
+			request:            delete_repo_req_2,
+			repoIndex:          testYaml("valid-index.yaml"),
+			repoName:           "repo-1",
+			repoNamespace:      "namespace-1",
+			expectedStatusCode: codes.NotFound,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			oldSecretRef := ""
+			secrets := []runtime.Object{}
+			if tc.oldRepoSecret != nil {
+				oldSecretRef = tc.oldRepoSecret.Name
+				secrets = append(secrets, tc.oldRepoSecret)
+			}
+			if tc.newRepoSecret != nil {
+				secrets = append(secrets, tc.newRepoSecret)
+			}
+			var repo *sourcev1.HelmRepository
+			if !tc.pending {
+				var ts *httptest.Server
+				var err error
+				ts, repo, err = newRepoWithIndex(tc.repoIndex, tc.repoName, tc.repoNamespace, nil, oldSecretRef)
+				if err != nil {
+					t.Fatalf("%+v", err)
+				}
+				defer ts.Close()
+			} else {
+				repoSpec := &sourcev1.HelmRepositorySpec{
+					URL:      "https://example.repo.com/charts",
+					Interval: metav1.Duration{Duration: 1 * time.Minute},
+				}
+				repoStatus := &sourcev1.HelmRepositoryStatus{
+					Conditions: []metav1.Condition{
+						{
+							LastTransitionTime: metav1.Time{Time: lastTransitionTime},
+							Type:               fluxmeta.ReadyCondition,
+							Status:             metav1.ConditionUnknown,
+							Reason:             fluxmeta.ProgressingReason,
+							Message:            "reconciliation in progress",
+						},
+					},
+				}
+				repo1 := newRepo(tc.repoName, tc.repoNamespace, repoSpec, repoStatus)
+				repo = &repo1
+			}
+			// update to the repo in a failed state will be tested in integration test
+
+			// the index.yaml will contain links to charts but for the purposes
+			// of this test they do not matter
+			s, _, err := newServerWithRepos(t, []sourcev1.HelmRepository{*repo}, nil, secrets)
+			if err != nil {
+				t.Fatalf("error instantiating the server: %v", err)
+			}
+			s.pluginConfig.UserManagedSecrets = tc.userManagedSecrets
+
+			ctx := context.Background()
+			ctrlClient, err := s.clientGetter.ControllerRuntime(ctx, s.kubeappsCluster)
+			if err != nil {
+				t.Fatal(err)
+			}
+			nsname := types.NamespacedName{
+				Namespace: tc.request.PackageRepoRef.Context.Namespace,
+				Name:      tc.request.PackageRepoRef.Identifier,
+			}
+			var actualRepo sourcev1.HelmRepository
+			if tc.expectedStatusCode == codes.OK {
+				if err = ctrlClient.Get(ctx, nsname, &actualRepo); err != nil {
+					t.Fatal(err)
+				}
+			}
+
+			_, err = s.DeletePackageRepository(ctx, tc.request)
+			if got, want := status.Code(err), tc.expectedStatusCode; got != want {
+				t.Fatalf("got: %+v, want: %+v, err: %+v", got, want, err)
+			}
+
+			if tc.expectedStatusCode == codes.OK {
+				// check the repository CRD is gone from the cluster
+				if err = ctrlClient.Get(ctx, nsname, &actualRepo); err == nil {
+					t.Fatalf("Expected repository [%s] to have been deleted but still exists", nsname)
 				}
 			}
 		})

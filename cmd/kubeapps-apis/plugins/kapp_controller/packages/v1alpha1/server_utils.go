@@ -67,7 +67,7 @@ func latestMatchingVersion(versions []pkgSemver, constraints string) (*semver.Ve
 }
 
 // statusReasonForKappStatus returns the reason for a given status
-func statusReasonForKappStatus(status kappctrlv1alpha1.AppConditionType) corev1.InstalledPackageStatus_StatusReason {
+func statusReasonForKappStatus(status kappctrlv1alpha1.ConditionType) corev1.InstalledPackageStatus_StatusReason {
 	switch status {
 	case kappctrlv1alpha1.ReconcileSucceeded:
 		return corev1.InstalledPackageStatus_STATUS_REASON_INSTALLED
@@ -81,7 +81,7 @@ func statusReasonForKappStatus(status kappctrlv1alpha1.AppConditionType) corev1.
 }
 
 // simpleUserReasonForKappStatus returns the simplified reason for a given status
-func simpleUserReasonForKappStatus(status kappctrlv1alpha1.AppConditionType) string {
+func simpleUserReasonForKappStatus(status kappctrlv1alpha1.ConditionType) string {
 	switch status {
 	case kappctrlv1alpha1.ReconcileSucceeded:
 		return "Deployed"
@@ -245,4 +245,47 @@ func (f *ConfigurableConfigFactoryImpl) ConfigureRESTConfig(config *rest.Config)
 
 func (f *ConfigurableConfigFactoryImpl) RESTConfig() (*rest.Config, error) {
 	return f.config, nil
+}
+
+// FilterMetadatas returns a slice where the content has been filtered
+// according to the provided filter options.
+func FilterMetadatas(metadatas []*datapackagingv1alpha1.PackageMetadata, filterOptions *corev1.FilterOptions) []*datapackagingv1alpha1.PackageMetadata {
+	// Currently we support filtering by query or category but not by repository
+	// (UX doesn't yet display carvel repo in filter options).
+	// Once the UX does, we should be able to filter by repository
+	// also as its now an annotation:
+	// https://github.com/vmware-tanzu/carvel-kapp-controller/pull/532
+	if filterOptions.Query == "" && len(filterOptions.Categories) == 0 {
+		return metadatas
+	}
+	filteredMeta := []*datapackagingv1alpha1.PackageMetadata{}
+	for _, metadata := range metadatas {
+		if (filterOptions.Query != "" && testMetadataMatchesQuery(metadata, filterOptions.Query)) ||
+			(len(filterOptions.Categories) > 0 && testMetadataMatchesCategories(metadata, filterOptions.Categories)) {
+			filteredMeta = append(filteredMeta, metadata)
+		}
+	}
+	return filteredMeta
+}
+
+func testMetadataMatchesQuery(metadata *datapackagingv1alpha1.PackageMetadata, query string) bool {
+	stringToMatch := strings.ToLower(fmt.Sprintf("%s %s %s", metadata.Spec.DisplayName, metadata.Spec.ShortDescription, metadata.Spec.LongDescription))
+	return strings.Contains(stringToMatch, strings.ToLower(query))
+}
+
+func testMetadataMatchesCategories(metadata *datapackagingv1alpha1.PackageMetadata, categories []string) bool {
+	metadataCategoriesHash := map[string]interface{}{}
+	for _, category := range metadata.Spec.Categories {
+		metadataCategoriesHash[category] = nil
+	}
+
+	// We only match if every category in the filter options is present.
+	intersection := true
+	for _, category := range categories {
+		if _, ok := metadataCategoriesHash[category]; !ok {
+			return false
+		}
+	}
+
+	return intersection
 }

@@ -79,6 +79,7 @@ const defaultPackageState = {
   } as IPackageState["selected"],
   items: [],
   categories: [],
+  nextPageToken: "",
   size: 20,
 } as IPackageState;
 
