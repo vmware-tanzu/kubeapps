@@ -105,7 +105,7 @@ authProxy:
   clientID: CLIENT-ID
   clientSecret: CLIENT-SECRET
   cookieSecret: COOKIE-SECRET
-  additionalFlags:
+  extraFlags:
     - --skip-oidc-discovery=true
     - --oidc-issuer-url=OIDC-ISSUER-URL # In CSP: https://gaz.csp-vidm-prod.com
     - --login-url=OIDC-LOGIN-URL # In CSP: https://console.cloud.vmware.com/csp/gateway/discovery

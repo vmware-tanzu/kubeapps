@@ -25,7 +25,7 @@ let store: any;
 const namespace = "package-namespace";
 const cluster = "default";
 const repos = "foo";
-const defaultPage = 1;
+const defaultPaginationToken = "defaultPaginationToken";
 const defaultSize = 0;
 const plugin = { name: "my.plugin", version: "0.0.1" } as Plugin;
 
@@ -80,138 +80,153 @@ interface IfetchAvailablePackageSummariesTestCase {
   name: string;
   response: GetAvailablePackageSummariesResponse;
   requestedRepos: string;
-  requestedPage: number;
+  requestedPageToken: string;
   requestedQuery?: string;
   expectedActions: any;
   expectedParams: any[];
 }
+
+const currentPageToken = "currentPageToken";
+const nextPageToken = "nextPageToken";
 
 const fetchAvailablePackageSummariesTestCases: IfetchAvailablePackageSummariesTestCase[] = [
   {
     name: "fetches packages with query",
     response: {
       availablePackageSummaries: [defaultAvailablePackageSummary],
-      nextPageToken: "1",
+      nextPageToken,
       categories: ["foo"],
     },
     requestedRepos: "",
-    requestedPage: 1,
+    requestedPageToken: currentPageToken,
     requestedQuery: "foo",
     expectedActions: [
-      { type: getType(actions.availablepackages.requestAvailablePackageSummaries), payload: 1 },
+      {
+        type: getType(actions.availablepackages.requestAvailablePackageSummaries),
+        payload: currentPageToken,
+      },
       {
         type: getType(actions.availablepackages.receiveAvailablePackageSummaries),
         payload: {
           response: {
             availablePackageSummaries: [defaultAvailablePackageSummary],
-            nextPageToken: "1",
+            nextPageToken,
             categories: ["foo"],
           },
-          page: 1,
+          paginationToken: currentPageToken,
         } as IReceivePackagesActionPayload,
       },
     ],
-    expectedParams: [cluster, namespace, "", 1, defaultSize, "foo"],
+    expectedParams: [cluster, namespace, "", currentPageToken, defaultSize, "foo"],
   },
   {
     name: "fetches packages from a repo (first page)",
     response: {
       availablePackageSummaries: [defaultAvailablePackageSummary],
-      nextPageToken: "3",
+      nextPageToken,
       categories: ["foo"],
     },
     requestedRepos: repos,
-    requestedPage: 1,
+    requestedPageToken: "",
     expectedActions: [
-      { type: getType(actions.availablepackages.requestAvailablePackageSummaries), payload: 1 },
+      { type: getType(actions.availablepackages.requestAvailablePackageSummaries), payload: "" },
       {
         type: getType(actions.availablepackages.receiveAvailablePackageSummaries),
         payload: {
           response: {
             availablePackageSummaries: [defaultAvailablePackageSummary],
-            nextPageToken: "3",
+            nextPageToken,
             categories: ["foo"],
           },
-          page: 1,
+          paginationToken: "",
         } as IReceivePackagesActionPayload,
       },
     ],
-    expectedParams: [cluster, namespace, repos, 1, defaultSize, undefined],
+    expectedParams: [cluster, namespace, repos, "", defaultSize, undefined],
   },
   {
     name: "fetches packages from a repo (middle page)",
     response: {
       availablePackageSummaries: [defaultAvailablePackageSummary],
-      nextPageToken: "3",
+      nextPageToken,
       categories: ["foo"],
     },
     requestedRepos: repos,
-    requestedPage: 2,
+    requestedPageToken: currentPageToken,
     expectedActions: [
-      { type: getType(actions.availablepackages.requestAvailablePackageSummaries), payload: 2 },
+      {
+        type: getType(actions.availablepackages.requestAvailablePackageSummaries),
+        payload: currentPageToken,
+      },
       {
         type: getType(actions.availablepackages.receiveAvailablePackageSummaries),
         payload: {
           response: {
             availablePackageSummaries: [defaultAvailablePackageSummary],
-            nextPageToken: "3",
+            nextPageToken,
             categories: ["foo"],
           },
-          page: 2,
+          paginationToken: currentPageToken,
         } as IReceivePackagesActionPayload,
       },
     ],
-    expectedParams: [cluster, namespace, repos, 2, defaultSize, undefined],
+    expectedParams: [cluster, namespace, repos, currentPageToken, defaultSize, undefined],
   },
   {
     name: "fetches packages from a repo (last page)",
     response: {
       availablePackageSummaries: [defaultAvailablePackageSummary],
-      nextPageToken: "3",
+      nextPageToken: "",
       categories: ["foo"],
     },
     requestedRepos: repos,
-    requestedPage: 3,
+    requestedPageToken: currentPageToken,
     expectedActions: [
-      { type: getType(actions.availablepackages.requestAvailablePackageSummaries), payload: 3 },
+      {
+        type: getType(actions.availablepackages.requestAvailablePackageSummaries),
+        payload: currentPageToken,
+      },
       {
         type: getType(actions.availablepackages.receiveAvailablePackageSummaries),
         payload: {
           response: {
             availablePackageSummaries: [defaultAvailablePackageSummary],
-            nextPageToken: "3",
+            nextPageToken: "",
             categories: ["foo"],
           },
-          page: 3,
+          paginationToken: currentPageToken,
         } as IReceivePackagesActionPayload,
       },
     ],
-    expectedParams: [cluster, namespace, repos, 3, defaultSize, undefined],
+    expectedParams: [cluster, namespace, repos, currentPageToken, defaultSize, undefined],
   },
   {
     name: "fetches packages from a repo (already processed page)",
     response: {
       availablePackageSummaries: [defaultAvailablePackageSummary],
-      nextPageToken: "3",
+      nextPageToken,
       categories: ["foo"],
     },
     requestedRepos: repos,
-    requestedPage: 2,
+    requestedPageToken: currentPageToken,
     expectedActions: [
-      { type: getType(actions.availablepackages.requestAvailablePackageSummaries), payload: 2 },
+      {
+        type: getType(actions.availablepackages.requestAvailablePackageSummaries),
+        payload: currentPageToken,
+      },
       {
         type: getType(actions.availablepackages.receiveAvailablePackageSummaries),
         payload: {
+          paginationToken: currentPageToken,
           response: {
             availablePackageSummaries: [defaultAvailablePackageSummary],
-            nextPageToken: "3",
+            nextPageToken,
             categories: ["foo"],
           },
-          page: 2,
         } as IReceivePackagesActionPayload,
       },
     ],
-    expectedParams: [cluster, namespace, repos, 2, defaultSize, undefined],
+    expectedParams: [cluster, namespace, repos, currentPageToken, defaultSize, undefined],
   },
   {
     name: "fetches packages from a repo (off-limits page)",
@@ -221,9 +236,12 @@ const fetchAvailablePackageSummariesTestCases: IfetchAvailablePackageSummariesTe
       categories: ["foo"],
     },
     requestedRepos: repos,
-    requestedPage: 4,
+    requestedPageToken: "next-page-token",
     expectedActions: [
-      { type: getType(actions.availablepackages.requestAvailablePackageSummaries), payload: 4 },
+      {
+        type: getType(actions.availablepackages.requestAvailablePackageSummaries),
+        payload: "next-page-token",
+      },
       {
         type: getType(actions.availablepackages.receiveAvailablePackageSummaries),
         payload: {
@@ -232,11 +250,11 @@ const fetchAvailablePackageSummariesTestCases: IfetchAvailablePackageSummariesTe
             nextPageToken: "3",
             categories: ["foo"],
           },
-          page: 4,
+          paginationToken: "next-page-token",
         } as IReceivePackagesActionPayload,
       },
     ],
-    expectedParams: [cluster, namespace, repos, 4, defaultSize, undefined],
+    expectedParams: [cluster, namespace, repos, "next-page-token", defaultSize, undefined],
   },
 ];
 
@@ -255,7 +273,7 @@ describe("fetchAvailablePackageSummaries", () => {
           cluster,
           namespace,
           tc.requestedRepos,
-          tc.requestedPage,
+          tc.requestedPageToken,
           defaultSize,
           tc.requestedQuery,
         ),
@@ -267,7 +285,10 @@ describe("fetchAvailablePackageSummaries", () => {
 
   it("returns a 404 error", async () => {
     const expectedActions = [
-      { type: getType(actions.availablepackages.requestAvailablePackageSummaries), payload: 1 },
+      {
+        type: getType(actions.availablepackages.requestAvailablePackageSummaries),
+        payload: defaultPaginationToken,
+      },
       {
         type: getType(actions.availablepackages.createErrorPackage),
         payload: new FetchError("could not find package"),
@@ -284,7 +305,7 @@ describe("fetchAvailablePackageSummaries", () => {
         cluster,
         namespace,
         "foo",
-        defaultPage,
+        defaultPaginationToken,
         defaultSize,
       ),
     );
@@ -293,7 +314,10 @@ describe("fetchAvailablePackageSummaries", () => {
 
   it("returns a generic error", async () => {
     const expectedActions = [
-      { type: getType(actions.availablepackages.requestAvailablePackageSummaries), payload: 1 },
+      {
+        type: getType(actions.availablepackages.requestAvailablePackageSummaries),
+        payload: defaultPaginationToken,
+      },
       {
         type: getType(actions.availablepackages.createErrorPackage),
         payload: new Error("something went wrong"),
@@ -310,7 +334,7 @@ describe("fetchAvailablePackageSummaries", () => {
         cluster,
         namespace,
         "foo",
-        defaultPage,
+        defaultPaginationToken,
         defaultSize,
       ),
     );
@@ -319,7 +343,10 @@ describe("fetchAvailablePackageSummaries", () => {
 
   it("returns a generic error and it is cleared later", async () => {
     const expectedActions = [
-      { type: getType(actions.availablepackages.requestAvailablePackageSummaries), payload: 1 },
+      {
+        type: getType(actions.availablepackages.requestAvailablePackageSummaries),
+        payload: defaultPaginationToken,
+      },
       {
         type: getType(actions.availablepackages.createErrorPackage),
         payload: new Error("something went wrong"),
@@ -337,7 +364,7 @@ describe("fetchAvailablePackageSummaries", () => {
         cluster,
         namespace,
         "foo",
-        defaultPage,
+        defaultPaginationToken,
         defaultSize,
       ),
     );

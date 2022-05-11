@@ -41,10 +41,7 @@ func setupRoutes() http.Handler {
 
 	// Routes
 	apiv1 := r.PathPrefix(pathPrefix).Subrouter()
-	// TODO: mnelson: Seems we could use path per endpoint handling empty params? Check.
-	apiv1.Methods("GET").Path("/clusters/{cluster}/namespaces/{namespace}/charts").Handler(WithParams(listChartsWithFilters)) // accepts: name, version, appversion, repos, categories, q, page, size
 	apiv1.Methods("GET").Path("/clusters/{cluster}/namespaces/{namespace}/charts/categories").Handler(WithParams(getChartCategories))
-	apiv1.Methods("GET").Path("/clusters/{cluster}/namespaces/{namespace}/charts/{repo}").Handler(WithParams(listChartsWithFilters)) // accepts: name, version, appversion, repos, categories, q, page, size
 	apiv1.Methods("GET").Path("/clusters/{cluster}/namespaces/{namespace}/charts/{repo}/categories").Handler(WithParams(getChartCategories))
 	apiv1.Methods("GET").Path("/clusters/{cluster}/namespaces/{namespace}/charts/{repo}/{chartName}").Handler(WithParams(getChart))
 	apiv1.Methods("GET").Path("/clusters/{cluster}/namespaces/{namespace}/charts/{repo}/{chartName}/versions").Handler(WithParams(listChartVersions))

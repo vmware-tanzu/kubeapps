@@ -78,7 +78,7 @@ const Alert = ({ app, action, children, customIcon, compact, theme, onClick, onC
 Alert.propTypes = {
   action: PropTypes.string,
   app: PropTypes.bool,
-  children: PropTypes.node.isRequired,
+  children: React.ReactNode || PropTypes.node.isRequired,
   compact: PropTypes.bool,
   customIcon: AlerTypes.customIcon,
   theme: AlerTypes.theme,

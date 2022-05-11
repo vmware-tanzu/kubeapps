@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"runtime"
 	"strings"
 	"sync"
 	"testing"
@@ -37,7 +38,7 @@ import (
 	k8scorev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-	"k8s.io/apimachinery/pkg/runtime"
+	k8sruntime "k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	disfake "k8s.io/client-go/discovery/fake"
 	"k8s.io/client-go/dynamic"
@@ -85,7 +86,7 @@ func TestGetClient(t *testing.T) {
 		return clientgetter.NewBuilder().
 			WithTyped(typfake.NewSimpleClientset()).
 			WithDynamic(dynfake.NewSimpleDynamicClientWithCustomListKinds(
-				runtime.NewScheme(),
+				k8sruntime.NewScheme(),
 				map[schema.GroupVersionResource]string{
 					{Group: "foo", Version: "bar", Resource: "baz"}: "fooList",
 				},
@@ -147,7 +148,7 @@ func TestGetClient(t *testing.T) {
 func TestGetAvailablePackageSummaries(t *testing.T) {
 	testCases := []struct {
 		name               string
-		existingObjects    []runtime.Object
+		existingObjects    []k8sruntime.Object
 		expectedPackages   []*corev1.AvailablePackageSummary
 		paginationOptions  corev1.PaginationOptions
 		filterOptions      corev1.FilterOptions
@@ -160,7 +161,7 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 		},
 		{
 			name: "it returns an internal error status if there is no corresponding package for a package metadata",
-			existingObjects: []runtime.Object{
+			existingObjects: []k8sruntime.Object{
 				&datapackagingv1alpha1.PackageMetadata{
 					TypeMeta: metav1.TypeMeta{
 						Kind:       pkgMetadataResource,
@@ -186,7 +187,7 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 		},
 		{
 			name: "it returns an invalid argument error status if a page is requested that doesn't exist",
-			existingObjects: []runtime.Object{
+			existingObjects: []k8sruntime.Object{
 				&datapackagingv1alpha1.PackageMetadata{
 					TypeMeta: metav1.TypeMeta{
 						Kind:       pkgMetadataResource,
@@ -216,7 +217,7 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 		},
 		{
 			name: "it returns carvel package summaries with basic info from the cluster",
-			existingObjects: []runtime.Object{
+			existingObjects: []k8sruntime.Object{
 				&datapackagingv1alpha1.PackageMetadata{
 					TypeMeta: metav1.TypeMeta{
 						Kind:       pkgMetadataResource,
@@ -333,7 +334,7 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 		// corresponding pkgmeta. Let's handle this gracefully.
 		{
 			name: "it returns carvel package summaries with basic info from the cluster even when there's a missing pkg meta",
-			existingObjects: []runtime.Object{
+			existingObjects: []k8sruntime.Object{
 				&datapackagingv1alpha1.PackageMetadata{
 					TypeMeta: metav1.TypeMeta{
 						Kind:       pkgMetadataResource,
@@ -466,7 +467,7 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 		},
 		{
 			name: "it returns carvel package summaries with complete metadata",
-			existingObjects: []runtime.Object{
+			existingObjects: []k8sruntime.Object{
 				&datapackagingv1alpha1.PackageMetadata{
 					TypeMeta: metav1.TypeMeta{
 						Kind:       pkgMetadataResource,
@@ -527,7 +528,7 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 		},
 		{
 			name: "it returns the latest semver version in the latest version field without relying on default alpha sorting",
-			existingObjects: []runtime.Object{
+			existingObjects: []k8sruntime.Object{
 				&datapackagingv1alpha1.PackageMetadata{
 					TypeMeta: metav1.TypeMeta{
 						Kind:       pkgMetadataResource,
@@ -623,8 +624,8 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 			},
 		},
 		{
-			name: "it returns paginated carvel package summaries with an offset",
-			existingObjects: []runtime.Object{
+			name: "it returns paginated carvel package summaries with an item offset (not a page offset)",
+			existingObjects: []k8sruntime.Object{
 				&datapackagingv1alpha1.PackageMetadata{
 					TypeMeta: metav1.TypeMeta{
 						Kind:       pkgMetadataResource,
@@ -665,6 +666,26 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 						ProviderName:       "Tombi!",
 					},
 				},
+				&datapackagingv1alpha1.PackageMetadata{
+					TypeMeta: metav1.TypeMeta{
+						Kind:       pkgMetadataResource,
+						APIVersion: datapackagingAPIVersion,
+					},
+					ObjectMeta: metav1.ObjectMeta{
+						Namespace: "default",
+						Name:      "tunotherone.foo.example.com",
+					},
+					Spec: datapackagingv1alpha1.PackageMetadataSpec{
+						DisplayName:        "Tunotherone!",
+						IconSVGBase64:      "Tm90IHJlYWxseSBTVkcK",
+						ShortDescription:   "Another awesome game from the 90's",
+						LongDescription:    "Tunotherone! is another open world platform-adventure game with RPG elements.",
+						Categories:         []string{"platforms", "rpg"},
+						Maintainers:        []datapackagingv1alpha1.Maintainer{{Name: "person1"}, {Name: "person2"}},
+						SupportDescription: "Some support information",
+						ProviderName:       "tunotherone",
+					},
+				},
 				&datapackagingv1alpha1.Package{
 					TypeMeta: metav1.TypeMeta{
 						Kind:       pkgResource,
@@ -701,10 +722,28 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 						ReleasedAt:                      metav1.Time{time.Date(1997, time.December, 25, 0, 0, 0, 0, time.UTC)},
 					},
 				},
+				&datapackagingv1alpha1.Package{
+					TypeMeta: metav1.TypeMeta{
+						Kind:       pkgResource,
+						APIVersion: datapackagingAPIVersion,
+					},
+					ObjectMeta: metav1.ObjectMeta{
+						Namespace: "default",
+						Name:      "tunotherone.foo.example.com.3.2.5",
+					},
+					Spec: datapackagingv1alpha1.PackageSpec{
+						RefName:                         "tunotherone.foo.example.com",
+						Version:                         "3.2.5",
+						Licenses:                        []string{"my-license"},
+						ReleaseNotes:                    "release notes",
+						CapactiyRequirementsDescription: "capacity description",
+						ReleasedAt:                      metav1.Time{time.Date(1997, time.December, 25, 0, 0, 0, 0, time.UTC)},
+					},
+				},
 			},
 			paginationOptions: corev1.PaginationOptions{
 				PageToken: "1",
-				PageSize:  1,
+				PageSize:  2,
 			},
 			expectedPackages: []*corev1.AvailablePackageSummary{
 				{
@@ -723,11 +762,27 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 					ShortDescription: "An awesome game from the 90's",
 					Categories:       []string{"platforms", "rpg"},
 				},
+				{
+					AvailablePackageRef: &corev1.AvailablePackageReference{
+						Context:    defaultContext,
+						Plugin:     &pluginDetail,
+						Identifier: "tunotherone.foo.example.com",
+					},
+					Name:        "tunotherone.foo.example.com",
+					DisplayName: "Tunotherone!",
+					LatestVersion: &corev1.PackageAppVersion{
+						PkgVersion: "3.2.5",
+						AppVersion: "3.2.5",
+					},
+					IconUrl:          "data:image/svg+xml;base64,Tm90IHJlYWxseSBTVkcK",
+					ShortDescription: "Another awesome game from the 90's",
+					Categories:       []string{"platforms", "rpg"},
+				},
 			},
 		},
 		{
 			name: "it returns paginated carvel package summaries limited to the page size",
-			existingObjects: []runtime.Object{
+			existingObjects: []k8sruntime.Object{
 				&datapackagingv1alpha1.PackageMetadata{
 					TypeMeta: metav1.TypeMeta{
 						Kind:       pkgMetadataResource,
@@ -833,7 +888,7 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 			filterOptions: corev1.FilterOptions{
 				Query: "tetr",
 			},
-			existingObjects: []runtime.Object{
+			existingObjects: []k8sruntime.Object{
 				&datapackagingv1alpha1.PackageMetadata{
 					TypeMeta: metav1.TypeMeta{
 						Kind:       pkgMetadataResource,
@@ -934,9 +989,9 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			var unstructuredObjects []runtime.Object
+			var unstructuredObjects []k8sruntime.Object
 			for _, obj := range tc.existingObjects {
-				unstructuredContent, _ := runtime.DefaultUnstructuredConverter.ToUnstructured(obj)
+				unstructuredContent, _ := k8sruntime.DefaultUnstructuredConverter.ToUnstructured(obj)
 				unstructuredObjects = append(unstructuredObjects, &unstructured.Unstructured{Object: unstructuredContent})
 			}
 
@@ -945,7 +1000,7 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 				clientGetter: func(ctx context.Context, cluster string) (clientgetter.ClientInterfaces, error) {
 					return clientgetter.NewBuilder().
 						WithDynamic(dynfake.NewSimpleDynamicClientWithCustomListKinds(
-							runtime.NewScheme(),
+							k8sruntime.NewScheme(),
 							map[schema.GroupVersionResource]string{
 								{Group: datapackagingv1alpha1.SchemeGroupVersion.Group, Version: datapackagingv1alpha1.SchemeGroupVersion.Version, Resource: pkgsResource}:         pkgResource + "List",
 								{Group: datapackagingv1alpha1.SchemeGroupVersion.Group, Version: datapackagingv1alpha1.SchemeGroupVersion.Version, Resource: pkgMetadatasResource}: pkgMetadataResource + "List",
@@ -979,7 +1034,7 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 func TestGetAvailablePackageVersions(t *testing.T) {
 	testCases := []struct {
 		name               string
-		existingObjects    []runtime.Object
+		existingObjects    []k8sruntime.Object
 		request            *corev1.GetAvailablePackageVersionsRequest
 		expectedStatusCode codes.Code
 		expectedResponse   *corev1.GetAvailablePackageVersionsResponse
@@ -1012,7 +1067,7 @@ func TestGetAvailablePackageVersions(t *testing.T) {
 		},
 		{
 			name: "it returns the package version summary",
-			existingObjects: []runtime.Object{
+			existingObjects: []k8sruntime.Object{
 				&datapackagingv1alpha1.Package{
 					TypeMeta: metav1.TypeMeta{
 						Kind:       pkgResource,
@@ -1098,9 +1153,9 @@ func TestGetAvailablePackageVersions(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			var unstructuredObjects []runtime.Object
+			var unstructuredObjects []k8sruntime.Object
 			for _, obj := range tc.existingObjects {
-				unstructuredContent, _ := runtime.DefaultUnstructuredConverter.ToUnstructured(obj)
+				unstructuredContent, _ := k8sruntime.DefaultUnstructuredConverter.ToUnstructured(obj)
 				unstructuredObjects = append(unstructuredObjects, &unstructured.Unstructured{Object: unstructuredContent})
 			}
 
@@ -1109,7 +1164,7 @@ func TestGetAvailablePackageVersions(t *testing.T) {
 				clientGetter: func(ctx context.Context, cluster string) (clientgetter.ClientInterfaces, error) {
 					return clientgetter.NewBuilder().
 						WithDynamic(dynfake.NewSimpleDynamicClientWithCustomListKinds(
-							runtime.NewScheme(),
+							k8sruntime.NewScheme(),
 							map[schema.GroupVersionResource]string{
 								{Group: datapackagingv1alpha1.SchemeGroupVersion.Group, Version: datapackagingv1alpha1.SchemeGroupVersion.Version, Resource: pkgsResource}: pkgResource + "List",
 							},
@@ -1139,7 +1194,7 @@ func TestGetAvailablePackageVersions(t *testing.T) {
 func TestGetAvailablePackageDetail(t *testing.T) {
 	testCases := []struct {
 		name            string
-		existingObjects []runtime.Object
+		existingObjects []k8sruntime.Object
 		expectedPackage *corev1.AvailablePackageDetail
 		statusCode      codes.Code
 		request         *corev1.GetAvailablePackageDetailRequest
@@ -1152,7 +1207,7 @@ func TestGetAvailablePackageDetail(t *testing.T) {
 					Identifier: "tetris.foo.example.com",
 				},
 			},
-			existingObjects: []runtime.Object{
+			existingObjects: []k8sruntime.Object{
 				&datapackagingv1alpha1.PackageMetadata{
 					TypeMeta: metav1.TypeMeta{
 						Kind:       pkgMetadataResource,
@@ -1243,7 +1298,7 @@ Some support information
 					Identifier: "tetris.foo.example.com",
 				},
 			},
-			existingObjects: []runtime.Object{
+			existingObjects: []k8sruntime.Object{
 				&datapackagingv1alpha1.PackageMetadata{
 					TypeMeta: metav1.TypeMeta{
 						Kind:       pkgMetadataResource,
@@ -1344,7 +1399,7 @@ Some support information
 				},
 				PkgVersion: "1.2.4",
 			},
-			existingObjects: []runtime.Object{
+			existingObjects: []k8sruntime.Object{
 				&datapackagingv1alpha1.PackageMetadata{
 					TypeMeta: metav1.TypeMeta{
 						Kind:       pkgMetadataResource,
@@ -1390,9 +1445,9 @@ Some support information
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			var unstructuredObjects []runtime.Object
+			var unstructuredObjects []k8sruntime.Object
 			for _, obj := range tc.existingObjects {
-				unstructuredContent, _ := runtime.DefaultUnstructuredConverter.ToUnstructured(obj)
+				unstructuredContent, _ := k8sruntime.DefaultUnstructuredConverter.ToUnstructured(obj)
 				unstructuredObjects = append(unstructuredObjects, &unstructured.Unstructured{Object: unstructuredContent})
 			}
 
@@ -1401,7 +1456,7 @@ Some support information
 				clientGetter: func(ctx context.Context, cluster string) (clientgetter.ClientInterfaces, error) {
 					return clientgetter.NewBuilder().
 						WithDynamic(dynfake.NewSimpleDynamicClientWithCustomListKinds(
-							runtime.NewScheme(),
+							k8sruntime.NewScheme(),
 							map[schema.GroupVersionResource]string{
 								{Group: datapackagingv1alpha1.SchemeGroupVersion.Group, Version: datapackagingv1alpha1.SchemeGroupVersion.Version, Resource: pkgsResource}:         pkgResource + "List",
 								{Group: datapackagingv1alpha1.SchemeGroupVersion.Group, Version: datapackagingv1alpha1.SchemeGroupVersion.Version, Resource: pkgMetadatasResource}: pkgMetadataResource + "List",
@@ -1429,7 +1484,7 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 	testCases := []struct {
 		name               string
 		request            *corev1.GetInstalledPackageSummariesRequest
-		existingObjects    []runtime.Object
+		existingObjects    []k8sruntime.Object
 		expectedPackages   []*corev1.InstalledPackageSummary
 		expectedStatusCode codes.Code
 	}{
@@ -1442,7 +1497,7 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 					PageSize:  2,
 				},
 			},
-			existingObjects: []runtime.Object{
+			existingObjects: []k8sruntime.Object{
 				&datapackagingv1alpha1.PackageMetadata{
 					TypeMeta: metav1.TypeMeta{
 						Kind:       pkgMetadataResource,
@@ -1512,7 +1567,7 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 					Status: packagingv1alpha1.PackageInstallStatus{
 						GenericStatus: kappctrlv1alpha1.GenericStatus{
 							ObservedGeneration: 1,
-							Conditions: []kappctrlv1alpha1.AppCondition{{
+							Conditions: []kappctrlv1alpha1.Condition{{
 								Type:    kappctrlv1alpha1.ReconcileSucceeded,
 								Status:  k8scorev1.ConditionTrue,
 								Reason:  "baz",
@@ -1531,7 +1586,7 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 		{
 			name:    "it returns carvel empty installed package summary when no package install is present",
 			request: &corev1.GetInstalledPackageSummariesRequest{Context: defaultContext},
-			existingObjects: []runtime.Object{
+			existingObjects: []k8sruntime.Object{
 				&datapackagingv1alpha1.PackageMetadata{
 					TypeMeta: metav1.TypeMeta{
 						Kind:       pkgMetadataResource,
@@ -1576,7 +1631,7 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 		{
 			name:    "it returns carvel installed package summary with complete metadata",
 			request: &corev1.GetInstalledPackageSummariesRequest{Context: defaultContext},
-			existingObjects: []runtime.Object{
+			existingObjects: []k8sruntime.Object{
 				&datapackagingv1alpha1.PackageMetadata{
 					TypeMeta: metav1.TypeMeta{
 						Kind:       pkgMetadataResource,
@@ -1646,7 +1701,7 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 					Status: packagingv1alpha1.PackageInstallStatus{
 						GenericStatus: kappctrlv1alpha1.GenericStatus{
 							ObservedGeneration: 1,
-							Conditions: []kappctrlv1alpha1.AppCondition{{
+							Conditions: []kappctrlv1alpha1.Condition{{
 								Type:    kappctrlv1alpha1.ReconcileSucceeded,
 								Status:  k8scorev1.ConditionTrue,
 								Reason:  "baz",
@@ -1704,7 +1759,7 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 					Cluster:   defaultContext.Cluster,
 				},
 			},
-			existingObjects: []runtime.Object{
+			existingObjects: []k8sruntime.Object{
 				&datapackagingv1alpha1.PackageMetadata{
 					TypeMeta: metav1.TypeMeta{
 						Kind:       pkgMetadataResource,
@@ -1774,7 +1829,7 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 					Status: packagingv1alpha1.PackageInstallStatus{
 						GenericStatus: kappctrlv1alpha1.GenericStatus{
 							ObservedGeneration: 1,
-							Conditions: []kappctrlv1alpha1.AppCondition{{
+							Conditions: []kappctrlv1alpha1.Condition{{
 								Type:    kappctrlv1alpha1.ReconcileSucceeded,
 								Status:  k8scorev1.ConditionTrue,
 								Reason:  "baz",
@@ -1828,7 +1883,7 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 					Cluster:   defaultContext.Cluster,
 				},
 			},
-			existingObjects: []runtime.Object{
+			existingObjects: []k8sruntime.Object{
 				&datapackagingv1alpha1.PackageMetadata{
 					TypeMeta: metav1.TypeMeta{
 						Kind:       pkgMetadataResource,
@@ -1936,7 +1991,7 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 					Status: packagingv1alpha1.PackageInstallStatus{
 						GenericStatus: kappctrlv1alpha1.GenericStatus{
 							ObservedGeneration: 1,
-							Conditions: []kappctrlv1alpha1.AppCondition{{
+							Conditions: []kappctrlv1alpha1.Condition{{
 								Type:    kappctrlv1alpha1.ReconcileSucceeded,
 								Status:  k8scorev1.ConditionTrue,
 								Reason:  "baz",
@@ -1980,7 +2035,7 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 					Status: packagingv1alpha1.PackageInstallStatus{
 						GenericStatus: kappctrlv1alpha1.GenericStatus{
 							ObservedGeneration: 1,
-							Conditions: []kappctrlv1alpha1.AppCondition{{
+							Conditions: []kappctrlv1alpha1.Condition{{
 								Type:    kappctrlv1alpha1.ReconcileSucceeded,
 								Status:  k8scorev1.ConditionTrue,
 								Reason:  "baz",
@@ -2058,7 +2113,7 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 		{
 			name:    "it returns carvel installed package summary with a packageInstall without status",
 			request: &corev1.GetInstalledPackageSummariesRequest{Context: defaultContext},
-			existingObjects: []runtime.Object{
+			existingObjects: []k8sruntime.Object{
 				&datapackagingv1alpha1.PackageMetadata{
 					TypeMeta: metav1.TypeMeta{
 						Kind:       pkgMetadataResource,
@@ -2164,7 +2219,7 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 		{
 			name:    "it returns the latest semver version in the latest version field with the latest matching version",
 			request: &corev1.GetInstalledPackageSummariesRequest{Context: defaultContext},
-			existingObjects: []runtime.Object{
+			existingObjects: []k8sruntime.Object{
 				&datapackagingv1alpha1.PackageMetadata{
 					TypeMeta: metav1.TypeMeta{
 						Kind:       pkgMetadataResource,
@@ -2270,7 +2325,7 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 					Status: packagingv1alpha1.PackageInstallStatus{
 						GenericStatus: kappctrlv1alpha1.GenericStatus{
 							ObservedGeneration: 1,
-							Conditions: []kappctrlv1alpha1.AppCondition{{
+							Conditions: []kappctrlv1alpha1.Condition{{
 								Type:    kappctrlv1alpha1.ReconcileSucceeded,
 								Status:  k8scorev1.ConditionTrue,
 								Reason:  "baz",
@@ -2319,7 +2374,7 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 		{
 			name:    "it returns the latest semver version in the latest version field with no latest matching version if constraint is not satisfied ",
 			request: &corev1.GetInstalledPackageSummariesRequest{Context: defaultContext},
-			existingObjects: []runtime.Object{
+			existingObjects: []k8sruntime.Object{
 				&datapackagingv1alpha1.PackageMetadata{
 					TypeMeta: metav1.TypeMeta{
 						Kind:       pkgMetadataResource,
@@ -2405,7 +2460,7 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 					Status: packagingv1alpha1.PackageInstallStatus{
 						GenericStatus: kappctrlv1alpha1.GenericStatus{
 							ObservedGeneration: 1,
-							Conditions: []kappctrlv1alpha1.AppCondition{{
+							Conditions: []kappctrlv1alpha1.Condition{{
 								Type:    kappctrlv1alpha1.ReconcileSucceeded,
 								Status:  k8scorev1.ConditionTrue,
 								Reason:  "baz",
@@ -2451,9 +2506,9 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			var unstructuredObjects []runtime.Object
+			var unstructuredObjects []k8sruntime.Object
 			for _, obj := range tc.existingObjects {
-				unstructuredContent, _ := runtime.DefaultUnstructuredConverter.ToUnstructured(obj)
+				unstructuredContent, _ := k8sruntime.DefaultUnstructuredConverter.ToUnstructured(obj)
 				unstructuredObjects = append(unstructuredObjects, &unstructured.Unstructured{Object: unstructuredContent})
 			}
 
@@ -2462,7 +2517,7 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 				clientGetter: func(ctx context.Context, cluster string) (clientgetter.ClientInterfaces, error) {
 					return clientgetter.NewBuilder().
 						WithDynamic(dynfake.NewSimpleDynamicClientWithCustomListKinds(
-							runtime.NewScheme(),
+							k8sruntime.NewScheme(),
 							map[schema.GroupVersionResource]string{
 								{Group: datapackagingv1alpha1.SchemeGroupVersion.Group, Version: datapackagingv1alpha1.SchemeGroupVersion.Version, Resource: pkgsResource}:         pkgResource + "List",
 								{Group: datapackagingv1alpha1.SchemeGroupVersion.Group, Version: datapackagingv1alpha1.SchemeGroupVersion.Version, Resource: pkgMetadatasResource}: pkgMetadataResource + "List",
@@ -2494,8 +2549,8 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 func TestGetInstalledPackageDetail(t *testing.T) {
 	testCases := []struct {
 		name                 string
-		existingObjects      []runtime.Object
-		existingTypedObjects []runtime.Object
+		existingObjects      []k8sruntime.Object
+		existingTypedObjects []k8sruntime.Object
 		expectedPackage      *corev1.InstalledPackageDetail
 		statusCode           codes.Code
 		request              *corev1.GetInstalledPackageDetailRequest
@@ -2508,7 +2563,7 @@ func TestGetInstalledPackageDetail(t *testing.T) {
 					Identifier: "my-installation",
 				},
 			},
-			existingObjects: []runtime.Object{
+			existingObjects: []k8sruntime.Object{
 				&datapackagingv1alpha1.PackageMetadata{
 					TypeMeta: metav1.TypeMeta{
 						Kind:       pkgMetadataResource,
@@ -2612,7 +2667,7 @@ func TestGetInstalledPackageDetail(t *testing.T) {
 					Status: packagingv1alpha1.PackageInstallStatus{
 						GenericStatus: kappctrlv1alpha1.GenericStatus{
 							ObservedGeneration: 1,
-							Conditions: []kappctrlv1alpha1.AppCondition{{
+							Conditions: []kappctrlv1alpha1.Condition{{
 								Type:    kappctrlv1alpha1.ReconcileSucceeded,
 								Status:  k8scorev1.ConditionTrue,
 								Reason:  "baz",
@@ -2653,7 +2708,7 @@ func TestGetInstalledPackageDetail(t *testing.T) {
 					},
 				},
 			},
-			existingTypedObjects: []runtime.Object{
+			existingTypedObjects: []k8sruntime.Object{
 				&k8scorev1.Secret{
 					ObjectMeta: metav1.ObjectMeta{
 						Namespace: "default",
@@ -2741,7 +2796,7 @@ fetchStderr
 					Identifier: "my-installation",
 				},
 			},
-			existingObjects: []runtime.Object{
+			existingObjects: []k8sruntime.Object{
 				&datapackagingv1alpha1.PackageMetadata{
 					TypeMeta: metav1.TypeMeta{
 						Kind:       pkgMetadataResource,
@@ -2810,7 +2865,7 @@ fetchStderr
 					Status: packagingv1alpha1.PackageInstallStatus{
 						GenericStatus: kappctrlv1alpha1.GenericStatus{
 							ObservedGeneration: 1,
-							Conditions: []kappctrlv1alpha1.AppCondition{{
+							Conditions: []kappctrlv1alpha1.Condition{{
 								Type:    kappctrlv1alpha1.ReconcileSucceeded,
 								Status:  k8scorev1.ConditionTrue,
 								Reason:  "baz",
@@ -2851,7 +2906,7 @@ fetchStderr
 					},
 				},
 			},
-			existingTypedObjects: []runtime.Object{
+			existingTypedObjects: []k8sruntime.Object{
 				&k8scorev1.Secret{
 					ObjectMeta: metav1.ObjectMeta{
 						Namespace: "default",
@@ -2931,9 +2986,9 @@ fetchStderr
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			var unstructuredObjects []runtime.Object
+			var unstructuredObjects []k8sruntime.Object
 			for _, obj := range tc.existingObjects {
-				unstructuredContent, _ := runtime.DefaultUnstructuredConverter.ToUnstructured(obj)
+				unstructuredContent, _ := k8sruntime.DefaultUnstructuredConverter.ToUnstructured(obj)
 				unstructuredObjects = append(unstructuredObjects, &unstructured.Unstructured{Object: unstructuredContent})
 			}
 
@@ -2943,7 +2998,7 @@ fetchStderr
 					return clientgetter.NewBuilder().
 						WithTyped(typfake.NewSimpleClientset(tc.existingTypedObjects...)).
 						WithDynamic(dynfake.NewSimpleDynamicClientWithCustomListKinds(
-							runtime.NewScheme(),
+							k8sruntime.NewScheme(),
 							map[schema.GroupVersionResource]string{
 								{Group: datapackagingv1alpha1.SchemeGroupVersion.Group, Version: datapackagingv1alpha1.SchemeGroupVersion.Version, Resource: pkgsResource}:         pkgResource + "List",
 								{Group: datapackagingv1alpha1.SchemeGroupVersion.Group, Version: datapackagingv1alpha1.SchemeGroupVersion.Version, Resource: pkgMetadatasResource}: pkgMetadataResource + "List",
@@ -2972,8 +3027,8 @@ func TestCreateInstalledPackage(t *testing.T) {
 		name                   string
 		request                *corev1.CreateInstalledPackageRequest
 		pluginConfig           *kappControllerPluginParsedConfig
-		existingObjects        []runtime.Object
-		existingTypedObjects   []runtime.Object
+		existingObjects        []k8sruntime.Object
+		existingTypedObjects   []k8sruntime.Object
 		expectedStatusCode     codes.Code
 		expectedResponse       *corev1.CreateInstalledPackageResponse
 		expectedPackageInstall *packagingv1alpha1.PackageInstall
@@ -3002,7 +3057,7 @@ func TestCreateInstalledPackage(t *testing.T) {
 				},
 			},
 			pluginConfig: defaultPluginConfig,
-			existingObjects: []runtime.Object{
+			existingObjects: []k8sruntime.Object{
 				&datapackagingv1alpha1.PackageMetadata{
 					TypeMeta: metav1.TypeMeta{
 						Kind:       pkgMetadataResource,
@@ -3069,7 +3124,7 @@ func TestCreateInstalledPackage(t *testing.T) {
 					},
 				},
 			},
-			existingTypedObjects: []runtime.Object{
+			existingTypedObjects: []k8sruntime.Object{
 				&k8scorev1.ConfigMap{
 					TypeMeta: metav1.TypeMeta{
 						Kind:       "ConfigMap",
@@ -3161,7 +3216,7 @@ func TestCreateInstalledPackage(t *testing.T) {
 				defaultPrereleasesVersionSelection: defaultPluginConfig.defaultPrereleasesVersionSelection,
 				defaultAllowDowngrades:             defaultPluginConfig.defaultAllowDowngrades,
 			},
-			existingObjects: []runtime.Object{
+			existingObjects: []k8sruntime.Object{
 				&datapackagingv1alpha1.PackageMetadata{
 					TypeMeta: metav1.TypeMeta{
 						Kind:       pkgMetadataResource,
@@ -3201,7 +3256,7 @@ func TestCreateInstalledPackage(t *testing.T) {
 					},
 				},
 			},
-			existingTypedObjects: []runtime.Object{
+			existingTypedObjects: []k8sruntime.Object{
 				&k8scorev1.ConfigMap{
 					TypeMeta: metav1.TypeMeta{
 						Kind:       "ConfigMap",
@@ -3243,7 +3298,7 @@ func TestCreateInstalledPackage(t *testing.T) {
 				},
 			},
 			pluginConfig: defaultPluginConfig,
-			existingObjects: []runtime.Object{
+			existingObjects: []k8sruntime.Object{
 				&datapackagingv1alpha1.PackageMetadata{
 					TypeMeta: metav1.TypeMeta{
 						Kind:       pkgMetadataResource,
@@ -3310,7 +3365,7 @@ func TestCreateInstalledPackage(t *testing.T) {
 					},
 				},
 			},
-			existingTypedObjects: []runtime.Object{
+			existingTypedObjects: []k8sruntime.Object{
 				&k8scorev1.ConfigMap{
 					TypeMeta: metav1.TypeMeta{
 						Kind:       "ConfigMap",
@@ -3399,7 +3454,7 @@ func TestCreateInstalledPackage(t *testing.T) {
 				},
 			},
 			pluginConfig: defaultPluginConfig,
-			existingObjects: []runtime.Object{
+			existingObjects: []k8sruntime.Object{
 				&datapackagingv1alpha1.PackageMetadata{
 					TypeMeta: metav1.TypeMeta{
 						Kind:       pkgMetadataResource,
@@ -3466,7 +3521,7 @@ func TestCreateInstalledPackage(t *testing.T) {
 					},
 				},
 			},
-			existingTypedObjects: []runtime.Object{
+			existingTypedObjects: []k8sruntime.Object{
 				&k8scorev1.ConfigMap{
 					TypeMeta: metav1.TypeMeta{
 						Kind:       "ConfigMap",
@@ -3557,7 +3612,7 @@ func TestCreateInstalledPackage(t *testing.T) {
 				defaultPrereleasesVersionSelection: nil,
 				defaultAllowDowngrades:             defaultPluginConfig.defaultAllowDowngrades,
 			},
-			existingObjects: []runtime.Object{
+			existingObjects: []k8sruntime.Object{
 				&datapackagingv1alpha1.PackageMetadata{
 					TypeMeta: metav1.TypeMeta{
 						Kind:       pkgMetadataResource,
@@ -3624,7 +3679,7 @@ func TestCreateInstalledPackage(t *testing.T) {
 					},
 				},
 			},
-			existingTypedObjects: []runtime.Object{
+			existingTypedObjects: []k8sruntime.Object{
 				&k8scorev1.ConfigMap{
 					TypeMeta: metav1.TypeMeta{
 						Kind:       "ConfigMap",
@@ -3716,7 +3771,7 @@ func TestCreateInstalledPackage(t *testing.T) {
 				defaultPrereleasesVersionSelection: nil,
 				defaultAllowDowngrades:             defaultPluginConfig.defaultAllowDowngrades,
 			},
-			existingObjects: []runtime.Object{
+			existingObjects: []k8sruntime.Object{
 				&datapackagingv1alpha1.PackageMetadata{
 					TypeMeta: metav1.TypeMeta{
 						Kind:       pkgMetadataResource,
@@ -3783,7 +3838,7 @@ func TestCreateInstalledPackage(t *testing.T) {
 					},
 				},
 			},
-			existingTypedObjects: []runtime.Object{
+			existingTypedObjects: []k8sruntime.Object{
 				&k8scorev1.ConfigMap{
 					TypeMeta: metav1.TypeMeta{
 						Kind:       "ConfigMap",
@@ -3828,7 +3883,7 @@ func TestCreateInstalledPackage(t *testing.T) {
 				defaultPrereleasesVersionSelection: []string{},
 				defaultAllowDowngrades:             defaultPluginConfig.defaultAllowDowngrades,
 			},
-			existingObjects: []runtime.Object{
+			existingObjects: []k8sruntime.Object{
 				&datapackagingv1alpha1.PackageMetadata{
 					TypeMeta: metav1.TypeMeta{
 						Kind:       pkgMetadataResource,
@@ -3895,7 +3950,7 @@ func TestCreateInstalledPackage(t *testing.T) {
 					},
 				},
 			},
-			existingTypedObjects: []runtime.Object{
+			existingTypedObjects: []k8sruntime.Object{
 				&k8scorev1.ConfigMap{
 					TypeMeta: metav1.TypeMeta{
 						Kind:       "ConfigMap",
@@ -3987,7 +4042,7 @@ func TestCreateInstalledPackage(t *testing.T) {
 				defaultPrereleasesVersionSelection: []string{"rc"},
 				defaultAllowDowngrades:             defaultPluginConfig.defaultAllowDowngrades,
 			},
-			existingObjects: []runtime.Object{
+			existingObjects: []k8sruntime.Object{
 				&datapackagingv1alpha1.PackageMetadata{
 					TypeMeta: metav1.TypeMeta{
 						Kind:       pkgMetadataResource,
@@ -4054,7 +4109,7 @@ func TestCreateInstalledPackage(t *testing.T) {
 					},
 				},
 			},
-			existingTypedObjects: []runtime.Object{
+			existingTypedObjects: []k8sruntime.Object{
 				&k8scorev1.ConfigMap{
 					TypeMeta: metav1.TypeMeta{
 						Kind:       "ConfigMap",
@@ -4142,7 +4197,7 @@ func TestCreateInstalledPackage(t *testing.T) {
 				},
 			},
 			pluginConfig: defaultPluginConfig,
-			existingObjects: []runtime.Object{
+			existingObjects: []k8sruntime.Object{
 				&datapackagingv1alpha1.PackageMetadata{
 					TypeMeta: metav1.TypeMeta{
 						Kind:       pkgMetadataResource,
@@ -4209,7 +4264,7 @@ func TestCreateInstalledPackage(t *testing.T) {
 					},
 				},
 			},
-			existingTypedObjects: []runtime.Object{
+			existingTypedObjects: []k8sruntime.Object{
 				&k8scorev1.ConfigMap{
 					TypeMeta: metav1.TypeMeta{
 						Kind:       "ConfigMap",
@@ -4300,7 +4355,7 @@ func TestCreateInstalledPackage(t *testing.T) {
 				defaultPrereleasesVersionSelection: defaultPluginConfig.defaultPrereleasesVersionSelection,
 				defaultAllowDowngrades:             defaultPluginConfig.defaultAllowDowngrades,
 			},
-			existingObjects: []runtime.Object{
+			existingObjects: []k8sruntime.Object{
 				&datapackagingv1alpha1.PackageMetadata{
 					TypeMeta: metav1.TypeMeta{
 						Kind:       pkgMetadataResource,
@@ -4367,7 +4422,7 @@ func TestCreateInstalledPackage(t *testing.T) {
 					},
 				},
 			},
-			existingTypedObjects: []runtime.Object{
+			existingTypedObjects: []k8sruntime.Object{
 				&k8scorev1.ConfigMap{
 					TypeMeta: metav1.TypeMeta{
 						Kind:       "ConfigMap",
@@ -4458,7 +4513,7 @@ func TestCreateInstalledPackage(t *testing.T) {
 				defaultPrereleasesVersionSelection: defaultPluginConfig.defaultPrereleasesVersionSelection,
 				defaultAllowDowngrades:             defaultPluginConfig.defaultAllowDowngrades,
 			},
-			existingObjects: []runtime.Object{
+			existingObjects: []k8sruntime.Object{
 				&datapackagingv1alpha1.PackageMetadata{
 					TypeMeta: metav1.TypeMeta{
 						Kind:       pkgMetadataResource,
@@ -4525,7 +4580,7 @@ func TestCreateInstalledPackage(t *testing.T) {
 					},
 				},
 			},
-			existingTypedObjects: []runtime.Object{
+			existingTypedObjects: []k8sruntime.Object{
 				&k8scorev1.ConfigMap{
 					TypeMeta: metav1.TypeMeta{
 						Kind:       "ConfigMap",
@@ -4616,7 +4671,7 @@ func TestCreateInstalledPackage(t *testing.T) {
 				defaultPrereleasesVersionSelection: defaultPluginConfig.defaultPrereleasesVersionSelection,
 				defaultAllowDowngrades:             defaultPluginConfig.defaultAllowDowngrades,
 			},
-			existingObjects: []runtime.Object{
+			existingObjects: []k8sruntime.Object{
 				&datapackagingv1alpha1.PackageMetadata{
 					TypeMeta: metav1.TypeMeta{
 						Kind:       pkgMetadataResource,
@@ -4683,7 +4738,7 @@ func TestCreateInstalledPackage(t *testing.T) {
 					},
 				},
 			},
-			existingTypedObjects: []runtime.Object{
+			existingTypedObjects: []k8sruntime.Object{
 				&k8scorev1.ConfigMap{
 					TypeMeta: metav1.TypeMeta{
 						Kind:       "ConfigMap",
@@ -4774,7 +4829,7 @@ func TestCreateInstalledPackage(t *testing.T) {
 				defaultPrereleasesVersionSelection: defaultPluginConfig.defaultPrereleasesVersionSelection,
 				defaultAllowDowngrades:             true,
 			},
-			existingObjects: []runtime.Object{
+			existingObjects: []k8sruntime.Object{
 				&datapackagingv1alpha1.PackageMetadata{
 					TypeMeta: metav1.TypeMeta{
 						Kind:       pkgMetadataResource,
@@ -4841,7 +4896,7 @@ func TestCreateInstalledPackage(t *testing.T) {
 					},
 				},
 			},
-			existingTypedObjects: []runtime.Object{
+			existingTypedObjects: []k8sruntime.Object{
 				&k8scorev1.ConfigMap{
 					TypeMeta: metav1.TypeMeta{
 						Kind:       "ConfigMap",
@@ -4909,14 +4964,14 @@ func TestCreateInstalledPackage(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			var unstructuredObjects []runtime.Object
+			var unstructuredObjects []k8sruntime.Object
 			for _, obj := range tc.existingObjects {
-				unstructuredContent, _ := runtime.DefaultUnstructuredConverter.ToUnstructured(obj)
+				unstructuredContent, _ := k8sruntime.DefaultUnstructuredConverter.ToUnstructured(obj)
 				unstructuredObjects = append(unstructuredObjects, &unstructured.Unstructured{Object: unstructuredContent})
 			}
 
 			dynamicClient := dynfake.NewSimpleDynamicClientWithCustomListKinds(
-				runtime.NewScheme(),
+				k8sruntime.NewScheme(),
 				map[schema.GroupVersionResource]string{
 					{Group: datapackagingv1alpha1.SchemeGroupVersion.Group, Version: datapackagingv1alpha1.SchemeGroupVersion.Version, Resource: pkgsResource}:         pkgResource + "List",
 					{Group: datapackagingv1alpha1.SchemeGroupVersion.Group, Version: datapackagingv1alpha1.SchemeGroupVersion.Version, Resource: pkgMetadatasResource}: pkgMetadataResource + "List",
@@ -4968,8 +5023,8 @@ func TestUpdateInstalledPackage(t *testing.T) {
 		name                   string
 		request                *corev1.UpdateInstalledPackageRequest
 		pluginConfig           *kappControllerPluginParsedConfig
-		existingObjects        []runtime.Object
-		existingTypedObjects   []runtime.Object
+		existingObjects        []k8sruntime.Object
+		existingTypedObjects   []k8sruntime.Object
 		expectedStatusCode     codes.Code
 		expectedResponse       *corev1.UpdateInstalledPackageResponse
 		expectedPackageInstall *packagingv1alpha1.PackageInstall
@@ -4996,7 +5051,7 @@ func TestUpdateInstalledPackage(t *testing.T) {
 				},
 			},
 			pluginConfig: defaultPluginConfig,
-			existingObjects: []runtime.Object{
+			existingObjects: []k8sruntime.Object{
 				&datapackagingv1alpha1.PackageMetadata{
 					TypeMeta: metav1.TypeMeta{
 						Kind:       pkgMetadataResource,
@@ -5066,7 +5121,7 @@ func TestUpdateInstalledPackage(t *testing.T) {
 					Status: packagingv1alpha1.PackageInstallStatus{
 						GenericStatus: kappctrlv1alpha1.GenericStatus{
 							ObservedGeneration: 1,
-							Conditions: []kappctrlv1alpha1.AppCondition{{
+							Conditions: []kappctrlv1alpha1.Condition{{
 								Type:    kappctrlv1alpha1.ReconcileSucceeded,
 								Status:  k8scorev1.ConditionTrue,
 								Reason:  "baz",
@@ -5080,7 +5135,7 @@ func TestUpdateInstalledPackage(t *testing.T) {
 					},
 				},
 			},
-			existingTypedObjects: []runtime.Object{
+			existingTypedObjects: []k8sruntime.Object{
 				&k8scorev1.Secret{
 					ObjectMeta: metav1.ObjectMeta{
 						Namespace: "default",
@@ -5131,7 +5186,7 @@ func TestUpdateInstalledPackage(t *testing.T) {
 				Status: packagingv1alpha1.PackageInstallStatus{
 					GenericStatus: kappctrlv1alpha1.GenericStatus{
 						ObservedGeneration: 1,
-						Conditions: []kappctrlv1alpha1.AppCondition{{
+						Conditions: []kappctrlv1alpha1.Condition{{
 							Type:    kappctrlv1alpha1.ReconcileSucceeded,
 							Status:  k8scorev1.ConditionTrue,
 							Reason:  "baz",
@@ -5171,7 +5226,7 @@ func TestUpdateInstalledPackage(t *testing.T) {
 				defaultPrereleasesVersionSelection: nil,
 				defaultAllowDowngrades:             defaultPluginConfig.defaultAllowDowngrades,
 			},
-			existingObjects: []runtime.Object{
+			existingObjects: []k8sruntime.Object{
 				&datapackagingv1alpha1.PackageMetadata{
 					TypeMeta: metav1.TypeMeta{
 						Kind:       pkgMetadataResource,
@@ -5241,7 +5296,7 @@ func TestUpdateInstalledPackage(t *testing.T) {
 					Status: packagingv1alpha1.PackageInstallStatus{
 						GenericStatus: kappctrlv1alpha1.GenericStatus{
 							ObservedGeneration: 1,
-							Conditions: []kappctrlv1alpha1.AppCondition{{
+							Conditions: []kappctrlv1alpha1.Condition{{
 								Type:    kappctrlv1alpha1.ReconcileSucceeded,
 								Status:  k8scorev1.ConditionTrue,
 								Reason:  "baz",
@@ -5255,7 +5310,7 @@ func TestUpdateInstalledPackage(t *testing.T) {
 					},
 				},
 			},
-			existingTypedObjects: []runtime.Object{
+			existingTypedObjects: []k8sruntime.Object{
 				&k8scorev1.Secret{
 					ObjectMeta: metav1.ObjectMeta{
 						Namespace: "default",
@@ -5273,9 +5328,9 @@ func TestUpdateInstalledPackage(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			var unstructuredObjects []runtime.Object
+			var unstructuredObjects []k8sruntime.Object
 			for _, obj := range tc.existingObjects {
-				unstructuredContent, _ := runtime.DefaultUnstructuredConverter.ToUnstructured(obj)
+				unstructuredContent, _ := k8sruntime.DefaultUnstructuredConverter.ToUnstructured(obj)
 				unstructuredObjects = append(unstructuredObjects, &unstructured.Unstructured{Object: unstructuredContent})
 			}
 
@@ -5285,7 +5340,7 @@ func TestUpdateInstalledPackage(t *testing.T) {
 					return clientgetter.NewBuilder().
 						WithTyped(typfake.NewSimpleClientset(tc.existingTypedObjects...)).
 						WithDynamic(dynfake.NewSimpleDynamicClientWithCustomListKinds(
-							runtime.NewScheme(),
+							k8sruntime.NewScheme(),
 							map[schema.GroupVersionResource]string{
 								{Group: datapackagingv1alpha1.SchemeGroupVersion.Group, Version: datapackagingv1alpha1.SchemeGroupVersion.Version, Resource: pkgsResource}:         pkgResource + "List",
 								{Group: datapackagingv1alpha1.SchemeGroupVersion.Group, Version: datapackagingv1alpha1.SchemeGroupVersion.Version, Resource: pkgMetadatasResource}: pkgMetadataResource + "List",
@@ -5327,8 +5382,8 @@ func TestDeleteInstalledPackage(t *testing.T) {
 	testCases := []struct {
 		name                 string
 		request              *corev1.DeleteInstalledPackageRequest
-		existingObjects      []runtime.Object
-		existingTypedObjects []runtime.Object
+		existingObjects      []k8sruntime.Object
+		existingTypedObjects []k8sruntime.Object
 		expectedStatusCode   codes.Code
 		expectedResponse     *corev1.DeleteInstalledPackageResponse
 	}{
@@ -5341,7 +5396,7 @@ func TestDeleteInstalledPackage(t *testing.T) {
 					Identifier: "my-installation",
 				},
 			},
-			existingObjects: []runtime.Object{
+			existingObjects: []k8sruntime.Object{
 				&packagingv1alpha1.PackageInstall{
 					TypeMeta: metav1.TypeMeta{
 						Kind:       pkgInstallResource,
@@ -5373,7 +5428,7 @@ func TestDeleteInstalledPackage(t *testing.T) {
 					Status: packagingv1alpha1.PackageInstallStatus{
 						GenericStatus: kappctrlv1alpha1.GenericStatus{
 							ObservedGeneration: 1,
-							Conditions: []kappctrlv1alpha1.AppCondition{{
+							Conditions: []kappctrlv1alpha1.Condition{{
 								Type:    kappctrlv1alpha1.ReconcileSucceeded,
 								Status:  k8scorev1.ConditionTrue,
 								Reason:  "baz",
@@ -5387,7 +5442,7 @@ func TestDeleteInstalledPackage(t *testing.T) {
 					},
 				},
 			},
-			existingTypedObjects: []runtime.Object{
+			existingTypedObjects: []k8sruntime.Object{
 				&k8scorev1.Secret{
 					ObjectMeta: metav1.ObjectMeta{
 						Namespace: "default",
@@ -5411,7 +5466,7 @@ func TestDeleteInstalledPackage(t *testing.T) {
 					Identifier: "noy-my-installation",
 				},
 			},
-			existingObjects: []runtime.Object{
+			existingObjects: []k8sruntime.Object{
 				&packagingv1alpha1.PackageInstall{
 					TypeMeta: metav1.TypeMeta{
 						Kind:       pkgInstallResource,
@@ -5443,7 +5498,7 @@ func TestDeleteInstalledPackage(t *testing.T) {
 					Status: packagingv1alpha1.PackageInstallStatus{
 						GenericStatus: kappctrlv1alpha1.GenericStatus{
 							ObservedGeneration: 1,
-							Conditions: []kappctrlv1alpha1.AppCondition{{
+							Conditions: []kappctrlv1alpha1.Condition{{
 								Type:    kappctrlv1alpha1.ReconcileSucceeded,
 								Status:  k8scorev1.ConditionTrue,
 								Reason:  "baz",
@@ -5457,7 +5512,7 @@ func TestDeleteInstalledPackage(t *testing.T) {
 					},
 				},
 			},
-			existingTypedObjects: []runtime.Object{
+			existingTypedObjects: []k8sruntime.Object{
 				&k8scorev1.Secret{
 					ObjectMeta: metav1.ObjectMeta{
 						Namespace: "default",
@@ -5476,9 +5531,9 @@ func TestDeleteInstalledPackage(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			var unstructuredObjects []runtime.Object
+			var unstructuredObjects []k8sruntime.Object
 			for _, obj := range tc.existingObjects {
-				unstructuredContent, _ := runtime.DefaultUnstructuredConverter.ToUnstructured(obj)
+				unstructuredContent, _ := k8sruntime.DefaultUnstructuredConverter.ToUnstructured(obj)
 				unstructuredObjects = append(unstructuredObjects, &unstructured.Unstructured{Object: unstructuredContent})
 			}
 
@@ -5488,7 +5543,7 @@ func TestDeleteInstalledPackage(t *testing.T) {
 					return clientgetter.NewBuilder().
 						WithTyped(typfake.NewSimpleClientset(tc.existingTypedObjects...)).
 						WithDynamic(dynfake.NewSimpleDynamicClientWithCustomListKinds(
-							runtime.NewScheme(),
+							k8sruntime.NewScheme(),
 							map[schema.GroupVersionResource]string{
 								{Group: datapackagingv1alpha1.SchemeGroupVersion.Group, Version: datapackagingv1alpha1.SchemeGroupVersion.Version, Resource: pkgsResource}:         pkgResource + "List",
 								{Group: datapackagingv1alpha1.SchemeGroupVersion.Group, Version: datapackagingv1alpha1.SchemeGroupVersion.Version, Resource: pkgMetadatasResource}: pkgMetadataResource + "List",
@@ -5519,8 +5574,8 @@ func TestGetInstalledPackageResourceRefs(t *testing.T) {
 	testCases := []struct {
 		name                 string
 		request              *corev1.GetInstalledPackageResourceRefsRequest
-		existingObjects      []runtime.Object
-		existingTypedObjects []runtime.Object
+		existingObjects      []k8sruntime.Object
+		existingTypedObjects []k8sruntime.Object
 		expectedStatusCode   codes.Code
 		expectedResponse     *corev1.GetInstalledPackageResourceRefsResponse
 	}{
@@ -5533,7 +5588,7 @@ func TestGetInstalledPackageResourceRefs(t *testing.T) {
 					Identifier: "my-installation",
 				},
 			},
-			existingObjects: []runtime.Object{
+			existingObjects: []k8sruntime.Object{
 				&packagingv1alpha1.PackageInstall{
 					TypeMeta: metav1.TypeMeta{
 						Kind:       pkgInstallResource,
@@ -5565,7 +5620,7 @@ func TestGetInstalledPackageResourceRefs(t *testing.T) {
 					Status: packagingv1alpha1.PackageInstallStatus{
 						GenericStatus: kappctrlv1alpha1.GenericStatus{
 							ObservedGeneration: 1,
-							Conditions: []kappctrlv1alpha1.AppCondition{{
+							Conditions: []kappctrlv1alpha1.Condition{{
 								Type:    kappctrlv1alpha1.ReconcileSucceeded,
 								Status:  k8scorev1.ConditionTrue,
 								Reason:  "baz",
@@ -5610,7 +5665,7 @@ func TestGetInstalledPackageResourceRefs(t *testing.T) {
 					},
 				},
 			},
-			existingTypedObjects: []runtime.Object{
+			existingTypedObjects: []k8sruntime.Object{
 				&k8scorev1.ConfigMap{
 					TypeMeta: metav1.TypeMeta{
 						Kind:       "ConfigMap",
@@ -5647,7 +5702,7 @@ func TestGetInstalledPackageResourceRefs(t *testing.T) {
 					Identifier: "my-installation",
 				},
 			},
-			existingObjects: []runtime.Object{
+			existingObjects: []k8sruntime.Object{
 				&packagingv1alpha1.PackageInstall{
 					TypeMeta: metav1.TypeMeta{
 						Kind:       pkgInstallResource,
@@ -5679,7 +5734,7 @@ func TestGetInstalledPackageResourceRefs(t *testing.T) {
 					Status: packagingv1alpha1.PackageInstallStatus{
 						GenericStatus: kappctrlv1alpha1.GenericStatus{
 							ObservedGeneration: 1,
-							Conditions: []kappctrlv1alpha1.AppCondition{{
+							Conditions: []kappctrlv1alpha1.Condition{{
 								Type:    kappctrlv1alpha1.ReconcileSucceeded,
 								Status:  k8scorev1.ConditionTrue,
 								Reason:  "baz",
@@ -5699,9 +5754,9 @@ func TestGetInstalledPackageResourceRefs(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			var unstructuredObjects []runtime.Object
+			var unstructuredObjects []k8sruntime.Object
 			for _, obj := range tc.existingObjects {
-				unstructuredContent, _ := runtime.DefaultUnstructuredConverter.ToUnstructured(obj)
+				unstructuredContent, _ := k8sruntime.DefaultUnstructuredConverter.ToUnstructured(obj)
 				unstructuredObjects = append(unstructuredObjects, &unstructured.Unstructured{Object: unstructuredContent})
 			}
 			// If more resources types are added, this will need to be updated accordingly
@@ -5722,7 +5777,7 @@ func TestGetInstalledPackageResourceRefs(t *testing.T) {
 			fakeDiscovery.Fake.Resources = apiResources
 
 			dynClient := dynfake.NewSimpleDynamicClientWithCustomListKinds(
-				runtime.NewScheme(),
+				k8sruntime.NewScheme(),
 				map[schema.GroupVersionResource]string{
 					{Group: datapackagingv1alpha1.SchemeGroupVersion.Group, Version: datapackagingv1alpha1.SchemeGroupVersion.Version, Resource: pkgsResource}:         pkgResource + "List",
 					{Group: datapackagingv1alpha1.SchemeGroupVersion.Group, Version: datapackagingv1alpha1.SchemeGroupVersion.Version, Resource: pkgMetadatasResource}: pkgMetadataResource + "List",
@@ -5790,7 +5845,7 @@ func TestGetPackageRepositories(t *testing.T) {
 	testCases := []struct {
 		name               string
 		request            *v1alpha1.GetPackageRepositoriesRequest
-		existingObjects    []runtime.Object
+		existingObjects    []k8sruntime.Object
 		expectedResponse   []*v1alpha1.PackageRepository
 		expectedStatusCode codes.Code
 	}{
@@ -5802,7 +5857,7 @@ func TestGetPackageRepositories(t *testing.T) {
 					Namespace: "default",
 				},
 			},
-			existingObjects: []runtime.Object{
+			existingObjects: []k8sruntime.Object{
 				&packagingv1alpha1.PackageRepository{
 					TypeMeta: metav1.TypeMeta{
 						Kind:       pkgRepositoryResource,
@@ -5859,9 +5914,9 @@ func TestGetPackageRepositories(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			var unstructuredObjects []runtime.Object
+			var unstructuredObjects []k8sruntime.Object
 			for _, obj := range tc.existingObjects {
-				unstructuredContent, _ := runtime.DefaultUnstructuredConverter.ToUnstructured(obj)
+				unstructuredContent, _ := k8sruntime.DefaultUnstructuredConverter.ToUnstructured(obj)
 				unstructuredObjects = append(unstructuredObjects, &unstructured.Unstructured{Object: unstructuredContent})
 			}
 
@@ -5870,7 +5925,7 @@ func TestGetPackageRepositories(t *testing.T) {
 				clientGetter: func(ctx context.Context, cluster string) (clientgetter.ClientInterfaces, error) {
 					return clientgetter.NewBuilder().
 						WithDynamic(dynfake.NewSimpleDynamicClientWithCustomListKinds(
-							runtime.NewScheme(),
+							k8sruntime.NewScheme(),
 							map[schema.GroupVersionResource]string{
 								{Group: packagingv1alpha1.SchemeGroupVersion.Group, Version: packagingv1alpha1.SchemeGroupVersion.Version, Resource: pkgRepositoriesResource}: pkgRepositoryResource + "List",
 							},
@@ -6155,6 +6210,10 @@ kappController:
 	}
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
+			// TODO(agamez): env vars and file paths should be handled properly for Windows operating system
+			if runtime.GOOS == "windows" {
+				t.Skip("Skipping in a Windows OS")
+			}
 			filename := ""
 			if tc.pluginYAMLConf != nil {
 				pluginJSONConf, err := yaml.YAMLToJSON(tc.pluginYAMLConf)

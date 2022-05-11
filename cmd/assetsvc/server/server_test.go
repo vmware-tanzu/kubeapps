@@ -43,60 +43,6 @@ func Test_GetReady(t *testing.T) {
 	assert.Equal(t, res.StatusCode, http.StatusOK, "http status code should match")
 }
 
-// tests the GET /{apiVersion}/clusters/default/namespaces/{namespace}/charts endpoint
-func Test_GetCharts(t *testing.T) {
-	ts := httptest.NewServer(setupRoutes())
-	defer ts.Close()
-
-	tests := []struct {
-		name   string
-		charts []*models.Chart
-	}{
-		{"no charts", []*models.Chart{}},
-		{"one chart", []*models.Chart{
-			{Repo: testRepo, ID: "my-repo/my-chart", ChartVersions: []models.ChartVersion{{Version: "0.0.1"}}}},
-		},
-		{"two charts", []*models.Chart{
-			{Repo: testRepo, ID: "my-repo/my-chart", ChartVersions: []models.ChartVersion{{Version: "0.0.1", Digest: "123"}}},
-			{Repo: testRepo, ID: "my-repo/dokuwiki", ChartVersions: []models.ChartVersion{{Version: "1.2.3", Digest: "1234"}, {Version: "1.2.2", Digest: "12345"}}},
-		}},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			mock, cleanup := setMockManager(t)
-			defer cleanup()
-
-			rows := sqlmock.NewRows([]string{"info"})
-			rowCount := sqlmock.NewRows([]string{"count"}).AddRow(len(tt.charts))
-
-			for _, chart := range tt.charts {
-				chartJSON, err := json.Marshal(chart)
-				if err != nil {
-					t.Fatalf("%+v", err)
-				}
-				rows.AddRow(string(chartJSON))
-			}
-			mock.ExpectQuery("SELECT info FROM charts WHERE *").
-				WithArgs("my-namespace", globalReposNamespace).
-				WillReturnRows(rows)
-
-			mock.ExpectQuery("^SELECT count(.+) FROM").
-				WillReturnRows(rowCount)
-
-			res, err := http.Get(ts.URL + pathPrefix + "/clusters/default/namespaces/my-namespace/charts")
-			assert.NoError(t, err)
-			defer res.Body.Close()
-
-			assert.Equal(t, res.StatusCode, http.StatusOK, "http status code should match")
-
-			var b bodyAPIListResponse
-			json.NewDecoder(res.Body).Decode(&b)
-			assert.Len(t, *b.Data, len(tt.charts))
-		})
-	}
-}
-
 // tests the GET /{apiVersion}/clusters/default/namespaces/{namespace}/charts/categories endpoint
 // particularly, it just tests that the endpoint is running the expected count query
 func Test_GetChartCategories(t *testing.T) {
@@ -210,61 +156,6 @@ func Test_GetChartCategoriesRepo(t *testing.T) {
 			var b bodyAPIListResponse
 			json.NewDecoder(res.Body).Decode(&b)
 			assert.Len(t, *b.Data, len(tt.expectedChartCategories))
-		})
-	}
-}
-
-// tests the GET /{apiVersion}/clusters/default/namespaces/{namespace}/charts/{repo} endpoint
-func Test_GetChartsInRepo(t *testing.T) {
-	ts := httptest.NewServer(setupRoutes())
-	defer ts.Close()
-
-	tests := []struct {
-		name   string
-		repo   string
-		charts []*models.Chart
-	}{
-		{"repo has no charts", "my-repo", []*models.Chart{}},
-		{"repo has one chart", "my-repo", []*models.Chart{
-			{Repo: testRepo, ID: "my-repo/my-chart", ChartVersions: []models.ChartVersion{{Version: "0.0.1", Digest: "123"}}},
-		}},
-		{"repo has many charts", "my-repo", []*models.Chart{
-			{Repo: testRepo, ID: "my-repo/my-chart", ChartVersions: []models.ChartVersion{{Version: "0.0.1", Digest: "123"}}},
-			{Repo: testRepo, ID: "my-repo/dokuwiki", ChartVersions: []models.ChartVersion{{Version: "1.2.3", Digest: "1234"}, {Version: "1.2.2", Digest: "12345"}}},
-		}},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			mock, cleanup := setMockManager(t)
-			defer cleanup()
-
-			rows := sqlmock.NewRows([]string{"info"})
-			rowCount := sqlmock.NewRows([]string{"count"}).AddRow(len(tt.charts))
-
-			for _, chart := range tt.charts {
-				chartJSON, err := json.Marshal(chart)
-				if err != nil {
-					t.Fatalf("%+v", err)
-				}
-				rows.AddRow(string(chartJSON))
-			}
-			mock.ExpectQuery("SELECT info FROM charts WHERE *").
-				WithArgs("my-namespace", globalReposNamespace, tt.repo).
-				WillReturnRows(rows)
-
-			mock.ExpectQuery("^SELECT count(.+) FROM").
-				WillReturnRows(rowCount)
-
-			res, err := http.Get(ts.URL + pathPrefix + "/clusters/default/namespaces/my-namespace/charts/" + tt.repo)
-			assert.NoError(t, err)
-			defer res.Body.Close()
-
-			assert.Equal(t, res.StatusCode, http.StatusOK, "http status code should match")
-
-			var b bodyAPIListResponse
-			json.NewDecoder(res.Body).Decode(&b)
-			assert.Len(t, *b.Data, len(tt.charts))
 		})
 	}
 }
