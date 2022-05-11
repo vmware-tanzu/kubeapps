@@ -5,7 +5,7 @@ However, to make them more accessible to the users, they are hosted in [SwaggerH
 
 If you are interested in the Kubeapps API, please [reach out to us](https://kubernetes.slack.com/messages/kubeapps) for further information.
 
-![image](../img/swaggerhub.png)
+![image](/site/themes/template/static/img/docs/swaggerhub.png)
 
 ## Using SwaggerHub
 
@@ -28,13 +28,13 @@ Once you finish editing, the changes can be saved and synced.
 
 In order to send your changes to the official Kubeapps repo, you need to commit the current API docs changes in your Kubeapps fork in GitHub. Whereas it is possible just to copy from SwaggerHub and paste the YAML in your repo, you can [confiugre Swagger to automatically push the saved changes in GitHub](https://support.smartbear.com/swaggerhub/docs/integrations/github-sync.html).
 
-![image](../img/swaggerhub-push-to-source-control.gif)
+![image](/site/themes/template/static/img/docs/swaggerhub-push-to-source-control.gif)
 
 Note that "pulling" from GitHub is a paid feature that users may don't have. In that case, always try to check the latest published version, as explained in [this guide](https://support.smartbear.com/swaggerhub/docs/apis/compare-and-merge.html).
 
-![image](../img/swaggerhub-merge-api.png)
+![image](/site/themes/template/static/img/docs/swaggerhub-merge-api.png)
 
-> Kubeapps maintainers can compare directly against https://raw.githubusercontent.com/vmware-tanzu/kubeapps/main/dashboard/public/openapi.yaml
+> Kubeapps maintainers can compare directly against <https://raw.githubusercontent.com/vmware-tanzu/kubeapps/main/dashboard/public/openapi.yaml>
 
 ### Sending a PR
 

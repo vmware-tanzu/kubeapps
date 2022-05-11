@@ -16,11 +16,11 @@ When users reach the deployment form, the desired behavior is to have two differ
 
 This is the proposed view for the basic deployment form:
 
-<img src="./img/deployment-form-basic.png" width="500px">
+![Deployment form basic](/site/themes/template/static/img/docs/dashboard/deployment-form-basic.png)
 
 And for the advanced tab:
 
-<img src="./img/deployment-form-adv.png" width="500px">
+![Deployment form advanced](/site/themes/template/static/img/docs/dashboard/deployment-form-adv.png)
 
 \*Note that the design may vary, the final proposal will be submitted in a different PR
 
@@ -170,7 +170,7 @@ Note that in order to be able to provide a richer presentation of the form we ar
 This section defines how the deployment logic will work based on the JSON Schema definition above.
 
 1. The deployment component loads the details of the Chart. If the chart doesn't contain the file `values.schema.json` or any key for `form`, continue as today; Only the advanced deployment is allowed. In other case, go to the next step.
-2. Load the `values.schema.json`. From this point, two different tabs will be shown to the user. If the user changes tab from `basic` to `advanced` the new form will be shown. We will port changes from one form to the other using the YAML library: https://github.com/eemeli/yaml/.
+2. Load the `values.schema.json`. From this point, two different tabs will be shown to the user. If the user changes tab from `basic` to `advanced` the new form will be shown. We will port changes from one form to the other using the YAML library: <https://github.com/eemeli/yaml/>.
 3. Kubeapps will support certain types of parameters (like `username` or `resources`). If those parameters are present, we will render the rich view of the parameter, for example a card-choice instead of a text-box. For parameters not supported, we should be able to fallback to the automatic generation. This may not be possible, so in that case, the parameter will be ignored (with an error for the developer console). If a parameter has a `title` or a `description`, those should be used in the form.
 4. Once the user clicks on "submit", we will also use the JSON schema to validate that the processed object complies with the definition.
 

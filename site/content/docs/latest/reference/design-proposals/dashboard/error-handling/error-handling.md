@@ -77,7 +77,7 @@ This new store will be able to contain more than one error. This aims to support
 
 In our case, the implementation overview could look like something like this, more details below:
 
-![Error handling overview](overview.png)
+![Error handling overview](/site/themes/template/static/img/docs/design-proposals/overview.png)
 
 This diagram represents the state of the system after implementing "Stage 4" from our [action plan](#action-plan).
 

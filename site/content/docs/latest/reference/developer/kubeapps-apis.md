@@ -4,11 +4,11 @@ The Kubeapps APIs service provides a pluggable, gRPC-based API service enabling 
 
 The Kubeapps APIs service is bundled with three packaging plugins providing support for the Helm, Carvel and Flux packaging formats, enabling users to browse and install packages of different formats.
 
-![Kubeapps with packaging plugins](../img/kubeapps-apis/packages-plugins.png)
+![Kubeapps with packaging plugins](/site/themes/template/static/img/docs/kubeapps-apis/packages-plugins.png)
 
 In addition to these three packaging plugins, the Kubeapps APIs service is also bundled with a Kubernetes resources plugin that removes the long-standing requirement for the Kubeapps UI to talk directly with the Kubernetes API server. With this change, a user with the required RBAC can request, for example, Kubernetes resources for a specific installed package only:
 
-![Kubeapps with resources plugins](../img/kubeapps-apis/resources-plugin.png)
+![Kubeapps with resources plugins](/site/themes/template/static/img/docs/kubeapps-apis/resources-plugin.png)
 
 ## Architectural overview
 

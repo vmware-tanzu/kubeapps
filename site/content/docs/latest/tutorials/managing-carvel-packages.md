@@ -60,7 +60,7 @@ At the time of writing this guide, kapp-controller will install the following Cu
 
 The following image depicts the relationship between the different kapp-controller CRs:
 
-![kapp-controller CRs](../img/kapp-crs.png)
+![kapp-controller CRs](/site/themes/template/static/img/docs/kapp-crs.png)
 
 ## Using Kubeapps for Managing Carvel Packages
 
@@ -190,11 +190,11 @@ Assuming that a Package Repository, such as the `Tanzu Community Edition`, is al
 
 The following image depicts the catalog page with a set of packages from the `Tanzu Community Edition` repository.
 
-![Catalog page with Carvel Packages](../img/carvel-catalog.png)
+![Catalog page with Carvel Packages](/site/themes/template/static/img/docs/carvel-catalog.png)
 
 Next, select any package you want to install, for example, `Harbor`, as depicted below:
 
-![Installation page of a Carvel Package](../img/carvel-install.png)
+![Installation page of a Carvel Package](/site/themes/template/static/img/docs/carvel-install.png)
 
 A big difference with respect to other packaging formats is that **you must select a `ServiceAccount` to be used for installing the package**.
 The reason why is that kapp-controller forces to explicitly provide needed privileges for management of app resources.
@@ -227,13 +227,13 @@ Go to the `Applications` tab to see every Application that has been installed in
 
 The following example shows an example of the Applications page with two Carvel Packages installed:
 
-![Installed applications page](../img/carvel-apps.png)
+![Installed applications page](/site/themes/template/static/img/docs/carvel-apps.png)
 
 Since the reconciliation process can eventually fail for several reasons, this page will show the current status of each application. If it is `deployed` it means that the application is successfully running in the cluster.
 
 Next, click on the application you want to view, for example, `my-test` to go to the details page, as depicted in the following image:
 
-![Details page of an installed Carvel Package](../img/carvel-details.png)
+![Details page of an installed Carvel Package](/site/themes/template/static/img/docs/carvel-details.png)
 
 As in any other packaging format, this page will display those Kubernetes resources that have been created as a result of the Package installation.
 Besides, the current values are shown at the end of the page.

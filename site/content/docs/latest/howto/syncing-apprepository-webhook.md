@@ -110,7 +110,7 @@ A high-level description of the main steps is presented below; please refer to t
 
 This picture illustrates the configuration of a webhook in Habor:
 
-![Configuring a webhook in Harbor](../img/harbor-webhook.png)
+![Configuring a webhook in Harbor](/site/themes/template/static/img/docs/harbor-webhook.png)
 
 ## Final remarks
 

@@ -7,10 +7,10 @@ Since Helm 3 has gotten rid of Tiller, it instead provides a client library that
 We see no reason to implement a proxy for Helm 3, but rather what we call an agent – afterall, its purpose is to perform _actions_ from the so called _Helm 3 "actions" library_.
 
 **Current situation:**
-![Current situation](https://user-images.githubusercontent.com/7773090/67413010-ac044e00-f5c0-11e9-93e9-f3cdd1eeaca8.PNG)
+![Current situation](/site/themes/template/static/img/docs/design-proposals/helm3-current-situation.png)
 
 **With the new additions:**
-![With the new additions](https://user-images.githubusercontent.com/7773090/67413025-b45c8900-f5c0-11e9-8961-67377bc8faad.PNG)
+![With the new additions](/site/themes/template/static/img/docs/design-proposals/helm3-new-situation.png)
 
 ## Authentication
 

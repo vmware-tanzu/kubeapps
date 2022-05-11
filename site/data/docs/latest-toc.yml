@@ -34,6 +34,8 @@ toc:
 
   - title: How-to guides
     subfolderitems:
+      - url: /howto/dashboard
+        page: Using the dashboard
       - url: /howto/access-control/
         page: Access Control
       - url: /howto/basic-form-support/
@@ -43,8 +45,6 @@ toc:
       - url: /howto/custom-form-component-support/
         page: Custom Form Component Support
       - url: /howto/deploying-to-multiple-clusters/
-        page: Using the dashboard
-      - url: /howto/dashboard
         page: Multi-cluster Support
       - url: /howto/offline-installation/
         page: Offline installation

@@ -82,11 +82,11 @@ kubectl port-forward -n kubeapps svc/kubeapps 8080:80
 
 This will start an HTTP proxy for secure access to the Kubeapps Dashboard. Visit http://127.0.0.1:8080/ in your preferred web browser to open the Dashboard. Here's what you should see:
 
-![Dashboard login page](../img/dashboard-login.png)
+![Dashboard login page](/site/themes/template/static/img/docs/dashboard-login.png)
 
 Paste the token generated in the previous step to authenticate and access the Kubeapps dashboard for Kubernetes.
 
-![Dashboard main page](../img/dashboard-home.png)
+![Dashboard main page](/site/themes/template/static/img/docs/dashboard-home.png)
 
 **_Note:_** If you are setting up Kubeapps for other people to access, you will want to use a different service type or setup Ingress rather than using the above `kubectl port-forward`. For detailed information on installing, configuring and upgrading Kubeapps, checkout the [chart README](https://github.com/vmware-tanzu/kubeapps/tree/main/chart/kubeapps)
 
@@ -96,35 +96,35 @@ Once you have the Kubeapps Dashboard up and running, you can start deploying app
 
 - Use the "Deploy" button or click on the "Catalog" page in the Dashboard to select an application from the list of charts in any of the configured Helm chart repositories. This example assumes you want to deploy WordPress.
 
-  ![WordPress chart](../img/wordpress-search.png)
+  ![WordPress chart](/site/themes/template/static/img/docs/wordpress-search.png)
 
 - Click the "Deploy" button.
 
-  ![WordPress chart](../img/wordpress-chart.png)
+  ![WordPress chart](/site/themes/template/static/img/docs/wordpress-chart.png)
 
 - You will be prompted for the release name and values for the application. The form is populated by the values (YAML), which you can see in the adjacent tab.
 
-  ![WordPress installation](../img/wordpress-installation.png)
+  ![WordPress installation](/site/themes/template/static/img/docs/wordpress-installation.png)
 
 - Click the "Deploy" button. The application will be deployed. You will be able to track the new Helm deployment directly from the browser. The status will be shown at the top, including the access URL and any secret included with the app. You can also look at the individual resources lower in the page. It will also show the number of ready pods. If you run your cursor over the status, you can see the workloads and number of ready and total pods within them.
 
-  ![WordPress deployment](../img/wordpress-deployment.png)
+  ![WordPress deployment](/site/themes/template/static/img/docs/wordpress-deployment.png)
 
 To access your new WordPress site, you can run the commands in the "Notes" section to get the URLs or simply click a URL (HTTP and HTTPS) shown.
 
 **_Note:_** Depending on your cloud provider of choice, it may take some time for an access URL to be available for the application and the Service will stay in a "Pending" state until a URL is assigned. If using Minikube, you will need to run `minikube tunnel` in your terminal in order for an IP address to be assigned to your application.
 
-![WordPress deployment notes](../img/wordpress-url.png)
+![WordPress deployment notes](/site/themes/template/static/img/docs/wordpress-url.png)
 
 To get the credentials for logging into your WordPress account, refer to the "Notes" section. You can also get the WordPress password by clicking on the eye next to `wordpress-password`.
 
-![WordPress deployment notes](../img/wordpress-credentials.png)
+![WordPress deployment notes](/site/themes/template/static/img/docs/wordpress-credentials.png)
 
 ## [Optional] Step 5: Uninstall/Delete WordPress
 
 If you want to uninstall/delete your WordPress application, you can do so by clicking the "Delete" button.
 
-![WordPress uninstall](../img/wordpress-uninstall.png)
+![WordPress uninstall](/site/themes/template/static/img/docs/wordpress-uninstall.png)
 
 ## Next Steps
 

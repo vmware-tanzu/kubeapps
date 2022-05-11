@@ -2,13 +2,13 @@
 
 The goal of this document is to define in detail the actions planned to improve the current user experience when working with applications.
 
-Parent issue: https://github.com/vmware-tanzu/kubeapps/issues/1524
+Parent issue: <https://github.com/vmware-tanzu/kubeapps/issues/1524>
 
 ## Goal
 
 The goal of this revamp is to improve the Application View, which is one of the core views of the project so it gives a better user experience in different areas:
 
-- Discoverability. It should be possible to obtain information about the application dependencies. For example, Kubeapps should show that MariaDB is a dependency of WordPress. Details at https://github.com/vmware-tanzu/kubeapps/issues/529
+- Discoverability. It should be possible to obtain information about the application dependencies. For example, Kubeapps should show that MariaDB is a dependency of WordPress. Details at <https://github.com/vmware-tanzu/kubeapps/issues/529>
 - Error Detection. Make an easy to understand view that can point the user to the piece(s) of the chart that is failing.
 - Usability. Make it easier, if possible, to modify/upgrade/rollback/test/delete an application.
 - Debugging. When something fails while working with a release, it should be possible to detect the cause of the issue and fix it without the need of a terminal. This means being able to report kubernetes events/errors to the user and being able to read logs.
@@ -33,21 +33,21 @@ dependencies:
     - wordpress-database
 ```
 
-From that information, if the user has permissions to request AppRepositories, we should be able to map https://kubernetes-charts.storage.googleapis.com/ to `stable` (name given in the AppRepository) and generate a link for the MariaDB chart:
+From that information, if the user has permissions to request AppRepositories, we should be able to map <https://kubernetes-charts.storage.googleapis.com/> to `stable` (name given in the AppRepository) and generate a link for the MariaDB chart:
 
-<img src="./img/chart-dependencies.png" width="300px">
+![Chart dependencies](/site/themes/template/static/img/docs/dashboard/chart-dependencies.png)
 
 ### Improve Application Status Report
 
 Right now we only show a "Ready" or "Not Ready" status message depending on the Application workloads. We take into account deployments, statefulsets and daemonsets. Only if all of those are ready, we show the "Ready" status. Since we already have that information, we can show it to the user in order to identify what can go wrong or what it's missing:
 
-<img src="./img/pod-count.png" width="300px">
+![Pod count](/site/themes/template/static/img/docs/dashboard/pod-count.png)
 
 ### Highlight Application Credentials
 
 In the current view, application credentials can be found either reading and running the commands that the Notes suggest, or clicking on the icon to reveal the secrets below. Those secrets usually are of the type "Opaque" (rather than `kubernetes.io/tls` or `kubernetes.io/service-account-token`). We can extract those credentials and show them in a more prominent place. That way the user can easily discover and copy the application credentials without the need of a terminal:
 
-<img src="./img/credentials-box.png" width="400px">
+![Credentials box](/site/themes/template/static/img/docs/dashboard/credentials-box.png)
 
 Note that we will still be showing the different application Secrets along with all the other resources in its own table.
 
@@ -57,7 +57,7 @@ The current approach is to show one button per action (Upgrade, Delete, Rollback
 
 We could also differentiate between the configuration and the upgrade actions. While both actions translate to the same helm command (`upgrade`), while configuring the application, the same version will be used and when upgrading, the latest version can be auto-selected.
 
-<img src="./img/configuration-options.png" width="300px">
+![Configuration options](/site/themes/template/static/img/docs/dashboard/configuration-options.png)
 
 ### Include Additional Information for Access URLs
 
@@ -66,7 +66,7 @@ The current list of URLs can be improved with two small changes:
 - If the browser can access the URL, we could show an icon so the user knows if the URL is working.
 - If the URL is not working and the cause is well known, we could show additional information for the user to debug it (e.g. Pending IPs when using LoadBalancers in Minikube [link](https://github.com/vmware-tanzu/kubeapps/issues/953)).
 
- <img src="./img/url-list.png">
+![URL list](/site/themes/template/static/img/docs/dashboard/url-list.png)
 
 ### Render an Extended Resources Table
 
@@ -76,7 +76,7 @@ Apart from the basic information of the resource, we could add a summary (human-
 
 We can also show different buttons in order to show the resource YAML, description and logs if available (available for pods, services and workloads).
 
-<img src="./img/resources-table.png">
+![Resources table](/site/themes/template/static/img/docs/dashboard/resources-table.png)
 
 If we later develop a clearer way to capture and present errors to users, clearly identifying the cause without requiring clicking through resources, the resources table will still be useful as a way to dig deeper and learn more without leaving the UI.
 
@@ -125,4 +125,4 @@ In order to prioritize the work described in this document, we can tag each acti
 
 This is a general view of the changes planned in this document. Specific implementation details will be discussed in their respective PRs:
 
-<img src="./img/appview-revamp.png">
+![Appview revamp](/site/themes/template/static/img/docs/dashboard/appview-revamp.png)

@@ -27,8 +27,8 @@ or to allow other users the ability to deploy charts from App Repositories in a 
 
 When creating an AppRepository in Kubeapps, you can now additionally choose (or create) an [imagePullSecret](https://kubernetes.io/docs/concepts/containers/images/#specifying-imagepullsecrets-on-a-pod) to be associated with the AppRepository:
 
-<img src="../img/app-repo-pull-secret.png" alt="AppRepository with imagePullSecret" width="600px">
-<img src="../img/app-repo-pull-secret-2.png" alt="AppRepository with imagePullSecret" width="600px">
+![AppRepository with imagePullSecret](/site/themes/template/static/img/docs/app-repo-pull-secret.png)
+![AppRepository with imagePullSecret](/site/themes/template/static/img/docs/app-repo-pull-secret-2.png)
 
 When Kubeapps deploys any chart from this AppRepository, if a referenced docker image within the chart is from a docker registry server matching one of the secrets associated with the AppRepository, then Kubeapps with Helm 3 will automatically append the corresponding imagePullSecret so that image can be pulled from the private registry. Note that the user deploying the chart will need to be able to read secrets in that namespace, which is usually the case when deploying to a namespace.
 
@@ -38,7 +38,7 @@ There will be further work to enable private AppRepositories to be available in 
 
 Since Kubeapps 2.3, it's possible to limit the number of packages that Kubeapps will expose to the users of an Application Repository. For doing so, edit the filter field of the form:
 
-<img src="../img/apprepo-form-filter.png" alt="AppRepository with filter" width="600px">
+![AppRepository with filter](/site/themes/template/static/img/docs/apprepo-form-filter.png)
 
 - If "Exclude Packages" is marked, all the applications matching the given names will be excluded.
 - If "Regular Expression" is marked, rather than treating the input as a comma-separated list of application names, it will be treated as a [PCRE regex](https://stedolan.github.io/jq/manual/#RegularexpressionsPCRE). This can be used when the name of the application is not known or when you want to filter different applications with the same name.
@@ -69,14 +69,14 @@ spec:
 
 To use ChartMuseum with Kubeapps, first deploy its Helm chart from the `stable` repository:
 
-<img src="../img/chartmuseum-chart.png" alt="ChartMuseum Chart">
+![ChartMuseum Chart](/site/themes/template/static/img/docs/chartmuseum-chart.png)
 
 In the deployment form we should change at least two things:
 
 - `env.open.DISABLE_API`: We should set this value to `false` so we can use the ChartMuseum API to push new charts.
 - `persistence.enabled`: We will set this value to `true` to enable persistence for the charts we store. Note that this will create a [Kubernetes Persistent Volume Claim](https://kubernetes.io/docs/concepts/storage/persistent-volumes/#lifecycle-of-a-volume-and-claim) so depending on your Kubernetes provider you may need to manually allocate the required Persistent Volume to satisfy the claim. Some Kubernetes providers will automatically create PVs for you so setting this value to `true` will be enough.
 
-<img src="../img/chartmuseum-deploy-form.png" alt="ChartMuseum Deploy Form" width="600px">
+![ChartMuseum Deploy Form](/site/themes/template/static/img/docs/chartmuseum-deploy-form.png)
 
 ### ChartMuseum: Upload a Chart
 
@@ -102,7 +102,7 @@ curl --data-binary "@my-chart-1.0.0.tgz" http://localhost:8080/api/charts
 
 To add your private repository to Kubeapps, select the Kubernetes namespace to which you want to add the repository (or "All Namespaces" if you want it available to users in all namespaces), go to `Configuration > App Repositories` and click on "Add App Repository". You will need to add your repository using the Kubernetes DNS name for the ChartMuseum service. This will be `<release_name>-chartmuseum.<namespace>:8080`:
 
-<img src="../img/chartmuseum-repository.png" alt="ChartMuseum App Repository" width="600px">
+![ChartMuseum App Repository](/site/themes/template/static/img/docs/chartmuseum-repository.png)
 
 Once you create the repository you can click on the link for the specific repository and you will be able to deploy your own applications using Kubeapps.
 
@@ -121,17 +121,17 @@ It is possible to configure ChartMuseum to use authentication with two different
 
 To use Harbor with Kubeapps, first deploy the [Bitnami Harbor Helm Chart](https://github.com/bitnami/charts/tree/master/bitnami/harbor) from the `bitnami` repository (alternatively you can deploy Harbor using [Harbor offline installer](https://goharbor.io/docs/2.1.0/install-config/download-installer/)):
 
-<img src="../img/harbor-chart.png" alt="Harbor Chart" width="300px">
+![Harbor Chart](/site/themes/template/static/img/docs/harbor-chart.png)
 
 In the deployment form we should change the parameter below:
 
 - `service.tls.enabled`: We should set this value to `false` so we don't need to configure the TLS settings. Alternatively, you can provide valid TSL certificates (check [Bitnami Harbor Helm Chart documentation](https://github.com/bitnami/charts/tree/master/bitnami/harbor#parameters) for more information).
 
-<img src="../img/harbor-deploy-form.png" alt="Harbor Deploy Form" width="600px">
+![Harbor Deploy Form](/site/themes/template/static/img/docs/harbor-deploy-form.png)
 
 Deploy the chart and wait for it to be ready.
 
-<img src="../img/harbor-ready.png" alt="Harbor Chart Ready" width="600px">
+![Harbor Chart Ready](/site/themes/template/static/img/docs/harbor-ready.png)
 
 **Note**: By default, Harbor deploys ChartMuseum to store charts. If you deactivate it, you can still use the Harbor OCI registry to upload charts. Check out the [OCI](#oci-registry) section for more information.
 
@@ -160,15 +160,15 @@ Second login Harbor admin portal following the instructions in the chart notes:
 
 Create a new Project named 'my-helm-repo' with public access. Each project will serve as a Helm chart repository.
 
-<img src="../img/harbor-new-project.png" width="300px">
+![Harbor new project](/site/themes/template/static/img/docs/harbor-new-project.png)
 
 Click the project name to view the project details page, then click 'Helm Charts' tab to list all helm charts.
 
-<img src="../img/harbor-list-charts.png" width="600px">
+![Harbor list charts](/site/themes/template/static/img/docs/harbor-list-charts.png)
 
 Click 'UPLOAD' button to upload the Helm chart you previously created. You can also use helm command to upload the chart too.
 
-<img src="../img/harbor-upload-chart.png" width="500px">
+![Harbor upload chart](/site/themes/template/static/img/docs/harbor-upload-chart.png)
 
 Please refer to ['Manage Helm Charts in Harbor'](https://goharbor.io/docs/2.1.0/working-with-projects/working-with-images/managing-helm-charts) for more details.
 
@@ -191,7 +191,7 @@ Since Helm v3, the project is pushing towards the idea that using an [OCI compli
 
 You can add an OCI registry like any other repository. For example, for a [Harbor registry](https://goharbor.io/docs/2.0.0/working-with-projects/working-with-images/managing-helm-charts/#manage-helm-charts-with-the-oci-compatible-registry-of-harbor):
 
-<img src="../img/oci-registry.png" alt="OCI Registry">
+![OCI registry](/site/themes/template/static/img/docs/oci-registry.png
 
 There is one caveat though. It's necessary to specify the list of applications (repositories) that the registry contains. This is because the OCI specification doesn't have an endpoint to discover artifacts (unlike the index.yaml file of a Helm repository). In any case, it's possible to use the registry provider API to retrieve this list.
 
@@ -212,13 +212,13 @@ JFrog Artifactory is a Repository Manager supporting all major packaging formats
 
 To install Artifactory with Kubeapps first add the JFrog repository to Kubeapps. Go to `Configuration > App Repositories` and add their repository:
 
-<img src="../img/jfrog-repository.png" alt="JFrog repository" width="300px">
+![JFrog repository](/site/themes/template/static/img/docs/jfrog-repository.png)
 
 Then click on the JFrog repository and deploy Artifactory. For detailed installation instructions, check its [README](https://github.com/jfrog/charts/tree/master/stable/artifactory). If you don't have any further requirements, the default values will work.
 
 When deployed, in the setup wizard, select "Helm" to initialize a repository:
 
-<img src="../img/jfrog-wizard.png" alt="JFrog repository" width="600px">
+![JFrog repository](/site/themes/template/static/img/docs/jfrog-wizard.png)
 
 By default, Artifactory creates a chart repository called `helm`. That is the one you can use to store your applications.
 
@@ -247,7 +247,7 @@ curl -u{USER}:{PASSWORD} -XPOST "http://{REPO_URL}/artifactory/api/security/toke
 
 The above command creates a token with read-only permissions. Now you can select the namespace to which you want to add the repository (or "All Namespaces" if you want it available to users in all namespaces), go to the `Configuration > App Repositories` menu and add your personal repository:
 
-<img src="../img/jfrog-custom-repo.png" alt="JFrog custom repository" width="600px">
+![JFrog custom repository](/site/themes/template/static/img/docs/jfrog-custom-repo.png)
 
 After submitting the repository, you will be able to click on the new repository and see the chart you uploaded in the previous step.
 

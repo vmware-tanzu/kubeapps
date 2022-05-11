@@ -10,38 +10,38 @@ The following sections walk you through some common tasks with the Kubeapps Dash
 
 - Start with the Dashboard welcome page:
 
-  ![Dashboard main page](../img/dashboard-home.png)
+  ![Dashboard main page](/site/themes/template/static/img/docs/dashboard-home.png)
 
 - Use the "Catalog" menu to select an application from the list of applications available. This example assumes you want to deploy MariaDB.
 
-  ![MariaDB chart](../img/mariadb-chart.png)
+  ![MariaDB chart](/site/themes/template/static/img/docs/mariadb-chart.png)
 
 - Click the "Deploy" button. You will be prompted for the release name, cluster namespace and values for your application deployment.
 
-  ![MariaDB installation](../img/mariadb-installation.png)
+  ![MariaDB installation](/site/themes/template/static/img/docs/mariadb-installation.png)
 
 - Click the "Submit" button. The application will be deployed. You will be able to track the new Kubernetes deployment directly from the browser. The "Notes" section of the deployment page contains important information to help you use the application.
 
-  ![MariaDB deployment](../img/mariadb-deployment.png)
+  ![MariaDB deployment](/site/themes/template/static/img/docs/mariadb-deployment.png)
 
 ### List all the applications running in your cluster
 
 The "Applications" page displays a list of the application deployments in your cluster.
 
-![Deployment list](../img/dashboard-deployments.png)
+![Deployment list](/site/themes/template/static/img/docs/dashboard-deployments.png)
 
 ### Remove existing application deployments
 
 You can remove any of the applications from your cluster by clicking the "Delete" button on the application's status page:
 
-![Deployment removal](../img/dashboard-delete-deployment.png)
+![Deployment removal](/site/themes/template/static/img/docs/dashboard-delete-deployment.png)
 
 ### Add more chart repositories
 
 By default, Kubeapps comes with the Bitnami repository enabled. You can see the list of enabled chart repositories in the "App Repositories" page under the menu:
 
-![Repositories List](../img/dashboard-repos.png)
+![Repositories List](/site/themes/template/static/img/docs/dashboard-repos.png)
 
 Add new repositories (for example, your organization's chart repository) by clicking the "Add App Repository" button. Fill the "Add Repository" form using the repository info. For a detailed guide of how to add app repositories, check [this guide](./private-app-repository.md).
 
-![Adding repository](../img/dashboard-add-repo.png)
+![Adding repository](/site/themes/template/static/img/docs/dashboard-add-repo.png)

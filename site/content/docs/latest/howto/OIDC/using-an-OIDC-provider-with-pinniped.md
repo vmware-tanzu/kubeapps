@@ -169,7 +169,7 @@ Also, you can use your browser to check the proper CA certificate you will need.
 
 Next, go to `https://gaz.csp-vidm-prod.com` to check the CA certificate using your browser. For instance, in Google Chrome:
 
-![Checking the CA certificate using Chrome](../img/ca-certificate-chrome.png "Checking the CA certificate using Chrome")
+![Checking the CA certificate using Chrome](/site/themes/template/static/img/docs/ca-certificate-chrome.png "Checking the CA certificate using Chrome")
 
 The CA used is `DigiCert SHA2 High Assurance Server CA`, so you will need to look up this certificate in the [DigiCert repository](https://www.digicert.com/kb/digicert-root-certificates.htm). Download the proper `.pem` file (in this case, [this one](https://cacerts.digicert.com/DigiCertSHA2HighAssuranceServerCA.crt.pem)) and convert the content to base64. For simplicity, we perform this step by running:
 

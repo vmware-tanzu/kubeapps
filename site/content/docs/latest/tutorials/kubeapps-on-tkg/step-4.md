@@ -10,33 +10,33 @@ To deploy a new application, follow the steps below:
 
 1. Log in to Kubeapps to arrive at the dashboard welcome page:
 
-   ![Kubeapps home](./img/kubeapps-applications-empty.png)
+   ![Kubeapps home](/site/themes/template/static/img/docs/kubeapps-on-tkg/kubeapps-applications-empty.png)
 
 2. Use the _Catalog_ menu to search for the desired application, for instance, _MariaDB_:
 
-   ![MariaDB chart search](./img/kubeapps-catalog-search.png)
+   ![MariaDB chart search](/site/themes/template/static/img/docs/kubeapps-on-tkg/kubeapps-catalog-search.png)
 
 3. Click on the application to see the details:
 
-   ![MariaDB chart](./img/kubeapps-chart-mariadb.png)
+   ![MariaDB chart](/site/themes/template/static/img/docs/kubeapps-on-tkg/kubeapps-chart-mariadb.png)
 
 4. Click on the _Deploy_ button. You will be prompted for the release name, cluster namespace and the values for your application deployment.
 
-   ![MariaDB installation](./img/kubeapps-chart-mariadb-deploy.png)
+   ![MariaDB installation](/site/themes/template/static/img/docs/kubeapps-on-tkg/kubeapps-chart-mariadb-deploy.png)
 
 5. Click the _Deploy_ button at the end of the page. Wait a while until it gets deployed.
 
-   ![MariaDB installation wait](./img/kubeapps-chart-mariadb-wait.png)
+   ![MariaDB installation wait](/site/themes/template/static/img/docs/kubeapps-on-tkg/kubeapps-chart-mariadb-wait.png)
 
 The application is deployed. The status of the deployment can be tracked directly from the browser. The _Notes_ section of the deployment page contains important information to help you use the application.
 
-![MariaDB deployment](./img/kubeapps-chart-mariadb-deployed.png)
+![MariaDB deployment](/site/themes/template/static/img/docs/kubeapps-on-tkg/kubeapps-chart-mariadb-deployed.png)
 
 ### List All Applications
 
 The _Applications_ page displays a list of the application deployments in your cluster.
 
-![Deployment list](./img/kubeapps-applications-one.png)
+![Deployment list](/site/themes/template/static/img/docs/kubeapps-on-tkg/kubeapps-applications-one.png)
 
 ### Upgrade an Application
 
@@ -45,15 +45,15 @@ To upgrade an application with new values, follow the steps below:
 1. Navigate to the _Applications_ page.
 2. Click the application you wish to upgrade.
 
-   ![MariaDB chart](./img/kubeapps-chart-mariadb-deployed.png)
+   ![MariaDB chart](/site/themes/template/static/img/docs/kubeapps-on-tkg/kubeapps-chart-mariadb-deployed.png)
 
 3. Click the _Upgrade_ button.
 
-   ![MariaDB chart](./img/kubeapps-chart-mariadb-deployed.png)
+   ![MariaDB chart](/site/themes/template/static/img/docs/kubeapps-on-tkg/kubeapps-chart-mariadb-deployed.png)
 
 4. Perform the changes and click the _Changes_ tab to see the differences with the installed version.
 
-   ![MariaDB installation](./img/kubeapps-chart-mariadb-upgrade.png)
+   ![MariaDB installation](/site/themes/template/static/img/docs/kubeapps-on-tkg/kubeapps-chart-mariadb-upgrade.png)
 
 5. Click the _Deploy_ button.
 
@@ -66,15 +66,15 @@ To rollback an application to a previous version, follow the steps below:
 1. Navigate to the _Applications_ page.
 2. Click the application you wish to upgrade.
 
-   ![MariaDB chart](./img/kubeapps-chart-mariadb-deployed.png)
+   ![MariaDB chart](/site/themes/template/static/img/docs/kubeapps-on-tkg/kubeapps-chart-mariadb-deployed.png)
 
 3. Click the _Rollback_ button.
 
-   ![MariaDB chart](./img/kubeapps-chart-mariadb-deployed.png)
+   ![MariaDB chart](/site/themes/template/static/img/docs/kubeapps-on-tkg/kubeapps-chart-mariadb-deployed.png)
 
 4. Select the version to rollback to and confirm the operation by clicking the _Rollback_ button in the confirmation dialog.
 
-   ![MariaDB installation](./img/kubeapps-chart-mariadb-rollback.png)
+   ![MariaDB installation](/site/themes/template/static/img/docs/kubeapps-on-tkg/kubeapps-chart-mariadb-rollback.png)
 
 The application is rolled back to the desired version. The status of the deployment can be tracked directly from the browser.
 
@@ -82,6 +82,6 @@ The application is rolled back to the desired version. The status of the deploym
 
 Running applications can be removed from the cluster by clicking the _Delete_ button on the application's status page:
 
-![Deployment removal](./img/kubeapps-chart-mariadb-delete.png)
+![Deployment removal](/site/themes/template/static/img/docs/kubeapps-on-tkg/kubeapps-chart-mariadb-delete.png)
 
 At the end of this step, you should be able to use Kubeapps for common application management and deployment tasks. Continue reading for a collection of [useful links and references to help you maximize your usage of Kubeapps](./conclusion.md).

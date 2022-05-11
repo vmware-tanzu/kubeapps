@@ -147,7 +147,7 @@ The next step is to provide a rich user experience, aligned with corporate brand
 
    This image depicts a customized version of Kubeapps applying the above styles and strings:
 
-   ![Customized Kubeapps](./img/login-oidc-initial.png)
+   ![Customized Kubeapps](/site/themes/template/static/img/docs/kubeapps-on-tkg/login-oidc-initial.png)
 
 2. Customize the initial application repositories by setting the `apprepository` parameter. Here is a simple example of adding the Bitnami open source catalog:
 
@@ -193,7 +193,7 @@ For instance, assuming Kubeapps is accessible at `https://kubeapps.example.com` 
 
 > **TIP**: If you are serving Kubeapps from a subpath, for instance, `https://example.com/kubeapps`, you will need to slightly modify the `authProxy` configuration. Please follow [these instructions](https://github.com/vmware-tanzu/kubeapps/blob/main/chart/kubeapps/README.md#serving-kubeapps-in-a-subpath) for further details.
 
-![Add name and description](./img/csp-oauth-redirect.png)
+![Add name and description](/site/themes/template/static/img/docs/kubeapps-on-tkg/csp-oauth-redirect.png)
 
 At this point, Kubeapps is installed in the cluster and the OIDC provider is fully configured.
 
@@ -243,14 +243,14 @@ Once Kubeapps is installed and configured, the next step is to log in and access
 
 2. Browse to [http://127.0.0.1:8080](http://127.0.0.1:8080) (when forwarding the port) or to the public IP address of the serevice (when exposing the service externally). You see the Kubeapps login page, as shown below:
 
-   ![OIDC login page](./img/login-oidc-initial.png)
+   ![OIDC login page](/site/themes/template/static/img/docs/kubeapps-on-tkg/login-oidc-initial.png)
 
 3. Click the _Login_ button. You are redirected to the OIDC provider (in this example, the VMware Cloud Services Portal).
 
-   ![OIDC login provider](./img/login-oidc-provider.png)
+   ![OIDC login provider](/site/themes/template/static/img/docs/kubeapps-on-tkg/login-oidc-provider.png)
 
 4. Enter the necessary credentials. If the login is successful, you are redirected to the Kubeapps dashboard:
 
-   ![Kubeapps home](./img/kubeapps-applications-empty.png)
+   ![Kubeapps home](/site/themes/template/static/img/docs/kubeapps-on-tkg/kubeapps-applications-empty.png)
 
 At the end of this step, the Kubeapps installation is configured, customized and running in the cluster. The next step is to [add application repositories to Kubeapps](./step-3.md).
