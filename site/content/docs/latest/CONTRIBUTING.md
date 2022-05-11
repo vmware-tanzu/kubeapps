@@ -1,74 +1,83 @@
 # Contributing
 
-Leo urna molestie at elementum eu facilisis sed odio. Non nisi est sit amet facilisis.
+When contributing to Kubeapps, please first discuss the change you wish to make via an issue with this repository before making a change.
 
-## Magna etiam tempor orci 
+> Kubeapps distribution is delegated to the official [Bitnami Kubeapps chart](https://github.com/bitnami/charts/tree/master/bitnami/kubeapps) from the separate Bitnami charts repository. PRs and issues related to the official chart should be created in the Bitnami charts repository.
 
-Congue eu consequat [scope](../scope/) ac felis donec et odio.
+Please note we have a [code of conduct](./CODE_OF_CONDUCT.md), please follow it in all your interactions with the project.
 
-Elit eget gravida cum sociis. Tempus quam pellentesque nec nam aliquam. 
-Dolor purus non enim praesent elementum facilisis leo.
+## Pull Request Process
 
-## Cras semper auctor neque vitae tempus
+1. Ensure any install or build dependencies are removed before the end of the layer when doing a build.
+2. Update the README.md with details of changes to the interface, this includes new environment variables, exposed ports, useful file locations and container parameters.
+3. Increase the version numbers in any examples files and the README.md to the new version that this Pull Request would represent. The versioning scheme we use is [SemVer](https://semver.org/).
+4. You may merge the Pull Request in once you have the sign-off of two other developers, or if you do not have permission to do that, you may request the second reviewer to merge it for you.
 
-Quis eleifend quam adipiscing vitae proin. Mauris pellentesque pulvinar 
-pellentesque habitant morbi tristique senectus et.
+## DCO Sign off
 
-## Ultrices vitae auctor eu augue ut lectus arcu bibendum.
+All authors to the project retain copyright to their work. However, to ensure
+that they are only submitting work that they have rights to, we are requiring
+everyone to acknowledge this by signing their work.
 
-Ut aliquam purus sit amet. Id ornare arcu odio ut sem nulla pharetra. 
-Justo nec ultrices dui sapien eget mi proin sed. 
-Nulla malesuada pellentesque elit eget gravida.
+Any copyright notices in this repo should specify the authors as "the contributors".
 
-### Imperdiet sed euismod
+To sign your work, just add a line like this at the end of your commit message:
 
-```bash
- nisi porta
+```text
+Signed-off-by: Michael Nelson <minelson@vmware.com>
 ```
 
-### Egestas pretium aenean
+This can easily be done with the `--signoff` option to `git commit`.
 
-```bash
- pharetr/magna/ac/placerat/vestibulum
+By doing this you state that you can certify the following (from [https://developercertificate.org/](https://developercertificate.org/):
+
+```text
+Developer Certificate of Origin
+Version 1.1
+
+Copyright (C) 2004, 2006 The Linux Foundation and its contributors.
+1 Letterman Drive
+Suite D4700
+San Francisco, CA, 94129
+
+Everyone is permitted to copy and distribute verbatim copies of this
+license document, but changing it is not allowed.
+
+
+Developer's Certificate of Origin 1.1
+
+By making a contribution to this project, I certify that:
+
+(a) The contribution was created in whole or in part by me and I
+    have the right to submit it under the open source license
+    indicated in the file; or
+
+(b) The contribution is based upon previous work that, to the best
+    of my knowledge, is covered under an appropriate open source
+    license and I have the right under that license to submit that
+    work with modifications, whether created in whole or in part
+    by me, under the same open source license (unless I am
+    permitted to submit under a different license), as indicated
+    in the file; or
+
+(c) The contribution was provided directly to me by some other
+    person who certified (a), (b) or (c) and I have not modified
+    it.
+
+(d) I understand and agree that this project and the contribution
+    are public and that a record of the contribution (including all
+    personal information I submit with it, including my sign-off) is
+    maintained indefinitely and may be redistributed consistent with
+    this project or the open source license(s) involved.
 ```
 
-### Vitae proin sagittis nisl 
+If you find yourself in the position where you've created a pull-request and it's failing the DCO check because some of your commits are not signed off, you can just follow the details of the DCO check failure to sign-off on those commits with a single command, such as:
 
-1. Rhoncus mattis rhoncus: 
+```bash
+git rebase HEAD~N --signoff
+git push --force-with-lease
+```
 
-   - Ante in nibh mauris cursus mattis.
-   - Elementum eu facilisis sed odio morbi quis commodo odio.
-   - Id faucibus nisl tincidunt eget nullam non nisi est sit.
-   - In fermentum posuere urna nec.
-   - Interdum velit laoreet id donec ultrices tincidunt arcu non sodales.
+where N is the number of commits you've added.
 
-
-   ```bash
-   At urna condimentum mattis pellentesque id. Amet venenatis urna cursus eget.
-   ```
-
-1.  Ut tortor pretium viverra suspendisse `potenti`:
-
-   ```bash
-   Ut tortor pretium viverra suspendisse potenti.
-   ```
-
-1. Arcu dui vivamus arcu felis bibendum ut `tristique et`:
-
-   ```bash
-   Ut tellus elementum sagittis vitae et leo duis ut. Urna nunc id cursus metus aliquam.
-   ```
-
-   In metus vulputate eu scelerisque felis imperdiet proin fermentum leo.
-
-Suscipit adipiscing bibendum est ultricies `integer quis`. 
-Cras pulvinar mattis nunc sed blandit nisl pretium `fusce id velit`.
-
-
-1. Porta non pulvinar neque laoreet suspendisse interdum consectetur.:
-
-   ```bash
-   Senectus et netus et malesuada fames ac turpis egestas.
-   ```
-
-Leo urna molestie at elementum eu facilisis sed odio. Non nisi est sit amet facilisis magna etiam tempor orci.
+You can also setup a [commit template for your local git config](https://stackoverflow.com/a/34687806) that includes your sign-off.

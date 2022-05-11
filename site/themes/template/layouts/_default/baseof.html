@@ -130,8 +130,8 @@
     {{ if .Site.Params.docs_search }}
     <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/docsearch.js@2/dist/cdn/docsearch.min.js"></script>
     <script type="text/javascript"> docsearch({
-        apiKey: '{{ .Site.Params.Docs_search_api_key }}',
-        indexName: '{{ .Site.Params.Docs_search_index_name }}',
+        apiKey: '{{ .Site.Params.docs_search_api_key }}',
+        indexName: '{{ .Site.Params.docs_search_index_name }}',
         inputSelector: '.docsearch-input',
         algoliaOptions: {'facetFilters': ["version:{{ .CurrentSection.Params.version }}"]},
         debug: false // Set debug to true if you want to inspect the dropdown

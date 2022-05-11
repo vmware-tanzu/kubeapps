@@ -1,25 +1,93 @@
 toc:
-  - title: Overview
+  - title: About Kubeapps
     subfolderitems:
-      - page: Overview
-        url: /
-  - title: Architecture
+      - page: What is Kubeapps
+        url: /readme
+      - page: Kubeapps chart
+        url: /chart-readme
+
+  - title: Tutorials
     subfolderitems:
-      - page: Architecture 1
-        url: /architecture
-  - title: Demo
+      - url: /tutorials/getting-started
+        page: Get Started with Kubeapps
+      - url: /tutorials/using-an-oidc-provider
+        page: Using an OIDC provider
+      - url: /tutorials/managing-carvel-packages/
+        page: Managing Carvel packages
+      - url: /tutorials/managing-flux-packages/
+        page: Managing Flux packages
+      - url: /tutorials/kubeapps-on-tkg/
+        page: Kubeapps on TKG
+        subitems:
+          - subpage: Introduction
+            suburl: /tutorials/kubeapps-on-tkg/introduction
+          - subpage: "Step 1: Configure an Identity Management Provider in the Cluster"
+            suburl: /tutorials/kubeapps-on-tkg/step-1
+          - subpage: "Step 2: Configure and Install Kubeapps"
+            suburl: /tutorials/kubeapps-on-tkg/step-2
+          - subpage: "Step 3: Add Application Repositories to Kubeapps"
+            suburl: /tutorials/kubeapps-on-tkg/step-3
+          - subpage: "Step 4: Deploy and Manage Applications with Kubeapps"
+            suburl: /tutorials/kubeapps-on-tkg/step-4
+          - subpage: Conclusion
+            suburl: /tutorials/kubeapps-on-tkg/conclusion
+
+  - title: How-to guides
     subfolderitems:
-      - page: Demo 1
-        url: /demo
-  - title: Scope
+      - url: /howto/access-control/
+        page: Access Control
+      - url: /howto/basic-form-support/
+        page: Basic Form Support
+      - url: /howto/custom-app-view-support/
+        page: Custon App View Support
+      - url: /howto/custom-form-component-support/
+        page: Custom Form Component Support
+      - url: /howto/deploying-to-multiple-clusters/
+        page: Using the dashboard
+      - url: /howto/dashboard
+        page: Multi-cluster Support
+      - url: /howto/offline-installation/
+        page: Offline installation
+      - url: /howto/private-app-repository/
+        page: Private App Repository
+      - url: /howto/syncing-apprepository-webhook/
+        page: Syncing App Repositories
+      - url: /howto/oidc/using-an-oidc-provider-with-pinniped
+        page: Using an OIDC provider with Pinniped
+
+  - title: Background
     subfolderitems:
-      - page: Scope 1
-        url: /scope
-      - page: Scope 2
-        url: /scope
-      - page: Scope 3
-        url: /scope
-  - title: Update Images
+      - url: /background/architecture/
+        page: Architecture
+      - url: /background/update-api-docs/
+        page: Kubeapps API documentation
+
+  - title: Reference
     subfolderitems:
-      - page: Update Images
+      - url: /reference/design-proposals/
+        page: Design proposals
+      - url: /reference/developer
+        page: Developer guides
+      - url: /reference/testing/testing-environment/
+        page: CI configuration
+      - url: /reference/testing/ci/
+        page: End-to-end testing configuration
+      - url: /reference/translations/translate-kubeapps/
+        page: Translations
+
+  - title: About the project
+    subfolderitems:
+      - page: Adopters
+        url: /adopters
+      - page: Code of Conduct
+        url: /code_of-_onduct
+      - page: Contributing
         url: /contributing
+      - page: Governance
+        url: /governance
+      - page: Maintainers
+        url: /maintainers
+      - page: Roadmap
+        url: /roadmap
+      - page: Security
+        url: /security

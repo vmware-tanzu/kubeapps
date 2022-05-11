@@ -19,23 +19,12 @@ markup:
     noClasses: true
     style: friendly
     tabWidth: 4
-menu:
-  docs:
-  - name: Overview
-    url: /docs/
-    weight: 100
-  - name: Architecture
-    url: /docs/architecture/
-    name: Demo
-    url: /docs/demo/
-  - name: Scope
-    url: /docs/scope/
-  - name: Update Images
-    url: /docs/contributing/
+## Only used if use_advanced_docs=false
+# menu:
+#   docs:
+#   - name: Overview
+#     url: /docs/
 params:
-  Docs_search_api_key: none
-  Docs_search_index_name: none
-  Use_advanced_docs: none
   author: Kubeapps
   description: Kubeapps website
   docs_latest: latest
@@ -43,7 +32,7 @@ params:
   docs_search: false
   docs_search_api_key: api_key
   docs_search_index_name: index_name
-  docs_versioning: false
+  docs_versioning: true
   github_base_url: "https://github.com/vmware-tanzu/kubeapps"
   github_url: "https://github.com/vmware-tanzu/kubeapps/"
   googleSiteVerification: xxxx
