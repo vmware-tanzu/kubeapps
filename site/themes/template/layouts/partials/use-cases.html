@@ -31,49 +31,6 @@
 
 </br>
 
-  <!-- <h2 id="install">How to get started with Kubeapps</h2>
-
-  <h3>Step 1: Install Kubeapps (for demo purposes)</h3>
-
-  <div>
-    {{ highlight ` helm repo add bitnami https://charts.bitnami.com/bitnami
-    kubectl create namespace kubeapps helm install kubeapps --namespace kubeapps
-    bitnami/kubeapps ` "" "" }}
-  </div>
-
-  <h3>
-    Step 2: Create a demo credential with which to access Kubeapps and
-    Kubernetes
-  </h3>
-
-  <div>
-    {{ highlight `kubectl create --namespace default serviceaccount
-    kubeapps-operator` "" "" }}
-  </div>
-
-  <div>
-    {{ highlight `kubectl create clusterrolebinding kubeapps-operator
-    --clusterrole=cluster-admin --serviceaccount=default:kubeapps-operator`
-    "" "" }}
-  </div>
-
-  <div>
-    {{ highlight `kubectl get --namespace default secret $(kubectl get
-    --namespace default serviceaccount kubeapps-operator -o jsonpath='{range
-    .secrets[*]}{.name}{"\n"}{end}' | grep kubeapps-operator-token) -o
-    jsonpath='{.data.token}' -o go-template='{{.data.token | base64decode}}' &&
-    echo ` "" "" }}
-  </div>
-
-  <h3>Step 3: Start the Kubeapps Dashboard</h3>
-
-  <div>
-    {{ highlight `kubectl port-forward -n kubeapps svc/kubeapps 8080:80 `
-    "" "" }}
-  </div>
-
-  <img alt="Kubeapps login page" src="/img/screenshots/dashboard-login.png" /> -->
-
   <div class="grid two">
     <div class="col image">
       <img src="/img/administration.svg" />

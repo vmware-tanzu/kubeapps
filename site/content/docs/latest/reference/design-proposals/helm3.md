@@ -4,7 +4,7 @@ We believe that the transition to Helm 3 can be done in such a fashion that both
 The choice between Helm 2 support and Helm 3 support should be made at deploy time in Helm (e.g. by setting `helm3=true` in Values).
 
 Since Helm 3 has gotten rid of Tiller, it instead provides a client library that can be used to access all required commands.
-We see no reason to implement a proxy for Helm 3, but rather what we call an agent – afterall, its purpose is to perform _actions_ from the so called _Helm 3 "actions" library_.
+We see no reason to implement a proxy for Helm 3, but rather what we call an agent - afterall, its purpose is to perform _actions_ from the so called _Helm 3 "actions" library_.
 
 **Current situation:**
 ![Current situation](/site/themes/template/static/img/docs/design-proposals/helm3-current-situation.png)

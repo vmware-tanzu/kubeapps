@@ -1,6 +1,6 @@
 # How-to guides
 
-How-to guides can be thought of as recipes, directions that guide the reader through the steps to achieve a specific end. They’ll help you achieve an end result but may require you to understand and adapt the steps to fit your specific requirements. Here you’ll find short answers to “How do I….?” types of questions.
+How-to guides can be thought of as recipes, directions that guide the reader through the steps to achieve a specific end. They’ll help you achieve an end result but may require you to understand and adapt the steps to fit your specific requirements. Here you’ll find short answers to "How do I...?" types of questions.
 
 | How-to-guides                                                                          | Get stuff done                                                                                                                            |
 | -------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
