@@ -124,7 +124,7 @@ The token can then be copied and given to the developer, who can then login to K
 
 When a developer accesses Kubeapps for the first time or on a new device, they will be greeted with a login prompt, similar to the one from the Kubernetes Dashboard shown below.
 
-![Kubernetes Dashboard Login](/site/themes/template/static/img/docs/dashboard/image_0.png)
+![Kubernetes Dashboard Login](../img/dashboard/image_0.png)
 
 The user will need to ask their Cluster Operator for a token to access Kubeapps, and once they receive one they will be able to enter it in the login form and click "Sign In". From then on, all requests to the Kubernetes API from the dashboard will use this token.
 
@@ -140,7 +140,7 @@ There will need to be a "Sign Out"/"Log Out" option in the top navigation bar so
 
 Everything the developer does inside Kubeapps will be within a Kubernetes namespace. The _default_ namespace will be used by default, and there will be a selector in the top-level navigation to select namespaces.
 
-![Namespace selector](/site/themes/template/static/img/docs/dashboard/image_1.png)
+![Namespace selector](../img/dashboard/image_1.png)
 
 #### Unauthorized access
 

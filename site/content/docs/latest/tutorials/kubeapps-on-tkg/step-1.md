@@ -20,28 +20,28 @@ Begin by creating an OAuth2 application to retrieve the information required by 
 2. Click the drop-down menu in the top-right corner.
 3. Under the _Organization_ settings, click _View Organization_.
 
-   ![View organization](/site/themes/template/static/img/docs/kubeapps-on-tkg/csp-menu-organization.png)
+   ![View organization](../img/kubeapps-on-tkg/csp-menu-organization.png)
 
 4. Click the _OAuth Apps_ tab.
 
-   ![OAuth Apps tab](/site/themes/template/static/img/docs/kubeapps-on-tkg/csp-oauth-initial.png)
+   ![OAuth Apps tab](../img/kubeapps-on-tkg/csp-oauth-initial.png)
 
 5. Select _Web app_ and click the _Continue_ button.
 
-   ![OAuth Apps tab](/site/themes/template/static/img/docs/kubeapps-on-tkg/csp-oauth-new.png)
+   ![OAuth Apps tab](../img/kubeapps-on-tkg/csp-oauth-new.png)
 
 6. Enter a name and description for the OAuth app. For the moment, enter the value `https://localhost/oauth2/callback` in the _Redirect URIs_ field (this will be updated after Kubeapps is installed).
 
-   ![Add name and description](/site/themes/template/static/img/docs/kubeapps-on-tkg/csp-oauth-new-details-general.png)
+   ![Add name and description](../img/kubeapps-on-tkg/csp-oauth-new-details-general.png)
 
 7. Leave the rest of the options at their default values.
 8. Tick the _OpenID_ checkbox and click the _Create_ button.
 
-   ![OpenID and create](/site/themes/template/static/img/docs/kubeapps-on-tkg/csp-oauth-new-details-scopes.png)
+   ![OpenID and create](../img/kubeapps-on-tkg/csp-oauth-new-details-scopes.png)
 
 The CSP Console displays a success screen with an auto-generated application ID and secret. Click the _Download JSON_ link to download these values.
 
-![Retrieve app id and secret](/site/themes/template/static/img/docs/kubeapps-on-tkg/csp-oauth-new-secrets.png)
+![Retrieve app id and secret](../img/kubeapps-on-tkg/csp-oauth-new-secrets.png)
 
 > **NOTE**: Store this file carefully as it contains important credentials which will be needed when configuring Pinniped and Kubeapps.
 

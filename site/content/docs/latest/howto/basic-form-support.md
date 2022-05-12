@@ -32,7 +32,7 @@ First of all, it's necessary to specify the tag `form` and set it to `true`. All
 
 With the definition above, we are marking the value `wordpressUsername` as a value to be represented in the form. Note that the `type` tag, apart than for validating that the submitted value has the correct type, will be used to render the proper HTML components to represent the input in the form:
 
-![username-input](/site/themes/template/static/img/docs/username-input.png)
+![username-input](../img/username-input.png)
 
 In addition to the `type`, there are other tags that can be used to customize the way the parameter is represented:
 
@@ -44,7 +44,7 @@ In addition to the `type`, there are other tags that can be used to customize th
 
 It's possible to render a component as a slider, users can then drag and drop this slider to select their preferred value:
 
-![disk-input](/site/themes/template/static/img/docs/disk-input.png)
+![disk-input](../img/disk-input.png)
 
 In order to render a slider, there are some requirements and additional tags that you may need to set:
 
@@ -103,7 +103,7 @@ This is an example:
     }
 ```
 
-![drop-down](/site/themes/template/static/img/docs/drop-down.png)
+![drop-down](../img/drop-down.png)
 
 A drop-down list cannot be empty or have its value unselected. For this purpose, it is necessary to add an explicit empty value on the enum constraints.
 
@@ -111,7 +111,7 @@ A drop-down list cannot be empty or have its value unselected. For this purpose,
 
 When a property of type `object` is set with a `form` identifier, it will be rendered as a subsection. A subsection is a set of parameters that are grouped together:
 
-![hostname-section](/site/themes/template/static/img/docs/hostname-section.png)
+![hostname-section](../img/hostname-section.png)
 
 All the parameters within an `object` will be rendered in the subsection.
 
@@ -253,4 +253,4 @@ This is a [working example for the WordPress chart](https://github.com/helm/char
 
 And the resulting form:
 
-![basic-form](/site/themes/template/static/img/docs/basic-form.png)
+![basic-form](../img/basic-form.png)

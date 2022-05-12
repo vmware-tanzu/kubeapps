@@ -45,7 +45,7 @@ Learn more about the topics discussed in this guide using the links below.
 ### Step 3: Add Application Repositories to Kubeapps
 
 - [Adding an public application repository](https://github.com/vmware-tanzu/kubeapps/blob/main/docs/howto/dashboard.md)
-- [Consume Tanzu™ Application Catalog™ Helm Charts using Kubeapps](https://docs.vmware.com/en/VMware-Tanzu-Application-Catalog/services/tac-docs/GUID-using-tac-consume-tac-kubeapps.html)
+- [Consume Tanzu™ Application Catalog™ Helm Charts using Kubeapps](https://docs.vmware.com/en/VMware-Application-Catalog/services/main/GUID-using-consume-kubeapps.html)
 - [Adding an private application repository](https://github.com/vmware-tanzu/kubeapps/blob/main/docs/howto/private-app-repository.md)
 
 ### Step 4: Deploy and Manage Applications with Kubeapps

@@ -7,7 +7,7 @@ This document explains how to configure VMware Cloud Services as an OIDC provide
 Login to VMware Cloud Services and select the organization which you want to use.
 
 1. Select View Organization (under Organization settings of the org menu),
-   ![Copying the bearer token](/site/themes/template/static/img/docs/csp-view-organization.png)
+   ![Copying the bearer token](../img/csp-view-organization.png)
 2. Click on the OAuth Apps tab,
 3. Click Create App, select Web App and continue,
 4. Enter a name and description for your OAuth app,

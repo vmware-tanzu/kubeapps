@@ -4,7 +4,7 @@ It is now possible to configure Kubeapps to target other clusters when deploying
 
 Once configured, you can select the cluster to which you are deploying in the same way that you can already select the namespace to which you are deploying:
 
-![Kubeapps showing the cluster selector](/site/themes/template/static/img/docs/multiple-clusters-selector.png "Cluster selector")
+![Kubeapps showing the cluster selector](../img/multiple-clusters-selector.png "Cluster selector")
 
 When you have selected the target cluster and namespace, you can browse the catalog as normal and deploy apps to the chosen target cluster and namespace as you would normally.
 
@@ -109,7 +109,7 @@ Your Kubeapps installation will also need to be [configured to use OIDC for auth
 
 Some multi-cluster environments configure each cluster's API server with its own client-id for the chosen OAuth2 provider. For example, part of the [configuration of an OIDC-enabled workload cluster in TKG](https://docs.vmware.com/en/VMware-Tanzu-Kubernetes-Grid/1.0/vmware-tanzu-kubernetes-grid-10/GUID-manage-instance-gangway-aws.html) has you creating a separate client ID in the Dex configuration for the new cluster:
 
-![TKG instructions requiring a new client-id](/site/themes/template/static/img/docs/tkg-separate-client-ids-per-cluster.png "TKG OIDC setup")
+![TKG instructions requiring a new client-id](../img/tkg-separate-client-ids-per-cluster.png "TKG OIDC setup")
 
 In this case, there is some extra configuration required to ensure the OIDC token used by Kubeapps is accepted by the different clusters as follows.
 
@@ -146,11 +146,11 @@ Once the pods have cycled, Kubeapps will be ready with your new configured clust
 
 As with any other update, you can use the Kubeapp UI to configure the list of available clusters. To do so, just go to your Kubeapps application and click on the Upgrade button.
 
-![Upgrade button](/site/themes/template/static/img/docs/kubeapps-upgrade-button.png)
+![Upgrade button](../img/kubeapps-upgrade-button.png)
 
 The clusters configuration cannot be changed in the form so we need to click on the YAML tab and add there the information. When you are done, click on the "Deploy" button to save the changes:
 
-![Upgrade update values](/site/themes/template/static/img/docs/kubeapps-update-values.png)
+![Upgrade update values](../img/kubeapps-update-values.png)
 
 When the application finishes its upgrade, refresh the page to re-request the new configuration.
 

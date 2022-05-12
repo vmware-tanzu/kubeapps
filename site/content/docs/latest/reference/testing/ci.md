@@ -2,7 +2,7 @@
 
 Kubeapps leverages CircleCI for running the tests (both unit and integration tests), pushing the images and syncing the chart with the official [Bitnami chart](https://github.com/bitnami/charts/tree/master/bitnami/kubeapps). The following image depicts how a successful workflow looks like after pushing a commit to the main branch.
 
-![CircleCI workflow after pushing to the main branch](/site/themes/template/static/img/docs/ci-workflow-main.png "CircleCI workflow after pushing to the main branch")
+![CircleCI workflow after pushing to the main branch](../img/ci-workflow-main.png "CircleCI workflow after pushing to the main branch")
 
 The main configuration is located at this [CircleCI config file](../../.circleci/config.yml). At a glance, it contains:
 

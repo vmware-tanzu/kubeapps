@@ -200,7 +200,7 @@ git push origin ${VERSION_NAME} # replace `origin` by your remote name
 
 A new tag pushed to the repository will trigger, apart from the usual test and build steps, a _release_ [workflow](https://circleci.com/gh/kubeapps/workflows) as described in the [CI documentation](./ci.md). An example of the triggered workflow is depicted below:
 
-![CircleCI workflow after pushing a new tag](/site/themes/template/static/img/docs/ci-workflow-release.png "CircleCI workflow after pushing a new tag")
+![CircleCI workflow after pushing a new tag](../img/ci-workflow-release.png "CircleCI workflow after pushing a new tag")
 
 > When a new tag is detected, Bitnami will automatically build a set of container images based on the tagged commit. They later will be published in [the Bitnami Dockerhub image registry](https://hub.docker.com/search?q=bitnami%2Fkubeapps&type=image).
 > Please note that this workflow is run outside the control of the Kubeapps release process

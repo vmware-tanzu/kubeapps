@@ -23,11 +23,11 @@ The following constraints are for wider discussion. While we cannot achieve a so
 
 The overview displayed below shows the simpest scenario of the multi-cluster support (ie. without private app repository support), which is discussed further in the [design doc](https://docs.google.com/document/d/1Ch9MjazQDBa9nya4cSwiiciolWhtcnLOjYQKB2XIYuM/).
 
-![Kubeapps Multi-cluster Overview](/site/themes/template/static/img/docs/design-proposals/Kubeapps-Multi-cluster-simple.png)
+![Kubeapps Multi-cluster Overview](../img/design-proposals/Kubeapps-Multi-cluster-simple.png)
 
 Similarly, the proposed extension including private repositories on additional clusters, though due to the current transition (in the Helm community) from chart repositories to OCI repositories, we may delay the private repository support until we implement OCI repository support:
 
-![Kubeapps Multi-cluster support with private repositories](/site/themes/template/static/img/docs/design-proposals/Kubeapps-Multi-cluster-private-repo.png)
+![Kubeapps Multi-cluster support with private repositories](../img/design-proposals/Kubeapps-Multi-cluster-private-repo.png)
 
 ## Details and discussion
 

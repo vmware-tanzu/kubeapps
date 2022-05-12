@@ -143,11 +143,11 @@ Assuming that a Flux `HelmRepository`, such as the Bitnami repository above, is 
 
 The following image depicts the catalog page with a set of packages from the above Bitnami `HelmRepository`.
 
-![Catalog page with Flux Packages](/site/themes/template/static/img/docs/flux-catalog.png)
+![Catalog page with Flux Packages](../img/flux-catalog.png)
 
 Next, select any package you want to install, for example, `Apache`, then click Deploy to see the install form as depicted below:
 
-![Installation page of a Carvel Package](/site/themes/template/static/img/docs/flux-install.png)
+![Installation page of a Carvel Package](../img/flux-install.png)
 
 A big difference with respect to other packaging formats is that **you must select a `ServiceAccount` to be used for installing the package**. This is because Flux, similar to [Carvel](managing-carvel-packages.md), will carry out the installation as well as upgrades in the background and so cannot rely on doing so as the user. See [Creating a service account](#creating-a-service-account) above.
 
@@ -175,13 +175,13 @@ Go to the `Applications` tab to see every Application that has been installed in
 
 The following example shows an example of the Applications page with Apache installed as a Flux package:
 
-![Installed applications page](/site/themes/template/static/img/docs/flux-apps.png)
+![Installed applications page](../img/flux-apps.png)
 
 Since the reconciliation process can eventually fail for several reasons, this page will show the current reconciliation status of each application.
 
 Next, click on the application you want to view, for example, `test-apache` to go to the details page, as depicted in the following image:
 
-![Details page of an installed Flux Package](/site/themes/template/static/img/docs/flux-details.png)
+![Details page of an installed Flux Package](../img/flux-details.png)
 
 As in any other packaging format, this page will display those Kubernetes resources that have been created as a result of the Package installation.
 Besides, the current values are shown at the end of the page.
