@@ -79,7 +79,7 @@ func (s *Server) getReleaseInCluster(ctx context.Context, key types.NamespacedNa
 	return &rel, nil
 }
 
-func (s *Server) paginatedInstalledPkgSummaries(ctx context.Context, namespace string, pageSize int32, pageOffset int) ([]*corev1.InstalledPackageSummary, error) {
+func (s *Server) paginatedInstalledPkgSummaries(ctx context.Context, namespace string, pageSize int32, itemOffset int) ([]*corev1.InstalledPackageSummary, error) {
 	releasesFromCluster, err := s.listReleasesInCluster(ctx, namespace)
 	if err != nil {
 		return nil, err
@@ -89,7 +89,7 @@ func (s *Server) paginatedInstalledPkgSummaries(ctx context.Context, namespace s
 	if len(releasesFromCluster) > 0 {
 		startAt := -1
 		if pageSize > 0 {
-			startAt = int(pageSize) * pageOffset
+			startAt = itemOffset
 		}
 
 		for i, r := range releasesFromCluster {

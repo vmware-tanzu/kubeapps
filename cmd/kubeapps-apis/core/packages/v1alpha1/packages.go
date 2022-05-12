@@ -58,7 +58,7 @@ func (s packagesServer) GetAvailablePackageSummaries(ctx context.Context, reques
 	contextMsg := fmt.Sprintf("(cluster=%q, namespace=%q)", request.GetContext().GetCluster(), request.GetContext().GetNamespace())
 	log.Infof("+core GetAvailablePackageSummaries %s", contextMsg)
 
-	pageOffset, err := paginate.PageOffsetFromAvailableRequest(request)
+	pageOffset, err := paginate.PageOffsetFromPageToken(request.GetPaginationOptions().GetPageToken())
 	pageSize := request.GetPaginationOptions().GetPageSize()
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, "Unable to intepret page token %q: %v", request.GetPaginationOptions().GetPageToken(), err)
