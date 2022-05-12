@@ -2338,10 +2338,10 @@
   dependencies:
     "@types/istanbul-lib-report" "*"
 
-"@types/jest@^27.5.0":
-  version "27.5.0"
-  resolved "https://registry.yarnpkg.com/@types/jest/-/jest-27.5.0.tgz#e04ed1824ca6b1dd0438997ba60f99a7405d4c7b"
-  integrity sha512-9RBFx7r4k+msyj/arpfaa0WOOEcaAZNmN+j80KFbFCoSqCJGHTz7YMAMGQW9Xmqm5w6l5c25vbSjMwlikJi5+g==
+"@types/jest@^27.5.1":
+  version "27.5.1"
+  resolved "https://registry.yarnpkg.com/@types/jest/-/jest-27.5.1.tgz#2c8b6dc6ff85c33bcd07d0b62cb3d19ddfdb3ab9"
+  integrity sha512-fUy7YRpT+rHXto1YlL+J9rs0uLGyiqVt3ZOTQR+4ROc47yNl8WLdVLgUloBRhOxP1PZvguHl44T3H0wAWxahYQ==
   dependencies:
     jest-matcher-utils "^27.0.0"
     pretty-format "^27.0.0"
@@ -2586,10 +2586,10 @@
   resolved "https://registry.yarnpkg.com/@types/stack-utils/-/stack-utils-2.0.1.tgz#20f18294f797f2209b5f65c8e3b5c8e8261d127c"
   integrity sha512-Hl219/BT5fLAaz6NDkSuhzasy49dwQS/DSdu4MdggFB8zcXv7vflBI3xp7FEmkmdDkBUI2bPUNeMttp2knYdxw==
 
-"@types/swagger-ui-react@^4.1.1":
-  version "4.1.1"
-  resolved "https://registry.yarnpkg.com/@types/swagger-ui-react/-/swagger-ui-react-4.1.1.tgz#6ae70f5b966941eb6655d79d1114d9b9ef69a980"
-  integrity sha512-tZqX/nShvNqtJ7WAfwOK7mphK1jqmEre4mUJh+R1RyCFVODsMTG4My2nqjXpSm8NfhVGmbFH3giD17AXmgsaJw==
+"@types/swagger-ui-react@^4.11.0":
+  version "4.11.0"
+  resolved "https://registry.yarnpkg.com/@types/swagger-ui-react/-/swagger-ui-react-4.11.0.tgz#3ac84bc8e2f6e57b9ff4533ec31934f697e1a2c4"
+  integrity sha512-WPMR+GWbLd7zvY/uOTGzGzP44zK2rIZSnU00+pDR2YANnEV6/qj0kqYfdSY1Vk6qdvI7dR0Tx8JEMgUUrUQDjw==
   dependencies:
     "@types/react" "*"
 
