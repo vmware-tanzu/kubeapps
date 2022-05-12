@@ -23,6 +23,7 @@ const (
 
 var mockedPackagingPlugin1 = makeDefaultTestPackagingPlugin("mock1")
 var mockedPackagingPlugin2 = makeDefaultTestPackagingPlugin("mock2")
+var mockedPackagingPlugin3 = makeDefaultTestPackagingPlugin("mock2")
 var mockedNotFoundPackagingPlugin = makeOnlyStatusTestPackagingPlugin("bad-plugin", codes.NotFound)
 
 var ignoreUnexportedOpts = cmpopts.IgnoreUnexported(
@@ -234,6 +235,33 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 				AvailablePackageSummaries: []*corev1.AvailablePackageSummary{},
 				Categories:                []string{},
 				NextPageToken:             "",
+			},
+			statusCode: codes.OK,
+		},
+		{
+			name: "it maintains the offset of a plugin even if that plugin did not contribute to the result",
+			configuredPlugins: []pkgPluginWithServer{
+				mockedPackagingPlugin1,
+				mockedPackagingPlugin2,
+				mockedPackagingPlugin3,
+			},
+			request: &corev1.GetAvailablePackageSummariesRequest{
+				Context: &corev1.Context{
+					Cluster:   "",
+					Namespace: globalPackagingNamespace,
+				},
+				PaginationOptions: &corev1.PaginationOptions{
+					PageToken: `{"mock1":1,"mock2":1,"mock3":1}`,
+					PageSize:  2,
+				},
+			},
+			expectedResponse: &corev1.GetAvailablePackageSummariesResponse{
+				AvailablePackageSummaries: []*corev1.AvailablePackageSummary{
+					plugin_test.MakeAvailablePackageSummary("pkg-2", mockedPackagingPlugin1.plugin),
+					plugin_test.MakeAvailablePackageSummary("pkg-2", mockedPackagingPlugin2.plugin),
+				},
+				Categories:    []string{"cat-1"},
+				NextPageToken: `{"mock1":-1,"mock2":2,"mock3":1}`,
 			},
 			statusCode: codes.OK,
 		},

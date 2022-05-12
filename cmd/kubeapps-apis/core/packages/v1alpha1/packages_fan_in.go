@@ -48,7 +48,7 @@ func fanInAvailablePackageSummaries(ctx context.Context, pkgPlugins []pkgPluginW
 		pluginPageSize = pluginPageSize / (len(pkgPlugins) - 1)
 	}
 
-	var pluginPageOffsets map[string]int
+	pluginPageOffsets := map[string]int{}
 	if request.GetPaginationOptions().GetPageToken() != "" {
 		err := json.Unmarshal([]byte(request.GetPaginationOptions().GetPageToken()), &pluginPageOffsets)
 		if err != nil {
@@ -81,7 +81,6 @@ func fanInAvailablePackageSummaries(ctx context.Context, pkgPlugins []pkgPluginW
 	// channel.
 	go func() {
 		numSent := 0
-		offsets := map[string]int{}
 		nextItems := make([]*summaryWithOffset, len(fanInput))
 		for {
 			// Populate the empty next items from each channel.
@@ -95,7 +94,7 @@ func fanInAvailablePackageSummaries(ctx context.Context, pkgPlugins []pkgPluginW
 						// plugin. We need to recognise when all plugins have exhausted
 						// itemsoffsets
 						pluginName := pkgPlugins[i].plugin.Name
-						offsets[pluginName] = CompleteToken
+						pluginPageOffsets[pluginName] = CompleteToken
 					}
 
 					if nextItems[i] != nil && nextItems[i].err != nil {
@@ -131,11 +130,11 @@ func fanInAvailablePackageSummaries(ctx context.Context, pkgPlugins []pkgPluginW
 				}
 			}
 			pluginName := nextItems[minIndex].availablePackageSummary.GetAvailablePackageRef().GetPlugin().GetName()
-			offsets[pluginName] = nextItems[minIndex].nextItemOffset
+			pluginPageOffsets[pluginName] = nextItems[minIndex].nextItemOffset
 			summariesCh <- summaryWithOffsets{
 				availablePackageSummary: nextItems[minIndex].availablePackageSummary,
 				categories:              nextItems[minIndex].categories,
-				nextItemOffsets:         offsets,
+				nextItemOffsets:         pluginPageOffsets,
 			}
 			// Ensure the item will get replaced on the next round.
 			nextItems[minIndex] = nil
