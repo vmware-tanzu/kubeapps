@@ -53,7 +53,7 @@ Besides other usual credentials or secrets passed through environment variables 
 - Create a [personal access token](https://docs.github.com/en/github/authenticating-to-github/creating-a-personal-access-token) with the robot account, granted, at least, with: `repo:status`, `public_repo` and `read:org`. This token must be stored as the environment variable `GITHUB_TOKEN` (is where Github CLI will look for)
   - That will allow the GitHub CLI to create PRs from the command line on behalf of our robot account.
   - Also, this token will be used for performing authenticated GitHub API calls.
-- Add deployment keys to the repositories to which the CI will commit. Currently, they are `kubeapps/kubeapps` and `kubeapps-bot/charts`.
+- Add deployment keys to the repositories to which the CI will commit. Currently, they are `vmware-tanzu/kubeapps` and `kubeapps-bot/charts`.
   - This step allows the robot account to push branches remotely. However, the CI will never push to the main branch as it always tries to create a pull request.
 - Add the robot account GPG key pair in the `GPG_KEY_PUBLIC` and `GPG_KEY_PRIVATE` environment variables.
   - The public key must be also uploaded in the robot account GPG settings in GitHub. It will be used for signing the commits and tags created by this account.

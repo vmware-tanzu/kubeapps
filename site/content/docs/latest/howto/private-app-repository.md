@@ -119,7 +119,7 @@ It is possible to configure ChartMuseum to use authentication with two different
 
 [Harbor](https://github.com/goharbor/harbor) is an open source trusted cloud native registry project that stores, signs, and scans content, e.g. Docker images. Harbor is hosted by the [Cloud Native Computing Foundation](https://cncf.io/). Since version 1.6.0, Harbor is a composite cloud native registry which supports both container image management and Helm chart management. Harbor integrates [ChartMuseum](https://chartmuseum.com) to provide the Helm chart repository functionality. The access to Helm Charts in a Harbor Chart Repository can be controlled via Role-Based Access Control.
 
-To use Harbor with Kubeapps, first deploy the [Bitnami Harbor Helm Chart](https://github.com/bitnami/charts/tree/master/bitnami/harbor) from the `bitnami` repository (alternatively you can deploy Harbor using [Harbor offline installer](https://goharbor.io/docs/2.1.0/install-config/download-installer/)):
+To use Harbor with Kubeapps, first deploy the [Bitnami Harbor Helm Chart](https://github.com/bitnami/charts/tree/master/bitnami/harbor) from the `bitnami` repository (alternatively you can deploy Harbor using [Harbor offline installer](https://goharbor.io/docs/2.5.0/install-config/download-installer/)):
 
 ![Harbor Chart](/site/themes/template/static/img/docs/harbor-chart.png)
 
@@ -170,7 +170,7 @@ Click 'UPLOAD' button to upload the Helm chart you previously created. You can a
 
 ![Harbor upload chart](/site/themes/template/static/img/docs/harbor-upload-chart.png)
 
-Please refer to ['Manage Helm Charts in Harbor'](https://goharbor.io/docs/2.1.0/working-with-projects/working-with-images/managing-helm-charts) for more details.
+Please refer to ['Manage Helm Charts in Harbor'](https://goharbor.io/docs/2.5.0/working-with-projects/working-with-images/managing-helm-charts) for more details.
 
 ### Harbor: Configure the repository in Kubeapps
 
@@ -189,7 +189,7 @@ It is possible to configure Harbor to use HTTP basic authentication:
 
 Since Helm v3, the project is pushing towards the idea that using an [OCI compliant registry](https://github.com/opencontainers/distribution-spec) to store Helm charts is the future. Since Kubeapps 2.2, it's also possible to use these registries to consume Helm charts. Cloud Providers like [Amazon ECR](https://aws.amazon.com/blogs/containers/oci-artifact-support-in-amazon-ecr/), [Google Artifact Registry](https://cloud.google.com/artifact-registry/docs/supported-formats) or [Azure ACR](https://docs.microsoft.com/en-us/azure/container-registry/container-registry-image-formats) have also added support for OCI artifacts.
 
-You can add an OCI registry like any other repository. For example, for a [Harbor registry](https://goharbor.io/docs/2.0.0/working-with-projects/working-with-images/managing-helm-charts/#manage-helm-charts-with-the-oci-compatible-registry-of-harbor):
+You can add an OCI registry like any other repository. For example, for a [Harbor registry](https://goharbor.io/docs/2.5.0/working-with-projects/working-with-images/managing-helm-charts/#manage-helm-charts-with-the-oci-compatible-registry-of-harbor):
 
 ![OCI registry](/site/themes/template/static/img/docs/oci-registry.png
 
@@ -198,7 +198,7 @@ There is one caveat though. It's necessary to specify the list of applications (
 For example, for Harbor, it's possible to query its API to retrieve the list:
 
 ```console
-curl -X GET "https://harbor.domain/api/v2.0/projects/my-oci-registry/repositories" -H "accept: application/json" | jq 'map(.name) | join(", ")'
+curl -X GET "https://harbor.domain/api/v2.0/projects/my-oci-registry/repositories" -H "accept: applincation/json" | jq 'map(.name) | join(", ")'
 ```
 
 > **Note**: Substitute the domain `harbor.domain` and the project name `my-oci-registry` with your own.

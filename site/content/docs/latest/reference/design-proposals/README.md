@@ -12,7 +12,6 @@ This folder contains documents/links used to design new features for Kubeapps.
   - [Simpler deployments](./dashboard/deployment-improvements.md)
   - [Improve UX in application view](./dashboard/application-view-revamp.md)
   - [Upgrade to Clarity design](./clarity-ui.md)
-- [Notify Available Chart Updates](https://docs.google.com/document/d/1oG9nerd5CurWSIwH33kKCsOCtkSFMgcm8SuTJyuSnxs/)
 - [Operators support](./operators-support-poc.md)
 - [Third party integration for adding a chart repository](./third-party-add-repository.md)
 - [Replacing MongoDB support](./replacing-mongodb.md)

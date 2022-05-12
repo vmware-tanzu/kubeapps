@@ -33,10 +33,6 @@ HUGO_ENABLEGITINFO = "true"
 from = "/*"
 to = "/404/"
 status = 404
-# [[headers]]
-#   for = "/fonts/*"
-#   [headers.values]
-#     Access-Control-Allow-Origin = "*"
 
 # [[headers]]
 #   for = "/*"

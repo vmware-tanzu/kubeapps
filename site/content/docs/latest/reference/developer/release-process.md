@@ -163,7 +163,7 @@ git merge main
 git push origin prerelease # replace `origin` by your remote name
 ```
 
-Then, check out the workflow that has just been created in CircleCI: [https://app.circleci.com/pipelines/github/kubeapps/kubeapps?branch=prerelease](https://app.circleci.com/pipelines/github/kubeapps/kubeapps?branch=prerelease).
+Then, check out the workflow that has just been created in CircleCI: [https://app.circleci.com/pipelines/github/vmware-tanzu/kubeapps?branch=prerelease](https://app.circleci.com/pipelines/github/vmware-tanzu/kubeapps?branch=prerelease).
 
 ## 1.2 - Perform a manual test
 
