@@ -6,4 +6,4 @@ For Dex, you can find the parameters that you need to set in the configuration (
 
 - **Client-ID**: Static client ID.
 - **Client-secret**: Static client secret.
-- **OIDC Issuer URL**: Dex URL (i.e. https://dex.example.com:32000).
+- **OIDC Issuer URL**: Dex URL (i.e. <https://dex.example.com:32000>).

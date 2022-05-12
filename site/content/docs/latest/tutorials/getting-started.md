@@ -35,13 +35,13 @@ kubectl create clusterrolebinding kubeapps-operator --clusterrole=cluster-admin 
 
 To retrieve the token,
 
-### On Linux/macOS:
+### On Linux/macOS
 
 ```bash
 kubectl get --namespace default secret $(kubectl get --namespace default serviceaccount kubeapps-operator -o jsonpath='{range .secrets[*]}{.name}{"\n"}{end}' | grep kubeapps-operator-token) -o jsonpath='{.data.token}' -o go-template='{{.data.token | base64decode}}' && echo
 ```
 
-### On Windows:
+### On Windows
 
 #### Using Powershell
 
@@ -80,7 +80,7 @@ Once Kubeapps is installed, securely access the Kubeapps Dashboard from your sys
 kubectl port-forward -n kubeapps svc/kubeapps 8080:80
 ```
 
-This will start an HTTP proxy for secure access to the Kubeapps Dashboard. Visit http://127.0.0.1:8080/ in your preferred web browser to open the Dashboard. Here's what you should see:
+This will start an HTTP proxy for secure access to the Kubeapps Dashboard. Visit <http://127.0.0.1:8080/> in your preferred web browser to open the Dashboard. Here's what you should see:
 
 ![Dashboard login page](/site/themes/template/static/img/docs/dashboard-login.png)
 

@@ -92,4 +92,4 @@ Run the following command within the dashboard directory to start the test runne
 yarn run test
 ```
 
-> **NOTE**: macOS users may need to install watchman (https://facebook.github.io/watchman/).
+> **NOTE**: macOS users may need to install watchman (<https://facebook.github.io/watchman/>).

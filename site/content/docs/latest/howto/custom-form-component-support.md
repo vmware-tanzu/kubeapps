@@ -12,7 +12,7 @@ This is an extension to the [basic form support](https://github.com/vmware-tanzu
 1. First you will need a react component to render instead of the default Kubeapps form components. You're React components must be compiled into a JS file so that they can be interpreted by the browser since they cannot natively parse `.jsx` or `.tsx` files. You can compile `jsx` or `tsx` into js with tools like webpack, create-react-app, babel, etc. If you just want to try this feature out and you don't have a component yet we provide some test files you can try (Do not try to load the `jsx` file since browsers cannot parse it! We simply include it so that you can see the pre-compiled version of the `.js` files).
 2. The easiest way to add inject the file in is via the command line. You can do it via the following command:
 
-   ```
+   ```bash
    helm install  bitnami/kubeapps --set-file dashboard.customComponents=*path to file* <other_flags>
    ```
 
@@ -25,7 +25,7 @@ This is an extension to the [basic form support](https://github.com/vmware-tanzu
 
 Signaling to the Kubeapps dashboard that you want to render a custom component is pretty straight forward. Simply add a `customComponent` field to any form parameter defined in the `values.json.schema` and that will tell the react application to fetch the component from the custom js bundle. An example parameter could look like:
 
-```
+```json
     "databaseType": {
       "type": "string",
       "form": true,
@@ -45,7 +45,7 @@ Note: The `customComponent` field **MUST BE AN OBJECT**. This design decision wa
 
 Custom form components would be useless without the ability to interact with the YAML state. To do this your custom components should be set up to receive 2 props: `handleBasicFormParamChange` and `param`. `param` is the current json object this is being rendered (denoted by the `customComponent` field) and `handleBasicFormParamChange` which is a function that updates the YAML file. An example of how you use this function can be found in any of the BasicDeploymentForm components such as the [SliderParam](https://github.com/vmware-tanzu/kubeapps/blob/main/dashboard/src/components/DeploymentFormBody/BasicDeploymentForm/SliderParam.tsx#L47-L53).
 
-```
+```javascript
   const handleParamChange = (newValue: number) => {
     handleBasicFormParamChange(param)({
       currentTarget: {

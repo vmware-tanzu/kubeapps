@@ -4,7 +4,7 @@ The `apprepository-controller` is a Kubernetes controller for managing Helm char
 
 An AppRepository resource looks like this:
 
-```
+```yaml
 apiVersion: v1
 items:
 apiVersion: kubeapps.com/v1alpha1

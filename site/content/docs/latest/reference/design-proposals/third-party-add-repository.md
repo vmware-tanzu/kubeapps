@@ -56,7 +56,7 @@ Kubeapps provides an api endpoint for app repositories:
   - Method: POST
   - Data
 
-  ```
+  ```grpc
   syntax = "proto3";
   message CreateAppRepositoryRequest {
     message AppRepository {
@@ -71,7 +71,7 @@ Kubeapps provides an api endpoint for app repositories:
 
   or JSON equivalent
 
-  ```
+  ```json
   {
     appRepository: {
       name: "foo",
@@ -82,7 +82,7 @@ Kubeapps provides an api endpoint for app repositories:
 
   - Success response: 201 Created with the following data:
 
-  ```
+  ```grpc
   message CreateAppRepositoryResponse {
     string repository_prefix = 1; // e.g. "/#/charts/<repository-name>/"
   }
@@ -90,7 +90,7 @@ Kubeapps provides an api endpoint for app repositories:
 
   or JSON equivalent
 
-  ```
+  ```json
   {
     repositoryPrefix: "/#/charts/my-repo/"
   }

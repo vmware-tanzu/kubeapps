@@ -30,7 +30,7 @@ _NOTE_: There are several steps in the management of Operators that require clus
 
 2. Clicking in the "Show Instructions" buttons show the list of commands required to install the OLM:
 
-```
+```bash
 curl -sL https://github.com/operator-framework/operator-lifecycle-manager/releases/download/0.14.1/install.sh | bash -s 0.14.1
 ```
 
@@ -40,7 +40,7 @@ curl -sL https://github.com/operator-framework/operator-lifecycle-manager/releas
 
 6. When attempting to install an Operator, for this PoC, Kubeapps will just show the `kubectl` command that can be used to install it:
 
-```
+```bash
 kubectl create -f https://operatorhub.io/install/etcd.yaml
 ```
 

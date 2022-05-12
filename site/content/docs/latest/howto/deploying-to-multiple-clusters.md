@@ -165,7 +165,7 @@ You can run Kubeapps locally in a multi-cluster development environment from a l
 
 Known limitations of the local development environment:
 
-- It assumes that the first docker container created will have the internal address 172.18.0.2 (ie. that it is the first docker container on the network). This is because Dex needs to be available on a URL that is resolveable both from pods within the cluster within the container as well as from the local host (so https://172.18.0.2:32000 is used)
+- It assumes that the first docker container created will have the internal address 172.18.0.2 (ie. that it is the first docker container on the network). This is because Dex needs to be available on a URL that is resolveable both from pods within the cluster within the container as well as from the local host (so <https://172.18.0.2:32000> is used)
 - Ports 80 and 443 are free. This is required to be able to use an ingress-controller with the local Kind cluster.
 - Dex currently runs with a CA cert shared from the first cluster (rather than created via mkcert) so you will see a warning when logging in to Dex.
 

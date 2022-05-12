@@ -93,7 +93,7 @@ When a property defines an `enum` tag as constraint, it will be rendered as a dr
 
 This is an example:
 
-```
+```json
     "databaseType": {
       "type": "string",
       "form": true,

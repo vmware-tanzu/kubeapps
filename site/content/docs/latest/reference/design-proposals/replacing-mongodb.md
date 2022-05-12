@@ -1,10 +1,10 @@
 ## Description of the problem
 
-Due the problems described here: https://github.com/vmware-tanzu/kubeapps/issues/651 and licensing issues, MongoDB is no longer the best solution for our use case. Apart from that, even though is not the goal of this document, we are evaluating the possible effort needed to support other type of assets in Kubeapps (apart than charts) like operators.
+Due the problems described here: <https://github.com/vmware-tanzu/kubeapps/issues/651> and licensing issues, MongoDB is no longer the best solution for our use case. Apart from that, even though is not the goal of this document, we are evaluating the possible effort needed to support other type of assets in Kubeapps (apart than charts) like operators.
 
 The two items above, require a re-design of two micro-services: `chartsvc` and `chart-repo`. While the changes should be kept minimal, at least for the moment, we should plan in advance to support new asset types.
 
-## Requisites:
+## Requisites
 
 - High Availability. Avoid single point of failure.
 - Open Source license. BSD, Apache2 or MIT are fine.
@@ -16,13 +16,13 @@ The two items above, require a re-design of two micro-services: `chartsvc` and `
 
 This section describes the current data we store in MongoDB and how we are using it in the different services.
 
-### Collections:
+### Collections
 
 - `charts`: All the chart info. Including all the versions. ID: repo/chart. Include chartVersions. Each chartVersion includes date, version, appversion, digest, url to tarball and icon.
 - `files`: Files related to a chart version. ID: repo/chart-version. Includes readme, schema, values, repo(object),
 - `repos`: Latest sync for each repo. ID: repo. Includes checksum and date.
 
-### Methods:
+### Methods
 
 chart-repo:
 

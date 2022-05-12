@@ -33,7 +33,7 @@ We want to improve the error handling of both unexpected and expected/handled er
 
 These are the errors raised by the application at runtime. From an application logic exception to network errors while talking to an API.
 
-Today, we are handling errors per-case basis, which is good if we want to react (pun intended) to the thrown error via a side-effect (i.e retry) or by showing actionable information to the user. But this is brittle since it force us to in advance to predict from where we can get errors from and how to handle them. Also, we need to be sure that we have a place to show these errors in every single page. **That's why, having a generic, global **catch all "Sorry something went wrong"** component can help.**
+Today, we are handling errors per-case basis, which is good if we want to react (pun intended) to the thrown error via a side-effect (i.e retry) or by showing actionable information to the user. But this is brittle since it force us to in advance to predict from where we can get errors from and how to handle them. Also, we need to be sure that we have a place to show these errors in every single page. **That's why, having a generic, global**catch all "Sorry something went wrong"**component can help.**
 
 Why do we need a catch all?
 

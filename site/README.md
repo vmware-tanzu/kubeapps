@@ -48,3 +48,12 @@ cd site
 hugo
 npx check-html-links ./public/
 ```
+
+## Check formatting
+
+Also, another tool for checking the markdown syntax is [markdownlint-cli](https://github.com/igorshubovych/markdownlint-cli). To use it, run:
+
+```bash
+cd site
+npx markdownlint-cli .\content\docs\latest\ --disable MD013 MD033 # add --fix to also solve the issues
+```

@@ -6,4 +6,4 @@ In the case of Google we can use an OAuth 2.0 client ID. You can find more infor
 
 - **Client-ID**: `<abc>.apps.googleusercontent.com`.
 - **Client-Secret**: Secret for the Web application.
-- **OIDC Issuer URL**: https://accounts.google.com.
+- **OIDC Issuer URL**: <https://accounts.google.com>.

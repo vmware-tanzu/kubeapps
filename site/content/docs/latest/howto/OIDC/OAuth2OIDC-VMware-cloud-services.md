@@ -11,7 +11,7 @@ Login to VMware Cloud Services and select the organization which you want to use
 2. Click on the OAuth Apps tab,
 3. Click Create App, select Web App and continue,
 4. Enter a name and description for your OAuth app,
-5. Add the callback URL where Kubeapps will be running (e.g. https://my.kubeapps.example.com/oauth2/callback),
+5. Add the callback URL where Kubeapps will be running (e.g. <https://my.kubeapps.example.com/oauth2/callback>),
 6. Leave the rest of the options other than the OpenID checkbox, which must be checked,
 7. Click Create
 

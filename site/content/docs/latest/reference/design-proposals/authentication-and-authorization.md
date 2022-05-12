@@ -4,8 +4,8 @@
 
 Take advantage of RBAC primitives from Kubernetes in Kubeapps to:
 
-1.  provide authenticated access to the Dashboard
-1.  restrict certain operations within the Dashboard for individual users
+1. provide authenticated access to the Dashboard
+1. restrict certain operations within the Dashboard for individual users
 
 ## Motivation
 
@@ -68,7 +68,7 @@ The Cluster Operator may want to configure the API Server to authenticate users 
 
 Given that most, if not all, Kubernetes distributions will have Service Accounts, this would be an easy way for a Cluster Operator to manage access to Kubeapps. To create a user, the Cluster Operator would create a Service Account:
 
-```
+```yaml
 apiVersion: v1
 kind: ServiceAccount
 metadata:
@@ -80,7 +80,7 @@ The Service Account can be created in any namespace, the above example uses _kub
 
 Then the Cluster Operator will need to create a set of RBAC roles and binding for the user. The Kubeapps documentation will need to define the set of roles for different features. For the purpose of this example, we will bind the Service Account to the _cluster-admin_ role.
 
-```
+```yaml
 apiVersion: rbac.authorization.k8s.io/v1beta1
 kind: ClusterRoleBinding
 metadata:
@@ -97,11 +97,11 @@ subjects:
 
 Now to retrieve the token for this account, the Cluster Operator would need to run the following:
 
-```
+```bash
 kubectl -n kube-system describe secret $(kubectl -n kubeapps-users get secret | grep johnsmith | awk '{print $1}')
 ```
 
-```
+```yaml
 Name: johnsmith-token-6gl6l
 Namespace: kubeapps-users
 Labels: <none>
@@ -174,11 +174,11 @@ By default for security reasons, kubectl proxy does not accept requests from hos
 
 This obviously raises security concerns as Kubeapps will now happily expose the whole Kubernetes API to the configured Ingress. To mitigate the attack surface of this:
 
-1.  The Service Account given to the proxy container will have no configured RBAC roles by default
+1. The Service Account given to the proxy container will have no configured RBAC roles by default
 
-2.  We will configure the _--accept-paths_ option on the proxy to only expose the endpoints Kubeapps uses
+2. We will configure the _--accept-paths_ option on the proxy to only expose the endpoints Kubeapps uses
 
-3.  The Kubeapps nginx-ingress Service will be configured as _ClusterIP_ by default (as it is today), a Cluster Operator will need to explicitly setup their own Ingress or switch the Service to LoadBalancer to enable access from outside the cluster - this will be documented
+3. The Kubeapps nginx-ingress Service will be configured as _ClusterIP_ by default (as it is today), a Cluster Operator will need to explicitly setup their own Ingress or switch the Service to LoadBalancer to enable access from outside the cluster - this will be documented
 
 On top of that, documentation should encourage Cluster Operators to ensure that Kubeapps is only accessible over a private, internal network (e.g. VPN).
 
@@ -533,11 +533,11 @@ create</td>
 
 We will add documentation to describe how Kubeapps can be externally exposed. There are multiple ways to achieve this:
 
-1.  Create and manage a separate Ingress resource that acts as a reverse proxy to the Kubeapps created nginx-ingress Service (**recommended**)
+1. Create and manage a separate Ingress resource that acts as a reverse proxy to the Kubeapps created nginx-ingress Service (**recommended**)
 
-2.  Change the nginx-ingress Service Kubeapps creates to a LoadBalancer type and get an IP address/hostname provisioned by the underlying cloud provider
+2. Change the nginx-ingress Service Kubeapps creates to a LoadBalancer type and get an IP address/hostname provisioned by the underlying cloud provider
 
-3.  Modify the Kubeapps created Ingress object to make use of a different Ingress controller (by configuring the _kubernetes.io/ingress.class_ annotation)
+3. Modify the Kubeapps created Ingress object to make use of a different Ingress controller (by configuring the _kubernetes.io/ingress.class_ annotation)
 
 #### Providing an additional authentication layer using oauth2_proxy
 

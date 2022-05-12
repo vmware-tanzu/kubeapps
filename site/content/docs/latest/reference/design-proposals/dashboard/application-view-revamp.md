@@ -23,7 +23,7 @@ For Helm charts adapted to Helm 3, the same information can be found in the char
 
 The raw information included in the file is this:
 
-```
+```yaml
 dependencies:
 - name: mariadb
   version: 7.x.x
