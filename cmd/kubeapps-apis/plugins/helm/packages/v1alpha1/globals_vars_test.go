@@ -35,10 +35,11 @@ var (
 			ResourceVersion: "1",
 		},
 		Spec: v1alpha1.AppRepositorySpec{
-			URL: "http://example.com",
+			URL:  "http://example.com",
+			Type: "helm",
 			Auth: v1alpha1.AppRepositoryAuth{
-				Header: &v1alpha1.AppRepositoryAuthHeader{
-					SecretKeyRef: v1.SecretKeySelector{Key: "secret-1"},
+				CustomCA: &v1alpha1.AppRepositoryCustomCA{
+					SecretKeyRef: v1.SecretKeySelector{LocalObjectReference: v1.LocalObjectReference{Name: "apprepo-bar"}, Key: "ca.crt"},
 				},
 			},
 		},
@@ -55,10 +56,11 @@ var (
 			ResourceVersion: "1",
 		},
 		Spec: v1alpha1.AppRepositorySpec{
-			URL: "http://example.com",
+			URL:  "http://example.com",
+			Type: "helm",
 			Auth: v1alpha1.AppRepositoryAuth{
-				Header: &v1alpha1.AppRepositoryAuthHeader{
-					SecretKeyRef: v1.SecretKeySelector{Key: "secret-1"},
+				CustomCA: &v1alpha1.AppRepositoryCustomCA{
+					SecretKeyRef: v1.SecretKeySelector{LocalObjectReference: v1.LocalObjectReference{Name: "secret-1"}, Key: "ca.crt"},
 				},
 			},
 		},
@@ -75,13 +77,41 @@ var (
 			ResourceVersion: "1",
 		},
 		Spec: v1alpha1.AppRepositorySpec{
-			URL: "http://example.com",
+			URL:  "http://example.com",
+			Type: "helm",
 			Auth: v1alpha1.AppRepositoryAuth{
 				Header: &v1alpha1.AppRepositoryAuthHeader{
-					SecretKeyRef: v1.SecretKeySelector{Key: ""},
+					SecretKeyRef: v1.SecretKeySelector{LocalObjectReference: v1.LocalObjectReference{
+						Name: "apprepo-bar"},
+						Key: "authorizationHeader",
+					},
 				},
 			},
 			PassCredentials: true,
+		},
+	}
+
+	addRepoBearerToken = v1alpha1.AppRepository{
+		TypeMeta: metav1.TypeMeta{
+			Kind:       AppRepositoryKind,
+			APIVersion: AppRepositoryApi,
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:            "bar",
+			Namespace:       "foo",
+			ResourceVersion: "1",
+		},
+		Spec: v1alpha1.AppRepositorySpec{
+			URL:  "http://example.com",
+			Type: "helm",
+			Auth: v1alpha1.AppRepositoryAuth{
+				Header: &v1alpha1.AppRepositoryAuthHeader{
+					SecretKeyRef: v1.SecretKeySelector{LocalObjectReference: v1.LocalObjectReference{
+						Name: "apprepo-bar"},
+						Key: "authorizationHeader",
+					},
+				},
+			},
 		},
 	}
 
@@ -173,10 +203,11 @@ var (
 	}
 
 	addRepoReq7 = &corev1.AddPackageRepositoryRequest{
-		Name:    "bar",
-		Context: &corev1.Context{Namespace: "foo"},
-		Type:    "helm",
-		Url:     "http://example.com",
+		Name:            "bar",
+		Context:         &corev1.Context{Namespace: "foo"},
+		Type:            "helm",
+		Url:             "http://example.com",
+		NamespaceScoped: true,
 		TlsConfig: &corev1.PackageRepositoryTlsConfig{
 			PackageRepoTlsConfigOneOf: &corev1.PackageRepositoryTlsConfig_SecretRef{
 				SecretRef: &corev1.SecretKeyReference{
@@ -187,10 +218,11 @@ var (
 	}
 
 	addRepoReq8 = &corev1.AddPackageRepositoryRequest{
-		Name:    "bar",
-		Context: &corev1.Context{Namespace: "foo"},
-		Type:    "helm",
-		Url:     "http://example.com",
+		Name:            "bar",
+		Context:         &corev1.Context{Namespace: "foo"},
+		Type:            "helm",
+		Url:             "http://example.com",
+		NamespaceScoped: true,
 		Auth: &corev1.PackageRepositoryAuth{
 			Type: corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_BASIC_AUTH,
 			PackageRepoAuthOneOf: &corev1.PackageRepositoryAuth_UsernamePassword{
@@ -203,21 +235,23 @@ var (
 		},
 	}
 
-	addRepoReq9 = func(pub, priv []byte) *corev1.AddPackageRepositoryRequest {
+	/*	addRepoReq9 = func(pub, priv []byte) *corev1.AddPackageRepositoryRequest {
 		return &corev1.AddPackageRepositoryRequest{
-			Name:    "bar",
-			Context: &corev1.Context{Namespace: "foo"},
-			Type:    "helm",
-			Url:     "http://example.com",
-			Auth:    tlsAuth(pub, priv),
+			Name:            "bar",
+			Context:         &corev1.Context{Namespace: "foo"},
+			Type:            "helm",
+			Url:             "http://example.com",
+			NamespaceScoped: true,
+			Auth:            tlsAuth(pub, priv),
 		}
-	}
+	}*/
 
 	addRepoReq10 = &corev1.AddPackageRepositoryRequest{
-		Name:    "bar",
-		Context: &corev1.Context{Namespace: "foo"},
-		Type:    "helm",
-		Url:     "http://example.com",
+		Name:            "bar",
+		Context:         &corev1.Context{Namespace: "foo"},
+		Type:            "helm",
+		Url:             "http://example.com",
+		NamespaceScoped: true,
 		Auth: &corev1.PackageRepositoryAuth{
 			Type: corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_BEARER,
 			PackageRepoAuthOneOf: &corev1.PackageRepositoryAuth_Header{
@@ -227,10 +261,11 @@ var (
 	}
 
 	addRepoReq11 = &corev1.AddPackageRepositoryRequest{
-		Name:    "bar",
-		Context: &corev1.Context{Namespace: "foo"},
-		Type:    "helm",
-		Url:     "http://example.com",
+		Name:            "bar",
+		Context:         &corev1.Context{Namespace: "foo"},
+		Type:            "helm",
+		Url:             "http://example.com",
+		NamespaceScoped: true,
 		Auth: &corev1.PackageRepositoryAuth{
 			Type: corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_CUSTOM,
 			PackageRepoAuthOneOf: &corev1.PackageRepositoryAuth_Header{
@@ -240,10 +275,11 @@ var (
 	}
 
 	addRepoReq12 = &corev1.AddPackageRepositoryRequest{
-		Name:    "bar",
-		Context: &corev1.Context{Namespace: "foo"},
-		Type:    "helm",
-		Url:     "http://example.com",
+		Name:            "bar",
+		Context:         &corev1.Context{Namespace: "foo"},
+		Type:            "helm",
+		Url:             "http://example.com",
+		NamespaceScoped: true,
 		Auth: &corev1.PackageRepositoryAuth{
 			Type: corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_DOCKER_CONFIG_JSON,
 			PackageRepoAuthOneOf: &corev1.PackageRepositoryAuth_DockerCreds{

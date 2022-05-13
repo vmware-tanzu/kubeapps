@@ -120,9 +120,6 @@ func setSecretOwnerRef(repoName string, secret *apiv1.Secret) *apiv1.Secret {
 
 // Note that according to https://kubernetes.io/docs/concepts/configuration/secret/#tls-secrets
 // TLS secrets need to look one way, but according to
-// https://fluxcd.io/docs/components/source/helmrepositories/#spec-examples they expect TLS secrets
-// in a different format:
-// certFile/keyFile/caFile vs tls.crt/tls.key. I am going with flux's example for now:
 func newTlsSecret(name, namespace string, pub, priv, ca []byte) *apiv1.Secret {
 	s := &apiv1.Secret{
 		ObjectMeta: metav1.ObjectMeta{
@@ -139,7 +136,7 @@ func newTlsSecret(name, namespace string, pub, priv, ca []byte) *apiv1.Secret {
 		s.Data["keyFile"] = priv
 	}
 	if ca != nil {
-		s.Data["caFile"] = ca
+		s.Data["ca.crt"] = ca
 	}
 	return s
 }

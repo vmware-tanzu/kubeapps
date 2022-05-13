@@ -104,7 +104,7 @@ func newHelmRepoCrd(targetName types.NamespacedName,
 			PassCredentials:       passCredentials,
 		},
 	}
-	if auth != nil {
+	if auth != nil || tlsConfig != nil {
 		if repoAuth, err := newAppRepositoryAuth(secret, tlsConfig, auth); err != nil {
 			return nil, err
 		} else {

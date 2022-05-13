@@ -122,28 +122,42 @@ func newAppRepositoryAuth(secret *k8scorev1.Secret,
 		}
 	}
 
-	switch auth.Type {
-	case corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_BASIC_AUTH,
-		corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_BEARER,
-		corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_CUSTOM:
-		if authHeader := auth.GetHeader(); authHeader != "" {
-			appRepoAuth.Header = &apprepov1alpha1.AppRepositoryAuthHeader{
-				SecretKeyRef: k8scorev1.SecretKeySelector{
-					Key: SecretAuthHeaderKey,
-					LocalObjectReference: k8scorev1.LocalObjectReference{
-						Name: secret.Name,
+	if auth != nil {
+		switch auth.Type {
+		case corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_BASIC_AUTH:
+			if basicAuthHeader := auth.GetUsernamePassword(); basicAuthHeader != nil {
+				appRepoAuth.Header = &apprepov1alpha1.AppRepositoryAuthHeader{
+					SecretKeyRef: k8scorev1.SecretKeySelector{
+						Key: SecretAuthHeaderKey,
+						LocalObjectReference: k8scorev1.LocalObjectReference{
+							Name: secret.Name,
+						},
 					},
-				},
+				}
+			} else {
+				return nil, status.Errorf(codes.InvalidArgument, "Basic authentication header is missing")
 			}
-		} else {
-			return nil, status.Errorf(codes.InvalidArgument, "Authentication header is missing")
+		case corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_BEARER,
+			corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_CUSTOM:
+			if authHeader := auth.GetHeader(); authHeader != "" {
+				appRepoAuth.Header = &apprepov1alpha1.AppRepositoryAuthHeader{
+					SecretKeyRef: k8scorev1.SecretKeySelector{
+						Key: SecretAuthHeaderKey,
+						LocalObjectReference: k8scorev1.LocalObjectReference{
+							Name: secret.Name,
+						},
+					},
+				}
+			} else {
+				return nil, status.Errorf(codes.InvalidArgument, "Authentication header is missing")
+			}
+		case corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_DOCKER_CONFIG_JSON:
+			return nil, status.Errorf(codes.Unimplemented, "Package repository authentication type %q is not supported", auth.Type)
+		case corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_UNSPECIFIED:
+			return nil, nil
+		default:
+			return nil, status.Errorf(codes.Internal, "Unexpected package repository authentication type: %q", auth.Type)
 		}
-	case corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_DOCKER_CONFIG_JSON:
-		return nil, status.Errorf(codes.Unimplemented, "Package repository authentication type %q is not supported", auth.Type)
-	case corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_UNSPECIFIED:
-		return nil, nil
-	default:
-		return nil, status.Errorf(codes.Internal, "Unexpected package repository authentication type: %q", auth.Type)
 	}
 
 	return appRepoAuth, nil

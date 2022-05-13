@@ -18,7 +18,8 @@ import (
 func TestAddPackageRepository(t *testing.T) {
 	// these will be used further on for TLS-related scenarios. Init
 	// byte arrays up front so they can be re-used in multiple places later
-	ca, pub, priv := getCertsForTesting(t)
+	//ca, pub, priv := getCertsForTesting(t)
+	ca, _, _ := getCertsForTesting(t)
 
 	testCases := []struct {
 		name                  string
@@ -74,7 +75,7 @@ func TestAddPackageRepository(t *testing.T) {
 			request:               addRepoReq6(ca),
 			expectedResponse:      addRepoExpectedResp,
 			expectedRepo:          &addRepo2,
-			expectedCreatedSecret: setSecretOwnerRef("bar", newTlsSecret("bar-", "foo", nil, nil, ca)),
+			expectedCreatedSecret: setSecretOwnerRef("bar", newTlsSecret("apprepo-bar", "foo", nil, nil, ca)),
 			statusCode:            codes.OK,
 		},
 		{
@@ -110,27 +111,33 @@ func TestAddPackageRepository(t *testing.T) {
 			expectedCreatedSecret: setSecretOwnerRef("bar", newBasicAuthSecret("bar-", "foo", "baz", "zot")),
 			statusCode:            codes.OK,
 		},
+		/*		{
+				name:                  "package repository with TLS authentication",
+				request:               addRepoReq9(pub, priv),
+				expectedResponse:      addRepoExpectedResp,
+				expectedRepo:          &addRepo2,
+				expectedCreatedSecret: setSecretOwnerRef("bar", newTlsSecret("apprepo-bar", "foo", pub, priv, nil)),
+				statusCode:            codes.OK,
+			},*/
 		{
-			name:                  "package repository with TLS authentication",
-			request:               addRepoReq9(pub, priv),
-			expectedResponse:      addRepoExpectedResp,
-			expectedRepo:          &addRepo2,
-			expectedCreatedSecret: setSecretOwnerRef("bar", newTlsSecret("bar-", "foo", pub, priv, nil)),
-			statusCode:            codes.OK,
+			name:             "errors for package repository with bearer token",
+			request:          addRepoReq10,
+			expectedResponse: addRepoExpectedResp,
+			expectedRepo:     &addRepoBearerToken,
+			//existingSecret:   newBasicAuthSecret("apprepo-bar", "foo", "baz", "zot"),
+			statusCode: codes.OK,
 		},
 		{
-			name:       "errors for package repository with bearer token",
-			request:    addRepoReq10,
-			statusCode: codes.Unimplemented,
+			name:             "errors for package repository with bearer token  (user managed secrets)",
+			request:          addRepoReq10,
+			expectedResponse: addRepoExpectedResp,
+			expectedRepo:     &addRepoBearerToken,
+			existingSecret:   newBasicAuthSecret("secret-1", "foo", "baz", "zot"),
+			statusCode:       codes.OK,
 		},
 		{
 			name:       "errors for package repository with custom auth token",
 			request:    addRepoReq11,
-			statusCode: codes.Unimplemented,
-		},
-		{
-			name:       "package repository with docker config JSON authentication",
-			request:    addRepoReq12,
 			statusCode: codes.Unimplemented,
 		},
 		{
