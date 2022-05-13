@@ -97,7 +97,7 @@ Of course, all plugins register their own gRPC servers and so the RPC calls they
 
 Part of the goal of enabling pluggable support for different packaging systems is to ensure that a UI like the Kubeapps dashboard can use a single client to present a catalog of apps for install, regardless of whether they come from a standard Helm repository, or a flux-based Helm repository, or Carvel package resources on the cluster.
 
-For this reason, the implementation of the core packages API delegates to the related packaging plugins and aggregates their results. For example, the core packages implementation of `GetAvailablePackageDetail` ([see `packages.go`](https://github.com/vmware-tanzu/kubeapps/blob/main/cmd/kubeapps-apis/core/packages/v1alpha1/packages.gopackages.go)) can simply delegate to the relevant plugin:
+For this reason, the implementation of the core packages API delegates to the related packaging plugins and aggregates their results. For example, the core packages implementation of `GetAvailablePackageDetail` ([see `packages.go`](https://github.com/vmware-tanzu/kubeapps/blob/main/cmd/kubeapps-apis/core/packages/v1alpha1/packages.go)) can simply delegate to the relevant plugin:
 
 ```golang
 // GetAvailablePackageDetail returns the package details based on the request.

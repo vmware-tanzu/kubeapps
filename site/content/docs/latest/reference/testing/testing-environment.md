@@ -28,8 +28,8 @@ Currently supported integrations:
 
 You can setup environment to test Kubeapps integration with Harbor using the scripts below:
 
-- [setup-kubeapps](../scripts/setup-kubeapps.sh).
-- [setup-harbor](../scripts/setup-harbor.sh).
+- [setup-kubeapps](https://github.com/vmware-tanzu/kubeapps/blob/main/docs/reference/scripts/setup-kubeapps.sh).
+- [setup-harbor](https://github.com/vmware-tanzu/kubeapps/blob/main/docs/reference/scripts/setup-harbor.sh).
 
 These scripts will create the necessary namespaces, install the charts, wait for them to be available, and perform any extra action that might be needed. Find detailed information about how to use these scripts running the commands below:
 

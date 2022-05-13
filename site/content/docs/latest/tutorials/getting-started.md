@@ -88,7 +88,7 @@ Paste the token generated in the previous step to authenticate and access the Ku
 
 ![Dashboard main page](../img/dashboard-home.png)
 
-**_Note:_** If you are setting up Kubeapps for other people to access, you will want to use a different service type or setup Ingress rather than using the above `kubectl port-forward`. For detailed information on installing, configuring and upgrading Kubeapps, checkout the [chart README](https://github.com/vmware-tanzu/kubeapps/blob/main/chart/kubeapps/README.mds)
+**_Note:_** If you are setting up Kubeapps for other people to access, you will want to use a different service type or setup Ingress rather than using the above `kubectl port-forward`. For detailed information on installing, configuring and upgrading Kubeapps, checkout the [chart README](https://github.com/vmware-tanzu/kubeapps/blob/main/chart/kubeapps/README.md)
 
 ## Step 4: Deploy WordPress
 
