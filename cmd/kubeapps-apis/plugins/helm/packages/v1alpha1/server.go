@@ -8,7 +8,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io/ioutil"
+	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/helm/packages/v1alpha1/common"
 	"net/url"
 	"os"
 	"path"
@@ -44,6 +44,7 @@ import (
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/kubernetes"
 	log "k8s.io/klog/v2"
+	ctrlclient "sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 type helmActionConfigGetter func(ctx context.Context, pkgContext *corev1.Context) (*action.Configuration, error)
@@ -52,8 +53,7 @@ type helmActionConfigGetter func(ctx context.Context, pkgContext *corev1.Context
 var _ corev1.PackagesServiceServer = (*Server)(nil)
 
 const (
-	UserAgentPrefix             = "kubeapps-apis/plugins"
-	DefaultTimeoutSeconds int32 = 300
+	UserAgentPrefix = "kubeapps-apis/plugins"
 )
 
 type createRelease func(*action.Configuration, string, string, string, *chart.Chart, map[string]string, int32) (*release.Release, error)
@@ -73,39 +73,8 @@ type Server struct {
 	versionsInSummary        pkgutils.VersionsInSummary
 	timeoutSeconds           int32
 	createReleaseFunc        createRelease
-}
-
-// parsePluginConfig parses the input plugin configuration json file and return the configuration options.
-func parsePluginConfig(pluginConfigPath string) (pkgutils.VersionsInSummary, int32, error) {
-
-	// Note at present VersionsInSummary is the only configurable option for this plugin,
-	// and if required this func can be enhaned to return helmConfig struct
-
-	// In the helm plugin, for example, we are interested in config for the
-	// core.packages.v1alpha1 only. So the plugin defines the following struct and parses the config.
-	type helmConfig struct {
-		Core struct {
-			Packages struct {
-				V1alpha1 struct {
-					VersionsInSummary pkgutils.VersionsInSummary
-					TimeoutSeconds    int32 `json:"timeoutSeconds"`
-				} `json:"v1alpha1"`
-			} `json:"packages"`
-		} `json:"core"`
-	}
-	var config helmConfig
-
-	pluginConfig, err := ioutil.ReadFile(pluginConfigPath)
-	if err != nil {
-		return pkgutils.VersionsInSummary{}, 0, fmt.Errorf("unable to open plugin config at %q: %w", pluginConfigPath, err)
-	}
-	err = json.Unmarshal([]byte(pluginConfig), &config)
-	if err != nil {
-		return pkgutils.VersionsInSummary{}, 0, fmt.Errorf("unable to unmarshal pluginconfig: %q error: %w", string(pluginConfig), err)
-	}
-
-	// return configured value
-	return config.Core.Packages.V1alpha1.VersionsInSummary, config.Core.Packages.V1alpha1.TimeoutSeconds, nil
+	kubeappsCluster          string // Specifies the cluster on which Kubeapps is installed.
+	pluginConfig             *common.HelmPluginConfig
 }
 
 // NewServer returns a Server automatically configured with a function to obtain
@@ -118,6 +87,9 @@ func NewServer(configGetter core.KubernetesConfigGetter, globalPackagingCluster 
 
 	var dbConfig = dbutils.Config{URL: ASSET_SYNCER_DB_URL, Database: ASSET_SYNCER_DB_NAME, Username: ASSET_SYNCER_DB_USERNAME, Password: ASSET_SYNCER_DB_USERPASSWORD}
 
+	log.Infof("+helm NewServer(globalPackagingCluster: [%v], globalReposNamespace: [%v], pluginConfigPath: [%s]",
+		globalPackagingCluster, globalReposNamespace, pluginConfigPath)
+
 	manager, err := utils.NewPGManager(dbConfig, globalReposNamespace)
 	if err != nil {
 		log.Fatalf("%s", err)
@@ -129,20 +101,23 @@ func NewServer(configGetter core.KubernetesConfigGetter, globalPackagingCluster 
 
 	// If no config is provided, we default to the existing values for backwards
 	// compatibility.
-	versionsInSummary := pkgutils.GetDefaultVersionsInSummary()
-	timeoutSeconds := DefaultTimeoutSeconds
+	pluginConfig := common.NewDefaultPluginConfig()
 	if pluginConfigPath != "" {
-		versionsInSummary, timeoutSeconds, err = parsePluginConfig(pluginConfigPath)
+		pluginConfig, err = common.ParsePluginConfig(pluginConfigPath)
 		if err != nil {
 			log.Fatalf("%s", err)
 		}
-		log.Infof("+helm using custom packages config with %v and timeout %d\n", versionsInSummary, timeoutSeconds)
+		log.Infof("+helm using custom config: [%v]", *pluginConfig)
 	} else {
 		log.Infof("+helm using default config since pluginConfigPath is empty")
 	}
 
+	// Register custom scheme
+	scheme := runtime.NewScheme()
+	appRepov1.AddToScheme(scheme)
+
 	return &Server{
-		clientGetter: clientgetter.NewClientGetter(configGetter, clientgetter.Options{}),
+		clientGetter: clientgetter.NewClientGetter(configGetter, clientgetter.Options{Scheme: scheme}),
 		actionConfigGetter: func(ctx context.Context, pkgContext *corev1.Context) (*action.Configuration, error) {
 			cluster := pkgContext.GetCluster()
 			// Don't force clients to send a cluster unless we are sure all use-cases
@@ -157,8 +132,7 @@ func NewServer(configGetter core.KubernetesConfigGetter, globalPackagingCluster 
 		globalPackagingNamespace: globalReposNamespace,
 		globalPackagingCluster:   globalPackagingCluster,
 		chartClientFactory:       &chartutils.ChartClientFactory{},
-		versionsInSummary:        versionsInSummary,
-		timeoutSeconds:           timeoutSeconds,
+		pluginConfig:             pluginConfig,
 		createReleaseFunc:        agent.CreateRelease,
 	}
 }
@@ -1025,4 +999,76 @@ func (s *Server) GetInstalledPackageResourceRefs(ctx context.Context, request *c
 			ResourceRefs: refs,
 		}, nil
 	}
+}
+
+func (s *Server) AddPackageRepository(ctx context.Context, request *corev1.AddPackageRepositoryRequest) (*corev1.AddPackageRepositoryResponse, error) {
+	log.Infof("+helm AddPackageRepository [%v]", request)
+	if request == nil {
+		return nil, status.Errorf(codes.InvalidArgument, "no request provided")
+	}
+	if request.Context == nil || request.Context.Namespace == "" {
+		return nil, status.Errorf(codes.InvalidArgument, "no request Context namespace provided")
+	}
+	cluster := request.GetContext().GetCluster()
+	if cluster != "" && cluster != s.kubeappsCluster {
+		return nil, status.Errorf(
+			codes.Unimplemented,
+			"not supported yet: request.Context.Cluster: [%v]",
+			request.Context.Cluster)
+	}
+
+	if request.Name == "" {
+		return nil, status.Errorf(codes.InvalidArgument, "no package repository Name provided")
+	}
+	name := types.NamespacedName{Name: request.Name}
+	if request.GetNamespaceScoped() {
+		name.Namespace = request.Context.Namespace
+	} else {
+		name.Namespace = s.globalPackagingNamespace
+	}
+
+	if repoRef, err := s.newRepo(ctx, name, request.GetUrl(), request.GetType(), request.GetDescription(),
+		request.GetInterval(), request.GetTlsConfig(), request.GetAuth()); err != nil {
+		return nil, err
+	} else {
+		return &corev1.AddPackageRepositoryResponse{PackageRepoRef: repoRef}, nil
+	}
+}
+
+func (s *Server) getClient(ctx context.Context, namespace string) (ctrlclient.Client, error) {
+	client, err := s.clientGetter.ControllerRuntime(ctx, s.kubeappsCluster)
+	if err != nil {
+		return nil, err
+	}
+	return ctrlclient.NewNamespacedClient(client, namespace), nil
+}
+
+func (s *Server) GetPackageRepositoryDetail(ctx context.Context, request *corev1.GetPackageRepositoryDetailRequest) (*corev1.GetPackageRepositoryDetailResponse, error) {
+	// TODO(rcastelblanq) WIP
+	return nil, nil
+}
+
+func (s *Server) GetPackageRepositorySummaries(ctx context.Context, request *corev1.GetPackageRepositorySummariesRequest) (*corev1.GetPackageRepositorySummariesResponse, error) {
+	// TODO(rcastelblanq) WIP
+	return nil, nil
+}
+
+func (s *Server) UpdatePackageRepository(ctx context.Context, request *corev1.UpdatePackageRepositoryRequest) (*corev1.UpdatePackageRepositoryResponse, error) {
+	// TODO(rcastelblanq) WIP
+	return nil, nil
+}
+
+func (s *Server) DeletePackageRepository(ctx context.Context, request *corev1.DeletePackageRepositoryRequest) (*corev1.DeletePackageRepositoryResponse, error) {
+	// TODO(rcastelblanq) WIP
+	return nil, nil
+}
+
+// SetUserManagedSecrets This endpoint exists only for integration unit tests
+func (s *Server) SetUserManagedSecrets(ctx context.Context, request *helmv1.SetUserManagedSecretsRequest) (*helmv1.SetUserManagedSecretsResponse, error) {
+	log.Infof("+helm SetUserManagedSecrets [%t]", request.Value)
+	oldVal := s.pluginConfig.UserManagedSecrets
+	s.pluginConfig.UserManagedSecrets = request.Value
+	return &helmv1.SetUserManagedSecretsResponse{
+		Value: oldVal,
+	}, nil
 }

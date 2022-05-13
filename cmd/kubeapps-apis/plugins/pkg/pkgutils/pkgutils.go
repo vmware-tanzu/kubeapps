@@ -51,33 +51,33 @@ func GetDefaultVersionsInSummary() VersionsInSummary {
 	return defaultVersionsInSummary
 }
 
-// packageAppVersionsSummary converts the model chart versions into the required version summary.
+// PackageAppVersionsSummary converts the model chart versions into the required version summary.
 func PackageAppVersionsSummary(versions []models.ChartVersion, versionInSummary VersionsInSummary) []*corev1.PackageAppVersion {
-	pav := []*corev1.PackageAppVersion{}
+	var pav []*corev1.PackageAppVersion
 
 	// Use a version map to be able to count how many major, minor and patch versions
 	// we have included.
-	version_map := map[uint64]map[uint64][]uint64{}
+	versionMap := map[uint64]map[uint64][]uint64{}
 	for _, v := range versions {
 		version, err := semver.NewVersion(v.Version)
 		if err != nil {
 			continue
 		}
 
-		if _, ok := version_map[version.Major()]; !ok {
+		if _, ok := versionMap[version.Major()]; !ok {
 			// Don't add a new major version if we already have enough
-			if len(version_map) >= versionInSummary.Major {
+			if len(versionMap) >= versionInSummary.Major {
 				continue
 			}
 		} else {
 			// If we don't yet have this minor version
-			if _, ok := version_map[version.Major()][version.Minor()]; !ok {
+			if _, ok := versionMap[version.Major()][version.Minor()]; !ok {
 				// Don't add a new minor version if we already have enough for this major version
-				if len(version_map[version.Major()]) >= versionInSummary.Minor {
+				if len(versionMap[version.Major()]) >= versionInSummary.Minor {
 					continue
 				}
 			} else {
-				if len(version_map[version.Major()][version.Minor()]) >= versionInSummary.Patch {
+				if len(versionMap[version.Major()][version.Minor()]) >= versionInSummary.Patch {
 					continue
 				}
 			}
@@ -89,16 +89,16 @@ func PackageAppVersionsSummary(versions []models.ChartVersion, versionInSummary 
 			AppVersion: v.AppVersion,
 		})
 
-		if _, ok := version_map[version.Major()]; !ok {
-			version_map[version.Major()] = map[uint64][]uint64{}
+		if _, ok := versionMap[version.Major()]; !ok {
+			versionMap[version.Major()] = map[uint64][]uint64{}
 		}
-		version_map[version.Major()][version.Minor()] = append(version_map[version.Major()][version.Minor()], version.Patch())
+		versionMap[version.Major()][version.Minor()] = append(versionMap[version.Major()][version.Minor()], version.Patch())
 	}
 
 	return pav
 }
 
-// isValidChart returns true if the chart model passed defines a value
+// IsValidChart returns true if the chart model passed defines a value
 // for each required field described at the Helm website:
 // https://helm.sh/docs/topics/charts/#the-chartyaml-file
 // together with required fields for our model.
@@ -209,44 +209,6 @@ func SplitChartIdentifier(chartID string) (repoName, chartName string, err error
 
 // DefaultValuesFromSchema returns a yaml string with default values generated from an OpenAPI v3 Schema
 func DefaultValuesFromSchema(schema []byte, isCommentedOut bool) (string, error) {
-	if len(schema) == 0 {
-		return "", nil
-	}
-	// Deserialize the schema passed into the function
-	jsonSchemaProps := &apiextensions.JSONSchemaProps{}
-	if err := yaml.Unmarshal(schema, jsonSchemaProps); err != nil {
-		return "", err
-	}
-	structural, err := structuralschema.NewStructural(jsonSchemaProps)
-	if err != nil {
-		return "", err
-	}
-
-	// Generate the default values
-	unstructuredDefaultValues := make(map[string]interface{})
-	defaultValues(unstructuredDefaultValues, structural)
-	yamlDefaultValues, err := yaml.Marshal(unstructuredDefaultValues)
-	if err != nil {
-		return "", err
-	}
-	strYamlDefaultValues := string(yamlDefaultValues)
-
-	// If isCommentedOut, add a yaml comment character '#' to the beginning of each line
-	if isCommentedOut {
-		var sb strings.Builder
-		scanner := bufio.NewScanner(strings.NewReader(strYamlDefaultValues))
-		scanner.Split(bufio.ScanLines)
-		for scanner.Scan() {
-			sb.WriteString("# ")
-			sb.WriteString(fmt.Sprintln(scanner.Text()))
-		}
-		strYamlDefaultValues = sb.String()
-	}
-	return strYamlDefaultValues, nil
-}
-
-// defaultValuesFromSchema returns a yaml string with default values generated from an OpenAPI v3 Schema
-func defaultValuesFromSchema(schema []byte, isCommentedOut bool) (string, error) {
 	if len(schema) == 0 {
 		return "", nil
 	}

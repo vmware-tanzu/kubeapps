@@ -35,6 +35,7 @@ func init() {
 func RegisterWithGRPCServer(opts pluginsv1alpha1.GRPCPluginRegistrationOptions) (interface{}, error) {
 	svr := NewServer(opts.ConfigGetter, opts.ClustersConfig.KubeappsClusterName, opts.ClustersConfig.GlobalReposNamespace, opts.PluginConfigPath)
 	v1alpha1.RegisterHelmPackagesServiceServer(opts.Registrar, svr)
+	v1alpha1.RegisterHelmRepositoriesServiceServer(opts.Registrar, svr)
 	return svr, nil
 }
 

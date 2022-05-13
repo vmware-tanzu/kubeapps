@@ -527,6 +527,7 @@ func (a *userHandler) ListAppRepositories(requestNamespace string) (*v1alpha1.Ap
 	return a.clientset.KubeappsV1alpha1().AppRepositories(requestNamespace).List(context.TODO(), metav1.ListOptions{})
 }
 
+// Deprecated: Remove when the new Package Repository API implementation is completed
 // CreateAppRepository creates an AppRepository resource based on the request data
 func (a *userHandler) CreateAppRepository(appRepoBody io.ReadCloser, requestNamespace string) (*v1alpha1.AppRepository, error) {
 	if a.kubeappsNamespace == "" {
@@ -677,6 +678,7 @@ func (a *userHandler) DeleteAppRepository(repoName, repoNamespace string) error 
 	return err
 }
 
+// Deprecated: Remove when the new Package Repository API implementation is completed
 func (a *userHandler) getValidationCli(appRepoBody io.ReadCloser, requestNamespace, kubeappsNamespace string) (*v1alpha1.AppRepository, httpclient.Client, error) {
 	appRepoRequest, err := parseRepoRequest(appRepoBody)
 	if err != nil {
@@ -902,6 +904,7 @@ func (r HelmOCIValidator) Validate(cli httpclient.Client) (*ValidationResponse, 
 	return response, nil
 }
 
+// Deprecated: Remove when the new Package Repository API implementation is completed
 // getValidator return appropriate HttpValidator interface for OCI and non-OCI Repos
 func getValidator(appRepo *v1alpha1.AppRepository) (HttpValidator, error) {
 
@@ -958,6 +961,7 @@ func (a *userHandler) GetAppRepository(repoName, repoNamespace string) (*v1alpha
 	return a.clientset.KubeappsV1alpha1().AppRepositories(repoNamespace).Get(context.TODO(), repoName, metav1.GetOptions{})
 }
 
+// Deprecated: Remove when the new Package Repository API implementation is completed
 // appRepositoryForRequest takes care of parsing the request data into an AppRepository.
 func appRepositoryForRequest(appRepoRequest *appRepositoryRequest) *v1alpha1.AppRepository {
 	appRepo := appRepoRequest.AppRepository
@@ -1055,6 +1059,7 @@ func (a *userHandler) secretForRequest(appRepoRequest *appRepositoryRequest, app
 	}, nil
 }
 
+// Deprecated: Remove when the new Package Repository API implementation is completed
 func secretNameForRepo(repoName string) string {
 	return fmt.Sprintf("apprepo-%s", repoName)
 }
