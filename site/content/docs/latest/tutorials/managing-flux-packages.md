@@ -57,7 +57,7 @@ The two custom resources that are relevant for our Kubeapps integration are:
 
 As with any other packaging format, the Flux support is enabled in Kubeapps by means of a plugin.
 
-To enable the Flux packaging support, in the [values.yaml](/chart/kubeapps/values.yaml) file, edit the `packaging` option as follows:
+To enable the Flux packaging support, in the [values.yaml](https://github.com/vmware-tanzu/kubeapps/blob/main/chart/kubeapps/values.yaml) file, edit the `packaging` option as follows:
 
 ```yaml
 packaging:

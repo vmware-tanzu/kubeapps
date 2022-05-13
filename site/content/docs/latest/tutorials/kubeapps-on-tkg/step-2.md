@@ -166,7 +166,7 @@ With the configuration out of the way, it's time to install Kubeapps. Since Kube
 
 In case Kubeapps is to be installed in an air-gapped environment, please follow the [offline installation instructions](https://github.com/vmware-tanzu/kubeapps/blob/main/docs/howto/offline-installation.md) instead.
 
-> **TIP**: Typically, the Kubeapps dashboard is set as externally accessible, either by setting the parameter `frontend.service.type=LoadBalancer` (as shown below) or by using an Ingress controller. Please refer to [the Kubeapps documentation covering external access](https://github.com/vmware-tanzu/kubeapps/tree/main/chart/kubeapps#exposing-externally) for additional information.
+> **TIP**: Typically, the Kubeapps dashboard is set as externally accessible, either by setting the parameter `frontend.service.type=LoadBalancer` (as shown below) or by using an Ingress controller. Please refer to [the Kubeapps documentation covering external access](https://github.com/vmware-tanzu/kubeapps/blob/main/chart/kubeapps/README.md#exposing-externally) for additional information.
 >
 > ```yaml
 > frontend:
@@ -233,7 +233,7 @@ At this point, the user having `EMAIL-ADDRESS` email account will have `cluster-
 
 Once Kubeapps is installed and configured, the next step is to log in and access the Kubeapps Web dashboard. The procedure to do this depends on how Kubeapps was configured.
 
-1. If [the service was exposed externally](https://github.com/vmware-tanzu/kubeapps/tree/main/chart/kubeapps#exposing-externally), it may be accessed using a public IP address; if not, it can be accessed locally by forwarding the cluster port using the command below:
+1. If [the service was exposed externally](https://github.com/vmware-tanzu/kubeapps/blob/main/chart/kubeapps/README.md#exposing-externally), it may be accessed using a public IP address; if not, it can be accessed locally by forwarding the cluster port using the command below:
 
    ```bash
    kubectl port-forward -n kubeapps svc/kubeapps 8080:80

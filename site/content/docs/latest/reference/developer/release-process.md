@@ -11,15 +11,15 @@ It consists of four main stages: update the development images, update the CI, u
 
 For building the [development container images](https://hub.docker.com/u/kubeapps), a number of base images are used in the build stage. Specifically:
 
-- The [dashboard/Dockerfile](/dashboard/Dockerfile) uses:
+- The [dashboard/Dockerfile](https://github.com/vmware-tanzu/kubeapps/blob/main/dashboard/Dockerfile) uses:
   - [bitnami/node](https://hub.docker.com/r/bitnami/node/tags) for building the static files for production.
   - [bitnami/nginx](https://hub.docker.com/r/bitnami/nginx/tags) for serving the HTML and JS files as a simple web server.
 - Those services written in Golang use the same image for building the binary, but then a [scratch](https://hub.docker.com/_/scratch) image is used for actually running it. These Dockerfiles are:
-  - [apprepository-controller/Dockerfile](/cmd/apprepository-controller/Dockerfile).
-  - [asset-syncer/Dockerfile](/cmd/asset-syncer/Dockerfile).
-  - [assetsvc/Dockerfile](/cmd/assetsvc/Dockerfile).
-  - [kubeops/Dockerfile](/cmd/kubeops/Dockerfile).
-- The [pinniped-proxy/Dockerfile](/cmd/pinniped-proxy/Dockerfile) uses:
+  - [apprepository-controller/Dockerfile](https://github.com/vmware-tanzu/kubeapps/blob/main/cmd/apprepository-controller/Dockerfile).
+  - [asset-syncer/Dockerfile](https://github.com/vmware-tanzu/kubeapps/blob/main/cmd/asset-syncer/Dockerfile).
+  - [assetsvc/Dockerfile](https://github.com/vmware-tanzu/kubeapps/blob/main/cmd/assetsvc/Dockerfile).
+  - [kubeops/Dockerfile](https://github.com/vmware-tanzu/kubeapps/blob/main/cmd/kubeops/Dockerfile).
+- The [pinniped-proxy/Dockerfile](https://github.com/vmware-tanzu/kubeapps/blob/main/cmd/pinniped-proxy/Dockerfile) uses:
   - [\_/rust](https://hub.docker.com/_/rust) for building the binary.
   - [bitnami/minideb](https://hub.docker.com/r/bitnami/minideb) for running it.
 
@@ -33,12 +33,12 @@ Find further information in the [CI configuration](../testing/ci.md) and the [e2
 
 #### 0.2.1 - CI configuration
 
-In the [CircleCI configuration](/.circleci/config.yml) we have an initial declaration of the variables used along with the file.
+In the [CircleCI configuration](https://github.com/vmware-tanzu/kubeapps/blob/main/.circleci/config.yml) we have an initial declaration of the variables used along with the file.
 The versions used there _must_ match the ones used for building the container images. Consequently, these variables _must_ be changed accordingly:
 
-- `GOLANG_VERSION` _must_ match the versions used by our services written in Golang, for instance, [kubeops](/cmd/kubeops/Dockerfile).
-- `NODE_VERSION` _must_ match the **major** version used by the [dashboard](/dashboard/Dockerfile).
-- `RUST_VERSION` _must_ match the version used by the [pinniped-proxy](/dashboard/Dockerfile).
+- `GOLANG_VERSION` _must_ match the versions used by our services written in Golang, for instance, [kubeops](https://github.com/vmware-tanzu/kubeapps/blob/main/cmd/kubeops/Dockerfile).
+- `NODE_VERSION` _must_ match the **major** version used by the [dashboard](https://github.com/vmware-tanzu/kubeapps/blob/main/dashboard/Dockerfile).
+- `RUST_VERSION` _must_ match the version used by the [pinniped-proxy](https://github.com/vmware-tanzu/kubeapps/blob/main/dashboard/Dockerfile).
 - `DOCKER_VERSION` can be updated to the [latest version provided by CircleCI](https://circleci.com/docs/2.0/building-docker-images/#docker-version).
 - `HELM_VERSION_MIN` _must_ match the one listed in the [Bitnami Application Catalog prerequisites](https://github.com/bitnami/charts#prerequisites).
 - `HELM_VERSION_STABLE` should be updated with the [latest stable version from the Helm releases](https://github.com/helm/helm/releases).
@@ -55,21 +55,21 @@ The versions used there _must_ match the ones used for building the container im
 
 Besides, the `GKE_STABLE_VERSION_XX` and the `GKE_REGULAR_VERSION_XX` might have to be updated if the _Stable_ and _Regular_ Kubernetes versions in GKE have changed. Check this information on [this GKE release notes website](https://cloud.google.com/kubernetes-engine/docs/release-notes).
 
-> **NOTE**: at least one of those `GKE_STABLE_VERSION_XX` or `GKE_REGULAR_VERSION_XX` versions _must_ match the Kubernetes-related dependencies in [Go](/go.mod) and [Rust](/cmd/pinniped-proxy/Cargo.toml).
+> **NOTE**: at least one of those `GKE_STABLE_VERSION_XX` or `GKE_REGULAR_VERSION_XX` versions _must_ match the Kubernetes-related dependencies in [Go](https://github.com/vmware-tanzu/kubeapps/blob/maingo.mod) and [Rust](https://github.com/vmware-tanzu/kubeapps/blob/main/cmd/pinniped-proxy/Cargo.toml).
 > As part of this release process, these variables _must_ be updated accordingly. Other variable changes _should_ be tracked in a separate PR.
 
 #### 0.2.2 - CI integration image and dependencies
 
 We use a separate integration image for running the e2e tests consisting of a simple Node image with a set of dependencies. Therefore, upgrading it includes:
 
-- The [integration dependencies](/dashboard/package.json) can be updated by running:
+- The [integration dependencies](https://github.com/vmware-tanzu/kubeapps/blob/main/integration/package.json) can be updated by running:
 
 ```bash
 cd integration
 yarn upgrade
 ```
 
-- The [integration/Dockerfile](/integration/Dockerfile) uses a [bitnami/node](https://hub.docker.com/r/bitnami/node/tags) image for running the e2e tests.
+- The [integration/Dockerfile](https://github.com/vmware-tanzu/kubeapps/blob/main/integration/Dockerfile) uses a [bitnami/node](https://hub.docker.com/r/bitnami/node/tags) image for running the e2e tests.
 
 > As part of this release process, this Node image tag _may_ be updated to the latest minor/patch version. In case of a major version, the change _should_ be tracked in a separate PR. Analogously, its dependencies _may_ also be updated, but in case of a major change, it _should_ be tracked in a separate PR.
 > **Note**: this image is not being built automatically. Consequently, a [manual build process](../testing/end-to-end-tests.md#building-the-kubeappsintegration-tests-image) _must_ be triggered if you happen to upgrade the integration image or its dependencies.
@@ -98,11 +98,11 @@ npx prettier --write  ../../dashboard/src/
 
 ### 0.4 - Upgrading the code dependencies
 
-Currently, we have three types of dependencies: the [dashboard dependencies](/dashboard/package.json), the [golang dependencies](/go.mod), and the [rust dependencies](/cmd/pinniped-proxy/Cargo.toml). They _must_ be upgraded to the latest minor/patch version to get the latest bug and security fixes.
+Currently, we have three types of dependencies: the [dashboard dependencies](https://github.com/vmware-tanzu/kubeapps/blob/main/dashboard/package.json), the [golang dependencies](https://github.com/vmware-tanzu/kubeapps/blob/maingo.mod), and the [rust dependencies](https://github.com/vmware-tanzu/kubeapps/blob/main/cmd/pinniped-proxy/Cargo.toml). They _must_ be upgraded to the latest minor/patch version to get the latest bug and security fixes.
 
 #### Dashboard dependencies
 
-Upgrade the [dashboard dependencies](/dashboard/package.json) by running:
+Upgrade the [dashboard dependencies](https://github.com/vmware-tanzu/kubeapps/blob/main/dashboard/package.json) by running:
 
 ```bash
 cd dashboard
@@ -113,7 +113,7 @@ Note: If there are certain dependencies which cannot be updated currently, `yarn
 
 #### Golang dependencies
 
-Check the outdated [golang dependencies](/go.mod) by running the following (from [How to upgrade and downgrade dependencies](https://github.com/golang/go/wiki/Modules#how-to-upgrade-and-downgrade-dependencies)):
+Check the outdated [golang dependencies](https://github.com/vmware-tanzu/kubeapps/blob/maingo.mod) by running the following (from [How to upgrade and downgrade dependencies](https://github.com/golang/go/wiki/Modules#how-to-upgrade-and-downgrade-dependencies)):
 
 ```bash
 go mod tidy
@@ -130,7 +130,7 @@ go get -u ./...
 
 #### Rust dependencies
 
-Upgrade the [rust dependencies](/cmd/pinniped-proxy/Cargo.toml) by running:
+Upgrade the [rust dependencies](https://github.com/vmware-tanzu/kubeapps/blob/main/cmd/pinniped-proxy/Cargo.toml) by running:
 
 ```bash
 cd cmd/pinniped-proxy/

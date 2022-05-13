@@ -18,7 +18,7 @@ This guide aims to provide the instructions to easily setup the environment to t
 
 ## Environment setup
 
-We are providing scripts to automatically setup both Kubeapps and the services to integrate on a K8s cluster. Find them under the [scripts](../../reference/scripts/) directory.
+We are providing scripts to automatically setup both Kubeapps and the services to integrate on a K8s cluster. Find them under the [scripts](https://github.com/vmware-tanzu/kubeapps/blob/main/docs/reference/scripts) directory.
 
 Currently supported integrations:
 
@@ -38,7 +38,7 @@ These scripts will create the necessary namespaces, install the charts, wait for
 ./setup-harbor.sh --help
 ```
 
-You can also use the [setup-kubeapps-harbor](../../reference/scripts/setup-kubeapps-harbor.sh) script which is a wrapper that uses both the scripts mentioned above with some default values:
+You can also use the [setup-kubeapps-harbor](https://github.com/vmware-tanzu/kubeapps/blob/main/docs/reference/scripts/setup-kubeapps-harbor.sh) script which is a wrapper that uses both the scripts mentioned above with some default values:
 
 - Install Harbor under the `harbor` namespace.
 - Install Kubeapps under the `kubeapps` namespace.
@@ -46,6 +46,6 @@ You can also use the [setup-kubeapps-harbor](../../reference/scripts/setup-kubea
 
 #### Cleaning up the environment
 
-You can use the scripts [delete-kubeapps](../../reference/scripts/delete-kubeapps.sh) and [delete-harbor](../../reference/scripts/delete-harbor.sh) to uninstall Kubeapps and Harbor releases from the cluster, respectively. These scripts will also remove the associated namespaces and resources.
+You can use the scripts [delete-kubeapps](https://github.com/vmware-tanzu/kubeapps/blob/main/docs/reference/scripts/delete-kubeapps.sh) and [delete-harbor](https://github.com/vmware-tanzu/kubeapps/blob/main/docs/reference/scripts/delete-harbor.sh) to uninstall Kubeapps and Harbor releases from the cluster, respectively. These scripts will also remove the associated namespaces and resources.
 
-> Note: you can use the [delete-kubeapps-harbor](../../reference/scripts/delete-kubeapps-harbor.sh) script to clean up the environment if you used the [setup-kubeapps-harbor](../../reference/scripts/setup-kubeapps-harbor.sh) script to setup the environment.
+> Note: you can use the [delete-kubeapps-harbor](https://github.com/vmware-tanzu/kubeapps/blob/main/docs/reference/scripts/delete-kubeapps-harbor.sh) script to clean up the environment if you used the [setup-kubeapps-harbor](https://github.com/vmware-tanzu/kubeapps/blob/main/docs/reference/scripts/setup-kubeapps-harbor.sh) script to setup the environment.

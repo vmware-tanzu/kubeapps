@@ -1,6 +1,6 @@
 # Custom Form Component Support
 
-This is an extension to the [basic form support](https://github.com/vmware-tanzu/kubeapps/blob/main/docs/howto/basic-form-support.md#basic-form-support)
+This is an extension to the [basic form support](./basic-form-support.md#basic-form-support)
 
 ## Possible use cases
 
@@ -19,7 +19,7 @@ This is an extension to the [basic form support](https://github.com/vmware-tanzu
    Note: The file can be located anywhere on your file system or even a remote source!
    Alternatively we provide remote loading by setting the `remoteComponentsUrl` value to the URL that is serving your bundle. If this is not set, the configmap will be the default loader.
 
-3. Once the deployment is complete you will need a values json that will signal to Kubeapps that we want to render a custom component and not one fo the provided ones. To do that you will need a `values.json.schema` that has a `customComponent` key, more info [here](https://github.com/vmware-tanzu/kubeapps/blob/main/docs/howto/custom-form-component-support.md#render-a-custom-component).
+3. Once the deployment is complete you will need a values json that will signal to Kubeapps that we want to render a custom component and not one fo the provided ones. To do that you will need a `values.json.schema` that has a `customComponent` key, more info [here](./custom-form-component-support.md#render-a-custom-component).
 
 ## Render a custom component
 
