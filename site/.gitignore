@@ -14,3 +14,6 @@ _site
 *.css.map
 .ruby-version
 public
+*.lock
+
+resources/_gen
