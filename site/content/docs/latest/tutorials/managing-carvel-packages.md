@@ -21,7 +21,7 @@
 
 Historically, Kubeapps was initially developed to solely manage [Helm Charts](https://helm.sh) on your Kubernetes clusters. However, it has evolved to support multiple formats, such as [Carvel Packages](https://carvel.dev/kapp-controller/docs/latest/packaging/#package) and [Helm releases via Fluxv2](https://fluxcd.io/docs/guides/helmreleases/).
 
-> **TIP**: Find more information about the architectural evolution at [this video](https://www.youtube.com/watch?v=rS2AhcIPQEs) and [this technical documentation](../developer/kubeapps-apis.md).
+> **TIP**: Find more information about the architectural evolution at [this video](https://www.youtube.com/watch?v=rS2AhcIPQEs) and [this technical documentation](../reference/developer/kubeapps-apis.md).
 
 [Carvel](https://carvel.dev/) is often defined as a set of reliable, single-purpose, composable tools that aid in your application building, configuration, and deployment to Kubernetes.
 Particularly, two of these tools have paramount importance for Kubeapps: [kapp](https://carvel.dev/kapp/) and [kapp-controller](https://carvel.dev/kapp-controller/).
@@ -184,7 +184,7 @@ Note that this service account will have `admin` access to the namespace only an
 
 Installing a Carvel Package in Kubeapps is the same experience as installing any other package (such as a Helm Chart) in Kubeapps.
 
-> **TIP**: Please refer to the [user documentation](./dashboard.md) for more information on how to use Kubeapps as a user.
+> **TIP**: Please refer to the [user documentation](../howto/dashboard.md) for more information on how to use Kubeapps as a user.
 
 Assuming that a Package Repository, such as the `Tanzu Community Edition`, is already installed in the cluster, go to the `Catalog` tab and select the package you want to install.
 
@@ -221,7 +221,7 @@ At this moment, kapp-controller will perform the required actions to start creat
 
 Viewing the installed Carvel Packages in Kubeapps is the same experience as viewing any other installed package (such as a Helm Chart) in Kubeapps.
 
-> **TIP**: Please refer to the [user documentation](./dashboard.md) for more information on how to use Kubeapps as a user.
+> **TIP**: Please refer to the [user documentation](../howto/dashboard.md) for more information on how to use Kubeapps as a user.
 
 Go to the `Applications` tab to see every Application that has been installed in the cluster. Click on _show apps in all namespaces_ to view the ones currently installed in every namespace of the cluster.
 

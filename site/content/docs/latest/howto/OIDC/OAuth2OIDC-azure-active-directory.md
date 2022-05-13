@@ -94,4 +94,4 @@ For setting up an Azure Kubernetes cluster (aks) with Azure Active Directory (le
 - Client-secret: A "Password" Key of the server Application.
 - OIDC Issuer URL: `https://sts.windows.net/<Tenant-ID>/`. The Tenant-ID can be found at `Home > Default Directory - Properties > Directory ID`.
 
-**Note**: If you are using an nginx reverse proxy to get to kubeapps you might need to increase the `proxy_buffer_size` as [Azure's session store is too large for nginx](https://oauth2-proxy.github.io/oauth2-proxy/auth-configuration#azure-auth-provider). Similar changes might also be required for other reverse proxies.
+**Note**: If you are using an nginx reverse proxy to get to kubeapps you might need to increase the `proxy_buffer_size` as [Azure's session store is too large for nginx](https://oauth2-proxy.github.io/oauth2-proxy/docs/configuration/oauth_provider#azure-auth-provider). Similar changes might also be required for other reverse proxies.

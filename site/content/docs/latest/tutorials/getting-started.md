@@ -31,7 +31,7 @@ kubectl create --namespace default serviceaccount kubeapps-operator
 kubectl create clusterrolebinding kubeapps-operator --clusterrole=cluster-admin --serviceaccount=default:kubeapps-operator
 ```
 
-> **NOTE** It's not recommended to assign users the `cluster-admin` role for Kubeapps production usage. Please refer to the [Access Control](./access-control.md) documentation to configure fine-grained access control for users.
+> **NOTE** It's not recommended to assign users the `cluster-admin` role for Kubeapps production usage. Please refer to the [Access Control](../howto/access-control.md) documentation to configure fine-grained access control for users.
 
 To retrieve the token,
 
@@ -132,6 +132,6 @@ Learn more about Kubeapps with the links below:
 
 - [Detailed installation instructions](https://github.com/vmware-tanzu/kubeapps/blob/main/chart/kubeapps/README.md)
 - [Deploying Operators](./operators.md)
-- [Kubeapps Dashboard documentation](./dashboard.md)
+- [Kubeapps Dashboard documentation](../howto/dashboard.md)
 - [Project board](https://github.com/orgs/vmware-tanzu/projects/38/views/2)
 - [Roadmap](https://github.com/vmware-tanzu/kubeapps/milestones)

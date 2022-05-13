@@ -20,7 +20,7 @@
 
 Historically, Kubeapps was initially developed to solely manage [Helm Charts](https://helm.sh) on your Kubernetes clusters. However, it has evolved to support multiple formats, such as [Carvel Packages](https://carvel.dev/kapp-controller/docs/latest/packaging/#package) and [Helm releases via Fluxv2](https://fluxcd.io/docs/guides/helmreleases/).
 
-> **TIP**: Find more information about the architectural evolution at [this video](https://www.youtube.com/watch?v=rS2AhcIPQEs) and [this technical documentation](../developer/kubeapps-apis.md).
+> **TIP**: Find more information about the architectural evolution at [this video](https://www.youtube.com/watch?v=rS2AhcIPQEs) and [this technical documentation](../reference/developer/kubeapps-apis.md).
 
 [Flux](https://fluxcd.io/) is a set of continuous and progressive delivery solutions for Kubernetes that are open and extensible. In particular, the Flux helm-controller allows you to [manage Helm chart releases](https://fluxcd.io/docs/guides/helmreleases/) declaratively with Kubernetes manifests. Similarly, the [Flux HelmRepository](https://fluxcd.io/docs/guides/helmreleases/#helm-repository) can be used to manage Helm repositories declaratively.
 
@@ -137,7 +137,7 @@ Note that this service account will have `admin` access to the namespace only an
 
 Installing a Flux Package in Kubeapps is very similar to installing any other package (such as a Helm Chart) in Kubeapps.
 
-> **TIP**: Please refer to the [user documentation](./dashboard.md) for more information on how to use Kubeapps as a user.
+> **TIP**: Please refer to the [user documentation](../howto/dashboard.md) for more information on how to use Kubeapps as a user.
 
 Assuming that a Flux `HelmRepository`, such as the Bitnami repository above, is already installed in the cluster, you can simply go to the `Catalog` tab and select the package you want to install.
 
@@ -169,7 +169,7 @@ test-apache   Unknown   Reconciliation in progress   8s
 
 Viewing the installed Flux Packages in Kubeapps is the same experience as viewing any other installed package (such as a Helm Chart) in Kubeapps.
 
-> **TIP**: Please refer to the [user documentation](./dashboard.md) for more information on how to use Kubeapps as a user.
+> **TIP**: Please refer to the [user documentation](../howto/dashboard.md) for more information on how to use Kubeapps as a user.
 
 Go to the `Applications` tab to see every Application that has been installed in the cluster. Click on _show apps in all namespaces_ to view the ones currently installed in every namespace of the cluster.
 
