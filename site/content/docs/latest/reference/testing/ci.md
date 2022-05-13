@@ -2,9 +2,9 @@
 
 Kubeapps leverages CircleCI for running the tests (both unit and integration tests), pushing the images and syncing the chart with the official [Bitnami chart](https://github.com/bitnami/charts/tree/master/bitnami/kubeapps). The following image depicts how a successful workflow looks like after pushing a commit to the main branch.
 
-![CircleCI workflow after pushing to the main branch](../img/ci-workflow-main.png "CircleCI workflow after pushing to the main branch")
+![CircleCI workflow after pushing to the main branch](../../img/ci-workflow-main.png "CircleCI workflow after pushing to the main branch")
 
-The main configuration is located at this [CircleCI config file](../../.circleci/config.yml). At a glance, it contains:
+The main configuration is located at this [CircleCI config file](/.circleci/config.yml). At a glance, it contains:
 
 - **Build conditions**: `build_always`, `build_on_main`, `build_on_tag` and `build_on_tag_or_prerelease`. They will be added to each job to determine whether or not it should be run. Whereas some should always be run, others only make sense when pushing to the main branch or when a new tag has been created.
 - **Workflows**: we only use a single workflow named `kubeapps` with multiple jobs.
@@ -12,11 +12,10 @@ The main configuration is located at this [CircleCI config file](../../.circleci
   - `test_go` (always): it runs every unit test for those projects written in Golang (that is, it runs `make test`) as well as it runs some DB-dependent tests.
   - `test_dashboard` (always): it runs the dashboard linter and unit tests (`yarn lint` and `yarn test`)
   - `test_pinniped_proxy` (always): it runs the Rust unit tests of the pinniped-proxy project (`cargo test`).
-  - `test_chart_render` (always): it runs the chart template test defined in the script [`chart-template-test.sh](../../script/chart-template-test.sh).
   - `build_go_images` (always): it builds the CI golang images for `kubeops`, `apprepository-controller`, `asset-syncer` and `assetsvc`.
   - `build_dashboard` (always): it builds the CI node image for `dashboard`.
   - `build_pinniped_proxy` (always): it builds the CI rust image for `pinniped-proxy`.
-  - `local_e2e_tests` (always): it runs locally (i.e., inside the CircleCI environment) the e2e tests. Please refer to the [e2e tests documentation](./end-to-end-tests.md) for further information. In this job, before running the script [`script/e2e-test.sh](../../script/e2e-test.sh), the proper environment is created. Namely:
+  - `local_e2e_tests` (always): it runs locally (i.e., inside the CircleCI environment) the e2e tests. Please refer to the [e2e tests documentation](./end-to-end-tests.md) for further information. In this job, before running the script [`script/e2e-test.sh](/script/e2e-test.sh), the proper environment is created. Namely:
     - Install the required binaries (kind, kubectl, mkcert, helm).
     - Spin up two Kind clusters.
     - Load the CI images into the cluster.
@@ -40,7 +39,7 @@ The main configuration is located at this [CircleCI config file](../../.circleci
     - Renaming the development images (`kubeapps/xxx`) by the production ones (`bitnami/kubeapps-xxx`) with the `vX.X.X` tag.
     - Using `vX.X.X` as the `appVersion`.
     - Sending a draft PR to the Bitnami Charts repository with these changes (from the robot account's personal fork)
-  - `release` (on tag): it creates a GitHub release based on the current tag by running the script [script/create_release.sh](../../script/create_release.sh).
+  - `release` (on tag): it creates a GitHub release based on the current tag by running the script [script/create_release.sh](/script/create_release.sh).
 
 Note that this process is independent of the release of the official Bitnami images and chart. These Bitnami images will be created according to their internal process (so the Golang, Node or Rust versions we define here are not used by them. Manual coordination is expected here if a major version bump happens to occur).
 

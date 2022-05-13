@@ -27,11 +27,11 @@ On top of Puppeteer, we are using the `jest-puppeteer` module that allows us to 
 
 > NOTE: this information is now outdated. We are using [playwright](https://playwright.dev) instead. This documentation will be eventually updated accordingly.
 
-The aforementioned [integration](/integration) folder is self-contained, that is, it contains every required dependency to run the browser tests in a separate [package.json](../../integration/package.json). Furthermore, a [Dockerfile](/integration/Dockerfile) is used to generate an image with [all the dependencies](https://github.com/puppeteer/puppeteer/blob/main/docs/troubleshooting.md#chrome-headless-doesnt-launch-on-unix) needed to run the browser tests.
+The aforementioned [integration](/integration) folder is self-contained, that is, it contains every required dependency to run the browser tests in a separate [package.json](/integration/package.json). Furthermore, a [Dockerfile](/integration/Dockerfile) is used to generate an image with [all the dependencies](https://github.com/puppeteer/puppeteer/blob/main/docs/troubleshooting.md#chrome-headless-doesnt-launch-on-unix) needed to run the browser tests.
 
 These tests can be run either [locally](#running-browser-tests-locally) or in a [container environment](#running-browser-tests-in-a-pod).
 
-You can set up a configured Kubeapps instance in your cluster with the [script/setup-kubeapps.sh](../../reference/scripts/setup-kubeapps.sh) script.
+You can set up a configured Kubeapps instance in your cluster with the [script/setup-kubeapps.sh](/../../reference/scripts/setup-kubeapps.sh) script.
 
 ### Running browser tests locally
 
@@ -52,7 +52,7 @@ Since the CI environment doesn't have the required dependencies and to provide a
 
 To do so, you can spin up an instance running the image [kubeapps/integration-tests](https://hub.docker.com/r/kubeapps/integration-tests).
 This image contains all the required dependencies and it waits forever so you can run commands within it.
-We also provide a simple [Kubernetes Deployment manifest](../../integration/manifests/executor.yaml) for launching this container.
+We also provide a simple [Kubernetes Deployment manifest](/integration/manifests/executor.yaml) for launching this container.
 
 The goal of this setup is that you can copy the latest tests to the image, run the tests and extract the screenshots in case of failure:
 

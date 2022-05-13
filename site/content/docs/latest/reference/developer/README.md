@@ -4,11 +4,11 @@
 
 The dashboard is the main UI component of the Kubeapps project. Written in JavaScript, the dashboard uses the React JavaScript library for the frontend.
 
-Please refer to the [Kubeapps Dashboard Developer Guide](dashboard.md) for the developer setup.
+Please refer to the [Kubeapps Dashboard Developer Guide](./dashboard.md) for the developer setup.
 
 ### Kubeapps APIs service
 
-The Kubeapps APIs service is the main backend component of the Kubeapps project. Written in Go, the APIs service provides a plugable gRPC service that is used to support different Kubernetes packaging formats.
+The Kubeapps APIs service is the main backend component of the Kubeapps project. Written in Go, the APIs service provides a pluggable gRPC service that is used to support different Kubernetes packaging formats.
 
 See the [Kubeapps APIs Service Developer Guide](kubeapps-apis.md) for more information.
 

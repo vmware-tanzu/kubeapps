@@ -28,7 +28,7 @@ cd $KUBEAPPS_DIR/dashboard
 
 ### Install Kubeapps in your cluster
 
-Kubeapps is a Kubernetes-native application. To develop and test Kubeapps components we need a Kubernetes cluster with Kubeapps already installed. Follow the [Kubeapps installation guide](../../chart/kubeapps/README.md) to install Kubeapps in your cluster.
+Kubeapps is a Kubernetes-native application. To develop and test Kubeapps components we need a Kubernetes cluster with Kubeapps already installed. Follow the [Kubeapps installation guide](/chart/kubeapps/README.md) to install Kubeapps in your cluster.
 
 ### Running the dashboard in development
 
@@ -68,9 +68,9 @@ First add the desired host:port to the package.json:
 +  "proxy": "http://127.0.0.1:8080"
 ```
 
-> **NOTE**: Add the [proxy](../../dashboard/package.json#L176) `key:value` to the end of the `package.json`. For convenience, you can change the `host:port` values to meet your needs.
+> **NOTE**: Add the [proxy](/dashboard/package.json#L176) `key:value` to the end of the `package.json`. For convenience, you can change the `host:port` values to meet your needs.
 
-To use this a run Kubeapps per the [getting-started documentation](../../docs/tutorials/getting-started.md#step-3-start-the-kubeapps-dashboard). This will start Kubeapps running on port `8080`.
+To use this a run Kubeapps per the [getting-started documentation](../../tutorials/getting-started.md#step-3-start-the-kubeapps-dashboard). This will start Kubeapps running on port `8080`.
 
 Next you can launch the dashboard.
 

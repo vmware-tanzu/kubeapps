@@ -26,7 +26,7 @@ _NOTE_: There are several steps in the management of Operators that require clus
 
 1. The user goes to the Configuration > Operators section. Since they don't have the OLM installed, they get an error:
 
- ![OLM not installed](../img/design-proposals/olm-not-installed.png)
+ ![OLM not installed](../../img/design-proposals/olm-not-installed.png)
 
 2. Clicking in the "Show Instructions" buttons show the list of commands required to install the OLM:
 
@@ -50,17 +50,17 @@ _NOTE:_ Some Operators are namespaced. This means that it will be available just
 
 8. Once Operators are available in a namespace, these would expose different "operator instance"s types. These are the instances that can be created using the Operator. For example, in the case of the `etcd` Operator, it will expose three different instance types: `etcd Cluster`, `etcd Backup` and `etcd Restore`. These types will be listed in the Catalog view, along with the different charts but with a tag that identifies them. Also, it should be possible to filter them to be easily discoverable:
 
-  ![Operator catalog](../img/design-proposals/operator-catalog.png)
+  ![Operator catalog](../../img/design-proposals/operator-catalog.png)
 
 _NOTE:_ Another option would be to create a self-contained view for the instance types catalog, similar to what Kubeapps has with Service Classes (Open Service Broker).
 
 9. When clicking in a Operator instance type, the form to create the instance will be rendered. Here is where the user can modify the given example with any other specification:
 
-  ![Operator instance](../img/design-proposals/operator-instance.png)
+  ![Operator instance](../../img/design-proposals/operator-instance.png)
 
 10. Once there are Operator instances running, they will be shown in the Operators section:
 
-  ![Operator instance list](../img/design-proposals/operator-instance-list.png)
+  ![Operator instance list](../../img/design-proposals/operator-instance-list.png)
 
 11. When clicking in an Operator instance, Kubeapps will render a view similar to the application view, with information related to the instance. For the first version Kubeapps can show just the YAML used to deploy that instance.
 

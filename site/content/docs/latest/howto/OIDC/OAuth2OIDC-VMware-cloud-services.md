@@ -1,13 +1,13 @@
 # Configuring VMware Cloud Services as an OIDC provider
 
-This document explains how to configure VMware Cloud Services as an OIDC provider (check general information and pre-requisites for [using an OAuth2/OIDC Provider with Kubeapps](../using-an-OIDC-provider.md)).
+This document explains how to configure VMware Cloud Services as an OIDC provider (check general information and pre-requisites for [using an OAuth2/OIDC Provider with Kubeapps](../../tutorials/using-an-OIDC-provider.md)).
 
 > **_Note:_** there is a [more detailed guide on how to use VMware Cloud Services in this document](../../step-by-step/kubeapps-on-tkg/step-1.md#step-12-configure-an-oidc-provider).
 
 Login to VMware Cloud Services and select the organization which you want to use.
 
 1. Select View Organization (under Organization settings of the org menu),
-   ![Copying the bearer token](../img/csp-view-organization.png)
+   ![Copying the bearer token](../../img/csp-view-organization.png)
 2. Click on the OAuth Apps tab,
 3. Click Create App, select Web App and continue,
 4. Enter a name and description for your OAuth app,
@@ -17,7 +17,7 @@ Login to VMware Cloud Services and select the organization which you want to use
 
 You will now see a dialog with the app id and secret. Click on the Download JSON option as there is other useful info in the JSON.
 
-Your Kubernetes cluster's API server (or alternatively, your [Pinniped JWTAuthenticator](../using-an-OIDC-provider-with-pinniped.md)) will need to be configured with the following options (the production VMware cloud services issuer URL is used in the example below):
+Your Kubernetes cluster's API server (or alternatively, your [Pinniped JWTAuthenticator](../../tutorials/using-an-OIDC-provider-with-pinniped.md)) will need to be configured with the following options (the production VMware cloud services issuer URL is used in the example below):
 
 ```yaml
 kind: ClusterConfiguration

@@ -6,7 +6,7 @@ This guide explains how to setup your environment to test Kubeapps integration w
 
 Kubeapps can be integrated with other services to extend its capabilities. Find more information about these integrations in the link below:
 
-- [Using Private App Repositories with Kubeapps](../user/private-app-repository.md).
+- [Using Private App Repositories with Kubeapps](../../howto/private-app-repository.md).
 
 This guide aims to provide the instructions to easily setup the environment to test these integrations.
 
@@ -18,7 +18,7 @@ This guide aims to provide the instructions to easily setup the environment to t
 
 ## Environment setup
 
-We are providing scripts to automatically setup both Kubeapps and the services to integrate on a K8s cluster. Find them under the [script](../../script) directory.
+We are providing scripts to automatically setup both Kubeapps and the services to integrate on a K8s cluster. Find them under the [scripts](../../reference/scripts/) directory.
 
 Currently supported integrations:
 
@@ -38,7 +38,7 @@ These scripts will create the necessary namespaces, install the charts, wait for
 ./setup-harbor.sh --help
 ```
 
-You can also use the [setup-kubeapps-harbor](../scripts/setup-kubeapps-harbor.sh) script which is a wrapper that uses both the scripts mentioned above with some default values:
+You can also use the [setup-kubeapps-harbor](../../reference/scripts/setup-kubeapps-harbor.sh) script which is a wrapper that uses both the scripts mentioned above with some default values:
 
 - Install Harbor under the `harbor` namespace.
 - Install Kubeapps under the `kubeapps` namespace.
@@ -46,6 +46,6 @@ You can also use the [setup-kubeapps-harbor](../scripts/setup-kubeapps-harbor.sh
 
 #### Cleaning up the environment
 
-You can use the scripts [delete-kubeapps](../scripts/delete-kubeapps.sh) and [delete-harbor](../scripts/delete-harbor.sh) to uninstall Kubeapps and Harbor releases from the cluster, respectively. These scripts will also remove the associated namespaces and resources.
+You can use the scripts [delete-kubeapps](../../reference/scripts/delete-kubeapps.sh) and [delete-harbor](../../reference/scripts/delete-harbor.sh) to uninstall Kubeapps and Harbor releases from the cluster, respectively. These scripts will also remove the associated namespaces and resources.
 
-> Note: you can use the [delete-kubeapps-harbor](../scripts/delete-kubeapps-harbor.sh) script to clean up the environment if you used the [setup-kubeapps-harbor](../scripts/setup-kubeapps-harbor.sh) script to setup the environment.
+> Note: you can use the [delete-kubeapps-harbor](../../reference/scripts/delete-kubeapps-harbor.sh) script to clean up the environment if you used the [setup-kubeapps-harbor](../../reference/scripts/setup-kubeapps-harbor.sh) script to setup the environment.

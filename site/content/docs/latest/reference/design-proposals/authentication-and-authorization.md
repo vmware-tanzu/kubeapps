@@ -15,7 +15,7 @@ In order to make it easier to access Kubeapps, the Cluster Operator configures K
 
 Further, the company wants to restrict the ability to manage certain applications to certain teams. They create a restricted namespace for Team A, and only allow employees in that team to view, create and manage applications within that namespace by creating the appropriate RBAC roles. However, since Kubeapps uses its own Service Account and RBAC roles to access the Kubernetes API, all employees are able to view, create and manage applications in Team A's namespace, even if their Kubeconfig credentials restrict it.
 
-DEPRECATED: The following paragraph and parts of this document were part of the initial Kubeapps implementation, but there are serious security issue with using Kubernetes service tokens and/or Kubeconfig credentials for user login. We recommend using an auth-proxy in front of the Kubeapps frontend nginx that handles obtaining a short-lived user token via a standard single sign-on service. See [using an OIDC provider](../../user/using-an-OIDC-provider.md) for more information. The remainder of the document is left in place because aside from the credentials we do take advantage of the RBAC primitives.
+DEPRECATED: The following paragraph and parts of this document were part of the initial Kubeapps implementation, but there are serious security issue with using Kubernetes service tokens and/or Kubeconfig credentials for user login. We recommend using an auth-proxy in front of the Kubeapps frontend nginx that handles obtaining a short-lived user token via a standard single sign-on service. See [using an OIDC provider](../../tutorials/using-an-OIDC-provider.md) for more information. The remainder of the document is left in place because aside from the credentials we do take advantage of the RBAC primitives.
 
 As described above, this is a solved problem in Kubernetes through the use of Kubeconfig credentials and RBAC roles. The Kubernetes Dashboard allows users to leverage their credentials and RBAC roles by providing a login form that accepts a bearer token. When a user is logged in with a token, all requests to the Kubernetes API are made using it. The Kubeapps Dashboard has very similar access mechanisms to the Kubernetes Dashboard, and I propose that we follow in their footsteps to enable authenticated and authorized access.
 
@@ -50,7 +50,7 @@ Client certificate and key pairs are a common way to authenticate against a clus
 
 Bearer tokens are passed via the _Authorization_ header in an HTTP request, which makes them very easy to pass in requests from Kubeapps. In order to use Token Authentication for users, a cluster operator will need to configure the API server with a [Token Auth file](https://kubernetes.io/docs/admin/authentication/#static-token-file) that defines user-token pairs.
 
-However, an alternative way to use token authentication is through the use of [Service Accounts](https://kubernetes.io/docs/admin/authentication/#service-account-tokens). These are typically robot accounts for use within Pods, and Kubernetes generates bearer tokens for them to authenticate with the API. Since Service Accounts are enabled by default in most Kubernetes distributions, they can provide for a good way to create and manage user access to Kubeapps. The Kubernetes Dashboard [describes using Service Accounts to create users for the Dashboard in their documentation](../../user/getting-started.md).
+However, an alternative way to use token authentication is through the use of [Service Accounts](https://kubernetes.io/docs/admin/authentication/#service-account-tokens). These are typically robot accounts for use within Pods, and Kubernetes generates bearer tokens for them to authenticate with the API. Since Service Accounts are enabled by default in most Kubernetes distributions, they can provide for a good way to create and manage user access to Kubeapps. The Kubernetes Dashboard [describes using Service Accounts to create users for the Dashboard in their documentation](../../tutorials/getting-started.md).
 
 Cluster operators can also configure clusters to use [OpenID Connect tokens to authenticate users](https://kubernetes.io/docs/admin/authentication/#openid-connect-tokens). These tokens could be retrieved from OpenID Connect providers such as Azure Active Directory, Salesforce and Google. With this method configured, the ID token returned by one of these providers can be used as a bearer token. As you can see, supporting token authentication in itself provides a plethora of different options for configuring access to Kubernetes and Kubeapps.
 
@@ -124,7 +124,7 @@ The token can then be copied and given to the developer, who can then login to K
 
 When a developer accesses Kubeapps for the first time or on a new device, they will be greeted with a login prompt, similar to the one from the Kubernetes Dashboard shown below.
 
-![Kubernetes Dashboard Login](../img/dashboard/image_0.png)
+![Kubernetes Dashboard Login](../../img/dashboard/image_0.png)
 
 The user will need to ask their Cluster Operator for a token to access Kubeapps, and once they receive one they will be able to enter it in the login form and click "Sign In". From then on, all requests to the Kubernetes API from the dashboard will use this token.
 
@@ -140,7 +140,7 @@ There will need to be a "Sign Out"/"Log Out" option in the top navigation bar so
 
 Everything the developer does inside Kubeapps will be within a Kubernetes namespace. The _default_ namespace will be used by default, and there will be a selector in the top-level navigation to select namespaces.
 
-![Namespace selector](../img/dashboard/image_1.png)
+![Namespace selector](../../img/dashboard/image_1.png)
 
 #### Unauthorized access
 
@@ -543,6 +543,6 @@ We will add documentation to describe how Kubeapps can be externally exposed. Th
 
 We will add documentation to describe how to put something like [oauth2_proxy](https://github.com/bitly/oauth2_proxy) in front of Kubeapps to enable an additional layer of authentication/authorization. With oauth2_proxy it is possible to configure login through a company's GitHub organization, Google domain, etc.
 
-Update: see [using an OIDC provider](../../user/using-an-OIDC-provider.md) for recommended auth-proxy configuration using various providers.
+Update: see [using an OIDC provider](../../tutorials/using-an-OIDC-provider.md) for recommended auth-proxy configuration using various providers.
 
 ## Open Questions
