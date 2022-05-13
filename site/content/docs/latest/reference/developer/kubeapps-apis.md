@@ -229,7 +229,7 @@ kubectl -n kubeapps port-forward svc/kubeapps-internal-kubeappsapis 8080:8080
 You can then verify the configured plugins endpoint via http:
 
 ```bash
-curl -s http://localhost:8080/core/plugins/v1alpha1/configured-plugins | jq .
+curl -s http://localhost:8080/apis/core/plugins/v1alpha1/configured-plugins | jq .
 {
   "plugins": [
     {
