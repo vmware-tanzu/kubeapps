@@ -11,7 +11,7 @@ swap:
   blacklist: denylist (n), block (v), banned list (n), deny (v), ban (v)
   blackout: restrict (v), restriction (n), outage (n), failed (adj)
   cakewalk: easy (v)
-  disable: deactivate (v), when paired with “enable", consider also changing “enable" to “activate"
+  disable: deactivate (v), when paired with "enable", consider also changing "enable" to "activate"
   evict(?:ion|s)?: removal (n), remove (v), eject (v)
   female: (when not referring to anything other than a persona) jack (n), socket (n)
   kill: stop (v), halt (v)

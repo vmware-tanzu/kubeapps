@@ -143,23 +143,23 @@ By default, there is no "groups" scope/claim. We will create a global client sco
 
 In the admin console:
 
-- Click “Client Scopes" from the left navigator menu
-- Click on “Create" from the table (top right corner)
-- Provide a name, ensure the protocol is set to “openid-connect" and that the option “Include in Token Scope" is on.
+- Click "Client Scopes" from the left navigator menu
+- Click on "Create" from the table (top right corner)
+- Provide a name, ensure the protocol is set to "openid-connect" and that the option "Include in Token Scope" is on.
 
-Once the client scope is created, you should be redirected to a page with several tabs. Navigate to the “Mappers" tab as we need to create a mapper to populate the value of the associated claim:
+Once the client scope is created, you should be redirected to a page with several tabs. Navigate to the "Mappers" tab as we need to create a mapper to populate the value of the associated claim:
 
-- Click on the “Mappers" tab
-- Click on “Create" from the table to create a new mapper
+- Click on the "Mappers" tab
+- Click on "Create" from the table to create a new mapper
 - Configure:
   - Enter a name
-  - Select “Group Membership" as the claim type
-  - Enter “groups" as the token claim name
-  - Ensure the “Full group path" is OFF
+  - Select "Group Membership" as the claim type
+  - Enter "groups" as the token claim name
+  - Ensure the "Full group path" is OFF
   - Keep the other knobs as ON
 - Click ‘Save'
 
-Note: if you navigate to “Client Scopes" and then select the tab “Default Client Scopes" you should be able to see the newly created “groups" scope in the “available client scopes" lists.
+Note: if you navigate to "Client Scopes" and then select the tab "Default Client Scopes" you should be able to see the newly created "groups" scope in the "available client scopes" lists.
 
 ## Clients
 
@@ -169,46 +169,46 @@ In probably a very simplified view, Clients represent the application to be prot
 
 For each of the two Kubernetes clusters, we will create a client as follows:
 
-- Click “Clients" from the left navigator
-- Click “Create" from the table
-- Enter an “id" and Save (for example, `cluster1`and `cluster2` respectively)
+- Click "Clients" from the left navigator
+- Click "Create" from the table
+- Enter an "id" and Save (for example, `cluster1`and `cluster2` respectively)
 
 Once created, configure the authentication as follows:
 
-- Ensure the protocol is set to “openid-connect"
-- Configure the “Access Type" to be “confidential". This will add a new “Credentials" tab from which you can get the client secret
-- If you just want to use tokens to access the cluster, you can turn off the “Standard Flow Enabled". Keep this option if you plan to use a local browser login screen (e.g. if using pinniped cli).
-- Ensure “Direct Access Grants Enabled" is enabled, as this is how we can get the tokens via API.
+- Ensure the protocol is set to "openid-connect"
+- Configure the "Access Type" to be "confidential". This will add a new "Credentials" tab from which you can get the client secret
+- If you just want to use tokens to access the cluster, you can turn off the "Standard Flow Enabled". Keep this option if you plan to use a local browser login screen (e.g. if using pinniped cli).
+- Ensure "Direct Access Grants Enabled" is enabled, as this is how we can get the tokens via API.
 - Save
 
 You then need to configure the client scopes that will be available:
 
-- Click the “Client Scopes" tab
-- Ensure the “email" scope is available either in the “Assigned Default Client Scopes" list or the “Assigned Optional Client Scopes" list
-- The “groups" client scope should be available in the lists on the left. Add it either to the “Assigned Default Client Scopes" list or the “Assigned Optional Client Scopes" list.
+- Click the "Client Scopes" tab
+- Ensure the "email" scope is available either in the "Assigned Default Client Scopes" list or the "Assigned Optional Client Scopes" list
+- The "groups" client scope should be available in the lists on the left. Add it either to the "Assigned Default Client Scopes" list or the "Assigned Optional Client Scopes" list.
 
 ### Kubeapps client
 
 We need to first create the client:
 
-- Click “Clients" from the left navigator
-- Click “Create" from the table
-- Enter an “id" and Save (e.g. `kubeapps`)
+- Click "Clients" from the left navigator
+- Click "Create" from the table
+- Enter an "id" and Save (e.g. `kubeapps`)
 
 Once created, configure the authentication as follows:
 
-- Ensure the protocol is set to “openid-connect"
-- Configure the “Access Type" to be “confidential". This will add a new “Credentials" tab from which you can get the client secret
-- Ensure “Standard Flow Enabled" is enabled, this is required for the login screen.
-- “Direct Access Grants Enabled" can be disabled.
-- In the “Valid Redirect URIs" field, enter “http://localhost:8000/\*" as a placeholder. We will need to revisit this field once we know the public hostname of kubeapps
+- Ensure the protocol is set to "openid-connect"
+- Configure the "Access Type" to be "confidential". This will add a new "Credentials" tab from which you can get the client secret
+- Ensure "Standard Flow Enabled" is enabled, this is required for the login screen.
+- "Direct Access Grants Enabled" can be disabled.
+- In the "Valid Redirect URIs" field, enter "http://localhost:8000/\*" as a placeholder. We will need to revisit this field once we know the public hostname of kubeapps
 - Save
 
 As for the cluster clients, we need to configure the client scopes:
 
-- Click the “Client Scopes" tab
-- Ensure the “email" scope is available either in the “Assigned Default Client Scopes" list or the “Assigned Optional Client Scopes" list
-- The “groups" client scope should be available in the lists on the left. Add it either to the “Assigned Default Client Scopes" list or the “Assigned Optional Client Scopes" list.
+- Click the "Client Scopes" tab
+- Ensure the "email" scope is available either in the "Assigned Default Client Scopes" list or the "Assigned Optional Client Scopes" list
+- The "groups" client scope should be available in the lists on the left. Add it either to the "Assigned Default Client Scopes" list or the "Assigned Optional Client Scopes" list.
 
 The last step is to configure the `kubeapps` client to be aware of the two cluster clients and be allowed to invoke them. There are different ways to configure Keycloak:
 
@@ -220,21 +220,21 @@ The last step is to configure the `kubeapps` client to be aware of the two clust
 
 In this option, we create a client scope similar to how we created the groups client scope. This solution is better than solution #3 as the client ids are injected in the audience claim only if they were asked for in the scope request field.
 
-- Click “Client Scopes" from the left navigator menu
-- Click on “Create" from the table (top right corner)
-- Provide a name (e.g. `cluster1-client`), ensure the protocol is set to “openid-connect" and that the option “Include in Token Scope" is on.
+- Click "Client Scopes" from the left navigator menu
+- Click on "Create" from the table (top right corner)
+- Provide a name (e.g. `cluster1-client`), ensure the protocol is set to "openid-connect" and that the option "Include in Token Scope" is on.
 - Click the Mappers tab
 - Click Create from the table to create a new mapper
   - Enter a name
-  - Select the mapper type “Audience"
-  - In “Included Client Audience" select the cluster client created above (e.g. `cluster1`)
-  - Ensure “Add to ID token" is enabled
+  - Select the mapper type "Audience"
+  - In "Included Client Audience" select the cluster client created above (e.g. `cluster1`)
+  - Ensure "Add to ID token" is enabled
   - Save
 - Repeat for the second cluster
 
 Then in the `kubeapps` client:
 
-- Navigate to the “Client Scope" tab
+- Navigate to the "Client Scope" tab
 - The two new scopes created above should be available in the lists on the left. You can choose to add them to either the default list or the optional list.
 
 #### Option #3
@@ -244,9 +244,9 @@ In this option, the claim is statically defined via a mapper similar to the one 
 - Navigate to the Mappers tab of the `kubeapps` client
 - Click Create from the table
   - Enter a name
-  - For Mapper Type select “Audience"
-  - In “Included Client Audience" select the cluster client(e.g. `cluster1`)
-  - Ensure “Add to ID token" is enabled
+  - For Mapper Type select "Audience"
+  - In "Included Client Audience" select the cluster client(e.g. `cluster1`)
+  - Ensure "Add to ID token" is enabled
   - Save
 - Repeat for the second cluster
 
@@ -254,11 +254,11 @@ The two client ids will be injected in the audience claim automatically.
 
 ## Users
 
-Users are intuitive to create. But they must be configured with a “verified" email address.
+Users are intuitive to create. But they must be configured with a "verified" email address.
 
 The oauth proxy used in kubeapps requires email as the username. Furthermore, if the email is not marked as verified, JWT validation will fail and authentication will fail.
 
-In order to test multiple users with different levels of authorization, it is useful to create them with multiple dummy email addresses. This can be done by ensuring that when the user is created, the field “email verified" is ON (skipping an actual email verification workflow).
+In order to test multiple users with different levels of authorization, it is useful to create them with multiple dummy email addresses. This can be done by ensuring that when the user is created, the field "email verified" is ON (skipping an actual email verification workflow).
 
 # Kubeapps Installation
 
@@ -319,7 +319,7 @@ authProxy:
 Once Kubeapps is installed and the load balancer is ready, we need to go back to Keycloak to configure the callback URL:
 
 - Navigate to the `kubeapps` Client
-- In the “Valid Redirect URIs" enter the callback URL for Kubeapps. It will be of the form “http://`<hostname>`/oauth2/callback" (where `<hostname>` is the load balancer hostname)
+- In the "Valid Redirect URIs" enter the callback URL for Kubeapps. It will be of the form "http://`<hostname>`/oauth2/callback" (where `<hostname>` is the load balancer hostname)
 
 ## Users
 
