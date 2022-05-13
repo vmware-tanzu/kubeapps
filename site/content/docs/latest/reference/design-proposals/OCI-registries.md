@@ -1,6 +1,6 @@
 # OCI support Helm charts in Kubeapps
 
-The goal of this document is to evaluate what’s needed to support OCI registries in Kubeapps to host Helm charts. We will identify blockers (if any) and propose an approach for a POC.
+The goal of this document is to evaluate what's needed to support OCI registries in Kubeapps to host Helm charts. We will identify blockers (if any) and propose an approach for a POC.
 
 ## Design overview
 

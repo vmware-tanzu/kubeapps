@@ -2,7 +2,7 @@
 
 ## Kubeapps backlog
 
-Kubeapps keeps a backlog of issues on GitHub submitted both by maintainers and contributors: this backlog comprises bugs, feature requests, and technical debt. If it’s a bug, an idea for a new feature, or something in between, it’s filed as an issue in the [kubeapps issue page](https://github.com/vmware-tanzu/kubeapps/issues) on GitHub.
+Kubeapps keeps a backlog of issues on GitHub submitted both by maintainers and contributors: this backlog comprises bugs, feature requests, and technical debt. If it's a bug, an idea for a new feature, or something in between, it's filed as an issue in the [kubeapps issue page](https://github.com/vmware-tanzu/kubeapps/issues) on GitHub.
 There are some special considerations about how the Kubeapps maintainer team manages its backlog on GitHub:
 
 - The issue repository is completely open. The maintainer team, along with the entire Kubeapps community, files all feature enhancements, bugs, and potential future work into the open repository.
@@ -88,6 +88,6 @@ According to the Kubeapps team practices, milestones will be defined based on qu
 1. Review issues in column **Inbox** (untriaged issues, awaiting-more-evidence, triaged issues labeled as low and medium priority) and move them to the column according to the triage process. Issues labeled as 'awaiting-more-evidence' must be checked if updated to be triaged.
 2. Review issues in column **Next iteration discussion** and decide what issues should be moved to the **Committed** column according to the capacity and uncompleted issues from previous iterations (**In progress**).
 3. Filter issues by 'priority/unbreak-now' → Check that all issues labeled as 'priority/unbreak-now' are, at least, placed in the **Committed** for next iteration column.
-4. Filter issues by 'priority/high' → Check that all issues labeled as 'priority/high' are, at least, placed in the "**Next iteration discussion**" column. If any of the 'priority/high' issues shouldn’t be discussed for the next iteration it means that they should be re-prioritized and moved back to the **Backlog**.
+4. Filter issues by 'priority/high' → Check that all issues labeled as 'priority/high' are, at least, placed in the "**Next iteration discussion**" column. If any of the 'priority/high' issues shouldn't be discussed for the next iteration it means that they should be re-prioritized and moved back to the **Backlog**.
 5. Filter issues by 'priority/medium' → Check if any of the issues should be re-prioritize or/and added to the **Next iteration discussion** (or **Committed**).
 6. Filter issues by 'priority/low' → Check if any of the issues should be re-prioritize or/and added to the **Next iteration discussion** (or **Committed**).

@@ -52,7 +52,7 @@ At the time of writing this guide, kapp-controller will install the following Cu
 
   - [Package](https://carvel.dev/kapp-controller/docs/latest/packaging/#package): is a combination of configuration metadata and OCI images that informs the package manager what software it holds and how to install itself onto a Kubernetes cluster.
 
-  - [PackageMetadata](https://carvel.dev/kapp-controller/docs/latest/packaging/#package-metadata): are attributes of a single package that do not change frequently and that are shared across multiple versions of a single package. It contains information similar to a project’s README.md.
+  - [PackageMetadata](https://carvel.dev/kapp-controller/docs/latest/packaging/#package-metadata): are attributes of a single package that do not change frequently and that are shared across multiple versions of a single package. It contains information similar to a project's README.md.
 
 - [PackageInstall](https://carvel.dev/kapp-controller/docs/latest/packaging/#package-install) is an actual installation of a package and its underlying resources on a Kubernetes cluster.
 

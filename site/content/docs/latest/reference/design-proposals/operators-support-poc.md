@@ -12,7 +12,7 @@ Right now, there are two places in which the community publishes open source Ope
 
 - Awesome-operators: <https://github.com/operator-framework/awesome-operators>. This GitHub repository is just a README file that can be used for people to publish a link to their Operators. There are no rules to add an Operator there, simply open a PR with a link for more info and a small description.
 
-- OperatorHub: It currently contains 110 Operators. From its page: "OperatorHub.io was launched by Red Hat in conjunction with Amazon, Microsoft, and Google forming the initial group that are supporting the initiative". It’s a list of Operators more curated that leverages the [Operator Lifecycle Manager (OLM)](https://github.com/operator-framework/operator-lifecycle-manager). This is a centralized source of Operators that are more similar to what we have right now for charts. It contains metadata, icons, a standard way of installation...
+- OperatorHub: It currently contains 110 Operators. From its page: "OperatorHub.io was launched by Red Hat in conjunction with Amazon, Microsoft, and Google forming the initial group that are supporting the initiative". It's a list of Operators more curated that leverages the [Operator Lifecycle Manager (OLM)](https://github.com/operator-framework/operator-lifecycle-manager). This is a centralized source of Operators that are more similar to what we have right now for charts. It contains metadata, icons, a standard way of installation...
 
 Since Operators listed in the OperatorHub follow a standard and contain the required information to list and deploy them, we will use that as the source of Operators for Kubeapps. We could add a link to the awesome-operators list in the application so people can browse additional Operators.
 

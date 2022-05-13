@@ -2,7 +2,7 @@
 
 This section of our documentation contains step-by-step tutorials to help outline what Kubeapps is capable of while helping you achieve specific aims, such as installing Kubeapps or managing different packages.
 
-We hope our tutorials make as few assumptions as possible and are broadly accessible to anyone with an interest in Kubeapps. They should also be a good place to start learning about Kubeapps, how it works and what it’s capable of.
+We hope our tutorials make as few assumptions as possible and are broadly accessible to anyone with an interest in Kubeapps. They should also be a good place to start learning about Kubeapps, how it works and what it's capable of.
 
 | Tutorial                                                  | Description                                                                                                                                                                                                                                    |
 | --------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |

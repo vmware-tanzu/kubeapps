@@ -157,7 +157,7 @@ Once the client scope is created, you should be redirected to a page with severa
   - Enter “groups" as the token claim name
   - Ensure the “Full group path" is OFF
   - Keep the other knobs as ON
-- Click ‘Save’
+- Click ‘Save'
 
 Note: if you navigate to “Client Scopes" and then select the tab “Default Client Scopes" you should be able to see the newly created “groups" scope in the “available client scopes" lists.
 
