@@ -48,8 +48,8 @@ require (
 	github.com/disintegration/imaging v1.6.2
 	github.com/distribution/distribution v2.8.1+incompatible
 	github.com/fluxcd/helm-controller/api v0.21.0
-	github.com/fluxcd/pkg/apis/meta v0.13.0
-	github.com/fluxcd/source-controller/api v0.24.3
+	github.com/fluxcd/pkg/apis/meta v0.14.0
+	github.com/fluxcd/source-controller/api v0.24.4
 	github.com/go-redis/redis/v8 v8.11.5
 	github.com/go-redis/redismock/v8 v8.0.6
 	github.com/google/go-cmp v0.5.8
@@ -85,7 +85,7 @@ require (
 	helm.sh/helm/v3 v3.8.2
 	k8s.io/api v0.23.5
 	k8s.io/apiextensions-apiserver v0.23.6
-	k8s.io/apimachinery v0.23.6
+	k8s.io/apimachinery v0.24.0
 	k8s.io/apiserver v0.23.5
 	k8s.io/cli-runtime v0.23.5
 	k8s.io/client-go v0.23.5
