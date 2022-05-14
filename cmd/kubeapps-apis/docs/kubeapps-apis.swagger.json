@@ -1591,7 +1591,7 @@
         ]
       }
     },
-    "/plugins/fluxv2/packages/v1alpha1/repositories/plugin/{packageRepoRef.plugin.name}/{packageRepoRef.plugin.version}/c/{packageRepoRef.context.cluster}/ns/{packageRepoRef.context.namespace}/{packageRepoRef.identifier}": {
+    "/plugins/fluxv2/packages/v1alpha1/repositories/c/{packageRepoRef.context.cluster}/ns/{packageRepoRef.context.namespace}/{packageRepoRef.identifier}": {
       "get": {
         "operationId": "FluxV2RepositoriesService_GetPackageRepositoryDetail",
         "responses": {
@@ -1614,20 +1614,6 @@
         },
         "parameters": [
           {
-            "name": "packageRepoRef.plugin.name",
-            "description": "Plugin name\n\nThe name of the plugin, such as `fluxv2.packages` or `kapp_controller.packages`.",
-            "in": "path",
-            "required": true,
-            "type": "string"
-          },
-          {
-            "name": "packageRepoRef.plugin.version",
-            "description": "Plugin version\n\nThe version of the plugin, such as v1alpha1",
-            "in": "path",
-            "required": true,
-            "type": "string"
-          },
-          {
             "name": "packageRepoRef.context.cluster",
             "description": "Cluster\n\nA cluster name can be provided to target a specific cluster if multiple\nclusters are configured, otherwise all clusters will be assumed.",
             "in": "path",
@@ -1646,6 +1632,20 @@
             "description": "The fully qualified identifier for the repository\n(i.e. a unique name for the context).",
             "in": "path",
             "required": true,
+            "type": "string"
+          },
+          {
+            "name": "packageRepoRef.plugin.name",
+            "description": "Plugin name. The name of the plugin, such as `fluxv2.packages` or `kapp_controller.packages`.",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "packageRepoRef.plugin.version",
+            "description": "Plugin version. The version of the plugin, such as v1alpha1",
+            "in": "query",
+            "required": false,
             "type": "string"
           }
         ],
@@ -1675,20 +1675,6 @@
         },
         "parameters": [
           {
-            "name": "packageRepoRef.plugin.name",
-            "description": "Plugin name\n\nThe name of the plugin, such as `fluxv2.packages` or `kapp_controller.packages`.",
-            "in": "path",
-            "required": true,
-            "type": "string"
-          },
-          {
-            "name": "packageRepoRef.plugin.version",
-            "description": "Plugin version\n\nThe version of the plugin, such as v1alpha1",
-            "in": "path",
-            "required": true,
-            "type": "string"
-          },
-          {
             "name": "packageRepoRef.context.cluster",
             "description": "Cluster\n\nA cluster name can be provided to target a specific cluster if multiple\nclusters are configured, otherwise all clusters will be assumed.",
             "in": "path",
@@ -1707,6 +1693,20 @@
             "description": "The fully qualified identifier for the repository\n(i.e. a unique name for the context).",
             "in": "path",
             "required": true,
+            "type": "string"
+          },
+          {
+            "name": "packageRepoRef.plugin.name",
+            "description": "Plugin name. The name of the plugin, such as `fluxv2.packages` or `kapp_controller.packages`.",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "packageRepoRef.plugin.version",
+            "description": "Plugin version. The version of the plugin, such as v1alpha1",
+            "in": "query",
+            "required": false,
             "type": "string"
           }
         ],
@@ -1735,20 +1735,6 @@
           }
         },
         "parameters": [
-          {
-            "name": "packageRepoRef.plugin.name",
-            "description": "Plugin name\n\nThe name of the plugin, such as `fluxv2.packages` or `kapp_controller.packages`.",
-            "in": "path",
-            "required": true,
-            "type": "string"
-          },
-          {
-            "name": "packageRepoRef.plugin.version",
-            "description": "Plugin version\n\nThe version of the plugin, such as v1alpha1",
-            "in": "path",
-            "required": true,
-            "type": "string"
-          },
           {
             "name": "packageRepoRef.context.cluster",
             "description": "Cluster\n\nA cluster name can be provided to target a specific cluster if multiple\nclusters are configured, otherwise all clusters will be assumed.",
