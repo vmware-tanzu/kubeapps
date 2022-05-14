@@ -1,6 +1,6 @@
 /* eslint-disable */
 import Long from "long";
-import * as _m0 from "protobufjs/minimal";
+import _m0 from "protobufjs/minimal";
 
 export const protobufPackage = "google.protobuf";
 
@@ -94,9 +94,7 @@ export interface BytesValue {
   value: Uint8Array;
 }
 
-function createBaseDoubleValue(): DoubleValue {
-  return { value: 0 };
-}
+const baseDoubleValue: object = { value: 0 };
 
 export const DoubleValue = {
   encode(message: DoubleValue, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
@@ -109,7 +107,7 @@ export const DoubleValue = {
   decode(input: _m0.Reader | Uint8Array, length?: number): DoubleValue {
     const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
     let end = length === undefined ? reader.len : reader.pos + length;
-    const message = createBaseDoubleValue();
+    const message = { ...baseDoubleValue } as DoubleValue;
     while (reader.pos < end) {
       const tag = reader.uint32();
       switch (tag >>> 3) {
@@ -125,9 +123,13 @@ export const DoubleValue = {
   },
 
   fromJSON(object: any): DoubleValue {
-    return {
-      value: isSet(object.value) ? Number(object.value) : 0,
-    };
+    const message = { ...baseDoubleValue } as DoubleValue;
+    if (object.value !== undefined && object.value !== null) {
+      message.value = Number(object.value);
+    } else {
+      message.value = 0;
+    }
+    return message;
   },
 
   toJSON(message: DoubleValue): unknown {
@@ -136,16 +138,18 @@ export const DoubleValue = {
     return obj;
   },
 
-  fromPartial<I extends Exact<DeepPartial<DoubleValue>, I>>(object: I): DoubleValue {
-    const message = createBaseDoubleValue();
-    message.value = object.value ?? 0;
+  fromPartial(object: DeepPartial<DoubleValue>): DoubleValue {
+    const message = { ...baseDoubleValue } as DoubleValue;
+    if (object.value !== undefined && object.value !== null) {
+      message.value = object.value;
+    } else {
+      message.value = 0;
+    }
     return message;
   },
 };
 
-function createBaseFloatValue(): FloatValue {
-  return { value: 0 };
-}
+const baseFloatValue: object = { value: 0 };
 
 export const FloatValue = {
   encode(message: FloatValue, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
@@ -158,7 +162,7 @@ export const FloatValue = {
   decode(input: _m0.Reader | Uint8Array, length?: number): FloatValue {
     const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
     let end = length === undefined ? reader.len : reader.pos + length;
-    const message = createBaseFloatValue();
+    const message = { ...baseFloatValue } as FloatValue;
     while (reader.pos < end) {
       const tag = reader.uint32();
       switch (tag >>> 3) {
@@ -174,9 +178,13 @@ export const FloatValue = {
   },
 
   fromJSON(object: any): FloatValue {
-    return {
-      value: isSet(object.value) ? Number(object.value) : 0,
-    };
+    const message = { ...baseFloatValue } as FloatValue;
+    if (object.value !== undefined && object.value !== null) {
+      message.value = Number(object.value);
+    } else {
+      message.value = 0;
+    }
+    return message;
   },
 
   toJSON(message: FloatValue): unknown {
@@ -185,16 +193,18 @@ export const FloatValue = {
     return obj;
   },
 
-  fromPartial<I extends Exact<DeepPartial<FloatValue>, I>>(object: I): FloatValue {
-    const message = createBaseFloatValue();
-    message.value = object.value ?? 0;
+  fromPartial(object: DeepPartial<FloatValue>): FloatValue {
+    const message = { ...baseFloatValue } as FloatValue;
+    if (object.value !== undefined && object.value !== null) {
+      message.value = object.value;
+    } else {
+      message.value = 0;
+    }
     return message;
   },
 };
 
-function createBaseInt64Value(): Int64Value {
-  return { value: 0 };
-}
+const baseInt64Value: object = { value: 0 };
 
 export const Int64Value = {
   encode(message: Int64Value, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
@@ -207,7 +217,7 @@ export const Int64Value = {
   decode(input: _m0.Reader | Uint8Array, length?: number): Int64Value {
     const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
     let end = length === undefined ? reader.len : reader.pos + length;
-    const message = createBaseInt64Value();
+    const message = { ...baseInt64Value } as Int64Value;
     while (reader.pos < end) {
       const tag = reader.uint32();
       switch (tag >>> 3) {
@@ -223,27 +233,33 @@ export const Int64Value = {
   },
 
   fromJSON(object: any): Int64Value {
-    return {
-      value: isSet(object.value) ? Number(object.value) : 0,
-    };
+    const message = { ...baseInt64Value } as Int64Value;
+    if (object.value !== undefined && object.value !== null) {
+      message.value = Number(object.value);
+    } else {
+      message.value = 0;
+    }
+    return message;
   },
 
   toJSON(message: Int64Value): unknown {
     const obj: any = {};
-    message.value !== undefined && (obj.value = Math.round(message.value));
+    message.value !== undefined && (obj.value = message.value);
     return obj;
   },
 
-  fromPartial<I extends Exact<DeepPartial<Int64Value>, I>>(object: I): Int64Value {
-    const message = createBaseInt64Value();
-    message.value = object.value ?? 0;
+  fromPartial(object: DeepPartial<Int64Value>): Int64Value {
+    const message = { ...baseInt64Value } as Int64Value;
+    if (object.value !== undefined && object.value !== null) {
+      message.value = object.value;
+    } else {
+      message.value = 0;
+    }
     return message;
   },
 };
 
-function createBaseUInt64Value(): UInt64Value {
-  return { value: 0 };
-}
+const baseUInt64Value: object = { value: 0 };
 
 export const UInt64Value = {
   encode(message: UInt64Value, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
@@ -256,7 +272,7 @@ export const UInt64Value = {
   decode(input: _m0.Reader | Uint8Array, length?: number): UInt64Value {
     const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
     let end = length === undefined ? reader.len : reader.pos + length;
-    const message = createBaseUInt64Value();
+    const message = { ...baseUInt64Value } as UInt64Value;
     while (reader.pos < end) {
       const tag = reader.uint32();
       switch (tag >>> 3) {
@@ -272,27 +288,33 @@ export const UInt64Value = {
   },
 
   fromJSON(object: any): UInt64Value {
-    return {
-      value: isSet(object.value) ? Number(object.value) : 0,
-    };
+    const message = { ...baseUInt64Value } as UInt64Value;
+    if (object.value !== undefined && object.value !== null) {
+      message.value = Number(object.value);
+    } else {
+      message.value = 0;
+    }
+    return message;
   },
 
   toJSON(message: UInt64Value): unknown {
     const obj: any = {};
-    message.value !== undefined && (obj.value = Math.round(message.value));
+    message.value !== undefined && (obj.value = message.value);
     return obj;
   },
 
-  fromPartial<I extends Exact<DeepPartial<UInt64Value>, I>>(object: I): UInt64Value {
-    const message = createBaseUInt64Value();
-    message.value = object.value ?? 0;
+  fromPartial(object: DeepPartial<UInt64Value>): UInt64Value {
+    const message = { ...baseUInt64Value } as UInt64Value;
+    if (object.value !== undefined && object.value !== null) {
+      message.value = object.value;
+    } else {
+      message.value = 0;
+    }
     return message;
   },
 };
 
-function createBaseInt32Value(): Int32Value {
-  return { value: 0 };
-}
+const baseInt32Value: object = { value: 0 };
 
 export const Int32Value = {
   encode(message: Int32Value, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
@@ -305,7 +327,7 @@ export const Int32Value = {
   decode(input: _m0.Reader | Uint8Array, length?: number): Int32Value {
     const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
     let end = length === undefined ? reader.len : reader.pos + length;
-    const message = createBaseInt32Value();
+    const message = { ...baseInt32Value } as Int32Value;
     while (reader.pos < end) {
       const tag = reader.uint32();
       switch (tag >>> 3) {
@@ -321,27 +343,33 @@ export const Int32Value = {
   },
 
   fromJSON(object: any): Int32Value {
-    return {
-      value: isSet(object.value) ? Number(object.value) : 0,
-    };
+    const message = { ...baseInt32Value } as Int32Value;
+    if (object.value !== undefined && object.value !== null) {
+      message.value = Number(object.value);
+    } else {
+      message.value = 0;
+    }
+    return message;
   },
 
   toJSON(message: Int32Value): unknown {
     const obj: any = {};
-    message.value !== undefined && (obj.value = Math.round(message.value));
+    message.value !== undefined && (obj.value = message.value);
     return obj;
   },
 
-  fromPartial<I extends Exact<DeepPartial<Int32Value>, I>>(object: I): Int32Value {
-    const message = createBaseInt32Value();
-    message.value = object.value ?? 0;
+  fromPartial(object: DeepPartial<Int32Value>): Int32Value {
+    const message = { ...baseInt32Value } as Int32Value;
+    if (object.value !== undefined && object.value !== null) {
+      message.value = object.value;
+    } else {
+      message.value = 0;
+    }
     return message;
   },
 };
 
-function createBaseUInt32Value(): UInt32Value {
-  return { value: 0 };
-}
+const baseUInt32Value: object = { value: 0 };
 
 export const UInt32Value = {
   encode(message: UInt32Value, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
@@ -354,7 +382,7 @@ export const UInt32Value = {
   decode(input: _m0.Reader | Uint8Array, length?: number): UInt32Value {
     const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
     let end = length === undefined ? reader.len : reader.pos + length;
-    const message = createBaseUInt32Value();
+    const message = { ...baseUInt32Value } as UInt32Value;
     while (reader.pos < end) {
       const tag = reader.uint32();
       switch (tag >>> 3) {
@@ -370,27 +398,33 @@ export const UInt32Value = {
   },
 
   fromJSON(object: any): UInt32Value {
-    return {
-      value: isSet(object.value) ? Number(object.value) : 0,
-    };
+    const message = { ...baseUInt32Value } as UInt32Value;
+    if (object.value !== undefined && object.value !== null) {
+      message.value = Number(object.value);
+    } else {
+      message.value = 0;
+    }
+    return message;
   },
 
   toJSON(message: UInt32Value): unknown {
     const obj: any = {};
-    message.value !== undefined && (obj.value = Math.round(message.value));
+    message.value !== undefined && (obj.value = message.value);
     return obj;
   },
 
-  fromPartial<I extends Exact<DeepPartial<UInt32Value>, I>>(object: I): UInt32Value {
-    const message = createBaseUInt32Value();
-    message.value = object.value ?? 0;
+  fromPartial(object: DeepPartial<UInt32Value>): UInt32Value {
+    const message = { ...baseUInt32Value } as UInt32Value;
+    if (object.value !== undefined && object.value !== null) {
+      message.value = object.value;
+    } else {
+      message.value = 0;
+    }
     return message;
   },
 };
 
-function createBaseBoolValue(): BoolValue {
-  return { value: false };
-}
+const baseBoolValue: object = { value: false };
 
 export const BoolValue = {
   encode(message: BoolValue, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
@@ -403,7 +437,7 @@ export const BoolValue = {
   decode(input: _m0.Reader | Uint8Array, length?: number): BoolValue {
     const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
     let end = length === undefined ? reader.len : reader.pos + length;
-    const message = createBaseBoolValue();
+    const message = { ...baseBoolValue } as BoolValue;
     while (reader.pos < end) {
       const tag = reader.uint32();
       switch (tag >>> 3) {
@@ -419,9 +453,13 @@ export const BoolValue = {
   },
 
   fromJSON(object: any): BoolValue {
-    return {
-      value: isSet(object.value) ? Boolean(object.value) : false,
-    };
+    const message = { ...baseBoolValue } as BoolValue;
+    if (object.value !== undefined && object.value !== null) {
+      message.value = Boolean(object.value);
+    } else {
+      message.value = false;
+    }
+    return message;
   },
 
   toJSON(message: BoolValue): unknown {
@@ -430,16 +468,18 @@ export const BoolValue = {
     return obj;
   },
 
-  fromPartial<I extends Exact<DeepPartial<BoolValue>, I>>(object: I): BoolValue {
-    const message = createBaseBoolValue();
-    message.value = object.value ?? false;
+  fromPartial(object: DeepPartial<BoolValue>): BoolValue {
+    const message = { ...baseBoolValue } as BoolValue;
+    if (object.value !== undefined && object.value !== null) {
+      message.value = object.value;
+    } else {
+      message.value = false;
+    }
     return message;
   },
 };
 
-function createBaseStringValue(): StringValue {
-  return { value: "" };
-}
+const baseStringValue: object = { value: "" };
 
 export const StringValue = {
   encode(message: StringValue, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
@@ -452,7 +492,7 @@ export const StringValue = {
   decode(input: _m0.Reader | Uint8Array, length?: number): StringValue {
     const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
     let end = length === undefined ? reader.len : reader.pos + length;
-    const message = createBaseStringValue();
+    const message = { ...baseStringValue } as StringValue;
     while (reader.pos < end) {
       const tag = reader.uint32();
       switch (tag >>> 3) {
@@ -468,9 +508,13 @@ export const StringValue = {
   },
 
   fromJSON(object: any): StringValue {
-    return {
-      value: isSet(object.value) ? String(object.value) : "",
-    };
+    const message = { ...baseStringValue } as StringValue;
+    if (object.value !== undefined && object.value !== null) {
+      message.value = String(object.value);
+    } else {
+      message.value = "";
+    }
+    return message;
   },
 
   toJSON(message: StringValue): unknown {
@@ -479,16 +523,18 @@ export const StringValue = {
     return obj;
   },
 
-  fromPartial<I extends Exact<DeepPartial<StringValue>, I>>(object: I): StringValue {
-    const message = createBaseStringValue();
-    message.value = object.value ?? "";
+  fromPartial(object: DeepPartial<StringValue>): StringValue {
+    const message = { ...baseStringValue } as StringValue;
+    if (object.value !== undefined && object.value !== null) {
+      message.value = object.value;
+    } else {
+      message.value = "";
+    }
     return message;
   },
 };
 
-function createBaseBytesValue(): BytesValue {
-  return { value: new Uint8Array() };
-}
+const baseBytesValue: object = {};
 
 export const BytesValue = {
   encode(message: BytesValue, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
@@ -501,7 +547,8 @@ export const BytesValue = {
   decode(input: _m0.Reader | Uint8Array, length?: number): BytesValue {
     const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
     let end = length === undefined ? reader.len : reader.pos + length;
-    const message = createBaseBytesValue();
+    const message = { ...baseBytesValue } as BytesValue;
+    message.value = new Uint8Array();
     while (reader.pos < end) {
       const tag = reader.uint32();
       switch (tag >>> 3) {
@@ -517,9 +564,12 @@ export const BytesValue = {
   },
 
   fromJSON(object: any): BytesValue {
-    return {
-      value: isSet(object.value) ? bytesFromBase64(object.value) : new Uint8Array(),
-    };
+    const message = { ...baseBytesValue } as BytesValue;
+    message.value = new Uint8Array();
+    if (object.value !== undefined && object.value !== null) {
+      message.value = bytesFromBase64(object.value);
+    }
+    return message;
   },
 
   toJSON(message: BytesValue): unknown {
@@ -529,9 +579,13 @@ export const BytesValue = {
     return obj;
   },
 
-  fromPartial<I extends Exact<DeepPartial<BytesValue>, I>>(object: I): BytesValue {
-    const message = createBaseBytesValue();
-    message.value = object.value ?? new Uint8Array();
+  fromPartial(object: DeepPartial<BytesValue>): BytesValue {
+    const message = { ...baseBytesValue } as BytesValue;
+    if (object.value !== undefined && object.value !== null) {
+      message.value = object.value;
+    } else {
+      message.value = new Uint8Array();
+    }
     return message;
   },
 };
@@ -562,14 +616,13 @@ const btoa: (bin: string) => string =
   globalThis.btoa || (bin => globalThis.Buffer.from(bin, "binary").toString("base64"));
 function base64FromBytes(arr: Uint8Array): string {
   const bin: string[] = [];
-  arr.forEach(byte => {
+  for (const byte of arr) {
     bin.push(String.fromCharCode(byte));
-  });
+  }
   return btoa(bin.join(""));
 }
 
 type Builtin = Date | Function | Uint8Array | string | number | boolean | undefined;
-
 export type DeepPartial<T> = T extends Builtin
   ? T
   : T extends Array<infer U>
@@ -579,11 +632,6 @@ export type DeepPartial<T> = T extends Builtin
   : T extends {}
   ? { [K in keyof T]?: DeepPartial<T[K]> }
   : Partial<T>;
-
-type KeysOfUnion<T> = T extends T ? keyof T : never;
-export type Exact<P, I extends P> = P extends Builtin
-  ? P
-  : P & { [K in keyof P]: Exact<P[K], I[K]> } & Record<Exclude<keyof I, KeysOfUnion<P>>, never>;
 
 function longToNumber(long: Long): number {
   if (long.gt(Number.MAX_SAFE_INTEGER)) {
@@ -595,8 +643,4 @@ function longToNumber(long: Long): number {
 if (_m0.util.Long !== Long) {
   _m0.util.Long = Long as any;
   _m0.configure();
-}
-
-function isSet(value: any): boolean {
-  return value !== null && value !== undefined;
 }

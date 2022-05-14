@@ -1,7 +1,7 @@
 /* eslint-disable */
 import Long from "long";
 import { grpc } from "@improbable-eng/grpc-web";
-import * as _m0 from "protobufjs/minimal";
+import _m0 from "protobufjs/minimal";
 import {
   InstalledPackageReference,
   GetAvailablePackageSummariesRequest,
@@ -72,9 +72,7 @@ export interface RollbackInstalledPackageResponse {
   installedPackageRef?: InstalledPackageReference;
 }
 
-function createBaseInstalledPackageDetailCustomDataHelm(): InstalledPackageDetailCustomDataHelm {
-  return { releaseRevision: 0 };
-}
+const baseInstalledPackageDetailCustomDataHelm: object = { releaseRevision: 0 };
 
 export const InstalledPackageDetailCustomDataHelm = {
   encode(
@@ -90,7 +88,9 @@ export const InstalledPackageDetailCustomDataHelm = {
   decode(input: _m0.Reader | Uint8Array, length?: number): InstalledPackageDetailCustomDataHelm {
     const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
     let end = length === undefined ? reader.len : reader.pos + length;
-    const message = createBaseInstalledPackageDetailCustomDataHelm();
+    const message = {
+      ...baseInstalledPackageDetailCustomDataHelm,
+    } as InstalledPackageDetailCustomDataHelm;
     while (reader.pos < end) {
       const tag = reader.uint32();
       switch (tag >>> 3) {
@@ -106,30 +106,39 @@ export const InstalledPackageDetailCustomDataHelm = {
   },
 
   fromJSON(object: any): InstalledPackageDetailCustomDataHelm {
-    return {
-      releaseRevision: isSet(object.releaseRevision) ? Number(object.releaseRevision) : 0,
-    };
+    const message = {
+      ...baseInstalledPackageDetailCustomDataHelm,
+    } as InstalledPackageDetailCustomDataHelm;
+    if (object.releaseRevision !== undefined && object.releaseRevision !== null) {
+      message.releaseRevision = Number(object.releaseRevision);
+    } else {
+      message.releaseRevision = 0;
+    }
+    return message;
   },
 
   toJSON(message: InstalledPackageDetailCustomDataHelm): unknown {
     const obj: any = {};
-    message.releaseRevision !== undefined &&
-      (obj.releaseRevision = Math.round(message.releaseRevision));
+    message.releaseRevision !== undefined && (obj.releaseRevision = message.releaseRevision);
     return obj;
   },
 
-  fromPartial<I extends Exact<DeepPartial<InstalledPackageDetailCustomDataHelm>, I>>(
-    object: I,
+  fromPartial(
+    object: DeepPartial<InstalledPackageDetailCustomDataHelm>,
   ): InstalledPackageDetailCustomDataHelm {
-    const message = createBaseInstalledPackageDetailCustomDataHelm();
-    message.releaseRevision = object.releaseRevision ?? 0;
+    const message = {
+      ...baseInstalledPackageDetailCustomDataHelm,
+    } as InstalledPackageDetailCustomDataHelm;
+    if (object.releaseRevision !== undefined && object.releaseRevision !== null) {
+      message.releaseRevision = object.releaseRevision;
+    } else {
+      message.releaseRevision = 0;
+    }
     return message;
   },
 };
 
-function createBaseRollbackInstalledPackageRequest(): RollbackInstalledPackageRequest {
-  return { installedPackageRef: undefined, releaseRevision: 0 };
-}
+const baseRollbackInstalledPackageRequest: object = { releaseRevision: 0 };
 
 export const RollbackInstalledPackageRequest = {
   encode(
@@ -151,7 +160,9 @@ export const RollbackInstalledPackageRequest = {
   decode(input: _m0.Reader | Uint8Array, length?: number): RollbackInstalledPackageRequest {
     const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
     let end = length === undefined ? reader.len : reader.pos + length;
-    const message = createBaseRollbackInstalledPackageRequest();
+    const message = {
+      ...baseRollbackInstalledPackageRequest,
+    } as RollbackInstalledPackageRequest;
     while (reader.pos < end) {
       const tag = reader.uint32();
       switch (tag >>> 3) {
@@ -170,12 +181,20 @@ export const RollbackInstalledPackageRequest = {
   },
 
   fromJSON(object: any): RollbackInstalledPackageRequest {
-    return {
-      installedPackageRef: isSet(object.installedPackageRef)
-        ? InstalledPackageReference.fromJSON(object.installedPackageRef)
-        : undefined,
-      releaseRevision: isSet(object.releaseRevision) ? Number(object.releaseRevision) : 0,
-    };
+    const message = {
+      ...baseRollbackInstalledPackageRequest,
+    } as RollbackInstalledPackageRequest;
+    if (object.installedPackageRef !== undefined && object.installedPackageRef !== null) {
+      message.installedPackageRef = InstalledPackageReference.fromJSON(object.installedPackageRef);
+    } else {
+      message.installedPackageRef = undefined;
+    }
+    if (object.releaseRevision !== undefined && object.releaseRevision !== null) {
+      message.releaseRevision = Number(object.releaseRevision);
+    } else {
+      message.releaseRevision = 0;
+    }
+    return message;
   },
 
   toJSON(message: RollbackInstalledPackageRequest): unknown {
@@ -184,27 +203,33 @@ export const RollbackInstalledPackageRequest = {
       (obj.installedPackageRef = message.installedPackageRef
         ? InstalledPackageReference.toJSON(message.installedPackageRef)
         : undefined);
-    message.releaseRevision !== undefined &&
-      (obj.releaseRevision = Math.round(message.releaseRevision));
+    message.releaseRevision !== undefined && (obj.releaseRevision = message.releaseRevision);
     return obj;
   },
 
-  fromPartial<I extends Exact<DeepPartial<RollbackInstalledPackageRequest>, I>>(
-    object: I,
+  fromPartial(
+    object: DeepPartial<RollbackInstalledPackageRequest>,
   ): RollbackInstalledPackageRequest {
-    const message = createBaseRollbackInstalledPackageRequest();
-    message.installedPackageRef =
-      object.installedPackageRef !== undefined && object.installedPackageRef !== null
-        ? InstalledPackageReference.fromPartial(object.installedPackageRef)
-        : undefined;
-    message.releaseRevision = object.releaseRevision ?? 0;
+    const message = {
+      ...baseRollbackInstalledPackageRequest,
+    } as RollbackInstalledPackageRequest;
+    if (object.installedPackageRef !== undefined && object.installedPackageRef !== null) {
+      message.installedPackageRef = InstalledPackageReference.fromPartial(
+        object.installedPackageRef,
+      );
+    } else {
+      message.installedPackageRef = undefined;
+    }
+    if (object.releaseRevision !== undefined && object.releaseRevision !== null) {
+      message.releaseRevision = object.releaseRevision;
+    } else {
+      message.releaseRevision = 0;
+    }
     return message;
   },
 };
 
-function createBaseRollbackInstalledPackageResponse(): RollbackInstalledPackageResponse {
-  return { installedPackageRef: undefined };
-}
+const baseRollbackInstalledPackageResponse: object = {};
 
 export const RollbackInstalledPackageResponse = {
   encode(
@@ -223,7 +248,9 @@ export const RollbackInstalledPackageResponse = {
   decode(input: _m0.Reader | Uint8Array, length?: number): RollbackInstalledPackageResponse {
     const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
     let end = length === undefined ? reader.len : reader.pos + length;
-    const message = createBaseRollbackInstalledPackageResponse();
+    const message = {
+      ...baseRollbackInstalledPackageResponse,
+    } as RollbackInstalledPackageResponse;
     while (reader.pos < end) {
       const tag = reader.uint32();
       switch (tag >>> 3) {
@@ -239,11 +266,15 @@ export const RollbackInstalledPackageResponse = {
   },
 
   fromJSON(object: any): RollbackInstalledPackageResponse {
-    return {
-      installedPackageRef: isSet(object.installedPackageRef)
-        ? InstalledPackageReference.fromJSON(object.installedPackageRef)
-        : undefined,
-    };
+    const message = {
+      ...baseRollbackInstalledPackageResponse,
+    } as RollbackInstalledPackageResponse;
+    if (object.installedPackageRef !== undefined && object.installedPackageRef !== null) {
+      message.installedPackageRef = InstalledPackageReference.fromJSON(object.installedPackageRef);
+    } else {
+      message.installedPackageRef = undefined;
+    }
+    return message;
   },
 
   toJSON(message: RollbackInstalledPackageResponse): unknown {
@@ -255,14 +286,19 @@ export const RollbackInstalledPackageResponse = {
     return obj;
   },
 
-  fromPartial<I extends Exact<DeepPartial<RollbackInstalledPackageResponse>, I>>(
-    object: I,
+  fromPartial(
+    object: DeepPartial<RollbackInstalledPackageResponse>,
   ): RollbackInstalledPackageResponse {
-    const message = createBaseRollbackInstalledPackageResponse();
-    message.installedPackageRef =
-      object.installedPackageRef !== undefined && object.installedPackageRef !== null
-        ? InstalledPackageReference.fromPartial(object.installedPackageRef)
-        : undefined;
+    const message = {
+      ...baseRollbackInstalledPackageResponse,
+    } as RollbackInstalledPackageResponse;
+    if (object.installedPackageRef !== undefined && object.installedPackageRef !== null) {
+      message.installedPackageRef = InstalledPackageReference.fromPartial(
+        object.installedPackageRef,
+      );
+    } else {
+      message.installedPackageRef = undefined;
+    }
     return message;
   },
 };
@@ -748,7 +784,6 @@ export class GrpcWebImpl {
 }
 
 type Builtin = Date | Function | Uint8Array | string | number | boolean | undefined;
-
 export type DeepPartial<T> = T extends Builtin
   ? T
   : T extends Array<infer U>
@@ -759,16 +794,7 @@ export type DeepPartial<T> = T extends Builtin
   ? { [K in keyof T]?: DeepPartial<T[K]> }
   : Partial<T>;
 
-type KeysOfUnion<T> = T extends T ? keyof T : never;
-export type Exact<P, I extends P> = P extends Builtin
-  ? P
-  : P & { [K in keyof P]: Exact<P[K], I[K]> } & Record<Exclude<keyof I, KeysOfUnion<P>>, never>;
-
 if (_m0.util.Long !== Long) {
   _m0.util.Long = Long as any;
   _m0.configure();
-}
-
-function isSet(value: any): boolean {
-  return value !== null && value !== undefined;
 }
