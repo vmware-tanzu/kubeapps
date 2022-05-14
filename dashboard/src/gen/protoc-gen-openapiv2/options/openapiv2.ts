@@ -587,9 +587,6 @@ export interface JSONSchema {
   format: string;
   /** Items in `enum` must be unique https://tools.ietf.org/html/draft-fge-json-schema-validation-00#section-5.5.1 */
   enum: string[];
-  /** Additional field level properties used when generating the OpenAPI v2 file. */
-  fieldConfiguration?: JSONSchema_FieldConfiguration;
-  extensions: { [key: string]: Value };
 }
 
 export enum JSONSchema_JSONSchemaSimpleTypes {
@@ -662,25 +659,6 @@ export function jSONSchema_JSONSchemaSimpleTypesToJSON(
     default:
       return "UNKNOWN";
   }
-}
-
-/**
- * 'FieldConfiguration' provides additional field level properties used when generating the OpenAPI v2 file.
- * These properties are not defined by OpenAPIv2, but they are used to control the generation.
- */
-export interface JSONSchema_FieldConfiguration {
-  /**
-   * Alternative parameter name when used as path parameter. If set, this will
-   * be used as the complete parameter name when this field is used as a path
-   * parameter. Use this to avoid having auto generated path parameter names
-   * for overlapping paths.
-   */
-  pathParamName: string;
-}
-
-export interface JSONSchema_ExtensionsEntry {
-  key: string;
-  value?: Value;
 }
 
 /**
@@ -3175,18 +3153,6 @@ export const JSONSchema = {
     for (const v of message.enum) {
       writer.uint32(370).string(v!);
     }
-    if (message.fieldConfiguration !== undefined) {
-      JSONSchema_FieldConfiguration.encode(
-        message.fieldConfiguration,
-        writer.uint32(8010).fork(),
-      ).ldelim();
-    }
-    Object.entries(message.extensions).forEach(([key, value]) => {
-      JSONSchema_ExtensionsEntry.encode(
-        { key: key as any, value },
-        writer.uint32(386).fork(),
-      ).ldelim();
-    });
     return writer;
   },
 
@@ -3198,7 +3164,6 @@ export const JSONSchema = {
     message.array = [];
     message.type = [];
     message.enum = [];
-    message.extensions = {};
     while (reader.pos < end) {
       const tag = reader.uint32();
       switch (tag >>> 3) {
@@ -3281,18 +3246,6 @@ export const JSONSchema = {
         case 46:
           message.enum.push(reader.string());
           break;
-        case 1001:
-          message.fieldConfiguration = JSONSchema_FieldConfiguration.decode(
-            reader,
-            reader.uint32(),
-          );
-          break;
-        case 48:
-          const entry48 = JSONSchema_ExtensionsEntry.decode(reader, reader.uint32());
-          if (entry48.value !== undefined) {
-            message.extensions[entry48.key] = entry48.value;
-          }
-          break;
         default:
           reader.skipType(tag & 7);
           break;
@@ -3307,7 +3260,6 @@ export const JSONSchema = {
     message.array = [];
     message.type = [];
     message.enum = [];
-    message.extensions = {};
     if (object.ref !== undefined && object.ref !== null) {
       message.ref = String(object.ref);
     } else {
@@ -3428,18 +3380,6 @@ export const JSONSchema = {
         message.enum.push(String(e));
       }
     }
-    if (object.fieldConfiguration !== undefined && object.fieldConfiguration !== null) {
-      message.fieldConfiguration = JSONSchema_FieldConfiguration.fromJSON(
-        object.fieldConfiguration,
-      );
-    } else {
-      message.fieldConfiguration = undefined;
-    }
-    if (object.extensions !== undefined && object.extensions !== null) {
-      Object.entries(object.extensions).forEach(([key, value]) => {
-        message.extensions[key] = Value.fromJSON(value);
-      });
-    }
     return message;
   },
 
@@ -3485,16 +3425,6 @@ export const JSONSchema = {
     } else {
       obj.enum = [];
     }
-    message.fieldConfiguration !== undefined &&
-      (obj.fieldConfiguration = message.fieldConfiguration
-        ? JSONSchema_FieldConfiguration.toJSON(message.fieldConfiguration)
-        : undefined);
-    obj.extensions = {};
-    if (message.extensions) {
-      Object.entries(message.extensions).forEach(([k, v]) => {
-        obj.extensions[k] = Value.toJSON(v);
-      });
-    }
     return obj;
   },
 
@@ -3504,7 +3434,6 @@ export const JSONSchema = {
     message.array = [];
     message.type = [];
     message.enum = [];
-    message.extensions = {};
     if (object.ref !== undefined && object.ref !== null) {
       message.ref = object.ref;
     } else {
@@ -3624,166 +3553,6 @@ export const JSONSchema = {
       for (const e of object.enum) {
         message.enum.push(e);
       }
-    }
-    if (object.fieldConfiguration !== undefined && object.fieldConfiguration !== null) {
-      message.fieldConfiguration = JSONSchema_FieldConfiguration.fromPartial(
-        object.fieldConfiguration,
-      );
-    } else {
-      message.fieldConfiguration = undefined;
-    }
-    if (object.extensions !== undefined && object.extensions !== null) {
-      Object.entries(object.extensions).forEach(([key, value]) => {
-        if (value !== undefined) {
-          message.extensions[key] = Value.fromPartial(value);
-        }
-      });
-    }
-    return message;
-  },
-};
-
-const baseJSONSchema_FieldConfiguration: object = { pathParamName: "" };
-
-export const JSONSchema_FieldConfiguration = {
-  encode(
-    message: JSONSchema_FieldConfiguration,
-    writer: _m0.Writer = _m0.Writer.create(),
-  ): _m0.Writer {
-    if (message.pathParamName !== "") {
-      writer.uint32(378).string(message.pathParamName);
-    }
-    return writer;
-  },
-
-  decode(input: _m0.Reader | Uint8Array, length?: number): JSONSchema_FieldConfiguration {
-    const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
-    let end = length === undefined ? reader.len : reader.pos + length;
-    const message = {
-      ...baseJSONSchema_FieldConfiguration,
-    } as JSONSchema_FieldConfiguration;
-    while (reader.pos < end) {
-      const tag = reader.uint32();
-      switch (tag >>> 3) {
-        case 47:
-          message.pathParamName = reader.string();
-          break;
-        default:
-          reader.skipType(tag & 7);
-          break;
-      }
-    }
-    return message;
-  },
-
-  fromJSON(object: any): JSONSchema_FieldConfiguration {
-    const message = {
-      ...baseJSONSchema_FieldConfiguration,
-    } as JSONSchema_FieldConfiguration;
-    if (object.pathParamName !== undefined && object.pathParamName !== null) {
-      message.pathParamName = String(object.pathParamName);
-    } else {
-      message.pathParamName = "";
-    }
-    return message;
-  },
-
-  toJSON(message: JSONSchema_FieldConfiguration): unknown {
-    const obj: any = {};
-    message.pathParamName !== undefined && (obj.pathParamName = message.pathParamName);
-    return obj;
-  },
-
-  fromPartial(object: DeepPartial<JSONSchema_FieldConfiguration>): JSONSchema_FieldConfiguration {
-    const message = {
-      ...baseJSONSchema_FieldConfiguration,
-    } as JSONSchema_FieldConfiguration;
-    if (object.pathParamName !== undefined && object.pathParamName !== null) {
-      message.pathParamName = object.pathParamName;
-    } else {
-      message.pathParamName = "";
-    }
-    return message;
-  },
-};
-
-const baseJSONSchema_ExtensionsEntry: object = { key: "" };
-
-export const JSONSchema_ExtensionsEntry = {
-  encode(
-    message: JSONSchema_ExtensionsEntry,
-    writer: _m0.Writer = _m0.Writer.create(),
-  ): _m0.Writer {
-    if (message.key !== "") {
-      writer.uint32(10).string(message.key);
-    }
-    if (message.value !== undefined) {
-      Value.encode(message.value, writer.uint32(18).fork()).ldelim();
-    }
-    return writer;
-  },
-
-  decode(input: _m0.Reader | Uint8Array, length?: number): JSONSchema_ExtensionsEntry {
-    const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
-    let end = length === undefined ? reader.len : reader.pos + length;
-    const message = {
-      ...baseJSONSchema_ExtensionsEntry,
-    } as JSONSchema_ExtensionsEntry;
-    while (reader.pos < end) {
-      const tag = reader.uint32();
-      switch (tag >>> 3) {
-        case 1:
-          message.key = reader.string();
-          break;
-        case 2:
-          message.value = Value.decode(reader, reader.uint32());
-          break;
-        default:
-          reader.skipType(tag & 7);
-          break;
-      }
-    }
-    return message;
-  },
-
-  fromJSON(object: any): JSONSchema_ExtensionsEntry {
-    const message = {
-      ...baseJSONSchema_ExtensionsEntry,
-    } as JSONSchema_ExtensionsEntry;
-    if (object.key !== undefined && object.key !== null) {
-      message.key = String(object.key);
-    } else {
-      message.key = "";
-    }
-    if (object.value !== undefined && object.value !== null) {
-      message.value = Value.fromJSON(object.value);
-    } else {
-      message.value = undefined;
-    }
-    return message;
-  },
-
-  toJSON(message: JSONSchema_ExtensionsEntry): unknown {
-    const obj: any = {};
-    message.key !== undefined && (obj.key = message.key);
-    message.value !== undefined &&
-      (obj.value = message.value ? Value.toJSON(message.value) : undefined);
-    return obj;
-  },
-
-  fromPartial(object: DeepPartial<JSONSchema_ExtensionsEntry>): JSONSchema_ExtensionsEntry {
-    const message = {
-      ...baseJSONSchema_ExtensionsEntry,
-    } as JSONSchema_ExtensionsEntry;
-    if (object.key !== undefined && object.key !== null) {
-      message.key = object.key;
-    } else {
-      message.key = "";
-    }
-    if (object.value !== undefined && object.value !== null) {
-      message.value = Value.fromPartial(object.value);
-    } else {
-      message.value = undefined;
     }
     return message;
   },
