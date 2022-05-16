@@ -2936,7 +2936,7 @@ paths:
         $ref: "#/components/requestBodies/v1alpha1AddPackageRepositoryRequest"
       tags:
         - FluxV2RepositoriesService
-  "/plugins/fluxv2/packages/v1alpha1/repositories/plugin/{packageRepoRef.plugin.name}/{packageRepoRef.plugin.version}/c/{packageRepoRef.context.cluster}/ns/{packageRepoRef.context.namespace}/{packageRepoRef.identifier}":
+  "/plugins/fluxv2/packages/v1alpha1/repositories/c/{packageRepoRef.context.cluster}/ns/{packageRepoRef.context.namespace}/{packageRepoRef.identifier}":
     get:
       operationId: FluxV2RepositoriesService_GetPackageRepositoryDetail
       responses:
@@ -2960,25 +2960,6 @@ paths:
               schema:
                 $ref: "#/components/schemas/rpcStatus"
       parameters:
-        - name: packageRepoRef.plugin.name
-          description: >-
-            Plugin name
-
-
-            The name of the plugin, such as `fluxv2.packages` or `kapp_controller.packages`.
-          in: path
-          required: true
-          schema:
-            type: string
-        - name: packageRepoRef.plugin.version
-          description: |-
-            Plugin version
-
-            The version of the plugin, such as v1alpha1
-          in: path
-          required: true
-          schema:
-            type: string
         - name: packageRepoRef.context.cluster
           description: >-
             Cluster
@@ -3020,6 +3001,25 @@ paths:
           schema:
             type: string
             pattern: .+
+        - name: packageRepoRef.plugin.name
+          description: >-
+            Plugin name
+
+
+            The name of the plugin, such as `fluxv2.packages` or `kapp_controller.packages`.
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: packageRepoRef.plugin.version
+          description: |-
+            Plugin version
+
+            The version of the plugin, such as v1alpha1.
+          in: query
+          required: false
+          schema:
+            type: string
       tags:
         - FluxV2RepositoriesService
     delete:
@@ -3044,25 +3044,6 @@ paths:
               schema:
                 $ref: "#/components/schemas/rpcStatus"
       parameters:
-        - name: packageRepoRef.plugin.name
-          description: >-
-            Plugin name
-
-
-            The name of the plugin, such as `fluxv2.packages` or `kapp_controller.packages`.
-          in: path
-          required: true
-          schema:
-            type: string
-        - name: packageRepoRef.plugin.version
-          description: |-
-            Plugin version
-
-            The version of the plugin, such as v1alpha1
-          in: path
-          required: true
-          schema:
-            type: string
         - name: packageRepoRef.context.cluster
           description: >-
             Cluster
@@ -3104,6 +3085,25 @@ paths:
           schema:
             type: string
             pattern: .+
+        - name: packageRepoRef.plugin.name
+          description: >-
+            Plugin name
+
+
+            The name of the plugin, such as `fluxv2.packages` or `kapp_controller.packages`.
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: packageRepoRef.plugin.version
+          description: |-
+            Plugin version
+
+            The version of the plugin, such as v1alpha1.
+          in: query
+          required: false
+          schema:
+            type: string
       tags:
         - FluxV2RepositoriesService
     put:
@@ -3128,25 +3128,6 @@ paths:
               schema:
                 $ref: "#/components/schemas/rpcStatus"
       parameters:
-        - name: packageRepoRef.plugin.name
-          description: >-
-            Plugin name
-
-
-            The name of the plugin, such as `fluxv2.packages` or `kapp_controller.packages`.
-          in: path
-          required: true
-          schema:
-            type: string
-        - name: packageRepoRef.plugin.version
-          description: |-
-            Plugin version
-
-            The version of the plugin, such as v1alpha1
-          in: path
-          required: true
-          schema:
-            type: string
         - name: packageRepoRef.context.cluster
           description: >-
             Cluster
