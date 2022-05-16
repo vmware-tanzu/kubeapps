@@ -42,11 +42,11 @@ make kubeapps/asset-syncer
 
   - Then, replace `172.18.0.2` with the previous IP the following files:
     - [script/makefiles/deploy-dev.mk](https://github.com/vmware-tanzu/kubeapps/blob/mainscript/makefiles/deploy-dev.mk)
-    - [kubeapps-local-dev-additional-apiserver-config.yaml](https://github.com/vmware-tanzu/kubeapps/blob/main/docs/howto/manifests/kubeapps-local-dev-additional-apiserver-config.yaml)
-    - [kubeapps-local-dev-additional-kind-cluster.yaml](https://github.com/vmware-tanzu/kubeapps/blob/main/docs/howto/manifests/kubeapps-local-dev-additional-kind-cluster.yaml)
-    - [kubeapps-local-dev-apiserver-config.yaml](https://github.com/vmware-tanzu/kubeapps/blob/main/docs/howto/manifests/kubeapps-local-dev-apiserver-config.yaml)
-    - [kubeapps-local-dev-auth-proxy-values.yaml](https://github.com/vmware-tanzu/kubeapps/blob/main/docs/howto/manifests/kubeapps-local-dev-auth-proxy-values.yaml)
-    - [kubeapps-local-dev-dex-values.yaml](https://github.com/vmware-tanzu/kubeapps/blob/main/docs/howto/manifests/kubeapps-local-dev-dex-values.yaml)
+    - [kubeapps-local-dev-additional-apiserver-config.yaml](https://github.com/vmware-tanzu/kubeapps/blob/site-new/site/content/docs/latest/howto/manifests/kubeapps-local-dev-additional-apiserver-config.yaml)
+    - [kubeapps-local-dev-additional-kind-cluster.yaml](https://github.com/vmware-tanzu/kubeapps/blob/site-new/site/content/docs/latest/howto/manifests/kubeapps-local-dev-additional-kind-cluster.yaml)
+    - [kubeapps-local-dev-apiserver-config.yaml](https://github.com/vmware-tanzu/kubeapps/blob/site-new/site/content/docs/latest/howto/manifests/kubeapps-local-dev-apiserver-config.yaml)
+    - [kubeapps-local-dev-auth-proxy-values.yaml](https://github.com/vmware-tanzu/kubeapps/blob/site-new/site/content/docs/latest/howto/manifests/kubeapps-local-dev-auth-proxy-values.yaml)
+    - [kubeapps-local-dev-dex-values.yaml](https://github.com/vmware-tanzu/kubeapps/blob/site-new/site/content/docs/latest/howto/manifests/kubeapps-local-dev-dex-values.yaml)
 
 ### Commands
 

@@ -1,6 +1,6 @@
 # Custom App View Support
 
-In addition to our [custom form component support](https://github.com/vmware-tanzu/kubeapps/blob/main/docs/howto/custom-form-component-support.md) we now support the ability for developers to inject custom app views for specific deployments.
+In addition to our [custom form component support](https://github.com/vmware-tanzu/kubeapps/blob/site-new/site/content/docs/latest/howto/custom-form-component-support.md) we now support the ability for developers to inject custom app views for specific deployments.
 
 ## Step-by-step integration process
 
@@ -28,4 +28,4 @@ In addition to our [custom form component support](https://github.com/vmware-tan
 
 ## Example Code
 
-In an effort to make getting antiquated with the feature easier we provide some demo code for you to play around with and explore the props that the dashboard supplies. The examples can be found in the [developer documentation examples](https://github.com/vmware-tanzu/kubeapps/tree/main/docs/reference/examples). [CustomAppView.jsx](https://github.com/vmware-tanzu/kubeapps/blob/main/docs/reference/examples/CustomAppView.jsx) is a demo Application View that will get you familiar w/ the props and handlers that we pass as props. The props are displayed in plain text and the buttons are wired up to use the handlers that mirror the buttons in the normal Application View. We also provide a complied bundle version [CustomAppView.min.js](https://github.com/vmware-tanzu/kubeapps/blob/main/docs/reference/examples/CustomAppView.min.js) which you can load into the configmap and render.
+In an effort to make getting antiquated with the feature easier we provide some demo code for you to play around with and explore the props that the dashboard supplies. The examples can be found in the [developer documentation examples](https://github.com/vmware-tanzu/kubeapps/tree/site-new/site/content/docs/latest/reference/examples). [CustomAppView.jsx](https://github.com/vmware-tanzu/kubeapps/blob/site-new/site/content/docs/latest/reference/examples/CustomAppView.jsx) is a demo Application View that will get you familiar w/ the props and handlers that we pass as props. The props are displayed in plain text and the buttons are wired up to use the handlers that mirror the buttons in the normal Application View. We also provide a complied bundle version [CustomAppView.min.js](https://github.com/vmware-tanzu/kubeapps/blob/site-new/site/content/docs/latest/reference/examples/CustomAppView.min.js) which you can load into the configmap and render.

@@ -56,7 +56,7 @@ Key user interface parameters are:
 
 The first step is to configure the `clusters`, `pinnipedProxy` and `authProxy` parameters to reflect the work done in [Step 1](./step-1.md). These parameters are discussed below:
 
-1. Declare that the target cluster is using Pinniped by setting the parameter `pinnipedConfig.enabled=true`. If using multiple target clusters, please refer to the [Deploying to Multiple Clusters](https://github.com/vmware-tanzu/kubeapps/blob/main/docs/howto/deploying-to-multiple-clusters.md) guide. Here is an example:
+1. Declare that the target cluster is using Pinniped by setting the parameter `pinnipedConfig.enabled=true`. If using multiple target clusters, please refer to the [Deploying to Multiple Clusters](https://github.com/vmware-tanzu/kubeapps/blob/site-new/site/content/docs/latest/howto/deploying-to-multiple-clusters.md) guide. Here is an example:
 
    > **TIP**: Since the target cluster is the same as the cluster on which Kubeapps is installed, there is no need to set a URL. Note that the `name` field is used only to configure a display name in the Kubeapps dashboard.
 
@@ -164,7 +164,7 @@ At this point, Kubeapps is configured to use a custom interface.
 
 With the configuration out of the way, it's time to install Kubeapps. Since Kubeapps is currently officially delivered as a [Helm chart packaged by Bitnami](https://github.com/bitnami/charts/tree/master/bitnami/kubeapps), the easiest way to install Kubeapps is to add the Bitnami repository to Helm and install it via Helm.
 
-In case Kubeapps is to be installed in an air-gapped environment, please follow the [offline installation instructions](https://github.com/vmware-tanzu/kubeapps/blob/main/docs/howto/offline-installation.md) instead.
+In case Kubeapps is to be installed in an air-gapped environment, please follow the [offline installation instructions](https://github.com/vmware-tanzu/kubeapps/blob/site-new/site/content/docs/latest/howto/offline-installation.md) instead.
 
 > **TIP**: Typically, the Kubeapps dashboard is set as externally accessible, either by setting the parameter `frontend.service.type=LoadBalancer` (as shown below) or by using an Ingress controller. Please refer to [the Kubeapps documentation covering external access](https://github.com/vmware-tanzu/kubeapps/blob/main/chart/kubeapps/README.md#exposing-externally) for additional information.
 >
@@ -199,7 +199,7 @@ At this point, Kubeapps is installed in the cluster and the OIDC provider is ful
 
 ### Step 2.4: Configure Role-Based Access
 
-Once Kubeapps is installed, the next step is to configure access. Since Kubeapps delegates authorization to the existing Role-Based Access Control (RBAC) configured in the cluster, every permission should be granted using `ClusterRoleBinding` and `RoleBinding` objects. Please refer to the official documentation about [Kubeapps access control](https://github.com/vmware-tanzu/kubeapps/blob/main/docs/howto/access-control.md) for more information.
+Once Kubeapps is installed, the next step is to configure access. Since Kubeapps delegates authorization to the existing Role-Based Access Control (RBAC) configured in the cluster, every permission should be granted using `ClusterRoleBinding` and `RoleBinding` objects. Please refer to the official documentation about [Kubeapps access control](https://github.com/vmware-tanzu/kubeapps/blob/site-new/site/content/docs/latest/howto/access-control.md) for more information.
 
 > **NOTE**: RBAC configuration depends on your custom business requirements. The configuration shown below is only an example and not meant for production use. Please refer to the official [Kubernetes RBAC documentation](https://kubernetes.io/docs/reference/access-authn-authz/rbac/) for more details.
 
