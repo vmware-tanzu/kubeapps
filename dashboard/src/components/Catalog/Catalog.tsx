@@ -210,7 +210,18 @@ export default function Catalog() {
   }, [dispatch, cluster, namespace, featureFlags]);
 
   // detect changes in cluster/ns/repos/search and reset the current package list
+  // Note: useEffect is called on every render - the initial render and any
+  // re-renders due to updates. As a result, without maintaining some state
+  // of an initial render, every effect is always called when the component
+  // first renders. To avoid resetting the catalog every render, we ensure
+  // this reset effect is only run when the dependencies *change*, not during
+  // the initial render.
+  const initialRender = React.useRef(true);
   useEffect(() => {
+    if (initialRender.current) {
+      initialRender.current = false;
+      return;
+    }
     setPageNum(0);
     dispatch(actions.availablepackages.resetAvailablePackageSummaries());
     dispatch(actions.availablepackages.resetSelectedAvailablePackageDetail());
