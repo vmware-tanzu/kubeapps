@@ -1,10 +1,20 @@
 {{ $link := .Destination }}
 {{ $isRemote := strings.HasPrefix $link "http" }}
 {{- if not $isRemote -}}
-    <!-- BEGIN Workaround to render symlinked files and served at /docs/latest/project/ -->
+    <!-- BEGIN Workaround to render the links of the symlinked files  -->
     {{- if in .Page.RelPermalink "/docs/latest/project/" }}
+        <!-- Replace the links pointing to the project files with the proper link -->
         {{- if in .Destination "/docs/" }}
-            {{ $link = printf "../../../../%s" (replace (replace (replace .Destination "docs/" "docs/latest/") ".md" "") "/README" "" | lower ) }}
+            {{ $link = printf "../../../../%s" (replace (replace (replace (replace .Destination "docs/" "docs/latest/") ".md" "") "/README" "") "_" "-" | lower ) }}
+        {{- end }}
+        <!-- Replace the chart/kubeapps/readme links with the proper link -->
+        {{- if in .Destination "/chart/kubeapps/" }}
+            {{ $link = printf "../%s" (replace (replace (replace .Destination "/chart/kubeapps/" "/chart-readme/") ".md" "") "/README" "" | lower ) }}
+        {{- end }}
+        <!-- Replace "_" with "-"" -->
+        <!-- If we start having issues with it, just apply the substitution if destination is "CODE_OF_CONDUCT" -->
+        {{- if in .Destination "_" }}
+            {{ $link = printf "../%s" (replace (replace $link "_" "-") ".md" "" | lower ) }}
         {{- end }}
     {{- end }}
     <!-- END  -->
