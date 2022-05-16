@@ -58,7 +58,7 @@ func fanInAvailablePackageSummaries(ctx context.Context, pkgPlugins []pkgPluginW
 
 	fanInput := []<-chan *summaryWithOffset{}
 	for _, pluginWithSrv := range pkgPlugins {
-		// Importantly, each plugin needs its own request, with its on pagination
+		// Importantly, each plugin needs its own request, with its own pagination
 		// options.
 		r := &packages.GetAvailablePackageSummariesRequest{
 			Context:       request.Context,
