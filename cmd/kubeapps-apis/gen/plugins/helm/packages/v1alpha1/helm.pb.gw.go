@@ -939,7 +939,7 @@ func local_request_HelmRepositoriesService_AddPackageRepository_0(ctx context.Co
 }
 
 var (
-	filter_HelmRepositoriesService_GetPackageRepositoryDetail_0 = &utilities.DoubleArray{Encoding: map[string]int{"package_repo_ref": 0, "plugin": 1, "name": 2, "version": 3, "context": 4, "cluster": 5, "namespace": 6, "identifier": 7}, Base: []int{1, 7, 1, 1, 2, 2, 2, 3, 6, 0, 0, 0, 5, 0, 7, 0}, Check: []int{0, 1, 2, 3, 2, 5, 2, 7, 2, 4, 6, 8, 9, 13, 2, 15}}
+	filter_HelmRepositoriesService_GetPackageRepositoryDetail_0 = &utilities.DoubleArray{Encoding: map[string]int{"package_repo_ref": 0, "context": 1, "cluster": 2, "namespace": 3, "identifier": 4}, Base: []int{1, 4, 1, 1, 2, 2, 0, 0, 4, 0}, Check: []int{0, 1, 2, 3, 2, 5, 4, 6, 2, 9}}
 )
 
 func request_HelmRepositoriesService_GetPackageRepositoryDetail_0(ctx context.Context, marshaler runtime.Marshaler, client HelmRepositoriesServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
@@ -952,26 +952,6 @@ func request_HelmRepositoriesService_GetPackageRepositoryDetail_0(ctx context.Co
 		err error
 		_   = err
 	)
-
-	val, ok = pathParams["package_repo_ref.plugin.name"]
-	if !ok {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "package_repo_ref.plugin.name")
-	}
-
-	err = runtime.PopulateFieldFromPath(&protoReq, "package_repo_ref.plugin.name", val)
-	if err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "package_repo_ref.plugin.name", err)
-	}
-
-	val, ok = pathParams["package_repo_ref.plugin.version"]
-	if !ok {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "package_repo_ref.plugin.version")
-	}
-
-	err = runtime.PopulateFieldFromPath(&protoReq, "package_repo_ref.plugin.version", val)
-	if err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "package_repo_ref.plugin.version", err)
-	}
 
 	val, ok = pathParams["package_repo_ref.context.cluster"]
 	if !ok {
@@ -1025,26 +1005,6 @@ func local_request_HelmRepositoriesService_GetPackageRepositoryDetail_0(ctx cont
 		err error
 		_   = err
 	)
-
-	val, ok = pathParams["package_repo_ref.plugin.name"]
-	if !ok {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "package_repo_ref.plugin.name")
-	}
-
-	err = runtime.PopulateFieldFromPath(&protoReq, "package_repo_ref.plugin.name", val)
-	if err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "package_repo_ref.plugin.name", err)
-	}
-
-	val, ok = pathParams["package_repo_ref.plugin.version"]
-	if !ok {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "package_repo_ref.plugin.version")
-	}
-
-	err = runtime.PopulateFieldFromPath(&protoReq, "package_repo_ref.plugin.version", val)
-	if err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "package_repo_ref.plugin.version", err)
-	}
 
 	val, ok = pathParams["package_repo_ref.context.cluster"]
 	if !ok {
@@ -1143,26 +1103,6 @@ func request_HelmRepositoriesService_UpdatePackageRepository_0(ctx context.Conte
 		_   = err
 	)
 
-	val, ok = pathParams["package_repo_ref.plugin.name"]
-	if !ok {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "package_repo_ref.plugin.name")
-	}
-
-	err = runtime.PopulateFieldFromPath(&protoReq, "package_repo_ref.plugin.name", val)
-	if err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "package_repo_ref.plugin.name", err)
-	}
-
-	val, ok = pathParams["package_repo_ref.plugin.version"]
-	if !ok {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "package_repo_ref.plugin.version")
-	}
-
-	err = runtime.PopulateFieldFromPath(&protoReq, "package_repo_ref.plugin.version", val)
-	if err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "package_repo_ref.plugin.version", err)
-	}
-
 	val, ok = pathParams["package_repo_ref.context.cluster"]
 	if !ok {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "package_repo_ref.context.cluster")
@@ -1217,26 +1157,6 @@ func local_request_HelmRepositoriesService_UpdatePackageRepository_0(ctx context
 		_   = err
 	)
 
-	val, ok = pathParams["package_repo_ref.plugin.name"]
-	if !ok {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "package_repo_ref.plugin.name")
-	}
-
-	err = runtime.PopulateFieldFromPath(&protoReq, "package_repo_ref.plugin.name", val)
-	if err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "package_repo_ref.plugin.name", err)
-	}
-
-	val, ok = pathParams["package_repo_ref.plugin.version"]
-	if !ok {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "package_repo_ref.plugin.version")
-	}
-
-	err = runtime.PopulateFieldFromPath(&protoReq, "package_repo_ref.plugin.version", val)
-	if err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "package_repo_ref.plugin.version", err)
-	}
-
 	val, ok = pathParams["package_repo_ref.context.cluster"]
 	if !ok {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "package_repo_ref.context.cluster")
@@ -1273,7 +1193,7 @@ func local_request_HelmRepositoriesService_UpdatePackageRepository_0(ctx context
 }
 
 var (
-	filter_HelmRepositoriesService_DeletePackageRepository_0 = &utilities.DoubleArray{Encoding: map[string]int{"package_repo_ref": 0, "plugin": 1, "name": 2, "version": 3, "context": 4, "cluster": 5, "namespace": 6, "identifier": 7}, Base: []int{1, 7, 1, 1, 2, 2, 2, 3, 6, 0, 0, 0, 5, 0, 7, 0}, Check: []int{0, 1, 2, 3, 2, 5, 2, 7, 2, 4, 6, 8, 9, 13, 2, 15}}
+	filter_HelmRepositoriesService_DeletePackageRepository_0 = &utilities.DoubleArray{Encoding: map[string]int{"package_repo_ref": 0, "context": 1, "cluster": 2, "namespace": 3, "identifier": 4}, Base: []int{1, 4, 1, 1, 2, 2, 0, 0, 4, 0}, Check: []int{0, 1, 2, 3, 2, 5, 4, 6, 2, 9}}
 )
 
 func request_HelmRepositoriesService_DeletePackageRepository_0(ctx context.Context, marshaler runtime.Marshaler, client HelmRepositoriesServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
@@ -1286,26 +1206,6 @@ func request_HelmRepositoriesService_DeletePackageRepository_0(ctx context.Conte
 		err error
 		_   = err
 	)
-
-	val, ok = pathParams["package_repo_ref.plugin.name"]
-	if !ok {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "package_repo_ref.plugin.name")
-	}
-
-	err = runtime.PopulateFieldFromPath(&protoReq, "package_repo_ref.plugin.name", val)
-	if err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "package_repo_ref.plugin.name", err)
-	}
-
-	val, ok = pathParams["package_repo_ref.plugin.version"]
-	if !ok {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "package_repo_ref.plugin.version")
-	}
-
-	err = runtime.PopulateFieldFromPath(&protoReq, "package_repo_ref.plugin.version", val)
-	if err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "package_repo_ref.plugin.version", err)
-	}
 
 	val, ok = pathParams["package_repo_ref.context.cluster"]
 	if !ok {
@@ -1359,26 +1259,6 @@ func local_request_HelmRepositoriesService_DeletePackageRepository_0(ctx context
 		err error
 		_   = err
 	)
-
-	val, ok = pathParams["package_repo_ref.plugin.name"]
-	if !ok {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "package_repo_ref.plugin.name")
-	}
-
-	err = runtime.PopulateFieldFromPath(&protoReq, "package_repo_ref.plugin.name", val)
-	if err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "package_repo_ref.plugin.name", err)
-	}
-
-	val, ok = pathParams["package_repo_ref.plugin.version"]
-	if !ok {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "package_repo_ref.plugin.version")
-	}
-
-	err = runtime.PopulateFieldFromPath(&protoReq, "package_repo_ref.plugin.version", val)
-	if err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "package_repo_ref.plugin.version", err)
-	}
 
 	val, ok = pathParams["package_repo_ref.context.cluster"]
 	if !ok {
@@ -1696,7 +1576,7 @@ func RegisterHelmRepositoriesServiceHandlerServer(ctx context.Context, mux *runt
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/kubeappsapis.plugins.helm.packages.v1alpha1.HelmRepositoriesService/GetPackageRepositoryDetail", runtime.WithHTTPPathPattern("/plugins/helm/packages/v1alpha1/repositories/plugin/{package_repo_ref.plugin.name}/{package_repo_ref.plugin.version}/c/{package_repo_ref.context.cluster}/ns/{package_repo_ref.context.namespace}/{package_repo_ref.identifier=**}"))
+		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/kubeappsapis.plugins.helm.packages.v1alpha1.HelmRepositoriesService/GetPackageRepositoryDetail", runtime.WithHTTPPathPattern("/plugins/helm/packages/v1alpha1/repositories/c/{package_repo_ref.context.cluster}/ns/{package_repo_ref.context.namespace}/{package_repo_ref.identifier=**}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -1742,7 +1622,7 @@ func RegisterHelmRepositoriesServiceHandlerServer(ctx context.Context, mux *runt
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/kubeappsapis.plugins.helm.packages.v1alpha1.HelmRepositoriesService/UpdatePackageRepository", runtime.WithHTTPPathPattern("/plugins/helm/packages/v1alpha1/repositories/plugin/{package_repo_ref.plugin.name}/{package_repo_ref.plugin.version}/c/{package_repo_ref.context.cluster}/ns/{package_repo_ref.context.namespace}/{package_repo_ref.identifier=**}"))
+		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/kubeappsapis.plugins.helm.packages.v1alpha1.HelmRepositoriesService/UpdatePackageRepository", runtime.WithHTTPPathPattern("/plugins/helm/packages/v1alpha1/repositories/c/{package_repo_ref.context.cluster}/ns/{package_repo_ref.context.namespace}/{package_repo_ref.identifier=**}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -1765,7 +1645,7 @@ func RegisterHelmRepositoriesServiceHandlerServer(ctx context.Context, mux *runt
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/kubeappsapis.plugins.helm.packages.v1alpha1.HelmRepositoriesService/DeletePackageRepository", runtime.WithHTTPPathPattern("/plugins/helm/packages/v1alpha1/repositories/plugin/{package_repo_ref.plugin.name}/{package_repo_ref.plugin.version}/c/{package_repo_ref.context.cluster}/ns/{package_repo_ref.context.namespace}/{package_repo_ref.identifier=**}"))
+		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/kubeappsapis.plugins.helm.packages.v1alpha1.HelmRepositoriesService/DeletePackageRepository", runtime.WithHTTPPathPattern("/plugins/helm/packages/v1alpha1/repositories/c/{package_repo_ref.context.cluster}/ns/{package_repo_ref.context.namespace}/{package_repo_ref.identifier=**}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -2132,7 +2012,7 @@ func RegisterHelmRepositoriesServiceHandlerClient(ctx context.Context, mux *runt
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/kubeappsapis.plugins.helm.packages.v1alpha1.HelmRepositoriesService/GetPackageRepositoryDetail", runtime.WithHTTPPathPattern("/plugins/helm/packages/v1alpha1/repositories/plugin/{package_repo_ref.plugin.name}/{package_repo_ref.plugin.version}/c/{package_repo_ref.context.cluster}/ns/{package_repo_ref.context.namespace}/{package_repo_ref.identifier=**}"))
+		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/kubeappsapis.plugins.helm.packages.v1alpha1.HelmRepositoriesService/GetPackageRepositoryDetail", runtime.WithHTTPPathPattern("/plugins/helm/packages/v1alpha1/repositories/c/{package_repo_ref.context.cluster}/ns/{package_repo_ref.context.namespace}/{package_repo_ref.identifier=**}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -2172,7 +2052,7 @@ func RegisterHelmRepositoriesServiceHandlerClient(ctx context.Context, mux *runt
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/kubeappsapis.plugins.helm.packages.v1alpha1.HelmRepositoriesService/UpdatePackageRepository", runtime.WithHTTPPathPattern("/plugins/helm/packages/v1alpha1/repositories/plugin/{package_repo_ref.plugin.name}/{package_repo_ref.plugin.version}/c/{package_repo_ref.context.cluster}/ns/{package_repo_ref.context.namespace}/{package_repo_ref.identifier=**}"))
+		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/kubeappsapis.plugins.helm.packages.v1alpha1.HelmRepositoriesService/UpdatePackageRepository", runtime.WithHTTPPathPattern("/plugins/helm/packages/v1alpha1/repositories/c/{package_repo_ref.context.cluster}/ns/{package_repo_ref.context.namespace}/{package_repo_ref.identifier=**}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -2192,7 +2072,7 @@ func RegisterHelmRepositoriesServiceHandlerClient(ctx context.Context, mux *runt
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/kubeappsapis.plugins.helm.packages.v1alpha1.HelmRepositoriesService/DeletePackageRepository", runtime.WithHTTPPathPattern("/plugins/helm/packages/v1alpha1/repositories/plugin/{package_repo_ref.plugin.name}/{package_repo_ref.plugin.version}/c/{package_repo_ref.context.cluster}/ns/{package_repo_ref.context.namespace}/{package_repo_ref.identifier=**}"))
+		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/kubeappsapis.plugins.helm.packages.v1alpha1.HelmRepositoriesService/DeletePackageRepository", runtime.WithHTTPPathPattern("/plugins/helm/packages/v1alpha1/repositories/c/{package_repo_ref.context.cluster}/ns/{package_repo_ref.context.namespace}/{package_repo_ref.identifier=**}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -2214,13 +2094,13 @@ func RegisterHelmRepositoriesServiceHandlerClient(ctx context.Context, mux *runt
 var (
 	pattern_HelmRepositoriesService_AddPackageRepository_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 2, 4}, []string{"plugins", "helm", "packages", "v1alpha1", "repositories"}, ""))
 
-	pattern_HelmRepositoriesService_GetPackageRepositoryDetail_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 2, 4, 2, 5, 1, 0, 4, 1, 5, 6, 1, 0, 4, 1, 5, 7, 2, 8, 1, 0, 4, 1, 5, 9, 2, 10, 1, 0, 4, 1, 5, 11, 3, 0, 4, 1, 5, 12}, []string{"plugins", "helm", "packages", "v1alpha1", "repositories", "plugin", "package_repo_ref.plugin.name", "package_repo_ref.plugin.version", "c", "package_repo_ref.context.cluster", "ns", "package_repo_ref.context.namespace", "package_repo_ref.identifier"}, ""))
+	pattern_HelmRepositoriesService_GetPackageRepositoryDetail_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 2, 4, 2, 5, 1, 0, 4, 1, 5, 6, 2, 7, 1, 0, 4, 1, 5, 8, 3, 0, 4, 1, 5, 9}, []string{"plugins", "helm", "packages", "v1alpha1", "repositories", "c", "package_repo_ref.context.cluster", "ns", "package_repo_ref.context.namespace", "package_repo_ref.identifier"}, ""))
 
 	pattern_HelmRepositoriesService_GetPackageRepositorySummaries_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 2, 4}, []string{"plugins", "helm", "packages", "v1alpha1", "repositories"}, ""))
 
-	pattern_HelmRepositoriesService_UpdatePackageRepository_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 2, 4, 2, 5, 1, 0, 4, 1, 5, 6, 1, 0, 4, 1, 5, 7, 2, 8, 1, 0, 4, 1, 5, 9, 2, 10, 1, 0, 4, 1, 5, 11, 3, 0, 4, 1, 5, 12}, []string{"plugins", "helm", "packages", "v1alpha1", "repositories", "plugin", "package_repo_ref.plugin.name", "package_repo_ref.plugin.version", "c", "package_repo_ref.context.cluster", "ns", "package_repo_ref.context.namespace", "package_repo_ref.identifier"}, ""))
+	pattern_HelmRepositoriesService_UpdatePackageRepository_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 2, 4, 2, 5, 1, 0, 4, 1, 5, 6, 2, 7, 1, 0, 4, 1, 5, 8, 3, 0, 4, 1, 5, 9}, []string{"plugins", "helm", "packages", "v1alpha1", "repositories", "c", "package_repo_ref.context.cluster", "ns", "package_repo_ref.context.namespace", "package_repo_ref.identifier"}, ""))
 
-	pattern_HelmRepositoriesService_DeletePackageRepository_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 2, 4, 2, 5, 1, 0, 4, 1, 5, 6, 1, 0, 4, 1, 5, 7, 2, 8, 1, 0, 4, 1, 5, 9, 2, 10, 1, 0, 4, 1, 5, 11, 3, 0, 4, 1, 5, 12}, []string{"plugins", "helm", "packages", "v1alpha1", "repositories", "plugin", "package_repo_ref.plugin.name", "package_repo_ref.plugin.version", "c", "package_repo_ref.context.cluster", "ns", "package_repo_ref.context.namespace", "package_repo_ref.identifier"}, ""))
+	pattern_HelmRepositoriesService_DeletePackageRepository_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 2, 4, 2, 5, 1, 0, 4, 1, 5, 6, 2, 7, 1, 0, 4, 1, 5, 8, 3, 0, 4, 1, 5, 9}, []string{"plugins", "helm", "packages", "v1alpha1", "repositories", "c", "package_repo_ref.context.cluster", "ns", "package_repo_ref.context.namespace", "package_repo_ref.identifier"}, ""))
 )
 
 var (
