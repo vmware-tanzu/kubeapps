@@ -23,11 +23,12 @@ export default function PackageCatalogItem(props: IPackageCatalogItem) {
 
   // Get the pkg repository for the plugins that have one.
   switch (availablePackageSummary.availablePackageRef?.plugin?.name) {
-    case (PluginNames.PACKAGES_HELM, PluginNames.PACKAGES_FLUX):
+    case PluginNames.PACKAGES_HELM:
+    case PluginNames.PACKAGES_FLUX:
       pkgRepository = availablePackageSummary.availablePackageRef?.identifier.split("/")[0];
       break;
     case PluginNames.PACKAGES_KAPP:
-      // TODO: get repo from kapp-controller
+      pkgRepository = availablePackageSummary.name.split("/")[0];
       break;
   }
 
