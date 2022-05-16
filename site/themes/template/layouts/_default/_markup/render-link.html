@@ -1,13 +1,13 @@
 {{ $link := .Destination }}
-<!-- BEGIN Workaround to render symlinked files and served at /docs/latest/project/ -->
-{{- if in .Page.RelPermalink "/docs/latest/project/" }}
-    {{- if in .Destination "/docs/" }}
-        {{ $link = printf "../../../../%s" (replace (replace (replace .Destination "docs/" "docs/latest/") ".md" "") "/README" "" | lower ) }}
-    {{- end }}
-{{- end }}
-<!-- END  -->
 {{ $isRemote := strings.HasPrefix $link "http" }}
 {{- if not $isRemote -}}
+    <!-- BEGIN Workaround to render symlinked files and served at /docs/latest/project/ -->
+    {{- if in .Page.RelPermalink "/docs/latest/project/" }}
+        {{- if in .Destination "/docs/" }}
+            {{ $link = printf "../../../../%s" (replace (replace (replace .Destination "docs/" "docs/latest/") ".md" "") "/README" "" | lower ) }}
+        {{- end }}
+    {{- end }}
+    <!-- END  -->
     {{ $url := urls.Parse .Destination }}
     {{- if $url.Path -}}
         {{ $fragment := "" }}
