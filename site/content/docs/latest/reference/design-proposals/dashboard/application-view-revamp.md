@@ -25,12 +25,12 @@ The raw information included in the file is this:
 
 ```yaml
 dependencies:
-- name: mariadb
-  version: 7.x.x
-  repository: https://kubernetes-charts.storage.googleapis.com/
-  condition: mariadb.enabled
-  tags:
-    - wordpress-database
+  - name: mariadb
+    version: 7.x.x
+    repository: https://kubernetes-charts.storage.googleapis.com/
+    condition: mariadb.enabled
+    tags:
+      - wordpress-database
 ```
 
 From that information, if the user has permissions to request AppRepositories, we should be able to map <https://kubernetes-charts.storage.googleapis.com/> to `stable` (name given in the AppRepository) and generate a link for the MariaDB chart:

@@ -9,7 +9,7 @@ In addition to our [custom form component support](https://github.com/vmware-tan
 1. Next you will need to define which applications you would like to render the custom view for. To do this we simply set `.Values.dashboard.customAppViews` to any application of your choice. For example, if you wanted to load a custom view for the [bitnami apache helm chart](https://github.com/bitnami/charts/tree/master/bitnami/apache) you can set the value as such:
 
    ```yaml
-    customAppViews:
+   customAppViews:
      - plugin: helm.packages
        name: apache
        repository: bitnami

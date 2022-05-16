@@ -73,9 +73,9 @@ Kubeapps provides an api endpoint for app repositories:
 
   ```json
   {
-    appRepository: {
-      name: "foo",
-      url: "https://example.com/stable"
+    "appRepository": {
+      "name": "foo",
+      "url": "https://example.com/stable"
     }
   }
   ```
@@ -92,7 +92,7 @@ Kubeapps provides an api endpoint for app repositories:
 
   ```json
   {
-    repositoryPrefix: "/#/charts/my-repo/"
+    "repositoryPrefix": "/#/charts/my-repo/"
   }
   ```
 

@@ -90,9 +90,9 @@ roleRef:
   kind: ClusterRole
   name: cluster-admin
 subjects:
-- kind: ServiceAccount
-  name: johnsmith
-  namespace: kubeapps-users
+  - kind: ServiceAccount
+    name: johnsmith
+    namespace: kubeapps-users
 ```
 
 Now to retrieve the token for this account, the Cluster Operator would need to run the following:

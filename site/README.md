@@ -51,9 +51,10 @@ npx check-html-links ./public/
 
 ## Check formatting
 
-Also, another tool for checking the markdown syntax is [markdownlint-cli](https://github.com/igorshubovych/markdownlint-cli). To use it, run:
+Also, another tool for checking the markdown syntax are [markdownlint-cli](https://github.com/igorshubovych/markdownlint-cli) and [prettier](https://github.com/prettier/prettier). To use them, run:
 
 ```bash
 cd site
 npx markdownlint-cli .\content\docs\latest\ --disable MD013 MD033 # add --fix to also solve the issues
+npx prettier --write .\content\docs\latest\
 ```
