@@ -16,11 +16,11 @@ When users reach the deployment form, the desired behavior is to have two differ
 
 This is the proposed view for the basic deployment form:
 
-![Deployment form basic](../../../img/dashboard/deployment-form-basic.png)
+![Deployment form basic](../../img/dashboard/deployment-form-basic.png)
 
 And for the advanced tab:
 
-![Deployment form advanced](../../../img/dashboard/deployment-form-adv.png)
+![Deployment form advanced](../../img/dashboard/deployment-form-adv.png)
 
 \*Note that the design may vary, the final proposal will be submitted in a different PR
 
