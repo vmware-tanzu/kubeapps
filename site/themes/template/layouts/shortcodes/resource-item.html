@@ -28,7 +28,7 @@
         {{- $pc := .Page.Site.Config.Privacy.YouTube | default true -}}
         {{- $ytHost := cond $pc.PrivacyEnhanced "www.youtube-nocookie.com" "www.youtube.com" -}}
         {{- $id := .Get "videoID" | default (.Get 0) -}}
-        <p><a target="_blank" rel="noopener" href="http://www.youtube.com/watch?v={{ $id }} {{ (.Get "url") }}">{{ (.Get "text")
+        <p><a target="_blank" rel="noopener" href="https://www.youtube.com/watch?v={{ $id }} {{ (.Get "url") }}">{{ (.Get "text")
                 }}</a>.
             {{ else }}
         <p><a target="_blank" rel="noopener" href="{{ (.Get "url") }}">{{ (.Get "text") }}</a>.

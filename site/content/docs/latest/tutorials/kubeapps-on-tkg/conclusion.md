@@ -13,7 +13,7 @@ This guide walked you through the process of configuring, deploying and using Ku
 
 At the end of this guide, you should have everything you need to begin using Kubeapps productively on a VMware Tanzu™ Kubernetes Grid™ cluster.
 
-In case of difficulties, reach out to the developers at [#kubeapps on Kubernetes Slack](https://kubernetes.slack.com/messages/kubeapps) (click [here](http://slack.k8s.io) to sign up). You can also [open a GitHub issue](https://github.com/vmware-tanzu/kubeapps/issues/new) to report problems or bugs.
+In case of difficulties, reach out to the developers at [#kubeapps on Kubernetes Slack](https://kubernetes.slack.com/messages/kubeapps) (click [here](https://slack.k8s.io) to sign up). You can also [open a GitHub issue](https://github.com/vmware-tanzu/kubeapps/issues/new) to report problems or bugs.
 
 ## Useful Links
 
