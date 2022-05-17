@@ -15,7 +15,7 @@ import (
 
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	"github.com/grpc-ecosystem/grpc-gateway/v2/utilities"
-	v1alpha1_0 "github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
+	v1alpha1_1 "github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/grpclog"
@@ -37,7 +37,7 @@ var (
 )
 
 func request_KappControllerPackagesService_GetAvailablePackageSummaries_0(ctx context.Context, marshaler runtime.Marshaler, client KappControllerPackagesServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq v1alpha1_0.GetAvailablePackageSummariesRequest
+	var protoReq v1alpha1_1.GetAvailablePackageSummariesRequest
 	var metadata runtime.ServerMetadata
 
 	if err := req.ParseForm(); err != nil {
@@ -53,7 +53,7 @@ func request_KappControllerPackagesService_GetAvailablePackageSummaries_0(ctx co
 }
 
 func local_request_KappControllerPackagesService_GetAvailablePackageSummaries_0(ctx context.Context, marshaler runtime.Marshaler, server KappControllerPackagesServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq v1alpha1_0.GetAvailablePackageSummariesRequest
+	var protoReq v1alpha1_1.GetAvailablePackageSummariesRequest
 	var metadata runtime.ServerMetadata
 
 	if err := req.ParseForm(); err != nil {
@@ -73,7 +73,7 @@ var (
 )
 
 func request_KappControllerPackagesService_GetAvailablePackageDetail_0(ctx context.Context, marshaler runtime.Marshaler, client KappControllerPackagesServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq v1alpha1_0.GetAvailablePackageDetailRequest
+	var protoReq v1alpha1_1.GetAvailablePackageDetailRequest
 	var metadata runtime.ServerMetadata
 
 	var (
@@ -126,7 +126,7 @@ func request_KappControllerPackagesService_GetAvailablePackageDetail_0(ctx conte
 }
 
 func local_request_KappControllerPackagesService_GetAvailablePackageDetail_0(ctx context.Context, marshaler runtime.Marshaler, server KappControllerPackagesServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq v1alpha1_0.GetAvailablePackageDetailRequest
+	var protoReq v1alpha1_1.GetAvailablePackageDetailRequest
 	var metadata runtime.ServerMetadata
 
 	var (
@@ -219,7 +219,7 @@ var (
 )
 
 func request_KappControllerPackagesService_GetAvailablePackageVersions_0(ctx context.Context, marshaler runtime.Marshaler, client KappControllerPackagesServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq v1alpha1_0.GetAvailablePackageVersionsRequest
+	var protoReq v1alpha1_1.GetAvailablePackageVersionsRequest
 	var metadata runtime.ServerMetadata
 
 	var (
@@ -272,7 +272,7 @@ func request_KappControllerPackagesService_GetAvailablePackageVersions_0(ctx con
 }
 
 func local_request_KappControllerPackagesService_GetAvailablePackageVersions_0(ctx context.Context, marshaler runtime.Marshaler, server KappControllerPackagesServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq v1alpha1_0.GetAvailablePackageVersionsRequest
+	var protoReq v1alpha1_1.GetAvailablePackageVersionsRequest
 	var metadata runtime.ServerMetadata
 
 	var (
@@ -329,7 +329,7 @@ var (
 )
 
 func request_KappControllerPackagesService_GetInstalledPackageSummaries_0(ctx context.Context, marshaler runtime.Marshaler, client KappControllerPackagesServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq v1alpha1_0.GetInstalledPackageSummariesRequest
+	var protoReq v1alpha1_1.GetInstalledPackageSummariesRequest
 	var metadata runtime.ServerMetadata
 
 	if err := req.ParseForm(); err != nil {
@@ -345,7 +345,7 @@ func request_KappControllerPackagesService_GetInstalledPackageSummaries_0(ctx co
 }
 
 func local_request_KappControllerPackagesService_GetInstalledPackageSummaries_0(ctx context.Context, marshaler runtime.Marshaler, server KappControllerPackagesServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq v1alpha1_0.GetInstalledPackageSummariesRequest
+	var protoReq v1alpha1_1.GetInstalledPackageSummariesRequest
 	var metadata runtime.ServerMetadata
 
 	if err := req.ParseForm(); err != nil {
@@ -365,7 +365,7 @@ var (
 )
 
 func request_KappControllerPackagesService_GetInstalledPackageDetail_0(ctx context.Context, marshaler runtime.Marshaler, client KappControllerPackagesServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq v1alpha1_0.GetInstalledPackageDetailRequest
+	var protoReq v1alpha1_1.GetInstalledPackageDetailRequest
 	var metadata runtime.ServerMetadata
 
 	var (
@@ -418,7 +418,7 @@ func request_KappControllerPackagesService_GetInstalledPackageDetail_0(ctx conte
 }
 
 func local_request_KappControllerPackagesService_GetInstalledPackageDetail_0(ctx context.Context, marshaler runtime.Marshaler, server KappControllerPackagesServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq v1alpha1_0.GetInstalledPackageDetailRequest
+	var protoReq v1alpha1_1.GetInstalledPackageDetailRequest
 	var metadata runtime.ServerMetadata
 
 	var (
@@ -471,7 +471,7 @@ func local_request_KappControllerPackagesService_GetInstalledPackageDetail_0(ctx
 }
 
 func request_KappControllerPackagesService_CreateInstalledPackage_0(ctx context.Context, marshaler runtime.Marshaler, client KappControllerPackagesServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq v1alpha1_0.CreateInstalledPackageRequest
+	var protoReq v1alpha1_1.CreateInstalledPackageRequest
 	var metadata runtime.ServerMetadata
 
 	newReader, berr := utilities.IOReaderFactory(req.Body)
@@ -488,7 +488,7 @@ func request_KappControllerPackagesService_CreateInstalledPackage_0(ctx context.
 }
 
 func local_request_KappControllerPackagesService_CreateInstalledPackage_0(ctx context.Context, marshaler runtime.Marshaler, server KappControllerPackagesServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq v1alpha1_0.CreateInstalledPackageRequest
+	var protoReq v1alpha1_1.CreateInstalledPackageRequest
 	var metadata runtime.ServerMetadata
 
 	newReader, berr := utilities.IOReaderFactory(req.Body)
@@ -505,7 +505,7 @@ func local_request_KappControllerPackagesService_CreateInstalledPackage_0(ctx co
 }
 
 func request_KappControllerPackagesService_UpdateInstalledPackage_0(ctx context.Context, marshaler runtime.Marshaler, client KappControllerPackagesServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq v1alpha1_0.UpdateInstalledPackageRequest
+	var protoReq v1alpha1_1.UpdateInstalledPackageRequest
 	var metadata runtime.ServerMetadata
 
 	newReader, berr := utilities.IOReaderFactory(req.Body)
@@ -559,7 +559,7 @@ func request_KappControllerPackagesService_UpdateInstalledPackage_0(ctx context.
 }
 
 func local_request_KappControllerPackagesService_UpdateInstalledPackage_0(ctx context.Context, marshaler runtime.Marshaler, server KappControllerPackagesServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq v1alpha1_0.UpdateInstalledPackageRequest
+	var protoReq v1alpha1_1.UpdateInstalledPackageRequest
 	var metadata runtime.ServerMetadata
 
 	newReader, berr := utilities.IOReaderFactory(req.Body)
@@ -617,7 +617,7 @@ var (
 )
 
 func request_KappControllerPackagesService_DeleteInstalledPackage_0(ctx context.Context, marshaler runtime.Marshaler, client KappControllerPackagesServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq v1alpha1_0.DeleteInstalledPackageRequest
+	var protoReq v1alpha1_1.DeleteInstalledPackageRequest
 	var metadata runtime.ServerMetadata
 
 	var (
@@ -670,7 +670,7 @@ func request_KappControllerPackagesService_DeleteInstalledPackage_0(ctx context.
 }
 
 func local_request_KappControllerPackagesService_DeleteInstalledPackage_0(ctx context.Context, marshaler runtime.Marshaler, server KappControllerPackagesServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq v1alpha1_0.DeleteInstalledPackageRequest
+	var protoReq v1alpha1_1.DeleteInstalledPackageRequest
 	var metadata runtime.ServerMetadata
 
 	var (
@@ -727,7 +727,7 @@ var (
 )
 
 func request_KappControllerPackagesService_GetInstalledPackageResourceRefs_0(ctx context.Context, marshaler runtime.Marshaler, client KappControllerPackagesServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq v1alpha1_0.GetInstalledPackageResourceRefsRequest
+	var protoReq v1alpha1_1.GetInstalledPackageResourceRefsRequest
 	var metadata runtime.ServerMetadata
 
 	var (
@@ -780,7 +780,7 @@ func request_KappControllerPackagesService_GetInstalledPackageResourceRefs_0(ctx
 }
 
 func local_request_KappControllerPackagesService_GetInstalledPackageResourceRefs_0(ctx context.Context, marshaler runtime.Marshaler, server KappControllerPackagesServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq v1alpha1_0.GetInstalledPackageResourceRefsRequest
+	var protoReq v1alpha1_1.GetInstalledPackageResourceRefsRequest
 	var metadata runtime.ServerMetadata
 
 	var (
@@ -844,12 +844,13 @@ func RegisterKappControllerPackagesServiceHandlerServer(ctx context.Context, mux
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/kubeappsapis.plugins.kapp_controller.packages.v1alpha1.KappControllerPackagesService/GetAvailablePackageSummaries", runtime.WithHTTPPathPattern("/plugins/kapp_controller/packages/v1alpha1/availablepackages"))
+		var err error
+		ctx, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/kubeappsapis.plugins.kapp_controller.packages.v1alpha1.KappControllerPackagesService/GetAvailablePackageSummaries", runtime.WithHTTPPathPattern("/plugins/kapp_controller/packages/v1alpha1/availablepackages"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := local_request_KappControllerPackagesService_GetAvailablePackageSummaries_0(rctx, inboundMarshaler, server, req, pathParams)
+		resp, md, err := local_request_KappControllerPackagesService_GetAvailablePackageSummaries_0(ctx, inboundMarshaler, server, req, pathParams)
 		md.HeaderMD, md.TrailerMD = metadata.Join(md.HeaderMD, stream.Header()), metadata.Join(md.TrailerMD, stream.Trailer())
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
@@ -867,12 +868,13 @@ func RegisterKappControllerPackagesServiceHandlerServer(ctx context.Context, mux
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/kubeappsapis.plugins.kapp_controller.packages.v1alpha1.KappControllerPackagesService/GetAvailablePackageDetail", runtime.WithHTTPPathPattern("/plugins/kapp_controller/packages/v1alpha1/availablepackages/c/{available_package_ref.context.cluster}/ns/{available_package_ref.context.namespace}/{available_package_ref.identifier=**}"))
+		var err error
+		ctx, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/kubeappsapis.plugins.kapp_controller.packages.v1alpha1.KappControllerPackagesService/GetAvailablePackageDetail", runtime.WithHTTPPathPattern("/plugins/kapp_controller/packages/v1alpha1/availablepackages/c/{available_package_ref.context.cluster}/ns/{available_package_ref.context.namespace}/{available_package_ref.identifier=**}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := local_request_KappControllerPackagesService_GetAvailablePackageDetail_0(rctx, inboundMarshaler, server, req, pathParams)
+		resp, md, err := local_request_KappControllerPackagesService_GetAvailablePackageDetail_0(ctx, inboundMarshaler, server, req, pathParams)
 		md.HeaderMD, md.TrailerMD = metadata.Join(md.HeaderMD, stream.Header()), metadata.Join(md.TrailerMD, stream.Trailer())
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
@@ -890,12 +892,13 @@ func RegisterKappControllerPackagesServiceHandlerServer(ctx context.Context, mux
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/kubeappsapis.plugins.kapp_controller.packages.v1alpha1.KappControllerPackagesService/GetPackageRepositories", runtime.WithHTTPPathPattern("/plugins/kapp_controller/packages/v1alpha1/packagerepositories"))
+		var err error
+		ctx, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/kubeappsapis.plugins.kapp_controller.packages.v1alpha1.KappControllerPackagesService/GetPackageRepositories", runtime.WithHTTPPathPattern("/plugins/kapp_controller/packages/v1alpha1/packagerepositories"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := local_request_KappControllerPackagesService_GetPackageRepositories_0(rctx, inboundMarshaler, server, req, pathParams)
+		resp, md, err := local_request_KappControllerPackagesService_GetPackageRepositories_0(ctx, inboundMarshaler, server, req, pathParams)
 		md.HeaderMD, md.TrailerMD = metadata.Join(md.HeaderMD, stream.Header()), metadata.Join(md.TrailerMD, stream.Trailer())
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
@@ -913,12 +916,13 @@ func RegisterKappControllerPackagesServiceHandlerServer(ctx context.Context, mux
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/kubeappsapis.plugins.kapp_controller.packages.v1alpha1.KappControllerPackagesService/GetAvailablePackageVersions", runtime.WithHTTPPathPattern("/plugins/kapp_controller/packages/v1alpha1/availablepackages/c/{available_package_ref.context.cluster}/ns/{available_package_ref.context.namespace}/{available_package_ref.identifier=**}/versions"))
+		var err error
+		ctx, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/kubeappsapis.plugins.kapp_controller.packages.v1alpha1.KappControllerPackagesService/GetAvailablePackageVersions", runtime.WithHTTPPathPattern("/plugins/kapp_controller/packages/v1alpha1/availablepackages/c/{available_package_ref.context.cluster}/ns/{available_package_ref.context.namespace}/{available_package_ref.identifier=**}/versions"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := local_request_KappControllerPackagesService_GetAvailablePackageVersions_0(rctx, inboundMarshaler, server, req, pathParams)
+		resp, md, err := local_request_KappControllerPackagesService_GetAvailablePackageVersions_0(ctx, inboundMarshaler, server, req, pathParams)
 		md.HeaderMD, md.TrailerMD = metadata.Join(md.HeaderMD, stream.Header()), metadata.Join(md.TrailerMD, stream.Trailer())
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
@@ -936,12 +940,13 @@ func RegisterKappControllerPackagesServiceHandlerServer(ctx context.Context, mux
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/kubeappsapis.plugins.kapp_controller.packages.v1alpha1.KappControllerPackagesService/GetInstalledPackageSummaries", runtime.WithHTTPPathPattern("/plugins/kapp_controller/packages/v1alpha1/installedpackages"))
+		var err error
+		ctx, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/kubeappsapis.plugins.kapp_controller.packages.v1alpha1.KappControllerPackagesService/GetInstalledPackageSummaries", runtime.WithHTTPPathPattern("/plugins/kapp_controller/packages/v1alpha1/installedpackages"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := local_request_KappControllerPackagesService_GetInstalledPackageSummaries_0(rctx, inboundMarshaler, server, req, pathParams)
+		resp, md, err := local_request_KappControllerPackagesService_GetInstalledPackageSummaries_0(ctx, inboundMarshaler, server, req, pathParams)
 		md.HeaderMD, md.TrailerMD = metadata.Join(md.HeaderMD, stream.Header()), metadata.Join(md.TrailerMD, stream.Trailer())
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
@@ -959,12 +964,13 @@ func RegisterKappControllerPackagesServiceHandlerServer(ctx context.Context, mux
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/kubeappsapis.plugins.kapp_controller.packages.v1alpha1.KappControllerPackagesService/GetInstalledPackageDetail", runtime.WithHTTPPathPattern("/plugins/kapp_controller/packages/v1alpha1/installedpackages/c/{installed_package_ref.context.cluster}/ns/{installed_package_ref.context.namespace}/{installed_package_ref.identifier}"))
+		var err error
+		ctx, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/kubeappsapis.plugins.kapp_controller.packages.v1alpha1.KappControllerPackagesService/GetInstalledPackageDetail", runtime.WithHTTPPathPattern("/plugins/kapp_controller/packages/v1alpha1/installedpackages/c/{installed_package_ref.context.cluster}/ns/{installed_package_ref.context.namespace}/{installed_package_ref.identifier}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := local_request_KappControllerPackagesService_GetInstalledPackageDetail_0(rctx, inboundMarshaler, server, req, pathParams)
+		resp, md, err := local_request_KappControllerPackagesService_GetInstalledPackageDetail_0(ctx, inboundMarshaler, server, req, pathParams)
 		md.HeaderMD, md.TrailerMD = metadata.Join(md.HeaderMD, stream.Header()), metadata.Join(md.TrailerMD, stream.Trailer())
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
@@ -982,12 +988,13 @@ func RegisterKappControllerPackagesServiceHandlerServer(ctx context.Context, mux
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/kubeappsapis.plugins.kapp_controller.packages.v1alpha1.KappControllerPackagesService/CreateInstalledPackage", runtime.WithHTTPPathPattern("/plugins/kapp_controller/packages/v1alpha1/installedpackages"))
+		var err error
+		ctx, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/kubeappsapis.plugins.kapp_controller.packages.v1alpha1.KappControllerPackagesService/CreateInstalledPackage", runtime.WithHTTPPathPattern("/plugins/kapp_controller/packages/v1alpha1/installedpackages"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := local_request_KappControllerPackagesService_CreateInstalledPackage_0(rctx, inboundMarshaler, server, req, pathParams)
+		resp, md, err := local_request_KappControllerPackagesService_CreateInstalledPackage_0(ctx, inboundMarshaler, server, req, pathParams)
 		md.HeaderMD, md.TrailerMD = metadata.Join(md.HeaderMD, stream.Header()), metadata.Join(md.TrailerMD, stream.Trailer())
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
@@ -1005,12 +1012,13 @@ func RegisterKappControllerPackagesServiceHandlerServer(ctx context.Context, mux
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/kubeappsapis.plugins.kapp_controller.packages.v1alpha1.KappControllerPackagesService/UpdateInstalledPackage", runtime.WithHTTPPathPattern("/plugins/kapp_controller/packages/v1alpha1/installedpackages/c/{installed_package_ref.context.cluster}/ns/{installed_package_ref.context.namespace}/{installed_package_ref.identifier}"))
+		var err error
+		ctx, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/kubeappsapis.plugins.kapp_controller.packages.v1alpha1.KappControllerPackagesService/UpdateInstalledPackage", runtime.WithHTTPPathPattern("/plugins/kapp_controller/packages/v1alpha1/installedpackages/c/{installed_package_ref.context.cluster}/ns/{installed_package_ref.context.namespace}/{installed_package_ref.identifier}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := local_request_KappControllerPackagesService_UpdateInstalledPackage_0(rctx, inboundMarshaler, server, req, pathParams)
+		resp, md, err := local_request_KappControllerPackagesService_UpdateInstalledPackage_0(ctx, inboundMarshaler, server, req, pathParams)
 		md.HeaderMD, md.TrailerMD = metadata.Join(md.HeaderMD, stream.Header()), metadata.Join(md.TrailerMD, stream.Trailer())
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
@@ -1028,12 +1036,13 @@ func RegisterKappControllerPackagesServiceHandlerServer(ctx context.Context, mux
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/kubeappsapis.plugins.kapp_controller.packages.v1alpha1.KappControllerPackagesService/DeleteInstalledPackage", runtime.WithHTTPPathPattern("/plugins/kapp_controller/packages/v1alpha1/installedpackages/c/{installed_package_ref.context.cluster}/ns/{installed_package_ref.context.namespace}/{installed_package_ref.identifier}"))
+		var err error
+		ctx, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/kubeappsapis.plugins.kapp_controller.packages.v1alpha1.KappControllerPackagesService/DeleteInstalledPackage", runtime.WithHTTPPathPattern("/plugins/kapp_controller/packages/v1alpha1/installedpackages/c/{installed_package_ref.context.cluster}/ns/{installed_package_ref.context.namespace}/{installed_package_ref.identifier}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := local_request_KappControllerPackagesService_DeleteInstalledPackage_0(rctx, inboundMarshaler, server, req, pathParams)
+		resp, md, err := local_request_KappControllerPackagesService_DeleteInstalledPackage_0(ctx, inboundMarshaler, server, req, pathParams)
 		md.HeaderMD, md.TrailerMD = metadata.Join(md.HeaderMD, stream.Header()), metadata.Join(md.TrailerMD, stream.Trailer())
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
@@ -1051,12 +1060,13 @@ func RegisterKappControllerPackagesServiceHandlerServer(ctx context.Context, mux
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/kubeappsapis.plugins.kapp_controller.packages.v1alpha1.KappControllerPackagesService/GetInstalledPackageResourceRefs", runtime.WithHTTPPathPattern("/plugins/kapp_controller/packages/v1alpha1/installedpackages/c/{installed_package_ref.context.cluster}/ns/{installed_package_ref.context.namespace}/{installed_package_ref.identifier}/resourcerefs"))
+		var err error
+		ctx, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/kubeappsapis.plugins.kapp_controller.packages.v1alpha1.KappControllerPackagesService/GetInstalledPackageResourceRefs", runtime.WithHTTPPathPattern("/plugins/kapp_controller/packages/v1alpha1/installedpackages/c/{installed_package_ref.context.cluster}/ns/{installed_package_ref.context.namespace}/{installed_package_ref.identifier}/resourcerefs"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := local_request_KappControllerPackagesService_GetInstalledPackageResourceRefs_0(rctx, inboundMarshaler, server, req, pathParams)
+		resp, md, err := local_request_KappControllerPackagesService_GetInstalledPackageResourceRefs_0(ctx, inboundMarshaler, server, req, pathParams)
 		md.HeaderMD, md.TrailerMD = metadata.Join(md.HeaderMD, stream.Header()), metadata.Join(md.TrailerMD, stream.Trailer())
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
@@ -1113,12 +1123,13 @@ func RegisterKappControllerPackagesServiceHandlerClient(ctx context.Context, mux
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/kubeappsapis.plugins.kapp_controller.packages.v1alpha1.KappControllerPackagesService/GetAvailablePackageSummaries", runtime.WithHTTPPathPattern("/plugins/kapp_controller/packages/v1alpha1/availablepackages"))
+		var err error
+		ctx, err = runtime.AnnotateContext(ctx, mux, req, "/kubeappsapis.plugins.kapp_controller.packages.v1alpha1.KappControllerPackagesService/GetAvailablePackageSummaries", runtime.WithHTTPPathPattern("/plugins/kapp_controller/packages/v1alpha1/availablepackages"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := request_KappControllerPackagesService_GetAvailablePackageSummaries_0(rctx, inboundMarshaler, client, req, pathParams)
+		resp, md, err := request_KappControllerPackagesService_GetAvailablePackageSummaries_0(ctx, inboundMarshaler, client, req, pathParams)
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
@@ -1133,12 +1144,13 @@ func RegisterKappControllerPackagesServiceHandlerClient(ctx context.Context, mux
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/kubeappsapis.plugins.kapp_controller.packages.v1alpha1.KappControllerPackagesService/GetAvailablePackageDetail", runtime.WithHTTPPathPattern("/plugins/kapp_controller/packages/v1alpha1/availablepackages/c/{available_package_ref.context.cluster}/ns/{available_package_ref.context.namespace}/{available_package_ref.identifier=**}"))
+		var err error
+		ctx, err = runtime.AnnotateContext(ctx, mux, req, "/kubeappsapis.plugins.kapp_controller.packages.v1alpha1.KappControllerPackagesService/GetAvailablePackageDetail", runtime.WithHTTPPathPattern("/plugins/kapp_controller/packages/v1alpha1/availablepackages/c/{available_package_ref.context.cluster}/ns/{available_package_ref.context.namespace}/{available_package_ref.identifier=**}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := request_KappControllerPackagesService_GetAvailablePackageDetail_0(rctx, inboundMarshaler, client, req, pathParams)
+		resp, md, err := request_KappControllerPackagesService_GetAvailablePackageDetail_0(ctx, inboundMarshaler, client, req, pathParams)
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
@@ -1153,12 +1165,13 @@ func RegisterKappControllerPackagesServiceHandlerClient(ctx context.Context, mux
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/kubeappsapis.plugins.kapp_controller.packages.v1alpha1.KappControllerPackagesService/GetPackageRepositories", runtime.WithHTTPPathPattern("/plugins/kapp_controller/packages/v1alpha1/packagerepositories"))
+		var err error
+		ctx, err = runtime.AnnotateContext(ctx, mux, req, "/kubeappsapis.plugins.kapp_controller.packages.v1alpha1.KappControllerPackagesService/GetPackageRepositories", runtime.WithHTTPPathPattern("/plugins/kapp_controller/packages/v1alpha1/packagerepositories"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := request_KappControllerPackagesService_GetPackageRepositories_0(rctx, inboundMarshaler, client, req, pathParams)
+		resp, md, err := request_KappControllerPackagesService_GetPackageRepositories_0(ctx, inboundMarshaler, client, req, pathParams)
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
@@ -1173,12 +1186,13 @@ func RegisterKappControllerPackagesServiceHandlerClient(ctx context.Context, mux
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/kubeappsapis.plugins.kapp_controller.packages.v1alpha1.KappControllerPackagesService/GetAvailablePackageVersions", runtime.WithHTTPPathPattern("/plugins/kapp_controller/packages/v1alpha1/availablepackages/c/{available_package_ref.context.cluster}/ns/{available_package_ref.context.namespace}/{available_package_ref.identifier=**}/versions"))
+		var err error
+		ctx, err = runtime.AnnotateContext(ctx, mux, req, "/kubeappsapis.plugins.kapp_controller.packages.v1alpha1.KappControllerPackagesService/GetAvailablePackageVersions", runtime.WithHTTPPathPattern("/plugins/kapp_controller/packages/v1alpha1/availablepackages/c/{available_package_ref.context.cluster}/ns/{available_package_ref.context.namespace}/{available_package_ref.identifier=**}/versions"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := request_KappControllerPackagesService_GetAvailablePackageVersions_0(rctx, inboundMarshaler, client, req, pathParams)
+		resp, md, err := request_KappControllerPackagesService_GetAvailablePackageVersions_0(ctx, inboundMarshaler, client, req, pathParams)
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
@@ -1193,12 +1207,13 @@ func RegisterKappControllerPackagesServiceHandlerClient(ctx context.Context, mux
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/kubeappsapis.plugins.kapp_controller.packages.v1alpha1.KappControllerPackagesService/GetInstalledPackageSummaries", runtime.WithHTTPPathPattern("/plugins/kapp_controller/packages/v1alpha1/installedpackages"))
+		var err error
+		ctx, err = runtime.AnnotateContext(ctx, mux, req, "/kubeappsapis.plugins.kapp_controller.packages.v1alpha1.KappControllerPackagesService/GetInstalledPackageSummaries", runtime.WithHTTPPathPattern("/plugins/kapp_controller/packages/v1alpha1/installedpackages"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := request_KappControllerPackagesService_GetInstalledPackageSummaries_0(rctx, inboundMarshaler, client, req, pathParams)
+		resp, md, err := request_KappControllerPackagesService_GetInstalledPackageSummaries_0(ctx, inboundMarshaler, client, req, pathParams)
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
@@ -1213,12 +1228,13 @@ func RegisterKappControllerPackagesServiceHandlerClient(ctx context.Context, mux
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/kubeappsapis.plugins.kapp_controller.packages.v1alpha1.KappControllerPackagesService/GetInstalledPackageDetail", runtime.WithHTTPPathPattern("/plugins/kapp_controller/packages/v1alpha1/installedpackages/c/{installed_package_ref.context.cluster}/ns/{installed_package_ref.context.namespace}/{installed_package_ref.identifier}"))
+		var err error
+		ctx, err = runtime.AnnotateContext(ctx, mux, req, "/kubeappsapis.plugins.kapp_controller.packages.v1alpha1.KappControllerPackagesService/GetInstalledPackageDetail", runtime.WithHTTPPathPattern("/plugins/kapp_controller/packages/v1alpha1/installedpackages/c/{installed_package_ref.context.cluster}/ns/{installed_package_ref.context.namespace}/{installed_package_ref.identifier}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := request_KappControllerPackagesService_GetInstalledPackageDetail_0(rctx, inboundMarshaler, client, req, pathParams)
+		resp, md, err := request_KappControllerPackagesService_GetInstalledPackageDetail_0(ctx, inboundMarshaler, client, req, pathParams)
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
@@ -1233,12 +1249,13 @@ func RegisterKappControllerPackagesServiceHandlerClient(ctx context.Context, mux
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/kubeappsapis.plugins.kapp_controller.packages.v1alpha1.KappControllerPackagesService/CreateInstalledPackage", runtime.WithHTTPPathPattern("/plugins/kapp_controller/packages/v1alpha1/installedpackages"))
+		var err error
+		ctx, err = runtime.AnnotateContext(ctx, mux, req, "/kubeappsapis.plugins.kapp_controller.packages.v1alpha1.KappControllerPackagesService/CreateInstalledPackage", runtime.WithHTTPPathPattern("/plugins/kapp_controller/packages/v1alpha1/installedpackages"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := request_KappControllerPackagesService_CreateInstalledPackage_0(rctx, inboundMarshaler, client, req, pathParams)
+		resp, md, err := request_KappControllerPackagesService_CreateInstalledPackage_0(ctx, inboundMarshaler, client, req, pathParams)
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
@@ -1253,12 +1270,13 @@ func RegisterKappControllerPackagesServiceHandlerClient(ctx context.Context, mux
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/kubeappsapis.plugins.kapp_controller.packages.v1alpha1.KappControllerPackagesService/UpdateInstalledPackage", runtime.WithHTTPPathPattern("/plugins/kapp_controller/packages/v1alpha1/installedpackages/c/{installed_package_ref.context.cluster}/ns/{installed_package_ref.context.namespace}/{installed_package_ref.identifier}"))
+		var err error
+		ctx, err = runtime.AnnotateContext(ctx, mux, req, "/kubeappsapis.plugins.kapp_controller.packages.v1alpha1.KappControllerPackagesService/UpdateInstalledPackage", runtime.WithHTTPPathPattern("/plugins/kapp_controller/packages/v1alpha1/installedpackages/c/{installed_package_ref.context.cluster}/ns/{installed_package_ref.context.namespace}/{installed_package_ref.identifier}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := request_KappControllerPackagesService_UpdateInstalledPackage_0(rctx, inboundMarshaler, client, req, pathParams)
+		resp, md, err := request_KappControllerPackagesService_UpdateInstalledPackage_0(ctx, inboundMarshaler, client, req, pathParams)
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
@@ -1273,12 +1291,13 @@ func RegisterKappControllerPackagesServiceHandlerClient(ctx context.Context, mux
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/kubeappsapis.plugins.kapp_controller.packages.v1alpha1.KappControllerPackagesService/DeleteInstalledPackage", runtime.WithHTTPPathPattern("/plugins/kapp_controller/packages/v1alpha1/installedpackages/c/{installed_package_ref.context.cluster}/ns/{installed_package_ref.context.namespace}/{installed_package_ref.identifier}"))
+		var err error
+		ctx, err = runtime.AnnotateContext(ctx, mux, req, "/kubeappsapis.plugins.kapp_controller.packages.v1alpha1.KappControllerPackagesService/DeleteInstalledPackage", runtime.WithHTTPPathPattern("/plugins/kapp_controller/packages/v1alpha1/installedpackages/c/{installed_package_ref.context.cluster}/ns/{installed_package_ref.context.namespace}/{installed_package_ref.identifier}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := request_KappControllerPackagesService_DeleteInstalledPackage_0(rctx, inboundMarshaler, client, req, pathParams)
+		resp, md, err := request_KappControllerPackagesService_DeleteInstalledPackage_0(ctx, inboundMarshaler, client, req, pathParams)
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
@@ -1293,12 +1312,13 @@ func RegisterKappControllerPackagesServiceHandlerClient(ctx context.Context, mux
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/kubeappsapis.plugins.kapp_controller.packages.v1alpha1.KappControllerPackagesService/GetInstalledPackageResourceRefs", runtime.WithHTTPPathPattern("/plugins/kapp_controller/packages/v1alpha1/installedpackages/c/{installed_package_ref.context.cluster}/ns/{installed_package_ref.context.namespace}/{installed_package_ref.identifier}/resourcerefs"))
+		var err error
+		ctx, err = runtime.AnnotateContext(ctx, mux, req, "/kubeappsapis.plugins.kapp_controller.packages.v1alpha1.KappControllerPackagesService/GetInstalledPackageResourceRefs", runtime.WithHTTPPathPattern("/plugins/kapp_controller/packages/v1alpha1/installedpackages/c/{installed_package_ref.context.cluster}/ns/{installed_package_ref.context.namespace}/{installed_package_ref.identifier}/resourcerefs"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := request_KappControllerPackagesService_GetInstalledPackageResourceRefs_0(rctx, inboundMarshaler, client, req, pathParams)
+		resp, md, err := request_KappControllerPackagesService_GetInstalledPackageResourceRefs_0(ctx, inboundMarshaler, client, req, pathParams)
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
