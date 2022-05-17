@@ -63,7 +63,9 @@ func newSecretFromTlsConfigAndAuth(repoName types.NamespacedName,
 		switch auth.Type {
 		case corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_BASIC_AUTH:
 			if unp := auth.GetUsernamePassword(); unp != nil {
-				if unp.Username == RedactedString && unp.Password == RedactedString {
+				if unp.Username == "" || unp.Password == "" {
+					return nil, false, status.Errorf(codes.InvalidArgument, "Wrong combination of username and password")
+				} else if unp.Username == RedactedString && unp.Password == RedactedString {
 					isSameSecret = true
 				} else {
 					authString := fmt.Sprintf("%s:%s", unp.Username, unp.Password)
@@ -81,7 +83,7 @@ func newSecretFromTlsConfigAndAuth(repoName types.NamespacedName,
 					secret.Data[SecretAuthHeaderKey] = []byte("Bearer " + token)
 				}
 			} else {
-				return nil, false, status.Errorf(codes.Internal, "Bearer token is missing")
+				return nil, false, status.Errorf(codes.InvalidArgument, "Bearer token is missing")
 			}
 		case corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_CUSTOM:
 			if authHeaderValue := auth.GetHeader(); authHeaderValue != "" {
@@ -124,22 +126,10 @@ func newAppRepositoryAuth(secret *k8scorev1.Secret,
 
 	if auth != nil {
 		switch auth.Type {
-		case corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_BASIC_AUTH:
-			if basicAuthHeader := auth.GetUsernamePassword(); basicAuthHeader != nil {
-				appRepoAuth.Header = &apprepov1alpha1.AppRepositoryAuthHeader{
-					SecretKeyRef: k8scorev1.SecretKeySelector{
-						Key: SecretAuthHeaderKey,
-						LocalObjectReference: k8scorev1.LocalObjectReference{
-							Name: secret.Name,
-						},
-					},
-				}
-			} else {
-				return nil, status.Errorf(codes.InvalidArgument, "Basic authentication header is missing")
-			}
-		case corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_BEARER,
+		case corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_BASIC_AUTH,
+			corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_BEARER,
 			corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_CUSTOM:
-			if authHeader := auth.GetHeader(); authHeader != "" {
+			if _, ok := secret.Data[SecretAuthHeaderKey]; ok {
 				appRepoAuth.Header = &apprepov1alpha1.AppRepositoryAuthHeader{
 					SecretKeyRef: k8scorev1.SecretKeySelector{
 						Key: SecretAuthHeaderKey,

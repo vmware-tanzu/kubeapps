@@ -107,7 +107,7 @@ func newHelmRepoCrd(targetName types.NamespacedName,
 	if auth != nil || tlsConfig != nil {
 		if repoAuth, err := newAppRepositoryAuth(secret, tlsConfig, auth); err != nil {
 			return nil, err
-		} else {
+		} else if repoAuth != nil {
 			appRepoCrd.Spec.Auth = *repoAuth
 		}
 	}

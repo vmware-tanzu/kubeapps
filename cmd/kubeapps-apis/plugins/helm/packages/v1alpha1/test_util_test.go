@@ -80,6 +80,11 @@ func basicAuth(handler http.HandlerFunc, username, password, realm string) http.
 func newBasicAuthSecret(name, namespace, username, password string) *apiv1.Secret {
 	authString := fmt.Sprintf("%s:%s", username, password)
 	authHeader := fmt.Sprintf("Basic %s", base64.StdEncoding.EncodeToString([]byte(authString)))
+	return newAuthTokenSecret(name, namespace, authHeader)
+}
+
+// ref: https://kubernetes.io/docs/concepts/configuration/secret/#basic-authentication-secret
+func newAuthTokenSecret(name, namespace, token string) *apiv1.Secret {
 	return &apiv1.Secret{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      name,
@@ -87,7 +92,7 @@ func newBasicAuthSecret(name, namespace, username, password string) *apiv1.Secre
 		},
 		Type: apiv1.SecretTypeOpaque,
 		Data: map[string][]byte{
-			"authenticationHeader": []byte(authHeader),
+			"authorizationHeader": []byte(token),
 		},
 	}
 }

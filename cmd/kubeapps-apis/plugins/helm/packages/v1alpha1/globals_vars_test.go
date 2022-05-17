@@ -8,7 +8,7 @@ import (
 )
 
 var (
-	addRepo1 = v1alpha1.AppRepository{
+	addRepoSimple = v1alpha1.AppRepository{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       AppRepositoryKind,
 			APIVersion: AppRepositoryApi,
@@ -24,7 +24,7 @@ var (
 		},
 	}
 
-	addRepo2 = v1alpha1.AppRepository{
+	addRepoWithTLSCA = v1alpha1.AppRepository{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       AppRepositoryKind,
 			APIVersion: AppRepositoryApi,
@@ -45,7 +45,7 @@ var (
 		},
 	}
 
-	addRepo3 = v1alpha1.AppRepository{
+	addRepoTLSSecret = v1alpha1.AppRepository{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       AppRepositoryKind,
 			APIVersion: AppRepositoryApi,
@@ -66,7 +66,7 @@ var (
 		},
 	}
 
-	addRepo4 = v1alpha1.AppRepository{
+	addRepoAuthHeaderPassCredentials = v1alpha1.AppRepository{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       AppRepositoryKind,
 			APIVersion: AppRepositoryApi,
@@ -81,8 +81,10 @@ var (
 			Type: "helm",
 			Auth: v1alpha1.AppRepositoryAuth{
 				Header: &v1alpha1.AppRepositoryAuthHeader{
-					SecretKeyRef: v1.SecretKeySelector{LocalObjectReference: v1.LocalObjectReference{
-						Name: "apprepo-bar"},
+					SecretKeyRef: v1.SecretKeySelector{
+						LocalObjectReference: v1.LocalObjectReference{
+							Name: "apprepo-bar",
+						},
 						Key: "authorizationHeader",
 					},
 				},
@@ -91,31 +93,35 @@ var (
 		},
 	}
 
-	addRepoBearerToken = v1alpha1.AppRepository{
-		TypeMeta: metav1.TypeMeta{
-			Kind:       AppRepositoryKind,
-			APIVersion: AppRepositoryApi,
-		},
-		ObjectMeta: metav1.ObjectMeta{
-			Name:            "bar",
-			Namespace:       "foo",
-			ResourceVersion: "1",
-		},
-		Spec: v1alpha1.AppRepositorySpec{
-			URL:  "http://example.com",
-			Type: "helm",
-			Auth: v1alpha1.AppRepositoryAuth{
-				Header: &v1alpha1.AppRepositoryAuthHeader{
-					SecretKeyRef: v1.SecretKeySelector{LocalObjectReference: v1.LocalObjectReference{
-						Name: "apprepo-bar"},
-						Key: "authorizationHeader",
+	addRepoAuthHeaderWithSecretRef = func(secretName string) *v1alpha1.AppRepository {
+		return &v1alpha1.AppRepository{
+			TypeMeta: metav1.TypeMeta{
+				Kind:       AppRepositoryKind,
+				APIVersion: AppRepositoryApi,
+			},
+			ObjectMeta: metav1.ObjectMeta{
+				Name:            "bar",
+				Namespace:       "foo",
+				ResourceVersion: "1",
+			},
+			Spec: v1alpha1.AppRepositorySpec{
+				URL:  "http://example.com",
+				Type: "helm",
+				Auth: v1alpha1.AppRepositoryAuth{
+					Header: &v1alpha1.AppRepositoryAuthHeader{
+						SecretKeyRef: v1.SecretKeySelector{
+							LocalObjectReference: v1.LocalObjectReference{
+								Name: secretName,
+							},
+							Key: "authorizationHeader",
+						},
 					},
 				},
 			},
-		},
+		}
 	}
 
-	addRepo5 = v1alpha1.AppRepository{
+	addRepoOnlyPassCredentials = v1alpha1.AppRepository{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       AppRepositoryKind,
 			APIVersion: AppRepositoryApi,
@@ -127,6 +133,7 @@ var (
 		},
 		Spec: v1alpha1.AppRepositorySpec{
 			URL:             "http://example.com",
+			Type:            "helm",
 			PassCredentials: true,
 		},
 	}
@@ -168,7 +175,7 @@ var (
 		NamespaceScoped: false,
 	}
 
-	addRepoReq5 = &corev1.AddPackageRepositoryRequest{
+	addRepoReqTlsSkipVerify = &corev1.AddPackageRepositoryRequest{
 		Name:            "bar",
 		Context:         &corev1.Context{Namespace: "foo"},
 		Type:            "helm",
@@ -179,7 +186,7 @@ var (
 		},
 	}
 
-	addRepoReq4 = &corev1.AddPackageRepositoryRequest{
+	addRepoReqSimple = &corev1.AddPackageRepositoryRequest{
 		Name:            "bar",
 		Context:         &corev1.Context{Namespace: "foo"},
 		Type:            "helm",
@@ -187,7 +194,7 @@ var (
 		NamespaceScoped: true,
 	}
 
-	addRepoReq6 = func(ca []byte) *corev1.AddPackageRepositoryRequest {
+	addRepoReqTLSCA = func(ca []byte) *corev1.AddPackageRepositoryRequest {
 		return &corev1.AddPackageRepositoryRequest{
 			Name:            "bar",
 			Context:         &corev1.Context{Namespace: "foo"},
@@ -202,7 +209,7 @@ var (
 		}
 	}
 
-	addRepoReq7 = &corev1.AddPackageRepositoryRequest{
+	addRepoReqTLSSecretRef = &corev1.AddPackageRepositoryRequest{
 		Name:            "bar",
 		Context:         &corev1.Context{Namespace: "foo"},
 		Type:            "helm",
@@ -217,7 +224,27 @@ var (
 		},
 	}
 
-	addRepoReq8 = &corev1.AddPackageRepositoryRequest{
+	addRepoReqBasicAuth = func(username, password string) *corev1.AddPackageRepositoryRequest {
+		return &corev1.AddPackageRepositoryRequest{
+			Name:            "bar",
+			Context:         &corev1.Context{Namespace: "foo"},
+			Type:            "helm",
+			Url:             "http://example.com",
+			NamespaceScoped: true,
+			Auth: &corev1.PackageRepositoryAuth{
+				Type: corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_BASIC_AUTH,
+				PackageRepoAuthOneOf: &corev1.PackageRepositoryAuth_UsernamePassword{
+					UsernamePassword: &corev1.UsernamePassword{
+						Username: username,
+						Password: password,
+					},
+				},
+				PassCredentials: true,
+			},
+		}
+	}
+
+	addRepoReqWrongBasicAuth = &corev1.AddPackageRepositoryRequest{
 		Name:            "bar",
 		Context:         &corev1.Context{Namespace: "foo"},
 		Type:            "helm",
@@ -228,39 +255,47 @@ var (
 			PackageRepoAuthOneOf: &corev1.PackageRepositoryAuth_UsernamePassword{
 				UsernamePassword: &corev1.UsernamePassword{
 					Username: "baz",
-					Password: "zot",
 				},
 			},
 			PassCredentials: true,
 		},
 	}
 
-	/*	addRepoReq9 = func(pub, priv []byte) *corev1.AddPackageRepositoryRequest {
+	addRepoReqBearerToken = func(token string) *corev1.AddPackageRepositoryRequest {
 		return &corev1.AddPackageRepositoryRequest{
 			Name:            "bar",
 			Context:         &corev1.Context{Namespace: "foo"},
 			Type:            "helm",
 			Url:             "http://example.com",
 			NamespaceScoped: true,
-			Auth:            tlsAuth(pub, priv),
-		}
-	}*/
-
-	addRepoReq10 = &corev1.AddPackageRepositoryRequest{
-		Name:            "bar",
-		Context:         &corev1.Context{Namespace: "foo"},
-		Type:            "helm",
-		Url:             "http://example.com",
-		NamespaceScoped: true,
-		Auth: &corev1.PackageRepositoryAuth{
-			Type: corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_BEARER,
-			PackageRepoAuthOneOf: &corev1.PackageRepositoryAuth_Header{
-				Header: "foobarzot",
+			Auth: &corev1.PackageRepositoryAuth{
+				Type: corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_BEARER,
+				PackageRepoAuthOneOf: &corev1.PackageRepositoryAuth_Header{
+					Header: token,
+				},
 			},
-		},
+		}
 	}
 
-	addRepoReq11 = &corev1.AddPackageRepositoryRequest{
+	addRepoReqAuthWithSecret = func(authType corev1.PackageRepositoryAuth_PackageRepositoryAuthType, secretName string) *corev1.AddPackageRepositoryRequest {
+		return &corev1.AddPackageRepositoryRequest{
+			Name:            "bar",
+			Context:         &corev1.Context{Namespace: "foo"},
+			Type:            "helm",
+			Url:             "http://example.com",
+			NamespaceScoped: true,
+			Auth: &corev1.PackageRepositoryAuth{
+				Type: authType,
+				PackageRepoAuthOneOf: &corev1.PackageRepositoryAuth_SecretRef{
+					SecretRef: &corev1.SecretKeyReference{
+						Name: secretName,
+					},
+				},
+			},
+		}
+	}
+
+	addRepoReqCustomAuth = &corev1.AddPackageRepositoryRequest{
 		Name:            "bar",
 		Context:         &corev1.Context{Namespace: "foo"},
 		Type:            "helm",
@@ -274,76 +309,21 @@ var (
 		},
 	}
 
-	addRepoReq12 = &corev1.AddPackageRepositoryRequest{
+	addRepoReqTLSDifferentSecretAuth = &corev1.AddPackageRepositoryRequest{
+		Name:      "bar",
+		Context:   &corev1.Context{Namespace: "foo"},
+		Type:      "helm",
+		Url:       "http://example.com",
+		Auth:      packageRepoSecretBasicAuth("secret-1"),
+		TlsConfig: packageRepoSecretTls("secret-2"),
+	}
+
+	addRepoReqOnlyPassCredentials = &corev1.AddPackageRepositoryRequest{
 		Name:            "bar",
 		Context:         &corev1.Context{Namespace: "foo"},
 		Type:            "helm",
 		Url:             "http://example.com",
 		NamespaceScoped: true,
-		Auth: &corev1.PackageRepositoryAuth{
-			Type: corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_DOCKER_CONFIG_JSON,
-			PackageRepoAuthOneOf: &corev1.PackageRepositoryAuth_DockerCreds{
-				DockerCreds: &corev1.DockerCredentials{
-					Server:   "your.private.registry.example.com",
-					Username: "janedoe",
-					Password: "xxxxxxxx",
-					Email:    "jdoe@example.com",
-				},
-			},
-		},
-	}
-
-	addRepoReq13 = &corev1.AddPackageRepositoryRequest{
-		Name:    "bar",
-		Context: &corev1.Context{Namespace: "foo"},
-		Type:    "helm",
-		Url:     "http://example.com",
-		Auth:    secret1Auth,
-	}
-
-	addRepoReq14 = &corev1.AddPackageRepositoryRequest{
-		Name:    "bar",
-		Context: &corev1.Context{Namespace: "foo"},
-		Type:    "helm",
-		Url:     "http://example.com",
-		Auth:    secret1Auth,
-		TlsConfig: &corev1.PackageRepositoryTlsConfig{
-			PackageRepoTlsConfigOneOf: &corev1.PackageRepositoryTlsConfig_SecretRef{
-				SecretRef: &corev1.SecretKeyReference{
-					Name: "secret-2",
-				},
-			},
-		},
-	}
-
-	/*add_repo_req_18 = &corev1.AddPackageRepositoryRequest{
-		Name:    "my-podinfo-4",
-		Context: &corev1.Context{Namespace: "default"},
-		Type:    "helm",
-		Url:     podinfo_basic_auth_repo_url,
-		Auth:    secret1Auth,
-	}
-
-	add_repo_req_19 = &corev1.AddPackageRepositoryRequest{
-		Name:    "my-podinfo-4",
-		Context: &corev1.Context{Namespace: "default"},
-		Type:    "helm",
-		Url:     podinfo_tls_repo_url,
-		Auth: &corev1.PackageRepositoryAuth{
-			Type: corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_TLS,
-			PackageRepoAuthOneOf: &corev1.PackageRepositoryAuth_SecretRef{
-				SecretRef: &corev1.SecretKeyReference{
-					Name: "secret-2",
-				},
-			},
-		},
-	}*/
-
-	addRepoReq20 = &corev1.AddPackageRepositoryRequest{
-		Name:    "bar",
-		Context: &corev1.Context{Namespace: "foo"},
-		Type:    "helm",
-		Url:     "http://example.com",
 		Auth: &corev1.PackageRepositoryAuth{
 			PassCredentials: true,
 		},
@@ -357,12 +337,24 @@ var (
 		PackageRepoRef: repoRef("bar", "kubeapps"),
 	}
 
-	secret1Auth = &corev1.PackageRepositoryAuth{
-		Type: corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_BASIC_AUTH,
-		PackageRepoAuthOneOf: &corev1.PackageRepositoryAuth_SecretRef{
-			SecretRef: &corev1.SecretKeyReference{
-				Name: "secret-1",
+	packageRepoSecretBasicAuth = func(secretName string) *corev1.PackageRepositoryAuth {
+		return &corev1.PackageRepositoryAuth{
+			Type: corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_BASIC_AUTH,
+			PackageRepoAuthOneOf: &corev1.PackageRepositoryAuth_SecretRef{
+				SecretRef: &corev1.SecretKeyReference{
+					Name: "secret-1",
+				},
 			},
-		},
+		}
+	}
+
+	packageRepoSecretTls = func(secretName string) *corev1.PackageRepositoryTlsConfig {
+		return &corev1.PackageRepositoryTlsConfig{
+			PackageRepoTlsConfigOneOf: &corev1.PackageRepositoryTlsConfig_SecretRef{
+				SecretRef: &corev1.SecretKeyReference{
+					Name: secretName,
+				},
+			},
+		}
 	}
 )
