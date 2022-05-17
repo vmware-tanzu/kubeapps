@@ -31,7 +31,7 @@ The aforementioned [integration](https://github.com/vmware-tanzu/kubeapps/blob/m
 
 These tests can be run either [locally](#running-browser-tests-locally) or in a [container environment](#running-browser-tests-in-a-pod).
 
-You can set up a configured Kubeapps instance in your cluster with the [script/setup-kubeapps.sh](https://github.com/vmware-tanzu/kubeapps/blob/site-new/site/content/docs/latest/reference/scripts/setup-kubeapps.sh) script.
+You can set up a configured Kubeapps instance in your cluster with the [script/setup-kubeapps.sh](https://github.com/vmware-tanzu/kubeapps/blob/main/site/content/docs/latest/reference/scripts/setup-kubeapps.sh) script.
 
 ### Running browser tests locally
 

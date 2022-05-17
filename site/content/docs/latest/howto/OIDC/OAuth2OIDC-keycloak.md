@@ -282,7 +282,7 @@ frontend:
     type: LoadBalancer
 
 # Auth Proxy configuration for OIDC support
-# ref: https://github.com/vmware-tanzu/kubeapps/blob/site-new/site/content/docs/latest/tutorials/using-an-OIDC-provider.md
+# ref: https://github.com/vmware-tanzu/kubeapps/blob/main/site/content/docs/latest/tutorials/using-an-OIDC-provider.md
 authProxy:
   ## Set to true if Kubeapps should configure the OAuth login/logout URIs defined below.
   #

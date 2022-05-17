@@ -18,7 +18,7 @@ This guide aims to provide the instructions to easily setup the environment to t
 
 ## Environment setup
 
-We are providing scripts to automatically setup both Kubeapps and the services to integrate on a K8s cluster. Find them under the [scripts](https://github.com/vmware-tanzu/kubeapps/blob/site-new/site/content/docs/latest/reference/scripts) directory.
+We are providing scripts to automatically setup both Kubeapps and the services to integrate on a K8s cluster. Find them under the [scripts](https://github.com/vmware-tanzu/kubeapps/blob/main/site/content/docs/latest/reference/scripts) directory.
 
 Currently supported integrations:
 
@@ -28,8 +28,8 @@ Currently supported integrations:
 
 You can setup environment to test Kubeapps integration with Harbor using the scripts below:
 
-- [setup-kubeapps](https://github.com/vmware-tanzu/kubeapps/blob/site-new/site/content/docs/latest/reference/scripts/setup-kubeapps.sh).
-- [setup-harbor](https://github.com/vmware-tanzu/kubeapps/blob/site-new/site/content/docs/latest/reference/scripts/setup-harbor.sh).
+- [setup-kubeapps](https://github.com/vmware-tanzu/kubeapps/blob/main/site/content/docs/latest/reference/scripts/setup-kubeapps.sh).
+- [setup-harbor](https://github.com/vmware-tanzu/kubeapps/blob/main/site/content/docs/latest/reference/scripts/setup-harbor.sh).
 
 These scripts will create the necessary namespaces, install the charts, wait for them to be available, and perform any extra action that might be needed. Find detailed information about how to use these scripts running the commands below:
 
@@ -38,7 +38,7 @@ These scripts will create the necessary namespaces, install the charts, wait for
 ./setup-harbor.sh --help
 ```
 
-You can also use the [setup-kubeapps-harbor](https://github.com/vmware-tanzu/kubeapps/blob/site-new/site/content/docs/latest/reference/scripts/setup-kubeapps-harbor.sh) script which is a wrapper that uses both the scripts mentioned above with some default values:
+You can also use the [setup-kubeapps-harbor](https://github.com/vmware-tanzu/kubeapps/blob/main/site/content/docs/latest/reference/scripts/setup-kubeapps-harbor.sh) script which is a wrapper that uses both the scripts mentioned above with some default values:
 
 - Install Harbor under the `harbor` namespace.
 - Install Kubeapps under the `kubeapps` namespace.
@@ -46,6 +46,6 @@ You can also use the [setup-kubeapps-harbor](https://github.com/vmware-tanzu/kub
 
 #### Cleaning up the environment
 
-You can use the scripts [delete-kubeapps](https://github.com/vmware-tanzu/kubeapps/blob/site-new/site/content/docs/latest/reference/scripts/delete-kubeapps.sh) and [delete-harbor](https://github.com/vmware-tanzu/kubeapps/blob/site-new/site/content/docs/latest/reference/scripts/delete-harbor.sh) to uninstall Kubeapps and Harbor releases from the cluster, respectively. These scripts will also remove the associated namespaces and resources.
+You can use the scripts [delete-kubeapps](https://github.com/vmware-tanzu/kubeapps/blob/main/site/content/docs/latest/reference/scripts/delete-kubeapps.sh) and [delete-harbor](https://github.com/vmware-tanzu/kubeapps/blob/main/site/content/docs/latest/reference/scripts/delete-harbor.sh) to uninstall Kubeapps and Harbor releases from the cluster, respectively. These scripts will also remove the associated namespaces and resources.
 
-> Note: you can use the [delete-kubeapps-harbor](https://github.com/vmware-tanzu/kubeapps/blob/site-new/site/content/docs/latest/reference/scripts/delete-kubeapps-harbor.sh) script to clean up the environment if you used the [setup-kubeapps-harbor](https://github.com/vmware-tanzu/kubeapps/blob/site-new/site/content/docs/latest/reference/scripts/setup-kubeapps-harbor.sh) script to setup the environment.
+> Note: you can use the [delete-kubeapps-harbor](https://github.com/vmware-tanzu/kubeapps/blob/main/site/content/docs/latest/reference/scripts/delete-kubeapps-harbor.sh) script to clean up the environment if you used the [setup-kubeapps-harbor](https://github.com/vmware-tanzu/kubeapps/blob/main/site/content/docs/latest/reference/scripts/setup-kubeapps-harbor.sh) script to setup the environment.
