@@ -2,7 +2,7 @@
   "swagger": "2.0",
   "info": {
     "title": "Kubeapps API",
-    "description": "[![CircleCI](https://circleci.com/gh/kubeapps/kubeapps/tree/main.svg?style=svg)](https://circleci.com/gh/kubeapps/kubeapps/tree/main)\n \n [Kubeapps](https://github.com/vmware-tanzu/kubeapps) is a web-based UI for deploying and managing applications in Kubernetes clusters.\n \n Note: this API documentation is still in an initial stage and is subject to change. Before coupling to it, please [drop us an issue](https://github.com/vmware-tanzu/kubeapps/issues/new/choose) or reach us [via Slack](https://kubernetes.slack.com/messages/kubeapps) to know more about your use case and see how we can assist you.\n #### Developer Documentation\n - The [Kubeapps architecture overview](https://github.com/vmware-tanzu/kubeapps/blob/main/docs/background/architecture.md).\n - The [Kubeapps Developer Documentation](https://github.com/vmware-tanzu/kubeapps/blob/main/docs/reference/developer/README.md) for instructions on setting up the developer environment for developing on Kubeapps and its components.\n - The [Kubeapps Build Guide](https://github.com/vmware-tanzu/kubeapps/blob/main/docs/reference/developer/build.md) for instructions on setting up the build environment and building Kubeapps from source.\n",
+    "description": "[![CircleCI](https://circleci.com/gh/vmware-tanzu/kubeapps/tree/main.svg?style=svg)](https://circleci.com/gh/vmware-tanzu/kubeapps/tree/main)\n \n [Kubeapps](https://github.com/vmware-tanzu/kubeapps) is a web-based UI for deploying and managing applications in Kubernetes clusters.\n \n Note: this API documentation is still in an initial stage and is subject to change. Before coupling to it, please [drop us an issue](https://github.com/vmware-tanzu/kubeapps/issues/new/choose) or reach us [via Slack](https://kubernetes.slack.com/messages/kubeapps) to know more about your use case and see how we can assist you.\n #### Developer Documentation\n - The [Kubeapps architecture overview](https://github.com/vmware-tanzu/kubeapps/blob/main/site/content/docs/latest/background/architecture.md).\n - The [Kubeapps Developer Documentation](https://github.com/vmware-tanzu/kubeapps/blob/main/site/content/docs/latest/reference/developer/README.md) for instructions on setting up the developer environment for developing on Kubeapps and its components.\n - The [Kubeapps Build Guide](https://github.com/vmware-tanzu/kubeapps/blob/main/site/content/docs/latest/reference/developer/build.md) for instructions on setting up the build environment and building Kubeapps from source.\n",
     "termsOfService": "https://github.com/vmware-tanzu/kubeapps/blob/main/LICENSE",
     "version": "0.1.0",
     "license": {
@@ -1601,7 +1601,7 @@
         ]
       }
     },
-    "/plugins/fluxv2/packages/v1alpha1/repositories/plugin/{packageRepoRef.plugin.name}/{packageRepoRef.plugin.version}/c/{packageRepoRef.context.cluster}/ns/{packageRepoRef.context.namespace}/{packageRepoRef.identifier}": {
+    "/plugins/fluxv2/packages/v1alpha1/repositories/c/{packageRepoRef.context.cluster}/ns/{packageRepoRef.context.namespace}/{packageRepoRef.identifier}": {
       "get": {
         "operationId": "FluxV2RepositoriesService_GetPackageRepositoryDetail",
         "responses": {
@@ -1624,20 +1624,6 @@
         },
         "parameters": [
           {
-            "name": "packageRepoRef.plugin.name",
-            "description": "Plugin name\n\nThe name of the plugin, such as `fluxv2.packages` or `kapp_controller.packages`.",
-            "in": "path",
-            "required": true,
-            "type": "string"
-          },
-          {
-            "name": "packageRepoRef.plugin.version",
-            "description": "Plugin version\n\nThe version of the plugin, such as v1alpha1",
-            "in": "path",
-            "required": true,
-            "type": "string"
-          },
-          {
             "name": "packageRepoRef.context.cluster",
             "description": "Cluster\n\nA cluster name can be provided to target a specific cluster if multiple\nclusters are configured, otherwise all clusters will be assumed.",
             "in": "path",
@@ -1658,6 +1644,20 @@
             "required": true,
             "type": "string",
             "pattern": ".+"
+          },
+          {
+            "name": "packageRepoRef.plugin.name",
+            "description": "Plugin name. The name of the plugin, such as `fluxv2.packages` or `kapp_controller.packages`.",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "packageRepoRef.plugin.version",
+            "description": "Plugin version. The version of the plugin, such as v1alpha1",
+            "in": "query",
+            "required": false,
+            "type": "string"
           }
         ],
         "tags": [
@@ -1686,20 +1686,6 @@
         },
         "parameters": [
           {
-            "name": "packageRepoRef.plugin.name",
-            "description": "Plugin name\n\nThe name of the plugin, such as `fluxv2.packages` or `kapp_controller.packages`.",
-            "in": "path",
-            "required": true,
-            "type": "string"
-          },
-          {
-            "name": "packageRepoRef.plugin.version",
-            "description": "Plugin version\n\nThe version of the plugin, such as v1alpha1",
-            "in": "path",
-            "required": true,
-            "type": "string"
-          },
-          {
             "name": "packageRepoRef.context.cluster",
             "description": "Cluster\n\nA cluster name can be provided to target a specific cluster if multiple\nclusters are configured, otherwise all clusters will be assumed.",
             "in": "path",
@@ -1720,6 +1706,20 @@
             "required": true,
             "type": "string",
             "pattern": ".+"
+          },
+          {
+            "name": "packageRepoRef.plugin.name",
+            "description": "Plugin name. The name of the plugin, such as `fluxv2.packages` or `kapp_controller.packages`.",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "packageRepoRef.plugin.version",
+            "description": "Plugin version. The version of the plugin, such as v1alpha1",
+            "in": "query",
+            "required": false,
+            "type": "string"
           }
         ],
         "tags": [
@@ -1747,20 +1747,6 @@
           }
         },
         "parameters": [
-          {
-            "name": "packageRepoRef.plugin.name",
-            "description": "Plugin name\n\nThe name of the plugin, such as `fluxv2.packages` or `kapp_controller.packages`.",
-            "in": "path",
-            "required": true,
-            "type": "string"
-          },
-          {
-            "name": "packageRepoRef.plugin.version",
-            "description": "Plugin version\n\nThe version of the plugin, such as v1alpha1",
-            "in": "path",
-            "required": true,
-            "type": "string"
-          },
           {
             "name": "packageRepoRef.context.cluster",
             "description": "Cluster\n\nA cluster name can be provided to target a specific cluster if multiple\nclusters are configured, otherwise all clusters will be assumed.",
@@ -4884,7 +4870,7 @@
       "properties": {
         "name": {
           "type": "string",
-          "title": "The name of an existing secret in the same namespace as the object\nthat refers to it (e.g. PackageRepository), containing authentication\ncredentials for the said package repository.\n- For HTTP/S basic auth the secret must be of type\n  \"kubernetes.io/basic-auth\" or opaque and contain username and\n  password fields\n- For TLS the secret must be of type \"kubernetes.io/tls\" or opaque\n  and contain a certFile and keyFile, and/or\n  caCert fields.\n- For Bearer or Custom Auth, the secret must be opaque, and\n  the key must be provided\n- For Docker Registry Credentials (OCI registries) the secret\n  must of of type \"kubernetes.io/dockerconfigjson”\nFor more details, refer to\nhttps://kubernetes.io/docs/concepts/configuration/secret/"
+          "title": "The name of an existing secret in the same namespace as the object\nthat refers to it (e.g. PackageRepository), containing authentication\ncredentials for the said package repository.\n- For HTTP/S basic auth the secret must be of type\n  \"kubernetes.io/basic-auth\" or opaque and contain username and\n  password fields\n- For TLS the secret must be of type \"kubernetes.io/tls\" or opaque\n  and contain a certFile and keyFile, and/or\n  caCert fields.\n- For Bearer or Custom Auth, the secret must be opaque, and\n  the key must be provided\n- For Docker Registry Credentials (OCI registries) the secret\n  must of of type \"kubernetes.io/dockerconfigjson\"\nFor more details, refer to\nhttps://kubernetes.io/docs/concepts/configuration/secret/"
         },
         "key": {
           "type": "string",
@@ -4961,7 +4947,7 @@
       "properties": {
         "packageRepoRef": {
           "$ref": "#/definitions/v1alpha1PackageRepositoryReference",
-          "title": "A reference uniquely identifying the package repository being updated. \nThe only required field"
+          "title": "A reference uniquely identifying the package repository being updated.\nThe only required field"
         },
         "url": {
           "type": "string",

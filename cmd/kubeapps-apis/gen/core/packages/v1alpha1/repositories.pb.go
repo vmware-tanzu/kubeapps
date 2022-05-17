@@ -786,7 +786,7 @@ type SecretKeyReference struct {
 	// - For Bearer or Custom Auth, the secret must be opaque, and
 	//   the key must be provided
 	// - For Docker Registry Credentials (OCI registries) the secret
-	//   must of of type "kubernetes.io/dockerconfigjson”
+	//   must of of type "kubernetes.io/dockerconfigjson"
 	// For more details, refer to
 	// https://kubernetes.io/docs/concepts/configuration/secret/
 	Name string `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`

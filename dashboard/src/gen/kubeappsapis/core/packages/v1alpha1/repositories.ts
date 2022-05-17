@@ -1,7 +1,7 @@
 /* eslint-disable */
 import Long from "long";
 import { grpc } from "@improbable-eng/grpc-web";
-import * as _m0 from "protobufjs/minimal";
+import _m0 from "protobufjs/minimal";
 import { Context } from "../../../../kubeappsapis/core/packages/v1alpha1/packages";
 import { Plugin } from "../../../../kubeappsapis/core/plugins/v1alpha1/plugins";
 import { Any } from "../../../../google/protobuf/any";
@@ -241,7 +241,7 @@ export interface SecretKeyReference {
    * - For Bearer or Custom Auth, the secret must be opaque, and
    *   the key must be provided
    * - For Docker Registry Credentials (OCI registries) the secret
-   *   must of of type "kubernetes.io/dockerconfigjson”
+   *   must of of type "kubernetes.io/dockerconfigjson"
    * For more details, refer to
    * https://kubernetes.io/docs/concepts/configuration/secret/
    */
