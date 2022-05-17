@@ -232,7 +232,8 @@ func validateUserManagedRepoSecret(
 					if secret.Data[SecretAuthHeaderKey] == nil {
 						return nil, status.Errorf(codes.Internal, "Specified secret [%s] missing key '%s'", secretRef, SecretAuthHeaderKey)
 					}
-				// TODO(rcastelblanq) Implement PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_DOCKER_CONFIG_JSON with custom repo data
+				// TODO(rcastelblanq) Implement PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_DOCKER_CONFIG_JSON
+				// TODO(rcastelblanq) Implement PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_TLS
 				default:
 					return nil, status.Errorf(codes.Internal, "Package repository authentication type %q is not supported", auth.Type)
 				}

@@ -312,13 +312,8 @@ func newServerWithSecrets(t *testing.T, secrets []runtime.Object) *Server {
 			Build(), nil
 	}
 
-	// Creating the SQL mock manager
-	//_, cleanup, manager := setMockManager(t)
-
-	// 	return makeServer(t, true, nil, repos...)
 	return &Server{
-		clientGetter: clientGetter,
-		//manager:                  manager,
+		clientGetter:             clientGetter,
 		globalPackagingNamespace: globalPackagingNamespace,
 		globalPackagingCluster:   globalPackagingCluster,
 		chartClientFactory:       &fake.ChartClientFactory{},
@@ -326,7 +321,7 @@ func newServerWithSecrets(t *testing.T, secrets []runtime.Object) *Server {
 		createReleaseFunc:        agent.CreateRelease,
 		kubeappsCluster:          KubeappsCluster,
 		pluginConfig:             common.NewDefaultPluginConfig(),
-	} //, cleanup
+	}
 }
 
 func TestGetAvailablePackageSummaries(t *testing.T) {

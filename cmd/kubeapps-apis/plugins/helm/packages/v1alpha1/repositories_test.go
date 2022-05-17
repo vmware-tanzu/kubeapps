@@ -282,7 +282,8 @@ func TestAddPackageRepository(t *testing.T) {
 							t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got))
 						}
 
-						/*if tc.expectedCreatedSecret != nil {
+						/* TODO(rcastelblanq) Check created secrets
+						if tc.expectedCreatedSecret != nil {
 							if !strings.HasPrefix(actualRepo.Spec.SecretRef.Name, tc.expectedRepo.Spec.SecretRef.Name) {
 								t.Errorf("SecretRef [%s] was expected to start with [%s]",
 									actualRepo.Spec.SecretRef.Name, tc.expectedRepo.Spec.SecretRef.Name)
