@@ -1,5 +1,5 @@
 extends: existence
-message: Be careful with '%s', it’s profane in some cases.
+message: Be careful with '%s', it's profane in some cases.
 level: warning
 ignorecase: true
 tokens:
