@@ -1269,9 +1269,10 @@ core:
 			pluginConfig, err := common.ParsePluginConfig(filename)
 			if err != nil && !strings.Contains(err.Error(), tc.exp_error_str) {
 				t.Errorf("err got %q, want to find %q", err.Error(), tc.exp_error_str)
-			}
-			if got, want := pluginConfig.VersionsInSummary, tc.exp_versions_in_summary; !cmp.Equal(want, got, opts) {
-				t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opts))
+			} else if pluginConfig != nil {
+				if got, want := pluginConfig.VersionsInSummary, tc.exp_versions_in_summary; !cmp.Equal(want, got, opts) {
+					t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opts))
+				}
 			}
 		})
 	}
@@ -1326,9 +1327,10 @@ core:
 			pluginConfig, err := common.ParsePluginConfig(filename)
 			if err != nil && !strings.Contains(err.Error(), tc.exp_error_str) {
 				t.Errorf("err got %q, want to find %q", err.Error(), tc.exp_error_str)
-			}
-			if got, want := pluginConfig.TimeoutSeconds, tc.exp_timeout; !cmp.Equal(want, got, opts) {
-				t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opts))
+			} else if pluginConfig != nil {
+				if got, want := pluginConfig.TimeoutSeconds, tc.exp_timeout; !cmp.Equal(want, got, opts) {
+					t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opts))
+				}
 			}
 		})
 	}
