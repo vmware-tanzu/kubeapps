@@ -187,7 +187,7 @@ func TestAddPackageRepository(t *testing.T) {
 			statusCode:         codes.OK,
 			userManagedSecrets: true,
 		},
-		// TLS and AUTH combination
+		// Others
 		{
 			name:       "errors when package repository with 1 secret for TLS CA and a different secret for basic auth (kubeapps managed secrets)",
 			request:    addRepoReqTLSDifferentSecretAuth,
@@ -205,6 +205,13 @@ func TestAddPackageRepository(t *testing.T) {
 			expectedResponse: addRepoExpectedResp,
 			expectedRepo:     &addRepoOnlyPassCredentials,
 			statusCode:       codes.OK,
+		},
+		{
+			name:               "package repository with reference to malformed secret",
+			request:            addRepoReqAuthWithSecret(corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_BASIC_AUTH, "secret-basic"),
+			existingSecret:     newTlsSecret("secret-basic", "foo", nil, nil, nil), // Creates empty secret
+			userManagedSecrets: true,
+			statusCode:         codes.Internal,
 		},
 	}
 
