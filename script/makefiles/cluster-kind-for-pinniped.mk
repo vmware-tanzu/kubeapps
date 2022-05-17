@@ -17,11 +17,11 @@ ${CLUSTER_CONFIG_FOR_PINNIPED}-for-pinniped:
 	kind create cluster \
 		--kubeconfig ${CLUSTER_CONFIG_FOR_PINNIPED} \
 		--name ${CLUSTER_NAME_FOR_PINNIPED} \
-		--config=./docs/howto/manifests/kubeapps-local-dev-apiserver-no-oidc-config.yaml \
+		--config=./site/content/docs/latest/reference/manifests/kubeapps-local-dev-apiserver-no-oidc-config.yaml \
 		--retain \
 		--wait 10s
-	kubectl apply --kubeconfig=${CLUSTER_CONFIG_FOR_PINNIPED} -f ./docs/howto/manifests/kubeapps-local-dev-users-rbac.yaml
-	kubectl apply --kubeconfig=${CLUSTER_CONFIG_FOR_PINNIPED} -f ./docs/howto/manifests/ingress-nginx-kind-with-large-proxy-buffers.yaml
+	kubectl apply --kubeconfig=${CLUSTER_CONFIG_FOR_PINNIPED} -f ./site/content/docs/latest/reference/manifests/kubeapps-local-dev-users-rbac.yaml
+	kubectl apply --kubeconfig=${CLUSTER_CONFIG_FOR_PINNIPED} -f ./site/content/docs/latest/reference/manifests/ingress-nginx-kind-with-large-proxy-buffers.yaml
 	# TODO: need to add wait for condition=exists or similar - https://github.com/kubernetes/kubernetes/issues/83242
 	sleep 5
 	kubectl wait --kubeconfig=${CLUSTER_CONFIG_FOR_PINNIPED} --namespace ingress-nginx \
@@ -41,11 +41,11 @@ ${ADDITIONAL_CLUSTER_CONFIG_FOR_PINNIPED}-for-pinniped: devel/dex.crt-for-pinnip
 	kind create cluster \
 		--kubeconfig ${ADDITIONAL_CLUSTER_CONFIG_FOR_PINNIPED} \
 		--name ${ADDITIONAL_CLUSTER_NAME_FOR_PINNIPED} \
-		--config=./docs/howto/manifests/kubeapps-local-dev-additional-apiserver-config-for-pinniped.yaml \
+		--config=./site/content/docs/latest/reference/manifests/kubeapps-local-dev-additional-apiserver-config-for-pinniped.yaml \
 		--retain \
 		--wait 10s
-	kubectl apply --kubeconfig=${ADDITIONAL_CLUSTER_CONFIG_FOR_PINNIPED} -f ./docs/howto/manifests/kubeapps-local-dev-users-rbac.yaml
-	kubectl apply --kubeconfig=${ADDITIONAL_CLUSTER_CONFIG_FOR_PINNIPED} -f ./docs/howto/manifests/kubeapps-local-dev-namespace-discovery-rbac.yaml
+	kubectl apply --kubeconfig=${ADDITIONAL_CLUSTER_CONFIG_FOR_PINNIPED} -f ./site/content/docs/latest/reference/manifests/kubeapps-local-dev-users-rbac.yaml
+	kubectl apply --kubeconfig=${ADDITIONAL_CLUSTER_CONFIG_FOR_PINNIPED} -f ./site/content/docs/latest/reference/manifests/kubeapps-local-dev-namespace-discovery-rbac.yaml
 
 additional-cluster-kind-for-pinniped: ${ADDITIONAL_CLUSTER_CONFIG_FOR_PINNIPED}-for-pinniped
 
