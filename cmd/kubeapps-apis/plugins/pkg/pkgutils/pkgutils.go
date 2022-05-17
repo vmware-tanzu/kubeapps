@@ -182,29 +182,29 @@ func AvailablePackageSummaryFromChart(chart *models.Chart, plugin *plugins.Plugi
 // https://github.com/vmware-tanzu/kubeapps/pull/4094#discussion_r790349962.
 // Will come back to this
 
-// GetUnescapedChartID takes a chart id with URI-encoded characters and decode them. Ex: 'foo%2Fbar' becomes 'foo/bar'
-// also checks that the chart ID is in the expected format, namely "repoName/chartName"
-func GetUnescapedChartID(chartID string) (string, error) {
-	unescapedChartID, err := url.QueryUnescape(chartID)
+// GetUnescapedPackageID takes a package id with URI-encoded characters and decode them. Ex: 'foo%2Fbar' becomes 'foo/bar'
+// also checks that the package ID is in the expected format, namely "repoName/packageName"
+func GetUnescapedPackageID(packageID string) (string, error) {
+	unescapedPackageID, err := url.QueryUnescape(packageID)
 	if err != nil {
-		return "", status.Errorf(codes.InvalidArgument, "Unable to decode chart ID chart: %v", chartID)
+		return "", status.Errorf(codes.InvalidArgument, "Unable to decode package ID: %v", packageID)
 	}
 	// TODO(agamez): support ID with multiple slashes, eg: aaa/bbb/ccc
-	chartIDParts := strings.Split(unescapedChartID, "/")
-	if len(chartIDParts) != 2 {
-		return "", status.Errorf(codes.InvalidArgument, "Incorrect package ref dentifier, currently just 'foo/bar' patterns are supported: %s", chartID)
+	packageIDParts := strings.Split(unescapedPackageID, "/")
+	if len(packageIDParts) != 2 {
+		return "", status.Errorf(codes.InvalidArgument, "Incorrect package ref dentifier, currently just 'foo/bar' patterns are supported: %s", packageID)
 	}
-	return unescapedChartID, nil
+	return unescapedPackageID, nil
 }
 
-func SplitChartIdentifier(chartID string) (repoName, chartName string, err error) {
-	// getUnescapedChartID also ensures that there are two parts (ie. repo/chart-name only)
-	unescapedChartID, err := GetUnescapedChartID(chartID)
+func SplitPackageIdentifier(packageID string) (repoName, packageName string, err error) {
+	// getUnescapedChartID also ensures that there are two parts (ie. repo/package-name only)
+	unescapedPackageID, err := GetUnescapedPackageID(packageID)
 	if err != nil {
 		return "", "", err
 	}
-	chartIDParts := strings.Split(unescapedChartID, "/")
-	return chartIDParts[0], chartIDParts[1], nil
+	packageIDParts := strings.Split(unescapedPackageID, "/")
+	return packageIDParts[0], packageIDParts[1], nil
 }
 
 // DefaultValuesFromSchema returns a yaml string with default values generated from an OpenAPI v3 Schema

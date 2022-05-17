@@ -321,7 +321,7 @@ func (s *Server) getReleaseViaHelmApi(ctx context.Context, key types.NamespacedN
 }
 
 func (s *Server) newRelease(ctx context.Context, packageRef *corev1.AvailablePackageReference, targetName types.NamespacedName, versionRef *corev1.VersionReference, reconcile *corev1.ReconciliationOptions, valuesString string) (*corev1.InstalledPackageReference, error) {
-	repoName, chartName, err := pkgutils.SplitChartIdentifier(packageRef.Identifier)
+	repoName, chartName, err := pkgutils.SplitPackageIdentifier(packageRef.Identifier)
 	if err != nil {
 		return nil, err
 	}

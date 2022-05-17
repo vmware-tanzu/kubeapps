@@ -633,7 +633,7 @@ func TestGetUnescapedChartID(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			actualOut, err := GetUnescapedChartID(tc.in)
+			actualOut, err := GetUnescapedPackageID(tc.in)
 			if got, want := status.Code(err), tc.statusCode; got != want {
 				t.Fatalf("got: %+v, want: %+v, err: %+v", got, want, err)
 			}
@@ -671,7 +671,7 @@ func TestSplitChartIdentifier(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			repoName, chartName, err := SplitChartIdentifier(tc.in)
+			repoName, chartName, err := SplitPackageIdentifier(tc.in)
 			if got, want := status.Code(err), tc.statusCode; got != want {
 				t.Fatalf("got: %+v, want: %+v, err: %+v", got, want, err)
 			}
