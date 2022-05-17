@@ -77,12 +77,13 @@ export interface IRepo {
 
 export interface IReceivePackagesActionPayload {
   response: GetAvailablePackageSummariesResponse;
-  page: number;
+  paginationToken: string;
 }
 
 export interface IPackageState {
   isFetching: boolean;
   hasFinishedFetching: boolean;
+  nextPageToken: string;
   selected: {
     error?: FetchError | Error;
     availablePackageDetail?: AvailablePackageDetail;

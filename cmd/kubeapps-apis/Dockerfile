@@ -3,12 +3,12 @@
 
 # syntax = docker/dockerfile:1
 
-FROM bitnami/golang:1.17.6 as builder
+FROM bitnami/golang:1.18.2 as builder
 WORKDIR /go/src/github.com/vmware-tanzu/kubeapps
 COPY go.mod go.sum ./
 ARG VERSION="devel"
 
-ARG BUF_VERSION="1.0.0-rc11"
+ARG BUF_VERSION="1.4.0"
 RUN curl -sSL "https://github.com/bufbuild/buf/releases/download/v$BUF_VERSION/buf-Linux-x86_64" -o "/tmp/buf" && chmod +x "/tmp/buf"
 
 # With the trick below, Go's build cache is kept between builds.
@@ -66,7 +66,7 @@ RUN --mount=type=cache,target=/go/pkg/mod \
 
 # Note: unlike the other docker images for go, we cannot use scratch as the plugins
 # are loaded using the dynamic linker.
-FROM bitnami/minideb:buster
+FROM bitnami/minideb:bullseye
 COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
 COPY --from=builder /go/src/github.com/vmware-tanzu/kubeapps/kubeapps-apis /kubeapps-apis
 COPY --from=builder /kapp-controller-packages-v1alpha1-plugin.so /plugins/kapp-controller-packages/

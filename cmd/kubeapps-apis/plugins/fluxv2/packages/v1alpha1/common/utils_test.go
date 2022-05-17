@@ -6,6 +6,7 @@ package common
 import (
 	"log"
 	"os"
+	"runtime"
 	"strings"
 	"sync"
 	"testing"
@@ -111,6 +112,10 @@ core:
 	opts := cmpopts.IgnoreUnexported(pkgutils.VersionsInSummary{})
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
+			// TODO(agamez): env vars and file paths should be handled properly for Windows operating system
+			if runtime.GOOS == "windows" {
+				t.Skip("Skipping in a Windows OS")
+			}
 			filename := ""
 			if tc.pluginYAMLConf != nil {
 				pluginJSONConf, err := yaml.YAMLToJSON(tc.pluginYAMLConf)

@@ -1,7 +1,7 @@
 /* eslint-disable */
 import Long from "long";
 import { grpc } from "@improbable-eng/grpc-web";
-import _m0 from "protobufjs/minimal";
+import * as _m0 from "protobufjs/minimal";
 import { BrowserHeaders } from "browser-headers";
 
 export const protobufPackage = "kubeappsapis.core.plugins.v1alpha1";

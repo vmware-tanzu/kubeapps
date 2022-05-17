@@ -237,7 +237,7 @@ message SecretKeyReference {
   // - For Bearer or Custom Auth, the secret must be opaque, and
   //   the key must be provided
   // - For Docker Registry Credentials (OCI registries) the secret
-  //   must of of type "kubernetes.io/dockerconfigjson”
+  //   must of of type "kubernetes.io/dockerconfigjson"
   // For more details, refer to
   // https://kubernetes.io/docs/concepts/configuration/secret/
   string name = 1;
@@ -265,24 +265,24 @@ message GetPackageRepositorySummariesRequest {
 //
 // Request for UpdatePackageRepository
 message UpdatePackageRepositoryRequest {
-  // A reference uniquely identifying the package repository being updated. 
+  // A reference uniquely identifying the package repository being updated.
   // The only required field
   PackageRepositoryReference package_repo_ref = 1;
 
   // URL identifying the package repository location.
   string url = 2;
-  
+
   // A user-provided description.
   string description = 3;
-  
+
   // The interval at which to check the upstream for updates (in seconds)
   // Optional. Defaults to 10m if not specified
   uint32 interval = 4;
 
-  // TLS-specific parameters for connecting to a repository. Optional 
+  // TLS-specific parameters for connecting to a repository. Optional
   PackageRepositoryTlsConfig tls_config = 5;
 
-  // authentication parameters for connecting to a repository. Optional 
+  // authentication parameters for connecting to a repository. Optional
   PackageRepositoryAuth auth = 6;
 
   // Custom data added by the plugin

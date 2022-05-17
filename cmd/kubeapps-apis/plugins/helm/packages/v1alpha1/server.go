@@ -208,7 +208,7 @@ func (s *Server) GetAvailablePackageSummaries(ctx context.Context, request *core
 	}
 
 	pageSize := request.GetPaginationOptions().GetPageSize()
-	pageOffset, err := paginate.PageOffsetFromAvailableRequest(request)
+	itemOffset, err := paginate.ItemOffsetFromPageToken(request.GetPaginationOptions().GetPageToken())
 	if err != nil {
 		return nil, err
 	}
@@ -225,10 +225,7 @@ func (s *Server) GetAvailablePackageSummaries(ctx context.Context, request *core
 		categories = append(categories, cat.Name)
 	}
 
-	// The current assetsvc manager works on a page number (ie. 1 for the first page),
-	// rather than an offset.
-	pageNumber := pageOffset + 1
-	charts, _, err := s.manager.GetPaginatedChartListWithFilters(cq, pageNumber, int(pageSize))
+	charts, err := s.manager.GetPaginatedChartListWithFilters(cq, itemOffset, int(pageSize))
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "Unable to retrieve charts: %v", err)
 	}
@@ -249,7 +246,7 @@ func (s *Server) GetAvailablePackageSummaries(ctx context.Context, request *core
 	// the results are a full page.
 	nextPageToken := ""
 	if pageSize > 0 && len(responsePackages) == int(pageSize) {
-		nextPageToken = fmt.Sprintf("%d", pageOffset+1)
+		nextPageToken = fmt.Sprintf("%d", itemOffset+int(pageSize))
 	}
 	return &corev1.GetAvailablePackageSummariesResponse{
 		AvailablePackageSummaries: responsePackages,
@@ -455,7 +452,7 @@ func (s *Server) GetInstalledPackageSummaries(ctx context.Context, request *core
 	}
 
 	cmd.Limit = int(request.GetPaginationOptions().GetPageSize())
-	cmd.Offset, err = paginate.PageOffsetFromInstalledRequest(request)
+	cmd.Offset, err = paginate.ItemOffsetFromPageToken(request.GetPaginationOptions().GetPageToken())
 	if err != nil {
 		return nil, err
 	}
@@ -492,7 +489,7 @@ func (s *Server) GetInstalledPackageSummaries(ctx context.Context, request *core
 			Version:    rel.Chart.Metadata.Version,
 			AppVersion: rel.Chart.Metadata.AppVersion,
 		}
-		charts, _, err := s.manager.GetPaginatedChartListWithFilters(cq, 1, 0)
+		charts, err := s.manager.GetPaginatedChartListWithFilters(cq, 0, 0)
 		if err != nil {
 			return nil, status.Errorf(codes.Internal, "Error while fetching related charts: %v", err)
 		}
@@ -518,8 +515,8 @@ func (s *Server) GetInstalledPackageSummaries(ctx context.Context, request *core
 	response := &corev1.GetInstalledPackageSummariesResponse{
 		InstalledPackageSummaries: installedPkgSummaries,
 	}
-	if len(releases) == cmd.Limit {
-		response.NextPageToken = fmt.Sprintf("%d", cmd.Limit+1)
+	if cmd.Limit > 0 && len(releases) == cmd.Limit {
+		response.NextPageToken = fmt.Sprintf("%d", cmd.Offset+cmd.Limit)
 	}
 	return response, nil
 }
@@ -605,7 +602,7 @@ func (s *Server) GetInstalledPackageDetail(ctx context.Context, request *corev1.
 		Version:    release.Chart.Metadata.Version,
 		AppVersion: release.Chart.Metadata.AppVersion,
 	}
-	charts, _, err := s.manager.GetPaginatedChartListWithFilters(cq, 1, 0)
+	charts, err := s.manager.GetPaginatedChartListWithFilters(cq, 0, 0)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "Error while fetching related chart: %v", err)
 	}

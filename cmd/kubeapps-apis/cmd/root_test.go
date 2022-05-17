@@ -5,6 +5,7 @@ package cmd
 
 import (
 	"bytes"
+	"runtime"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
@@ -47,6 +48,10 @@ func TestParseFlagsCorrect(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			// TODO(agamez): env vars and file paths should be handled properly for Windows operating system
+			if runtime.GOOS == "windows" {
+				t.Skip("Skipping in a Windows OS")
+			}
 			cmd := newRootCmd()
 			b := bytes.NewBufferString("")
 			cmd.SetOut(b)

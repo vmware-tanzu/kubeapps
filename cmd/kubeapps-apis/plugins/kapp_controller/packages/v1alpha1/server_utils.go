@@ -67,7 +67,7 @@ func latestMatchingVersion(versions []pkgSemver, constraints string) (*semver.Ve
 }
 
 // statusReasonForKappStatus returns the reason for a given status
-func statusReasonForKappStatus(status kappctrlv1alpha1.AppConditionType) corev1.InstalledPackageStatus_StatusReason {
+func statusReasonForKappStatus(status kappctrlv1alpha1.ConditionType) corev1.InstalledPackageStatus_StatusReason {
 	switch status {
 	case kappctrlv1alpha1.ReconcileSucceeded:
 		return corev1.InstalledPackageStatus_STATUS_REASON_INSTALLED
@@ -81,7 +81,7 @@ func statusReasonForKappStatus(status kappctrlv1alpha1.AppConditionType) corev1.
 }
 
 // simpleUserReasonForKappStatus returns the simplified reason for a given status
-func simpleUserReasonForKappStatus(status kappctrlv1alpha1.AppConditionType) string {
+func simpleUserReasonForKappStatus(status kappctrlv1alpha1.ConditionType) string {
 	switch status {
 	case kappctrlv1alpha1.ReconcileSucceeded:
 		return "Deployed"

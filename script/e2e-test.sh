@@ -85,9 +85,9 @@ installOLM() {
   url=https://github.com/operator-framework/operator-lifecycle-manager/releases/download/${release}
   namespace=olm
 
-  kubectl apply -f "${url}/crds.yaml"
+  kubectl create -f "${url}/crds.yaml"
   kubectl wait --for=condition=Established -f "${url}/crds.yaml"
-  kubectl apply -f "${url}/olm.yaml"
+  kubectl create -f "${url}/olm.yaml"
 
   # wait for deployments to be ready
   kubectl rollout status -w deployment/olm-operator --namespace="${namespace}"
@@ -440,8 +440,7 @@ kubectl create rolebinding kubeapps-repositories-read -n kubeapps --clusterrole 
 kubectl create role view-secrets -n ${GLOBAL_REPOS_NS} --verb=get,list,watch --resource=secrets
 kubectl create rolebinding global-repos-secrets-read -n ${GLOBAL_REPOS_NS} --role=view-secrets --serviceaccount kubeapps:kubeapps-edit
 
-## Give the cluster some time to avoid issues like
-## https://circleci.com/gh/kubeapps/kubeapps/16102
+## Give the cluster some time to avoid timeout issues
 retry_while "kubectl get -n kubeapps serviceaccount kubeapps-operator -o name" "5" "1"
 retry_while "kubectl get -n kubeapps serviceaccount kubeapps-view -o name" "5" "1"
 retry_while "kubectl get -n kubeapps serviceaccount kubeapps-edit -o name" "5" "1"
