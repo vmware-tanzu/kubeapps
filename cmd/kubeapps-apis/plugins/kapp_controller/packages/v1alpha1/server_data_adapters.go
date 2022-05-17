@@ -24,8 +24,6 @@ import (
 	log "k8s.io/klog/v2"
 )
 
-const REPO_REF_ANNOTATION = "packaging.carvel.dev/package-repository-ref"
-
 func (s *Server) buildAvailablePackageSummary(pkgMetadata *datapackagingv1alpha1.PackageMetadata, latestVersion string, cluster string) *corev1.AvailablePackageSummary {
 	var iconStringBuilder strings.Builder
 
@@ -40,16 +38,8 @@ func (s *Server) buildAvailablePackageSummary(pkgMetadata *datapackagingv1alpha1
 		iconStringBuilder.WriteString(pkgMetadata.Spec.IconSVGBase64)
 	}
 
-	pkgNameWithRepo := pkgMetadata.Name
-
-	// See https://github.com/vmware-tanzu/carvel-kapp-controller/pull/532
-	if repoName := pkgMetadata.Annotations[REPO_REF_ANNOTATION]; repoName != "" {
-		// this annotation returns "namespace/reponame", for instance "default/tce-repo"
-		// we just want the "reponame" part
-		repoName = strings.Split(repoName, "/")[1]
-		// TODO(agamez): temporary hack to provide the repo name until we return the proper repo reference in the new API model
-		pkgNameWithRepo = fmt.Sprintf("%s/%s", repoName, pkgNameWithRepo)
-	}
+	// build package identifier based on the metadata
+	identifier := buildPackageIdentifier(pkgMetadata)
 
 	availablePackageSummary := &corev1.AvailablePackageSummary{
 		AvailablePackageRef: &corev1.AvailablePackageReference{
@@ -58,9 +48,9 @@ func (s *Server) buildAvailablePackageSummary(pkgMetadata *datapackagingv1alpha1
 				Namespace: pkgMetadata.Namespace,
 			},
 			Plugin:     &pluginDetail,
-			Identifier: pkgMetadata.Name,
+			Identifier: identifier,
 		},
-		Name: pkgNameWithRepo,
+		Name: pkgMetadata.Name,
 		// Currently, PkgVersion and AppVersion are the same
 		// https://kubernetes.slack.com/archives/CH8KCCKA5/p1636386358322000?thread_ts=1636371493.320900&cid=CH8KCCKA5
 		LatestVersion: &corev1.PackageAppVersion{
@@ -98,6 +88,9 @@ func (s *Server) buildAvailablePackageDetail(pkgMetadata *datapackagingv1alpha1.
 		})
 	}
 
+	// build package identifier based on the metadata
+	identifier := buildPackageIdentifier(pkgMetadata)
+
 	// build readme
 	readme := buildReadme(pkgMetadata, foundPkgSemver)
 
@@ -115,7 +108,7 @@ func (s *Server) buildAvailablePackageDetail(pkgMetadata *datapackagingv1alpha1.
 				Namespace: pkgMetadata.Namespace,
 			},
 			Plugin:     &pluginDetail,
-			Identifier: pkgMetadata.Name,
+			Identifier: identifier,
 		},
 		Name:             pkgMetadata.Name,
 		IconUrl:          iconStringBuilder.String(),

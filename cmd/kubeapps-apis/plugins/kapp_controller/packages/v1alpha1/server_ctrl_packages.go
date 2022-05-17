@@ -100,7 +100,7 @@ func (s *Server) GetAvailablePackageSummaries(ctx context.Context, request *core
 			if currentPkg.Spec.RefName > pkgMetadata.Name {
 				return nil, status.Errorf(codes.Internal, fmt.Sprintf("unexpected order for kapp-controller packages, expected %q, found %q", pkgMetadata.Name, currentPkg.Spec.RefName))
 			}
-			log.Errorf("Package %q did not have a corresponding metadata", currentPkg.Spec.RefName)
+			log.Errorf("Package %q did not have a corresponding metadata (want %q)", currentPkg.Spec.RefName, pkgMetadata.Name)
 			currentPkg = <-getPkgsChannel
 		}
 		// Collect the packages for a particular refName to be able to send the
@@ -165,8 +165,13 @@ func (s *Server) GetAvailablePackageVersions(ctx context.Context, request *corev
 		cluster = s.globalPackagingCluster
 	}
 
+	_, pkgName, err := pkgutils.SplitPackageIdentifier(identifier)
+	if err != nil {
+		return nil, err
+	}
+
 	// Use the field selector to return only Package CRs that match on the spec.refName.
-	fieldSelector := fmt.Sprintf("spec.refName=%s", identifier)
+	fieldSelector := fmt.Sprintf("spec.refName=%s", pkgName)
 	pkgs, err := s.getPkgsWithFieldSelector(ctx, cluster, namespace, fieldSelector)
 	if err != nil {
 		return nil, statuserror.FromK8sError("get", "Package", "", err)
@@ -179,8 +184,8 @@ func (s *Server) GetAvailablePackageVersions(ctx context.Context, request *corev
 
 	// TODO(minelson): support configurable version summary for kapp-controller pkgs
 	// as already done for Helm (see #3588 for more info).
-	versions := make([]*corev1.PackageAppVersion, len(pkgVersionsMap[identifier]))
-	for i, v := range pkgVersionsMap[identifier] {
+	versions := make([]*corev1.PackageAppVersion, len(pkgVersionsMap[pkgName]))
+	for i, v := range pkgVersionsMap[pkgName] {
 		// Currently, PkgVersion and AppVersion are the same
 		// https://kubernetes.slack.com/archives/CH8KCCKA5/p1636386358322000?thread_ts=1636371493.320900&cid=CH8KCCKA5
 		versions[i] = &corev1.PackageAppVersion{
@@ -215,17 +220,22 @@ func (s *Server) GetAvailablePackageDetail(ctx context.Context, request *corev1.
 		cluster = s.globalPackagingCluster
 	}
 
-	// fetch the package metadata
-	pkgMetadata, err := s.getPkgMetadata(ctx, cluster, namespace, identifier)
+	_, pkgName, err := pkgutils.SplitPackageIdentifier(identifier)
 	if err != nil {
-		return nil, statuserror.FromK8sError("get", "PackageMetadata", identifier, err)
+		return nil, err
+	}
+
+	// fetch the package metadata
+	pkgMetadata, err := s.getPkgMetadata(ctx, cluster, namespace, pkgName)
+	if err != nil {
+		return nil, statuserror.FromK8sError("get", "PackageMetadata", pkgName, err)
 	}
 
 	// Use the field selector to return only Package CRs that match on the spec.refName.
-	fieldSelector := fmt.Sprintf("spec.refName=%s", identifier)
+	fieldSelector := fmt.Sprintf("spec.refName=%s", pkgName)
 	pkgs, err := s.getPkgsWithFieldSelector(ctx, cluster, namespace, fieldSelector)
 	if err != nil {
-		return nil, statuserror.FromK8sError("get", "Package", identifier, err)
+		return nil, statuserror.FromK8sError("get", "Package", pkgName, err)
 	}
 	pkgVersionsMap, err := getPkgVersionsMap(pkgs)
 	if err != nil {
@@ -235,22 +245,22 @@ func (s *Server) GetAvailablePackageDetail(ctx context.Context, request *corev1.
 	var foundPkgSemver = &pkgSemver{}
 	if requestedPkgVersion != "" {
 		// Ensure the version is available.
-		for _, v := range pkgVersionsMap[identifier] {
+		for _, v := range pkgVersionsMap[pkgName] {
 			if v.version.String() == requestedPkgVersion {
 				foundPkgSemver = &v
 				break
 			}
 		}
 		if foundPkgSemver.version == nil {
-			return nil, status.Errorf(codes.NotFound, fmt.Sprintf("unable to find %q package with version %q", identifier, requestedPkgVersion))
+			return nil, status.Errorf(codes.NotFound, fmt.Sprintf("unable to find %q package with version %q", pkgName, requestedPkgVersion))
 		}
 	} else {
 		// If the pkgVersion wasn't specified, grab the packages to find the latest.
-		if len(pkgVersionsMap[identifier]) > 0 {
-			foundPkgSemver = &pkgVersionsMap[identifier][0]
+		if len(pkgVersionsMap[pkgName]) > 0 {
+			foundPkgSemver = &pkgVersionsMap[pkgName][0]
 			requestedPkgVersion = foundPkgSemver.version.String()
 		} else {
-			return nil, status.Errorf(codes.NotFound, fmt.Sprintf("unable to find any versions for the package %q", identifier))
+			return nil, status.Errorf(codes.NotFound, fmt.Sprintf("unable to find any versions for the package %q", pkgName))
 		}
 	}
 
