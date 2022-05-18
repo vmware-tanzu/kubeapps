@@ -1,4 +1,4 @@
-module github.com/vmware-tanzu/kubeapps
+module github.com/vmware-tanzu/kubeapps/apprepository-controller-new
 
 go 1.17
 

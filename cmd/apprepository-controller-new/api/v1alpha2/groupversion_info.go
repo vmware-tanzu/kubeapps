@@ -1,4 +1,4 @@
-// Copyright XXXX-YYYY the Kubeapps contributors.
+// Copyright 2022 the Kubeapps contributors.
 // SPDX-License-Identifier: Apache-2.0
 
 // Package v1alpha2 contains API Schema definitions for the  v1alpha2 API group

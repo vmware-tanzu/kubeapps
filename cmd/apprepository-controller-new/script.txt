@@ -34,7 +34,7 @@ $ kubebuilder create api
 
 
 change the contents of cmd/apprepository-controller-new/hack/boilerplate.go.txt to say
-// Copyright XXXX-YYYY the Kubeapps contributors.
+// Copyright 2022 the Kubeapps contributors.
 // SPDX-License-Identifier: Apache-2.0
 
 [apprepository-controller-new]$ kubebuilder create api --version v1alpha2 --kind AppRepository
@@ -58,6 +58,11 @@ go: downloading golang.org/x/sys v0.0.0-20210831042530-f4d43177bf5e
 /Users/gfichtenholt/gitlocal/kubeapps-gfichtenholt/cmd/apprepository-controller-new/bin/controller-gen object:headerFile="hack/boilerplate.go.txt" paths="./..."
 Next: implement your new API and generate the manifests (e.g. CRDs,CRs) with:
 $ make manifests
+
+Now make sure all .go files (like main.go) have this copyright statement
+// Copyright 2022 the Kubeapps contributors.
+// SPDX-License-Identifier: Apache-2.0
+
 
 [apprepository-controller-new]$ make manifests
 /Users/gfichtenholt/gitlocal/kubeapps-gfichtenholt/cmd/apprepository-controller-new/bin/controller-gen rbac:roleName=manager-role crd webhook paths="./..." output:crd:artifacts:config=config/crd/bases
