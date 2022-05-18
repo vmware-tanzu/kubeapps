@@ -561,12 +561,17 @@ func (s *Server) CreateInstalledPackage(ctx context.Context, request *corev1.Cre
 	}
 
 	// Retrieve additional parameters from the request
-	packageRef := request.GetAvailablePackageRef()
+	identifier := request.GetAvailablePackageRef().GetIdentifier()
 	packageCluster := request.GetAvailablePackageRef().GetContext().GetCluster()
 	packageNamespace := request.GetAvailablePackageRef().GetContext().GetNamespace()
 	reconciliationOptions := request.GetReconciliationOptions()
 	pkgVersion := request.GetPkgVersionReference().GetVersion()
 	values := request.GetValues()
+
+	_, pkgName, err := pkgutils.SplitPackageIdentifier(identifier)
+	if err != nil {
+		return nil, err
+	}
 
 	if targetCluster == "" {
 		targetCluster = s.globalPackagingCluster
@@ -582,9 +587,9 @@ func (s *Server) CreateInstalledPackage(ctx context.Context, request *corev1.Cre
 	}
 
 	// fetch the package metadata
-	pkgMetadata, err := s.getPkgMetadata(ctx, packageCluster, packageNamespace, packageRef.Identifier)
+	pkgMetadata, err := s.getPkgMetadata(ctx, packageCluster, packageNamespace, pkgName)
 	if err != nil {
-		return nil, statuserror.FromK8sError("get", "PackageMetadata", packageRef.Identifier, err)
+		return nil, statuserror.FromK8sError("get", "PackageMetadata", pkgName, err)
 	}
 
 	// build a new secret object with the values
