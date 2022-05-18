@@ -99,17 +99,46 @@ describe("packageReducer", () => {
     });
   });
 
-  it("single receiveAvailablePackageSummaries (first page) should be returned", () => {
-    const state = packageReducer(undefined, {
-      type: getType(actions.availablepackages.receiveAvailablePackageSummaries) as any,
-      payload: {
-        response: {
-          availablePackageSummaries: [availablePackageSummary1],
-          nextPageToken,
-          categories: ["foo"],
-        },
-      } as IReceivePackagesActionPayload,
+  it("ignores a receiveAvailablePackageSummaries when not fetching (ie. after a reset)", () => {
+    const state = packageReducer(
+      {
+        ...initialState,
+        isFetching: false,
+      },
+      {
+        type: getType(actions.availablepackages.receiveAvailablePackageSummaries) as any,
+        payload: {
+          response: {
+            availablePackageSummaries: [availablePackageSummary1],
+            nextPageToken,
+            categories: ["foo"],
+          },
+        } as IReceivePackagesActionPayload,
+      },
+    );
+    expect(state).toEqual({
+      ...initialState,
+      isFetching: false,
     });
+  });
+
+  it("single receiveAvailablePackageSummaries (first page) should be returned", () => {
+    const state = packageReducer(
+      {
+        ...initialState,
+        isFetching: true,
+      },
+      {
+        type: getType(actions.availablepackages.receiveAvailablePackageSummaries) as any,
+        payload: {
+          response: {
+            availablePackageSummaries: [availablePackageSummary1],
+            nextPageToken,
+            categories: ["foo"],
+          },
+        } as IReceivePackagesActionPayload,
+      },
+    );
     expect(state).toEqual({
       ...initialState,
       isFetching: false,
@@ -122,7 +151,10 @@ describe("packageReducer", () => {
 
   it("single receiveAvailablePackageSummaries (middle page) having visited the previous ones should be ignored", () => {
     const state = packageReducer(
-      { ...initialState },
+      {
+        ...initialState,
+        isFetching: true,
+      },
       {
         type: getType(actions.availablepackages.receiveAvailablePackageSummaries) as any,
         payload: {
@@ -146,7 +178,10 @@ describe("packageReducer", () => {
 
   it("single receiveAvailablePackageSummaries (middle page) not visiting the previous ones should be ignored", () => {
     const state = packageReducer(
-      { ...initialState },
+      {
+        ...initialState,
+        isFetching: true,
+      },
       {
         type: getType(actions.availablepackages.receiveAvailablePackageSummaries) as any,
         payload: {
@@ -172,6 +207,7 @@ describe("packageReducer", () => {
     const state = packageReducer(
       {
         ...initialState,
+        isFetching: true,
       },
       {
         type: getType(actions.availablepackages.receiveAvailablePackageSummaries) as any,
@@ -194,26 +230,38 @@ describe("packageReducer", () => {
   });
 
   it("two receiveAvailablePackageSummaries should add items (no dups)", () => {
-    const state1 = packageReducer(undefined, {
-      type: getType(actions.availablepackages.receiveAvailablePackageSummaries) as any,
-      payload: {
-        response: {
-          availablePackageSummaries: [availablePackageSummary1],
-          nextPageToken,
-          categories: ["foo"],
-        },
-      } as IReceivePackagesActionPayload,
-    });
-    const state2 = packageReducer(state1, {
-      type: getType(actions.availablepackages.receiveAvailablePackageSummaries) as any,
-      payload: {
-        response: {
-          availablePackageSummaries: [availablePackageSummary2],
-          nextPageToken: "",
-          categories: ["foo"],
-        },
-      } as IReceivePackagesActionPayload,
-    });
+    const state1 = packageReducer(
+      {
+        ...initialState,
+        isFetching: true,
+      },
+      {
+        type: getType(actions.availablepackages.receiveAvailablePackageSummaries) as any,
+        payload: {
+          response: {
+            availablePackageSummaries: [availablePackageSummary1],
+            nextPageToken,
+            categories: ["foo"],
+          },
+        } as IReceivePackagesActionPayload,
+      },
+    );
+    const state2 = packageReducer(
+      {
+        ...state1,
+        isFetching: true,
+      },
+      {
+        type: getType(actions.availablepackages.receiveAvailablePackageSummaries) as any,
+        payload: {
+          response: {
+            availablePackageSummaries: [availablePackageSummary2],
+            nextPageToken: "",
+            categories: ["foo"],
+          },
+        } as IReceivePackagesActionPayload,
+      },
+    );
     expect(state2).toEqual({
       ...initialState,
       isFetching: false,
@@ -316,17 +364,23 @@ describe("packageReducer", () => {
   // TODO(agamez): check whether or not we really want to filter out duplicates. If so, add some deleted tests back
 
   it("two receiveAvailablePackageSummaries and then createErrorPackage", () => {
-    const state1 = packageReducer(undefined, {
-      type: getType(actions.availablepackages.receiveAvailablePackageSummaries) as any,
-      payload: {
-        response: {
-          availablePackageSummaries: [availablePackageSummary1],
-          nextPageToken,
-          categories: ["foo"],
-        },
-        paginationToken: currentPageToken,
-      } as IReceivePackagesActionPayload,
-    });
+    const state1 = packageReducer(
+      {
+        ...initialState,
+        isFetching: true,
+      },
+      {
+        type: getType(actions.availablepackages.receiveAvailablePackageSummaries) as any,
+        payload: {
+          response: {
+            availablePackageSummaries: [availablePackageSummary1],
+            nextPageToken,
+            categories: ["foo"],
+          },
+          paginationToken: currentPageToken,
+        } as IReceivePackagesActionPayload,
+      },
+    );
     const state2 = packageReducer(state1, {
       type: getType(actions.availablepackages.receiveAvailablePackageSummaries) as any,
       payload: {
@@ -351,16 +405,22 @@ describe("packageReducer", () => {
   });
 
   it("clears errors after clearErrorPackage", () => {
-    const state1 = packageReducer(undefined, {
-      type: getType(actions.availablepackages.receiveAvailablePackageSummaries) as any,
-      payload: {
-        response: {
-          availablePackageSummaries: [availablePackageSummary1],
-          nextPageToken,
-          categories: ["foo"],
-        },
-      } as IReceivePackagesActionPayload,
-    });
+    const state1 = packageReducer(
+      {
+        ...initialState,
+        isFetching: true,
+      },
+      {
+        type: getType(actions.availablepackages.receiveAvailablePackageSummaries) as any,
+        payload: {
+          response: {
+            availablePackageSummaries: [availablePackageSummary1],
+            nextPageToken,
+            categories: ["foo"],
+          },
+        } as IReceivePackagesActionPayload,
+      },
+    );
     const state2 = packageReducer(state1, {
       type: getType(actions.availablepackages.createErrorPackage) as any,
     });

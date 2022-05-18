@@ -104,6 +104,29 @@ export default function Catalog() {
 
   const csvs = operators.csvs;
 
+  // Only one search filter can be set
+  const searchFilter = filters[filterNames.SEARCH]?.toString().replace(tmpStrRegex, ",") || "";
+  const reposFilter = filters[filterNames.REPO]?.join(",") || "";
+
+  // Detect changes in cluster/ns/repos/search and reset the current package
+  // list Note: useEffect is called on every render - the initial render and any
+  // re-renders due to updates. Additionally, any cleanup function returned by
+  // an effect is run prior to re-running the effect as well as on unmount.
+  // https://reactjs.org/docs/hooks-effect.html#example-using-hooks-1
+  // Therefore the reset effect below only has a cleanup function so that we a)
+  // don't reset when the component is initially rendered, and b) do reset
+  // whenever the effect is re-triggered or the component unmounted.
+  useEffect(() => {
+    // Ensure that when this component is unmounted, we remove any catalog state
+    // so that it is reloaded cleanly for the given inputs next time it is
+    // loaded.
+    return function cleanup() {
+      setPageNum(0);
+      dispatch(actions.availablepackages.resetAvailablePackageSummaries());
+      dispatch(actions.availablepackages.resetSelectedAvailablePackageDetail());
+    };
+  }, [dispatch, cluster, namespace, reposFilter, searchFilter]);
+
   useEffect(() => {
     const propsFilter = qs.parse(location.search, { ignoreQueryPrefix: true });
     const newFilters = {};
@@ -117,9 +140,6 @@ export default function Catalog() {
     });
   }, [location.search]);
 
-  // Only one search filter can be set
-  const searchFilter = filters[filterNames.SEARCH]?.toString().replace(tmpStrRegex, ",") || "";
-  const reposFilter = filters[filterNames.REPO]?.join(",") || "";
   useEffect(() => {
     if (hasFinishedFetching) {
       return;
@@ -208,13 +228,6 @@ export default function Catalog() {
       dispatch(actions.operators.getCSVs(cluster, namespace));
     }
   }, [dispatch, cluster, namespace, featureFlags]);
-
-  // detect changes in cluster/ns/repos/search and reset the current package list
-  useEffect(() => {
-    setPageNum(0);
-    dispatch(actions.availablepackages.resetAvailablePackageSummaries());
-    dispatch(actions.availablepackages.resetSelectedAvailablePackageDetail());
-  }, [dispatch, cluster, namespace, reposFilter, searchFilter]);
 
   const setSearchFilter = (searchTerm: string) => {
     const newFilters = {
