@@ -18,8 +18,8 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 
-	kubeappscomv1alpha2 "github.com/vmware-tanzu/kubeapps/api/v1alpha2"
-	"github.com/vmware-tanzu/kubeapps/controllers"
+	"github.com/vmware-tanzu/kubeapps/apprepository-controller-new/api/v1alpha2"
+	"github.com/vmware-tanzu/kubeapps/apprepository-controller-new/controllers"
 	//+kubebuilder:scaffold:imports
 )
 
@@ -31,7 +31,7 @@ var (
 func init() {
 	utilruntime.Must(clientgoscheme.AddToScheme(scheme))
 
-	utilruntime.Must(kubeappscomv1alpha2.AddToScheme(scheme))
+	utilruntime.Must(v1alpha2.AddToScheme(scheme))
 	//+kubebuilder:scaffold:scheme
 }
 

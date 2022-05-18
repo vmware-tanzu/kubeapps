@@ -11,7 +11,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
-	kubeappscomv1alpha2 "github.com/vmware-tanzu/kubeapps/api/v1alpha2"
+	"github.com/vmware-tanzu/kubeapps/apprepository-controller-new/api/v1alpha2"
 )
 
 // AppRepositoryReconciler reconciles a AppRepository object
@@ -45,6 +45,6 @@ func (r *AppRepositoryReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 // SetupWithManager sets up the controller with the Manager.
 func (r *AppRepositoryReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
-		For(&kubeappscomv1alpha2.AppRepository{}).
+		For(&v1alpha2.AppRepository{}).
 		Complete(r)
 }
