@@ -15,7 +15,7 @@ import (
 
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	"github.com/grpc-ecosystem/grpc-gateway/v2/utilities"
-	v1alpha1_1 "github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
+	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/grpclog"
@@ -37,7 +37,7 @@ var (
 )
 
 func request_HelmPackagesService_GetAvailablePackageSummaries_0(ctx context.Context, marshaler runtime.Marshaler, client HelmPackagesServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq v1alpha1_1.GetAvailablePackageSummariesRequest
+	var protoReq v1alpha1.GetAvailablePackageSummariesRequest
 	var metadata runtime.ServerMetadata
 
 	if err := req.ParseForm(); err != nil {
@@ -53,7 +53,7 @@ func request_HelmPackagesService_GetAvailablePackageSummaries_0(ctx context.Cont
 }
 
 func local_request_HelmPackagesService_GetAvailablePackageSummaries_0(ctx context.Context, marshaler runtime.Marshaler, server HelmPackagesServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq v1alpha1_1.GetAvailablePackageSummariesRequest
+	var protoReq v1alpha1.GetAvailablePackageSummariesRequest
 	var metadata runtime.ServerMetadata
 
 	if err := req.ParseForm(); err != nil {
@@ -73,7 +73,7 @@ var (
 )
 
 func request_HelmPackagesService_GetAvailablePackageDetail_0(ctx context.Context, marshaler runtime.Marshaler, client HelmPackagesServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq v1alpha1_1.GetAvailablePackageDetailRequest
+	var protoReq v1alpha1.GetAvailablePackageDetailRequest
 	var metadata runtime.ServerMetadata
 
 	var (
@@ -126,7 +126,7 @@ func request_HelmPackagesService_GetAvailablePackageDetail_0(ctx context.Context
 }
 
 func local_request_HelmPackagesService_GetAvailablePackageDetail_0(ctx context.Context, marshaler runtime.Marshaler, server HelmPackagesServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq v1alpha1_1.GetAvailablePackageDetailRequest
+	var protoReq v1alpha1.GetAvailablePackageDetailRequest
 	var metadata runtime.ServerMetadata
 
 	var (
@@ -183,7 +183,7 @@ var (
 )
 
 func request_HelmPackagesService_GetAvailablePackageVersions_0(ctx context.Context, marshaler runtime.Marshaler, client HelmPackagesServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq v1alpha1_1.GetAvailablePackageVersionsRequest
+	var protoReq v1alpha1.GetAvailablePackageVersionsRequest
 	var metadata runtime.ServerMetadata
 
 	var (
@@ -236,7 +236,7 @@ func request_HelmPackagesService_GetAvailablePackageVersions_0(ctx context.Conte
 }
 
 func local_request_HelmPackagesService_GetAvailablePackageVersions_0(ctx context.Context, marshaler runtime.Marshaler, server HelmPackagesServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq v1alpha1_1.GetAvailablePackageVersionsRequest
+	var protoReq v1alpha1.GetAvailablePackageVersionsRequest
 	var metadata runtime.ServerMetadata
 
 	var (
@@ -293,7 +293,7 @@ var (
 )
 
 func request_HelmPackagesService_GetInstalledPackageSummaries_0(ctx context.Context, marshaler runtime.Marshaler, client HelmPackagesServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq v1alpha1_1.GetInstalledPackageSummariesRequest
+	var protoReq v1alpha1.GetInstalledPackageSummariesRequest
 	var metadata runtime.ServerMetadata
 
 	if err := req.ParseForm(); err != nil {
@@ -309,7 +309,7 @@ func request_HelmPackagesService_GetInstalledPackageSummaries_0(ctx context.Cont
 }
 
 func local_request_HelmPackagesService_GetInstalledPackageSummaries_0(ctx context.Context, marshaler runtime.Marshaler, server HelmPackagesServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq v1alpha1_1.GetInstalledPackageSummariesRequest
+	var protoReq v1alpha1.GetInstalledPackageSummariesRequest
 	var metadata runtime.ServerMetadata
 
 	if err := req.ParseForm(); err != nil {
@@ -329,7 +329,7 @@ var (
 )
 
 func request_HelmPackagesService_GetInstalledPackageDetail_0(ctx context.Context, marshaler runtime.Marshaler, client HelmPackagesServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq v1alpha1_1.GetInstalledPackageDetailRequest
+	var protoReq v1alpha1.GetInstalledPackageDetailRequest
 	var metadata runtime.ServerMetadata
 
 	var (
@@ -382,7 +382,7 @@ func request_HelmPackagesService_GetInstalledPackageDetail_0(ctx context.Context
 }
 
 func local_request_HelmPackagesService_GetInstalledPackageDetail_0(ctx context.Context, marshaler runtime.Marshaler, server HelmPackagesServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq v1alpha1_1.GetInstalledPackageDetailRequest
+	var protoReq v1alpha1.GetInstalledPackageDetailRequest
 	var metadata runtime.ServerMetadata
 
 	var (
@@ -435,7 +435,7 @@ func local_request_HelmPackagesService_GetInstalledPackageDetail_0(ctx context.C
 }
 
 func request_HelmPackagesService_CreateInstalledPackage_0(ctx context.Context, marshaler runtime.Marshaler, client HelmPackagesServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq v1alpha1_1.CreateInstalledPackageRequest
+	var protoReq v1alpha1.CreateInstalledPackageRequest
 	var metadata runtime.ServerMetadata
 
 	newReader, berr := utilities.IOReaderFactory(req.Body)
@@ -452,7 +452,7 @@ func request_HelmPackagesService_CreateInstalledPackage_0(ctx context.Context, m
 }
 
 func local_request_HelmPackagesService_CreateInstalledPackage_0(ctx context.Context, marshaler runtime.Marshaler, server HelmPackagesServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq v1alpha1_1.CreateInstalledPackageRequest
+	var protoReq v1alpha1.CreateInstalledPackageRequest
 	var metadata runtime.ServerMetadata
 
 	newReader, berr := utilities.IOReaderFactory(req.Body)
@@ -469,7 +469,7 @@ func local_request_HelmPackagesService_CreateInstalledPackage_0(ctx context.Cont
 }
 
 func request_HelmPackagesService_UpdateInstalledPackage_0(ctx context.Context, marshaler runtime.Marshaler, client HelmPackagesServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq v1alpha1_1.UpdateInstalledPackageRequest
+	var protoReq v1alpha1.UpdateInstalledPackageRequest
 	var metadata runtime.ServerMetadata
 
 	newReader, berr := utilities.IOReaderFactory(req.Body)
@@ -523,7 +523,7 @@ func request_HelmPackagesService_UpdateInstalledPackage_0(ctx context.Context, m
 }
 
 func local_request_HelmPackagesService_UpdateInstalledPackage_0(ctx context.Context, marshaler runtime.Marshaler, server HelmPackagesServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq v1alpha1_1.UpdateInstalledPackageRequest
+	var protoReq v1alpha1.UpdateInstalledPackageRequest
 	var metadata runtime.ServerMetadata
 
 	newReader, berr := utilities.IOReaderFactory(req.Body)
@@ -581,7 +581,7 @@ var (
 )
 
 func request_HelmPackagesService_DeleteInstalledPackage_0(ctx context.Context, marshaler runtime.Marshaler, client HelmPackagesServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq v1alpha1_1.DeleteInstalledPackageRequest
+	var protoReq v1alpha1.DeleteInstalledPackageRequest
 	var metadata runtime.ServerMetadata
 
 	var (
@@ -634,7 +634,7 @@ func request_HelmPackagesService_DeleteInstalledPackage_0(ctx context.Context, m
 }
 
 func local_request_HelmPackagesService_DeleteInstalledPackage_0(ctx context.Context, marshaler runtime.Marshaler, server HelmPackagesServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq v1alpha1_1.DeleteInstalledPackageRequest
+	var protoReq v1alpha1.DeleteInstalledPackageRequest
 	var metadata runtime.ServerMetadata
 
 	var (
@@ -799,7 +799,7 @@ var (
 )
 
 func request_HelmPackagesService_GetInstalledPackageResourceRefs_0(ctx context.Context, marshaler runtime.Marshaler, client HelmPackagesServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq v1alpha1_1.GetInstalledPackageResourceRefsRequest
+	var protoReq v1alpha1.GetInstalledPackageResourceRefsRequest
 	var metadata runtime.ServerMetadata
 
 	var (
@@ -852,7 +852,7 @@ func request_HelmPackagesService_GetInstalledPackageResourceRefs_0(ctx context.C
 }
 
 func local_request_HelmPackagesService_GetInstalledPackageResourceRefs_0(ctx context.Context, marshaler runtime.Marshaler, server HelmPackagesServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq v1alpha1_1.GetInstalledPackageResourceRefsRequest
+	var protoReq v1alpha1.GetInstalledPackageResourceRefsRequest
 	var metadata runtime.ServerMetadata
 
 	var (
@@ -916,12 +916,13 @@ func RegisterHelmPackagesServiceHandlerServer(ctx context.Context, mux *runtime.
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/kubeappsapis.plugins.helm.packages.v1alpha1.HelmPackagesService/GetAvailablePackageSummaries", runtime.WithHTTPPathPattern("/plugins/helm/packages/v1alpha1/availablepackages"))
+		var err error
+		ctx, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/kubeappsapis.plugins.helm.packages.v1alpha1.HelmPackagesService/GetAvailablePackageSummaries", runtime.WithHTTPPathPattern("/plugins/helm/packages/v1alpha1/availablepackages"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := local_request_HelmPackagesService_GetAvailablePackageSummaries_0(rctx, inboundMarshaler, server, req, pathParams)
+		resp, md, err := local_request_HelmPackagesService_GetAvailablePackageSummaries_0(ctx, inboundMarshaler, server, req, pathParams)
 		md.HeaderMD, md.TrailerMD = metadata.Join(md.HeaderMD, stream.Header()), metadata.Join(md.TrailerMD, stream.Trailer())
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
@@ -939,12 +940,13 @@ func RegisterHelmPackagesServiceHandlerServer(ctx context.Context, mux *runtime.
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/kubeappsapis.plugins.helm.packages.v1alpha1.HelmPackagesService/GetAvailablePackageDetail", runtime.WithHTTPPathPattern("/plugins/helm/packages/v1alpha1/availablepackages/c/{available_package_ref.context.cluster}/ns/{available_package_ref.context.namespace}/{available_package_ref.identifier=**}"))
+		var err error
+		ctx, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/kubeappsapis.plugins.helm.packages.v1alpha1.HelmPackagesService/GetAvailablePackageDetail", runtime.WithHTTPPathPattern("/plugins/helm/packages/v1alpha1/availablepackages/c/{available_package_ref.context.cluster}/ns/{available_package_ref.context.namespace}/{available_package_ref.identifier=**}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := local_request_HelmPackagesService_GetAvailablePackageDetail_0(rctx, inboundMarshaler, server, req, pathParams)
+		resp, md, err := local_request_HelmPackagesService_GetAvailablePackageDetail_0(ctx, inboundMarshaler, server, req, pathParams)
 		md.HeaderMD, md.TrailerMD = metadata.Join(md.HeaderMD, stream.Header()), metadata.Join(md.TrailerMD, stream.Trailer())
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
@@ -962,12 +964,13 @@ func RegisterHelmPackagesServiceHandlerServer(ctx context.Context, mux *runtime.
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/kubeappsapis.plugins.helm.packages.v1alpha1.HelmPackagesService/GetAvailablePackageVersions", runtime.WithHTTPPathPattern("/plugins/helm/packages/v1alpha1/availablepackages/c/{available_package_ref.context.cluster}/ns/{available_package_ref.context.namespace}/{available_package_ref.identifier=**}/versions"))
+		var err error
+		ctx, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/kubeappsapis.plugins.helm.packages.v1alpha1.HelmPackagesService/GetAvailablePackageVersions", runtime.WithHTTPPathPattern("/plugins/helm/packages/v1alpha1/availablepackages/c/{available_package_ref.context.cluster}/ns/{available_package_ref.context.namespace}/{available_package_ref.identifier=**}/versions"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := local_request_HelmPackagesService_GetAvailablePackageVersions_0(rctx, inboundMarshaler, server, req, pathParams)
+		resp, md, err := local_request_HelmPackagesService_GetAvailablePackageVersions_0(ctx, inboundMarshaler, server, req, pathParams)
 		md.HeaderMD, md.TrailerMD = metadata.Join(md.HeaderMD, stream.Header()), metadata.Join(md.TrailerMD, stream.Trailer())
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
@@ -985,12 +988,13 @@ func RegisterHelmPackagesServiceHandlerServer(ctx context.Context, mux *runtime.
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/kubeappsapis.plugins.helm.packages.v1alpha1.HelmPackagesService/GetInstalledPackageSummaries", runtime.WithHTTPPathPattern("/plugins/helm/packages/v1alpha1/installedpackages"))
+		var err error
+		ctx, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/kubeappsapis.plugins.helm.packages.v1alpha1.HelmPackagesService/GetInstalledPackageSummaries", runtime.WithHTTPPathPattern("/plugins/helm/packages/v1alpha1/installedpackages"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := local_request_HelmPackagesService_GetInstalledPackageSummaries_0(rctx, inboundMarshaler, server, req, pathParams)
+		resp, md, err := local_request_HelmPackagesService_GetInstalledPackageSummaries_0(ctx, inboundMarshaler, server, req, pathParams)
 		md.HeaderMD, md.TrailerMD = metadata.Join(md.HeaderMD, stream.Header()), metadata.Join(md.TrailerMD, stream.Trailer())
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
@@ -1008,12 +1012,13 @@ func RegisterHelmPackagesServiceHandlerServer(ctx context.Context, mux *runtime.
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/kubeappsapis.plugins.helm.packages.v1alpha1.HelmPackagesService/GetInstalledPackageDetail", runtime.WithHTTPPathPattern("/plugins/helm/packages/v1alpha1/installedpackages/c/{installed_package_ref.context.cluster}/ns/{installed_package_ref.context.namespace}/{installed_package_ref.identifier}"))
+		var err error
+		ctx, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/kubeappsapis.plugins.helm.packages.v1alpha1.HelmPackagesService/GetInstalledPackageDetail", runtime.WithHTTPPathPattern("/plugins/helm/packages/v1alpha1/installedpackages/c/{installed_package_ref.context.cluster}/ns/{installed_package_ref.context.namespace}/{installed_package_ref.identifier}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := local_request_HelmPackagesService_GetInstalledPackageDetail_0(rctx, inboundMarshaler, server, req, pathParams)
+		resp, md, err := local_request_HelmPackagesService_GetInstalledPackageDetail_0(ctx, inboundMarshaler, server, req, pathParams)
 		md.HeaderMD, md.TrailerMD = metadata.Join(md.HeaderMD, stream.Header()), metadata.Join(md.TrailerMD, stream.Trailer())
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
@@ -1031,12 +1036,13 @@ func RegisterHelmPackagesServiceHandlerServer(ctx context.Context, mux *runtime.
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/kubeappsapis.plugins.helm.packages.v1alpha1.HelmPackagesService/CreateInstalledPackage", runtime.WithHTTPPathPattern("/plugins/helm/packages/v1alpha1/installedpackages"))
+		var err error
+		ctx, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/kubeappsapis.plugins.helm.packages.v1alpha1.HelmPackagesService/CreateInstalledPackage", runtime.WithHTTPPathPattern("/plugins/helm/packages/v1alpha1/installedpackages"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := local_request_HelmPackagesService_CreateInstalledPackage_0(rctx, inboundMarshaler, server, req, pathParams)
+		resp, md, err := local_request_HelmPackagesService_CreateInstalledPackage_0(ctx, inboundMarshaler, server, req, pathParams)
 		md.HeaderMD, md.TrailerMD = metadata.Join(md.HeaderMD, stream.Header()), metadata.Join(md.TrailerMD, stream.Trailer())
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
@@ -1054,12 +1060,13 @@ func RegisterHelmPackagesServiceHandlerServer(ctx context.Context, mux *runtime.
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/kubeappsapis.plugins.helm.packages.v1alpha1.HelmPackagesService/UpdateInstalledPackage", runtime.WithHTTPPathPattern("/plugins/helm/packages/v1alpha1/installedpackages/c/{installed_package_ref.context.cluster}/ns/{installed_package_ref.context.namespace}/{installed_package_ref.identifier}"))
+		var err error
+		ctx, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/kubeappsapis.plugins.helm.packages.v1alpha1.HelmPackagesService/UpdateInstalledPackage", runtime.WithHTTPPathPattern("/plugins/helm/packages/v1alpha1/installedpackages/c/{installed_package_ref.context.cluster}/ns/{installed_package_ref.context.namespace}/{installed_package_ref.identifier}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := local_request_HelmPackagesService_UpdateInstalledPackage_0(rctx, inboundMarshaler, server, req, pathParams)
+		resp, md, err := local_request_HelmPackagesService_UpdateInstalledPackage_0(ctx, inboundMarshaler, server, req, pathParams)
 		md.HeaderMD, md.TrailerMD = metadata.Join(md.HeaderMD, stream.Header()), metadata.Join(md.TrailerMD, stream.Trailer())
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
@@ -1077,12 +1084,13 @@ func RegisterHelmPackagesServiceHandlerServer(ctx context.Context, mux *runtime.
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/kubeappsapis.plugins.helm.packages.v1alpha1.HelmPackagesService/DeleteInstalledPackage", runtime.WithHTTPPathPattern("/plugins/helm/packages/v1alpha1/installedpackages/c/{installed_package_ref.context.cluster}/ns/{installed_package_ref.context.namespace}/{installed_package_ref.identifier}"))
+		var err error
+		ctx, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/kubeappsapis.plugins.helm.packages.v1alpha1.HelmPackagesService/DeleteInstalledPackage", runtime.WithHTTPPathPattern("/plugins/helm/packages/v1alpha1/installedpackages/c/{installed_package_ref.context.cluster}/ns/{installed_package_ref.context.namespace}/{installed_package_ref.identifier}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := local_request_HelmPackagesService_DeleteInstalledPackage_0(rctx, inboundMarshaler, server, req, pathParams)
+		resp, md, err := local_request_HelmPackagesService_DeleteInstalledPackage_0(ctx, inboundMarshaler, server, req, pathParams)
 		md.HeaderMD, md.TrailerMD = metadata.Join(md.HeaderMD, stream.Header()), metadata.Join(md.TrailerMD, stream.Trailer())
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
@@ -1100,12 +1108,13 @@ func RegisterHelmPackagesServiceHandlerServer(ctx context.Context, mux *runtime.
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/kubeappsapis.plugins.helm.packages.v1alpha1.HelmPackagesService/RollbackInstalledPackage", runtime.WithHTTPPathPattern("/plugins/helm/packages/v1alpha1/installedpackages/c/{installed_package_ref.context.cluster}/ns/{installed_package_ref.context.namespace}/{installed_package_ref.identifier}/rollback"))
+		var err error
+		ctx, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/kubeappsapis.plugins.helm.packages.v1alpha1.HelmPackagesService/RollbackInstalledPackage", runtime.WithHTTPPathPattern("/plugins/helm/packages/v1alpha1/installedpackages/c/{installed_package_ref.context.cluster}/ns/{installed_package_ref.context.namespace}/{installed_package_ref.identifier}/rollback"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := local_request_HelmPackagesService_RollbackInstalledPackage_0(rctx, inboundMarshaler, server, req, pathParams)
+		resp, md, err := local_request_HelmPackagesService_RollbackInstalledPackage_0(ctx, inboundMarshaler, server, req, pathParams)
 		md.HeaderMD, md.TrailerMD = metadata.Join(md.HeaderMD, stream.Header()), metadata.Join(md.TrailerMD, stream.Trailer())
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
@@ -1123,12 +1132,13 @@ func RegisterHelmPackagesServiceHandlerServer(ctx context.Context, mux *runtime.
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/kubeappsapis.plugins.helm.packages.v1alpha1.HelmPackagesService/GetInstalledPackageResourceRefs", runtime.WithHTTPPathPattern("/plugins/helm/packages/v1alpha1/installedpackages/c/{installed_package_ref.context.cluster}/ns/{installed_package_ref.context.namespace}/{installed_package_ref.identifier}/resourcerefs"))
+		var err error
+		ctx, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/kubeappsapis.plugins.helm.packages.v1alpha1.HelmPackagesService/GetInstalledPackageResourceRefs", runtime.WithHTTPPathPattern("/plugins/helm/packages/v1alpha1/installedpackages/c/{installed_package_ref.context.cluster}/ns/{installed_package_ref.context.namespace}/{installed_package_ref.identifier}/resourcerefs"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := local_request_HelmPackagesService_GetInstalledPackageResourceRefs_0(rctx, inboundMarshaler, server, req, pathParams)
+		resp, md, err := local_request_HelmPackagesService_GetInstalledPackageResourceRefs_0(ctx, inboundMarshaler, server, req, pathParams)
 		md.HeaderMD, md.TrailerMD = metadata.Join(md.HeaderMD, stream.Header()), metadata.Join(md.TrailerMD, stream.Trailer())
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
@@ -1185,12 +1195,13 @@ func RegisterHelmPackagesServiceHandlerClient(ctx context.Context, mux *runtime.
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/kubeappsapis.plugins.helm.packages.v1alpha1.HelmPackagesService/GetAvailablePackageSummaries", runtime.WithHTTPPathPattern("/plugins/helm/packages/v1alpha1/availablepackages"))
+		var err error
+		ctx, err = runtime.AnnotateContext(ctx, mux, req, "/kubeappsapis.plugins.helm.packages.v1alpha1.HelmPackagesService/GetAvailablePackageSummaries", runtime.WithHTTPPathPattern("/plugins/helm/packages/v1alpha1/availablepackages"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := request_HelmPackagesService_GetAvailablePackageSummaries_0(rctx, inboundMarshaler, client, req, pathParams)
+		resp, md, err := request_HelmPackagesService_GetAvailablePackageSummaries_0(ctx, inboundMarshaler, client, req, pathParams)
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
@@ -1205,12 +1216,13 @@ func RegisterHelmPackagesServiceHandlerClient(ctx context.Context, mux *runtime.
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/kubeappsapis.plugins.helm.packages.v1alpha1.HelmPackagesService/GetAvailablePackageDetail", runtime.WithHTTPPathPattern("/plugins/helm/packages/v1alpha1/availablepackages/c/{available_package_ref.context.cluster}/ns/{available_package_ref.context.namespace}/{available_package_ref.identifier=**}"))
+		var err error
+		ctx, err = runtime.AnnotateContext(ctx, mux, req, "/kubeappsapis.plugins.helm.packages.v1alpha1.HelmPackagesService/GetAvailablePackageDetail", runtime.WithHTTPPathPattern("/plugins/helm/packages/v1alpha1/availablepackages/c/{available_package_ref.context.cluster}/ns/{available_package_ref.context.namespace}/{available_package_ref.identifier=**}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := request_HelmPackagesService_GetAvailablePackageDetail_0(rctx, inboundMarshaler, client, req, pathParams)
+		resp, md, err := request_HelmPackagesService_GetAvailablePackageDetail_0(ctx, inboundMarshaler, client, req, pathParams)
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
@@ -1225,12 +1237,13 @@ func RegisterHelmPackagesServiceHandlerClient(ctx context.Context, mux *runtime.
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/kubeappsapis.plugins.helm.packages.v1alpha1.HelmPackagesService/GetAvailablePackageVersions", runtime.WithHTTPPathPattern("/plugins/helm/packages/v1alpha1/availablepackages/c/{available_package_ref.context.cluster}/ns/{available_package_ref.context.namespace}/{available_package_ref.identifier=**}/versions"))
+		var err error
+		ctx, err = runtime.AnnotateContext(ctx, mux, req, "/kubeappsapis.plugins.helm.packages.v1alpha1.HelmPackagesService/GetAvailablePackageVersions", runtime.WithHTTPPathPattern("/plugins/helm/packages/v1alpha1/availablepackages/c/{available_package_ref.context.cluster}/ns/{available_package_ref.context.namespace}/{available_package_ref.identifier=**}/versions"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := request_HelmPackagesService_GetAvailablePackageVersions_0(rctx, inboundMarshaler, client, req, pathParams)
+		resp, md, err := request_HelmPackagesService_GetAvailablePackageVersions_0(ctx, inboundMarshaler, client, req, pathParams)
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
@@ -1245,12 +1258,13 @@ func RegisterHelmPackagesServiceHandlerClient(ctx context.Context, mux *runtime.
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/kubeappsapis.plugins.helm.packages.v1alpha1.HelmPackagesService/GetInstalledPackageSummaries", runtime.WithHTTPPathPattern("/plugins/helm/packages/v1alpha1/installedpackages"))
+		var err error
+		ctx, err = runtime.AnnotateContext(ctx, mux, req, "/kubeappsapis.plugins.helm.packages.v1alpha1.HelmPackagesService/GetInstalledPackageSummaries", runtime.WithHTTPPathPattern("/plugins/helm/packages/v1alpha1/installedpackages"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := request_HelmPackagesService_GetInstalledPackageSummaries_0(rctx, inboundMarshaler, client, req, pathParams)
+		resp, md, err := request_HelmPackagesService_GetInstalledPackageSummaries_0(ctx, inboundMarshaler, client, req, pathParams)
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
@@ -1265,12 +1279,13 @@ func RegisterHelmPackagesServiceHandlerClient(ctx context.Context, mux *runtime.
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/kubeappsapis.plugins.helm.packages.v1alpha1.HelmPackagesService/GetInstalledPackageDetail", runtime.WithHTTPPathPattern("/plugins/helm/packages/v1alpha1/installedpackages/c/{installed_package_ref.context.cluster}/ns/{installed_package_ref.context.namespace}/{installed_package_ref.identifier}"))
+		var err error
+		ctx, err = runtime.AnnotateContext(ctx, mux, req, "/kubeappsapis.plugins.helm.packages.v1alpha1.HelmPackagesService/GetInstalledPackageDetail", runtime.WithHTTPPathPattern("/plugins/helm/packages/v1alpha1/installedpackages/c/{installed_package_ref.context.cluster}/ns/{installed_package_ref.context.namespace}/{installed_package_ref.identifier}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := request_HelmPackagesService_GetInstalledPackageDetail_0(rctx, inboundMarshaler, client, req, pathParams)
+		resp, md, err := request_HelmPackagesService_GetInstalledPackageDetail_0(ctx, inboundMarshaler, client, req, pathParams)
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
@@ -1285,12 +1300,13 @@ func RegisterHelmPackagesServiceHandlerClient(ctx context.Context, mux *runtime.
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/kubeappsapis.plugins.helm.packages.v1alpha1.HelmPackagesService/CreateInstalledPackage", runtime.WithHTTPPathPattern("/plugins/helm/packages/v1alpha1/installedpackages"))
+		var err error
+		ctx, err = runtime.AnnotateContext(ctx, mux, req, "/kubeappsapis.plugins.helm.packages.v1alpha1.HelmPackagesService/CreateInstalledPackage", runtime.WithHTTPPathPattern("/plugins/helm/packages/v1alpha1/installedpackages"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := request_HelmPackagesService_CreateInstalledPackage_0(rctx, inboundMarshaler, client, req, pathParams)
+		resp, md, err := request_HelmPackagesService_CreateInstalledPackage_0(ctx, inboundMarshaler, client, req, pathParams)
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
@@ -1305,12 +1321,13 @@ func RegisterHelmPackagesServiceHandlerClient(ctx context.Context, mux *runtime.
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/kubeappsapis.plugins.helm.packages.v1alpha1.HelmPackagesService/UpdateInstalledPackage", runtime.WithHTTPPathPattern("/plugins/helm/packages/v1alpha1/installedpackages/c/{installed_package_ref.context.cluster}/ns/{installed_package_ref.context.namespace}/{installed_package_ref.identifier}"))
+		var err error
+		ctx, err = runtime.AnnotateContext(ctx, mux, req, "/kubeappsapis.plugins.helm.packages.v1alpha1.HelmPackagesService/UpdateInstalledPackage", runtime.WithHTTPPathPattern("/plugins/helm/packages/v1alpha1/installedpackages/c/{installed_package_ref.context.cluster}/ns/{installed_package_ref.context.namespace}/{installed_package_ref.identifier}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := request_HelmPackagesService_UpdateInstalledPackage_0(rctx, inboundMarshaler, client, req, pathParams)
+		resp, md, err := request_HelmPackagesService_UpdateInstalledPackage_0(ctx, inboundMarshaler, client, req, pathParams)
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
@@ -1325,12 +1342,13 @@ func RegisterHelmPackagesServiceHandlerClient(ctx context.Context, mux *runtime.
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/kubeappsapis.plugins.helm.packages.v1alpha1.HelmPackagesService/DeleteInstalledPackage", runtime.WithHTTPPathPattern("/plugins/helm/packages/v1alpha1/installedpackages/c/{installed_package_ref.context.cluster}/ns/{installed_package_ref.context.namespace}/{installed_package_ref.identifier}"))
+		var err error
+		ctx, err = runtime.AnnotateContext(ctx, mux, req, "/kubeappsapis.plugins.helm.packages.v1alpha1.HelmPackagesService/DeleteInstalledPackage", runtime.WithHTTPPathPattern("/plugins/helm/packages/v1alpha1/installedpackages/c/{installed_package_ref.context.cluster}/ns/{installed_package_ref.context.namespace}/{installed_package_ref.identifier}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := request_HelmPackagesService_DeleteInstalledPackage_0(rctx, inboundMarshaler, client, req, pathParams)
+		resp, md, err := request_HelmPackagesService_DeleteInstalledPackage_0(ctx, inboundMarshaler, client, req, pathParams)
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
@@ -1345,12 +1363,13 @@ func RegisterHelmPackagesServiceHandlerClient(ctx context.Context, mux *runtime.
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/kubeappsapis.plugins.helm.packages.v1alpha1.HelmPackagesService/RollbackInstalledPackage", runtime.WithHTTPPathPattern("/plugins/helm/packages/v1alpha1/installedpackages/c/{installed_package_ref.context.cluster}/ns/{installed_package_ref.context.namespace}/{installed_package_ref.identifier}/rollback"))
+		var err error
+		ctx, err = runtime.AnnotateContext(ctx, mux, req, "/kubeappsapis.plugins.helm.packages.v1alpha1.HelmPackagesService/RollbackInstalledPackage", runtime.WithHTTPPathPattern("/plugins/helm/packages/v1alpha1/installedpackages/c/{installed_package_ref.context.cluster}/ns/{installed_package_ref.context.namespace}/{installed_package_ref.identifier}/rollback"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := request_HelmPackagesService_RollbackInstalledPackage_0(rctx, inboundMarshaler, client, req, pathParams)
+		resp, md, err := request_HelmPackagesService_RollbackInstalledPackage_0(ctx, inboundMarshaler, client, req, pathParams)
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
@@ -1365,12 +1384,13 @@ func RegisterHelmPackagesServiceHandlerClient(ctx context.Context, mux *runtime.
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/kubeappsapis.plugins.helm.packages.v1alpha1.HelmPackagesService/GetInstalledPackageResourceRefs", runtime.WithHTTPPathPattern("/plugins/helm/packages/v1alpha1/installedpackages/c/{installed_package_ref.context.cluster}/ns/{installed_package_ref.context.namespace}/{installed_package_ref.identifier}/resourcerefs"))
+		var err error
+		ctx, err = runtime.AnnotateContext(ctx, mux, req, "/kubeappsapis.plugins.helm.packages.v1alpha1.HelmPackagesService/GetInstalledPackageResourceRefs", runtime.WithHTTPPathPattern("/plugins/helm/packages/v1alpha1/installedpackages/c/{installed_package_ref.context.cluster}/ns/{installed_package_ref.context.namespace}/{installed_package_ref.identifier}/resourcerefs"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := request_HelmPackagesService_GetInstalledPackageResourceRefs_0(rctx, inboundMarshaler, client, req, pathParams)
+		resp, md, err := request_HelmPackagesService_GetInstalledPackageResourceRefs_0(ctx, inboundMarshaler, client, req, pathParams)
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
