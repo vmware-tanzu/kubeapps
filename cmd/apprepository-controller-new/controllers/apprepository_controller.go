@@ -37,6 +37,7 @@ func (r *AppRepositoryReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 	_ = log.FromContext(ctx)
 
 	// TODO(user): your logic here
+	ctrl.LoggerFrom(ctx).Info("+Reconcile")
 
 	return ctrl.Result{}, nil
 }
