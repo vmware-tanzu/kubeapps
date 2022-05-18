@@ -300,7 +300,7 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 					AvailablePackageRef: &corev1.AvailablePackageReference{
 						Context:    defaultContext,
 						Plugin:     &pluginDetail,
-						Identifier: "tetris.foo.example.com",
+						Identifier: "unknown/tetris.foo.example.com",
 					},
 					Name:        "tetris.foo.example.com",
 					DisplayName: "Classic Tetris",
@@ -316,7 +316,7 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 					AvailablePackageRef: &corev1.AvailablePackageReference{
 						Context:    defaultContext,
 						Plugin:     &pluginDetail,
-						Identifier: "tombi.foo.example.com",
+						Identifier: "unknown/tombi.foo.example.com",
 					},
 					Name:        "tombi.foo.example.com",
 					DisplayName: "Tombi!",
@@ -435,7 +435,7 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 					AvailablePackageRef: &corev1.AvailablePackageReference{
 						Context:    defaultContext,
 						Plugin:     &pluginDetail,
-						Identifier: "tetris.foo.example.com",
+						Identifier: "unknown/tetris.foo.example.com",
 					},
 					Name:        "tetris.foo.example.com",
 					DisplayName: "Classic Tetris",
@@ -451,7 +451,7 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 					AvailablePackageRef: &corev1.AvailablePackageReference{
 						Context:    defaultContext,
 						Plugin:     &pluginDetail,
-						Identifier: "tombi.foo.example.com",
+						Identifier: "unknown/tombi.foo.example.com",
 					},
 					Name:        "tombi.foo.example.com",
 					DisplayName: "Tombi!",
@@ -512,7 +512,7 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 					AvailablePackageRef: &corev1.AvailablePackageReference{
 						Context:    defaultContext,
 						Plugin:     &pluginDetail,
-						Identifier: "tetris.foo.example.com",
+						Identifier: "unknown/tetris.foo.example.com",
 					},
 					Name:        "tetris.foo.example.com",
 					DisplayName: "Classic Tetris",
@@ -609,7 +609,7 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 					AvailablePackageRef: &corev1.AvailablePackageReference{
 						Context:    defaultContext,
 						Plugin:     &pluginDetail,
-						Identifier: "tetris.foo.example.com",
+						Identifier: "unknown/tetris.foo.example.com",
 					},
 					Name:        "tetris.foo.example.com",
 					DisplayName: "Classic Tetris",
@@ -750,7 +750,7 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 					AvailablePackageRef: &corev1.AvailablePackageReference{
 						Context:    defaultContext,
 						Plugin:     &pluginDetail,
-						Identifier: "tombi.foo.example.com",
+						Identifier: "unknown/tombi.foo.example.com",
 					},
 					Name:        "tombi.foo.example.com",
 					DisplayName: "Tombi!",
@@ -766,7 +766,7 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 					AvailablePackageRef: &corev1.AvailablePackageReference{
 						Context:    defaultContext,
 						Plugin:     &pluginDetail,
-						Identifier: "tunotherone.foo.example.com",
+						Identifier: "unknown/tunotherone.foo.example.com",
 					},
 					Name:        "tunotherone.foo.example.com",
 					DisplayName: "Tunotherone!",
@@ -869,7 +869,7 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 					AvailablePackageRef: &corev1.AvailablePackageReference{
 						Context:    defaultContext,
 						Plugin:     &pluginDetail,
-						Identifier: "tetris.foo.example.com",
+						Identifier: "unknown/tetris.foo.example.com",
 					},
 					Name:        "tetris.foo.example.com",
 					DisplayName: "Classic Tetris",
@@ -971,7 +971,7 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 					AvailablePackageRef: &corev1.AvailablePackageReference{
 						Context:    defaultContext,
 						Plugin:     &pluginDetail,
-						Identifier: "tetris.foo.example.com",
+						Identifier: "unknown/tetris.foo.example.com",
 					},
 					Name:        "tetris.foo.example.com",
 					DisplayName: "Classic Tetris",
@@ -1049,7 +1049,7 @@ func TestGetAvailablePackageVersions(t *testing.T) {
 			request: &corev1.GetAvailablePackageVersionsRequest{
 				AvailablePackageRef: &corev1.AvailablePackageReference{
 					Context:    &corev1.Context{},
-					Identifier: "package-one",
+					Identifier: "unknown/package-one",
 				},
 			},
 			expectedStatusCode: codes.InvalidArgument,
@@ -1128,7 +1128,7 @@ func TestGetAvailablePackageVersions(t *testing.T) {
 					Context: &corev1.Context{
 						Namespace: "default",
 					},
-					Identifier: "tetris.foo.example.com",
+					Identifier: "unknown/tetris.foo.example.com",
 				},
 			},
 			expectedStatusCode: codes.OK,
@@ -1204,7 +1204,7 @@ func TestGetAvailablePackageDetail(t *testing.T) {
 			request: &corev1.GetAvailablePackageDetailRequest{
 				AvailablePackageRef: &corev1.AvailablePackageReference{
 					Context:    defaultContext,
-					Identifier: "tetris.foo.example.com",
+					Identifier: "unknown/tetris.foo.example.com",
 				},
 			},
 			existingObjects: []k8sruntime.Object{
@@ -1284,7 +1284,7 @@ Some support information
 `,
 				AvailablePackageRef: &corev1.AvailablePackageReference{
 					Context:    defaultContext,
-					Identifier: "tetris.foo.example.com",
+					Identifier: "unknown/tetris.foo.example.com",
 					Plugin:     &pluginDetail,
 				},
 			},
@@ -1295,7 +1295,7 @@ Some support information
 			request: &corev1.GetAvailablePackageDetailRequest{
 				AvailablePackageRef: &corev1.AvailablePackageReference{
 					Context:    defaultContext,
-					Identifier: "tetris.foo.example.com",
+					Identifier: "unknown/tetris.foo.example.com",
 				},
 			},
 			existingObjects: []k8sruntime.Object{
@@ -1375,7 +1375,7 @@ Some support information
 `,
 				AvailablePackageRef: &corev1.AvailablePackageReference{
 					Context:    defaultContext,
-					Identifier: "tetris.foo.example.com",
+					Identifier: "unknown/tetris.foo.example.com",
 					Plugin:     &pluginDetail,
 				},
 			},
@@ -1385,7 +1385,7 @@ Some support information
 			name: "it returns an invalid arg error status if no context is provided",
 			request: &corev1.GetAvailablePackageDetailRequest{
 				AvailablePackageRef: &corev1.AvailablePackageReference{
-					Identifier: "foo/bar",
+					Identifier: "unknown/foo/bar",
 				},
 			},
 			statusCode: codes.InvalidArgument,
@@ -1395,7 +1395,7 @@ Some support information
 			request: &corev1.GetAvailablePackageDetailRequest{
 				AvailablePackageRef: &corev1.AvailablePackageReference{
 					Context:    defaultContext,
-					Identifier: "tetris.foo.example.com",
+					Identifier: "unknown/tetris.foo.example.com",
 				},
 				PkgVersion: "1.2.4",
 			},
@@ -2725,7 +2725,7 @@ func TestGetInstalledPackageDetail(t *testing.T) {
 				AvailablePackageRef: &corev1.AvailablePackageReference{
 					Context:    defaultContext,
 					Plugin:     &pluginDetail,
-					Identifier: "tetris.foo.example.com",
+					Identifier: "unknown/tetris.foo.example.com",
 				},
 				InstalledPackageRef: &corev1.InstalledPackageReference{
 					Context:    defaultContext,
@@ -2923,7 +2923,7 @@ fetchStderr
 				AvailablePackageRef: &corev1.AvailablePackageReference{
 					Context:    defaultContext,
 					Plugin:     &pluginDetail,
-					Identifier: "tetris.foo.example.com",
+					Identifier: "unknown/tetris.foo.example.com",
 				},
 				InstalledPackageRef: &corev1.InstalledPackageReference{
 					Context:    defaultContext,
@@ -3042,7 +3042,7 @@ func TestCreateInstalledPackage(t *testing.T) {
 						Cluster:   "default",
 					},
 					Plugin:     &pluginDetail,
-					Identifier: "tetris.foo.example.com",
+					Identifier: "unknown/tetris.foo.example.com",
 				},
 				PkgVersionReference: &corev1.VersionReference{
 					Version: "1.2.3",
@@ -3196,7 +3196,7 @@ func TestCreateInstalledPackage(t *testing.T) {
 						Cluster:   "default",
 					},
 					Plugin:     &pluginDetail,
-					Identifier: "tetris.foo.example.com",
+					Identifier: "unknown/tetris.foo.example.com",
 				},
 				PkgVersionReference: &corev1.VersionReference{
 					Version: "1.2.3",
@@ -3282,7 +3282,7 @@ func TestCreateInstalledPackage(t *testing.T) {
 						Cluster:   "default",
 					},
 					Plugin:     &pluginDetail,
-					Identifier: "tetris.foo.example.com",
+					Identifier: "unknown/tetris.foo.example.com",
 				},
 				PkgVersionReference: &corev1.VersionReference{
 					Version: "1.2.3",
@@ -3437,7 +3437,7 @@ func TestCreateInstalledPackage(t *testing.T) {
 						Cluster:   "default",
 					},
 					Plugin:     &pluginDetail,
-					Identifier: "tetris.foo.example.com",
+					Identifier: "unknown/tetris.foo.example.com",
 				},
 				PkgVersionReference: &corev1.VersionReference{
 					Version: "1.2.3",
@@ -3593,7 +3593,7 @@ func TestCreateInstalledPackage(t *testing.T) {
 						Cluster:   "default",
 					},
 					Plugin:     &pluginDetail,
-					Identifier: "tetris.foo.example.com",
+					Identifier: "unknown/tetris.foo.example.com",
 				},
 				PkgVersionReference: &corev1.VersionReference{
 					Version: "1.0.0",
@@ -3752,7 +3752,7 @@ func TestCreateInstalledPackage(t *testing.T) {
 						Cluster:   "default",
 					},
 					Plugin:     &pluginDetail,
-					Identifier: "tetris.foo.example.com",
+					Identifier: "unknown/tetris.foo.example.com",
 				},
 				PkgVersionReference: &corev1.VersionReference{
 					Version: "1.0.0-rc1",
@@ -3864,7 +3864,7 @@ func TestCreateInstalledPackage(t *testing.T) {
 						Cluster:   "default",
 					},
 					Plugin:     &pluginDetail,
-					Identifier: "tetris.foo.example.com",
+					Identifier: "unknown/tetris.foo.example.com",
 				},
 				PkgVersionReference: &corev1.VersionReference{
 					Version: "1.0.0",
@@ -4023,7 +4023,7 @@ func TestCreateInstalledPackage(t *testing.T) {
 						Cluster:   "default",
 					},
 					Plugin:     &pluginDetail,
-					Identifier: "tetris.foo.example.com",
+					Identifier: "unknown/tetris.foo.example.com",
 				},
 				PkgVersionReference: &corev1.VersionReference{
 					Version: "1.0.0",
@@ -4182,7 +4182,7 @@ func TestCreateInstalledPackage(t *testing.T) {
 						Cluster:   "default",
 					},
 					Plugin:     &pluginDetail,
-					Identifier: "tetris.foo.example.com",
+					Identifier: "unknown/tetris.foo.example.com",
 				},
 				PkgVersionReference: &corev1.VersionReference{
 					Version: "1.0.0",
@@ -4336,7 +4336,7 @@ func TestCreateInstalledPackage(t *testing.T) {
 						Cluster:   "default",
 					},
 					Plugin:     &pluginDetail,
-					Identifier: "tetris.foo.example.com",
+					Identifier: "unknown/tetris.foo.example.com",
 				},
 				PkgVersionReference: &corev1.VersionReference{
 					Version: "1.0.0",
@@ -4494,7 +4494,7 @@ func TestCreateInstalledPackage(t *testing.T) {
 						Cluster:   "default",
 					},
 					Plugin:     &pluginDetail,
-					Identifier: "tetris.foo.example.com",
+					Identifier: "unknown/tetris.foo.example.com",
 				},
 				PkgVersionReference: &corev1.VersionReference{
 					Version: "1.0.0",
@@ -4652,7 +4652,7 @@ func TestCreateInstalledPackage(t *testing.T) {
 						Cluster:   "default",
 					},
 					Plugin:     &pluginDetail,
-					Identifier: "tetris.foo.example.com",
+					Identifier: "unknown/tetris.foo.example.com",
 				},
 				PkgVersionReference: &corev1.VersionReference{
 					Version: "1.0.0",
@@ -4810,7 +4810,7 @@ func TestCreateInstalledPackage(t *testing.T) {
 						Cluster:   "default",
 					},
 					Plugin:     &pluginDetail,
-					Identifier: "tetris.foo.example.com",
+					Identifier: "unknown/tetris.foo.example.com",
 				},
 				PkgVersionReference: &corev1.VersionReference{
 					Version: "1.0.0",
