@@ -182,17 +182,20 @@ func AvailablePackageSummaryFromChart(chart *models.Chart, plugin *plugins.Plugi
 // https://github.com/vmware-tanzu/kubeapps/pull/4094#discussion_r790349962.
 // Will come back to this
 
-// GetUnescapedChartID takes a chart id with URI-encoded characters and decode them. Ex: 'foo%2Fbar' becomes 'foo/bar'
+// GetUnescapedChartID takes a chart id with URI-encoded characters and decode them. Ex: 'repoName/foo/bar' becomes 'repoName/foo%2Fbar'
 // also checks that the chart ID is in the expected format, namely "repoName/chartName"
 func GetUnescapedChartID(chartID string) (string, error) {
 	unescapedChartID, err := url.QueryUnescape(chartID)
 	if err != nil {
 		return "", status.Errorf(codes.InvalidArgument, "Unable to decode chart ID chart: %v", chartID)
 	}
-	// TODO(agamez): support ID with multiple slashes, eg: aaa/bbb/ccc
-	chartIDParts := strings.Split(unescapedChartID, "/")
-	if len(chartIDParts) != 2 {
-		return "", status.Errorf(codes.InvalidArgument, "Incorrect package ref dentifier, currently just 'foo/bar' patterns are supported: %s", chartID)
+	// Ensure it has at least a / character, like "my-repo/foo/bar"
+	if idx := strings.IndexByte(unescapedChartID, '/'); idx >= 0 {
+		repo := unescapedChartID[:idx]                    // first part of the package ID is the repo name
+		id := url.QueryEscape(unescapedChartID[idx+1:])   // the rest is the package name, which should remain escaped
+		unescapedChartID = fmt.Sprintf("%s/%s", repo, id) // combine the repo and package name like "my-repo/foo%2Fbar"
+	} else {
+		return "", status.Errorf(codes.InvalidArgument, "Incorrect package ref dentifier, expecting 'my-repo/foo/.../bar' %s", chartID)
 	}
 	return unescapedChartID, nil
 }
