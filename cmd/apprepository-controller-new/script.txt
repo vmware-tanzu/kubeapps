@@ -1,6 +1,9 @@
 These are the commands I ran after bootstrapping kubebuilder locally per
  https://book.kubebuilder.io/quick-start.html
 
+$ kubebuilder version
+Version: main.version{KubeBuilderVersion:"3.4.1", KubernetesVendor:"1.23.5", GitCommit:"d59d7882ce95ce5de10238e135ddff31d8ede026", BuildDate:"2022-05-06T13:58:56Z", GoOs:"darwin", GoArch:"amd64"}
+
 [cmd]$ mkdir apprepository-controller-new && cd apprepository-controller-new
 
 [apprepository-controller-new]$ kubebuilder init --domain kubeapps.com
