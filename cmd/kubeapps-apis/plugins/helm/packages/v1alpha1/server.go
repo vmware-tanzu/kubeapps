@@ -498,6 +498,7 @@ func (s *Server) GetInstalledPackageSummaries(ctx context.Context, request *core
 	for i, r := range releases {
 		installedPkgSummaries[i] = installedPkgSummaryFromRelease(r)
 		installedPkgSummaries[i].InstalledPackageRef.Context.Cluster = cluster
+		installedPkgSummaries[i].InstalledPackageRef.Plugin = GetPluginDetail()
 	}
 
 	// Fill in the latest package version for each.
