@@ -139,7 +139,11 @@ func buildPackageIdentifier(pkgMetadata *datapackagingv1alpha1.PackageMetadata) 
 	if repoRefAnnotation := pkgMetadata.Annotations[REPO_REF_ANNOTATION]; repoRefAnnotation != "" {
 		// this annotation returns "namespace/reponame", for instance "default/tce-repo",
 		// but we just want the "reponame" part
-		repoName = strings.Split(repoRefAnnotation, "/")[1]
+		splitRepoRefAnnotation := strings.Split(repoRefAnnotation, "/")
+		// just change the repo name if we have a valid annotation
+		if len(splitRepoRefAnnotation) == 2 {
+			repoName = strings.Split(repoRefAnnotation, "/")[1]
+		}
 	}
 	return fmt.Sprintf("%s/%s", repoName, pkgMetadata.Name)
 }
