@@ -600,7 +600,7 @@ func TestAvailablePackageSummaryFromChart(t *testing.T) {
 	}
 }
 
-func TestGetUnescapedChartID(t *testing.T) {
+func TestGetUnescapedPackageID(t *testing.T) {
 	testCases := []struct {
 		name       string
 		in         string
@@ -647,7 +647,7 @@ func TestGetUnescapedChartID(t *testing.T) {
 	}
 }
 
-func TestSplitChartIdentifier(t *testing.T) {
+func TestSplitPackageIdentifier(t *testing.T) {
 	testCases := []struct {
 		name       string
 		in         string

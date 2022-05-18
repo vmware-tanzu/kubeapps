@@ -198,7 +198,7 @@ func GetUnescapedPackageID(packageID string) (string, error) {
 }
 
 func SplitPackageIdentifier(packageID string) (repoName, packageName string, err error) {
-	// getUnescapedChartID also ensures that there are two parts (ie. repo/package-name only)
+	// GetUnescapedPackageID also ensures that there are two parts (ie. repo/package-name only)
 	unescapedPackageID, err := GetUnescapedPackageID(packageID)
 	if err != nil {
 		return "", "", err
