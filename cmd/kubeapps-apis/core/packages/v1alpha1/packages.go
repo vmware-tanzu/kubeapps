@@ -5,21 +5,21 @@ package v1alpha1
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 
 	. "github.com/ahmetb/go-linq/v3"
 	pluginsv1alpha1 "github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/core/plugins/v1alpha1"
 	packages "github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
 	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/core/plugins/v1alpha1"
-	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/pkg/paginate"
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	log "k8s.io/klog/v2"
 )
 
-// pkgPluginsWithServer stores the plugin detail together with its implementation.
-type pkgPluginsWithServer struct {
+// pkgPluginWithServer stores the plugin detail together with its implementation.
+type pkgPluginWithServer struct {
 	plugin *v1alpha1.Plugin
 	server packages.PackagesServiceServer
 }
@@ -30,19 +30,19 @@ type packagesServer struct {
 
 	// pluginsWithServers is a slice of all registered pluginsWithServers which satisfy the core.packages.v1alpha1
 	// interface.
-	pluginsWithServers []pkgPluginsWithServer
+	pluginsWithServers []pkgPluginWithServer
 }
 
 func NewPackagesServer(pkgingPlugins []pluginsv1alpha1.PluginWithServer) (*packagesServer, error) {
 	// Verify that each plugin is indeed a packaging plugin while
 	// casting.
-	pluginsWithServer := make([]pkgPluginsWithServer, len(pkgingPlugins))
+	pluginsWithServer := make([]pkgPluginWithServer, len(pkgingPlugins))
 	for i, p := range pkgingPlugins {
 		pkgsSrv, ok := p.Server.(packages.PackagesServiceServer)
 		if !ok {
 			return nil, fmt.Errorf("Unable to convert plugin %v to core PackagesServicesServer", p)
 		}
-		pluginsWithServer[i] = pkgPluginsWithServer{
+		pluginsWithServer[i] = pkgPluginWithServer{
 			plugin: p.Plugin,
 			server: pkgsSrv,
 		}
@@ -58,78 +58,43 @@ func (s packagesServer) GetAvailablePackageSummaries(ctx context.Context, reques
 	contextMsg := fmt.Sprintf("(cluster=%q, namespace=%q)", request.GetContext().GetCluster(), request.GetContext().GetNamespace())
 	log.Infof("+core GetAvailablePackageSummaries %s", contextMsg)
 
-	pageOffset, err := paginate.PageOffsetFromPageToken(request.GetPaginationOptions().GetPageToken())
 	pageSize := request.GetPaginationOptions().GetPageSize()
-	if err != nil {
-		return nil, status.Errorf(codes.InvalidArgument, "Unable to intepret page token %q: %v", request.GetPaginationOptions().GetPageToken(), err)
-	}
 
-	if len(s.pluginsWithServers) > 1 {
-		// TODO(agamez): if there is more than one packaging plugin, we are
-		// temporarily fetching all the results (size=0) and then paginate them
-		// ideally, paginate each plugin request and then aggregate results.
-		request.PaginationOptions = &packages.PaginationOptions{
-			PageToken: "0",
-			PageSize:  0,
-		}
+	summariesWithOffsets, err := fanInAvailablePackageSummaries(ctx, s.pluginsWithServers, request)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "Unable to request results from registered plugins: %v", err)
 	}
 
 	pkgs := []*packages.AvailablePackageSummary{}
 	categories := []string{}
-
-	// Only return a next page token if the request was for pagination and
-	// the results are a full page.
-	nextPageToken := ""
-
-	// TODO: We can do these in parallel in separate go routines.
-	for _, p := range s.pluginsWithServers {
-		if pageSize == 0 || len(pkgs) <= (pageOffset*int(pageSize)+int(pageSize)) {
-			response, err := p.server.GetAvailablePackageSummaries(ctx, request)
-			if err != nil {
-				return nil, status.Errorf(status.Convert(err).Code(), "Invalid GetAvailablePackageSummaries response from the plugin %v: %v", p.plugin.Name, err)
-			}
-			nextPageToken = response.NextPageToken
-
-			categories = append(categories, response.Categories...)
-
-			// Add the plugin for the pkgs
-			pluginPkgs := response.AvailablePackageSummaries
-			for _, r := range pluginPkgs {
-				if r.AvailablePackageRef == nil {
-					r.AvailablePackageRef = &packages.AvailablePackageReference{}
-				}
-				r.AvailablePackageRef.Plugin = p.plugin
-			}
-			pkgs = append(pkgs, pluginPkgs...)
+	var pkgWithOffsets summaryWithOffsets
+	for pkgWithOffsets = range summariesWithOffsets {
+		if pkgWithOffsets.err != nil {
+			return nil, pkgWithOffsets.err
+		}
+		pkgs = append(pkgs, pkgWithOffsets.availablePackageSummary)
+		categories = append(categories, pkgWithOffsets.categories...)
+		if pageSize > 0 && len(pkgs) >= int(pageSize) {
+			break
 		}
 	}
+
+	// Only return a next page token of the combined plugin offsets if at least one
+	// plugin is not completely exhausted.
+	nextPageToken := ""
+	for _, v := range pkgWithOffsets.nextItemOffsets {
+		if v != CompleteToken {
+			token, err := json.Marshal(pkgWithOffsets.nextItemOffsets)
+			if err != nil {
+				return nil, status.Errorf(codes.Internal, "Unable to marshal next item offsets %v: %s", pkgWithOffsets.nextItemOffsets, err)
+			}
+			nextPageToken = string(token)
+			break
+		}
+	}
+
 	// Delete duplicate categories and sort by name
 	From(categories).Distinct().OrderBy(func(i interface{}) interface{} { return i }).ToSlice(&categories)
-
-	if len(s.pluginsWithServers) > 1 {
-		nextPageToken = ""
-		if pageSize > 0 {
-			// Using https://github.com/ahmetb/go-linq for simplicity
-			From(pkgs).
-				// Order by package name, regardless of the plugin
-				OrderBy(func(pkg interface{}) interface{} {
-					return pkg.(*packages.AvailablePackageSummary).Name + pkg.(*packages.AvailablePackageSummary).AvailablePackageRef.Plugin.Name
-				}).
-				Skip(pageOffset * int(pageSize)).
-				Take(int(pageSize)).
-				ToSlice(&pkgs)
-
-			if len(pkgs) == int(pageSize) {
-				nextPageToken = fmt.Sprintf("%d", pageOffset+1)
-			}
-		} else {
-			From(pkgs).
-				// Order by package name, regardless of the plugin
-				OrderBy(func(pkg interface{}) interface{} {
-					return pkg.(*packages.AvailablePackageSummary).Name + pkg.(*packages.AvailablePackageSummary).AvailablePackageRef.Plugin.Name
-				}).ToSlice(&pkgs)
-		}
-	}
 
 	return &packages.GetAvailablePackageSummariesResponse{
 		AvailablePackageSummaries: pkgs,
@@ -386,7 +351,7 @@ func (s packagesServer) DeleteInstalledPackage(ctx context.Context, request *pac
 
 // getPluginWithServer returns the *pkgPluginsWithServer from a given packagesServer
 // matching the plugin name
-func (s packagesServer) getPluginWithServer(plugin *v1alpha1.Plugin) *pkgPluginsWithServer {
+func (s packagesServer) getPluginWithServer(plugin *v1alpha1.Plugin) *pkgPluginWithServer {
 	for _, p := range s.pluginsWithServers {
 		if plugin.Name == p.plugin.Name {
 			return &p

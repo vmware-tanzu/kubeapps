@@ -122,12 +122,17 @@ playwright-core@1.22.0:
   resolved "https://registry.yarnpkg.com/playwright-core/-/playwright-core-1.22.0.tgz#e738a0c83f4be0984c953ab25d2bc77545187ecc"
   integrity sha512-XnDPiV4NCzTtXWxQdyJ6Wg8xhST3ciUjt5mITaxoqOoYggmRtofKm0PXLehfbetXh2ppPYj5U8UhtUpdIE4wag==
 
-playwright@^1.22.0:
-  version "1.22.0"
-  resolved "https://registry.yarnpkg.com/playwright/-/playwright-1.22.0.tgz#7b0f684f618faa6ff422fc584a9ff167d844c49a"
-  integrity sha512-T2UqJAuvJip7TfYwvl7h3gUWtEE5D950PKd96POhUpumG3BkMfiLmXOe6Ja6UP39Ab3wEvatUJYBXvZCkocfpg==
+playwright-core@1.22.1:
+  version "1.22.1"
+  resolved "https://registry.yarnpkg.com/playwright-core/-/playwright-core-1.22.1.tgz#59ddf903546171fdfd9c3dc189630c883619667c"
+  integrity sha512-H+ZUVYnceWNXrRf3oxTEKAr81QzFsCKu5Fp//fEjQvqgKkfA1iX3E9DBrPJpPNOrgVzcE+IqeI0fDmYJe6Ynnw==
+
+playwright@^1.22.1:
+  version "1.22.1"
+  resolved "https://registry.yarnpkg.com/playwright/-/playwright-1.22.1.tgz#a41bf55065953a6b31c151433e0f00c9e23c54dd"
+  integrity sha512-pn4dvphQdL3zTgI+xfqkTL3HK1xbtQz+zjJxzyhwKLDxMNuAH7/NCm75auWbYLyssdnvApznujwrQuJvqXTKUw==
   dependencies:
-    playwright-core "1.22.0"
+    playwright-core "1.22.1"
 
 prettier@^2.6.2:
   version "2.6.2"
