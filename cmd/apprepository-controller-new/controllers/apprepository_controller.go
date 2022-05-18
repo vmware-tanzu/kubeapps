@@ -34,10 +34,11 @@ type AppRepositoryReconciler struct {
 // For more details, check Reconcile and its Result here:
 // - https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.11.2/pkg/reconcile
 func (r *AppRepositoryReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
+	defer ctrl.LoggerFrom(ctx).Info("-Reconcile [%s]", req.NamespacedName)
 	_ = log.FromContext(ctx)
 
 	// TODO(user): your logic here
-	ctrl.LoggerFrom(ctx).Info("+Reconcile")
+	ctrl.LoggerFrom(ctx).Info("+Reconcile [%s]", req.NamespacedName)
 
 	return ctrl.Result{}, nil
 }
