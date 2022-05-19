@@ -21,7 +21,7 @@ func PageOffsetFromPageToken(pageToken string) (int, error) {
 	if pageToken == "" {
 		return 0, nil
 	}
-	offset, err := strconv.ParseUint(pageToken, 10, 0)
+	offset, err := strconv.ParseInt(pageToken, 10, 0)
 	if err != nil {
 		return 0, status.Errorf(codes.InvalidArgument, "unable to interpret page token %q: %v",
 			pageToken, err)

@@ -580,7 +580,7 @@ func chartCacheKeyFor(namespace, chartID, chartVersion string) (string, error) {
 	}
 
 	var err error
-	if chartID, err = pkgutils.GetUnescapedChartID(chartID); err != nil {
+	if chartID, err = pkgutils.GetUnescapedPackageID(chartID); err != nil {
 		return "", fmt.Errorf("invalid chart ID in chartCacheKeyFor: [%s]: %v", chartID, err)
 	}
 

@@ -600,7 +600,7 @@ func TestAvailablePackageSummaryFromChart(t *testing.T) {
 	}
 }
 
-func TestGetUnescapedChartID(t *testing.T) {
+func TestGetUnescapedPackageID(t *testing.T) {
 	testCases := []struct {
 		name       string
 		in         string
@@ -620,20 +620,26 @@ func TestGetUnescapedChartID(t *testing.T) {
 			statusCode: codes.OK,
 		},
 		{
+			name:       "allows chart with multiple slashes",
+			in:         "foo/bar/zot",
+			out:        "foo/bar%2Fzot",
+			statusCode: codes.OK,
+		},
+		{
 			name:       "it fails for an invalid chartID",
 			in:         "foo%ZZbar",
 			statusCode: codes.InvalidArgument,
 		},
 		{
 			name:       "it fails for an invalid chartID (2)",
-			in:         "foo/bar/zot",
+			in:         "foo",
 			statusCode: codes.InvalidArgument,
 		},
 	}
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			actualOut, err := GetUnescapedChartID(tc.in)
+			actualOut, err := GetUnescapedPackageID(tc.in)
 			if got, want := status.Code(err), tc.statusCode; got != want {
 				t.Fatalf("got: %+v, want: %+v, err: %+v", got, want, err)
 			}
@@ -647,7 +653,7 @@ func TestGetUnescapedChartID(t *testing.T) {
 	}
 }
 
-func TestSplitChartIdentifier(t *testing.T) {
+func TestSplitPackageIdentifier(t *testing.T) {
 	testCases := []struct {
 		name       string
 		in         string
@@ -663,15 +669,22 @@ func TestSplitChartIdentifier(t *testing.T) {
 			statusCode: codes.OK,
 		},
 		{
-			name:       "it fails for invalid input",
+			name:       "it allows chart with multiple slashes",
 			in:         "foo/bar/zot",
+			repoName:   "foo",
+			chartName:  "bar%2Fzot",
+			statusCode: codes.OK,
+		},
+		{
+			name:       "it fails for invalid input",
+			in:         "foo",
 			statusCode: codes.InvalidArgument,
 		},
 	}
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			repoName, chartName, err := SplitChartIdentifier(tc.in)
+			repoName, chartName, err := SplitPackageIdentifier(tc.in)
 			if got, want := status.Code(err), tc.statusCode; got != want {
 				t.Fatalf("got: %+v, want: %+v, err: %+v", got, want, err)
 			}

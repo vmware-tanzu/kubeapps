@@ -92,7 +92,7 @@ service FluxV2RepositoriesService {
 
   rpc GetPackageRepositoryDetail(kubeappsapis.core.packages.v1alpha1.GetPackageRepositoryDetailRequest) returns (kubeappsapis.core.packages.v1alpha1.GetPackageRepositoryDetailResponse) {
     option (google.api.http) = {
-      get: "/plugins/fluxv2/packages/v1alpha1/repositories/plugin/{package_repo_ref.plugin.name}/{package_repo_ref.plugin.version}/c/{package_repo_ref.context.cluster}/ns/{package_repo_ref.context.namespace}/{package_repo_ref.identifier=**}"
+      get: "/plugins/fluxv2/packages/v1alpha1/repositories/c/{package_repo_ref.context.cluster}/ns/{package_repo_ref.context.namespace}/{package_repo_ref.identifier=**}"
     };
   }
 
@@ -104,14 +104,14 @@ service FluxV2RepositoriesService {
 
   rpc UpdatePackageRepository(kubeappsapis.core.packages.v1alpha1.UpdatePackageRepositoryRequest) returns (kubeappsapis.core.packages.v1alpha1.UpdatePackageRepositoryResponse) {
     option (google.api.http) = {
-      put: "/plugins/fluxv2/packages/v1alpha1/repositories/plugin/{package_repo_ref.plugin.name}/{package_repo_ref.plugin.version}/c/{package_repo_ref.context.cluster}/ns/{package_repo_ref.context.namespace}/{package_repo_ref.identifier=**}"
+      put: "/plugins/fluxv2/packages/v1alpha1/repositories/c/{package_repo_ref.context.cluster}/ns/{package_repo_ref.context.namespace}/{package_repo_ref.identifier=**}"
       body: "*"
      };
   }
 
   rpc DeletePackageRepository(kubeappsapis.core.packages.v1alpha1.DeletePackageRepositoryRequest) returns (kubeappsapis.core.packages.v1alpha1.DeletePackageRepositoryResponse) {
     option (google.api.http) = {
-      delete: "/plugins/fluxv2/packages/v1alpha1/repositories/plugin/{package_repo_ref.plugin.name}/{package_repo_ref.plugin.version}/c/{package_repo_ref.context.cluster}/ns/{package_repo_ref.context.namespace}/{package_repo_ref.identifier=**}"
+      delete: "/plugins/fluxv2/packages/v1alpha1/repositories/c/{package_repo_ref.context.cluster}/ns/{package_repo_ref.context.namespace}/{package_repo_ref.identifier=**}"
     };
   }
 

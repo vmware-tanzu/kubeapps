@@ -47,6 +47,9 @@ func (s *Server) buildAvailablePackageSummary(pkgMetadata *datapackagingv1alpha1
 		iconStringBuilder.WriteString(pkgMetadata.Spec.IconSVGBase64)
 	}
 
+	// build package identifier based on the metadata
+	identifier := buildPackageIdentifier(pkgMetadata)
+
 	availablePackageSummary := &corev1.AvailablePackageSummary{
 		AvailablePackageRef: &corev1.AvailablePackageReference{
 			Context: &corev1.Context{
@@ -54,7 +57,7 @@ func (s *Server) buildAvailablePackageSummary(pkgMetadata *datapackagingv1alpha1
 				Namespace: pkgMetadata.Namespace,
 			},
 			Plugin:     &pluginDetail,
-			Identifier: pkgMetadata.Name,
+			Identifier: identifier,
 		},
 		Name: pkgMetadata.Name,
 		// Currently, PkgVersion and AppVersion are the same
@@ -94,6 +97,9 @@ func (s *Server) buildAvailablePackageDetail(pkgMetadata *datapackagingv1alpha1.
 		})
 	}
 
+	// build package identifier based on the metadata
+	identifier := buildPackageIdentifier(pkgMetadata)
+
 	// build readme
 	readme := buildReadme(pkgMetadata, foundPkgSemver)
 
@@ -111,7 +117,7 @@ func (s *Server) buildAvailablePackageDetail(pkgMetadata *datapackagingv1alpha1.
 				Namespace: pkgMetadata.Namespace,
 			},
 			Plugin:     &pluginDetail,
-			Identifier: pkgMetadata.Name,
+			Identifier: identifier,
 		},
 		Name:             pkgMetadata.Name,
 		IconUrl:          iconStringBuilder.String(),
@@ -237,6 +243,9 @@ func (s *Server) buildInstalledPackageDetail(pkgInstall *packagingv1alpha1.Packa
 		return nil, fmt.Errorf("Cannot get the latest matching version for the pkg %q: %s", pkgMetadata.Name, err.Error())
 	}
 
+	// build package availablePackageIdentifier based on the metadata
+	availablePackageIdentifier := buildPackageIdentifier(pkgMetadata)
+
 	installedPackageDetail := &corev1.InstalledPackageDetail{
 		InstalledPackageRef: &corev1.InstalledPackageReference{
 			Context: &corev1.Context{
@@ -267,8 +276,8 @@ func (s *Server) buildInstalledPackageDetail(pkgInstall *packagingv1alpha1.Packa
 				Namespace: pkgMetadata.Namespace,
 				Cluster:   cluster,
 			},
-			Identifier: pkgInstall.Spec.PackageRef.RefName,
 			Plugin:     &pluginDetail,
+			Identifier: availablePackageIdentifier,
 		},
 		// Currently, PkgVersion and AppVersion are the same
 		// https://kubernetes.slack.com/archives/CH8KCCKA5/p1636386358322000?thread_ts=1636371493.320900&cid=CH8KCCKA5

@@ -68,6 +68,12 @@ const packageReducer = (
     case getType(actions.availablepackages.requestSelectedAvailablePackageVersions):
       return { ...state, isFetching: true };
     case getType(actions.availablepackages.receiveAvailablePackageSummaries): {
+      // If there has been a call to reset the state since the request was
+      // issued, we ignore the received available package summaries until
+      // a new request is issued.
+      if (!state.isFetching) {
+        return state;
+      }
       // Note that the same condition identifies *before* we've fetched
       // the first page and *after* we've fetched the last page. In both
       // cases, the nextPageToken is empty. Since we have just fetched a
@@ -107,6 +113,7 @@ const packageReducer = (
       return {
         ...state,
         hasFinishedFetching: false,
+        isFetching: false,
         items: [],
         nextPageToken: "",
       };

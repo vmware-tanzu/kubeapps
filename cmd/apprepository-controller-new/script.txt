@@ -1,0 +1,107 @@
+These are the commands I ran after bootstrapping kubebuilder locally per
+ https://book.kubebuilder.io/quick-start.html
+
+$ kubebuilder version
+Version: main.version{KubeBuilderVersion:"3.4.1", KubernetesVendor:"1.23.5", GitCommit:"d59d7882ce95ce5de10238e135ddff31d8ede026", BuildDate:"2022-05-06T13:58:56Z", GoOs:"darwin", GoArch:"amd64"}
+
+[cmd]$ mkdir apprepository-controller-new && cd apprepository-controller-new
+
+[apprepository-controller-new]$ kubebuilder init --domain kubeapps.com
+Writing kustomize manifests for you to edit...
+Writing scaffold for you to edit...
+Get controller runtime:
+$ go get sigs.k8s.io/controller-runtime@v0.11.2
+go: downloading k8s.io/apimachinery v0.23.5
+go: downloading k8s.io/client-go v0.23.5
+go: downloading github.com/prometheus/common v0.28.0
+go: downloading k8s.io/api v0.23.5
+go: downloading golang.org/x/net v0.0.0-20211209124913-491a49abca63
+Update dependencies:
+$ go mod tidy
+go: downloading github.com/Azure/go-autorest/autorest v0.11.18
+go: downloading github.com/Azure/go-autorest/autorest/adal v0.9.13
+go: downloading cloud.google.com/go v0.81.0
+go: downloading gopkg.in/check.v1 v1.0.0-20200227125254-8fa46927fb4f
+go: downloading github.com/Azure/go-autorest v14.2.0+incompatible
+go: downloading github.com/niemeyer/pretty v0.0.0-20200227124842-a10e7caefd8e
+go: downloading github.com/Azure/go-autorest/autorest/mocks v0.4.1
+go: downloading github.com/Azure/go-autorest/tracing v0.6.0
+go: downloading github.com/Azure/go-autorest/logger v0.2.1
+go: downloading github.com/Azure/go-autorest/autorest/date v0.3.0
+go: downloading github.com/form3tech-oss/jwt-go v3.2.3+incompatible
+Next: define a resource with:
+$ kubebuilder create api
+
+
+change the contents of cmd/apprepository-controller-new/hack/boilerplate.go.txt to say
+// Copyright 2022 the Kubeapps contributors.
+// SPDX-License-Identifier: Apache-2.0
+
+[apprepository-controller-new]$ kubebuilder create api --version v1alpha2 --kind AppRepository
+Create Resource [y/n]
+y
+Create Controller [y/n]
+y
+Writing kustomize manifests for you to edit...
+Writing scaffold for you to edit...
+api/v1alpha2/apprepository_types.go
+controllers/apprepository_controller.go
+Update dependencies:
+$ go mod tidy
+Running make:
+$ make generate
+mkdir -p /Users/gfichtenholt/gitlocal/kubeapps-gfichtenholt/cmd/apprepository-controller-new/bin
+GOBIN=/Users/gfichtenholt/gitlocal/kubeapps-gfichtenholt/cmd/apprepository-controller-new/bin go install sigs.k8s.io/controller-tools/cmd/controller-gen@v0.8.0
+go: downloading golang.org/x/tools v0.1.6-0.20210820212750-d4cc65f0b2ff
+go: downloading k8s.io/apiextensions-apiserver v0.23.0
+go: downloading golang.org/x/sys v0.0.0-20210831042530-f4d43177bf5e
+/Users/gfichtenholt/gitlocal/kubeapps-gfichtenholt/cmd/apprepository-controller-new/bin/controller-gen object:headerFile="hack/boilerplate.go.txt" paths="./..."
+Next: implement your new API and generate the manifests (e.g. CRDs,CRs) with:
+$ make manifests
+
+Now make sure all .go files (like main.go) have this copyright statement
+// Copyright 2022 the Kubeapps contributors.
+// SPDX-License-Identifier: Apache-2.0
+
+
+[apprepository-controller-new]$ make manifests
+/Users/gfichtenholt/gitlocal/kubeapps-gfichtenholt/cmd/apprepository-controller-new/bin/controller-gen rbac:roleName=manager-role crd webhook paths="./..." output:crd:artifacts:config=config/crd/bases
+
+[apprepository-controller-new]$ kubectl delete crd/apprepositories.kubeapps.com
+customresourcedefinition.apiextensions.k8s.io "apprepositories.kubeapps.com" deleted
+
+[apprepository-controller-new]$ make install
+GOBIN=/Users/gfichtenholt/gitlocal/kubeapps-gfichtenholt/cmd/apprepository-controller-new/bin go install sigs.k8s.io/controller-tools/cmd/controller-gen@v0.8.0
+/Users/gfichtenholt/gitlocal/kubeapps-gfichtenholt/cmd/apprepository-controller-new/bin/controller-gen rbac:roleName=manager-role crd webhook paths="./..." output:crd:artifacts:config=config/crd/bases
+/Users/gfichtenholt/gitlocal/kubeapps-gfichtenholt/cmd/apprepository-controller-new/bin/kustomize build config/crd | kubectl apply -f -
+customresourcedefinition.apiextensions.k8s.io/apprepositories.kubeapps.com created
+
+[apprepository-controller-new]$ make run
+/Users/gfichtenholt/gitlocal/kubeapps-gfichtenholt/cmd/apprepository-controller-new/bin/controller-gen rbac:roleName=manager-role crd webhook paths="./..." output:crd:artifacts:config=config/crd/bases
+/Users/gfichtenholt/gitlocal/kubeapps-gfichtenholt/cmd/apprepository-controller-new/bin/controller-gen object:headerFile="hack/boilerplate.go.txt" paths="./..."
+go fmt ./...
+go vet ./...
+go run ./main.go
+I0518 00:06:27.403237   27715 request.go:665] Waited for 1.035775077s due to client-side throttling, not priority and fairness, request: GET:https://127.0.0.1:60158/apis/node.k8s.io/v1?timeout=32s
+1.652857587407531e+09	INFO	controller-runtime.metrics	Metrics server is starting to listen	{"addr": ":8080"}
+1.65285758740785e+09	INFO	setup	starting manager
+1.652857587408082e+09	INFO	Starting server	{"kind": "health probe", "addr": "[::]:8081"}
+1.652857587408082e+09	INFO	Starting server	{"path": "/metrics", "kind": "metrics", "addr": "[::]:8080"}
+1.652857587408134e+09	INFO	controller.apprepository	Starting EventSource	{"reconciler group": "kubeapps.com", "reconciler kind": "AppRepository", "source": "kind source: *v1alpha2.AppRepository"}
+1.652857587408169e+09	INFO	controller.apprepository	Starting Controller	{"reconciler group": "kubeapps.com", "reconciler kind": "AppRepository"}
+1.652857587509225e+09	INFO	controller.apprepository	Starting workers	{"reconciler group": "kubeapps.com", "reconciler kind": "AppRepository", "worker count": 1}
+
+In another terminal window
+[apprepository-controller-new]$ kubectl apply -f config/samples/_v1alpha2_apprepository.yaml 
+apprepository.kubeapps.com/apprepository-sample created
+
+In the first terminal window you should see 
+1.652858494850314e+09	INFO	controller.apprepository	+Reconcile	{"reconciler group": "kubeapps.com", "reconciler kind": "AppRepository", "name": "apprepository-sample", "namespace": "default"}
+
+To delete your CRDs from the cluster:
+make uninstall
+
+
+To undo
+[apprepository-controller-new]$
+cd .. && rm -rf apprepository-controller-new
