@@ -17,16 +17,9 @@ COPY controllers/ controllers/
 # Build
 RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -a -o manager main.go
 
-# TODO (gfichtenholt) @antgamdia asked
-# Don't know whether or not we should this img from google or just FROM scratch 
-# as we are doing in the rest of Dockerfiles. I'd rather go with the latter unless 
-# there is any reason to use the google one.
-
-# Use distroless as minimal base image to package the manager binary
-# Refer to https://github.com/GoogleContainerTools/distroless for more details
-FROM gcr.io/distroless/static:nonroot
+FROM scratch
 WORKDIR /
 COPY --from=builder /workspace/manager .
-USER 65532:65532
+USER 1001
 
 ENTRYPOINT ["/manager"]

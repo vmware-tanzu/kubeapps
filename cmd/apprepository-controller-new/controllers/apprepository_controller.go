@@ -5,19 +5,61 @@ package controllers
 
 import (
 	"context"
+	"fmt"
+	"time"
 
+	helmgetter "helm.sh/helm/v3/pkg/getter"
 	"k8s.io/apimachinery/pkg/runtime"
+	kuberecorder "k8s.io/client-go/tools/record"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	"sigs.k8s.io/controller-runtime/pkg/log"
 
+	"github.com/fluxcd/pkg/apis/meta"
+	helper "github.com/fluxcd/pkg/runtime/controller"
+	"github.com/fluxcd/pkg/runtime/patch"
 	"github.com/vmware-tanzu/kubeapps/apprepository-controller-new/api/v1alpha2"
+	sreconcile "github.com/vmware-tanzu/kubeapps/apprepository-controller-new/internal/reconcile"
+	"github.com/vmware-tanzu/kubeapps/apprepository-controller-new/internal/reconcile/summarize"
 )
+
+// appRepositoryReadyCondition contains the information required to summarize a
+// v1alpha2.AppRepository Ready Condition.
+var appRepositoryReadyCondition = summarize.Conditions{
+	Target: meta.ReadyCondition,
+	Owned: []string{
+		v1alpha2.StorageOperationFailedCondition,
+		v1alpha2.FetchFailedCondition,
+		v1alpha2.ArtifactOutdatedCondition,
+		v1alpha2.ArtifactInStorageCondition,
+		meta.ReadyCondition,
+		meta.ReconcilingCondition,
+		meta.StalledCondition,
+	},
+	Summarize: []string{
+		v1alpha2.StorageOperationFailedCondition,
+		v1alpha2.FetchFailedCondition,
+		v1alpha2.ArtifactOutdatedCondition,
+		v1alpha2.ArtifactInStorageCondition,
+		meta.StalledCondition,
+		meta.ReconcilingCondition,
+	},
+	NegativePolarity: []string{
+		v1alpha2.StorageOperationFailedCondition,
+		v1alpha2.FetchFailedCondition,
+		v1alpha2.ArtifactOutdatedCondition,
+		meta.StalledCondition,
+		meta.ReconcilingCondition,
+	},
+}
 
 // AppRepositoryReconciler reconciles a AppRepository object
 type AppRepositoryReconciler struct {
 	client.Client
-	Scheme *runtime.Scheme
+	Scheme  *runtime.Scheme
+	Getters helmgetter.Providers
+	helper.Metrics
+	kuberecorder.EventRecorder
+	ControllerName string
 }
 
 //+kubebuilder:rbac:groups=kubeapps.com,resources=apprepositories,verbs=get;list;watch;create;update;patch;delete
@@ -33,12 +75,55 @@ type AppRepositoryReconciler struct {
 //
 // For more details, check Reconcile and its Result here:
 // - https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.11.2/pkg/reconcile
-func (r *AppRepositoryReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
-	defer ctrl.LoggerFrom(ctx).Info("-Reconcile [%s]", req.NamespacedName)
-	_ = log.FromContext(ctx)
+func (r *AppRepositoryReconciler) Reconcile(ctx context.Context, req ctrl.Request) (result ctrl.Result, retErr error) {
+	defer func() {
+		msg := fmt.Sprintf("-Reconcile [%s]", req.NamespacedName)
+		defer ctrl.LoggerFrom(ctx).Info(msg)
+	}()
 
-	// TODO(user): your logic here
-	ctrl.LoggerFrom(ctx).Info("+Reconcile [%s]", req.NamespacedName)
+	msg := fmt.Sprintf("+Reconcile [%s]", req.NamespacedName)
+	ctrl.LoggerFrom(ctx).Info(msg)
+
+	start := time.Now()
+	_ = ctrl.LoggerFrom(ctx)
+
+	// Fetch the HelmRepository
+	obj := &v1alpha2.AppRepository{}
+	if err := r.Get(ctx, req.NamespacedName, obj); err != nil {
+		return ctrl.Result{}, client.IgnoreNotFound(err)
+	}
+
+	// Initialize the patch helper with the current version of the object.
+	patchHelper, err := patch.NewHelper(obj, r.Client)
+	if err != nil {
+		return ctrl.Result{}, err
+	}
+
+	// recResult stores the abstracted reconcile result.
+	var recResult sreconcile.Result
+
+	// Always attempt to patch the object after each reconciliation.
+	// NOTE: The final runtime result and error are set in this block.
+	defer func() {
+		summarizeHelper := summarize.NewHelper(r.EventRecorder, patchHelper)
+		summarizeOpts := []summarize.Option{
+			summarize.WithConditions(appRepositoryReadyCondition),
+			summarize.WithReconcileResult(recResult),
+			summarize.WithReconcileError(retErr),
+			summarize.WithIgnoreNotFound(),
+			summarize.WithProcessors(
+				summarize.RecordContextualError,
+				summarize.RecordReconcileReq,
+			),
+			summarize.WithResultBuilder(sreconcile.AlwaysRequeueResultBuilder{RequeueAfter: obj.GetRequeueAfter()}),
+			summarize.WithPatchFieldOwner(r.ControllerName),
+		}
+		result, retErr = summarizeHelper.SummarizeAndPatch(ctx, obj, summarizeOpts...)
+
+		// Always record readiness and duration metrics
+		r.Metrics.RecordReadiness(ctx, obj)
+		r.Metrics.RecordDuration(ctx, obj, start)
+	}()
 
 	return ctrl.Result{}, nil
 }
