@@ -35,4 +35,4 @@ Epic|Description|Timeline|
 | [Implementation of package repository for Carvel plugin](https://github.com/vmware-tanzu/kubeapps/milestone/43) | Once package repository API has been defined, it is time to implement it for Carvel plugin | FY23-Q2 |
 | [Design how to enable plugins to customize UI](https://github.com/vmware-tanzu/kubeapps/milestone/46) | Kubeapps UI should allow to include some features provided by specific plugins in addition to the core features provided by all of the packaging plugins | FY23-Q2 |
 | [Standardize caching repo and chart data in Kubeapps](https://github.com/vmware-tanzu/kubeapps/milestone/45) | Look into replacing postgresql as a mechanism for helm plug-in with redis to be consistent with flux support in kubeapps (which already uses redis as a caching mechanism) | FY23-Q2 |
-| Kubeapps Docker Desktop extension | Develop and publish a Docker Desktop extension to simlpify the onboarding to Kubeapps for Docker Desktop users | FY-23 |
+| Kubeapps Docker Desktop extension | Develop and publish a Docker Desktop extension to simplify the onboarding to Kubeapps for Docker Desktop users | FY-23 |
