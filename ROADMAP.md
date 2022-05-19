@@ -30,7 +30,7 @@ Last Updated: May 2022
 Epic|Description|Timeline|
 |--|--|--|
 | [Distribute Kubeapps Carvel package as part of TCE](https://github.com/vmware-tanzu/kubeapps/milestone/40) | Include the Kubeapps application in the TCE repository so that users can view and interact with the packages available in the TCE repository via the Kubeapps UI, which now supports browsing and installing Carvel packages | FY23-Q2 |
-| [New Kubeapps website](https://github.com/vmware-tanzu/kubeapps/milestone/37) | Build a new Kubeapps website aligned with the rest of open sourced projects in Tanzu | FY23-Q2 |
+| [New Kubeapps website](https://github.com/vmware-tanzu/kubeapps/milestone/37) | Build a new Kubeapps website aligned with the rest of open-sourced projects in Tanzu | FY23-Q2 |
 | [Implementation of package repository for Helm plugin](https://github.com/vmware-tanzu/kubeapps/milestone/42) | Once package repository API has been defined, it is time to implement it for Helm plugin | FY23-Q2 |
 | [Implementation of package repository for Carvel plugin](https://github.com/vmware-tanzu/kubeapps/milestone/43) | Once package repository API has been defined, it is time to implement it for Carvel plugin | FY23-Q2 |
 | [Design how to enable plugins to customize UI](https://github.com/vmware-tanzu/kubeapps/milestone/46) | Kubeapps UI should allow to include some features provided by specific plugins in addition to the core features provided by all of the packaging plugins | FY23-Q2 |
