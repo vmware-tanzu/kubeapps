@@ -26,7 +26,7 @@ The following table includes the current roadmap for Kubeapps. If you have any q
 
 If you don't know where to start, we are always looking for contributors that will help us reduce technical, automation, and documentation debt. Please take the timelines & dates as proposals and goals. Priorities and requirements change based on community feedback, roadblocks encountered, community contributions, etc. If you depend on a specific item, we encourage you to contact by Slack, or help us deliver that feature by contributing to Kubeapps.
 
-Last Updated: May 2023
+Last Updated: May 2022
 Epic|Description|Timeline|
 |--|--|--|
 | [Distribute Kubeapps Carvel package as part of TCE](https://github.com/vmware-tanzu/kubeapps/milestone/40) | Include the Kubeapps application in the TCE repository so that users can view and interact with the packages available in the TCE repository via the Kubeapps UI, which now supports browsing and installing Carvel packages | FY23-Q2 |
