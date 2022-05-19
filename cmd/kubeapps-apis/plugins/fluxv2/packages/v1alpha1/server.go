@@ -266,7 +266,7 @@ func (s *Server) GetAvailablePackageVersions(ctx context.Context, request *corev
 			cluster)
 	}
 
-	repoName, chartName, err := pkgutils.SplitChartIdentifier(packageRef.Identifier)
+	repoName, chartName, err := pkgutils.SplitPackageIdentifier(packageRef.Identifier)
 	if err != nil {
 		return nil, err
 	}

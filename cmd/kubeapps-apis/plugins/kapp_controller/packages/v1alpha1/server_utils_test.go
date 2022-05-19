@@ -526,6 +526,92 @@ Some support information
 	}
 }
 
+func TestBuildPackageIdentifier(t *testing.T) {
+	tests := []struct {
+		name        string
+		pkgMetadata *datapackagingv1alpha1.PackageMetadata
+		expected    string
+	}{
+		{"empty", &datapackagingv1alpha1.PackageMetadata{
+			TypeMeta: metav1.TypeMeta{
+				Kind:       pkgMetadataResource,
+				APIVersion: datapackagingAPIVersion,
+			},
+			ObjectMeta: metav1.ObjectMeta{
+				Namespace: "default",
+				Name:      "tetris.foo.example.com",
+			},
+			Spec: datapackagingv1alpha1.PackageMetadataSpec{
+				DisplayName:        "Classic Tetris",
+				IconSVGBase64:      "Tm90IHJlYWxseSBTVkcK",
+				ShortDescription:   "A great game for arcade gamers",
+				LongDescription:    "A few sentences but not really a readme",
+				Categories:         []string{"logging", "daemon-set"},
+				Maintainers:        []datapackagingv1alpha1.Maintainer{{Name: "person1"}, {Name: "person2"}},
+				SupportDescription: "Some support information",
+				ProviderName:       "Tetris inc.",
+			},
+		}, "unknown/tetris.foo.example.com",
+		},
+		{"a valid annotation", &datapackagingv1alpha1.PackageMetadata{
+			TypeMeta: metav1.TypeMeta{
+				Kind:       pkgMetadataResource,
+				APIVersion: datapackagingAPIVersion,
+			},
+			ObjectMeta: metav1.ObjectMeta{
+				Namespace: "default",
+				Name:      "tetris.foo.example.com",
+				Annotations: map[string]string{
+					REPO_REF_ANNOTATION: "default/tce-repo",
+				},
+			},
+			Spec: datapackagingv1alpha1.PackageMetadataSpec{
+				DisplayName:        "Classic Tetris",
+				IconSVGBase64:      "Tm90IHJlYWxseSBTVkcK",
+				ShortDescription:   "A great game for arcade gamers",
+				LongDescription:    "A few sentences but not really a readme",
+				Categories:         []string{"logging", "daemon-set"},
+				Maintainers:        []datapackagingv1alpha1.Maintainer{{Name: "person1"}, {Name: "person2"}},
+				SupportDescription: "Some support information",
+				ProviderName:       "Tetris inc.",
+			},
+		}, "tce-repo/tetris.foo.example.com",
+		},
+		{"an invalid annotation", &datapackagingv1alpha1.PackageMetadata{
+			TypeMeta: metav1.TypeMeta{
+				Kind:       pkgMetadataResource,
+				APIVersion: datapackagingAPIVersion,
+			},
+			ObjectMeta: metav1.ObjectMeta{
+				Namespace: "default",
+				Name:      "tetris.foo.example.com",
+				Annotations: map[string]string{
+					REPO_REF_ANNOTATION: "default/foo/tce-repo",
+				},
+			},
+			Spec: datapackagingv1alpha1.PackageMetadataSpec{
+				DisplayName:        "Classic Tetris",
+				IconSVGBase64:      "Tm90IHJlYWxseSBTVkcK",
+				ShortDescription:   "A great game for arcade gamers",
+				LongDescription:    "A few sentences but not really a readme",
+				Categories:         []string{"logging", "daemon-set"},
+				Maintainers:        []datapackagingv1alpha1.Maintainer{{Name: "person1"}, {Name: "person2"}},
+				SupportDescription: "Some support information",
+				ProviderName:       "Tetris inc.",
+			},
+		}, "unknown/tetris.foo.example.com",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			packageIdentifier := buildPackageIdentifier(tt.pkgMetadata)
+			if want, got := tt.expected, packageIdentifier; !cmp.Equal(want, got) {
+				t.Errorf("in %s: mismatch (-want +got):\n%s", tt.name, cmp.Diff(want, got))
+			}
+		})
+	}
+}
+
 func TestPrereleasesVersionSelection(t *testing.T) {
 	tests := []struct {
 		name                        string

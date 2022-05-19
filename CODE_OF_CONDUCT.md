@@ -40,7 +40,7 @@ This Code of Conduct applies both within project spaces and in public spaces whe
 
 ## Enforcement
 
-Instances of abusive, harassing, or otherwise unacceptable behavior may be reported to the community leaders responsible for enforcement at tanzu-kubeapps-team@vmware.com. All complaints will be reviewed and investigated promptly and fairly.
+Instances of abusive, harassing, or otherwise unacceptable behavior may be reported to the community leaders responsible for enforcement at oss-coc@vmware.com. All complaints will be reviewed and investigated promptly and fairly.
 
 Project maintainers are obligated to respect the privacy and security of the reporter of any incident.
 
