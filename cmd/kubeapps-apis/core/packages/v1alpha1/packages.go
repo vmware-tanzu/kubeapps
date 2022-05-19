@@ -67,7 +67,7 @@ func (s packagesServer) GetAvailablePackageSummaries(ctx context.Context, reques
 
 	pkgs := []*packages.AvailablePackageSummary{}
 	categories := []string{}
-	var pkgWithOffsets summaryWithOffsets
+	var pkgWithOffsets availableSummaryWithOffsets
 	for pkgWithOffsets = range summariesWithOffsets {
 		if pkgWithOffsets.err != nil {
 			return nil, pkgWithOffsets.err
@@ -140,39 +140,41 @@ func (s packagesServer) GetInstalledPackageSummaries(ctx context.Context, reques
 	contextMsg := fmt.Sprintf("(cluster=%q, namespace=%q)", request.GetContext().GetCluster(), request.GetContext().GetNamespace())
 	log.Infof("+core GetInstalledPackageSummaries %s", contextMsg)
 
-	// TODO (gfichtenholt) what about request.PaginationOptions?
-	// I think logic similar to GetAvailablePackageSummaries is missing here
+	pageSize := request.GetPaginationOptions().GetPageSize()
 
-	// Aggregate the response for each plugin
+	summariesWithOffsets, err := fanInInstalledPackageSummaries(ctx, s.pluginsWithServers, request)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "Unable to request results from registered plugins: %v", err)
+	}
 	pkgs := []*packages.InstalledPackageSummary{}
-	// TODO: We can do these in parallel in separate go routines.
-	for _, p := range s.pluginsWithServers {
-		response, err := p.server.GetInstalledPackageSummaries(ctx, request)
-		if err != nil {
-			return nil, status.Errorf(status.Convert(err).Code(), "Invalid GetInstalledPackageSummaries response from the plugin %v: %v", p.plugin.Name, err)
+	var pkgWithOffsets installedSummaryWithOffsets
+	for pkgWithOffsets = range summariesWithOffsets {
+		if pkgWithOffsets.err != nil {
+			return nil, pkgWithOffsets.err
 		}
-
-		// Add the plugin for the pkgs
-		pluginPkgs := response.InstalledPackageSummaries
-		for _, r := range pluginPkgs {
-			if r.InstalledPackageRef == nil {
-				r.InstalledPackageRef = &packages.InstalledPackageReference{}
-			}
-			r.InstalledPackageRef.Plugin = p.plugin
+		pkgs = append(pkgs, pkgWithOffsets.installedPackageSummary)
+		if pageSize > 0 && len(pkgs) >= int(pageSize) {
+			break
 		}
-		pkgs = append(pkgs, pluginPkgs...)
 	}
 
-	From(pkgs).
-		// Order by package name, regardless of the plugin
-		OrderBy(func(pkg interface{}) interface{} {
-			return pkg.(*packages.InstalledPackageSummary).Name + pkg.(*packages.InstalledPackageSummary).InstalledPackageRef.Plugin.Name
-		}).
-		ToSlice(&pkgs)
+	// Only return a next page token of the combined plugin offsets if at least one
+	// plugin is not completely exhausted.
+	nextPageToken := ""
+	for _, v := range pkgWithOffsets.nextItemOffsets {
+		if v != CompleteToken {
+			token, err := json.Marshal(pkgWithOffsets.nextItemOffsets)
+			if err != nil {
+				return nil, status.Errorf(codes.Internal, "Unable to marshal next item offsets %v: %s", pkgWithOffsets.nextItemOffsets, err)
+			}
+			nextPageToken = string(token)
+			break
+		}
+	}
 
-	// Build the response
 	return &packages.GetInstalledPackageSummariesResponse{
 		InstalledPackageSummaries: pkgs,
+		NextPageToken:             nextPageToken,
 	}, nil
 }
 
