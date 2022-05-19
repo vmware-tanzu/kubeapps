@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import * as url from "shared/url";
-import { getPluginIcon, getPluginName, PluginNames, trimDescription } from "shared/utils";
+import { getPluginIcon, getPluginName, trimDescription } from "shared/utils";
 import placeholder from "../../placeholder.png";
 import InfoCard from "../InfoCard/InfoCard";
 import { IPackageCatalogItem } from "./CatalogItem";
@@ -22,13 +22,10 @@ export default function PackageCatalogItem(props: IPackageCatalogItem) {
   const pkgPluginName = getPluginName(availablePackageSummary.availablePackageRef?.plugin);
 
   // Get the pkg repository for the plugins that have one.
-  switch (availablePackageSummary.availablePackageRef?.plugin?.name) {
-    case (PluginNames.PACKAGES_HELM, PluginNames.PACKAGES_FLUX):
-      pkgRepository = availablePackageSummary.availablePackageRef?.identifier.split("/")[0];
-      break;
-    case PluginNames.PACKAGES_KAPP:
-      // TODO: get repo from kapp-controller
-      break;
+  // Assuming an identifier will always be like: "repo/pkgName"
+  const splitIdentifier = availablePackageSummary.availablePackageRef?.identifier.split("/");
+  if (splitIdentifier && splitIdentifier?.length > 0) {
+    pkgRepository = splitIdentifier[0];
   }
 
   return (
