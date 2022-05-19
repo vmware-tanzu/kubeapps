@@ -414,12 +414,16 @@ func (c *OCIRepoClient) GetChart(details *Details, repoURL string) (*chart.Chart
 	if c.puller == nil {
 		return nil, fmt.Errorf("unable to retrieve chart, Init should be called first")
 	}
-	url, err := url.ParseRequestURI(strings.TrimSpace(repoURL))
+	parsedURL, err := url.ParseRequestURI(strings.TrimSpace(repoURL))
+	if err != nil {
+		return nil, err
+	}
+	unescapedChartName, err := url.QueryUnescape(details.ChartName)
 	if err != nil {
 		return nil, err
 	}
 
-	ref := path.Join(url.Host, url.Path, fmt.Sprintf("%s:%s", details.ChartName, details.Version))
+	ref := path.Join(parsedURL.Host, parsedURL.Path, fmt.Sprintf("%s:%s", unescapedChartName, details.Version))
 	chartBuffer, _, err := c.puller.PullOCIChart(ref)
 	if err != nil {
 		return nil, err

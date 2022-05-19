@@ -182,23 +182,28 @@ func AvailablePackageSummaryFromChart(chart *models.Chart, plugin *plugins.Plugi
 // https://github.com/vmware-tanzu/kubeapps/pull/4094#discussion_r790349962.
 // Will come back to this
 
-// GetUnescapedPackageID takes a package id with URI-encoded characters and decode them. Ex: 'foo%2Fbar' becomes 'foo/bar'
+// GetUnescapedPackageID takes a package id with URI-encoded characters and decode them. Ex: 'repoName/foo/bar' becomes 'repoName/foo%2Fbar'
 // also checks that the package ID is in the expected format, namely "repoName/packageName"
 func GetUnescapedPackageID(packageID string) (string, error) {
 	unescapedPackageID, err := url.QueryUnescape(packageID)
 	if err != nil {
 		return "", status.Errorf(codes.InvalidArgument, "Unable to decode package ID: %v", packageID)
 	}
-	// TODO(agamez): support ID with multiple slashes, eg: aaa/bbb/ccc
-	packageIDParts := strings.Split(unescapedPackageID, "/")
-	if len(packageIDParts) != 2 {
-		return "", status.Errorf(codes.InvalidArgument, "Incorrect package ref dentifier, currently just 'foo/bar' patterns are supported: %s", packageID)
+	// Ensure it has at least a / character, like "my-repo/foo/bar"
+	if idx := strings.IndexByte(unescapedPackageID, '/'); idx >= 0 {
+		repo := unescapedPackageID[:idx]                    // first part of the package ID is the repo name
+		id := url.QueryEscape(unescapedPackageID[idx+1:])   // the rest is the package name, which should remain escaped
+		unescapedPackageID = fmt.Sprintf("%s/%s", repo, id) // combine the repo and package name like "my-repo/foo%2Fbar"
+	} else {
+		return "", status.Errorf(codes.InvalidArgument, "Incorrect package ref dentifier, expecting 'my-repo/foo/.../bar' %s", packageID)
 	}
 	return unescapedPackageID, nil
 }
 
+// SplitPackageIdentifier takes a package id  and slplits it into repoName and packageName
+// Ex: 'repoName/foo/bar' becomes 'repoName/foo%2Fbar'
 func SplitPackageIdentifier(packageID string) (repoName, packageName string, err error) {
-	// GetUnescapedPackageID also ensures that there are two parts (ie. repo/package-name only)
+	// GetUnescapedPackageID also ensures that there is at least a / character, like "my-repo/foo/bar" (ie. repoName/packageName only)
 	unescapedPackageID, err := GetUnescapedPackageID(packageID)
 	if err != nil {
 		return "", "", err

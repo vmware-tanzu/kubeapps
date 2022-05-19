@@ -923,7 +923,25 @@ func TestOCIClient(t *testing.T) {
 			Content:      map[string]*bytes.Buffer{"5.1.1": bytes.NewBuffer(data)},
 		}
 		ch, err := cli.GetChart(&Details{ChartName: "nginx", Version: "5.1.1"}, "http://foo/bar")
-		if ch.Name() != "nginx" || ch.Metadata.Version != "5.1.1" {
+		if ch == nil {
+			t.Errorf("Unexpected error: %s", err)
+		} else if ch.Name() != "nginx" || ch.Metadata.Version != "5.1.1" {
+			t.Errorf("Unexpected chart %s:%s", ch.Name(), ch.Metadata.Version)
+		}
+	})
+
+	t.Run("GetChart - Returns a chart with multiple slashes", func(t *testing.T) {
+		cli := NewOCIClient("foo")
+		data, err := ioutil.ReadFile("./testdata/nginx-5.1.1-apiVersionV2.tgz")
+		assert.NoError(t, err)
+		cli.(*OCIRepoClient).puller = &helmfake.OCIPuller{
+			ExpectedName: "foo/bar/bar/nginx:5.1.1",
+			Content:      map[string]*bytes.Buffer{"5.1.1": bytes.NewBuffer(data)},
+		}
+		ch, err := cli.GetChart(&Details{ChartName: "nginx", Version: "5.1.1"}, "http://foo/bar%2Fbar")
+		if ch == nil {
+			t.Errorf("Unexpected error: %s", err)
+		} else if ch.Name() != "nginx" || ch.Metadata.Version != "5.1.1" {
 			t.Errorf("Unexpected chart %s:%s", ch.Name(), ch.Metadata.Version)
 		}
 	})

@@ -620,13 +620,19 @@ func TestGetUnescapedPackageID(t *testing.T) {
 			statusCode: codes.OK,
 		},
 		{
+			name:       "allows chart with multiple slashes",
+			in:         "foo/bar/zot",
+			out:        "foo/bar%2Fzot",
+			statusCode: codes.OK,
+		},
+		{
 			name:       "it fails for an invalid chartID",
 			in:         "foo%ZZbar",
 			statusCode: codes.InvalidArgument,
 		},
 		{
 			name:       "it fails for an invalid chartID (2)",
-			in:         "foo/bar/zot",
+			in:         "foo",
 			statusCode: codes.InvalidArgument,
 		},
 	}
@@ -663,8 +669,15 @@ func TestSplitPackageIdentifier(t *testing.T) {
 			statusCode: codes.OK,
 		},
 		{
-			name:       "it fails for invalid input",
+			name:       "it allows chart with multiple slashes",
 			in:         "foo/bar/zot",
+			repoName:   "foo",
+			chartName:  "bar%2Fzot",
+			statusCode: codes.OK,
+		},
+		{
+			name:       "it fails for invalid input",
+			in:         "foo",
 			statusCode: codes.InvalidArgument,
 		},
 	}
