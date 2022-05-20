@@ -8,7 +8,7 @@ import (
 )
 
 var (
-	addRepoSimple = v1alpha1.AppRepository{
+	addRepoSimpleHelm = v1alpha1.AppRepository{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       AppRepositoryKind,
 			APIVersion: AppRepositoryApi,
@@ -20,6 +20,22 @@ var (
 		},
 		Spec: v1alpha1.AppRepositorySpec{
 			Type: "helm",
+			URL:  "http://example.com",
+		},
+	}
+
+	addRepoSimpleOci = v1alpha1.AppRepository{
+		TypeMeta: metav1.TypeMeta{
+			Kind:       AppRepositoryKind,
+			APIVersion: AppRepositoryApi,
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:            "bar",
+			Namespace:       "foo",
+			ResourceVersion: "1",
+		},
+		Spec: v1alpha1.AppRepositorySpec{
+			Type: "oci",
 			URL:  "http://example.com",
 		},
 	}
@@ -186,12 +202,14 @@ var (
 		},
 	}
 
-	addRepoReqSimple = &corev1.AddPackageRepositoryRequest{
-		Name:            "bar",
-		Context:         &corev1.Context{Namespace: "foo"},
-		Type:            "helm",
-		Url:             "http://example.com",
-		NamespaceScoped: true,
+	addRepoReqSimple = func(repoType string) *corev1.AddPackageRepositoryRequest {
+		return &corev1.AddPackageRepositoryRequest{
+			Name:            "bar",
+			Context:         &corev1.Context{Namespace: "foo"},
+			Type:            repoType,
+			Url:             "http://example.com",
+			NamespaceScoped: true,
+		}
 	}
 
 	addRepoReqTLSCA = func(ca []byte) *corev1.AddPackageRepositoryRequest {

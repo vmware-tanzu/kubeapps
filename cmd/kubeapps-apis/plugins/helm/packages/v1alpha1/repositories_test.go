@@ -59,10 +59,17 @@ func TestAddPackageRepository(t *testing.T) {
 			statusCode: codes.InvalidArgument,
 		},
 		{
-			name:             "simple add package repository scenario",
-			request:          addRepoReqSimple,
+			name:             "simple add package repository scenario (HELM)",
+			request:          addRepoReqSimple("helm"),
 			expectedResponse: addRepoExpectedResp,
-			expectedRepo:     &addRepoSimple,
+			expectedRepo:     &addRepoSimpleHelm,
+			statusCode:       codes.OK,
+		},
+		{
+			name:             "simple add package repository scenario (OCI)",
+			request:          addRepoReqSimple("oci"),
+			expectedResponse: addRepoExpectedResp,
+			expectedRepo:     &addRepoSimpleOci,
 			statusCode:       codes.OK,
 		},
 		{
