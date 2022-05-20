@@ -13,11 +13,13 @@ import (
 	kuberecorder "k8s.io/client-go/tools/record"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/ratelimiter"
 
 	"github.com/fluxcd/pkg/apis/meta"
 	helper "github.com/fluxcd/pkg/runtime/controller"
 	"github.com/fluxcd/pkg/runtime/patch"
 	"github.com/vmware-tanzu/kubeapps/apprepository-controller-new/api/v1alpha2"
+	"github.com/vmware-tanzu/kubeapps/apprepository-controller-new/internal/helm/repository"
 	sreconcile "github.com/vmware-tanzu/kubeapps/apprepository-controller-new/internal/reconcile"
 	"github.com/vmware-tanzu/kubeapps/apprepository-controller-new/internal/reconcile/summarize"
 )
@@ -52,6 +54,10 @@ var appRepositoryReadyCondition = summarize.Conditions{
 	},
 }
 
+//+kubebuilder:rbac:groups=kubeapps.com,resources=apprepositories,verbs=get;list;watch;create;update;patch;delete
+//+kubebuilder:rbac:groups=kubeapps.com,resources=apprepositories/status,verbs=get;update;patch
+//+kubebuilder:rbac:groups=kubeapps.com,resources=apprepositories/finalizers,verbs=update
+
 // AppRepositoryReconciler reconciles a AppRepository object
 type AppRepositoryReconciler struct {
 	client.Client
@@ -62,9 +68,16 @@ type AppRepositoryReconciler struct {
 	ControllerName string
 }
 
-//+kubebuilder:rbac:groups=kubeapps.com,resources=apprepositories,verbs=get;list;watch;create;update;patch;delete
-//+kubebuilder:rbac:groups=kubeapps.com,resources=apprepositories/status,verbs=get;update;patch
-//+kubebuilder:rbac:groups=kubeapps.com,resources=apprepositories/finalizers,verbs=update
+type AppRepositoryReconcilerOptions struct {
+	MaxConcurrentReconciles int
+	RateLimiter             ratelimiter.RateLimiter
+}
+
+// appRepositoryReconcileFunc is the function type for all the
+// v1alpha2.AppRepository (sub)reconcile functions. The type implementations
+// are grouped and executed serially to perform the complete reconcile of the
+// object.
+type appRepositoryReconcileFunc func(ctx context.Context, obj *v1alpha2.AppRepository, artifact *v1alpha2.Artifact, repo *repository.ChartRepository) (sreconcile.Result, error)
 
 // Reconcile is part of the main kubernetes reconciliation loop which aims to
 // move the current state of the cluster closer to the desired state.
@@ -87,7 +100,7 @@ func (r *AppRepositoryReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 	start := time.Now()
 	_ = ctrl.LoggerFrom(ctx)
 
-	// Fetch the HelmRepository
+	// Fetch the AppRepository
 	obj := &v1alpha2.AppRepository{}
 	if err := r.Get(ctx, req.NamespacedName, obj); err != nil {
 		return ctrl.Result{}, client.IgnoreNotFound(err)
