@@ -280,9 +280,6 @@ func TestAddPackageRepository(t *testing.T) {
 							t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got))
 						}
 					} else {
-						// TODO(rcastelblanq) Remove
-						//opt1 := cmpopts.IgnoreFields(appRepov1alpha1.AppRepositorySpec{}, "SecretRef")
-
 						if got, want := &actualRepo, tc.expectedRepo; !cmp.Equal(want, got) {
 							t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got))
 						}
