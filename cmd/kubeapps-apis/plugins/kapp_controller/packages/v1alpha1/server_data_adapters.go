@@ -517,6 +517,64 @@ func (s *Server) buildPackageRepository(pr *packagingv1alpha1.PackageRepository,
 	return repository, nil
 }
 
+func (s *Server) buildPkgRepositoryCreate(request *corev1.AddPackageRepositoryRequest) (*packagingv1alpha1.PackageRepository, error) {
+	// identifier
+	namespace := request.GetContext().GetNamespace()
+	if namespace == "" {
+		namespace = s.globalPackagingNamespace
+	}
+	name := request.GetName()
+
+	// repository stub
+	repository := &packagingv1alpha1.PackageRepository{
+		TypeMeta: metav1.TypeMeta{
+			Kind:       pkgRepositoryResource,
+			APIVersion: fmt.Sprintf("%s/%s", packagingv1alpha1.SchemeGroupVersion.Group, packagingv1alpha1.SchemeGroupVersion.Version),
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:        name,
+			Namespace:   namespace,
+			Annotations: map[string]string{},
+		},
+		Spec: packagingv1alpha1.PackageRepositorySpec{},
+	}
+
+	// synchronization
+	interval := request.GetInterval()
+	if interval > 0 {
+		repository.Spec.SyncPeriod = &metav1.Duration{Duration: time.Duration(interval) * time.Second}
+	}
+
+	// fetch (todo -> add support for other directives than just imgkpg)
+	repository.Spec.Fetch = &packagingv1alpha1.PackageRepositoryFetch{
+		ImgpkgBundle: &kappctrlv1alpha1.AppFetchImgpkgBundle{
+			Image: request.GetUrl(),
+		},
+	}
+
+	return repository, nil
+}
+
+func (s *Server) buildPkgRepositoryUpdate(request *corev1.UpdatePackageRepositoryRequest, repository *packagingv1alpha1.PackageRepository) (*packagingv1alpha1.PackageRepository, error) {
+	// repository stub
+	repository.Spec = packagingv1alpha1.PackageRepositorySpec{}
+
+	// synchronization
+	interval := request.GetInterval()
+	if interval > 0 {
+		repository.Spec.SyncPeriod = &metav1.Duration{Duration: time.Duration(interval) * time.Second}
+	}
+
+	// fetch (todo -> add support for other directives than just imgkpg)
+	repository.Spec.Fetch = &packagingv1alpha1.PackageRepositoryFetch{
+		ImgpkgBundle: &kappctrlv1alpha1.AppFetchImgpkgBundle{
+			Image: request.GetUrl(),
+		},
+	}
+
+	return repository, nil
+}
+
 // utils
 
 func statusReason(status kappctrlv1alpha1.Condition) corev1.PackageRepositoryStatus_StatusReason {

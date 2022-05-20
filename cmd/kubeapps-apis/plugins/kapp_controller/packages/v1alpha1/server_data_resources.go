@@ -375,11 +375,51 @@ func (s *Server) createPkgInstall(ctx context.Context, cluster, namespace string
 	return &pkgInstall, nil
 }
 
+// createPkgRepository creates a package repository for the given cluster, namespace and identifier
+func (s *Server) createPkgRepository(ctx context.Context, cluster, namespace string, newPkgRepository *packagingv1alpha1.PackageRepository) (*packagingv1alpha1.PackageRepository, error) {
+	var pkgRepository packagingv1alpha1.PackageRepository
+	resource, err := s.getPkgRepositoryResource(ctx, cluster, namespace)
+	if err != nil {
+		return nil, err
+	}
+
+	unstructuredPkgRepositoryContent, err := runtime.DefaultUnstructuredConverter.ToUnstructured(newPkgRepository)
+	if err != nil {
+		return nil, err
+	}
+	unstructuredPkgRepository := unstructured.Unstructured{}
+	unstructuredPkgRepository.SetUnstructuredContent(unstructuredPkgRepositoryContent)
+
+	unstructuredNewPkgRepository, err := resource.Create(ctx, &unstructuredPkgRepository, metav1.CreateOptions{})
+	if err != nil {
+		return nil, err
+	}
+
+	err = runtime.DefaultUnstructuredConverter.FromUnstructured(unstructuredNewPkgRepository.Object, &pkgRepository)
+	if err != nil {
+		return nil, err
+	}
+	return &pkgRepository, nil
+}
+
 // Deletion functions
 
 // deletePkgInstall deletes a package install for the given cluster, namespace and identifier
 func (s *Server) deletePkgInstall(ctx context.Context, cluster, namespace, identifier string) error {
 	resource, err := s.getPkgInstallResource(ctx, cluster, namespace)
+	if err != nil {
+		return err
+	}
+	err = resource.Delete(ctx, identifier, metav1.DeleteOptions{})
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+// deletePkgRepository deletes a package repository for the given cluster, namespace and identifier
+func (s *Server) deletePkgRepository(ctx context.Context, cluster, namespace, identifier string) error {
+	resource, err := s.getPkgRepositoryResource(ctx, cluster, namespace)
 	if err != nil {
 		return err
 	}
@@ -478,4 +518,31 @@ func (s *Server) inspectKappK8sResources(ctx context.Context, cluster, namespace
 		})
 	}
 	return refs, nil
+}
+
+// updatePkgRepository updates a package repository for the given cluster, namespace and identifier
+func (s *Server) updatePkgRepository(ctx context.Context, cluster, namespace string, newPkgRepository *packagingv1alpha1.PackageRepository) (*packagingv1alpha1.PackageRepository, error) {
+	var pkgRepository packagingv1alpha1.PackageRepository
+	resource, err := s.getPkgRepositoryResource(ctx, cluster, namespace)
+	if err != nil {
+		return nil, err
+	}
+
+	unstructuredPkgRepositoryContent, err := runtime.DefaultUnstructuredConverter.ToUnstructured(newPkgRepository)
+	if err != nil {
+		return nil, err
+	}
+	unstructuredPkgRepository := unstructured.Unstructured{}
+	unstructuredPkgRepository.SetUnstructuredContent(unstructuredPkgRepositoryContent)
+
+	unstructuredNewPkgRepository, err := resource.Update(ctx, &unstructuredPkgRepository, metav1.UpdateOptions{})
+	if err != nil {
+		return nil, err
+	}
+
+	err = runtime.DefaultUnstructuredConverter.FromUnstructured(unstructuredNewPkgRepository.Object, &pkgRepository)
+	if err != nil {
+		return nil, err
+	}
+	return &pkgRepository, nil
 }

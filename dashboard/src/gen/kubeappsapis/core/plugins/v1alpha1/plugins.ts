@@ -1,7 +1,7 @@
 /* eslint-disable */
 import Long from "long";
 import { grpc } from "@improbable-eng/grpc-web";
-import * as _m0 from "protobufjs/minimal";
+import _m0 from "protobufjs/minimal";
 import { BrowserHeaders } from "browser-headers";
 
 export const protobufPackage = "kubeappsapis.core.plugins.v1alpha1";
@@ -47,9 +47,7 @@ export interface Plugin {
   version: string;
 }
 
-function createBaseGetConfiguredPluginsRequest(): GetConfiguredPluginsRequest {
-  return {};
-}
+const baseGetConfiguredPluginsRequest: object = {};
 
 export const GetConfiguredPluginsRequest = {
   encode(_: GetConfiguredPluginsRequest, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
@@ -59,7 +57,9 @@ export const GetConfiguredPluginsRequest = {
   decode(input: _m0.Reader | Uint8Array, length?: number): GetConfiguredPluginsRequest {
     const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
     let end = length === undefined ? reader.len : reader.pos + length;
-    const message = createBaseGetConfiguredPluginsRequest();
+    const message = {
+      ...baseGetConfiguredPluginsRequest,
+    } as GetConfiguredPluginsRequest;
     while (reader.pos < end) {
       const tag = reader.uint32();
       switch (tag >>> 3) {
@@ -72,7 +72,10 @@ export const GetConfiguredPluginsRequest = {
   },
 
   fromJSON(_: any): GetConfiguredPluginsRequest {
-    return {};
+    const message = {
+      ...baseGetConfiguredPluginsRequest,
+    } as GetConfiguredPluginsRequest;
+    return message;
   },
 
   toJSON(_: GetConfiguredPluginsRequest): unknown {
@@ -80,17 +83,15 @@ export const GetConfiguredPluginsRequest = {
     return obj;
   },
 
-  fromPartial<I extends Exact<DeepPartial<GetConfiguredPluginsRequest>, I>>(
-    _: I,
-  ): GetConfiguredPluginsRequest {
-    const message = createBaseGetConfiguredPluginsRequest();
+  fromPartial(_: DeepPartial<GetConfiguredPluginsRequest>): GetConfiguredPluginsRequest {
+    const message = {
+      ...baseGetConfiguredPluginsRequest,
+    } as GetConfiguredPluginsRequest;
     return message;
   },
 };
 
-function createBaseGetConfiguredPluginsResponse(): GetConfiguredPluginsResponse {
-  return { plugins: [] };
-}
+const baseGetConfiguredPluginsResponse: object = {};
 
 export const GetConfiguredPluginsResponse = {
   encode(
@@ -106,7 +107,10 @@ export const GetConfiguredPluginsResponse = {
   decode(input: _m0.Reader | Uint8Array, length?: number): GetConfiguredPluginsResponse {
     const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
     let end = length === undefined ? reader.len : reader.pos + length;
-    const message = createBaseGetConfiguredPluginsResponse();
+    const message = {
+      ...baseGetConfiguredPluginsResponse,
+    } as GetConfiguredPluginsResponse;
+    message.plugins = [];
     while (reader.pos < end) {
       const tag = reader.uint32();
       switch (tag >>> 3) {
@@ -122,11 +126,16 @@ export const GetConfiguredPluginsResponse = {
   },
 
   fromJSON(object: any): GetConfiguredPluginsResponse {
-    return {
-      plugins: Array.isArray(object?.plugins)
-        ? object.plugins.map((e: any) => Plugin.fromJSON(e))
-        : [],
-    };
+    const message = {
+      ...baseGetConfiguredPluginsResponse,
+    } as GetConfiguredPluginsResponse;
+    message.plugins = [];
+    if (object.plugins !== undefined && object.plugins !== null) {
+      for (const e of object.plugins) {
+        message.plugins.push(Plugin.fromJSON(e));
+      }
+    }
+    return message;
   },
 
   toJSON(message: GetConfiguredPluginsResponse): unknown {
@@ -139,18 +148,21 @@ export const GetConfiguredPluginsResponse = {
     return obj;
   },
 
-  fromPartial<I extends Exact<DeepPartial<GetConfiguredPluginsResponse>, I>>(
-    object: I,
-  ): GetConfiguredPluginsResponse {
-    const message = createBaseGetConfiguredPluginsResponse();
-    message.plugins = object.plugins?.map(e => Plugin.fromPartial(e)) || [];
+  fromPartial(object: DeepPartial<GetConfiguredPluginsResponse>): GetConfiguredPluginsResponse {
+    const message = {
+      ...baseGetConfiguredPluginsResponse,
+    } as GetConfiguredPluginsResponse;
+    message.plugins = [];
+    if (object.plugins !== undefined && object.plugins !== null) {
+      for (const e of object.plugins) {
+        message.plugins.push(Plugin.fromPartial(e));
+      }
+    }
     return message;
   },
 };
 
-function createBasePlugin(): Plugin {
-  return { name: "", version: "" };
-}
+const basePlugin: object = { name: "", version: "" };
 
 export const Plugin = {
   encode(message: Plugin, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
@@ -166,7 +178,7 @@ export const Plugin = {
   decode(input: _m0.Reader | Uint8Array, length?: number): Plugin {
     const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
     let end = length === undefined ? reader.len : reader.pos + length;
-    const message = createBasePlugin();
+    const message = { ...basePlugin } as Plugin;
     while (reader.pos < end) {
       const tag = reader.uint32();
       switch (tag >>> 3) {
@@ -185,10 +197,18 @@ export const Plugin = {
   },
 
   fromJSON(object: any): Plugin {
-    return {
-      name: isSet(object.name) ? String(object.name) : "",
-      version: isSet(object.version) ? String(object.version) : "",
-    };
+    const message = { ...basePlugin } as Plugin;
+    if (object.name !== undefined && object.name !== null) {
+      message.name = String(object.name);
+    } else {
+      message.name = "";
+    }
+    if (object.version !== undefined && object.version !== null) {
+      message.version = String(object.version);
+    } else {
+      message.version = "";
+    }
+    return message;
   },
 
   toJSON(message: Plugin): unknown {
@@ -198,10 +218,18 @@ export const Plugin = {
     return obj;
   },
 
-  fromPartial<I extends Exact<DeepPartial<Plugin>, I>>(object: I): Plugin {
-    const message = createBasePlugin();
-    message.name = object.name ?? "";
-    message.version = object.version ?? "";
+  fromPartial(object: DeepPartial<Plugin>): Plugin {
+    const message = { ...basePlugin } as Plugin;
+    if (object.name !== undefined && object.name !== null) {
+      message.name = object.name;
+    } else {
+      message.name = "";
+    }
+    if (object.version !== undefined && object.version !== null) {
+      message.version = object.version;
+    } else {
+      message.version = "";
+    }
     return message;
   },
 };
@@ -333,7 +361,6 @@ export class GrpcWebImpl {
 }
 
 type Builtin = Date | Function | Uint8Array | string | number | boolean | undefined;
-
 export type DeepPartial<T> = T extends Builtin
   ? T
   : T extends Array<infer U>
@@ -344,16 +371,7 @@ export type DeepPartial<T> = T extends Builtin
   ? { [K in keyof T]?: DeepPartial<T[K]> }
   : Partial<T>;
 
-type KeysOfUnion<T> = T extends T ? keyof T : never;
-export type Exact<P, I extends P> = P extends Builtin
-  ? P
-  : P & { [K in keyof P]: Exact<P[K], I[K]> } & Record<Exclude<keyof I, KeysOfUnion<P>>, never>;
-
 if (_m0.util.Long !== Long) {
   _m0.util.Long = Long as any;
   _m0.configure();
-}
-
-function isSet(value: any): boolean {
-  return value !== null && value !== undefined;
 }

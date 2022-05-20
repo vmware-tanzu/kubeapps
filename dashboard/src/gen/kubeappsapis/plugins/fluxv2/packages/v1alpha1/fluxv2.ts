@@ -1,7 +1,7 @@
 /* eslint-disable */
 import Long from "long";
 import { grpc } from "@improbable-eng/grpc-web";
-import * as _m0 from "protobufjs/minimal";
+import _m0 from "protobufjs/minimal";
 import {
   GetAvailablePackageSummariesRequest,
   GetAvailablePackageDetailRequest,
@@ -46,9 +46,7 @@ export interface SetUserManagedSecretsResponse {
   value: boolean;
 }
 
-function createBaseSetUserManagedSecretsRequest(): SetUserManagedSecretsRequest {
-  return { value: false };
-}
+const baseSetUserManagedSecretsRequest: object = { value: false };
 
 export const SetUserManagedSecretsRequest = {
   encode(
@@ -64,7 +62,9 @@ export const SetUserManagedSecretsRequest = {
   decode(input: _m0.Reader | Uint8Array, length?: number): SetUserManagedSecretsRequest {
     const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
     let end = length === undefined ? reader.len : reader.pos + length;
-    const message = createBaseSetUserManagedSecretsRequest();
+    const message = {
+      ...baseSetUserManagedSecretsRequest,
+    } as SetUserManagedSecretsRequest;
     while (reader.pos < end) {
       const tag = reader.uint32();
       switch (tag >>> 3) {
@@ -80,9 +80,15 @@ export const SetUserManagedSecretsRequest = {
   },
 
   fromJSON(object: any): SetUserManagedSecretsRequest {
-    return {
-      value: isSet(object.value) ? Boolean(object.value) : false,
-    };
+    const message = {
+      ...baseSetUserManagedSecretsRequest,
+    } as SetUserManagedSecretsRequest;
+    if (object.value !== undefined && object.value !== null) {
+      message.value = Boolean(object.value);
+    } else {
+      message.value = false;
+    }
+    return message;
   },
 
   toJSON(message: SetUserManagedSecretsRequest): unknown {
@@ -91,18 +97,20 @@ export const SetUserManagedSecretsRequest = {
     return obj;
   },
 
-  fromPartial<I extends Exact<DeepPartial<SetUserManagedSecretsRequest>, I>>(
-    object: I,
-  ): SetUserManagedSecretsRequest {
-    const message = createBaseSetUserManagedSecretsRequest();
-    message.value = object.value ?? false;
+  fromPartial(object: DeepPartial<SetUserManagedSecretsRequest>): SetUserManagedSecretsRequest {
+    const message = {
+      ...baseSetUserManagedSecretsRequest,
+    } as SetUserManagedSecretsRequest;
+    if (object.value !== undefined && object.value !== null) {
+      message.value = object.value;
+    } else {
+      message.value = false;
+    }
     return message;
   },
 };
 
-function createBaseSetUserManagedSecretsResponse(): SetUserManagedSecretsResponse {
-  return { value: false };
-}
+const baseSetUserManagedSecretsResponse: object = { value: false };
 
 export const SetUserManagedSecretsResponse = {
   encode(
@@ -118,7 +126,9 @@ export const SetUserManagedSecretsResponse = {
   decode(input: _m0.Reader | Uint8Array, length?: number): SetUserManagedSecretsResponse {
     const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
     let end = length === undefined ? reader.len : reader.pos + length;
-    const message = createBaseSetUserManagedSecretsResponse();
+    const message = {
+      ...baseSetUserManagedSecretsResponse,
+    } as SetUserManagedSecretsResponse;
     while (reader.pos < end) {
       const tag = reader.uint32();
       switch (tag >>> 3) {
@@ -134,9 +144,15 @@ export const SetUserManagedSecretsResponse = {
   },
 
   fromJSON(object: any): SetUserManagedSecretsResponse {
-    return {
-      value: isSet(object.value) ? Boolean(object.value) : false,
-    };
+    const message = {
+      ...baseSetUserManagedSecretsResponse,
+    } as SetUserManagedSecretsResponse;
+    if (object.value !== undefined && object.value !== null) {
+      message.value = Boolean(object.value);
+    } else {
+      message.value = false;
+    }
+    return message;
   },
 
   toJSON(message: SetUserManagedSecretsResponse): unknown {
@@ -145,11 +161,15 @@ export const SetUserManagedSecretsResponse = {
     return obj;
   },
 
-  fromPartial<I extends Exact<DeepPartial<SetUserManagedSecretsResponse>, I>>(
-    object: I,
-  ): SetUserManagedSecretsResponse {
-    const message = createBaseSetUserManagedSecretsResponse();
-    message.value = object.value ?? false;
+  fromPartial(object: DeepPartial<SetUserManagedSecretsResponse>): SetUserManagedSecretsResponse {
+    const message = {
+      ...baseSetUserManagedSecretsResponse,
+    } as SetUserManagedSecretsResponse;
+    if (object.value !== undefined && object.value !== null) {
+      message.value = object.value;
+    } else {
+      message.value = false;
+    }
     return message;
   },
 };
@@ -845,7 +865,6 @@ export class GrpcWebImpl {
 }
 
 type Builtin = Date | Function | Uint8Array | string | number | boolean | undefined;
-
 export type DeepPartial<T> = T extends Builtin
   ? T
   : T extends Array<infer U>
@@ -856,16 +875,7 @@ export type DeepPartial<T> = T extends Builtin
   ? { [K in keyof T]?: DeepPartial<T[K]> }
   : Partial<T>;
 
-type KeysOfUnion<T> = T extends T ? keyof T : never;
-export type Exact<P, I extends P> = P extends Builtin
-  ? P
-  : P & { [K in keyof P]: Exact<P[K], I[K]> } & Record<Exclude<keyof I, KeysOfUnion<P>>, never>;
-
 if (_m0.util.Long !== Long) {
   _m0.util.Long = Long as any;
   _m0.configure();
-}
-
-function isSet(value: any): boolean {
-  return value !== null && value !== undefined;
 }
