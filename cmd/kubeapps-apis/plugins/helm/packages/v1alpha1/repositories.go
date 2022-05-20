@@ -5,7 +5,6 @@ package main
 
 import (
 	"context"
-	"encoding/json"
 	apprepov1alpha1 "github.com/vmware-tanzu/kubeapps/cmd/apprepository-controller/pkg/apis/apprepository/v1alpha1"
 	corev1 "github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
 	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/pkg/statuserror"
@@ -15,7 +14,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
-	log "k8s.io/klog/v2"
 	"k8s.io/utils/strings/slices"
 )
 
@@ -111,11 +109,6 @@ func newHelmRepoCrd(targetName types.NamespacedName,
 			appRepoCrd.Spec.Auth = *repoAuth
 		}
 	}
-	u, err := json.MarshalIndent(appRepoCrd, "", "  ")
-	if err != nil {
-		log.Fatalf("%s", err)
-	}
-	log.Info(string(u))
 	return appRepoCrd, nil
 }
 
@@ -130,7 +123,7 @@ func (s *Server) setOwnerReferencesForRepoSecret(
 	secret *k8scorev1.Secret,
 	repo *apprepov1alpha1.AppRepository) error {
 
-	if repo.Spec.Auth.Header != nil && secret != nil {
+	if (repo.Spec.Auth.Header != nil || repo.Spec.Auth.CustomCA != nil) && secret != nil {
 		if typedClient, err := s.clientGetter.Typed(ctx, s.kubeappsCluster); err != nil {
 			return err
 		} else {

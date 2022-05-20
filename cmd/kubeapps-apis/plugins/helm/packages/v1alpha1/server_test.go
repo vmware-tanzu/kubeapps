@@ -43,7 +43,7 @@ import (
 	"helm.sh/helm/v3/pkg/action"
 	"helm.sh/helm/v3/pkg/chart"
 	"helm.sh/helm/v3/pkg/chartutil"
-	kube "helm.sh/helm/v3/pkg/kube"
+	"helm.sh/helm/v3/pkg/kube"
 	kubefake "helm.sh/helm/v3/pkg/kube/fake"
 	"helm.sh/helm/v3/pkg/release"
 	"helm.sh/helm/v3/pkg/storage"
@@ -277,13 +277,13 @@ func makeServer(t *testing.T, authorized bool, actionConfig *action.Configuratio
 	}, mock, cleanup
 }
 
-func newServerWithSecrets(t *testing.T, secrets []runtime.Object) *Server {
+func newServerWithSecrets(t *testing.T, secrets []k8sruntime.Object) *Server {
 	typedClient := typfake.NewSimpleClientset(secrets...)
 
 	// ref https://stackoverflow.com/questions/68794562/kubernetes-fake-client-doesnt-handle-generatename-in-objectmeta/68794563#68794563
 	typedClient.PrependReactor(
 		"create", "*",
-		func(action k8stesting.Action) (handled bool, ret runtime.Object, err error) {
+		func(action k8stesting.Action) (handled bool, ret k8sruntime.Object, err error) {
 			ret = action.(k8stesting.CreateAction).GetObject()
 			meta, ok := ret.(metav1.Object)
 			if !ok {
@@ -296,7 +296,7 @@ func newServerWithSecrets(t *testing.T, secrets []runtime.Object) *Server {
 		})
 
 	// Creating an authorized clientGetter
-	typedClient.PrependReactor("create", "selfsubjectaccessreviews", func(action k8stesting.Action) (handled bool, ret runtime.Object, err error) {
+	typedClient.PrependReactor("create", "selfsubjectaccessreviews", func(action k8stesting.Action) (handled bool, ret k8sruntime.Object, err error) {
 		return true, &authorizationv1.SelfSubjectAccessReview{
 			Status: authorizationv1.SubjectAccessReviewStatus{Allowed: true},
 		}, nil

@@ -10,8 +10,10 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	apiv1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
+	"strings"
 	"testing"
 )
 
@@ -70,6 +72,7 @@ func TestAddPackageRepository(t *testing.T) {
 			expectedRepo:     &addRepoGlobal,
 			statusCode:       codes.OK,
 		},
+		// CUSTOM CA AUTH
 		{
 			name:                  "package repository with tls cert authority",
 			request:               addRepoReqTLSCA(ca),
@@ -109,7 +112,7 @@ func TestAddPackageRepository(t *testing.T) {
 			request:               addRepoReqBasicAuth("baz", "zot"),
 			expectedResponse:      addRepoExpectedResp,
 			expectedRepo:          &addRepoAuthHeaderPassCredentials,
-			expectedCreatedSecret: setSecretOwnerRef("bar", newBasicAuthSecret("bar-", "foo", "baz", "zot")),
+			expectedCreatedSecret: setSecretOwnerRef("bar", newBasicAuthSecret("apprepo-bar", "foo", "baz", "zot")),
 			statusCode:            codes.OK,
 		},
 		{
@@ -118,7 +121,7 @@ func TestAddPackageRepository(t *testing.T) {
 			statusCode: codes.InvalidArgument,
 		},
 		{
-			name:               "package repository passing basic auth (user managed secrets)",
+			name:               "fails for package repository passing basic auth (user managed secrets)",
 			request:            addRepoReqBasicAuth("kermit", "frog"),
 			userManagedSecrets: true,
 			statusCode:         codes.InvalidArgument,
@@ -128,7 +131,7 @@ func TestAddPackageRepository(t *testing.T) {
 			request:            addRepoReqAuthWithSecret(corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_BASIC_AUTH, "secret-basic"),
 			expectedResponse:   addRepoExpectedResp,
 			expectedRepo:       addRepoAuthHeaderWithSecretRef("secret-basic"),
-			existingSecret:     newBasicAuthSecret("secret-basic", "foo", "baz", "zot"),
+			existingSecret:     newBasicAuthSecret("secret-basic", "foo", "baz-user", "zot-pwd"),
 			statusCode:         codes.OK,
 			userManagedSecrets: true,
 		},
@@ -139,11 +142,12 @@ func TestAddPackageRepository(t *testing.T) {
 		},
 		// BEARER TOKEN
 		{
-			name:             "package repository with bearer token",
-			request:          addRepoReqBearerToken("the-token"),
-			expectedResponse: addRepoExpectedResp,
-			expectedRepo:     addRepoAuthHeaderWithSecretRef("apprepo-bar"),
-			statusCode:       codes.OK,
+			name:                  "package repository with bearer token",
+			request:               addRepoReqBearerToken("the-token"),
+			expectedResponse:      addRepoExpectedResp,
+			expectedRepo:          addRepoAuthHeaderWithSecretRef("apprepo-bar"),
+			statusCode:            codes.OK,
+			expectedCreatedSecret: setSecretOwnerRef("bar", newAuthTokenSecret("apprepo-bar", "foo", "Bearer the-token")),
 		},
 		{
 			name:       "package repository with no bearer token",
@@ -172,11 +176,12 @@ func TestAddPackageRepository(t *testing.T) {
 		},
 		// CUSTOM AUTH
 		{
-			name:             "package repository with custom auth",
-			request:          addRepoReqCustomAuth,
-			expectedResponse: addRepoExpectedResp,
-			expectedRepo:     addRepoAuthHeaderWithSecretRef("apprepo-bar"),
-			statusCode:       codes.OK,
+			name:                  "package repository with custom auth",
+			request:               addRepoReqCustomAuth,
+			expectedResponse:      addRepoExpectedResp,
+			expectedRepo:          addRepoAuthHeaderWithSecretRef("apprepo-bar"),
+			statusCode:            codes.OK,
+			expectedCreatedSecret: setSecretOwnerRef("bar", newAuthTokenSecret("apprepo-bar", "foo", "foobarzot")),
 		},
 		{
 			name:               "package repository custom auth with existing secret (user managed secrets)",
@@ -282,29 +287,50 @@ func TestAddPackageRepository(t *testing.T) {
 							t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got))
 						}
 
-						/* TODO(rcastelblanq) Check created secrets
 						if tc.expectedCreatedSecret != nil {
-							if !strings.HasPrefix(actualRepo.Spec.SecretRef.Name, tc.expectedRepo.Spec.SecretRef.Name) {
-								t.Errorf("SecretRef [%s] was expected to start with [%s]",
-									actualRepo.Spec.SecretRef.Name, tc.expectedRepo.Spec.SecretRef.Name)
-							}
 							opt2 := cmpopts.IgnoreFields(metav1.ObjectMeta{}, "Name", "GenerateName")
-							// check expected secret has been created
-							if typedClient, err := s.clientGetter.Typed(ctx, s.kubeappsCluster); err != nil {
-								t.Fatal(err)
-							} else if secret, err := typedClient.CoreV1().Secrets(nsname.Namespace).Get(ctx, actualRepo.Spec.SecretRef.Name, metav1.GetOptions{}); err != nil {
-								t.Fatal(err)
-							} else if got, want := secret, tc.expectedCreatedSecret; !cmp.Equal(want, got, opt2) {
-								t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opt2))
-							} else if !strings.HasPrefix(secret.Name, tc.expectedCreatedSecret.Name) {
-								t.Errorf("Secret Name [%s] was expected to start with [%s]",
-									secret.Name, tc.expectedCreatedSecret.Name)
+							if actualRepo.Spec.Auth.Header == nil && actualRepo.Spec.Auth.CustomCA == nil {
+								t.Errorf("Error: Repository secrets were expected but auth header and CA are empty")
+							} else if actualRepo.Spec.Auth.Header != nil {
+								if !strings.HasPrefix(actualRepo.Spec.Auth.Header.SecretKeyRef.Name, tc.expectedRepo.Spec.Auth.Header.SecretKeyRef.Name) {
+									t.Errorf("Auth header SecretKeyRef [%s] was expected to start with [%s]",
+										actualRepo.Spec.Auth.Header.SecretKeyRef.Name, tc.expectedRepo.Spec.Auth.Header.SecretKeyRef.Name)
+								}
+								// check expected secret has been created
+								if typedClient, err := s.clientGetter.Typed(ctx, s.kubeappsCluster); err != nil {
+									t.Fatal(err)
+								} else if secret, err := typedClient.CoreV1().Secrets(nsname.Namespace).Get(ctx, actualRepo.Spec.Auth.Header.SecretKeyRef.Name, metav1.GetOptions{}); err != nil {
+									t.Fatal(err)
+								} else if got, want := secret, tc.expectedCreatedSecret; !cmp.Equal(want, got, opt2) {
+									t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opt2))
+								} else if !strings.HasPrefix(secret.Name, tc.expectedCreatedSecret.Name) {
+									t.Errorf("Secret Name [%s] was expected to start with [%s]",
+										secret.Name, tc.expectedCreatedSecret.Name)
+								}
+							} else {
+								if !strings.HasPrefix(actualRepo.Spec.Auth.CustomCA.SecretKeyRef.Name, tc.expectedRepo.Spec.Auth.CustomCA.SecretKeyRef.Name) {
+									t.Errorf("CustomCA SecretKeyRef [%s] was expected to start with [%s]",
+										actualRepo.Spec.Auth.CustomCA.SecretKeyRef.Name, tc.expectedRepo.Spec.Auth.CustomCA.SecretKeyRef.Name)
+								}
+								// check expected secret has been created
+								if typedClient, err := s.clientGetter.Typed(ctx, s.kubeappsCluster); err != nil {
+									t.Fatal(err)
+								} else if secret, err := typedClient.CoreV1().Secrets(nsname.Namespace).Get(ctx, actualRepo.Spec.Auth.CustomCA.SecretKeyRef.Name, metav1.GetOptions{}); err != nil {
+									t.Fatal(err)
+								} else if got, want := secret, tc.expectedCreatedSecret; !cmp.Equal(want, got, opt2) {
+									t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opt2))
+								} else if !strings.HasPrefix(secret.Name, tc.expectedCreatedSecret.Name) {
+									t.Errorf("Secret Name [%s] was expected to start with [%s]",
+										secret.Name, tc.expectedCreatedSecret.Name)
+								}
 							}
-						} else if actualRepo.Spec.SecretRef != nil {
-							t.Fatalf("Expected no secret, but found: [%q]", actualRepo.Spec.SecretRef.Name)
-						} else if tc.expectedRepo.Spec.SecretRef != nil {
+						} else if actualRepo.Spec.Auth.Header != nil {
+							t.Fatalf("Expected no secret, but found Header: [%v]", actualRepo.Spec.Auth.Header.SecretKeyRef)
+						} else if actualRepo.Spec.Auth.CustomCA != nil {
+							t.Fatalf("Expected no secret, but found CustomCA: [%v]", actualRepo.Spec.Auth.CustomCA.SecretKeyRef)
+						} else if tc.expectedRepo.Spec.Auth.Header != nil {
 							t.Fatalf("Error: unexpected state")
-						}*/
+						}
 					}
 				}
 			}
