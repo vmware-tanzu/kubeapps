@@ -426,7 +426,7 @@ func (s *Server) buildPackageRepositorySummary(pr *packagingv1alpha1.PackageRepo
 			Identifier: pr.Name,
 		},
 		Name:            pr.Name,
-		NamespaceScoped: s.globalPackagingNamespace == pr.Namespace,
+		NamespaceScoped: s.globalPackagingNamespace != pr.Namespace,
 	}
 
 	// handle fetch-specific configuration
@@ -474,7 +474,7 @@ func (s *Server) buildPackageRepository(pr *packagingv1alpha1.PackageRepository,
 			Identifier: pr.Name,
 		},
 		Name:            pr.Name,
-		NamespaceScoped: s.globalPackagingNamespace == pr.Namespace,
+		NamespaceScoped: s.globalPackagingNamespace != pr.Namespace,
 	}
 
 	// synchronization
@@ -581,17 +581,28 @@ func statusReason(status kappctrlv1alpha1.Condition) corev1.PackageRepositorySta
 	switch status.Type {
 	case kappctrlv1alpha1.ReconcileSucceeded:
 		return corev1.PackageRepositoryStatus_STATUS_REASON_SUCCESS
-	case kappctrlv1alpha1.ReconcileFailed:
-		return corev1.PackageRepositoryStatus_STATUS_REASON_FAILED
-	case kappctrlv1alpha1.Reconciling:
+	case kappctrlv1alpha1.Reconciling, kappctrlv1alpha1.Deleting:
 		return corev1.PackageRepositoryStatus_STATUS_REASON_PENDING
+	case kappctrlv1alpha1.ReconcileFailed, kappctrlv1alpha1.DeleteFailed:
+		return corev1.PackageRepositoryStatus_STATUS_REASON_FAILED
 	}
 	// Fall back to unknown/unspecified.
 	return corev1.PackageRepositoryStatus_STATUS_REASON_UNSPECIFIED
 }
 
 func statusUserReason(status kappctrlv1alpha1.Condition, usefulerror string) string {
-	if status.Type == kappctrlv1alpha1.ReconcileSucceeded {
+	switch status.Type {
+	case kappctrlv1alpha1.ReconcileSucceeded:
+		return status.Message
+	case kappctrlv1alpha1.Reconciling:
+		if status.Message == "" {
+			return "Reconciling"
+		}
+		return status.Message
+	case kappctrlv1alpha1.Deleting:
+		if status.Message == "" {
+			return "Deleting"
+		}
 		return status.Message
 	}
 

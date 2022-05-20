@@ -39,7 +39,7 @@ func (s *Server) AddPackageRepository(ctx context.Context, request *corev1.AddPa
 	if request.GetDescription() != "" {
 		return nil, status.Errorf(codes.InvalidArgument, "Description is not supported")
 	}
-	if request.GetNamespaceScoped() != (namespace == s.globalPackagingNamespace) {
+	if request.GetNamespaceScoped() != (namespace != s.globalPackagingNamespace) {
 		return nil, status.Errorf(codes.InvalidArgument, "Namespace Scope is inconsistent with the provided Namespace")
 	}
 	if request.GetType() != Type_ImgPkgBundle {
@@ -97,7 +97,7 @@ func (s *Server) GetPackageRepositoryDetail(ctx context.Context, request *corev1
 	name := request.GetPackageRepoRef().GetIdentifier()
 
 	// trace logging
-	logctx := fmt.Sprintf("(cluster=%q, namespace=%q, identifier)", cluster, namespace, name)
+	logctx := fmt.Sprintf("(cluster=%q, namespace=%q, name=%q)", cluster, namespace, name)
 	log.Infof("+kapp-controller GetPackageRepositoryDetail %s", logctx)
 
 	// fetch carvel repository
@@ -244,7 +244,7 @@ func (s *Server) DeletePackageRepository(ctx context.Context, request *corev1.De
 	name := request.GetPackageRepoRef().GetIdentifier()
 
 	// trace logging
-	logctx := fmt.Sprintf("(cluster=%q, namespace=%q, identifier)", cluster, namespace, name)
+	logctx := fmt.Sprintf("(cluster=%q, namespace=%q, name=%q)", cluster, namespace, name)
 	log.Infof("+kapp-controller DeletePackageRepository %s", logctx)
 
 	// delete
