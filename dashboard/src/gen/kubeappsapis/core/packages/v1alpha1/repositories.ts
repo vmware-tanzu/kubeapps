@@ -93,7 +93,7 @@ export interface PackageRepositoryTlsConfig {
 /**
  * PackageRepositoryAuth
  *
- * Authentication/authorization to provide client’s identity when connecting
+ * Authentication/authorization to provide client's identity when connecting
  * to a package repository.
  * There are 6 total distinct use cases we may support:
  * 1) None (Public)
@@ -241,7 +241,7 @@ export interface SecretKeyReference {
    * - For Bearer or Custom Auth, the secret must be opaque, and
    *   the key must be provided
    * - For Docker Registry Credentials (OCI registries) the secret
-   *   must of of type "kubernetes.io/dockerconfigjson”
+   *   must of of type "kubernetes.io/dockerconfigjson"
    * For more details, refer to
    * https://kubernetes.io/docs/concepts/configuration/secret/
    */

@@ -1320,6 +1320,7 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 								Namespace: "namespace-1",
 							},
 							Identifier: "my-release-1",
+							Plugin:     GetPluginDetail(),
 						},
 						Name:    "my-release-1",
 						IconUrl: "https://example.com/icon.png",
@@ -1347,6 +1348,7 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 								Namespace: "namespace-1",
 							},
 							Identifier: "my-release-3",
+							Plugin:     GetPluginDetail(),
 						},
 						Name:    "my-release-3",
 						IconUrl: "https://example.com/icon.png",
@@ -1408,6 +1410,7 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 								Namespace: "namespace-1",
 							},
 							Identifier: "my-release-1",
+							Plugin:     GetPluginDetail(),
 						},
 						Name:    "my-release-1",
 						IconUrl: "https://example.com/icon.png",
@@ -1435,6 +1438,7 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 								Namespace: "namespace-2",
 							},
 							Identifier: "my-release-2",
+							Plugin:     GetPluginDetail(),
 						},
 						Name:    "my-release-2",
 						IconUrl: "https://example.com/icon.png",
@@ -1462,6 +1466,7 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 								Namespace: "namespace-3",
 							},
 							Identifier: "my-release-3",
+							Plugin:     GetPluginDetail(),
 						},
 						Name:    "my-release-3",
 						IconUrl: "https://example.com/icon.png",
@@ -1526,6 +1531,7 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 								Namespace: "namespace-1",
 							},
 							Identifier: "my-release-1",
+							Plugin:     GetPluginDetail(),
 						},
 						Name:    "my-release-1",
 						IconUrl: "https://example.com/icon.png",
@@ -1553,6 +1559,7 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 								Namespace: "namespace-2",
 							},
 							Identifier: "my-release-2",
+							Plugin:     GetPluginDetail(),
 						},
 						Name:    "my-release-2",
 						IconUrl: "https://example.com/icon.png",
@@ -1619,6 +1626,7 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 								Namespace: "namespace-3",
 							},
 							Identifier: "my-release-3",
+							Plugin:     GetPluginDetail(),
 						},
 						Name:    "my-release-3",
 						IconUrl: "https://example.com/icon.png",
@@ -1667,6 +1675,7 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 								Namespace: "namespace-1",
 							},
 							Identifier: "my-release-1",
+							Plugin:     GetPluginDetail(),
 						},
 						Name:    "my-release-1",
 						IconUrl: "https://example.com/icon.png",
@@ -1714,7 +1723,7 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 				return
 			}
 
-			opts := cmpopts.IgnoreUnexported(corev1.GetInstalledPackageSummariesResponse{}, corev1.InstalledPackageSummary{}, corev1.InstalledPackageReference{}, corev1.Context{}, corev1.VersionReference{}, corev1.InstalledPackageStatus{}, corev1.PackageAppVersion{})
+			opts := cmpopts.IgnoreUnexported(corev1.GetInstalledPackageSummariesResponse{}, corev1.InstalledPackageSummary{}, corev1.InstalledPackageReference{}, corev1.Context{}, corev1.VersionReference{}, corev1.InstalledPackageStatus{}, corev1.PackageAppVersion{}, plugins.Plugin{})
 			if got, want := response, tc.expectedResponse; !cmp.Equal(want, got, opts) {
 				t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opts))
 			}

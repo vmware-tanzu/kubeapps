@@ -22,16 +22,17 @@ Please open an issue to track any initiative on the roadmap of Kubeapps (usually
 
 **Current Roadmap**
 
-The following table includes the current roadmap for Kubeapps. If you have any questions or would like to contribute to Kubeapps, please contact by Slack on the [#Kubeapps channel](https://kubernetes.slack.com/messages/kubeapps) to discuss with our team. If you don't know where to start, we are always looking for contributors that will help us reduce technical, automation, and documentation debt. Please take the timelines & dates as proposals and goals. Priorities and requirements change based on community feedback, roadblocks encountered, community contributions, etc. If you depend on a specific item, we encourage you to contact by Slack, or help us deliver that feature by contributing to Kubeapps.
+The following table includes the current roadmap for Kubeapps. If you have any questions or would like to contribute to Kubeapps, please contact us by Slack on the [#Kubeapps channel](https://kubernetes.slack.com/messages/kubeapps) to discuss with our team.
 
-Last Updated: December 2021
-Theme|Description|Timeline|
+If you don't know where to start, we are always looking for contributors that will help us reduce technical, automation, and documentation debt. Please take the timelines & dates as proposals and goals. Priorities and requirements change based on community feedback, roadblocks encountered, community contributions, etc. If you depend on a specific item, we encourage you to contact us by Slack, or help us deliver that feature by contributing to Kubeapps.
+
+Last Updated: May 2022
+Epic|Description|Timeline|
 |--|--|--|
-|Kubernetes API Service |Currently when an app is installed on the cluster, our AppView gets the data about the related k8s resources from the k8s api server. We want to replace that with an API call which allows getting the (relevant) resources for a particular installed package (only). |Q4 - 2021|
-|flux plugin |Plugin-based support for different packaging systems, moving across our existing Helm support as well as adding fluxv2 support. |Q4 - 2021|
-|kapp-controller plugin |Plugin-based support for different packaging systems, moving across our existing Helm support as well as adding Carvel packages support. |Q4 - 2021|
-|Package repository API |Define a package repositories API with similar core interface to packages API. |Q4 - 2021|
-|Improve CI/CD and Release process | Explore a replacement for CircleCI (Github actions or any other alternative); Upgrade tests; |Q4 -2021|
-|Update documentation |Reorganizing and updating Kubeapps docs (including new architecture and plugins); New Kubeapps website |Ongoing|
-|operators plugin |The operators plugin aims at just replacing the current support for operators in Kubeapps implemented within a plugin. |Backlog|
-|Improve auditability |Design an interface which receives audit events for resources we're interested in and use the built-in support for auditing in Kubernetes (https://kubernetes.io/docs/tasks/debug-application-cluster/audit/) so that the cluster is configured to send the events. |Backlog|
+| [Distribute Kubeapps Carvel package as part of TCE](https://github.com/vmware-tanzu/kubeapps/milestone/40) | Include the Kubeapps application in the TCE repository so that users can view and interact with the packages available in the TCE repository via the Kubeapps UI, which now supports browsing and installing Carvel packages | FY23-Q2 |
+| [New Kubeapps website](https://github.com/vmware-tanzu/kubeapps/milestone/37) | Build a new Kubeapps website aligned with the rest of open-sourced projects in Tanzu | FY23-Q2 |
+| [Implementation of package repository for Helm plugin](https://github.com/vmware-tanzu/kubeapps/milestone/42) | Once package repository API has been defined, it is time to implement it for Helm plugin | FY23-Q2 |
+| [Implementation of package repository for Carvel plugin](https://github.com/vmware-tanzu/kubeapps/milestone/43) | Once package repository API has been defined, it is time to implement it for Carvel plugin | FY23-Q2 |
+| [Design how to enable plugins to customize UI](https://github.com/vmware-tanzu/kubeapps/milestone/46) | Kubeapps UI should allow to include some features provided by specific plugins in addition to the core features provided by all of the packaging plugins | FY23-Q2 |
+| [Standardize caching repo and chart data in Kubeapps](https://github.com/vmware-tanzu/kubeapps/milestone/45) | Look into replacing postgresql as a mechanism for helm plug-in with redis to be consistent with flux support in kubeapps (which already uses redis as a caching mechanism) | FY23-Q2 |
+| Kubeapps Docker Desktop extension | Develop and publish a Docker Desktop extension to simplify the onboarding to Kubeapps for Docker Desktop users | FY-23 |

@@ -2,7 +2,7 @@
   "swagger": "2.0",
   "info": {
     "title": "Kubeapps API",
-    "description": "[![CircleCI](https://circleci.com/gh/vmware-tanzu/kubeapps/tree/main.svg?style=svg)](https://circleci.com/gh/vmware-tanzu/kubeapps/tree/main)\n \n [Kubeapps](https://github.com/vmware-tanzu/kubeapps) is a web-based UI for deploying and managing applications in Kubernetes clusters.\n \n Note: this API documentation is still in an initial stage and is subject to change. Before coupling to it, please [drop us an issue](https://github.com/vmware-tanzu/kubeapps/issues/new/choose) or reach us [via Slack](https://kubernetes.slack.com/messages/kubeapps) to know more about your use case and see how we can assist you.\n #### Developer Documentation\n - The [Kubeapps architecture overview](https://github.com/vmware-tanzu/kubeapps/blob/main/docs/background/architecture.md).\n - The [Kubeapps Developer Documentation](https://github.com/vmware-tanzu/kubeapps/blob/main/docs/reference/developer/README.md) for instructions on setting up the developer environment for developing on Kubeapps and its components.\n - The [Kubeapps Build Guide](https://github.com/vmware-tanzu/kubeapps/blob/main/docs/reference/developer/build.md) for instructions on setting up the build environment and building Kubeapps from source.\n",
+    "description": "[![CircleCI](https://circleci.com/gh/vmware-tanzu/kubeapps/tree/main.svg?style=svg)](https://circleci.com/gh/vmware-tanzu/kubeapps/tree/main)\n \n [Kubeapps](https://github.com/vmware-tanzu/kubeapps) is a web-based UI for deploying and managing applications in Kubernetes clusters.\n \n Note: this API documentation is still in an initial stage and is subject to change. Before coupling to it, please [drop us an issue](https://github.com/vmware-tanzu/kubeapps/issues/new/choose) or reach us [via Slack](https://kubernetes.slack.com/messages/kubeapps) to know more about your use case and see how we can assist you.\n #### Developer Documentation\n - The [Kubeapps architecture overview](https://github.com/vmware-tanzu/kubeapps/blob/main/site/content/docs/latest/background/architecture.md).\n - The [Kubeapps Developer Documentation](https://github.com/vmware-tanzu/kubeapps/blob/main/site/content/docs/latest/reference/developer/README.md) for instructions on setting up the developer environment for developing on Kubeapps and its components.\n - The [Kubeapps Build Guide](https://github.com/vmware-tanzu/kubeapps/blob/main/site/content/docs/latest/reference/developer/build.md) for instructions on setting up the build environment and building Kubeapps from source.\n",
     "termsOfService": "https://github.com/vmware-tanzu/kubeapps/blob/main/LICENSE",
     "version": "0.1.0",
     "license": {
@@ -73,28 +73,28 @@
         "parameters": [
           {
             "name": "context.cluster",
-            "description": "Cluster. A cluster name can be provided to target a specific cluster if multiple\nclusters are configured, otherwise all clusters will be assumed.",
+            "description": "Cluster\n\nA cluster name can be provided to target a specific cluster if multiple\nclusters are configured, otherwise all clusters will be assumed.",
             "in": "query",
             "required": false,
             "type": "string"
           },
           {
             "name": "context.namespace",
-            "description": "Namespace. A namespace must be provided if the context of the operation is for a resource\nor resources in a particular namespace.\nFor requests to list items, not including a namespace here implies that the context\nfor the request is everything the requesting user can read, though the result can\nbe filtered by any filtering options of the request. Plugins may choose to return\nUnimplemented for some queries for which we do not yet have a need.",
+            "description": "Namespace\n\nA namespace must be provided if the context of the operation is for a resource\nor resources in a particular namespace.\nFor requests to list items, not including a namespace here implies that the context\nfor the request is everything the requesting user can read, though the result can\nbe filtered by any filtering options of the request. Plugins may choose to return\nUnimplemented for some queries for which we do not yet have a need.",
             "in": "query",
             "required": false,
             "type": "string"
           },
           {
             "name": "filterOptions.query",
-            "description": "Text query. Text query for the request",
+            "description": "Text query\n\nText query for the request",
             "in": "query",
             "required": false,
             "type": "string"
           },
           {
             "name": "filterOptions.categories",
-            "description": "Categories. Collection of categories for the request",
+            "description": "Categories\n\nCollection of categories for the request",
             "in": "query",
             "required": false,
             "type": "array",
@@ -105,7 +105,7 @@
           },
           {
             "name": "filterOptions.repositories",
-            "description": "Repositories. Collection of repositories where the packages belong to",
+            "description": "Repositories\n\nCollection of repositories where the packages belong to",
             "in": "query",
             "required": false,
             "type": "array",
@@ -116,28 +116,28 @@
           },
           {
             "name": "filterOptions.pkgVersion",
-            "description": "Package version. Package version for the request",
+            "description": "Package version\n\nPackage version for the request",
             "in": "query",
             "required": false,
             "type": "string"
           },
           {
             "name": "filterOptions.appVersion",
-            "description": "App version. Packaged app version for the request",
+            "description": "App version\n\nPackaged app version for the request",
             "in": "query",
             "required": false,
             "type": "string"
           },
           {
             "name": "paginationOptions.pageToken",
-            "description": "Page token. The client uses this field to request a specific page of the list results.",
+            "description": "Page token\n\nThe client uses this field to request a specific page of the list results.",
             "in": "query",
             "required": false,
             "type": "string"
           },
           {
             "name": "paginationOptions.pageSize",
-            "description": "Page size. Clients use this field to specify the maximum number of results to be\nreturned by the server. The server may further constrain the maximum number\nof results returned in a single page. If the page_size is 0, the server\nwill decide the number of results to be returned.",
+            "description": "Page size\n\nClients use this field to specify the maximum number of results to be\nreturned by the server. The server may further constrain the maximum number\nof results returned in a single page. If the page_size is 0, the server\nwill decide the number of results to be returned.",
             "in": "query",
             "required": false,
             "type": "integer",
@@ -204,7 +204,8 @@
             "description": "Available package identifier\n\nThe fully qualified identifier for the available package\n(ie. a unique name for the context). For some packaging systems\n(particularly those where an available package is backed by a CR) this\nwill just be the name, but for others such as those where an available\npackage is not backed by a CR (eg. standard helm) it may be necessary\nto include the repository in the name or even the repo namespace\nto ensure this is unique.\nFor example two helm repositories can define\nan \"apache\" chart that is available globally, the names would need to\nencode that to be unique (ie. \"repoA:apache\" and \"repoB:apache\").",
             "in": "path",
             "required": true,
-            "type": "string"
+            "type": "string",
+            "pattern": ".+"
           },
           {
             "name": "pkgVersion",
@@ -274,7 +275,8 @@
             "description": "Available package identifier\n\nThe fully qualified identifier for the available package\n(ie. a unique name for the context). For some packaging systems\n(particularly those where an available package is backed by a CR) this\nwill just be the name, but for others such as those where an available\npackage is not backed by a CR (eg. standard helm) it may be necessary\nto include the repository in the name or even the repo namespace\nto ensure this is unique.\nFor example two helm repositories can define\nan \"apache\" chart that is available globally, the names would need to\nencode that to be unique (ie. \"repoA:apache\" and \"repoB:apache\").",
             "in": "path",
             "required": true,
-            "type": "string"
+            "type": "string",
+            "pattern": ".+"
           },
           {
             "name": "pkgVersion",
@@ -313,28 +315,28 @@
         "parameters": [
           {
             "name": "context.cluster",
-            "description": "Cluster. A cluster name can be provided to target a specific cluster if multiple\nclusters are configured, otherwise all clusters will be assumed.",
+            "description": "Cluster\n\nA cluster name can be provided to target a specific cluster if multiple\nclusters are configured, otherwise all clusters will be assumed.",
             "in": "query",
             "required": false,
             "type": "string"
           },
           {
             "name": "context.namespace",
-            "description": "Namespace. A namespace must be provided if the context of the operation is for a resource\nor resources in a particular namespace.\nFor requests to list items, not including a namespace here implies that the context\nfor the request is everything the requesting user can read, though the result can\nbe filtered by any filtering options of the request. Plugins may choose to return\nUnimplemented for some queries for which we do not yet have a need.",
+            "description": "Namespace\n\nA namespace must be provided if the context of the operation is for a resource\nor resources in a particular namespace.\nFor requests to list items, not including a namespace here implies that the context\nfor the request is everything the requesting user can read, though the result can\nbe filtered by any filtering options of the request. Plugins may choose to return\nUnimplemented for some queries for which we do not yet have a need.",
             "in": "query",
             "required": false,
             "type": "string"
           },
           {
             "name": "paginationOptions.pageToken",
-            "description": "Page token. The client uses this field to request a specific page of the list results.",
+            "description": "Page token\n\nThe client uses this field to request a specific page of the list results.",
             "in": "query",
             "required": false,
             "type": "string"
           },
           {
             "name": "paginationOptions.pageSize",
-            "description": "Page size. Clients use this field to specify the maximum number of results to be\nreturned by the server. The server may further constrain the maximum number\nof results returned in a single page. If the page_size is 0, the server\nwill decide the number of results to be returned.",
+            "description": "Page size\n\nClients use this field to specify the maximum number of results to be\nreturned by the server. The server may further constrain the maximum number\nof results returned in a single page. If the page_size is 0, the server\nwill decide the number of results to be returned.",
             "in": "query",
             "required": false,
             "type": "integer",
@@ -564,7 +566,42 @@
             "in": "body",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/v1alpha1UpdateInstalledPackageRequest"
+              "type": "object",
+              "properties": {
+                "installedPackageRef": {
+                  "type": "object",
+                  "properties": {
+                    "context": {
+                      "type": "object",
+                      "description": "Installed package context\n\nThe context (cluster/namespace) for the package.",
+                      "title": "Installed package context\n\nThe context (cluster/namespace) for the package."
+                    },
+                    "plugin": {
+                      "type": "object",
+                      "example": {
+                        "name": "kapp_controller.packages",
+                        "version": "v1alpha1"
+                      },
+                      "description": "The plugin used to identify and interact with the installed package.\nThis field can be omitted when the request is in the context of a specific plugin.",
+                      "title": "The plugin used to identify and interact with the installed package.\nThis field can be omitted when the request is in the context of a specific plugin."
+                    }
+                  },
+                  "title": "A reference uniquely identifying the installed package being updated.\nRequired"
+                },
+                "pkgVersionReference": {
+                  "$ref": "#/definitions/v1alpha1VersionReference",
+                  "title": "For helm this will be the exact version in VersionReference.version\nFor fluxv2 this could be any semver constraint expression\nFor other plugins we can extend the VersionReference as needed. Optional"
+                },
+                "values": {
+                  "type": "string",
+                  "description": "An optional serialized values string to be included when templating a\npackage in the format expected by the plugin. Included when the backend\nformat doesn't use secrets or configmaps for values or supports both.\nThese values are layered on top of any values refs above, when\nrelevant."
+                },
+                "reconciliationOptions": {
+                  "$ref": "#/definitions/v1alpha1ReconciliationOptions",
+                  "description": "An optional field for specifying data common to systems that reconcile\nthe package on the cluster."
+                }
+              },
+              "description": "UpdateInstalledPackageRequest\n\nRequest for UpdateInstalledPackage. The intent is to reach the desired state specified\nby the fields in the request, while leaving other fields intact. This is a whole\nobject \"Update\" semantics rather than \"Patch\" semantics. The caller will provide the\nvalues for the fields below, which will replace, or be overlayed onto, the\ncorresponding fields in the existing resource. For example, with the\nUpdateInstalledPackageRequest, it is not possible to change just the 'package version\nreference' without also specifying 'values' field. As a side effect, not specifying the\n'values' field in the request means there are no values specified in the desired state.\nSo the meaning of each field value is describing the desired state of the corresponding\nfield in the resource after the update operation has completed the renconciliation."
             }
           }
         ],
@@ -660,14 +697,14 @@
         "parameters": [
           {
             "name": "context.cluster",
-            "description": "Cluster. A cluster name can be provided to target a specific cluster if multiple\nclusters are configured, otherwise all clusters will be assumed.",
+            "description": "Cluster\n\nA cluster name can be provided to target a specific cluster if multiple\nclusters are configured, otherwise all clusters will be assumed.",
             "in": "query",
             "required": false,
             "type": "string"
           },
           {
             "name": "context.namespace",
-            "description": "Namespace. A namespace must be provided if the context of the operation is for a resource\nor resources in a particular namespace.\nFor requests to list items, not including a namespace here implies that the context\nfor the request is everything the requesting user can read, though the result can\nbe filtered by any filtering options of the request. Plugins may choose to return\nUnimplemented for some queries for which we do not yet have a need.",
+            "description": "Namespace\n\nA namespace must be provided if the context of the operation is for a resource\nor resources in a particular namespace.\nFor requests to list items, not including a namespace here implies that the context\nfor the request is everything the requesting user can read, though the result can\nbe filtered by any filtering options of the request. Plugins may choose to return\nUnimplemented for some queries for which we do not yet have a need.",
             "in": "query",
             "required": false,
             "type": "string"
@@ -767,7 +804,8 @@
             "description": "The fully qualified identifier for the repository\n(i.e. a unique name for the context).",
             "in": "path",
             "required": true,
-            "type": "string"
+            "type": "string",
+            "pattern": ".+"
           }
         ],
         "tags": [
@@ -828,7 +866,8 @@
             "description": "The fully qualified identifier for the repository\n(i.e. a unique name for the context).",
             "in": "path",
             "required": true,
-            "type": "string"
+            "type": "string",
+            "pattern": ".+"
           }
         ],
         "tags": [
@@ -889,14 +928,63 @@
             "description": "The fully qualified identifier for the repository\n(i.e. a unique name for the context).",
             "in": "path",
             "required": true,
-            "type": "string"
+            "type": "string",
+            "pattern": ".+"
           },
           {
             "name": "body",
             "in": "body",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/v1alpha1UpdatePackageRepositoryRequest"
+              "type": "object",
+              "properties": {
+                "packageRepoRef": {
+                  "type": "object",
+                  "properties": {
+                    "context": {
+                      "type": "object",
+                      "description": "The context (cluster/namespace) for the repository.",
+                      "title": "The context (cluster/namespace) for the repository."
+                    },
+                    "plugin": {
+                      "type": "object",
+                      "example": {
+                        "name": "kapp_controller.packages",
+                        "version": "v1alpha1"
+                      },
+                      "description": "The plugin used to interact with this available package.\nThis field should be omitted when the request is in the context of a\nspecific plugin.",
+                      "title": "The plugin used to interact with this available package.\nThis field should be omitted when the request is in the context of a\nspecific plugin."
+                    }
+                  },
+                  "title": "A reference uniquely identifying the package repository being updated.\nThe only required field"
+                },
+                "url": {
+                  "type": "string",
+                  "description": "URL identifying the package repository location."
+                },
+                "description": {
+                  "type": "string",
+                  "description": "A user-provided description."
+                },
+                "interval": {
+                  "type": "integer",
+                  "format": "int64",
+                  "title": "The interval at which to check the upstream for updates (in seconds)\nOptional. Defaults to 10m if not specified"
+                },
+                "tlsConfig": {
+                  "$ref": "#/definitions/v1alpha1PackageRepositoryTlsConfig",
+                  "title": "TLS-specific parameters for connecting to a repository. Optional"
+                },
+                "auth": {
+                  "$ref": "#/definitions/v1alpha1PackageRepositoryAuth",
+                  "title": "authentication parameters for connecting to a repository. Optional"
+                },
+                "customDetail": {
+                  "$ref": "#/definitions/protobufAny",
+                  "title": "Custom data added by the plugin\nA plugin can define custom details for data which is not yet, or\nnever will be specified in the core AddPackageRepositoryRequest\nfields. The use of an `Any` field means that each plugin can define\nthe structure of this message as required, while still satisfying the\ncore interface.\nSee https://developers.google.com/protocol-buffers/docs/proto3#any\nJust for reference, some of the examples that have been chosen not to\nbe part of the core API but rather plugin-specific details are:\n  direct-helm:\n     - image pull secrets\n     - list of oci repositories\n     - filter rules\n     - sync job pod template"
+                }
+              },
+              "title": "UpdatePackageRepositoryRequest\n\nRequest for UpdatePackageRepository"
             }
           }
         ],
@@ -957,28 +1045,28 @@
         "parameters": [
           {
             "name": "context.cluster",
-            "description": "Cluster. A cluster name can be provided to target a specific cluster if multiple\nclusters are configured, otherwise all clusters will be assumed.",
+            "description": "Cluster\n\nA cluster name can be provided to target a specific cluster if multiple\nclusters are configured, otherwise all clusters will be assumed.",
             "in": "query",
             "required": false,
             "type": "string"
           },
           {
             "name": "context.namespace",
-            "description": "Namespace. A namespace must be provided if the context of the operation is for a resource\nor resources in a particular namespace.\nFor requests to list items, not including a namespace here implies that the context\nfor the request is everything the requesting user can read, though the result can\nbe filtered by any filtering options of the request. Plugins may choose to return\nUnimplemented for some queries for which we do not yet have a need.",
+            "description": "Namespace\n\nA namespace must be provided if the context of the operation is for a resource\nor resources in a particular namespace.\nFor requests to list items, not including a namespace here implies that the context\nfor the request is everything the requesting user can read, though the result can\nbe filtered by any filtering options of the request. Plugins may choose to return\nUnimplemented for some queries for which we do not yet have a need.",
             "in": "query",
             "required": false,
             "type": "string"
           },
           {
             "name": "filterOptions.query",
-            "description": "Text query. Text query for the request",
+            "description": "Text query\n\nText query for the request",
             "in": "query",
             "required": false,
             "type": "string"
           },
           {
             "name": "filterOptions.categories",
-            "description": "Categories. Collection of categories for the request",
+            "description": "Categories\n\nCollection of categories for the request",
             "in": "query",
             "required": false,
             "type": "array",
@@ -989,7 +1077,7 @@
           },
           {
             "name": "filterOptions.repositories",
-            "description": "Repositories. Collection of repositories where the packages belong to",
+            "description": "Repositories\n\nCollection of repositories where the packages belong to",
             "in": "query",
             "required": false,
             "type": "array",
@@ -1000,28 +1088,28 @@
           },
           {
             "name": "filterOptions.pkgVersion",
-            "description": "Package version. Package version for the request",
+            "description": "Package version\n\nPackage version for the request",
             "in": "query",
             "required": false,
             "type": "string"
           },
           {
             "name": "filterOptions.appVersion",
-            "description": "App version. Packaged app version for the request",
+            "description": "App version\n\nPackaged app version for the request",
             "in": "query",
             "required": false,
             "type": "string"
           },
           {
             "name": "paginationOptions.pageToken",
-            "description": "Page token. The client uses this field to request a specific page of the list results.",
+            "description": "Page token\n\nThe client uses this field to request a specific page of the list results.",
             "in": "query",
             "required": false,
             "type": "string"
           },
           {
             "name": "paginationOptions.pageSize",
-            "description": "Page size. Clients use this field to specify the maximum number of results to be\nreturned by the server. The server may further constrain the maximum number\nof results returned in a single page. If the page_size is 0, the server\nwill decide the number of results to be returned.",
+            "description": "Page size\n\nClients use this field to specify the maximum number of results to be\nreturned by the server. The server may further constrain the maximum number\nof results returned in a single page. If the page_size is 0, the server\nwill decide the number of results to be returned.",
             "in": "query",
             "required": false,
             "type": "integer",
@@ -1075,18 +1163,19 @@
             "description": "Available package identifier\n\nThe fully qualified identifier for the available package\n(ie. a unique name for the context). For some packaging systems\n(particularly those where an available package is backed by a CR) this\nwill just be the name, but for others such as those where an available\npackage is not backed by a CR (eg. standard helm) it may be necessary\nto include the repository in the name or even the repo namespace\nto ensure this is unique.\nFor example two helm repositories can define\nan \"apache\" chart that is available globally, the names would need to\nencode that to be unique (ie. \"repoA:apache\" and \"repoB:apache\").",
             "in": "path",
             "required": true,
-            "type": "string"
+            "type": "string",
+            "pattern": ".+"
           },
           {
             "name": "availablePackageRef.plugin.name",
-            "description": "Plugin name. The name of the plugin, such as `fluxv2.packages` or `kapp_controller.packages`.",
+            "description": "Plugin name\n\nThe name of the plugin, such as `fluxv2.packages` or `kapp_controller.packages`.",
             "in": "query",
             "required": false,
             "type": "string"
           },
           {
             "name": "availablePackageRef.plugin.version",
-            "description": "Plugin version. The version of the plugin, such as v1alpha1",
+            "description": "Plugin version\n\nThe version of the plugin, such as v1alpha1",
             "in": "query",
             "required": false,
             "type": "string"
@@ -1146,18 +1235,19 @@
             "description": "Available package identifier\n\nThe fully qualified identifier for the available package\n(ie. a unique name for the context). For some packaging systems\n(particularly those where an available package is backed by a CR) this\nwill just be the name, but for others such as those where an available\npackage is not backed by a CR (eg. standard helm) it may be necessary\nto include the repository in the name or even the repo namespace\nto ensure this is unique.\nFor example two helm repositories can define\nan \"apache\" chart that is available globally, the names would need to\nencode that to be unique (ie. \"repoA:apache\" and \"repoB:apache\").",
             "in": "path",
             "required": true,
-            "type": "string"
+            "type": "string",
+            "pattern": ".+"
           },
           {
             "name": "availablePackageRef.plugin.name",
-            "description": "Plugin name. The name of the plugin, such as `fluxv2.packages` or `kapp_controller.packages`.",
+            "description": "Plugin name\n\nThe name of the plugin, such as `fluxv2.packages` or `kapp_controller.packages`.",
             "in": "query",
             "required": false,
             "type": "string"
           },
           {
             "name": "availablePackageRef.plugin.version",
-            "description": "Plugin version. The version of the plugin, such as v1alpha1",
+            "description": "Plugin version\n\nThe version of the plugin, such as v1alpha1",
             "in": "query",
             "required": false,
             "type": "string"
@@ -1200,28 +1290,28 @@
         "parameters": [
           {
             "name": "context.cluster",
-            "description": "Cluster. A cluster name can be provided to target a specific cluster if multiple\nclusters are configured, otherwise all clusters will be assumed.",
+            "description": "Cluster\n\nA cluster name can be provided to target a specific cluster if multiple\nclusters are configured, otherwise all clusters will be assumed.",
             "in": "query",
             "required": false,
             "type": "string"
           },
           {
             "name": "context.namespace",
-            "description": "Namespace. A namespace must be provided if the context of the operation is for a resource\nor resources in a particular namespace.\nFor requests to list items, not including a namespace here implies that the context\nfor the request is everything the requesting user can read, though the result can\nbe filtered by any filtering options of the request. Plugins may choose to return\nUnimplemented for some queries for which we do not yet have a need.",
+            "description": "Namespace\n\nA namespace must be provided if the context of the operation is for a resource\nor resources in a particular namespace.\nFor requests to list items, not including a namespace here implies that the context\nfor the request is everything the requesting user can read, though the result can\nbe filtered by any filtering options of the request. Plugins may choose to return\nUnimplemented for some queries for which we do not yet have a need.",
             "in": "query",
             "required": false,
             "type": "string"
           },
           {
             "name": "paginationOptions.pageToken",
-            "description": "Page token. The client uses this field to request a specific page of the list results.",
+            "description": "Page token\n\nThe client uses this field to request a specific page of the list results.",
             "in": "query",
             "required": false,
             "type": "string"
           },
           {
             "name": "paginationOptions.pageSize",
-            "description": "Page size. Clients use this field to specify the maximum number of results to be\nreturned by the server. The server may further constrain the maximum number\nof results returned in a single page. If the page_size is 0, the server\nwill decide the number of results to be returned.",
+            "description": "Page size\n\nClients use this field to specify the maximum number of results to be\nreturned by the server. The server may further constrain the maximum number\nof results returned in a single page. If the page_size is 0, the server\nwill decide the number of results to be returned.",
             "in": "query",
             "required": false,
             "type": "integer",
@@ -1314,14 +1404,14 @@
           },
           {
             "name": "installedPackageRef.plugin.name",
-            "description": "Plugin name. The name of the plugin, such as `fluxv2.packages` or `kapp_controller.packages`.",
+            "description": "Plugin name\n\nThe name of the plugin, such as `fluxv2.packages` or `kapp_controller.packages`.",
             "in": "query",
             "required": false,
             "type": "string"
           },
           {
             "name": "installedPackageRef.plugin.version",
-            "description": "Plugin version. The version of the plugin, such as v1alpha1",
+            "description": "Plugin version\n\nThe version of the plugin, such as v1alpha1",
             "in": "query",
             "required": false,
             "type": "string"
@@ -1376,14 +1466,14 @@
           },
           {
             "name": "installedPackageRef.plugin.name",
-            "description": "Plugin name. The name of the plugin, such as `fluxv2.packages` or `kapp_controller.packages`.",
+            "description": "Plugin name\n\nThe name of the plugin, such as `fluxv2.packages` or `kapp_controller.packages`.",
             "in": "query",
             "required": false,
             "type": "string"
           },
           {
             "name": "installedPackageRef.plugin.version",
-            "description": "Plugin version. The version of the plugin, such as v1alpha1",
+            "description": "Plugin version\n\nThe version of the plugin, such as v1alpha1",
             "in": "query",
             "required": false,
             "type": "string"
@@ -1441,7 +1531,37 @@
             "in": "body",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/v1alpha1UpdateInstalledPackageRequest"
+              "type": "object",
+              "properties": {
+                "installedPackageRef": {
+                  "type": "object",
+                  "properties": {
+                    "context": {
+                      "type": "object",
+                      "description": "Installed package context\n\nThe context (cluster/namespace) for the package.",
+                      "title": "Installed package context\n\nThe context (cluster/namespace) for the package."
+                    },
+                    "plugin": {
+                      "$ref": "#/definitions/v1alpha1Plugin",
+                      "description": "The plugin used to identify and interact with the installed package.\nThis field can be omitted when the request is in the context of a specific plugin."
+                    }
+                  },
+                  "title": "A reference uniquely identifying the installed package being updated.\nRequired"
+                },
+                "pkgVersionReference": {
+                  "$ref": "#/definitions/v1alpha1VersionReference",
+                  "title": "For helm this will be the exact version in VersionReference.version\nFor fluxv2 this could be any semver constraint expression\nFor other plugins we can extend the VersionReference as needed. Optional"
+                },
+                "values": {
+                  "type": "string",
+                  "description": "An optional serialized values string to be included when templating a\npackage in the format expected by the plugin. Included when the backend\nformat doesn't use secrets or configmaps for values or supports both.\nThese values are layered on top of any values refs above, when\nrelevant."
+                },
+                "reconciliationOptions": {
+                  "$ref": "#/definitions/v1alpha1ReconciliationOptions",
+                  "description": "An optional field for specifying data common to systems that reconcile\nthe package on the cluster."
+                }
+              },
+              "description": "UpdateInstalledPackageRequest\n\nRequest for UpdateInstalledPackage. The intent is to reach the desired state specified\nby the fields in the request, while leaving other fields intact. This is a whole\nobject \"Update\" semantics rather than \"Patch\" semantics. The caller will provide the\nvalues for the fields below, which will replace, or be overlayed onto, the\ncorresponding fields in the existing resource. For example, with the\nUpdateInstalledPackageRequest, it is not possible to change just the 'package version\nreference' without also specifying 'values' field. As a side effect, not specifying the\n'values' field in the request means there are no values specified in the desired state.\nSo the meaning of each field value is describing the desired state of the corresponding\nfield in the resource after the update operation has completed the renconciliation."
             }
           }
         ],
@@ -1496,14 +1616,14 @@
           },
           {
             "name": "installedPackageRef.plugin.name",
-            "description": "Plugin name. The name of the plugin, such as `fluxv2.packages` or `kapp_controller.packages`.",
+            "description": "Plugin name\n\nThe name of the plugin, such as `fluxv2.packages` or `kapp_controller.packages`.",
             "in": "query",
             "required": false,
             "type": "string"
           },
           {
             "name": "installedPackageRef.plugin.version",
-            "description": "Plugin version. The version of the plugin, such as v1alpha1",
+            "description": "Plugin version\n\nThe version of the plugin, such as v1alpha1",
             "in": "query",
             "required": false,
             "type": "string"
@@ -1538,14 +1658,14 @@
         "parameters": [
           {
             "name": "context.cluster",
-            "description": "Cluster. A cluster name can be provided to target a specific cluster if multiple\nclusters are configured, otherwise all clusters will be assumed.",
+            "description": "Cluster\n\nA cluster name can be provided to target a specific cluster if multiple\nclusters are configured, otherwise all clusters will be assumed.",
             "in": "query",
             "required": false,
             "type": "string"
           },
           {
             "name": "context.namespace",
-            "description": "Namespace. A namespace must be provided if the context of the operation is for a resource\nor resources in a particular namespace.\nFor requests to list items, not including a namespace here implies that the context\nfor the request is everything the requesting user can read, though the result can\nbe filtered by any filtering options of the request. Plugins may choose to return\nUnimplemented for some queries for which we do not yet have a need.",
+            "description": "Namespace\n\nA namespace must be provided if the context of the operation is for a resource\nor resources in a particular namespace.\nFor requests to list items, not including a namespace here implies that the context\nfor the request is everything the requesting user can read, though the result can\nbe filtered by any filtering options of the request. Plugins may choose to return\nUnimplemented for some queries for which we do not yet have a need.",
             "in": "query",
             "required": false,
             "type": "string"
@@ -1632,18 +1752,19 @@
             "description": "The fully qualified identifier for the repository\n(i.e. a unique name for the context).",
             "in": "path",
             "required": true,
-            "type": "string"
+            "type": "string",
+            "pattern": ".+"
           },
           {
             "name": "packageRepoRef.plugin.name",
-            "description": "Plugin name. The name of the plugin, such as `fluxv2.packages` or `kapp_controller.packages`.",
+            "description": "Plugin name\n\nThe name of the plugin, such as `fluxv2.packages` or `kapp_controller.packages`.",
             "in": "query",
             "required": false,
             "type": "string"
           },
           {
             "name": "packageRepoRef.plugin.version",
-            "description": "Plugin version. The version of the plugin, such as v1alpha1",
+            "description": "Plugin version\n\nThe version of the plugin, such as v1alpha1",
             "in": "query",
             "required": false,
             "type": "string"
@@ -1693,18 +1814,19 @@
             "description": "The fully qualified identifier for the repository\n(i.e. a unique name for the context).",
             "in": "path",
             "required": true,
-            "type": "string"
+            "type": "string",
+            "pattern": ".+"
           },
           {
             "name": "packageRepoRef.plugin.name",
-            "description": "Plugin name. The name of the plugin, such as `fluxv2.packages` or `kapp_controller.packages`.",
+            "description": "Plugin name\n\nThe name of the plugin, such as `fluxv2.packages` or `kapp_controller.packages`.",
             "in": "query",
             "required": false,
             "type": "string"
           },
           {
             "name": "packageRepoRef.plugin.version",
-            "description": "Plugin version. The version of the plugin, such as v1alpha1",
+            "description": "Plugin version\n\nThe version of the plugin, such as v1alpha1",
             "in": "query",
             "required": false,
             "type": "string"
@@ -1754,14 +1876,58 @@
             "description": "The fully qualified identifier for the repository\n(i.e. a unique name for the context).",
             "in": "path",
             "required": true,
-            "type": "string"
+            "type": "string",
+            "pattern": ".+"
           },
           {
             "name": "body",
             "in": "body",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/v1alpha1UpdatePackageRepositoryRequest"
+              "type": "object",
+              "properties": {
+                "packageRepoRef": {
+                  "type": "object",
+                  "properties": {
+                    "context": {
+                      "type": "object",
+                      "description": "The context (cluster/namespace) for the repository.",
+                      "title": "The context (cluster/namespace) for the repository."
+                    },
+                    "plugin": {
+                      "$ref": "#/definitions/v1alpha1Plugin",
+                      "description": "The plugin used to interact with this available package.\nThis field should be omitted when the request is in the context of a\nspecific plugin."
+                    }
+                  },
+                  "title": "A reference uniquely identifying the package repository being updated.\nThe only required field"
+                },
+                "url": {
+                  "type": "string",
+                  "description": "URL identifying the package repository location."
+                },
+                "description": {
+                  "type": "string",
+                  "description": "A user-provided description."
+                },
+                "interval": {
+                  "type": "integer",
+                  "format": "int64",
+                  "title": "The interval at which to check the upstream for updates (in seconds)\nOptional. Defaults to 10m if not specified"
+                },
+                "tlsConfig": {
+                  "$ref": "#/definitions/v1alpha1PackageRepositoryTlsConfig",
+                  "title": "TLS-specific parameters for connecting to a repository. Optional"
+                },
+                "auth": {
+                  "$ref": "#/definitions/v1alpha1PackageRepositoryAuth",
+                  "title": "authentication parameters for connecting to a repository. Optional"
+                },
+                "customDetail": {
+                  "$ref": "#/definitions/protobufAny",
+                  "title": "Custom data added by the plugin\nA plugin can define custom details for data which is not yet, or\nnever will be specified in the core AddPackageRepositoryRequest\nfields. The use of an `Any` field means that each plugin can define\nthe structure of this message as required, while still satisfying the\ncore interface.\nSee https://developers.google.com/protocol-buffers/docs/proto3#any\nJust for reference, some of the examples that have been chosen not to\nbe part of the core API but rather plugin-specific details are:\n  direct-helm:\n     - image pull secrets\n     - list of oci repositories\n     - filter rules\n     - sync job pod template"
+                }
+              },
+              "title": "UpdatePackageRepositoryRequest\n\nRequest for UpdatePackageRepository"
             }
           }
         ],
@@ -1795,28 +1961,28 @@
         "parameters": [
           {
             "name": "context.cluster",
-            "description": "Cluster. A cluster name can be provided to target a specific cluster if multiple\nclusters are configured, otherwise all clusters will be assumed.",
+            "description": "Cluster\n\nA cluster name can be provided to target a specific cluster if multiple\nclusters are configured, otherwise all clusters will be assumed.",
             "in": "query",
             "required": false,
             "type": "string"
           },
           {
             "name": "context.namespace",
-            "description": "Namespace. A namespace must be provided if the context of the operation is for a resource\nor resources in a particular namespace.\nFor requests to list items, not including a namespace here implies that the context\nfor the request is everything the requesting user can read, though the result can\nbe filtered by any filtering options of the request. Plugins may choose to return\nUnimplemented for some queries for which we do not yet have a need.",
+            "description": "Namespace\n\nA namespace must be provided if the context of the operation is for a resource\nor resources in a particular namespace.\nFor requests to list items, not including a namespace here implies that the context\nfor the request is everything the requesting user can read, though the result can\nbe filtered by any filtering options of the request. Plugins may choose to return\nUnimplemented for some queries for which we do not yet have a need.",
             "in": "query",
             "required": false,
             "type": "string"
           },
           {
             "name": "filterOptions.query",
-            "description": "Text query. Text query for the request",
+            "description": "Text query\n\nText query for the request",
             "in": "query",
             "required": false,
             "type": "string"
           },
           {
             "name": "filterOptions.categories",
-            "description": "Categories. Collection of categories for the request",
+            "description": "Categories\n\nCollection of categories for the request",
             "in": "query",
             "required": false,
             "type": "array",
@@ -1827,7 +1993,7 @@
           },
           {
             "name": "filterOptions.repositories",
-            "description": "Repositories. Collection of repositories where the packages belong to",
+            "description": "Repositories\n\nCollection of repositories where the packages belong to",
             "in": "query",
             "required": false,
             "type": "array",
@@ -1838,28 +2004,28 @@
           },
           {
             "name": "filterOptions.pkgVersion",
-            "description": "Package version. Package version for the request",
+            "description": "Package version\n\nPackage version for the request",
             "in": "query",
             "required": false,
             "type": "string"
           },
           {
             "name": "filterOptions.appVersion",
-            "description": "App version. Packaged app version for the request",
+            "description": "App version\n\nPackaged app version for the request",
             "in": "query",
             "required": false,
             "type": "string"
           },
           {
             "name": "paginationOptions.pageToken",
-            "description": "Page token. The client uses this field to request a specific page of the list results.",
+            "description": "Page token\n\nThe client uses this field to request a specific page of the list results.",
             "in": "query",
             "required": false,
             "type": "string"
           },
           {
             "name": "paginationOptions.pageSize",
-            "description": "Page size. Clients use this field to specify the maximum number of results to be\nreturned by the server. The server may further constrain the maximum number\nof results returned in a single page. If the page_size is 0, the server\nwill decide the number of results to be returned.",
+            "description": "Page size\n\nClients use this field to specify the maximum number of results to be\nreturned by the server. The server may further constrain the maximum number\nof results returned in a single page. If the page_size is 0, the server\nwill decide the number of results to be returned.",
             "in": "query",
             "required": false,
             "type": "integer",
@@ -1913,18 +2079,19 @@
             "description": "Available package identifier\n\nThe fully qualified identifier for the available package\n(ie. a unique name for the context). For some packaging systems\n(particularly those where an available package is backed by a CR) this\nwill just be the name, but for others such as those where an available\npackage is not backed by a CR (eg. standard helm) it may be necessary\nto include the repository in the name or even the repo namespace\nto ensure this is unique.\nFor example two helm repositories can define\nan \"apache\" chart that is available globally, the names would need to\nencode that to be unique (ie. \"repoA:apache\" and \"repoB:apache\").",
             "in": "path",
             "required": true,
-            "type": "string"
+            "type": "string",
+            "pattern": ".+"
           },
           {
             "name": "availablePackageRef.plugin.name",
-            "description": "Plugin name. The name of the plugin, such as `fluxv2.packages` or `kapp_controller.packages`.",
+            "description": "Plugin name\n\nThe name of the plugin, such as `fluxv2.packages` or `kapp_controller.packages`.",
             "in": "query",
             "required": false,
             "type": "string"
           },
           {
             "name": "availablePackageRef.plugin.version",
-            "description": "Plugin version. The version of the plugin, such as v1alpha1",
+            "description": "Plugin version\n\nThe version of the plugin, such as v1alpha1",
             "in": "query",
             "required": false,
             "type": "string"
@@ -1984,18 +2151,19 @@
             "description": "Available package identifier\n\nThe fully qualified identifier for the available package\n(ie. a unique name for the context). For some packaging systems\n(particularly those where an available package is backed by a CR) this\nwill just be the name, but for others such as those where an available\npackage is not backed by a CR (eg. standard helm) it may be necessary\nto include the repository in the name or even the repo namespace\nto ensure this is unique.\nFor example two helm repositories can define\nan \"apache\" chart that is available globally, the names would need to\nencode that to be unique (ie. \"repoA:apache\" and \"repoB:apache\").",
             "in": "path",
             "required": true,
-            "type": "string"
+            "type": "string",
+            "pattern": ".+"
           },
           {
             "name": "availablePackageRef.plugin.name",
-            "description": "Plugin name. The name of the plugin, such as `fluxv2.packages` or `kapp_controller.packages`.",
+            "description": "Plugin name\n\nThe name of the plugin, such as `fluxv2.packages` or `kapp_controller.packages`.",
             "in": "query",
             "required": false,
             "type": "string"
           },
           {
             "name": "availablePackageRef.plugin.version",
-            "description": "Plugin version. The version of the plugin, such as v1alpha1",
+            "description": "Plugin version\n\nThe version of the plugin, such as v1alpha1",
             "in": "query",
             "required": false,
             "type": "string"
@@ -2038,28 +2206,28 @@
         "parameters": [
           {
             "name": "context.cluster",
-            "description": "Cluster. A cluster name can be provided to target a specific cluster if multiple\nclusters are configured, otherwise all clusters will be assumed.",
+            "description": "Cluster\n\nA cluster name can be provided to target a specific cluster if multiple\nclusters are configured, otherwise all clusters will be assumed.",
             "in": "query",
             "required": false,
             "type": "string"
           },
           {
             "name": "context.namespace",
-            "description": "Namespace. A namespace must be provided if the context of the operation is for a resource\nor resources in a particular namespace.\nFor requests to list items, not including a namespace here implies that the context\nfor the request is everything the requesting user can read, though the result can\nbe filtered by any filtering options of the request. Plugins may choose to return\nUnimplemented for some queries for which we do not yet have a need.",
+            "description": "Namespace\n\nA namespace must be provided if the context of the operation is for a resource\nor resources in a particular namespace.\nFor requests to list items, not including a namespace here implies that the context\nfor the request is everything the requesting user can read, though the result can\nbe filtered by any filtering options of the request. Plugins may choose to return\nUnimplemented for some queries for which we do not yet have a need.",
             "in": "query",
             "required": false,
             "type": "string"
           },
           {
             "name": "paginationOptions.pageToken",
-            "description": "Page token. The client uses this field to request a specific page of the list results.",
+            "description": "Page token\n\nThe client uses this field to request a specific page of the list results.",
             "in": "query",
             "required": false,
             "type": "string"
           },
           {
             "name": "paginationOptions.pageSize",
-            "description": "Page size. Clients use this field to specify the maximum number of results to be\nreturned by the server. The server may further constrain the maximum number\nof results returned in a single page. If the page_size is 0, the server\nwill decide the number of results to be returned.",
+            "description": "Page size\n\nClients use this field to specify the maximum number of results to be\nreturned by the server. The server may further constrain the maximum number\nof results returned in a single page. If the page_size is 0, the server\nwill decide the number of results to be returned.",
             "in": "query",
             "required": false,
             "type": "integer",
@@ -2152,14 +2320,14 @@
           },
           {
             "name": "installedPackageRef.plugin.name",
-            "description": "Plugin name. The name of the plugin, such as `fluxv2.packages` or `kapp_controller.packages`.",
+            "description": "Plugin name\n\nThe name of the plugin, such as `fluxv2.packages` or `kapp_controller.packages`.",
             "in": "query",
             "required": false,
             "type": "string"
           },
           {
             "name": "installedPackageRef.plugin.version",
-            "description": "Plugin version. The version of the plugin, such as v1alpha1",
+            "description": "Plugin version\n\nThe version of the plugin, such as v1alpha1",
             "in": "query",
             "required": false,
             "type": "string"
@@ -2214,14 +2382,14 @@
           },
           {
             "name": "installedPackageRef.plugin.name",
-            "description": "Plugin name. The name of the plugin, such as `fluxv2.packages` or `kapp_controller.packages`.",
+            "description": "Plugin name\n\nThe name of the plugin, such as `fluxv2.packages` or `kapp_controller.packages`.",
             "in": "query",
             "required": false,
             "type": "string"
           },
           {
             "name": "installedPackageRef.plugin.version",
-            "description": "Plugin version. The version of the plugin, such as v1alpha1",
+            "description": "Plugin version\n\nThe version of the plugin, such as v1alpha1",
             "in": "query",
             "required": false,
             "type": "string"
@@ -2279,7 +2447,37 @@
             "in": "body",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/v1alpha1UpdateInstalledPackageRequest"
+              "type": "object",
+              "properties": {
+                "installedPackageRef": {
+                  "type": "object",
+                  "properties": {
+                    "context": {
+                      "type": "object",
+                      "description": "Installed package context\n\nThe context (cluster/namespace) for the package.",
+                      "title": "Installed package context\n\nThe context (cluster/namespace) for the package."
+                    },
+                    "plugin": {
+                      "$ref": "#/definitions/v1alpha1Plugin",
+                      "description": "The plugin used to identify and interact with the installed package.\nThis field can be omitted when the request is in the context of a specific plugin."
+                    }
+                  },
+                  "title": "A reference uniquely identifying the installed package being updated.\nRequired"
+                },
+                "pkgVersionReference": {
+                  "$ref": "#/definitions/v1alpha1VersionReference",
+                  "title": "For helm this will be the exact version in VersionReference.version\nFor fluxv2 this could be any semver constraint expression\nFor other plugins we can extend the VersionReference as needed. Optional"
+                },
+                "values": {
+                  "type": "string",
+                  "description": "An optional serialized values string to be included when templating a\npackage in the format expected by the plugin. Included when the backend\nformat doesn't use secrets or configmaps for values or supports both.\nThese values are layered on top of any values refs above, when\nrelevant."
+                },
+                "reconciliationOptions": {
+                  "$ref": "#/definitions/v1alpha1ReconciliationOptions",
+                  "description": "An optional field for specifying data common to systems that reconcile\nthe package on the cluster."
+                }
+              },
+              "description": "UpdateInstalledPackageRequest\n\nRequest for UpdateInstalledPackage. The intent is to reach the desired state specified\nby the fields in the request, while leaving other fields intact. This is a whole\nobject \"Update\" semantics rather than \"Patch\" semantics. The caller will provide the\nvalues for the fields below, which will replace, or be overlayed onto, the\ncorresponding fields in the existing resource. For example, with the\nUpdateInstalledPackageRequest, it is not possible to change just the 'package version\nreference' without also specifying 'values' field. As a side effect, not specifying the\n'values' field in the request means there are no values specified in the desired state.\nSo the meaning of each field value is describing the desired state of the corresponding\nfield in the resource after the update operation has completed the renconciliation."
             }
           }
         ],
@@ -2334,14 +2532,14 @@
           },
           {
             "name": "installedPackageRef.plugin.name",
-            "description": "Plugin name. The name of the plugin, such as `fluxv2.packages` or `kapp_controller.packages`.",
+            "description": "Plugin name\n\nThe name of the plugin, such as `fluxv2.packages` or `kapp_controller.packages`.",
             "in": "query",
             "required": false,
             "type": "string"
           },
           {
             "name": "installedPackageRef.plugin.version",
-            "description": "Plugin version. The version of the plugin, such as v1alpha1",
+            "description": "Plugin version\n\nThe version of the plugin, such as v1alpha1",
             "in": "query",
             "required": false,
             "type": "string"
@@ -2401,7 +2599,30 @@
             "in": "body",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/v1alpha1RollbackInstalledPackageRequest"
+              "type": "object",
+              "properties": {
+                "installedPackageRef": {
+                  "type": "object",
+                  "properties": {
+                    "context": {
+                      "type": "object",
+                      "description": "Installed package context\n\nThe context (cluster/namespace) for the package.",
+                      "title": "Installed package context\n\nThe context (cluster/namespace) for the package."
+                    },
+                    "plugin": {
+                      "$ref": "#/definitions/v1alpha1Plugin",
+                      "description": "The plugin used to identify and interact with the installed package.\nThis field can be omitted when the request is in the context of a specific plugin."
+                    }
+                  },
+                  "description": "Installed package reference\n\nA reference uniquely identifying the installed package.",
+                  "title": "Installed package reference\n\nA reference uniquely identifying the installed package."
+                },
+                "releaseRevision": {
+                  "type": "integer",
+                  "format": "int32",
+                  "description": "ReleaseRevision\n\nA number identifying the Helm revision to which to rollback."
+                }
+              }
             }
           }
         ],
@@ -2435,28 +2656,28 @@
         "parameters": [
           {
             "name": "context.cluster",
-            "description": "Cluster. A cluster name can be provided to target a specific cluster if multiple\nclusters are configured, otherwise all clusters will be assumed.",
+            "description": "Cluster\n\nA cluster name can be provided to target a specific cluster if multiple\nclusters are configured, otherwise all clusters will be assumed.",
             "in": "query",
             "required": false,
             "type": "string"
           },
           {
             "name": "context.namespace",
-            "description": "Namespace. A namespace must be provided if the context of the operation is for a resource\nor resources in a particular namespace.\nFor requests to list items, not including a namespace here implies that the context\nfor the request is everything the requesting user can read, though the result can\nbe filtered by any filtering options of the request. Plugins may choose to return\nUnimplemented for some queries for which we do not yet have a need.",
+            "description": "Namespace\n\nA namespace must be provided if the context of the operation is for a resource\nor resources in a particular namespace.\nFor requests to list items, not including a namespace here implies that the context\nfor the request is everything the requesting user can read, though the result can\nbe filtered by any filtering options of the request. Plugins may choose to return\nUnimplemented for some queries for which we do not yet have a need.",
             "in": "query",
             "required": false,
             "type": "string"
           },
           {
             "name": "filterOptions.query",
-            "description": "Text query. Text query for the request",
+            "description": "Text query\n\nText query for the request",
             "in": "query",
             "required": false,
             "type": "string"
           },
           {
             "name": "filterOptions.categories",
-            "description": "Categories. Collection of categories for the request",
+            "description": "Categories\n\nCollection of categories for the request",
             "in": "query",
             "required": false,
             "type": "array",
@@ -2467,7 +2688,7 @@
           },
           {
             "name": "filterOptions.repositories",
-            "description": "Repositories. Collection of repositories where the packages belong to",
+            "description": "Repositories\n\nCollection of repositories where the packages belong to",
             "in": "query",
             "required": false,
             "type": "array",
@@ -2478,28 +2699,28 @@
           },
           {
             "name": "filterOptions.pkgVersion",
-            "description": "Package version. Package version for the request",
+            "description": "Package version\n\nPackage version for the request",
             "in": "query",
             "required": false,
             "type": "string"
           },
           {
             "name": "filterOptions.appVersion",
-            "description": "App version. Packaged app version for the request",
+            "description": "App version\n\nPackaged app version for the request",
             "in": "query",
             "required": false,
             "type": "string"
           },
           {
             "name": "paginationOptions.pageToken",
-            "description": "Page token. The client uses this field to request a specific page of the list results.",
+            "description": "Page token\n\nThe client uses this field to request a specific page of the list results.",
             "in": "query",
             "required": false,
             "type": "string"
           },
           {
             "name": "paginationOptions.pageSize",
-            "description": "Page size. Clients use this field to specify the maximum number of results to be\nreturned by the server. The server may further constrain the maximum number\nof results returned in a single page. If the page_size is 0, the server\nwill decide the number of results to be returned.",
+            "description": "Page size\n\nClients use this field to specify the maximum number of results to be\nreturned by the server. The server may further constrain the maximum number\nof results returned in a single page. If the page_size is 0, the server\nwill decide the number of results to be returned.",
             "in": "query",
             "required": false,
             "type": "integer",
@@ -2553,18 +2774,19 @@
             "description": "Available package identifier\n\nThe fully qualified identifier for the available package\n(ie. a unique name for the context). For some packaging systems\n(particularly those where an available package is backed by a CR) this\nwill just be the name, but for others such as those where an available\npackage is not backed by a CR (eg. standard helm) it may be necessary\nto include the repository in the name or even the repo namespace\nto ensure this is unique.\nFor example two helm repositories can define\nan \"apache\" chart that is available globally, the names would need to\nencode that to be unique (ie. \"repoA:apache\" and \"repoB:apache\").",
             "in": "path",
             "required": true,
-            "type": "string"
+            "type": "string",
+            "pattern": ".+"
           },
           {
             "name": "availablePackageRef.plugin.name",
-            "description": "Plugin name. The name of the plugin, such as `fluxv2.packages` or `kapp_controller.packages`.",
+            "description": "Plugin name\n\nThe name of the plugin, such as `fluxv2.packages` or `kapp_controller.packages`.",
             "in": "query",
             "required": false,
             "type": "string"
           },
           {
             "name": "availablePackageRef.plugin.version",
-            "description": "Plugin version. The version of the plugin, such as v1alpha1",
+            "description": "Plugin version\n\nThe version of the plugin, such as v1alpha1",
             "in": "query",
             "required": false,
             "type": "string"
@@ -2624,18 +2846,19 @@
             "description": "Available package identifier\n\nThe fully qualified identifier for the available package\n(ie. a unique name for the context). For some packaging systems\n(particularly those where an available package is backed by a CR) this\nwill just be the name, but for others such as those where an available\npackage is not backed by a CR (eg. standard helm) it may be necessary\nto include the repository in the name or even the repo namespace\nto ensure this is unique.\nFor example two helm repositories can define\nan \"apache\" chart that is available globally, the names would need to\nencode that to be unique (ie. \"repoA:apache\" and \"repoB:apache\").",
             "in": "path",
             "required": true,
-            "type": "string"
+            "type": "string",
+            "pattern": ".+"
           },
           {
             "name": "availablePackageRef.plugin.name",
-            "description": "Plugin name. The name of the plugin, such as `fluxv2.packages` or `kapp_controller.packages`.",
+            "description": "Plugin name\n\nThe name of the plugin, such as `fluxv2.packages` or `kapp_controller.packages`.",
             "in": "query",
             "required": false,
             "type": "string"
           },
           {
             "name": "availablePackageRef.plugin.version",
-            "description": "Plugin version. The version of the plugin, such as v1alpha1",
+            "description": "Plugin version\n\nThe version of the plugin, such as v1alpha1",
             "in": "query",
             "required": false,
             "type": "string"
@@ -2678,28 +2901,28 @@
         "parameters": [
           {
             "name": "context.cluster",
-            "description": "Cluster. A cluster name can be provided to target a specific cluster if multiple\nclusters are configured, otherwise all clusters will be assumed.",
+            "description": "Cluster\n\nA cluster name can be provided to target a specific cluster if multiple\nclusters are configured, otherwise all clusters will be assumed.",
             "in": "query",
             "required": false,
             "type": "string"
           },
           {
             "name": "context.namespace",
-            "description": "Namespace. A namespace must be provided if the context of the operation is for a resource\nor resources in a particular namespace.\nFor requests to list items, not including a namespace here implies that the context\nfor the request is everything the requesting user can read, though the result can\nbe filtered by any filtering options of the request. Plugins may choose to return\nUnimplemented for some queries for which we do not yet have a need.",
+            "description": "Namespace\n\nA namespace must be provided if the context of the operation is for a resource\nor resources in a particular namespace.\nFor requests to list items, not including a namespace here implies that the context\nfor the request is everything the requesting user can read, though the result can\nbe filtered by any filtering options of the request. Plugins may choose to return\nUnimplemented for some queries for which we do not yet have a need.",
             "in": "query",
             "required": false,
             "type": "string"
           },
           {
             "name": "paginationOptions.pageToken",
-            "description": "Page token. The client uses this field to request a specific page of the list results.",
+            "description": "Page token\n\nThe client uses this field to request a specific page of the list results.",
             "in": "query",
             "required": false,
             "type": "string"
           },
           {
             "name": "paginationOptions.pageSize",
-            "description": "Page size. Clients use this field to specify the maximum number of results to be\nreturned by the server. The server may further constrain the maximum number\nof results returned in a single page. If the page_size is 0, the server\nwill decide the number of results to be returned.",
+            "description": "Page size\n\nClients use this field to specify the maximum number of results to be\nreturned by the server. The server may further constrain the maximum number\nof results returned in a single page. If the page_size is 0, the server\nwill decide the number of results to be returned.",
             "in": "query",
             "required": false,
             "type": "integer",
@@ -2792,14 +3015,14 @@
           },
           {
             "name": "installedPackageRef.plugin.name",
-            "description": "Plugin name. The name of the plugin, such as `fluxv2.packages` or `kapp_controller.packages`.",
+            "description": "Plugin name\n\nThe name of the plugin, such as `fluxv2.packages` or `kapp_controller.packages`.",
             "in": "query",
             "required": false,
             "type": "string"
           },
           {
             "name": "installedPackageRef.plugin.version",
-            "description": "Plugin version. The version of the plugin, such as v1alpha1",
+            "description": "Plugin version\n\nThe version of the plugin, such as v1alpha1",
             "in": "query",
             "required": false,
             "type": "string"
@@ -2854,14 +3077,14 @@
           },
           {
             "name": "installedPackageRef.plugin.name",
-            "description": "Plugin name. The name of the plugin, such as `fluxv2.packages` or `kapp_controller.packages`.",
+            "description": "Plugin name\n\nThe name of the plugin, such as `fluxv2.packages` or `kapp_controller.packages`.",
             "in": "query",
             "required": false,
             "type": "string"
           },
           {
             "name": "installedPackageRef.plugin.version",
-            "description": "Plugin version. The version of the plugin, such as v1alpha1",
+            "description": "Plugin version\n\nThe version of the plugin, such as v1alpha1",
             "in": "query",
             "required": false,
             "type": "string"
@@ -2919,7 +3142,37 @@
             "in": "body",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/v1alpha1UpdateInstalledPackageRequest"
+              "type": "object",
+              "properties": {
+                "installedPackageRef": {
+                  "type": "object",
+                  "properties": {
+                    "context": {
+                      "type": "object",
+                      "description": "Installed package context\n\nThe context (cluster/namespace) for the package.",
+                      "title": "Installed package context\n\nThe context (cluster/namespace) for the package."
+                    },
+                    "plugin": {
+                      "$ref": "#/definitions/v1alpha1Plugin",
+                      "description": "The plugin used to identify and interact with the installed package.\nThis field can be omitted when the request is in the context of a specific plugin."
+                    }
+                  },
+                  "title": "A reference uniquely identifying the installed package being updated.\nRequired"
+                },
+                "pkgVersionReference": {
+                  "$ref": "#/definitions/v1alpha1VersionReference",
+                  "title": "For helm this will be the exact version in VersionReference.version\nFor fluxv2 this could be any semver constraint expression\nFor other plugins we can extend the VersionReference as needed. Optional"
+                },
+                "values": {
+                  "type": "string",
+                  "description": "An optional serialized values string to be included when templating a\npackage in the format expected by the plugin. Included when the backend\nformat doesn't use secrets or configmaps for values or supports both.\nThese values are layered on top of any values refs above, when\nrelevant."
+                },
+                "reconciliationOptions": {
+                  "$ref": "#/definitions/v1alpha1ReconciliationOptions",
+                  "description": "An optional field for specifying data common to systems that reconcile\nthe package on the cluster."
+                }
+              },
+              "description": "UpdateInstalledPackageRequest\n\nRequest for UpdateInstalledPackage. The intent is to reach the desired state specified\nby the fields in the request, while leaving other fields intact. This is a whole\nobject \"Update\" semantics rather than \"Patch\" semantics. The caller will provide the\nvalues for the fields below, which will replace, or be overlayed onto, the\ncorresponding fields in the existing resource. For example, with the\nUpdateInstalledPackageRequest, it is not possible to change just the 'package version\nreference' without also specifying 'values' field. As a side effect, not specifying the\n'values' field in the request means there are no values specified in the desired state.\nSo the meaning of each field value is describing the desired state of the corresponding\nfield in the resource after the update operation has completed the renconciliation."
             }
           }
         ],
@@ -2974,14 +3227,14 @@
           },
           {
             "name": "installedPackageRef.plugin.name",
-            "description": "Plugin name. The name of the plugin, such as `fluxv2.packages` or `kapp_controller.packages`.",
+            "description": "Plugin name\n\nThe name of the plugin, such as `fluxv2.packages` or `kapp_controller.packages`.",
             "in": "query",
             "required": false,
             "type": "string"
           },
           {
             "name": "installedPackageRef.plugin.version",
-            "description": "Plugin version. The version of the plugin, such as v1alpha1",
+            "description": "Plugin version\n\nThe version of the plugin, such as v1alpha1",
             "in": "query",
             "required": false,
             "type": "string"
@@ -3017,14 +3270,14 @@
         "parameters": [
           {
             "name": "context.cluster",
-            "description": "Cluster. A cluster name can be provided to target a specific cluster if multiple\nclusters are configured, otherwise all clusters will be assumed.",
+            "description": "Cluster\n\nA cluster name can be provided to target a specific cluster if multiple\nclusters are configured, otherwise all clusters will be assumed.",
             "in": "query",
             "required": false,
             "type": "string"
           },
           {
             "name": "context.namespace",
-            "description": "Namespace. A namespace must be provided if the context of the operation is for a resource\nor resources in a particular namespace.\nFor requests to list items, not including a namespace here implies that the context\nfor the request is everything the requesting user can read, though the result can\nbe filtered by any filtering options of the request. Plugins may choose to return\nUnimplemented for some queries for which we do not yet have a need.",
+            "description": "Namespace\n\nA namespace must be provided if the context of the operation is for a resource\nor resources in a particular namespace.\nFor requests to list items, not including a namespace here implies that the context\nfor the request is everything the requesting user can read, though the result can\nbe filtered by any filtering options of the request. Plugins may choose to return\nUnimplemented for some queries for which we do not yet have a need.",
             "in": "query",
             "required": false,
             "type": "string"
@@ -3097,6 +3350,13 @@
             "description": "Cluster\n\nA cluster name can be provided to target a specific cluster if multiple\nclusters are configured, otherwise all clusters will be assumed.",
             "in": "path",
             "required": true,
+            "type": "string"
+          },
+          {
+            "name": "context.namespace",
+            "description": "Namespace\n\nA namespace must be provided if the context of the operation is for a resource\nor resources in a particular namespace.\nFor requests to list items, not including a namespace here implies that the context\nfor the request is everything the requesting user can read, though the result can\nbe filtered by any filtering options of the request. Plugins may choose to return\nUnimplemented for some queries for which we do not yet have a need.",
+            "in": "query",
+            "required": false,
             "type": "string"
           }
         ],
@@ -3224,6 +3484,31 @@
             "in": "path",
             "required": true,
             "type": "string"
+          },
+          {
+            "name": "type",
+            "description": "Type\n\nThe type of the secret. Valid values are defined by the Type enumeration.",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "enum": [
+              "SECRET_TYPE_OPAQUE_UNSPECIFIED",
+              "SECRET_TYPE_SERVICE_ACCOUNT_TOKEN",
+              "SECRET_TYPE_DOCKER_CONFIG",
+              "SECRET_TYPE_DOCKER_CONFIG_JSON",
+              "SECRET_TYPE_BASIC_AUTH",
+              "SECRET_TYPE_SSH_AUTH",
+              "SECRET_TYPE_TLS",
+              "SECRET_TYPE_BOOTSTRAP_TOKEN"
+            ],
+            "default": "SECRET_TYPE_OPAQUE_UNSPECIFIED"
+          },
+          {
+            "name": "name",
+            "description": "Name\n\nThe name of the secret.",
+            "in": "query",
+            "required": false,
+            "type": "string"
           }
         ],
         "tags": [
@@ -3341,7 +3626,7 @@
           },
           {
             "name": "watch",
-            "description": "Watch. When true, this will cause the stream to remain open with updated\nresources being sent as events are received from the Kubernetes API\nserver.",
+            "description": "Watch\n\nWhen true, this will cause the stream to remain open with updated\nresources being sent as events are received from the Kubernetes API\nserver.",
             "in": "query",
             "required": false,
             "type": "boolean"
@@ -3369,16 +3654,12 @@
     "protobufAny": {
       "type": "object",
       "properties": {
-        "typeUrl": {
+        "@type": {
           "type": "string",
           "description": "A URL/resource name that uniquely identifies the type of the serialized\nprotocol buffer message. This string must contain at least\none \"/\" character. The last segment of the URL's path must represent\nthe fully qualified name of the type (as in\n`path/google.protobuf.Duration`). The name should be in a canonical form\n(e.g., leading \".\" is not accepted).\n\nIn practice, teams usually precompile into the binary all types that they\nexpect it to use in the context of Any. However, for URLs which use the\nscheme `http`, `https`, or no scheme, one can optionally set up a type\nserver that maps type URLs to message definitions as follows:\n\n* If no scheme is provided, `https` is assumed.\n* An HTTP GET on the URL must yield a [google.protobuf.Type][]\n  value in binary format, or produce an error.\n* Applications are allowed to cache lookup results based on the\n  URL, or have them precompiled into a binary to avoid any\n  lookup. Therefore, binary compatibility needs to be preserved\n  on changes to types. (Use versioned type names to manage\n  breaking changes.)\n\nNote: this functionality is not currently available in the official\nprotobuf release, and it is not used for type URLs beginning with\ntype.googleapis.com.\n\nSchemes other than `http`, `https` (or the empty scheme) might be\nused with implementation specific semantics."
-        },
-        "value": {
-          "type": "string",
-          "format": "byte",
-          "description": "Must be a valid serialized protocol buffer of the above specified type."
         }
       },
+      "additionalProperties": {},
       "description": "`Any` contains an arbitrary serialized protocol buffer message along with a\nURL that describes the type of the serialized message.\n\nProtobuf library provides support to pack/unpack Any values in the form\nof utility functions or additional generated methods of the Any type.\n\nExample 1: Pack and unpack a message in C++.\n\n    Foo foo = ...;\n    Any any;\n    any.PackFrom(foo);\n    ...\n    if (any.UnpackTo(\u0026foo)) {\n      ...\n    }\n\nExample 2: Pack and unpack a message in Java.\n\n    Foo foo = ...;\n    Any any = Any.pack(foo);\n    ...\n    if (any.is(Foo.class)) {\n      foo = any.unpack(Foo.class);\n    }\n\n Example 3: Pack and unpack a message in Python.\n\n    foo = Foo(...)\n    any = Any()\n    any.Pack(foo)\n    ...\n    if any.Is(Foo.DESCRIPTOR):\n      any.Unpack(foo)\n      ...\n\n Example 4: Pack and unpack a message in Go\n\n     foo := \u0026pb.Foo{...}\n     any, err := anypb.New(foo)\n     if err != nil {\n       ...\n     }\n     ...\n     foo := \u0026pb.Foo{}\n     if err := any.UnmarshalTo(foo); err != nil {\n       ...\n     }\n\nThe pack methods provided by protobuf library will by default use\n'type.googleapis.com/full.type.name' as the type URL and the unpack\nmethods only use the fully qualified type name after the last '/'\nin the type URL, for example \"foo.bar.com/x/y.z\" will yield type\nname \"y.z\".\n\n\nJSON\n====\nThe JSON representation of an `Any` value uses the regular\nrepresentation of the deserialized, embedded message, with an\nadditional field `@type` which contains the type URL. Example:\n\n    package google.profile;\n    message Person {\n      string first_name = 1;\n      string last_name = 2;\n    }\n\n    {\n      \"@type\": \"type.googleapis.com/google.profile.Person\",\n      \"firstName\": \u003cstring\u003e,\n      \"lastName\": \u003cstring\u003e\n    }\n\nIf the embedded message type is well-known and has a custom JSON\nrepresentation, that representation will be embedded adding a field\n`value` which holds the custom JSON in addition to the `@type`\nfield. Example (for message [google.protobuf.Duration][]):\n\n    {\n      \"@type\": \"type.googleapis.com/google.protobuf.Duration\",\n      \"value\": \"1.212s\"\n    }"
     },
     "rpcStatus": {
@@ -3448,8 +3729,7 @@
           "title": "Custom data added by the plugin\nA plugin can define custom details for data which is not yet, or\nnever will be specified in the core AddPackageRepositoryRequest\nfields. The use of an `Any` field means that each plugin can define\nthe structure of this message as required, while still satisfying the\ncore interface.\nSee https://developers.google.com/protocol-buffers/docs/proto3#any\nJust for reference, some of the examples that have been chosen not to\nbe part of the core API but rather plugin-specific details are:\n  direct-helm:\n     - image pull secrets\n     - list of oci repositories\n     - filter rules\n     - sync job pod template"
         }
       },
-      "description": "Request for AddPackageRepository",
-      "title": "AddPackageRepositoryRequest"
+      "title": "AddPackageRepositoryRequest\n\nRequest for AddPackageRepository"
     },
     "v1alpha1AddPackageRepositoryResponse": {
       "type": "object",
@@ -3459,26 +3739,22 @@
           "title": "TODO: add example for API docs\noption (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {\n  example: '{\"package_repo_ref\": {}}'\n};"
         }
       },
-      "description": "Response for AddPackageRepositoryRequest",
-      "title": "AddPackageRepositoryResponse"
+      "title": "AddPackageRepositoryResponse\n\nResponse for AddPackageRepositoryRequest"
     },
     "v1alpha1AvailablePackageDetail": {
       "type": "object",
       "properties": {
         "availablePackageRef": {
           "$ref": "#/definitions/v1alpha1AvailablePackageReference",
-          "description": "A reference uniquely identifying the package.",
-          "title": "Available package reference"
+          "description": "Available package reference\n\nA reference uniquely identifying the package."
         },
         "name": {
           "type": "string",
-          "description": "The name of the available package",
-          "title": "Available package name"
+          "title": "Available package name\n\nThe name of the available package"
         },
         "version": {
           "$ref": "#/definitions/v1alpha1PackageAppVersion",
-          "description": "The version of the package and application.",
-          "title": "Available version"
+          "description": "Available version\n\nThe version of the package and application."
         },
         "repoUrl": {
           "type": "string",
@@ -3490,33 +3766,27 @@
         },
         "iconUrl": {
           "type": "string",
-          "description": "A url for an icon.",
-          "title": "Available package icon URL"
+          "description": "Available package icon URL\n\nA url for an icon."
         },
         "displayName": {
           "type": "string",
-          "description": "A name as displayed to users",
-          "title": "Available package display name"
+          "title": "Available package display name\n\nA name as displayed to users"
         },
         "shortDescription": {
           "type": "string",
-          "description": "A short description of the app provided by the package",
-          "title": "Available package short description"
+          "title": "Available package short description\n\nA short description of the app provided by the package"
         },
         "longDescription": {
           "type": "string",
-          "description": "A longer description of the package, a few sentences.",
-          "title": "Available package long description"
+          "description": "Available package long description\n\nA longer description of the package, a few sentences."
         },
         "readme": {
           "type": "string",
-          "description": "A longer README with potentially pages of formatted Markdown.",
-          "title": "Available package readme"
+          "description": "Available package readme\n\nA longer README with potentially pages of formatted Markdown."
         },
         "defaultValues": {
           "type": "string",
-          "description": "An example of default values used during package templating that can serve\nas documentation or a starting point for user customization.",
-          "title": "Available package default values"
+          "description": "Available package default values\n\nAn example of default values used during package templating that can serve\nas documentation or a starting point for user customization."
         },
         "valuesSchema": {
           "type": "string"
@@ -3533,92 +3803,76 @@
           "items": {
             "$ref": "#/definitions/v1alpha1Maintainer"
           },
-          "description": "List of Maintainer",
-          "title": "Available package maintainers"
+          "title": "Available package maintainers\n\nList of Maintainer"
         },
         "categories": {
           "type": "array",
           "items": {
             "type": "string"
           },
-          "description": "A user-facing list of category names useful for creating richer user interfaces.\nPlugins can choose not to implement this",
-          "title": "Available package categories"
+          "title": "Available package categories\n\nA user-facing list of category names useful for creating richer user interfaces.\nPlugins can choose not to implement this"
         },
         "customDetail": {
           "$ref": "#/definitions/protobufAny",
-          "description": "A plugin can define custom details for data which is not yet, or never will\nbe specified in the core.packaging.CreateInstalledPackageRequest fields. The use\nof an `Any` field means that each plugin can define the structure of this\nmessage as required, while still satisfying the core interface.\nSee https://developers.google.com/protocol-buffers/docs/proto3#any",
-          "title": "Custom data added by the plugin"
+          "title": "Custom data added by the plugin\n\nA plugin can define custom details for data which is not yet, or never will\nbe specified in the core.packaging.CreateInstalledPackageRequest fields. The use\nof an `Any` field means that each plugin can define the structure of this\nmessage as required, while still satisfying the core interface.\nSee https://developers.google.com/protocol-buffers/docs/proto3#any"
         }
       },
-      "description": "An AvailablePackageDetail provides additional details required when\ninspecting an individual package.",
-      "title": "AvailablePackageDetail"
+      "description": "AvailablePackageDetail\n\nAn AvailablePackageDetail provides additional details required when\ninspecting an individual package."
     },
     "v1alpha1AvailablePackageReference": {
       "type": "object",
       "properties": {
         "context": {
           "$ref": "#/definitions/v1alpha1Context",
-          "description": "The context (cluster/namespace) for the package.",
-          "title": "Available package context"
+          "description": "Available package context\n\nThe context (cluster/namespace) for the package."
         },
         "identifier": {
           "type": "string",
-          "description": "The fully qualified identifier for the available package\n(ie. a unique name for the context). For some packaging systems\n(particularly those where an available package is backed by a CR) this\nwill just be the name, but for others such as those where an available\npackage is not backed by a CR (eg. standard helm) it may be necessary\nto include the repository in the name or even the repo namespace\nto ensure this is unique.\nFor example two helm repositories can define\nan \"apache\" chart that is available globally, the names would need to\nencode that to be unique (ie. \"repoA:apache\" and \"repoB:apache\").",
-          "title": "Available package identifier"
+          "description": "Available package identifier\n\nThe fully qualified identifier for the available package\n(ie. a unique name for the context). For some packaging systems\n(particularly those where an available package is backed by a CR) this\nwill just be the name, but for others such as those where an available\npackage is not backed by a CR (eg. standard helm) it may be necessary\nto include the repository in the name or even the repo namespace\nto ensure this is unique.\nFor example two helm repositories can define\nan \"apache\" chart that is available globally, the names would need to\nencode that to be unique (ie. \"repoA:apache\" and \"repoB:apache\")."
         },
         "plugin": {
           "$ref": "#/definitions/v1alpha1Plugin",
-          "description": "The plugin used to interact with this available package.\nThis field should be omitted when the request is in the context of a specific plugin.",
-          "title": "Plugin for the available package"
+          "description": "Plugin for the available package\n\nThe plugin used to interact with this available package.\nThis field should be omitted when the request is in the context of a specific plugin."
         }
       },
-      "description": "An AvailablePackageReference has the minimum information required to uniquely\nidentify an available package. This is re-used on the summary and details of an\navailable package.",
-      "title": "AvailablePackageReference"
+      "description": "AvailablePackageReference\n\nAn AvailablePackageReference has the minimum information required to uniquely\nidentify an available package. This is re-used on the summary and details of an\navailable package."
     },
     "v1alpha1AvailablePackageSummary": {
       "type": "object",
       "properties": {
         "availablePackageRef": {
           "$ref": "#/definitions/v1alpha1AvailablePackageReference",
-          "description": "A reference uniquely identifying the package.",
-          "title": "Available package reference"
+          "description": "Available package reference\n\nA reference uniquely identifying the package."
         },
         "name": {
           "type": "string",
-          "description": "The name of the available package",
-          "title": "Available package name"
+          "title": "Available package name\n\nThe name of the available package"
         },
         "latestVersion": {
           "$ref": "#/definitions/v1alpha1PackageAppVersion",
-          "description": "The latest version available for this package. Often expected when viewing\na summary of many available packages.",
-          "title": "Latest available version"
+          "description": "Latest available version\n\nThe latest version available for this package. Often expected when viewing\na summary of many available packages."
         },
         "iconUrl": {
           "type": "string",
-          "description": "A url for an icon.",
-          "title": "Available package Icon URL"
+          "description": "Available package Icon URL\n\nA url for an icon."
         },
         "displayName": {
           "type": "string",
-          "description": "A name as displayed to users",
-          "title": "Available package display name"
+          "title": "Available package display name\n\nA name as displayed to users"
         },
         "shortDescription": {
           "type": "string",
-          "description": "A short description of the app provided by the package",
-          "title": "Available package short description"
+          "title": "Available package short description\n\nA short description of the app provided by the package"
         },
         "categories": {
           "type": "array",
           "items": {
             "type": "string"
           },
-          "description": "A user-facing list of category names useful for creating richer user interfaces.\nPlugins can choose not to implement this",
-          "title": "Available package categories"
+          "title": "Available package categories\n\nA user-facing list of category names useful for creating richer user interfaces.\nPlugins can choose not to implement this"
         }
       },
-      "description": "An AvailablePackageSummary provides a summary of a package available for installation\nuseful when aggregating many available packages.",
-      "title": "AvailablePackageSummary"
+      "description": "AvailablePackageSummary\n\nAn AvailablePackageSummary provides a summary of a package available for installation\nuseful when aggregating many available packages."
     },
     "v1alpha1CheckNamespaceExistsResponse": {
       "type": "object",
@@ -3627,25 +3881,21 @@
           "type": "boolean"
         }
       },
-      "description": "Response for CheckNamespaceExists",
-      "title": "CheckNamespaceExistsResponse"
+      "title": "CheckNamespaceExistsResponse\n\nResponse for CheckNamespaceExists"
     },
     "v1alpha1Context": {
       "type": "object",
       "properties": {
         "cluster": {
           "type": "string",
-          "description": "A cluster name can be provided to target a specific cluster if multiple\nclusters are configured, otherwise all clusters will be assumed.",
-          "title": "Cluster"
+          "description": "Cluster\n\nA cluster name can be provided to target a specific cluster if multiple\nclusters are configured, otherwise all clusters will be assumed."
         },
         "namespace": {
           "type": "string",
-          "description": "A namespace must be provided if the context of the operation is for a resource\nor resources in a particular namespace.\nFor requests to list items, not including a namespace here implies that the context\nfor the request is everything the requesting user can read, though the result can\nbe filtered by any filtering options of the request. Plugins may choose to return\nUnimplemented for some queries for which we do not yet have a need.",
-          "title": "Namespace"
+          "description": "Namespace\n\nA namespace must be provided if the context of the operation is for a resource\nor resources in a particular namespace.\nFor requests to list items, not including a namespace here implies that the context\nfor the request is everything the requesting user can read, though the result can\nbe filtered by any filtering options of the request. Plugins may choose to return\nUnimplemented for some queries for which we do not yet have a need."
         }
       },
-      "description": "A Context specifies the context of the message",
-      "title": "Context"
+      "title": "Context\n\nA Context specifies the context of the message"
     },
     "v1alpha1CreateInstalledPackageRequest": {
       "type": "object",
@@ -3675,8 +3925,7 @@
           "description": "An optional field for specifying data common to systems that reconcile\nthe package on the cluster."
         }
       },
-      "description": "Request for CreateInstalledPackage",
-      "title": "CreateInstalledPackageRequest"
+      "title": "CreateInstalledPackageRequest\n\nRequest for CreateInstalledPackage"
     },
     "v1alpha1CreateInstalledPackageResponse": {
       "type": "object",
@@ -3685,28 +3934,23 @@
           "$ref": "#/definitions/v1alpha1InstalledPackageReference"
         }
       },
-      "description": "Response for CreateInstalledPackage",
-      "title": "CreateInstalledPackageResponse"
+      "title": "CreateInstalledPackageResponse\n\nResponse for CreateInstalledPackage"
     },
     "v1alpha1CreateNamespaceResponse": {
       "type": "object",
-      "description": "Response for CreateNamespace",
-      "title": "CreateNamespaceResponse"
+      "title": "CreateNamespaceResponse\n\nResponse for CreateNamespace"
     },
     "v1alpha1CreateSecretResponse": {
       "type": "object",
-      "description": "Response for CreateSecret",
-      "title": "CreateSecretResponse"
+      "title": "CreateSecretResponse\n\nResponse for CreateSecret"
     },
     "v1alpha1DeleteInstalledPackageResponse": {
       "type": "object",
-      "description": "Response for DeleteInstalledPackage",
-      "title": "DeleteInstalledPackageResponse"
+      "title": "DeleteInstalledPackageResponse\n\nResponse for DeleteInstalledPackage"
     },
     "v1alpha1DeletePackageRepositoryResponse": {
       "type": "object",
-      "description": "Response for DeletePackageRepository",
-      "title": "DeletePackageRepositoryResponse"
+      "title": "DeletePackageRepositoryResponse\n\nResponse for DeletePackageRepository"
     },
     "v1alpha1DockerCredentials": {
       "type": "object",
@@ -3735,50 +3979,42 @@
       "properties": {
         "query": {
           "type": "string",
-          "description": "Text query for the request",
-          "title": "Text query"
+          "title": "Text query\n\nText query for the request"
         },
         "categories": {
           "type": "array",
           "items": {
             "type": "string"
           },
-          "description": "Collection of categories for the request",
-          "title": "Categories"
+          "title": "Categories\n\nCollection of categories for the request"
         },
         "repositories": {
           "type": "array",
           "items": {
             "type": "string"
           },
-          "description": "Collection of repositories where the packages belong to",
-          "title": "Repositories"
+          "title": "Repositories\n\nCollection of repositories where the packages belong to"
         },
         "pkgVersion": {
           "type": "string",
-          "description": "Package version for the request",
-          "title": "Package version"
+          "title": "Package version\n\nPackage version for the request"
         },
         "appVersion": {
           "type": "string",
-          "description": "Packaged app version for the request",
-          "title": "App version"
+          "title": "App version\n\nPackaged app version for the request"
         }
       },
-      "description": "FilterOptions available when requesting summaries",
-      "title": "FilterOptions"
+      "title": "FilterOptions\n\nFilterOptions available when requesting summaries"
     },
     "v1alpha1GetAvailablePackageDetailResponse": {
       "type": "object",
       "properties": {
         "availablePackageDetail": {
           "$ref": "#/definitions/v1alpha1AvailablePackageDetail",
-          "description": "The requested AvailablePackageDetail",
-          "title": "Available package detail"
+          "title": "Available package detail\n\nThe requested AvailablePackageDetail"
         }
       },
-      "description": "Response for GetAvailablePackageDetail",
-      "title": "GetAvailablePackageDetailResponse"
+      "title": "GetAvailablePackageDetailResponse\n\nResponse for GetAvailablePackageDetail"
     },
     "v1alpha1GetAvailablePackageSummariesResponse": {
       "type": "object",
@@ -3788,25 +4024,21 @@
           "items": {
             "$ref": "#/definitions/v1alpha1AvailablePackageSummary"
           },
-          "description": "List of AvailablePackageSummary",
-          "title": "Available packages summaries"
+          "title": "Available packages summaries\n\nList of AvailablePackageSummary"
         },
         "nextPageToken": {
           "type": "string",
-          "description": "This field represents the pagination token to retrieve the next page of\nresults. If the value is \"\", it means no further results for the request.",
-          "title": "Next page token"
+          "description": "Next page token\n\nThis field represents the pagination token to retrieve the next page of\nresults. If the value is \"\", it means no further results for the request."
         },
         "categories": {
           "type": "array",
           "items": {
             "type": "string"
           },
-          "description": "This optional field contains the distinct category names considering the FilterOptions.",
-          "title": "Categories"
+          "description": "Categories\n\nThis optional field contains the distinct category names considering the FilterOptions."
         }
       },
-      "description": "Response for GetAvailablePackageSummaries",
-      "title": "GetAvailablePackageSummariesResponse"
+      "title": "GetAvailablePackageSummariesResponse\n\nResponse for GetAvailablePackageSummaries"
     },
     "v1alpha1GetAvailablePackageVersionsResponse": {
       "type": "object",
@@ -3816,12 +4048,10 @@
           "items": {
             "$ref": "#/definitions/v1alpha1PackageAppVersion"
           },
-          "description": "By default (when version_query is empty or ignored) the response\nshould contain an ordered summary of versions including the most recent three\npatch versions of the most recent three minor versions of the most recent three\nmajor versions when available, something like:\n[\n  { pkg_version: \"10.3.19\", app_version: \"2.16.8\" },\n  { pkg_version: \"10.3.18\", app_version: \"2.16.8\" },\n  { pkg_version: \"10.3.17\", app_version: \"2.16.7\" },\n  { pkg_version: \"10.2.6\", app_version: \"2.15.3\" },\n  { pkg_version: \"10.2.5\", app_version: \"2.15.2\" },\n  { pkg_version: \"10.2.4\", app_version: \"2.15.2\" },\n  { pkg_version: \"10.1.8\", app_version: \"2.13.5\" },\n  { pkg_version: \"10.1.7\", app_version: \"2.13.5\" },\n  { pkg_version: \"10.1.6\", app_version: \"2.13.5\" },\n  { pkg_version: \"9.5.4\", app_version: \"2.8.9\" },\n  ...\n  { pkg_version: \"8.2.5\", app_version: \"1.19.5\" },\n  ...\n]\nIf a version_query is present and the plugin chooses to support it,\nthe full history of versions matching the version query should be returned.",
-          "title": "Package app versions"
+          "description": "Package app versions\n\nBy default (when version_query is empty or ignored) the response\nshould contain an ordered summary of versions including the most recent three\npatch versions of the most recent three minor versions of the most recent three\nmajor versions when available, something like:\n[\n  { pkg_version: \"10.3.19\", app_version: \"2.16.8\" },\n  { pkg_version: \"10.3.18\", app_version: \"2.16.8\" },\n  { pkg_version: \"10.3.17\", app_version: \"2.16.7\" },\n  { pkg_version: \"10.2.6\", app_version: \"2.15.3\" },\n  { pkg_version: \"10.2.5\", app_version: \"2.15.2\" },\n  { pkg_version: \"10.2.4\", app_version: \"2.15.2\" },\n  { pkg_version: \"10.1.8\", app_version: \"2.13.5\" },\n  { pkg_version: \"10.1.7\", app_version: \"2.13.5\" },\n  { pkg_version: \"10.1.6\", app_version: \"2.13.5\" },\n  { pkg_version: \"9.5.4\", app_version: \"2.8.9\" },\n  ...\n  { pkg_version: \"8.2.5\", app_version: \"1.19.5\" },\n  ...\n]\nIf a version_query is present and the plugin chooses to support it,\nthe full history of versions matching the version query should be returned."
         }
       },
-      "description": "Response for GetAvailablePackageVersions",
-      "title": "GetAvailablePackageVersionsResponse"
+      "title": "GetAvailablePackageVersionsResponse\n\nResponse for GetAvailablePackageVersions"
     },
     "v1alpha1GetConfiguredPluginsResponse": {
       "type": "object",
@@ -3839,24 +4069,20 @@
           "items": {
             "$ref": "#/definitions/v1alpha1Plugin"
           },
-          "description": "List of Plugin",
-          "title": "Plugins"
+          "title": "Plugins\n\nList of Plugin"
         }
       },
-      "description": "Response for GetConfiguredPlugins",
-      "title": "GetConfiguredPluginsResponse"
+      "title": "GetConfiguredPluginsResponse\n\nResponse for GetConfiguredPlugins"
     },
     "v1alpha1GetInstalledPackageDetailResponse": {
       "type": "object",
       "properties": {
         "installedPackageDetail": {
           "$ref": "#/definitions/v1alpha1InstalledPackageDetail",
-          "description": "The requested InstalledPackageDetail",
-          "title": "InstalledPackageDetail"
+          "title": "InstalledPackageDetail\n\nThe requested InstalledPackageDetail"
         }
       },
-      "description": "Response for GetInstalledPackageDetail",
-      "title": "GetInstalledPackageDetailResponse"
+      "title": "GetInstalledPackageDetailResponse\n\nResponse for GetInstalledPackageDetail"
     },
     "v1alpha1GetInstalledPackageResourceRefsResponse": {
       "type": "object",
@@ -3871,8 +4097,7 @@
           }
         }
       },
-      "description": "Response for GetInstalledPackageResourceRefs",
-      "title": "GetInstalledPackageResourceRefsResponse"
+      "title": "GetInstalledPackageResourceRefsResponse\n\nResponse for GetInstalledPackageResourceRefs"
     },
     "v1alpha1GetInstalledPackageSummariesResponse": {
       "type": "object",
@@ -3882,17 +4107,14 @@
           "items": {
             "$ref": "#/definitions/v1alpha1InstalledPackageSummary"
           },
-          "description": "List of InstalledPackageSummary",
-          "title": "Installed packages summaries"
+          "title": "Installed packages summaries\n\nList of InstalledPackageSummary"
         },
         "nextPageToken": {
           "type": "string",
-          "description": "This field represents the pagination token to retrieve the next page of\nresults. If the value is \"\", it means no further results for the request.",
-          "title": "Next page token"
+          "description": "Next page token\n\nThis field represents the pagination token to retrieve the next page of\nresults. If the value is \"\", it means no further results for the request."
         }
       },
-      "description": "Response for GetInstalledPackageSummaries",
-      "title": "GetInstalledPackageSummariesResponse"
+      "title": "GetInstalledPackageSummariesResponse\n\nResponse for GetInstalledPackageSummaries"
     },
     "v1alpha1GetNamespaceNamesResponse": {
       "type": "object",
@@ -3902,12 +4124,10 @@
           "items": {
             "type": "string"
           },
-          "description": "The list of Namespace names.",
-          "title": "NamespaceNames"
+          "description": "NamespaceNames\n\nThe list of Namespace names."
         }
       },
-      "description": "Response for GetNamespaceNames",
-      "title": "GetNamespaceNamesResponse"
+      "title": "GetNamespaceNamesResponse\n\nResponse for GetNamespaceNames"
     },
     "v1alpha1GetPackageRepositoriesResponse": {
       "type": "object",
@@ -3926,12 +4146,10 @@
           "items": {
             "$ref": "#/definitions/v1alpha1PackageRepository"
           },
-          "description": "List of PackageRepository",
-          "title": "Repositories"
+          "title": "Repositories\n\nList of PackageRepository"
         }
       },
-      "description": "Response for GetPackageRepositories",
-      "title": "GetPackageRepositories"
+      "title": "GetPackageRepositories\n\nResponse for GetPackageRepositories"
     },
     "v1alpha1GetPackageRepositoryDetailResponse": {
       "type": "object",
@@ -3941,8 +4159,7 @@
           "title": "package repository detail"
         }
       },
-      "description": "Response for GetPackageRepositoryDetail",
-      "title": "GetPackageRepositoryDetailResponse"
+      "title": "GetPackageRepositoryDetailResponse\n\nResponse for GetPackageRepositoryDetail"
     },
     "v1alpha1GetPackageRepositorySummariesResponse": {
       "type": "object",
@@ -3955,21 +4172,18 @@
           "title": "List of PackageRepositorySummary"
         }
       },
-      "description": "Response for GetPackageRepositorySummaries",
-      "title": "GetPackageRepositorySummariesResponse"
+      "title": "GetPackageRepositorySummariesResponse\n\nResponse for GetPackageRepositorySummaries"
     },
     "v1alpha1GetResourcesResponse": {
       "type": "object",
       "properties": {
         "resourceRef": {
           "$ref": "#/definitions/v1alpha1ResourceRef",
-          "description": "The resource reference for this single resource.",
-          "title": "ResourceRef"
+          "description": "ResourceRef\n\nThe resource reference for this single resource."
         },
         "manifest": {
           "type": "string",
-          "description": "The current manifest of the requested resource.  Initially the JSON\nmanifest will be returned a json-encoded string, enabling the existing\nKubeapps UI to replace its current direct api-server getting and watching\nof resources, but we may in the future pull out further structured\nmetadata into this message as needed.",
-          "title": "Manifest"
+          "description": "Manifest\n\nThe current manifest of the requested resource.  Initially the JSON\nmanifest will be returned a json-encoded string, enabling the existing\nKubeapps UI to replace its current direct api-server getting and watching\nof resources, but we may in the future pull out further structured\nmetadata into this message as needed."
         }
       }
     },
@@ -3981,12 +4195,10 @@
           "additionalProperties": {
             "$ref": "#/definitions/v1alpha1SecretType"
           },
-          "description": "The list of Service Account names.",
-          "title": "SecretNames"
+          "description": "SecretNames\n\nThe list of Service Account names."
         }
       },
-      "description": "Response for GetSecretNames",
-      "title": "GetSecretNamesResponse"
+      "title": "GetSecretNamesResponse\n\nResponse for GetSecretNames"
     },
     "v1alpha1GetServiceAccountNamesResponse": {
       "type": "object",
@@ -3996,87 +4208,71 @@
           "items": {
             "type": "string"
           },
-          "description": "The list of Service Account names.",
-          "title": "ServiceAccountNames"
+          "description": "ServiceAccountNames\n\nThe list of Service Account names."
         }
       },
-      "description": "Response for GetServiceAccountNames",
-      "title": "GetServiceAccountNamesResponse"
+      "title": "GetServiceAccountNamesResponse\n\nResponse for GetServiceAccountNames"
     },
     "v1alpha1InstalledPackageDetail": {
       "type": "object",
       "properties": {
         "installedPackageRef": {
           "$ref": "#/definitions/v1alpha1InstalledPackageReference",
-          "description": "A reference uniquely identifying the installed package.",
-          "title": "InstalledPackageReference"
+          "description": "InstalledPackageReference\n\nA reference uniquely identifying the installed package."
         },
         "pkgVersionReference": {
           "$ref": "#/definitions/v1alpha1VersionReference",
-          "description": "The package version reference defines a version or constraint limiting\nmatching package versions.",
-          "title": "PkgVersionReference"
+          "description": "PkgVersionReference\n\nThe package version reference defines a version or constraint limiting\nmatching package versions."
         },
         "name": {
           "type": "string",
-          "description": "The name given to the installed package",
-          "title": "Installed package name"
+          "title": "Installed package name\n\nThe name given to the installed package"
         },
         "currentVersion": {
           "$ref": "#/definitions/v1alpha1PackageAppVersion",
-          "description": "The version of the package which is currently installed.",
-          "title": "CurrentVersion"
+          "description": "CurrentVersion\n\nThe version of the package which is currently installed."
         },
         "valuesApplied": {
           "type": "string",
-          "description": "The values applied currently for the installed package.",
-          "title": "ValuesApplied"
+          "description": "ValuesApplied\n\nThe values applied currently for the installed package."
         },
         "reconciliationOptions": {
           "$ref": "#/definitions/v1alpha1ReconciliationOptions",
-          "description": "An optional field specifying data common to systems that reconcile\nthe package installation on the cluster asynchronously. In particular,\nthis specifies the service account used to perform the reconcilliation.",
-          "title": "ReconciliationOptions"
+          "description": "ReconciliationOptions\n\nAn optional field specifying data common to systems that reconcile\nthe package installation on the cluster asynchronously. In particular,\nthis specifies the service account used to perform the reconcilliation."
         },
         "status": {
           "$ref": "#/definitions/v1alpha1InstalledPackageStatus",
-          "description": "The current status of the installed package.",
-          "title": "Status"
+          "description": "Status\n\nThe current status of the installed package."
         },
         "postInstallationNotes": {
           "type": "string",
-          "description": "Optional notes generated by package and intended for the user post installation.",
-          "title": "PostInstallationNotes"
+          "description": "PostInstallationNotes\n\nOptional notes generated by package and intended for the user post installation."
         },
         "availablePackageRef": {
           "$ref": "#/definitions/v1alpha1AvailablePackageReference",
-          "description": "A reference to the available package for this installation.\nUseful to lookup the package display name, icon and other info.",
-          "title": "Available package reference"
+          "description": "Available package reference\n\nA reference to the available package for this installation.\nUseful to lookup the package display name, icon and other info."
         },
         "latestMatchingVersion": {
           "$ref": "#/definitions/v1alpha1PackageAppVersion",
-          "description": "Only non-empty if an available upgrade matches the specified pkg_version_reference.\nFor example, if the pkg_version_reference is \"\u003e10.3.0 \u003c 10.4.0\" and 10.3.1\nis installed, then:\n  * if 10.3.2 is available, latest_matching_version should be 10.3.2, but\n  * if 10.4 is available while \u003e10.3.1 is not, this should remain empty.",
-          "title": "LatestMatchingVersion"
+          "description": "LatestMatchingVersion\n\nOnly non-empty if an available upgrade matches the specified pkg_version_reference.\nFor example, if the pkg_version_reference is \"\u003e10.3.0 \u003c 10.4.0\" and 10.3.1\nis installed, then:\n  * if 10.3.2 is available, latest_matching_version should be 10.3.2, but\n  * if 10.4 is available while \u003e10.3.1 is not, this should remain empty."
         },
         "latestVersion": {
           "$ref": "#/definitions/v1alpha1PackageAppVersion",
-          "description": "The latest version available for this package, regardless of the pkg_version_reference.",
-          "title": "LatestVersion"
+          "description": "LatestVersion\n\nThe latest version available for this package, regardless of the pkg_version_reference."
         },
         "customDetail": {
           "$ref": "#/definitions/protobufAny",
-          "description": "A plugin can define custom details for data which is not yet, or never will\nbe specified in the core.packaging.CreateInstalledPackageRequest fields. The use\nof an `Any` field means that each plugin can define the structure of this\nmessage as required, while still satisfying the core interface.\nSee https://developers.google.com/protocol-buffers/docs/proto3#any",
-          "title": "Custom data added by the plugin"
+          "title": "Custom data added by the plugin\n\nA plugin can define custom details for data which is not yet, or never will\nbe specified in the core.packaging.CreateInstalledPackageRequest fields. The use\nof an `Any` field means that each plugin can define the structure of this\nmessage as required, while still satisfying the core interface.\nSee https://developers.google.com/protocol-buffers/docs/proto3#any"
         }
       },
-      "description": "An InstalledPackageDetail includes details about the installed package that are\ntypically useful when presenting a single installed package.",
-      "title": "InstalledPackageDetail"
+      "description": "InstalledPackageDetail\n\nAn InstalledPackageDetail includes details about the installed package that are\ntypically useful when presenting a single installed package."
     },
     "v1alpha1InstalledPackageReference": {
       "type": "object",
       "properties": {
         "context": {
           "$ref": "#/definitions/v1alpha1Context",
-          "description": "The context (cluster/namespace) for the package.",
-          "title": "Installed package context"
+          "description": "Installed package context\n\nThe context (cluster/namespace) for the package."
         },
         "identifier": {
           "type": "string",
@@ -4087,30 +4283,25 @@
           "description": "The plugin used to identify and interact with the installed package.\nThis field can be omitted when the request is in the context of a specific plugin."
         }
       },
-      "description": "An InstalledPackageReference has the minimum information required to uniquely\nidentify an installed package.",
-      "title": "InstalledPackageReference"
+      "description": "InstalledPackageReference\n\nAn InstalledPackageReference has the minimum information required to uniquely\nidentify an installed package."
     },
     "v1alpha1InstalledPackageStatus": {
       "type": "object",
       "properties": {
         "ready": {
           "type": "boolean",
-          "description": "An indication of whether the installation is ready or not",
-          "title": "Ready"
+          "title": "Ready\n\nAn indication of whether the installation is ready or not"
         },
         "reason": {
           "$ref": "#/definitions/v1alpha1InstalledPackageStatusStatusReason",
-          "description": "An enum indicating the reason for the current status.",
-          "title": "Reason"
+          "description": "Reason\n\nAn enum indicating the reason for the current status."
         },
         "userReason": {
           "type": "string",
-          "description": "Optional text to return for user context, which may be plugin specific.",
-          "title": "UserReason"
+          "description": "UserReason\n\nOptional text to return for user context, which may be plugin specific."
         }
       },
-      "description": "An InstalledPackageStatus reports on the current status of the installation.",
-      "title": "InstalledPackageStatus"
+      "description": "InstalledPackageStatus\n\nAn InstalledPackageStatus reports on the current status of the installation."
     },
     "v1alpha1InstalledPackageStatusStatusReason": {
       "type": "string",
@@ -4122,126 +4313,103 @@
         "STATUS_REASON_PENDING"
       ],
       "default": "STATUS_REASON_UNSPECIFIED",
-      "description": "Generic reasons why an installed package may be ready or not.\nThese should make sense across different packaging plugins.",
-      "title": "StatusReason"
+      "description": "StatusReason\n\nGeneric reasons why an installed package may be ready or not.\nThese should make sense across different packaging plugins."
     },
     "v1alpha1InstalledPackageSummary": {
       "type": "object",
       "properties": {
         "installedPackageRef": {
           "$ref": "#/definitions/v1alpha1InstalledPackageReference",
-          "description": "A reference uniquely identifying the package.",
-          "title": "InstalledPackageReference"
+          "description": "InstalledPackageReference\n\nA reference uniquely identifying the package."
         },
         "name": {
           "type": "string",
-          "description": "A name given to the installation of the package (eg. \"my-postgresql-for-testing\").",
-          "title": "Name"
+          "description": "Name\n\nA name given to the installation of the package (eg. \"my-postgresql-for-testing\")."
         },
         "pkgVersionReference": {
           "$ref": "#/definitions/v1alpha1VersionReference",
-          "description": "The package version reference defines a version or constraint limiting\nmatching package versions.",
-          "title": "PkgVersionReference"
+          "description": "PkgVersionReference\n\nThe package version reference defines a version or constraint limiting\nmatching package versions."
         },
         "currentVersion": {
           "$ref": "#/definitions/v1alpha1PackageAppVersion",
-          "description": "The current version of the package being reconciled, which may be\nin one of these states:\n - has been successfully installed/upgraded or\n - is currently being installed/upgraded or\n - has failed to install/upgrade",
-          "title": "CurrentVersion"
+          "title": "CurrentVersion\n\nThe current version of the package being reconciled, which may be\nin one of these states:\n - has been successfully installed/upgraded or\n - is currently being installed/upgraded or\n - has failed to install/upgrade"
         },
         "iconUrl": {
           "type": "string",
-          "description": "A url for an icon.",
-          "title": "Installed package icon URL"
+          "description": "Installed package icon URL\n\nA url for an icon."
         },
         "pkgDisplayName": {
           "type": "string",
-          "description": "The package name as displayed to users (provided by the package, eg. \"PostgreSQL\")",
-          "title": "PackageDisplayName"
+          "title": "PackageDisplayName\n\nThe package name as displayed to users (provided by the package, eg. \"PostgreSQL\")"
         },
         "shortDescription": {
           "type": "string",
-          "description": "A short description of the package (provided by the package)",
-          "title": "ShortDescription"
+          "title": "ShortDescription\n\nA short description of the package (provided by the package)"
         },
         "latestMatchingVersion": {
           "$ref": "#/definitions/v1alpha1PackageAppVersion",
-          "description": "Only non-empty if an available upgrade matches the specified pkg_version_reference.\nFor example, if the pkg_version_reference is \"\u003e10.3.0 \u003c 10.4.0\" and 10.3.1\nis installed, then:\n  * if 10.3.2 is available, latest_matching_version should be 10.3.2, but\n  * if 10.4 is available while \u003e10.3.1 is not, this should remain empty.",
-          "title": "LatestMatchingVersion"
+          "description": "LatestMatchingVersion\n\nOnly non-empty if an available upgrade matches the specified pkg_version_reference.\nFor example, if the pkg_version_reference is \"\u003e10.3.0 \u003c 10.4.0\" and 10.3.1\nis installed, then:\n  * if 10.3.2 is available, latest_matching_version should be 10.3.2, but\n  * if 10.4 is available while \u003e10.3.1 is not, this should remain empty."
         },
         "latestVersion": {
           "$ref": "#/definitions/v1alpha1PackageAppVersion",
-          "description": "The latest version available for this package, regardless of the pkg_version_reference.",
-          "title": "LatestVersion"
+          "description": "LatestVersion\n\nThe latest version available for this package, regardless of the pkg_version_reference."
         },
         "status": {
           "$ref": "#/definitions/v1alpha1InstalledPackageStatus",
-          "description": "The current status of the installed package.",
-          "title": "Status"
+          "description": "Status\n\nThe current status of the installed package."
         }
       },
-      "description": "An InstalledPackageSummary provides a summary of an installed package\nuseful when aggregating many installed packages.",
-      "title": "InstalledPackageSummary"
+      "description": "InstalledPackageSummary\n\nAn InstalledPackageSummary provides a summary of an installed package\nuseful when aggregating many installed packages."
     },
     "v1alpha1Maintainer": {
       "type": "object",
       "properties": {
         "name": {
           "type": "string",
-          "description": "A maintainer name",
-          "title": "Maintainer name"
+          "title": "Maintainer name\n\nA maintainer name"
         },
         "email": {
           "type": "string",
-          "description": "A maintainer email",
-          "title": "Maintainer email"
+          "title": "Maintainer email\n\nA maintainer email"
         }
       },
-      "description": "Maintainers for the package.",
-      "title": "Maintainer"
+      "description": "Maintainer\n\nMaintainers for the package."
     },
     "v1alpha1PackageAppVersion": {
       "type": "object",
       "properties": {
         "pkgVersion": {
           "type": "string",
-          "description": "Version of the package itself",
-          "title": "Package version"
+          "title": "Package version\n\nVersion of the package itself"
         },
         "appVersion": {
           "type": "string",
-          "description": "Version of the packaged application",
-          "title": "Application version"
+          "title": "Application version\n\nVersion of the packaged application"
         }
       },
-      "description": "PackageAppVersion conveys both the package version and the packaged app version.",
-      "title": "Package AppVersion"
+      "description": "Package AppVersion\n\nPackageAppVersion conveys both the package version and the packaged app version."
     },
     "v1alpha1PackageRepository": {
       "type": "object",
       "properties": {
         "name": {
           "type": "string",
-          "description": "The name identifying package repository on the cluster.",
-          "title": "Package repository name"
+          "description": "Package repository name\n\nThe name identifying package repository on the cluster."
         },
         "namespace": {
           "type": "string",
-          "description": "An optional namespace for namespaced package repositories.",
-          "title": "Package repository namespace"
+          "description": "Package repository namespace\n\nAn optional namespace for namespaced package repositories."
         },
         "url": {
           "type": "string",
-          "description": "A url identifying the package repository location.",
-          "title": "Package repository URL"
+          "description": "Package repository URL\n\nA url identifying the package repository location."
         },
         "plugin": {
           "$ref": "#/definitions/v1alpha1Plugin",
-          "description": "The plugin used to interact with this package repository.",
-          "title": "Package repository plugin"
+          "description": "Package repository plugin\n\nThe plugin used to interact with this package repository."
         }
       },
-      "description": "A PackageRepository defines a repository of packages for installation.",
-      "title": "PackageRepository"
+      "description": "PackageRepository\n\nA PackageRepository defines a repository of packages for installation."
     },
     "v1alpha1PackageRepositoryAuth": {
       "type": "object",
@@ -4274,8 +4442,7 @@
           "title": "pass_credentials allows the credentials from the SecretRef to be passed\non to a host that does not match the host as defined in URL.\nThis flag controls whether or not it is allowed to passing credentials\nwith requests to other domains linked from the repository.\nThis may be needed if the host of the advertised chart URLs in the\nindex differs from the defined URL. Optional"
         }
       },
-      "description": "Authentication/authorization to provide client’s identity when connecting\nto a package repository.\nThere are 6 total distinct use cases we may support:\n1) None (Public)\n2) Basic Auth\n3) Bearer Token\n4) Custom Authorization Header\n5) Docker Registry Credentials (for OCI only)\n6) TLS certificate and key\n\nNote that (1)-(4) may be done over HTTP or HTTPs without any custom\ncertificates or certificate authority\n(1) is handled by not not having PackageRepositoryAuth field on\n    the parent object\na given plug-in may or may not support a given authentication type.\nFor example\n - direct-helm plug-in does not currently support (6), while flux does\n - flux plug-in does not support (3) or (4) while direct-helm does",
-      "title": "PackageRepositoryAuth"
+      "title": "PackageRepositoryAuth\n\nAuthentication/authorization to provide client's identity when connecting\nto a package repository.\nThere are 6 total distinct use cases we may support:\n1) None (Public)\n2) Basic Auth\n3) Bearer Token\n4) Custom Authorization Header\n5) Docker Registry Credentials (for OCI only)\n6) TLS certificate and key\n\nNote that (1)-(4) may be done over HTTP or HTTPs without any custom\ncertificates or certificate authority\n(1) is handled by not not having PackageRepositoryAuth field on\n    the parent object\na given plug-in may or may not support a given authentication type.\nFor example\n - direct-helm plug-in does not currently support (6), while flux does\n - flux plug-in does not support (3) or (4) while direct-helm does"
     },
     "v1alpha1PackageRepositoryDetail": {
       "type": "object",
@@ -4344,30 +4511,25 @@
           "description": "The plugin used to interact with this available package.\nThis field should be omitted when the request is in the context of a\nspecific plugin."
         }
       },
-      "description": "A PackageRepositoryReference has the minimum information required to\nuniquely identify a package repository.",
-      "title": "PackageRepositoryReference"
+      "description": "PackageRepositoryReference\n\nA PackageRepositoryReference has the minimum information required to\nuniquely identify a package repository."
     },
     "v1alpha1PackageRepositoryStatus": {
       "type": "object",
       "properties": {
         "ready": {
           "type": "boolean",
-          "description": "An indication of whether the repository is ready or not",
-          "title": "Ready"
+          "title": "Ready\n\nAn indication of whether the repository is ready or not"
         },
         "reason": {
           "$ref": "#/definitions/v1alpha1PackageRepositoryStatusStatusReason",
-          "description": "An enum indicating the reason for the current status.",
-          "title": "Reason"
+          "description": "Reason\n\nAn enum indicating the reason for the current status."
         },
         "userReason": {
           "type": "string",
-          "description": "Optional text to return for user context, which may be plugin specific.",
-          "title": "UserReason"
+          "description": "UserReason\n\nOptional text to return for user context, which may be plugin specific."
         }
       },
-      "description": "A PackageRepositoryStatus reports on the current status of the repository.",
-      "title": "PackageRepositoryStatus"
+      "description": "PackageRepositoryStatus\n\nA PackageRepositoryStatus reports on the current status of the repository."
     },
     "v1alpha1PackageRepositoryStatusStatusReason": {
       "type": "string",
@@ -4378,8 +4540,7 @@
         "STATUS_REASON_PENDING"
       ],
       "default": "STATUS_REASON_UNSPECIFIED",
-      "description": "Generic reasons why a package repository may be ready or not.\nThese should make sense across different packaging plugins.",
-      "title": "StatusReason"
+      "description": "StatusReason\n\nGeneric reasons why a package repository may be ready or not.\nThese should make sense across different packaging plugins."
     },
     "v1alpha1PackageRepositorySummary": {
       "type": "object",
@@ -4438,18 +4599,15 @@
       "properties": {
         "pageToken": {
           "type": "string",
-          "description": "The client uses this field to request a specific page of the list results.",
-          "title": "Page token"
+          "description": "Page token\n\nThe client uses this field to request a specific page of the list results."
         },
         "pageSize": {
           "type": "integer",
           "format": "int32",
-          "description": "Clients use this field to specify the maximum number of results to be\nreturned by the server. The server may further constrain the maximum number\nof results returned in a single page. If the page_size is 0, the server\nwill decide the number of results to be returned.",
-          "title": "Page size"
+          "description": "Page size\n\nClients use this field to specify the maximum number of results to be\nreturned by the server. The server may further constrain the maximum number\nof results returned in a single page. If the page_size is 0, the server\nwill decide the number of results to be returned."
         }
       },
-      "description": "The PaginationOptions based on the example proto at:\nhttps://cloud.google.com/apis/design/design_patterns#list_pagination\njust encapsulated in a message so it can be reused on different request messages.",
-      "title": "PaginationOptions"
+      "description": "PaginationOptions\n\nThe PaginationOptions based on the example proto at:\nhttps://cloud.google.com/apis/design/design_patterns#list_pagination\njust encapsulated in a message so it can be reused on different request messages."
     },
     "v1alpha1Plugin": {
       "type": "object",
@@ -4460,17 +4618,14 @@
       "properties": {
         "name": {
           "type": "string",
-          "description": "The name of the plugin, such as `fluxv2.packages` or `kapp_controller.packages`.",
-          "title": "Plugin name"
+          "description": "Plugin name\n\nThe name of the plugin, such as `fluxv2.packages` or `kapp_controller.packages`."
         },
         "version": {
           "type": "string",
-          "description": "The version of the plugin, such as v1alpha1",
-          "title": "Plugin version"
+          "title": "Plugin version\n\nThe version of the plugin, such as v1alpha1"
         }
       },
-      "description": "A plugin can implement multiple services and multiple versions of a service.",
-      "title": "Plugin"
+      "description": "Plugin\n\nA plugin can implement multiple services and multiple versions of a service."
     },
     "v1alpha1ReconciliationOptions": {
       "type": "object",
@@ -4478,22 +4633,18 @@
         "interval": {
           "type": "integer",
           "format": "int32",
-          "description": "The interval with which the package is checked for reconciliation (in seconds)",
-          "title": "Reconciliation Interval"
+          "title": "Reconciliation Interval\n\nThe interval with which the package is checked for reconciliation (in seconds)"
         },
         "suspend": {
           "type": "boolean",
-          "description": "Whether reconciliation should be suspended until otherwise enabled.\nThis can be utilized to e.g. temporarily ignore chart changes, and\nprevent a Helm release from getting upgraded",
-          "title": "Suspend"
+          "title": "Suspend\n\nWhether reconciliation should be suspended until otherwise enabled.\nThis can be utilized to e.g. temporarily ignore chart changes, and\nprevent a Helm release from getting upgraded"
         },
         "serviceAccountName": {
           "type": "string",
-          "description": "A name for a service account in the same namespace which should be used\nto perform the reconciliation.",
-          "title": "ServiceAccountName"
+          "description": "ServiceAccountName\n\nA name for a service account in the same namespace which should be used\nto perform the reconciliation."
         }
       },
-      "description": "ReconciliationOptions enable specifying standard fields for backends that continuously\nreconcile a package install as new matching versions are released. Most of the naming\nis from the flux HelmReleaseSpec though it maps directly to equivalent fields on Carvel's\nInstalledPackage.",
-      "title": "ReconciliationOptions"
+      "description": "ReconciliationOptions\n\nReconciliationOptions enable specifying standard fields for backends that continuously\nreconcile a package install as new matching versions are released. Most of the naming\nis from the flux HelmReleaseSpec though it maps directly to equivalent fields on Carvel's\nInstalledPackage."
     },
     "v1alpha1ResourceRef": {
       "type": "object",
@@ -4515,24 +4666,7 @@
           "description": "The namespace of the specific resource in the context of the installed\npackage. In most cases this will be identical to the namespace of the\ninstalled package. Exceptions will be non-namespaced resources and packages\nthat install resources in other namespaces for special reasons."
         }
       },
-      "description": "A reference to a Kubernetes resource related to a specific installed package.\nThe context (cluster) for each resource is that of the related\ninstalled package.",
-      "title": "Resource reference"
-    },
-    "v1alpha1RollbackInstalledPackageRequest": {
-      "type": "object",
-      "properties": {
-        "installedPackageRef": {
-          "$ref": "#/definitions/v1alpha1InstalledPackageReference",
-          "description": "A reference uniquely identifying the installed package.",
-          "title": "Installed package reference"
-        },
-        "releaseRevision": {
-          "type": "integer",
-          "format": "int32",
-          "description": "A number identifying the Helm revision to which to rollback.",
-          "title": "ReleaseRevision"
-        }
-      }
+      "description": "Resource reference\n\nA reference to a Kubernetes resource related to a specific installed package.\nThe context (cluster) for each resource is that of the related\ninstalled package."
     },
     "v1alpha1RollbackInstalledPackageResponse": {
       "type": "object",
@@ -4542,15 +4676,14 @@
           "title": "TODO: add example for API docs\noption (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {\n  example: '{\"installed_package_ref\": {}}'\n};"
         }
       },
-      "description": "Response for RollbackInstalledPackage",
-      "title": "RollbackInstalledPackageResponse"
+      "title": "RollbackInstalledPackageResponse\n\nResponse for RollbackInstalledPackage"
     },
     "v1alpha1SecretKeyReference": {
       "type": "object",
       "properties": {
         "name": {
           "type": "string",
-          "title": "The name of an existing secret in the same namespace as the object\nthat refers to it (e.g. PackageRepository), containing authentication\ncredentials for the said package repository.\n- For HTTP/S basic auth the secret must be of type\n  \"kubernetes.io/basic-auth\" or opaque and contain username and\n  password fields\n- For TLS the secret must be of type \"kubernetes.io/tls\" or opaque\n  and contain a certFile and keyFile, and/or\n  caCert fields.\n- For Bearer or Custom Auth, the secret must be opaque, and\n  the key must be provided\n- For Docker Registry Credentials (OCI registries) the secret\n  must of of type \"kubernetes.io/dockerconfigjson”\nFor more details, refer to\nhttps://kubernetes.io/docs/concepts/configuration/secret/"
+          "title": "The name of an existing secret in the same namespace as the object\nthat refers to it (e.g. PackageRepository), containing authentication\ncredentials for the said package repository.\n- For HTTP/S basic auth the secret must be of type\n  \"kubernetes.io/basic-auth\" or opaque and contain username and\n  password fields\n- For TLS the secret must be of type \"kubernetes.io/tls\" or opaque\n  and contain a certFile and keyFile, and/or\n  caCert fields.\n- For Bearer or Custom Auth, the secret must be opaque, and\n  the key must be provided\n- For Docker Registry Credentials (OCI registries) the secret\n  must of of type \"kubernetes.io/dockerconfigjson\"\nFor more details, refer to\nhttps://kubernetes.io/docs/concepts/configuration/secret/"
         },
         "key": {
           "type": "string",
@@ -4572,8 +4705,7 @@
         "SECRET_TYPE_BOOTSTRAP_TOKEN"
       ],
       "default": "SECRET_TYPE_OPAQUE_UNSPECIFIED",
-      "description": "The type of secret. Currently Kubeapps itself only deals with OPAQUE\nand docker config json secrets, but we define all so we can correctly\nlist the secret names with their types.\nSee https://kubernetes.io/docs/concepts/configuration/secret/#secret-types",
-      "title": "SecretType"
+      "title": "SecretType\n\nThe type of secret. Currently Kubeapps itself only deals with OPAQUE\nand docker config json secrets, but we define all so we can correctly\nlist the secret names with their types.\nSee https://kubernetes.io/docs/concepts/configuration/secret/#secret-types"
     },
     "v1alpha1SetUserManagedSecretsResponse": {
       "type": "object",
@@ -4597,29 +4729,6 @@
       },
       "title": "TlsCertKey"
     },
-    "v1alpha1UpdateInstalledPackageRequest": {
-      "type": "object",
-      "properties": {
-        "installedPackageRef": {
-          "$ref": "#/definitions/v1alpha1InstalledPackageReference",
-          "title": "A reference uniquely identifying the installed package being updated.\nRequired"
-        },
-        "pkgVersionReference": {
-          "$ref": "#/definitions/v1alpha1VersionReference",
-          "title": "For helm this will be the exact version in VersionReference.version\nFor fluxv2 this could be any semver constraint expression\nFor other plugins we can extend the VersionReference as needed. Optional"
-        },
-        "values": {
-          "type": "string",
-          "description": "An optional serialized values string to be included when templating a\npackage in the format expected by the plugin. Included when the backend\nformat doesn't use secrets or configmaps for values or supports both.\nThese values are layered on top of any values refs above, when\nrelevant."
-        },
-        "reconciliationOptions": {
-          "$ref": "#/definitions/v1alpha1ReconciliationOptions",
-          "description": "An optional field for specifying data common to systems that reconcile\nthe package on the cluster."
-        }
-      },
-      "description": "Request for UpdateInstalledPackage. The intent is to reach the desired state specified\nby the fields in the request, while leaving other fields intact. This is a whole\nobject \"Update\" semantics rather than \"Patch\" semantics. The caller will provide the\nvalues for the fields below, which will replace, or be overlayed onto, the\ncorresponding fields in the existing resource. For example, with the\nUpdateInstalledPackageRequest, it is not possible to change just the 'package version\nreference' without also specifying 'values' field. As a side effect, not specifying the\n'values' field in the request means there are no values specified in the desired state.\nSo the meaning of each field value is describing the desired state of the corresponding\nfield in the resource after the update operation has completed the renconciliation.",
-      "title": "UpdateInstalledPackageRequest"
-    },
     "v1alpha1UpdateInstalledPackageResponse": {
       "type": "object",
       "properties": {
@@ -4627,44 +4736,7 @@
           "$ref": "#/definitions/v1alpha1InstalledPackageReference"
         }
       },
-      "description": "Response for UpdateInstalledPackage",
-      "title": "UpdateInstalledPackageResponse"
-    },
-    "v1alpha1UpdatePackageRepositoryRequest": {
-      "type": "object",
-      "properties": {
-        "packageRepoRef": {
-          "$ref": "#/definitions/v1alpha1PackageRepositoryReference",
-          "title": "A reference uniquely identifying the package repository being updated. \nThe only required field"
-        },
-        "url": {
-          "type": "string",
-          "description": "URL identifying the package repository location."
-        },
-        "description": {
-          "type": "string",
-          "description": "A user-provided description."
-        },
-        "interval": {
-          "type": "integer",
-          "format": "int64",
-          "title": "The interval at which to check the upstream for updates (in seconds)\nOptional. Defaults to 10m if not specified"
-        },
-        "tlsConfig": {
-          "$ref": "#/definitions/v1alpha1PackageRepositoryTlsConfig",
-          "title": "TLS-specific parameters for connecting to a repository. Optional"
-        },
-        "auth": {
-          "$ref": "#/definitions/v1alpha1PackageRepositoryAuth",
-          "title": "authentication parameters for connecting to a repository. Optional"
-        },
-        "customDetail": {
-          "$ref": "#/definitions/protobufAny",
-          "title": "Custom data added by the plugin\nA plugin can define custom details for data which is not yet, or\nnever will be specified in the core AddPackageRepositoryRequest\nfields. The use of an `Any` field means that each plugin can define\nthe structure of this message as required, while still satisfying the\ncore interface.\nSee https://developers.google.com/protocol-buffers/docs/proto3#any\nJust for reference, some of the examples that have been chosen not to\nbe part of the core API but rather plugin-specific details are:\n  direct-helm:\n     - image pull secrets\n     - list of oci repositories\n     - filter rules\n     - sync job pod template"
-        }
-      },
-      "description": "Request for UpdatePackageRepository",
-      "title": "UpdatePackageRepositoryRequest"
+      "title": "UpdateInstalledPackageResponse\n\nResponse for UpdateInstalledPackage"
     },
     "v1alpha1UpdatePackageRepositoryResponse": {
       "type": "object",
@@ -4673,8 +4745,7 @@
           "$ref": "#/definitions/v1alpha1PackageRepositoryReference"
         }
       },
-      "description": "Response for UpdatePackageRepository",
-      "title": "UpdatePackageRepositoryResponse"
+      "title": "UpdatePackageRepositoryResponse\n\nResponse for UpdatePackageRepository"
     },
     "v1alpha1UsernamePassword": {
       "type": "object",
@@ -4695,12 +4766,10 @@
       "properties": {
         "version": {
           "type": "string",
-          "description": "The format of the version constraint depends on the backend. For example,\nfor a flux v2 and Carvel it’s a semver expression, such as \"\u003e=10.3 \u003c 10.4\"",
-          "title": "Version"
+          "title": "Version\n\nThe format of the version constraint depends on the backend. For example,\nfor a flux v2 and Carvel it's a semver expression, such as \"\u003e=10.3 \u003c 10.4\""
         }
       },
-      "description": "A VersionReference defines a version or constraint limiting matching versions.\nThe reason it is a separate message is so that in the future we can add other\nfields as necessary (such as something similar to Carvel's `prereleases` option\nto its versionSelection).",
-      "title": "VersionReference"
+      "description": "VersionReference\n\nA VersionReference defines a version or constraint limiting matching versions.\nThe reason it is a separate message is so that in the future we can add other\nfields as necessary (such as something similar to Carvel's `prereleases` option\nto its versionSelection)."
     }
   },
   "securityDefinitions": {

@@ -556,42 +556,21 @@ describe("pagination and package fetching", () => {
     expect(fetchAvailablePackageSummaries).not.toHaveBeenCalled();
   });
 
-  describe("pagination", () => {
-    let spyOnUseState: jest.SpyInstance;
-    const setState = jest.fn();
-    const setPageNum = jest.fn();
-
+  describe("reset", () => {
+    const mockDispatch = jest.fn();
+    let spyOnUseDispatch: jest.SpyInstance;
+    let resetAvailablePackageSummaries: jest.SpyInstance;
     beforeEach(() => {
-      spyOnUseState = jest
-        .spyOn(React, "useState")
-        /* @ts-expect-error: Argument of type '(init: any) => any' is not assignable to parameter of type '() => [unknown, Dispatch<unknown>]' */
-        .mockImplementation((init: any) => {
-          if (init === false) {
-            // Mocking the result of hasLoadedFirstPage to simulate that is already loaded
-            return [true, setState];
-          }
-          if (init === 0) {
-            // Mocking the result of setPageNum to ensure it's called
-            return [0, setPageNum];
-          }
-          return [init, setState];
-        });
-
-      // Mock intersection observer
-      const observe = jest.fn();
-      const unobserve = jest.fn();
-
-      window.IntersectionObserver = jest.fn(callback => {
-        (callback as (e: any) => void)([{ isIntersecting: true }]);
-        return { observe, unobserve } as any;
-      });
+      spyOnUseDispatch = jest.spyOn(ReactRedux, "useDispatch").mockReturnValue(mockDispatch);
+      resetAvailablePackageSummaries = jest
+        .spyOn(actions.availablepackages, "resetAvailablePackageSummaries")
+        .mockImplementation();
     });
-
     afterEach(() => {
-      spyOnUseState.mockRestore();
+      spyOnUseDispatch.mockRestore();
     });
 
-    it("changes page", () => {
+    it("does not reset during the initial page render", () => {
       const packages = {
         ...defaultPackageState,
         hasFinishedFetching: false,
@@ -607,7 +586,29 @@ describe("pagination and package fetching", () => {
           </Route>
         </MemoryRouter>,
       );
-      expect(setPageNum).toHaveBeenCalledWith(0);
+
+      expect(resetAvailablePackageSummaries).not.toHaveBeenCalledWith();
+    });
+
+    it("resets the package state when unmounted", () => {
+      const packages = {
+        ...defaultPackageState,
+        hasFinishedFetching: false,
+        isFetching: false,
+        items: [],
+      } as any;
+
+      const wrapper = mountWrapper(
+        getStore({ ...populatedState, packages: packages } as IStoreState),
+        <MemoryRouter initialEntries={[routePathParam]}>
+          <Route path={routePath}>
+            <Catalog />
+          </Route>
+        </MemoryRouter>,
+      );
+      wrapper.unmount();
+
+      expect(resetAvailablePackageSummaries).toHaveBeenCalledWith();
     });
     // TODO(agamez): add a test case covering it "resets page when one of the filters changes"
     // https://github.com/vmware-tanzu/kubeapps/pull/2264/files/0d3c77448543668255809bf05039aca704cf729f..22343137efb1c2292b0aa4795f02124306cb055e#r565486271

@@ -40,7 +40,7 @@ func (s *Server) getChartInCluster(ctx context.Context, key types.NamespacedName
 func (s *Server) availableChartDetail(ctx context.Context, packageRef *corev1.AvailablePackageReference, chartVersion string) (*corev1.AvailablePackageDetail, error) {
 	log.Infof("+availableChartDetail(%s, %s)", packageRef, chartVersion)
 
-	repoN, chartName, err := pkgutils.SplitChartIdentifier(packageRef.Identifier)
+	repoN, chartName, err := pkgutils.SplitPackageIdentifier(packageRef.Identifier)
 	if err != nil {
 		return nil, err
 	}
