@@ -1,0 +1,15 @@
+domain: kubeapps.com
+layout:
+- go.kubebuilder.io/v3
+projectName: apprepository-controller-new
+repo: github.com/vmware-tanzu/kubeapps
+resources:
+- api:
+    crdVersion: v1
+    namespaced: true
+  controller: true
+  domain: kubeapps.com
+  kind: AppRepository
+  path: github.com/vmware-tanzu/kubeapps/api/v1alpha2
+  version: v1alpha2
+version: "3"

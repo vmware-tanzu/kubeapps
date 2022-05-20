@@ -3,7 +3,7 @@
 
 import Tooltip from "components/js/Tooltip";
 import { InstalledPackageSummary } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
-import { getAppStatusLabel, getPluginIcon } from "shared/utils";
+import { getAppStatusLabel, getPluginIcon, getPluginName } from "shared/utils";
 import placeholder from "../../placeholder.png";
 import * as url from "../../shared/url";
 import InfoCard from "../InfoCard/InfoCard";
@@ -59,6 +59,8 @@ function AppListItem(props: IAppListItemProps) {
     <></>
   );
 
+  const pkgPluginName = getPluginName(app.installedPackageRef?.plugin);
+
   return app?.installedPackageRef ? (
     <InfoCard
       key={app.installedPackageRef?.identifier}
@@ -80,6 +82,8 @@ function AppListItem(props: IAppListItemProps) {
       description={app.shortDescription}
       tag1Content={appStatus}
       tag1Class={appReady ? "label-success" : "label-warning"}
+      tag2Content={pkgPluginName}
+      tag2Class={"label-info-secondary"}
       tooltip={tooltip}
       bgIcon={getPluginIcon(app.installedPackageRef?.plugin)}
     />

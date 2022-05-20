@@ -825,7 +825,7 @@ export interface VersionReference {
    * Version
    *
    * The format of the version constraint depends on the backend. For example,
-   * for a flux v2 and Carvel it’s a semver expression, such as ">=10.3 < 10.4"
+   * for a flux v2 and Carvel it's a semver expression, such as ">=10.3 < 10.4"
    */
   version: string;
 }

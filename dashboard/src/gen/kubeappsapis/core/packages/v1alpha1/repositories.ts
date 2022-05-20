@@ -93,7 +93,7 @@ export interface PackageRepositoryTlsConfig {
 /**
  * PackageRepositoryAuth
  *
- * Authentication/authorization to provide client’s identity when connecting
+ * Authentication/authorization to provide client's identity when connecting
  * to a package repository.
  * There are 6 total distinct use cases we may support:
  * 1) None (Public)
