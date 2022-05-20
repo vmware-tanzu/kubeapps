@@ -11,7 +11,7 @@ import Row from "components/js/Row";
 import PageHeader from "components/PageHeader/PageHeader";
 import {
   InstalledPackageReference,
-  ResourceRef
+  ResourceRef,
 } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
 import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins";
 import * as yaml from "js-yaml";
@@ -27,7 +27,7 @@ import {
   DeleteError,
   FetchError,
   FetchWarning,
-  IStoreState
+  IStoreState,
 } from "shared/types";
 import { getPluginsSupportingRollback } from "shared/utils";
 import ApplicationStatus from "../../containers/ApplicationStatusContainer";

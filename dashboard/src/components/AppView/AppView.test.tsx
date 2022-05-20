@@ -2,12 +2,12 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import actions from "actions";
-import { getType } from "typesafe-actions";
 import Alert from "components/js/Alert";
 import LoadingWrapper from "components/LoadingWrapper/LoadingWrapper";
 import PageHeader from "components/PageHeader";
 import ApplicationStatusContainer from "containers/ApplicationStatusContainer";
 import {
+  AvailablePackageDetail,
   AvailablePackageReference,
   Context,
   GetAvailablePackageDetailResponse,
@@ -22,22 +22,23 @@ import {
   VersionReference,
 } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
 import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins";
-import { MemoryRouter, Route } from "react-router-dom";
 import { act } from "react-dom/test-utils";
+import { MemoryRouter, Route } from "react-router-dom";
+import { InstalledPackage } from "shared/InstalledPackage";
+import PackagesService from "shared/PackagesService";
 import { defaultStore, getStore, mountWrapper } from "shared/specs/mountWrapper";
 import { DeleteError, FetchError } from "shared/types";
 import { PluginNames } from "shared/utils";
+import { getType } from "typesafe-actions";
 import AccessURLTable from "./AccessURLTable/AccessURLTable";
 import DeleteButton from "./AppControls/DeleteButton/DeleteButton";
 import RollbackButton from "./AppControls/RollbackButton";
 import UpgradeButton from "./AppControls/UpgradeButton/UpgradeButton";
 import AppNotes from "./AppNotes/AppNotes";
 import AppView from "./AppView";
-import PackageInfo from "./PackageInfo/PackageInfo";
 import CustomAppView from "./CustomAppView";
+import PackageInfo from "./PackageInfo/PackageInfo";
 import ResourceTabs from "./ResourceTabs";
-import { InstalledPackage } from "shared/InstalledPackage";
-import PackagesService from "shared/PackagesService";
 
 const routeParams = {
   cluster: "cluster-1",
@@ -74,6 +75,15 @@ const installedPackage = {
     userReason: "deployed",
   } as InstalledPackageStatus,
 } as InstalledPackageDetail;
+
+const availablePackageDetail = {
+  availablePackageRef: {
+    identifier: "apache/1",
+    plugin: { name: PluginNames.PACKAGES_HELM },
+    context: { cluster: "", namespace: "chart-namespace" } as Context,
+  } as AvailablePackageReference,
+  version: { appVersion: "4.5.6", pkgVersion: "1.2.3" },
+} as AvailablePackageDetail;
 
 const resourceRefs = {
   configMap: { apiVersion: "v1", kind: "ConfigMap", name: "cm-one" } as ResourceRef,
@@ -211,6 +221,27 @@ describe("AppView", () => {
       );
     });
     expect(wrapper.find(CustomAppView)).not.toExist();
+  });
+
+  it("renders a PackageHeader with the information about the associated available package", async () => {
+    let wrapper: any;
+    await act(async () => {
+      wrapper = mountWrapper(
+        getStore({
+          apps: {
+            selected: { ...installedPackage },
+            selectedDetails: { ...availablePackageDetail },
+          },
+          config: {},
+        }),
+        <MemoryRouter initialEntries={[routePathParam]}>
+          <Route path={routePath}>
+            <AppView />
+          </Route>
+        </MemoryRouter>,
+      );
+    });
+    expect(wrapper.find(PageHeader).text()).toContain("from package apache/1");
   });
 
   it("renders a RollBack button if the installedPackage is from PACKAGES_HELM", async () => {
