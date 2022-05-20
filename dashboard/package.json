@@ -74,7 +74,7 @@
     "yaml": "^1.10.2"
   },
   "devDependencies": {
-    "@formatjs/cli": "^4.8.4",
+    "@formatjs/cli": "^5.0.1",
     "@improbable-eng/grpc-web-fake-transport": "^0.15.0",
     "@testing-library/react": "^12.1.5",
     "@types/enzyme": "^3.10.12",
@@ -109,7 +109,7 @@
     "prettier": "^2.6.2",
     "react-scripts": "^4.0.3",
     "redux-mock-store": "^1.5.4",
-    "sass": "^1.51.0",
+    "sass": "^1.52.0",
     "shx": "^0.3.4",
     "stylelint": "^14.8.2",
     "stylelint-config-idiomatic-order": "^8.1.0",
