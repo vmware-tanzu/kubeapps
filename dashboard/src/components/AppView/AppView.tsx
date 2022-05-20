@@ -2,34 +2,37 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { CdsButton } from "@cds/react/button";
+import { grpc } from "@improbable-eng/grpc-web";
 import actions from "actions";
-import Alert from "components/js/Alert";
 import ErrorAlert from "components/ErrorAlert";
+import Alert from "components/js/Alert";
 import Column from "components/js/Column";
 import Row from "components/js/Row";
 import PageHeader from "components/PageHeader/PageHeader";
 import {
   InstalledPackageReference,
-  ResourceRef,
+  ResourceRef
 } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
-import { InstalledPackage } from "shared/InstalledPackage";
 import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins";
 import * as yaml from "js-yaml";
 import { useEffect, useMemo, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import * as ReactRouter from "react-router-dom";
+import { Link } from "react-router-dom";
 import { Action } from "redux";
 import { ThunkDispatch } from "redux-thunk";
+import { InstalledPackage } from "shared/InstalledPackage";
 import {
   CustomInstalledPackageDetail,
   DeleteError,
   FetchError,
   FetchWarning,
-  IStoreState,
+  IStoreState
 } from "shared/types";
 import { getPluginsSupportingRollback } from "shared/utils";
 import ApplicationStatus from "../../containers/ApplicationStatusContainer";
 import placeholder from "../../placeholder.png";
+import * as url from "../../shared/url";
 import LoadingWrapper from "../LoadingWrapper/LoadingWrapper";
 import AccessURLTable from "./AccessURLTable/AccessURLTable";
 import DeleteButton from "./AppControls/DeleteButton/DeleteButton";
@@ -41,7 +44,6 @@ import AppValues from "./AppValues/AppValues";
 import CustomAppView from "./CustomAppView";
 import PackageInfo from "./PackageInfo/PackageInfo";
 import ResourceTabs from "./ResourceTabs";
-import { grpc } from "@improbable-eng/grpc-web";
 
 export interface IAppViewResourceRefs {
   deployments: ResourceRef[];
@@ -292,6 +294,20 @@ export default function AppView() {
           <PageHeader
             title={releaseName}
             titleSize="md"
+            subtitle={
+              appDetails?.availablePackageRef ? (
+                <span>
+                  from package{" "}
+                  <Link
+                    to={url.app.packages.get(cluster, namespace, appDetails.availablePackageRef)}
+                  >
+                    {appDetails.availablePackageRef.identifier}
+                  </Link>
+                </span>
+              ) : (
+                <span>from an unknown package --{JSON.stringify(appDetails)}--</span>
+              )
+            }
             plugin={app?.availablePackageRef?.plugin}
             icon={icon}
             buttons={getButtons(app, error, revision)}
