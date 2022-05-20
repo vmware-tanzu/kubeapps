@@ -247,7 +247,7 @@ func Test_newCronJob(t *testing.T) {
 			},
 			batchv1beta1.CronJob{
 				ObjectMeta: metav1.ObjectMeta{
-					Name: "apprepo-otherns-sync-my-charts-in-otherns",
+					Name: "apprepo-otherns-sync-my-chart-482411688",
 					Labels: map[string]string{
 						LabelRepoName:      "my-charts-in-otherns",
 						LabelRepoNamespace: "otherns",
@@ -1348,13 +1348,15 @@ func Test_newSyncJob(t *testing.T) {
 
 func Test_newCleanupJob(t *testing.T) {
 	tests := []struct {
-		name          string
-		repoName      string
-		repoNamespace string
-		expected      batchv1.Job
+		name              string
+		kubeappsNamespace string
+		repoName          string
+		repoNamespace     string
+		expected          batchv1.Job
 	}{
 		{
-			"my-charts",
+			"my-charts with",
+			"kubeapps",
 			"my-charts",
 			"kubeapps",
 			batchv1.Job{
@@ -1401,7 +1403,7 @@ func Test_newCleanupJob(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result := newCleanupJob("kubeapps", tt.repoNamespace, tt.repoName, makeDefaultConfig())
+			result := newCleanupJob(tt.kubeappsNamespace, tt.repoNamespace, tt.repoName, makeDefaultConfig())
 			if got, want := tt.expected, *result; !cmp.Equal(want, got) {
 				t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got))
 			}
