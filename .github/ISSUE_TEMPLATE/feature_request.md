@@ -3,7 +3,7 @@ name: Feature request
 about: Suggest a new feature for Kubeapps
 title: ''
 labels: kind/feature
-assignees: ''
+assignees: ""
 
 ---
 
