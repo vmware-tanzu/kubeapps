@@ -6183,33 +6183,6 @@ func TestGetInstalledPackageResourceRefs(t *testing.T) {
 				},
 			},
 			existingObjects: []k8sruntime.Object{
-				&kappctrlv1alpha1.App{
-					TypeMeta: metav1.TypeMeta{
-						Kind:       appResource,
-						APIVersion: kappctrlAPIVersion,
-					},
-					ObjectMeta: metav1.ObjectMeta{
-						Namespace: "default",
-						Name:      "my-installation",
-					},
-					Spec: kappctrlv1alpha1.AppSpec{
-						SyncPeriod: &metav1.Duration{(time.Second * 30)},
-					},
-					Status: kappctrlv1alpha1.AppStatus{
-						Deploy: &kappctrlv1alpha1.AppStatusDeploy{
-							Stdout: "deployStdout",
-							Stderr: "deployStderr",
-						},
-						Fetch: &kappctrlv1alpha1.AppStatusFetch{
-							Stdout: "fetchStdout",
-							Stderr: "fetchStderr",
-						},
-						Inspect: &kappctrlv1alpha1.AppStatusInspect{
-							Stdout: "inspectStdout",
-							Stderr: "inspectStderr",
-						},
-					},
-				},
 				&packagingv1alpha1.PackageInstall{
 					TypeMeta: metav1.TypeMeta{
 						Kind:       pkgInstallResource,
