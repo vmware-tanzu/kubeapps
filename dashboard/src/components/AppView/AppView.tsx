@@ -301,11 +301,11 @@ export default function AppView() {
                   <Link
                     to={url.app.packages.get(cluster, namespace, appDetails.availablePackageRef)}
                   >
-                    {appDetails.availablePackageRef.identifier}
+                    {appDetails.displayName}
                   </Link>
                 </span>
               ) : (
-                <span>from an unknown package --{JSON.stringify(appDetails)}--</span>
+                <span>from an unknown package</span>
               )
             }
             plugin={app?.availablePackageRef?.plugin}

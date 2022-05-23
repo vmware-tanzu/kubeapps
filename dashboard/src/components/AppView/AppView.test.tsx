@@ -77,6 +77,7 @@ const installedPackage = {
 } as InstalledPackageDetail;
 
 const availablePackageDetail = {
+  displayName: "my-cool-package-1",
   availablePackageRef: {
     identifier: "apache/1",
     plugin: { name: PluginNames.PACKAGES_HELM },
@@ -241,7 +242,7 @@ describe("AppView", () => {
         </MemoryRouter>,
       );
     });
-    expect(wrapper.find(PageHeader).text()).toContain("from package apache/1");
+    expect(wrapper.find(PageHeader).text()).toContain("from package my-cool-package-1");
   });
 
   it("renders a RollBack button if the installedPackage is from PACKAGES_HELM", async () => {
