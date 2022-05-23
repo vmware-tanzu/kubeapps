@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"strings"
 
+	ctlapp "github.com/k14s/kapp/pkg/kapp/app"
 	ctlres "github.com/k14s/kapp/pkg/kapp/resources"
 	kappctrlv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
 	packagingv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/packaging/v1alpha1"
@@ -419,10 +420,49 @@ func (s *Server) updatePkgInstall(ctx context.Context, cluster, namespace string
 	return &pkgInstall, nil
 }
 
+// getAppUsedGVs returns the list of GVs used by the given app, falling back to pre 0.47 Kapp version behavior with regards to suffixes
+func getAppUsedGVs(appsClient ctlapp.Apps, packageId string, namespace string, useDeprecatedCtrlAppSuffix bool) ([]schema.GroupVersion, ctlapp.App, error) {
+	// We first try to fetch the app using the suffixed name (kapp >= 0.47)
+	appName := fmt.Sprintf("%s%s", packageId, ctlapp.AppSuffix)
+
+	// Workaround to also support pre-0.47 kapp versions, whose ConfigMap were suffixed with "-ctrl" instead of ".apps.k14s.io"
+	if useDeprecatedCtrlAppSuffix {
+		// As per https://github.com/vmware-tanzu/carvel-kapp-controller/blob/v0.32.0/pkg/deploy/kapp.go#L151
+		appName = fmt.Sprintf("%s%s", packageId, "-ctrl")
+	}
+
+	// Fetch the Kapp App
+	app, err := appsClient.Find(appName)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	// Fetch the GroupVersions used by the app
+	usedGVs, err := app.UsedGVs()
+	if err != nil {
+		// TODO(minelson): We can't currently use `errors.IsNotFound(err)` here.
+		// See https://github.com/vmware-tanzu/carvel-kapp/issues/498
+		// Instead we need to match on the error string :/
+		cmErrPattern := "configmaps %q not found"
+		appErrPattern := "App '%s' (namespace: %s) does not exist"
+		if strings.Contains(err.Error(), fmt.Sprintf(cmErrPattern, appName)) || strings.Contains(err.Error(), fmt.Sprintf(appErrPattern, appName, namespace)) || strings.Contains(err.Error(), fmt.Sprintf(appErrPattern, packageId, namespace)) {
+			// Catching the not found error and falling back to the pre-0.47 Kapp prefixes
+			if !useDeprecatedCtrlAppSuffix {
+				return getAppUsedGVs(appsClient, packageId, namespace, true)
+			}
+			// We want to return a NotFound here because the dashboard already
+			// handles this case, knowing that the references may not be
+			// available immediately.
+			return nil, nil, status.Errorf(codes.NotFound, "App not found: %+v", err)
+		}
+		return nil, nil, err
+	}
+	return usedGVs, app, nil
+}
+
 // inspectKappK8sResources returns the list of k8s resources matching the given listOptions
 func (s *Server) inspectKappK8sResources(ctx context.Context, cluster, namespace, packageId string) ([]*corev1.ResourceRef, error) {
 	// As per https://github.com/vmware-tanzu/carvel-kapp-controller/blob/v0.32.0/pkg/deploy/kapp.go#L151
-	appName := fmt.Sprintf("%s-ctrl", packageId)
 
 	refs := []*corev1.ResourceRef{}
 
@@ -432,24 +472,9 @@ func (s *Server) inspectKappK8sResources(ctx context.Context, cluster, namespace
 		return nil, err
 	}
 
-	// Fetch the Kapp App
-	app, err := appsClient.Find(appName)
+	// Get the App and its used GVs considering the pre/post Kapp 0.47 suffixes
+	usedGVs, app, err := getAppUsedGVs(appsClient, packageId, namespace, false)
 	if err != nil {
-		return nil, err
-	}
-
-	// Fetch the GroupVersions used by the app
-	usedGVs, err := app.UsedGVs()
-	if err != nil {
-		// TODO(minelson): We can't currently use `errors.IsNotFound(err)` here.
-		// See https://github.com/vmware-tanzu/carvel-kapp/issues/498
-		// Instead we need to match on the error string :/
-		if strings.Contains(err.Error(), fmt.Sprintf("configmaps %q not found", appName)) {
-			// We want to return a NotFound here because the dashboard already
-			// handles this case, knowing that the references may not be
-			// available immediately.
-			return nil, status.Errorf(codes.NotFound, "App not found: %+v", err)
-		}
 		return nil, err
 	}
 
