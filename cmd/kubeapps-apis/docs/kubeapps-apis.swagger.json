@@ -4785,7 +4785,7 @@
     }
   ],
   "externalDocs": {
-    "description": "Kuebapps GitHub repository",
+    "description": "Kubeapps GitHub repository",
     "url": "https://github.com/vmware-tanzu/kubeapps"
   }
 }
