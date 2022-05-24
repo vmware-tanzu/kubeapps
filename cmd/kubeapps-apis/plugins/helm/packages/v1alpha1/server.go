@@ -305,7 +305,7 @@ func (s *Server) GetAvailablePackageDetail(ctx context.Context, request *corev1.
 		return nil, err
 	}
 
-	unescapedChartID, err := pkgutils.GetUnescapedChartID(request.AvailablePackageRef.Identifier)
+	unescapedChartID, err := pkgutils.GetUnescapedPackageID(request.AvailablePackageRef.Identifier)
 	if err != nil {
 		return nil, err
 	}
@@ -371,7 +371,7 @@ func (s *Server) GetAvailablePackageVersions(ctx context.Context, request *corev
 		return nil, err
 	}
 
-	unescapedChartID, err := pkgutils.GetUnescapedChartID(request.GetAvailablePackageRef().GetIdentifier())
+	unescapedChartID, err := pkgutils.GetUnescapedPackageID(request.GetAvailablePackageRef().GetIdentifier())
 	if err != nil {
 		return nil, err
 	}
@@ -498,6 +498,7 @@ func (s *Server) GetInstalledPackageSummaries(ctx context.Context, request *core
 	for i, r := range releases {
 		installedPkgSummaries[i] = installedPkgSummaryFromRelease(r)
 		installedPkgSummaries[i].InstalledPackageRef.Context.Cluster = cluster
+		installedPkgSummaries[i].InstalledPackageRef.Plugin = GetPluginDetail()
 	}
 
 	// Fill in the latest package version for each.
@@ -697,7 +698,7 @@ func (s *Server) CreateInstalledPackage(ctx context.Context, request *corev1.Cre
 	}
 	chartID := request.GetAvailablePackageRef().GetIdentifier()
 	repoNamespace := request.GetAvailablePackageRef().GetContext().GetNamespace()
-	repoName, chartName, err := pkgutils.SplitChartIdentifier(chartID)
+	repoName, chartName, err := pkgutils.SplitPackageIdentifier(chartID)
 	if err != nil {
 		return nil, err
 	}
@@ -769,7 +770,7 @@ func (s *Server) UpdateInstalledPackage(ctx context.Context, request *corev1.Upd
 		return nil, status.Errorf(codes.Internal, "Unable to create kubernetes clientset: %v", err)
 	}
 	chartID := availablePkgRef.GetIdentifier()
-	repoName, chartName, err := pkgutils.SplitChartIdentifier(chartID)
+	repoName, chartName, err := pkgutils.SplitPackageIdentifier(chartID)
 	if err != nil {
 		return nil, err
 	}

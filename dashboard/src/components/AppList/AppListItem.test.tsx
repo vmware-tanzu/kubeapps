@@ -57,6 +57,8 @@ it("renders an app item", () => {
     } as InstalledPackageReference),
     tag1Class: "label-success",
     tag1Content: "installed",
+    tag2Class: "label-info-secondary",
+    tag2Content: "my.plugin",
     title: defaultProps.app.name,
   });
 });

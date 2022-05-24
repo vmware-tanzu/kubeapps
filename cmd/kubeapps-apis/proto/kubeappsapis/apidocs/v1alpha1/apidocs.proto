@@ -17,7 +17,7 @@ option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_swagger) = {
 	info: {
 		title: "Kubeapps API";
 		version: "0.1.0";
-		description: "[![CircleCI](https://circleci.com/gh/vmware-tanzu/kubeapps/tree/main.svg?style=svg)](https://circleci.com/gh/vmware-tanzu/kubeapps/tree/main)\n \n [Kubeapps](https://github.com/vmware-tanzu/kubeapps) is a web-based UI for deploying and managing applications in Kubernetes clusters.\n \n Note: this API documentation is still in an initial stage and is subject to change. Before coupling to it, please [drop us an issue](https://github.com/vmware-tanzu/kubeapps/issues/new/choose) or reach us [via Slack](https://kubernetes.slack.com/messages/kubeapps) to know more about your use case and see how we can assist you.\n #### Developer Documentation\n - The [Kubeapps architecture overview](https://github.com/vmware-tanzu/kubeapps/blob/main/docs/background/architecture.md).\n - The [Kubeapps Developer Documentation](https://github.com/vmware-tanzu/kubeapps/blob/main/docs/reference/developer/README.md) for instructions on setting up the developer environment for developing on Kubeapps and its components.\n - The [Kubeapps Build Guide](https://github.com/vmware-tanzu/kubeapps/blob/main/docs/reference/developer/build.md) for instructions on setting up the build environment and building Kubeapps from source.\n";
+		description: "[![CircleCI](https://circleci.com/gh/vmware-tanzu/kubeapps/tree/main.svg?style=svg)](https://circleci.com/gh/vmware-tanzu/kubeapps/tree/main)\n \n [Kubeapps](https://github.com/vmware-tanzu/kubeapps) is a web-based UI for deploying and managing applications in Kubernetes clusters.\n \n Note: this API documentation is still in an initial stage and is subject to change. Before coupling to it, please [drop us an issue](https://github.com/vmware-tanzu/kubeapps/issues/new/choose) or reach us [via Slack](https://kubernetes.slack.com/messages/kubeapps) to know more about your use case and see how we can assist you.\n #### Developer Documentation\n - The [Kubeapps architecture overview](https://github.com/vmware-tanzu/kubeapps/blob/main/site/content/docs/latest/background/architecture.md).\n - The [Kubeapps Developer Documentation](https://github.com/vmware-tanzu/kubeapps/blob/main/site/content/docs/latest/reference/developer/README.md) for instructions on setting up the developer environment for developing on Kubeapps and its components.\n - The [Kubeapps Build Guide](https://github.com/vmware-tanzu/kubeapps/blob/main/site/content/docs/latest/reference/developer/build.md) for instructions on setting up the build environment and building Kubeapps from source.\n";
 		terms_of_service: "https://github.com/vmware-tanzu/kubeapps/blob/main/LICENSE";
 		license: {
 			name: "Apache-2.0";
@@ -25,7 +25,7 @@ option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_swagger) = {
 		};
 	};
 	external_docs: {
-		description: "Kuebapps GitHub repository";
+		description: "Kubeapps GitHub repository";
 		url: "https://github.com/vmware-tanzu/kubeapps";
 	}
 	schemes: HTTP;

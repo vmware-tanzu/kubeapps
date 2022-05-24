@@ -19,16 +19,16 @@ servers:
         default: "8080"
         description: Kubeapps port
 info:
-  description: |
+  description: >
     [![CircleCI](https://circleci.com/gh/vmware-tanzu/kubeapps/tree/main.svg?style=svg)](https://circleci.com/gh/vmware-tanzu/kubeapps/tree/main)
 
      [Kubeapps](https://github.com/vmware-tanzu/kubeapps) is a web-based UI for deploying and managing applications in Kubernetes clusters.
 
      Note: this API documentation is still in an initial stage and is subject to change. Before coupling to it, please [drop us an issue](https://github.com/vmware-tanzu/kubeapps/issues/new/choose) or reach us [via Slack](https://kubernetes.slack.com/messages/kubeapps) to know more about your use case and see how we can assist you.
      #### Developer Documentation
-     - The [Kubeapps architecture overview](https://github.com/vmware-tanzu/kubeapps/blob/main/docs/background/architecture.md).
-     - The [Kubeapps Developer Documentation](https://github.com/vmware-tanzu/kubeapps/blob/main/docs/reference/developer/README.md) for instructions on setting up the developer environment for developing on Kubeapps and its components.
-     - The [Kubeapps Build Guide](https://github.com/vmware-tanzu/kubeapps/blob/main/docs/reference/developer/build.md) for instructions on setting up the build environment and building Kubeapps from source.
+     - The [Kubeapps architecture overview](https://github.com/vmware-tanzu/kubeapps/blob/main/site/content/docs/latest/background/architecture.md).
+     - The [Kubeapps Developer Documentation](https://github.com/vmware-tanzu/kubeapps/blob/main/site/content/docs/latest/reference/developer/README.md) for instructions on setting up the developer environment for developing on Kubeapps and its components.
+     - The [Kubeapps Build Guide](https://github.com/vmware-tanzu/kubeapps/blob/main/site/content/docs/latest/reference/developer/build.md) for instructions on setting up the build environment and building Kubeapps from source.
   version: 0.1.0
   title: Kubeapps API
   termsOfService: "https://github.com/vmware-tanzu/kubeapps/blob/main/LICENSE"
@@ -902,7 +902,7 @@ paths:
           description: |-
             Text query
 
-            Text query for the request.
+            Text query for the request
           in: query
           required: false
           schema:
@@ -911,7 +911,7 @@ paths:
           description: |-
             Categories
 
-            Collection of categories for the request.
+            Collection of categories for the request
           in: query
           required: false
           explode: true
@@ -923,7 +923,7 @@ paths:
           description: |-
             Repositories
 
-            Collection of repositories where the packages belong to.
+            Collection of repositories where the packages belong to
           in: query
           required: false
           explode: true
@@ -935,7 +935,7 @@ paths:
           description: |-
             Package version
 
-            Package version for the request.
+            Package version for the request
           in: query
           required: false
           schema:
@@ -944,7 +944,7 @@ paths:
           description: |-
             App version
 
-            Packaged app version for the request.
+            Packaged app version for the request
           in: query
           required: false
           schema:
@@ -1575,7 +1575,85 @@ paths:
           schema:
             type: string
       requestBody:
-        $ref: "#/components/requestBodies/v1alpha1UpdateInstalledPackageRequest"
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                installedPackageRef:
+                  type: object
+                  properties:
+                    context:
+                      type: object
+                      description: |-
+                        Installed package context
+
+                        The context (cluster/namespace) for the package.
+                      title: |-
+                        Installed package context
+
+                        The context (cluster/namespace) for the package.
+                    plugin:
+                      type: object
+                      example:
+                        name: kapp_controller.packages
+                        version: v1alpha1
+                      description: >-
+                        The plugin used to identify and interact with the
+                        installed package.
+
+                        This field can be omitted when the request is in the context of a specific plugin.
+                      title: >-
+                        The plugin used to identify and interact with the
+                        installed package.
+
+                        This field can be omitted when the request is in the context of a specific plugin.
+                  title: >-
+                    A reference uniquely identifying the installed package being
+                    updated.
+
+                    Required
+                pkgVersionReference:
+                  $ref: "#/components/schemas/v1alpha1VersionReference"
+                values:
+                  type: string
+                  description: >-
+                    An optional serialized values string to be included when
+                    templating a
+
+                    package in the format expected by the plugin. Included when the backend
+
+                    format doesn't use secrets or configmaps for values or supports both.
+
+                    These values are layered on top of any values refs above, when
+
+                    relevant.
+                reconciliationOptions:
+                  $ref: "#/components/schemas/v1alpha1ReconciliationOptions"
+              description: >-
+                UpdateInstalledPackageRequest
+
+
+                Request for UpdateInstalledPackage. The intent is to reach the desired state specified
+
+                by the fields in the request, while leaving other fields intact. This is a whole
+
+                object "Update" semantics rather than "Patch" semantics. The caller will provide the
+
+                values for the fields below, which will replace, or be overlayed onto, the
+
+                corresponding fields in the existing resource. For example, with the
+
+                UpdateInstalledPackageRequest, it is not possible to change just the 'package version
+
+                reference' without also specifying 'values' field. As a side effect, not specifying the
+
+                'values' field in the request means there are no values specified in the desired state.
+
+                So the meaning of each field value is describing the desired state of the corresponding
+
+                field in the resource after the update operation has completed the renconciliation.
+        required: true
       tags:
         - PackagesService
   "/core/packages/v1alpha1/installedpackages/plugin/{installedPackageRef.plugin.name}/{installedPackageRef.plugin.version}/c/{installedPackageRef.context.cluster}/ns/{installedPackageRef.context.namespace}/{installedPackageRef.identifier}/resourcerefs":
@@ -1999,7 +2077,65 @@ paths:
             type: string
             pattern: .+
       requestBody:
-        $ref: "#/components/requestBodies/v1alpha1UpdatePackageRepositoryRequest"
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                packageRepoRef:
+                  type: object
+                  properties:
+                    context:
+                      type: object
+                      description: The context (cluster/namespace) for the repository.
+                      title: The context (cluster/namespace) for the repository.
+                    plugin:
+                      type: object
+                      example:
+                        name: kapp_controller.packages
+                        version: v1alpha1
+                      description: >-
+                        The plugin used to interact with this available package.
+
+                        This field should be omitted when the request is in the context of a
+
+                        specific plugin.
+                      title: >-
+                        The plugin used to interact with this available package.
+
+                        This field should be omitted when the request is in the context of a
+
+                        specific plugin.
+                  title: >-
+                    A reference uniquely identifying the package repository
+                    being updated.
+
+                    The only required field
+                url:
+                  type: string
+                  description: URL identifying the package repository location.
+                description:
+                  type: string
+                  description: A user-provided description.
+                interval:
+                  type: integer
+                  format: int64
+                  title: >-
+                    The interval at which to check the upstream for updates (in
+                    seconds)
+
+                    Optional. Defaults to 10m if not specified
+                tlsConfig:
+                  $ref: "#/components/schemas/v1alpha1PackageRepositoryTlsConfig"
+                auth:
+                  $ref: "#/components/schemas/v1alpha1PackageRepositoryAuth"
+                customDetail:
+                  $ref: "#/components/schemas/protobufAny"
+              title: |-
+                UpdatePackageRepositoryRequest
+
+                Request for UpdatePackageRepository
+        required: true
       tags:
         - RepositoriesService
   /core/plugins/v1alpha1/configured-plugins:
@@ -2090,7 +2226,7 @@ paths:
           description: |-
             Text query
 
-            Text query for the request.
+            Text query for the request
           in: query
           required: false
           schema:
@@ -2099,7 +2235,7 @@ paths:
           description: |-
             Categories
 
-            Collection of categories for the request.
+            Collection of categories for the request
           in: query
           required: false
           explode: true
@@ -2111,7 +2247,7 @@ paths:
           description: |-
             Repositories
 
-            Collection of repositories where the packages belong to.
+            Collection of repositories where the packages belong to
           in: query
           required: false
           explode: true
@@ -2123,7 +2259,7 @@ paths:
           description: |-
             Package version
 
-            Package version for the request.
+            Package version for the request
           in: query
           required: false
           schema:
@@ -2132,7 +2268,7 @@ paths:
           description: |-
             App version
 
-            Packaged app version for the request.
+            Packaged app version for the request
           in: query
           required: false
           schema:
@@ -2267,7 +2403,7 @@ paths:
           description: |-
             Plugin version
 
-            The version of the plugin, such as v1alpha1.
+            The version of the plugin, such as v1alpha1
           in: query
           required: false
           schema:
@@ -2386,7 +2522,7 @@ paths:
           description: |-
             Plugin version
 
-            The version of the plugin, such as v1alpha1.
+            The version of the plugin, such as v1alpha1
           in: query
           required: false
           schema:
@@ -2600,7 +2736,7 @@ paths:
           description: |-
             Plugin version
 
-            The version of the plugin, such as v1alpha1.
+            The version of the plugin, such as v1alpha1
           in: query
           required: false
           schema:
@@ -2684,7 +2820,7 @@ paths:
           description: |-
             Plugin version
 
-            The version of the plugin, such as v1alpha1.
+            The version of the plugin, such as v1alpha1
           in: query
           required: false
           schema:
@@ -2755,7 +2891,8 @@ paths:
           schema:
             type: string
       requestBody:
-        $ref: "#/components/requestBodies/v1alpha1UpdateInstalledPackageRequest"
+        $ref: "#/components/requestBodies/FluxV2PackagesService_UpdateInstalledPack\
+          ageBody"
       tags:
         - FluxV2PackagesService
   "/plugins/fluxv2/packages/v1alpha1/installedpackages/c/{installedPackageRef.context.cluster}/ns/{installedPackageRef.context.namespace}/{installedPackageRef.identifier}/resourcerefs":
@@ -2841,7 +2978,7 @@ paths:
           description: |-
             Plugin version
 
-            The version of the plugin, such as v1alpha1.
+            The version of the plugin, such as v1alpha1
           in: query
           required: false
           schema:
@@ -2936,7 +3073,7 @@ paths:
         $ref: "#/components/requestBodies/v1alpha1AddPackageRepositoryRequest"
       tags:
         - FluxV2RepositoriesService
-  "/plugins/fluxv2/packages/v1alpha1/repositories/plugin/{packageRepoRef.plugin.name}/{packageRepoRef.plugin.version}/c/{packageRepoRef.context.cluster}/ns/{packageRepoRef.context.namespace}/{packageRepoRef.identifier}":
+  "/plugins/fluxv2/packages/v1alpha1/repositories/c/{packageRepoRef.context.cluster}/ns/{packageRepoRef.context.namespace}/{packageRepoRef.identifier}":
     get:
       operationId: FluxV2RepositoriesService_GetPackageRepositoryDetail
       responses:
@@ -2960,25 +3097,6 @@ paths:
               schema:
                 $ref: "#/components/schemas/rpcStatus"
       parameters:
-        - name: packageRepoRef.plugin.name
-          description: >-
-            Plugin name
-
-
-            The name of the plugin, such as `fluxv2.packages` or `kapp_controller.packages`.
-          in: path
-          required: true
-          schema:
-            type: string
-        - name: packageRepoRef.plugin.version
-          description: |-
-            Plugin version
-
-            The version of the plugin, such as v1alpha1
-          in: path
-          required: true
-          schema:
-            type: string
         - name: packageRepoRef.context.cluster
           description: >-
             Cluster
@@ -3020,6 +3138,25 @@ paths:
           schema:
             type: string
             pattern: .+
+        - name: packageRepoRef.plugin.name
+          description: >-
+            Plugin name
+
+
+            The name of the plugin, such as `fluxv2.packages` or `kapp_controller.packages`.
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: packageRepoRef.plugin.version
+          description: |-
+            Plugin version
+
+            The version of the plugin, such as v1alpha1
+          in: query
+          required: false
+          schema:
+            type: string
       tags:
         - FluxV2RepositoriesService
     delete:
@@ -3044,25 +3181,6 @@ paths:
               schema:
                 $ref: "#/components/schemas/rpcStatus"
       parameters:
-        - name: packageRepoRef.plugin.name
-          description: >-
-            Plugin name
-
-
-            The name of the plugin, such as `fluxv2.packages` or `kapp_controller.packages`.
-          in: path
-          required: true
-          schema:
-            type: string
-        - name: packageRepoRef.plugin.version
-          description: |-
-            Plugin version
-
-            The version of the plugin, such as v1alpha1
-          in: path
-          required: true
-          schema:
-            type: string
         - name: packageRepoRef.context.cluster
           description: >-
             Cluster
@@ -3104,6 +3222,25 @@ paths:
           schema:
             type: string
             pattern: .+
+        - name: packageRepoRef.plugin.name
+          description: >-
+            Plugin name
+
+
+            The name of the plugin, such as `fluxv2.packages` or `kapp_controller.packages`.
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: packageRepoRef.plugin.version
+          description: |-
+            Plugin version
+
+            The version of the plugin, such as v1alpha1
+          in: query
+          required: false
+          schema:
+            type: string
       tags:
         - FluxV2RepositoriesService
     put:
@@ -3128,25 +3265,6 @@ paths:
               schema:
                 $ref: "#/components/schemas/rpcStatus"
       parameters:
-        - name: packageRepoRef.plugin.name
-          description: >-
-            Plugin name
-
-
-            The name of the plugin, such as `fluxv2.packages` or `kapp_controller.packages`.
-          in: path
-          required: true
-          schema:
-            type: string
-        - name: packageRepoRef.plugin.version
-          description: |-
-            Plugin version
-
-            The version of the plugin, such as v1alpha1
-          in: path
-          required: true
-          schema:
-            type: string
         - name: packageRepoRef.context.cluster
           description: >-
             Cluster
@@ -3189,7 +3307,50 @@ paths:
             type: string
             pattern: .+
       requestBody:
-        $ref: "#/components/requestBodies/v1alpha1UpdatePackageRepositoryRequest"
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                packageRepoRef:
+                  type: object
+                  properties:
+                    context:
+                      type: object
+                      description: The context (cluster/namespace) for the repository.
+                      title: The context (cluster/namespace) for the repository.
+                    plugin:
+                      $ref: "#/components/schemas/v1alpha1Plugin"
+                  title: >-
+                    A reference uniquely identifying the package repository
+                    being updated.
+
+                    The only required field
+                url:
+                  type: string
+                  description: URL identifying the package repository location.
+                description:
+                  type: string
+                  description: A user-provided description.
+                interval:
+                  type: integer
+                  format: int64
+                  title: >-
+                    The interval at which to check the upstream for updates (in
+                    seconds)
+
+                    Optional. Defaults to 10m if not specified
+                tlsConfig:
+                  $ref: "#/components/schemas/v1alpha1PackageRepositoryTlsConfig"
+                auth:
+                  $ref: "#/components/schemas/v1alpha1PackageRepositoryAuth"
+                customDetail:
+                  $ref: "#/components/schemas/protobufAny"
+              title: |-
+                UpdatePackageRepositoryRequest
+
+                Request for UpdatePackageRepository
+        required: true
       tags:
         - FluxV2RepositoriesService
   /plugins/helm/packages/v1alpha1/availablepackages:
@@ -3254,7 +3415,7 @@ paths:
           description: |-
             Text query
 
-            Text query for the request.
+            Text query for the request
           in: query
           required: false
           schema:
@@ -3263,7 +3424,7 @@ paths:
           description: |-
             Categories
 
-            Collection of categories for the request.
+            Collection of categories for the request
           in: query
           required: false
           explode: true
@@ -3275,7 +3436,7 @@ paths:
           description: |-
             Repositories
 
-            Collection of repositories where the packages belong to.
+            Collection of repositories where the packages belong to
           in: query
           required: false
           explode: true
@@ -3287,7 +3448,7 @@ paths:
           description: |-
             Package version
 
-            Package version for the request.
+            Package version for the request
           in: query
           required: false
           schema:
@@ -3296,7 +3457,7 @@ paths:
           description: |-
             App version
 
-            Packaged app version for the request.
+            Packaged app version for the request
           in: query
           required: false
           schema:
@@ -3431,7 +3592,7 @@ paths:
           description: |-
             Plugin version
 
-            The version of the plugin, such as v1alpha1.
+            The version of the plugin, such as v1alpha1
           in: query
           required: false
           schema:
@@ -3550,7 +3711,7 @@ paths:
           description: |-
             Plugin version
 
-            The version of the plugin, such as v1alpha1.
+            The version of the plugin, such as v1alpha1
           in: query
           required: false
           schema:
@@ -3764,7 +3925,7 @@ paths:
           description: |-
             Plugin version
 
-            The version of the plugin, such as v1alpha1.
+            The version of the plugin, such as v1alpha1
           in: query
           required: false
           schema:
@@ -3848,7 +4009,7 @@ paths:
           description: |-
             Plugin version
 
-            The version of the plugin, such as v1alpha1.
+            The version of the plugin, such as v1alpha1
           in: query
           required: false
           schema:
@@ -3919,7 +4080,8 @@ paths:
           schema:
             type: string
       requestBody:
-        $ref: "#/components/requestBodies/v1alpha1UpdateInstalledPackageRequest"
+        $ref: "#/components/requestBodies/FluxV2PackagesService_UpdateInstalledPack\
+          ageBody"
       tags:
         - HelmPackagesService
   "/plugins/helm/packages/v1alpha1/installedpackages/c/{installedPackageRef.context.cluster}/ns/{installedPackageRef.context.namespace}/{installedPackageRef.identifier}/resourcerefs":
@@ -4005,7 +4167,7 @@ paths:
           description: |-
             Plugin version
 
-            The version of the plugin, such as v1alpha1.
+            The version of the plugin, such as v1alpha1
           in: query
           required: false
           schema:
@@ -4081,7 +4243,38 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/v1alpha1RollbackInstalledPackageRequest"
+              type: object
+              properties:
+                installedPackageRef:
+                  type: object
+                  properties:
+                    context:
+                      type: object
+                      description: |-
+                        Installed package context
+
+                        The context (cluster/namespace) for the package.
+                      title: |-
+                        Installed package context
+
+                        The context (cluster/namespace) for the package.
+                    plugin:
+                      $ref: "#/components/schemas/v1alpha1Plugin"
+                  description: |-
+                    Installed package reference
+
+                    A reference uniquely identifying the installed package.
+                  title: |-
+                    Installed package reference
+
+                    A reference uniquely identifying the installed package.
+                releaseRevision:
+                  type: integer
+                  format: int32
+                  description: |-
+                    ReleaseRevision
+
+                    A number identifying the Helm revision to which to rollback.
         required: true
       tags:
         - HelmPackagesService
@@ -4147,7 +4340,7 @@ paths:
           description: |-
             Text query
 
-            Text query for the request.
+            Text query for the request
           in: query
           required: false
           schema:
@@ -4156,7 +4349,7 @@ paths:
           description: |-
             Categories
 
-            Collection of categories for the request.
+            Collection of categories for the request
           in: query
           required: false
           explode: true
@@ -4168,7 +4361,7 @@ paths:
           description: |-
             Repositories
 
-            Collection of repositories where the packages belong to.
+            Collection of repositories where the packages belong to
           in: query
           required: false
           explode: true
@@ -4180,7 +4373,7 @@ paths:
           description: |-
             Package version
 
-            Package version for the request.
+            Package version for the request
           in: query
           required: false
           schema:
@@ -4189,7 +4382,7 @@ paths:
           description: |-
             App version
 
-            Packaged app version for the request.
+            Packaged app version for the request
           in: query
           required: false
           schema:
@@ -4324,7 +4517,7 @@ paths:
           description: |-
             Plugin version
 
-            The version of the plugin, such as v1alpha1.
+            The version of the plugin, such as v1alpha1
           in: query
           required: false
           schema:
@@ -4443,7 +4636,7 @@ paths:
           description: |-
             Plugin version
 
-            The version of the plugin, such as v1alpha1.
+            The version of the plugin, such as v1alpha1
           in: query
           required: false
           schema:
@@ -4657,7 +4850,7 @@ paths:
           description: |-
             Plugin version
 
-            The version of the plugin, such as v1alpha1.
+            The version of the plugin, such as v1alpha1
           in: query
           required: false
           schema:
@@ -4741,7 +4934,7 @@ paths:
           description: |-
             Plugin version
 
-            The version of the plugin, such as v1alpha1.
+            The version of the plugin, such as v1alpha1
           in: query
           required: false
           schema:
@@ -4812,7 +5005,8 @@ paths:
           schema:
             type: string
       requestBody:
-        $ref: "#/components/requestBodies/v1alpha1UpdateInstalledPackageRequest"
+        $ref: "#/components/requestBodies/FluxV2PackagesService_UpdateInstalledPack\
+          ageBody"
       tags:
         - KappControllerPackagesService
   "/plugins/kapp_controller/packages/v1alpha1/installedpackages/c/{installedPackageRef.context.cluster}/ns/{installedPackageRef.context.namespace}/{installedPackageRef.identifier}/resourcerefs":
@@ -4898,7 +5092,7 @@ paths:
           description: |-
             Plugin version
 
-            The version of the plugin, such as v1alpha1.
+            The version of the plugin, such as v1alpha1
           in: query
           required: false
           schema:
@@ -5432,23 +5626,78 @@ components:
           schema:
             $ref: "#/components/schemas/v1alpha1AddPackageRepositoryRequest"
       required: true
-    v1alpha1UpdatePackageRepositoryRequest:
-      content:
-        application/json:
-          schema:
-            $ref: "#/components/schemas/v1alpha1UpdatePackageRepositoryRequest"
-      required: true
     v1alpha1CreateInstalledPackageRequest:
       content:
         application/json:
           schema:
             $ref: "#/components/schemas/v1alpha1CreateInstalledPackageRequest"
       required: true
-    v1alpha1UpdateInstalledPackageRequest:
+    FluxV2PackagesService_UpdateInstalledPackageBody:
       content:
         application/json:
           schema:
-            $ref: "#/components/schemas/v1alpha1UpdateInstalledPackageRequest"
+            type: object
+            properties:
+              installedPackageRef:
+                type: object
+                properties:
+                  context:
+                    type: object
+                    description: |-
+                      Installed package context
+
+                      The context (cluster/namespace) for the package.
+                    title: |-
+                      Installed package context
+
+                      The context (cluster/namespace) for the package.
+                  plugin:
+                    $ref: "#/components/schemas/v1alpha1Plugin"
+                title: >-
+                  A reference uniquely identifying the installed package being
+                  updated.
+
+                  Required
+              pkgVersionReference:
+                $ref: "#/components/schemas/v1alpha1VersionReference"
+              values:
+                type: string
+                description: >-
+                  An optional serialized values string to be included when
+                  templating a
+
+                  package in the format expected by the plugin. Included when the backend
+
+                  format doesn't use secrets or configmaps for values or supports both.
+
+                  These values are layered on top of any values refs above, when
+
+                  relevant.
+              reconciliationOptions:
+                $ref: "#/components/schemas/v1alpha1ReconciliationOptions"
+            description: >-
+              UpdateInstalledPackageRequest
+
+
+              Request for UpdateInstalledPackage. The intent is to reach the desired state specified
+
+              by the fields in the request, while leaving other fields intact. This is a whole
+
+              object "Update" semantics rather than "Patch" semantics. The caller will provide the
+
+              values for the fields below, which will replace, or be overlayed onto, the
+
+              corresponding fields in the existing resource. For example, with the
+
+              UpdateInstalledPackageRequest, it is not possible to change just the 'package version
+
+              reference' without also specifying 'values' field. As a side effect, not specifying the
+
+              'values' field in the request means there are no values specified in the desired state.
+
+              So the meaning of each field value is describing the desired state of the corresponding
+
+              field in the resource after the update operation has completed the renconciliation.
       required: true
   schemas:
     # pkg/chart/models/chart.go
@@ -5988,7 +6237,7 @@ components:
               foo = any.unpack(Foo.class);
             }
 
-          Example 3: Pack and unpack a message in Python.
+         Example 3: Pack and unpack a message in Python.
 
             foo = Foo(...)
             any = Any()
@@ -5998,18 +6247,18 @@ components:
               any.Unpack(foo)
               ...
 
-          Example 4: Pack and unpack a message in Go
+         Example 4: Pack and unpack a message in Go
 
-              foo := &pb.Foo{...}
-              any, err := anypb.New(foo)
-              if err != nil {
-                ...
-              }
-              ...
-              foo := &pb.Foo{}
-              if err := any.UnmarshalTo(foo); err != nil {
-                ...
-              }
+             foo := &pb.Foo{...}
+             any, err := anypb.New(foo)
+             if err != nil {
+               ...
+             }
+             ...
+             foo := &pb.Foo{}
+             if err := any.UnmarshalTo(foo); err != nil {
+               ...
+             }
 
         The pack methods provided by protobuf library will by default use
 
@@ -6977,7 +7226,7 @@ components:
         PackageRepositoryAuth
 
 
-        Authentication/authorization to provide client’s identity when connecting
+        Authentication/authorization to provide client's identity when connecting
 
         to a package repository.
 
@@ -7005,8 +7254,8 @@ components:
         a given plug-in may or may not support a given authentication type.
 
         For example
-          - direct-helm plug-in does not currently support (6), while flux does
-          - flux plug-in does not support (3) or (4) while direct-helm does
+         - direct-helm plug-in does not currently support (6), while flux does
+         - flux plug-in does not support (3) or (4) while direct-helm does
     v1alpha1PackageRepositoryDetail:
       type: object
       properties:
@@ -7268,18 +7517,6 @@ components:
         The context (cluster) for each resource is that of the related
 
         installed package.
-    v1alpha1RollbackInstalledPackageRequest:
-      type: object
-      properties:
-        installedPackageRef:
-          $ref: "#/components/schemas/v1alpha1InstalledPackageReference"
-        releaseRevision:
-          type: integer
-          format: int32
-          description: |-
-            ReleaseRevision
-
-            A number identifying the Helm revision to which to rollback.
     v1alpha1RollbackInstalledPackageResponse:
       type: object
       properties:
@@ -7310,7 +7547,7 @@ components:
             - For Bearer or Custom Auth, the secret must be opaque, and
               the key must be provided
             - For Docker Registry Credentials (OCI registries) the secret
-              must of of type "kubernetes.io/dockerconfigjson”
+              must of of type "kubernetes.io/dockerconfigjson"
             For more details, refer to
 
             https://kubernetes.io/docs/concepts/configuration/secret/
@@ -7356,51 +7593,6 @@ components:
           type: string
           title: certificate key. In clear text
       title: TlsCertKey
-    v1alpha1UpdateInstalledPackageRequest:
-      type: object
-      properties:
-        installedPackageRef:
-          $ref: "#/components/schemas/v1alpha1InstalledPackageReference"
-        pkgVersionReference:
-          $ref: "#/components/schemas/v1alpha1VersionReference"
-        values:
-          type: string
-          description: >-
-            An optional serialized values string to be included when templating
-            a
-
-            package in the format expected by the plugin. Included when the backend
-
-            format doesn't use secrets or configmaps for values or supports both.
-
-            These values are layered on top of any values refs above, when
-
-            relevant.
-        reconciliationOptions:
-          $ref: "#/components/schemas/v1alpha1ReconciliationOptions"
-      description: >-
-        UpdateInstalledPackageRequest
-
-
-        Request for UpdateInstalledPackage. The intent is to reach the desired state specified
-
-        by the fields in the request, while leaving other fields intact. This is a whole
-
-        object "Update" semantics rather than "Patch" semantics. The caller will provide the
-
-        values for the fields below, which will replace, or be overlayed onto, the
-
-        corresponding fields in the existing resource. For example, with the
-
-        UpdateInstalledPackageRequest, it is not possible to change just the 'package version
-
-        reference' without also specifying 'values' field. As a side effect, not specifying the
-
-        'values' field in the request means there are no values specified in the desired state.
-
-        So the meaning of each field value is describing the desired state of the corresponding
-
-        field in the resource after the update operation has completed the renconciliation.
     v1alpha1UpdateInstalledPackageResponse:
       type: object
       properties:
@@ -7410,33 +7602,6 @@ components:
         UpdateInstalledPackageResponse
 
         Response for UpdateInstalledPackage
-    v1alpha1UpdatePackageRepositoryRequest:
-      type: object
-      properties:
-        packageRepoRef:
-          $ref: "#/components/schemas/v1alpha1PackageRepositoryReference"
-        url:
-          type: string
-          description: URL identifying the package repository location.
-        description:
-          type: string
-          description: A user-provided description.
-        interval:
-          type: integer
-          format: int64
-          title: |-
-            The interval at which to check the upstream for updates (in seconds)
-            Optional. Defaults to 10m if not specified
-        tlsConfig:
-          $ref: "#/components/schemas/v1alpha1PackageRepositoryTlsConfig"
-        auth:
-          $ref: "#/components/schemas/v1alpha1PackageRepositoryAuth"
-        customDetail:
-          $ref: "#/components/schemas/protobufAny"
-      title: |-
-        UpdatePackageRepositoryRequest
-
-        Request for UpdatePackageRepository
     v1alpha1UpdatePackageRepositoryResponse:
       type: object
       properties:
@@ -7467,7 +7632,7 @@ components:
 
             The format of the version constraint depends on the backend. For example,
 
-            for a flux v2 and Carvel it’s a semver expression, such as ">=10.3 < 10.4"
+            for a flux v2 and Carvel it's a semver expression, such as ">=10.3 < 10.4"
       description: >-
         VersionReference
 
