@@ -12,6 +12,7 @@ import { IBasicFormParam } from "./types";
 const ajv = new Ajv({ strict: false });
 
 const toStringOptions: ToStringOptions = {
+  defaultKeyType: "PLAIN",
   defaultStringType: Scalar.QUOTE_DOUBLE, // Preserving double quotes in scalars (see https://github.com/vmware-tanzu/kubeapps/issues/3621)
   nullStr: "", // Avoid to explicitly add "null" when an element is not defined
 };
