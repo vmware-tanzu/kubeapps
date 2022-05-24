@@ -24,6 +24,11 @@ it("includes an icon", () => {
   expect(wrapper.find("img").prop("src")).toBe("icon.png");
 });
 
+it("includes subtitle", () => {
+  const wrapper = mount(<PageHeader {...defaultProps} subtitle={<span id="test">test</span>} />);
+  expect(wrapper.find("span").prop("id")).toBe("test");
+});
+
 it("includes a filter component", () => {
   const wrapper = mount(<PageHeader {...defaultProps} filter={<div id="foo" />} />);
   expect(wrapper.find("#foo")).toExist();
