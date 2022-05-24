@@ -10,7 +10,13 @@ integration/reports/*
 # OSX
 .DS_Store
 
-dashboard/src/locales/
+# IntelliJ
+.idea
 
+# VSCode
+.vscode
+
+# Dashboard
+dashboard/src/locales/
 dashboard/public/clr-ui-dark.min.css*
 dashboard/public/clr-ui.min.css*
