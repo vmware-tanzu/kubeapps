@@ -6,7 +6,7 @@
 KUBE ?= ${HOME}/.kube
 CLUSTER_NAME ?= kubeapps
 ADDITIONAL_CLUSTER_NAME ?= kubeapps-additional
-IMAGE ?= kindest/node:v1.24.0
+IMAGE ?= kindest/node:v1.24.0@sha256:0866296e693efe1fed79d5e6c7af8df71fc73ae45e3679af05342239cdc5bc8e
 
 CLUSTER_CONFIG = ${KUBE}/kind-config-${CLUSTER_NAME}
 ADDITIONAL_CLUSTER_CONFIG = ${KUBE}/kind-config-${ADDITIONAL_CLUSTER_NAME}
