@@ -70,8 +70,6 @@ type Server struct {
 	manager                  utils.AssetManager
 	actionConfigGetter       helmActionConfigGetter
 	chartClientFactory       chartutils.ChartClientFactoryInterface
-	versionsInSummary        pkgutils.VersionsInSummary
-	timeoutSeconds           int32
 	createReleaseFunc        createRelease
 	kubeappsCluster          string // Specifies the cluster on which Kubeapps is installed.
 	pluginConfig             *common.HelmPluginConfig
@@ -357,7 +355,7 @@ func (s *Server) GetAvailablePackageVersions(ctx context.Context, request *corev
 	}
 
 	return &corev1.GetAvailablePackageVersionsResponse{
-		PackageAppVersions: pkgutils.PackageAppVersionsSummary(chart.ChartVersions, s.versionsInSummary),
+		PackageAppVersions: pkgutils.PackageAppVersionsSummary(chart.ChartVersions, s.pluginConfig.VersionsInSummary),
 	}, nil
 }
 
@@ -693,7 +691,7 @@ func (s *Server) CreateInstalledPackage(ctx context.Context, request *corev1.Cre
 		return nil, status.Errorf(codes.Internal, "Unable to create Helm action config: %v", err)
 	}
 
-	release, err := s.createReleaseFunc(actionConfig, request.GetName(), request.GetTargetContext().GetNamespace(), request.GetValues(), ch, registrySecrets, s.timeoutSeconds)
+	release, err := s.createReleaseFunc(actionConfig, request.GetName(), request.GetTargetContext().GetNamespace(), request.GetValues(), ch, registrySecrets, s.pluginConfig.TimeoutSeconds)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "Unable to create helm release %q in the namespace %q: %v", request.GetName(), request.GetTargetContext().GetNamespace(), err)
 	}
@@ -765,7 +763,7 @@ func (s *Server) UpdateInstalledPackage(ctx context.Context, request *corev1.Upd
 		return nil, status.Errorf(codes.Internal, "Unable to create Helm action config: %v", err)
 	}
 
-	release, err := agent.UpgradeRelease(actionConfig, releaseName, request.GetValues(), ch, registrySecrets, s.timeoutSeconds)
+	release, err := agent.UpgradeRelease(actionConfig, releaseName, request.GetValues(), ch, registrySecrets, s.pluginConfig.TimeoutSeconds)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "Unable to upgrade helm release %q in the namespace %q: %v", releaseName, installedRef.GetContext().GetNamespace(), err)
 	}
@@ -921,7 +919,7 @@ func (s *Server) DeleteInstalledPackage(ctx context.Context, request *corev1.Del
 	}
 
 	keepHistory := false
-	err = agent.DeleteRelease(actionConfig, releaseName, keepHistory, s.timeoutSeconds)
+	err = agent.DeleteRelease(actionConfig, releaseName, keepHistory, s.pluginConfig.TimeoutSeconds)
 	if err != nil {
 		log.Errorf("error: %+v", err)
 		if errors.Is(err, driver.ErrReleaseNotFound) {
@@ -946,7 +944,7 @@ func (s *Server) RollbackInstalledPackage(ctx context.Context, request *helmv1.R
 		return nil, status.Errorf(codes.Internal, "Unable to create Helm action config: %v", err)
 	}
 
-	release, err := agent.RollbackRelease(actionConfig, releaseName, int(request.GetReleaseRevision()), s.timeoutSeconds)
+	release, err := agent.RollbackRelease(actionConfig, releaseName, int(request.GetReleaseRevision()), s.pluginConfig.TimeoutSeconds)
 	if err != nil {
 		if errors.Is(err, driver.ErrReleaseNotFound) {
 			return nil, status.Errorf(codes.NotFound, "Unable to find Helm release %q in namespace %q: %+v", releaseName, installedRef.GetContext().GetNamespace(), err)

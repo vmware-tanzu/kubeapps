@@ -272,7 +272,7 @@ func makeServer(t *testing.T, authorized bool, actionConfig *action.Configuratio
 			return actionConfig, nil
 		},
 		chartClientFactory: &fake.ChartClientFactory{},
-		versionsInSummary:  pkgutils.GetDefaultVersionsInSummary(),
+		pluginConfig:       common.NewDefaultPluginConfig(),
 		createReleaseFunc:  agent.CreateRelease,
 	}, mock, cleanup
 }
@@ -318,7 +318,6 @@ func newServerWithSecrets(t *testing.T, secrets []k8sruntime.Object) *Server {
 		globalPackagingNamespace: globalPackagingNamespace,
 		globalPackagingCluster:   globalPackagingCluster,
 		chartClientFactory:       &fake.ChartClientFactory{},
-		versionsInSummary:        pkgutils.GetDefaultVersionsInSummary(),
 		createReleaseFunc:        agent.CreateRelease,
 		kubeappsCluster:          KubeappsCluster,
 		pluginConfig:             common.NewDefaultPluginConfig(),
