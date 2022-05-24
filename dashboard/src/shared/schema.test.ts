@@ -340,14 +340,14 @@ describe("setValue", () => {
       values: "foo: bar",
       path: "new",
       newValue: "value",
-      result: 'foo: bar\n"new": "value"\n',
+      result: 'foo: bar\nnew: "value"\n',
     },
     {
       description: "should add a new nested value",
       values: "foo: bar",
       path: "this/new",
       newValue: 1,
-      result: 'foo: bar\n"this":\n  "new": 1\n',
+      result: "foo: bar\nthis:\n  new: 1\n",
       error: false,
     },
     {
@@ -355,7 +355,7 @@ describe("setValue", () => {
       values: "foo: bar",
       path: "this/new/value",
       newValue: 1,
-      result: 'foo: bar\n"this":\n  "new":\n    "value": 1\n',
+      result: "foo: bar\nthis:\n  new:\n    value: 1\n",
       error: false,
     },
     {
@@ -363,7 +363,7 @@ describe("setValue", () => {
       values: "foo: bar\nthis:\n",
       path: "this/new/value",
       newValue: 1,
-      result: 'foo: bar\nthis:\n  "new":\n    "value": 1\n',
+      result: "foo: bar\nthis:\n  new:\n    value: 1\n",
       error: false,
     },
     {
@@ -371,7 +371,7 @@ describe("setValue", () => {
       values: "foo: bar\nthis: {}\n",
       path: "this/new/value",
       newValue: 1,
-      result: 'foo: bar\nthis: { "new": { "value": 1 } }\n',
+      result: "foo: bar\nthis: { new: { value: 1 } }\n",
       error: false,
     },
     {
@@ -379,7 +379,7 @@ describe("setValue", () => {
       values: "",
       path: "foo",
       newValue: "bar",
-      result: '"foo": "bar"\n',
+      result: 'foo: "bar"\n',
       error: false,
     },
     {
