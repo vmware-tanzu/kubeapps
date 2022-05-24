@@ -1,9 +1,9 @@
 ---
 name: Proposal request
 about: Suggest a new feature for Kubeapps
-title: ''
+title: ""
 labels: kind/proposal
-assignees: ''
+assignees: ""
 
 ---
 
