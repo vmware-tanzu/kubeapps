@@ -588,28 +588,39 @@ func ttlLifetimeJobs(config Config) *int32 {
 // cronJobName returns a unique name for the CronJob managed by an AppRepository
 func cronJobName(namespace, name string, addDash bool) string {
 	// the "apprepo--sync-" string has 14 chars, which leaves us 52-14=38 chars for the final name
-	maxNamesapceLength, rem := (MAX_CRONJOB_CHARS-14)/2, (MAX_CRONJOB_CHARS-14)%2
-	maxNameLength := maxNamesapceLength
-	if rem > 0 && !addDash {
-		maxNameLength++
-	}
-	truncatedName := fmt.Sprintf("apprepo-%s-sync-%s", truncateAndHashString(namespace, maxNamesapceLength), truncateAndHashString(name, maxNameLength))
-	if addDash {
-		truncatedName = fmt.Sprintf("%s-", truncatedName)
-	}
-	return truncatedName
+	return generateJobName(namespace, name, "apprepo-%s-sync-%s", addDash)
+
 }
 
 // deleteJobName returns a unique name for the Job to cleanup AppRepository
 func deleteJobName(namespace, name string) string {
 	// the "apprepo--cleanup--" string has 18 chars, which leaves us 52-18=34 chars for the final name
-	maxNamesapceLength, rem := (MAX_CRONJOB_CHARS-18)/2, (MAX_CRONJOB_CHARS-18)%2
+	return generateJobName(namespace, name, "apprepo-%s-cleanup-%s-", false)
+}
+
+// generateJobName returns a unique name for the Job managed by an AppRepository
+func generateJobName(namespace, name, pattern string, addDash bool) string {
+	// ensure there are enough placeholders to be replaces later
+	if strings.Count(pattern, "%s") != 2 {
+		return ""
+	}
+
+	// calculate the length used by the name pattern
+	patternLen := len(strings.ReplaceAll(pattern, "%s", ""))
+
+	// for example: the "apprepo--cleanup--" string has 18 chars, which leaves us 52-18=34 chars for the final name
+	maxNamesapceLength, rem := (MAX_CRONJOB_CHARS-patternLen)/2, (MAX_CRONJOB_CHARS-patternLen)%2
 	maxNameLength := maxNamesapceLength
-	if rem > 0 {
+	if rem > 0 && !addDash {
 		maxNameLength++
 	}
 
-	truncatedName := fmt.Sprintf("apprepo-%s-cleanup-%s-", truncateAndHashString(namespace, maxNamesapceLength), truncateAndHashString(name, maxNameLength))
+	if addDash {
+		pattern = fmt.Sprintf("%s-", pattern)
+	}
+
+	truncatedName := fmt.Sprintf(pattern, truncateAndHashString(namespace, maxNamesapceLength), truncateAndHashString(name, maxNameLength))
+
 	return truncatedName
 }
 

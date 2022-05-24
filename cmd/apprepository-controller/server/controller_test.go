@@ -1745,49 +1745,49 @@ func TestCronJobName(t *testing.T) {
 	testCases := []struct {
 		name      string
 		namespace string
-		jonName   string
+		jobName   string
 		addDash   bool
 		expect    string
 	}{
 		{
 			name:      "short name",
 			namespace: "foo",
-			jonName:   "bar",
+			jobName:   "bar",
 			addDash:   false,
 			expect:    "apprepo-foo-sync-bar",
 		},
 		{
 			name:      "short name with dash",
 			namespace: "foo",
-			jonName:   "bar",
+			jobName:   "bar",
 			addDash:   true,
 			expect:    "apprepo-foo-sync-bar-",
 		},
 		{
 			name:      "max length name",
 			namespace: "foofoofoofoofoofoof",
-			jonName:   "barbarbarbarbarbarb",
+			jobName:   "barbarbarbarbarbarb",
 			addDash:   false,
 			expect:    "apprepo-foofoofoofoofoofoof-sync-barbarbarbarbarbarb",
 		},
 		{
 			name:      "max length name with dash",
 			namespace: "foofoofoofoofoofoof",
-			jonName:   "barbarbarbarbarbar",
+			jobName:   "barbarbarbarbarbar",
 			addDash:   true,
 			expect:    "apprepo-foofoofoofoofoofoof-sync-barbarbarbarbarbar-",
 		},
 		{
 			name:      "exceeding length name",
 			namespace: "foofoofoofoofoofoofoo",
-			jonName:   "barbarbarbarbarbarbar",
+			jobName:   "barbarbarbarbarbarbar",
 			addDash:   false,
 			expect:    "apprepo-foofoofo-645137792-sync-barbarba-620299591",
 		},
 		{
 			name:      "exceeding length name with dash",
 			namespace: "foofoofoofoofoofoofoofoo",
-			jonName:   "barbarbarbarbarbarbarbar",
+			jobName:   "barbarbarbarbarbarbarbar",
 			addDash:   true,
 			expect:    "apprepo-foofoofo-963839684-sync-barbarba-925369980-",
 		},
@@ -1795,7 +1795,7 @@ func TestCronJobName(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			res := cronJobName(tc.namespace, tc.jonName, tc.addDash)
+			res := cronJobName(tc.namespace, tc.jobName, tc.addDash)
 			if len(res) > MAX_CRONJOB_CHARS {
 				t.Errorf("expected length of truncated string to be <= %d, got %d", MAX_CRONJOB_CHARS, len(res))
 			}
@@ -1810,31 +1810,70 @@ func TestDeleteJobName(t *testing.T) {
 	testCases := []struct {
 		name      string
 		namespace string
-		jonName   string
+		jobName   string
 		expect    string
 	}{
 		{
 			name:      "short name",
 			namespace: "foo",
-			jonName:   "bar",
+			jobName:   "bar",
 			expect:    "apprepo-foo-cleanup-bar-",
 		},
 		{
 			name:      "max length name",
 			namespace: "foofoofoofoofoofo",
-			jonName:   "barbarbarbarbarba",
+			jobName:   "barbarbarbarbarba",
 			expect:    "apprepo-foofoofoofoofoofo-cleanup-barbarbarbarbarba-",
 		},
 		{
 			name:      "exceeding length name",
 			namespace: "foofoofoofoofoofoofoo",
-			jonName:   "barbarbarbarbarbarbar",
+			jobName:   "barbarbarbarbarbarbar",
 			expect:    "apprepo-foofoo-847382101-cleanup-barbar-805766666-",
 		},
 	}
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			res := deleteJobName(tc.namespace, tc.jonName)
+			res := deleteJobName(tc.namespace, tc.jobName)
+			if len(res) > MAX_CRONJOB_CHARS {
+				t.Errorf("expected length of truncated string to be <= %d, got %d", MAX_CRONJOB_CHARS, len(res))
+			}
+			if got, want := res, tc.expect; got != want {
+				t.Errorf("got: %s, want: %s", got, want)
+			}
+		})
+	}
+}
+
+func TestGenerateJobName(t *testing.T) {
+	testCases := []struct {
+		name      string
+		namespace string
+		jobName   string
+		pattern   string
+		addDash   bool
+		expect    string
+	}{
+		{
+			name:      "good patern",
+			namespace: "foo",
+			jobName:   "bar",
+			pattern:   "name: %s, namespace %s",
+			addDash:   false,
+			expect:    "name: foo, namespace bar",
+		},
+		{
+			name:      "good patern (with dash)",
+			namespace: "foo",
+			jobName:   "bar",
+			pattern:   "name: %s, namespace %s",
+			addDash:   true,
+			expect:    "name: foo, namespace bar-",
+		},
+	}
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			res := generateJobName(tc.namespace, tc.jobName, tc.pattern, tc.addDash)
 			if len(res) > MAX_CRONJOB_CHARS {
 				t.Errorf("expected length of truncated string to be <= %d, got %d", MAX_CRONJOB_CHARS, len(res))
 			}
