@@ -1,9 +1,9 @@
 ---
 name: Issue
 about: General issue template for Kubeapps
-title: ''
-labels: ''
-assignees: ''
+title: ""
+labels: ""
+assignees: ""
 
 ---
 
