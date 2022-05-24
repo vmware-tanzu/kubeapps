@@ -9,7 +9,6 @@ import (
 	"github.com/google/go-cmp/cmp"
 	apprepov1alpha1 "github.com/vmware-tanzu/kubeapps/cmd/apprepository-controller/pkg/apis/apprepository/v1alpha1"
 	batchv1 "k8s.io/api/batch/v1"
-	batchv1beta1 "k8s.io/api/batch/v1beta1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -25,7 +24,7 @@ func Test_newCronJob(t *testing.T) {
 		crontab          string
 		userAgentComment string
 		apprepo          *apprepov1alpha1.AppRepository
-		expected         batchv1beta1.CronJob
+		expected         batchv1.CronJob
 	}{
 		{
 			"my-charts",
@@ -49,7 +48,7 @@ func Test_newCronJob(t *testing.T) {
 					URL:  "https://charts.acme.com/my-charts",
 				},
 			},
-			batchv1beta1.CronJob{
+			batchv1.CronJob{
 				ObjectMeta: metav1.ObjectMeta{
 					Name: "apprepo-kubeapps-sync-my-charts",
 					OwnerReferences: []metav1.OwnerReference{
@@ -67,10 +66,10 @@ func Test_newCronJob(t *testing.T) {
 					},
 					Annotations: map[string]string{},
 				},
-				Spec: batchv1beta1.CronJobSpec{
+				Spec: batchv1.CronJobSpec{
 					Schedule:          "*/10 * * * *",
 					ConcurrencyPolicy: "Replace",
-					JobTemplate: batchv1beta1.JobTemplateSpec{
+					JobTemplate: batchv1.JobTemplateSpec{
 						Spec: batchv1.JobSpec{
 							TTLSecondsAfterFinished: &defaultTTL,
 							Template: corev1.PodTemplateSpec{
@@ -144,7 +143,7 @@ func Test_newCronJob(t *testing.T) {
 					},
 				},
 			},
-			batchv1beta1.CronJob{
+			batchv1.CronJob{
 				ObjectMeta: metav1.ObjectMeta{
 					Name: "apprepo-kubeapps-sync-my-charts",
 					OwnerReferences: []metav1.OwnerReference{
@@ -162,10 +161,10 @@ func Test_newCronJob(t *testing.T) {
 					},
 					Annotations: map[string]string{},
 				},
-				Spec: batchv1beta1.CronJobSpec{
+				Spec: batchv1.CronJobSpec{
 					Schedule:          "*/20 * * * *",
 					ConcurrencyPolicy: "Replace",
-					JobTemplate: batchv1beta1.JobTemplateSpec{
+					JobTemplate: batchv1.JobTemplateSpec{
 						Spec: batchv1.JobSpec{
 							TTLSecondsAfterFinished: &defaultTTL,
 							Template: corev1.PodTemplateSpec{
@@ -245,7 +244,7 @@ func Test_newCronJob(t *testing.T) {
 					},
 				},
 			},
-			batchv1beta1.CronJob{
+			batchv1.CronJob{
 				ObjectMeta: metav1.ObjectMeta{
 					Name: "apprepo-otherns-sync-my-charts-in-otherns",
 					Labels: map[string]string{
@@ -254,10 +253,10 @@ func Test_newCronJob(t *testing.T) {
 					},
 					Annotations: map[string]string{},
 				},
-				Spec: batchv1beta1.CronJobSpec{
+				Spec: batchv1.CronJobSpec{
 					Schedule:          "*/20 * * * *",
 					ConcurrencyPolicy: "Replace",
-					JobTemplate: batchv1beta1.JobTemplateSpec{
+					JobTemplate: batchv1.JobTemplateSpec{
 						Spec: batchv1.JobSpec{
 							TTLSecondsAfterFinished: &defaultTTL,
 							Template: corev1.PodTemplateSpec{
@@ -1418,7 +1417,7 @@ func TestObjectBelongsTo(t *testing.T) {
 	}{
 		{
 			name: "it recognises a cronjob belonging to an app repository in another namespace",
-			object: &batchv1beta1.CronJob{
+			object: &batchv1.CronJob{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      "apprepo-kubeapps-sync-my-charts",
 					Namespace: "kubeapps",
@@ -1438,7 +1437,7 @@ func TestObjectBelongsTo(t *testing.T) {
 		},
 		{
 			name: "it returns false if the namespace does not match",
-			object: &batchv1beta1.CronJob{
+			object: &batchv1.CronJob{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      "apprepo-kubeapps-sync-my-charts",
 					Namespace: "kubeapps",

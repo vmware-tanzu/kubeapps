@@ -18,7 +18,6 @@ import (
 	listers "github.com/vmware-tanzu/kubeapps/cmd/apprepository-controller/pkg/client/listers/apprepository/v1alpha1"
 	"github.com/vmware-tanzu/kubeapps/pkg/kube"
 	batchv1 "k8s.io/api/batch/v1"
-	batchv1beta1 "k8s.io/api/batch/v1beta1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -29,7 +28,7 @@ import (
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/kubernetes/scheme"
 	typedcorev1 "k8s.io/client-go/kubernetes/typed/core/v1"
-	batchlisters "k8s.io/client-go/listers/batch/v1beta1"
+	batchlisters "k8s.io/client-go/listers/batch/v1"
 	"k8s.io/client-go/tools/cache"
 	"k8s.io/client-go/tools/record"
 	"k8s.io/client-go/util/workqueue"
@@ -95,7 +94,7 @@ func NewController(
 
 	// obtain references to shared index informers for the CronJob and
 	// AppRepository types.
-	cronjobInformer := kubeInformerFactory.Batch().V1beta1().CronJobs()
+	cronjobInformer := kubeInformerFactory.Batch().V1().CronJobs()
 	apprepoInformer := apprepoInformerFactory.Kubeapps().V1alpha1().AppRepositories()
 
 	// Create event broadcaster
@@ -271,7 +270,7 @@ func (c *Controller) syncHandler(key string) error {
 
 			// TODO: Workaround until the sync jobs are moved to the repoNamespace (#1647)
 			// Delete the cronjob in the Kubeapps namespace to avoid re-syncing the repository
-			err = c.kubeclientset.BatchV1beta1().CronJobs(c.conf.KubeappsNamespace).Delete(context.TODO(), cronJobName(namespace, name), metav1.DeleteOptions{})
+			err = c.kubeclientset.BatchV1().CronJobs(c.conf.KubeappsNamespace).Delete(context.TODO(), cronJobName(namespace, name), metav1.DeleteOptions{})
 			if err != nil && !errors.IsNotFound(err) {
 				log.Errorf("Unable to delete sync cronjob: %v", err)
 				return err
@@ -287,7 +286,7 @@ func (c *Controller) syncHandler(key string) error {
 	// If the resource doesn't exist, we'll create it
 	if errors.IsNotFound(err) {
 		log.Infof("Creating CronJob %q for AppRepository %q", cronjobName, apprepo.GetName())
-		cronjob, err = c.kubeclientset.BatchV1beta1().CronJobs(c.conf.KubeappsNamespace).Create(context.TODO(), newCronJob(apprepo, c.conf), metav1.CreateOptions{})
+		cronjob, err = c.kubeclientset.BatchV1().CronJobs(c.conf.KubeappsNamespace).Create(context.TODO(), newCronJob(apprepo, c.conf), metav1.CreateOptions{})
 		if err != nil {
 			return err
 		}
@@ -297,7 +296,7 @@ func (c *Controller) syncHandler(key string) error {
 	} else if err == nil {
 		// If the resource already exists, we'll update it
 		log.Infof("Updating CronJob %q in namespace %q for AppRepository %q in namespace %q", cronjobName, c.conf.KubeappsNamespace, apprepo.GetName(), apprepo.GetNamespace())
-		cronjob, err = c.kubeclientset.BatchV1beta1().CronJobs(c.conf.KubeappsNamespace).Update(context.TODO(), newCronJob(apprepo, c.conf), metav1.UpdateOptions{})
+		cronjob, err = c.kubeclientset.BatchV1().CronJobs(c.conf.KubeappsNamespace).Update(context.TODO(), newCronJob(apprepo, c.conf), metav1.UpdateOptions{})
 		if err != nil {
 			return err
 		}
@@ -411,21 +410,21 @@ func ownerReferencesForAppRepo(apprepo *apprepov1alpha1.AppRepository, childName
 // newCronJob creates a new CronJob for a AppRepository resource. It also sets
 // the appropriate OwnerReferences on the resource so handleObject can discover
 // the AppRepository resource that 'owns' it.
-func newCronJob(apprepo *apprepov1alpha1.AppRepository, config Config) *batchv1beta1.CronJob {
-	return &batchv1beta1.CronJob{
+func newCronJob(apprepo *apprepov1alpha1.AppRepository, config Config) *batchv1.CronJob {
+	return &batchv1.CronJob{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:            cronJobName(apprepo.Namespace, apprepo.Name),
 			OwnerReferences: ownerReferencesForAppRepo(apprepo, config.KubeappsNamespace),
 			Labels:          jobLabels(apprepo, config),
 			Annotations:     config.ParsedCustomAnnotations,
 		},
-		Spec: batchv1beta1.CronJobSpec{
+		Spec: batchv1.CronJobSpec{
 			Schedule: config.Crontab,
 			// Set to replace as short-circuit in k8s <1.12
 			// TODO re-evaluate ConcurrentPolicy when 1.12+ is mainstream (i.e 1.14)
 			// https://github.com/kubernetes/kubernetes/issues/54870
 			ConcurrencyPolicy: "Replace",
-			JobTemplate: batchv1beta1.JobTemplateSpec{
+			JobTemplate: batchv1.JobTemplateSpec{
 				Spec: syncJobSpec(apprepo, config),
 			},
 		},
