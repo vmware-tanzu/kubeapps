@@ -25,7 +25,7 @@ option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_swagger) = {
 		};
 	};
 	external_docs: {
-		description: "Kuebapps GitHub repository";
+		description: "Kubeapps GitHub repository";
 		url: "https://github.com/vmware-tanzu/kubeapps";
 	}
 	schemes: HTTP;
