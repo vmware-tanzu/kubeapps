@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import ReactMarkdown from "react-markdown";
+import remarkBreaks from "remark-breaks";
 import remarkGfm from "remark-gfm";
 import HeadingRenderer from "../../MarkdownRenderer/HeadingRenderer";
 import LinkRenderer from "../../MarkdownRenderer/LinkRenderer";
@@ -19,7 +20,7 @@ function AppNotes(props: IAppNotesProps) {
       <h3 className="section-title">{title ? title : "Installation Notes"}</h3>
       <div className="application-notes">
         <ReactMarkdown
-          remarkPlugins={[remarkGfm]}
+          remarkPlugins={[remarkGfm, remarkBreaks]}
           components={{
             h1: HeadingRenderer,
             h2: HeadingRenderer,
