@@ -614,8 +614,8 @@ export function AppRepoForm(props: IAppRepoFormProps) {
 
       {namespace === kubeappsNamespace && (
         <p>
-          <strong>NOTE:</strong> This App Repository will be created in the "{kubeappsNamespace}"
-          namespace and packages will be available in all namespaces for installation.
+          <strong>NOTE:</strong> This Package Repository will be created in the "{kubeappsNamespace}
+          " namespace and packages will be available in all namespaces for installation.
         </p>
       )}
       {validationError && (

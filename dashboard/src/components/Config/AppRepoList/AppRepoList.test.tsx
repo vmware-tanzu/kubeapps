@@ -99,7 +99,7 @@ it("shows a warning if the cluster is not the default one", () => {
     <AppRepoList />,
   );
   expect(wrapper.find(Alert)).toIncludeText(
-    "App Repositories are available on the default cluster only",
+    "Package Repositories can't be managed from this cluster",
   );
 });
 
@@ -148,12 +148,12 @@ describe("global and namespaced repositories", () => {
   it("shows a message if no global or namespaced repos exist", () => {
     const wrapper = mountWrapper(defaultStore, <AppRepoList />);
     expect(
-      wrapper.find("p").filterWhere(p => p.text().includes("No global repositories found")),
+      wrapper.find("p").filterWhere(p => p.text().includes("There are no global Package Repositories")),
     ).toExist();
     expect(
       wrapper
         .find("p")
-        .filterWhere(p => p.text().includes("The current namespace doesn't have any repositories")),
+        .filterWhere(p => p.text().includes("There are no namespaced Package Repositories")),
     ).toExist();
   });
 
@@ -184,7 +184,7 @@ describe("global and namespaced repositories", () => {
     expect(wrapper.find(AppRepoControl)).not.toExist();
     // The content related to namespaced repositories should exist
     expect(
-      wrapper.find("h3").filterWhere(h => h.text().includes("Namespace Repositories")),
+      wrapper.find("h3").filterWhere(h => h.text().includes("Namespaced Repositories")),
     ).toExist();
   });
 
