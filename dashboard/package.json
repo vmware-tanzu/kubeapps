@@ -112,14 +112,14 @@
     "redux-mock-store": "^1.5.4",
     "sass": "^1.52.1",
     "shx": "^0.3.4",
-    "stylelint": "^14.8.3",
+    "stylelint": "^14.8.4",
     "stylelint-config-idiomatic-order": "^8.1.0",
     "stylelint-config-prettier": "^9.0.3",
     "stylelint-config-standard-scss": "^3.0.0",
     "stylelint-scss": "^4.2.0",
     "ts-jest": "^28.0.2",
     "ts-proto": "^1.112.2",
-    "typescript": "^4.6.4"
+    "typescript": "^4.7.2"
   },
   "resolutions": {
     "@babel/parser": "^7.15.3",
