@@ -421,12 +421,12 @@ func (s *Server) updatePkgInstall(ctx context.Context, cluster, namespace string
 }
 
 // getAppUsedGVs returns the list of GVs used by the given app, falling back to pre 0.47 Kapp version behavior with regards to suffixes
-func getAppUsedGVs(appsClient ctlapp.Apps, packageId string, namespace string, useDeprecatedCtrlAppSuffix bool) ([]schema.GroupVersion, ctlapp.App, error) {
+func getAppUsedGVs(appsClient ctlapp.Apps, packageId string, namespace string, useNewCtrlAppSuffix bool) ([]schema.GroupVersion, ctlapp.App, error) {
 	// We first try to fetch the app using the suffixed name (kapp >= 0.47)
 	appName := fmt.Sprintf("%s%s", packageId, ctlapp.AppSuffix)
 
 	// Workaround to also support pre-0.47 kapp versions, whose ConfigMap were suffixed with "-ctrl" instead of ".apps.k14s.io"
-	if useDeprecatedCtrlAppSuffix {
+	if !useNewCtrlAppSuffix {
 		// As per https://github.com/vmware-tanzu/carvel-kapp-controller/blob/v0.32.0/pkg/deploy/kapp.go#L151
 		appName = fmt.Sprintf("%s%s", packageId, "-ctrl")
 	}
@@ -446,9 +446,9 @@ func getAppUsedGVs(appsClient ctlapp.Apps, packageId string, namespace string, u
 		cmErrPattern := "configmaps %q not found"
 		appErrPattern := "App '%s' (namespace: %s) does not exist"
 		if strings.Contains(err.Error(), fmt.Sprintf(cmErrPattern, appName)) || strings.Contains(err.Error(), fmt.Sprintf(appErrPattern, appName, namespace)) || strings.Contains(err.Error(), fmt.Sprintf(appErrPattern, packageId, namespace)) {
-			// Catching the not found error and falling back to the pre-0.47 Kapp prefixes
-			if !useDeprecatedCtrlAppSuffix {
-				return getAppUsedGVs(appsClient, packageId, namespace, true)
+			// If using the new suffix and getting a not found error, fall back to the pre-0.47 Kapp prefix
+			if useNewCtrlAppSuffix {
+				return getAppUsedGVs(appsClient, packageId, namespace, false)
 			}
 			// We want to return a NotFound here because the dashboard already
 			// handles this case, knowing that the references may not be
@@ -462,8 +462,6 @@ func getAppUsedGVs(appsClient ctlapp.Apps, packageId string, namespace string, u
 
 // inspectKappK8sResources returns the list of k8s resources matching the given listOptions
 func (s *Server) inspectKappK8sResources(ctx context.Context, cluster, namespace, packageId string) ([]*corev1.ResourceRef, error) {
-	// As per https://github.com/vmware-tanzu/carvel-kapp-controller/blob/v0.32.0/pkg/deploy/kapp.go#L151
-
 	refs := []*corev1.ResourceRef{}
 
 	// Get the Kapp different clients
@@ -472,8 +470,8 @@ func (s *Server) inspectKappK8sResources(ctx context.Context, cluster, namespace
 		return nil, err
 	}
 
-	// Get the App and its used GVs considering the pre/post Kapp 0.47 suffixes
-	usedGVs, app, err := getAppUsedGVs(appsClient, packageId, namespace, false)
+	// Get the App and its used GVs initially considering the post-0.47 Kapp suffix, but falling back to pre-0.47 behavior
+	usedGVs, app, err := getAppUsedGVs(appsClient, packageId, namespace, true)
 	if err != nil {
 		return nil, err
 	}
