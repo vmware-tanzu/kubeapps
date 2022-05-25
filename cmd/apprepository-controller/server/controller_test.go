@@ -118,6 +118,88 @@ func Test_newCronJob(t *testing.T) {
 			},
 		},
 		{
+			"my-charts with long names",
+			"*/10 * * * *",
+			"",
+			&apprepov1alpha1.AppRepository{
+				TypeMeta: metav1.TypeMeta{
+					Kind:       "AppRepository",
+					APIVersion: "kubeapps.com/v1alpha1",
+				},
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "a-really-long-long-long-long-but-valid-name-under-63-characters",
+					Namespace: "a-really-long-long-long-but-valid-namespace-under-63-characters",
+					Labels: map[string]string{
+						"name":       "a-really-long-long-long-long-but-valid-name-under-63-characters",
+						"created-by": "a-really-long-long-long-but-valid-namespace-under-63-characters",
+					},
+				},
+				Spec: apprepov1alpha1.AppRepositorySpec{
+					Type: "helm",
+					URL:  "https://charts.acme.com/a-really-long-long-long-long-but-valid-name-under-63-characters",
+				},
+			},
+			batchv1.CronJob{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "apprepo-a-really-914363477-sync-a-really-839652390",
+					Labels: map[string]string{
+						LabelRepoName:      "a-really-long-long-long-long-but-valid-name-under-63-characters",
+						LabelRepoNamespace: "a-really-long-long-long-but-valid-namespace-under-63-characters",
+					},
+					Annotations: map[string]string{},
+				},
+				Spec: batchv1.CronJobSpec{
+					Schedule:          "*/10 * * * *",
+					ConcurrencyPolicy: "Replace",
+					JobTemplate: batchv1.JobTemplateSpec{
+						Spec: batchv1.JobSpec{
+							TTLSecondsAfterFinished: &defaultTTL,
+							Template: corev1.PodTemplateSpec{
+								ObjectMeta: metav1.ObjectMeta{
+									Labels: map[string]string{
+										LabelRepoName:      "a-really-long-long-long-long-but-valid-name-under-63-characters",
+										LabelRepoNamespace: "a-really-long-long-long-but-valid-namespace-under-63-characters",
+									},
+									Annotations: map[string]string{},
+								},
+								Spec: corev1.PodSpec{
+									RestartPolicy: "OnFailure",
+									Containers: []corev1.Container{
+										{
+											Name:            "sync",
+											Image:           repoSyncImage,
+											ImagePullPolicy: "IfNotPresent",
+											Command:         []string{"/chart-repo"},
+											Args: []string{
+												"sync",
+												"--database-url=postgresql.kubeapps",
+												"--database-user=admin",
+												"--database-name=assets",
+												"--global-repos-namespace=kubeapps-global",
+												"--namespace=a-really-long-long-long-but-valid-namespace-under-63-characters",
+												"a-really-long-long-long-long-but-valid-name-under-63-characters",
+												"https://charts.acme.com/a-really-long-long-long-long-but-valid-name-under-63-characters",
+												"helm",
+											},
+											Env: []corev1.EnvVar{
+												{
+													Name: "DB_PASSWORD",
+													ValueFrom: &corev1.EnvVarSource{
+														SecretKeyRef: &corev1.SecretKeySelector{LocalObjectReference: corev1.LocalObjectReference{Name: "postgresql"}, Key: "postgresql-root-password"}},
+												},
+											},
+											VolumeMounts: nil,
+										},
+									},
+									Volumes: nil,
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
 			"my-charts with auth, userAgent and crontab configuration",
 			"*/20 * * * *",
 			"kubeapps/v2.3",
@@ -246,7 +328,7 @@ func Test_newCronJob(t *testing.T) {
 			},
 			batchv1.CronJob{
 				ObjectMeta: metav1.ObjectMeta{
-					Name: "apprepo-otherns-sync-my-charts-in-otherns",
+					Name: "apprepo-otherns-sync-my-chart-482411688",
 					Labels: map[string]string{
 						LabelRepoName:      "my-charts-in-otherns",
 						LabelRepoNamespace: "otherns",
@@ -397,6 +479,78 @@ func Test_newSyncJob(t *testing.T) {
 										"--namespace=kubeapps",
 										"my-charts",
 										"https://charts.acme.com/my-charts",
+										"helm",
+									},
+									Env: []corev1.EnvVar{
+										{
+											Name: "DB_PASSWORD",
+											ValueFrom: &corev1.EnvVarSource{
+												SecretKeyRef: &corev1.SecretKeySelector{LocalObjectReference: corev1.LocalObjectReference{Name: "postgresql"}, Key: "postgresql-root-password"}},
+										},
+									},
+									VolumeMounts: nil,
+								},
+							},
+							Volumes: nil,
+						},
+					},
+				},
+			},
+		},
+		{
+			"my-charts with long names",
+			"",
+			&apprepov1alpha1.AppRepository{
+				TypeMeta: metav1.TypeMeta{
+					Kind:       "AppRepository",
+					APIVersion: "kubeapps.com/v1alpha1",
+				},
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "a-really-long-long-long-long-but-valid-name-under-63-characters",
+					Namespace: "a-really-long-long-long-but-valid-namespace-under-63-characters",
+					Labels: map[string]string{
+						"name":       "a-really-long-long-long-long-but-valid-name-under-63-characters",
+						"created-by": "a-really-long-long-long-but-valid-namespace-under-63-characters",
+					},
+				},
+				Spec: apprepov1alpha1.AppRepositorySpec{
+					Type: "helm",
+					URL:  "https://charts.acme.com/a-really-long-long-long-long-but-valid-name-under-63-characters",
+				},
+			},
+			batchv1.Job{
+				ObjectMeta: metav1.ObjectMeta{
+					GenerateName: "apprepo-a-really-914363477-sync-a-really-839652390-",
+					Annotations:  map[string]string{},
+					Labels:       map[string]string{},
+				},
+				Spec: batchv1.JobSpec{
+					TTLSecondsAfterFinished: &defaultTTL,
+					Template: corev1.PodTemplateSpec{
+						ObjectMeta: metav1.ObjectMeta{
+							Labels: map[string]string{
+								LabelRepoName:      "a-really-long-long-long-long-but-valid-name-under-63-characters",
+								LabelRepoNamespace: "a-really-long-long-long-but-valid-namespace-under-63-characters",
+							},
+							Annotations: map[string]string{},
+						},
+						Spec: corev1.PodSpec{
+							RestartPolicy: "OnFailure",
+							Containers: []corev1.Container{
+								{
+									Name:            "sync",
+									Image:           repoSyncImage,
+									ImagePullPolicy: "IfNotPresent",
+									Command:         []string{"/chart-repo"},
+									Args: []string{
+										"sync",
+										"--database-url=postgresql.kubeapps",
+										"--database-user=admin",
+										"--database-name=assets",
+										"--global-repos-namespace=kubeapps-global",
+										"--namespace=a-really-long-long-long-but-valid-namespace-under-63-characters",
+										"a-really-long-long-long-long-but-valid-name-under-63-characters",
+										"https://charts.acme.com/a-really-long-long-long-long-but-valid-name-under-63-characters",
 										"helm",
 									},
 									Env: []corev1.EnvVar{
@@ -1347,13 +1501,15 @@ func Test_newSyncJob(t *testing.T) {
 
 func Test_newCleanupJob(t *testing.T) {
 	tests := []struct {
-		name          string
-		repoName      string
-		repoNamespace string
-		expected      batchv1.Job
+		name              string
+		kubeappsNamespace string
+		repoName          string
+		repoNamespace     string
+		expected          batchv1.Job
 	}{
 		{
-			"my-charts",
+			"my-charts with",
+			"kubeapps",
 			"my-charts",
 			"kubeapps",
 			batchv1.Job{
@@ -1396,11 +1552,56 @@ func Test_newCleanupJob(t *testing.T) {
 				},
 			},
 		},
+		{
+			"my-charts with long names",
+			"kubeapps",
+			"a-really-long-long-long-long-but-valid-name-under-63-characters",
+			"a-really-long-long-long-but-valid-namespace-under-63-characters",
+			batchv1.Job{
+				ObjectMeta: metav1.ObjectMeta{
+					GenerateName: "apprepo-a-real-1762006330-cleanup-a-real-1687295243-",
+					Namespace:    "kubeapps",
+					Annotations:  map[string]string{},
+					Labels:       map[string]string{},
+				},
+				Spec: batchv1.JobSpec{
+					TTLSecondsAfterFinished: &defaultTTL,
+					Template: corev1.PodTemplateSpec{
+						Spec: corev1.PodSpec{
+							RestartPolicy: "Never",
+							Containers: []corev1.Container{
+								{
+									Name:            "delete",
+									Image:           repoSyncImage,
+									ImagePullPolicy: "IfNotPresent",
+									Command:         []string{"/chart-repo"},
+									Args: []string{
+										"delete",
+										"a-really-long-long-long-long-but-valid-name-under-63-characters",
+										"--namespace=a-really-long-long-long-but-valid-namespace-under-63-characters",
+										"--database-url=postgresql.kubeapps",
+										"--database-user=admin",
+										"--database-name=assets",
+									},
+									Env: []corev1.EnvVar{
+										{
+											Name: "DB_PASSWORD",
+											ValueFrom: &corev1.EnvVarSource{
+												SecretKeyRef: &corev1.SecretKeySelector{LocalObjectReference: corev1.LocalObjectReference{Name: "postgresql"}, Key: "postgresql-root-password"}},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result := newCleanupJob("kubeapps", tt.repoNamespace, tt.repoName, makeDefaultConfig())
+			result := newCleanupJob(tt.kubeappsNamespace, tt.repoNamespace, tt.repoName, makeDefaultConfig())
 			if got, want := tt.expected, *result; !cmp.Equal(want, got) {
 				t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got))
 			}
@@ -1461,6 +1662,222 @@ func TestObjectBelongsTo(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			if got, want := objectBelongsTo(tc.object, tc.parent), tc.expect; got != want {
 				t.Errorf("got: %t, want: %t", got, want)
+			}
+		})
+	}
+}
+
+func TestTruncateAndHashString(t *testing.T) {
+	testCases := []struct {
+		name   string
+		input  string
+		length int
+		expect string
+	}{
+		{
+			name:   "empty string",
+			input:  "",
+			length: 5,
+			expect: "",
+		},
+		{
+			name:   "0 length",
+			input:  "",
+			length: 0,
+			expect: "",
+		},
+		{
+			name:   "string under the max length",
+			input:  "1234",
+			length: 5,
+			expect: "1234",
+		},
+		{
+			name:   "string that fits in the max length",
+			input:  "12345",
+			length: 5,
+			expect: "12345",
+		},
+		{
+			name:   "long string whose exceeding part gets truncated but not hashed if length < 11",
+			input:  "123456789",
+			length: 5,
+			expect: "12345",
+		},
+		{
+			name:   "long string whose exceeding part gets truncated and hashed",
+			input:  "1234567891234",
+			length: 12,
+			expect: "1-269222519",
+		},
+		{
+			name:   "string under the 52-chars length",
+			input:  "aaa",
+			length: 52,
+			expect: "aaa",
+		},
+		{
+			name:   "string that fits in the 52-chars length",
+			input:  "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+			length: 52,
+			expect: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+		},
+		{
+			name:   "long string whose exceeding part gets truncated and hashed",
+			input:  "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaExceedingLongName",
+			length: 52,
+			expect: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa-2604272329",
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			res := truncateAndHashString(tc.input, tc.length)
+			if got, want := res, tc.expect; got != want {
+				t.Errorf("got: %s, want: %s", got, want)
+			}
+		})
+	}
+}
+
+func TestCronJobName(t *testing.T) {
+	testCases := []struct {
+		name      string
+		namespace string
+		jobName   string
+		addDash   bool
+		expect    string
+	}{
+		{
+			name:      "short name",
+			namespace: "foo",
+			jobName:   "bar",
+			addDash:   false,
+			expect:    "apprepo-foo-sync-bar",
+		},
+		{
+			name:      "short name with dash",
+			namespace: "foo",
+			jobName:   "bar",
+			addDash:   true,
+			expect:    "apprepo-foo-sync-bar-",
+		},
+		{
+			name:      "max length name",
+			namespace: "foofoofoofoofoofoof",
+			jobName:   "barbarbarbarbarbarb",
+			addDash:   false,
+			expect:    "apprepo-foofoofoofoofoofoof-sync-barbarbarbarbarbarb",
+		},
+		{
+			name:      "max length name with dash",
+			namespace: "foofoofoofoofoofoof",
+			jobName:   "barbarbarbarbarbar",
+			addDash:   true,
+			expect:    "apprepo-foofoofoofoofoofoof-sync-barbarbarbarbarbar-",
+		},
+		{
+			name:      "exceeding length name",
+			namespace: "foofoofoofoofoofoofoo",
+			jobName:   "barbarbarbarbarbarbar",
+			addDash:   false,
+			expect:    "apprepo-foofoofo-645137792-sync-barbarba-620299591",
+		},
+		{
+			name:      "exceeding length name with dash",
+			namespace: "foofoofoofoofoofoofoofoo",
+			jobName:   "barbarbarbarbarbarbarbar",
+			addDash:   true,
+			expect:    "apprepo-foofoofo-963839684-sync-barbarba-925369980-",
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			res := cronJobName(tc.namespace, tc.jobName, tc.addDash)
+			if len(res) > MAX_CRONJOB_CHARS {
+				t.Errorf("expected length of truncated string to be <= %d, got %d", MAX_CRONJOB_CHARS, len(res))
+			}
+			if got, want := res, tc.expect; got != want {
+				t.Errorf("got: %s, want: %s", got, want)
+			}
+		})
+	}
+}
+
+func TestDeleteJobName(t *testing.T) {
+	testCases := []struct {
+		name      string
+		namespace string
+		jobName   string
+		expect    string
+	}{
+		{
+			name:      "short name",
+			namespace: "foo",
+			jobName:   "bar",
+			expect:    "apprepo-foo-cleanup-bar-",
+		},
+		{
+			name:      "max length name",
+			namespace: "foofoofoofoofoofo",
+			jobName:   "barbarbarbarbarba",
+			expect:    "apprepo-foofoofoofoofoofo-cleanup-barbarbarbarbarba-",
+		},
+		{
+			name:      "exceeding length name",
+			namespace: "foofoofoofoofoofoofoo",
+			jobName:   "barbarbarbarbarbarbar",
+			expect:    "apprepo-foofoo-847382101-cleanup-barbar-805766666-",
+		},
+	}
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			res := deleteJobName(tc.namespace, tc.jobName)
+			if len(res) > MAX_CRONJOB_CHARS {
+				t.Errorf("expected length of truncated string to be <= %d, got %d", MAX_CRONJOB_CHARS, len(res))
+			}
+			if got, want := res, tc.expect; got != want {
+				t.Errorf("got: %s, want: %s", got, want)
+			}
+		})
+	}
+}
+
+func TestGenerateJobName(t *testing.T) {
+	testCases := []struct {
+		name      string
+		namespace string
+		jobName   string
+		pattern   string
+		addDash   bool
+		expect    string
+	}{
+		{
+			name:      "good patern",
+			namespace: "foo",
+			jobName:   "bar",
+			pattern:   "name: %s, namespace %s",
+			addDash:   false,
+			expect:    "name: foo, namespace bar",
+		},
+		{
+			name:      "good patern (with dash)",
+			namespace: "foo",
+			jobName:   "bar",
+			pattern:   "name: %s, namespace %s",
+			addDash:   true,
+			expect:    "name: foo, namespace bar-",
+		},
+	}
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			res := generateJobName(tc.namespace, tc.jobName, tc.pattern, tc.addDash)
+			if len(res) > MAX_CRONJOB_CHARS {
+				t.Errorf("expected length of truncated string to be <= %d, got %d", MAX_CRONJOB_CHARS, len(res))
+			}
+			if got, want := res, tc.expect; got != want {
+				t.Errorf("got: %s, want: %s", got, want)
 			}
 		})
 	}
