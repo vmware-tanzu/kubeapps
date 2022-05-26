@@ -1,9 +1,9 @@
 ---
-name: Feature proposal
-about: Suggest a new feature for Kubeapps
+name: Issue
+about: General issue template for Kubeapps
 title: ""
-labels: kind/proposal
-assignees: ''
+labels: ""
+assignees: ""
 
 ---
 

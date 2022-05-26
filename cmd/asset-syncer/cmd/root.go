@@ -29,7 +29,9 @@ func newRootCmd() *cobra.Command {
 		Short: "Asset Synchronization utility",
 		PersistentPreRun: func(cmd *cobra.Command, args []string) {
 			serveOpts.UserAgent = server.GetUserAgent(version, serveOpts.UserAgentComment)
-			log.Infof("asset-syncer has been configured with: %#v", serveOpts)
+			serveOptsCopy := serveOpts
+			serveOptsCopy.DatabasePassword = "REDACTED"
+			log.Infof("asset-syncer has been configured with: %#v", serveOptsCopy)
 		},
 		Version: "devel",
 	}
