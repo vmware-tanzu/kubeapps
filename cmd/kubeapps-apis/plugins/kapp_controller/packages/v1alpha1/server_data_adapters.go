@@ -430,21 +430,23 @@ func (s *Server) buildPackageRepositorySummary(pr *packagingv1alpha1.PackageRepo
 	}
 
 	// handle fetch-specific configuration
-	if pr.Spec.Fetch.Inline != nil {
+	fetch := pr.Spec.Fetch
+	switch {
+	case fetch.Inline != nil:
 		repository.Type = Type_Inline
-	} else if pr.Spec.Fetch.Image != nil {
+	case fetch.Image != nil:
 		repository.Type = Type_Image
-		repository.Url = pr.Spec.Fetch.Image.URL
-	} else if pr.Spec.Fetch.ImgpkgBundle != nil {
+		repository.Url = fetch.Image.URL
+	case fetch.ImgpkgBundle != nil:
 		repository.Type = Type_ImgPkgBundle
-		repository.Url = pr.Spec.Fetch.ImgpkgBundle.Image
-	} else if pr.Spec.Fetch.HTTP != nil {
+		repository.Url = fetch.ImgpkgBundle.Image
+	case fetch.HTTP != nil:
 		repository.Type = Type_HTTP
-		repository.Url = pr.Spec.Fetch.HTTP.URL
-	} else if pr.Spec.Fetch.Git != nil {
+		repository.Url = fetch.HTTP.URL
+	case fetch.Git != nil:
 		repository.Type = Type_GIT
-		repository.Url = pr.Spec.Fetch.Git.URL
-	} else {
+		repository.Url = fetch.Git.URL
+	default:
 		return nil, fmt.Errorf("the package repository has a fetch directive that is not supported")
 	}
 
@@ -484,21 +486,22 @@ func (s *Server) buildPackageRepository(pr *packagingv1alpha1.PackageRepository,
 
 	// handle fetch-specific configuration (todo -> handle custom configuration)
 	fetch := pr.Spec.Fetch
-	if fetch.Inline != nil {
+	switch {
+	case fetch.Inline != nil:
 		repository.Type = Type_Inline
-	} else if fetch.Image != nil {
+	case fetch.Image != nil:
 		repository.Type = Type_Image
 		repository.Url = fetch.Image.URL
-	} else if fetch.ImgpkgBundle != nil {
+	case fetch.ImgpkgBundle != nil:
 		repository.Type = Type_ImgPkgBundle
-		repository.Url = pr.Spec.Fetch.ImgpkgBundle.Image
-	} else if fetch.HTTP != nil {
+		repository.Url = fetch.ImgpkgBundle.Image
+	case fetch.HTTP != nil:
 		repository.Type = Type_HTTP
 		repository.Url = fetch.HTTP.URL
-	} else if fetch.Git != nil {
+	case fetch.Git != nil:
 		repository.Type = Type_GIT
 		repository.Url = fetch.Git.URL
-	} else {
+	default:
 		return nil, fmt.Errorf("the package repository has a fetch directive that is not supported")
 	}
 
