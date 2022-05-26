@@ -29,6 +29,16 @@ For any user-facing installation you should [configure an OAuth2/OIDC provider](
 ```bash
 kubectl create --namespace default serviceaccount kubeapps-operator
 kubectl create clusterrolebinding kubeapps-operator --clusterrole=cluster-admin --serviceaccount=default:kubeapps-operator
+cat <<EOF | kubectl apply -f -
+apiVersion: v1
+kind: Secret
+metadata:
+  name: kubeapps-operator-token
+  namespace: default
+  annotations:
+    kubernetes.io/service-account.name: kubeapps-operator
+type: kubernetes.io/service-account-token
+EOF
 ```
 
 > **NOTE** It's not recommended to assign users the `cluster-admin` role for Kubeapps production usage. Please refer to the [Access Control](../howto/access-control.md) documentation to configure fine-grained access control for users.
@@ -38,7 +48,7 @@ To retrieve the token,
 ### On Linux/macOS
 
 ```bash
-kubectl get --namespace default secret $(kubectl get --namespace default serviceaccount kubeapps-operator -o jsonpath='{range .secrets[*]}{.name}{"\n"}{end}' | grep kubeapps-operator-token) -o jsonpath='{.data.token}' -o go-template='{{.data.token | base64decode}}' && echo
+kubectl get --namespace default secret kubeapps-operator-token -o jsonpath='{.data.token}' -o go-template='{{.data.token | base64decode}}' && echo
 ```
 
 ### On Windows
@@ -48,7 +58,7 @@ kubectl get --namespace default secret $(kubectl get --namespace default service
 Open a Powershell terminal and run:
 
 ```powershell
-[Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String($(kubectl get --namespace default secret $(kubectl get --namespace default serviceaccount kubeapps-operator -o jsonpath='{.secrets[].name}') -o jsonpath='{.data.token}')))
+[Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String($(kubectl get --namespace default secret kubeapps-operator-token -o jsonpath='{.data.token}')))
 ```
 
 #### Using CMD
@@ -57,13 +67,8 @@ Create a file called `GetDashToken.cmd` with the following lines in it:
 
 ```bat
 @ECHO OFF
-REM Get the Service Account
-kubectl get --namespace default serviceaccount kubeapps-operator -o jsonpath={.secrets[].name} > s.txt
-SET /p ks=<s.txt
-DEL s.txt
-
 REM Get the Base64 encoded token
-kubectl get --namespace default secret %ks% -o jsonpath={.data.token} > b64.txt
+kubectl get --namespace default secret kubeapps-operator-token -o jsonpath={.data.token} > b64.txt
 
 REM Decode The Token
 DEL token.txt
