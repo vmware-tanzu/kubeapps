@@ -5,6 +5,7 @@ package main
 
 import (
 	"context"
+
 	apprepov1alpha1 "github.com/vmware-tanzu/kubeapps/cmd/apprepository-controller/pkg/apis/apprepository/v1alpha1"
 	corev1 "github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
 	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/plugins/helm/packages/v1alpha1"
@@ -35,11 +36,13 @@ type HelmRepository struct {
 	customDetails *v1alpha1.RepositoryCustomDetails
 }
 
+var ValidRepoTypes = []string{HelmRepoType, OCIRepoType}
+
 func (s *Server) newRepo(ctx context.Context, repo *HelmRepository) (*corev1.PackageRepositoryReference, error) {
 	if repo.url == "" {
 		return nil, status.Errorf(codes.InvalidArgument, "repository url may not be empty")
 	}
-	if repo.repoType == "" || !slices.Contains(getValidRepoTypes(), repo.repoType) {
+	if repo.repoType == "" || !slices.Contains(ValidRepoTypes, repo.repoType) {
 		return nil, status.Errorf(codes.InvalidArgument, "repository type [%s] not supported", repo.repoType)
 	}
 
@@ -105,10 +108,6 @@ func (s *Server) newRepo(ctx context.Context, repo *HelmRepository) (*corev1.Pac
 			Plugin:     GetPluginDetail(),
 		}, nil
 	}
-}
-
-func getValidRepoTypes() []string {
-	return []string{HelmRepoType, OCIRepoType}
 }
 
 func newHelmRepoCrd(repo *HelmRepository, secret *k8scorev1.Secret) (*apprepov1alpha1.AppRepository, error) {
