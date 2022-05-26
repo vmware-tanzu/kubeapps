@@ -4,12 +4,14 @@
 package main
 
 import (
+	"bytes"
 	"crypto/subtle"
 	"encoding/base64"
 	"fmt"
 	appRepov1 "github.com/vmware-tanzu/kubeapps/cmd/apprepository-controller/pkg/apis/apprepository/v1alpha1"
 	corev1 "github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
 	plugins "github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/core/plugins/v1alpha1"
+	httpclient "github.com/vmware-tanzu/kubeapps/pkg/http-client"
 	"io/ioutil"
 	apiv1 "k8s.io/api/core/v1"
 	apiextv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
@@ -100,6 +102,19 @@ func newAuthTokenSecret(name, namespace, token string) *apiv1.Secret {
 	}
 }
 
+func newAuthDockerSecret(name, namespace, jsonData string) *apiv1.Secret {
+	return &apiv1.Secret{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      name,
+			Namespace: namespace,
+		},
+		Type: apiv1.SecretTypeDockerConfigJson,
+		Data: map[string][]byte{
+			".dockerconfigjson": []byte(jsonData),
+		},
+	}
+}
+
 func tlsAuth(pub, priv []byte) *corev1.PackageRepositoryAuth {
 	return &corev1.PackageRepositoryAuth{
 		Type: corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_TLS,
@@ -147,6 +162,30 @@ func newTlsSecret(name, namespace string, pub, priv, ca []byte) *apiv1.Secret {
 		s.Data["ca.crt"] = ca
 	}
 	return s
+}
+
+func newRepoHttpClient(responses map[string]*http.Response) newRepoClient {
+	return func(appRepo *appRepov1.AppRepository, secret *apiv1.Secret) (httpclient.Client, error) {
+		return &fakeHTTPClient{
+			responses: responses,
+		}, nil
+	}
+}
+
+type fakeHTTPClient struct {
+	responses map[string]*http.Response
+}
+
+func (f *fakeHTTPClient) Do(h *http.Request) (*http.Response, error) {
+	if resp, ok := f.responses[h.URL.String()]; !ok {
+		return nil, fmt.Errorf("url requested '%s' not found in valid responses %v", h.URL.String(), f.responses)
+	} else {
+		return resp, nil
+	}
+}
+
+func httpResponse(statusCode int, body string) *http.Response {
+	return &http.Response{StatusCode: statusCode, Body: ioutil.NopCloser(bytes.NewReader([]byte(body)))}
 }
 
 func testCert(name string) string {

@@ -6,6 +6,7 @@ package main
 import (
 	"context"
 	"encoding/base64"
+	"encoding/json"
 	"fmt"
 	apprepov1alpha1 "github.com/vmware-tanzu/kubeapps/cmd/apprepository-controller/pkg/apis/apprepository/v1alpha1"
 	corev1 "github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
@@ -16,11 +17,13 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/kubernetes"
+	"k8s.io/kubernetes/pkg/credentialprovider"
 )
 
 const (
 	SecretCaKey         = "ca.crt"
 	SecretAuthHeaderKey = "authorizationHeader"
+	DockerConfigJsonKey = ".dockerconfigjson"
 )
 
 func secretNameForRepo(repoName string) string {
@@ -93,11 +96,33 @@ func newSecretFromTlsConfigAndAuth(repoName types.NamespacedName,
 					secret.Data[SecretAuthHeaderKey] = []byte(authHeaderValue)
 				}
 			} else {
-				return nil, false, status.Errorf(codes.Internal, "Authentication header value is missing")
+				return nil, false, status.Errorf(codes.InvalidArgument, "Authentication header value is missing")
 			}
-		// TODO(rcastelblanq) Implement Docker config Json type with repo custom data
-		case corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_DOCKER_CONFIG_JSON,
-			corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_TLS:
+		case corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_DOCKER_CONFIG_JSON:
+			if dockerCreds := auth.GetDockerCreds(); dockerCreds != nil {
+				if dockerCreds.Password == RedactedString {
+					isSameSecret = true
+				} else {
+					secret.Type = k8scorev1.SecretTypeDockerConfigJson
+					dockerConfig := &credentialprovider.DockerConfigJSON{
+						Auths: map[string]credentialprovider.DockerConfigEntry{
+							dockerCreds.Server: {
+								Username: dockerCreds.Username,
+								Password: dockerCreds.Password,
+								Email:    dockerCreds.Email,
+							},
+						},
+					}
+					dockerConfigJson, err := json.Marshal(dockerConfig)
+					if err != nil {
+						return nil, false, status.Errorf(codes.InvalidArgument, "Docker credentials are wrong")
+					}
+					secret.Data[DockerConfigJsonKey] = dockerConfigJson
+				}
+			} else {
+				return nil, false, status.Errorf(codes.InvalidArgument, "Docker credentials are missing")
+			}
+		case corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_TLS:
 			return nil, false, status.Errorf(codes.Unimplemented, "Package repository authentication type %q is not supported", auth.Type)
 		case corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_UNSPECIFIED:
 			return nil, true, nil
@@ -142,7 +167,16 @@ func newAppRepositoryAuth(secret *k8scorev1.Secret,
 				return nil, status.Errorf(codes.InvalidArgument, "Authentication header is missing")
 			}
 		case corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_DOCKER_CONFIG_JSON:
-			return nil, status.Errorf(codes.Unimplemented, "Package repository authentication type %q is not supported", auth.Type)
+			if _, ok := secret.Data[DockerConfigJsonKey]; ok {
+				appRepoAuth.Header = &apprepov1alpha1.AppRepositoryAuthHeader{
+					SecretKeyRef: k8scorev1.SecretKeySelector{
+						Key: DockerConfigJsonKey,
+						LocalObjectReference: k8scorev1.LocalObjectReference{
+							Name: secret.Name,
+						},
+					},
+				}
+			}
 		case corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_UNSPECIFIED:
 			return nil, nil
 		default:
@@ -156,18 +190,12 @@ func newAppRepositoryAuth(secret *k8scorev1.Secret,
 func createKubeappsManagedRepoSecret(
 	ctx context.Context,
 	typedClient kubernetes.Interface,
-	repoName types.NamespacedName,
-	tlsConfig *corev1.PackageRepositoryTlsConfig,
-	auth *corev1.PackageRepositoryAuth) (*k8scorev1.Secret, error) {
-
-	secret, _, err := newSecretFromTlsConfigAndAuth(repoName, tlsConfig, auth)
-	if err != nil {
-		return nil, err
-	}
+	namespace string,
+	secret *k8scorev1.Secret) (*k8scorev1.Secret, error) {
 
 	if secret != nil {
 		// create a secret first, if applicable
-		if secret, err = typedClient.CoreV1().Secrets(repoName.Namespace).Create(ctx, secret, metav1.CreateOptions{}); err != nil {
+		if secret, err := typedClient.CoreV1().Secrets(namespace).Create(ctx, secret, metav1.CreateOptions{}); err != nil {
 			return nil, statuserror.FromK8sError("create", "secret", secret.GetName(), err)
 		}
 	}
@@ -232,8 +260,10 @@ func validateUserManagedRepoSecret(
 					if secret.Data[SecretAuthHeaderKey] == nil {
 						return nil, status.Errorf(codes.Internal, "Specified secret [%s] missing key '%s'", secretRef, SecretAuthHeaderKey)
 					}
-				// TODO(rcastelblanq) Implement PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_DOCKER_CONFIG_JSON
-				// TODO(rcastelblanq) Implement PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_TLS
+				case corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_DOCKER_CONFIG_JSON:
+					if secret.Data[DockerConfigJsonKey] == nil {
+						return nil, status.Errorf(codes.Internal, "Specified secret [%s] missing key '%s'", secretRef, DockerConfigJsonKey)
+					}
 				default:
 					return nil, status.Errorf(codes.Internal, "Package repository authentication type %q is not supported", auth.Type)
 				}

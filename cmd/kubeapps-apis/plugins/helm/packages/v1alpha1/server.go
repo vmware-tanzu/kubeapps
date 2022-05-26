@@ -9,6 +9,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/helm/packages/v1alpha1/common"
+	httpclient "github.com/vmware-tanzu/kubeapps/pkg/http-client"
 	"net/url"
 	"os"
 	"path"
@@ -57,6 +58,7 @@ const (
 )
 
 type createRelease func(*action.Configuration, string, string, string, *chart.Chart, map[string]string, int32) (*release.Release, error)
+type newRepoClient func(appRepo *appRepov1.AppRepository, secret *corek8sv1.Secret) (httpclient.Client, error)
 
 // Server implements the helm packages v1alpha1 interface.
 type Server struct {
@@ -73,6 +75,7 @@ type Server struct {
 	createReleaseFunc        createRelease
 	kubeappsCluster          string // Specifies the cluster on which Kubeapps is installed.
 	pluginConfig             *common.HelmPluginConfig
+	repoClientGetter         newRepoClient
 }
 
 // NewServer returns a Server automatically configured with a function to obtain
@@ -132,6 +135,7 @@ func NewServer(configGetter core.KubernetesConfigGetter, globalPackagingCluster 
 		chartClientFactory:       &chartutils.ChartClientFactory{},
 		pluginConfig:             pluginConfig,
 		createReleaseFunc:        agent.CreateRelease,
+		repoClientGetter:         newRepositoryClient,
 	}
 }
 
@@ -1023,8 +1027,27 @@ func (s *Server) AddPackageRepository(ctx context.Context, request *corev1.AddPa
 		name.Namespace = s.globalPackagingNamespace
 	}
 
-	if repoRef, err := s.newRepo(ctx, name, request.GetUrl(), request.GetType(), request.GetDescription(),
-		request.GetInterval(), request.GetTlsConfig(), request.GetAuth()); err != nil {
+	// Get Helm-specific values
+	var customDetails *helmv1.RepositoryCustomDetails
+	if request.CustomDetail != nil {
+		customDetails = &helmv1.RepositoryCustomDetails{}
+		if err := request.CustomDetail.UnmarshalTo(customDetails); err != nil {
+			return nil, status.Errorf(codes.InvalidArgument, "customDetails could not be parsed: [%v]", request.CustomDetail)
+		}
+		log.Infof("+helm customDetails [%v]", customDetails)
+	}
+
+	helmRepo := &HelmRepository{
+		name:          name,
+		url:           request.GetUrl(),
+		repoType:      request.GetType(),
+		description:   request.GetDescription(),
+		interval:      request.GetInterval(),
+		tlsConfig:     request.GetTlsConfig(),
+		auth:          request.GetAuth(),
+		customDetails: customDetails,
+	}
+	if repoRef, err := s.newRepo(ctx, helmRepo); err != nil {
 		return nil, err
 	} else {
 		return &corev1.AddPackageRepositoryResponse{PackageRepoRef: repoRef}, nil
