@@ -4,7 +4,7 @@ This document defines the project governance for Kubeapps.
 
 ## Overview
 
-**Kubeapps**, an open-source project, is committed to building an open, inclusive, productive and self-governing open source community involved to simplifying how applications are deployed and managed in Kubernetes clusters. The community is governed by this document to define how the community should work together to achieve this goal.
+**Kubeapps**, an open-source project, is committed to building an open, inclusive, productive and self-governing open source community focused on simplifying how applications are deployed and managed in Kubernetes clusters. The community is governed by this document to define how the community should work together to achieve this goal.
 
 ## Code of Conduct
 
@@ -41,10 +41,11 @@ Lazy consensus does not apply to the process of:
 ## Proposal Process
 
 The proposal process is defined [here](./site/content/docs/latest/reference/proposals/proposals.md).
+
 ## Updating Governance
 
 All substantive changes in Governance require a supermajority agreement by all [maintainers](./MAINTAINERS.md).
 
 ## Credits
 
-Sections of this documents have been borrowed from [Velero](https://github.com/vmware-tanzu/velero) project.
+Sections of this document have been borrowed from [Velero](https://github.com/vmware-tanzu/velero) and [Pinniped](https://github.com/vmware-tanzu/pinniped) projects.

@@ -41,14 +41,14 @@ To track the proposal the following states are defined:
 1. Author creates a ["Proposal request"](https://github.com/vmware-tanzu/kubeapps/issues/new?assignees=&labels=kind%2Fproposal&template=proposal-request.md&title=).
 2. Author adds the proposal by creating a PR in draft mode (authors can save their work until ready):
    - this PR must include a markdown file in the root of the [proposals](./) folder, and
-   - this PR must reference the "Proposal request" (by adding the github ID).
-3. When the author elaborates the proposal sufficiently and consider ready to be reviewed:
+   - this PR must reference the "Proposal request" (by adding the GitHub ID).
+3. When the author elaborates the proposal sufficiently and considers ready to be reviewed:
    - change the status of the "Proposal request" to `in-review`, and
    - mark the PR as "Ready for Review".
 4. The community reviews the proposal by adding PR reviews in order to mature/converge on the proposal.
 5. When the maintainers reach consensus or supermajority to accept a proposal, they:
    - change the status of the "Proposal request" to `accepted`,
-   - add the Engineering Decission Record (EDR) to the proposal (in the markdown file) including the following topics:
+   - add the Engineering Decision Record (EDR) to the proposal (in the markdown file) including the following topics:
      1. _considered options_,
      2. _pros and cons_,
      3. _decision drivers_, and
@@ -57,21 +57,22 @@ To track the proposal the following states are defined:
    - code implementation PRs are submitted separately to implement the solution.
 6. During implementation of an accepted proposal:
    - as each implementation PR is created, the "Proposal request" should be updated to link to the new implementation PR, and
-   - when all implementation PRs are merged, the "Proposal Request" should be updated to have status `implemented`, to list all the related PRs, and then, the "Proposal request" should be closed.
+   - when all the implementation PRs are merged, the "Proposal Request" should be updated to the `implemented` status, to list all the related PRs, and then, the "Proposal request" should be closed.
+   - The proposal file (.md file) should be updated by including the version where the proposal was released.
    - If it is discovered that significant unanticipated changes are needed to the proposal, then the implementation work should be paused and the proposal should be updated with the new details to be reviewed by the maintainers again before resuming implementation.
 7. When the maintainers do not reach consensus or supermajority, then the proposal is rejected, and they:
-   - may mark the status of the "Proposal request" to `rejected`,
+   - may mark the status of the "Proposal request" as `rejected`,
    - close the PR with a note explaining the rejection, and
    - close the "Proposal request".
 8. Rejected proposal PRs (and the corresponding "Proposal request") may be reopened and moved back to `in-review` if there are material changes to the proposal which address the reasons for rejection.
 
 ## Proposal Review
 
-Once a proposal PR marked as "Ready for Review", the community and all Kubeapps maintainers will review the proposal. The goal of the review is to gain an understanding of the problem being solved and the design of the proposed solution.
+Once a proposal PR is marked as "Ready for Review", the community and all Kubeapps maintainers shall review the proposal. The goal of the review is to gain an understanding of the problem being solved and the design of the proposed solution.
 
 Maintainers will consider all aspects of the proposed problem and solution, including but not limited to:
 
-- Is the problem within scope for the project?
+- Is the problem within the scope of the project?
 - Would the additional future cost of maintenance imposed by an implementation of the solution justify solving the problem?
 - Is the solution reasonably consistent with the rest of the project?
 - How does the solution impact the usability, security, scalability, performance, observability, and reliability of Kubeapps?
@@ -81,7 +82,7 @@ Maintainers will consider all aspects of the proposed problem and solution, incl
 
 ## Maintenance of Accepted Proposal Documents
 
-Proposal documents reflect a point-in-time design and decision. Once approved, they become historical documents, not living documents. There is no expectation that they will be maintained in the future. Instead, significant changes to a feature which came from a previous proposal should be proposed as a fresh proposal. New proposals should link to
+Proposal documents reflect a point-in-time design and decision. Once approved, they become historical documents, not living documents. There is no expectation that they will be maintained in the future. Instead, significant changes to a feature that came from a previous proposal should be proposed as a fresh proposal. New proposals should link to
 previous proposals for historical context when appropriate.
 
 ## Getting Help with the Proposal Process
