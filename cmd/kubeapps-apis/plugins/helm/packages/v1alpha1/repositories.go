@@ -23,12 +23,14 @@ const (
 	RedactedString = "REDACTED"
 )
 
+var ValidRepoTypes = []string{HelmRepoType, OCIRepoType}
+
 func (s *Server) newRepo(ctx context.Context, targetName types.NamespacedName, url string, repoType string, description string, interval uint32,
 	tlsConfig *corev1.PackageRepositoryTlsConfig, auth *corev1.PackageRepositoryAuth) (*corev1.PackageRepositoryReference, error) {
 	if url == "" {
 		return nil, status.Errorf(codes.InvalidArgument, "repository url may not be empty")
 	}
-	if repoType == "" || !slices.Contains(getValidRepoTypes(), repoType) {
+	if repoType == "" || !slices.Contains(ValidRepoTypes, repoType) {
 		return nil, status.Errorf(codes.InvalidArgument, "repository type [%s] not supported", repoType)
 	}
 
@@ -75,10 +77,6 @@ func (s *Server) newRepo(ctx context.Context, targetName types.NamespacedName, u
 			Plugin:     GetPluginDetail(),
 		}, nil
 	}
-}
-
-func getValidRepoTypes() []string {
-	return []string{HelmRepoType, OCIRepoType}
 }
 
 func newHelmRepoCrd(targetName types.NamespacedName,

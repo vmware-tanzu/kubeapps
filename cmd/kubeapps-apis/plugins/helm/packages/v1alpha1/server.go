@@ -998,7 +998,7 @@ func (s *Server) GetInstalledPackageResourceRefs(ctx context.Context, request *c
 }
 
 func (s *Server) AddPackageRepository(ctx context.Context, request *corev1.AddPackageRepositoryRequest) (*corev1.AddPackageRepositoryResponse, error) {
-	log.Infof("+helm AddPackageRepository [%v]", request)
+	log.Infof("+helm AddPackageRepository '%s' pointing to '%s'", request.Name, request.Url)
 	if request == nil {
 		return nil, status.Errorf(codes.InvalidArgument, "no request provided")
 	}
@@ -1016,11 +1016,16 @@ func (s *Server) AddPackageRepository(ctx context.Context, request *corev1.AddPa
 	if request.Name == "" {
 		return nil, status.Errorf(codes.InvalidArgument, "no package repository Name provided")
 	}
-	name := types.NamespacedName{Name: request.Name}
-	if request.GetNamespaceScoped() {
-		name.Namespace = request.Context.Namespace
-	} else {
-		name.Namespace = s.globalPackagingNamespace
+	namespace := request.GetContext().GetNamespace()
+	if namespace == "" {
+		namespace = s.globalPackagingNamespace
+	}
+	if request.GetNamespaceScoped() != (namespace != s.globalPackagingNamespace) {
+		return nil, status.Errorf(codes.InvalidArgument, "Namespace Scope is inconsistent with the provided Namespace")
+	}
+	name := types.NamespacedName{
+		Name:      request.Name,
+		Namespace: namespace,
 	}
 
 	if repoRef, err := s.newRepo(ctx, name, request.GetUrl(), request.GetType(), request.GetDescription(),
