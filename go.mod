@@ -48,7 +48,7 @@ require (
 	github.com/disintegration/imaging v1.6.2
 	github.com/distribution/distribution v2.8.1+incompatible
 	github.com/fluxcd/helm-controller/api v0.21.0
-	github.com/fluxcd/pkg/apis/meta v0.14.0
+	github.com/fluxcd/pkg/apis/meta v0.14.1
 	github.com/fluxcd/source-controller/api v0.24.4
 	github.com/go-redis/redis/v8 v8.11.5
 	github.com/go-redis/redismock/v8 v8.0.6
@@ -59,7 +59,7 @@ require (
 	github.com/improbable-eng/grpc-web v0.15.0
 	github.com/itchyny/gojq v0.12.7
 	github.com/jinzhu/copier v0.3.5
-	github.com/k14s/kapp v0.47.0
+	github.com/k14s/kapp v0.48.0
 	github.com/lib/pq v1.10.6
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/opencontainers/image-spec v1.0.3-0.20211202183452-c5a74bcca799
