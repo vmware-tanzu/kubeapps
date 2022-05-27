@@ -25,8 +25,8 @@ test.describe("Limited user simple deployments", () => {
 
     // Add new repo
     const repoName = utils.getRandomName("repo-09");
-    console.log(`Creating repository "${repoName}"`);
-    await page.click('cds-button:has-text("Add App Repository")');
+    console.log(`Creating package repository "${repoName}"`);
+    await page.click('cds-button:has-text("Add Package Repository")');
     await page.fill("input#kubeapps-repo-name", repoName);
     await page.fill(
       "input#kubeapps-repo-url",
