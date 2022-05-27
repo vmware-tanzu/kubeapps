@@ -1047,13 +1047,12 @@ func RegisterPackagesServiceHandlerServer(ctx context.Context, mux *runtime.Serv
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		var err error
-		ctx, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/kubeappsapis.core.packages.v1alpha1.PackagesService/GetAvailablePackageSummaries", runtime.WithHTTPPathPattern("/core/packages/v1alpha1/availablepackages"))
+		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/kubeappsapis.core.packages.v1alpha1.PackagesService/GetAvailablePackageSummaries", runtime.WithHTTPPathPattern("/core/packages/v1alpha1/availablepackages"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := local_request_PackagesService_GetAvailablePackageSummaries_0(ctx, inboundMarshaler, server, req, pathParams)
+		resp, md, err := local_request_PackagesService_GetAvailablePackageSummaries_0(rctx, inboundMarshaler, server, req, pathParams)
 		md.HeaderMD, md.TrailerMD = metadata.Join(md.HeaderMD, stream.Header()), metadata.Join(md.TrailerMD, stream.Trailer())
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
@@ -1071,13 +1070,12 @@ func RegisterPackagesServiceHandlerServer(ctx context.Context, mux *runtime.Serv
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		var err error
-		ctx, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/kubeappsapis.core.packages.v1alpha1.PackagesService/GetAvailablePackageDetail", runtime.WithHTTPPathPattern("/core/packages/v1alpha1/availablepackages/plugin/{available_package_ref.plugin.name}/{available_package_ref.plugin.version}/c/{available_package_ref.context.cluster}/ns/{available_package_ref.context.namespace}/{available_package_ref.identifier=**}"))
+		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/kubeappsapis.core.packages.v1alpha1.PackagesService/GetAvailablePackageDetail", runtime.WithHTTPPathPattern("/core/packages/v1alpha1/availablepackages/plugin/{available_package_ref.plugin.name}/{available_package_ref.plugin.version}/c/{available_package_ref.context.cluster}/ns/{available_package_ref.context.namespace}/{available_package_ref.identifier=**}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := local_request_PackagesService_GetAvailablePackageDetail_0(ctx, inboundMarshaler, server, req, pathParams)
+		resp, md, err := local_request_PackagesService_GetAvailablePackageDetail_0(rctx, inboundMarshaler, server, req, pathParams)
 		md.HeaderMD, md.TrailerMD = metadata.Join(md.HeaderMD, stream.Header()), metadata.Join(md.TrailerMD, stream.Trailer())
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
@@ -1095,13 +1093,12 @@ func RegisterPackagesServiceHandlerServer(ctx context.Context, mux *runtime.Serv
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		var err error
-		ctx, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/kubeappsapis.core.packages.v1alpha1.PackagesService/GetAvailablePackageVersions", runtime.WithHTTPPathPattern("/core/packages/v1alpha1/availablepackages/plugin/{available_package_ref.plugin.name}/{available_package_ref.plugin.version}/c/{available_package_ref.context.cluster}/ns/{available_package_ref.context.namespace}/{available_package_ref.identifier=**}/versions"))
+		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/kubeappsapis.core.packages.v1alpha1.PackagesService/GetAvailablePackageVersions", runtime.WithHTTPPathPattern("/core/packages/v1alpha1/availablepackages/plugin/{available_package_ref.plugin.name}/{available_package_ref.plugin.version}/c/{available_package_ref.context.cluster}/ns/{available_package_ref.context.namespace}/{available_package_ref.identifier=**}/versions"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := local_request_PackagesService_GetAvailablePackageVersions_0(ctx, inboundMarshaler, server, req, pathParams)
+		resp, md, err := local_request_PackagesService_GetAvailablePackageVersions_0(rctx, inboundMarshaler, server, req, pathParams)
 		md.HeaderMD, md.TrailerMD = metadata.Join(md.HeaderMD, stream.Header()), metadata.Join(md.TrailerMD, stream.Trailer())
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
@@ -1119,13 +1116,12 @@ func RegisterPackagesServiceHandlerServer(ctx context.Context, mux *runtime.Serv
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		var err error
-		ctx, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/kubeappsapis.core.packages.v1alpha1.PackagesService/GetInstalledPackageSummaries", runtime.WithHTTPPathPattern("/core/packages/v1alpha1/installedpackages"))
+		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/kubeappsapis.core.packages.v1alpha1.PackagesService/GetInstalledPackageSummaries", runtime.WithHTTPPathPattern("/core/packages/v1alpha1/installedpackages"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := local_request_PackagesService_GetInstalledPackageSummaries_0(ctx, inboundMarshaler, server, req, pathParams)
+		resp, md, err := local_request_PackagesService_GetInstalledPackageSummaries_0(rctx, inboundMarshaler, server, req, pathParams)
 		md.HeaderMD, md.TrailerMD = metadata.Join(md.HeaderMD, stream.Header()), metadata.Join(md.TrailerMD, stream.Trailer())
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
@@ -1143,13 +1139,12 @@ func RegisterPackagesServiceHandlerServer(ctx context.Context, mux *runtime.Serv
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		var err error
-		ctx, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/kubeappsapis.core.packages.v1alpha1.PackagesService/GetInstalledPackageDetail", runtime.WithHTTPPathPattern("/core/packages/v1alpha1/installedpackages/plugin/{installed_package_ref.plugin.name}/{installed_package_ref.plugin.version}/c/{installed_package_ref.context.cluster}/ns/{installed_package_ref.context.namespace}/{installed_package_ref.identifier}"))
+		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/kubeappsapis.core.packages.v1alpha1.PackagesService/GetInstalledPackageDetail", runtime.WithHTTPPathPattern("/core/packages/v1alpha1/installedpackages/plugin/{installed_package_ref.plugin.name}/{installed_package_ref.plugin.version}/c/{installed_package_ref.context.cluster}/ns/{installed_package_ref.context.namespace}/{installed_package_ref.identifier}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := local_request_PackagesService_GetInstalledPackageDetail_0(ctx, inboundMarshaler, server, req, pathParams)
+		resp, md, err := local_request_PackagesService_GetInstalledPackageDetail_0(rctx, inboundMarshaler, server, req, pathParams)
 		md.HeaderMD, md.TrailerMD = metadata.Join(md.HeaderMD, stream.Header()), metadata.Join(md.TrailerMD, stream.Trailer())
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
@@ -1167,13 +1162,12 @@ func RegisterPackagesServiceHandlerServer(ctx context.Context, mux *runtime.Serv
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		var err error
-		ctx, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/kubeappsapis.core.packages.v1alpha1.PackagesService/CreateInstalledPackage", runtime.WithHTTPPathPattern("/core/packages/v1alpha1/installedpackages"))
+		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/kubeappsapis.core.packages.v1alpha1.PackagesService/CreateInstalledPackage", runtime.WithHTTPPathPattern("/core/packages/v1alpha1/installedpackages"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := local_request_PackagesService_CreateInstalledPackage_0(ctx, inboundMarshaler, server, req, pathParams)
+		resp, md, err := local_request_PackagesService_CreateInstalledPackage_0(rctx, inboundMarshaler, server, req, pathParams)
 		md.HeaderMD, md.TrailerMD = metadata.Join(md.HeaderMD, stream.Header()), metadata.Join(md.TrailerMD, stream.Trailer())
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
@@ -1191,13 +1185,12 @@ func RegisterPackagesServiceHandlerServer(ctx context.Context, mux *runtime.Serv
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		var err error
-		ctx, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/kubeappsapis.core.packages.v1alpha1.PackagesService/UpdateInstalledPackage", runtime.WithHTTPPathPattern("/core/packages/v1alpha1/installedpackages/plugin/{installed_package_ref.plugin.name}/{installed_package_ref.plugin.version}/c/{installed_package_ref.context.cluster}/ns/{installed_package_ref.context.namespace}/{installed_package_ref.identifier}"))
+		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/kubeappsapis.core.packages.v1alpha1.PackagesService/UpdateInstalledPackage", runtime.WithHTTPPathPattern("/core/packages/v1alpha1/installedpackages/plugin/{installed_package_ref.plugin.name}/{installed_package_ref.plugin.version}/c/{installed_package_ref.context.cluster}/ns/{installed_package_ref.context.namespace}/{installed_package_ref.identifier}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := local_request_PackagesService_UpdateInstalledPackage_0(ctx, inboundMarshaler, server, req, pathParams)
+		resp, md, err := local_request_PackagesService_UpdateInstalledPackage_0(rctx, inboundMarshaler, server, req, pathParams)
 		md.HeaderMD, md.TrailerMD = metadata.Join(md.HeaderMD, stream.Header()), metadata.Join(md.TrailerMD, stream.Trailer())
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
@@ -1215,13 +1208,12 @@ func RegisterPackagesServiceHandlerServer(ctx context.Context, mux *runtime.Serv
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		var err error
-		ctx, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/kubeappsapis.core.packages.v1alpha1.PackagesService/DeleteInstalledPackage", runtime.WithHTTPPathPattern("/core/packages/v1alpha1/installedpackages/plugin/{installed_package_ref.plugin.name}/{installed_package_ref.plugin.version}/c/{installed_package_ref.context.cluster}/ns/{installed_package_ref.context.namespace}/{installed_package_ref.identifier}"))
+		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/kubeappsapis.core.packages.v1alpha1.PackagesService/DeleteInstalledPackage", runtime.WithHTTPPathPattern("/core/packages/v1alpha1/installedpackages/plugin/{installed_package_ref.plugin.name}/{installed_package_ref.plugin.version}/c/{installed_package_ref.context.cluster}/ns/{installed_package_ref.context.namespace}/{installed_package_ref.identifier}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := local_request_PackagesService_DeleteInstalledPackage_0(ctx, inboundMarshaler, server, req, pathParams)
+		resp, md, err := local_request_PackagesService_DeleteInstalledPackage_0(rctx, inboundMarshaler, server, req, pathParams)
 		md.HeaderMD, md.TrailerMD = metadata.Join(md.HeaderMD, stream.Header()), metadata.Join(md.TrailerMD, stream.Trailer())
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
@@ -1239,13 +1231,12 @@ func RegisterPackagesServiceHandlerServer(ctx context.Context, mux *runtime.Serv
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		var err error
-		ctx, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/kubeappsapis.core.packages.v1alpha1.PackagesService/GetInstalledPackageResourceRefs", runtime.WithHTTPPathPattern("/core/packages/v1alpha1/installedpackages/plugin/{installed_package_ref.plugin.name}/{installed_package_ref.plugin.version}/c/{installed_package_ref.context.cluster}/ns/{installed_package_ref.context.namespace}/{installed_package_ref.identifier}/resourcerefs"))
+		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/kubeappsapis.core.packages.v1alpha1.PackagesService/GetInstalledPackageResourceRefs", runtime.WithHTTPPathPattern("/core/packages/v1alpha1/installedpackages/plugin/{installed_package_ref.plugin.name}/{installed_package_ref.plugin.version}/c/{installed_package_ref.context.cluster}/ns/{installed_package_ref.context.namespace}/{installed_package_ref.identifier}/resourcerefs"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := local_request_PackagesService_GetInstalledPackageResourceRefs_0(ctx, inboundMarshaler, server, req, pathParams)
+		resp, md, err := local_request_PackagesService_GetInstalledPackageResourceRefs_0(rctx, inboundMarshaler, server, req, pathParams)
 		md.HeaderMD, md.TrailerMD = metadata.Join(md.HeaderMD, stream.Header()), metadata.Join(md.TrailerMD, stream.Trailer())
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
@@ -1302,13 +1293,12 @@ func RegisterPackagesServiceHandlerClient(ctx context.Context, mux *runtime.Serv
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		var err error
-		ctx, err = runtime.AnnotateContext(ctx, mux, req, "/kubeappsapis.core.packages.v1alpha1.PackagesService/GetAvailablePackageSummaries", runtime.WithHTTPPathPattern("/core/packages/v1alpha1/availablepackages"))
+		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/kubeappsapis.core.packages.v1alpha1.PackagesService/GetAvailablePackageSummaries", runtime.WithHTTPPathPattern("/core/packages/v1alpha1/availablepackages"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := request_PackagesService_GetAvailablePackageSummaries_0(ctx, inboundMarshaler, client, req, pathParams)
+		resp, md, err := request_PackagesService_GetAvailablePackageSummaries_0(rctx, inboundMarshaler, client, req, pathParams)
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
@@ -1323,13 +1313,12 @@ func RegisterPackagesServiceHandlerClient(ctx context.Context, mux *runtime.Serv
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		var err error
-		ctx, err = runtime.AnnotateContext(ctx, mux, req, "/kubeappsapis.core.packages.v1alpha1.PackagesService/GetAvailablePackageDetail", runtime.WithHTTPPathPattern("/core/packages/v1alpha1/availablepackages/plugin/{available_package_ref.plugin.name}/{available_package_ref.plugin.version}/c/{available_package_ref.context.cluster}/ns/{available_package_ref.context.namespace}/{available_package_ref.identifier=**}"))
+		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/kubeappsapis.core.packages.v1alpha1.PackagesService/GetAvailablePackageDetail", runtime.WithHTTPPathPattern("/core/packages/v1alpha1/availablepackages/plugin/{available_package_ref.plugin.name}/{available_package_ref.plugin.version}/c/{available_package_ref.context.cluster}/ns/{available_package_ref.context.namespace}/{available_package_ref.identifier=**}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := request_PackagesService_GetAvailablePackageDetail_0(ctx, inboundMarshaler, client, req, pathParams)
+		resp, md, err := request_PackagesService_GetAvailablePackageDetail_0(rctx, inboundMarshaler, client, req, pathParams)
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
@@ -1344,13 +1333,12 @@ func RegisterPackagesServiceHandlerClient(ctx context.Context, mux *runtime.Serv
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		var err error
-		ctx, err = runtime.AnnotateContext(ctx, mux, req, "/kubeappsapis.core.packages.v1alpha1.PackagesService/GetAvailablePackageVersions", runtime.WithHTTPPathPattern("/core/packages/v1alpha1/availablepackages/plugin/{available_package_ref.plugin.name}/{available_package_ref.plugin.version}/c/{available_package_ref.context.cluster}/ns/{available_package_ref.context.namespace}/{available_package_ref.identifier=**}/versions"))
+		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/kubeappsapis.core.packages.v1alpha1.PackagesService/GetAvailablePackageVersions", runtime.WithHTTPPathPattern("/core/packages/v1alpha1/availablepackages/plugin/{available_package_ref.plugin.name}/{available_package_ref.plugin.version}/c/{available_package_ref.context.cluster}/ns/{available_package_ref.context.namespace}/{available_package_ref.identifier=**}/versions"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := request_PackagesService_GetAvailablePackageVersions_0(ctx, inboundMarshaler, client, req, pathParams)
+		resp, md, err := request_PackagesService_GetAvailablePackageVersions_0(rctx, inboundMarshaler, client, req, pathParams)
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
@@ -1365,13 +1353,12 @@ func RegisterPackagesServiceHandlerClient(ctx context.Context, mux *runtime.Serv
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		var err error
-		ctx, err = runtime.AnnotateContext(ctx, mux, req, "/kubeappsapis.core.packages.v1alpha1.PackagesService/GetInstalledPackageSummaries", runtime.WithHTTPPathPattern("/core/packages/v1alpha1/installedpackages"))
+		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/kubeappsapis.core.packages.v1alpha1.PackagesService/GetInstalledPackageSummaries", runtime.WithHTTPPathPattern("/core/packages/v1alpha1/installedpackages"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := request_PackagesService_GetInstalledPackageSummaries_0(ctx, inboundMarshaler, client, req, pathParams)
+		resp, md, err := request_PackagesService_GetInstalledPackageSummaries_0(rctx, inboundMarshaler, client, req, pathParams)
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
@@ -1386,13 +1373,12 @@ func RegisterPackagesServiceHandlerClient(ctx context.Context, mux *runtime.Serv
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		var err error
-		ctx, err = runtime.AnnotateContext(ctx, mux, req, "/kubeappsapis.core.packages.v1alpha1.PackagesService/GetInstalledPackageDetail", runtime.WithHTTPPathPattern("/core/packages/v1alpha1/installedpackages/plugin/{installed_package_ref.plugin.name}/{installed_package_ref.plugin.version}/c/{installed_package_ref.context.cluster}/ns/{installed_package_ref.context.namespace}/{installed_package_ref.identifier}"))
+		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/kubeappsapis.core.packages.v1alpha1.PackagesService/GetInstalledPackageDetail", runtime.WithHTTPPathPattern("/core/packages/v1alpha1/installedpackages/plugin/{installed_package_ref.plugin.name}/{installed_package_ref.plugin.version}/c/{installed_package_ref.context.cluster}/ns/{installed_package_ref.context.namespace}/{installed_package_ref.identifier}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := request_PackagesService_GetInstalledPackageDetail_0(ctx, inboundMarshaler, client, req, pathParams)
+		resp, md, err := request_PackagesService_GetInstalledPackageDetail_0(rctx, inboundMarshaler, client, req, pathParams)
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
@@ -1407,13 +1393,12 @@ func RegisterPackagesServiceHandlerClient(ctx context.Context, mux *runtime.Serv
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		var err error
-		ctx, err = runtime.AnnotateContext(ctx, mux, req, "/kubeappsapis.core.packages.v1alpha1.PackagesService/CreateInstalledPackage", runtime.WithHTTPPathPattern("/core/packages/v1alpha1/installedpackages"))
+		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/kubeappsapis.core.packages.v1alpha1.PackagesService/CreateInstalledPackage", runtime.WithHTTPPathPattern("/core/packages/v1alpha1/installedpackages"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := request_PackagesService_CreateInstalledPackage_0(ctx, inboundMarshaler, client, req, pathParams)
+		resp, md, err := request_PackagesService_CreateInstalledPackage_0(rctx, inboundMarshaler, client, req, pathParams)
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
@@ -1428,13 +1413,12 @@ func RegisterPackagesServiceHandlerClient(ctx context.Context, mux *runtime.Serv
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		var err error
-		ctx, err = runtime.AnnotateContext(ctx, mux, req, "/kubeappsapis.core.packages.v1alpha1.PackagesService/UpdateInstalledPackage", runtime.WithHTTPPathPattern("/core/packages/v1alpha1/installedpackages/plugin/{installed_package_ref.plugin.name}/{installed_package_ref.plugin.version}/c/{installed_package_ref.context.cluster}/ns/{installed_package_ref.context.namespace}/{installed_package_ref.identifier}"))
+		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/kubeappsapis.core.packages.v1alpha1.PackagesService/UpdateInstalledPackage", runtime.WithHTTPPathPattern("/core/packages/v1alpha1/installedpackages/plugin/{installed_package_ref.plugin.name}/{installed_package_ref.plugin.version}/c/{installed_package_ref.context.cluster}/ns/{installed_package_ref.context.namespace}/{installed_package_ref.identifier}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := request_PackagesService_UpdateInstalledPackage_0(ctx, inboundMarshaler, client, req, pathParams)
+		resp, md, err := request_PackagesService_UpdateInstalledPackage_0(rctx, inboundMarshaler, client, req, pathParams)
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
@@ -1449,13 +1433,12 @@ func RegisterPackagesServiceHandlerClient(ctx context.Context, mux *runtime.Serv
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		var err error
-		ctx, err = runtime.AnnotateContext(ctx, mux, req, "/kubeappsapis.core.packages.v1alpha1.PackagesService/DeleteInstalledPackage", runtime.WithHTTPPathPattern("/core/packages/v1alpha1/installedpackages/plugin/{installed_package_ref.plugin.name}/{installed_package_ref.plugin.version}/c/{installed_package_ref.context.cluster}/ns/{installed_package_ref.context.namespace}/{installed_package_ref.identifier}"))
+		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/kubeappsapis.core.packages.v1alpha1.PackagesService/DeleteInstalledPackage", runtime.WithHTTPPathPattern("/core/packages/v1alpha1/installedpackages/plugin/{installed_package_ref.plugin.name}/{installed_package_ref.plugin.version}/c/{installed_package_ref.context.cluster}/ns/{installed_package_ref.context.namespace}/{installed_package_ref.identifier}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := request_PackagesService_DeleteInstalledPackage_0(ctx, inboundMarshaler, client, req, pathParams)
+		resp, md, err := request_PackagesService_DeleteInstalledPackage_0(rctx, inboundMarshaler, client, req, pathParams)
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
@@ -1470,13 +1453,12 @@ func RegisterPackagesServiceHandlerClient(ctx context.Context, mux *runtime.Serv
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		var err error
-		ctx, err = runtime.AnnotateContext(ctx, mux, req, "/kubeappsapis.core.packages.v1alpha1.PackagesService/GetInstalledPackageResourceRefs", runtime.WithHTTPPathPattern("/core/packages/v1alpha1/installedpackages/plugin/{installed_package_ref.plugin.name}/{installed_package_ref.plugin.version}/c/{installed_package_ref.context.cluster}/ns/{installed_package_ref.context.namespace}/{installed_package_ref.identifier}/resourcerefs"))
+		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/kubeappsapis.core.packages.v1alpha1.PackagesService/GetInstalledPackageResourceRefs", runtime.WithHTTPPathPattern("/core/packages/v1alpha1/installedpackages/plugin/{installed_package_ref.plugin.name}/{installed_package_ref.plugin.version}/c/{installed_package_ref.context.cluster}/ns/{installed_package_ref.context.namespace}/{installed_package_ref.identifier}/resourcerefs"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := request_PackagesService_GetInstalledPackageResourceRefs_0(ctx, inboundMarshaler, client, req, pathParams)
+		resp, md, err := request_PackagesService_GetInstalledPackageResourceRefs_0(rctx, inboundMarshaler, client, req, pathParams)
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
