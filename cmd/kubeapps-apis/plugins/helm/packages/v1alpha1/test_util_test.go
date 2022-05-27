@@ -5,7 +5,6 @@ package main
 
 import (
 	"bytes"
-	"crypto/subtle"
 	"encoding/base64"
 	"fmt"
 	appRepov1 "github.com/vmware-tanzu/kubeapps/cmd/apprepository-controller/pkg/apis/apprepository/v1alpha1"
@@ -30,7 +29,6 @@ const (
 	AppRepositoryGroup   = "kubeapps.com"
 	AppRepositoryVersion = "v1alpha1"
 	AppRepositoryApi     = AppRepositoryGroup + "/" + AppRepositoryVersion
-	AppRepositoryKind    = "AppRepository"
 )
 
 // misc global vars that get re-used in multiple tests
@@ -56,10 +54,10 @@ var (
 	}
 )
 
-func repoRef(id, namespace string) *corev1.PackageRepositoryReference {
+func repoRef(id, cluster, namespace string) *corev1.PackageRepositoryReference {
 	return &corev1.PackageRepositoryReference{
 		Context: &corev1.Context{
-			Cluster:   KubeappsCluster,
+			Cluster:   cluster,
 			Namespace: namespace,
 		},
 		Identifier: id,
@@ -67,18 +65,9 @@ func repoRef(id, namespace string) *corev1.PackageRepositoryReference {
 	}
 }
 
-// ref: https://stackoverflow.com/questions/21936332/idiomatic-way-of-requiring-http-basic-auth-in-go
-func basicAuth(handler http.HandlerFunc, username, password, realm string) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		user, pass, ok := r.BasicAuth()
-		if !ok || subtle.ConstantTimeCompare([]byte(user), []byte(username)) != 1 || subtle.ConstantTimeCompare([]byte(pass), []byte(password)) != 1 {
-			w.Header().Set("WWW-Authenticate", `Basic realm="`+realm+`"`)
-			w.WriteHeader(401)
-			w.Write([]byte("Unauthorised.\n"))
-			return
-		}
-		handler(w, r)
-	}
+// these are helpers to compare slices ignoring order
+func lessPackageRepositorySummaryFunc(p1, p2 *corev1.PackageRepositorySummary) bool {
+	return p1.Name < p2.Name
 }
 
 // ref: https://kubernetes.io/docs/concepts/configuration/secret/#basic-authentication-secret
@@ -111,18 +100,6 @@ func newAuthDockerSecret(name, namespace, jsonData string) *apiv1.Secret {
 		Type: apiv1.SecretTypeDockerConfigJson,
 		Data: map[string][]byte{
 			".dockerconfigjson": []byte(jsonData),
-		},
-	}
-}
-
-func tlsAuth(pub, priv []byte) *corev1.PackageRepositoryAuth {
-	return &corev1.PackageRepositoryAuth{
-		Type: corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_TLS,
-		PackageRepoAuthOneOf: &corev1.PackageRepositoryAuth_TlsCertKey{
-			TlsCertKey: &corev1.TlsCertKey{
-				Cert: string(pub),
-				Key:  string(priv),
-			},
 		},
 	}
 }
@@ -190,6 +167,10 @@ func httpResponse(statusCode int, body string) *http.Response {
 
 func testCert(name string) string {
 	return "./testdata/cert/" + name
+}
+
+func testYaml(name string) string {
+	return "./testdata/charts/" + name
 }
 
 // generate-cert.sh script in testdata directory is used to generate these files

@@ -9,6 +9,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/helm/packages/v1alpha1/common"
+	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/pkg/statuserror"
 	httpclient "github.com/vmware-tanzu/kubeapps/pkg/http-client"
 	"net/url"
 	"os"
@@ -66,16 +67,19 @@ type Server struct {
 	// clientGetter is a field so that it can be switched in tests for
 	// a fake client. NewServer() below sets this automatically with the
 	// non-test implementation.
-	clientGetter             clientgetter.ClientGetterFunc
-	globalPackagingNamespace string
-	globalPackagingCluster   string
-	manager                  utils.AssetManager
-	actionConfigGetter       helmActionConfigGetter
-	chartClientFactory       chartutils.ChartClientFactoryInterface
-	createReleaseFunc        createRelease
-	kubeappsCluster          string // Specifies the cluster on which Kubeapps is installed.
-	pluginConfig             *common.HelmPluginConfig
-	repoClientGetter         newRepoClient
+	clientGetter clientgetter.ClientGetterFunc
+	// for interactions with k8s API server in the context of
+	// kubeapps-internal-kubeappsapis service account
+	serviceAccountClientGetter clientgetter.BackgroundClientGetterFunc
+	globalPackagingNamespace   string
+	globalPackagingCluster     string
+	manager                    utils.AssetManager
+	actionConfigGetter         helmActionConfigGetter
+	chartClientFactory         chartutils.ChartClientFactoryInterface
+	createReleaseFunc          createRelease
+	kubeappsCluster            string // Specifies the cluster on which Kubeapps is installed.
+	pluginConfig               *common.HelmPluginConfig
+	repoClientGetter           newRepoClient
 }
 
 // NewServer returns a Server automatically configured with a function to obtain
@@ -117,6 +121,9 @@ func NewServer(configGetter core.KubernetesConfigGetter, globalPackagingCluster 
 	scheme := runtime.NewScheme()
 	appRepov1.AddToScheme(scheme)
 
+	backgroundClientGetter := clientgetter.NewBackgroundClientGetter(
+		configGetter, clientgetter.Options{Scheme: scheme})
+
 	return &Server{
 		clientGetter: clientgetter.NewClientGetter(configGetter, clientgetter.Options{Scheme: scheme}),
 		actionConfigGetter: func(ctx context.Context, pkgContext *corev1.Context) (*action.Configuration, error) {
@@ -129,13 +136,14 @@ func NewServer(configGetter core.KubernetesConfigGetter, globalPackagingCluster 
 			fn := clientgetter.NewHelmActionConfigGetter(configGetter, cluster)
 			return fn(ctx, pkgContext.GetNamespace())
 		},
-		manager:                  manager,
-		globalPackagingNamespace: globalReposNamespace,
-		globalPackagingCluster:   globalPackagingCluster,
-		chartClientFactory:       &chartutils.ChartClientFactory{},
-		pluginConfig:             pluginConfig,
-		createReleaseFunc:        agent.CreateRelease,
-		repoClientGetter:         newRepositoryClient,
+		serviceAccountClientGetter: backgroundClientGetter,
+		manager:                    manager,
+		globalPackagingNamespace:   globalReposNamespace,
+		globalPackagingCluster:     globalPackagingCluster,
+		chartClientFactory:         &chartutils.ChartClientFactory{},
+		pluginConfig:               pluginConfig,
+		createReleaseFunc:          agent.CreateRelease,
+		repoClientGetter:           newRepositoryClient,
 	}
 }
 
@@ -789,12 +797,11 @@ func (s *Server) UpdateInstalledPackage(ctx context.Context, request *corev1.Upd
 	}, nil
 }
 
-// GetAppRepoAndRelatedSecrets retrieves the given repo from its namespace
-// Depending on the repo namespace and the
-func (s *Server) getAppRepoAndRelatedSecrets(ctx context.Context, appRepoName, appRepoNamespace string) (*appRepov1.AppRepository, *corek8sv1.Secret, *corek8sv1.Secret, error) {
+// getAppRepoAndRelatedSecrets retrieves the given repo from its cluster and namespace
+func (s *Server) getAppRepoAndRelatedSecrets(ctx context.Context, cluster, appRepoName, appRepoNamespace string) (*appRepov1.AppRepository, *corek8sv1.Secret, *corek8sv1.Secret, error) {
 
 	// We currently get app repositories on the kubeapps cluster only.
-	typedClient, dynClient, err := s.GetClients(ctx, s.globalPackagingCluster)
+	typedClient, dynClient, err := s.GetClients(ctx, cluster)
 	if err != nil {
 		return nil, nil, nil, err
 	}
@@ -845,7 +852,7 @@ func (s *Server) getAppRepoAndRelatedSecrets(ctx context.Context, appRepoName, a
 // Mainly to DRY up similar code in the create and update methods.
 func (s *Server) fetchChartWithRegistrySecrets(ctx context.Context, chartDetails *chartutils.Details, client kubernetes.Interface) (*chart.Chart, map[string]string, error) {
 	// Most of the existing code that we want to reuse is based on having a typed AppRepository.
-	appRepo, caCertSecret, authSecret, err := s.getAppRepoAndRelatedSecrets(ctx, chartDetails.AppRepositoryResourceName, chartDetails.AppRepositoryResourceNamespace)
+	appRepo, caCertSecret, authSecret, err := s.getAppRepoAndRelatedSecrets(ctx, s.globalPackagingCluster, chartDetails.AppRepositoryResourceName, chartDetails.AppRepositoryResourceNamespace)
 	if err != nil {
 		return nil, nil, status.Errorf(codes.Internal, "Unable to fetch app repo %q from namespace %q: %v", chartDetails.AppRepositoryResourceName, chartDetails.AppRepositoryResourceNamespace, err)
 	}
@@ -1006,15 +1013,12 @@ func (s *Server) AddPackageRepository(ctx context.Context, request *corev1.AddPa
 	if request == nil {
 		return nil, status.Errorf(codes.InvalidArgument, "no request provided")
 	}
-	if request.Context == nil || request.Context.Namespace == "" {
-		return nil, status.Errorf(codes.InvalidArgument, "no request Context namespace provided")
+	if request.Context == nil {
+		return nil, status.Errorf(codes.InvalidArgument, "no request Context provided")
 	}
 	cluster := request.GetContext().GetCluster()
-	if cluster != "" && cluster != s.kubeappsCluster {
-		return nil, status.Errorf(
-			codes.Unimplemented,
-			"not supported yet: request.Context.Cluster: [%v]",
-			request.Context.Cluster)
+	if cluster == "" {
+		return nil, status.Errorf(codes.InvalidArgument, "no cluster specified: request.Context.Cluster: [%v]", request.Context.Cluster)
 	}
 
 	if request.Name == "" {
@@ -1059,8 +1063,8 @@ func (s *Server) AddPackageRepository(ctx context.Context, request *corev1.AddPa
 	}
 }
 
-func (s *Server) getClient(ctx context.Context, namespace string) (ctrlclient.Client, error) {
-	client, err := s.clientGetter.ControllerRuntime(ctx, s.kubeappsCluster)
+func (s *Server) getClient(ctx context.Context, cluster string, namespace string) (ctrlclient.Client, error) {
+	client, err := s.clientGetter.ControllerRuntime(ctx, cluster)
 	if err != nil {
 		return nil, err
 	}
@@ -1068,23 +1072,115 @@ func (s *Server) getClient(ctx context.Context, namespace string) (ctrlclient.Cl
 }
 
 func (s *Server) GetPackageRepositoryDetail(ctx context.Context, request *corev1.GetPackageRepositoryDetailRequest) (*corev1.GetPackageRepositoryDetailResponse, error) {
-	// TODO(rcastelblanq) WIP
-	return nil, nil
+	if request == nil || request.PackageRepoRef == nil {
+		return nil, status.Errorf(codes.InvalidArgument, "no request PackageRepoRef provided")
+	}
+	repoRef := request.GetPackageRepoRef()
+	if repoRef.GetContext() == nil || repoRef.GetContext().GetCluster() == "" || repoRef.GetContext().GetNamespace() == "" {
+		return nil, status.Errorf(codes.InvalidArgument, "no valid context provided")
+	}
+	log.Infof("+helm GetPackageRepositoryDetail '%s' in context [%v]", repoRef.Identifier, repoRef.Context)
+
+	cluster := repoRef.GetContext().GetCluster()
+	namespace := repoRef.GetContext().GetNamespace()
+	name := repoRef.GetIdentifier()
+
+	log.Infof("+helm GetPackageRepositoryDetail (cluster=%s, namespace=%s, name=%s)", cluster, namespace, name)
+
+	// Retrieve repository
+	appRepo, caCertSecret, authSecret, err := s.getAppRepoAndRelatedSecrets(ctx, cluster, name, namespace)
+	if err != nil {
+		return nil, statuserror.FromK8sError("get", AppRepositoryKind, name, err)
+	}
+
+	// Map to target struct
+	repositoryDetail, err := s.mapToPackageRepositoryDetail(appRepo, cluster, namespace, caCertSecret, authSecret)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "unable to convert the AppRepository: %v", err)
+	}
+
+	// response
+	response := &corev1.GetPackageRepositoryDetailResponse{
+		Detail: repositoryDetail,
+	}
+
+	return response, nil
 }
 
 func (s *Server) GetPackageRepositorySummaries(ctx context.Context, request *corev1.GetPackageRepositorySummariesRequest) (*corev1.GetPackageRepositorySummariesResponse, error) {
-	// TODO(rcastelblanq) WIP
-	return nil, nil
+	log.Infof("+helm GetPackageRepositorySummaries [%v]", request)
+	if request.GetContext() == nil || request.GetContext().GetCluster() == "" {
+		return nil, status.Errorf(codes.InvalidArgument, "no valid context provided")
+	}
+
+	if summaries, err := s.repoSummaries(ctx, request.GetContext().GetCluster(), request.GetContext().GetNamespace()); err != nil {
+		return nil, err
+	} else {
+		return &corev1.GetPackageRepositorySummariesResponse{
+			PackageRepositorySummaries: summaries,
+		}, nil
+	}
 }
 
 func (s *Server) UpdatePackageRepository(ctx context.Context, request *corev1.UpdatePackageRepositoryRequest) (*corev1.UpdatePackageRepositoryResponse, error) {
-	// TODO(rcastelblanq) WIP
-	return nil, nil
+	if request == nil || request.PackageRepoRef == nil {
+		return nil, status.Errorf(codes.InvalidArgument, "no request PackageRepoRef provided")
+	}
+	repoRef := request.GetPackageRepoRef()
+	if repoRef.GetContext() == nil || repoRef.GetContext().GetCluster() == "" || repoRef.GetContext().GetNamespace() == "" {
+		return nil, status.Errorf(codes.InvalidArgument, "no valid context provided")
+	}
+	log.Infof("+helm UpdatePackageRepository '%s' in context [%v]", repoRef.Identifier, repoRef.Context)
+
+	// Get Helm-specific values
+	var customDetails *helmv1.RepositoryCustomDetails
+	if request.CustomDetail != nil {
+		customDetails = &helmv1.RepositoryCustomDetails{}
+		if err := request.CustomDetail.UnmarshalTo(customDetails); err != nil {
+			return nil, status.Errorf(codes.InvalidArgument, "customDetails could not be parsed: [%v]", request.CustomDetail)
+		}
+		log.V(4).Infof("+helm upgrade repo %s customDetails [%v]", repoRef.Identifier, customDetails)
+	}
+
+	helmRepo := &HelmRepository{
+		cluster: repoRef.GetContext().GetCluster(),
+		name: types.NamespacedName{
+			Name:      repoRef.Identifier,
+			Namespace: repoRef.GetContext().GetNamespace(),
+		},
+		url:           request.GetUrl(),
+		description:   request.GetDescription(),
+		interval:      request.GetInterval(),
+		tlsConfig:     request.GetTlsConfig(),
+		auth:          request.GetAuth(),
+		customDetails: customDetails,
+	}
+	if responseRef, err := s.updateRepo(ctx, helmRepo); err != nil {
+		return nil, err
+	} else {
+		return &corev1.UpdatePackageRepositoryResponse{
+			PackageRepoRef: responseRef,
+		}, nil
+	}
 }
 
 func (s *Server) DeletePackageRepository(ctx context.Context, request *corev1.DeletePackageRepositoryRequest) (*corev1.DeletePackageRepositoryResponse, error) {
-	// TODO(rcastelblanq) WIP
-	return nil, nil
+	log.Infof("+helm DeletePackageRepository [%v]", request)
+
+	if request == nil || request.PackageRepoRef == nil {
+		return nil, status.Errorf(codes.InvalidArgument, "no request PackageRepoRef provided")
+	}
+	repoRef := request.GetPackageRepoRef()
+	if repoRef.GetContext() == nil || repoRef.GetContext().GetCluster() == "" || repoRef.GetContext().GetNamespace() == "" {
+		return nil, status.Errorf(codes.InvalidArgument, "no valid context provided")
+	}
+	cluster := repoRef.GetContext().GetCluster()
+
+	if err := s.deleteRepo(ctx, cluster, repoRef); err != nil {
+		return nil, err
+	} else {
+		return &corev1.DeletePackageRepositoryResponse{}, nil
+	}
 }
 
 // SetUserManagedSecrets This endpoint exists only for integration unit tests

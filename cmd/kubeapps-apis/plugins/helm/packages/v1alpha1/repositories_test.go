@@ -5,6 +5,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
 	appRepov1alpha1 "github.com/vmware-tanzu/kubeapps/cmd/apprepository-controller/pkg/apis/apprepository/v1alpha1"
@@ -12,19 +13,73 @@ import (
 	plugins "github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/core/plugins/v1alpha1"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"io/ioutil"
 	apiv1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	k8sruntime "k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	"net/http"
+	"net/http/httptest"
 	"strings"
 	"testing"
 )
 
+var repo1 = &appRepov1alpha1.AppRepository{
+	TypeMeta: metav1.TypeMeta{
+		APIVersion: appReposAPIVersion,
+		Kind:       AppRepositoryKind,
+	},
+	ObjectMeta: metav1.ObjectMeta{
+		Name:      "repo-1",
+		Namespace: "ns",
+	},
+	Spec: appRepov1alpha1.AppRepositorySpec{
+		URL:         "https://test-repo",
+		Type:        "helm",
+		Description: "description 1",
+	},
+}
+
+var repo2 = &appRepov1alpha1.AppRepository{
+	TypeMeta: metav1.TypeMeta{
+		APIVersion: appReposAPIVersion,
+		Kind:       AppRepositoryKind,
+	},
+	ObjectMeta: metav1.ObjectMeta{
+		Name:      "repo-2",
+		Namespace: "ns2",
+	},
+	Spec: appRepov1alpha1.AppRepositorySpec{
+		URL:         "https://test-repo2",
+		Type:        "oci",
+		Description: "description 2",
+	},
+}
+
+var repo1Summary = &corev1.PackageRepositorySummary{
+	PackageRepoRef:  repoRef("repo-1", KubeappsCluster, "ns-1"),
+	Name:            "repo-1",
+	Description:     "description 1",
+	NamespaceScoped: true,
+	Type:            "helm",
+	Url:             "https://test-repo",
+}
+
+var repo2Summary = &corev1.PackageRepositorySummary{
+	PackageRepoRef:  repoRef("repo-2", KubeappsCluster, "ns-2"),
+	Name:            "repo-2",
+	Description:     "description 2",
+	NamespaceScoped: true,
+	Type:            "oci",
+	Url:             "https://test-repo2",
+}
+
+var appReposAPIVersion = fmt.Sprintf("%s/%s", appRepov1alpha1.SchemeGroupVersion.Group, appRepov1alpha1.SchemeGroupVersion.Version)
+
 func TestAddPackageRepository(t *testing.T) {
 	// these will be used further on for TLS-related scenarios. Init
 	// byte arrays up front so they can be re-used in multiple places later
-	//ca, pub, priv := getCertsForTesting(t)
 	ca, _, _ := getCertsForTesting(t)
 
 	testCases := []struct {
@@ -47,11 +102,6 @@ func TestAddPackageRepository(t *testing.T) {
 			name:       "returns error if no name is provided",
 			request:    &corev1.AddPackageRepositoryRequest{Context: &corev1.Context{Namespace: "foo"}},
 			statusCode: codes.InvalidArgument,
-		},
-		{
-			name:       "returns error if invalid cluster",
-			request:    &corev1.AddPackageRepositoryRequest{Context: &corev1.Context{Cluster: "wrongCluster", Namespace: "foo"}},
-			statusCode: codes.Unimplemented,
 		},
 		{
 			name:       "returns error if wrong repository type",
@@ -304,11 +354,11 @@ func TestAddPackageRepository(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			var secrets []runtime.Object
+			var secrets []k8sruntime.Object
 			if tc.existingSecret != nil {
 				secrets = append(secrets, tc.existingSecret)
 			}
-			s := newServerWithSecrets(t, secrets)
+			s := newServerWithSecretsAndRepos(t, secrets, nil)
 			s.pluginConfig.UserManagedSecrets = tc.userManagedSecrets
 			if tc.repoClientGetter != nil {
 				s.repoClientGetter = tc.repoClientGetter
@@ -415,6 +465,102 @@ func TestAddPackageRepository(t *testing.T) {
 						}
 					}
 				}
+			}
+		})
+	}
+}
+
+func TestGetPackageRepositorySummaries(t *testing.T) {
+	// some prep
+	indexYAMLBytes, err := ioutil.ReadFile(testYaml("valid-index.yaml"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		fmt.Fprintln(w, string(indexYAMLBytes))
+	}))
+	defer ts.Close()
+	repo1.Spec.URL = ts.URL
+	repo2.Spec.URL = ts.URL
+
+	testCases := []struct {
+		name               string
+		request            *corev1.GetPackageRepositorySummariesRequest
+		existingRepos      []k8sruntime.Object
+		expectedStatusCode codes.Code
+		expectedResponse   *corev1.GetPackageRepositorySummariesResponse
+	}{
+		{
+			name: "returns package summaries when namespace not specified",
+			request: &corev1.GetPackageRepositorySummariesRequest{
+				Context: &corev1.Context{Cluster: KubeappsCluster},
+			},
+			existingRepos: []k8sruntime.Object{
+				repo1,
+				repo2,
+			},
+			expectedStatusCode: codes.OK,
+			expectedResponse: &corev1.GetPackageRepositorySummariesResponse{
+				PackageRepositorySummaries: []*corev1.PackageRepositorySummary{
+					repo1Summary,
+					repo2Summary,
+				},
+			},
+		},
+		{
+			name: "returns package summaries when namespace is specified",
+			request: &corev1.GetPackageRepositorySummariesRequest{
+				Context: &corev1.Context{Cluster: KubeappsCluster, Namespace: "ns-2"},
+			},
+			existingRepos: []k8sruntime.Object{
+				repo1,
+				repo2,
+			},
+			expectedStatusCode: codes.OK,
+			expectedResponse: &corev1.GetPackageRepositorySummariesResponse{
+				PackageRepositorySummaries: []*corev1.PackageRepositorySummary{
+					repo2Summary,
+				},
+			},
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			var unstructuredObjects []k8sruntime.Object
+			if tc.existingRepos != nil {
+				for _, repo := range tc.existingRepos {
+					unstructuredContent, _ := k8sruntime.DefaultUnstructuredConverter.ToUnstructured(repo)
+					unstructuredObjects = append(unstructuredObjects, &unstructured.Unstructured{Object: unstructuredContent})
+				}
+			}
+			//s := newServerWithSecretsAndRepos(t, nil, unstructuredObjects)
+			actionConfig := newActionConfigFixture(t, tc.request.Context.Namespace, nil, nil)
+			s, _, cleanup := makeServer(t, true, actionConfig, repo1, repo2)
+			defer cleanup()
+
+			response, err := s.GetPackageRepositorySummaries(context.Background(), tc.request)
+
+			if got, want := status.Code(err), tc.expectedStatusCode; got != want {
+				t.Fatalf("got: %+v, want: %+v, err: %+v", got, want, err)
+			}
+
+			// We don't need to check anything else for non-OK codes.
+			if tc.expectedStatusCode != codes.OK {
+				return
+			}
+
+			opts := cmpopts.IgnoreUnexported(
+				corev1.Context{},
+				plugins.Plugin{},
+				corev1.GetPackageRepositorySummariesResponse{},
+				corev1.PackageRepositorySummary{},
+				corev1.PackageRepositoryReference{},
+				corev1.PackageRepositoryStatus{},
+			)
+			opts2 := cmpopts.SortSlices(lessPackageRepositorySummaryFunc)
+			if got, want := response, tc.expectedResponse; !cmp.Equal(want, got, opts, opts2) {
+				t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opts, opts2))
 			}
 		})
 	}

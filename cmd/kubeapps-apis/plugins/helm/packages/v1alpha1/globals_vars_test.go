@@ -501,11 +501,11 @@ var (
 	}
 
 	addRepoExpectedResp = &corev1.AddPackageRepositoryResponse{
-		PackageRepoRef: repoRef("bar", "foo"),
+		PackageRepoRef: repoRef("bar", KubeappsCluster, "foo"),
 	}
 
 	addRepoExpectedGlobalResp = &corev1.AddPackageRepositoryResponse{
-		PackageRepoRef: repoRef("bar", "kubeapps"),
+		PackageRepoRef: repoRef("bar", KubeappsCluster, "kubeapps"),
 	}
 
 	packageRepoSecretBasicAuth = func(secretName string) *corev1.PackageRepositoryAuth {
