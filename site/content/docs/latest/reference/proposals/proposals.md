@@ -55,7 +55,7 @@ To track the proposal the following states are defined:
      4. _decision outcome._
    - merge the PR, thus adding the new proposal to the `main` branch,
    - code implementation PRs are submitted separately to implement the solution.
-6. During implementation of an accepted proposal:
+6. During the implementation of an accepted proposal:
    - as each implementation PR is created, the "Proposal request" should be updated to link to the new implementation PR, and
    - when all the implementation PRs are merged, the "Proposal Request" should be updated to the `implemented` status, to list all the related PRs, and then, the "Proposal request" should be closed.
    - The proposal file (.md file) should be updated by including the version where the proposal was released.
