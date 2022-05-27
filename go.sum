@@ -1077,8 +1077,8 @@ github.com/julienschmidt/httprouter v1.3.0/go.mod h1:JR6WtHb+2LUe8TCKY3cZOxFyyO8
 github.com/jung-kurt/gofpdf v1.0.3-0.20190309125859-24315acbbda5/go.mod h1:7Id9E/uU8ce6rXgefFLlgrJj/GYY22cpxn+r32jIOes=
 github.com/k14s/difflib v0.0.0-20201117154628-0c031775bf57 h1:CwBRArr+BWBopnUJhDjJw86rPL/jGbEjfHWKzTasSqE=
 github.com/k14s/difflib v0.0.0-20201117154628-0c031775bf57/go.mod h1:B0xN2MiNBGWOWi9CcfAo9LBI8IU4J1utlbOIJCsmKr4=
-github.com/k14s/kapp v0.47.0 h1:f97zTMQpoKl8lZv4M0ms3ZgkLXjAN9YQRIj4Oyjrh5A=
-github.com/k14s/kapp v0.47.0/go.mod h1:KcszWiNcydV9UGNVsPi/r8SDFlF6JuOKsHe295HKvNo=
+github.com/k14s/kapp v0.48.0 h1:SEPr9YZ9T2PmDvl2GxXJG9JF4NXVi8NDq9JsGx3WoQM=
+github.com/k14s/kapp v0.48.0/go.mod h1:KcszWiNcydV9UGNVsPi/r8SDFlF6JuOKsHe295HKvNo=
 github.com/k14s/semver/v4 v4.0.1-0.20210701191048-266d47ac6115 h1:wKSifC/VbCaQMqXYn6/gSFqle82OX4bE3KYALDU9FlU=
 github.com/k14s/semver/v4 v4.0.1-0.20210701191048-266d47ac6115/go.mod h1:mGrnmO5qnhJIaSiwMo05cvRL6Ww9ccYbTgNFcm6RHZQ=
 github.com/k14s/starlark-go v0.0.0-20200720175618-3a5c849cc368 h1:4bcRTTSx+LKSxMWibIwzHnDNmaN1x52oEpvnjCy+8vk=
