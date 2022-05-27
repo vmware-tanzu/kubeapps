@@ -21,6 +21,10 @@ CoreWeave is a specialized cloud provider, built for GPU-accelerated use cases. 
 
 Kubeapps eases the deployment of our internal Helm charts for everybody, including those that are not familiar with Kubernetes. The ability to seamlessly integrate the Helm values with the web page (basic form support) is a killer-feature for us.
 
+**[SAP](https://www.sap.com/)** - Teapots team
+
+We are Team Teapots (reference to the HTTP 418 code). We manage the infrastructure of an internal Pipelines-as-a-Service offering for other development teams here at SAP. We use the wonderful Kubeapps project to help our customers deploy cloud-native applications (Jenkins, etc.) with an easy-to-use UI.
+
 **[Terasky](https://www.terasky.com/)**
 
 TeraSky is a Global Advanced Technology Solutions Provider. We utilize Kubeapps in many of our customers environments to provide a clean and simple UI for deploying and managing applications on kubernetes. we heavily use the multi cluster support in Kubeapps. We also heavily utilize the Carvel Packaging support in kubeapps, in order to provide a great solution for our customers in airgapped environments as well.
