@@ -385,7 +385,7 @@ export default function Catalog() {
             <a
               target="_blank"
               rel="noopener noreferrer"
-              href={`https://github.com/vmware-tanzu/kubeapps/blob/${appVersion}/docs/`}
+              href={`https://github.com/vmware-tanzu/kubeapps/tree/${appVersion}/site/content/docs/latest`}
             >
               Kubeapps documentation
             </a>
