@@ -13,14 +13,11 @@ import (
 	plugins "github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/core/plugins/v1alpha1"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
-	"io/ioutil"
 	apiv1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	k8sruntime "k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	"net/http"
-	"net/http/httptest"
 	"strings"
 	"testing"
 )
@@ -470,7 +467,7 @@ func TestAddPackageRepository(t *testing.T) {
 	}
 }
 
-func TestGetPackageRepositorySummaries(t *testing.T) {
+/*func TestGetPackageRepositorySummaries(t *testing.T) {
 	// some prep
 	indexYAMLBytes, err := ioutil.ReadFile(testYaml("valid-index.yaml"))
 	if err != nil {
@@ -565,3 +562,4 @@ func TestGetPackageRepositorySummaries(t *testing.T) {
 		})
 	}
 }
+*/
