@@ -148,7 +148,9 @@ describe("global and namespaced repositories", () => {
   it("shows a message if no global or namespaced repos exist", () => {
     const wrapper = mountWrapper(defaultStore, <AppRepoList />);
     expect(
-      wrapper.find("p").filterWhere(p => p.text().includes("There are no global Package Repositories")),
+      wrapper
+        .find("p")
+        .filterWhere(p => p.text().includes("There are no global Package Repositories")),
     ).toExist();
     expect(
       wrapper
