@@ -6,7 +6,7 @@ Note that prior to 2022, some of the proposal documents were written as public G
 
 ## Proposal Process
 
-The proposal process is defined in [proposals.md]().
+The proposal process is defined in [proposals.md](./proposals.md).
 
 ## List of proposals
 

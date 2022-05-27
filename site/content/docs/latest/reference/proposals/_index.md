@@ -4,4 +4,4 @@ cascade:
   layout: docs
 ---
 
-{{%  readfile file="/content/docs/latest/reference/design-proposals/README.md" %}}
+{{%  readfile file="/content/docs/latest/reference/proposals/README.md" %}}

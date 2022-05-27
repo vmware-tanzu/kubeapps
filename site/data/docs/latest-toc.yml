@@ -64,8 +64,8 @@ toc:
 
   - title: Reference
     subfolderitems:
-      - url: /reference/design-proposals/
-        page: Design proposals
+      - url: /reference/proposals/
+        page: Proposals
       - url: /reference/developer
         page: Developer guides
       - url: /reference/testing/testing-environment/
