@@ -4,7 +4,7 @@ This section contains technical reference and developer guides for Kubeapps.
 
 | Reference                                                         | Description |
 | ----------------------------------------------------------------- | ----------- |
-| [Design proposals](./design-proposals/README.md)                  |             |
+| [Proposals](./proposals/README.md)                                |             |
 | [Developer guides](./developer/README.md)                         |             |
 | [Testing environment setup](./testing/testing-environment.md)     |             |
 | [CI configuration](./testing/ci.md)                               |             |

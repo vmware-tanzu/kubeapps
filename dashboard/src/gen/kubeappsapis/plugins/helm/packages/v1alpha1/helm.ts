@@ -1,7 +1,7 @@
 /* eslint-disable */
 import Long from "long";
 import { grpc } from "@improbable-eng/grpc-web";
-import * as _m0 from "protobufjs/minimal";
+import _m0 from "protobufjs/minimal";
 import {
   InstalledPackageReference,
   GetAvailablePackageSummariesRequest,
@@ -23,6 +23,18 @@ import {
   DeleteInstalledPackageResponse,
   GetInstalledPackageResourceRefsResponse,
 } from "../../../../../kubeappsapis/core/packages/v1alpha1/packages";
+import {
+  AddPackageRepositoryRequest,
+  GetPackageRepositoryDetailRequest,
+  GetPackageRepositorySummariesRequest,
+  UpdatePackageRepositoryRequest,
+  DeletePackageRepositoryRequest,
+  AddPackageRepositoryResponse,
+  GetPackageRepositoryDetailResponse,
+  GetPackageRepositorySummariesResponse,
+  UpdatePackageRepositoryResponse,
+  DeletePackageRepositoryResponse,
+} from "../../../../../kubeappsapis/core/packages/v1alpha1/repositories";
 import { BrowserHeaders } from "browser-headers";
 
 export const protobufPackage = "kubeappsapis.plugins.helm.packages.v1alpha1";
@@ -70,6 +82,14 @@ export interface RollbackInstalledPackageResponse {
    * };
    */
   installedPackageRef?: InstalledPackageReference;
+}
+
+export interface SetUserManagedSecretsRequest {
+  value: boolean;
+}
+
+export interface SetUserManagedSecretsResponse {
+  value: boolean;
 }
 
 function createBaseInstalledPackageDetailCustomDataHelm(): InstalledPackageDetailCustomDataHelm {
@@ -263,6 +283,114 @@ export const RollbackInstalledPackageResponse = {
       object.installedPackageRef !== undefined && object.installedPackageRef !== null
         ? InstalledPackageReference.fromPartial(object.installedPackageRef)
         : undefined;
+    return message;
+  },
+};
+
+function createBaseSetUserManagedSecretsRequest(): SetUserManagedSecretsRequest {
+  return { value: false };
+}
+
+export const SetUserManagedSecretsRequest = {
+  encode(
+    message: SetUserManagedSecretsRequest,
+    writer: _m0.Writer = _m0.Writer.create(),
+  ): _m0.Writer {
+    if (message.value === true) {
+      writer.uint32(8).bool(message.value);
+    }
+    return writer;
+  },
+
+  decode(input: _m0.Reader | Uint8Array, length?: number): SetUserManagedSecretsRequest {
+    const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseSetUserManagedSecretsRequest();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1:
+          message.value = reader.bool();
+          break;
+        default:
+          reader.skipType(tag & 7);
+          break;
+      }
+    }
+    return message;
+  },
+
+  fromJSON(object: any): SetUserManagedSecretsRequest {
+    return {
+      value: isSet(object.value) ? Boolean(object.value) : false,
+    };
+  },
+
+  toJSON(message: SetUserManagedSecretsRequest): unknown {
+    const obj: any = {};
+    message.value !== undefined && (obj.value = message.value);
+    return obj;
+  },
+
+  fromPartial<I extends Exact<DeepPartial<SetUserManagedSecretsRequest>, I>>(
+    object: I,
+  ): SetUserManagedSecretsRequest {
+    const message = createBaseSetUserManagedSecretsRequest();
+    message.value = object.value ?? false;
+    return message;
+  },
+};
+
+function createBaseSetUserManagedSecretsResponse(): SetUserManagedSecretsResponse {
+  return { value: false };
+}
+
+export const SetUserManagedSecretsResponse = {
+  encode(
+    message: SetUserManagedSecretsResponse,
+    writer: _m0.Writer = _m0.Writer.create(),
+  ): _m0.Writer {
+    if (message.value === true) {
+      writer.uint32(8).bool(message.value);
+    }
+    return writer;
+  },
+
+  decode(input: _m0.Reader | Uint8Array, length?: number): SetUserManagedSecretsResponse {
+    const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseSetUserManagedSecretsResponse();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1:
+          message.value = reader.bool();
+          break;
+        default:
+          reader.skipType(tag & 7);
+          break;
+      }
+    }
+    return message;
+  },
+
+  fromJSON(object: any): SetUserManagedSecretsResponse {
+    return {
+      value: isSet(object.value) ? Boolean(object.value) : false,
+    };
+  },
+
+  toJSON(message: SetUserManagedSecretsResponse): unknown {
+    const obj: any = {};
+    message.value !== undefined && (obj.value = message.value);
+    return obj;
+  },
+
+  fromPartial<I extends Exact<DeepPartial<SetUserManagedSecretsResponse>, I>>(
+    object: I,
+  ): SetUserManagedSecretsResponse {
+    const message = createBaseSetUserManagedSecretsResponse();
+    message.value = object.value ?? false;
     return message;
   },
 };
@@ -667,6 +795,251 @@ export const HelmPackagesServiceGetInstalledPackageResourceRefsDesc: UnaryMethod
     deserializeBinary(data: Uint8Array) {
       return {
         ...GetInstalledPackageResourceRefsResponse.decode(data),
+        toObject() {
+          return this;
+        },
+      };
+    },
+  } as any,
+};
+
+export interface HelmRepositoriesService {
+  /** AddPackageRepository add an existing package repository to the set of ones already managed by the Helm plugin */
+  AddPackageRepository(
+    request: DeepPartial<AddPackageRepositoryRequest>,
+    metadata?: grpc.Metadata,
+  ): Promise<AddPackageRepositoryResponse>;
+  GetPackageRepositoryDetail(
+    request: DeepPartial<GetPackageRepositoryDetailRequest>,
+    metadata?: grpc.Metadata,
+  ): Promise<GetPackageRepositoryDetailResponse>;
+  GetPackageRepositorySummaries(
+    request: DeepPartial<GetPackageRepositorySummariesRequest>,
+    metadata?: grpc.Metadata,
+  ): Promise<GetPackageRepositorySummariesResponse>;
+  UpdatePackageRepository(
+    request: DeepPartial<UpdatePackageRepositoryRequest>,
+    metadata?: grpc.Metadata,
+  ): Promise<UpdatePackageRepositoryResponse>;
+  DeletePackageRepository(
+    request: DeepPartial<DeletePackageRepositoryRequest>,
+    metadata?: grpc.Metadata,
+  ): Promise<DeletePackageRepositoryResponse>;
+  /** this endpoint only exists for the purpose of integration tests */
+  SetUserManagedSecrets(
+    request: DeepPartial<SetUserManagedSecretsRequest>,
+    metadata?: grpc.Metadata,
+  ): Promise<SetUserManagedSecretsResponse>;
+}
+
+export class HelmRepositoriesServiceClientImpl implements HelmRepositoriesService {
+  private readonly rpc: Rpc;
+
+  constructor(rpc: Rpc) {
+    this.rpc = rpc;
+    this.AddPackageRepository = this.AddPackageRepository.bind(this);
+    this.GetPackageRepositoryDetail = this.GetPackageRepositoryDetail.bind(this);
+    this.GetPackageRepositorySummaries = this.GetPackageRepositorySummaries.bind(this);
+    this.UpdatePackageRepository = this.UpdatePackageRepository.bind(this);
+    this.DeletePackageRepository = this.DeletePackageRepository.bind(this);
+    this.SetUserManagedSecrets = this.SetUserManagedSecrets.bind(this);
+  }
+
+  AddPackageRepository(
+    request: DeepPartial<AddPackageRepositoryRequest>,
+    metadata?: grpc.Metadata,
+  ): Promise<AddPackageRepositoryResponse> {
+    return this.rpc.unary(
+      HelmRepositoriesServiceAddPackageRepositoryDesc,
+      AddPackageRepositoryRequest.fromPartial(request),
+      metadata,
+    );
+  }
+
+  GetPackageRepositoryDetail(
+    request: DeepPartial<GetPackageRepositoryDetailRequest>,
+    metadata?: grpc.Metadata,
+  ): Promise<GetPackageRepositoryDetailResponse> {
+    return this.rpc.unary(
+      HelmRepositoriesServiceGetPackageRepositoryDetailDesc,
+      GetPackageRepositoryDetailRequest.fromPartial(request),
+      metadata,
+    );
+  }
+
+  GetPackageRepositorySummaries(
+    request: DeepPartial<GetPackageRepositorySummariesRequest>,
+    metadata?: grpc.Metadata,
+  ): Promise<GetPackageRepositorySummariesResponse> {
+    return this.rpc.unary(
+      HelmRepositoriesServiceGetPackageRepositorySummariesDesc,
+      GetPackageRepositorySummariesRequest.fromPartial(request),
+      metadata,
+    );
+  }
+
+  UpdatePackageRepository(
+    request: DeepPartial<UpdatePackageRepositoryRequest>,
+    metadata?: grpc.Metadata,
+  ): Promise<UpdatePackageRepositoryResponse> {
+    return this.rpc.unary(
+      HelmRepositoriesServiceUpdatePackageRepositoryDesc,
+      UpdatePackageRepositoryRequest.fromPartial(request),
+      metadata,
+    );
+  }
+
+  DeletePackageRepository(
+    request: DeepPartial<DeletePackageRepositoryRequest>,
+    metadata?: grpc.Metadata,
+  ): Promise<DeletePackageRepositoryResponse> {
+    return this.rpc.unary(
+      HelmRepositoriesServiceDeletePackageRepositoryDesc,
+      DeletePackageRepositoryRequest.fromPartial(request),
+      metadata,
+    );
+  }
+
+  SetUserManagedSecrets(
+    request: DeepPartial<SetUserManagedSecretsRequest>,
+    metadata?: grpc.Metadata,
+  ): Promise<SetUserManagedSecretsResponse> {
+    return this.rpc.unary(
+      HelmRepositoriesServiceSetUserManagedSecretsDesc,
+      SetUserManagedSecretsRequest.fromPartial(request),
+      metadata,
+    );
+  }
+}
+
+export const HelmRepositoriesServiceDesc = {
+  serviceName: "kubeappsapis.plugins.helm.packages.v1alpha1.HelmRepositoriesService",
+};
+
+export const HelmRepositoriesServiceAddPackageRepositoryDesc: UnaryMethodDefinitionish = {
+  methodName: "AddPackageRepository",
+  service: HelmRepositoriesServiceDesc,
+  requestStream: false,
+  responseStream: false,
+  requestType: {
+    serializeBinary() {
+      return AddPackageRepositoryRequest.encode(this).finish();
+    },
+  } as any,
+  responseType: {
+    deserializeBinary(data: Uint8Array) {
+      return {
+        ...AddPackageRepositoryResponse.decode(data),
+        toObject() {
+          return this;
+        },
+      };
+    },
+  } as any,
+};
+
+export const HelmRepositoriesServiceGetPackageRepositoryDetailDesc: UnaryMethodDefinitionish = {
+  methodName: "GetPackageRepositoryDetail",
+  service: HelmRepositoriesServiceDesc,
+  requestStream: false,
+  responseStream: false,
+  requestType: {
+    serializeBinary() {
+      return GetPackageRepositoryDetailRequest.encode(this).finish();
+    },
+  } as any,
+  responseType: {
+    deserializeBinary(data: Uint8Array) {
+      return {
+        ...GetPackageRepositoryDetailResponse.decode(data),
+        toObject() {
+          return this;
+        },
+      };
+    },
+  } as any,
+};
+
+export const HelmRepositoriesServiceGetPackageRepositorySummariesDesc: UnaryMethodDefinitionish = {
+  methodName: "GetPackageRepositorySummaries",
+  service: HelmRepositoriesServiceDesc,
+  requestStream: false,
+  responseStream: false,
+  requestType: {
+    serializeBinary() {
+      return GetPackageRepositorySummariesRequest.encode(this).finish();
+    },
+  } as any,
+  responseType: {
+    deserializeBinary(data: Uint8Array) {
+      return {
+        ...GetPackageRepositorySummariesResponse.decode(data),
+        toObject() {
+          return this;
+        },
+      };
+    },
+  } as any,
+};
+
+export const HelmRepositoriesServiceUpdatePackageRepositoryDesc: UnaryMethodDefinitionish = {
+  methodName: "UpdatePackageRepository",
+  service: HelmRepositoriesServiceDesc,
+  requestStream: false,
+  responseStream: false,
+  requestType: {
+    serializeBinary() {
+      return UpdatePackageRepositoryRequest.encode(this).finish();
+    },
+  } as any,
+  responseType: {
+    deserializeBinary(data: Uint8Array) {
+      return {
+        ...UpdatePackageRepositoryResponse.decode(data),
+        toObject() {
+          return this;
+        },
+      };
+    },
+  } as any,
+};
+
+export const HelmRepositoriesServiceDeletePackageRepositoryDesc: UnaryMethodDefinitionish = {
+  methodName: "DeletePackageRepository",
+  service: HelmRepositoriesServiceDesc,
+  requestStream: false,
+  responseStream: false,
+  requestType: {
+    serializeBinary() {
+      return DeletePackageRepositoryRequest.encode(this).finish();
+    },
+  } as any,
+  responseType: {
+    deserializeBinary(data: Uint8Array) {
+      return {
+        ...DeletePackageRepositoryResponse.decode(data),
+        toObject() {
+          return this;
+        },
+      };
+    },
+  } as any,
+};
+
+export const HelmRepositoriesServiceSetUserManagedSecretsDesc: UnaryMethodDefinitionish = {
+  methodName: "SetUserManagedSecrets",
+  service: HelmRepositoriesServiceDesc,
+  requestStream: false,
+  responseStream: false,
+  requestType: {
+    serializeBinary() {
+      return SetUserManagedSecretsRequest.encode(this).finish();
+    },
+  } as any,
+  responseType: {
+    deserializeBinary(data: Uint8Array) {
+      return {
+        ...SetUserManagedSecretsResponse.decode(data),
         toObject() {
           return this;
         },

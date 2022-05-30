@@ -1440,10 +1440,10 @@
   dependencies:
     tslib "2.4.0"
 
-"@formatjs/intl@2.2.4":
-  version "2.2.4"
-  resolved "https://registry.yarnpkg.com/@formatjs/intl/-/intl-2.2.4.tgz#27c71b1c9ffc7b2632956dc49faf8e0da3871486"
-  integrity sha512-cQpEdxP4WtQsb8kc8h2+21fnkb7tcQMBAMpnUzK8lFUNOXQtu65pUVe0f7Nh7uvJoVbtMiigTGoj+J4dZjUOuQ==
+"@formatjs/intl@2.2.5":
+  version "2.2.5"
+  resolved "https://registry.yarnpkg.com/@formatjs/intl/-/intl-2.2.5.tgz#888f42750eacdcfb836a062eb889cb429d13f7f7"
+  integrity sha512-b0+5Bjsl3KDAII2frBPRO7ck9Ec/xqZ25BoiJATJhe//e4n6FOvVXk5QKYwBQPDt3JPu/Qa14oqHDiZlZmVdSg==
   dependencies:
     "@formatjs/ecma402-abstract" "1.11.6"
     "@formatjs/fast-memoize" "1.2.3"
@@ -9963,10 +9963,10 @@ mkdirp@^1.0.3, mkdirp@^1.0.4:
   resolved "https://registry.yarnpkg.com/mkdirp/-/mkdirp-1.0.4.tgz#3eb5ed62622756d79a5f0e2a221dfebad75c2f7e"
   integrity sha512-vVqVZQyf3WLx2Shd0qJ9xuvqgAyKPLAiqITEtqW0oIUjzo3PePDd6fW9iFz30ef7Ysp/oiWqbhszeGWW2T6Gzw==
 
-mock-socket@^9.1.3:
-  version "9.1.3"
-  resolved "https://registry.yarnpkg.com/mock-socket/-/mock-socket-9.1.3.tgz#bcb106c6b345001fa7619466fcf2f8f5a156b10f"
-  integrity sha512-uz8lx8c5wuJYJ21f5UtovqpV0+KJuVwE7cVOLNhrl2QW/CvmstOLRfjXnLSbfFHZtJtiaSGQu0oCJA8SmRcK6A==
+mock-socket@^9.1.4:
+  version "9.1.4"
+  resolved "https://registry.yarnpkg.com/mock-socket/-/mock-socket-9.1.4.tgz#9295cb9c95d3b2730a7bc067008f055635d8fc75"
+  integrity sha512-zc7jF8FId8pD9ojxWLcXrv4c2nEFOb6o8giPb45yQ6BfQX1tWuUktHNFSiy+KBt0VhYtHNt5MFIzclt0LIynEA==
 
 modern-normalize@1.1.0, modern-normalize@^1.1.0:
   version "1.1.0"
@@ -11685,10 +11685,10 @@ property-information@^6.0.0:
   resolved "https://registry.yarnpkg.com/property-information/-/property-information-6.1.1.tgz#5ca85510a3019726cb9afed4197b7b8ac5926a22"
   integrity sha512-hrzC564QIl0r0vy4l6MvRLhafmUowhO/O3KgVSoXIbbA2Sz4j8HGpJc6T2cubRVwMwpdiG/vKGfhT4IixmKN9w==
 
-protobufjs@^6.11.2, protobufjs@^6.8.8:
-  version "6.11.2"
-  resolved "https://registry.yarnpkg.com/protobufjs/-/protobufjs-6.11.2.tgz#de39fabd4ed32beaa08e9bb1e30d08544c1edf8b"
-  integrity sha512-4BQJoPooKJl2G9j3XftkIXjoC9C0Av2NOrWmbLWT1vH32GcSUHjM0Arra6UfTsVyfMAuFzaLucXn1sadxJydAw==
+protobufjs@^6.11.3, protobufjs@^6.8.8:
+  version "6.11.3"
+  resolved "https://registry.yarnpkg.com/protobufjs/-/protobufjs-6.11.3.tgz#637a527205a35caa4f3e2a9a4a13ddffe0e7af74"
+  integrity sha512-xL96WDdCZYdU7Slin569tFX712BxsxslWwAfAhCYjQKGTq7dAU91Lomy6nLLhh/dyGhk/YH4TwTSRxTzhuHyZg==
   dependencies:
     "@protobufjs/aspromise" "^1.1.2"
     "@protobufjs/base64" "^1.1.2"
@@ -12040,14 +12040,14 @@ react-inspector@^5.1.1:
     is-dom "^1.0.0"
     prop-types "^15.0.0"
 
-react-intl@^6.0.2:
-  version "6.0.2"
-  resolved "https://registry.yarnpkg.com/react-intl/-/react-intl-6.0.2.tgz#0e8df2aec2eea3e4fd672f68fa97abc82459e721"
-  integrity sha512-SrVlPUYITOQA9s+yhePh2MtLwbJh1MRhO69PK+eOPX8N+0kF78h0kaiJaIF3ZEJCawAxrL5927qI22VCap0INw==
+react-intl@^6.0.3:
+  version "6.0.3"
+  resolved "https://registry.yarnpkg.com/react-intl/-/react-intl-6.0.3.tgz#eb5857f2fd525c83255bf6c8339562a7fea9f970"
+  integrity sha512-c6wHOnYjOBTbqIt+6TVV2QwdKrqYiFP713tMsw/sJWYgzfaRTjsvGkcxOXhX3SoBrqbUhKTEzjdniuwpAN/qKA==
   dependencies:
     "@formatjs/ecma402-abstract" "1.11.6"
     "@formatjs/icu-messageformat-parser" "2.1.2"
-    "@formatjs/intl" "2.2.4"
+    "@formatjs/intl" "2.2.5"
     "@formatjs/intl-displaynames" "6.0.1"
     "@formatjs/intl-listformat" "7.0.1"
     "@types/hoist-non-react-statics" "^3.3.1"
@@ -13782,34 +13782,34 @@ stylelint-config-prettier@^9.0.3:
   resolved "https://registry.yarnpkg.com/stylelint-config-prettier/-/stylelint-config-prettier-9.0.3.tgz#0dccebeff359dcc393c9229184408b08964d561c"
   integrity sha512-5n9gUDp/n5tTMCq1GLqSpA30w2sqWITSSEiAWQlpxkKGAUbjcemQ0nbkRvRUa0B1LgD3+hCvdL7B1eTxy1QHJg==
 
-stylelint-config-recommended-scss@^5.0.2:
-  version "5.0.2"
-  resolved "https://registry.yarnpkg.com/stylelint-config-recommended-scss/-/stylelint-config-recommended-scss-5.0.2.tgz#193f483861c76a36ece24c52eb6baca4838f4a48"
-  integrity sha512-b14BSZjcwW0hqbzm9b0S/ScN2+3CO3O4vcMNOw2KGf8lfVSwJ4p5TbNEXKwKl1+0FMtgRXZj6DqVUe/7nGnuBg==
+stylelint-config-recommended-scss@^6.0.0:
+  version "6.0.0"
+  resolved "https://registry.yarnpkg.com/stylelint-config-recommended-scss/-/stylelint-config-recommended-scss-6.0.0.tgz#02baeace2b7f30f80369b6ee2da77aae5a01bff6"
+  integrity sha512-6QOe2/OzXV2AP5FE12A7+qtKdZik7Saf42SMMl84ksVBBPpTdrV+9HaCbPYiRMiwELY9hXCVdH4wlJ+YJb5eig==
   dependencies:
     postcss-scss "^4.0.2"
-    stylelint-config-recommended "^6.0.0"
+    stylelint-config-recommended "^7.0.0"
     stylelint-scss "^4.0.0"
 
-stylelint-config-recommended@^6.0.0:
-  version "6.0.0"
-  resolved "https://registry.yarnpkg.com/stylelint-config-recommended/-/stylelint-config-recommended-6.0.0.tgz#fd2523a322836005ad9bf473d3e5534719c09f9d"
-  integrity sha512-ZorSSdyMcxWpROYUvLEMm0vSZud2uB7tX1hzBZwvVY9SV/uly4AvvJPPhCcymZL3fcQhEQG5AELmrxWqtmzacw==
+stylelint-config-recommended@^7.0.0:
+  version "7.0.0"
+  resolved "https://registry.yarnpkg.com/stylelint-config-recommended/-/stylelint-config-recommended-7.0.0.tgz#7497372ae83ab7a6fffc18d7d7b424c6480ae15e"
+  integrity sha512-yGn84Bf/q41J4luis1AZ95gj0EQwRX8lWmGmBwkwBNSkpGSpl66XcPTulxGa/Z91aPoNGuIGBmFkcM1MejMo9Q==
 
-stylelint-config-standard-scss@^3.0.0:
-  version "3.0.0"
-  resolved "https://registry.yarnpkg.com/stylelint-config-standard-scss/-/stylelint-config-standard-scss-3.0.0.tgz#dafc4fa5538d0ed833bf0a7d391e075683ffd96c"
-  integrity sha512-zt3ZbzIbllN1iCmc94e4pDxqpkzeR6CJo5DDXzltshuXr+82B8ylHyMMARNnUYrZH80B7wgY7UkKTYCFM0UUyw==
+stylelint-config-standard-scss@^4.0.0:
+  version "4.0.0"
+  resolved "https://registry.yarnpkg.com/stylelint-config-standard-scss/-/stylelint-config-standard-scss-4.0.0.tgz#9c1dc99eea73394bf22ad15648a5b1d9b74ff649"
+  integrity sha512-xizu8PTEyB6zYXBiVg6VtvUYn9m57x+6ZtaOdaxsfpbe5eagLPGNlbYnKfm/CfN69ArUpnwR6LjgsTHzlGbtXQ==
   dependencies:
-    stylelint-config-recommended-scss "^5.0.2"
-    stylelint-config-standard "^24.0.0"
+    stylelint-config-recommended-scss "^6.0.0"
+    stylelint-config-standard "^25.0.0"
 
-stylelint-config-standard@^24.0.0:
-  version "24.0.0"
-  resolved "https://registry.yarnpkg.com/stylelint-config-standard/-/stylelint-config-standard-24.0.0.tgz#6823f207ab997ae0b641f9a636d007cc44d77541"
-  integrity sha512-+RtU7fbNT+VlNbdXJvnjc3USNPZRiRVp/d2DxOF/vBDDTi0kH5RX2Ny6errdtZJH3boO+bmqIYEllEmok4jiuw==
+stylelint-config-standard@^25.0.0:
+  version "25.0.0"
+  resolved "https://registry.yarnpkg.com/stylelint-config-standard/-/stylelint-config-standard-25.0.0.tgz#2c916984e6655d40d6e8748b19baa8603b680bff"
+  integrity sha512-21HnP3VSpaT1wFjFvv9VjvOGDtAviv47uTp3uFmzcN+3Lt+RYRv6oAplLaV51Kf792JSxJ6svCJh/G18E9VnCA==
   dependencies:
-    stylelint-config-recommended "^6.0.0"
+    stylelint-config-recommended "^7.0.0"
 
 stylelint-order@^3.1.1:
   version "3.1.1"
@@ -14321,10 +14321,10 @@ ts-proto-descriptors@1.6.0:
     long "^4.0.0"
     protobufjs "^6.8.8"
 
-ts-proto@^1.112.2:
-  version "1.112.2"
-  resolved "https://registry.yarnpkg.com/ts-proto/-/ts-proto-1.112.2.tgz#aca04efbc035dc15b94bc0cc01ce3026fe82ec29"
-  integrity sha512-+97ks5l+R49nzY/sN3Z43+55suW2+URZt1LoXC+EIg6tmeV0556JqwNp+vVcdXJgUG/gXoypYbOiB0m+RFf9Qg==
+ts-proto@^1.114.7:
+  version "1.114.7"
+  resolved "https://registry.yarnpkg.com/ts-proto/-/ts-proto-1.114.7.tgz#0ab78d3311eadbf30607fc48323f3b905dae5b38"
+  integrity sha512-0v+ogiBK6zt0aVDWN5w3CaGo5Q0O4ZuO/8Rr1Yj1C4c+HCqFJQvew2o+0PyO6Td10xlpD9FzfP+RqArfu1eh8w==
   dependencies:
     "@types/object-hash" "^1.3.0"
     dataloader "^1.4.0"
@@ -15412,10 +15412,10 @@ yaml@^1.10.0, yaml@^1.7.2:
   resolved "https://registry.yarnpkg.com/yaml/-/yaml-1.10.2.tgz#2301c5ffbf12b467de8da2333a459e29e7920e4b"
   integrity sha512-r3vXyErRCYJ7wg28yvBY5VSoAF8ZvlcW9/BwUzEtUsjvX/DKs24dIkuwjtuprwJJHsbyUbLApepYTR1BN4uHrg==
 
-yaml@^2.0.1:
-  version "2.0.1"
-  resolved "https://registry.yarnpkg.com/yaml/-/yaml-2.0.1.tgz#71886d6021f3da28169dbefde78d4dd0f8d83650"
-  integrity sha512-1NpAYQ3wjzIlMs0mgdBmYzLkFgWBIWrzYVDYfrixhoFNNgJ444/jT2kUT2sicRbJES3oQYRZugjB6Ro8SjKeFg==
+yaml@^2.1.1:
+  version "2.1.1"
+  resolved "https://registry.yarnpkg.com/yaml/-/yaml-2.1.1.tgz#1e06fb4ca46e60d9da07e4f786ea370ed3c3cfec"
+  integrity sha512-o96x3OPo8GjWeSLF+wOAbrPfhFOGY0W00GNaxCDv+9hkcDJEnev1yh8S7pgHF0ik6zc8sQLuL8hjHjJULZp8bw==
 
 yargs-parser@^13.1.2:
   version "13.1.2"

@@ -187,7 +187,7 @@ func TestTimeoutCreateInstalledPackage(t *testing.T) {
 					Namespace: globalPackagingNamespace,
 				},
 			})
-			server.timeoutSeconds = tc.timeoutSeconds
+			server.pluginConfig.TimeoutSeconds = tc.timeoutSeconds
 
 			var effectiveTimeout int32 = -1
 			var effectiveConfig *action.Configuration

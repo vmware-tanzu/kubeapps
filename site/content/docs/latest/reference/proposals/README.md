@@ -1,8 +1,14 @@
-# Design Proposals
+# Proposals
 
-This folder contains documents/links used to design new features for Kubeapps.
+This directory contains proposal documents for significant enhancements and changes to Kubeapps.
 
-# Links
+Note that prior to 2022, some of the proposal documents were written as public Google Docs.
+
+## Proposal Process
+
+The proposal process is defined in [proposals.md](./proposals.md).
+
+## List of proposals
 
 - Authentication (AuthN) and Authorization (AuthZ):
   - [Introduction](./authentication-and-authorization.md)
