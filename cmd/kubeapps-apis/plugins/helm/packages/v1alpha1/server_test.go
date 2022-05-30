@@ -7,7 +7,11 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/helm/packages/v1alpha1/common"
 	"io/ioutil"
+	apiextfake "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset/fake"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apiserver/pkg/storage/names"
 	"net/url"
 	"os"
 	"regexp"
@@ -39,7 +43,7 @@ import (
 	"helm.sh/helm/v3/pkg/action"
 	"helm.sh/helm/v3/pkg/chart"
 	"helm.sh/helm/v3/pkg/chartutil"
-	kube "helm.sh/helm/v3/pkg/kube"
+	"helm.sh/helm/v3/pkg/kube"
 	kubefake "helm.sh/helm/v3/pkg/kube/fake"
 	"helm.sh/helm/v3/pkg/release"
 	"helm.sh/helm/v3/pkg/storage"
@@ -268,9 +272,56 @@ func makeServer(t *testing.T, authorized bool, actionConfig *action.Configuratio
 			return actionConfig, nil
 		},
 		chartClientFactory: &fake.ChartClientFactory{},
-		versionsInSummary:  pkgutils.GetDefaultVersionsInSummary(),
+		pluginConfig:       common.NewDefaultPluginConfig(),
 		createReleaseFunc:  agent.CreateRelease,
 	}, mock, cleanup
+}
+
+func newServerWithSecrets(t *testing.T, secrets []k8sruntime.Object) *Server {
+	typedClient := typfake.NewSimpleClientset(secrets...)
+
+	// ref https://stackoverflow.com/questions/68794562/kubernetes-fake-client-doesnt-handle-generatename-in-objectmeta/68794563#68794563
+	typedClient.PrependReactor(
+		"create", "*",
+		func(action k8stesting.Action) (handled bool, ret k8sruntime.Object, err error) {
+			ret = action.(k8stesting.CreateAction).GetObject()
+			meta, ok := ret.(metav1.Object)
+			if !ok {
+				return
+			}
+			if meta.GetName() == "" && meta.GetGenerateName() != "" {
+				meta.SetName(names.SimpleNameGenerator.GenerateName(meta.GetGenerateName()))
+			}
+			return
+		})
+
+	// Creating an authorized clientGetter
+	typedClient.PrependReactor("create", "selfsubjectaccessreviews", func(action k8stesting.Action) (handled bool, ret k8sruntime.Object, err error) {
+		return true, &authorizationv1.SelfSubjectAccessReview{
+			Status: authorizationv1.SubjectAccessReviewStatus{Allowed: true},
+		}, nil
+	})
+
+	apiExtIfc := apiextfake.NewSimpleClientset(helmAppRepositoryCRD)
+	ctrlClient := newCtrlClient(nil)
+	clientGetter := func(context.Context, string) (clientgetter.ClientInterfaces, error) {
+		return clientgetter.
+			NewBuilder().
+			WithTyped(typedClient).
+			WithApiExt(apiExtIfc).
+			WithControllerRuntime(ctrlClient).
+			Build(), nil
+	}
+
+	return &Server{
+		clientGetter:             clientGetter,
+		globalPackagingNamespace: globalPackagingNamespace,
+		globalPackagingCluster:   globalPackagingCluster,
+		chartClientFactory:       &fake.ChartClientFactory{},
+		createReleaseFunc:        agent.CreateRelease,
+		kubeappsCluster:          KubeappsCluster,
+		pluginConfig:             common.NewDefaultPluginConfig(),
+	}
 }
 
 func TestGetAvailablePackageSummaries(t *testing.T) {
@@ -1208,12 +1259,13 @@ core:
 				}
 				filename = f.Name()
 			}
-			versions_in_summary, _, goterr := parsePluginConfig(filename)
-			if goterr != nil && !strings.Contains(goterr.Error(), tc.exp_error_str) {
-				t.Errorf("err got %q, want to find %q", goterr.Error(), tc.exp_error_str)
-			}
-			if got, want := versions_in_summary, tc.exp_versions_in_summary; !cmp.Equal(want, got, opts) {
-				t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opts))
+			pluginConfig, err := common.ParsePluginConfig(filename)
+			if err != nil && !strings.Contains(err.Error(), tc.exp_error_str) {
+				t.Errorf("err got %q, want to find %q", err.Error(), tc.exp_error_str)
+			} else if pluginConfig != nil {
+				if got, want := pluginConfig.VersionsInSummary, tc.exp_versions_in_summary; !cmp.Equal(want, got, opts) {
+					t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opts))
+				}
 			}
 		})
 	}
@@ -1265,12 +1317,13 @@ core:
 				}
 				filename = f.Name()
 			}
-			_, timeoutSeconds, goterr := parsePluginConfig(filename)
-			if goterr != nil && !strings.Contains(goterr.Error(), tc.exp_error_str) {
-				t.Errorf("err got %q, want to find %q", goterr.Error(), tc.exp_error_str)
-			}
-			if got, want := timeoutSeconds, tc.exp_timeout; !cmp.Equal(want, got, opts) {
-				t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opts))
+			pluginConfig, err := common.ParsePluginConfig(filename)
+			if err != nil && !strings.Contains(err.Error(), tc.exp_error_str) {
+				t.Errorf("err got %q, want to find %q", err.Error(), tc.exp_error_str)
+			} else if pluginConfig != nil {
+				if got, want := pluginConfig.TimeoutSeconds, tc.exp_timeout; !cmp.Equal(want, got, opts) {
+					t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opts))
+				}
 			}
 		})
 	}
