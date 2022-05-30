@@ -20,7 +20,7 @@ test.describe("Limited user simple deployments", () => {
 
     // Go to repos page
     await page.click(".dropdown.kubeapps-menu button.kubeapps-nav-link");
-    await page.click('a.dropdown-menu-link:has-text("App Repositories")');
+    await page.click('a.dropdown-menu-link:has-text("Package Repositories")');
     await page.waitForTimeout(3000);
 
     // Add new repo
