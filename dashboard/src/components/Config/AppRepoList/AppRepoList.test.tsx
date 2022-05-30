@@ -81,7 +81,7 @@ it("should hide the all-namespace switch if the user doesn't have permissions", 
   expect(wrapper.find("input[type='checkbox']")).not.toExist();
 });
 
-// TODO: Remove this test when app repos are supported in different clusters
+// TODO: Remove this test when package repos are supported in different clusters
 it("shows a warning if the cluster is not the default one", () => {
   const wrapper = mountWrapper(
     getStore({

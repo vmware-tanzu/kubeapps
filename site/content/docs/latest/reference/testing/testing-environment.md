@@ -6,7 +6,7 @@ This guide explains how to setup your environment to test Kubeapps integration w
 
 Kubeapps can be integrated with other services to extend its capabilities. Find more information about these integrations in the link below:
 
-- [Using Private App Repositories with Kubeapps](../../howto/private-app-repository.md).
+- [Using Private Package Repositories with Kubeapps](../../howto/private-app-repository.md).
 
 This guide aims to provide the instructions to easily setup the environment to test these integrations.
 
