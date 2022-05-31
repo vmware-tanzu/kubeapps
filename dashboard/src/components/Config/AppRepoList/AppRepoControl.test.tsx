@@ -4,10 +4,10 @@
 import { CdsButton } from "@cds/react/button";
 import actions from "actions";
 import ConfirmDialog from "components/ConfirmDialog/ConfirmDialog";
+import { PackageRepositorySummary } from "gen/kubeappsapis/core/packages/v1alpha1/repositories";
 import { act } from "react-dom/test-utils";
 import * as ReactRedux from "react-redux";
 import { defaultStore, mountWrapper } from "shared/specs/mountWrapper";
-import { IAppRepository } from "shared/types";
 import { AppRepoAddButton } from "./AppRepoButton";
 import { AppRepoControl } from "./AppRepoControl";
 
@@ -35,7 +35,8 @@ const defaultProps = {
       name: "bitnami",
       namespace: "kubeapps",
     },
-  } as IAppRepository,
+    // FIXME(agamez): use the proper type
+  } as unknown as PackageRepositorySummary,
   refetchRepos: jest.fn(),
 };
 

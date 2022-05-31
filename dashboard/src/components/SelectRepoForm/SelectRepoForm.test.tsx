@@ -5,10 +5,10 @@ import { CdsButton } from "@cds/react/button";
 import actions from "actions";
 import Alert from "components/js/Alert";
 import { InstalledPackageDetail } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
+import { PackageRepositorySummary } from "gen/kubeappsapis/core/packages/v1alpha1/repositories";
 import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins";
 import * as ReactRedux from "react-redux";
 import { defaultStore, getStore, initialState, mountWrapper } from "shared/specs/mountWrapper";
-import { IAppRepository } from "shared/types";
 import SelectRepoForm from "./SelectRepoForm";
 
 const defaultProps = {
@@ -92,7 +92,8 @@ it("should select a repo", () => {
     spec: {
       url: "http://repo",
     },
-  } as IAppRepository;
+    // FIXME(agamez): use the proper type
+  } as unknown as PackageRepositorySummary;
 
   const props = { ...defaultProps, app: installedPackageDetail };
   const wrapper = mountWrapper(

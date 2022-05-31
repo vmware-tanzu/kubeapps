@@ -10,7 +10,7 @@ import { defaultStore, getStore, mountWrapper } from "shared/specs/mountWrapper"
 import { ISecret } from "shared/types";
 import AppRepoAddDockerCreds from "./AppRepoAddDockerCreds";
 import { AppRepoForm } from "./AppRepoForm";
-import { AppRepository } from "shared/AppRepository";
+import { PackageRepositoriesService } from "shared/PackageRepositoriesService";
 import { waitFor } from "@testing-library/react";
 import Secret from "shared/Secret";
 
@@ -600,11 +600,14 @@ describe("when the repository info is already populated", () => {
         spec: { auth: { customCA: { secretKeyRef: { name: "bar" } } } },
       } as any;
       const secret = { data: { "ca.crt": "Zm9v" } } as any;
-      AppRepository.getSecretForRepo = jest.fn(() => secret);
+      PackageRepositoriesService.getSecretForRepo = jest.fn(() => secret);
 
       let wrapper: any;
       act(() => {
-        wrapper = mountWrapper(defaultStore, <AppRepoForm {...defaultProps} repo={repo} />);
+        wrapper = mountWrapper(
+          defaultStore,
+          <AppRepoForm {...defaultProps} packageRepoRef={repo} />,
+        );
       });
 
       await waitFor(() => {
@@ -624,11 +627,14 @@ describe("when the repository info is already populated", () => {
         spec: { auth: { header: { secretKeyRef: { name: "bar" } } } },
       } as any;
       const secret = { data: { authorizationHeader: "Zm9v" } } as any;
-      AppRepository.getSecretForRepo = jest.fn(() => secret);
+      PackageRepositoriesService.getSecretForRepo = jest.fn(() => secret);
 
       let wrapper: any;
       act(() => {
-        wrapper = mountWrapper(defaultStore, <AppRepoForm {...defaultProps} repo={repo} />);
+        wrapper = mountWrapper(
+          defaultStore,
+          <AppRepoForm {...defaultProps} packageRepoRef={repo} />,
+        );
       });
 
       await waitFor(() => {
@@ -648,11 +654,14 @@ describe("when the repository info is already populated", () => {
         spec: { auth: { header: { secretKeyRef: { name: "bar" } } } },
       } as any;
       const secret = { data: { authorizationHeader: "QmFzaWMgWm05dk9tSmhjZz09" } } as any;
-      AppRepository.getSecretForRepo = jest.fn(() => secret);
+      PackageRepositoriesService.getSecretForRepo = jest.fn(() => secret);
 
       let wrapper: any;
       act(() => {
-        wrapper = mountWrapper(defaultStore, <AppRepoForm {...defaultProps} repo={repo} />);
+        wrapper = mountWrapper(
+          defaultStore,
+          <AppRepoForm {...defaultProps} packageRepoRef={repo} />,
+        );
       });
 
       await waitFor(() => {
@@ -699,11 +708,14 @@ describe("when the repository info is already populated", () => {
         spec: { auth: { header: { secretKeyRef: { name: "bar" } } } },
       } as any;
       const secret = { data: { authorizationHeader: "QmVhcmVyIGZvbw==" } } as any;
-      AppRepository.getSecretForRepo = jest.fn(() => secret);
+      PackageRepositoriesService.getSecretForRepo = jest.fn(() => secret);
 
       let wrapper: any;
       act(() => {
-        wrapper = mountWrapper(defaultStore, <AppRepoForm {...defaultProps} repo={repo} />);
+        wrapper = mountWrapper(
+          defaultStore,
+          <AppRepoForm {...defaultProps} packageRepoRef={repo} />,
+        );
       });
 
       await waitFor(() => {
@@ -718,11 +730,14 @@ describe("when the repository info is already populated", () => {
         spec: { auth: { header: { secretKeyRef: { name: "bar" } } } },
       } as any;
       const secret = { data: { ".dockerconfigjson": "QmVhcmVyIGZvbw==" } } as any;
-      AppRepository.getSecretForRepo = jest.fn(() => secret);
+      PackageRepositoriesService.getSecretForRepo = jest.fn(() => secret);
 
       let wrapper: any;
       act(() => {
-        wrapper = mountWrapper(defaultStore, <AppRepoForm {...defaultProps} repo={repo} />);
+        wrapper = mountWrapper(
+          defaultStore,
+          <AppRepoForm {...defaultProps} packageRepoRef={repo} />,
+        );
       });
 
       await waitFor(() => {

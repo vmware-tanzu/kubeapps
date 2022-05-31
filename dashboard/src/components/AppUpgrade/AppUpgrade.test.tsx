@@ -14,6 +14,7 @@ import {
   PackageAppVersion,
   VersionReference,
 } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
+import { PackageRepositorySummary } from "gen/kubeappsapis/core/packages/v1alpha1/repositories";
 import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins";
 import * as ReactRedux from "react-redux";
 import * as ReactRouter from "react-router";
@@ -23,7 +24,6 @@ import { defaultStore, getStore, mountWrapper } from "shared/specs/mountWrapper"
 import {
   CustomInstalledPackageDetail,
   FetchError,
-  IAppRepository,
   IInstalledPackageState,
   IPackageState,
   UpgradeError,
@@ -89,7 +89,8 @@ const repo1 = {
     name: defaultProps.repo,
     namespace: defaultProps.repoNamespace,
   },
-} as IAppRepository;
+  // FIXME(agamez): use the proper type
+} as unknown as PackageRepositorySummary;
 
 let spyOnUseDispatch: jest.SpyInstance;
 let spyOnUseHistory: jest.SpyInstance;
@@ -184,7 +185,7 @@ describe("when an error exists", () => {
   it("renders a warning message if there are no repositories", () => {
     const state = {
       repos: {
-        repos: [] as IAppRepository[],
+        repos: [] as PackageRepositorySummary[],
       } as IAppRepositoryState,
       apps: {
         selected: { name: "foo" },

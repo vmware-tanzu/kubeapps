@@ -2,12 +2,12 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import * as moxios from "moxios";
-import { AppRepository } from "./AppRepository";
+import { PackageRepositoriesService } from "./PackageRepositoriesService";
 import { axiosWithAuth } from "./AxiosInstance";
 import * as url from "./url";
 import { IAppRepositoryFilter } from "shared/types";
 
-describe("AppRepository", () => {
+describe("RepositoriesService", () => {
   const cluster = "cluster";
   const namespace = "namespace";
   const repo = {
@@ -45,7 +45,7 @@ describe("AppRepository", () => {
       response: {},
     });
 
-    await AppRepository.create(
+    await PackageRepositoriesService.addPackageRepository(
       cluster,
       repo.name,
       namespace,
@@ -76,7 +76,7 @@ describe("AppRepository", () => {
       response: {},
     });
 
-    await AppRepository.update(
+    await PackageRepositoriesService.updatePackageRepository(
       cluster,
       repo.name,
       namespace,
@@ -107,7 +107,7 @@ describe("AppRepository", () => {
       response: {},
     });
 
-    await AppRepository.delete(cluster, namespace, repo.name);
+    await PackageRepositoriesService.deletePackageRepository(cluster, namespace, repo.name);
 
     const request = moxios.requests.mostRecent();
     expect(request.config.method).toEqual("delete");

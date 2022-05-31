@@ -58,6 +58,7 @@ const defaultProps = {
       },
     ],
     secrets: [],
+    // FIXME(agamez): use the proper type
   } as unknown as IAppViewResourceRefs,
   appDetails: {} as AvailablePackageDetail,
 };

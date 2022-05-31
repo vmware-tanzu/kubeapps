@@ -5,14 +5,15 @@ import {
   AvailablePackageReference,
   InstalledPackageDetail,
 } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
+import { PackageRepositorySummary } from "gen/kubeappsapis/core/packages/v1alpha1/repositories";
 import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins";
 import context from "jest-plugin-context";
 import configureMockStore from "redux-mock-store";
 import thunk from "redux-thunk";
-import { AppRepository } from "shared/AppRepository";
+import { PackageRepositoriesService } from "shared/PackageRepositoriesService";
 import PackagesService from "shared/PackagesService";
 import Secret from "shared/Secret";
-import { IAppRepository, NotFoundError } from "shared/types";
+import { NotFoundError } from "shared/types";
 import { getType } from "typesafe-actions";
 import actions from ".";
 
@@ -44,15 +45,17 @@ beforeEach(() => {
       },
     },
   });
-  AppRepository.list = jest.fn().mockImplementationOnce(() => {
-    return { items: { foo: "bar" } };
-  });
-  AppRepository.delete = jest.fn();
-  AppRepository.get = jest.fn().mockImplementationOnce(() => {
+  PackageRepositoriesService.getPackageRepositorySummaries = jest
+    .fn()
+    .mockImplementationOnce(() => {
+      return { items: { foo: "bar" } };
+    });
+  PackageRepositoriesService.deletePackageRepository = jest.fn();
+  PackageRepositoriesService.getPackageRepositoryDetail = jest.fn().mockImplementationOnce(() => {
     return appRepo;
   });
-  AppRepository.update = jest.fn();
-  AppRepository.create = jest.fn().mockImplementationOnce(() => {
+  PackageRepositoriesService.updatePackageRepository = jest.fn();
+  PackageRepositoriesService.addPackageRepository = jest.fn().mockImplementationOnce(() => {
     return { appRepository: { metadata: { name: "repo-abc" } } };
   });
 });
@@ -67,7 +70,8 @@ interface ITestCase {
   payload?: any;
 }
 
-const repo = { metadata: { name: "my-repo" } } as IAppRepository;
+// FIXME(agamez): use the proper type
+const repo = { metadata: { name: "my-repo" } } as unknown as PackageRepositorySummary;
 
 const actionTestCases: ITestCase[] = [
   { name: "addRepo", action: repoActions.addRepo },
@@ -122,7 +126,7 @@ describe("deleteRepo", () => {
   });
 
   it("dispatches errorRepos if error deleting", async () => {
-    AppRepository.delete = jest.fn().mockImplementationOnce(() => {
+    PackageRepositoriesService.deletePackageRepository = jest.fn().mockImplementationOnce(() => {
       throw new Error("Boom!");
     });
 
@@ -140,7 +144,7 @@ describe("deleteRepo", () => {
 
 describe("resyncRepo", () => {
   it("dispatches errorRepos if error on #update", async () => {
-    AppRepository.resync = jest.fn().mockImplementationOnce(() => {
+    PackageRepositoriesService.resync = jest.fn().mockImplementationOnce(() => {
       throw new Error("Boom!");
     });
 
@@ -159,7 +163,7 @@ describe("resyncRepo", () => {
 describe("resyncAllRepos", () => {
   it("resyncs each repo using its namespace", async () => {
     const appRepoGetMock = jest.fn();
-    AppRepository.resync = appRepoGetMock;
+    PackageRepositoriesService.resync = appRepoGetMock;
     await store.dispatch(
       repoActions.resyncAllRepos([
         {
@@ -198,9 +202,11 @@ describe("fetchRepos", () => {
   });
 
   it("dispatches requestRepos and errorRepos if error fetching", async () => {
-    AppRepository.list = jest.fn().mockImplementationOnce(() => {
-      throw new Error("Boom!");
-    });
+    PackageRepositoriesService.getPackageRepositorySummaries = jest
+      .fn()
+      .mockImplementationOnce(() => {
+        throw new Error("Boom!");
+      });
 
     const expectedActions = [
       {
@@ -218,7 +224,7 @@ describe("fetchRepos", () => {
   });
 
   it("fetches additional repos from the global namespace and joins them", async () => {
-    AppRepository.list = jest
+    PackageRepositoriesService.getPackageRepositorySummaries = jest
       .fn()
       .mockImplementationOnce(() => {
         return { items: [{ name: "repo1", metadata: { uid: "123" } }] };
@@ -250,7 +256,7 @@ describe("fetchRepos", () => {
   });
 
   it("fetches duplicated repos from several namespaces and joins them", async () => {
-    AppRepository.list = jest
+    PackageRepositoriesService.getPackageRepositorySummaries = jest
       .fn()
       .mockImplementationOnce(() => {
         return { items: [{ name: "repo1", metadata: { uid: "123" } }] };
@@ -287,7 +293,7 @@ describe("fetchRepos", () => {
   });
 
   it("fetches repos only if the namespace is the one used for global repos", async () => {
-    AppRepository.list = jest
+    PackageRepositoriesService.getPackageRepositorySummaries = jest
       .fn()
       .mockImplementationOnce(() => {
         return { items: [{ name: "repo1", metadata: { uid: "123" } }] };
@@ -355,7 +361,7 @@ describe("installRepo", () => {
 
     it("calls AppRepository create including a auth struct (authHeader)", async () => {
       await store.dispatch(installRepoCMDAuth);
-      expect(AppRepository.create).toHaveBeenCalledWith(
+      expect(PackageRepositoriesService.addPackageRepository).toHaveBeenCalledWith(
         "default",
         "my-repo",
         "my-namespace",
@@ -393,7 +399,7 @@ describe("installRepo", () => {
           undefined,
         ),
       );
-      expect(AppRepository.create).toHaveBeenCalledWith(
+      expect(PackageRepositoriesService.addPackageRepository).toHaveBeenCalledWith(
         "default",
         "my-repo",
         "my-namespace",
@@ -431,7 +437,7 @@ describe("installRepo", () => {
           undefined,
         ),
       );
-      expect(AppRepository.create).toHaveBeenCalledWith(
+      expect(PackageRepositoriesService.addPackageRepository).toHaveBeenCalledWith(
         "default",
         "my-repo",
         "my-namespace",
@@ -476,7 +482,7 @@ describe("installRepo", () => {
 
     it("calls AppRepository create including a auth struct (custom CA)", async () => {
       await store.dispatch(installRepoCMDAuth);
-      expect(AppRepository.create).toHaveBeenCalledWith(
+      expect(PackageRepositoriesService.addPackageRepository).toHaveBeenCalledWith(
         "default",
         "my-repo",
         "my-namespace",
@@ -521,7 +527,7 @@ describe("installRepo", () => {
           ),
         );
 
-        expect(AppRepository.create).toHaveBeenCalledWith(
+        expect(PackageRepositoriesService.addPackageRepository).toHaveBeenCalledWith(
           "default",
           "my-repo",
           "my-namespace",
@@ -565,7 +571,7 @@ describe("installRepo", () => {
             undefined,
           ),
         );
-        expect(AppRepository.create).not.toHaveBeenCalled();
+        expect(PackageRepositoriesService.addPackageRepository).not.toHaveBeenCalled();
       });
     });
   });
@@ -573,7 +579,7 @@ describe("installRepo", () => {
   context("when authHeader and customCA are empty", () => {
     it("calls AppRepository create without a auth struct", async () => {
       await store.dispatch(installRepoCMD);
-      expect(AppRepository.create).toHaveBeenCalledWith(
+      expect(PackageRepositoriesService.addPackageRepository).toHaveBeenCalledWith(
         "default",
         "my-repo",
         "my-namespace",
@@ -599,7 +605,7 @@ describe("installRepo", () => {
   });
 
   it("dispatches addRepo and errorRepos if error fetching", async () => {
-    AppRepository.create = jest.fn().mockImplementationOnce(() => {
+    PackageRepositoriesService.addPackageRepository = jest.fn().mockImplementationOnce(() => {
       throw new Error("Boom!");
     });
 
@@ -618,7 +624,7 @@ describe("installRepo", () => {
   });
 
   it("returns false if error fetching", async () => {
-    AppRepository.create = jest.fn().mockImplementationOnce(() => {
+    PackageRepositoriesService.addPackageRepository = jest.fn().mockImplementationOnce(() => {
       throw new Error("Boom!");
     });
 
@@ -661,7 +667,7 @@ describe("installRepo", () => {
       ),
     );
 
-    expect(AppRepository.create).toHaveBeenCalledWith(
+    expect(PackageRepositoriesService.addPackageRepository).toHaveBeenCalledWith(
       "default",
       "my-repo",
       "foo",
@@ -699,7 +705,7 @@ describe("installRepo", () => {
         undefined,
       ),
     );
-    expect(AppRepository.create).toHaveBeenCalledWith(
+    expect(PackageRepositoriesService.addPackageRepository).toHaveBeenCalledWith(
       "default",
       "my-repo",
       "my-namespace",
@@ -725,7 +731,7 @@ describe("updateRepo", () => {
       metadata: { name: "repo-abc" },
       spec: { auth: { header: { secretKeyRef: { name: "apprepo-repo-abc" } } } },
     };
-    AppRepository.update = jest.fn().mockReturnValue({
+    PackageRepositoriesService.updatePackageRepository = jest.fn().mockReturnValue({
       appRepository: r,
     });
     const expectedActions = [
@@ -757,7 +763,7 @@ describe("updateRepo", () => {
       ),
     );
     expect(store.getActions()).toEqual(expectedActions);
-    expect(AppRepository.update).toHaveBeenCalledWith(
+    expect(PackageRepositoriesService.updatePackageRepository).toHaveBeenCalledWith(
       "default",
       "my-repo",
       "my-namespace",
@@ -781,7 +787,7 @@ describe("updateRepo", () => {
       metadata: { name: "repo-abc" },
       spec: { auth: { customCA: { secretKeyRef: { name: "apprepo-repo-abc" } } } },
     };
-    AppRepository.update = jest.fn().mockReturnValue({
+    PackageRepositoriesService.updatePackageRepository = jest.fn().mockReturnValue({
       appRepository: r,
     });
     const expectedActions = [
@@ -813,7 +819,7 @@ describe("updateRepo", () => {
       ),
     );
     expect(store.getActions()).toEqual(expectedActions);
-    expect(AppRepository.update).toHaveBeenCalledWith(
+    expect(PackageRepositoriesService.updatePackageRepository).toHaveBeenCalledWith(
       "default",
       "my-repo",
       "my-namespace",
@@ -833,7 +839,7 @@ describe("updateRepo", () => {
   });
 
   it("returns an error if failed", async () => {
-    AppRepository.update = jest.fn(() => {
+    PackageRepositoriesService.updatePackageRepository = jest.fn(() => {
       throw new Error("boom");
     });
     const expectedActions = [
@@ -868,7 +874,7 @@ describe("updateRepo", () => {
   });
 
   it("updates a repo with ociRepositories", async () => {
-    AppRepository.update = jest.fn().mockReturnValue({
+    PackageRepositoriesService.updatePackageRepository = jest.fn().mockReturnValue({
       appRepository: {},
     });
     await store.dispatch(
@@ -889,7 +895,7 @@ describe("updateRepo", () => {
         undefined,
       ),
     );
-    expect(AppRepository.update).toHaveBeenCalledWith(
+    expect(PackageRepositoriesService.updatePackageRepository).toHaveBeenCalledWith(
       "default",
       "my-repo",
       "my-namespace",
@@ -909,7 +915,7 @@ describe("updateRepo", () => {
   });
 
   it("updates a repo with description", async () => {
-    AppRepository.update = jest.fn().mockReturnValue({
+    PackageRepositoriesService.updatePackageRepository = jest.fn().mockReturnValue({
       appRepository: {},
     });
     await store.dispatch(
@@ -930,7 +936,7 @@ describe("updateRepo", () => {
         undefined,
       ),
     );
-    expect(AppRepository.update).toHaveBeenCalledWith(
+    expect(PackageRepositoriesService.updatePackageRepository).toHaveBeenCalledWith(
       "default",
       "my-repo",
       "my-namespace",
@@ -1021,7 +1027,7 @@ describe("findPackageInRepo", () => {
 
 describe("validateRepo", () => {
   it("dispatches repoValidating and repoValidated if no error", async () => {
-    AppRepository.validate = jest.fn().mockReturnValue({
+    PackageRepositoriesService.validate = jest.fn().mockReturnValue({
       code: 200,
       message: "OK",
     });
@@ -1044,7 +1050,7 @@ describe("validateRepo", () => {
 
   it("dispatches checkRepo and errorRepos when the validation failed", async () => {
     const error = new Error("boom!");
-    AppRepository.validate = jest.fn(() => {
+    PackageRepositoriesService.validate = jest.fn(() => {
       throw error;
     });
     const expectedActions = [
@@ -1064,7 +1070,7 @@ describe("validateRepo", () => {
   });
 
   it("dispatches checkRepo and errorRepos when the validation cannot be parsed", async () => {
-    AppRepository.validate = jest.fn().mockReturnValue({
+    PackageRepositoriesService.validate = jest.fn().mockReturnValue({
       code: 409,
       message: "forbidden",
     });
@@ -1088,14 +1094,14 @@ describe("validateRepo", () => {
   });
 
   it("validates repo with ociRepositories", async () => {
-    AppRepository.validate = jest.fn().mockReturnValue({
+    PackageRepositoriesService.validate = jest.fn().mockReturnValue({
       code: 200,
     });
     const res = await store.dispatch(
       repoActions.validateRepo("url", "oci", "", "", "", ["apache", "jenkins"], false, false),
     );
     expect(res).toBe(true);
-    expect(AppRepository.validate).toHaveBeenCalledWith(
+    expect(PackageRepositoriesService.validate).toHaveBeenCalledWith(
       "default",
       "kubeapps-namespace",
       "url",
