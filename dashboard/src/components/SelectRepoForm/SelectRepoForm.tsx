@@ -34,8 +34,10 @@ function SelectRepoForm({ cluster, namespace, app }: ISelectRepoFormProps) {
     config: { kubeappsNamespace, kubeappsCluster },
   } = useSelector((state: IStoreState) => state);
 
-  const [userRepoName, setUserRepoName] = useState(repo?.metadata?.name ?? "");
-  const [userRepoNamespace, setUserRepoNamepace] = useState(repo?.metadata?.namespace ?? "");
+  const [userRepoName, setUserRepoName] = useState(repo?.name ?? "");
+  const [userRepoNamespace, setUserRepoNamepace] = useState(
+    repo.packageRepoRef?.context?.namespace ?? "",
+  );
 
   useEffect(() => {
     if (namespace !== kubeappsNamespace) {
@@ -64,12 +66,12 @@ function SelectRepoForm({ cluster, namespace, app }: ISelectRepoFormProps) {
   };
 
   const findRepo = (ns: string, name: string) => {
-    return repos.find(r => r.metadata.name === name && r.metadata.namespace === ns);
+    return repos.find(r => r.name === name && r.packageRepoRef?.context?.namespace === ns);
   };
 
   const getRepoURL = (ns: string, name: string) => {
     const r = findRepo(ns, name);
-    return r && r.spec ? r.spec.url : "";
+    return r?.url || "";
   };
 
   return (
@@ -108,10 +110,10 @@ function SelectRepoForm({ cluster, namespace, app }: ISelectRepoFormProps) {
             >
               {!userRepoName && <option key="" value="" />}
               {repos.map(r => {
-                const value = `${r.metadata.namespace}/${r.metadata.name}`;
+                const value = `${r.packageRepoRef?.context?.namespace}/${r.name}`;
                 return (
                   <option key={value} value={value}>
-                    {value} ({getRepoURL(r.metadata.namespace, r.metadata.name)})
+                    {value} ({getRepoURL(r.packageRepoRef?.context?.namespace || "", r.name)})
                   </option>
                 );
               })}

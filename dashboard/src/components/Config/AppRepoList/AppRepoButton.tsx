@@ -5,11 +5,13 @@ import { CdsButton } from "@cds/react/button";
 import { CdsIcon } from "@cds/react/icon";
 import { CdsModal, CdsModalContent, CdsModalHeader } from "@cds/react/modal";
 import actions from "actions";
+import { PackageRepositoryReference } from "gen/kubeappsapis/core/packages/v1alpha1/repositories";
+import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins";
 import { useState } from "react";
 import { useDispatch } from "react-redux";
 import { Action } from "redux";
 import { ThunkDispatch } from "redux-thunk";
-import { IAppRepository, IAppRepositoryFilter, IStoreState } from "shared/types";
+import { IAppRepositoryFilter, IStoreState } from "shared/types";
 import { AppRepoForm } from "./AppRepoForm";
 
 interface IAppRepoAddButtonProps {
@@ -17,7 +19,7 @@ interface IAppRepoAddButtonProps {
   kubeappsNamespace: string;
   text?: string;
   primary?: boolean;
-  repo?: IAppRepository;
+  packageRepoRef?: PackageRepositoryReference;
   disabled?: boolean;
   title?: string;
 }
@@ -26,17 +28,21 @@ export function AppRepoAddButton({
   text,
   namespace,
   kubeappsNamespace,
-  repo,
+  packageRepoRef,
   primary = true,
   title,
   disabled,
 }: IAppRepoAddButtonProps) {
   const dispatch: ThunkDispatch<IStoreState, null, Action> = useDispatch();
   const [modalIsOpen, setModalOpen] = useState(false);
-  const openModal = () => setModalOpen(true);
+  const openModal = () => {
+    dispatch(actions.repos.requestRepo());
+    setModalOpen(true);
+  };
   const closeModal = () => setModalOpen(false);
   const onSubmit = (
     name: string,
+    plugin: Plugin,
     url: string,
     type: string,
     description: string,
@@ -50,10 +56,11 @@ export function AppRepoAddButton({
     passCredentials: boolean,
     filter?: IAppRepositoryFilter,
   ) => {
-    if (repo) {
+    if (packageRepoRef) {
       return dispatch(
         actions.repos.updateRepo(
           name,
+          plugin,
           namespace,
           url,
           type,
@@ -73,6 +80,7 @@ export function AppRepoAddButton({
       return dispatch(
         actions.repos.installRepo(
           name,
+          plugin,
           namespace,
           url,
           type,
@@ -108,7 +116,7 @@ export function AppRepoAddButton({
             <AppRepoForm
               onSubmit={onSubmit}
               onAfterInstall={closeModal}
-              repo={repo}
+              packageRepoRef={packageRepoRef}
               namespace={namespace}
               kubeappsNamespace={kubeappsNamespace}
             />

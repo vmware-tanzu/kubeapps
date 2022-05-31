@@ -20,18 +20,14 @@ export function AppRepoRefreshAllButton() {
     setRefreshing(true);
     setTimeout(() => setRefreshing(false), 500);
     if (repos) {
-      const repoObjects = repos.map(repo => {
-        return {
-          name: repo.metadata.name,
-          namespace: repo.metadata.namespace,
-        };
-      });
+      const repoObjects = repos.map(repo => repo.packageRepoRef);
       dispatch(actions.repos.resyncAllRepos(repoObjects));
     }
   };
+
   return (
     <div className="refresh-all-button">
-      <CdsButton action="outline" onClick={handleResyncAllClick} disabled={refreshing}>
+      <CdsButton disabled={refreshing} action="outline" onClick={handleResyncAllClick}>
         <CdsIcon shape="refresh" /> {refreshing ? "Refreshing" : "Refresh All"}
       </CdsButton>
     </div>

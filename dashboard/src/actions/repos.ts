@@ -348,11 +348,13 @@ export const resyncRepo = (
 };
 
 export const resyncAllRepos = (
-  packageRepositoryReferences: PackageRepositoryReference[],
+  packageRepositoryReferences: (PackageRepositoryReference | undefined)[],
 ): ThunkAction<Promise<void>, IStoreState, null, AppReposAction> => {
   return async dispatch => {
     packageRepositoryReferences.forEach(ref => {
-      dispatch(resyncRepo(ref.identifier, ref.context?.namespace || ""));
+      if (ref) {
+        dispatch(resyncRepo(ref.identifier, ref.context?.namespace || ""));
+      }
     });
   };
 };

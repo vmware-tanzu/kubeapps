@@ -1,6 +1,8 @@
 // Copyright 2018-2022 the Kubeapps contributors.
 // SPDX-License-Identifier: Apache-2.0
 
+import { CdsButton } from "@cds/react/button";
+import { CdsIcon } from "@cds/react/icon";
 import { CdsToggle, CdsToggleGroup } from "@cds/react/toggle";
 import actions from "actions";
 import { filterNames, filtersToQuery } from "components/Catalog/Catalog";
@@ -9,19 +11,19 @@ import Table from "components/js/Table";
 import Tooltip from "components/js/Tooltip";
 import PageHeader from "components/PageHeader/PageHeader";
 import { push } from "connected-react-router";
+import { PackageRepositorySummary } from "gen/kubeappsapis/core/packages/v1alpha1/repositories";
 import qs from "qs";
 import { useCallback, useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { useLocation, Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { Kube } from "shared/Kube";
-import { IAppRepository, IStoreState } from "shared/types";
+import { IStoreState } from "shared/types";
 import { app } from "shared/url";
 import LoadingWrapper from "../../LoadingWrapper/LoadingWrapper";
 import { AppRepoAddButton } from "./AppRepoButton";
 import { AppRepoControl } from "./AppRepoControl";
 import { AppRepoDisabledControl } from "./AppRepoDisabledControl";
 import "./AppRepoList.css";
-import { AppRepoRefreshAllButton } from "./AppRepoRefreshAllButton";
 
 function AppRepoList() {
   const dispatch = useDispatch();
@@ -97,10 +99,10 @@ function AppRepoList() {
     ).then(allowed => setCanEditGlobalRepos(allowed));
   }, [cluster, kubeappsCluster, kubeappsNamespace, globalReposNamespace]);
 
-  const globalRepos: IAppRepository[] = [];
-  const namespaceRepos: IAppRepository[] = [];
+  const globalRepos: PackageRepositorySummary[] = [];
+  const namespaceRepos: PackageRepositorySummary[] = [];
   repos.forEach(repo => {
-    repo.metadata.namespace === globalReposNamespace
+    repo.packageRepoRef?.context?.namespace === globalReposNamespace
       ? globalRepos.push(repo)
       : namespaceRepos.push(repo);
   });
@@ -108,17 +110,33 @@ function AppRepoList() {
   const tableColumns = [
     { accessor: "name", Header: "Name" },
     { accessor: "url", Header: "URL" },
+    { accessor: "plugin", Header: "Package Type" },
     { accessor: "accessLevel", Header: "Access Level" },
     { accessor: "namespace", Header: "Namespace" },
+    { accessor: "status", Header: "Status" },
     { accessor: "actions", Header: "Actions" },
   ];
-  const getTableData = (targetRepos: IAppRepository[], disableControls: boolean) => {
+  const getTableData = (targetRepos: PackageRepositorySummary[], disableControls: boolean) => {
     return targetRepos.map(repo => {
       return {
         name: getRepoNameLinkAndTooltip(cluster, repo),
-        url: repo.spec?.url,
-        accessLevel: repo.spec?.auth?.header ? "Private" : "Public",
-        namespace: repo.metadata.namespace,
+        url: repo.url,
+        // TODO(agamez): the PackageRepositorySummary API doesn't expose this field. It will be added in upcoming PRs; in the meantime, set to "unknown"
+        // accessLevel: repo.type?.auth?.header ? "Private" : "Public",
+        accessLevel: "unknown",
+        namespace: repo.packageRepoRef?.context?.namespace,
+        plugin: repo.type,
+        status: repo.status?.ready ? (
+          <>Ready</>
+        ) : (
+          <>
+            <CdsButton action="flat-inline" onClick={refetchRepos}>
+              <CdsIcon shape="refresh" />
+              Refresh
+            </CdsButton>
+            <p>Not ready</p>
+          </>
+        ),
         actions: disableControls ? (
           <AppRepoDisabledControl />
         ) : (
@@ -144,7 +162,8 @@ function AppRepoList() {
             namespace={currentNamespace}
             kubeappsNamespace={globalReposNamespace}
           />,
-          <AppRepoRefreshAllButton key="refresh-all-button" />,
+          // TODO(agamez): the refresh functionallity is currently not implemented/supported in the new Repositories API
+          // <AppRepoRefreshAllButton key="refresh-all-button" />,
         ]}
         filter={
           canSetAllNS ? (
@@ -237,30 +256,30 @@ function AppRepoList() {
   );
 }
 
-function getRepoNameLinkAndTooltip(cluster: string, repo: IAppRepository) {
+function getRepoNameLinkAndTooltip(cluster: string, repo: PackageRepositorySummary) {
   const linkObj = (
     <Link
       to={
-        app.catalog(cluster, repo.metadata.namespace) +
-        filtersToQuery({ [filterNames.REPO]: [repo.metadata.name] })
+        app.catalog(cluster, repo.packageRepoRef?.context?.namespace || "") +
+        filtersToQuery({ [filterNames.REPO]: [repo.name] })
       }
     >
-      {repo.metadata.name}
+      {repo.name}
     </Link>
   );
-  return repo.spec?.description ? (
+  return repo.description ? (
     <div className="color-icon-info">
       <span className="tooltip-wrapper">
         {linkObj}
         <Tooltip
           label="pending-tooltip"
-          id={`${repo.metadata.name}-pending-tooltip`}
+          id={`${repo.name}-pending-tooltip`}
           icon="info-circle"
           position="bottom-left"
           small={true}
           iconProps={{ solid: true, size: "sm" }}
         >
-          {repo.spec?.description}
+          {repo.description}
         </Tooltip>
       </span>
     </div>
