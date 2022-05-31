@@ -469,63 +469,7 @@ func TestAddPackageRepository(t *testing.T) {
 				if err = ctrlClient.Get(ctx, nsname, &actualRepo); err != nil {
 					t.Fatal(err)
 				} else {
-					if tc.userManagedSecrets {
-						if tc.expectedCreatedSecret != nil {
-							t.Fatalf("Error: unexpected state")
-						}
-						if got, want := &actualRepo, tc.expectedRepo; !cmp.Equal(want, got) {
-							t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got))
-						}
-					} else {
-						if got, want := &actualRepo, tc.expectedRepo; !cmp.Equal(want, got) {
-							t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got))
-						}
-
-						if tc.expectedCreatedSecret != nil {
-							opt2 := cmpopts.IgnoreFields(metav1.ObjectMeta{}, "Name", "GenerateName")
-							if actualRepo.Spec.Auth.Header == nil && actualRepo.Spec.Auth.CustomCA == nil {
-								t.Errorf("Error: Repository secrets were expected but auth header and CA are empty")
-							} else if actualRepo.Spec.Auth.Header != nil {
-								if !strings.HasPrefix(actualRepo.Spec.Auth.Header.SecretKeyRef.Name, tc.expectedRepo.Spec.Auth.Header.SecretKeyRef.Name) {
-									t.Errorf("Auth header SecretKeyRef [%s] was expected to start with [%s]",
-										actualRepo.Spec.Auth.Header.SecretKeyRef.Name, tc.expectedRepo.Spec.Auth.Header.SecretKeyRef.Name)
-								}
-								// check expected secret has been created
-								if typedClient, err := s.clientGetter.Typed(ctx, s.kubeappsCluster); err != nil {
-									t.Fatal(err)
-								} else if secret, err := typedClient.CoreV1().Secrets(nsname.Namespace).Get(ctx, actualRepo.Spec.Auth.Header.SecretKeyRef.Name, metav1.GetOptions{}); err != nil {
-									t.Fatal(err)
-								} else if got, want := secret, tc.expectedCreatedSecret; !cmp.Equal(want, got, opt2) {
-									t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opt2))
-								} else if !strings.HasPrefix(secret.Name, tc.expectedCreatedSecret.Name) {
-									t.Errorf("Secret Name [%s] was expected to start with [%s]",
-										secret.Name, tc.expectedCreatedSecret.Name)
-								}
-							} else {
-								if !strings.HasPrefix(actualRepo.Spec.Auth.CustomCA.SecretKeyRef.Name, tc.expectedRepo.Spec.Auth.CustomCA.SecretKeyRef.Name) {
-									t.Errorf("CustomCA SecretKeyRef [%s] was expected to start with [%s]",
-										actualRepo.Spec.Auth.CustomCA.SecretKeyRef.Name, tc.expectedRepo.Spec.Auth.CustomCA.SecretKeyRef.Name)
-								}
-								// check expected secret has been created
-								if typedClient, err := s.clientGetter.Typed(ctx, s.kubeappsCluster); err != nil {
-									t.Fatal(err)
-								} else if secret, err := typedClient.CoreV1().Secrets(nsname.Namespace).Get(ctx, actualRepo.Spec.Auth.CustomCA.SecretKeyRef.Name, metav1.GetOptions{}); err != nil {
-									t.Fatal(err)
-								} else if got, want := secret, tc.expectedCreatedSecret; !cmp.Equal(want, got, opt2) {
-									t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opt2))
-								} else if !strings.HasPrefix(secret.Name, tc.expectedCreatedSecret.Name) {
-									t.Errorf("Secret Name [%s] was expected to start with [%s]",
-										secret.Name, tc.expectedCreatedSecret.Name)
-								}
-							}
-						} else if actualRepo.Spec.Auth.Header != nil {
-							t.Fatalf("Expected no secret, but found Header: [%v]", actualRepo.Spec.Auth.Header.SecretKeyRef)
-						} else if actualRepo.Spec.Auth.CustomCA != nil {
-							t.Fatalf("Expected no secret, but found CustomCA: [%v]", actualRepo.Spec.Auth.CustomCA.SecretKeyRef)
-						} else if tc.expectedRepo.Spec.Auth.Header != nil {
-							t.Fatalf("Error: unexpected state")
-						}
-					}
+					checkRepoSecrets(s, t, nsname.Namespace, tc.userManagedSecrets, &actualRepo, tc.expectedRepo, tc.expectedCreatedSecret)
 				}
 			}
 		})
@@ -815,6 +759,7 @@ func TestUpdatePackageRepository(t *testing.T) {
 		expectedRef            *corev1.PackageRepositoryReference
 		existingSecret         *apiv1.Secret
 		expectedSecret         *apiv1.Secret
+		userManagedSecrets     bool
 	}{
 		{
 			name: "invalid package repo ref",
@@ -931,6 +876,39 @@ func TestUpdatePackageRepository(t *testing.T) {
 			expectedStatusCode: codes.OK,
 		},
 		{
+			name: "update adding auth (user managed secrets)",
+			requestCustomizer: func(request *corev1.UpdatePackageRepositoryRequest) *corev1.UpdatePackageRepositoryRequest {
+				request.Auth = &corev1.PackageRepositoryAuth{
+					Type: corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_BEARER,
+					PackageRepoAuthOneOf: &corev1.PackageRepositoryAuth_SecretRef{
+						SecretRef: &corev1.SecretKeyReference{
+							Name: "my-own-secret",
+						},
+					},
+				}
+				return request
+			},
+			userManagedSecrets: true,
+			existingSecret:     newAuthTokenSecret("my-own-secret", "ns-1", "Bearer foobarzot"),
+			expectedRepoCustomizer: func(repository appRepov1alpha1.AppRepository) *appRepov1alpha1.AppRepository {
+				repository.ResourceVersion = "2"
+				repository.Spec.Auth = appRepov1alpha1.AppRepositoryAuth{
+					Header: &appRepov1alpha1.AppRepositoryAuthHeader{
+						SecretKeyRef: apiv1.SecretKeySelector{
+							LocalObjectReference: apiv1.LocalObjectReference{Name: "my-own-secret"},
+							Key:                  "authorizationHeader",
+						},
+					},
+				}
+				repository.Spec.Description = ""
+				repository.Spec.URL = "https://new-repo-url"
+				return &repository
+			},
+			expectedRef: defaultRef,
+			//expectedSecret:     setSecretOwnerRef("repo-1", newAuthTokenSecret("apprepo-repo-1", "ns-1", "Bearer foobarzot")),
+			expectedStatusCode: codes.OK,
+		},
+		{
 			name:           "update removing auth",
 			existingSecret: newAuthTokenSecret("repo-3-secret", globalPackagingNamespace, "token-value"),
 			requestCustomizer: func(request *corev1.UpdatePackageRepositoryRequest) *corev1.UpdatePackageRepositoryRequest {
@@ -1008,6 +986,7 @@ func TestUpdatePackageRepository(t *testing.T) {
 			}
 
 			s := newServerWithSecretsAndRepos(t, secrets, unstructuredObjects, repos)
+			s.pluginConfig.UserManagedSecrets = tc.userManagedSecrets
 
 			request := tc.requestCustomizer(commonRequest())
 			response, err := s.UpdatePackageRepository(context.Background(), request)
@@ -1055,7 +1034,7 @@ func TestUpdatePackageRepository(t *testing.T) {
 			}
 
 			if tc.expectedSecret != nil {
-				checkRepoSecrets(s, t, tc.expectedRef.Context.Namespace, false, appRepo, expectedRepository, tc.expectedSecret)
+				checkRepoSecrets(s, t, tc.expectedRef.Context.Namespace, tc.userManagedSecrets, appRepo, expectedRepository, tc.expectedSecret)
 			}
 		})
 	}

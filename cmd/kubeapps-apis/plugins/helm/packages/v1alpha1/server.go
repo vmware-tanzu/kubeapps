@@ -67,19 +67,16 @@ type Server struct {
 	// clientGetter is a field so that it can be switched in tests for
 	// a fake client. NewServer() below sets this automatically with the
 	// non-test implementation.
-	clientGetter clientgetter.ClientGetterFunc
-	// for interactions with k8s API server in the context of
-	// kubeapps-internal-kubeappsapis service account
-	serviceAccountClientGetter clientgetter.BackgroundClientGetterFunc
-	globalPackagingNamespace   string
-	globalPackagingCluster     string
-	manager                    utils.AssetManager
-	actionConfigGetter         helmActionConfigGetter
-	chartClientFactory         chartutils.ChartClientFactoryInterface
-	createReleaseFunc          createRelease
-	kubeappsCluster            string // Specifies the cluster on which Kubeapps is installed.
-	pluginConfig               *common.HelmPluginConfig
-	repoClientGetter           newRepoClient
+	clientGetter             clientgetter.ClientGetterFunc
+	globalPackagingNamespace string
+	globalPackagingCluster   string
+	manager                  utils.AssetManager
+	actionConfigGetter       helmActionConfigGetter
+	chartClientFactory       chartutils.ChartClientFactoryInterface
+	createReleaseFunc        createRelease
+	kubeappsCluster          string // Specifies the cluster on which Kubeapps is installed.
+	pluginConfig             *common.HelmPluginConfig
+	repoClientGetter         newRepoClient
 }
 
 // NewServer returns a Server automatically configured with a function to obtain
@@ -121,9 +118,6 @@ func NewServer(configGetter core.KubernetesConfigGetter, globalPackagingCluster 
 	scheme := runtime.NewScheme()
 	appRepov1.AddToScheme(scheme)
 
-	backgroundClientGetter := clientgetter.NewBackgroundClientGetter(
-		configGetter, clientgetter.Options{Scheme: scheme})
-
 	return &Server{
 		clientGetter: clientgetter.NewClientGetter(configGetter, clientgetter.Options{Scheme: scheme}),
 		actionConfigGetter: func(ctx context.Context, pkgContext *corev1.Context) (*action.Configuration, error) {
@@ -136,14 +130,13 @@ func NewServer(configGetter core.KubernetesConfigGetter, globalPackagingCluster 
 			fn := clientgetter.NewHelmActionConfigGetter(configGetter, cluster)
 			return fn(ctx, pkgContext.GetNamespace())
 		},
-		serviceAccountClientGetter: backgroundClientGetter,
-		manager:                    manager,
-		globalPackagingNamespace:   globalReposNamespace,
-		globalPackagingCluster:     globalPackagingCluster,
-		chartClientFactory:         &chartutils.ChartClientFactory{},
-		pluginConfig:               pluginConfig,
-		createReleaseFunc:          agent.CreateRelease,
-		repoClientGetter:           newRepositoryClient,
+		manager:                  manager,
+		globalPackagingNamespace: globalReposNamespace,
+		globalPackagingCluster:   globalPackagingCluster,
+		chartClientFactory:       &chartutils.ChartClientFactory{},
+		pluginConfig:             pluginConfig,
+		createReleaseFunc:        agent.CreateRelease,
+		repoClientGetter:         newRepositoryClient,
 	}
 }
 
