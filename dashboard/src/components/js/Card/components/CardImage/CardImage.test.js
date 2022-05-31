@@ -16,8 +16,8 @@ describe(CardImage, () => {
   });
 
   it("includes the alt property if it's an empty string", () => {
-    const wrapper = render(<CardImage src="https://example.com" alt="" />);
-    expect(wrapper.find("img").attr("alt")).toBe("");
+    const view = render(<CardImage src="https://example.com" alt="" />);
+    expect(view.find("img").attr("alt")).toBe("");
   });
 
   it("includes the expected CSS class", () => {
