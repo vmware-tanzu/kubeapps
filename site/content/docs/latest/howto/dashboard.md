@@ -38,10 +38,10 @@ You can remove any of the applications from your cluster by clicking the "Delete
 
 ### Add more chart repositories
 
-By default, Kubeapps comes with the Bitnami repository enabled. You can see the list of enabled chart repositories in the "App Repositories" page under the menu:
+By default, Kubeapps comes with the Bitnami repository enabled. You can see the list of enabled chart repositories in the "Package Repositories" page under the menu:
 
 ![Repositories List](../img/dashboard-repos.png)
 
-Add new repositories (for example, your organization's chart repository) by clicking the "Add App Repository" button. Fill the "Add Repository" form using the repository info. For a detailed guide of how to add app repositories, check [this guide](./private-app-repository.md).
+Add new repositories (for example, your organization's chart repository) by clicking the "Add Package Repository" button. Fill the "Add Repository" form using the repository info. For a detailed guide of how to add package repositories, check [this guide](./private-app-repository.md).
 
 ![Adding repository](../img/dashboard-add-repo.png)

@@ -615,7 +615,7 @@ describe("pagination and package fetching", () => {
   });
 });
 
-describe("filters by application repository", () => {
+describe("filters by package repository", () => {
   const mockDispatch = jest.fn();
   let spyOnUseDispatch: jest.SpyInstance;
   let fetchRepos: jest.SpyInstance;

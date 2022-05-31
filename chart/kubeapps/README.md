@@ -6,7 +6,7 @@ Kubeapps is a web-based UI for launching and managing applications on Kubernetes
 [Overview of Kubeapps](https://github.com/vmware-tanzu/kubeapps)
 
 
-                           
+
 ## TL;DR
 
 ```bash
@@ -119,7 +119,7 @@ Once you have installed Kubeapps follow the [Getting Started Guide](https://gith
 | ------------------------------------------------ | ----------------------------------------------------------------------------------------- | ----------------------- |
 | `frontend.image.registry`                        | NGINX image registry                                                                      | `docker.io`             |
 | `frontend.image.repository`                      | NGINX image repository                                                                    | `bitnami/nginx`         |
-| `frontend.image.tag`                             | NGINX image tag (immutable tags are recommended)                                          | `1.21.6-debian-10-r114` |
+| `frontend.image.tag`                             | NGINX image tag (immutable tags are recommended)                                          | `1.21.6-debian-10-r117` |
 | `frontend.image.pullPolicy`                      | NGINX image pull policy                                                                   | `IfNotPresent`          |
 | `frontend.image.pullSecrets`                     | NGINX image pull secrets                                                                  | `[]`                    |
 | `frontend.image.debug`                           | Enable image debug mode                                                                   | `false`                 |
@@ -500,7 +500,7 @@ Once you have installed Kubeapps follow the [Getting Started Guide](https://gith
 | `authProxy.enabled`                               | Specifies whether Kubeapps should configure OAuth login/logout                           | `false`                |
 | `authProxy.image.registry`                        | OAuth2 Proxy image registry                                                              | `docker.io`            |
 | `authProxy.image.repository`                      | OAuth2 Proxy image repository                                                            | `bitnami/oauth2-proxy` |
-| `authProxy.image.tag`                             | OAuth2 Proxy image tag (immutable tags are recommended)                                  | `7.2.1-debian-10-r146` |
+| `authProxy.image.tag`                             | OAuth2 Proxy image tag (immutable tags are recommended)                                  | `7.2.1-debian-10-r149` |
 | `authProxy.image.pullPolicy`                      | OAuth2 Proxy image pull policy                                                           | `IfNotPresent`         |
 | `authProxy.image.pullSecrets`                     | OAuth2 Proxy image pull secrets                                                          | `[]`                   |
 | `authProxy.external`                              | Use an external Auth Proxy instead of deploying its own one                              | `false`                |
@@ -575,7 +575,7 @@ Once you have installed Kubeapps follow the [Getting Started Guide](https://gith
 | `rbac.create`             | Specifies whether RBAC resources should be created                            | `true`                  |
 | `testImage.registry`      | NGINX image registry                                                          | `docker.io`             |
 | `testImage.repository`    | NGINX image repository                                                        | `bitnami/nginx`         |
-| `testImage.tag`           | NGINX image tag (immutable tags are recommended)                              | `1.21.6-debian-10-r114` |
+| `testImage.tag`           | NGINX image tag (immutable tags are recommended)                              | `1.21.6-debian-10-r117` |
 | `testImage.pullPolicy`    | NGINX image pull policy                                                       | `IfNotPresent`          |
 | `testImage.pullSecrets`   | NGINX image pull secrets                                                      | `[]`                    |
 
@@ -900,7 +900,7 @@ Yes! Follow the [offline installation documentation](https://github.com/vmware-t
 
 ### Does Kubeapps support private repositories?
 
-Of course! Have a look at the [private app repositories documentation](https://github.com/vmware-tanzu/kubeapps/blob/main/site/content/docs/latest/howto/private-app-repository.md) to learn how to configure a private repository in Kubeapps.
+Of course! Have a look at the [private package repositories documentation](https://github.com/vmware-tanzu/kubeapps/blob/main/site/content/docs/latest/howto/private-app-repository.md) to learn how to configure a private repository in Kubeapps.
 
 ### Is there any API documentation?
 
@@ -1078,7 +1078,7 @@ PASSWORDS ERROR: you must provide your current passwords when upgrade the releas
 The error gives you generic instructions for retrieving the PostgreSQL password, but if you have installed a Kubeapps version prior to 2.3.1, the name of the secret will differ. Run the following command:
 
 ```console
-export POSTGRESQL_PASSWORD=$(kubectl get secret --namespace "kubeapps" kubeapps-db -o jsonpath="{.data.postgresql-password}" | base64 --decode)
+export POSTGRESQL_PASSWORD=$(kubectl get secret --namespace "kubeapps" kubeapps-db -o jsonpath="{.data.postgresql-password}" | base64 -d)
 ```
 
 > NOTE: Replace the namespace in the command with the namespace in which you have deployed Kubeapps.

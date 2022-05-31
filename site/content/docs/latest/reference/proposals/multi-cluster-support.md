@@ -21,7 +21,7 @@ The following constraints are for wider discussion. While we cannot achieve a so
 
 ## Design overview
 
-The overview displayed below shows the simpest scenario of the multi-cluster support (ie. without private app repository support), which is discussed further in the [design doc](https://docs.google.com/document/d/1Ch9MjazQDBa9nya4cSwiiciolWhtcnLOjYQKB2XIYuM/).
+The overview displayed below shows the simpest scenario of the multi-cluster support (ie. without privatepPackage repository support), which is discussed further in the [design doc](https://docs.google.com/document/d/1Ch9MjazQDBa9nya4cSwiiciolWhtcnLOjYQKB2XIYuM/).
 
 ![Kubeapps Multi-cluster Overview](../../img/design-proposals/Kubeapps-Multi-cluster-simple.png)
 

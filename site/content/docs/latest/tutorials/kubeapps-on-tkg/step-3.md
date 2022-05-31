@@ -9,33 +9,33 @@ The general procedure to add any repository is described below:
 
    ![Kubeapps home](../../img/kubeapps-on-tkg/kubeapps-applications-empty.png)
 
-3. Click the _App Repositories_ button.
+3. Click the _Package Repositories_ button.
 
    ![Right menu](../../img/kubeapps-on-tkg/kubeapps-menu-right.png)
 
-4. Add a new repository by clicking the _Add App Repository_ button.
+4. Add a new repository by clicking the _Add Package Repository_ button.
 
 > **NOTE**: If no repositories were specified in the `initialRepos` chart parameter during the Kubeapps installation, no repositories will be shown on the _Application Repositories_ page.
 
-5. Fill the _Add An App Repository_ form using the guidelines below:
+5. Fill the _Add a Package Repository_ form using the guidelines below:
 
 - The _Name_ field is a friendly display name for the repository.
 - The _URL_ field specifies the endpoint of the repository. This endpoint might require different forms of authentication, such as `None`, `Basic Auth` (username and password), `Bearer Token` (a token) or another `Custom` mechanism.
 
-  ![App repositories modal part 1](../../img/kubeapps-on-tkg/apprepository-detail-general.png)
+  ![Package repositories modal part 1](../../img/kubeapps-on-tkg/apprepository-detail-general.png)
 
 - The _Repository Type_ field specifies the type of repository. Currently, Kubeapps supports both Helm repositories and OCI registries. For the latter, it is necessary to also manually specify the list of artifacts to fetch in the _List of Repositories_ field (as there is no index yet). Additionally, artifacts can be excluded using regular expressions if required.
 
-  ![App repositories modal part 2](../../img/kubeapps-on-tkg/apprepository-detail-types.png)
+  ![Package repositories modal part 2](../../img/kubeapps-on-tkg/apprepository-detail-types.png)
 
 - The _Associate Docker Registry_ field specifies an `imagePullSecret` for images that are to be pulled from the private registry. It is possible to create a fresh secret or choose an existing one.
 
-  ![App repositories modal part 3](../../img/kubeapps-on-tkg/apprepository-detail-credentials.png)
+  ![Package repositories modal part 3](../../img/kubeapps-on-tkg/apprepository-detail-credentials.png)
 
 - The _Custom CA Certificate_ field specifies a CA certificate to use (with an option to skip the TLS verification if required).
 - The _Custom Sync Job_ field specifies the synchronization template to use when periodically pulling the latest changes from the application repository.
 
-  ![App repositories modal part 4](../../img/kubeapps-on-tkg/apprepository-detail-advanced.png)
+  ![Package repositories modal part 4](../../img/kubeapps-on-tkg/apprepository-detail-advanced.png)
 
 6. Click the _Install Repo_ button to finish the process and add the repository to Kubeapps.
 
@@ -45,13 +45,13 @@ Retrieving the catalog from the repository will take a few minutes. Once complet
 kubectl logs -n kubeapps -l apprepositories.kubeapps.com/repo-name=REPOSITORY-NAME
 ```
 
-The following sections demonstrate the process of filling the _Add An App Repository_ form for two specific examples: the VMware Marketplace™ and the VMware Tanzu™ Application Catalog™ for Tanzu™ Advanced.
+The following sections demonstrate the process of filling the _Add a Package Repository_ form for two specific examples: the VMware Marketplace™ and the VMware Tanzu™ Application Catalog™ for Tanzu™ Advanced.
 
 ### Add the VMware Marketplace™
 
 > **NOTE**: This repository is currently under heavy development. Therefore, the URL used below is subject to change.
 
-The public content from the VMware Marketplace™ repository can be retrieved at `https://charts.market.csp.vmware.com/bitnami`. Since this is a public repository, it is only necessary to configure the following values in the _Add An App Repository_ form:
+The public content from the VMware Marketplace™ repository can be retrieved at `https://charts.market.csp.vmware.com/bitnami`. Since this is a public repository, it is only necessary to configure the following values in the _Add a Package Repository_ form:
 
 - _Name_: Add a descriptive name, such as `vmware-marketplace`.
 - _URL_: Use the endpoint URL `https://charts.market.csp.vmware.com/bitnami`.

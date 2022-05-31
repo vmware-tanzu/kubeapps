@@ -4,7 +4,7 @@ Since the version 1.10.1 of Kubeapps (Chart version 3.7.0), it's possible to suc
 
 - Pre-download the Kubeapps chart.
 - Mirror Kubeapps images so they are accessible within the cluster.
-- [Optional] Have one or more offline App Repositories.
+- [Optional] Have one or more offline Package Repositories.
 
 ## 1. Download the Kubeapps chart
 
@@ -46,9 +46,9 @@ docker push REPO_URL/bitnami/nginx:1.19.2-debian-10-r32
 
 You will need to follow a similar process for every image present in the values file.
 
-## 3. [Optional] Prepare an offline App Repository
+## 3. [Optional] Prepare an offline Package Repository
 
-By default, Kubeapps install the `bitnami` App Repository. Since, in order to sync that repository, it's necessary to have Internet connection, you will need to mirror it or create your own repository (e.g. using Harbor) and configure it when installing Kubeapps.
+By default, Kubeapps install the `bitnami` Package Repository. Since, in order to sync that repository, it's necessary to have Internet connection, you will need to mirror it or create your own repository (e.g. using Harbor) and configure it when installing Kubeapps.
 
 For more information about how to create a private repository, follow this [guide](./private-app-repository.md).
 

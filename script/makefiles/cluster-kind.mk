@@ -6,6 +6,7 @@
 KUBE ?= ${HOME}/.kube
 CLUSTER_NAME ?= kubeapps
 ADDITIONAL_CLUSTER_NAME ?= kubeapps-additional
+IMAGE ?= kindest/node:v1.24.0@sha256:0866296e693efe1fed79d5e6c7af8df71fc73ae45e3679af05342239cdc5bc8e
 
 CLUSTER_CONFIG = ${KUBE}/kind-config-${CLUSTER_NAME}
 ADDITIONAL_CLUSTER_CONFIG = ${KUBE}/kind-config-${ADDITIONAL_CLUSTER_NAME}
@@ -14,6 +15,7 @@ ADDITIONAL_CLUSTER_CONFIG = ${KUBE}/kind-config-${ADDITIONAL_CLUSTER_NAME}
 # but is sufficient for the pod to be created so that we can copy the certs below.
 ${CLUSTER_CONFIG}:
 	kind create cluster \
+		--image ${IMAGE} \
 		--kubeconfig ${CLUSTER_CONFIG} \
 		--name ${CLUSTER_NAME} \
 		--config=./site/content/docs/latest/reference/manifests/kubeapps-local-dev-apiserver-config.yaml \

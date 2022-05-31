@@ -58,7 +58,7 @@ kubectl create -n default rolebinding example-view \
   --serviceaccount default:example
 ```
 
-This role should be enough to explore and discover the applications running in your cluster. It's certainly not enough for deploying new apps or managing app repositories.
+This role should be enough to explore and discover the applications running in your cluster. It's certainly not enough for deploying new apps or managing package repositories.
 
 #### Write access to Applications within a namespace
 
@@ -72,9 +72,9 @@ kubectl create -n default rolebinding example-edit \
 
 With the `edit` role, a user will be able to deploy and manage most of the applications available but it will still not be able to create new application repositories.
 
-### App Repositories
+### Package Repositories
 
-In order to manage Kubeapps app repositories, the `apprepositories-write` ClusterRole in the namespace Kubeapps is installed in is required. This cluster role include permissions to manage Kubernetes secrets in the namespace is installed (in order to manage app repository credentials) so treat it carefully:
+In order to manage Kubeapps package repositories, the `apprepositories-write` ClusterRole in the namespace Kubeapps is installed in is required. This cluster role include permissions to manage Kubernetes secrets in the namespace is installed (in order to manage package repository credentials) so treat it carefully:
 
 ```bash
 export KUBEAPPS_NAMESPACE=kubeapps
@@ -83,9 +83,9 @@ kubectl create -n ${KUBEAPPS_NAMESPACE} rolebinding example-kubeapps-repositorie
   --serviceaccount default:example
 ```
 
-> Note: There is also a cluster-role for just allowing people to read app repositories: `kubeapps:${KUBEAPPS_NAMESPACE}:apprepositories-read`.
+> Note: There is also a cluster-role for just allowing people to read package repositories: `kubeapps:${KUBEAPPS_NAMESPACE}:apprepositories-read`.
 
-The above command allows people to create app repositories in the Kubeapps namespace, these are called "Global Repositories" since they will be available in any namespace Kubeapps is available. On the other hand, it's also possible to create "Namespaced Repositories" that will be available just in a single namespace. For doing so, users need to have permissions to create app repositories in those namespaces. Read the next section to know how to create those roles.
+The above command allows people to create package repositories in the Kubeapps namespace, these are called "Global Repositories" since they will be available in any namespace Kubeapps is available. On the other hand, it's also possible to create "Namespaced Repositories" that will be available just in a single namespace. For doing so, users need to have permissions to create package repositories in those namespaces. Read the next section to know how to create those roles.
 
 ### Assigning roles across multiple namespaces
 
