@@ -6922,9 +6922,6 @@ func TestGetPackageRepositoryDetail(t *testing.T) {
 	}{
 		{
 			name: "not found",
-			repositoryCustomizer: func(repository *packagingv1alpha1.PackageRepository) *packagingv1alpha1.PackageRepository {
-				return repository
-			},
 			requestCustomizer: func(request *corev1.GetPackageRepositoryDetailRequest) *corev1.GetPackageRepositoryDetailRequest {
 				request.PackageRepoRef.Identifier = "foo"
 				return request
