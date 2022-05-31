@@ -561,12 +561,13 @@ func RegisterRepositoriesServiceHandlerServer(ctx context.Context, mux *runtime.
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/kubeappsapis.core.packages.v1alpha1.RepositoriesService/AddPackageRepository", runtime.WithHTTPPathPattern("/core/packages/v1alpha1/repositories"))
+		var err error
+		ctx, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/kubeappsapis.core.packages.v1alpha1.RepositoriesService/AddPackageRepository", runtime.WithHTTPPathPattern("/core/packages/v1alpha1/repositories"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := local_request_RepositoriesService_AddPackageRepository_0(rctx, inboundMarshaler, server, req, pathParams)
+		resp, md, err := local_request_RepositoriesService_AddPackageRepository_0(ctx, inboundMarshaler, server, req, pathParams)
 		md.HeaderMD, md.TrailerMD = metadata.Join(md.HeaderMD, stream.Header()), metadata.Join(md.TrailerMD, stream.Trailer())
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
@@ -584,12 +585,13 @@ func RegisterRepositoriesServiceHandlerServer(ctx context.Context, mux *runtime.
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/kubeappsapis.core.packages.v1alpha1.RepositoriesService/GetPackageRepositoryDetail", runtime.WithHTTPPathPattern("/core/packages/v1alpha1/repositories/plugin/{package_repo_ref.plugin.name}/{package_repo_ref.plugin.version}/c/{package_repo_ref.context.cluster}/ns/{package_repo_ref.context.namespace}/{package_repo_ref.identifier=**}"))
+		var err error
+		ctx, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/kubeappsapis.core.packages.v1alpha1.RepositoriesService/GetPackageRepositoryDetail", runtime.WithHTTPPathPattern("/core/packages/v1alpha1/repositories/plugin/{package_repo_ref.plugin.name}/{package_repo_ref.plugin.version}/c/{package_repo_ref.context.cluster}/ns/{package_repo_ref.context.namespace}/{package_repo_ref.identifier=**}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := local_request_RepositoriesService_GetPackageRepositoryDetail_0(rctx, inboundMarshaler, server, req, pathParams)
+		resp, md, err := local_request_RepositoriesService_GetPackageRepositoryDetail_0(ctx, inboundMarshaler, server, req, pathParams)
 		md.HeaderMD, md.TrailerMD = metadata.Join(md.HeaderMD, stream.Header()), metadata.Join(md.TrailerMD, stream.Trailer())
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
@@ -607,12 +609,13 @@ func RegisterRepositoriesServiceHandlerServer(ctx context.Context, mux *runtime.
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/kubeappsapis.core.packages.v1alpha1.RepositoriesService/GetPackageRepositorySummaries", runtime.WithHTTPPathPattern("/core/packages/v1alpha1/repositories"))
+		var err error
+		ctx, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/kubeappsapis.core.packages.v1alpha1.RepositoriesService/GetPackageRepositorySummaries", runtime.WithHTTPPathPattern("/core/packages/v1alpha1/repositories"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := local_request_RepositoriesService_GetPackageRepositorySummaries_0(rctx, inboundMarshaler, server, req, pathParams)
+		resp, md, err := local_request_RepositoriesService_GetPackageRepositorySummaries_0(ctx, inboundMarshaler, server, req, pathParams)
 		md.HeaderMD, md.TrailerMD = metadata.Join(md.HeaderMD, stream.Header()), metadata.Join(md.TrailerMD, stream.Trailer())
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
@@ -630,12 +633,13 @@ func RegisterRepositoriesServiceHandlerServer(ctx context.Context, mux *runtime.
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/kubeappsapis.core.packages.v1alpha1.RepositoriesService/UpdatePackageRepository", runtime.WithHTTPPathPattern("/core/packages/v1alpha1/repositories/plugin/{package_repo_ref.plugin.name}/{package_repo_ref.plugin.version}/c/{package_repo_ref.context.cluster}/ns/{package_repo_ref.context.namespace}/{package_repo_ref.identifier=**}"))
+		var err error
+		ctx, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/kubeappsapis.core.packages.v1alpha1.RepositoriesService/UpdatePackageRepository", runtime.WithHTTPPathPattern("/core/packages/v1alpha1/repositories/plugin/{package_repo_ref.plugin.name}/{package_repo_ref.plugin.version}/c/{package_repo_ref.context.cluster}/ns/{package_repo_ref.context.namespace}/{package_repo_ref.identifier=**}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := local_request_RepositoriesService_UpdatePackageRepository_0(rctx, inboundMarshaler, server, req, pathParams)
+		resp, md, err := local_request_RepositoriesService_UpdatePackageRepository_0(ctx, inboundMarshaler, server, req, pathParams)
 		md.HeaderMD, md.TrailerMD = metadata.Join(md.HeaderMD, stream.Header()), metadata.Join(md.TrailerMD, stream.Trailer())
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
@@ -653,12 +657,13 @@ func RegisterRepositoriesServiceHandlerServer(ctx context.Context, mux *runtime.
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/kubeappsapis.core.packages.v1alpha1.RepositoriesService/DeletePackageRepository", runtime.WithHTTPPathPattern("/core/packages/v1alpha1/repositories/plugin/{package_repo_ref.plugin.name}/{package_repo_ref.plugin.version}/c/{package_repo_ref.context.cluster}/ns/{package_repo_ref.context.namespace}/{package_repo_ref.identifier=**}"))
+		var err error
+		ctx, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/kubeappsapis.core.packages.v1alpha1.RepositoriesService/DeletePackageRepository", runtime.WithHTTPPathPattern("/core/packages/v1alpha1/repositories/plugin/{package_repo_ref.plugin.name}/{package_repo_ref.plugin.version}/c/{package_repo_ref.context.cluster}/ns/{package_repo_ref.context.namespace}/{package_repo_ref.identifier=**}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := local_request_RepositoriesService_DeletePackageRepository_0(rctx, inboundMarshaler, server, req, pathParams)
+		resp, md, err := local_request_RepositoriesService_DeletePackageRepository_0(ctx, inboundMarshaler, server, req, pathParams)
 		md.HeaderMD, md.TrailerMD = metadata.Join(md.HeaderMD, stream.Header()), metadata.Join(md.TrailerMD, stream.Trailer())
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
@@ -715,12 +720,13 @@ func RegisterRepositoriesServiceHandlerClient(ctx context.Context, mux *runtime.
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/kubeappsapis.core.packages.v1alpha1.RepositoriesService/AddPackageRepository", runtime.WithHTTPPathPattern("/core/packages/v1alpha1/repositories"))
+		var err error
+		ctx, err = runtime.AnnotateContext(ctx, mux, req, "/kubeappsapis.core.packages.v1alpha1.RepositoriesService/AddPackageRepository", runtime.WithHTTPPathPattern("/core/packages/v1alpha1/repositories"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := request_RepositoriesService_AddPackageRepository_0(rctx, inboundMarshaler, client, req, pathParams)
+		resp, md, err := request_RepositoriesService_AddPackageRepository_0(ctx, inboundMarshaler, client, req, pathParams)
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
@@ -735,12 +741,13 @@ func RegisterRepositoriesServiceHandlerClient(ctx context.Context, mux *runtime.
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/kubeappsapis.core.packages.v1alpha1.RepositoriesService/GetPackageRepositoryDetail", runtime.WithHTTPPathPattern("/core/packages/v1alpha1/repositories/plugin/{package_repo_ref.plugin.name}/{package_repo_ref.plugin.version}/c/{package_repo_ref.context.cluster}/ns/{package_repo_ref.context.namespace}/{package_repo_ref.identifier=**}"))
+		var err error
+		ctx, err = runtime.AnnotateContext(ctx, mux, req, "/kubeappsapis.core.packages.v1alpha1.RepositoriesService/GetPackageRepositoryDetail", runtime.WithHTTPPathPattern("/core/packages/v1alpha1/repositories/plugin/{package_repo_ref.plugin.name}/{package_repo_ref.plugin.version}/c/{package_repo_ref.context.cluster}/ns/{package_repo_ref.context.namespace}/{package_repo_ref.identifier=**}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := request_RepositoriesService_GetPackageRepositoryDetail_0(rctx, inboundMarshaler, client, req, pathParams)
+		resp, md, err := request_RepositoriesService_GetPackageRepositoryDetail_0(ctx, inboundMarshaler, client, req, pathParams)
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
@@ -755,12 +762,13 @@ func RegisterRepositoriesServiceHandlerClient(ctx context.Context, mux *runtime.
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/kubeappsapis.core.packages.v1alpha1.RepositoriesService/GetPackageRepositorySummaries", runtime.WithHTTPPathPattern("/core/packages/v1alpha1/repositories"))
+		var err error
+		ctx, err = runtime.AnnotateContext(ctx, mux, req, "/kubeappsapis.core.packages.v1alpha1.RepositoriesService/GetPackageRepositorySummaries", runtime.WithHTTPPathPattern("/core/packages/v1alpha1/repositories"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := request_RepositoriesService_GetPackageRepositorySummaries_0(rctx, inboundMarshaler, client, req, pathParams)
+		resp, md, err := request_RepositoriesService_GetPackageRepositorySummaries_0(ctx, inboundMarshaler, client, req, pathParams)
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
@@ -775,12 +783,13 @@ func RegisterRepositoriesServiceHandlerClient(ctx context.Context, mux *runtime.
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/kubeappsapis.core.packages.v1alpha1.RepositoriesService/UpdatePackageRepository", runtime.WithHTTPPathPattern("/core/packages/v1alpha1/repositories/plugin/{package_repo_ref.plugin.name}/{package_repo_ref.plugin.version}/c/{package_repo_ref.context.cluster}/ns/{package_repo_ref.context.namespace}/{package_repo_ref.identifier=**}"))
+		var err error
+		ctx, err = runtime.AnnotateContext(ctx, mux, req, "/kubeappsapis.core.packages.v1alpha1.RepositoriesService/UpdatePackageRepository", runtime.WithHTTPPathPattern("/core/packages/v1alpha1/repositories/plugin/{package_repo_ref.plugin.name}/{package_repo_ref.plugin.version}/c/{package_repo_ref.context.cluster}/ns/{package_repo_ref.context.namespace}/{package_repo_ref.identifier=**}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := request_RepositoriesService_UpdatePackageRepository_0(rctx, inboundMarshaler, client, req, pathParams)
+		resp, md, err := request_RepositoriesService_UpdatePackageRepository_0(ctx, inboundMarshaler, client, req, pathParams)
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
@@ -795,12 +804,13 @@ func RegisterRepositoriesServiceHandlerClient(ctx context.Context, mux *runtime.
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/kubeappsapis.core.packages.v1alpha1.RepositoriesService/DeletePackageRepository", runtime.WithHTTPPathPattern("/core/packages/v1alpha1/repositories/plugin/{package_repo_ref.plugin.name}/{package_repo_ref.plugin.version}/c/{package_repo_ref.context.cluster}/ns/{package_repo_ref.context.namespace}/{package_repo_ref.identifier=**}"))
+		var err error
+		ctx, err = runtime.AnnotateContext(ctx, mux, req, "/kubeappsapis.core.packages.v1alpha1.RepositoriesService/DeletePackageRepository", runtime.WithHTTPPathPattern("/core/packages/v1alpha1/repositories/plugin/{package_repo_ref.plugin.name}/{package_repo_ref.plugin.version}/c/{package_repo_ref.context.cluster}/ns/{package_repo_ref.context.namespace}/{package_repo_ref.identifier=**}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := request_RepositoriesService_DeletePackageRepository_0(rctx, inboundMarshaler, client, req, pathParams)
+		resp, md, err := request_RepositoriesService_DeletePackageRepository_0(ctx, inboundMarshaler, client, req, pathParams)
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)

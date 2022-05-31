@@ -27,8 +27,6 @@ type KappControllerPackagesServiceClient interface {
 	GetAvailablePackageSummaries(ctx context.Context, in *v1alpha1.GetAvailablePackageSummariesRequest, opts ...grpc.CallOption) (*v1alpha1.GetAvailablePackageSummariesResponse, error)
 	// GetAvailablePackageDetail returns the package details managed by the 'kapp_controller' plugin
 	GetAvailablePackageDetail(ctx context.Context, in *v1alpha1.GetAvailablePackageDetailRequest, opts ...grpc.CallOption) (*v1alpha1.GetAvailablePackageDetailResponse, error)
-	// GetPackageRepositories returns the repositories managed by the 'kapp_controller' plugin
-	GetPackageRepositories(ctx context.Context, in *GetPackageRepositoriesRequest, opts ...grpc.CallOption) (*GetPackageRepositoriesResponse, error)
 	// GetAvailablePackageVersions returns the package versions managed by the 'kapp_controller' plugin
 	GetAvailablePackageVersions(ctx context.Context, in *v1alpha1.GetAvailablePackageVersionsRequest, opts ...grpc.CallOption) (*v1alpha1.GetAvailablePackageVersionsResponse, error)
 	// GetInstalledPackageSummaries returns the installed packages managed by the 'kapp_controller' plugin
@@ -66,15 +64,6 @@ func (c *kappControllerPackagesServiceClient) GetAvailablePackageSummaries(ctx c
 func (c *kappControllerPackagesServiceClient) GetAvailablePackageDetail(ctx context.Context, in *v1alpha1.GetAvailablePackageDetailRequest, opts ...grpc.CallOption) (*v1alpha1.GetAvailablePackageDetailResponse, error) {
 	out := new(v1alpha1.GetAvailablePackageDetailResponse)
 	err := c.cc.Invoke(ctx, "/kubeappsapis.plugins.kapp_controller.packages.v1alpha1.KappControllerPackagesService/GetAvailablePackageDetail", in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *kappControllerPackagesServiceClient) GetPackageRepositories(ctx context.Context, in *GetPackageRepositoriesRequest, opts ...grpc.CallOption) (*GetPackageRepositoriesResponse, error) {
-	out := new(GetPackageRepositoriesResponse)
-	err := c.cc.Invoke(ctx, "/kubeappsapis.plugins.kapp_controller.packages.v1alpha1.KappControllerPackagesService/GetPackageRepositories", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -152,8 +141,6 @@ type KappControllerPackagesServiceServer interface {
 	GetAvailablePackageSummaries(context.Context, *v1alpha1.GetAvailablePackageSummariesRequest) (*v1alpha1.GetAvailablePackageSummariesResponse, error)
 	// GetAvailablePackageDetail returns the package details managed by the 'kapp_controller' plugin
 	GetAvailablePackageDetail(context.Context, *v1alpha1.GetAvailablePackageDetailRequest) (*v1alpha1.GetAvailablePackageDetailResponse, error)
-	// GetPackageRepositories returns the repositories managed by the 'kapp_controller' plugin
-	GetPackageRepositories(context.Context, *GetPackageRepositoriesRequest) (*GetPackageRepositoriesResponse, error)
 	// GetAvailablePackageVersions returns the package versions managed by the 'kapp_controller' plugin
 	GetAvailablePackageVersions(context.Context, *v1alpha1.GetAvailablePackageVersionsRequest) (*v1alpha1.GetAvailablePackageVersionsResponse, error)
 	// GetInstalledPackageSummaries returns the installed packages managed by the 'kapp_controller' plugin
@@ -180,9 +167,6 @@ func (UnimplementedKappControllerPackagesServiceServer) GetAvailablePackageSumma
 }
 func (UnimplementedKappControllerPackagesServiceServer) GetAvailablePackageDetail(context.Context, *v1alpha1.GetAvailablePackageDetailRequest) (*v1alpha1.GetAvailablePackageDetailResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetAvailablePackageDetail not implemented")
-}
-func (UnimplementedKappControllerPackagesServiceServer) GetPackageRepositories(context.Context, *GetPackageRepositoriesRequest) (*GetPackageRepositoriesResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetPackageRepositories not implemented")
 }
 func (UnimplementedKappControllerPackagesServiceServer) GetAvailablePackageVersions(context.Context, *v1alpha1.GetAvailablePackageVersionsRequest) (*v1alpha1.GetAvailablePackageVersionsResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetAvailablePackageVersions not implemented")
@@ -249,24 +233,6 @@ func _KappControllerPackagesService_GetAvailablePackageDetail_Handler(srv interf
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(KappControllerPackagesServiceServer).GetAvailablePackageDetail(ctx, req.(*v1alpha1.GetAvailablePackageDetailRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _KappControllerPackagesService_GetPackageRepositories_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(GetPackageRepositoriesRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(KappControllerPackagesServiceServer).GetPackageRepositories(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/kubeappsapis.plugins.kapp_controller.packages.v1alpha1.KappControllerPackagesService/GetPackageRepositories",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(KappControllerPackagesServiceServer).GetPackageRepositories(ctx, req.(*GetPackageRepositoriesRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -413,10 +379,6 @@ var KappControllerPackagesService_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _KappControllerPackagesService_GetAvailablePackageDetail_Handler,
 		},
 		{
-			MethodName: "GetPackageRepositories",
-			Handler:    _KappControllerPackagesService_GetPackageRepositories_Handler,
-		},
-		{
 			MethodName: "GetAvailablePackageVersions",
 			Handler:    _KappControllerPackagesService_GetAvailablePackageVersions_Handler,
 		},
@@ -443,6 +405,236 @@ var KappControllerPackagesService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetInstalledPackageResourceRefs",
 			Handler:    _KappControllerPackagesService_GetInstalledPackageResourceRefs_Handler,
+		},
+	},
+	Streams:  []grpc.StreamDesc{},
+	Metadata: "kubeappsapis/plugins/kapp_controller/packages/v1alpha1/kapp_controller.proto",
+}
+
+// KappControllerRepositoriesServiceClient is the client API for KappControllerRepositoriesService service.
+//
+// For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
+type KappControllerRepositoriesServiceClient interface {
+	// AddPackageRepository add an existing package repository to the set of ones already managed by the 'kapp_controller' plugin
+	AddPackageRepository(ctx context.Context, in *v1alpha1.AddPackageRepositoryRequest, opts ...grpc.CallOption) (*v1alpha1.AddPackageRepositoryResponse, error)
+	GetPackageRepositoryDetail(ctx context.Context, in *v1alpha1.GetPackageRepositoryDetailRequest, opts ...grpc.CallOption) (*v1alpha1.GetPackageRepositoryDetailResponse, error)
+	GetPackageRepositorySummaries(ctx context.Context, in *v1alpha1.GetPackageRepositorySummariesRequest, opts ...grpc.CallOption) (*v1alpha1.GetPackageRepositorySummariesResponse, error)
+	UpdatePackageRepository(ctx context.Context, in *v1alpha1.UpdatePackageRepositoryRequest, opts ...grpc.CallOption) (*v1alpha1.UpdatePackageRepositoryResponse, error)
+	DeletePackageRepository(ctx context.Context, in *v1alpha1.DeletePackageRepositoryRequest, opts ...grpc.CallOption) (*v1alpha1.DeletePackageRepositoryResponse, error)
+}
+
+type kappControllerRepositoriesServiceClient struct {
+	cc grpc.ClientConnInterface
+}
+
+func NewKappControllerRepositoriesServiceClient(cc grpc.ClientConnInterface) KappControllerRepositoriesServiceClient {
+	return &kappControllerRepositoriesServiceClient{cc}
+}
+
+func (c *kappControllerRepositoriesServiceClient) AddPackageRepository(ctx context.Context, in *v1alpha1.AddPackageRepositoryRequest, opts ...grpc.CallOption) (*v1alpha1.AddPackageRepositoryResponse, error) {
+	out := new(v1alpha1.AddPackageRepositoryResponse)
+	err := c.cc.Invoke(ctx, "/kubeappsapis.plugins.kapp_controller.packages.v1alpha1.KappControllerRepositoriesService/AddPackageRepository", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *kappControllerRepositoriesServiceClient) GetPackageRepositoryDetail(ctx context.Context, in *v1alpha1.GetPackageRepositoryDetailRequest, opts ...grpc.CallOption) (*v1alpha1.GetPackageRepositoryDetailResponse, error) {
+	out := new(v1alpha1.GetPackageRepositoryDetailResponse)
+	err := c.cc.Invoke(ctx, "/kubeappsapis.plugins.kapp_controller.packages.v1alpha1.KappControllerRepositoriesService/GetPackageRepositoryDetail", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *kappControllerRepositoriesServiceClient) GetPackageRepositorySummaries(ctx context.Context, in *v1alpha1.GetPackageRepositorySummariesRequest, opts ...grpc.CallOption) (*v1alpha1.GetPackageRepositorySummariesResponse, error) {
+	out := new(v1alpha1.GetPackageRepositorySummariesResponse)
+	err := c.cc.Invoke(ctx, "/kubeappsapis.plugins.kapp_controller.packages.v1alpha1.KappControllerRepositoriesService/GetPackageRepositorySummaries", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *kappControllerRepositoriesServiceClient) UpdatePackageRepository(ctx context.Context, in *v1alpha1.UpdatePackageRepositoryRequest, opts ...grpc.CallOption) (*v1alpha1.UpdatePackageRepositoryResponse, error) {
+	out := new(v1alpha1.UpdatePackageRepositoryResponse)
+	err := c.cc.Invoke(ctx, "/kubeappsapis.plugins.kapp_controller.packages.v1alpha1.KappControllerRepositoriesService/UpdatePackageRepository", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *kappControllerRepositoriesServiceClient) DeletePackageRepository(ctx context.Context, in *v1alpha1.DeletePackageRepositoryRequest, opts ...grpc.CallOption) (*v1alpha1.DeletePackageRepositoryResponse, error) {
+	out := new(v1alpha1.DeletePackageRepositoryResponse)
+	err := c.cc.Invoke(ctx, "/kubeappsapis.plugins.kapp_controller.packages.v1alpha1.KappControllerRepositoriesService/DeletePackageRepository", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+// KappControllerRepositoriesServiceServer is the server API for KappControllerRepositoriesService service.
+// All implementations should embed UnimplementedKappControllerRepositoriesServiceServer
+// for forward compatibility
+type KappControllerRepositoriesServiceServer interface {
+	// AddPackageRepository add an existing package repository to the set of ones already managed by the 'kapp_controller' plugin
+	AddPackageRepository(context.Context, *v1alpha1.AddPackageRepositoryRequest) (*v1alpha1.AddPackageRepositoryResponse, error)
+	GetPackageRepositoryDetail(context.Context, *v1alpha1.GetPackageRepositoryDetailRequest) (*v1alpha1.GetPackageRepositoryDetailResponse, error)
+	GetPackageRepositorySummaries(context.Context, *v1alpha1.GetPackageRepositorySummariesRequest) (*v1alpha1.GetPackageRepositorySummariesResponse, error)
+	UpdatePackageRepository(context.Context, *v1alpha1.UpdatePackageRepositoryRequest) (*v1alpha1.UpdatePackageRepositoryResponse, error)
+	DeletePackageRepository(context.Context, *v1alpha1.DeletePackageRepositoryRequest) (*v1alpha1.DeletePackageRepositoryResponse, error)
+}
+
+// UnimplementedKappControllerRepositoriesServiceServer should be embedded to have forward compatible implementations.
+type UnimplementedKappControllerRepositoriesServiceServer struct {
+}
+
+func (UnimplementedKappControllerRepositoriesServiceServer) AddPackageRepository(context.Context, *v1alpha1.AddPackageRepositoryRequest) (*v1alpha1.AddPackageRepositoryResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method AddPackageRepository not implemented")
+}
+func (UnimplementedKappControllerRepositoriesServiceServer) GetPackageRepositoryDetail(context.Context, *v1alpha1.GetPackageRepositoryDetailRequest) (*v1alpha1.GetPackageRepositoryDetailResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetPackageRepositoryDetail not implemented")
+}
+func (UnimplementedKappControllerRepositoriesServiceServer) GetPackageRepositorySummaries(context.Context, *v1alpha1.GetPackageRepositorySummariesRequest) (*v1alpha1.GetPackageRepositorySummariesResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetPackageRepositorySummaries not implemented")
+}
+func (UnimplementedKappControllerRepositoriesServiceServer) UpdatePackageRepository(context.Context, *v1alpha1.UpdatePackageRepositoryRequest) (*v1alpha1.UpdatePackageRepositoryResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method UpdatePackageRepository not implemented")
+}
+func (UnimplementedKappControllerRepositoriesServiceServer) DeletePackageRepository(context.Context, *v1alpha1.DeletePackageRepositoryRequest) (*v1alpha1.DeletePackageRepositoryResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method DeletePackageRepository not implemented")
+}
+
+// UnsafeKappControllerRepositoriesServiceServer may be embedded to opt out of forward compatibility for this service.
+// Use of this interface is not recommended, as added methods to KappControllerRepositoriesServiceServer will
+// result in compilation errors.
+type UnsafeKappControllerRepositoriesServiceServer interface {
+	mustEmbedUnimplementedKappControllerRepositoriesServiceServer()
+}
+
+func RegisterKappControllerRepositoriesServiceServer(s grpc.ServiceRegistrar, srv KappControllerRepositoriesServiceServer) {
+	s.RegisterService(&KappControllerRepositoriesService_ServiceDesc, srv)
+}
+
+func _KappControllerRepositoriesService_AddPackageRepository_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(v1alpha1.AddPackageRepositoryRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(KappControllerRepositoriesServiceServer).AddPackageRepository(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/kubeappsapis.plugins.kapp_controller.packages.v1alpha1.KappControllerRepositoriesService/AddPackageRepository",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(KappControllerRepositoriesServiceServer).AddPackageRepository(ctx, req.(*v1alpha1.AddPackageRepositoryRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _KappControllerRepositoriesService_GetPackageRepositoryDetail_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(v1alpha1.GetPackageRepositoryDetailRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(KappControllerRepositoriesServiceServer).GetPackageRepositoryDetail(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/kubeappsapis.plugins.kapp_controller.packages.v1alpha1.KappControllerRepositoriesService/GetPackageRepositoryDetail",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(KappControllerRepositoriesServiceServer).GetPackageRepositoryDetail(ctx, req.(*v1alpha1.GetPackageRepositoryDetailRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _KappControllerRepositoriesService_GetPackageRepositorySummaries_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(v1alpha1.GetPackageRepositorySummariesRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(KappControllerRepositoriesServiceServer).GetPackageRepositorySummaries(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/kubeappsapis.plugins.kapp_controller.packages.v1alpha1.KappControllerRepositoriesService/GetPackageRepositorySummaries",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(KappControllerRepositoriesServiceServer).GetPackageRepositorySummaries(ctx, req.(*v1alpha1.GetPackageRepositorySummariesRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _KappControllerRepositoriesService_UpdatePackageRepository_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(v1alpha1.UpdatePackageRepositoryRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(KappControllerRepositoriesServiceServer).UpdatePackageRepository(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/kubeappsapis.plugins.kapp_controller.packages.v1alpha1.KappControllerRepositoriesService/UpdatePackageRepository",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(KappControllerRepositoriesServiceServer).UpdatePackageRepository(ctx, req.(*v1alpha1.UpdatePackageRepositoryRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _KappControllerRepositoriesService_DeletePackageRepository_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(v1alpha1.DeletePackageRepositoryRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(KappControllerRepositoriesServiceServer).DeletePackageRepository(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/kubeappsapis.plugins.kapp_controller.packages.v1alpha1.KappControllerRepositoriesService/DeletePackageRepository",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(KappControllerRepositoriesServiceServer).DeletePackageRepository(ctx, req.(*v1alpha1.DeletePackageRepositoryRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+// KappControllerRepositoriesService_ServiceDesc is the grpc.ServiceDesc for KappControllerRepositoriesService service.
+// It's only intended for direct use with grpc.RegisterService,
+// and not to be introspected or modified (even as a copy)
+var KappControllerRepositoriesService_ServiceDesc = grpc.ServiceDesc{
+	ServiceName: "kubeappsapis.plugins.kapp_controller.packages.v1alpha1.KappControllerRepositoriesService",
+	HandlerType: (*KappControllerRepositoriesServiceServer)(nil),
+	Methods: []grpc.MethodDesc{
+		{
+			MethodName: "AddPackageRepository",
+			Handler:    _KappControllerRepositoriesService_AddPackageRepository_Handler,
+		},
+		{
+			MethodName: "GetPackageRepositoryDetail",
+			Handler:    _KappControllerRepositoriesService_GetPackageRepositoryDetail_Handler,
+		},
+		{
+			MethodName: "GetPackageRepositorySummaries",
+			Handler:    _KappControllerRepositoriesService_GetPackageRepositorySummaries_Handler,
+		},
+		{
+			MethodName: "UpdatePackageRepository",
+			Handler:    _KappControllerRepositoriesService_UpdatePackageRepository_Handler,
+		},
+		{
+			MethodName: "DeletePackageRepository",
+			Handler:    _KappControllerRepositoriesService_DeletePackageRepository_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

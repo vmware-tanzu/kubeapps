@@ -13,7 +13,7 @@ build-plugins:
 # both octant and pinniped for build tooling.
 # See https://github.com/golang/go/wiki/Modules#how-can-i-track-tool-dependencies-for-a-module
 cli-dependencies:
-	go get \
+	go install \
 		github.com/spf13/cobra-cli \
 		google.golang.org/grpc/cmd/protoc-gen-go-grpc \
 		google.golang.org/protobuf/cmd/protoc-gen-go \
