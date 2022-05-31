@@ -8,6 +8,7 @@ import InfoCard from "components/InfoCard/InfoCard";
 import Alert from "components/js/Alert";
 import LoadingWrapper from "components/LoadingWrapper";
 import { AvailablePackageSummary, Context } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
+import { PackageRepositorySummary } from "gen/kubeappsapis/core/packages/v1alpha1/repositories";
 import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins";
 import { createMemoryHistory } from "history";
 import React from "react";
@@ -660,8 +661,7 @@ describe("filters by package repository", () => {
     const wrapper = mountWrapper(
       getStore({
         ...populatedState,
-        // FIXME(agamez): use the proper type
-        repos: { repos: [{ metadata: { name: "foo" } } as unknown as PackageRepositorySummary] },
+        repos: { repos: [{ name: "foo" } as PackageRepositorySummary] },
       }),
       <MemoryRouter initialEntries={[routePathParam]}>
         <Route path={routePath}>
@@ -689,8 +689,7 @@ describe("filters by package repository", () => {
     const wrapper = mountWrapper(
       getStore({
         ...populatedState,
-        // FIXME(agamez): use the proper type
-        repos: { repos: [{ metadata: { name: "foo" } } as unknown as PackageRepositorySummary] },
+        repos: { repos: [{ name: "foo" } as PackageRepositorySummary] },
       }),
       <MemoryRouter initialEntries={[`/c/${defaultProps.cluster}/ns/my-ns/catalog`]}>
         <Route path={routePath}>
@@ -718,8 +717,7 @@ describe("filters by package repository", () => {
     mountWrapper(
       getStore({
         ...populatedState,
-        // FIXME(agamez): use the proper type
-        repos: { repos: [{ metadata: { name: "foo" } } as unknown as PackageRepositorySummary] },
+        repos: { repos: [{ name: "foo" } as PackageRepositorySummary] },
       }),
       <MemoryRouter
         initialEntries={[
@@ -740,8 +738,7 @@ describe("filters by package repository", () => {
     mountWrapper(
       getStore({
         ...populatedState,
-        // FIXME(agamez): use the proper type
-        repos: { repos: [{ metadata: { name: "foo" } } as unknown as PackageRepositorySummary] },
+        repos: { repos: [{ name: "foo" } as PackageRepositorySummary] },
       }),
       <MemoryRouter initialEntries={[`/c/other-cluster/ns/my-ns/catalog`]}>
         <Route path={routePath}>

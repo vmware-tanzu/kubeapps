@@ -559,7 +559,10 @@ describe("when the repository info is already populated", () => {
     const repo = { metadata: { name: "foo" } } as any;
     let wrapper: any;
     await act(async () => {
-      wrapper = await mountWrapper(defaultStore, <AppRepoForm {...defaultProps} repo={repo} />);
+      wrapper = await mountWrapper(
+        defaultStore,
+        <AppRepoForm {...defaultProps} packageRepoRef={repo} />,
+      );
     });
     await waitFor(() => {
       wrapper.update();
@@ -573,7 +576,7 @@ describe("when the repository info is already populated", () => {
     const repo = { metadata: { name: "foo" }, spec: { url: "http://repo" } } as any;
     let wrapper: any;
     await act(async () => {
-      wrapper = mountWrapper(defaultStore, <AppRepoForm {...defaultProps} repo={repo} />);
+      wrapper = mountWrapper(defaultStore, <AppRepoForm {...defaultProps} packageRepoRef={repo} />);
     });
     await waitFor(() => {
       wrapper.update();
@@ -585,7 +588,7 @@ describe("when the repository info is already populated", () => {
     const repo = { metadata: { name: "foo" }, spec: { syncJobPodTemplate: { foo: "bar" } } } as any;
     let wrapper: any;
     await act(async () => {
-      wrapper = mountWrapper(defaultStore, <AppRepoForm {...defaultProps} repo={repo} />);
+      wrapper = mountWrapper(defaultStore, <AppRepoForm {...defaultProps} packageRepoRef={repo} />);
     });
     await waitFor(() => {
       wrapper.update();
@@ -611,7 +614,7 @@ describe("when the repository info is already populated", () => {
       });
 
       await waitFor(() => {
-        expect(AppRepository.getSecretForRepo).toHaveBeenCalledWith(
+        expect(PackageRepositoriesService.getSecretForRepo).toHaveBeenCalledWith(
           "default-cluster",
           "default",
           "foo",
@@ -638,7 +641,7 @@ describe("when the repository info is already populated", () => {
       });
 
       await waitFor(() => {
-        expect(AppRepository.getSecretForRepo).toHaveBeenCalledWith(
+        expect(PackageRepositoriesService.getSecretForRepo).toHaveBeenCalledWith(
           "default-cluster",
           "default",
           "foo",
@@ -675,7 +678,10 @@ describe("when the repository info is already populated", () => {
       const repo = { metadata: { name: "foo" }, spec: { type: "oci" } } as any;
       let wrapper: any;
       await act(async () => {
-        wrapper = mountWrapper(defaultStore, <AppRepoForm {...defaultProps} repo={repo} />);
+        wrapper = mountWrapper(
+          defaultStore,
+          <AppRepoForm {...defaultProps} packageRepoRef={repo} />,
+        );
       });
       await waitFor(() => {
         wrapper.update();
@@ -688,7 +694,10 @@ describe("when the repository info is already populated", () => {
       const repo = { metadata: { name: "foo" }, spec: { tlsInsecureSkipVerify: true } } as any;
       let wrapper: any;
       await act(async () => {
-        wrapper = mountWrapper(defaultStore, <AppRepoForm {...defaultProps} repo={repo} />);
+        wrapper = mountWrapper(
+          defaultStore,
+          <AppRepoForm {...defaultProps} packageRepoRef={repo} />,
+        );
       });
       expect(wrapper.find("#kubeapps-repo-skip-tls")).toBeChecked();
     });
@@ -697,7 +706,10 @@ describe("when the repository info is already populated", () => {
       const repo = { metadata: { name: "foo" }, spec: { passCredentials: true } } as any;
       let wrapper: any;
       await act(async () => {
-        wrapper = mountWrapper(defaultStore, <AppRepoForm {...defaultProps} repo={repo} />);
+        wrapper = mountWrapper(
+          defaultStore,
+          <AppRepoForm {...defaultProps} packageRepoRef={repo} />,
+        );
       });
       expect(wrapper.find("#kubeapps-repo-pass-credentials")).toBeChecked();
     });
@@ -756,7 +768,10 @@ describe("when the repository info is already populated", () => {
       );
       let wrapper: any;
       await act(async () => {
-        wrapper = mountWrapper(defaultStore, <AppRepoForm {...defaultProps} repo={repo} />);
+        wrapper = mountWrapper(
+          defaultStore,
+          <AppRepoForm {...defaultProps} packageRepoRef={repo} />,
+        );
       });
       await waitFor(() => {
         wrapper.update();
@@ -777,7 +792,10 @@ describe("when the repository info is already populated", () => {
       } as any;
       let wrapper: any;
       await act(async () => {
-        wrapper = mountWrapper(defaultStore, <AppRepoForm {...defaultProps} repo={repo} />);
+        wrapper = mountWrapper(
+          defaultStore,
+          <AppRepoForm {...defaultProps} packageRepoRef={repo} />,
+        );
       });
       await waitFor(() => {
         wrapper.update();
@@ -797,7 +815,10 @@ describe("when the repository info is already populated", () => {
       } as any;
       let wrapper: any;
       await act(async () => {
-        wrapper = mountWrapper(defaultStore, <AppRepoForm {...defaultProps} repo={repo} />);
+        wrapper = mountWrapper(
+          defaultStore,
+          <AppRepoForm {...defaultProps} packageRepoRef={repo} />,
+        );
       });
       await waitFor(() => {
         wrapper.update();

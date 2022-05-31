@@ -5,7 +5,10 @@ import {
   AvailablePackageReference,
   InstalledPackageDetail,
 } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
-import { PackageRepositorySummary } from "gen/kubeappsapis/core/packages/v1alpha1/repositories";
+import {
+  PackageRepositoryReference,
+  PackageRepositorySummary,
+} from "gen/kubeappsapis/core/packages/v1alpha1/repositories";
 import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins";
 import context from "jest-plugin-context";
 import configureMockStore from "redux-mock-store";
@@ -32,6 +35,8 @@ spec:
       - name: FOO
         value: BAR
 `;
+
+const plugin: Plugin = { name: "my.plugin", version: "0.0.1" };
 
 beforeEach(() => {
   store = mockStore({
@@ -70,8 +75,7 @@ interface ITestCase {
   payload?: any;
 }
 
-// FIXME(agamez): use the proper type
-const repo = { metadata: { name: "my-repo" } } as unknown as PackageRepositorySummary;
+const repo = { name: "my-repo" } as PackageRepositorySummary;
 
 const actionTestCases: ITestCase[] = [
   { name: "addRepo", action: repoActions.addRepo },
@@ -120,7 +124,13 @@ describe("deleteRepo", () => {
           },
         },
       });
-      await storeWithFlag.dispatch(repoActions.deleteRepo("foo", "my-namespace"));
+      await storeWithFlag.dispatch(
+        repoActions.deleteRepo({
+          context: { cluster: "default", namespace: "my-namespace" },
+          identifier: "foo",
+          plugin: plugin,
+        } as PackageRepositoryReference),
+      );
       expect(storeWithFlag.getActions()).toEqual([]);
     });
   });
@@ -137,7 +147,13 @@ describe("deleteRepo", () => {
       },
     ];
 
-    await store.dispatch(repoActions.deleteRepo("foo", "my-namespace"));
+    await store.dispatch(
+      repoActions.deleteRepo({
+        context: { cluster: "default", namespace: "my-namespace" },
+        identifier: "foo",
+        plugin: plugin,
+      } as PackageRepositoryReference),
+    );
     expect(store.getActions()).toEqual(expectedActions);
   });
 });
@@ -167,14 +183,16 @@ describe("resyncAllRepos", () => {
     await store.dispatch(
       repoActions.resyncAllRepos([
         {
-          namespace: "namespace-1",
-          name: "foo",
+          context: { cluster: "default", namespace: "namespace-1" },
+          identifier: "foo",
+          plugin: plugin,
         },
         {
-          namespace: "namespace-2",
-          name: "bar",
+          context: { cluster: "default", namespace: "namespace-2" },
+          identifier: "bar",
+          plugin: plugin,
         },
-      ]),
+      ] as PackageRepositoryReference[]),
     );
 
     expect(appRepoGetMock).toHaveBeenCalledTimes(2);
@@ -326,6 +344,7 @@ describe("fetchRepos", () => {
 describe("installRepo", () => {
   const installRepoCMD = repoActions.installRepo(
     "my-repo",
+    plugin,
     "my-namespace",
     "http://foo.bar",
     "helm",
@@ -344,6 +363,7 @@ describe("installRepo", () => {
   context("when authHeader provided", () => {
     const installRepoCMDAuth = repoActions.installRepo(
       "my-repo",
+      plugin,
       "my-namespace",
       "http://foo.bar",
       "helm",
@@ -384,6 +404,7 @@ describe("installRepo", () => {
       await store.dispatch(
         repoActions.installRepo(
           "my-repo",
+          plugin,
           "my-namespace",
           "http://foo.bar",
           "oci",
@@ -422,6 +443,7 @@ describe("installRepo", () => {
       await store.dispatch(
         repoActions.installRepo(
           "my-repo",
+          plugin,
           "my-namespace",
           "http://foo.bar",
           "oci",
@@ -465,6 +487,7 @@ describe("installRepo", () => {
   context("when a customCA is provided", () => {
     const installRepoCMDAuth = repoActions.installRepo(
       "my-repo",
+      plugin,
       "my-namespace",
       "http://foo.bar",
       "helm",
@@ -511,6 +534,7 @@ describe("installRepo", () => {
         await store.dispatch(
           repoActions.installRepo(
             "my-repo",
+            plugin,
             "my-namespace",
             "http://foo.bar",
             "helm",
@@ -529,6 +553,7 @@ describe("installRepo", () => {
 
         expect(PackageRepositoriesService.addPackageRepository).toHaveBeenCalledWith(
           "default",
+          plugin,
           "my-repo",
           "my-namespace",
           "http://foo.bar",
@@ -556,6 +581,7 @@ describe("installRepo", () => {
         await store.dispatch(
           repoActions.installRepo(
             "my-repo",
+            plugin,
             "my-namespace",
             "http://foo.bar",
             "helm",
@@ -651,6 +677,7 @@ describe("installRepo", () => {
     await store.dispatch(
       repoActions.installRepo(
         "my-repo",
+        plugin,
         "foo",
         "http://foo.bar",
         "helm",
@@ -690,6 +717,7 @@ describe("installRepo", () => {
     await store.dispatch(
       repoActions.installRepo(
         "my-repo",
+        plugin,
         "my-namespace",
         "http://foo.bar",
         "oci",
@@ -747,6 +775,7 @@ describe("updateRepo", () => {
     await store.dispatch(
       repoActions.updateRepo(
         "my-repo",
+        plugin,
         "my-namespace",
         "http://foo.bar",
         "helm",
@@ -803,6 +832,7 @@ describe("updateRepo", () => {
     await store.dispatch(
       repoActions.updateRepo(
         "my-repo",
+        plugin,
         "my-namespace",
         "http://foo.bar",
         "helm",
@@ -855,6 +885,7 @@ describe("updateRepo", () => {
     await store.dispatch(
       repoActions.updateRepo(
         "my-repo",
+        plugin,
         "my-namespace",
         "http://foo.bar",
         "helm",
@@ -880,6 +911,7 @@ describe("updateRepo", () => {
     await store.dispatch(
       repoActions.updateRepo(
         "my-repo",
+        plugin,
         "my-namespace",
         "http://foo.bar",
         "oci",
@@ -921,6 +953,7 @@ describe("updateRepo", () => {
     await store.dispatch(
       repoActions.updateRepo(
         "my-repo",
+        plugin,
         "my-namespace",
         "http://foo.bar",
         "oci",
@@ -961,7 +994,7 @@ describe("findPackageInRepo", () => {
     availablePackageRef: {
       context: { cluster: "default", namespace: "my-ns" },
       identifier: "my-repo/my-package",
-      plugin: { name: "my.plugin", version: "0.0.1" } as Plugin,
+      plugin: plugin,
     },
   } as InstalledPackageDetail;
   it("dispatches requestRepo and receivedRepo if no error", async () => {
@@ -987,7 +1020,7 @@ describe("findPackageInRepo", () => {
     expect(PackagesService.getAvailablePackageVersions).toBeCalledWith({
       context: { cluster: "default", namespace: "other-namespace" },
       identifier: "my-repo/my-package",
-      plugin: { name: "my.plugin", version: "0.0.1" } as Plugin,
+      plugin: plugin,
     } as AvailablePackageReference);
   });
 
@@ -1020,7 +1053,7 @@ describe("findPackageInRepo", () => {
     expect(PackagesService.getAvailablePackageVersions).toBeCalledWith({
       context: { cluster: "default", namespace: "other-namespace" },
       identifier: "my-repo/my-package",
-      plugin: { name: "my.plugin", version: "0.0.1" } as Plugin,
+      plugin: plugin,
     } as AvailablePackageReference);
   });
 });

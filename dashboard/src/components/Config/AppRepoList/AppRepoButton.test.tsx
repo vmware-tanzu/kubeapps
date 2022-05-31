@@ -104,8 +104,9 @@ it("calls updateRepo when submitting and there is a repo available", () => {
     <AppRepoAddButton
       {...defaultProps}
       packageRepoRef={
-        // FIXME(agamez): use the proper type
-        { metadata: { name: "foo" }, spec: {} } as unknown as PackageRepositoryReference
+        {
+          identifier: "foo",
+        } as PackageRepositoryReference
       }
     />,
   );

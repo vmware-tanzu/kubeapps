@@ -31,12 +31,9 @@ afterEach(() => {
 const defaultProps = {
   kubeappsNamespace: "kubeapps",
   repo: {
-    metadata: {
-      name: "bitnami",
-      namespace: "kubeapps",
-    },
-    // FIXME(agamez): use the proper type
-  } as unknown as PackageRepositorySummary,
+    name: "bitnami",
+    packageRepoRef: { context: { namespace: "kubeapps" } },
+  } as PackageRepositorySummary,
   refetchRepos: jest.fn(),
 };
 

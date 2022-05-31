@@ -103,7 +103,9 @@ it("shows a warning if the cluster is not the default one", () => {
   );
 });
 
-it("renders the button to add a repo and refresh all", () => {
+// TODO(agamez): the refresh functionallity is currently not implemented/supported in the new Repositories API, Decide whether removing it or not
+// eslint-disable-next-line jest/no-disabled-tests
+it.skip("renders the button to add a repo and refresh all", () => {
   const wrapper = mountWrapper(defaultStore, <AppRepoList />);
   expect(wrapper.find(PageHeader).find(AppRepoAddButton)).toExist();
   expect(wrapper.find(PageHeader).find(AppRepoRefreshAllButton)).toExist();

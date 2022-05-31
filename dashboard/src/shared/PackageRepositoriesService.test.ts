@@ -1,11 +1,13 @@
 // Copyright 2021-2022 the Kubeapps contributors.
 // SPDX-License-Identifier: Apache-2.0
 
+import { PackageRepositoryReference } from "gen/kubeappsapis/core/packages/v1alpha1/repositories";
+import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins";
 import * as moxios from "moxios";
-import { PackageRepositoriesService } from "./PackageRepositoriesService";
-import { axiosWithAuth } from "./AxiosInstance";
-import * as url from "./url";
 import { IAppRepositoryFilter } from "shared/types";
+import { axiosWithAuth } from "./AxiosInstance";
+import { PackageRepositoriesService } from "./PackageRepositoriesService";
+import * as url from "./url";
 
 describe("RepositoriesService", () => {
   const cluster = "cluster";
@@ -29,6 +31,8 @@ describe("RepositoriesService", () => {
     } as IAppRepositoryFilter,
   };
 
+  const plugin: Plugin = { name: "my.plugin", version: "0.0.1" };
+
   beforeEach(() => {
     // Import as "any" to avoid typescript syntax error
     moxios.install(axiosWithAuth as any);
@@ -48,6 +52,7 @@ describe("RepositoriesService", () => {
     await PackageRepositoriesService.addPackageRepository(
       cluster,
       repo.name,
+      plugin,
       namespace,
       repo.repoURL,
       repo.type,
@@ -79,6 +84,7 @@ describe("RepositoriesService", () => {
     await PackageRepositoriesService.updatePackageRepository(
       cluster,
       repo.name,
+      plugin,
       namespace,
       repo.repoURL,
       repo.type,
@@ -107,7 +113,11 @@ describe("RepositoriesService", () => {
       response: {},
     });
 
-    await PackageRepositoriesService.deletePackageRepository(cluster, namespace, repo.name);
+    await PackageRepositoriesService.deletePackageRepository({
+      identifier: repo.name,
+      context: { cluster, namespace },
+      plugin,
+    } as PackageRepositoryReference);
 
     const request = moxios.requests.mostRecent();
     expect(request.config.method).toEqual("delete");

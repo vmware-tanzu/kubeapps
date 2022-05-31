@@ -85,12 +85,13 @@ const selectedPackage = {
 } as IPackageState["selected"];
 
 const repo1 = {
-  metadata: {
-    name: defaultProps.repo,
-    namespace: defaultProps.repoNamespace,
+  name: defaultProps.repo,
+  packageRepoRef: {
+    context: { namespace: defaultProps.repoNamespace, cluster: defaultProps.cluster },
+    identifier: defaultProps.repo,
+    plugin: defaultProps.plugin,
   },
-  // FIXME(agamez): use the proper type
-} as unknown as PackageRepositorySummary;
+} as PackageRepositorySummary;
 
 let spyOnUseDispatch: jest.SpyInstance;
 let spyOnUseHistory: jest.SpyInstance;

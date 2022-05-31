@@ -85,15 +85,14 @@ it("should select a repo", () => {
   const findPackageInRepo = jest.fn();
   actions.repos = { ...actions.repos, findPackageInRepo };
   const repo = {
-    metadata: {
-      name: "bitnami",
-      namespace: "default",
+    name: "bitnami",
+    url: "http://repo",
+    packageRepoRef: {
+      context: { namespace: "default", cluster: "default" },
+      identifier: "bitnami",
+      plugin: { name: "my.plugin", version: "0.0.1" } as Plugin,
     },
-    spec: {
-      url: "http://repo",
-    },
-    // FIXME(agamez): use the proper type
-  } as unknown as PackageRepositorySummary;
+  } as PackageRepositorySummary;
 
   const props = { ...defaultProps, app: installedPackageDetail };
   const wrapper = mountWrapper(
@@ -104,8 +103,8 @@ it("should select a repo", () => {
   (wrapper.find(CdsButton).prop("onClick") as any)();
   expect(findPackageInRepo).toHaveBeenCalledWith(
     initialState.config.kubeappsCluster,
-    repo.metadata.namespace,
-    repo.metadata.name,
+    repo.packageRepoRef?.context?.namespace,
+    repo.name,
     installedPackageDetail,
   );
 });
