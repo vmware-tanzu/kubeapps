@@ -2,7 +2,11 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { LocationChangeAction, LOCATION_CHANGE } from "connected-react-router";
-import { IAppRepository, ISecret } from "shared/types";
+import {
+  PackageRepositoryDetail,
+  PackageRepositorySummary,
+} from "gen/kubeappsapis/core/packages/v1alpha1/repositories";
+import { ISecret } from "shared/types";
 import { getType } from "typesafe-actions";
 import actions from "../actions";
 import { AppReposAction } from "../actions/repos";
@@ -16,15 +20,15 @@ export interface IAppRepositoryState {
     update?: Error;
     validate?: Error;
   };
-  lastAdded?: IAppRepository;
+  lastAdded?: PackageRepositoryDetail;
   isFetching: boolean;
   isFetchingElem: {
     repositories: boolean;
     secrets: boolean;
   };
   validating: boolean;
-  repo: IAppRepository;
-  repos: IAppRepository[];
+  repo: PackageRepositoryDetail;
+  repos: PackageRepositorySummary[];
   form: {
     name: string;
     namespace: string;
@@ -50,8 +54,8 @@ export const initialState: IAppRepositoryState = {
     secrets: false,
   },
   validating: false,
-  repo: {} as IAppRepository,
-  repos: [],
+  repo: {} as PackageRepositoryDetail,
+  repos: [] as PackageRepositorySummary[],
   imagePullSecrets: [],
 };
 
@@ -87,6 +91,8 @@ const reposReducer = (
       };
     case getType(actions.repos.requestRepos):
       return { ...state, ...isFetching(state, "repositories", true) };
+    case getType(actions.repos.requestRepo):
+      return { ...state, repo: initialState.repo };
     case getType(actions.repos.addRepo):
       return { ...state, addingRepo: true };
     case getType(actions.repos.addedRepo):
@@ -99,8 +105,8 @@ const reposReducer = (
     case getType(actions.repos.repoUpdated): {
       const updatedRepo = action.payload;
       const repos = state.repos.map(r =>
-        r.metadata.name === updatedRepo.metadata.name &&
-        r.metadata.namespace === updatedRepo.metadata.namespace
+        r.name === updatedRepo.name &&
+        r.packageRepoRef?.context?.namespace === updatedRepo.packageRepoRef?.context?.namespace
           ? updatedRepo
           : r,
       );
