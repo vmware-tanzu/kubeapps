@@ -8,12 +8,13 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/helm/packages/v1alpha1/common"
-	httpclient "github.com/vmware-tanzu/kubeapps/pkg/http-client"
 	"net/url"
 	"os"
 	"path"
 	"strings"
+
+	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/helm/packages/v1alpha1/common"
+	httpclient "github.com/vmware-tanzu/kubeapps/pkg/http-client"
 
 	appRepov1 "github.com/vmware-tanzu/kubeapps/cmd/apprepository-controller/pkg/apis/apprepository/v1alpha1"
 	"github.com/vmware-tanzu/kubeapps/cmd/assetsvc/pkg/utils"

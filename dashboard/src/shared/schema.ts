@@ -6,15 +6,16 @@ import * as jsonpatch from "fast-json-patch";
 import * as yaml from "js-yaml";
 import { isEmpty, set } from "lodash";
 // TODO(agamez): check if we can replace this package by js-yaml or vice-versa
-import YAML from "yaml";
-import { nullOptions } from "yaml/types";
-import { Type } from "yaml/util";
+import YAML, { ToStringOptions, Scalar } from "yaml";
 import { IBasicFormParam } from "./types";
 
 const ajv = new Ajv({ strict: false });
 
-// Avoid to explicitly add "null" when an element is not defined
-nullOptions.nullStr = "";
+const toStringOptions: ToStringOptions = {
+  defaultKeyType: "PLAIN",
+  defaultStringType: Scalar.QUOTE_DOUBLE, // Preserving double quotes in scalars (see https://github.com/vmware-tanzu/kubeapps/issues/3621)
+  nullStr: "", // Avoid to explicitly add "null" when an element is not defined
+};
 
 // retrieveBasicFormParams iterates over a JSON Schema properties looking for `form` keys
 // It uses the raw yaml to setup default values.
@@ -125,30 +126,33 @@ function parsePathAndValue(doc: YAML.Document, path: string, value?: any) {
 
 // setValue modifies the current values (text) based on a path
 export function setValue(values: string, path: string, newValue: any) {
-  YAML.scalarOptions.str.defaultType = Type.QUOTE_DOUBLE;
-  const doc = YAML.parseDocument(values);
+  const doc = YAML.parseDocument(values, { toStringDefaults: toStringOptions });
   const { splittedPath, value } = parsePathAndValue(doc, path, newValue);
   (doc as any).setIn(splittedPath, value);
-  return doc.toString();
+  return doc.toString(toStringOptions);
 }
 
 // parseValues returns a processed version of the values without modifying anything
 export function parseValues(values: string) {
-  return YAML.parseDocument(values).toString();
+  return YAML.parseDocument(values, {
+    toStringDefaults: toStringOptions,
+  }).toString(toStringOptions);
 }
 
 export function deleteValue(values: string, path: string) {
-  const doc = YAML.parseDocument(values);
+  const doc = YAML.parseDocument(values, { toStringDefaults: toStringOptions });
   const { splittedPath } = parsePathAndValue(doc, path);
   (doc as any).deleteIn(splittedPath);
   // If the document is empty after the deletion instead of returning {}
   // we return an empty line "\n"
-  return doc.contents && !isEmpty((doc.contents as any).items) ? doc.toString() : "\n";
+  return doc.contents && !isEmpty((doc.contents as any).items)
+    ? doc.toString(toStringOptions)
+    : "\n";
 }
 
 // getValue returns the current value of an object based on YAML text and its path
 export function getValue(values: string, path: string, defaultValue?: any) {
-  const doc = YAML.parseDocument(values);
+  const doc = YAML.parseDocument(values, { toStringDefaults: toStringOptions });
   const splittedPath = parsePath(path);
   const value = (doc as any).getIn(splittedPath);
   return value === undefined || value === null ? defaultValue : value;

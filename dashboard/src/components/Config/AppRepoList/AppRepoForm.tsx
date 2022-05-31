@@ -589,7 +589,7 @@ export function AppRepoForm(props: IAppRepoFormProps) {
             <a
               target="_blank"
               rel="noopener noreferrer"
-              href={`https://github.com/vmware-tanzu/kubeapps/blob/${appVersion}/docs/howto/private-app-repository.md#modifying-the-synchronization-job`}
+              href={`https://github.com/vmware-tanzu/kubeapps/blob/${appVersion}/site/content/docs/latest/howto/private-app-repository.md#modifying-the-synchronization-job`}
             >
               here
             </a>
@@ -614,8 +614,8 @@ export function AppRepoForm(props: IAppRepoFormProps) {
 
       {namespace === kubeappsNamespace && (
         <p>
-          <strong>NOTE:</strong> This App Repository will be created in the "{kubeappsNamespace}"
-          namespace and packages will be available in all namespaces for installation.
+          <strong>NOTE:</strong> This Package Repository will be created in the "{kubeappsNamespace}
+          " namespace and packages will be available in all namespaces for installation.
         </p>
       )}
       {validationError && (

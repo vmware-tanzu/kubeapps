@@ -5974,7 +5974,7 @@ func TestGetInstalledPackageResourceRefs(t *testing.T) {
 		expectedResponse     *corev1.GetInstalledPackageResourceRefsResponse
 	}{
 		{
-			name: "fetch the resources from an installed package",
+			name: "fetch the resources from an installed package (kapp < 0.47 suffix)",
 			request: &corev1.GetInstalledPackageResourceRefsRequest{
 				InstalledPackageRef: &corev1.InstalledPackageReference{
 					Context:    defaultContext,
@@ -6044,7 +6044,8 @@ func TestGetInstalledPackageResourceRefs(t *testing.T) {
 						}},
 					},
 				},
-				// Although it's a typical k8s object, it is retrieved with the dynamic client
+			},
+			existingTypedObjects: []k8sruntime.Object{
 				&k8scorev1.ConfigMap{
 					TypeMeta: metav1.TypeMeta{
 						Kind:       "ConfigMap",
@@ -6059,6 +6060,91 @@ func TestGetInstalledPackageResourceRefs(t *testing.T) {
 					},
 				},
 			},
+			expectedStatusCode: codes.OK,
+			expectedResponse: &corev1.GetInstalledPackageResourceRefsResponse{
+				ResourceRefs: []*corev1.ResourceRef{
+					{
+						ApiVersion: "v1",
+						Kind:       "Pod",
+						Name:       "my-installation-pod",
+						Namespace:  "default",
+					},
+				},
+				Context: defaultContext,
+			},
+		},
+		{
+			name: "fetch the resources from an installed package (kapp => 0.47 suffix)",
+			request: &corev1.GetInstalledPackageResourceRefsRequest{
+				InstalledPackageRef: &corev1.InstalledPackageReference{
+					Context:    defaultContext,
+					Plugin:     &pluginDetail,
+					Identifier: "my-installation",
+				},
+			},
+			existingObjects: []k8sruntime.Object{
+				&packagingv1alpha1.PackageInstall{
+					TypeMeta: metav1.TypeMeta{
+						Kind:       pkgInstallResource,
+						APIVersion: packagingAPIVersion,
+					},
+					ObjectMeta: metav1.ObjectMeta{
+						Namespace: "default",
+						Name:      "my-installation",
+					},
+					Spec: packagingv1alpha1.PackageInstallSpec{
+						ServiceAccountName: "default",
+						PackageRef: &packagingv1alpha1.PackageRef{
+							RefName: "tetris.foo.example.com",
+							VersionSelection: &vendirversions.VersionSelectionSemver{
+								Constraints: "1.2.3",
+							},
+						},
+						Values: []packagingv1alpha1.PackageInstallValues{{
+							SecretRef: &packagingv1alpha1.PackageInstallValuesSecretRef{
+								Name: "my-installation-default-values",
+							},
+						},
+						},
+						Paused:     false,
+						Canceled:   false,
+						SyncPeriod: &metav1.Duration{(time.Second * 30)},
+						NoopDelete: false,
+					},
+					Status: packagingv1alpha1.PackageInstallStatus{
+						GenericStatus: kappctrlv1alpha1.GenericStatus{
+							ObservedGeneration: 1,
+							Conditions: []kappctrlv1alpha1.Condition{{
+								Type:    kappctrlv1alpha1.ReconcileSucceeded,
+								Status:  k8scorev1.ConditionTrue,
+								Reason:  "baz",
+								Message: "qux",
+							}},
+							FriendlyDescription: "foo",
+							UsefulErrorMessage:  "foo",
+						},
+						Version:              "1.2.3",
+						LastAttemptedVersion: "1.2.3",
+					},
+				},
+				// Although it's a typical k8s object, it is retrieved with the dynamic client
+				&k8scorev1.Pod{
+					TypeMeta: metav1.TypeMeta{
+						APIVersion: "v1",
+						Kind:       "Pod",
+					},
+					ObjectMeta: metav1.ObjectMeta{
+						Namespace: "default",
+						Name:      "my-installation-pod",
+						Labels:    map[string]string{"kapp.k14s.io/app": "my-id"},
+					},
+					Spec: k8scorev1.PodSpec{
+						Containers: []k8scorev1.Container{{
+							Name: "my-installation-container",
+						}},
+					},
+				},
+			},
 			existingTypedObjects: []k8sruntime.Object{
 				&k8scorev1.ConfigMap{
 					TypeMeta: metav1.TypeMeta{
@@ -6067,7 +6153,7 @@ func TestGetInstalledPackageResourceRefs(t *testing.T) {
 					},
 					ObjectMeta: metav1.ObjectMeta{
 						Namespace: "default",
-						Name:      "my-installation-ctrl",
+						Name:      "my-installation.apps.k14s.io",
 					},
 					Data: map[string]string{
 						"spec": "{\"labelKey\":\"kapp.k14s.io/app\",\"labelValue\":\"my-id\"}",
@@ -6176,6 +6262,7 @@ func TestGetInstalledPackageResourceRefs(t *testing.T) {
 					{Group: datapackagingv1alpha1.SchemeGroupVersion.Group, Version: datapackagingv1alpha1.SchemeGroupVersion.Version, Resource: pkgsResource}:         pkgResource + "List",
 					{Group: datapackagingv1alpha1.SchemeGroupVersion.Group, Version: datapackagingv1alpha1.SchemeGroupVersion.Version, Resource: pkgMetadatasResource}: pkgMetadataResource + "List",
 					{Group: packagingv1alpha1.SchemeGroupVersion.Group, Version: packagingv1alpha1.SchemeGroupVersion.Version, Resource: pkgInstallsResource}:          pkgInstallResource + "List",
+					{Group: packagingv1alpha1.SchemeGroupVersion.Group, Version: packagingv1alpha1.SchemeGroupVersion.Version, Resource: appsResource}:                 appResource + "List",
 					// If more resources types are added, this will need to be updated accordingly
 					{Group: "", Version: "v1", Resource: "pods"}:       "Pod" + "List",
 					{Group: "", Version: "v1", Resource: "configmaps"}: "ConfigMap" + "List",

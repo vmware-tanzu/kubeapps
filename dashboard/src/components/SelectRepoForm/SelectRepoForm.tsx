@@ -75,7 +75,7 @@ function SelectRepoForm({ cluster, namespace, app }: ISelectRepoFormProps) {
   return (
     <LoadingWrapper
       className="margin-t-xxl"
-      loadingText="Fetching Application Repositories..."
+      loadingText="Fetching Package Repositories..."
       loaded={!isFetching}
     >
       {fetchError && <Alert theme="danger">An error occurred: {fetchError.message}</Alert>}
@@ -84,7 +84,7 @@ function SelectRepoForm({ cluster, namespace, app }: ISelectRepoFormProps) {
           <h5>Repositories not found. </h5>
           Manage your repositories in Kubeapps by visiting the{" "}
           <Link to={url.app.config.apprepositories(cluster, namespace)}>
-            App repositories configuration
+            Package Repositories configuration
           </Link>{" "}
           page.
         </Alert>

@@ -179,6 +179,8 @@ func newAppRepositoryAuth(secret *k8scorev1.Secret,
 					},
 				}
 			}
+		case corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_TLS:
+			return nil, status.Errorf(codes.Unimplemented, "Package repository authentication type %q is not supported", auth.Type)
 		case corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_UNSPECIFIED:
 			return nil, nil
 		default:

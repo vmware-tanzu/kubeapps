@@ -40,7 +40,7 @@ function AppRepoList() {
   const [canEditGlobalRepos, setCanEditGlobalRepos] = useState(false);
   const [namespace, setNamespace] = useState(allNSQuery ? "" : currentNamespace);
 
-  // We do not currently support app repositories on additional clusters.
+  // We do not currently support package repositories on additional clusters.
   const supportedCluster = cluster === kubeappsCluster;
   // useCallback stores the reference to the function, not the function execution
   // so calling several times to refetchRepos would run the code inside, even
@@ -136,10 +136,10 @@ function AppRepoList() {
   return (
     <>
       <PageHeader
-        title="Application Repositories"
+        title="Package Repositories"
         buttons={[
           <AppRepoAddButton
-            title="Add an App Repository"
+            title="Add a Package Repository"
             key="add-repo-button"
             namespace={currentNamespace}
             kubeappsNamespace={globalReposNamespace}
@@ -161,17 +161,16 @@ function AppRepoList() {
       />
       {!supportedCluster ? (
         <Alert theme="warning">
-          <h5>App Repositories are available on the default cluster only</h5>
+          <h5>Package Repositories can't be managed from this cluster.</h5>
           <p>
-            Currently the multi-cluster support in Kubeapps supports AppRepositories on the default
-            cluster only.
+            Currently, the Package Repositories must be managed from the default cluster (the one on
+            which Kubeapps has been installed).
           </p>
           <p>
-            The catalog of packages from AppRepositories on the default cluster which are available
-            for all namespaces will be available on additional clusters also, but you can not
-            currently create a private AppRepository for a particular namespace of an additional
-            cluster. We may in the future support AppRepositories on additional clusters but for now
-            you will need to switch back to your default cluster.
+            Any <i>global</i> Package Repository defined in the default cluster can be later used
+            across any target cluster.
+            <br />
+            However, <i>namespaced</i> Package Repositories can only be used on the default cluster.
           </p>
         </Alert>
       ) : (
@@ -190,11 +189,11 @@ function AppRepoList() {
             <>
               <LoadingWrapper
                 className="margin-t-xxl"
-                loadingText="Fetching Application Repositories..."
+                loadingText="Fetching Package Repositories..."
                 loaded={!isFetchingElem.repositories}
               >
                 <h3>Global Repositories:</h3>
-                <p>Global repositories are available for all Kubeapps users.</p>
+                <p>Global Package Repositories are available for all Kubeapps users.</p>
                 {globalRepos.length ? (
                   <Table
                     valign="center"
@@ -202,14 +201,18 @@ function AppRepoList() {
                     data={getTableData(globalRepos, !canEditGlobalRepos)}
                   />
                 ) : (
-                  <p>No global repositories found.</p>
+                  <p>
+                    There are no <i>global</i> Package Repositories yet. Click on the "Add Package
+                    Repository" button to create one.
+                  </p>
                 )}
                 {namespace !== globalReposNamespace && (
                   <>
-                    <h3>Namespace Repositories: {namespace}</h3>
+                    <h3>Namespaced Repositories: {namespace}</h3>
                     <p>
-                      Namespaced Repositories are available in their namespace only. To switch to a
-                      different one, use the "Current Context" selector in the top navigation.
+                      Namespaced Package Repositories are available in their namespace only. To
+                      switch to a different one, use the "Current Context" selector in the top
+                      navigation.
                     </p>
                     {namespaceRepos.length ? (
                       <Table
@@ -219,8 +222,8 @@ function AppRepoList() {
                       />
                     ) : (
                       <p>
-                        The current namespace doesn't have any repositories. Click on the button
-                        "Add app repository" above to create the first one.
+                        There are no <i>namespaced</i> Package Repositories in the '{namespace}'
+                        namespace yet. Click on the "Add Package Repository" button to create one.
                       </p>
                     )}
                   </>

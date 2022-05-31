@@ -24,7 +24,7 @@ export default function PackageCatalogItem(props: IPackageCatalogItem) {
   // Get the pkg repository for the plugins that have one.
   // Assuming an identifier will always be like: "repo/pkgName"
   const splitIdentifier = availablePackageSummary.availablePackageRef?.identifier.split("/");
-  if (splitIdentifier && splitIdentifier?.length > 0) {
+  if (splitIdentifier && splitIdentifier?.length > 1) {
     pkgRepository = splitIdentifier[0];
   }
 

@@ -49,9 +49,9 @@ toc:
       - url: /howto/offline-installation/
         page: Offline installation
       - url: /howto/private-app-repository/
-        page: Private App Repository
+        page: Private Package Repository
       - url: /howto/syncing-apprepository-webhook/
-        page: Syncing App Repositories
+        page: Syncing Package Repositories
       - url: /howto/oidc/using-an-oidc-provider-with-pinniped
         page: Using an OIDC provider with Pinniped
 
@@ -64,8 +64,8 @@ toc:
 
   - title: Reference
     subfolderitems:
-      - url: /reference/design-proposals/
-        page: Design proposals
+      - url: /reference/proposals/
+        page: Proposals
       - url: /reference/developer
         page: Developer guides
       - url: /reference/testing/testing-environment/
