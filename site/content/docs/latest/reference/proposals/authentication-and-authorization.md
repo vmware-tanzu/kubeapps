@@ -359,7 +359,7 @@ create</td>
   </tr>
 </table>
 
-##### App Repositories
+##### Package Repositories
 
 <table>
   <tr>
@@ -371,7 +371,7 @@ create</td>
     <td>Explanation</td>
   </tr>
   <tr>
-    <td>List App Repositories</td>
+    <td>List Package Repositories</td>
     <td>kubeapps.com</td>
     <td>kubeapps</td>
     <td>apprepositories</td>
@@ -379,7 +379,7 @@ create</td>
     <td></td>
   </tr>
   <tr>
-    <td>View App Repository</td>
+    <td>View Package Repository</td>
     <td>kubeapps.com</td>
     <td>kubeapps</td>
     <td>apprepositories</td>
@@ -387,7 +387,7 @@ create</td>
     <td></td>
   </tr>
   <tr>
-    <td>Resync App Repository</td>
+    <td>Resync Package Repository</td>
     <td>kubeapps.com</td>
     <td>kubeapps</td>
     <td>apprepositories</td>
@@ -395,7 +395,7 @@ create</td>
     <td></td>
   </tr>
   <tr>
-    <td>Update App Repository</td>
+    <td>Update Package Repository</td>
     <td>kubeapps.com</td>
     <td>kubeapps</td>
     <td>apprepositories</td>
@@ -403,7 +403,7 @@ create</td>
     <td></td>
   </tr>
   <tr>
-    <td>Delete App Repository</td>
+    <td>Delete Package Repository</td>
     <td>kubeapps.com</td>
     <td>kubeapps</td>
     <td>apprepositories</td>

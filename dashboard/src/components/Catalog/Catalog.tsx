@@ -209,7 +209,7 @@ export default function Catalog() {
       .concat(flatten(csvs.map(c => getOperatorCategories(c)))),
   ).sort();
 
-  // We do not currently support app repositories on additional clusters.
+  // We do not currently support package repositories on additional clusters.
   const supportedCluster = cluster === kubeappsCluster;
   useEffect(() => {
     if (!supportedCluster || namespace === globalReposNamespace) {
@@ -374,18 +374,18 @@ export default function Catalog() {
           <CdsIcon shape="bundle" />
           <p>The current catalog is empty.</p>
           <p>
-            Manage your Helm Package Repositories in Kubeapps by visiting the App repositories
+            Manage your Package Repositories in Kubeapps by visiting the Package repositories
             configuration page.
           </p>
           <Link to={app.config.apprepositories(cluster, namespace)}>
-            <CdsButton>Manage App Repositories</CdsButton>
+            <CdsButton>Manage Package Repositories</CdsButton>
           </Link>
           <p>
             For help managing other packaging formats, such as Flux or Carvel, please refer to the{" "}
             <a
               target="_blank"
               rel="noopener noreferrer"
-              href={`https://github.com/vmware-tanzu/kubeapps/blob/${appVersion}/docs/`}
+              href={`https://github.com/vmware-tanzu/kubeapps/tree/${appVersion}/site/content/docs/latest`}
             >
               Kubeapps documentation
             </a>
@@ -432,7 +432,7 @@ export default function Catalog() {
               )}
               {allRepos.length > 0 && (
                 <div className="filter-section">
-                  <label>Application Repository</label>
+                  <label>Package Repository</label>
                   <FilterGroup
                     name={filterNames.REPO}
                     options={allRepos}

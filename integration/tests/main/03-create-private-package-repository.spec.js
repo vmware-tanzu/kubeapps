@@ -19,13 +19,13 @@ test("Create a new private package repository successfully", async ({ page }) =>
 
   // Go to repos page
   await page.click(".dropdown.kubeapps-menu button.kubeapps-nav-link");
-  await page.click('a.dropdown-menu-link:has-text("App Repositories")');
+  await page.click('a.dropdown-menu-link:has-text("Package Repositories")');
   await page.waitForTimeout(3000);
 
   // Add new repo
-  await page.click('cds-button:has-text("Add App Repository")');
+  await page.click('cds-button:has-text("Add Package Repository")');
   const repoName = utils.getRandomName("my-repo");
-  console.log(`Creating repository "${repoName}"`);
+  console.log(`Creating package repository "${repoName}"`);
   await page.fill("input#kubeapps-repo-name", repoName);
   await page.fill("input#kubeapps-repo-url", "http://chartmuseum-chartmuseum.kubeapps:8080");
 

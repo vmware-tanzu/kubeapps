@@ -80,7 +80,8 @@ function Menu({ clusters, appVersion, logout }: IContextSelectorProps) {
                 onClick={toggleOpen}
               >
                 <div className="dropdown-menu-item" role="menuitem">
-                  <CdsIcon solid={true} size="md" shape="library" /> <span>App Repositories</span>
+                  <CdsIcon solid={true} size="md" shape="library" />{" "}
+                  <span>Package Repositories</span>
                 </div>
               </Link>
               <div className="dropdown-divider" role="separator" />
