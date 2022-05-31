@@ -258,7 +258,7 @@ var (
 
 	addRepoReqGlobal = &corev1.AddPackageRepositoryRequest{
 		Name:            "bar",
-		Context:         &corev1.Context{Namespace: "kubeapps"},
+		Context:         &corev1.Context{Namespace: "kubeapps", Cluster: KubeappsCluster},
 		Type:            "helm",
 		Url:             "http://example.com",
 		NamespaceScoped: false,
@@ -278,7 +278,7 @@ var (
 	addRepoReqSimple = func(repoType string) *corev1.AddPackageRepositoryRequest {
 		return &corev1.AddPackageRepositoryRequest{
 			Name:            "bar",
-			Context:         &corev1.Context{Namespace: "foo"},
+			Context:         &corev1.Context{Namespace: "foo", Cluster: KubeappsCluster},
 			Type:            repoType,
 			Url:             "http://example.com",
 			NamespaceScoped: true,
@@ -288,7 +288,7 @@ var (
 	addRepoReqTLSCA = func(ca []byte) *corev1.AddPackageRepositoryRequest {
 		return &corev1.AddPackageRepositoryRequest{
 			Name:            "bar",
-			Context:         &corev1.Context{Namespace: "foo"},
+			Context:         &corev1.Context{Namespace: "foo", Cluster: KubeappsCluster},
 			Type:            "helm",
 			Url:             "http://example.com",
 			NamespaceScoped: true,
@@ -302,7 +302,7 @@ var (
 
 	addRepoReqTLSSecretRef = &corev1.AddPackageRepositoryRequest{
 		Name:            "bar",
-		Context:         &corev1.Context{Namespace: "foo"},
+		Context:         &corev1.Context{Namespace: "foo", Cluster: KubeappsCluster},
 		Type:            "helm",
 		Url:             "http://example.com",
 		NamespaceScoped: true,
@@ -318,7 +318,7 @@ var (
 	addRepoReqBasicAuth = func(username, password string) *corev1.AddPackageRepositoryRequest {
 		return &corev1.AddPackageRepositoryRequest{
 			Name:            "bar",
-			Context:         &corev1.Context{Namespace: "foo"},
+			Context:         &corev1.Context{Namespace: "foo", Cluster: KubeappsCluster},
 			Type:            "helm",
 			Url:             "http://example.com",
 			NamespaceScoped: true,
@@ -355,7 +355,7 @@ var (
 	addRepoReqBearerToken = func(token string) *corev1.AddPackageRepositoryRequest {
 		return &corev1.AddPackageRepositoryRequest{
 			Name:            "bar",
-			Context:         &corev1.Context{Namespace: "foo"},
+			Context:         &corev1.Context{Namespace: "foo", Cluster: KubeappsCluster},
 			Type:            "helm",
 			Url:             "http://example.com",
 			NamespaceScoped: true,
@@ -371,7 +371,7 @@ var (
 	addRepoReqAuthWithSecret = func(authType corev1.PackageRepositoryAuth_PackageRepositoryAuthType, secretName string) *corev1.AddPackageRepositoryRequest {
 		return &corev1.AddPackageRepositoryRequest{
 			Name:            "bar",
-			Context:         &corev1.Context{Namespace: "foo"},
+			Context:         &corev1.Context{Namespace: "foo", Cluster: KubeappsCluster},
 			Type:            "helm",
 			Url:             "http://example.com",
 			NamespaceScoped: true,
@@ -388,7 +388,7 @@ var (
 
 	addRepoReqCustomAuth = &corev1.AddPackageRepositoryRequest{
 		Name:            "bar",
-		Context:         &corev1.Context{Namespace: "foo"},
+		Context:         &corev1.Context{Namespace: "foo", Cluster: KubeappsCluster},
 		Type:            "helm",
 		Url:             "http://example.com",
 		NamespaceScoped: true,
@@ -403,7 +403,7 @@ var (
 	addRepoReqDockerAuth = func(credentials *corev1.DockerCredentials) *corev1.AddPackageRepositoryRequest {
 		return &corev1.AddPackageRepositoryRequest{
 			Name:            "bar",
-			Context:         &corev1.Context{Namespace: "foo"},
+			Context:         &corev1.Context{Namespace: "foo", Cluster: KubeappsCluster},
 			Type:            "helm",
 			Url:             "http://example.com",
 			NamespaceScoped: true,
@@ -427,7 +427,7 @@ var (
 
 	addRepoReqOnlyPassCredentials = &corev1.AddPackageRepositoryRequest{
 		Name:            "bar",
-		Context:         &corev1.Context{Namespace: "foo"},
+		Context:         &corev1.Context{Namespace: "foo", Cluster: KubeappsCluster},
 		Type:            "helm",
 		Url:             "http://example.com",
 		NamespaceScoped: true,
@@ -438,7 +438,7 @@ var (
 
 	addRepoReqCustomValues = &corev1.AddPackageRepositoryRequest{
 		Name:            "bar",
-		Context:         &corev1.Context{Namespace: "foo"},
+		Context:         &corev1.Context{Namespace: "foo", Cluster: KubeappsCluster},
 		Type:            "helm",
 		Url:             "https://example.com",
 		NamespaceScoped: true,
@@ -454,7 +454,7 @@ var (
 
 	addRepoReqCustomValuesHelmValid = &corev1.AddPackageRepositoryRequest{
 		Name:            "bar",
-		Context:         &corev1.Context{Namespace: "foo"},
+		Context:         &corev1.Context{Namespace: "foo", Cluster: KubeappsCluster},
 		Type:            "helm",
 		Url:             "https://example.com",
 		NamespaceScoped: true,
@@ -471,7 +471,7 @@ var (
 
 	addRepoReqCustomValuesOCIValid = &corev1.AddPackageRepositoryRequest{
 		Name:            "bar",
-		Context:         &corev1.Context{Namespace: "foo"},
+		Context:         &corev1.Context{Namespace: "foo", Cluster: KubeappsCluster},
 		Type:            "oci",
 		Url:             "https://example.com",
 		NamespaceScoped: true,

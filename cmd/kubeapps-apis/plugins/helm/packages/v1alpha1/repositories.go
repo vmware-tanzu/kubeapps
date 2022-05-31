@@ -17,7 +17,6 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
-	"k8s.io/client-go/dynamic"
 	log "k8s.io/klog/v2"
 	"k8s.io/utils/strings/slices"
 )
@@ -247,14 +246,17 @@ func (s *Server) updateRepo(ctx context.Context, repo *HelmRepository) (*corev1.
 	if repo.url == "" {
 		return nil, status.Errorf(codes.InvalidArgument, "repository url may not be empty")
 	}
+	if repo.name.Name == "" {
+		return nil, status.Errorf(codes.InvalidArgument, "repository name may not be empty")
+	}
 	typedClient, err := s.clientGetter.Typed(ctx, repo.cluster)
 	if err != nil {
 		return nil, err
 	}
 
-	appRepo, caSecret, authSecret, err := s.getAppRepoAndRelatedSecrets(ctx, repo.cluster, repo.name.Name, repo.name.Namespace)
+	appRepo, caSecret, authSecret, err := s.getPkgRepository(ctx, repo.cluster, repo.name.Namespace, repo.name.Name)
 	if err != nil {
-		return nil, err
+		return nil, status.Errorf(codes.NotFound, "unable to retrieve repository '%s/%s' due to [%v]", repo.name.Namespace, repo.name.Namespace, err)
 	}
 
 	if authSecret != nil && caSecret != nil && authSecret.Name != caSecret.Name {
@@ -293,6 +295,7 @@ func (s *Server) updateRepo(ctx context.Context, repo *HelmRepository) (*corev1.
 			}
 		} else {
 			appRepo.Spec.Auth.Header = nil
+			appRepo.Spec.Auth.CustomCA = nil
 		}
 	}
 
@@ -316,11 +319,13 @@ func (s *Server) updateRepo(ctx context.Context, repo *HelmRepository) (*corev1.
 		appRepo.Spec.FilterRule = apprepov1alpha1.FilterRuleSpec{}
 	}
 
-	if client, err := s.getClient(ctx, repo.cluster, repo.name.Namespace); err != nil {
-		return nil, err
-	} else if err = client.Update(ctx, appRepo); err != nil {
+	// persist repository
+	err = s.updatePkgRepository(ctx, repo.cluster, repo.name.Namespace, appRepo)
+	if err != nil {
 		return nil, statuserror.FromK8sError("update", AppRepositoryKind, repo.name.String(), err)
-	} else if updateRepoSecret && secret != nil {
+	}
+
+	if updateRepoSecret && secret != nil {
 		// new secret => will need to set the owner
 		if err = s.setOwnerReferencesForRepoSecret(ctx, secret, repo.cluster, appRepo); err != nil {
 			return nil, err
@@ -388,20 +393,6 @@ func (s *Server) GetPkgRepositories(ctx context.Context, cluster, namespace stri
 		pkgRepositories = append(pkgRepositories, pkgRepository)
 	}
 	return pkgRepositories, nil
-}
-
-func (s *Server) getPkgRepositoryResource(ctx context.Context, cluster, namespace string) (dynamic.ResourceInterface, error) {
-	_, dynClient, err := s.GetClients(ctx, cluster)
-	if err != nil {
-		return nil, err
-	}
-	gvr := schema.GroupVersionResource{
-		Group:    apprepov1alpha1.SchemeGroupVersion.Group,
-		Version:  apprepov1alpha1.SchemeGroupVersion.Version,
-		Resource: AppRepositoryResource}
-	ri := dynClient.Resource(gvr).Namespace(namespace)
-	log.Infof("+helm getPkgRepositoryResource [%v]", ri)
-	return ri, nil
 }
 
 func (s *Server) deleteRepo(ctx context.Context, cluster string, repoRef *corev1.PackageRepositoryReference) error {

@@ -370,15 +370,25 @@ func getRepoTlsConfigAndAuthWithUserManagedSecrets(source *apprepov1alpha1.AppRe
 
 func getRepoTlsConfigAndAuthWithKubeappsManagedSecrets(source *apprepov1alpha1.AppRepository,
 	caSecret *k8scorev1.Secret, authSecret *k8scorev1.Secret) (*corev1.PackageRepositoryTlsConfig, *corev1.PackageRepositoryAuth, error) {
-	tlsConfig := &corev1.PackageRepositoryTlsConfig{
-		InsecureSkipVerify: source.Spec.TLSInsecureSkipVerify,
+	var tlsConfig *corev1.PackageRepositoryTlsConfig
+	var auth *corev1.PackageRepositoryAuth
+
+	if source.Spec.TLSInsecureSkipVerify {
+		tlsConfig = &corev1.PackageRepositoryTlsConfig{
+			InsecureSkipVerify: source.Spec.TLSInsecureSkipVerify,
+		}
 	}
-	auth := &corev1.PackageRepositoryAuth{
-		PassCredentials: source.Spec.PassCredentials,
+	if source.Spec.PassCredentials {
+		auth = &corev1.PackageRepositoryAuth{
+			PassCredentials: source.Spec.PassCredentials,
+		}
 	}
 
 	if caSecret != nil {
 		if _, ok := caSecret.Data[SecretCaKey]; ok {
+			if tlsConfig == nil {
+				tlsConfig = &corev1.PackageRepositoryTlsConfig{}
+			}
 			tlsConfig.PackageRepoTlsConfigOneOf = &corev1.PackageRepositoryTlsConfig_CertAuthority{
 				CertAuthority: RedactedString,
 			}
@@ -386,6 +396,9 @@ func getRepoTlsConfigAndAuthWithKubeappsManagedSecrets(source *apprepov1alpha1.A
 	}
 
 	if authSecret != nil {
+		if auth == nil {
+			auth = &corev1.PackageRepositoryAuth{}
+		}
 		if authHeader, ok := authSecret.Data[SecretAuthHeaderKey]; ok {
 			if strings.HasPrefix(string(authHeader), "Basic") {
 				auth.Type = corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_BASIC_AUTH

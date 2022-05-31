@@ -9,7 +9,6 @@ import (
 	"errors"
 	"fmt"
 	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/helm/packages/v1alpha1/common"
-	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/pkg/statuserror"
 	httpclient "github.com/vmware-tanzu/kubeapps/pkg/http-client"
 	"net/url"
 	"os"
@@ -1047,6 +1046,7 @@ func (s *Server) AddPackageRepository(ctx context.Context, request *corev1.AddPa
 	}
 
 	helmRepo := &HelmRepository{
+		cluster:       cluster,
 		name:          name,
 		url:           request.GetUrl(),
 		repoType:      request.GetType(),
@@ -1090,7 +1090,7 @@ func (s *Server) GetPackageRepositoryDetail(ctx context.Context, request *corev1
 	// Retrieve repository
 	appRepo, caCertSecret, authSecret, err := s.getAppRepoAndRelatedSecrets(ctx, cluster, name, namespace)
 	if err != nil {
-		return nil, statuserror.FromK8sError("get", AppRepositoryKind, name, err)
+		return nil, status.Errorf(codes.NotFound, "Unable to retrieve AppRepository '%s/%s' due to [%v]", namespace, name, err)
 	}
 
 	// Map to target struct

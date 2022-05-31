@@ -186,7 +186,7 @@ func getCertsForTesting(t *testing.T) (ca, pub, priv []byte) {
 	return ca, pub, priv
 }
 
-func newCtrlClient(repos []appRepov1.AppRepository) client.WithWatch {
+func newCtrlClient(repos []*appRepov1.AppRepository) client.WithWatch {
 	// Register required schema definitions
 	scheme := runtime.NewScheme()
 	appRepov1.AddToScheme(scheme)
@@ -201,7 +201,11 @@ func newCtrlClient(repos []appRepov1.AppRepository) client.WithWatch {
 	ctrlClientBuilder := ctrlfake.NewClientBuilder().WithScheme(scheme).WithRESTMapper(rm)
 	var initLists []client.ObjectList
 	if len(repos) > 0 {
-		initLists = append(initLists, &appRepov1.AppRepositoryList{Items: repos})
+		repoInst := make([]appRepov1.AppRepository, len(repos))
+		for i, repo := range repos {
+			repoInst[i] = *repo
+		}
+		initLists = append(initLists, &appRepov1.AppRepositoryList{Items: repoInst})
 	}
 	if len(initLists) > 0 {
 		ctrlClientBuilder = ctrlClientBuilder.WithLists(initLists...)
