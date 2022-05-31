@@ -8,20 +8,20 @@ It is possible to use a private Helm repository to store your own Helm charts an
 
 But first, a note about Kubeapps AppRepository resources:
 
-## Per Namespace App Repositories
+## Per Namespace Package Repositories
 
-Previously, once an App Repository was created in Kubeapps, the charts indexed by that repository were then available cluster-wide to all Kubeapps users. This was changed in Kubeapps 1.10 to allow creating App Repositories that are available only in specific namespaces, which is more inline with the Kubernetes RBAC model where an account can have roles in specific namespaces. This change also enables Kubeapps to support deploying charts with images from private docker registries (more below).
+Previously, once an Package Repository was created in Kubeapps, the charts indexed by that repository were then available cluster-wide to all Kubeapps users. This was changed in Kubeapps 1.10 to allow creating Package Repositories that are available only in specific namespaces, which is more inline with the Kubernetes RBAC model where an account can have roles in specific namespaces. This change also enables Kubeapps to support deploying charts with images from private docker registries (more below).
 
-A Kubeapps AppRepository can be created by anyone with the required RBAC for that namespace. If you have cluster-wide RBAC for creating AppRepositories, you can still create an App Repository whose charts will be available to users in all namespaces by selecting "All Namespaces" when creating the repository.
+A Kubeapps AppRepository can be created by anyone with the required RBAC for that namespace. If you have cluster-wide RBAC for creating AppRepositories, you can still create an Package Repository whose charts will be available to users in all namespaces by selecting "All Namespaces" when creating the repository.
 
-To give a specific user `USERNAME` the ability to create App Repositories in a specific namespace named `custom-namespace`, grant them both read and write RBAC for AppRepositories in that namespace:
+To give a specific user `USERNAME` the ability to create Package Repositories in a specific namespace named `custom-namespace`, grant them both read and write RBAC for AppRepositories in that namespace:
 
 ```bash
 kubectl -n custom-namespace create rolebinding username-apprepositories-read --user $USERNAME --clusterrole kubeapps:$KUBEAPPS_NAMESPACE:apprepositories-read
 kubectl -n custom-namespace create rolebinding username-apprepositories-write --user $USERNAME --clusterrole kubeapps:$KUBEAPPS_NAMESPACE:apprepositories-write
 ```
 
-or to allow other users the ability to deploy charts from App Repositories in a specific namespace, grant the read access only.
+or to allow other users the ability to deploy charts from Package Repositories in a specific namespace, grant the read access only.
 
 ## Associating docker image pull secrets to an AppRepository
 
@@ -100,9 +100,9 @@ curl --data-binary "@my-chart-1.0.0.tgz" http://localhost:8080/api/charts
 
 ### ChartMuseum: Configure the repository in Kubeapps
 
-To add your private repository to Kubeapps, select the Kubernetes namespace to which you want to add the repository (or "All Namespaces" if you want it available to users in all namespaces), go to `Configuration > App Repositories` and click on "Add App Repository". You will need to add your repository using the Kubernetes DNS name for the ChartMuseum service. This will be `<release_name>-chartmuseum.<namespace>:8080`:
+To add your private repository to Kubeapps, select the Kubernetes namespace to which you want to add the repository (or "All Namespaces" if you want it available to users in all namespaces), go to `Configuration > Package Repositories` and click on "Add Package Repository". You will need to add your repository using the Kubernetes DNS name for the ChartMuseum service. This will be `<release_name>-chartmuseum.<namespace>:8080`:
 
-![ChartMuseum App Repository](../img/chartmuseum-repository.png)
+![ChartMuseum Package Repository](../img/chartmuseum-repository.png)
 
 Once you create the repository you can click on the link for the specific repository and you will be able to deploy your own applications using Kubeapps.
 
@@ -174,7 +174,7 @@ Please refer to ['Manage Helm Charts in Harbor'](https://goharbor.io/docs/2.5.0/
 
 ### Harbor: Configure the repository in Kubeapps
 
-To add Harbor as the private chart repository in Kubeapps, select the Kubernetes namespace to which you want to add the repository (or "All Namespaces" if you want it available to users in all namespaces), go to `Configuration > App Repositories` and click on "Add App Repository" and use the Harbor helm repository URL `http://harbor.default.svc.cluster.local/chartrepo/my-helm-repo`
+To add Harbor as the private chart repository in Kubeapps, select the Kubernetes namespace to which you want to add the repository (or "All Namespaces" if you want it available to users in all namespaces), go to `Configuration > Package Repositories` and click on "Add Package Repository" and use the Harbor helm repository URL `http://harbor.default.svc.cluster.local/chartrepo/my-helm-repo`
 
 Once you create the repository you can click on the link for the specific repository and you will be able to deploy your own applications using Kubeapps.
 
@@ -183,7 +183,7 @@ Once you create the repository you can click on the link for the specific reposi
 It is possible to configure Harbor to use HTTP basic authentication:
 
 - When creating a new project for serving as the helm chart repository in Harbor, set the `Access Level` of the project to non public. This enforces authentication to access the charts in the chart repository via Helm CLI or other clients.
-- When `Adding App Repository` in Kubeapps, select `Basic Auth` for `Authorization` and specify the username and password for Harbor.
+- When `Adding Package Repository` in Kubeapps, select `Basic Auth` for `Authorization` and specify the username and password for Harbor.
 
 ## OCI Registry
 
@@ -210,7 +210,7 @@ JFrog Artifactory is a Repository Manager supporting all major packaging formats
 
 > **Note**: In order to use the Helm repository feature, it's necessary to use an Artifactory Pro account.
 
-To install Artifactory with Kubeapps first add the JFrog repository to Kubeapps. Go to `Configuration > App Repositories` and add their repository:
+To install Artifactory with Kubeapps first add the JFrog repository to Kubeapps. Go to `Configuration > Package Repositories` and add their repository:
 
 ![JFrog repository](../img/jfrog-repository.png)
 
@@ -245,7 +245,7 @@ curl -u{USER}:{PASSWORD} -XPOST "http://{REPO_URL}/artifactory/api/security/toke
 }
 ```
 
-The above command creates a token with read-only permissions. Now you can select the namespace to which you want to add the repository (or "All Namespaces" if you want it available to users in all namespaces), go to the `Configuration > App Repositories` menu and add your personal repository:
+The above command creates a token with read-only permissions. Now you can select the namespace to which you want to add the repository (or "All Namespaces" if you want it available to users in all namespaces), go to the `Configuration > Package Repositories` menu and add your personal repository:
 
 ![JFrog custom repository](../img/jfrog-custom-repo.png)
 

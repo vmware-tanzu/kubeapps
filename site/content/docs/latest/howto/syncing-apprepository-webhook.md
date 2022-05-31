@@ -1,22 +1,22 @@
-# Syncing App Repositories using a webhook
+# Syncing Package Repositories using a webhook
 
 ## Introduction
 
-Kubeapps's default configuration schedules the syncing process of the App Repositories every _ten minutes_. However, this behavior can be easily changed globally by editing the [values.yaml file](https://github.com/vmware-tanzu/kubeapps/blob/main/chart/kubeapps/values.yaml#L908) (`crontab: "*/10 * * * *"`).
+Kubeapps's default configuration schedules the syncing process of the Package Repositories every _ten minutes_. However, this behavior can be easily changed globally by editing the [values.yaml file](https://github.com/vmware-tanzu/kubeapps/blob/main/chart/kubeapps/values.yaml#L908) (`crontab: "*/10 * * * *"`).
 
-Nevertheless, this default approach might not be useful for environments with highly frequent changes. Moreover, if there are a few App Repositories with numerous changes while others hardly are modified, therefore, increasing the default global syncing periodicity is not a good approach.
+Nevertheless, this default approach might not be useful for environments with highly frequent changes. Moreover, if there are a few Package Repositories with numerous changes while others hardly are modified, therefore, increasing the default global syncing periodicity is not a good approach.
 
-Kubeapps now supports an API endpoint for manually triggering a sync process for a given App Repository. This endpoint is intended to be used as a webhook from external applications.
+Kubeapps now supports an API endpoint for manually triggering a sync process for a given Package Repository. This endpoint is intended to be used as a webhook from external applications.
 A number of platforms do use webhooks for triggering actions when something occurs. For instance, [Harbor notifies the webhook endpoint of certain events that occur in the project](https://goharbor.io/docs/2.5.0/working-with-projects/project-configuration/configure-webhooks/).
 Webhook notifications provide information about events in JSON format and are usually delivered by an HTTP(s) POST to an existing webhook endpoint URL.
 
-The example below will use Harbor for explaining how a webhook is configured for triggering an App Repository sync process.
+The example below will use Harbor for explaining how a webhook is configured for triggering an Package Repository sync process.
 
 > In other platforms the process will be pretty similar. Doubts? Please feel free to [open an issue](https://github.com/vmware-tanzu/kubeapps/issues/new) if you need further guidance!
 
 ## Creating and granting a ServiceAccount for authenticating requests
 
-Since the webhook endpoint will be used outside the user browser session (i.e., no OIDC login), an ad-hoc ServiceAccount should be created in the same namespace as the app repository; next, it has to be granted with sufficient permissions to `get` and `update` the `AppRepository` objects. Finally, the ServiceAccount token must be retrieved.
+Since the webhook endpoint will be used outside the user browser session (i.e., no OIDC login), an ad-hoc ServiceAccount should be created in the same namespace as the package repository; next, it has to be granted with sufficient permissions to `get` and `update` the `AppRepository` objects. Finally, the ServiceAccount token must be retrieved.
 
 ### Creating the RBAC objects
 
@@ -77,7 +77,7 @@ subjects:
 EOF
 ```
 
-> Note: remember that the namespace `kubeapps` is special as every App Repository added here is considered as a **global** one and it is shared across every namespace. Please take it into consideration before granting the ServiceAccount with permissions on the `kubeapps` namespace.
+> Note: remember that the namespace `kubeapps` is special as every Package Repository added here is considered as a **global** one and it is shared across every namespace. Please take it into consideration before granting the ServiceAccount with permissions on the `kubeapps` namespace.
 
 ### Retrieving the ServiceAccount token
 
@@ -97,7 +97,7 @@ A high-level description of the main steps is presented below; please refer to t
 2. Go to _Projects_, select a project, and select _Webhooks_.
 3. Enter this URL: `https://<KUBEAPPS_URL>/api/v1/clusters/<CLUSTER_NAME>/namespaces/<NAMESPACE_NAME>/apprepositories/<APPREPO_NAME>/refresh`. Modify `<KUBEAPPS_URL>` , `<CLUSTER_NAME>`, `<NAMESPACE_NAME>`, `<APPREPO_NAME>` to match your needs.
 
-   > For instance: `https://<KUBEAPPS_URL>/api/v1/clusters/default/namespaces/my-namespace/apprepositories/my-repo/refresh` will update the App Repository `my-repo` in the namespace `my-namespace` of the cluster `default`.
+   > For instance: `https://<KUBEAPPS_URL>/api/v1/clusters/default/namespaces/my-namespace/apprepositories/my-repo/refresh` will update the Package Repository `my-repo` in the namespace `my-namespace` of the cluster `default`.
 
 4. As authentication header enter `Bearer <TOKEN>`
 

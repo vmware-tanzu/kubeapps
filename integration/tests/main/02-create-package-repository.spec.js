@@ -12,12 +12,12 @@ test("Create a new package repository successfully", async ({ page }) => {
 
   // Go to repos page
   await page.click(".dropdown.kubeapps-menu button.kubeapps-nav-link");
-  await page.click('a.dropdown-menu-link:has-text("App Repositories")');
+  await page.click('a.dropdown-menu-link:has-text("Package Repositories")');
   await page.waitForTimeout(3000);
 
   // Add new repo
-  console.log('Creating repository "my-repo"');
-  await page.click('cds-button:has-text("Add App Repository")');
+  console.log('Creating package repository "my-repo"');
+  await page.click('cds-button:has-text("Add Package Repository")');
   await page.fill("input#kubeapps-repo-name", "my-repo");
   await page.fill("input#kubeapps-repo-url", "https://charts.gitlab.io/");
   await page.click('cds-button:has-text("Install Repo")');
@@ -32,7 +32,7 @@ test("Create a new package repository successfully", async ({ page }) => {
   // Clean up
   // Go back to repos page and delete repo
   await page.click(".dropdown.kubeapps-menu button.kubeapps-nav-link");
-  await page.click('a.dropdown-menu-link:has-text("App Repositories")');
+  await page.click('a.dropdown-menu-link:has-text("Package Repositories")');
   await page.waitForTimeout(3000);
   await page.click("cds-button#delete-repo-my-repo");
   await page.locator('cds-modal-actions button:has-text("Delete")').click();

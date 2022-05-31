@@ -23,7 +23,7 @@ Learn more about the topics discussed in this guide using the links below.
 
 - [Enabling Identity Management in VMware Tanzu™ Kubernetes Grid™](https://docs.vmware.com/en/VMware-Tanzu-Kubernetes-Grid/1.3/vmware-tanzu-kubernetes-grid-13/GUID-mgmt-clusters-enabling-id-mgmt.html)
 - [Installing Kubeapps in air-gapped environments](https://github.com/vmware-tanzu/kubeapps/blob/main/site/content/docs/latest/howto/offline-installation.md)
-- [Syncing app repositories using webhooks](https://github.com/vmware-tanzu/kubeapps/blob/main/site/content/docs/latest/howto/syncing-apprepository-webhook.md)
+- [Syncing package repositories using webhooks](https://github.com/vmware-tanzu/kubeapps/blob/main/site/content/docs/latest/howto/syncing-apprepository-webhook.md)
 - [Using Kubeapps to deploy in multiple clusters](https://github.com/vmware-tanzu/kubeapps/blob/main/site/content/docs/latest/howto/deploying-to-multiple-clusters.md)
 - [Using Operators in Kubeapps](https://github.com/vmware-tanzu/kubeapps/blob/main/site/content/docs/latest/tutorials/operators.md)
 

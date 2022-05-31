@@ -20,13 +20,13 @@ test.describe("Limited user simple deployments", () => {
 
     // Go to repos page
     await page.click(".dropdown.kubeapps-menu button.kubeapps-nav-link");
-    await page.click('a.dropdown-menu-link:has-text("App Repositories")');
+    await page.click('a.dropdown-menu-link:has-text("Package Repositories")');
     await page.waitForTimeout(3000);
 
     // Add new repo
     const repoName = utils.getRandomName("repo-09");
-    console.log(`Creating repository "${repoName}"`);
-    await page.click('cds-button:has-text("Add App Repository")');
+    console.log(`Creating package repository "${repoName}"`);
+    await page.click('cds-button:has-text("Add Package Repository")');
     await page.fill("input#kubeapps-repo-name", repoName);
     await page.fill(
       "input#kubeapps-repo-url",
