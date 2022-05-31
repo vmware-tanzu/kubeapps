@@ -363,53 +363,6 @@ export interface IK8sList<I, M> extends IK8sResource {
   } & M;
 }
 
-export type IAppRepository = IK8sObject<
-  {
-    clusterName: string;
-    creationTimestamp: string;
-    deletionGracePeriodSeconds: string | null;
-    deletionTimestamp: string | null;
-    resourceVersion: string;
-    selfLink: string;
-  },
-  {
-    type: string;
-    url: string;
-    description?: string;
-    auth?: {
-      header?: {
-        secretKeyRef: {
-          name: string;
-          key: string;
-        };
-      };
-      customCA?: {
-        secretKeyRef: {
-          name: string;
-          key: string;
-        };
-      };
-    };
-    resyncRequests: number;
-    syncJobPodTemplate?: object;
-    dockerRegistrySecrets?: string[];
-    ociRepositories?: string[];
-    tlsInsecureSkipVerify?: boolean;
-    filterRule?: IAppRepositoryFilter;
-    passCredentials?: boolean;
-  },
-  undefined
->;
-
-export interface ICreateAppRepositoryResponse {
-  appRepository: IAppRepository;
-}
-
-export interface IAppRepositoryKey {
-  name: string;
-  namespace: string;
-}
-
 /** @see https://github.com/kubernetes/community/blob/master/contributors/devel/api-conventions.md#response-status-kind */
 export interface IStatus extends IK8sResource {
   kind: "Status";

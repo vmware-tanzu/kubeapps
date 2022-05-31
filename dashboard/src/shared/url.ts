@@ -103,6 +103,7 @@ export const backend = {
   namespaces: {
     list: (cluster: string) => `api/v1/clusters/${cluster}/namespaces`,
   },
+  canI: (cluster: string) => `api/v1/clusters/${cluster}/can-i`,
   apprepositories: {
     base: (cluster: string, namespace: string) =>
       `api/v1/clusters/${cluster}/${withNS(namespace)}apprepositories`,
@@ -120,7 +121,6 @@ export const backend = {
     update: (cluster: string, namespace: string, name: string) =>
       `${backend.apprepositories.base(cluster, namespace)}/${name}`,
   },
-  canI: (cluster: string) => `api/v1/clusters/${cluster}/can-i`,
 };
 
 export const api = {
@@ -130,9 +130,6 @@ export const api = {
   // access the k8s api server directly).
   k8s: {
     base: (cluster: string) => `api/clusters/${cluster}`,
-    namespaces: (cluster: string) => `${api.k8s.base(cluster)}/api/v1/namespaces`,
-    namespace: (cluster: string, namespace: string) =>
-      namespace ? `${api.k8s.namespaces(cluster)}/${namespace}` : `${api.k8s.base(cluster)}/api/v1`,
     operators: {
       operators: (cluster: string, namespace: string) =>
         `${api.k8s.base(cluster)}/apis/packages.operators.coreos.com/v1/${withNS(
