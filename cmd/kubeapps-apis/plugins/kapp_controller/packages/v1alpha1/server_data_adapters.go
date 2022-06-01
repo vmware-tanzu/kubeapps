@@ -696,7 +696,7 @@ func (s *Server) validatePackageRepositoryCreate(request *corev1.AddPackageRepos
 	case "":
 		return status.Errorf(codes.InvalidArgument, "no repository Type provided")
 	default:
-		return status.Errorf(codes.InvalidArgument, "unrecognized repository Type")
+		return status.Errorf(codes.InvalidArgument, "invalid repository Type")
 	}
 
 	if request.Url == "" {
@@ -728,7 +728,7 @@ func (s *Server) validatePackageRepositoryUpdate(request *corev1.UpdatePackageRe
 	case repository.Spec.Fetch.Inline != nil:
 		return status.Errorf(codes.FailedPrecondition, "inline repositories are not supported")
 	default:
-		return status.Errorf(codes.FailedPrecondition, "the package repository has a fetch directive that is not supported")
+		return status.Errorf(codes.Internal, "the package repository has a fetch directive that is not supported")
 	}
 
 	if request.Description != "" {

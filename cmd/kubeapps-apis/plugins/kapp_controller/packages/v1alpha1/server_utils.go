@@ -383,23 +383,20 @@ func toFetchInline(pkgfetch *kappctrlv1alpha1.AppFetchInline) *kappcorev1.Packag
 	if len(pkgfetch.PathsFrom) > 0 {
 		paths := []*kappcorev1.PackageRepositoryInline_Source{}
 		for _, pf := range pkgfetch.PathsFrom {
+			pathfrom := &kappcorev1.PackageRepositoryInline_Source{}
 			if pf.SecretRef != nil {
-				pathfrom := &kappcorev1.PackageRepositoryInline_Source{
-					SecretRef: &kappcorev1.PackageRepositoryInline_SourceRef{
-						Name:          pf.SecretRef.Name,
-						DirectoryPath: pf.SecretRef.DirectoryPath,
-					},
+				pathfrom.SecretRef = &kappcorev1.PackageRepositoryInline_SourceRef{
+					Name:          pf.SecretRef.Name,
+					DirectoryPath: pf.SecretRef.DirectoryPath,
 				}
-				paths = append(paths, pathfrom)
-			} else if pf.ConfigMapRef != nil {
-				pathfrom := &kappcorev1.PackageRepositoryInline_Source{
-					ConfigMapRef: &kappcorev1.PackageRepositoryInline_SourceRef{
-						Name:          pf.ConfigMapRef.Name,
-						DirectoryPath: pf.ConfigMapRef.DirectoryPath,
-					},
-				}
-				paths = append(paths, pathfrom)
 			}
+			if pf.ConfigMapRef != nil {
+				pathfrom.ConfigMapRef = &kappcorev1.PackageRepositoryInline_SourceRef{
+					Name:          pf.ConfigMapRef.Name,
+					DirectoryPath: pf.ConfigMapRef.DirectoryPath,
+				}
+			}
+			paths = append(paths, pathfrom)
 		}
 		fetch.Inline.PathsFrom = paths
 	}
