@@ -125,9 +125,9 @@ export const fetchRepos = (
   };
 };
 
-export function fetchRepo(
+export const fetchRepo = (
   packageRepoRef: PackageRepositoryReference,
-): ThunkAction<Promise<boolean>, IStoreState, null, AppReposAction> {
+): ThunkAction<Promise<boolean>, IStoreState, null, AppReposAction> => {
   return async dispatch => {
     try {
       dispatch(requestRepo());
@@ -145,7 +145,7 @@ export function fetchRepo(
       return false;
     }
   };
-}
+};
 
 export const installRepo = (
   name: string,

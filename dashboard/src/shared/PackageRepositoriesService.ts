@@ -20,7 +20,7 @@ export class PackageRepositoriesService {
 
   public static async getPackageRepositorySummaries(
     cluster: string,
-    namespace: string,
+    namespace?: string,
   ): Promise<GetPackageRepositorySummariesResponse> {
     return await this.coreRepositoriesClient().GetPackageRepositorySummaries({
       context: {
