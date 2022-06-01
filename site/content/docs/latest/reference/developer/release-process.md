@@ -23,6 +23,8 @@ For building the [development container images](https://hub.docker.com/u/kubeapp
   - [\_/rust](https://hub.docker.com/_/rust) for building the binary.
   - [bitnami/minideb](https://hub.docker.com/r/bitnami/minideb) for running it.
 
+In some images, some build-time linters are used (e.g., `buf` linter, `gosec` checker, etc.). When updating the base container image, these linters (like `BUF_VERSION`, `GOSEC_VERSION`) _should_ be updated to the latest minor/patch version.
+
 > As part of this release process, these image tags _must_ be updated to the latest minor/patch version. In case of a major version, the change _should_ be tracked in a separate PR.
 > **Note**: as the official container images are those being created by Bitnami, we _should_ ensure that we are using the same major version as they are using.
 
