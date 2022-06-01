@@ -1,7 +1,7 @@
 /* eslint-disable */
 import Long from "long";
 import { grpc } from "@improbable-eng/grpc-web";
-import _m0 from "protobufjs/minimal";
+import * as _m0 from "protobufjs/minimal";
 import { Any } from "../../../../google/protobuf/any";
 import { Plugin } from "../../../../kubeappsapis/core/plugins/v1alpha1/plugins";
 import { BrowserHeaders } from "browser-headers";
@@ -911,8 +911,9 @@ export function installedPackageStatus_StatusReasonToJSON(
       return "STATUS_REASON_FAILED";
     case InstalledPackageStatus_StatusReason.STATUS_REASON_PENDING:
       return "STATUS_REASON_PENDING";
+    case InstalledPackageStatus_StatusReason.UNRECOGNIZED:
     default:
-      return "UNKNOWN";
+      return "UNRECOGNIZED";
   }
 }
 

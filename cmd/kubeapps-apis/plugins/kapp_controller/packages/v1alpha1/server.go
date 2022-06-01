@@ -43,6 +43,7 @@ func fallbackDefaultPrereleasesVersionSelection() []string {
 
 // Compile-time statement to ensure this service implementation satisfies the core packaging API
 var _ corev1.PackagesServiceServer = (*Server)(nil)
+var _ corev1.RepositoriesServiceServer = (*Server)(nil)
 
 // Server implements the kapp-controller packages v1alpha1 interface.
 type Server struct {

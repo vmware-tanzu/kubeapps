@@ -1,6 +1,0 @@
-apiVersion: kubeapps.com/v1alpha2
-kind: AppRepository
-metadata:
-  name: apprepository-sample
-spec:
-  # TODO(user): Add fields here

@@ -1,7 +1,7 @@
 /* eslint-disable */
 import Long from "long";
 import { grpc } from "@improbable-eng/grpc-web";
-import _m0 from "protobufjs/minimal";
+import * as _m0 from "protobufjs/minimal";
 import { Context } from "../../../../kubeappsapis/core/packages/v1alpha1/packages";
 import { Plugin } from "../../../../kubeappsapis/core/plugins/v1alpha1/plugins";
 import { Any } from "../../../../google/protobuf/any";
@@ -193,8 +193,9 @@ export function packageRepositoryAuth_PackageRepositoryAuthTypeToJSON(
       return "PACKAGE_REPOSITORY_AUTH_TYPE_CUSTOM";
     case PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_DOCKER_CONFIG_JSON:
       return "PACKAGE_REPOSITORY_AUTH_TYPE_DOCKER_CONFIG_JSON";
+    case PackageRepositoryAuth_PackageRepositoryAuthType.UNRECOGNIZED:
     default:
-      return "UNKNOWN";
+      return "UNRECOGNIZED";
   }
 }
 
@@ -433,8 +434,9 @@ export function packageRepositoryStatus_StatusReasonToJSON(
       return "STATUS_REASON_FAILED";
     case PackageRepositoryStatus_StatusReason.STATUS_REASON_PENDING:
       return "STATUS_REASON_PENDING";
+    case PackageRepositoryStatus_StatusReason.UNRECOGNIZED:
     default:
-      return "UNKNOWN";
+      return "UNRECOGNIZED";
   }
 }
 
