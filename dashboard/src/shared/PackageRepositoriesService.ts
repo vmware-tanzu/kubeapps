@@ -65,7 +65,7 @@ export class PackageRepositoriesService {
     // TODO(agamez): use this field once the helm repo api is ready
     _filter?: IAppRepositoryFilter,
   ) {
-    const addPackageRepositoryRequest = buildAddOrUpdateRequest(
+    const addPackageRepositoryRequest = this.buildAddOrUpdateRequest(
       false,
       cluster,
       name,
@@ -83,9 +83,9 @@ export class PackageRepositoriesService {
       skipTLS,
       passCredentials,
       authMethod,
+      interval,
       namespaceScoped,
       // filter?,
-      interval,
     );
 
     return await this.coreRepositoriesClient().AddPackageRepository(addPackageRepositoryRequest);
@@ -114,7 +114,7 @@ export class PackageRepositoriesService {
     // TODO(agamez): use this field once the helm repo api is ready
     _filter?: IAppRepositoryFilter,
   ) {
-    const updatePackageRepositoryRequest = buildAddOrUpdateRequest(
+    const updatePackageRepositoryRequest = this.buildAddOrUpdateRequest(
       true,
       cluster,
       name,
@@ -147,6 +147,112 @@ export class PackageRepositoriesService {
     return await this.coreRepositoriesClient().DeletePackageRepository({
       packageRepoRef,
     });
+  }
+
+  private static buildAddOrUpdateRequest(
+    isUpdate: boolean,
+    cluster: string,
+    name: string,
+    plugin: Plugin,
+    namespace: string,
+    repoURL: string,
+    type: string,
+    description: string,
+    authHeader: string,
+    authRegCreds: string,
+    customCA: string,
+    registrySecrets: string[],
+    skipTLS: boolean,
+    passCredentials: boolean,
+    authMethod: PackageRepositoryAuth_PackageRepositoryAuthType,
+    interval: number,
+    namespaceScoped?: boolean,
+  ) {
+    const addPackageRepositoryRequest = {
+      context: { cluster, namespace },
+      name,
+      description,
+      namespaceScoped,
+      type,
+      url: repoURL,
+      interval,
+      plugin,
+      // customDetail: {
+      //   typeUrl: "",
+      //   value: undefined,
+      // },
+    } as AddPackageRepositoryRequest;
+
+    // add optional fields if present in the request
+    if (authHeader) {
+      addPackageRepositoryRequest.auth = {
+        ...addPackageRepositoryRequest.auth,
+        header: authHeader,
+      } as PackageRepositoryAuth;
+    }
+    if (passCredentials) {
+      addPackageRepositoryRequest.auth = {
+        ...addPackageRepositoryRequest.auth,
+        passCredentials: passCredentials,
+      } as PackageRepositoryAuth;
+    }
+    if (authMethod) {
+      addPackageRepositoryRequest.auth = {
+        ...addPackageRepositoryRequest.auth,
+        type: authMethod,
+      } as PackageRepositoryAuth;
+    }
+    if (customCA) {
+      addPackageRepositoryRequest.tlsConfig = {
+        ...addPackageRepositoryRequest.tlsConfig,
+        certAuthority: customCA,
+      } as PackageRepositoryTlsConfig;
+    }
+    if (skipTLS) {
+      addPackageRepositoryRequest.tlsConfig = {
+        ...addPackageRepositoryRequest.tlsConfig,
+        insecureSkipVerify: skipTLS,
+      } as PackageRepositoryTlsConfig;
+    }
+    if (registrySecrets[0]) {
+      addPackageRepositoryRequest.tlsConfig = {
+        ...addPackageRepositoryRequest.tlsConfig,
+        secretRef: {
+          key: ".dockerconfigjson",
+          name: registrySecrets[0],
+        } as SecretKeyReference,
+      } as PackageRepositoryTlsConfig;
+    }
+    if (authRegCreds) {
+      addPackageRepositoryRequest.auth!.secretRef = {
+        key: ".dockerconfigjson",
+        name: authRegCreds,
+      } as SecretKeyReference;
+    }
+
+    if (isUpdate) {
+      const updatePackageRepositoryRequest: UpdatePackageRepositoryRequest = {
+        description: addPackageRepositoryRequest.description,
+        interval: addPackageRepositoryRequest.interval,
+        url: addPackageRepositoryRequest.url,
+        auth: addPackageRepositoryRequest.auth,
+        customDetail: addPackageRepositoryRequest.customDetail,
+        tlsConfig: addPackageRepositoryRequest.tlsConfig,
+        packageRepoRef: {
+          identifier: addPackageRepositoryRequest.name,
+          context: addPackageRepositoryRequest.context,
+          plugin: addPackageRepositoryRequest.plugin,
+        },
+      };
+      return updatePackageRepositoryRequest;
+    }
+    return addPackageRepositoryRequest as UpdatePackageRepositoryRequest;
+
+    // -- currently unsupported configuration --
+    // tlsConfig.secretRef={ key: "", name: "" }, // reference a secret to pass the CA cert
+    // auth.usernamePassword: { password: "", username: "" } // username and password for basic auth
+    // auth.dockerCreds: { email: "", password: "", server: "", username: ""} // username and password for docker auth
+    // auth.tlsCertKey: { cert: "", key: ""  // cert and key for tls auth
   }
 
   // ............................... DEPRECATED ...............................
@@ -196,184 +302,3 @@ export class PackageRepositoriesService {
     return data;
   }
 }
-
-function buildAddOrUpdateRequest(
-  isUpdate: boolean,
-  cluster: string,
-  name: string,
-  plugin: Plugin,
-  namespace: string,
-  repoURL: string,
-  type: string,
-  description: string,
-  authHeader: string,
-  authRegCreds: string,
-  customCA: string,
-  registrySecrets: string[],
-  skipTLS: boolean,
-  passCredentials: boolean,
-  authMethod: PackageRepositoryAuth_PackageRepositoryAuthType,
-  namespaceScoped?: boolean,
-  interval: number,
-) {
-  const addPackageRepositoryRequest = {
-    context: { cluster, namespace },
-    name,
-    description,
-    namespaceScoped,
-    type,
-    url: repoURL,
-    interval,
-    plugin,
-    // customDetail: {
-    //   typeUrl: "",
-    //   value: undefined,
-    // },
-  } as AddPackageRepositoryRequest;
-
-  // add optional fields if present in the request
-  if (authHeader) {
-    addPackageRepositoryRequest.auth = {
-      ...addPackageRepositoryRequest.auth,
-      header: authHeader,
-    } as PackageRepositoryAuth;
-  }
-  if (passCredentials) {
-    addPackageRepositoryRequest.auth = {
-      ...addPackageRepositoryRequest.auth,
-      passCredentials: passCredentials,
-    } as PackageRepositoryAuth;
-  }
-  if (authMethod) {
-    addPackageRepositoryRequest.auth = {
-      ...addPackageRepositoryRequest.auth,
-      type: authMethod,
-    } as PackageRepositoryAuth;
-  }
-  if (customCA) {
-    addPackageRepositoryRequest.tlsConfig = {
-      ...addPackageRepositoryRequest.tlsConfig,
-      certAuthority: customCA,
-    } as PackageRepositoryTlsConfig;
-  }
-  if (skipTLS) {
-    addPackageRepositoryRequest.tlsConfig = {
-      ...addPackageRepositoryRequest.tlsConfig,
-      insecureSkipVerify: skipTLS,
-    } as PackageRepositoryTlsConfig;
-  }
-  if (registrySecrets[0]) {
-    addPackageRepositoryRequest.tlsConfig = {
-      ...addPackageRepositoryRequest.tlsConfig,
-      secretRef: {
-        key: ".dockerconfigjson",
-        name: registrySecrets[0],
-      } as SecretKeyReference,
-    } as PackageRepositoryTlsConfig;
-  }
-  if (authRegCreds) {
-    addPackageRepositoryRequest.auth!.secretRef = {
-      key: ".dockerconfigjson",
-      name: authRegCreds,
-    } as SecretKeyReference;
-  }
-
-  if (isUpdate) {
-    const updatePackageRepositoryRequest: UpdatePackageRepositoryRequest = {
-      description: addPackageRepositoryRequest.description,
-      interval: addPackageRepositoryRequest.interval,
-      url: addPackageRepositoryRequest.url,
-      auth: addPackageRepositoryRequest.auth,
-      customDetail: addPackageRepositoryRequest.customDetail,
-      tlsConfig: addPackageRepositoryRequest.tlsConfig,
-      packageRepoRef: {
-        identifier: addPackageRepositoryRequest.name,
-        context: addPackageRepositoryRequest.context,
-        plugin: addPackageRepositoryRequest.plugin,
-      },
-    };
-    return updatePackageRepositoryRequest;
-  }
-  return addPackageRepositoryRequest as UpdatePackageRepositoryRequest;
-
-  // -- currently unsupported configuration --
-  // tlsConfig.secretRef={ key: "", name: "" }, // reference a secret to pass the CA cert
-  // auth.usernamePassword: { password: "", username: "" } // username and password for basic auth
-  // auth.dockerCreds: { email: "", password: "", server: "", username: ""} // username and password for docker auth
-  // auth.tlsCertKey: { cert: "", key: ""  // cert and key for tls auth
-  return addPackageRepositoryRequest;
-}
-
-// function buildAddOrUpdateRequest(
-//   cluster: string,
-//   name: string,
-//   plugin: Plugin,
-//   namespace: string,
-//   repoURL: string,
-//   type: string,
-//   description: string,
-//   authHeader: string,
-//   authRegCreds: string,
-//   customCA: string,
-//   registrySecrets: string[],
-//   skipTLS: boolean,
-//   passCredentials: boolean,
-//   namespaceScoped: boolean,
-//   authMethod: PackageRepositoryAuth_PackageRepositoryAuthType,
-// ) {
-//   const addPackageRepositoryRequest = {
-//     context: { cluster, namespace },
-//     name,
-//     description,
-//     namespaceScoped,
-//     type,
-//     url: repoURL,
-//     interval: 3600, // TODO(agamez): make it configurable
-//     auth: {
-//       header: authHeader,
-//       passCredentials,
-//       type: authMethod,
-//     },
-//     plugin,
-//     // customDetail: {
-//     //   typeUrl: "",
-//     //   value: undefined,
-//     // },
-//   } as AddPackageRepositoryRequest;
-
-//   // add optional fields if present in the request
-//   if (customCA) {
-//     addPackageRepositoryRequest.tlsConfig = {
-//       ...addPackageRepositoryRequest.tlsConfig,
-//       certAuthority: customCA,
-//     } as PackageRepositoryTlsConfig;
-//   }
-//   if (skipTLS) {
-//     addPackageRepositoryRequest.tlsConfig = {
-//       ...addPackageRepositoryRequest.tlsConfig,
-//       insecureSkipVerify: skipTLS,
-//     } as PackageRepositoryTlsConfig;
-//   }
-//   if (registrySecrets[0]) {
-//     addPackageRepositoryRequest.tlsConfig = {
-//       ...addPackageRepositoryRequest.tlsConfig,
-//       secretRef: {
-//         key: ".dockerconfigjson",
-//         name: registrySecrets[0],
-//       } as SecretKeyReference,
-//     } as PackageRepositoryTlsConfig;
-//   }
-//   if (authRegCreds) {
-//     addPackageRepositoryRequest.auth!.secretRef = {
-//       key: ".dockerconfigjson",
-//       name: authRegCreds,
-//     } as SecretKeyReference;
-//   }
-
-//   // -- currently unsupported configuration --
-//   // tlsConfig.secretRef={ key: "", name: "" }, // reference a secret to pass the CA cert
-//   // auth.usernamePassword: { password: "", username: "" } // username and password for basic auth
-//   // auth.dockerCreds: { email: "", password: "", server: "", username: ""} // username and password for docker auth
-//   // auth.tlsCertKey: { cert: "", key: ""  // cert and key for tls auth
-//   return addPackageRepositoryRequest;
-// }
