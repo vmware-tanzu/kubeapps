@@ -125,6 +125,10 @@ func (s repositoriesServer) GetPackageRepositorySummaries(ctx context.Context, r
 		if err != nil {
 			return nil, status.Errorf(status.Convert(err).Code(), "Invalid GetPackageRepositorySummaries response from the plugin %v: %v", p.plugin.Name, err)
 		}
+		if response == nil {
+			log.Infof("core GetPackageRepositorySummaries received nil response from plugin %s / %s", p.plugin.GetName(), p.plugin.GetVersion())
+			continue
+		}
 
 		// Add the plugin for the pkgs
 		pluginSummaries := response.PackageRepositorySummaries

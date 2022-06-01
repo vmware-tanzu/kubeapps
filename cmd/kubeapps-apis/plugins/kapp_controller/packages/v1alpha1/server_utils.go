@@ -5,6 +5,7 @@ package main
 
 import (
 	"fmt"
+	kappcorev1 "github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/plugins/kapp_controller/packages/v1alpha1"
 	"sort"
 	"strings"
 	"time"
@@ -309,4 +310,158 @@ func testMetadataMatchesCategories(metadata *datapackagingv1alpha1.PackageMetada
 	}
 
 	return intersection
+}
+
+//
+//		Utils for repositories
+
+// translation utils for custom details. todo -> revisit once we can reuse existing proto files
+
+func toFetchImgpkg(pkgfetch *kappctrlv1alpha1.AppFetchImgpkgBundle) *kappcorev1.PackageRepositoryFetch {
+	if pkgfetch.TagSelection == nil {
+		return nil
+	}
+	fetch := &kappcorev1.PackageRepositoryFetch{
+		ImgpkgBundle: &kappcorev1.PackageRepositoryImgpkg{
+			TagSelection: toVersionSelection(pkgfetch.TagSelection),
+		},
+	}
+	return fetch
+}
+
+func toFetchImage(pkgfetch *kappctrlv1alpha1.AppFetchImage) *kappcorev1.PackageRepositoryFetch {
+	if pkgfetch.SubPath == "" && pkgfetch.TagSelection == nil {
+		return nil
+	}
+	fetch := &kappcorev1.PackageRepositoryFetch{
+		Image: &kappcorev1.PackageRepositoryImage{
+			SubPath:      pkgfetch.SubPath,
+			TagSelection: toVersionSelection(pkgfetch.TagSelection),
+		},
+	}
+	return fetch
+}
+
+func toFetchGit(pkgfetch *kappctrlv1alpha1.AppFetchGit) *kappcorev1.PackageRepositoryFetch {
+	if pkgfetch.Ref == "" && pkgfetch.RefSelection == nil && pkgfetch.SubPath == "" && !pkgfetch.LFSSkipSmudge {
+		return nil
+	}
+	fetch := &kappcorev1.PackageRepositoryFetch{
+		Git: &kappcorev1.PackageRepositoryGit{
+			Ref:           pkgfetch.Ref,
+			RefSelection:  toVersionSelection(pkgfetch.RefSelection),
+			SubPath:       pkgfetch.SubPath,
+			LfsSkipSmudge: pkgfetch.LFSSkipSmudge,
+		},
+	}
+	return fetch
+}
+
+func toFetchHttp(pkgfetch *kappctrlv1alpha1.AppFetchHTTP) *kappcorev1.PackageRepositoryFetch {
+	if pkgfetch.SubPath == "" && pkgfetch.SHA256 == "" {
+		return nil
+	}
+	fetch := &kappcorev1.PackageRepositoryFetch{
+		Http: &kappcorev1.PackageRepositoryHttp{
+			SubPath: pkgfetch.SubPath,
+			Sha256:  pkgfetch.SHA256,
+		},
+	}
+	return fetch
+}
+
+func toFetchInline(pkgfetch *kappctrlv1alpha1.AppFetchInline) *kappcorev1.PackageRepositoryFetch {
+	if len(pkgfetch.Paths) == 0 && len(pkgfetch.PathsFrom) == 0 {
+		return nil
+	}
+
+	fetch := &kappcorev1.PackageRepositoryFetch{
+		Inline: &kappcorev1.PackageRepositoryInline{
+			Paths: pkgfetch.Paths,
+		},
+	}
+	if len(pkgfetch.PathsFrom) > 0 {
+		paths := []*kappcorev1.PackageRepositoryInline_Source{}
+		for _, pf := range pkgfetch.PathsFrom {
+			if pf.SecretRef != nil {
+				pathfrom := &kappcorev1.PackageRepositoryInline_Source{
+					SecretRef: &kappcorev1.PackageRepositoryInline_SourceRef{
+						Name:          pf.SecretRef.Name,
+						DirectoryPath: pf.SecretRef.DirectoryPath,
+					},
+				}
+				paths = append(paths, pathfrom)
+			} else if pf.ConfigMapRef != nil {
+				pathfrom := &kappcorev1.PackageRepositoryInline_Source{
+					ConfigMapRef: &kappcorev1.PackageRepositoryInline_SourceRef{
+						Name:          pf.ConfigMapRef.Name,
+						DirectoryPath: pf.ConfigMapRef.DirectoryPath,
+					},
+				}
+				paths = append(paths, pathfrom)
+			}
+		}
+		fetch.Inline.PathsFrom = paths
+	}
+
+	return fetch
+}
+
+func toVersionSelection(pkgversion *vendirversions.VersionSelection) *kappcorev1.VersionSelection {
+	if pkgversion == nil || pkgversion.Semver == nil {
+		return nil
+	}
+
+	version := &kappcorev1.VersionSelection{
+		Semver: &kappcorev1.VersionSelectionSemver{
+			Constraints: pkgversion.Semver.Constraints,
+		},
+	}
+	if pkgversion.Semver.Prereleases != nil && len(pkgversion.Semver.Prereleases.Identifiers) > 0 {
+		version.Semver.Prereleases = &kappcorev1.VersionSelectionSemverPrereleases{
+			Identifiers: pkgversion.Semver.Prereleases.Identifiers,
+		}
+	}
+
+	return version
+}
+
+func toPkgFetchImgpkg(from *kappcorev1.PackageRepositoryImgpkg, to *kappctrlv1alpha1.AppFetchImgpkgBundle) {
+	to.TagSelection = toPkgVersionSelection(from.TagSelection)
+}
+
+func toPkgFetchImage(from *kappcorev1.PackageRepositoryImage, to *kappctrlv1alpha1.AppFetchImage) {
+	to.SubPath = from.SubPath
+	to.TagSelection = toPkgVersionSelection(from.TagSelection)
+}
+
+func toPkgFetchGit(from *kappcorev1.PackageRepositoryGit, to *kappctrlv1alpha1.AppFetchGit) {
+	to.Ref = from.Ref
+	to.RefSelection = toPkgVersionSelection(from.RefSelection)
+	to.SubPath = from.SubPath
+	to.LFSSkipSmudge = from.LfsSkipSmudge
+}
+
+func toPkgFetchHttp(from *kappcorev1.PackageRepositoryHttp, to *kappctrlv1alpha1.AppFetchHTTP) {
+	to.SubPath = from.SubPath
+	to.SHA256 = from.Sha256
+}
+
+func toPkgVersionSelection(version *kappcorev1.VersionSelection) *vendirversions.VersionSelection {
+	if version == nil || version.Semver == nil {
+		return nil
+	}
+
+	pkgversion := &vendirversions.VersionSelection{
+		Semver: &vendirversions.VersionSelectionSemver{
+			Constraints: version.Semver.Constraints,
+		},
+	}
+	if version.Semver.Prereleases != nil && len(version.Semver.Prereleases.Identifiers) > 0 {
+		pkgversion.Semver.Prereleases = &vendirversions.VersionSelectionSemverPrereleases{
+			Identifiers: version.Semver.Prereleases.Identifiers,
+		}
+	}
+
+	return pkgversion
 }
