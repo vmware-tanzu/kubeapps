@@ -1,3 +1,4 @@
+<!--- app-name: Kubeapps -->
 
 # Kubeapps packaged by Bitnami
 
@@ -900,7 +901,7 @@ Yes! Follow the [offline installation documentation](https://github.com/vmware-t
 
 ### Does Kubeapps support private repositories?
 
-Of course! Have a look at the [private package repositories documentation](https://github.com/vmware-tanzu/kubeapps/blob/main/site/content/docs/latest/howto/private-app-repository.md) to learn how to configure a private repository in Kubeapps.
+Of course! Have a look at the [private app repositories documentation](https://github.com/vmware-tanzu/kubeapps/blob/main/site/content/docs/latest/howto/private-app-repository.md) to learn how to configure a private repository in Kubeapps.
 
 ### Is there any API documentation?
 
