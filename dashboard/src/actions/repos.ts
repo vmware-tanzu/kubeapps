@@ -19,6 +19,7 @@ import { PackageRepositoriesService } from "shared/PackageRepositoriesService";
 import PackagesService from "shared/PackagesService";
 import Secret from "shared/Secret";
 import { IAppRepositoryFilter, IStoreState, NotFoundError } from "shared/types";
+import { PluginNames } from "shared/utils";
 import { ActionType, deprecated } from "typesafe-actions";
 import { createErrorPackage } from "./availablepackages";
 
@@ -174,6 +175,13 @@ export const installRepo = (
     try {
       const syncJobPodTemplateObj = parsePodTemplate(syncJobPodTemplate);
       dispatch(addRepo());
+
+      let namespaceScoped = namespace !== globalReposNamespace;
+      // TODO(agamez): currently, flux doesn't support this value to be true
+      if (plugin?.name === PluginNames.PACKAGES_FLUX) {
+        namespaceScoped = false;
+      }
+
       const data = await PackageRepositoriesService.addPackageRepository(
         currentCluster,
         name,
@@ -190,7 +198,7 @@ export const installRepo = (
         ociRepositories,
         skipTLS,
         passCredentials,
-        namespace !== globalReposNamespace,
+        namespaceScoped,
         authMethod,
         interval,
         filter,
