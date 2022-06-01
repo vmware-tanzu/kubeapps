@@ -807,32 +807,32 @@ export function AppRepoForm(props: IAppRepoFormProps) {
                   />
                 </CdsTextarea>
               </CdsFormGroup>
-
-              {namespace === kubeappsNamespace && (
-                <p>
-                  <strong>NOTE:</strong> This Package Repository will be created in the "
-                  {kubeappsNamespace}" namespace and packages will be available in all namespaces
-                  for installation.
-                </p>
-              )}
-              {validationError && (
-                <Alert theme="danger">
-                  Validation Failed. Got: {parseValidationError(validationError)}
-                </Alert>
-              )}
-              {createError && (
-                <Alert theme="danger">
-                  An error occurred while creating the repository: {createError.message}
-                </Alert>
-              )}
-              {updateError && (
-                <Alert theme="danger">
-                  An error occurred while updating the repository: {updateError.message}
-                </Alert>
-              )}
             </CdsAccordionContent>
           </CdsAccordionPanel>
         </CdsAccordion>
+
+        {namespace === kubeappsNamespace && (
+          <p>
+            <strong>NOTE:</strong> This Package Repository will be created in the "
+            {kubeappsNamespace}" global namespace. Consequently, its packages will be available for
+            installation in every namespace and cluster.
+          </p>
+        )}
+        {validationError && (
+          <Alert theme="danger">
+            Validation Failed. Got: {parseValidationError(validationError)}
+          </Alert>
+        )}
+        {createError && (
+          <Alert theme="danger">
+            An error occurred while creating the repository: {createError.message}
+          </Alert>
+        )}
+        {updateError && (
+          <Alert theme="danger">
+            An error occurred while updating the repository: {updateError.message}
+          </Alert>
+        )}
         <div className="margin-t-xl">
           <CdsButton type="submit" disabled={validating}>
             {validating

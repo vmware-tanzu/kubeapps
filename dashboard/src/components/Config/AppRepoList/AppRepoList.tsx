@@ -91,9 +91,14 @@ function AppRepoList() {
   }, [cluster, kubeappsCluster, kubeappsNamespace, globalReposNamespace]);
 
   const globalRepos: PackageRepositorySummary[] = [];
-  const namespaceRepos: PackageRepositorySummary[] = [];
+  const namespacedRepos: PackageRepositorySummary[] = [];
   repos.forEach(repo => {
-    repo.namespaceScoped ? namespaceRepos.push(repo) : globalRepos.push(repo);
+    if (!repo.namespaceScoped) {
+      globalRepos.push(repo);
+      // ensure listed namespaced repos are those in the current namespace
+    } else if (allNS || repo.packageRepoRef?.context?.namespace === namespace) {
+      namespacedRepos.push(repo);
+    }
   });
 
   const tableColumns = [
@@ -222,11 +227,11 @@ function AppRepoList() {
                       switch to a different one, use the "Current Context" selector in the top
                       navigation.
                     </p>
-                    {namespaceRepos.length ? (
+                    {namespacedRepos.length ? (
                       <Table
                         valign="center"
                         columns={tableColumns}
-                        data={getTableData(namespaceRepos, false)}
+                        data={getTableData(namespacedRepos, false)}
                       />
                     ) : (
                       <p>

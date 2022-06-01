@@ -201,7 +201,11 @@ export default function Catalog() {
     pushFilters(filters);
   };
 
-  const allRepos = uniq(repos.map(c => c.name));
+  const allRepos = uniq(
+    repos
+      .filter(r => !r.namespaceScoped || r.packageRepoRef?.context?.namespace === namespace)
+      .map(r => r.name),
+  );
   const allProviders = uniq(csvs.map(c => c.spec.provider.name));
   const allCategories = uniq(
     categories
