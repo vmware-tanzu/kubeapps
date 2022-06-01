@@ -129,6 +129,16 @@ function AppRepoList() {
               Refresh
             </CdsButton>
             <p>Not ready</p>
+            <Tooltip
+              label="notready-tooltip"
+              id={`${repo.name}-notready-tooltip`}
+              icon="info-circle"
+              position="top-right"
+              small={true}
+              iconProps={{ solid: true, size: "sm" }}
+            >
+              {repo?.status?.userReason}
+            </Tooltip>
           </>
         ),
         actions: disableControls ? (
@@ -172,80 +182,83 @@ function AppRepoList() {
           )
         }
       />
-      {!supportedCluster ? (
-        <Alert theme="warning">
-          <h5>Package Repositories can't be managed from this cluster.</h5>
-          <p>
-            Currently, the Package Repositories must be managed from the default cluster (the one on
-            which Kubeapps has been installed).
-          </p>
-          <p>
-            Any <i>global</i> Package Repository defined in the default cluster can be later used
-            across any target cluster.
-            <br />
-            However, <i>namespaced</i> Package Repositories can only be used on the default cluster.
-          </p>
-        </Alert>
-      ) : (
-        <div className="page-content">
-          {errors.fetch && (
-            <Alert theme="danger">
-              An error occurred while fetching repositories: {errors.fetch.message}
-            </Alert>
-          )}
-          {errors.delete && (
-            <Alert theme="danger">
-              An error occurred while deleting the repository: {errors.delete.message}
-            </Alert>
-          )}
-          {!errors.fetch && (
-            <>
-              <LoadingWrapper
-                className="margin-t-xxl"
-                loadingText="Fetching Package Repositories..."
-                loaded={!isFetchingElem.repositories}
-              >
-                <h3>Global Repositories:</h3>
-                <p>Global Package Repositories are available for all Kubeapps users.</p>
-                {globalRepos.length ? (
-                  <Table
-                    valign="center"
-                    columns={tableColumns}
-                    data={getTableData(globalRepos, !canEditGlobalRepos)}
-                  />
-                ) : (
-                  <p>
-                    There are no <i>global</i> Package Repositories yet. Click on the "Add Package
-                    Repository" button to create one.
-                  </p>
-                )}
-                {namespace !== globalReposNamespace && (
-                  <>
-                    <h3>Namespaced Repositories: {namespace}</h3>
+      <div className="catalog-container">
+        {!supportedCluster ? (
+          <Alert theme="warning">
+            <h5>Package Repositories can't be managed from this cluster.</h5>
+            <p>
+              Currently, the Package Repositories must be managed from the default cluster (the one
+              on which Kubeapps has been installed).
+            </p>
+            <p>
+              Any <i>global</i> Package Repository defined in the default cluster can be later used
+              across any target cluster.
+              <br />
+              However, <i>namespaced</i> Package Repositories can only be used on the default
+              cluster.
+            </p>
+          </Alert>
+        ) : (
+          <div className="page-content">
+            {errors.fetch && (
+              <Alert theme="danger">
+                An error occurred while fetching repositories: {errors.fetch.message}
+              </Alert>
+            )}
+            {errors.delete && (
+              <Alert theme="danger">
+                An error occurred while deleting the repository: {errors.delete.message}
+              </Alert>
+            )}
+            {!errors.fetch && (
+              <>
+                <LoadingWrapper
+                  className="margin-t-xxl"
+                  loadingText="Fetching Package Repositories..."
+                  loaded={!isFetchingElem.repositories}
+                >
+                  <h3>Global Repositories:</h3>
+                  <p>Global Package Repositories are available for all Kubeapps users.</p>
+                  {globalRepos.length ? (
+                    <Table
+                      valign="center"
+                      columns={tableColumns}
+                      data={getTableData(globalRepos, !canEditGlobalRepos)}
+                    />
+                  ) : (
                     <p>
-                      Namespaced Package Repositories are available in their namespace only. To
-                      switch to a different one, use the "Current Context" selector in the top
-                      navigation.
+                      There are no <i>global</i> Package Repositories yet. Click on the "Add Package
+                      Repository" button to create one.
                     </p>
-                    {namespacedRepos.length ? (
-                      <Table
-                        valign="center"
-                        columns={tableColumns}
-                        data={getTableData(namespacedRepos, false)}
-                      />
-                    ) : (
+                  )}
+                  {namespace !== globalReposNamespace && (
+                    <>
+                      <h3>Namespaced Repositories: {namespace}</h3>
                       <p>
-                        There are no <i>namespaced</i> Package Repositories in the '{namespace}'
-                        namespace yet. Click on the "Add Package Repository" button to create one.
+                        Namespaced Package Repositories are available in their namespace only. To
+                        switch to a different one, use the "Current Context" selector in the top
+                        navigation.
                       </p>
-                    )}
-                  </>
-                )}
-              </LoadingWrapper>
-            </>
-          )}
-        </div>
-      )}
+                      {namespacedRepos.length ? (
+                        <Table
+                          valign="center"
+                          columns={tableColumns}
+                          data={getTableData(namespacedRepos, false)}
+                        />
+                      ) : (
+                        <p>
+                          There are no <i>namespaced</i> Package Repositories in the '{namespace}'
+                          namespace yet. Click on the "Add Package Repository" button to create one.
+                        </p>
+                      )}
+                    </>
+                  )}
+                </LoadingWrapper>
+              </>
+            )}
+          </div>
+        )}
+      </div>
     </>
   );
 }

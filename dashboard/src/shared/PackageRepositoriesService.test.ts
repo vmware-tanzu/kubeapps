@@ -30,6 +30,7 @@ describe("RepositoriesService", () => {
     passCredentials: true,
     authMethod:
       PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_UNSPECIFIED,
+    interval: 3600,
     filterRule: {
       jq: ".name == $var0",
       variables: { $var0: "nginx" },
@@ -72,6 +73,7 @@ describe("RepositoriesService", () => {
       repo.passCredentials,
       true,
       repo.authMethod,
+      repo.interval,
       repo.filterRule,
     );
 
@@ -105,6 +107,7 @@ describe("RepositoriesService", () => {
       repo.tlsInsecureSkipVerify,
       repo.passCredentials,
       repo.authMethod,
+      repo.interval,
       repo.filterRule,
     );
 

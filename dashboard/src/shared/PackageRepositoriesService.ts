@@ -6,6 +6,7 @@ import {
   DeletePackageRepositoryResponse,
   GetPackageRepositoryDetailResponse,
   GetPackageRepositorySummariesResponse,
+  PackageRepositoryAuth,
   PackageRepositoryAuth_PackageRepositoryAuthType,
   PackageRepositoryReference,
   PackageRepositoryTlsConfig,
@@ -51,19 +52,19 @@ export class PackageRepositoriesService {
     authHeader: string,
     authRegCreds: string,
     customCA: string,
-    syncJobPodTemplate: any,
+    // TODO(agamez): use this field once the helm repo api is ready
+    _syncJobPodTemplate: any,
     registrySecrets: string[],
-    ociRepositories: string[],
+    // TODO(agamez): use this field once the helm repo api is ready
+    _ociRepositories: string[],
     skipTLS: boolean,
     passCredentials: boolean,
     namespaceScoped: boolean,
     authMethod: PackageRepositoryAuth_PackageRepositoryAuthType,
-    filter?: IAppRepositoryFilter,
+    interval: number,
+    // TODO(agamez): use this field once the helm repo api is ready
+    _filter?: IAppRepositoryFilter,
   ) {
-    console.warn("UNUSED syncJobPodTemplate", JSON.stringify(syncJobPodTemplate));
-    console.warn("UNUSED ociRepositories", JSON.stringify(ociRepositories));
-    console.warn("UNUSED filter", JSON.stringify(filter));
-
     const addPackageRepositoryRequest = buildAddOrUpdateRequest(
       false,
       cluster,
@@ -84,6 +85,7 @@ export class PackageRepositoriesService {
       authMethod,
       namespaceScoped,
       // filter?,
+      interval,
     );
 
     return await this.coreRepositoriesClient().AddPackageRepository(addPackageRepositoryRequest);
@@ -100,18 +102,18 @@ export class PackageRepositoriesService {
     authHeader: string,
     authRegCreds: string,
     customCA: string,
-    syncJobPodTemplate: any,
+    // TODO(agamez): use this field once the helm repo api is ready
+    _syncJobPodTemplate: any,
     registrySecrets: string[],
-    ociRepositories: string[],
+    // TODO(agamez): use this field once the helm repo api is ready
+    _ociRepositories: string[],
     skipTLS: boolean,
     passCredentials: boolean,
     authMethod: PackageRepositoryAuth_PackageRepositoryAuthType,
-    filter?: IAppRepositoryFilter,
+    interval: number,
+    // TODO(agamez): use this field once the helm repo api is ready
+    _filter?: IAppRepositoryFilter,
   ) {
-    console.warn("UNUSED syncJobPodTemplate", JSON.stringify(syncJobPodTemplate));
-    console.warn("UNUSED ociRepositories", JSON.stringify(ociRepositories));
-    console.warn("UNUSED filter", JSON.stringify(filter));
-
     const updatePackageRepositoryRequest = buildAddOrUpdateRequest(
       true,
       cluster,
@@ -131,6 +133,7 @@ export class PackageRepositoriesService {
       passCredentials,
       authMethod,
       // filter?,
+      interval,
     );
 
     return await this.coreRepositoriesClient().UpdatePackageRepository(
@@ -211,6 +214,7 @@ function buildAddOrUpdateRequest(
   passCredentials: boolean,
   authMethod: PackageRepositoryAuth_PackageRepositoryAuthType,
   namespaceScoped?: boolean,
+  interval: number,
 ) {
   const addPackageRepositoryRequest = {
     context: { cluster, namespace },
@@ -219,12 +223,7 @@ function buildAddOrUpdateRequest(
     namespaceScoped,
     type,
     url: repoURL,
-    interval: 3600, // TODO(agamez): make it configurable
-    auth: {
-      header: authHeader,
-      passCredentials,
-      type: authMethod,
-    },
+    interval,
     plugin,
     // customDetail: {
     //   typeUrl: "",
@@ -233,6 +232,24 @@ function buildAddOrUpdateRequest(
   } as AddPackageRepositoryRequest;
 
   // add optional fields if present in the request
+  if (authHeader) {
+    addPackageRepositoryRequest.auth = {
+      ...addPackageRepositoryRequest.auth,
+      header: authHeader,
+    } as PackageRepositoryAuth;
+  }
+  if (passCredentials) {
+    addPackageRepositoryRequest.auth = {
+      ...addPackageRepositoryRequest.auth,
+      passCredentials: passCredentials,
+    } as PackageRepositoryAuth;
+  }
+  if (authMethod) {
+    addPackageRepositoryRequest.auth = {
+      ...addPackageRepositoryRequest.auth,
+      type: authMethod,
+    } as PackageRepositoryAuth;
+  }
   if (customCA) {
     addPackageRepositoryRequest.tlsConfig = {
       ...addPackageRepositoryRequest.tlsConfig,

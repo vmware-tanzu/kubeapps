@@ -49,6 +49,7 @@ interface IAppRepoFormProps {
     skipTLS: boolean,
     passCredentials: boolean,
     authMethod: PackageRepositoryAuth_PackageRepositoryAuthType,
+    interval: number,
     filter?: IAppRepositoryFilter,
   ) => Promise<boolean>;
   onAfterInstall?: () => void;
@@ -61,6 +62,11 @@ interface IAppRepoFormProps {
 enum RepositoryStorageTypes {
   PACKAGE_REPOSITORY_STORAGE_HELM = "helm",
   PACKAGE_REPOSITORY_STORAGE_OCI = "oci",
+  PACKAGE_REPOSITORY_STORAGE_CARVEL_INLINE = "inline",
+  PACKAGE_REPOSITORY_STORAGE_CARVEL_IMAGE = "image",
+  PACKAGE_REPOSITORY_STORAGE_CARVEL_IMGPKGBUNDLE = "imgpkgBundle",
+  PACKAGE_REPOSITORY_STORAGE_CARVEL_HTTP = "http",
+  PACKAGE_REPOSITORY_STORAGE_CARVEL_GIT = "git",
 }
 
 export function AppRepoForm(props: IAppRepoFormProps) {
@@ -95,6 +101,7 @@ export function AppRepoForm(props: IAppRepoFormProps) {
   const [ociRepositories, setOCIRepositories] = useState("");
   const [skipTLS, setSkipTLS] = useState(!!repo?.tlsConfig?.insecureSkipVerify);
   const [passCredentials, setPassCredentials] = useState(!!repo?.auth?.passCredentials);
+  const [interval, setInterval] = useState(3600);
   const [filterNames, setFilterNames] = useState("");
   const [filterRegex, setFilterRegex] = useState(false);
   const [filterExclude, setFilterExclude] = useState(false);
@@ -141,15 +148,14 @@ export function AppRepoForm(props: IAppRepoFormProps) {
       setType(repo.type);
       setPlugin(repo.packageRepoRef?.plugin || ({ name: "", version: "" } as Plugin));
       setDescription(repo.description);
-      // TODO(agamez): CHECK THIS
+      setSkipTLS(!!repo.tlsConfig?.insecureSkipVerify);
+      setPassCredentials(!!repo.auth?.passCredentials);
+      setInterval(repo.interval);
+      // TODO(agamez): handle these fields once the helm plugion's custom data is implemented
       // setSyncJobTemplate(
       //   repo.spec?.syncJobPodTemplate ? yaml.dump(repo.spec?.syncJobPodTemplate) : "",
       // );
-      // TODO(agamez): CHECK THIS
       // setOCIRepositories(repo.spec?.ociRepositories?.join(", ") || "");
-      setSkipTLS(!!repo.tlsConfig?.insecureSkipVerify);
-      setPassCredentials(!!repo.auth?.passCredentials);
-      // TODO(agamez): CHECK THIS
       // if (repo.spec?.filterRule?.jq) {
       //   const { names, regex, exclude } = toParams(repo.spec.filterRule);
       //   setFilterRegex(regex);
@@ -170,18 +176,18 @@ export function AppRepoForm(props: IAppRepoFormProps) {
   useEffect(() => {
     if (secret) {
       if (secret.data["ca.crt"]) {
-        setCustomCA(Buffer.from(secret.data["ca.crt"], "base64").toString());
+        setCustomCA(Buffer.from(secret.data["ca.crt"], "base64")?.toString());
       }
       if (secret.data.authorizationHeader) {
-        if (authHeader.startsWith("Basic")) {
-          const userPass = Buffer.from(authHeader.split(" ")[1], "base64").toString().split(":");
+        if (authHeader?.startsWith("Basic")) {
+          const userPass = Buffer.from(authHeader?.split(" ")[1], "base64")?.toString()?.split(":");
           setUser(userPass[0]);
           setPassword(userPass[1]);
           setAuthMethod(
             PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_BASIC_AUTH,
           );
-        } else if (authHeader.startsWith("Bearer")) {
-          setToken(authHeader.split(" ")[1]);
+        } else if (authHeader?.startsWith("Bearer")) {
+          setToken(authHeader?.split(" ")[1]);
           setAuthMethod(
             PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_BEARER,
           );
@@ -189,7 +195,7 @@ export function AppRepoForm(props: IAppRepoFormProps) {
           setAuthMethod(
             PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_CUSTOM,
           );
-          setAuthHeader(Buffer.from(secret.data.authorizationHeader, "base64").toString());
+          setAuthHeader(Buffer.from(secret.data.authorizationHeader, "base64")?.toString());
         }
       }
       if (secret.data[".dockerconfigjson"]) {
@@ -218,7 +224,7 @@ export function AppRepoForm(props: IAppRepoFormProps) {
         finalHeader = authHeader;
         break;
       case PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_BASIC_AUTH:
-        finalHeader = `Basic ${Buffer.from(`${user}:${password}`).toString("base64")}`;
+        finalHeader = `Basic ${Buffer.from(`${user}:${password}`)?.toString("base64")}`;
         break;
       case PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_BEARER:
         finalHeader = `Bearer ${token}`;
@@ -226,14 +232,21 @@ export function AppRepoForm(props: IAppRepoFormProps) {
       case PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_DOCKER_CONFIG_JSON:
         dockerRegCreds = selectedImagePullSecret;
     }
-    const ociRepoList = ociRepositories.length ? ociRepositories.split(",").map(r => r.trim()) : [];
+    const ociRepoList = ociRepositories.length
+      ? ociRepositories?.split(",").map(r => r.trim())
+      : [];
+    let finalURL = url;
     // If the scheme is not specified, assume HTTPS. This is common for OCI registries
-    const finalURL = url.startsWith("http") ? url : `https://${url}`;
+    // unless using the kapp plugin, which explicitly should not include https:// protocol prefix
+    if (plugin?.name !== PluginNames.PACKAGES_KAPP && !url?.startsWith("http")) {
+      finalURL = `https://${url}`;
+    }
     // If the validation already failed and we try to reinstall,
     // skip validation and force install
     const force = validated === false;
     let currentlyValidated = validated;
-    if (!validated && !force) {
+    // Validation feature is only available in the Helm plugin for now
+    if (plugin?.name === PluginNames.PACKAGES_HELM && !validated && !force) {
       currentlyValidated = await dispatch(
         actions.repos.validateRepo(
           finalURL,
@@ -246,6 +259,10 @@ export function AppRepoForm(props: IAppRepoFormProps) {
           passCredentials,
         ),
       );
+      setValidated(currentlyValidated);
+      // If using any other plugin, force the validation to pass
+    } else if (plugin?.name !== PluginNames.PACKAGES_HELM) {
+      currentlyValidated = true;
       setValidated(currentlyValidated);
     }
     let filter: IAppRepositoryFilter | undefined;
@@ -268,6 +285,7 @@ export function AppRepoForm(props: IAppRepoFormProps) {
         skipTLS,
         passCredentials,
         authMethod,
+        interval,
         filter,
       );
       if (success && onAfterInstall) {
@@ -280,6 +298,10 @@ export function AppRepoForm(props: IAppRepoFormProps) {
   const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => setName(e.target.value);
   const handleDescriptionChange = (e: React.ChangeEvent<HTMLInputElement>) =>
     setDescription(e.target.value);
+  const handleIntervalChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setInterval(Number(e.target.value));
+    setValidated(undefined);
+  };
   const handleURLChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setURL(e.target.value);
     setValidated(undefined);
@@ -310,9 +332,13 @@ export function AppRepoForm(props: IAppRepoFormProps) {
     if (!type && getPluginByName(e.target.value)?.name === PluginNames.PACKAGES_HELM) {
       setType(RepositoryStorageTypes.PACKAGE_REPOSITORY_STORAGE_HELM);
     }
-    // TODO(agamez): workaround until Flux also supports OCI artifacts
+    // TODO(agamez): workaround until Flux plugin also supports OCI artifacts
     if (getPluginByName(e.target.value)?.name === PluginNames.PACKAGES_FLUX) {
       setType(RepositoryStorageTypes.PACKAGE_REPOSITORY_STORAGE_HELM);
+    }
+    // TODO(agamez): workaround until Carvel plugin also supports this type
+    if (getPluginByName(e.target.value)?.name === PluginNames.PACKAGES_KAPP) {
+      setType(RepositoryStorageTypes.PACKAGE_REPOSITORY_STORAGE_CARVEL_IMGPKGBUNDLE);
     }
 
     setValidated(undefined);
@@ -402,11 +428,22 @@ export function AppRepoForm(props: IAppRepoFormProps) {
                   <label> URL </label>
                   <input
                     id="kubeapps-repo-url"
-                    type="url"
+                    type="text"
                     placeholder="https://charts.example.com/stable"
                     value={url}
                     onChange={handleURLChange}
                     required={true}
+                  />
+                </CdsInput>
+                <CdsInput>
+                  <label>Synchronization Interval</label>
+                  <input
+                    id="kubeapps-repo-interval"
+                    type="number"
+                    placeholder="Synchronization interval in seconds"
+                    value={interval}
+                    onChange={handleIntervalChange}
+                    required={false}
                   />
                 </CdsInput>
                 <CdsInput>
@@ -461,37 +498,119 @@ export function AppRepoForm(props: IAppRepoFormProps) {
                     />
                   </CdsRadio>
                 </CdsRadioGroup>
-                {plugin?.name !== PluginNames.PACKAGES_KAPP && (
-                  <CdsRadioGroup layout="vertical">
-                    <label>Package Storage Type</label>
-                    <CdsControlMessage>Select the package storage type.</CdsControlMessage>
-                    <CdsRadio>
-                      <label>Helm Repository</label>
-                      <input
-                        id="kubeapps-repo-type-helm"
-                        type="radio"
-                        name="type"
-                        value={RepositoryStorageTypes.PACKAGE_REPOSITORY_STORAGE_HELM}
-                        checked={type === RepositoryStorageTypes.PACKAGE_REPOSITORY_STORAGE_HELM}
-                        disabled={!!repo?.type}
-                        onChange={handleTypeRadioButtonChange}
-                      />
-                    </CdsRadio>
-                    <CdsRadio>
-                      <label>OCI Registry</label>
-                      <input
-                        id="kubeapps-repo-type-oci"
-                        type="radio"
-                        name="type"
-                        // TODO(agamez): workaround until Flux also supports OCI artifacts
-                        disabled={plugin?.name === PluginNames.PACKAGES_FLUX || !!repo?.type}
-                        value={RepositoryStorageTypes.PACKAGE_REPOSITORY_STORAGE_OCI}
-                        checked={type === RepositoryStorageTypes.PACKAGE_REPOSITORY_STORAGE_OCI}
-                        onChange={handleTypeRadioButtonChange}
-                      />
-                    </CdsRadio>
-                  </CdsRadioGroup>
-                )}
+                <CdsRadioGroup layout="vertical">
+                  <label>Package Storage Type</label>
+                  <CdsControlMessage>Select the package storage type.</CdsControlMessage>
+                  {plugin?.name !== PluginNames.PACKAGES_KAPP ? (
+                    <>
+                      <CdsRadio>
+                        <label>Helm Repository</label>
+                        <input
+                          id="kubeapps-repo-type-helm"
+                          type="radio"
+                          name="type"
+                          value={RepositoryStorageTypes.PACKAGE_REPOSITORY_STORAGE_HELM}
+                          checked={type === RepositoryStorageTypes.PACKAGE_REPOSITORY_STORAGE_HELM}
+                          disabled={!!repo?.type}
+                          onChange={handleTypeRadioButtonChange}
+                        />
+                      </CdsRadio>
+                      <CdsRadio>
+                        <label>OCI Registry</label>
+                        <input
+                          id="kubeapps-repo-type-oci"
+                          type="radio"
+                          name="type"
+                          // TODO(agamez): workaround until Flux plugin also supports OCI artifacts
+                          disabled={plugin?.name === PluginNames.PACKAGES_FLUX || !!repo?.type}
+                          value={RepositoryStorageTypes.PACKAGE_REPOSITORY_STORAGE_OCI}
+                          checked={type === RepositoryStorageTypes.PACKAGE_REPOSITORY_STORAGE_OCI}
+                          onChange={handleTypeRadioButtonChange}
+                        />
+                      </CdsRadio>
+                    </>
+                  ) : (
+                    <>
+                      <CdsRadio>
+                        <label>Imgpkg Bundle</label>
+                        <input
+                          id="kubeapps-repo-type-imgpkgbundle"
+                          type="radio"
+                          name="type"
+                          disabled={!!repo?.type}
+                          value={
+                            RepositoryStorageTypes.PACKAGE_REPOSITORY_STORAGE_CARVEL_IMGPKGBUNDLE
+                          }
+                          checked={
+                            type ===
+                            RepositoryStorageTypes.PACKAGE_REPOSITORY_STORAGE_CARVEL_IMGPKGBUNDLE
+                          }
+                          onChange={handleTypeRadioButtonChange}
+                        />
+                      </CdsRadio>
+                      <CdsRadio>
+                        <label>Inline</label>
+                        <input
+                          id="kubeapps-repo-type-inline"
+                          type="radio"
+                          name="type"
+                          // TODO(agamez): workaround until Carvel plugin also supports this type
+                          disabled={true || !!repo?.type}
+                          value={RepositoryStorageTypes.PACKAGE_REPOSITORY_STORAGE_CARVEL_INLINE}
+                          checked={
+                            type === RepositoryStorageTypes.PACKAGE_REPOSITORY_STORAGE_CARVEL_INLINE
+                          }
+                          onChange={handleTypeRadioButtonChange}
+                        />
+                      </CdsRadio>
+                      <CdsRadio>
+                        <label>Image</label>
+                        <input
+                          id="kubeapps-repo-type-image"
+                          type="radio"
+                          name="type"
+                          // TODO(agamez): workaround until Carvel plugin also supports this type
+                          disabled={true || !!repo?.type}
+                          value={RepositoryStorageTypes.PACKAGE_REPOSITORY_STORAGE_CARVEL_IMAGE}
+                          checked={
+                            type === RepositoryStorageTypes.PACKAGE_REPOSITORY_STORAGE_CARVEL_IMAGE
+                          }
+                          onChange={handleTypeRadioButtonChange}
+                        />
+                      </CdsRadio>
+                      <CdsRadio>
+                        <label>HTTP</label>
+                        <input
+                          id="kubeapps-repo-type-http"
+                          type="radio"
+                          name="type"
+                          // TODO(agamez): workaround until Carvel plugin also supports this type
+                          disabled={true || !!repo?.type}
+                          value={RepositoryStorageTypes.PACKAGE_REPOSITORY_STORAGE_CARVEL_HTTP}
+                          checked={
+                            type === RepositoryStorageTypes.PACKAGE_REPOSITORY_STORAGE_CARVEL_HTTP
+                          }
+                          onChange={handleTypeRadioButtonChange}
+                        />
+                      </CdsRadio>
+                      <CdsRadio>
+                        <label>Git</label>
+                        <input
+                          id="kubeapps-repo-type-git"
+                          type="radio"
+                          name="type"
+                          // TODO(agamez): workaround until Carvel plugin also supports this type
+                          disabled={true || !!repo?.type}
+                          value={RepositoryStorageTypes.PACKAGE_REPOSITORY_STORAGE_CARVEL_GIT}
+                          checked={
+                            type === RepositoryStorageTypes.PACKAGE_REPOSITORY_STORAGE_CARVEL_GIT
+                          }
+                          onChange={handleTypeRadioButtonChange}
+                        />
+                      </CdsRadio>
+                    </>
+                  )}
+                </CdsRadioGroup>
               </CdsFormGroup>
             </CdsAccordionContent>
           </CdsAccordionPanel>
@@ -684,15 +803,23 @@ export function AppRepoForm(props: IAppRepoFormProps) {
             </CdsAccordionContent>
           </CdsAccordionPanel>
 
-          <CdsAccordionPanel expanded={accordion[2]}>
+          <CdsAccordionPanel
+            expanded={accordion[2]}
+            hidden={
+              type !== RepositoryStorageTypes.PACKAGE_REPOSITORY_STORAGE_OCI &&
+              plugin?.name !== PluginNames.PACKAGES_HELM
+            }
+          >
             <CdsAccordionHeader onClick={() => toggleAccordion(2)}>Filtering</CdsAccordionHeader>
             <CdsAccordionContent>
               <CdsFormGroup layout="vertical">
-                {type === RepositoryStorageTypes.PACKAGE_REPOSITORY_STORAGE_OCI ? (
+                {type === RepositoryStorageTypes.PACKAGE_REPOSITORY_STORAGE_OCI && (
                   <CdsTextarea>
-                    <label htmlFor="kubeapps-oci-repositories">List of Repositories</label>
+                    <label htmlFor="kubeapps-oci-repositories">
+                      List of Repositories (required)
+                    </label>
                     <CdsControlMessage>
-                      Include a list of comma-separated repositories that will be available in
+                      Include a list of comma-separated OCI repositories that will be available in
                       Kubeapps.
                     </CdsControlMessage>
                     <textarea
@@ -703,7 +830,9 @@ export function AppRepoForm(props: IAppRepoFormProps) {
                       onChange={handleOCIRepositoriesChange}
                     />
                   </CdsTextarea>
-                ) : (
+                )}
+                {/* TODO(agamez): workaround until Flux plugin also supports OCI artifacts */}
+                {plugin?.name === PluginNames.PACKAGES_HELM && (
                   <>
                     <CdsTextarea>
                       <label>Filter Applications (optional)</label>

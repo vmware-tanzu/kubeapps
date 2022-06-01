@@ -699,6 +699,7 @@ describe("installRepo", () => {
         false,
         false,
         PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_UNSPECIFIED,
+        3600,
         undefined,
       ),
     );
@@ -801,6 +802,7 @@ describe("updateRepo", () => {
         false,
         false,
         PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_UNSPECIFIED,
+        3600,
         undefined,
       ),
     );
@@ -860,6 +862,7 @@ describe("updateRepo", () => {
         false,
         false,
         PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_UNSPECIFIED,
+        3600,
         undefined,
       ),
     );
@@ -915,6 +918,7 @@ describe("updateRepo", () => {
         false,
         false,
         PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_UNSPECIFIED,
+        3600,
         undefined,
       ),
     );
@@ -942,6 +946,7 @@ describe("updateRepo", () => {
         false,
         false,
         PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_UNSPECIFIED,
+        3600,
         undefined,
       ),
     );
@@ -985,6 +990,7 @@ describe("updateRepo", () => {
         false,
         false,
         PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_UNSPECIFIED,
+        3600,
         undefined,
       ),
     );

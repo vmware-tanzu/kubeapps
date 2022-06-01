@@ -163,6 +163,7 @@ export const installRepo = (
   skipTLS: boolean,
   passCredentials: boolean,
   authMethod: PackageRepositoryAuth_PackageRepositoryAuthType,
+  interval: number,
   filter?: IAppRepositoryFilter,
 ): ThunkAction<Promise<boolean>, IStoreState, null, AppReposAction> => {
   return async (dispatch, getState) => {
@@ -189,8 +190,9 @@ export const installRepo = (
         ociRepositories,
         skipTLS,
         passCredentials,
-        namespace === globalReposNamespace,
+        namespace !== globalReposNamespace,
         authMethod,
+        interval,
         filter,
       );
       // Ensure the repo have been created
@@ -226,6 +228,7 @@ export const updateRepo = (
   skipTLS: boolean,
   passCredentials: boolean,
   authMethod: PackageRepositoryAuth_PackageRepositoryAuthType,
+  interval: number,
   filter?: IAppRepositoryFilter,
 ): ThunkAction<Promise<boolean>, IStoreState, null, AppReposAction> => {
   return async (dispatch, getState) => {
@@ -252,6 +255,7 @@ export const updateRepo = (
         skipTLS,
         passCredentials,
         authMethod,
+        interval,
         filter,
       );
 

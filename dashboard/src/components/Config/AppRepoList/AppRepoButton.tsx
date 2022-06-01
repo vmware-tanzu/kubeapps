@@ -58,6 +58,7 @@ export function AppRepoAddButton({
     skipTLS: boolean,
     passCredentials: boolean,
     authMethod: PackageRepositoryAuth_PackageRepositoryAuthType,
+    interval: number,
     filter?: IAppRepositoryFilter,
   ) => {
     if (packageRepoRef) {
@@ -78,6 +79,7 @@ export function AppRepoAddButton({
           skipTLS,
           passCredentials,
           authMethod,
+          interval,
           filter,
         ),
       );
@@ -99,6 +101,7 @@ export function AppRepoAddButton({
           skipTLS,
           passCredentials,
           authMethod,
+          interval,
           filter,
         ),
       );
