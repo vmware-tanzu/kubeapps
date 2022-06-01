@@ -1,4 +1,4 @@
-baseURL: "https://kubeapps-dev.netlify.app/"
+baseURL: "https://kubeapps.dev/"
 languageCode: "en-us"
 title: "Kubeapps"
 theme: "template"
