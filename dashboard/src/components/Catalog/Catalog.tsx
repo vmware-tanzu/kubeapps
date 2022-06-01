@@ -212,9 +212,9 @@ export default function Catalog() {
   // We do not currently support package repositories on additional clusters.
   const supportedCluster = cluster === kubeappsCluster;
   useEffect(() => {
-    if (!supportedCluster || namespace === globalReposNamespace) {
-      // Global namespace or other cluster, show global repos only
-      dispatch(actions.repos.fetchRepos(globalReposNamespace));
+    if (!namespace || !supportedCluster || namespace === globalReposNamespace) {
+      // All Namespaces. Global namespace or other cluster, show global repos only
+      dispatch(actions.repos.fetchRepos(""));
       return () => {};
     }
     // In other case, fetch global and namespace repos

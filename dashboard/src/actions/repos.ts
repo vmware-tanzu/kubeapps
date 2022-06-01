@@ -110,7 +110,6 @@ export const fetchRepos = (
         dispatch(requestRepos(globalReposNamespace));
         const globalRepos = await PackageRepositoriesService.getPackageRepositorySummaries(
           currentCluster,
-          globalReposNamespace,
         );
         // Avoid adding duplicated repos: if two repos have the same uid, filter out
         totalRepos = uniqBy(

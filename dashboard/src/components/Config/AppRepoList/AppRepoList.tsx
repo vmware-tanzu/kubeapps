@@ -48,14 +48,9 @@ function AppRepoList() {
   // so calling several times to refetchRepos would run the code inside, even
   // if the dependencies do not change.
   const refetchRepos: () => void = useCallback(() => {
-    if (!namespace) {
-      // All Namespaces
+    if (!namespace || !supportedCluster || namespace === globalReposNamespace) {
+      // All Namespaces. Global namespace or other cluster, show global repos only
       dispatch(actions.repos.fetchRepos(""));
-      return () => {};
-    }
-    if (!supportedCluster || namespace === globalReposNamespace) {
-      // Global namespace or other cluster, show global repos only
-      dispatch(actions.repos.fetchRepos(globalReposNamespace));
       return () => {};
     }
     // In other case, fetch global and namespace repos
@@ -98,9 +93,7 @@ function AppRepoList() {
   const globalRepos: PackageRepositorySummary[] = [];
   const namespaceRepos: PackageRepositorySummary[] = [];
   repos.forEach(repo => {
-    repo.packageRepoRef?.context?.namespace === globalReposNamespace
-      ? globalRepos.push(repo)
-      : namespaceRepos.push(repo);
+    repo.namespaceScoped ? namespaceRepos.push(repo) : globalRepos.push(repo);
   });
 
   const tableColumns = [

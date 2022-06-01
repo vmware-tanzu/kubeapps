@@ -31,23 +31,25 @@ function SelectRepoForm({ cluster, namespace, app }: ISelectRepoFormProps) {
     packages: {
       selected: { error: packageError },
     },
-    config: { kubeappsNamespace, kubeappsCluster },
+    config: { kubeappsNamespace, kubeappsCluster, globalReposNamespace },
   } = useSelector((state: IStoreState) => state);
 
   const [userRepoName, setUserRepoName] = useState(repo?.name ?? "");
   const [userRepoNamespace, setUserRepoNamepace] = useState(
     repo.packageRepoRef?.context?.namespace ?? "",
   );
-
+  // We do not currently support package repositories on additional clusters.
+  const supportedCluster = cluster === kubeappsCluster;
   useEffect(() => {
-    if (namespace !== kubeappsNamespace) {
-      // Normal namespace, show local and global repos
-      dispatch(actions.repos.fetchRepos(namespace, true));
-    } else {
-      // Global namespace, show global repos only
-      dispatch(actions.repos.fetchRepos(kubeappsNamespace));
+    if (!namespace || !supportedCluster || namespace === globalReposNamespace) {
+      // All Namespaces. Global namespace or other cluster, show global repos only
+      dispatch(actions.repos.fetchRepos(""));
+      return () => {};
     }
-  }, [dispatch, namespace, kubeappsNamespace]);
+    // In other case, fetch global and namespace repos
+    dispatch(actions.repos.fetchRepos(namespace, true));
+    return () => {};
+  }, [dispatch, namespace, kubeappsNamespace, globalReposNamespace, supportedCluster]);
 
   const handleRepoNameChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     if (e.target.value) {
