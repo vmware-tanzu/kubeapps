@@ -364,6 +364,7 @@ func ParsePluginConfig(pluginConfigPath string) (*FluxPluginConfig, error) {
 			Packages struct {
 				V1alpha1 struct {
 					DefaultUpgradePolicy string `json:"defaultUpgradePolicy"`
+					UserManagedSecrets   bool   `json:"userManagedSecrets"`
 				} `json:"v1alpha1"`
 			} `json:"packages"`
 		} `json:"flux"`
@@ -388,7 +389,7 @@ func ParsePluginConfig(pluginConfigPath string) (*FluxPluginConfig, error) {
 			VersionsInSummary:    config.Core.Packages.V1alpha1.VersionsInSummary,
 			TimeoutSeconds:       config.Core.Packages.V1alpha1.TimeoutSeconds,
 			DefaultUpgradePolicy: defaultUpgradePolicy,
-			UserManagedSecrets:   false,
+			UserManagedSecrets:   config.Flux.Packages.V1alpha1.UserManagedSecrets,
 		}, nil
 	}
 }
