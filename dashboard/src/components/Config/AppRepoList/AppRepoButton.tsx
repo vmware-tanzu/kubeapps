@@ -5,7 +5,10 @@ import { CdsButton } from "@cds/react/button";
 import { CdsIcon } from "@cds/react/icon";
 import { CdsModal, CdsModalContent, CdsModalHeader } from "@cds/react/modal";
 import actions from "actions";
-import { PackageRepositoryReference } from "gen/kubeappsapis/core/packages/v1alpha1/repositories";
+import {
+  PackageRepositoryAuth_PackageRepositoryAuthType,
+  PackageRepositoryReference,
+} from "gen/kubeappsapis/core/packages/v1alpha1/repositories";
 import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins";
 import { useState } from "react";
 import { useDispatch } from "react-redux";
@@ -54,6 +57,7 @@ export function AppRepoAddButton({
     ociRepositories: string[],
     skipTLS: boolean,
     passCredentials: boolean,
+    authMethod: PackageRepositoryAuth_PackageRepositoryAuthType,
     filter?: IAppRepositoryFilter,
   ) => {
     if (packageRepoRef) {
@@ -73,6 +77,7 @@ export function AppRepoAddButton({
           ociRepositories,
           skipTLS,
           passCredentials,
+          authMethod,
           filter,
         ),
       );
@@ -93,6 +98,7 @@ export function AppRepoAddButton({
           ociRepositories,
           skipTLS,
           passCredentials,
+          authMethod,
           filter,
         ),
       );

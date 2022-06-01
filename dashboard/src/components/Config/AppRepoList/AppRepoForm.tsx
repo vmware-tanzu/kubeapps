@@ -48,6 +48,7 @@ interface IAppRepoFormProps {
     ociRepositories: string[],
     skipTLS: boolean,
     passCredentials: boolean,
+    authMethod: PackageRepositoryAuth_PackageRepositoryAuthType,
     filter?: IAppRepositoryFilter,
   ) => Promise<boolean>;
   onAfterInstall?: () => void;
@@ -266,6 +267,7 @@ export function AppRepoForm(props: IAppRepoFormProps) {
         ociRepoList,
         skipTLS,
         passCredentials,
+        authMethod,
         filter,
       );
       if (success && onAfterInstall) {
@@ -672,8 +674,7 @@ export function AppRepoForm(props: IAppRepoFormProps) {
                   selectedImagePullSecret={selectedImagePullSecret}
                   namespace={namespace}
                   appVersion={appVersion}
-                  // TODO(agamez): CHECK THIS
-                  disabled={true || !shouldEnableDockerRegistryCreds}
+                  disabled={!shouldEnableDockerRegistryCreds}
                   required={
                     authMethod ===
                     PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_DOCKER_CONFIG_JSON

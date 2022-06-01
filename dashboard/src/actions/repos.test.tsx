@@ -6,6 +6,7 @@ import {
   InstalledPackageDetail,
 } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
 import {
+  PackageRepositoryAuth_PackageRepositoryAuthType,
   PackageRepositoryReference,
   PackageRepositorySummary,
 } from "gen/kubeappsapis/core/packages/v1alpha1/repositories";
@@ -357,6 +358,7 @@ describe("installRepo", () => {
     [],
     false,
     false,
+    PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_UNSPECIFIED,
     undefined,
   );
 
@@ -376,6 +378,7 @@ describe("installRepo", () => {
       [],
       false,
       false,
+      PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_UNSPECIFIED,
       undefined,
     );
 
@@ -417,6 +420,7 @@ describe("installRepo", () => {
           ["apache", "jenkins"],
           false,
           false,
+          PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_UNSPECIFIED,
           undefined,
         ),
       );
@@ -456,6 +460,7 @@ describe("installRepo", () => {
           [],
           true,
           false,
+          PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_UNSPECIFIED,
           undefined,
         ),
       );
@@ -500,6 +505,7 @@ describe("installRepo", () => {
       [],
       false,
       false,
+      PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_UNSPECIFIED,
       undefined,
     );
 
@@ -547,6 +553,7 @@ describe("installRepo", () => {
             [],
             false,
             false,
+            PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_UNSPECIFIED,
             undefined,
           ),
         );
@@ -594,6 +601,7 @@ describe("installRepo", () => {
             [],
             false,
             false,
+            PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_UNSPECIFIED,
             undefined,
           ),
         );
@@ -690,6 +698,7 @@ describe("installRepo", () => {
         [],
         false,
         false,
+        PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_UNSPECIFIED,
         undefined,
       ),
     );
@@ -709,6 +718,7 @@ describe("installRepo", () => {
       [],
       false,
       false,
+      PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_UNSPECIFIED,
       undefined,
     );
   });
@@ -730,6 +740,7 @@ describe("installRepo", () => {
         ["apache", "jenkins"],
         false,
         false,
+        PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_UNSPECIFIED,
         undefined,
       ),
     );
@@ -748,6 +759,7 @@ describe("installRepo", () => {
       ["apache", "jenkins"],
       false,
       false,
+      PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_UNSPECIFIED,
       undefined,
     );
   });
@@ -788,6 +800,7 @@ describe("updateRepo", () => {
         [],
         false,
         false,
+        PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_UNSPECIFIED,
         undefined,
       ),
     );
@@ -807,6 +820,7 @@ describe("updateRepo", () => {
       [],
       false,
       false,
+      PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_UNSPECIFIED,
       undefined,
     );
   });
@@ -845,6 +859,7 @@ describe("updateRepo", () => {
         [],
         false,
         false,
+        PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_UNSPECIFIED,
         undefined,
       ),
     );
@@ -864,6 +879,7 @@ describe("updateRepo", () => {
       [],
       false,
       false,
+      PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_UNSPECIFIED,
       undefined,
     );
   });
@@ -898,6 +914,7 @@ describe("updateRepo", () => {
         [],
         false,
         false,
+        PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_UNSPECIFIED,
         undefined,
       ),
     );
@@ -924,6 +941,7 @@ describe("updateRepo", () => {
         ["apache", "jenkins"],
         false,
         false,
+        PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_UNSPECIFIED,
         undefined,
       ),
     );
@@ -966,6 +984,7 @@ describe("updateRepo", () => {
         ["apache", "jenkins"],
         false,
         false,
+        PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_UNSPECIFIED,
         undefined,
       ),
     );
@@ -984,6 +1003,7 @@ describe("updateRepo", () => {
       ["apache", "jenkins"],
       false,
       false,
+      PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_UNSPECIFIED,
       undefined,
     );
   });

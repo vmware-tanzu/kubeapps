@@ -6,8 +6,7 @@ import { CdsIcon } from "@cds/react/icon";
 import { CdsModal } from "@cds/react/modal";
 import actions from "actions";
 import {
-  PackageRepositoryReference,
-  PackageRepositorySummary,
+  PackageRepositoryReference
 } from "gen/kubeappsapis/core/packages/v1alpha1/repositories";
 import { act } from "react-dom/test-utils";
 import * as ReactRedux from "react-redux";

@@ -6,6 +6,7 @@ import {
   InstalledPackageDetail,
 } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
 import {
+  PackageRepositoryAuth_PackageRepositoryAuthType,
   PackageRepositoryDetail,
   PackageRepositoryReference,
   PackageRepositorySummary,
@@ -161,11 +162,13 @@ export const installRepo = (
   ociRepositories: string[],
   skipTLS: boolean,
   passCredentials: boolean,
+  authMethod: PackageRepositoryAuth_PackageRepositoryAuthType,
   filter?: IAppRepositoryFilter,
 ): ThunkAction<Promise<boolean>, IStoreState, null, AppReposAction> => {
   return async (dispatch, getState) => {
     const {
       clusters: { currentCluster },
+      config: { globalReposNamespace },
     } = getState();
     try {
       const syncJobPodTemplateObj = parsePodTemplate(syncJobPodTemplate);
@@ -186,6 +189,8 @@ export const installRepo = (
         ociRepositories,
         skipTLS,
         passCredentials,
+        namespace === globalReposNamespace,
+        authMethod,
         filter,
       );
       // Ensure the repo have been created
@@ -220,6 +225,7 @@ export const updateRepo = (
   ociRepositories: string[],
   skipTLS: boolean,
   passCredentials: boolean,
+  authMethod: PackageRepositoryAuth_PackageRepositoryAuthType,
   filter?: IAppRepositoryFilter,
 ): ThunkAction<Promise<boolean>, IStoreState, null, AppReposAction> => {
   return async (dispatch, getState) => {
@@ -245,6 +251,7 @@ export const updateRepo = (
         ociRepositories,
         skipTLS,
         passCredentials,
+        authMethod,
         filter,
       );
 

@@ -1,7 +1,10 @@
 // Copyright 2021-2022 the Kubeapps contributors.
 // SPDX-License-Identifier: Apache-2.0
 
-import { PackageRepositoryReference } from "gen/kubeappsapis/core/packages/v1alpha1/repositories";
+import {
+  PackageRepositoryAuth_PackageRepositoryAuthType,
+  PackageRepositoryReference,
+} from "gen/kubeappsapis/core/packages/v1alpha1/repositories";
 import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins";
 import * as moxios from "moxios";
 import { IAppRepositoryFilter } from "shared/types";
@@ -25,6 +28,8 @@ describe("RepositoriesService", () => {
     ociRepositories: ["oci-repo1"],
     tlsInsecureSkipVerify: false,
     passCredentials: true,
+    authMethod:
+      PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_UNSPECIFIED,
     filterRule: {
       jq: ".name == $var0",
       variables: { $var0: "nginx" },
@@ -65,6 +70,8 @@ describe("RepositoriesService", () => {
       repo.ociRepositories,
       repo.tlsInsecureSkipVerify,
       repo.passCredentials,
+      true,
+      repo.authMethod,
       repo.filterRule,
     );
 
@@ -97,6 +104,7 @@ describe("RepositoriesService", () => {
       repo.ociRepositories,
       repo.tlsInsecureSkipVerify,
       repo.passCredentials,
+      repo.authMethod,
       repo.filterRule,
     );
 
