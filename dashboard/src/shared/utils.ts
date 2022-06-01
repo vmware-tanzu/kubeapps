@@ -137,6 +137,32 @@ export function getPluginPackageName(plugin?: Plugin | PluginNames | string) {
   }
 }
 
+// FIXME(agamez): replace with a proper call to the plugins server (see getPluginsServiceClientImpl)
+export function getPluginByName(pluginName: PluginNames | string) {
+  switch (pluginName) {
+    case PluginNames.PACKAGES_HELM:
+      return {
+        name: PluginNames.PACKAGES_HELM,
+        version: "v1alpha1",
+      } as Plugin;
+    case PluginNames.PACKAGES_FLUX:
+      return {
+        name: PluginNames.PACKAGES_FLUX,
+        version: "v1alpha1",
+      } as Plugin;
+    case PluginNames.PACKAGES_KAPP:
+      return {
+        name: PluginNames.PACKAGES_KAPP,
+        version: "v1alpha1",
+      } as Plugin;
+    default:
+      return {
+        name: "",
+        version: "",
+      } as Plugin;
+  }
+}
+
 export function getPluginsRequiringSA(): string[] {
   return [PluginNames.PACKAGES_FLUX, PluginNames.PACKAGES_KAPP];
 }

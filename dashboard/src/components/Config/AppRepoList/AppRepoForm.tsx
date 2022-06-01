@@ -1,6 +1,12 @@
 // Copyright 2019-2022 the Kubeapps contributors.
 // SPDX-License-Identifier: Apache-2.0
 
+import {
+  CdsAccordion,
+  CdsAccordionContent,
+  CdsAccordionHeader,
+  CdsAccordionPanel,
+} from "@cds/react/accordion";
 import { CdsButton } from "@cds/react/button";
 import { CdsCheckbox } from "@cds/react/checkbox";
 import { CdsControlMessage, CdsFormGroup } from "@cds/react/forms";
@@ -9,20 +15,28 @@ import { CdsRadio, CdsRadioGroup } from "@cds/react/radio";
 import { CdsTextarea } from "@cds/react/textarea";
 import actions from "actions";
 import Alert from "components/js/Alert";
-import * as yaml from "js-yaml";
+import {
+  PackageRepositoryAuth_PackageRepositoryAuthType,
+  PackageRepositoryReference,
+} from "gen/kubeappsapis/core/packages/v1alpha1/repositories";
+import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins";
+// import * as yaml from "js-yaml";
 import { useEffect, useRef, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { Action } from "redux";
 import { ThunkDispatch } from "redux-thunk";
-import { AppRepository } from "shared/AppRepository";
-import { toFilterRule, toParams } from "shared/jq";
+// import { toFilterRule, toParams } from "shared/jq";
+import { toFilterRule } from "shared/jq";
+import { PackageRepositoriesService } from "shared/PackageRepositoriesService";
 import Secret from "shared/Secret";
-import { IAppRepository, IAppRepositoryFilter, ISecret, IStoreState } from "shared/types";
+import { IAppRepositoryFilter, ISecret, IStoreState } from "shared/types";
+import { getPluginByName, getPluginPackageName, PluginNames } from "shared/utils";
 import AppRepoAddDockerCreds from "./AppRepoAddDockerCreds";
 import "./AppRepoForm.css";
 interface IAppRepoFormProps {
   onSubmit: (
     name: string,
+    plugin: Plugin,
     url: string,
     type: string,
     description: string,
@@ -39,24 +53,33 @@ interface IAppRepoFormProps {
   onAfterInstall?: () => void;
   namespace: string;
   kubeappsNamespace: string;
-  repo?: IAppRepository;
+  packageRepoRef?: PackageRepositoryReference;
 }
 
-const AUTH_METHOD_NONE = "none";
-const AUTH_METHOD_BASIC = "basic";
-const AUTH_METHOD_BEARER = "bearer";
-const AUTH_METHOD_CUSTOM = "custom";
-const AUTH_METHOD_REGISTRY_SECRET = "registry";
-
-const TYPE_HELM = "helm";
-const TYPE_OCI = "oci";
+// temporary enum for the type of package repository storage
+enum RepositoryStorageTypes {
+  PACKAGE_REPOSITORY_STORAGE_HELM = "helm",
+  PACKAGE_REPOSITORY_STORAGE_OCI = "oci",
+}
 
 export function AppRepoForm(props: IAppRepoFormProps) {
-  const { onSubmit, onAfterInstall, namespace, kubeappsNamespace, repo } = props;
+  const { onSubmit, onAfterInstall, namespace, kubeappsNamespace, packageRepoRef } = props;
   const isInstallingRef = useRef(false);
   const dispatch: ThunkDispatch<IStoreState, null, Action> = useDispatch();
 
-  const [authMethod, setAuthMethod] = useState(AUTH_METHOD_NONE);
+  const {
+    repos: {
+      repo,
+      errors: { create: createError, update: updateError, validate: validationError },
+      validating,
+    },
+    config: { appVersion },
+    clusters: { currentCluster },
+  } = useSelector((state: IStoreState) => state);
+
+  const [authMethod, setAuthMethod] = useState(
+    PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_UNSPECIFIED,
+  );
   const [user, setUser] = useState("");
   const [password, setPassword] = useState("");
   const [authHeader, setAuthHeader] = useState("");
@@ -66,10 +89,11 @@ export function AppRepoForm(props: IAppRepoFormProps) {
   const [url, setURL] = useState("");
   const [customCA, setCustomCA] = useState("");
   const [syncJobPodTemplate, setSyncJobTemplate] = useState("");
-  const [type, setType] = useState(TYPE_HELM);
+  const [type, setType] = useState("");
+  const [plugin, setPlugin] = useState(getPluginByName(PluginNames.PACKAGES_HELM));
   const [ociRepositories, setOCIRepositories] = useState("");
-  const [skipTLS, setSkipTLS] = useState(!!repo?.spec?.tlsInsecureSkipVerify);
-  const [passCredentials, setPassCredentials] = useState(!!repo?.spec?.passCredentials);
+  const [skipTLS, setSkipTLS] = useState(!!repo?.tlsConfig?.insecureSkipVerify);
+  const [passCredentials, setPassCredentials] = useState(!!repo?.auth?.passCredentials);
   const [filterNames, setFilterNames] = useState("");
   const [filterRegex, setFilterRegex] = useState(false);
   const [filterExclude, setFilterExclude] = useState(false);
@@ -78,14 +102,19 @@ export function AppRepoForm(props: IAppRepoFormProps) {
   const [imagePullSecrets, setImagePullSecrets] = useState<string[]>([]);
   const [validated, setValidated] = useState(undefined as undefined | boolean);
 
-  const {
-    repos: {
-      errors: { create: createError, update: updateError, validate: validationError },
-      validating,
-    },
-    config: { appVersion },
-    clusters: { currentCluster },
-  } = useSelector((state: IStoreState) => state);
+  const [accordion, setAccordion] = useState([true, false, false, false]);
+
+  const toggleAccordion = (section: number) => {
+    const items = [...accordion];
+    items[section] = !items[section];
+    setAccordion(items);
+  };
+
+  useEffect(() => {
+    if (packageRepoRef) {
+      dispatch(actions.repos.fetchRepo(packageRepoRef));
+    }
+  }, [dispatch, packageRepoRef]);
 
   useEffect(() => {
     fetchImagePullSecrets(currentCluster, namespace);
@@ -98,7 +127,7 @@ export function AppRepoForm(props: IAppRepoFormProps) {
   useEffect(() => {
     // Select the pull secrets if they are already selected in the existing repo
     imagePullSecrets.forEach(secretName => {
-      if (repo?.spec?.dockerRegistrySecrets?.some(s => s === secretName)) {
+      if (repo?.auth?.secretRef?.key === secretName) {
         setSelectedImagePullSecret(secretName);
       }
     });
@@ -106,31 +135,35 @@ export function AppRepoForm(props: IAppRepoFormProps) {
 
   useEffect(() => {
     if (repo) {
-      setName(repo.metadata.name);
-      setURL(repo.spec?.url || "");
-      setType(repo.spec?.type || "");
-      setDescription(repo.spec?.description || "");
-      setSyncJobTemplate(
-        repo.spec?.syncJobPodTemplate ? yaml.dump(repo.spec?.syncJobPodTemplate) : "",
-      );
-      setOCIRepositories(repo.spec?.ociRepositories?.join(", ") || "");
-      setSkipTLS(!!repo.spec?.tlsInsecureSkipVerify);
-      setPassCredentials(!!repo.spec?.passCredentials);
-      if (repo.spec?.filterRule?.jq) {
-        const { names, regex, exclude } = toParams(repo.spec.filterRule);
-        setFilterRegex(regex);
-        setFilterExclude(exclude);
-        setFilterNames(names);
-      }
+      setName(repo.name);
+      setURL(repo.url);
+      setType(repo.type);
+      setPlugin(repo.packageRepoRef?.plugin || ({ name: "", version: "" } as Plugin));
+      setDescription(repo.description);
+      // TODO(agamez): CHECK THIS
+      // setSyncJobTemplate(
+      //   repo.spec?.syncJobPodTemplate ? yaml.dump(repo.spec?.syncJobPodTemplate) : "",
+      // );
+      // TODO(agamez): CHECK THIS
+      // setOCIRepositories(repo.spec?.ociRepositories?.join(", ") || "");
+      setSkipTLS(!!repo.tlsConfig?.insecureSkipVerify);
+      setPassCredentials(!!repo.auth?.passCredentials);
+      // TODO(agamez): CHECK THIS
+      // if (repo.spec?.filterRule?.jq) {
+      //   const { names, regex, exclude } = toParams(repo.spec.filterRule);
+      //   setFilterRegex(regex);
+      //   setFilterExclude(exclude);
+      //   setFilterNames(names);
+      // }
 
-      if (repo.spec?.auth?.customCA || repo.spec?.auth?.header) {
-        fetchRepoSecret(currentCluster, repo.metadata.namespace, repo.metadata.name);
+      if (repo?.tlsConfig?.certAuthority || repo?.auth?.header) {
+        fetchRepoSecret(currentCluster, repo.packageRepoRef?.context?.namespace || "", repo.name);
       }
     }
   }, [repo, namespace, currentCluster, dispatch]);
 
   async function fetchRepoSecret(cluster: string, repoNamespace: string, repoName: string) {
-    setSecret(await AppRepository.getSecretForRepo(cluster, repoNamespace, repoName));
+    setSecret(await PackageRepositoriesService.getSecretForRepo(cluster, repoNamespace, repoName));
   }
 
   useEffect(() => {
@@ -143,17 +176,25 @@ export function AppRepoForm(props: IAppRepoFormProps) {
           const userPass = Buffer.from(authHeader.split(" ")[1], "base64").toString().split(":");
           setUser(userPass[0]);
           setPassword(userPass[1]);
-          setAuthMethod(AUTH_METHOD_BASIC);
+          setAuthMethod(
+            PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_BASIC_AUTH,
+          );
         } else if (authHeader.startsWith("Bearer")) {
           setToken(authHeader.split(" ")[1]);
-          setAuthMethod(AUTH_METHOD_BEARER);
+          setAuthMethod(
+            PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_BEARER,
+          );
         } else {
-          setAuthMethod(AUTH_METHOD_CUSTOM);
+          setAuthMethod(
+            PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_CUSTOM,
+          );
           setAuthHeader(Buffer.from(secret.data.authorizationHeader, "base64").toString());
         }
       }
       if (secret.data[".dockerconfigjson"]) {
-        setAuthMethod(AUTH_METHOD_REGISTRY_SECRET);
+        setAuthMethod(
+          PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_DOCKER_CONFIG_JSON,
+        );
       }
     }
   }, [secret, authHeader]);
@@ -172,16 +213,16 @@ export function AppRepoForm(props: IAppRepoFormProps) {
     let finalHeader = "";
     let dockerRegCreds = "";
     switch (authMethod) {
-      case AUTH_METHOD_CUSTOM:
+      case PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_CUSTOM:
         finalHeader = authHeader;
         break;
-      case AUTH_METHOD_BASIC:
+      case PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_BASIC_AUTH:
         finalHeader = `Basic ${Buffer.from(`${user}:${password}`).toString("base64")}`;
         break;
-      case AUTH_METHOD_BEARER:
+      case PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_BEARER:
         finalHeader = `Bearer ${token}`;
         break;
-      case AUTH_METHOD_REGISTRY_SECRET:
+      case PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_DOCKER_CONFIG_JSON:
         dockerRegCreds = selectedImagePullSecret;
     }
     const ociRepoList = ociRepositories.length ? ociRepositories.split(",").map(r => r.trim()) : [];
@@ -207,12 +248,13 @@ export function AppRepoForm(props: IAppRepoFormProps) {
       setValidated(currentlyValidated);
     }
     let filter: IAppRepositoryFilter | undefined;
-    if (type === TYPE_HELM && filterNames !== "") {
+    if (type === RepositoryStorageTypes.PACKAGE_REPOSITORY_STORAGE_HELM && filterNames !== "") {
       filter = toFilterRule(filterNames, filterRegex, filterExclude);
     }
     if (currentlyValidated || force) {
       const success = await onSubmit(
         name,
+        plugin,
         finalURL,
         type,
         description,
@@ -253,11 +295,24 @@ export function AppRepoForm(props: IAppRepoFormProps) {
     setValidated(undefined);
   };
   const handleAuthRadioButtonChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setAuthMethod(e.target.value);
+    setAuthMethod(PackageRepositoryAuth_PackageRepositoryAuthType[e.target.value]);
     setValidated(undefined);
   };
   const handleTypeRadioButtonChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setType(e.target.value);
+    setValidated(undefined);
+  };
+  const handlePluginRadioButtonChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setPlugin(getPluginByName(e.target.value));
+    // if no type, suggest using helm storage instead of OCI if the plugin is "helm"
+    if (!type && getPluginByName(e.target.value)?.name === PluginNames.PACKAGES_HELM) {
+      setType(RepositoryStorageTypes.PACKAGE_REPOSITORY_STORAGE_HELM);
+    }
+    // TODO(agamez): workaround until Flux also supports OCI artifacts
+    if (getPluginByName(e.target.value)?.name === PluginNames.PACKAGES_FLUX) {
+      setType(RepositoryStorageTypes.PACKAGE_REPOSITORY_STORAGE_HELM);
+    }
+
     setValidated(undefined);
   };
   const handleUserChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -318,328 +373,476 @@ export function AppRepoForm(props: IAppRepoFormProps) {
 
   /* eslint-disable jsx-a11y/label-has-associated-control */
   return (
-    <form onSubmit={handleInstallClick}>
-      <CdsFormGroup layout="vertical">
-        <CdsInput>
-          <label>Name</label>
-          <input
-            id="kubeapps-repo-name"
-            type="text"
-            placeholder="example"
-            value={name}
-            onChange={handleNameChange}
-            required={true}
-            pattern="[a-z0-9]([-a-z0-9]*[a-z0-9])?(\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*"
-            title="Use lower case alphanumeric characters, '-' or '.'"
-            disabled={repo?.metadata.name ? true : false}
-          />
-        </CdsInput>
-        <CdsInput>
-          <label> URL </label>
-          <input
-            id="kubeapps-repo-url"
-            type="url"
-            placeholder="https://charts.example.com/stable"
-            value={url}
-            onChange={handleURLChange}
-            required={true}
-          />
-        </CdsInput>
-        <CdsInput>
-          <label> Description (optional)</label>
-          <input
-            id="kubeapps-repo-description"
-            type="text"
-            placeholder="Description of the repository"
-            value={description}
-            onChange={handleDescriptionChange}
-            required={false}
-          />
-        </CdsInput>
+    <>
+      <form onSubmit={handleInstallClick}>
+        <CdsAccordion>
+          <CdsAccordionPanel expanded={accordion[0]}>
+            <CdsAccordionHeader onClick={() => toggleAccordion(0)}>
+              Basic information
+            </CdsAccordionHeader>
+            <CdsAccordionContent>
+              <CdsFormGroup layout="vertical">
+                <CdsInput>
+                  <label>Name</label>
+                  <input
+                    id="kubeapps-repo-name"
+                    type="text"
+                    placeholder="example"
+                    value={name}
+                    onChange={handleNameChange}
+                    required={true}
+                    pattern="[a-z0-9]([-a-z0-9]*[a-z0-9])?(\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*"
+                    title="Use lower case alphanumeric characters, '-' or '.'"
+                    disabled={repo?.name ? true : false}
+                  />
+                </CdsInput>
+                <CdsInput>
+                  <label> URL </label>
+                  <input
+                    id="kubeapps-repo-url"
+                    type="url"
+                    placeholder="https://charts.example.com/stable"
+                    value={url}
+                    onChange={handleURLChange}
+                    required={true}
+                  />
+                </CdsInput>
+                <CdsInput>
+                  <label> Description (optional)</label>
+                  <input
+                    id="kubeapps-repo-description"
+                    type="text"
+                    placeholder="Description of the repository"
+                    value={description}
+                    onChange={handleDescriptionChange}
+                    required={false}
+                  />
+                </CdsInput>
 
-        <CdsRadioGroup layout="vertical">
-          <label>Repository Type</label>
-          <CdsControlMessage>Select the package storage type.</CdsControlMessage>
-          <CdsRadio>
-            <label>Helm Repository</label>
-            <input
-              id="kubeapps-repo-type-helm"
-              type="radio"
-              name="type"
-              value={TYPE_HELM}
-              checked={type === TYPE_HELM}
-              onChange={handleTypeRadioButtonChange}
-            />
-          </CdsRadio>
-          <CdsRadio>
-            <label>OCI Registry</label>
-            <input
-              id="kubeapps-repo-type-oci"
-              type="radio"
-              name="type"
-              value={TYPE_OCI}
-              checked={type === TYPE_OCI}
-              onChange={handleTypeRadioButtonChange}
-            />
-          </CdsRadio>
-        </CdsRadioGroup>
+                <CdsRadioGroup layout="vertical">
+                  <label>Packaging Format:</label>
+                  <CdsControlMessage>Select the plugin to use.</CdsControlMessage>
+                  <CdsRadio>
+                    <label>{getPluginPackageName(PluginNames.PACKAGES_HELM)}</label>
+                    <input
+                      id="kubeapps-plugin-helm"
+                      type="radio"
+                      name="plugin"
+                      value={PluginNames.PACKAGES_HELM}
+                      checked={plugin?.name === PluginNames.PACKAGES_HELM}
+                      onChange={handlePluginRadioButtonChange}
+                      disabled={repo.packageRepoRef?.plugin ? true : false}
+                    />
+                  </CdsRadio>
+                  <CdsRadio>
+                    <label>{getPluginPackageName(PluginNames.PACKAGES_FLUX)}</label>
+                    <input
+                      id="kubeapps-plugin-fluxv2"
+                      type="radio"
+                      name="plugin"
+                      value={PluginNames.PACKAGES_FLUX}
+                      checked={plugin?.name === PluginNames.PACKAGES_FLUX}
+                      onChange={handlePluginRadioButtonChange}
+                      disabled={repo.packageRepoRef?.plugin ? true : false}
+                    />
+                  </CdsRadio>
+                  <CdsRadio>
+                    <label>{getPluginPackageName(PluginNames.PACKAGES_KAPP)}</label>
+                    <input
+                      id="kubeapps-plugin-kappcontroller"
+                      type="radio"
+                      name="plugin"
+                      value={PluginNames.PACKAGES_KAPP}
+                      checked={plugin?.name === PluginNames.PACKAGES_KAPP}
+                      onChange={handlePluginRadioButtonChange}
+                      disabled={repo.packageRepoRef?.plugin ? true : false}
+                    />
+                  </CdsRadio>
+                </CdsRadioGroup>
+                {plugin?.name !== PluginNames.PACKAGES_KAPP && (
+                  <CdsRadioGroup layout="vertical">
+                    <label>Package Storage Type</label>
+                    <CdsControlMessage>Select the package storage type.</CdsControlMessage>
+                    <CdsRadio>
+                      <label>Helm Repository</label>
+                      <input
+                        id="kubeapps-repo-type-helm"
+                        type="radio"
+                        name="type"
+                        value={RepositoryStorageTypes.PACKAGE_REPOSITORY_STORAGE_HELM}
+                        checked={type === RepositoryStorageTypes.PACKAGE_REPOSITORY_STORAGE_HELM}
+                        disabled={!!repo?.type}
+                        onChange={handleTypeRadioButtonChange}
+                      />
+                    </CdsRadio>
+                    <CdsRadio>
+                      <label>OCI Registry</label>
+                      <input
+                        id="kubeapps-repo-type-oci"
+                        type="radio"
+                        name="type"
+                        // TODO(agamez): workaround until Flux also supports OCI artifacts
+                        disabled={plugin?.name === PluginNames.PACKAGES_FLUX || !!repo?.type}
+                        value={RepositoryStorageTypes.PACKAGE_REPOSITORY_STORAGE_OCI}
+                        checked={type === RepositoryStorageTypes.PACKAGE_REPOSITORY_STORAGE_OCI}
+                        onChange={handleTypeRadioButtonChange}
+                      />
+                    </CdsRadio>
+                  </CdsRadioGroup>
+                )}
+              </CdsFormGroup>
+            </CdsAccordionContent>
+          </CdsAccordionPanel>
 
-        <div cds-layout="grid gap:lg">
-          <CdsRadioGroup cds-layout="col@xs:4">
-            <label>Repository Authorization</label>
-            <CdsRadio>
-              <label>None (Public)</label>
-              <input
-                id="kubeapps-repo-auth-method-none"
-                type="radio"
-                name="auth"
-                value={AUTH_METHOD_NONE}
-                checked={authMethod === AUTH_METHOD_NONE}
-                onChange={handleAuthRadioButtonChange}
-              />
-            </CdsRadio>
-            <CdsRadio>
-              <label>Basic Auth</label>
-              <input
-                id="kubeapps-repo-auth-method-basic"
-                type="radio"
-                name="auth"
-                checked={authMethod === AUTH_METHOD_BASIC}
-                value={AUTH_METHOD_BASIC}
-                onChange={handleAuthRadioButtonChange}
-              />
-            </CdsRadio>
-            <CdsRadio>
-              <label>Bearer Token</label>
-              <input
-                id="kubeapps-repo-auth-method-bearer"
-                type="radio"
-                name="auth"
-                value={AUTH_METHOD_BEARER}
-                checked={authMethod === AUTH_METHOD_BEARER}
-                onChange={handleAuthRadioButtonChange}
-              />
-            </CdsRadio>
-            {shouldEnableDockerRegistryCreds && (
-              <CdsRadio>
-                <label>Use Docker Registry Credentials</label>
-                <input
-                  id="kubeapps-repo-auth-method-registry"
-                  type="radio"
-                  name="auth"
-                  value={AUTH_METHOD_REGISTRY_SECRET}
-                  checked={authMethod === AUTH_METHOD_REGISTRY_SECRET}
-                  onChange={handleAuthRadioButtonChange}
+          <CdsAccordionPanel expanded={accordion[1]}>
+            <CdsAccordionHeader onClick={() => toggleAccordion(1)}>
+              Authentication
+            </CdsAccordionHeader>
+            <CdsAccordionContent>
+              <CdsFormGroup layout="vertical">
+                <div cds-layout="grid gap:lg">
+                  <CdsRadioGroup cds-layout="col@xs:4">
+                    <label>Repository Authorization</label>
+                    <CdsRadio>
+                      <label>None (Public)</label>
+                      <input
+                        id="kubeapps-repo-auth-method-none"
+                        type="radio"
+                        name="auth"
+                        value={
+                          PackageRepositoryAuth_PackageRepositoryAuthType[
+                            PackageRepositoryAuth_PackageRepositoryAuthType
+                              .PACKAGE_REPOSITORY_AUTH_TYPE_UNSPECIFIED
+                          ]
+                        }
+                        checked={
+                          authMethod ===
+                          PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_UNSPECIFIED
+                        }
+                        onChange={handleAuthRadioButtonChange}
+                      />
+                    </CdsRadio>
+                    <CdsRadio>
+                      <label>Basic Auth</label>
+                      <input
+                        id="kubeapps-repo-auth-method-basic"
+                        type="radio"
+                        name="auth"
+                        value={
+                          PackageRepositoryAuth_PackageRepositoryAuthType[
+                            PackageRepositoryAuth_PackageRepositoryAuthType
+                              .PACKAGE_REPOSITORY_AUTH_TYPE_BASIC_AUTH
+                          ]
+                        }
+                        checked={
+                          authMethod ===
+                          PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_BASIC_AUTH
+                        }
+                        onChange={handleAuthRadioButtonChange}
+                      />
+                    </CdsRadio>
+                    <CdsRadio>
+                      <label>Bearer Token</label>
+                      <input
+                        id="kubeapps-repo-auth-method-bearer"
+                        type="radio"
+                        name="auth"
+                        value={
+                          PackageRepositoryAuth_PackageRepositoryAuthType[
+                            PackageRepositoryAuth_PackageRepositoryAuthType
+                              .PACKAGE_REPOSITORY_AUTH_TYPE_BEARER
+                          ]
+                        }
+                        checked={
+                          authMethod ===
+                          PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_BEARER
+                        }
+                        onChange={handleAuthRadioButtonChange}
+                      />
+                    </CdsRadio>
+                    {shouldEnableDockerRegistryCreds && (
+                      <CdsRadio>
+                        <label>Use Docker Registry Credentials</label>
+                        <input
+                          id="kubeapps-repo-auth-method-registry"
+                          type="radio"
+                          name="auth"
+                          value={
+                            PackageRepositoryAuth_PackageRepositoryAuthType[
+                              PackageRepositoryAuth_PackageRepositoryAuthType
+                                .PACKAGE_REPOSITORY_AUTH_TYPE_DOCKER_CONFIG_JSON
+                            ]
+                          }
+                          checked={
+                            authMethod ===
+                            PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_DOCKER_CONFIG_JSON
+                          }
+                          onChange={handleAuthRadioButtonChange}
+                        />
+                      </CdsRadio>
+                    )}
+                    <CdsRadio>
+                      <label>Custom</label>
+                      <input
+                        id="kubeapps-repo-auth-method-custom"
+                        type="radio"
+                        name="auth"
+                        value={
+                          PackageRepositoryAuth_PackageRepositoryAuthType[
+                            PackageRepositoryAuth_PackageRepositoryAuthType
+                              .PACKAGE_REPOSITORY_AUTH_TYPE_CUSTOM
+                          ]
+                        }
+                        checked={
+                          authMethod ===
+                          PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_CUSTOM
+                        }
+                        onChange={handleAuthRadioButtonChange}
+                      />
+                    </CdsRadio>
+                  </CdsRadioGroup>
+                  <div cds-layout="col@xs:8">
+                    <div
+                      hidden={
+                        authMethod !==
+                        PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_BASIC_AUTH
+                      }
+                    >
+                      <CdsInput>
+                        <label>Username</label>
+                        <input
+                          id="kubeapps-repo-username"
+                          type="text"
+                          value={user}
+                          onChange={handleUserChange}
+                          placeholder="Username"
+                        />
+                      </CdsInput>
+                      <br />
+                      <CdsInput>
+                        <label>Password</label>
+                        <input
+                          id="kubeapps-repo-password"
+                          type="password"
+                          value={password}
+                          onChange={handlePasswordChange}
+                          placeholder="Password"
+                        />
+                      </CdsInput>
+                    </div>
+                    <div
+                      hidden={
+                        authMethod !==
+                        PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_BEARER
+                      }
+                    >
+                      <CdsInput>
+                        <label>Token</label>
+                        <input
+                          type="text"
+                          value={token}
+                          onChange={handleAuthTokenChange}
+                          id="kubeapps-repo-token"
+                        />
+                      </CdsInput>
+                    </div>
+                    <div
+                      hidden={
+                        authMethod !==
+                        PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_CUSTOM
+                      }
+                    >
+                      <CdsInput>
+                        <label>Raw Authorization Header</label>
+                        <input
+                          id="kubeapps-repo-custom-header"
+                          type="text"
+                          placeholder="Bearer xrxNcWghpRLdcPHFgVRM73rr4N7qjvjm"
+                          value={authHeader}
+                          onChange={handleAuthHeaderChange}
+                        />
+                      </CdsInput>
+                    </div>
+                  </div>
+                </div>
+
+                <AppRepoAddDockerCreds
+                  imagePullSecrets={imagePullSecrets}
+                  selectPullSecret={selectPullSecret}
+                  selectedImagePullSecret={selectedImagePullSecret}
+                  namespace={namespace}
+                  appVersion={appVersion}
+                  // TODO(agamez): CHECK THIS
+                  disabled={true || !shouldEnableDockerRegistryCreds}
+                  required={
+                    authMethod ===
+                    PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_DOCKER_CONFIG_JSON
+                  }
                 />
-              </CdsRadio>
-            )}
-            <CdsRadio>
-              <label>Custom</label>
-              <input
-                id="kubeapps-repo-auth-method-custom"
-                type="radio"
-                name="auth"
-                value={AUTH_METHOD_CUSTOM}
-                checked={authMethod === AUTH_METHOD_CUSTOM}
-                onChange={handleAuthRadioButtonChange}
-              />
-            </CdsRadio>
-          </CdsRadioGroup>
-          <div cds-layout="col@xs:8">
-            <div hidden={authMethod !== AUTH_METHOD_BASIC}>
-              <CdsInput>
-                <label>Username</label>
-                <input
-                  id="kubeapps-repo-username"
-                  type="text"
-                  value={user}
-                  onChange={handleUserChange}
-                  placeholder="Username"
-                />
-              </CdsInput>
-              <br />
-              <CdsInput>
-                <label>Password</label>
-                <input
-                  id="kubeapps-repo-password"
-                  type="password"
-                  value={password}
-                  onChange={handlePasswordChange}
-                  placeholder="Password"
-                />
-              </CdsInput>
-            </div>
-            <div hidden={authMethod !== AUTH_METHOD_BEARER}>
-              <CdsInput>
-                <label>Token</label>
-                <input
-                  type="text"
-                  value={token}
-                  onChange={handleAuthTokenChange}
-                  id="kubeapps-repo-token"
-                />
-              </CdsInput>
-            </div>
-            <div hidden={authMethod !== AUTH_METHOD_CUSTOM}>
-              <CdsInput>
-                <label>Complete Authorization Header</label>
-                <input
-                  id="kubeapps-repo-custom-header"
-                  type="text"
-                  placeholder="Bearer xrxNcWghpRLdcPHFgVRM73rr4N7qjvjm"
-                  value={authHeader}
-                  onChange={handleAuthHeaderChange}
-                />
-              </CdsInput>
-            </div>
-          </div>
+              </CdsFormGroup>
+            </CdsAccordionContent>
+          </CdsAccordionPanel>
+
+          <CdsAccordionPanel expanded={accordion[2]}>
+            <CdsAccordionHeader onClick={() => toggleAccordion(2)}>Filtering</CdsAccordionHeader>
+            <CdsAccordionContent>
+              <CdsFormGroup layout="vertical">
+                {type === RepositoryStorageTypes.PACKAGE_REPOSITORY_STORAGE_OCI ? (
+                  <CdsTextarea>
+                    <label htmlFor="kubeapps-oci-repositories">List of Repositories</label>
+                    <CdsControlMessage>
+                      Include a list of comma-separated repositories that will be available in
+                      Kubeapps.
+                    </CdsControlMessage>
+                    <textarea
+                      id="kubeapps-oci-repositories"
+                      className="cds-textarea-fix"
+                      placeholder={"nginx, jenkins"}
+                      value={ociRepositories}
+                      onChange={handleOCIRepositoriesChange}
+                    />
+                  </CdsTextarea>
+                ) : (
+                  <>
+                    <CdsTextarea>
+                      <label>Filter Applications (optional)</label>
+                      <CdsControlMessage>
+                        Comma-separated list of applications to be included or excluded (all will be
+                        included by default).
+                      </CdsControlMessage>
+                      <textarea
+                        className="cds-textarea-fix"
+                        placeholder={"nginx, jenkins"}
+                        value={filterNames}
+                        onChange={handleFilterNames}
+                      />
+                    </CdsTextarea>
+                    <CdsCheckbox className="ca-skip-tls">
+                      <label>Exclude Packages</label>
+                      <CdsControlMessage>
+                        Exclude packages matching the given filter
+                      </CdsControlMessage>
+                      <input
+                        type="checkbox"
+                        onChange={handleFilterExclude}
+                        checked={filterExclude}
+                      />
+                    </CdsCheckbox>
+                    <CdsCheckbox className="ca-skip-tls">
+                      <label>Regular Expression</label>
+                      <CdsControlMessage>
+                        Mark this box to treat the filter as a regular expression
+                      </CdsControlMessage>
+                      <input type="checkbox" onChange={handleFilterRegex} checked={filterRegex} />
+                    </CdsCheckbox>
+                  </>
+                )}
+              </CdsFormGroup>
+            </CdsAccordionContent>
+          </CdsAccordionPanel>
+
+          <CdsAccordionPanel expanded={accordion[3]}>
+            <CdsAccordionHeader onClick={() => toggleAccordion(3)}>Advanced</CdsAccordionHeader>
+            <CdsAccordionContent>
+              <CdsFormGroup layout="vertical">
+                <CdsTextarea layout="vertical">
+                  <label>Custom CA Certificate (optional)</label>
+                  <textarea
+                    id="kubeapps-repo-custom-ca"
+                    placeholder={"-----BEGIN CERTIFICATE-----\n...\n-----END CERTIFICATE-----"}
+                    className="cds-textarea-fix"
+                    value={customCA}
+                    disabled={skipTLS}
+                    onChange={handleCustomCAChange}
+                  />
+                </CdsTextarea>
+                <CdsCheckbox className="ca-skip-tls">
+                  <label className="clr-control-label">Skip TLS Verification</label>
+                  <input
+                    id="kubeapps-repo-skip-tls"
+                    type="checkbox"
+                    checked={skipTLS}
+                    onChange={handleSkipTLSChange}
+                  />
+                </CdsCheckbox>
+                <CdsCheckbox className="ca-skip-tls">
+                  <label className="clr-control-label">
+                    Pass Credentials to 3rd party URLs (Icon and Tarball files)
+                  </label>
+                  <input
+                    id="kubeapps-repo-pass-credentials"
+                    type="checkbox"
+                    checked={passCredentials}
+                    onChange={handlePassCredentialsChange}
+                  />
+                </CdsCheckbox>
+
+                <CdsTextarea layout="vertical">
+                  <label>Custom Sync Job Template (optional)</label>
+                  <CdsControlMessage>
+                    It's possible to modify the default sync job. When doing this, the
+                    pre-validation is not supported. More info{" "}
+                    <a
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      href={`https://github.com/vmware-tanzu/kubeapps/blob/${appVersion}/site/content/docs/latest/howto/private-app-repository.md#modifying-the-synchronization-job`}
+                    >
+                      here
+                    </a>
+                    .
+                  </CdsControlMessage>
+                  <textarea
+                    id="kubeapps-repo-sync-job-tpl"
+                    rows={5}
+                    className="cds-textarea-fix"
+                    placeholder={
+                      "spec:\n" +
+                      "  containers:\n" +
+                      "  - env:\n" +
+                      "    - name: FOO\n" +
+                      "      value: BAR\n"
+                    }
+                    value={syncJobPodTemplate}
+                    onChange={handleSyncJobPodTemplateChange}
+                  />
+                </CdsTextarea>
+              </CdsFormGroup>
+
+              {namespace === kubeappsNamespace && (
+                <p>
+                  <strong>NOTE:</strong> This Package Repository will be created in the "
+                  {kubeappsNamespace}" namespace and packages will be available in all namespaces
+                  for installation.
+                </p>
+              )}
+              {validationError && (
+                <Alert theme="danger">
+                  Validation Failed. Got: {parseValidationError(validationError)}
+                </Alert>
+              )}
+              {createError && (
+                <Alert theme="danger">
+                  An error occurred while creating the repository: {createError.message}
+                </Alert>
+              )}
+              {updateError && (
+                <Alert theme="danger">
+                  An error occurred while updating the repository: {updateError.message}
+                </Alert>
+              )}
+            </CdsAccordionContent>
+          </CdsAccordionPanel>
+        </CdsAccordion>
+        <div className="margin-t-xl">
+          <CdsButton type="submit" disabled={validating}>
+            {validating
+              ? "Validating..."
+              : `${repo.name ? `Update '${repo.name}'` : "Install"} Repo ${
+                  validated === false ? "(force)" : ""
+                }`}
+          </CdsButton>
         </div>
-
-        <AppRepoAddDockerCreds
-          imagePullSecrets={imagePullSecrets}
-          selectPullSecret={selectPullSecret}
-          selectedImagePullSecret={selectedImagePullSecret}
-          namespace={namespace}
-          appVersion={appVersion}
-          disabled={!shouldEnableDockerRegistryCreds}
-          required={authMethod === AUTH_METHOD_REGISTRY_SECRET}
-        />
-
-        {type === TYPE_OCI ? (
-          <CdsTextarea>
-            <label htmlFor="kubeapps-oci-repositories">List of Repositories</label>
-            <CdsControlMessage>
-              Include a list of comma-separated repositories that will be available in Kubeapps.
-            </CdsControlMessage>
-            <textarea
-              id="kubeapps-oci-repositories"
-              className="cds-textarea-fix"
-              placeholder={"nginx, jenkins"}
-              value={ociRepositories}
-              onChange={handleOCIRepositoriesChange}
-            />
-          </CdsTextarea>
-        ) : (
-          <>
-            <CdsTextarea>
-              <label>Filter Applications (optional)</label>
-              <CdsControlMessage>
-                Comma-separated list of applications to be included or excluded (all will be
-                included by default).
-              </CdsControlMessage>
-              <textarea
-                className="cds-textarea-fix"
-                placeholder={"nginx, jenkins"}
-                value={filterNames}
-                onChange={handleFilterNames}
-              />
-            </CdsTextarea>
-            <CdsCheckbox className="ca-skip-tls">
-              <label>Exclude Packages</label>
-              <CdsControlMessage>Exclude packages matching the given filter</CdsControlMessage>
-              <input type="checkbox" onChange={handleFilterExclude} checked={filterExclude} />
-            </CdsCheckbox>
-            <CdsCheckbox className="ca-skip-tls">
-              <label>Regular Expression</label>
-              <CdsControlMessage>
-                Mark this box to treat the filter as a regular expression
-              </CdsControlMessage>
-              <input type="checkbox" onChange={handleFilterRegex} checked={filterRegex} />
-            </CdsCheckbox>
-          </>
-        )}
-
-        <CdsTextarea layout="vertical">
-          <label>Custom CA Certificate (optional)</label>
-          <textarea
-            id="kubeapps-repo-custom-ca"
-            placeholder={"-----BEGIN CERTIFICATE-----\n...\n-----END CERTIFICATE-----"}
-            className="cds-textarea-fix"
-            value={customCA}
-            disabled={skipTLS}
-            onChange={handleCustomCAChange}
-          />
-        </CdsTextarea>
-        <CdsCheckbox className="ca-skip-tls">
-          <label className="clr-control-label">Skip TLS Verification</label>
-          <input
-            id="kubeapps-repo-skip-tls"
-            type="checkbox"
-            checked={skipTLS}
-            onChange={handleSkipTLSChange}
-          />
-        </CdsCheckbox>
-        <CdsCheckbox className="ca-skip-tls">
-          <label className="clr-control-label">
-            Pass Credentials to 3rd party URLs (Icon and Tarball files)
-          </label>
-          <input
-            id="kubeapps-repo-pass-credentials"
-            type="checkbox"
-            checked={passCredentials}
-            onChange={handlePassCredentialsChange}
-          />
-        </CdsCheckbox>
-
-        <CdsTextarea layout="vertical">
-          <label>Custom Sync Job Template (optional)</label>
-          <CdsControlMessage>
-            It's possible to modify the default sync job. When doing this, the pre-validation is not
-            supported. More info{" "}
-            <a
-              target="_blank"
-              rel="noopener noreferrer"
-              href={`https://github.com/vmware-tanzu/kubeapps/blob/${appVersion}/site/content/docs/latest/howto/private-app-repository.md#modifying-the-synchronization-job`}
-            >
-              here
-            </a>
-            .
-          </CdsControlMessage>
-          <textarea
-            id="kubeapps-repo-sync-job-tpl"
-            rows={5}
-            className="cds-textarea-fix"
-            placeholder={
-              "spec:\n" +
-              "  containers:\n" +
-              "  - env:\n" +
-              "    - name: FOO\n" +
-              "      value: BAR\n"
-            }
-            value={syncJobPodTemplate}
-            onChange={handleSyncJobPodTemplateChange}
-          />
-        </CdsTextarea>
-      </CdsFormGroup>
-
-      {namespace === kubeappsNamespace && (
-        <p>
-          <strong>NOTE:</strong> This Package Repository will be created in the "{kubeappsNamespace}
-          " namespace and packages will be available in all namespaces for installation.
-        </p>
-      )}
-      {validationError && (
-        <Alert theme="danger">
-          Validation Failed. Got: {parseValidationError(validationError)}
-        </Alert>
-      )}
-      {createError && (
-        <Alert theme="danger">
-          An error occurred while creating the repository: {createError.message}
-        </Alert>
-      )}
-      {updateError && (
-        <Alert theme="danger">
-          An error occurred while updating the repository: {updateError.message}
-        </Alert>
-      )}
-      <div className="margin-t-xl">
-        <CdsButton type="submit" disabled={validating}>
-          {validating
-            ? "Validating..."
-            : `${repo ? "Update" : "Install"} Repo ${validated === false ? "(force)" : ""}`}
-        </CdsButton>
-      </div>
-    </form>
+      </form>
+    </>
   );
 }
