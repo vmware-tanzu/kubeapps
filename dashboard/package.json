@@ -80,7 +80,7 @@
     "@improbable-eng/grpc-web-fake-transport": "^0.15.0",
     "@testing-library/react": "^12.1.5",
     "@types/enzyme": "^3.10.12",
-    "@types/jest": "^27.5.1",
+    "@types/jest": "^28.1.0",
     "@types/js-yaml": "^4.0.5",
     "@types/jsonwebtoken": "^8.5.8",
     "@types/lodash": "^4.14.182",
