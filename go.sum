@@ -597,8 +597,8 @@ github.com/fluxcd/pkg/apis/kustomize v0.3.3/go.mod h1:5HTOFZfQFVMMqR2rvuxpbZhpb+
 github.com/fluxcd/pkg/apis/meta v0.13.0/go.mod h1:Z26X5uTU5LxAyWETGueRQY7TvdPaGfKU7Wye9bdUlho=
 github.com/fluxcd/pkg/apis/meta v0.14.1 h1:lPDs9yV67DnwalHPb13bbnDkAatALfUiAMRHjUm4UBw=
 github.com/fluxcd/pkg/apis/meta v0.14.1/go.mod h1:1uJkTJGSZWrZxL5PFpx1IxGLrFmT1Cd0C2fFWrbv77I=
-github.com/fluxcd/source-controller/api v0.24.4 h1:m54sS1rJlgJf5j9qDRgKLhbPJAnJ9dY+VrstPKj0aQo=
-github.com/fluxcd/source-controller/api v0.24.4/go.mod h1:b0MmMPGE8gcpgSyGXe5m7see77tBW26eZrvGkkPstUs=
+github.com/fluxcd/source-controller/api v0.25.0 h1:+uL+hQb/6h2MHuE9/Iq054TrDWF70puAuWBcoBrZK5M=
+github.com/fluxcd/source-controller/api v0.25.0/go.mod h1:tuMrqHHpRt7mxdLeRXGIMtTKAMufLwLTm5uXkEOJWFw=
 github.com/flynn/go-shlex v0.0.0-20150515145356-3f9db97f8568/go.mod h1:xEzjJPgXI435gkrCt3MPfRiAkVrwSbHsst4LCFVfpJc=
 github.com/fogleman/gg v1.2.1-0.20190220221249-0403632d5b90/go.mod h1:R/bRT+9gY/C5z7JzPU0zXsXHKM4/ayA+zqcVNZzPa1k=
 github.com/form3tech-oss/jwt-go v3.2.2+incompatible/go.mod h1:pbq4aXjuKjdthFRnoDwaVPLA+WlJuPGy+QneDUgJi2k=
@@ -949,8 +949,8 @@ github.com/grpc-ecosystem/grpc-gateway v1.9.5/go.mod h1:vNeuVxBJEsws4ogUvrchl83t
 github.com/grpc-ecosystem/grpc-gateway v1.12.1/go.mod h1:8XEsbTttt/W+VvjtQhLACqCisSPWTxCZ7sBRjU6iH9c=
 github.com/grpc-ecosystem/grpc-gateway v1.16.0 h1:gmcG1KaJ57LophUzW0Hy8NmPhnMZb4M0+kPpLofRdBo=
 github.com/grpc-ecosystem/grpc-gateway v1.16.0/go.mod h1:BDjrQk3hbvj6Nolgz8mAMFbcEtjT1g+wF4CSlocrBnw=
-github.com/grpc-ecosystem/grpc-gateway/v2 v2.10.2 h1:ERKrevVTnCw3Wu4I3mtR15QU3gtWy86cBo6De0jEohg=
-github.com/grpc-ecosystem/grpc-gateway/v2 v2.10.2/go.mod h1:chrfS3YoLAlKTRE5cFWvCbt8uGAjshktT4PveTUpsFQ=
+github.com/grpc-ecosystem/grpc-gateway/v2 v2.10.3 h1:BGNSrTRW4rwfhJiFwvwF4XQ0Y72Jj9YEgxVrtovbD5o=
+github.com/grpc-ecosystem/grpc-gateway/v2 v2.10.3/go.mod h1:VHn7KgNsRriXa4mcgtkpR00OXyQY6g67JWMvn+R27A4=
 github.com/hashicorp/consul/api v1.1.0/go.mod h1:VmuI/Lkw1nC05EYQWNKwWGbkg+FbDBtguAZLlVdkD9Q=
 github.com/hashicorp/consul/api v1.3.0/go.mod h1:MmDNSzIMUjNpY/mQ398R4bk2FnqQLoPndWW5VkKPlCE=
 github.com/hashicorp/consul/api v1.11.0/go.mod h1:XjsvQN+RJGWI2TWy1/kqaE16HrR2J/FWgkYjdZQsX9M=
