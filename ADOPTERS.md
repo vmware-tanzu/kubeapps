@@ -19,7 +19,7 @@ CoreWeave is a specialized cloud provider, built for GPU-accelerated use cases. 
 
 **[Ledger](https://www.ledger.com/)**
 
-Kubeapps eases the deployment of our internal Helm charts for everybody, including those that are not familiar with Kubernetes. The ability to seamlessly integrate the Helm values with the web page (basic form support) is a killer-feature for us.
+Kubeapps eases the deployment of our internal Helm charts for everybody, including those that are not familiar with Kubernetes. The ability to seamlessly integrate the Helm values with the web page (basic form support) is an essential feature for us.
 
 **[SAP](https://www.sap.com/)** - Teapots team
 
