@@ -8,6 +8,8 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"strings"
+
 	apprepov1alpha1 "github.com/vmware-tanzu/kubeapps/cmd/apprepository-controller/pkg/apis/apprepository/v1alpha1"
 	corev1 "github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
 	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/pkg/statuserror"
@@ -17,6 +19,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/kubernetes"
+	log "k8s.io/klog/v2"
 	"k8s.io/kubernetes/pkg/credentialprovider"
 )
 
@@ -273,4 +276,167 @@ func validateUserManagedRepoSecret(
 		}
 	}
 	return secret, nil
+}
+
+func (s *Server) updateKubeappsManagedRepoSecret(ctx context.Context, repo *HelmRepository, existingSecretRef string) (secret *k8scorev1.Secret, updateRepo bool, err error) {
+	secret, isSameSecret, err := newSecretFromTlsConfigAndAuth(repo.name, repo.tlsConfig, repo.auth)
+	if err != nil {
+		return nil, false, err
+	} else if isSameSecret {
+		// Do nothing if repo auth data came redacted
+		return nil, false, nil
+	}
+
+	typedClient, err := s.clientGetter.Typed(ctx, repo.cluster)
+	if err != nil {
+		return nil, false, err
+	}
+	secretInterface := typedClient.CoreV1().Secrets(repo.name.Namespace)
+	if secret != nil {
+		if existingSecretRef == "" {
+			// create a secret first
+			newSecret, err := secretInterface.Create(ctx, secret, metav1.CreateOptions{})
+			if err != nil {
+				return nil, false, statuserror.FromK8sError("create", "secret", secret.GetGenerateName(), err)
+			}
+			return newSecret, true, nil
+		} else {
+			// TODO (gfichtenholt) we should optimize this to somehow tell if the existing secret
+			// is the same (data-wise) as the new one and if so skip all this
+			if err = secretInterface.Delete(ctx, existingSecretRef, metav1.DeleteOptions{}); err != nil {
+				return nil, false, statuserror.FromK8sError("get", "secret", existingSecretRef, err)
+			}
+			// create a new one
+			newSecret, err := secretInterface.Create(ctx, secret, metav1.CreateOptions{})
+			if err != nil {
+				return nil, false, statuserror.FromK8sError("update", "secret", secret.GetGenerateName(), err)
+			}
+			return newSecret, true, nil
+		}
+	} else if existingSecretRef != "" {
+		if err = secretInterface.Delete(ctx, existingSecretRef, metav1.DeleteOptions{}); err != nil {
+			log.Errorf("Error deleting existing secret: [%s] due to %v", err)
+		}
+	}
+	return secret, true, nil
+}
+
+func getRepoTlsConfigAndAuthWithUserManagedSecrets(source *apprepov1alpha1.AppRepository,
+	caSecret *k8scorev1.Secret, authSecret *k8scorev1.Secret) (*corev1.PackageRepositoryTlsConfig, *corev1.PackageRepositoryAuth, error) {
+	tlsConfig := &corev1.PackageRepositoryTlsConfig{
+		InsecureSkipVerify: source.Spec.TLSInsecureSkipVerify,
+	}
+	auth := &corev1.PackageRepositoryAuth{
+		PassCredentials: source.Spec.PassCredentials,
+	}
+
+	if caSecret != nil {
+		if _, ok := caSecret.Data[SecretCaKey]; ok {
+			tlsConfig.PackageRepoTlsConfigOneOf = &corev1.PackageRepositoryTlsConfig_SecretRef{
+				SecretRef: &corev1.SecretKeyReference{
+					Name: caSecret.Name,
+					Key:  SecretCaKey,
+				},
+			}
+		}
+	}
+	if authSecret != nil {
+		if authHeader, ok := authSecret.Data[SecretAuthHeaderKey]; ok {
+			if strings.HasPrefix(string(authHeader), "Basic") {
+				auth.Type = corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_BASIC_AUTH
+			} else if strings.HasPrefix(string(authHeader), "Bearer") {
+				auth.Type = corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_BEARER
+			} else {
+				auth.Type = corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_CUSTOM
+			}
+			auth.PackageRepoAuthOneOf = &corev1.PackageRepositoryAuth_SecretRef{
+				SecretRef: &corev1.SecretKeyReference{
+					Name: authSecret.Name,
+					Key:  SecretAuthHeaderKey,
+				},
+			}
+		} else if _, ok := authSecret.Data[DockerConfigJsonKey]; ok {
+			auth.Type = corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_DOCKER_CONFIG_JSON
+			auth.PackageRepoAuthOneOf = &corev1.PackageRepositoryAuth_SecretRef{
+				SecretRef: &corev1.SecretKeyReference{
+					Name: authSecret.Name,
+					Key:  DockerConfigJsonKey,
+				},
+			}
+		} else {
+			auth.Type = corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_UNSPECIFIED
+			log.Warning("Unrecognized type of secret for auth [%s]", authSecret.Name)
+		}
+	}
+	return tlsConfig, auth, nil
+}
+
+func getRepoTlsConfigAndAuthWithKubeappsManagedSecrets(source *apprepov1alpha1.AppRepository,
+	caSecret *k8scorev1.Secret, authSecret *k8scorev1.Secret) (*corev1.PackageRepositoryTlsConfig, *corev1.PackageRepositoryAuth, error) {
+	var tlsConfig *corev1.PackageRepositoryTlsConfig
+	var auth *corev1.PackageRepositoryAuth
+
+	if source.Spec.TLSInsecureSkipVerify {
+		tlsConfig = &corev1.PackageRepositoryTlsConfig{
+			InsecureSkipVerify: source.Spec.TLSInsecureSkipVerify,
+		}
+	}
+	if source.Spec.PassCredentials {
+		auth = &corev1.PackageRepositoryAuth{
+			PassCredentials: source.Spec.PassCredentials,
+		}
+	}
+
+	if caSecret != nil {
+		if _, ok := caSecret.Data[SecretCaKey]; ok {
+			if tlsConfig == nil {
+				tlsConfig = &corev1.PackageRepositoryTlsConfig{}
+			}
+			tlsConfig.PackageRepoTlsConfigOneOf = &corev1.PackageRepositoryTlsConfig_CertAuthority{
+				CertAuthority: RedactedString,
+			}
+		}
+	}
+
+	if authSecret != nil {
+		if auth == nil {
+			auth = &corev1.PackageRepositoryAuth{}
+		}
+		if authHeader, ok := authSecret.Data[SecretAuthHeaderKey]; ok {
+			if strings.HasPrefix(string(authHeader), "Basic") {
+				auth.Type = corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_BASIC_AUTH
+				auth.PackageRepoAuthOneOf = &corev1.PackageRepositoryAuth_UsernamePassword{
+					UsernamePassword: &corev1.UsernamePassword{
+						Username: RedactedString,
+						Password: RedactedString,
+					},
+				}
+			} else if strings.HasPrefix(string(authHeader), "Bearer") {
+				auth.Type = corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_BEARER
+				auth.PackageRepoAuthOneOf = &corev1.PackageRepositoryAuth_Header{
+					Header: RedactedString,
+				}
+			} else {
+				auth.Type = corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_CUSTOM
+				auth.PackageRepoAuthOneOf = &corev1.PackageRepositoryAuth_Header{
+					Header: RedactedString,
+				}
+			}
+
+		} else if _, ok := authSecret.Data[DockerConfigJsonKey]; ok {
+			auth.Type = corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_DOCKER_CONFIG_JSON
+			auth.PackageRepoAuthOneOf = &corev1.PackageRepositoryAuth_DockerCreds{
+				DockerCreds: &corev1.DockerCredentials{
+					Username: RedactedString,
+					Password: RedactedString,
+					Email:    RedactedString,
+					Server:   RedactedString,
+				},
+			}
+		} else {
+			auth.Type = corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_UNSPECIFIED
+			log.Warning("Unrecognized type of secret for auth [%s]", authSecret.Name)
+		}
+	}
+	return tlsConfig, auth, nil
 }

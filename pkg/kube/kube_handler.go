@@ -405,7 +405,7 @@ type appRepositoryRequestDetails struct {
 	AuthRegCreds          string                  `json:"authRegCreds"`
 	RegistrySecrets       []string                `json:"registrySecrets"`
 	SyncJobPodTemplate    corev1.PodTemplateSpec  `json:"syncJobPodTemplate"`
-	ResyncRequests        uint                    `json:"resyncRequests"`
+	ResyncRequests        int                     `json:"resyncRequests"`
 	OCIRepositories       []string                `json:"ociRepositories"`
 	TLSInsecureSkipVerify bool                    `json:"tlsInsecureSkipVerify"`
 	FilterRule            v1alpha1.FilterRuleSpec `json:"filterRule"`

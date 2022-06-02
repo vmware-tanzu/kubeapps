@@ -5,7 +5,6 @@ package main
 
 import (
 	"bytes"
-	"crypto/subtle"
 	"encoding/base64"
 	"fmt"
 	"io/ioutil"
@@ -31,7 +30,6 @@ const (
 	AppRepositoryGroup   = "kubeapps.com"
 	AppRepositoryVersion = "v1alpha1"
 	AppRepositoryApi     = AppRepositoryGroup + "/" + AppRepositoryVersion
-	AppRepositoryKind    = "AppRepository"
 )
 
 // misc global vars that get re-used in multiple tests
@@ -57,10 +55,10 @@ var (
 	}
 )
 
-func repoRef(id, namespace string) *corev1.PackageRepositoryReference {
+func repoRef(id, cluster, namespace string) *corev1.PackageRepositoryReference {
 	return &corev1.PackageRepositoryReference{
 		Context: &corev1.Context{
-			Cluster:   KubeappsCluster,
+			Cluster:   cluster,
 			Namespace: namespace,
 		},
 		Identifier: id,
@@ -68,18 +66,9 @@ func repoRef(id, namespace string) *corev1.PackageRepositoryReference {
 	}
 }
 
-// ref: https://stackoverflow.com/questions/21936332/idiomatic-way-of-requiring-http-basic-auth-in-go
-func basicAuth(handler http.HandlerFunc, username, password, realm string) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		user, pass, ok := r.BasicAuth()
-		if !ok || subtle.ConstantTimeCompare([]byte(user), []byte(username)) != 1 || subtle.ConstantTimeCompare([]byte(pass), []byte(password)) != 1 {
-			w.Header().Set("WWW-Authenticate", `Basic realm="`+realm+`"`)
-			w.WriteHeader(401)
-			w.Write([]byte("Unauthorised.\n"))
-			return
-		}
-		handler(w, r)
-	}
+// these are helpers to compare slices ignoring order
+func lessPackageRepositorySummaryFunc(p1, p2 *corev1.PackageRepositorySummary) bool {
+	return p1.Name < p2.Name
 }
 
 // ref: https://kubernetes.io/docs/concepts/configuration/secret/#basic-authentication-secret
@@ -112,18 +101,6 @@ func newAuthDockerSecret(name, namespace, jsonData string) *apiv1.Secret {
 		Type: apiv1.SecretTypeDockerConfigJson,
 		Data: map[string][]byte{
 			".dockerconfigjson": []byte(jsonData),
-		},
-	}
-}
-
-func tlsAuth(pub, priv []byte) *corev1.PackageRepositoryAuth {
-	return &corev1.PackageRepositoryAuth{
-		Type: corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_TLS,
-		PackageRepoAuthOneOf: &corev1.PackageRepositoryAuth_TlsCertKey{
-			TlsCertKey: &corev1.TlsCertKey{
-				Cert: string(pub),
-				Key:  string(priv),
-			},
 		},
 	}
 }
@@ -193,6 +170,10 @@ func testCert(name string) string {
 	return "./testdata/cert/" + name
 }
 
+func testYaml(name string) string {
+	return "./testdata/charts/" + name
+}
+
 // generate-cert.sh script in testdata directory is used to generate these files
 func getCertsForTesting(t *testing.T) (ca, pub, priv []byte) {
 	var err error
@@ -206,7 +187,7 @@ func getCertsForTesting(t *testing.T) (ca, pub, priv []byte) {
 	return ca, pub, priv
 }
 
-func newCtrlClient(repos []appRepov1.AppRepository) client.WithWatch {
+func newCtrlClient(repos []*appRepov1.AppRepository) client.WithWatch {
 	// Register required schema definitions
 	scheme := runtime.NewScheme()
 	appRepov1.AddToScheme(scheme)
@@ -221,7 +202,11 @@ func newCtrlClient(repos []appRepov1.AppRepository) client.WithWatch {
 	ctrlClientBuilder := ctrlfake.NewClientBuilder().WithScheme(scheme).WithRESTMapper(rm)
 	var initLists []client.ObjectList
 	if len(repos) > 0 {
-		initLists = append(initLists, &appRepov1.AppRepositoryList{Items: repos})
+		repoInst := make([]appRepov1.AppRepository, len(repos))
+		for i, repo := range repos {
+			repoInst[i] = *repo
+		}
+		initLists = append(initLists, &appRepov1.AppRepositoryList{Items: repoInst})
 	}
 	if len(initLists) > 0 {
 		ctrlClientBuilder = ctrlClientBuilder.WithLists(initLists...)
