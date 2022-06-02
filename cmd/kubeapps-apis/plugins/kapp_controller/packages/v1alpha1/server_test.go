@@ -6,9 +6,11 @@ package main
 import (
 	"context"
 	"fmt"
+	kappctrlpackageinstall "github.com/vmware-tanzu/carvel-kapp-controller/pkg/packageinstall"
 	"log"
 	"os"
 	"runtime"
+	"sort"
 	"strings"
 	"sync"
 	"testing"
@@ -26,11 +28,9 @@ import (
 	kappctrlv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
 	packagingv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/packaging/v1alpha1"
 	datapackagingv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/apis/datapackaging/v1alpha1"
-	kappctrlpackageinstall "github.com/vmware-tanzu/carvel-kapp-controller/pkg/packageinstall"
 	vendirversions "github.com/vmware-tanzu/carvel-vendir/pkg/vendir/versions/v1alpha1"
 	corev1 "github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
 	pluginv1 "github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/core/plugins/v1alpha1"
-	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/plugins/kapp_controller/packages/v1alpha1"
 	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/pkg/clientgetter"
 	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/pkg/pkgutils"
 	"google.golang.org/grpc/codes"
@@ -60,22 +60,32 @@ var ignoreUnexported = cmpopts.IgnoreUnexported(
 	corev1.GetAvailablePackageVersionsResponse{},
 	corev1.GetInstalledPackageResourceRefsResponse{},
 	corev1.GetInstalledPackageResourceRefsResponse{},
+	corev1.GetPackageRepositoryDetailResponse{},
 	corev1.InstalledPackageDetail{},
 	corev1.InstalledPackageReference{},
 	corev1.InstalledPackageStatus{},
 	corev1.InstalledPackageSummary{},
 	corev1.Maintainer{},
 	corev1.PackageAppVersion{},
+	corev1.PackageRepositoryDetail{},
+	corev1.PackageRepositoryReference{},
+	corev1.PackageRepositoryStatus{},
+	corev1.PackageRepositorySummary{},
 	corev1.ReconciliationOptions{},
 	corev1.ResourceRef{},
 	corev1.UpdateInstalledPackageResponse{},
 	corev1.VersionReference{},
 	kappControllerPluginParsedConfig{},
 	pluginv1.Plugin{},
-	v1alpha1.PackageRepository{},
 )
 
 var defaultContext = &corev1.Context{Cluster: "default", Namespace: "default"}
+var defaultGlobalContext = &corev1.Context{Cluster: defaultContext.Cluster, Namespace: globalPackagingNamespace}
+
+var defaultTypeMeta = metav1.TypeMeta{
+	Kind:       pkgRepositoryResource,
+	APIVersion: packagingAPIVersion,
+}
 
 var datapackagingAPIVersion = fmt.Sprintf("%s/%s", datapackagingv1alpha1.SchemeGroupVersion.Group, datapackagingv1alpha1.SchemeGroupVersion.Version)
 var packagingAPIVersion = fmt.Sprintf("%s/%s", packagingv1alpha1.SchemeGroupVersion.Group, packagingv1alpha1.SchemeGroupVersion.Version)
@@ -145,6 +155,7 @@ func TestGetClient(t *testing.T) {
 	}
 }
 
+// available packages
 func TestGetAvailablePackageSummaries(t *testing.T) {
 	testCases := []struct {
 		name               string
@@ -1637,6 +1648,8 @@ Some support information
 		})
 	}
 }
+
+// installed packages
 
 func TestGetInstalledPackageSummaries(t *testing.T) {
 	testCases := []struct {
@@ -5406,7 +5419,6 @@ func TestCreateInstalledPackage(t *testing.T) {
 				if got, want := createdPkgInstall, tc.expectedPackageInstall; !cmp.Equal(want, got, ignoreUnexported) {
 					t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, ignoreUnexported))
 				}
-
 			}
 		})
 	}
@@ -6322,32 +6334,127 @@ func TestGetInstalledPackageResourceRefs(t *testing.T) {
 	}
 }
 
-func TestGetPackageRepositories(t *testing.T) {
-	testCases := []struct {
-		name               string
-		request            *v1alpha1.GetPackageRepositoriesRequest
-		existingObjects    []k8sruntime.Object
-		expectedResponse   []*v1alpha1.PackageRepository
-		expectedStatusCode codes.Code
-	}{
-		{
-			name: "returns expected repositories",
-			request: &v1alpha1.GetPackageRepositoriesRequest{
-				Context: &corev1.Context{
-					Cluster:   "default",
-					Namespace: "default",
+// repositories
+
+func TestAddPackageRepository(t *testing.T) {
+	defaultRef := &corev1.PackageRepositoryReference{
+		Context:    defaultGlobalContext,
+		Plugin:     &pluginDetail,
+		Identifier: "globalrepo",
+	}
+	defaultRequest := func() *corev1.AddPackageRepositoryRequest {
+		return &corev1.AddPackageRepositoryRequest{
+			Context:  defaultGlobalContext,
+			Name:     "globalrepo",
+			Type:     Type_ImgPkgBundle,
+			Url:      "projects.registry.example.com/repo-1/main@sha256:abcd",
+			Interval: 86400,
+			Plugin:   &pluginDetail,
+		}
+	}
+	defaultRepository := func() *packagingv1alpha1.PackageRepository {
+		return &packagingv1alpha1.PackageRepository{
+			TypeMeta:   defaultTypeMeta,
+			ObjectMeta: metav1.ObjectMeta{Name: "globalrepo", Namespace: globalPackagingNamespace},
+			Spec: packagingv1alpha1.PackageRepositorySpec{
+				SyncPeriod: &metav1.Duration{Duration: time.Duration(24) * time.Hour},
+				Fetch: &packagingv1alpha1.PackageRepositoryFetch{
+					ImgpkgBundle: &kappctrlv1alpha1.AppFetchImgpkgBundle{
+						Image: "projects.registry.example.com/repo-1/main@sha256:abcd",
+					},
 				},
 			},
+			Status: packagingv1alpha1.PackageRepositoryStatus{},
+		}
+	}
+
+	testCases := []struct {
+		name                 string
+		existingObjects      []k8sruntime.Object
+		requestCustomizer    func(request *corev1.AddPackageRepositoryRequest) *corev1.AddPackageRepositoryRequest
+		repositoryCustomizer func(repository *packagingv1alpha1.PackageRepository) *packagingv1alpha1.PackageRepository
+		expectedStatusCode   codes.Code
+		expectedRef          *corev1.PackageRepositoryReference
+	}{
+		{
+			name: "validate cluster",
+			requestCustomizer: func(request *corev1.AddPackageRepositoryRequest) *corev1.AddPackageRepositoryRequest {
+				request.Context = &corev1.Context{Cluster: "other", Namespace: globalPackagingNamespace}
+				return request
+			},
+			expectedStatusCode: codes.InvalidArgument,
+		},
+		{
+			name: "validate name",
+			requestCustomizer: func(request *corev1.AddPackageRepositoryRequest) *corev1.AddPackageRepositoryRequest {
+				request.Name = ""
+				return request
+			},
+			expectedStatusCode: codes.InvalidArgument,
+		},
+		{
+			name: "validate desc",
+			requestCustomizer: func(request *corev1.AddPackageRepositoryRequest) *corev1.AddPackageRepositoryRequest {
+				request.Description = "some description"
+				return request
+			},
+			expectedStatusCode: codes.InvalidArgument,
+		},
+		{
+			name: "validate scope",
+			requestCustomizer: func(request *corev1.AddPackageRepositoryRequest) *corev1.AddPackageRepositoryRequest {
+				request.NamespaceScoped = true
+				return request
+			},
+			expectedStatusCode: codes.InvalidArgument,
+		},
+		{
+			name: "validate scope",
+			requestCustomizer: func(request *corev1.AddPackageRepositoryRequest) *corev1.AddPackageRepositoryRequest {
+				request.Context = &corev1.Context{Namespace: "foo", Cluster: defaultContext.Cluster}
+				request.NamespaceScoped = false
+				return request
+			},
+			expectedStatusCode: codes.InvalidArgument,
+		},
+		{
+			name: "validate type",
+			requestCustomizer: func(request *corev1.AddPackageRepositoryRequest) *corev1.AddPackageRepositoryRequest {
+				request.Type = Type_Image
+				return request
+			},
+			expectedStatusCode: codes.InvalidArgument,
+		},
+		{
+			name: "validate url",
+			requestCustomizer: func(request *corev1.AddPackageRepositoryRequest) *corev1.AddPackageRepositoryRequest {
+				request.Url = ""
+				return request
+			},
+			expectedStatusCode: codes.InvalidArgument,
+		},
+		{
+			name: "validate tls config",
+			requestCustomizer: func(request *corev1.AddPackageRepositoryRequest) *corev1.AddPackageRepositoryRequest {
+				request.TlsConfig = &corev1.PackageRepositoryTlsConfig{}
+				return request
+			},
+			expectedStatusCode: codes.InvalidArgument,
+		},
+		{
+			name: "validate auth",
+			requestCustomizer: func(request *corev1.AddPackageRepositoryRequest) *corev1.AddPackageRepositoryRequest {
+				request.Auth = &corev1.PackageRepositoryAuth{}
+				return request
+			},
+			expectedStatusCode: codes.InvalidArgument,
+		},
+		{
+			name: "validate exists in global ns",
 			existingObjects: []k8sruntime.Object{
 				&packagingv1alpha1.PackageRepository{
-					TypeMeta: metav1.TypeMeta{
-						Kind:       pkgRepositoryResource,
-						APIVersion: packagingAPIVersion,
-					},
-					ObjectMeta: metav1.ObjectMeta{
-						Name:      "repo-1",
-						Namespace: "default",
-					},
+					TypeMeta:   defaultTypeMeta,
+					ObjectMeta: metav1.ObjectMeta{Name: "globalrepo", Namespace: globalPackagingNamespace},
 					Spec: packagingv1alpha1.PackageRepositorySpec{
 						Fetch: &packagingv1alpha1.PackageRepositoryFetch{
 							ImgpkgBundle: &kappctrlv1alpha1.AppFetchImgpkgBundle{
@@ -6357,38 +6464,703 @@ func TestGetPackageRepositories(t *testing.T) {
 					},
 					Status: packagingv1alpha1.PackageRepositoryStatus{},
 				},
+			},
+			requestCustomizer: func(request *corev1.AddPackageRepositoryRequest) *corev1.AddPackageRepositoryRequest {
+				return request
+			},
+			expectedStatusCode: codes.AlreadyExists,
+		},
+		{
+			name: "validate exists in private ns",
+			existingObjects: []k8sruntime.Object{
 				&packagingv1alpha1.PackageRepository{
-					TypeMeta: metav1.TypeMeta{
-						Kind:       pkgRepositoryResource,
-						APIVersion: packagingAPIVersion,
-					},
-					ObjectMeta: metav1.ObjectMeta{
-						Name:      "repo-2",
-						Namespace: "default",
-					},
+					TypeMeta:   defaultTypeMeta,
+					ObjectMeta: metav1.ObjectMeta{Name: "nsrepo", Namespace: "privatens"},
 					Spec: packagingv1alpha1.PackageRepositorySpec{
 						Fetch: &packagingv1alpha1.PackageRepositoryFetch{
 							ImgpkgBundle: &kappctrlv1alpha1.AppFetchImgpkgBundle{
-								Image: "projects.registry.example.com/repo-2/main@sha256:abcd",
+								Image: "projects.registry.example.com/repo-1/main@sha256:abcd",
 							},
 						},
 					},
 					Status: packagingv1alpha1.PackageRepositoryStatus{},
 				},
 			},
-			expectedResponse: []*v1alpha1.PackageRepository{
-				{
-					Name:      "repo-1",
-					Url:       "projects.registry.example.com/repo-1/main@sha256:abcd",
-					Namespace: "default",
-					Plugin:    &pluginDetail,
+			requestCustomizer: func(request *corev1.AddPackageRepositoryRequest) *corev1.AddPackageRepositoryRequest {
+				request.Context = &corev1.Context{Namespace: "privatens", Cluster: defaultContext.Cluster}
+				request.Name = "nsrepo"
+				request.NamespaceScoped = true
+				return request
+			},
+			expectedStatusCode: codes.AlreadyExists,
+		},
+		{
+			name: "create with no interval",
+			requestCustomizer: func(request *corev1.AddPackageRepositoryRequest) *corev1.AddPackageRepositoryRequest {
+				request.Interval = 0
+				return request
+			},
+			repositoryCustomizer: func(repository *packagingv1alpha1.PackageRepository) *packagingv1alpha1.PackageRepository {
+				repository.Spec.SyncPeriod = nil
+				return repository
+			},
+			expectedStatusCode: codes.OK,
+			expectedRef:        defaultRef,
+		},
+		{
+			name: "create with interval",
+			requestCustomizer: func(request *corev1.AddPackageRepositoryRequest) *corev1.AddPackageRepositoryRequest {
+				request.Interval = 12 * 3600
+				return request
+			},
+			repositoryCustomizer: func(repository *packagingv1alpha1.PackageRepository) *packagingv1alpha1.PackageRepository {
+				repository.Spec.SyncPeriod = &metav1.Duration{Duration: time.Duration(12) * time.Hour}
+				return repository
+			},
+			expectedStatusCode: codes.OK,
+			expectedRef:        defaultRef,
+		},
+		{
+			name: "create with url",
+			requestCustomizer: func(request *corev1.AddPackageRepositoryRequest) *corev1.AddPackageRepositoryRequest {
+				request.Url = "foo"
+				return request
+			},
+			repositoryCustomizer: func(repository *packagingv1alpha1.PackageRepository) *packagingv1alpha1.PackageRepository {
+				repository.Spec.Fetch.ImgpkgBundle.Image = "foo"
+				return repository
+			},
+			expectedStatusCode: codes.OK,
+			expectedRef:        defaultRef,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			var unstructuredObjects []k8sruntime.Object
+			for _, obj := range tc.existingObjects {
+				unstructuredContent, _ := k8sruntime.DefaultUnstructuredConverter.ToUnstructured(obj)
+				unstructuredObjects = append(unstructuredObjects, &unstructured.Unstructured{Object: unstructuredContent})
+			}
+
+			dynamicClient := dynfake.NewSimpleDynamicClientWithCustomListKinds(
+				k8sruntime.NewScheme(),
+				map[schema.GroupVersionResource]string{
+					{Group: packagingv1alpha1.SchemeGroupVersion.Group, Version: packagingv1alpha1.SchemeGroupVersion.Version, Resource: pkgRepositoriesResource}: pkgRepositoryResource + "List",
 				},
-				{
-					Name:      "repo-2",
-					Url:       "projects.registry.example.com/repo-2/main@sha256:abcd",
-					Namespace: "default",
-					Plugin:    &pluginDetail,
+				unstructuredObjects...,
+			)
+
+			s := Server{
+				pluginConfig: defaultPluginConfig,
+				clientGetter: func(ctx context.Context, cluster string) (clientgetter.ClientInterfaces, error) {
+					return clientgetter.NewBuilder().WithDynamic(dynamicClient).Build(), nil
 				},
+				globalPackagingCluster:   defaultGlobalContext.Cluster,
+				globalPackagingNamespace: defaultGlobalContext.Namespace,
+			}
+
+			request := tc.requestCustomizer(defaultRequest())
+			response, err := s.AddPackageRepository(context.Background(), request)
+
+			if got, want := status.Code(err), tc.expectedStatusCode; got != want {
+				t.Fatalf("got error: %d, want: %d, err: %+v", got, want, err)
+			} else if got != codes.OK {
+				return
+			}
+
+			// check ref
+			if got, want := response.GetPackageRepoRef(), tc.expectedRef; !cmp.Equal(want, got, ignoreUnexported) {
+				t.Errorf("response mismatch (-want +got):\n%s", cmp.Diff(want, got, ignoreUnexported))
+			}
+
+			// check repository
+			repository, err := s.getPkgRepository(context.Background(), tc.expectedRef.Context.Cluster, tc.expectedRef.Context.Namespace, tc.expectedRef.Identifier)
+			if err != nil {
+				t.Fatalf("unexpected error retrieving repository: %+v", err)
+			}
+			expectedRepository := tc.repositoryCustomizer(defaultRepository())
+
+			if got, want := repository, expectedRepository; !cmp.Equal(want, got, ignoreUnexported) {
+				t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, ignoreUnexported))
+			}
+		})
+	}
+}
+
+func TestUpdatePackageRepository(t *testing.T) {
+	defaultRef := &corev1.PackageRepositoryReference{
+		Plugin:     &pluginDetail,
+		Context:    defaultGlobalContext,
+		Identifier: "globalrepo",
+	}
+	defaultRequest := func() *corev1.UpdatePackageRepositoryRequest {
+		return &corev1.UpdatePackageRepositoryRequest{
+			PackageRepoRef: &corev1.PackageRepositoryReference{
+				Plugin:     &pluginDetail,
+				Context:    &corev1.Context{Namespace: defaultGlobalContext.Namespace, Cluster: defaultGlobalContext.Cluster},
+				Identifier: "globalrepo",
+			},
+			Url:      "projects.registry.example.com/repo-1/main@sha256:abcd",
+			Interval: 86400,
+		}
+	}
+	defaultRepository := func() *packagingv1alpha1.PackageRepository {
+		return &packagingv1alpha1.PackageRepository{
+			TypeMeta:   defaultTypeMeta,
+			ObjectMeta: metav1.ObjectMeta{Name: "globalrepo", Namespace: defaultGlobalContext.Namespace},
+			Spec: packagingv1alpha1.PackageRepositorySpec{
+				SyncPeriod: &metav1.Duration{Duration: time.Duration(24) * time.Hour},
+				Fetch: &packagingv1alpha1.PackageRepositoryFetch{
+					ImgpkgBundle: &kappctrlv1alpha1.AppFetchImgpkgBundle{
+						Image: "projects.registry.example.com/repo-1/main@sha256:abcd",
+					},
+				},
+			},
+			Status: packagingv1alpha1.PackageRepositoryStatus{},
+		}
+	}
+
+	testCases := []struct {
+		name                 string
+		requestCustomizer    func(request *corev1.UpdatePackageRepositoryRequest) *corev1.UpdatePackageRepositoryRequest
+		repositoryCustomizer func(repository *packagingv1alpha1.PackageRepository) *packagingv1alpha1.PackageRepository
+		expectedStatusCode   codes.Code
+		expectedRef          *corev1.PackageRepositoryReference
+	}{
+		{
+			name: "validate cluster",
+			requestCustomizer: func(request *corev1.UpdatePackageRepositoryRequest) *corev1.UpdatePackageRepositoryRequest {
+				request.PackageRepoRef.Context = &corev1.Context{Cluster: "other", Namespace: globalPackagingNamespace}
+				return request
+			},
+			expectedStatusCode: codes.InvalidArgument,
+		},
+		{
+			name: "validate name",
+			requestCustomizer: func(request *corev1.UpdatePackageRepositoryRequest) *corev1.UpdatePackageRepositoryRequest {
+				request.PackageRepoRef.Identifier = ""
+				return request
+			},
+			expectedStatusCode: codes.InvalidArgument,
+		},
+		{
+			name: "validate desc",
+			requestCustomizer: func(request *corev1.UpdatePackageRepositoryRequest) *corev1.UpdatePackageRepositoryRequest {
+				request.Description = "some description"
+				return request
+			},
+			expectedStatusCode: codes.InvalidArgument,
+		},
+		{
+			name: "validate url",
+			requestCustomizer: func(request *corev1.UpdatePackageRepositoryRequest) *corev1.UpdatePackageRepositoryRequest {
+				request.Url = ""
+				return request
+			},
+			expectedStatusCode: codes.InvalidArgument,
+		},
+		{
+			name: "validate tls config",
+			requestCustomizer: func(request *corev1.UpdatePackageRepositoryRequest) *corev1.UpdatePackageRepositoryRequest {
+				request.TlsConfig = &corev1.PackageRepositoryTlsConfig{}
+				return request
+			},
+			expectedStatusCode: codes.InvalidArgument,
+		},
+		{
+			name: "validate auth",
+			requestCustomizer: func(request *corev1.UpdatePackageRepositoryRequest) *corev1.UpdatePackageRepositoryRequest {
+				request.Auth = &corev1.PackageRepositoryAuth{}
+				return request
+			},
+			expectedStatusCode: codes.InvalidArgument,
+		},
+		{
+			name: "validate not found",
+			requestCustomizer: func(request *corev1.UpdatePackageRepositoryRequest) *corev1.UpdatePackageRepositoryRequest {
+				request.PackageRepoRef.Identifier = "foo"
+				return request
+			},
+			expectedStatusCode: codes.NotFound,
+		},
+		{
+			name: "update with no interval",
+			requestCustomizer: func(request *corev1.UpdatePackageRepositoryRequest) *corev1.UpdatePackageRepositoryRequest {
+				request.Interval = 0
+				return request
+			},
+			repositoryCustomizer: func(repository *packagingv1alpha1.PackageRepository) *packagingv1alpha1.PackageRepository {
+				repository.Spec.SyncPeriod = nil
+				return repository
+			},
+			expectedStatusCode: codes.OK,
+			expectedRef:        defaultRef,
+		},
+		{
+			name: "updated with new interval",
+			requestCustomizer: func(request *corev1.UpdatePackageRepositoryRequest) *corev1.UpdatePackageRepositoryRequest {
+				request.Interval = 12 * 3600
+				return request
+			},
+			repositoryCustomizer: func(repository *packagingv1alpha1.PackageRepository) *packagingv1alpha1.PackageRepository {
+				repository.Spec.SyncPeriod = &metav1.Duration{Duration: time.Duration(12) * time.Hour}
+				return repository
+			},
+			expectedStatusCode: codes.OK,
+			expectedRef:        defaultRef,
+		},
+		{
+			name: "updated with new url",
+			requestCustomizer: func(request *corev1.UpdatePackageRepositoryRequest) *corev1.UpdatePackageRepositoryRequest {
+				request.Url = "foo"
+				return request
+			},
+			repositoryCustomizer: func(repository *packagingv1alpha1.PackageRepository) *packagingv1alpha1.PackageRepository {
+				repository.Spec.Fetch.ImgpkgBundle.Image = "foo"
+				return repository
+			},
+			expectedStatusCode: codes.OK,
+			expectedRef:        defaultRef,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			repository := defaultRepository()
+
+			var unstructuredObjects []k8sruntime.Object
+			for _, obj := range []k8sruntime.Object{repository} {
+				unstructuredContent, _ := k8sruntime.DefaultUnstructuredConverter.ToUnstructured(obj)
+				unstructuredObjects = append(unstructuredObjects, &unstructured.Unstructured{Object: unstructuredContent})
+			}
+
+			dynamicClient := dynfake.NewSimpleDynamicClientWithCustomListKinds(
+				k8sruntime.NewScheme(),
+				map[schema.GroupVersionResource]string{
+					{Group: packagingv1alpha1.SchemeGroupVersion.Group, Version: packagingv1alpha1.SchemeGroupVersion.Version, Resource: pkgRepositoriesResource}: pkgRepositoryResource + "List",
+				},
+				unstructuredObjects...,
+			)
+
+			s := Server{
+				pluginConfig: defaultPluginConfig,
+				clientGetter: func(ctx context.Context, cluster string) (clientgetter.ClientInterfaces, error) {
+					return clientgetter.NewBuilder().WithDynamic(dynamicClient).Build(), nil
+				},
+				globalPackagingCluster:   defaultGlobalContext.Cluster,
+				globalPackagingNamespace: defaultGlobalContext.Namespace,
+			}
+
+			request := tc.requestCustomizer(defaultRequest())
+			response, err := s.UpdatePackageRepository(context.Background(), request)
+
+			if got, want := status.Code(err), tc.expectedStatusCode; got != want {
+				t.Fatalf("got error: %d, want: %d, err: %+v", got, want, err)
+			} else if got != codes.OK {
+				return
+			}
+
+			// check ref
+			if got, want := response.GetPackageRepoRef(), tc.expectedRef; !cmp.Equal(want, got, ignoreUnexported) {
+				t.Errorf("response mismatch (-want +got):\n%s", cmp.Diff(want, got, ignoreUnexported))
+			}
+
+			// check repository
+			pkgrepository, err := s.getPkgRepository(context.Background(), tc.expectedRef.Context.Cluster, tc.expectedRef.Context.Namespace, tc.expectedRef.Identifier)
+			if err != nil {
+				t.Fatalf("unexpected error retrieving repository: %+v", err)
+			}
+			expectedRepository := tc.repositoryCustomizer(repository)
+
+			if got, want := pkgrepository, expectedRepository; !cmp.Equal(want, got, ignoreUnexported) {
+				t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, ignoreUnexported))
+			}
+		})
+	}
+}
+
+func TestDeletePackageRepository(t *testing.T) {
+	repository := &packagingv1alpha1.PackageRepository{
+		TypeMeta:   defaultTypeMeta,
+		ObjectMeta: metav1.ObjectMeta{Name: "globalrepo", Namespace: globalPackagingNamespace},
+		Spec: packagingv1alpha1.PackageRepositorySpec{
+			Fetch: &packagingv1alpha1.PackageRepositoryFetch{
+				ImgpkgBundle: &kappctrlv1alpha1.AppFetchImgpkgBundle{
+					Image: "projects.registry.example.com/repo-1/main@sha256:abcd",
+				},
+			},
+		},
+		Status: packagingv1alpha1.PackageRepositoryStatus{},
+	}
+
+	testCases := []struct {
+		name               string
+		existingObjects    []k8sruntime.Object
+		request            *corev1.DeletePackageRepositoryRequest
+		expectedStatusCode codes.Code
+	}{
+		{
+			name:            "delete - success",
+			existingObjects: []k8sruntime.Object{repository},
+			request: &corev1.DeletePackageRepositoryRequest{
+				PackageRepoRef: &corev1.PackageRepositoryReference{
+					Context:    defaultGlobalContext,
+					Plugin:     &pluginDetail,
+					Identifier: "globalrepo",
+				},
+			},
+			expectedStatusCode: codes.OK,
+		},
+		{
+			name:            "delete - not found (empty)",
+			existingObjects: []k8sruntime.Object{},
+			request: &corev1.DeletePackageRepositoryRequest{
+				PackageRepoRef: &corev1.PackageRepositoryReference{
+					Context:    defaultGlobalContext,
+					Plugin:     &pluginDetail,
+					Identifier: "globalrepo",
+				},
+			},
+			expectedStatusCode: codes.NotFound,
+		},
+		{
+			name:            "delete - not found (different)",
+			existingObjects: []k8sruntime.Object{repository},
+			request: &corev1.DeletePackageRepositoryRequest{
+				PackageRepoRef: &corev1.PackageRepositoryReference{
+					Context:    defaultGlobalContext,
+					Plugin:     &pluginDetail,
+					Identifier: "globalrepo2",
+				},
+			},
+			expectedStatusCode: codes.NotFound,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			var unstructuredObjects []k8sruntime.Object
+			for _, obj := range tc.existingObjects {
+				unstructuredContent, _ := k8sruntime.DefaultUnstructuredConverter.ToUnstructured(obj)
+				unstructuredObjects = append(unstructuredObjects, &unstructured.Unstructured{Object: unstructuredContent})
+			}
+
+			s := Server{
+				pluginConfig: defaultPluginConfig,
+				clientGetter: func(ctx context.Context, cluster string) (clientgetter.ClientInterfaces, error) {
+					return clientgetter.NewBuilder().
+						WithDynamic(dynfake.NewSimpleDynamicClientWithCustomListKinds(
+							k8sruntime.NewScheme(),
+							map[schema.GroupVersionResource]string{
+								{Group: packagingv1alpha1.SchemeGroupVersion.Group, Version: packagingv1alpha1.SchemeGroupVersion.Version, Resource: pkgRepositoriesResource}: pkgRepositoryResource + "List",
+							},
+							unstructuredObjects...,
+						)).Build(), nil
+				},
+				globalPackagingCluster:   defaultGlobalContext.Cluster,
+				globalPackagingNamespace: defaultGlobalContext.Namespace,
+			}
+
+			_, err := s.DeletePackageRepository(context.Background(), tc.request)
+
+			if got, want := status.Code(err), tc.expectedStatusCode; got != want {
+				t.Fatalf("got: %d, want: %d, err: %+v", got, want, err)
+			}
+		})
+	}
+}
+
+func TestGetPackageRepositoryDetail(t *testing.T) {
+	defaultRequest := func() *corev1.GetPackageRepositoryDetailRequest {
+		return &corev1.GetPackageRepositoryDetailRequest{
+			PackageRepoRef: &corev1.PackageRepositoryReference{
+				Plugin:     &pluginDetail,
+				Context:    &corev1.Context{Namespace: defaultGlobalContext.Namespace, Cluster: defaultGlobalContext.Cluster},
+				Identifier: "globalrepo",
+			},
+		}
+	}
+	defaultRepository := func() *packagingv1alpha1.PackageRepository {
+		return &packagingv1alpha1.PackageRepository{
+			TypeMeta:   defaultTypeMeta,
+			ObjectMeta: metav1.ObjectMeta{Name: "globalrepo", Namespace: defaultGlobalContext.Namespace},
+			Spec: packagingv1alpha1.PackageRepositorySpec{
+				SyncPeriod: &metav1.Duration{Duration: time.Duration(24) * time.Hour},
+				Fetch: &packagingv1alpha1.PackageRepositoryFetch{
+					ImgpkgBundle: &kappctrlv1alpha1.AppFetchImgpkgBundle{
+						Image: "projects.registry.example.com/repo-1/main@sha256:abcd",
+					},
+				},
+			},
+			Status: packagingv1alpha1.PackageRepositoryStatus{},
+		}
+	}
+	defaultResponse := func() *corev1.GetPackageRepositoryDetailResponse {
+		return &corev1.GetPackageRepositoryDetailResponse{
+			Detail: &corev1.PackageRepositoryDetail{
+				PackageRepoRef: &corev1.PackageRepositoryReference{
+					Plugin:     &pluginDetail,
+					Context:    &corev1.Context{Namespace: defaultGlobalContext.Namespace, Cluster: defaultGlobalContext.Cluster},
+					Identifier: "globalrepo",
+				},
+				Name:            "globalrepo",
+				NamespaceScoped: false,
+				Type:            Type_ImgPkgBundle,
+				Url:             "projects.registry.example.com/repo-1/main@sha256:abcd",
+				Interval:        24 * 3600,
+			},
+		}
+	}
+
+	testCases := []struct {
+		name                 string
+		requestCustomizer    func(request *corev1.GetPackageRepositoryDetailRequest) *corev1.GetPackageRepositoryDetailRequest
+		repositoryCustomizer func(repository *packagingv1alpha1.PackageRepository) *packagingv1alpha1.PackageRepository
+		responseCustomizer   func(response *corev1.GetPackageRepositoryDetailResponse) *corev1.GetPackageRepositoryDetailResponse
+		expectedStatusCode   codes.Code
+	}{
+		{
+			name: "not found",
+			requestCustomizer: func(request *corev1.GetPackageRepositoryDetailRequest) *corev1.GetPackageRepositoryDetailRequest {
+				request.PackageRepoRef.Identifier = "foo"
+				return request
+			},
+			expectedStatusCode: codes.NotFound,
+		},
+		{
+			name: "check ref",
+			repositoryCustomizer: func(repository *packagingv1alpha1.PackageRepository) *packagingv1alpha1.PackageRepository {
+				repository.ObjectMeta.Name = "foo"
+				repository.Name = "foo"
+				return repository
+			},
+			requestCustomizer: func(request *corev1.GetPackageRepositoryDetailRequest) *corev1.GetPackageRepositoryDetailRequest {
+				request.PackageRepoRef.Identifier = "foo"
+				return request
+			},
+			responseCustomizer: func(response *corev1.GetPackageRepositoryDetailResponse) *corev1.GetPackageRepositoryDetailResponse {
+				response.Detail.PackageRepoRef.Identifier = "foo"
+				response.Detail.Name = "foo"
+				return response
+			},
+			expectedStatusCode: codes.OK,
+		},
+		{
+			name:               "check name",
+			expectedStatusCode: codes.OK,
+		},
+		{
+			name:               "check global scope",
+			expectedStatusCode: codes.OK,
+		},
+		{
+			name: "check namespace scoped",
+			repositoryCustomizer: func(repository *packagingv1alpha1.PackageRepository) *packagingv1alpha1.PackageRepository {
+				repository.ObjectMeta.Namespace = "privatens"
+				return repository
+			},
+			requestCustomizer: func(request *corev1.GetPackageRepositoryDetailRequest) *corev1.GetPackageRepositoryDetailRequest {
+				request.PackageRepoRef.Context.Namespace = "privatens"
+				return request
+			},
+			responseCustomizer: func(response *corev1.GetPackageRepositoryDetailResponse) *corev1.GetPackageRepositoryDetailResponse {
+				response.Detail.PackageRepoRef.Context.Namespace = "privatens"
+				response.Detail.NamespaceScoped = true
+				return response
+			},
+			expectedStatusCode: codes.OK,
+		},
+		{
+			name:               "check type",
+			expectedStatusCode: codes.OK,
+		},
+		{
+			name: "check url",
+			repositoryCustomizer: func(repository *packagingv1alpha1.PackageRepository) *packagingv1alpha1.PackageRepository {
+				repository.Spec.Fetch.ImgpkgBundle.Image = "foo"
+				return repository
+			},
+			responseCustomizer: func(response *corev1.GetPackageRepositoryDetailResponse) *corev1.GetPackageRepositoryDetailResponse {
+				response.Detail.Url = "foo"
+				return response
+			},
+			expectedStatusCode: codes.OK,
+		},
+		{
+			name: "check interval (none)",
+			repositoryCustomizer: func(repository *packagingv1alpha1.PackageRepository) *packagingv1alpha1.PackageRepository {
+				repository.Spec.SyncPeriod = nil
+				return repository
+			},
+			responseCustomizer: func(response *corev1.GetPackageRepositoryDetailResponse) *corev1.GetPackageRepositoryDetailResponse {
+				response.Detail.Interval = 0
+				return response
+			},
+			expectedStatusCode: codes.OK,
+		},
+		{
+			name: "check interval (set)",
+			repositoryCustomizer: func(repository *packagingv1alpha1.PackageRepository) *packagingv1alpha1.PackageRepository {
+				repository.Spec.SyncPeriod = &metav1.Duration{Duration: time.Duration(12) * time.Hour}
+				return repository
+			},
+			responseCustomizer: func(response *corev1.GetPackageRepositoryDetailResponse) *corev1.GetPackageRepositoryDetailResponse {
+				response.Detail.Interval = 12 * 3600
+				return response
+			},
+			expectedStatusCode: codes.OK,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			repository := defaultRepository()
+			if tc.repositoryCustomizer != nil {
+				repository = tc.repositoryCustomizer(repository)
+			}
+
+			var unstructuredObjects []k8sruntime.Object
+			for _, obj := range []k8sruntime.Object{repository} {
+				unstructuredContent, _ := k8sruntime.DefaultUnstructuredConverter.ToUnstructured(obj)
+				unstructuredObjects = append(unstructuredObjects, &unstructured.Unstructured{Object: unstructuredContent})
+			}
+
+			dynamicClient := dynfake.NewSimpleDynamicClientWithCustomListKinds(
+				k8sruntime.NewScheme(),
+				map[schema.GroupVersionResource]string{
+					{Group: packagingv1alpha1.SchemeGroupVersion.Group, Version: packagingv1alpha1.SchemeGroupVersion.Version, Resource: pkgRepositoriesResource}: pkgRepositoryResource + "List",
+				},
+				unstructuredObjects...,
+			)
+
+			s := Server{
+				pluginConfig: defaultPluginConfig,
+				clientGetter: func(ctx context.Context, cluster string) (clientgetter.ClientInterfaces, error) {
+					return clientgetter.NewBuilder().WithDynamic(dynamicClient).Build(), nil
+				},
+				globalPackagingCluster:   defaultGlobalContext.Cluster,
+				globalPackagingNamespace: defaultGlobalContext.Namespace,
+			}
+
+			// invocation
+			request := defaultRequest()
+			if tc.requestCustomizer != nil {
+				request = tc.requestCustomizer(request)
+			}
+
+			response, err := s.GetPackageRepositoryDetail(context.Background(), request)
+
+			// checks
+			if got, want := status.Code(err), tc.expectedStatusCode; got != want {
+				t.Fatalf("got error: %d, want: %d, err: %+v", got, want, err)
+			} else if got != codes.OK {
+				return
+			}
+
+			if got, want := request.PackageRepoRef, response.Detail.PackageRepoRef; !cmp.Equal(want, got, ignoreUnexported) {
+				t.Errorf("ref mismatch (-want +got):\n%s", cmp.Diff(want, got, ignoreUnexported))
+			}
+
+			expectedResponse := defaultResponse()
+			if tc.responseCustomizer != nil {
+				expectedResponse = tc.responseCustomizer(expectedResponse)
+			}
+
+			if got, want := response, expectedResponse; !cmp.Equal(want, got, ignoreUnexported) {
+				t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, ignoreUnexported))
+			}
+		})
+	}
+}
+
+func TestGetPackageRepositorySummaries(t *testing.T) {
+	testCases := []struct {
+		name             string
+		existingObjects  []k8sruntime.Object
+		expectedResponse *corev1.PackageRepositorySummary
+	}{
+		{
+			name: "test namespace scope for private ns",
+			existingObjects: []k8sruntime.Object{
+				&packagingv1alpha1.PackageRepository{
+					TypeMeta:   defaultTypeMeta,
+					ObjectMeta: metav1.ObjectMeta{Name: "nsrepo", Namespace: "privatens"},
+					Spec: packagingv1alpha1.PackageRepositorySpec{
+						Fetch: &packagingv1alpha1.PackageRepositoryFetch{
+							ImgpkgBundle: &kappctrlv1alpha1.AppFetchImgpkgBundle{
+								Image: "projects.registry.example.com/repo-1/main@sha256:abcd",
+							},
+						},
+					},
+					Status: packagingv1alpha1.PackageRepositoryStatus{},
+				},
+			},
+			expectedResponse: &corev1.PackageRepositorySummary{
+				PackageRepoRef: &corev1.PackageRepositoryReference{
+					Context:    &corev1.Context{Namespace: "privatens", Cluster: defaultContext.Cluster},
+					Plugin:     &pluginDetail,
+					Identifier: "nsrepo",
+				},
+				Name:            "nsrepo",
+				NamespaceScoped: true,
+				Type:            Type_ImgPkgBundle,
+				Url:             "projects.registry.example.com/repo-1/main@sha256:abcd",
+			},
+		},
+		{
+			name: "test namespace scope for global ns",
+			existingObjects: []k8sruntime.Object{
+				&packagingv1alpha1.PackageRepository{
+					TypeMeta:   defaultTypeMeta,
+					ObjectMeta: metav1.ObjectMeta{Name: "globalrepo", Namespace: globalPackagingNamespace},
+					Spec: packagingv1alpha1.PackageRepositorySpec{
+						Fetch: &packagingv1alpha1.PackageRepositoryFetch{
+							ImgpkgBundle: &kappctrlv1alpha1.AppFetchImgpkgBundle{
+								Image: "projects.registry.example.com/repo-1/main@sha256:abcd",
+							},
+						},
+					},
+					Status: packagingv1alpha1.PackageRepositoryStatus{},
+				},
+			},
+			expectedResponse: &corev1.PackageRepositorySummary{
+				PackageRepoRef: &corev1.PackageRepositoryReference{
+					Context:    defaultGlobalContext,
+					Plugin:     &pluginDetail,
+					Identifier: "globalrepo",
+				},
+				Name:            "globalrepo",
+				NamespaceScoped: false,
+				Type:            Type_ImgPkgBundle,
+				Url:             "projects.registry.example.com/repo-1/main@sha256:abcd",
+			},
+		},
+		{
+			name: "test imgpkg translation",
+			existingObjects: []k8sruntime.Object{
+				&packagingv1alpha1.PackageRepository{
+					TypeMeta:   defaultTypeMeta,
+					ObjectMeta: metav1.ObjectMeta{Name: "globalrepo", Namespace: globalPackagingNamespace},
+					Spec: packagingv1alpha1.PackageRepositorySpec{
+						Fetch: &packagingv1alpha1.PackageRepositoryFetch{
+							ImgpkgBundle: &kappctrlv1alpha1.AppFetchImgpkgBundle{
+								Image: "projects.registry.example.com/repo-1/main@sha256:abcd",
+							},
+						},
+					},
+					Status: packagingv1alpha1.PackageRepositoryStatus{},
+				},
+			},
+			expectedResponse: &corev1.PackageRepositorySummary{
+				PackageRepoRef: &corev1.PackageRepositoryReference{
+					Context:    defaultGlobalContext,
+					Plugin:     &pluginDetail,
+					Identifier: "globalrepo",
+				},
+				Name: "globalrepo",
+				Type: Type_ImgPkgBundle,
+				Url:  "projects.registry.example.com/repo-1/main@sha256:abcd",
 			},
 		},
 	}
@@ -6411,29 +7183,365 @@ func TestGetPackageRepositories(t *testing.T) {
 								{Group: packagingv1alpha1.SchemeGroupVersion.Group, Version: packagingv1alpha1.SchemeGroupVersion.Version, Resource: pkgRepositoriesResource}: pkgRepositoryResource + "List",
 							},
 							unstructuredObjects...,
-						)), nil
+						)).Build(), nil
 				},
+				globalPackagingCluster:   defaultGlobalContext.Cluster,
+				globalPackagingNamespace: defaultGlobalContext.Namespace,
 			}
 
-			getPackageRepositoriesResponse, err := s.GetPackageRepositories(context.Background(), tc.request)
-
-			if got, want := status.Code(err), tc.expectedStatusCode; got != want {
-				t.Fatalf("got: %d, want: %d, err: %+v", got, want, err)
+			// should not happen
+			response, err := s.GetPackageRepositorySummaries(context.Background(), &corev1.GetPackageRepositorySummariesRequest{
+				Context: &corev1.Context{Namespace: ""},
+			})
+			if err != nil {
+				t.Fatalf("received unexpected error: %+v", err)
 			}
 
-			// Only check the response for OK status.
-			if tc.expectedStatusCode == codes.OK {
-				if getPackageRepositoriesResponse == nil {
-					t.Fatalf("got: nil, want: response")
-				} else {
-					if got, want := getPackageRepositoriesResponse.Repositories, tc.expectedResponse; !cmp.Equal(got, want, ignoreUnexported) {
-						t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, ignoreUnexported))
-					}
+			// fail fast
+			if len(response.GetPackageRepositorySummaries()) != 1 {
+				t.Fatalf("mistmatch on number of summaries received, expected 1 but got %d", len(response.PackageRepositorySummaries))
+			}
+			if got, want := response.PackageRepositorySummaries[0], tc.expectedResponse; !cmp.Equal(got, want, ignoreUnexported) {
+				t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, ignoreUnexported))
+			}
+		})
+	}
+}
+
+func TestGetPackageRepositorySummariesFiltering(t *testing.T) {
+	repositories := []k8sruntime.Object{
+		&packagingv1alpha1.PackageRepository{
+			TypeMeta:   defaultTypeMeta,
+			ObjectMeta: metav1.ObjectMeta{Name: "globalrepo", Namespace: globalPackagingNamespace},
+			Spec: packagingv1alpha1.PackageRepositorySpec{
+				Fetch: &packagingv1alpha1.PackageRepositoryFetch{
+					ImgpkgBundle: &kappctrlv1alpha1.AppFetchImgpkgBundle{
+						Image: "projects.registry.example.com/repo-1/main@sha256:abcd",
+					},
+				},
+			},
+			Status: packagingv1alpha1.PackageRepositoryStatus{},
+		},
+		&packagingv1alpha1.PackageRepository{
+			TypeMeta:   defaultTypeMeta,
+			ObjectMeta: metav1.ObjectMeta{Name: "nsrepo", Namespace: "privatens"},
+			Spec: packagingv1alpha1.PackageRepositorySpec{
+				Fetch: &packagingv1alpha1.PackageRepositoryFetch{
+					ImgpkgBundle: &kappctrlv1alpha1.AppFetchImgpkgBundle{
+						Image: "projects.registry.example.com/repo-1/main@sha256:abcd",
+					},
+				},
+			},
+			Status: packagingv1alpha1.PackageRepositoryStatus{},
+		},
+	}
+
+	testCases := []struct {
+		name             string
+		request          *corev1.GetPackageRepositorySummariesRequest
+		existingObjects  []k8sruntime.Object
+		expectedResponse []metav1.ObjectMeta
+	}{
+		{
+			name: "returns repositories from other namespace",
+			request: &corev1.GetPackageRepositorySummariesRequest{
+				Context: &corev1.Context{Namespace: "default"},
+			},
+			existingObjects:  repositories,
+			expectedResponse: []metav1.ObjectMeta{},
+		},
+		{
+			name: "returns repositories from given namespace",
+			request: &corev1.GetPackageRepositorySummariesRequest{
+				Context: &corev1.Context{Namespace: "privatens"},
+			},
+			existingObjects: repositories,
+			expectedResponse: []metav1.ObjectMeta{
+				metav1.ObjectMeta{Name: "nsrepo", Namespace: "privatens"},
+			},
+		},
+		{
+			name: "returns repositories from global namespace",
+			request: &corev1.GetPackageRepositorySummariesRequest{
+				Context: &corev1.Context{Namespace: globalPackagingNamespace},
+			},
+			existingObjects: repositories,
+			expectedResponse: []metav1.ObjectMeta{
+				metav1.ObjectMeta{Name: "globalrepo", Namespace: globalPackagingNamespace},
+			},
+		},
+		{
+			name: "returns repositories from all namespaces",
+			request: &corev1.GetPackageRepositorySummariesRequest{
+				Context: &corev1.Context{Namespace: ""},
+			},
+			existingObjects: repositories,
+			expectedResponse: []metav1.ObjectMeta{
+				metav1.ObjectMeta{Name: "globalrepo", Namespace: globalPackagingNamespace},
+				metav1.ObjectMeta{Name: "nsrepo", Namespace: "privatens"},
+			},
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			var unstructuredObjects []k8sruntime.Object
+			for _, obj := range tc.existingObjects {
+				unstructuredContent, _ := k8sruntime.DefaultUnstructuredConverter.ToUnstructured(obj)
+				unstructuredObjects = append(unstructuredObjects, &unstructured.Unstructured{Object: unstructuredContent})
+			}
+
+			s := Server{
+				pluginConfig: defaultPluginConfig,
+				clientGetter: func(ctx context.Context, cluster string) (clientgetter.ClientInterfaces, error) {
+					return clientgetter.NewBuilder().
+						WithDynamic(dynfake.NewSimpleDynamicClientWithCustomListKinds(
+							k8sruntime.NewScheme(),
+							map[schema.GroupVersionResource]string{
+								{Group: packagingv1alpha1.SchemeGroupVersion.Group, Version: packagingv1alpha1.SchemeGroupVersion.Version, Resource: pkgRepositoriesResource}: pkgRepositoryResource + "List",
+							},
+							unstructuredObjects...,
+						)).Build(), nil
+				},
+				globalPackagingNamespace: globalPackagingNamespace,
+			}
+
+			// should not happen
+			response, err := s.GetPackageRepositorySummaries(context.Background(), tc.request)
+			if err != nil {
+				t.Fatalf("received unexpected error: %+v", err)
+			}
+
+			// fail fast
+			if len(response.PackageRepositorySummaries) != len(tc.expectedResponse) {
+				t.Fatalf("mistmatch on number of summaries received, expected %d but got %d", len(tc.expectedResponse), len(response.PackageRepositorySummaries))
+			}
+
+			// sort response
+			sort.Slice(response.PackageRepositorySummaries, func(i, j int) bool {
+				refi := response.PackageRepositorySummaries[i].GetPackageRepoRef()
+				refj := response.PackageRepositorySummaries[j].GetPackageRepoRef()
+				return refi.GetIdentifier() < refj.GetIdentifier()
+			})
+
+			for i := 0; i < len(tc.expectedResponse); i++ {
+				expected := tc.expectedResponse[i]
+				receivedRef := response.PackageRepositorySummaries[i].GetPackageRepoRef()
+				if expected.Name != receivedRef.GetIdentifier() {
+					t.Fatalf("expected to received repository named %s but received name %s", expected.Name, receivedRef.GetIdentifier())
+				}
+				if expected.Namespace != receivedRef.GetContext().GetNamespace() {
+					t.Fatalf("expected to received repository in namespace %s but received namespace %s", expected.Namespace, receivedRef.GetContext().GetNamespace())
 				}
 			}
 		})
 	}
 }
+
+func TestGetPackageRepositoryStatus(t *testing.T) {
+	factory := func(status kappctrlv1alpha1.GenericStatus) *packagingv1alpha1.PackageRepository {
+		return &packagingv1alpha1.PackageRepository{
+			TypeMeta:   defaultTypeMeta,
+			ObjectMeta: metav1.ObjectMeta{Name: "nsrepo", Namespace: "privatens"},
+			Spec: packagingv1alpha1.PackageRepositorySpec{
+				Fetch: &packagingv1alpha1.PackageRepositoryFetch{
+					ImgpkgBundle: &kappctrlv1alpha1.AppFetchImgpkgBundle{
+						Image: "projects.registry.example.com/repo-1/main@sha256:abcd",
+					},
+				},
+			},
+			Status: packagingv1alpha1.PackageRepositoryStatus{
+				GenericStatus: status,
+			},
+		}
+	}
+
+	testCases := []struct {
+		name             string
+		existingStatus   kappctrlv1alpha1.GenericStatus
+		expectedResponse *corev1.PackageRepositoryStatus
+	}{
+		{
+			name: "default success case",
+			existingStatus: kappctrlv1alpha1.GenericStatus{
+				Conditions: []kappctrlv1alpha1.Condition{
+					{
+						Type:    kappctrlv1alpha1.ReconcileSucceeded,
+						Message: "Succeeded",
+					},
+				},
+			},
+			expectedResponse: &corev1.PackageRepositoryStatus{
+				Ready:      true,
+				Reason:     corev1.PackageRepositoryStatus_STATUS_REASON_SUCCESS,
+				UserReason: "Succeeded",
+			},
+		},
+		{
+			name: "reconciling, server message",
+			existingStatus: kappctrlv1alpha1.GenericStatus{
+				Conditions: []kappctrlv1alpha1.Condition{
+					{
+						Type:    kappctrlv1alpha1.Reconciling,
+						Message: "Fetching in progress",
+					},
+				},
+			},
+			expectedResponse: &corev1.PackageRepositoryStatus{
+				Reason:     corev1.PackageRepositoryStatus_STATUS_REASON_PENDING,
+				UserReason: "Fetching in progress",
+			},
+		},
+		{
+			name: "reconciling, default message",
+			existingStatus: kappctrlv1alpha1.GenericStatus{
+				Conditions: []kappctrlv1alpha1.Condition{
+					{
+						Type: kappctrlv1alpha1.Reconciling,
+					},
+				},
+			},
+			expectedResponse: &corev1.PackageRepositoryStatus{
+				Reason:     corev1.PackageRepositoryStatus_STATUS_REASON_PENDING,
+				UserReason: "Reconciling",
+			},
+		},
+		{
+			name: "deleting, server message",
+			existingStatus: kappctrlv1alpha1.GenericStatus{
+				Conditions: []kappctrlv1alpha1.Condition{
+					{
+						Type:    kappctrlv1alpha1.Deleting,
+						Message: "Terminating",
+					},
+				},
+			},
+			expectedResponse: &corev1.PackageRepositoryStatus{
+				Reason:     corev1.PackageRepositoryStatus_STATUS_REASON_PENDING,
+				UserReason: "Terminating",
+			},
+		},
+		{
+			name: "deleting, default message",
+			existingStatus: kappctrlv1alpha1.GenericStatus{
+				Conditions: []kappctrlv1alpha1.Condition{
+					{
+						Type: kappctrlv1alpha1.Deleting,
+					},
+				},
+			},
+			expectedResponse: &corev1.PackageRepositoryStatus{
+				Reason:     corev1.PackageRepositoryStatus_STATUS_REASON_PENDING,
+				UserReason: "Deleting",
+			},
+		},
+		{
+			name: "reconcilation failure",
+			existingStatus: kappctrlv1alpha1.GenericStatus{
+				Conditions: []kappctrlv1alpha1.Condition{
+					{
+						Type:    kappctrlv1alpha1.ReconcileFailed,
+						Message: "fetch failure",
+					},
+				},
+			},
+			expectedResponse: &corev1.PackageRepositoryStatus{
+				Reason:     corev1.PackageRepositoryStatus_STATUS_REASON_FAILED,
+				UserReason: "fetch failure",
+			},
+		},
+		{
+			name: "reconcilation failure, extra error message",
+			existingStatus: kappctrlv1alpha1.GenericStatus{
+				Conditions: []kappctrlv1alpha1.Condition{
+					{
+						Type:    kappctrlv1alpha1.ReconcileFailed,
+						Message: "see .status.usefulErrorMessage for detailed error message",
+					},
+				},
+				UsefulErrorMessage: "fetch failed connecting to registry",
+			},
+			expectedResponse: &corev1.PackageRepositoryStatus{
+				Reason:     corev1.PackageRepositoryStatus_STATUS_REASON_FAILED,
+				UserReason: "fetch failed connecting to registry",
+			},
+		},
+		{
+			name: "deletion failure",
+			existingStatus: kappctrlv1alpha1.GenericStatus{
+				Conditions: []kappctrlv1alpha1.Condition{
+					{
+						Type:    kappctrlv1alpha1.DeleteFailed,
+						Message: "failed termination",
+					},
+				},
+			},
+			expectedResponse: &corev1.PackageRepositoryStatus{
+				Reason:     corev1.PackageRepositoryStatus_STATUS_REASON_FAILED,
+				UserReason: "failed termination",
+			},
+		},
+		{
+			name: "unknown type",
+			existingStatus: kappctrlv1alpha1.GenericStatus{
+				Conditions: []kappctrlv1alpha1.Condition{
+					{
+						Type:    "unknown",
+						Message: "unexpected failure",
+					},
+				},
+			},
+			expectedResponse: &corev1.PackageRepositoryStatus{
+				Reason:     corev1.PackageRepositoryStatus_STATUS_REASON_UNSPECIFIED,
+				UserReason: "unexpected failure",
+			},
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			var repository = factory(tc.existingStatus)
+
+			var unstructuredObjects []k8sruntime.Object
+			unstructuredContent, _ := k8sruntime.DefaultUnstructuredConverter.ToUnstructured(repository)
+			unstructuredObjects = append(unstructuredObjects, &unstructured.Unstructured{Object: unstructuredContent})
+
+			s := Server{
+				pluginConfig: defaultPluginConfig,
+				clientGetter: func(ctx context.Context, cluster string) (clientgetter.ClientInterfaces, error) {
+					return clientgetter.NewBuilder().
+						WithDynamic(dynfake.NewSimpleDynamicClientWithCustomListKinds(
+							k8sruntime.NewScheme(),
+							map[schema.GroupVersionResource]string{
+								{Group: packagingv1alpha1.SchemeGroupVersion.Group, Version: packagingv1alpha1.SchemeGroupVersion.Version, Resource: pkgRepositoriesResource}: pkgRepositoryResource + "List",
+							},
+							unstructuredObjects...,
+						)).Build(), nil
+				},
+				globalPackagingCluster:   defaultGlobalContext.Cluster,
+				globalPackagingNamespace: defaultGlobalContext.Namespace,
+			}
+
+			// should not happen
+			response, err := s.GetPackageRepositorySummaries(context.Background(), &corev1.GetPackageRepositorySummariesRequest{
+				Context: &corev1.Context{Namespace: ""},
+			})
+			if err != nil {
+				t.Fatalf("received unexpected error: %+v", err)
+			}
+
+			// fail fast
+			if len(response.GetPackageRepositorySummaries()) != 1 {
+				t.Fatalf("mistmatch on number of summaries received, expected 1 but got %d", len(response.PackageRepositorySummaries))
+			}
+			if got, want := response.PackageRepositorySummaries[0].Status, tc.expectedResponse; !cmp.Equal(got, want, ignoreUnexported) {
+				t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, ignoreUnexported))
+			}
+		})
+	}
+}
+
+// plugin
 
 func TestParsePluginConfig(t *testing.T) {
 	testCases := []struct {

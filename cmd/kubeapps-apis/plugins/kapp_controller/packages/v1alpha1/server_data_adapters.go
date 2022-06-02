@@ -15,7 +15,6 @@ import (
 	"github.com/vmware-tanzu/carvel-vendir/pkg/vendir/versions"
 	vendirversions "github.com/vmware-tanzu/carvel-vendir/pkg/vendir/versions/v1alpha1"
 	corev1 "github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
-	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/plugins/kapp_controller/packages/v1alpha1"
 	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/pkg/pkgutils"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -23,6 +22,16 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	log "k8s.io/klog/v2"
 )
+
+const (
+	Type_Inline       = "inline"
+	Type_Image        = "image"
+	Type_ImgPkgBundle = "imgpkgBundle"
+	Type_HTTP         = "http"
+	Type_GIT          = "git"
+)
+
+// available packages
 
 func (s *Server) buildAvailablePackageSummary(pkgMetadata *datapackagingv1alpha1.PackageMetadata, latestVersion string, cluster string) *corev1.AvailablePackageSummary {
 	var iconStringBuilder strings.Builder
@@ -133,6 +142,8 @@ func (s *Server) buildAvailablePackageDetail(pkgMetadata *datapackagingv1alpha1.
 	}
 	return availablePackageDetail, nil
 }
+
+// installed packages
 
 func (s *Server) buildInstalledPackageSummary(pkgInstall *packagingv1alpha1.PackageInstall, pkgMetadata *datapackagingv1alpha1.PackageMetadata, pkgVersionsMap map[string][]pkgSemver, cluster string) (*corev1.InstalledPackageSummary, error) {
 	// get the versions associated with the package
@@ -400,33 +411,207 @@ func (s *Server) buildPkgInstall(installedPackageName, targetCluster, targetName
 	return pkgInstall, nil
 }
 
-func getPackageRepository(pr *packagingv1alpha1.PackageRepository) (*v1alpha1.PackageRepository, error) {
-	// See the PackageRepository CR at
-	// https://carvel.dev/kapp-controller/docs/latest/packaging/#packagerepository-cr
+// package repositories
 
-	repoURL := ""
+func (s *Server) buildPackageRepositorySummary(pr *packagingv1alpha1.PackageRepository, cluster string) (*corev1.PackageRepositorySummary, error) {
 
-	// TODO(agamez): this is a temporary solution
-	if pr.Spec.Fetch != nil && pr.Spec.Fetch.ImgpkgBundle != nil {
-		repoURL = pr.Spec.Fetch.ImgpkgBundle.Image
-	} else if pr.Spec.Fetch != nil && pr.Spec.Fetch.Image != nil {
-		repoURL = pr.Spec.Fetch.Image.URL
-	} else if pr.Spec.Fetch != nil && pr.Spec.Fetch.HTTP != nil {
-		repoURL = pr.Spec.Fetch.HTTP.URL
-	} else if pr.Spec.Fetch != nil && pr.Spec.Fetch.Git != nil {
-		repoURL = pr.Spec.Fetch.Git.URL
+	// base struct
+	repository := &corev1.PackageRepositorySummary{
+		PackageRepoRef: &corev1.PackageRepositoryReference{
+			Context: &corev1.Context{
+				Cluster:   cluster,
+				Namespace: pr.Namespace,
+			},
+			Plugin:     GetPluginDetail(),
+			Identifier: pr.Name,
+		},
+		Name:            pr.Name,
+		NamespaceScoped: s.globalPackagingNamespace != pr.Namespace,
 	}
 
-	if repoURL == "" {
-		return nil, fmt.Errorf("packagerepository without fetch of one of imgpkgBundle, image, http or git: %v", pr)
+	// handle fetch-specific configuration
+	fetch := pr.Spec.Fetch
+	switch {
+	case fetch.Inline != nil:
+		repository.Type = Type_Inline
+	case fetch.Image != nil:
+		repository.Type = Type_Image
+		repository.Url = fetch.Image.URL
+	case fetch.ImgpkgBundle != nil:
+		repository.Type = Type_ImgPkgBundle
+		repository.Url = fetch.ImgpkgBundle.Image
+	case fetch.HTTP != nil:
+		repository.Type = Type_HTTP
+		repository.Url = fetch.HTTP.URL
+	case fetch.Git != nil:
+		repository.Type = Type_GIT
+		repository.Url = fetch.Git.URL
+	default:
+		return nil, fmt.Errorf("the package repository has a fetch directive that is not supported")
 	}
 
-	repo := &v1alpha1.PackageRepository{
-		Name:      pr.Name,
-		Namespace: pr.Namespace,
-		Url:       repoURL,
-		Plugin:    &pluginDetail,
+	// extract status
+	if len(pr.Status.Conditions) > 0 {
+		repository.Status = &corev1.PackageRepositoryStatus{
+			Ready:      pr.Status.Conditions[0].Type == kappctrlv1alpha1.ReconcileSucceeded,
+			Reason:     statusReason(pr.Status.Conditions[0]),
+			UserReason: statusUserReason(pr.Status.Conditions[0], pr.Status.UsefulErrorMessage),
+		}
 	}
 
-	return repo, nil
+	// result
+	return repository, nil
+}
+
+func (s *Server) buildPackageRepository(pr *packagingv1alpha1.PackageRepository, cluster string) (*corev1.PackageRepositoryDetail, error) {
+
+	// base struct
+	repository := &corev1.PackageRepositoryDetail{
+		PackageRepoRef: &corev1.PackageRepositoryReference{
+			Context: &corev1.Context{
+				Cluster:   cluster,
+				Namespace: pr.Namespace,
+			},
+			Plugin:     GetPluginDetail(),
+			Identifier: pr.Name,
+		},
+		Name:            pr.Name,
+		NamespaceScoped: s.globalPackagingNamespace != pr.Namespace,
+	}
+
+	// synchronization
+	if pr.Spec.SyncPeriod != nil {
+		repository.Interval = uint32(pr.Spec.SyncPeriod.Seconds())
+	}
+
+	// handle fetch-specific configuration (todo -> handle custom configuration)
+	fetch := pr.Spec.Fetch
+	switch {
+	case fetch.Inline != nil:
+		repository.Type = Type_Inline
+	case fetch.Image != nil:
+		repository.Type = Type_Image
+		repository.Url = fetch.Image.URL
+	case fetch.ImgpkgBundle != nil:
+		repository.Type = Type_ImgPkgBundle
+		repository.Url = fetch.ImgpkgBundle.Image
+	case fetch.HTTP != nil:
+		repository.Type = Type_HTTP
+		repository.Url = fetch.HTTP.URL
+	case fetch.Git != nil:
+		repository.Type = Type_GIT
+		repository.Url = fetch.Git.URL
+	default:
+		return nil, fmt.Errorf("the package repository has a fetch directive that is not supported")
+	}
+
+	// auth
+
+	// extract status
+	if len(pr.Status.Conditions) > 0 {
+		repository.Status = &corev1.PackageRepositoryStatus{
+			Ready:      pr.Status.Conditions[0].Type == kappctrlv1alpha1.ReconcileSucceeded,
+			Reason:     statusReason(pr.Status.Conditions[0]),
+			UserReason: statusUserReason(pr.Status.Conditions[0], pr.Status.UsefulErrorMessage),
+		}
+	}
+
+	// result
+	return repository, nil
+}
+
+func (s *Server) buildPkgRepositoryCreate(request *corev1.AddPackageRepositoryRequest) (*packagingv1alpha1.PackageRepository, error) {
+	// identifier
+	namespace := request.GetContext().GetNamespace()
+	if namespace == "" {
+		namespace = s.globalPackagingNamespace
+	}
+	name := request.GetName()
+
+	// repository stub
+	repository := &packagingv1alpha1.PackageRepository{
+		TypeMeta: metav1.TypeMeta{
+			Kind:       pkgRepositoryResource,
+			APIVersion: fmt.Sprintf("%s/%s", packagingv1alpha1.SchemeGroupVersion.Group, packagingv1alpha1.SchemeGroupVersion.Version),
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:        name,
+			Namespace:   namespace,
+			Annotations: map[string]string{},
+		},
+		Spec: packagingv1alpha1.PackageRepositorySpec{},
+	}
+
+	// synchronization
+	interval := request.GetInterval()
+	if interval > 0 {
+		repository.Spec.SyncPeriod = &metav1.Duration{Duration: time.Duration(interval) * time.Second}
+	}
+
+	// fetch (todo -> add support for other directives than just imgkpg)
+	repository.Spec.Fetch = &packagingv1alpha1.PackageRepositoryFetch{
+		ImgpkgBundle: &kappctrlv1alpha1.AppFetchImgpkgBundle{
+			Image: request.GetUrl(),
+		},
+	}
+
+	return repository, nil
+}
+
+func (s *Server) buildPkgRepositoryUpdate(request *corev1.UpdatePackageRepositoryRequest, repository *packagingv1alpha1.PackageRepository) (*packagingv1alpha1.PackageRepository, error) {
+	// repository stub
+	repository.Spec = packagingv1alpha1.PackageRepositorySpec{}
+
+	// synchronization
+	interval := request.GetInterval()
+	if interval > 0 {
+		repository.Spec.SyncPeriod = &metav1.Duration{Duration: time.Duration(interval) * time.Second}
+	}
+
+	// fetch (todo -> add support for other directives than just imgkpg)
+	repository.Spec.Fetch = &packagingv1alpha1.PackageRepositoryFetch{
+		ImgpkgBundle: &kappctrlv1alpha1.AppFetchImgpkgBundle{
+			Image: request.GetUrl(),
+		},
+	}
+
+	return repository, nil
+}
+
+// utils
+
+func statusReason(status kappctrlv1alpha1.Condition) corev1.PackageRepositoryStatus_StatusReason {
+	switch status.Type {
+	case kappctrlv1alpha1.ReconcileSucceeded:
+		return corev1.PackageRepositoryStatus_STATUS_REASON_SUCCESS
+	case kappctrlv1alpha1.Reconciling, kappctrlv1alpha1.Deleting:
+		return corev1.PackageRepositoryStatus_STATUS_REASON_PENDING
+	case kappctrlv1alpha1.ReconcileFailed, kappctrlv1alpha1.DeleteFailed:
+		return corev1.PackageRepositoryStatus_STATUS_REASON_FAILED
+	}
+	// Fall back to unknown/unspecified.
+	return corev1.PackageRepositoryStatus_STATUS_REASON_UNSPECIFIED
+}
+
+func statusUserReason(status kappctrlv1alpha1.Condition, usefulerror string) string {
+	switch status.Type {
+	case kappctrlv1alpha1.ReconcileSucceeded:
+		return status.Message
+	case kappctrlv1alpha1.Reconciling:
+		if status.Message == "" {
+			return "Reconciling"
+		}
+		return status.Message
+	case kappctrlv1alpha1.Deleting:
+		if status.Message == "" {
+			return "Deleting"
+		}
+		return status.Message
+	}
+
+	if strings.Contains(status.Message, ".status.usefulErrorMessage") {
+		return usefulerror
+	} else {
+		return status.Message
+	}
 }

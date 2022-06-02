@@ -1,7 +1,7 @@
 /* eslint-disable */
 import Long from "long";
 import { grpc } from "@improbable-eng/grpc-web";
-import _m0 from "protobufjs/minimal";
+import * as _m0 from "protobufjs/minimal";
 import {
   InstalledPackageReference,
   ResourceRef,
@@ -84,8 +84,9 @@ export function secretTypeToJSON(object: SecretType): string {
       return "SECRET_TYPE_TLS";
     case SecretType.SECRET_TYPE_BOOTSTRAP_TOKEN:
       return "SECRET_TYPE_BOOTSTRAP_TOKEN";
+    case SecretType.UNRECOGNIZED:
     default:
-      return "UNKNOWN";
+      return "UNRECOGNIZED";
   }
 }
 

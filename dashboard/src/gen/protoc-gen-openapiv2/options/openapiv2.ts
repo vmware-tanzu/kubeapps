@@ -1,6 +1,6 @@
 /* eslint-disable */
 import Long from "long";
-import _m0 from "protobufjs/minimal";
+import * as _m0 from "protobufjs/minimal";
 import { Value } from "../../google/protobuf/struct";
 
 export const protobufPackage = "grpc.gateway.protoc_gen_openapiv2.options";
@@ -54,8 +54,9 @@ export function schemeToJSON(object: Scheme): string {
       return "WS";
     case Scheme.WSS:
       return "WSS";
+    case Scheme.UNRECOGNIZED:
     default:
-      return "UNKNOWN";
+      return "UNRECOGNIZED";
   }
 }
 
@@ -659,8 +660,9 @@ export function jSONSchema_JSONSchemaSimpleTypesToJSON(
       return "OBJECT";
     case JSONSchema_JSONSchemaSimpleTypes.STRING:
       return "STRING";
+    case JSONSchema_JSONSchemaSimpleTypes.UNRECOGNIZED:
     default:
-      return "UNKNOWN";
+      return "UNRECOGNIZED";
   }
 }
 
@@ -820,8 +822,9 @@ export function securityScheme_TypeToJSON(object: SecurityScheme_Type): string {
       return "TYPE_API_KEY";
     case SecurityScheme_Type.TYPE_OAUTH2:
       return "TYPE_OAUTH2";
+    case SecurityScheme_Type.UNRECOGNIZED:
     default:
-      return "UNKNOWN";
+      return "UNRECOGNIZED";
   }
 }
 
@@ -859,8 +862,9 @@ export function securityScheme_InToJSON(object: SecurityScheme_In): string {
       return "IN_QUERY";
     case SecurityScheme_In.IN_HEADER:
       return "IN_HEADER";
+    case SecurityScheme_In.UNRECOGNIZED:
     default:
-      return "UNKNOWN";
+      return "UNRECOGNIZED";
   }
 }
 
@@ -913,8 +917,9 @@ export function securityScheme_FlowToJSON(object: SecurityScheme_Flow): string {
       return "FLOW_APPLICATION";
     case SecurityScheme_Flow.FLOW_ACCESS_CODE:
       return "FLOW_ACCESS_CODE";
+    case SecurityScheme_Flow.UNRECOGNIZED:
     default:
-      return "UNKNOWN";
+      return "UNRECOGNIZED";
   }
 }
 
