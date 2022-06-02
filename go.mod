@@ -57,7 +57,7 @@ require (
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.10.2
 	github.com/heptiolabs/healthcheck v0.0.0-20211123025425-613501dd5deb
 	github.com/improbable-eng/grpc-web v0.15.0
-	github.com/itchyny/gojq v0.12.7
+	github.com/itchyny/gojq v0.12.8
 	github.com/jinzhu/copier v0.3.5
 	github.com/k14s/kapp v0.48.0
 	github.com/lib/pq v1.10.6
