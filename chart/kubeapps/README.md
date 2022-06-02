@@ -1,3 +1,4 @@
+<!--- app-name: Kubeapps -->
 
 # Kubeapps packaged by Bitnami
 
@@ -607,8 +608,6 @@ Once you have installed Kubeapps follow the [Getting Started Guide](https://gith
 | `kubeappsapis.pluginConfig.kappController.packages.v1alpha1.defaultUpgradePolicy`               | Default upgrade policy generating version constraints                                                               | `none`                   |
 | `kubeappsapis.pluginConfig.kappController.packages.v1alpha1.defaultPrereleasesVersionSelection` | Default policy for allowing prereleases containing one of the identifiers                                           | `nil`                    |
 | `kubeappsapis.pluginConfig.kappController.packages.v1alpha1.defaultAllowDowngrades`             | Default policy for allowing applications to be downgraded to previous versions                                      | `false`                  |
-| `kubeappsapis.pluginConfig.flux.packages.v1alpha1.defaultUpgradePolicy`                         | Default upgrade policy generating version constraints                                                               | `none`                   |
-| `kubeappsapis.pluginConfig.flux.packages.v1alpha1.userManagedSecrets`                           | Default policy for handling repository secrets, either managed by the user or by kubeapps-apis                      | `true`                   |
 | `kubeappsapis.image.registry`                                                                   | Kubeapps-APIs image registry                                                                                        | `docker.io`              |
 | `kubeappsapis.image.repository`                                                                 | Kubeapps-APIs image repository                                                                                      | `kubeapps/kubeapps-apis` |
 | `kubeappsapis.image.tag`                                                                        | Kubeapps-APIs image tag (immutable tags are recommended)                                                            | `latest`                 |
@@ -683,18 +682,18 @@ Once you have installed Kubeapps follow the [Getting Started Guide](https://gith
 | `kubeappsapis.serviceAccount.annotations`                                                       | Annotations for service account. Evaluated as a template. Only used if `create` is `true`.                          | `{}`                     |
 
 
-### Redis&trade; chart configuration
+### Redis&reg; chart configuration
 
-| Name                            | Description                                                        | Value                                                    |
-| ------------------------------- | ------------------------------------------------------------------ | -------------------------------------------------------- |
-| `redis.auth.enabled`            | Enable password authentication                                     | `true`                                                   |
-| `redis.auth.password`           | Redis&trade; password                                              | `""`                                                     |
-| `redis.auth.existingSecret`     | The name of an existing secret with Redis&trade; credentials       | `""`                                                     |
-| `redis.master.extraFlags`       | Array with additional command line flags for Redis&trade; master   | `["--maxmemory 200mb","--maxmemory-policy allkeys-lru"]` |
-| `redis.master.disableCommands`  | Array with commands to deactivate on Redis&trade                   | `[]`                                                     |
-| `redis.replica.replicaCount`    | Number of Redis&trade; replicas to deploy                          | `1`                                                      |
-| `redis.replica.extraFlags`      | Array with additional command line flags for Redis&trade; replicas | `["--maxmemory 200mb","--maxmemory-policy allkeys-lru"]` |
-| `redis.replica.disableCommands` | Array with commands to deactivate on Redis&trade                   | `[]`                                                     |
+| Name                            | Description                                                      | Value                                                    |
+| ------------------------------- | ---------------------------------------------------------------- | -------------------------------------------------------- |
+| `redis.auth.enabled`            | Enable password authentication                                   | `true`                                                   |
+| `redis.auth.password`           | Redis&reg; password                                              | `""`                                                     |
+| `redis.auth.existingSecret`     | The name of an existing secret with Redis&reg; credentials       | `""`                                                     |
+| `redis.master.extraFlags`       | Array with additional command line flags for Redis&reg; master   | `["--maxmemory 200mb","--maxmemory-policy allkeys-lru"]` |
+| `redis.master.disableCommands`  | Array with commands to deactivate on Redis&trade                 | `[]`                                                     |
+| `redis.replica.replicaCount`    | Number of Redis&reg; replicas to deploy                          | `1`                                                      |
+| `redis.replica.extraFlags`      | Array with additional command line flags for Redis&reg; replicas | `["--maxmemory 200mb","--maxmemory-policy allkeys-lru"]` |
+| `redis.replica.disableCommands` | Array with commands to deactivate on Redis&trade                 | `[]`                                                     |
 
 
 Specify each parameter using the `--set key=value[,key=value]` argument to `helm install`. For example,
@@ -902,7 +901,7 @@ Yes! Follow the [offline installation documentation](https://github.com/vmware-t
 
 ### Does Kubeapps support private repositories?
 
-Of course! Have a look at the [private package repositories documentation](https://github.com/vmware-tanzu/kubeapps/blob/main/site/content/docs/latest/howto/private-app-repository.md) to learn how to configure a private repository in Kubeapps.
+Of course! Have a look at the [private app repositories documentation](https://github.com/vmware-tanzu/kubeapps/blob/main/site/content/docs/latest/howto/private-app-repository.md) to learn how to configure a private repository in Kubeapps.
 
 ### Is there any API documentation?
 
