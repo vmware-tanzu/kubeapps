@@ -1,4 +1,25 @@
-# Kubeapps triage process
+# 🔬 Triaging and prioritizing issues
+
+This document captures how the Kubeapps team triages and prioritizes issues.
+
+## 📝 Issues
+
+Kubeapps provides the following issue template to create new issues:
+
+| Template                                                                                                                     | Description                                       |
+| ---------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------- |
+| [Bug report](https://github.com/vmware-tanzu/kubeapps/issues/new?assignees=&labels=kind%2Fbug&template=bug_report.md&title=) | File a bug for something not working as expected. |
+| [Feature request]()                                                                                                          | File a request for a new feature.                 |
+| [Support request]()                                                                                                          | File a request for questions and support.         |
+| [Issue]()                                                                                                                    | File an issue to describe work to be performed.   |
+
+## 🏷 Labeling
+
+## ⛳️ Milestones
+
+## ❔ Triaging process
+
+## 🔢 Prioritizing process
 
 ## Kubeapps backlog
 
