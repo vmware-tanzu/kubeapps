@@ -70,12 +70,15 @@ var ignoreUnexported = cmpopts.IgnoreUnexported(
 	corev1.InstalledPackageSummary{},
 	corev1.Maintainer{},
 	corev1.PackageAppVersion{},
+	corev1.PackageRepositoryAuth{},
+	corev1.PackageRepositoryAuth_SecretRef{},
 	corev1.PackageRepositoryDetail{},
 	corev1.PackageRepositoryReference{},
 	corev1.PackageRepositoryStatus{},
 	corev1.PackageRepositorySummary{},
 	corev1.ReconciliationOptions{},
 	corev1.ResourceRef{},
+	corev1.SecretKeyReference{},
 	corev1.UpdateInstalledPackageResponse{},
 	corev1.VersionReference{},
 	kappControllerPluginParsedConfig{},
@@ -6429,14 +6432,6 @@ func TestAddPackageRepository(t *testing.T) {
 			expectedStatusCode: codes.InvalidArgument,
 		},
 		{
-			name: "validate auth",
-			requestCustomizer: func(request *corev1.AddPackageRepositoryRequest) *corev1.AddPackageRepositoryRequest {
-				request.Auth = &corev1.PackageRepositoryAuth{}
-				return request
-			},
-			expectedStatusCode: codes.InvalidArgument,
-		},
-		{
 			name: "validate exists in global ns",
 			existingObjects: []k8sruntime.Object{
 				&packagingv1alpha1.PackageRepository{
@@ -6532,6 +6527,39 @@ func TestAddPackageRepository(t *testing.T) {
 						},
 					},
 				})
+				return request
+			},
+			expectedStatusCode: codes.InvalidArgument,
+		},
+		{
+			name: "validate auth (invalid type)",
+			requestCustomizer: func(request *corev1.AddPackageRepositoryRequest) *corev1.AddPackageRepositoryRequest {
+				request.Auth = &corev1.PackageRepositoryAuth{
+					Type: corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_DOCKER_CONFIG_JSON,
+				}
+				return request
+			},
+			expectedStatusCode: codes.InvalidArgument,
+		},
+		{
+			name: "validate auth (no secret)",
+			requestCustomizer: func(request *corev1.AddPackageRepositoryRequest) *corev1.AddPackageRepositoryRequest {
+				request.Auth = &corev1.PackageRepositoryAuth{
+					Type: corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_CUSTOM,
+				}
+				return request
+			},
+			expectedStatusCode: codes.InvalidArgument,
+		},
+		{
+			name: "validate auth (invalid secret)",
+			requestCustomizer: func(request *corev1.AddPackageRepositoryRequest) *corev1.AddPackageRepositoryRequest {
+				request.Auth = &corev1.PackageRepositoryAuth{
+					Type: corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_CUSTOM,
+					PackageRepoAuthOneOf: &corev1.PackageRepositoryAuth_SecretRef{
+						SecretRef: &corev1.SecretKeyReference{},
+					},
+				}
 				return request
 			},
 			expectedStatusCode: codes.InvalidArgument,
@@ -6731,6 +6759,28 @@ func TestAddPackageRepository(t *testing.T) {
 			expectedStatusCode: codes.OK,
 			expectedRef:        defaultRef,
 		},
+		{
+			name: "create with auth",
+			requestCustomizer: func(request *corev1.AddPackageRepositoryRequest) *corev1.AddPackageRepositoryRequest {
+				request.Auth = &corev1.PackageRepositoryAuth{
+					Type: corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_CUSTOM,
+					PackageRepoAuthOneOf: &corev1.PackageRepositoryAuth_SecretRef{
+						SecretRef: &corev1.SecretKeyReference{
+							Name: "my-secret",
+						},
+					},
+				}
+				return request
+			},
+			repositoryCustomizer: func(repository *packagingv1alpha1.PackageRepository) *packagingv1alpha1.PackageRepository {
+				repository.Spec.Fetch.ImgpkgBundle.SecretRef = &kappctrlv1alpha1.AppFetchLocalRef{
+					Name: "my-secret",
+				}
+				return repository
+			},
+			expectedStatusCode: codes.OK,
+			expectedRef:        defaultRef,
+		},
 	}
 
 	for _, tc := range testCases {
@@ -6868,9 +6918,34 @@ func TestUpdatePackageRepository(t *testing.T) {
 			expectedStatusCode: codes.InvalidArgument,
 		},
 		{
-			name: "validate auth",
+			name: "validate auth (invalid type)",
 			requestCustomizer: func(request *corev1.UpdatePackageRepositoryRequest) *corev1.UpdatePackageRepositoryRequest {
-				request.Auth = &corev1.PackageRepositoryAuth{}
+				request.Auth = &corev1.PackageRepositoryAuth{
+					Type: corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_DOCKER_CONFIG_JSON,
+				}
+				return request
+			},
+			expectedStatusCode: codes.InvalidArgument,
+		},
+		{
+			name: "validate auth (no secret)",
+			requestCustomizer: func(request *corev1.UpdatePackageRepositoryRequest) *corev1.UpdatePackageRepositoryRequest {
+				request.Auth = &corev1.PackageRepositoryAuth{
+					Type: corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_CUSTOM,
+				}
+				return request
+			},
+			expectedStatusCode: codes.InvalidArgument,
+		},
+		{
+			name: "validate auth (invalid secret)",
+			requestCustomizer: func(request *corev1.UpdatePackageRepositoryRequest) *corev1.UpdatePackageRepositoryRequest {
+				request.Auth = &corev1.PackageRepositoryAuth{
+					Type: corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_CUSTOM,
+					PackageRepoAuthOneOf: &corev1.PackageRepositoryAuth_SecretRef{
+						SecretRef: &corev1.SecretKeyReference{},
+					},
+				}
 				return request
 			},
 			expectedStatusCode: codes.InvalidArgument,
@@ -7129,6 +7204,71 @@ func TestUpdatePackageRepository(t *testing.T) {
 			expectedStatusCode: codes.OK,
 			expectedRef:        defaultRef,
 		},
+		{
+			name: "updated with auth (add)",
+			requestCustomizer: func(request *corev1.UpdatePackageRepositoryRequest) *corev1.UpdatePackageRepositoryRequest {
+				request.Auth = &corev1.PackageRepositoryAuth{
+					Type: corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_CUSTOM,
+					PackageRepoAuthOneOf: &corev1.PackageRepositoryAuth_SecretRef{
+						SecretRef: &corev1.SecretKeyReference{
+							Name: "my-secret",
+						},
+					},
+				}
+				return request
+			},
+			repositoryCustomizer: func(repository *packagingv1alpha1.PackageRepository) *packagingv1alpha1.PackageRepository {
+				repository.Spec.Fetch.ImgpkgBundle.SecretRef = &kappctrlv1alpha1.AppFetchLocalRef{
+					Name: "my-secret",
+				}
+				return repository
+			},
+			expectedStatusCode: codes.OK,
+			expectedRef:        defaultRef,
+		},
+		{
+			name: "updated with auth (remove)",
+			initialCustomizer: func(repository *packagingv1alpha1.PackageRepository) *packagingv1alpha1.PackageRepository {
+				repository.Spec.Fetch.ImgpkgBundle.SecretRef = &kappctrlv1alpha1.AppFetchLocalRef{
+					Name: "my-secret",
+				}
+				return repository
+			},
+			repositoryCustomizer: func(repository *packagingv1alpha1.PackageRepository) *packagingv1alpha1.PackageRepository {
+				repository.Spec.Fetch.ImgpkgBundle.SecretRef = nil
+				return repository
+			},
+			expectedStatusCode: codes.OK,
+			expectedRef:        defaultRef,
+		},
+		{
+			name: "updated with auth (change)",
+			initialCustomizer: func(repository *packagingv1alpha1.PackageRepository) *packagingv1alpha1.PackageRepository {
+				repository.Spec.Fetch.ImgpkgBundle.SecretRef = &kappctrlv1alpha1.AppFetchLocalRef{
+					Name: "my-secret",
+				}
+				return repository
+			},
+			requestCustomizer: func(request *corev1.UpdatePackageRepositoryRequest) *corev1.UpdatePackageRepositoryRequest {
+				request.Auth = &corev1.PackageRepositoryAuth{
+					Type: corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_CUSTOM,
+					PackageRepoAuthOneOf: &corev1.PackageRepositoryAuth_SecretRef{
+						SecretRef: &corev1.SecretKeyReference{
+							Name: "my-other-secret",
+						},
+					},
+				}
+				return request
+			},
+			repositoryCustomizer: func(repository *packagingv1alpha1.PackageRepository) *packagingv1alpha1.PackageRepository {
+				repository.Spec.Fetch.ImgpkgBundle.SecretRef = &kappctrlv1alpha1.AppFetchLocalRef{
+					Name: "my-other-secret",
+				}
+				return repository
+			},
+			expectedStatusCode: codes.OK,
+			expectedRef:        defaultRef,
+		},
 	}
 
 	for _, tc := range testCases {
@@ -7161,9 +7301,16 @@ func TestUpdatePackageRepository(t *testing.T) {
 				globalPackagingNamespace: defaultGlobalContext.Namespace,
 			}
 
-			request := tc.requestCustomizer(defaultRequest())
+			// prepare request
+			request := defaultRequest()
+			if tc.requestCustomizer != nil {
+				request = tc.requestCustomizer(request)
+			}
+
+			// invoke
 			response, err := s.UpdatePackageRepository(context.Background(), request)
 
+			// check status
 			if got, want := status.Code(err), tc.expectedStatusCode; got != want {
 				t.Fatalf("got error: %d, want: %d, err: %+v", got, want, err)
 			} else if got != codes.OK {
@@ -7614,6 +7761,27 @@ func TestGetPackageRepositoryDetail(t *testing.T) {
 			},
 			expectedStatusCode: codes.OK,
 		},
+		{
+			name: "check auth",
+			repositoryCustomizer: func(repository *packagingv1alpha1.PackageRepository) *packagingv1alpha1.PackageRepository {
+				repository.Spec.Fetch.ImgpkgBundle.SecretRef = &kappctrlv1alpha1.AppFetchLocalRef{
+					Name: "my-secret",
+				}
+				return repository
+			},
+			responseCustomizer: func(response *corev1.GetPackageRepositoryDetailResponse) *corev1.GetPackageRepositoryDetailResponse {
+				response.Detail.Auth = &corev1.PackageRepositoryAuth{
+					Type: corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_CUSTOM,
+					PackageRepoAuthOneOf: &corev1.PackageRepositoryAuth_SecretRef{
+						SecretRef: &corev1.SecretKeyReference{
+							Name: "my-secret",
+						},
+					},
+				}
+				return response
+			},
+			expectedStatusCode: codes.OK,
+		},
 	}
 
 	for _, tc := range testCases {
@@ -7871,6 +8039,71 @@ func TestGetPackageRepositorySummaries(t *testing.T) {
 				Type: Type_Inline,
 			},
 		},
+		{
+			name: "test with details",
+			existingObjects: []k8sruntime.Object{
+				&packagingv1alpha1.PackageRepository{
+					TypeMeta:   defaultTypeMeta,
+					ObjectMeta: metav1.ObjectMeta{Name: "globalrepo", Namespace: globalPackagingNamespace},
+					Spec: packagingv1alpha1.PackageRepositorySpec{
+						Fetch: &packagingv1alpha1.PackageRepositoryFetch{
+							ImgpkgBundle: &kappctrlv1alpha1.AppFetchImgpkgBundle{
+								Image: "projects.registry.example.com/repo-1/main@sha256:abcd",
+								TagSelection: &vendirversions.VersionSelection{
+									Semver: &vendirversions.VersionSelectionSemver{
+										Constraints: ">0.10.0 <0.11.0",
+										Prereleases: &vendirversions.VersionSelectionSemverPrereleases{
+											Identifiers: []string{"beta", "rc"},
+										},
+									},
+								},
+							},
+						},
+					},
+					Status: packagingv1alpha1.PackageRepositoryStatus{},
+				},
+			},
+			expectedResponse: &corev1.PackageRepositorySummary{
+				PackageRepoRef: &corev1.PackageRepositoryReference{
+					Context:    defaultGlobalContext,
+					Plugin:     &pluginDetail,
+					Identifier: "globalrepo",
+				},
+				Name: "globalrepo",
+				Type: Type_ImgPkgBundle,
+				Url:  "projects.registry.example.com/repo-1/main@sha256:abcd",
+			},
+		},
+		{
+			name: "test with auth",
+			existingObjects: []k8sruntime.Object{
+				&packagingv1alpha1.PackageRepository{
+					TypeMeta:   defaultTypeMeta,
+					ObjectMeta: metav1.ObjectMeta{Name: "globalrepo", Namespace: globalPackagingNamespace},
+					Spec: packagingv1alpha1.PackageRepositorySpec{
+						Fetch: &packagingv1alpha1.PackageRepositoryFetch{
+							ImgpkgBundle: &kappctrlv1alpha1.AppFetchImgpkgBundle{
+								Image: "projects.registry.example.com/repo-1/main@sha256:abcd",
+								SecretRef: &kappctrlv1alpha1.AppFetchLocalRef{
+									Name: "my-secret",
+								},
+							},
+						},
+					},
+					Status: packagingv1alpha1.PackageRepositoryStatus{},
+				},
+			},
+			expectedResponse: &corev1.PackageRepositorySummary{
+				PackageRepoRef: &corev1.PackageRepositoryReference{
+					Context:    defaultGlobalContext,
+					Plugin:     &pluginDetail,
+					Identifier: "globalrepo",
+				},
+				Name: "globalrepo",
+				Type: Type_ImgPkgBundle,
+				Url:  "projects.registry.example.com/repo-1/main@sha256:abcd",
+			},
+		},
 	}
 
 	for _, tc := range testCases {
@@ -7897,7 +8130,7 @@ func TestGetPackageRepositorySummaries(t *testing.T) {
 				globalPackagingNamespace: defaultGlobalContext.Namespace,
 			}
 
-			// should not happen
+			// query repositories
 			response, err := s.GetPackageRepositorySummaries(context.Background(), &corev1.GetPackageRepositorySummariesRequest{
 				Context: &corev1.Context{Namespace: ""},
 			})
