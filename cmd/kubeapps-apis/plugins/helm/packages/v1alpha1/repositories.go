@@ -5,8 +5,10 @@ package main
 
 import (
 	"context"
+
 	apprepov1alpha1 "github.com/vmware-tanzu/kubeapps/cmd/apprepository-controller/pkg/apis/apprepository/v1alpha1"
 	corev1 "github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
+	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/plugins/helm/packages/v1alpha1"
 	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/pkg/statuserror"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -23,45 +25,74 @@ const (
 	RedactedString = "REDACTED"
 )
 
+type HelmRepository struct {
+	name          types.NamespacedName
+	url           string
+	repoType      string
+	description   string
+	interval      uint32
+	tlsConfig     *corev1.PackageRepositoryTlsConfig
+	auth          *corev1.PackageRepositoryAuth
+	customDetails *v1alpha1.RepositoryCustomDetails
+}
+
 var ValidRepoTypes = []string{HelmRepoType, OCIRepoType}
 
-func (s *Server) newRepo(ctx context.Context, targetName types.NamespacedName, url string, repoType string, description string, interval uint32,
-	tlsConfig *corev1.PackageRepositoryTlsConfig, auth *corev1.PackageRepositoryAuth) (*corev1.PackageRepositoryReference, error) {
-	if url == "" {
+func (s *Server) newRepo(ctx context.Context, repo *HelmRepository) (*corev1.PackageRepositoryReference, error) {
+	if repo.url == "" {
 		return nil, status.Errorf(codes.InvalidArgument, "repository url may not be empty")
 	}
-	if repoType == "" || !slices.Contains(ValidRepoTypes, repoType) {
-		return nil, status.Errorf(codes.InvalidArgument, "repository type [%s] not supported", repoType)
+	if repo.repoType == "" || !slices.Contains(ValidRepoTypes, repo.repoType) {
+		return nil, status.Errorf(codes.InvalidArgument, "repository type [%s] not supported", repo.repoType)
 	}
 
-	var secret *k8scorev1.Secret
 	typedClient, err := s.clientGetter.Typed(ctx, s.kubeappsCluster)
 	if err != nil {
 		return nil, err
 	}
+
+	// Get or validate secret resource for auth,
+	// not yet stored in K8s
+	var secret *k8scorev1.Secret
 	if s.pluginConfig.UserManagedSecrets {
-		if secret, err = validateUserManagedRepoSecret(ctx, typedClient, targetName, tlsConfig, auth); err != nil {
+		if secret, err = validateUserManagedRepoSecret(ctx, typedClient, repo.name, repo.tlsConfig, repo.auth); err != nil {
 			return nil, err
 		}
 	} else {
-		// a bit of catch 22: I need to create a secret first, so that I can create a repo that references it
-		// but then I need to set the owner reference on this secret to the repo. In has to be done
-		// in that order because to set an owner ref you need object (i.e. repo) UID, which you only get
-		// once the object's been created
-		if secret, err = createKubeappsManagedRepoSecret(ctx, typedClient, targetName, tlsConfig, auth); err != nil {
+		if secret, _, err = newSecretFromTlsConfigAndAuth(repo.name, repo.tlsConfig, repo.auth); err != nil {
 			return nil, err
 		}
 	}
 
-	passCredentials := auth != nil && auth.PassCredentials
-	insecureSkipVerify := tlsConfig != nil && tlsConfig.InsecureSkipVerify
-
-	if helmRepoCrd, err := newHelmRepoCrd(targetName, url, repoType, description, interval, secret, tlsConfig, auth, passCredentials, insecureSkipVerify); err != nil {
+	// Map data to a repository CRD
+	helmRepoCrd, err := newHelmRepoCrd(repo, secret)
+	if err != nil {
 		return nil, err
-	} else if client, err := s.getClient(ctx, targetName.Namespace); err != nil {
+	}
+
+	// Repository validation
+	if repo.customDetails != nil && repo.customDetails.PerformValidation {
+		if err = s.ValidateRepository(helmRepoCrd, secret); err != nil {
+			return nil, err
+		}
+	}
+
+	// Store secret if Kubeapps manages secrets
+	if !s.pluginConfig.UserManagedSecrets {
+		// a bit of catch 22: I need to create a secret first, so that I can create a repo that references it,
+		// but then I need to set the owner reference on this secret to the repo. In has to be done
+		// in that order because to set an owner ref you need object (i.e. repo) UID, which you only get
+		// once the object's been created
+		if secret, err = createKubeappsManagedRepoSecret(ctx, typedClient, repo.name.Namespace, secret); err != nil {
+			return nil, err
+		}
+	}
+
+	// Create repository CRD in K8s
+	if client, err := s.getClient(ctx, repo.name.Namespace); err != nil {
 		return nil, err
 	} else if err = client.Create(ctx, helmRepoCrd); err != nil {
-		return nil, statuserror.FromK8sError("create", "AppRepository", targetName.String(), err)
+		return nil, statuserror.FromK8sError("create", "AppRepository", repo.name.String(), err)
 	} else {
 		if !s.pluginConfig.UserManagedSecrets {
 			if err = s.setOwnerReferencesForRepoSecret(ctx, secret, helmRepoCrd); err != nil {
@@ -79,32 +110,39 @@ func (s *Server) newRepo(ctx context.Context, targetName types.NamespacedName, u
 	}
 }
 
-func newHelmRepoCrd(targetName types.NamespacedName,
-	url string, repoType string, description string,
-	interval uint32,
-	secret *k8scorev1.Secret,
-	tlsConfig *corev1.PackageRepositoryTlsConfig,
-	auth *corev1.PackageRepositoryAuth,
-	passCredentials bool,
-	tlsInsecureSkipVerify bool) (*apprepov1alpha1.AppRepository, error) {
+func newHelmRepoCrd(repo *HelmRepository, secret *k8scorev1.Secret) (*apprepov1alpha1.AppRepository, error) {
 	appRepoCrd := &apprepov1alpha1.AppRepository{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      targetName.Name,
-			Namespace: targetName.Namespace,
+			Name:      repo.name.Name,
+			Namespace: repo.name.Namespace,
 		},
 		Spec: apprepov1alpha1.AppRepositorySpec{
-			URL:                   url,
-			Type:                  repoType,
-			TLSInsecureSkipVerify: tlsInsecureSkipVerify,
-			Description:           description,
-			PassCredentials:       passCredentials,
+			URL:                   repo.url,
+			Type:                  repo.repoType,
+			TLSInsecureSkipVerify: repo.tlsConfig != nil && repo.tlsConfig.InsecureSkipVerify,
+			Description:           repo.description,
+			PassCredentials:       repo.auth != nil && repo.auth.PassCredentials,
 		},
 	}
-	if auth != nil || tlsConfig != nil {
-		if repoAuth, err := newAppRepositoryAuth(secret, tlsConfig, auth); err != nil {
+	if repo.auth != nil || repo.tlsConfig != nil {
+		if repoAuth, err := newAppRepositoryAuth(secret, repo.tlsConfig, repo.auth); err != nil {
 			return nil, err
 		} else if repoAuth != nil {
 			appRepoCrd.Spec.Auth = *repoAuth
+		}
+	}
+	if repo.customDetails != nil {
+		if repo.customDetails.DockerRegistrySecrets != nil {
+			appRepoCrd.Spec.DockerRegistrySecrets = repo.customDetails.DockerRegistrySecrets
+		}
+		if repo.customDetails.FilterRule != nil {
+			appRepoCrd.Spec.FilterRule = apprepov1alpha1.FilterRuleSpec{
+				JQ:        repo.customDetails.FilterRule.Jq,
+				Variables: repo.customDetails.FilterRule.Variables,
+			}
+		}
+		if repo.customDetails.OciRepositories != nil {
+			appRepoCrd.Spec.OCIRepositories = repo.customDetails.OciRepositories
 		}
 	}
 	return appRepoCrd, nil

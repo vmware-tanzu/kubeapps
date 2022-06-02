@@ -5,6 +5,10 @@ package main
 
 import (
 	"context"
+	"net/http"
+	"strings"
+	"testing"
+
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
 	appRepov1alpha1 "github.com/vmware-tanzu/kubeapps/cmd/apprepository-controller/pkg/apis/apprepository/v1alpha1"
@@ -16,8 +20,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
-	"strings"
-	"testing"
 )
 
 func TestAddPackageRepository(t *testing.T) {
@@ -35,6 +37,7 @@ func TestAddPackageRepository(t *testing.T) {
 		existingSecret        *apiv1.Secret
 		expectedCreatedSecret *apiv1.Secret
 		userManagedSecrets    bool
+		repoClientGetter      newRepoClient
 	}{
 		{
 			name:       "returns error if no namespace is provided",
@@ -202,6 +205,33 @@ func TestAddPackageRepository(t *testing.T) {
 			statusCode:         codes.OK,
 			userManagedSecrets: true,
 		},
+		// DOCKER AUTH
+		{
+			name: "package repository with Docker auth",
+			request: addRepoReqDockerAuth(&corev1.DockerCredentials{
+				Server:   "https://docker-server",
+				Username: "the-user",
+				Password: "the-password",
+				Email:    "foo@bar.com",
+			}),
+			expectedResponse: addRepoExpectedResp,
+			expectedRepo:     addRepoAuthDocker("apprepo-bar"),
+			expectedCreatedSecret: setSecretOwnerRef("bar",
+				newAuthDockerSecret("apprepo-bar",
+					"foo",
+					"{\"auths\":{\"https://docker-server\":{\"username\":\"the-user\",\"password\":\"the-password\",\"email\":\"foo@bar.com\",\"auth\":\"dGhlLXVzZXI6dGhlLXBhc3N3b3Jk\"}}}")),
+			statusCode: codes.OK,
+		},
+		{
+			name:               "package repository with Docker auth (user managed secrets)",
+			request:            addRepoReqAuthWithSecret(corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_DOCKER_CONFIG_JSON, "secret-docker"),
+			expectedResponse:   addRepoExpectedResp,
+			userManagedSecrets: true,
+			existingSecret: newAuthDockerSecret("secret-docker", "foo",
+				"{\"auths\":{\"https://docker-server\":{\"username\":\"the-user\",\"password\":\"the-password\",\"email\":\"foo@bar.com\",\"auth\":\"dGhlLXVzZXI6dGhlLXBhc3N3b3Jk\"}}}"),
+			expectedRepo: addRepoAuthDocker("secret-docker"),
+			statusCode:   codes.OK,
+		},
 		// Others
 		{
 			name:       "errors when package repository with 1 secret for TLS CA and a different secret for basic auth (kubeapps managed secrets)",
@@ -228,6 +258,49 @@ func TestAddPackageRepository(t *testing.T) {
 			userManagedSecrets: true,
 			statusCode:         codes.Internal,
 		},
+		// Custom values
+		{
+			name:             "package repository with custom values",
+			request:          addRepoReqCustomValues,
+			expectedResponse: addRepoExpectedResp,
+			expectedRepo:     &addRepoCustomDetailsHelm,
+			statusCode:       codes.OK,
+		},
+		{
+			name:             "package repository with invalid custom values",
+			request:          addRepoReqWrongCustomValues,
+			expectedResponse: addRepoExpectedResp,
+			statusCode:       codes.InvalidArgument,
+		},
+		{
+			name:             "package repository with validation success (Helm)",
+			request:          addRepoReqCustomValuesHelmValid,
+			expectedResponse: addRepoExpectedResp,
+			expectedRepo:     &addRepoCustomDetailsHelm,
+			repoClientGetter: newRepoHttpClient(map[string]*http.Response{"https://example.com/index.yaml": {StatusCode: 200}}),
+			statusCode:       codes.OK,
+		},
+		{
+			name:             "package repository with validation success (OCI)",
+			request:          addRepoReqCustomValuesOCIValid,
+			expectedResponse: addRepoExpectedResp,
+			expectedRepo:     &addRepoCustomDetailsOci,
+			repoClientGetter: newRepoHttpClient(map[string]*http.Response{
+				"https://example.com/v2/repo1/tags/list?n=1":  httpResponse(200, "{ \"name\":\"repo1\", \"tags\":[\"tag1\"] }"),
+				"https://example.com/v2/repo1/manifests/tag1": httpResponse(200, "{ \"config\":{ \"mediaType\":\"application/vnd.cncf.helm.config\" } }"),
+			}),
+			statusCode: codes.OK,
+		},
+		{
+			name:             "package repository with validation failing",
+			request:          addRepoReqCustomValuesHelmValid,
+			expectedResponse: addRepoExpectedResp,
+			repoClientGetter: newRepoHttpClient(
+				map[string]*http.Response{
+					"https://example.com/index.yaml": httpResponse(404, "It failed because of X and Y"),
+				}),
+			statusCode: codes.FailedPrecondition,
+		},
 	}
 
 	for _, tc := range testCases {
@@ -238,6 +311,9 @@ func TestAddPackageRepository(t *testing.T) {
 			}
 			s := newServerWithSecrets(t, secrets)
 			s.pluginConfig.UserManagedSecrets = tc.userManagedSecrets
+			if tc.repoClientGetter != nil {
+				s.repoClientGetter = tc.repoClientGetter
+			}
 
 			nsname := types.NamespacedName{Namespace: tc.request.Context.Namespace, Name: tc.request.Name}
 			ctx := context.Background()
