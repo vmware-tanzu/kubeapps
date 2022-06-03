@@ -20,12 +20,10 @@ import {
   PackageRepositoryReference,
 } from "gen/kubeappsapis/core/packages/v1alpha1/repositories";
 import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins";
-// import * as yaml from "js-yaml";
 import { useEffect, useRef, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { Action } from "redux";
 import { ThunkDispatch } from "redux-thunk";
-// import { toFilterRule, toParams } from "shared/jq";
 import { toFilterRule } from "shared/jq";
 import { PackageRepositoriesService } from "shared/PackageRepositoriesService";
 import Secret from "shared/Secret";
@@ -153,17 +151,16 @@ export function AppRepoForm(props: IAppRepoFormProps) {
       setSkipTLS(!!repo.tlsConfig?.insecureSkipVerify);
       setPassCredentials(!!repo.auth?.passCredentials);
       setInterval(repo.interval);
-      // TODO(agamez): handle these fields once the helm plugion's custom data is implemented
-      // setSyncJobTemplate(
-      //   repo.spec?.syncJobPodTemplate ? yaml.dump(repo.spec?.syncJobPodTemplate) : "",
-      // );
-      // setOCIRepositories(repo.spec?.ociRepositories?.join(", ") || "");
-      // if (repo.spec?.filterRule?.jq) {
-      //   const { names, regex, exclude } = toParams(repo.spec.filterRule);
-      //   setFilterRegex(regex);
-      //   setFilterExclude(exclude);
-      //   setFilterNames(names);
-      // }
+      setSyncJobTemplate(
+        repo.spec?.syncJobPodTemplate ? yaml.dump(repo.spec?.syncJobPodTemplate) : "",
+      );
+      setOCIRepositories(repo.spec?.ociRepositories?.join(", ") || "");
+      if (repo.spec?.filterRule?.jq) {
+        const { names, regex, exclude } = toParams(repo.spec.filterRule);
+        setFilterRegex(regex);
+        setFilterExclude(exclude);
+        setFilterNames(names);
+      }
 
       if (repo?.tlsConfig?.certAuthority || repo?.auth?.header) {
         fetchRepoSecret(currentCluster, repo.packageRepoRef?.context?.namespace || "", repo.name);
@@ -225,9 +222,6 @@ export function AppRepoForm(props: IAppRepoFormProps) {
       case PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_CUSTOM:
         finalHeader = authHeader;
         break;
-      // case PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_BASIC_AUTH:
-      //   finalHeader = `Basic ${Buffer.from(`${user}:${password}`)?.toString("base64")}`;
-      // break;
       case PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_BEARER:
         finalHeader = `Bearer ${token}`;
         break;
@@ -342,17 +336,21 @@ export function AppRepoForm(props: IAppRepoFormProps) {
   };
   const handlePluginRadioButtonChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setPlugin(getPluginByName(e.target.value));
-    // if no type, suggest using helm storage instead of OCI if the plugin is "helm"
-    if (!type && getPluginByName(e.target.value)?.name === PluginNames.PACKAGES_HELM) {
-      setType(RepositoryStorageTypes.PACKAGE_REPOSITORY_STORAGE_HELM);
+    if (!type) {
+      // if no type, suggest one per plugin
+      switch (getPluginByName(e.target.value)?.name) {
+        case PluginNames.PACKAGES_HELM:
+        case PluginNames.PACKAGES_FLUX:
+          setType(RepositoryStorageTypes.PACKAGE_REPOSITORY_STORAGE_HELM);
+          break;
+        case PluginNames.PACKAGES_KAPP:
+          setType(RepositoryStorageTypes.PACKAGE_REPOSITORY_STORAGE_CARVEL_IMGPKGBUNDLE);
+          break;
+      }
     }
     // TODO(agamez): workaround until Flux plugin also supports OCI artifacts
     if (getPluginByName(e.target.value)?.name === PluginNames.PACKAGES_FLUX) {
       setType(RepositoryStorageTypes.PACKAGE_REPOSITORY_STORAGE_HELM);
-    }
-    // TODO(agamez): workaround until Carvel plugin also supports this type
-    if (getPluginByName(e.target.value)?.name === PluginNames.PACKAGES_KAPP) {
-      setType(RepositoryStorageTypes.PACKAGE_REPOSITORY_STORAGE_CARVEL_IMGPKGBUNDLE);
     }
 
     setValidated(undefined);
@@ -460,7 +458,8 @@ export function AppRepoForm(props: IAppRepoFormProps) {
                     required={false}
                   />
                 </CdsInput>
-
+                {/* TODO(agamez): these plugin selectors should be loaded
+                based on the current plugins that are loaded in the cluster */}
                 <CdsRadioGroup layout="vertical">
                   <label>Packaging Format:</label>
                   <CdsControlMessage>Select the plugin to use.</CdsControlMessage>
@@ -557,8 +556,7 @@ export function AppRepoForm(props: IAppRepoFormProps) {
                           id="kubeapps-repo-type-inline"
                           type="radio"
                           name="type"
-                          // TODO(agamez): workaround until Carvel plugin also supports this type
-                          disabled={true || !!repo?.type}
+                          disabled={!!repo?.type}
                           value={RepositoryStorageTypes.PACKAGE_REPOSITORY_STORAGE_CARVEL_INLINE}
                           checked={
                             type === RepositoryStorageTypes.PACKAGE_REPOSITORY_STORAGE_CARVEL_INLINE
@@ -572,8 +570,7 @@ export function AppRepoForm(props: IAppRepoFormProps) {
                           id="kubeapps-repo-type-image"
                           type="radio"
                           name="type"
-                          // TODO(agamez): workaround until Carvel plugin also supports this type
-                          disabled={true || !!repo?.type}
+                          disabled={!!repo?.type}
                           value={RepositoryStorageTypes.PACKAGE_REPOSITORY_STORAGE_CARVEL_IMAGE}
                           checked={
                             type === RepositoryStorageTypes.PACKAGE_REPOSITORY_STORAGE_CARVEL_IMAGE
@@ -587,8 +584,7 @@ export function AppRepoForm(props: IAppRepoFormProps) {
                           id="kubeapps-repo-type-http"
                           type="radio"
                           name="type"
-                          // TODO(agamez): workaround until Carvel plugin also supports this type
-                          disabled={true || !!repo?.type}
+                          disabled={!!repo?.type}
                           value={RepositoryStorageTypes.PACKAGE_REPOSITORY_STORAGE_CARVEL_HTTP}
                           checked={
                             type === RepositoryStorageTypes.PACKAGE_REPOSITORY_STORAGE_CARVEL_HTTP
@@ -602,8 +598,7 @@ export function AppRepoForm(props: IAppRepoFormProps) {
                           id="kubeapps-repo-type-git"
                           type="radio"
                           name="type"
-                          // TODO(agamez): workaround until Carvel plugin also supports this type
-                          disabled={true || !!repo?.type}
+                          disabled={!!repo?.type}
                           value={RepositoryStorageTypes.PACKAGE_REPOSITORY_STORAGE_CARVEL_GIT}
                           checked={
                             type === RepositoryStorageTypes.PACKAGE_REPOSITORY_STORAGE_CARVEL_GIT

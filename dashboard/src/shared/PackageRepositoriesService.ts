@@ -304,10 +304,7 @@ export class PackageRepositoriesService {
     }
     return addPackageRepositoryRequest as UpdatePackageRepositoryRequest;
 
-    // -- currently unsupported configuration --
-
-    // TODO(agamez): support it instead of manually creating the http basic auth header in the UI
-    // auth.usernamePassword: { password: "", username: "" } // username and password for basic auth
+    // TODO(agamez): -- currently unsupported configuration --
 
     // auth.dockerCreds: { email: "", password: "", server: "", username: ""} // username and password for docker auth
 
