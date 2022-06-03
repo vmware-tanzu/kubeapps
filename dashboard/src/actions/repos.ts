@@ -359,71 +359,75 @@ export const findPackageInRepo = (
 
 // validateRepo performs a validation of the repo, but currently only works for the helm repo
 export const validateRepo = (
-  name: string,
-  plugin: Plugin,
-  namespace: string,
-  repoURL: string,
-  type: string,
-  description: string,
-  authHeader: string,
-  authRegCreds: string,
-  customCA: string,
-  syncJobPodTemplate: string,
-  registrySecrets: string[],
-  ociRepositories: string[],
-  skipTLS: boolean,
-  passCredentials: boolean,
-  authMethod: PackageRepositoryAuth_PackageRepositoryAuthType,
-  interval: number,
-  username: string,
-  password: string,
+  _name: string,
+  _plugin: Plugin,
+  _namespace: string,
+  _repoURL: string,
+  _type: string,
+  _description: string,
+  _authHeader: string,
+  _authRegCreds: string,
+  _customCA: string,
+  _syncJobPodTemplate: string,
+  _registrySecrets: string[],
+  _ociRepositories: string[],
+  _skipTLS: boolean,
+  _passCredentials: boolean,
+  _authMethod: PackageRepositoryAuth_PackageRepositoryAuthType,
+  _interval: number,
+  _username: string,
+  _password: string,
 ): ThunkAction<Promise<boolean>, IStoreState, null, AppReposAction> => {
-  return async (dispatch, getState) => {
-    const {
-      clusters: { currentCluster },
-      config: { globalReposNamespace },
-    } = getState();
+  return async (dispatch, _getState) => {
+    // const {
+    //   clusters: { currentCluster },
+    //   config: { globalReposNamespace },
+    // } = getState();
     try {
-      const syncJobPodTemplateObj = parsePodTemplate(syncJobPodTemplate);
+      // const syncJobPodTemplateObj = parsePodTemplate(syncJobPodTemplate);
 
-      dispatch(repoValidating());
+      // dispatch(repoValidating());
 
-      let namespaceScoped = namespace !== globalReposNamespace;
-      // TODO(agamez): currently, flux doesn't support this value to be true
-      if (plugin?.name === PluginNames.PACKAGES_FLUX) {
-        namespaceScoped = false;
-      }
+      // let namespaceScoped = namespace !== globalReposNamespace;
+      // // TODO(agamez): currently, flux doesn't support this value to be true
+      // if (plugin?.name === PluginNames.PACKAGES_FLUX) {
+      //   namespaceScoped = false;
+      // }
 
-      const data = await PackageRepositoriesService.addPackageRepository(
-        currentCluster,
-        name,
-        plugin,
-        namespace,
-        repoURL,
-        type,
-        description,
-        authHeader,
-        authRegCreds,
-        customCA,
-        syncJobPodTemplateObj,
-        registrySecrets,
-        ociRepositories,
-        skipTLS,
-        passCredentials,
-        namespaceScoped,
-        authMethod,
-        interval,
-        username,
-        password,
-        true,
-      );
-      // Ensure the repo have been created
-      if (data?.packageRepoRef) {
-        return true;
-      } else {
-        dispatch(errorRepos(new Error(JSON.stringify(data)), "validate"));
-        return false;
-      }
+      // TODO(agamez): the helm plugin is validatin, but also creating the repo, which is not the expected way in the current code,
+      // hecee temporarily yielding an always "true" result
+      return true;
+
+      // const data = await PackageRepositoriesService.addPackageRepository(
+      //   currentCluster,
+      //   name,
+      //   plugin,
+      //   namespace,
+      //   repoURL,
+      //   type,
+      //   description,
+      //   authHeader,
+      //   authRegCreds,
+      //   customCA,
+      //   syncJobPodTemplateObj,
+      //   registrySecrets,
+      //   ociRepositories,
+      //   skipTLS,
+      //   passCredentials,
+      //   namespaceScoped,
+      //   authMethod,
+      //   interval,
+      //   username,
+      //   password,
+      //   true,
+      // );
+      // // Ensure the repo have been created
+      // if (data?.packageRepoRef) {
+      //   return true;
+      // } else {
+      //   dispatch(errorRepos(new Error(JSON.stringify(data)), "validate"));
+      //   return false;
+      // }
     } catch (e: any) {
       dispatch(errorRepos(e, "validate"));
       return false;
