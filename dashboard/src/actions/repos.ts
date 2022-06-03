@@ -165,6 +165,8 @@ export const installRepo = (
   passCredentials: boolean,
   authMethod: PackageRepositoryAuth_PackageRepositoryAuthType,
   interval: number,
+  username: string,
+  password: string,
   filter?: IAppRepositoryFilter,
 ): ThunkAction<Promise<boolean>, IStoreState, null, AppReposAction> => {
   return async (dispatch, getState) => {
@@ -201,6 +203,9 @@ export const installRepo = (
         namespaceScoped,
         authMethod,
         interval,
+        username,
+        password,
+        false,
         filter,
       );
       // Ensure the repo have been created
@@ -237,6 +242,8 @@ export const updateRepo = (
   passCredentials: boolean,
   authMethod: PackageRepositoryAuth_PackageRepositoryAuthType,
   interval: number,
+  username: string,
+  password: string,
   filter?: IAppRepositoryFilter,
 ): ThunkAction<Promise<boolean>, IStoreState, null, AppReposAction> => {
   return async (dispatch, getState) => {
@@ -264,6 +271,9 @@ export const updateRepo = (
         passCredentials,
         authMethod,
         interval,
+        username,
+        password,
+        false,
         filter,
       );
 
@@ -347,67 +357,68 @@ export const findPackageInRepo = (
   };
 };
 
-// ............................... DEPRECATED ...............................
-
-export const resyncRepo = (
-  name: string,
-  namespace: string,
-): ThunkAction<Promise<void>, IStoreState, null, AppReposAction> => {
-  return async (dispatch, getState) => {
-    const {
-      clusters: { currentCluster },
-    } = getState();
-    try {
-      await PackageRepositoriesService.resync(currentCluster, namespace, name);
-    } catch (e: any) {
-      dispatch(errorRepos(e, "update"));
-    }
-  };
-};
-
-export const resyncAllRepos = (
-  packageRepositoryReferences: (PackageRepositoryReference | undefined)[],
-): ThunkAction<Promise<void>, IStoreState, null, AppReposAction> => {
-  return async dispatch => {
-    packageRepositoryReferences.forEach(ref => {
-      if (ref) {
-        dispatch(resyncRepo(ref.identifier, ref.context?.namespace || ""));
-      }
-    });
-  };
-};
-
+// validateRepo performs a validation of the repo, but currently only works for the helm repo
 export const validateRepo = (
+  name: string,
+  plugin: Plugin,
+  namespace: string,
   repoURL: string,
   type: string,
+  description: string,
   authHeader: string,
   authRegCreds: string,
   customCA: string,
+  syncJobPodTemplate: string,
+  registrySecrets: string[],
   ociRepositories: string[],
   skipTLS: boolean,
   passCredentials: boolean,
+  authMethod: PackageRepositoryAuth_PackageRepositoryAuthType,
+  interval: number,
+  username: string,
+  password: string,
 ): ThunkAction<Promise<boolean>, IStoreState, null, AppReposAction> => {
   return async (dispatch, getState) => {
     const {
-      clusters: { currentCluster, clusters },
+      clusters: { currentCluster },
+      config: { globalReposNamespace },
     } = getState();
-    const namespace = clusters[currentCluster].currentNamespace;
     try {
+      const syncJobPodTemplateObj = parsePodTemplate(syncJobPodTemplate);
+
       dispatch(repoValidating());
-      const data = await PackageRepositoriesService.validate(
+
+      let namespaceScoped = namespace !== globalReposNamespace;
+      // TODO(agamez): currently, flux doesn't support this value to be true
+      if (plugin?.name === PluginNames.PACKAGES_FLUX) {
+        namespaceScoped = false;
+      }
+
+      const data = await PackageRepositoriesService.addPackageRepository(
         currentCluster,
+        name,
+        plugin,
         namespace,
         repoURL,
         type,
+        description,
         authHeader,
         authRegCreds,
         customCA,
+        syncJobPodTemplateObj,
+        registrySecrets,
         ociRepositories,
         skipTLS,
         passCredentials,
+        namespaceScoped,
+        authMethod,
+        interval,
+        username,
+        password,
+        true,
       );
-      if (data.code === 200) {
-        dispatch(repoValidated(data));
+      // Ensure the repo have been created
+      if (data?.packageRepoRef) {
         return true;
       } else {
         dispatch(errorRepos(new Error(JSON.stringify(data)), "validate"));
@@ -450,3 +461,33 @@ function parsePodTemplate(syncJobPodTemplate: string) {
   }
   return syncJobPodTemplateObj;
 }
+
+// ............................... DEPRECATED ...............................
+
+// export const resyncRepo = (
+//   name: string,
+//   namespace: string,
+// ): ThunkAction<Promise<void>, IStoreState, null, AppReposAction> => {
+//   return async (dispatch, getState) => {
+//     const {
+//       clusters: { currentCluster },
+//     } = getState();
+//     try {
+//       await PackageRepositoriesService.resync(currentCluster, namespace, name);
+//     } catch (e: any) {
+//       dispatch(errorRepos(e, "update"));
+//     }
+//   };
+// };
+
+// export const resyncAllRepos = (
+//   packageRepositoryReferences: (PackageRepositoryReference | undefined)[],
+// ): ThunkAction<Promise<void>, IStoreState, null, AppReposAction> => {
+//   return async dispatch => {
+//     packageRepositoryReferences.forEach(ref => {
+//       if (ref) {
+//         dispatch(resyncRepo(ref.identifier, ref.context?.namespace || ""));
+//       }
+//     });
+//   };
+// };

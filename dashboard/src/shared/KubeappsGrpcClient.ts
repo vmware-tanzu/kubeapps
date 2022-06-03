@@ -9,8 +9,14 @@ import {
   FluxV2PackagesServiceClientImpl,
   FluxV2RepositoriesServiceClientImpl,
 } from "gen/kubeappsapis/plugins/fluxv2/packages/v1alpha1/fluxv2";
-import { HelmPackagesServiceClientImpl } from "gen/kubeappsapis/plugins/helm/packages/v1alpha1/helm";
-import { KappControllerPackagesServiceClientImpl } from "gen/kubeappsapis/plugins/kapp_controller/packages/v1alpha1/kapp_controller";
+import {
+  HelmPackagesServiceClientImpl,
+  HelmRepositoriesServiceClientImpl,
+} from "gen/kubeappsapis/plugins/helm/packages/v1alpha1/helm";
+import {
+  KappControllerPackagesServiceClientImpl,
+  KappControllerRepositoriesServiceClientImpl,
+} from "gen/kubeappsapis/plugins/kapp_controller/packages/v1alpha1/kapp_controller";
 import {
   GrpcWebImpl,
   ResourcesServiceClientImpl,
@@ -69,18 +75,22 @@ export class KubeappsGrpcClient {
 
   // Plugins (packages/repositories) APIs
   // TODO(agamez): ideally, these clients should be loaded automatically from a list of configured plugins
+
   // Helm
   public getHelmPackagesServiceClientImpl() {
     return new HelmPackagesServiceClientImpl(this.getGrpcClient());
   }
-  // TODO(agamez): add theHelmRepositoriesServiceClientImpl
+  public getHelmRepositoriesServiceClientImpl() {
+    return new HelmRepositoriesServiceClientImpl(this.getGrpcClient());
+  }
 
   // KappController
   public getKappControllerPackagesServiceClientImpl() {
     return new KappControllerPackagesServiceClientImpl(this.getGrpcClient());
   }
-  // TODO(agamez): add the KappControllerRepositoriesServiceClientImpl
-
+  public getKappControllerRepositoriesServiceClientImpl() {
+    return new KappControllerRepositoriesServiceClientImpl(this.getGrpcClient());
+  }
   // Fluxv2
   public getFluxv2PackagesServiceClientImpl() {
     return new FluxV2PackagesServiceClientImpl(this.getGrpcClient());

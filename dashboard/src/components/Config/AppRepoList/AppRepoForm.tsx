@@ -50,6 +50,8 @@ interface IAppRepoFormProps {
     passCredentials: boolean,
     authMethod: PackageRepositoryAuth_PackageRepositoryAuthType,
     interval: number,
+    username: string,
+    password: string,
     filter?: IAppRepositoryFilter,
   ) => Promise<boolean>;
   onAfterInstall?: () => void;
@@ -223,9 +225,9 @@ export function AppRepoForm(props: IAppRepoFormProps) {
       case PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_CUSTOM:
         finalHeader = authHeader;
         break;
-      case PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_BASIC_AUTH:
-        finalHeader = `Basic ${Buffer.from(`${user}:${password}`)?.toString("base64")}`;
-        break;
+      // case PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_BASIC_AUTH:
+      //   finalHeader = `Basic ${Buffer.from(`${user}:${password}`)?.toString("base64")}`;
+      // break;
       case PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_BEARER:
         finalHeader = `Bearer ${token}`;
         break;
@@ -249,14 +251,24 @@ export function AppRepoForm(props: IAppRepoFormProps) {
     if (plugin?.name === PluginNames.PACKAGES_HELM && !validated && !force) {
       currentlyValidated = await dispatch(
         actions.repos.validateRepo(
+          name,
+          plugin,
+          namespace,
           finalURL,
           type,
+          description,
           finalHeader,
           dockerRegCreds,
           customCA,
+          syncJobPodTemplate,
+          selectedImagePullSecret.length ? [selectedImagePullSecret] : [],
           ociRepoList,
           skipTLS,
           passCredentials,
+          authMethod,
+          interval,
+          user,
+          password,
         ),
       );
       setValidated(currentlyValidated);
@@ -286,6 +298,8 @@ export function AppRepoForm(props: IAppRepoFormProps) {
         passCredentials,
         authMethod,
         interval,
+        user,
+        password,
         filter,
       );
       if (success && onAfterInstall) {
@@ -433,17 +447,6 @@ export function AppRepoForm(props: IAppRepoFormProps) {
                     value={url}
                     onChange={handleURLChange}
                     required={true}
-                  />
-                </CdsInput>
-                <CdsInput>
-                  <label>Synchronization Interval</label>
-                  <input
-                    id="kubeapps-repo-interval"
-                    type="number"
-                    placeholder="Synchronization interval in seconds"
-                    value={interval}
-                    onChange={handleIntervalChange}
-                    required={false}
                   />
                 </CdsInput>
                 <CdsInput>
@@ -875,6 +878,17 @@ export function AppRepoForm(props: IAppRepoFormProps) {
             <CdsAccordionHeader onClick={() => toggleAccordion(3)}>Advanced</CdsAccordionHeader>
             <CdsAccordionContent>
               <CdsFormGroup layout="vertical">
+                <CdsInput>
+                  <label>Synchronization Interval</label>
+                  <input
+                    id="kubeapps-repo-interval"
+                    type="number"
+                    placeholder="Synchronization interval in seconds"
+                    value={interval}
+                    onChange={handleIntervalChange}
+                    required={false}
+                  />
+                </CdsInput>
                 <CdsTextarea layout="vertical">
                   <label>Custom CA Certificate (optional)</label>
                   <textarea

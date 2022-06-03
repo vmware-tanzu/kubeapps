@@ -31,6 +31,8 @@ describe("RepositoriesService", () => {
     authMethod:
       PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_UNSPECIFIED,
     interval: 3600,
+    username: "user",
+    password: "password",
     filterRule: {
       jq: ".name == $var0",
       variables: { $var0: "nginx" },
@@ -74,6 +76,9 @@ describe("RepositoriesService", () => {
       true,
       repo.authMethod,
       repo.interval,
+      repo.username,
+      repo.password,
+      false,
       repo.filterRule,
     );
 
@@ -108,6 +113,9 @@ describe("RepositoriesService", () => {
       repo.passCredentials,
       repo.authMethod,
       repo.interval,
+      repo.username,
+      repo.password,
+      false,
       repo.filterRule,
     );
 

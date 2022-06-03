@@ -129,16 +129,18 @@ function AppRepoList() {
               Refresh
             </CdsButton>
             <p>Not ready</p>
-            <Tooltip
-              label="notready-tooltip"
-              id={`${repo.name}-notready-tooltip`}
-              icon="info-circle"
-              position="top-right"
-              small={true}
-              iconProps={{ solid: true, size: "sm" }}
-            >
-              {repo?.status?.userReason}
-            </Tooltip>
+            {repo?.status?.userReason && (
+              <Tooltip
+                label="notready-tooltip"
+                id={`${repo.name}-notready-tooltip`}
+                icon="info-circle"
+                position="top-right"
+                small={true}
+                iconProps={{ solid: true, size: "sm" }}
+              >
+                {repo?.status?.userReason}
+              </Tooltip>
+            )}
           </>
         ),
         actions: disableControls ? (

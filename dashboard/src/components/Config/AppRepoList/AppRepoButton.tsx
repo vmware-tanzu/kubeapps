@@ -59,6 +59,8 @@ export function AppRepoAddButton({
     passCredentials: boolean,
     authMethod: PackageRepositoryAuth_PackageRepositoryAuthType,
     interval: number,
+    username: string,
+    password: string,
     filter?: IAppRepositoryFilter,
   ) => {
     if (packageRepoRef) {
@@ -80,6 +82,8 @@ export function AppRepoAddButton({
           passCredentials,
           authMethod,
           interval,
+          username,
+          password,
           filter,
         ),
       );
@@ -102,6 +106,8 @@ export function AppRepoAddButton({
           passCredentials,
           authMethod,
           interval,
+          username,
+          password,
           filter,
         ),
       );
