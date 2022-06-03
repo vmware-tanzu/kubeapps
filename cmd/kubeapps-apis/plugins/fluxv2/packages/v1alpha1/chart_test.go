@@ -932,10 +932,6 @@ func TestChartWithRelativeURL(t *testing.T) {
 
 func newChart(name, namespace string, spec *sourcev1.HelmChartSpec, status *sourcev1.HelmChartStatus) sourcev1.HelmChart {
 	helmChart := sourcev1.HelmChart{
-		TypeMeta: metav1.TypeMeta{
-			Kind:       sourcev1.HelmChartKind,
-			APIVersion: sourcev1.GroupVersion.String(),
-		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:       name,
 			Generation: int64(1),
