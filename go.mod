@@ -49,7 +49,7 @@ require (
 	github.com/distribution/distribution v2.8.1+incompatible
 	github.com/fluxcd/helm-controller/api v0.22.0
 	github.com/fluxcd/pkg/apis/meta v0.14.1
-	github.com/fluxcd/source-controller/api v0.25.0
+	github.com/fluxcd/source-controller/api v0.25.1
 	github.com/go-redis/redis/v8 v8.11.5
 	github.com/go-redis/redismock/v8 v8.0.6
 	github.com/google/go-cmp v0.5.8
@@ -73,7 +73,7 @@ require (
 	github.com/srwiley/rasterx v0.0.0-20220128185129-2efea2b9ea41
 	github.com/stretchr/testify v1.7.1
 	github.com/urfave/negroni/v2 v2.0.2
-	github.com/vmware-tanzu/carvel-kapp-controller v0.36.1
+	github.com/vmware-tanzu/carvel-kapp-controller v0.37.0
 	github.com/vmware-tanzu/carvel-vendir v0.27.0
 	golang.org/x/net v0.0.0-20220520000938-2e3eb7b945c2
 	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c

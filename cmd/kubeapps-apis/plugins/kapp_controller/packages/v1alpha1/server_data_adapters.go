@@ -5,6 +5,7 @@ package main
 
 import (
 	"fmt"
+	"google.golang.org/protobuf/types/known/anypb"
 	"strings"
 	"time"
 
@@ -15,6 +16,7 @@ import (
 	"github.com/vmware-tanzu/carvel-vendir/pkg/vendir/versions"
 	vendirversions "github.com/vmware-tanzu/carvel-vendir/pkg/vendir/versions/v1alpha1"
 	corev1 "github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
+	kappcorev1 "github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/plugins/kapp_controller/packages/v1alpha1"
 	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/pkg/pkgutils"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -432,20 +434,20 @@ func (s *Server) buildPackageRepositorySummary(pr *packagingv1alpha1.PackageRepo
 	// handle fetch-specific configuration
 	fetch := pr.Spec.Fetch
 	switch {
-	case fetch.Inline != nil:
-		repository.Type = Type_Inline
-	case fetch.Image != nil:
-		repository.Type = Type_Image
-		repository.Url = fetch.Image.URL
 	case fetch.ImgpkgBundle != nil:
 		repository.Type = Type_ImgPkgBundle
 		repository.Url = fetch.ImgpkgBundle.Image
-	case fetch.HTTP != nil:
-		repository.Type = Type_HTTP
-		repository.Url = fetch.HTTP.URL
+	case fetch.Image != nil:
+		repository.Type = Type_Image
+		repository.Url = fetch.Image.URL
 	case fetch.Git != nil:
 		repository.Type = Type_GIT
 		repository.Url = fetch.Git.URL
+	case fetch.HTTP != nil:
+		repository.Type = Type_HTTP
+		repository.Url = fetch.HTTP.URL
+	case fetch.Inline != nil:
+		repository.Type = Type_Inline
 	default:
 		return nil, fmt.Errorf("the package repository has a fetch directive that is not supported")
 	}
@@ -484,28 +486,73 @@ func (s *Server) buildPackageRepository(pr *packagingv1alpha1.PackageRepository,
 		repository.Interval = uint32(pr.Spec.SyncPeriod.Seconds())
 	}
 
-	// handle fetch-specific configuration (todo -> handle custom configuration)
+	// handle fetch-specific configuration
+	var customFetch *kappcorev1.PackageRepositoryFetch
+	var secret *kappctrlv1alpha1.AppFetchLocalRef
+
 	fetch := pr.Spec.Fetch
 	switch {
-	case fetch.Inline != nil:
-		repository.Type = Type_Inline
-	case fetch.Image != nil:
-		repository.Type = Type_Image
-		repository.Url = fetch.Image.URL
 	case fetch.ImgpkgBundle != nil:
-		repository.Type = Type_ImgPkgBundle
-		repository.Url = fetch.ImgpkgBundle.Image
-	case fetch.HTTP != nil:
-		repository.Type = Type_HTTP
-		repository.Url = fetch.HTTP.URL
+		{
+			repository.Type = Type_ImgPkgBundle
+			repository.Url = fetch.ImgpkgBundle.Image
+
+			customFetch = toFetchImgpkg(fetch.ImgpkgBundle)
+			secret = fetch.ImgpkgBundle.SecretRef
+		}
+	case fetch.Image != nil:
+		{
+			repository.Type = Type_Image
+			repository.Url = fetch.Image.URL
+
+			customFetch = toFetchImage(fetch.Image)
+			secret = fetch.Image.SecretRef
+		}
 	case fetch.Git != nil:
-		repository.Type = Type_GIT
-		repository.Url = fetch.Git.URL
+		{
+			repository.Type = Type_GIT
+			repository.Url = fetch.Git.URL
+
+			customFetch = toFetchGit(fetch.Git)
+			secret = fetch.Git.SecretRef
+		}
+	case fetch.HTTP != nil:
+		{
+			repository.Type = Type_HTTP
+			repository.Url = fetch.HTTP.URL
+
+			customFetch = toFetchHttp(fetch.HTTP)
+			secret = fetch.HTTP.SecretRef
+		}
+	case fetch.Inline != nil:
+		{
+			repository.Type = Type_Inline
+			customFetch = toFetchInline(fetch.Inline)
+		}
 	default:
 		return nil, fmt.Errorf("the package repository has a fetch directive that is not supported")
 	}
 
-	// auth
+	if customFetch != nil {
+		if customDetail, err := anypb.New(&kappcorev1.PackageRepositoryCustomDetail{
+			Fetch: customFetch,
+		}); err != nil {
+			return nil, err
+		} else {
+			repository.CustomDetail = customDetail
+		}
+	}
+
+	if secret != nil && secret.Name != "" {
+		repository.Auth = &corev1.PackageRepositoryAuth{
+			Type: corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_CUSTOM,
+			PackageRepoAuthOneOf: &corev1.PackageRepositoryAuth_SecretRef{
+				SecretRef: &corev1.SecretKeyReference{
+					Name: secret.Name,
+				},
+			},
+		}
+	}
 
 	// extract status
 	if len(pr.Status.Conditions) > 0 {
@@ -526,9 +573,17 @@ func (s *Server) buildPkgRepositoryCreate(request *corev1.AddPackageRepositoryRe
 	if namespace == "" {
 		namespace = s.globalPackagingNamespace
 	}
-	name := request.GetName()
+	name := request.Name
 
-	// repository stub
+	// custom details
+	details := &kappcorev1.PackageRepositoryCustomDetail{}
+	if request.CustomDetail != nil {
+		if err := request.CustomDetail.UnmarshalTo(details); err != nil {
+			return nil, status.Errorf(codes.InvalidArgument, "custom details are invalid: %v", err)
+		}
+	}
+
+	// repository
 	repository := &packagingv1alpha1.PackageRepository{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       pkgRepositoryResource,
@@ -539,46 +594,246 @@ func (s *Server) buildPkgRepositoryCreate(request *corev1.AddPackageRepositoryRe
 			Namespace:   namespace,
 			Annotations: map[string]string{},
 		},
-		Spec: packagingv1alpha1.PackageRepositorySpec{},
 	}
-
-	// synchronization
-	interval := request.GetInterval()
-	if interval > 0 {
-		repository.Spec.SyncPeriod = &metav1.Duration{Duration: time.Duration(interval) * time.Second}
-	}
-
-	// fetch (todo -> add support for other directives than just imgkpg)
-	repository.Spec.Fetch = &packagingv1alpha1.PackageRepositoryFetch{
-		ImgpkgBundle: &kappctrlv1alpha1.AppFetchImgpkgBundle{
-			Image: request.GetUrl(),
-		},
-	}
+	repository.Spec = s.buildPkgRepositorySpec(request.Type, request.Interval, request.Url, request.Auth, details)
 
 	return repository, nil
 }
 
 func (s *Server) buildPkgRepositoryUpdate(request *corev1.UpdatePackageRepositoryRequest, repository *packagingv1alpha1.PackageRepository) (*packagingv1alpha1.PackageRepository, error) {
-	// repository stub
-	repository.Spec = packagingv1alpha1.PackageRepositorySpec{}
-
-	// synchronization
-	interval := request.GetInterval()
-	if interval > 0 {
-		repository.Spec.SyncPeriod = &metav1.Duration{Duration: time.Duration(interval) * time.Second}
+	// existing type
+	var rptype string
+	switch {
+	case repository.Spec.Fetch.ImgpkgBundle != nil:
+		rptype = Type_ImgPkgBundle
+	case repository.Spec.Fetch.Image != nil:
+		rptype = Type_Image
+	case repository.Spec.Fetch.Git != nil:
+		rptype = Type_GIT
+	case repository.Spec.Fetch.HTTP != nil:
+		rptype = Type_HTTP
 	}
 
-	// fetch (todo -> add support for other directives than just imgkpg)
-	repository.Spec.Fetch = &packagingv1alpha1.PackageRepositoryFetch{
-		ImgpkgBundle: &kappctrlv1alpha1.AppFetchImgpkgBundle{
-			Image: request.GetUrl(),
-		},
+	// custom details
+	details := &kappcorev1.PackageRepositoryCustomDetail{}
+	if request.CustomDetail != nil {
+		if err := request.CustomDetail.UnmarshalTo(details); err != nil {
+			return nil, status.Errorf(codes.InvalidArgument, "custom details are invalid: %v", err)
+		}
 	}
+
+	// repository
+	repository.Spec = s.buildPkgRepositorySpec(rptype, request.Interval, request.Url, request.Auth, details)
 
 	return repository, nil
 }
 
-// utils
+func (s *Server) buildPkgRepositorySpec(rptype string, interval uint32, url string, auth *corev1.PackageRepositoryAuth, details *kappcorev1.PackageRepositoryCustomDetail) packagingv1alpha1.PackageRepositorySpec {
+	// spec stub
+	spec := packagingv1alpha1.PackageRepositorySpec{
+		Fetch: &packagingv1alpha1.PackageRepositoryFetch{},
+	}
+
+	// synchronization
+	if interval > 0 {
+		spec.SyncPeriod = &metav1.Duration{Duration: time.Duration(interval) * time.Second}
+	}
+
+	// auth
+	var secret *kappctrlv1alpha1.AppFetchLocalRef
+	if auth != nil && auth.GetSecretRef() != nil {
+		secret = &kappctrlv1alpha1.AppFetchLocalRef{
+			Name: auth.GetSecretRef().GetName(),
+		}
+	}
+
+	// fetch
+	switch rptype {
+	case Type_ImgPkgBundle:
+		{
+			imgpkg := &kappctrlv1alpha1.AppFetchImgpkgBundle{
+				Image:     url,
+				SecretRef: secret,
+			}
+			if details.Fetch != nil && details.Fetch.ImgpkgBundle != nil {
+				toPkgFetchImgpkg(details.Fetch.ImgpkgBundle, imgpkg)
+			}
+			spec.Fetch.ImgpkgBundle = imgpkg
+		}
+	case Type_Image:
+		{
+			image := &kappctrlv1alpha1.AppFetchImage{
+				URL:       url,
+				SecretRef: secret,
+			}
+			if details.Fetch != nil && details.Fetch.Image != nil {
+				toPkgFetchImage(details.Fetch.Image, image)
+			}
+			spec.Fetch.Image = image
+		}
+	case Type_GIT:
+		{
+			git := &kappctrlv1alpha1.AppFetchGit{
+				URL:       url,
+				SecretRef: secret,
+			}
+			if details.Fetch != nil && details.Fetch.Git != nil {
+				toPkgFetchGit(details.Fetch.Git, git)
+			}
+			spec.Fetch.Git = git
+		}
+	case Type_HTTP:
+		{
+			http := &kappctrlv1alpha1.AppFetchHTTP{
+				URL:       url,
+				SecretRef: secret,
+			}
+			if details.Fetch != nil && details.Fetch.Http != nil {
+				toPkgFetchHttp(details.Fetch.Http, http)
+			}
+			spec.Fetch.HTTP = http
+		}
+	}
+
+	return spec
+}
+
+// package repositories validation
+
+func (s *Server) validatePackageRepositoryCreate(request *corev1.AddPackageRepositoryRequest) error {
+	namespace := request.GetContext().GetNamespace()
+	if namespace == "" {
+		namespace = s.globalPackagingNamespace
+	}
+
+	if request.Description != "" {
+		return status.Errorf(codes.InvalidArgument, "Description is not supported")
+	}
+	if request.TlsConfig != nil {
+		return status.Errorf(codes.InvalidArgument, "TLS Config is not supported")
+	}
+
+	if request.Name == "" {
+		return status.Errorf(codes.InvalidArgument, "no request Name provided")
+	}
+	if request.NamespaceScoped != (namespace != s.globalPackagingNamespace) {
+		return status.Errorf(codes.InvalidArgument, "Namespace Scope is inconsistent with the provided Namespace")
+	}
+
+	switch request.Type {
+	case Type_ImgPkgBundle, Type_Image, Type_GIT, Type_HTTP:
+	case Type_Inline:
+		return status.Errorf(codes.InvalidArgument, "inline repositories are not supported")
+	case "":
+		return status.Errorf(codes.InvalidArgument, "no repository Type provided")
+	default:
+		return status.Errorf(codes.InvalidArgument, "invalid repository Type")
+	}
+
+	if request.Url == "" {
+		return status.Errorf(codes.InvalidArgument, "no request Url provided")
+	}
+	if request.Auth != nil {
+		if err := s.validatePackageRepositoryAuth(request.Auth); err != nil {
+			return err
+		}
+	}
+	if request.CustomDetail != nil {
+		if err := s.validatePackageRepositoryDetails(request.Type, request.CustomDetail); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (s *Server) validatePackageRepositoryUpdate(request *corev1.UpdatePackageRepositoryRequest, repository *packagingv1alpha1.PackageRepository) error {
+	var rptype string
+	switch {
+	case repository.Spec.Fetch.ImgpkgBundle != nil:
+		rptype = Type_ImgPkgBundle
+	case repository.Spec.Fetch.Image != nil:
+		rptype = Type_Image
+	case repository.Spec.Fetch.Git != nil:
+		rptype = Type_GIT
+	case repository.Spec.Fetch.HTTP != nil:
+		rptype = Type_HTTP
+	case repository.Spec.Fetch.Inline != nil:
+		return status.Errorf(codes.FailedPrecondition, "inline repositories are not supported")
+	default:
+		return status.Errorf(codes.Internal, "the package repository has a fetch directive that is not supported")
+	}
+
+	if request.Description != "" {
+		return status.Errorf(codes.InvalidArgument, "Description is not supported")
+	}
+	if request.TlsConfig != nil {
+		return status.Errorf(codes.InvalidArgument, "TLS Config is not supported")
+	}
+
+	if request.Url == "" {
+		return status.Errorf(codes.InvalidArgument, "no request Url provided")
+	}
+	if request.Auth != nil {
+		if err := s.validatePackageRepositoryAuth(request.Auth); err != nil {
+			return err
+		}
+	}
+	if request.CustomDetail != nil {
+		if err := s.validatePackageRepositoryDetails(rptype, request.CustomDetail); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (s *Server) validatePackageRepositoryDetails(rptype string, any *anypb.Any) error {
+	details := &kappcorev1.PackageRepositoryCustomDetail{}
+	if err := any.UnmarshalTo(details); err != nil {
+		return status.Errorf(codes.InvalidArgument, "custom details are invalid: %v", err)
+	}
+	if fetch := details.Fetch; fetch != nil {
+		switch {
+		case fetch.ImgpkgBundle != nil:
+			if rptype != Type_ImgPkgBundle {
+				return status.Errorf(codes.InvalidArgument, "custom details do not match the expected type %s", rptype)
+			}
+		case fetch.Image != nil:
+			if rptype != Type_Image {
+				return status.Errorf(codes.InvalidArgument, "custom details do not match the expected type %s", rptype)
+			}
+		case fetch.Git != nil:
+			if rptype != Type_GIT {
+				return status.Errorf(codes.InvalidArgument, "custom details do not match the expected type %s", rptype)
+			}
+		case fetch.Http != nil:
+			if rptype != Type_HTTP {
+				return status.Errorf(codes.InvalidArgument, "custom details do not match the expected type %s", rptype)
+			}
+		case fetch.Inline != nil:
+			if rptype != Type_Inline {
+				return status.Errorf(codes.InvalidArgument, "custom details do not match the expected type %s", rptype)
+			}
+		}
+	}
+	return nil
+}
+
+func (s *Server) validatePackageRepositoryAuth(auth *corev1.PackageRepositoryAuth) error {
+	if auth.Type != corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_CUSTOM {
+		return status.Errorf(codes.InvalidArgument, "invalid auth type, only custom is supported")
+	}
+	if auth.GetSecretRef() == nil {
+		return status.Errorf(codes.InvalidArgument, "invalid auth configuration, expected a secret to be configured")
+	}
+	if auth.GetSecretRef().Name == "" {
+		return status.Errorf(codes.InvalidArgument, "invalid auth configuration, missing secret name")
+	}
+	return nil
+}
+
+// status utils
 
 func statusReason(status kappctrlv1alpha1.Condition) corev1.PackageRepositoryStatus_StatusReason {
 	switch status.Type {

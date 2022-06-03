@@ -33,26 +33,8 @@ func (s *Server) AddPackageRepository(ctx context.Context, request *corev1.AddPa
 	if cluster != s.globalPackagingCluster {
 		return nil, status.Errorf(codes.InvalidArgument, "installing package repositories in other clusters in not supported yet")
 	}
-	if request.GetName() == "" {
-		return nil, status.Errorf(codes.InvalidArgument, "no request Name provided")
-	}
-	if request.GetDescription() != "" {
-		return nil, status.Errorf(codes.InvalidArgument, "Description is not supported")
-	}
-	if request.GetNamespaceScoped() != (namespace != s.globalPackagingNamespace) {
-		return nil, status.Errorf(codes.InvalidArgument, "Namespace Scope is inconsistent with the provided Namespace")
-	}
-	if request.GetType() != Type_ImgPkgBundle {
-		return nil, status.Errorf(codes.InvalidArgument, "only repositories of Type imgpkBundle are currently supported")
-	}
-	if request.GetUrl() == "" {
-		return nil, status.Errorf(codes.InvalidArgument, "no request Url provided")
-	}
-	if request.GetTlsConfig() != nil {
-		return nil, status.Errorf(codes.InvalidArgument, "TLS Config is not supported")
-	}
-	if request.GetAuth() != nil {
-		return nil, status.Errorf(codes.InvalidArgument, "Auth is not supported yet")
+	if err := s.validatePackageRepositoryCreate(request); err != nil {
+		return nil, err
 	}
 
 	// build repository
@@ -75,7 +57,7 @@ func (s *Server) AddPackageRepository(ctx context.Context, request *corev1.AddPa
 				Namespace: namespace,
 			},
 			Plugin:     GetPluginDetail(),
-			Identifier: request.GetName(),
+			Identifier: request.Name,
 		},
 	}
 
@@ -176,30 +158,23 @@ func (s *Server) UpdatePackageRepository(ctx context.Context, request *corev1.Up
 	logctx := fmt.Sprintf("(cluster=%q, namespace=%q, name=%q)", cluster, namespace, name)
 	log.Infof("+kapp-controller UpdatePackageRepository %s", logctx)
 
-	// validation
+	// identity validation
 	if cluster != s.globalPackagingCluster {
-		return nil, status.Errorf(codes.InvalidArgument, "installing package repositories in other clusters in not supported yet")
+		return nil, status.Errorf(codes.InvalidArgument, "updating package repositories in other clusters in not supported yet")
 	}
 	if name == "" {
 		return nil, status.Errorf(codes.InvalidArgument, "no request Name provided")
-	}
-	if request.GetDescription() != "" {
-		return nil, status.Errorf(codes.InvalidArgument, "Description is not supported")
-	}
-	if request.GetUrl() == "" {
-		return nil, status.Errorf(codes.InvalidArgument, "no request Url provided")
-	}
-	if request.GetTlsConfig() != nil {
-		return nil, status.Errorf(codes.InvalidArgument, "TLS Config is not supported")
-	}
-	if request.GetAuth() != nil {
-		return nil, status.Errorf(codes.InvalidArgument, "Auth is not supported yet")
 	}
 
 	// fetch existing
 	repository, err := s.getPkgRepository(ctx, cluster, namespace, name)
 	if err != nil {
 		return nil, statuserror.FromK8sError("get", "PackageRepository", name, err)
+	}
+
+	// validate for update
+	if err := s.validatePackageRepositoryUpdate(request, repository); err != nil {
+		return nil, err
 	}
 
 	// build repository
