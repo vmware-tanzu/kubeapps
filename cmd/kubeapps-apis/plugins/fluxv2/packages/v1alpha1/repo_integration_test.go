@@ -285,6 +285,14 @@ func TestKindClusterAddPackageRepository(t *testing.T) {
 	}
 }
 
+func TestKindClusterAddOciPackageRepository(t *testing.T) {
+	_, _, err := checkEnv(t)
+	if err != nil {
+		t.Fatal(err)
+	}
+	// TODO
+}
+
 func TestKindClusterGetPackageRepositoryDetail(t *testing.T) {
 	_, fluxPluginReposClient, err := checkEnv(t)
 	if err != nil {
@@ -412,10 +420,15 @@ func TestKindClusterGetPackageRepositoryDetail(t *testing.T) {
 
 			var resp *corev1.GetPackageRepositoryDetailResponse
 			for {
+				grpcCtx, cancel = context.WithTimeout(grpcCtx, defaultContextTimeout)
+				defer cancel()
+
 				resp, err = fluxPluginReposClient.GetPackageRepositoryDetail(grpcCtx, tc.request)
+
 				if got, want := status.Code(err), tc.expectedStatusCode; got != want {
-					t.Fatalf("got: %v, want: %v", err, want)
+					t.Fatalf("got: %v, want: %v, last repo detail: %v", err, want, resp)
 				}
+
 				if tc.expectedStatusCode != codes.OK {
 					// we are done
 					return

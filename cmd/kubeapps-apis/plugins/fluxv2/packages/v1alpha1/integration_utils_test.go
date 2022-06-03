@@ -189,10 +189,6 @@ func kubeAddHelmRepository(t *testing.T, name, url, namespace, secretName string
 		interval = time.Duration(10 * time.Minute)
 	}
 	repo := sourcev1.HelmRepository{
-		TypeMeta: metav1.TypeMeta{
-			Kind:       sourcev1.HelmRepositoryKind,
-			APIVersion: sourcev1.GroupVersion.String(),
-		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      name,
 			Namespace: namespace,
@@ -435,74 +431,16 @@ func kubeDeleteRole(t *testing.T, name, namespace string) error {
 	return typedClient.RbacV1().Roles(namespace).Delete(ctx, name, metav1.DeleteOptions{})
 }
 
-func kubeCreateServiceAccountAndSecret(t *testing.T, name, namespace string) (string, error) {
+func kubeCreateClusterRoleBinding(t *testing.T, name, namespace, role string) error {
+	t.Logf("+kubeCreateClusterRoleBinding(%s,%s,%s)", name, namespace, role)
 	typedClient, err := kubeGetTypedClient()
 	if err != nil {
-		return "", err
+		return err
 	}
+
 	ctx, cancel := context.WithTimeout(context.Background(), defaultContextTimeout)
 	defer cancel()
-	_, err = typedClient.CoreV1().ServiceAccounts(namespace).Create(
-		ctx,
-		&apiv1.ServiceAccount{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      name,
-				Namespace: namespace,
-			},
-		},
-		metav1.CreateOptions{})
-	if err != nil {
-		return "", err
-	}
 
-	secretName := ""
-	for i := 0; i < 10; i++ {
-		ctx, cancel := context.WithTimeout(context.Background(), defaultContextTimeout)
-		defer cancel()
-		svcAccount, err := typedClient.CoreV1().ServiceAccounts(namespace).Get(ctx, name, metav1.GetOptions{})
-		if err != nil {
-			return "", err
-		}
-		if len(svcAccount.Secrets) >= 1 && svcAccount.Secrets[0].Name != "" {
-			secretName = svcAccount.Secrets[0].Name
-			break
-		}
-		t.Logf("Waiting 1s for service account [%s] secret to be set up... [%d/%d]", name, i+1, 10)
-		time.Sleep(1 * time.Second)
-	}
-	if secretName == "" {
-		return "", fmt.Errorf("Service account [%s] has no secrets", name)
-	}
-
-	ctx, cancel = context.WithTimeout(context.Background(), defaultContextTimeout)
-	defer cancel()
-	secret, err := typedClient.CoreV1().Secrets(namespace).Get(
-		ctx,
-		secretName,
-		metav1.GetOptions{})
-	if err != nil {
-		return "", err
-	}
-	token := secret.Data["token"]
-	if token == nil {
-		return "", err
-	} else {
-		return string(token), nil
-	}
-}
-
-func kubeCreateServiceAccountWithClusterRole(t *testing.T, name, namespace, role string) (string, error) {
-	t.Logf("+kubeCreateServiceAccountWithClusterRole(%s,%s,%s)", name, namespace, role)
-	token, err := kubeCreateServiceAccountAndSecret(t, name, namespace)
-	if err != nil {
-		return "", err
-	}
-	typedClient, err := kubeGetTypedClient()
-	if err != nil {
-		return "", err
-	}
-	ctx, cancel := context.WithTimeout(context.Background(), defaultContextTimeout)
-	defer cancel()
 	_, err = typedClient.RbacV1().ClusterRoleBindings().Create(
 		ctx,
 		&rbacv1.ClusterRoleBinding{
@@ -522,25 +460,98 @@ func kubeCreateServiceAccountWithClusterRole(t *testing.T, name, namespace, role
 			},
 		},
 		metav1.CreateOptions{})
+	return err
+}
+
+func kubeCreateServiceAccount(t *testing.T, name, namespace string) error {
+	t.Logf("+kubeCreateServiceAccount(%s,%s)", name, namespace)
+	typedClient, err := kubeGetTypedClient()
+	if err != nil {
+		return err
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), defaultContextTimeout)
+	defer cancel()
+
+	_, err = typedClient.CoreV1().ServiceAccounts(namespace).Create(
+		ctx,
+		&apiv1.ServiceAccount{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      name,
+				Namespace: namespace,
+			},
+		},
+		metav1.CreateOptions{})
+	return err
+}
+
+func kubeCreateServiceAccountWithClusterRole(t *testing.T, name, namespace, role string) (string, error) {
+	t.Logf("+kubeCreateServiceAccountWithClusterRole(%s,%s,%s)", name, namespace, role)
+
+	// https://itnext.io/big-change-in-k8s-1-24-about-serviceaccounts-and-their-secrets-4b909a4af4e0
+	// and
+	// https://github.com/vmware-tanzu/kubeapps/pull/4772
+	// it used to be the case that creating service account would automatically create an
+	// associated secret service account token
+	// (per https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/)
+	// but starting with 1.24 it doesn't. So now I do it manually
+	err := kubeCreateServiceAccount(t, name, namespace)
 	if err != nil {
 		return "", err
 	}
-	return string(token), nil
+
+	err = kubeCreateClusterRoleBinding(t, name, namespace, role)
+	if err != nil {
+		return "", err
+	}
+
+	secretName := name + "-token"
+	err = kubeCreateSecret(t, &apiv1.Secret{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      secretName,
+			Namespace: namespace,
+			Annotations: map[string]string{
+				apiv1.ServiceAccountNameKey: name,
+			},
+		},
+		Type: apiv1.SecretTypeServiceAccountToken,
+	})
+	if err != nil {
+		return "", err
+	}
+
+	var token string
+	for i := 0; i < 10; i++ {
+		token, err = kubeGetSecretToken(t, namespace, secretName, "token")
+		if token != "" && err == nil {
+			break
+		}
+		t.Logf("Waiting 1s for service account token in secret [%s] to be set up... [%d/%d]", secretName, i+1, 10)
+		time.Sleep(1 * time.Second)
+	}
+
+	if token == "" {
+		return "", fmt.Errorf("Failed to get token from secret: [%s]", secretName)
+	}
+	return token, nil
 }
 
 func kubeCreateServiceAccountWithRoles(t *testing.T, name, namespace string, namespacesToRoles map[string]string) (string, error) {
 	t.Logf("+kubeCreateServiceAccountWithRoles(%s,%s,%s)", name, namespace, namespacesToRoles)
-	token, err := kubeCreateServiceAccountAndSecret(t, name, namespace)
+	err := kubeCreateServiceAccount(t, name, namespace)
 	if err != nil {
 		return "", err
 	}
+
 	typedClient, err := kubeGetTypedClient()
 	if err != nil {
 		return "", err
 	}
-	ctx, cancel := context.WithTimeout(context.Background(), defaultContextTimeout)
-	defer cancel()
+
 	for ns, role := range namespacesToRoles {
+		ctx, cancel := context.WithTimeout(context.Background(), defaultContextTimeout)
+		defer cancel()
+
 		_, err = typedClient.RbacV1().RoleBindings(ns).Create(
 			ctx,
 			&rbacv1.RoleBinding{
@@ -565,7 +576,36 @@ func kubeCreateServiceAccountWithRoles(t *testing.T, name, namespace string, nam
 			return "", err
 		}
 	}
-	return string(token), nil
+
+	secretName := name + "-token"
+	err = kubeCreateSecret(t, &apiv1.Secret{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      secretName,
+			Namespace: namespace,
+			Annotations: map[string]string{
+				apiv1.ServiceAccountNameKey: name,
+			},
+		},
+		Type: apiv1.SecretTypeServiceAccountToken,
+	})
+	if err != nil {
+		return "", err
+	}
+
+	var token string
+	for i := 0; i < 10; i++ {
+		token, err = kubeGetSecretToken(t, namespace, secretName, "token")
+		if token != "" && err == nil {
+			break
+		}
+		t.Logf("Waiting 1s for service account token in secret [%s] to be set up... [%d/%d]", secretName, i+1, 10)
+		time.Sleep(1 * time.Second)
+	}
+
+	if token == "" {
+		return "", fmt.Errorf("Failed to get token from secret: [%s]", secretName)
+	}
+	return token, nil
 }
 
 // ref: https://kubernetes.io/docs/reference/access-authn-authz/rbac/#user-facing-roles

@@ -7,7 +7,7 @@ FROM nginx:1.21.3
 COPY ./nginx.conf /etc/nginx/nginx.conf
 
 # only has a single user: foo, password: bar
-COPY ./.htpasswd /etc/apache2/.htpasswd
+COPY ./md5.htpasswd /etc/apache2/.htpasswd
 
 COPY ./charts/podinfo-index.yaml /usr/share/nginx/html/podinfo/index.yaml
 COPY ./charts/podinfo-6.0.0.tgz /usr/share/nginx/html/podinfo/

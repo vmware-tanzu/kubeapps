@@ -2146,10 +2146,6 @@ func TestDeletePackageRepository(t *testing.T) {
 
 func newRepo(name string, namespace string, spec *sourcev1.HelmRepositorySpec, status *sourcev1.HelmRepositoryStatus) sourcev1.HelmRepository {
 	helmRepository := sourcev1.HelmRepository{
-		TypeMeta: metav1.TypeMeta{
-			Kind:       sourcev1.HelmRepositoryKind,
-			APIVersion: sourcev1.GroupVersion.String(),
-		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:       name,
 			Generation: 1,
