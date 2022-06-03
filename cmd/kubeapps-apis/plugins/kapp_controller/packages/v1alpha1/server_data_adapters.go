@@ -488,31 +488,41 @@ func (s *Server) buildPackageRepository(pr *packagingv1alpha1.PackageRepository,
 
 	// handle fetch-specific configuration
 	var customFetch *kappcorev1.PackageRepositoryFetch
+	var secret *kappctrlv1alpha1.AppFetchLocalRef
+
 	fetch := pr.Spec.Fetch
 	switch {
 	case fetch.ImgpkgBundle != nil:
 		{
 			repository.Type = Type_ImgPkgBundle
 			repository.Url = fetch.ImgpkgBundle.Image
+
 			customFetch = toFetchImgpkg(fetch.ImgpkgBundle)
+			secret = fetch.ImgpkgBundle.SecretRef
 		}
 	case fetch.Image != nil:
 		{
 			repository.Type = Type_Image
 			repository.Url = fetch.Image.URL
+
 			customFetch = toFetchImage(fetch.Image)
+			secret = fetch.Image.SecretRef
 		}
 	case fetch.Git != nil:
 		{
 			repository.Type = Type_GIT
 			repository.Url = fetch.Git.URL
+
 			customFetch = toFetchGit(fetch.Git)
+			secret = fetch.Git.SecretRef
 		}
 	case fetch.HTTP != nil:
 		{
 			repository.Type = Type_HTTP
 			repository.Url = fetch.HTTP.URL
+
 			customFetch = toFetchHttp(fetch.HTTP)
+			secret = fetch.HTTP.SecretRef
 		}
 	case fetch.Inline != nil:
 		{
@@ -533,7 +543,16 @@ func (s *Server) buildPackageRepository(pr *packagingv1alpha1.PackageRepository,
 		}
 	}
 
-	// auth
+	if secret != nil && secret.Name != "" {
+		repository.Auth = &corev1.PackageRepositoryAuth{
+			Type: corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_CUSTOM,
+			PackageRepoAuthOneOf: &corev1.PackageRepositoryAuth_SecretRef{
+				SecretRef: &corev1.SecretKeyReference{
+					Name: secret.Name,
+				},
+			},
+		}
+	}
 
 	// extract status
 	if len(pr.Status.Conditions) > 0 {
@@ -576,7 +595,7 @@ func (s *Server) buildPkgRepositoryCreate(request *corev1.AddPackageRepositoryRe
 			Annotations: map[string]string{},
 		},
 	}
-	repository.Spec = s.buildPkgRepositorySpec(request.Type, request.Interval, request.Url, details)
+	repository.Spec = s.buildPkgRepositorySpec(request.Type, request.Interval, request.Url, request.Auth, details)
 
 	return repository, nil
 }
@@ -604,12 +623,12 @@ func (s *Server) buildPkgRepositoryUpdate(request *corev1.UpdatePackageRepositor
 	}
 
 	// repository
-	repository.Spec = s.buildPkgRepositorySpec(rptype, request.Interval, request.Url, details)
+	repository.Spec = s.buildPkgRepositorySpec(rptype, request.Interval, request.Url, request.Auth, details)
 
 	return repository, nil
 }
 
-func (s *Server) buildPkgRepositorySpec(rptype string, interval uint32, url string, details *kappcorev1.PackageRepositoryCustomDetail) packagingv1alpha1.PackageRepositorySpec {
+func (s *Server) buildPkgRepositorySpec(rptype string, interval uint32, url string, auth *corev1.PackageRepositoryAuth, details *kappcorev1.PackageRepositoryCustomDetail) packagingv1alpha1.PackageRepositorySpec {
 	// spec stub
 	spec := packagingv1alpha1.PackageRepositorySpec{
 		Fetch: &packagingv1alpha1.PackageRepositoryFetch{},
@@ -620,12 +639,21 @@ func (s *Server) buildPkgRepositorySpec(rptype string, interval uint32, url stri
 		spec.SyncPeriod = &metav1.Duration{Duration: time.Duration(interval) * time.Second}
 	}
 
+	// auth
+	var secret *kappctrlv1alpha1.AppFetchLocalRef
+	if auth != nil && auth.GetSecretRef() != nil {
+		secret = &kappctrlv1alpha1.AppFetchLocalRef{
+			Name: auth.GetSecretRef().GetName(),
+		}
+	}
+
 	// fetch
 	switch rptype {
 	case Type_ImgPkgBundle:
 		{
 			imgpkg := &kappctrlv1alpha1.AppFetchImgpkgBundle{
-				Image: url,
+				Image:     url,
+				SecretRef: secret,
 			}
 			if details.Fetch != nil && details.Fetch.ImgpkgBundle != nil {
 				toPkgFetchImgpkg(details.Fetch.ImgpkgBundle, imgpkg)
@@ -635,7 +663,8 @@ func (s *Server) buildPkgRepositorySpec(rptype string, interval uint32, url stri
 	case Type_Image:
 		{
 			image := &kappctrlv1alpha1.AppFetchImage{
-				URL: url,
+				URL:       url,
+				SecretRef: secret,
 			}
 			if details.Fetch != nil && details.Fetch.Image != nil {
 				toPkgFetchImage(details.Fetch.Image, image)
@@ -645,7 +674,8 @@ func (s *Server) buildPkgRepositorySpec(rptype string, interval uint32, url stri
 	case Type_GIT:
 		{
 			git := &kappctrlv1alpha1.AppFetchGit{
-				URL: url,
+				URL:       url,
+				SecretRef: secret,
 			}
 			if details.Fetch != nil && details.Fetch.Git != nil {
 				toPkgFetchGit(details.Fetch.Git, git)
@@ -655,7 +685,8 @@ func (s *Server) buildPkgRepositorySpec(rptype string, interval uint32, url stri
 	case Type_HTTP:
 		{
 			http := &kappctrlv1alpha1.AppFetchHTTP{
-				URL: url,
+				URL:       url,
+				SecretRef: secret,
 			}
 			if details.Fetch != nil && details.Fetch.Http != nil {
 				toPkgFetchHttp(details.Fetch.Http, http)
@@ -703,7 +734,9 @@ func (s *Server) validatePackageRepositoryCreate(request *corev1.AddPackageRepos
 		return status.Errorf(codes.InvalidArgument, "no request Url provided")
 	}
 	if request.Auth != nil {
-		return status.Errorf(codes.InvalidArgument, "Auth is not supported yet")
+		if err := s.validatePackageRepositoryAuth(request.Auth); err != nil {
+			return err
+		}
 	}
 	if request.CustomDetail != nil {
 		if err := s.validatePackageRepositoryDetails(request.Type, request.CustomDetail); err != nil {
@@ -742,7 +775,9 @@ func (s *Server) validatePackageRepositoryUpdate(request *corev1.UpdatePackageRe
 		return status.Errorf(codes.InvalidArgument, "no request Url provided")
 	}
 	if request.Auth != nil {
-		return status.Errorf(codes.InvalidArgument, "Auth is not supported yet")
+		if err := s.validatePackageRepositoryAuth(request.Auth); err != nil {
+			return err
+		}
 	}
 	if request.CustomDetail != nil {
 		if err := s.validatePackageRepositoryDetails(rptype, request.CustomDetail); err != nil {
@@ -781,6 +816,19 @@ func (s *Server) validatePackageRepositoryDetails(rptype string, any *anypb.Any)
 				return status.Errorf(codes.InvalidArgument, "custom details do not match the expected type %s", rptype)
 			}
 		}
+	}
+	return nil
+}
+
+func (s *Server) validatePackageRepositoryAuth(auth *corev1.PackageRepositoryAuth) error {
+	if auth.Type != corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_CUSTOM {
+		return status.Errorf(codes.InvalidArgument, "invalid auth type, only custom is supported")
+	}
+	if auth.GetSecretRef() == nil {
+		return status.Errorf(codes.InvalidArgument, "invalid auth configuration, expected a secret to be configured")
+	}
+	if auth.GetSecretRef().Name == "" {
+		return status.Errorf(codes.InvalidArgument, "invalid auth configuration, missing secret name")
 	}
 	return nil
 }
