@@ -1,70 +1,21 @@
 <!DOCTYPE html>
 <html lang="{{ .Site.LanguageCode | default "en-us" }}">
 <head>
-	<!-- OneTrust Cookies Consent Notice start -->
-	<script
-    src="https://cdn.cookielaw.org/scripttemplates/otSDKStub.js"
-    type="text/javascript"
-    charset="UTF-8"
-    data-domain-script="{{ .Site.Params.oneTrustId }}"
-  ></script>
-  <script type="text/javascript">
-    function OptanonWrapper() {
-      {
-        window.dataLayer.push({ event: "OneTrustGroupsUpdated" });
-      }
-    }
+	<!-- OneTrust Cookies Consent Notice and Google Tag Manager -->
+  <meta content="{{ .Site.Params.oneTrustId }}" name='onetrust-data-domain'>
+  <meta content='https://tags.tiqcdn.com/utag/vmware/microsites-privacy/prod/utag.js' name='microsites-utag'>
+  <script src=https://code.jquery.com/jquery-3.4.1.slim.min.js integrity=sha384-J6qa4849blE2+poT4WnyKhv5vZF5SrPo0iEjwBvKU7imGFAV0wwj1yYfoRSJoZ+n crossorigin=anonymous></script>
+  <script src='//www.vmware.com/files/templates/inc/utag_data.js'></script>
+  <script src='//tags.tiqcdn.com/utag/vmware/microsites-privacy/prod/utag.sync.js'></script>
+  <script>
+    function OptanonWrapper() { { window.dataLayer.push({ event: 'OneTrustGroupsUpdated' }); } }
   </script>
-  <!-- OneTrust Cookies Consent Notice end -->
+  <script>
+    function setGTM(w,d,s,l,i){ w[l]=w[l]||[]; w[l].push({'gtm.start':new Date().getTime(),event:'gtm.js'}); var f=d.getElementsByTagName(s)[0],j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:''; j.async=true; j.src='https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f); } 
+    if (document.cookie.indexOf('OptanonConsent') > -1 && document.cookie.indexOf('groups=') > -1) { setGTM(window,document,'script','dataLayer','{{ .Site.Params.gtmId }}'); } else{ waitForOnetrustActiveGroups(); } var timer; function waitForOnetrustActiveGroups() { if (document.cookie.indexOf('OptanonConsent') > -1 && document.cookie.indexOf('groups=') > -1) { clearTimeout(timer); setGTM(window,document,'script','dataLayer','{{ .Site.Params.gtmId }}'); } else{ timer=setTimeout(waitForOnetrustActiveGroups, 250); } }
+  </script>
+  <!-- OneTrust Cookies Consent Notice and Google Tag Manager end -->
 
-  <!-- Google Tag Manager -->
-  <script type="text/javascript">
-    function setGTM(w, d, s, l, i) {
-      w[l] = w[l] || [];
-      w[l].push({
-        "gtm.start": new Date().getTime(),
-        event: "gtm.js",
-      });
-      var f = d.getElementsByTagName(s)[0],
-        j = d.createElement(s),
-        dl = l != "dataLayer" ? "&l=" + l : "";
-      j.async = true;
-      j.src = "https://www.googletagmanager.com/gtag/js?id=" + i + dl;
-      f.parentNode.insertBefore(j, f);
-    }
-    if (
-      document.cookie.indexOf("OptanonConsent") > -1 &&
-      document.cookie.indexOf("groups=") > -1
-    ) {
-      setGTM(
-        window,
-        document,
-        "script",
-        "dataLayer",
-        "{{ .Site.Params.gtmId }}"
-      );
-    } else {
-      waitForOnetrustActiveGroups();
-    }
-    var timer;
-    function waitForOnetrustActiveGroups() {
-      if (
-        document.cookie.indexOf("OptanonConsent") > -1 &&
-        document.cookie.indexOf("groups=") > -1
-      ) {
-        clearTimeout(timer);
-        setGTM(
-          window,
-          document,
-          "script",
-          "dataLayer",
-          "{{ .Site.Params.gtmId }}"
-        );
-      } else {
-        timer = setTimeout(waitForOnetrustActiveGroups, 250);
-      }
-    }
-  </script>
 
   <meta
     name="google-site-verification"
