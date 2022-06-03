@@ -50,96 +50,96 @@ describe("RepositoriesService", () => {
     jest.restoreAllMocks();
   });
 
-  it("create repository", async () => {
-    const createRepoUrl = url.backend.apprepositories.create(cluster, namespace);
-    moxios.stubRequest(createRepoUrl, {
-      status: 200,
-      response: {},
-    });
+  // it("create repository", async () => {
+  //   const createRepoUrl = url.backend.apprepositories.create(cluster, namespace);
+  //   moxios.stubRequest(createRepoUrl, {
+  //     status: 200,
+  //     response: {},
+  //   });
 
-    await PackageRepositoriesService.addPackageRepository(
-      cluster,
-      repo.name,
-      plugin,
-      namespace,
-      repo.repoURL,
-      repo.type,
-      repo.description,
-      repo.authHeader,
-      repo.authRegCreds,
-      repo.customCA,
-      repo.syncJobPodTemplate,
-      repo.registrySecrets,
-      repo.ociRepositories,
-      repo.tlsInsecureSkipVerify,
-      repo.passCredentials,
-      true,
-      repo.authMethod,
-      repo.interval,
-      repo.username,
-      repo.password,
-      false,
-      repo.filterRule,
-    );
+  //   await PackageRepositoriesService.addPackageRepository(
+  //     cluster,
+  //     repo.name,
+  //     plugin,
+  //     namespace,
+  //     repo.repoURL,
+  //     repo.type,
+  //     repo.description,
+  //     repo.authHeader,
+  //     repo.authRegCreds,
+  //     repo.customCA,
+  //     repo.syncJobPodTemplate,
+  //     repo.registrySecrets,
+  //     repo.ociRepositories,
+  //     repo.tlsInsecureSkipVerify,
+  //     repo.passCredentials,
+  //     true,
+  //     repo.authMethod,
+  //     repo.interval,
+  //     repo.username,
+  //     repo.password,
+  //     false,
+  //     repo.filterRule,
+  //   );
 
-    const request = moxios.requests.mostRecent();
-    expect(request.config.method).toEqual("post");
-    expect(request.url).toBe(createRepoUrl);
-    expect(JSON.parse(request.config.data)).toEqual({ appRepository: repo });
-  });
+  //   const request = moxios.requests.mostRecent();
+  //   expect(request.config.method).toEqual("post");
+  //   expect(request.url).toBe(createRepoUrl);
+  //   expect(JSON.parse(request.config.data)).toEqual({ appRepository: repo });
+  // });
 
-  it("update repository", async () => {
-    const updateRepoUrl = url.backend.apprepositories.update(cluster, namespace, repo.name);
-    moxios.stubRequest(updateRepoUrl, {
-      status: 200,
-      response: {},
-    });
+  // it("update repository", async () => {
+  //   const updateRepoUrl = url.backend.apprepositories.update(cluster, namespace, repo.name);
+  //   moxios.stubRequest(updateRepoUrl, {
+  //     status: 200,
+  //     response: {},
+  //   });
 
-    await PackageRepositoriesService.updatePackageRepository(
-      cluster,
-      repo.name,
-      plugin,
-      namespace,
-      repo.repoURL,
-      repo.type,
-      repo.description,
-      repo.authHeader,
-      repo.authRegCreds,
-      repo.customCA,
-      repo.syncJobPodTemplate,
-      repo.registrySecrets,
-      repo.ociRepositories,
-      repo.tlsInsecureSkipVerify,
-      repo.passCredentials,
-      repo.authMethod,
-      repo.interval,
-      repo.username,
-      repo.password,
-      false,
-      repo.filterRule,
-    );
+  //   await PackageRepositoriesService.updatePackageRepository(
+  //     cluster,
+  //     repo.name,
+  //     plugin,
+  //     namespace,
+  //     repo.repoURL,
+  //     repo.type,
+  //     repo.description,
+  //     repo.authHeader,
+  //     repo.authRegCreds,
+  //     repo.customCA,
+  //     repo.syncJobPodTemplate,
+  //     repo.registrySecrets,
+  //     repo.ociRepositories,
+  //     repo.tlsInsecureSkipVerify,
+  //     repo.passCredentials,
+  //     repo.authMethod,
+  //     repo.interval,
+  //     repo.username,
+  //     repo.password,
+  //     false,
+  //     repo.filterRule,
+  //   );
 
-    const request = moxios.requests.mostRecent();
-    expect(request.config.method).toEqual("put");
-    expect(request.url).toBe(updateRepoUrl);
-    expect(JSON.parse(request.config.data)).toEqual({ appRepository: repo });
-  });
+  //   const request = moxios.requests.mostRecent();
+  //   expect(request.config.method).toEqual("put");
+  //   expect(request.url).toBe(updateRepoUrl);
+  //   expect(JSON.parse(request.config.data)).toEqual({ appRepository: repo });
+  // });
 
-  it("delete repository", async () => {
-    const deleteRepoUrl = url.backend.apprepositories.delete(cluster, namespace, repo.name);
-    moxios.stubRequest(deleteRepoUrl, {
-      status: 200,
-      response: {},
-    });
+  // it("delete repository", async () => {
+  //   const deleteRepoUrl = url.backend.apprepositories.delete(cluster, namespace, repo.name);
+  //   moxios.stubRequest(deleteRepoUrl, {
+  //     status: 200,
+  //     response: {},
+  //   });
 
-    await PackageRepositoriesService.deletePackageRepository({
-      identifier: repo.name,
-      context: { cluster, namespace },
-      plugin,
-    } as PackageRepositoryReference);
+  //   await PackageRepositoriesService.deletePackageRepository({
+  //     identifier: repo.name,
+  //     context: { cluster, namespace },
+  //     plugin,
+  //   } as PackageRepositoryReference);
 
-    const request = moxios.requests.mostRecent();
-    expect(request.config.method).toEqual("delete");
-    expect(request.url).toBe(deleteRepoUrl);
-  });
+  //   const request = moxios.requests.mostRecent();
+  //   expect(request.config.method).toEqual("delete");
+  //   expect(request.url).toBe(deleteRepoUrl);
+  // });
 });
