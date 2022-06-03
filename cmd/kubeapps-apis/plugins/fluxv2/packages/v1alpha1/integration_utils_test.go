@@ -1146,6 +1146,10 @@ func redisReceiveNotificationsLoop(t *testing.T, ch <-chan *redis.Message, sem *
 	}
 }
 
+// TODO (gfichtenholt): download bitnami index.yaml once, push it to the flux2testdata pod and use
+// that URL to avoid intermittent
+// "Failed: failed to fetch Helm repository index: failed to cache index to temporary file: unexpected EOF"
+
 func initNumberOfChartsInBitnamiCatalog(t *testing.T) error {
 	t.Logf("+initNumberOfChartsInBitnamiCatalog")
 
