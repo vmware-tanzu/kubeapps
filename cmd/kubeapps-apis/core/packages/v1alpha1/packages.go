@@ -265,6 +265,10 @@ func (s *packagesServer) GetInstalledPackageResourceRefs(ctx context.Context, re
 	if err != nil {
 		return nil, status.Errorf(status.Convert(err).Code(), "Unable to get the resource refs for the package %q using the plugin %q: %v", request.InstalledPackageRef.Identifier, request.InstalledPackageRef.Plugin.Name, err)
 	}
+	// Package exists but no resourceRefs found
+	if response != nil && len(response.ResourceRefs) == 0 {
+		return nil, status.Errorf(codes.NotFound, "No resource references available for %s using plugin %v", identifier, request.InstalledPackageRef.Plugin)
+	}
 
 	return response, nil
 }
