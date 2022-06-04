@@ -4,20 +4,27 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
-	kappcorev1 "github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/plugins/kapp_controller/packages/v1alpha1"
+	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/kubernetes/pkg/credentialprovider"
 	"sort"
 	"strings"
 	"time"
 
+	k8scorev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/client-go/rest"
+
 	"github.com/Masterminds/semver/v3"
 	kappcmdcore "github.com/k14s/kapp/pkg/kapp/cmd/core"
 	kappctrlv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
+	packagingv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/packaging/v1alpha1"
 	datapackagingv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/apis/datapackaging/v1alpha1"
 	vendirversions "github.com/vmware-tanzu/carvel-vendir/pkg/vendir/versions/v1alpha1"
 	corev1 "github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
+	kappcorev1 "github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/plugins/kapp_controller/packages/v1alpha1"
 	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/pkg/pkgutils"
-	"k8s.io/client-go/rest"
 )
 
 const REPO_REF_ANNOTATION = "packaging.carvel.dev/package-repository-ref"
@@ -461,4 +468,93 @@ func toPkgVersionSelection(version *kappcorev1.VersionSelection) *vendirversions
 	}
 
 	return pkgversion
+}
+
+// secret state
+
+func repositorySecretRef(pkgRepository *packagingv1alpha1.PackageRepository) *kappctrlv1alpha1.AppFetchLocalRef {
+	fetch := pkgRepository.Spec.Fetch
+	switch {
+	case fetch.ImgpkgBundle != nil:
+		return fetch.ImgpkgBundle.SecretRef
+	case fetch.Image != nil:
+		return fetch.Image.SecretRef
+	case fetch.Git != nil:
+		return fetch.Git.SecretRef
+	case fetch.HTTP != nil:
+		return fetch.HTTP.SecretRef
+	}
+	return nil
+}
+
+func isPluginManaged(pkgRepository *packagingv1alpha1.PackageRepository, pkgSecret *k8scorev1.Secret) bool {
+	if !metav1.IsControlledBy(pkgSecret, pkgRepository) {
+		return false
+	}
+	if managedby := pkgSecret.GetAnnotations()[ManagedBy_Key]; managedby != ManagedBy_Value {
+		return false
+	}
+	return true
+}
+
+func isBasicAuth(secret *k8scorev1.Secret) bool {
+	return secret.Data != nil && secret.Data[k8scorev1.BasicAuthUsernameKey] != nil && secret.Data[k8scorev1.BasicAuthPasswordKey] != nil
+}
+
+func isBearerAuth(secret *k8scorev1.Secret) bool {
+	return secret.Data != nil && secret.Data["token"] != nil
+}
+
+func isSshAuth(secret *k8scorev1.Secret) bool {
+	return secret.Data != nil && secret.Data[k8scorev1.SSHAuthPrivateKey] != nil
+}
+
+func isDockerAuth(secret *k8scorev1.Secret) bool {
+	return secret.Data != nil && secret.Data[k8scorev1.DockerConfigJsonKey] != nil
+}
+
+func toDockerConfig(docker *corev1.DockerCredentials) ([]byte, error) {
+	dockerConfig := &credentialprovider.DockerConfigJSON{
+		Auths: map[string]credentialprovider.DockerConfigEntry{
+			docker.Server: {
+				Username: docker.Username,
+				Password: docker.Password,
+				Email:    docker.Email,
+			},
+		},
+	}
+	if dockerjson, err := json.Marshal(dockerConfig); err != nil {
+		return nil, err
+	} else {
+		return dockerjson, nil
+	}
+}
+
+func fromDockerConfig(dockerjson []byte) (*corev1.DockerCredentials, error) {
+	dockerConfig := &credentialprovider.DockerConfigJSON{}
+	if err := json.Unmarshal(dockerjson, dockerConfig); err != nil {
+		return nil, err
+	}
+	for server, entry := range dockerConfig.Auths {
+		docker := &corev1.DockerCredentials{
+			Server:   server,
+			Username: entry.Username,
+			Password: entry.Password,
+			Email:    entry.Email,
+		}
+		return docker, nil
+	}
+	return nil, fmt.Errorf("invalid dockerconfig, no Auths entries were found")
+}
+
+func addOwnerReference(pkgSecret *k8scorev1.Secret, pkgRepository *packagingv1alpha1.PackageRepository) {
+	pkgSecret.OwnerReferences = []metav1.OwnerReference{
+		*metav1.NewControllerRef(
+			pkgRepository,
+			schema.GroupVersionKind{
+				Group:   packagingv1alpha1.SchemeGroupVersion.Group,
+				Version: packagingv1alpha1.SchemeGroupVersion.Version,
+				Kind:    pkgRepositoryResource,
+			}),
+	}
 }
