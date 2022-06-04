@@ -491,7 +491,7 @@ func isPluginManaged(pkgRepository *packagingv1alpha1.PackageRepository, pkgSecr
 	if !metav1.IsControlledBy(pkgSecret, pkgRepository) {
 		return false
 	}
-	if managedby := pkgSecret.GetAnnotations()[ManagedBy_Key]; managedby != ManagedBy_Value {
+	if managedby := pkgSecret.GetAnnotations()[Annotation_ManagedBy_Key]; managedby != Annotation_ManagedBy_Value {
 		return false
 	}
 	return true

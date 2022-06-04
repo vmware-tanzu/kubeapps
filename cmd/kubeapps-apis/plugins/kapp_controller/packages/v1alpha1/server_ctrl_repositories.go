@@ -159,7 +159,8 @@ func (s *Server) GetPackageRepositorySummaries(ctx context.Context, request *cor
 	for _, repo := range pkgRepositories {
 		repo, err := s.buildPackageRepositorySummary(repo, cluster)
 		if err != nil {
-			return nil, fmt.Errorf("unable to convert the PackageRepository: %v", err)
+			// todo -> instead of failing the whole query, we should be able to log the error along with the response
+			return nil, status.Errorf(codes.Internal, "unable to convert the PackageRepository: %v", err)
 		}
 		repositories = append(repositories, repo)
 	}
@@ -218,7 +219,10 @@ func (s *Server) UpdatePackageRepository(ctx context.Context, request *corev1.Up
 		return nil, err
 	}
 
-	// handle managed secret
+	// handle managed secret, there 3 cases to consider:
+	//    create the secret if auth was not previously configured
+	//    update the secret if auth has been updated
+	//    delete the secret if auth has been removed
 	if request.Auth == nil && pkgSecret != nil && isPluginManaged(pkgRepository, pkgSecret) {
 		// delete exiting secret
 		if err := s.deleteSecret(ctx, cluster, pkgSecret.GetNamespace(), pkgSecret.GetName()); err != nil {
@@ -232,6 +236,7 @@ func (s *Server) UpdatePackageRepository(ctx context.Context, request *corev1.Up
 			if err != nil {
 				return nil, status.Errorf(codes.Internal, "unable to build the associated secret: %v", err)
 			}
+			// repository already exist, we can set the owner reference as part of creation
 			addOwnerReference(pkgSecret, pkgRepository)
 
 			pkgSecret, err = s.createSecret(ctx, cluster, pkgSecret)

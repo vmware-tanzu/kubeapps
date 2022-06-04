@@ -36,8 +36,8 @@ const (
 
 	Redacted = "REDACTED"
 
-	ManagedBy_Key   = "kubeapps.dev/managedBy"
-	ManagedBy_Value = "plugin:kapp-controller"
+	Annotation_ManagedBy_Key   = "kubeapps.dev/managed-by"
+	Annotation_ManagedBy_Value = "plugin:kapp-controller"
 )
 
 // available packages
@@ -583,7 +583,6 @@ func (s *Server) buildPackageRepository(pkgRepository *packagingv1alpha1.Package
 			default:
 				auth.Type = corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_UNSPECIFIED
 			}
-
 		} else {
 			switch {
 			case isBasicAuth(pkgSecret):
@@ -631,7 +630,7 @@ func (s *Server) buildPkgRepositoryCreate(request *corev1.AddPackageRepositoryRe
 	details := &kappcorev1.PackageRepositoryCustomDetail{}
 	if request.CustomDetail != nil {
 		if err := request.CustomDetail.UnmarshalTo(details); err != nil {
-			return nil, status.Errorf(codes.InvalidArgument, "custom details are invalid: %v", err)
+			return nil, fmt.Errorf("custom details are invalid: %v", err)
 		}
 	}
 
@@ -670,7 +669,7 @@ func (s *Server) buildPkgRepositoryUpdate(request *corev1.UpdatePackageRepositor
 	details := &kappcorev1.PackageRepositoryCustomDetail{}
 	if request.CustomDetail != nil {
 		if err := request.CustomDetail.UnmarshalTo(details); err != nil {
-			return nil, status.Errorf(codes.InvalidArgument, "custom details are invalid: %v", err)
+			return nil, fmt.Errorf("custom details are invalid: %v", err)
 		}
 	}
 
@@ -776,6 +775,7 @@ func (s *Server) validatePackageRepositoryCreate(ctx context.Context, cluster st
 
 	switch request.Type {
 	case Type_ImgPkgBundle, Type_Image, Type_GIT, Type_HTTP:
+		// valid types
 	case Type_Inline:
 		return status.Errorf(codes.InvalidArgument, "inline repositories are not supported")
 	case "":
@@ -901,7 +901,7 @@ func (s *Server) validatePackageRepositoryAuth(ctx context.Context, cluster, nam
 		}
 	}
 
-	// validate secret if provided
+	// validate referenced secret matches type
 	if auth.GetSecretRef() != nil {
 		name := auth.GetSecretRef().Name
 		if name == "" {
@@ -937,6 +937,8 @@ func (s *Server) validatePackageRepositoryAuth(ctx context.Context, cluster, nam
 	}
 
 	// validate auth data
+	//    ensures the expected credential struct is provided
+	//    for new auth, or type change, credentials can't have Redacted content
 	switch auth.Type {
 	case corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_BASIC_AUTH:
 		up := auth.GetUsernamePassword()
@@ -989,7 +991,7 @@ func (s *Server) buildPkgRepositorySecretCreate(namespace, name string, auth *co
 		ObjectMeta: metav1.ObjectMeta{
 			Namespace:    namespace,
 			GenerateName: name + "-",
-			Annotations:  map[string]string{ManagedBy_Key: ManagedBy_Value},
+			Annotations:  map[string]string{Annotation_ManagedBy_Key: Annotation_ManagedBy_Value},
 		},
 		StringData: map[string]string{},
 	}
