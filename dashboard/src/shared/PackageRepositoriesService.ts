@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { Any } from "gen/google/protobuf/any";
+import { Context } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
 import {
   AddPackageRepositoryRequest,
   DeletePackageRepositoryResponse,
@@ -30,21 +31,22 @@ export class PackageRepositoriesService {
     new KubeappsGrpcClient().getHelmRepositoriesServiceClientImpl();
 
   public static async getPackageRepositorySummaries(
-    cluster: string,
-    namespace?: string,
+    context: Context,
   ): Promise<GetPackageRepositorySummariesResponse> {
-    return await this.coreRepositoriesClient().GetPackageRepositorySummaries({
-      context: {
-        cluster,
-        namespace,
-      },
-    });
+    return await this.coreRepositoriesClient().GetPackageRepositorySummaries({ context });
   }
 
   public static async getPackageRepositoryDetail(
     packageRepoRef: PackageRepositoryReference,
   ): Promise<GetPackageRepositoryDetailResponse> {
-    return await this.coreRepositoriesClient().GetPackageRepositoryDetail({ packageRepoRef });
+    // since the Helm plugin has its own fields (ociRepositories, filter),
+    // we invoke it directly instead of using kthe core API client.
+    switch (packageRepoRef?.plugin?.name) {
+      case PluginNames.PACKAGES_HELM:
+        return await this.helmRepositoriesClient().GetPackageRepositoryDetail({ packageRepoRef });
+      default:
+        return await this.coreRepositoriesClient().GetPackageRepositoryDetail({ packageRepoRef });
+    }
   }
 
   public static async addPackageRepository(
@@ -58,7 +60,6 @@ export class PackageRepositoriesService {
     authHeader: string,
     authRegCreds: string,
     customCA: string,
-    syncJobPodTemplate: any,
     registrySecrets: string[],
     ociRepositories: string[],
     skipTLS: boolean,
@@ -68,7 +69,7 @@ export class PackageRepositoriesService {
     interval: number,
     username: string,
     password: string,
-    dryRun: boolean,
+    performValidation: boolean,
     filter?: IAppRepositoryFilter,
   ) {
     const addPackageRepositoryRequest = this.buildAddOrUpdateRequest(
@@ -83,7 +84,6 @@ export class PackageRepositoriesService {
       authHeader,
       authRegCreds,
       customCA,
-      syncJobPodTemplate,
       registrySecrets,
       ociRepositories,
       skipTLS,
@@ -92,17 +92,22 @@ export class PackageRepositoriesService {
       interval,
       username,
       password,
-      dryRun,
+      performValidation,
       filter,
       namespaceScoped,
     );
 
-    // since the Helm plugin has its own fields (syncJobPodTemplate, ociRepositories, filter),
+    // since the Helm plugin has its own fields (ociRepositories, filter),
     // we invoke it directly instead of using kthe core API client.
-    if (plugin.name === PluginNames.PACKAGES_HELM) {
-      return await this.helmRepositoriesClient().AddPackageRepository(addPackageRepositoryRequest);
-    } else {
-      return await this.coreRepositoriesClient().AddPackageRepository(addPackageRepositoryRequest);
+    switch (plugin.name) {
+      case PluginNames.PACKAGES_HELM:
+        return await this.helmRepositoriesClient().AddPackageRepository(
+          addPackageRepositoryRequest,
+        );
+      default:
+        return await this.coreRepositoriesClient().AddPackageRepository(
+          addPackageRepositoryRequest,
+        );
     }
   }
 
@@ -117,7 +122,6 @@ export class PackageRepositoriesService {
     authHeader: string,
     authRegCreds: string,
     customCA: string,
-    syncJobPodTemplate: any,
     registrySecrets: string[],
     ociRepositories: string[],
     skipTLS: boolean,
@@ -141,7 +145,6 @@ export class PackageRepositoriesService {
       authHeader,
       authRegCreds,
       customCA,
-      syncJobPodTemplate,
       registrySecrets,
       ociRepositories,
       skipTLS,
@@ -155,16 +158,17 @@ export class PackageRepositoriesService {
       undefined,
     );
 
-    // since the Helm plugin has its own fields (syncJobPodTemplate, ociRepositories, filter),
+    // since the Helm plugin has its own fields (ociRepositories, filter),
     // we invoke it directly instead of using kthe core API client.
-    if (plugin.name === PluginNames.PACKAGES_HELM) {
-      return await this.helmRepositoriesClient().UpdatePackageRepository(
-        updatePackageRepositoryRequest,
-      );
-    } else {
-      return await this.coreRepositoriesClient().UpdatePackageRepository(
-        updatePackageRepositoryRequest,
-      );
+    switch (plugin.name) {
+      case PluginNames.PACKAGES_HELM:
+        return await this.helmRepositoriesClient().UpdatePackageRepository(
+          updatePackageRepositoryRequest,
+        );
+      default:
+        return await this.coreRepositoriesClient().UpdatePackageRepository(
+          updatePackageRepositoryRequest,
+        );
     }
   }
 
@@ -188,7 +192,6 @@ export class PackageRepositoriesService {
     authHeader: string,
     authRegCreds: string,
     customCA: string,
-    _syncJobPodTemplate: any,
     registrySecrets: string[],
     ociRepositories: string[],
     skipTLS: boolean,
@@ -321,12 +324,4 @@ export class PackageRepositoriesService {
     } = await axiosWithAuth.get<any>(url.backend.apprepositories.get(cluster, namespace, name));
     return secret;
   }
-
-  // TODO(agamez): the refresh functionallity is currently not implemented/supported in the new Repositories API. Decide whether removing it or not
-  // public static async resync(cluster: string, namespace: string, name: string) {
-  //   const { data } = await axiosWithAuth.post(
-  //     url.backend.apprepositories.refresh(cluster, namespace, name),
-  //     null,
-  //   );
-  //   return data;
 }

@@ -25,7 +25,6 @@ const kubeaActions = { ...actions.kube };
 beforeEach(() => {
   actions.repos = {
     ...actions.repos,
-    validateRepo: jest.fn().mockReturnValue(true),
   };
   const mockDispatch = jest.fn(r => r);
   spyOnUseDispatch = jest.spyOn(ReactRedux, "useDispatch").mockReturnValue(mockDispatch);
@@ -110,11 +109,9 @@ it("shows an error updating a repo", async () => {
 });
 
 it("should call the install method when the validation success", async () => {
-  const validateRepo = jest.fn().mockReturnValue(true);
   const install = jest.fn().mockReturnValue(true);
   actions.repos = {
     ...actions.repos,
-    validateRepo,
   };
 
   let wrapper: any;
@@ -130,11 +127,9 @@ it("should call the install method when the validation success", async () => {
 });
 
 it("should not call the install method when the validation fails unless forced", async () => {
-  const validateRepo = jest.fn().mockReturnValue(false);
   const install = jest.fn().mockReturnValue(true);
   actions.repos = {
     ...actions.repos,
-    validateRepo,
   };
   let wrapper: any;
   await act(async () => {
@@ -165,11 +160,9 @@ it("should not call the install method when the validation fails unless forced",
 });
 
 it("should call the install method with OCI information", async () => {
-  const validateRepo = jest.fn().mockReturnValue(true);
   const install = jest.fn().mockReturnValue(true);
   actions.repos = {
     ...actions.repos,
-    validateRepo,
   };
   let wrapper: any;
   await act(async () => {
@@ -203,11 +196,9 @@ it("should call the install method with OCI information", async () => {
 });
 
 it("should call the install skipping TLS verification", async () => {
-  const validateRepo = jest.fn().mockReturnValue(true);
   const install = jest.fn().mockReturnValue(true);
   actions.repos = {
     ...actions.repos,
-    validateRepo,
   };
   let wrapper: any;
   await act(async () => {
@@ -238,11 +229,9 @@ it("should call the install skipping TLS verification", async () => {
 });
 
 it("should call the install passing credentials", async () => {
-  const validateRepo = jest.fn().mockReturnValue(true);
   const install = jest.fn().mockReturnValue(true);
   actions.repos = {
     ...actions.repos,
-    validateRepo,
   };
   let wrapper: any;
   await act(async () => {
@@ -439,11 +428,9 @@ it("should render the docker registry credentials section", async () => {
 });
 
 it("should call the install method with the selected docker credentials", async () => {
-  const validateRepo = jest.fn().mockReturnValue(true);
   const install = jest.fn().mockReturnValue(true);
   actions.repos = {
     ...actions.repos,
-    validateRepo,
   };
   const secret = {
     metadata: {
@@ -495,11 +482,9 @@ it("should call the install method with the selected docker credentials", async 
 });
 
 it("should call the install reusing as auth the selected docker credentials", async () => {
-  const validateRepo = jest.fn().mockReturnValue(true);
   const install = jest.fn().mockReturnValue(true);
   actions.repos = {
     ...actions.repos,
-    validateRepo,
   };
   const secret = {
     metadata: {
@@ -581,18 +566,6 @@ describe("when the repository info is already populated", () => {
     await waitFor(() => {
       wrapper.update();
       expect(wrapper.find("#kubeapps-repo-url").prop("value")).toBe("http://repo");
-    });
-  });
-
-  it("should parse the existing syncJobPodTemplate", async () => {
-    const repo = { metadata: { name: "foo" }, spec: { syncJobPodTemplate: { foo: "bar" } } } as any;
-    let wrapper: any;
-    await act(async () => {
-      wrapper = mountWrapper(defaultStore, <AppRepoForm {...defaultProps} packageRepoRef={repo} />);
-    });
-    await waitFor(() => {
-      wrapper.update();
-      expect(wrapper.find("#kubeapps-repo-sync-job-tpl").prop("value")).toBe("foo: bar\n");
     });
   });
 

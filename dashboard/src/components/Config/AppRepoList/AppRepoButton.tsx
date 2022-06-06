@@ -52,7 +52,6 @@ export function AppRepoAddButton({
     authHeader: string,
     authRegCreds: string,
     customCA: string,
-    syncJobPodTemplate: string,
     registrySecrets: string[],
     ociRepositories: string[],
     skipTLS: boolean,
@@ -61,6 +60,7 @@ export function AppRepoAddButton({
     interval: number,
     username: string,
     password: string,
+    performValidation: boolean,
     filter?: IAppRepositoryFilter,
   ) => {
     if (packageRepoRef) {
@@ -75,7 +75,6 @@ export function AppRepoAddButton({
           authHeader,
           authRegCreds,
           customCA,
-          syncJobPodTemplate,
           registrySecrets,
           ociRepositories,
           skipTLS,
@@ -84,6 +83,7 @@ export function AppRepoAddButton({
           interval,
           username,
           password,
+          performValidation,
           filter,
         ),
       );
@@ -99,7 +99,6 @@ export function AppRepoAddButton({
           authHeader,
           authRegCreds,
           customCA,
-          syncJobPodTemplate,
           registrySecrets,
           ociRepositories,
           skipTLS,
@@ -108,6 +107,7 @@ export function AppRepoAddButton({
           interval,
           username,
           password,
+          performValidation,
           filter,
         ),
       );

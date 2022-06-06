@@ -6,7 +6,9 @@ import {
   InstalledPackageDetail,
 } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
 import {
+  AddPackageRepositoryResponse,
   PackageRepositoryAuth_PackageRepositoryAuthType,
+  PackageRepositoryDetail,
   PackageRepositoryReference,
   PackageRepositorySummary,
 } from "gen/kubeappsapis/core/packages/v1alpha1/repositories";
@@ -25,17 +27,9 @@ const { repos: repoActions } = actions;
 const mockStore = configureMockStore([thunk]);
 
 let store: any;
-const appRepo = { spec: { resyncRequests: 10000 } };
+const appRepo = { name: "repo-abc" } as PackageRepositoryDetail;
 const kubeappsNamespace = "kubeapps-namespace";
 const globalReposNamespace = "kubeapps-repos-global";
-
-const safeYAMLTemplate = `
-spec:
-  containers:
-    - env:
-      - name: FOO
-        value: BAR
-`;
 
 const plugin: Plugin = { name: "my.plugin", version: "0.0.1" };
 
@@ -62,7 +56,13 @@ beforeEach(() => {
   });
   PackageRepositoriesService.updatePackageRepository = jest.fn();
   PackageRepositoriesService.addPackageRepository = jest.fn().mockImplementationOnce(() => {
-    return { appRepository: { metadata: { name: "repo-abc" } } };
+    return {
+      packageRepoRef: {
+        identifier: "repo-abc",
+        context: { cluster: "", namespace: "" },
+        plugin: { name: "", version: "" },
+      },
+    } as AddPackageRepositoryResponse;
   });
 });
 
@@ -158,49 +158,6 @@ describe("deleteRepo", () => {
     expect(store.getActions()).toEqual(expectedActions);
   });
 });
-
-// describe("resyncRepo", () => {
-//   it("dispatches errorRepos if error on #update", async () => {
-//     PackageRepositoriesService.resync = jest.fn().mockImplementationOnce(() => {
-//       throw new Error("Boom!");
-//     });
-
-//     const expectedActions = [
-//       {
-//         type: getType(repoActions.errorRepos),
-//         payload: { err: new Error("Boom!"), op: "update" },
-//       },
-//     ];
-
-//     await store.dispatch(repoActions.resyncRepo("foo", "my-namespace"));
-//     expect(store.getActions()).toEqual(expectedActions);
-//   });
-// });
-
-// describe("resyncAllRepos", () => {
-//   it("resyncs each repo using its namespace", async () => {
-//     const appRepoGetMock = jest.fn();
-//     PackageRepositoriesService.resync = appRepoGetMock;
-//     await store.dispatch(
-//       repoActions.resyncAllRepos([
-//         {
-//           context: { cluster: "default", namespace: "namespace-1" },
-//           identifier: "foo",
-//           plugin: plugin,
-//         },
-//         {
-//           context: { cluster: "default", namespace: "namespace-2" },
-//           identifier: "bar",
-//           plugin: plugin,
-//         },
-//       ] as PackageRepositoryReference[]),
-//     );
-
-//     expect(appRepoGetMock).toHaveBeenCalledTimes(2);
-//     expect(appRepoGetMock.mock.calls[0]).toEqual(["default", "namespace-1", "foo"]);
-//     expect(appRepoGetMock.mock.calls[1]).toEqual(["default", "namespace-2", "bar"]);
-//   });
-// });
 
 describe("fetchRepos", () => {
   const namespace = "default";
@@ -353,7 +310,6 @@ describe("installRepo", () => {
     "",
     "",
     "",
-    "",
     [],
     [],
     false,
@@ -362,6 +318,7 @@ describe("installRepo", () => {
     3600,
     "user",
     "password",
+    true,
     undefined,
   );
 
@@ -376,7 +333,6 @@ describe("installRepo", () => {
       "Bearer: abc",
       "",
       "",
-      "",
       [],
       [],
       false,
@@ -385,6 +341,7 @@ describe("installRepo", () => {
       3600,
       "user",
       "password",
+      true,
       undefined,
     );
 
@@ -421,7 +378,6 @@ describe("installRepo", () => {
           "",
           "",
           "",
-          "",
           [],
           ["apache", "jenkins"],
           false,
@@ -430,6 +386,7 @@ describe("installRepo", () => {
           3600,
           "user",
           "password",
+          true,
           undefined,
         ),
       );
@@ -464,7 +421,6 @@ describe("installRepo", () => {
           "",
           "",
           "",
-          "",
           [],
           [],
           true,
@@ -473,6 +429,7 @@ describe("installRepo", () => {
           3600,
           "user",
           "password",
+          true,
           undefined,
         ),
       );
@@ -512,7 +469,6 @@ describe("installRepo", () => {
       "",
       "",
       "This is a cert!",
-      "",
       [],
       [],
       false,
@@ -521,6 +477,7 @@ describe("installRepo", () => {
       3600,
       "user",
       "password",
+      true,
       undefined,
     );
 
@@ -563,7 +520,6 @@ describe("installRepo", () => {
             "",
             "",
             "",
-            safeYAMLTemplate,
             [],
             [],
             false,
@@ -572,6 +528,7 @@ describe("installRepo", () => {
             3600,
             "user",
             "password",
+            true,
             undefined,
           ),
         );
@@ -596,37 +553,6 @@ describe("installRepo", () => {
           false,
           undefined,
         );
-      });
-
-      // Example from https://nealpoole.com/blog/2013/06/code-execution-via-yaml-in-js-yaml-nodejs-module/
-      const unsafeYAMLTemplate =
-        '"toString": !<tag:yaml.org,2002:js/function> "function (){very_evil_thing();}"';
-
-      it("does not call AppRepository create with an unsafe pod template", async () => {
-        await store.dispatch(
-          repoActions.installRepo(
-            "my-repo",
-            plugin,
-            "my-namespace",
-            "http://foo.bar",
-            "helm",
-            "",
-            "",
-            "",
-            "",
-            unsafeYAMLTemplate,
-            [],
-            [],
-            false,
-            false,
-            PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_UNSPECIFIED,
-            3600,
-            "user",
-            "password",
-            undefined,
-          ),
-        );
-        expect(PackageRepositoriesService.addPackageRepository).not.toHaveBeenCalled();
       });
     });
   });
@@ -714,7 +640,6 @@ describe("installRepo", () => {
         "",
         "",
         "",
-        "",
         ["repo-1"],
         [],
         false,
@@ -723,6 +648,7 @@ describe("installRepo", () => {
         3600,
         "user",
         "password",
+        true,
         undefined,
       ),
     );
@@ -759,7 +685,6 @@ describe("installRepo", () => {
         "",
         "",
         "",
-        "",
         [],
         ["apache", "jenkins"],
         false,
@@ -768,6 +693,7 @@ describe("installRepo", () => {
         3600,
         "user",
         "password",
+        true,
         undefined,
       ),
     );
@@ -822,7 +748,6 @@ describe("updateRepo", () => {
         "foo",
         "",
         "bar",
-        safeYAMLTemplate,
         ["repo-1"],
         [],
         false,
@@ -831,6 +756,7 @@ describe("updateRepo", () => {
         3600,
         "user",
         "password",
+        true,
         undefined,
       ),
     );
@@ -884,7 +810,6 @@ describe("updateRepo", () => {
         "foo",
         "",
         "bar",
-        safeYAMLTemplate,
         ["repo-1"],
         [],
         false,
@@ -893,6 +818,7 @@ describe("updateRepo", () => {
         3600,
         "user",
         "password",
+        true,
         undefined,
       ),
     );
@@ -942,7 +868,6 @@ describe("updateRepo", () => {
         "foo",
         "",
         "bar",
-        safeYAMLTemplate,
         [],
         [],
         false,
@@ -951,6 +876,7 @@ describe("updateRepo", () => {
         3600,
         "user",
         "password",
+        true,
         undefined,
       ),
     );
@@ -972,7 +898,6 @@ describe("updateRepo", () => {
         "",
         "",
         "",
-        "",
         [],
         ["apache", "jenkins"],
         false,
@@ -981,6 +906,7 @@ describe("updateRepo", () => {
         3600,
         "user",
         "password",
+        true,
         undefined,
       ),
     );
@@ -1018,7 +944,6 @@ describe("updateRepo", () => {
         "",
         "",
         "",
-        "",
         [],
         ["apache", "jenkins"],
         false,
@@ -1027,6 +952,7 @@ describe("updateRepo", () => {
         3600,
         "user",
         "password",
+        true,
         undefined,
       ),
     );
@@ -1118,93 +1044,6 @@ describe("findPackageInRepo", () => {
       plugin: plugin,
     } as AvailablePackageReference);
   });
-});
-
-describe("validateRepo", () => {
-  // it("dispatches repoValidating and repoValidated if no error", async () => {
-  //   PackageRepositoriesService.validate = jest.fn().mockReturnValue({
-  //     code: 200,
-  //     message: "OK",
-  //   });
-  //   const expectedActions = [
-  //     {
-  //       type: getType(repoActions.repoValidating),
-  //     },
-  //     {
-  //       type: getType(repoActions.repoValidated),
-  //       payload: { code: 200, message: "OK" },
-  //     },
-  //   ];
-  //   const res = await store.dispatch(
-  //     repoActions.validateRepo("url", "helm", "auth", "", "cert", [], false, false),
-  //   );
-  //   expect(store.getActions()).toEqual(expectedActions);
-  //   expect(res).toBe(true);
-  // });
-  // it("dispatches checkRepo and errorRepos when the validation failed", async () => {
-  //   const error = new Error("boom!");
-  //   PackageRepositoriesService.validate = jest.fn(() => {
-  //     throw error;
-  //   });
-  //   const expectedActions = [
-  //     {
-  //       type: getType(repoActions.repoValidating),
-  //     },
-  //     {
-  //       type: getType(repoActions.errorRepos),
-  //       payload: { err: error, op: "validate" },
-  //     },
-  //   ];
-  //   const res = await store.dispatch(
-  //     repoActions.validateRepo("url", "helm", "auth", "", "cert", [], false, false),
-  //   );
-  //   expect(store.getActions()).toEqual(expectedActions);
-  //   expect(res).toBe(false);
-  // });
-  // it("dispatches checkRepo and errorRepos when the validation cannot be parsed", async () => {
-  //   PackageRepositoriesService.validate = jest.fn().mockReturnValue({
-  //     code: 409,
-  //     message: "forbidden",
-  //   });
-  //   const expectedActions = [
-  //     {
-  //       type: getType(repoActions.repoValidating),
-  //     },
-  //     {
-  //       type: getType(repoActions.errorRepos),
-  //       payload: {
-  //         err: new Error('{"code":409,"message":"forbidden"}'),
-  //         op: "validate",
-  //       },
-  //     },
-  //   ];
-  //   const res = await store.dispatch(
-  //     repoActions.validateRepo("url", "helm", "auth", "", "cert", [], false, false),
-  //   );
-  //   expect(store.getActions()).toEqual(expectedActions);
-  //   expect(res).toBe(false);
-  // });
-  // it("validates repo with ociRepositories", async () => {
-  //   PackageRepositoriesService.validate = jest.fn().mockReturnValue({
-  //     code: 200,
-  //   });
-  //   const res = await store.dispatch(
-  //     repoActions.validateRepo("url", "oci", "", "", "", ["apache", "jenkins"], false, false),
-  //   );
-  //   expect(res).toBe(true);
-  //   expect(PackageRepositoriesService.validate).toHaveBeenCalledWith(
-  //     "default",
-  //     "kubeapps-namespace",
-  //     "url",
-  //     "oci",
-  //     "",
-  //     "",
-  //     "",
-  //     ["apache", "jenkins"],
-  //     false,
-  //     false,
-  //   );
-  // });
 });
 
 describe("createDockerRegistrySecret", () => {

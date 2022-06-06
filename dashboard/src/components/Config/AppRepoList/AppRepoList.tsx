@@ -168,8 +168,6 @@ function AppRepoList() {
             namespace={currentNamespace}
             kubeappsNamespace={globalReposNamespace}
           />,
-          // TODO(agamez): the refresh functionallity is currently not implemented/supported in the new Repositories API
-          // <AppRepoRefreshAllButton key="refresh-all-button" />,
         ]}
         filter={
           canSetAllNS ? (

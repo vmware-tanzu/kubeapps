@@ -5,17 +5,14 @@ import actions from "actions";
 import Alert from "components/js/Alert";
 import Table from "components/js/Table";
 import Tooltip from "components/js/Tooltip";
-import PageHeader from "components/PageHeader/PageHeader";
 import { act } from "react-dom/test-utils";
 import * as ReactRedux from "react-redux";
 import { Link } from "react-router-dom";
 import { Kube } from "shared/Kube";
 import { defaultStore, getStore, initialState, mountWrapper } from "shared/specs/mountWrapper";
-import { AppRepoAddButton } from "./AppRepoButton";
 import { AppRepoControl } from "./AppRepoControl";
 import { AppRepoDisabledControl } from "./AppRepoDisabledControl";
 import AppRepoList from "./AppRepoList";
-import { AppRepoRefreshAllButton } from "./AppRepoRefreshAllButton";
 
 const {
   clusters: { currentCluster, clusters },
@@ -103,14 +100,6 @@ it("shows a warning if the cluster is not the default one", () => {
   expect(wrapper.find(Alert)).toIncludeText(
     "Package Repositories can't be managed from this cluster",
   );
-});
-
-// TODO(agamez): the refresh functionallity is currently not implemented/supported in the new Repositories API, Decide whether removing it or not
-// eslint-disable-next-line jest/no-disabled-tests
-it.skip("renders the button to add a repo and refresh all", () => {
-  const wrapper = mountWrapper(defaultStore, <AppRepoList />);
-  expect(wrapper.find(PageHeader).find(AppRepoAddButton)).toExist();
-  expect(wrapper.find(PageHeader).find(AppRepoRefreshAllButton)).toExist();
 });
 
 it("shows an error fetching a repo", () => {

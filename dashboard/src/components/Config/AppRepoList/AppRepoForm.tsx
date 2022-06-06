@@ -42,7 +42,6 @@ interface IAppRepoFormProps {
     authHeader: string,
     dockerRegCreds: string,
     customCA: string,
-    syncJobPodTemplate: string,
     registrySecrets: string[],
     ociRepositories: string[],
     skipTLS: boolean,
@@ -51,6 +50,7 @@ interface IAppRepoFormProps {
     interval: number,
     username: string,
     password: string,
+    performValidation: boolean,
     filter?: IAppRepositoryFilter,
   ) => Promise<boolean>;
   onAfterInstall?: () => void;
@@ -96,20 +96,19 @@ export function AppRepoForm(props: IAppRepoFormProps) {
   const [description, setDescription] = useState("");
   const [url, setURL] = useState("");
   const [customCA, setCustomCA] = useState("");
-  const [syncJobPodTemplate, setSyncJobTemplate] = useState("");
   const [type, setType] = useState("");
   const [plugin, setPlugin] = useState(getPluginByName(PluginNames.PACKAGES_HELM));
   const [ociRepositories, setOCIRepositories] = useState("");
   const [skipTLS, setSkipTLS] = useState(!!repo?.tlsConfig?.insecureSkipVerify);
   const [passCredentials, setPassCredentials] = useState(!!repo?.auth?.passCredentials);
   const [interval, setInterval] = useState(3600);
+  const [performValidation, setPerformValidation] = useState(true);
   const [filterNames, setFilterNames] = useState("");
   const [filterRegex, setFilterRegex] = useState(false);
   const [filterExclude, setFilterExclude] = useState(false);
   const [secret, setSecret] = useState<ISecret>();
   const [selectedImagePullSecret, setSelectedImagePullSecret] = useState("");
   const [imagePullSecrets, setImagePullSecrets] = useState<string[]>([]);
-  const [validated, setValidated] = useState(undefined as undefined | boolean);
 
   const [accordion, setAccordion] = useState([true, false, false, false]);
 
@@ -153,12 +152,8 @@ export function AppRepoForm(props: IAppRepoFormProps) {
       setPassCredentials(!!repo.auth?.passCredentials);
       setInterval(repo.interval);
       const repositoryCustomDetails = repo.customDetail as Partial<RepositoryCustomDetails>;
-      // setSyncJobTemplate(
-      //   repositoryCustomDetails?.syncJobPodTemplate
-      //     ? yaml.dump(repositoryCustomDetails?.syncJobPodTemplate)
-      //     : "",
-      // );
       setOCIRepositories(repositoryCustomDetails?.ociRepositories?.join(", ") || "");
+      setPerformValidation(repositoryCustomDetails?.performValidation || false);
       if (repositoryCustomDetails?.filterRule?.jq) {
         const { names, regex, exclude } = toParams(repositoryCustomDetails.filterRule!);
         setFilterRegex(regex);
@@ -241,68 +236,32 @@ export function AppRepoForm(props: IAppRepoFormProps) {
     if (plugin?.name !== PluginNames.PACKAGES_KAPP && !url?.startsWith("http")) {
       finalURL = `https://${url}`;
     }
-    // If the validation already failed and we try to reinstall,
-    // skip validation and force install
-    const force = validated === false;
-    let currentlyValidated = validated;
-    // Validation feature is only available in the Helm plugin for now
-    if (plugin?.name === PluginNames.PACKAGES_HELM && !validated && !force) {
-      currentlyValidated = await dispatch(
-        actions.repos.validateRepo(
-          name,
-          plugin,
-          namespace,
-          finalURL,
-          type,
-          description,
-          finalHeader,
-          dockerRegCreds,
-          customCA,
-          syncJobPodTemplate,
-          selectedImagePullSecret.length ? [selectedImagePullSecret] : [],
-          ociRepoList,
-          skipTLS,
-          passCredentials,
-          authMethod,
-          interval,
-          user,
-          password,
-        ),
-      );
-      setValidated(currentlyValidated);
-      // If using any other plugin, force the validation to pass
-    } else if (plugin?.name !== PluginNames.PACKAGES_HELM) {
-      currentlyValidated = true;
-      setValidated(currentlyValidated);
-    }
     let filter: IAppRepositoryFilter | undefined;
     if (type === RepositoryStorageTypes.PACKAGE_REPOSITORY_STORAGE_HELM && filterNames !== "") {
       filter = toFilterRule(filterNames, filterRegex, filterExclude);
     }
-    if (currentlyValidated || force) {
-      const success = await onSubmit(
-        name,
-        plugin,
-        finalURL,
-        type,
-        description,
-        finalHeader,
-        dockerRegCreds,
-        customCA,
-        syncJobPodTemplate,
-        selectedImagePullSecret.length ? [selectedImagePullSecret] : [],
-        ociRepoList,
-        skipTLS,
-        passCredentials,
-        authMethod,
-        interval,
-        user,
-        password,
-        filter,
-      );
-      if (success && onAfterInstall) {
-        onAfterInstall();
-      }
+    const success = await onSubmit(
+      name,
+      plugin,
+      finalURL,
+      type,
+      description,
+      finalHeader,
+      dockerRegCreds,
+      customCA,
+      selectedImagePullSecret.length ? [selectedImagePullSecret] : [],
+      ociRepoList,
+      skipTLS,
+      passCredentials,
+      authMethod,
+      interval,
+      user,
+      password,
+      performValidation,
+      filter,
+    );
+    if (success && onAfterInstall) {
+      onAfterInstall();
     }
     isInstallingRef.current = false;
   };
@@ -312,31 +271,27 @@ export function AppRepoForm(props: IAppRepoFormProps) {
     setDescription(e.target.value);
   const handleIntervalChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setInterval(Number(e.target.value));
-    setValidated(undefined);
+  };
+  const handlePerformValidationChange = (_e: React.ChangeEvent<HTMLInputElement>) => {
+    setPerformValidation(!performValidation);
   };
   const handleURLChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setURL(e.target.value);
-    setValidated(undefined);
   };
   const handleAuthHeaderChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setAuthHeader(e.target.value);
-    setValidated(undefined);
   };
   const handleAuthTokenChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setToken(e.target.value);
-    setValidated(undefined);
   };
   const handleCustomCAChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setCustomCA(e.target.value);
-    setValidated(undefined);
   };
   const handleAuthRadioButtonChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setAuthMethod(PackageRepositoryAuth_PackageRepositoryAuthType[e.target.value]);
-    setValidated(undefined);
   };
   const handleTypeRadioButtonChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setType(e.target.value);
-    setValidated(undefined);
   };
   const handlePluginRadioButtonChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setPlugin(getPluginByName(e.target.value));
@@ -356,40 +311,29 @@ export function AppRepoForm(props: IAppRepoFormProps) {
     if (getPluginByName(e.target.value)?.name === PluginNames.PACKAGES_FLUX) {
       setType(RepositoryStorageTypes.PACKAGE_REPOSITORY_STORAGE_HELM);
     }
-
-    setValidated(undefined);
   };
   const handleUserChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setUser(e.target.value);
-    setValidated(undefined);
   };
   const handlePasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setPassword(e.target.value);
-    setValidated(undefined);
-  };
-  const handleSyncJobPodTemplateChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    setSyncJobTemplate(e.target.value);
-    setValidated(undefined);
   };
   const handleOCIRepositoriesChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setOCIRepositories(e.target.value);
-    setValidated(undefined);
   };
   const handleSkipTLSChange = (_e: React.ChangeEvent<HTMLInputElement>) => {
     setSkipTLS(!skipTLS);
-    setValidated(undefined);
   };
   const handlePassCredentialsChange = (_e: React.ChangeEvent<HTMLInputElement>) => {
     setPassCredentials(!passCredentials);
-    setValidated(undefined);
   };
-  const handleFilterNames = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+  const handleFilterNamesChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setFilterNames(e.target.value);
   };
-  const handleFilterRegex = (_e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFilterRegexChange = (_e: React.ChangeEvent<HTMLInputElement>) => {
     setFilterRegex(!filterRegex);
   };
-  const handleFilterExclude = (_e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFilterExcludeChange = (_e: React.ChangeEvent<HTMLInputElement>) => {
     setFilterExclude(!filterExclude);
   };
 
@@ -738,7 +682,7 @@ export function AppRepoForm(props: IAppRepoFormProps) {
                           type="text"
                           value={user}
                           onChange={handleUserChange}
-                          placeholder="Username"
+                          placeholder="username"
                         />
                       </CdsInput>
                       <br />
@@ -749,7 +693,7 @@ export function AppRepoForm(props: IAppRepoFormProps) {
                           type="password"
                           value={password}
                           onChange={handlePasswordChange}
-                          placeholder="Password"
+                          placeholder="password"
                         />
                       </CdsInput>
                     </div>
@@ -766,6 +710,7 @@ export function AppRepoForm(props: IAppRepoFormProps) {
                           value={token}
                           onChange={handleAuthTokenChange}
                           id="kubeapps-repo-token"
+                          placeholder="xrxNcWghpRLdcPHFgVRM73rr4N7qjvjm"
                         />
                       </CdsInput>
                     </div>
@@ -780,7 +725,7 @@ export function AppRepoForm(props: IAppRepoFormProps) {
                         <input
                           id="kubeapps-repo-custom-header"
                           type="text"
-                          placeholder="Bearer xrxNcWghpRLdcPHFgVRM73rr4N7qjvjm"
+                          placeholder="MyAuth xrxNcWghpRLdcPHFgVRM73rr4N7qjvjm"
                           value={authHeader}
                           onChange={handleAuthHeaderChange}
                         />
@@ -844,9 +789,10 @@ export function AppRepoForm(props: IAppRepoFormProps) {
                       </CdsControlMessage>
                       <textarea
                         className="cds-textarea-fix"
+                        id="kubeapps-repo-filter-repositories"
                         placeholder={"nginx, jenkins"}
                         value={filterNames}
-                        onChange={handleFilterNames}
+                        onChange={handleFilterNamesChange}
                       />
                     </CdsTextarea>
                     <CdsCheckbox className="ca-skip-tls">
@@ -855,8 +801,9 @@ export function AppRepoForm(props: IAppRepoFormProps) {
                         Exclude packages matching the given filter
                       </CdsControlMessage>
                       <input
+                        id="kubeapps-repo-filter-exclude"
                         type="checkbox"
-                        onChange={handleFilterExclude}
+                        onChange={handleFilterExcludeChange}
                         checked={filterExclude}
                       />
                     </CdsCheckbox>
@@ -865,7 +812,12 @@ export function AppRepoForm(props: IAppRepoFormProps) {
                       <CdsControlMessage>
                         Mark this box to treat the filter as a regular expression
                       </CdsControlMessage>
-                      <input type="checkbox" onChange={handleFilterRegex} checked={filterRegex} />
+                      <input
+                        id="kubeapps-repo-filter-regex"
+                        type="checkbox"
+                        onChange={handleFilterRegexChange}
+                        checked={filterRegex}
+                      />
                     </CdsCheckbox>
                   </>
                 )}
@@ -887,7 +839,25 @@ export function AppRepoForm(props: IAppRepoFormProps) {
                     onChange={handleIntervalChange}
                     required={false}
                   />
+                  <CdsControlMessage>
+                    Time (in seconds) to wait between synchronizing the repository.
+                  </CdsControlMessage>
                 </CdsInput>
+                {plugin?.name === PluginNames.PACKAGES_HELM && (
+                  <CdsCheckbox>
+                    <label>Perform Validation</label>
+                    <CdsControlMessage>
+                      Ensure that a connection can be established with the repository before adding
+                      it.
+                    </CdsControlMessage>
+                    <input
+                      id="kubeapps-repo-performvalidation"
+                      type="checkbox"
+                      onChange={handlePerformValidationChange}
+                      checked={performValidation}
+                    />
+                  </CdsCheckbox>
+                )}
                 <CdsTextarea layout="vertical">
                   <label>Custom CA Certificate (optional)</label>
                   <textarea
@@ -898,6 +868,9 @@ export function AppRepoForm(props: IAppRepoFormProps) {
                     disabled={skipTLS}
                     onChange={handleCustomCAChange}
                   />
+                  <CdsControlMessage>
+                    Custom Certificate Authority (CA) to use when connecting to the repository.
+                  </CdsControlMessage>
                 </CdsTextarea>
                 <CdsCheckbox className="ca-skip-tls">
                   <label className="clr-control-label">Skip TLS Verification</label>
@@ -907,48 +880,23 @@ export function AppRepoForm(props: IAppRepoFormProps) {
                     checked={skipTLS}
                     onChange={handleSkipTLSChange}
                   />
+                  <CdsControlMessage>
+                    If enabled, the TLS certificate will not be verified (potentially insecure).
+                  </CdsControlMessage>
                 </CdsCheckbox>
                 <CdsCheckbox className="ca-skip-tls">
-                  <label className="clr-control-label">
-                    Pass Credentials to 3rd party URLs (Icon and Tarball files)
-                  </label>
+                  <label className="clr-control-label">Pass Credentials to 3rd party URLs</label>
                   <input
                     id="kubeapps-repo-pass-credentials"
                     type="checkbox"
                     checked={passCredentials}
                     onChange={handlePassCredentialsChange}
                   />
-                </CdsCheckbox>
-
-                <CdsTextarea layout="vertical">
-                  <label>Custom Sync Job Template (optional)</label>
                   <CdsControlMessage>
-                    It's possible to modify the default sync job. When doing this, the
-                    pre-validation is not supported. More info{" "}
-                    <a
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      href={`https://github.com/vmware-tanzu/kubeapps/blob/${appVersion}/site/content/docs/latest/howto/private-app-repository.md#modifying-the-synchronization-job`}
-                    >
-                      here
-                    </a>
-                    .
+                    If enabled, the same credentials will be sent to those URLs for fetching the
+                    icon and the tarball files (potentially insecure).
                   </CdsControlMessage>
-                  <textarea
-                    id="kubeapps-repo-sync-job-tpl"
-                    rows={5}
-                    className="cds-textarea-fix"
-                    placeholder={
-                      "spec:\n" +
-                      "  containers:\n" +
-                      "  - env:\n" +
-                      "    - name: FOO\n" +
-                      "      value: BAR\n"
-                    }
-                    value={syncJobPodTemplate}
-                    onChange={handleSyncJobPodTemplateChange}
-                  />
-                </CdsTextarea>
+                </CdsCheckbox>
               </CdsFormGroup>
             </CdsAccordionContent>
           </CdsAccordionPanel>
@@ -980,9 +928,7 @@ export function AppRepoForm(props: IAppRepoFormProps) {
           <CdsButton type="submit" disabled={validating}>
             {validating
               ? "Validating..."
-              : `${repo.name ? `Update '${repo.name}'` : "Install"} Repo ${
-                  validated === false ? "(force)" : ""
-                }`}
+              : `${repo.name ? `Update '${repo.name}'` : "Install"} Repository`}
           </CdsButton>
         </div>
       </form>

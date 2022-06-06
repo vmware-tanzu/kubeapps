@@ -24,8 +24,6 @@ interface IAppRepoListItemProps {
 
 export function AppRepoControl({ repo, kubeappsNamespace, refetchRepos }: IAppRepoListItemProps) {
   const [modalIsOpen, setModalOpen] = useState(false);
-  //  TODO(agamez): the refresh functionallity is currently not implemented/supported in the new Repositories API. Decide whether removing it or not
-  // const [refreshing, setRefreshing] = useState(false);
   const openModal = () => setModalOpen(true);
   const closeModal = () => setModalOpen(false);
   const dispatch: ThunkDispatch<IStoreState, null, Action> = useDispatch();
@@ -37,18 +35,6 @@ export function AppRepoControl({ repo, kubeappsNamespace, refetchRepos }: IAppRe
       closeModal();
     };
   };
-
-  //  TODO(agamez): the refresh functionallity is currently not implemented/supported in the new Repositories API. Decide whether removing it or not
-  // const handleResyncClick = (repoName: string, repoNamespace: string) => {
-  //   return () => {
-  //     setRefreshing(true);
-  //     dispatch(actions.repos.resyncRepo(repoName, repoNamespace));
-  //     // Fake timeout to show progress
-  //     // TODO(andresmgot): Ideally, we should show the progress of the sync but we don't
-  //     // have that info yet: https://github.com/vmware-tanzu/kubeapps/issues/153
-  //     setTimeout(() => setRefreshing(false), 500);
-  //   };
-  // };
 
   return (
     <div className="apprepo-control-buttons">
@@ -69,14 +55,6 @@ export function AppRepoControl({ repo, kubeappsNamespace, refetchRepos }: IAppRe
         packageRepoRef={repo.packageRepoRef}
         primary={false}
       />
-      {/* TODO(agamez): the refresh functionallity is currently not implemented/supported in the new Repositories API. Decide whether removing it or not */}
-      {/* <CdsButton
-        disabled={refreshing}
-        onClick={handleResyncClick(repo.name, repo.packageRepoRef?.context?.namespace || "")}
-        action="outline"
-      >
-        {refreshing ? "Refreshing" : "Refresh"}
-      </CdsButton> */}
       <CdsButton
         id={`delete-repo-${repo.name}`}
         status="danger"

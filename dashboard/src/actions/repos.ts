@@ -12,7 +12,6 @@ import {
   PackageRepositorySummary,
 } from "gen/kubeappsapis/core/packages/v1alpha1/repositories";
 import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins";
-import * as yaml from "js-yaml";
 import { uniqBy } from "lodash";
 import { ThunkAction } from "redux-thunk";
 import { PackageRepositoriesService } from "shared/PackageRepositoriesService";
@@ -100,19 +99,20 @@ export const fetchRepos = (
     } = getState();
     try {
       dispatch(requestRepos(namespace));
-      const repos = await PackageRepositoriesService.getPackageRepositorySummaries(
-        currentCluster,
-        namespace,
-      );
+      const repos = await PackageRepositoriesService.getPackageRepositorySummaries({
+        cluster: currentCluster,
+        namespace: namespace,
+      });
       if (!listGlobal || namespace === globalReposNamespace) {
         dispatch(receiveRepos(repos.packageRepositorySummaries));
       } else {
         // Global repos need to be added
         let totalRepos = repos.packageRepositorySummaries;
         dispatch(requestRepos(globalReposNamespace));
-        const globalRepos = await PackageRepositoriesService.getPackageRepositorySummaries(
-          currentCluster,
-        );
+        const globalRepos = await PackageRepositoriesService.getPackageRepositorySummaries({
+          cluster: currentCluster,
+          namespace: "",
+        });
         // Avoid adding duplicated repos: if two repos have the same uid, filter out
         totalRepos = uniqBy(
           totalRepos.concat(globalRepos.packageRepositorySummaries),
@@ -158,7 +158,6 @@ export const installRepo = (
   authHeader: string,
   authRegCreds: string,
   customCA: string,
-  syncJobPodTemplate: string,
   registrySecrets: string[],
   ociRepositories: string[],
   skipTLS: boolean,
@@ -167,6 +166,7 @@ export const installRepo = (
   interval: number,
   username: string,
   password: string,
+  performValidation: boolean,
   filter?: IAppRepositoryFilter,
 ): ThunkAction<Promise<boolean>, IStoreState, null, AppReposAction> => {
   return async (dispatch, getState) => {
@@ -175,7 +175,6 @@ export const installRepo = (
       config: { globalReposNamespace },
     } = getState();
     try {
-      const syncJobPodTemplateObj = parsePodTemplate(syncJobPodTemplate);
       dispatch(addRepo());
 
       let namespaceScoped = namespace !== globalReposNamespace;
@@ -195,7 +194,6 @@ export const installRepo = (
         authHeader,
         authRegCreds,
         customCA,
-        syncJobPodTemplateObj,
         registrySecrets,
         ociRepositories,
         skipTLS,
@@ -205,7 +203,7 @@ export const installRepo = (
         interval,
         username,
         password,
-        false,
+        performValidation,
         filter,
       );
       // Ensure the repo have been created
@@ -235,7 +233,6 @@ export const updateRepo = (
   authHeader: string,
   authRegCreds: string,
   customCA: string,
-  syncJobPodTemplate: string,
   registrySecrets: string[],
   ociRepositories: string[],
   skipTLS: boolean,
@@ -244,6 +241,7 @@ export const updateRepo = (
   interval: number,
   username: string,
   password: string,
+  performValidation: boolean,
   filter?: IAppRepositoryFilter,
 ): ThunkAction<Promise<boolean>, IStoreState, null, AppReposAction> => {
   return async (dispatch, getState) => {
@@ -251,7 +249,6 @@ export const updateRepo = (
       clusters: { currentCluster },
     } = getState();
     try {
-      const syncJobPodTemplateObj = parsePodTemplate(syncJobPodTemplate);
       dispatch(requestRepoUpdate());
       const data = await PackageRepositoriesService.updatePackageRepository(
         currentCluster,
@@ -264,7 +261,6 @@ export const updateRepo = (
         authHeader,
         authRegCreds,
         customCA,
-        syncJobPodTemplateObj,
         registrySecrets,
         ociRepositories,
         skipTLS,
@@ -273,7 +269,7 @@ export const updateRepo = (
         interval,
         username,
         password,
-        false,
+        performValidation,
         filter,
       );
 
@@ -357,84 +353,6 @@ export const findPackageInRepo = (
   };
 };
 
-// validateRepo performs a validation of the repo, but currently only works for the helm repo
-export const validateRepo = (
-  _name: string,
-  _plugin: Plugin,
-  _namespace: string,
-  _repoURL: string,
-  _type: string,
-  _description: string,
-  _authHeader: string,
-  _authRegCreds: string,
-  _customCA: string,
-  _syncJobPodTemplate: string,
-  _registrySecrets: string[],
-  _ociRepositories: string[],
-  _skipTLS: boolean,
-  _passCredentials: boolean,
-  _authMethod: PackageRepositoryAuth_PackageRepositoryAuthType,
-  _interval: number,
-  _username: string,
-  _password: string,
-): ThunkAction<Promise<boolean>, IStoreState, null, AppReposAction> => {
-  return async (dispatch, _getState) => {
-    // const {
-    //   clusters: { currentCluster },
-    //   config: { globalReposNamespace },
-    // } = getState();
-    try {
-      // const syncJobPodTemplateObj = parsePodTemplate(syncJobPodTemplate);
-
-      // dispatch(repoValidating());
-
-      // let namespaceScoped = namespace !== globalReposNamespace;
-      // // TODO(agamez): currently, flux doesn't support this value to be true
-      // if (plugin?.name === PluginNames.PACKAGES_FLUX) {
-      //   namespaceScoped = false;
-      // }
-
-      // TODO(agamez): the helm plugin is validatin, but also creating the repo, which is not the expected way in the current code,
-      // hecee temporarily yielding an always "true" result
-      return true;
-
-      // const data = await PackageRepositoriesService.addPackageRepository(
-      //   currentCluster,
-      //   name,
-      //   plugin,
-      //   namespace,
-      //   repoURL,
-      //   type,
-      //   description,
-      //   authHeader,
-      //   authRegCreds,
-      //   customCA,
-      //   syncJobPodTemplateObj,
-      //   registrySecrets,
-      //   ociRepositories,
-      //   skipTLS,
-      //   passCredentials,
-      //   namespaceScoped,
-      //   authMethod,
-      //   interval,
-      //   username,
-      //   password,
-      //   true,
-      // );
-      // // Ensure the repo have been created
-      // if (data?.packageRepoRef) {
-      //   return true;
-      // } else {
-      //   dispatch(errorRepos(new Error(JSON.stringify(data)), "validate"));
-      //   return false;
-      // }
-    } catch (e: any) {
-      dispatch(errorRepos(e, "validate"));
-      return false;
-    }
-  };
-};
-
 export const createDockerRegistrySecret = (
   name: string,
   user: string,
@@ -457,41 +375,3 @@ export const createDockerRegistrySecret = (
     }
   };
 };
-
-function parsePodTemplate(syncJobPodTemplate: string) {
-  let syncJobPodTemplateObj: any = {};
-  if (syncJobPodTemplate.length) {
-    syncJobPodTemplateObj = yaml.load(syncJobPodTemplate);
-  }
-  return syncJobPodTemplateObj;
-}
-
-// ............................... DEPRECATED ...............................
-
-// export const resyncRepo = (
-//   name: string,
-//   namespace: string,
-// ): ThunkAction<Promise<void>, IStoreState, null, AppReposAction> => {
-//   return async (dispatch, getState) => {
-//     const {
-//       clusters: { currentCluster },
-//     } = getState();
-//     try {
-//       await PackageRepositoriesService.resync(currentCluster, namespace, name);
-//     } catch (e: any) {
-//       dispatch(errorRepos(e, "update"));
-//     }
-//   };
-// };
-
-// export const resyncAllRepos = (
-//   packageRepositoryReferences: (PackageRepositoryReference | undefined)[],
-// ): ThunkAction<Promise<void>, IStoreState, null, AppReposAction> => {
-//   return async dispatch => {
-//     packageRepositoryReferences.forEach(ref => {
-//       if (ref) {
-//         dispatch(resyncRepo(ref.identifier, ref.context?.namespace || ""));
-//       }
-//     });
-//   };
-// };
