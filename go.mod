@@ -43,7 +43,7 @@ require (
 	github.com/DATA-DOG/go-sqlmock v1.5.0
 	github.com/Masterminds/semver/v3 v3.1.1
 	github.com/ahmetb/go-linq/v3 v3.2.0
-	github.com/containerd/containerd v1.6.4
+	github.com/containerd/containerd v1.6.5
 	github.com/cppforlife/go-cli-ui v0.0.0-20220428182907-73db60c7611a
 	github.com/disintegration/imaging v1.6.2
 	github.com/distribution/distribution v2.8.1+incompatible
