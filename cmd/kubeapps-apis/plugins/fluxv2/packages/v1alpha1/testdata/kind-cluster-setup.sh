@@ -10,9 +10,8 @@ set -o errexit
 set -o nounset
 set -o pipefail
 
-TAG=0.0.10
-
 function deploy {
+  TAG=0.0.11
   docker build -t kubeapps/fluxv2plugin-testdata:$TAG .
   # "kubeapps" is the name of the kind cluster
   kind load docker-image kubeapps/fluxv2plugin-testdata:$TAG --name kubeapps
@@ -31,14 +30,14 @@ function deploy {
   helm registry login -u foo localhost:5000 -p bar
   helm push charts/podinfo-6.0.3.tgz oci://localhost:5000/helm-charts 
   helm show all oci://localhost:5000/helm-charts/podinfo | head -9
+  helm registry logout localhost:5000
 }
 
 function undeploy {
-   helm registry logout localhost:5000
-   docker rm -f registry
-   kubectl delete svc/fluxv2plugin-testdata-svc
-   kubectl delete svc/fluxv2plugin-testdata-ssl-svc
-   kubectl delete deployment fluxv2plugin-testdata-app --context kind-kubeapps 
+  docker rm -f registry
+  kubectl delete svc/fluxv2plugin-testdata-svc
+  kubectl delete svc/fluxv2plugin-testdata-ssl-svc
+  kubectl delete deployment fluxv2plugin-testdata-app --context kind-kubeapps 
 }
 
 function redeploy {
@@ -48,8 +47,8 @@ function redeploy {
 
 
 function portforward {
-  #kubectl -n default port-forward svc/fluxv2plugin-testdata-svc 8081:80 --context kind-kubeapps 
-  kubectl -n default port-forward svc/fluxv2plugin-testdata-ssl-svc 8081:443 --context kind-kubeapps 
+  kubectl -n default port-forward svc/fluxv2plugin-testdata-svc 8081:80 --context kind-kubeapps 
+  #kubectl -n default port-forward svc/fluxv2plugin-testdata-ssl-svc 8081:443 --context kind-kubeapps 
 }
 
 function shell {
