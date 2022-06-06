@@ -83,9 +83,7 @@ function AppList() {
     // to list/get secrets in all of them.
     Kube.canI(cluster, "", "secrets", "list", "")
       .then(allowed => setCanSetAllNS(allowed))
-      .catch(() => {
-        setCanSetAllNS(false);
-      });
+      ?.catch(() => setCanSetAllNS(false));
   }, [cluster]);
 
   useEffect(() => {

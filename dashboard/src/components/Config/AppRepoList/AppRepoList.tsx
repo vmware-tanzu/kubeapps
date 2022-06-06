@@ -84,10 +84,10 @@ function AppRepoList() {
   useEffect(() => {
     Kube.canI(cluster, "kubeapps.com", "apprepositories", "list", "")
       .then(allowed => setCanSetAllNS(allowed))
-      .catch(() => setCanEditGlobalRepos(false));
+      ?.catch(() => setCanSetAllNS(false));
     Kube.canI(kubeappsCluster, "kubeapps.com", "apprepositories", "update", globalReposNamespace)
       .then(allowed => setCanEditGlobalRepos(allowed))
-      .catch(() => setCanEditGlobalRepos(false));
+      ?.catch(() => setCanEditGlobalRepos(false));
   }, [cluster, kubeappsCluster, kubeappsNamespace, globalReposNamespace]);
 
   const globalRepos: PackageRepositorySummary[] = [];
