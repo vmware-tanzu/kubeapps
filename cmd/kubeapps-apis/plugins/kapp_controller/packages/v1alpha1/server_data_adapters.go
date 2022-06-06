@@ -693,10 +693,10 @@ func (s *Server) buildPkgRepositorySpec(rptype string, interval uint32, url stri
 	// auth
 	var secretRef *kappctrlv1alpha1.AppFetchLocalRef
 	if auth != nil {
-		if pkgSecret != nil {
-			secretRef = &kappctrlv1alpha1.AppFetchLocalRef{Name: pkgSecret.GetName()}
-		} else if auth.GetSecretRef() != nil {
+		if auth.GetSecretRef() != nil {
 			secretRef = &kappctrlv1alpha1.AppFetchLocalRef{Name: auth.GetSecretRef().GetName()}
+		} else if pkgSecret != nil {
+			secretRef = &kappctrlv1alpha1.AppFetchLocalRef{Name: pkgSecret.GetName()}
 		}
 	}
 

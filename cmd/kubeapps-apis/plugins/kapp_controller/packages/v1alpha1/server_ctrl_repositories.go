@@ -223,13 +223,15 @@ func (s *Server) UpdatePackageRepository(ctx context.Context, request *corev1.Up
 	//    create the secret if auth was not previously configured
 	//    update the secret if auth has been updated
 	//    delete the secret if auth has been removed
-	if request.Auth == nil && pkgSecret != nil && isPluginManaged(pkgRepository, pkgSecret) {
-		// delete exiting secret
-		if err := s.deleteSecret(ctx, cluster, pkgSecret.GetNamespace(), pkgSecret.GetName()); err != nil {
-			return nil, statuserror.FromK8sError("delete", "Secret", pkgSecret.GetName(), err)
+	if request.Auth == nil {
+		// delete existing secret, if plugin managed
+		if pkgSecret != nil && isPluginManaged(pkgRepository, pkgSecret) {
+			if err := s.deleteSecret(ctx, cluster, pkgSecret.GetNamespace(), pkgSecret.GetName()); err != nil {
+				return nil, statuserror.FromK8sError("delete", "Secret", pkgSecret.GetName(), err)
+			}
 		}
 		pkgSecret = nil
-	} else if request.Auth != nil && request.Auth.GetSecretRef() == nil {
+	} else if request.Auth.GetSecretRef() == nil {
 		if pkgSecret == nil {
 			// create
 			pkgSecret, err = s.buildPkgRepositorySecretCreate(namespace, pkgRepository.GetName(), request.Auth)
