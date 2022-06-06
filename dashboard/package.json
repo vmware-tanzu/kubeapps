@@ -48,7 +48,7 @@
     "qs": "^6.10.3",
     "react": "^17.0.2",
     "react-ace": "^10.1.0",
-    "react-compound-slider": "^3.3.1",
+    "react-compound-slider": "^3.4.0",
     "react-copy-to-clipboard": "^5.1.0",
     "react-diff-viewer": "^3.1.1",
     "react-dom": "^17.0.2",
@@ -119,9 +119,9 @@
     "stylelint-config-prettier": "^9.0.3",
     "stylelint-config-standard-scss": "^4.0.0",
     "stylelint-scss": "^4.2.0",
-    "ts-jest": "^28.0.3",
+    "ts-jest": "^28.0.4",
     "ts-proto": "^1.115.1",
-    "typescript": "^4.7.2"
+    "typescript": "^4.7.3"
   },
   "resolutions": {
     "@babel/parser": "^7.18.4",
