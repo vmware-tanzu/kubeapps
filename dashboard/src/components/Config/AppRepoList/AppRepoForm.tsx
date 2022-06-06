@@ -20,11 +20,12 @@ import {
   PackageRepositoryReference,
 } from "gen/kubeappsapis/core/packages/v1alpha1/repositories";
 import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins";
+import { RepositoryCustomDetails } from "gen/kubeappsapis/plugins/helm/packages/v1alpha1/helm";
 import { useEffect, useRef, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { Action } from "redux";
 import { ThunkDispatch } from "redux-thunk";
-import { toFilterRule } from "shared/jq";
+import { toFilterRule, toParams } from "shared/jq";
 import { PackageRepositoriesService } from "shared/PackageRepositoriesService";
 import Secret from "shared/Secret";
 import { IAppRepositoryFilter, ISecret, IStoreState } from "shared/types";
@@ -151,12 +152,15 @@ export function AppRepoForm(props: IAppRepoFormProps) {
       setSkipTLS(!!repo.tlsConfig?.insecureSkipVerify);
       setPassCredentials(!!repo.auth?.passCredentials);
       setInterval(repo.interval);
-      setSyncJobTemplate(
-        repo.spec?.syncJobPodTemplate ? yaml.dump(repo.spec?.syncJobPodTemplate) : "",
-      );
-      setOCIRepositories(repo.spec?.ociRepositories?.join(", ") || "");
-      if (repo.spec?.filterRule?.jq) {
-        const { names, regex, exclude } = toParams(repo.spec.filterRule);
+      const repositoryCustomDetails = repo.customDetail as Partial<RepositoryCustomDetails>;
+      // setSyncJobTemplate(
+      //   repositoryCustomDetails?.syncJobPodTemplate
+      //     ? yaml.dump(repositoryCustomDetails?.syncJobPodTemplate)
+      //     : "",
+      // );
+      setOCIRepositories(repositoryCustomDetails?.ociRepositories?.join(", ") || "");
+      if (repositoryCustomDetails?.filterRule?.jq) {
+        const { names, regex, exclude } = toParams(repositoryCustomDetails.filterRule!);
         setFilterRegex(regex);
         setFilterExclude(exclude);
         setFilterNames(names);
