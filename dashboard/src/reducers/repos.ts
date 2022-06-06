@@ -6,7 +6,9 @@ import {
   PackageRepositoryDetail,
   PackageRepositorySummary,
 } from "gen/kubeappsapis/core/packages/v1alpha1/repositories";
+import { RepositoryCustomDetails } from "gen/kubeappsapis/plugins/helm/packages/v1alpha1/helm";
 import { ISecret } from "shared/types";
+import { PluginNames } from "shared/utils";
 import { getType } from "typesafe-actions";
 import actions from "../actions";
 import { AppReposAction } from "../actions/repos";
@@ -83,10 +85,32 @@ const reposReducer = (
         errors: {},
       };
     case getType(actions.repos.receiveRepo):
+      // eslint-disable-next-line no-case-declarations
+      let customDetail: any;
+
+      // TODO(agamez): decoding customDetail just for the helm plugin
+      if (action.payload.packageRepoRef?.plugin?.name === PluginNames.PACKAGES_HELM) {
+        customDetail = {
+          dockerRegistrySecrets: [],
+          ociRepositories: [],
+          performValidation: false,
+        } as RepositoryCustomDetails;
+
+        try {
+          if (action.payload?.customDetail?.value) {
+            // TODO(agamez): verify why the field is not automatically decoded.
+            customDetail = RepositoryCustomDetails.decode(
+              action.payload.customDetail.value as unknown as Uint8Array,
+            );
+          }
+          // eslint-disable-next-line no-empty
+        } catch (error) {}
+      }
+
       return {
         ...state,
         ...isFetching(state, "repositories", false),
-        repo: action.payload,
+        repo: { ...action.payload, customDetail: customDetail },
         errors: {},
       };
     case getType(actions.repos.requestRepos):
