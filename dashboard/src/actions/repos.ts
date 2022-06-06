@@ -137,6 +137,12 @@ export const fetchRepo = (
         packageRepoRef,
       );
       if (!appRepository?.detail) {
+        dispatch(
+          errorRepos(
+            new Error(`Can't get the repository: ${JSON.stringify(appRepository)}`),
+            "create",
+          ),
+        );
         return false;
       }
       dispatch(receiveRepo(appRepository.detail));
@@ -208,10 +214,16 @@ export const installRepo = (
       );
       // Ensure the repo have been created
       if (!data?.packageRepoRef) {
+        dispatch(
+          errorRepos(new Error(`Can't create the repository: ${JSON.stringify(data)}`), "create"),
+        );
         return false;
       }
       const repo = await PackageRepositoriesService.getPackageRepositoryDetail(data.packageRepoRef);
       if (!repo?.detail) {
+        dispatch(
+          errorRepos(new Error(`The repo wasn't created: ${JSON.stringify(repo)}`), "create"),
+        );
         return false;
       }
       dispatch(addedRepo(repo.detail));
@@ -275,10 +287,16 @@ export const updateRepo = (
 
       // Ensure the repo have been updated
       if (!data?.packageRepoRef) {
+        dispatch(
+          errorRepos(new Error(`Can't create the repository: ${JSON.stringify(data)}`), "create"),
+        );
         return false;
       }
       const repo = await PackageRepositoriesService.getPackageRepositoryDetail(data.packageRepoRef);
       if (!repo?.detail) {
+        dispatch(
+          errorRepos(new Error(`The repo wasn't created: ${JSON.stringify(repo)}`), "create"),
+        );
         return false;
       }
       dispatch(repoUpdated(repo.detail));
@@ -326,6 +344,13 @@ export const findPackageInRepo = (
           identifier: app.availablePackageRef.identifier,
         } as AvailablePackageReference);
         if (!appRepository?.detail) {
+          dispatch(
+            createErrorPackage(
+              new NotFoundError(
+                `Package ${app.availablePackageRef.identifier} not found in the repository ${repoNamespace}.`,
+              ),
+            ),
+          );
           return false;
         }
         dispatch(receiveRepo(appRepository.detail));
