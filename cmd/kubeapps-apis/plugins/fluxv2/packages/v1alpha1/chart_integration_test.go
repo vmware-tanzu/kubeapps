@@ -62,8 +62,8 @@ func TestKindClusterGetAvailablePackageSummariesForLargeReposAndTinyRedis(t *tes
 		t.Fatalf("%+v", err)
 	}
 
-	if err = initNumberOfChartsInBitnamiCatalog(t); err != nil {
-		t.Errorf("Failed to get number of charts in bitnami catalog due to: %v", err)
+	if err = usesBitnamiCatalog(t); err != nil {
+		t.Fatalf("Failed to get number of charts in bitnami catalog due to: %v", err)
 	}
 
 	const MAX_REPOS_NEVER = 100
@@ -90,9 +90,12 @@ func TestKindClusterGetAvailablePackageSummariesForLargeReposAndTinyRedis(t *tes
 		// we'll keep adding repos one at a time, until we get an event from redis
 		// about the first evicted repo entry
 		for ; totalRepos < MAX_REPOS_NEVER && evictedRepos.Len() == 0; totalRepos++ {
-			repo := fmt.Sprintf("bitnami-%d", totalRepos)
+			repo := types.NamespacedName{
+				Name:      fmt.Sprintf("bitnami-%d", totalRepos),
+				Namespace: "default",
+			}
 			// this is to make sure we allow enough time for repository to be created and come to ready state
-			if err = kubeAddHelmRepositoryAndCleanup(t, repo, "https://charts.bitnami.com/bitnami", "default", "", 0); err != nil {
+			if err = kubeAddHelmRepositoryAndCleanup(t, repo, in_cluster_bitnami_url, "", 0); err != nil {
 				t.Fatalf("%v", err)
 			}
 			// wait until this repo have been indexed and cached up to 10 minutes
@@ -122,7 +125,11 @@ func TestKindClusterGetAvailablePackageSummariesForLargeReposAndTinyRedis(t *tes
 
 	// one particular code path I'd like to test:
 	// make sure that GetAvailablePackageVersions() works w.r.t. a cache entry that's been evicted
-	grpcContext, err := newGrpcAdminContext(t, "test-create-admin-"+randSeq(4), "default")
+	name := types.NamespacedName{
+		Name:      "test-create-admin-" + randSeq(4),
+		Namespace: "default",
+	}
+	grpcContext, err := newGrpcAdminContext(t, name)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -176,9 +183,12 @@ func TestKindClusterGetAvailablePackageSummariesForLargeReposAndTinyRedis(t *tes
 		go redisReceiveNotificationsLoop(t, subscribe.Channel(), sem, &evictedRepos)
 
 		for ; totalRepos < MAX_REPOS_NEVER && evictedRepos.Len() == evictedCopy.Len(); totalRepos++ {
-			repo := fmt.Sprintf("bitnami-%d", totalRepos)
+			repo := types.NamespacedName{
+				Name:      fmt.Sprintf("bitnami-%d", totalRepos),
+				Namespace: "default",
+			}
 			// this is to make sure we allow enough time for repository to be created and come to ready state
-			if err = kubeAddHelmRepositoryAndCleanup(t, repo, "https://charts.bitnami.com/bitnami", "default", "", 0); err != nil {
+			if err = kubeAddHelmRepositoryAndCleanup(t, repo, in_cluster_bitnami_url, "", 0); err != nil {
 				t.Fatalf("%v", err)
 			}
 			// wait until this repo have been indexed and cached up to 10 minutes
@@ -266,41 +276,44 @@ func TestKindClusterRepoAndChartRBAC(t *testing.T) {
 	}
 
 	for _, n := range names {
-		nm, ns := n.Name, n.Namespace
-		if err := kubeCreateNamespaceAndCleanup(t, ns); err != nil {
+		if err := kubeCreateNamespaceAndCleanup(t, n.Namespace); err != nil {
 			t.Fatal(err)
-		} else if err = kubeAddHelmRepositoryAndCleanup(t, nm, podinfo_repo_url, ns, "", 0); err != nil {
+		} else if err = kubeAddHelmRepositoryAndCleanup(t, n, podinfo_repo_url, "", 0); err != nil {
 			t.Fatal(err)
 		}
 		// wait until this repo reaches 'Ready'
-		if err = kubeWaitUntilHelmRepositoryIsReady(t, nm, ns); err != nil {
+		if err = kubeWaitUntilHelmRepositoryIsReady(t, n); err != nil {
 			t.Fatal(err)
 		}
 	}
 
-	svcAcctName := "test-repo-rbac-admin-" + randSeq(4)
-	grpcCtxAdmin, err := newGrpcAdminContext(t, svcAcctName, "default")
+	svcAcctName := types.NamespacedName{
+		Name:      "test-repo-rbac-admin-" + randSeq(4),
+		Namespace: "default",
+	}
+	grpcCtxAdmin, err := newGrpcAdminContext(t, svcAcctName)
 	if err != nil {
 		t.Fatal(err)
 	}
 
 	for _, n := range names {
-		out := kubectlCanI(
-			t, svcAcctName, "default", "get", fluxHelmRepositories, n.Namespace)
+		out := kubectlCanI(t, svcAcctName, "get", fluxHelmRepositories, n.Namespace)
 		if out != "yes" {
 			t.Errorf("Expected [yes], got [%s]", out)
 		}
 	}
 
-	svcAcctName2 := "test-repo-rbac-loser-" + randSeq(4)
-	grpcCtxLoser, err := newGrpcContextForServiceAccountWithoutAccessToAnyNamespace(
-		t, svcAcctName2, "default")
+	svcAcctName2 := types.NamespacedName{
+		Name:      "test-repo-rbac-loser-" + randSeq(4),
+		Namespace: "default",
+	}
+	grpcCtxLoser, err := newGrpcContextForServiceAccountWithoutAccessToAnyNamespace(t, svcAcctName2)
 	if err != nil {
 		t.Fatal(err)
 	}
 	for _, n := range names {
 		out := kubectlCanI(
-			t, svcAcctName2, "default", "get", fluxHelmRepositories, n.Namespace)
+			t, svcAcctName2, "get", fluxHelmRepositories, n.Namespace)
 		if out != "no" {
 			t.Errorf("Expected [no], got [%s]", out)
 		}
@@ -321,14 +334,17 @@ func TestKindClusterRepoAndChartRBAC(t *testing.T) {
 		},
 	}
 
-	svcAcctName3 := "test-repo-rbac-limited-" + randSeq(4)
-	grpcCtxLimited, err := newGrpcContextForServiceAccountWithRules(
-		t, svcAcctName3, "default", rules)
+	svcAcctName3 := types.NamespacedName{
+		Name:      "test-repo-rbac-limited-" + randSeq(4),
+		Namespace: "default",
+	}
+
+	grpcCtxLimited, err := newGrpcContextForServiceAccountWithRules(t, svcAcctName3, rules)
 	if err != nil {
 		t.Fatal(err)
 	}
 	for i, n := range names {
-		out := kubectlCanI(t, svcAcctName3, "default", "get", fluxHelmRepositories, n.Namespace)
+		out := kubectlCanI(t, svcAcctName3, "get", fluxHelmRepositories, n.Namespace)
 		if i == 0 {
 			if out != "no" {
 				t.Errorf("Expected [no], got [%s]", out)
