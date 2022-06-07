@@ -65,7 +65,7 @@ func (s *Server) AddPackageRepository(ctx context.Context, request *corev1.AddPa
 
 	// update secret with owner reference if needed
 	if pkgSecret != nil {
-		addOwnerReference(pkgSecret, pkgRepository)
+		setOwnerReference(pkgSecret, pkgRepository)
 		pkgSecret, err = s.updateSecret(ctx, cluster, pkgSecret)
 		if err != nil {
 			return nil, statuserror.FromK8sError("update", "Secret", request.Name, err)
@@ -239,7 +239,7 @@ func (s *Server) UpdatePackageRepository(ctx context.Context, request *corev1.Up
 				return nil, status.Errorf(codes.Internal, "unable to build the associated secret: %v", err)
 			}
 			// repository already exist, we can set the owner reference as part of creation
-			addOwnerReference(pkgSecret, pkgRepository)
+			setOwnerReference(pkgSecret, pkgRepository)
 
 			pkgSecret, err = s.createSecret(ctx, cluster, pkgSecret)
 			if err != nil {

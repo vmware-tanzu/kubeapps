@@ -6,8 +6,6 @@ package main
 import (
 	"context"
 	"fmt"
-	kappctrlpackageinstall "github.com/vmware-tanzu/carvel-kapp-controller/pkg/packageinstall"
-	kappcorev1 "github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/plugins/kapp_controller/packages/v1alpha1"
 	"google.golang.org/protobuf/types/known/anypb"
 	"log"
 	"os"
@@ -30,9 +28,11 @@ import (
 	kappctrlv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
 	packagingv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/packaging/v1alpha1"
 	datapackagingv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/apis/datapackaging/v1alpha1"
+	kappctrlpackageinstall "github.com/vmware-tanzu/carvel-kapp-controller/pkg/packageinstall"
 	vendirversions "github.com/vmware-tanzu/carvel-vendir/pkg/vendir/versions/v1alpha1"
 	corev1 "github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
 	pluginv1 "github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/core/plugins/v1alpha1"
+	kappcorev1 "github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/plugins/kapp_controller/packages/v1alpha1"
 	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/pkg/clientgetter"
 	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/pkg/pkgutils"
 	"google.golang.org/grpc/codes"
@@ -74,6 +74,7 @@ var ignoreUnexported = cmpopts.IgnoreUnexported(
 	corev1.PackageRepositoryAuth_DockerCreds{},
 	corev1.PackageRepositoryAuth_Header{},
 	corev1.PackageRepositoryAuth_SecretRef{},
+	corev1.PackageRepositoryAuth_SshCreds{},
 	corev1.PackageRepositoryAuth_TlsCertKey{},
 	corev1.PackageRepositoryAuth_UsernamePassword{},
 	corev1.PackageRepositoryDetail{},
@@ -84,6 +85,7 @@ var ignoreUnexported = cmpopts.IgnoreUnexported(
 	corev1.ResourceRef{},
 	corev1.DockerCredentials{},
 	corev1.SecretKeyReference{},
+	corev1.SshCredentials{},
 	corev1.TlsCertKey{},
 	corev1.UsernamePassword{},
 	corev1.UpdateInstalledPackageResponse{},
@@ -6545,7 +6547,7 @@ func TestAddPackageRepository(t *testing.T) {
 			name: "validate auth (type incompatibility)",
 			requestCustomizer: func(request *corev1.AddPackageRepositoryRequest) *corev1.AddPackageRepositoryRequest {
 				request.Auth = &corev1.PackageRepositoryAuth{
-					Type: corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_TLS,
+					Type: corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_SSH,
 				}
 				return request
 			},
@@ -6634,10 +6636,11 @@ func TestAddPackageRepository(t *testing.T) {
 			requestCustomizer: func(request *corev1.AddPackageRepositoryRequest) *corev1.AddPackageRepositoryRequest {
 				request.Type = Type_GIT
 				request.Auth = &corev1.PackageRepositoryAuth{
-					Type: corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_TLS,
-					PackageRepoAuthOneOf: &corev1.PackageRepositoryAuth_TlsCertKey{
-						TlsCertKey: &corev1.TlsCertKey{
-							Key: Redacted,
+					Type: corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_SSH,
+					PackageRepoAuthOneOf: &corev1.PackageRepositoryAuth_SshCreds{
+						SshCreds: &corev1.SshCredentials{
+							PrivateKey: Redacted,
+							KnownHosts: Redacted,
 						},
 					},
 				}
@@ -7111,7 +7114,7 @@ func TestUpdatePackageRepository(t *testing.T) {
 			name: "validate auth (type incompatibility)",
 			requestCustomizer: func(request *corev1.UpdatePackageRepositoryRequest) *corev1.UpdatePackageRepositoryRequest {
 				request.Auth = &corev1.PackageRepositoryAuth{
-					Type: corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_TLS,
+					Type: corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_SSH,
 				}
 				return request
 			},
@@ -7218,6 +7221,36 @@ func TestUpdatePackageRepository(t *testing.T) {
 			expectedStatusString: "unexpected REDACTED",
 		},
 		{
+			name: "validate (plugin managed, type changed)",
+			existingTypedObjects: []k8sruntime.Object{
+				func() *k8scorev1.Secret {
+					s := defaultSecret()
+					s.Type = k8scorev1.SecretTypeBasicAuth
+					s.Data[k8scorev1.BasicAuthUsernameKey] = []byte("foo")
+					s.Data[k8scorev1.BasicAuthPasswordKey] = []byte("bar")
+					return s
+				}(),
+			},
+			initialCustomizer: func(repository *packagingv1alpha1.PackageRepository) *packagingv1alpha1.PackageRepository {
+				repository.ObjectMeta.UID = "globalrepo"
+				repository.Spec.Fetch.ImgpkgBundle.SecretRef = &kappctrlv1alpha1.AppFetchLocalRef{
+					Name: "my-secret",
+				}
+				return repository
+			},
+			requestCustomizer: func(request *corev1.UpdatePackageRepositoryRequest) *corev1.UpdatePackageRepositoryRequest {
+				request.Auth = &corev1.PackageRepositoryAuth{
+					Type: corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_BEARER,
+					PackageRepoAuthOneOf: &corev1.PackageRepositoryAuth_Header{
+						Header: "eXYZ",
+					},
+				}
+				return request
+			},
+			expectedStatusCode:   codes.InvalidArgument,
+			expectedStatusString: "type cannot be changed",
+		},
+		{
 			name: "validate not found",
 			requestCustomizer: func(request *corev1.UpdatePackageRepositoryRequest) *corev1.UpdatePackageRepositoryRequest {
 				request.PackageRepoRef.Identifier = "foo"
@@ -7247,6 +7280,23 @@ func TestUpdatePackageRepository(t *testing.T) {
 				return request
 			},
 			expectedStatusCode: codes.InvalidArgument,
+		},
+		{
+			name: "validate pending status",
+			initialCustomizer: func(repository *packagingv1alpha1.PackageRepository) *packagingv1alpha1.PackageRepository {
+				repository.Status = packagingv1alpha1.PackageRepositoryStatus{
+					GenericStatus: kappctrlv1alpha1.GenericStatus{
+						Conditions: []kappctrlv1alpha1.Condition{
+							{
+								Type: kappctrlv1alpha1.Reconciling,
+							},
+						},
+					},
+				}
+				return repository
+			},
+			expectedStatusCode:   codes.FailedPrecondition,
+			expectedStatusString: "not in a stable state",
 		},
 		{
 			name: "update with no interval",
@@ -7688,45 +7738,6 @@ func TestUpdatePackageRepository(t *testing.T) {
 					t.Fatalf("error fetching secret:%+v", err)
 				}
 				if secret.Type != k8scorev1.SecretTypeBasicAuth || secret.StringData[k8scorev1.BasicAuthPasswordKey] != "bar2" {
-					t.Errorf("secret data not as expected: %+v", secret)
-				}
-			},
-		},
-		{
-			name: "updated with auth (plugin managed, update type changed)",
-			existingTypedObjects: []k8sruntime.Object{
-				func() *k8scorev1.Secret {
-					s := defaultSecret()
-					s.Type = k8scorev1.SecretTypeBasicAuth
-					s.Data[k8scorev1.BasicAuthUsernameKey] = []byte("foo")
-					s.Data[k8scorev1.BasicAuthPasswordKey] = []byte("bar")
-					return s
-				}(),
-			},
-			initialCustomizer: func(repository *packagingv1alpha1.PackageRepository) *packagingv1alpha1.PackageRepository {
-				repository.ObjectMeta.UID = "globalrepo"
-				repository.Spec.Fetch.ImgpkgBundle.SecretRef = &kappctrlv1alpha1.AppFetchLocalRef{
-					Name: "my-secret",
-				}
-				return repository
-			},
-			requestCustomizer: func(request *corev1.UpdatePackageRepositoryRequest) *corev1.UpdatePackageRepositoryRequest {
-				request.Auth = &corev1.PackageRepositoryAuth{
-					Type: corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_BEARER,
-					PackageRepoAuthOneOf: &corev1.PackageRepositoryAuth_Header{
-						Header: "eXYZ",
-					},
-				}
-				return request
-			},
-			expectedStatusCode: codes.OK,
-			expectedRef:        defaultRef,
-			customChecks: func(t *testing.T, s *Server) {
-				secret, err := s.getSecret(context.Background(), defaultGlobalContext.Cluster, globalPackagingNamespace, "my-secret")
-				if err != nil {
-					t.Fatalf("error fetching secret:%+v", err)
-				}
-				if secret.Type != k8scorev1.SecretTypeOpaque || secret.StringData["token"] != "eXYZ" || len(secret.Data) != 0 {
 					t.Errorf("secret data not as expected: %+v", secret)
 				}
 			},
@@ -8378,10 +8389,11 @@ func TestGetPackageRepositoryDetail(t *testing.T) {
 			},
 			responseCustomizer: func(response *corev1.GetPackageRepositoryDetailResponse) *corev1.GetPackageRepositoryDetailResponse {
 				response.Detail.Auth = &corev1.PackageRepositoryAuth{
-					Type: corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_TLS,
-					PackageRepoAuthOneOf: &corev1.PackageRepositoryAuth_TlsCertKey{
-						TlsCertKey: &corev1.TlsCertKey{
-							Key: Redacted,
+					Type: corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_SSH,
+					PackageRepoAuthOneOf: &corev1.PackageRepositoryAuth_SshCreds{
+						SshCreds: &corev1.SshCredentials{
+							PrivateKey: Redacted,
+							KnownHosts: Redacted,
 						},
 					},
 				}
@@ -8394,7 +8406,7 @@ func TestGetPackageRepositoryDetail(t *testing.T) {
 			existingTypedObjects: []k8sruntime.Object{
 				func() *k8scorev1.Secret {
 					s := defaultSecret()
-					s.Data["token"] = []byte("foo")
+					s.Data[BearerAuthToken] = []byte("foo")
 					return s
 				}(),
 			},

@@ -502,7 +502,7 @@ func isBasicAuth(secret *k8scorev1.Secret) bool {
 }
 
 func isBearerAuth(secret *k8scorev1.Secret) bool {
-	return secret.Data != nil && secret.Data["token"] != nil
+	return secret.Data != nil && secret.Data[BearerAuthToken] != nil
 }
 
 func isSshAuth(secret *k8scorev1.Secret) bool {
@@ -547,7 +547,7 @@ func fromDockerConfig(dockerjson []byte) (*corev1.DockerCredentials, error) {
 	return nil, fmt.Errorf("invalid dockerconfig, no Auths entries were found")
 }
 
-func addOwnerReference(pkgSecret *k8scorev1.Secret, pkgRepository *packagingv1alpha1.PackageRepository) {
+func setOwnerReference(pkgSecret *k8scorev1.Secret, pkgRepository *packagingv1alpha1.PackageRepository) {
 	pkgSecret.OwnerReferences = []metav1.OwnerReference{
 		*metav1.NewControllerRef(
 			pkgRepository,
