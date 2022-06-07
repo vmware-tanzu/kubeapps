@@ -36,7 +36,7 @@ The type of issue. kind powers our filtering to understand what qualifies as a b
 
 ### `component/*`:
 
-The area of the issue. Components are high level areas of Kubeapps architecture. They are used to group issues into smaller and related parts.
+The relevant component(s) for the issue. Components are high level areas of the Kubeapps architecture. They are used to group issues together with other related issues.
 
 | Label                        | Description                                                                                      |
 | ---------------------------- | ------------------------------------------------------------------------------------------------ |
