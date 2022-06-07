@@ -20,7 +20,7 @@ Kubeapps keeps a backlog of issues on GitHub submitted both by maintainers and c
 
 ## 🏷 Labeling
 
-Kubeapps mantainers team operates with 4 groups of labels:
+Kubeapps maintainers team operates with 4 groups of labels:
 
 ### `kind/*`:
 
