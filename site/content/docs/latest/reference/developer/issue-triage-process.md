@@ -47,7 +47,7 @@ The relevant component(s) for the issue. Components are high level areas of the 
 | `component/authentication`   | An issue related to kubeapps authentication                                                      |
 | `component/ci`               | An issue related to kubeapps ci system                                                           |
 | `component/kubeops`          | An issue related to kubeops (to be deprecated)                                                   |
-| `component/packages`         | An issue related to kubeapps packging formats to be distributed (Helm chart and Carvel packages) |
+| `component/packages`         | An issue related to kubeapps packaging formats to be distributed (Helm chart and Carvel packages) |
 | `component/pinniped-proxy`   | An issue related to kubeapps integration with pinniped-proxy                                     |
 | `component/plugin-carvel`    | An issue related to kubeapps plugin to manage Carvel packages                                    |
 | `component/plugin-flux`      | An issue related to kubeapps plugin to manage Flux packages                                      |
