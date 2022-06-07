@@ -378,25 +378,25 @@ export const findPackageInRepo = (
   };
 };
 
-export const createDockerRegistrySecret = (
-  name: string,
-  user: string,
-  password: string,
-  email: string,
-  server: string,
-  namespace: string,
-): ThunkAction<Promise<boolean>, IStoreState, null, AppReposAction> => {
-  return async (dispatch, getState) => {
-    const {
-      clusters: { currentCluster },
-    } = getState();
-    try {
-      await Secret.createPullSecret(currentCluster, name, user, password, email, server, namespace);
-      dispatch(createImagePullSecret(name));
-      return true;
-    } catch (e: any) {
-      dispatch(errorRepos(e, "fetch"));
-      return false;
-    }
-  };
-};
+// export const createDockerRegistrySecret = (
+//   name: string,
+//   user: string,
+//   password: string,
+//   email: string,
+//   server: string,
+//   namespace: string,
+// ): ThunkAction<Promise<boolean>, IStoreState, null, AppReposAction> => {
+//   return async (dispatch, getState) => {
+//     const {
+//       clusters: { currentCluster },
+//     } = getState();
+//     try {
+//       await Secret.createPullSecret(currentCluster, name, user, password, email, server, namespace);
+//       dispatch(createImagePullSecret(name));
+//       return true;
+//     } catch (e: any) {
+//       dispatch(errorRepos(e, "fetch"));
+//       return false;
+//     }
+//   };
+// };

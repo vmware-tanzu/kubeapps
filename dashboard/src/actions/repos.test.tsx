@@ -27,7 +27,7 @@ const { repos: repoActions } = actions;
 const mockStore = configureMockStore([thunk]);
 
 let store: any;
-const appRepo = { name: "repo-abc" } as PackageRepositoryDetail;
+const pkgRepo = { name: "repo-abc" } as PackageRepositoryDetail;
 const kubeappsNamespace = "kubeapps-namespace";
 const globalReposNamespace = "kubeapps-repos-global";
 
@@ -52,7 +52,7 @@ beforeEach(() => {
     });
   PackageRepositoriesService.deletePackageRepository = jest.fn();
   PackageRepositoriesService.getPackageRepositoryDetail = jest.fn().mockImplementationOnce(() => {
-    return appRepo;
+    return pkgRepo;
   });
   PackageRepositoriesService.updatePackageRepository = jest.fn();
   PackageRepositoriesService.addPackageRepository = jest.fn().mockImplementationOnce(() => {
@@ -787,7 +787,7 @@ describe("updateRepo", () => {
       spec: { auth: { customCA: { secretKeyRef: { name: "apprepo-repo-abc" } } } },
     };
     PackageRepositoriesService.updatePackageRepository = jest.fn().mockReturnValue({
-      appRepository: r,
+      pkgRepository: r,
     });
     const expectedActions = [
       {
@@ -931,7 +931,7 @@ describe("updateRepo", () => {
 
   it("updates a repo with description", async () => {
     PackageRepositoriesService.updatePackageRepository = jest.fn().mockReturnValue({
-      appRepository: {},
+      pkgRepository: {},
     });
     await store.dispatch(
       repoActions.updateRepo(
@@ -993,7 +993,7 @@ describe("findPackageInRepo", () => {
       },
       {
         type: getType(repoActions.receiveRepo),
-        payload: appRepo,
+        payload: pkgRepo,
       },
     ];
     await store.dispatch(
@@ -1043,55 +1043,5 @@ describe("findPackageInRepo", () => {
       identifier: "my-repo/my-package",
       plugin: plugin,
     } as AvailablePackageReference);
-  });
-});
-
-describe("createDockerRegistrySecret", () => {
-  it("creates a docker registry", async () => {
-    Secret.createPullSecret = jest.fn();
-    const expectedActions = [
-      {
-        type: getType(repoActions.createImagePullSecret),
-        payload: "secret-name",
-      },
-    ];
-
-    await store.dispatch(
-      repoActions.createDockerRegistrySecret(
-        "secret-name",
-        "user",
-        "password",
-        "email",
-        "server",
-        "namespace",
-      ),
-    );
-    expect(Secret.createPullSecret).toHaveBeenCalledWith(
-      "default",
-      "secret-name",
-      "user",
-      "password",
-      "email",
-      "server",
-      "namespace",
-    );
-    expect(store.getActions()).toEqual(expectedActions);
-  });
-
-  it("dispatches an error", async () => {
-    Secret.createPullSecret = jest.fn(() => {
-      throw new Error("boom");
-    });
-    const expectedActions = [
-      {
-        type: getType(repoActions.errorRepos),
-        payload: {
-          err: new Error("boom"),
-          op: "fetch",
-        },
-      },
-    ];
-    await store.dispatch(repoActions.createDockerRegistrySecret("", "", "", "", "", ""));
-    expect(store.getActions()).toEqual(expectedActions);
   });
 });

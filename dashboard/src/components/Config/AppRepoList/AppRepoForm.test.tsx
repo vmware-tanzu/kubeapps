@@ -2,17 +2,16 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { CdsButton } from "@cds/react/button";
+import { waitFor } from "@testing-library/react";
 import actions from "actions";
 import Alert from "components/js/Alert";
 import { act } from "react-dom/test-utils";
 import * as ReactRedux from "react-redux";
+import { PackageRepositoriesService } from "shared/PackageRepositoriesService";
+import Secret from "shared/Secret";
 import { defaultStore, getStore, mountWrapper } from "shared/specs/mountWrapper";
 import { ISecret } from "shared/types";
-import AppRepoAddDockerCreds from "./AppRepoAddDockerCreds";
 import { AppRepoForm } from "./AppRepoForm";
-import { PackageRepositoriesService } from "shared/PackageRepositoriesService";
-import { waitFor } from "@testing-library/react";
-import Secret from "shared/Secret";
 
 const defaultProps = {
   onSubmit: jest.fn(),
@@ -28,22 +27,11 @@ beforeEach(() => {
   };
   const mockDispatch = jest.fn(r => r);
   spyOnUseDispatch = jest.spyOn(ReactRedux, "useDispatch").mockReturnValue(mockDispatch);
-  Secret.getDockerConfigSecretNames = jest.fn(() => Promise.resolve([]));
 });
 
 afterEach(() => {
   actions.kube = { ...kubeaActions };
   spyOnUseDispatch.mockRestore();
-});
-
-it("fetches repos and imagePullSecrets", async () => {
-  await act(async () => {
-    mountWrapper(defaultStore, <AppRepoForm {...defaultProps} />);
-  });
-  expect(Secret.getDockerConfigSecretNames).toHaveBeenCalledWith(
-    "default-cluster",
-    defaultProps.namespace,
-  );
 });
 
 it("disables the submit button while fetching", async () => {
@@ -419,14 +407,6 @@ it("should deactivate the docker registry credentials section if the namespace i
   expect(wrapper.find(".docker-creds-subform-button button")).toBeDisabled();
 });
 
-it("should render the docker registry credentials section", async () => {
-  let wrapper: any;
-  await act(async () => {
-    wrapper = mountWrapper(defaultStore, <AppRepoForm {...defaultProps} />);
-  });
-  expect(wrapper.find(AppRepoAddDockerCreds)).toExist();
-});
-
 it("should call the install method with the selected docker credentials", async () => {
   const install = jest.fn().mockReturnValue(true);
   actions.repos = {
@@ -728,27 +708,6 @@ describe("when the repository info is already populated", () => {
       await waitFor(() => {
         wrapper.update();
         expect(wrapper.find("#kubeapps-repo-auth-method-registry")).toBeChecked();
-      });
-    });
-
-    it("should pre-select the existing docker registry secret", async () => {
-      const repo = {
-        metadata: { name: "foo" },
-        spec: { dockerRegistrySecrets: ["secret-2"] },
-      } as any;
-      Secret.getDockerConfigSecretNames = jest.fn(() =>
-        Promise.resolve(["secret-1", "secret-2", "secret-3"]),
-      );
-      let wrapper: any;
-      await act(async () => {
-        wrapper = mountWrapper(
-          defaultStore,
-          <AppRepoForm {...defaultProps} packageRepoRef={repo} />,
-        );
-      });
-      await waitFor(() => {
-        wrapper.update();
-        expect(wrapper.find("select").prop("value")).toBe("secret-2");
       });
     });
 

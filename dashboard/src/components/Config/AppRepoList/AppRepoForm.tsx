@@ -30,7 +30,6 @@ import { PackageRepositoriesService } from "shared/PackageRepositoriesService";
 import Secret from "shared/Secret";
 import { IAppRepositoryFilter, ISecret, IStoreState } from "shared/types";
 import { getPluginByName, getPluginPackageName, PluginNames } from "shared/utils";
-import AppRepoAddDockerCreds from "./AppRepoAddDockerCreds";
 import "./AppRepoForm.css";
 interface IAppRepoFormProps {
   onSubmit: (
@@ -81,17 +80,16 @@ export function AppRepoForm(props: IAppRepoFormProps) {
       errors: { create: createError, update: updateError, validate: validationError },
       validating,
     },
-    config: { appVersion },
     clusters: { currentCluster },
   } = useSelector((state: IStoreState) => state);
 
   const [authMethod, setAuthMethod] = useState(
     PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_UNSPECIFIED,
   );
-  const [user, setUser] = useState("");
-  const [password, setPassword] = useState("");
+  const [basicUser, setUser] = useState("");
+  const [basicPassword, setPassword] = useState("");
   const [authHeader, setAuthHeader] = useState("");
-  const [token, setToken] = useState("");
+  const [bearerToken, setToken] = useState("");
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [url, setURL] = useState("");
@@ -106,9 +104,14 @@ export function AppRepoForm(props: IAppRepoFormProps) {
   const [filterNames, setFilterNames] = useState("");
   const [filterRegex, setFilterRegex] = useState(false);
   const [filterExclude, setFilterExclude] = useState(false);
+
   const [secret, setSecret] = useState<ISecret>();
   const [selectedImagePullSecret, setSelectedImagePullSecret] = useState("");
-  const [imagePullSecrets, setImagePullSecrets] = useState<string[]>([]);
+  const [secretName, setSecretName] = useState("");
+  const [secretUser, setSecretUser] = useState("");
+  const [secretPassword, setSecretPassword] = useState("");
+  const [secretEmail, setSecretEmail] = useState("");
+  const [secretServer, setSecretServer] = useState("");
 
   const [accordion, setAccordion] = useState([true, false, false, false]);
 
@@ -123,23 +126,6 @@ export function AppRepoForm(props: IAppRepoFormProps) {
       dispatch(actions.repos.fetchRepo(packageRepoRef));
     }
   }, [dispatch, packageRepoRef]);
-
-  useEffect(() => {
-    fetchImagePullSecrets(currentCluster, namespace);
-  }, [dispatch, namespace, currentCluster]);
-
-  async function fetchImagePullSecrets(cluster: string, repoNamespace: string) {
-    setImagePullSecrets(await Secret.getDockerConfigSecretNames(cluster, repoNamespace));
-  }
-
-  useEffect(() => {
-    // Select the pull secrets if they are already selected in the existing repo
-    imagePullSecrets.forEach(secretName => {
-      if (repo?.auth?.secretRef?.key === secretName) {
-        setSelectedImagePullSecret(secretName);
-      }
-    });
-  }, [imagePullSecrets, repo]);
 
   useEffect(() => {
     if (repo) {
@@ -222,7 +208,7 @@ export function AppRepoForm(props: IAppRepoFormProps) {
         finalHeader = authHeader;
         break;
       case PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_BEARER:
-        finalHeader = `Bearer ${token}`;
+        finalHeader = `Bearer ${bearerToken}`;
         break;
       case PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_DOCKER_CONFIG_JSON:
         dockerRegCreds = selectedImagePullSecret;
@@ -255,8 +241,8 @@ export function AppRepoForm(props: IAppRepoFormProps) {
       passCredentials,
       authMethod,
       interval,
-      user,
-      password,
+      basicUser,
+      basicPassword,
       performValidation,
       filter,
     );
@@ -266,9 +252,12 @@ export function AppRepoForm(props: IAppRepoFormProps) {
     isInstallingRef.current = false;
   };
 
-  const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => setName(e.target.value);
-  const handleDescriptionChange = (e: React.ChangeEvent<HTMLInputElement>) =>
+  const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setName(e.target.value);
+  };
+  const handleDescriptionChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setDescription(e.target.value);
+  };
   const handleIntervalChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setInterval(Number(e.target.value));
   };
@@ -281,7 +270,7 @@ export function AppRepoForm(props: IAppRepoFormProps) {
   const handleAuthHeaderChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setAuthHeader(e.target.value);
   };
-  const handleAuthTokenChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleAuthBearerTokenChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setToken(e.target.value);
   };
   const handleCustomCAChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
@@ -306,10 +295,10 @@ export function AppRepoForm(props: IAppRepoFormProps) {
         break;
     }
   };
-  const handleUserChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleBasicUserChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setUser(e.target.value);
   };
-  const handlePasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleBasicPasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setPassword(e.target.value);
   };
   const handleOCIRepositoriesChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
@@ -330,9 +319,20 @@ export function AppRepoForm(props: IAppRepoFormProps) {
   const handleFilterExcludeChange = (_e: React.ChangeEvent<HTMLInputElement>) => {
     setFilterExclude(!filterExclude);
   };
-
-  const selectPullSecret = (imagePullSecret: string) => {
-    setSelectedImagePullSecret(imagePullSecret);
+  const handleAuthSecretUserChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSecretUser(e.target.value);
+  };
+  const handleAuthSecretNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSecretName(e.target.value);
+  };
+  const handleAuthSecretPasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSecretPassword(e.target.value);
+  };
+  const handleAuthSecretEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSecretEmail(e.target.value);
+  };
+  const handleAuthSecretServerChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSecretServer(e.target.value);
   };
 
   const parseValidationError = (error: Error) => {
@@ -674,6 +674,7 @@ export function AppRepoForm(props: IAppRepoFormProps) {
                   </CdsRadioGroup>
                   <div cds-layout="col@xs:8">
                     <div
+                      id="kubeapps-repo-auth-details-basic"
                       hidden={
                         authMethod !==
                         PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_BASIC_AUTH
@@ -684,8 +685,8 @@ export function AppRepoForm(props: IAppRepoFormProps) {
                         <input
                           id="kubeapps-repo-username"
                           type="text"
-                          value={user}
-                          onChange={handleUserChange}
+                          value={basicUser}
+                          onChange={handleBasicUserChange}
                           placeholder="username"
                         />
                       </CdsInput>
@@ -695,13 +696,15 @@ export function AppRepoForm(props: IAppRepoFormProps) {
                         <input
                           id="kubeapps-repo-password"
                           type="password"
-                          value={password}
-                          onChange={handlePasswordChange}
+                          value={basicPassword}
+                          onChange={handleBasicPasswordChange}
                           placeholder="password"
                         />
                       </CdsInput>
                     </div>
+
                     <div
+                      id="kubeapps-repo-auth-details-bearer"
                       hidden={
                         authMethod !==
                         PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_BEARER
@@ -711,14 +714,74 @@ export function AppRepoForm(props: IAppRepoFormProps) {
                         <label>Token</label>
                         <input
                           type="text"
-                          value={token}
-                          onChange={handleAuthTokenChange}
+                          value={bearerToken}
+                          onChange={handleAuthBearerTokenChange}
                           id="kubeapps-repo-token"
                           placeholder="xrxNcWghpRLdcPHFgVRM73rr4N7qjvjm"
                         />
                       </CdsInput>
                     </div>
                     <div
+                      id="kubeapps-repo-auth-details-docker"
+                      hidden={
+                        authMethod !==
+                        PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_DOCKER_CONFIG_JSON
+                      }
+                    >
+                      <CdsInput className="margin-t-sm">
+                        <label>Secret Name</label>
+                        <input
+                          id="kubeapps-docker-cred-secret-name"
+                          value={secretName}
+                          onChange={handleAuthSecretNameChange}
+                          placeholder="Secret"
+                          required={true}
+                        />
+                      </CdsInput>
+                      <CdsInput className="margin-t-sm">
+                        <label>Server</label>
+                        <input
+                          id="kubeapps-docker-cred-server"
+                          value={secretServer}
+                          onChange={handleAuthSecretServerChange}
+                          placeholder="https://index.docker.io/v1/"
+                          required={true}
+                        />
+                      </CdsInput>
+                      <CdsInput className="margin-t-sm">
+                        <label>Username</label>
+                        <input
+                          id="kubeapps-docker-cred-username"
+                          value={secretUser}
+                          onChange={handleAuthSecretUserChange}
+                          placeholder="Username"
+                          required={true}
+                        />
+                      </CdsInput>
+                      <CdsInput className="margin-t-sm">
+                        <label>Password</label>
+                        <input
+                          id="kubeapps-docker-cred-password"
+                          type="password"
+                          value={secretPassword}
+                          onChange={handleAuthSecretPasswordChange}
+                          placeholder="Password"
+                          required={true}
+                        />
+                      </CdsInput>
+                      <CdsInput className="margin-t-sm">
+                        <label>Email</label>
+                        <input
+                          id="kubeapps-docker-cred-email"
+                          value={secretEmail}
+                          onChange={handleAuthSecretEmailChange}
+                          placeholder="user@example.com"
+                        />
+                      </CdsInput>
+                    </div>
+
+                    <div
+                      id="kubeapps-repo-auth-details-custom"
                       hidden={
                         authMethod !==
                         PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_CUSTOM
@@ -737,19 +800,6 @@ export function AppRepoForm(props: IAppRepoFormProps) {
                     </div>
                   </div>
                 </div>
-
-                <AppRepoAddDockerCreds
-                  imagePullSecrets={imagePullSecrets}
-                  selectPullSecret={selectPullSecret}
-                  selectedImagePullSecret={selectedImagePullSecret}
-                  namespace={namespace}
-                  appVersion={appVersion}
-                  disabled={!shouldEnableDockerRegistryCreds}
-                  required={
-                    authMethod ===
-                    PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_DOCKER_CONFIG_JSON
-                  }
-                />
               </CdsFormGroup>
             </CdsAccordionContent>
           </CdsAccordionPanel>
