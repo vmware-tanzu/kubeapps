@@ -97,7 +97,7 @@ export function AppRepoForm(props: IAppRepoFormProps) {
   const [url, setURL] = useState("");
   const [customCA, setCustomCA] = useState("");
   const [type, setType] = useState("");
-  const [plugin, setPlugin] = useState(getPluginByName(PluginNames.PACKAGES_HELM));
+  const [plugin, setPlugin] = useState({} as Plugin);
   const [ociRepositories, setOCIRepositories] = useState("");
   const [skipTLS, setSkipTLS] = useState(!!repo?.tlsConfig?.insecureSkipVerify);
   const [passCredentials, setPassCredentials] = useState(!!repo?.auth?.passCredentials);
@@ -295,21 +295,15 @@ export function AppRepoForm(props: IAppRepoFormProps) {
   };
   const handlePluginRadioButtonChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setPlugin(getPluginByName(e.target.value));
-    if (!type) {
-      // if no type, suggest one per plugin
-      switch (getPluginByName(e.target.value)?.name) {
-        case PluginNames.PACKAGES_HELM:
-        case PluginNames.PACKAGES_FLUX:
-          setType(RepositoryStorageTypes.PACKAGE_REPOSITORY_STORAGE_HELM);
-          break;
-        case PluginNames.PACKAGES_KAPP:
-          setType(RepositoryStorageTypes.PACKAGE_REPOSITORY_STORAGE_CARVEL_IMGPKGBUNDLE);
-          break;
-      }
-    }
-    // TODO(agamez): workaround until Flux plugin also supports OCI artifacts
-    if (getPluginByName(e.target.value)?.name === PluginNames.PACKAGES_FLUX) {
-      setType(RepositoryStorageTypes.PACKAGE_REPOSITORY_STORAGE_HELM);
+    // suggest a type per plugin
+    switch (getPluginByName(e.target.value)?.name) {
+      case PluginNames.PACKAGES_HELM:
+      case PluginNames.PACKAGES_FLUX:
+        setType(RepositoryStorageTypes.PACKAGE_REPOSITORY_STORAGE_HELM);
+        break;
+      case PluginNames.PACKAGES_KAPP:
+        setType(RepositoryStorageTypes.PACKAGE_REPOSITORY_STORAGE_CARVEL_IMGPKGBUNDLE);
+        break;
     }
   };
   const handleUserChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -421,6 +415,7 @@ export function AppRepoForm(props: IAppRepoFormProps) {
                       checked={plugin?.name === PluginNames.PACKAGES_HELM}
                       onChange={handlePluginRadioButtonChange}
                       disabled={repo.packageRepoRef?.plugin ? true : false}
+                      required={true}
                     />
                   </CdsRadio>
                   <CdsRadio>
@@ -433,6 +428,7 @@ export function AppRepoForm(props: IAppRepoFormProps) {
                       checked={plugin?.name === PluginNames.PACKAGES_FLUX}
                       onChange={handlePluginRadioButtonChange}
                       disabled={repo.packageRepoRef?.plugin ? true : false}
+                      required={true}
                     />
                   </CdsRadio>
                   <CdsRadio>
@@ -445,6 +441,7 @@ export function AppRepoForm(props: IAppRepoFormProps) {
                       checked={plugin?.name === PluginNames.PACKAGES_KAPP}
                       onChange={handlePluginRadioButtonChange}
                       disabled={repo.packageRepoRef?.plugin ? true : false}
+                      required={true}
                     />
                   </CdsRadio>
                 </CdsRadioGroup>
@@ -463,6 +460,7 @@ export function AppRepoForm(props: IAppRepoFormProps) {
                           checked={type === RepositoryStorageTypes.PACKAGE_REPOSITORY_STORAGE_HELM}
                           disabled={!!repo?.type}
                           onChange={handleTypeRadioButtonChange}
+                          required={true}
                         />
                       </CdsRadio>
                       <CdsRadio>
@@ -476,6 +474,7 @@ export function AppRepoForm(props: IAppRepoFormProps) {
                           value={RepositoryStorageTypes.PACKAGE_REPOSITORY_STORAGE_OCI}
                           checked={type === RepositoryStorageTypes.PACKAGE_REPOSITORY_STORAGE_OCI}
                           onChange={handleTypeRadioButtonChange}
+                          required={true}
                         />
                       </CdsRadio>
                     </>
@@ -496,6 +495,7 @@ export function AppRepoForm(props: IAppRepoFormProps) {
                             RepositoryStorageTypes.PACKAGE_REPOSITORY_STORAGE_CARVEL_IMGPKGBUNDLE
                           }
                           onChange={handleTypeRadioButtonChange}
+                          required={true}
                         />
                       </CdsRadio>
                       <CdsRadio>
@@ -510,6 +510,7 @@ export function AppRepoForm(props: IAppRepoFormProps) {
                             type === RepositoryStorageTypes.PACKAGE_REPOSITORY_STORAGE_CARVEL_INLINE
                           }
                           onChange={handleTypeRadioButtonChange}
+                          required={true}
                         />
                       </CdsRadio>
                       <CdsRadio>
@@ -524,6 +525,7 @@ export function AppRepoForm(props: IAppRepoFormProps) {
                             type === RepositoryStorageTypes.PACKAGE_REPOSITORY_STORAGE_CARVEL_IMAGE
                           }
                           onChange={handleTypeRadioButtonChange}
+                          required={true}
                         />
                       </CdsRadio>
                       <CdsRadio>
@@ -538,6 +540,7 @@ export function AppRepoForm(props: IAppRepoFormProps) {
                             type === RepositoryStorageTypes.PACKAGE_REPOSITORY_STORAGE_CARVEL_HTTP
                           }
                           onChange={handleTypeRadioButtonChange}
+                          required={true}
                         />
                       </CdsRadio>
                       <CdsRadio>
@@ -552,6 +555,7 @@ export function AppRepoForm(props: IAppRepoFormProps) {
                             type === RepositoryStorageTypes.PACKAGE_REPOSITORY_STORAGE_CARVEL_GIT
                           }
                           onChange={handleTypeRadioButtonChange}
+                          required={true}
                         />
                       </CdsRadio>
                     </>
