@@ -71,7 +71,7 @@ Specific labels for contributors. Contribution labels help to identify a relevan
 | `good first issue`       | Good first issues to start contributing to Kubeapps.                             |
 | `help wanted`            | The maintainer team wants help on an issue or pull request.                      |
 | `javascript`             | Automatic label set to pull requests that update javascript code                 |
-| `next-iteration`         | Label to mark issues to be discussed in next planning session                    |
+| `next-iteration`         | Label to mark issues to be discussed in the next planning session                    |
 | `rust`                   | Automatic label set to pull requests that update rust code                       |
 | `security`               | Issues which relate to security concerns.                                        |
 | `stale`                  | Automatic label to stale issues due inactivity to be closed if no further action |
