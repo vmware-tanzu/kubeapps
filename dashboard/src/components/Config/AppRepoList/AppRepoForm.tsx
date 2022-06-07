@@ -16,8 +16,10 @@ import { CdsTextarea } from "@cds/react/textarea";
 import actions from "actions";
 import Alert from "components/js/Alert";
 import {
+  DockerCredentials,
   PackageRepositoryAuth_PackageRepositoryAuthType,
   PackageRepositoryReference,
+  UsernamePassword,
 } from "gen/kubeappsapis/core/packages/v1alpha1/repositories";
 import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins";
 import { RepositoryCustomDetails } from "gen/kubeappsapis/plugins/helm/packages/v1alpha1/helm";
@@ -26,40 +28,19 @@ import { useDispatch, useSelector } from "react-redux";
 import { Action } from "redux";
 import { ThunkDispatch } from "redux-thunk";
 import { toFilterRule, toParams } from "shared/jq";
-import { PackageRepositoriesService } from "shared/PackageRepositoriesService";
-import Secret from "shared/Secret";
-import { IAppRepositoryFilter, ISecret, IStoreState } from "shared/types";
+import { IPkgRepoFormData, IPkgRepositoryFilter, IStoreState } from "shared/types";
 import { getPluginByName, getPluginPackageName, PluginNames } from "shared/utils";
 import "./AppRepoForm.css";
 interface IAppRepoFormProps {
-  onSubmit: (
-    name: string,
-    plugin: Plugin,
-    url: string,
-    type: string,
-    description: string,
-    authHeader: string,
-    dockerRegCreds: string,
-    customCA: string,
-    registrySecrets: string[],
-    ociRepositories: string[],
-    skipTLS: boolean,
-    passCredentials: boolean,
-    authMethod: PackageRepositoryAuth_PackageRepositoryAuthType,
-    interval: number,
-    username: string,
-    password: string,
-    performValidation: boolean,
-    filter?: IAppRepositoryFilter,
-  ) => Promise<boolean>;
+  onSubmit: (data: IPkgRepoFormData) => Promise<boolean>;
   onAfterInstall?: () => void;
   namespace: string;
   kubeappsNamespace: string;
   packageRepoRef?: PackageRepositoryReference;
 }
 
-// temporary enum for the type of package repository storage
-enum RepositoryStorageTypes {
+//  enum for the type of package repository storage
+export enum RepositoryStorageTypes {
   PACKAGE_REPOSITORY_STORAGE_HELM = "helm",
   PACKAGE_REPOSITORY_STORAGE_OCI = "oci",
   PACKAGE_REPOSITORY_STORAGE_CARVEL_INLINE = "inline",
@@ -83,37 +64,34 @@ export function AppRepoForm(props: IAppRepoFormProps) {
     clusters: { currentCluster },
   } = useSelector((state: IStoreState) => state);
 
+  // initial state (collapsed or not) of each accordion tab
+  const [accordion, setAccordion] = useState([true, false, false, false]);
+
+  const [authCustomHeader, setAuthCustomHeader] = useState("");
   const [authMethod, setAuthMethod] = useState(
     PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_UNSPECIFIED,
   );
-  const [basicUser, setUser] = useState("");
-  const [basicPassword, setPassword] = useState("");
-  const [authHeader, setAuthHeader] = useState("");
-  const [bearerToken, setToken] = useState("");
-  const [name, setName] = useState("");
-  const [description, setDescription] = useState("");
-  const [url, setURL] = useState("");
+  const [basicPassword, setBasicPassword] = useState("");
+  const [basicUser, setBasicUser] = useState("");
+  const [bearerToken, setBearerToken] = useState("");
   const [customCA, setCustomCA] = useState("");
-  const [type, setType] = useState("");
-  const [plugin, setPlugin] = useState({} as Plugin);
-  const [ociRepositories, setOCIRepositories] = useState("");
-  const [skipTLS, setSkipTLS] = useState(!!repo?.tlsConfig?.insecureSkipVerify);
-  const [passCredentials, setPassCredentials] = useState(!!repo?.auth?.passCredentials);
-  const [interval, setInterval] = useState(3600);
-  const [performValidation, setPerformValidation] = useState(true);
+  const [description, setDescription] = useState("");
+  const [filterExclude, setFilterExclude] = useState(false);
   const [filterNames, setFilterNames] = useState("");
   const [filterRegex, setFilterRegex] = useState(false);
-  const [filterExclude, setFilterExclude] = useState(false);
-
-  const [secret, setSecret] = useState<ISecret>();
-  const [selectedImagePullSecret, setSelectedImagePullSecret] = useState("");
-  const [secretName, setSecretName] = useState("");
-  const [secretUser, setSecretUser] = useState("");
-  const [secretPassword, setSecretPassword] = useState("");
+  const [interval, setInterval] = useState(3600);
+  const [name, setName] = useState("");
+  const [ociRepositories, setOCIRepositories] = useState("");
+  const [passCredentials, setPassCredentials] = useState(!!repo?.auth?.passCredentials);
+  const [performValidation, setPerformValidation] = useState(true);
+  const [plugin, setPlugin] = useState({} as Plugin);
   const [secretEmail, setSecretEmail] = useState("");
+  const [secretPassword, setSecretPassword] = useState("");
   const [secretServer, setSecretServer] = useState("");
-
-  const [accordion, setAccordion] = useState([true, false, false, false]);
+  const [secretUser, setSecretUser] = useState("");
+  const [skipTLS, setSkipTLS] = useState(!!repo?.tlsConfig?.insecureSkipVerify);
+  const [type, setType] = useState("");
+  const [url, setURL] = useState("");
 
   const toggleAccordion = (section: number) => {
     const items = [...accordion];
@@ -129,6 +107,7 @@ export function AppRepoForm(props: IAppRepoFormProps) {
 
   useEffect(() => {
     if (repo) {
+      // populate state properties from the incoming repo
       setName(repo.name);
       setURL(repo.url);
       setType(repo.type);
@@ -137,6 +116,16 @@ export function AppRepoForm(props: IAppRepoFormProps) {
       setSkipTLS(!!repo.tlsConfig?.insecureSkipVerify);
       setPassCredentials(!!repo.auth?.passCredentials);
       setInterval(repo.interval);
+      setCustomCA(repo.tlsConfig?.certAuthority || "");
+      setAuthCustomHeader(repo.auth?.header || "");
+      setBearerToken(repo.auth?.header || "");
+      setBasicPassword(repo.auth?.usernamePassword?.password || "");
+      setBasicUser(repo.auth?.usernamePassword?.username || "");
+      setSecretEmail(repo.auth?.dockerCreds?.email || "");
+      setSecretPassword(repo.auth?.dockerCreds?.password || "");
+      setSecretServer(repo.auth?.dockerCreds?.server || "");
+      setSecretUser(repo.auth?.dockerCreds?.username || "");
+
       const repositoryCustomDetails = repo.customDetail as Partial<RepositoryCustomDetails>;
       setOCIRepositories(repositoryCustomDetails?.ociRepositories?.join(", ") || "");
       setPerformValidation(repositoryCustomDetails?.performValidation || false);
@@ -146,49 +135,8 @@ export function AppRepoForm(props: IAppRepoFormProps) {
         setFilterExclude(exclude);
         setFilterNames(names);
       }
-
-      if (repo?.tlsConfig?.certAuthority || repo?.auth?.header) {
-        fetchRepoSecret(currentCluster, repo.packageRepoRef?.context?.namespace || "", repo.name);
-      }
     }
   }, [repo, namespace, currentCluster, dispatch]);
-
-  async function fetchRepoSecret(cluster: string, repoNamespace: string, repoName: string) {
-    setSecret(await PackageRepositoriesService.getSecretForRepo(cluster, repoNamespace, repoName));
-  }
-
-  useEffect(() => {
-    if (secret) {
-      if (secret.data["ca.crt"]) {
-        setCustomCA(Buffer.from(secret.data["ca.crt"], "base64")?.toString());
-      }
-      if (secret.data.authorizationHeader) {
-        if (authHeader?.startsWith("Basic")) {
-          const userPass = Buffer.from(authHeader?.split(" ")[1], "base64")?.toString()?.split(":");
-          setUser(userPass[0]);
-          setPassword(userPass[1]);
-          setAuthMethod(
-            PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_BASIC_AUTH,
-          );
-        } else if (authHeader?.startsWith("Bearer")) {
-          setToken(authHeader?.split(" ")[1]);
-          setAuthMethod(
-            PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_BEARER,
-          );
-        } else {
-          setAuthMethod(
-            PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_CUSTOM,
-          );
-          setAuthHeader(Buffer.from(secret.data.authorizationHeader, "base64")?.toString());
-        }
-      }
-      if (secret.data[".dockerconfigjson"]) {
-        setAuthMethod(
-          PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_DOCKER_CONFIG_JSON,
-        );
-      }
-    }
-  }, [secret, authHeader]);
 
   const handleInstallClick = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -201,51 +149,70 @@ export function AppRepoForm(props: IAppRepoFormProps) {
       return;
     }
     isInstallingRef.current = true;
+
+    // send the proper header depending on the auth method
     let finalHeader = "";
-    let dockerRegCreds = "";
     switch (authMethod) {
       case PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_CUSTOM:
-        finalHeader = authHeader;
+        finalHeader = authCustomHeader;
         break;
       case PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_BEARER:
         finalHeader = `Bearer ${bearerToken}`;
         break;
-      case PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_DOCKER_CONFIG_JSON:
-        dockerRegCreds = selectedImagePullSecret;
     }
+
+    // create an array from the (trimmed) comma separated string
     const ociRepoList = ociRepositories.length
       ? ociRepositories?.split(",").map(r => r.trim())
       : [];
-    let finalURL = url;
+
     // If the scheme is not specified, assume HTTPS. This is common for OCI registries
     // unless using the kapp plugin, which explicitly should not include https:// protocol prefix
+    let finalURL = url;
     if (plugin?.name !== PluginNames.PACKAGES_KAPP && !url?.startsWith("http")) {
       finalURL = `https://${url}`;
     }
-    let filter: IAppRepositoryFilter | undefined;
+
+    // build the IAppRepositoryFilter object based on the filter names plus the regex and exclude options
+    let filter: IPkgRepositoryFilter | undefined;
     if (type === RepositoryStorageTypes.PACKAGE_REPOSITORY_STORAGE_HELM && filterNames !== "") {
       filter = toFilterRule(filterNames, filterRegex, filterExclude);
     }
-    const success = await onSubmit(
-      name,
-      plugin,
-      finalURL,
-      type,
-      description,
-      finalHeader,
-      dockerRegCreds,
-      customCA,
-      selectedImagePullSecret.length ? [selectedImagePullSecret] : [],
-      ociRepoList,
-      skipTLS,
-      passCredentials,
+
+    const success = await onSubmit({
+      authHeader: finalHeader,
       authMethod,
+      basicAuth: {
+        password: basicPassword,
+        username: basicUser,
+      } as UsernamePassword,
+      customCA,
+      customDetails: {
+        ociRepositories: ociRepoList,
+        performValidation,
+        filterRule: filter,
+        // TODO(agamez): set this value when supporting user-managed secrets
+        dockerRegistrySecrets: [],
+      } as RepositoryCustomDetails,
+      description,
+      dockerRegCreds: {
+        username: secretUser,
+        email: secretEmail,
+        password: secretPassword,
+        server: secretServer,
+      } as DockerCredentials,
       interval,
-      basicUser,
-      basicPassword,
-      performValidation,
-      filter,
-    );
+      name,
+      passCredentials,
+      plugin,
+      // TODO(agamez): set this value when supporting user-managed secrets
+      secretAuthName: "",
+      // TODO(agamez): set this value when supporting user-managed secrets
+      secretTLSName: "",
+      skipTLS,
+      type,
+      url: finalURL,
+    } as IPkgRepoFormData);
     if (success && onAfterInstall) {
       onAfterInstall();
     }
@@ -267,11 +234,11 @@ export function AppRepoForm(props: IAppRepoFormProps) {
   const handleURLChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setURL(e.target.value);
   };
-  const handleAuthHeaderChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setAuthHeader(e.target.value);
+  const handleAuthCustomHeaderChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setAuthCustomHeader(e.target.value);
   };
   const handleAuthBearerTokenChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setToken(e.target.value);
+    setBearerToken(e.target.value);
   };
   const handleCustomCAChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setCustomCA(e.target.value);
@@ -296,10 +263,10 @@ export function AppRepoForm(props: IAppRepoFormProps) {
     }
   };
   const handleBasicUserChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setUser(e.target.value);
+    setBasicUser(e.target.value);
   };
   const handleBasicPasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setPassword(e.target.value);
+    setBasicPassword(e.target.value);
   };
   const handleOCIRepositoriesChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setOCIRepositories(e.target.value);
@@ -321,9 +288,6 @@ export function AppRepoForm(props: IAppRepoFormProps) {
   };
   const handleAuthSecretUserChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSecretUser(e.target.value);
-  };
-  const handleAuthSecretNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setSecretName(e.target.value);
   };
   const handleAuthSecretPasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSecretPassword(e.target.value);
@@ -347,11 +311,6 @@ export function AppRepoForm(props: IAppRepoFormProps) {
     }
     return message;
   };
-
-  /* Only when using a namespace different than the Kubeapps namespace (Global)
-    the repository can be associated with Docker Registry Credentials since
-    the pull secret won't be available in all namespaces */
-  const shouldEnableDockerRegistryCreds = namespace !== kubeappsNamespace;
 
   /* eslint-disable jsx-a11y/label-has-associated-control */
   return (
@@ -448,7 +407,8 @@ export function AppRepoForm(props: IAppRepoFormProps) {
                 <CdsRadioGroup layout="vertical">
                   <label>Package Storage Type</label>
                   <CdsControlMessage>Select the package storage type.</CdsControlMessage>
-                  {plugin?.name !== PluginNames.PACKAGES_KAPP ? (
+                  {(plugin?.name === (PluginNames.PACKAGES_HELM as string) ||
+                    plugin?.name === (PluginNames.PACKAGES_FLUX as string)) && (
                     <>
                       <CdsRadio>
                         <label>Helm Repository</label>
@@ -460,7 +420,10 @@ export function AppRepoForm(props: IAppRepoFormProps) {
                           checked={type === RepositoryStorageTypes.PACKAGE_REPOSITORY_STORAGE_HELM}
                           disabled={!!repo?.type}
                           onChange={handleTypeRadioButtonChange}
-                          required={true}
+                          required={
+                            plugin?.name === (PluginNames.PACKAGES_HELM as string) ||
+                            plugin?.name === (PluginNames.PACKAGES_FLUX as string)
+                          }
                         />
                       </CdsRadio>
                       <CdsRadio>
@@ -474,11 +437,15 @@ export function AppRepoForm(props: IAppRepoFormProps) {
                           value={RepositoryStorageTypes.PACKAGE_REPOSITORY_STORAGE_OCI}
                           checked={type === RepositoryStorageTypes.PACKAGE_REPOSITORY_STORAGE_OCI}
                           onChange={handleTypeRadioButtonChange}
-                          required={true}
+                          required={
+                            plugin?.name === (PluginNames.PACKAGES_HELM as string) ||
+                            plugin?.name === (PluginNames.PACKAGES_FLUX as string)
+                          }
                         />
                       </CdsRadio>
                     </>
-                  ) : (
+                  )}
+                  {plugin?.name === PluginNames.PACKAGES_KAPP && (
                     <>
                       <CdsRadio>
                         <label>Imgpkg Bundle</label>
@@ -495,7 +462,7 @@ export function AppRepoForm(props: IAppRepoFormProps) {
                             RepositoryStorageTypes.PACKAGE_REPOSITORY_STORAGE_CARVEL_IMGPKGBUNDLE
                           }
                           onChange={handleTypeRadioButtonChange}
-                          required={true}
+                          required={plugin?.name === PluginNames.PACKAGES_KAPP}
                         />
                       </CdsRadio>
                       <CdsRadio>
@@ -510,7 +477,7 @@ export function AppRepoForm(props: IAppRepoFormProps) {
                             type === RepositoryStorageTypes.PACKAGE_REPOSITORY_STORAGE_CARVEL_INLINE
                           }
                           onChange={handleTypeRadioButtonChange}
-                          required={true}
+                          required={plugin?.name === PluginNames.PACKAGES_KAPP}
                         />
                       </CdsRadio>
                       <CdsRadio>
@@ -525,7 +492,7 @@ export function AppRepoForm(props: IAppRepoFormProps) {
                             type === RepositoryStorageTypes.PACKAGE_REPOSITORY_STORAGE_CARVEL_IMAGE
                           }
                           onChange={handleTypeRadioButtonChange}
-                          required={true}
+                          required={plugin?.name === PluginNames.PACKAGES_KAPP}
                         />
                       </CdsRadio>
                       <CdsRadio>
@@ -540,7 +507,7 @@ export function AppRepoForm(props: IAppRepoFormProps) {
                             type === RepositoryStorageTypes.PACKAGE_REPOSITORY_STORAGE_CARVEL_HTTP
                           }
                           onChange={handleTypeRadioButtonChange}
-                          required={true}
+                          required={plugin?.name === PluginNames.PACKAGES_KAPP}
                         />
                       </CdsRadio>
                       <CdsRadio>
@@ -555,7 +522,7 @@ export function AppRepoForm(props: IAppRepoFormProps) {
                             type === RepositoryStorageTypes.PACKAGE_REPOSITORY_STORAGE_CARVEL_GIT
                           }
                           onChange={handleTypeRadioButtonChange}
-                          required={true}
+                          required={plugin?.name === PluginNames.PACKAGES_KAPP}
                         />
                       </CdsRadio>
                     </>
@@ -631,29 +598,27 @@ export function AppRepoForm(props: IAppRepoFormProps) {
                         onChange={handleAuthRadioButtonChange}
                       />
                     </CdsRadio>
-                    {shouldEnableDockerRegistryCreds && (
-                      <CdsRadio>
-                        <label>Use Docker Registry Credentials</label>
-                        <input
-                          id="kubeapps-repo-auth-method-registry"
-                          type="radio"
-                          name="auth"
-                          value={
-                            PackageRepositoryAuth_PackageRepositoryAuthType[
-                              PackageRepositoryAuth_PackageRepositoryAuthType
-                                .PACKAGE_REPOSITORY_AUTH_TYPE_DOCKER_CONFIG_JSON
-                            ]
-                          }
-                          checked={
-                            authMethod ===
-                            PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_DOCKER_CONFIG_JSON
-                          }
-                          onChange={handleAuthRadioButtonChange}
-                        />
-                      </CdsRadio>
-                    )}
                     <CdsRadio>
-                      <label>Custom</label>
+                      <label>Use Docker Registry Credentials</label>
+                      <input
+                        id="kubeapps-repo-auth-method-registry"
+                        type="radio"
+                        name="auth"
+                        value={
+                          PackageRepositoryAuth_PackageRepositoryAuthType[
+                            PackageRepositoryAuth_PackageRepositoryAuthType
+                              .PACKAGE_REPOSITORY_AUTH_TYPE_DOCKER_CONFIG_JSON
+                          ]
+                        }
+                        checked={
+                          authMethod ===
+                          PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_DOCKER_CONFIG_JSON
+                        }
+                        onChange={handleAuthRadioButtonChange}
+                      />
+                    </CdsRadio>
+                    <CdsRadio>
+                      <label>Custom Authorization Header</label>
                       <input
                         id="kubeapps-repo-auth-method-custom"
                         type="radio"
@@ -672,6 +637,7 @@ export function AppRepoForm(props: IAppRepoFormProps) {
                       />
                     </CdsRadio>
                   </CdsRadioGroup>
+
                   <div cds-layout="col@xs:8">
                     <div
                       id="kubeapps-repo-auth-details-basic"
@@ -688,6 +654,10 @@ export function AppRepoForm(props: IAppRepoFormProps) {
                           value={basicUser}
                           onChange={handleBasicUserChange}
                           placeholder="username"
+                          required={
+                            authMethod ===
+                            PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_BASIC_AUTH
+                          }
                         />
                       </CdsInput>
                       <br />
@@ -699,6 +669,10 @@ export function AppRepoForm(props: IAppRepoFormProps) {
                           value={basicPassword}
                           onChange={handleBasicPasswordChange}
                           placeholder="password"
+                          required={
+                            authMethod ===
+                            PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_BASIC_AUTH
+                          }
                         />
                       </CdsInput>
                     </div>
@@ -718,6 +692,10 @@ export function AppRepoForm(props: IAppRepoFormProps) {
                           onChange={handleAuthBearerTokenChange}
                           id="kubeapps-repo-token"
                           placeholder="xrxNcWghpRLdcPHFgVRM73rr4N7qjvjm"
+                          required={
+                            authMethod ===
+                            PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_BEARER
+                          }
                         />
                       </CdsInput>
                     </div>
@@ -729,23 +707,16 @@ export function AppRepoForm(props: IAppRepoFormProps) {
                       }
                     >
                       <CdsInput className="margin-t-sm">
-                        <label>Secret Name</label>
-                        <input
-                          id="kubeapps-docker-cred-secret-name"
-                          value={secretName}
-                          onChange={handleAuthSecretNameChange}
-                          placeholder="Secret"
-                          required={true}
-                        />
-                      </CdsInput>
-                      <CdsInput className="margin-t-sm">
                         <label>Server</label>
                         <input
                           id="kubeapps-docker-cred-server"
                           value={secretServer}
                           onChange={handleAuthSecretServerChange}
                           placeholder="https://index.docker.io/v1/"
-                          required={true}
+                          required={
+                            authMethod ===
+                            PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_DOCKER_CONFIG_JSON
+                          }
                         />
                       </CdsInput>
                       <CdsInput className="margin-t-sm">
@@ -755,7 +726,10 @@ export function AppRepoForm(props: IAppRepoFormProps) {
                           value={secretUser}
                           onChange={handleAuthSecretUserChange}
                           placeholder="Username"
-                          required={true}
+                          required={
+                            authMethod ===
+                            PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_DOCKER_CONFIG_JSON
+                          }
                         />
                       </CdsInput>
                       <CdsInput className="margin-t-sm">
@@ -766,7 +740,10 @@ export function AppRepoForm(props: IAppRepoFormProps) {
                           value={secretPassword}
                           onChange={handleAuthSecretPasswordChange}
                           placeholder="Password"
-                          required={true}
+                          required={
+                            authMethod ===
+                            PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_DOCKER_CONFIG_JSON
+                          }
                         />
                       </CdsInput>
                       <CdsInput className="margin-t-sm">
@@ -793,8 +770,12 @@ export function AppRepoForm(props: IAppRepoFormProps) {
                           id="kubeapps-repo-custom-header"
                           type="text"
                           placeholder="MyAuth xrxNcWghpRLdcPHFgVRM73rr4N7qjvjm"
-                          value={authHeader}
-                          onChange={handleAuthHeaderChange}
+                          value={authCustomHeader}
+                          onChange={handleAuthCustomHeaderChange}
+                          required={
+                            authMethod ===
+                            PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_CUSTOM
+                          }
                         />
                       </CdsInput>
                     </div>

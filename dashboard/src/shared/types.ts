@@ -3,7 +3,6 @@
 
 import { JSONSchemaType } from "ajv";
 import { RouterState } from "connected-react-router";
-import { Subscription } from "rxjs";
 import {
   AvailablePackageDetail,
   AvailablePackageSummary,
@@ -13,7 +12,15 @@ import {
   PackageAppVersion,
   ResourceRef,
 } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
+import {
+  DockerCredentials,
+  PackageRepositoryAuth_PackageRepositoryAuthType,
+  UsernamePassword,
+} from "gen/kubeappsapis/core/packages/v1alpha1/repositories";
+import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins";
+import { RepositoryCustomDetails } from "gen/kubeappsapis/plugins/helm/packages/v1alpha1/helm";
 import { IOperatorsState } from "reducers/operators";
+import { Subscription } from "rxjs";
 import { IAuthState } from "../reducers/auth";
 import { IClustersState } from "../reducers/cluster";
 import { IConfigState } from "../reducers/config";
@@ -68,12 +75,6 @@ export class RollbackError extends CustomError {}
 export class DeleteError extends CustomError {}
 
 export type DeploymentEvent = "install" | "upgrade";
-
-export interface IRepo {
-  namespace: string;
-  name: string;
-  url: string;
-}
 
 export interface IReceivePackagesActionPayload {
   response: GetAvailablePackageSummariesResponse;
@@ -303,7 +304,7 @@ export interface IClusterServiceVersion extends IResource {
   spec: IClusterServiceVersionSpec;
 }
 
-export interface IAppRepositoryFilter {
+export interface IPkgRepositoryFilter {
   jq: string;
   variables?: { [key: string]: string };
 }
@@ -336,24 +337,6 @@ interface IK8sResource {
   kind: string;
 }
 
-/** @see https://github.com/kubernetes/community/blob/master/contributors/devel/api-conventions.md#objects */
-export interface IK8sObject<M, SP, ST> extends IK8sResource {
-  metadata: {
-    annotations?: { [key: string]: string };
-    creationTimestamp?: string;
-    deletionTimestamp?: string | null;
-    generation?: number;
-    labels?: { [key: string]: string };
-    name: string;
-    namespace: string;
-    resourceVersion?: string;
-    uid: string;
-    selfLink?: string; // Not in docs, but seems to exist everywhere
-  } & M;
-  spec?: SP;
-  status?: ST;
-}
-
 /** @see https://github.com/kubernetes/community/blob/master/contributors/devel/api-conventions.md#lists-and-simple-kinds */
 export interface IK8sList<I, M> extends IK8sResource {
   items: I[];
@@ -361,36 +344,6 @@ export interface IK8sList<I, M> extends IK8sResource {
     resourceVersion?: string;
     selfLink?: string; // Not in docs, but seems to exist everywhere
   } & M;
-}
-
-/** @see https://github.com/kubernetes/community/blob/master/contributors/devel/api-conventions.md#response-status-kind */
-export interface IStatus extends IK8sResource {
-  kind: "Status";
-  status: "Success" | "Failure";
-  message: string;
-  reason:
-    | "BadRequest"
-    | "Unauthorized"
-    | "Forbidden"
-    | "NotFound"
-    | "AlreadyExists"
-    | "Conflict"
-    | "Invalid"
-    | "Timeout"
-    | "ServerTimeout"
-    | "MethodNotAllowed"
-    | "InternalError";
-  details?: {
-    kind?: string;
-    name?: string;
-    causes?: IStatusCause[] | string;
-  };
-}
-
-interface IStatusCause {
-  field: string;
-  message: string;
-  reason: string;
 }
 
 export interface IRBACRole {
@@ -457,4 +410,23 @@ export interface IBasicFormSliderParam extends IBasicFormParam {
 
 export interface CustomInstalledPackageDetail extends InstalledPackageDetail {
   revision: number;
+}
+
+export interface IPkgRepoFormData {
+  authHeader: string;
+  authMethod: PackageRepositoryAuth_PackageRepositoryAuthType;
+  basicAuth: UsernamePassword;
+  customCA: string;
+  customDetails: RepositoryCustomDetails; // add more types if necesary
+  description: string;
+  dockerRegCreds: DockerCredentials;
+  interval: number;
+  name: string;
+  passCredentials: boolean;
+  plugin: Plugin;
+  secretAuthName: string;
+  secretTLSName: string;
+  skipTLS: boolean;
+  type: string;
+  url: string;
 }

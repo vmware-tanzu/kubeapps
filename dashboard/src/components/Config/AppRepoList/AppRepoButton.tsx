@@ -5,16 +5,12 @@ import { CdsButton } from "@cds/react/button";
 import { CdsIcon } from "@cds/react/icon";
 import { CdsModal, CdsModalContent, CdsModalHeader } from "@cds/react/modal";
 import actions from "actions";
-import {
-  PackageRepositoryAuth_PackageRepositoryAuthType,
-  PackageRepositoryReference,
-} from "gen/kubeappsapis/core/packages/v1alpha1/repositories";
-import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins";
+import { PackageRepositoryReference } from "gen/kubeappsapis/core/packages/v1alpha1/repositories";
 import { useState } from "react";
 import { useDispatch } from "react-redux";
 import { Action } from "redux";
 import { ThunkDispatch } from "redux-thunk";
-import { IAppRepositoryFilter, IStoreState } from "shared/types";
+import { IPkgRepoFormData, IStoreState } from "shared/types";
 import { AppRepoForm } from "./AppRepoForm";
 
 interface IAppRepoAddButtonProps {
@@ -43,74 +39,12 @@ export function AppRepoAddButton({
     setModalOpen(true);
   };
   const closeModal = () => setModalOpen(false);
-  const onSubmit = (
-    name: string,
-    plugin: Plugin,
-    url: string,
-    type: string,
-    description: string,
-    authHeader: string,
-    authRegCreds: string,
-    customCA: string,
-    registrySecrets: string[],
-    ociRepositories: string[],
-    skipTLS: boolean,
-    passCredentials: boolean,
-    authMethod: PackageRepositoryAuth_PackageRepositoryAuthType,
-    interval: number,
-    username: string,
-    password: string,
-    performValidation: boolean,
-    filter?: IAppRepositoryFilter,
-  ) => {
+  const onSubmit = (request: IPkgRepoFormData) => {
+    // decide whether to create or update the repository
     if (packageRepoRef) {
-      return dispatch(
-        actions.repos.updateRepo(
-          name,
-          plugin,
-          namespace,
-          url,
-          type,
-          description,
-          authHeader,
-          authRegCreds,
-          customCA,
-          registrySecrets,
-          ociRepositories,
-          skipTLS,
-          passCredentials,
-          authMethod,
-          interval,
-          username,
-          password,
-          performValidation,
-          filter,
-        ),
-      );
+      return dispatch(actions.repos.updateRepo(namespace, request));
     } else {
-      return dispatch(
-        actions.repos.installRepo(
-          name,
-          plugin,
-          namespace,
-          url,
-          type,
-          description,
-          authHeader,
-          authRegCreds,
-          customCA,
-          registrySecrets,
-          ociRepositories,
-          skipTLS,
-          passCredentials,
-          authMethod,
-          interval,
-          username,
-          password,
-          performValidation,
-          filter,
-        ),
-      );
+      return dispatch(actions.repos.installRepo(namespace, request));
     }
   };
 

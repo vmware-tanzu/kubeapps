@@ -6,18 +6,15 @@ import {
   InstalledPackageDetail,
 } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
 import {
-  PackageRepositoryAuth_PackageRepositoryAuthType,
   PackageRepositoryDetail,
   PackageRepositoryReference,
   PackageRepositorySummary,
 } from "gen/kubeappsapis/core/packages/v1alpha1/repositories";
-import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins";
 import { uniqBy } from "lodash";
 import { ThunkAction } from "redux-thunk";
 import { PackageRepositoriesService } from "shared/PackageRepositoriesService";
 import PackagesService from "shared/PackagesService";
-import Secret from "shared/Secret";
-import { IAppRepositoryFilter, IStoreState, NotFoundError } from "shared/types";
+import { IPkgRepoFormData, IStoreState, NotFoundError } from "shared/types";
 import { PluginNames } from "shared/utils";
 import { ActionType, deprecated } from "typesafe-actions";
 import { createErrorPackage } from "./availablepackages";
@@ -85,13 +82,13 @@ const allActions = [
   redirected,
   createImagePullSecret,
 ];
-export type AppReposAction = ActionType<typeof allActions[number]>;
+export type PkgReposAction = ActionType<typeof allActions[number]>;
 
 // fetchRepos fetches the AppRepositories in a specified namespace.
 export const fetchRepos = (
   namespace: string,
   listGlobal?: boolean,
-): ThunkAction<Promise<void>, IStoreState, null, AppReposAction> => {
+): ThunkAction<Promise<void>, IStoreState, null, PkgReposAction> => {
   return async (dispatch, getState) => {
     const {
       clusters: { currentCluster },
@@ -128,7 +125,7 @@ export const fetchRepos = (
 
 export const fetchRepo = (
   packageRepoRef: PackageRepositoryReference,
-): ThunkAction<Promise<boolean>, IStoreState, null, AppReposAction> => {
+): ThunkAction<Promise<boolean>, IStoreState, null, PkgReposAction> => {
   return async dispatch => {
     try {
       dispatch(requestRepo());
@@ -155,26 +152,9 @@ export const fetchRepo = (
 };
 
 export const installRepo = (
-  name: string,
-  plugin: Plugin,
   namespace: string,
-  repoURL: string,
-  type: string,
-  description: string,
-  authHeader: string,
-  authRegCreds: string,
-  customCA: string,
-  registrySecrets: string[],
-  ociRepositories: string[],
-  skipTLS: boolean,
-  passCredentials: boolean,
-  authMethod: PackageRepositoryAuth_PackageRepositoryAuthType,
-  interval: number,
-  username: string,
-  password: string,
-  performValidation: boolean,
-  filter?: IAppRepositoryFilter,
-): ThunkAction<Promise<boolean>, IStoreState, null, AppReposAction> => {
+  request: IPkgRepoFormData,
+): ThunkAction<Promise<boolean>, IStoreState, null, PkgReposAction> => {
   return async (dispatch, getState) => {
     const {
       clusters: { currentCluster },
@@ -185,32 +165,15 @@ export const installRepo = (
 
       let namespaceScoped = namespace !== globalReposNamespace;
       // TODO(agamez): currently, flux doesn't support this value to be true
-      if (plugin?.name === PluginNames.PACKAGES_FLUX) {
+      if (request.plugin?.name === PluginNames.PACKAGES_FLUX) {
         namespaceScoped = false;
       }
 
       const data = await PackageRepositoriesService.addPackageRepository(
         currentCluster,
-        name,
-        plugin,
         namespace,
-        repoURL,
-        type,
-        description,
-        authHeader,
-        authRegCreds,
-        customCA,
-        registrySecrets,
-        ociRepositories,
-        skipTLS,
-        passCredentials,
+        request,
         namespaceScoped,
-        authMethod,
-        interval,
-        username,
-        password,
-        performValidation,
-        filter,
       );
       // Ensure the repo have been created
       if (!data?.packageRepoRef) {
@@ -236,26 +199,9 @@ export const installRepo = (
 };
 
 export const updateRepo = (
-  name: string,
-  plugin: Plugin,
   namespace: string,
-  repoURL: string,
-  type: string,
-  description: string,
-  authHeader: string,
-  authRegCreds: string,
-  customCA: string,
-  registrySecrets: string[],
-  ociRepositories: string[],
-  skipTLS: boolean,
-  passCredentials: boolean,
-  authMethod: PackageRepositoryAuth_PackageRepositoryAuthType,
-  interval: number,
-  username: string,
-  password: string,
-  performValidation: boolean,
-  filter?: IAppRepositoryFilter,
-): ThunkAction<Promise<boolean>, IStoreState, null, AppReposAction> => {
+  request: IPkgRepoFormData,
+): ThunkAction<Promise<boolean>, IStoreState, null, PkgReposAction> => {
   return async (dispatch, getState) => {
     const {
       clusters: { currentCluster },
@@ -264,25 +210,8 @@ export const updateRepo = (
       dispatch(requestRepoUpdate());
       const data = await PackageRepositoriesService.updatePackageRepository(
         currentCluster,
-        name,
-        plugin,
         namespace,
-        repoURL,
-        type,
-        description,
-        authHeader,
-        authRegCreds,
-        customCA,
-        registrySecrets,
-        ociRepositories,
-        skipTLS,
-        passCredentials,
-        authMethod,
-        interval,
-        username,
-        password,
-        performValidation,
-        filter,
+        request,
       );
 
       // Ensure the repo have been updated
@@ -310,7 +239,7 @@ export const updateRepo = (
 
 export const deleteRepo = (
   packageRepoRef: PackageRepositoryReference,
-): ThunkAction<Promise<boolean>, IStoreState, null, AppReposAction> => {
+): ThunkAction<Promise<boolean>, IStoreState, null, PkgReposAction> => {
   return async dispatch => {
     try {
       await PackageRepositoriesService.deletePackageRepository(packageRepoRef);
@@ -327,7 +256,7 @@ export const findPackageInRepo = (
   repoNamespace: string,
   repoName: string,
   app?: InstalledPackageDetail,
-): ThunkAction<Promise<boolean>, IStoreState, null, AppReposAction> => {
+): ThunkAction<Promise<boolean>, IStoreState, null, PkgReposAction> => {
   return async dispatch => {
     dispatch(requestRepo());
     // Check if we have enough data to retrieve the package manually (instead of using its own availablePackageRef)
@@ -377,26 +306,3 @@ export const findPackageInRepo = (
     }
   };
 };
-
-// export const createDockerRegistrySecret = (
-//   name: string,
-//   user: string,
-//   password: string,
-//   email: string,
-//   server: string,
-//   namespace: string,
-// ): ThunkAction<Promise<boolean>, IStoreState, null, AppReposAction> => {
-//   return async (dispatch, getState) => {
-//     const {
-//       clusters: { currentCluster },
-//     } = getState();
-//     try {
-//       await Secret.createPullSecret(currentCluster, name, user, password, email, server, namespace);
-//       dispatch(createImagePullSecret(name));
-//       return true;
-//     } catch (e: any) {
-//       dispatch(errorRepos(e, "fetch"));
-//       return false;
-//     }
-//   };
-// };

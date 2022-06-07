@@ -8,7 +8,6 @@ import Alert from "components/js/Alert";
 import { act } from "react-dom/test-utils";
 import * as ReactRedux from "react-redux";
 import { PackageRepositoriesService } from "shared/PackageRepositoriesService";
-import Secret from "shared/Secret";
 import { defaultStore, getStore, mountWrapper } from "shared/specs/mountWrapper";
 import { ISecret } from "shared/types";
 import { AppRepoForm } from "./AppRepoForm";
@@ -555,8 +554,6 @@ describe("when the repository info is already populated", () => {
         metadata: { name: "foo", namespace: "default" },
         spec: { auth: { customCA: { secretKeyRef: { name: "bar" } } } },
       } as any;
-      const secret = { data: { "ca.crt": "Zm9v" } } as any;
-      PackageRepositoriesService.getSecretForRepo = jest.fn(() => secret);
 
       let wrapper: any;
       act(() => {
@@ -566,13 +563,6 @@ describe("when the repository info is already populated", () => {
         );
       });
 
-      await waitFor(() => {
-        expect(PackageRepositoriesService.getSecretForRepo).toHaveBeenCalledWith(
-          "default-cluster",
-          "default",
-          "foo",
-        );
-      });
       wrapper.update();
       expect(wrapper.find("#kubeapps-repo-custom-ca").prop("value")).toBe("foo");
     });
@@ -582,8 +572,6 @@ describe("when the repository info is already populated", () => {
         metadata: { name: "foo", namespace: "default" },
         spec: { auth: { header: { secretKeyRef: { name: "bar" } } } },
       } as any;
-      const secret = { data: { authorizationHeader: "Zm9v" } } as any;
-      PackageRepositoriesService.getSecretForRepo = jest.fn(() => secret);
 
       let wrapper: any;
       act(() => {
@@ -593,13 +581,6 @@ describe("when the repository info is already populated", () => {
         );
       });
 
-      await waitFor(() => {
-        expect(PackageRepositoriesService.getSecretForRepo).toHaveBeenCalledWith(
-          "default-cluster",
-          "default",
-          "foo",
-        );
-      });
       wrapper.update();
       expect(wrapper.find("#kubeapps-repo-custom-header").prop("value")).toBe("foo");
     });
@@ -609,8 +590,6 @@ describe("when the repository info is already populated", () => {
         metadata: { name: "foo", namespace: "default" },
         spec: { auth: { header: { secretKeyRef: { name: "bar" } } } },
       } as any;
-      const secret = { data: { authorizationHeader: "QmFzaWMgWm05dk9tSmhjZz09" } } as any;
-      PackageRepositoriesService.getSecretForRepo = jest.fn(() => secret);
 
       let wrapper: any;
       act(() => {
@@ -672,8 +651,6 @@ describe("when the repository info is already populated", () => {
         metadata: { name: "foo", namespace: "default" },
         spec: { auth: { header: { secretKeyRef: { name: "bar" } } } },
       } as any;
-      const secret = { data: { authorizationHeader: "QmVhcmVyIGZvbw==" } } as any;
-      PackageRepositoriesService.getSecretForRepo = jest.fn(() => secret);
 
       let wrapper: any;
       act(() => {
@@ -694,8 +671,6 @@ describe("when the repository info is already populated", () => {
         metadata: { name: "foo", namespace: "default" },
         spec: { auth: { header: { secretKeyRef: { name: "bar" } } } },
       } as any;
-      const secret = { data: { ".dockerconfigjson": "QmVhcmVyIGZvbw==" } } as any;
-      PackageRepositoriesService.getSecretForRepo = jest.fn(() => secret);
 
       let wrapper: any;
       act(() => {

@@ -11,7 +11,7 @@ import { ISecret } from "shared/types";
 import { PluginNames } from "shared/utils";
 import { getType } from "typesafe-actions";
 import actions from "../actions";
-import { AppReposAction } from "../actions/repos";
+import { PkgReposAction } from "../actions/repos";
 
 export interface IAppRepositoryState {
   addingRepo: boolean;
@@ -74,7 +74,7 @@ function isFetching(state: IAppRepositoryState, item: string, fetching: boolean)
 
 const reposReducer = (
   state: IAppRepositoryState = initialState,
-  action: AppReposAction | LocationChangeAction,
+  action: PkgReposAction | LocationChangeAction,
 ): IAppRepositoryState => {
   switch (action.type) {
     case getType(actions.repos.receiveRepos):

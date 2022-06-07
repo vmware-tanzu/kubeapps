@@ -7,7 +7,7 @@ import {
 } from "gen/kubeappsapis/core/packages/v1alpha1/repositories";
 import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins";
 import * as moxios from "moxios";
-import { IAppRepositoryFilter } from "shared/types";
+import { IPkgRepositoryFilter } from "shared/types";
 import { axiosWithAuth } from "./AxiosInstance";
 import { PackageRepositoriesService } from "./PackageRepositoriesService";
 import * as url from "./url";
@@ -35,7 +35,7 @@ describe("RepositoriesService", () => {
     filterRule: {
       jq: ".name == $var0",
       variables: { $var0: "nginx" },
-    } as IAppRepositoryFilter,
+    } as IPkgRepositoryFilter,
   };
 
   const plugin: Plugin = { name: "my.plugin", version: "0.0.1" };
@@ -49,6 +49,7 @@ describe("RepositoriesService", () => {
     jest.restoreAllMocks();
   });
 
+  // TODO(agamez): add tests back
   // it("create repository", async () => {
   //   const createRepoUrl = url.backend.apprepositories.create(cluster, namespace);
   //   moxios.stubRequest(createRepoUrl, {

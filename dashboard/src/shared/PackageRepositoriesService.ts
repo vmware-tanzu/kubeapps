@@ -6,22 +6,19 @@ import { Context } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
 import {
   AddPackageRepositoryRequest,
   DeletePackageRepositoryResponse,
+  DockerCredentials,
   GetPackageRepositoryDetailResponse,
   GetPackageRepositorySummariesResponse,
   PackageRepositoryAuth,
-  PackageRepositoryAuth_PackageRepositoryAuthType,
   PackageRepositoryReference,
   PackageRepositoryTlsConfig,
   SecretKeyReference,
   UpdatePackageRepositoryRequest,
   UsernamePassword,
 } from "gen/kubeappsapis/core/packages/v1alpha1/repositories";
-import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins";
 import { RepositoryCustomDetails } from "gen/kubeappsapis/plugins/helm/packages/v1alpha1/helm";
-import { axiosWithAuth } from "./AxiosInstance";
 import KubeappsGrpcClient from "./KubeappsGrpcClient";
-import { IAppRepositoryFilter } from "./types";
-import * as url from "./url";
+import { IPkgRepoFormData } from "./types";
 import { PluginNames } from "./utils";
 
 export class PackageRepositoriesService {
@@ -51,56 +48,24 @@ export class PackageRepositoriesService {
 
   public static async addPackageRepository(
     cluster: string,
-    name: string,
-    plugin: Plugin,
     namespace: string,
-    repoURL: string,
-    type: string,
-    description: string,
-    authHeader: string,
-    authRegCreds: string,
-    customCA: string,
-    registrySecrets: string[],
-    ociRepositories: string[],
-    skipTLS: boolean,
-    passCredentials: boolean,
+    request: IPkgRepoFormData,
     namespaceScoped: boolean,
-    authMethod: PackageRepositoryAuth_PackageRepositoryAuthType,
-    interval: number,
-    username: string,
-    password: string,
-    performValidation: boolean,
-    filter?: IAppRepositoryFilter,
   ) {
     const addPackageRepositoryRequest = this.buildAddOrUpdateRequest(
       false,
       cluster,
-      name,
-      plugin,
       namespace,
-      repoURL,
-      type,
-      description,
-      authHeader,
-      authRegCreds,
-      customCA,
-      registrySecrets,
-      ociRepositories,
-      skipTLS,
-      passCredentials,
-      authMethod,
-      interval,
-      username,
-      password,
-      performValidation,
-      filter,
+      request,
       namespaceScoped,
     );
 
     // since the Helm plugin has its own fields (ociRepositories, filter),
     // we invoke it directly instead of using kthe core API client.
-    switch (plugin.name) {
+    switch (request.plugin.name) {
       case PluginNames.PACKAGES_HELM:
+        console.log(request);
+        console.log(addPackageRepositoryRequest);
         return await this.helmRepositoriesClient().AddPackageRepository(
           addPackageRepositoryRequest,
         );
@@ -113,54 +78,20 @@ export class PackageRepositoriesService {
 
   public static async updatePackageRepository(
     cluster: string,
-    name: string,
-    plugin: Plugin,
     namespace: string,
-    repoURL: string,
-    type: string,
-    description: string,
-    authHeader: string,
-    authRegCreds: string,
-    customCA: string,
-    registrySecrets: string[],
-    ociRepositories: string[],
-    skipTLS: boolean,
-    passCredentials: boolean,
-    authMethod: PackageRepositoryAuth_PackageRepositoryAuthType,
-    interval: number,
-    username: string,
-    password: string,
-    performValidation: boolean,
-    filter?: IAppRepositoryFilter,
+    request: IPkgRepoFormData,
   ) {
     const updatePackageRepositoryRequest = this.buildAddOrUpdateRequest(
       true,
       cluster,
-      name,
-      plugin,
       namespace,
-      repoURL,
-      type,
-      description,
-      authHeader,
-      authRegCreds,
-      customCA,
-      registrySecrets,
-      ociRepositories,
-      skipTLS,
-      passCredentials,
-      authMethod,
-      interval,
-      username,
-      password,
-      performValidation,
-      filter,
+      request,
       undefined,
     );
 
     // since the Helm plugin has its own fields (ociRepositories, filter),
     // we invoke it directly instead of using kthe core API client.
-    switch (plugin.name) {
+    switch (request.plugin.name) {
       case PluginNames.PACKAGES_HELM:
         return await this.helmRepositoriesClient().UpdatePackageRepository(
           updatePackageRepositoryRequest,
@@ -183,108 +114,95 @@ export class PackageRepositoriesService {
   private static buildAddOrUpdateRequest(
     isUpdate: boolean,
     cluster: string,
-    name: string,
-    plugin: Plugin,
     namespace: string,
-    repoURL: string,
-    type: string,
-    description: string,
-    authHeader: string,
-    authRegCreds: string,
-    customCA: string,
-    registrySecrets: string[],
-    ociRepositories: string[],
-    skipTLS: boolean,
-    passCredentials: boolean,
-    authMethod: PackageRepositoryAuth_PackageRepositoryAuthType,
-    interval: number,
-    username: string,
-    password: string,
-    performValidation: boolean,
-    filter?: IAppRepositoryFilter,
+    request: IPkgRepoFormData,
     namespaceScoped?: boolean,
   ) {
     const addPackageRepositoryRequest = {
       context: { cluster, namespace },
-      name,
-      description,
-      namespaceScoped,
-      type,
-      url: repoURL,
-      interval,
-      plugin,
+      name: request.name,
+      description: request.description,
+      namespaceScoped: namespaceScoped,
+      type: request.type,
+      url: request.url,
+      interval: request.interval,
+      plugin: request.plugin,
     } as AddPackageRepositoryRequest;
 
     // add optional fields if present in the request
-    if (authHeader) {
+    if (request.authHeader) {
       addPackageRepositoryRequest.auth = {
         ...addPackageRepositoryRequest.auth,
-        header: authHeader,
+        header: request.authHeader,
       } as PackageRepositoryAuth;
     }
-    if (passCredentials) {
+    if (request.passCredentials) {
       addPackageRepositoryRequest.auth = {
         ...addPackageRepositoryRequest.auth,
-        passCredentials: passCredentials,
+        passCredentials: request.passCredentials,
       } as PackageRepositoryAuth;
     }
-    if (authMethod) {
+    if (request.authMethod) {
       addPackageRepositoryRequest.auth = {
         ...addPackageRepositoryRequest.auth,
-        type: authMethod,
+        type: request.authMethod,
       } as PackageRepositoryAuth;
     }
-    if (username || password) {
+    if (Object.values(request.basicAuth).some(e => !!e)) {
       addPackageRepositoryRequest.auth = {
         ...addPackageRepositoryRequest.auth,
         usernamePassword: {
-          username,
-          password,
+          username: request.basicAuth.username,
+          password: request.basicAuth.password,
         } as UsernamePassword,
       } as PackageRepositoryAuth;
     }
-    if (customCA) {
+    if (Object.values(request.dockerRegCreds).some(e => !!e)) {
+      addPackageRepositoryRequest.auth = {
+        ...addPackageRepositoryRequest.auth,
+        dockerCreds: { ...request.dockerRegCreds } as DockerCredentials,
+      } as PackageRepositoryAuth;
+    }
+    if (request.customCA) {
       addPackageRepositoryRequest.tlsConfig = {
         ...addPackageRepositoryRequest.tlsConfig,
-        certAuthority: customCA,
+        certAuthority: request.customCA,
       } as PackageRepositoryTlsConfig;
     }
-    if (skipTLS) {
+    if (request.skipTLS) {
       addPackageRepositoryRequest.tlsConfig = {
         ...addPackageRepositoryRequest.tlsConfig,
-        insecureSkipVerify: skipTLS,
+        insecureSkipVerify: request.skipTLS,
       } as PackageRepositoryTlsConfig;
     }
-    if (
-      authMethod ===
-        PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_DOCKER_CONFIG_JSON &&
-      registrySecrets[0]
-    ) {
+    if (request.secretTLSName) {
       addPackageRepositoryRequest.tlsConfig = {
         ...addPackageRepositoryRequest.tlsConfig,
         secretRef: {
-          name: registrySecrets[0],
+          name: request.secretTLSName,
         } as SecretKeyReference,
       } as PackageRepositoryTlsConfig;
     }
-    if (authRegCreds) {
-      addPackageRepositoryRequest.auth!.secretRef = {
-        name: authRegCreds,
-      } as SecretKeyReference;
+    if (request.secretAuthName) {
+      addPackageRepositoryRequest.auth = {
+        ...addPackageRepositoryRequest.auth,
+        secretRef: {
+          name: request.secretAuthName,
+        } as SecretKeyReference,
+      } as PackageRepositoryAuth;
     }
-
     // if using the Helm plugin, add its custom fields.
     // An "Any" object has  "typeUrl" with the FQN of the type and a "value",
     // which is the result of the encoding (+finish(), to get the Uint8Array)
     // of the actual custom object
-    if (plugin?.name === PluginNames.PACKAGES_HELM) {
+    if (request.plugin?.name === PluginNames.PACKAGES_HELM) {
       addPackageRepositoryRequest.customDetail = {
         typeUrl: "kubeappsapis.plugins.helm.packages.v1alpha1.RepositoryCustomDetails",
         value: RepositoryCustomDetails.encode({
-          dockerRegistrySecrets: registrySecrets,
-          ociRepositories: ociRepositories,
-          filterRule: filter,
-          performValidation: performValidation,
+          dockerRegistrySecrets: request.customDetails.dockerRegistrySecrets,
+          ociRepositories: request.customDetails.ociRepositories,
+          filterRule: request.customDetails.filterRule,
+          performValidation: request.customDetails.performValidation,
         } as RepositoryCustomDetails).finish(),
       } as Any;
     }
@@ -308,20 +226,7 @@ export class PackageRepositoriesService {
     return addPackageRepositoryRequest as UpdatePackageRepositoryRequest;
 
     // TODO(agamez): -- currently unsupported configuration --
-
-    // auth.dockerCreds: { email: "", password: "", server: "", username: ""} // username and password for docker auth
-
     // tlsConfig.secretRef={ key: "", name: "" }, // reference a secret to pass the CA certificate
-
     // auth.tlsCertKey: { cert: "", key: ""},  // cert and key for tls auth
-  }
-
-  // ............................... DEPRECATED ...............................
-
-  public static async getSecretForRepo(cluster: string, namespace: string, name: string) {
-    const {
-      data: { secret },
-    } = await axiosWithAuth.get<any>(url.backend.apprepositories.get(cluster, namespace, name));
-    return secret;
   }
 }
