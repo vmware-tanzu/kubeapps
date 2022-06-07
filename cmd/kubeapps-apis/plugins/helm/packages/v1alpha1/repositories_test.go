@@ -309,7 +309,7 @@ func TestAddPackageRepository(t *testing.T) {
 		},
 		{
 			name:               "package repository custom auth with existing secret (user managed secrets)",
-			request:            addRepoReqAuthWithSecret(corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_CUSTOM, "secret-custom"),
+			request:            addRepoReqAuthWithSecret(corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_AUTHORIZATION_HEADER, "secret-custom"),
 			expectedResponse:   addRepoExpectedResp,
 			expectedRepo:       addRepoAuthHeaderWithSecretRef("secret-custom"),
 			existingSecret:     newBasicAuthSecret("secret-custom", "foo", "baz", "zot"),
