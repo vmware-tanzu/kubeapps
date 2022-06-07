@@ -38,23 +38,23 @@ The type of issue. kind powers our filtering to understand what qualifies as a b
 
 The relevant component(s) for the issue. Components are high level areas of the Kubeapps architecture. They are used to group issues together with other related issues.
 
-| Label                        | Description                                                                                      |
-| ---------------------------- | ------------------------------------------------------------------------------------------------ |
-| `component/api-server`       | An issue related to kubeapps api-server                                                          |
-| `component/apprepository`    | An issue related to kubeapps apprepository                                                       |
-| `component/asset-syncer`     | An issue related to kubeapps asset-syncer (to be deprecated)                                     |
-| `component/assetsvc`         | An issue related to kubeapps assetsvc (to be deprecated)                                         |
-| `component/authentication`   | An issue related to kubeapps authentication                                                      |
-| `component/ci`               | An issue related to kubeapps ci system                                                           |
-| `component/kubeops`          | An issue related to kubeops (to be deprecated)                                                   |
+| Label                        | Description                                                                                       |
+| ---------------------------- | ------------------------------------------------------------------------------------------------- |
+| `component/api-server`       | An issue related to kubeapps api-server                                                           |
+| `component/apprepository`    | An issue related to kubeapps apprepository                                                        |
+| `component/asset-syncer`     | An issue related to kubeapps asset-syncer (to be deprecated)                                      |
+| `component/assetsvc`         | An issue related to kubeapps assetsvc (to be deprecated)                                          |
+| `component/authentication`   | An issue related to kubeapps authentication                                                       |
+| `component/ci`               | An issue related to kubeapps ci system                                                            |
+| `component/kubeops`          | An issue related to kubeops (to be deprecated)                                                    |
 | `component/packages`         | An issue related to kubeapps packaging formats to be distributed (Helm chart and Carvel packages) |
-| `component/pinniped-proxy`   | An issue related to kubeapps integration with pinniped-proxy                                     |
-| `component/plugin-carvel`    | An issue related to kubeapps plugin to manage Carvel packages                                    |
-| `component/plugin-flux`      | An issue related to kubeapps plugin to manage Flux packages                                      |
-| `component/plugin-helm`      | An issue related to kubeapps plugin to manage Helm packages                                      |
-| `component/plugin-operators` | An issue related to kubeapps plugin to manage operators (to be implemented)                      |
-| `component/plugin-resources` | An issue related to kubeapps plugin to manage resources                                          |
-| `component/ui`               | An issue related to kubeapps UI                                                                  |
+| `component/pinniped-proxy`   | An issue related to kubeapps integration with pinniped-proxy                                      |
+| `component/plugin-carvel`    | An issue related to kubeapps plugin to manage Carvel packages                                     |
+| `component/plugin-flux`      | An issue related to kubeapps plugin to manage Flux packages                                       |
+| `component/plugin-helm`      | An issue related to kubeapps plugin to manage Helm packages                                       |
+| `component/plugin-operators` | An issue related to kubeapps plugin to manage operators (to be implemented)                       |
+| `component/plugin-resources` | An issue related to kubeapps plugin to manage resources                                           |
+| `component/ui`               | An issue related to kubeapps UI                                                                   |
 
 ### `contribution labels`:
 
@@ -71,7 +71,7 @@ Specific labels for contributors. Contribution labels help to identify a relevan
 | `good first issue`       | Good first issues to start contributing to Kubeapps.                             |
 | `help wanted`            | The maintainer team wants help on an issue or pull request.                      |
 | `javascript`             | Automatic label set to pull requests that update javascript code                 |
-| `next-iteration`         | Label to mark issues to be discussed in the next planning session                    |
+| `next-iteration`         | Label to mark issues to be discussed in the next planning session                |
 | `rust`                   | Automatic label set to pull requests that update rust code                       |
 | `security`               | Issues which relate to security concerns.                                        |
 | `stale`                  | Automatic label to stale issues due inactivity to be closed if no further action |
@@ -89,9 +89,12 @@ There is some metadata for Kubeapps project in GitHub to be added to the issues:
 | 'L'   | A story that requires investigation and possibly will take a person a full 2-week iteration |
 | 'XL'  | A story too big or with too many unknowns. Needs investigation and split into several ones  |
 
-| priority/ |       |       |       |
-| --------- | ----- | ----- | ----- |
-| ⛔️ P0    | 🔴 P1 | 🟠 P2 | 🔵 P3 |
+| priority/ | Description                                  |
+| --------- | -------------------------------------------- |
+| ⛔️ P0    | Unbreak-now. Drop everything and fix it      |
+| 🔴 P1     | Required to be done before other things      |
+| 🟠 P2     | Ordinary flow of work                        |
+| 🔵 P3     | Nice to have, but not required to be tackled |
 
 ## ⛳️ Milestones
 
