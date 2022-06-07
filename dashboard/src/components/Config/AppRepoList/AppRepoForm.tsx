@@ -125,6 +125,10 @@ export function AppRepoForm(props: IAppRepoFormProps) {
       setSecretPassword(repo.auth?.dockerCreds?.password || "");
       setSecretServer(repo.auth?.dockerCreds?.server || "");
       setSecretUser(repo.auth?.dockerCreds?.username || "");
+      setAuthMethod(
+        repo.auth?.type ||
+          PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_UNSPECIFIED,
+      );
 
       const repositoryCustomDetails = repo.customDetail as Partial<RepositoryCustomDetails>;
       setOCIRepositories(repositoryCustomDetails?.ociRepositories?.join(", ") || "");
@@ -334,7 +338,7 @@ export function AppRepoForm(props: IAppRepoFormProps) {
                     required={true}
                     pattern="[a-z0-9]([-a-z0-9]*[a-z0-9])?(\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*"
                     title="Use lower case alphanumeric characters, '-' or '.'"
-                    disabled={repo?.name ? true : false}
+                    disabled={!!repo?.name}
                   />
                 </CdsInput>
                 <CdsInput>
@@ -373,7 +377,7 @@ export function AppRepoForm(props: IAppRepoFormProps) {
                       value={PluginNames.PACKAGES_HELM}
                       checked={plugin?.name === PluginNames.PACKAGES_HELM}
                       onChange={handlePluginRadioButtonChange}
-                      disabled={repo.packageRepoRef?.plugin ? true : false}
+                      disabled={!!repo.packageRepoRef?.plugin}
                       required={true}
                     />
                   </CdsRadio>
@@ -386,7 +390,7 @@ export function AppRepoForm(props: IAppRepoFormProps) {
                       value={PluginNames.PACKAGES_FLUX}
                       checked={plugin?.name === PluginNames.PACKAGES_FLUX}
                       onChange={handlePluginRadioButtonChange}
-                      disabled={repo.packageRepoRef?.plugin ? true : false}
+                      disabled={!!repo.packageRepoRef?.plugin}
                       required={true}
                     />
                   </CdsRadio>
@@ -399,7 +403,7 @@ export function AppRepoForm(props: IAppRepoFormProps) {
                       value={PluginNames.PACKAGES_KAPP}
                       checked={plugin?.name === PluginNames.PACKAGES_KAPP}
                       onChange={handlePluginRadioButtonChange}
-                      disabled={repo.packageRepoRef?.plugin ? true : false}
+                      disabled={!!repo.packageRepoRef?.plugin}
                       required={true}
                     />
                   </CdsRadio>
@@ -564,6 +568,7 @@ export function AppRepoForm(props: IAppRepoFormProps) {
                           PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_UNSPECIFIED
                         }
                         onChange={handleAuthRadioButtonChange}
+                        disabled={!!repo.auth?.type}
                       />
                     </CdsRadio>
                     <CdsRadio>
@@ -583,6 +588,7 @@ export function AppRepoForm(props: IAppRepoFormProps) {
                           PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_BASIC_AUTH
                         }
                         onChange={handleAuthRadioButtonChange}
+                        disabled={!!repo.auth?.type}
                       />
                     </CdsRadio>
                     <CdsRadio>
@@ -602,6 +608,7 @@ export function AppRepoForm(props: IAppRepoFormProps) {
                           PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_BEARER
                         }
                         onChange={handleAuthRadioButtonChange}
+                        disabled={!!repo.auth?.type}
                       />
                     </CdsRadio>
                     <CdsRadio>
@@ -621,6 +628,7 @@ export function AppRepoForm(props: IAppRepoFormProps) {
                           PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_DOCKER_CONFIG_JSON
                         }
                         onChange={handleAuthRadioButtonChange}
+                        disabled={!!repo.auth?.type}
                       />
                     </CdsRadio>
                     <CdsRadio>
@@ -640,6 +648,7 @@ export function AppRepoForm(props: IAppRepoFormProps) {
                           PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_CUSTOM
                         }
                         onChange={handleAuthRadioButtonChange}
+                        disabled={!!repo.auth?.type}
                       />
                     </CdsRadio>
                   </CdsRadioGroup>
@@ -664,6 +673,7 @@ export function AppRepoForm(props: IAppRepoFormProps) {
                             authMethod ===
                             PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_BASIC_AUTH
                           }
+                          disabled={!!repo.auth?.type}
                         />
                       </CdsInput>
                       <br />
@@ -679,6 +689,7 @@ export function AppRepoForm(props: IAppRepoFormProps) {
                             authMethod ===
                             PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_BASIC_AUTH
                           }
+                          disabled={!!repo.auth?.type}
                         />
                       </CdsInput>
                     </div>
@@ -702,6 +713,7 @@ export function AppRepoForm(props: IAppRepoFormProps) {
                             authMethod ===
                             PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_BEARER
                           }
+                          disabled={!!repo.auth?.type}
                         />
                       </CdsInput>
                     </div>
@@ -723,6 +735,7 @@ export function AppRepoForm(props: IAppRepoFormProps) {
                             authMethod ===
                             PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_DOCKER_CONFIG_JSON
                           }
+                          disabled={!!repo.auth?.type}
                         />
                       </CdsInput>
                       <CdsInput className="margin-t-sm">
@@ -736,6 +749,7 @@ export function AppRepoForm(props: IAppRepoFormProps) {
                             authMethod ===
                             PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_DOCKER_CONFIG_JSON
                           }
+                          disabled={!!repo.auth?.type}
                         />
                       </CdsInput>
                       <CdsInput className="margin-t-sm">
@@ -750,6 +764,7 @@ export function AppRepoForm(props: IAppRepoFormProps) {
                             authMethod ===
                             PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_DOCKER_CONFIG_JSON
                           }
+                          disabled={!!repo.auth?.type}
                         />
                       </CdsInput>
                       <CdsInput className="margin-t-sm">
@@ -759,6 +774,7 @@ export function AppRepoForm(props: IAppRepoFormProps) {
                           value={secretEmail}
                           onChange={handleAuthSecretEmailChange}
                           placeholder="user@example.com"
+                          disabled={!!repo.auth?.type}
                         />
                       </CdsInput>
                     </div>
@@ -782,6 +798,7 @@ export function AppRepoForm(props: IAppRepoFormProps) {
                             authMethod ===
                             PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_CUSTOM
                           }
+                          disabled={!!repo.auth?.type}
                         />
                       </CdsInput>
                     </div>
