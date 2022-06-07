@@ -6545,7 +6545,7 @@ func TestAddPackageRepository(t *testing.T) {
 			name: "validate auth (no secret)",
 			requestCustomizer: func(request *corev1.AddPackageRepositoryRequest) *corev1.AddPackageRepositoryRequest {
 				request.Auth = &corev1.PackageRepositoryAuth{
-					Type: corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_CUSTOM,
+					Type: corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_AUTHORIZATION_HEADER,
 				}
 				return request
 			},
@@ -6555,7 +6555,7 @@ func TestAddPackageRepository(t *testing.T) {
 			name: "validate auth (invalid secret)",
 			requestCustomizer: func(request *corev1.AddPackageRepositoryRequest) *corev1.AddPackageRepositoryRequest {
 				request.Auth = &corev1.PackageRepositoryAuth{
-					Type: corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_CUSTOM,
+					Type: corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_AUTHORIZATION_HEADER,
 					PackageRepoAuthOneOf: &corev1.PackageRepositoryAuth_SecretRef{
 						SecretRef: &corev1.SecretKeyReference{},
 					},
@@ -6763,7 +6763,7 @@ func TestAddPackageRepository(t *testing.T) {
 			name: "create with auth",
 			requestCustomizer: func(request *corev1.AddPackageRepositoryRequest) *corev1.AddPackageRepositoryRequest {
 				request.Auth = &corev1.PackageRepositoryAuth{
-					Type: corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_CUSTOM,
+					Type: corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_AUTHORIZATION_HEADER,
 					PackageRepoAuthOneOf: &corev1.PackageRepositoryAuth_SecretRef{
 						SecretRef: &corev1.SecretKeyReference{
 							Name: "my-secret",
@@ -6931,7 +6931,7 @@ func TestUpdatePackageRepository(t *testing.T) {
 			name: "validate auth (no secret)",
 			requestCustomizer: func(request *corev1.UpdatePackageRepositoryRequest) *corev1.UpdatePackageRepositoryRequest {
 				request.Auth = &corev1.PackageRepositoryAuth{
-					Type: corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_CUSTOM,
+					Type: corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_AUTHORIZATION_HEADER,
 				}
 				return request
 			},
@@ -6941,7 +6941,7 @@ func TestUpdatePackageRepository(t *testing.T) {
 			name: "validate auth (invalid secret)",
 			requestCustomizer: func(request *corev1.UpdatePackageRepositoryRequest) *corev1.UpdatePackageRepositoryRequest {
 				request.Auth = &corev1.PackageRepositoryAuth{
-					Type: corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_CUSTOM,
+					Type: corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_AUTHORIZATION_HEADER,
 					PackageRepoAuthOneOf: &corev1.PackageRepositoryAuth_SecretRef{
 						SecretRef: &corev1.SecretKeyReference{},
 					},
@@ -7208,7 +7208,7 @@ func TestUpdatePackageRepository(t *testing.T) {
 			name: "updated with auth (add)",
 			requestCustomizer: func(request *corev1.UpdatePackageRepositoryRequest) *corev1.UpdatePackageRepositoryRequest {
 				request.Auth = &corev1.PackageRepositoryAuth{
-					Type: corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_CUSTOM,
+					Type: corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_AUTHORIZATION_HEADER,
 					PackageRepoAuthOneOf: &corev1.PackageRepositoryAuth_SecretRef{
 						SecretRef: &corev1.SecretKeyReference{
 							Name: "my-secret",
@@ -7251,7 +7251,7 @@ func TestUpdatePackageRepository(t *testing.T) {
 			},
 			requestCustomizer: func(request *corev1.UpdatePackageRepositoryRequest) *corev1.UpdatePackageRepositoryRequest {
 				request.Auth = &corev1.PackageRepositoryAuth{
-					Type: corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_CUSTOM,
+					Type: corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_AUTHORIZATION_HEADER,
 					PackageRepoAuthOneOf: &corev1.PackageRepositoryAuth_SecretRef{
 						SecretRef: &corev1.SecretKeyReference{
 							Name: "my-other-secret",
@@ -7771,7 +7771,7 @@ func TestGetPackageRepositoryDetail(t *testing.T) {
 			},
 			responseCustomizer: func(response *corev1.GetPackageRepositoryDetailResponse) *corev1.GetPackageRepositoryDetailResponse {
 				response.Detail.Auth = &corev1.PackageRepositoryAuth{
-					Type: corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_CUSTOM,
+					Type: corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_AUTHORIZATION_HEADER,
 					PackageRepoAuthOneOf: &corev1.PackageRepositoryAuth_SecretRef{
 						SecretRef: &corev1.SecretKeyReference{
 							Name: "my-secret",

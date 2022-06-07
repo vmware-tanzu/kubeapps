@@ -545,7 +545,7 @@ func (s *Server) buildPackageRepository(pr *packagingv1alpha1.PackageRepository,
 
 	if secret != nil && secret.Name != "" {
 		repository.Auth = &corev1.PackageRepositoryAuth{
-			Type: corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_CUSTOM,
+			Type: corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_AUTHORIZATION_HEADER,
 			PackageRepoAuthOneOf: &corev1.PackageRepositoryAuth_SecretRef{
 				SecretRef: &corev1.SecretKeyReference{
 					Name: secret.Name,
@@ -821,7 +821,7 @@ func (s *Server) validatePackageRepositoryDetails(rptype string, any *anypb.Any)
 }
 
 func (s *Server) validatePackageRepositoryAuth(auth *corev1.PackageRepositoryAuth) error {
-	if auth.Type != corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_CUSTOM {
+	if auth.Type != corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_AUTHORIZATION_HEADER {
 		return status.Errorf(codes.InvalidArgument, "invalid auth type, only custom is supported")
 	}
 	if auth.GetSecretRef() == nil {
