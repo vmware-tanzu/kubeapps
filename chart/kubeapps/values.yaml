@@ -2065,6 +2065,14 @@ kubeappsapis:
           ## @param kubeappsapis.pluginConfig.kappController.packages.v1alpha1.defaultAllowDowngrades Default policy for allowing applications to be downgraded to previous versions
           ## ref: https://carvel.dev/kapp-controller/docs/latest/package-consumer-concepts/#downgrading
           defaultAllowDowngrades: false
+    flux:
+      packages:
+        v1alpha1:
+          ## @param kubeappsapis.pluginConfig.flux.packages.v1alpha1.defaultUpgradePolicy Default upgrade policy generating version constraints
+          ## enum: [ "major", "minor", "patch", "none" ]
+          defaultUpgradePolicy: none
+            ## @param kubeappsapis.pluginConfig.flux.packages.v1alpha1.userManagedSecrets Default policy for handling repository secrets, either managed by the user or by kubeapps-apis
+          userManagedSecrets: true
   ## Bitnami Kubeapps-APIs image
   ## ref: https://hub.docker.com/r/bitnami/kubeapps-apis/tags/
   ## @param kubeappsapis.image.registry Kubeapps-APIs image registry
