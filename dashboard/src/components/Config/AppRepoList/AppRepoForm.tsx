@@ -404,130 +404,136 @@ export function AppRepoForm(props: IAppRepoFormProps) {
                     />
                   </CdsRadio>
                 </CdsRadioGroup>
-                <CdsRadioGroup layout="vertical">
-                  <label>Package Storage Type</label>
-                  <CdsControlMessage>Select the package storage type.</CdsControlMessage>
-                  {(plugin?.name === (PluginNames.PACKAGES_HELM as string) ||
-                    plugin?.name === (PluginNames.PACKAGES_FLUX as string)) && (
-                    <>
-                      <CdsRadio>
-                        <label>Helm Repository</label>
-                        <input
-                          id="kubeapps-repo-type-helm"
-                          type="radio"
-                          name="type"
-                          value={RepositoryStorageTypes.PACKAGE_REPOSITORY_STORAGE_HELM}
-                          checked={type === RepositoryStorageTypes.PACKAGE_REPOSITORY_STORAGE_HELM}
-                          disabled={!!repo?.type}
-                          onChange={handleTypeRadioButtonChange}
-                          required={
-                            plugin?.name === (PluginNames.PACKAGES_HELM as string) ||
-                            plugin?.name === (PluginNames.PACKAGES_FLUX as string)
-                          }
-                        />
-                      </CdsRadio>
-                      <CdsRadio>
-                        <label>OCI Registry</label>
-                        <input
-                          id="kubeapps-repo-type-oci"
-                          type="radio"
-                          name="type"
-                          // TODO(agamez): workaround until Flux plugin also supports OCI artifacts
-                          disabled={plugin?.name === PluginNames.PACKAGES_FLUX || !!repo?.type}
-                          value={RepositoryStorageTypes.PACKAGE_REPOSITORY_STORAGE_OCI}
-                          checked={type === RepositoryStorageTypes.PACKAGE_REPOSITORY_STORAGE_OCI}
-                          onChange={handleTypeRadioButtonChange}
-                          required={
-                            plugin?.name === (PluginNames.PACKAGES_HELM as string) ||
-                            plugin?.name === (PluginNames.PACKAGES_FLUX as string)
-                          }
-                        />
-                      </CdsRadio>
-                    </>
-                  )}
-                  {plugin?.name === PluginNames.PACKAGES_KAPP && (
-                    <>
-                      <CdsRadio>
-                        <label>Imgpkg Bundle</label>
-                        <input
-                          id="kubeapps-repo-type-imgpkgbundle"
-                          type="radio"
-                          name="type"
-                          disabled={!!repo?.type}
-                          value={
-                            RepositoryStorageTypes.PACKAGE_REPOSITORY_STORAGE_CARVEL_IMGPKGBUNDLE
-                          }
-                          checked={
-                            type ===
-                            RepositoryStorageTypes.PACKAGE_REPOSITORY_STORAGE_CARVEL_IMGPKGBUNDLE
-                          }
-                          onChange={handleTypeRadioButtonChange}
-                          required={plugin?.name === PluginNames.PACKAGES_KAPP}
-                        />
-                      </CdsRadio>
-                      <CdsRadio>
-                        <label>Inline</label>
-                        <input
-                          id="kubeapps-repo-type-inline"
-                          type="radio"
-                          name="type"
-                          disabled={!!repo?.type}
-                          value={RepositoryStorageTypes.PACKAGE_REPOSITORY_STORAGE_CARVEL_INLINE}
-                          checked={
-                            type === RepositoryStorageTypes.PACKAGE_REPOSITORY_STORAGE_CARVEL_INLINE
-                          }
-                          onChange={handleTypeRadioButtonChange}
-                          required={plugin?.name === PluginNames.PACKAGES_KAPP}
-                        />
-                      </CdsRadio>
-                      <CdsRadio>
-                        <label>Image</label>
-                        <input
-                          id="kubeapps-repo-type-image"
-                          type="radio"
-                          name="type"
-                          disabled={!!repo?.type}
-                          value={RepositoryStorageTypes.PACKAGE_REPOSITORY_STORAGE_CARVEL_IMAGE}
-                          checked={
-                            type === RepositoryStorageTypes.PACKAGE_REPOSITORY_STORAGE_CARVEL_IMAGE
-                          }
-                          onChange={handleTypeRadioButtonChange}
-                          required={plugin?.name === PluginNames.PACKAGES_KAPP}
-                        />
-                      </CdsRadio>
-                      <CdsRadio>
-                        <label>HTTP</label>
-                        <input
-                          id="kubeapps-repo-type-http"
-                          type="radio"
-                          name="type"
-                          disabled={!!repo?.type}
-                          value={RepositoryStorageTypes.PACKAGE_REPOSITORY_STORAGE_CARVEL_HTTP}
-                          checked={
-                            type === RepositoryStorageTypes.PACKAGE_REPOSITORY_STORAGE_CARVEL_HTTP
-                          }
-                          onChange={handleTypeRadioButtonChange}
-                          required={plugin?.name === PluginNames.PACKAGES_KAPP}
-                        />
-                      </CdsRadio>
-                      <CdsRadio>
-                        <label>Git</label>
-                        <input
-                          id="kubeapps-repo-type-git"
-                          type="radio"
-                          name="type"
-                          disabled={!!repo?.type}
-                          value={RepositoryStorageTypes.PACKAGE_REPOSITORY_STORAGE_CARVEL_GIT}
-                          checked={
-                            type === RepositoryStorageTypes.PACKAGE_REPOSITORY_STORAGE_CARVEL_GIT
-                          }
-                          onChange={handleTypeRadioButtonChange}
-                          required={plugin?.name === PluginNames.PACKAGES_KAPP}
-                        />
-                      </CdsRadio>
-                    </>
-                  )}
-                </CdsRadioGroup>
+                {plugin?.name && (
+                  <CdsRadioGroup layout="vertical">
+                    <label>Package Storage Type</label>
+                    <CdsControlMessage>Select the package storage type.</CdsControlMessage>
+                    {(plugin?.name === (PluginNames.PACKAGES_HELM as string) ||
+                      plugin?.name === (PluginNames.PACKAGES_FLUX as string)) && (
+                      <>
+                        <CdsRadio>
+                          <label>Helm Repository</label>
+                          <input
+                            id="kubeapps-repo-type-helm"
+                            type="radio"
+                            name="type"
+                            value={RepositoryStorageTypes.PACKAGE_REPOSITORY_STORAGE_HELM}
+                            checked={
+                              type === RepositoryStorageTypes.PACKAGE_REPOSITORY_STORAGE_HELM
+                            }
+                            disabled={!!repo?.type}
+                            onChange={handleTypeRadioButtonChange}
+                            required={
+                              plugin?.name === (PluginNames.PACKAGES_HELM as string) ||
+                              plugin?.name === (PluginNames.PACKAGES_FLUX as string)
+                            }
+                          />
+                        </CdsRadio>
+                        <CdsRadio>
+                          <label>OCI Registry</label>
+                          <input
+                            id="kubeapps-repo-type-oci"
+                            type="radio"
+                            name="type"
+                            // TODO(agamez): workaround until Flux plugin also supports OCI artifacts
+                            disabled={plugin?.name === PluginNames.PACKAGES_FLUX || !!repo?.type}
+                            value={RepositoryStorageTypes.PACKAGE_REPOSITORY_STORAGE_OCI}
+                            checked={type === RepositoryStorageTypes.PACKAGE_REPOSITORY_STORAGE_OCI}
+                            onChange={handleTypeRadioButtonChange}
+                            required={
+                              plugin?.name === (PluginNames.PACKAGES_HELM as string) ||
+                              plugin?.name === (PluginNames.PACKAGES_FLUX as string)
+                            }
+                          />
+                        </CdsRadio>
+                      </>
+                    )}
+                    {plugin?.name === PluginNames.PACKAGES_KAPP && (
+                      <>
+                        <CdsRadio>
+                          <label>Imgpkg Bundle</label>
+                          <input
+                            id="kubeapps-repo-type-imgpkgbundle"
+                            type="radio"
+                            name="type"
+                            disabled={!!repo?.type}
+                            value={
+                              RepositoryStorageTypes.PACKAGE_REPOSITORY_STORAGE_CARVEL_IMGPKGBUNDLE
+                            }
+                            checked={
+                              type ===
+                              RepositoryStorageTypes.PACKAGE_REPOSITORY_STORAGE_CARVEL_IMGPKGBUNDLE
+                            }
+                            onChange={handleTypeRadioButtonChange}
+                            required={plugin?.name === PluginNames.PACKAGES_KAPP}
+                          />
+                        </CdsRadio>
+                        <CdsRadio>
+                          <label>Inline</label>
+                          <input
+                            id="kubeapps-repo-type-inline"
+                            type="radio"
+                            name="type"
+                            disabled={!!repo?.type}
+                            value={RepositoryStorageTypes.PACKAGE_REPOSITORY_STORAGE_CARVEL_INLINE}
+                            checked={
+                              type ===
+                              RepositoryStorageTypes.PACKAGE_REPOSITORY_STORAGE_CARVEL_INLINE
+                            }
+                            onChange={handleTypeRadioButtonChange}
+                            required={plugin?.name === PluginNames.PACKAGES_KAPP}
+                          />
+                        </CdsRadio>
+                        <CdsRadio>
+                          <label>Image</label>
+                          <input
+                            id="kubeapps-repo-type-image"
+                            type="radio"
+                            name="type"
+                            disabled={!!repo?.type}
+                            value={RepositoryStorageTypes.PACKAGE_REPOSITORY_STORAGE_CARVEL_IMAGE}
+                            checked={
+                              type ===
+                              RepositoryStorageTypes.PACKAGE_REPOSITORY_STORAGE_CARVEL_IMAGE
+                            }
+                            onChange={handleTypeRadioButtonChange}
+                            required={plugin?.name === PluginNames.PACKAGES_KAPP}
+                          />
+                        </CdsRadio>
+                        <CdsRadio>
+                          <label>HTTP</label>
+                          <input
+                            id="kubeapps-repo-type-http"
+                            type="radio"
+                            name="type"
+                            disabled={!!repo?.type}
+                            value={RepositoryStorageTypes.PACKAGE_REPOSITORY_STORAGE_CARVEL_HTTP}
+                            checked={
+                              type === RepositoryStorageTypes.PACKAGE_REPOSITORY_STORAGE_CARVEL_HTTP
+                            }
+                            onChange={handleTypeRadioButtonChange}
+                            required={plugin?.name === PluginNames.PACKAGES_KAPP}
+                          />
+                        </CdsRadio>
+                        <CdsRadio>
+                          <label>Git</label>
+                          <input
+                            id="kubeapps-repo-type-git"
+                            type="radio"
+                            name="type"
+                            disabled={!!repo?.type}
+                            value={RepositoryStorageTypes.PACKAGE_REPOSITORY_STORAGE_CARVEL_GIT}
+                            checked={
+                              type === RepositoryStorageTypes.PACKAGE_REPOSITORY_STORAGE_CARVEL_GIT
+                            }
+                            onChange={handleTypeRadioButtonChange}
+                            required={plugin?.name === PluginNames.PACKAGES_KAPP}
+                          />
+                        </CdsRadio>
+                      </>
+                    )}
+                  </CdsRadioGroup>
+                )}
               </CdsFormGroup>
             </CdsAccordionContent>
           </CdsAccordionPanel>
@@ -810,6 +816,7 @@ export function AppRepoForm(props: IAppRepoFormProps) {
                       placeholder={"nginx, jenkins"}
                       value={ociRepositories}
                       onChange={handleOCIRepositoriesChange}
+                      required={type === RepositoryStorageTypes.PACKAGE_REPOSITORY_STORAGE_OCI}
                     />
                   </CdsTextarea>
                 )}

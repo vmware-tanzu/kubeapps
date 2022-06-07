@@ -116,7 +116,7 @@ const reposReducer = (
     case getType(actions.repos.requestRepos):
       return { ...state, ...isFetching(state, "repositories", true) };
     case getType(actions.repos.requestRepo):
-      return { ...state, repo: initialState.repo };
+      return { ...state, repo: initialState.repo, errors: {} };
     case getType(actions.repos.addRepo):
       return { ...state, addingRepo: true };
     case getType(actions.repos.addedRepo):

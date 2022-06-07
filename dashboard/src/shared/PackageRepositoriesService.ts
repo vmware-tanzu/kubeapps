@@ -64,8 +64,6 @@ export class PackageRepositoriesService {
     // we invoke it directly instead of using kthe core API client.
     switch (request.plugin.name) {
       case PluginNames.PACKAGES_HELM:
-        console.log(request);
-        console.log(addPackageRepositoryRequest);
         return await this.helmRepositoriesClient().AddPackageRepository(
           addPackageRepositoryRequest,
         );
