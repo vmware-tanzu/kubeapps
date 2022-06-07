@@ -1,10 +1,9 @@
 ---
-name: Proposal request
+name: Feature request
 about: Suggest a new feature for Kubeapps
 title: ""
 labels: kind/proposal
 assignees: ""
-
 ---
 
 **Summary**

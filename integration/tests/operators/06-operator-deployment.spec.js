@@ -24,7 +24,7 @@ test("Deploys an Operator", async ({ page }) => {
   await page.click('cds-button:has-text("Deploy")');
 
   // Wait for operators to be deployed
-  await page.waitForTimeout(10000);
+  await page.waitForTimeout(utils.getDeploymentTimeout());
 
   // Wait for the operator to be ready to be used
   await page.click('a.nav-link:has-text("Catalog")');

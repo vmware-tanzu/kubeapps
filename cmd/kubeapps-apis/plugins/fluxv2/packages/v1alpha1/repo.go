@@ -999,10 +999,6 @@ func newFluxHelmRepo(
 		pollInterval = metav1.Duration{Duration: time.Duration(interval) * time.Second}
 	}
 	fluxRepo := &sourcev1.HelmRepository{
-		TypeMeta: metav1.TypeMeta{
-			Kind:       sourcev1.HelmRepositoryKind,
-			APIVersion: sourcev1.GroupVersion.String(),
-		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      targetName.Name,
 			Namespace: targetName.Namespace,
