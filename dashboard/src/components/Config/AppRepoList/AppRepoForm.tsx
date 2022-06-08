@@ -103,12 +103,14 @@ export function AppRepoForm(props: IAppRepoFormProps) {
   const [secretTLSName, setSecretTLSName] = useState("");
 
   // rest of the package repo form variables
+
+  const initialInterval = 3600;
   const [customCA, setCustomCA] = useState("");
   const [description, setDescription] = useState("");
   const [filterExclude, setFilterExclude] = useState(false);
   const [filterNames, setFilterNames] = useState("");
   const [filterRegex, setFilterRegex] = useState(false);
-  const [interval, setInterval] = useState(3600);
+  const [interval, setInterval] = useState(initialInterval);
   const [name, setName] = useState("");
   const [ociRepositories, setOCIRepositories] = useState("");
   const [passCredentials, setPassCredentials] = useState(!!repo?.auth?.passCredentials);
@@ -298,14 +300,19 @@ export function AppRepoForm(props: IAppRepoFormProps) {
   };
   const handlePluginRadioButtonChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setPlugin(getPluginByName(e.target.value));
-    // suggest a storage type per plugin
+    // set some default values based on the selected plugin
     switch (getPluginByName(e.target.value)?.name) {
       case PluginNames.PACKAGES_HELM:
+        setType(RepositoryStorageTypes.PACKAGE_REPOSITORY_STORAGE_HELM);
+        setInterval(0); // helm plugin doesn't allow interval
+        break;
       case PluginNames.PACKAGES_FLUX:
         setType(RepositoryStorageTypes.PACKAGE_REPOSITORY_STORAGE_HELM);
+        setInterval(interval || initialInterval);
         break;
       case PluginNames.PACKAGES_KAPP:
         setType(RepositoryStorageTypes.PACKAGE_REPOSITORY_STORAGE_CARVEL_IMGPKGBUNDLE);
+        setInterval(interval || initialInterval);
         break;
     }
   };
@@ -1133,19 +1140,21 @@ export function AppRepoForm(props: IAppRepoFormProps) {
                     </CdsControlMessage>
                   </CdsInput>
                 )}
-                <CdsInput>
-                  <label>Synchronization Interval</label>
-                  <input
-                    id="kubeapps-repo-interval"
-                    type="number"
-                    placeholder="Synchronization interval in seconds"
-                    value={interval}
-                    onChange={handleIntervalChange}
-                  />
-                  <CdsControlMessage>
-                    Time (in seconds) to wait between synchronizing the repository.
-                  </CdsControlMessage>
-                </CdsInput>
+                {plugin?.name !== PluginNames.PACKAGES_HELM && (
+                  <CdsInput>
+                    <label>Synchronization Interval</label>
+                    <input
+                      id="kubeapps-repo-interval"
+                      type="number"
+                      placeholder="Synchronization interval in seconds"
+                      value={interval}
+                      onChange={handleIntervalChange}
+                    />
+                    <CdsControlMessage>
+                      Time (in seconds) to wait between synchronizing the repository.
+                    </CdsControlMessage>
+                  </CdsInput>
+                )}
                 {plugin?.name === PluginNames.PACKAGES_HELM && (
                   <CdsCheckbox>
                     <label>Perform Validation</label>
