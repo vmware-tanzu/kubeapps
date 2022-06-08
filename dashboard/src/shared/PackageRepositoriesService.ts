@@ -245,8 +245,5 @@ export class PackageRepositoriesService {
       return updatePackageRepositoryRequest;
     }
     return addPackageRepositoryRequest as UpdatePackageRepositoryRequest;
-
-    // TODO(agamez): -- currently unsupported configuration --
-    // tlsConfig.secretRef={ key: "", name: "" }, // reference a secret to pass the CA certificate
   }
 }

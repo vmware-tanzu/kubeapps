@@ -98,6 +98,10 @@ export function AppRepoForm(props: IAppRepoFormProps) {
   // PACKAGE_REPOSITORY_AUTH_TYPE_OPAQUE
   const [opaqueData, setOpaqueData] = useState("");
 
+  // User-managed secrets
+  const [secretAuthName, setSecretAuthName] = useState("");
+  const [secretTLSName, setSecretTLSName] = useState("");
+
   // rest of the package repo form variables
   const [customCA, setCustomCA] = useState("");
   const [description, setDescription] = useState("");
@@ -158,7 +162,8 @@ export function AppRepoForm(props: IAppRepoFormProps) {
         repo.auth?.type ||
           PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_UNSPECIFIED,
       );
-
+      setSecretAuthName(repo.auth?.secretRef?.name || "");
+      setSecretTLSName(repo.tlsConfig?.secretRef?.name || "");
       const repositoryCustomDetails = repo.customDetail as Partial<RepositoryCustomDetails>;
       setOCIRepositories(repositoryCustomDetails?.ociRepositories?.join(", ") || "");
       setPerformValidation(repositoryCustomDetails?.performValidation || false);
@@ -238,10 +243,8 @@ export function AppRepoForm(props: IAppRepoFormProps) {
       name,
       passCredentials,
       plugin,
-      // TODO(agamez): set this value when supporting user-managed secrets
-      secretAuthName: "",
-      // TODO(agamez): set this value when supporting user-managed secrets
-      secretTLSName: "",
+      secretAuthName,
+      secretTLSName,
       skipTLS,
       type,
       url: finalURL,
@@ -357,6 +360,12 @@ export function AppRepoForm(props: IAppRepoFormProps) {
   const handleOpaqueDataChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setOpaqueData(e.target.value);
   };
+  const handleSecretAuthNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSecretAuthName(e.target.value);
+  };
+  const handleSecretTLSNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSecretTLSName(e.target.value);
+  };
 
   const parseValidationError = (error: Error) => {
     let message = error.message;
@@ -415,7 +424,6 @@ export function AppRepoForm(props: IAppRepoFormProps) {
                     placeholder="Description of the repository"
                     value={description}
                     onChange={handleDescriptionChange}
-                    required={false}
                   />
                 </CdsInput>
                 {/* TODO(agamez): these plugin selectors should be loaded
@@ -1103,11 +1111,28 @@ export function AppRepoForm(props: IAppRepoFormProps) {
               </CdsFormGroup>
             </CdsAccordionContent>
           </CdsAccordionPanel>
-
           <CdsAccordionPanel expanded={accordion[3]}>
             <CdsAccordionHeader onClick={() => toggleAccordion(3)}>Advanced</CdsAccordionHeader>
             <CdsAccordionContent>
               <CdsFormGroup layout="vertical">
+                {/* TODO(agamez): move this input to a better UX-wise place */}
+                {authMethod !==
+                  PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_UNSPECIFIED && (
+                  <CdsInput>
+                    <label>Authentication Secret Name</label>
+                    <input
+                      id="kubeapps-repo-secret-auth"
+                      type="text"
+                      placeholder="my-auth-secret"
+                      value={secretAuthName}
+                      onChange={handleSecretAuthNameChange}
+                    />
+                    <CdsControlMessage>
+                      Name of the Kubernetes Secret object holding the auth data. Please ensure that
+                      secret has the proper type as expected by the selected authentication method.
+                    </CdsControlMessage>
+                  </CdsInput>
+                )}
                 <CdsInput>
                   <label>Synchronization Interval</label>
                   <input
@@ -1116,7 +1141,6 @@ export function AppRepoForm(props: IAppRepoFormProps) {
                     placeholder="Synchronization interval in seconds"
                     value={interval}
                     onChange={handleIntervalChange}
-                    required={false}
                   />
                   <CdsControlMessage>
                     Time (in seconds) to wait between synchronizing the repository.
@@ -1137,6 +1161,20 @@ export function AppRepoForm(props: IAppRepoFormProps) {
                     />
                   </CdsCheckbox>
                 )}
+                {/* TODO(agamez): move this input to a better UX-wise place */}
+                <CdsInput>
+                  <label>Custom CA Secret Name (optional)</label>
+                  <input
+                    id="kubeapps-repo-secret-ca"
+                    type="text"
+                    placeholder="my-ca-secret"
+                    value={secretTLSName}
+                    onChange={handleSecretTLSNameChange}
+                  />
+                  <CdsControlMessage>
+                    Name of the Kubernetes Secret object holding the TLS Certificate Authority data.
+                  </CdsControlMessage>
+                </CdsInput>
                 <CdsTextarea layout="vertical">
                   <label>Custom CA Certificate (optional)</label>
                   <textarea
