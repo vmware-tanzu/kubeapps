@@ -10,6 +10,8 @@ If you're using Kubeapps and want to add your organization to this list, follow 
 
 <a href="https://www.terasky.com/" border="0" target="_blank"><img alt="Terasky" src="./site/content/docs/latest/img/adopters/terasky.svg" height="30"></a>
 
+<a href="https://otomi.io/" border="0" target="_blank"><img alt="Otomi" src="./site/content/docs/latest/img/adopters/otomi.svg" height="80"></a>
+
 ## Sucess Stories
 
 Below is a list of adopters of Kubeapps that have publicly shared the details of how they use it (in alphabetical order).
@@ -28,6 +30,10 @@ We are Team Teapots (reference to the HTTP 418 code). We manage the infrastructu
 **[Terasky](https://www.terasky.com/)**
 
 TeraSky is a Global Advanced Technology Solutions Provider. We utilize Kubeapps in many of our customers environments to provide a clean and simple UI for deploying and managing applications on kubernetes. we heavily use the multi cluster support in Kubeapps. We also heavily utilize the Carvel Packaging support in kubeapps, in order to provide a great solution for our customers in airgapped environments as well.
+
+**[Otomi](https://otomi.io/)**
+
+As part of their PaaS offering, Otomi has integrated KubeApps with their Harbor chart museum repository. It also comes preconfigured with both Bitnami's extensive app catalog, as well as [OperatorHub's](https://operatorhub.io) extensive offering of kubernetes operators.
 
 ## Adding your organization to the list of adopters
 

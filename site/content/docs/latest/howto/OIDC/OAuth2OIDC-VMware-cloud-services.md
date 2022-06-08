@@ -2,7 +2,7 @@
 
 This document explains how to configure VMware Cloud Services as an OIDC provider (check general information and pre-requisites for [using an OAuth2/OIDC Provider with Kubeapps](../../tutorials/using-an-OIDC-provider.md)).
 
-> **_Note:_** there is a [more detailed guide on how to use VMware Cloud Services in this document](../../tutorials/kubeapps-on-tkg/step-1.md#step-12-configure-an-oidc-provider).
+> **_Note:_** there is a [more detailed guide on how to use VMware Cloud Services in this document](../../tutorials/kubeapps-on-tkg/step-1.md#step-11-configure-an-oidc-provider).
 
 Login to VMware Cloud Services and select the organization which you want to use.
 
