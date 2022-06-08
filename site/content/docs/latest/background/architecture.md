@@ -27,4 +27,4 @@ Chart repositories in Kubeapps are managed with a `CustomResourceDefinition` cal
 
 ### `asset-syncer`
 
-The `asset-syncer` component is a tool that scans a Helm chart repository and populates chart metadata in a database. This metadata is then served by the `assetsvc` component. Check more details about the implementation in this [document](../reference/developer/asset-syncer.md).
+The `asset-syncer` component is a tool that scans a Helm chart repository and populates chart metadata in a database. This metadata is then served by the Helm plugin of the `kubeapps-apis` component. Check more details about the implementation in this [document](../reference/developer/asset-syncer.md).

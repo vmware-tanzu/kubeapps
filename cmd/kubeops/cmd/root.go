@@ -53,7 +53,6 @@ func init() {
 }
 
 func setFlags(c *cobra.Command) {
-	c.Flags().StringVar(&serveOpts.AssetsvcURL, "assetsvc-url", "https://kubeapps-internal-assetsvc:8080", "URL to the internal assetsvc")
 	c.Flags().StringVar(&serveOpts.HelmDriverArg, "helm-driver", "", "which Helm driver type to use")
 	c.Flags().IntVar(&serveOpts.ListLimit, "list-max", 256, "maximum number of releases to fetch")
 	c.Flags().StringVar(&serveOpts.UserAgentComment, "user-agent-comment", "", "UserAgent comment used during outbound requests")
