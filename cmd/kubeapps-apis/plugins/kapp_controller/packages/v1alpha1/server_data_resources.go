@@ -580,6 +580,10 @@ func (s *Server) inspectKappK8sResources(ctx context.Context, cluster, namespace
 			Namespace:  resource.Namespace(),
 		})
 	}
+	// Package exists but no resourceRefs found
+	if refs != nil && len(refs) == 0 {
+		return nil, status.Errorf(codes.NotFound, "No resource references available for '%s' in plugin '%s'", packageId, namespace)
+	}
 	return refs, nil
 }
 
