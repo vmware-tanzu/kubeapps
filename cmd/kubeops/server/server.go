@@ -16,8 +16,8 @@ import (
 	"github.com/heptiolabs/healthcheck"
 	negroni "github.com/urfave/negroni/v2"
 	"github.com/vmware-tanzu/kubeapps/cmd/kubeops/internal/handler"
+	"github.com/vmware-tanzu/kubeapps/cmd/kubeops/internal/httphandler"
 	"github.com/vmware-tanzu/kubeapps/pkg/agent"
-	backendHandlers "github.com/vmware-tanzu/kubeapps/pkg/http-handler"
 	"github.com/vmware-tanzu/kubeapps/pkg/kube"
 
 	log "k8s.io/klog/v2"
@@ -101,7 +101,7 @@ func Serve(serveOpts ServeOptions) error {
 	addRoute("DELETE", "/clusters/{cluster}/namespaces/{namespace}/releases/{releaseName}", handler.DeleteRelease)
 
 	// Backend routes unrelated to kubeops functionality.
-	err := backendHandlers.SetupDefaultRoutes(r.PathPrefix("/backend/v1").Subrouter(), serveOpts.NamespaceHeaderName, serveOpts.NamespaceHeaderPattern, serveOpts.Burst, serveOpts.Qps, clustersConfig)
+	err := httphandler.SetupDefaultRoutes(r.PathPrefix("/backend/v1").Subrouter(), serveOpts.NamespaceHeaderName, serveOpts.NamespaceHeaderPattern, serveOpts.Burst, serveOpts.Qps, clustersConfig)
 	if err != nil {
 		return fmt.Errorf("Unable to setup backend routes: %+v", err)
 	}
