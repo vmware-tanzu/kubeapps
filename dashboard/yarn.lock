@@ -1104,10 +1104,10 @@
     "@cds/city" "^1.1.0"
     modern-normalize "^1.1.0"
 
-"@clr/ui@^13.3.2":
-  version "13.3.2"
-  resolved "https://registry.yarnpkg.com/@clr/ui/-/ui-13.3.2.tgz#f56672f3797c3823fb6ded1d9cf1a9eba5b32dfc"
-  integrity sha512-8+/ZUOqWkZoxMihWnIyNys9sSYSHjS2pNz8/1/nf8P3DvqUwtvVisIOsrHSYHyi0V644ud6I6ixEONZM0SzjLA==
+"@clr/ui@^13.4.0":
+  version "13.4.0"
+  resolved "https://registry.yarnpkg.com/@clr/ui/-/ui-13.4.0.tgz#5743f17a205ddcf2f5b8f76b80143a725052a27d"
+  integrity sha512-G8EQHkRFuFAmNLwv+UhKlh9lJEKE0fz0KJpiBA662excgx+kl6wY3prq5QoiG3ZvGRV7abx8Omqg+oFVRl0yfA==
 
 "@cnakazawa/watch@^1.0.3":
   version "1.0.4"
@@ -9260,10 +9260,10 @@ mkdirp@^0.5.1, mkdirp@~0.5.1:
   dependencies:
     minimist "^1.2.6"
 
-mock-socket@^9.1.4:
-  version "9.1.4"
-  resolved "https://registry.yarnpkg.com/mock-socket/-/mock-socket-9.1.4.tgz#9295cb9c95d3b2730a7bc067008f055635d8fc75"
-  integrity sha512-zc7jF8FId8pD9ojxWLcXrv4c2nEFOb6o8giPb45yQ6BfQX1tWuUktHNFSiy+KBt0VhYtHNt5MFIzclt0LIynEA==
+mock-socket@^9.1.5:
+  version "9.1.5"
+  resolved "https://registry.yarnpkg.com/mock-socket/-/mock-socket-9.1.5.tgz#2c4e44922ad556843b6dfe09d14ed8041fa2cdeb"
+  integrity sha512-3DeNIcsQixWHHKk6NdoBhWI4t1VMj5/HzfnI1rE/pLl5qKx7+gd4DNA07ehTaZ6MoUU053si6Hd+YtiM/tQZfg==
 
 modern-normalize@1.1.0, modern-normalize@^1.1.0:
   version "1.1.0"
