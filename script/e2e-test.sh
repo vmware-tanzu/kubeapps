@@ -49,18 +49,6 @@ echo ""
 # Auxiliar functions
 
 ########################
-# Test Helm
-# Globals:
-#   HELM_*
-# Arguments: None
-# Returns: None
-#########################
-testHelm() {
-  info "Running Helm tests..."
-  helm test -n kubeapps kubeapps-ci
-}
-
-########################
 # Check if the pod that populates de OperatorHub catalog is running
 # Globals: None
 # Arguments: None
@@ -361,32 +349,6 @@ for svc in "${svcs[@]}"; do
   k8s_wait_for_endpoints kubeapps "$svc" 1
   info "Endpoints for ${svc} available"
 done
-
-# Deactivate helm tests unless we are testing the latest release until
-# we have released the code with per-namespace tests (since the helm
-# tests for assetsvc needs to test the namespaced repo).
-if [[ -z "${TEST_LATEST_RELEASE:-}" ]]; then
-  # Run helm tests
-  # Retry once if tests fail to avoid temporary issue
-  if ! retry_while testHelm "2" "1"; then
-    warn "PODS status on failure"
-    kubectl get pods -n kubeapps
-    for pod in $(kubectl get po -l='app.kubernetes.io/managed-by=Helm,app.kubernetes.io/instance=kubeapps-ci' -oname -n kubeapps); do
-      warn "LOGS for pod $pod ------------"
-      if [[ "$pod" =~ .*internal.* ]]; then
-        kubectl logs -n kubeapps "$pod"
-      else
-        kubectl logs -n kubeapps "$pod" nginx
-        kubectl logs -n kubeapps "$pod" auth-proxy
-      fi
-    done
-    echo
-    warn "LOGS for dashboard tests --------"
-    kubectl logs kubeapps-ci-dashboard-test --namespace kubeapps
-    exit 1
-  fi
-  info "Helm tests succeeded!"
-fi
 
 # Browser tests
 cd "${ROOT_DIR}/integration"
