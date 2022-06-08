@@ -59,7 +59,7 @@ parameters:
     default: "ubuntu-2004:202201-02"
   IMAGES_TO_PUSH:
     type: "string"
-    default: "kubeapps/apprepository-controller kubeapps/dashboard kubeapps/asset-syncer kubeapps/assetsvc kubeapps/kubeops kubeapps/pinniped-proxy kubeapps/kubeapps-apis"
+    default: "kubeapps/apprepository-controller kubeapps/dashboard kubeapps/asset-syncer kubeapps/kubeops kubeapps/pinniped-proxy kubeapps/kubeapps-apis"
   CI_BOT_USERNAME:
     type: "string"
     default: "kubeapps-bot"
@@ -676,7 +676,7 @@ jobs:
     working_directory: /home/circleci/go/src/github.com/vmware-tanzu/kubeapps
     environment:
       GOPATH: ${HOME}/.go_workspace
-      IMAGES: "kubeops apprepository-controller asset-syncer assetsvc kubeapps-apis"
+      IMAGES: "kubeops apprepository-controller asset-syncer kubeapps-apis"
     <<: *build_images
   build_dashboard:
     docker:
