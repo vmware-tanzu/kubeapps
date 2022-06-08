@@ -14,7 +14,10 @@ import {
 } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
 import {
   DockerCredentials,
+  OpaqueCredentials,
   PackageRepositoryAuth_PackageRepositoryAuthType,
+  SshCredentials,
+  TlsCertKey,
   UsernamePassword,
 } from "gen/kubeappsapis/core/packages/v1alpha1/repositories";
 import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins";
@@ -413,20 +416,26 @@ export interface CustomInstalledPackageDetail extends InstalledPackageDetail {
 }
 
 export interface IPkgRepoFormData {
-  authHeader: string;
   authMethod: PackageRepositoryAuth_PackageRepositoryAuthType;
-  basicAuth: UsernamePassword;
+  // kubeapps-managed secrets
+  authHeader: string; // used if type == PACKAGE_REPOSITORY_AUTH_TYPE_BEARER || type == PACKAGE_REPOSITORY_AUTH_TYPE_AUTHORIZATION_HEADER
+  basicAuth: UsernamePassword; // used if type == PACKAGE_REPOSITORY_AUTH_TYPE_BASIC_AUTH
+  dockerRegCreds: DockerCredentials; // used if type == PACKAGE_REPOSITORY_AUTH_TYPE_DOCKER_CONFIG_JSON
+  sshCreds: SshCredentials; // used if type == PACKAGE_REPOSITORY_AUTH_TYPE_SSH
+  opaqueCreds: OpaqueCredentials; // used if type == PACKAGE_REPOSITORY_AUTH_TYPE_OPAQUE
+  tlsCertKey: TlsCertKey; // used if type == PACKAGE_REPOSITORY_AUTH_TYPE_TLS
+  // user-managed secrets
+  secretAuthName: string;
+  secretTLSName: string;
+  // rest of the paramters
   customCA: string;
-  customDetails: RepositoryCustomDetails; // add more types if necesary
   description: string;
-  dockerRegCreds: DockerCredentials;
   interval: number;
   name: string;
   passCredentials: boolean;
   plugin: Plugin;
-  secretAuthName: string;
-  secretTLSName: string;
   skipTLS: boolean;
   type: string;
   url: string;
+  customDetails: Partial<RepositoryCustomDetails>; // add more types if necesary, currently just helm's custom details
 }

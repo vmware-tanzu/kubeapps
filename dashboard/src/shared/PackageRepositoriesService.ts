@@ -9,10 +9,13 @@ import {
   DockerCredentials,
   GetPackageRepositoryDetailResponse,
   GetPackageRepositorySummariesResponse,
+  OpaqueCredentials,
   PackageRepositoryAuth,
   PackageRepositoryReference,
   PackageRepositoryTlsConfig,
   SecretKeyReference,
+  SshCredentials,
+  TlsCertKey,
   UpdatePackageRepositoryRequest,
   UsernamePassword,
 } from "gen/kubeappsapis/core/packages/v1alpha1/repositories";
@@ -36,7 +39,7 @@ export class PackageRepositoriesService {
   public static async getPackageRepositoryDetail(
     packageRepoRef: PackageRepositoryReference,
   ): Promise<GetPackageRepositoryDetailResponse> {
-    // since the Helm plugin has its own fields (ociRepositories, filter),
+    // since the Helm plugin has its own fields (dockerRegistrySecrets, ociRepositories, filterRule, performValidation),
     // we invoke it directly instead of using kthe core API client.
     switch (packageRepoRef?.plugin?.name) {
       case PluginNames.PACKAGES_HELM:
@@ -60,7 +63,7 @@ export class PackageRepositoriesService {
       namespaceScoped,
     );
 
-    // since the Helm plugin has its own fields (ociRepositories, filter),
+    // since the Helm plugin has its own fields (dockerRegistrySecrets, ociRepositories, filterRule, performValidation),
     // we invoke it directly instead of using kthe core API client.
     switch (request.plugin.name) {
       case PluginNames.PACKAGES_HELM:
@@ -87,7 +90,7 @@ export class PackageRepositoriesService {
       undefined,
     );
 
-    // since the Helm plugin has its own fields (ociRepositories, filter),
+    // since the Helm plugin has its own fields (dockerRegistrySecrets, ociRepositories, filterRule, performValidation),
     // we invoke it directly instead of using kthe core API client.
     switch (request.plugin.name) {
       case PluginNames.PACKAGES_HELM:
@@ -161,6 +164,26 @@ export class PackageRepositoriesService {
         dockerCreds: { ...request.dockerRegCreds } as DockerCredentials,
       } as PackageRepositoryAuth;
     }
+    if (Object.values(request.sshCreds).some(e => !!e)) {
+      addPackageRepositoryRequest.auth = {
+        ...addPackageRepositoryRequest.auth,
+        sshCreds: {
+          ...request.sshCreds,
+        } as SshCredentials,
+      } as PackageRepositoryAuth;
+    }
+    if (Object.values(request.tlsCertKey).some(e => !!e)) {
+      addPackageRepositoryRequest.auth = {
+        ...addPackageRepositoryRequest.auth,
+        tlsCertKey: { ...request.tlsCertKey } as TlsCertKey,
+      } as PackageRepositoryAuth;
+    }
+    if (Object.values(request.opaqueCreds).some(e => !!e)) {
+      addPackageRepositoryRequest.auth = {
+        ...addPackageRepositoryRequest.auth,
+        opaqueCreds: { ...request.opaqueCreds } as OpaqueCredentials,
+      } as PackageRepositoryAuth;
+    }
     if (request.customCA) {
       addPackageRepositoryRequest.tlsConfig = {
         ...addPackageRepositoryRequest.tlsConfig,
@@ -225,6 +248,5 @@ export class PackageRepositoriesService {
 
     // TODO(agamez): -- currently unsupported configuration --
     // tlsConfig.secretRef={ key: "", name: "" }, // reference a secret to pass the CA certificate
-    // auth.tlsCertKey: { cert: "", key: ""},  // cert and key for tls auth
   }
 }

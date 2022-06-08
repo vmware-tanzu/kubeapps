@@ -110,6 +110,17 @@ const repoData = {
   skipTLS: false,
   type: RepositoryStorageTypes.PACKAGE_REPOSITORY_STORAGE_HELM,
   url: "http://foo.ba",
+  opaqueCreds: {
+    data: {},
+  },
+  sshCreds: {
+    knownHosts: "",
+    privateKey: "",
+  },
+  tlsCertKey: {
+    cert: "",
+    key: "",
+  },
 } as IPkgRepoFormData;
 
 const actionTestCases: ITestCase[] = [
