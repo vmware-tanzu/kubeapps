@@ -46,7 +46,7 @@ func NewPackagesServer(pkgingPlugins []pluginsv1alpha1.PluginWithServer) (*packa
 			plugin: p.Plugin,
 			server: pkgsSrv,
 		}
-		log.Infof("Registered %v for core.packaging.v1alpha1 aggregation.", p.Plugin)
+		log.Infof("Registered %v for core.packaging.v1alpha1 packages aggregation.", p.Plugin)
 	}
 	return &packagesServer{
 		pluginsWithServers: pluginsWithServer,
