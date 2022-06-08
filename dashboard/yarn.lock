@@ -9260,10 +9260,10 @@ mkdirp@^0.5.1, mkdirp@~0.5.1:
   dependencies:
     minimist "^1.2.6"
 
-mock-socket@^9.1.4:
-  version "9.1.4"
-  resolved "https://registry.yarnpkg.com/mock-socket/-/mock-socket-9.1.4.tgz#9295cb9c95d3b2730a7bc067008f055635d8fc75"
-  integrity sha512-zc7jF8FId8pD9ojxWLcXrv4c2nEFOb6o8giPb45yQ6BfQX1tWuUktHNFSiy+KBt0VhYtHNt5MFIzclt0LIynEA==
+mock-socket@^9.1.5:
+  version "9.1.5"
+  resolved "https://registry.yarnpkg.com/mock-socket/-/mock-socket-9.1.5.tgz#2c4e44922ad556843b6dfe09d14ed8041fa2cdeb"
+  integrity sha512-3DeNIcsQixWHHKk6NdoBhWI4t1VMj5/HzfnI1rE/pLl5qKx7+gd4DNA07ehTaZ6MoUU053si6Hd+YtiM/tQZfg==
 
 modern-normalize@1.1.0, modern-normalize@^1.1.0:
   version "1.1.0"
