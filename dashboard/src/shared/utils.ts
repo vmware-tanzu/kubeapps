@@ -106,14 +106,18 @@ export function getPluginName(plugin?: Plugin | string) {
   }
 }
 
-export function getPluginPackageName(plugin?: Plugin | string) {
+export function getPluginPackageName(plugin?: Plugin | PluginNames | string) {
   // Temporary case while operators are not supported as kubeapps apis plugin
   if (typeof plugin === "string") {
     switch (plugin) {
       case "chart":
-        return "Helm Chart";
       case "helm":
+      case PluginNames.PACKAGES_HELM:
         return "Helm Chart";
+      case PluginNames.PACKAGES_FLUX:
+        return "Helm Chart via Flux";
+      case PluginNames.PACKAGES_KAPP:
+        return "Carvel Package";
       case "operator":
         return "Operator";
       default:

@@ -14,7 +14,7 @@ test("Deploys an Operator", async ({ page }) => {
 
   // Go to operators page
   await page.goto(utils.getUrl("/#/c/default/ns/kubeapps/operators"));
-  await page.waitForTimeout(3000);
+  await page.waitForTimeout(10000);
 
   // Select operator to deploy
   await page.locator("input#search").fill("prometheus");

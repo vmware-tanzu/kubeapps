@@ -7,7 +7,7 @@ FROM nginx:1.21.3
 COPY ./nginx.conf /etc/nginx/nginx.conf
 
 # only has a single user: foo, password: bar
-COPY ./.htpasswd /etc/apache2/.htpasswd
+COPY ./md5.htpasswd /etc/apache2/.htpasswd
 
 COPY ./charts/podinfo-index.yaml /usr/share/nginx/html/podinfo/index.yaml
 COPY ./charts/podinfo-6.0.0.tgz /usr/share/nginx/html/podinfo/
@@ -22,3 +22,6 @@ COPY ./cert/server-key.pem /etc/ssl/certs/
 COPY ./charts/podinfo-tls-index.yaml /usr/share/nginx/html/podinfo-tls/index.yaml
 COPY ./charts/podinfo-6.0.0.tgz /usr/share/nginx/html/podinfo-tls/
 COPY ./charts/podinfo-5.2.1.tgz /usr/share/nginx/html/podinfo-tls/
+
+RUN mkdir /usr/share/nginx/html/bitnami/ ; curl "https://charts.bitnami.com/bitnami/index.yaml" -o /usr/share/nginx/html/bitnami/index.yaml
+

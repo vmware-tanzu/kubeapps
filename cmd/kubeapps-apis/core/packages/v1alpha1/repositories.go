@@ -46,7 +46,7 @@ func NewRepositoriesServer(pkgingPlugins []pluginsv1alpha1.PluginWithServer) (*r
 			plugin: p.Plugin,
 			server: pkgsSrv,
 		}
-		log.Infof("Registered %v for core.packaging.v1alpha1 aggregation.", p.Plugin)
+		log.Infof("Registered %v for core.packaging.v1alpha1 repositories aggregation.", p.Plugin)
 	}
 	return &repositoriesServer{
 		pluginsWithServers: pluginsWithServer,

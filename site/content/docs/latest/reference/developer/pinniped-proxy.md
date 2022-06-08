@@ -63,13 +63,13 @@ Next, follow the steps in [/docs/reference/developer/using-makefiles.md](../deve
 
 Next, replace `172.18.0.2` with the previous IP (and `172.18.0.3` with the next one) the following files: - [script/makefiles/deploy-dev.mk](https://github.com/vmware-tanzu/kubeapps/blob/main/script/makefiles/deploy-dev.mk) - [kubeapps-local-dev-additional-kind-cluster-for-pinniped.yaml](https://github.com/vmware-tanzu/kubeapps/blob/main/site/content/docs/latest/reference/manifests/kubeapps-local-dev-additional-kind-cluster-for-pinniped.yaml) - [kubeapps-local-dev-auth-proxy-values.yaml](https://github.com/vmware-tanzu/kubeapps/blob/main/site/content/docs/latest/reference/manifests/kubeapps-local-dev-auth-proxy-values.yaml) - [kubeapps-local-dev-dex-values.yaml](https://github.com/vmware-tanzu/kubeapps/blob/main/site/content/docs/latest/reference/manifests/kubeapps-local-dev-dex-values.yaml)
 
-### Launching the multi-cluster dev environment
+### Launching the dev environment
 
-- Run `make multi-cluster-kind-for-pinniped`.
+- Run `make cluster-kind-for-pinniped` or `make multi-cluster-kind-for-pinniped` for multi-cluster.
 - Update [https://github.com/vmware-tanzu/kubeapps/blob/main/site/content/docs/latest/reference/manifests/kubeapps-local-dev-additional-kind-cluster-for-pinniped.yaml](https://github.com/vmware-tanzu/kubeapps/blob/main/site/content/docs/latest/reference/manifests/kubeapps-local-dev-additional-kind-cluster-for-pinniped.yaml) copying the certificate-authority-data from the additional cluster (`~/.kube/kind-config-kubeapps-additional`) to the `certificate-authority-data` of the second cluster.
-- Run `make deploy-dev-for-pinniped`.
+- Run `make deploy-dev-for-pinniped` and additionally `make deploy-pinniped-additional` for multi-cluster.
 - Edit [https://github.com/vmware-tanzu/kubeapps/blob/main/site/content/docs/latest/reference/manifests/kubeapps-pinniped-jwt-authenticator.yaml](https://github.com/vmware-tanzu/kubeapps/blob/main/site/content/docs/latest/reference/manifests/kubeapps-pinniped-jwt-authenticator.yaml) with the `certificate-authority-data` from the main cluster (`~/.kube/kind-config-kubeapps`).
-- Run `make add-pinniped-jwt-authenticator`.
+- Run `make add-pinniped-jwt-authenticator` and additionally `make add-pinniped-jwt-authenticator-additional` for multi-cluster.
 - Open <https://localhost/> and login with `kubeapps-operator@example.com`/`password`
 
 > Note: make sure you are really copying `certificate-authority-data` and not the `client-certificate-data` or `client-certificate-data`. Otherwise, the setup will not work.

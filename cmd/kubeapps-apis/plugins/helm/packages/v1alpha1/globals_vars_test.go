@@ -393,7 +393,7 @@ var (
 		Url:             "http://example.com",
 		NamespaceScoped: true,
 		Auth: &corev1.PackageRepositoryAuth{
-			Type: corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_CUSTOM,
+			Type: corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_AUTHORIZATION_HEADER,
 			PackageRepoAuthOneOf: &corev1.PackageRepositoryAuth_Header{
 				Header: "foobarzot",
 			},
