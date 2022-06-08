@@ -11,9 +11,9 @@ import (
 
 	"github.com/gorilla/mux"
 	negroni "github.com/urfave/negroni/v2"
+	"github.com/vmware-tanzu/kubeapps/cmd/kubeops/internal/auth"
 	"github.com/vmware-tanzu/kubeapps/cmd/kubeops/internal/response"
 	"github.com/vmware-tanzu/kubeapps/pkg/agent"
-	"github.com/vmware-tanzu/kubeapps/pkg/auth"
 	"github.com/vmware-tanzu/kubeapps/pkg/chart"
 	chartUtils "github.com/vmware-tanzu/kubeapps/pkg/chart"
 	"github.com/vmware-tanzu/kubeapps/pkg/handlerutil"
