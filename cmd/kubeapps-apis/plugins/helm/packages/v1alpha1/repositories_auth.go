@@ -91,7 +91,7 @@ func newSecretFromTlsConfigAndAuth(repoName types.NamespacedName,
 			} else {
 				return nil, false, status.Errorf(codes.InvalidArgument, "Bearer token is missing")
 			}
-		case corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_CUSTOM:
+		case corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_AUTHORIZATION_HEADER:
 			if authHeaderValue := auth.GetHeader(); authHeaderValue != "" {
 				if authHeaderValue == RedactedString {
 					isSameSecret = true
@@ -156,7 +156,7 @@ func newAppRepositoryAuth(secret *k8scorev1.Secret,
 		switch auth.Type {
 		case corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_BASIC_AUTH,
 			corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_BEARER,
-			corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_CUSTOM:
+			corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_AUTHORIZATION_HEADER:
 			if _, ok := secret.Data[SecretAuthHeaderKey]; ok {
 				appRepoAuth.Header = &apprepov1alpha1.AppRepositoryAuthHeader{
 					SecretKeyRef: k8scorev1.SecretKeySelector{
@@ -260,7 +260,7 @@ func validateUserManagedRepoSecret(
 			if secretRefAuth != "" {
 				switch auth.Type {
 				case corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_BEARER,
-					corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_CUSTOM,
+					corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_AUTHORIZATION_HEADER,
 					corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_BASIC_AUTH:
 					if secret.Data[SecretAuthHeaderKey] == nil {
 						return nil, status.Errorf(codes.Internal, "Specified secret [%s] missing key '%s'", secretRef, SecretAuthHeaderKey)
@@ -347,7 +347,7 @@ func getRepoTlsConfigAndAuthWithUserManagedSecrets(source *apprepov1alpha1.AppRe
 			} else if strings.HasPrefix(string(authHeader), "Bearer") {
 				auth.Type = corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_BEARER
 			} else {
-				auth.Type = corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_CUSTOM
+				auth.Type = corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_AUTHORIZATION_HEADER
 			}
 			auth.PackageRepoAuthOneOf = &corev1.PackageRepositoryAuth_SecretRef{
 				SecretRef: &corev1.SecretKeyReference{
@@ -417,7 +417,7 @@ func getRepoTlsConfigAndAuthWithKubeappsManagedSecrets(source *apprepov1alpha1.A
 					Header: RedactedString,
 				}
 			} else {
-				auth.Type = corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_CUSTOM
+				auth.Type = corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_AUTHORIZATION_HEADER
 				auth.PackageRepoAuthOneOf = &corev1.PackageRepositoryAuth_Header{
 					Header: RedactedString,
 				}
