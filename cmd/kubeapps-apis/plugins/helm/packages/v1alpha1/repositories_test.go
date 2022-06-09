@@ -176,6 +176,18 @@ func TestAddPackageRepository(t *testing.T) {
 			statusCode: codes.InvalidArgument,
 		},
 		{
+			name: "check that interval is not used",
+			request: &corev1.AddPackageRepositoryRequest{
+				Name:            "bar",
+				Context:         &corev1.Context{Namespace: "foo", Cluster: KubeappsCluster},
+				Type:            "helm",
+				Url:             "http://example.com",
+				NamespaceScoped: true,
+				Interval:        1,
+			},
+			statusCode: codes.InvalidArgument,
+		},
+		{
 			name:             "simple add package repository scenario (HELM)",
 			request:          addRepoReqSimple("helm"),
 			expectedResponse: addRepoExpectedResp,
@@ -788,6 +800,14 @@ func TestUpdatePackageRepository(t *testing.T) {
 			name: "validate url",
 			requestCustomizer: func(request *corev1.UpdatePackageRepositoryRequest) *corev1.UpdatePackageRepositoryRequest {
 				request.Url = ""
+				return request
+			},
+			expectedStatusCode: codes.InvalidArgument,
+		},
+		{
+			name: "check that interval is not used",
+			requestCustomizer: func(request *corev1.UpdatePackageRepositoryRequest) *corev1.UpdatePackageRepositoryRequest {
+				request.Interval = 1
 				return request
 			},
 			expectedStatusCode: codes.InvalidArgument,
