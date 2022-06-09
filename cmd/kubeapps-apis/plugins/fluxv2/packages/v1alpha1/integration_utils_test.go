@@ -68,6 +68,18 @@ const (
 
 	// same as above but requires TLS
 	podinfo_tls_repo_url = "https://fluxv2plugin-testdata-ssl-svc.default.svc.cluster.local:443"
+
+	// download bitnami index.yaml once, push it to the flux2testdata pod and use
+	// that URL to avoid intermittent
+	// "Failed: failed to fetch Helm repository index: failed to cache index to temporary file: unexpected EOF"
+	// This is the URL of local copy of http://charts.bitnami.com/bitnami/index.yaml.
+	// It gets set up at the time you build the docker image for fluxv2plugin-testdata-app.
+	// Note this solution only avoids having to GET index.yaml,
+	// all the chart .tgz files are still retrieved from bitnami.com
+	in_cluster_bitnami_url = "http://fluxv2plugin-testdata-svc.default.svc.cluster.local:80/bitnami"
+
+	// port forward is done programmatically
+	outside_cluster_bitnami_url = "http://localhost:50057/bitnami"
 )
 
 func checkEnv(t *testing.T) (fluxplugin.FluxV2PackagesServiceClient, fluxplugin.FluxV2RepositoriesServiceClient, error) {
@@ -183,19 +195,15 @@ func getFluxPluginClients(t *testing.T) (fluxplugin.FluxV2PackagesServiceClient,
 
 // This creates a flux helm repository CRD. The usage of this func should be minimized as much as
 // possible in favor of flux Plugin's AddPackageRepository() call
-func kubeAddHelmRepository(t *testing.T, name, url, namespace, secretName string, interval time.Duration) error {
-	t.Logf("+kubeAddHelmRepository(%s,%s)", name, namespace)
+func kubeAddHelmRepository(t *testing.T, name types.NamespacedName, url, secretName string, interval time.Duration) error {
+	t.Logf("+kubeAddHelmRepository(%s)", name)
 	if interval <= 0 {
 		interval = time.Duration(10 * time.Minute)
 	}
 	repo := sourcev1.HelmRepository{
-		TypeMeta: metav1.TypeMeta{
-			Kind:       sourcev1.HelmRepositoryKind,
-			APIVersion: sourcev1.GroupVersion.String(),
-		},
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      name,
-			Namespace: namespace,
+			Name:      name.Name,
+			Namespace: name.Namespace,
 		},
 		Spec: sourcev1.HelmRepositorySpec{
 			URL:      url,
@@ -218,12 +226,12 @@ func kubeAddHelmRepository(t *testing.T, name, url, namespace, secretName string
 	}
 }
 
-func kubeAddHelmRepositoryAndCleanup(t *testing.T, name, url, namespace, secretName string, interval time.Duration) error {
-	t.Logf("+kubeAddHelmRepositoryAndCleanup(%s,%s)", name, namespace)
-	err := kubeAddHelmRepository(t, name, url, namespace, secretName, interval)
+func kubeAddHelmRepositoryAndCleanup(t *testing.T, name types.NamespacedName, url, secretName string, interval time.Duration) error {
+	t.Logf("+kubeAddHelmRepositoryAndCleanup(%s)", name)
+	err := kubeAddHelmRepository(t, name, url, secretName, interval)
 	if err == nil {
 		t.Cleanup(func() {
-			err := kubeDeleteHelmRepository(t, name, namespace)
+			err := kubeDeleteHelmRepository(t, name)
 			if err != nil {
 				t.Logf("Failed to delete helm repository [%s] due to [%v]", name, err)
 			}
@@ -232,8 +240,8 @@ func kubeAddHelmRepositoryAndCleanup(t *testing.T, name, url, namespace, secretN
 	return err
 }
 
-func kubeGetHelmRepository(t *testing.T, name, namespace string) (*sourcev1.HelmRepository, error) {
-	t.Logf("+kubeGetHelmRepository(%s,%s)", name, namespace)
+func kubeGetHelmRepository(t *testing.T, name types.NamespacedName) (*sourcev1.HelmRepository, error) {
+	t.Logf("+kubeGetHelmRepository(%s)", name)
 
 	ctx, cancel := context.WithTimeout(context.Background(), defaultContextTimeout)
 	defer cancel()
@@ -241,18 +249,17 @@ func kubeGetHelmRepository(t *testing.T, name, namespace string) (*sourcev1.Helm
 		return nil, err
 	} else {
 		var repo sourcev1.HelmRepository
-		key := types.NamespacedName{Namespace: namespace, Name: name}
-		if err := ifc.Get(ctx, key, &repo); err != nil {
+		if err := ifc.Get(ctx, name, &repo); err != nil {
 			return nil, err
 		}
 		return &repo, nil
 	}
 }
 
-func kubeWaitUntilHelmRepositoryIsReady(t *testing.T, name, namespace string) error {
-	t.Logf("+kubeWaitUntilHelmRepositoryIsReady(%s,%s)", name, namespace)
+func kubeWaitUntilHelmRepositoryIsReady(t *testing.T, name types.NamespacedName) error {
+	t.Logf("+kubeWaitUntilHelmRepositoryIsReady(%s)", name)
 	defer func() {
-		t.Logf("-kubeWaitUntilHelmRepositoryIsReady(%s,%s)", name, namespace)
+		t.Logf("-kubeWaitUntilHelmRepositoryIsReady(%s)", name)
 	}()
 
 	if ifc, err := kubeGetCtrlClient(); err != nil {
@@ -284,7 +291,7 @@ func kubeWaitUntilHelmRepositoryIsReady(t *testing.T, name, namespace string) er
 						complete, success, reason := isHelmRepositoryReady(*repo)
 						t.Logf("[%d:%d:%d] Got event: type: [%v], name: [%s/%s], complete: [%t], success: [%t], reason: [%s]",
 							hour, minute, second, event.Type, repo.Namespace, repo.Name, complete, success, reason)
-						if name == repo.Name && namespace == repo.Namespace {
+						if name.Name == repo.Name && name.Namespace == repo.Namespace {
 							if complete && success {
 								return nil
 							} else if complete && !success {
@@ -299,12 +306,12 @@ func kubeWaitUntilHelmRepositoryIsReady(t *testing.T, name, namespace string) er
 }
 
 // this should eventually be replaced with flux plugin's DeleteRepository()
-func kubeDeleteHelmRepository(t *testing.T, name, namespace string) error {
-	t.Logf("+kubeDeleteHelmRepository(%s,%s)", name, namespace)
+func kubeDeleteHelmRepository(t *testing.T, name types.NamespacedName) error {
+	t.Logf("+kubeDeleteHelmRepository(%s)", name)
 	repo := &sourcev1.HelmRepository{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      name,
-			Namespace: namespace,
+			Name:      name.Name,
+			Namespace: name.Namespace,
 		},
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), defaultContextTimeout)
@@ -316,29 +323,28 @@ func kubeDeleteHelmRepository(t *testing.T, name, namespace string) error {
 	}
 }
 
-func kubeExistsHelmRepository(t *testing.T, name, namespace string) (bool, error) {
-	t.Logf("+kubeExistsHelmRepository(%s,%s)", name, namespace)
+func kubeExistsHelmRepository(t *testing.T, name types.NamespacedName) (bool, error) {
+	t.Logf("+kubeExistsHelmRepository(%s)", name)
 	ctx, cancel := context.WithTimeout(context.Background(), defaultContextTimeout)
 	defer cancel()
-	key := types.NamespacedName{Name: name, Namespace: namespace}
 	var repo sourcev1.HelmRepository
 	if ifc, err := kubeGetCtrlClient(); err != nil {
 		return false, err
-	} else if err = ifc.Get(ctx, key, &repo); err == nil {
+	} else if err = ifc.Get(ctx, name, &repo); err == nil {
 		return true, nil
 	} else {
 		return false, nil
 	}
 }
 
-func kubeDeleteHelmRelease(t *testing.T, name, namespace string) error {
-	t.Logf("+kubeDeleteHelmRelease(%s,%s)", name, namespace)
+func kubeDeleteHelmRelease(t *testing.T, name types.NamespacedName) error {
+	t.Logf("+kubeDeleteHelmRelease(%s)", name)
 	ctx, cancel := context.WithTimeout(context.Background(), defaultContextTimeout)
 	defer cancel()
 	release := &helmv2.HelmRelease{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      name,
-			Namespace: namespace,
+			Name:      name.Name,
+			Namespace: name.Namespace,
 		},
 	}
 	if ifc, err := kubeGetCtrlClient(); err != nil {
@@ -348,15 +354,14 @@ func kubeDeleteHelmRelease(t *testing.T, name, namespace string) error {
 	}
 }
 
-func kubeExistsHelmRelease(t *testing.T, name, namespace string) (bool, error) {
-	t.Logf("+kubeExistsHelmRelease(%s,%s)", name, namespace)
+func kubeExistsHelmRelease(t *testing.T, name types.NamespacedName) (bool, error) {
+	t.Logf("+kubeExistsHelmRelease(%s)", name)
 	ctx, cancel := context.WithTimeout(context.Background(), defaultContextTimeout)
 	defer cancel()
-	key := types.NamespacedName{Name: name, Namespace: namespace}
 	var rel helmv2.HelmRelease
 	if ifc, err := kubeGetCtrlClient(); err != nil {
 		return false, err
-	} else if err = ifc.Get(ctx, key, &rel); err == nil {
+	} else if err = ifc.Get(ctx, name, &rel); err == nil {
 		return true, nil
 	} else {
 		return false, nil
@@ -407,113 +412,55 @@ func kubeDeleteClusterRole(t *testing.T, name string) error {
 	return typedClient.RbacV1().ClusterRoles().Delete(ctx, name, metav1.DeleteOptions{})
 }
 
-func kubeCreateRole(t *testing.T, name, namespace string, rules []rbacv1.PolicyRule) error {
-	t.Logf("+kubeCreateRole(%s,%s)", name, namespace)
+func kubeCreateRole(t *testing.T, name types.NamespacedName, rules []rbacv1.PolicyRule) error {
+	t.Logf("+kubeCreateRole(%s)", name)
 	typedClient, err := kubeGetTypedClient()
 	if err != nil {
 		return err
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), defaultContextTimeout)
 	defer cancel()
-	_, err = typedClient.RbacV1().Roles(namespace).Create(ctx, &rbacv1.Role{
+	_, err = typedClient.RbacV1().Roles(name.Namespace).Create(ctx, &rbacv1.Role{
 		ObjectMeta: metav1.ObjectMeta{
-			Name: name,
+			Name: name.Name,
 		},
 		Rules: rules,
 	}, metav1.CreateOptions{})
 	return err
 }
 
-func kubeDeleteRole(t *testing.T, name, namespace string) error {
-	t.Logf("+kubeDeleteRole(%s,%s)", name, namespace)
+func kubeDeleteRole(t *testing.T, name types.NamespacedName) error {
+	t.Logf("+kubeDeleteRole(%s)", name)
 	typedClient, err := kubeGetTypedClient()
 	if err != nil {
 		return err
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), defaultContextTimeout)
 	defer cancel()
-	return typedClient.RbacV1().Roles(namespace).Delete(ctx, name, metav1.DeleteOptions{})
+	return typedClient.RbacV1().Roles(name.Name).Delete(ctx, name.Namespace, metav1.DeleteOptions{})
 }
 
-func kubeCreateServiceAccountAndSecret(t *testing.T, name, namespace string) (string, error) {
+func kubeCreateClusterRoleBinding(t *testing.T, name types.NamespacedName, role string) error {
+	t.Logf("+kubeCreateClusterRoleBinding(%s,%s)", name, role)
 	typedClient, err := kubeGetTypedClient()
 	if err != nil {
-		return "", err
+		return err
 	}
+
 	ctx, cancel := context.WithTimeout(context.Background(), defaultContextTimeout)
 	defer cancel()
-	_, err = typedClient.CoreV1().ServiceAccounts(namespace).Create(
-		ctx,
-		&apiv1.ServiceAccount{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      name,
-				Namespace: namespace,
-			},
-		},
-		metav1.CreateOptions{})
-	if err != nil {
-		return "", err
-	}
 
-	secretName := ""
-	for i := 0; i < 10; i++ {
-		ctx, cancel := context.WithTimeout(context.Background(), defaultContextTimeout)
-		defer cancel()
-		svcAccount, err := typedClient.CoreV1().ServiceAccounts(namespace).Get(ctx, name, metav1.GetOptions{})
-		if err != nil {
-			return "", err
-		}
-		if len(svcAccount.Secrets) >= 1 && svcAccount.Secrets[0].Name != "" {
-			secretName = svcAccount.Secrets[0].Name
-			break
-		}
-		t.Logf("Waiting 1s for service account [%s] secret to be set up... [%d/%d]", name, i+1, 10)
-		time.Sleep(1 * time.Second)
-	}
-	if secretName == "" {
-		return "", fmt.Errorf("Service account [%s] has no secrets", name)
-	}
-
-	ctx, cancel = context.WithTimeout(context.Background(), defaultContextTimeout)
-	defer cancel()
-	secret, err := typedClient.CoreV1().Secrets(namespace).Get(
-		ctx,
-		secretName,
-		metav1.GetOptions{})
-	if err != nil {
-		return "", err
-	}
-	token := secret.Data["token"]
-	if token == nil {
-		return "", err
-	} else {
-		return string(token), nil
-	}
-}
-
-func kubeCreateServiceAccountWithClusterRole(t *testing.T, name, namespace, role string) (string, error) {
-	t.Logf("+kubeCreateServiceAccountWithClusterRole(%s,%s,%s)", name, namespace, role)
-	token, err := kubeCreateServiceAccountAndSecret(t, name, namespace)
-	if err != nil {
-		return "", err
-	}
-	typedClient, err := kubeGetTypedClient()
-	if err != nil {
-		return "", err
-	}
-	ctx, cancel := context.WithTimeout(context.Background(), defaultContextTimeout)
-	defer cancel()
 	_, err = typedClient.RbacV1().ClusterRoleBindings().Create(
 		ctx,
 		&rbacv1.ClusterRoleBinding{
 			ObjectMeta: metav1.ObjectMeta{
-				Name: name + "-binding",
+				Name: name.Name + "-binding",
 			},
 			Subjects: []rbacv1.Subject{
 				{
 					Kind:      rbacv1.ServiceAccountKind,
-					Name:      name,
-					Namespace: namespace,
+					Name:      name.Name,
+					Namespace: name.Namespace,
 				},
 			},
 			RoleRef: rbacv1.RoleRef{
@@ -522,37 +469,110 @@ func kubeCreateServiceAccountWithClusterRole(t *testing.T, name, namespace, role
 			},
 		},
 		metav1.CreateOptions{})
-	if err != nil {
-		return "", err
-	}
-	return string(token), nil
+	return err
 }
 
-func kubeCreateServiceAccountWithRoles(t *testing.T, name, namespace string, namespacesToRoles map[string]string) (string, error) {
-	t.Logf("+kubeCreateServiceAccountWithRoles(%s,%s,%s)", name, namespace, namespacesToRoles)
-	token, err := kubeCreateServiceAccountAndSecret(t, name, namespace)
+func kubeCreateServiceAccount(t *testing.T, name types.NamespacedName) error {
+	t.Logf("+kubeCreateServiceAccount(%s)", name)
+	typedClient, err := kubeGetTypedClient()
+	if err != nil {
+		return err
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), defaultContextTimeout)
+	defer cancel()
+
+	_, err = typedClient.CoreV1().ServiceAccounts(name.Namespace).Create(
+		ctx,
+		&apiv1.ServiceAccount{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      name.Name,
+				Namespace: name.Namespace,
+			},
+		},
+		metav1.CreateOptions{})
+	return err
+}
+
+func kubeCreateServiceAccountWithClusterRole(t *testing.T, name types.NamespacedName, role string) (string, error) {
+	t.Logf("+kubeCreateServiceAccountWithClusterRole(%s,%s)", name, role)
+
+	// https://itnext.io/big-change-in-k8s-1-24-about-serviceaccounts-and-their-secrets-4b909a4af4e0
+	// and
+	// https://github.com/vmware-tanzu/kubeapps/pull/4772
+	// it used to be the case that creating service account would automatically create an
+	// associated secret service account token
+	// (per https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/)
+	// but starting with 1.24 it doesn't. So now I do it manually
+	err := kubeCreateServiceAccount(t, name)
 	if err != nil {
 		return "", err
 	}
+
+	err = kubeCreateClusterRoleBinding(t, name, role)
+	if err != nil {
+		return "", err
+	}
+
+	secretName := types.NamespacedName{Name: name.Name + "-token", Namespace: name.Namespace}
+	err = kubeCreateSecret(t, &apiv1.Secret{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      secretName.Name,
+			Namespace: secretName.Namespace,
+			Annotations: map[string]string{
+				apiv1.ServiceAccountNameKey: name.Name,
+			},
+		},
+		Type: apiv1.SecretTypeServiceAccountToken,
+	})
+	if err != nil {
+		return "", err
+	}
+
+	var token string
+	for i := 0; i < 10; i++ {
+		token, err = kubeGetSecretToken(t, secretName, "token")
+		if token != "" && err == nil {
+			break
+		}
+		t.Logf("Waiting 1s for service account token in secret [%s] to be set up... [%d/%d]", secretName, i+1, 10)
+		time.Sleep(1 * time.Second)
+	}
+
+	if token == "" {
+		return "", fmt.Errorf("Failed to get token from secret: [%s]", secretName)
+	}
+	return token, nil
+}
+
+func kubeCreateServiceAccountWithRoles(t *testing.T, name types.NamespacedName, namespacesToRoles map[string]string) (string, error) {
+	t.Logf("+kubeCreateServiceAccountWithRoles(%s,%s)", name, namespacesToRoles)
+	err := kubeCreateServiceAccount(t, name)
+	if err != nil {
+		return "", err
+	}
+
 	typedClient, err := kubeGetTypedClient()
 	if err != nil {
 		return "", err
 	}
-	ctx, cancel := context.WithTimeout(context.Background(), defaultContextTimeout)
-	defer cancel()
+
 	for ns, role := range namespacesToRoles {
+		ctx, cancel := context.WithTimeout(context.Background(), defaultContextTimeout)
+		defer cancel()
+
 		_, err = typedClient.RbacV1().RoleBindings(ns).Create(
 			ctx,
 			&rbacv1.RoleBinding{
 				ObjectMeta: metav1.ObjectMeta{
-					Name:      name + "-binding",
+					Name:      name.Name + "-binding",
 					Namespace: ns,
 				},
 				Subjects: []rbacv1.Subject{
 					{
 						Kind:      rbacv1.ServiceAccountKind,
-						Name:      name,
-						Namespace: namespace,
+						Name:      name.Name,
+						Namespace: name.Namespace,
 					},
 				},
 				RoleRef: rbacv1.RoleRef{
@@ -565,22 +585,51 @@ func kubeCreateServiceAccountWithRoles(t *testing.T, name, namespace string, nam
 			return "", err
 		}
 	}
-	return string(token), nil
+
+	secretName := types.NamespacedName{Name: name.Name + "-token", Namespace: name.Namespace}
+	err = kubeCreateSecret(t, &apiv1.Secret{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      secretName.Name,
+			Namespace: secretName.Namespace,
+			Annotations: map[string]string{
+				apiv1.ServiceAccountNameKey: name.Name,
+			},
+		},
+		Type: apiv1.SecretTypeServiceAccountToken,
+	})
+	if err != nil {
+		return "", err
+	}
+
+	var token string
+	for i := 0; i < 10; i++ {
+		token, err = kubeGetSecretToken(t, secretName, "token")
+		if token != "" && err == nil {
+			break
+		}
+		t.Logf("Waiting 1s for service account token in secret [%s] to be set up... [%d/%d]", secretName, i+1, 10)
+		time.Sleep(1 * time.Second)
+	}
+
+	if token == "" {
+		return "", fmt.Errorf("Failed to get token from secret: [%s]", secretName)
+	}
+	return token, nil
 }
 
 // ref: https://kubernetes.io/docs/reference/access-authn-authz/rbac/#user-facing-roles
 // will create a service account with cluster-admin privs and return the associated
 // Bearer token (base64-encoded)
-func kubeCreateAdminServiceAccount(t *testing.T, name, namespace string) (string, error) {
-	return kubeCreateServiceAccountWithClusterRole(t, name, namespace, "cluster-admin")
+func kubeCreateAdminServiceAccount(t *testing.T, name types.NamespacedName) (string, error) {
+	return kubeCreateServiceAccountWithClusterRole(t, name, "cluster-admin")
 }
 
-func kubeCreateFluxPluginServiceAccount(t *testing.T, name, namespace string) (string, error) {
-	return kubeCreateServiceAccountWithClusterRole(t, name, namespace, "kubeapps:controller:kubeapps-apis-fluxv2-plugin")
+func kubeCreateFluxPluginServiceAccount(t *testing.T, name types.NamespacedName) (string, error) {
+	return kubeCreateServiceAccountWithClusterRole(t, name, "kubeapps:controller:kubeapps-apis-fluxv2-plugin")
 }
 
-func kubeDeleteServiceAccountWithClusterRoleBinding(t *testing.T, name, namespace string) error {
-	t.Logf("+kubeDeleteServiceAccountWithClusterRoleBinding(%s,%s)", name, namespace)
+func kubeDeleteServiceAccountWithClusterRoleBinding(t *testing.T, name types.NamespacedName) error {
+	t.Logf("+kubeDeleteServiceAccountWithClusterRoleBinding(%s)", name)
 	typedClient, err := kubeGetTypedClient()
 	if err != nil {
 		return err
@@ -589,16 +638,16 @@ func kubeDeleteServiceAccountWithClusterRoleBinding(t *testing.T, name, namespac
 	defer cancel()
 	err = typedClient.RbacV1().ClusterRoleBindings().Delete(
 		ctx,
-		name+"-binding",
+		name.Name+"-binding",
 		metav1.DeleteOptions{})
 	if err != nil {
 		return err
 	}
 	ctx, cancel = context.WithTimeout(context.Background(), defaultContextTimeout)
 	defer cancel()
-	err = typedClient.CoreV1().ServiceAccounts(namespace).Delete(
+	err = typedClient.CoreV1().ServiceAccounts(name.Namespace).Delete(
 		ctx,
-		name,
+		name.Name,
 		metav1.DeleteOptions{})
 	if err != nil {
 		return err
@@ -606,8 +655,8 @@ func kubeDeleteServiceAccountWithClusterRoleBinding(t *testing.T, name, namespac
 	return nil
 }
 
-func kubeDeleteServiceAccountWithRoleBindings(t *testing.T, name, namespace string, nsToRole map[string]string) error {
-	t.Logf("+kubeDeleteServiceAccountWithRoleBindings(%s,%s,%s)", name, namespace, nsToRole)
+func kubeDeleteServiceAccountWithRoleBindings(t *testing.T, name types.NamespacedName, nsToRole map[string]string) error {
+	t.Logf("+kubeDeleteServiceAccountWithRoleBindings(%s,%s)", name, nsToRole)
 	typedClient, err := kubeGetTypedClient()
 	if err != nil {
 		return err
@@ -617,7 +666,7 @@ func kubeDeleteServiceAccountWithRoleBindings(t *testing.T, name, namespace stri
 		defer cancel()
 		err = typedClient.RbacV1().RoleBindings(ns).Delete(
 			ctx,
-			name+"-binding",
+			name.Name+"-binding",
 			metav1.DeleteOptions{})
 		if err != nil {
 			return err
@@ -626,9 +675,9 @@ func kubeDeleteServiceAccountWithRoleBindings(t *testing.T, name, namespace stri
 
 	ctx, cancel := context.WithTimeout(context.Background(), defaultContextTimeout)
 	defer cancel()
-	err = typedClient.CoreV1().ServiceAccounts(namespace).Delete(
+	err = typedClient.CoreV1().ServiceAccounts(name.Namespace).Delete(
 		ctx,
-		name,
+		name.Name,
 		metav1.DeleteOptions{})
 	if err != nil {
 		return err
@@ -676,9 +725,9 @@ func kubeDeleteNamespace(t *testing.T, namespace string) error {
 	return err
 }
 
-func kubeGetSecretToken(t *testing.T, namespace, name, dataKey string) (string, error) {
-	t.Logf("+kubeGetSecretToken(%s, %s, %s)", namespace, name, dataKey)
-	if secret, err := kubeGetSecret(t, namespace, name); err == nil && secret != nil {
+func kubeGetSecretToken(t *testing.T, name types.NamespacedName, dataKey string) (string, error) {
+	t.Logf("+kubeGetSecretToken(%s, %s)", name, dataKey)
+	if secret, err := kubeGetSecret(t, name); err == nil && secret != nil {
 		token := secret.Data[dataKey]
 		if token == nil {
 			return "", errors.New("No data found")
@@ -704,46 +753,83 @@ func kubeCreateSecret(t *testing.T, secret *apiv1.Secret) error {
 	return err
 }
 
+func kubeSetSecretOwnerRef(t *testing.T, secretName types.NamespacedName, ownerRepo *sourcev1.HelmRepository) error {
+	t.Logf("+kubeSetSecretOwnerRef(%s, %s)", secretName, ownerRepo.Name)
+	typedClient, err := kubeGetTypedClient()
+	if err != nil {
+		return err
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), defaultContextTimeout)
+	defer cancel()
+
+	secretsInterface := typedClient.CoreV1().Secrets(secretName.Namespace)
+	secret, err := secretsInterface.Get(
+		ctx,
+		secretName.Name,
+		metav1.GetOptions{})
+	if err != nil {
+		return err
+	}
+
+	secret.OwnerReferences = []metav1.OwnerReference{
+		*metav1.NewControllerRef(
+			ownerRepo,
+			schema.GroupVersionKind{
+				Group:   sourcev1.GroupVersion.Group,
+				Version: sourcev1.GroupVersion.Version,
+				Kind:    sourcev1.HelmRepositoryKind,
+			}),
+	}
+
+	if _, err := secretsInterface.Update(ctx, secret, metav1.UpdateOptions{}); err != nil {
+		return err
+	} else {
+		return nil
+	}
+}
+
 func kubeCreateSecretAndCleanup(t *testing.T, secret *apiv1.Secret) error {
-	t.Logf("+kubeCreateSecretAndCleanup(%s, %s)", secret.Namespace, secret.Name)
+	secretName := types.NamespacedName{Name: secret.Name, Namespace: secret.Namespace}
+	t.Logf("+kubeCreateSecretAndCleanup(%s)", secretName)
 	err := kubeCreateSecret(t, secret)
 	if err != nil {
 		return err
 	}
 	t.Cleanup(func() {
-		err := kubeDeleteSecret(t, "default", secret.Name)
+		err := kubeDeleteSecret(t, secretName)
 		if err != nil {
-			t.Logf("Failed to delete secret [%s] due to [%v]", secret.Name, err)
+			t.Logf("Failed to delete secret [%s] due to [%v]", secretName, err)
 		}
 	})
 	return nil
 }
 
-func kubeDeleteSecret(t *testing.T, namespace, name string) error {
-	t.Logf("+kubeDeleteSecret(%s, %s)", namespace, name)
+func kubeDeleteSecret(t *testing.T, name types.NamespacedName) error {
+	t.Logf("+kubeDeleteSecret(%s)", name)
 	typedClient, err := kubeGetTypedClient()
 	if err != nil {
 		return err
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), defaultContextTimeout)
 	defer cancel()
-	return typedClient.CoreV1().Secrets(namespace).Delete(
+	return typedClient.CoreV1().Secrets(name.Namespace).Delete(
 		ctx,
-		name,
+		name.Name,
 		metav1.DeleteOptions{})
 }
 
-func kubeGetSecret(t *testing.T, namespace, name string) (*apiv1.Secret, error) {
-	t.Logf("+kubeGetSecret(%s, %s)", namespace, name)
+func kubeGetSecret(t *testing.T, name types.NamespacedName) (*apiv1.Secret, error) {
+	t.Logf("+kubeGetSecret(%s)", name)
 	typedClient, err := kubeGetTypedClient()
 	if err != nil {
 		return nil, err
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), defaultContextTimeout)
 	defer cancel()
-	secret, err := typedClient.CoreV1().Secrets(namespace).Get(
+	secret, err := typedClient.CoreV1().Secrets(name.Namespace).Get(
 		ctx,
-		name,
+		name.Name,
 		metav1.GetOptions{})
 	if err != nil {
 		return nil, err
@@ -752,15 +838,15 @@ func kubeGetSecret(t *testing.T, namespace, name string) (*apiv1.Secret, error) 
 	}
 }
 
-func kubeExistsSecret(t *testing.T, namespace, name string) (bool, error) {
-	t.Logf("+kubeExistsSecret(%s, %s)", namespace, name)
-	secret, err := kubeGetSecret(t, namespace, name)
+func kubeExistsSecret(t *testing.T, name types.NamespacedName) (bool, error) {
+	t.Logf("+kubeExistsSecret(%s)", name)
+	secret, err := kubeGetSecret(t, name)
 	return err == nil && secret != nil, nil
 }
 
-func kubePortForwardToRedis(t *testing.T) error {
-	t.Logf("+kubePortForwardToRedis")
-	defer t.Logf("-kubePortForwardToRedis")
+func kubePortForwardToPod(t *testing.T, name types.NamespacedName, ports string) error {
+	t.Logf("+kubePortForwardToPod(%s,%s)", name, ports)
+	defer t.Logf("-kubePortForwardToPod")
 	stopChan, readyChan := make(chan struct{}, 1), make(chan struct{}, 1)
 	go func() {
 		if err := func() error {
@@ -770,21 +856,21 @@ func kubePortForwardToRedis(t *testing.T) error {
 			} else if roundTripper, upgrader, err := spdy.RoundTripperFor(config); err != nil {
 				return err
 			} else {
-				path := fmt.Sprintf("/api/v1/namespaces/%s/pods/%s/portforward", "kubeapps", "kubeapps-redis-master-0")
+				path := fmt.Sprintf("/api/v1/namespaces/%s/pods/%s/portforward", name.Namespace, name.Name)
 				hostIP := strings.TrimLeft(config.Host, "htps:/")
 				serverURL := url.URL{Scheme: "https", Path: path, Host: hostIP}
 				dialer := spdy.NewDialer(upgrader, &http.Client{Transport: roundTripper}, http.MethodPost, &serverURL)
 				out, errOut := new(bytes.Buffer), new(bytes.Buffer)
-				if forwarder, err := portforward.New(dialer, []string{"6379"}, stopChan, readyChan, out, errOut); err != nil {
+				if forwarder, err := portforward.New(dialer, []string{ports}, stopChan, readyChan, out, errOut); err != nil {
 					return err
 				} else {
 					go func() {
 						for range readyChan { // Kubernetes will close this channel when it has something to tell us.
 						}
 						if len(errOut.String()) != 0 {
-							t.Errorf("kubePortForwardToRedis: %s", errOut.String())
+							t.Errorf("kubePortForwardToPod:\n%s", errOut.String())
 						} else if len(out.String()) != 0 {
-							t.Logf("kubePortForwardToRedis: %s", out.String())
+							t.Logf("kubePortForwardToPod:\n%s", out.String())
 						}
 					}()
 					if err = forwarder.ForwardPorts(); err != nil { // Locks until stopChan is closed.
@@ -794,7 +880,7 @@ func kubePortForwardToRedis(t *testing.T) error {
 			}
 			return nil
 		}(); err != nil {
-			t.Errorf("%+v", err)
+			t.Error(err)
 		}
 	}()
 	// this will stop the port forwarding
@@ -807,6 +893,23 @@ func kubePortForwardToRedis(t *testing.T) error {
 	case <-time.After(10 * time.Second):
 		return errors.New("failed to start portforward in 10s")
 	}
+}
+
+func kubePortForwardToRedis(t *testing.T) error {
+	t.Logf("+kubePortForwardToRedis")
+	return kubePortForwardToPod(t, types.NamespacedName{
+		Name:      "kubeapps-redis-master-0",
+		Namespace: "kubeapps"},
+		"6379")
+}
+
+func kubePortForwardToFluxTestdataApp(t *testing.T) error {
+	t.Logf("+kubePortForwardToFluxTestdataApp")
+	podName, err := getFluxPluginTestdataPodName()
+	if err != nil {
+		t.Fatal(err)
+	}
+	return kubePortForwardToPod(t, *podName, "50057:80")
 }
 
 // ref https://stackoverflow.com/questions/51686986/how-to-copy-file-to-container-with-kubernetes-client-go
@@ -884,33 +987,33 @@ func newGrpcContext(t *testing.T, token string) context.Context {
 		metadata.Pairs("Authorization", "Bearer "+token))
 }
 
-func newGrpcAdminContext(t *testing.T, name, namespace string) (context.Context, error) {
-	token, err := kubeCreateAdminServiceAccount(t, name, namespace)
+func newGrpcAdminContext(t *testing.T, name types.NamespacedName) (context.Context, error) {
+	token, err := kubeCreateAdminServiceAccount(t, name)
 	if err != nil {
 		return nil, fmt.Errorf("Failed to create service account due to: %+v", err)
 	}
 	t.Cleanup(func() {
-		if err := kubeDeleteServiceAccountWithClusterRoleBinding(t, name, namespace); err != nil {
+		if err := kubeDeleteServiceAccountWithClusterRoleBinding(t, name); err != nil {
 			t.Logf("Failed to delete service account due to: %+v", err)
 		}
 	})
 	return newGrpcContext(t, token), nil
 }
 
-func newGrpcFluxPluginContext(t *testing.T, name, namespace string) (context.Context, error) {
-	token, err := kubeCreateFluxPluginServiceAccount(t, name, namespace)
+func newGrpcFluxPluginContext(t *testing.T, name types.NamespacedName) (context.Context, error) {
+	token, err := kubeCreateFluxPluginServiceAccount(t, name)
 	if err != nil {
 		return nil, fmt.Errorf("Failed to create service account [%s] due to: %+v", name, err)
 	}
 	t.Cleanup(func() {
-		if err := kubeDeleteServiceAccountWithClusterRoleBinding(t, name, namespace); err != nil {
+		if err := kubeDeleteServiceAccountWithClusterRoleBinding(t, name); err != nil {
 			t.Logf("Failed to delete service account [%s] due to: %+v", name, err)
 		}
 	})
 	return newGrpcContext(t, token), nil
 }
 
-func kubectlCanI(t *testing.T, name, namespace, verb, resource, checkThisNamespace string) string {
+func kubectlCanI(t *testing.T, name types.NamespacedName, verb, resource, checkThisNamespace string) string {
 	args := []string{
 		"auth",
 		"can-i",
@@ -919,7 +1022,7 @@ func kubectlCanI(t *testing.T, name, namespace, verb, resource, checkThisNamespa
 		"--namespace",
 		checkThisNamespace,
 		"--as",
-		"system:serviceaccount:" + namespace + ":" + name,
+		"system:serviceaccount:" + name.Namespace + ":" + name.Name,
 	}
 	cmd := exec.Command("kubectl", args...)
 	byteArray, _ := cmd.CombinedOutput()
@@ -928,8 +1031,8 @@ func kubectlCanI(t *testing.T, name, namespace, verb, resource, checkThisNamespa
 	return out
 }
 
-func newGrpcContextForServiceAccountWithoutAccessToAnyNamespace(t *testing.T, name, namespace string) (context.Context, error) {
-	role := name + "-cluster-role"
+func newGrpcContextForServiceAccountWithoutAccessToAnyNamespace(t *testing.T, name types.NamespacedName) (context.Context, error) {
+	role := name.Name + "-cluster-role"
 	if err := kubeCreateClusterRole(t, role); err != nil {
 		t.Fatal(err)
 	}
@@ -939,40 +1042,42 @@ func newGrpcContextForServiceAccountWithoutAccessToAnyNamespace(t *testing.T, na
 		}
 	})
 
-	token, err := kubeCreateServiceAccountWithClusterRole(t, name, namespace, role)
+	token, err := kubeCreateServiceAccountWithClusterRole(t, name, role)
 	if err != nil {
 		t.Fatal(err)
 	}
 	t.Cleanup(func() {
-		if err := kubeDeleteServiceAccountWithClusterRoleBinding(t, name, namespace); err != nil {
+		if err := kubeDeleteServiceAccountWithClusterRoleBinding(t, name); err != nil {
 			t.Logf("Failed to delete service account [%s] due to: %+v", name, err)
 		}
 	})
 	return newGrpcContext(t, token), nil
 }
 
-func newGrpcContextForServiceAccountWithRules(t *testing.T, name, namespace string, namespaceToRules map[string][]rbacv1.PolicyRule) (context.Context, error) {
+func newGrpcContextForServiceAccountWithRules(t *testing.T, name types.NamespacedName, namespaceToRules map[string][]rbacv1.PolicyRule) (context.Context, error) {
 	nsToRole := make(map[string]string)
 	for ns, rules := range namespaceToRules {
-		role := name + "-" + ns + "-role"
-		namespace := ns // somthing funky with using ns inside a t.Cleanup func
-		if err := kubeCreateRole(t, role, ns, rules); err != nil {
+		role := types.NamespacedName{
+			Name:      name.Name + "-" + ns + "-role",
+			Namespace: ns,
+		}
+		if err := kubeCreateRole(t, role, rules); err != nil {
 			t.Fatal(err)
 		}
 		t.Cleanup(func() {
-			if err := kubeDeleteRole(t, role, namespace); err != nil {
-				t.Logf("Failed to delete role [%s/%s] due to: %+v", ns, role, err)
+			if err := kubeDeleteRole(t, role); err != nil {
+				t.Logf("Failed to delete role [%s] due to: %+v", role, err)
 			}
 		})
-		nsToRole[ns] = role
+		nsToRole[ns] = role.Name
 	}
 
-	token, err := kubeCreateServiceAccountWithRoles(t, name, namespace, nsToRole)
+	token, err := kubeCreateServiceAccountWithRoles(t, name, nsToRole)
 	if err != nil {
 		t.Fatal(err)
 	}
 	t.Cleanup(func() {
-		if err := kubeDeleteServiceAccountWithRoleBindings(t, name, namespace, nsToRole); err != nil {
+		if err := kubeDeleteServiceAccountWithRoleBindings(t, name, nsToRole); err != nil {
 			t.Logf("Failed to delete service account [%s] due to: %+v", name, err)
 		}
 	})
@@ -1008,7 +1113,11 @@ func newRedisClientForIntegrationTest(t *testing.T) (*redis.Client, error) {
 	if err := kubePortForwardToRedis(t); err != nil {
 		return nil, fmt.Errorf("kubePortForwardToRedis failed due to %+v", err)
 	}
-	redisPwd, err := kubeGetSecretToken(t, "kubeapps", "kubeapps-redis", "redis-password")
+	name := types.NamespacedName{
+		Name:      "kubeapps-redis",
+		Namespace: "kubeapps",
+	}
+	redisPwd, err := kubeGetSecretToken(t, name, "redis-password")
 	if err != nil {
 		return nil, fmt.Errorf("%v", err)
 	}
@@ -1058,7 +1167,7 @@ func newRedisClientForIntegrationTest(t *testing.T) (*redis.Client, error) {
 func redisReceiveNotificationsLoop(t *testing.T, ch <-chan *redis.Message, sem *semaphore.Weighted, evictedRepos *sets.String) {
 	if totalBitnamiCharts == -1 {
 		t.Errorf("Error: unexpected state: number of charts in bitnami catalog is not initialized")
-		return
+		t.Fail()
 	}
 
 	// this for loop running in the background will signal to the main goroutine
@@ -1106,30 +1215,35 @@ func redisReceiveNotificationsLoop(t *testing.T, ch <-chan *redis.Message, sem *
 	}
 }
 
-func initNumberOfChartsInBitnamiCatalog(t *testing.T) error {
-	t.Logf("+initNumberOfChartsInBitnamiCatalog")
+func usesBitnamiCatalog(t *testing.T) error {
+	t.Logf("+usesBitnamiCatalog")
 
-	bitnamiUrl := "https://charts.bitnami.com/bitnami"
+	if totalBitnamiCharts == -1 {
+		// just need to do this once
+		err := kubePortForwardToFluxTestdataApp(t)
+		if err != nil {
+			return err
+		}
 
-	byteArray, err := httpclient.Get(bitnamiUrl+"/index.yaml", httpclient.New(), nil)
-	if err != nil {
-		return err
+		byteArray, err := httpclient.Get(outside_cluster_bitnami_url+"/index.yaml", httpclient.New(), nil)
+		if err != nil {
+			return err
+		}
+
+		modelRepo := &models.Repo{
+			Namespace: "default",
+			Name:      "bitnami",
+			URL:       outside_cluster_bitnami_url,
+			Type:      "helm",
+		}
+
+		charts, err := helm.ChartsFromIndex(byteArray, modelRepo, true)
+		if err != nil {
+			return err
+		}
+		totalBitnamiCharts = len(charts)
+		t.Logf("-usesBitnamiCatalog: total [%d] charts", totalBitnamiCharts)
 	}
-
-	modelRepo := &models.Repo{
-		Namespace: "default",
-		Name:      "bitnami",
-		URL:       bitnamiUrl,
-		Type:      "helm",
-	}
-
-	charts, err := helm.ChartsFromIndex(byteArray, modelRepo, true)
-	if err != nil {
-		return err
-	}
-
-	totalBitnamiCharts = len(charts)
-	t.Logf("+initNumberOfChartsInBitnamiCatalog: total [%d] charts", totalBitnamiCharts)
 	return nil
 }
 

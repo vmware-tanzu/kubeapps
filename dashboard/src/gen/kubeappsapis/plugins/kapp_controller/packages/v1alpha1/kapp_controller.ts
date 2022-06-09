@@ -38,6 +38,1017 @@ import { BrowserHeaders } from "browser-headers";
 
 export const protobufPackage = "kubeappsapis.plugins.kapp_controller.packages.v1alpha1";
 
+/**
+ * custom fields to support other carvel repository types
+ * this is mirror from https://github.com/vmware-tanzu/carvel-kapp-controller/blob/develop/pkg/apis/kappctrl/v1alpha1/generated.proto
+ * todo -> find a way to define those messages by referencing proto files from kapp_controller rather than duplication
+ */
+export interface PackageRepositoryCustomDetail {
+  fetch?: PackageRepositoryFetch;
+}
+
+export interface PackageRepositoryFetch {
+  imgpkgBundle?: PackageRepositoryImgpkg;
+  image?: PackageRepositoryImage;
+  git?: PackageRepositoryGit;
+  http?: PackageRepositoryHttp;
+  inline?: PackageRepositoryInline;
+}
+
+export interface PackageRepositoryImgpkg {
+  tagSelection?: VersionSelection;
+}
+
+export interface PackageRepositoryImage {
+  tagSelection?: VersionSelection;
+  subPath: string;
+}
+
+export interface PackageRepositoryGit {
+  ref: string;
+  refSelection?: VersionSelection;
+  subPath: string;
+  lfsSkipSmudge: boolean;
+}
+
+export interface PackageRepositoryHttp {
+  subPath: string;
+  sha256: string;
+}
+
+export interface PackageRepositoryInline {
+  paths: { [key: string]: string };
+  pathsFrom: PackageRepositoryInline_Source[];
+}
+
+export interface PackageRepositoryInline_SourceRef {
+  name: string;
+  directoryPath: string;
+}
+
+export interface PackageRepositoryInline_Source {
+  secretRef?: PackageRepositoryInline_SourceRef;
+  configMapRef?: PackageRepositoryInline_SourceRef;
+}
+
+export interface PackageRepositoryInline_PathsEntry {
+  key: string;
+  value: string;
+}
+
+export interface VersionSelection {
+  semver?: VersionSelectionSemver;
+}
+
+export interface VersionSelectionSemver {
+  constraints: string;
+  prereleases?: VersionSelectionSemverPrereleases;
+}
+
+export interface VersionSelectionSemverPrereleases {
+  identifiers: string[];
+}
+
+function createBasePackageRepositoryCustomDetail(): PackageRepositoryCustomDetail {
+  return { fetch: undefined };
+}
+
+export const PackageRepositoryCustomDetail = {
+  encode(
+    message: PackageRepositoryCustomDetail,
+    writer: _m0.Writer = _m0.Writer.create(),
+  ): _m0.Writer {
+    if (message.fetch !== undefined) {
+      PackageRepositoryFetch.encode(message.fetch, writer.uint32(10).fork()).ldelim();
+    }
+    return writer;
+  },
+
+  decode(input: _m0.Reader | Uint8Array, length?: number): PackageRepositoryCustomDetail {
+    const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBasePackageRepositoryCustomDetail();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1:
+          message.fetch = PackageRepositoryFetch.decode(reader, reader.uint32());
+          break;
+        default:
+          reader.skipType(tag & 7);
+          break;
+      }
+    }
+    return message;
+  },
+
+  fromJSON(object: any): PackageRepositoryCustomDetail {
+    return {
+      fetch: isSet(object.fetch) ? PackageRepositoryFetch.fromJSON(object.fetch) : undefined,
+    };
+  },
+
+  toJSON(message: PackageRepositoryCustomDetail): unknown {
+    const obj: any = {};
+    message.fetch !== undefined &&
+      (obj.fetch = message.fetch ? PackageRepositoryFetch.toJSON(message.fetch) : undefined);
+    return obj;
+  },
+
+  fromPartial<I extends Exact<DeepPartial<PackageRepositoryCustomDetail>, I>>(
+    object: I,
+  ): PackageRepositoryCustomDetail {
+    const message = createBasePackageRepositoryCustomDetail();
+    message.fetch =
+      object.fetch !== undefined && object.fetch !== null
+        ? PackageRepositoryFetch.fromPartial(object.fetch)
+        : undefined;
+    return message;
+  },
+};
+
+function createBasePackageRepositoryFetch(): PackageRepositoryFetch {
+  return {
+    imgpkgBundle: undefined,
+    image: undefined,
+    git: undefined,
+    http: undefined,
+    inline: undefined,
+  };
+}
+
+export const PackageRepositoryFetch = {
+  encode(message: PackageRepositoryFetch, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
+    if (message.imgpkgBundle !== undefined) {
+      PackageRepositoryImgpkg.encode(message.imgpkgBundle, writer.uint32(10).fork()).ldelim();
+    }
+    if (message.image !== undefined) {
+      PackageRepositoryImage.encode(message.image, writer.uint32(18).fork()).ldelim();
+    }
+    if (message.git !== undefined) {
+      PackageRepositoryGit.encode(message.git, writer.uint32(26).fork()).ldelim();
+    }
+    if (message.http !== undefined) {
+      PackageRepositoryHttp.encode(message.http, writer.uint32(34).fork()).ldelim();
+    }
+    if (message.inline !== undefined) {
+      PackageRepositoryInline.encode(message.inline, writer.uint32(42).fork()).ldelim();
+    }
+    return writer;
+  },
+
+  decode(input: _m0.Reader | Uint8Array, length?: number): PackageRepositoryFetch {
+    const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBasePackageRepositoryFetch();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1:
+          message.imgpkgBundle = PackageRepositoryImgpkg.decode(reader, reader.uint32());
+          break;
+        case 2:
+          message.image = PackageRepositoryImage.decode(reader, reader.uint32());
+          break;
+        case 3:
+          message.git = PackageRepositoryGit.decode(reader, reader.uint32());
+          break;
+        case 4:
+          message.http = PackageRepositoryHttp.decode(reader, reader.uint32());
+          break;
+        case 5:
+          message.inline = PackageRepositoryInline.decode(reader, reader.uint32());
+          break;
+        default:
+          reader.skipType(tag & 7);
+          break;
+      }
+    }
+    return message;
+  },
+
+  fromJSON(object: any): PackageRepositoryFetch {
+    return {
+      imgpkgBundle: isSet(object.imgpkgBundle)
+        ? PackageRepositoryImgpkg.fromJSON(object.imgpkgBundle)
+        : undefined,
+      image: isSet(object.image) ? PackageRepositoryImage.fromJSON(object.image) : undefined,
+      git: isSet(object.git) ? PackageRepositoryGit.fromJSON(object.git) : undefined,
+      http: isSet(object.http) ? PackageRepositoryHttp.fromJSON(object.http) : undefined,
+      inline: isSet(object.inline) ? PackageRepositoryInline.fromJSON(object.inline) : undefined,
+    };
+  },
+
+  toJSON(message: PackageRepositoryFetch): unknown {
+    const obj: any = {};
+    message.imgpkgBundle !== undefined &&
+      (obj.imgpkgBundle = message.imgpkgBundle
+        ? PackageRepositoryImgpkg.toJSON(message.imgpkgBundle)
+        : undefined);
+    message.image !== undefined &&
+      (obj.image = message.image ? PackageRepositoryImage.toJSON(message.image) : undefined);
+    message.git !== undefined &&
+      (obj.git = message.git ? PackageRepositoryGit.toJSON(message.git) : undefined);
+    message.http !== undefined &&
+      (obj.http = message.http ? PackageRepositoryHttp.toJSON(message.http) : undefined);
+    message.inline !== undefined &&
+      (obj.inline = message.inline ? PackageRepositoryInline.toJSON(message.inline) : undefined);
+    return obj;
+  },
+
+  fromPartial<I extends Exact<DeepPartial<PackageRepositoryFetch>, I>>(
+    object: I,
+  ): PackageRepositoryFetch {
+    const message = createBasePackageRepositoryFetch();
+    message.imgpkgBundle =
+      object.imgpkgBundle !== undefined && object.imgpkgBundle !== null
+        ? PackageRepositoryImgpkg.fromPartial(object.imgpkgBundle)
+        : undefined;
+    message.image =
+      object.image !== undefined && object.image !== null
+        ? PackageRepositoryImage.fromPartial(object.image)
+        : undefined;
+    message.git =
+      object.git !== undefined && object.git !== null
+        ? PackageRepositoryGit.fromPartial(object.git)
+        : undefined;
+    message.http =
+      object.http !== undefined && object.http !== null
+        ? PackageRepositoryHttp.fromPartial(object.http)
+        : undefined;
+    message.inline =
+      object.inline !== undefined && object.inline !== null
+        ? PackageRepositoryInline.fromPartial(object.inline)
+        : undefined;
+    return message;
+  },
+};
+
+function createBasePackageRepositoryImgpkg(): PackageRepositoryImgpkg {
+  return { tagSelection: undefined };
+}
+
+export const PackageRepositoryImgpkg = {
+  encode(message: PackageRepositoryImgpkg, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
+    if (message.tagSelection !== undefined) {
+      VersionSelection.encode(message.tagSelection, writer.uint32(10).fork()).ldelim();
+    }
+    return writer;
+  },
+
+  decode(input: _m0.Reader | Uint8Array, length?: number): PackageRepositoryImgpkg {
+    const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBasePackageRepositoryImgpkg();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1:
+          message.tagSelection = VersionSelection.decode(reader, reader.uint32());
+          break;
+        default:
+          reader.skipType(tag & 7);
+          break;
+      }
+    }
+    return message;
+  },
+
+  fromJSON(object: any): PackageRepositoryImgpkg {
+    return {
+      tagSelection: isSet(object.tagSelection)
+        ? VersionSelection.fromJSON(object.tagSelection)
+        : undefined,
+    };
+  },
+
+  toJSON(message: PackageRepositoryImgpkg): unknown {
+    const obj: any = {};
+    message.tagSelection !== undefined &&
+      (obj.tagSelection = message.tagSelection
+        ? VersionSelection.toJSON(message.tagSelection)
+        : undefined);
+    return obj;
+  },
+
+  fromPartial<I extends Exact<DeepPartial<PackageRepositoryImgpkg>, I>>(
+    object: I,
+  ): PackageRepositoryImgpkg {
+    const message = createBasePackageRepositoryImgpkg();
+    message.tagSelection =
+      object.tagSelection !== undefined && object.tagSelection !== null
+        ? VersionSelection.fromPartial(object.tagSelection)
+        : undefined;
+    return message;
+  },
+};
+
+function createBasePackageRepositoryImage(): PackageRepositoryImage {
+  return { tagSelection: undefined, subPath: "" };
+}
+
+export const PackageRepositoryImage = {
+  encode(message: PackageRepositoryImage, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
+    if (message.tagSelection !== undefined) {
+      VersionSelection.encode(message.tagSelection, writer.uint32(10).fork()).ldelim();
+    }
+    if (message.subPath !== "") {
+      writer.uint32(18).string(message.subPath);
+    }
+    return writer;
+  },
+
+  decode(input: _m0.Reader | Uint8Array, length?: number): PackageRepositoryImage {
+    const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBasePackageRepositoryImage();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1:
+          message.tagSelection = VersionSelection.decode(reader, reader.uint32());
+          break;
+        case 2:
+          message.subPath = reader.string();
+          break;
+        default:
+          reader.skipType(tag & 7);
+          break;
+      }
+    }
+    return message;
+  },
+
+  fromJSON(object: any): PackageRepositoryImage {
+    return {
+      tagSelection: isSet(object.tagSelection)
+        ? VersionSelection.fromJSON(object.tagSelection)
+        : undefined,
+      subPath: isSet(object.subPath) ? String(object.subPath) : "",
+    };
+  },
+
+  toJSON(message: PackageRepositoryImage): unknown {
+    const obj: any = {};
+    message.tagSelection !== undefined &&
+      (obj.tagSelection = message.tagSelection
+        ? VersionSelection.toJSON(message.tagSelection)
+        : undefined);
+    message.subPath !== undefined && (obj.subPath = message.subPath);
+    return obj;
+  },
+
+  fromPartial<I extends Exact<DeepPartial<PackageRepositoryImage>, I>>(
+    object: I,
+  ): PackageRepositoryImage {
+    const message = createBasePackageRepositoryImage();
+    message.tagSelection =
+      object.tagSelection !== undefined && object.tagSelection !== null
+        ? VersionSelection.fromPartial(object.tagSelection)
+        : undefined;
+    message.subPath = object.subPath ?? "";
+    return message;
+  },
+};
+
+function createBasePackageRepositoryGit(): PackageRepositoryGit {
+  return {
+    ref: "",
+    refSelection: undefined,
+    subPath: "",
+    lfsSkipSmudge: false,
+  };
+}
+
+export const PackageRepositoryGit = {
+  encode(message: PackageRepositoryGit, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
+    if (message.ref !== "") {
+      writer.uint32(10).string(message.ref);
+    }
+    if (message.refSelection !== undefined) {
+      VersionSelection.encode(message.refSelection, writer.uint32(18).fork()).ldelim();
+    }
+    if (message.subPath !== "") {
+      writer.uint32(26).string(message.subPath);
+    }
+    if (message.lfsSkipSmudge === true) {
+      writer.uint32(32).bool(message.lfsSkipSmudge);
+    }
+    return writer;
+  },
+
+  decode(input: _m0.Reader | Uint8Array, length?: number): PackageRepositoryGit {
+    const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBasePackageRepositoryGit();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1:
+          message.ref = reader.string();
+          break;
+        case 2:
+          message.refSelection = VersionSelection.decode(reader, reader.uint32());
+          break;
+        case 3:
+          message.subPath = reader.string();
+          break;
+        case 4:
+          message.lfsSkipSmudge = reader.bool();
+          break;
+        default:
+          reader.skipType(tag & 7);
+          break;
+      }
+    }
+    return message;
+  },
+
+  fromJSON(object: any): PackageRepositoryGit {
+    return {
+      ref: isSet(object.ref) ? String(object.ref) : "",
+      refSelection: isSet(object.refSelection)
+        ? VersionSelection.fromJSON(object.refSelection)
+        : undefined,
+      subPath: isSet(object.subPath) ? String(object.subPath) : "",
+      lfsSkipSmudge: isSet(object.lfsSkipSmudge) ? Boolean(object.lfsSkipSmudge) : false,
+    };
+  },
+
+  toJSON(message: PackageRepositoryGit): unknown {
+    const obj: any = {};
+    message.ref !== undefined && (obj.ref = message.ref);
+    message.refSelection !== undefined &&
+      (obj.refSelection = message.refSelection
+        ? VersionSelection.toJSON(message.refSelection)
+        : undefined);
+    message.subPath !== undefined && (obj.subPath = message.subPath);
+    message.lfsSkipSmudge !== undefined && (obj.lfsSkipSmudge = message.lfsSkipSmudge);
+    return obj;
+  },
+
+  fromPartial<I extends Exact<DeepPartial<PackageRepositoryGit>, I>>(
+    object: I,
+  ): PackageRepositoryGit {
+    const message = createBasePackageRepositoryGit();
+    message.ref = object.ref ?? "";
+    message.refSelection =
+      object.refSelection !== undefined && object.refSelection !== null
+        ? VersionSelection.fromPartial(object.refSelection)
+        : undefined;
+    message.subPath = object.subPath ?? "";
+    message.lfsSkipSmudge = object.lfsSkipSmudge ?? false;
+    return message;
+  },
+};
+
+function createBasePackageRepositoryHttp(): PackageRepositoryHttp {
+  return { subPath: "", sha256: "" };
+}
+
+export const PackageRepositoryHttp = {
+  encode(message: PackageRepositoryHttp, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
+    if (message.subPath !== "") {
+      writer.uint32(10).string(message.subPath);
+    }
+    if (message.sha256 !== "") {
+      writer.uint32(18).string(message.sha256);
+    }
+    return writer;
+  },
+
+  decode(input: _m0.Reader | Uint8Array, length?: number): PackageRepositoryHttp {
+    const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBasePackageRepositoryHttp();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1:
+          message.subPath = reader.string();
+          break;
+        case 2:
+          message.sha256 = reader.string();
+          break;
+        default:
+          reader.skipType(tag & 7);
+          break;
+      }
+    }
+    return message;
+  },
+
+  fromJSON(object: any): PackageRepositoryHttp {
+    return {
+      subPath: isSet(object.subPath) ? String(object.subPath) : "",
+      sha256: isSet(object.sha256) ? String(object.sha256) : "",
+    };
+  },
+
+  toJSON(message: PackageRepositoryHttp): unknown {
+    const obj: any = {};
+    message.subPath !== undefined && (obj.subPath = message.subPath);
+    message.sha256 !== undefined && (obj.sha256 = message.sha256);
+    return obj;
+  },
+
+  fromPartial<I extends Exact<DeepPartial<PackageRepositoryHttp>, I>>(
+    object: I,
+  ): PackageRepositoryHttp {
+    const message = createBasePackageRepositoryHttp();
+    message.subPath = object.subPath ?? "";
+    message.sha256 = object.sha256 ?? "";
+    return message;
+  },
+};
+
+function createBasePackageRepositoryInline(): PackageRepositoryInline {
+  return { paths: {}, pathsFrom: [] };
+}
+
+export const PackageRepositoryInline = {
+  encode(message: PackageRepositoryInline, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
+    Object.entries(message.paths).forEach(([key, value]) => {
+      PackageRepositoryInline_PathsEntry.encode(
+        { key: key as any, value },
+        writer.uint32(10).fork(),
+      ).ldelim();
+    });
+    for (const v of message.pathsFrom) {
+      PackageRepositoryInline_Source.encode(v!, writer.uint32(18).fork()).ldelim();
+    }
+    return writer;
+  },
+
+  decode(input: _m0.Reader | Uint8Array, length?: number): PackageRepositoryInline {
+    const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBasePackageRepositoryInline();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1:
+          const entry1 = PackageRepositoryInline_PathsEntry.decode(reader, reader.uint32());
+          if (entry1.value !== undefined) {
+            message.paths[entry1.key] = entry1.value;
+          }
+          break;
+        case 2:
+          message.pathsFrom.push(PackageRepositoryInline_Source.decode(reader, reader.uint32()));
+          break;
+        default:
+          reader.skipType(tag & 7);
+          break;
+      }
+    }
+    return message;
+  },
+
+  fromJSON(object: any): PackageRepositoryInline {
+    return {
+      paths: isObject(object.paths)
+        ? Object.entries(object.paths).reduce<{ [key: string]: string }>((acc, [key, value]) => {
+            acc[key] = String(value);
+            return acc;
+          }, {})
+        : {},
+      pathsFrom: Array.isArray(object?.pathsFrom)
+        ? object.pathsFrom.map((e: any) => PackageRepositoryInline_Source.fromJSON(e))
+        : [],
+    };
+  },
+
+  toJSON(message: PackageRepositoryInline): unknown {
+    const obj: any = {};
+    obj.paths = {};
+    if (message.paths) {
+      Object.entries(message.paths).forEach(([k, v]) => {
+        obj.paths[k] = v;
+      });
+    }
+    if (message.pathsFrom) {
+      obj.pathsFrom = message.pathsFrom.map(e =>
+        e ? PackageRepositoryInline_Source.toJSON(e) : undefined,
+      );
+    } else {
+      obj.pathsFrom = [];
+    }
+    return obj;
+  },
+
+  fromPartial<I extends Exact<DeepPartial<PackageRepositoryInline>, I>>(
+    object: I,
+  ): PackageRepositoryInline {
+    const message = createBasePackageRepositoryInline();
+    message.paths = Object.entries(object.paths ?? {}).reduce<{
+      [key: string]: string;
+    }>((acc, [key, value]) => {
+      if (value !== undefined) {
+        acc[key] = String(value);
+      }
+      return acc;
+    }, {});
+    message.pathsFrom =
+      object.pathsFrom?.map(e => PackageRepositoryInline_Source.fromPartial(e)) || [];
+    return message;
+  },
+};
+
+function createBasePackageRepositoryInline_SourceRef(): PackageRepositoryInline_SourceRef {
+  return { name: "", directoryPath: "" };
+}
+
+export const PackageRepositoryInline_SourceRef = {
+  encode(
+    message: PackageRepositoryInline_SourceRef,
+    writer: _m0.Writer = _m0.Writer.create(),
+  ): _m0.Writer {
+    if (message.name !== "") {
+      writer.uint32(10).string(message.name);
+    }
+    if (message.directoryPath !== "") {
+      writer.uint32(18).string(message.directoryPath);
+    }
+    return writer;
+  },
+
+  decode(input: _m0.Reader | Uint8Array, length?: number): PackageRepositoryInline_SourceRef {
+    const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBasePackageRepositoryInline_SourceRef();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1:
+          message.name = reader.string();
+          break;
+        case 2:
+          message.directoryPath = reader.string();
+          break;
+        default:
+          reader.skipType(tag & 7);
+          break;
+      }
+    }
+    return message;
+  },
+
+  fromJSON(object: any): PackageRepositoryInline_SourceRef {
+    return {
+      name: isSet(object.name) ? String(object.name) : "",
+      directoryPath: isSet(object.directoryPath) ? String(object.directoryPath) : "",
+    };
+  },
+
+  toJSON(message: PackageRepositoryInline_SourceRef): unknown {
+    const obj: any = {};
+    message.name !== undefined && (obj.name = message.name);
+    message.directoryPath !== undefined && (obj.directoryPath = message.directoryPath);
+    return obj;
+  },
+
+  fromPartial<I extends Exact<DeepPartial<PackageRepositoryInline_SourceRef>, I>>(
+    object: I,
+  ): PackageRepositoryInline_SourceRef {
+    const message = createBasePackageRepositoryInline_SourceRef();
+    message.name = object.name ?? "";
+    message.directoryPath = object.directoryPath ?? "";
+    return message;
+  },
+};
+
+function createBasePackageRepositoryInline_Source(): PackageRepositoryInline_Source {
+  return { secretRef: undefined, configMapRef: undefined };
+}
+
+export const PackageRepositoryInline_Source = {
+  encode(
+    message: PackageRepositoryInline_Source,
+    writer: _m0.Writer = _m0.Writer.create(),
+  ): _m0.Writer {
+    if (message.secretRef !== undefined) {
+      PackageRepositoryInline_SourceRef.encode(
+        message.secretRef,
+        writer.uint32(10).fork(),
+      ).ldelim();
+    }
+    if (message.configMapRef !== undefined) {
+      PackageRepositoryInline_SourceRef.encode(
+        message.configMapRef,
+        writer.uint32(18).fork(),
+      ).ldelim();
+    }
+    return writer;
+  },
+
+  decode(input: _m0.Reader | Uint8Array, length?: number): PackageRepositoryInline_Source {
+    const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBasePackageRepositoryInline_Source();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1:
+          message.secretRef = PackageRepositoryInline_SourceRef.decode(reader, reader.uint32());
+          break;
+        case 2:
+          message.configMapRef = PackageRepositoryInline_SourceRef.decode(reader, reader.uint32());
+          break;
+        default:
+          reader.skipType(tag & 7);
+          break;
+      }
+    }
+    return message;
+  },
+
+  fromJSON(object: any): PackageRepositoryInline_Source {
+    return {
+      secretRef: isSet(object.secretRef)
+        ? PackageRepositoryInline_SourceRef.fromJSON(object.secretRef)
+        : undefined,
+      configMapRef: isSet(object.configMapRef)
+        ? PackageRepositoryInline_SourceRef.fromJSON(object.configMapRef)
+        : undefined,
+    };
+  },
+
+  toJSON(message: PackageRepositoryInline_Source): unknown {
+    const obj: any = {};
+    message.secretRef !== undefined &&
+      (obj.secretRef = message.secretRef
+        ? PackageRepositoryInline_SourceRef.toJSON(message.secretRef)
+        : undefined);
+    message.configMapRef !== undefined &&
+      (obj.configMapRef = message.configMapRef
+        ? PackageRepositoryInline_SourceRef.toJSON(message.configMapRef)
+        : undefined);
+    return obj;
+  },
+
+  fromPartial<I extends Exact<DeepPartial<PackageRepositoryInline_Source>, I>>(
+    object: I,
+  ): PackageRepositoryInline_Source {
+    const message = createBasePackageRepositoryInline_Source();
+    message.secretRef =
+      object.secretRef !== undefined && object.secretRef !== null
+        ? PackageRepositoryInline_SourceRef.fromPartial(object.secretRef)
+        : undefined;
+    message.configMapRef =
+      object.configMapRef !== undefined && object.configMapRef !== null
+        ? PackageRepositoryInline_SourceRef.fromPartial(object.configMapRef)
+        : undefined;
+    return message;
+  },
+};
+
+function createBasePackageRepositoryInline_PathsEntry(): PackageRepositoryInline_PathsEntry {
+  return { key: "", value: "" };
+}
+
+export const PackageRepositoryInline_PathsEntry = {
+  encode(
+    message: PackageRepositoryInline_PathsEntry,
+    writer: _m0.Writer = _m0.Writer.create(),
+  ): _m0.Writer {
+    if (message.key !== "") {
+      writer.uint32(10).string(message.key);
+    }
+    if (message.value !== "") {
+      writer.uint32(18).string(message.value);
+    }
+    return writer;
+  },
+
+  decode(input: _m0.Reader | Uint8Array, length?: number): PackageRepositoryInline_PathsEntry {
+    const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBasePackageRepositoryInline_PathsEntry();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1:
+          message.key = reader.string();
+          break;
+        case 2:
+          message.value = reader.string();
+          break;
+        default:
+          reader.skipType(tag & 7);
+          break;
+      }
+    }
+    return message;
+  },
+
+  fromJSON(object: any): PackageRepositoryInline_PathsEntry {
+    return {
+      key: isSet(object.key) ? String(object.key) : "",
+      value: isSet(object.value) ? String(object.value) : "",
+    };
+  },
+
+  toJSON(message: PackageRepositoryInline_PathsEntry): unknown {
+    const obj: any = {};
+    message.key !== undefined && (obj.key = message.key);
+    message.value !== undefined && (obj.value = message.value);
+    return obj;
+  },
+
+  fromPartial<I extends Exact<DeepPartial<PackageRepositoryInline_PathsEntry>, I>>(
+    object: I,
+  ): PackageRepositoryInline_PathsEntry {
+    const message = createBasePackageRepositoryInline_PathsEntry();
+    message.key = object.key ?? "";
+    message.value = object.value ?? "";
+    return message;
+  },
+};
+
+function createBaseVersionSelection(): VersionSelection {
+  return { semver: undefined };
+}
+
+export const VersionSelection = {
+  encode(message: VersionSelection, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
+    if (message.semver !== undefined) {
+      VersionSelectionSemver.encode(message.semver, writer.uint32(10).fork()).ldelim();
+    }
+    return writer;
+  },
+
+  decode(input: _m0.Reader | Uint8Array, length?: number): VersionSelection {
+    const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseVersionSelection();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1:
+          message.semver = VersionSelectionSemver.decode(reader, reader.uint32());
+          break;
+        default:
+          reader.skipType(tag & 7);
+          break;
+      }
+    }
+    return message;
+  },
+
+  fromJSON(object: any): VersionSelection {
+    return {
+      semver: isSet(object.semver) ? VersionSelectionSemver.fromJSON(object.semver) : undefined,
+    };
+  },
+
+  toJSON(message: VersionSelection): unknown {
+    const obj: any = {};
+    message.semver !== undefined &&
+      (obj.semver = message.semver ? VersionSelectionSemver.toJSON(message.semver) : undefined);
+    return obj;
+  },
+
+  fromPartial<I extends Exact<DeepPartial<VersionSelection>, I>>(object: I): VersionSelection {
+    const message = createBaseVersionSelection();
+    message.semver =
+      object.semver !== undefined && object.semver !== null
+        ? VersionSelectionSemver.fromPartial(object.semver)
+        : undefined;
+    return message;
+  },
+};
+
+function createBaseVersionSelectionSemver(): VersionSelectionSemver {
+  return { constraints: "", prereleases: undefined };
+}
+
+export const VersionSelectionSemver = {
+  encode(message: VersionSelectionSemver, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
+    if (message.constraints !== "") {
+      writer.uint32(10).string(message.constraints);
+    }
+    if (message.prereleases !== undefined) {
+      VersionSelectionSemverPrereleases.encode(
+        message.prereleases,
+        writer.uint32(18).fork(),
+      ).ldelim();
+    }
+    return writer;
+  },
+
+  decode(input: _m0.Reader | Uint8Array, length?: number): VersionSelectionSemver {
+    const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseVersionSelectionSemver();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1:
+          message.constraints = reader.string();
+          break;
+        case 2:
+          message.prereleases = VersionSelectionSemverPrereleases.decode(reader, reader.uint32());
+          break;
+        default:
+          reader.skipType(tag & 7);
+          break;
+      }
+    }
+    return message;
+  },
+
+  fromJSON(object: any): VersionSelectionSemver {
+    return {
+      constraints: isSet(object.constraints) ? String(object.constraints) : "",
+      prereleases: isSet(object.prereleases)
+        ? VersionSelectionSemverPrereleases.fromJSON(object.prereleases)
+        : undefined,
+    };
+  },
+
+  toJSON(message: VersionSelectionSemver): unknown {
+    const obj: any = {};
+    message.constraints !== undefined && (obj.constraints = message.constraints);
+    message.prereleases !== undefined &&
+      (obj.prereleases = message.prereleases
+        ? VersionSelectionSemverPrereleases.toJSON(message.prereleases)
+        : undefined);
+    return obj;
+  },
+
+  fromPartial<I extends Exact<DeepPartial<VersionSelectionSemver>, I>>(
+    object: I,
+  ): VersionSelectionSemver {
+    const message = createBaseVersionSelectionSemver();
+    message.constraints = object.constraints ?? "";
+    message.prereleases =
+      object.prereleases !== undefined && object.prereleases !== null
+        ? VersionSelectionSemverPrereleases.fromPartial(object.prereleases)
+        : undefined;
+    return message;
+  },
+};
+
+function createBaseVersionSelectionSemverPrereleases(): VersionSelectionSemverPrereleases {
+  return { identifiers: [] };
+}
+
+export const VersionSelectionSemverPrereleases = {
+  encode(
+    message: VersionSelectionSemverPrereleases,
+    writer: _m0.Writer = _m0.Writer.create(),
+  ): _m0.Writer {
+    for (const v of message.identifiers) {
+      writer.uint32(10).string(v!);
+    }
+    return writer;
+  },
+
+  decode(input: _m0.Reader | Uint8Array, length?: number): VersionSelectionSemverPrereleases {
+    const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseVersionSelectionSemverPrereleases();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1:
+          message.identifiers.push(reader.string());
+          break;
+        default:
+          reader.skipType(tag & 7);
+          break;
+      }
+    }
+    return message;
+  },
+
+  fromJSON(object: any): VersionSelectionSemverPrereleases {
+    return {
+      identifiers: Array.isArray(object?.identifiers)
+        ? object.identifiers.map((e: any) => String(e))
+        : [],
+    };
+  },
+
+  toJSON(message: VersionSelectionSemverPrereleases): unknown {
+    const obj: any = {};
+    if (message.identifiers) {
+      obj.identifiers = message.identifiers.map(e => e);
+    } else {
+      obj.identifiers = [];
+    }
+    return obj;
+  },
+
+  fromPartial<I extends Exact<DeepPartial<VersionSelectionSemverPrereleases>, I>>(
+    object: I,
+  ): VersionSelectionSemverPrereleases {
+    const message = createBaseVersionSelectionSemverPrereleases();
+    message.identifiers = object.identifiers?.map(e => e) || [];
+    return message;
+  },
+};
+
 export interface KappControllerPackagesService {
   /** GetAvailablePackageSummaries returns the available packages managed by the 'kapp_controller' plugin */
   GetAvailablePackageSummaries(
@@ -711,7 +1722,20 @@ export type DeepPartial<T> = T extends Builtin
   ? { [K in keyof T]?: DeepPartial<T[K]> }
   : Partial<T>;
 
+type KeysOfUnion<T> = T extends T ? keyof T : never;
+export type Exact<P, I extends P> = P extends Builtin
+  ? P
+  : P & { [K in keyof P]: Exact<P[K], I[K]> } & Record<Exclude<keyof I, KeysOfUnion<P>>, never>;
+
 if (_m0.util.Long !== Long) {
   _m0.util.Long = Long as any;
   _m0.configure();
+}
+
+function isObject(value: any): boolean {
+  return typeof value === "object" && value !== null;
+}
+
+function isSet(value: any): boolean {
+  return value !== null && value !== undefined;
 }

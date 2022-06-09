@@ -81,7 +81,9 @@ function AppList() {
   useEffect(() => {
     // In order to be able to list applications in all namespaces, it's necessary to be able
     // to list/get secrets in all of them.
-    Kube.canI(cluster, "", "secrets", "list", "").then(allowed => setCanSetAllNS(allowed));
+    Kube.canI(cluster, "", "secrets", "list", "")
+      .then(allowed => setCanSetAllNS(allowed))
+      ?.catch(() => setCanSetAllNS(false));
   }, [cluster]);
 
   useEffect(() => {
