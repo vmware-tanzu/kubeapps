@@ -15,7 +15,7 @@ DEV_TAG=${3:?missing dev tag}
 IMG_MODIFIER=${4:-""}
 DOCKER_USERNAME=${5:-""}
 DOCKER_PASSWORD=${6:-""}
-TEST_TIMEOUT_MINUTES=${7:-"4"}
+TEST_TIMEOUT_MINUTES=${7:-4}
 DEX_IP=${8:-"172.18.0.2"}
 ADDITIONAL_CLUSTER_IP=${9:-"172.18.0.3"}
 KAPP_CONTROLLER_VERSION=${10:-"v0.32.0"}
@@ -41,7 +41,7 @@ info "Image tag: ${DEV_TAG}"
 info "Image repo suffix: ${IMG_MODIFIER}"
 info "Dex IP: ${DEX_IP}"
 info "Additional cluster IP : ${ADDITIONAL_CLUSTER_IP}"
-info "Test timeout minutes: ${TEST_TIMEOUT_MINUTES}"
+info "Test timeout: ${TEST_TIMEOUT_MINUTES}"
 info "Cluster Version: $(kubectl version -o json | jq -r '.serverVersion.gitVersion')"
 info "Kubectl Version: $(kubectl version -o json | jq -r '.clientVersion.gitVersion')"
 echo ""

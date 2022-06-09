@@ -33,17 +33,15 @@ deploy-dependencies-for-pinniped: deploy-dex-for-pinniped deploy-openldap-for-pi
 		--from-literal=postgres-password=dev-only-fake-password
 
 deploy-pinniped:
-	kubectl --kubeconfig=${CLUSTER_CONFIG_FOR_PINNIPED} apply -f https://get.pinniped.dev/v0.17.0/install-pinniped-concierge-crds.yaml
-	kubectl --kubeconfig=${CLUSTER_CONFIG_FOR_PINNIPED} apply -f https://get.pinniped.dev/v0.17.0/install-pinniped-concierge.yaml
+	kubectl --kubeconfig=${CLUSTER_CONFIG_FOR_PINNIPED} apply -f https://get.pinniped.dev/v0.12.0/install-pinniped-concierge-crds.yaml
+	kubectl --kubeconfig=${CLUSTER_CONFIG_FOR_PINNIPED} apply -f https://get.pinniped.dev/v0.12.0/install-pinniped-concierge.yaml
 
 deploy-pinniped-additional:
-	kubectl --kubeconfig=${ADDITIONAL_CLUSTER_CONFIG_FOR_PINNIPED} apply -f https://get.pinniped.dev/v0.17.0/install-pinniped-concierge-crds.yaml
-	kubectl --kubeconfig=${ADDITIONAL_CLUSTER_CONFIG_FOR_PINNIPED} apply -f https://get.pinniped.dev/v0.17.0/install-pinniped-concierge.yaml
+	kubectl --kubeconfig=${ADDITIONAL_CLUSTER_CONFIG_FOR_PINNIPED} apply -f https://get.pinniped.dev/v0.12.0/install-pinniped-concierge-crds.yaml
+	kubectl --kubeconfig=${ADDITIONAL_CLUSTER_CONFIG_FOR_PINNIPED} apply -f https://get.pinniped.dev/v0.12.0/install-pinniped-concierge.yaml
 
 add-pinniped-jwt-authenticator:
 	kubectl --kubeconfig=${CLUSTER_CONFIG_FOR_PINNIPED} apply -f ./site/content/docs/latest/reference/manifests/kubeapps-pinniped-jwt-authenticator.yaml
-
-add-pinniped-jwt-authenticator-additional:
 	kubectl --kubeconfig=${ADDITIONAL_CLUSTER_CONFIG_FOR_PINNIPED} apply -f ./site/content/docs/latest/reference/manifests/kubeapps-pinniped-jwt-authenticator.yaml
 
 delete-pinniped-jwt-authenticator:
@@ -55,13 +53,13 @@ delete-pinniped:
 	kubectl --kubeconfig=${ADDITIONAL_CLUSTER_CONFIG_FOR_PINNIPED} delete -f https://get.pinniped.dev/v0.7.0/install-pinniped-concierge.yaml
 
 deploy-dev-kubeapps-for-pinniped:
-	helm --kubeconfig=${CLUSTER_CONFIG_FOR_PINNIPED} upgrade --install kubeapps ./chart/kubeapps --namespace kubeapps --create-namespace \
+	helm --kubeconfig=${CLUSTER_CONFIG_FOR_PINNIPED} install kubeapps ./chart/kubeapps --namespace kubeapps --create-namespace \
 		--values ./site/content/docs/latest/reference/manifests/kubeapps-local-dev-values.yaml \
 		--set pinnipedProxy.enabled=true \
 		--values ./site/content/docs/latest/reference/manifests/kubeapps-local-dev-auth-proxy-values.yaml \
 		--values ./site/content/docs/latest/reference/manifests/kubeapps-local-dev-additional-kind-cluster-for-pinniped.yaml
 
-deploy-dev-for-pinniped: deploy-dependencies-for-pinniped deploy-dev-kubeapps-for-pinniped
+deploy-dev-for-pinniped: deploy-dependencies-for-pinniped deploy-dev-kubeapps-for-pinniped deploy-pinniped-additional
 	@echo "\nYou can now simply open your browser at https://localhost/ to access Kubeapps!"
 	@echo "When logging in, you will be redirected to dex (with a self-signed cert) and can login with email as either of"
 	@echo "  kubeapps-operator@example.com:password"

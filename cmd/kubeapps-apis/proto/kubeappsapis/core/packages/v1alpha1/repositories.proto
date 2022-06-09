@@ -156,13 +156,11 @@ message PackageRepositoryTlsConfig {
 message PackageRepositoryAuth {
   enum PackageRepositoryAuthType {
     PACKAGE_REPOSITORY_AUTH_TYPE_UNSPECIFIED = 0;
-    PACKAGE_REPOSITORY_AUTH_TYPE_BASIC_AUTH = 1;              // uses UsernamePassword
-    PACKAGE_REPOSITORY_AUTH_TYPE_TLS = 2;                     // uses TlsCertKey
-    PACKAGE_REPOSITORY_AUTH_TYPE_BEARER = 3;                  // uses header
-    PACKAGE_REPOSITORY_AUTH_TYPE_AUTHORIZATION_HEADER = 4;    // uses header
-    PACKAGE_REPOSITORY_AUTH_TYPE_DOCKER_CONFIG_JSON = 5;      // uses DockerCredentials
-    PACKAGE_REPOSITORY_AUTH_TYPE_SSH = 6;                     // uses SshCredentials
-    PACKAGE_REPOSITORY_AUTH_TYPE_OPAQUE = 7;                  // uses OpaqueCredentials
+    PACKAGE_REPOSITORY_AUTH_TYPE_BASIC_AUTH = 1;
+    PACKAGE_REPOSITORY_AUTH_TYPE_TLS = 2;
+    PACKAGE_REPOSITORY_AUTH_TYPE_BEARER = 3;
+    PACKAGE_REPOSITORY_AUTH_TYPE_CUSTOM = 4;
+    PACKAGE_REPOSITORY_AUTH_TYPE_DOCKER_CONFIG_JSON = 5;
   }
   PackageRepositoryAuthType type = 1;
 
@@ -182,12 +180,6 @@ message PackageRepositoryAuth {
 
     // a reference to an existing secret
     SecretKeyReference secret_ref = 6;
-
-    // SSH credentials
-    SshCredentials ssh_creds = 8;
-
-    // opaque credentials
-    OpaqueCredentials opaque_creds = 9;
   }
 
   // pass_credentials allows the credentials from the SecretRef to be passed
@@ -228,22 +220,6 @@ message DockerCredentials {
   string password = 3;
   // email address
   string email = 4;
-}
-
-// SshCredentials
-//
-message SshCredentials {
-  // private key
-  string private_key = 1;
-  // known hosts.
-  string known_hosts = 2;
-}
-
-// OpaqueCredentials
-//
-message OpaqueCredentials {
-  // fields
-  map<string,string> data = 1;
 }
 
 // SecretKeyReference

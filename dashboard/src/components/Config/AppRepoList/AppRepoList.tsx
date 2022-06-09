@@ -85,12 +85,16 @@ function AppRepoList() {
   }, [allNS, currentNamespace]);
 
   useEffect(() => {
-    Kube.canI(cluster, "kubeapps.com", "apprepositories", "list", "")
-      .then(allowed => setCanSetAllNS(allowed))
-      ?.catch(() => setCanSetAllNS(false));
-    Kube.canI(kubeappsCluster, "kubeapps.com", "apprepositories", "update", globalReposNamespace)
-      .then(allowed => setCanEditGlobalRepos(allowed))
-      ?.catch(() => setCanEditGlobalRepos(false));
+    Kube.canI(cluster, "kubeapps.com", "apprepositories", "list", "").then(allowed =>
+      setCanSetAllNS(allowed),
+    );
+    Kube.canI(
+      kubeappsCluster,
+      "kubeapps.com",
+      "apprepositories",
+      "update",
+      globalReposNamespace,
+    ).then(allowed => setCanEditGlobalRepos(allowed));
   }, [cluster, kubeappsCluster, kubeappsNamespace, globalReposNamespace]);
 
   const globalRepos: IAppRepository[] = [];

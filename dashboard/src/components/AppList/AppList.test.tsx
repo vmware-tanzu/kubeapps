@@ -45,7 +45,6 @@ beforeEach(() => {
   spyOnUseDispatch = jest.spyOn(ReactRedux, "useDispatch").mockReturnValue(mockDispatch);
   Kube.canI = jest.fn().mockReturnValue({
     then: jest.fn(f => f(true)),
-    catch: jest.fn(f => f(false)),
   });
 });
 
@@ -127,7 +126,6 @@ context("when changing props", () => {
   it("should hide the all-namespace switch if the user doesn't have permissions", async () => {
     Kube.canI = jest.fn().mockReturnValue({
       then: jest.fn((f: any) => f(false)),
-      catch: jest.fn(f => f(false)),
     });
     const wrapper = mountWrapper(defaultStore, <AppList />);
     expect(wrapper.find("input[type='checkbox']")).not.toExist();

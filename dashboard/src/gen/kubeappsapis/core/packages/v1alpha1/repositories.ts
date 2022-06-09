@@ -127,10 +127,6 @@ export interface PackageRepositoryAuth {
   header: string | undefined;
   /** a reference to an existing secret */
   secretRef?: SecretKeyReference | undefined;
-  /** SSH credentials */
-  sshCreds?: SshCredentials | undefined;
-  /** opaque credentials */
-  opaqueCreds?: OpaqueCredentials | undefined;
   /**
    * pass_credentials allows the credentials from the SecretRef to be passed
    * on to a host that does not match the host as defined in URL.
@@ -144,20 +140,11 @@ export interface PackageRepositoryAuth {
 
 export enum PackageRepositoryAuth_PackageRepositoryAuthType {
   PACKAGE_REPOSITORY_AUTH_TYPE_UNSPECIFIED = 0,
-  /** PACKAGE_REPOSITORY_AUTH_TYPE_BASIC_AUTH - uses UsernamePassword */
   PACKAGE_REPOSITORY_AUTH_TYPE_BASIC_AUTH = 1,
-  /** PACKAGE_REPOSITORY_AUTH_TYPE_TLS - uses TlsCertKey */
   PACKAGE_REPOSITORY_AUTH_TYPE_TLS = 2,
-  /** PACKAGE_REPOSITORY_AUTH_TYPE_BEARER - uses header */
   PACKAGE_REPOSITORY_AUTH_TYPE_BEARER = 3,
-  /** PACKAGE_REPOSITORY_AUTH_TYPE_AUTHORIZATION_HEADER - uses header */
-  PACKAGE_REPOSITORY_AUTH_TYPE_AUTHORIZATION_HEADER = 4,
-  /** PACKAGE_REPOSITORY_AUTH_TYPE_DOCKER_CONFIG_JSON - uses DockerCredentials */
+  PACKAGE_REPOSITORY_AUTH_TYPE_CUSTOM = 4,
   PACKAGE_REPOSITORY_AUTH_TYPE_DOCKER_CONFIG_JSON = 5,
-  /** PACKAGE_REPOSITORY_AUTH_TYPE_SSH - uses SshCredentials */
-  PACKAGE_REPOSITORY_AUTH_TYPE_SSH = 6,
-  /** PACKAGE_REPOSITORY_AUTH_TYPE_OPAQUE - uses OpaqueCredentials */
-  PACKAGE_REPOSITORY_AUTH_TYPE_OPAQUE = 7,
   UNRECOGNIZED = -1,
 }
 
@@ -178,17 +165,11 @@ export function packageRepositoryAuth_PackageRepositoryAuthTypeFromJSON(
     case "PACKAGE_REPOSITORY_AUTH_TYPE_BEARER":
       return PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_BEARER;
     case 4:
-    case "PACKAGE_REPOSITORY_AUTH_TYPE_AUTHORIZATION_HEADER":
-      return PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_AUTHORIZATION_HEADER;
+    case "PACKAGE_REPOSITORY_AUTH_TYPE_CUSTOM":
+      return PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_CUSTOM;
     case 5:
     case "PACKAGE_REPOSITORY_AUTH_TYPE_DOCKER_CONFIG_JSON":
       return PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_DOCKER_CONFIG_JSON;
-    case 6:
-    case "PACKAGE_REPOSITORY_AUTH_TYPE_SSH":
-      return PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_SSH;
-    case 7:
-    case "PACKAGE_REPOSITORY_AUTH_TYPE_OPAQUE":
-      return PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_OPAQUE;
     case -1:
     case "UNRECOGNIZED":
     default:
@@ -208,14 +189,10 @@ export function packageRepositoryAuth_PackageRepositoryAuthTypeToJSON(
       return "PACKAGE_REPOSITORY_AUTH_TYPE_TLS";
     case PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_BEARER:
       return "PACKAGE_REPOSITORY_AUTH_TYPE_BEARER";
-    case PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_AUTHORIZATION_HEADER:
-      return "PACKAGE_REPOSITORY_AUTH_TYPE_AUTHORIZATION_HEADER";
+    case PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_CUSTOM:
+      return "PACKAGE_REPOSITORY_AUTH_TYPE_CUSTOM";
     case PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_DOCKER_CONFIG_JSON:
       return "PACKAGE_REPOSITORY_AUTH_TYPE_DOCKER_CONFIG_JSON";
-    case PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_SSH:
-      return "PACKAGE_REPOSITORY_AUTH_TYPE_SSH";
-    case PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_OPAQUE:
-      return "PACKAGE_REPOSITORY_AUTH_TYPE_OPAQUE";
     case PackageRepositoryAuth_PackageRepositoryAuthType.UNRECOGNIZED:
     default:
       return "UNRECOGNIZED";
@@ -248,25 +225,6 @@ export interface DockerCredentials {
   password: string;
   /** email address */
   email: string;
-}
-
-/** SshCredentials */
-export interface SshCredentials {
-  /** private key */
-  privateKey: string;
-  /** known hosts. */
-  knownHosts: string;
-}
-
-/** OpaqueCredentials */
-export interface OpaqueCredentials {
-  /** fields */
-  data: { [key: string]: string };
-}
-
-export interface OpaqueCredentials_DataEntry {
-  key: string;
-  value: string;
 }
 
 /** SecretKeyReference */
@@ -855,8 +813,6 @@ function createBasePackageRepositoryAuth(): PackageRepositoryAuth {
     dockerCreds: undefined,
     header: undefined,
     secretRef: undefined,
-    sshCreds: undefined,
-    opaqueCreds: undefined,
     passCredentials: false,
   };
 }
@@ -880,12 +836,6 @@ export const PackageRepositoryAuth = {
     }
     if (message.secretRef !== undefined) {
       SecretKeyReference.encode(message.secretRef, writer.uint32(50).fork()).ldelim();
-    }
-    if (message.sshCreds !== undefined) {
-      SshCredentials.encode(message.sshCreds, writer.uint32(66).fork()).ldelim();
-    }
-    if (message.opaqueCreds !== undefined) {
-      OpaqueCredentials.encode(message.opaqueCreds, writer.uint32(74).fork()).ldelim();
     }
     if (message.passCredentials === true) {
       writer.uint32(56).bool(message.passCredentials);
@@ -918,12 +868,6 @@ export const PackageRepositoryAuth = {
         case 6:
           message.secretRef = SecretKeyReference.decode(reader, reader.uint32());
           break;
-        case 8:
-          message.sshCreds = SshCredentials.decode(reader, reader.uint32());
-          break;
-        case 9:
-          message.opaqueCreds = OpaqueCredentials.decode(reader, reader.uint32());
-          break;
         case 7:
           message.passCredentials = reader.bool();
           break;
@@ -951,10 +895,6 @@ export const PackageRepositoryAuth = {
       secretRef: isSet(object.secretRef)
         ? SecretKeyReference.fromJSON(object.secretRef)
         : undefined,
-      sshCreds: isSet(object.sshCreds) ? SshCredentials.fromJSON(object.sshCreds) : undefined,
-      opaqueCreds: isSet(object.opaqueCreds)
-        ? OpaqueCredentials.fromJSON(object.opaqueCreds)
-        : undefined,
       passCredentials: isSet(object.passCredentials) ? Boolean(object.passCredentials) : false,
     };
   },
@@ -977,12 +917,6 @@ export const PackageRepositoryAuth = {
     message.secretRef !== undefined &&
       (obj.secretRef = message.secretRef
         ? SecretKeyReference.toJSON(message.secretRef)
-        : undefined);
-    message.sshCreds !== undefined &&
-      (obj.sshCreds = message.sshCreds ? SshCredentials.toJSON(message.sshCreds) : undefined);
-    message.opaqueCreds !== undefined &&
-      (obj.opaqueCreds = message.opaqueCreds
-        ? OpaqueCredentials.toJSON(message.opaqueCreds)
         : undefined);
     message.passCredentials !== undefined && (obj.passCredentials = message.passCredentials);
     return obj;
@@ -1009,14 +943,6 @@ export const PackageRepositoryAuth = {
     message.secretRef =
       object.secretRef !== undefined && object.secretRef !== null
         ? SecretKeyReference.fromPartial(object.secretRef)
-        : undefined;
-    message.sshCreds =
-      object.sshCreds !== undefined && object.sshCreds !== null
-        ? SshCredentials.fromPartial(object.sshCreds)
-        : undefined;
-    message.opaqueCreds =
-      object.opaqueCreds !== undefined && object.opaqueCreds !== null
-        ? OpaqueCredentials.fromPartial(object.opaqueCreds)
         : undefined;
     message.passCredentials = object.passCredentials ?? false;
     return message;
@@ -1211,199 +1137,6 @@ export const DockerCredentials = {
     message.username = object.username ?? "";
     message.password = object.password ?? "";
     message.email = object.email ?? "";
-    return message;
-  },
-};
-
-function createBaseSshCredentials(): SshCredentials {
-  return { privateKey: "", knownHosts: "" };
-}
-
-export const SshCredentials = {
-  encode(message: SshCredentials, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
-    if (message.privateKey !== "") {
-      writer.uint32(10).string(message.privateKey);
-    }
-    if (message.knownHosts !== "") {
-      writer.uint32(18).string(message.knownHosts);
-    }
-    return writer;
-  },
-
-  decode(input: _m0.Reader | Uint8Array, length?: number): SshCredentials {
-    const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
-    let end = length === undefined ? reader.len : reader.pos + length;
-    const message = createBaseSshCredentials();
-    while (reader.pos < end) {
-      const tag = reader.uint32();
-      switch (tag >>> 3) {
-        case 1:
-          message.privateKey = reader.string();
-          break;
-        case 2:
-          message.knownHosts = reader.string();
-          break;
-        default:
-          reader.skipType(tag & 7);
-          break;
-      }
-    }
-    return message;
-  },
-
-  fromJSON(object: any): SshCredentials {
-    return {
-      privateKey: isSet(object.privateKey) ? String(object.privateKey) : "",
-      knownHosts: isSet(object.knownHosts) ? String(object.knownHosts) : "",
-    };
-  },
-
-  toJSON(message: SshCredentials): unknown {
-    const obj: any = {};
-    message.privateKey !== undefined && (obj.privateKey = message.privateKey);
-    message.knownHosts !== undefined && (obj.knownHosts = message.knownHosts);
-    return obj;
-  },
-
-  fromPartial<I extends Exact<DeepPartial<SshCredentials>, I>>(object: I): SshCredentials {
-    const message = createBaseSshCredentials();
-    message.privateKey = object.privateKey ?? "";
-    message.knownHosts = object.knownHosts ?? "";
-    return message;
-  },
-};
-
-function createBaseOpaqueCredentials(): OpaqueCredentials {
-  return { data: {} };
-}
-
-export const OpaqueCredentials = {
-  encode(message: OpaqueCredentials, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
-    Object.entries(message.data).forEach(([key, value]) => {
-      OpaqueCredentials_DataEntry.encode(
-        { key: key as any, value },
-        writer.uint32(10).fork(),
-      ).ldelim();
-    });
-    return writer;
-  },
-
-  decode(input: _m0.Reader | Uint8Array, length?: number): OpaqueCredentials {
-    const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
-    let end = length === undefined ? reader.len : reader.pos + length;
-    const message = createBaseOpaqueCredentials();
-    while (reader.pos < end) {
-      const tag = reader.uint32();
-      switch (tag >>> 3) {
-        case 1:
-          const entry1 = OpaqueCredentials_DataEntry.decode(reader, reader.uint32());
-          if (entry1.value !== undefined) {
-            message.data[entry1.key] = entry1.value;
-          }
-          break;
-        default:
-          reader.skipType(tag & 7);
-          break;
-      }
-    }
-    return message;
-  },
-
-  fromJSON(object: any): OpaqueCredentials {
-    return {
-      data: isObject(object.data)
-        ? Object.entries(object.data).reduce<{ [key: string]: string }>((acc, [key, value]) => {
-            acc[key] = String(value);
-            return acc;
-          }, {})
-        : {},
-    };
-  },
-
-  toJSON(message: OpaqueCredentials): unknown {
-    const obj: any = {};
-    obj.data = {};
-    if (message.data) {
-      Object.entries(message.data).forEach(([k, v]) => {
-        obj.data[k] = v;
-      });
-    }
-    return obj;
-  },
-
-  fromPartial<I extends Exact<DeepPartial<OpaqueCredentials>, I>>(object: I): OpaqueCredentials {
-    const message = createBaseOpaqueCredentials();
-    message.data = Object.entries(object.data ?? {}).reduce<{
-      [key: string]: string;
-    }>((acc, [key, value]) => {
-      if (value !== undefined) {
-        acc[key] = String(value);
-      }
-      return acc;
-    }, {});
-    return message;
-  },
-};
-
-function createBaseOpaqueCredentials_DataEntry(): OpaqueCredentials_DataEntry {
-  return { key: "", value: "" };
-}
-
-export const OpaqueCredentials_DataEntry = {
-  encode(
-    message: OpaqueCredentials_DataEntry,
-    writer: _m0.Writer = _m0.Writer.create(),
-  ): _m0.Writer {
-    if (message.key !== "") {
-      writer.uint32(10).string(message.key);
-    }
-    if (message.value !== "") {
-      writer.uint32(18).string(message.value);
-    }
-    return writer;
-  },
-
-  decode(input: _m0.Reader | Uint8Array, length?: number): OpaqueCredentials_DataEntry {
-    const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
-    let end = length === undefined ? reader.len : reader.pos + length;
-    const message = createBaseOpaqueCredentials_DataEntry();
-    while (reader.pos < end) {
-      const tag = reader.uint32();
-      switch (tag >>> 3) {
-        case 1:
-          message.key = reader.string();
-          break;
-        case 2:
-          message.value = reader.string();
-          break;
-        default:
-          reader.skipType(tag & 7);
-          break;
-      }
-    }
-    return message;
-  },
-
-  fromJSON(object: any): OpaqueCredentials_DataEntry {
-    return {
-      key: isSet(object.key) ? String(object.key) : "",
-      value: isSet(object.value) ? String(object.value) : "",
-    };
-  },
-
-  toJSON(message: OpaqueCredentials_DataEntry): unknown {
-    const obj: any = {};
-    message.key !== undefined && (obj.key = message.key);
-    message.value !== undefined && (obj.value = message.value);
-    return obj;
-  },
-
-  fromPartial<I extends Exact<DeepPartial<OpaqueCredentials_DataEntry>, I>>(
-    object: I,
-  ): OpaqueCredentials_DataEntry {
-    const message = createBaseOpaqueCredentials_DataEntry();
-    message.key = object.key ?? "";
-    message.value = object.value ?? "";
     return message;
   },
 };
@@ -2832,10 +2565,6 @@ export type Exact<P, I extends P> = P extends Builtin
 if (_m0.util.Long !== Long) {
   _m0.util.Long = Long as any;
   _m0.configure();
-}
-
-function isObject(value: any): boolean {
-  return typeof value === "object" && value !== null;
 }
 
 function isSet(value: any): boolean {

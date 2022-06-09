@@ -169,21 +169,3 @@ message SetUserManagedSecretsRequest {
 message SetUserManagedSecretsResponse {
   bool value = 1;
 }
-
-// RepositoryCustomDetails
-//
-// Custom details for a Helm repository
-message RepositoryCustomDetails {
-  repeated string docker_registry_secrets = 1;
-  repeated string oci_repositories = 2;
-  RepositoryFilterRule filter_rule = 3;
-  bool perform_validation = 4; // Perform repository validation test
-}
-
-// RepositoryFilterRule
-//
-// JQ expression for filtering packages
-message RepositoryFilterRule {
-  string jq = 1;
-  map<string, string> variables = 4;
-}

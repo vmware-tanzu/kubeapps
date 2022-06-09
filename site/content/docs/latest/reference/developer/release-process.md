@@ -198,9 +198,9 @@ git push origin ${VERSION_NAME} # replace `origin` by your remote name
 > export VERSION_NAME="v$(semver bump <major|minor|patch> $(git fetch --tags && git describe --tags $(git rev-list --tags --max-count=1)))"
 > ```
 
-A new tag pushed to the repository will trigger, apart from the usual test and build steps, a _release_ [workflow](https://circleci.com/gh/kubeapps/workflows) as described in the [CI documentation](../testing/ci.md). An example of the triggered workflow is depicted below:
+A new tag pushed to the repository will trigger, apart from the usual test and build steps, a _release_ [workflow](https://circleci.com/gh/kubeapps/workflows) as described in the [CI documentation](./ci.md). An example of the triggered workflow is depicted below:
 
-![CircleCI workflow after pushing a new tag](../../img/ci-workflow-release.png "CircleCI workflow after pushing a new tag")
+![CircleCI workflow after pushing a new tag](../img/ci-workflow-release.png "CircleCI workflow after pushing a new tag")
 
 > When a new tag is detected, Bitnami will automatically build a set of container images based on the tagged commit. They later will be published in [the Bitnami Dockerhub image registry](https://hub.docker.com/search?q=bitnami%2Fkubeapps&type=image).
 > Please note that this workflow is run outside the control of the Kubeapps release process
@@ -217,7 +217,7 @@ Then, save the draft and **do not publish it yet** and get these notes reviewed 
 
 Since the chart that we host in the Kubeapps repository is only intended for development purposes, we need to synchronize it with the official one in the [bitnami/charts repository](https://github.com/bitnami/charts/tree/master/bitnami/kubeapps).
 
-To this end, our CI system will automatically (in the `sync_chart_to_bitnami` workflow, as described in the [CI documentation](../testing/ci.md).) send a PR with the current development changes to [their repository](https://github.com/bitnami/charts/pulls) whenever a new release is triggered.
+To this end, our CI system will automatically (in the `sync_chart_to_bitnami` workflow, as described in the [CI documentation](./ci.md).) send a PR with the current development changes to [their repository](https://github.com/bitnami/charts/pulls) whenever a new release is triggered.
 Once the PR has been created, have a look at it (eg. remove any development changes that should not be released) and wait for someone from the Bitnami team to review and accept it.
 
 > Some issues can arise here, so please check the app versions are being properly updated at once and ensure you have the latest changes in the PR branch. Note that the [bitnami-bot](https://github.com/bitnami-bot) usually performs some automated commits to the main branch that might collide with the changes in our PR. In particular, it will release a new version of the chart with the updated images.

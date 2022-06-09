@@ -10,7 +10,7 @@ Kubeapps assumes a working Kubernetes cluster (v1.12+) and [`kubectl`](https://k
 
 ## Step 1: Enable Operators support in Kubeapps
 
-Since Kubeapps v2.4.3 (package version 7.8.4), Operators support is deactivated by default.
+Since Kubeapps v2.4.3 (package version 7.8.4), Operators support is disabled by default.
 
 In order to enable it, set up Kubeapps with the following chart value:
 

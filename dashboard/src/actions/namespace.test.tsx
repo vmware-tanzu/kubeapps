@@ -231,10 +231,7 @@ describe("setNamespace", () => {
 
 describe("canCreate", () => {
   it("checks if it can create namespaces", async () => {
-    Kube.canI = jest.fn().mockReturnValue({
-      then: jest.fn(f => f(true)),
-      catch: jest.fn(f => f(false)),
-    });
+    Kube.canI = jest.fn().mockReturnValue(true);
     const expectedActions = [
       {
         type: getType(setAllowCreate),

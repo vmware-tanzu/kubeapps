@@ -4,7 +4,6 @@
 import {
   InstalledPackageDetail,
   AvailablePackageDetail,
-  ResourceRef,
 } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
 import { getStore, mountWrapper } from "shared/specs/mountWrapper";
 import CustomAppView from ".";
@@ -22,7 +21,7 @@ const defaultProps = {
     },
   } as InstalledPackageDetail,
   resourceRefs: {
-    ingresses: [] as ResourceRef[],
+    ingresses: [],
     deployments: [
       {
         cluster: "default",
@@ -32,10 +31,10 @@ const defaultProps = {
         namespaced: true,
         name: "ssh-server-example",
         namespace: "demo-namespace",
-      } as ResourceRef,
-    ] as ResourceRef[],
-    statefulsets: [] as ResourceRef[],
-    daemonsets: [] as ResourceRef[],
+      },
+    ],
+    statefulsets: [],
+    daemonsets: [],
     otherResources: [
       {
         cluster: "default",
@@ -45,8 +44,8 @@ const defaultProps = {
         namespaced: true,
         name: "ssh-server-example-root-pv-claim",
         namespace: "demo-namespace",
-      } as ResourceRef,
-    ] as ResourceRef[],
+      },
+    ],
     services: [
       {
         cluster: "default",
@@ -56,10 +55,10 @@ const defaultProps = {
         namespaced: true,
         name: "ssh-server-example",
         namespace: "demo-namespace",
-      } as ResourceRef,
-    ] as ResourceRef[],
-    secrets: [] as ResourceRef[],
-  } as IAppViewResourceRefs,
+      },
+    ],
+    secrets: [],
+  } as unknown as IAppViewResourceRefs,
   appDetails: {} as AvailablePackageDetail,
 };
 

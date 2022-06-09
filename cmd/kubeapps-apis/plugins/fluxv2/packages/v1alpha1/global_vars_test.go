@@ -972,7 +972,7 @@ var (
 		Type:    "helm",
 		Url:     "http://example.com",
 		Auth: &corev1.PackageRepositoryAuth{
-			Type: corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_AUTHORIZATION_HEADER,
+			Type: corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_CUSTOM,
 			PackageRepoAuthOneOf: &corev1.PackageRepositoryAuth_Header{
 				Header: "foobarzot",
 			},

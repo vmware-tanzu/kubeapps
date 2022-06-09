@@ -19,7 +19,6 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	apiv1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/types"
 )
 
 // This is an integration test: it tests the full integration of flux plugin with flux back-end
@@ -35,42 +34,33 @@ import (
 // The goal is to make sure that the events are processed by the cache fully in the order
 // they were received and the cache does not end up in inconsistent state
 func TestKindClusterAddThenDeleteRepo(t *testing.T) {
-	_, _, err := checkEnv(t)
-	if err != nil {
-		t.Fatal(err)
-	}
+	checkEnv(t)
 
 	redisCli, err := newRedisClientForIntegrationTest(t)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("%+v", err)
 	}
 
 	// now load some large repos (bitnami)
 	// I didn't want to store a large (10MB) copy of bitnami repo in our git,
 	// so for now let it fetch from bitnami website
-	name := types.NamespacedName{
-		Name:      "bitnami-1",
-		Namespace: "default",
-	}
-	if err = usesBitnamiCatalog(t); err != nil {
-		t.Fatal(err)
-	} else if err = kubeAddHelmRepository(t, name, in_cluster_bitnami_url, "", 0); err != nil {
-		t.Fatal(err)
+	if err = kubeAddHelmRepository(t, "bitnami-1", "https://charts.bitnami.com/bitnami", "default", "", 0); err != nil {
+		t.Fatalf("%v", err)
 	}
 	// wait until this repo reaches 'Ready' state so that long indexation process kicks in
-	if err = kubeWaitUntilHelmRepositoryIsReady(t, name); err != nil {
-		t.Fatal(err)
+	if err = kubeWaitUntilHelmRepositoryIsReady(t, "bitnami-1", "default"); err != nil {
+		t.Fatalf("%v", err)
 	}
 
-	if err = kubeDeleteHelmRepository(t, name); err != nil {
-		t.Fatal(err)
+	if err = kubeDeleteHelmRepository(t, "bitnami-1", "default"); err != nil {
+		t.Fatalf("%v", err)
 	}
 
 	t.Logf("Waiting up to 30 seconds...")
 	time.Sleep(30 * time.Second)
 
 	if keys, err := redisCli.Keys(redisCli.Context(), "*").Result(); err != nil {
-		t.Fatal(err)
+		t.Fatalf("%v", err)
 	} else {
 		if len(keys) != 0 {
 			t.Fatalf("Failing due to unexpected state of the cache. Current keys: %s", keys)
@@ -84,32 +74,23 @@ func TestKindClusterRepoWithBasicAuth(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	secretName := types.NamespacedName{
-		Name:      "podinfo-basic-auth-secret-" + randSeq(4),
-		Namespace: "default",
-	}
-	if err := kubeCreateSecretAndCleanup(t, newBasicAuthSecret(secretName, "foo", "bar")); err != nil {
+	secretName := "podinfo-basic-auth-secret-" + randSeq(4)
+	repoName := "podinfo-basic-auth-" + randSeq(4)
+
+	if err := kubeCreateSecretAndCleanup(t, newBasicAuthSecret(secretName, "default", "foo", "bar")); err != nil {
 		t.Fatalf("%v", err)
 	}
 
-	repoName := types.NamespacedName{
-		Name:      "podinfo-basic-auth-" + randSeq(4),
-		Namespace: "default",
-	}
-	if err := kubeAddHelmRepositoryAndCleanup(t, repoName, podinfo_basic_auth_repo_url, secretName.Name, 0); err != nil {
+	if err := kubeAddHelmRepositoryAndCleanup(t, repoName, podinfo_basic_auth_repo_url, "default", secretName, 0); err != nil {
 		t.Fatalf("%v", err)
 	}
 
 	// wait until this repo reaches 'Ready'
-	if err := kubeWaitUntilHelmRepositoryIsReady(t, repoName); err != nil {
+	if err := kubeWaitUntilHelmRepositoryIsReady(t, repoName, "default"); err != nil {
 		t.Fatalf("%v", err)
 	}
 
-	name := types.NamespacedName{
-		Name:      "test-create-admin-basic-auth",
-		Namespace: "default",
-	}
-	grpcContext, err := newGrpcAdminContext(t, name)
+	grpcContext, err := newGrpcAdminContext(t, "test-create-admin-basic-auth", "default")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -134,7 +115,7 @@ func TestKindClusterRepoWithBasicAuth(t *testing.T) {
 				plugins.Plugin{},
 				corev1.PackageAppVersion{})
 			opt2 := cmpopts.SortSlices(lessAvailablePackageFunc)
-			if got, want := resp, available_package_summaries_podinfo_basic_auth(repoName.Name); !cmp.Equal(got, want, opt1, opt2) {
+			if got, want := resp, available_package_summaries_podinfo_basic_auth(repoName); !cmp.Equal(got, want, opt1, opt2) {
 				t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opt1, opt2))
 			}
 			break
@@ -146,15 +127,12 @@ func TestKindClusterRepoWithBasicAuth(t *testing.T) {
 		}
 	}
 
-	availablePackageRef := availableRef(repoName.Name+"/podinfo", repoName.Namespace)
+	availablePackageRef := availableRef(repoName+"/podinfo", "default")
 
 	// first try the negative case, no auth - should fail due to not being able to
 	// read secrets in all namespaces
-	fluxPluginServiceAccount := types.NamespacedName{
-		Name:      "test-repo-with-basic-auth",
-		Namespace: "default",
-	}
-	grpcCtx, err := newGrpcFluxPluginContext(t, fluxPluginServiceAccount)
+	fluxPluginServiceAccount := "test-repo-with-basic-auth"
+	grpcCtx, err := newGrpcFluxPluginContext(t, fluxPluginServiceAccount, "default")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -182,7 +160,7 @@ func TestKindClusterRepoWithBasicAuth(t *testing.T) {
 	compareActualVsExpectedAvailablePackageDetail(
 		t,
 		resp.AvailablePackageDetail,
-		expected_detail_podinfo_basic_auth(repoName.Name).AvailablePackageDetail)
+		expected_detail_podinfo_basic_auth(repoName).AvailablePackageDetail)
 }
 
 func TestKindClusterAddPackageRepository(t *testing.T) {
@@ -224,52 +202,37 @@ func TestKindClusterAddPackageRepository(t *testing.T) {
 			expectedReconcileFailure: true,
 		},
 		{
-			testName: "package repository with basic auth and existing secret",
-			request:  add_repo_req_18,
-			existingSecret: newBasicAuthSecret(types.NamespacedName{
-				Name:      "secret-1",
-				Namespace: "default",
-			}, "foo", "bar"),
+			testName:           "package repository with basic auth and existing secret",
+			request:            add_repo_req_18,
+			existingSecret:     newBasicAuthSecret("secret-1", "default", "foo", "bar"),
 			expectedResponse:   add_repo_expected_resp_5,
 			expectedStatusCode: codes.OK,
 			userManagedSecrets: true,
 		},
 		{
-			testName: "package repository with basic auth and existing secret (kubeapps managed secrets)",
-			request:  add_repo_req_18,
-			existingSecret: newBasicAuthSecret(types.NamespacedName{
-				Name:      "secret-1",
-				Namespace: "default",
-			}, "foo", "bar"),
+			testName:           "package repository with basic auth and existing secret (kubeapps managed secrets)",
+			request:            add_repo_req_18,
+			existingSecret:     newBasicAuthSecret("secret-1", "default", "foo", "bar"),
 			expectedStatusCode: codes.InvalidArgument,
 		},
 		{
-			testName: "package repository with TLS",
-			request:  add_repo_req_19,
-			existingSecret: newTlsSecret(types.NamespacedName{
-				Name:      "secret-2",
-				Namespace: "default",
-			}, pub, priv, ca),
+			testName:           "package repository with TLS",
+			request:            add_repo_req_19,
+			existingSecret:     newTlsSecret("secret-2", "default", pub, priv, ca),
 			expectedResponse:   add_repo_expected_resp_6,
 			expectedStatusCode: codes.OK,
 			userManagedSecrets: true,
 		},
 		{
-			testName: "package repository with TLS (kubeapps managed secrets)",
-			request:  add_repo_req_19,
-			existingSecret: newTlsSecret(types.NamespacedName{
-				Name:      "secret-2",
-				Namespace: "default",
-			}, pub, priv, ca),
+			testName:           "package repository with TLS (kubeapps managed secrets)",
+			request:            add_repo_req_19,
+			existingSecret:     newTlsSecret("secret-2", "default", pub, priv, ca),
 			expectedStatusCode: codes.InvalidArgument,
 		},
 	}
 
-	adminAcctName := types.NamespacedName{
-		Name:      "test-add-repo-admin-" + randSeq(4),
-		Namespace: "default",
-	}
-	grpcContext, err := newGrpcAdminContext(t, adminAcctName)
+	adminAcctName := "test-add-repo-admin-" + randSeq(4)
+	grpcContext, err := newGrpcAdminContext(t, adminAcctName, "default")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -295,10 +258,7 @@ func TestKindClusterAddPackageRepository(t *testing.T) {
 				t.Fatal(err)
 			}
 			t.Cleanup(func() {
-				err := kubeDeleteHelmRepository(t, types.NamespacedName{
-					Name:      tc.request.Name,
-					Namespace: tc.request.Context.Namespace,
-				})
+				err := kubeDeleteHelmRepository(t, tc.request.Name, tc.request.Context.Namespace)
 				if err != nil {
 					t.Logf("Failed to delete helm source due to [%v]", err)
 				}
@@ -313,10 +273,9 @@ func TestKindClusterAddPackageRepository(t *testing.T) {
 				t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opt1))
 			}
 
-			err = kubeWaitUntilHelmRepositoryIsReady(t, types.NamespacedName{
-				Name:      tc.request.Name,
-				Namespace: tc.request.Context.Namespace,
-			})
+			// TODO wait for reconcile. To do it properly, we need "R" in CRUD to be
+			// designed and implemented
+			err = kubeWaitUntilHelmRepositoryIsReady(t, tc.request.Name, tc.request.Context.Namespace)
 			if err != nil && !tc.expectedReconcileFailure {
 				t.Fatal(err)
 			} else if err == nil && tc.expectedReconcileFailure {
@@ -324,14 +283,6 @@ func TestKindClusterAddPackageRepository(t *testing.T) {
 			}
 		})
 	}
-}
-
-func TestKindClusterAddOciPackageRepository(t *testing.T) {
-	_, _, err := checkEnv(t)
-	if err != nil {
-		t.Fatal(err)
-	}
-	// TODO
 }
 
 func TestKindClusterGetPackageRepositoryDetail(t *testing.T) {
@@ -382,10 +333,7 @@ func TestKindClusterGetPackageRepositoryDetail(t *testing.T) {
 			repoUrl:            podinfo_basic_auth_repo_url,
 			expectedStatusCode: codes.OK,
 			expectedResponse:   get_repo_detail_resp_14,
-			existingSecret: newBasicAuthSecret(types.NamespacedName{
-				Name:      "secret-1",
-				Namespace: "TBD",
-			}, "foo", "bar"),
+			existingSecret:     newBasicAuthSecret("secret-1", "TBD", "foo", "bar"),
 			userManagedSecrets: true,
 		},
 		{
@@ -395,10 +343,7 @@ func TestKindClusterGetPackageRepositoryDetail(t *testing.T) {
 			repoUrl:            podinfo_basic_auth_repo_url,
 			expectedStatusCode: codes.OK,
 			expectedResponse:   get_repo_detail_resp_14a,
-			existingSecret: newBasicAuthSecret(types.NamespacedName{
-				Name:      "secret-1",
-				Namespace: "TBD",
-			}, "foo", "bar"),
+			existingSecret:     newBasicAuthSecret("secret-1", "TBD", "foo", "bar"),
 		},
 		{
 			testName:           "get detail returns NotFound error for wrong repo",
@@ -417,20 +362,14 @@ func TestKindClusterGetPackageRepositoryDetail(t *testing.T) {
 		},
 	}
 
-	adminAcctName := types.NamespacedName{
-		Name:      "test-get-repo-admin-" + randSeq(4),
-		Namespace: "default",
-	}
-	grpcAdmin, err := newGrpcAdminContext(t, adminAcctName)
+	adminAcctName := "test-get-repo-admin-" + randSeq(4)
+	grpcAdmin, err := newGrpcAdminContext(t, adminAcctName, "default")
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	loserAcctName := types.NamespacedName{
-		Name:      "test-get-repo-loser-" + randSeq(4),
-		Namespace: "default",
-	}
-	grpcLoser, err := newGrpcContextForServiceAccountWithoutAccessToAnyNamespace(t, loserAcctName)
+	loserAcctName := "test-get-repo-loser-" + randSeq(4)
+	grpcLoser, err := newGrpcContextForServiceAccountWithoutAccessToAnyNamespace(t, loserAcctName, "default")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -451,10 +390,7 @@ func TestKindClusterGetPackageRepositoryDetail(t *testing.T) {
 				secretName = tc.existingSecret.Name
 			}
 
-			if err = kubeAddHelmRepositoryAndCleanup(t, types.NamespacedName{
-				Name:      tc.repoName,
-				Namespace: repoNamespace,
-			}, tc.repoUrl, secretName, 0); err != nil {
+			if err = kubeAddHelmRepositoryAndCleanup(t, tc.repoName, tc.repoUrl, repoNamespace, secretName, 0); err != nil {
 				t.Fatal(err)
 			}
 
@@ -476,15 +412,10 @@ func TestKindClusterGetPackageRepositoryDetail(t *testing.T) {
 
 			var resp *corev1.GetPackageRepositoryDetailResponse
 			for {
-				grpcCtx, cancel = context.WithTimeout(grpcCtx, defaultContextTimeout)
-				defer cancel()
-
 				resp, err = fluxPluginReposClient.GetPackageRepositoryDetail(grpcCtx, tc.request)
-
 				if got, want := status.Code(err), tc.expectedStatusCode; got != want {
-					t.Fatalf("got: %v, want: %v, last repo detail: %v", err, want, resp)
+					t.Fatalf("got: %v, want: %v", err, want)
 				}
-
 				if tc.expectedStatusCode != codes.OK {
 					// we are done
 					return
@@ -599,20 +530,14 @@ func TestKindClusterGetPackageRepositorySummaries(t *testing.T) {
 		},
 	}
 
-	adminAcctName := types.NamespacedName{
-		Name:      "test-get-repo-admin-" + randSeq(4),
-		Namespace: "default",
-	}
-	grpcAdmin, err := newGrpcAdminContext(t, adminAcctName)
+	adminAcctName := "test-get-repo-admin-" + randSeq(4)
+	grpcAdmin, err := newGrpcAdminContext(t, adminAcctName, "default")
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	loserAcctName := types.NamespacedName{
-		Name:      "test-get-repo-loser-" + randSeq(4),
-		Namespace: "default",
-	}
-	grpcLoser, err := newGrpcContextForServiceAccountWithoutAccessToAnyNamespace(t, loserAcctName)
+	loserAcctName := "test-get-repo-loser-" + randSeq(4)
+	grpcLoser, err := newGrpcContextForServiceAccountWithoutAccessToAnyNamespace(t, loserAcctName, "default")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -620,15 +545,12 @@ func TestKindClusterGetPackageRepositorySummaries(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.testName, func(t *testing.T) {
 			for _, repo := range tc.existingRepos {
-				name := types.NamespacedName{
-					Name:      repo.name,
-					Namespace: repo.ns,
-				}
-				if err = kubeAddHelmRepositoryAndCleanup(t, name, repo.url, "", 0); err != nil {
+				name, namespace := repo.name, repo.ns
+				if err = kubeAddHelmRepositoryAndCleanup(t, name, repo.url, namespace, "", 0); err != nil {
 					t.Fatal(err)
 				}
 				// want to wait until all repos reach Ready state
-				err := kubeWaitUntilHelmRepositoryIsReady(t, name)
+				err := kubeWaitUntilHelmRepositoryIsReady(t, name, namespace)
 				if err != nil {
 					t.Fatal(err)
 				}
@@ -726,47 +648,35 @@ func TestKindClusterUpdatePackageRepository(t *testing.T) {
 			userManagedSecrets: true,
 		},
 		{
-			name:     "update url and auth for podinfo package repository (user-managed secrets)",
-			request:  update_repo_req_14,
-			repoName: "my-podinfo-4",
-			repoUrl:  podinfo_repo_url,
-			newSecret: newBasicAuthSecret(types.NamespacedName{
-				Name:      "secret-1",
-				Namespace: "TBD",
-			}, "foo", "bar"),
+			name:               "update url and auth for podinfo package repository (user-managed secrets)",
+			request:            update_repo_req_14,
+			repoName:           "my-podinfo-4",
+			repoUrl:            podinfo_repo_url,
+			newSecret:          newBasicAuthSecret("secret-1", "TBD", "foo", "bar"),
 			expectedResponse:   update_repo_resp_4,
 			expectedDetail:     update_repo_detail_13,
 			userManagedSecrets: true,
 		},
 		{
-			name:     "update repository change from TLS cert/key to basic auth (kubeapps-managed secrets)",
-			request:  update_repo_req_15,
-			repoName: "my-podinfo-5",
-			repoUrl:  podinfo_tls_repo_url,
-			oldSecret: newTlsSecret(types.NamespacedName{
-				Name:      "secret-1",
-				Namespace: "TBD",
-			}, pub, priv, ca),
+			name:               "update repository change from TLS cert/key to basic auth (kubeapps-managed secrets)",
+			request:            update_repo_req_15,
+			repoName:           "my-podinfo-5",
+			repoUrl:            podinfo_tls_repo_url,
+			oldSecret:          newTlsSecret("secret-1", "TBD", pub, priv, ca),
 			expectedStatusCode: codes.OK,
 			expectedResponse:   update_repo_resp_5,
 			expectedDetail:     update_repo_detail_14,
 		},
 	}
 
-	adminAcctName := types.NamespacedName{
-		Name:      "test-update-repo-admin-" + randSeq(4),
-		Namespace: "default",
-	}
-	grpcAdmin, err := newGrpcAdminContext(t, adminAcctName)
+	adminAcctName := "test-update-repo-admin-" + randSeq(4)
+	grpcAdmin, err := newGrpcAdminContext(t, adminAcctName, "default")
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	loserAcctName := types.NamespacedName{
-		Name:      "test-update-repo-loser-" + randSeq(4),
-		Namespace: "default",
-	}
-	grpcLoser, err := newGrpcContextForServiceAccountWithoutAccessToAnyNamespace(t, loserAcctName)
+	loserAcctName := "test-update-repo-loser-" + randSeq(4)
+	grpcLoser, err := newGrpcContextForServiceAccountWithoutAccessToAnyNamespace(t, loserAcctName, "default")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -787,10 +697,7 @@ func TestKindClusterUpdatePackageRepository(t *testing.T) {
 				oldSecretName = tc.oldSecret.GetName()
 				if tc.userManagedSecrets {
 					t.Cleanup(func() {
-						err := kubeDeleteSecret(t, types.NamespacedName{
-							Name:      tc.oldSecret.Name,
-							Namespace: tc.oldSecret.Namespace,
-						})
+						err := kubeDeleteSecret(t, tc.oldSecret.Namespace, tc.oldSecret.Name)
 						if err != nil {
 							t.Logf("Failed to delete secret [%s] due to [%v]", tc.oldSecret.Name, err)
 						}
@@ -804,16 +711,11 @@ func TestKindClusterUpdatePackageRepository(t *testing.T) {
 				}
 			}
 
-			name := types.NamespacedName{
-				Name:      tc.repoName,
-				Namespace: repoNamespace,
-			}
-			if err = kubeAddHelmRepositoryAndCleanup(t, name,
-				tc.repoUrl, oldSecretName, 0); err != nil {
+			if err = kubeAddHelmRepositoryAndCleanup(t, tc.repoName, tc.repoUrl, repoNamespace, oldSecretName, 0); err != nil {
 				t.Fatal(err)
 			}
 			// wait until this repo reaches 'Ready' state so that long indexation process kicks in
-			err := kubeWaitUntilHelmRepositoryIsReady(t, name)
+			err := kubeWaitUntilHelmRepositoryIsReady(t, tc.repoName, repoNamespace)
 			if err != nil {
 				if !tc.failed {
 					t.Fatalf("%v", err)
@@ -933,31 +835,23 @@ func TestKindClusterDeletePackageRepository(t *testing.T) {
 			unauthorized:       true,
 		},
 		{
-			name:     "delete repo also deletes the corresponding secret in kubeapps managed env",
-			request:  delete_repo_req_6,
-			repoName: "my-podinfo-4",
-			repoUrl:  podinfo_basic_auth_repo_url,
-			oldSecret: newBasicAuthSecret(types.NamespacedName{
-				Name:      "secret-1",
-				Namespace: "namespace-1"}, "foo", "bar"),
+			name:               "delete repo also deletes the corresponding secret in kubeapps managed env",
+			request:            delete_repo_req_6,
+			repoName:           "my-podinfo-4",
+			repoUrl:            podinfo_basic_auth_repo_url,
+			oldSecret:          newBasicAuthSecret("secret-1", "namespace-1", "foo", "bar"),
 			expectedStatusCode: codes.OK,
 		},
 	}
 
-	adminAcctName := types.NamespacedName{
-		Name:      "test-delete-repo-admin-" + randSeq(4),
-		Namespace: "default",
-	}
-	grpcAdmin, err := newGrpcAdminContext(t, adminAcctName)
+	adminAcctName := "test-delete-repo-admin-" + randSeq(4)
+	grpcAdmin, err := newGrpcAdminContext(t, adminAcctName, "default")
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	loserAcctName := types.NamespacedName{
-		Name:      "test-delete-repo-loser-" + randSeq(4),
-		Namespace: "default",
-	}
-	grpcLoser, err := newGrpcContextForServiceAccountWithoutAccessToAnyNamespace(t, loserAcctName)
+	loserAcctName := "test-delete-repo-loser-" + randSeq(4)
+	grpcLoser, err := newGrpcContextForServiceAccountWithoutAccessToAnyNamespace(t, loserAcctName, "default")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -978,10 +872,7 @@ func TestKindClusterDeletePackageRepository(t *testing.T) {
 				oldSecretName = tc.oldSecret.GetName()
 				if tc.userManagedSecrets {
 					t.Cleanup(func() {
-						err := kubeDeleteSecret(t,
-							types.NamespacedName{
-								Namespace: tc.oldSecret.Namespace,
-								Name:      tc.oldSecret.Name})
+						err := kubeDeleteSecret(t, tc.oldSecret.Namespace, tc.oldSecret.Name)
 						if err != nil {
 							t.Logf("Failed to delete secret [%s] due to [%v]", tc.oldSecret.Name, err)
 						}
@@ -995,22 +886,10 @@ func TestKindClusterDeletePackageRepository(t *testing.T) {
 				}
 			}
 
-			name := types.NamespacedName{
-				Name:      tc.repoName,
-				Namespace: repoNamespace,
-			}
-			if err = kubeAddHelmRepository(t, name, tc.repoUrl, oldSecretName, 0); err != nil {
+			if err = kubeAddHelmRepository(t, tc.repoName, tc.repoUrl, repoNamespace, oldSecretName, 0); err != nil {
 				t.Fatal(err)
 				// wait until this repo reaches 'Ready' state so that long indexation process kicks in
-			} else if !tc.userManagedSecrets && tc.oldSecret != nil {
-				if repo, err := kubeGetHelmRepository(t, name); err != nil {
-					t.Fatal(err)
-				} else if err = kubeSetSecretOwnerRef(t, types.NamespacedName{
-					Namespace: tc.oldSecret.Namespace,
-					Name:      tc.oldSecret.Name}, repo); err != nil {
-					t.Fatal(err)
-				}
-			} else if err := kubeWaitUntilHelmRepositoryIsReady(t, name); err != nil {
+			} else if err := kubeWaitUntilHelmRepositoryIsReady(t, tc.repoName, repoNamespace); err != nil {
 				if !tc.failed {
 					t.Fatal(err)
 				} else {
@@ -1046,7 +925,7 @@ func TestKindClusterDeletePackageRepository(t *testing.T) {
 
 			const maxWait = 25
 			for i := 0; i <= maxWait; i++ {
-				exists, err := kubeExistsHelmRepository(t, name)
+				exists, err := kubeExistsHelmRepository(t, tc.repoName, repoNamespace)
 				if err != nil {
 					t.Fatal(err)
 				} else if !exists {
@@ -1062,10 +941,7 @@ func TestKindClusterDeletePackageRepository(t *testing.T) {
 			// check the secret is gone too in kubeapps-managed secrets env
 			if !tc.userManagedSecrets && tc.oldSecret != nil {
 				for i := 0; i <= maxWait; i++ {
-					exists, err := kubeExistsSecret(t, types.NamespacedName{
-						Name:      tc.oldSecret.Name,
-						Namespace: repoNamespace,
-					})
+					exists, err := kubeExistsSecret(t, tc.oldSecret.Name, repoNamespace)
 					if err != nil {
 						t.Fatal(err)
 					} else if !exists {
@@ -1091,19 +967,13 @@ func TestKindClusterUpdatePackageRepoSecretUnchanged(t *testing.T) {
 	request := update_repo_req_17
 	repoName := "my-podinfo-6"
 	repoUrl := podinfo_basic_auth_repo_url
-	oldSecret := newBasicAuthSecret(types.NamespacedName{
-		Name:      "secret-1",
-		Namespace: "TBD"}, "foo", "bar")
+	oldSecret := newBasicAuthSecret("secret-1", "TBD", "foo", "bar")
 	expectedStatusCode := codes.OK
 	expectedResponse := update_repo_resp_6
 	expectedDetail := update_repo_detail_16
 	repoNamespace := "test-" + randSeq(4)
-	adminAcctName := types.NamespacedName{
-		Name:      "test-update-repo-admin-" + randSeq(4),
-		Namespace: "default",
-	}
-
-	grpcAdmin, err := newGrpcAdminContext(t, adminAcctName)
+	adminAcctName := "test-update-repo-admin-" + randSeq(4)
+	grpcAdmin, err := newGrpcAdminContext(t, adminAcctName, "default")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -1120,13 +990,9 @@ func TestKindClusterUpdatePackageRepoSecretUnchanged(t *testing.T) {
 		oldSecretName = oldSecret.GetName()
 	}
 
-	name := types.NamespacedName{
-		Name:      repoName,
-		Namespace: repoNamespace,
-	}
-	if err = kubeAddHelmRepositoryAndCleanup(t, name, repoUrl, oldSecretName, 0); err != nil {
+	if err = kubeAddHelmRepositoryAndCleanup(t, repoName, repoUrl, repoNamespace, oldSecretName, 0); err != nil {
 		t.Fatal(err)
-	} else if err = kubeWaitUntilHelmRepositoryIsReady(t, name); err != nil {
+	} else if err = kubeWaitUntilHelmRepositoryIsReady(t, repoName, repoNamespace); err != nil {
 		t.Fatal(err)
 	}
 
@@ -1139,18 +1005,13 @@ func TestKindClusterUpdatePackageRepoSecretUnchanged(t *testing.T) {
 	expectedResponse.PackageRepoRef.Context.Namespace = repoNamespace
 	expectedDetail.Detail.PackageRepoRef.Context.Namespace = repoNamespace
 
-	repoBeforeUpdate, err := kubeGetHelmRepository(t, types.NamespacedName{
-		Name:      repoName,
-		Namespace: repoNamespace,
-	})
+	repoBeforeUpdate, err := kubeGetHelmRepository(t, repoName, repoNamespace)
 	if err != nil {
 		t.Fatal(err)
 	}
 	repoVersionBeforeUpdate := repoBeforeUpdate.ResourceVersion
 	secretNameBeforeUpdate := repoBeforeUpdate.Spec.SecretRef.Name
-	secretBeforeUpdate, err := kubeGetSecret(t, types.NamespacedName{
-		Namespace: repoNamespace,
-		Name:      secretNameBeforeUpdate})
+	secretBeforeUpdate, err := kubeGetSecret(t, repoNamespace, secretNameBeforeUpdate)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -1183,9 +1044,7 @@ func TestKindClusterUpdatePackageRepoSecretUnchanged(t *testing.T) {
 		t.Fatalf("got: %v, want: %v", err, want)
 	}
 
-	repoAfterUpdate, err := kubeGetHelmRepository(t, types.NamespacedName{
-		Name:      repoName,
-		Namespace: repoNamespace})
+	repoAfterUpdate, err := kubeGetHelmRepository(t, repoName, repoNamespace)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -1197,10 +1056,7 @@ func TestKindClusterUpdatePackageRepoSecretUnchanged(t *testing.T) {
 	if secretNameAfterUpdate != secretNameBeforeUpdate {
 		t.Fatalf("Expected secret to be the same after update")
 	}
-	secretAfterUpdate, err := kubeGetSecret(t, types.NamespacedName{
-		Name:      oldSecretName,
-		Namespace: repoNamespace,
-	})
+	secretAfterUpdate, err := kubeGetSecret(t, repoNamespace, oldSecretName)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -1289,10 +1145,7 @@ func waitForRepoToReconcileWithSuccess(t *testing.T, fluxPluginReposClient v1alp
 		}
 	}
 	if actualDetail.Detail.Status.Reason != corev1.PackageRepositoryStatus_STATUS_REASON_SUCCESS {
-		repo, _ := kubeGetHelmRepository(t, types.NamespacedName{
-			Name:      name,
-			Namespace: namespace,
-		})
+		repo, _ := kubeGetHelmRepository(t, name, namespace)
 		t.Fatalf("Timed out waiting for repository [%q] reconcile successfully after the update:\n%s",
 			name, common.PrettyPrint(repo))
 	}

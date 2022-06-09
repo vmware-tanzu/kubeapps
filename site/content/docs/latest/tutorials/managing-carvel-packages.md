@@ -273,7 +273,7 @@ Succeeded
 
 ## Conclusions
 
-This guide has covered how to manage Carvel Packages in Kubeapps, starting from [how to configure Kubeapps itself](#configuring-kubeapps-to-support-carvel-packages), then how to [add Carvel Packages Repositories](#installing-a-package-repository), next [how to browse and install Carvel Packages](#installing-a-package), and finally [how to view the installed Carvel Packages](#viewing-the-installed-packages).
+This guide has covered how to manage Carvel Packages in Kubeapps, starting from [how to configure Kubeapps itself](#configuring-kubeapps-to-support-carvel-packages), then how to [add Carvel Packages Repositories](#installing-a-package-repository), next [how to browse and install Carvel Packages](#installing-a-package), and finally [how to view the installed Carvel Packages](#viewing-the-installed-applications).
 
 Some additional resources and references include:
 

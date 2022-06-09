@@ -515,6 +515,10 @@ func (s *Server) deleteRelease(ctx context.Context, packageRef *corev1.Installed
 // 3. spec.targetNamespace, where flux will install any artifacts from the release
 func (s *Server) newFluxHelmRelease(chart *models.Chart, targetName types.NamespacedName, versionExpr string, reconcile *corev1.ReconciliationOptions, values map[string]interface{}) (*helmv2.HelmRelease, error) {
 	fluxRelease := &helmv2.HelmRelease{
+		TypeMeta: metav1.TypeMeta{
+			Kind:       helmv2.HelmReleaseKind,
+			APIVersion: helmv2.GroupVersion.String(),
+		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      targetName.Name,
 			Namespace: targetName.Namespace,

@@ -34,7 +34,6 @@ beforeEach(() => {
   spyOnUseDispatch = jest.spyOn(ReactRedux, "useDispatch").mockReturnValue(mockDispatch);
   Kube.canI = jest.fn().mockReturnValue({
     then: jest.fn(f => f(true)),
-    catch: jest.fn(f => f(false)),
   });
 });
 
@@ -77,7 +76,6 @@ it("fetches repos from all namespaces (without kubeappsNamespace)", () => {
 it("should hide the all-namespace switch if the user doesn't have permissions", async () => {
   Kube.canI = jest.fn().mockReturnValue({
     then: jest.fn((f: any) => f(false)),
-    catch: jest.fn(f => f(false)),
   });
   const wrapper = mountWrapper(defaultStore, <AppRepoList />);
   expect(wrapper.find("input[type='checkbox']")).not.toExist();
@@ -164,7 +162,6 @@ describe("global and namespaced repositories", () => {
   it("shows the global repositories with the buttons deactivated if the current user is not allowed to modify them", () => {
     Kube.canI = jest.fn().mockReturnValue({
       then: jest.fn((f: any) => f(false)),
-      catch: jest.fn(f => f(false)),
     });
     const wrapper = mountWrapper(
       getStore({

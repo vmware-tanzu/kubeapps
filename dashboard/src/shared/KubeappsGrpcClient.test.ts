@@ -18,26 +18,18 @@ describe("kubeapps grpc client creation", () => {
     const serviceClients = [
       kubeappsGrpcClient.getPluginsServiceClientImpl(),
       kubeappsGrpcClient.getPackagesServiceClientImpl(),
-      kubeappsGrpcClient.getRepositoriesServiceClientImpl(),
-      kubeappsGrpcClient.getResourcesServiceClientImpl(),
     ];
     serviceClients.every(sc => expect(sc).not.toBeNull());
   });
 
   it("should create the clients for each plugin service", async () => {
     const kubeappsGrpcClient = new KubeappsGrpcClient(fakeEmpyTransport);
-    const packagesServiceClients = [
+    const serviceClients = [
       kubeappsGrpcClient.getHelmPackagesServiceClientImpl(),
       kubeappsGrpcClient.getKappControllerPackagesServiceClientImpl(),
       kubeappsGrpcClient.getFluxv2PackagesServiceClientImpl(),
     ];
-    const repositoriesServiceClients = [
-      kubeappsGrpcClient.getHelmRepositoriesServiceClientImpl(),
-      kubeappsGrpcClient.getKappControllerRepositoriesServiceClientImpl(),
-      kubeappsGrpcClient.getFluxV2RepositoriesServiceClientImpl(),
-    ];
-    packagesServiceClients.every(sc => expect(sc).not.toBeNull());
-    repositoriesServiceClients.every(sc => expect(sc).not.toBeNull());
+    serviceClients.every(sc => expect(sc).not.toBeNull());
   });
 });
 

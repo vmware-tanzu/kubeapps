@@ -4222,10 +4222,8 @@
         "PACKAGE_REPOSITORY_AUTH_TYPE_BASIC_AUTH",
         "PACKAGE_REPOSITORY_AUTH_TYPE_TLS",
         "PACKAGE_REPOSITORY_AUTH_TYPE_BEARER",
-        "PACKAGE_REPOSITORY_AUTH_TYPE_AUTHORIZATION_HEADER",
-        "PACKAGE_REPOSITORY_AUTH_TYPE_DOCKER_CONFIG_JSON",
-        "PACKAGE_REPOSITORY_AUTH_TYPE_SSH",
-        "PACKAGE_REPOSITORY_AUTH_TYPE_OPAQUE"
+        "PACKAGE_REPOSITORY_AUTH_TYPE_CUSTOM",
+        "PACKAGE_REPOSITORY_AUTH_TYPE_DOCKER_CONFIG_JSON"
       ],
       "default": "PACKAGE_REPOSITORY_AUTH_TYPE_UNSPECIFIED"
     },
@@ -5050,19 +5048,6 @@
       "description": "Maintainers for the package.",
       "title": "Maintainer"
     },
-    "v1alpha1OpaqueCredentials": {
-      "type": "object",
-      "properties": {
-        "data": {
-          "type": "object",
-          "additionalProperties": {
-            "type": "string"
-          },
-          "title": "fields"
-        }
-      },
-      "title": "OpaqueCredentials"
-    },
     "v1alpha1PackageAppVersion": {
       "type": "object",
       "properties": {
@@ -5105,14 +5090,6 @@
         "secretRef": {
           "$ref": "#/definitions/v1alpha1SecretKeyReference",
           "title": "a reference to an existing secret"
-        },
-        "sshCreds": {
-          "$ref": "#/definitions/v1alpha1SshCredentials",
-          "title": "SSH credentials"
-        },
-        "opaqueCreds": {
-          "$ref": "#/definitions/v1alpha1OpaqueCredentials",
-          "title": "opaque credentials"
         },
         "passCredentials": {
           "type": "boolean",
@@ -5403,20 +5380,6 @@
       "default": "SECRET_TYPE_OPAQUE_UNSPECIFIED",
       "description": "The type of secret. Currently Kubeapps itself only deals with OPAQUE\nand docker config json secrets, but we define all so we can correctly\nlist the secret names with their types.\nSee https://kubernetes.io/docs/concepts/configuration/secret/#secret-types",
       "title": "SecretType"
-    },
-    "v1alpha1SshCredentials": {
-      "type": "object",
-      "properties": {
-        "privateKey": {
-          "type": "string",
-          "title": "private key"
-        },
-        "knownHosts": {
-          "type": "string",
-          "description": "known hosts."
-        }
-      },
-      "title": "SshCredentials"
     },
     "v1alpha1TlsCertKey": {
       "type": "object",

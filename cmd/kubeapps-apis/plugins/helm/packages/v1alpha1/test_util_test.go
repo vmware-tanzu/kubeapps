@@ -4,25 +4,23 @@
 package main
 
 import (
-	"bytes"
+	"crypto/subtle"
 	"encoding/base64"
 	"fmt"
-	"io/ioutil"
-	"net/http"
-	"testing"
-
 	appRepov1 "github.com/vmware-tanzu/kubeapps/cmd/apprepository-controller/pkg/apis/apprepository/v1alpha1"
 	corev1 "github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
 	plugins "github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/core/plugins/v1alpha1"
-	httpclient "github.com/vmware-tanzu/kubeapps/pkg/http-client"
+	"io/ioutil"
 	apiv1 "k8s.io/api/core/v1"
 	apiextv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	apimeta "k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"net/http"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	ctrlfake "sigs.k8s.io/controller-runtime/pkg/client/fake"
+	"testing"
 )
 
 const (
@@ -30,6 +28,7 @@ const (
 	AppRepositoryGroup   = "kubeapps.com"
 	AppRepositoryVersion = "v1alpha1"
 	AppRepositoryApi     = AppRepositoryGroup + "/" + AppRepositoryVersion
+	AppRepositoryKind    = "AppRepository"
 )
 
 // misc global vars that get re-used in multiple tests
@@ -55,10 +54,10 @@ var (
 	}
 )
 
-func repoRef(id, cluster, namespace string) *corev1.PackageRepositoryReference {
+func repoRef(id, namespace string) *corev1.PackageRepositoryReference {
 	return &corev1.PackageRepositoryReference{
 		Context: &corev1.Context{
-			Cluster:   cluster,
+			Cluster:   KubeappsCluster,
 			Namespace: namespace,
 		},
 		Identifier: id,
@@ -66,9 +65,18 @@ func repoRef(id, cluster, namespace string) *corev1.PackageRepositoryReference {
 	}
 }
 
-// these are helpers to compare slices ignoring order
-func lessPackageRepositorySummaryFunc(p1, p2 *corev1.PackageRepositorySummary) bool {
-	return p1.Name < p2.Name
+// ref: https://stackoverflow.com/questions/21936332/idiomatic-way-of-requiring-http-basic-auth-in-go
+func basicAuth(handler http.HandlerFunc, username, password, realm string) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		user, pass, ok := r.BasicAuth()
+		if !ok || subtle.ConstantTimeCompare([]byte(user), []byte(username)) != 1 || subtle.ConstantTimeCompare([]byte(pass), []byte(password)) != 1 {
+			w.Header().Set("WWW-Authenticate", `Basic realm="`+realm+`"`)
+			w.WriteHeader(401)
+			w.Write([]byte("Unauthorised.\n"))
+			return
+		}
+		handler(w, r)
+	}
 }
 
 // ref: https://kubernetes.io/docs/concepts/configuration/secret/#basic-authentication-secret
@@ -92,15 +100,14 @@ func newAuthTokenSecret(name, namespace, token string) *apiv1.Secret {
 	}
 }
 
-func newAuthDockerSecret(name, namespace, jsonData string) *apiv1.Secret {
-	return &apiv1.Secret{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      name,
-			Namespace: namespace,
-		},
-		Type: apiv1.SecretTypeDockerConfigJson,
-		Data: map[string][]byte{
-			".dockerconfigjson": []byte(jsonData),
+func tlsAuth(pub, priv []byte) *corev1.PackageRepositoryAuth {
+	return &corev1.PackageRepositoryAuth{
+		Type: corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_TLS,
+		PackageRepoAuthOneOf: &corev1.PackageRepositoryAuth_TlsCertKey{
+			TlsCertKey: &corev1.TlsCertKey{
+				Cert: string(pub),
+				Key:  string(priv),
+			},
 		},
 	}
 }
@@ -142,36 +149,8 @@ func newTlsSecret(name, namespace string, pub, priv, ca []byte) *apiv1.Secret {
 	return s
 }
 
-func newRepoHttpClient(responses map[string]*http.Response) newRepoClient {
-	return func(appRepo *appRepov1.AppRepository, secret *apiv1.Secret) (httpclient.Client, error) {
-		return &fakeHTTPClient{
-			responses: responses,
-		}, nil
-	}
-}
-
-type fakeHTTPClient struct {
-	responses map[string]*http.Response
-}
-
-func (f *fakeHTTPClient) Do(h *http.Request) (*http.Response, error) {
-	if resp, ok := f.responses[h.URL.String()]; !ok {
-		return nil, fmt.Errorf("url requested '%s' not found in valid responses %v", h.URL.String(), f.responses)
-	} else {
-		return resp, nil
-	}
-}
-
-func httpResponse(statusCode int, body string) *http.Response {
-	return &http.Response{StatusCode: statusCode, Body: ioutil.NopCloser(bytes.NewReader([]byte(body)))}
-}
-
 func testCert(name string) string {
 	return "./testdata/cert/" + name
-}
-
-func testYaml(name string) string {
-	return "./testdata/charts/" + name
 }
 
 // generate-cert.sh script in testdata directory is used to generate these files
@@ -187,7 +166,7 @@ func getCertsForTesting(t *testing.T) (ca, pub, priv []byte) {
 	return ca, pub, priv
 }
 
-func newCtrlClient(repos []*appRepov1.AppRepository) client.WithWatch {
+func newCtrlClient(repos []appRepov1.AppRepository) client.WithWatch {
 	// Register required schema definitions
 	scheme := runtime.NewScheme()
 	appRepov1.AddToScheme(scheme)
@@ -202,11 +181,7 @@ func newCtrlClient(repos []*appRepov1.AppRepository) client.WithWatch {
 	ctrlClientBuilder := ctrlfake.NewClientBuilder().WithScheme(scheme).WithRESTMapper(rm)
 	var initLists []client.ObjectList
 	if len(repos) > 0 {
-		repoInst := make([]appRepov1.AppRepository, len(repos))
-		for i, repo := range repos {
-			repoInst[i] = *repo
-		}
-		initLists = append(initLists, &appRepov1.AppRepositoryList{Items: repoInst})
+		initLists = append(initLists, &appRepov1.AppRepositoryList{Items: repos})
 	}
 	if len(initLists) > 0 {
 		ctrlClientBuilder = ctrlClientBuilder.WithLists(initLists...)

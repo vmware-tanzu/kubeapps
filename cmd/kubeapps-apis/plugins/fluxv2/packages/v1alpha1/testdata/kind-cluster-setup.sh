@@ -10,8 +10,9 @@ set -o errexit
 set -o nounset
 set -o pipefail
 
+TAG=0.0.10
+
 function deploy {
-  TAG=0.0.11
   docker build -t kubeapps/fluxv2plugin-testdata:$TAG .
   # "kubeapps" is the name of the kind cluster
   kind load docker-image kubeapps/fluxv2plugin-testdata:$TAG --name kubeapps
@@ -19,25 +20,12 @@ function deploy {
   kubectl set env deployment/fluxv2plugin-testdata-app DOMAIN=cluster --context kind-kubeapps
   kubectl expose deployment fluxv2plugin-testdata-app --port=80 --target-port=80 --name=fluxv2plugin-testdata-svc --context kind-kubeapps
   kubectl expose deployment fluxv2plugin-testdata-app --port=443 --target-port=443 --name=fluxv2plugin-testdata-ssl-svc --context kind-kubeapps
-  # set up OCI registry
-  # ref https://helm.sh/docs/topics/registries/
-  # only has a single user: foo, password: bar
-  docker rm -f registry
-  docker run -dp 5000:5000 --restart=always --name registry \
-    -v $(pwd)/bcrypt.htpasswd:/etc/docker/registry/auth.htpasswd \
-    -e REGISTRY_AUTH="{htpasswd: {realm: localhost, path: /etc/docker/registry/auth.htpasswd}}" \
-    registry
-  helm registry login -u foo localhost:5000 -p bar
-  helm push charts/podinfo-6.0.3.tgz oci://localhost:5000/helm-charts 
-  helm show all oci://localhost:5000/helm-charts/podinfo | head -9
-  helm registry logout localhost:5000
 }
 
 function undeploy {
-  docker rm -f registry
-  kubectl delete svc/fluxv2plugin-testdata-svc
-  kubectl delete svc/fluxv2plugin-testdata-ssl-svc
-  kubectl delete deployment fluxv2plugin-testdata-app --context kind-kubeapps 
+   kubectl delete svc/fluxv2plugin-testdata-svc
+   kubectl delete svc/fluxv2plugin-testdata-ssl-svc
+   kubectl delete deployment fluxv2plugin-testdata-app --context kind-kubeapps 
 }
 
 function redeploy {
@@ -47,8 +35,8 @@ function redeploy {
 
 
 function portforward {
-  kubectl -n default port-forward svc/fluxv2plugin-testdata-svc 8081:80 --context kind-kubeapps 
-  #kubectl -n default port-forward svc/fluxv2plugin-testdata-ssl-svc 8081:443 --context kind-kubeapps 
+  #kubectl -n default port-forward svc/fluxv2plugin-testdata-svc 8081:80 --context kind-kubeapps 
+  kubectl -n default port-forward svc/fluxv2plugin-testdata-ssl-svc 8081:443 --context kind-kubeapps 
 }
 
 function shell {

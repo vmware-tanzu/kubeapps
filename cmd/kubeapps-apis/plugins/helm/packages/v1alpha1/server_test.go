@@ -277,7 +277,7 @@ func makeServer(t *testing.T, authorized bool, actionConfig *action.Configuratio
 	}, mock, cleanup
 }
 
-func newServerWithSecretsAndRepos(t *testing.T, secrets []k8sruntime.Object, unstructuredObjs []k8sruntime.Object, repos []*v1alpha1.AppRepository) *Server {
+func newServerWithSecrets(t *testing.T, secrets []k8sruntime.Object) *Server {
 	typedClient := typfake.NewSimpleClientset(secrets...)
 
 	// ref https://stackoverflow.com/questions/68794562/kubernetes-fake-client-doesnt-handle-generatename-in-objectmeta/68794563#68794563
@@ -303,27 +303,13 @@ func newServerWithSecretsAndRepos(t *testing.T, secrets []k8sruntime.Object, uns
 	})
 
 	apiExtIfc := apiextfake.NewSimpleClientset(helmAppRepositoryCRD)
-	ctrlClient := newCtrlClient(repos)
-	scheme := k8sruntime.NewScheme()
-	v1alpha1.AddToScheme(scheme)
-
+	ctrlClient := newCtrlClient(nil)
 	clientGetter := func(context.Context, string) (clientgetter.ClientInterfaces, error) {
 		return clientgetter.
 			NewBuilder().
 			WithTyped(typedClient).
 			WithApiExt(apiExtIfc).
 			WithControllerRuntime(ctrlClient).
-			WithDynamic(dynfake.NewSimpleDynamicClientWithCustomListKinds(
-				scheme,
-				map[schema.GroupVersionResource]string{
-					{
-						Group:    v1alpha1.SchemeGroupVersion.Group,
-						Version:  v1alpha1.SchemeGroupVersion.Version,
-						Resource: AppRepositoryResource,
-					}: AppRepositoryResource + "List",
-				},
-				unstructuredObjs...,
-			)).
 			Build(), nil
 	}
 

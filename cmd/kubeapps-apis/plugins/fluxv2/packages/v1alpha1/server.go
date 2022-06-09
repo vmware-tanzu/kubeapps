@@ -521,7 +521,7 @@ func (s *Server) AddPackageRepository(ctx context.Context, request *corev1.AddPa
 	name := types.NamespacedName{Name: request.Name, Namespace: request.Context.Namespace}
 
 	if request.GetNamespaceScoped() {
-		return nil, status.Errorf(codes.Unimplemented, "namespaced-scoped repositories are not supported")
+		return nil, status.Errorf(codes.Unimplemented, "Namespaced-scoped repositories are not supported")
 	} else if request.GetType() != "helm" {
 		return nil, status.Errorf(codes.Unimplemented, "repository type [%s] not supported", request.GetType())
 	}

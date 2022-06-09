@@ -3,20 +3,10 @@
 
 import { grpc } from "@improbable-eng/grpc-web";
 import { PackagesServiceClientImpl } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
-import { RepositoriesServiceClientImpl } from "gen/kubeappsapis/core/packages/v1alpha1/repositories";
 import { PluginsServiceClientImpl } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins";
-import {
-  FluxV2PackagesServiceClientImpl,
-  FluxV2RepositoriesServiceClientImpl,
-} from "gen/kubeappsapis/plugins/fluxv2/packages/v1alpha1/fluxv2";
-import {
-  HelmPackagesServiceClientImpl,
-  HelmRepositoriesServiceClientImpl,
-} from "gen/kubeappsapis/plugins/helm/packages/v1alpha1/helm";
-import {
-  KappControllerPackagesServiceClientImpl,
-  KappControllerRepositoriesServiceClientImpl,
-} from "gen/kubeappsapis/plugins/kapp_controller/packages/v1alpha1/kapp_controller";
+import { FluxV2PackagesServiceClientImpl } from "gen/kubeappsapis/plugins/fluxv2/packages/v1alpha1/fluxv2";
+import { HelmPackagesServiceClientImpl } from "gen/kubeappsapis/plugins/helm/packages/v1alpha1/helm";
+import { KappControllerPackagesServiceClientImpl } from "gen/kubeappsapis/plugins/kapp_controller/packages/v1alpha1/kapp_controller";
 import {
   GrpcWebImpl,
   ResourcesServiceClientImpl,
@@ -56,10 +46,6 @@ export class KubeappsGrpcClient {
     return new PackagesServiceClientImpl(this.getGrpcClient());
   }
 
-  public getRepositoriesServiceClientImpl() {
-    return new RepositoriesServiceClientImpl(this.getGrpcClient());
-  }
-
   public getPluginsServiceClientImpl() {
     return new PluginsServiceClientImpl(this.getGrpcClient());
   }
@@ -73,30 +59,18 @@ export class KubeappsGrpcClient {
     return new ResourcesServiceClientImpl(this.getGrpcClient(token));
   }
 
-  // Plugins (packages/repositories) APIs
+  // Plugins (packages) APIs
   // TODO(agamez): ideally, these clients should be loaded automatically from a list of configured plugins
-
-  // Helm
   public getHelmPackagesServiceClientImpl() {
     return new HelmPackagesServiceClientImpl(this.getGrpcClient());
   }
-  public getHelmRepositoriesServiceClientImpl() {
-    return new HelmRepositoriesServiceClientImpl(this.getGrpcClient());
-  }
 
-  // KappController
   public getKappControllerPackagesServiceClientImpl() {
     return new KappControllerPackagesServiceClientImpl(this.getGrpcClient());
   }
-  public getKappControllerRepositoriesServiceClientImpl() {
-    return new KappControllerRepositoriesServiceClientImpl(this.getGrpcClient());
-  }
-  // Fluxv2
+
   public getFluxv2PackagesServiceClientImpl() {
     return new FluxV2PackagesServiceClientImpl(this.getGrpcClient());
-  }
-  public getFluxV2RepositoriesServiceClientImpl() {
-    return new FluxV2RepositoriesServiceClientImpl(this.getGrpcClient());
   }
 }
 

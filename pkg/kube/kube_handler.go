@@ -405,7 +405,7 @@ type appRepositoryRequestDetails struct {
 	AuthRegCreds          string                  `json:"authRegCreds"`
 	RegistrySecrets       []string                `json:"registrySecrets"`
 	SyncJobPodTemplate    corev1.PodTemplateSpec  `json:"syncJobPodTemplate"`
-	ResyncRequests        int                     `json:"resyncRequests"`
+	ResyncRequests        uint                    `json:"resyncRequests"`
 	OCIRepositories       []string                `json:"ociRepositories"`
 	TLSInsecureSkipVerify bool                    `json:"tlsInsecureSkipVerify"`
 	FilterRule            v1alpha1.FilterRuleSpec `json:"filterRule"`
@@ -506,7 +506,6 @@ func (a *userHandler) applyAppRepositorySecret(repoSecret *corev1.Secret, reques
 	return err
 }
 
-// Deprecated: Remove when the new Package Repository API implementation is completed
 // TODO(#1647): Move app repo sync to namespaces so secret copy not required.
 func (a *userHandler) copyAppRepositorySecret(repoSecret *corev1.Secret, appRepo *v1alpha1.AppRepository) error {
 	repoSecret.ObjectMeta.Name = KubeappsSecretNameForRepo(appRepo.ObjectMeta.Name, appRepo.ObjectMeta.Namespace)
@@ -723,7 +722,6 @@ type repoManifest struct {
 	Config repoConfig `json:"config"`
 }
 
-// Deprecated: Remove when the new Package Repository API implementation is completed
 //  getOCIAppRepositoryTag  get a tag for the given repoURL & repoName
 func getOCIAppRepositoryTag(cli httpclient.Client, repoURL string, repoName string) (string, error) {
 	// This function is the implementation of below curl command
@@ -783,7 +781,6 @@ func getOCIAppRepositoryTag(cli httpclient.Client, repoURL string, repoName stri
 	return tagVersion, nil
 }
 
-// Deprecated: Remove when the new Package Repository API implementation is completed
 //  getOCIAppRepositoryMediaType  get manifests config.MediaType for the given repoURL & repoName
 func getOCIAppRepositoryMediaType(cli httpclient.Client, repoURL string, repoName string, tagVersion string) (string, error) {
 	// This function is the implementation of below curl command
@@ -938,7 +935,6 @@ func getValidator(appRepo *v1alpha1.AppRepository) (HttpValidator, error) {
 	}
 }
 
-// Deprecated: Remove when the new Package Repository API implementation is completed
 func (a *userHandler) ValidateAppRepository(appRepoBody io.ReadCloser, requestNamespace string) (*ValidationResponse, error) {
 	// Split body parsing to a different function for ease testing
 	appRepo, cli, err := a.getValidationCli(appRepoBody, requestNamespace, a.kubeappsNamespace)
@@ -1028,7 +1024,6 @@ func appRepositoryForRequest(appRepoRequest *appRepositoryRequest) *v1alpha1.App
 	}
 }
 
-// Deprecated: Remove when the new Package Repository API implementation is completed
 // secretForRequest takes care of parsing the request data into a secret for an AppRepository.
 func (a *userHandler) secretForRequest(appRepoRequest *appRepositoryRequest, appRepo *v1alpha1.AppRepository, namespace string) (*corev1.Secret, error) {
 	if len(appRepoRequest.AppRepository.AuthRegCreds) > 0 {
