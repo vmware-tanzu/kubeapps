@@ -21,7 +21,6 @@ func TestParseFlagsCorrect(t *testing.T) {
 			"all arguments are captured",
 			[]string{
 
-				"--assetsvc-url", "foo01",
 				"--helm-driver", "foo02",
 				"--list-max", "901",
 				"--user-agent-comment", "foo03",
@@ -35,7 +34,6 @@ func TestParseFlagsCorrect(t *testing.T) {
 				"--global-repos-namespace", "kubeapps-global",
 			},
 			server.ServeOptions{
-				AssetsvcURL:            "foo01",
 				HelmDriverArg:          "foo02",
 				ListLimit:              901,
 				UserAgentComment:       "foo03",

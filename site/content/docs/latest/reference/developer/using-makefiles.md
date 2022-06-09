@@ -20,7 +20,6 @@ make # will make all the kubeapps images
 make kubeapps/dashboard
 make kubeapps/apprepository-controller
 make kubeapps/kubeops
-make kubeapps/assetsvc
 make kubeapps/asset-syncer
 ```
 
