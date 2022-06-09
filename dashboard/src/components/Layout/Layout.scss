@@ -207,6 +207,10 @@
   border: 2px solid var(--cds-alias-object-border-color, #f1f1f1);
   margin: 0.625em 0;
   font-family: monospace;
+
+  p:first-child {
+    margin-top: 0;
+  }
 }
 
 .after-readme-button {
