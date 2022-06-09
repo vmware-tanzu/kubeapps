@@ -51,6 +51,10 @@ func (s *Server) newRepo(ctx context.Context, repo *HelmRepository) (*corev1.Pac
 	if repo.repoType == "" || !slices.Contains(ValidRepoTypes, repo.repoType) {
 		return nil, status.Errorf(codes.InvalidArgument, "repository type [%s] not supported", repo.repoType)
 	}
+	// Helm repositories do not support intervals for reconciliation by now
+	if repo.interval > 0 {
+		return nil, status.Errorf(codes.InvalidArgument, "interval is not supported for Helm repositories")
+	}
 	typedClient, err := s.clientGetter.Typed(ctx, repo.cluster)
 	if err != nil {
 		return nil, err
@@ -249,6 +253,10 @@ func (s *Server) updateRepo(ctx context.Context, repo *HelmRepository) (*corev1.
 	}
 	if repo.name.Name == "" {
 		return nil, status.Errorf(codes.InvalidArgument, "repository name may not be empty")
+	}
+	// Helm repositories do not support intervals for reconciliation by now
+	if repo.interval > 0 {
+		return nil, status.Errorf(codes.InvalidArgument, "interval is not supported for Helm repositories")
 	}
 	typedClient, err := s.clientGetter.Typed(ctx, repo.cluster)
 	if err != nil {
