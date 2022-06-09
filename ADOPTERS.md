@@ -6,6 +6,8 @@ If you're using Kubeapps and want to add your organization to this list, follow 
 
 <a href="https://www.coreweave.com/" border="0" target="_blank"><img alt="CoreWeave" src="./site/content/docs/latest/img/adopters/coreweave.svg" height="90"></a>
 
+<a href="https://h8l.io/" border="0" target="_blank"><img alt="h8lio" src="./site/content/docs/latest/img/adopters/h8lio.svg" height="70"></a>
+
 <a href="https://www.ledger.com/" border="0" target="_blank"><img alt="Ledger" src="./site/content/docs/latest/img/adopters/ledger.svg" height="50"></a>
 
 <a href="https://otomi.io/" border="0" target="_blank"><img alt="Otomi" src="./site/content/docs/latest/img/adopters/otomi.svg" height="70"></a>
@@ -17,7 +19,12 @@ If you're using Kubeapps and want to add your organization to this list, follow 
 Below is a list of adopters of Kubeapps that have publicly shared the details of how they use it (in alphabetical order).
 
 **[CoreWeave](https://www.coreweave.com/)**
+
 CoreWeave is a specialized cloud provider, built for GPU-accelerated use cases. Our infrastructure is Kubetnetes-native, and we invest in a wide range of open-source Kubernetes projects making it easy for engineers to benefit from bare metal performance without the infrastructure overhead. Kubeapps hosts our suite of 1-click deploy applications, enabling our clients to quickly and easily consume the scale of compute they need.
+
+**[h8lio](https://h8l.io/)**
+
+h8lio is an open source Smart Cloud Factory for software companies, allowing them to focus on their code & business. We've integrated Kubeapps in our automated DevOps chain to help our users to simply install, configure and manage onto our managed Kubernetes the applications their business rely on. Both from public catalog such as Bitnami or from their own Helm charts.
 
 **[Ledger](https://www.ledger.com/)**
 
