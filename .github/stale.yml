@@ -7,12 +7,10 @@ daysUntilStale: 15
 daysUntilClose: 3
 # Issues with these labels will never be considered stale
 exemptLabels:
-  - priority/unbreak-now
-  - priority/high
-  - priority/medium
   - kind/bug
+  - kind/documentation
+  - kind/enhancement
   - kind/feature
-  - kind/refactor
 # Label to use when marking an issue as stale
 staleLabel: stale
 # Comment to post when marking an issue as stale. Set to `false` to deactivate

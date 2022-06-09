@@ -26,13 +26,14 @@ Kubeapps maintainers team operates with 4 groups of labels:
 
 The type of issue. kind powers our filtering to understand what qualifies as a bug, proposal, feature, enhancement, question or documentation.
 
-| Label                | Description                                                      |
-| -------------------- | ---------------------------------------------------------------- |
-| `kind/bug`           | An issue that reports a defect in an existing feature            |
-| `kind/documentation` | An issue that reports an update related to project documentation |
-| `kind/proposal`      | An issue that reports a new feature proposal to be discussed     |
-| `kind/feature`       | An issue that reports a feature (approved) to be implemented     |
-| `kind/enhancement`   | An issue that reports an enhancement for an implemented feature  |
+| Label                | Description                                                       |
+| -------------------- | ----------------------------------------------------------------- |
+| `kind/bug`           | An issue that reports a defect in an existing feature             |
+| `kind/documentation` | An issue that reports an update related to project documentation  |
+| `kind/enhancement`   | An issue that reports an enhancement for an implemented feature   |
+| `kind/feature`       | An issue that reports a feature (approved) to be implemented      |
+| `kind/proposal`      | An issue that reports a new feature proposal to be discussed      |
+| `kind/question`      | An issue that request for feedback or support to maintainers team |
 
 ### `component/*`:
 
@@ -55,6 +56,7 @@ The relevant component(s) for the issue. Components are high level areas of the 
 | `component/plugin-operators` | An issue related to kubeapps plugin to manage operators (to be implemented)                       |
 | `component/plugin-resources` | An issue related to kubeapps plugin to manage resources                                           |
 | `component/ui`               | An issue related to kubeapps UI                                                                   |
+| `component/website`          | An issue related to kubeapps website                                                              |
 
 ### `contribution labels`:
 
@@ -122,20 +124,21 @@ Kubeapps EPICs must include: `title`,`description`, `acceptance criteria`, `end-
 
 Automatically **stalebot** is checking inactive issues to label them as `stale`. An issue becomes stale after 15 days of inactivity and the bot will close it after 3 days of inactivity for stale issues. To be considered:
 
-- Issues labeled as `kind/feature`, `kind/bug` or `kind/refactor` will never be labeled as `stale`.
-- Only issues labeled as `awaiting-more-evidence` could be considered stale.
+- Issues labeled as `kind/bug`, `kind/documentation`, `kind/enhancement` or `kind/feature`, will never be labeled as `stale`.
+- Issues labeled as `awaiting-more-evidence`, `kind/proposal` or `kin/question` could be considered stale.
 - The label to use when marking an issue as stale is `stale`.
 
 ## 🔢 Prioritizing process
 
 This process mainly consists on checking issues in the **Backlog** and moving to the **To Do** column to be tackled during the following iteration.
 
-Criteria:
+**Criteria**:
 
 1. Issues marked as `P0` → Add to the iteration (**To Do**).
-2. Review issues to complete those milestones planned for the current quarter and select those to be completed during next iteration by priority. To be considered for the capacity:
+2. Review issues to complete those milestones planned for the current quarter and add issues to be completed during next iteration by priority. To be considered for the capacity:
 
 - At least 1 issue labeled as `kind/bug` must be included for every single iteration.
 - At least 1 issue **requested** from the Kubeapps community must be included for every single iteration.
+- At least 1 issue labeled as `component/ci` must be included quarterly to make improvements in ci system.
 
 3. Then review issues labeled as `next-iteration` and discuss what issues should be included according to the maintainers team capacity, issues already added to the **To Do** column and uncompleted issues from previous iterations (**In progress**).
