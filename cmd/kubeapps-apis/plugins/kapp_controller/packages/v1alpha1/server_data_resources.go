@@ -6,6 +6,7 @@ package main
 import (
 	"context"
 	"fmt"
+	k8scorev1 "k8s.io/api/core/v1"
 	"strings"
 
 	ctlapp "github.com/k14s/kapp/pkg/kapp/app"
@@ -199,6 +200,19 @@ func (s *Server) getApp(ctx context.Context, cluster, namespace, identifier stri
 		return nil, err
 	}
 	return &app, nil
+}
+
+// get Secret
+func (s *Server) getSecret(ctx context.Context, cluster, namespace, name string) (*k8scorev1.Secret, error) {
+	client, _, err := s.GetClients(ctx, cluster)
+	if err != nil {
+		return nil, err
+	}
+	secret, err := client.CoreV1().Secrets(namespace).Get(ctx, name, metav1.GetOptions{})
+	if err != nil {
+		return nil, err
+	}
+	return secret, nil
 }
 
 //  List of resources getters
@@ -403,6 +417,19 @@ func (s *Server) createPkgRepository(ctx context.Context, cluster, namespace str
 	return &pkgRepository, nil
 }
 
+// create Secret
+func (s *Server) createSecret(ctx context.Context, cluster string, secret *k8scorev1.Secret) (*k8scorev1.Secret, error) {
+	client, _, err := s.GetClients(ctx, cluster)
+	if err != nil {
+		return nil, err
+	}
+	secret, err = client.CoreV1().Secrets(secret.GetNamespace()).Create(ctx, secret, metav1.CreateOptions{})
+	if err != nil {
+		return nil, err
+	}
+	return secret, nil
+}
+
 // Deletion functions
 
 // deletePkgInstall deletes a package install for the given cluster, namespace and identifier
@@ -425,6 +452,19 @@ func (s *Server) deletePkgRepository(ctx context.Context, cluster, namespace, id
 		return err
 	}
 	err = resource.Delete(ctx, identifier, metav1.DeleteOptions{})
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+// create Secret
+func (s *Server) deleteSecret(ctx context.Context, cluster, namespace, name string) error {
+	client, _, err := s.GetClients(ctx, cluster)
+	if err != nil {
+		return err
+	}
+	err = client.CoreV1().Secrets(namespace).Delete(ctx, name, metav1.DeleteOptions{})
 	if err != nil {
 		return err
 	}
@@ -540,6 +580,10 @@ func (s *Server) inspectKappK8sResources(ctx context.Context, cluster, namespace
 			Namespace:  resource.Namespace(),
 		})
 	}
+	// Package exists but no resourceRefs found
+	if refs != nil && len(refs) == 0 {
+		return nil, status.Errorf(codes.NotFound, "No resource references available for '%s' in plugin '%s'", packageId, namespace)
+	}
 	return refs, nil
 }
 
@@ -568,4 +612,17 @@ func (s *Server) updatePkgRepository(ctx context.Context, cluster, namespace str
 		return nil, err
 	}
 	return &pkgRepository, nil
+}
+
+// create Secret
+func (s *Server) updateSecret(ctx context.Context, cluster string, secret *k8scorev1.Secret) (*k8scorev1.Secret, error) {
+	client, _, err := s.GetClients(ctx, cluster)
+	if err != nil {
+		return nil, err
+	}
+	secret, err = client.CoreV1().Secrets(secret.GetNamespace()).Update(ctx, secret, metav1.UpdateOptions{})
+	if err != nil {
+		return nil, err
+	}
+	return secret, nil
 }

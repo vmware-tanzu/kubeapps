@@ -14,7 +14,7 @@ test("Deploys an Operator", async ({ page }) => {
 
   // Go to operators page
   await page.goto(utils.getUrl("/#/c/default/ns/kubeapps/operators"));
-  await page.waitForTimeout(3000);
+  await page.waitForTimeout(10000);
 
   // Select operator to deploy
   await page.locator("input#search").fill("prometheus");
@@ -24,7 +24,7 @@ test("Deploys an Operator", async ({ page }) => {
   await page.click('cds-button:has-text("Deploy")');
 
   // Wait for operators to be deployed
-  await page.waitForTimeout(10000);
+  await page.waitForTimeout(utils.getDeploymentTimeout());
 
   // Wait for the operator to be ready to be used
   await page.click('a.nav-link:has-text("Catalog")');

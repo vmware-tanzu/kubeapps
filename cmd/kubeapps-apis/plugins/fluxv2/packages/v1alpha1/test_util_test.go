@@ -25,6 +25,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/watch"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	ctrlfake "sigs.k8s.io/controller-runtime/pkg/client/fake"
@@ -181,11 +182,11 @@ func basicAuth(handler http.HandlerFunc, username, password, realm string) http.
 }
 
 // ref: https://kubernetes.io/docs/concepts/configuration/secret/#basic-authentication-secret
-func newBasicAuthSecret(name, namespace, user, password string) *apiv1.Secret {
+func newBasicAuthSecret(name types.NamespacedName, user, password string) *apiv1.Secret {
 	return &apiv1.Secret{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      name,
-			Namespace: namespace,
+			Name:      name.Name,
+			Namespace: name.Namespace,
 		},
 		Type: apiv1.SecretTypeOpaque,
 		Data: map[string][]byte{
@@ -200,11 +201,11 @@ func newBasicAuthSecret(name, namespace, user, password string) *apiv1.Secret {
 // https://fluxcd.io/docs/components/source/helmrepositories/#spec-examples they expect TLS secrets
 // in a different format:
 // certFile/keyFile/caFile vs tls.crt/tls.key. I am going with flux's example for now:
-func newTlsSecret(name, namespace string, pub, priv, ca []byte) *apiv1.Secret {
+func newTlsSecret(name types.NamespacedName, pub, priv, ca []byte) *apiv1.Secret {
 	s := &apiv1.Secret{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      name,
-			Namespace: namespace,
+			Name:      name.Name,
+			Namespace: name.Namespace,
 		},
 		Type: apiv1.SecretTypeOpaque,
 		Data: map[string][]byte{},
@@ -221,11 +222,11 @@ func newTlsSecret(name, namespace string, pub, priv, ca []byte) *apiv1.Secret {
 	return s
 }
 
-func newBasicAuthTlsSecret(name, namespace, user, password string, pub, priv, ca []byte) *apiv1.Secret {
+func newBasicAuthTlsSecret(name types.NamespacedName, user, password string, pub, priv, ca []byte) *apiv1.Secret {
 	s := &apiv1.Secret{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      name,
-			Namespace: namespace,
+			Name:      name.Name,
+			Namespace: name.Namespace,
 		},
 		Type: apiv1.SecretTypeOpaque,
 		Data: map[string][]byte{},

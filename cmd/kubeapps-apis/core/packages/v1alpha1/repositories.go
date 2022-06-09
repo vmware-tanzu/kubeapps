@@ -46,7 +46,7 @@ func NewRepositoriesServer(pkgingPlugins []pluginsv1alpha1.PluginWithServer) (*r
 			plugin: p.Plugin,
 			server: pkgsSrv,
 		}
-		log.Infof("Registered %v for core.packaging.v1alpha1 aggregation.", p.Plugin)
+		log.Infof("Registered %v for core.packaging.v1alpha1 repositories aggregation.", p.Plugin)
 	}
 	return &repositoriesServer{
 		pluginsWithServers: pluginsWithServer,
@@ -124,6 +124,10 @@ func (s repositoriesServer) GetPackageRepositorySummaries(ctx context.Context, r
 		response, err := p.server.GetPackageRepositorySummaries(ctx, request)
 		if err != nil {
 			return nil, status.Errorf(status.Convert(err).Code(), "Invalid GetPackageRepositorySummaries response from the plugin %v: %v", p.plugin.Name, err)
+		}
+		if response == nil {
+			log.Infof("core GetPackageRepositorySummaries received nil response from plugin %s / %s", p.plugin.GetName(), p.plugin.GetVersion())
+			continue
 		}
 
 		// Add the plugin for the pkgs

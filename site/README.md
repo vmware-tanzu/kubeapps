@@ -31,7 +31,7 @@ The [site/content/docs/latest](./content/docs/latest) directory holds the projec
 
 In order to validate and ensure a proper style of writing, it is recommended to run the [vale validator](https://vale.sh/docs/vale-cli/installation/) with a set of [style rules](https://github.com/errata-ai/styles). The rules are present in the project codebase in the directory. Some of them have been slightly modified to fit our project needs.
 
-To run the validator, install the `vale` binary in your machine from the [vale releases website](https://github.com/errata-ai/vale/releases) and run:
+To run the validator, install the `vale` binary on your machine from the [vale releases website](https://github.com/errata-ai/vale/releases) and run:
 
 ```bash
 cd site
@@ -57,4 +57,15 @@ Also, another tool for checking the markdown syntax are [markdownlint-cli](https
 cd site
 npx markdownlint-cli .\content\docs\latest\ --disable MD013 MD033 # add --fix to also solve the issues
 npx prettier --write .\content\docs\latest\
+```
+
+## Check accessibility
+
+In order to validate the accessibility conformance, it is recommended to run the [pa11y validator](https://github.com/pa11y/pa11y).
+First, serve the website locally and then run `pa11y` in the `http://localhost:1313/` address.
+
+```bash
+cd site
+hugo server --disableFastRender
+npx pa11y http://localhost:1313/ -i "WCAG2AA.Principle1.Guideline1_4.1_4_3.G18.Fail" # ignoring this as colors are set by the corporate template
 ```

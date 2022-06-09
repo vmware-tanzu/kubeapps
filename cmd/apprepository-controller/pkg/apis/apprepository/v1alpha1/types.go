@@ -26,7 +26,7 @@ type AppRepositorySpec struct {
 	Type               string                 `json:"type"`
 	URL                string                 `json:"url"`
 	Auth               AppRepositoryAuth      `json:"auth,omitempty"`
-	ResyncRequests     uint                   `json:"resyncRequests"`
+	ResyncRequests     int                    `json:"resyncRequests"`
 	SyncJobPodTemplate corev1.PodTemplateSpec `json:"syncJobPodTemplate"`
 	// DockerRegistrySecrets is a list of dockerconfigjson secrets which exist
 	// in the same namespace as the AppRepository and should be included
