@@ -34,11 +34,6 @@ import (
 	"sigs.k8s.io/yaml"
 )
 
-const (
-	fluxHelmReleases    = "helmreleases"
-	fluxHelmReleaseList = "HelmReleaseList"
-)
-
 var (
 	// default reconcile interval is 1 min
 	defaultReconcileInterval = metav1.Duration{Duration: 1 * time.Minute}

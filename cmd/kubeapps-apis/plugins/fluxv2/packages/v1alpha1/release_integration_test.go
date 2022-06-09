@@ -24,6 +24,11 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 )
 
+const (
+	fluxHelmReleases    = "helmreleases"
+	fluxHelmReleaseList = "HelmReleaseList"
+)
+
 // This is an integration test: it tests the full integration of flux plugin with flux back-end
 // To run these tests, enable ENABLE_FLUX_INTEGRATION_TESTS variable
 // pre-requisites for these tests to run:
@@ -940,7 +945,7 @@ func TestKindClusterRBAC_CreateRelease(t *testing.T) {
 		Namespace: ns1,
 	}
 
-	err = kubeAddHelmRepositoryAndCleanup(t, name, podinfo_repo_url, "", 0)
+	err = kubeAddHelmRepositoryAndCleanup(t, name, "", podinfo_repo_url, "", 0)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -1319,7 +1324,7 @@ func createAndWaitForHelmRelease(t *testing.T, tc integrationTestCreatePackageSp
 		Name:      idParts[0],
 		Namespace: availablePackageRef.Context.Namespace,
 	}
-	err := kubeAddHelmRepositoryAndCleanup(t, name, tc.repoUrl, "", tc.repoInterval)
+	err := kubeAddHelmRepositoryAndCleanup(t, name, "", tc.repoUrl, "", tc.repoInterval)
 	if err != nil {
 		t.Fatalf("%+v", err)
 	}

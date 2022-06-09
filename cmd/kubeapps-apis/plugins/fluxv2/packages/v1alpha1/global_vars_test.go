@@ -14,6 +14,7 @@ import (
 	"helm.sh/helm/v3/pkg/release"
 	v1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/types"
 )
 
 // global vars
@@ -1084,6 +1085,13 @@ var (
 		},
 	}
 
+	add_repo_req_21 = &corev1.AddPackageRepositoryRequest{
+		Name:    "my-podinfo-5",
+		Context: &corev1.Context{Namespace: "default"},
+		Type:    "oci",
+		Url:     podinfo_oci_repo_url,
+	}
+
 	add_repo_expected_resp = &corev1.AddPackageRepositoryResponse{
 		PackageRepoRef: repoRef("bar", "foo"),
 	}
@@ -1105,7 +1113,7 @@ var (
 	}
 
 	add_repo_expected_resp_6 = &corev1.AddPackageRepositoryResponse{
-		PackageRepoRef: repoRef("my-podinfo-4", "default"),
+		PackageRepoRef: repoRef("my-podinfo-5", "default"),
 	}
 
 	status_installed = &corev1.InstalledPackageStatus{
@@ -2402,6 +2410,52 @@ var (
 		PackageRepoRef: repoRefInReq("my-podinfo-4", "TBD"),
 	}
 
+	get_repo_detail_req_12 = &corev1.GetPackageRepositoryDetailRequest{
+		// namespace will be set when test scenario is run
+		PackageRepoRef: repoRefInReq("my-podinfo-12", "TBD"),
+	}
+
+	get_repo_detail_resp_15 = &corev1.GetPackageRepositoryDetailResponse{
+		Detail: &corev1.PackageRepositoryDetail{
+			PackageRepoRef:  repoRefWithId("my-podinfo-12"),
+			Name:            "my-podinfo-12",
+			Description:     "",
+			NamespaceScoped: false,
+			Type:            "helm",
+			Url:             podinfo_oci_repo_url,
+			Interval:        600,
+			Auth:            &corev1.PackageRepositoryAuth{},
+			Status: &corev1.PackageRepositoryStatus{
+				Ready:      false,
+				Reason:     corev1.PackageRepositoryStatus_STATUS_REASON_FAILED,
+				UserReason: "Failed: failed to fetch Helm repository index: failed to cache index to temporary file: object required",
+			},
+		},
+	}
+
+	get_repo_detail_req_13 = &corev1.GetPackageRepositoryDetailRequest{
+		// namespace will be set when test scenario is run
+		PackageRepoRef: repoRefInReq("my-podinfo-13", "TBD"),
+	}
+
+	get_repo_detail_resp_16 = &corev1.GetPackageRepositoryDetailResponse{
+		Detail: &corev1.PackageRepositoryDetail{
+			PackageRepoRef:  repoRefWithId("my-podinfo-13"),
+			Name:            "my-podinfo-13",
+			Description:     "",
+			NamespaceScoped: false,
+			Type:            "oci",
+			Url:             podinfo_oci_repo_url,
+			Interval:        600,
+			Auth:            &corev1.PackageRepositoryAuth{},
+			Status: &corev1.PackageRepositoryStatus{
+				Ready:      true,
+				Reason:     corev1.PackageRepositoryStatus_STATUS_REASON_SUCCESS,
+				UserReason: "Succeeded: Helm repository is ready",
+			},
+		},
+	}
+
 	get_summaries_repo_1 = newRepo("bar", "foo",
 		&sourcev1.HelmRepositorySpec{
 			URL:      "http://example.com",
@@ -2521,15 +2575,27 @@ var (
 		},
 	}
 
-	get_summaries_summary_5 = func(name, ns string) *corev1.PackageRepositorySummary {
+	get_summaries_summary_5 = func(name types.NamespacedName) *corev1.PackageRepositorySummary {
 		return &corev1.PackageRepositorySummary{
-			PackageRepoRef:  repoRef(name, ns),
-			Name:            name,
+			PackageRepoRef:  repoRef(name.Name, name.Namespace),
+			Name:            name.Name,
 			Description:     "",
 			NamespaceScoped: false,
 			Type:            "helm",
 			Url:             podinfo_repo_url,
 			Status:          podinfo_repo_status_3,
+		}
+	}
+
+	get_summaries_summary_6 = func(name types.NamespacedName) *corev1.PackageRepositorySummary {
+		return &corev1.PackageRepositorySummary{
+			PackageRepoRef:  repoRef(name.Name, name.Namespace),
+			Name:            name.Name,
+			Description:     "",
+			NamespaceScoped: false,
+			Type:            "oci",
+			Url:             podinfo_oci_repo_url,
+			Status:          podinfo_repo_status_4,
 		}
 	}
 
@@ -2954,6 +3020,12 @@ var (
 		Ready:      true,
 		Reason:     corev1.PackageRepositoryStatus_STATUS_REASON_SUCCESS,
 		UserReason: "Succeeded: stored artifact for revision '2867920fb8f56575f4bc95ed878ee2a0c8ae79cdd2bca210a72aa3ff04defa1b'",
+	}
+
+	podinfo_repo_status_4 = &corev1.PackageRepositoryStatus{
+		Ready:      true,
+		Reason:     corev1.PackageRepositoryStatus_STATUS_REASON_SUCCESS,
+		UserReason: "Succeeded: Helm repository is ready",
 	}
 
 	repo_status_pending = &corev1.PackageRepositoryStatus{

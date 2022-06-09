@@ -25,6 +25,7 @@ import (
 	"github.com/vmware-tanzu/kubeapps/cmd/apprepository-controller/pkg/client/clientset/versioned/scheme"
 	plugins "github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/core/plugins/v1alpha1"
 	fluxplugin "github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/plugins/fluxv2/packages/v1alpha1"
+	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/fluxv2/packages/v1alpha1/common"
 	"github.com/vmware-tanzu/kubeapps/pkg/chart/models"
 	"github.com/vmware-tanzu/kubeapps/pkg/helm"
 	httpclient "github.com/vmware-tanzu/kubeapps/pkg/http-client"
@@ -80,6 +81,8 @@ const (
 
 	// port forward is done programmatically
 	outside_cluster_bitnami_url = "http://localhost:50057/bitnami"
+
+	podinfo_oci_repo_url = "oci://ghcr.io/stefanprodan/charts"
 )
 
 func checkEnv(t *testing.T) (fluxplugin.FluxV2PackagesServiceClient, fluxplugin.FluxV2RepositoriesServiceClient, error) {
@@ -193,10 +196,9 @@ func getFluxPluginClients(t *testing.T) (fluxplugin.FluxV2PackagesServiceClient,
 	return fluxplugin.NewFluxV2PackagesServiceClient(conn), fluxplugin.NewFluxV2RepositoriesServiceClient(conn), nil
 }
 
-// This creates a flux helm repository CRD. The usage of this func should be minimized as much as
-// possible in favor of flux Plugin's AddPackageRepository() call
-func kubeAddHelmRepository(t *testing.T, name types.NamespacedName, url, secretName string, interval time.Duration) error {
-	t.Logf("+kubeAddHelmRepository(%s)", name)
+// This creates a flux helm repository CRD
+func kubeAddHelmRepository(t *testing.T, name types.NamespacedName, typ, url, secretName string, interval time.Duration) error {
+	t.Logf("+kubeAddHelmRepository(%s,%s,%s)", name, typ, url)
 	if interval <= 0 {
 		interval = time.Duration(10 * time.Minute)
 	}
@@ -211,6 +213,10 @@ func kubeAddHelmRepository(t *testing.T, name types.NamespacedName, url, secretN
 		},
 	}
 
+	if typ != "" {
+		repo.Spec.Type = typ
+	}
+
 	if secretName != "" {
 		repo.Spec.SecretRef = &meta.LocalObjectReference{
 			Name: secretName,
@@ -222,13 +228,14 @@ func kubeAddHelmRepository(t *testing.T, name types.NamespacedName, url, secretN
 	if ifc, err := kubeGetCtrlClient(); err != nil {
 		return err
 	} else {
+		t.Logf("Creating: %s\n...", common.PrettyPrint(repo))
 		return ifc.Create(ctx, &repo)
 	}
 }
 
-func kubeAddHelmRepositoryAndCleanup(t *testing.T, name types.NamespacedName, url, secretName string, interval time.Duration) error {
+func kubeAddHelmRepositoryAndCleanup(t *testing.T, name types.NamespacedName, typ, url, secretName string, interval time.Duration) error {
 	t.Logf("+kubeAddHelmRepositoryAndCleanup(%s)", name)
-	err := kubeAddHelmRepository(t, name, url, secretName, interval)
+	err := kubeAddHelmRepository(t, name, typ, url, secretName, interval)
 	if err == nil {
 		t.Cleanup(func() {
 			err := kubeDeleteHelmRepository(t, name)

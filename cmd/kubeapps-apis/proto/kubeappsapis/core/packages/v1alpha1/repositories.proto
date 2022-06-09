@@ -75,9 +75,9 @@ message AddPackageRepositoryRequest {
 
   // Package storage type
   // In general, each plug-in will define an acceptable set of valid types
-  // - for direct helm plug-in valid values are: helm, oci
-  // - for flux plug-in currently only supported value is helm. In the
-  //   future, we may add support for git and/or AWS s3-style buckets
+  // - for direct helm plug-in valid values are: “helm” and “oci”
+  // - for flux plug-in valid values are: “helm” and “oci”. In the
+  //   future, we may add support for git and/or AWS s3-style buckets 
   string type = 5;
 
   // A URL identifying the package repository location. Must contain at

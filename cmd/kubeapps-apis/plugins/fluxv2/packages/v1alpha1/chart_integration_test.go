@@ -95,7 +95,7 @@ func TestKindClusterGetAvailablePackageSummariesForLargeReposAndTinyRedis(t *tes
 				Namespace: "default",
 			}
 			// this is to make sure we allow enough time for repository to be created and come to ready state
-			if err = kubeAddHelmRepositoryAndCleanup(t, repo, in_cluster_bitnami_url, "", 0); err != nil {
+			if err = kubeAddHelmRepositoryAndCleanup(t, repo, "", in_cluster_bitnami_url, "", 0); err != nil {
 				t.Fatalf("%v", err)
 			}
 			// wait until this repo have been indexed and cached up to 10 minutes
@@ -188,7 +188,7 @@ func TestKindClusterGetAvailablePackageSummariesForLargeReposAndTinyRedis(t *tes
 				Namespace: "default",
 			}
 			// this is to make sure we allow enough time for repository to be created and come to ready state
-			if err = kubeAddHelmRepositoryAndCleanup(t, repo, in_cluster_bitnami_url, "", 0); err != nil {
+			if err = kubeAddHelmRepositoryAndCleanup(t, repo, "", in_cluster_bitnami_url, "", 0); err != nil {
 				t.Fatalf("%v", err)
 			}
 			// wait until this repo have been indexed and cached up to 10 minutes
@@ -278,7 +278,7 @@ func TestKindClusterRepoAndChartRBAC(t *testing.T) {
 	for _, n := range names {
 		if err := kubeCreateNamespaceAndCleanup(t, n.Namespace); err != nil {
 			t.Fatal(err)
-		} else if err = kubeAddHelmRepositoryAndCleanup(t, n, podinfo_repo_url, "", 0); err != nil {
+		} else if err = kubeAddHelmRepositoryAndCleanup(t, n, "", podinfo_repo_url, "", 0); err != nil {
 			t.Fatal(err)
 		}
 		// wait until this repo reaches 'Ready'
@@ -511,4 +511,43 @@ func TestKindClusterRepoAndChartRBAC(t *testing.T) {
 			t.Errorf("UnexpectedResponse: %s", common.PrettyPrint(resp3))
 		}
 	}
+}
+
+func TestKindClusterGetAvailablePackageSummariesForOCI(t *testing.T) {
+	fluxPluginClient, _, err := checkEnv(t)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	adminName := types.NamespacedName{
+		Name:      "test-admin-" + randSeq(4),
+		Namespace: "default",
+	}
+	grpcContext, err := newGrpcAdminContext(t, adminName)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	repoName := types.NamespacedName{
+		Name:      "my-podinfo-" + randSeq(4),
+		Namespace: "default",
+	}
+	if err := kubeAddHelmRepositoryAndCleanup(t, repoName, "oci", podinfo_oci_repo_url, "", 0); err != nil {
+		t.Fatalf("%v", err)
+	}
+	// wait until this repo reaches 'Ready'
+	if err = kubeWaitUntilHelmRepositoryIsReady(t, repoName); err != nil {
+		t.Fatal(err)
+	}
+
+	grpcContext, cancel := context.WithTimeout(grpcContext, 90*time.Second)
+	defer cancel()
+	resp, err := fluxPluginClient.GetAvailablePackageSummaries(
+		grpcContext,
+		&corev1.GetAvailablePackageSummariesRequest{})
+	if err != nil {
+		t.Fatalf("%v", err)
+	}
+
+	t.Logf("=======> %s", common.PrettyPrint(resp))
 }
