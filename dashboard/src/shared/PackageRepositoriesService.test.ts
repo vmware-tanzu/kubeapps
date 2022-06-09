@@ -7,7 +7,7 @@ import {
 } from "gen/kubeappsapis/core/packages/v1alpha1/repositories";
 import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins";
 import * as moxios from "moxios";
-import { IPkgRepositoryFilter } from "shared/types";
+import { IPkgRepoFormData, IPkgRepositoryFilter } from "shared/types";
 import { axiosWithAuth } from "./AxiosInstance";
 import { PackageRepositoriesService } from "./PackageRepositoriesService";
 import * as url from "./url";
@@ -15,30 +15,54 @@ import * as url from "./url";
 describe("RepositoriesService", () => {
   const cluster = "cluster";
   const namespace = "namespace";
+  const plugin: Plugin = { name: "my.plugin", version: "0.0.1" };
+
   const repo = {
     name: "repo-test",
-    repoURL: "repo-url",
     type: "repo-type",
     description: "repo-description",
     authHeader: "repo-authHeader",
-    authRegCreds: "repo-authRegCreds",
     customCA: "repo-customCA",
-    registrySecrets: ["repo-secret1"],
-    ociRepositories: ["oci-repo1"],
-    tlsInsecureSkipVerify: false,
     passCredentials: true,
     authMethod:
       PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_UNSPECIFIED,
-    interval: 3600,
-    username: "user",
-    password: "password",
-    filterRule: {
-      jq: ".name == $var0",
-      variables: { $var0: "nginx" },
-    } as IPkgRepositoryFilter,
-  };
+    basicAuth: {
+      username: "user",
+      password: "password",
+    },
+    skipTLS: false,
+    tlsCertKey: {
+      cert: "",
+      key: "",
+    },
+    sshCreds: {
+      knownHosts: "",
+      privateKey: "",
+    },
+    secretTLSName: "",
 
-  const plugin: Plugin = { name: "my.plugin", version: "0.0.1" };
+    opaqueCreds: {
+      data: {},
+    },
+    url: "repo-url",
+    secretAuthName: "repo-secret1",
+    dockerRegCreds: {
+      password: "",
+      username: "",
+      email: "",
+      server: "",
+    },
+    interval: 3600,
+    plugin,
+    customDetails: {
+      ociRepositories: ["oci-repo1"],
+      dockerRegistrySecrets: ["repo-authRegCreds"],
+      filterRule: {
+        jq: ".name == $var0",
+        variables: { $var0: "nginx" },
+      },
+    },
+  } as IPkgRepoFormData;
 
   beforeEach(() => {
     // Import as "any" to avoid typescript syntax error

@@ -13,6 +13,7 @@ import { CdsControlMessage, CdsFormGroup } from "@cds/react/forms";
 import { CdsInput } from "@cds/react/input";
 import { CdsRadio, CdsRadioGroup } from "@cds/react/radio";
 import { CdsTextarea } from "@cds/react/textarea";
+import { CdsToggle, CdsToggleGroup } from "@cds/react/toggle";
 import actions from "actions";
 import Alert from "components/js/Alert";
 import {
@@ -119,6 +120,7 @@ export function AppRepoForm(props: IAppRepoFormProps) {
   const [skipTLS, setSkipTLS] = useState(!!repo?.tlsConfig?.insecureSkipVerify);
   const [type, setType] = useState("");
   const [url, setURL] = useState("");
+  const [isUserManagedSecret, setIsUserManagedSecret] = useState(false);
 
   // initial state (collapsed or not) of each accordion tab
   const [accordion, setAccordion] = useState([true, false, false, false]);
@@ -175,6 +177,8 @@ export function AppRepoForm(props: IAppRepoFormProps) {
         setFilterExclude(exclude);
         setFilterNames(names);
       }
+      // TODO(agamez): set it properly
+      setIsUserManagedSecret(false);
     }
   }, [repo, namespace, currentCluster, dispatch]);
 
@@ -373,6 +377,9 @@ export function AppRepoForm(props: IAppRepoFormProps) {
   const handleSecretTLSNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSecretTLSName(e.target.value);
   };
+  const handleIsUserManagedSecretChange = (_e: React.ChangeEvent<HTMLInputElement>) => {
+    setIsUserManagedSecret(!isUserManagedSecret);
+  };
 
   const parseValidationError = (error: Error) => {
     let message = error.message;
@@ -387,7 +394,51 @@ export function AppRepoForm(props: IAppRepoFormProps) {
     return message;
   };
 
-  /* eslint-disable jsx-a11y/label-has-associated-control */
+  const isUserManagedSecretToggle = (
+    <>
+      <CdsToggleGroup className="flex-v-center">
+        <CdsToggle>
+          <label>
+            {isUserManagedSecret ? "Use user-mangaged secrets" : "Use Kubeapps-mangaged secrets"}
+          </label>
+          <input
+            type="checkbox"
+            onChange={handleIsUserManagedSecretChange}
+            checked={isUserManagedSecret}
+          />
+        </CdsToggle>
+      </CdsToggleGroup>
+    </>
+  );
+
+  const secretNameInput = (authType: string) => (
+    <>
+      <CdsInput>
+        <label htmlFor={`kubeapps-repo-auth-secret-name-${authType}`}>Secret Name</label>
+        <input
+          id={`kubeapps-repo-auth-secret-name-${authType}`}
+          type="text"
+          placeholder="my-secret-name"
+          value={secretAuthName}
+          onChange={handleSecretAuthNameChange}
+          required={
+            isUserManagedSecret &&
+            authMethod !==
+              PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_UNSPECIFIED
+          }
+          pattern="[a-z0-9]([-a-z0-9]*[a-z0-9])?(\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*"
+          title="Use lower case alphanumeric characters, '-' or '.'"
+          disabled={!!repo?.name}
+        />
+      </CdsInput>
+      <br />
+      <CdsControlMessage>
+        Name of the Kubernetes Secret object holding the auth data. Please ensure that secret has
+        the proper type as expected by the selected authentication method.
+      </CdsControlMessage>
+    </>
+  );
+
   return (
     <>
       <form onSubmit={handleInstallClick}>
@@ -399,7 +450,7 @@ export function AppRepoForm(props: IAppRepoFormProps) {
             <CdsAccordionContent>
               <CdsFormGroup layout="vertical">
                 <CdsInput>
-                  <label>Name</label>
+                  <label htmlFor="kubeapps-repo-name">Name</label>
                   <input
                     id="kubeapps-repo-name"
                     type="text"
@@ -413,7 +464,7 @@ export function AppRepoForm(props: IAppRepoFormProps) {
                   />
                 </CdsInput>
                 <CdsInput>
-                  <label> URL </label>
+                  <label htmlFor="kubeapps-repo-url"> URL </label>
                   <input
                     id="kubeapps-repo-url"
                     type="text"
@@ -424,7 +475,7 @@ export function AppRepoForm(props: IAppRepoFormProps) {
                   />
                 </CdsInput>
                 <CdsInput>
-                  <label> Description (optional)</label>
+                  <label htmlFor="kubeapps-repo-description"> Description (optional)</label>
                   <input
                     id="kubeapps-repo-description"
                     type="text"
@@ -436,6 +487,7 @@ export function AppRepoForm(props: IAppRepoFormProps) {
                 {/* TODO(agamez): these plugin selectors should be loaded
                 based on the current plugins that are loaded in the cluster */}
                 <CdsRadioGroup layout="vertical">
+                  {/* eslint-disable-next-line jsx-a11y/label-has-associated-control */}
                   <label>Packaging Format:</label>
                   <CdsControlMessage>Select the plugin to use.</CdsControlMessage>
                   <CdsRadio>
@@ -480,13 +532,14 @@ export function AppRepoForm(props: IAppRepoFormProps) {
                 </CdsRadioGroup>
                 {plugin?.name && (
                   <CdsRadioGroup layout="vertical">
+                    {/* eslint-disable-next-line jsx-a11y/label-has-associated-control */}
                     <label>Package Storage Type</label>
                     <CdsControlMessage>Select the package storage type.</CdsControlMessage>
                     {(plugin?.name === (PluginNames.PACKAGES_HELM as string) ||
                       plugin?.name === (PluginNames.PACKAGES_FLUX as string)) && (
                       <>
                         <CdsRadio>
-                          <label>Helm Repository</label>
+                          <label htmlFor="kubeapps-repo-type-helm">Helm Repository</label>
                           <input
                             id="kubeapps-repo-type-helm"
                             type="radio"
@@ -504,7 +557,7 @@ export function AppRepoForm(props: IAppRepoFormProps) {
                           />
                         </CdsRadio>
                         <CdsRadio>
-                          <label>OCI Registry</label>
+                          <label htmlFor="kubeapps-repo-type-oci">OCI Registry</label>
                           <input
                             id="kubeapps-repo-type-oci"
                             type="radio"
@@ -525,7 +578,7 @@ export function AppRepoForm(props: IAppRepoFormProps) {
                     {plugin?.name === PluginNames.PACKAGES_KAPP && (
                       <>
                         <CdsRadio>
-                          <label>Imgpkg Bundle</label>
+                          <label htmlFor="kubeapps-repo-type-imgpkgbundle">Imgpkg Bundle</label>
                           <input
                             id="kubeapps-repo-type-imgpkgbundle"
                             type="radio"
@@ -543,7 +596,7 @@ export function AppRepoForm(props: IAppRepoFormProps) {
                           />
                         </CdsRadio>
                         <CdsRadio>
-                          <label>Inline</label>
+                          <label htmlFor="kubeapps-repo-type-inline">Inline</label>
                           <input
                             id="kubeapps-repo-type-inline"
                             type="radio"
@@ -559,7 +612,7 @@ export function AppRepoForm(props: IAppRepoFormProps) {
                           />
                         </CdsRadio>
                         <CdsRadio>
-                          <label>Image</label>
+                          <label htmlFor="kubeapps-repo-type-image">Image</label>
                           <input
                             id="kubeapps-repo-type-image"
                             type="radio"
@@ -575,7 +628,7 @@ export function AppRepoForm(props: IAppRepoFormProps) {
                           />
                         </CdsRadio>
                         <CdsRadio>
-                          <label>HTTP</label>
+                          <label htmlFor="kubeapps-repo-type-http">HTTP</label>
                           <input
                             id="kubeapps-repo-type-http"
                             type="radio"
@@ -590,7 +643,7 @@ export function AppRepoForm(props: IAppRepoFormProps) {
                           />
                         </CdsRadio>
                         <CdsRadio>
-                          <label>Git</label>
+                          <label htmlFor="kubeapps-repo-type-git">Git</label>
                           <input
                             id="kubeapps-repo-type-git"
                             type="radio"
@@ -619,10 +672,12 @@ export function AppRepoForm(props: IAppRepoFormProps) {
             <CdsAccordionContent>
               <CdsFormGroup layout="vertical">
                 <div cds-layout="grid gap:lg">
+                  {/* Begin authentication selection */}
                   <CdsRadioGroup cds-layout="col@xs:4">
+                    {/* eslint-disable-next-line jsx-a11y/label-has-associated-control */}
                     <label>Repository Authorization</label>
                     <CdsRadio>
-                      <label>None (Public)</label>
+                      <label htmlFor="kubeapps-repo-auth-method-none">None (Public)</label>
                       <input
                         id="kubeapps-repo-auth-method-none"
                         type="radio"
@@ -642,7 +697,7 @@ export function AppRepoForm(props: IAppRepoFormProps) {
                       />
                     </CdsRadio>
                     <CdsRadio>
-                      <label>Basic Auth</label>
+                      <label htmlFor="kubeapps-repo-auth-method-basic">Basic Auth</label>
                       <input
                         id="kubeapps-repo-auth-method-basic"
                         type="radio"
@@ -662,7 +717,7 @@ export function AppRepoForm(props: IAppRepoFormProps) {
                       />
                     </CdsRadio>
                     <CdsRadio>
-                      <label>Bearer Token</label>
+                      <label htmlFor="kubeapps-repo-auth-method-bearer">Bearer Token</label>
                       <input
                         id="kubeapps-repo-auth-method-bearer"
                         type="radio"
@@ -682,7 +737,9 @@ export function AppRepoForm(props: IAppRepoFormProps) {
                       />
                     </CdsRadio>
                     <CdsRadio>
-                      <label>Use Docker Registry Credentials</label>
+                      <label htmlFor="kubeapps-repo-auth-method-registry">
+                        Use Docker Registry Credentials
+                      </label>
                       <input
                         id="kubeapps-repo-auth-method-registry"
                         type="radio"
@@ -702,7 +759,9 @@ export function AppRepoForm(props: IAppRepoFormProps) {
                       />
                     </CdsRadio>
                     <CdsRadio>
-                      <label>Custom Authorization Header</label>
+                      <label htmlFor="kubeapps-repo-auth-method-custom">
+                        Custom Authorization Header
+                      </label>
                       <input
                         id="kubeapps-repo-auth-method-custom"
                         type="radio"
@@ -722,7 +781,9 @@ export function AppRepoForm(props: IAppRepoFormProps) {
                       />
                     </CdsRadio>
                     <CdsRadio>
-                      <label>SSH-based Authentication</label>
+                      <label htmlFor="kubeapps-repo-auth-method-ssh">
+                        SSH-based Authentication
+                      </label>
                       <input
                         id="kubeapps-repo-auth-method-ssh"
                         type="radio"
@@ -742,7 +803,9 @@ export function AppRepoForm(props: IAppRepoFormProps) {
                       />
                     </CdsRadio>
                     <CdsRadio>
-                      <label>TLS-based Authentication</label>
+                      <label htmlFor="kubeapps-repo-auth-method-tls">
+                        TLS-based Authentication
+                      </label>
                       <input
                         id="kubeapps-repo-auth-method-tls"
                         type="radio"
@@ -762,9 +825,11 @@ export function AppRepoForm(props: IAppRepoFormProps) {
                       />
                     </CdsRadio>
                     <CdsRadio>
-                      <label>Opaque-based Authentication</label>
+                      <label htmlFor="kubeapps-repo-auth-method-opaque">
+                        Opaque-based Authentication
+                      </label>
                       <input
-                        id="kubeapps-repo-auth-method-paque"
+                        id="kubeapps-repo-auth-method-opaque"
                         type="radio"
                         name="auth"
                         value={
@@ -782,8 +847,11 @@ export function AppRepoForm(props: IAppRepoFormProps) {
                       />
                     </CdsRadio>
                   </CdsRadioGroup>
+                  {/* End authentication selection */}
 
+                  {/* Begin authentication details */}
                   <div cds-layout="col@xs:8">
+                    {/* Begin basic authentication */}
                     <div
                       id="kubeapps-repo-auth-details-basic"
                       hidden={
@@ -791,39 +859,49 @@ export function AppRepoForm(props: IAppRepoFormProps) {
                         PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_BASIC_AUTH
                       }
                     >
-                      <CdsInput>
-                        <label>Username</label>
-                        <input
-                          id="kubeapps-repo-username"
-                          type="text"
-                          value={basicUser}
-                          onChange={handleBasicUserChange}
-                          placeholder="username"
-                          required={
-                            authMethod ===
-                            PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_BASIC_AUTH
-                          }
-                          disabled={!!repo.auth?.type}
-                        />
-                      </CdsInput>
+                      {isUserManagedSecretToggle}
                       <br />
-                      <CdsInput>
-                        <label>Password</label>
-                        <input
-                          id="kubeapps-repo-password"
-                          type="password"
-                          value={basicPassword}
-                          onChange={handleBasicPasswordChange}
-                          placeholder="password"
-                          required={
-                            authMethod ===
-                            PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_BASIC_AUTH
-                          }
-                          disabled={!!repo.auth?.type}
-                        />
-                      </CdsInput>
+                      {isUserManagedSecret ? (
+                        secretNameInput("basic")
+                      ) : (
+                        <>
+                          <CdsInput>
+                            <label htmlFor="kubeapps-repo-username">Username</label>
+                            <input
+                              id="kubeapps-repo-username"
+                              type="text"
+                              value={basicUser}
+                              onChange={handleBasicUserChange}
+                              placeholder="username"
+                              required={
+                                authMethod ===
+                                PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_BASIC_AUTH
+                              }
+                              disabled={!!repo.auth?.type}
+                            />
+                          </CdsInput>
+                          <br />
+                          <CdsInput>
+                            <label htmlFor="kubeapps-repo-password">Password</label>
+                            <input
+                              id="kubeapps-repo-password"
+                              type="password"
+                              value={basicPassword}
+                              onChange={handleBasicPasswordChange}
+                              placeholder="password"
+                              required={
+                                authMethod ===
+                                PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_BASIC_AUTH
+                              }
+                              disabled={!!repo.auth?.type}
+                            />
+                          </CdsInput>
+                        </>
+                      )}
                     </div>
+                    {/* End basic authentication */}
 
+                    {/* Begin http bearer authentication */}
                     <div
                       id="kubeapps-repo-auth-details-bearer"
                       hidden={
@@ -831,22 +909,33 @@ export function AppRepoForm(props: IAppRepoFormProps) {
                         PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_BEARER
                       }
                     >
-                      <CdsInput>
-                        <label>Token</label>
-                        <input
-                          type="text"
-                          value={bearerToken}
-                          onChange={handleAuthBearerTokenChange}
-                          id="kubeapps-repo-token"
-                          placeholder="xrxNcWghpRLdcPHFgVRM73rr4N7qjvjm"
-                          required={
-                            authMethod ===
-                            PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_BEARER
-                          }
-                          disabled={!!repo.auth?.type}
-                        />
-                      </CdsInput>
+                      {isUserManagedSecretToggle}
+                      <br />
+                      {isUserManagedSecret ? (
+                        secretNameInput("bearer")
+                      ) : (
+                        <>
+                          <CdsInput>
+                            <label htmlFor="kubeapps-repo-token">Token</label>
+                            <input
+                              type="text"
+                              value={bearerToken}
+                              onChange={handleAuthBearerTokenChange}
+                              id="kubeapps-repo-token"
+                              placeholder="xrxNcWghpRLdcPHFgVRM73rr4N7qjvjm"
+                              required={
+                                authMethod ===
+                                PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_BEARER
+                              }
+                              disabled={!!repo.auth?.type}
+                            />
+                          </CdsInput>
+                        </>
+                      )}
                     </div>
+                    {/* End http bearer authentication */}
+
+                    {/* Begin docker creds authentication */}
                     <div
                       id="kubeapps-repo-auth-details-docker"
                       hidden={
@@ -854,61 +943,74 @@ export function AppRepoForm(props: IAppRepoFormProps) {
                         PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_DOCKER_CONFIG_JSON
                       }
                     >
-                      <CdsInput className="margin-t-sm">
-                        <label>Server</label>
-                        <input
-                          id="kubeapps-docker-cred-server"
-                          value={secretServer}
-                          onChange={handleAuthSecretServerChange}
-                          placeholder="https://index.docker.io/v1/"
-                          required={
-                            authMethod ===
-                            PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_DOCKER_CONFIG_JSON
-                          }
-                          disabled={!!repo.auth?.type}
-                        />
-                      </CdsInput>
-                      <CdsInput className="margin-t-sm">
-                        <label>Username</label>
-                        <input
-                          id="kubeapps-docker-cred-username"
-                          value={secretUser}
-                          onChange={handleAuthSecretUserChange}
-                          placeholder="Username"
-                          required={
-                            authMethod ===
-                            PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_DOCKER_CONFIG_JSON
-                          }
-                          disabled={!!repo.auth?.type}
-                        />
-                      </CdsInput>
-                      <CdsInput className="margin-t-sm">
-                        <label>Password</label>
-                        <input
-                          id="kubeapps-docker-cred-password"
-                          type="password"
-                          value={secretPassword}
-                          onChange={handleAuthSecretPasswordChange}
-                          placeholder="Password"
-                          required={
-                            authMethod ===
-                            PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_DOCKER_CONFIG_JSON
-                          }
-                          disabled={!!repo.auth?.type}
-                        />
-                      </CdsInput>
-                      <CdsInput className="margin-t-sm">
-                        <label>Email</label>
-                        <input
-                          id="kubeapps-docker-cred-email"
-                          value={secretEmail}
-                          onChange={handleAuthSecretEmailChange}
-                          placeholder="user@example.com"
-                          disabled={!!repo.auth?.type}
-                        />
-                      </CdsInput>
+                      {isUserManagedSecretToggle}
+                      <br />
+                      {isUserManagedSecret ? (
+                        secretNameInput("docker")
+                      ) : (
+                        <>
+                          <CdsInput className="margin-t-sm">
+                            <label htmlFor="kubeapps-docker-cred-server">Server</label>
+                            <input
+                              id="kubeapps-docker-cred-server"
+                              value={secretServer}
+                              onChange={handleAuthSecretServerChange}
+                              placeholder="https://index.docker.io/v1/"
+                              required={
+                                authMethod ===
+                                PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_DOCKER_CONFIG_JSON
+                              }
+                              disabled={!!repo.auth?.type}
+                            />
+                          </CdsInput>
+                          <br />
+                          <CdsInput className="margin-t-sm">
+                            <label htmlFor="kubeapps-docker-cred-username">Username</label>
+                            <input
+                              id="kubeapps-docker-cred-username"
+                              value={secretUser}
+                              onChange={handleAuthSecretUserChange}
+                              placeholder="Username"
+                              required={
+                                authMethod ===
+                                PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_DOCKER_CONFIG_JSON
+                              }
+                              disabled={!!repo.auth?.type}
+                            />
+                          </CdsInput>
+                          <br />
+                          <CdsInput className="margin-t-sm">
+                            <label htmlFor="kubeapps-docker-cred-password">Password</label>
+                            <input
+                              id="kubeapps-docker-cred-password"
+                              type="password"
+                              value={secretPassword}
+                              onChange={handleAuthSecretPasswordChange}
+                              placeholder="Password"
+                              required={
+                                authMethod ===
+                                PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_DOCKER_CONFIG_JSON
+                              }
+                              disabled={!!repo.auth?.type}
+                            />
+                          </CdsInput>
+                          <br />
+                          <CdsInput className="margin-t-sm">
+                            <label htmlFor="kubeapps-docker-cred-email">Email</label>
+                            <input
+                              id="kubeapps-docker-cred-email"
+                              value={secretEmail}
+                              onChange={handleAuthSecretEmailChange}
+                              placeholder="user@example.com"
+                              disabled={!!repo.auth?.type}
+                            />
+                          </CdsInput>
+                        </>
+                      )}
                     </div>
+                    {/* End docker creds authentication */}
 
+                    {/* Begin HTTP custom authentication */}
                     <div
                       id="kubeapps-repo-auth-details-custom"
                       hidden={
@@ -916,22 +1018,35 @@ export function AppRepoForm(props: IAppRepoFormProps) {
                         PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_AUTHORIZATION_HEADER
                       }
                     >
-                      <CdsInput>
-                        <label>Raw Authorization Header</label>
-                        <input
-                          id="kubeapps-repo-custom-header"
-                          type="text"
-                          placeholder="MyAuth xrxNcWghpRLdcPHFgVRM73rr4N7qjvjm"
-                          value={authCustomHeader}
-                          onChange={handleAuthCustomHeaderChange}
-                          required={
-                            authMethod ===
-                            PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_AUTHORIZATION_HEADER
-                          }
-                          disabled={!!repo.auth?.type}
-                        />
-                      </CdsInput>
+                      {isUserManagedSecretToggle}
+                      <br />
+                      {isUserManagedSecret ? (
+                        secretNameInput("custom")
+                      ) : (
+                        <>
+                          <CdsInput>
+                            <label htmlFor="kubeapps-repo-custom-header">
+                              Raw Authorization Header
+                            </label>
+                            <input
+                              id="kubeapps-repo-custom-header"
+                              type="text"
+                              placeholder="MyAuth xrxNcWghpRLdcPHFgVRM73rr4N7qjvjm"
+                              value={authCustomHeader}
+                              onChange={handleAuthCustomHeaderChange}
+                              required={
+                                authMethod ===
+                                PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_AUTHORIZATION_HEADER
+                              }
+                              disabled={!!repo.auth?.type}
+                            />
+                          </CdsInput>
+                        </>
+                      )}
                     </div>
+                    {/* End HTTP custom authentication */}
+
+                    {/* Begin SSH authentication */}
                     <div
                       id="kubeapps-repo-auth-details-ssh"
                       hidden={
@@ -939,39 +1054,55 @@ export function AppRepoForm(props: IAppRepoFormProps) {
                         PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_SSH
                       }
                     >
-                      <CdsTextarea>
-                        <label htmlFor="kubeapps-repo-ssh-knownhosts">Raw SSH Known Hosts</label>
-                        <textarea
-                          id="kubeapps-repo-ssh-knownhosts"
-                          className="cds-textarea-fix"
-                          placeholder="github.com ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIOMqqnkVzrm0SdG6UOoqKLsabgH5C9okWi0dh2l9GKJl"
-                          value={sshKnownHosts}
-                          onChange={handleSshKnownHostsChange}
-                          required={
-                            authMethod ===
-                            PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_SSH
-                          }
-                          disabled={!!repo.auth?.type}
-                        />
-                      </CdsTextarea>
-                      <CdsTextarea>
-                        <label htmlFor="kubeapps-repo-ssh-privatekey">Raw SSH Private Key</label>
-                        <textarea
-                          id="kubeapps-repo-ssh-privatekey"
-                          className="cds-textarea-fix"
-                          placeholder={
-                            "-----BEGIN CERTIFICATE-----\n...\n-----END CERTIFICATE-----"
-                          }
-                          value={sshPrivateKey}
-                          onChange={handleSshPrivateKeyChange}
-                          required={
-                            authMethod ===
-                            PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_SSH
-                          }
-                          disabled={!!repo.auth?.type}
-                        />
-                      </CdsTextarea>
+                      {isUserManagedSecretToggle}
+                      <br />
+                      {isUserManagedSecret ? (
+                        secretNameInput("ssh")
+                      ) : (
+                        <>
+                          <CdsTextarea>
+                            <label htmlFor="kubeapps-repo-ssh-knownhosts">
+                              Raw SSH Known Hosts
+                            </label>
+                            <textarea
+                              id="kubeapps-repo-ssh-knownhosts"
+                              className="cds-textarea-fix"
+                              placeholder="github.com ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIOMqqnkVzrm0SdG6UOoqKLsabgH5C9okWi0dh2l9GKJl"
+                              value={sshKnownHosts}
+                              onChange={handleSshKnownHostsChange}
+                              required={
+                                authMethod ===
+                                PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_SSH
+                              }
+                              disabled={!!repo.auth?.type}
+                            />
+                          </CdsTextarea>
+                          <br />
+                          <CdsTextarea>
+                            <label htmlFor="kubeapps-repo-ssh-privatekey">
+                              Raw SSH Private Key
+                            </label>
+                            <textarea
+                              id="kubeapps-repo-ssh-privatekey"
+                              className="cds-textarea-fix"
+                              placeholder={
+                                "-----BEGIN CERTIFICATE-----\n...\n-----END CERTIFICATE-----"
+                              }
+                              value={sshPrivateKey}
+                              onChange={handleSshPrivateKeyChange}
+                              required={
+                                authMethod ===
+                                PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_SSH
+                              }
+                              disabled={!!repo.auth?.type}
+                            />
+                          </CdsTextarea>
+                        </>
+                      )}
                     </div>
+                    {/* End SSH authentication */}
+
+                    {/* Begin TLS authentication */}
                     <div
                       id="kubeapps-repo-auth-details-tls"
                       hidden={
@@ -979,41 +1110,53 @@ export function AppRepoForm(props: IAppRepoFormProps) {
                         PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_TLS
                       }
                     >
-                      <CdsTextarea>
-                        <label htmlFor="kubeapps-repo-tls-cert">Raw TLS Cert</label>
-                        <textarea
-                          id="kubeapps-repo-tls-cert"
-                          className="cds-textarea-fix"
-                          placeholder={
-                            "-----BEGIN CERTIFICATE-----\n...\n-----END CERTIFICATE-----"
-                          }
-                          value={tlsAuthCert}
-                          onChange={handleTlsAuthCertChange}
-                          required={
-                            authMethod ===
-                            PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_TLS
-                          }
-                          disabled={!!repo.auth?.type}
-                        />
-                      </CdsTextarea>
-                      <CdsTextarea>
-                        <label htmlFor="kubeapps-repo-tls-cert">Raw TLS Key</label>
-                        <textarea
-                          id="kubeapps-repo-tls-key"
-                          className="cds-textarea-fix"
-                          placeholder={
-                            "-----BEGIN CERTIFICATE-----\n...\n-----END CERTIFICATE-----"
-                          }
-                          value={tlsAuthKey}
-                          onChange={handleTlsAuthKeyChange}
-                          required={
-                            authMethod ===
-                            PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_TLS
-                          }
-                          disabled={!!repo.auth?.type}
-                        />
-                      </CdsTextarea>
+                      {isUserManagedSecretToggle}
+                      <br />
+                      {isUserManagedSecret ? (
+                        secretNameInput("tls")
+                      ) : (
+                        <>
+                          <CdsTextarea>
+                            <label htmlFor="kubeapps-repo-tls-cert">Raw TLS Cert</label>
+                            <textarea
+                              id="kubeapps-repo-tls-cert"
+                              className="cds-textarea-fix"
+                              placeholder={
+                                "-----BEGIN CERTIFICATE-----\n...\n-----END CERTIFICATE-----"
+                              }
+                              value={tlsAuthCert}
+                              onChange={handleTlsAuthCertChange}
+                              required={
+                                authMethod ===
+                                PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_TLS
+                              }
+                              disabled={!!repo.auth?.type}
+                            />
+                          </CdsTextarea>
+                          <br />
+                          <CdsTextarea>
+                            <label htmlFor="kubeapps-repo-tls-cert">Raw TLS Key</label>
+                            <textarea
+                              id="kubeapps-repo-tls-key"
+                              className="cds-textarea-fix"
+                              placeholder={
+                                "-----BEGIN CERTIFICATE-----\n...\n-----END CERTIFICATE-----"
+                              }
+                              value={tlsAuthKey}
+                              onChange={handleTlsAuthKeyChange}
+                              required={
+                                authMethod ===
+                                PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_TLS
+                              }
+                              disabled={!!repo.auth?.type}
+                            />
+                          </CdsTextarea>
+                        </>
+                      )}
                     </div>
+                    {/* End TLS authentication */}
+
+                    {/* Begin opaque authentication */}
                     <div
                       id="kubeapps-repo-auth-details-opaque"
                       hidden={
@@ -1021,23 +1164,35 @@ export function AppRepoForm(props: IAppRepoFormProps) {
                         PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_OPAQUE
                       }
                     >
-                      <CdsTextarea>
-                        <label htmlFor="kubeapps-repo-opaque-data">Raw Opaque Data (JSON)</label>
-                        <textarea
-                          id="kubeapps-repo-opaque-data"
-                          className="cds-textarea-fix"
-                          placeholder={'{\n  "username": "admin",\n  "password": "admin"\n}'}
-                          value={opaqueData}
-                          onChange={handleOpaqueDataChange}
-                          required={
-                            authMethod ===
-                            PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_OPAQUE
-                          }
-                          disabled={!!repo.auth?.type}
-                        />
-                      </CdsTextarea>
+                      {isUserManagedSecretToggle}
+                      <br />
+                      {isUserManagedSecret ? (
+                        secretNameInput("opaque")
+                      ) : (
+                        <>
+                          <CdsTextarea>
+                            <label htmlFor="kubeapps-repo-opaque-data">
+                              Raw Opaque Data (JSON)
+                            </label>
+                            <textarea
+                              id="kubeapps-repo-opaque-data"
+                              className="cds-textarea-fix"
+                              placeholder={'{\n  "username": "admin",\n  "password": "admin"\n}'}
+                              value={opaqueData}
+                              onChange={handleOpaqueDataChange}
+                              required={
+                                authMethod ===
+                                PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_OPAQUE
+                              }
+                              disabled={!!repo.auth?.type}
+                            />
+                          </CdsTextarea>
+                        </>
+                      )}
                     </div>
+                    {/* Begin opaque authentication */}
                   </div>
+                  {/* End authentication details */}
                 </div>
               </CdsFormGroup>
             </CdsAccordionContent>
@@ -1076,7 +1231,9 @@ export function AppRepoForm(props: IAppRepoFormProps) {
                 {plugin?.name === PluginNames.PACKAGES_HELM && (
                   <>
                     <CdsTextarea>
-                      <label>Filter Applications (optional)</label>
+                      <label htmlFor="kubeapps-repo-filter-repositories">
+                        Filter Applications (optional)
+                      </label>
                       <CdsControlMessage>
                         Comma-separated list of applications to be included or excluded (all will be
                         included by default).
@@ -1090,7 +1247,7 @@ export function AppRepoForm(props: IAppRepoFormProps) {
                       />
                     </CdsTextarea>
                     <CdsCheckbox className="ca-skip-tls">
-                      <label>Exclude Packages</label>
+                      <label htmlFor="kubeapps-repo-filter-exclude">Exclude Packages</label>
                       <CdsControlMessage>
                         Exclude packages matching the given filter
                       </CdsControlMessage>
@@ -1102,7 +1259,7 @@ export function AppRepoForm(props: IAppRepoFormProps) {
                       />
                     </CdsCheckbox>
                     <CdsCheckbox className="ca-skip-tls">
-                      <label>Regular Expression</label>
+                      <label htmlFor="kubeapps-repo-filter-regex">Regular Expression</label>
                       <CdsControlMessage>
                         Mark this box to treat the filter as a regular expression
                       </CdsControlMessage>
@@ -1122,27 +1279,9 @@ export function AppRepoForm(props: IAppRepoFormProps) {
             <CdsAccordionHeader onClick={() => toggleAccordion(3)}>Advanced</CdsAccordionHeader>
             <CdsAccordionContent>
               <CdsFormGroup layout="vertical">
-                {/* TODO(agamez): move this input to a better UX-wise place */}
-                {authMethod !==
-                  PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_UNSPECIFIED && (
-                  <CdsInput>
-                    <label>Authentication Secret Name</label>
-                    <input
-                      id="kubeapps-repo-secret-auth"
-                      type="text"
-                      placeholder="my-auth-secret"
-                      value={secretAuthName}
-                      onChange={handleSecretAuthNameChange}
-                    />
-                    <CdsControlMessage>
-                      Name of the Kubernetes Secret object holding the auth data. Please ensure that
-                      secret has the proper type as expected by the selected authentication method.
-                    </CdsControlMessage>
-                  </CdsInput>
-                )}
                 {plugin?.name !== PluginNames.PACKAGES_HELM && (
                   <CdsInput>
-                    <label>Synchronization Interval</label>
+                    <label htmlFor="kubeapps-repo-interval">Synchronization Interval</label>
                     <input
                       id="kubeapps-repo-interval"
                       type="number"
@@ -1157,7 +1296,7 @@ export function AppRepoForm(props: IAppRepoFormProps) {
                 )}
                 {plugin?.name === PluginNames.PACKAGES_HELM && (
                   <CdsCheckbox>
-                    <label>Perform Validation</label>
+                    <label htmlFor="kubeapps-repo-performvalidation">Perform Validation</label>
                     <CdsControlMessage>
                       Ensure that a connection can be established with the repository before adding
                       it.
@@ -1172,11 +1311,13 @@ export function AppRepoForm(props: IAppRepoFormProps) {
                 )}
                 {/* TODO(agamez): move this input to a better UX-wise place */}
                 <CdsInput>
-                  <label>Custom CA Secret Name (optional)</label>
+                  <label htmlFor="kubeapps-repo-secret-ca">Custom CA Secret Name (optional)</label>
                   <input
                     id="kubeapps-repo-secret-ca"
                     type="text"
                     placeholder="my-ca-secret"
+                    pattern="[a-z0-9]([-a-z0-9]*[a-z0-9])?(\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*"
+                    title="Use lower case alphanumeric characters, '-' or '.'"
                     value={secretTLSName}
                     onChange={handleSecretTLSNameChange}
                   />
@@ -1185,7 +1326,7 @@ export function AppRepoForm(props: IAppRepoFormProps) {
                   </CdsControlMessage>
                 </CdsInput>
                 <CdsTextarea layout="vertical">
-                  <label>Custom CA Certificate (optional)</label>
+                  <label htmlFor="kubeapps-repo-custom-ca">Custom CA Certificate (optional)</label>
                   <textarea
                     id="kubeapps-repo-custom-ca"
                     placeholder={"-----BEGIN CERTIFICATE-----\n...\n-----END CERTIFICATE-----"}
@@ -1199,7 +1340,7 @@ export function AppRepoForm(props: IAppRepoFormProps) {
                   </CdsControlMessage>
                 </CdsTextarea>
                 <CdsCheckbox className="ca-skip-tls">
-                  <label className="clr-control-label">Skip TLS Verification</label>
+                  <label htmlFor="kubeapps-repo-skip-tls">Skip TLS Verification</label>
                   <input
                     id="kubeapps-repo-skip-tls"
                     type="checkbox"
@@ -1211,7 +1352,9 @@ export function AppRepoForm(props: IAppRepoFormProps) {
                   </CdsControlMessage>
                 </CdsCheckbox>
                 <CdsCheckbox className="ca-skip-tls">
-                  <label className="clr-control-label">Pass Credentials to 3rd party URLs</label>
+                  <label htmlFor="kubeapps-repo-pass-credentials">
+                    Pass Credentials to 3rd party URLs
+                  </label>
                   <input
                     id="kubeapps-repo-pass-credentials"
                     type="checkbox"
