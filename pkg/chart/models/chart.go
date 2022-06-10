@@ -90,12 +90,6 @@ func (a ChartFiles) Value() (driver.Value, error) {
 	return json.Marshal(a)
 }
 
-type RepoCheck struct {
-	ID         string    `bson:"_id"`
-	LastUpdate time.Time `bson:"last_update"`
-	Checksum   string    `bson:"checksum"`
-}
-
 // some constant strings used as keys in maps in several modules
 const (
 	ReadmeKey    = "readme"

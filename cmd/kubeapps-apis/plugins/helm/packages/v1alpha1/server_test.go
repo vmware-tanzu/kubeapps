@@ -7,11 +7,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/helm/packages/v1alpha1/common"
 	"io/ioutil"
-	apiextfake "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset/fake"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apiserver/pkg/storage/names"
 	"net/url"
 	"os"
 	"regexp"
@@ -24,15 +20,14 @@ import (
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/vmware-tanzu/kubeapps/cmd/apprepository-controller/pkg/apis/apprepository/v1alpha1"
-	"github.com/vmware-tanzu/kubeapps/cmd/assetsvc/pkg/utils"
 	corev1 "github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
 	plugins "github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/core/plugins/v1alpha1"
 	helmv1 "github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/plugins/helm/packages/v1alpha1"
+	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/helm/packages/v1alpha1/common"
+	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/helm/packages/v1alpha1/utils"
 	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/pkg/clientgetter"
 	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/pkg/paginate"
 	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/pkg/pkgutils"
-	"sigs.k8s.io/yaml"
-
 	"github.com/vmware-tanzu/kubeapps/pkg/agent"
 	"github.com/vmware-tanzu/kubeapps/pkg/chart/fake"
 	"github.com/vmware-tanzu/kubeapps/pkg/chart/models"
@@ -49,12 +44,16 @@ import (
 	"helm.sh/helm/v3/pkg/storage"
 	"helm.sh/helm/v3/pkg/storage/driver"
 	authorizationv1 "k8s.io/api/authorization/v1"
+	apiextfake "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset/fake"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	k8sruntime "k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apiserver/pkg/storage/names"
 	dynfake "k8s.io/client-go/dynamic/fake"
 	typfake "k8s.io/client-go/kubernetes/fake"
 	k8stesting "k8s.io/client-go/testing"
 	log "k8s.io/klog/v2"
+	"sigs.k8s.io/yaml"
 )
 
 const (
@@ -79,7 +78,7 @@ func setMockManager(t *testing.T) (sqlmock.Sqlmock, func(), utils.AssetManager) 
 }
 
 func TestGetClient(t *testing.T) {
-	dbConfig := dbutils.Config{URL: "localhost:5432", Database: "assetsvc", Username: "postgres", Password: "password"}
+	dbConfig := dbutils.Config{URL: "localhost:5432", Database: "assets", Username: "postgres", Password: "password"}
 	manager, err := utils.NewPGManager(dbConfig, globalPackagingNamespace)
 	if err != nil {
 		log.Fatalf("%s", err)

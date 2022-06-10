@@ -17,7 +17,6 @@ For building the [development container images](https://hub.docker.com/u/kubeapp
 - Those services written in Golang use the same image for building the binary, but then a [scratch](https://hub.docker.com/_/scratch) image is used for actually running it. These Dockerfiles are:
   - [apprepository-controller/Dockerfile](https://github.com/vmware-tanzu/kubeapps/blob/main/cmd/apprepository-controller/Dockerfile).
   - [asset-syncer/Dockerfile](https://github.com/vmware-tanzu/kubeapps/blob/main/cmd/asset-syncer/Dockerfile).
-  - [assetsvc/Dockerfile](https://github.com/vmware-tanzu/kubeapps/blob/main/cmd/assetsvc/Dockerfile).
   - [kubeops/Dockerfile](https://github.com/vmware-tanzu/kubeapps/blob/main/cmd/kubeops/Dockerfile).
 - The [pinniped-proxy/Dockerfile](https://github.com/vmware-tanzu/kubeapps/blob/main/cmd/pinniped-proxy/Dockerfile) uses:
   - [\_/rust](https://hub.docker.com/_/rust) for building the binary.

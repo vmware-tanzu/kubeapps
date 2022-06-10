@@ -164,7 +164,7 @@ func Test_GetChartsWithFilters(t *testing.T) {
 	if err != nil {
 		t.Errorf("Found error %v", err)
 	}
-	expectedCharts := []*models.Chart{&models.Chart{
+	expectedCharts := []*models.Chart{{
 		Name: "foo",
 		ChartVersions: []models.ChartVersion{
 			{Version: "2.0.0", AppVersion: "2.0.2"},
@@ -204,7 +204,7 @@ func Test_GetChartsWithFilters_withSlashes(t *testing.T) {
 	if err != nil {
 		t.Errorf("Found error %v", err)
 	}
-	expectedCharts := []*models.Chart{&models.Chart{
+	expectedCharts := []*models.Chart{{
 		Name: "fo%2Fo",
 		ChartVersions: []models.ChartVersion{
 			{Version: "2.0.0", AppVersion: "2.0.2"},

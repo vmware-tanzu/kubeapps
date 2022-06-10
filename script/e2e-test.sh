@@ -234,7 +234,6 @@ kubeapps_apis_image="kubeapps-apis"
 images=(
   "apprepository-controller"
   "asset-syncer"
-  "assetsvc"
   "dashboard"
   "kubeops"
   "pinniped-proxy"
@@ -247,16 +246,14 @@ img_flags=(
   "--set" "apprepository.image.repository=${images[0]}"
   "--set" "apprepository.syncImage.tag=${DEV_TAG}"
   "--set" "apprepository.syncImage.repository=${images[1]}"
-  "--set" "assetsvc.image.tag=${DEV_TAG}"
-  "--set" "assetsvc.image.repository=${images[2]}"
   "--set" "dashboard.image.tag=${DEV_TAG}"
-  "--set" "dashboard.image.repository=${images[3]}"
+  "--set" "dashboard.image.repository=${images[2]}"
   "--set" "kubeops.image.tag=${DEV_TAG}"
-  "--set" "kubeops.image.repository=${images[4]}"
+  "--set" "kubeops.image.repository=${images[3]}"
   "--set" "pinnipedProxy.image.tag=${DEV_TAG}"
-  "--set" "pinnipedProxy.image.repository=${images[5]}"
+  "--set" "pinnipedProxy.image.repository=${images[4]}"
   "--set" "kubeappsapis.image.tag=${DEV_TAG}"
-  "--set" "kubeappsapis.image.repository=${images[6]}"
+  "--set" "kubeappsapis.image.repository=${images[5]}"
 )
 
 if [ "$USE_MULTICLUSTER_OIDC_ENV" = true ]; then

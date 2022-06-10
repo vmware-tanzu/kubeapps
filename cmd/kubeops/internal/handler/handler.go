@@ -11,13 +11,13 @@ import (
 
 	"github.com/gorilla/mux"
 	negroni "github.com/urfave/negroni/v2"
+	"github.com/vmware-tanzu/kubeapps/cmd/kubeops/internal/auth"
+	"github.com/vmware-tanzu/kubeapps/cmd/kubeops/internal/response"
 	"github.com/vmware-tanzu/kubeapps/pkg/agent"
-	"github.com/vmware-tanzu/kubeapps/pkg/auth"
 	"github.com/vmware-tanzu/kubeapps/pkg/chart"
 	chartUtils "github.com/vmware-tanzu/kubeapps/pkg/chart"
 	"github.com/vmware-tanzu/kubeapps/pkg/handlerutil"
 	"github.com/vmware-tanzu/kubeapps/pkg/kube"
-	"github.com/vmware-tanzu/kubeapps/pkg/response"
 	"helm.sh/helm/v3/pkg/action"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
@@ -249,6 +249,10 @@ func upgradeRelease(cfg Config, w http.ResponseWriter, req *http.Request, params
 		caCertSecret, authSecret,
 		cfg.ChartClientFactory.New(appRepo.Spec.Type, cfg.Options.UserAgent),
 	)
+	if err != nil {
+		returnErrMessage(err, w)
+		return
+	}
 	registrySecrets, err := chartUtils.RegistrySecretsPerDomain(req.Context(), appRepo.Spec.DockerRegistrySecrets, appRepo.Namespace, cfg.userClientSet)
 	if err != nil {
 		returnErrMessage(err, w)
