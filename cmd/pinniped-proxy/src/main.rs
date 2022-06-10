@@ -1,5 +1,7 @@
 // Copyright 2020-2022 the Kubeapps contributors.
 // SPDX-License-Identifier: Apache-2.0
+#[macro_use]
+extern crate cached;
 
 use std::convert::Infallible;
 use std::fs;
@@ -14,6 +16,7 @@ use structopt::StructOpt;
 
 // Ensure the root crate is aware of the child modules.
 mod cli;
+mod expired_value_cache;
 mod https;
 mod logging;
 mod pinniped;
