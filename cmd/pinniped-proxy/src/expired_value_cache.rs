@@ -1,5 +1,10 @@
 // Copyright 2020-2022 the Kubeapps contributors.
 // SPDX-License-Identifier: Apache-2.0
+
+// NOTE: This may be better in the upstream cached repository. I've created
+// an issue to check with the author, otherwise it can stay here or I may
+// spin it off to a separate crate.
+// https://github.com/jaemk/cached/issues/115
 use std::collections::HashMap;
 use std::hash::Hash;
 
