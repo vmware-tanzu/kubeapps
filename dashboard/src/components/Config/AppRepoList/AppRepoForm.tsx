@@ -177,8 +177,7 @@ export function AppRepoForm(props: IAppRepoFormProps) {
         setFilterExclude(exclude);
         setFilterNames(names);
       }
-      // TODO(agamez): set it properly
-      setIsUserManagedSecret(false);
+      setIsUserManagedSecret(!!repo.auth?.secretRef?.name);
     }
   }, [repo, namespace, currentCluster, dispatch]);
 
@@ -235,8 +234,7 @@ export function AppRepoForm(props: IAppRepoFormProps) {
         ociRepositories: ociRepoList,
         performValidation,
         filterRule: filter,
-        // TODO(agamez): set this value when supporting user-managed secrets
-        dockerRegistrySecrets: [],
+        dockerRegistrySecrets: [secretAuthName],
       } as RepositoryCustomDetails,
       description,
       dockerRegCreds: {
@@ -405,6 +403,7 @@ export function AppRepoForm(props: IAppRepoFormProps) {
             type="checkbox"
             onChange={handleIsUserManagedSecretChange}
             checked={isUserManagedSecret}
+            disabled={!!repo.auth?.type}
           />
         </CdsToggle>
       </CdsToggleGroup>
