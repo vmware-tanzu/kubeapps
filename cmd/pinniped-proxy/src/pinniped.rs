@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 use std::convert::TryFrom;
 use std::env;
+use std::hash::{Hash, Hasher};
 
 use anyhow::{Context, Result};
 use http::Uri;
@@ -46,6 +47,14 @@ pub struct TokenCredentialRequest {
     status: Option<TokenCredentialRequestStatus>,
 }
 
+// We specifically do not include the request status in the hash generation,
+// considering only the request spec for our caching.
+impl Hash for TokenCredentialRequest {
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        self.spec.hash(state);
+    }
+}
+
 #[derive(Deserialize, Serialize, Clone, Debug)]
 pub struct TokenCredentialRequestSpec {
     // Bearer token supplied with the credential request.
@@ -53,6 +62,18 @@ pub struct TokenCredentialRequestSpec {
 
     // Reference to an authenticator which can verify this credential request.
     authenticator: corev1::TypedLocalObjectReference,
+}
+
+// Since the TypedLocalObjectReference doesn't implement the Hash trait
+// we cannot simple derive the Hash trait, instead calculating it manually
+// for the token and authenticator fields.
+impl Hash for TokenCredentialRequestSpec {
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        self.token.hash(state);
+        self.authenticator.api_group.hash(state);
+        self.authenticator.kind.hash(state);
+        self.authenticator.name.hash(state);
+    }
 }
 
 #[derive(Deserialize, Serialize, Clone, Debug)]
@@ -254,6 +275,7 @@ mod tests {
     use super::*;
     use serial_test::serial;
     use chrono::{Utc, TimeZone};
+    use std::collections::hash_map::DefaultHasher;
 
     const VALID_CERT_BASE64: &'static str = "LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSUN5RENDQWJDZ0F3SUJBZ0lCQURBTkJna3Foa2lHOXcwQkFRc0ZBREFWTVJNd0VRWURWUVFERXdwcmRXSmwKY201bGRHVnpNQjRYRFRJd01UQXlOakl6TXpBME5Wb1hEVE13TVRBeU5ESXpNekEwTlZvd0ZURVRNQkVHQTFVRQpBeE1LYTNWaVpYSnVaWFJsY3pDQ0FTSXdEUVlKS29aSWh2Y05BUUVCQlFBRGdnRVBBRENDQVFvQ2dnRUJBT1ZKCnFuOVBFZUp3UDRQYnI0cFo1ZjZKUmliOFZ5a2tOYjV2K1hzTVZER01aWGZLb293Y29IYjFwRWh5d0pzeDFiME4Kd2YvZ1JURi9maEgzT0drRnNQMlV2a0lHVytzNUlBd0sxMFRXYkN5VzAwT3lzVkdLcnl5bHNWcEhCWXBZRGJBcQpkdnQzc0FkcFJZaGlLZSs2NkVTL3dQNTdLV3g0SVdwZko0UGpyejh2NkJBWlptZ3o5ZzRCSFNMQkhpbTVFbTdYClBJTmpKL1RJTXFzVW1PR1ppUUNHR0ptRnQxZ21jQTd3eHZ0ZXg2ckkxSWdFNkh5NW10UzJ3NDZaMCtlVU1RSzgKSE9UdnI5aGFETnhJenVjbkduaFlCT2Z2U2VVaXNCR0pOUm5QbENydWx4b2NSZGI3N20rQUdzWW52QitNd2prVQpEbXNQTWZBelpSRHEwekhzcGEwQ0F3RUFBYU1qTUNFd0RnWURWUjBQQVFIL0JBUURBZ0trTUE4R0ExVWRFd0VCCi93UUZNQU1CQWY4d0RRWUpLb1pJaHZjTkFRRUxCUUFEZ2dFQkFBWndybXJLa3FVaDJUYld2VHdwSWlOd0o1NzAKaU9lTVl2WWhNakZxTmt6Tk9OUW55c3lPd1laRGJFMDRrV3AxclRLNHVZaUh3NTJUc0cyelJsZ0QzMzNKaEtvUQpIVloyV1hUT3Z5U2RJaWl5bVpKM2N3d0p2T0lhMW5zZnhYY1NJakJnYnNzYXowMndpRCtlazRPdmlRZktjcXJpCnFQbWZabDZDSkk0NU1rd3JwTExFaTZkNVhGbkhDb3d4eklxQjBrUDhwOFlOaGJYWTNYY2JaNElvY2lMemRBamUKQ1l6NXFVSlBlSDJCcHNaM0JXNXRDbjcycGZYazVQUjlYOFRUTHh6aTA4SU9yYjgvRDB4Tnk3emQyMnVjNXM1bwoveXZIeEt6cXBiczVuRXJkT0JFVXNGWnBpUEhaVGc1dExmWlZ4TG00VjNTZzQwRWUyNFd6d09zaDNIOD0KLS0tLS1FTkQgQ0VSVElGSUNBVEUtLS0tLQo=";
 
@@ -436,5 +458,78 @@ mZu9A/ivt37pOQXm/HOX6tHB
             Ok(_) => anyhow::bail!("expected error"),
             Err(_) => Ok(()),
         }
+    }
+
+    // Without any changes, the make_token_credential_request function
+    // returns a request with the following hash.
+    const DEFAULT_TOKEN_CREDENTIAL_REQUEST_HASH: u64 = 2363471629413450951;
+
+    fn make_token_credential_request() -> TokenCredentialRequest {
+        TokenCredentialRequest {
+            spec: TokenCredentialRequestSpec {
+                token: Some(String::from("fake-token")),
+                authenticator: corev1::TypedLocalObjectReference {
+                    name: String::from("fake-authenticator-name"),
+                    kind: String::from("fake-authenticator-kind"),
+                    api_group: Some(get_pinniped_authenticator_api_group().into()),
+                },
+            },
+            status: None,
+        }
+    }
+
+    #[test]
+    fn test_token_credential_request_hash_default() -> Result<()> {
+        let cred_data = make_token_credential_request();
+
+        let mut hasher = DefaultHasher::new();
+        cred_data.hash(&mut hasher);
+
+        assert_eq!(hasher.finish(), DEFAULT_TOKEN_CREDENTIAL_REQUEST_HASH);
+        Ok(())
+    }
+
+    #[test]
+    fn test_token_credential_request_hash_differs_with_token() -> Result<()> {
+        let mut cred_data = make_token_credential_request();
+        cred_data.spec.token = Some(String::from("another-token"));
+
+        let mut hasher = DefaultHasher::new();
+        cred_data.hash(&mut hasher);
+
+        assert!(hasher.finish() != DEFAULT_TOKEN_CREDENTIAL_REQUEST_HASH);
+        Ok(())
+    }
+
+    #[test]
+    fn test_token_credential_request_hash_differs_with_authenticator() -> Result<()> {
+        let mut cred_data = make_token_credential_request();
+        cred_data.spec.authenticator.name = String::from("another-authenticator-name");
+
+        let mut hasher = DefaultHasher::new();
+        cred_data.hash(&mut hasher);
+
+        assert!(hasher.finish() != DEFAULT_TOKEN_CREDENTIAL_REQUEST_HASH);
+        Ok(())
+    }
+
+    #[test]
+    fn test_token_credential_request_hash_identical_with_status_change() -> Result<()> {
+        let mut cred_data = make_token_credential_request();
+        cred_data.status = Some(TokenCredentialRequestStatus {
+            credential: Some(ClusterCredential {
+                token: Some(String::from("returned token")),
+                client_certificate_data: String::from("cert-data"),
+                client_key_data: String::from("key-data"),
+                expiration_timestamp: metav1::Time(Utc.timestamp(0, 0)),
+            }),
+            message: Some(String::from("some status message")),
+        });
+
+        let mut hasher = DefaultHasher::new();
+        cred_data.hash(&mut hasher);
+
+        assert_eq!(hasher.finish(), DEFAULT_TOKEN_CREDENTIAL_REQUEST_HASH);
+        Ok(())
     }
 }
