@@ -3,7 +3,7 @@
 
 module github.com/vmware-tanzu/kubeapps
 
-go 1.17
+go 1.18
 
 replace (
 	// required by https://github.com/kubernetes/code-generator/blob/master/go.mod
