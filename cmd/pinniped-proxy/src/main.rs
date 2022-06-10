@@ -1,8 +1,5 @@
 // Copyright 2020-2022 the Kubeapps contributors.
 // SPDX-License-Identifier: Apache-2.0
-#[macro_use]
-extern crate cached;
-
 use std::convert::Infallible;
 use std::fs;
 

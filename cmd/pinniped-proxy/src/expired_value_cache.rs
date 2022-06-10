@@ -5,19 +5,19 @@ use std::hash::Hash;
 
 use cached::Cached;
 
-pub trait Expired {
-    fn has_expired(&self) -> bool;
+pub trait CanExpire {
+    fn is_expired(&self) -> bool;
 }
 
 // Implement our ExpiredValueCache which uses the returned values own
 // trait to determine whether it has expired, rather than a set timestamp.
-struct ExpiredValueCache<K: Hash + Eq, V: Expired> {
+struct ExpiredValueCache<K: Hash + Eq, V: CanExpire> {
     store: HashMap<K, V>,
     capacity: usize,
     hits: u64,
     misses: u64,
 }
-impl<K: Hash + Eq, V: Expired> ExpiredValueCache<K, V> {
+impl<K: Hash + Eq, V: CanExpire> ExpiredValueCache<K, V> {
     pub fn with_capacity(size: usize) -> ExpiredValueCache<K, V> {
         ExpiredValueCache {
             store: HashMap::with_capacity(size),
@@ -28,13 +28,13 @@ impl<K: Hash + Eq, V: Expired> ExpiredValueCache<K, V> {
     }
 }
 
-impl<K: Hash + Eq, V: Expired> Cached<K, V> for ExpiredValueCache<K, V> {
+impl<K: Hash + Eq, V: CanExpire> Cached<K, V> for ExpiredValueCache<K, V> {
     fn cache_get(&mut self, k: &K) -> Option<&V> {
         let optv = self.store.get(k);
         // If it has expired, delete the cached entry and return none.
         match optv {
             Some(v) => {
-                if v.has_expired() {
+                if v.is_expired() {
                     self.cache_remove(k);
                     self.misses += 1;
                     return None;
@@ -57,7 +57,7 @@ impl<K: Hash + Eq, V: Expired> Cached<K, V> for ExpiredValueCache<K, V> {
         // If it has expired, delete the cached entry and return none.
         match optv {
             Some(v) => {
-                if v.has_expired() {
+                if v.is_expired() {
                     self.cache_remove(k);
                     self.misses += 1;
                     return None;
@@ -107,14 +107,16 @@ mod tests {
     use super::*;
     use serial_test::serial;
 
+    use cached::proc_macro::cached;
+
     #[derive(Clone)]
     pub struct NewsArticle {
         slug: String,
         is_expired: bool,
     }
 
-    impl Expired for NewsArticle {
-        fn has_expired(&self) -> bool {
+    impl CanExpire for NewsArticle {
+        fn is_expired(&self) -> bool {
             self.is_expired
         }
     }
@@ -122,20 +124,22 @@ mod tests {
     const EXPIRED_SLUG: &str = "expired_slug";
     const UNEXPIRED_SLUG: &str = "unexpired_slug";
 
-    cached_result! {
-        EXPIRED_VALUE_CACHE: ExpiredValueCache<String, NewsArticle> = ExpiredValueCache::with_capacity(3);
-        fn fetch_article(slug: String) -> Result<NewsArticle, ()> = {
-            match slug.as_str() {
-                EXPIRED_SLUG => Ok(NewsArticle {
-                    slug: String::from(EXPIRED_SLUG),
-                    is_expired: true,
-                }),
-                UNEXPIRED_SLUG => Ok(NewsArticle {
-                    slug: String::from(UNEXPIRED_SLUG),
-                    is_expired: false,
-                }),
-                _ => Err(())
-            }
+    #[cached(
+        type = "ExpiredValueCache<String, NewsArticle>",
+        create = "{ ExpiredValueCache::with_capacity(3) }",
+        result = true,
+    )]
+    fn fetch_article(slug: String) -> Result<NewsArticle, ()> {
+        match slug.as_str() {
+            EXPIRED_SLUG => Ok(NewsArticle {
+                slug: String::from(EXPIRED_SLUG),
+                is_expired: true,
+            }),
+            UNEXPIRED_SLUG => Ok(NewsArticle {
+                slug: String::from(UNEXPIRED_SLUG),
+                is_expired: false,
+            }),
+            _ => Err(())
         }
     }
 
@@ -143,7 +147,7 @@ mod tests {
     #[serial(cachetest)]
     fn test_expired_article_returned_with_miss() {
         {
-            let mut cache = EXPIRED_VALUE_CACHE.lock().unwrap();
+            let mut cache = FETCH_ARTICLE.lock().unwrap();
             cache.cache_reset();
             cache.cache_reset_metrics();
         }
@@ -154,7 +158,7 @@ mod tests {
 
         // The article was fetched due to a cache miss and the result cached.
         {
-            let cache = EXPIRED_VALUE_CACHE.lock().unwrap();
+            let cache = FETCH_ARTICLE.lock().unwrap();
             assert_eq!(1, cache.cache_size());
             assert_eq!(cache.cache_hits(), Some(0));
             assert_eq!(cache.cache_misses(), Some(1));
@@ -164,7 +168,7 @@ mod tests {
 
         // The article was fetched again as it had expired.
         {
-            let cache = EXPIRED_VALUE_CACHE.lock().unwrap();
+            let cache = FETCH_ARTICLE.lock().unwrap();
             assert_eq!(1, cache.cache_size());
             assert_eq!(cache.cache_hits(), Some(0));
             assert_eq!(cache.cache_misses(), Some(2));
@@ -175,7 +179,7 @@ mod tests {
     #[serial(cachetest)]
     fn test_unexpired_article_returned_with_hit() {
         {
-            let mut cache = EXPIRED_VALUE_CACHE.lock().unwrap();
+            let mut cache = FETCH_ARTICLE.lock().unwrap();
             cache.cache_reset();
             cache.cache_reset_metrics();
         }
@@ -186,7 +190,7 @@ mod tests {
 
         // The article was fetched due to a cache miss and the result cached.
         {
-            let cache = EXPIRED_VALUE_CACHE.lock().unwrap();
+            let cache = FETCH_ARTICLE.lock().unwrap();
             assert_eq!(1, cache.cache_size());
             assert_eq!(cache.cache_hits(), Some(0));
             assert_eq!(cache.cache_misses(), Some(1));
@@ -198,7 +202,7 @@ mod tests {
 
         // The article was not fetched but returned as a hit from the cache.
         {
-            let cache = EXPIRED_VALUE_CACHE.lock().unwrap();
+            let cache = FETCH_ARTICLE.lock().unwrap();
             assert_eq!(1, cache.cache_size());
             assert_eq!(cache.cache_hits(), Some(1));
             assert_eq!(cache.cache_misses(), Some(1));
