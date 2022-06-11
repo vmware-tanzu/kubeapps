@@ -30,7 +30,7 @@ const (
 	DefaultValues           = "key: value"
 	DefaultMaintainerName   = "me"
 	DefaultMaintainerEmail  = "me@example.com"
-	DefaultRepoInterval     = 60
+	DefaultRepoInterval     = "1m"
 )
 
 var defaultInstalledPackageStatus = &corev1.InstalledPackageStatus{

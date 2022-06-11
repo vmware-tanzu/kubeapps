@@ -36,7 +36,7 @@ type HelmRepository struct {
 	url           string
 	repoType      string
 	description   string
-	interval      uint32
+	interval      string
 	tlsConfig     *corev1.PackageRepositoryTlsConfig
 	auth          *corev1.PackageRepositoryAuth
 	customDetails *v1alpha1.RepositoryCustomDetails
@@ -52,7 +52,7 @@ func (s *Server) newRepo(ctx context.Context, repo *HelmRepository) (*corev1.Pac
 		return nil, status.Errorf(codes.InvalidArgument, "repository type [%s] not supported", repo.repoType)
 	}
 	// Helm repositories do not support intervals for reconciliation by now
-	if repo.interval > 0 {
+	if repo.interval != "" {
 		return nil, status.Errorf(codes.InvalidArgument, "interval is not supported for Helm repositories")
 	}
 	typedClient, err := s.clientGetter.Typed(ctx, repo.cluster)
@@ -255,7 +255,7 @@ func (s *Server) updateRepo(ctx context.Context, repo *HelmRepository) (*corev1.
 		return nil, status.Errorf(codes.InvalidArgument, "repository name may not be empty")
 	}
 	// Helm repositories do not support intervals for reconciliation by now
-	if repo.interval > 0 {
+	if repo.interval != "" {
 		return nil, status.Errorf(codes.InvalidArgument, "interval is not supported for Helm repositories")
 	}
 	typedClient, err := s.clientGetter.Typed(ctx, repo.cluster)
