@@ -130,7 +130,7 @@ context("PackageUpdateInfo: when information about updates is available", () => 
       ...defaultProps.installedPackageDetail,
       reconciliationOptions: {
         serviceAccountName: "my-sa",
-        interval: "99s",
+        interval: "1m33s",
         suspend: false,
       } as ReconciliationOptions,
     } as InstalledPackageDetail;
@@ -139,6 +139,6 @@ context("PackageUpdateInfo: when information about updates is available", () => 
       <PackageInfo {...defaultProps} installedPackageDetail={appWithUpdates} />,
     );
     expect(wrapper.text()).toContain("Service Account: my-sa");
-    expect(wrapper.text()).toContain("Interval: 99 seconds");
+    expect(wrapper.text()).toContain("Interval: 1m33s");
   });
 });
