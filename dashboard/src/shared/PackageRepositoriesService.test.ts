@@ -1,68 +1,60 @@
 // Copyright 2021-2022 the Kubeapps contributors.
 // SPDX-License-Identifier: Apache-2.0
 
-import {
-  PackageRepositoryAuth_PackageRepositoryAuthType,
-  PackageRepositoryReference,
-} from "gen/kubeappsapis/core/packages/v1alpha1/repositories";
-import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins";
 import * as moxios from "moxios";
-import { IPkgRepoFormData, IPkgRepositoryFilter } from "shared/types";
 import { axiosWithAuth } from "./AxiosInstance";
-import { PackageRepositoriesService } from "./PackageRepositoriesService";
-import * as url from "./url";
 
 describe("RepositoriesService", () => {
-  const cluster = "cluster";
-  const namespace = "namespace";
-  const plugin: Plugin = { name: "my.plugin", version: "0.0.1" };
+  // const cluster = "cluster";
+  // const namespace = "namespace";
+  // const plugin: Plugin = { name: "my.plugin", version: "0.0.1" };
 
-  const repo = {
-    name: "repo-test",
-    type: "repo-type",
-    description: "repo-description",
-    authHeader: "repo-authHeader",
-    customCA: "repo-customCA",
-    passCredentials: true,
-    authMethod:
-      PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_UNSPECIFIED,
-    basicAuth: {
-      username: "user",
-      password: "password",
-    },
-    skipTLS: false,
-    tlsCertKey: {
-      cert: "",
-      key: "",
-    },
-    sshCreds: {
-      knownHosts: "",
-      privateKey: "",
-    },
-    secretTLSName: "",
+  // const repo = {
+  //   name: "repo-test",
+  //   type: "repo-type",
+  //   description: "repo-description",
+  //   authHeader: "repo-authHeader",
+  //   customCA: "repo-customCA",
+  //   passCredentials: true,
+  //   authMethod:
+  //     PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_UNSPECIFIED,
+  //   basicAuth: {
+  //     username: "user",
+  //     password: "password",
+  //   },
+  //   skipTLS: false,
+  //   tlsCertKey: {
+  //     cert: "",
+  //     key: "",
+  //   },
+  //   sshCreds: {
+  //     knownHosts: "",
+  //     privateKey: "",
+  //   },
+  //   secretTLSName: "",
 
-    opaqueCreds: {
-      data: {},
-    },
-    url: "repo-url",
-    secretAuthName: "repo-secret1",
-    dockerRegCreds: {
-      password: "",
-      username: "",
-      email: "",
-      server: "",
-    },
-    interval: 3600,
-    plugin,
-    customDetails: {
-      ociRepositories: ["oci-repo1"],
-      dockerRegistrySecrets: ["repo-authRegCreds"],
-      filterRule: {
-        jq: ".name == $var0",
-        variables: { $var0: "nginx" },
-      },
-    },
-  } as IPkgRepoFormData;
+  //   opaqueCreds: {
+  //     data: {},
+  //   },
+  //   url: "repo-url",
+  //   secretAuthName: "repo-secret1",
+  //   dockerRegCreds: {
+  //     password: "",
+  //     username: "",
+  //     email: "",
+  //     server: "",
+  //   },
+  //   interval: 3600,
+  //   plugin,
+  //   customDetails: {
+  //     ociRepositories: ["oci-repo1"],
+  //     dockerRegistrySecrets: ["repo-authRegCreds"],
+  //     filterRule: {
+  //       jq: ".name == $var0",
+  //       variables: { $var0: "nginx" },
+  //     },
+  //   },
+  // } as IPkgRepoFormData;
 
   beforeEach(() => {
     // Import as "any" to avoid typescript syntax error

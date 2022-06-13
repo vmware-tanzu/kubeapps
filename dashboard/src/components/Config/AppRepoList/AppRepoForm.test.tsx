@@ -7,7 +7,6 @@ import actions from "actions";
 import Alert from "components/js/Alert";
 import { act } from "react-dom/test-utils";
 import * as ReactRedux from "react-redux";
-import { PackageRepositoriesService } from "shared/PackageRepositoriesService";
 import { defaultStore, getStore, mountWrapper } from "shared/specs/mountWrapper";
 import { ISecret } from "shared/types";
 import { AppRepoForm } from "./AppRepoForm";

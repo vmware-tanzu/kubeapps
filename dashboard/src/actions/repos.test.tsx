@@ -4,14 +4,14 @@
 import { RepositoryStorageTypes } from "components/Config/AppRepoList/AppRepoForm";
 import {
   AvailablePackageReference,
-  InstalledPackageDetail,
+  InstalledPackageDetail
 } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
 import {
   AddPackageRepositoryResponse,
   PackageRepositoryAuth_PackageRepositoryAuthType,
   PackageRepositoryDetail,
   PackageRepositoryReference,
-  PackageRepositorySummary,
+  PackageRepositorySummary
 } from "gen/kubeappsapis/core/packages/v1alpha1/repositories";
 import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins";
 import context from "jest-plugin-context";
@@ -19,7 +19,6 @@ import configureMockStore from "redux-mock-store";
 import thunk from "redux-thunk";
 import { PackageRepositoriesService } from "shared/PackageRepositoriesService";
 import PackagesService from "shared/PackagesService";
-import Secret from "shared/Secret";
 import { IPkgRepoFormData, NotFoundError } from "shared/types";
 import { getType } from "typesafe-actions";
 import actions from ".";
