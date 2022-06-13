@@ -69,6 +69,8 @@ function AppListItem(props: IAppListItemProps) {
       icon={icon}
       info={
         <div>
+          <span>Namespace: {app.installedPackageRef.context?.namespace}</span>
+          <br />
           <span>
             App: {app.pkgDisplayName}{" "}
             {app.currentVersion?.appVersion
