@@ -501,6 +501,14 @@ run_e2e_tests: &run_e2e_tests
         DEV_TAG=${latest/v/}
         IMG_MODIFIER=""
       fi
+      echo "use multicluster $$USE_MULTICLUSTER_OIDC_ENV"
+      echo "olm version $OLM_VERSION"
+      echo "dev tag $DEV_TAG"
+      echo "image modifier $IMG_MODIFIER"
+      echo "test timeout $TEST_TIMEOUT_MINUTES"
+      echo "default dex ip $DEFAULT_DEX_IP"
+      echo "additional cluster ip $ADDITIONAL_CLUSTER_IP"
+      echo "kapp version $KAPP_CONTROLLER_VERSION"
       if ./script/e2e-test.sh $USE_MULTICLUSTER_OIDC_ENV $OLM_VERSION $DEV_TAG $IMG_MODIFIER $DOCKER_USERNAME $DOCKER_PASSWORD $TEST_TIMEOUT_MINUTES $DEFAULT_DEX_IP $ADDITIONAL_CLUSTER_IP $KAPP_CONTROLLER_VERSION; then
         # Test success
         echo "export TEST_RESULT=$?" >> $BASH_ENV
