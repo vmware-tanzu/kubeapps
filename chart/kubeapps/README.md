@@ -1,4 +1,3 @@
-<!--- app-name: Kubeapps -->
 
 # Kubeapps packaged by Bitnami
 
@@ -422,78 +421,6 @@ Once you have installed Kubeapps follow the [Getting Started Guide](https://gith
 | `kubeops.serviceAccount.annotations`                  | Annotations for service account. Evaluated as a template. Only used if `create` is `true`.                          | `{}`               |
 
 
-### Assetsvc parameters
-
-| Name                                             | Description                                                                               | Value                       |
-| ------------------------------------------------ | ----------------------------------------------------------------------------------------- | --------------------------- |
-| `assetsvc.enabled`                               | Specifies whether this deprecated component should be installed.                          | `false`                     |
-| `assetsvc.image.registry`                        | Kubeapps Assetsvc image registry                                                          | `docker.io`                 |
-| `assetsvc.image.repository`                      | Kubeapps Assetsvc image repository                                                        | `bitnami/kubeapps-assetsvc` |
-| `assetsvc.image.tag`                             | Kubeapps Assetsvc image tag (immutable tags are recommended)                              | `2.4.5-scratch-r1`          |
-| `assetsvc.image.pullPolicy`                      | Kubeapps Assetsvc image pull policy                                                       | `IfNotPresent`              |
-| `assetsvc.image.pullSecrets`                     | Kubeapps Assetsvc image pull secrets                                                      | `[]`                        |
-| `assetsvc.extraFlags`                            | Additional command line flags for Assetsvc                                                | `[]`                        |
-| `assetsvc.replicaCount`                          | Number of Assetsvc replicas to deploy                                                     | `1`                         |
-| `assetsvc.updateStrategy.type`                   | Assetsvc deployment strategy type.                                                        | `RollingUpdate`             |
-| `assetsvc.lifecycleHooks`                        | Custom lifecycle hooks for Assetsvc containers                                            | `{}`                        |
-| `assetsvc.command`                               | Override default container command (useful when using custom images)                      | `[]`                        |
-| `assetsvc.args`                                  | Override default container args (useful when using custom images)                         | `[]`                        |
-| `assetsvc.extraEnvVars`                          | Array with extra environment variables to add to the Assetsvc container                   | `[]`                        |
-| `assetsvc.extraEnvVarsCM`                        | Name of existing ConfigMap containing extra env vars for the Assetsvc container           | `""`                        |
-| `assetsvc.extraEnvVarsSecret`                    | Name of existing Secret containing extra env vars for the Assetsvc container              | `""`                        |
-| `assetsvc.extraVolumes`                          | Optionally specify extra list of additional volumes for the Assetsvc pod(s)               | `[]`                        |
-| `assetsvc.extraVolumeMounts`                     | Optionally specify extra list of additional volumeMounts for the Assetsvc container(s)    | `[]`                        |
-| `assetsvc.containerPorts.http`                   | Assetsvc HTTP container port                                                              | `8080`                      |
-| `assetsvc.resources.limits.cpu`                  | The CPU limits for the Assetsvc container                                                 | `250m`                      |
-| `assetsvc.resources.limits.memory`               | The memory limits for the Assetsvc container                                              | `128Mi`                     |
-| `assetsvc.resources.requests.cpu`                | The requested CPU for the Assetsvc container                                              | `25m`                       |
-| `assetsvc.resources.requests.memory`             | The requested memory for the Assetsvc container                                           | `32Mi`                      |
-| `assetsvc.podSecurityContext.enabled`            | Enabled Assetsvc pods' Security Context                                                   | `true`                      |
-| `assetsvc.podSecurityContext.fsGroup`            | Set Assetsvc pod's Security Context fsGroup                                               | `1001`                      |
-| `assetsvc.containerSecurityContext.enabled`      | Enabled Assetsvc containers' Security Context                                             | `true`                      |
-| `assetsvc.containerSecurityContext.runAsUser`    | Set Assetsvc container's Security Context runAsUser                                       | `1001`                      |
-| `assetsvc.containerSecurityContext.runAsNonRoot` | Set Assetsvc container's Security Context runAsNonRoot                                    | `true`                      |
-| `assetsvc.livenessProbe.enabled`                 | Enable livenessProbe                                                                      | `true`                      |
-| `assetsvc.livenessProbe.initialDelaySeconds`     | Initial delay seconds for livenessProbe                                                   | `60`                        |
-| `assetsvc.livenessProbe.periodSeconds`           | Period seconds for livenessProbe                                                          | `10`                        |
-| `assetsvc.livenessProbe.timeoutSeconds`          | Timeout seconds for livenessProbe                                                         | `5`                         |
-| `assetsvc.livenessProbe.failureThreshold`        | Failure threshold for livenessProbe                                                       | `6`                         |
-| `assetsvc.livenessProbe.successThreshold`        | Success threshold for livenessProbe                                                       | `1`                         |
-| `assetsvc.readinessProbe.enabled`                | Enable readinessProbe                                                                     | `true`                      |
-| `assetsvc.readinessProbe.initialDelaySeconds`    | Initial delay seconds for readinessProbe                                                  | `0`                         |
-| `assetsvc.readinessProbe.periodSeconds`          | Period seconds for readinessProbe                                                         | `10`                        |
-| `assetsvc.readinessProbe.timeoutSeconds`         | Timeout seconds for readinessProbe                                                        | `5`                         |
-| `assetsvc.readinessProbe.failureThreshold`       | Failure threshold for readinessProbe                                                      | `6`                         |
-| `assetsvc.readinessProbe.successThreshold`       | Success threshold for readinessProbe                                                      | `1`                         |
-| `assetsvc.startupProbe.enabled`                  | Enable startupProbe                                                                       | `false`                     |
-| `assetsvc.startupProbe.initialDelaySeconds`      | Initial delay seconds for startupProbe                                                    | `0`                         |
-| `assetsvc.startupProbe.periodSeconds`            | Period seconds for startupProbe                                                           | `10`                        |
-| `assetsvc.startupProbe.timeoutSeconds`           | Timeout seconds for startupProbe                                                          | `5`                         |
-| `assetsvc.startupProbe.failureThreshold`         | Failure threshold for startupProbe                                                        | `6`                         |
-| `assetsvc.startupProbe.successThreshold`         | Success threshold for startupProbe                                                        | `1`                         |
-| `assetsvc.customLivenessProbe`                   | Custom livenessProbe that overrides the default one                                       | `{}`                        |
-| `assetsvc.customReadinessProbe`                  | Custom readinessProbe that overrides the default one                                      | `{}`                        |
-| `assetsvc.customStartupProbe`                    | Custom startupProbe that overrides the default one                                        | `{}`                        |
-| `assetsvc.podLabels`                             | Extra labels for Assetsvc pods                                                            | `{}`                        |
-| `assetsvc.podAnnotations`                        | Annotations for Assetsvc pods                                                             | `{}`                        |
-| `assetsvc.podAffinityPreset`                     | Pod affinity preset. Ignored if `affinity` is set. Allowed values: `soft` or `hard`       | `""`                        |
-| `assetsvc.podAntiAffinityPreset`                 | Pod anti-affinity preset. Ignored if `affinity` is set. Allowed values: `soft` or `hard`  | `soft`                      |
-| `assetsvc.nodeAffinityPreset.type`               | Node affinity preset type. Ignored if `affinity` is set. Allowed values: `soft` or `hard` | `""`                        |
-| `assetsvc.nodeAffinityPreset.key`                | Node label key to match. Ignored if `affinity` is set                                     | `""`                        |
-| `assetsvc.nodeAffinityPreset.values`             | Node label values to match. Ignored if `affinity` is set                                  | `[]`                        |
-| `assetsvc.affinity`                              | Affinity for pod assignment                                                               | `{}`                        |
-| `assetsvc.nodeSelector`                          | Node labels for pod assignment                                                            | `{}`                        |
-| `assetsvc.tolerations`                           | Tolerations for pod assignment                                                            | `[]`                        |
-| `assetsvc.priorityClassName`                     | Priority class name for Assetsvc pods                                                     | `""`                        |
-| `assetsvc.schedulerName`                         | Name of the k8s scheduler (other than default)                                            | `""`                        |
-| `assetsvc.topologySpreadConstraints`             | Topology Spread Constraints for pod assignment                                            | `[]`                        |
-| `assetsvc.hostAliases`                           | Custom host aliases for Assetsvc pods                                                     | `[]`                        |
-| `assetsvc.sidecars`                              | Add additional sidecar containers to the Assetsvc pod(s)                                  | `[]`                        |
-| `assetsvc.initContainers`                        | Add additional init containers to the Assetsvc pod(s)                                     | `[]`                        |
-| `assetsvc.service.ports.http`                    | Assetsvc service HTTP port                                                                | `8080`                      |
-| `assetsvc.service.annotations`                   | Additional custom annotations for Assetsvc service                                        | `{}`                        |
-
-
 ### Auth Proxy parameters
 
 | Name                                              | Description                                                                              | Value                  |
@@ -608,6 +535,8 @@ Once you have installed Kubeapps follow the [Getting Started Guide](https://gith
 | `kubeappsapis.pluginConfig.kappController.packages.v1alpha1.defaultUpgradePolicy`               | Default upgrade policy generating version constraints                                                               | `none`                   |
 | `kubeappsapis.pluginConfig.kappController.packages.v1alpha1.defaultPrereleasesVersionSelection` | Default policy for allowing prereleases containing one of the identifiers                                           | `nil`                    |
 | `kubeappsapis.pluginConfig.kappController.packages.v1alpha1.defaultAllowDowngrades`             | Default policy for allowing applications to be downgraded to previous versions                                      | `false`                  |
+| `kubeappsapis.pluginConfig.flux.packages.v1alpha1.defaultUpgradePolicy`                         | Default upgrade policy generating version constraints                                                               | `none`                   |
+| `kubeappsapis.pluginConfig.flux.packages.v1alpha1.userManagedSecrets`                           | Default policy for handling repository secrets, either managed by the user or by kubeapps-apis                      | `false`                  |
 | `kubeappsapis.image.registry`                                                                   | Kubeapps-APIs image registry                                                                                        | `docker.io`              |
 | `kubeappsapis.image.repository`                                                                 | Kubeapps-APIs image repository                                                                                      | `kubeapps/kubeapps-apis` |
 | `kubeappsapis.image.tag`                                                                        | Kubeapps-APIs image tag (immutable tags are recommended)                                                            | `latest`                 |
@@ -901,7 +830,7 @@ Yes! Follow the [offline installation documentation](https://github.com/vmware-t
 
 ### Does Kubeapps support private repositories?
 
-Of course! Have a look at the [private app repositories documentation](https://github.com/vmware-tanzu/kubeapps/blob/main/site/content/docs/latest/howto/private-app-repository.md) to learn how to configure a private repository in Kubeapps.
+Of course! Have a look at the [private package repositories documentation](https://github.com/vmware-tanzu/kubeapps/blob/main/site/content/docs/latest/howto/private-app-repository.md) to learn how to configure a private repository in Kubeapps.
 
 ### Is there any API documentation?
 
