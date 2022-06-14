@@ -16,7 +16,7 @@ pub trait CanExpire {
 
 // Implement our ExpiredValueCache which uses the returned values own
 // trait to determine whether it has expired, rather than a set timestamp.
-struct ExpiredValueCache<K: Hash + Eq, V: CanExpire> {
+pub struct ExpiredValueCache<K: Hash + Eq, V: CanExpire> {
     store: HashMap<K, V>,
     capacity: usize,
     hits: u64,
