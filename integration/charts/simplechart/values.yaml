@@ -1,0 +1,16 @@
+image:
+  repository: docker-registry:5600/nginx
+  tag: "latest"
+  pullPolicy: Always
+
+imagePullSecrets: []
+nameOverride: ""
+fullnameOverride: ""
+
+serviceAccount:
+  create: false
+  name: "default"
+
+service:
+  type: ClusterIP
+  port: 80
