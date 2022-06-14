@@ -5,6 +5,7 @@ use std::env;
 use std::hash::{Hash, Hasher};
 
 use anyhow::{Context, Result};
+use cached::proc_macro::cached;
 use chrono::{Utc, Duration};
 use http::Uri;
 use k8s_openapi::api::core::v1 as corev1;
@@ -21,7 +22,7 @@ use serde::{Deserialize, Serialize};
 use serde_json;
 use thiserror::Error;
 
-use crate::expired_value_cache::CanExpire;
+use crate::expired_value_cache::{CanExpire, ExpiredValueCache };
 
 const DEFAULT_PINNIPED_API_SUFFIX: &str = "DEFAULT_PINNIPED_API_SUFFIX";
 const DEFAULT_PINNIPED_NAMESPACE: &str = "DEFAULT_PINNIPED_NAMESPACE";
@@ -44,7 +45,7 @@ pub enum PinnipedError {
 /// Request, Spec and the Status including the returned cluster credential
 /// are structs based on the corresponding structs in the pinniped code at:
 /// https://github.com/vmware-tanzu/pinniped/blob/main/generated/1.19/apis/concierge/login/v1alpha1/types_token.go#L11
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq, Eq)]
 pub struct TokenCredentialRequest {
     spec: TokenCredentialRequestSpec,
     status: Option<TokenCredentialRequestStatus>,
@@ -81,6 +82,15 @@ pub struct TokenCredentialRequestSpec {
     authenticator: corev1::TypedLocalObjectReference,
 }
 
+// We need to implement equality explicitly as it's not implemented for
+// TypedLocalObjectReference.
+impl PartialEq for TokenCredentialRequestSpec {
+    fn eq(&self, other: &Self) -> bool {
+        self.token == other.token && self.authenticator.name == other.authenticator.name
+    }
+}
+impl Eq for TokenCredentialRequestSpec {}
+
 // Since the TypedLocalObjectReference doesn't implement the Hash trait
 // we cannot simple derive the Hash trait, instead calculating it manually
 // for the token and authenticator fields.
@@ -93,7 +103,7 @@ impl Hash for TokenCredentialRequestSpec {
     }
 }
 
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq, Eq)]
 pub struct TokenCredentialRequestStatus {
     // A ClusterCredential will be returned for a successful credential request.
     credential: Option<ClusterCredential>,
@@ -102,7 +112,7 @@ pub struct TokenCredentialRequestStatus {
     message: Option<String>,
 }
 
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq, Eq)]
 /// ClusterCredential is the cluster-specific credential returned on a successful credential request. It
 /// contains either a valid bearer token or a valid TLS certificate and corresponding private key for the cluster.
 #[serde(rename_all = "camelCase")]
@@ -129,7 +139,7 @@ pub async fn exchange_token_for_identity(
     k8s_api_ca_cert_data: &[u8],
 ) -> Result<Identity> {
     let credential_request =
-        call_pinniped_exchange(authorization, k8s_api_server_url, k8s_api_ca_cert_data)
+        prepare_and_call_pinniped_exchange(authorization, k8s_api_server_url, k8s_api_ca_cert_data)
             .await
             .context("Failed to exchange credentials")?;
     match credential_request.status {
@@ -186,8 +196,8 @@ fn get_client_config(
     Ok(Client::try_from(config)?)
 }
 
-/// call_pinniped_exchange returns the resulting TokenCredentialRequest with Status after requesting a token credential exchange.
-async fn call_pinniped_exchange(
+/// prepare_and_call_pinniped_exchange returns the resulting TokenCredentialRequest with Status after requesting a token credential exchange.
+async fn prepare_and_call_pinniped_exchange(
     authorization: &str,
     k8s_api_server_url: &str,
     k8s_api_ca_cert_data: &[u8],
@@ -210,14 +220,6 @@ async fn call_pinniped_exchange(
         None => authorization.to_string(),
     };
 
-    // define the Api Resource dynamically
-    let gvk = GroupVersionKind::gvk(
-        &get_pinniped_login_api_group(),
-        TOKEN_REQUEST_VERSION,
-        TOKEN_REQUEST_KIND,
-    );
-    let ar = ApiResource::from_gvk(&gvk);
-
     // create request
     let cred_data = TokenCredentialRequest {
         spec: TokenCredentialRequestSpec {
@@ -230,11 +232,36 @@ async fn call_pinniped_exchange(
         },
         status: None,
     };
+
+    call_pinniped(pinniped_namespace, client, cred_data).await
+}
+
+// More details about the cached macro options at
+// https://docs.rs/cached/latest/cached/proc_macro/index.html
+#[cached(
+    // Creates an ExpiredValueCache with key and value both being TokenCredentialRequests.
+    type = "ExpiredValueCache<TokenCredentialRequest, TokenCredentialRequest>",
+    create = "{ ExpiredValueCache::with_capacity(5) }",
+    key = "TokenCredentialRequest",
+    // We convert the arguments so that we're only using the cred_data as the key.
+    convert = r#"{ cred_data.clone() }"#,
+    result = true,
+    // If two requests with the same key arrive, only one is sent through on a miss
+    // with the others returning once the result is cached.
+    sync_writes = true,
+)]
+async fn call_pinniped(pinniped_namespace: String, client: kube::Client, cred_data: TokenCredentialRequest) -> Result<TokenCredentialRequest> {
+    // define the Api Resource dynamically
+    let gvk = GroupVersionKind::gvk(
+        &get_pinniped_login_api_group(),
+        TOKEN_REQUEST_VERSION,
+        TOKEN_REQUEST_KIND,
+    );
+    let ar = ApiResource::from_gvk(&gvk);
     let cred_request = DynamicObject::new("", &ar)
         .within(&pinniped_namespace)
         .data(serde_json::to_value(cred_data)?);
     debug!("{}", serde_json::to_string(&cred_request).unwrap());
-
     // token credential request invocation
     // we start first as a cluster-based call. if this call fails with a NotFound error, it is
     // an indication we are on an old version which was namespace-based. we thus fallback to
@@ -302,7 +329,7 @@ mod tests {
     #[serial(envtest)]
     fn test_call_pinniped_exchange_no_env() -> Result<()> {
         env::remove_var(DEFAULT_PINNIPED_NAMESPACE);
-        match tokio_test::block_on(call_pinniped_exchange(
+        match tokio_test::block_on(prepare_and_call_pinniped_exchange(
             "authorization",
             "https://example.com",
             VALID_CERT_BASE64.as_bytes(),
@@ -326,7 +353,7 @@ mod tests {
         env::set_var(DEFAULT_PINNIPED_NAMESPACE, "pinniped-concierge");
         env::set_var(DEFAULT_PINNIPED_AUTHENTICATOR_TYPE, "JWTAuthenticator");
         env::set_var(DEFAULT_PINNIPED_AUTHENTICATOR_NAME, "oidc-authenticator");
-        match tokio_test::block_on(call_pinniped_exchange(
+        match tokio_test::block_on(prepare_and_call_pinniped_exchange(
             "authorization",
             "not a url",
             VALID_CERT_BASE64.as_bytes(),
@@ -350,7 +377,7 @@ mod tests {
         env::set_var(DEFAULT_PINNIPED_NAMESPACE, "pinniped-concierge");
         env::set_var(DEFAULT_PINNIPED_AUTHENTICATOR_TYPE, "JWTAuthenticator");
         env::set_var(DEFAULT_PINNIPED_AUTHENTICATOR_NAME, "oidc-authenticator");
-        match tokio_test::block_on(call_pinniped_exchange(
+        match tokio_test::block_on(prepare_and_call_pinniped_exchange(
             "authorization",
             "https://example.com",
             "not a cert".as_bytes(),
