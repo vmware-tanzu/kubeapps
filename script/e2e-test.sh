@@ -13,11 +13,11 @@ USE_MULTICLUSTER_OIDC_ENV=${1:-false}
 OLM_VERSION=${2:-"v0.18.2"}
 DEV_TAG=${3:?missing dev tag}
 IMG_MODIFIER=${4:-""}
-DOCKER_USERNAME=${5:-""}
-DOCKER_PASSWORD=${6:-""}
-TEST_TIMEOUT_MINUTES=${7:-"4"}
-DEX_IP=${8:-"172.18.0.2"}
-ADDITIONAL_CLUSTER_IP=${9:-"172.18.0.3"}
+TEST_TIMEOUT_MINUTES=${5:-"4"}
+DEX_IP=${6:-"172.18.0.2"}
+ADDITIONAL_CLUSTER_IP=${7:-"172.18.0.3"}
+DOCKER_USERNAME=${8:-""}
+DOCKER_PASSWORD=${9:-""}
 KAPP_CONTROLLER_VERSION=${10:-"v0.32.0"}
 
 # TODO(andresmgot): While we work with beta releases, the Bitnami pipeline

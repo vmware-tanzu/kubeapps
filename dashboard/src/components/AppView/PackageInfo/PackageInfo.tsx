@@ -63,7 +63,7 @@ function PackageInfo({ installedPackageDetail, availablePackageDetail }: IPackag
                   </div>
                   <div>
                     Interval:{" "}
-                    <strong>{installedPackageDetail.reconciliationOptions.interval} seconds</strong>
+                    <strong>{installedPackageDetail.reconciliationOptions.interval}</strong>
                   </div>
                 </>
               </div>
