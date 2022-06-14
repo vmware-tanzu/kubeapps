@@ -5,6 +5,7 @@ use std::env;
 use std::hash::{Hash, Hasher};
 
 use anyhow::{Context, Result};
+use chrono::{Utc, Duration};
 use http::Uri;
 use k8s_openapi::api::core::v1 as corev1;
 use k8s_openapi::apimachinery::pkg::apis::meta::v1 as metav1;
@@ -19,6 +20,8 @@ use openssl::{x509::X509};
 use serde::{Deserialize, Serialize};
 use serde_json;
 use thiserror::Error;
+
+use crate::expired_value_cache::CanExpire;
 
 const DEFAULT_PINNIPED_API_SUFFIX: &str = "DEFAULT_PINNIPED_API_SUFFIX";
 const DEFAULT_PINNIPED_NAMESPACE: &str = "DEFAULT_PINNIPED_NAMESPACE";
@@ -52,6 +55,20 @@ pub struct TokenCredentialRequest {
 impl Hash for TokenCredentialRequest {
     fn hash<H: Hasher>(&self, state: &mut H) {
         self.spec.hash(state);
+    }
+}
+
+// CanExpire is implemented for the request so that the cache can determine
+// if the request has expired.
+impl CanExpire for TokenCredentialRequest {
+    fn is_expired(&self) -> bool {
+        match self.status.clone() {
+            Some(s) => match s.credential {
+                Some(c) => c.expiration_timestamp < metav1::Time(Utc::now()),
+                None => true,
+            },
+            None => true,
+        }
     }
 }
 
@@ -530,6 +547,60 @@ mZu9A/ivt37pOQXm/HOX6tHB
         cred_data.hash(&mut hasher);
 
         assert_eq!(hasher.finish(), DEFAULT_TOKEN_CREDENTIAL_REQUEST_HASH);
+        Ok(())
+    }
+
+    #[test]
+    fn test_token_credential_request_without_status_is_expired() -> Result<()> {
+        let cred_data = make_token_credential_request();
+
+        assert!(cred_data.is_expired());
+        Ok(())
+    }
+
+    #[test]
+    fn test_token_credential_request_without_credential_is_expired() -> Result<()> {
+        let mut cred_data = make_token_credential_request();
+        cred_data.status = Some(TokenCredentialRequestStatus{
+            credential: None,
+            message: Some(String::from("some message")),
+        });
+
+        assert!(cred_data.is_expired());
+        Ok(())
+    }
+
+    #[test]
+    fn test_token_credential_request_with_old_expiry_is_expired() -> Result<()> {
+        let mut cred_data = make_token_credential_request();
+        cred_data.status = Some(TokenCredentialRequestStatus{
+            credential: Some(ClusterCredential{
+                expiration_timestamp: metav1::Time(Utc.timestamp(0, 0)),
+                client_certificate_data: String::from("cert data"),
+                client_key_data: String::from("key data"),
+                token: Some(String::from("token")),
+            }),
+            message: None,
+        });
+
+        assert!(cred_data.is_expired());
+        Ok(())
+    }
+
+    #[test]
+    fn test_token_credential_request_with_future_expiry_is_not_expired() -> Result<()> {
+        let mut cred_data = make_token_credential_request();
+        cred_data.status = Some(TokenCredentialRequestStatus{
+            credential: Some(ClusterCredential{
+                expiration_timestamp: metav1::Time(Utc::now() + Duration::days(1)),
+                client_certificate_data: String::from("cert data"),
+                client_key_data: String::from("key data"),
+                token: Some(String::from("token")),
+            }),
+            message: None,
+        });
+
+        assert!(!cred_data.is_expired());
         Ok(())
     }
 }
