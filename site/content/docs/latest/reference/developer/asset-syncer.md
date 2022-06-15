@@ -1,6 +1,6 @@
 # Kubeapps asset-syncer Developer Guide
 
-The `asset-syncer` component is a tool that scans a Helm chart repository and populates chart metadata in the database. This metadata is then served by the `assetsvc` component.
+The `asset-syncer` component is a tool that scans a Helm chart repository and populates chart metadata in the database. This metadata is then served by the Helm plugin of the `kubeapps-apis` component.
 
 ## Prerequisites
 

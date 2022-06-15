@@ -56,17 +56,6 @@ func NewDataResponse(resources interface{}) DataResponse {
 	return DataResponse{http.StatusOK, resources, nil}
 }
 
-// NewDataResponseWithMeta returns a new DataResponse
-func NewDataResponseWithMeta(resources, meta interface{}) DataResponse {
-	return DataResponse{http.StatusOK, resources, meta}
-}
-
-// WithCode sets the code for the response and returns the DataResponse
-func (r DataResponse) WithCode(code int) DataResponse {
-	r.Code = code
-	return r
-}
-
 func (d DataResponse) Write(w http.ResponseWriter) {
 	responseBody, err := json.Marshal(d)
 	if err != nil {

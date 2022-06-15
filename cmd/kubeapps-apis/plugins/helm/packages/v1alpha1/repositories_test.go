@@ -183,7 +183,7 @@ func TestAddPackageRepository(t *testing.T) {
 				Type:            "helm",
 				Url:             "http://example.com",
 				NamespaceScoped: true,
-				Interval:        1,
+				Interval:        "1s",
 			},
 			statusCode: codes.InvalidArgument,
 		},
@@ -807,7 +807,7 @@ func TestUpdatePackageRepository(t *testing.T) {
 		{
 			name: "check that interval is not used",
 			requestCustomizer: func(request *corev1.UpdatePackageRepositoryRequest) *corev1.UpdatePackageRepositoryRequest {
-				request.Interval = 1
+				request.Interval = "1s"
 				return request
 			},
 			expectedStatusCode: codes.InvalidArgument,
