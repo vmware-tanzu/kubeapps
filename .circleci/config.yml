@@ -150,10 +150,6 @@ workflows:
       - build_pinniped_proxy:
           <<: *build_always
       - local_e2e_tests:
-          filters:
-            branches:
-              # Forked pull requests have CIRCLE_BRANCH set to pull/XXX
-              ignore: /pull\/[0-9]+/
           <<: *build_always
           matrix:
             parameters:
