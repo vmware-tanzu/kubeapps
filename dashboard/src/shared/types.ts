@@ -3,7 +3,6 @@
 
 import { JSONSchemaType } from "ajv";
 import { RouterState } from "connected-react-router";
-import { Subscription } from "rxjs";
 import {
   AvailablePackageDetail,
   AvailablePackageSummary,
@@ -14,6 +13,7 @@ import {
   ResourceRef,
 } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
 import { IOperatorsState } from "reducers/operators";
+import { Subscription } from "rxjs";
 import { IAuthState } from "../reducers/auth";
 import { IClustersState } from "../reducers/cluster";
 import { IConfigState } from "../reducers/config";
@@ -303,7 +303,7 @@ export interface IClusterServiceVersion extends IResource {
   spec: IClusterServiceVersionSpec;
 }
 
-export interface IAppRepositoryFilter {
+export interface IPkgRepositoryFilter {
   jq: string;
   variables?: { [key: string]: string };
 }
@@ -377,7 +377,7 @@ export type IAppRepository = IK8sObject<
     dockerRegistrySecrets?: string[];
     ociRepositories?: string[];
     tlsInsecureSkipVerify?: boolean;
-    filterRule?: IAppRepositoryFilter;
+    filterRule?: IPkgRepositoryFilter;
     passCredentials?: boolean;
   },
   undefined

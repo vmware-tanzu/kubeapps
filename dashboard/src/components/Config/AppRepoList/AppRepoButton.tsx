@@ -9,7 +9,7 @@ import { useState } from "react";
 import { useDispatch } from "react-redux";
 import { Action } from "redux";
 import { ThunkDispatch } from "redux-thunk";
-import { IAppRepository, IAppRepositoryFilter, IStoreState } from "shared/types";
+import { IAppRepository, IPkgRepositoryFilter, IStoreState } from "shared/types";
 import { AppRepoForm } from "./AppRepoForm";
 
 interface IAppRepoAddButtonProps {
@@ -48,7 +48,7 @@ export function AppRepoAddButton({
     ociRepositories: string[],
     skipTLS: boolean,
     passCredentials: boolean,
-    filter?: IAppRepositoryFilter,
+    filter?: IPkgRepositoryFilter,
   ) => {
     if (repo) {
       return dispatch(

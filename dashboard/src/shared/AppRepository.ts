@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { axiosWithAuth } from "./AxiosInstance";
-import { IAppRepositoryFilter, ICreateAppRepositoryResponse } from "./types";
+import { IPkgRepositoryFilter, ICreateAppRepositoryResponse } from "./types";
 import * as url from "./url";
 
 export class AppRepository {
@@ -50,7 +50,7 @@ export class AppRepository {
     ociRepositories: string[],
     skipTLS: boolean,
     passCredentials: boolean,
-    filter?: IAppRepositoryFilter,
+    filter?: IPkgRepositoryFilter,
   ) {
     const { data } = await axiosWithAuth.put<ICreateAppRepositoryResponse>(
       url.backend.apprepositories.update(cluster, namespace, name),
@@ -100,7 +100,7 @@ export class AppRepository {
     ociRepositories: string[],
     skipTLS: boolean,
     passCredentials: boolean,
-    filter?: IAppRepositoryFilter,
+    filter?: IPkgRepositoryFilter,
   ) {
     const { data } = await axiosWithAuth.post<ICreateAppRepositoryResponse>(
       url.backend.apprepositories.create(cluster, namespace),

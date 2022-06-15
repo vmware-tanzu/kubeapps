@@ -17,7 +17,7 @@ import { ThunkDispatch } from "redux-thunk";
 import { AppRepository } from "shared/AppRepository";
 import { toFilterRule, toParams } from "shared/jq";
 import Secret from "shared/Secret";
-import { IAppRepository, IAppRepositoryFilter, ISecret, IStoreState } from "shared/types";
+import { IAppRepository, IPkgRepositoryFilter, ISecret, IStoreState } from "shared/types";
 import AppRepoAddDockerCreds from "./AppRepoAddDockerCreds";
 import "./AppRepoForm.css";
 interface IAppRepoFormProps {
@@ -34,7 +34,7 @@ interface IAppRepoFormProps {
     ociRepositories: string[],
     skipTLS: boolean,
     passCredentials: boolean,
-    filter?: IAppRepositoryFilter,
+    filter?: IPkgRepositoryFilter,
   ) => Promise<boolean>;
   onAfterInstall?: () => void;
   namespace: string;
@@ -206,7 +206,7 @@ export function AppRepoForm(props: IAppRepoFormProps) {
       );
       setValidated(currentlyValidated);
     }
-    let filter: IAppRepositoryFilter | undefined;
+    let filter: IPkgRepositoryFilter | undefined;
     if (type === TYPE_HELM && filterNames !== "") {
       filter = toFilterRule(filterNames, filterRegex, filterExclude);
     }
