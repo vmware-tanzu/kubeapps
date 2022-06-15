@@ -1212,7 +1212,7 @@ export const GetSecretNamesResponse = {
         ? Object.entries(object.secretNames).reduce<{
             [key: string]: SecretType;
           }>((acc, [key, value]) => {
-            acc[key] = value as SecretType;
+            acc[key] = secretTypeFromJSON(value);
             return acc;
           }, {})
         : {},

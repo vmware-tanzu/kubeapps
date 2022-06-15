@@ -13,6 +13,7 @@ build = "build.rs"
 [dependencies]
 anyhow = "1.0"
 base64 = "0.13"
+cached = "0.34"
 chrono = "0.4"
 hyper = { version = "0.14", features = ["server"] }
 hyper-tls = "0.5"
@@ -39,10 +40,10 @@ default = ["v1_22"]
 
 # k8s target version when compiling k8s-openapi
 # See https://doc.rust-lang.org/cargo/reference/features.html#dependency-features
-v1_20 = ["k8s-openapi/v1_20"]
 v1_21 = ["k8s-openapi/v1_21"]
 v1_22 = ["k8s-openapi/v1_22"]
 v1_23 = ["k8s-openapi/v1_23"]
+v1_24 = ["k8s-openapi/v1_24"]
 
 [dev-dependencies]
 tokio-test = "0.4"

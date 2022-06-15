@@ -71,7 +71,7 @@ export function schemeToJSON(object: Scheme): string {
  *    info: {
  *      title: "Echo API";
  *      version: "1.0";
- *      description: ";
+ *      description: "";
  *      contact: {
  *        name: "gRPC-Gateway project";
  *        url: "https://github.com/grpc-ecosystem/grpc-gateway";
@@ -344,7 +344,7 @@ export interface Response_ExtensionsEntry {
  *    info: {
  *      title: "Echo API";
  *      version: "1.0";
- *      description: ";
+ *      description: "";
  *      contact: {
  *        name: "gRPC-Gateway project";
  *        url: "https://github.com/grpc-ecosystem/grpc-gateway";

@@ -8,10 +8,10 @@ parameters:
     default: "1.18"
   NODE_VERSION:
     type: string
-    default: "16.15.0"
+    default: "16.15.1"
   RUST_VERSION:
     type: string
-    default: "1.60.0"
+    default: "1.61.0"
   DOCKER_VERSION:
     type: string
     default: "20.10.14"
@@ -20,43 +20,43 @@ parameters:
     default: "v3.2.0"
   HELM_VERSION_STABLE:
     type: "string"
-    default: "v3.8.1"
+    default: "v3.9.0"
   OLM_VERSION:
     type: "string"
-    default: "v0.21.1"
+    default: "v0.21.2"
   KAPP_CONTROLLER_VERSION:
     type: "string"
-    default: "v0.36.1"
+    default: "v0.38.0"
   MKCERT_VERSION:
     type: "string"
     default: "v1.4.4"
   KUBECTL_VERSION:
     type: "string"
-    default: "v1.22.9"
+    default: "v1.22.10"
   GITHUB_VERSION:
     type: "string"
-    default: "2.9.0"
+    default: "2.12.1"
   SEMVER_VERSION:
     type: "string"
     default: "3.3.0"
   KIND_VERSION:
     type: "string"
-    default: "v0.12.0"
+    default: "v0.14.0"
   K8S_KIND_VERSION:
     type: "string"
-    default: "v1.22.7@sha256:1dfd72d193bf7da64765fd2f2898f78663b9ba366c2aa74be1fd7498a1873166"
+    default: "v1.22.9@sha256:8135260b959dfe320206eb36b3aeda9cffcb262f4b44cda6b33f7bb73f453105"
   POSTGRESQL_VERSION:
     type: "string"
-    default: "14.2.0-debian-10-r88"
+    default: "14.3.0-debian-11-r3"
   GKE_STABLE_VERSION:
     type: "string"
-    default: "1.20"
+    default: "1.21"
   GKE_REGULAR_VERSION:
     type: "string"
-    default: "1.21"
+    default: "1.22"
   DEFAULT_MACHINE_IMG:
     type: "string"
-    default: "ubuntu-2004:202201-02"
+    default: "ubuntu-2204:2022.04.1"
   IMAGES_TO_PUSH:
     type: "string"
     default: "kubeapps/apprepository-controller kubeapps/dashboard kubeapps/asset-syncer kubeapps/kubeops kubeapps/pinniped-proxy kubeapps/kubeapps-apis"
@@ -502,7 +502,7 @@ run_e2e_tests: &run_e2e_tests
         DEV_TAG=${latest/v/}
         IMG_MODIFIER=""
       fi
-      if ./script/e2e-test.sh $USE_MULTICLUSTER_OIDC_ENV $OLM_VERSION $DEV_TAG $IMG_MODIFIER $DOCKER_USERNAME $DOCKER_PASSWORD $TEST_TIMEOUT_MINUTES $DEFAULT_DEX_IP $ADDITIONAL_CLUSTER_IP $KAPP_CONTROLLER_VERSION; then
+      if ./script/e2e-test.sh $USE_MULTICLUSTER_OIDC_ENV $OLM_VERSION $DEV_TAG $IMG_MODIFIER $TEST_TIMEOUT_MINUTES $DEFAULT_DEX_IP $ADDITIONAL_CLUSTER_IP $DOCKER_USERNAME $DOCKER_PASSWORD $KAPP_CONTROLLER_VERSION; then
         # Test success
         echo "export TEST_RESULT=$?" >> $BASH_ENV
       else
