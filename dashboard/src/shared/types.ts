@@ -336,24 +336,6 @@ interface IK8sResource {
   kind: string;
 }
 
-/** @see https://github.com/kubernetes/community/blob/master/contributors/devel/api-conventions.md#objects */
-export interface IK8sObject<M, SP, ST> extends IK8sResource {
-  metadata: {
-    annotations?: { [key: string]: string };
-    creationTimestamp?: string;
-    deletionTimestamp?: string | null;
-    generation?: number;
-    labels?: { [key: string]: string };
-    name: string;
-    namespace: string;
-    resourceVersion?: string;
-    uid: string;
-    selfLink?: string; // Not in docs, but seems to exist everywhere
-  } & M;
-  spec?: SP;
-  status?: ST;
-}
-
 /** @see https://github.com/kubernetes/community/blob/master/contributors/devel/api-conventions.md#lists-and-simple-kinds */
 export interface IK8sList<I, M> extends IK8sResource {
   items: I[];
@@ -408,36 +390,6 @@ export interface ICreateAppRepositoryResponse {
 export interface IAppRepositoryKey {
   name: string;
   namespace: string;
-}
-
-/** @see https://github.com/kubernetes/community/blob/master/contributors/devel/api-conventions.md#response-status-kind */
-export interface IStatus extends IK8sResource {
-  kind: "Status";
-  status: "Success" | "Failure";
-  message: string;
-  reason:
-    | "BadRequest"
-    | "Unauthorized"
-    | "Forbidden"
-    | "NotFound"
-    | "AlreadyExists"
-    | "Conflict"
-    | "Invalid"
-    | "Timeout"
-    | "ServerTimeout"
-    | "MethodNotAllowed"
-    | "InternalError";
-  details?: {
-    kind?: string;
-    name?: string;
-    causes?: IStatusCause[] | string;
-  };
-}
-
-interface IStatusCause {
-  field: string;
-  message: string;
-  reason: string;
 }
 
 export interface IRBACRole {
