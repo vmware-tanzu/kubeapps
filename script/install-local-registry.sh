@@ -1,13 +1,14 @@
 #!/bin/bash
 
+CONTROL_PLANE_CONTAINER="kubeapps-ci-control-plane"
 REGISTRY_NS=ci
 DOCKER_REGISTRY_HOST=local-docker-registry
 DOCKER_REGISTRY_PORT=5600
+DOCKER_USERNAME=testuser
+DOCKER_PASSWORD=testpassword
 
 installLocalRegistry() {
-    CONTROL_PLANE_CONTAINER="kubeapps-ci-control-plane"
-    REGISTRY_NS=$2
-    PROJECT_PATH=$3
+    PROJECT_PATH=$1
 
     kubectl create namespace $REGISTRY_NS
 
@@ -38,9 +39,6 @@ installLocalRegistry() {
 }
 
 pushContainerToLocalRegistry() {
-    REGISTRY_NS=$1
-    DOCKER_REGISTRY_HOST=$2
-    DOCKER_REGISTRY_PORT=$3
     DOCKER_REGISTRY="$DOCKER_REGISTRY_HOST:$DOCKER_REGISTRY_PORT"
 
     echo "127.0.0.1  $DOCKER_REGISTRY_HOST" | sudo tee -a /etc/hosts

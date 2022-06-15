@@ -16,9 +16,7 @@ IMG_MODIFIER=${4:-""}
 TEST_TIMEOUT_MINUTES=${5:-"4"}
 DEX_IP=${6:-"172.18.0.2"}
 ADDITIONAL_CLUSTER_IP=${7:-"172.18.0.3"}
-DOCKER_USERNAME=${8:-""}
-DOCKER_PASSWORD=${9:-""}
-KAPP_CONTROLLER_VERSION=${10:-"v0.32.0"}
+KAPP_CONTROLLER_VERSION=${8:-"v0.32.0"}
 
 # TODO(andresmgot): While we work with beta releases, the Bitnami pipeline
 # removes the pre-release part of the tag
@@ -56,10 +54,10 @@ echo ""
 #
 setupLocalDockerRegistry() {
     info "Installing local Docker registry with authentication"
-    installLocalRegistry $REGISTRY_NS $ROOT_DIR
+    installLocalRegistry $ROOT_DIR
 
     info "Pushing test container to local Docker registry"
-    pushContainerToLocalRegistry $REGISTRY_NS $DOCKER_REGISTRY_HOST $DOCKER_REGISTRY_PORT
+    pushContainerToLocalRegistry
 }
 
 #
@@ -70,7 +68,7 @@ pushLocalChart() {
     helm package $ROOT_DIR/integration/charts/simplechart
 
     info "Pushing local test chart to ChartMuseum"
-    pushChartToChartMuseum chart-museum admin password simplechart "0.1.0"
+    pushChartToChartMuseum kubeapps admin password simplechart "0.1.0"
 }
 
 ########################
@@ -330,6 +328,10 @@ installChartmuseum admin password
 pushChart apache 8.6.2 admin password
 pushChart apache 8.6.3 admin password
 
+# Setting up local Docker registry
+setupLocalDockerRegistry
+pushLocalChart
+
 # Ensure that we are testing the correct image
 info ""
 k8s_ensure_image kubeapps kubeapps-ci-internal-apprepository-controller "$DEV_TAG"
@@ -492,16 +494,4 @@ if [[ -z "${GKE_BRANCH-}" ]] && [[ -n "${TEST_OPERATORS-}" ]]; then
   fi
   info "Operator integration tests (with k8s API access) succeeded!!"
 fi
-
-info "Running local Docker registry with authentication integration test..."
-setupLocalDockerRegistry
-pushLocalChart
-if ! kubectl exec -it "$pod" -- /bin/sh -c "CI_TIMEOUT_MINUTES=20 TEST_TIMEOUT_MINUTES=${TEST_TIMEOUT_MINUTES} INTEGRATION_ENTRYPOINT=http://kubeapps-ci.kubeapps USE_MULTICLUSTER_OIDC_ENV=${USE_MULTICLUSTER_OIDC_ENV} ADMIN_TOKEN=${admin_token} VIEW_TOKEN=${view_token} EDIT_TOKEN=${edit_token} yarn test \"tests/registry/\""; then
-  ## Integration tests failed, get report screenshot
-  warn "PODS status on failure"
-  kubectl cp "${pod}:/app/reports" ./reports
-  exit 1
-fi
-info "Docker registry with authentication tests succeeded!!"
-
 info "Integration tests succeeded!"
