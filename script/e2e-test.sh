@@ -34,6 +34,9 @@ fi
 # shellcheck disable=SC1090
 . "${ROOT_DIR}/script/lib/libutil.sh"
 
+# Functions for local Docker registry mgmt
+source install-local-registry.sh
+
 info "Root dir: ${ROOT_DIR}"
 info "Use multicluster+OIDC: ${USE_MULTICLUSTER_OIDC_ENV}"
 info "OLM version: ${OLM_VERSION}"
@@ -47,6 +50,28 @@ info "Kubectl Version: $(kubectl version -o json | jq -r '.clientVersion.gitVers
 echo ""
 
 # Auxiliar functions
+
+#
+# Install an authenticated Docker registry inside the cluster
+#
+setupLocalDockerRegistry() {
+    info "Installing local Docker registry with authentication"
+    installLocalRegistry $REGISTRY_NS $ROOT_DIR
+
+    info "Pushing test container to local Docker registry"
+    pushContainerToLocalRegistry $REGISTRY_NS $DOCKER_REGISTRY_HOST $DOCKER_REGISTRY_PORT
+}
+
+#
+# Push a chart that uses container image from the local registry
+#
+pushLocalChart() {
+    info "Packaging local test chart"
+    helm package $ROOT_DIR/integration/charts/simplechart
+
+    info "Pushing local test chart to ChartMuseum"
+    pushChartToChartMuseum chart-museum admin password simplechart "0.1.0"
+}
 
 ########################
 # Check if the pod that populates de OperatorHub catalog is running
@@ -467,4 +492,16 @@ if [[ -z "${GKE_BRANCH-}" ]] && [[ -n "${TEST_OPERATORS-}" ]]; then
   fi
   info "Operator integration tests (with k8s API access) succeeded!!"
 fi
+
+info "Running local Docker registry with authentication integration test..."
+setupLocalDockerRegistry
+pushLocalChart
+if ! kubectl exec -it "$pod" -- /bin/sh -c "CI_TIMEOUT_MINUTES=20 TEST_TIMEOUT_MINUTES=${TEST_TIMEOUT_MINUTES} INTEGRATION_ENTRYPOINT=http://kubeapps-ci.kubeapps USE_MULTICLUSTER_OIDC_ENV=${USE_MULTICLUSTER_OIDC_ENV} ADMIN_TOKEN=${admin_token} VIEW_TOKEN=${view_token} EDIT_TOKEN=${edit_token} yarn test \"tests/registry/\""; then
+  ## Integration tests failed, get report screenshot
+  warn "PODS status on failure"
+  kubectl cp "${pod}:/app/reports" ./reports
+  exit 1
+fi
+info "Docker registry with authentication tests succeeded!!"
+
 info "Integration tests succeeded!"

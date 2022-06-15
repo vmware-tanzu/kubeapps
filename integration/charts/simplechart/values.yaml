@@ -1,5 +1,5 @@
 image:
-  repository: docker-registry:5600/nginx
+  repository: local-docker-registry:5600/nginx
   tag: "latest"
   pullPolicy: Always
 
