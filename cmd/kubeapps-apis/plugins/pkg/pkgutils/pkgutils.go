@@ -12,6 +12,7 @@ import (
 	"net/url"
 	"reflect"
 	"strings"
+	"time"
 
 	"github.com/Masterminds/semver/v3"
 	corev1 "github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
@@ -22,6 +23,7 @@ import (
 	"gopkg.in/yaml.v3" // The usual "sigs.k8s.io/yaml" doesn't work: https://github.com/vmware-tanzu/kubeapps/pull/4050
 	"k8s.io/apiextensions-apiserver/pkg/apis/apiextensions"
 	structuralschema "k8s.io/apiextensions-apiserver/pkg/apiserver/schema"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 )
 
@@ -342,4 +344,29 @@ func isNonNullableNull(x interface{}, s *structuralschema.Structural) bool {
 // isKindInt returns true if the item is an int
 func isKindInt(src interface{}) bool {
 	return src != nil && reflect.TypeOf(src).Kind() == reflect.Int
+}
+
+// translation to duration
+func ToDuration(duration string) (*metav1.Duration, error) {
+	if duration == "" {
+		return nil, nil
+	} else {
+		if d, err := time.ParseDuration(duration); err != nil {
+			return nil, err
+		} else {
+			return &metav1.Duration{Duration: d}, nil
+		}
+	}
+}
+
+// translation from duration
+func FromDuration(duration *metav1.Duration) string {
+	if duration == nil {
+		return ""
+	} else {
+		s := duration.Duration.String()
+		s = strings.Replace(s, "m0s", "m", 1)
+		s = strings.Replace(s, "h0m", "h", 1)
+		return s
+	}
 }

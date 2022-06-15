@@ -298,7 +298,7 @@ func TestKindClusterUpdateInstalledPackage(t *testing.T) {
 			tc.expectedDetailAfterUpdate.InstalledPackageRef = installedRef
 			tc.expectedDetailAfterUpdate.Name = tc.integrationTestCreatePackageSpec.request.Name
 			tc.expectedDetailAfterUpdate.ReconciliationOptions = &corev1.ReconciliationOptions{
-				Interval: 60,
+				Interval: "1m",
 			}
 			tc.expectedDetailAfterUpdate.AvailablePackageRef = tc.integrationTestCreatePackageSpec.request.AvailablePackageRef
 			tc.expectedDetailAfterUpdate.PostInstallationNotes = strings.ReplaceAll(
@@ -1421,7 +1421,7 @@ func createAndWaitForHelmRelease(t *testing.T, tc integrationTestCreatePackageSp
 		tc.expectedDetail.Name = tc.request.Name
 		if tc.request.ReconciliationOptions == nil {
 			tc.expectedDetail.ReconciliationOptions = &corev1.ReconciliationOptions{
-				Interval: 60,
+				Interval: "1m",
 			}
 		}
 	}

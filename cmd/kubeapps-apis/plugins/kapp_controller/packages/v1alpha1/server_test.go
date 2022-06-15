@@ -2929,7 +2929,7 @@ func TestGetInstalledPackageDetail(t *testing.T) {
 				ValuesApplied: "\n# values.yaml\nfoo: bar\n",
 				ReconciliationOptions: &corev1.ReconciliationOptions{
 					ServiceAccountName: "default",
-					Interval:           30,
+					Interval:           "30s",
 					Suspend:            false,
 				},
 				Status: &corev1.InstalledPackageStatus{
@@ -3165,7 +3165,7 @@ fetchStderr
 				ValuesApplied: "\n# values.yaml\nfoo: bar\n",
 				ReconciliationOptions: &corev1.ReconciliationOptions{
 					ServiceAccountName: "default",
-					Interval:           30,
+					Interval:           "30s",
 					Suspend:            false,
 				},
 				Status: &corev1.InstalledPackageStatus{
@@ -3363,7 +3363,7 @@ fetchStderr
 				ValuesApplied: "\n# values.yaml\nfoo: bar\n",
 				ReconciliationOptions: &corev1.ReconciliationOptions{
 					ServiceAccountName: "default",
-					Interval:           30,
+					Interval:           "30s",
 					Suspend:            false,
 				},
 				Status: &corev1.InstalledPackageStatus{
@@ -3865,7 +3865,7 @@ func TestCreateInstalledPackage(t *testing.T) {
 					Version: "1.2.3",
 				},
 				ReconciliationOptions: &corev1.ReconciliationOptions{
-					Interval:           99,
+					Interval:           "99s",
 					Suspend:            true,
 					ServiceAccountName: "my-sa",
 				},
@@ -5467,7 +5467,7 @@ func TestUpdateInstalledPackage(t *testing.T) {
 				Values: "foo: bar",
 				ReconciliationOptions: &corev1.ReconciliationOptions{
 					ServiceAccountName: "default",
-					Interval:           30,
+					Interval:           "30s",
 					Suspend:            false,
 				},
 			},
@@ -5638,7 +5638,7 @@ func TestUpdateInstalledPackage(t *testing.T) {
 				Values: "foo: bar",
 				ReconciliationOptions: &corev1.ReconciliationOptions{
 					ServiceAccountName: "default",
-					Interval:           30,
+					Interval:           "30s",
 					Suspend:            false,
 				},
 			},
@@ -6435,7 +6435,7 @@ func TestAddPackageRepository(t *testing.T) {
 			Name:     "globalrepo",
 			Type:     Type_ImgPkgBundle,
 			Url:      "projects.registry.example.com/repo-1/main@sha256:abcd",
-			Interval: 86400,
+			Interval: "24h",
 			Plugin:   &pluginDetail,
 		}
 	}
@@ -6724,7 +6724,7 @@ func TestAddPackageRepository(t *testing.T) {
 		{
 			name: "create with no interval",
 			requestCustomizer: func(request *corev1.AddPackageRepositoryRequest) *corev1.AddPackageRepositoryRequest {
-				request.Interval = 0
+				request.Interval = ""
 				return request
 			},
 			repositoryCustomizer: func(repository *packagingv1alpha1.PackageRepository) *packagingv1alpha1.PackageRepository {
@@ -6737,7 +6737,7 @@ func TestAddPackageRepository(t *testing.T) {
 		{
 			name: "create with interval",
 			requestCustomizer: func(request *corev1.AddPackageRepositoryRequest) *corev1.AddPackageRepositoryRequest {
-				request.Interval = 12 * 3600
+				request.Interval = "12h"
 				return request
 			},
 			repositoryCustomizer: func(repository *packagingv1alpha1.PackageRepository) *packagingv1alpha1.PackageRepository {
@@ -7091,7 +7091,7 @@ func TestUpdatePackageRepository(t *testing.T) {
 				Identifier: "globalrepo",
 			},
 			Url:      "projects.registry.example.com/repo-1/main@sha256:abcd",
-			Interval: 86400,
+			Interval: "24h",
 		}
 	}
 	defaultRepository := func() *packagingv1alpha1.PackageRepository {
@@ -7373,7 +7373,7 @@ func TestUpdatePackageRepository(t *testing.T) {
 		{
 			name: "update with no interval",
 			requestCustomizer: func(request *corev1.UpdatePackageRepositoryRequest) *corev1.UpdatePackageRepositoryRequest {
-				request.Interval = 0
+				request.Interval = ""
 				return request
 			},
 			repositoryCustomizer: func(repository *packagingv1alpha1.PackageRepository) *packagingv1alpha1.PackageRepository {
@@ -7386,7 +7386,7 @@ func TestUpdatePackageRepository(t *testing.T) {
 		{
 			name: "updated with new interval",
 			requestCustomizer: func(request *corev1.UpdatePackageRepositoryRequest) *corev1.UpdatePackageRepositoryRequest {
-				request.Interval = 12 * 3600
+				request.Interval = "12h"
 				return request
 			},
 			repositoryCustomizer: func(repository *packagingv1alpha1.PackageRepository) *packagingv1alpha1.PackageRepository {
@@ -8059,7 +8059,7 @@ func TestGetPackageRepositoryDetail(t *testing.T) {
 				NamespaceScoped: false,
 				Type:            Type_ImgPkgBundle,
 				Url:             "projects.registry.example.com/repo-1/main@sha256:abcd",
-				Interval:        24 * 3600,
+				Interval:        "24h",
 			},
 		}
 	}
@@ -8162,7 +8162,7 @@ func TestGetPackageRepositoryDetail(t *testing.T) {
 				return repository
 			},
 			responseCustomizer: func(response *corev1.GetPackageRepositoryDetailResponse) *corev1.GetPackageRepositoryDetailResponse {
-				response.Detail.Interval = 0
+				response.Detail.Interval = ""
 				return response
 			},
 			expectedStatusCode: codes.OK,
@@ -8174,7 +8174,7 @@ func TestGetPackageRepositoryDetail(t *testing.T) {
 				return repository
 			},
 			responseCustomizer: func(response *corev1.GetPackageRepositoryDetailResponse) *corev1.GetPackageRepositoryDetailResponse {
-				response.Detail.Interval = 12 * 3600
+				response.Detail.Interval = "12h"
 				return response
 			},
 			expectedStatusCode: codes.OK,
