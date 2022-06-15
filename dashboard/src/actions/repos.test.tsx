@@ -101,7 +101,7 @@ const repoData = {
     email: "",
     server: "",
   },
-  interval: 3600,
+  interval: "10m",
   name: "my-repo",
   passCredentials: false,
   secretAuthName: "",

@@ -105,7 +105,8 @@ export function AppRepoForm(props: IAppRepoFormProps) {
 
   // rest of the package repo form variables
 
-  const initialInterval = 3600;
+  const initialInterval = "10m";
+
   const [customCA, setCustomCA] = useState("");
   const [description, setDescription] = useState("");
   const [filterExclude, setFilterExclude] = useState(false);
@@ -277,7 +278,7 @@ export function AppRepoForm(props: IAppRepoFormProps) {
     setDescription(e.target.value);
   };
   const handleIntervalChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setInterval(Number(e.target.value));
+    setInterval(e.target.value);
   };
   const handlePerformValidationChange = (_e: React.ChangeEvent<HTMLInputElement>) => {
     setPerformValidation(!performValidation);
@@ -306,7 +307,7 @@ export function AppRepoForm(props: IAppRepoFormProps) {
     switch (getPluginByName(e.target.value)?.name) {
       case PluginNames.PACKAGES_HELM:
         setType(RepositoryStorageTypes.PACKAGE_REPOSITORY_STORAGE_HELM);
-        setInterval(0); // helm plugin doesn't allow interval
+        // helm plugin doesn't allow interval
         break;
       case PluginNames.PACKAGES_FLUX:
         setType(RepositoryStorageTypes.PACKAGE_REPOSITORY_STORAGE_HELM);
@@ -1283,13 +1284,21 @@ export function AppRepoForm(props: IAppRepoFormProps) {
                     <label htmlFor="kubeapps-repo-interval">Synchronization Interval</label>
                     <input
                       id="kubeapps-repo-interval"
-                      type="number"
-                      placeholder="Synchronization interval in seconds"
+                      type="text"
+                      placeholder="10m"
                       value={interval}
                       onChange={handleIntervalChange}
                     />
                     <CdsControlMessage>
-                      Time (in seconds) to wait between synchronizing the repository.
+                      Time (expressed as a{" "}
+                      <a
+                        href={"https://pkg.go.dev/time#ParseDuration"}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        Golang duration
+                      </a>
+                      ) to wait between synchronizing the repository.
                     </CdsControlMessage>
                   </CdsInput>
                 )}

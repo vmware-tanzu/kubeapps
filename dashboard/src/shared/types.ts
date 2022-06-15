@@ -430,7 +430,7 @@ export interface IPkgRepoFormData {
   // rest of the paramters
   customCA: string;
   description: string;
-  interval: number;
+  interval: string;
   name: string;
   passCredentials: boolean;
   plugin: Plugin;
