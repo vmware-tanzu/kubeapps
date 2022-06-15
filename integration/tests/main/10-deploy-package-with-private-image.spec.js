@@ -84,31 +84,6 @@ test("Deploy a chart using a private container image", async ({ page }) => {
     timeout: deployTimeout,
   });
 
-  // Now that the deployment has been created, we check that the imagePullSecret
-  // has been added. For doing so, we query the resources API to get info of the
-  // deployment
-  const axInstance = await utils.getAxiosInstance(page, k.token);
-  const resourceResp = await axInstance.get(
-    `/apis/plugins/resources/v1alpha1/helm.packages/v1alpha1/c/default/ns/default/${appName}`,
-  );
-  expect(resourceResp.status).toEqual(200);
-
-  let deployment;
-  resourceResp.data
-    .trim()
-    .split(/\r?\n/)
-    .forEach(r => {
-      // Axios doesn't provide streaming responses, so splitting on new line works
-      // but gives us a string, not JSON, and may leave a blank line at the end.
-      const response = JSON.parse(r);
-      const resourceRef = response.result?.resourceRef;
-      if (resourceRef.kind === "Deployment" && resourceRef.name.match(appName)) {
-        deployment = JSON.parse(response.result?.manifest);
-      }
-    });
-
-  expect(deployment?.spec?.template?.spec?.imagePullSecrets).toEqual([{ name: secretName }]);
-
   // Clean up
   await page.locator('cds-button:has-text("Delete")').click();
   await page.locator('cds-modal-actions button:has-text("Delete")').click();

@@ -1,7 +1,9 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: simplechart
+  name: {{ include "simplechart.fullname" . }}
+  labels:
+    {{- include "simplechart.labels" . | nindent 4 }}
 spec:
   replicas: 1
   selector:
