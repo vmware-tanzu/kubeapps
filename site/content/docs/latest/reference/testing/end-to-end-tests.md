@@ -94,6 +94,8 @@ IMAGE_TAG=v1.0.1 make push
 > It will build and push the image using this [Dockerfile](https://github.com/vmware-tanzu/kubeapps/blob/main/integration/Dockerfile) (we are using the base image as in the [Kubeapps Dashboard build image](https://github.com/vmware-tanzu/kubeapps/blob/main/dashboard/Dockerfile)).
 > The dependencies of this image are defined in the [package.json](https://github.com/vmware-tanzu/kubeapps/blob/main/integration/package.json).
 
+When pushing a new image, also update the field `version` in the [package.json](https://github.com/vmware-tanzu/kubeapps/blob/main/integration/package.json).
+
 Then, update the [Kubernetes Deployment manifest](https://github.com/vmware-tanzu/kubeapps/blob/main/integration/manifests/executor.yaml) to point to the version you have built and pushed.
 
 To sum up, whenever a change triggers a new `kubeapps/integration-tests` version (new NodeJS image, updating the integration dependencies, other changes, etc.), you will have to release a new version. This process involves:

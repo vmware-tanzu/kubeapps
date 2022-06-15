@@ -929,9 +929,9 @@ export interface ReconciliationOptions {
   /**
    * Reconciliation Interval
    *
-   * The interval with which the package is checked for reconciliation (in seconds)
+   * The interval with which the package is checked for reconciliation (in time+unit)
    */
-  interval: number;
+  interval: string;
   /**
    * Suspend
    *
@@ -3730,13 +3730,13 @@ export const InstalledPackageStatus = {
 };
 
 function createBaseReconciliationOptions(): ReconciliationOptions {
-  return { interval: 0, suspend: false, serviceAccountName: "" };
+  return { interval: "", suspend: false, serviceAccountName: "" };
 }
 
 export const ReconciliationOptions = {
   encode(message: ReconciliationOptions, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
-    if (message.interval !== 0) {
-      writer.uint32(8).int32(message.interval);
+    if (message.interval !== "") {
+      writer.uint32(10).string(message.interval);
     }
     if (message.suspend === true) {
       writer.uint32(16).bool(message.suspend);
@@ -3755,7 +3755,7 @@ export const ReconciliationOptions = {
       const tag = reader.uint32();
       switch (tag >>> 3) {
         case 1:
-          message.interval = reader.int32();
+          message.interval = reader.string();
           break;
         case 2:
           message.suspend = reader.bool();
@@ -3773,7 +3773,7 @@ export const ReconciliationOptions = {
 
   fromJSON(object: any): ReconciliationOptions {
     return {
-      interval: isSet(object.interval) ? Number(object.interval) : 0,
+      interval: isSet(object.interval) ? String(object.interval) : "",
       suspend: isSet(object.suspend) ? Boolean(object.suspend) : false,
       serviceAccountName: isSet(object.serviceAccountName) ? String(object.serviceAccountName) : "",
     };
@@ -3781,7 +3781,7 @@ export const ReconciliationOptions = {
 
   toJSON(message: ReconciliationOptions): unknown {
     const obj: any = {};
-    message.interval !== undefined && (obj.interval = Math.round(message.interval));
+    message.interval !== undefined && (obj.interval = message.interval);
     message.suspend !== undefined && (obj.suspend = message.suspend);
     message.serviceAccountName !== undefined &&
       (obj.serviceAccountName = message.serviceAccountName);
@@ -3792,7 +3792,7 @@ export const ReconciliationOptions = {
     object: I,
   ): ReconciliationOptions {
     const message = createBaseReconciliationOptions();
-    message.interval = object.interval ?? 0;
+    message.interval = object.interval ?? "";
     message.suspend = object.suspend ?? false;
     message.serviceAccountName = object.serviceAccountName ?? "";
     return message;

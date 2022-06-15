@@ -15,7 +15,7 @@ const testProps: IPackageHeaderProps = {
     name: "foo",
     categories: [""],
     displayName: "foo",
-    iconUrl: "api/assetsvc/test.jpg",
+    iconUrl: "api/test.jpg",
     repoUrl: "",
     homeUrl: "",
     sourceUrls: [],
@@ -58,7 +58,7 @@ it("uses the icon", () => {
   const wrapper = mount(<PackageHeader {...testProps} />);
   const icon = wrapper.find("img").filterWhere(i => i.prop("alt") === "icon");
   expect(icon.exists()).toBe(true);
-  expect(icon.props()).toMatchObject({ src: "api/assetsvc/test.jpg" });
+  expect(icon.props()).toMatchObject({ src: "api/test.jpg" });
 });
 
 it("uses the first version as default in the select input", () => {

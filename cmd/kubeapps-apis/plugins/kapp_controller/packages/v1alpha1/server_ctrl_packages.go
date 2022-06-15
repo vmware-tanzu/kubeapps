@@ -731,8 +731,8 @@ func (s *Server) UpdateInstalledPackage(ctx context.Context, request *corev1.Upd
 
 	// Update the rest of the fields
 	if reconciliationOptions != nil {
-		if reconciliationOptions.Interval > 0 {
-			pkgInstall.Spec.SyncPeriod = &metav1.Duration{Duration: time.Duration(reconciliationOptions.Interval) * time.Second}
+		if pkgInstall.Spec.SyncPeriod, err = pkgutils.ToDuration(reconciliationOptions.Interval); err != nil {
+			return nil, status.Errorf(codes.InvalidArgument, "The interval is invalid: %v", err)
 		}
 		if reconciliationOptions.ServiceAccountName != "" {
 			pkgInstall.Spec.ServiceAccountName = reconciliationOptions.ServiceAccountName

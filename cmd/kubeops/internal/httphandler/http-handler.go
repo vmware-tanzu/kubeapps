@@ -12,7 +12,7 @@ import (
 
 	"github.com/gorilla/mux"
 	"github.com/vmware-tanzu/kubeapps/cmd/apprepository-controller/pkg/apis/apprepository/v1alpha1"
-	"github.com/vmware-tanzu/kubeapps/pkg/auth"
+	"github.com/vmware-tanzu/kubeapps/cmd/kubeops/internal/auth"
 	"github.com/vmware-tanzu/kubeapps/pkg/kube"
 	corev1 "k8s.io/api/core/v1"
 	k8sErrors "k8s.io/apimachinery/pkg/api/errors"

@@ -4,7 +4,7 @@
 // Currently these tests will be skipped entirely unless the
 // ENABLE_PG_INTEGRATION_TESTS env var is set.
 // Run the local postgres with
-// docker run --publish 5432:5432 -e ALLOW_EMPTY_PASSWORD=yes bitnami/postgresql:14.2.0-debian-10-r88
+// docker run --publish 5432:5432 -e ALLOW_EMPTY_PASSWORD=yes bitnami/postgresql:14.3.0-debian-11-r3
 // in another terminal.
 package utils
 
@@ -47,8 +47,8 @@ func TestGetChart(t *testing.T) {
 		{
 			name: "it returns an error if the chart does not exist in that repo",
 			existingCharts: map[string][]models.Chart{
-				"namespace-1": []models.Chart{
-					models.Chart{ID: "chart-1", Name: "my-chart"},
+				"namespace-1": {
+					{ID: "chart-1", Name: "my-chart"},
 				},
 			},
 			chartId:     "chart-1",
@@ -58,8 +58,8 @@ func TestGetChart(t *testing.T) {
 		{
 			name: "it returns the chart matching the chartid",
 			existingCharts: map[string][]models.Chart{
-				"namespace-1": []models.Chart{
-					models.Chart{ID: "chart-1", Name: "my-chart"},
+				"namespace-1": {
+					{ID: "chart-1", Name: "my-chart"},
 				},
 			},
 			chartId:       "chart-1",
@@ -112,9 +112,9 @@ func TestGetVersion(t *testing.T) {
 		{
 			name: "it returns an error if the chart version does not exist",
 			existingCharts: map[string][]models.Chart{
-				"namespace-1": []models.Chart{
-					models.Chart{ID: "chart-1", ChartVersions: []models.ChartVersion{
-						models.ChartVersion{Version: "1.2.3"},
+				"namespace-1": {
+					{ID: "chart-1", ChartVersions: []models.ChartVersion{
+						{Version: "1.2.3"},
 					}},
 				},
 			},
@@ -126,9 +126,9 @@ func TestGetVersion(t *testing.T) {
 		{
 			name: "it returns an error if the chart version does not exist in that namespace",
 			existingCharts: map[string][]models.Chart{
-				"namespace-1": []models.Chart{
-					models.Chart{ID: "chart-1", ChartVersions: []models.ChartVersion{
-						models.ChartVersion{Version: "1.2.3"},
+				"namespace-1": {
+					{ID: "chart-1", ChartVersions: []models.ChartVersion{
+						{Version: "1.2.3"},
 					}},
 				},
 			},
@@ -140,10 +140,10 @@ func TestGetVersion(t *testing.T) {
 		{
 			name: "it returns the chart version matching the chartid and version",
 			existingCharts: map[string][]models.Chart{
-				"namespace-1": []models.Chart{
-					models.Chart{ID: "chart-1", ChartVersions: []models.ChartVersion{
-						models.ChartVersion{Version: "1.2.3"},
-						models.ChartVersion{Version: "4.5.6"},
+				"namespace-1": {
+					{ID: "chart-1", ChartVersions: []models.ChartVersion{
+						{Version: "1.2.3"},
+						{Version: "4.5.6"},
 					}},
 				},
 			},
@@ -189,7 +189,7 @@ func TestGetPaginatedChartList(t *testing.T) {
 	)
 
 	chartVersions := []models.ChartVersion{
-		models.ChartVersion{
+		{
 			Digest: "abc-123",
 		},
 	}
@@ -216,149 +216,149 @@ func TestGetPaginatedChartList(t *testing.T) {
 			repo:      repoName,
 			namespace: namespaceName,
 			existingCharts: map[string]map[string][]models.Chart{
-				namespaceName: map[string][]models.Chart{
-					repoName: []models.Chart{
-						models.Chart{ID: repoName + "/chart-1", Name: "chart-1"},
+				namespaceName: {
+					repoName: {
+						{ID: repoName + "/chart-1", Name: "chart-1"},
 					},
-					"other-repo": []models.Chart{
-						models.Chart{ID: "other-repo/other-chart", Name: "other-chart"},
+					"other-repo": {
+						{ID: "other-repo/other-chart", Name: "other-chart"},
 					},
 				},
-				"other-namespace": map[string][]models.Chart{
-					repoName: []models.Chart{
-						models.Chart{ID: repoName + "/chart-in-other-namespace", Name: "chart-in-other-namespace"},
+				"other-namespace": {
+					repoName: {
+						{ID: repoName + "/chart-in-other-namespace", Name: "chart-in-other-namespace"},
 					},
 				},
 			},
 			expectedCharts: []*models.Chart{
-				&models.Chart{ID: repoName + "/chart-1", Name: "chart-1"},
+				{ID: repoName + "/chart-1", Name: "chart-1"},
 			},
 			expectedNumPages: 1,
 		},
 		{
 			name: "it returns charts from multiple repos in a specific namespace",
 			existingCharts: map[string]map[string][]models.Chart{
-				namespaceName: map[string][]models.Chart{
-					repoName: []models.Chart{
-						models.Chart{ID: repoName + "/chart-1", Name: "chart-1"},
+				namespaceName: {
+					repoName: {
+						{ID: repoName + "/chart-1", Name: "chart-1"},
 					},
-					"other-repo": []models.Chart{
-						models.Chart{ID: "other-repo/other-chart", Name: "other-chart"},
+					"other-repo": {
+						{ID: "other-repo/other-chart", Name: "other-chart"},
 					},
 				},
-				"other-namespace": map[string][]models.Chart{
-					repoName: []models.Chart{
-						models.Chart{ID: repoName + "/chart-in-other-namespace", Name: "chart-in-other-namespace"},
+				"other-namespace": {
+					repoName: {
+						{ID: repoName + "/chart-in-other-namespace", Name: "chart-in-other-namespace"},
 					},
 				},
 			},
 			repo:      "",
 			namespace: namespaceName,
 			expectedCharts: []*models.Chart{
-				&models.Chart{ID: repoName + "/chart-1", Name: "chart-1"},
-				&models.Chart{ID: "other-repo/other-chart", Name: "other-chart"},
+				{ID: repoName + "/chart-1", Name: "chart-1"},
+				{ID: "other-repo/other-chart", Name: "other-chart"},
 			},
 			expectedNumPages: 1,
 		},
 		{
 			name: "it includes charts from global repositories and the specific namespace",
 			existingCharts: map[string]map[string][]models.Chart{
-				namespaceName: map[string][]models.Chart{
-					repoName: []models.Chart{
-						models.Chart{ID: repoName + "/chart-1", Name: "chart-1"},
+				namespaceName: {
+					repoName: {
+						{ID: repoName + "/chart-1", Name: "chart-1"},
 					},
-					"other-repo": []models.Chart{
-						models.Chart{ID: "other-repo/other-chart", Name: "other-chart"},
-					},
-				},
-				"other-namespace": map[string][]models.Chart{
-					repoName: []models.Chart{
-						models.Chart{ID: repoName + "/chart-in-other-namespace", Name: "chart-in-other-namespace"},
+					"other-repo": {
+						{ID: "other-repo/other-chart", Name: "other-chart"},
 					},
 				},
-				dbutilstest.KubeappsTestNamespace: map[string][]models.Chart{
-					"global-repo": []models.Chart{
-						models.Chart{ID: "global-repo/global-chart", Name: "global-chart"},
+				"other-namespace": {
+					repoName: {
+						{ID: repoName + "/chart-in-other-namespace", Name: "chart-in-other-namespace"},
+					},
+				},
+				dbutilstest.KubeappsTestNamespace: {
+					"global-repo": {
+						{ID: "global-repo/global-chart", Name: "global-chart"},
 					},
 				},
 			},
 			repo:      "",
 			namespace: namespaceName,
 			expectedCharts: []*models.Chart{
-				&models.Chart{ID: repoName + "/chart-1", Name: "chart-1"},
-				&models.Chart{ID: "global-repo/global-chart", Name: "global-chart"},
-				&models.Chart{ID: "other-repo/other-chart", Name: "other-chart"},
+				{ID: repoName + "/chart-1", Name: "chart-1"},
+				{ID: "global-repo/global-chart", Name: "global-chart"},
+				{ID: "other-repo/other-chart", Name: "other-chart"},
 			},
 			expectedNumPages: 1,
 		},
 		{
 			name: "it returns charts from multiple repos across all namespaces",
 			existingCharts: map[string]map[string][]models.Chart{
-				namespaceName: map[string][]models.Chart{
-					repoName: []models.Chart{
-						models.Chart{ID: repoName + "/chart-1", Name: "chart-1"},
+				namespaceName: {
+					repoName: {
+						{ID: repoName + "/chart-1", Name: "chart-1"},
 					},
-					"other-repo": []models.Chart{
-						models.Chart{ID: "other-repo/other-chart", Name: "other-chart"},
+					"other-repo": {
+						{ID: "other-repo/other-chart", Name: "other-chart"},
 					},
 				},
-				"other-namespace": map[string][]models.Chart{
-					repoName: []models.Chart{
-						models.Chart{ID: repoName + "/chart-in-other-namespace", Name: "chart-in-other-namespace"},
+				"other-namespace": {
+					repoName: {
+						{ID: repoName + "/chart-in-other-namespace", Name: "chart-in-other-namespace"},
 					},
 				},
 			},
 			repo:      "",
 			namespace: "_all",
 			expectedCharts: []*models.Chart{
-				&models.Chart{ID: repoName + "/chart-1", Name: "chart-1"},
-				&models.Chart{ID: repoName + "/chart-in-other-namespace", Name: "chart-in-other-namespace"},
-				&models.Chart{ID: "other-repo/other-chart", Name: "other-chart"},
+				{ID: repoName + "/chart-1", Name: "chart-1"},
+				{ID: repoName + "/chart-in-other-namespace", Name: "chart-in-other-namespace"},
+				{ID: "other-repo/other-chart", Name: "other-chart"},
 			},
 			expectedNumPages: 1,
 		},
 		{
 			name: "it returns charts from a single repo across all namespaces",
 			existingCharts: map[string]map[string][]models.Chart{
-				namespaceName: map[string][]models.Chart{
-					repoName: []models.Chart{
-						models.Chart{ID: repoName + "/chart-1", Name: "chart-1"},
+				namespaceName: {
+					repoName: {
+						{ID: repoName + "/chart-1", Name: "chart-1"},
 					},
-					"other-repo": []models.Chart{
-						models.Chart{ID: "other-repo/other-chart", Name: "other-chart"},
+					"other-repo": {
+						{ID: "other-repo/other-chart", Name: "other-chart"},
 					},
 				},
-				"other-namespace": map[string][]models.Chart{
-					repoName: []models.Chart{
-						models.Chart{ID: repoName + "/chart-in-other-namespace", Name: "chart-in-other-namespace"},
+				"other-namespace": {
+					repoName: {
+						{ID: repoName + "/chart-in-other-namespace", Name: "chart-in-other-namespace"},
 					},
 				},
 			},
 			repo:      repoName,
 			namespace: "_all",
 			expectedCharts: []*models.Chart{
-				&models.Chart{ID: repoName + "/chart-1", Name: "chart-1"},
-				&models.Chart{ID: repoName + "/chart-in-other-namespace", Name: "chart-in-other-namespace"},
+				{ID: repoName + "/chart-1", Name: "chart-1"},
+				{ID: repoName + "/chart-in-other-namespace", Name: "chart-in-other-namespace"},
 			},
 			expectedNumPages: 1,
 		},
 		{
 			name: "it does not remove duplicates",
 			existingCharts: map[string]map[string][]models.Chart{
-				namespaceName: map[string][]models.Chart{
-					repoName: []models.Chart{
-						models.Chart{ID: repoName + "/chart-1", Name: "chart-1", ChartVersions: chartVersions},
+				namespaceName: {
+					repoName: {
+						{ID: repoName + "/chart-1", Name: "chart-1", ChartVersions: chartVersions},
 					},
-					"other-repo": []models.Chart{
-						models.Chart{ID: "other-repo/same-chart-different-repo", Name: "same-chart-different-repo", ChartVersions: chartVersions},
+					"other-repo": {
+						{ID: "other-repo/same-chart-different-repo", Name: "same-chart-different-repo", ChartVersions: chartVersions},
 					},
 				},
 			},
 			repo:      "",
 			namespace: namespaceName,
 			expectedCharts: []*models.Chart{
-				&models.Chart{ID: repoName + "/chart-1", Name: "chart-1", ChartVersions: chartVersions},
-				&models.Chart{ID: "other-repo/same-chart-different-repo", Name: "same-chart-different-repo", ChartVersions: chartVersions},
+				{ID: repoName + "/chart-1", Name: "chart-1", ChartVersions: chartVersions},
+				{ID: "other-repo/same-chart-different-repo", Name: "same-chart-different-repo", ChartVersions: chartVersions},
 			},
 			expectedNumPages: 1,
 		},
@@ -429,7 +429,7 @@ func TestGetChartsWithFilters(t *testing.T) {
 			existingCharts: map[string]map[string][]models.Chart{
 				namespaceName: {
 					repoName1: {chartWithVersionRepo1},
-					"other-repo": []models.Chart{
+					"other-repo": {
 						{ID: "other-repo/other-chart", Name: "other-chart"},
 					},
 				},

@@ -46,7 +46,6 @@ The relevant component(s) for the issue. Components are high level areas of the 
 | `component/api-server`       | An issue related to kubeapps api-server                                                           |
 | `component/apprepository`    | An issue related to kubeapps apprepository                                                        |
 | `component/asset-syncer`     | An issue related to kubeapps asset-syncer (to be deprecated)                                      |
-| `component/assetsvc`         | An issue related to kubeapps assetsvc (to be deprecated)                                          |
 | `component/authentication`   | An issue related to kubeapps authentication                                                       |
 | `component/ci`               | An issue related to kubeapps ci system                                                            |
 | `component/kubeops`          | An issue related to kubeops (to be deprecated)                                                    |

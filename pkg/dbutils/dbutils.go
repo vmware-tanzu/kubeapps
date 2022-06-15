@@ -11,8 +11,6 @@ type AssetManager interface {
 	Close() error
 }
 
-const AllNamespaces = "_all"
-
 type Config struct {
 	URL      string
 	Database string

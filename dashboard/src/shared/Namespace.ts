@@ -12,7 +12,7 @@ export default class Namespace {
   private static resourcesClient = () => new KubeappsGrpcClient().getResourcesServiceClientImpl();
 
   public static async list(cluster: string) {
-    // This call is hitting an actual backend endpoint (see pkg/http-handler.go)
+    // This call is hitting an actual backend endpoint (see cmd\kubeops\internal\http-handler)
     // while the other two calls (create, get) have been updated to use the
     // resources client rather than the k8s API server.
     const { data } = await axiosWithAuth.get<{ namespaces: IResource[] }>(
