@@ -878,8 +878,8 @@ message InstalledPackageStatus {
 message ReconciliationOptions {
   // Reconciliation Interval
   //
-  // The interval with which the package is checked for reconciliation (in seconds)
-  int32 interval = 1;
+  // The interval with which the package is checked for reconciliation (in time+unit)
+  string interval = 1;
 
   // Suspend
   //
