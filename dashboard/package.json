@@ -29,7 +29,7 @@
     "@cds/city": "^1.1.0",
     "@cds/core": "^6.0.1",
     "@cds/react": "^6.0.1",
-    "@clr/ui": "^13.4.0",
+    "@clr/ui": "^13.4.1",
     "@improbable-eng/grpc-web": "^0.15.0",
     "@paciolan/remote-component": "^2.12.1",
     "ajv": "^8.11.0",
