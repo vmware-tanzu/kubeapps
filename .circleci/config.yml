@@ -398,7 +398,7 @@ load_kind_images: &load_kind_images
     name: "Load needed images into Kind"
     command:
       ./script/load-kind-image.sh docker.io/bitnami/apache:2.4.48-debian-10-r74 kubeapps-ci kubeapps-ci-additional &&
-      ./script/load-kind-image.sh docker.io/bitnami/apache:2.4.48-debian-10-r75 kubeapps-ci kubeapps-ci-additional
+      ./script/load-kind-image.sh docker.io/bitnami/apache:2.4.48-debian-10-r75 kubeapps-ci kubeapps-ci-additional &&
       ./script/load-kind-image.sh registry:2 kubeapps-ci kubeapps-ci-additional
 copy_apiserver_certificates: &copy_apiserver_certificates
   run:

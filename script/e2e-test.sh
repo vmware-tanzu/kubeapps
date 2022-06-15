@@ -35,7 +35,7 @@ fi
 . "${ROOT_DIR}/script/lib/libutil.sh"
 
 # Functions for local Docker registry mgmt
-source install-local-registry.sh
+. "${ROOT_DIR}/script/install-local-registry.sh"
 
 info "Root dir: ${ROOT_DIR}"
 info "Use multicluster+OIDC: ${USE_MULTICLUSTER_OIDC_ENV}"
