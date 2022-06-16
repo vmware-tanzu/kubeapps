@@ -19,6 +19,7 @@ import (
 	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/fluxv2/packages/v1alpha1/cache"
 	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/fluxv2/packages/v1alpha1/common"
 	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/pkg/clientgetter"
+	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/pkg/pkgutils"
 	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/pkg/statuserror"
 	"github.com/vmware-tanzu/kubeapps/pkg/chart/models"
 	"github.com/vmware-tanzu/kubeapps/pkg/helm"
@@ -271,7 +272,6 @@ func (s *Server) repoDetail(ctx context.Context, repoRef *corev1.PackageReposito
 
 	repo, err := s.getRepoInCluster(ctx, key)
 	if err != nil {
-		log.Infof("repoDetail :%v", err)
 		return nil, err
 	}
 
@@ -306,10 +306,6 @@ func (s *Server) repoDetail(ctx context.Context, repoRef *corev1.PackageReposito
 		}
 	}
 	auth.PassCredentials = repo.Spec.PassCredentials
-	typ := repo.Spec.Type
-	if typ == "" {
-		typ = "helm"
-	}
 	return &corev1.PackageRepositoryDetail{
 		PackageRepoRef: &corev1.PackageRepositoryReference{
 			Context: &corev1.Context{
@@ -323,9 +319,9 @@ func (s *Server) repoDetail(ctx context.Context, repoRef *corev1.PackageReposito
 		// TBD Flux HelmRepository CR doesn't have a designated field for description
 		Description:     "",
 		NamespaceScoped: false,
-		Type:            typ,
+		Type:            "helm",
 		Url:             repo.Spec.URL,
-		Interval:        uint32(repo.Spec.Interval.Duration.Seconds()),
+		Interval:        pkgutils.FromDuration(&repo.Spec.Interval),
 		TlsConfig:       tlsConfig,
 		Auth:            auth,
 		CustomDetail:    nil,
@@ -357,10 +353,6 @@ func (s *Server) repoSummaries(ctx context.Context, namespace string) ([]*corev1
 		}
 	}
 	for _, repo := range repos {
-		typ := repo.Spec.Type
-		if typ == "" {
-			typ = "helm"
-		}
 		summary := &corev1.PackageRepositorySummary{
 			PackageRepoRef: &corev1.PackageRepositoryReference{
 				Context: &corev1.Context{
@@ -374,7 +366,7 @@ func (s *Server) repoSummaries(ctx context.Context, namespace string) ([]*corev1
 			// TBD Flux HelmRepository CR doesn't have a designated field for description
 			Description:     "",
 			NamespaceScoped: false,
-			Type:            typ,
+			Type:            "helm",
 			Url:             repo.Spec.URL,
 			Status:          repoStatus(repo),
 		}
@@ -552,12 +544,12 @@ func (s *Server) updateKubeappsManagedRepoSecret(
 			// TODO (gfichtenholt) we should optimize this to somehow tell if the existing secret
 			// is the same (data-wise) as the new one and if so skip all this
 			if err = secretInterface.Delete(ctx, existingSecretRef.Name, metav1.DeleteOptions{}); err != nil {
-				return nil, false, statuserror.FromK8sError("delete", "secret", existingSecretRef.Name, err)
+				return nil, false, statuserror.FromK8sError("get", "secret", existingSecretRef.Name, err)
 			}
 			// create a new one
 			newSecret, err := secretInterface.Create(ctx, secret, metav1.CreateOptions{})
 			if err != nil {
-				return nil, false, statuserror.FromK8sError("create", "secret", secret.GetGenerateName(), err)
+				return nil, false, statuserror.FromK8sError("update", "secret", secret.GetGenerateName(), err)
 			}
 			return newSecret, true, nil
 		}
@@ -569,7 +561,7 @@ func (s *Server) updateKubeappsManagedRepoSecret(
 	return secret, true, nil
 }
 
-func (s *Server) updateRepo(ctx context.Context, repoRef *corev1.PackageRepositoryReference, url string, interval uint32, tlsConfig *corev1.PackageRepositoryTlsConfig, auth *corev1.PackageRepositoryAuth) (*corev1.PackageRepositoryReference, error) {
+func (s *Server) updateRepo(ctx context.Context, repoRef *corev1.PackageRepositoryReference, url string, interval string, tlsConfig *corev1.PackageRepositoryTlsConfig, auth *corev1.PackageRepositoryAuth) (*corev1.PackageRepositoryReference, error) {
 	key := types.NamespacedName{Namespace: repoRef.GetContext().GetNamespace(), Name: repoRef.GetIdentifier()}
 	repo, err := s.getRepoInCluster(ctx, key)
 	if err != nil {
@@ -591,8 +583,12 @@ func (s *Server) updateRepo(ctx context.Context, repoRef *corev1.PackageReposito
 
 	// flux does not grok description yet
 
-	if interval > 0 {
-		repo.Spec.Interval = metav1.Duration{Duration: time.Duration(interval) * time.Second}
+	if interval != "" {
+		if duration, err := pkgutils.ToDuration(interval); err != nil {
+			return nil, status.Errorf(codes.InvalidArgument, "interval is invalid: %v", err)
+		} else {
+			repo.Spec.Interval = *duration
+		}
 	} else {
 		// interval is a required field
 		repo.Spec.Interval = defaultPollInterval
@@ -695,17 +691,26 @@ type repoCacheEntryValue struct {
 
 // onAddRepo essentially tells the cache whether to and what to store for a given key
 func (s *repoEventSink) onAddRepo(key string, obj ctrlclient.Object) (interface{}, bool, error) {
-	log.Infof("+onAddRepo(%s)", key)
-	defer log.Infof("-onAddRepo()")
+	log.V(4).Info("+onAddRepo(%s)", key)
+	defer log.V(4).Info("-onAddRepo()")
 
 	if repo, ok := obj.(*sourcev1.HelmRepository); !ok {
 		return nil, false, fmt.Errorf("expected an instance of *sourcev1.HelmRepository, got: %s", reflect.TypeOf(obj))
-		// first, check the repo is ready
 	} else if isRepoReady(*repo) {
-		if repo.Spec.Type == sourcev1.HelmRepositoryTypeOCI {
-			return s.onAddOciRepo(*repo)
+		// first, check the repo is ready
+		// ref https://fluxcd.io/docs/components/source/helmrepositories/#status
+		if artifact := repo.GetArtifact(); artifact != nil {
+			if checksum := artifact.Checksum; checksum == "" {
+				return nil, false, status.Errorf(codes.Internal,
+					"expected field status.artifact.checksum not found on HelmRepository\n[%s]",
+					common.PrettyPrint(repo))
+			} else {
+				return s.indexAndEncode(checksum, *repo)
+			}
 		} else {
-			return s.onAddHttpRepo(*repo)
+			return nil, false, status.Errorf(codes.Internal,
+				"expected field status.artifact not found on HelmRepository\n[%s]",
+				common.PrettyPrint(repo))
 		}
 	} else {
 		// repo is not quite ready to be indexed - not really an error condition,
@@ -715,25 +720,7 @@ func (s *repoEventSink) onAddRepo(key string, obj ctrlclient.Object) (interface{
 	}
 }
 
-// ref https://fluxcd.io/docs/components/source/helmrepositories/#status
-func (s *repoEventSink) onAddHttpRepo(repo sourcev1.HelmRepository) ([]byte, bool, error) {
-	if artifact := repo.GetArtifact(); artifact != nil {
-		if checksum := artifact.Checksum; checksum == "" {
-			return nil, false, status.Errorf(codes.Internal,
-				"expected field status.artifact.checksum not found on HelmRepository\n[%s]",
-				common.PrettyPrint(repo))
-		} else {
-			return s.indexAndEncode(checksum, repo)
-		}
-	} else {
-		return nil, false, status.Errorf(codes.Internal,
-			"expected field status.artifact not found on HelmRepository\n[%s]",
-			common.PrettyPrint(repo))
-	}
-}
-
 func (s *repoEventSink) indexAndEncode(checksum string, repo sourcev1.HelmRepository) ([]byte, bool, error) {
-	log.Infof("+indexAndEncode(%s)", common.PrettyPrint(repo))
 	charts, err := s.indexOneRepo(repo)
 	if err != nil {
 		return nil, false, err
@@ -829,49 +816,43 @@ func (s *repoEventSink) onModifyRepo(key string, obj ctrlclient.Object, oldValue
 	if repo, ok := obj.(*sourcev1.HelmRepository); !ok {
 		return nil, false, fmt.Errorf("expected an instance of *sourcev1.HelmRepository, got: %s", reflect.TypeOf(obj))
 	} else if isRepoReady(*repo) {
-		if repo.Spec.Type == sourcev1.HelmRepositoryTypeOCI {
-			// OCI Helm repository, which defines a source, does not produce an Artifact
-			// ref https://fluxcd.io/docs/components/source/helmrepositories/#helm-oci-repository
-			return nil, false, nil
-		} else {
-			// first check the repo is ready
-			// We should to compare checksums on what's stored in the cache
-			// vs the modified object to see if the contents has really changed before embarking on
-			// expensive operation indexOneRepo() below.
-			// ref https://fluxcd.io/docs/components/source/helmrepositories/#status
-			// ref https://fluxcd.io/docs/components/source/helmrepositories/#status
-			var newChecksum string
-			if artifact := repo.GetArtifact(); artifact != nil {
-				if newChecksum = artifact.Checksum; newChecksum == "" {
-					return nil, false, status.Errorf(codes.Internal,
-						"expected field status.artifact.checksum not found on HelmRepository\n[%s]",
-						common.PrettyPrint(repo))
-				}
-			} else {
+		// first check the repo is ready
+		// We should to compare checksums on what's stored in the cache
+		// vs the modified object to see if the contents has really changed before embarking on
+		// expensive operation indexOneRepo() below.
+		// ref https://fluxcd.io/docs/components/source/helmrepositories/#status
+		// ref https://fluxcd.io/docs/components/source/helmrepositories/#status
+		var newChecksum string
+		if artifact := repo.GetArtifact(); artifact != nil {
+			if newChecksum = artifact.Checksum; newChecksum == "" {
 				return nil, false, status.Errorf(codes.Internal,
-					"expected field status.artifact not found on HelmRepository\n[%s]",
+					"expected field status.artifact.checksum not found on HelmRepository\n[%s]",
 					common.PrettyPrint(repo))
 			}
+		} else {
+			return nil, false, status.Errorf(codes.Internal,
+				"expected field status.artifact not found on HelmRepository\n[%s]",
+				common.PrettyPrint(repo))
+		}
 
-			cacheEntryUntyped, err := s.onGetRepo(key, oldValue)
-			if err != nil {
-				return nil, false, err
-			}
+		cacheEntryUntyped, err := s.onGetRepo(key, oldValue)
+		if err != nil {
+			return nil, false, err
+		}
 
-			cacheEntry, ok := cacheEntryUntyped.(repoCacheEntryValue)
-			if !ok {
-				return nil, false, status.Errorf(
-					codes.Internal,
-					"unexpected value found in cache for key [%s]: %v",
-					key, cacheEntryUntyped)
-			}
+		cacheEntry, ok := cacheEntryUntyped.(repoCacheEntryValue)
+		if !ok {
+			return nil, false, status.Errorf(
+				codes.Internal,
+				"unexpected value found in cache for key [%s]: %v",
+				key, cacheEntryUntyped)
+		}
 
-			if cacheEntry.Checksum != newChecksum {
-				return s.indexAndEncode(newChecksum, *repo)
-			} else {
-				// skip because the content did not change
-				return nil, false, nil
-			}
+		if cacheEntry.Checksum != newChecksum {
+			return s.indexAndEncode(newChecksum, *repo)
+		} else {
+			// skip because the content did not change
+			return nil, false, nil
 		}
 	} else {
 		// repo is not quite ready to be indexed - not really an error condition,
@@ -1038,12 +1019,16 @@ func newFluxHelmRepo(
 	targetName types.NamespacedName,
 	typ string,
 	url string,
-	interval uint32,
+	interval string,
 	secret *apiv1.Secret,
 	passCredentials bool) (*sourcev1.HelmRepository, error) {
 	pollInterval := defaultPollInterval
-	if interval > 0 {
-		pollInterval = metav1.Duration{Duration: time.Duration(interval) * time.Second}
+	if interval != "" {
+		if duration, err := pkgutils.ToDuration(interval); err != nil {
+			return nil, status.Errorf(codes.InvalidArgument, "interval is invalid: %v", err)
+		} else {
+			pollInterval = *duration
+		}
 	}
 	fluxRepo := &sourcev1.HelmRepository{
 		ObjectMeta: metav1.ObjectMeta{

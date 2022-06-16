@@ -7,8 +7,6 @@ frontend:
     type: NodePort
     nodePorts:
       http: 30000
-assetsvc:
-  replicaCount: 1
 dashboard:
   replicaCount: 1
 kubeops:

@@ -14,6 +14,8 @@ import (
 	"github.com/vmware-tanzu/kubeapps/pkg/dbutils"
 )
 
+const AllNamespaces = "_all"
+
 // TODO(mnelson): standardise error API for package.
 var ErrChartVersionNotFound = errors.New("chart version not found")
 
@@ -186,7 +188,7 @@ func (m *PostgresAssetManager) GenerateWhereClause(cq ChartQuery) (string, []int
 	whereQueryParams := []interface{}{}
 	whereQuery := ""
 
-	if cq.Namespace != dbutils.AllNamespaces {
+	if cq.Namespace != AllNamespaces {
 		whereQueryParams = append(whereQueryParams, cq.Namespace, m.GetGlobalReposNamespace())
 		whereClauses = append(whereClauses, fmt.Sprintf(
 			"(repo_namespace = $%d OR repo_namespace = $%d)", len(whereQueryParams)-1, len(whereQueryParams),

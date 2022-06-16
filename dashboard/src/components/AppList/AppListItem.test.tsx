@@ -132,3 +132,18 @@ it("doesn't include a double v prefix", () => {
   const wrapper = mountWrapper(defaultStore, <AppListItem {...props} />);
   expect(wrapper.find("span").findWhere(s => s.text() === "App: foo v1.0.0")).toExist();
 });
+
+it("includes namespace", () => {
+  const props = {
+    ...defaultProps,
+    app: {
+      ...defaultProps.app,
+      latestVersion: { appVersion: "1.0.0", pkgVersion: "1.1.0" } as PackageAppVersion,
+      currentVersion: { appVersion: "1.0.0", pkgVersion: "1.0.0" } as PackageAppVersion,
+    },
+  } as IAppListItemProps;
+  const wrapper = mountWrapper(defaultStore, <AppListItem {...props} />);
+  expect(
+    wrapper.find("span").findWhere(s => s.text() === "Namespace: package-namespace"),
+  ).toExist();
+});

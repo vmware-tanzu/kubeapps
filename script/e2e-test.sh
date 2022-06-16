@@ -13,11 +13,11 @@ USE_MULTICLUSTER_OIDC_ENV=${1:-false}
 OLM_VERSION=${2:-"v0.18.2"}
 DEV_TAG=${3:?missing dev tag}
 IMG_MODIFIER=${4:-""}
-DOCKER_USERNAME=${5:-""}
-DOCKER_PASSWORD=${6:-""}
-TEST_TIMEOUT_MINUTES=${7:-4}
-DEX_IP=${8:-"172.18.0.2"}
-ADDITIONAL_CLUSTER_IP=${9:-"172.18.0.3"}
+TEST_TIMEOUT_MINUTES=${5:-"4"}
+DEX_IP=${6:-"172.18.0.2"}
+ADDITIONAL_CLUSTER_IP=${7:-"172.18.0.3"}
+DOCKER_USERNAME=${8:-""}
+DOCKER_PASSWORD=${9:-""}
 KAPP_CONTROLLER_VERSION=${10:-"v0.32.0"}
 
 # TODO(andresmgot): While we work with beta releases, the Bitnami pipeline
@@ -47,18 +47,6 @@ info "Kubectl Version: $(kubectl version -o json | jq -r '.clientVersion.gitVers
 echo ""
 
 # Auxiliar functions
-
-########################
-# Test Helm
-# Globals:
-#   HELM_*
-# Arguments: None
-# Returns: None
-#########################
-testHelm() {
-  info "Running Helm tests..."
-  helm test -n kubeapps kubeapps-ci
-}
 
 ########################
 # Check if the pod that populates de OperatorHub catalog is running
@@ -246,7 +234,6 @@ kubeapps_apis_image="kubeapps-apis"
 images=(
   "apprepository-controller"
   "asset-syncer"
-  "assetsvc"
   "dashboard"
   "kubeops"
   "pinniped-proxy"
@@ -259,16 +246,14 @@ img_flags=(
   "--set" "apprepository.image.repository=${images[0]}"
   "--set" "apprepository.syncImage.tag=${DEV_TAG}"
   "--set" "apprepository.syncImage.repository=${images[1]}"
-  "--set" "assetsvc.image.tag=${DEV_TAG}"
-  "--set" "assetsvc.image.repository=${images[2]}"
   "--set" "dashboard.image.tag=${DEV_TAG}"
-  "--set" "dashboard.image.repository=${images[3]}"
+  "--set" "dashboard.image.repository=${images[2]}"
   "--set" "kubeops.image.tag=${DEV_TAG}"
-  "--set" "kubeops.image.repository=${images[4]}"
+  "--set" "kubeops.image.repository=${images[3]}"
   "--set" "pinnipedProxy.image.tag=${DEV_TAG}"
-  "--set" "pinnipedProxy.image.repository=${images[5]}"
+  "--set" "pinnipedProxy.image.repository=${images[4]}"
   "--set" "kubeappsapis.image.tag=${DEV_TAG}"
-  "--set" "kubeappsapis.image.repository=${images[6]}"
+  "--set" "kubeappsapis.image.repository=${images[5]}"
 )
 
 if [ "$USE_MULTICLUSTER_OIDC_ENV" = true ]; then
@@ -361,32 +346,6 @@ for svc in "${svcs[@]}"; do
   k8s_wait_for_endpoints kubeapps "$svc" 1
   info "Endpoints for ${svc} available"
 done
-
-# Deactivate helm tests unless we are testing the latest release until
-# we have released the code with per-namespace tests (since the helm
-# tests for assetsvc needs to test the namespaced repo).
-if [[ -z "${TEST_LATEST_RELEASE:-}" ]]; then
-  # Run helm tests
-  # Retry once if tests fail to avoid temporary issue
-  if ! retry_while testHelm "2" "1"; then
-    warn "PODS status on failure"
-    kubectl get pods -n kubeapps
-    for pod in $(kubectl get po -l='app.kubernetes.io/managed-by=Helm,app.kubernetes.io/instance=kubeapps-ci' -oname -n kubeapps); do
-      warn "LOGS for pod $pod ------------"
-      if [[ "$pod" =~ .*internal.* ]]; then
-        kubectl logs -n kubeapps "$pod"
-      else
-        kubectl logs -n kubeapps "$pod" nginx
-        kubectl logs -n kubeapps "$pod" auth-proxy
-      fi
-    done
-    echo
-    warn "LOGS for dashboard tests --------"
-    kubectl logs kubeapps-ci-dashboard-test --namespace kubeapps
-    exit 1
-  fi
-  info "Helm tests succeeded!"
-fi
 
 # Browser tests
 cd "${ROOT_DIR}/integration"

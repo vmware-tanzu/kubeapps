@@ -65,7 +65,7 @@ var (
 		Name:                "my-podinfo-3",
 		TargetContext:       targetContext("test-3"),
 		ReconciliationOptions: &corev1.ReconciliationOptions{
-			Interval:           60,
+			Interval:           "1m",
 			Suspend:            false,
 			ServiceAccountName: "foo",
 		},
@@ -77,7 +77,7 @@ var (
 		},
 		CurrentVersion: pkgAppVersion("6.0.0"),
 		ReconciliationOptions: &corev1.ReconciliationOptions{
-			Interval:           60,
+			Interval:           "1m",
 			Suspend:            false,
 			ServiceAccountName: "foo",
 		},
@@ -455,7 +455,7 @@ var (
 			Version: ">= 6",
 		},
 		ReconciliationOptions: &corev1.ReconciliationOptions{
-			Interval: 30,
+			Interval: "30s",
 		},
 	}
 
@@ -466,7 +466,7 @@ var (
 		CurrentVersion: pkgAppVersion("6.0.0"),
 		Status:         status_installed,
 		ReconciliationOptions: &corev1.ReconciliationOptions{
-			Interval: 30,
+			Interval: "30s",
 		},
 		PostInstallationNotes: podinfo_notes("my-podinfo-16"),
 	}
@@ -479,7 +479,7 @@ var (
 		Name:           "my-podinfo-16",
 		Status:         status_installed,
 		ReconciliationOptions: &corev1.ReconciliationOptions{
-			Interval: 30,
+			Interval: "30s",
 		},
 		AvailablePackageRef: &corev1.AvailablePackageReference{
 			Context: &corev1.Context{
@@ -550,7 +550,7 @@ var (
 			Name:                "my-podinfo",
 			CurrentVersion:      pkgAppVersion("6.0.0"),
 			ReconciliationOptions: &corev1.ReconciliationOptions{
-				Interval: 60,
+				Interval: "1m",
 			},
 			Status:                status_installed,
 			PostInstallationNotes: podinfo_notes("my-podinfo"),
@@ -1113,7 +1113,7 @@ var (
 	}
 
 	add_repo_expected_resp_6 = &corev1.AddPackageRepositoryResponse{
-		PackageRepoRef: repoRef("my-podinfo-5", "default"),
+		PackageRepoRef: repoRef("my-podinfo-4", "default"),
 	}
 
 	status_installed = &corev1.InstalledPackageStatus{
@@ -1574,7 +1574,7 @@ var (
 			AppVersion: "1.2.3",
 		},
 		ReconciliationOptions: &corev1.ReconciliationOptions{
-			Interval: 60,
+			Interval: "1m",
 		},
 		Status: &corev1.InstalledPackageStatus{
 			Ready:      false,
@@ -1596,7 +1596,7 @@ var (
 			AppVersion: "1.2.3",
 		},
 		ReconciliationOptions: &corev1.ReconciliationOptions{
-			Interval: 60,
+			Interval: "1m",
 		},
 		Status: &corev1.InstalledPackageStatus{
 			Ready:      false,
@@ -1618,7 +1618,7 @@ var (
 			Version: "14.4.0",
 		},
 		ReconciliationOptions: &corev1.ReconciliationOptions{
-			Interval: 60,
+			Interval: "1m",
 		},
 		Status:                status_installed,
 		AvailablePackageRef:   availableRef("bitnami-1/redis", "default"),
@@ -1636,7 +1636,7 @@ var (
 			Version: "14.4.0",
 		},
 		ReconciliationOptions: &corev1.ReconciliationOptions{
-			Interval:           60,
+			Interval:           "1m",
 			Suspend:            true,
 			ServiceAccountName: "foo",
 		},
@@ -1970,7 +1970,7 @@ var (
 		Name:                "my-podinfo",
 		TargetContext:       &corev1.Context{Namespace: "test"},
 		ReconciliationOptions: &corev1.ReconciliationOptions{
-			Interval:           60,
+			Interval:           "1m",
 			Suspend:            false,
 			ServiceAccountName: "foo",
 		},
@@ -2134,7 +2134,7 @@ var (
 			NamespaceScoped: false,
 			Type:            "helm",
 			Url:             "https://example.repo.com/charts",
-			Interval:        60,
+			Interval:        "1m",
 			Auth:            &corev1.PackageRepositoryAuth{PassCredentials: false},
 			Status:          podinfo_repo_status_2,
 		},
@@ -2172,7 +2172,7 @@ var (
 			NamespaceScoped: false,
 			Type:            "helm",
 			Url:             "https://example.repo.com/charts",
-			Interval:        60,
+			Interval:        "1m",
 			Auth:            &corev1.PackageRepositoryAuth{PassCredentials: false},
 			TlsConfig: &corev1.PackageRepositoryTlsConfig{
 				InsecureSkipVerify: false,
@@ -2195,7 +2195,7 @@ var (
 			NamespaceScoped: false,
 			Type:            "helm",
 			Url:             "https://example.repo.com/charts",
-			Interval:        60,
+			Interval:        "1m",
 			Auth:            &corev1.PackageRepositoryAuth{PassCredentials: false},
 			TlsConfig: &corev1.PackageRepositoryTlsConfig{
 				InsecureSkipVerify: false,
@@ -2215,7 +2215,7 @@ var (
 			NamespaceScoped: false,
 			Type:            "helm",
 			Url:             "https://example.repo.com/charts",
-			Interval:        60,
+			Interval:        "1m",
 			Auth:            &corev1.PackageRepositoryAuth{PassCredentials: false},
 			Status: &corev1.PackageRepositoryStatus{
 				Ready:      false,
@@ -2233,7 +2233,7 @@ var (
 			NamespaceScoped: false,
 			Type:            "helm",
 			Url:             "https://example.repo.com/charts",
-			Interval:        60,
+			Interval:        "1m",
 			Auth:            &corev1.PackageRepositoryAuth{PassCredentials: false},
 			Status: &corev1.PackageRepositoryStatus{
 				Ready:      false,
@@ -2251,7 +2251,7 @@ var (
 			NamespaceScoped: false,
 			Type:            "helm",
 			Url:             "https://example.repo.com/charts",
-			Interval:        60,
+			Interval:        "1m",
 			Auth: &corev1.PackageRepositoryAuth{
 				PassCredentials: false,
 				Type:            corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_TLS,
@@ -2273,7 +2273,7 @@ var (
 			NamespaceScoped: false,
 			Type:            "helm",
 			Url:             "https://example.repo.com/charts",
-			Interval:        60,
+			Interval:        "1m",
 			Auth:            tls_auth_redacted,
 			Status:          podinfo_repo_status_2,
 		},
@@ -2291,7 +2291,7 @@ var (
 			NamespaceScoped: false,
 			Type:            "helm",
 			Url:             "https://example.repo.com/charts",
-			Interval:        60,
+			Interval:        "1m",
 			Auth:            secret_1_auth,
 			Status:          podinfo_repo_status_2,
 		},
@@ -2305,7 +2305,7 @@ var (
 			NamespaceScoped: false,
 			Type:            "helm",
 			Url:             "https://example.repo.com/charts",
-			Interval:        60,
+			Interval:        "1m",
 			Auth:            foo_bar_auth_redacted,
 			Status:          podinfo_repo_status_2,
 		},
@@ -2319,7 +2319,7 @@ var (
 			NamespaceScoped: false,
 			Type:            "helm",
 			Url:             podinfo_repo_url,
-			Interval:        600,
+			Interval:        "10m",
 			Auth:            &corev1.PackageRepositoryAuth{PassCredentials: false},
 			Status:          podinfo_repo_status_3,
 		},
@@ -2337,7 +2337,7 @@ var (
 			NamespaceScoped: false,
 			Type:            "helm",
 			Url:             "https://charts.bitnami.com/bitnami",
-			Interval:        600,
+			Interval:        "10m",
 			Auth:            &corev1.PackageRepositoryAuth{PassCredentials: false},
 			Status: &corev1.PackageRepositoryStatus{
 				Ready:      true,
@@ -2355,7 +2355,7 @@ var (
 			NamespaceScoped: false,
 			Type:            "helm",
 			Url:             podinfo_basic_auth_repo_url,
-			Interval:        600,
+			Interval:        "10m",
 			Auth:            &corev1.PackageRepositoryAuth{PassCredentials: false},
 			Status: &corev1.PackageRepositoryStatus{
 				Ready:      false,
@@ -2373,7 +2373,7 @@ var (
 			NamespaceScoped: false,
 			Type:            "helm",
 			Url:             podinfo_basic_auth_repo_url,
-			Interval:        600,
+			Interval:        "10m",
 			Auth:            secret_1_auth,
 			Status:          podinfo_repo_status_1,
 		},
@@ -2387,7 +2387,7 @@ var (
 			NamespaceScoped: false,
 			Type:            "helm",
 			Url:             podinfo_basic_auth_repo_url,
-			Interval:        600,
+			Interval:        "10m",
 			Auth:            foo_bar_auth_redacted,
 			Status:          podinfo_repo_status_1,
 		},
@@ -2423,7 +2423,7 @@ var (
 			NamespaceScoped: false,
 			Type:            "helm",
 			Url:             podinfo_oci_repo_url,
-			Interval:        600,
+			Interval:        "10m",
 			Auth:            &corev1.PackageRepositoryAuth{},
 			Status: &corev1.PackageRepositoryStatus{
 				Ready:      false,
@@ -2446,7 +2446,7 @@ var (
 			NamespaceScoped: false,
 			Type:            "oci",
 			Url:             podinfo_oci_repo_url,
-			Interval:        600,
+			Interval:        "10m",
 			Auth:            &corev1.PackageRepositoryAuth{},
 			Status: &corev1.PackageRepositoryStatus{
 				Ready:      true,
@@ -2607,7 +2607,7 @@ var (
 	update_repo_req_2 = &corev1.UpdatePackageRepositoryRequest{
 		PackageRepoRef: repoRefInReq("repo-1", "namespace-1"),
 		Url:            "https://example.repo.com/charts",
-		Interval:       345,
+		Interval:       "5m45s",
 	}
 
 	update_repo_req_3 = &corev1.UpdatePackageRepositoryRequest{
@@ -2737,7 +2737,7 @@ var (
 			NamespaceScoped: false,
 			Type:            "helm",
 			Url:             "http://newurl.com",
-			Interval:        600,
+			Interval:        "10m",
 			Auth:            &corev1.PackageRepositoryAuth{PassCredentials: false},
 			Status:          repo_status_pending,
 		},
@@ -2751,7 +2751,7 @@ var (
 			NamespaceScoped: false,
 			Type:            "helm",
 			Url:             "https://example.repo.com/charts",
-			Interval:        345,
+			Interval:        "5m45s",
 			Auth:            &corev1.PackageRepositoryAuth{PassCredentials: false},
 			Status:          repo_status_pending,
 		},
@@ -2765,7 +2765,7 @@ var (
 			NamespaceScoped: false,
 			Type:            "helm",
 			Url:             "https://example.repo.com/charts",
-			Interval:        600,
+			Interval:        "10m",
 			Auth:            &corev1.PackageRepositoryAuth{PassCredentials: true},
 			Status:          repo_status_pending,
 		},
@@ -2779,7 +2779,7 @@ var (
 			NamespaceScoped: false,
 			Type:            "helm",
 			Url:             "https://example.repo.com/charts",
-			Interval:        600,
+			Interval:        "10m",
 			Auth:            &corev1.PackageRepositoryAuth{PassCredentials: false},
 			TlsConfig: &corev1.PackageRepositoryTlsConfig{
 				PackageRepoTlsConfigOneOf: &corev1.PackageRepositoryTlsConfig_SecretRef{
@@ -2801,7 +2801,7 @@ var (
 			NamespaceScoped: false,
 			Type:            "helm",
 			Url:             "https://example.repo.com/charts",
-			Interval:        600,
+			Interval:        "10m",
 			Auth:            &corev1.PackageRepositoryAuth{PassCredentials: false},
 			Status:          repo_status_pending,
 		},
@@ -2815,7 +2815,7 @@ var (
 			NamespaceScoped: false,
 			Type:            "helm",
 			Url:             "https://example.repo.com/charts",
-			Interval:        600,
+			Interval:        "10m",
 			Auth:            secret_1_auth,
 			Status:          repo_status_pending,
 		},
@@ -2829,7 +2829,7 @@ var (
 			NamespaceScoped: false,
 			Type:            "helm",
 			Url:             "https://example.repo.com/charts",
-			Interval:        600,
+			Interval:        "10m",
 			Auth:            &corev1.PackageRepositoryAuth{},
 			Status:          repo_status_pending,
 		},
@@ -2843,7 +2843,7 @@ var (
 			NamespaceScoped: false,
 			Type:            "helm",
 			Url:             "https://example.repo.com/charts",
-			Interval:        600,
+			Interval:        "10m",
 			Auth:            tls_auth_redacted,
 			Status:          repo_status_pending,
 		},
@@ -2857,7 +2857,7 @@ var (
 			NamespaceScoped: false,
 			Type:            "helm",
 			Url:             "https://example.repo.com/charts",
-			Interval:        600,
+			Interval:        "10m",
 			Auth:            &corev1.PackageRepositoryAuth{},
 			Status:          repo_status_pending,
 		},
@@ -2871,7 +2871,7 @@ var (
 			NamespaceScoped: false,
 			Type:            "helm",
 			Url:             "https://example.repo.com/charts",
-			Interval:        600,
+			Interval:        "10m",
 			Auth:            foo_bar_auth_redacted,
 			Status:          repo_status_pending,
 		},
@@ -2885,7 +2885,7 @@ var (
 			NamespaceScoped: false,
 			Type:            "helm",
 			Url:             podinfo_basic_auth_repo_url,
-			Interval:        600,
+			Interval:        "10m",
 			Auth:            foo_bar_auth_redacted,
 			Status:          podinfo_repo_status_1,
 		},
@@ -2899,7 +2899,7 @@ var (
 			NamespaceScoped: false,
 			Type:            "helm",
 			Url:             podinfo_basic_auth_repo_url,
-			Interval:        600,
+			Interval:        "10m",
 			Auth:            foo_bar_auth_redacted,
 			Status:          podinfo_repo_status_1,
 		},
@@ -2913,7 +2913,7 @@ var (
 			NamespaceScoped: false,
 			Type:            "helm",
 			Url:             podinfo_basic_auth_repo_url,
-			Interval:        600,
+			Interval:        "10m",
 			Auth:            secret_1_auth,
 			Status:          podinfo_repo_status_1,
 		},
@@ -2927,7 +2927,7 @@ var (
 			NamespaceScoped: false,
 			Type:            "helm",
 			Url:             podinfo_basic_auth_repo_url,
-			Interval:        600,
+			Interval:        "10m",
 			Auth:            foo_bar_auth_redacted,
 			Status:          podinfo_repo_status_1,
 		},
@@ -2941,7 +2941,7 @@ var (
 			NamespaceScoped: false,
 			Type:            "helm",
 			Url:             "http://newurl.com",
-			Interval:        600,
+			Interval:        "10m",
 			Auth:            foo_bar_auth_redacted,
 			Status:          repo_status_pending,
 		},
@@ -2955,7 +2955,7 @@ var (
 			NamespaceScoped: false,
 			Type:            "helm",
 			Url:             podinfo_basic_auth_repo_url,
-			Interval:        600,
+			Interval:        "10m",
 			Auth:            foo_bar_auth_redacted,
 			Status:          podinfo_repo_status_1,
 		},

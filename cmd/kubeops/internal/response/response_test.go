@@ -72,25 +72,6 @@ func TestNewDataResponse(t *testing.T) {
 	}
 }
 
-func TestNewDataResponseWithMeta(t *testing.T) {
-	tests := []struct {
-		name string
-		data interface{}
-		meta interface{}
-	}{
-		{"single resource", resource{"test"}, resource{"foo"}},
-		{"multiple resources", []resource{{"one"}, {"two"}}, resource{"foo"}},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			d := NewDataResponseWithMeta(tt.data, tt.meta)
-			assert.Equal(t, tt.data, d.Data)
-			assert.Equal(t, tt.meta, d.Meta)
-		})
-	}
-}
-
 func TestDataResponse_Write(t *testing.T) {
 	tests := []struct {
 		name string
@@ -113,11 +94,4 @@ func TestDataResponse_Write(t *testing.T) {
 			assert.Equal(t, tt.want, body)
 		})
 	}
-}
-
-func TestDataResponse_WithCode(t *testing.T) {
-	d := NewDataResponse(resource{"test"})
-	assert.Equal(t, http.StatusOK, d.Code)
-	d = d.WithCode(http.StatusBadRequest)
-	assert.Equal(t, http.StatusBadRequest, d.Code)
 }

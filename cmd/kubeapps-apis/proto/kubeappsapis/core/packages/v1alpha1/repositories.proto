@@ -84,9 +84,9 @@ message AddPackageRepositoryRequest {
   // least a protocol and host
   string url = 6;
 
-  // The interval at which to check the upstream for updates (in seconds)
+  // The interval at which to check the upstream for updates (in time+unit)
   // Optional. Defaults to 10m if not specified
-  uint32 interval = 7;
+  string interval = 7;
 
   // TLS-specific parameters for connecting to a repository. Optional
   PackageRepositoryTlsConfig tls_config = 8;
@@ -299,9 +299,9 @@ message UpdatePackageRepositoryRequest {
   // A user-provided description.
   string description = 3;
 
-  // The interval at which to check the upstream for updates (in seconds)
+  // The interval at which to check the upstream for updates (in time+unit)
   // Optional. Defaults to 10m if not specified
-  uint32 interval = 4;
+  string interval = 4;
 
   // TLS-specific parameters for connecting to a repository. Optional
   PackageRepositoryTlsConfig tls_config = 5;
@@ -416,8 +416,8 @@ message PackageRepositoryDetail {
   // A URL identifying the package repository location.
   string url = 6;
 
-  // The interval at which to check the upstream for updates (in seconds)
-  uint32 interval = 7;
+  // The interval at which to check the upstream for updates (in time+unit)
+  string interval = 7;
 
   // TLS-specific parameters for connecting to a repository.
   // If the cert authority was configured for this repository, then in the context
