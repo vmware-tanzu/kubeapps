@@ -544,12 +544,12 @@ func (s *Server) updateKubeappsManagedRepoSecret(
 			// TODO (gfichtenholt) we should optimize this to somehow tell if the existing secret
 			// is the same (data-wise) as the new one and if so skip all this
 			if err = secretInterface.Delete(ctx, existingSecretRef.Name, metav1.DeleteOptions{}); err != nil {
-				return nil, false, statuserror.FromK8sError("get", "secret", existingSecretRef.Name, err)
+				return nil, false, statuserror.FromK8sError("delete", "secret", existingSecretRef.Name, err)
 			}
 			// create a new one
 			newSecret, err := secretInterface.Create(ctx, secret, metav1.CreateOptions{})
 			if err != nil {
-				return nil, false, statuserror.FromK8sError("update", "secret", secret.GetGenerateName(), err)
+				return nil, false, statuserror.FromK8sError("create", "secret", secret.GetGenerateName(), err)
 			}
 			return newSecret, true, nil
 		}
@@ -697,26 +697,33 @@ func (s *repoEventSink) onAddRepo(key string, obj ctrlclient.Object) (interface{
 	if repo, ok := obj.(*sourcev1.HelmRepository); !ok {
 		return nil, false, fmt.Errorf("expected an instance of *sourcev1.HelmRepository, got: %s", reflect.TypeOf(obj))
 	} else if isRepoReady(*repo) {
-		// first, check the repo is ready
-		// ref https://fluxcd.io/docs/components/source/helmrepositories/#status
-		if artifact := repo.GetArtifact(); artifact != nil {
-			if checksum := artifact.Checksum; checksum == "" {
-				return nil, false, status.Errorf(codes.Internal,
-					"expected field status.artifact.checksum not found on HelmRepository\n[%s]",
-					common.PrettyPrint(repo))
-			} else {
-				return s.indexAndEncode(checksum, *repo)
-			}
+		if repo.Spec.Type == sourcev1.HelmRepositoryTypeOCI {
+			return s.onAddOciRepo(*repo)
 		} else {
-			return nil, false, status.Errorf(codes.Internal,
-				"expected field status.artifact not found on HelmRepository\n[%s]",
-				common.PrettyPrint(repo))
+			return s.onAddHttpRepo(*repo)
 		}
 	} else {
 		// repo is not quite ready to be indexed - not really an error condition,
 		// just skip it eventually there will be another event when it is in ready state
 		log.Infof("Skipping packages for repository [%s] because it is not in 'Ready' state", key)
 		return nil, false, nil
+	}
+}
+
+// ref https://fluxcd.io/docs/components/source/helmrepositories/#status
+func (s *repoEventSink) onAddHttpRepo(repo sourcev1.HelmRepository) ([]byte, bool, error) {
+	if artifact := repo.GetArtifact(); artifact != nil {
+		if checksum := artifact.Checksum; checksum == "" {
+			return nil, false, status.Errorf(codes.Internal,
+				"expected field status.artifact.checksum not found on HelmRepository\n[%s]",
+				common.PrettyPrint(repo))
+		} else {
+			return s.indexAndEncode(checksum, repo)
+		}
+	} else {
+		return nil, false, status.Errorf(codes.Internal,
+			"expected field status.artifact not found on HelmRepository\n[%s]",
+			common.PrettyPrint(repo))
 	}
 }
 
