@@ -17,7 +17,7 @@ interface IAppRepoAddButtonProps {
   kubeappsNamespace: string;
   text?: string;
   primary?: boolean;
-  repo?: IAppRepository;
+  packageRepoRef?: IAppRepository;
   disabled?: boolean;
   title?: string;
 }
@@ -26,14 +26,17 @@ export function AppRepoAddButton({
   text,
   namespace,
   kubeappsNamespace,
-  repo,
+  packageRepoRef,
   primary = true,
   title,
   disabled,
 }: IAppRepoAddButtonProps) {
   const dispatch: ThunkDispatch<IStoreState, null, Action> = useDispatch();
   const [modalIsOpen, setModalOpen] = useState(false);
-  const openModal = () => setModalOpen(true);
+  const openModal = () => {
+    dispatch(actions.repos.requestRepo());
+    setModalOpen(true);
+  };
   const closeModal = () => setModalOpen(false);
   const onSubmit = (
     name: string,
@@ -50,7 +53,7 @@ export function AppRepoAddButton({
     passCredentials: boolean,
     filter?: IPkgRepositoryFilter,
   ) => {
-    if (repo) {
+    if (packageRepoRef) {
       return dispatch(
         actions.repos.updateRepo(
           name,
@@ -108,7 +111,7 @@ export function AppRepoAddButton({
             <AppRepoForm
               onSubmit={onSubmit}
               onAfterInstall={closeModal}
-              repo={repo}
+              packageRepoRef={packageRepoRef}
               namespace={namespace}
               kubeappsNamespace={kubeappsNamespace}
             />

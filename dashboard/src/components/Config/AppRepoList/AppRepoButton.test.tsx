@@ -100,7 +100,7 @@ it("calls updateRepo when submitting and there is a repo available", () => {
     defaultStore,
     <AppRepoAddButton
       {...defaultProps}
-      repo={{ metadata: { name: "foo" }, spec: {} } as IAppRepository}
+      packageRepoRef={{ metadata: { name: "foo" }, spec: {} } as IAppRepository}
     />,
   );
   act(() => {

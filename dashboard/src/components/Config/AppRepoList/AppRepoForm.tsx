@@ -39,7 +39,7 @@ interface IAppRepoFormProps {
   onAfterInstall?: () => void;
   namespace: string;
   kubeappsNamespace: string;
-  repo?: IAppRepository;
+  packageRepoRef?: IAppRepository;
 }
 
 const AUTH_METHOD_NONE = "none";
@@ -52,7 +52,7 @@ const TYPE_HELM = "helm";
 const TYPE_OCI = "oci";
 
 export function AppRepoForm(props: IAppRepoFormProps) {
-  const { onSubmit, onAfterInstall, namespace, kubeappsNamespace, repo } = props;
+  const { onSubmit, onAfterInstall, namespace, kubeappsNamespace, packageRepoRef: repo } = props;
   const isInstallingRef = useRef(false);
   const dispatch: ThunkDispatch<IStoreState, null, Action> = useDispatch();
 

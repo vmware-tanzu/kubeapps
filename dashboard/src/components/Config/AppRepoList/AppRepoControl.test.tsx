@@ -17,7 +17,6 @@ beforeEach(() => {
   actions.repos = {
     ...actions.repos,
     deleteRepo: jest.fn(),
-    resyncRepo: jest.fn(),
   };
   const mockDispatch = jest.fn();
   spyOnUseDispatch = jest.spyOn(ReactRedux, "useDispatch").mockReturnValue(mockDispatch);
@@ -67,21 +66,6 @@ it("deletes the repo and refreshes list", async () => {
   });
   expect(deleteRepo).toHaveBeenCalled();
   expect(refetchRepos).toHaveBeenCalled();
-});
-
-it("refreshes the repo", () => {
-  const resyncRepo = jest.fn();
-  actions.repos = {
-    ...actions.repos,
-    resyncRepo,
-  };
-  const wrapper = mountWrapper(defaultStore, <AppRepoControl {...defaultProps} />);
-  const refreshButton = wrapper.find(CdsButton).filterWhere(b => b.text() === "Refresh");
-  act(() => {
-    (refreshButton.prop("onClick") as any)();
-  });
-  wrapper.update();
-  expect(resyncRepo).toHaveBeenCalled();
 });
 
 it("renders the button to edit the repo", () => {
