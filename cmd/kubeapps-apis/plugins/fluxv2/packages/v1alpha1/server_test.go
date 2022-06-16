@@ -196,7 +196,7 @@ type testSpecChartWithUrl struct {
 	chartID       string
 	chartRevision string
 	chartUrl      string
-	opts          *common.ClientOptions
+	opts          *common.HttpClientOptions
 	repoNamespace string
 	// this is for a negative test TestTransientHttpFailuresAreRetriedForChartCache
 	numRetries int

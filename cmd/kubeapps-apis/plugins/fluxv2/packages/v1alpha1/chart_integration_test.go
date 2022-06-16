@@ -514,7 +514,7 @@ func TestKindClusterRepoAndChartRBAC(t *testing.T) {
 }
 
 func TestKindClusterGetAvailablePackageSummariesForOCI(t *testing.T) {
-	fluxPluginClient, _, err := checkEnv(t)
+	fluxPluginClient, fluxPluginReposClient, err := checkEnv(t)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -532,7 +532,22 @@ func TestKindClusterGetAvailablePackageSummariesForOCI(t *testing.T) {
 		Name:      "my-podinfo-" + randSeq(4),
 		Namespace: "default",
 	}
-	if err := kubeAddHelmRepositoryAndCleanup(t, repoName, "oci", podinfo_oci_repo_url, "", 0); err != nil {
+
+	secret := newBasicAuthSecret(types.NamespacedName{
+		Name:      "secret-1",
+		Namespace: repoName.Namespace},
+		"admin", "Harbor12345")
+
+	if err := kubeCreateSecretAndCleanup(t, secret); err != nil {
+		t.Fatal(err)
+	}
+	ctx, cancel := context.WithTimeout(grpcContext, defaultContextTimeout)
+	defer cancel()
+	setUserManagedSecretsAndCleanup(t, fluxPluginReposClient, ctx, true)
+
+	// TODO: need to somehow pass repo = "podinfo"
+	if err := kubeAddHelmRepositoryAndCleanup(
+		t, repoName, "oci", "oci://ghcr.io/stefanprodan/charts", "", 0); err != nil {
 		t.Fatalf("%v", err)
 	}
 	// wait until this repo reaches 'Ready'
@@ -540,7 +555,7 @@ func TestKindClusterGetAvailablePackageSummariesForOCI(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	grpcContext, cancel := context.WithTimeout(grpcContext, 90*time.Second)
+	grpcContext, cancel = context.WithTimeout(grpcContext, 90*time.Second)
 	defer cancel()
 	resp, err := fluxPluginClient.GetAvailablePackageSummaries(
 		grpcContext,

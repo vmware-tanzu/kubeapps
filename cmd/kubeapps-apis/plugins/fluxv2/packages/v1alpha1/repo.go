@@ -8,13 +8,11 @@ import (
 	"context"
 	"encoding/gob"
 	"fmt"
-	"net/http"
 	"reflect"
 	"regexp"
 	"strings"
 	"time"
 
-	"github.com/containerd/containerd/remotes/docker"
 	fluxmeta "github.com/fluxcd/pkg/apis/meta"
 	sourcev1 "github.com/fluxcd/source-controller/api/v1beta2"
 	corev1 "github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
@@ -43,7 +41,6 @@ const (
 	fluxHelmRepositories   = "helmrepositories"
 	fluxHelmRepositoryList = "HelmRepositoryList"
 	redactedString         = "REDACTED"
-	additionalCAFile       = "/usr/local/share/ca-certificates/ca.crt"
 )
 
 var (
@@ -182,7 +179,7 @@ func (s *Server) getChartsForRepos(ctx context.Context, match []string) (map[str
 	return chartsTyped, nil
 }
 
-func (s *Server) clientOptionsForRepo(ctx context.Context, repoName types.NamespacedName) (*common.ClientOptions, error) {
+func (s *Server) clientOptionsForRepo(ctx context.Context, repoName types.NamespacedName) (*common.HttpClientOptions, error) {
 	repo, err := s.getRepoInCluster(ctx, repoName)
 	if err != nil {
 		return nil, err
@@ -200,7 +197,7 @@ func (s *Server) clientOptionsForRepo(ctx context.Context, repoName types.Namesp
 		clientGetter: s.newBackgroundClientGetter(),
 		chartCache:   s.chartCache,
 	}
-	return sink.clientOptionsForRepo(ctx, *repo)
+	return sink.httpClientOptionsForRepo(ctx, *repo)
 }
 
 func (s *Server) newRepo(ctx context.Context, request *corev1.AddPackageRepositoryRequest) (*corev1.PackageRepositoryReference, error) {
@@ -698,17 +695,17 @@ type repoCacheEntryValue struct {
 
 // onAddRepo essentially tells the cache whether to and what to store for a given key
 func (s *repoEventSink) onAddRepo(key string, obj ctrlclient.Object) (interface{}, bool, error) {
-	log.V(4).Info("+onAddRepo(%s)", key)
-	defer log.V(4).Info("-onAddRepo()")
+	log.Infof("+onAddRepo(%s)", key)
+	defer log.Infof("-onAddRepo()")
 
 	if repo, ok := obj.(*sourcev1.HelmRepository); !ok {
 		return nil, false, fmt.Errorf("expected an instance of *sourcev1.HelmRepository, got: %s", reflect.TypeOf(obj))
 		// first, check the repo is ready
 	} else if isRepoReady(*repo) {
 		if repo.Spec.Type == sourcev1.HelmRepositoryTypeOCI {
-			return s.onAddOciRepo(repo)
+			return s.onAddOciRepo(*repo)
 		} else {
-			return s.onAddHttpRepo(repo)
+			return s.onAddHttpRepo(*repo)
 		}
 	} else {
 		// repo is not quite ready to be indexed - not really an error condition,
@@ -718,52 +715,15 @@ func (s *repoEventSink) onAddRepo(key string, obj ctrlclient.Object) (interface{
 	}
 }
 
-// OCI Helm repository, which defines a source, does not produce an Artifact
-// ref https://fluxcd.io/docs/components/source/helmrepositories/#helm-oci-repository
-func (s *repoEventSink) onAddOciRepo(repo *sourcev1.HelmRepository) ([]byte, bool, error) {
-	authorizationHeader := ""
-	// TODO look at repo's secretRef
-	/*
-		// The auth header may be a dockerconfig that we need to parse
-		if serveOpts.DockerConfigJson != "" {
-			dockerConfig := &credentialprovider.DockerConfigJSON{}
-			err := json.Unmarshal([]byte(serveOpts.DockerConfigJson), dockerConfig)
-			if err != nil {
-				return nil, false, status.Errorf(codes.Internal, "%v", err)
-			}
-			authorizationHeader, err = kube.GetAuthHeaderFromDockerConfig(dockerConfig)
-			if err != nil {
-				return nil, false, status.Errorf(codes.Internal, "%v", err)
-			}
-		}
-	*/
-	headers := http.Header{}
-	if authorizationHeader != "" {
-		headers["Authorization"] = []string{authorizationHeader}
-	}
-	// TODO look at repo's secretRef for TLS config
-	netClient, err := httpclient.NewWithCertFile(additionalCAFile, false)
-	if err != nil {
-		return nil, false, status.Errorf(codes.Internal, "%v", err)
-	}
-
-	ociResolver := docker.NewResolver(
-		docker.ResolverOptions{
-			Headers: headers,
-			Client:  netClient})
-
-	return nil, false, nil
-}
-
 // ref https://fluxcd.io/docs/components/source/helmrepositories/#status
-func (s *repoEventSink) onAddHttpRepo(repo *sourcev1.HelmRepository) ([]byte, bool, error) {
+func (s *repoEventSink) onAddHttpRepo(repo sourcev1.HelmRepository) ([]byte, bool, error) {
 	if artifact := repo.GetArtifact(); artifact != nil {
 		if checksum := artifact.Checksum; checksum == "" {
 			return nil, false, status.Errorf(codes.Internal,
 				"expected field status.artifact.checksum not found on HelmRepository\n[%s]",
 				common.PrettyPrint(repo))
 		} else {
-			return s.indexAndEncode(checksum, *repo)
+			return s.indexAndEncode(checksum, repo)
 		}
 	} else {
 		return nil, false, status.Errorf(codes.Internal,
@@ -773,6 +733,7 @@ func (s *repoEventSink) onAddHttpRepo(repo *sourcev1.HelmRepository) ([]byte, bo
 }
 
 func (s *repoEventSink) indexAndEncode(checksum string, repo sourcev1.HelmRepository) ([]byte, bool, error) {
+	log.Infof("+indexAndEncode(%s)", common.PrettyPrint(repo))
 	charts, err := s.indexOneRepo(repo)
 	if err != nil {
 		return nil, false, err
@@ -791,7 +752,7 @@ func (s *repoEventSink) indexAndEncode(checksum string, repo sourcev1.HelmReposi
 	}
 
 	if s.chartCache != nil {
-		if opts, err := s.clientOptionsForRepo(context.Background(), repo); err != nil {
+		if opts, err := s.httpClientOptionsForRepo(context.Background(), repo); err != nil {
 			// ref: https://github.com/vmware-tanzu/kubeapps/pull/3899#issuecomment-990446931
 			// I don't want this func to fail onAdd/onModify() if we can't read
 			// the corresponding secret due to something like default RBAC settings:
@@ -964,12 +925,7 @@ func (s *repoEventSink) fromKey(key string) (*types.NamespacedName, error) {
 	return &types.NamespacedName{Namespace: parts[1], Name: parts[2]}, nil
 }
 
-// this is only until https://github.com/vmware-tanzu/kubeapps/issues/3496
-// "Investigate and propose package repositories API with similar core interface to packages API"
-// gets implemented. After that, the auth should be part of some kind of packageRepositoryFromCtrlObject()
-// The reason I do this here is to set up auth that may be needed to fetch chart tarballs by
-// ChartCache
-func (s *repoEventSink) clientOptionsForRepo(ctx context.Context, repo sourcev1.HelmRepository) (*common.ClientOptions, error) {
+func (s *repoEventSink) getRepoSecret(ctx context.Context, repo sourcev1.HelmRepository) (*apiv1.Secret, error) {
 	if repo.Spec.SecretRef == nil {
 		return nil, nil
 	}
@@ -978,7 +934,7 @@ func (s *repoEventSink) clientOptionsForRepo(ctx context.Context, repo sourcev1.
 		return nil, nil
 	}
 	if s == nil || s.clientGetter == nil {
-		return nil, status.Errorf(codes.Internal, "unexpected state in clientGetterHolder instance")
+		return nil, status.Errorf(codes.Internal, "unexpected state in clientGetter instance")
 	}
 	typedClient, err := s.clientGetter.Typed(ctx)
 	if err != nil {
@@ -992,7 +948,17 @@ func (s *repoEventSink) clientOptionsForRepo(ctx context.Context, repo sourcev1.
 	if err != nil {
 		return nil, statuserror.FromK8sError("get", "secret", secretName, err)
 	}
-	return common.ClientOptionsFromSecret(*secret)
+	return secret, err
+}
+
+// The reason I do this here is to set up auth that may be needed to fetch chart tarballs by
+// ChartCache
+func (s *repoEventSink) httpClientOptionsForRepo(ctx context.Context, repo sourcev1.HelmRepository) (*common.HttpClientOptions, error) {
+	if secret, err := s.getRepoSecret(ctx, repo); err == nil && secret != nil {
+		return common.HttpClientOptionsFromSecret(*secret)
+	} else {
+		return nil, err
+	}
 }
 
 //

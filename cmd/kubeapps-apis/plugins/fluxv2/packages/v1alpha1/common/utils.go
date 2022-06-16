@@ -26,6 +26,7 @@ import (
 	"golang.org/x/net/http/httpproxy"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"helm.sh/helm/v3/pkg/getter"
 	apiv1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -223,7 +224,7 @@ func RedisMemoryStats(redisCli *redis.Client) (used, total string) {
 }
 
 // options are generic parameters to be provided to the httpclient during instantiation.
-type ClientOptions struct {
+type HttpClientOptions struct {
 	// for TLS connections
 	CertBytes []byte
 	KeyBytes  []byte
@@ -236,12 +237,9 @@ type ClientOptions struct {
 	UserAgent string
 }
 
-// inspired by https://github.com/fluxcd/source-controller/blob/main/internal/helm/getter/getter.go#L29
-
-// ClientOptionsFromSecret constructs a getter.Option slice for the given secret.
-// It returns the slice, or an error.
-func ClientOptionsFromSecret(secret apiv1.Secret) (*ClientOptions, error) {
-	var opts ClientOptions
+// HttpClientOptionsFromSecret constructs a getter.Option slice for the given secret.
+func HttpClientOptionsFromSecret(secret apiv1.Secret) (*HttpClientOptions, error) {
+	var opts HttpClientOptions
 	if err := basicAuthFromSecret(secret, &opts); err != nil {
 		return nil, err
 	}
@@ -251,10 +249,24 @@ func ClientOptionsFromSecret(secret apiv1.Secret) (*ClientOptions, error) {
 	return &opts, nil
 }
 
+// HelmGetterOptionsFromSecret attempts to construct a basic auth getter.Option for the
+// given v1.Secret and returns the result.
+// It returns the slice, or an error.
+func HelmGetterOptionsFromSecret(secret apiv1.Secret) ([]getter.Option, error) {
+	var opts HttpClientOptions
+	if err := basicAuthFromSecret(secret, &opts); err != nil {
+		return nil, err
+	} else {
+		return []getter.Option{
+			getter.WithBasicAuth(opts.Username, opts.Password),
+		}, nil
+	}
+}
+
 //
 // Secrets with no username AND password are ignored, if only one is defined it
 // returns an error.
-func basicAuthFromSecret(secret apiv1.Secret, options *ClientOptions) error {
+func basicAuthFromSecret(secret apiv1.Secret, options *HttpClientOptions) error {
 	username, password := string(secret.Data["username"]), string(secret.Data["password"])
 	switch {
 	case username == "" && password == "":
@@ -269,7 +281,7 @@ func basicAuthFromSecret(secret apiv1.Secret, options *ClientOptions) error {
 
 // Secrets with no certFile, keyFile, AND caFile are ignored, if only a
 // certBytes OR keyBytes is defined it returns an error.
-func tlsClientConfigFromSecret(secret apiv1.Secret, options *ClientOptions) error {
+func tlsClientConfigFromSecret(secret apiv1.Secret, options *HttpClientOptions) error {
 	certBytes, keyBytes, caBytes := secret.Data["certFile"], secret.Data["keyFile"], secret.Data["caFile"]
 	switch {
 	case len(certBytes)+len(keyBytes)+len(caBytes) == 0:
@@ -285,7 +297,7 @@ func tlsClientConfigFromSecret(secret apiv1.Secret, options *ClientOptions) erro
 	return nil
 }
 
-func NewHttpClientAndHeaders(clientOptions *ClientOptions) (*http.Client, map[string]string, error) {
+func NewHttpClientAndHeaders(clientOptions *HttpClientOptions) (*http.Client, map[string]string, error) {
 	// I wish I could have re-used the code in pkg/chart/chart.go and pkg/kube_utils/kube_utils.go
 	// InitHTTPClient(), etc. but alas, it's all built around AppRepository CRD, which I don't have.
 	headers := make(map[string]string)
