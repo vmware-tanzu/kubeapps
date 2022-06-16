@@ -422,8 +422,15 @@ func (s *Server) GetInstalledPackageSummaries(ctx context.Context, request *core
 			pkgDataForNamespaces := pkgDatas[pkgName]
 			// Check if there was package metadata for the specific namespace.
 			pkgData := pkgDataForNamespaces[pkgi.Namespace]
+			var ok bool
 			if pkgData.meta == nil {
-				pkgData = pkgDataForNamespaces[s.globalPackagingNamespace]
+				pkgData, ok = pkgDataForNamespaces[s.globalPackagingNamespace]
+				// Ignore packages which do not have associated metadata
+				// available. See https://github.com/vmware-tanzu/kubeapps/issues/4901
+				if !ok || pkgData.meta == nil {
+					log.Errorf("+kapp-controller GetInstalledPackageSummary: No corresponding package metadata found for package %q. Ignoring package.", pkgName)
+					continue
+				}
 			}
 			// generate the installedPackageSummary from the fetched information
 			installedPackageSummary, err := s.buildInstalledPackageSummary(pkgi, pkgData.meta, pkgVersionsMap, cluster)
