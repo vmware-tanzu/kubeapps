@@ -832,47 +832,55 @@ func (s *repoEventSink) onModifyRepo(key string, obj ctrlclient.Object, oldValue
 		return nil, false, fmt.Errorf("expected an instance of *sourcev1.HelmRepository, got: %s", reflect.TypeOf(obj))
 	} else if isRepoReady(*repo) {
 		// first check the repo is ready
-		// We should to compare checksums on what's stored in the cache
-		// vs the modified object to see if the contents has really changed before embarking on
-		// expensive operation indexOneRepo() below.
-		// ref https://fluxcd.io/docs/components/source/helmrepositories/#status
-		// ref https://fluxcd.io/docs/components/source/helmrepositories/#status
-		var newChecksum string
-		if artifact := repo.GetArtifact(); artifact != nil {
-			if newChecksum = artifact.Checksum; newChecksum == "" {
-				return nil, false, status.Errorf(codes.Internal,
-					"expected field status.artifact.checksum not found on HelmRepository\n[%s]",
-					common.PrettyPrint(repo))
-			}
+
+		if repo.Spec.Type == sourcev1.HelmRepositoryTypeOCI {
+			return s.onModifyOciRepo(key, oldValue, *repo)
 		} else {
-			return nil, false, status.Errorf(codes.Internal,
-				"expected field status.artifact not found on HelmRepository\n[%s]",
-				common.PrettyPrint(repo))
-		}
-
-		cacheEntryUntyped, err := s.onGetRepo(key, oldValue)
-		if err != nil {
-			return nil, false, err
-		}
-
-		cacheEntry, ok := cacheEntryUntyped.(repoCacheEntryValue)
-		if !ok {
-			return nil, false, status.Errorf(
-				codes.Internal,
-				"unexpected value found in cache for key [%s]: %v",
-				key, cacheEntryUntyped)
-		}
-
-		if cacheEntry.Checksum != newChecksum {
-			return s.indexAndEncode(newChecksum, *repo)
-		} else {
-			// skip because the content did not change
-			return nil, false, nil
+			return s.onModifyHttpRepo(key, oldValue, *repo)
 		}
 	} else {
 		// repo is not quite ready to be indexed - not really an error condition,
 		// just skip it eventually there will be another event when it is in ready state
 		log.V(4).Infof("Skipping packages for repository [%s] because it is not in 'Ready' state", key)
+		return nil, false, nil
+	}
+}
+
+func (s *repoEventSink) onModifyHttpRepo(key string, oldValue interface{}, repo sourcev1.HelmRepository) ([]byte, bool, error) {
+	// We should to compare checksums on what's stored in the cache
+	// vs the modified object to see if the contents has really changed before embarking on
+	// expensive operation indexOneRepo() below.
+	// ref https://fluxcd.io/docs/components/source/helmrepositories/#status
+	var newChecksum string
+	if artifact := repo.GetArtifact(); artifact != nil {
+		if newChecksum = artifact.Checksum; newChecksum == "" {
+			return nil, false, status.Errorf(codes.Internal,
+				"expected field status.artifact.checksum not found on HelmRepository\n[%s]",
+				common.PrettyPrint(repo))
+		}
+	} else {
+		return nil, false, status.Errorf(codes.Internal,
+			"expected field status.artifact not found on HelmRepository\n[%s]",
+			common.PrettyPrint(repo))
+	}
+
+	cacheEntryUntyped, err := s.onGetRepo(key, oldValue)
+	if err != nil {
+		return nil, false, err
+	}
+
+	cacheEntry, ok := cacheEntryUntyped.(repoCacheEntryValue)
+	if !ok {
+		return nil, false, status.Errorf(
+			codes.Internal,
+			"unexpected value found in cache for key [%s]: %v",
+			key, cacheEntryUntyped)
+	}
+
+	if cacheEntry.Checksum != newChecksum {
+		return s.indexAndEncode(newChecksum, repo)
+	} else {
+		// skip because the content did not change
 		return nil, false, nil
 	}
 }

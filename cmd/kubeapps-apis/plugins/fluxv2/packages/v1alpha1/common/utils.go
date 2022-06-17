@@ -4,9 +4,12 @@
 package common
 
 import (
+	"bytes"
+	"crypto/sha256"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"net/http"
 	"net/url"
@@ -416,4 +419,13 @@ func GetChartsGvr() schema.GroupVersionResource {
 
 func GetReleasesGvr() schema.GroupVersionResource {
 	return releasesGvr
+}
+
+func GetSha256(src []byte) (string, error) {
+	f := bytes.NewReader(src)
+	h := sha256.New()
+	if _, err := io.Copy(h, f); err != nil {
+		return "", err
+	}
+	return fmt.Sprintf("%x", h.Sum(nil)), nil
 }

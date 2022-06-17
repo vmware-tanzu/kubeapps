@@ -14,6 +14,7 @@ import (
 	"context"
 	"crypto/tls"
 	"encoding/gob"
+	"encoding/json"
 	"fmt"
 	"io"
 	"net/url"
@@ -327,45 +328,9 @@ func (s *repoEventSink) onAddOciRepo(repo sourcev1.HelmRepository) ([]byte, bool
 	log.Infof("+onAddOciRepo(%s)", common.PrettyPrint(repo))
 	defer log.Infof("-onAddOciRepo")
 
-	// Construct the Getter options from the HelmRepository data
-	loginOpts, getterOpts, err := s.helmOptionsForRepo(repo)
+	ociRegistry, err := s.newOCIRegistry(repo)
 	if err != nil {
-		return nil, false, status.Errorf(codes.Internal, "failed to create registry client options: %v", err)
-	}
-	log.Infof("=====================> loginOpts: [%v], getterOpts: [%v]", len(loginOpts), len(getterOpts))
-
-	// Create registry client and login if needed.
-	registryClient, file, err := NewRegistryClient(loginOpts != nil)
-	if err != nil {
-		return nil, false, status.Errorf(codes.Internal, "failed to create registry client: %v", err)
-	}
-	if file != "" {
-		defer func() {
-			if err := os.Remove(file); err != nil {
-				log.Infof("Failed to delete temporary credentials file: %v", err)
-			}
-		}()
-	}
-
-	// a little bit misleading, since repo.Spec.URL is really an OCI Registry URL,
-	// which may contain zero or more "helm repositories", such as
-	// oci://demo.goharbor.io/test-oci-1, which may contain repositories "repo-1", "repo2", etc
-
-	ociRegistry, err := NewOCIRegistry(
-		repo.Spec.URL,
-		WithOCIGetter(getters),
-		WithOCIGetterOptions(getterOpts),
-		WithOCIRegistryClient(registryClient))
-	if err != nil {
-		return nil, false, status.Errorf(codes.Internal, "failed to parse URL '%s': %v", repo.Spec.URL, err)
-	}
-
-	// Attempt to login to the registry if credentials are provided.
-	if loginOpts != nil {
-		err = ociRegistry.login(loginOpts...)
-		if err != nil {
-			return nil, false, err
-		}
+		return nil, false, err
 	}
 
 	repoURL, err := url.ParseRequestURI(strings.TrimSpace(repo.Spec.URL))
@@ -465,9 +430,13 @@ func (s *repoEventSink) onAddOciRepo(repo sourcev1.HelmRepository) ([]byte, bool
 		charts = append(charts, chart)
 	}
 
-	// TODO: encode and return bytes
+	checksum, err := ociRegistry.checksum()
+	if err != nil {
+		return nil, false, status.Errorf(codes.Internal, "%v", err)
+	}
+
 	cacheEntryValue := repoCacheEntryValue{
-		Checksum: "TODO",
+		Checksum: checksum,
 		Charts:   charts,
 	}
 
@@ -480,9 +449,125 @@ func (s *repoEventSink) onAddOciRepo(repo sourcev1.HelmRepository) ([]byte, bool
 	return buf.Bytes(), true, nil
 }
 
+func (s *repoEventSink) onModifyOciRepo(key string, oldValue interface{}, repo sourcev1.HelmRepository) ([]byte, bool, error) {
+	log.Infof("+onModifyOciRepo(%s)", common.PrettyPrint(repo))
+	defer log.Infof("-onModifyOciRepo")
+
+	// We should to compare checksums on what's stored in the cache
+	// vs the modified object to see if the contents has really changed before embarking on
+	// an expensive operation
+	cacheEntryUntyped, err := s.onGetRepo(key, oldValue)
+	if err != nil {
+		return nil, false, err
+	}
+
+	cacheEntry, ok := cacheEntryUntyped.(repoCacheEntryValue)
+	if !ok {
+		return nil, false, status.Errorf(
+			codes.Internal,
+			"unexpected value found in cache for key [%s]: %v",
+			key, cacheEntryUntyped)
+	}
+
+	ociRegistry, err := s.newOCIRegistry(repo)
+	if err != nil {
+		return nil, false, err
+	}
+
+	newChecksum, err := ociRegistry.checksum()
+	if err != nil {
+		return nil, false, err
+	}
+
+	if cacheEntry.Checksum != newChecksum {
+		return nil, false, status.Errorf(codes.Unimplemented, "TODO")
+	} else {
+		// skip because the content did not change
+		return nil, false, nil
+	}
+}
+
 //
 // misc OCI repo utilities
 //
+
+// TagList represents a list of tags as specified at
+// https://github.com/opencontainers/distribution-spec/blob/main/spec.md#content-discovery
+type TagList struct {
+	Name string   `json:"name"`
+	Tags []string `json:"tags"`
+}
+
+// Checksum returns the sha256 of the repo by concatenating tags for
+// all repositories within the registry and returning the sha256.
+// Caveat: Mutated image tags won't be detected as new
+func (r *OCIRegistry) checksum() (string, error) {
+	appNames, err := r.listRepositoryNames()
+	if err != nil {
+		return "", err
+	}
+	tags := map[string]TagList{}
+	for _, appName := range appNames {
+		ref := fmt.Sprintf("%s/%s", r.URL.String(), appName)
+		tagss, err := r.getTags(ref)
+		if err != nil {
+			return "", err
+		}
+		tags[appName] = TagList{Name: appName, Tags: tagss}
+	}
+
+	content, err := json.Marshal(tags)
+	if err != nil {
+		return "", err
+	}
+
+	return common.GetSha256(content)
+}
+
+func (s *repoEventSink) newOCIRegistry(repo sourcev1.HelmRepository) (*OCIRegistry, error) {
+	// Construct the Getter options from the HelmRepository data
+	loginOpts, getterOpts, err := s.helmOptionsForRepo(repo)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to create registry client options: %v", err)
+	}
+	log.Infof("=====================> loginOpts: [%v], getterOpts: [%v]", len(loginOpts), len(getterOpts))
+
+	// Create registry client and login if needed.
+	registryClient, file, err := NewRegistryClient(loginOpts != nil)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to create registry client: %v", err)
+	}
+	if file != "" {
+		defer func() {
+			if err := os.Remove(file); err != nil {
+				log.Infof("Failed to delete temporary credentials file: %v", err)
+			}
+		}()
+	}
+
+	// a little bit misleading, since repo.Spec.URL is really an OCI Registry URL,
+	// which may contain zero or more "helm repositories", such as
+	// oci://demo.goharbor.io/test-oci-1, which may contain repositories "repo-1", "repo2", etc
+
+	ociRegistry, err := NewOCIRegistry(
+		repo.Spec.URL,
+		WithOCIGetter(getters),
+		WithOCIGetterOptions(getterOpts),
+		WithOCIRegistryClient(registryClient))
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to parse URL '%s': %v", repo.Spec.URL, err)
+	}
+
+	// Attempt to login to the registry if credentials are provided.
+	if loginOpts != nil {
+		err = ociRegistry.login(loginOpts...)
+		if err != nil {
+			return nil, err
+		}
+	}
+	return ociRegistry, nil
+}
+
 func (s *repoEventSink) helmOptionsForRepo(repo sourcev1.HelmRepository) ([]registry.LoginOption, []getter.Option, error) {
 	log.Infof("+helmOptionsForRepo()")
 
