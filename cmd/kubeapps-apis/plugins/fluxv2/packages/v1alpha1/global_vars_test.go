@@ -1113,7 +1113,7 @@ var (
 	}
 
 	add_repo_expected_resp_6 = &corev1.AddPackageRepositoryResponse{
-		PackageRepoRef: repoRef("my-podinfo-4", "default"),
+		PackageRepoRef: repoRef("my-podinfo-5", "default"),
 	}
 
 	status_installed = &corev1.InstalledPackageStatus{

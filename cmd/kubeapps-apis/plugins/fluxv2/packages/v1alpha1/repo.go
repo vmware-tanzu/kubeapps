@@ -306,6 +306,10 @@ func (s *Server) repoDetail(ctx context.Context, repoRef *corev1.PackageReposito
 		}
 	}
 	auth.PassCredentials = repo.Spec.PassCredentials
+	typ := repo.Spec.Type
+	if typ == "" {
+		typ = "helm"
+	}
 	return &corev1.PackageRepositoryDetail{
 		PackageRepoRef: &corev1.PackageRepositoryReference{
 			Context: &corev1.Context{
@@ -316,10 +320,10 @@ func (s *Server) repoDetail(ctx context.Context, repoRef *corev1.PackageReposito
 			Plugin:     GetPluginDetail(),
 		},
 		Name: repo.Name,
-		// TBD Flux HelmRepository CR doesn't have a designated field for description
+		// TODO (gfichtenholt) Flux HelmRepository CR doesn't have a designated field for description
 		Description:     "",
 		NamespaceScoped: false,
-		Type:            "helm",
+		Type:            typ,
 		Url:             repo.Spec.URL,
 		Interval:        pkgutils.FromDuration(&repo.Spec.Interval),
 		TlsConfig:       tlsConfig,
@@ -353,6 +357,10 @@ func (s *Server) repoSummaries(ctx context.Context, namespace string) ([]*corev1
 		}
 	}
 	for _, repo := range repos {
+		typ := repo.Spec.Type
+		if typ == "" {
+			typ = "helm"
+		}
 		summary := &corev1.PackageRepositorySummary{
 			PackageRepoRef: &corev1.PackageRepositoryReference{
 				Context: &corev1.Context{
@@ -363,10 +371,10 @@ func (s *Server) repoSummaries(ctx context.Context, namespace string) ([]*corev1
 				Plugin:     GetPluginDetail(),
 			},
 			Name: repo.Name,
-			// TBD Flux HelmRepository CR doesn't have a designated field for description
+			// TODO (gfichtenholt) Flux HelmRepository CR doesn't have a designated field for description
 			Description:     "",
 			NamespaceScoped: false,
-			Type:            "helm",
+			Type:            typ,
 			Url:             repo.Spec.URL,
 			Status:          repoStatus(repo),
 		}
@@ -1049,8 +1057,6 @@ func newFluxHelmRepo(
 	}
 	if typ == "oci" {
 		fluxRepo.Spec.Type = sourcev1.HelmRepositoryTypeOCI
-	} else {
-		fluxRepo.Spec.Type = sourcev1.HelmRepositoryTypeDefault
 	}
 	if secret != nil {
 		fluxRepo.Spec.SecretRef = &fluxmeta.LocalObjectReference{

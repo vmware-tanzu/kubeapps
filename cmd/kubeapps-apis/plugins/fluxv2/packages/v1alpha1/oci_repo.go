@@ -13,10 +13,12 @@ import (
 	"bytes"
 	"context"
 	"crypto/tls"
+	"encoding/gob"
 	"fmt"
 	"io"
 	"net/url"
 	"os"
+	"path"
 	"sort"
 	"strings"
 
@@ -26,9 +28,13 @@ import (
 	"helm.sh/helm/v3/pkg/getter"
 	"helm.sh/helm/v3/pkg/registry"
 	"helm.sh/helm/v3/pkg/repo"
+	"sigs.k8s.io/yaml"
 
 	"github.com/Masterminds/semver/v3"
 	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/fluxv2/packages/v1alpha1/common"
+	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/fluxv2/packages/v1alpha1/common/transport"
+	"github.com/vmware-tanzu/kubeapps/pkg/chart/models"
+	"github.com/vmware-tanzu/kubeapps/pkg/tarutil"
 	log "k8s.io/klog/v2"
 
 	"github.com/fluxcd/pkg/version"
@@ -63,11 +69,31 @@ type OCIRegistry struct {
 	RegistryClient RegistryClient
 }
 
+type ArtifactFiles struct {
+	Metadata string
+	Readme   string
+	Values   string
+	Schema   string
+}
+
 // OCIRegistryOption is a function that can be passed to NewOCIRegistry
 // to configure an OCIRegistry.
 type OCIRegistryOption func(*OCIRegistry) error
 
-// WithOCIRegistryClient returns a ChartRepositoryOption that will set the registry client
+var (
+	getters = getter.Providers{
+		getter.Provider{
+			Schemes: []string{"http", "https"},
+			New:     getter.NewHTTPGetter,
+		},
+		getter.Provider{
+			Schemes: []string{"oci"},
+			New:     getter.NewOCIGetter,
+		},
+	}
+)
+
+// WithOCIRegistryClient returns a OCIRegistryOption that will set the registry client
 func WithOCIRegistryClient(client RegistryClient) OCIRegistryOption {
 	return func(r *OCIRegistry) error {
 		r.RegistryClient = client
@@ -121,6 +147,8 @@ func (r *OCIRegistry) listRepositoryNames() ([]string, error) {
 	// It's necessary to specify the list of applications (repositories) that the registry contains.
 	// This is because the OCI specification doesn't have an endpoint to discover artifacts
 	//  (unlike the index.yaml file of a Helm repository).
+
+	// TODO (gfichtenholt) fix me
 	return []string{"podinfo"}, nil
 }
 
@@ -139,7 +167,7 @@ func (r *OCIRegistry) getChartVersion(name, ver string) (*repo.ChartVersion, err
 	}
 
 	if len(cvs) == 0 {
-		return nil, fmt.Errorf("unable to locate any tags in provided repository: %s", name)
+		return nil, status.Errorf(codes.Internal, "unable to locate any tags in provided repository: %s", name)
 	}
 
 	// Determine if version provided
@@ -176,7 +204,7 @@ func (r *OCIRegistry) getTags(ref string) ([]string, error) {
 
 // downloadChart confirms the given repo.ChartVersion has a downloadable URL,
 // and then attempts to download the chart using the Client and Options of the
-// ChartRepository. It returns a bytes.Buffer containing the chart data.
+// OCIRegistry. It returns a bytes.Buffer containing the chart data.
 // In case of an OCI hosted chart, this function assumes that the chartVersion url is valid.
 func (r *OCIRegistry) downloadChart(chart *repo.ChartVersion) (*bytes.Buffer, error) {
 	if len(chart.URLs) == 0 {
@@ -190,17 +218,13 @@ func (r *OCIRegistry) downloadChart(chart *repo.ChartVersion) (*bytes.Buffer, er
 		return nil, err
 	}
 
-	ustr := strings.TrimPrefix(u.String(), fmt.Sprintf("%s://", registry.OCIScheme))
-	return nil, status.Errorf(codes.Unimplemented, "TODO %s", ustr)
-
-	/* TODO:
 	t := transport.NewOrIdle(r.tlsConfig)
 	clientOpts := append(r.Options, getter.WithTransport(t))
 	defer transport.Release(t)
 
 	// trim the oci scheme prefix if needed
-	return r.Client.Get(ustr, clientOpts...)
-	*/
+	getThis := strings.TrimPrefix(u.String(), fmt.Sprintf("%s://", registry.OCIScheme))
+	return r.Client.Get(getThis, clientOpts...)
 }
 
 // login attempts to login to the OCI registry.
@@ -323,11 +347,14 @@ func (s *repoEventSink) onAddOciRepo(repo sourcev1.HelmRepository) ([]byte, bool
 		}()
 	}
 
-	// a little bit misleading, repo.Spec.URL is really an OCI registry URL,
+	// a little bit misleading, since repo.Spec.URL is really an OCI Registry URL,
 	// which may contain zero or more "helm repositories", such as
-	// oci://demo.goharbor.io/test-oci-1 or
+	// oci://demo.goharbor.io/test-oci-1, which may contain repositories "repo-1", "repo2", etc
+
 	ociRegistry, err := NewOCIRegistry(
 		repo.Spec.URL,
+		WithOCIGetter(getters),
+		WithOCIGetterOptions(getterOpts),
 		WithOCIRegistryClient(registryClient))
 	if err != nil {
 		return nil, false, status.Errorf(codes.Internal, "failed to parse URL '%s': %v", repo.Spec.URL, err)
@@ -346,136 +373,111 @@ func (s *repoEventSink) onAddOciRepo(repo sourcev1.HelmRepository) ([]byte, bool
 		return nil, false, status.Errorf(codes.Internal, "%v", err)
 	}
 
-	// e.g.
 	log.Infof("==========>: URL object: [%s]", common.PrettyPrint(repoURL))
 
-	repoNames, err := ociRegistry.listRepositoryNames()
+	chartRepo := &models.Repo{
+		Namespace: repo.Namespace,
+		Name:      repo.Name,
+		URL:       repo.Spec.URL,
+		Type:      repo.Spec.Type,
+	}
+
+	// repository names aka application names
+	appNames, err := ociRegistry.listRepositoryNames()
 	if err != nil {
 		return nil, false, err
 	}
-	for _, name := range repoNames {
-		log.Infof("==========>: ref: [%s]", name)
 
-		chartVersion, err := ociRegistry.getChartVersion(name, "")
+	charts := []models.Chart{}
+	for _, appName := range appNames {
+		log.Infof("==========>: app name: [%s]", appName)
+
+		chartVersion, err := ociRegistry.getChartVersion(appName, "")
 		if err != nil {
 			return nil, false, status.Errorf(codes.Internal, "%v", err)
 		}
 		log.Infof("==========>: chart version: %s", common.PrettyPrint(chartVersion))
-	}
 
-	// later we'll do
-	// chartRepo.DownloadChart(chartVersion)
-	// to cache the charts' .tgz file
-
-	return nil, false, nil
-	/*
-			authorizationHeader := ""
-		// TODO look at repo's secretRef
-		/*
-			// The auth header may be a dockerconfig that we need to parse
-			if serveOpts.DockerConfigJson != "" {
-				dockerConfig := &credentialprovider.DockerConfigJSON{}
-				err := json.Unmarshal([]byte(serveOpts.DockerConfigJson), dockerConfig)
-				if err != nil {
-					return nil, false, status.Errorf(codes.Internal, "%v", err)
-				}
-				authorizationHeader, err = kube.GetAuthHeaderFromDockerConfig(dockerConfig)
-				if err != nil {
-					return nil, false, status.Errorf(codes.Internal, "%v", err)
-				}
-			}
-		headers := http.Header{}
-		if authorizationHeader != "" {
-			headers["Authorization"] = []string{authorizationHeader}
+		chartBuffer, err := ociRegistry.downloadChart(chartVersion)
+		if err != nil {
+			return nil, false, status.Errorf(codes.Internal, "%v", err)
 		}
-		// TODO look at repo's secretRef for TLS config
-		netClient, err := httpclient.NewWithCertFile(additionalCAFile, false)
+		log.Infof("==========>: chart buffer: [%d] bytes", chartBuffer.Len())
+
+		// Encode repository names to store them in the database.
+		encodedAppName := url.PathEscape(appName)
+
+		// not sure yet why flux untars into a temp directory
+		chartID := path.Join(repo.Name, encodedAppName)
+		files, err := tarutil.FetchChartDetailFromTarball(
+			bytes.NewReader(chartBuffer.Bytes()), chartID)
 		if err != nil {
 			return nil, false, status.Errorf(codes.Internal, "%v", err)
 		}
 
-		ociResolver :=
-		docker.NewResolver(
-			docker.ResolverOptions{
-				Headers: headers,
+		log.Infof("==========>: files: [%d]", len(files))
 
-				Client:  netClient})
-			// from cmd/asset-syncer/server/utils.go
-			//func pullAndExtract(repoURL *url.URL, appName, tag string, puller helm.ChartPuller, r *OCIRegistry) (*models.Chart, error) {
-			repoURL, err := url.ParseRequestURI(strings.TrimSpace(repo.Spec.URL))
-			if err != nil {
-				return nil, false, status.Errorf(codes.Internal, "%v", err)
-			}
-			repositories := []string{"test-oci-1/podinfo"}
+		chartYaml, ok := files[models.ChartYamlKey]
+		// TODO (gfichtenholt): if there is no chart yaml (is that even possible?),
+		// fall back to chart info from repo index.yaml
+		if !ok || chartYaml == "" {
+			return nil, false, status.Errorf(codes.Internal, "No chart manifest found for chart [%s]", chartID)
+		}
+		var chartMetadata chart.Metadata
+		err = yaml.Unmarshal([]byte(chartYaml), &chartMetadata)
+		if err != nil {
+			return nil, false, err
+		}
 
-			// find tags
-			// see func (r *OCIRegistry) FilterIndex()
-			// TagList represents a list of tags as specified at
-			// https://github.com/opencontainers/distribution-spec/blob/main/spec.md#content-discovery
-			type TagList struct {
-				Name string   `json:"name"`
-				Tags []string `json:"tags"`
-			}
-			tags := map[string]TagList{}
+		log.Infof("==========>: chart metadata: %s", common.PrettyPrint(chartMetadata))
 
-			for _, appName := range repositories {
-				tag := tags[appName].Tags[0]
-				ref := path.Join(repoURL.Host, repoURL.Path, fmt.Sprintf("%s:%s", appName, tag))
-			}
+		maintainers := []chart.Maintainer{}
+		for _, maintainer := range chartMetadata.Maintainers {
+			maintainers = append(maintainers, *maintainer)
+		}
 
-				chartBuffer, digest, err := puller.PullOCIChart(ref)
-				if err != nil {
-					return nil, err
-				}
+		modelsChartVersion := models.ChartVersion{
+			Version:    chartVersion.Version,
+			AppVersion: chartVersion.AppVersion,
+			Created:    chartVersion.Created,
+			Digest:     chartVersion.Digest,
+			URLs:       chartVersion.URLs,
+			Readme:     files[models.ReadmeKey],
+			Values:     files[models.ValuesKey],
+			Schema:     files[models.SchemaKey],
+		}
 
-				// Extract
-				files, err := extractFilesFromBuffer(chartBuffer)
-				if err != nil {
-					return nil, err
-				}
-				chartMetadata := chart.Metadata{}
-				err = yaml.Unmarshal([]byte(files.Metadata), &chartMetadata)
-				if err != nil {
-					return nil, err
-				}
+		chart := models.Chart{
+			ID:          path.Join(repo.Name, encodedAppName),
+			Name:        encodedAppName,
+			Repo:        chartRepo,
+			Description: chartMetadata.Description,
+			Home:        chartMetadata.Home,
+			Keywords:    chartMetadata.Keywords,
+			Maintainers: maintainers,
+			Sources:     chartMetadata.Sources,
+			Icon:        chartMetadata.Icon,
+			Category:    chartMetadata.Annotations["category"],
+			ChartVersions: []models.ChartVersion{
+				modelsChartVersion,
+			},
+		}
+		charts = append(charts, chart)
+	}
 
-				// Format Data
-				chartVersion := models.ChartVersion{
-					Version:    chartMetadata.Version,
-					AppVersion: chartMetadata.AppVersion,
-					Digest:     digest,
-					URLs:       chartMetadata.Sources,
-					Readme:     files.Readme,
-					Values:     files.Values,
-					Schema:     files.Schema,
-				}
+	// TODO: encode and return bytes
+	cacheEntryValue := repoCacheEntryValue{
+		Checksum: "TODO",
+		Charts:   charts,
+	}
 
-				maintainers := []chart.Maintainer{}
-				for _, m := range chartMetadata.Maintainers {
-					maintainers = append(maintainers, chart.Maintainer{
-						Name:  m.Name,
-						Email: m.Email,
-						URL:   m.URL,
-					})
-				}
-
-				// Encode repository names to store them in the database.
-				encodedAppName := url.PathEscape(appName)
-
-					&models.Chart{
-						ID:            path.Join(r.Name, encodedAppName),
-						Name:          encodedAppName,
-						Repo:          &models.Repo{Namespace: r.Namespace, Name: r.Name, URL: r.URL, Type: r.Type},
-						Description:   chartMetadata.Description,
-						Home:          chartMetadata.Home,
-						Keywords:      chartMetadata.Keywords,
-						Maintainers:   maintainers,
-						Sources:       chartMetadata.Sources,
-						Icon:          chartMetadata.Icon,
-						Category:      chartMetadata.Annotations["category"],
-						ChartVersions: []models.ChartVersion{chartVersion},
-					}, nil
-	*/
+	// use gob encoding instead of json, it peforms much better
+	var buf bytes.Buffer
+	enc := gob.NewEncoder(&buf)
+	if err = enc.Encode(cacheEntryValue); err != nil {
+		return nil, false, err
+	}
+	return buf.Bytes(), true, nil
 }
 
 //
