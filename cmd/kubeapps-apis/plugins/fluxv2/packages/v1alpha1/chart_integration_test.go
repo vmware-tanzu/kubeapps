@@ -519,6 +519,12 @@ func TestKindClusterGetAvailablePackageSummariesForOCI(t *testing.T) {
 		t.Fatal(err)
 	}
 
+	debugTags("ghcr.io/stefanprodan/charts/podinfo")
+
+	if true {
+		return
+	}
+
 	adminName := types.NamespacedName{
 		Name:      "test-admin-" + randSeq(4),
 		Namespace: "default",

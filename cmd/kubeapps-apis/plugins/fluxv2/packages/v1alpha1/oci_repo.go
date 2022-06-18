@@ -40,7 +40,6 @@ import (
 
 	"github.com/fluxcd/pkg/version"
 	sourcev1 "github.com/fluxcd/source-controller/api/v1beta2"
-	//	"github.com/fluxcd/source-controller/internal/transport"
 )
 
 // RegistryClient is an interface for interacting with OCI registries
@@ -158,10 +157,10 @@ func (r *OCIRegistry) listRepositoryNames() ([]string, error) {
 // stable version will be returned and prerelease versions will be ignored.
 // adapted from https://github.com/helm/helm/blob/49819b4ef782e80b0c7f78c30bd76b51ebb56dc8/pkg/downloader/chart_downloader.go#L162
 func (r *OCIRegistry) getChartVersion(name, ver string) (*repo.ChartVersion, error) {
+	log.Infof("+getChartVersion(%s,%s", name, ver)
 	// Find chart versions matching the given name.
 	// Either in an index file or from a registry.
 	ref := fmt.Sprintf("%s/%s", r.URL.String(), name)
-	log.Infof("about to call getTags(%s)", ref)
 	cvs, err := r.getTags(ref)
 	if err != nil {
 		return nil, err
@@ -188,18 +187,21 @@ func (r *OCIRegistry) getChartVersion(name, ver string) (*repo.ChartVersion, err
 // This function shall be called for OCI registries only
 // It assumes that the ref has been validated to be an OCI reference.
 func (r *OCIRegistry) getTags(ref string) ([]string, error) {
-	url := strings.TrimPrefix(ref, fmt.Sprintf("%s://", registry.OCIScheme))
-	log.Infof("about to call RegistryClient.Tags(%s)", url)
-	// Retrieve list of repository tags
-	tags, err := r.RegistryClient.Tags(url)
-	log.Infof("done with call RegistryClient.Tags(%s): %s %v", url, tags, err)
+	ref = strings.TrimPrefix(ref, fmt.Sprintf("%s://", registry.OCIScheme))
+
+	if err := debugTags(ref); err != nil {
+		log.Infof("debugTags failed due to: %v", err)
+	}
+
+	tags, err := r.RegistryClient.Tags(ref)
 	if err != nil {
 		return nil, err
 	}
+
+	log.Infof("getTags(%s): %s %v", ref, tags, err)
 	if len(tags) == 0 {
 		return nil, fmt.Errorf("unable to locate any tags in provided repository: %s", ref)
 	}
-
 	return tags, nil
 }
 
@@ -231,6 +233,7 @@ func (r *OCIRegistry) downloadChart(chart *repo.ChartVersion) (*bytes.Buffer, er
 // login attempts to login to the OCI registry.
 // It returns an error on failure.
 func (r *OCIRegistry) login(opts ...registry.LoginOption) error {
+	log.Infof("+login")
 	err := r.RegistryClient.Login(r.URL.Host, opts...)
 	if err != nil {
 		return err
@@ -241,6 +244,7 @@ func (r *OCIRegistry) login(opts ...registry.LoginOption) error {
 // logout attempts to logout from the OCI registry.
 // It returns an error on failure.
 func (r *OCIRegistry) logout() error {
+	log.Infof("+logout")
 	err := r.RegistryClient.Logout(r.URL.Host)
 	if err != nil {
 		return err
@@ -308,14 +312,23 @@ func NewRegistryClient(isLogin bool) (*registry.Client, string, error) {
 			return nil, "", err
 		}
 
-		rClient, err := registry.NewClient(registry.ClientOptWriter(io.Discard), registry.ClientOptCredentialsFile(credentialFile.Name()))
+		clientOpts := []registry.ClientOption{
+			registry.ClientOptWriter(io.Discard),
+			registry.ClientOptCredentialsFile(credentialFile.Name()),
+		}
+		rClient, err := registry.NewClient(clientOpts...)
 		if err != nil {
 			return nil, "", err
 		}
 		return rClient, credentialFile.Name(), nil
 	}
 
-	rClient, err := registry.NewClient(registry.ClientOptWriter(io.Discard))
+	clientOpts := []registry.ClientOption{
+		registry.ClientOptWriter(io.Discard),
+		registry.ClientOptDebug(true),
+	}
+
+	rClient, err := registry.NewClient(clientOpts...)
 	if err != nil {
 		return nil, "", err
 	}
