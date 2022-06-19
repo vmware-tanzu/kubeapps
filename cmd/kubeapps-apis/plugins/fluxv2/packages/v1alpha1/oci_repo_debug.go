@@ -29,8 +29,8 @@ import (
 
 // Retrieve list of repository tags
 // impl ref https://github.com/helm/helm/blob/657850e44b880cca43d0606ebf5a54eb75362c3f/pkg/registry/client.go#L579
-func debugTags(ref string) error {
-	log.Infof("+debugTags(%s)", ref)
+func debugTagList(ref string) error {
+	log.Infof("+debugTagList(%s)", ref)
 
 	parsedReference, err := orasregistry.ParseReference(ref)
 	if err != nil {
@@ -68,11 +68,15 @@ func debugTags(ref string) error {
 				return registryauth.EmptyCredential, errors.New("unable to retrieve credentials")
 			}
 
-			log.Infof("=======> debugTags: registryAuthorizer: [%s] [%s...]", username, password[0:3])
+			printPwd := password
+			if len(printPwd) > 3 {
+				printPwd = printPwd[0:3] + "..."
+			}
+			log.Infof("=======> debugTags: registryAuthorizer: username: [%s] password: [%s]",
+				username, printPwd)
 
 			// A blank returned username and password value is a bearer token
 			if username == "" && password != "" {
-				log.Infof("debugTags: registryAuthorizer: [%s] [%s]", username, password)
 				return registryauth.Credential{
 					RefreshToken: password,
 				}, nil
@@ -119,8 +123,8 @@ func debugTags(ref string) error {
 	// Reference: https://docs.docker.com/registry/spec/api/#tags
 	buildRepositoryTagListURL := func(plainHTTP bool, ref orasregistry.Reference) string {
 		//return buildRepositoryBaseURL(plainHTTP, ref) + "/tags/list"
-		//return buildRepositoryBaseURL(plainHTTP, ref)
-		return "https://ghcr.io/v2/_catalog"
+		//return "https://ghcr.io/v2/_catalog"
+		return "https://ghcr.io/v2/"
 	}
 
 	tags := func(ctx context.Context, url string) (string, error) {
@@ -134,17 +138,18 @@ func debugTags(ref string) error {
 			req.URL.RawQuery = q.Encode()
 		}
 
-		log.Infof("debugTags: +HTTP GET request:\nURL:\n%s\npretty print:\n%s\nAuthorization:[%s]\n",
+		log.Infof("debugTags: +HTTP %s request:\nURL:\n%s\npretty print:\n%s",
+			req.Method,
 			req.URL.String(),
-			common.PrettyPrint(req),
-			req.Header["Authorization"])
+			common.PrettyPrint(req))
 		resp, err := repository.Client.Do(req)
 		if err != nil {
 			log.Infof("debugTags: -HTTP GET response: raised err=%v", err)
 			return "", err
 		}
 		respBody, err := ioutil.ReadAll(resp.Body)
-		log.Infof("debugTags: -HTTP GET response: code:%s\nbody:\n%s\nheaders:\n%s\nerr=%v",
+		log.Infof("debugTags: -HTTP %s response: code:%s\nbody:\n%s\nheaders:\n%s\nerr=%v",
+			req.Method,
 			resp.Status,
 			respBody,
 			resp.Header,

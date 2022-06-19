@@ -20,6 +20,7 @@ import (
 	"net/url"
 	"os"
 	"path"
+	"reflect"
 	"sort"
 	"strings"
 
@@ -44,36 +45,39 @@ import (
 
 // RegistryClient is an interface for interacting with OCI registries
 // It is used by the OCIRegistry to retrieve chart versions
-// from OCI registries
+// from OCI registries. These signatures are implemented by
+//
 type RegistryClient interface {
 	Login(host string, opts ...registry.LoginOption) error
 	Logout(host string, opts ...registry.LogoutOption) error
 	Tags(url string) ([]string, error)
 }
 
+// an interface flux plugin uses to determine what kind of vendor-specific
+// registry repository name lister applies, and then executes specific logic
+type OCIRepositoryLister interface {
+	IsApplicableFor(*OCIRegistry) (bool, error)
+	ListRepositoryNames() ([]string, error)
+}
+
 // OCIRegistry represents a Helm chart repository, and the configuration
 // required to download the repository tags and charts from the repository.
 // All methods are thread safe unless defined otherwise.
 type OCIRegistry struct {
-	// URL is the location of the repository.
-	URL url.URL
-	// Client to use while accessing the repository's contents.
-	Client getter.Getter
-	// Options to configure the Client with while downloading tags
+	// url is the location of the repository.
+	url url.URL
+	// helmGetter to use while accessing the repository's contents.
+	helmGetter getter.Getter
+	// helmOptions to configure the Client with while downloading tags
 	// or a chart from the URL.
-	Options []getter.Option
+	helmOptions []getter.Option
 
 	tlsConfig *tls.Config
 
-	// RegistryClient is a client to use while downloading tags or charts from a registry.
-	RegistryClient RegistryClient
-}
+	// registryClient is a client to use while downloading tags or charts from a registry.
+	registryClient RegistryClient
 
-type ArtifactFiles struct {
-	Metadata string
-	Readme   string
-	Values   string
-	Schema   string
+	repositoryLister OCIRepositoryLister
 }
 
 // OCIRegistryOption is a function that can be passed to NewOCIRegistry
@@ -81,7 +85,7 @@ type ArtifactFiles struct {
 type OCIRegistryOption func(*OCIRegistry) error
 
 var (
-	getters = getter.Providers{
+	helmGetters = getter.Providers{
 		getter.Provider{
 			Schemes: []string{"http", "https"},
 			New:     getter.NewHTTPGetter,
@@ -91,65 +95,79 @@ var (
 			New:     getter.NewOCIGetter,
 		},
 	}
+
+	// TODO: make this thing extensible so code coming from other plugs/modules
+	// can register new repository listers
+	builtInRepoListers = []OCIRepositoryLister{
+		NewGitHubRepositoryLister(),
+		// TODO
+	}
 )
 
-// WithOCIRegistryClient returns a OCIRegistryOption that will set the registry client
-func WithOCIRegistryClient(client RegistryClient) OCIRegistryOption {
+// withOCIRegistryClient returns a OCIRegistryOption that will set the registry client
+func withOCIRegistryClient(client RegistryClient) OCIRegistryOption {
 	return func(r *OCIRegistry) error {
-		r.RegistryClient = client
+		r.registryClient = client
 		return nil
 	}
 }
 
-// WithOCIGetter returns a OCIRegistryOption that will set the getter.Getter
-func WithOCIGetter(providers getter.Providers) OCIRegistryOption {
+// withOCIGetter returns a OCIRegistryOption that will set the getter.Getter
+func withOCIGetter(providers getter.Providers) OCIRegistryOption {
 	return func(r *OCIRegistry) error {
-		c, err := providers.ByScheme(r.URL.Scheme)
+		c, err := providers.ByScheme(r.url.Scheme)
 		if err != nil {
 			return err
 		}
-		r.Client = c
+		r.helmGetter = c
 		return nil
 	}
 }
 
-// WithOCIGetterOptions returns a OCIRegistryOption that will set the getter.Options
-func WithOCIGetterOptions(getterOpts []getter.Option) OCIRegistryOption {
+// withOCIGetterOptions returns a OCIRegistryOption that will set the getter.Options
+func withOCIGetterOptions(getterOpts []getter.Option) OCIRegistryOption {
 	return func(r *OCIRegistry) error {
-		r.Options = getterOpts
+		r.helmOptions = getterOpts
 		return nil
 	}
 }
 
-// NewOCIRegistry constructs and returns a new OCIRegistry with
+// newOCIRegistry constructs and returns a new OCIRegistry with
 // the RegistryClient configured to the getter.Getter for the
 // registry URL scheme. It returns an error on URL parsing failures.
 // It assumes that the url scheme has been validated to be an OCI scheme.
-func NewOCIRegistry(registryURL string, registryOpts ...OCIRegistryOption) (*OCIRegistry, error) {
+func newOCIRegistry(registryURL string, registryOpts ...OCIRegistryOption) (*OCIRegistry, error) {
 	u, err := url.Parse(registryURL)
 	if err != nil {
 		return nil, err
 	}
 
 	r := &OCIRegistry{}
-	r.URL = *u
+	r.url = *u
 	for _, opt := range registryOpts {
 		if err := opt(r); err != nil {
 			return nil, err
 		}
 	}
 
+	for _, lister := range builtInRepoListers {
+		if ok, err := lister.IsApplicableFor(r); ok && err == nil {
+			r.repositoryLister = lister
+			break
+		} else {
+			log.Infof("Lister [%v] not applicable for registry for URL: [%s] [%v]", reflect.TypeOf(lister), &r.url, err)
+		}
+	}
+
+	if r.repositoryLister == nil {
+		return nil, status.Errorf(codes.Internal, "No repository lister found for OCI registry with url: [%s]", &r.url)
+	}
+
 	return r, nil
 }
 
 func (r *OCIRegistry) listRepositoryNames() ([]string, error) {
-	// see OCI Registry section in private-app-repository.md
-	// It's necessary to specify the list of applications (repositories) that the registry contains.
-	// This is because the OCI specification doesn't have an endpoint to discover artifacts
-	//  (unlike the index.yaml file of a Helm repository).
-
-	// TODO (gfichtenholt) fix me
-	return []string{"podinfo"}, nil
+	return r.repositoryLister.ListRepositoryNames()
 }
 
 // Get returns the ChartVersion for the given name, the version is expected
@@ -160,7 +178,7 @@ func (r *OCIRegistry) getChartVersion(name, ver string) (*repo.ChartVersion, err
 	log.Infof("+getChartVersion(%s,%s", name, ver)
 	// Find chart versions matching the given name.
 	// Either in an index file or from a registry.
-	ref := fmt.Sprintf("%s/%s", r.URL.String(), name)
+	ref := fmt.Sprintf("%s/%s", r.url.String(), name)
 	cvs, err := r.getTags(ref)
 	if err != nil {
 		return nil, err
@@ -176,7 +194,7 @@ func (r *OCIRegistry) getChartVersion(name, ver string) (*repo.ChartVersion, err
 	// If semver constraint string, try to find a match
 	tag, err := getLastMatchingVersionOrConstraint(cvs, ver)
 	return &repo.ChartVersion{
-		URLs: []string{fmt.Sprintf("%s/%s:%s", r.URL.String(), name, tag)},
+		URLs: []string{fmt.Sprintf("%s/%s:%s", r.url.String(), name, tag)},
 		Metadata: &chart.Metadata{
 			Name:    name,
 			Version: tag,
@@ -189,11 +207,11 @@ func (r *OCIRegistry) getChartVersion(name, ver string) (*repo.ChartVersion, err
 func (r *OCIRegistry) getTags(ref string) ([]string, error) {
 	ref = strings.TrimPrefix(ref, fmt.Sprintf("%s://", registry.OCIScheme))
 
-	if err := debugTags(ref); err != nil {
+	if err := debugTagList(ref); err != nil {
 		log.Infof("debugTags failed due to: %v", err)
 	}
 
-	tags, err := r.RegistryClient.Tags(ref)
+	tags, err := r.registryClient.Tags(ref)
 	if err != nil {
 		return nil, err
 	}
@@ -222,19 +240,19 @@ func (r *OCIRegistry) downloadChart(chart *repo.ChartVersion) (*bytes.Buffer, er
 	}
 
 	t := transport.NewOrIdle(r.tlsConfig)
-	clientOpts := append(r.Options, getter.WithTransport(t))
+	clientOpts := append(r.helmOptions, getter.WithTransport(t))
 	defer transport.Release(t)
 
 	// trim the oci scheme prefix if needed
 	getThis := strings.TrimPrefix(u.String(), fmt.Sprintf("%s://", registry.OCIScheme))
-	return r.Client.Get(getThis, clientOpts...)
+	return r.helmGetter.Get(getThis, clientOpts...)
 }
 
 // login attempts to login to the OCI registry.
 // It returns an error on failure.
 func (r *OCIRegistry) login(opts ...registry.LoginOption) error {
 	log.Infof("+login")
-	err := r.RegistryClient.Login(r.URL.Host, opts...)
+	err := r.registryClient.Login(r.url.Host, opts...)
 	if err != nil {
 		return err
 	}
@@ -245,7 +263,7 @@ func (r *OCIRegistry) login(opts ...registry.LoginOption) error {
 // It returns an error on failure.
 func (r *OCIRegistry) logout() error {
 	log.Infof("+logout")
-	err := r.RegistryClient.Logout(r.URL.Host)
+	err := r.registryClient.Logout(r.url.Host)
 	if err != nil {
 		return err
 	}
@@ -521,7 +539,7 @@ func (r *OCIRegistry) checksum() (string, error) {
 	}
 	tags := map[string]TagList{}
 	for _, appName := range appNames {
-		ref := fmt.Sprintf("%s/%s", r.URL.String(), appName)
+		ref := fmt.Sprintf("%s/%s", r.url.String(), appName)
 		tagss, err := r.getTags(ref)
 		if err != nil {
 			return "", err
@@ -562,11 +580,11 @@ func (s *repoEventSink) newOCIRegistry(repo sourcev1.HelmRepository) (*OCIRegist
 	// which may contain zero or more "helm repositories", such as
 	// oci://demo.goharbor.io/test-oci-1, which may contain repositories "repo-1", "repo2", etc
 
-	ociRegistry, err := NewOCIRegistry(
+	ociRegistry, err := newOCIRegistry(
 		repo.Spec.URL,
-		WithOCIGetter(getters),
-		WithOCIGetterOptions(getterOpts),
-		WithOCIRegistryClient(registryClient))
+		withOCIGetter(helmGetters),
+		withOCIGetterOptions(getterOpts),
+		withOCIRegistryClient(registryClient))
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to parse URL '%s': %v", repo.Spec.URL, err)
 	}
