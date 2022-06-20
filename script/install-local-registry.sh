@@ -27,7 +27,8 @@ installLocalRegistry() {
     kubectl -n $REGISTRY_NS create secret tls registry-tls --key $PROJECT_PATH/devel/localhost-key.pem --cert $PROJECT_PATH/devel/docker-registry-cert.pem
 
     # Create registry resources
-    kubectl apply -f ${PROJECT_PATH}/integration/registry/local-registry.yaml
+    REGISTRY_YAML="${PROJECT_PATH}/integration/registry/local-registry.yaml"
+    envsubst < $REGISTRY_YAML | kubectl apply -f $REGISTRY_YAML
 
     # Wait for deployment to be ready
     kubectl rollout status -w deployment/private-registry -n $REGISTRY_NS

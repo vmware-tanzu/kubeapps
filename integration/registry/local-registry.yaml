@@ -1,3 +1,6 @@
+# Copyright 2022 the Kubeapps contributors.
+# SPDX-License-Identifier: Apache-2.0
+
 ---
 apiVersion: v1
 kind: Secret
@@ -6,6 +9,8 @@ metadata:
   name: registry-auth
   namespace: ci
 data:
+  # Local credential for the instantiated Docker registry.
+  # User "testuser" and password "testpassword".
   htpasswd: dGVzdHVzZXI6JDJ5JDA1JHVLUnAvdUV1aEMxRXpmbzQ1a1NCbk96eUlnV2tKNmk3R1VKTzNhLjVvY0JrZUNBNTZjRWxXCgo=
 ---
 apiVersion: apps/v1
@@ -33,7 +38,7 @@ spec:
         secret:
           secretName: registry-tls
       containers:
-        - image: registry:2
+        - image: registry:$DOCKER_REGISTRY_VERSION
           name: private-registry
           imagePullPolicy: Always
           env:
