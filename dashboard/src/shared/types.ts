@@ -3,7 +3,6 @@
 
 import { JSONSchemaType } from "ajv";
 import { RouterState } from "connected-react-router";
-import { Subscription } from "rxjs";
 import {
   AvailablePackageDetail,
   AvailablePackageSummary,
@@ -14,6 +13,7 @@ import {
   ResourceRef,
 } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
 import { IOperatorsState } from "reducers/operators";
+import { Subscription } from "rxjs";
 import { IAuthState } from "../reducers/auth";
 import { IClustersState } from "../reducers/cluster";
 import { IConfigState } from "../reducers/config";
@@ -303,7 +303,7 @@ export interface IClusterServiceVersion extends IResource {
   spec: IClusterServiceVersionSpec;
 }
 
-export interface IAppRepositoryFilter {
+export interface IPkgRepositoryFilter {
   jq: string;
   variables?: { [key: string]: string };
 }
@@ -336,6 +336,16 @@ interface IK8sResource {
   kind: string;
 }
 
+/** @see https://github.com/kubernetes/community/blob/master/contributors/devel/api-conventions.md#lists-and-simple-kinds */
+export interface IK8sList<I, M> extends IK8sResource {
+  items: I[];
+  metadata?: {
+    resourceVersion?: string;
+    selfLink?: string; // Not in docs, but seems to exist everywhere
+  } & M;
+}
+
+// TODO(agamez): delete once we remove 'IAppRepository'
 /** @see https://github.com/kubernetes/community/blob/master/contributors/devel/api-conventions.md#objects */
 export interface IK8sObject<M, SP, ST> extends IK8sResource {
   metadata: {
@@ -352,15 +362,6 @@ export interface IK8sObject<M, SP, ST> extends IK8sResource {
   } & M;
   spec?: SP;
   status?: ST;
-}
-
-/** @see https://github.com/kubernetes/community/blob/master/contributors/devel/api-conventions.md#lists-and-simple-kinds */
-export interface IK8sList<I, M> extends IK8sResource {
-  items: I[];
-  metadata?: {
-    resourceVersion?: string;
-    selfLink?: string; // Not in docs, but seems to exist everywhere
-  } & M;
 }
 
 export type IAppRepository = IK8sObject<
@@ -395,7 +396,7 @@ export type IAppRepository = IK8sObject<
     dockerRegistrySecrets?: string[];
     ociRepositories?: string[];
     tlsInsecureSkipVerify?: boolean;
-    filterRule?: IAppRepositoryFilter;
+    filterRule?: IPkgRepositoryFilter;
     passCredentials?: boolean;
   },
   undefined
@@ -408,36 +409,6 @@ export interface ICreateAppRepositoryResponse {
 export interface IAppRepositoryKey {
   name: string;
   namespace: string;
-}
-
-/** @see https://github.com/kubernetes/community/blob/master/contributors/devel/api-conventions.md#response-status-kind */
-export interface IStatus extends IK8sResource {
-  kind: "Status";
-  status: "Success" | "Failure";
-  message: string;
-  reason:
-    | "BadRequest"
-    | "Unauthorized"
-    | "Forbidden"
-    | "NotFound"
-    | "AlreadyExists"
-    | "Conflict"
-    | "Invalid"
-    | "Timeout"
-    | "ServerTimeout"
-    | "MethodNotAllowed"
-    | "InternalError";
-  details?: {
-    kind?: string;
-    name?: string;
-    causes?: IStatusCause[] | string;
-  };
-}
-
-interface IStatusCause {
-  field: string;
-  message: string;
-  reason: string;
 }
 
 export interface IRBACRole {

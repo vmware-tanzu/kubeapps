@@ -5,7 +5,7 @@ import * as moxios from "moxios";
 import { AppRepository } from "./AppRepository";
 import { axiosWithAuth } from "./AxiosInstance";
 import * as url from "./url";
-import { IAppRepositoryFilter } from "shared/types";
+import { IPkgRepositoryFilter } from "shared/types";
 
 describe("AppRepository", () => {
   const cluster = "cluster";
@@ -26,7 +26,7 @@ describe("AppRepository", () => {
     filterRule: {
       jq: ".name == $var0",
       variables: { $var0: "nginx" },
-    } as IAppRepositoryFilter,
+    } as IPkgRepositoryFilter,
   };
 
   beforeEach(() => {

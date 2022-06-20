@@ -1,6 +1,8 @@
 // Copyright 2018-2022 the Kubeapps contributors.
 // SPDX-License-Identifier: Apache-2.0
 
+import { CdsButton } from "@cds/react/button";
+import { CdsIcon } from "@cds/react/icon";
 import { CdsToggle, CdsToggleGroup } from "@cds/react/toggle";
 import actions from "actions";
 import { filterNames, filtersToQuery } from "components/Catalog/Catalog";
@@ -12,7 +14,7 @@ import { push } from "connected-react-router";
 import qs from "qs";
 import { useCallback, useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { useLocation, Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { Kube } from "shared/Kube";
 import { IAppRepository, IStoreState } from "shared/types";
 import { app } from "shared/url";
@@ -21,7 +23,6 @@ import { AppRepoAddButton } from "./AppRepoButton";
 import { AppRepoControl } from "./AppRepoControl";
 import { AppRepoDisabledControl } from "./AppRepoDisabledControl";
 import "./AppRepoList.css";
-import { AppRepoRefreshAllButton } from "./AppRepoRefreshAllButton";
 
 function AppRepoList() {
   const dispatch = useDispatch();
@@ -94,18 +95,20 @@ function AppRepoList() {
   }, [cluster, kubeappsCluster, kubeappsNamespace, globalReposNamespace]);
 
   const globalRepos: IAppRepository[] = [];
-  const namespaceRepos: IAppRepository[] = [];
+  const namespacedRepos: IAppRepository[] = [];
   repos.forEach(repo => {
     repo.metadata.namespace === globalReposNamespace
       ? globalRepos.push(repo)
-      : namespaceRepos.push(repo);
+      : namespacedRepos.push(repo);
   });
 
   const tableColumns = [
     { accessor: "name", Header: "Name" },
     { accessor: "url", Header: "URL" },
+    { accessor: "plugin", Header: "Package Type" },
     { accessor: "accessLevel", Header: "Access Level" },
     { accessor: "namespace", Header: "Namespace" },
+    { accessor: "status", Header: "Status" },
     { accessor: "actions", Header: "Actions" },
   ];
   const getTableData = (targetRepos: IAppRepository[], disableControls: boolean) => {
@@ -113,8 +116,35 @@ function AppRepoList() {
       return {
         name: getRepoNameLinkAndTooltip(cluster, repo),
         url: repo.spec?.url,
-        accessLevel: repo.spec?.auth?.header ? "Private" : "Public",
+        // TODO(agamez): the PackageRepositorySummary API doesn't expose this field. It will be added in upcoming PRs; in the meantime, set to "unknown"
+        // accessLevel: repo.type?.auth?.header ? "Private" : "Public",
+        accessLevel: "unknown",
         namespace: repo.metadata.namespace,
+        plugin: "Helm",
+        // eslint-disable-next-line no-constant-condition
+        status: true ? (
+          <>Ready</>
+        ) : (
+          <>
+            <CdsButton action="flat-inline" onClick={refetchRepos}>
+              <CdsIcon shape="refresh" />
+              Refresh
+            </CdsButton>
+            <p>Not ready</p>
+            {false && (
+              <Tooltip
+                label="notready-tooltip"
+                id={`${repo.metadata.name}-notready-tooltip`}
+                icon="info-circle"
+                position="top-right"
+                small={true}
+                iconProps={{ solid: true, size: "sm" }}
+              >
+                {"unknown"}
+              </Tooltip>
+            )}
+          </>
+        ),
         actions: disableControls ? (
           <AppRepoDisabledControl />
         ) : (
@@ -140,7 +170,6 @@ function AppRepoList() {
             namespace={currentNamespace}
             kubeappsNamespace={globalReposNamespace}
           />,
-          <AppRepoRefreshAllButton key="refresh-all-button" />,
         ]}
         filter={
           canSetAllNS ? (
@@ -155,80 +184,83 @@ function AppRepoList() {
           )
         }
       />
-      {!supportedCluster ? (
-        <Alert theme="warning">
-          <h5>Package Repositories can't be managed from this cluster.</h5>
-          <p>
-            Currently, the Package Repositories must be managed from the default cluster (the one on
-            which Kubeapps has been installed).
-          </p>
-          <p>
-            Any <i>global</i> Package Repository defined in the default cluster can be later used
-            across any target cluster.
-            <br />
-            However, <i>namespaced</i> Package Repositories can only be used on the default cluster.
-          </p>
-        </Alert>
-      ) : (
-        <div className="page-content">
-          {errors.fetch && (
-            <Alert theme="danger">
-              An error occurred while fetching repositories: {errors.fetch.message}
-            </Alert>
-          )}
-          {errors.delete && (
-            <Alert theme="danger">
-              An error occurred while deleting the repository: {errors.delete.message}
-            </Alert>
-          )}
-          {!errors.fetch && (
-            <>
-              <LoadingWrapper
-                className="margin-t-xxl"
-                loadingText="Fetching Package Repositories..."
-                loaded={!isFetchingElem.repositories}
-              >
-                <h3>Global Repositories:</h3>
-                <p>Global Package Repositories are available for all Kubeapps users.</p>
-                {globalRepos.length ? (
-                  <Table
-                    valign="center"
-                    columns={tableColumns}
-                    data={getTableData(globalRepos, !canEditGlobalRepos)}
-                  />
-                ) : (
-                  <p>
-                    There are no <i>global</i> Package Repositories yet. Click on the "Add Package
-                    Repository" button to create one.
-                  </p>
-                )}
-                {namespace !== globalReposNamespace && (
-                  <>
-                    <h3>Namespaced Repositories: {namespace}</h3>
+      <div className="catalog-container">
+        {!supportedCluster ? (
+          <Alert theme="warning">
+            <h5>Package Repositories can't be managed from this cluster.</h5>
+            <p>
+              Currently, the Package Repositories must be managed from the default cluster (the one
+              on which Kubeapps has been installed).
+            </p>
+            <p>
+              Any <i>global</i> Package Repository defined in the default cluster can be later used
+              across any target cluster.
+              <br />
+              However, <i>namespaced</i> Package Repositories can only be used on the default
+              cluster.
+            </p>
+          </Alert>
+        ) : (
+          <div className="page-content">
+            {errors.fetch && (
+              <Alert theme="danger">
+                An error occurred while fetching repositories: {errors.fetch.message}
+              </Alert>
+            )}
+            {errors.delete && (
+              <Alert theme="danger">
+                An error occurred while deleting the repository: {errors.delete.message}
+              </Alert>
+            )}
+            {!errors.fetch && (
+              <>
+                <LoadingWrapper
+                  className="margin-t-xxl"
+                  loadingText="Fetching Package Repositories..."
+                  loaded={!isFetchingElem.repositories}
+                >
+                  <h3>Global Repositories:</h3>
+                  <p>Global Package Repositories are available for all Kubeapps users.</p>
+                  {globalRepos.length ? (
+                    <Table
+                      valign="center"
+                      columns={tableColumns}
+                      data={getTableData(globalRepos, !canEditGlobalRepos)}
+                    />
+                  ) : (
                     <p>
-                      Namespaced Package Repositories are available in their namespace only. To
-                      switch to a different one, use the "Current Context" selector in the top
-                      navigation.
+                      There are no <i>global</i> Package Repositories yet. Click on the "Add Package
+                      Repository" button to create one.
                     </p>
-                    {namespaceRepos.length ? (
-                      <Table
-                        valign="center"
-                        columns={tableColumns}
-                        data={getTableData(namespaceRepos, false)}
-                      />
-                    ) : (
+                  )}
+                  {namespace !== globalReposNamespace && (
+                    <>
+                      <h3>Namespaced Repositories: {namespace}</h3>
                       <p>
-                        There are no <i>namespaced</i> Package Repositories in the '{namespace}'
-                        namespace yet. Click on the "Add Package Repository" button to create one.
+                        Namespaced Package Repositories are available in their namespace only. To
+                        switch to a different one, use the "Current Context" selector in the top
+                        navigation.
                       </p>
-                    )}
-                  </>
-                )}
-              </LoadingWrapper>
-            </>
-          )}
-        </div>
-      )}
+                      {namespacedRepos.length ? (
+                        <Table
+                          valign="center"
+                          columns={tableColumns}
+                          data={getTableData(namespacedRepos, false)}
+                        />
+                      ) : (
+                        <p>
+                          There are no <i>namespaced</i> Package Repositories in the '{namespace}'
+                          namespace yet. Click on the "Add Package Repository" button to create one.
+                        </p>
+                      )}
+                    </>
+                  )}
+                </LoadingWrapper>
+              </>
+            )}
+          </div>
+        )}
+      </div>
     </>
   );
 }

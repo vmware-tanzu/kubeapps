@@ -17,7 +17,7 @@ import { ThunkDispatch } from "redux-thunk";
 import { AppRepository } from "shared/AppRepository";
 import { toFilterRule, toParams } from "shared/jq";
 import Secret from "shared/Secret";
-import { IAppRepository, IAppRepositoryFilter, ISecret, IStoreState } from "shared/types";
+import { IAppRepository, IPkgRepositoryFilter, ISecret, IStoreState } from "shared/types";
 import AppRepoAddDockerCreds from "./AppRepoAddDockerCreds";
 import "./AppRepoForm.css";
 interface IAppRepoFormProps {
@@ -34,12 +34,12 @@ interface IAppRepoFormProps {
     ociRepositories: string[],
     skipTLS: boolean,
     passCredentials: boolean,
-    filter?: IAppRepositoryFilter,
+    filter?: IPkgRepositoryFilter,
   ) => Promise<boolean>;
   onAfterInstall?: () => void;
   namespace: string;
   kubeappsNamespace: string;
-  repo?: IAppRepository;
+  packageRepoRef?: IAppRepository;
 }
 
 const AUTH_METHOD_NONE = "none";
@@ -52,7 +52,7 @@ const TYPE_HELM = "helm";
 const TYPE_OCI = "oci";
 
 export function AppRepoForm(props: IAppRepoFormProps) {
-  const { onSubmit, onAfterInstall, namespace, kubeappsNamespace, repo } = props;
+  const { onSubmit, onAfterInstall, namespace, kubeappsNamespace, packageRepoRef: repo } = props;
   const isInstallingRef = useRef(false);
   const dispatch: ThunkDispatch<IStoreState, null, Action> = useDispatch();
 
@@ -206,7 +206,7 @@ export function AppRepoForm(props: IAppRepoFormProps) {
       );
       setValidated(currentlyValidated);
     }
-    let filter: IAppRepositoryFilter | undefined;
+    let filter: IPkgRepositoryFilter | undefined;
     if (type === TYPE_HELM && filterNames !== "") {
       filter = toFilterRule(filterNames, filterRegex, filterExclude);
     }

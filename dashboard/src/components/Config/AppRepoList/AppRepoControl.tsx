@@ -20,7 +20,6 @@ interface IAppRepoListItemProps {
 
 export function AppRepoControl({ repo, kubeappsNamespace, refetchRepos }: IAppRepoListItemProps) {
   const [modalIsOpen, setModalOpen] = useState(false);
-  const [refreshing, setRefreshing] = useState(false);
   const openModal = () => setModalOpen(true);
   const closeModal = () => setModalOpen(false);
   const dispatch: ThunkDispatch<IStoreState, null, Action> = useDispatch();
@@ -30,17 +29,6 @@ export function AppRepoControl({ repo, kubeappsNamespace, refetchRepos }: IAppRe
       await dispatch(actions.repos.deleteRepo(repoName, repoNamespace));
       refetchRepos();
       closeModal();
-    };
-  };
-
-  const handleResyncClick = (repoName: string, repoNamespace: string) => {
-    return () => {
-      setRefreshing(true);
-      dispatch(actions.repos.resyncRepo(repoName, repoNamespace));
-      // Fake timeout to show progress
-      // TODO(andresmgot): Ideally, we should show the progress of the sync but we don't
-      // have that info yet: https://github.com/vmware-tanzu/kubeapps/issues/153
-      setTimeout(() => setRefreshing(false), 500);
     };
   };
 
@@ -56,21 +44,13 @@ export function AppRepoControl({ repo, kubeappsNamespace, refetchRepos }: IAppRe
       />
 
       <AppRepoAddButton
-        title={`Edit repository '${repo.metadata.name}'`}
+        title={`Edit the '${repo.metadata.name}' Package Repository`}
         namespace={repo.metadata.namespace}
         kubeappsNamespace={kubeappsNamespace}
         text="Edit"
-        repo={repo}
+        packageRepoRef={repo}
         primary={false}
       />
-
-      <CdsButton
-        onClick={handleResyncClick(repo.metadata.name, repo.metadata.namespace)}
-        action="outline"
-        disabled={refreshing}
-      >
-        {refreshing ? "Refreshing" : "Refresh"}
-      </CdsButton>
       <CdsButton
         id={`delete-repo-${repo.metadata.name}`}
         status="danger"

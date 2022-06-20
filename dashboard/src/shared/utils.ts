@@ -40,7 +40,7 @@ export function getValueFromEvent(
 }
 
 // 3 lines description max
-const MAX_DESC_LENGTH = 90;
+export const MAX_DESC_LENGTH = 90;
 
 export function trimDescription(desc: string): string {
   if (desc.length > MAX_DESC_LENGTH) {
@@ -57,7 +57,6 @@ export function getPluginIcon(plugin?: Plugin | string) {
   if (typeof plugin === "string") {
     switch (plugin) {
       case "chart":
-        return helmIcon;
       case "helm":
         return helmIcon;
       case "operator":
@@ -134,6 +133,32 @@ export function getPluginPackageName(plugin?: Plugin | PluginNames | string) {
       default:
         return `${plugin?.name} package`;
     }
+  }
+}
+
+// FIXME(agamez): replace with a proper call to the plugins server (see getPluginsServiceClientImpl)
+export function getPluginByName(pluginName: PluginNames | string) {
+  switch (pluginName) {
+    case PluginNames.PACKAGES_HELM:
+      return {
+        name: PluginNames.PACKAGES_HELM,
+        version: "v1alpha1",
+      } as Plugin;
+    case PluginNames.PACKAGES_FLUX:
+      return {
+        name: PluginNames.PACKAGES_FLUX,
+        version: "v1alpha1",
+      } as Plugin;
+    case PluginNames.PACKAGES_KAPP:
+      return {
+        name: PluginNames.PACKAGES_KAPP,
+        version: "v1alpha1",
+      } as Plugin;
+    default:
+      return {
+        name: "",
+        version: "",
+      } as Plugin;
   }
 }
 

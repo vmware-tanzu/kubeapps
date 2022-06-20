@@ -13,7 +13,7 @@ import PackagesService from "shared/PackagesService";
 import Secret from "shared/Secret";
 import {
   IAppRepository,
-  IAppRepositoryFilter,
+  IPkgRepositoryFilter,
   IAppRepositoryKey,
   IStoreState,
   NotFoundError,
@@ -182,7 +182,7 @@ export const installRepo = (
   ociRepositories: string[],
   skipTLS: boolean,
   passCredentials: boolean,
-  filter?: IAppRepositoryFilter,
+  filter?: IPkgRepositoryFilter,
 ): ThunkAction<Promise<boolean>, IStoreState, null, AppReposAction> => {
   return async (dispatch, getState) => {
     const {
@@ -232,7 +232,7 @@ export const updateRepo = (
   ociRepositories: string[],
   skipTLS: boolean,
   passCredentials: boolean,
-  filter?: IAppRepositoryFilter,
+  filter?: IPkgRepositoryFilter,
 ): ThunkAction<Promise<boolean>, IStoreState, null, AppReposAction> => {
   return async (dispatch, getState) => {
     const {
