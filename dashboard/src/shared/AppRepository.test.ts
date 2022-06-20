@@ -5,29 +5,32 @@ import * as moxios from "moxios";
 import { AppRepository } from "./AppRepository";
 import { axiosWithAuth } from "./AxiosInstance";
 import * as url from "./url";
-import { IPkgRepositoryFilter } from "shared/types";
+import { IPkgRepoFormData, IPkgRepositoryFilter } from "shared/types";
+import { PackageRepositoryAuth_PackageRepositoryAuthType } from "gen/kubeappsapis/core/packages/v1alpha1/repositories";
 
 describe("AppRepository", () => {
   const cluster = "cluster";
   const namespace = "namespace";
-  const repo = {
+  const pkgRepoFormData = {
     name: "repo-test",
-    repoURL: "repo-url",
+    url: "repo-url",
     type: "repo-type",
     description: "repo-description",
     authHeader: "repo-authHeader",
-    authRegCreds: "repo-authRegCreds",
     customCA: "repo-customCA",
-    syncJobPodTemplate: { type: "helm" },
-    registrySecrets: ["repo-secret1"],
-    ociRepositories: ["oci-repo1"],
-    tlsInsecureSkipVerify: false,
+    customDetails: {
+      dockerRegistrySecrets: ["repo-secret1"],
+      ociRepositories: ["oci-repo1"],
+      filterRule: {
+        jq: ".name == $var0",
+        variables: { $var0: "nginx" },
+      } as IPkgRepositoryFilter,
+    },
+    skipTLS: false,
     passCredentials: true,
-    filterRule: {
-      jq: ".name == $var0",
-      variables: { $var0: "nginx" },
-    } as IPkgRepositoryFilter,
-  };
+    authMethod:
+      PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_UNSPECIFIED,
+  } as IPkgRepoFormData;
 
   beforeEach(() => {
     // Import as "any" to avoid typescript syntax error
@@ -45,69 +48,85 @@ describe("AppRepository", () => {
       response: {},
     });
 
-    await AppRepository.create(
-      cluster,
-      repo.name,
-      namespace,
-      repo.repoURL,
-      repo.type,
-      repo.description,
-      repo.authHeader,
-      repo.authRegCreds,
-      repo.customCA,
-      repo.syncJobPodTemplate,
-      repo.registrySecrets,
-      repo.ociRepositories,
-      repo.tlsInsecureSkipVerify,
-      repo.passCredentials,
-      repo.filterRule,
-    );
+    await AppRepository.create(cluster, namespace, pkgRepoFormData);
 
     const request = moxios.requests.mostRecent();
     expect(request.config.method).toEqual("post");
     expect(request.url).toBe(createRepoUrl);
-    expect(JSON.parse(request.config.data)).toEqual({ appRepository: repo });
+    expect(JSON.parse(request.config.data)).toEqual({
+      appRepository: {
+        authHeader: "repo-authHeader",
+        authRegCreds: ["repo-secret1"],
+        description: "repo-description",
+        filterRule: {
+          jq: ".name == $var0",
+          variables: {
+            $var0: "nginx",
+          },
+        },
+        name: "repo-test",
+        ociRepositories: ["oci-repo1"],
+        passCredentials: true,
+        repoURL: "repo-url",
+        syncJobPodTemplate: "",
+        tlsInsecureSkipVerify: false,
+        type: "repo-type",
+        customCA: "repo-customCA",
+      },
+    });
   });
 
   it("update repository", async () => {
-    const updateRepoUrl = url.backend.apprepositories.update(cluster, namespace, repo.name);
+    const updateRepoUrl = url.backend.apprepositories.update(
+      cluster,
+      namespace,
+      pkgRepoFormData.name,
+    );
     moxios.stubRequest(updateRepoUrl, {
       status: 200,
       response: {},
     });
 
-    await AppRepository.update(
-      cluster,
-      repo.name,
-      namespace,
-      repo.repoURL,
-      repo.type,
-      repo.description,
-      repo.authHeader,
-      repo.authRegCreds,
-      repo.customCA,
-      repo.syncJobPodTemplate,
-      repo.registrySecrets,
-      repo.ociRepositories,
-      repo.tlsInsecureSkipVerify,
-      repo.passCredentials,
-      repo.filterRule,
-    );
+    await AppRepository.update(cluster, namespace, pkgRepoFormData);
 
     const request = moxios.requests.mostRecent();
     expect(request.config.method).toEqual("put");
     expect(request.url).toBe(updateRepoUrl);
-    expect(JSON.parse(request.config.data)).toEqual({ appRepository: repo });
+    expect(JSON.parse(request.config.data)).toEqual({
+      appRepository: {
+        authHeader: "repo-authHeader",
+        authRegCreds: ["repo-secret1"],
+        description: "repo-description",
+        filterRule: {
+          jq: ".name == $var0",
+          variables: {
+            $var0: "nginx",
+          },
+        },
+        name: "repo-test",
+        ociRepositories: ["oci-repo1"],
+        passCredentials: true,
+        repoURL: "repo-url",
+        syncJobPodTemplate: "",
+        tlsInsecureSkipVerify: false,
+        type: "repo-type",
+        customCA: "repo-customCA",
+      },
+    });
   });
 
   it("delete repository", async () => {
-    const deleteRepoUrl = url.backend.apprepositories.delete(cluster, namespace, repo.name);
+    const deleteRepoUrl = url.backend.apprepositories.delete(
+      cluster,
+      namespace,
+      pkgRepoFormData.name,
+    );
     moxios.stubRequest(deleteRepoUrl, {
       status: 200,
       response: {},
     });
 
-    await AppRepository.delete(cluster, namespace, repo.name);
+    await AppRepository.delete(cluster, namespace, pkgRepoFormData.name);
 
     const request = moxios.requests.mostRecent();
     expect(request.config.method).toEqual("delete");

@@ -12,6 +12,16 @@ import {
   PackageAppVersion,
   ResourceRef,
 } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
+import {
+  DockerCredentials,
+  OpaqueCredentials,
+  PackageRepositoryAuth_PackageRepositoryAuthType,
+  SshCredentials,
+  TlsCertKey,
+  UsernamePassword,
+} from "gen/kubeappsapis/core/packages/v1alpha1/repositories";
+import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins";
+import { RepositoryCustomDetails } from "gen/kubeappsapis/plugins/helm/packages/v1alpha1/helm";
 import { IOperatorsState } from "reducers/operators";
 import { Subscription } from "rxjs";
 import { IAuthState } from "../reducers/auth";
@@ -475,4 +485,35 @@ export interface IBasicFormSliderParam extends IBasicFormParam {
 
 export interface CustomInstalledPackageDetail extends InstalledPackageDetail {
   revision: number;
+}
+
+//  enum for the type of package repository storage
+export enum RepositoryStorageTypes {
+  PACKAGE_REPOSITORY_STORAGE_HELM = "helm",
+  PACKAGE_REPOSITORY_STORAGE_OCI = "oci",
+}
+
+export interface IPkgRepoFormData {
+  authMethod: PackageRepositoryAuth_PackageRepositoryAuthType;
+  // kubeapps-managed secrets
+  authHeader: string; // used if type == PACKAGE_REPOSITORY_AUTH_TYPE_BEARER || type == PACKAGE_REPOSITORY_AUTH_TYPE_AUTHORIZATION_HEADER
+  basicAuth: UsernamePassword; // used if type == PACKAGE_REPOSITORY_AUTH_TYPE_BASIC_AUTH
+  dockerRegCreds: DockerCredentials; // used if type == PACKAGE_REPOSITORY_AUTH_TYPE_DOCKER_CONFIG_JSON
+  sshCreds: SshCredentials; // used if type == PACKAGE_REPOSITORY_AUTH_TYPE_SSH
+  opaqueCreds: OpaqueCredentials; // used if type == PACKAGE_REPOSITORY_AUTH_TYPE_OPAQUE
+  tlsCertKey: TlsCertKey; // used if type == PACKAGE_REPOSITORY_AUTH_TYPE_TLS
+  // user-managed secrets
+  secretAuthName: string;
+  secretTLSName: string;
+  // rest of the paramters
+  customCA: string;
+  description: string;
+  interval: string;
+  name: string;
+  passCredentials: boolean;
+  plugin: Plugin;
+  skipTLS: boolean;
+  type: string;
+  url: string;
+  customDetails: Partial<RepositoryCustomDetails>; // add more types if necesary, currently just helm's custom details
 }

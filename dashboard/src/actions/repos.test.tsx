@@ -5,14 +5,19 @@ import {
   AvailablePackageReference,
   InstalledPackageDetail,
 } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
+import { PackageRepositoryAuth_PackageRepositoryAuthType } from "gen/kubeappsapis/core/packages/v1alpha1/repositories";
 import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins";
 import context from "jest-plugin-context";
 import configureMockStore from "redux-mock-store";
 import thunk from "redux-thunk";
 import { AppRepository } from "shared/AppRepository";
 import PackagesService from "shared/PackagesService";
-import Secret from "shared/Secret";
-import { IAppRepository, NotFoundError } from "shared/types";
+import {
+  IAppRepository,
+  IPkgRepoFormData,
+  NotFoundError,
+  RepositoryStorageTypes,
+} from "shared/types";
 import { getType } from "typesafe-actions";
 import actions from ".";
 
@@ -68,6 +73,50 @@ interface ITestCase {
 }
 
 const repo = { metadata: { name: "my-repo" } } as IAppRepository;
+
+const repoData = {
+  plugin: { name: "my.plugin", version: "0.0.1" } as Plugin,
+  authHeader: "",
+  authMethod:
+    PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_UNSPECIFIED,
+  basicAuth: {
+    password: "",
+    username: "",
+  },
+  customCA: "",
+  customDetails: {
+    dockerRegistrySecrets: [],
+    ociRepositories: [],
+    performValidation: false,
+    filterRules: [],
+  },
+  description: "",
+  dockerRegCreds: {
+    password: "",
+    username: "",
+    email: "",
+    server: "",
+  },
+  interval: "",
+  name: "",
+  passCredentials: false,
+  secretAuthName: "",
+  secretTLSName: "",
+  skipTLS: false,
+  type: RepositoryStorageTypes.PACKAGE_REPOSITORY_STORAGE_HELM,
+  url: "",
+  opaqueCreds: {
+    data: {},
+  },
+  sshCreds: {
+    knownHosts: "",
+    privateKey: "",
+  },
+  tlsCertKey: {
+    cert: "",
+    key: "",
+  },
+} as IPkgRepoFormData;
 
 const actionTestCases: ITestCase[] = [
   { name: "addRepo", action: repoActions.addRepo },
@@ -135,47 +184,6 @@ describe("deleteRepo", () => {
 
     await store.dispatch(repoActions.deleteRepo("foo", "my-namespace"));
     expect(store.getActions()).toEqual(expectedActions);
-  });
-});
-
-describe("resyncRepo", () => {
-  it("dispatches errorRepos if error on #update", async () => {
-    AppRepository.resync = jest.fn().mockImplementationOnce(() => {
-      throw new Error("Boom!");
-    });
-
-    const expectedActions = [
-      {
-        type: getType(repoActions.errorRepos),
-        payload: { err: new Error("Boom!"), op: "update" },
-      },
-    ];
-
-    await store.dispatch(repoActions.resyncRepo("foo", "my-namespace"));
-    expect(store.getActions()).toEqual(expectedActions);
-  });
-});
-
-describe("resyncAllRepos", () => {
-  it("resyncs each repo using its namespace", async () => {
-    const appRepoGetMock = jest.fn();
-    AppRepository.resync = appRepoGetMock;
-    await store.dispatch(
-      repoActions.resyncAllRepos([
-        {
-          namespace: "namespace-1",
-          name: "foo",
-        },
-        {
-          namespace: "namespace-2",
-          name: "bar",
-        },
-      ]),
-    );
-
-    expect(appRepoGetMock).toHaveBeenCalledTimes(2);
-    expect(appRepoGetMock.mock.calls[0]).toEqual(["default", "namespace-1", "foo"]);
-    expect(appRepoGetMock.mock.calls[1]).toEqual(["default", "namespace-2", "bar"]);
   });
 });
 
@@ -318,136 +326,43 @@ describe("fetchRepos", () => {
 });
 
 describe("installRepo", () => {
-  const installRepoCMD = repoActions.installRepo(
-    "my-repo",
-    "my-namespace",
-    "http://foo.bar",
-    "helm",
-    "",
-    "",
-    "",
-    "",
-    "",
-    [],
-    [],
-    false,
-    false,
-    undefined,
-  );
+  const installRepoCMD = repoActions.installRepo("my-namespace", repoData);
 
   context("when authHeader provided", () => {
-    const installRepoCMDAuth = repoActions.installRepo(
-      "my-repo",
-      "my-namespace",
-      "http://foo.bar",
-      "helm",
-      "",
-      "Bearer: abc",
-      "",
-      "",
-      "",
-      [],
-      [],
-      false,
-      false,
-      undefined,
-    );
+    const installRepoCMDAuth = repoActions.installRepo("my-namespace", {
+      ...repoData,
+      authHeader: "Bearer: abc",
+    });
 
     it("calls AppRepository create including a auth struct (authHeader)", async () => {
       await store.dispatch(installRepoCMDAuth);
-      expect(AppRepository.create).toHaveBeenCalledWith(
-        "default",
-        "my-repo",
-        "my-namespace",
-        "http://foo.bar",
-        "helm",
-        "",
-        "Bearer: abc",
-        "",
-        "",
-        {},
-        [],
-        [],
-        false,
-        false,
-        undefined,
-      );
+      expect(AppRepository.create).toHaveBeenCalledWith("default", "my-namespace", {
+        ...repoData,
+        authHeader: "Bearer: abc",
+      });
     });
 
     it("calls AppRepository create including ociRepositories", async () => {
       await store.dispatch(
-        repoActions.installRepo(
-          "my-repo",
-          "my-namespace",
-          "http://foo.bar",
-          "oci",
-          "",
-          "",
-          "",
-          "",
-          "",
-          [],
-          ["apache", "jenkins"],
-          false,
-          false,
-          undefined,
-        ),
+        repoActions.installRepo("my-namespace", {
+          ...repoData,
+          type: RepositoryStorageTypes.PACKAGE_REPOSITORY_STORAGE_OCI,
+          customDetails: { ...repoData.customDetails, ociRepositories: ["apache", "jenkins"] },
+        }),
       );
-      expect(AppRepository.create).toHaveBeenCalledWith(
-        "default",
-        "my-repo",
-        "my-namespace",
-        "http://foo.bar",
-        "oci",
-        "",
-        "",
-        "",
-        "",
-        {},
-        [],
-        ["apache", "jenkins"],
-        false,
-        false,
-        undefined,
-      );
+      expect(AppRepository.create).toHaveBeenCalledWith("default", "my-namespace", {
+        ...repoData,
+        type: RepositoryStorageTypes.PACKAGE_REPOSITORY_STORAGE_OCI,
+        customDetails: { ...repoData.customDetails, ociRepositories: ["apache", "jenkins"] },
+      });
     });
 
     it("calls AppRepository create skipping TLS verification", async () => {
-      await store.dispatch(
-        repoActions.installRepo(
-          "my-repo",
-          "my-namespace",
-          "http://foo.bar",
-          "oci",
-          "",
-          "",
-          "",
-          "",
-          "",
-          [],
-          [],
-          true,
-          false,
-          undefined,
-        ),
-      );
-      expect(AppRepository.create).toHaveBeenCalledWith(
-        "default",
-        "my-repo",
-        "my-namespace",
-        "http://foo.bar",
-        "oci",
-        "",
-        "",
-        "",
-        "",
-        {},
-        [],
-        [],
-        true,
-        false,
-        undefined,
-      );
+      await store.dispatch(repoActions.installRepo("my-namespace", { ...repoData, skipTLS: true }));
+      expect(AppRepository.create).toHaveBeenCalledWith("default", "my-namespace", {
+        ...repoData,
+        skipTLS: true,
+      });
     });
 
     it("returns true", async () => {
@@ -457,139 +372,29 @@ describe("installRepo", () => {
   });
 
   context("when a customCA is provided", () => {
-    const installRepoCMDAuth = repoActions.installRepo(
-      "my-repo",
-      "my-namespace",
-      "http://foo.bar",
-      "helm",
-      "",
-      "",
-      "",
-      "This is a cert!",
-      "",
-      [],
-      [],
-      false,
-      false,
-      undefined,
-    );
+    const installRepoCMDAuth = repoActions.installRepo("my-namespace", {
+      ...repoData,
+      customCA: "This is a cert!",
+    });
 
     it("calls AppRepository create including a auth struct (custom CA)", async () => {
       await store.dispatch(installRepoCMDAuth);
-      expect(AppRepository.create).toHaveBeenCalledWith(
-        "default",
-        "my-repo",
-        "my-namespace",
-        "http://foo.bar",
-        "helm",
-        "",
-        "",
-        "",
-        "This is a cert!",
-        {},
-        [],
-        [],
-        false,
-        false,
-        undefined,
-      );
+      expect(AppRepository.create).toHaveBeenCalledWith("default", "my-namespace", {
+        ...repoData,
+        customCA: "This is a cert!",
+      });
     });
 
     it("returns true (installRepoCMDAuth)", async () => {
       const res = await store.dispatch(installRepoCMDAuth);
       expect(res).toBe(true);
     });
-
-    context("when a pod template is provided", () => {
-      it("calls AppRepository create including pod template", async () => {
-        await store.dispatch(
-          repoActions.installRepo(
-            "my-repo",
-            "my-namespace",
-            "http://foo.bar",
-            "helm",
-            "",
-            "",
-            "",
-            "",
-            safeYAMLTemplate,
-            [],
-            [],
-            false,
-            false,
-            undefined,
-          ),
-        );
-
-        expect(AppRepository.create).toHaveBeenCalledWith(
-          "default",
-          "my-repo",
-          "my-namespace",
-          "http://foo.bar",
-          "helm",
-          "",
-          "",
-          "",
-          "",
-          {
-            spec: { containers: [{ env: [{ name: "FOO", value: "BAR" }] }] },
-          },
-          [],
-          [],
-          false,
-          false,
-          undefined,
-        );
-      });
-
-      // Example from https://nealpoole.com/blog/2013/06/code-execution-via-yaml-in-js-yaml-nodejs-module/
-      const unsafeYAMLTemplate =
-        '"toString": !<tag:yaml.org,2002:js/function> "function (){very_evil_thing();}"';
-
-      it("does not call AppRepository create with an unsafe pod template", async () => {
-        await store.dispatch(
-          repoActions.installRepo(
-            "my-repo",
-            "my-namespace",
-            "http://foo.bar",
-            "helm",
-            "",
-            "",
-            "",
-            "",
-            unsafeYAMLTemplate,
-            [],
-            [],
-            false,
-            false,
-            undefined,
-          ),
-        );
-        expect(AppRepository.create).not.toHaveBeenCalled();
-      });
-    });
   });
 
   context("when authHeader and customCA are empty", () => {
     it("calls AppRepository create without a auth struct", async () => {
       await store.dispatch(installRepoCMD);
-      expect(AppRepository.create).toHaveBeenCalledWith(
-        "default",
-        "my-repo",
-        "my-namespace",
-        "http://foo.bar",
-        "helm",
-        "",
-        "",
-        "",
-        "",
-        {},
-        [],
-        [],
-        false,
-        false,
-        undefined,
-      );
+      expect(AppRepository.create).toHaveBeenCalledWith("default", "my-namespace", repoData);
     });
 
     it("returns true (installRepoCMD)", async () => {
@@ -643,79 +448,29 @@ describe("installRepo", () => {
 
   it("includes registry secrets if given", async () => {
     await store.dispatch(
-      repoActions.installRepo(
-        "my-repo",
-        "foo",
-        "http://foo.bar",
-        "helm",
-        "",
-        "",
-        "",
-        "",
-        "",
-        ["repo-1"],
-        [],
-        false,
-        false,
-        undefined,
-      ),
+      repoActions.installRepo("my-namespace", {
+        ...repoData,
+        customDetails: { ...repoData.customDetails, dockerRegistrySecrets: ["repo-1"] },
+      }),
     );
 
-    expect(AppRepository.create).toHaveBeenCalledWith(
-      "default",
-      "my-repo",
-      "foo",
-      "http://foo.bar",
-      "helm",
-      "",
-      "",
-      "",
-      "",
-      {},
-      ["repo-1"],
-      [],
-      false,
-      false,
-      undefined,
-    );
+    expect(AppRepository.create).toHaveBeenCalledWith("default", "my-namespace", {
+      ...repoData,
+      customDetails: { ...repoData.customDetails, dockerRegistrySecrets: ["repo-1"] },
+    });
   });
 
   it("calls AppRepository create with description", async () => {
     await store.dispatch(
-      repoActions.installRepo(
-        "my-repo",
-        "my-namespace",
-        "http://foo.bar",
-        "oci",
-        "This is a weird description 123!@#$%^&&*()_+-=<>?/.,;:'\"",
-        "",
-        "",
-        "",
-        "",
-        [],
-        ["apache", "jenkins"],
-        false,
-        false,
-        undefined,
-      ),
+      repoActions.installRepo("my-namespace", {
+        ...repoData,
+        description: "This is a weird description 123!@#$%^&&*()_+-=<>?/.,;:'\"",
+      }),
     );
-    expect(AppRepository.create).toHaveBeenCalledWith(
-      "default",
-      "my-repo",
-      "my-namespace",
-      "http://foo.bar",
-      "oci",
-      "This is a weird description 123!@#$%^&&*()_+-=<>?/.,;:'\"",
-      "",
-      "",
-      "",
-      {},
-      [],
-      ["apache", "jenkins"],
-      false,
-      false,
-      undefined,
-    );
+    expect(AppRepository.create).toHaveBeenCalledWith("default", "my-namespace", {
+      ...repoData,
+      description: "This is a weird description 123!@#$%^&&*()_+-=<>?/.,;:'\"",
+    });
   });
 });
 
@@ -739,41 +494,17 @@ describe("updateRepo", () => {
     ];
 
     await store.dispatch(
-      repoActions.updateRepo(
-        "my-repo",
-        "my-namespace",
-        "http://foo.bar",
-        "helm",
-        "",
-        "foo",
-        "",
-        "bar",
-        safeYAMLTemplate,
-        ["repo-1"],
-        [],
-        false,
-        false,
-        undefined,
-      ),
+      repoActions.updateRepo("my-namespace", {
+        ...repoData,
+        authHeader: "foo",
+      }),
     );
+
     expect(store.getActions()).toEqual(expectedActions);
-    expect(AppRepository.update).toHaveBeenCalledWith(
-      "default",
-      "my-repo",
-      "my-namespace",
-      "http://foo.bar",
-      "helm",
-      "",
-      "foo",
-      "",
-      "bar",
-      { spec: { containers: [{ env: [{ name: "FOO", value: "BAR" }] }] } },
-      ["repo-1"],
-      [],
-      false,
-      false,
-      undefined,
-    );
+    expect(AppRepository.update).toHaveBeenCalledWith("default", "my-namespace", {
+      ...repoData,
+      authHeader: "foo",
+    });
   });
 
   it("updates a repo with an customCA", async () => {
@@ -795,41 +526,13 @@ describe("updateRepo", () => {
     ];
 
     await store.dispatch(
-      repoActions.updateRepo(
-        "my-repo",
-        "my-namespace",
-        "http://foo.bar",
-        "helm",
-        "",
-        "foo",
-        "",
-        "bar",
-        safeYAMLTemplate,
-        ["repo-1"],
-        [],
-        false,
-        false,
-        undefined,
-      ),
+      repoActions.updateRepo("my-namespace", { ...repoData, customCA: "This is a cert!" }),
     );
     expect(store.getActions()).toEqual(expectedActions);
-    expect(AppRepository.update).toHaveBeenCalledWith(
-      "default",
-      "my-repo",
-      "my-namespace",
-      "http://foo.bar",
-      "helm",
-      "",
-      "foo",
-      "",
-      "bar",
-      { spec: { containers: [{ env: [{ name: "FOO", value: "BAR" }] }] } },
-      ["repo-1"],
-      [],
-      false,
-      false,
-      undefined,
-    );
+    expect(AppRepository.update).toHaveBeenCalledWith("default", "my-namespace", {
+      ...repoData,
+      customCA: "This is a cert!",
+    });
   });
 
   it("returns an error if failed", async () => {
@@ -846,24 +549,7 @@ describe("updateRepo", () => {
       },
     ];
 
-    await store.dispatch(
-      repoActions.updateRepo(
-        "my-repo",
-        "my-namespace",
-        "http://foo.bar",
-        "helm",
-        "",
-        "foo",
-        "",
-        "bar",
-        safeYAMLTemplate,
-        [],
-        [],
-        false,
-        false,
-        undefined,
-      ),
-    );
+    await store.dispatch(repoActions.updateRepo("my-namespace", repoData));
     expect(store.getActions()).toEqual(expectedActions);
   });
 
@@ -872,40 +558,17 @@ describe("updateRepo", () => {
       appRepository: {},
     });
     await store.dispatch(
-      repoActions.updateRepo(
-        "my-repo",
-        "my-namespace",
-        "http://foo.bar",
-        "oci",
-        "",
-        "",
-        "",
-        "",
-        "",
-        [],
-        ["apache", "jenkins"],
-        false,
-        false,
-        undefined,
-      ),
+      repoActions.updateRepo("my-namespace", {
+        ...repoData,
+        type: RepositoryStorageTypes.PACKAGE_REPOSITORY_STORAGE_OCI,
+        customDetails: { ...repoData.customDetails, ociRepositories: ["apache", "jenkins"] },
+      }),
     );
-    expect(AppRepository.update).toHaveBeenCalledWith(
-      "default",
-      "my-repo",
-      "my-namespace",
-      "http://foo.bar",
-      "oci",
-      "",
-      "",
-      "",
-      "",
-      {},
-      [],
-      ["apache", "jenkins"],
-      false,
-      false,
-      undefined,
-    );
+    expect(AppRepository.update).toHaveBeenCalledWith("default", "my-namespace", {
+      ...repoData,
+      type: RepositoryStorageTypes.PACKAGE_REPOSITORY_STORAGE_OCI,
+      customDetails: { ...repoData.customDetails, ociRepositories: ["apache", "jenkins"] },
+    });
   });
 
   it("updates a repo with description", async () => {
@@ -913,40 +576,12 @@ describe("updateRepo", () => {
       appRepository: {},
     });
     await store.dispatch(
-      repoActions.updateRepo(
-        "my-repo",
-        "my-namespace",
-        "http://foo.bar",
-        "oci",
-        "updated description",
-        "",
-        "",
-        "",
-        "",
-        [],
-        ["apache", "jenkins"],
-        false,
-        false,
-        undefined,
-      ),
+      repoActions.updateRepo("my-namespace", { ...repoData, description: "updated description" }),
     );
-    expect(AppRepository.update).toHaveBeenCalledWith(
-      "default",
-      "my-repo",
-      "my-namespace",
-      "http://foo.bar",
-      "oci",
-      "updated description",
-      "",
-      "",
-      "",
-      {},
-      [],
-      ["apache", "jenkins"],
-      false,
-      false,
-      undefined,
-    );
+    expect(AppRepository.update).toHaveBeenCalledWith("default", "my-namespace", {
+      ...repoData,
+      description: "updated description",
+    });
   });
 });
 
@@ -1016,146 +651,5 @@ describe("findPackageInRepo", () => {
       identifier: "my-repo/my-package",
       plugin: { name: "my.plugin", version: "0.0.1" } as Plugin,
     } as AvailablePackageReference);
-  });
-});
-
-describe("validateRepo", () => {
-  it("dispatches repoValidating and repoValidated if no error", async () => {
-    AppRepository.validate = jest.fn().mockReturnValue({
-      code: 200,
-      message: "OK",
-    });
-    const expectedActions = [
-      {
-        type: getType(repoActions.repoValidating),
-      },
-      {
-        type: getType(repoActions.repoValidated),
-        payload: { code: 200, message: "OK" },
-      },
-    ];
-
-    const res = await store.dispatch(
-      repoActions.validateRepo("url", "helm", "auth", "", "cert", [], false, false),
-    );
-    expect(store.getActions()).toEqual(expectedActions);
-    expect(res).toBe(true);
-  });
-
-  it("dispatches checkRepo and errorRepos when the validation failed", async () => {
-    const error = new Error("boom!");
-    AppRepository.validate = jest.fn(() => {
-      throw error;
-    });
-    const expectedActions = [
-      {
-        type: getType(repoActions.repoValidating),
-      },
-      {
-        type: getType(repoActions.errorRepos),
-        payload: { err: error, op: "validate" },
-      },
-    ];
-    const res = await store.dispatch(
-      repoActions.validateRepo("url", "helm", "auth", "", "cert", [], false, false),
-    );
-    expect(store.getActions()).toEqual(expectedActions);
-    expect(res).toBe(false);
-  });
-
-  it("dispatches checkRepo and errorRepos when the validation cannot be parsed", async () => {
-    AppRepository.validate = jest.fn().mockReturnValue({
-      code: 409,
-      message: "forbidden",
-    });
-    const expectedActions = [
-      {
-        type: getType(repoActions.repoValidating),
-      },
-      {
-        type: getType(repoActions.errorRepos),
-        payload: {
-          err: new Error('{"code":409,"message":"forbidden"}'),
-          op: "validate",
-        },
-      },
-    ];
-    const res = await store.dispatch(
-      repoActions.validateRepo("url", "helm", "auth", "", "cert", [], false, false),
-    );
-    expect(store.getActions()).toEqual(expectedActions);
-    expect(res).toBe(false);
-  });
-
-  it("validates repo with ociRepositories", async () => {
-    AppRepository.validate = jest.fn().mockReturnValue({
-      code: 200,
-    });
-    const res = await store.dispatch(
-      repoActions.validateRepo("url", "oci", "", "", "", ["apache", "jenkins"], false, false),
-    );
-    expect(res).toBe(true);
-    expect(AppRepository.validate).toHaveBeenCalledWith(
-      "default",
-      "kubeapps-namespace",
-      "url",
-      "oci",
-      "",
-      "",
-      "",
-      ["apache", "jenkins"],
-      false,
-      false,
-    );
-  });
-});
-
-describe("createDockerRegistrySecret", () => {
-  it("creates a docker registry", async () => {
-    Secret.createPullSecret = jest.fn();
-    const expectedActions = [
-      {
-        type: getType(repoActions.createImagePullSecret),
-        payload: "secret-name",
-      },
-    ];
-
-    await store.dispatch(
-      repoActions.createDockerRegistrySecret(
-        "secret-name",
-        "user",
-        "password",
-        "email",
-        "server",
-        "namespace",
-      ),
-    );
-    expect(Secret.createPullSecret).toHaveBeenCalledWith(
-      "default",
-      "secret-name",
-      "user",
-      "password",
-      "email",
-      "server",
-      "namespace",
-    );
-    expect(store.getActions()).toEqual(expectedActions);
-  });
-
-  it("dispatches an error", async () => {
-    Secret.createPullSecret = jest.fn(() => {
-      throw new Error("boom");
-    });
-    const expectedActions = [
-      {
-        type: getType(repoActions.errorRepos),
-        payload: {
-          err: new Error("boom"),
-          op: "fetch",
-        },
-      },
-    ];
-    await store.dispatch(repoActions.createDockerRegistrySecret("", "", "", "", "", ""));
-    expect(store.getActions()).toEqual(expectedActions);
   });
 });
