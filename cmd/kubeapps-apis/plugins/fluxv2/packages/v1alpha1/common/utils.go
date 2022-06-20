@@ -32,13 +32,13 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"helm.sh/helm/v3/pkg/getter"
-	"helm.sh/helm/v3/pkg/registry"
 	apiv1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/wait"
 	log "k8s.io/klog/v2"
+	registryauth "oras.land/oras-go/pkg/registry/remote/auth"
 	ctrlclient "sigs.k8s.io/controller-runtime/pkg/client"
 )
 
@@ -303,13 +303,13 @@ func tlsClientConfigFromSecret(secret apiv1.Secret, options *HttpClientOptions) 
 	return nil
 }
 
-// LoginOptionFromSecret derives authentication data from a Secret to login to an OCI registry.
+// OCIRegistryCredentialFromSecret derives authentication data from a Secret to login to an OCI registry.
 // This Secret may either hold "username" and "password" fields or be of the
 // apiv1.SecretTypeDockerConfigJson type and hold a apiv1.DockerConfigJsonKey field with a
 // complete Docker configuration. If both, "username" and "password" are
 // empty, a nil LoginOption and a nil error will be returned.
 // ref https://github.com/fluxcd/source-controller/blob/main/internal/helm/registry/auth.go
-func LoginOptionFromSecret(registryURL string, secret apiv1.Secret) (registry.LoginOption, error) {
+func OCIRegistryCredentialFromSecret(registryURL string, secret apiv1.Secret) (*registryauth.Credential, error) {
 	var username, password string
 	if secret.Type == apiv1.SecretTypeDockerConfigJson {
 		dockerCfg, err := config.LoadFromReader(bytes.NewReader(secret.Data[apiv1.DockerConfigJsonKey]))
@@ -348,12 +348,15 @@ func LoginOptionFromSecret(registryURL string, secret apiv1.Secret) (registry.Lo
 	if len(pwdRedacted) > 4 {
 		pwdRedacted = pwdRedacted[0:3] + "..."
 	}
-	log.Infof("-LoginOptionFromSecret: username: [%s], password: [%s]", username, pwdRedacted)
-	return registry.LoginOptBasicAuth(username, password), nil
+	log.Infof("-OCIRegistryCredentialFromSecret: username: [%s], password: [%s]", username, pwdRedacted)
+	return &registryauth.Credential{
+		Username: username,
+		Password: password,
+	}, nil
 }
 
 func NewHttpClientAndHeaders(clientOptions *HttpClientOptions) (*http.Client, map[string]string, error) {
-	// I wish I could have re-used the code in pkg/chart/chart.go and pkg/kube_utils/kube_utils.go
+	// I wish I could reuse the code in pkg/chart/chart.go and pkg/kube_utils/kube_utils.go
 	// InitHTTPClient(), etc. but alas, it's all built around AppRepository CRD, which I don't have.
 	headers := make(map[string]string)
 	headers["User-Agent"] = userAgentString()

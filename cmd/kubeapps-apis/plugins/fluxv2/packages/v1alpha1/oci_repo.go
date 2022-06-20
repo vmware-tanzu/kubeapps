@@ -41,6 +41,7 @@ import (
 
 	"github.com/fluxcd/pkg/version"
 	sourcev1 "github.com/fluxcd/source-controller/api/v1beta2"
+	registryauth "oras.land/oras-go/pkg/registry/remote/auth"
 )
 
 // RegistryClient is an interface for interacting with OCI registries
@@ -77,12 +78,17 @@ type OCIRegistry struct {
 	// registryClient is a client to use while downloading tags or charts from a registry.
 	registryClient RegistryClient
 
+	// a workaround for the fact that I don't have access to internals of RegistryClient
+	registryCredentialFn OCIRegistryCredentialFn
+
 	repositoryLister OCIRepositoryLister
 }
 
 // OCIRegistryOption is a function that can be passed to NewOCIRegistry
 // to configure an OCIRegistry.
 type OCIRegistryOption func(*OCIRegistry) error
+
+type OCIRegistryCredentialFn func(ctx context.Context, reg string) (registryauth.Credential, error)
 
 var (
 	helmGetters = getter.Providers{
@@ -128,6 +134,13 @@ func withOCIGetter(providers getter.Providers) OCIRegistryOption {
 func withOCIGetterOptions(getterOpts []getter.Option) OCIRegistryOption {
 	return func(r *OCIRegistry) error {
 		r.helmOptions = getterOpts
+		return nil
+	}
+}
+
+func withRegistryCredentialFn(fn OCIRegistryCredentialFn) OCIRegistryOption {
+	return func(r *OCIRegistry) error {
+		r.registryCredentialFn = fn
 		return nil
 	}
 }
@@ -303,10 +316,10 @@ func getLastMatchingVersionOrConstraint(cvs []string, ver string) (string, error
 	return matchingVersions[0].Original(), nil
 }
 
-// NewRegistryClient generates a registry client and a temporary credential file.
+// newRegistryClient generates a registry client and a temporary credential file.
 // The client is meant to be used for a single reconciliation.
 // The file is meant to be used for a single reconciliation and deleted after.
-func NewRegistryClient(isLogin bool) (*registry.Client, string, error) {
+func newRegistryClient(isLogin bool) (*registry.Client, string, error) {
 	if isLogin {
 		// create a temporary file to store the credentials
 		// this is needed because otherwise the credentials are stored in ~/.docker/config.json.
@@ -348,8 +361,6 @@ func (s *repoEventSink) onAddOciRepo(repo sourcev1.HelmRepository) ([]byte, bool
 	if err != nil {
 		return nil, false, err
 	}
-
-	//	debugTagList("ghcr.io/stefanprodan/charts/podinfo")
 
 	chartRepo := &models.Repo{
 		Namespace: repo.Namespace,
@@ -537,14 +548,14 @@ func (r *OCIRegistry) checksum() (string, error) {
 
 func (s *repoEventSink) newOCIRegistryAndLogin(repo sourcev1.HelmRepository) (*OCIRegistry, error) {
 	// Construct the Getter options from the HelmRepository data
-	loginOpts, getterOpts, err := s.helmOptionsForRepo(repo)
+	loginOpts, getterOpts, cred, err := s.clientOptionsForRepo(repo)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to create registry client options: %v", err)
 	}
-	log.Infof("=====================> loginOpts: [%v], getterOpts: [%v]", len(loginOpts), len(getterOpts))
+	log.Infof("=====================> loginOpts: [%v], getterOpts: [%v], cred: %t", len(loginOpts), len(getterOpts), cred != nil)
 
 	// Create registry client and login if needed.
-	registryClient, file, err := NewRegistryClient(loginOpts != nil)
+	registryClient, file, err := newRegistryClient(loginOpts != nil)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to create registry client: %v", err)
 	}
@@ -567,6 +578,13 @@ func (s *repoEventSink) newOCIRegistryAndLogin(repo sourcev1.HelmRepository) (*O
 		*/
 	}
 
+	registryCredentialFn := func(ctx context.Context, reg string) (registryauth.Credential, error) {
+		if cred != nil {
+			return *cred, nil
+		} else {
+			return registryauth.EmptyCredential, nil
+		}
+	}
 	// a little bit misleading, since repo.Spec.URL is really an OCI Registry URL,
 	// which may contain zero or more "helm repositories", such as
 	// oci://demo.goharbor.io/test-oci-1, which may contain repositories "repo-1", "repo2", etc
@@ -575,7 +593,8 @@ func (s *repoEventSink) newOCIRegistryAndLogin(repo sourcev1.HelmRepository) (*O
 		repo.Spec.URL,
 		withOCIGetter(helmGetters),
 		withOCIGetterOptions(getterOpts),
-		withOCIRegistryClient(registryClient))
+		withOCIRegistryClient(registryClient),
+		withRegistryCredentialFn(registryCredentialFn))
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to parse URL '%s': %v", repo.Spec.URL, err)
 	}
@@ -591,10 +610,11 @@ func (s *repoEventSink) newOCIRegistryAndLogin(repo sourcev1.HelmRepository) (*O
 	return ociRegistry, nil
 }
 
-func (s *repoEventSink) helmOptionsForRepo(repo sourcev1.HelmRepository) ([]registry.LoginOption, []getter.Option, error) {
-	log.Infof("+helmOptionsForRepo()")
+func (s *repoEventSink) clientOptionsForRepo(repo sourcev1.HelmRepository) ([]registry.LoginOption, []getter.Option, *registryauth.Credential, error) {
+	log.Infof("+clientOptionsForRepo()")
 
 	var loginOpts []registry.LoginOption
+	var cred *registryauth.Credential
 	getterOpts := []getter.Option{
 		getter.WithURL(repo.Spec.URL),
 		getter.WithTimeout(repo.Spec.Timeout.Duration),
@@ -603,23 +623,23 @@ func (s *repoEventSink) helmOptionsForRepo(repo sourcev1.HelmRepository) ([]regi
 
 	secret, err := s.getRepoSecret(context.Background(), repo)
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, nil, err
 	} else if secret != nil {
 		opts, err := common.HelmGetterOptionsFromSecret(*secret)
 		if err != nil {
-			return nil, nil, err
+			return nil, nil, nil, err
 		}
 		getterOpts = append(getterOpts, opts...)
 
-		loginOpt, err := common.LoginOptionFromSecret(repo.Spec.URL, *secret)
+		cred, err = common.OCIRegistryCredentialFromSecret(repo.Spec.URL, *secret)
 		if err != nil {
-			return nil, nil, err
+			return nil, nil, nil, err
 		}
 
+		loginOpt := registry.LoginOptBasicAuth(cred.Username, cred.Password)
 		if loginOpt != nil {
 			loginOpts = append(loginOpts, loginOpt)
 		}
 	}
-
-	return loginOpts, getterOpts, nil
+	return loginOpts, getterOpts, cred, nil
 }

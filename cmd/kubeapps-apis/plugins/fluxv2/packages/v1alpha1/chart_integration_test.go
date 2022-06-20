@@ -529,18 +529,6 @@ func TestKindClusterGetAvailablePackageSummariesForOCI(t *testing.T) {
 		t.Fatalf("Environment variable GITHUB_TOKEN needs to be set")
 	}
 
-	// appears to work on the client-side only after successful
-	//   docker login ghcr.io -u gfichtenholt -p ghp_...
-	// personal access token ghp_... can be seen on https://github.com/settings/tokens
-	// and has "admin:repo_hook, delete_repo, repo" scopes
-
-	// TODO on the server-side it doesn't work
-	// somehow dockerauth.NewClientWithDockerFallback() isn't finding any creds which causes
-	// -HTTP GET response: raised err=GET "https://ghcr.io/v2/":
-	// GET "https://ghcr.io/token?scope=repository%3Auser%2Fimage%3Apull&service=ghcr.io":
-	// unexpected status code 403: denied: requested access to the resource is denied
-	// debugTagList("ghcr.io/stefanprodan/charts/podinfo")
-
 	adminName := types.NamespacedName{
 		Name:      "test-admin-" + randSeq(4),
 		Namespace: "default",
