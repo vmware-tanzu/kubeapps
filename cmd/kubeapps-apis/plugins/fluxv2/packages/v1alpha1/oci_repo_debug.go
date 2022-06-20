@@ -11,12 +11,16 @@ import (
 	"io"
 	"io/ioutil"
 	"net/http"
+	"os"
 	"strconv"
 
 	"helm.sh/helm/v3/pkg/registry"
 
 	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/fluxv2/packages/v1alpha1/common"
 	log "k8s.io/klog/v2"
+
+	"github.com/docker/cli/cli/config/configfile"
+	"github.com/docker/cli/cli/config/credentials"
 
 	"github.com/sirupsen/logrus"
 	"helm.sh/helm/v3/pkg/helmpath"
@@ -58,11 +62,11 @@ func debugTagList(ref string) error {
 		Header: http.Header{"User-Agent": {"Helm/3.9.0"}},
 		Cache:  registryauth.DefaultCache,
 		Credential: func(ctx context.Context, reg string) (registryauth.Credential, error) {
+			log.Infof("+ =======> debugTags: Credential fn(%s)", reg)
 			dockerClient, ok := authClient.(*dockerauth.Client)
 			if !ok {
 				return registryauth.EmptyCredential, errors.New("unable to obtain docker client")
 			}
-
 			username, password, err := dockerClient.Credential(reg)
 			if err != nil {
 				return registryauth.EmptyCredential, errors.New("unable to retrieve credentials")
@@ -166,4 +170,25 @@ func debugTagList(ref string) error {
 	tags(ctxFn(io.Discard, true), url)
 
 	return nil
+}
+
+// loadConfigFile reads the configuration files from the given path.
+func loadConfigFile(path string) (*configfile.ConfigFile, error) {
+	cfg := configfile.New(path)
+	if _, err := os.Stat(path); err == nil {
+		file, err := os.Open(path)
+		if err != nil {
+			return nil, err
+		}
+		defer file.Close()
+		if err := cfg.LoadFromReader(file); err != nil {
+			return nil, err
+		}
+	} else if !os.IsNotExist(err) {
+		return nil, err
+	}
+	if !cfg.ContainsAuth() {
+		cfg.CredentialsStore = credentials.DetectDefaultStore(cfg.CredentialsStore)
+	}
+	return cfg, nil
 }

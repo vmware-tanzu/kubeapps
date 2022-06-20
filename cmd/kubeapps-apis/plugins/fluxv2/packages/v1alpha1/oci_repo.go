@@ -46,7 +46,7 @@ import (
 // RegistryClient is an interface for interacting with OCI registries
 // It is used by the OCIRegistry to retrieve chart versions
 // from OCI registries. These signatures are implemented by
-//
+// https://github.com/helm/helm/blob/main/pkg/registry/client.go
 type RegistryClient interface {
 	Login(host string, opts ...registry.LoginOption) error
 	Logout(host string, opts ...registry.LogoutOption) error
@@ -149,7 +149,11 @@ func newOCIRegistry(registryURL string, registryOpts ...OCIRegistryOption) (*OCI
 			return nil, err
 		}
 	}
+	return r, nil
+}
 
+func (r *OCIRegistry) listRepositoryNames() ([]string, error) {
+	// this needs to be done after a call to login()
 	for _, lister := range builtInRepoListers {
 		if ok, err := lister.IsApplicableFor(r); ok && err == nil {
 			r.repositoryLister = lister
@@ -163,10 +167,6 @@ func newOCIRegistry(registryURL string, registryOpts ...OCIRegistryOption) (*OCI
 		return nil, status.Errorf(codes.Internal, "No repository lister found for OCI registry with url: [%s]", &r.url)
 	}
 
-	return r, nil
-}
-
-func (r *OCIRegistry) listRepositoryNames() ([]string, error) {
 	return r.repositoryLister.ListRepositoryNames()
 }
 
@@ -207,10 +207,6 @@ func (r *OCIRegistry) getChartVersion(name, ver string) (*repo.ChartVersion, err
 func (r *OCIRegistry) getTags(ref string) ([]string, error) {
 	ref = strings.TrimPrefix(ref, fmt.Sprintf("%s://", registry.OCIScheme))
 
-	if err := debugTagList(ref); err != nil {
-		log.Infof("debugTags failed due to: %v", err)
-	}
-
 	tags, err := r.registryClient.Tags(ref)
 	if err != nil {
 		return nil, err
@@ -246,17 +242,6 @@ func (r *OCIRegistry) downloadChart(chart *repo.ChartVersion) (*bytes.Buffer, er
 	// trim the oci scheme prefix if needed
 	getThis := strings.TrimPrefix(u.String(), fmt.Sprintf("%s://", registry.OCIScheme))
 	return r.helmGetter.Get(getThis, clientOpts...)
-}
-
-// login attempts to login to the OCI registry.
-// It returns an error on failure.
-func (r *OCIRegistry) login(opts ...registry.LoginOption) error {
-	log.Infof("+login")
-	err := r.registryClient.Login(r.url.Host, opts...)
-	if err != nil {
-		return err
-	}
-	return nil
 }
 
 // logout attempts to logout from the OCI registry.
@@ -359,17 +344,12 @@ func (s *repoEventSink) onAddOciRepo(repo sourcev1.HelmRepository) ([]byte, bool
 	log.Infof("+onAddOciRepo(%s)", common.PrettyPrint(repo))
 	defer log.Infof("-onAddOciRepo")
 
-	ociRegistry, err := s.newOCIRegistry(repo)
+	ociRegistry, err := s.newOCIRegistryAndLogin(repo)
 	if err != nil {
 		return nil, false, err
 	}
 
-	repoURL, err := url.ParseRequestURI(strings.TrimSpace(repo.Spec.URL))
-	if err != nil {
-		return nil, false, status.Errorf(codes.Internal, "%v", err)
-	}
-
-	log.Infof("==========>: URL object: [%s]", common.PrettyPrint(repoURL))
+	//	debugTagList("ghcr.io/stefanprodan/charts/podinfo")
 
 	chartRepo := &models.Repo{
 		Namespace: repo.Namespace,
@@ -500,7 +480,7 @@ func (s *repoEventSink) onModifyOciRepo(key string, oldValue interface{}, repo s
 			key, cacheEntryUntyped)
 	}
 
-	ociRegistry, err := s.newOCIRegistry(repo)
+	ociRegistry, err := s.newOCIRegistryAndLogin(repo)
 	if err != nil {
 		return nil, false, err
 	}
@@ -555,7 +535,7 @@ func (r *OCIRegistry) checksum() (string, error) {
 	return common.GetSha256(content)
 }
 
-func (s *repoEventSink) newOCIRegistry(repo sourcev1.HelmRepository) (*OCIRegistry, error) {
+func (s *repoEventSink) newOCIRegistryAndLogin(repo sourcev1.HelmRepository) (*OCIRegistry, error) {
 	// Construct the Getter options from the HelmRepository data
 	loginOpts, getterOpts, err := s.helmOptionsForRepo(repo)
 	if err != nil {
@@ -569,11 +549,22 @@ func (s *repoEventSink) newOCIRegistry(repo sourcev1.HelmRepository) (*OCIRegist
 		return nil, status.Errorf(codes.Internal, "failed to create registry client: %v", err)
 	}
 	if file != "" {
-		defer func() {
-			if err := os.Remove(file); err != nil {
-				log.Infof("Failed to delete temporary credentials file: %v", err)
-			}
-		}()
+		/*
+			defer func() {
+				byteArray, err := ioutil.ReadFile(file)
+				if err != nil {
+					log.Infof("Failed to read temporary credentials file [%s]: %v", file, err)
+				}
+
+				// Convert []byte to string and print to screen
+				log.Infof("about to remove temporary credentials file [%s] content\n[%s]",
+					file, string(byteArray))
+
+				if err := os.Remove(file); err != nil {
+					log.Infof("Failed to delete temporary credentials file: %v", err)
+				}
+			}()
+		*/
 	}
 
 	// a little bit misleading, since repo.Spec.URL is really an OCI Registry URL,
@@ -591,7 +582,8 @@ func (s *repoEventSink) newOCIRegistry(repo sourcev1.HelmRepository) (*OCIRegist
 
 	// Attempt to login to the registry if credentials are provided.
 	if loginOpts != nil {
-		err = ociRegistry.login(loginOpts...)
+		err := ociRegistry.registryClient.Login(ociRegistry.url.Host, loginOpts...)
+		log.Infof("login(%s): %v", ociRegistry.url.Host, err)
 		if err != nil {
 			return nil, err
 		}
@@ -602,6 +594,7 @@ func (s *repoEventSink) newOCIRegistry(repo sourcev1.HelmRepository) (*OCIRegist
 func (s *repoEventSink) helmOptionsForRepo(repo sourcev1.HelmRepository) ([]registry.LoginOption, []getter.Option, error) {
 	log.Infof("+helmOptionsForRepo()")
 
+	var loginOpts []registry.LoginOption
 	getterOpts := []getter.Option{
 		getter.WithURL(repo.Spec.URL),
 		getter.WithTimeout(repo.Spec.Timeout.Duration),
@@ -617,29 +610,16 @@ func (s *repoEventSink) helmOptionsForRepo(repo sourcev1.HelmRepository) ([]regi
 			return nil, nil, err
 		}
 		getterOpts = append(getterOpts, opts...)
-	}
 
-	/*
-		ctx :=
-		_, err := s.clientOptionsForRepo(ctx, repo)
+		loginOpt, err := common.LoginOptionFromSecret(repo.Spec.URL, *secret)
 		if err != nil {
 			return nil, nil, err
 		}
 
-				loginOpt := append(getterOpts, common.ConvertClientOptionsToHelmGetterOptions(c)...)
+		if loginOpt != nil {
+			loginOpts = append(loginOpts, loginOpt)
+		}
+	}
 
-					tlsConfig, err = getter.TLSClientConfigFromSecret(*secret, repo.Spec.URL)
-					if err != nil {
-						return nil, err
-					}
-
-					// Build registryClient options from secret
-					loginOpt, err := registry.LoginOptionFromSecret(repo.Spec.URL, *secret)
-					if err != nil {
-						return nil, err
-					}
-
-			loginOpts := append([]registry.LoginOption{}, loginOpt)
-	*/
-	return nil, getterOpts, nil
+	return loginOpts, getterOpts, nil
 }

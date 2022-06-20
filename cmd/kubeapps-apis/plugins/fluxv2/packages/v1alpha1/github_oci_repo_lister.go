@@ -9,6 +9,7 @@ import (
 	"io"
 	"io/ioutil"
 	"net/http"
+	"reflect"
 	"strings"
 
 	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/fluxv2/packages/v1alpha1/common"
@@ -32,8 +33,108 @@ func NewGitHubRepositoryLister() OCIRepositoryLister {
 type gitHubRepositoryLister struct {
 }
 
-// ref https://github.com/distribution/distribution/blob/main/docs/spec/api.md#api-version-check
 func (l *gitHubRepositoryLister) IsApplicableFor(ociRegistry *OCIRegistry) (bool, error) {
+	log.Infof("+IsApplicableFor()")
+
+	ref := strings.TrimPrefix(ociRegistry.url.String(), fmt.Sprintf("%s://", registry.OCIScheme))
+	log.Infof("ref: [%s]", ref)
+
+	// need to use
+	// https://github.com/helm/helm/blob/657850e44b880cca43d0606ebf5a54eb75362c3f/pkg/registry/client.go#L55
+	//registry.Client.
+	log.Infof("ociRegistry.registryClient: %s", reflect.TypeOf(ociRegistry.registryClient))
+	//origRegistryAuthorizer := ociRegistry.registryClient.
+
+	// given ref like this
+	//   ghcr.io/stefanprodan/charts/podinfo
+	// will return
+	//  {
+	//    "Registry": "ghcr.io",
+	//    "Repository": "stefanprodan/charts/podinfo",
+	//    "Reference": ""
+	// }
+	registryAuthorizer := &registryauth.Client{
+		Header: http.Header{"User-Agent": {"Helm/3.9.0"}},
+		Cache:  registryauth.DefaultCache,
+		Credential: func(ctx context.Context, reg string) (registryauth.Credential, error) {
+			username := "gfichtenholt"
+			password := "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"
+
+			log.Infof("=======> IsApplicableFor: registryAuthorizer: [%s] [%s...]", username, password[0:3])
+			return registryauth.Credential{
+				Username: username,
+				Password: password,
+			}, nil
+		},
+	}
+
+	// given ref like this
+	//   ghcr.io/stefanprodan/charts/podinfo
+	// will return
+	//  {
+	//    "Registry": "ghcr.io",
+	//    "Repository": "stefanprodan/charts/podinfo",
+	//    "Reference": ""
+	// }
+	parsedRef, err := orasregistry.ParseReference(ref)
+	if err != nil {
+		return false, err
+	}
+	log.Infof("parsed reference: [%s]", common.PrettyPrint(parsedRef))
+
+	ociRepo := registryremote.Repository{
+		Reference: parsedRef,
+		Client:    registryAuthorizer,
+	}
+
+	ctx := ctxFn(io.Discard, true)
+	ctx = withScopeHint(ctx, parsedRef, registryauth.ActionPull)
+	// buildRepositoryBaseURL builds the base endpoint of the remote registry.
+	// Format: <scheme>://<registry>/v2/
+	url := fmt.Sprintf("%s://%s/v2/", "https", ociRepo.Reference.Host())
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
+	if err != nil {
+		return false, err
+	}
+
+	resp, err := ociRepo.Client.Do(req)
+	if err != nil {
+		return false, err
+	}
+	defer resp.Body.Close()
+
+	_, err = ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return false, err
+	}
+
+	if resp.StatusCode == http.StatusOK {
+		// based on the presence of this here Docker-Distribution-Api-Version:[registry/2.0]
+		// conclude this is a case for GitHubRepositoryLister, e.g.
+		// +HTTP GET request:
+		// URL: https://ghcr.io/v2/
+		// -HTTP GET response: code: 200 OK
+		// headers:
+		//   map[
+		//       Content-Length:[0] Content-Type:[application/json]
+		//       Date:[Sun, 19 Jun 2022 05:08:18 GMT]
+		//       Docker-Distribution-Api-Version:[registry/2.0]
+		//       X-Github-Request-Id:[C4E4:2F9A:3069FD:914D65:62AEAF42]
+		//   ]
+
+		val, ok := resp.Header["Docker-Distribution-Api-Version"]
+		if ok && len(val) == 1 && val[0] == "registry/2.0" {
+			return true, nil
+		}
+	} else {
+		log.Infof("isApplicableFor: HTTP GET (%s) returned status [%d]", url, resp.StatusCode)
+	}
+
+	return false, nil
+}
+
+// ref https://github.com/distribution/distribution/blob/main/docs/spec/api.md#api-version-check
+func (l *gitHubRepositoryLister) IsApplicableFor2(ociRegistry *OCIRegistry) (bool, error) {
 	log.Infof("+IsApplicableFor()")
 
 	ref := strings.TrimPrefix(ociRegistry.url.String(), fmt.Sprintf("%s://", registry.OCIScheme))
@@ -163,4 +264,10 @@ func ctxFn(out io.Writer, debug bool) context.Context {
 	ctx := orascontext.WithLoggerFromWriter(context.Background(), out)
 	orascontext.GetLogger(ctx).Logger.SetLevel(logrus.DebugLevel)
 	return ctx
+}
+
+// withScopeHint adds a hinted scope to the context.
+func withScopeHint(ctx context.Context, ref orasregistry.Reference, actions ...string) context.Context {
+	scope := registryauth.ScopeRepository(ref.Repository, actions...)
+	return registryauth.AppendScopes(ctx, scope)
 }

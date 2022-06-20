@@ -6,6 +6,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"os"
 	"strings"
 	"testing"
 	"time"
@@ -519,6 +520,15 @@ func TestKindClusterGetAvailablePackageSummariesForOCI(t *testing.T) {
 		t.Fatal(err)
 	}
 
+	ghUser := os.Getenv("GITHUB_USER")
+	if ghUser == "" {
+		t.Fatalf("Environment variable GITHUB_USER needs to be set")
+	}
+	ghToken := os.Getenv("GITHUB_TOKEN")
+	if ghToken == "" {
+		t.Fatalf("Environment variable GITHUB_TOKEN needs to be set")
+	}
+
 	// appears to work on the client-side only after successful
 	//   docker login ghcr.io -u gfichtenholt -p ghp_...
 	// personal access token ghp_... can be seen on https://github.com/settings/tokens
@@ -529,11 +539,7 @@ func TestKindClusterGetAvailablePackageSummariesForOCI(t *testing.T) {
 	// -HTTP GET response: raised err=GET "https://ghcr.io/v2/":
 	// GET "https://ghcr.io/token?scope=repository%3Auser%2Fimage%3Apull&service=ghcr.io":
 	// unexpected status code 403: denied: requested access to the resource is denied
-	debugTagList("ghcr.io/stefanprodan/charts/podinfo")
-
-	if true {
-		return
-	}
+	// debugTagList("ghcr.io/stefanprodan/charts/podinfo")
 
 	adminName := types.NamespacedName{
 		Name:      "test-admin-" + randSeq(4),
@@ -549,21 +555,26 @@ func TestKindClusterGetAvailablePackageSummariesForOCI(t *testing.T) {
 		Namespace: "default",
 	}
 
-	secret := newBasicAuthSecret(types.NamespacedName{
-		Name:      "secret-1",
-		Namespace: repoName.Namespace},
-		"admin", "Harbor12345")
+	// this is a secret for authentication with GitHub (ghcr.io)
+	//    personal access token ghp_... can be seen on https://github.com/settings/tokens
+	// and has "admin:repo_hook, delete_repo, repo" scopes
+	// one should be able to login successfully like this:
+	//   docker login ghcr.io -u $GITHUB_USER -p $GITHUB_TOKEN
 
-	if err := kubeCreateSecretAndCleanup(t, secret); err != nil {
+	ghSecret := newBasicAuthSecret(types.NamespacedName{
+		Name:      "github-secret-1",
+		Namespace: repoName.Namespace},
+		ghUser, ghToken)
+
+	if err := kubeCreateSecretAndCleanup(t, ghSecret); err != nil {
 		t.Fatal(err)
 	}
 	ctx, cancel := context.WithTimeout(grpcContext, defaultContextTimeout)
 	defer cancel()
 	setUserManagedSecretsAndCleanup(t, fluxPluginReposClient, ctx, true)
 
-	// TODO: need to somehow pass repo = "podinfo"
 	if err := kubeAddHelmRepositoryAndCleanup(
-		t, repoName, "oci", "oci://ghcr.io/stefanprodan/charts", "", 0); err != nil {
+		t, repoName, "oci", "oci://ghcr.io/stefanprodan/charts", ghSecret.Name, 0); err != nil {
 		t.Fatalf("%v", err)
 	}
 	// wait until this repo reaches 'Ready'
