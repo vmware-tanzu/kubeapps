@@ -49,7 +49,7 @@ pushContainerToLocalRegistry() {
     docker tag nginx $DOCKER_REGISTRY/nginx
 
     /bin/sh -c "kubectl -n ${REGISTRY_NS} port-forward service/docker-registry 5600:5600 &"
-    sleep 4
+    waitForPort localhost 5600
 
     docker login $DOCKER_REGISTRY -u=testuser -p=testpassword
     docker push $DOCKER_REGISTRY/nginx
@@ -68,7 +68,7 @@ pushChartToChartMuseum() {
 
     local POD_NAME=$(kubectl get pods --namespace ${CHART_MUSEUM_NS} -l "app=chartmuseum" -l "release=chartmuseum" -o jsonpath="{.items[0].metadata.name}")
     /bin/sh -c "kubectl port-forward $POD_NAME 8080:8080 --namespace ${CHART_MUSEUM_NS} &"
-    sleep 2
+    waitForPort localhost 8080
 
     CHART_EXISTS=$(curl -u "${CM_USER}:${CM_PASSWORD}" -X GET http://localhost:8080/api/charts/${CHART_NAME}/${CHART_VERSION} | jq -r 'any([ .error] ; . > 0)')
     if [ "$CHART_EXISTS" == "true" ]; then
@@ -82,4 +82,13 @@ pushChartToChartMuseum() {
 
     # End port forward
     pkill -f "kubectl port-forward $POD_NAME 8080:8080 --namespace ${CHART_MUSEUM_NS}"
+}
+
+# Scans for opened port during max. 10 seconds
+waitForPort() {
+  HOST_NAME=$1
+  PORT=$2
+
+  # shellcheck disable=SC2016
+  timeout 10 sh -c 'until nc -z $0 $1; do sleep 1; done' "$HOST_NAME" "$PORT"
 }
