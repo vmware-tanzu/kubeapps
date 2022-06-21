@@ -136,7 +136,7 @@ export function getPluginPackageName(plugin?: Plugin | PluginNames | string) {
   }
 }
 
-// FIXME(agamez): replace with a proper call to the plugins server (see getPluginsServiceClientImpl)
+// TODO(agamez): replace with a proper call to the plugins server (see getPluginsServiceClientImpl)
 export function getPluginByName(pluginName: PluginNames | string) {
   switch (pluginName) {
     case PluginNames.PACKAGES_HELM:

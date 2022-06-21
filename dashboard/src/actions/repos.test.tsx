@@ -3,7 +3,7 @@
 
 import {
   AvailablePackageReference,
-  InstalledPackageDetail
+  InstalledPackageDetail,
 } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
 import { PackageRepositoryAuth_PackageRepositoryAuthType } from "gen/kubeappsapis/core/packages/v1alpha1/repositories";
 import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins";
@@ -16,7 +16,7 @@ import {
   IAppRepository,
   IPkgRepoFormData,
   NotFoundError,
-  RepositoryStorageTypes
+  RepositoryStorageTypes,
 } from "shared/types";
 import { getType } from "typesafe-actions";
 import actions from ".";
