@@ -334,7 +334,7 @@ export function AppRepoForm(props: IAppRepoFormProps) {
     <>
       <form onSubmit={handleInstallClick}>
         <CdsAccordion>
-          <CdsAccordionPanel expanded={accordion[0]}>
+          <CdsAccordionPanel id="panel-basic" expanded={accordion[0]}>
             <CdsAccordionHeader onClick={() => toggleAccordion(0)}>
               Basic information
             </CdsAccordionHeader>
@@ -448,7 +448,7 @@ export function AppRepoForm(props: IAppRepoFormProps) {
             </CdsAccordionContent>
           </CdsAccordionPanel>
 
-          <CdsAccordionPanel expanded={accordion[1]}>
+          <CdsAccordionPanel id="panel-auth" expanded={accordion[1]}>
             <CdsAccordionHeader onClick={() => toggleAccordion(1)}>
               Authentication
             </CdsAccordionHeader>
@@ -746,6 +746,7 @@ export function AppRepoForm(props: IAppRepoFormProps) {
           </CdsAccordionPanel>
 
           <CdsAccordionPanel
+            id="panel-filtering"
             expanded={accordion[2]}
             hidden={
               type !== RepositoryStorageTypes.PACKAGE_REPOSITORY_STORAGE_OCI &&
@@ -822,7 +823,7 @@ export function AppRepoForm(props: IAppRepoFormProps) {
               </CdsFormGroup>
             </CdsAccordionContent>
           </CdsAccordionPanel>
-          <CdsAccordionPanel expanded={accordion[3]}>
+          <CdsAccordionPanel id="panel-advanced" expanded={accordion[3]}>
             <CdsAccordionHeader onClick={() => toggleAccordion(3)}>Advanced</CdsAccordionHeader>
             <CdsAccordionContent>
               <CdsFormGroup layout="vertical">

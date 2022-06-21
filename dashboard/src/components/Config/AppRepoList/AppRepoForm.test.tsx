@@ -1,4 +1,3 @@
-
 // Copyright 2020-2022 the Kubeapps contributors.
 // SPDX-License-Identifier: Apache-2.0
 
@@ -8,18 +7,60 @@ import Alert from "components/js/Alert";
 import { act } from "react-dom/test-utils";
 import * as ReactRedux from "react-redux";
 import { defaultStore, getStore, mountWrapper } from "shared/specs/mountWrapper";
-import { ISecret } from "shared/types";
-import AppRepoAddDockerCreds from "./AppRepoAddDockerCreds";
-import { AppRepoForm } from "./AppRepoForm";
-import { AppRepository } from "shared/AppRepository";
-import { waitFor } from "@testing-library/react";
+import { IPkgRepoFormData } from "shared/types";
+import { PackageRepositoryAuth_PackageRepositoryAuthType } from "gen/kubeappsapis/core/packages/v1alpha1/repositories";
 import Secret from "shared/Secret";
+import { AppRepoForm } from "./AppRepoForm";
 
 const defaultProps = {
   onSubmit: jest.fn(),
   namespace: "default",
   kubeappsNamespace: "kubeapps",
 };
+
+const repoData = {
+  plugin: undefined,
+  name: undefined,
+  type: undefined,
+  url: undefined,
+  authHeader: "",
+  authMethod:
+    PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_UNSPECIFIED,
+  basicAuth: {
+    password: "",
+    username: "",
+  },
+  customCA: "",
+  customDetails: {
+    dockerRegistrySecrets: [""],
+    ociRepositories: [],
+    performValidation: undefined,
+    filterRules: undefined,
+  },
+  description: "",
+  dockerRegCreds: {
+    password: "",
+    username: "",
+    email: "",
+    server: "",
+  },
+  interval: "10m",
+  passCredentials: false,
+  secretAuthName: "",
+  secretTLSName: "",
+  skipTLS: false,
+  opaqueCreds: {
+    data: {},
+  },
+  sshCreds: {
+    knownHosts: "",
+    privateKey: "",
+  },
+  tlsCertKey: {
+    cert: "",
+    key: "",
+  },
+} as unknown as IPkgRepoFormData;
 
 let spyOnUseDispatch: jest.SpyInstance;
 const kubeaActions = { ...actions.kube };
@@ -66,497 +107,326 @@ it("disables the submit button while fetching", async () => {
   ).toBe(true);
 });
 
-// it("submit button can not be fired more than once", async () => {
-//   const onSubmit = jest.fn().mockReturnValue(true);
-//   const onAfterInstall = jest.fn().mockReturnValue(true);
-//   let wrapper: any;
-//   await act(async () => {
-//     wrapper = mountWrapper(
-//       defaultStore,
-//       <AppRepoForm {...defaultProps} onSubmit={onSubmit} onAfterInstall={onAfterInstall} />,
-//     );
-//   });
-//   const installButton = wrapper
-//     .find(CdsButton)
-//     .filterWhere((b: any) => b.html().includes("Install Repo"));
-//   await act(async () => {
-//     Promise.all([
-//       installButton.simulate("submit"),
-//       installButton.simulate("submit"),
-//       installButton.simulate("submit"),
-//     ]);
-//   });
-//   wrapper.update();
-//   expect(onSubmit.mock.calls.length).toBe(1);
-// });
+it("submit button can not be fired more than once", async () => {
+  const onSubmit = jest.fn().mockReturnValue(true);
+  const onAfterInstall = jest.fn().mockReturnValue(true);
+  let wrapper: any;
+  await act(async () => {
+    wrapper = mountWrapper(
+      defaultStore,
+      <AppRepoForm {...defaultProps} onSubmit={onSubmit} onAfterInstall={onAfterInstall} />,
+    );
+  });
+  const installButton = wrapper
+    .find(CdsButton)
+    .filterWhere((b: any) => b.html().includes("Install Repo"));
+  await act(async () => {
+    Promise.all([
+      installButton.simulate("submit"),
+      installButton.simulate("submit"),
+      installButton.simulate("submit"),
+    ]);
+  });
+  wrapper.update();
+  expect(onSubmit.mock.calls.length).toBe(1);
+});
 
-// it("should show a validation error", async () => {
-//   let wrapper: any;
-//   await act(async () => {
-//     wrapper = mountWrapper(
-//       getStore({ repos: { errors: { validate: new Error("Boom!") } } }),
-//       <AppRepoForm {...defaultProps} />,
-//     );
-//   });
-//   expect(wrapper.find(Alert).text()).toContain("Boom!");
-// });
+it("should show a validation error", async () => {
+  let wrapper: any;
+  await act(async () => {
+    wrapper = mountWrapper(
+      getStore({ repos: { errors: { validate: new Error("Boom!") } } }),
+      <AppRepoForm {...defaultProps} />,
+    );
+  });
+  expect(wrapper.find(Alert).text()).toContain("Boom!");
+});
 
-// it("shows an error updating a repo", async () => {
-//   let wrapper: any;
-//   await act(async () => {
-//     wrapper = mountWrapper(
-//       getStore({ repos: { errors: { update: new Error("boom!") } } }),
-//       <AppRepoForm {...defaultProps} />,
-//     );
-//   });
-//   expect(wrapper.find(Alert)).toIncludeText("boom!");
-// });
+it("shows an error updating a repo", async () => {
+  let wrapper: any;
+  await act(async () => {
+    wrapper = mountWrapper(
+      getStore({ repos: { errors: { update: new Error("boom!") } } }),
+      <AppRepoForm {...defaultProps} />,
+    );
+  });
+  expect(wrapper.find(Alert)).toIncludeText("boom!");
+});
 
-// it("should call the install method when the validation success", async () => {
-//   const validateRepo = jest.fn().mockReturnValue(true);
-//   const install = jest.fn().mockReturnValue(true);
-//   actions.repos = {
-//     ...actions.repos,
-//     validateRepo,
-//   };
+it("should call the install method when the validation success", async () => {
+  const validateRepo = jest.fn().mockReturnValue(true);
+  const install = jest.fn().mockReturnValue(true);
+  actions.repos = {
+    ...actions.repos,
+    validateRepo,
+  };
 
-//   let wrapper: any;
-//   await act(async () => {
-//     wrapper = mountWrapper(defaultStore, <AppRepoForm {...defaultProps} onSubmit={install} />);
-//   });
-//   const form = wrapper.find("form");
-//   await act(async () => {
-//     await (form.prop("onSubmit") as (e: any) => Promise<any>)({ preventDefault: jest.fn() });
-//   });
-//   wrapper.update();
-//   expect(install).toHaveBeenCalled();
-// });
+  let wrapper: any;
+  await act(async () => {
+    wrapper = mountWrapper(defaultStore, <AppRepoForm {...defaultProps} onSubmit={install} />);
+  });
+  const form = wrapper.find("form");
+  await act(async () => {
+    await (form.prop("onSubmit") as (e: any) => Promise<any>)({ preventDefault: jest.fn() });
+  });
+  wrapper.update();
+  expect(install).toHaveBeenCalled();
+});
 
-// it("should not call the install method when the validation fails unless forced", async () => {
-//   const validateRepo = jest.fn().mockReturnValue(false);
-//   const install = jest.fn().mockReturnValue(true);
-//   actions.repos = {
-//     ...actions.repos,
-//     validateRepo,
-//   };
-//   let wrapper: any;
-//   await act(async () => {
-//     wrapper = mountWrapper(defaultStore, <AppRepoForm {...defaultProps} onSubmit={install} />);
-//   });
-//   const form = wrapper.find("form");
-//   await act(async () => {
-//     await (form.prop("onSubmit") as (e: any) => Promise<any>)({ preventDefault: jest.fn() });
-//   });
-//   wrapper.update();
-//   expect(install).not.toHaveBeenCalled();
+it("should call the install method with OCI information", async () => {
+  const validateRepo = jest.fn().mockReturnValue(true);
+  const install = jest.fn().mockReturnValue(true);
+  actions.repos = {
+    ...actions.repos,
+    validateRepo,
+  };
+  let wrapper: any;
+  await act(async () => {
+    wrapper = mountWrapper(defaultStore, <AppRepoForm {...defaultProps} onSubmit={install} />);
+  });
+  wrapper.find("#kubeapps-repo-name").simulate("change", { target: { value: "my-oci-repo" } });
+  wrapper.find("#kubeapps-repo-url").simulate("change", { target: { value: "oci.repo" } });
+  wrapper.find("#kubeapps-repo-type-oci").simulate("change");
+  wrapper
+    .find("#kubeapps-oci-repositories")
+    .simulate("change", { target: { value: "apache, jenkins" } });
+  const form = wrapper.find("form");
+  await act(async () => {
+    await (form.prop("onSubmit") as (e: any) => Promise<any>)({ preventDefault: jest.fn() });
+  });
+  wrapper.update();
+  expect(install).toHaveBeenCalledWith({
+    ...repoData,
+    customDetails: {
+      ...repoData.customDetails,
+      performValidation: true,
+      ociRepositories: ["apache", "jenkins"],
+    },
+    name: "my-oci-repo",
+    type: "oci",
+    url: "https://oci.repo",
+    plugin: { name: "helm.packages", version: "v1alpha1" },
+  });
+});
 
-//   expect(
-//     wrapper
-//       .find(CdsButton)
-//       .filterWhere((b: any) => b.text().includes("Install"))
-//       .text(),
-//   ).toContain("Install Repo (force)");
+it("should call the install skipping TLS verification", async () => {
+  const validateRepo = jest.fn().mockReturnValue(true);
+  const install = jest.fn().mockReturnValue(true);
+  actions.repos = {
+    ...actions.repos,
+    validateRepo,
+  };
+  let wrapper: any;
+  await act(async () => {
+    wrapper = mountWrapper(defaultStore, <AppRepoForm {...defaultProps} onSubmit={install} />);
+  });
+  wrapper.find("#kubeapps-repo-name").simulate("change", { target: { value: "my-repo" } });
+  wrapper.find("#kubeapps-repo-url").simulate("change", { target: { value: "helm.repo" } });
+  wrapper.find("#kubeapps-repo-type-helm").simulate("change");
+  wrapper.find("#kubeapps-repo-skip-tls").simulate("change");
+  const form = wrapper.find("form");
+  await act(async () => {
+    await (form.prop("onSubmit") as (e: any) => Promise<any>)({ preventDefault: jest.fn() });
+  });
+  wrapper.update();
+  expect(install).toHaveBeenCalledWith({
+    ...repoData,
+    customDetails: {
+      ...repoData.customDetails,
+      performValidation: true,
+    },
+    name: "my-repo",
+    type: "helm",
+    url: "https://helm.repo",
+    plugin: { name: "helm.packages", version: "v1alpha1" },
+    skipTLS: true,
+  });
+});
 
-//   await act(async () => {
-//     wrapper
-//       .find(CdsButton)
-//       .filterWhere((b: any) => b.html().includes("Install Repo (force)"))
-//       .simulate("submit");
-//   });
-//   wrapper.update();
-//   expect(install).toHaveBeenCalled();
-// });
+it("should call the install passing credentials", async () => {
+  const validateRepo = jest.fn().mockReturnValue(true);
+  const install = jest.fn().mockReturnValue(true);
+  actions.repos = {
+    ...actions.repos,
+    validateRepo,
+  };
+  let wrapper: any;
+  await act(async () => {
+    wrapper = mountWrapper(defaultStore, <AppRepoForm {...defaultProps} onSubmit={install} />);
+  });
+  wrapper.find("#kubeapps-repo-name").simulate("change", { target: { value: "my-repo" } });
+  wrapper.find("#kubeapps-repo-url").simulate("change", { target: { value: "helm.repo" } });
+  wrapper.find("#kubeapps-repo-type-helm").simulate("change");
+  wrapper.find("#kubeapps-repo-pass-credentials").simulate("change");
+  const form = wrapper.find("form");
+  await act(async () => {
+    await (form.prop("onSubmit") as (e: any) => Promise<any>)({ preventDefault: jest.fn() });
+  });
+  wrapper.update();
+  expect(install).toHaveBeenCalledWith({
+    ...repoData,
+    customDetails: {
+      ...repoData.customDetails,
+      performValidation: true,
+    },
+    name: "my-repo",
+    type: "helm",
+    url: "https://helm.repo",
+    plugin: { name: "helm.packages", version: "v1alpha1" },
+    passCredentials: true,
+  });
+});
 
-// it("should call the install method with OCI information", async () => {
-//   const validateRepo = jest.fn().mockReturnValue(true);
-//   const install = jest.fn().mockReturnValue(true);
-//   actions.repos = {
-//     ...actions.repos,
-//     validateRepo,
-//   };
-//   let wrapper: any;
-//   await act(async () => {
-//     wrapper = mountWrapper(defaultStore, <AppRepoForm {...defaultProps} onSubmit={install} />);
-//   });
-//   wrapper.find("#kubeapps-repo-url").simulate("change", { target: { value: "oci.repo" } });
-//   wrapper.find("#kubeapps-repo-type-oci").simulate("change");
-//   wrapper
-//     .find("#kubeapps-oci-repositories")
-//     .simulate("change", { target: { value: "apache, jenkins" } });
-//   const form = wrapper.find("form");
-//   await act(async () => {
-//     await (form.prop("onSubmit") as (e: any) => Promise<any>)({ preventDefault: jest.fn() });
-//   });
-//   wrapper.update();
-//   expect(install).toHaveBeenCalledWith(
-//     "",
-//     "https://oci.repo",
-//     "oci",
-//     "",
-//     "",
-//     "",
-//     "",
-//     "",
-//     [],
-//     ["apache", "jenkins"],
-//     false,
-//     false,
-//     undefined,
-//   );
-// });
+describe("when using a filter", () => {
+  it("should call the install method with a filter", async () => {
+    const install = jest.fn().mockReturnValue(true);
+    let wrapper: any;
+    await act(async () => {
+      wrapper = mountWrapper(defaultStore, <AppRepoForm {...defaultProps} onSubmit={install} />);
+    });
+    wrapper.find("#kubeapps-repo-name").simulate("change", { target: { value: "my-repo" } });
+    wrapper
+      .find("#kubeapps-repo-url")
+      .simulate("change", { target: { value: "https://helm.repo" } });
+    wrapper.find("#kubeapps-repo-type-helm").simulate("change");
+    wrapper
+      .find("#kubeapps-repo-filter-repositories")
+      .simulate("change", { target: { value: "nginx, wordpress" } });
+    const form = wrapper.find("form");
+    await act(async () => {
+      await (form.prop("onSubmit") as (e: any) => Promise<any>)({ preventDefault: jest.fn() });
+    });
+    wrapper.update();
+    expect(install).toHaveBeenCalledWith({
+      ...repoData,
+      customDetails: {
+        ...repoData.customDetails,
+        performValidation: true,
+        filterRule: {
+          jq: ".name == $var0 or .name == $var1",
+          variables: { $var0: "nginx", $var1: "wordpress" },
+        },
+      },
+      name: "my-repo",
+      type: "helm",
+      url: "https://helm.repo",
+      plugin: { name: "helm.packages", version: "v1alpha1" },
+    });
+  });
 
-// it("should call the install skipping TLS verification", async () => {
-//   const validateRepo = jest.fn().mockReturnValue(true);
-//   const install = jest.fn().mockReturnValue(true);
-//   actions.repos = {
-//     ...actions.repos,
-//     validateRepo,
-//   };
-//   let wrapper: any;
-//   await act(async () => {
-//     wrapper = mountWrapper(defaultStore, <AppRepoForm {...defaultProps} onSubmit={install} />);
-//   });
-//   wrapper.find("#kubeapps-repo-url").simulate("change", { target: { value: "helm.repo" } });
-//   wrapper.find("#kubeapps-repo-skip-tls").simulate("change");
-//   const form = wrapper.find("form");
-//   await act(async () => {
-//     await (form.prop("onSubmit") as (e: any) => Promise<any>)({ preventDefault: jest.fn() });
-//   });
-//   wrapper.update();
-//   expect(install).toHaveBeenCalledWith(
-//     "",
-//     "https://helm.repo",
-//     "helm",
-//     "",
-//     "",
-//     "",
-//     "",
-//     "",
-//     [],
-//     [],
-//     true,
-//     false,
-//     undefined,
-//   );
-// });
+  it("should call the install method with a filter excluding a regex", async () => {
+    const install = jest.fn().mockReturnValue(true);
+    let wrapper: any;
+    await act(async () => {
+      wrapper = mountWrapper(defaultStore, <AppRepoForm {...defaultProps} onSubmit={install} />);
+    });
+    wrapper.find("#kubeapps-repo-name").simulate("change", { target: { value: "my-repo" } });
+    wrapper
+      .find("#kubeapps-repo-url")
+      .simulate("change", { target: { value: "https://helm.repo" } });
+    wrapper.find("#kubeapps-repo-type-helm").simulate("change");
+    wrapper
+      .find("#kubeapps-repo-filter-repositories")
+      .simulate("change", { target: { value: "nginx" } });
+    wrapper.find('input[type="checkbox"]').at(0).simulate("change");
+    wrapper.find('input[type="checkbox"]').at(1).simulate("change");
+    const form = wrapper.find("form");
+    await act(async () => {
+      await (form.prop("onSubmit") as (e: any) => Promise<any>)({ preventDefault: jest.fn() });
+    });
+    wrapper.update();
+    expect(install).toHaveBeenCalledWith({
+      ...repoData,
+      customDetails: {
+        ...repoData.customDetails,
+        performValidation: true,
+        filterRule: { jq: ".name | test($var) | not", variables: { $var: "nginx" } },
+      },
+      name: "my-repo",
+      type: "helm",
+      url: "https://helm.repo",
+      plugin: { name: "helm.packages", version: "v1alpha1" },
+    });
+  });
 
-// it("should call the install passing credentials", async () => {
-//   const validateRepo = jest.fn().mockReturnValue(true);
-//   const install = jest.fn().mockReturnValue(true);
-//   actions.repos = {
-//     ...actions.repos,
-//     validateRepo,
-//   };
-//   let wrapper: any;
-//   await act(async () => {
-//     wrapper = mountWrapper(defaultStore, <AppRepoForm {...defaultProps} onSubmit={install} />);
-//   });
-//   wrapper.find("#kubeapps-repo-url").simulate("change", { target: { value: "helm.repo" } });
-//   wrapper.find("#kubeapps-repo-pass-credentials").simulate("change");
-//   const form = wrapper.find("form");
-//   await act(async () => {
-//     await (form.prop("onSubmit") as (e: any) => Promise<any>)({ preventDefault: jest.fn() });
-//   });
-//   wrapper.update();
-//   expect(install).toHaveBeenCalledWith(
-//     "",
-//     "https://helm.repo",
-//     "helm",
-//     "",
-//     "",
-//     "",
-//     "",
-//     "",
-//     [],
-//     [],
-//     false,
-//     true,
-//     undefined,
-//   );
-// });
+  it("ignore the filter for the OCI case", async () => {
+    const install = jest.fn().mockReturnValue(true);
+    let wrapper: any;
+    await act(async () => {
+      wrapper = mountWrapper(defaultStore, <AppRepoForm {...defaultProps} onSubmit={install} />);
+    });
+    wrapper.find("#kubeapps-repo-name").simulate("change", { target: { value: "my-repo" } });
+    wrapper
+      .find("#kubeapps-repo-url")
+      .simulate("change", { target: { value: "https://oci.repo" } });
+    wrapper
+      .find("#kubeapps-repo-filter-repositories")
+      .simulate("change", { target: { value: "nginx, wordpress" } });
+    wrapper.find("#kubeapps-repo-type-oci").simulate("change");
+    const form = wrapper.find("form");
+    await act(async () => {
+      await (form.prop("onSubmit") as (e: any) => Promise<any>)({ preventDefault: jest.fn() });
+    });
+    wrapper.update();
+    expect(install).toHaveBeenCalledWith({
+      ...repoData,
+      customDetails: {
+        ...repoData.customDetails,
+        performValidation: true,
+      },
+      name: "my-repo",
+      type: "oci",
+      url: "https://oci.repo",
+      plugin: { name: "helm.packages", version: "v1alpha1" },
+    });
+  });
+});
 
-// describe("when using a filter", () => {
-//   it("should call the install method with a filter", async () => {
-//     const install = jest.fn().mockReturnValue(true);
-//     let wrapper: any;
-//     await act(async () => {
-//       wrapper = mountWrapper(defaultStore, <AppRepoForm {...defaultProps} onSubmit={install} />);
-//     });
-//     wrapper
-//       .find("#kubeapps-repo-url")
-//       .simulate("change", { target: { value: "https://helm.repo" } });
-//     wrapper
-//       .find("textarea")
-//       .at(0)
-//       .simulate("change", { target: { value: "nginx, wordpress" } });
-//     const form = wrapper.find("form");
-//     await act(async () => {
-//       await (form.prop("onSubmit") as (e: any) => Promise<any>)({ preventDefault: jest.fn() });
-//     });
-//     wrapper.update();
-//     expect(install).toHaveBeenCalledWith(
-//       "",
-//       "https://helm.repo",
-//       "helm",
-//       "",
-//       "",
-//       "",
-//       "",
-//       "",
-//       [],
-//       [],
-//       false,
-//       false,
-//       { jq: ".name == $var0 or .name == $var1", variables: { $var0: "nginx", $var1: "wordpress" } },
-//     );
-//   });
+describe("when using a description", () => {
+  it("should call the install method with a description", async () => {
+    const install = jest.fn().mockReturnValue(true);
+    let wrapper: any;
+    await act(async () => {
+      wrapper = mountWrapper(defaultStore, <AppRepoForm {...defaultProps} onSubmit={install} />);
+    });
+    wrapper.find("#kubeapps-repo-name").simulate("change", { target: { value: "my-repo" } });
+    wrapper.find("#kubeapps-repo-type-helm").simulate("change");
+    wrapper
+      .find("#kubeapps-repo-url")
+      .simulate("change", { target: { value: "https://helm.repo" } });
+    wrapper
+      .find("#kubeapps-repo-description")
+      .simulate("change", { target: { value: "description test" } });
+    const form = wrapper.find("form");
+    await act(async () => {
+      await (form.prop("onSubmit") as (e: any) => Promise<any>)({ preventDefault: jest.fn() });
+    });
+    wrapper.update();
+    expect(install).toHaveBeenCalledWith({
+      ...repoData,
+      customDetails: {
+        ...repoData.customDetails,
+        performValidation: true,
+      },
+      name: "my-repo",
+      type: "helm",
+      url: "https://helm.repo",
+      description: "description test",
+      plugin: { name: "helm.packages", version: "v1alpha1" },
+    });
+  });
+});
 
-//   it("should call the install method with a filter excluding a regex", async () => {
-//     const install = jest.fn().mockReturnValue(true);
-//     let wrapper: any;
-//     await act(async () => {
-//       wrapper = mountWrapper(defaultStore, <AppRepoForm {...defaultProps} onSubmit={install} />);
-//     });
-//     wrapper
-//       .find("#kubeapps-repo-url")
-//       .simulate("change", { target: { value: "https://helm.repo" } });
-//     wrapper
-//       .find("textarea")
-//       .at(0)
-//       .simulate("change", { target: { value: "nginx" } });
-//     wrapper.find('input[type="checkbox"]').at(0).simulate("change");
-//     wrapper.find('input[type="checkbox"]').at(1).simulate("change");
-//     const form = wrapper.find("form");
-//     await act(async () => {
-//       await (form.prop("onSubmit") as (e: any) => Promise<any>)({ preventDefault: jest.fn() });
-//     });
-//     wrapper.update();
-//     expect(install).toHaveBeenCalledWith(
-//       "",
-//       "https://helm.repo",
-//       "helm",
-//       "",
-//       "",
-//       "",
-//       "",
-//       "",
-//       [],
-//       [],
-//       false,
-//       false,
-//       { jq: ".name | test($var) | not", variables: { $var: "nginx" } },
-//     );
-//   });
+it("should not show the list of OCI repositories if using a Helm repo (default)", async () => {
+  let wrapper: any;
+  await act(async () => {
+    wrapper = mountWrapper(defaultStore, <AppRepoForm {...defaultProps} />);
+  });
+  wrapper.find("#kubeapps-repo-type-helm").simulate("change");
+  expect(wrapper.find("#kubeapps-oci-repositories")).not.toExist();
+});
 
-//   it("ignore the filter for the OCI case", async () => {
-//     const install = jest.fn().mockReturnValue(true);
-//     let wrapper: any;
-//     await act(async () => {
-//       wrapper = mountWrapper(defaultStore, <AppRepoForm {...defaultProps} onSubmit={install} />);
-//     });
-//     wrapper
-//       .find("#kubeapps-repo-url")
-//       .simulate("change", { target: { value: "https://oci.repo" } });
-//     wrapper
-//       .find("textarea")
-//       .at(0)
-//       .simulate("change", { target: { value: "nginx, wordpress" } });
-//     wrapper.find("#kubeapps-repo-type-oci").simulate("change");
-//     const form = wrapper.find("form");
-//     await act(async () => {
-//       await (form.prop("onSubmit") as (e: any) => Promise<any>)({ preventDefault: jest.fn() });
-//     });
-//     wrapper.update();
-//     expect(install).toHaveBeenCalledWith(
-//       "",
-//       "https://oci.repo",
-//       "oci",
-//       "",
-//       "",
-//       "",
-//       "",
-//       "",
-//       [],
-//       [],
-//       false,
-//       false,
-//       undefined,
-//     );
-//   });
-// });
-
-// describe("when using a description", () => {
-//   it("should call the install method with a description", async () => {
-//     const install = jest.fn().mockReturnValue(true);
-//     let wrapper: any;
-//     await act(async () => {
-//       wrapper = mountWrapper(defaultStore, <AppRepoForm {...defaultProps} onSubmit={install} />);
-//     });
-//     wrapper
-//       .find("#kubeapps-repo-url")
-//       .simulate("change", { target: { value: "https://helm.repo" } });
-//     wrapper
-//       .find("#kubeapps-repo-description")
-//       .simulate("change", { target: { value: "description test" } });
-//     const form = wrapper.find("form");
-//     await act(async () => {
-//       await (form.prop("onSubmit") as (e: any) => Promise<any>)({ preventDefault: jest.fn() });
-//     });
-//     wrapper.update();
-//     expect(install).toHaveBeenCalledWith(
-//       "",
-//       "https://helm.repo",
-//       "helm",
-//       "description test",
-//       "",
-//       "",
-//       "",
-//       "",
-//       [],
-//       [],
-//       false,
-//       false,
-//       undefined,
-//     );
-//   });
-// });
-
-// it("should deactivate the docker registry credentials section if the namespace is the global one", async () => {
-//   let wrapper: any;
-//   await act(async () => {
-//     wrapper = mountWrapper(
-//       defaultStore,
-//       <AppRepoForm {...defaultProps} kubeappsNamespace={defaultProps.namespace} />,
-//     );
-//   });
-//   expect(wrapper.find("select")).toBeDisabled();
-//   expect(wrapper.find(".docker-creds-subform-button button")).toBeDisabled();
-// });
-
-// it("should render the docker registry credentials section", async () => {
-//   let wrapper: any;
-//   await act(async () => {
-//     wrapper = mountWrapper(defaultStore, <AppRepoForm {...defaultProps} />);
-//   });
-//   expect(wrapper.find(AppRepoAddDockerCreds)).toExist();
-// });
-
-// it("should call the install method with the selected docker credentials", async () => {
-//   const validateRepo = jest.fn().mockReturnValue(true);
-//   const install = jest.fn().mockReturnValue(true);
-//   actions.repos = {
-//     ...actions.repos,
-//     validateRepo,
-//   };
-//   const secret = {
-//     metadata: {
-//       name: "repo-1",
-//     },
-//   } as ISecret;
-
-//   let wrapper: any;
-//   await act(async () => {
-//     wrapper = mountWrapper(
-//       getStore({
-//         repos: { imagePullSecrets: [secret] },
-//       }),
-//       <AppRepoForm {...defaultProps} onSubmit={install} />,
-//     );
-//   });
-
-//   const label = wrapper.find("select");
-//   act(() => {
-//     label.simulate("change", { target: { value: "repo-1" } });
-//   });
-//   const radio = wrapper.find("#kubeapps-repo-auth-method-registry");
-//   act(() => {
-//     radio.simulate("change", { target: { value: "registry" } });
-//   });
-//   wrapper.find("#kubeapps-repo-url").simulate("change", { target: { value: "http://test" } });
-//   wrapper.update();
-
-//   await act(async () => {
-//     await (wrapper.find("form").prop("onSubmit") as (e: any) => Promise<any>)({
-//       preventDefault: jest.fn(),
-//     });
-//   });
-//   expect(install).toHaveBeenCalledWith(
-//     "",
-//     "http://test",
-//     "helm",
-//     "",
-//     "",
-//     "repo-1",
-//     "",
-//     "",
-//     ["repo-1"],
-//     [],
-//     false,
-//     false,
-//     undefined,
-//   );
-// });
-
-// it("should call the install reusing as auth the selected docker credentials", async () => {
-//   const validateRepo = jest.fn().mockReturnValue(true);
-//   const install = jest.fn().mockReturnValue(true);
-//   actions.repos = {
-//     ...actions.repos,
-//     validateRepo,
-//   };
-//   const secret = {
-//     metadata: {
-//       name: "repo-1",
-//     },
-//   } as ISecret;
-
-//   let wrapper: any;
-//   await act(async () => {
-//     wrapper = mountWrapper(
-//       getStore({
-//         repos: { imagePullSecrets: [secret] },
-//       }),
-//       <AppRepoForm {...defaultProps} onSubmit={install} />,
-//     );
-//   });
-
-//   const label = wrapper.find("select");
-//   act(() => {
-//     label.simulate("change", { target: { value: "repo-1" } });
-//   });
-//   wrapper.find("#kubeapps-repo-url").simulate("change", { target: { value: "http://test" } });
-//   wrapper.update();
-
-//   await act(async () => {
-//     await (wrapper.find("form").prop("onSubmit") as (e: any) => Promise<any>)({
-//       preventDefault: jest.fn(),
-//     });
-//   });
-//   expect(install).toHaveBeenCalledWith(
-//     "",
-//     "http://test",
-//     "helm",
-//     "",
-//     "",
-//     "",
-//     "",
-//     "",
-//     ["repo-1"],
-//     [],
-//     false,
-//     false,
-//     undefined,
-//   );
-// });
-
-// it("should not show the list of OCI repositories if using a Helm repo (default)", async () => {
-//   let wrapper: any;
-//   await act(async () => {
-//     wrapper = mountWrapper(defaultStore, <AppRepoForm {...defaultProps} />);
-//   });
-//   expect(wrapper.find("#kubeapps-oci-repositories")).not.toExist();
-// });
-
+// TODO(agamez): fix those tests in the upcoming PR
 // describe("when the repository info is already populated", () => {
 //   it("should parse the existing name", async () => {
 //     const repo = { metadata: { name: "foo" } } as any;
@@ -584,18 +454,6 @@ it("disables the submit button while fetching", async () => {
 //     await waitFor(() => {
 //       wrapper.update();
 //       expect(wrapper.find("#kubeapps-repo-url").prop("value")).toBe("http://repo");
-//     });
-//   });
-
-//   it("should parse the existing syncJobPodTemplate", async () => {
-//     const repo = { metadata: { name: "foo" }, spec: { syncJobPodTemplate: { foo: "bar" } } } as any;
-//     let wrapper: any;
-//     await act(async () => {
-//       wrapper = mountWrapper(defaultStore, <AppRepoForm {...defaultProps} packageRepoRef={repo} />);
-//     });
-//     await waitFor(() => {
-//       wrapper.update();
-//       expect(wrapper.find("#kubeapps-repo-sync-job-tpl").prop("value")).toBe("foo: bar\n");
 //     });
 //   });
 
@@ -758,27 +616,6 @@ it("disables the submit button while fetching", async () => {
 //       await waitFor(() => {
 //         wrapper.update();
 //         expect(wrapper.find("#kubeapps-repo-auth-method-registry")).toBeChecked();
-//       });
-//     });
-
-//     it("should pre-select the existing docker registry secret", async () => {
-//       const repo = {
-//         metadata: { name: "foo" },
-//         spec: { dockerRegistrySecrets: ["secret-2"] },
-//       } as any;
-//       Secret.getDockerConfigSecretNames = jest.fn(() =>
-//         Promise.resolve(["secret-1", "secret-2", "secret-3"]),
-//       );
-//       let wrapper: any;
-//       await act(async () => {
-//         wrapper = mountWrapper(
-//           defaultStore,
-//           <AppRepoForm {...defaultProps} packageRepoRef={repo} />,
-//         );
-//       });
-//       await waitFor(() => {
-//         wrapper.update();
-//         expect(wrapper.find("select").prop("value")).toBe("secret-2");
 //       });
 //     });
 
