@@ -359,7 +359,7 @@ func NewHttpClientAndHeaders(clientOptions *HttpClientOptions) (*http.Client, ma
 	// I wish I could reuse the code in pkg/chart/chart.go and pkg/kube_utils/kube_utils.go
 	// InitHTTPClient(), etc. but alas, it's all built around AppRepository CRD, which I don't have.
 	headers := make(map[string]string)
-	headers["User-Agent"] = userAgentString()
+	headers["User-Agent"] = UserAgentString()
 	if clientOptions != nil {
 		if clientOptions.Username != "" && clientOptions.Password != "" {
 			auth := clientOptions.Username + ":" + clientOptions.Password
@@ -395,7 +395,7 @@ func NewHttpClientAndHeaders(clientOptions *HttpClientOptions) (*http.Client, ma
 }
 
 // this string is the same for all outbound calls
-func userAgentString() string {
+func UserAgentString() string {
 	return fmt.Sprintf("%s/%s/%s/%s", UserAgentPrefix, pluginDetail.Name, pluginDetail.Version, version)
 }
 

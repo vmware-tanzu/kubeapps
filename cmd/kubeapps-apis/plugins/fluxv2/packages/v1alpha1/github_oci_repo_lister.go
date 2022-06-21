@@ -5,16 +5,13 @@ package main
 import (
 	"context"
 	"fmt"
-	"io"
 	"io/ioutil"
 	"net/http"
-	"reflect"
 	"strings"
 
 	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/fluxv2/packages/v1alpha1/common"
 	log "k8s.io/klog/v2"
 
-	"github.com/sirupsen/logrus"
 	"helm.sh/helm/v3/pkg/registry"
 	orascontext "oras.land/oras-go/pkg/context"
 	orasregistry "oras.land/oras-go/pkg/registry"
@@ -33,12 +30,9 @@ type gitHubRepositoryLister struct {
 func (l *gitHubRepositoryLister) IsApplicableFor(ociRegistry *OCIRegistry) (bool, error) {
 	log.Infof("+IsApplicableFor(%s)", ociRegistry.url.String())
 
-	// need to use
-	// https://github.com/helm/helm/blob/657850e44b880cca43d0606ebf5a54eb75362c3f/pkg/registry/client.go#L55
-	//registry.Client.
-	log.Infof("ociRegistry.registryClient: %s", reflect.TypeOf(ociRegistry.registryClient))
+	// ref https://github.com/helm/helm/blob/657850e44b880cca43d0606ebf5a54eb75362c3f/pkg/registry/client.go#L55
 	registryAuthorizer := &registryauth.Client{
-		Header:     http.Header{"User-Agent": {"Helm/3.9.0"}},
+		Header:     http.Header{"User-Agent": {common.UserAgentString()}},
 		Cache:      registryauth.DefaultCache,
 		Credential: ociRegistry.registryCredentialFn,
 	}
@@ -65,9 +59,8 @@ func (l *gitHubRepositoryLister) IsApplicableFor(ociRegistry *OCIRegistry) (bool
 		Client:    registryAuthorizer,
 	}
 
-	ctx := ctxFn(io.Discard, true)
-	ctx = withScopeHint(ctx, parsedRef, registryauth.ActionPull)
-	// buildRepositoryBaseURL builds the base endpoint of the remote registry.
+	ctx := withScopeHint(orascontext.Background(), parsedRef, registryauth.ActionPull)
+	// build the base endpoint of the remote registry.
 	// Format: <scheme>://<registry>/v2/
 	url := fmt.Sprintf("%s://%s/v2/", "https", ociRepo.Reference.Host())
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
@@ -116,15 +109,6 @@ func (l *gitHubRepositoryLister) ListRepositoryNames() ([]string, error) {
 	log.Infof("+ListRepositoryNames()")
 	// TODO (gfichtenholt) fix me
 	return []string{"podinfo"}, nil
-}
-
-func ctxFn(out io.Writer, debug bool) context.Context {
-	if !debug {
-		return orascontext.Background()
-	}
-	ctx := orascontext.WithLoggerFromWriter(context.Background(), out)
-	orascontext.GetLogger(ctx).Logger.SetLevel(logrus.DebugLevel)
-	return ctx
 }
 
 // withScopeHint adds a hinted scope to the context.
