@@ -427,7 +427,11 @@ it("should not show the list of OCI repositories if using a Helm repo (default)"
 });
 
 // TODO(agamez): fix those tests in the upcoming PR
+// eslint-disable-next-line jest/no-commented-out-tests
 // describe("when the repository info is already populated", () => {
+// TODO(agamez): fix those tests in the upcoming PR
+// eslint-disable-next-line jest/no-commented-out-tests
+// eslint-disable-next-line jest/no-commented-out-tests
 //   it("should parse the existing name", async () => {
 //     const repo = { metadata: { name: "foo" } } as any;
 //     let wrapper: any;
@@ -445,6 +449,8 @@ it("should not show the list of OCI repositories if using a Helm repo (default)"
 //     expect(wrapper.find("#kubeapps-repo-name").prop("disabled")).toBe(true);
 //   });
 
+// TODO(agamez): fix those tests in the upcoming PR
+// eslint-disable-next-line jest/no-commented-out-tests
 //   it("should parse the existing url", async () => {
 //     const repo = { metadata: { name: "foo" }, spec: { url: "http://repo" } } as any;
 //     let wrapper: any;
@@ -457,7 +463,11 @@ it("should not show the list of OCI repositories if using a Helm repo (default)"
 //     });
 //   });
 
+// TODO(agamez): fix those tests in the upcoming PR
+// eslint-disable-next-line jest/no-commented-out-tests
 //   describe("when there is a secret associated to the repo", () => {
+// TODO(agamez): fix those tests in the upcoming PR
+// eslint-disable-next-line jest/no-commented-out-tests
 //     it("should parse the existing CA cert", async () => {
 //       const repo = {
 //         metadata: { name: "foo", namespace: "default" },
@@ -485,6 +495,8 @@ it("should not show the list of OCI repositories if using a Helm repo (default)"
 //       expect(wrapper.find("#kubeapps-repo-custom-ca").prop("value")).toBe("foo");
 //     });
 
+// TODO(agamez): fix those tests in the upcoming PR
+// eslint-disable-next-line jest/no-commented-out-tests
 //     it("should parse the existing auth header", async () => {
 //       const repo = {
 //         metadata: { name: "foo", namespace: "default" },
@@ -512,6 +524,8 @@ it("should not show the list of OCI repositories if using a Helm repo (default)"
 //       expect(wrapper.find("#kubeapps-repo-custom-header").prop("value")).toBe("foo");
 //     });
 
+// TODO(agamez): fix those tests in the upcoming PR
+// eslint-disable-next-line jest/no-commented-out-tests
 //     it("should parse the existing basic auth", async () => {
 //       const repo = {
 //         metadata: { name: "foo", namespace: "default" },
@@ -535,6 +549,8 @@ it("should not show the list of OCI repositories if using a Helm repo (default)"
 //       expect(wrapper.find("#kubeapps-repo-password").prop("value")).toBe("bar");
 //     });
 
+// TODO(agamez): fix those tests in the upcoming PR
+// eslint-disable-next-line jest/no-commented-out-tests
 //     it("should parse the existing type", async () => {
 //       const repo = { metadata: { name: "foo" }, spec: { type: "oci" } } as any;
 //       let wrapper: any;
@@ -551,6 +567,8 @@ it("should not show the list of OCI repositories if using a Helm repo (default)"
 //       expect(wrapper.find("#kubeapps-oci-repositories")).toExist();
 //     });
 
+// TODO(agamez): fix those tests in the upcoming PR
+// eslint-disable-next-line jest/no-commented-out-tests
 //     it("should parse the existing skip tls config", async () => {
 //       const repo = { metadata: { name: "foo" }, spec: { tlsInsecureSkipVerify: true } } as any;
 //       let wrapper: any;
@@ -563,6 +581,8 @@ it("should not show the list of OCI repositories if using a Helm repo (default)"
 //       expect(wrapper.find("#kubeapps-repo-skip-tls")).toBeChecked();
 //     });
 
+// TODO(agamez): fix those tests in the upcoming PR
+// eslint-disable-next-line jest/no-commented-out-tests
 //     it("should parse the existing pass credentials config", async () => {
 //       const repo = { metadata: { name: "foo" }, spec: { passCredentials: true } } as any;
 //       let wrapper: any;
@@ -575,6 +595,8 @@ it("should not show the list of OCI repositories if using a Helm repo (default)"
 //       expect(wrapper.find("#kubeapps-repo-pass-credentials")).toBeChecked();
 //     });
 
+// TODO(agamez): fix those tests in the upcoming PR
+// eslint-disable-next-line jest/no-commented-out-tests
 //     it("should parse a bearer token", async () => {
 //       const repo = {
 //         metadata: { name: "foo", namespace: "default" },
@@ -597,6 +619,8 @@ it("should not show the list of OCI repositories if using a Helm repo (default)"
 //       });
 //     });
 
+// TODO(agamez): fix those tests in the upcoming PR
+// eslint-disable-next-line jest/no-commented-out-tests
 //     it("should select a docker secret as auth mechanism", async () => {
 //       const repo = {
 //         metadata: { name: "foo", namespace: "default" },
@@ -619,6 +643,8 @@ it("should not show the list of OCI repositories if using a Helm repo (default)"
 //       });
 //     });
 
+// TODO(agamez): fix those tests in the upcoming PR
+// eslint-disable-next-line jest/no-commented-out-tests
 //     it("should parse the existing filter (simple)", async () => {
 //       const repo = {
 //         metadata: { name: "foo" },
@@ -645,6 +671,8 @@ it("should not show the list of OCI repositories if using a Helm repo (default)"
 //       expect(wrapper.find('input[type="checkbox"]').at(1)).not.toBeChecked();
 //     });
 
+// TODO(agamez): fix those tests in the upcoming PR
+// eslint-disable-next-line jest/no-commented-out-tests
 //     it("should parse the existing filter (negated regex)", async () => {
 //       const repo = {
 //         metadata: { name: "foo" },
