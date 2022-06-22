@@ -79,12 +79,6 @@ export class DeleteError extends CustomError {}
 
 export type DeploymentEvent = "install" | "upgrade";
 
-export interface IRepo {
-  namespace: string;
-  name: string;
-  url: string;
-}
-
 export interface IReceivePackagesActionPayload {
   response: GetAvailablePackageSummariesResponse;
   paginationToken: string;
@@ -353,72 +347,6 @@ export interface IK8sList<I, M> extends IK8sResource {
     resourceVersion?: string;
     selfLink?: string; // Not in docs, but seems to exist everywhere
   } & M;
-}
-
-// TODO(agamez): delete once we remove 'IAppRepository'
-/** @see https://github.com/kubernetes/community/blob/master/contributors/devel/api-conventions.md#objects */
-export interface IK8sObject<M, SP, ST> extends IK8sResource {
-  metadata: {
-    annotations?: { [key: string]: string };
-    creationTimestamp?: string;
-    deletionTimestamp?: string | null;
-    generation?: number;
-    labels?: { [key: string]: string };
-    name: string;
-    namespace: string;
-    resourceVersion?: string;
-    uid: string;
-    selfLink?: string; // Not in docs, but seems to exist everywhere
-  } & M;
-  spec?: SP;
-  status?: ST;
-}
-
-export type IAppRepository = IK8sObject<
-  {
-    clusterName: string;
-    creationTimestamp: string;
-    deletionGracePeriodSeconds: string | null;
-    deletionTimestamp: string | null;
-    resourceVersion: string;
-    selfLink: string;
-  },
-  {
-    type: string;
-    url: string;
-    description?: string;
-    auth?: {
-      header?: {
-        secretKeyRef: {
-          name: string;
-          key: string;
-        };
-      };
-      customCA?: {
-        secretKeyRef: {
-          name: string;
-          key: string;
-        };
-      };
-    };
-    resyncRequests: number;
-    syncJobPodTemplate?: object;
-    dockerRegistrySecrets?: string[];
-    ociRepositories?: string[];
-    tlsInsecureSkipVerify?: boolean;
-    filterRule?: IPkgRepositoryFilter;
-    passCredentials?: boolean;
-  },
-  undefined
->;
-
-export interface ICreateAppRepositoryResponse {
-  appRepository: IAppRepository;
-}
-
-export interface IAppRepositoryKey {
-  name: string;
-  namespace: string;
 }
 
 export interface IRBACRole {

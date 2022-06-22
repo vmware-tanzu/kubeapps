@@ -108,18 +108,7 @@ export const backend = {
   apprepositories: {
     base: (cluster: string, namespace: string) =>
       `api/v1/clusters/${cluster}/${withNS(namespace)}apprepositories`,
-    create: (cluster: string, namespace: string) =>
-      backend.apprepositories.base(cluster, namespace),
-    list: (cluster: string, namespace: string) => backend.apprepositories.base(cluster, namespace),
-    validate: (cluster: string, namespace: string) =>
-      `${backend.apprepositories.base(cluster, namespace)}/validate`,
     get: (cluster: string, namespace: string, name: string) =>
-      `${backend.apprepositories.base(cluster, namespace)}/${name}`,
-    delete: (cluster: string, namespace: string, name: string) =>
-      `${backend.apprepositories.base(cluster, namespace)}/${name}`,
-    refresh: (cluster: string, namespace: string, name: string) =>
-      `${backend.apprepositories.base(cluster, namespace)}/${name}/refresh`,
-    update: (cluster: string, namespace: string, name: string) =>
       `${backend.apprepositories.base(cluster, namespace)}/${name}`,
   },
 };
