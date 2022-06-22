@@ -5,6 +5,7 @@ import actions from "actions";
 import Alert from "components/js/Alert";
 import Table from "components/js/Table";
 import Tooltip from "components/js/Tooltip";
+import { PackageRepositorySummary } from "gen/kubeappsapis/core/packages/v1alpha1/repositories";
 import { act } from "react-dom/test-utils";
 import * as ReactRedux from "react-redux";
 import { Link } from "react-router-dom";
@@ -13,6 +14,7 @@ import { defaultStore, getStore, initialState, mountWrapper } from "shared/specs
 import { AppRepoControl } from "./AppRepoControl";
 import { AppRepoDisabledControl } from "./AppRepoDisabledControl";
 import AppRepoList from "./AppRepoList";
+import TableRow from "components/js/Table/components/TableRow";
 
 const {
   clusters: { currentCluster, clusters },
@@ -60,7 +62,7 @@ it("fetches repos only from the globalReposNamespace", () => {
     }),
     <AppRepoList />,
   );
-  expect(actions.repos.fetchRepos).toHaveBeenCalledWith(globalReposNamespace);
+  expect(actions.repos.fetchRepos).toHaveBeenCalledWith("");
 });
 
 it("fetches repos from all namespaces (without kubeappsNamespace)", () => {
@@ -121,22 +123,15 @@ it("shows an error deleting a repo", () => {
 // TODO(andresmgot): Re-enable when the repo list is refactored
 describe("global and namespaced repositories", () => {
   const globalRepo = {
-    metadata: {
-      name: "bitnami",
-      namespace: globalReposNamespace,
-    },
-    spec: {},
-  };
+    name: "bitnami",
+    packageRepoRef: { context: { cluster: "default-cluster", namespace: globalReposNamespace } },
+  } as PackageRepositorySummary;
 
   const namespacedRepo = {
-    metadata: {
-      name: "my-repo",
-      namespace,
-    },
-    spec: {
-      description: "my description 1 2 3 4",
-    },
-  };
+    name: "my-repo",
+    packageRepoRef: { context: { cluster: "default-cluster", namespace: namespace } },
+    description: "my description 1 2 3 4",
+  } as PackageRepositorySummary;
 
   it("shows a message if no global or namespaced repos exist", () => {
     const wrapper = mountWrapper(defaultStore, <AppRepoList />);
@@ -225,7 +220,7 @@ describe("global and namespaced repositories", () => {
           clusters: {
             [currentCluster]: {
               ...initialState.clusters.clusters[currentCluster],
-              currentNamespace: namespacedRepo.metadata.namespace,
+              currentNamespace: namespacedRepo.packageRepoRef?.context?.namespace,
             },
           },
         },
@@ -235,9 +230,8 @@ describe("global and namespaced repositories", () => {
       }),
       <AppRepoList />,
     );
-
     // A table per repository type
-    expect(wrapper.find(Table)).toHaveLength(2);
+    expect(wrapper.find(TableRow)).toHaveLength(2);
   });
 
   it("shows a link to the repo catalog", () => {
@@ -250,7 +244,7 @@ describe("global and namespaced repositories", () => {
       <AppRepoList />,
     );
     expect(wrapper.find(Table).find(Link).prop("to")).toEqual(
-      `/c/${currentCluster}/ns/${namespacedRepo.metadata.namespace}/catalog?Repository=my-repo`,
+      `/c/${currentCluster}/ns/${namespacedRepo.packageRepoRef?.context?.namespace}/catalog?Repository=my-repo`,
     );
   });
 
@@ -283,7 +277,7 @@ describe("global and namespaced repositories", () => {
       wrapper.find("input[type='checkbox']").simulate("change");
     });
     expect(wrapper.find(Table).find(Link).prop("to")).toEqual(
-      `/c/${currentCluster}/ns/${namespacedRepo.metadata.namespace}/catalog?Repository=my-repo`,
+      `/c/${currentCluster}/ns/${namespacedRepo.packageRepoRef?.context?.namespace}/catalog?Repository=my-repo`,
     );
   });
 });

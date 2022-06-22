@@ -11,14 +11,14 @@ import * as ReactRedux from "react-redux";
 import { defaultStore, getStore, initialState, mountWrapper } from "shared/specs/mountWrapper";
 import SelectRepoForm from "./SelectRepoForm";
 
-const defaultProps = {
-  cluster: "default",
+const defaultContext = {
+  cluster: "default-cluster",
   namespace: "default",
 };
 
 const installedPackageDetail = {
   availablePackageRef: {
-    context: { cluster: "default", namespace: "default" },
+    context: defaultContext,
     identifier: "bitnami/my-package",
     plugin: { name: "my.plugin", version: "0.0.1" } as Plugin,
   },
@@ -44,26 +44,26 @@ it("should fetch only the global repository", () => {
   const fetch = jest.fn();
   actions.repos = { ...actions.repos, fetchRepos: fetch };
   const props = {
-    cluster: defaultProps.cluster,
+    cluster: defaultContext.cluster,
     namespace: initialState.config.kubeappsNamespace, // global
     app: installedPackageDetail,
   };
   mountWrapper(defaultStore, <SelectRepoForm {...props} />);
-  expect(fetch).toHaveBeenCalledWith(initialState.config.kubeappsNamespace);
+  expect(fetch).toHaveBeenCalledWith(initialState.config.kubeappsNamespace, true);
 });
 
 it("should fetch repositories", () => {
   const fetch = jest.fn();
   actions.repos = { ...actions.repos, fetchRepos: fetch };
-  mountWrapper(defaultStore, <SelectRepoForm {...defaultProps} />);
-  expect(fetch).toHaveBeenCalledWith(defaultProps.namespace, true);
+  mountWrapper(defaultStore, <SelectRepoForm {...defaultContext} />);
+  expect(fetch).toHaveBeenCalledWith(defaultContext.namespace, true);
 });
 
 it("should render a loading page if fetching", () => {
   expect(
     mountWrapper(
       getStore({ repos: { isFetching: true } }),
-      <SelectRepoForm {...defaultProps} />,
+      <SelectRepoForm {...defaultContext} />,
     ).find("LoadingWrapper"),
   ).toExist();
 });
@@ -71,13 +71,13 @@ it("should render a loading page if fetching", () => {
 it("render an error if failed to request repos", () => {
   const wrapper = mountWrapper(
     getStore({ repos: { errors: { fetch: new Error("boom") } } }),
-    <SelectRepoForm {...defaultProps} />,
+    <SelectRepoForm {...defaultContext} />,
   );
   expect(wrapper.find(Alert)).toIncludeText("boom");
 });
 
 it("render a warning if there are no repos", () => {
-  const wrapper = mountWrapper(defaultStore, <SelectRepoForm {...defaultProps} />);
+  const wrapper = mountWrapper(defaultStore, <SelectRepoForm {...defaultContext} />);
   expect(wrapper.find(Alert)).toIncludeText("Repositories not found");
 });
 
@@ -94,7 +94,7 @@ it("should select a repo", () => {
     },
   } as PackageRepositorySummary;
 
-  const props = { ...defaultProps, app: installedPackageDetail };
+  const props = { ...defaultContext, app: installedPackageDetail };
   const wrapper = mountWrapper(
     getStore({ repos: { repos: [repo] } }),
     <SelectRepoForm {...props} />,

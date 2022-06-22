@@ -731,7 +731,7 @@ describe("filters by package repository", () => {
     );
 
     // Called without the boolean `true` option to additionally fetch global repos.
-    expect(fetchRepos).toHaveBeenCalledWith(initialState.config.globalReposNamespace);
+    expect(fetchRepos).toHaveBeenCalledWith("");
   });
 
   it("fetches from the global repos namespace for other clusters", () => {
@@ -748,7 +748,7 @@ describe("filters by package repository", () => {
     );
 
     // Only the global repos should have been fetched.
-    expect(fetchRepos).toHaveBeenCalledWith(initialState.config.globalReposNamespace);
+    expect(fetchRepos).toHaveBeenCalledWith("");
   });
 });
 
