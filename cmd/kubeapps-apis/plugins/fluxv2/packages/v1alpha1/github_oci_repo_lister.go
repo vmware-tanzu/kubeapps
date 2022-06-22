@@ -3,7 +3,6 @@
 package main
 
 import (
-	"context"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -59,11 +58,10 @@ func (l *gitHubRepositoryLister) IsApplicableFor(ociRegistry *OCIRegistry) (bool
 		Client:    registryAuthorizer,
 	}
 
-	ctx := withScopeHint(orascontext.Background(), parsedRef, registryauth.ActionPull)
 	// build the base endpoint of the remote registry.
 	// Format: <scheme>://<registry>/v2/
 	url := fmt.Sprintf("%s://%s/v2/", "https", ociRepo.Reference.Host())
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
+	req, err := http.NewRequestWithContext(orascontext.Background(), http.MethodGet, url, nil)
 	if err != nil {
 		return false, err
 	}
@@ -80,7 +78,7 @@ func (l *gitHubRepositoryLister) IsApplicableFor(ociRegistry *OCIRegistry) (bool
 	}
 
 	if resp.StatusCode == http.StatusOK {
-		// based on the presence of this here Docker-Distribution-Api-Version:[registry/2.0]
+		// based on the presence of this header Docker-Distribution-Api-Version:[registry/2.0]
 		// conclude this is a case for GitHubRepositoryLister, e.g.
 		// +HTTP GET request:
 		// URL: https://ghcr.io/v2/
@@ -109,10 +107,4 @@ func (l *gitHubRepositoryLister) ListRepositoryNames() ([]string, error) {
 	log.Infof("+ListRepositoryNames()")
 	// TODO (gfichtenholt) fix me
 	return []string{"podinfo"}, nil
-}
-
-// withScopeHint adds a hinted scope to the context.
-func withScopeHint(ctx context.Context, ref orasregistry.Reference, actions ...string) context.Context {
-	scope := registryauth.ScopeRepository(ref.Repository, actions...)
-	return registryauth.AppendScopes(ctx, scope)
 }

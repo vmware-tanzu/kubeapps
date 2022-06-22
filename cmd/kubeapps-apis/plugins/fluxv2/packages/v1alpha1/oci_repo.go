@@ -41,6 +41,8 @@ import (
 
 	"github.com/fluxcd/pkg/version"
 	sourcev1 "github.com/fluxcd/source-controller/api/v1beta2"
+
+	// OCI Registry As a Storage (ORAS)
 	registryauth "oras.land/oras-go/pkg/registry/remote/auth"
 )
 
@@ -78,7 +80,10 @@ type OCIRegistry struct {
 	// registryClient is a client to use while downloading tags or charts from a registry.
 	registryClient RegistryClient
 
-	// a workaround for the fact that I don't have access to internals of RegistryClient
+	// The set of public operations one can use w.r.t. RegistryClient is very small
+	// (Login/Logout/Tags). I need to be able to query remote OCI repo for ListRepositoryNames(),
+	// which is not in the set and all fields of RegistryClient,
+	//  including repositoryAuthorizer are internal, so this is a workaround
 	registryCredentialFn OCIRegistryCredentialFn
 
 	repositoryLister OCIRepositoryLister

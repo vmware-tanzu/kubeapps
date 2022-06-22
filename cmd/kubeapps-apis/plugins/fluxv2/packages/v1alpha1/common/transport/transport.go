@@ -14,7 +14,12 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-// a copy of fluxcd source-controller internal/transport/transport.go
+// this is a copy of fluxcd source-controller internal/transport/transport.go
+// It implements a pool of TCP connections. Allows for re-use of TCP
+// connections when pulling (downloading) helm charts. Per
+// official Go documentation ref https://go.dev/src/net/http/transport.go, L#68-69:
+// Transports should be reused instead of created as needed.
+// Transports are safe for concurrent use by multiple goroutines.
 package transport
 
 import (
