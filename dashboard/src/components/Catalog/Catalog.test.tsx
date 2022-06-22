@@ -8,6 +8,7 @@ import InfoCard from "components/InfoCard/InfoCard";
 import Alert from "components/js/Alert";
 import LoadingWrapper from "components/LoadingWrapper";
 import { AvailablePackageSummary, Context } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
+import { PackageRepositorySummary } from "gen/kubeappsapis/core/packages/v1alpha1/repositories";
 import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins";
 import { createMemoryHistory } from "history";
 import React from "react";
@@ -19,12 +20,7 @@ import { IConfigState } from "reducers/config";
 import { IOperatorsState } from "reducers/operators";
 import { IAppRepositoryState } from "reducers/repos";
 import { getStore, initialState, mountWrapper } from "shared/specs/mountWrapper";
-import {
-  IAppRepository,
-  IPackageState,
-  IClusterServiceVersion,
-  IStoreState,
-} from "../../shared/types";
+import { IClusterServiceVersion, IPackageState, IStoreState } from "../../shared/types";
 import SearchFilter from "../SearchFilter/SearchFilter";
 import Catalog, { filterNames } from "./Catalog";
 import CatalogItems from "./CatalogItems";
@@ -665,7 +661,7 @@ describe("filters by package repository", () => {
     const wrapper = mountWrapper(
       getStore({
         ...populatedState,
-        repos: { repos: [{ metadata: { name: "foo" } } as IAppRepository] },
+        repos: { repos: [{ name: "foo" } as PackageRepositorySummary] },
       }),
       <MemoryRouter initialEntries={[routePathParam]}>
         <Route path={routePath}>
@@ -693,7 +689,7 @@ describe("filters by package repository", () => {
     const wrapper = mountWrapper(
       getStore({
         ...populatedState,
-        repos: { repos: [{ metadata: { name: "foo" } } as IAppRepository] },
+        repos: { repos: [{ name: "foo" } as PackageRepositorySummary] },
       }),
       <MemoryRouter initialEntries={[`/c/${defaultProps.cluster}/ns/my-ns/catalog`]}>
         <Route path={routePath}>
@@ -721,7 +717,7 @@ describe("filters by package repository", () => {
     mountWrapper(
       getStore({
         ...populatedState,
-        repos: { repos: [{ metadata: { name: "foo" } } as IAppRepository] },
+        repos: { repos: [{ name: "foo" } as PackageRepositorySummary] },
       }),
       <MemoryRouter
         initialEntries={[
@@ -742,7 +738,7 @@ describe("filters by package repository", () => {
     mountWrapper(
       getStore({
         ...populatedState,
-        repos: { repos: [{ metadata: { name: "foo" } } as IAppRepository] },
+        repos: { repos: [{ name: "foo" } as PackageRepositorySummary] },
       }),
       <MemoryRouter initialEntries={[`/c/other-cluster/ns/my-ns/catalog`]}>
         <Route path={routePath}>

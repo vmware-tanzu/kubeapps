@@ -5,10 +5,10 @@ import { CdsButton } from "@cds/react/button";
 import { CdsIcon } from "@cds/react/icon";
 import { CdsModal } from "@cds/react/modal";
 import actions from "actions";
+import { PackageRepositoryReference } from "gen/kubeappsapis/core/packages/v1alpha1/repositories";
 import { act } from "react-dom/test-utils";
 import * as ReactRedux from "react-redux";
 import { defaultStore, mountWrapper } from "shared/specs/mountWrapper";
-import { IAppRepository } from "shared/types";
 import { AppRepoAddButton } from "./AppRepoButton";
 import { AppRepoForm } from "./AppRepoForm";
 
@@ -100,7 +100,11 @@ it("calls updateRepo when submitting and there is a repo available", () => {
     defaultStore,
     <AppRepoAddButton
       {...defaultProps}
-      packageRepoRef={{ metadata: { name: "foo" }, spec: {} } as IAppRepository}
+      packageRepoRef={
+        {
+          identifier: "foo",
+        } as PackageRepositoryReference
+      }
     />,
   );
   act(() => {

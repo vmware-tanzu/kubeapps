@@ -5,11 +5,12 @@ import { CdsButton } from "@cds/react/button";
 import { CdsIcon } from "@cds/react/icon";
 import { CdsModal, CdsModalContent, CdsModalHeader } from "@cds/react/modal";
 import actions from "actions";
+import { PackageRepositoryReference } from "gen/kubeappsapis/core/packages/v1alpha1/repositories";
 import { useState } from "react";
 import { useDispatch } from "react-redux";
 import { Action } from "redux";
 import { ThunkDispatch } from "redux-thunk";
-import { IAppRepository, IPkgRepoFormData, IStoreState } from "shared/types";
+import { IPkgRepoFormData, IStoreState } from "shared/types";
 import { AppRepoForm } from "./AppRepoForm";
 
 interface IAppRepoAddButtonProps {
@@ -17,7 +18,7 @@ interface IAppRepoAddButtonProps {
   kubeappsNamespace: string;
   text?: string;
   primary?: boolean;
-  packageRepoRef?: IAppRepository;
+  packageRepoRef?: PackageRepositoryReference;
   disabled?: boolean;
   title?: string;
 }

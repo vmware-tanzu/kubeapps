@@ -5,10 +5,10 @@ import { CdsButton } from "@cds/react/button";
 import actions from "actions";
 import Alert from "components/js/Alert";
 import { InstalledPackageDetail } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
+import { PackageRepositorySummary } from "gen/kubeappsapis/core/packages/v1alpha1/repositories";
 import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins";
 import * as ReactRedux from "react-redux";
 import { defaultStore, getStore, initialState, mountWrapper } from "shared/specs/mountWrapper";
-import { IAppRepository } from "shared/types";
 import SelectRepoForm from "./SelectRepoForm";
 
 const defaultProps = {
@@ -85,14 +85,14 @@ it("should select a repo", () => {
   const findPackageInRepo = jest.fn();
   actions.repos = { ...actions.repos, findPackageInRepo };
   const repo = {
-    metadata: {
-      name: "bitnami",
-      namespace: "default",
+    name: "bitnami",
+    url: "http://repo",
+    packageRepoRef: {
+      context: { namespace: "default", cluster: "default" },
+      identifier: "bitnami",
+      plugin: { name: "my.plugin", version: "0.0.1" } as Plugin,
     },
-    spec: {
-      url: "http://repo",
-    },
-  } as IAppRepository;
+  } as PackageRepositorySummary;
 
   const props = { ...defaultProps, app: installedPackageDetail };
   const wrapper = mountWrapper(
@@ -103,8 +103,8 @@ it("should select a repo", () => {
   (wrapper.find(CdsButton).prop("onClick") as any)();
   expect(findPackageInRepo).toHaveBeenCalledWith(
     initialState.config.kubeappsCluster,
-    repo.metadata.namespace,
-    repo.metadata.name,
+    repo.packageRepoRef?.context?.namespace,
+    repo.name,
     installedPackageDetail,
   );
 });

@@ -31,21 +31,25 @@ function SelectRepoForm({ cluster, namespace, app }: ISelectRepoFormProps) {
     packages: {
       selected: { error: packageError },
     },
-    config: { kubeappsNamespace, kubeappsCluster },
+    config: { kubeappsNamespace, kubeappsCluster, globalReposNamespace },
   } = useSelector((state: IStoreState) => state);
 
-  const [userRepoName, setUserRepoName] = useState(repo?.metadata?.name ?? "");
-  const [userRepoNamespace, setUserRepoNamepace] = useState(repo?.metadata?.namespace ?? "");
-
+  const [userRepoName, setUserRepoName] = useState(repo?.name ?? "");
+  const [userRepoNamespace, setUserRepoNamepace] = useState(
+    repo.packageRepoRef?.context?.namespace ?? "",
+  );
+  // We do not currently support package repositories on additional clusters.
+  const supportedCluster = cluster === kubeappsCluster;
   useEffect(() => {
-    if (namespace !== kubeappsNamespace) {
-      // Normal namespace, show local and global repos
-      dispatch(actions.repos.fetchRepos(namespace, true));
-    } else {
-      // Global namespace, show global repos only
-      dispatch(actions.repos.fetchRepos(kubeappsNamespace));
+    if (!namespace || !supportedCluster || namespace === globalReposNamespace) {
+      // All Namespaces. Global namespace or other cluster, show global repos only
+      dispatch(actions.repos.fetchRepos(""));
+      return () => {};
     }
-  }, [dispatch, namespace, kubeappsNamespace]);
+    // In other case, fetch global and namespace repos
+    dispatch(actions.repos.fetchRepos(namespace, true));
+    return () => {};
+  }, [dispatch, namespace, kubeappsNamespace, globalReposNamespace, supportedCluster]);
 
   const handleRepoNameChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     if (e.target.value) {
@@ -64,12 +68,12 @@ function SelectRepoForm({ cluster, namespace, app }: ISelectRepoFormProps) {
   };
 
   const findRepo = (ns: string, name: string) => {
-    return repos.find(r => r.metadata.name === name && r.metadata.namespace === ns);
+    return repos.find(r => r.name === name && r.packageRepoRef?.context?.namespace === ns);
   };
 
   const getRepoURL = (ns: string, name: string) => {
     const r = findRepo(ns, name);
-    return r && r.spec ? r.spec.url : "";
+    return r?.url || "";
   };
 
   return (
@@ -108,10 +112,10 @@ function SelectRepoForm({ cluster, namespace, app }: ISelectRepoFormProps) {
             >
               {!userRepoName && <option key="" value="" />}
               {repos.map(r => {
-                const value = `${r.metadata.namespace}/${r.metadata.name}`;
+                const value = `${r.packageRepoRef?.context?.namespace}/${r.name}`;
                 return (
                   <option key={value} value={value}>
-                    {value} ({getRepoURL(r.metadata.namespace, r.metadata.name)})
+                    {value} ({getRepoURL(r.packageRepoRef?.context?.namespace || "", r.name)})
                   </option>
                 );
               })}

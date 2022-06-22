@@ -1,7 +1,10 @@
 // Copyright 2020-2022 the Kubeapps contributors.
 // SPDX-License-Identifier: Apache-2.0
 
-import { IAppRepository } from "shared/types";
+import {
+  PackageRepositoryDetail,
+  PackageRepositorySummary,
+} from "gen/kubeappsapis/core/packages/v1alpha1/repositories";
 import { getType } from "typesafe-actions";
 import actions from "../actions";
 import reposReducer, { IAppRepositoryState } from "./repos";
@@ -25,8 +28,8 @@ describe("reposReducer", () => {
         secrets: false,
       },
       validating: false,
-      repo: {} as IAppRepository,
-      repos: [],
+      repo: {} as PackageRepositoryDetail,
+      repos: [] as PackageRepositorySummary[],
       imagePullSecrets: [],
     };
   });

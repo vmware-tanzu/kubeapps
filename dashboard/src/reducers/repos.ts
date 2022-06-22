@@ -2,10 +2,16 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { LocationChangeAction, LOCATION_CHANGE } from "connected-react-router";
-import { IAppRepository, ISecret } from "shared/types";
+import {
+  PackageRepositoryDetail,
+  PackageRepositorySummary,
+} from "gen/kubeappsapis/core/packages/v1alpha1/repositories";
+import { RepositoryCustomDetails } from "gen/kubeappsapis/plugins/helm/packages/v1alpha1/helm";
+import { ISecret } from "shared/types";
+import { PluginNames } from "shared/utils";
 import { getType } from "typesafe-actions";
 import actions from "../actions";
-import { AppReposAction } from "../actions/repos";
+import { PkgReposAction } from "../actions/repos";
 
 export interface IAppRepositoryState {
   addingRepo: boolean;
@@ -16,15 +22,15 @@ export interface IAppRepositoryState {
     update?: Error;
     validate?: Error;
   };
-  lastAdded?: IAppRepository;
+  lastAdded?: PackageRepositoryDetail;
   isFetching: boolean;
   isFetchingElem: {
     repositories: boolean;
     secrets: boolean;
   };
   validating: boolean;
-  repo: IAppRepository;
-  repos: IAppRepository[];
+  repo: PackageRepositoryDetail;
+  repos: PackageRepositorySummary[];
   form: {
     name: string;
     namespace: string;
@@ -50,8 +56,8 @@ export const initialState: IAppRepositoryState = {
     secrets: false,
   },
   validating: false,
-  repo: {} as IAppRepository,
-  repos: [],
+  repo: {} as PackageRepositoryDetail,
+  repos: [] as PackageRepositorySummary[],
   imagePullSecrets: [],
 };
 
@@ -68,7 +74,7 @@ function isFetching(state: IAppRepositoryState, item: string, fetching: boolean)
 
 const reposReducer = (
   state: IAppRepositoryState = initialState,
-  action: AppReposAction | LocationChangeAction,
+  action: PkgReposAction | LocationChangeAction,
 ): IAppRepositoryState => {
   switch (action.type) {
     case getType(actions.repos.receiveRepos):
@@ -79,14 +85,38 @@ const reposReducer = (
         errors: {},
       };
     case getType(actions.repos.receiveRepo):
+      // eslint-disable-next-line no-case-declarations
+      let customDetail: any;
+
+      // TODO(agamez): decoding customDetail just for the helm plugin
+      if (action.payload.packageRepoRef?.plugin?.name === PluginNames.PACKAGES_HELM) {
+        customDetail = {
+          dockerRegistrySecrets: [],
+          ociRepositories: [],
+          performValidation: false,
+        } as RepositoryCustomDetails;
+
+        try {
+          if (action.payload?.customDetail?.value) {
+            // TODO(agamez): verify why the field is not automatically decoded.
+            customDetail = RepositoryCustomDetails.decode(
+              action.payload.customDetail.value as unknown as Uint8Array,
+            );
+          }
+          // eslint-disable-next-line no-empty
+        } catch (error) {}
+      }
+
       return {
         ...state,
         ...isFetching(state, "repositories", false),
-        repo: action.payload,
+        repo: { ...action.payload, customDetail: customDetail },
         errors: {},
       };
     case getType(actions.repos.requestRepos):
       return { ...state, ...isFetching(state, "repositories", true) };
+    case getType(actions.repos.requestRepo):
+      return { ...state, repo: initialState.repo, errors: {} };
     case getType(actions.repos.addRepo):
       return { ...state, addingRepo: true };
     case getType(actions.repos.addedRepo):
@@ -99,8 +129,8 @@ const reposReducer = (
     case getType(actions.repos.repoUpdated): {
       const updatedRepo = action.payload;
       const repos = state.repos.map(r =>
-        r.metadata.name === updatedRepo.metadata.name &&
-        r.metadata.namespace === updatedRepo.metadata.namespace
+        r.name === updatedRepo.name &&
+        r.packageRepoRef?.context?.namespace === updatedRepo.packageRepoRef?.context?.namespace
           ? updatedRepo
           : r,
       );

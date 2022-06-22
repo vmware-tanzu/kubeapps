@@ -11,12 +11,13 @@ import Table from "components/js/Table";
 import Tooltip from "components/js/Tooltip";
 import PageHeader from "components/PageHeader/PageHeader";
 import { push } from "connected-react-router";
+import { PackageRepositorySummary } from "gen/kubeappsapis/core/packages/v1alpha1/repositories";
 import qs from "qs";
 import { useCallback, useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { Link, useLocation } from "react-router-dom";
 import { Kube } from "shared/Kube";
-import { IAppRepository, IStoreState } from "shared/types";
+import { IStoreState } from "shared/types";
 import { app } from "shared/url";
 import LoadingWrapper from "../../LoadingWrapper/LoadingWrapper";
 import { AppRepoAddButton } from "./AppRepoButton";
@@ -47,14 +48,9 @@ function AppRepoList() {
   // so calling several times to refetchRepos would run the code inside, even
   // if the dependencies do not change.
   const refetchRepos: () => void = useCallback(() => {
-    if (!namespace) {
-      // All Namespaces
+    if (!namespace || !supportedCluster || namespace === globalReposNamespace) {
+      // All Namespaces. Global namespace or other cluster, show global repos only
       dispatch(actions.repos.fetchRepos(""));
-      return () => {};
-    }
-    if (!supportedCluster || namespace === globalReposNamespace) {
-      // Global namespace or other cluster, show global repos only
-      dispatch(actions.repos.fetchRepos(globalReposNamespace));
       return () => {};
     }
     // In other case, fetch global and namespace repos
@@ -94,12 +90,15 @@ function AppRepoList() {
       ?.catch(() => setCanEditGlobalRepos(false));
   }, [cluster, kubeappsCluster, kubeappsNamespace, globalReposNamespace]);
 
-  const globalRepos: IAppRepository[] = [];
-  const namespacedRepos: IAppRepository[] = [];
+  const globalRepos: PackageRepositorySummary[] = [];
+  const namespacedRepos: PackageRepositorySummary[] = [];
   repos.forEach(repo => {
-    repo.metadata.namespace === globalReposNamespace
-      ? globalRepos.push(repo)
-      : namespacedRepos.push(repo);
+    if (!repo.namespaceScoped) {
+      globalRepos.push(repo);
+      // ensure listed namespaced repos are those in the current namespace
+    } else if (allNS || repo.packageRepoRef?.context?.namespace === namespace) {
+      namespacedRepos.push(repo);
+    }
   });
 
   const tableColumns = [
@@ -111,18 +110,17 @@ function AppRepoList() {
     { accessor: "status", Header: "Status" },
     { accessor: "actions", Header: "Actions" },
   ];
-  const getTableData = (targetRepos: IAppRepository[], disableControls: boolean) => {
+  const getTableData = (targetRepos: PackageRepositorySummary[], disableControls: boolean) => {
     return targetRepos.map(repo => {
       return {
         name: getRepoNameLinkAndTooltip(cluster, repo),
-        url: repo.spec?.url,
+        url: repo.url,
         // TODO(agamez): the PackageRepositorySummary API doesn't expose this field. It will be added in upcoming PRs; in the meantime, set to "unknown"
         // accessLevel: repo.type?.auth?.header ? "Private" : "Public",
         accessLevel: "unknown",
-        namespace: repo.metadata.namespace,
-        plugin: "Helm",
-        // eslint-disable-next-line no-constant-condition
-        status: true ? (
+        namespace: repo.packageRepoRef?.context?.namespace,
+        plugin: repo.type,
+        status: repo.status?.ready ? (
           <>Ready</>
         ) : (
           <>
@@ -131,16 +129,16 @@ function AppRepoList() {
               Refresh
             </CdsButton>
             <p>Not ready</p>
-            {false && (
+            {repo?.status?.userReason && (
               <Tooltip
                 label="notready-tooltip"
-                id={`${repo.metadata.name}-notready-tooltip`}
+                id={`${repo.name}-notready-tooltip`}
                 icon="info-circle"
                 position="top-right"
                 small={true}
                 iconProps={{ solid: true, size: "sm" }}
               >
-                {"unknown"}
+                {repo?.status?.userReason}
               </Tooltip>
             )}
           </>
@@ -265,30 +263,30 @@ function AppRepoList() {
   );
 }
 
-function getRepoNameLinkAndTooltip(cluster: string, repo: IAppRepository) {
+function getRepoNameLinkAndTooltip(cluster: string, repo: PackageRepositorySummary) {
   const linkObj = (
     <Link
       to={
-        app.catalog(cluster, repo.metadata.namespace) +
-        filtersToQuery({ [filterNames.REPO]: [repo.metadata.name] })
+        app.catalog(cluster, repo.packageRepoRef?.context?.namespace || "") +
+        filtersToQuery({ [filterNames.REPO]: [repo.name] })
       }
     >
-      {repo.metadata.name}
+      {repo.name}
     </Link>
   );
-  return repo.spec?.description ? (
+  return repo.description ? (
     <div className="color-icon-info">
       <span className="tooltip-wrapper">
         {linkObj}
         <Tooltip
           label="pending-tooltip"
-          id={`${repo.metadata.name}-pending-tooltip`}
+          id={`${repo.name}-pending-tooltip`}
           icon="info-circle"
           position="bottom-left"
           small={true}
           iconProps={{ solid: true, size: "sm" }}
         >
-          {repo.spec?.description}
+          {repo.description}
         </Tooltip>
       </span>
     </div>
