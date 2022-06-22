@@ -93,6 +93,7 @@ github.com/Masterminds/goutils v1.1.0/go.mod h1:8cTjp+g8YejhMuvIA5y2vz3BpJxksy86
 github.com/Masterminds/goutils v1.1.1 h1:5nUrii3FMTL5diU80unEVvNevw1nH4+ZV4DSLVJLSYI=
 github.com/Masterminds/goutils v1.1.1/go.mod h1:8cTjp+g8YejhMuvIA5y2vz3BpJxksy863GQaJW2MFNU=
 github.com/Masterminds/semver v1.5.0/go.mod h1:MB6lktGJrhw8PrUyiEoblNEGEQ+RzHPF078ddwwvV3Y=
+github.com/Masterminds/semver/v3 v3.1.0/go.mod h1:VPu/7SZ7ePZ3QOrcuXROw5FAcLl4a0cBrbBpGY/8hQs=
 github.com/Masterminds/semver/v3 v3.1.1 h1:hLg3sBzpNErnxhQtUy/mmLR2I9foDujNK030IGemrRc=
 github.com/Masterminds/semver/v3 v3.1.1/go.mod h1:VPu/7SZ7ePZ3QOrcuXROw5FAcLl4a0cBrbBpGY/8hQs=
 github.com/Masterminds/sprig v2.22.0+incompatible/go.mod h1:y6hNFY5UBTIWBxnzTeuNhlNS5hqE0NB0E6fgfo2Br3o=
@@ -491,6 +492,8 @@ github.com/fluxcd/pkg/apis/kustomize v0.4.2 h1:5mC/t+OndouK7poFaG4soWLqvHqOxJ3HC
 github.com/fluxcd/pkg/apis/kustomize v0.4.2/go.mod h1:y/TpJvnhR08BRt3E7oLpDPvx0/J/2AS8tOiAFJpctu8=
 github.com/fluxcd/pkg/apis/meta v0.14.2 h1:/Hf7I/Vz01vv3m7Qx7DtQvrzAL1oVt0MJcLb/I1Y1HE=
 github.com/fluxcd/pkg/apis/meta v0.14.2/go.mod h1:ijZ61VG/8T3U17gj0aFL3fdtZL+mulD6V8VrLLUCAgM=
+github.com/fluxcd/pkg/version v0.1.0 h1:v+SmCanmCB5Tj2Cx9TXlj+kNRfPGbAvirkeqsp7ZEAQ=
+github.com/fluxcd/pkg/version v0.1.0/go.mod h1:V7Z/w8dxLQzv0FHqa5ox5TeyOd2zOd49EeuWFgnwyj4=
 github.com/fluxcd/source-controller/api v0.25.5 h1:64rLb5cuHhZ3LcRIxkp+/oAVCyVtjOhQ9kbphdFfR/s=
 github.com/fluxcd/source-controller/api v0.25.5/go.mod h1:/e7YRDOqb8z8I3N8ifbDF1mknf8zFsoADtS/Q93iWPs=
 github.com/flynn/go-shlex v0.0.0-20150515145356-3f9db97f8568/go.mod h1:xEzjJPgXI435gkrCt3MPfRiAkVrwSbHsst4LCFVfpJc=

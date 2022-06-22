@@ -514,20 +514,7 @@ func (s *Server) AddPackageRepository(ctx context.Context, request *corev1.AddPa
 			request.Context.Cluster)
 	}
 
-	if request.Name == "" {
-		return nil, status.Errorf(codes.InvalidArgument, "no request Name provided")
-	}
-
-	name := types.NamespacedName{Name: request.Name, Namespace: request.Context.Namespace}
-
-	if request.GetNamespaceScoped() {
-		return nil, status.Errorf(codes.Unimplemented, "namespaced-scoped repositories are not supported")
-	} else if request.GetType() != "helm" {
-		return nil, status.Errorf(codes.Unimplemented, "repository type [%s] not supported", request.GetType())
-	}
-
-	if repoRef, err := s.newRepo(ctx, name, request.GetUrl(),
-		request.GetInterval(), request.GetTlsConfig(), request.GetAuth()); err != nil {
+	if repoRef, err := s.newRepo(ctx, request); err != nil {
 		return nil, err
 	} else {
 		return &corev1.AddPackageRepositoryResponse{PackageRepoRef: repoRef}, nil
@@ -536,6 +523,7 @@ func (s *Server) AddPackageRepository(ctx context.Context, request *corev1.AddPa
 
 func (s *Server) GetPackageRepositoryDetail(ctx context.Context, request *corev1.GetPackageRepositoryDetailRequest) (*corev1.GetPackageRepositoryDetailResponse, error) {
 	log.Infof("+fluxv2 GetPackageRepositoryDetail [%v]", request)
+	defer log.Infof("-fluxv2 GetPackageRepositoryDetail")
 	if request == nil || request.PackageRepoRef == nil {
 		return nil, status.Errorf(codes.InvalidArgument, "no request AvailablePackageRef provided")
 	}
