@@ -65,7 +65,10 @@ func (l *dockerRegistryApiV2RepositoryLister) ListRepositoryNames(ociRegistry *O
 			log.Infof("orasRegistry.Repositories fn: %s", repos)
 			return done
 		}
-		// TODO need to append
+
+		// see https://github.com/vmware-tanzu/kubeapps/pull/4932#issuecomment-1164004999
+		// and https://github.com/oras-project/oras-go/issues/196
+		// TODO (gfichtenholt) need to append
 		// "?last=" + orasRegistry.Reference.Repository
 		// to req.Query so we don't start at the beggining of the alphabet
 

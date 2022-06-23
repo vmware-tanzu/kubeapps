@@ -3123,4 +3123,21 @@ var (
 	delete_repo_req_6 = &corev1.DeletePackageRepositoryRequest{
 		PackageRepoRef: repoRefInReq("my-podinfo-4", "TBD"),
 	}
+
+	oci_stefanprodan_podinfo_available_summaries = func(name string) *corev1.GetAvailablePackageSummariesResponse {
+		return &corev1.GetAvailablePackageSummariesResponse{
+			AvailablePackageSummaries: []*corev1.AvailablePackageSummary{
+				{
+					Name:                "podinfo",
+					AvailablePackageRef: availableRef(name+"/podinfo", "default"),
+					LatestVersion: &corev1.PackageAppVersion{
+						PkgVersion: "6.1.6",
+					},
+					DisplayName:      "podinfo",
+					ShortDescription: "Podinfo Helm chart for Kubernetes",
+					Categories:       []string{""},
+				},
+			},
+		}
+	}
 )

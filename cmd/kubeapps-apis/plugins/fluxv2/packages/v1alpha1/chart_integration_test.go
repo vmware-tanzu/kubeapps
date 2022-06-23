@@ -12,7 +12,10 @@ import (
 	"time"
 
 	sourcev1 "github.com/fluxcd/source-controller/api/v1beta2"
+	"github.com/google/go-cmp/cmp"
+	"github.com/google/go-cmp/cmp/cmpopts"
 	corev1 "github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
+	plugins "github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/core/plugins/v1alpha1"
 	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/fluxv2/packages/v1alpha1/common"
 	"golang.org/x/sync/semaphore"
 	"google.golang.org/grpc/codes"
@@ -579,5 +582,15 @@ func TestKindClusterGetAvailablePackageSummariesForOCI(t *testing.T) {
 		t.Fatalf("%v", err)
 	}
 
-	t.Logf("=======> %s", common.PrettyPrint(resp))
+	opt1 := cmpopts.IgnoreUnexported(
+		corev1.GetAvailablePackageSummariesResponse{},
+		corev1.AvailablePackageSummary{},
+		corev1.AvailablePackageReference{},
+		corev1.Context{},
+		plugins.Plugin{},
+		corev1.PackageAppVersion{})
+	opt2 := cmpopts.SortSlices(lessAvailablePackageFunc)
+	if got, want := resp, oci_stefanprodan_podinfo_available_summaries(repoName.Name); !cmp.Equal(got, want, opt1, opt2) {
+		t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opt1, opt2))
+	}
 }
