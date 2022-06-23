@@ -211,14 +211,14 @@ export const updateRepo = (
       // Ensure the repo have been updated
       if (!data?.packageRepoRef) {
         dispatch(
-          errorRepos(new Error(`Can't create the repository: ${JSON.stringify(data)}`), "create"),
+          errorRepos(new Error(`Can't update the repository: ${JSON.stringify(data)}`), "update"),
         );
         return false;
       }
       const repo = await PackageRepositoriesService.getPackageRepositoryDetail(data.packageRepoRef);
       if (!repo?.detail) {
         dispatch(
-          errorRepos(new Error(`The repo wasn't created: ${JSON.stringify(repo)}`), "create"),
+          errorRepos(new Error(`The repo wasn't updated: ${JSON.stringify(repo)}`), "update"),
         );
         return false;
       }
