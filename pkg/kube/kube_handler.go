@@ -797,7 +797,7 @@ func getOCIAppRepositoryMediaType(cli httpclient.Client, repoURL string, repoNam
 	}
 	parsedURL.Path = path.Join("v2", parsedURL.Path, repoName, "manifests", tagVersion)
 
-	log.Infof("parsedURL %v", parsedURL.String())
+	log.InfoS("parsedURL", "URL", parsedURL.String())
 	req, err := http.NewRequest("GET", parsedURL.String(), nil)
 	if err != nil {
 		return "", err
@@ -1206,7 +1206,7 @@ func ParseSelfSubjectAccessRequest(selfSubjectAccessReviewBody io.ReadCloser) (*
 	var request authorizationapi.ResourceAttributes
 	err := json.NewDecoder(selfSubjectAccessReviewBody).Decode(&request)
 	if err != nil {
-		log.Infof("unable to decode: %v", err)
+		log.InfoS("unable to decode:", "err", err)
 		return nil, err
 	}
 	return &request, nil
