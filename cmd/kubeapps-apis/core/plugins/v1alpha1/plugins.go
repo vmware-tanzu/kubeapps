@@ -148,7 +148,7 @@ func (s *PluginsServer) registerPlugins(pluginPaths []string, grpcReg grpc.Servi
 			return err
 		}
 
-		log.Infof("Successfully registered plugin %q", pluginPath)
+		log.InfoS("Successfully registered plugin", "pluginPath", pluginPath)
 	}
 
 	sortPlugins(pluginsWithServers)

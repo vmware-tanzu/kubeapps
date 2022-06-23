@@ -119,7 +119,7 @@ func NewChartCache(name string, redisCli *redis.Client, stopCh <-chan struct{}) 
 // this func will enqueue work items into chart work queue and return.
 // the charts will be synced worker threads running in the background
 func (c *ChartCache) SyncCharts(charts []models.Chart, clientOptions *common.ClientOptions) error {
-	log.Infof("+SyncCharts()")
+	log.Info("+SyncCharts()")
 	totalToSync := 0
 	defer func() {
 		log.Infof("-SyncCharts(): [%d] total charts to sync", totalToSync)
@@ -536,11 +536,11 @@ func (c *ChartCache) Shutdown() {
 // at the time of the resync() call and guarantees no more work items will be processed
 // until resync() finishes
 func (c *ChartCache) ExpectResync() (chan int, error) {
-	log.Infof("+ExpectResync()")
+	log.Info("+ExpectResync()")
 	c.resyncCond.L.Lock()
 	defer func() {
 		c.resyncCond.L.Unlock()
-		log.Infof("-ExpectResync()")
+		log.Info("-ExpectResync()")
 	}()
 
 	if c.resyncCh != nil {
@@ -554,11 +554,11 @@ func (c *ChartCache) ExpectResync() (chan int, error) {
 // this func is used by unit tests only
 // By the end of the call the work queue should be empty
 func (c *ChartCache) WaitUntilResyncComplete() {
-	log.Infof("+WaitUntilResyncComplete()")
+	log.Info("+WaitUntilResyncComplete()")
 	c.resyncCond.L.Lock()
 	defer func() {
 		c.resyncCond.L.Unlock()
-		log.Infof("-WaitUntilResyncComplete()")
+		log.Info("-WaitUntilResyncComplete()")
 	}()
 
 	for c.resyncCh != nil {
