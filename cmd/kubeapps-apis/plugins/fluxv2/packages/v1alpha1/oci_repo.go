@@ -265,7 +265,7 @@ func (r *OCIRegistry) downloadChart(chart *repo.ChartVersion) (*bytes.Buffer, er
 // logout attempts to logout from the OCI registry.
 // It returns an error on failure.
 func (r *OCIRegistry) logout() error {
-	log.Infof("+logout")
+	log.Info("+logout")
 	err := r.registryClient.Logout(r.url.Host)
 	if err != nil {
 		return err
@@ -360,7 +360,7 @@ func newRegistryClient(isLogin bool) (*registry.Client, string, error) {
 // ref https://fluxcd.io/docs/components/source/helmrepositories/#helm-oci-repository
 func (s *repoEventSink) onAddOciRepo(repo sourcev1.HelmRepository) ([]byte, bool, error) {
 	log.Infof("+onAddOciRepo(%s)", common.PrettyPrint(repo))
-	defer log.Infof("-onAddOciRepo")
+	defer log.Info("-onAddOciRepo")
 
 	ociRegistry, err := s.newOCIRegistryAndLogin(repo)
 	if err != nil {
@@ -478,7 +478,7 @@ func (s *repoEventSink) onAddOciRepo(repo sourcev1.HelmRepository) ([]byte, bool
 
 func (s *repoEventSink) onModifyOciRepo(key string, oldValue interface{}, repo sourcev1.HelmRepository) ([]byte, bool, error) {
 	log.Infof("+onModifyOciRepo(%s)", common.PrettyPrint(repo))
-	defer log.Infof("-onModifyOciRepo")
+	defer log.Info("-onModifyOciRepo")
 
 	// We should to compare checksums on what's stored in the cache
 	// vs the modified object to see if the contents has really changed before embarking on
@@ -616,7 +616,7 @@ func (s *repoEventSink) newOCIRegistryAndLogin(repo sourcev1.HelmRepository) (*O
 }
 
 func (s *repoEventSink) clientOptionsForRepo(repo sourcev1.HelmRepository) ([]registry.LoginOption, []getter.Option, *registryauth.Credential, error) {
-	log.Infof("+clientOptionsForRepo()")
+	log.Info("+clientOptionsForRepo()")
 
 	var loginOpts []registry.LoginOption
 	var cred *registryauth.Credential

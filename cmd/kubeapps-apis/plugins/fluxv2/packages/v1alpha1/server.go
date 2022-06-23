@@ -466,6 +466,7 @@ func (s *Server) DeleteInstalledPackage(ctx context.Context, request *corev1.Del
 // resources created by an installed package.
 func (s *Server) GetInstalledPackageResourceRefs(ctx context.Context, request *corev1.GetInstalledPackageResourceRefsRequest) (*corev1.GetInstalledPackageResourceRefsResponse, error) {
 	pkgRef := request.GetInstalledPackageRef()
+	identifier := pkgRef.GetIdentifier()
 	log.InfoS("+fluxv2 GetInstalledPackageResourceRefs", "cluster", pkgRef.GetContext().GetCluster(), "namespace", pkgRef.GetContext().GetNamespace(), "id", identifier)
 
 	key := types.NamespacedName{Namespace: pkgRef.Context.Namespace, Name: identifier}
@@ -521,7 +522,7 @@ func (s *Server) AddPackageRepository(ctx context.Context, request *corev1.AddPa
 
 func (s *Server) GetPackageRepositoryDetail(ctx context.Context, request *corev1.GetPackageRepositoryDetailRequest) (*corev1.GetPackageRepositoryDetailResponse, error) {
 	log.Infof("+fluxv2 GetPackageRepositoryDetail [%v]", request)
-	defer log.Infof("-fluxv2 GetPackageRepositoryDetail")
+	defer log.Info("-fluxv2 GetPackageRepositoryDetail")
 	if request == nil || request.PackageRepoRef == nil {
 		return nil, status.Errorf(codes.InvalidArgument, "no request AvailablePackageRef provided")
 	}

@@ -93,7 +93,7 @@ func (l *gitHubRepositoryLister) IsApplicableFor(ociRegistry *OCIRegistry) (bool
 
 		val, ok := resp.Header["Docker-Distribution-Api-Version"]
 		if ok && len(val) == 1 && val[0] == "registry/2.0" {
-			log.Infof("-isApplicableFor(): yes")
+			log.Info("-isApplicableFor(): yes")
 			return true, nil
 		}
 	} else {
@@ -104,7 +104,7 @@ func (l *gitHubRepositoryLister) IsApplicableFor(ociRegistry *OCIRegistry) (bool
 
 // ref https://github.com/distribution/distribution/blob/main/docs/spec/api.md#listing-repositories
 func (l *gitHubRepositoryLister) ListRepositoryNames() ([]string, error) {
-	log.Infof("+ListRepositoryNames()")
+	log.Info("+ListRepositoryNames()")
 	// TODO (gfichtenholt) fix me
 	return []string{"podinfo"}, nil
 }

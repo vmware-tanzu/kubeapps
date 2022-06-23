@@ -490,7 +490,7 @@ func parseRepoRequest(appRepoBody io.ReadCloser) (*appRepositoryRequest, error) 
 	var appRepoRequest appRepositoryRequest
 	err := json.NewDecoder(appRepoBody).Decode(&appRepoRequest)
 	if err != nil {
-		log.Infof("unable to decode: %v", err)
+		log.InfoS("unable to decode", "err", err)
 		return nil, err
 	}
 	return &appRepoRequest, nil

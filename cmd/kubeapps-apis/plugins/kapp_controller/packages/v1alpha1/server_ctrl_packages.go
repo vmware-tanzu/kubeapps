@@ -857,8 +857,7 @@ func (s *Server) GetInstalledPackageResourceRefs(ctx context.Context, request *c
 	cluster := request.GetInstalledPackageRef().GetContext().GetCluster()
 	namespace := request.GetInstalledPackageRef().GetContext().GetNamespace()
 	installedPackageRefId := request.GetInstalledPackageRef().GetIdentifier()
-	contextMsg := fmt.Sprintf("(cluster=%q, namespace=%q, id=%q)", cluster, namespace, installedPackageRefId)
-	log.Infof("+kapp-controller GetInstalledPackageResourceRefs %s", contextMsg)
+	log.InfoS("+kapp-controller GetInstalledPackageResourceRefs", "cluster", cluster, "namespace", namespace, "id", installedPackageRefId)
 
 	if cluster == "" {
 		cluster = s.globalPackagingCluster
