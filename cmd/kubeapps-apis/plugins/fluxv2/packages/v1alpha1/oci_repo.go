@@ -43,7 +43,7 @@ import (
 	sourcev1 "github.com/fluxcd/source-controller/api/v1beta2"
 
 	// OCI Registry As a Storage (ORAS)
-	registryauth "oras.land/oras-go/pkg/registry/remote/auth"
+	orasregistryauthv2 "oras.land/oras-go/v2/registry/remote/auth"
 )
 
 // RegistryClient is an interface for interacting with OCI registries
@@ -60,7 +60,7 @@ type RegistryClient interface {
 // registry repository name lister applies, and then executes specific logic
 type OCIRepositoryLister interface {
 	IsApplicableFor(*OCIRegistry) (bool, error)
-	ListRepositoryNames() ([]string, error)
+	ListRepositoryNames(ociRegistry *OCIRegistry) ([]string, error)
 }
 
 // OCIRegistry represents a Helm chart repository, and the configuration
@@ -93,7 +93,7 @@ type OCIRegistry struct {
 // to configure an OCIRegistry.
 type OCIRegistryOption func(*OCIRegistry) error
 
-type OCIRegistryCredentialFn func(ctx context.Context, reg string) (registryauth.Credential, error)
+type OCIRegistryCredentialFn func(ctx context.Context, reg string) (orasregistryauthv2.Credential, error)
 
 var (
 	helmGetters = getter.Providers{
@@ -110,7 +110,7 @@ var (
 	// TODO: make this thing extensible so code coming from other plugs/modules
 	// can register new repository listers
 	builtInRepoListers = []OCIRepositoryLister{
-		NewGitHubRepositoryLister(),
+		NewDockerRegistryApiV2RepositoryLister(),
 		// TODO
 	}
 )
@@ -185,7 +185,7 @@ func (r *OCIRegistry) listRepositoryNames() ([]string, error) {
 		return nil, status.Errorf(codes.Internal, "No repository lister found for OCI registry with url: [%s]", &r.url)
 	}
 
-	return r.repositoryLister.ListRepositoryNames()
+	return r.repositoryLister.ListRepositoryNames(r)
 }
 
 // Get returns the ChartVersion for the given name, the version is expected
@@ -193,7 +193,7 @@ func (r *OCIRegistry) listRepositoryNames() ([]string, error) {
 // stable version will be returned and prerelease versions will be ignored.
 // adapted from https://github.com/helm/helm/blob/49819b4ef782e80b0c7f78c30bd76b51ebb56dc8/pkg/downloader/chart_downloader.go#L162
 func (r *OCIRegistry) getChartVersion(name, ver string) (*repo.ChartVersion, error) {
-	log.Infof("+getChartVersion(%s,%s", name, ver)
+	log.Infof("+getChartVersion(%s,%s)", name, ver)
 	// Find chart versions matching the given name.
 	// Either in an index file or from a registry.
 	ref := fmt.Sprintf("%s/%s", r.url.String(), name)
@@ -382,6 +382,11 @@ func (s *repoEventSink) onAddOciRepo(repo sourcev1.HelmRepository) ([]byte, bool
 
 	charts := []models.Chart{}
 	for _, appName := range appNames {
+		appName, err := ociRegistry.shortRepoName(appName)
+		if err != nil {
+			return nil, false, err
+		}
+
 		log.Infof("==========>: app name: [%s]", appName)
 
 		chartVersion, err := ociRegistry.getChartVersion(appName, "")
@@ -529,12 +534,17 @@ type TagList struct {
 // all repositories within the registry and returning the sha256.
 // Caveat: Mutated image tags won't be detected as new
 func (r *OCIRegistry) checksum() (string, error) {
+	log.Infof("+checksum")
 	appNames, err := r.listRepositoryNames()
 	if err != nil {
 		return "", err
 	}
 	tags := map[string]TagList{}
 	for _, appName := range appNames {
+		appName, err := r.shortRepoName(appName)
+		if err != nil {
+			return "", err
+		}
 		ref := fmt.Sprintf("%s/%s", r.url.String(), appName)
 		tagss, err := r.getTags(ref)
 		if err != nil {
@@ -551,13 +561,24 @@ func (r *OCIRegistry) checksum() (string, error) {
 	return common.GetSha256(content)
 }
 
+func (r *OCIRegistry) shortRepoName(fullRepoName string) (string, error) {
+	expectedPrefix := strings.TrimLeft(r.url.Path, "/") + "/"
+	if strings.HasPrefix(fullRepoName, expectedPrefix) {
+		return fullRepoName[len(expectedPrefix):], nil
+	} else {
+		err := status.Errorf(codes.Internal,
+			"Unexpected repository name: expected prefix: [%s], actual name: [%s]",
+			expectedPrefix, fullRepoName)
+		return "", err
+	}
+}
+
 func (s *repoEventSink) newOCIRegistryAndLogin(repo sourcev1.HelmRepository) (*OCIRegistry, error) {
 	// Construct the Getter options from the HelmRepository data
 	loginOpts, getterOpts, cred, err := s.clientOptionsForRepo(repo)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to create registry client options: %v", err)
 	}
-	log.Infof("=====================> loginOpts: [%v], getterOpts: [%v], cred: %t", len(loginOpts), len(getterOpts), cred != nil)
 
 	// Create registry client and login if needed.
 	registryClient, file, err := newRegistryClient(loginOpts != nil)
@@ -565,31 +586,22 @@ func (s *repoEventSink) newOCIRegistryAndLogin(repo sourcev1.HelmRepository) (*O
 		return nil, status.Errorf(codes.Internal, "failed to create registry client: %v", err)
 	}
 	if file != "" {
-		/*
-			defer func() {
-				byteArray, err := ioutil.ReadFile(file)
-				if err != nil {
-					log.Infof("Failed to read temporary credentials file [%s]: %v", file, err)
-				}
-
-				// Convert []byte to string and print to screen
-				log.Infof("about to remove temporary credentials file [%s] content\n[%s]",
-					file, string(byteArray))
-
-				if err := os.Remove(file); err != nil {
-					log.Infof("Failed to delete temporary credentials file: %v", err)
-				}
-			}()
-		*/
+		defer func() {
+			if err := os.Remove(file); err != nil {
+				log.Infof("Failed to delete temporary credentials file: %v", err)
+			}
+			log.Infof("Removed temporary credentials file: [%s]", file)
+		}()
 	}
 
-	registryCredentialFn := func(ctx context.Context, reg string) (registryauth.Credential, error) {
+	registryCredentialFn := func(ctx context.Context, reg string) (orasregistryauthv2.Credential, error) {
 		if cred != nil {
 			return *cred, nil
 		} else {
-			return registryauth.EmptyCredential, nil
+			return orasregistryauthv2.EmptyCredential, nil
 		}
 	}
+
 	// a little bit misleading, since repo.Spec.URL is really an OCI Registry URL,
 	// which may contain zero or more "helm repositories", such as
 	// oci://demo.goharbor.io/test-oci-1, which may contain repositories "repo-1", "repo2", etc
@@ -615,11 +627,11 @@ func (s *repoEventSink) newOCIRegistryAndLogin(repo sourcev1.HelmRepository) (*O
 	return ociRegistry, nil
 }
 
-func (s *repoEventSink) clientOptionsForRepo(repo sourcev1.HelmRepository) ([]registry.LoginOption, []getter.Option, *registryauth.Credential, error) {
+func (s *repoEventSink) clientOptionsForRepo(repo sourcev1.HelmRepository) ([]registry.LoginOption, []getter.Option, *orasregistryauthv2.Credential, error) {
 	log.Infof("+clientOptionsForRepo()")
 
 	var loginOpts []registry.LoginOption
-	var cred *registryauth.Credential
+	var cred *orasregistryauthv2.Credential
 	getterOpts := []getter.Option{
 		getter.WithURL(repo.Spec.URL),
 		getter.WithTimeout(repo.Spec.Timeout.Duration),
