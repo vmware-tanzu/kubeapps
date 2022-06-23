@@ -27,6 +27,7 @@ function deploy {
     -v $(pwd)/bcrypt.htpasswd:/etc/docker/registry/auth.htpasswd \
     -e REGISTRY_AUTH="{htpasswd: {realm: localhost, path: /etc/docker/registry/auth.htpasswd}}" \
     registry
+  # TODO retries
   helm registry login -u foo localhost:5000 -p bar
   helm push charts/podinfo-6.0.3.tgz oci://localhost:5000/helm-charts 
   helm show all oci://localhost:5000/helm-charts/podinfo | head -9

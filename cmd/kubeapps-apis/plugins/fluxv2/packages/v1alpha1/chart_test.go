@@ -108,7 +108,7 @@ func TestGetAvailablePackageDetail(t *testing.T) {
 			requestChartUrl := ""
 
 			// these will be used later in a few places
-			opts := &common.ClientOptions{}
+			opts := &common.HttpClientOptions{}
 			if tc.basicAuth {
 				opts.Username = "foo"
 				opts.Password = "bar"
@@ -743,7 +743,7 @@ func TestChartCacheResyncNotIdle(t *testing.T) {
 			redisMockSetValueForRepo(mock, repoKey, repoBytes, nil)
 		}
 
-		opts := &common.ClientOptions{}
+		opts := &common.HttpClientOptions{}
 		chartCacheKeys := []string{}
 		var chartBytes []byte
 		for i := 0; i < NUM_CHARTS; i++ {
@@ -960,7 +960,7 @@ func newChart(name, namespace string, spec *sourcev1.HelmChartSpec, status *sour
 	return helmChart
 }
 
-func (s *Server) redisMockSetValueForChart(mock redismock.ClientMock, key, url string, opts *common.ClientOptions) error {
+func (s *Server) redisMockSetValueForChart(mock redismock.ClientMock, key, url string, opts *common.HttpClientOptions) error {
 	sink := repoEventSink{
 		clientGetter: s.newBackgroundClientGetter(),
 		chartCache:   s.chartCache,
@@ -968,7 +968,7 @@ func (s *Server) redisMockSetValueForChart(mock redismock.ClientMock, key, url s
 	return sink.redisMockSetValueForChart(mock, key, url, opts)
 }
 
-func (cs *repoEventSink) redisMockSetValueForChart(mock redismock.ClientMock, key, url string, opts *common.ClientOptions) error {
+func (cs *repoEventSink) redisMockSetValueForChart(mock redismock.ClientMock, key, url string, opts *common.HttpClientOptions) error {
 	_, chartID, version, err := fromRedisKeyForChart(key)
 	if err != nil {
 		return err
@@ -988,7 +988,7 @@ func redisMockSetValueForChart(mock redismock.ClientMock, key string, byteArray 
 }
 
 // does a series of mock.ExpectGet(...)
-func redisMockExpectGetFromChartCache(mock redismock.ClientMock, key, url string, opts *common.ClientOptions) error {
+func redisMockExpectGetFromChartCache(mock redismock.ClientMock, key, url string, opts *common.HttpClientOptions) error {
 	if url != "" {
 		_, chartID, version, err := fromRedisKeyForChart(key)
 		if err != nil {
