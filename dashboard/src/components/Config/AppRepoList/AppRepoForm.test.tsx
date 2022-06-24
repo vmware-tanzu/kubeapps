@@ -219,6 +219,7 @@ it("should call the install skipping TLS verification", async () => {
   wrapper.find("#kubeapps-plugin-helm").simulate("change");
   wrapper.find("#kubeapps-repo-name").simulate("change", { target: { value: "helm-repo" } });
   wrapper.find("#kubeapps-repo-url").simulate("change", { target: { value: "helm.repo" } });
+  wrapper.find("#kubeapps-repo-type-helm").simulate("change");
   wrapper.find("#kubeapps-repo-skip-tls").simulate("change");
   const form = wrapper.find("form");
   await act(async () => {
@@ -255,6 +256,7 @@ it("should call the install passing credentials", async () => {
   wrapper.find("#kubeapps-plugin-helm").simulate("change");
   wrapper.find("#kubeapps-repo-name").simulate("change", { target: { value: "helm-repo" } });
   wrapper.find("#kubeapps-repo-url").simulate("change", { target: { value: "helm.repo" } });
+  wrapper.find("#kubeapps-repo-type-helm").simulate("change");
   wrapper.find("#kubeapps-repo-pass-credentials").simulate("change");
   const form = wrapper.find("form");
   await act(async () => {

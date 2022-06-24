@@ -32,6 +32,7 @@ import { toFilterRule, toParams } from "shared/jq";
 import { IPkgRepoFormData, IPkgRepositoryFilter, IStoreState } from "shared/types";
 import { getPluginByName, getPluginPackageName, PluginNames } from "shared/utils";
 import "./AppRepoForm.css";
+
 interface IAppRepoFormProps {
   onSubmit: (data: IPkgRepoFormData) => Promise<boolean>;
   onAfterInstall?: () => void;
