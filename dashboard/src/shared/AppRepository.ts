@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { axiosWithAuth } from "./AxiosInstance";
-import { IPkgRepositoryFilter, ICreateAppRepositoryResponse } from "./types";
+import { ICreateAppRepositoryResponse, IPkgRepoFormData } from "./types";
 import * as url from "./url";
 
 export class AppRepository {
@@ -20,55 +20,24 @@ export class AppRepository {
     return appRepository;
   }
 
-  public static async getSecretForRepo(cluster: string, namespace: string, name: string) {
-    const {
-      data: { secret },
-    } = await axiosWithAuth.get<any>(url.backend.apprepositories.get(cluster, namespace, name));
-    return secret;
-  }
-
-  public static async resync(cluster: string, namespace: string, name: string) {
-    const { data } = await axiosWithAuth.post(
-      url.backend.apprepositories.refresh(cluster, namespace, name),
-      null,
-    );
-    return data;
-  }
-
-  public static async update(
-    cluster: string,
-    name: string,
-    namespace: string,
-    repoURL: string,
-    type: string,
-    description: string,
-    authHeader: string,
-    authRegCreds: string,
-    customCA: string,
-    syncJobPodTemplate: any,
-    registrySecrets: string[],
-    ociRepositories: string[],
-    skipTLS: boolean,
-    passCredentials: boolean,
-    filter?: IPkgRepositoryFilter,
-  ) {
+  public static async update(cluster: string, namespace: string, request: IPkgRepoFormData) {
     const { data } = await axiosWithAuth.put<ICreateAppRepositoryResponse>(
-      url.backend.apprepositories.update(cluster, namespace, name),
+      url.backend.apprepositories.update(cluster, namespace, request.name),
       {
         appRepository: {
-          name,
-          repoURL,
-          type,
-          description,
-          authHeader,
-          authRegCreds,
-          customCA,
-          syncJobPodTemplate,
-          registrySecrets,
-          ociRepositories,
-          tlsInsecureSkipVerify: skipTLS,
-          passCredentials: passCredentials,
-          filterRule: filter,
+          name: request.name,
+          repoURL: request.url,
+          type: request.type,
+          description: request.description,
+          authHeader: request.authHeader,
+          authRegCreds: request.customDetails.dockerRegistrySecrets,
+          customCA: request.customCA,
+          syncJobPodTemplate: "",
+          registrySecrets: request.dockerRegCreds,
+          ociRepositories: request.customDetails.ociRepositories,
+          tlsInsecureSkipVerify: request.skipTLS,
+          passCredentials: request.passCredentials,
+          filterRule: request.customDetails.filterRule,
         },
       },
     );
@@ -85,40 +54,24 @@ export class AppRepository {
   // create uses the kubeapps backend API
   // TODO(mnelson) Update other endpoints to similarly use the backend API, removing the need
   // for direct k8s api access (for this resource, at least).
-  public static async create(
-    cluster: string,
-    name: string,
-    namespace: string,
-    repoURL: string,
-    type: string,
-    description: string,
-    authHeader: string,
-    authRegCreds: string,
-    customCA: string,
-    syncJobPodTemplate: any,
-    registrySecrets: string[],
-    ociRepositories: string[],
-    skipTLS: boolean,
-    passCredentials: boolean,
-    filter?: IPkgRepositoryFilter,
-  ) {
+  public static async create(cluster: string, namespace: string, request: IPkgRepoFormData) {
     const { data } = await axiosWithAuth.post<ICreateAppRepositoryResponse>(
       url.backend.apprepositories.create(cluster, namespace),
       {
         appRepository: {
-          name,
-          repoURL,
-          authHeader,
-          authRegCreds,
-          type,
-          description,
-          customCA,
-          syncJobPodTemplate,
-          registrySecrets,
-          ociRepositories,
-          tlsInsecureSkipVerify: skipTLS,
-          passCredentials: passCredentials,
-          filterRule: filter,
+          name: request.name,
+          repoURL: request.url,
+          type: request.type,
+          description: request.description,
+          authHeader: request.authHeader,
+          authRegCreds: request.customDetails.dockerRegistrySecrets,
+          customCA: request.customCA,
+          syncJobPodTemplate: "",
+          registrySecrets: request.dockerRegCreds,
+          ociRepositories: request.customDetails.ociRepositories,
+          tlsInsecureSkipVerify: request.skipTLS,
+          passCredentials: request.passCredentials,
+          filterRule: request.customDetails.filterRule,
         },
       },
     );

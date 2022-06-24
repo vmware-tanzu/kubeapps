@@ -9,7 +9,7 @@ import { useState } from "react";
 import { useDispatch } from "react-redux";
 import { Action } from "redux";
 import { ThunkDispatch } from "redux-thunk";
-import { IAppRepository, IPkgRepositoryFilter, IStoreState } from "shared/types";
+import { IAppRepository, IPkgRepoFormData, IStoreState } from "shared/types";
 import { AppRepoForm } from "./AppRepoForm";
 
 interface IAppRepoAddButtonProps {
@@ -38,59 +38,12 @@ export function AppRepoAddButton({
     setModalOpen(true);
   };
   const closeModal = () => setModalOpen(false);
-  const onSubmit = (
-    name: string,
-    url: string,
-    type: string,
-    description: string,
-    authHeader: string,
-    authRegCreds: string,
-    customCA: string,
-    syncJobPodTemplate: string,
-    registrySecrets: string[],
-    ociRepositories: string[],
-    skipTLS: boolean,
-    passCredentials: boolean,
-    filter?: IPkgRepositoryFilter,
-  ) => {
+  const onSubmit = (request: IPkgRepoFormData) => {
+    // decide whether to create or update the repository
     if (packageRepoRef) {
-      return dispatch(
-        actions.repos.updateRepo(
-          name,
-          namespace,
-          url,
-          type,
-          description,
-          authHeader,
-          authRegCreds,
-          customCA,
-          syncJobPodTemplate,
-          registrySecrets,
-          ociRepositories,
-          skipTLS,
-          passCredentials,
-          filter,
-        ),
-      );
+      return dispatch(actions.repos.updateRepo(namespace, request));
     } else {
-      return dispatch(
-        actions.repos.installRepo(
-          name,
-          namespace,
-          url,
-          type,
-          description,
-          authHeader,
-          authRegCreds,
-          customCA,
-          syncJobPodTemplate,
-          registrySecrets,
-          ociRepositories,
-          skipTLS,
-          passCredentials,
-          filter,
-        ),
-      );
+      return dispatch(actions.repos.installRepo(namespace, request));
     }
   };
 

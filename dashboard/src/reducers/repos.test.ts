@@ -46,7 +46,6 @@ describe("reposReducer", () => {
       redirect: getType(actions.repos.redirect),
       redirected: getType(actions.repos.redirected),
       errorRepos: getType(actions.repos.errorRepos),
-      createImagePullSecret: getType(actions.repos.createImagePullSecret),
     };
 
     describe("reducer actions", () => {
