@@ -13,7 +13,7 @@ import { getType } from "typesafe-actions";
 import actions from "../actions";
 import { PkgReposAction } from "../actions/repos";
 
-export interface IAppRepositoryState {
+export interface IPackageRepositoryState {
   addingRepo: boolean;
   errors: {
     create?: Error;
@@ -41,7 +41,7 @@ export interface IAppRepositoryState {
   redirectTo?: string;
 }
 
-export const initialState: IAppRepositoryState = {
+export const initialState: IPackageRepositoryState = {
   addingRepo: false,
   errors: {},
   form: {
@@ -61,7 +61,7 @@ export const initialState: IAppRepositoryState = {
   imagePullSecrets: [],
 };
 
-function isFetching(state: IAppRepositoryState, item: string, fetching: boolean) {
+function isFetching(state: IPackageRepositoryState, item: string, fetching: boolean) {
   const composedIsFetching = {
     ...state.isFetchingElem,
     [item]: fetching,
@@ -73,9 +73,9 @@ function isFetching(state: IAppRepositoryState, item: string, fetching: boolean)
 }
 
 const reposReducer = (
-  state: IAppRepositoryState = initialState,
+  state: IPackageRepositoryState = initialState,
   action: PkgReposAction | LocationChangeAction,
-): IAppRepositoryState => {
+): IPackageRepositoryState => {
   switch (action.type) {
     case getType(actions.repos.receiveRepos):
       return {

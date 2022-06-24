@@ -54,7 +54,7 @@ it("opens the dropdown full menu", () => {
   // It render links for AppRepositories and operators
   const links = wrapper.find(Link);
   expect(links).toHaveLength(3);
-  expect(links.get(0).props.to).toEqual(app.config.apprepositories("default", "default"));
+  expect(links.get(0).props.to).toEqual(app.config.pkgrepositories("default", "default"));
   expect(links.get(1).props.to).toEqual(app.config.operators("default", "default"));
   expect(links.get(2).props.to).toEqual("/docs");
 });
@@ -72,7 +72,7 @@ it("opens the dropdown menu without operators item", () => {
   // It render links for AppRepositories and operators
   const links = wrapper.find(Link);
   expect(links).toHaveLength(2);
-  expect(links.get(0).props.to).toEqual(app.config.apprepositories("default", "default"));
+  expect(links.get(0).props.to).toEqual(app.config.pkgrepositories("default", "default"));
   expect(links.get(1).props.to).toEqual("/docs");
 });
 

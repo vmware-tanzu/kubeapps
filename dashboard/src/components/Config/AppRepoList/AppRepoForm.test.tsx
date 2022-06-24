@@ -14,7 +14,7 @@ import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins";
 import { RepositoryCustomDetails } from "gen/kubeappsapis/plugins/helm/packages/v1alpha1/helm";
 import { act } from "react-dom/test-utils";
 import * as ReactRedux from "react-redux";
-import { IAppRepositoryState } from "reducers/repos";
+import { IPackageRepositoryState } from "reducers/repos";
 import { defaultStore, getStore, mountWrapper } from "shared/specs/mountWrapper";
 import { IPkgRepoFormData, IStoreState } from "shared/types";
 import { PluginNames } from "shared/utils";
@@ -28,7 +28,7 @@ const defaultProps = {
 };
 
 const defaultState = {
-  repos: { repo: {} } as Partial<IAppRepositoryState>,
+  repos: { repo: {} } as Partial<IPackageRepositoryState>,
 } as IStoreState;
 
 const pkgRepoFormData = {

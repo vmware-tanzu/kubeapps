@@ -27,7 +27,7 @@ import { Subscription } from "rxjs";
 import { IAuthState } from "../reducers/auth";
 import { IClustersState } from "../reducers/cluster";
 import { IConfigState } from "../reducers/config";
-import { IAppRepositoryState } from "../reducers/repos";
+import { IPackageRepositoryState } from "../reducers/repos";
 import { RpcError } from "./RpcError";
 
 export class CustomError extends Error {
@@ -330,7 +330,7 @@ export interface IStoreState {
   packages: IPackageState;
   config: IConfigState;
   kube: IKubeState;
-  repos: IAppRepositoryState;
+  repos: IPackageRepositoryState;
   clusters: IClustersState;
   operators: IOperatorsState;
 }

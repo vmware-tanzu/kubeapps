@@ -19,7 +19,7 @@ import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins";
 import * as ReactRedux from "react-redux";
 import * as ReactRouter from "react-router";
 import { MemoryRouter, Route } from "react-router-dom";
-import { IAppRepositoryState } from "reducers/repos";
+import { IPackageRepositoryState } from "reducers/repos";
 import { defaultStore, getStore, mountWrapper } from "shared/specs/mountWrapper";
 import {
   CustomInstalledPackageDetail,
@@ -134,7 +134,7 @@ it("renders the repo selection form if not introduced when the app is loaded", (
   const state = {
     repos: {
       repos: [repo1],
-    } as IAppRepositoryState,
+    } as IPackageRepositoryState,
     apps: {
       selected: { name: "foo" },
       isFetching: false,
@@ -187,7 +187,7 @@ describe("when an error exists", () => {
     const state = {
       repos: {
         repos: [] as PackageRepositorySummary[],
-      } as IAppRepositoryState,
+      } as IPackageRepositoryState,
       apps: {
         selected: { name: "foo" },
         isFetching: false,
@@ -254,7 +254,7 @@ it("renders the upgrade form when the repo is available, clears state and fetche
       repo: repo1,
       repos: [repo1],
       isFetching: false,
-    } as IAppRepositoryState,
+    } as IPackageRepositoryState,
     packages: { selected: selectedPackage } as IPackageState,
   };
   const wrapper = mountWrapper(
@@ -290,7 +290,7 @@ it("renders the upgrade form with the version property", () => {
       repo: repo1,
       repos: [repo1],
       isFetching: false,
-    } as IAppRepositoryState,
+    } as IPackageRepositoryState,
     packages: { selected: selectedPackage } as IPackageState,
   };
   const wrapper = mountWrapper(
@@ -318,7 +318,7 @@ it("skips the repo selection form if the app contains upgrade info", () => {
       repo: repo1,
       repos: [repo1],
       isFetching: false,
-    } as IAppRepositoryState,
+    } as IPackageRepositoryState,
     packages: { selected: selectedPackage } as IPackageState,
   };
   const wrapper = mountWrapper(

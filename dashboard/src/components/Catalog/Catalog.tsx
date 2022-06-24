@@ -381,7 +381,7 @@ export default function Catalog() {
             Manage your Package Repositories in Kubeapps by visiting the Package repositories
             configuration page.
           </p>
-          <Link to={app.config.apprepositories(cluster, namespace)}>
+          <Link to={app.config.pkgrepositories(cluster, namespace)}>
             <CdsButton>Manage Package Repositories</CdsButton>
           </Link>
           <p>
