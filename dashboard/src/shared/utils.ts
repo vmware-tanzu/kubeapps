@@ -105,33 +105,33 @@ export function getPluginName(plugin?: Plugin | string) {
   }
 }
 
-export function getPluginPackageName(plugin?: Plugin | PluginNames | string) {
+export function getPluginPackageName(plugin?: Plugin | PluginNames | string, plural = false) {
   // Temporary case while operators are not supported as kubeapps apis plugin
   if (typeof plugin === "string") {
     switch (plugin) {
       case "chart":
       case "helm":
       case PluginNames.PACKAGES_HELM:
-        return "Helm Chart";
+        return plural ? "Helm Charts" : "Helm Chart";
       case PluginNames.PACKAGES_FLUX:
-        return "Helm Chart via Flux";
+        return plural ? "Helm Charts via Flux" : "Helm Chart via Flux";
       case PluginNames.PACKAGES_KAPP:
-        return "Carvel Package";
+        return plural ? "Carvel Packages" : "Carvel Package";
       case "operator":
-        return "Operator";
+        return plural ? "Operators" : "Operator";
       default:
-        return "unknown plugin package";
+        return `unknown plugin ${plural ? "packages" : "package"}`;
     }
   } else {
     switch (plugin?.name) {
       case PluginNames.PACKAGES_HELM:
-        return "Helm Chart";
+        return plural ? "Helm Charts" : "Helm Chart";
       case PluginNames.PACKAGES_FLUX:
-        return "Helm Chart via Flux";
+        return plural ? "Helm Charts via Flux" : "Helm Chart via Flux";
       case PluginNames.PACKAGES_KAPP:
-        return "Carvel Package";
+        return plural ? "Carvel Packages" : "Carvel Package";
       default:
-        return `${plugin?.name} package`;
+        return `${plugin?.name ? plugin.name : "unknown"} ${plural ? "packages" : "package"}`;
     }
   }
 }

@@ -19,6 +19,7 @@ import { Link, useLocation } from "react-router-dom";
 import { Kube } from "shared/Kube";
 import { IStoreState } from "shared/types";
 import { app } from "shared/url";
+import { getPluginName } from "shared/utils";
 import LoadingWrapper from "../../LoadingWrapper/LoadingWrapper";
 import { AppRepoAddButton } from "./AppRepoButton";
 import { AppRepoControl } from "./AppRepoControl";
@@ -104,7 +105,7 @@ function AppRepoList() {
   const tableColumns = [
     { accessor: "name", Header: "Name" },
     { accessor: "url", Header: "URL" },
-    { accessor: "plugin", Header: "Package Type" },
+    { accessor: "packageFormat", Header: "Package Format" },
     { accessor: "accessLevel", Header: "Access Level" },
     { accessor: "namespace", Header: "Namespace" },
     { accessor: "status", Header: "Status" },
@@ -119,7 +120,7 @@ function AppRepoList() {
         // accessLevel: repo.type?.auth?.header ? "Private" : "Public",
         accessLevel: "unknown",
         namespace: repo.packageRepoRef?.context?.namespace,
-        plugin: repo.type,
+        packageFormat: getPluginName(repo.packageRepoRef?.plugin),
         status: repo.status?.ready ? (
           <>Ready</>
         ) : (
