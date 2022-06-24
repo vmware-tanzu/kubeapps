@@ -11,9 +11,9 @@ import { useDispatch } from "react-redux";
 import { Action } from "redux";
 import { ThunkDispatch } from "redux-thunk";
 import { IPkgRepoFormData, IStoreState } from "shared/types";
-import { AppRepoForm } from "./AppRepoForm";
+import { PkgRepoForm } from "./PkgRepoForm";
 
-interface IAppRepoAddButtonProps {
+interface IPkgRepoAddButtonProps {
   namespace: string;
   kubeappsNamespace: string;
   text?: string;
@@ -23,7 +23,7 @@ interface IAppRepoAddButtonProps {
   title?: string;
 }
 
-export function AppRepoAddButton({
+export function PkgRepoAddButton({
   text,
   namespace,
   kubeappsNamespace,
@@ -31,7 +31,7 @@ export function AppRepoAddButton({
   primary = true,
   title,
   disabled,
-}: IAppRepoAddButtonProps) {
+}: IPkgRepoAddButtonProps) {
   const dispatch: ThunkDispatch<IStoreState, null, Action> = useDispatch();
   const [modalIsOpen, setModalOpen] = useState(false);
   const openModal = () => {
@@ -62,7 +62,7 @@ export function AppRepoAddButton({
         <CdsModal size={"lg"} onCloseChange={closeModal}>
           <CdsModalHeader>{title}</CdsModalHeader>
           <CdsModalContent>
-            <AppRepoForm
+            <PkgRepoForm
               onSubmit={onSubmit}
               onAfterInstall={closeModal}
               packageRepoRef={packageRepoRef}

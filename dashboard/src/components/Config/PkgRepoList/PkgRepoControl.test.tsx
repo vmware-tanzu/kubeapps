@@ -8,8 +8,8 @@ import { PackageRepositorySummary } from "gen/kubeappsapis/core/packages/v1alpha
 import { act } from "react-dom/test-utils";
 import * as ReactRedux from "react-redux";
 import { defaultStore, mountWrapper } from "shared/specs/mountWrapper";
-import { AppRepoAddButton } from "./AppRepoButton";
-import { AppRepoControl } from "./AppRepoControl";
+import { PkgRepoAddButton } from "./PkgRepoButton";
+import { PkgRepoControl } from "./PkgRepoControl";
 
 let spyOnUseDispatch: jest.SpyInstance;
 const kubeaActions = { ...actions.kube };
@@ -45,7 +45,7 @@ it("deletes the repo and refreshes list", async () => {
   };
   const wrapper = mountWrapper(
     defaultStore,
-    <AppRepoControl {...defaultProps} refetchRepos={refetchRepos} />,
+    <PkgRepoControl {...defaultProps} refetchRepos={refetchRepos} />,
   );
   const deleteButton = wrapper.find(CdsButton).filterWhere(b => b.text() === "Delete");
   act(() => {
@@ -67,6 +67,6 @@ it("deletes the repo and refreshes list", async () => {
 });
 
 it("renders the button to edit the repo", () => {
-  const wrapper = mountWrapper(defaultStore, <AppRepoControl {...defaultProps} />);
-  expect(wrapper.find(AppRepoAddButton).prop("text")).toBe("Edit");
+  const wrapper = mountWrapper(defaultStore, <PkgRepoControl {...defaultProps} />);
+  expect(wrapper.find(PkgRepoAddButton).prop("text")).toBe("Edit");
 });

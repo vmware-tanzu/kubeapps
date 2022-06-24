@@ -31,9 +31,9 @@ import { ThunkDispatch } from "redux-thunk";
 import { toFilterRule, toParams } from "shared/jq";
 import { IPkgRepoFormData, IPkgRepositoryFilter, IStoreState } from "shared/types";
 import { getPluginByName, getPluginPackageName, PluginNames } from "shared/utils";
-import "./AppRepoForm.css";
+import "./PkgRepoForm.css";
 
-interface IAppRepoFormProps {
+interface IPkgRepoFormProps {
   onSubmit: (data: IPkgRepoFormData) => Promise<boolean>;
   onAfterInstall?: () => void;
   namespace: string;
@@ -52,7 +52,7 @@ export enum RepositoryStorageTypes {
   PACKAGE_REPOSITORY_STORAGE_CARVEL_GIT = "git",
 }
 
-export function AppRepoForm(props: IAppRepoFormProps) {
+export function PkgRepoForm(props: IPkgRepoFormProps) {
   const {
     onSubmit,
     onAfterInstall,
@@ -228,7 +228,7 @@ export function AppRepoForm(props: IAppRepoFormProps) {
       finalURL = `https://${url}`;
     }
 
-    // build the IAppRepositoryFilter object based on the filter names plus the regex and exclude options
+    // build the IPkgRepositoryFilter object based on the filter names plus the regex and exclude options
     let filter: IPkgRepositoryFilter | undefined;
     if (type === RepositoryStorageTypes.PACKAGE_REPOSITORY_STORAGE_HELM && filterNames !== "") {
       filter = toFilterRule(filterNames, filterRegex, filterExclude);

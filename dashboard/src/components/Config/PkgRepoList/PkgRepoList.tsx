@@ -21,12 +21,12 @@ import { IStoreState } from "shared/types";
 import { app } from "shared/url";
 import { getPluginName } from "shared/utils";
 import LoadingWrapper from "../../LoadingWrapper/LoadingWrapper";
-import { AppRepoAddButton } from "./AppRepoButton";
-import { AppRepoControl } from "./AppRepoControl";
-import { AppRepoDisabledControl } from "./AppRepoDisabledControl";
-import "./AppRepoList.css";
+import { PkgRepoAddButton } from "./PkgRepoButton";
+import { PkgRepoControl } from "./PkgRepoControl";
+import { PkgRepoDisabledControl } from "./PkgRepoDisabledControl";
+import "./PkgRepoList.css";
 
-function AppRepoList() {
+function PkgRepoList() {
   const dispatch = useDispatch();
   const location = useLocation();
   const {
@@ -145,9 +145,9 @@ function AppRepoList() {
           </>
         ),
         actions: disableControls ? (
-          <AppRepoDisabledControl />
+          <PkgRepoDisabledControl />
         ) : (
-          <AppRepoControl
+          <PkgRepoControl
             repo={repo}
             refetchRepos={refetchRepos}
             kubeappsNamespace={globalReposNamespace}
@@ -163,7 +163,7 @@ function AppRepoList() {
       <PageHeader
         title="Package Repositories"
         buttons={[
-          <AppRepoAddButton
+          <PkgRepoAddButton
             title="Add a Package Repository"
             key="add-repo-button"
             namespace={currentNamespace}
@@ -296,4 +296,4 @@ function getRepoNameLinkAndTooltip(cluster: string, repo: PackageRepositorySumma
   );
 }
 
-export default AppRepoList;
+export default PkgRepoList;

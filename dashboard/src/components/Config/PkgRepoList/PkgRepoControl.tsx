@@ -13,16 +13,16 @@ import { ThunkDispatch } from "redux-thunk";
 import { IStoreState } from "shared/types";
 import actions from "../../../actions";
 import ConfirmDialog from "../../ConfirmDialog/ConfirmDialog";
-import { AppRepoAddButton } from "./AppRepoButton";
-import "./AppRepoControl.css";
+import { PkgRepoAddButton } from "./PkgRepoButton";
+import "./PkgRepoControl.css";
 
-interface IAppRepoListItemProps {
+interface IPkgRepoListItemProps {
   repo: PackageRepositorySummary;
   kubeappsNamespace: string;
   refetchRepos: () => void;
 }
 
-export function AppRepoControl({ repo, kubeappsNamespace, refetchRepos }: IAppRepoListItemProps) {
+export function PkgRepoControl({ repo, kubeappsNamespace, refetchRepos }: IPkgRepoListItemProps) {
   const [modalIsOpen, setModalOpen] = useState(false);
   const openModal = () => setModalOpen(true);
   const closeModal = () => setModalOpen(false);
@@ -37,7 +37,7 @@ export function AppRepoControl({ repo, kubeappsNamespace, refetchRepos }: IAppRe
   };
 
   return (
-    <div className="apprepo-control-buttons">
+    <div className="pkgrepo-control-buttons">
       <ConfirmDialog
         onConfirm={handleDeleteClick(repo.packageRepoRef!)}
         modalIsOpen={modalIsOpen}
@@ -47,7 +47,7 @@ export function AppRepoControl({ repo, kubeappsNamespace, refetchRepos }: IAppRe
         confirmationText={`Are you sure you want to delete the repository ${repo.name}?`}
       />
 
-      <AppRepoAddButton
+      <PkgRepoAddButton
         title={`Edit the '${repo.name}' Package Repository`}
         namespace={repo.packageRepoRef?.context?.namespace || ""}
         kubeappsNamespace={kubeappsNamespace}
