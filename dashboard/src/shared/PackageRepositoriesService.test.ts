@@ -179,7 +179,6 @@ describe("RepositoriesService", () => {
     expect(mockUpdatePackageRepository).toHaveBeenCalledWith({
       auth: {
         opaqueCreds: {
-          //TODO(agamez): check this
           data: {},
         },
       },

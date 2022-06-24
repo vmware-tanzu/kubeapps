@@ -17,6 +17,7 @@ import * as ReactRedux from "react-redux";
 import { IAppRepositoryState } from "reducers/repos";
 import { defaultStore, getStore, mountWrapper } from "shared/specs/mountWrapper";
 import { IPkgRepoFormData, IStoreState } from "shared/types";
+import { PluginNames } from "shared/utils";
 import { AppRepoForm, RepositoryStorageTypes } from "./AppRepoForm";
 
 const defaultProps = {
@@ -31,7 +32,7 @@ const defaultState = {
 } as IStoreState;
 
 const pkgRepoFormData = {
-  plugin: { name: "my.plugin", version: "0.0.1" } as Plugin,
+  plugin: { name: PluginNames.PACKAGES_HELM, version: "v1alpha1" } as Plugin,
   authHeader: "",
   authMethod:
     PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_UNSPECIFIED,
@@ -43,7 +44,7 @@ const pkgRepoFormData = {
   customDetails: {
     dockerRegistrySecrets: [],
     ociRepositories: [],
-    performValidation: false,
+    performValidation: true,
     filterRules: [],
   },
   description: "",
@@ -195,12 +196,12 @@ it("should call the install method with OCI information", async () => {
     name: "oci-repo",
     type: "oci",
     url: "https://oci.repo",
-    plugin: { name: "helm.packages", version: "v1alpha1" },
+    plugin: { name: PluginNames.PACKAGES_HELM, version: "v1alpha1" },
     customDetails: {
       ociRepositories: ["apache", "jenkins"],
       dockerRegistrySecrets: [""],
       filterRule: undefined,
-      performValidation: false,
+      performValidation: true,
     },
     interval: undefined,
     description: undefined,
@@ -231,12 +232,12 @@ it("should call the install skipping TLS verification", async () => {
     name: "helm-repo",
     type: "helm",
     url: "https://helm.repo",
-    plugin: { name: "helm.packages", version: "v1alpha1" },
+    plugin: { name: PluginNames.PACKAGES_HELM, version: "v1alpha1" },
     customDetails: {
       ociRepositories: [],
       dockerRegistrySecrets: [""],
       filterRule: undefined,
-      performValidation: false,
+      performValidation: true,
     },
     skipTLS: true,
     interval: undefined,
@@ -268,12 +269,12 @@ it("should call the install passing credentials", async () => {
     name: "helm-repo",
     type: "helm",
     url: "https://helm.repo",
-    plugin: { name: "helm.packages", version: "v1alpha1" },
+    plugin: { name: PluginNames.PACKAGES_HELM, version: "v1alpha1" },
     customDetails: {
       ociRepositories: [],
       dockerRegistrySecrets: [""],
       filterRule: undefined,
-      performValidation: false,
+      performValidation: true,
     },
     passCredentials: true,
     interval: undefined,
@@ -282,121 +283,7 @@ it("should call the install passing credentials", async () => {
 });
 
 describe("when using a filter", () => {
-  // it("should call the install method with a filter", async () => {
-  //   const install = jest.fn().mockReturnValue(true);
-  //   let wrapper: any;
-  //   await act(async () => {
-  //     wrapper = mountWrapper(defaultStore, <AppRepoForm {...defaultProps} onSubmit={install} />);
-  //   });
-  //   wrapper.find("#kubeapps-plugin-helm").simulate("change");
-  //   wrapper.find("#kubeapps-repo-name").simulate("change", { target: { value: "helm-repo" } });
-  //   wrapper
-  //     .find("#kubeapps-repo-url")
-  //     .simulate("change", { target: { value: "https://helm.repo" } });
-  //   wrapper
-  //     .find("textarea")
-  //     .at(0)
-  //     .simulate("change", { target: { value: "nginx, wordpress" } });
-  //   const form = wrapper.find("form");
-  //   await act(async () => {
-  //     await (form.prop("onSubmit") as (e: any) => Promise<any>)({ preventDefault: jest.fn() });
-  //   });
-  //   wrapper.update();
-  //   expect(install).toHaveBeenCalledWith({
-  //     ...pkgRepoFormData,
-  //     name: "helm-repo",
-  //     type: "helm",
-  //     url: "https://helm.repo",
-  //     plugin: { name: "helm.packages", version: "v1alpha1" },
-  //     customDetails: {
-  //       ociRepositories: [],
-  //       dockerRegistrySecrets: [""],
-  //       filterRule: undefined,
-  //       performValidation: false,
-  //     },
-  //     interval: undefined,
-  //     description: undefined,
-  //   } as unknown as IPkgRepoFormData);
-  // });
-  // it("should call the install method with a filter excluding a regex", async () => {
-  //   const install = jest.fn().mockReturnValue(true);
-  //   let wrapper: any;
-  //   await act(async () => {
-  //     wrapper = mountWrapper(defaultStore, <AppRepoForm {...defaultProps} onSubmit={install} />);
-  //   });
-  //   wrapper.find("#kubeapps-plugin-helm").simulate("change");
-  //   wrapper.find("#kubeapps-repo-name").simulate("change", { target: { value: "helm-repo" } });
-  //   wrapper
-  //     .find("#kubeapps-repo-url")
-  //     .simulate("change", { target: { value: "https://helm.repo" } });
-  //   wrapper
-  //     .find("textarea")
-  //     .at(0)
-  //     .simulate("change", { target: { value: "nginx" } });
-  //   wrapper.find('input[type="checkbox"]').at(0).simulate("change");
-  //   wrapper.find('input[type="checkbox"]').at(1).simulate("change");
-  //   const form = wrapper.find("form");
-  //   await act(async () => {
-  //     await (form.prop("onSubmit") as (e: any) => Promise<any>)({ preventDefault: jest.fn() });
-  //   });
-  //   wrapper.update();
-  //   expect(install).toHaveBeenCalledWith({
-  //     ...pkgRepoFormData,
-  //     name: "helm-repo",
-  //     type: "helm",
-  //     url: "https://helm.repo",
-  //     plugin: { name: "helm.packages", version: "v1alpha1" },
-  //     customDetails: {
-  //       ociRepositories: [],
-  //       dockerRegistrySecrets: [""],
-  //       filterRule: undefined,
-  //       performValidation: false,
-  //     },
-  //     interval: undefined,
-  //     description: undefined,
-  //   } as unknown as IPkgRepoFormData);
-  // });
-  // it("ignore the filter for the OCI case", async () => {
-  //   const install = jest.fn().mockReturnValue(true);
-  //   let wrapper: any;
-  //   await act(async () => {
-  //     wrapper = mountWrapper(defaultStore, <AppRepoForm {...defaultProps} onSubmit={install} />);
-  //   });
-  //   wrapper.find("#kubeapps-repo-name").simulate("change", { target: { value: "oci-repo" } });
-  //   wrapper
-  //     .find("#kubeapps-repo-url")
-  //     .simulate("change", { target: { value: "https://oci.repo" } });
-  //   wrapper
-  //     .find("textarea")
-  //     .at(0)
-  //     .simulate("change", { target: { value: "nginx, wordpress" } });
-  //   wrapper.find("#kubeapps-plugin-helm").simulate("change");
-  //   wrapper.find("#kubeapps-repo-type-oci").simulate("change");
-  //   const form = wrapper.find("form");
-  //   await act(async () => {
-  //     await (form.prop("onSubmit") as (e: any) => Promise<any>)({ preventDefault: jest.fn() });
-  //   });
-  //   wrapper.update();
-  //   expect(install).toHaveBeenCalledWith({
-  //     ...pkgRepoFormData,
-  //     name: "oci-repo",
-  //     type: "oci",
-  //     url: "https://oci.repo",
-  //     plugin: { name: "helm.packages", version: "v1alpha1" },
-  //     customDetails: {
-  //       ociRepositories: [],
-  //       dockerRegistrySecrets: [""],
-  //       filterRule: undefined,
-  //       performValidation: false,
-  //     },
-  //     interval: undefined,
-  //     description: undefined,
-  //   } as unknown as IPkgRepoFormData);
-  // });
-});
-
-describe("when using a description", () => {
-  it("should call the install method with a description", async () => {
+  it("should call the install method with a filter", async () => {
     const install = jest.fn().mockReturnValue(true);
     let wrapper: any;
     await act(async () => {
@@ -404,12 +291,11 @@ describe("when using a description", () => {
     });
     wrapper.find("#kubeapps-plugin-helm").simulate("change");
     wrapper.find("#kubeapps-repo-name").simulate("change", { target: { value: "helm-repo" } });
+    wrapper.find("#kubeapps-repo-url").simulate("change", { target: { value: "helm.repo" } });
+    wrapper.find("#kubeapps-repo-type-helm").simulate("change");
     wrapper
-      .find("#kubeapps-repo-url")
-      .simulate("change", { target: { value: "https://helm.repo" } });
-    wrapper
-      .find("#kubeapps-repo-description")
-      .simulate("change", { target: { value: "description test" } });
+      .find("#kubeapps-repo-filter-repositories")
+      .simulate("change", { target: { value: "nginx, wordpress" } });
     const form = wrapper.find("form");
     await act(async () => {
       await (form.prop("onSubmit") as (e: any) => Promise<any>)({ preventDefault: jest.fn() });
@@ -420,17 +306,136 @@ describe("when using a description", () => {
       name: "helm-repo",
       type: "helm",
       url: "https://helm.repo",
-      plugin: { name: "helm.packages", version: "v1alpha1" },
+      plugin: { name: PluginNames.PACKAGES_HELM, version: "v1alpha1" },
       customDetails: {
         ociRepositories: [],
         dockerRegistrySecrets: [""],
-        filterRule: undefined,
-        performValidation: false,
+        filterRule: {
+          jq: ".name == $var0 or .name == $var1",
+          variables: { $var0: "nginx", $var1: "wordpress" },
+        },
+        performValidation: true,
       },
       interval: undefined,
-      description: "description test",
+      description: undefined,
     } as unknown as IPkgRepoFormData);
   });
+
+  it("should call the install method with a filter excluding a regex", async () => {
+    const install = jest.fn().mockReturnValue(true);
+    let wrapper: any;
+    await act(async () => {
+      wrapper = mountWrapper(defaultStore, <AppRepoForm {...defaultProps} onSubmit={install} />);
+    });
+    wrapper.find("#kubeapps-plugin-helm").simulate("change");
+    wrapper.find("#kubeapps-repo-name").simulate("change", { target: { value: "helm-repo" } });
+    wrapper.find("#kubeapps-repo-url").simulate("change", { target: { value: "helm.repo" } });
+    wrapper.find("#kubeapps-repo-type-helm").simulate("change");
+    wrapper
+      .find("#kubeapps-repo-filter-repositories")
+      .simulate("change", { target: { value: "nginx" } });
+
+    wrapper.find("#kubeapps-repo-filter-exclude").simulate("change");
+    wrapper.find("#kubeapps-repo-filter-regex").simulate("change");
+    const form = wrapper.find("form");
+    await act(async () => {
+      await (form.prop("onSubmit") as (e: any) => Promise<any>)({ preventDefault: jest.fn() });
+    });
+    wrapper.update();
+    expect(install).toHaveBeenCalledWith({
+      ...pkgRepoFormData,
+      name: "helm-repo",
+      type: "helm",
+      url: "https://helm.repo",
+      plugin: { name: PluginNames.PACKAGES_HELM, version: "v1alpha1" },
+      customDetails: {
+        ociRepositories: [],
+        dockerRegistrySecrets: [""],
+        filterRule: {
+          jq: ".name | test($var) | not",
+          variables: { $var: "nginx" },
+        },
+        performValidation: true,
+      },
+      interval: undefined,
+      description: undefined,
+    } as unknown as IPkgRepoFormData);
+  });
+
+  it("ignore the filter for the OCI case", async () => {
+    const install = jest.fn().mockReturnValue(true);
+    actions.repos = {
+      ...actions.repos,
+    };
+    let wrapper: any;
+    await act(async () => {
+      wrapper = mountWrapper(defaultStore, <AppRepoForm {...defaultProps} onSubmit={install} />);
+    });
+    wrapper.find("#kubeapps-plugin-helm").simulate("change");
+    wrapper.find("#kubeapps-repo-name").simulate("change", { target: { value: "oci-repo" } });
+    wrapper.find("#kubeapps-repo-url").simulate("change", { target: { value: "oci.repo" } });
+    wrapper.find("#kubeapps-repo-type-oci").simulate("change");
+    wrapper
+      .find("#kubeapps-oci-repositories")
+      .simulate("change", { target: { value: "apache, jenkins" } });
+    wrapper
+      .find("#kubeapps-repo-filter-repositories")
+      .simulate("change", { target: { value: "nginx, wordpress" } });
+    const form = wrapper.find("form");
+    await act(async () => {
+      await (form.prop("onSubmit") as (e: any) => Promise<any>)({ preventDefault: jest.fn() });
+    });
+    wrapper.update();
+    wrapper.find("#kubeapps-repo-type-oci").simulate("change");
+    expect(install).toHaveBeenCalledWith({
+      ...pkgRepoFormData,
+      name: "oci-repo",
+      type: "oci",
+      url: "https://oci.repo",
+      plugin: { name: PluginNames.PACKAGES_HELM, version: "v1alpha1" },
+      customDetails: {
+        ociRepositories: ["apache", "jenkins"],
+        dockerRegistrySecrets: [""],
+        filterRule: undefined,
+        performValidation: true,
+      },
+      interval: undefined,
+      description: undefined,
+    } as unknown as IPkgRepoFormData);
+  });
+});
+
+it("should call the install method with a description", async () => {
+  const install = jest.fn().mockReturnValue(true);
+  let wrapper: any;
+  await act(async () => {
+    wrapper = mountWrapper(defaultStore, <AppRepoForm {...defaultProps} onSubmit={install} />);
+  });
+  wrapper.find("#kubeapps-plugin-helm").simulate("change");
+  wrapper.find("#kubeapps-repo-name").simulate("change", { target: { value: "helm-repo" } });
+  wrapper.find("#kubeapps-repo-url").simulate("change", { target: { value: "https://helm.repo" } });
+  wrapper
+    .find("#kubeapps-repo-description")
+    .simulate("change", { target: { value: "description test" } });
+  const form = wrapper.find("form");
+  await act(async () => {
+    await (form.prop("onSubmit") as (e: any) => Promise<any>)({ preventDefault: jest.fn() });
+  });
+  wrapper.update();
+  expect(install).toHaveBeenCalledWith({
+    ...pkgRepoFormData,
+    name: "helm-repo",
+    type: "helm",
+    url: "https://helm.repo",
+    customDetails: {
+      ociRepositories: [],
+      dockerRegistrySecrets: [""],
+      filterRule: undefined,
+      performValidation: true,
+    },
+    interval: undefined,
+    description: "description test",
+  } as unknown as IPkgRepoFormData);
 });
 
 it("should not show the list of OCI repositories if using a Helm repo (default)", async () => {
@@ -449,7 +454,7 @@ describe("when the repository info is already populated", () => {
   const packageRepoRef = {
     identifier: "helm-repo",
     context: { cluster: defaultProps.cluster, namespace: defaultProps.namespace },
-    plugin: { name: "helm.packages", version: "v1alpha1" },
+    plugin: { name: PluginNames.PACKAGES_HELM, version: "v1alpha1" },
   } as PackageRepositoryReference;
   const repo = {
     name: "",
@@ -709,8 +714,11 @@ describe("when the repository info is already populated", () => {
       await waitFor(() => {
         wrapper.update();
         expect(wrapper.find("#kubeapps-repo-auth-method-registry")).toBeChecked();
-        //TODO(agamez): add checks
       });
+      expect(wrapper.find("#kubeapps-docker-cred-server").prop("value")).toBe("foobar");
+      expect(wrapper.find("#kubeapps-docker-cred-username").prop("value")).toBe("foo");
+      expect(wrapper.find("#kubeapps-docker-cred-password").prop("value")).toBe("bar");
+      expect(wrapper.find("#kubeapps-docker-cred-email").prop("value")).toBe("foo@foo.foo");
     });
 
     it("should select a opaque as auth mechanism", async () => {
@@ -733,8 +741,8 @@ describe("when the repository info is already populated", () => {
       await waitFor(() => {
         wrapper.update();
         expect(wrapper.find("#kubeapps-repo-auth-method-opaque")).toBeChecked();
-        //TODO(agamez): add checks
       });
+      expect(wrapper.find("#kubeapps-repo-opaque-data").prop("value")).toBe("{}");
     });
 
     it("should select a ssh as auth mechanism", async () => {
@@ -758,8 +766,9 @@ describe("when the repository info is already populated", () => {
       await waitFor(() => {
         wrapper.update();
         expect(wrapper.find("#kubeapps-repo-auth-method-ssh")).toBeChecked();
-        //TODO(agamez): add checks
       });
+      expect(wrapper.find("#kubeapps-repo-ssh-knownhosts").prop("value")).toBe("foo");
+      expect(wrapper.find("#kubeapps-repo-ssh-privatekey").prop("value")).toBe("bar");
     });
 
     it("should select a tls as auth mechanism", async () => {
@@ -783,8 +792,9 @@ describe("when the repository info is already populated", () => {
       await waitFor(() => {
         wrapper.update();
         expect(wrapper.find("#kubeapps-repo-auth-method-tls")).toBeChecked();
-        //TODO(agamez): add checks
       });
+      expect(wrapper.find("#kubeapps-repo-tls-cert").prop("value")).toBe("foo");
+      expect(wrapper.find("#kubeapps-repo-tls-key").prop("value")).toBe("bar");
     });
   });
 });

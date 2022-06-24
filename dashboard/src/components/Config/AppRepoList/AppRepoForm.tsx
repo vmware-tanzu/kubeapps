@@ -176,17 +176,20 @@ export function AppRepoForm(props: IAppRepoFormProps) {
       );
       setSecretAuthName(repo.auth?.secretRef?.name || "");
       setSecretTLSName(repo.tlsConfig?.secretRef?.name || "");
-      //TODO(agamez): assuming that it is Helm the only one having custom details
-      const repositoryCustomDetails = repo.customDetail as Partial<RepositoryCustomDetails>;
-      setOCIRepositories(repositoryCustomDetails?.ociRepositories?.join(", ") || "");
-      setPerformValidation(repositoryCustomDetails?.performValidation || false);
-      if (repositoryCustomDetails?.filterRule?.jq) {
-        const { names, regex, exclude } = toParams(repositoryCustomDetails.filterRule!);
-        setFilterRegex(regex);
-        setFilterExclude(exclude);
-        setFilterNames(names);
-      }
       setIsUserManagedSecret(!!repo.auth?.secretRef?.name);
+
+      // setting custom details for the Helm plugin
+      if (repo.packageRepoRef?.plugin?.name === PluginNames.PACKAGES_HELM) {
+        const repositoryCustomDetails = repo.customDetail as Partial<RepositoryCustomDetails>;
+        setOCIRepositories(repositoryCustomDetails?.ociRepositories?.join(", ") || "");
+        setPerformValidation(repositoryCustomDetails?.performValidation || false);
+        if (repositoryCustomDetails?.filterRule?.jq) {
+          const { names, regex, exclude } = toParams(repositoryCustomDetails.filterRule!);
+          setFilterRegex(regex);
+          setFilterExclude(exclude);
+          setFilterNames(names);
+        }
+      }
     }
   }, [repo, namespace, currentCluster, dispatch]);
 
@@ -1143,7 +1146,7 @@ export function AppRepoForm(props: IAppRepoFormProps) {
                           </CdsTextarea>
                           <br />
                           <CdsTextarea>
-                            <label htmlFor="kubeapps-repo-tls-cert">Raw TLS Key</label>
+                            <label htmlFor="kubeapps-repo-tls-key">Raw TLS Key</label>
                             <textarea
                               id="kubeapps-repo-tls-key"
                               className="cds-textarea-fix"
