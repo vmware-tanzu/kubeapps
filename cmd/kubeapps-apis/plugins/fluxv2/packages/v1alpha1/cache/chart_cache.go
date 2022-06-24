@@ -83,7 +83,7 @@ type chartCacheStoreEntry struct {
 	id            string
 	version       string
 	url           string
-	clientOptions *common.ClientOptions
+	clientOptions *common.HttpClientOptions
 	deleted       bool
 }
 
@@ -118,7 +118,7 @@ func NewChartCache(name string, redisCli *redis.Client, stopCh <-chan struct{}) 
 
 // this func will enqueue work items into chart work queue and return.
 // the charts will be synced worker threads running in the background
-func (c *ChartCache) SyncCharts(charts []models.Chart, clientOptions *common.ClientOptions) error {
+func (c *ChartCache) SyncCharts(charts []models.Chart, clientOptions *common.HttpClientOptions) error {
 	log.Infof("+SyncCharts()")
 	totalToSync := 0
 	defer func() {
@@ -454,7 +454,7 @@ func (c *ChartCache) FetchForOne(key string) ([]byte, error) {
  • otherwise return the bytes stored in the
  chart cache for the given entry
 */
-func (c *ChartCache) GetForOne(key string, chart *models.Chart, clientOptions *common.ClientOptions) ([]byte, error) {
+func (c *ChartCache) GetForOne(key string, chart *models.Chart, clientOptions *common.HttpClientOptions) ([]byte, error) {
 	// TODO (gfichtenholt) it'd be nice to get rid of all arguments except for the key, similar to that of
 	// NamespacedResourceWatcherCache.GetForOne()
 	log.Infof("+GetForOne(%s)", key)
@@ -599,7 +599,7 @@ func chartCacheKeyFor(namespace, chartID, chartVersion string) (string, error) {
 }
 
 // FYI: The work queue is able to retry transient HTTP errors
-func ChartCacheComputeValue(chartID, chartUrl, chartVersion string, clientOptions *common.ClientOptions) ([]byte, error) {
+func ChartCacheComputeValue(chartID, chartUrl, chartVersion string, clientOptions *common.HttpClientOptions) ([]byte, error) {
 	client, headers, err := common.NewHttpClientAndHeaders(clientOptions)
 	if err != nil {
 		return nil, err
