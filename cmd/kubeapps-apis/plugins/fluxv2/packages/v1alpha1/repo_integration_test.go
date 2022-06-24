@@ -54,7 +54,7 @@ func TestKindClusterAddThenDeleteRepo(t *testing.T) {
 	}
 	if err = usesBitnamiCatalog(t); err != nil {
 		t.Fatal(err)
-	} else if err = kubeAddHelmRepository(t, name, in_cluster_bitnami_url, "", 0); err != nil {
+	} else if err = kubeAddHelmRepository(t, name, "", in_cluster_bitnami_url, "", 0); err != nil {
 		t.Fatal(err)
 	}
 	// wait until this repo reaches 'Ready' state so that long indexation process kicks in
@@ -96,7 +96,7 @@ func TestKindClusterRepoWithBasicAuth(t *testing.T) {
 		Name:      "podinfo-basic-auth-" + randSeq(4),
 		Namespace: "default",
 	}
-	if err := kubeAddHelmRepositoryAndCleanup(t, repoName, podinfo_basic_auth_repo_url, secretName.Name, 0); err != nil {
+	if err := kubeAddHelmRepositoryAndCleanup(t, repoName, "", podinfo_basic_auth_repo_url, secretName.Name, 0); err != nil {
 		t.Fatalf("%v", err)
 	}
 
@@ -250,7 +250,7 @@ func TestKindClusterAddPackageRepository(t *testing.T) {
 				Name:      "secret-2",
 				Namespace: "default",
 			}, pub, priv, ca),
-			expectedResponse:   add_repo_expected_resp_6,
+			expectedResponse:   add_repo_expected_resp_5,
 			expectedStatusCode: codes.OK,
 			userManagedSecrets: true,
 		},
@@ -262,6 +262,12 @@ func TestKindClusterAddPackageRepository(t *testing.T) {
 				Namespace: "default",
 			}, pub, priv, ca),
 			expectedStatusCode: codes.InvalidArgument,
+		},
+		{
+			testName:           "add OCI repo test (simplest case)",
+			request:            add_repo_req_21,
+			expectedResponse:   add_repo_expected_resp_6,
+			expectedStatusCode: codes.OK,
 		},
 	}
 
@@ -326,14 +332,6 @@ func TestKindClusterAddPackageRepository(t *testing.T) {
 	}
 }
 
-func TestKindClusterAddOciPackageRepository(t *testing.T) {
-	_, _, err := checkEnv(t)
-	if err != nil {
-		t.Fatal(err)
-	}
-	// TODO
-}
-
 func TestKindClusterGetPackageRepositoryDetail(t *testing.T) {
 	_, fluxPluginReposClient, err := checkEnv(t)
 	if err != nil {
@@ -344,6 +342,7 @@ func TestKindClusterGetPackageRepositoryDetail(t *testing.T) {
 		testName           string
 		request            *corev1.GetPackageRepositoryDetailRequest
 		repoName           string
+		repoType           string
 		repoUrl            string
 		unauthorized       bool
 		expectedResponse   *corev1.GetPackageRepositoryDetailResponse
@@ -415,6 +414,23 @@ func TestKindClusterGetPackageRepositoryDetail(t *testing.T) {
 			expectedStatusCode: codes.PermissionDenied,
 			unauthorized:       true,
 		},
+		{
+			testName:           "returns failed status for helm repository with OCI url",
+			request:            get_repo_detail_req_12,
+			repoName:           "my-podinfo-12",
+			repoUrl:            podinfo_oci_repo_url,
+			expectedStatusCode: codes.OK,
+			expectedResponse:   get_repo_detail_resp_15,
+		},
+		{
+			testName:           "get details for OCI repo",
+			request:            get_repo_detail_req_13,
+			repoName:           "my-podinfo-13",
+			repoType:           "oci",
+			repoUrl:            podinfo_oci_repo_url,
+			expectedStatusCode: codes.OK,
+			expectedResponse:   get_repo_detail_resp_16,
+		},
 	}
 
 	adminAcctName := types.NamespacedName{
@@ -454,7 +470,7 @@ func TestKindClusterGetPackageRepositoryDetail(t *testing.T) {
 			if err = kubeAddHelmRepositoryAndCleanup(t, types.NamespacedName{
 				Name:      tc.repoName,
 				Namespace: repoNamespace,
-			}, tc.repoUrl, secretName, 0); err != nil {
+			}, tc.repoType, tc.repoUrl, secretName, 0); err != nil {
 				t.Fatal(err)
 			}
 
@@ -480,7 +496,6 @@ func TestKindClusterGetPackageRepositoryDetail(t *testing.T) {
 				defer cancel()
 
 				resp, err = fluxPluginReposClient.GetPackageRepositoryDetail(grpcCtx, tc.request)
-
 				if got, want := status.Code(err), tc.expectedStatusCode; got != want {
 					t.Fatalf("got: %v, want: %v, last repo detail: %v", err, want, resp)
 				}
@@ -510,6 +525,7 @@ func TestKindClusterGetPackageRepositorySummaries(t *testing.T) {
 	type repoSpec struct {
 		name string
 		ns   string
+		typ  string
 		url  string
 	}
 
@@ -545,9 +561,9 @@ func TestKindClusterGetPackageRepositorySummaries(t *testing.T) {
 			expectedStatusCode: codes.OK,
 			expectedResponse: &corev1.GetPackageRepositorySummariesResponse{
 				PackageRepositorySummaries: []*corev1.PackageRepositorySummary{
-					get_summaries_summary_5("podinfo-1", ns1),
-					get_summaries_summary_5("podinfo-2", ns2),
-					get_summaries_summary_5("podinfo-3", ns3),
+					get_summaries_summary_5(types.NamespacedName{Name: "podinfo-1", Namespace: ns1}),
+					get_summaries_summary_5(types.NamespacedName{Name: "podinfo-2", Namespace: ns2}),
+					get_summaries_summary_5(types.NamespacedName{Name: "podinfo-3", Namespace: ns3}),
 				},
 			},
 		},
@@ -564,7 +580,7 @@ func TestKindClusterGetPackageRepositorySummaries(t *testing.T) {
 			expectedStatusCode: codes.OK,
 			expectedResponse: &corev1.GetPackageRepositorySummariesResponse{
 				PackageRepositorySummaries: []*corev1.PackageRepositorySummary{
-					get_summaries_summary_5("podinfo-5", ns2),
+					get_summaries_summary_5(types.NamespacedName{Name: "podinfo-5", Namespace: ns2}),
 				},
 			},
 		},
@@ -597,10 +613,32 @@ func TestKindClusterGetPackageRepositorySummaries(t *testing.T) {
 			},
 			unauthorized: true,
 		},
+		{
+			testName: "summaries from OCI repo",
+			request: &corev1.GetPackageRepositorySummariesRequest{
+				Context: &corev1.Context{},
+			},
+			existingRepos: []repoSpec{
+				{
+					name: "podinfo-13",
+					ns:   ns1,
+					typ:  "oci",
+					url:  podinfo_oci_repo_url,
+				},
+			},
+			expectedStatusCode: codes.OK,
+			expectedResponse: &corev1.GetPackageRepositorySummariesResponse{
+				PackageRepositorySummaries: []*corev1.PackageRepositorySummary{
+					get_summaries_summary_6(types.NamespacedName{
+						Name:      "podinfo-13",
+						Namespace: ns1}),
+				},
+			},
+		},
 	}
 
 	adminAcctName := types.NamespacedName{
-		Name:      "test-get-repo-admin-" + randSeq(4),
+		Name:      "test-get-summaries-admin-" + randSeq(4),
 		Namespace: "default",
 	}
 	grpcAdmin, err := newGrpcAdminContext(t, adminAcctName)
@@ -609,7 +647,7 @@ func TestKindClusterGetPackageRepositorySummaries(t *testing.T) {
 	}
 
 	loserAcctName := types.NamespacedName{
-		Name:      "test-get-repo-loser-" + randSeq(4),
+		Name:      "test-get-summaries-loser-" + randSeq(4),
 		Namespace: "default",
 	}
 	grpcLoser, err := newGrpcContextForServiceAccountWithoutAccessToAnyNamespace(t, loserAcctName)
@@ -620,15 +658,16 @@ func TestKindClusterGetPackageRepositorySummaries(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.testName, func(t *testing.T) {
 			for _, repo := range tc.existingRepos {
-				name := types.NamespacedName{
-					Name:      repo.name,
-					Namespace: repo.ns,
-				}
-				if err = kubeAddHelmRepositoryAndCleanup(t, name, repo.url, "", 0); err != nil {
+				if err = kubeAddHelmRepositoryAndCleanup(t,
+					types.NamespacedName{
+						Name:      repo.name,
+						Namespace: repo.ns}, repo.typ, repo.url, "", 0); err != nil {
 					t.Fatal(err)
 				}
 				// want to wait until all repos reach Ready state
-				err := kubeWaitUntilHelmRepositoryIsReady(t, name)
+				err := kubeWaitUntilHelmRepositoryIsReady(t, types.NamespacedName{
+					Name:      repo.name,
+					Namespace: repo.ns})
 				if err != nil {
 					t.Fatal(err)
 				}
@@ -809,7 +848,7 @@ func TestKindClusterUpdatePackageRepository(t *testing.T) {
 				Namespace: repoNamespace,
 			}
 			if err = kubeAddHelmRepositoryAndCleanup(t, name,
-				tc.repoUrl, oldSecretName, 0); err != nil {
+				"", tc.repoUrl, oldSecretName, 0); err != nil {
 				t.Fatal(err)
 			}
 			// wait until this repo reaches 'Ready' state so that long indexation process kicks in
@@ -932,7 +971,9 @@ func TestKindClusterDeletePackageRepository(t *testing.T) {
 			expectedStatusCode: codes.PermissionDenied,
 			unauthorized:       true,
 		},
-		{
+		{ //TODO rewrite this test to use AddPackageRepository
+			//Instead of kubeAddHelmRepository so we don't need to copy
+			//production code bizness logic here
 			name:     "delete repo also deletes the corresponding secret in kubeapps managed env",
 			request:  delete_repo_req_6,
 			repoName: "my-podinfo-4",
@@ -999,7 +1040,7 @@ func TestKindClusterDeletePackageRepository(t *testing.T) {
 				Name:      tc.repoName,
 				Namespace: repoNamespace,
 			}
-			if err = kubeAddHelmRepository(t, name, tc.repoUrl, oldSecretName, 0); err != nil {
+			if err = kubeAddHelmRepository(t, name, "", tc.repoUrl, oldSecretName, 0); err != nil {
 				t.Fatal(err)
 				// wait until this repo reaches 'Ready' state so that long indexation process kicks in
 			} else if !tc.userManagedSecrets && tc.oldSecret != nil {
@@ -1124,7 +1165,7 @@ func TestKindClusterUpdatePackageRepoSecretUnchanged(t *testing.T) {
 		Name:      repoName,
 		Namespace: repoNamespace,
 	}
-	if err = kubeAddHelmRepositoryAndCleanup(t, name, repoUrl, oldSecretName, 0); err != nil {
+	if err = kubeAddHelmRepositoryAndCleanup(t, name, "", repoUrl, oldSecretName, 0); err != nil {
 		t.Fatal(err)
 	} else if err = kubeWaitUntilHelmRepositoryIsReady(t, name); err != nil {
 		t.Fatal(err)
