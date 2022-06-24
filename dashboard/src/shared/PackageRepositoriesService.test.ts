@@ -1,160 +1,243 @@
-// Copyright 2021-2022 the Kubeapps contributors.
+// Copyright 2022 the Kubeapps contributors.
 // SPDX-License-Identifier: Apache-2.0
 
-import * as moxios from "moxios";
-import { axiosWithAuth } from "./AxiosInstance";
+import {
+  AddPackageRepositoryResponse,
+  DeletePackageRepositoryResponse,
+  GetPackageRepositoryDetailResponse,
+  GetPackageRepositorySummariesResponse,
+  PackageRepositoryAuth_PackageRepositoryAuthType,
+  PackageRepositoryReference,
+  UpdatePackageRepositoryResponse,
+} from "gen/kubeappsapis/core/packages/v1alpha1/repositories";
+import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins";
+import KubeappsGrpcClient from "./KubeappsGrpcClient";
+import { PackageRepositoriesService } from "./PackageRepositoriesService";
+import { IPkgRepoFormData, RepositoryStorageTypes } from "./types";
 
-//TODO(agamez): implement this test suite
+const cluster = "cluster";
+const namespace = "namespace";
+const plugin: Plugin = { name: "my.plugin", version: "0.0.1" };
+
+const pkgRepoFormData = {
+  plugin,
+  authHeader: "",
+  authMethod:
+    PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_UNSPECIFIED,
+  basicAuth: {
+    password: "",
+    username: "",
+  },
+  customCA: "",
+  customDetails: {
+    dockerRegistrySecrets: [],
+    ociRepositories: [],
+    performValidation: false,
+    filterRules: [],
+  },
+  description: "",
+  dockerRegCreds: {
+    password: "",
+    username: "",
+    email: "",
+    server: "",
+  },
+  interval: "",
+  name: "",
+  passCredentials: false,
+  secretAuthName: "",
+  secretTLSName: "",
+  skipTLS: false,
+  type: RepositoryStorageTypes.PACKAGE_REPOSITORY_STORAGE_HELM,
+  url: "",
+  opaqueCreds: {
+    data: {},
+  },
+  sshCreds: {
+    knownHosts: "",
+    privateKey: "",
+  },
+  tlsCertKey: {
+    cert: "",
+    key: "",
+  },
+} as IPkgRepoFormData;
+
+const packageRepoRef = {
+  identifier: pkgRepoFormData.name,
+  context: { cluster, namespace },
+  plugin,
+} as PackageRepositoryReference;
+
 describe("RepositoriesService", () => {
-  // const cluster = "cluster";
-  // const namespace = "namespace";
-  // const plugin: Plugin = { name: "my.plugin", version: "0.0.1" };
-
-  // const repo = {
-  //   name: "repo-test",
-  //   type: "repo-type",
-  //   description: "repo-description",
-  //   authHeader: "repo-authHeader",
-  //   customCA: "repo-customCA",
-  //   passCredentials: true,
-  //   authMethod:
-  //     PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_UNSPECIFIED,
-  //   basicAuth: {
-  //     username: "user",
-  //     password: "password",
-  //   },
-  //   skipTLS: false,
-  //   tlsCertKey: {
-  //     cert: "",
-  //     key: "",
-  //   },
-  //   sshCreds: {
-  //     knownHosts: "",
-  //     privateKey: "",
-  //   },
-  //   secretTLSName: "",
-
-  //   opaqueCreds: {
-  //     data: {},
-  //   },
-  //   url: "repo-url",
-  //   secretAuthName: "repo-secret1",
-  //   dockerRegCreds: {
-  //     password: "",
-  //     username: "",
-  //     email: "",
-  //     server: "",
-  //   },
-  //   interval: 3600,
-  //   plugin,
-  //   customDetails: {
-  //     ociRepositories: ["oci-repo1"],
-  //     dockerRegistrySecrets: ["repo-authRegCreds"],
-  //     filterRule: {
-  //       jq: ".name == $var0",
-  //       variables: { $var0: "nginx" },
-  //     },
-  //   },
-  // } as IPkgRepoFormData;
-
-  beforeEach(() => {
-    // Import as "any" to avoid typescript syntax error
-    moxios.install(axiosWithAuth as any);
-  });
   afterEach(() => {
-    moxios.uninstall(axiosWithAuth as any);
     jest.restoreAllMocks();
   });
 
-  // TODO(agamez): add tests back
-  // it("create repository", async () => {
-  //   const createRepoUrl = url.backend.apprepositories.create(cluster, namespace);
-  //   moxios.stubRequest(createRepoUrl, {
-  //     status: 200,
-  //     response: {},
-  //   });
+  it("getPackageRepositorySummaries", async () => {
+    const mockGetPackageRepositorySummaries = jest.fn().mockImplementation(() =>
+      Promise.resolve({
+        packageRepositorySummaries: [
+          { name: "repo1", packageRepoRef },
+          { name: "repo2", packageRepoRef },
+        ],
+      } as GetPackageRepositorySummariesResponse),
+    );
+    setMockCoreClient("GetPackageRepositorySummaries", mockGetPackageRepositorySummaries);
 
-  //   await PackageRepositoriesService.addPackageRepository(
-  //     cluster,
-  //     repo.name,
-  //     plugin,
-  //     namespace,
-  //     repo.repoURL,
-  //     repo.type,
-  //     repo.description,
-  //     repo.authHeader,
-  //     repo.authRegCreds,
-  //     repo.customCA,
-  //     repo.registrySecrets,
-  //     repo.ociRepositories,
-  //     repo.tlsInsecureSkipVerify,
-  //     repo.passCredentials,
-  //     true,
-  //     repo.authMethod,
-  //     repo.interval,
-  //     repo.username,
-  //     repo.password,
-  //     false,
-  //     repo.filterRule,
-  //   );
+    const getPackageRepositorySummariesResponse =
+      await PackageRepositoriesService.getPackageRepositorySummaries({
+        cluster,
+        namespace,
+      });
+    expect(getPackageRepositorySummariesResponse).toStrictEqual({
+      packageRepositorySummaries: [
+        { name: "repo1", packageRepoRef },
+        { name: "repo2", packageRepoRef },
+      ],
+    } as GetPackageRepositorySummariesResponse);
+    expect(mockGetPackageRepositorySummaries).toHaveBeenCalledWith({
+      context: { cluster, namespace },
+    });
+  });
 
-  //   const request = moxios.requests.mostRecent();
-  //   expect(request.config.method).toEqual("post");
-  //   expect(request.url).toBe(createRepoUrl);
-  //   expect(JSON.parse(request.config.data)).toEqual({ appRepository: repo });
-  // });
+  it("getPackageRepositoryDetail", async () => {
+    const mockGetPackageRepositoryDetail = jest.fn().mockImplementation(() =>
+      Promise.resolve({
+        detail: { name: "repo1", packageRepoRef },
+      } as GetPackageRepositoryDetailResponse),
+    );
+    setMockCoreClient("GetPackageRepositoryDetail", mockGetPackageRepositoryDetail);
 
-  // it("update repository", async () => {
-  //   const updateRepoUrl = url.backend.apprepositories.update(cluster, namespace, repo.name);
-  //   moxios.stubRequest(updateRepoUrl, {
-  //     status: 200,
-  //     response: {},
-  //   });
+    const getPackageRepositoryDetailResponse =
+      await PackageRepositoriesService.getPackageRepositoryDetail(packageRepoRef);
+    expect(getPackageRepositoryDetailResponse).toStrictEqual({
+      detail: { name: "repo1", packageRepoRef },
+    } as GetPackageRepositoryDetailResponse);
+    expect(mockGetPackageRepositoryDetail).toHaveBeenCalledWith({ packageRepoRef });
+  });
 
-  //   await PackageRepositoriesService.updatePackageRepository(
-  //     cluster,
-  //     repo.name,
-  //     plugin,
-  //     namespace,
-  //     repo.repoURL,
-  //     repo.type,
-  //     repo.description,
-  //     repo.authHeader,
-  //     repo.authRegCreds,
-  //     repo.customCA,
-  //     repo.registrySecrets,
-  //     repo.ociRepositories,
-  //     repo.tlsInsecureSkipVerify,
-  //     repo.passCredentials,
-  //     repo.authMethod,
-  //     repo.interval,
-  //     repo.username,
-  //     repo.password,
-  //     false,
-  //     repo.filterRule,
-  //   );
+  it("addPackageRepository", async () => {
+    const mockAddPackageRepository = jest.fn().mockImplementation(() =>
+      Promise.resolve({
+        packageRepoRef: {
+          identifier: pkgRepoFormData.name,
+          context: { cluster, namespace },
+          plugin,
+        } as PackageRepositoryReference,
+      } as AddPackageRepositoryResponse),
+    );
+    setMockCoreClient("AddPackageRepository", mockAddPackageRepository);
 
-  //   const request = moxios.requests.mostRecent();
-  //   expect(request.config.method).toEqual("put");
-  //   expect(request.url).toBe(updateRepoUrl);
-  //   expect(JSON.parse(request.config.data)).toEqual({ appRepository: repo });
-  // });
+    const addPackageRepositoryResponse = await PackageRepositoriesService.addPackageRepository(
+      cluster,
+      namespace,
+      pkgRepoFormData,
+      false,
+    );
+    expect(addPackageRepositoryResponse).toStrictEqual({
+      packageRepoRef: {
+        identifier: pkgRepoFormData.name,
+        context: { cluster, namespace },
+        plugin,
+      } as PackageRepositoryReference,
+    } as AddPackageRepositoryResponse);
+    expect(mockAddPackageRepository).toHaveBeenCalledWith({
+      auth: { opaqueCreds: { data: {} } },
+      context: { cluster, namespace },
+      description: "",
+      interval: "",
+      name: "",
+      namespaceScoped: false,
+      plugin,
+      type: "helm",
+      url: "",
+    });
+  });
 
-  // it("delete repository", async () => {
-  //   const deleteRepoUrl = url.backend.apprepositories.delete(cluster, namespace, repo.name);
-  //   moxios.stubRequest(deleteRepoUrl, {
-  //     status: 200,
-  //     response: {},
-  //   });
+  it("updatePackageRepository", async () => {
+    const mockUpdatePackageRepository = jest.fn().mockImplementation(() =>
+      Promise.resolve({
+        packageRepoRef: {
+          identifier: pkgRepoFormData.name,
+          context: { cluster, namespace },
+          plugin,
+        } as PackageRepositoryReference,
+      } as UpdatePackageRepositoryResponse),
+    );
+    setMockCoreClient("UpdatePackageRepository", mockUpdatePackageRepository);
 
-  //   await PackageRepositoriesService.deletePackageRepository({
-  //     identifier: repo.name,
-  //     context: { cluster, namespace },
-  //     plugin,
-  //   } as PackageRepositoryReference);
+    const updatePackageRepositoryResponse =
+      await PackageRepositoriesService.updatePackageRepository(cluster, namespace, pkgRepoFormData);
+    expect(updatePackageRepositoryResponse).toStrictEqual({
+      packageRepoRef: {
+        identifier: pkgRepoFormData.name,
+        context: { cluster, namespace },
+        plugin,
+      } as PackageRepositoryReference,
+    } as UpdatePackageRepositoryResponse);
+    expect(mockUpdatePackageRepository).toHaveBeenCalledWith({
+      auth: {
+        opaqueCreds: {
+          //TODO(agamez): check this
+          data: {},
+        },
+      },
+      description: "",
+      interval: "",
+      packageRepoRef: {
+        context: {
+          cluster: cluster,
+          namespace: namespace,
+        },
+        identifier: "",
+        plugin,
+      },
+      url: "",
+    });
+  });
 
-  //   const request = moxios.requests.mostRecent();
-  //   expect(request.config.method).toEqual("delete");
-  //   expect(request.url).toBe(deleteRepoUrl);
-  // });
+  it("deletePackageRepository", async () => {
+    const mockDeletePackageRepository = jest.fn().mockImplementation(() =>
+      Promise.resolve({
+        packageRepoRef: {
+          identifier: pkgRepoFormData.name,
+          context: { cluster, namespace },
+          plugin,
+        } as PackageRepositoryReference,
+      } as DeletePackageRepositoryResponse),
+    );
+    setMockCoreClient("DeletePackageRepository", mockDeletePackageRepository);
+
+    const deletePackageRepositoryResponse =
+      await PackageRepositoriesService.deletePackageRepository({
+        identifier: pkgRepoFormData.name,
+        context: { cluster, namespace },
+        plugin,
+      } as PackageRepositoryReference);
+    expect(deletePackageRepositoryResponse).toStrictEqual({
+      packageRepoRef: {
+        identifier: pkgRepoFormData.name,
+        context: { cluster, namespace },
+        plugin,
+      } as PackageRepositoryReference,
+    } as DeletePackageRepositoryResponse);
+    expect(mockDeletePackageRepository).toHaveBeenCalledWith({
+      packageRepoRef: {
+        context: { cluster, namespace },
+        identifier: "",
+        plugin,
+      },
+    });
+  });
 });
+
+function setMockCoreClient(fnToMock: any, mockFn: jest.Mock<any, any>) {
+  // Replace the specified function on the real KubeappsGrpcClient's
+  // packages service implementation.
+  const mockClient = new KubeappsGrpcClient().getRepositoriesServiceClientImpl();
+  jest.spyOn(mockClient, fnToMock).mockImplementation(mockFn);
+  jest
+    .spyOn(PackageRepositoriesService, "coreRepositoriesClient")
+    .mockImplementation(() => mockClient);
+}
