@@ -342,6 +342,27 @@ func TestPackageAppVersionsSummary(t *testing.T) {
 				Minor: 0,
 				Patch: 0},
 		},
+		{
+			name: "it includes latest versions in right order",
+			chart_versions: []models.ChartVersion{
+				{Version: "6.1.3", AppVersion: DefaultAppVersion},
+				{Version: "6.0.0", AppVersion: DefaultAppVersion},
+				{Version: "6.0.3", AppVersion: DefaultAppVersion},
+				{Version: "6.1.6", AppVersion: DefaultAppVersion},
+				{Version: "5.2.1", AppVersion: DefaultAppVersion},
+				{Version: "6.1.4", AppVersion: DefaultAppVersion},
+				{Version: "6.1.5", AppVersion: DefaultAppVersion},
+			},
+			version_summary: []*corev1.PackageAppVersion{
+				{PkgVersion: "6.1.6", AppVersion: DefaultAppVersion},
+				{PkgVersion: "6.1.5", AppVersion: DefaultAppVersion},
+				{PkgVersion: "6.1.4", AppVersion: DefaultAppVersion},
+				{PkgVersion: "6.0.3", AppVersion: DefaultAppVersion},
+				{PkgVersion: "6.0.0", AppVersion: DefaultAppVersion},
+				{PkgVersion: "5.2.1", AppVersion: DefaultAppVersion},
+			},
+			input_versions_in_summary: GetDefaultVersionsInSummary(),
+		},
 	}
 
 	opts := cmpopts.IgnoreUnexported(corev1.PackageAppVersion{})
