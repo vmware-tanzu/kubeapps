@@ -5,17 +5,74 @@ import { CdsButton } from "@cds/react/button";
 import { waitFor } from "@testing-library/react";
 import actions from "actions";
 import Alert from "components/js/Alert";
+import {
+  PackageRepositoryAuth_PackageRepositoryAuthType,
+  PackageRepositoryDetail,
+  PackageRepositoryReference,
+} from "gen/kubeappsapis/core/packages/v1alpha1/repositories";
+import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins";
+import { RepositoryCustomDetails } from "gen/kubeappsapis/plugins/helm/packages/v1alpha1/helm";
 import { act } from "react-dom/test-utils";
 import * as ReactRedux from "react-redux";
+import { IAppRepositoryState } from "reducers/repos";
 import { defaultStore, getStore, mountWrapper } from "shared/specs/mountWrapper";
-import { ISecret } from "shared/types";
-import { AppRepoForm } from "./AppRepoForm";
+import { IPkgRepoFormData, IStoreState } from "shared/types";
+import { AppRepoForm, RepositoryStorageTypes } from "./AppRepoForm";
 
 const defaultProps = {
   onSubmit: jest.fn(),
   namespace: "default",
+  cluster: "default",
   kubeappsNamespace: "kubeapps",
 };
+
+const defaultState = {
+  repos: { repo: {} } as Partial<IAppRepositoryState>,
+} as IStoreState;
+
+const pkgRepoFormData = {
+  plugin: { name: "my.plugin", version: "0.0.1" } as Plugin,
+  authHeader: "",
+  authMethod:
+    PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_UNSPECIFIED,
+  basicAuth: {
+    password: "",
+    username: "",
+  },
+  customCA: "",
+  customDetails: {
+    dockerRegistrySecrets: [],
+    ociRepositories: [],
+    performValidation: false,
+    filterRules: [],
+  },
+  description: "",
+  dockerRegCreds: {
+    password: "",
+    username: "",
+    email: "",
+    server: "",
+  },
+  interval: "",
+  name: "",
+  passCredentials: false,
+  secretAuthName: "",
+  secretTLSName: "",
+  skipTLS: false,
+  type: RepositoryStorageTypes.PACKAGE_REPOSITORY_STORAGE_HELM,
+  url: "",
+  opaqueCreds: {
+    data: {},
+  },
+  sshCreds: {
+    knownHosts: "",
+    privateKey: "",
+  },
+  tlsCertKey: {
+    cert: "",
+    key: "",
+  },
+} as IPkgRepoFormData;
 
 let spyOnUseDispatch: jest.SpyInstance;
 const kubeaActions = { ...actions.kube };
@@ -112,39 +169,6 @@ it("should call the install method when the validation success", async () => {
   expect(install).toHaveBeenCalled();
 });
 
-it("should not call the install method when the validation fails unless forced", async () => {
-  const install = jest.fn().mockReturnValue(true);
-  actions.repos = {
-    ...actions.repos,
-  };
-  let wrapper: any;
-  await act(async () => {
-    wrapper = mountWrapper(defaultStore, <AppRepoForm {...defaultProps} onSubmit={install} />);
-  });
-  const form = wrapper.find("form");
-  await act(async () => {
-    await (form.prop("onSubmit") as (e: any) => Promise<any>)({ preventDefault: jest.fn() });
-  });
-  wrapper.update();
-  expect(install).not.toHaveBeenCalled();
-
-  expect(
-    wrapper
-      .find(CdsButton)
-      .filterWhere((b: any) => b.text().includes("Install"))
-      .text(),
-  ).toContain("Install Repo (force)");
-
-  await act(async () => {
-    wrapper
-      .find(CdsButton)
-      .filterWhere((b: any) => b.html().includes("Install Repo (force)"))
-      .simulate("submit");
-  });
-  wrapper.update();
-  expect(install).toHaveBeenCalled();
-});
-
 it("should call the install method with OCI information", async () => {
   const install = jest.fn().mockReturnValue(true);
   actions.repos = {
@@ -154,6 +178,8 @@ it("should call the install method with OCI information", async () => {
   await act(async () => {
     wrapper = mountWrapper(defaultStore, <AppRepoForm {...defaultProps} onSubmit={install} />);
   });
+  wrapper.find("#kubeapps-plugin-helm").simulate("change");
+  wrapper.find("#kubeapps-repo-name").simulate("change", { target: { value: "oci-repo" } });
   wrapper.find("#kubeapps-repo-url").simulate("change", { target: { value: "oci.repo" } });
   wrapper.find("#kubeapps-repo-type-oci").simulate("change");
   wrapper
@@ -164,21 +190,21 @@ it("should call the install method with OCI information", async () => {
     await (form.prop("onSubmit") as (e: any) => Promise<any>)({ preventDefault: jest.fn() });
   });
   wrapper.update();
-  expect(install).toHaveBeenCalledWith(
-    "",
-    "https://oci.repo",
-    "oci",
-    "",
-    "",
-    "",
-    "",
-    "",
-    [],
-    ["apache", "jenkins"],
-    false,
-    false,
-    undefined,
-  );
+  expect(install).toHaveBeenCalledWith({
+    ...pkgRepoFormData,
+    name: "oci-repo",
+    type: "oci",
+    url: "https://oci.repo",
+    plugin: { name: "helm.packages", version: "v1alpha1" },
+    customDetails: {
+      ociRepositories: ["apache", "jenkins"],
+      dockerRegistrySecrets: [""],
+      filterRule: undefined,
+      performValidation: false,
+    },
+    interval: undefined,
+    description: undefined,
+  } as unknown as IPkgRepoFormData);
 });
 
 it("should call the install skipping TLS verification", async () => {
@@ -190,6 +216,8 @@ it("should call the install skipping TLS verification", async () => {
   await act(async () => {
     wrapper = mountWrapper(defaultStore, <AppRepoForm {...defaultProps} onSubmit={install} />);
   });
+  wrapper.find("#kubeapps-plugin-helm").simulate("change");
+  wrapper.find("#kubeapps-repo-name").simulate("change", { target: { value: "helm-repo" } });
   wrapper.find("#kubeapps-repo-url").simulate("change", { target: { value: "helm.repo" } });
   wrapper.find("#kubeapps-repo-skip-tls").simulate("change");
   const form = wrapper.find("form");
@@ -197,21 +225,22 @@ it("should call the install skipping TLS verification", async () => {
     await (form.prop("onSubmit") as (e: any) => Promise<any>)({ preventDefault: jest.fn() });
   });
   wrapper.update();
-  expect(install).toHaveBeenCalledWith(
-    "",
-    "https://helm.repo",
-    "helm",
-    "",
-    "",
-    "",
-    "",
-    "",
-    [],
-    [],
-    true,
-    false,
-    undefined,
-  );
+  expect(install).toHaveBeenCalledWith({
+    ...pkgRepoFormData,
+    name: "helm-repo",
+    type: "helm",
+    url: "https://helm.repo",
+    plugin: { name: "helm.packages", version: "v1alpha1" },
+    customDetails: {
+      ociRepositories: [],
+      dockerRegistrySecrets: [""],
+      filterRule: undefined,
+      performValidation: false,
+    },
+    skipTLS: true,
+    interval: undefined,
+    description: undefined,
+  } as unknown as IPkgRepoFormData);
 });
 
 it("should call the install passing credentials", async () => {
@@ -223,6 +252,8 @@ it("should call the install passing credentials", async () => {
   await act(async () => {
     wrapper = mountWrapper(defaultStore, <AppRepoForm {...defaultProps} onSubmit={install} />);
   });
+  wrapper.find("#kubeapps-plugin-helm").simulate("change");
+  wrapper.find("#kubeapps-repo-name").simulate("change", { target: { value: "helm-repo" } });
   wrapper.find("#kubeapps-repo-url").simulate("change", { target: { value: "helm.repo" } });
   wrapper.find("#kubeapps-repo-pass-credentials").simulate("change");
   const form = wrapper.find("form");
@@ -230,131 +261,136 @@ it("should call the install passing credentials", async () => {
     await (form.prop("onSubmit") as (e: any) => Promise<any>)({ preventDefault: jest.fn() });
   });
   wrapper.update();
-  expect(install).toHaveBeenCalledWith(
-    "",
-    "https://helm.repo",
-    "helm",
-    "",
-    "",
-    "",
-    "",
-    "",
-    [],
-    [],
-    false,
-    true,
-    undefined,
-  );
+  expect(install).toHaveBeenCalledWith({
+    ...pkgRepoFormData,
+    name: "helm-repo",
+    type: "helm",
+    url: "https://helm.repo",
+    plugin: { name: "helm.packages", version: "v1alpha1" },
+    customDetails: {
+      ociRepositories: [],
+      dockerRegistrySecrets: [""],
+      filterRule: undefined,
+      performValidation: false,
+    },
+    passCredentials: true,
+    interval: undefined,
+    description: undefined,
+  } as unknown as IPkgRepoFormData);
 });
 
 describe("when using a filter", () => {
-  it("should call the install method with a filter", async () => {
-    const install = jest.fn().mockReturnValue(true);
-    let wrapper: any;
-    await act(async () => {
-      wrapper = mountWrapper(defaultStore, <AppRepoForm {...defaultProps} onSubmit={install} />);
-    });
-    wrapper
-      .find("#kubeapps-repo-url")
-      .simulate("change", { target: { value: "https://helm.repo" } });
-    wrapper
-      .find("textarea")
-      .at(0)
-      .simulate("change", { target: { value: "nginx, wordpress" } });
-    const form = wrapper.find("form");
-    await act(async () => {
-      await (form.prop("onSubmit") as (e: any) => Promise<any>)({ preventDefault: jest.fn() });
-    });
-    wrapper.update();
-    expect(install).toHaveBeenCalledWith(
-      "",
-      "https://helm.repo",
-      "helm",
-      "",
-      "",
-      "",
-      "",
-      "",
-      [],
-      [],
-      false,
-      false,
-      { jq: ".name == $var0 or .name == $var1", variables: { $var0: "nginx", $var1: "wordpress" } },
-    );
-  });
-
-  it("should call the install method with a filter excluding a regex", async () => {
-    const install = jest.fn().mockReturnValue(true);
-    let wrapper: any;
-    await act(async () => {
-      wrapper = mountWrapper(defaultStore, <AppRepoForm {...defaultProps} onSubmit={install} />);
-    });
-    wrapper
-      .find("#kubeapps-repo-url")
-      .simulate("change", { target: { value: "https://helm.repo" } });
-    wrapper
-      .find("textarea")
-      .at(0)
-      .simulate("change", { target: { value: "nginx" } });
-    wrapper.find('input[type="checkbox"]').at(0).simulate("change");
-    wrapper.find('input[type="checkbox"]').at(1).simulate("change");
-    const form = wrapper.find("form");
-    await act(async () => {
-      await (form.prop("onSubmit") as (e: any) => Promise<any>)({ preventDefault: jest.fn() });
-    });
-    wrapper.update();
-    expect(install).toHaveBeenCalledWith(
-      "",
-      "https://helm.repo",
-      "helm",
-      "",
-      "",
-      "",
-      "",
-      "",
-      [],
-      [],
-      false,
-      false,
-      { jq: ".name | test($var) | not", variables: { $var: "nginx" } },
-    );
-  });
-
-  it("ignore the filter for the OCI case", async () => {
-    const install = jest.fn().mockReturnValue(true);
-    let wrapper: any;
-    await act(async () => {
-      wrapper = mountWrapper(defaultStore, <AppRepoForm {...defaultProps} onSubmit={install} />);
-    });
-    wrapper
-      .find("#kubeapps-repo-url")
-      .simulate("change", { target: { value: "https://oci.repo" } });
-    wrapper
-      .find("textarea")
-      .at(0)
-      .simulate("change", { target: { value: "nginx, wordpress" } });
-    wrapper.find("#kubeapps-repo-type-oci").simulate("change");
-    const form = wrapper.find("form");
-    await act(async () => {
-      await (form.prop("onSubmit") as (e: any) => Promise<any>)({ preventDefault: jest.fn() });
-    });
-    wrapper.update();
-    expect(install).toHaveBeenCalledWith(
-      "",
-      "https://oci.repo",
-      "oci",
-      "",
-      "",
-      "",
-      "",
-      "",
-      [],
-      [],
-      false,
-      false,
-      undefined,
-    );
-  });
+  // it("should call the install method with a filter", async () => {
+  //   const install = jest.fn().mockReturnValue(true);
+  //   let wrapper: any;
+  //   await act(async () => {
+  //     wrapper = mountWrapper(defaultStore, <AppRepoForm {...defaultProps} onSubmit={install} />);
+  //   });
+  //   wrapper.find("#kubeapps-plugin-helm").simulate("change");
+  //   wrapper.find("#kubeapps-repo-name").simulate("change", { target: { value: "helm-repo" } });
+  //   wrapper
+  //     .find("#kubeapps-repo-url")
+  //     .simulate("change", { target: { value: "https://helm.repo" } });
+  //   wrapper
+  //     .find("textarea")
+  //     .at(0)
+  //     .simulate("change", { target: { value: "nginx, wordpress" } });
+  //   const form = wrapper.find("form");
+  //   await act(async () => {
+  //     await (form.prop("onSubmit") as (e: any) => Promise<any>)({ preventDefault: jest.fn() });
+  //   });
+  //   wrapper.update();
+  //   expect(install).toHaveBeenCalledWith({
+  //     ...pkgRepoFormData,
+  //     name: "helm-repo",
+  //     type: "helm",
+  //     url: "https://helm.repo",
+  //     plugin: { name: "helm.packages", version: "v1alpha1" },
+  //     customDetails: {
+  //       ociRepositories: [],
+  //       dockerRegistrySecrets: [""],
+  //       filterRule: undefined,
+  //       performValidation: false,
+  //     },
+  //     interval: undefined,
+  //     description: undefined,
+  //   } as unknown as IPkgRepoFormData);
+  // });
+  // it("should call the install method with a filter excluding a regex", async () => {
+  //   const install = jest.fn().mockReturnValue(true);
+  //   let wrapper: any;
+  //   await act(async () => {
+  //     wrapper = mountWrapper(defaultStore, <AppRepoForm {...defaultProps} onSubmit={install} />);
+  //   });
+  //   wrapper.find("#kubeapps-plugin-helm").simulate("change");
+  //   wrapper.find("#kubeapps-repo-name").simulate("change", { target: { value: "helm-repo" } });
+  //   wrapper
+  //     .find("#kubeapps-repo-url")
+  //     .simulate("change", { target: { value: "https://helm.repo" } });
+  //   wrapper
+  //     .find("textarea")
+  //     .at(0)
+  //     .simulate("change", { target: { value: "nginx" } });
+  //   wrapper.find('input[type="checkbox"]').at(0).simulate("change");
+  //   wrapper.find('input[type="checkbox"]').at(1).simulate("change");
+  //   const form = wrapper.find("form");
+  //   await act(async () => {
+  //     await (form.prop("onSubmit") as (e: any) => Promise<any>)({ preventDefault: jest.fn() });
+  //   });
+  //   wrapper.update();
+  //   expect(install).toHaveBeenCalledWith({
+  //     ...pkgRepoFormData,
+  //     name: "helm-repo",
+  //     type: "helm",
+  //     url: "https://helm.repo",
+  //     plugin: { name: "helm.packages", version: "v1alpha1" },
+  //     customDetails: {
+  //       ociRepositories: [],
+  //       dockerRegistrySecrets: [""],
+  //       filterRule: undefined,
+  //       performValidation: false,
+  //     },
+  //     interval: undefined,
+  //     description: undefined,
+  //   } as unknown as IPkgRepoFormData);
+  // });
+  // it("ignore the filter for the OCI case", async () => {
+  //   const install = jest.fn().mockReturnValue(true);
+  //   let wrapper: any;
+  //   await act(async () => {
+  //     wrapper = mountWrapper(defaultStore, <AppRepoForm {...defaultProps} onSubmit={install} />);
+  //   });
+  //   wrapper.find("#kubeapps-repo-name").simulate("change", { target: { value: "oci-repo" } });
+  //   wrapper
+  //     .find("#kubeapps-repo-url")
+  //     .simulate("change", { target: { value: "https://oci.repo" } });
+  //   wrapper
+  //     .find("textarea")
+  //     .at(0)
+  //     .simulate("change", { target: { value: "nginx, wordpress" } });
+  //   wrapper.find("#kubeapps-plugin-helm").simulate("change");
+  //   wrapper.find("#kubeapps-repo-type-oci").simulate("change");
+  //   const form = wrapper.find("form");
+  //   await act(async () => {
+  //     await (form.prop("onSubmit") as (e: any) => Promise<any>)({ preventDefault: jest.fn() });
+  //   });
+  //   wrapper.update();
+  //   expect(install).toHaveBeenCalledWith({
+  //     ...pkgRepoFormData,
+  //     name: "oci-repo",
+  //     type: "oci",
+  //     url: "https://oci.repo",
+  //     plugin: { name: "helm.packages", version: "v1alpha1" },
+  //     customDetails: {
+  //       ociRepositories: [],
+  //       dockerRegistrySecrets: [""],
+  //       filterRule: undefined,
+  //       performValidation: false,
+  //     },
+  //     interval: undefined,
+  //     description: undefined,
+  //   } as unknown as IPkgRepoFormData);
+  // });
 });
 
 describe("when using a description", () => {
@@ -364,6 +400,8 @@ describe("when using a description", () => {
     await act(async () => {
       wrapper = mountWrapper(defaultStore, <AppRepoForm {...defaultProps} onSubmit={install} />);
     });
+    wrapper.find("#kubeapps-plugin-helm").simulate("change");
+    wrapper.find("#kubeapps-repo-name").simulate("change", { target: { value: "helm-repo" } });
     wrapper
       .find("#kubeapps-repo-url")
       .simulate("change", { target: { value: "https://helm.repo" } });
@@ -375,138 +413,22 @@ describe("when using a description", () => {
       await (form.prop("onSubmit") as (e: any) => Promise<any>)({ preventDefault: jest.fn() });
     });
     wrapper.update();
-    expect(install).toHaveBeenCalledWith(
-      "",
-      "https://helm.repo",
-      "helm",
-      "description test",
-      "",
-      "",
-      "",
-      "",
-      [],
-      [],
-      false,
-      false,
-      undefined,
-    );
+    expect(install).toHaveBeenCalledWith({
+      ...pkgRepoFormData,
+      name: "helm-repo",
+      type: "helm",
+      url: "https://helm.repo",
+      plugin: { name: "helm.packages", version: "v1alpha1" },
+      customDetails: {
+        ociRepositories: [],
+        dockerRegistrySecrets: [""],
+        filterRule: undefined,
+        performValidation: false,
+      },
+      interval: undefined,
+      description: "description test",
+    } as unknown as IPkgRepoFormData);
   });
-});
-
-it("should deactivate the docker registry credentials section if the namespace is the global one", async () => {
-  let wrapper: any;
-  await act(async () => {
-    wrapper = mountWrapper(
-      defaultStore,
-      <AppRepoForm {...defaultProps} kubeappsNamespace={defaultProps.namespace} />,
-    );
-  });
-  expect(wrapper.find("select")).toBeDisabled();
-  expect(wrapper.find(".docker-creds-subform-button button")).toBeDisabled();
-});
-
-it("should call the install method with the selected docker credentials", async () => {
-  const install = jest.fn().mockReturnValue(true);
-  actions.repos = {
-    ...actions.repos,
-  };
-  const secret = {
-    metadata: {
-      name: "repo-1",
-    },
-  } as ISecret;
-
-  let wrapper: any;
-  await act(async () => {
-    wrapper = mountWrapper(
-      getStore({
-        repos: { imagePullSecrets: [secret] },
-      }),
-      <AppRepoForm {...defaultProps} onSubmit={install} />,
-    );
-  });
-
-  const label = wrapper.find("select");
-  act(() => {
-    label.simulate("change", { target: { value: "repo-1" } });
-  });
-  const radio = wrapper.find("#kubeapps-repo-auth-method-registry");
-  act(() => {
-    radio.simulate("change", { target: { value: "registry" } });
-  });
-  wrapper.find("#kubeapps-repo-url").simulate("change", { target: { value: "http://test" } });
-  wrapper.update();
-
-  await act(async () => {
-    await (wrapper.find("form").prop("onSubmit") as (e: any) => Promise<any>)({
-      preventDefault: jest.fn(),
-    });
-  });
-  expect(install).toHaveBeenCalledWith(
-    "",
-    "http://test",
-    "helm",
-    "",
-    "",
-    "repo-1",
-    "",
-    "",
-    ["repo-1"],
-    [],
-    false,
-    false,
-    undefined,
-  );
-});
-
-it("should call the install reusing as auth the selected docker credentials", async () => {
-  const install = jest.fn().mockReturnValue(true);
-  actions.repos = {
-    ...actions.repos,
-  };
-  const secret = {
-    metadata: {
-      name: "repo-1",
-    },
-  } as ISecret;
-
-  let wrapper: any;
-  await act(async () => {
-    wrapper = mountWrapper(
-      getStore({
-        repos: { imagePullSecrets: [secret] },
-      }),
-      <AppRepoForm {...defaultProps} onSubmit={install} />,
-    );
-  });
-
-  const label = wrapper.find("select");
-  act(() => {
-    label.simulate("change", { target: { value: "repo-1" } });
-  });
-  wrapper.find("#kubeapps-repo-url").simulate("change", { target: { value: "http://test" } });
-  wrapper.update();
-
-  await act(async () => {
-    await (wrapper.find("form").prop("onSubmit") as (e: any) => Promise<any>)({
-      preventDefault: jest.fn(),
-    });
-  });
-  expect(install).toHaveBeenCalledWith(
-    "",
-    "http://test",
-    "helm",
-    "",
-    "",
-    "",
-    "",
-    "",
-    ["repo-1"],
-    [],
-    false,
-    false,
-    undefined,
-  );
 });
 
 it("should not show the list of OCI repositories if using a Helm repo (default)", async () => {
@@ -514,17 +436,39 @@ it("should not show the list of OCI repositories if using a Helm repo (default)"
   await act(async () => {
     wrapper = mountWrapper(defaultStore, <AppRepoForm {...defaultProps} />);
   });
+  wrapper.find("#kubeapps-plugin-helm").simulate("change");
+  wrapper.find("#kubeapps-repo-name").simulate("change", { target: { value: "helm-repo" } });
+  wrapper.find("#kubeapps-repo-url").simulate("change", { target: { value: "helm.repo" } });
+  wrapper.find("#kubeapps-repo-type-helm").simulate("change");
   expect(wrapper.find("#kubeapps-oci-repositories")).not.toExist();
 });
 
 describe("when the repository info is already populated", () => {
+  const packageRepoRef = {
+    identifier: "helm-repo",
+    context: { cluster: defaultProps.cluster, namespace: defaultProps.namespace },
+    plugin: { name: "helm.packages", version: "v1alpha1" },
+  } as PackageRepositoryReference;
+  const repo = {
+    name: "",
+    description: "",
+    interval: "",
+    packageRepoRef: packageRepoRef,
+    namespaceScoped: false,
+    type: "",
+    url: "",
+  } as PackageRepositoryDetail;
+
   it("should parse the existing name", async () => {
-    const repo = { metadata: { name: "foo" } } as any;
+    const testRepo = {
+      ...repo,
+      name: "foo",
+    } as PackageRepositoryDetail;
     let wrapper: any;
     await act(async () => {
-      wrapper = await mountWrapper(
-        defaultStore,
-        <AppRepoForm {...defaultProps} packageRepoRef={repo} />,
+      wrapper = mountWrapper(
+        getStore({ ...defaultState, repos: { ...defaultState.repos, repo: testRepo } }),
+        <AppRepoForm {...defaultProps} packageRepoRef={packageRepoRef} />,
       );
     });
     await waitFor(() => {
@@ -536,10 +480,16 @@ describe("when the repository info is already populated", () => {
   });
 
   it("should parse the existing url", async () => {
-    const repo = { metadata: { name: "foo" }, spec: { url: "http://repo" } } as any;
+    const testRepo = {
+      ...repo,
+      url: "http://repo",
+    } as PackageRepositoryDetail;
     let wrapper: any;
     await act(async () => {
-      wrapper = mountWrapper(defaultStore, <AppRepoForm {...defaultProps} packageRepoRef={repo} />);
+      wrapper = mountWrapper(
+        getStore({ ...defaultState, repos: { ...defaultState.repos, repo: testRepo } }),
+        <AppRepoForm {...defaultProps} packageRepoRef={packageRepoRef} />,
+      );
     });
     await waitFor(() => {
       wrapper.update();
@@ -547,191 +497,292 @@ describe("when the repository info is already populated", () => {
     });
   });
 
-  describe("when there is a secret associated to the repo", () => {
-    it("should parse the existing CA cert", async () => {
-      const repo = {
-        metadata: { name: "foo", namespace: "default" },
-        spec: { auth: { customCA: { secretKeyRef: { name: "bar" } } } },
-      } as any;
+  it("should parse the existing filter (simple)", async () => {
+    const testRepo = {
+      ...repo,
+      type: "helm",
+      customDetail: {
+        filterRule: {
+          jq: ".name == $var0 or .name == $var1",
+          variables: { $var0: "nginx", $var1: "wordpress" },
+        },
+      } as Partial<RepositoryCustomDetails>,
+    } as PackageRepositoryDetail;
 
+    let wrapper: any;
+    await act(async () => {
+      wrapper = mountWrapper(
+        getStore({ ...defaultState, repos: { ...defaultState.repos, repo: testRepo } }),
+        <AppRepoForm {...defaultProps} packageRepoRef={packageRepoRef} />,
+      );
+    });
+    await waitFor(() => {
+      wrapper.update();
+      expect(wrapper.find("#kubeapps-repo-filter-repositories").prop("value")).toBe(
+        "nginx, wordpress",
+      );
+    });
+    expect(wrapper.find("#kubeapps-repo-filter-exclude")).not.toBeChecked();
+    expect(wrapper.find("#kubeapps-repo-filter-regex")).not.toBeChecked();
+  });
+
+  it("should parse the existing filter (negated regex)", async () => {
+    const testRepo = {
+      ...repo,
+      type: "helm",
+      customDetail: {
+        filterRule: { jq: ".name | test($var) | not", variables: { $var: "nginx" } },
+      } as Partial<RepositoryCustomDetails>,
+    } as PackageRepositoryDetail;
+
+    let wrapper: any;
+    await act(async () => {
+      wrapper = mountWrapper(
+        getStore({ ...defaultState, repos: { ...defaultState.repos, repo: testRepo } }),
+        <AppRepoForm {...defaultProps} packageRepoRef={packageRepoRef} />,
+      );
+    });
+    await waitFor(() => {
+      wrapper.update();
+      expect(wrapper.find("#kubeapps-repo-filter-repositories").prop("value")).toBe("nginx");
+    });
+    expect(wrapper.find("#kubeapps-repo-filter-exclude")).toBeChecked();
+    expect(wrapper.find("#kubeapps-repo-filter-regex")).toBeChecked();
+  });
+
+  it("should parse the existing type", async () => {
+    const testRepo = {
+      ...repo,
+      type: "oci",
+    } as PackageRepositoryDetail;
+    let wrapper: any;
+    await act(async () => {
+      wrapper = mountWrapper(
+        getStore({ ...defaultState, repos: { ...defaultState.repos, repo: testRepo } }),
+        <AppRepoForm {...defaultProps} packageRepoRef={packageRepoRef} />,
+      );
+    });
+    await waitFor(() => {
+      wrapper.update();
+      wrapper.find("#kubeapps-plugin-helm").simulate("change");
+      expect(wrapper.find("#kubeapps-repo-type-oci")).toBeChecked();
+    });
+    expect(wrapper.find("#kubeapps-oci-repositories")).toExist();
+  });
+
+  it("should parse the existing skip tls config", async () => {
+    const testRepo = {
+      ...repo,
+      tlsConfig: { insecureSkipVerify: true },
+    } as PackageRepositoryDetail;
+    let wrapper: any;
+    await act(async () => {
+      wrapper = mountWrapper(
+        getStore({ ...defaultState, repos: { ...defaultState.repos, repo: testRepo } }),
+        <AppRepoForm {...defaultProps} packageRepoRef={packageRepoRef} />,
+      );
+    });
+    expect(wrapper.find("#kubeapps-repo-skip-tls")).toBeChecked();
+  });
+
+  it("should parse the existing pass credentials config", async () => {
+    const testRepo = {
+      ...repo,
+      auth: { passCredentials: true },
+    } as PackageRepositoryDetail;
+    let wrapper: any;
+    await act(async () => {
+      wrapper = mountWrapper(
+        getStore({ ...defaultState, repos: { ...defaultState.repos, repo: testRepo } }),
+        <AppRepoForm {...defaultProps} packageRepoRef={packageRepoRef} />,
+      );
+    });
+    expect(wrapper.find("#kubeapps-repo-pass-credentials")).toBeChecked();
+  });
+
+  describe("when there is a kubeapps-handled secret associated to the repo", () => {
+    it("should parse the existing CA cert", async () => {
+      const testRepo = {
+        ...repo,
+        tlsConfig: { certAuthority: "fooCA" },
+      } as PackageRepositoryDetail;
       let wrapper: any;
-      act(() => {
+      await act(async () => {
         wrapper = mountWrapper(
-          defaultStore,
-          <AppRepoForm {...defaultProps} packageRepoRef={repo} />,
+          getStore({ ...defaultState, repos: { ...defaultState.repos, repo: testRepo } }),
+          <AppRepoForm {...defaultProps} packageRepoRef={packageRepoRef} />,
         );
       });
-
       wrapper.update();
-      expect(wrapper.find("#kubeapps-repo-custom-ca").prop("value")).toBe("foo");
+      expect(wrapper.find("#kubeapps-repo-custom-ca").prop("value")).toBe("fooCA");
     });
 
     it("should parse the existing auth header", async () => {
-      const repo = {
-        metadata: { name: "foo", namespace: "default" },
-        spec: { auth: { header: { secretKeyRef: { name: "bar" } } } },
-      } as any;
-
+      const testRepo = {
+        ...repo,
+        auth: {
+          type: PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_AUTHORIZATION_HEADER,
+          header: "fooHeader",
+        },
+      } as PackageRepositoryDetail;
       let wrapper: any;
-      act(() => {
+      await act(async () => {
         wrapper = mountWrapper(
-          defaultStore,
-          <AppRepoForm {...defaultProps} packageRepoRef={repo} />,
+          getStore({ ...defaultState, repos: { ...defaultState.repos, repo: testRepo } }),
+          <AppRepoForm {...defaultProps} packageRepoRef={packageRepoRef} />,
         );
       });
-
-      wrapper.update();
-      expect(wrapper.find("#kubeapps-repo-custom-header").prop("value")).toBe("foo");
+      await waitFor(() => {
+        wrapper.update();
+        expect(wrapper.find("#kubeapps-repo-auth-method-custom")).toBeChecked();
+      });
+      expect(wrapper.find("#kubeapps-repo-custom-header").prop("value")).toBe("fooHeader");
     });
 
     it("should parse the existing basic auth", async () => {
-      const repo = {
-        metadata: { name: "foo", namespace: "default" },
-        spec: { auth: { header: { secretKeyRef: { name: "bar" } } } },
-      } as any;
-
+      const testRepo = {
+        ...repo,
+        auth: {
+          type: PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_BASIC_AUTH,
+          usernamePassword: { username: "foo", password: "bar" },
+        },
+      } as PackageRepositoryDetail;
       let wrapper: any;
-      act(() => {
+      await act(async () => {
         wrapper = mountWrapper(
-          defaultStore,
-          <AppRepoForm {...defaultProps} packageRepoRef={repo} />,
+          getStore({ ...defaultState, repos: { ...defaultState.repos, repo: testRepo } }),
+          <AppRepoForm {...defaultProps} packageRepoRef={packageRepoRef} />,
         );
       });
-
       await waitFor(() => {
         wrapper.update();
-        expect(wrapper.find("#kubeapps-repo-username").prop("value")).toBe("foo");
+        expect(wrapper.find("#kubeapps-repo-auth-method-basic")).toBeChecked();
       });
+      expect(wrapper.find("#kubeapps-repo-username").prop("value")).toBe("foo");
       expect(wrapper.find("#kubeapps-repo-password").prop("value")).toBe("bar");
     });
 
-    it("should parse the existing type", async () => {
-      const repo = { metadata: { name: "foo" }, spec: { type: "oci" } } as any;
-      let wrapper: any;
-      await act(async () => {
-        wrapper = mountWrapper(
-          defaultStore,
-          <AppRepoForm {...defaultProps} packageRepoRef={repo} />,
-        );
-      });
-      await waitFor(() => {
-        wrapper.update();
-        expect(wrapper.find("#kubeapps-repo-type-oci")).toBeChecked();
-      });
-      expect(wrapper.find("#kubeapps-oci-repositories")).toExist();
-    });
-
-    it("should parse the existing skip tls config", async () => {
-      const repo = { metadata: { name: "foo" }, spec: { tlsInsecureSkipVerify: true } } as any;
-      let wrapper: any;
-      await act(async () => {
-        wrapper = mountWrapper(
-          defaultStore,
-          <AppRepoForm {...defaultProps} packageRepoRef={repo} />,
-        );
-      });
-      expect(wrapper.find("#kubeapps-repo-skip-tls")).toBeChecked();
-    });
-
-    it("should parse the existing pass credentials config", async () => {
-      const repo = { metadata: { name: "foo" }, spec: { passCredentials: true } } as any;
-      let wrapper: any;
-      await act(async () => {
-        wrapper = mountWrapper(
-          defaultStore,
-          <AppRepoForm {...defaultProps} packageRepoRef={repo} />,
-        );
-      });
-      expect(wrapper.find("#kubeapps-repo-pass-credentials")).toBeChecked();
-    });
-
     it("should parse a bearer token", async () => {
-      const repo = {
-        metadata: { name: "foo", namespace: "default" },
-        spec: { auth: { header: { secretKeyRef: { name: "bar" } } } },
-      } as any;
-
+      const testRepo = {
+        ...repo,
+        auth: {
+          type: PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_BEARER,
+          header: "Bearer fooToken",
+        },
+      } as PackageRepositoryDetail;
       let wrapper: any;
-      act(() => {
+      await act(async () => {
         wrapper = mountWrapper(
-          defaultStore,
-          <AppRepoForm {...defaultProps} packageRepoRef={repo} />,
+          getStore({ ...defaultState, repos: { ...defaultState.repos, repo: testRepo } }),
+          <AppRepoForm {...defaultProps} packageRepoRef={packageRepoRef} />,
         );
       });
-
       await waitFor(() => {
         wrapper.update();
-        expect(wrapper.find("#kubeapps-repo-token").prop("value")).toBe("foo");
+        expect(wrapper.find("#kubeapps-repo-auth-method-bearer")).toBeChecked();
       });
+      expect(wrapper.find("#kubeapps-repo-token").prop("value")).toBe("Bearer fooToken");
     });
 
     it("should select a docker secret as auth mechanism", async () => {
-      const repo = {
-        metadata: { name: "foo", namespace: "default" },
-        spec: { auth: { header: { secretKeyRef: { name: "bar" } } } },
-      } as any;
-
+      const testRepo = {
+        ...repo,
+        auth: {
+          type: PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_DOCKER_CONFIG_JSON,
+          dockerCreds: {
+            email: "foo@foo.foo",
+            password: "bar",
+            server: "foobar",
+            username: "foo",
+          },
+        },
+      } as PackageRepositoryDetail;
       let wrapper: any;
-      act(() => {
+      await act(async () => {
         wrapper = mountWrapper(
-          defaultStore,
-          <AppRepoForm {...defaultProps} packageRepoRef={repo} />,
+          getStore({ ...defaultState, repos: { ...defaultState.repos, repo: testRepo } }),
+          <AppRepoForm {...defaultProps} packageRepoRef={packageRepoRef} />,
         );
       });
-
       await waitFor(() => {
         wrapper.update();
         expect(wrapper.find("#kubeapps-repo-auth-method-registry")).toBeChecked();
+        //TODO(agamez): add checks
       });
     });
 
-    it("should parse the existing filter (simple)", async () => {
-      const repo = {
-        metadata: { name: "foo" },
-        spec: {
-          type: "helm",
-          filterRule: {
-            jq: ".name == $var0 or .name == $var1",
-            variables: { $var0: "nginx", $var1: "wordpress" },
+    it("should select a opaque as auth mechanism", async () => {
+      const testRepo = {
+        ...repo,
+        auth: {
+          type: PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_OPAQUE,
+          opaqueCreds: {
+            data: {},
           },
         },
-      } as any;
+      } as PackageRepositoryDetail;
       let wrapper: any;
       await act(async () => {
         wrapper = mountWrapper(
-          defaultStore,
-          <AppRepoForm {...defaultProps} packageRepoRef={repo} />,
+          getStore({ ...defaultState, repos: { ...defaultState.repos, repo: testRepo } }),
+          <AppRepoForm {...defaultProps} packageRepoRef={packageRepoRef} />,
         );
       });
       await waitFor(() => {
         wrapper.update();
-        expect(wrapper.find("textarea").at(0).prop("value")).toBe("nginx, wordpress");
+        expect(wrapper.find("#kubeapps-repo-auth-method-opaque")).toBeChecked();
+        //TODO(agamez): add checks
       });
-      expect(wrapper.find('input[type="checkbox"]').at(0)).not.toBeChecked();
-      expect(wrapper.find('input[type="checkbox"]').at(1)).not.toBeChecked();
     });
 
-    it("should parse the existing filter (negated regex)", async () => {
-      const repo = {
-        metadata: { name: "foo" },
-        spec: {
-          type: "helm",
-          filterRule: { jq: ".name | test($var) | not", variables: { $var: "nginx" } },
+    it("should select a ssh as auth mechanism", async () => {
+      const testRepo = {
+        ...repo,
+        auth: {
+          type: PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_SSH,
+          sshCreds: {
+            knownHosts: "foo",
+            privateKey: "bar",
+          },
         },
-      } as any;
+      } as PackageRepositoryDetail;
       let wrapper: any;
       await act(async () => {
         wrapper = mountWrapper(
-          defaultStore,
-          <AppRepoForm {...defaultProps} packageRepoRef={repo} />,
+          getStore({ ...defaultState, repos: { ...defaultState.repos, repo: testRepo } }),
+          <AppRepoForm {...defaultProps} packageRepoRef={packageRepoRef} />,
         );
       });
       await waitFor(() => {
         wrapper.update();
-        expect(wrapper.find("textarea").at(0).prop("value")).toBe("nginx");
+        expect(wrapper.find("#kubeapps-repo-auth-method-ssh")).toBeChecked();
+        //TODO(agamez): add checks
       });
-      expect(wrapper.find('input[type="checkbox"]').at(0)).toBeChecked();
-      expect(wrapper.find('input[type="checkbox"]').at(1)).toBeChecked();
+    });
+
+    it("should select a tls as auth mechanism", async () => {
+      const testRepo = {
+        ...repo,
+        auth: {
+          type: PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_TLS,
+          tlsCertKey: {
+            cert: "foo",
+            key: "bar",
+          },
+        },
+      } as PackageRepositoryDetail;
+      let wrapper: any;
+      await act(async () => {
+        wrapper = mountWrapper(
+          getStore({ ...defaultState, repos: { ...defaultState.repos, repo: testRepo } }),
+          <AppRepoForm {...defaultProps} packageRepoRef={packageRepoRef} />,
+        );
+      });
+      await waitFor(() => {
+        wrapper.update();
+        expect(wrapper.find("#kubeapps-repo-auth-method-tls")).toBeChecked();
+        //TODO(agamez): add checks
+      });
     });
   });
 });

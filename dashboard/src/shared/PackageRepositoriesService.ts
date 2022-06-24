@@ -13,6 +13,7 @@ import {
   PackageRepositoryAuth,
   PackageRepositoryReference,
   PackageRepositoryTlsConfig,
+  protobufPackage,
   SecretKeyReference,
   SshCredentials,
   TlsCertKey,
@@ -218,7 +219,7 @@ export class PackageRepositoriesService {
     // of the actual custom object
     if (request.plugin?.name === PluginNames.PACKAGES_HELM) {
       addPackageRepositoryRequest.customDetail = {
-        typeUrl: "kubeappsapis.plugins.helm.packages.v1alpha1.RepositoryCustomDetails",
+        typeUrl: `${protobufPackage}.RepositoryCustomDetails`,
         value: RepositoryCustomDetails.encode({
           dockerRegistrySecrets: request.customDetails.dockerRegistrySecrets,
           ociRepositories: request.customDetails.ociRepositories,

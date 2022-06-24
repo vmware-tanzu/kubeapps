@@ -175,6 +175,7 @@ export function AppRepoForm(props: IAppRepoFormProps) {
       );
       setSecretAuthName(repo.auth?.secretRef?.name || "");
       setSecretTLSName(repo.tlsConfig?.secretRef?.name || "");
+      //TODO(agamez): assuming that it is Helm the only one having custom details
       const repositoryCustomDetails = repo.customDetail as Partial<RepositoryCustomDetails>;
       setOCIRepositories(repositoryCustomDetails?.ociRepositories?.join(", ") || "");
       setPerformValidation(repositoryCustomDetails?.performValidation || false);
@@ -260,7 +261,7 @@ export function AppRepoForm(props: IAppRepoFormProps) {
       type,
       url: finalURL,
       opaqueCreds: {
-        data: JSON.parse(opaqueData),
+        data: opaqueData ? JSON.parse(opaqueData) : {},
       },
       sshCreds: {
         knownHosts: sshKnownHosts,
