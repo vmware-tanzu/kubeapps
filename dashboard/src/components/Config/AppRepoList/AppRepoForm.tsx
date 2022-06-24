@@ -13,11 +13,13 @@ import { CdsControlMessage, CdsFormGroup } from "@cds/react/forms";
 import { CdsInput } from "@cds/react/input";
 import { CdsRadio, CdsRadioGroup } from "@cds/react/radio";
 import { CdsTextarea } from "@cds/react/textarea";
+import { CdsToggle, CdsToggleGroup } from "@cds/react/toggle";
 import actions from "actions";
 import Alert from "components/js/Alert";
 import {
   DockerCredentials,
   PackageRepositoryAuth_PackageRepositoryAuthType,
+  PackageRepositoryReference,
   UsernamePassword,
 } from "gen/kubeappsapis/core/packages/v1alpha1/repositories";
 import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins";
@@ -27,22 +29,26 @@ import { useDispatch, useSelector } from "react-redux";
 import { Action } from "redux";
 import { ThunkDispatch } from "redux-thunk";
 import { toFilterRule, toParams } from "shared/jq";
-import {
-  IAppRepository,
-  IPkgRepoFormData,
-  IPkgRepositoryFilter,
-  IStoreState,
-  RepositoryStorageTypes,
-} from "shared/types";
+import { IPkgRepoFormData, IPkgRepositoryFilter, IStoreState } from "shared/types";
 import { getPluginByName, getPluginPackageName, PluginNames } from "shared/utils";
 import "./AppRepoForm.css";
-
 interface IAppRepoFormProps {
   onSubmit: (data: IPkgRepoFormData) => Promise<boolean>;
   onAfterInstall?: () => void;
   namespace: string;
   kubeappsNamespace: string;
-  packageRepoRef?: IAppRepository;
+  packageRepoRef?: PackageRepositoryReference;
+}
+
+//  enum for the type of package repository storage
+export enum RepositoryStorageTypes {
+  PACKAGE_REPOSITORY_STORAGE_HELM = "helm",
+  PACKAGE_REPOSITORY_STORAGE_OCI = "oci",
+  PACKAGE_REPOSITORY_STORAGE_CARVEL_INLINE = "inline",
+  PACKAGE_REPOSITORY_STORAGE_CARVEL_IMAGE = "image",
+  PACKAGE_REPOSITORY_STORAGE_CARVEL_IMGPKGBUNDLE = "imgpkgBundle",
+  PACKAGE_REPOSITORY_STORAGE_CARVEL_HTTP = "http",
+  PACKAGE_REPOSITORY_STORAGE_CARVEL_GIT = "git",
 }
 
 export function AppRepoForm(props: IAppRepoFormProps) {
@@ -88,6 +94,21 @@ export function AppRepoForm(props: IAppRepoFormProps) {
   const [secretPassword, setSecretPassword] = useState("");
   const [secretServer, setSecretServer] = useState("");
 
+  // PACKAGE_REPOSITORY_AUTH_TYPE_SSH
+  const [sshKnownHosts, setSshKnownHosts] = useState("");
+  const [sshPrivateKey, setSshPrivateKey] = useState("");
+
+  // PACKAGE_REPOSITORY_AUTH_TYPE_TLS
+  const [tlsAuthCert, setTlsAuthCert] = useState("");
+  const [tlsAuthKey, setTlsAuthKey] = useState("");
+
+  // PACKAGE_REPOSITORY_AUTH_TYPE_OPAQUE
+  const [opaqueData, setOpaqueData] = useState("");
+
+  // User-managed secrets
+  const [secretAuthName, setSecretAuthName] = useState("");
+  const [secretTLSName, setSecretTLSName] = useState("");
+
   // rest of the package repo form variables
 
   const initialInterval = "10m";
@@ -100,16 +121,13 @@ export function AppRepoForm(props: IAppRepoFormProps) {
   const [interval, setInterval] = useState(initialInterval);
   const [name, setName] = useState("");
   const [ociRepositories, setOCIRepositories] = useState("");
-  const [passCredentials, setPassCredentials] = useState(!!repo?.spec?.passCredentials);
+  const [passCredentials, setPassCredentials] = useState(!!repo?.auth?.passCredentials);
   const [performValidation, setPerformValidation] = useState(true);
-  // TODO(agamez): initially hardcoded to the Helm plugin
-  const [plugin, setPlugin] = useState(getPluginByName(PluginNames.PACKAGES_HELM) as Plugin);
-  // const [plugin, setPlugin] = useState({} as Plugin);
-  const [skipTLS, setSkipTLS] = useState(!!repo?.spec?.tlsInsecureSkipVerify);
-  const [type, setType] = useState(
-    RepositoryStorageTypes.PACKAGE_REPOSITORY_STORAGE_HELM.toString(),
-  );
+  const [plugin, setPlugin] = useState({} as Plugin);
+  const [skipTLS, setSkipTLS] = useState(!!repo?.tlsConfig?.insecureSkipVerify);
+  const [type, setType] = useState("");
   const [url, setURL] = useState("");
+  const [isUserManagedSecret, setIsUserManagedSecret] = useState(false);
 
   // initial state (collapsed or not) of each accordion tab
   const [accordion, setAccordion] = useState([true, false, false, false]);
@@ -122,32 +140,51 @@ export function AppRepoForm(props: IAppRepoFormProps) {
 
   useEffect(() => {
     if (selectedPkgRepo) {
-      dispatch(
-        actions.repos.fetchRepo(
-          currentCluster,
-          selectedPkgRepo?.metadata?.namespace,
-          selectedPkgRepo?.metadata?.name,
-        ),
-      );
+      dispatch(actions.repos.fetchRepo(selectedPkgRepo));
     }
-  }, [dispatch, currentCluster, selectedPkgRepo]);
+  }, [dispatch, selectedPkgRepo]);
 
   useEffect(() => {
     if (repo) {
       // populate state properties from the incoming repo
-      setName(repo?.metadata?.name);
-      setURL(repo?.spec?.url || "");
-      setType(repo?.spec?.type || "");
-      setDescription(repo?.spec?.description || "");
-      setOCIRepositories(repo?.spec?.ociRepositories?.join(", ") || "");
-      setSkipTLS(!!repo?.spec?.tlsInsecureSkipVerify);
-      setPassCredentials(!!repo?.spec?.passCredentials);
-      if (repo?.spec?.filterRule?.jq) {
-        const { names, regex, exclude } = toParams(repo?.spec.filterRule);
+      setName(repo.name);
+      setURL(repo.url);
+      setType(repo.type);
+      setPlugin(repo.packageRepoRef?.plugin || ({ name: "", version: "" } as Plugin));
+      setDescription(repo.description);
+      setSkipTLS(!!repo.tlsConfig?.insecureSkipVerify);
+      setPassCredentials(!!repo.auth?.passCredentials);
+      setInterval(repo.interval);
+      setCustomCA(repo.tlsConfig?.certAuthority || "");
+      setAuthCustomHeader(repo.auth?.header || "");
+      setBearerToken(repo.auth?.header || "");
+      setBasicPassword(repo.auth?.usernamePassword?.password || "");
+      setBasicUser(repo.auth?.usernamePassword?.username || "");
+      setSecretEmail(repo.auth?.dockerCreds?.email || "");
+      setSecretPassword(repo.auth?.dockerCreds?.password || "");
+      setSecretServer(repo.auth?.dockerCreds?.server || "");
+      setSecretUser(repo.auth?.dockerCreds?.username || "");
+      setSshKnownHosts(repo.auth?.sshCreds?.knownHosts || "");
+      setSshPrivateKey(repo.auth?.sshCreds?.privateKey || "");
+      setTlsAuthCert(repo.auth?.tlsCertKey?.cert || "");
+      setTlsAuthKey(repo.auth?.tlsCertKey?.key || "");
+      setOpaqueData(JSON.stringify(repo.auth?.opaqueCreds?.data) || "");
+      setAuthMethod(
+        repo.auth?.type ||
+          PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_UNSPECIFIED,
+      );
+      setSecretAuthName(repo.auth?.secretRef?.name || "");
+      setSecretTLSName(repo.tlsConfig?.secretRef?.name || "");
+      const repositoryCustomDetails = repo.customDetail as Partial<RepositoryCustomDetails>;
+      setOCIRepositories(repositoryCustomDetails?.ociRepositories?.join(", ") || "");
+      setPerformValidation(repositoryCustomDetails?.performValidation || false);
+      if (repositoryCustomDetails?.filterRule?.jq) {
+        const { names, regex, exclude } = toParams(repositoryCustomDetails.filterRule!);
         setFilterRegex(regex);
         setFilterExclude(exclude);
         setFilterNames(names);
       }
+      setIsUserManagedSecret(!!repo.auth?.secretRef?.name);
     }
   }, [repo, namespace, currentCluster, dispatch]);
 
@@ -204,7 +241,7 @@ export function AppRepoForm(props: IAppRepoFormProps) {
         ociRepositories: ociRepoList,
         performValidation,
         filterRule: filter,
-        dockerRegistrySecrets: [""],
+        dockerRegistrySecrets: [secretAuthName],
       } as RepositoryCustomDetails,
       description,
       dockerRegCreds: {
@@ -217,21 +254,21 @@ export function AppRepoForm(props: IAppRepoFormProps) {
       name,
       passCredentials,
       plugin,
-      secretAuthName: "",
-      secretTLSName: "",
+      secretAuthName,
+      secretTLSName,
       skipTLS,
       type,
       url: finalURL,
       opaqueCreds: {
-        data: JSON.parse("{}"),
+        data: JSON.parse(opaqueData),
       },
       sshCreds: {
-        knownHosts: "",
-        privateKey: "",
+        knownHosts: sshKnownHosts,
+        privateKey: sshPrivateKey,
       },
       tlsCertKey: {
-        cert: "",
-        key: "",
+        cert: tlsAuthCert,
+        key: tlsAuthKey,
       },
     } as IPkgRepoFormData);
     if (success && onAfterInstall) {
@@ -278,6 +315,14 @@ export function AppRepoForm(props: IAppRepoFormProps) {
         setType(RepositoryStorageTypes.PACKAGE_REPOSITORY_STORAGE_HELM);
         // helm plugin doesn't allow interval
         break;
+      case PluginNames.PACKAGES_FLUX:
+        setType(RepositoryStorageTypes.PACKAGE_REPOSITORY_STORAGE_HELM);
+        setInterval(interval || initialInterval);
+        break;
+      case PluginNames.PACKAGES_KAPP:
+        setType(RepositoryStorageTypes.PACKAGE_REPOSITORY_STORAGE_CARVEL_IMGPKGBUNDLE);
+        setInterval(interval || initialInterval);
+        break;
     }
   };
   const handleBasicUserChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -316,6 +361,30 @@ export function AppRepoForm(props: IAppRepoFormProps) {
   const handleAuthSecretServerChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSecretServer(e.target.value);
   };
+  const handleSshKnownHostsChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    setSshKnownHosts(e.target.value);
+  };
+  const handleSshPrivateKeyChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    setSshPrivateKey(e.target.value);
+  };
+  const handleTlsAuthCertChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    setTlsAuthCert(e.target.value);
+  };
+  const handleTlsAuthKeyChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    setTlsAuthKey(e.target.value);
+  };
+  const handleOpaqueDataChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    setOpaqueData(e.target.value);
+  };
+  const handleSecretAuthNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSecretAuthName(e.target.value);
+  };
+  const handleSecretTLSNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSecretTLSName(e.target.value);
+  };
+  const handleIsUserManagedSecretChange = (_e: React.ChangeEvent<HTMLInputElement>) => {
+    setIsUserManagedSecret(!isUserManagedSecret);
+  };
 
   const parseValidationError = (error: Error) => {
     let message = error.message;
@@ -329,6 +398,52 @@ export function AppRepoForm(props: IAppRepoFormProps) {
     }
     return message;
   };
+
+  const isUserManagedSecretToggle = (
+    <>
+      <CdsToggleGroup className="flex-v-center">
+        <CdsToggle>
+          <label>
+            {isUserManagedSecret ? "Use user-mangaged secrets" : "Use Kubeapps-mangaged secrets"}
+          </label>
+          <input
+            type="checkbox"
+            onChange={handleIsUserManagedSecretChange}
+            checked={isUserManagedSecret}
+            disabled={!!repo.auth?.type}
+          />
+        </CdsToggle>
+      </CdsToggleGroup>
+    </>
+  );
+
+  const secretNameInput = (authType: string) => (
+    <>
+      <CdsInput>
+        <label htmlFor={`kubeapps-repo-auth-secret-name-${authType}`}>Secret Name</label>
+        <input
+          id={`kubeapps-repo-auth-secret-name-${authType}`}
+          type="text"
+          placeholder="my-secret-name"
+          value={secretAuthName}
+          onChange={handleSecretAuthNameChange}
+          required={
+            isUserManagedSecret &&
+            authMethod !==
+              PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_UNSPECIFIED
+          }
+          pattern="[a-z0-9]([-a-z0-9]*[a-z0-9])?(\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*"
+          title="Use lower case alphanumeric characters, '-' or '.'"
+          disabled={!!repo?.name}
+        />
+      </CdsInput>
+      <br />
+      <CdsControlMessage>
+        Name of the Kubernetes Secret object holding the auth data. Please ensure that secret has
+        the proper type as expected by the selected authentication method.
+      </CdsControlMessage>
+    </>
+  );
 
   return (
     <>
@@ -351,7 +466,7 @@ export function AppRepoForm(props: IAppRepoFormProps) {
                     required={true}
                     pattern="[a-z0-9]([-a-z0-9]*[a-z0-9])?(\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*"
                     title="Use lower case alphanumeric characters, '-' or '.'"
-                    disabled={!!repo?.metadata?.name}
+                    disabled={!!repo?.name}
                   />
                 </CdsInput>
                 <CdsInput>
@@ -382,7 +497,7 @@ export function AppRepoForm(props: IAppRepoFormProps) {
                   <label>Packaging Format:</label>
                   <CdsControlMessage>Select the plugin to use.</CdsControlMessage>
                   <CdsRadio>
-                    <label>{getPluginPackageName(PluginNames.PACKAGES_HELM)}</label>
+                    <label>{getPluginPackageName(PluginNames.PACKAGES_HELM, true)}</label>
                     <input
                       id="kubeapps-plugin-helm"
                       type="radio"
@@ -390,7 +505,33 @@ export function AppRepoForm(props: IAppRepoFormProps) {
                       value={PluginNames.PACKAGES_HELM}
                       checked={plugin?.name === PluginNames.PACKAGES_HELM}
                       onChange={handlePluginRadioButtonChange}
-                      // disabled={!!repo.packageRepoRef?.plugin}
+                      disabled={!!repo.packageRepoRef?.plugin}
+                      required={true}
+                    />
+                  </CdsRadio>
+                  <CdsRadio>
+                    <label>{getPluginPackageName(PluginNames.PACKAGES_FLUX, true)}</label>
+                    <input
+                      id="kubeapps-plugin-fluxv2"
+                      type="radio"
+                      name="plugin"
+                      value={PluginNames.PACKAGES_FLUX}
+                      checked={plugin?.name === PluginNames.PACKAGES_FLUX}
+                      onChange={handlePluginRadioButtonChange}
+                      disabled={!!repo.packageRepoRef?.plugin}
+                      required={true}
+                    />
+                  </CdsRadio>
+                  <CdsRadio>
+                    <label>{getPluginPackageName(PluginNames.PACKAGES_KAPP, true)}</label>
+                    <input
+                      id="kubeapps-plugin-kappcontroller"
+                      type="radio"
+                      name="plugin"
+                      value={PluginNames.PACKAGES_KAPP}
+                      checked={plugin?.name === PluginNames.PACKAGES_KAPP}
+                      onChange={handlePluginRadioButtonChange}
+                      disabled={!!repo.packageRepoRef?.plugin}
                       required={true}
                     />
                   </CdsRadio>
@@ -413,7 +554,7 @@ export function AppRepoForm(props: IAppRepoFormProps) {
                             checked={
                               type === RepositoryStorageTypes.PACKAGE_REPOSITORY_STORAGE_HELM
                             }
-                            disabled={!!repo?.spec?.type}
+                            disabled={!!repo?.type}
                             onChange={handleTypeRadioButtonChange}
                             required={
                               plugin?.name === (PluginNames.PACKAGES_HELM as string) ||
@@ -428,9 +569,7 @@ export function AppRepoForm(props: IAppRepoFormProps) {
                             type="radio"
                             name="type"
                             // TODO(agamez): workaround until Flux plugin also supports OCI artifacts
-                            disabled={
-                              plugin?.name === PluginNames.PACKAGES_FLUX || !!repo?.spec?.type
-                            }
+                            disabled={plugin?.name === PluginNames.PACKAGES_FLUX || !!repo?.type}
                             value={RepositoryStorageTypes.PACKAGE_REPOSITORY_STORAGE_OCI}
                             checked={type === RepositoryStorageTypes.PACKAGE_REPOSITORY_STORAGE_OCI}
                             onChange={handleTypeRadioButtonChange}
@@ -438,6 +577,90 @@ export function AppRepoForm(props: IAppRepoFormProps) {
                               plugin?.name === (PluginNames.PACKAGES_HELM as string) ||
                               plugin?.name === (PluginNames.PACKAGES_FLUX as string)
                             }
+                          />
+                        </CdsRadio>
+                      </>
+                    )}
+                    {plugin?.name === PluginNames.PACKAGES_KAPP && (
+                      <>
+                        <CdsRadio>
+                          <label htmlFor="kubeapps-repo-type-imgpkgbundle">Imgpkg Bundle</label>
+                          <input
+                            id="kubeapps-repo-type-imgpkgbundle"
+                            type="radio"
+                            name="type"
+                            disabled={!!repo?.type}
+                            value={
+                              RepositoryStorageTypes.PACKAGE_REPOSITORY_STORAGE_CARVEL_IMGPKGBUNDLE
+                            }
+                            checked={
+                              type ===
+                              RepositoryStorageTypes.PACKAGE_REPOSITORY_STORAGE_CARVEL_IMGPKGBUNDLE
+                            }
+                            onChange={handleTypeRadioButtonChange}
+                            required={plugin?.name === PluginNames.PACKAGES_KAPP}
+                          />
+                        </CdsRadio>
+                        <CdsRadio>
+                          <label htmlFor="kubeapps-repo-type-inline">Inline</label>
+                          <input
+                            id="kubeapps-repo-type-inline"
+                            type="radio"
+                            name="type"
+                            disabled={!!repo?.type}
+                            value={RepositoryStorageTypes.PACKAGE_REPOSITORY_STORAGE_CARVEL_INLINE}
+                            checked={
+                              type ===
+                              RepositoryStorageTypes.PACKAGE_REPOSITORY_STORAGE_CARVEL_INLINE
+                            }
+                            onChange={handleTypeRadioButtonChange}
+                            required={plugin?.name === PluginNames.PACKAGES_KAPP}
+                          />
+                        </CdsRadio>
+                        <CdsRadio>
+                          <label htmlFor="kubeapps-repo-type-image">Image</label>
+                          <input
+                            id="kubeapps-repo-type-image"
+                            type="radio"
+                            name="type"
+                            disabled={!!repo?.type}
+                            value={RepositoryStorageTypes.PACKAGE_REPOSITORY_STORAGE_CARVEL_IMAGE}
+                            checked={
+                              type ===
+                              RepositoryStorageTypes.PACKAGE_REPOSITORY_STORAGE_CARVEL_IMAGE
+                            }
+                            onChange={handleTypeRadioButtonChange}
+                            required={plugin?.name === PluginNames.PACKAGES_KAPP}
+                          />
+                        </CdsRadio>
+                        <CdsRadio>
+                          <label htmlFor="kubeapps-repo-type-http">HTTP</label>
+                          <input
+                            id="kubeapps-repo-type-http"
+                            type="radio"
+                            name="type"
+                            disabled={!!repo?.type}
+                            value={RepositoryStorageTypes.PACKAGE_REPOSITORY_STORAGE_CARVEL_HTTP}
+                            checked={
+                              type === RepositoryStorageTypes.PACKAGE_REPOSITORY_STORAGE_CARVEL_HTTP
+                            }
+                            onChange={handleTypeRadioButtonChange}
+                            required={plugin?.name === PluginNames.PACKAGES_KAPP}
+                          />
+                        </CdsRadio>
+                        <CdsRadio>
+                          <label htmlFor="kubeapps-repo-type-git">Git</label>
+                          <input
+                            id="kubeapps-repo-type-git"
+                            type="radio"
+                            name="type"
+                            disabled={!!repo?.type}
+                            value={RepositoryStorageTypes.PACKAGE_REPOSITORY_STORAGE_CARVEL_GIT}
+                            checked={
+                              type === RepositoryStorageTypes.PACKAGE_REPOSITORY_STORAGE_CARVEL_GIT
+                            }
+                            onChange={handleTypeRadioButtonChange}
+                            required={plugin?.name === PluginNames.PACKAGES_KAPP}
                           />
                         </CdsRadio>
                       </>
@@ -476,7 +699,7 @@ export function AppRepoForm(props: IAppRepoFormProps) {
                           PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_UNSPECIFIED
                         }
                         onChange={handleAuthRadioButtonChange}
-                        disabled={!!repo?.spec?.auth}
+                        disabled={!!repo.auth?.type}
                       />
                     </CdsRadio>
                     <CdsRadio>
@@ -496,7 +719,7 @@ export function AppRepoForm(props: IAppRepoFormProps) {
                           PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_BASIC_AUTH
                         }
                         onChange={handleAuthRadioButtonChange}
-                        disabled={!!repo?.spec?.auth}
+                        disabled={!!repo.auth?.type}
                       />
                     </CdsRadio>
                     <CdsRadio>
@@ -516,7 +739,7 @@ export function AppRepoForm(props: IAppRepoFormProps) {
                           PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_BEARER
                         }
                         onChange={handleAuthRadioButtonChange}
-                        disabled={!!repo?.spec?.auth}
+                        disabled={!!repo.auth?.type}
                       />
                     </CdsRadio>
                     <CdsRadio>
@@ -538,7 +761,7 @@ export function AppRepoForm(props: IAppRepoFormProps) {
                           PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_DOCKER_CONFIG_JSON
                         }
                         onChange={handleAuthRadioButtonChange}
-                        disabled={true} // TODO(agamez): temporarily disabled in this PR
+                        disabled={!!repo.auth?.type}
                       />
                     </CdsRadio>
                     <CdsRadio>
@@ -560,7 +783,73 @@ export function AppRepoForm(props: IAppRepoFormProps) {
                           PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_AUTHORIZATION_HEADER
                         }
                         onChange={handleAuthRadioButtonChange}
-                        disabled={!!repo?.spec?.auth}
+                        disabled={!!repo.auth?.type}
+                      />
+                    </CdsRadio>
+                    <CdsRadio>
+                      <label htmlFor="kubeapps-repo-auth-method-ssh">
+                        SSH-based Authentication
+                      </label>
+                      <input
+                        id="kubeapps-repo-auth-method-ssh"
+                        type="radio"
+                        name="auth"
+                        value={
+                          PackageRepositoryAuth_PackageRepositoryAuthType[
+                            PackageRepositoryAuth_PackageRepositoryAuthType
+                              .PACKAGE_REPOSITORY_AUTH_TYPE_SSH
+                          ]
+                        }
+                        checked={
+                          authMethod ===
+                          PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_SSH
+                        }
+                        onChange={handleAuthRadioButtonChange}
+                        disabled={!!repo.auth?.type}
+                      />
+                    </CdsRadio>
+                    <CdsRadio>
+                      <label htmlFor="kubeapps-repo-auth-method-tls">
+                        TLS-based Authentication
+                      </label>
+                      <input
+                        id="kubeapps-repo-auth-method-tls"
+                        type="radio"
+                        name="auth"
+                        value={
+                          PackageRepositoryAuth_PackageRepositoryAuthType[
+                            PackageRepositoryAuth_PackageRepositoryAuthType
+                              .PACKAGE_REPOSITORY_AUTH_TYPE_TLS
+                          ]
+                        }
+                        checked={
+                          authMethod ===
+                          PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_TLS
+                        }
+                        onChange={handleAuthRadioButtonChange}
+                        disabled={!!repo.auth?.type}
+                      />
+                    </CdsRadio>
+                    <CdsRadio>
+                      <label htmlFor="kubeapps-repo-auth-method-opaque">
+                        Opaque-based Authentication
+                      </label>
+                      <input
+                        id="kubeapps-repo-auth-method-opaque"
+                        type="radio"
+                        name="auth"
+                        value={
+                          PackageRepositoryAuth_PackageRepositoryAuthType[
+                            PackageRepositoryAuth_PackageRepositoryAuthType
+                              .PACKAGE_REPOSITORY_AUTH_TYPE_OPAQUE
+                          ]
+                        }
+                        checked={
+                          authMethod ===
+                          PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_OPAQUE
+                        }
+                        onChange={handleAuthRadioButtonChange}
+                        disabled={!!repo.auth?.type}
                       />
                     </CdsRadio>
                   </CdsRadioGroup>
@@ -576,39 +865,45 @@ export function AppRepoForm(props: IAppRepoFormProps) {
                         PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_BASIC_AUTH
                       }
                     >
-                      <>
-                        <CdsInput>
-                          <label htmlFor="kubeapps-repo-username">Username</label>
-                          <input
-                            id="kubeapps-repo-username"
-                            type="text"
-                            value={basicUser}
-                            onChange={handleBasicUserChange}
-                            placeholder="username"
-                            required={
-                              authMethod ===
-                              PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_BASIC_AUTH
-                            }
-                            disabled={!!repo?.spec?.auth}
-                          />
-                        </CdsInput>
-                        <br />
-                        <CdsInput>
-                          <label htmlFor="kubeapps-repo-password">Password</label>
-                          <input
-                            id="kubeapps-repo-password"
-                            type="password"
-                            value={basicPassword}
-                            onChange={handleBasicPasswordChange}
-                            placeholder="password"
-                            required={
-                              authMethod ===
-                              PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_BASIC_AUTH
-                            }
-                            disabled={!!repo?.spec?.auth}
-                          />
-                        </CdsInput>
-                      </>
+                      {isUserManagedSecretToggle}
+                      <br />
+                      {isUserManagedSecret ? (
+                        secretNameInput("basic")
+                      ) : (
+                        <>
+                          <CdsInput>
+                            <label htmlFor="kubeapps-repo-username">Username</label>
+                            <input
+                              id="kubeapps-repo-username"
+                              type="text"
+                              value={basicUser}
+                              onChange={handleBasicUserChange}
+                              placeholder="username"
+                              required={
+                                authMethod ===
+                                PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_BASIC_AUTH
+                              }
+                              disabled={!!repo.auth?.type}
+                            />
+                          </CdsInput>
+                          <br />
+                          <CdsInput>
+                            <label htmlFor="kubeapps-repo-password">Password</label>
+                            <input
+                              id="kubeapps-repo-password"
+                              type="password"
+                              value={basicPassword}
+                              onChange={handleBasicPasswordChange}
+                              placeholder="password"
+                              required={
+                                authMethod ===
+                                PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_BASIC_AUTH
+                              }
+                              disabled={!!repo.auth?.type}
+                            />
+                          </CdsInput>
+                        </>
+                      )}
                     </div>
                     {/* End basic authentication */}
 
@@ -620,23 +915,29 @@ export function AppRepoForm(props: IAppRepoFormProps) {
                         PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_BEARER
                       }
                     >
-                      <>
-                        <CdsInput>
-                          <label htmlFor="kubeapps-repo-token">Token</label>
-                          <input
-                            type="text"
-                            value={bearerToken}
-                            onChange={handleAuthBearerTokenChange}
-                            id="kubeapps-repo-token"
-                            placeholder="xrxNcWghpRLdcPHFgVRM73rr4N7qjvjm"
-                            required={
-                              authMethod ===
-                              PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_BEARER
-                            }
-                            disabled={!!repo?.spec?.auth}
-                          />
-                        </CdsInput>
-                      </>
+                      {isUserManagedSecretToggle}
+                      <br />
+                      {isUserManagedSecret ? (
+                        secretNameInput("bearer")
+                      ) : (
+                        <>
+                          <CdsInput>
+                            <label htmlFor="kubeapps-repo-token">Token</label>
+                            <input
+                              type="text"
+                              value={bearerToken}
+                              onChange={handleAuthBearerTokenChange}
+                              id="kubeapps-repo-token"
+                              placeholder="xrxNcWghpRLdcPHFgVRM73rr4N7qjvjm"
+                              required={
+                                authMethod ===
+                                PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_BEARER
+                              }
+                              disabled={!!repo.auth?.type}
+                            />
+                          </CdsInput>
+                        </>
+                      )}
                     </div>
                     {/* End http bearer authentication */}
 
@@ -648,64 +949,70 @@ export function AppRepoForm(props: IAppRepoFormProps) {
                         PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_DOCKER_CONFIG_JSON
                       }
                     >
-                      <>
-                        <CdsInput className="margin-t-sm">
-                          <label htmlFor="kubeapps-docker-cred-server">Server</label>
-                          <input
-                            id="kubeapps-docker-cred-server"
-                            value={secretServer}
-                            onChange={handleAuthSecretServerChange}
-                            placeholder="https://index.docker.io/v1/"
-                            required={
-                              authMethod ===
-                              PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_DOCKER_CONFIG_JSON
-                            }
-                            disabled={!!repo?.spec?.auth}
-                          />
-                        </CdsInput>
-                        <br />
-                        <CdsInput className="margin-t-sm">
-                          <label htmlFor="kubeapps-docker-cred-username">Username</label>
-                          <input
-                            id="kubeapps-docker-cred-username"
-                            value={secretUser}
-                            onChange={handleAuthSecretUserChange}
-                            placeholder="Username"
-                            required={
-                              authMethod ===
-                              PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_DOCKER_CONFIG_JSON
-                            }
-                            disabled={!!repo?.spec?.auth}
-                          />
-                        </CdsInput>
-                        <br />
-                        <CdsInput className="margin-t-sm">
-                          <label htmlFor="kubeapps-docker-cred-password">Password</label>
-                          <input
-                            id="kubeapps-docker-cred-password"
-                            type="password"
-                            value={secretPassword}
-                            onChange={handleAuthSecretPasswordChange}
-                            placeholder="Password"
-                            required={
-                              authMethod ===
-                              PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_DOCKER_CONFIG_JSON
-                            }
-                            disabled={!!repo?.spec?.auth}
-                          />
-                        </CdsInput>
-                        <br />
-                        <CdsInput className="margin-t-sm">
-                          <label htmlFor="kubeapps-docker-cred-email">Email</label>
-                          <input
-                            id="kubeapps-docker-cred-email"
-                            value={secretEmail}
-                            onChange={handleAuthSecretEmailChange}
-                            placeholder="user@example.com"
-                            disabled={!!repo?.spec?.auth}
-                          />
-                        </CdsInput>
-                      </>
+                      {isUserManagedSecretToggle}
+                      <br />
+                      {isUserManagedSecret ? (
+                        secretNameInput("docker")
+                      ) : (
+                        <>
+                          <CdsInput className="margin-t-sm">
+                            <label htmlFor="kubeapps-docker-cred-server">Server</label>
+                            <input
+                              id="kubeapps-docker-cred-server"
+                              value={secretServer}
+                              onChange={handleAuthSecretServerChange}
+                              placeholder="https://index.docker.io/v1/"
+                              required={
+                                authMethod ===
+                                PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_DOCKER_CONFIG_JSON
+                              }
+                              disabled={!!repo.auth?.type}
+                            />
+                          </CdsInput>
+                          <br />
+                          <CdsInput className="margin-t-sm">
+                            <label htmlFor="kubeapps-docker-cred-username">Username</label>
+                            <input
+                              id="kubeapps-docker-cred-username"
+                              value={secretUser}
+                              onChange={handleAuthSecretUserChange}
+                              placeholder="Username"
+                              required={
+                                authMethod ===
+                                PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_DOCKER_CONFIG_JSON
+                              }
+                              disabled={!!repo.auth?.type}
+                            />
+                          </CdsInput>
+                          <br />
+                          <CdsInput className="margin-t-sm">
+                            <label htmlFor="kubeapps-docker-cred-password">Password</label>
+                            <input
+                              id="kubeapps-docker-cred-password"
+                              type="password"
+                              value={secretPassword}
+                              onChange={handleAuthSecretPasswordChange}
+                              placeholder="Password"
+                              required={
+                                authMethod ===
+                                PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_DOCKER_CONFIG_JSON
+                              }
+                              disabled={!!repo.auth?.type}
+                            />
+                          </CdsInput>
+                          <br />
+                          <CdsInput className="margin-t-sm">
+                            <label htmlFor="kubeapps-docker-cred-email">Email</label>
+                            <input
+                              id="kubeapps-docker-cred-email"
+                              value={secretEmail}
+                              onChange={handleAuthSecretEmailChange}
+                              placeholder="user@example.com"
+                              disabled={!!repo.auth?.type}
+                            />
+                          </CdsInput>
+                        </>
+                      )}
                     </div>
                     {/* End docker creds authentication */}
 
@@ -717,27 +1024,179 @@ export function AppRepoForm(props: IAppRepoFormProps) {
                         PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_AUTHORIZATION_HEADER
                       }
                     >
-                      <>
-                        <CdsInput>
-                          <label htmlFor="kubeapps-repo-custom-header">
-                            Raw Authorization Header
-                          </label>
-                          <input
-                            id="kubeapps-repo-custom-header"
-                            type="text"
-                            placeholder="MyAuth xrxNcWghpRLdcPHFgVRM73rr4N7qjvjm"
-                            value={authCustomHeader}
-                            onChange={handleAuthCustomHeaderChange}
-                            required={
-                              authMethod ===
-                              PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_AUTHORIZATION_HEADER
-                            }
-                            disabled={!!repo?.spec?.auth}
-                          />
-                        </CdsInput>
-                      </>
+                      {isUserManagedSecretToggle}
+                      <br />
+                      {isUserManagedSecret ? (
+                        secretNameInput("custom")
+                      ) : (
+                        <>
+                          <CdsInput>
+                            <label htmlFor="kubeapps-repo-custom-header">
+                              Raw Authorization Header
+                            </label>
+                            <input
+                              id="kubeapps-repo-custom-header"
+                              type="text"
+                              placeholder="MyAuth xrxNcWghpRLdcPHFgVRM73rr4N7qjvjm"
+                              value={authCustomHeader}
+                              onChange={handleAuthCustomHeaderChange}
+                              required={
+                                authMethod ===
+                                PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_AUTHORIZATION_HEADER
+                              }
+                              disabled={!!repo.auth?.type}
+                            />
+                          </CdsInput>
+                        </>
+                      )}
                     </div>
                     {/* End HTTP custom authentication */}
+
+                    {/* Begin SSH authentication */}
+                    <div
+                      id="kubeapps-repo-auth-details-ssh"
+                      hidden={
+                        authMethod !==
+                        PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_SSH
+                      }
+                    >
+                      {isUserManagedSecretToggle}
+                      <br />
+                      {isUserManagedSecret ? (
+                        secretNameInput("ssh")
+                      ) : (
+                        <>
+                          <CdsTextarea>
+                            <label htmlFor="kubeapps-repo-ssh-knownhosts">
+                              Raw SSH Known Hosts
+                            </label>
+                            <textarea
+                              id="kubeapps-repo-ssh-knownhosts"
+                              className="cds-textarea-fix"
+                              placeholder="github.com ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIOMqqnkVzrm0SdG6UOoqKLsabgH5C9okWi0dh2l9GKJl"
+                              value={sshKnownHosts}
+                              onChange={handleSshKnownHostsChange}
+                              required={
+                                authMethod ===
+                                PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_SSH
+                              }
+                              disabled={!!repo.auth?.type}
+                            />
+                          </CdsTextarea>
+                          <br />
+                          <CdsTextarea>
+                            <label htmlFor="kubeapps-repo-ssh-privatekey">
+                              Raw SSH Private Key
+                            </label>
+                            <textarea
+                              id="kubeapps-repo-ssh-privatekey"
+                              className="cds-textarea-fix"
+                              placeholder={
+                                "-----BEGIN CERTIFICATE-----\n...\n-----END CERTIFICATE-----"
+                              }
+                              value={sshPrivateKey}
+                              onChange={handleSshPrivateKeyChange}
+                              required={
+                                authMethod ===
+                                PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_SSH
+                              }
+                              disabled={!!repo.auth?.type}
+                            />
+                          </CdsTextarea>
+                        </>
+                      )}
+                    </div>
+                    {/* End SSH authentication */}
+
+                    {/* Begin TLS authentication */}
+                    <div
+                      id="kubeapps-repo-auth-details-tls"
+                      hidden={
+                        authMethod !==
+                        PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_TLS
+                      }
+                    >
+                      {isUserManagedSecretToggle}
+                      <br />
+                      {isUserManagedSecret ? (
+                        secretNameInput("tls")
+                      ) : (
+                        <>
+                          <CdsTextarea>
+                            <label htmlFor="kubeapps-repo-tls-cert">Raw TLS Cert</label>
+                            <textarea
+                              id="kubeapps-repo-tls-cert"
+                              className="cds-textarea-fix"
+                              placeholder={
+                                "-----BEGIN CERTIFICATE-----\n...\n-----END CERTIFICATE-----"
+                              }
+                              value={tlsAuthCert}
+                              onChange={handleTlsAuthCertChange}
+                              required={
+                                authMethod ===
+                                PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_TLS
+                              }
+                              disabled={!!repo.auth?.type}
+                            />
+                          </CdsTextarea>
+                          <br />
+                          <CdsTextarea>
+                            <label htmlFor="kubeapps-repo-tls-cert">Raw TLS Key</label>
+                            <textarea
+                              id="kubeapps-repo-tls-key"
+                              className="cds-textarea-fix"
+                              placeholder={
+                                "-----BEGIN CERTIFICATE-----\n...\n-----END CERTIFICATE-----"
+                              }
+                              value={tlsAuthKey}
+                              onChange={handleTlsAuthKeyChange}
+                              required={
+                                authMethod ===
+                                PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_TLS
+                              }
+                              disabled={!!repo.auth?.type}
+                            />
+                          </CdsTextarea>
+                        </>
+                      )}
+                    </div>
+                    {/* End TLS authentication */}
+
+                    {/* Begin opaque authentication */}
+                    <div
+                      id="kubeapps-repo-auth-details-opaque"
+                      hidden={
+                        authMethod !==
+                        PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_OPAQUE
+                      }
+                    >
+                      {isUserManagedSecretToggle}
+                      <br />
+                      {isUserManagedSecret ? (
+                        secretNameInput("opaque")
+                      ) : (
+                        <>
+                          <CdsTextarea>
+                            <label htmlFor="kubeapps-repo-opaque-data">
+                              Raw Opaque Data (JSON)
+                            </label>
+                            <textarea
+                              id="kubeapps-repo-opaque-data"
+                              className="cds-textarea-fix"
+                              placeholder={'{\n  "username": "admin",\n  "password": "admin"\n}'}
+                              value={opaqueData}
+                              onChange={handleOpaqueDataChange}
+                              required={
+                                authMethod ===
+                                PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_OPAQUE
+                              }
+                              disabled={!!repo.auth?.type}
+                            />
+                          </CdsTextarea>
+                        </>
+                      )}
+                    </div>
+                    {/* End opaque authentication */}
                   </div>
                   {/* End authentication details */}
                 </div>
@@ -865,6 +1324,22 @@ export function AppRepoForm(props: IAppRepoFormProps) {
                     />
                   </CdsCheckbox>
                 )}
+                {/* TODO(agamez): move this input to a better UX-wise place */}
+                <CdsInput>
+                  <label htmlFor="kubeapps-repo-secret-ca">Custom CA Secret Name (optional)</label>
+                  <input
+                    id="kubeapps-repo-secret-ca"
+                    type="text"
+                    placeholder="my-ca-secret"
+                    pattern="[a-z0-9]([-a-z0-9]*[a-z0-9])?(\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*"
+                    title="Use lower case alphanumeric characters, '-' or '.'"
+                    value={secretTLSName}
+                    onChange={handleSecretTLSNameChange}
+                  />
+                  <CdsControlMessage>
+                    Name of the Kubernetes Secret object holding the TLS Certificate Authority data.
+                  </CdsControlMessage>
+                </CdsInput>
                 <CdsTextarea layout="vertical">
                   <label htmlFor="kubeapps-repo-custom-ca">Custom CA Certificate (optional)</label>
                   <textarea
@@ -937,9 +1412,7 @@ export function AppRepoForm(props: IAppRepoFormProps) {
           <CdsButton type="submit" disabled={validating}>
             {validating
               ? "Validating..."
-              : `${
-                  repo?.metadata?.name ? `Update '${repo?.metadata?.name}'` : "Install"
-                } Repository`}
+              : `${repo.name ? `Update '${repo.name}'` : "Install"} Repository`}
           </CdsButton>
         </div>
       </form>
