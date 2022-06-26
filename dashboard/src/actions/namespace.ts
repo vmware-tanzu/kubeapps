@@ -82,10 +82,11 @@ export function fetchNamespaces(
 export function createNamespace(
   cluster: string,
   ns: string,
+  labels: {[key: string]: string}
 ): ThunkAction<Promise<boolean>, IStoreState, null, NamespaceAction> {
   return async dispatch => {
     try {
-      await Namespace.create(cluster, ns);
+      await Namespace.create(cluster, ns, labels);
       dispatch(postNamespace(cluster, ns));
       dispatch(fetchNamespaces(cluster));
       return true;

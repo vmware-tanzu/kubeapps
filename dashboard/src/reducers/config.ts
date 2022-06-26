@@ -26,6 +26,7 @@ export const initialState: IConfigState = {
   remoteComponentsUrl: "",
   customAppViews: [],
   skipAvailablePackageDetails: false,
+  createNamespaceLabels: {}
 };
 
 const configReducer = (state: IConfigState = initialState, action: ConfigAction): IConfigState => {

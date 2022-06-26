@@ -35,6 +35,7 @@ function ContextSelector() {
   const [namespace, setStateNamespace] = useState(namespaceSelected);
   const [newNSModalIsOpen, setNewNSModalIsOpen] = useState(false);
   const [newNS, setNewNS] = useState("");
+  const { createNamespaceLabels } = useSelector( (state: IStoreState) => state.config)
 
   // Control when users click outside
   const ref = useRef(null);
@@ -82,7 +83,7 @@ function ContextSelector() {
     setNewNS(event.target.value);
   const createNewNS = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    const created = await dispatch(actions.namespace.createNamespace(cluster, newNS));
+    const created = await dispatch(actions.namespace.createNamespace(cluster, newNS, createNamespaceLabels));
     if (created) {
       closeNewNSModal();
       dispatch(actions.namespace.setNamespace(cluster, newNS));
