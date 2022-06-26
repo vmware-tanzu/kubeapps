@@ -606,5 +606,13 @@ func TestKindClusterGetAvailablePackageSummariesAndVersionsForOCI(t *testing.T) 
 	if err != nil {
 		t.Fatalf("%v", err)
 	}
-	t.Logf("=============> %s", common.PrettyPrint(resp2))
+	if err != nil {
+		t.Fatal(err)
+	}
+	opts := cmpopts.IgnoreUnexported(
+		corev1.GetAvailablePackageVersionsResponse{},
+		corev1.PackageAppVersion{})
+	if got, want := resp2, expected_versions_stefanprodan_podinfo; !cmp.Equal(want, got, opts) {
+		t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opts))
+	}
 }

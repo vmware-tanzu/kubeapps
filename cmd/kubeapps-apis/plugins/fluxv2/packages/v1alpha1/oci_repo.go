@@ -392,7 +392,40 @@ func (s *repoEventSink) onAddOciRepo(repo sourcev1.HelmRepository) ([]byte, bool
 			return nil, false, err
 		}
 
-		var mc *models.Chart
+		// to be consistent with how we support helm http repos
+		// the chart fields like Desciption, home, sources come from the
+		// most recent chart version
+		// ref https://github.com/vmware-tanzu/kubeapps/blob/11c87926d6cd798af72875d01437d15ae8d85b9a/pkg/helm/index.go#L30
+		log.Infof("==========>: most recent chart version: %s", allTags[0])
+		latestChartVersion, err := ociRegistry.pickChartVersionFrom(appName, allTags[0], allTags)
+		if err != nil {
+			return nil, false, status.Errorf(codes.Internal, "%v", err)
+		}
+
+		latestChartMetadata, err := s.getChartMetadata(ociRegistry, chartID, latestChartVersion)
+		if err != nil {
+			return nil, false, err
+		}
+
+		maintainers := []chart.Maintainer{}
+		for _, maintainer := range latestChartMetadata.Maintainers {
+			maintainers = append(maintainers, *maintainer)
+		}
+
+		mc := models.Chart{
+			ID:            chartID,
+			Name:          encodedAppName,
+			Repo:          chartRepo,
+			Description:   latestChartMetadata.Description,
+			Home:          latestChartMetadata.Home,
+			Keywords:      latestChartMetadata.Keywords,
+			Maintainers:   maintainers,
+			Sources:       latestChartMetadata.Sources,
+			Icon:          latestChartMetadata.Icon,
+			Category:      latestChartMetadata.Annotations["category"],
+			ChartVersions: []models.ChartVersion{},
+		}
+
 		// TODO (gfichtenholt) this loop needs to be implemented using
 		// multiple concurrent readers
 		for _, tag := range allTags {
@@ -402,71 +435,16 @@ func (s *repoEventSink) onAddOciRepo(repo sourcev1.HelmRepository) ([]byte, bool
 			}
 			log.Infof("==========>: chart version: %s", common.PrettyPrint(chartVersion))
 
-			chartBuffer, err := ociRegistry.downloadChart(chartVersion)
-			if err != nil {
-				return nil, false, status.Errorf(codes.Internal, "%v", err)
-			}
-			log.Infof("==========>: chart buffer: [%d] bytes", chartBuffer.Len())
-
-			// not sure yet why flux untars into a temp directory
-			files, err := tarutil.FetchChartDetailFromTarball(
-				bytes.NewReader(chartBuffer.Bytes()), chartID)
-			if err != nil {
-				return nil, false, status.Errorf(codes.Internal, "%v", err)
-			}
-
-			log.Infof("==========>: files: [%d]", len(files))
-
-			chartYaml, ok := files[models.ChartYamlKey]
-			// TODO (gfichtenholt): if there is no chart yaml (is that even possible?),
-			// fall back to chart info from repo index.yaml
-			if !ok || chartYaml == "" {
-				return nil, false, status.Errorf(codes.Internal, "No chart manifest found for chart [%s]", chartID)
-			}
-			var chartMetadata chart.Metadata
-			err = yaml.Unmarshal([]byte(chartYaml), &chartMetadata)
-			if err != nil {
-				return nil, false, err
-			}
-
-			log.Infof("==========>: chart metadata: %s", common.PrettyPrint(chartMetadata))
-
-			maintainers := []chart.Maintainer{}
-			for _, maintainer := range chartMetadata.Maintainers {
-				maintainers = append(maintainers, *maintainer)
-			}
-
 			mcv := models.ChartVersion{
 				Version:    chartVersion.Version,
 				AppVersion: chartVersion.AppVersion,
 				Created:    chartVersion.Created,
 				Digest:     chartVersion.Digest,
 				URLs:       chartVersion.URLs,
-				Readme:     files[models.ReadmeKey],
-				Values:     files[models.ValuesKey],
-				Schema:     files[models.SchemaKey],
-			}
-
-			if mc == nil {
-				mc = &models.Chart{
-					ID:            chartID,
-					Name:          encodedAppName,
-					Repo:          chartRepo,
-					Description:   chartMetadata.Description,
-					Home:          chartMetadata.Home,
-					Keywords:      chartMetadata.Keywords,
-					Maintainers:   maintainers,
-					Sources:       chartMetadata.Sources,
-					Icon:          chartMetadata.Icon,
-					Category:      chartMetadata.Annotations["category"],
-					ChartVersions: []models.ChartVersion{},
-				}
 			}
 			mc.ChartVersions = append(mc.ChartVersions, mcv)
 		}
-		if mc != nil {
-			charts = append(charts, *mc)
-		}
+		charts = append(charts, mc)
 	}
 
 	checksum, err := ociRegistry.checksum()
@@ -669,4 +647,37 @@ func (s *repoEventSink) clientOptionsForRepo(repo sourcev1.HelmRepository) ([]re
 		}
 	}
 	return loginOpts, getterOpts, cred, nil
+}
+
+func (s *repoEventSink) getChartMetadata(ociRegistry *OCIRegistry, chartID string, chartVersion *repo.ChartVersion) (*chart.Metadata, error) {
+	log.Infof("getChartMetadata(%s, %s)", chartID, chartVersion.Metadata.Version)
+
+	chartBuffer, err := ociRegistry.downloadChart(chartVersion)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "%v", err)
+	}
+	log.Infof("==========>: chart buffer: [%d] bytes", chartBuffer.Len())
+
+	// not sure yet why flux untars into a temp directory
+	files, err := tarutil.FetchChartDetailFromTarball(
+		bytes.NewReader(chartBuffer.Bytes()), chartID)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "%v", err)
+	}
+
+	log.Infof("==========>: files: [%d]", len(files))
+
+	chartYaml, ok := files[models.ChartYamlKey]
+	// TODO (gfichtenholt): if there is no chart yaml (is that even possible?),
+	// fall back to chart info from repo index.yaml
+	if !ok || chartYaml == "" {
+		return nil, status.Errorf(codes.Internal, "No chart manifest found for chart [%s]", chartID)
+	}
+	var chartMetadata chart.Metadata
+	err = yaml.Unmarshal([]byte(chartYaml), &chartMetadata)
+	if err != nil {
+		return nil, err
+	}
+	log.Infof("==========>: chart metadata: %s", common.PrettyPrint(chartMetadata))
+	return &chartMetadata, nil
 }
