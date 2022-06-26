@@ -188,23 +188,12 @@ func (r *OCIRegistry) listRepositoryNames() ([]string, error) {
 	return r.repositoryLister.ListRepositoryNames(r)
 }
 
-// Get returns the ChartVersion for the given name, the version is expected
+// pickChartVersionFrom returns the ChartVersion for the given name, the version is expected
 // to be a semver.Constraints compatible string. If version is empty, the latest
 // stable version will be returned and prerelease versions will be ignored.
 // adapted from https://github.com/helm/helm/blob/49819b4ef782e80b0c7f78c30bd76b51ebb56dc8/pkg/downloader/chart_downloader.go#L162
-func (r *OCIRegistry) getChartVersion(name, ver string) (*repo.ChartVersion, error) {
-	log.Infof("+getChartVersion(%s,%s)", name, ver)
-	// Find chart versions matching the given name.
-	// Either in an index file or from a registry.
-	ref := fmt.Sprintf("%s/%s", r.url.String(), name)
-	cvs, err := r.getTags(ref)
-	if err != nil {
-		return nil, err
-	}
-
-	if len(cvs) == 0 {
-		return nil, status.Errorf(codes.Internal, "unable to locate any tags in provided repository: %s", name)
-	}
+func (r *OCIRegistry) pickChartVersionFrom(name, ver string, cvs []string) (*repo.ChartVersion, error) {
+	log.Infof("+pickChartVersionFrom(%s,%s,%s)", name, ver, cvs)
 
 	// Determine if version provided
 	// If empty, try to get the highest available tag
@@ -223,14 +212,18 @@ func (r *OCIRegistry) getChartVersion(name, ver string) (*repo.ChartVersion, err
 // This function shall be called for OCI registries only
 // It assumes that the ref has been validated to be an OCI reference.
 func (r *OCIRegistry) getTags(ref string) ([]string, error) {
+	log.Infof("+getTags(%s)", ref)
+	defer log.Infof("-getTags(%s)", ref)
+
 	ref = strings.TrimPrefix(ref, fmt.Sprintf("%s://", registry.OCIScheme))
 
+	log.Infof("getTags: about to call .Tags(%s)", ref)
 	tags, err := r.registryClient.Tags(ref)
+	log.Infof("getTags: done with call .Tags(%s): %s %v", ref, tags, err)
 	if err != nil {
 		return nil, err
 	}
 
-	log.Infof("getTags(%s): %s %v", ref, tags, err)
 	if len(tags) == 0 {
 		return nil, fmt.Errorf("unable to locate any tags in provided repository: %s", ref)
 	}
@@ -381,85 +374,99 @@ func (s *repoEventSink) onAddOciRepo(repo sourcev1.HelmRepository) ([]byte, bool
 	}
 
 	charts := []models.Chart{}
-	for _, appName := range appNames {
-		appName, err := ociRegistry.shortRepoName(appName)
+	for _, fullAppName := range appNames {
+		appName, err := ociRegistry.shortRepoName(fullAppName)
 		if err != nil {
 			return nil, false, err
 		}
-
-		log.Infof("==========>: app name: [%s]", appName)
-
-		chartVersion, err := ociRegistry.getChartVersion(appName, "")
-		if err != nil {
-			return nil, false, status.Errorf(codes.Internal, "%v", err)
-		}
-		log.Infof("==========>: chart version: %s", common.PrettyPrint(chartVersion))
-
-		chartBuffer, err := ociRegistry.downloadChart(chartVersion)
-		if err != nil {
-			return nil, false, status.Errorf(codes.Internal, "%v", err)
-		}
-		log.Infof("==========>: chart buffer: [%d] bytes", chartBuffer.Len())
 
 		// Encode repository names to store them in the database.
 		encodedAppName := url.PathEscape(appName)
-
-		// not sure yet why flux untars into a temp directory
 		chartID := path.Join(repo.Name, encodedAppName)
-		files, err := tarutil.FetchChartDetailFromTarball(
-			bytes.NewReader(chartBuffer.Bytes()), chartID)
-		if err != nil {
-			return nil, false, status.Errorf(codes.Internal, "%v", err)
-		}
 
-		log.Infof("==========>: files: [%d]", len(files))
+		log.Infof("==========>: app name: [%s], chartID: [%s]", appName, chartID)
 
-		chartYaml, ok := files[models.ChartYamlKey]
-		// TODO (gfichtenholt): if there is no chart yaml (is that even possible?),
-		// fall back to chart info from repo index.yaml
-		if !ok || chartYaml == "" {
-			return nil, false, status.Errorf(codes.Internal, "No chart manifest found for chart [%s]", chartID)
-		}
-		var chartMetadata chart.Metadata
-		err = yaml.Unmarshal([]byte(chartYaml), &chartMetadata)
+		ref := fmt.Sprintf("%s/%s", ociRegistry.url.String(), appName)
+		allTags, err := ociRegistry.getTags(ref)
 		if err != nil {
 			return nil, false, err
 		}
 
-		log.Infof("==========>: chart metadata: %s", common.PrettyPrint(chartMetadata))
+		var mc *models.Chart
+		// TODO (gfichtenholt) this loop needs to be implemented using
+		// multiple concurrent readers
+		for _, tag := range allTags {
+			chartVersion, err := ociRegistry.pickChartVersionFrom(appName, tag, allTags)
+			if err != nil {
+				return nil, false, status.Errorf(codes.Internal, "%v", err)
+			}
+			log.Infof("==========>: chart version: %s", common.PrettyPrint(chartVersion))
 
-		maintainers := []chart.Maintainer{}
-		for _, maintainer := range chartMetadata.Maintainers {
-			maintainers = append(maintainers, *maintainer)
-		}
+			chartBuffer, err := ociRegistry.downloadChart(chartVersion)
+			if err != nil {
+				return nil, false, status.Errorf(codes.Internal, "%v", err)
+			}
+			log.Infof("==========>: chart buffer: [%d] bytes", chartBuffer.Len())
 
-		modelsChartVersion := models.ChartVersion{
-			Version:    chartVersion.Version,
-			AppVersion: chartVersion.AppVersion,
-			Created:    chartVersion.Created,
-			Digest:     chartVersion.Digest,
-			URLs:       chartVersion.URLs,
-			Readme:     files[models.ReadmeKey],
-			Values:     files[models.ValuesKey],
-			Schema:     files[models.SchemaKey],
-		}
+			// not sure yet why flux untars into a temp directory
+			files, err := tarutil.FetchChartDetailFromTarball(
+				bytes.NewReader(chartBuffer.Bytes()), chartID)
+			if err != nil {
+				return nil, false, status.Errorf(codes.Internal, "%v", err)
+			}
 
-		chart := models.Chart{
-			ID:          path.Join(repo.Name, encodedAppName),
-			Name:        encodedAppName,
-			Repo:        chartRepo,
-			Description: chartMetadata.Description,
-			Home:        chartMetadata.Home,
-			Keywords:    chartMetadata.Keywords,
-			Maintainers: maintainers,
-			Sources:     chartMetadata.Sources,
-			Icon:        chartMetadata.Icon,
-			Category:    chartMetadata.Annotations["category"],
-			ChartVersions: []models.ChartVersion{
-				modelsChartVersion,
-			},
+			log.Infof("==========>: files: [%d]", len(files))
+
+			chartYaml, ok := files[models.ChartYamlKey]
+			// TODO (gfichtenholt): if there is no chart yaml (is that even possible?),
+			// fall back to chart info from repo index.yaml
+			if !ok || chartYaml == "" {
+				return nil, false, status.Errorf(codes.Internal, "No chart manifest found for chart [%s]", chartID)
+			}
+			var chartMetadata chart.Metadata
+			err = yaml.Unmarshal([]byte(chartYaml), &chartMetadata)
+			if err != nil {
+				return nil, false, err
+			}
+
+			log.Infof("==========>: chart metadata: %s", common.PrettyPrint(chartMetadata))
+
+			maintainers := []chart.Maintainer{}
+			for _, maintainer := range chartMetadata.Maintainers {
+				maintainers = append(maintainers, *maintainer)
+			}
+
+			mcv := models.ChartVersion{
+				Version:    chartVersion.Version,
+				AppVersion: chartVersion.AppVersion,
+				Created:    chartVersion.Created,
+				Digest:     chartVersion.Digest,
+				URLs:       chartVersion.URLs,
+				Readme:     files[models.ReadmeKey],
+				Values:     files[models.ValuesKey],
+				Schema:     files[models.SchemaKey],
+			}
+
+			if mc == nil {
+				mc = &models.Chart{
+					ID:            chartID,
+					Name:          encodedAppName,
+					Repo:          chartRepo,
+					Description:   chartMetadata.Description,
+					Home:          chartMetadata.Home,
+					Keywords:      chartMetadata.Keywords,
+					Maintainers:   maintainers,
+					Sources:       chartMetadata.Sources,
+					Icon:          chartMetadata.Icon,
+					Category:      chartMetadata.Annotations["category"],
+					ChartVersions: []models.ChartVersion{},
+				}
+			}
+			mc.ChartVersions = append(mc.ChartVersions, mcv)
 		}
-		charts = append(charts, chart)
+		if mc != nil {
+			charts = append(charts, *mc)
+		}
 	}
 
 	checksum, err := ociRegistry.checksum()
@@ -534,23 +541,26 @@ type TagList struct {
 // all repositories within the registry and returning the sha256.
 // Caveat: Mutated image tags won't be detected as new
 func (r *OCIRegistry) checksum() (string, error) {
-	log.Infof("+checksum")
+	log.Infof("+checksum()")
+	defer log.Infof("-checksum()")
 	appNames, err := r.listRepositoryNames()
 	if err != nil {
 		return "", err
 	}
 	tags := map[string]TagList{}
-	for _, appName := range appNames {
-		appName, err := r.shortRepoName(appName)
+	for _, fullAppName := range appNames {
+		appName, err := r.shortRepoName(fullAppName)
 		if err != nil {
 			return "", err
 		}
 		ref := fmt.Sprintf("%s/%s", r.url.String(), appName)
-		tagss, err := r.getTags(ref)
+		tagz, err := r.getTags(ref)
 		if err != nil {
 			return "", err
 		}
-		tags[appName] = TagList{Name: appName, Tags: tagss}
+
+		//ref := fmt.Sprintf("%s/%s", r.url.String(), fullAppName)
+		tags[appName] = TagList{Name: appName, Tags: tagz}
 	}
 
 	content, err := json.Marshal(tags)

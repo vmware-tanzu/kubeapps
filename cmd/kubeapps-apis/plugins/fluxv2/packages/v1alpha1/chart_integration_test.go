@@ -517,7 +517,7 @@ func TestKindClusterRepoAndChartRBAC(t *testing.T) {
 	}
 }
 
-func TestKindClusterGetAvailablePackageSummariesForOCI(t *testing.T) {
+func TestKindClusterGetAvailablePackageSummariesAndVersionsForOCI(t *testing.T) {
 	fluxPluginClient, fluxPluginReposClient, err := checkEnv(t)
 	if err != nil {
 		t.Fatal(err)
@@ -593,4 +593,18 @@ func TestKindClusterGetAvailablePackageSummariesForOCI(t *testing.T) {
 	if got, want := resp, oci_stefanprodan_podinfo_available_summaries(repoName.Name); !cmp.Equal(got, want, opt1, opt2) {
 		t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opt1, opt2))
 	}
+
+	resp2, err := fluxPluginClient.GetAvailablePackageVersions(
+		grpcContext, &corev1.GetAvailablePackageVersionsRequest{
+			AvailablePackageRef: &corev1.AvailablePackageReference{
+				Context: &corev1.Context{
+					Namespace: "default",
+				},
+				Identifier: repoName.Name + "/podinfo",
+			},
+		})
+	if err != nil {
+		t.Fatalf("%v", err)
+	}
+	t.Logf("=============> %s", common.PrettyPrint(resp2))
 }

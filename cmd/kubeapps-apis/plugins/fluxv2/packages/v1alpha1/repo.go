@@ -807,7 +807,7 @@ func (s *repoEventSink) indexOneRepo(repo sourcev1.HelmRepository) ([]models.Cha
 
 	// this is potentially a very expensive operation for large repos like 'bitnami'
 	// shallow = true  => 8-9 sec
-	// shallow = false => 12-13 sec, so deep copy adds 50% to cost, but we need it to
+	// shallow = false => 12-13 sec, so deep copy adds 50% to cost, but we need it
 	// for GetAvailablePackageVersions()
 	charts, err := helm.ChartsFromIndex(byteArray, modelRepo, false)
 	if err != nil {
@@ -818,11 +818,17 @@ func (s *repoEventSink) indexOneRepo(repo sourcev1.HelmRepository) ([]models.Cha
 	msg := fmt.Sprintf("-indexOneRepo: [%s], indexed [%d] packages in [%d] ms", repo.Name, len(charts), duration.Milliseconds())
 	if len(charts) > 0 {
 		log.Info(msg)
+		log.Infof("%s", common.PrettyPrint(charts))
 	} else {
 		// this is kind of a red flag - an index with 0 charts, most likely contents of index.yaml is
 		// messed up and didn't parse successfully but the helm library didn't raise an error
 		log.Warning(msg)
 	}
+	// note that we are returning an array of model.Chart, each of which has an
+	// array of model.ChartVersions, which in turn, only has those fields initialized that
+	// can be read from index.yaml. Fields like readme, schema, values are empty at this point.
+	// They do not get stored in the repo cache. They get stored in the chart cache
+	// in a .tgz file
 	return charts, nil
 }
 
