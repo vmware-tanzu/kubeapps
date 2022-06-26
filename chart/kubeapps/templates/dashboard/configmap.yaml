@@ -81,5 +81,5 @@ data:
       "remoteComponentsUrl": {{ .Values.dashboard.remoteComponentsUrl | quote }},
       "customAppViews": {{ .Values.dashboard.customAppViews | toJson }},
       "skipAvailablePackageDetails": {{ .Values.dashboard.skipAvailablePackageDetails }},
-      "createNamespaceLabels": {{ .Values.dashboard.createNamespaceLabels }}
+      "createNamespaceLabels": {{ .Values.dashboard.createNamespaceLabels | toJson }}
     }
