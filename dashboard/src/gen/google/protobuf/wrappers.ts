@@ -99,7 +99,10 @@ function createBaseDoubleValue(): DoubleValue {
 }
 
 export const DoubleValue = {
-  encode(message: DoubleValue, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
+  encode(
+    message: DoubleValue,
+    writer: _m0.Writer = _m0.Writer.create()
+  ): _m0.Writer {
     if (message.value !== 0) {
       writer.uint32(9).double(message.value);
     }
@@ -136,7 +139,9 @@ export const DoubleValue = {
     return obj;
   },
 
-  fromPartial<I extends Exact<DeepPartial<DoubleValue>, I>>(object: I): DoubleValue {
+  fromPartial<I extends Exact<DeepPartial<DoubleValue>, I>>(
+    object: I
+  ): DoubleValue {
     const message = createBaseDoubleValue();
     message.value = object.value ?? 0;
     return message;
@@ -148,7 +153,10 @@ function createBaseFloatValue(): FloatValue {
 }
 
 export const FloatValue = {
-  encode(message: FloatValue, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
+  encode(
+    message: FloatValue,
+    writer: _m0.Writer = _m0.Writer.create()
+  ): _m0.Writer {
     if (message.value !== 0) {
       writer.uint32(13).float(message.value);
     }
@@ -185,7 +193,9 @@ export const FloatValue = {
     return obj;
   },
 
-  fromPartial<I extends Exact<DeepPartial<FloatValue>, I>>(object: I): FloatValue {
+  fromPartial<I extends Exact<DeepPartial<FloatValue>, I>>(
+    object: I
+  ): FloatValue {
     const message = createBaseFloatValue();
     message.value = object.value ?? 0;
     return message;
@@ -197,7 +207,10 @@ function createBaseInt64Value(): Int64Value {
 }
 
 export const Int64Value = {
-  encode(message: Int64Value, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
+  encode(
+    message: Int64Value,
+    writer: _m0.Writer = _m0.Writer.create()
+  ): _m0.Writer {
     if (message.value !== 0) {
       writer.uint32(8).int64(message.value);
     }
@@ -234,7 +247,9 @@ export const Int64Value = {
     return obj;
   },
 
-  fromPartial<I extends Exact<DeepPartial<Int64Value>, I>>(object: I): Int64Value {
+  fromPartial<I extends Exact<DeepPartial<Int64Value>, I>>(
+    object: I
+  ): Int64Value {
     const message = createBaseInt64Value();
     message.value = object.value ?? 0;
     return message;
@@ -246,7 +261,10 @@ function createBaseUInt64Value(): UInt64Value {
 }
 
 export const UInt64Value = {
-  encode(message: UInt64Value, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
+  encode(
+    message: UInt64Value,
+    writer: _m0.Writer = _m0.Writer.create()
+  ): _m0.Writer {
     if (message.value !== 0) {
       writer.uint32(8).uint64(message.value);
     }
@@ -283,7 +301,9 @@ export const UInt64Value = {
     return obj;
   },
 
-  fromPartial<I extends Exact<DeepPartial<UInt64Value>, I>>(object: I): UInt64Value {
+  fromPartial<I extends Exact<DeepPartial<UInt64Value>, I>>(
+    object: I
+  ): UInt64Value {
     const message = createBaseUInt64Value();
     message.value = object.value ?? 0;
     return message;
@@ -295,7 +315,10 @@ function createBaseInt32Value(): Int32Value {
 }
 
 export const Int32Value = {
-  encode(message: Int32Value, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
+  encode(
+    message: Int32Value,
+    writer: _m0.Writer = _m0.Writer.create()
+  ): _m0.Writer {
     if (message.value !== 0) {
       writer.uint32(8).int32(message.value);
     }
@@ -332,7 +355,9 @@ export const Int32Value = {
     return obj;
   },
 
-  fromPartial<I extends Exact<DeepPartial<Int32Value>, I>>(object: I): Int32Value {
+  fromPartial<I extends Exact<DeepPartial<Int32Value>, I>>(
+    object: I
+  ): Int32Value {
     const message = createBaseInt32Value();
     message.value = object.value ?? 0;
     return message;
@@ -344,7 +369,10 @@ function createBaseUInt32Value(): UInt32Value {
 }
 
 export const UInt32Value = {
-  encode(message: UInt32Value, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
+  encode(
+    message: UInt32Value,
+    writer: _m0.Writer = _m0.Writer.create()
+  ): _m0.Writer {
     if (message.value !== 0) {
       writer.uint32(8).uint32(message.value);
     }
@@ -381,7 +409,9 @@ export const UInt32Value = {
     return obj;
   },
 
-  fromPartial<I extends Exact<DeepPartial<UInt32Value>, I>>(object: I): UInt32Value {
+  fromPartial<I extends Exact<DeepPartial<UInt32Value>, I>>(
+    object: I
+  ): UInt32Value {
     const message = createBaseUInt32Value();
     message.value = object.value ?? 0;
     return message;
@@ -393,7 +423,10 @@ function createBaseBoolValue(): BoolValue {
 }
 
 export const BoolValue = {
-  encode(message: BoolValue, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
+  encode(
+    message: BoolValue,
+    writer: _m0.Writer = _m0.Writer.create()
+  ): _m0.Writer {
     if (message.value === true) {
       writer.uint32(8).bool(message.value);
     }
@@ -430,7 +463,9 @@ export const BoolValue = {
     return obj;
   },
 
-  fromPartial<I extends Exact<DeepPartial<BoolValue>, I>>(object: I): BoolValue {
+  fromPartial<I extends Exact<DeepPartial<BoolValue>, I>>(
+    object: I
+  ): BoolValue {
     const message = createBaseBoolValue();
     message.value = object.value ?? false;
     return message;
@@ -442,7 +477,10 @@ function createBaseStringValue(): StringValue {
 }
 
 export const StringValue = {
-  encode(message: StringValue, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
+  encode(
+    message: StringValue,
+    writer: _m0.Writer = _m0.Writer.create()
+  ): _m0.Writer {
     if (message.value !== "") {
       writer.uint32(10).string(message.value);
     }
@@ -479,7 +517,9 @@ export const StringValue = {
     return obj;
   },
 
-  fromPartial<I extends Exact<DeepPartial<StringValue>, I>>(object: I): StringValue {
+  fromPartial<I extends Exact<DeepPartial<StringValue>, I>>(
+    object: I
+  ): StringValue {
     const message = createBaseStringValue();
     message.value = object.value ?? "";
     return message;
@@ -491,7 +531,10 @@ function createBaseBytesValue(): BytesValue {
 }
 
 export const BytesValue = {
-  encode(message: BytesValue, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
+  encode(
+    message: BytesValue,
+    writer: _m0.Writer = _m0.Writer.create()
+  ): _m0.Writer {
     if (message.value.length !== 0) {
       writer.uint32(10).bytes(message.value);
     }
@@ -518,18 +561,24 @@ export const BytesValue = {
 
   fromJSON(object: any): BytesValue {
     return {
-      value: isSet(object.value) ? bytesFromBase64(object.value) : new Uint8Array(),
+      value: isSet(object.value)
+        ? bytesFromBase64(object.value)
+        : new Uint8Array(),
     };
   },
 
   toJSON(message: BytesValue): unknown {
     const obj: any = {};
     message.value !== undefined &&
-      (obj.value = base64FromBytes(message.value !== undefined ? message.value : new Uint8Array()));
+      (obj.value = base64FromBytes(
+        message.value !== undefined ? message.value : new Uint8Array()
+      ));
     return obj;
   },
 
-  fromPartial<I extends Exact<DeepPartial<BytesValue>, I>>(object: I): BytesValue {
+  fromPartial<I extends Exact<DeepPartial<BytesValue>, I>>(
+    object: I
+  ): BytesValue {
     const message = createBaseBytesValue();
     message.value = object.value ?? new Uint8Array();
     return message;
@@ -548,7 +597,8 @@ var globalThis: any = (() => {
 })();
 
 const atob: (b64: string) => string =
-  globalThis.atob || (b64 => globalThis.Buffer.from(b64, "base64").toString("binary"));
+  globalThis.atob ||
+  ((b64) => globalThis.Buffer.from(b64, "base64").toString("binary"));
 function bytesFromBase64(b64: string): Uint8Array {
   const bin = atob(b64);
   const arr = new Uint8Array(bin.length);
@@ -559,16 +609,24 @@ function bytesFromBase64(b64: string): Uint8Array {
 }
 
 const btoa: (bin: string) => string =
-  globalThis.btoa || (bin => globalThis.Buffer.from(bin, "binary").toString("base64"));
+  globalThis.btoa ||
+  ((bin) => globalThis.Buffer.from(bin, "binary").toString("base64"));
 function base64FromBytes(arr: Uint8Array): string {
   const bin: string[] = [];
-  arr.forEach(byte => {
+  arr.forEach((byte) => {
     bin.push(String.fromCharCode(byte));
   });
   return btoa(bin.join(""));
 }
 
-type Builtin = Date | Function | Uint8Array | string | number | boolean | undefined;
+type Builtin =
+  | Date
+  | Function
+  | Uint8Array
+  | string
+  | number
+  | boolean
+  | undefined;
 
 export type DeepPartial<T> = T extends Builtin
   ? T
@@ -583,7 +641,10 @@ export type DeepPartial<T> = T extends Builtin
 type KeysOfUnion<T> = T extends T ? keyof T : never;
 export type Exact<P, I extends P> = P extends Builtin
   ? P
-  : P & { [K in keyof P]: Exact<P[K], I[K]> } & Record<Exclude<keyof I, KeysOfUnion<P>>, never>;
+  : P & { [K in keyof P]: Exact<P[K], I[K]> } & Record<
+        Exclude<keyof I, KeysOfUnion<P>>,
+        never
+      >;
 
 function longToNumber(long: Long): number {
   if (long.gt(Number.MAX_SAFE_INTEGER)) {
