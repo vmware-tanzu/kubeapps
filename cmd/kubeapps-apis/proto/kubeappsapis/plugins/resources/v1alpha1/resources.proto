@@ -145,6 +145,8 @@ message CreateNamespaceRequest {
     // The context of the namespace being created.
     kubeappsapis.core.packages.v1alpha1.Context context = 1;
 
+    // Labels
+    //
     // The additional labels added to the namespace at creation time
     map<string, string> labels = 2;
 }
