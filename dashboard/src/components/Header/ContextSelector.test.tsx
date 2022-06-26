@@ -139,7 +139,7 @@ it("submits the form to create a new namespace with custom labels", () => {
 
   const config = cloneDeep(initialState.config);
   config.createNamespaceLabels = {
-    "managed-by": "kubeapps"
+    "managed-by": "kubeapps",
   };
   const wrapper = mountWrapper(getStore({ config }), <ContextSelector />);
 
@@ -160,7 +160,9 @@ it("submits the form to create a new namespace with custom labels", () => {
   });
   wrapper.update();
 
-  expect(createNamespace).toHaveBeenCalledWith(initialState.clusters.currentCluster, "new-ns", {"managed-by": "kubeapps"});
+  expect(createNamespace).toHaveBeenCalledWith(initialState.clusters.currentCluster, "new-ns", {
+    "managed-by": "kubeapps",
+  });
 });
 
 it("shows an error creating a namespace", () => {
