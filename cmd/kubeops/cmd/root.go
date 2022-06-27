@@ -65,7 +65,7 @@ func setFlags(c *cobra.Command) {
 	c.Flags().Int64Var(&serveOpts.Timeout, "timeout", 300, "Timeout to perform release operations (install, upgrade, rollback, delete)")
 	c.Flags().StringVar(&serveOpts.ClustersConfigPath, "clusters-config-path", "", "Configuration for clusters")
 	c.Flags().StringVar(&serveOpts.PinnipedProxyURL, "pinniped-proxy-url", "http://kubeapps-internal-pinniped-proxy.kubeapps:3333", "internal url to be used for requests to clusters configured for credential proxying via pinniped")
-	c.Flags().StringVar(&serveOpts.PinnipedProxyCACert, "pinniped-proxy-ca-cert", "", "Custom certificate authority to use with requests to pinniped-proxy service")
+	c.Flags().StringVar(&serveOpts.PinnipedProxyCACert, "pinniped-proxy-ca-cert", "", "Path to certificate authority to use with requests to pinniped-proxy service")
 	c.Flags().IntVar(&serveOpts.Burst, "burst", 15, "internal burst capacity")
 	c.Flags().Float32Var(&serveOpts.Qps, "qps", 10, "internal QPS rate")
 	c.Flags().StringVar(&serveOpts.NamespaceHeaderName, "namespace-header-name", "", "name of the header field, e.g. namespace-header-name=X-Consumer-Groups")
