@@ -39,6 +39,7 @@ async fn main() -> Result<()> {
     // Run the server for ever. If it returns with an error, return the
     // result, otherwise, if it completes, we return Ok.
     if with_tls {
+        info!("Configuring with TLS cert {} and key {}", opt.proxy_tls_cert, opt.proxy_tls_cert_key);
         // For every incoming connection, we make a new hyper `Service` to handle
         // all incoming HTTP requests on that connection. This is done by passing a
         // closure to the hyper `make_service_fn` which returns our custom `make_svc`
@@ -58,10 +59,16 @@ async fn main() -> Result<()> {
             }
         });
 
-        let incoming = TlsListener::new(tls_config::tls_acceptor(opt.proxy_tls_cert, opt.proxy_tls_cert_key)?, AddrIncoming::bind(&addr)?);
+        let incoming = TlsListener::new(
+            tls_config::tls_acceptor(
+                opt.proxy_tls_cert,
+                opt.proxy_tls_cert_key
+            ).expect("unable to create tls acceptor"),
+            AddrIncoming::bind(&addr).expect("unable to bind to address")
+        );
         let server = Server::builder(incoming).serve(make_svc);
         info!("Listening on https://{}", addr);
-        server.await?;
+        server.await.expect("unexpected error while serving");
     } else {
         // The make_svc function needs to be defined in this scope as the
         // compiler uses a different type for the non-tls version.
@@ -75,7 +82,7 @@ async fn main() -> Result<()> {
         });
         let server = Server::bind(&addr).serve(make_svc);
         info!("Listening on http://{}", addr);
-        server.await?;
+        server.await.expect("unexpected error while serving");
     }
 
     Ok(())
