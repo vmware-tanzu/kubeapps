@@ -140,7 +140,7 @@ export function AppRepoForm(props: IAppRepoFormProps) {
   const [type, setType] = useState("");
   const [url, setURL] = useState("");
   const [isUserManagedSecret, setIsUserManagedSecret] = useState(false);
-  const [isUserManagedPSSecret, setIsUserManagedPSSecret] = useState(true);
+  const [isUserManagedPSSecret] = useState(true);
   const [isUserManagedCASecret, setIsUserManagedCASecret] = useState(false);
 
   // initial state (collapsed or not) of each accordion tab
