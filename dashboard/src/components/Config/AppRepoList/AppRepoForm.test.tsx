@@ -199,7 +199,7 @@ it("should call the install method with OCI information", async () => {
     plugin: { name: PluginNames.PACKAGES_HELM, version: "v1alpha1" },
     customDetails: {
       ociRepositories: ["apache", "jenkins"],
-      dockerRegistrySecrets: [""],
+      dockerRegistrySecrets: [],
       filterRule: undefined,
       performValidation: true,
     },
@@ -235,7 +235,7 @@ it("should call the install skipping TLS verification", async () => {
     plugin: { name: PluginNames.PACKAGES_HELM, version: "v1alpha1" },
     customDetails: {
       ociRepositories: [],
-      dockerRegistrySecrets: [""],
+      dockerRegistrySecrets: [],
       filterRule: undefined,
       performValidation: true,
     },
@@ -272,7 +272,7 @@ it("should call the install passing credentials", async () => {
     plugin: { name: PluginNames.PACKAGES_HELM, version: "v1alpha1" },
     customDetails: {
       ociRepositories: [],
-      dockerRegistrySecrets: [""],
+      dockerRegistrySecrets: [],
       filterRule: undefined,
       performValidation: true,
     },
@@ -309,7 +309,7 @@ describe("when using a filter", () => {
       plugin: { name: PluginNames.PACKAGES_HELM, version: "v1alpha1" },
       customDetails: {
         ociRepositories: [],
-        dockerRegistrySecrets: [""],
+        dockerRegistrySecrets: [],
         filterRule: {
           jq: ".name == $var0 or .name == $var1",
           variables: { $var0: "nginx", $var1: "wordpress" },
@@ -350,7 +350,7 @@ describe("when using a filter", () => {
       plugin: { name: PluginNames.PACKAGES_HELM, version: "v1alpha1" },
       customDetails: {
         ociRepositories: [],
-        dockerRegistrySecrets: [""],
+        dockerRegistrySecrets: [],
         filterRule: {
           jq: ".name | test($var) | not",
           variables: { $var: "nginx" },
@@ -395,7 +395,7 @@ describe("when using a filter", () => {
       plugin: { name: PluginNames.PACKAGES_HELM, version: "v1alpha1" },
       customDetails: {
         ociRepositories: ["apache", "jenkins"],
-        dockerRegistrySecrets: [""],
+        dockerRegistrySecrets: [],
         filterRule: undefined,
         performValidation: true,
       },
@@ -429,7 +429,7 @@ it("should call the install method with a description", async () => {
     url: "https://helm.repo",
     customDetails: {
       ociRepositories: [],
-      dockerRegistrySecrets: [""],
+      dockerRegistrySecrets: [],
       filterRule: undefined,
       performValidation: true,
     },

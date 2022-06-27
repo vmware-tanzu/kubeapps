@@ -246,7 +246,7 @@ export function AppRepoForm(props: IAppRepoFormProps) {
         ociRepositories: ociRepoList,
         performValidation,
         filterRule: filter,
-        dockerRegistrySecrets: [secretAuthName],
+        dockerRegistrySecrets: secretAuthName ? [secretAuthName] : [],
       } as RepositoryCustomDetails,
       description,
       dockerRegCreds: {
