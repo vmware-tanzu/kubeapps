@@ -39,19 +39,21 @@ test("Create a new private package repository successfully", async ({ page }) =>
   await page.locator('[id="kubeapps-repo-password"]').fill("password");
 
   // Docker credentials
-  await page.locator("text=Docker Registry Credentials").click();
-  await page.locator('[id="kubeapps-docker-cred-server"]').fill("https://index.docker.io/v1/");
-  await page.locator('[id="kubeapps-docker-cred-username"]').fill(process.env.DOCKER_USERNAME);
-  await page.locator('[id="kubeapps-docker-cred-password"]').fill(process.env.DOCKER_PASSWORD);
-  await page.locator('[id="kubeapps-docker-cred-email"]').fill("test@example.com");
+  // TODO(agamez): add them once we can create pullsecrets from the UI
+  // await page.locator('[id="kubeapps-imagePullSecrets-cred-server"]').fill("https://index.docker.io/v1/");
+  // await page.locator('[id="kubeapps-imagePullSecrets-cred-username"]').fill(process.env.DOCKER_USERNAME);
+  // await page.locator('[id="kubeapps-imagePullSecrets-cred-password"]').fill(process.env.DOCKER_PASSWORD);
+  // await page.locator('[id="kubeapps-imagePullSecrets-cred-email"]').fill("test@example.com");
+  await page.locator('text=Docker Registry Credentials').nth(1).click();
+  await page.locator('[id="kubeapps-repo-auth-secret-name-pullsecret"]').fill("my-pull-secret");
 
   await page.locator("text=Install Repository >> div").click();
 
+  // Wait for new packages to be indexed
+  await page.waitForTimeout(5000);
+
   // TODO(agamez): disabling this test for now. We need to figure out how to pass the pullsecrets from the UI
   // https://github.com/vmware-tanzu/kubeapps/issues/4764
-
-  // // Wait for new packages to be indexed
-  // await page.waitForTimeout(5000);
 
   // // Check if our package shows up in catalog
   // await page.click(`a:has-text("${repoName}")`);
