@@ -44,7 +44,7 @@ test("Create a new private package repository successfully", async ({ page }) =>
   // await page.locator('[id="kubeapps-imagePullSecrets-cred-username"]').fill(process.env.DOCKER_USERNAME);
   // await page.locator('[id="kubeapps-imagePullSecrets-cred-password"]').fill(process.env.DOCKER_PASSWORD);
   // await page.locator('[id="kubeapps-imagePullSecrets-cred-email"]').fill("test@example.com");
-  await page.locator('text=Docker Registry Credentials').nth(1).click();
+  await page.locator("text=Docker Registry Credentials").nth(1).click();
   await page.locator('[id="kubeapps-repo-auth-secret-name-pullsecret"]').fill("my-pull-secret");
 
   await page.locator("text=Install Repository >> div").click();
