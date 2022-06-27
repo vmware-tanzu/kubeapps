@@ -7,6 +7,7 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"io/ioutil"
 	"reflect"
 	"strings"
 
@@ -16,6 +17,7 @@ import (
 	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/pkg/pkgutils"
 	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/pkg/statuserror"
 	"github.com/vmware-tanzu/kubeapps/pkg/chart/models"
+	httpclient "github.com/vmware-tanzu/kubeapps/pkg/http-client"
 	"github.com/vmware-tanzu/kubeapps/pkg/tarutil"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -85,7 +87,7 @@ func (s *Server) availableChartDetail(ctx context.Context, packageRef *corev1.Av
 			return nil, err
 		} else if opts, err := s.clientOptionsForRepo(ctx, repoName); err != nil {
 			return nil, err
-		} else if byteArray, err = s.chartCache.GetForOne(key, chartModel, opts); err != nil {
+		} else if byteArray, err = s.chartCache.GetForOne(key, chartModel, downloadChartViaHttpFn(opts)); err != nil {
 			return nil, err
 		} else if byteArray == nil {
 			return nil, status.Errorf(codes.Internal, "failed to load details for chart [%s]", chartModel.ID)
@@ -285,4 +287,28 @@ func availablePackageDetailFromChartDetail(chartID string, chartDetail map[strin
 	// note, the caller will set pkg.AvailablePackageRef namespace as that information
 	// is not included in the tarball
 	return pkg, nil
+}
+
+func downloadChartViaHttpFn(options *common.HttpClientOptions) func(chartID, chartUrl, chartVersion string) ([]byte, error) {
+	return func(chartID, chartUrl, chartVersion string) ([]byte, error) {
+		client, headers, err := common.NewHttpClientAndHeaders(options)
+		if err != nil {
+			return nil, err
+		}
+
+		reader, _, err := httpclient.GetStream(chartUrl, client, headers)
+		if reader != nil {
+			defer reader.Close()
+		}
+		if err != nil {
+			return nil, err
+		}
+
+		chartTgz, err := ioutil.ReadAll(reader)
+		if err != nil {
+			return nil, err
+		}
+
+		return chartTgz, nil
+	}
 }

@@ -517,7 +517,7 @@ func TestKindClusterRepoAndChartRBAC(t *testing.T) {
 	}
 }
 
-func TestKindClusterGetAvailablePackageSummariesAndVersionsForOCI(t *testing.T) {
+func TestKindClusterAvailablePackageEndpointsForOCI(t *testing.T) {
 	fluxPluginClient, fluxPluginReposClient, err := checkEnv(t)
 	if err != nil {
 		t.Fatal(err)
@@ -573,7 +573,7 @@ func TestKindClusterGetAvailablePackageSummariesAndVersionsForOCI(t *testing.T) 
 		t.Fatal(err)
 	}
 
-	grpcContext, cancel = context.WithTimeout(grpcContext, 90*time.Second)
+	grpcContext, cancel = context.WithTimeout(grpcContext, defaultContextTimeout)
 	defer cancel()
 	resp, err := fluxPluginClient.GetAvailablePackageSummaries(
 		grpcContext,
@@ -590,10 +590,12 @@ func TestKindClusterGetAvailablePackageSummariesAndVersionsForOCI(t *testing.T) 
 		plugins.Plugin{},
 		corev1.PackageAppVersion{})
 	opt2 := cmpopts.SortSlices(lessAvailablePackageFunc)
-	if got, want := resp, oci_stefanprodan_podinfo_available_summaries(repoName.Name); !cmp.Equal(got, want, opt1, opt2) {
+	if got, want := resp, expected_oci_stefanprodan_podinfo_available_summaries(repoName.Name); !cmp.Equal(got, want, opt1, opt2) {
 		t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opt1, opt2))
 	}
 
+	grpcContext, cancel = context.WithTimeout(grpcContext, defaultContextTimeout)
+	defer cancel()
 	resp2, err := fluxPluginClient.GetAvailablePackageVersions(
 		grpcContext, &corev1.GetAvailablePackageVersionsRequest{
 			AvailablePackageRef: &corev1.AvailablePackageReference{
@@ -604,9 +606,6 @@ func TestKindClusterGetAvailablePackageSummariesAndVersionsForOCI(t *testing.T) 
 			},
 		})
 	if err != nil {
-		t.Fatalf("%v", err)
-	}
-	if err != nil {
 		t.Fatal(err)
 	}
 	opts := cmpopts.IgnoreUnexported(
@@ -615,4 +614,27 @@ func TestKindClusterGetAvailablePackageSummariesAndVersionsForOCI(t *testing.T) 
 	if got, want := resp2, expected_versions_stefanprodan_podinfo; !cmp.Equal(want, got, opts) {
 		t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opts))
 	}
+
+	grpcContext, cancel = context.WithTimeout(grpcContext, defaultContextTimeout)
+	defer cancel()
+	resp3, err := fluxPluginClient.GetAvailablePackageDetail(
+		grpcContext,
+		&corev1.GetAvailablePackageDetailRequest{
+			AvailablePackageRef: &corev1.AvailablePackageReference{
+				Context: &corev1.Context{
+					Namespace: "default",
+				},
+				Identifier: repoName.Name + "/podinfo",
+			},
+		})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	compareActualVsExpectedAvailablePackageDetail(
+		t,
+		resp3.AvailablePackageDetail,
+		expected_detail_oci_stefanprodan_podinfo(repoName.Name).AvailablePackageDetail)
+
+	// TODO try a few older versions
 }

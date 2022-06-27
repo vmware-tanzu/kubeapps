@@ -35,6 +35,7 @@ import (
 	"github.com/Masterminds/semver/v3"
 	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/fluxv2/packages/v1alpha1/common"
 	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/fluxv2/packages/v1alpha1/common/transport"
+	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/pkg/pkgutils"
 	"github.com/vmware-tanzu/kubeapps/pkg/chart/models"
 	"github.com/vmware-tanzu/kubeapps/pkg/tarutil"
 	log "k8s.io/klog/v2"
@@ -402,7 +403,7 @@ func (s *repoEventSink) onAddOciRepo(repo sourcev1.HelmRepository) ([]byte, bool
 			return nil, false, status.Errorf(codes.Internal, "%v", err)
 		}
 
-		latestChartMetadata, err := s.getChartMetadata(ociRegistry, chartID, latestChartVersion)
+		latestChartMetadata, err := s.getOCIChartMetadata(ociRegistry, chartID, latestChartVersion)
 		if err != nil {
 			return nil, false, err
 		}
@@ -463,6 +464,14 @@ func (s *repoEventSink) onAddOciRepo(repo sourcev1.HelmRepository) ([]byte, bool
 	if err = enc.Encode(cacheEntryValue); err != nil {
 		return nil, false, err
 	}
+
+	if s.chartCache != nil {
+		fn := s.downloadOCIChartFn(ociRegistry)
+		if err = s.chartCache.SyncCharts(charts, fn); err != nil {
+			return nil, false, err
+		}
+	}
+
 	return buf.Bytes(), true, nil
 }
 
@@ -497,6 +506,7 @@ func (s *repoEventSink) onModifyOciRepo(key string, oldValue interface{}, repo s
 	}
 
 	if cacheEntry.Checksum != newChecksum {
+		// TODO (gfichtenholt)
 		return nil, false, status.Errorf(codes.Unimplemented, "TODO")
 	} else {
 		// skip because the content did not change
@@ -649,18 +659,25 @@ func (s *repoEventSink) clientOptionsForRepo(repo sourcev1.HelmRepository) ([]re
 	return loginOpts, getterOpts, cred, nil
 }
 
-func (s *repoEventSink) getChartMetadata(ociRegistry *OCIRegistry, chartID string, chartVersion *repo.ChartVersion) (*chart.Metadata, error) {
-	log.Infof("getChartMetadata(%s, %s)", chartID, chartVersion.Metadata.Version)
-
+func (s *repoEventSink) getOCIChartTarball(ociRegistry *OCIRegistry, chartID string, chartVersion *repo.ChartVersion) ([]byte, error) {
 	chartBuffer, err := ociRegistry.downloadChart(chartVersion)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "%v", err)
 	}
-	log.Infof("==========>: chart buffer: [%d] bytes", chartBuffer.Len())
+	return chartBuffer.Bytes(), nil
+}
+
+func (s *repoEventSink) getOCIChartMetadata(ociRegistry *OCIRegistry, chartID string, chartVersion *repo.ChartVersion) (*chart.Metadata, error) {
+	log.Infof("getOCIChartMetadata(%s, %s)", chartID, chartVersion.Metadata.Version)
+
+	chartTarball, err := s.getOCIChartTarball(ociRegistry, chartID, chartVersion)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "%v", err)
+	}
+	log.Infof("==========>: chart .tgz: [%d] bytes", len(chartTarball))
 
 	// not sure yet why flux untars into a temp directory
-	files, err := tarutil.FetchChartDetailFromTarball(
-		bytes.NewReader(chartBuffer.Bytes()), chartID)
+	files, err := tarutil.FetchChartDetailFromTarball(bytes.NewReader(chartTarball), chartID)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "%v", err)
 	}
@@ -680,4 +697,21 @@ func (s *repoEventSink) getChartMetadata(ociRegistry *OCIRegistry, chartID strin
 	}
 	log.Infof("==========>: chart metadata: %s", common.PrettyPrint(chartMetadata))
 	return &chartMetadata, nil
+}
+
+func (s *repoEventSink) downloadOCIChartFn(ociRegistry *OCIRegistry) func(chartID, chartUrl, chartVersion string) ([]byte, error) {
+	return func(chartID, chartUrl, chartVersion string) ([]byte, error) {
+		_, chartName, err := pkgutils.SplitPackageIdentifier(chartID)
+		if err != nil {
+			return nil, err
+		}
+		cv := &repo.ChartVersion{
+			URLs: []string{chartUrl},
+			Metadata: &chart.Metadata{
+				Name:    chartName,
+				Version: chartVersion,
+			},
+		}
+		return s.getOCIChartTarball(ociRegistry, chartID, cv)
+	}
 }

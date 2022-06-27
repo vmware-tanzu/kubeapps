@@ -3132,7 +3132,7 @@ var (
 		PackageRepoRef: repoRefInReq("my-podinfo-4", "TBD"),
 	}
 
-	oci_stefanprodan_podinfo_available_summaries = func(name string) *corev1.GetAvailablePackageSummariesResponse {
+	expected_oci_stefanprodan_podinfo_available_summaries = func(name string) *corev1.GetAvailablePackageSummariesResponse {
 		return &corev1.GetAvailablePackageSummariesResponse{
 			AvailablePackageSummaries: []*corev1.AvailablePackageSummary{
 				{
@@ -3145,6 +3145,26 @@ var (
 					ShortDescription: "Podinfo Helm chart for Kubernetes",
 					Categories:       []string{""},
 				},
+			},
+		}
+	}
+
+	expected_detail_oci_stefanprodan_podinfo = func(name string) *corev1.GetAvailablePackageDetailResponse {
+		return &corev1.GetAvailablePackageDetailResponse{
+			AvailablePackageDetail: &corev1.AvailablePackageDetail{
+				AvailablePackageRef: availableRef(name+"/podinfo", "default"),
+				Name:                "podinfo",
+				Version:             pkgAppVersion("6.1.6"),
+				RepoUrl:             "oci://ghcr.io/stefanprodan/charts",
+				HomeUrl:             "https://github.com/stefanprodan/podinfo",
+				DisplayName:         "podinfo",
+				ShortDescription:    "Podinfo Helm chart for Kubernetes",
+				SourceUrls:          []string{"https://github.com/stefanprodan/podinfo"},
+				Maintainers: []*corev1.Maintainer{
+					{Name: "stefanprodan", Email: "stefanprodan@users.noreply.github.com"},
+				},
+				Readme:        "Podinfo is a tiny web application made with Go",
+				DefaultValues: "Default values for podinfo.\n\nreplicaCount: 1\n",
 			},
 		}
 	}

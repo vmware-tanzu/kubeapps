@@ -754,7 +754,8 @@ func TestChartCacheResyncNotIdle(t *testing.T) {
 				t.Fatalf("%+v", err)
 			}
 			if i == 0 {
-				chartBytes, err = cache.ChartCacheComputeValue(chartID, ts.URL, chartVersion, opts)
+				fn := downloadChartViaHttpFn(opts)
+				chartBytes, err = cache.ChartCacheComputeValue(chartID, ts.URL, chartVersion, fn)
 				if err != nil {
 					t.Fatalf("%+v", err)
 				}
@@ -973,7 +974,8 @@ func (cs *repoEventSink) redisMockSetValueForChart(mock redismock.ClientMock, ke
 	if err != nil {
 		return err
 	}
-	byteArray, err := cache.ChartCacheComputeValue(chartID, url, version, opts)
+	fn := downloadChartViaHttpFn(opts)
+	byteArray, err := cache.ChartCacheComputeValue(chartID, url, version, fn)
 	if err != nil {
 		return fmt.Errorf("chartCacheComputeValue failed due to: %+v", err)
 	}
@@ -994,7 +996,8 @@ func redisMockExpectGetFromChartCache(mock redismock.ClientMock, key, url string
 		if err != nil {
 			return err
 		}
-		bytes, err := cache.ChartCacheComputeValue(chartID, url, version, opts)
+		fn := downloadChartViaHttpFn(opts)
+		bytes, err := cache.ChartCacheComputeValue(chartID, url, version, fn)
 		if err != nil {
 			return err
 		}
