@@ -39,7 +39,7 @@ test("Create a new private package repository successfully", async ({ page }) =>
   await page.locator('[id="kubeapps-repo-password"]').fill("password");
 
   // Docker credentials
-  await page.locator("text=Use Docker Registry Credentials").click();
+  await page.locator("text=Docker Registry Credentials").click();
   await page.locator('[id="kubeapps-docker-cred-server"]').fill("https://index.docker.io/v1/");
   await page.locator('[id="kubeapps-docker-cred-username"]').fill(process.env.DOCKER_USERNAME);
   await page.locator('[id="kubeapps-docker-cred-password"]').fill(process.env.DOCKER_PASSWORD);
