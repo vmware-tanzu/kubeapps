@@ -78,6 +78,10 @@ export function AppRepoForm(props: IAppRepoFormProps) {
   const [authMethod, setAuthMethod] = useState(
     PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_UNSPECIFIED,
   );
+  // Auth type of the registry (for Helm-based repos)
+  const [helmPSAuthMethod, setHelmPsAuthMethod] = useState(
+    PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_UNSPECIFIED,
+  );
 
   // PACKAGE_REPOSITORY_AUTH_TYPE_AUTHORIZATION_HEADER
   const [authCustomHeader, setAuthCustomHeader] = useState("");
@@ -95,6 +99,12 @@ export function AppRepoForm(props: IAppRepoFormProps) {
   const [secretPassword, setSecretPassword] = useState("");
   const [secretServer, setSecretServer] = useState("");
 
+  // Registry pullsecrets
+  const [pullSecretEmail, setPullSecretEmail] = useState("");
+  const [pullSecretUser, setPullSecretUser] = useState("");
+  const [pullSecretPassword, setPullSecretPassword] = useState("");
+  const [pullSecretServer, setPullSecretServer] = useState("");
+
   // PACKAGE_REPOSITORY_AUTH_TYPE_SSH
   const [sshKnownHosts, setSshKnownHosts] = useState("");
   const [sshPrivateKey, setSshPrivateKey] = useState("");
@@ -108,6 +118,7 @@ export function AppRepoForm(props: IAppRepoFormProps) {
 
   // User-managed secrets
   const [secretAuthName, setSecretAuthName] = useState("");
+  const [secretPSName, setSecretPSName] = useState("");
   const [secretTLSName, setSecretTLSName] = useState("");
 
   // rest of the package repo form variables
@@ -129,6 +140,8 @@ export function AppRepoForm(props: IAppRepoFormProps) {
   const [type, setType] = useState("");
   const [url, setURL] = useState("");
   const [isUserManagedSecret, setIsUserManagedSecret] = useState(false);
+  const [isUserManagedPSSecret, setIsUserManagedPSSecret] = useState(true);
+  const [isUserManagedCASecret, setIsUserManagedCASecret] = useState(false);
 
   // initial state (collapsed or not) of each accordion tab
   const [accordion, setAccordion] = useState([true, false, false, false]);
@@ -189,6 +202,11 @@ export function AppRepoForm(props: IAppRepoFormProps) {
           setFilterExclude(exclude);
           setFilterNames(names);
         }
+        setHelmPsAuthMethod(
+          repositoryCustomDetails?.dockerRegistrySecrets?.length
+            ? PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_DOCKER_CONFIG_JSON
+            : PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_UNSPECIFIED,
+        );
       }
     }
   }, [repo, namespace, currentCluster, dispatch]);
@@ -246,7 +264,7 @@ export function AppRepoForm(props: IAppRepoFormProps) {
         ociRepositories: ociRepoList,
         performValidation,
         filterRule: filter,
-        dockerRegistrySecrets: secretAuthName ? [secretAuthName] : [],
+        dockerRegistrySecrets: secretPSName ? [secretPSName] : [],
       } as RepositoryCustomDetails,
       description,
       dockerRegCreds: {
@@ -309,6 +327,9 @@ export function AppRepoForm(props: IAppRepoFormProps) {
   const handleAuthRadioButtonChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setAuthMethod(PackageRepositoryAuth_PackageRepositoryAuthType[e.target.value]);
   };
+  const handleImgPSChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setHelmPsAuthMethod(PackageRepositoryAuth_PackageRepositoryAuthType[e.target.value]);
+  };
   const handleTypeRadioButtonChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setType(e.target.value);
   };
@@ -366,6 +387,18 @@ export function AppRepoForm(props: IAppRepoFormProps) {
   const handleAuthSecretServerChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSecretServer(e.target.value);
   };
+  const handleImgPSUserChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setPullSecretUser(e.target.value);
+  };
+  const handleImgPSPasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setPullSecretPassword(e.target.value);
+  };
+  const handleImgPSEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setPullSecretEmail(e.target.value);
+  };
+  const handleImgPSServerChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setPullSecretServer(e.target.value);
+  };
   const handleSshKnownHostsChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setSshKnownHosts(e.target.value);
   };
@@ -384,11 +417,20 @@ export function AppRepoForm(props: IAppRepoFormProps) {
   const handleSecretAuthNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSecretAuthName(e.target.value);
   };
+  const setSecretPSNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSecretPSName(e.target.value);
+  };
   const handleSecretTLSNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSecretTLSName(e.target.value);
   };
   const handleIsUserManagedSecretChange = (_e: React.ChangeEvent<HTMLInputElement>) => {
     setIsUserManagedSecret(!isUserManagedSecret);
+  };
+  // const handleIsUserManagedPSSecretChange = (_e: React.ChangeEvent<HTMLInputElement>) => {
+  //   setIsUserManagedPSSecret(!isUserManagedPSSecret);
+  // };
+  const handleIsUserManagedCASecretChange = (_e: React.ChangeEvent<HTMLInputElement>) => {
+    setIsUserManagedCASecret(!isUserManagedCASecret);
   };
 
   const parseValidationError = (error: Error) => {
@@ -409,7 +451,7 @@ export function AppRepoForm(props: IAppRepoFormProps) {
       <CdsToggleGroup className="flex-v-center">
         <CdsToggle>
           <label>
-            {isUserManagedSecret ? "Use user-mangaged secrets" : "Use Kubeapps-mangaged secrets"}
+            {isUserManagedSecret ? "Use user-managed secrets" : "Use Kubeapps-managed secrets"}
           </label>
           <input
             type="checkbox"
@@ -439,7 +481,6 @@ export function AppRepoForm(props: IAppRepoFormProps) {
           }
           pattern="[a-z0-9]([-a-z0-9]*[a-z0-9])?(\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*"
           title="Use lower case alphanumeric characters, '-' or '.'"
-          disabled={!!repo?.name}
         />
       </CdsInput>
       <br />
@@ -749,7 +790,7 @@ export function AppRepoForm(props: IAppRepoFormProps) {
                     </CdsRadio>
                     <CdsRadio>
                       <label htmlFor="kubeapps-repo-auth-method-registry">
-                        Use Docker Registry Credentials
+                        Docker Registry Credentials
                       </label>
                       <input
                         id="kubeapps-repo-auth-method-registry"
@@ -1205,6 +1246,211 @@ export function AppRepoForm(props: IAppRepoFormProps) {
                   </div>
                   {/* End authentication details */}
                 </div>
+                {plugin?.name === PluginNames.PACKAGES_HELM && (
+                  <div cds-layout="grid gap:lg">
+                    {/* Begin imagePullSecrets selection */}
+                    <CdsRadioGroup cds-layout="col@xs:4">
+                      {/* eslint-disable-next-line jsx-a11y/label-has-associated-control */}
+                      <label>Container Registry Credentials</label>
+                      <CdsRadio>
+                        <label htmlFor="kubeapps-repo-pullsecret-method-none">None (Public)</label>
+                        <input
+                          id="kubeapps-repo-pullsecret-method-none"
+                          type="radio"
+                          name="auth"
+                          value={
+                            PackageRepositoryAuth_PackageRepositoryAuthType[
+                              PackageRepositoryAuth_PackageRepositoryAuthType
+                                .PACKAGE_REPOSITORY_AUTH_TYPE_UNSPECIFIED
+                            ]
+                          }
+                          checked={
+                            helmPSAuthMethod ===
+                            PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_UNSPECIFIED
+                          }
+                          onChange={handleImgPSChange}
+                          disabled={
+                            !!(repo?.customDetail as Partial<RepositoryCustomDetails>)
+                              ?.dockerRegistrySecrets?.length
+                          }
+                          required={
+                            authMethod ===
+                            PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_DOCKER_CONFIG_JSON
+                          }
+                        />
+                      </CdsRadio>
+                      {/* TODO(agamez): for a better UX, we might want to allow copying the values from the existing auth credentials */}
+                      <CdsRadio>
+                        <label htmlFor="kubeapps-repo-pullsecret-method-registry">
+                          Docker Registry Credentials
+                        </label>
+                        <input
+                          id="kubeapps-repo-pullsecret-method-registry"
+                          type="radio"
+                          name="auth"
+                          value={
+                            PackageRepositoryAuth_PackageRepositoryAuthType[
+                              PackageRepositoryAuth_PackageRepositoryAuthType
+                                .PACKAGE_REPOSITORY_AUTH_TYPE_DOCKER_CONFIG_JSON
+                            ]
+                          }
+                          checked={
+                            helmPSAuthMethod ===
+                            PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_DOCKER_CONFIG_JSON
+                          }
+                          onChange={handleImgPSChange}
+                          disabled={
+                            !!(repo?.customDetail as Partial<RepositoryCustomDetails>)
+                              ?.dockerRegistrySecrets?.length
+                          }
+                          required={
+                            authMethod ===
+                            PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_DOCKER_CONFIG_JSON
+                          }
+                        />
+                      </CdsRadio>
+                    </CdsRadioGroup>
+                    {/* End imagePullSecrets selection */}
+                    {/* Begin imagePullSecrets details */}
+                    <div cds-layout="col@xs:8">
+                      {/* Begin docker creds authentication */}
+                      <div
+                        id="kubeapps-repo-imagePullSecrets-details-docker"
+                        hidden={
+                          helmPSAuthMethod !==
+                          PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_DOCKER_CONFIG_JSON
+                        }
+                      >
+                        {/* TODO(agamez): enable the selection once the API supports it */}
+                        {/* <CdsToggleGroup className="flex-v-center">
+                          <CdsToggle>
+                            <label>
+                              {isUserManagedPSSecret
+                                ? "Use user-managed secrets"
+                                : "Use Kubeapps-managed secrets"}
+                            </label>
+                            <input
+                              type="checkbox"
+                              onChange={handleIsUserManagedPSSecretChange}
+                              checked={isUserManagedPSSecret}
+                              disabled={
+                                !!(repo?.customDetail as Partial<RepositoryCustomDetails>)
+                                  ?.dockerRegistrySecrets?.length
+                              }
+                            />
+                          </CdsToggle>
+                        </CdsToggleGroup>
+                        <br /> */}
+                        {isUserManagedPSSecret ? (
+                          <>
+                            <CdsInput>
+                              <label htmlFor={`kubeapps-repo-auth-secret-name-pullsecret`}>
+                                Registry Secret Name
+                              </label>
+                              <input
+                                id={`kubeapps-repo-auth-secret-name-pullsecret`}
+                                type="text"
+                                placeholder="my-registry-secret-name"
+                                value={secretPSName}
+                                onChange={setSecretPSNameChange}
+                                required={
+                                  isUserManagedPSSecret &&
+                                  helmPSAuthMethod !==
+                                    PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_UNSPECIFIED
+                                }
+                                pattern="[a-z0-9]([-a-z0-9]*[a-z0-9])?(\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*"
+                                title="Use lower case alphanumeric characters, '-' or '.'"
+                              />
+                            </CdsInput>
+                            <br />
+                            <CdsControlMessage>
+                              Name of the Kubernetes Secret object holding the auth data. Please
+                              ensure that secret has the proper type as expected by the selected
+                              authentication method.
+                            </CdsControlMessage>
+                          </>
+                        ) : (
+                          <>
+                            <CdsInput className="margin-t-sm">
+                              <label htmlFor="kubeapps-imagePullSecrets-cred-server">Server</label>
+                              <input
+                                id="kubeapps-imagePullSecrets-cred-server"
+                                value={pullSecretServer}
+                                onChange={handleImgPSServerChange}
+                                placeholder="https://index.docker.io/v1/"
+                                required={
+                                  authMethod ===
+                                  PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_DOCKER_CONFIG_JSON
+                                }
+                                disabled={
+                                  !!(repo?.customDetail as Partial<RepositoryCustomDetails>)
+                                    ?.dockerRegistrySecrets?.length
+                                }
+                              />
+                            </CdsInput>
+                            <br />
+                            <CdsInput className="margin-t-sm">
+                              <label htmlFor="kubeapps-imagePullSecrets-cred-username">
+                                Username
+                              </label>
+                              <input
+                                id="kubeapps-imagePullSecrets-cred-username"
+                                value={pullSecretUser}
+                                onChange={handleImgPSUserChange}
+                                placeholder="Username"
+                                required={
+                                  authMethod ===
+                                  PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_DOCKER_CONFIG_JSON
+                                }
+                                disabled={
+                                  !!(repo?.customDetail as Partial<RepositoryCustomDetails>)
+                                    ?.dockerRegistrySecrets?.length
+                                }
+                              />
+                            </CdsInput>
+                            <br />
+                            <CdsInput className="margin-t-sm">
+                              <label htmlFor="kubeapps-imagePullSecrets-cred-password">
+                                Password
+                              </label>
+                              <input
+                                id="kubeapps-imagePullSecrets-cred-password"
+                                type="password"
+                                value={pullSecretPassword}
+                                onChange={handleImgPSPasswordChange}
+                                placeholder="Password"
+                                required={
+                                  authMethod ===
+                                  PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_DOCKER_CONFIG_JSON
+                                }
+                                disabled={
+                                  !!(repo?.customDetail as Partial<RepositoryCustomDetails>)
+                                    ?.dockerRegistrySecrets?.length
+                                }
+                              />
+                            </CdsInput>
+                            <br />
+                            <CdsInput className="margin-t-sm">
+                              <label htmlFor="kubeapps-imagePullSecrets-cred-email">Email</label>
+                              <input
+                                id="kubeapps-imagePullSecrets-cred-email"
+                                value={pullSecretEmail}
+                                onChange={handleImgPSEmailChange}
+                                placeholder="user@example.com"
+                                disabled={
+                                  !!(repo?.customDetail as Partial<RepositoryCustomDetails>)
+                                    ?.dockerRegistrySecrets?.length
+                                }
+                              />
+                            </CdsInput>
+                          </>
+                        )}
+                      </div>
+                      {/* End docker creds authentication */}
+                    </div>
+                    {/* End imagePullSecrets details */}
+                  </div>
+                )}
               </CdsFormGroup>
             </CdsAccordionContent>
           </CdsAccordionPanel>
@@ -1329,36 +1575,65 @@ export function AppRepoForm(props: IAppRepoFormProps) {
                     />
                   </CdsCheckbox>
                 )}
-                {/* TODO(agamez): move this input to a better UX-wise place */}
-                <CdsInput>
-                  <label htmlFor="kubeapps-repo-secret-ca">Custom CA Secret Name (optional)</label>
-                  <input
-                    id="kubeapps-repo-secret-ca"
-                    type="text"
-                    placeholder="my-ca-secret"
-                    pattern="[a-z0-9]([-a-z0-9]*[a-z0-9])?(\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*"
-                    title="Use lower case alphanumeric characters, '-' or '.'"
-                    value={secretTLSName}
-                    onChange={handleSecretTLSNameChange}
-                  />
-                  <CdsControlMessage>
-                    Name of the Kubernetes Secret object holding the TLS Certificate Authority data.
-                  </CdsControlMessage>
-                </CdsInput>
-                <CdsTextarea layout="vertical">
-                  <label htmlFor="kubeapps-repo-custom-ca">Custom CA Certificate (optional)</label>
-                  <textarea
-                    id="kubeapps-repo-custom-ca"
-                    placeholder={"-----BEGIN CERTIFICATE-----\n...\n-----END CERTIFICATE-----"}
-                    className="cds-textarea-fix"
-                    value={customCA}
-                    disabled={skipTLS}
-                    onChange={handleCustomCAChange}
-                  />
-                  <CdsControlMessage>
-                    Custom Certificate Authority (CA) to use when connecting to the repository.
-                  </CdsControlMessage>
-                </CdsTextarea>
+
+                <CdsToggleGroup>
+                  <CdsToggle>
+                    <label>
+                      {isUserManagedCASecret
+                        ? "Use user-managed secrets"
+                        : "Use Kubeapps-managed secrets"}
+                    </label>
+                    <input
+                      type="checkbox"
+                      onChange={handleIsUserManagedCASecretChange}
+                      checked={isUserManagedCASecret}
+                      disabled={skipTLS}
+                    />
+                  </CdsToggle>
+                </CdsToggleGroup>
+                {isUserManagedCASecret ? (
+                  <>
+                    <CdsInput>
+                      <label htmlFor="kubeapps-repo-secret-ca">
+                        Custom CA Secret Name (optional)
+                      </label>
+                      <input
+                        id="kubeapps-repo-secret-ca"
+                        type="text"
+                        placeholder="my-ca-secret"
+                        pattern="[a-z0-9]([-a-z0-9]*[a-z0-9])?(\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*"
+                        title="Use lower case alphanumeric characters, '-' or '.'"
+                        value={secretTLSName}
+                        disabled={skipTLS}
+                        onChange={handleSecretTLSNameChange}
+                      />
+                    </CdsInput>
+                    <br />
+                    <CdsControlMessage>
+                      Name of the Kubernetes Secret object holding the TLS Certificate Authority
+                      data.
+                    </CdsControlMessage>
+                  </>
+                ) : (
+                  <>
+                    <CdsTextarea layout="vertical">
+                      <label htmlFor="kubeapps-repo-custom-ca">
+                        Custom CA Certificate (optional)
+                      </label>
+                      <textarea
+                        id="kubeapps-repo-custom-ca"
+                        placeholder={"-----BEGIN CERTIFICATE-----\n...\n-----END CERTIFICATE-----"}
+                        className="cds-textarea-fix"
+                        value={customCA}
+                        disabled={skipTLS}
+                        onChange={handleCustomCAChange}
+                      />
+                      <CdsControlMessage>
+                        Custom Certificate Authority (CA) to use when connecting to the repository.
+                      </CdsControlMessage>
+                    </CdsTextarea>
+                  </>
+                )}
                 <CdsCheckbox className="ca-skip-tls">
                   <label htmlFor="kubeapps-repo-skip-tls">Skip TLS Verification</label>
                   <input
