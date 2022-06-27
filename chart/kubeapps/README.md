@@ -474,6 +474,8 @@ Once you have installed Kubeapps follow the [Getting Started Guide](https://gith
 | `pinnipedProxy.defaultAuthenticatorType`              | Specify the (default) authenticator type                                                     | `JWTAuthenticator`        |
 | `pinnipedProxy.defaultAuthenticatorName`              | Specify the (default) authenticator name                                                     | `jwt-authenticator`       |
 | `pinnipedProxy.defaultPinnipedAPISuffix`              | Specify the (default) API suffix                                                             | `pinniped.dev`            |
+| `pinnipedProxy.TLSSecret`                             | Specify an optional TLS secret with which to proxy requests                                  | `""`                      |
+| `pinnipedProxy.CACert`                                | Specify the TLS CA cert config map which                                                     | `""`                      |
 | `pinnipedProxy.lifecycleHooks`                        | for the Pinniped Proxy container(s) to automate configuration before or after startup        | `{}`                      |
 | `pinnipedProxy.command`                               | Override default container command (useful when using custom images)                         | `[]`                      |
 | `pinnipedProxy.args`                                  | Override default container args (useful when using custom images)                            | `[]`                      |
