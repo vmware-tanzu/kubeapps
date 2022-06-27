@@ -35,11 +35,14 @@ async fn main() -> Result<()> {
     let addr = ([0, 0, 0, 0], opt.port).into();
 
     let with_tls = opt.proxy_tls_cert != "" && opt.proxy_tls_cert_key != "";
+    if !with_tls && (opt.proxy_tls_cert != "" || opt.proxy_tls_cert_key != "") {
+        panic!("If configuring TLS support, you must set both --proxy-tls-cert and --proxy-tls-cert-key");
+    }
 
     // Run the server for ever. If it returns with an error, return the
     // result, otherwise, if it completes, we return Ok.
     if with_tls {
-        info!("Configuring with TLS cert {} and key {}", opt.proxy_tls_cert, opt.proxy_tls_cert_key);
+        info!("Configuring with TLS cert filepath {} and key filepath {}", opt.proxy_tls_cert, opt.proxy_tls_cert_key);
         // For every incoming connection, we make a new hyper `Service` to handle
         // all incoming HTTP requests on that connection. This is done by passing a
         // closure to the hyper `make_service_fn` which returns our custom `make_svc`
