@@ -4,10 +4,12 @@ The [Pinniped project](https://pinniped.dev/) exists to "Simplify user authentic
 
 ## Installing Pinniped
 
-Install Pinniped into a `pinniped-concierge` namespace on your cluster with:
+Install Pinniped on your cluster with:
 
 ```bash
-kubectl apply -f https://get.pinniped.dev/latest/install-pinniped-concierge.yaml
+kubectl apply -f https://github.com/vmware-tanzu/pinniped/releases/download/v0.18.0/install-pinniped-concierge-crds.yaml
+
+kubectl apply -f  https://github.com/vmware-tanzu/pinniped/releases/download/v0.18.0/install-pinniped-concierge.yaml
 ```
 
 ## Configure Pinniped to trust your OIDC identity provider
