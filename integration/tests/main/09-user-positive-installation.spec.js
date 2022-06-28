@@ -20,19 +20,22 @@ test.describe("Limited user simple deployments", () => {
 
     // Go to repos page
     await page.click(".dropdown.kubeapps-menu button.kubeapps-nav-link");
-    await page.click('a.dropdown-menu-link:has-text("Package Repositories")');
-    await page.waitForTimeout(3000);
+    await page.locator("text=Package Repositories").click();
+    await expect(page).not.toContain("text=Fetching Package Repositories...");
 
     // Add new repo
     const repoName = utils.getRandomName("repo-09");
     console.log(`Creating package repository "${repoName}"`);
-    await page.click('cds-button:has-text("Add Package Repository")');
+    await page.locator("text=Add Package Repository >> div").click();
     await page.fill("input#kubeapps-repo-name", repoName);
     await page.fill(
       "input#kubeapps-repo-url",
       "https://prometheus-community.github.io/helm-charts",
     );
-    await page.click('cds-button:has-text("Install Repo")');
+    await page.locator("text=Helm Charts").first().click();
+    await page.locator("text=Helm Repository").click();
+    await page.locator("text=Install Repository >> div").click();
+
     await page.waitForLoadState("networkidle");
     await page.click(`div.page-content table td a:has-text("${repoName}")`);
 

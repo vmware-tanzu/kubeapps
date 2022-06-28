@@ -143,7 +143,6 @@ describe("RepositoriesService", () => {
       } as PackageRepositoryReference,
     } as AddPackageRepositoryResponse);
     expect(mockAddPackageRepository).toHaveBeenCalledWith({
-      auth: { opaqueCreds: { data: {} } },
       context: { cluster, namespace },
       description: "",
       interval: "",
@@ -177,11 +176,6 @@ describe("RepositoriesService", () => {
       } as PackageRepositoryReference,
     } as UpdatePackageRepositoryResponse);
     expect(mockUpdatePackageRepository).toHaveBeenCalledWith({
-      auth: {
-        opaqueCreds: {
-          data: {},
-        },
-      },
       description: "",
       interval: "",
       packageRepoRef: {

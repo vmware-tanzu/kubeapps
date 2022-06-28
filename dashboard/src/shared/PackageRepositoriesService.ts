@@ -13,14 +13,16 @@ import {
   PackageRepositoryAuth,
   PackageRepositoryReference,
   PackageRepositoryTlsConfig,
-  protobufPackage,
   SecretKeyReference,
   SshCredentials,
   TlsCertKey,
   UpdatePackageRepositoryRequest,
   UsernamePassword,
 } from "gen/kubeappsapis/core/packages/v1alpha1/repositories";
-import { RepositoryCustomDetails } from "gen/kubeappsapis/plugins/helm/packages/v1alpha1/helm";
+import {
+  protobufPackage as helmProtobufPackage,
+  RepositoryCustomDetails,
+} from "gen/kubeappsapis/plugins/helm/packages/v1alpha1/helm";
 import KubeappsGrpcClient from "./KubeappsGrpcClient";
 import { IPkgRepoFormData } from "./types";
 import { PluginNames } from "./utils";
@@ -179,7 +181,7 @@ export class PackageRepositoriesService {
         tlsCertKey: { ...request.tlsCertKey } as TlsCertKey,
       } as PackageRepositoryAuth;
     }
-    if (Object.values(request.opaqueCreds).some(e => !!e)) {
+    if (Object.values(request.opaqueCreds.data).some(e => !!e)) {
       addPackageRepositoryRequest.auth = {
         ...addPackageRepositoryRequest.auth,
         opaqueCreds: { ...request.opaqueCreds } as OpaqueCredentials,
@@ -219,7 +221,7 @@ export class PackageRepositoriesService {
     // of the actual custom object
     if (request.plugin?.name === PluginNames.PACKAGES_HELM) {
       addPackageRepositoryRequest.customDetail = {
-        typeUrl: `${protobufPackage}.RepositoryCustomDetails`,
+        typeUrl: `${helmProtobufPackage}.RepositoryCustomDetails`,
         value: RepositoryCustomDetails.encode({
           dockerRegistrySecrets: request.customDetails.dockerRegistrySecrets,
           ociRepositories: request.customDetails.ociRepositories,
@@ -245,6 +247,6 @@ export class PackageRepositoriesService {
       };
       return updatePackageRepositoryRequest;
     }
-    return addPackageRepositoryRequest as UpdatePackageRepositoryRequest;
+    return addPackageRepositoryRequest;
   }
 }
