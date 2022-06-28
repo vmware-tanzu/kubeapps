@@ -675,3 +675,27 @@ func (s *Server) hasAccessToNamespace(ctx context.Context, gvr schema.GroupVersi
 func GetPluginDetail() *plugins.Plugin {
 	return common.GetPluginDetail()
 }
+
+// makes the server look like a repo event sink. Facilitates code reuse between
+// use cases when something happens in background as a result of a watch event,
+// aka an "out-of-band" interaction and use cases when the user wants something
+// done explicitly, aka "in-band" interaction
+func (s *Server) newRepoEventSink() repoEventSink {
+	cg := func(ctx context.Context) (clientgetter.ClientInterfaces, error) {
+		return s.clientGetter(ctx, s.kubeappsCluster)
+	}
+
+	// notice a bit of inconsistency here, we are using s.clientGetter
+	// (i.e. the context of the incoming request) to read the secret
+	// as opposed to s.repoCache.clientGetter (which uses the context of
+	//	User "system:serviceaccount:kubeapps:kubeapps-internal-kubeappsapis")
+	// which is what is used when the repo is being processed/indexed.
+	// I don't think it's necessarily a bad thing if the incoming user's RBAC
+	// settings are more permissive than that of the default RBAC for
+	// kubeapps-internal-kubeappsapis account. If we don't like that behavior,
+	// I can easily switch to BackgroundClientGetter here
+	return repoEventSink{
+		clientGetter: cg,
+		chartCache:   s.chartCache,
+	}
+}

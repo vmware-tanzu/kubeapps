@@ -2285,11 +2285,15 @@ func redisMockSetValueForRepo(mock redismock.ClientMock, key string, newValue, o
 	mock.ExpectInfo("memory").SetVal("used_memory_rss_human:NA\r\nmaxmemory_human:NA")
 }
 
-func (s *Server) redisKeyValueForRepo(r sourcev1.HelmRepository) (key string, byteArray []byte, err error) {
-	sink := repoEventSink{
-		clientGetter: s.newBackgroundClientGetter(),
-		chartCache:   nil,
+func (s *Server) newRepoEventSinkNoCache() repoEventSink {
+	cg := func(ctx context.Context) (clientgetter.ClientInterfaces, error) {
+		return s.clientGetter(ctx, s.kubeappsCluster)
 	}
+	return repoEventSink{clientGetter: cg}
+}
+
+func (s *Server) redisKeyValueForRepo(r sourcev1.HelmRepository) (key string, byteArray []byte, err error) {
+	sink := s.newRepoEventSinkNoCache()
 	return sink.redisKeyValueForRepo(r)
 }
 
