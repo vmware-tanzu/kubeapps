@@ -32,8 +32,8 @@ export interface AddPackageRepositoryRequest {
   /**
    * Package storage type
    * In general, each plug-in will define an acceptable set of valid types
-   * - for direct helm plug-in valid values are: helm, oci
-   * - for flux plug-in currently only supported value is helm. In the
+   * - for direct helm plug-in valid values are: "helm" and "oci"
+   * - for flux plug-in valid values are: "helm" and "oci". In the
    *   future, we may add support for git and/or AWS s3-style buckets
    */
   type: string;
@@ -552,6 +552,12 @@ export interface PackageRepositorySummary {
    * status, where relevant.
    */
   status?: PackageRepositoryStatus;
+  /**
+   * authentication parameters for connecting to a repository.
+   * If the repo doesn't have any auth configured, then this field will be nil;
+   * otherwise, it will not. However, the fields will be optionally populated.
+   */
+  auth?: PackageRepositoryAuth;
 }
 
 /**
@@ -2250,6 +2256,7 @@ function createBasePackageRepositorySummary(): PackageRepositorySummary {
     type: "",
     url: "",
     status: undefined,
+    auth: undefined,
   };
 }
 
@@ -2275,6 +2282,9 @@ export const PackageRepositorySummary = {
     }
     if (message.status !== undefined) {
       PackageRepositoryStatus.encode(message.status, writer.uint32(58).fork()).ldelim();
+    }
+    if (message.auth !== undefined) {
+      PackageRepositoryAuth.encode(message.auth, writer.uint32(66).fork()).ldelim();
     }
     return writer;
   },
@@ -2307,6 +2317,9 @@ export const PackageRepositorySummary = {
         case 7:
           message.status = PackageRepositoryStatus.decode(reader, reader.uint32());
           break;
+        case 8:
+          message.auth = PackageRepositoryAuth.decode(reader, reader.uint32());
+          break;
         default:
           reader.skipType(tag & 7);
           break;
@@ -2326,6 +2339,7 @@ export const PackageRepositorySummary = {
       type: isSet(object.type) ? String(object.type) : "",
       url: isSet(object.url) ? String(object.url) : "",
       status: isSet(object.status) ? PackageRepositoryStatus.fromJSON(object.status) : undefined,
+      auth: isSet(object.auth) ? PackageRepositoryAuth.fromJSON(object.auth) : undefined,
     };
   },
 
@@ -2342,6 +2356,8 @@ export const PackageRepositorySummary = {
     message.url !== undefined && (obj.url = message.url);
     message.status !== undefined &&
       (obj.status = message.status ? PackageRepositoryStatus.toJSON(message.status) : undefined);
+    message.auth !== undefined &&
+      (obj.auth = message.auth ? PackageRepositoryAuth.toJSON(message.auth) : undefined);
     return obj;
   },
 
@@ -2361,6 +2377,10 @@ export const PackageRepositorySummary = {
     message.status =
       object.status !== undefined && object.status !== null
         ? PackageRepositoryStatus.fromPartial(object.status)
+        : undefined;
+    message.auth =
+      object.auth !== undefined && object.auth !== null
+        ? PackageRepositoryAuth.fromPartial(object.auth)
         : undefined;
     return message;
   },

@@ -167,8 +167,8 @@ type AddPackageRepositoryRequest struct {
 	NamespaceScoped bool `protobuf:"varint,4,opt,name=namespace_scoped,json=namespaceScoped,proto3" json:"namespace_scoped,omitempty"`
 	// Package storage type
 	// In general, each plug-in will define an acceptable set of valid types
-	// - for direct helm plug-in valid values are: helm, oci
-	// - for flux plug-in currently only supported value is helm. In the
+	// - for direct helm plug-in valid values are: "helm" and "oci"
+	// - for flux plug-in valid values are: "helm" and "oci". In the
 	//   future, we may add support for git and/or AWS s3-style buckets
 	Type string `protobuf:"bytes,5,opt,name=type,proto3" json:"type,omitempty"`
 	// A URL identifying the package repository location. Must contain at
@@ -1680,6 +1680,10 @@ type PackageRepositorySummary struct {
 	// current status of the repository which can include reconciliation
 	// status, where relevant.
 	Status *PackageRepositoryStatus `protobuf:"bytes,7,opt,name=status,proto3" json:"status,omitempty"`
+	// authentication parameters for connecting to a repository.
+	// If the repo doesn't have any auth configured, then this field will be nil;
+	// otherwise, it will not. However, the fields will be optionally populated.
+	Auth *PackageRepositoryAuth `protobuf:"bytes,8,opt,name=auth,proto3" json:"auth,omitempty"`
 }
 
 func (x *PackageRepositorySummary) Reset() {
@@ -1759,6 +1763,13 @@ func (x *PackageRepositorySummary) GetUrl() string {
 func (x *PackageRepositorySummary) GetStatus() *PackageRepositoryStatus {
 	if x != nil {
 		return x.Status
+	}
+	return nil
+}
+
+func (x *PackageRepositorySummary) GetAuth() *PackageRepositoryAuth {
+	if x != nil {
+		return x.Auth
 	}
 	return nil
 }
@@ -2226,7 +2237,7 @@ var file_kubeappsapis_core_packages_v1alpha1_repositories_proto_rawDesc = []byte
 	0x2e, 0x70, 0x61, 0x63, 0x6b, 0x61, 0x67, 0x65, 0x73, 0x2e, 0x76, 0x31, 0x61, 0x6c, 0x70, 0x68,
 	0x61, 0x31, 0x2e, 0x50, 0x61, 0x63, 0x6b, 0x61, 0x67, 0x65, 0x52, 0x65, 0x70, 0x6f, 0x73, 0x69,
 	0x74, 0x6f, 0x72, 0x79, 0x44, 0x65, 0x74, 0x61, 0x69, 0x6c, 0x52, 0x06, 0x64, 0x65, 0x74, 0x61,
-	0x69, 0x6c, 0x22, 0xe2, 0x02, 0x0a, 0x18, 0x50, 0x61, 0x63, 0x6b, 0x61, 0x67, 0x65, 0x52, 0x65,
+	0x69, 0x6c, 0x22, 0xb2, 0x03, 0x0a, 0x18, 0x50, 0x61, 0x63, 0x6b, 0x61, 0x67, 0x65, 0x52, 0x65,
 	0x70, 0x6f, 0x73, 0x69, 0x74, 0x6f, 0x72, 0x79, 0x53, 0x75, 0x6d, 0x6d, 0x61, 0x72, 0x79, 0x12,
 	0x69, 0x0a, 0x10, 0x70, 0x61, 0x63, 0x6b, 0x61, 0x67, 0x65, 0x5f, 0x72, 0x65, 0x70, 0x6f, 0x5f,
 	0x72, 0x65, 0x66, 0x18, 0x01, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x3f, 0x2e, 0x6b, 0x75, 0x62, 0x65,
@@ -2248,7 +2259,12 @@ var file_kubeappsapis_core_packages_v1alpha1_repositories_proto_rawDesc = []byte
 	0x2e, 0x63, 0x6f, 0x72, 0x65, 0x2e, 0x70, 0x61, 0x63, 0x6b, 0x61, 0x67, 0x65, 0x73, 0x2e, 0x76,
 	0x31, 0x61, 0x6c, 0x70, 0x68, 0x61, 0x31, 0x2e, 0x50, 0x61, 0x63, 0x6b, 0x61, 0x67, 0x65, 0x52,
 	0x65, 0x70, 0x6f, 0x73, 0x69, 0x74, 0x6f, 0x72, 0x79, 0x53, 0x74, 0x61, 0x74, 0x75, 0x73, 0x52,
-	0x06, 0x73, 0x74, 0x61, 0x74, 0x75, 0x73, 0x22, 0xa8, 0x01, 0x0a, 0x25, 0x47, 0x65, 0x74, 0x50,
+	0x06, 0x73, 0x74, 0x61, 0x74, 0x75, 0x73, 0x12, 0x4e, 0x0a, 0x04, 0x61, 0x75, 0x74, 0x68, 0x18,
+	0x08, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x3a, 0x2e, 0x6b, 0x75, 0x62, 0x65, 0x61, 0x70, 0x70, 0x73,
+	0x61, 0x70, 0x69, 0x73, 0x2e, 0x63, 0x6f, 0x72, 0x65, 0x2e, 0x70, 0x61, 0x63, 0x6b, 0x61, 0x67,
+	0x65, 0x73, 0x2e, 0x76, 0x31, 0x61, 0x6c, 0x70, 0x68, 0x61, 0x31, 0x2e, 0x50, 0x61, 0x63, 0x6b,
+	0x61, 0x67, 0x65, 0x52, 0x65, 0x70, 0x6f, 0x73, 0x69, 0x74, 0x6f, 0x72, 0x79, 0x41, 0x75, 0x74,
+	0x68, 0x52, 0x04, 0x61, 0x75, 0x74, 0x68, 0x22, 0xa8, 0x01, 0x0a, 0x25, 0x47, 0x65, 0x74, 0x50,
 	0x61, 0x63, 0x6b, 0x61, 0x67, 0x65, 0x52, 0x65, 0x70, 0x6f, 0x73, 0x69, 0x74, 0x6f, 0x72, 0x79,
 	0x53, 0x75, 0x6d, 0x6d, 0x61, 0x72, 0x69, 0x65, 0x73, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73,
 	0x65, 0x12, 0x7f, 0x0a, 0x1c, 0x70, 0x61, 0x63, 0x6b, 0x61, 0x67, 0x65, 0x5f, 0x72, 0x65, 0x70,
@@ -2461,23 +2477,24 @@ var file_kubeappsapis_core_packages_v1alpha1_repositories_proto_depIdxs = []int3
 	18, // 30: kubeappsapis.core.packages.v1alpha1.GetPackageRepositoryDetailResponse.detail:type_name -> kubeappsapis.core.packages.v1alpha1.PackageRepositoryDetail
 	15, // 31: kubeappsapis.core.packages.v1alpha1.PackageRepositorySummary.package_repo_ref:type_name -> kubeappsapis.core.packages.v1alpha1.PackageRepositoryReference
 	17, // 32: kubeappsapis.core.packages.v1alpha1.PackageRepositorySummary.status:type_name -> kubeappsapis.core.packages.v1alpha1.PackageRepositoryStatus
-	20, // 33: kubeappsapis.core.packages.v1alpha1.GetPackageRepositorySummariesResponse.package_repository_summaries:type_name -> kubeappsapis.core.packages.v1alpha1.PackageRepositorySummary
-	15, // 34: kubeappsapis.core.packages.v1alpha1.UpdatePackageRepositoryResponse.package_repo_ref:type_name -> kubeappsapis.core.packages.v1alpha1.PackageRepositoryReference
-	2,  // 35: kubeappsapis.core.packages.v1alpha1.RepositoriesService.AddPackageRepository:input_type -> kubeappsapis.core.packages.v1alpha1.AddPackageRepositoryRequest
-	11, // 36: kubeappsapis.core.packages.v1alpha1.RepositoriesService.GetPackageRepositoryDetail:input_type -> kubeappsapis.core.packages.v1alpha1.GetPackageRepositoryDetailRequest
-	12, // 37: kubeappsapis.core.packages.v1alpha1.RepositoriesService.GetPackageRepositorySummaries:input_type -> kubeappsapis.core.packages.v1alpha1.GetPackageRepositorySummariesRequest
-	13, // 38: kubeappsapis.core.packages.v1alpha1.RepositoriesService.UpdatePackageRepository:input_type -> kubeappsapis.core.packages.v1alpha1.UpdatePackageRepositoryRequest
-	14, // 39: kubeappsapis.core.packages.v1alpha1.RepositoriesService.DeletePackageRepository:input_type -> kubeappsapis.core.packages.v1alpha1.DeletePackageRepositoryRequest
-	16, // 40: kubeappsapis.core.packages.v1alpha1.RepositoriesService.AddPackageRepository:output_type -> kubeappsapis.core.packages.v1alpha1.AddPackageRepositoryResponse
-	19, // 41: kubeappsapis.core.packages.v1alpha1.RepositoriesService.GetPackageRepositoryDetail:output_type -> kubeappsapis.core.packages.v1alpha1.GetPackageRepositoryDetailResponse
-	21, // 42: kubeappsapis.core.packages.v1alpha1.RepositoriesService.GetPackageRepositorySummaries:output_type -> kubeappsapis.core.packages.v1alpha1.GetPackageRepositorySummariesResponse
-	22, // 43: kubeappsapis.core.packages.v1alpha1.RepositoriesService.UpdatePackageRepository:output_type -> kubeappsapis.core.packages.v1alpha1.UpdatePackageRepositoryResponse
-	23, // 44: kubeappsapis.core.packages.v1alpha1.RepositoriesService.DeletePackageRepository:output_type -> kubeappsapis.core.packages.v1alpha1.DeletePackageRepositoryResponse
-	40, // [40:45] is the sub-list for method output_type
-	35, // [35:40] is the sub-list for method input_type
-	35, // [35:35] is the sub-list for extension type_name
-	35, // [35:35] is the sub-list for extension extendee
-	0,  // [0:35] is the sub-list for field type_name
+	4,  // 33: kubeappsapis.core.packages.v1alpha1.PackageRepositorySummary.auth:type_name -> kubeappsapis.core.packages.v1alpha1.PackageRepositoryAuth
+	20, // 34: kubeappsapis.core.packages.v1alpha1.GetPackageRepositorySummariesResponse.package_repository_summaries:type_name -> kubeappsapis.core.packages.v1alpha1.PackageRepositorySummary
+	15, // 35: kubeappsapis.core.packages.v1alpha1.UpdatePackageRepositoryResponse.package_repo_ref:type_name -> kubeappsapis.core.packages.v1alpha1.PackageRepositoryReference
+	2,  // 36: kubeappsapis.core.packages.v1alpha1.RepositoriesService.AddPackageRepository:input_type -> kubeappsapis.core.packages.v1alpha1.AddPackageRepositoryRequest
+	11, // 37: kubeappsapis.core.packages.v1alpha1.RepositoriesService.GetPackageRepositoryDetail:input_type -> kubeappsapis.core.packages.v1alpha1.GetPackageRepositoryDetailRequest
+	12, // 38: kubeappsapis.core.packages.v1alpha1.RepositoriesService.GetPackageRepositorySummaries:input_type -> kubeappsapis.core.packages.v1alpha1.GetPackageRepositorySummariesRequest
+	13, // 39: kubeappsapis.core.packages.v1alpha1.RepositoriesService.UpdatePackageRepository:input_type -> kubeappsapis.core.packages.v1alpha1.UpdatePackageRepositoryRequest
+	14, // 40: kubeappsapis.core.packages.v1alpha1.RepositoriesService.DeletePackageRepository:input_type -> kubeappsapis.core.packages.v1alpha1.DeletePackageRepositoryRequest
+	16, // 41: kubeappsapis.core.packages.v1alpha1.RepositoriesService.AddPackageRepository:output_type -> kubeappsapis.core.packages.v1alpha1.AddPackageRepositoryResponse
+	19, // 42: kubeappsapis.core.packages.v1alpha1.RepositoriesService.GetPackageRepositoryDetail:output_type -> kubeappsapis.core.packages.v1alpha1.GetPackageRepositoryDetailResponse
+	21, // 43: kubeappsapis.core.packages.v1alpha1.RepositoriesService.GetPackageRepositorySummaries:output_type -> kubeappsapis.core.packages.v1alpha1.GetPackageRepositorySummariesResponse
+	22, // 44: kubeappsapis.core.packages.v1alpha1.RepositoriesService.UpdatePackageRepository:output_type -> kubeappsapis.core.packages.v1alpha1.UpdatePackageRepositoryResponse
+	23, // 45: kubeappsapis.core.packages.v1alpha1.RepositoriesService.DeletePackageRepository:output_type -> kubeappsapis.core.packages.v1alpha1.DeletePackageRepositoryResponse
+	41, // [41:46] is the sub-list for method output_type
+	36, // [36:41] is the sub-list for method input_type
+	36, // [36:36] is the sub-list for extension type_name
+	36, // [36:36] is the sub-list for extension extendee
+	0,  // [0:36] is the sub-list for field type_name
 }
 
 func init() { file_kubeappsapis_core_packages_v1alpha1_repositories_proto_init() }
