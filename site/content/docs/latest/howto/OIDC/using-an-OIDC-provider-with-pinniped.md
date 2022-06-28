@@ -118,6 +118,36 @@ clusters:
       enabled: true
 ```
 
+### Running the Pinniped Proxy service over TLS
+
+By default, the pinniped-proxy service is an http service, with requests from the kubeapps-apis backend transmitted in clear text to the proxy (all within the cluster). If you are using pinniped-proxy in a secure environment where you want to minimize internal clear-text communication of credentials, you can optionally choose to configure the pinniped-proxy service to accept TLS connections only.
+
+You will need to provide a TLS certificate and key for the internal host name of the pinniped-proxy service, as well as a certificate authority for the clients of the pinniped-proxy service to use.
+
+For example, if you have the development tool [mkcert](https://github.com/FiloSottile/mkcert), you can generate the TLS certificate and key and then create the Kubernetes TLS secret with:
+
+```console
+mkcert kubeapps-internal-pinniped-proxy.kubeapps
+
+kubectl -n kubeapps create secret tls pinniped-proxy-tls --cert kubeapps-internal-pinniped-proxy.kubeapps.pem --key kubeapps-internal-pinniped-proxy.kubeapps-key.pem
+```
+
+Then create a `ConfigMap` with the certificate authority:
+
+```console
+kubectl create configmap -n kubeapps pinniped-proxy-ca --from-file ca.crt=$HOME/.local/share/mkcert/rootCA.pem
+```
+
+and finally configure Kubeapps' `pinniped-proxy` service to use TLS and the backend clients of `pinniped-proxy` to use the CA cert by adding the following to your chart configuration:
+
+```yaml
+pinnipedProxy:
+  tlsSecret: pinniped-proxy-tls
+  CACert: pinniped-proxy-ca
+```
+
+Note that this does not eliminate internal clear-text communication of credentials within the cluster because currently the `oauth2-proxy` service communicates with the `kubeapps-apis` backend over http with the user `id_token` in the headers.
+
 ## Debugging auth failures when using OIDC
 
 For general OIDC issues, have a look at [this OIDC debugging guide](./OAuth2OIDC-debugging.md).
