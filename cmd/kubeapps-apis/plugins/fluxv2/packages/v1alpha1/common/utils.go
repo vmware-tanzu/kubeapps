@@ -15,6 +15,7 @@ import (
 	"net/url"
 	"os"
 	"reflect"
+	"runtime"
 	"strconv"
 	"strings"
 	"sync"
@@ -483,4 +484,12 @@ func GetSha256(src []byte) (string, error) {
 		return "", err
 	}
 	return fmt.Sprintf("%x", h.Sum(nil)), nil
+}
+
+// https://stackoverflow.com/questions/28712397/put-stack-trace-to-string-variable
+func GetStackTrace() string {
+	// adjust buffer size to be larger than expected stack
+	b := make([]byte, 2048)
+	n := runtime.Stack(b, false)
+	return string(b[:n])
 }
