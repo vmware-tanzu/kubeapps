@@ -636,5 +636,26 @@ func TestKindClusterAvailablePackageEndpointsForOCI(t *testing.T) {
 		resp3.AvailablePackageDetail,
 		expected_detail_oci_stefanprodan_podinfo(repoName.Name).AvailablePackageDetail)
 
-	// TODO try a few older versions
+	// try a few older versions
+	grpcContext, cancel = context.WithTimeout(grpcContext, defaultContextTimeout)
+	defer cancel()
+	resp4, err := fluxPluginClient.GetAvailablePackageDetail(
+		grpcContext,
+		&corev1.GetAvailablePackageDetailRequest{
+			AvailablePackageRef: &corev1.AvailablePackageReference{
+				Context: &corev1.Context{
+					Namespace: "default",
+				},
+				Identifier: repoName.Name + "/podinfo",
+			},
+			PkgVersion: "6.1.5",
+		})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	compareActualVsExpectedAvailablePackageDetail(
+		t,
+		resp4.AvailablePackageDetail,
+		expected_detail_oci_stefanprodan_podinfo_2(repoName.Name).AvailablePackageDetail)
 }

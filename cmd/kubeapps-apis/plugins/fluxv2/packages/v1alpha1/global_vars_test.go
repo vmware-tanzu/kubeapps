@@ -3168,4 +3168,24 @@ var (
 			},
 		}
 	}
+
+	expected_detail_oci_stefanprodan_podinfo_2 = func(name string) *corev1.GetAvailablePackageDetailResponse {
+		return &corev1.GetAvailablePackageDetailResponse{
+			AvailablePackageDetail: &corev1.AvailablePackageDetail{
+				AvailablePackageRef: availableRef(name+"/podinfo", "default"),
+				Name:                "podinfo",
+				Version:             pkgAppVersion("6.1.5"),
+				RepoUrl:             "oci://ghcr.io/stefanprodan/charts",
+				HomeUrl:             "https://github.com/stefanprodan/podinfo",
+				DisplayName:         "podinfo",
+				ShortDescription:    "Podinfo Helm chart for Kubernetes",
+				SourceUrls:          []string{"https://github.com/stefanprodan/podinfo"},
+				Maintainers: []*corev1.Maintainer{
+					{Name: "stefanprodan", Email: "stefanprodan@users.noreply.github.com"},
+				},
+				Readme:        "Podinfo is a tiny web application made with Go",
+				DefaultValues: "Default values for podinfo.\n\nreplicaCount: 1\n",
+			},
+		}
+	}
 )
