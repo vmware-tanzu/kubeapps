@@ -40,6 +40,7 @@ func (s *Server) getChartInCluster(ctx context.Context, key types.NamespacedName
 	return &chartObj, nil
 }
 
+// TODO (gfichtenholt) this func is too long. Break it up
 func (s *Server) availableChartDetail(ctx context.Context, packageRef *corev1.AvailablePackageReference, chartVersion string) (*corev1.AvailablePackageDetail, error) {
 	log.Infof("+availableChartDetail(%s, %s)", packageRef, chartVersion)
 
