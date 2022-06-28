@@ -52,12 +52,7 @@ func init() {
 	setFlags(rootCmd)
 }
 
-// TODO(agamez): remove this after the v2.4.6 release
-var assetsvcurlDeprecated string
-
 func setFlags(c *cobra.Command) {
-	// TODO(agamez): remove 'assetsvc-url' after the v2.4.6 release
-	c.Flags().StringVar(&assetsvcurlDeprecated, "assetsvc-url", "", "(DEPRECATED)")
 	c.Flags().StringVar(&serveOpts.HelmDriverArg, "helm-driver", "", "which Helm driver type to use")
 	c.Flags().IntVar(&serveOpts.ListLimit, "list-max", 256, "maximum number of releases to fetch")
 	c.Flags().StringVar(&serveOpts.UserAgentComment, "user-agent-comment", "", "UserAgent comment used during outbound requests")
