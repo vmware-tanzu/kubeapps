@@ -180,24 +180,12 @@ func (s *Server) getChartsForRepos(ctx context.Context, match []string) (map[str
 	return chartsTyped, nil
 }
 
-func (s *Server) clientOptionsForRepo(ctx context.Context, repoName types.NamespacedName) (*common.HttpClientOptions, error) {
+func (s *Server) httpClientOptionsForRepo(ctx context.Context, repoName types.NamespacedName) (*common.HttpClientOptions, error) {
 	repo, err := s.getRepoInCluster(ctx, repoName)
 	if err != nil {
 		return nil, err
 	}
-	// notice a bit of inconsistency here, we are using s.clientGetter
-	// (i.e. the context of the incoming request) to read the secret
-	// as opposed to s.repoCache.clientGetter (which uses the context of
-	//	User "system:serviceaccount:kubeapps:kubeapps-internal-kubeappsapis")
-	// which is what is used when the repo is being processed/indexed.
-	// I don't think it's necessarily a bad thing if the incoming user's RBAC
-	// settings are more permissive than that of the default RBAC for
-	// kubeapps-internal-kubeappsapis account. If we don't like that behavior,
-	// I can easily switch to BackgroundClientGetter here
-	sink := repoEventSink{
-		clientGetter: s.newBackgroundClientGetter(),
-		chartCache:   s.chartCache,
-	}
+	sink := s.newRepoEventSink()
 	return sink.httpClientOptionsForRepo(ctx, *repo)
 }
 
@@ -763,8 +751,11 @@ func (s *repoEventSink) indexAndEncode(checksum string, repo sourcev1.HelmReposi
 			// resource "secrets" in API group "" in the namespace "default"
 			// So we still finish the indexing of the repo but skip the charts
 			log.Errorf("Failed to read secret for repo due to: %+v", err)
-		} else if err = s.chartCache.SyncCharts(charts, downloadChartViaHttpFn(opts)); err != nil {
-			return nil, false, err
+		} else {
+			fn := downloadChartViaHttpFn(opts)
+			if err = s.chartCache.SyncCharts(charts, fn); err != nil {
+				return nil, false, err
+			}
 		}
 	}
 	return buf.Bytes(), true, nil
@@ -818,7 +809,6 @@ func (s *repoEventSink) indexOneRepo(repo sourcev1.HelmRepository) ([]models.Cha
 	msg := fmt.Sprintf("-indexOneRepo: [%s], indexed [%d] packages in [%d] ms", repo.Name, len(charts), duration.Milliseconds())
 	if len(charts) > 0 {
 		log.Info(msg)
-		log.Infof("%s", common.PrettyPrint(charts))
 	} else {
 		// this is kind of a red flag - an index with 0 charts, most likely contents of index.yaml is
 		// messed up and didn't parse successfully but the helm library didn't raise an error

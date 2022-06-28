@@ -38,6 +38,7 @@ import (
 	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/pkg/pkgutils"
 	"github.com/vmware-tanzu/kubeapps/pkg/chart/models"
 	"github.com/vmware-tanzu/kubeapps/pkg/tarutil"
+	"k8s.io/apimachinery/pkg/types"
 	log "k8s.io/klog/v2"
 
 	"github.com/fluxcd/pkg/version"
@@ -352,11 +353,13 @@ func newRegistryClient(isLogin bool) (*registry.Client, string, error) {
 
 // OCI Helm repository, which defines a source, does not produce an Artifact
 // ref https://fluxcd.io/docs/components/source/helmrepositories/#helm-oci-repository
+
+// TODO: this function is way too long. Break it up
 func (s *repoEventSink) onAddOciRepo(repo sourcev1.HelmRepository) ([]byte, bool, error) {
 	log.Infof("+onAddOciRepo(%s)", common.PrettyPrint(repo))
 	defer log.Infof("-onAddOciRepo")
 
-	ociRegistry, err := s.newOCIRegistryAndLogin(repo)
+	ociRegistry, err := s.newOCIRegistryAndLoginWithRepo(context.Background(), repo)
 	if err != nil {
 		return nil, false, err
 	}
@@ -403,7 +406,7 @@ func (s *repoEventSink) onAddOciRepo(repo sourcev1.HelmRepository) ([]byte, bool
 			return nil, false, status.Errorf(codes.Internal, "%v", err)
 		}
 
-		latestChartMetadata, err := s.getOCIChartMetadata(ociRegistry, chartID, latestChartVersion)
+		latestChartMetadata, err := getOCIChartMetadata(ociRegistry, chartID, latestChartVersion)
 		if err != nil {
 			return nil, false, err
 		}
@@ -427,8 +430,6 @@ func (s *repoEventSink) onAddOciRepo(repo sourcev1.HelmRepository) ([]byte, bool
 			ChartVersions: []models.ChartVersion{},
 		}
 
-		// TODO (gfichtenholt) this loop needs to be implemented using
-		// multiple concurrent readers
 		for _, tag := range allTags {
 			chartVersion, err := ociRegistry.pickChartVersionFrom(appName, tag, allTags)
 			if err != nil {
@@ -466,7 +467,7 @@ func (s *repoEventSink) onAddOciRepo(repo sourcev1.HelmRepository) ([]byte, bool
 	}
 
 	if s.chartCache != nil {
-		fn := s.downloadOCIChartFn(ociRegistry)
+		fn := downloadOCIChartFn(ociRegistry)
 		if err = s.chartCache.SyncCharts(charts, fn); err != nil {
 			return nil, false, err
 		}
@@ -495,7 +496,7 @@ func (s *repoEventSink) onModifyOciRepo(key string, oldValue interface{}, repo s
 			key, cacheEntryUntyped)
 	}
 
-	ociRegistry, err := s.newOCIRegistryAndLogin(repo)
+	ociRegistry, err := s.newOCIRegistryAndLoginWithRepo(context.Background(), repo)
 	if err != nil {
 		return nil, false, err
 	}
@@ -571,13 +572,25 @@ func (r *OCIRegistry) shortRepoName(fullRepoName string) (string, error) {
 	}
 }
 
-func (s *repoEventSink) newOCIRegistryAndLogin(repo sourcev1.HelmRepository) (*OCIRegistry, error) {
-	// Construct the Getter options from the HelmRepository data
-	loginOpts, getterOpts, cred, err := s.clientOptionsForRepo(repo)
+func (s *Server) newOCIRegistryAndLoginWithRepo(ctx context.Context, repoName types.NamespacedName) (*OCIRegistry, error) {
+	repo, err := s.getRepoInCluster(ctx, repoName)
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "failed to create registry client options: %v", err)
+		return nil, err
+	} else {
+		sink := s.newRepoEventSink()
+		return sink.newOCIRegistryAndLoginWithRepo(ctx, *repo)
 	}
+}
 
+func (s *repoEventSink) newOCIRegistryAndLoginWithRepo(ctx context.Context, repo sourcev1.HelmRepository) (*OCIRegistry, error) {
+	if loginOpts, getterOpts, cred, err := s.ociClientOptionsForRepo(ctx, repo); err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to create registry client: %v", err)
+	} else {
+		return s.newOCIRegistryAndLoginWithOptions(repo.Spec.URL, loginOpts, getterOpts, cred)
+	}
+}
+
+func (s *repoEventSink) newOCIRegistryAndLoginWithOptions(registryURL string, loginOpts []registry.LoginOption, getterOpts []getter.Option, cred *orasregistryauthv2.Credential) (*OCIRegistry, error) {
 	// Create registry client and login if needed.
 	registryClient, file, err := newRegistryClient(loginOpts != nil)
 	if err != nil {
@@ -605,13 +618,13 @@ func (s *repoEventSink) newOCIRegistryAndLogin(repo sourcev1.HelmRepository) (*O
 	// oci://demo.goharbor.io/test-oci-1, which may contain repositories "repo-1", "repo2", etc
 
 	ociRegistry, err := newOCIRegistry(
-		repo.Spec.URL,
+		registryURL,
 		withOCIGetter(helmGetters),
 		withOCIGetterOptions(getterOpts),
 		withOCIRegistryClient(registryClient),
 		withRegistryCredentialFn(registryCredentialFn))
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "failed to parse URL '%s': %v", repo.Spec.URL, err)
+		return nil, status.Errorf(codes.Internal, "failed to parse URL '%s': %v", registryURL, err)
 	}
 
 	// Attempt to login to the registry if credentials are provided.
@@ -625,8 +638,9 @@ func (s *repoEventSink) newOCIRegistryAndLogin(repo sourcev1.HelmRepository) (*O
 	return ociRegistry, nil
 }
 
-func (s *repoEventSink) clientOptionsForRepo(repo sourcev1.HelmRepository) ([]registry.LoginOption, []getter.Option, *orasregistryauthv2.Credential, error) {
-	log.Infof("+clientOptionsForRepo()")
+func (s *repoEventSink) ociClientOptionsForRepo(ctx context.Context, repo sourcev1.HelmRepository) ([]registry.LoginOption, []getter.Option, *orasregistryauthv2.Credential, error) {
+	log.Infof("+ociClientOptionsForRepo(%s)", common.PrettyPrint(repo))
+	log.Infof("-ociClientOptionsForRepo")
 
 	var loginOpts []registry.LoginOption
 	var cred *orasregistryauthv2.Credential
@@ -636,7 +650,7 @@ func (s *repoEventSink) clientOptionsForRepo(repo sourcev1.HelmRepository) ([]re
 		getter.WithPassCredentialsAll(repo.Spec.PassCredentials),
 	}
 
-	secret, err := s.getRepoSecret(context.Background(), repo)
+	secret, err := s.getRepoSecret(ctx, repo)
 	if err != nil {
 		return nil, nil, nil, err
 	} else if secret != nil {
@@ -659,7 +673,7 @@ func (s *repoEventSink) clientOptionsForRepo(repo sourcev1.HelmRepository) ([]re
 	return loginOpts, getterOpts, cred, nil
 }
 
-func (s *repoEventSink) getOCIChartTarball(ociRegistry *OCIRegistry, chartID string, chartVersion *repo.ChartVersion) ([]byte, error) {
+func getOCIChartTarball(ociRegistry *OCIRegistry, chartID string, chartVersion *repo.ChartVersion) ([]byte, error) {
 	chartBuffer, err := ociRegistry.downloadChart(chartVersion)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "%v", err)
@@ -667,10 +681,10 @@ func (s *repoEventSink) getOCIChartTarball(ociRegistry *OCIRegistry, chartID str
 	return chartBuffer.Bytes(), nil
 }
 
-func (s *repoEventSink) getOCIChartMetadata(ociRegistry *OCIRegistry, chartID string, chartVersion *repo.ChartVersion) (*chart.Metadata, error) {
+func getOCIChartMetadata(ociRegistry *OCIRegistry, chartID string, chartVersion *repo.ChartVersion) (*chart.Metadata, error) {
 	log.Infof("getOCIChartMetadata(%s, %s)", chartID, chartVersion.Metadata.Version)
 
-	chartTarball, err := s.getOCIChartTarball(ociRegistry, chartID, chartVersion)
+	chartTarball, err := getOCIChartTarball(ociRegistry, chartID, chartVersion)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "%v", err)
 	}
@@ -699,7 +713,7 @@ func (s *repoEventSink) getOCIChartMetadata(ociRegistry *OCIRegistry, chartID st
 	return &chartMetadata, nil
 }
 
-func (s *repoEventSink) downloadOCIChartFn(ociRegistry *OCIRegistry) func(chartID, chartUrl, chartVersion string) ([]byte, error) {
+func downloadOCIChartFn(ociRegistry *OCIRegistry) func(chartID, chartUrl, chartVersion string) ([]byte, error) {
 	return func(chartID, chartUrl, chartVersion string) ([]byte, error) {
 		_, chartName, err := pkgutils.SplitPackageIdentifier(chartID)
 		if err != nil {
@@ -712,6 +726,6 @@ func (s *repoEventSink) downloadOCIChartFn(ociRegistry *OCIRegistry) func(chartI
 				Version: chartVersion,
 			},
 		}
-		return s.getOCIChartTarball(ociRegistry, chartID, cv)
+		return getOCIChartTarball(ociRegistry, chartID, cv)
 	}
 }

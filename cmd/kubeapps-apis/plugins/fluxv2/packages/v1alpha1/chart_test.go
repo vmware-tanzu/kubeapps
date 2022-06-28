@@ -962,10 +962,7 @@ func newChart(name, namespace string, spec *sourcev1.HelmChartSpec, status *sour
 }
 
 func (s *Server) redisMockSetValueForChart(mock redismock.ClientMock, key, url string, opts *common.HttpClientOptions) error {
-	sink := repoEventSink{
-		clientGetter: s.newBackgroundClientGetter(),
-		chartCache:   s.chartCache,
-	}
+	sink := s.newRepoEventSink()
 	return sink.redisMockSetValueForChart(mock, key, url, opts)
 }
 
