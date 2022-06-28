@@ -152,7 +152,7 @@ Once the proxy is in place and it's able to connect to the IdP we will need to e
 
 ```bash
 kubectl create -n $KUBEAPPS_NAMESPACE -f - -o yaml << EOF
-apiVersion: extensions/v1beta1
+apiVersion: extensions/v1
 kind: Ingress
 metadata:
   annotations:
