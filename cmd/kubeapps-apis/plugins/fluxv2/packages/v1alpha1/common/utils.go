@@ -15,6 +15,7 @@ import (
 	"net/url"
 	"os"
 	"reflect"
+	"runtime"
 	"strconv"
 	"strings"
 	"sync"
@@ -38,7 +39,7 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/wait"
 	log "k8s.io/klog/v2"
-	registryauth "oras.land/oras-go/pkg/registry/remote/auth"
+	orasregistryauthv2 "oras.land/oras-go/v2/registry/remote/auth"
 	ctrlclient "sigs.k8s.io/controller-runtime/pkg/client"
 )
 
@@ -309,7 +310,7 @@ func tlsClientConfigFromSecret(secret apiv1.Secret, options *HttpClientOptions) 
 // complete Docker configuration. If both, "username" and "password" are
 // empty, a nil LoginOption and a nil error will be returned.
 // ref https://github.com/fluxcd/source-controller/blob/main/internal/helm/registry/auth.go
-func OCIRegistryCredentialFromSecret(registryURL string, secret apiv1.Secret) (*registryauth.Credential, error) {
+func OCIRegistryCredentialFromSecret(registryURL string, secret apiv1.Secret) (*orasregistryauthv2.Credential, error) {
 	var username, password string
 	if secret.Type == apiv1.SecretTypeDockerConfigJson {
 		dockerCfg, err := config.LoadFromReader(bytes.NewReader(secret.Data[apiv1.DockerConfigJsonKey]))
@@ -349,7 +350,7 @@ func OCIRegistryCredentialFromSecret(registryURL string, secret apiv1.Secret) (*
 		pwdRedacted = pwdRedacted[0:3] + "..."
 	}
 	log.Infof("-OCIRegistryCredentialFromSecret: username: [%s], password: [%s]", username, pwdRedacted)
-	return &registryauth.Credential{
+	return &orasregistryauthv2.Credential{
 		Username: username,
 		Password: password,
 	}, nil
@@ -483,4 +484,12 @@ func GetSha256(src []byte) (string, error) {
 		return "", err
 	}
 	return fmt.Sprintf("%x", h.Sum(nil)), nil
+}
+
+// https://stackoverflow.com/questions/28712397/put-stack-trace-to-string-variable
+func GetStackTrace() string {
+	// adjust buffer size to be larger than expected stack
+	b := make([]byte, 2048)
+	n := runtime.Stack(b, false)
+	return string(b[:n])
 }
