@@ -343,7 +343,7 @@ func TestPackageAppVersionsSummary(t *testing.T) {
 				Patch: 0},
 		},
 		{
-			name: "it includes latest versions in right order",
+			name: "it includes latest versions ordered (descending) by package version",
 			chart_versions: []models.ChartVersion{
 				{Version: "6.1.3", AppVersion: DefaultAppVersion},
 				{Version: "6.0.0", AppVersion: DefaultAppVersion},
