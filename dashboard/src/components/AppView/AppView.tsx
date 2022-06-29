@@ -24,6 +24,7 @@ import { ThunkDispatch } from "redux-thunk";
 import { InstalledPackage } from "shared/InstalledPackage";
 import {
   CustomInstalledPackageDetail,
+  StartError,
   DeleteError,
   FetchError,
   FetchWarning,
@@ -35,6 +36,7 @@ import placeholder from "../../placeholder.png";
 import * as url from "../../shared/url";
 import LoadingWrapper from "../LoadingWrapper/LoadingWrapper";
 import AccessURLTable from "./AccessURLTable/AccessURLTable";
+import StartButton from "./AppControls/StartButton/StartButton";
 import DeleteButton from "./AppControls/DeleteButton/DeleteButton";
 import RollbackButton from "./AppControls/RollbackButton/RollbackButton";
 import UpgradeButton from "./AppControls/UpgradeButton/UpgradeButton";
@@ -103,6 +105,17 @@ function getButtons(app: CustomInstalledPackageDetail, error: any, revision: num
   buttons.push(
     <UpgradeButton
       key="upgrade-button"
+      installedPackageRef={app.installedPackageRef}
+      releaseStatus={app?.status}
+      disabled={error !== undefined}
+    />,
+  );
+ 
+  // Start can only be operated on packages that are stopped
+ if (getPluginsSupportingRollback().includes(app.installedPackageRef.plugin.name)) {
+  buttons.push(
+    <StartButton
+      key="start-button"
       installedPackageRef={app.installedPackageRef}
       releaseStatus={app?.status}
       disabled={error !== undefined}

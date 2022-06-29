@@ -169,6 +169,16 @@ export interface DeleteInstalledPackageRequest {
 }
 
 /**
+ * StartInstalledPackageRequest
+ *
+ * Request for StartInstalledPackage
+ */
+ export interface StartInstalledPackageRequest {
+  /** A reference to uniquely identify the installed package to be deleted. */
+  installedPackageRef?: InstalledPackageReference;
+}
+
+/**
  * GetInstalledPackageResourceRefsRequest
  *
  * Request for GetInstalledPackageResourceRefs

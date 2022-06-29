@@ -85,6 +85,8 @@ export const selectInstalledPackage = createAction("SELECT_INSTALLED_PACKAGE", r
     resolve({ pkg, details });
 });
 
+export const requestStartInstalledPackage = createAction("REQUEST_START_INSTALLED_PACKAGE");
+
 const allActions = [
   requestInstalledPackageList,
   requestInstalledPackage,
@@ -320,6 +322,22 @@ export function rollbackInstalledPackage(
           ),
         ),
       );
+      return false;
+    }
+  };
+}
+
+export function startInstalledPackage(
+  installedPackageRef: InstalledPackageReference,
+): ThunkAction<Promise<boolean>, IStoreState, null, InstalledPackagesAction> {
+  return async dispatch => {
+    dispatch(requestDeleteInstalledPackage());
+    try {
+      await InstalledPackage.DeleteInstalledPackage(installedPackageRef);
+      dispatch(receiveDeleteInstalledPackage());
+      return true;
+    } catch (e: any) {
+      dispatch(errorInstalledPackage(new DeleteError(e.message)));
       return false;
     }
   };
