@@ -34,18 +34,7 @@ test("Create a new private package repository successfully", async ({ page }) =>
   await page.fill("input#kubeapps-repo-username", "admin");
   await page.fill("input#kubeapps-repo-password", "password");
 
-  // Create a new secret for Docker repo credentials
-  const secretName = utils.getRandomName("my-repo-secret");
-  await page.click('.docker-creds-subform-button button:has-text("Add new credentials")');
-  await page.fill("input#kubeapps-docker-cred-secret-name", secretName);
-  await page.fill("input#kubeapps-docker-cred-server", "https://index.docker.io/v1/");
-  await page.fill("input#kubeapps-docker-cred-username", process.env.DOCKER_USERNAME);
-  await page.fill("input#kubeapps-docker-cred-password", process.env.DOCKER_PASSWORD);
-  await page.click('.docker-creds-subform button:has-text("Submit")');
-
-  // Select the newly created secret
-  await page.selectOption("form cds-form-group cds-select select", secretName);
-
+  // Create repository
   await page.click('cds-button:has-text("Install Repo")');
 
   // Wait for new packages to be indexed
@@ -84,31 +73,6 @@ test("Create a new private package repository successfully", async ({ page }) =>
   await page.waitForSelector("css=.application-status-pie-chart-title >> text=Ready", {
     timeout: deployTimeout,
   });
-
-  // Now that the deployment has been created, we check that the imagePullSecret
-  // has been added. For doing so, we query the resources API to get info of the
-  // deployment
-  const axInstance = await utils.getAxiosInstance(page, k.token);
-  const resourceResp = await axInstance.get(
-    `/apis/plugins/resources/v1alpha1/helm.packages/v1alpha1/c/default/ns/default/${appName}`,
-  );
-  expect(resourceResp.status).toEqual(200);
-
-  let deployment;
-  resourceResp.data
-    .trim()
-    .split(/\r?\n/)
-    .forEach(r => {
-      // Axios doesn't provide streaming responses, so splitting on new line works
-      // but gives us a string, not JSON, and may leave a blank line at the end.
-      const response = JSON.parse(r);
-      const resourceRef = response.result?.resourceRef;
-      if (resourceRef.kind === "Deployment" && resourceRef.name.match(appName)) {
-        deployment = JSON.parse(response.result?.manifest);
-      }
-    });
-
-  expect(deployment?.spec?.template?.spec?.imagePullSecrets).toEqual([{ name: secretName }]);
 
   // Prepare and verify the upgrade
   await page.waitForSelector('cds-button:has-text("Upgrade")');

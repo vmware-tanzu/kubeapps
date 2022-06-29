@@ -1950,6 +1950,14 @@ var (
 		},
 	}
 
+	expected_versions_stefanprodan_podinfo = &corev1.GetAvailablePackageVersionsResponse{
+		PackageAppVersions: []*corev1.PackageAppVersion{
+			{PkgVersion: "6.1.6"},
+			{PkgVersion: "6.1.5"},
+			{PkgVersion: "6.1.4"},
+		},
+	}
+
 	create_package_simple_req = &corev1.CreateInstalledPackageRequest{
 		AvailablePackageRef: availableRef("podinfo/podinfo", "namespace-1"),
 		Name:                "my-podinfo",
@@ -3122,5 +3130,62 @@ var (
 
 	delete_repo_req_6 = &corev1.DeletePackageRepositoryRequest{
 		PackageRepoRef: repoRefInReq("my-podinfo-4", "TBD"),
+	}
+
+	expected_oci_stefanprodan_podinfo_available_summaries = func(name string) *corev1.GetAvailablePackageSummariesResponse {
+		return &corev1.GetAvailablePackageSummariesResponse{
+			AvailablePackageSummaries: []*corev1.AvailablePackageSummary{
+				{
+					Name:                "podinfo",
+					AvailablePackageRef: availableRef(name+"/podinfo", "default"),
+					LatestVersion: &corev1.PackageAppVersion{
+						PkgVersion: "6.1.6",
+					},
+					DisplayName:      "podinfo",
+					ShortDescription: "Podinfo Helm chart for Kubernetes",
+					Categories:       []string{""},
+				},
+			},
+		}
+	}
+
+	expected_detail_oci_stefanprodan_podinfo = func(name string) *corev1.GetAvailablePackageDetailResponse {
+		return &corev1.GetAvailablePackageDetailResponse{
+			AvailablePackageDetail: &corev1.AvailablePackageDetail{
+				AvailablePackageRef: availableRef(name+"/podinfo", "default"),
+				Name:                "podinfo",
+				Version:             pkgAppVersion("6.1.6"),
+				RepoUrl:             "oci://ghcr.io/stefanprodan/charts",
+				HomeUrl:             "https://github.com/stefanprodan/podinfo",
+				DisplayName:         "podinfo",
+				ShortDescription:    "Podinfo Helm chart for Kubernetes",
+				SourceUrls:          []string{"https://github.com/stefanprodan/podinfo"},
+				Maintainers: []*corev1.Maintainer{
+					{Name: "stefanprodan", Email: "stefanprodan@users.noreply.github.com"},
+				},
+				Readme:        "Podinfo is a tiny web application made with Go",
+				DefaultValues: "Default values for podinfo.\n\nreplicaCount: 1\n",
+			},
+		}
+	}
+
+	expected_detail_oci_stefanprodan_podinfo_2 = func(name string) *corev1.GetAvailablePackageDetailResponse {
+		return &corev1.GetAvailablePackageDetailResponse{
+			AvailablePackageDetail: &corev1.AvailablePackageDetail{
+				AvailablePackageRef: availableRef(name+"/podinfo", "default"),
+				Name:                "podinfo",
+				Version:             pkgAppVersion("6.1.5"),
+				RepoUrl:             "oci://ghcr.io/stefanprodan/charts",
+				HomeUrl:             "https://github.com/stefanprodan/podinfo",
+				DisplayName:         "podinfo",
+				ShortDescription:    "Podinfo Helm chart for Kubernetes",
+				SourceUrls:          []string{"https://github.com/stefanprodan/podinfo"},
+				Maintainers: []*corev1.Maintainer{
+					{Name: "stefanprodan", Email: "stefanprodan@users.noreply.github.com"},
+				},
+				Readme:        "Podinfo is a tiny web application made with Go",
+				DefaultValues: "Default values for podinfo.\n\nreplicaCount: 1\n",
+			},
+		}
 	}
 )

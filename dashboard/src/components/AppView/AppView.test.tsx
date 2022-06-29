@@ -89,13 +89,13 @@ const availablePackageDetail = {
 const resourceRefs = {
   configMap: { apiVersion: "v1", kind: "ConfigMap", name: "cm-one" } as ResourceRef,
   deployment: {
-    apiVersion: "apps/v1beta1",
+    apiVersion: "apps/v1",
     kind: "Deployment",
     name: "deployment-one",
   } as ResourceRef,
   service: { apiVersion: "v1", kind: "Service", name: "svc-one" } as ResourceRef,
   ingress: {
-    apiVersion: "extensions/v1beta1",
+    apiVersion: "extensions/v1",
     kind: "Ingress",
     name: "ingress-one",
   } as ResourceRef,
@@ -105,12 +105,12 @@ const resourceRefs = {
     name: "secret-one",
   } as ResourceRef,
   daemonset: {
-    apiVersion: "apps/v1beta1",
+    apiVersion: "apps/v1",
     kind: "DaemonSet",
     name: "daemonset-one",
   } as ResourceRef,
   statefulset: {
-    apiVersion: "apps/v1beta1",
+    apiVersion: "apps/v1",
     kind: "StatefulSet",
     name: "statefulset-one",
   } as ResourceRef,

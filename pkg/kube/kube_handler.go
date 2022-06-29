@@ -96,6 +96,7 @@ type ClustersConfig struct {
 	KubeappsClusterName  string
 	GlobalReposNamespace string
 	PinnipedProxyURL     string
+	PinnipedProxyCACert  string
 	Clusters             map[string]ClusterConfig
 }
 
@@ -141,6 +142,11 @@ func NewClusterConfig(inClusterConfig *rest.Config, userToken string, cluster st
 				rt:      rt,
 			}
 		}
+
+		// If pinniped-proxy is configured with TLS, we need to set the
+		// CACert.
+		config.CAFile = clustersConfig.PinnipedProxyCACert
+
 		return config, nil
 	}
 
@@ -158,7 +164,7 @@ func NewClusterConfig(inClusterConfig *rest.Config, userToken string, cluster st
 	return config, nil
 }
 
-func ParseClusterConfig(configPath, caFilesPrefix string, pinnipedProxyURL string) (ClustersConfig, func(), error) {
+func ParseClusterConfig(configPath, caFilesPrefix string, pinnipedProxyURL, PinnipedProxyCACert string) (ClustersConfig, func(), error) {
 	caFilesDir, err := ioutil.TempDir(caFilesPrefix, "")
 	if err != nil {
 		return ClustersConfig{}, func() {}, err
@@ -176,6 +182,7 @@ func ParseClusterConfig(configPath, caFilesPrefix string, pinnipedProxyURL strin
 
 	configs := ClustersConfig{Clusters: map[string]ClusterConfig{}}
 	configs.PinnipedProxyURL = pinnipedProxyURL
+	configs.PinnipedProxyCACert = PinnipedProxyCACert
 	for _, c := range clusterConfigs {
 		// Select the cluster in which Kubeapps in installed. We look for either
 		// `isKubeappsCluster: true` or an empty `APIServiceURL`.
@@ -490,7 +497,7 @@ func parseRepoRequest(appRepoBody io.ReadCloser) (*appRepositoryRequest, error) 
 	var appRepoRequest appRepositoryRequest
 	err := json.NewDecoder(appRepoBody).Decode(&appRepoRequest)
 	if err != nil {
-		log.Infof("unable to decode: %v", err)
+		log.InfoS("unable to decode", "err", err)
 		return nil, err
 	}
 	return &appRepoRequest, nil
@@ -797,7 +804,7 @@ func getOCIAppRepositoryMediaType(cli httpclient.Client, repoURL string, repoNam
 	}
 	parsedURL.Path = path.Join("v2", parsedURL.Path, repoName, "manifests", tagVersion)
 
-	log.Infof("parsedURL %v", parsedURL.String())
+	log.InfoS("parsedURL", "URL", parsedURL.String())
 	req, err := http.NewRequest("GET", parsedURL.String(), nil)
 	if err != nil {
 		return "", err
@@ -1206,7 +1213,7 @@ func ParseSelfSubjectAccessRequest(selfSubjectAccessReviewBody io.ReadCloser) (*
 	var request authorizationapi.ResourceAttributes
 	err := json.NewDecoder(selfSubjectAccessReviewBody).Decode(&request)
 	if err != nil {
-		log.Infof("unable to decode: %v", err)
+		log.InfoS("unable to decode:", "err", err)
 		return nil, err
 	}
 	return &request, nil

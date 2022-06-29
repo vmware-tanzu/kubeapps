@@ -148,7 +148,7 @@ func (s *PluginsServer) registerPlugins(pluginPaths []string, grpcReg grpc.Servi
 			return err
 		}
 
-		log.Infof("Successfully registered plugin %q", pluginPath)
+		log.InfoS("Successfully registered plugin", "pluginPath", pluginPath)
 	}
 
 	sortPlugins(pluginsWithServers)
@@ -385,7 +385,7 @@ func getClustersConfigFromServeOpts(serveOpts core.ServeOptions) (kube.ClustersC
 	}
 
 	var cleanupCAFiles func()
-	config, cleanupCAFiles, err := kube.ParseClusterConfig(serveOpts.ClustersConfigPath, clustersCAFilesPrefix, serveOpts.PinnipedProxyURL)
+	config, cleanupCAFiles, err := kube.ParseClusterConfig(serveOpts.ClustersConfigPath, clustersCAFilesPrefix, serveOpts.PinnipedProxyURL, serveOpts.PinnipedProxyCACert)
 	if err != nil {
 		return kube.ClustersConfig{}, fmt.Errorf("unable to parse additional clusters config: %+v", err)
 	}

@@ -1,0 +1,75 @@
+# Copyright 2022 the Kubeapps contributors.
+# SPDX-License-Identifier: Apache-2.0
+
+---
+apiVersion: v1
+kind: Secret
+type: Opaque
+metadata:
+  name: registry-auth
+  namespace: ci
+data:
+  # Local credential for the instantiated Docker registry.
+  # User "testuser" and password "testpassword".
+  htpasswd: dGVzdHVzZXI6JDJ5JDA1JHVLUnAvdUV1aEMxRXpmbzQ1a1NCbk96eUlnV2tKNmk3R1VKTzNhLjVvY0JrZUNBNTZjRWxXCgo=
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: private-registry
+  namespace: ci
+  labels:
+    app: private-registry
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: private-registry
+  template:
+    metadata:
+      labels:
+        app: private-registry
+    spec:
+      volumes:
+      - name: auth-vol
+        secret:
+          secretName: registry-auth
+      - name: certs-vol
+        secret:
+          secretName: registry-tls
+      containers:
+        - image: registry:$DOCKER_REGISTRY_VERSION
+          name: private-registry
+          imagePullPolicy: Always
+          env:
+          - name: REGISTRY_AUTH_HTPASSWD_REALM
+            value: "CI Registry Realm"
+          - name: REGISTRY_AUTH
+            value: "htpasswd"
+          - name: REGISTRY_AUTH_HTPASSWD_PATH
+            value: "/auth/htpasswd"
+          - name: REGISTRY_HTTP_TLS_CERTIFICATE
+            value: "/certs/tls.crt"
+          - name: REGISTRY_HTTP_TLS_KEY
+            value: "/certs/tls.key"
+          ports:
+            - containerPort: 5000
+          volumeMounts:
+          - name: auth-vol
+            mountPath: "/auth"
+            readOnly: true          
+          - name: certs-vol
+            mountPath: "/certs"
+            readOnly: true
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: docker-registry
+  namespace: ci
+spec:
+  selector:
+    app: private-registry
+  ports:
+  - port: 5600
+    targetPort: 5000

@@ -80,7 +80,7 @@ func NewServer(configGetter core.KubernetesConfigGetter, kubeappsCluster string,
 			}
 			log.Infof("+fluxv2 using custom config: [%v]", *pluginConfig)
 		} else {
-			log.Infof("+fluxv2 using default config since pluginConfigPath is empty")
+			log.Info("+fluxv2 using default config since pluginConfigPath is empty")
 		}
 
 		// register the GitOps Toolkit schema definitions
@@ -156,7 +156,7 @@ func NewServer(configGetter core.KubernetesConfigGetter, kubeappsCluster string,
 // accessible to the user are available to be installed in the target namespace.
 func (s *Server) GetAvailablePackageSummaries(ctx context.Context, request *corev1.GetAvailablePackageSummariesRequest) (*corev1.GetAvailablePackageSummariesResponse, error) {
 	log.Infof("+fluxv2 GetAvailablePackageSummaries(request: [%v])", request)
-	defer log.Infof("-fluxv2 GetAvailablePackageSummaries")
+	defer log.Info("-fluxv2 GetAvailablePackageSummaries")
 
 	// grpc compiles in getters for you which automatically return a default (empty) struct
 	// if the pointer was nil
@@ -210,7 +210,7 @@ func (s *Server) GetAvailablePackageSummaries(ctx context.Context, request *core
 // GetAvailablePackageDetail returns the package metadata managed by the 'fluxv2' plugin
 func (s *Server) GetAvailablePackageDetail(ctx context.Context, request *corev1.GetAvailablePackageDetailRequest) (*corev1.GetAvailablePackageDetailResponse, error) {
 	log.Infof("+fluxv2 GetAvailablePackageDetail(request: [%v])", request)
-	defer log.Infof("-fluxv2 GetAvailablePackageDetail")
+	defer log.Info("-fluxv2 GetAvailablePackageDetail")
 
 	if request == nil || request.AvailablePackageRef == nil {
 		return nil, status.Errorf(codes.InvalidArgument, "no request AvailablePackageRef provided")
@@ -243,7 +243,7 @@ func (s *Server) GetAvailablePackageDetail(ctx context.Context, request *corev1.
 // GetAvailablePackageVersions returns the package versions managed by the 'fluxv2' plugin
 func (s *Server) GetAvailablePackageVersions(ctx context.Context, request *corev1.GetAvailablePackageVersionsRequest) (*corev1.GetAvailablePackageVersionsResponse, error) {
 	log.Infof("+fluxv2 GetAvailablePackageVersions [%v]", request)
-	defer log.Infof("-fluxv2 GetAvailablePackageVersions")
+	defer log.Info("-fluxv2 GetAvailablePackageVersions")
 
 	if request.GetPkgVersion() != "" {
 		return nil, status.Errorf(
@@ -466,9 +466,8 @@ func (s *Server) DeleteInstalledPackage(ctx context.Context, request *corev1.Del
 // resources created by an installed package.
 func (s *Server) GetInstalledPackageResourceRefs(ctx context.Context, request *corev1.GetInstalledPackageResourceRefsRequest) (*corev1.GetInstalledPackageResourceRefsResponse, error) {
 	pkgRef := request.GetInstalledPackageRef()
-	contextMsg := fmt.Sprintf("(cluster=%q, namespace=%q)", pkgRef.GetContext().GetCluster(), pkgRef.GetContext().GetNamespace())
 	identifier := pkgRef.GetIdentifier()
-	log.Infof("+fluxv2 GetInstalledPackageResourceRefs %s %s", contextMsg, identifier)
+	log.InfoS("+fluxv2 GetInstalledPackageResourceRefs", "cluster", pkgRef.GetContext().GetCluster(), "namespace", pkgRef.GetContext().GetNamespace(), "id", identifier)
 
 	key := types.NamespacedName{Namespace: pkgRef.Context.Namespace, Name: identifier}
 	rel, err := s.getReleaseInCluster(ctx, key)
@@ -523,7 +522,7 @@ func (s *Server) AddPackageRepository(ctx context.Context, request *corev1.AddPa
 
 func (s *Server) GetPackageRepositoryDetail(ctx context.Context, request *corev1.GetPackageRepositoryDetailRequest) (*corev1.GetPackageRepositoryDetailResponse, error) {
 	log.Infof("+fluxv2 GetPackageRepositoryDetail [%v]", request)
-	defer log.Infof("-fluxv2 GetPackageRepositoryDetail")
+	defer log.Info("-fluxv2 GetPackageRepositoryDetail")
 	if request == nil || request.PackageRepoRef == nil {
 		return nil, status.Errorf(codes.InvalidArgument, "no request AvailablePackageRef provided")
 	}
@@ -630,10 +629,27 @@ func (s *Server) SetUserManagedSecrets(ctx context.Context, request *v1alpha1.Se
 	}, nil
 }
 
-// convenience func mostly used by unit tests
-func (s *Server) newBackgroundClientGetter() clientgetter.BackgroundClientGetterFunc {
-	return func(ctx context.Context) (clientgetter.ClientInterfaces, error) {
+// makes the server look like a repo event sink. Facilitates code reuse between
+// use cases when something happens in background as a result of a watch event,
+// aka an "out-of-band" interaction and use cases when the user wants something
+// done explicitly, aka "in-band" interaction
+func (s *Server) newRepoEventSink() repoEventSink {
+	cg := func(ctx context.Context) (clientgetter.ClientInterfaces, error) {
 		return s.clientGetter(ctx, s.kubeappsCluster)
+	}
+
+	// notice a bit of inconsistency here, we are using s.clientGetter
+	// (i.e. the context of the incoming request) to read the secret
+	// as opposed to s.repoCache.clientGetter (which uses the context of
+	//	User "system:serviceaccount:kubeapps:kubeapps-internal-kubeappsapis")
+	// which is what is used when the repo is being processed/indexed.
+	// I don't think it's necessarily a bad thing if the incoming user's RBAC
+	// settings are more permissive than that of the default RBAC for
+	// kubeapps-internal-kubeappsapis account. If we don't like that behavior,
+	// I can easily switch to BackgroundClientGetter here
+	return repoEventSink{
+		clientGetter: cg,
+		chartCache:   s.chartCache,
 	}
 }
 

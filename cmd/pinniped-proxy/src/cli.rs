@@ -28,4 +28,18 @@ pub struct Options {
         help = "Specify the file path to the cert authority for the default api server https://kubernetes.default"
     )]
     pub default_ca_cert: String,
+    #[structopt(
+        long = "proxy-tls-cert",
+        env = "PINNIPED_PROXY_TLS_CERT",
+        default_value = "",
+        help = "Specify the file path to a PEM encoded TLS certificate. Providing the cert and key implies listening for TLS requests."
+    )]
+    pub proxy_tls_cert: String,
+    #[structopt(
+        long = "proxy-tls-cert-key",
+        env = "PINNIPED_PROXY_TLS_CERT_KEY",
+        default_value = "",
+        help = "Specify the file path to a PEM encoded TLS certificate key. Providing the cert and key implies listening for TLS requests."
+    )]
+    pub proxy_tls_cert_key: String,
 }
