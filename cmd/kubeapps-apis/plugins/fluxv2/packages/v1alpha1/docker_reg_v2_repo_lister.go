@@ -73,7 +73,7 @@ func (l *dockerRegistryApiV2RepositoryLister) ListRepositoryNames(ociRegistry *O
 		// to req.Query so we don't start at the beggining of the alphabet
 
 		// impl refs:
-		// 1. https://github.com/oras-project/oras-go/blob/14422086e418/registry/remote/registry.go
+		// 1. https://github.com/oras-project/oras-go/blob/14422086e41897a44cb706726e687d39dc728805/registry/remote/registry.go#L105
 		// 2. https://github.com/oras-project/oras-go/blob/14422086e41897a44cb706726e687d39dc728805/registry/remote/url.go#L43
 		err = orasRegistry.Repositories(context.Background(), fn)
 		log.Infof("ORAS Repositories returned: %v", err)
