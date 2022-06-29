@@ -10,6 +10,7 @@ import (
 	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/pkg/statuserror"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	k8scorev1 "k8s.io/api/core/v1"
 	log "k8s.io/klog/v2"
 )
 
@@ -33,38 +34,42 @@ func (s *Server) AddPackageRepository(ctx context.Context, request *corev1.AddPa
 	if cluster != s.globalPackagingCluster {
 		return nil, status.Errorf(codes.InvalidArgument, "installing package repositories in other clusters in not supported yet")
 	}
-	if request.GetName() == "" {
-		return nil, status.Errorf(codes.InvalidArgument, "no request Name provided")
-	}
-	if request.GetDescription() != "" {
-		return nil, status.Errorf(codes.InvalidArgument, "Description is not supported")
-	}
-	if request.GetNamespaceScoped() != (namespace != s.globalPackagingNamespace) {
-		return nil, status.Errorf(codes.InvalidArgument, "Namespace Scope is inconsistent with the provided Namespace")
-	}
-	if request.GetType() != Type_ImgPkgBundle {
-		return nil, status.Errorf(codes.InvalidArgument, "only repositories of Type imgpkBundle are currently supported")
-	}
-	if request.GetUrl() == "" {
-		return nil, status.Errorf(codes.InvalidArgument, "no request Url provided")
-	}
-	if request.GetTlsConfig() != nil {
-		return nil, status.Errorf(codes.InvalidArgument, "TLS Config is not supported")
-	}
-	if request.GetAuth() != nil {
-		return nil, status.Errorf(codes.InvalidArgument, "Auth is not supported yet")
+	if err := s.validatePackageRepositoryCreate(ctx, cluster, request); err != nil {
+		return nil, err
 	}
 
-	// build repository
-	repository, err := s.buildPkgRepositoryCreate(request)
+	// create secret (must be done first, to get the name)
+	var err error
+	var pkgSecret *k8scorev1.Secret
+	if request.Auth != nil && request.Auth.GetSecretRef() == nil {
+		pkgSecret, err = s.buildPkgRepositorySecretCreate(namespace, request.Name, request.Auth)
+		if err != nil {
+			return nil, status.Errorf(codes.Internal, "unable to build the associated secret: %v", err)
+		}
+
+		pkgSecret, err = s.createSecret(ctx, cluster, pkgSecret)
+		if err != nil {
+			return nil, statuserror.FromK8sError("create", "Secret", request.Name, err)
+		}
+	}
+
+	// create repository
+	pkgRepository, err := s.buildPkgRepositoryCreate(request, pkgSecret)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "unable to build the PackageRepository: %v", err)
 	}
-
-	// persist repository
-	_, err = s.createPkgRepository(ctx, cluster, namespace, repository)
+	pkgRepository, err = s.createPkgRepository(ctx, cluster, namespace, pkgRepository)
 	if err != nil {
-		return nil, statuserror.FromK8sError("create", "PackageRepository", request.GetName(), err)
+		return nil, statuserror.FromK8sError("create", "PackageRepository", request.Name, err)
+	}
+
+	// update secret with owner reference if needed
+	if pkgSecret != nil {
+		setOwnerReference(pkgSecret, pkgRepository)
+		pkgSecret, err = s.updateSecret(ctx, cluster, pkgSecret)
+		if err != nil {
+			return nil, statuserror.FromK8sError("update", "Secret", request.Name, err)
+		}
 	}
 
 	// response
@@ -75,7 +80,7 @@ func (s *Server) AddPackageRepository(ctx context.Context, request *corev1.AddPa
 				Namespace: namespace,
 			},
 			Plugin:     GetPluginDetail(),
-			Identifier: request.GetName(),
+			Identifier: request.Name,
 		},
 	}
 
@@ -100,14 +105,23 @@ func (s *Server) GetPackageRepositoryDetail(ctx context.Context, request *corev1
 	logctx := fmt.Sprintf("(cluster=%q, namespace=%q, name=%q)", cluster, namespace, name)
 	log.Infof("+kapp-controller GetPackageRepositoryDetail %s", logctx)
 
-	// fetch carvel repository
+	// fetch repository
 	pkgRepository, err := s.getPkgRepository(ctx, cluster, namespace, name)
 	if err != nil {
 		return nil, statuserror.FromK8sError("get", "PackageRepository", name, err)
 	}
 
+	// fetch repository secret
+	var pkgSecret *k8scorev1.Secret
+	if pkgSecretRef := repositorySecretRef(pkgRepository); pkgSecretRef != nil {
+		pkgSecret, err = s.getSecret(ctx, cluster, namespace, pkgSecretRef.Name)
+		if err != nil {
+			return nil, statuserror.FromK8sError("get", "Secret", pkgSecretRef.Name, err)
+		}
+	}
+
 	// translate
-	repository, err := s.buildPackageRepository(pkgRepository, cluster)
+	repository, err := s.buildPackageRepository(pkgRepository, pkgSecret, cluster)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "unable to convert the PackageRepository: %v", err)
 	}
@@ -145,7 +159,8 @@ func (s *Server) GetPackageRepositorySummaries(ctx context.Context, request *cor
 	for _, repo := range pkgRepositories {
 		repo, err := s.buildPackageRepositorySummary(repo, cluster)
 		if err != nil {
-			return nil, fmt.Errorf("unable to convert the PackageRepository: %v", err)
+			// todo -> instead of failing the whole query, we should be able to log the error along with the response
+			return nil, status.Errorf(codes.Internal, "unable to convert the PackageRepository: %v", err)
 		}
 		repositories = append(repositories, repo)
 	}
@@ -176,40 +191,81 @@ func (s *Server) UpdatePackageRepository(ctx context.Context, request *corev1.Up
 	logctx := fmt.Sprintf("(cluster=%q, namespace=%q, name=%q)", cluster, namespace, name)
 	log.Infof("+kapp-controller UpdatePackageRepository %s", logctx)
 
-	// validation
+	// identity validation
 	if cluster != s.globalPackagingCluster {
-		return nil, status.Errorf(codes.InvalidArgument, "installing package repositories in other clusters in not supported yet")
+		return nil, status.Errorf(codes.InvalidArgument, "updating package repositories in other clusters in not supported yet")
 	}
 	if name == "" {
 		return nil, status.Errorf(codes.InvalidArgument, "no request Name provided")
 	}
-	if request.GetDescription() != "" {
-		return nil, status.Errorf(codes.InvalidArgument, "Description is not supported")
-	}
-	if request.GetUrl() == "" {
-		return nil, status.Errorf(codes.InvalidArgument, "no request Url provided")
-	}
-	if request.GetTlsConfig() != nil {
-		return nil, status.Errorf(codes.InvalidArgument, "TLS Config is not supported")
-	}
-	if request.GetAuth() != nil {
-		return nil, status.Errorf(codes.InvalidArgument, "Auth is not supported yet")
-	}
 
-	// fetch existing
-	repository, err := s.getPkgRepository(ctx, cluster, namespace, name)
+	// fetch existing repository
+	pkgRepository, err := s.getPkgRepository(ctx, cluster, namespace, name)
 	if err != nil {
 		return nil, statuserror.FromK8sError("get", "PackageRepository", name, err)
 	}
 
-	// build repository
-	repository, err = s.buildPkgRepositoryUpdate(request, repository)
+	// fetch existing secret
+	var pkgSecret *k8scorev1.Secret
+	if pkgSecretRef := repositorySecretRef(pkgRepository); pkgSecretRef != nil {
+		pkgSecret, err = s.getSecret(ctx, cluster, namespace, pkgSecretRef.Name)
+		if err != nil {
+			return nil, statuserror.FromK8sError("get", "Secret", pkgSecretRef.Name, err)
+		}
+	}
+
+	// validate for update
+	if err := s.validatePackageRepositoryUpdate(ctx, cluster, request, pkgRepository, pkgSecret); err != nil {
+		return nil, err
+	}
+
+	// handle managed secret, there 3 cases to consider:
+	//    create the secret if auth was not previously configured
+	//    update the secret if auth has been updated
+	//    delete the secret if auth has been removed
+	if request.Auth == nil {
+		// delete existing secret, if plugin managed
+		if pkgSecret != nil && isPluginManaged(pkgRepository, pkgSecret) {
+			if err := s.deleteSecret(ctx, cluster, pkgSecret.GetNamespace(), pkgSecret.GetName()); err != nil {
+				return nil, statuserror.FromK8sError("delete", "Secret", pkgSecret.GetName(), err)
+			}
+		}
+		pkgSecret = nil
+	} else if request.Auth.GetSecretRef() == nil {
+		if pkgSecret == nil {
+			// create
+			pkgSecret, err = s.buildPkgRepositorySecretCreate(namespace, pkgRepository.GetName(), request.Auth)
+			if err != nil {
+				return nil, status.Errorf(codes.Internal, "unable to build the associated secret: %v", err)
+			}
+			// repository already exist, we can set the owner reference as part of creation
+			setOwnerReference(pkgSecret, pkgRepository)
+
+			pkgSecret, err = s.createSecret(ctx, cluster, pkgSecret)
+			if err != nil {
+				return nil, statuserror.FromK8sError("create", "Secret", pkgRepository.GetName(), err)
+			}
+		} else {
+			// update
+			updated, err := s.buildPkgRepositorySecretUpdate(pkgSecret, request.Auth)
+			if err != nil {
+				return nil, status.Errorf(codes.Internal, "unable to build the associated secret: %v", err)
+			}
+			if updated {
+				pkgSecret, err = s.updateSecret(ctx, cluster, pkgSecret)
+				if err != nil {
+					return nil, statuserror.FromK8sError("update", "Secret", pkgRepository.GetName(), err)
+				}
+			}
+		}
+	}
+
+	// update repository
+	pkgRepository, err = s.buildPkgRepositoryUpdate(request, pkgRepository, pkgSecret)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "unable to build the PackageRepository: %v", err)
 	}
-
-	// persist repository
-	_, err = s.updatePkgRepository(ctx, cluster, namespace, repository)
+	pkgRepository, err = s.updatePkgRepository(ctx, cluster, namespace, pkgRepository)
 	if err != nil {
 		return nil, statuserror.FromK8sError("update", "PackageRepository", name, err)
 	}

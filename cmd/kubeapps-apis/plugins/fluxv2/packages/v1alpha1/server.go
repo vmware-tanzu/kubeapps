@@ -514,20 +514,7 @@ func (s *Server) AddPackageRepository(ctx context.Context, request *corev1.AddPa
 			request.Context.Cluster)
 	}
 
-	if request.Name == "" {
-		return nil, status.Errorf(codes.InvalidArgument, "no request Name provided")
-	}
-
-	name := types.NamespacedName{Name: request.Name, Namespace: request.Context.Namespace}
-
-	if request.GetNamespaceScoped() {
-		return nil, status.Errorf(codes.Unimplemented, "Namespaced-scoped repositories are not supported")
-	} else if request.GetType() != "helm" {
-		return nil, status.Errorf(codes.Unimplemented, "repository type [%s] not supported", request.GetType())
-	}
-
-	if repoRef, err := s.newRepo(ctx, name, request.GetUrl(),
-		request.GetInterval(), request.GetTlsConfig(), request.GetAuth()); err != nil {
+	if repoRef, err := s.newRepo(ctx, request); err != nil {
 		return nil, err
 	} else {
 		return &corev1.AddPackageRepositoryResponse{PackageRepoRef: repoRef}, nil
@@ -536,6 +523,7 @@ func (s *Server) AddPackageRepository(ctx context.Context, request *corev1.AddPa
 
 func (s *Server) GetPackageRepositoryDetail(ctx context.Context, request *corev1.GetPackageRepositoryDetailRequest) (*corev1.GetPackageRepositoryDetailResponse, error) {
 	log.Infof("+fluxv2 GetPackageRepositoryDetail [%v]", request)
+	defer log.Infof("-fluxv2 GetPackageRepositoryDetail")
 	if request == nil || request.PackageRepoRef == nil {
 		return nil, status.Errorf(codes.InvalidArgument, "no request AvailablePackageRef provided")
 	}
@@ -642,10 +630,27 @@ func (s *Server) SetUserManagedSecrets(ctx context.Context, request *v1alpha1.Se
 	}, nil
 }
 
-// convenience func mostly used by unit tests
-func (s *Server) newBackgroundClientGetter() clientgetter.BackgroundClientGetterFunc {
-	return func(ctx context.Context) (clientgetter.ClientInterfaces, error) {
+// makes the server look like a repo event sink. Facilitates code reuse between
+// use cases when something happens in background as a result of a watch event,
+// aka an "out-of-band" interaction and use cases when the user wants something
+// done explicitly, aka "in-band" interaction
+func (s *Server) newRepoEventSink() repoEventSink {
+	cg := func(ctx context.Context) (clientgetter.ClientInterfaces, error) {
 		return s.clientGetter(ctx, s.kubeappsCluster)
+	}
+
+	// notice a bit of inconsistency here, we are using s.clientGetter
+	// (i.e. the context of the incoming request) to read the secret
+	// as opposed to s.repoCache.clientGetter (which uses the context of
+	//	User "system:serviceaccount:kubeapps:kubeapps-internal-kubeappsapis")
+	// which is what is used when the repo is being processed/indexed.
+	// I don't think it's necessarily a bad thing if the incoming user's RBAC
+	// settings are more permissive than that of the default RBAC for
+	// kubeapps-internal-kubeappsapis account. If we don't like that behavior,
+	// I can easily switch to BackgroundClientGetter here
+	return repoEventSink{
+		clientGetter: cg,
+		chartCache:   s.chartCache,
 	}
 }
 

@@ -108,7 +108,7 @@ func TestGetAvailablePackageDetail(t *testing.T) {
 			requestChartUrl := ""
 
 			// these will be used later in a few places
-			opts := &common.ClientOptions{}
+			opts := &common.HttpClientOptions{}
 			if tc.basicAuth {
 				opts.Username = "foo"
 				opts.Password = "bar"
@@ -163,14 +163,21 @@ func TestGetAvailablePackageDetail(t *testing.T) {
 			secretObjs := []runtime.Object{}
 			if tc.basicAuth && tc.tls {
 				secretRef = "both-credentials"
-				secret := newBasicAuthTlsSecret(secretRef, repoNamespace, "foo", "bar", pub, priv, ca)
+				secret := newBasicAuthTlsSecret(types.NamespacedName{
+					Name:      secretRef,
+					Namespace: repoNamespace}, "foo", "bar", pub, priv, ca)
 				secretObjs = append(secretObjs, secret)
 			} else if tc.basicAuth {
 				secretRef = "http-credentials"
-				secretObjs = append(secretObjs, newBasicAuthSecret(secretRef, repoNamespace, "foo", "bar"))
+				secretObjs = append(secretObjs, newBasicAuthSecret(
+					types.NamespacedName{
+						Name:      secretRef,
+						Namespace: repoNamespace}, "foo", "bar"))
 			} else if tc.tls {
 				secretRef = "https-credentials"
-				secret := newTlsSecret(secretRef, repoNamespace, pub, priv, ca)
+				secret := newTlsSecret(types.NamespacedName{
+					Name:      secretRef,
+					Namespace: repoNamespace}, pub, priv, ca)
 				secretObjs = append(secretObjs, secret)
 			}
 
@@ -736,7 +743,7 @@ func TestChartCacheResyncNotIdle(t *testing.T) {
 			redisMockSetValueForRepo(mock, repoKey, repoBytes, nil)
 		}
 
-		opts := &common.ClientOptions{}
+		opts := &common.HttpClientOptions{}
 		chartCacheKeys := []string{}
 		var chartBytes []byte
 		for i := 0; i < NUM_CHARTS; i++ {
@@ -747,7 +754,8 @@ func TestChartCacheResyncNotIdle(t *testing.T) {
 				t.Fatalf("%+v", err)
 			}
 			if i == 0 {
-				chartBytes, err = cache.ChartCacheComputeValue(chartID, ts.URL, chartVersion, opts)
+				fn := downloadChartViaHttpFn(opts)
+				chartBytes, err = cache.ChartCacheComputeValue(chartID, ts.URL, chartVersion, fn)
 				if err != nil {
 					t.Fatalf("%+v", err)
 				}
@@ -932,10 +940,6 @@ func TestChartWithRelativeURL(t *testing.T) {
 
 func newChart(name, namespace string, spec *sourcev1.HelmChartSpec, status *sourcev1.HelmChartStatus) sourcev1.HelmChart {
 	helmChart := sourcev1.HelmChart{
-		TypeMeta: metav1.TypeMeta{
-			Kind:       sourcev1.HelmChartKind,
-			APIVersion: sourcev1.GroupVersion.String(),
-		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:       name,
 			Generation: int64(1),
@@ -957,20 +961,18 @@ func newChart(name, namespace string, spec *sourcev1.HelmChartSpec, status *sour
 	return helmChart
 }
 
-func (s *Server) redisMockSetValueForChart(mock redismock.ClientMock, key, url string, opts *common.ClientOptions) error {
-	sink := repoEventSink{
-		clientGetter: s.newBackgroundClientGetter(),
-		chartCache:   s.chartCache,
-	}
+func (s *Server) redisMockSetValueForChart(mock redismock.ClientMock, key, url string, opts *common.HttpClientOptions) error {
+	sink := s.newRepoEventSink()
 	return sink.redisMockSetValueForChart(mock, key, url, opts)
 }
 
-func (cs *repoEventSink) redisMockSetValueForChart(mock redismock.ClientMock, key, url string, opts *common.ClientOptions) error {
+func (cs *repoEventSink) redisMockSetValueForChart(mock redismock.ClientMock, key, url string, opts *common.HttpClientOptions) error {
 	_, chartID, version, err := fromRedisKeyForChart(key)
 	if err != nil {
 		return err
 	}
-	byteArray, err := cache.ChartCacheComputeValue(chartID, url, version, opts)
+	fn := downloadChartViaHttpFn(opts)
+	byteArray, err := cache.ChartCacheComputeValue(chartID, url, version, fn)
 	if err != nil {
 		return fmt.Errorf("chartCacheComputeValue failed due to: %+v", err)
 	}
@@ -985,13 +987,14 @@ func redisMockSetValueForChart(mock redismock.ClientMock, key string, byteArray 
 }
 
 // does a series of mock.ExpectGet(...)
-func redisMockExpectGetFromChartCache(mock redismock.ClientMock, key, url string, opts *common.ClientOptions) error {
+func redisMockExpectGetFromChartCache(mock redismock.ClientMock, key, url string, opts *common.HttpClientOptions) error {
 	if url != "" {
 		_, chartID, version, err := fromRedisKeyForChart(key)
 		if err != nil {
 			return err
 		}
-		bytes, err := cache.ChartCacheComputeValue(chartID, url, version, opts)
+		fn := downloadChartViaHttpFn(opts)
+		bytes, err := cache.ChartCacheComputeValue(chartID, url, version, fn)
 		if err != nil {
 			return err
 		}

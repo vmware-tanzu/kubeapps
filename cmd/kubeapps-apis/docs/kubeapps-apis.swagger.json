@@ -974,9 +974,8 @@
                   "description": "A user-provided description."
                 },
                 "interval": {
-                  "type": "integer",
-                  "format": "int64",
-                  "title": "The interval at which to check the upstream for updates (in seconds)\nOptional. Defaults to 10m if not specified"
+                  "type": "string",
+                  "title": "The interval at which to check the upstream for updates (in time+unit)\nOptional. Defaults to 10m if not specified"
                 },
                 "tlsConfig": {
                   "$ref": "#/definitions/v1alpha1PackageRepositoryTlsConfig",
@@ -1919,9 +1918,8 @@
                   "description": "A user-provided description."
                 },
                 "interval": {
-                  "type": "integer",
-                  "format": "int64",
-                  "title": "The interval at which to check the upstream for updates (in seconds)\nOptional. Defaults to 10m if not specified"
+                  "type": "string",
+                  "title": "The interval at which to check the upstream for updates (in time+unit)\nOptional. Defaults to 10m if not specified"
                 },
                 "tlsConfig": {
                   "$ref": "#/definitions/v1alpha1PackageRepositoryTlsConfig",
@@ -2919,9 +2917,8 @@
                   "description": "A user-provided description."
                 },
                 "interval": {
-                  "type": "integer",
-                  "format": "int64",
-                  "title": "The interval at which to check the upstream for updates (in seconds)\nOptional. Defaults to 10m if not specified"
+                  "type": "string",
+                  "title": "The interval at which to check the upstream for updates (in time+unit)\nOptional. Defaults to 10m if not specified"
                 },
                 "tlsConfig": {
                   "$ref": "#/definitions/v1alpha1PackageRepositoryTlsConfig",
@@ -3837,9 +3834,8 @@
                   "description": "A user-provided description."
                 },
                 "interval": {
-                  "type": "integer",
-                  "format": "int64",
-                  "title": "The interval at which to check the upstream for updates (in seconds)\nOptional. Defaults to 10m if not specified"
+                  "type": "string",
+                  "title": "The interval at which to check the upstream for updates (in time+unit)\nOptional. Defaults to 10m if not specified"
                 },
                 "tlsConfig": {
                   "$ref": "#/definitions/v1alpha1PackageRepositoryTlsConfig",
@@ -4222,8 +4218,10 @@
         "PACKAGE_REPOSITORY_AUTH_TYPE_BASIC_AUTH",
         "PACKAGE_REPOSITORY_AUTH_TYPE_TLS",
         "PACKAGE_REPOSITORY_AUTH_TYPE_BEARER",
-        "PACKAGE_REPOSITORY_AUTH_TYPE_CUSTOM",
-        "PACKAGE_REPOSITORY_AUTH_TYPE_DOCKER_CONFIG_JSON"
+        "PACKAGE_REPOSITORY_AUTH_TYPE_AUTHORIZATION_HEADER",
+        "PACKAGE_REPOSITORY_AUTH_TYPE_DOCKER_CONFIG_JSON",
+        "PACKAGE_REPOSITORY_AUTH_TYPE_SSH",
+        "PACKAGE_REPOSITORY_AUTH_TYPE_OPAQUE"
       ],
       "default": "PACKAGE_REPOSITORY_AUTH_TYPE_UNSPECIFIED"
     },
@@ -4252,7 +4250,7 @@
         }
       },
       "additionalProperties": {},
-      "description": "`Any` contains an arbitrary serialized protocol buffer message along with a\nURL that describes the type of the serialized message.\n\nProtobuf library provides support to pack/unpack Any values in the form\nof utility functions or additional generated methods of the Any type.\n\nExample 1: Pack and unpack a message in C++.\n\n    Foo foo = ...;\n    Any any;\n    any.PackFrom(foo);\n    ...\n    if (any.UnpackTo(\u0026foo)) {\n      ...\n    }\n\nExample 2: Pack and unpack a message in Java.\n\n    Foo foo = ...;\n    Any any = Any.pack(foo);\n    ...\n    if (any.is(Foo.class)) {\n      foo = any.unpack(Foo.class);\n    }\n\n Example 3: Pack and unpack a message in Python.\n\n    foo = Foo(...)\n    any = Any()\n    any.Pack(foo)\n    ...\n    if any.Is(Foo.DESCRIPTOR):\n      any.Unpack(foo)\n      ...\n\n Example 4: Pack and unpack a message in Go\n\n     foo := \u0026pb.Foo{...}\n     any, err := anypb.New(foo)\n     if err != nil {\n       ...\n     }\n     ...\n     foo := \u0026pb.Foo{}\n     if err := any.UnmarshalTo(foo); err != nil {\n       ...\n     }\n\nThe pack methods provided by protobuf library will by default use\n'type.googleapis.com/full.type.name' as the type URL and the unpack\nmethods only use the fully qualified type name after the last '/'\nin the type URL, for example \"foo.bar.com/x/y.z\" will yield type\nname \"y.z\".\n\n\nJSON\n====\nThe JSON representation of an `Any` value uses the regular\nrepresentation of the deserialized, embedded message, with an\nadditional field `@type` which contains the type URL. Example:\n\n    package google.profile;\n    message Person {\n      string first_name = 1;\n      string last_name = 2;\n    }\n\n    {\n      \"@type\": \"type.googleapis.com/google.profile.Person\",\n      \"firstName\": \u003cstring\u003e,\n      \"lastName\": \u003cstring\u003e\n    }\n\nIf the embedded message type is well-known and has a custom JSON\nrepresentation, that representation will be embedded adding a field\n`value` which holds the custom JSON in addition to the `@type`\nfield. Example (for message [google.protobuf.Duration][]):\n\n    {\n      \"@type\": \"type.googleapis.com/google.protobuf.Duration\",\n      \"value\": \"1.212s\"\n    }"
+      "description": "`Any` contains an arbitrary serialized protocol buffer message along with a\nURL that describes the type of the serialized message.\n\nProtobuf library provides support to pack/unpack Any values in the form\nof utility functions or additional generated methods of the Any type.\n\nExample 1: Pack and unpack a message in C++.\n\n    Foo foo = ...;\n    Any any;\n    any.PackFrom(foo);\n    ...\n    if (any.UnpackTo(\u0026foo)) {\n      ...\n    }\n\nExample 2: Pack and unpack a message in Java.\n\n    Foo foo = ...;\n    Any any = Any.pack(foo);\n    ...\n    if (any.is(Foo.class)) {\n      foo = any.unpack(Foo.class);\n    }\n\nExample 3: Pack and unpack a message in Python.\n\n    foo = Foo(...)\n    any = Any()\n    any.Pack(foo)\n    ...\n    if any.Is(Foo.DESCRIPTOR):\n      any.Unpack(foo)\n      ...\n\nExample 4: Pack and unpack a message in Go\n\n     foo := \u0026pb.Foo{...}\n     any, err := anypb.New(foo)\n     if err != nil {\n       ...\n     }\n     ...\n     foo := \u0026pb.Foo{}\n     if err := any.UnmarshalTo(foo); err != nil {\n       ...\n     }\n\nThe pack methods provided by protobuf library will by default use\n'type.googleapis.com/full.type.name' as the type URL and the unpack\nmethods only use the fully qualified type name after the last '/'\nin the type URL, for example \"foo.bar.com/x/y.z\" will yield type\nname \"y.z\".\n\n\nJSON\n\nThe JSON representation of an `Any` value uses the regular\nrepresentation of the deserialized, embedded message, with an\nadditional field `@type` which contains the type URL. Example:\n\n    package google.profile;\n    message Person {\n      string first_name = 1;\n      string last_name = 2;\n    }\n\n    {\n      \"@type\": \"type.googleapis.com/google.profile.Person\",\n      \"firstName\": \u003cstring\u003e,\n      \"lastName\": \u003cstring\u003e\n    }\n\nIf the embedded message type is well-known and has a custom JSON\nrepresentation, that representation will be embedded adding a field\n`value` which holds the custom JSON in addition to the `@type`\nfield. Example (for message [google.protobuf.Duration][]):\n\n    {\n      \"@type\": \"type.googleapis.com/google.protobuf.Duration\",\n      \"value\": \"1.212s\"\n    }"
     },
     "rpcStatus": {
       "type": "object",
@@ -4300,9 +4298,8 @@
           "title": "A URL identifying the package repository location. Must contain at\nleast a protocol and host"
         },
         "interval": {
-          "type": "integer",
-          "format": "int64",
-          "title": "The interval at which to check the upstream for updates (in seconds)\nOptional. Defaults to 10m if not specified"
+          "type": "string",
+          "title": "The interval at which to check the upstream for updates (in time+unit)\nOptional. Defaults to 10m if not specified"
         },
         "tlsConfig": {
           "$ref": "#/definitions/v1alpha1PackageRepositoryTlsConfig",
@@ -5048,6 +5045,19 @@
       "description": "Maintainers for the package.",
       "title": "Maintainer"
     },
+    "v1alpha1OpaqueCredentials": {
+      "type": "object",
+      "properties": {
+        "data": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          },
+          "title": "fields"
+        }
+      },
+      "title": "OpaqueCredentials"
+    },
     "v1alpha1PackageAppVersion": {
       "type": "object",
       "properties": {
@@ -5091,6 +5101,14 @@
           "$ref": "#/definitions/v1alpha1SecretKeyReference",
           "title": "a reference to an existing secret"
         },
+        "sshCreds": {
+          "$ref": "#/definitions/v1alpha1SshCredentials",
+          "title": "SSH credentials"
+        },
+        "opaqueCreds": {
+          "$ref": "#/definitions/v1alpha1OpaqueCredentials",
+          "title": "opaque credentials"
+        },
         "passCredentials": {
           "type": "boolean",
           "title": "pass_credentials allows the credentials from the SecretRef to be passed\non to a host that does not match the host as defined in URL.\nThis flag controls whether or not it is allowed to passing credentials\nwith requests to other domains linked from the repository.\nThis may be needed if the host of the advertised chart URLs in the\nindex differs from the defined URL. Optional"
@@ -5127,9 +5145,8 @@
           "description": "A URL identifying the package repository location."
         },
         "interval": {
-          "type": "integer",
-          "format": "int64",
-          "title": "The interval at which to check the upstream for updates (in seconds)"
+          "type": "string",
+          "title": "The interval at which to check the upstream for updates (in time+unit)"
         },
         "tlsConfig": {
           "$ref": "#/definitions/v1alpha1PackageRepositoryTlsConfig",
@@ -5298,9 +5315,8 @@
       "type": "object",
       "properties": {
         "interval": {
-          "type": "integer",
-          "format": "int32",
-          "description": "The interval with which the package is checked for reconciliation (in seconds)",
+          "type": "string",
+          "description": "The interval with which the package is checked for reconciliation (in time+unit)",
           "title": "Reconciliation Interval"
         },
         "suspend": {
@@ -5380,6 +5396,20 @@
       "default": "SECRET_TYPE_OPAQUE_UNSPECIFIED",
       "description": "The type of secret. Currently Kubeapps itself only deals with OPAQUE\nand docker config json secrets, but we define all so we can correctly\nlist the secret names with their types.\nSee https://kubernetes.io/docs/concepts/configuration/secret/#secret-types",
       "title": "SecretType"
+    },
+    "v1alpha1SshCredentials": {
+      "type": "object",
+      "properties": {
+        "privateKey": {
+          "type": "string",
+          "title": "private key"
+        },
+        "knownHosts": {
+          "type": "string",
+          "description": "known hosts."
+        }
+      },
+      "title": "SshCredentials"
     },
     "v1alpha1TlsCertKey": {
       "type": "object",

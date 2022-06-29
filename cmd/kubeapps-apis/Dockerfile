@@ -3,12 +3,12 @@
 
 # syntax = docker/dockerfile:1
 
-FROM bitnami/golang:1.18.2 as builder
+FROM bitnami/golang:1.18.3 as builder
 WORKDIR /go/src/github.com/vmware-tanzu/kubeapps
 COPY go.mod go.sum ./
 ARG VERSION="devel"
 
-ARG BUF_VERSION="1.4.0"
+ARG BUF_VERSION="1.5.0"
 ARG GOSEC_VERSION="2.11.0"
 
 # Install lint tools

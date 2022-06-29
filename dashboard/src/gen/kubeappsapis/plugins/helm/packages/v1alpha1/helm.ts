@@ -92,6 +92,34 @@ export interface SetUserManagedSecretsResponse {
   value: boolean;
 }
 
+/**
+ * RepositoryCustomDetails
+ *
+ * Custom details for a Helm repository
+ */
+export interface RepositoryCustomDetails {
+  dockerRegistrySecrets: string[];
+  ociRepositories: string[];
+  filterRule?: RepositoryFilterRule;
+  /** Perform repository validation test */
+  performValidation: boolean;
+}
+
+/**
+ * RepositoryFilterRule
+ *
+ * JQ expression for filtering packages
+ */
+export interface RepositoryFilterRule {
+  jq: string;
+  variables: { [key: string]: string };
+}
+
+export interface RepositoryFilterRule_VariablesEntry {
+  key: string;
+  value: string;
+}
+
 function createBaseInstalledPackageDetailCustomDataHelm(): InstalledPackageDetailCustomDataHelm {
   return { releaseRevision: 0 };
 }
@@ -391,6 +419,260 @@ export const SetUserManagedSecretsResponse = {
   ): SetUserManagedSecretsResponse {
     const message = createBaseSetUserManagedSecretsResponse();
     message.value = object.value ?? false;
+    return message;
+  },
+};
+
+function createBaseRepositoryCustomDetails(): RepositoryCustomDetails {
+  return {
+    dockerRegistrySecrets: [],
+    ociRepositories: [],
+    filterRule: undefined,
+    performValidation: false,
+  };
+}
+
+export const RepositoryCustomDetails = {
+  encode(message: RepositoryCustomDetails, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
+    for (const v of message.dockerRegistrySecrets) {
+      writer.uint32(10).string(v!);
+    }
+    for (const v of message.ociRepositories) {
+      writer.uint32(18).string(v!);
+    }
+    if (message.filterRule !== undefined) {
+      RepositoryFilterRule.encode(message.filterRule, writer.uint32(26).fork()).ldelim();
+    }
+    if (message.performValidation === true) {
+      writer.uint32(32).bool(message.performValidation);
+    }
+    return writer;
+  },
+
+  decode(input: _m0.Reader | Uint8Array, length?: number): RepositoryCustomDetails {
+    const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseRepositoryCustomDetails();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1:
+          message.dockerRegistrySecrets.push(reader.string());
+          break;
+        case 2:
+          message.ociRepositories.push(reader.string());
+          break;
+        case 3:
+          message.filterRule = RepositoryFilterRule.decode(reader, reader.uint32());
+          break;
+        case 4:
+          message.performValidation = reader.bool();
+          break;
+        default:
+          reader.skipType(tag & 7);
+          break;
+      }
+    }
+    return message;
+  },
+
+  fromJSON(object: any): RepositoryCustomDetails {
+    return {
+      dockerRegistrySecrets: Array.isArray(object?.dockerRegistrySecrets)
+        ? object.dockerRegistrySecrets.map((e: any) => String(e))
+        : [],
+      ociRepositories: Array.isArray(object?.ociRepositories)
+        ? object.ociRepositories.map((e: any) => String(e))
+        : [],
+      filterRule: isSet(object.filterRule)
+        ? RepositoryFilterRule.fromJSON(object.filterRule)
+        : undefined,
+      performValidation: isSet(object.performValidation)
+        ? Boolean(object.performValidation)
+        : false,
+    };
+  },
+
+  toJSON(message: RepositoryCustomDetails): unknown {
+    const obj: any = {};
+    if (message.dockerRegistrySecrets) {
+      obj.dockerRegistrySecrets = message.dockerRegistrySecrets.map(e => e);
+    } else {
+      obj.dockerRegistrySecrets = [];
+    }
+    if (message.ociRepositories) {
+      obj.ociRepositories = message.ociRepositories.map(e => e);
+    } else {
+      obj.ociRepositories = [];
+    }
+    message.filterRule !== undefined &&
+      (obj.filterRule = message.filterRule
+        ? RepositoryFilterRule.toJSON(message.filterRule)
+        : undefined);
+    message.performValidation !== undefined && (obj.performValidation = message.performValidation);
+    return obj;
+  },
+
+  fromPartial<I extends Exact<DeepPartial<RepositoryCustomDetails>, I>>(
+    object: I,
+  ): RepositoryCustomDetails {
+    const message = createBaseRepositoryCustomDetails();
+    message.dockerRegistrySecrets = object.dockerRegistrySecrets?.map(e => e) || [];
+    message.ociRepositories = object.ociRepositories?.map(e => e) || [];
+    message.filterRule =
+      object.filterRule !== undefined && object.filterRule !== null
+        ? RepositoryFilterRule.fromPartial(object.filterRule)
+        : undefined;
+    message.performValidation = object.performValidation ?? false;
+    return message;
+  },
+};
+
+function createBaseRepositoryFilterRule(): RepositoryFilterRule {
+  return { jq: "", variables: {} };
+}
+
+export const RepositoryFilterRule = {
+  encode(message: RepositoryFilterRule, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
+    if (message.jq !== "") {
+      writer.uint32(10).string(message.jq);
+    }
+    Object.entries(message.variables).forEach(([key, value]) => {
+      RepositoryFilterRule_VariablesEntry.encode(
+        { key: key as any, value },
+        writer.uint32(34).fork(),
+      ).ldelim();
+    });
+    return writer;
+  },
+
+  decode(input: _m0.Reader | Uint8Array, length?: number): RepositoryFilterRule {
+    const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseRepositoryFilterRule();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1:
+          message.jq = reader.string();
+          break;
+        case 4:
+          const entry4 = RepositoryFilterRule_VariablesEntry.decode(reader, reader.uint32());
+          if (entry4.value !== undefined) {
+            message.variables[entry4.key] = entry4.value;
+          }
+          break;
+        default:
+          reader.skipType(tag & 7);
+          break;
+      }
+    }
+    return message;
+  },
+
+  fromJSON(object: any): RepositoryFilterRule {
+    return {
+      jq: isSet(object.jq) ? String(object.jq) : "",
+      variables: isObject(object.variables)
+        ? Object.entries(object.variables).reduce<{ [key: string]: string }>(
+            (acc, [key, value]) => {
+              acc[key] = String(value);
+              return acc;
+            },
+            {},
+          )
+        : {},
+    };
+  },
+
+  toJSON(message: RepositoryFilterRule): unknown {
+    const obj: any = {};
+    message.jq !== undefined && (obj.jq = message.jq);
+    obj.variables = {};
+    if (message.variables) {
+      Object.entries(message.variables).forEach(([k, v]) => {
+        obj.variables[k] = v;
+      });
+    }
+    return obj;
+  },
+
+  fromPartial<I extends Exact<DeepPartial<RepositoryFilterRule>, I>>(
+    object: I,
+  ): RepositoryFilterRule {
+    const message = createBaseRepositoryFilterRule();
+    message.jq = object.jq ?? "";
+    message.variables = Object.entries(object.variables ?? {}).reduce<{
+      [key: string]: string;
+    }>((acc, [key, value]) => {
+      if (value !== undefined) {
+        acc[key] = String(value);
+      }
+      return acc;
+    }, {});
+    return message;
+  },
+};
+
+function createBaseRepositoryFilterRule_VariablesEntry(): RepositoryFilterRule_VariablesEntry {
+  return { key: "", value: "" };
+}
+
+export const RepositoryFilterRule_VariablesEntry = {
+  encode(
+    message: RepositoryFilterRule_VariablesEntry,
+    writer: _m0.Writer = _m0.Writer.create(),
+  ): _m0.Writer {
+    if (message.key !== "") {
+      writer.uint32(10).string(message.key);
+    }
+    if (message.value !== "") {
+      writer.uint32(18).string(message.value);
+    }
+    return writer;
+  },
+
+  decode(input: _m0.Reader | Uint8Array, length?: number): RepositoryFilterRule_VariablesEntry {
+    const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseRepositoryFilterRule_VariablesEntry();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1:
+          message.key = reader.string();
+          break;
+        case 2:
+          message.value = reader.string();
+          break;
+        default:
+          reader.skipType(tag & 7);
+          break;
+      }
+    }
+    return message;
+  },
+
+  fromJSON(object: any): RepositoryFilterRule_VariablesEntry {
+    return {
+      key: isSet(object.key) ? String(object.key) : "",
+      value: isSet(object.value) ? String(object.value) : "",
+    };
+  },
+
+  toJSON(message: RepositoryFilterRule_VariablesEntry): unknown {
+    const obj: any = {};
+    message.key !== undefined && (obj.key = message.key);
+    message.value !== undefined && (obj.value = message.value);
+    return obj;
+  },
+
+  fromPartial<I extends Exact<DeepPartial<RepositoryFilterRule_VariablesEntry>, I>>(
+    object: I,
+  ): RepositoryFilterRule_VariablesEntry {
+    const message = createBaseRepositoryFilterRule_VariablesEntry();
+    message.key = object.key ?? "";
+    message.value = object.value ?? "";
     return message;
   },
 };
@@ -1140,6 +1422,10 @@ export type Exact<P, I extends P> = P extends Builtin
 if (_m0.util.Long !== Long) {
   _m0.util.Long = Long as any;
   _m0.configure();
+}
+
+function isObject(value: any): boolean {
+  return typeof value === "object" && value !== null;
 }
 
 function isSet(value: any): boolean {

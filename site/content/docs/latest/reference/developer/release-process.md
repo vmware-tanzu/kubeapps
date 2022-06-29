@@ -14,10 +14,9 @@ For building the [development container images](https://hub.docker.com/u/kubeapp
 - The [dashboard/Dockerfile](https://github.com/vmware-tanzu/kubeapps/blob/main/dashboard/Dockerfile) uses:
   - [bitnami/node](https://hub.docker.com/r/bitnami/node/tags) for building the static files for production.
   - [bitnami/nginx](https://hub.docker.com/r/bitnami/nginx/tags) for serving the HTML and JS files as a simple web server.
-- Those services written in Golang use the same image for building the binary, but then a [scratch](https://hub.docker.com/_/scratch) image is used for actually running it. These Dockerfiles are:
+- Those services written in Golang use the same [bitnami/golang](https://hub.docker.com/r/bitnami/golang) image for building the binary, but then a [scratch](https://hub.docker.com/_/scratch) image is used for actually running it. These Dockerfiles are:
   - [apprepository-controller/Dockerfile](https://github.com/vmware-tanzu/kubeapps/blob/main/cmd/apprepository-controller/Dockerfile).
   - [asset-syncer/Dockerfile](https://github.com/vmware-tanzu/kubeapps/blob/main/cmd/asset-syncer/Dockerfile).
-  - [assetsvc/Dockerfile](https://github.com/vmware-tanzu/kubeapps/blob/main/cmd/assetsvc/Dockerfile).
   - [kubeops/Dockerfile](https://github.com/vmware-tanzu/kubeapps/blob/main/cmd/kubeops/Dockerfile).
 - The [pinniped-proxy/Dockerfile](https://github.com/vmware-tanzu/kubeapps/blob/main/cmd/pinniped-proxy/Dockerfile) uses:
   - [\_/rust](https://hub.docker.com/_/rust) for building the binary.
@@ -49,7 +48,7 @@ The versions used there _must_ match the ones used for building the container im
 - `MKCERT_VERSION` should be updated with the [latest stable version from the mkcert releases](https://github.com/FiloSottile/mkcert/releases).
 - `KUBECTL_VERSION` _should_ match the Kubernetes minor version (or minor version +1) used in `GKE_REGULAR_VERSION_XX` and listed in the [Kubernetes releases page](https://kubernetes.io/releases/).
 - `GITHUB_VERSION` should be updated with the [latest stable version from the GitHub CLI releases](https://github.com/cli/cli/releases).
-- `SEMVER_VERSION` should be updated with the [latest stable version from the semver releases](https://github.com/fsaintjacques/semver-tool/releases/tag/3.3.0).
+- `SEMVER_VERSION` should be updated with the [latest stable version from the semver releases](https://github.com/fsaintjacques/semver-tool/releases/).
 - `KIND_VERSION` should be updated with the [latest stable version from the kind releases](https://github.com/kubernetes-sigs/kind/releases).
 - `K8S_KIND_VERSION` _must_ match the Kubernetes minor version used in `GKE_REGULAR_VERSION_XX` and should be updated with one of the available image tags for a given [Kind release](https://github.com/kubernetes-sigs/kind/releases).
 - `POSTGRESQL_VERSION` _must_ match the version used by the [Bitnami PostgreSQL chart](https://github.com/bitnami/charts/blob/master/bitnami/postgresql/values.yaml).
@@ -200,9 +199,9 @@ git push origin ${VERSION_NAME} # replace `origin` by your remote name
 > export VERSION_NAME="v$(semver bump <major|minor|patch> $(git fetch --tags && git describe --tags $(git rev-list --tags --max-count=1)))"
 > ```
 
-A new tag pushed to the repository will trigger, apart from the usual test and build steps, a _release_ [workflow](https://circleci.com/gh/kubeapps/workflows) as described in the [CI documentation](./ci.md). An example of the triggered workflow is depicted below:
+A new tag pushed to the repository will trigger, apart from the usual test and build steps, a _release_ [workflow](https://circleci.com/gh/kubeapps/workflows) as described in the [CI documentation](../testing/ci.md). An example of the triggered workflow is depicted below:
 
-![CircleCI workflow after pushing a new tag](../img/ci-workflow-release.png "CircleCI workflow after pushing a new tag")
+![CircleCI workflow after pushing a new tag](../../img/ci-workflow-release.png "CircleCI workflow after pushing a new tag")
 
 > When a new tag is detected, Bitnami will automatically build a set of container images based on the tagged commit. They later will be published in [the Bitnami Dockerhub image registry](https://hub.docker.com/search?q=bitnami%2Fkubeapps&type=image).
 > Please note that this workflow is run outside the control of the Kubeapps release process
@@ -219,7 +218,7 @@ Then, save the draft and **do not publish it yet** and get these notes reviewed 
 
 Since the chart that we host in the Kubeapps repository is only intended for development purposes, we need to synchronize it with the official one in the [bitnami/charts repository](https://github.com/bitnami/charts/tree/master/bitnami/kubeapps).
 
-To this end, our CI system will automatically (in the `sync_chart_to_bitnami` workflow, as described in the [CI documentation](./ci.md).) send a PR with the current development changes to [their repository](https://github.com/bitnami/charts/pulls) whenever a new release is triggered.
+To this end, our CI system will automatically (in the `sync_chart_to_bitnami` workflow, as described in the [CI documentation](../testing/ci.md).) send a PR with the current development changes to [their repository](https://github.com/bitnami/charts/pulls) whenever a new release is triggered.
 Once the PR has been created, have a look at it (eg. remove any development changes that should not be released) and wait for someone from the Bitnami team to review and accept it.
 
 > Some issues can arise here, so please check the app versions are being properly updated at once and ensure you have the latest changes in the PR branch. Note that the [bitnami-bot](https://github.com/bitnami-bot) usually performs some automated commits to the main branch that might collide with the changes in our PR. In particular, it will release a new version of the chart with the updated images.

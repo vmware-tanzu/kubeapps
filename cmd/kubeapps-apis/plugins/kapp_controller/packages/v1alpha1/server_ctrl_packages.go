@@ -422,8 +422,15 @@ func (s *Server) GetInstalledPackageSummaries(ctx context.Context, request *core
 			pkgDataForNamespaces := pkgDatas[pkgName]
 			// Check if there was package metadata for the specific namespace.
 			pkgData := pkgDataForNamespaces[pkgi.Namespace]
+			var ok bool
 			if pkgData.meta == nil {
-				pkgData = pkgDataForNamespaces[s.globalPackagingNamespace]
+				pkgData, ok = pkgDataForNamespaces[s.globalPackagingNamespace]
+				// Ignore packages which do not have associated metadata
+				// available. See https://github.com/vmware-tanzu/kubeapps/issues/4901
+				if !ok || pkgData.meta == nil {
+					log.Errorf("+kapp-controller GetInstalledPackageSummary: No corresponding package metadata found for package %q. Ignoring package.", pkgName)
+					continue
+				}
 			}
 			// generate the installedPackageSummary from the fetched information
 			installedPackageSummary, err := s.buildInstalledPackageSummary(pkgi, pkgData.meta, pkgVersionsMap, cluster)
@@ -731,8 +738,8 @@ func (s *Server) UpdateInstalledPackage(ctx context.Context, request *corev1.Upd
 
 	// Update the rest of the fields
 	if reconciliationOptions != nil {
-		if reconciliationOptions.Interval > 0 {
-			pkgInstall.Spec.SyncPeriod = &metav1.Duration{Duration: time.Duration(reconciliationOptions.Interval) * time.Second}
+		if pkgInstall.Spec.SyncPeriod, err = pkgutils.ToDuration(reconciliationOptions.Interval); err != nil {
+			return nil, status.Errorf(codes.InvalidArgument, "The interval is invalid: %v", err)
 		}
 		if reconciliationOptions.ServiceAccountName != "" {
 			pkgInstall.Spec.ServiceAccountName = reconciliationOptions.ServiceAccountName
@@ -857,7 +864,7 @@ func (s *Server) GetInstalledPackageResourceRefs(ctx context.Context, request *c
 	cluster := request.GetInstalledPackageRef().GetContext().GetCluster()
 	namespace := request.GetInstalledPackageRef().GetContext().GetNamespace()
 	installedPackageRefId := request.GetInstalledPackageRef().GetIdentifier()
-	contextMsg := fmt.Sprintf("(cluster=%q, namespace=%q, id=%q)", namespace, cluster, installedPackageRefId)
+	contextMsg := fmt.Sprintf("(cluster=%q, namespace=%q, id=%q)", cluster, namespace, installedPackageRefId)
 	log.Infof("+kapp-controller GetInstalledPackageResourceRefs %s", contextMsg)
 
 	if cluster == "" {

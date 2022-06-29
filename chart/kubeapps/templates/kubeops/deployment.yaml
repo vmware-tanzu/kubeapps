@@ -89,12 +89,14 @@ spec:
           {{- else }}
           args:
             - --user-agent-comment=kubeapps/{{ .Chart.AppVersion }}
-            - --assetsvc-url={{ printf "http://%s:%d" (include "kubeapps.assetsvc.fullname" .) (int .Values.assetsvc.service.ports.http) }}
             {{- if .Values.clusters }}
             - --clusters-config-path=/config/clusters.conf
             {{- end }}
             {{- if .Values.pinnipedProxy.enabled }}
-            - --pinniped-proxy-url={{ printf "http://%s.%s:%d" (include "kubeapps.pinniped-proxy.fullname" .) .Release.Namespace (int .Values.pinnipedProxy.service.ports.pinnipedProxy) }}
+            - --pinniped-proxy-url={{ printf "http%s://%s.%s:%d" (eq .Values.pinnipedProxy.CACert "" | ternary "" "s") (include "kubeapps.pinniped-proxy.fullname" .) .Release.Namespace (int .Values.pinnipedProxy.service.ports.pinnipedProxy) }}
+            {{- if .Values.pinnipedProxy.CACert }}
+            - --pinniped-proxy-ca-cert=/etc/pinniped-proxy-tls/ca.crt
+            {{- end }}
             {{- end }}
             {{- if .Values.kubeops.burst }}
             - --burst={{ .Values.kubeops.burst }}
@@ -172,6 +174,10 @@ spec:
             {{- if .Values.kubeops.extraVolumeMounts }}
             {{- include "common.tplvalues.render" (dict "value" .Values.kubeops.extraVolumeMounts "context" $) | nindent 12 }}
             {{- end }}
+            {{- if .Values.pinnipedProxy.CACert }}
+            - name: pinniped-proxy-ca-cert
+              mountPath: /etc/pinniped-proxy-tls
+            {{- end }}
         {{- if .Values.kubeops.sidecars }}
         {{- include "common.tplvalues.render" (dict "value" .Values.kubeops.sidecars "context" $) | trim | nindent 8 }}
         {{- end }}
@@ -182,6 +188,11 @@ spec:
             name: {{ template "kubeapps.clusters-config.fullname" . }}
         - name: ca-certs
           emptyDir: {}
+        {{- end }}
+        {{- if .Values.pinnipedProxy.CACert }}
+        - name: pinniped-proxy-ca-cert
+          configMap:
+            name: {{ .Values.pinnipedProxy.CACert }}
         {{- end }}
         {{- if .Values.kubeops.extraVolumes }}
         {{- include "common.tplvalues.render" (dict "value" .Values.kubeops.extraVolumes "context" $) | nindent 8 }}

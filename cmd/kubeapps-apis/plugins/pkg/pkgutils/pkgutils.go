@@ -11,7 +11,9 @@ import (
 	"fmt"
 	"net/url"
 	"reflect"
+	"sort"
 	"strings"
+	"time"
 
 	"github.com/Masterminds/semver/v3"
 	corev1 "github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
@@ -22,6 +24,7 @@ import (
 	"gopkg.in/yaml.v3" // The usual "sigs.k8s.io/yaml" doesn't work: https://github.com/vmware-tanzu/kubeapps/pull/4050
 	"k8s.io/apiextensions-apiserver/pkg/apis/apiextensions"
 	structuralschema "k8s.io/apiextensions-apiserver/pkg/apiserver/schema"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 )
 
@@ -51,19 +54,42 @@ func GetDefaultVersionsInSummary() VersionsInSummary {
 	return defaultVersionsInSummary
 }
 
-// PackageAppVersionsSummary converts the model chart versions into the required version summary.
-func PackageAppVersionsSummary(versions []models.ChartVersion, versionInSummary VersionsInSummary) []*corev1.PackageAppVersion {
-	var pav []*corev1.PackageAppVersion
+type packageSemVersion struct {
+	*semver.Version
+	appVersion string
+}
 
-	// Use a version map to be able to count how many major, minor and patch versions
-	// we have included.
-	versionMap := map[uint64]map[uint64][]uint64{}
+func sortByPackageVersion(versions []models.ChartVersion) []*packageSemVersion {
+	var sortedVersions []*packageSemVersion
 	for _, v := range versions {
 		version, err := semver.NewVersion(v.Version)
 		if err != nil {
 			continue
 		}
 
+		sortedVersions = append(sortedVersions, &packageSemVersion{
+			Version:    version,
+			appVersion: v.AppVersion,
+		})
+	}
+	sort.Slice(sortedVersions, func(i, j int) bool {
+		return sortedVersions[i].Version.GreaterThan(sortedVersions[j].Version)
+	})
+	return sortedVersions
+}
+
+// PackageAppVersionsSummary converts the model chart versions into the required version summary.
+func PackageAppVersionsSummary(versions []models.ChartVersion, versionInSummary VersionsInSummary) []*corev1.PackageAppVersion {
+
+	// Sort versions
+	sortedVersions := sortByPackageVersion(versions)
+
+	var pav []*corev1.PackageAppVersion
+
+	// Use a version map to be able to count how many major, minor and patch versions
+	// we have included.
+	versionMap := map[uint64]map[uint64][]uint64{}
+	for _, version := range sortedVersions {
 		if _, ok := versionMap[version.Major()]; !ok {
 			// Don't add a new major version if we already have enough
 			if len(versionMap) >= versionInSummary.Major {
@@ -85,8 +111,8 @@ func PackageAppVersionsSummary(versions []models.ChartVersion, versionInSummary 
 
 		// Include the version and update the version map.
 		pav = append(pav, &corev1.PackageAppVersion{
-			PkgVersion: v.Version,
-			AppVersion: v.AppVersion,
+			PkgVersion: version.Version.String(),
+			AppVersion: version.appVersion,
 		})
 
 		if _, ok := versionMap[version.Major()]; !ok {
@@ -342,4 +368,29 @@ func isNonNullableNull(x interface{}, s *structuralschema.Structural) bool {
 // isKindInt returns true if the item is an int
 func isKindInt(src interface{}) bool {
 	return src != nil && reflect.TypeOf(src).Kind() == reflect.Int
+}
+
+// translation to duration
+func ToDuration(duration string) (*metav1.Duration, error) {
+	if duration == "" {
+		return nil, nil
+	} else {
+		if d, err := time.ParseDuration(duration); err != nil {
+			return nil, err
+		} else {
+			return &metav1.Duration{Duration: d}, nil
+		}
+	}
+}
+
+// translation from duration
+func FromDuration(duration *metav1.Duration) string {
+	if duration == nil {
+		return ""
+	} else {
+		s := duration.Duration.String()
+		s = strings.Replace(s, "m0s", "m", 1)
+		s = strings.Replace(s, "h0m", "h", 1)
+		return s
+	}
 }

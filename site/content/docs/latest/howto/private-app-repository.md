@@ -198,7 +198,7 @@ There is one caveat though. It's necessary to specify the list of applications (
 For example, for Harbor, it's possible to query its API to retrieve the list:
 
 ```console
-curl -X GET "https://harbor.domain/api/v2.0/projects/my-oci-registry/repositories" -H "accept: applincation/json" | jq 'map(.name) | join(", ")'
+curl -X GET "https://harbor.domain/api/v2.0/projects/my-oci-registry/repositories" -H "accept: application/json" | jq 'map(.name) | join(", ")'
 ```
 
 > **Note**: Substitute the domain `harbor.domain` and the project name `my-oci-registry` with your own.

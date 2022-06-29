@@ -12,7 +12,7 @@ The main configuration is located at this [CircleCI config file](https://github.
   - `test_go` (always): it runs every unit test for those projects written in Golang (that is, it runs `make test`) as well as it runs some DB-dependent tests.
   - `test_dashboard` (always): it runs the dashboard linter and unit tests (`yarn lint` and `yarn test`)
   - `test_pinniped_proxy` (always): it runs the Rust unit tests of the pinniped-proxy project (`cargo test`).
-  - `build_go_images` (always): it builds the CI golang images for `kubeops`, `apprepository-controller`, `asset-syncer` and `assetsvc`.
+  - `build_go_images` (always): it builds the CI golang images for `kubeops`, `apprepository-controller`, `asset-syncer` and `kubeapps-apis`.
   - `build_dashboard` (always): it builds the CI node image for `dashboard`.
   - `build_pinniped_proxy` (always): it builds the CI rust image for `pinniped-proxy`.
   - `local_e2e_tests` (always): it runs locally (i.e., inside the CircleCI environment) the e2e tests. Please refer to the [e2e tests documentation](./end-to-end-tests.md) for further information. In this job, before running the script [`script/e2e-test.sh](https://github.com/vmware-tanzu/kubeapps/blob/main/script/e2e-test.sh), the proper environment is created. Namely:

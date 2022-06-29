@@ -1236,10 +1236,6 @@ func compareActualVsExpectedGetInstalledPackageDetailResponse(t *testing.T, actu
 
 func newRelease(name string, namespace string, spec *helmv2.HelmReleaseSpec, status *helmv2.HelmReleaseStatus) helmv2.HelmRelease {
 	helmRelease := helmv2.HelmRelease{
-		TypeMeta: metav1.TypeMeta{
-			Kind:       helmv2.HelmReleaseKind,
-			APIVersion: helmv2.GroupVersion.String(),
-		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:       name,
 			Generation: int64(1),
