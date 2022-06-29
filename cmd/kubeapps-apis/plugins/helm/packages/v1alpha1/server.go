@@ -116,7 +116,10 @@ func NewServer(configGetter core.KubernetesConfigGetter, globalPackagingCluster 
 
 	// Register custom scheme
 	scheme := runtime.NewScheme()
-	appRepov1.AddToScheme(scheme)
+	err = appRepov1.AddToScheme(scheme)
+	if err != nil {
+		log.Fatalf("%s", err)
+	}
 
 	return &Server{
 		clientGetter: clientgetter.NewClientGetter(configGetter, clientgetter.Options{Scheme: scheme}),

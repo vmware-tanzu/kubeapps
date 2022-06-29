@@ -245,7 +245,10 @@ func (s *Server) GetResources(r *v1alpha1.GetResourcesRequest, stream v1alpha1.R
 	// data as it arrives.
 	resourceWatcher := mergeWatchers(watchers)
 	for e := range resourceWatcher.ResultChan() {
-		sendResourceData(e.ResourceRef, e.Object, stream)
+		err = sendResourceData(e.ResourceRef, e.Object, stream)
+		if err != nil {
+			return err
+		}
 	}
 
 	return nil
@@ -289,10 +292,13 @@ func sendResourceData(ref *pkgsGRPCv1alpha1.ResourceRef, obj interface{}, s v1al
 
 	// Note, a string in Go is effectively a read-only slice of bytes.
 	// See https://stackoverflow.com/a/50880408 for interesting links.
-	s.Send(&v1alpha1.GetResourcesResponse{
+	err = s.Send(&v1alpha1.GetResourcesResponse{
 		ResourceRef: ref,
 		Manifest:    string(resourceBytes),
 	})
+	if err != nil {
+		return status.Errorf(codes.Internal, "unable send GetResourcesResponse: %s", err.Error())
+	}
 
 	return nil
 }

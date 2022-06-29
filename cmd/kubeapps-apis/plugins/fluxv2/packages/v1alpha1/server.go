@@ -85,8 +85,14 @@ func NewServer(configGetter core.KubernetesConfigGetter, kubeappsCluster string,
 
 		// register the GitOps Toolkit schema definitions
 		scheme := runtime.NewScheme()
-		sourcev1.AddToScheme(scheme)
-		helmv2.AddToScheme(scheme)
+		err = sourcev1.AddToScheme(scheme)
+		if err != nil {
+			log.Fatalf("%s", err)
+		}
+		err = helmv2.AddToScheme(scheme)
+		if err != nil {
+			log.Fatalf("%s", err)
+		}
 
 		backgroundClientGetter := clientgetter.NewBackgroundClientGetter(
 			configGetter, clientgetter.Options{Scheme: scheme})

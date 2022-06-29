@@ -67,6 +67,7 @@ func parsePluginConfig(pluginConfigPath string) (*kappControllerPluginParsedConf
 	config := defaultPluginConfig
 
 	// load the configuration file and unmarshall the values
+	// #nosec G304
 	pluginConfigFile, err := ioutil.ReadFile(pluginConfigPath)
 	if err != nil {
 		return config, fmt.Errorf("unable to open plugin config at %q: %w", pluginConfigPath, err)
