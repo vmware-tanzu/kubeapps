@@ -33,8 +33,7 @@ func (s *Server) GetAvailablePackageSummaries(ctx context.Context, request *core
 	// Retrieve parameters from the request
 	namespace := request.GetContext().GetNamespace()
 	cluster := request.GetContext().GetCluster()
-	contextMsg := fmt.Sprintf("(cluster=%q, namespace=%q)", cluster, namespace)
-	log.Infof("+kapp-controller GetAvailablePackageSummaries %s", contextMsg)
+	log.InfoS("+kapp-controller GetAvailablePackageSummaries", "cluster", cluster, "namespace", namespace)
 
 	// Retrieve additional parameters from the request
 	pageSize := request.GetPaginationOptions().GetPageSize()
@@ -153,8 +152,7 @@ func (s *Server) GetAvailablePackageVersions(ctx context.Context, request *corev
 	namespace := request.GetAvailablePackageRef().GetContext().GetNamespace()
 	cluster := request.GetAvailablePackageRef().GetContext().GetCluster()
 	identifier := request.GetAvailablePackageRef().GetIdentifier()
-	contextMsg := fmt.Sprintf("(cluster=%q, namespace=%q, id=%q)", cluster, namespace, identifier)
-	log.Infof("+kapp-controller GetAvailablePackageVersions %s", contextMsg)
+	log.InfoS("+kapp-controller GetAvailablePackageVersions", "cluster", cluster, "namespace", namespace, "id", identifier)
 
 	// Validate the request
 	if namespace == "" || identifier == "" {
@@ -205,8 +203,7 @@ func (s *Server) GetAvailablePackageDetail(ctx context.Context, request *corev1.
 	namespace := request.GetAvailablePackageRef().GetContext().GetNamespace()
 	cluster := request.GetAvailablePackageRef().GetContext().GetCluster()
 	identifier := request.GetAvailablePackageRef().GetIdentifier()
-	contextMsg := fmt.Sprintf("(cluster=%q, namespace=%q, id=%q)", cluster, namespace, identifier)
-	log.Infof("+kapp-controller GetAvailablePackageDetail %s", contextMsg)
+	log.InfoS("+kapp-controller GetAvailablePackageDetail", "cluster", cluster, "namespace", namespace, "identifier", identifier)
 
 	// Retrieve additional parameters from the request
 	requestedPkgVersion := request.GetPkgVersion()
@@ -280,8 +277,7 @@ func (s *Server) GetInstalledPackageSummaries(ctx context.Context, request *core
 	// Retrieve parameters from the request
 	namespace := request.GetContext().GetNamespace()
 	cluster := request.GetContext().GetCluster()
-	contextMsg := fmt.Sprintf("(cluster=%q, namespace=%q)", cluster, namespace)
-	log.Infof("+kapp-controller GetInstalledPackageSummaries %s", contextMsg)
+	log.Info("+kapp-controller GetInstalledPackageSummaries", "cluster", cluster, "namespace", namespace)
 
 	// Retrieve additional parameters from the request
 	pageSize := request.GetPaginationOptions().GetPageSize()
@@ -462,8 +458,7 @@ func (s *Server) GetInstalledPackageDetail(ctx context.Context, request *corev1.
 	cluster := request.GetInstalledPackageRef().GetContext().GetCluster()
 	namespace := request.GetInstalledPackageRef().GetContext().GetNamespace()
 	installedPackageRefId := request.GetInstalledPackageRef().GetIdentifier()
-	contextMsg := fmt.Sprintf("(cluster=%q, namespace=%q, id=%q)", cluster, namespace, installedPackageRefId)
-	log.Infof("+kapp-controller GetInstalledPackageDetail %s", contextMsg)
+	log.InfoS("+kapp-controller GetInstalledPackageDetail", "cluster", cluster, "namespace", namespace, "id", installedPackageRefId)
 
 	if cluster == "" {
 		cluster = s.globalPackagingCluster
@@ -547,8 +542,8 @@ func (s *Server) CreateInstalledPackage(ctx context.Context, request *corev1.Cre
 	targetCluster := request.GetTargetContext().GetCluster()
 	targetNamespace := request.GetTargetContext().GetNamespace()
 	installedPackageName := request.GetName()
-	contextMsg := fmt.Sprintf("(cluster=%q, namespace=%q, id=%q)", targetCluster, targetNamespace, installedPackageName)
-	log.Infof("+kapp-controller CreateInstalledPackage %s", contextMsg)
+
+	log.InfoS("+kapp-controller CreateInstalledPackage %s", "cluster", targetCluster, "namespace", targetNamespace, "id", installedPackageName)
 
 	// Validate the request
 	if request.GetAvailablePackageRef().GetContext().GetNamespace() == "" || request.GetAvailablePackageRef().GetIdentifier() == "" {
@@ -672,8 +667,7 @@ func (s *Server) UpdateInstalledPackage(ctx context.Context, request *corev1.Upd
 	packageCluster := request.GetInstalledPackageRef().GetContext().GetCluster()
 	packageNamespace := request.GetInstalledPackageRef().GetContext().GetNamespace()
 	installedPackageName := request.GetInstalledPackageRef().GetIdentifier()
-	contextMsg := fmt.Sprintf("(cluster=%q, namespace=%q, id=%q)", packageCluster, packageNamespace, installedPackageName)
-	log.Infof("+kapp-controller UpdateInstalledPackage %s", contextMsg)
+	log.InfoS("+kapp-controller UpdateInstalledPackage", "cluster", packageCluster, "namespace", "packageNamespace", "id", installedPackageName)
 
 	// Validate the request
 	if request == nil || request.GetInstalledPackageRef() == nil {
@@ -810,8 +804,7 @@ func (s *Server) DeleteInstalledPackage(ctx context.Context, request *corev1.Del
 	namespace := request.GetInstalledPackageRef().GetContext().GetNamespace()
 	cluster := request.GetInstalledPackageRef().GetContext().GetCluster()
 	identifier := request.GetInstalledPackageRef().GetIdentifier()
-	contextMsg := fmt.Sprintf("(cluster=%q, namespace=%q, id=%q)", namespace, cluster, identifier)
-	log.Infof("+kapp-controller DeleteInstalledPackage %s", contextMsg)
+	log.InfoS("+kapp-controller DeleteInstalledPackage", "namespace", namespace, "cluster", cluster, "id", identifier)
 
 	// Validate the request
 	if request == nil || request.GetInstalledPackageRef() == nil {
@@ -864,8 +857,7 @@ func (s *Server) GetInstalledPackageResourceRefs(ctx context.Context, request *c
 	cluster := request.GetInstalledPackageRef().GetContext().GetCluster()
 	namespace := request.GetInstalledPackageRef().GetContext().GetNamespace()
 	installedPackageRefId := request.GetInstalledPackageRef().GetIdentifier()
-	contextMsg := fmt.Sprintf("(cluster=%q, namespace=%q, id=%q)", cluster, namespace, installedPackageRefId)
-	log.Infof("+kapp-controller GetInstalledPackageResourceRefs %s", contextMsg)
+	log.InfoS("+kapp-controller GetInstalledPackageResourceRefs", "cluster", cluster, "namespace", namespace, "id", installedPackageRefId)
 
 	if cluster == "" {
 		cluster = s.globalPackagingCluster

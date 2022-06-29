@@ -204,7 +204,7 @@ func NewRedisClientFromEnv(stopCh <-chan struct{}) (*redis.Client, error) {
 	if maxmemory, err := redisCli.ConfigGet(redisCli.Context(), "maxmemory").Result(); err != nil {
 		return nil, err
 	} else if len(maxmemory) > 1 {
-		log.Infof("Redis [CONFIG GET maxmemory]: %v", maxmemory[1])
+		log.InfoS("Redis [CONFIG GET maxmemory]", "maxmemory", maxmemory[1])
 	}
 
 	return redisCli, nil
