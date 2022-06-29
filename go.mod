@@ -71,7 +71,7 @@ require (
 	github.com/spf13/viper v1.12.0
 	github.com/srwiley/oksvg v0.0.0-20220128195007-1f435e4c2b44
 	github.com/srwiley/rasterx v0.0.0-20220128185129-2efea2b9ea41
-	github.com/stretchr/testify v1.7.2
+	github.com/stretchr/testify v1.7.5
 	github.com/urfave/negroni/v2 v2.0.2
 	github.com/vmware-tanzu/carvel-kapp-controller v0.38.1
 	github.com/vmware-tanzu/carvel-vendir v0.27.0
@@ -94,14 +94,12 @@ require (
 	k8s.io/kubernetes v1.22.10
 	k8s.io/utils v0.0.0-20220210201930-3a6ce19ff2f9
 	oras.land/oras-go v1.1.1
+	oras.land/oras-go/v2 v2.0.0-20220621073716-14422086e418
 	sigs.k8s.io/controller-runtime v0.11.2
 	sigs.k8s.io/yaml v1.3.0
 )
 
-require (
-	github.com/oras-project/artifacts-spec v1.0.0-draft.1.1 // indirect
-	oras.land/oras-go/v2 v2.0.0-20220621073716-14422086e418 // indirect
-)
+require github.com/oras-project/artifacts-spec v1.0.0-draft.1.1 // indirect
 
 require (
 	github.com/Azure/go-ansiterm v0.0.0-20210617225240-d185dfc1b5a1 // indirect
