@@ -1,5 +1,8 @@
 #!/bin/bash
 
+# Copyright 2022 the Kubeapps contributors.
+# SPDX-License-Identifier: Apache-2.0
+
 CONTROL_PLANE_CONTAINER="kubeapps-ci-control-plane"
 REGISTRY_NS=ci
 DOCKER_REGISTRY_HOST=local-docker-registry
