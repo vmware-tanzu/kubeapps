@@ -49,7 +49,7 @@ require (
 	github.com/distribution/distribution v2.8.1+incompatible
 	github.com/fluxcd/helm-controller/api v0.22.1
 	github.com/fluxcd/pkg/apis/meta v0.14.2
-	github.com/fluxcd/source-controller/api v0.25.8
+	github.com/fluxcd/source-controller/api v0.25.9
 	github.com/go-redis/redis/v8 v8.11.5
 	github.com/go-redis/redismock/v8 v8.0.6
 	github.com/google/go-cmp v0.5.8
@@ -91,7 +91,7 @@ require (
 	k8s.io/client-go v0.23.5
 	k8s.io/klog/v2 v2.60.1
 	k8s.io/kubectl v0.23.5
-	k8s.io/kubernetes v1.22.10
+	k8s.io/kubernetes v1.24.2
 	k8s.io/utils v0.0.0-20220210201930-3a6ce19ff2f9
 	oras.land/oras-go v1.2.0
 	oras.land/oras-go/v2 v2.0.0-20220621073716-14422086e418
@@ -99,7 +99,10 @@ require (
 	sigs.k8s.io/yaml v1.3.0
 )
 
-require github.com/oras-project/artifacts-spec v1.0.0-draft.1.1 // indirect
+require (
+	github.com/google/gnostic v0.5.7-v3refs // indirect
+	github.com/oras-project/artifacts-spec v1.0.0-draft.1.1 // indirect
+)
 
 require (
 	github.com/Azure/go-ansiterm v0.0.0-20210617225240-d185dfc1b5a1 // indirect
@@ -229,7 +232,7 @@ require (
 	gopkg.in/ini.v1 v1.66.6 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	k8s.io/component-base v0.23.5 // indirect
-	k8s.io/kube-openapi v0.0.0-20220124234850-424119656bbf // indirect
+	k8s.io/kube-openapi v0.0.0-20220328201542-3ee0da9b0b42 // indirect
 	nhooyr.io/websocket v1.8.7 // indirect
 	sigs.k8s.io/kustomize/api v0.11.1 // indirect
 	sigs.k8s.io/kustomize/kyaml v0.13.3 // indirect
