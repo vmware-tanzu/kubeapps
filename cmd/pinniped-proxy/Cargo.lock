@@ -129,9 +129,9 @@ checksum = "c4872d67bab6358e59559027aa3b9157c53d9358c51423c17554809a8858e0f8"
 
 [[package]]
 name = "cached"
-version = "0.34.0"
+version = "0.34.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "aadf76ddea74bab35ebeb8f1eb115b9bc04eaee42d8acc0d5f477dee6b176c9a"
+checksum = "12f5cd208ba696f870238022d81ca1d80ed9d696fd62341c747f2d8f6ecdd9fe"
 dependencies = [
  "async-trait",
  "async_once",
@@ -1444,10 +1444,11 @@ dependencies = [
 
 [[package]]
 name = "serial_test"
-version = "0.7.0"
+version = "0.8.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d19dbfb999a147cedbfe82f042eb9555f5b0fa4ef95ee4570b74349103d9c9f4"
+checksum = "7eec42e7232e5ca56aa59d63af3c7f991fe71ee6a3ddd2d3480834cf3902b007"
 dependencies = [
+ "futures",
  "lazy_static",
  "log",
  "parking_lot",
@@ -1456,9 +1457,9 @@ dependencies = [
 
 [[package]]
 name = "serial_test_derive"
-version = "0.7.0"
+version = "0.8.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "cb9e2050b2be1d681f8f1c1a528bcfe4e00afa2d8995f713974f5333288659f2"
+checksum = "f1b95bb2f4f624565e8fe8140c789af7e2082c0e0561b5a82a1b678baa9703dc"
 dependencies = [
  "proc-macro-error",
  "proc-macro2",
