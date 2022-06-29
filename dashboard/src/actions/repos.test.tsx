@@ -403,7 +403,7 @@ describe("installRepo", () => {
       authHeader: "Bearer: abc",
     });
 
-    it("calls AppRepository create including a auth struct (authHeader)", async () => {
+    it("calls PackageRepositoriesService create including a auth struct (authHeader)", async () => {
       await store.dispatch(installRepoCMDAuth);
       expect(PackageRepositoriesService.addPackageRepository).toHaveBeenCalledWith(
         "default",
@@ -416,7 +416,7 @@ describe("installRepo", () => {
       );
     });
 
-    it("calls AppRepository create including ociRepositories", async () => {
+    it("calls PackageRepositoriesService create including ociRepositories", async () => {
       await store.dispatch(
         repoActions.installRepo("my-namespace", {
           ...pkgRepoFormData,
@@ -442,7 +442,7 @@ describe("installRepo", () => {
       );
     });
 
-    it("calls AppRepository create skipping TLS verification", async () => {
+    it("calls PackageRepositoriesService create skipping TLS verification", async () => {
       await store.dispatch(
         repoActions.installRepo("my-namespace", { ...pkgRepoFormData, skipTLS: true }),
       );
@@ -469,7 +469,7 @@ describe("installRepo", () => {
       customCA: "This is a cert!",
     });
 
-    it("calls AppRepository create including a auth struct (custom CA)", async () => {
+    it("calls PackageRepositoriesService create including a auth struct (custom CA)", async () => {
       await store.dispatch(installRepoCMDAuth);
       expect(PackageRepositoriesService.addPackageRepository).toHaveBeenCalledWith(
         "default",
@@ -489,7 +489,7 @@ describe("installRepo", () => {
   });
 
   context("when authHeader and customCA are empty", () => {
-    it("calls AppRepository create without a auth struct", async () => {
+    it("calls PackageRepositoriesService create without a auth struct", async () => {
       await store.dispatch(installRepoCMD);
       expect(PackageRepositoriesService.addPackageRepository).toHaveBeenCalledWith(
         "default",
@@ -567,7 +567,7 @@ describe("installRepo", () => {
     );
   });
 
-  it("calls AppRepository create with description", async () => {
+  it("calls PackageRepositoriesService create with description", async () => {
     await store.dispatch(
       repoActions.installRepo("my-namespace", {
         ...pkgRepoFormData,
@@ -633,7 +633,7 @@ describe("updateRepo", () => {
     const r = {
       ...packageRepositoryDetail,
       tlsConfig: {
-        secretRef: { name: "apprepo-repo-abc", key: "data" },
+        secretRef: { name: "pkgrepo-repo-abc", key: "data" },
         certAuthority: "",
         insecureSkipVerify: false,
       },

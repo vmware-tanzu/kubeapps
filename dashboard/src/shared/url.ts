@@ -89,7 +89,7 @@ export const app = {
       `/c/${cluster}/ns/${namespace}/operators-instances/new/${csvName}/${crdName}`,
   },
   config: {
-    apprepositories: (cluster: string, namespace: string) =>
+    pkgrepositories: (cluster: string, namespace: string) =>
       `/c/${cluster}/ns/${namespace}/config/repos`,
     operators: (cluster: string, namespace: string) => `/c/${cluster}/ns/${namespace}/operators`,
   },

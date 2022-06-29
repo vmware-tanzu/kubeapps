@@ -18,7 +18,7 @@ import * as ReactRouter from "react-router";
 import { MemoryRouter, Route, Router } from "react-router-dom";
 import { IConfigState } from "reducers/config";
 import { IOperatorsState } from "reducers/operators";
-import { IAppRepositoryState } from "reducers/repos";
+import { IPackageRepositoryState } from "reducers/repos";
 import { getStore, initialState, mountWrapper } from "shared/specs/mountWrapper";
 import { IClusterServiceVersion, IPackageState, IStoreState } from "../../shared/types";
 import SearchFilter from "../SearchFilter/SearchFilter";
@@ -95,7 +95,7 @@ const csv = {
 const defaultState = {
   packages: defaultPackageState,
   operators: { csvs: [] } as Partial<IOperatorsState>,
-  repos: { repos: [] } as Partial<IAppRepositoryState>,
+  repos: { repos: [] } as Partial<IPackageRepositoryState>,
   config: {
     kubeappsCluster: defaultProps.cluster,
     kubeappsNamespace: defaultProps.kubeappsNamespace,

@@ -9,14 +9,14 @@ import { PackageRepositoryReference } from "gen/kubeappsapis/core/packages/v1alp
 import { act } from "react-dom/test-utils";
 import * as ReactRedux from "react-redux";
 import { defaultStore, mountWrapper } from "shared/specs/mountWrapper";
-import { AppRepoAddButton } from "./AppRepoButton";
-import { AppRepoForm } from "./AppRepoForm";
+import { PkgRepoAddButton } from "./PkgRepoButton";
+import { PkgRepoForm } from "./PkgRepoForm";
 
-// Mocking AppRepoForm to easily test this component standalone
+// Mocking PkgRepoForm to easily test this component standalone
 /* eslint-disable react/display-name */
-jest.mock("./AppRepoForm", () => {
+jest.mock("./PkgRepoForm", () => {
   return {
-    AppRepoForm: () => <div />,
+    PkgRepoForm: () => <div />,
   };
 });
 
@@ -42,7 +42,7 @@ const defaultProps = {
 };
 
 it("should open a modal with the repository form", () => {
-  const wrapper = mountWrapper(defaultStore, <AppRepoAddButton {...defaultProps} />);
+  const wrapper = mountWrapper(defaultStore, <PkgRepoAddButton {...defaultProps} />);
   act(() => {
     (wrapper.find(CdsButton).prop("onClick") as any)();
   });
@@ -53,13 +53,13 @@ it("should open a modal with the repository form", () => {
 it("should render a custom text", () => {
   const wrapper = mountWrapper(
     defaultStore,
-    <AppRepoAddButton {...defaultProps} text="other text" />,
+    <PkgRepoAddButton {...defaultProps} text="other text" />,
   );
   expect(wrapper.find(CdsButton)).toIncludeText("other text");
 });
 
 it("should render a primary button", () => {
-  const wrapper = mountWrapper(defaultStore, <AppRepoAddButton {...defaultProps} />);
+  const wrapper = mountWrapper(defaultStore, <PkgRepoAddButton {...defaultProps} />);
   expect(wrapper.find(CdsButton).prop("action")).toBe("solid");
   expect(wrapper.find(CdsIcon)).toExist();
 });
@@ -67,7 +67,7 @@ it("should render a primary button", () => {
 it("should render a secondary button", () => {
   const wrapper = mountWrapper(
     defaultStore,
-    <AppRepoAddButton {...defaultProps} primary={false} />,
+    <PkgRepoAddButton {...defaultProps} primary={false} />,
   );
   expect(wrapper.find(CdsButton).prop("action")).toBe("outline");
   expect(wrapper.find(CdsIcon)).not.toExist();
@@ -80,12 +80,12 @@ it("calls installRepo when submitting", () => {
     installRepo,
   };
 
-  const wrapper = mountWrapper(defaultStore, <AppRepoAddButton {...defaultProps} />);
+  const wrapper = mountWrapper(defaultStore, <PkgRepoAddButton {...defaultProps} />);
   act(() => {
     (wrapper.find(CdsButton).prop("onClick") as any)();
   });
   wrapper.update();
-  (wrapper.find(AppRepoForm).prop("onSubmit") as any)();
+  (wrapper.find(PkgRepoForm).prop("onSubmit") as any)();
   expect(installRepo).toHaveBeenCalled();
 });
 
@@ -98,7 +98,7 @@ it("calls updateRepo when submitting and there is a repo available", () => {
 
   const wrapper = mountWrapper(
     defaultStore,
-    <AppRepoAddButton
+    <PkgRepoAddButton
       {...defaultProps}
       packageRepoRef={
         {
@@ -111,14 +111,14 @@ it("calls updateRepo when submitting and there is a repo available", () => {
     (wrapper.find(CdsButton).prop("onClick") as any)();
   });
   wrapper.update();
-  (wrapper.find(AppRepoForm).prop("onSubmit") as any)();
+  (wrapper.find(PkgRepoForm).prop("onSubmit") as any)();
   expect(updateRepo).toHaveBeenCalled();
 });
 
 it("should deactivate the button if given", () => {
   const wrapper = mountWrapper(
     defaultStore,
-    <AppRepoAddButton {...defaultProps} disabled={true} />,
+    <PkgRepoAddButton {...defaultProps} disabled={true} />,
   );
   expect(wrapper.find(CdsButton)).toBeDisabled();
 });
@@ -126,7 +126,7 @@ it("should deactivate the button if given", () => {
 it("should use the given title", () => {
   const wrapper = mountWrapper(
     defaultStore,
-    <AppRepoAddButton {...defaultProps} title={"a title"} />,
+    <PkgRepoAddButton {...defaultProps} title={"a title"} />,
   );
   expect(wrapper.find(CdsButton).prop("title")).toBe("a title");
 });

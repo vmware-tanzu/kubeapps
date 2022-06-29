@@ -87,7 +87,7 @@ function SelectRepoForm({ cluster, namespace, app }: ISelectRepoFormProps) {
         <Alert theme="warning">
           <h5>Repositories not found. </h5>
           Manage your repositories in Kubeapps by visiting the{" "}
-          <Link to={url.app.config.apprepositories(cluster, namespace)}>
+          <Link to={url.app.config.pkgrepositories(cluster, namespace)}>
             Package Repositories configuration
           </Link>{" "}
           page.
@@ -128,7 +128,7 @@ function SelectRepoForm({ cluster, namespace, app }: ISelectRepoFormProps) {
             {" "}
             * If the repository containing '{app?.availablePackageRef?.identifier ?? app?.name}' is
             not in the list, add it{" "}
-            <Link to={url.app.config.apprepositories(cluster, namespace)}>here</Link>.{" "}
+            <Link to={url.app.config.pkgrepositories(cluster, namespace)}>here</Link>.{" "}
           </p>
         </div>
       )}

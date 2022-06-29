@@ -11,9 +11,9 @@ import * as ReactRedux from "react-redux";
 import { Link } from "react-router-dom";
 import { Kube } from "shared/Kube";
 import { defaultStore, getStore, initialState, mountWrapper } from "shared/specs/mountWrapper";
-import { AppRepoControl } from "./AppRepoControl";
-import { AppRepoDisabledControl } from "./AppRepoDisabledControl";
-import AppRepoList from "./AppRepoList";
+import { PkgRepoControl } from "./PkgRepoControl";
+import { PkgRepoDisabledControl } from "./PkgRepoDisabledControl";
+import PkgRepoList from "./PkgRepoList";
 import TableRow from "components/js/Table/components/TableRow";
 
 const {
@@ -43,7 +43,7 @@ afterEach(() => {
 });
 
 it("fetches repos and imagePullSecrets", () => {
-  mountWrapper(defaultStore, <AppRepoList />);
+  mountWrapper(defaultStore, <PkgRepoList />);
   expect(actions.repos.fetchRepos).toHaveBeenCalledWith(namespace, true);
 });
 
@@ -60,13 +60,13 @@ it("fetches repos only from the globalReposNamespace", () => {
         },
       },
     }),
-    <AppRepoList />,
+    <PkgRepoList />,
   );
   expect(actions.repos.fetchRepos).toHaveBeenCalledWith("");
 });
 
 it("fetches repos from all namespaces (without kubeappsNamespace)", () => {
-  const wrapper = mountWrapper(defaultStore, <AppRepoList />);
+  const wrapper = mountWrapper(defaultStore, <PkgRepoList />);
   act(() => {
     wrapper.find("input[type='checkbox']").simulate("change");
   });
@@ -78,7 +78,7 @@ it("should hide the all-namespace switch if the user doesn't have permissions", 
     then: jest.fn((f: any) => f(false)),
     catch: jest.fn(f => f(false)),
   });
-  const wrapper = mountWrapper(defaultStore, <AppRepoList />);
+  const wrapper = mountWrapper(defaultStore, <PkgRepoList />);
   expect(wrapper.find("input[type='checkbox']")).not.toExist();
 });
 
@@ -97,7 +97,7 @@ it("shows a warning if the cluster is not the default one", () => {
         },
       },
     }),
-    <AppRepoList />,
+    <PkgRepoList />,
   );
   expect(wrapper.find(Alert)).toIncludeText(
     "Package Repositories can't be managed from this cluster",
@@ -107,7 +107,7 @@ it("shows a warning if the cluster is not the default one", () => {
 it("shows an error fetching a repo", () => {
   const wrapper = mountWrapper(
     getStore({ repos: { errors: { fetch: new Error("boom!") } } }),
-    <AppRepoList />,
+    <PkgRepoList />,
   );
   expect(wrapper.find(Alert)).toIncludeText("boom!");
 });
@@ -115,7 +115,7 @@ it("shows an error fetching a repo", () => {
 it("shows an error deleting a repo", () => {
   const wrapper = mountWrapper(
     getStore({ repos: { errors: { delete: new Error("boom!") } } }),
-    <AppRepoList />,
+    <PkgRepoList />,
   );
   expect(wrapper.find(Alert)).toIncludeText("boom!");
 });
@@ -134,7 +134,7 @@ describe("global and namespaced repositories", () => {
   } as PackageRepositorySummary;
 
   it("shows a message if no global or namespaced repos exist", () => {
-    const wrapper = mountWrapper(defaultStore, <AppRepoList />);
+    const wrapper = mountWrapper(defaultStore, <PkgRepoList />);
     expect(
       wrapper
         .find("p")
@@ -167,12 +167,12 @@ describe("global and namespaced repositories", () => {
           repos: [globalRepo],
         },
       }),
-      <AppRepoList />,
+      <PkgRepoList />,
     );
     expect(wrapper.find(Table)).toHaveLength(1);
     // The control buttons should be deactivated
-    expect(wrapper.find(AppRepoDisabledControl)).toExist();
-    expect(wrapper.find(AppRepoControl)).not.toExist();
+    expect(wrapper.find(PkgRepoDisabledControl)).toExist();
+    expect(wrapper.find(PkgRepoControl)).not.toExist();
     // The content related to namespaced repositories should exist
     expect(
       wrapper.find("h3").filterWhere(h => h.text().includes("Namespaced Repositories")),
@@ -195,15 +195,15 @@ describe("global and namespaced repositories", () => {
           repos: [globalRepo],
         },
       }),
-      <AppRepoList />,
+      <PkgRepoList />,
     );
 
     // A link to manage the repos should not exist since we are already there
     expect(wrapper.find("p").find(Link)).not.toExist();
     expect(wrapper.find(Table)).toHaveLength(1);
     // The control buttons should be enabled
-    expect(wrapper.find(AppRepoDisabledControl)).not.toExist();
-    expect(wrapper.find(AppRepoControl)).toExist();
+    expect(wrapper.find(PkgRepoDisabledControl)).not.toExist();
+    expect(wrapper.find(PkgRepoControl)).toExist();
     // The content related to namespaced repositories should be hidden
     expect(
       wrapper.find("h3").filterWhere(h => h.text().includes("Namespace Repositories")),
@@ -228,7 +228,7 @@ describe("global and namespaced repositories", () => {
           repos: [globalRepo, namespacedRepo],
         },
       }),
-      <AppRepoList />,
+      <PkgRepoList />,
     );
     // A table per repository type
     expect(wrapper.find(TableRow)).toHaveLength(2);
@@ -241,7 +241,7 @@ describe("global and namespaced repositories", () => {
           repos: [namespacedRepo],
         },
       }),
-      <AppRepoList />,
+      <PkgRepoList />,
     );
     expect(wrapper.find(Table).find(Link).prop("to")).toEqual(
       `/c/${currentCluster}/ns/${namespacedRepo.packageRepoRef?.context?.namespace}/catalog?Repository=my-repo`,
@@ -255,7 +255,7 @@ describe("global and namespaced repositories", () => {
           repos: [namespacedRepo],
         },
       }),
-      <AppRepoList />,
+      <PkgRepoList />,
     );
     act(() => {
       wrapper.find("input[type='checkbox']").simulate("change");
@@ -271,7 +271,7 @@ describe("global and namespaced repositories", () => {
           repos: [namespacedRepo],
         },
       }),
-      <AppRepoList />,
+      <PkgRepoList />,
     );
     act(() => {
       wrapper.find("input[type='checkbox']").simulate("change");

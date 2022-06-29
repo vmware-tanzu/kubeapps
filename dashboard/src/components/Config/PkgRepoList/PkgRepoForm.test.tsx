@@ -14,11 +14,11 @@ import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins";
 import { RepositoryCustomDetails } from "gen/kubeappsapis/plugins/helm/packages/v1alpha1/helm";
 import { act } from "react-dom/test-utils";
 import * as ReactRedux from "react-redux";
-import { IAppRepositoryState } from "reducers/repos";
+import { IPackageRepositoryState } from "reducers/repos";
 import { defaultStore, getStore, mountWrapper } from "shared/specs/mountWrapper";
 import { IPkgRepoFormData, IStoreState } from "shared/types";
 import { PluginNames } from "shared/utils";
-import { AppRepoForm, RepositoryStorageTypes } from "./AppRepoForm";
+import { PkgRepoForm, RepositoryStorageTypes } from "./PkgRepoForm";
 
 const defaultProps = {
   onSubmit: jest.fn(),
@@ -28,7 +28,7 @@ const defaultProps = {
 };
 
 const defaultState = {
-  repos: { repo: {} } as Partial<IAppRepositoryState>,
+  repos: { repo: {} } as Partial<IPackageRepositoryState>,
 } as IStoreState;
 
 const pkgRepoFormData = {
@@ -95,7 +95,7 @@ it("disables the submit button while fetching", async () => {
   await act(async () => {
     wrapper = mountWrapper(
       getStore({ repos: { validating: true } }),
-      <AppRepoForm {...defaultProps} />,
+      <PkgRepoForm {...defaultProps} />,
     );
   });
   expect(
@@ -113,7 +113,7 @@ it("submit button can not be fired more than once", async () => {
   await act(async () => {
     wrapper = mountWrapper(
       defaultStore,
-      <AppRepoForm {...defaultProps} onSubmit={onSubmit} onAfterInstall={onAfterInstall} />,
+      <PkgRepoForm {...defaultProps} onSubmit={onSubmit} onAfterInstall={onAfterInstall} />,
     );
   });
   const installButton = wrapper
@@ -135,7 +135,7 @@ it("should show a validation error", async () => {
   await act(async () => {
     wrapper = mountWrapper(
       getStore({ repos: { errors: { validate: new Error("Boom!") } } }),
-      <AppRepoForm {...defaultProps} />,
+      <PkgRepoForm {...defaultProps} />,
     );
   });
   expect(wrapper.find(Alert).text()).toContain("Boom!");
@@ -146,7 +146,7 @@ it("shows an error updating a repo", async () => {
   await act(async () => {
     wrapper = mountWrapper(
       getStore({ repos: { errors: { update: new Error("boom!") } } }),
-      <AppRepoForm {...defaultProps} />,
+      <PkgRepoForm {...defaultProps} />,
     );
   });
   expect(wrapper.find(Alert)).toIncludeText("boom!");
@@ -160,7 +160,7 @@ it("should call the install method when the validation success", async () => {
 
   let wrapper: any;
   await act(async () => {
-    wrapper = mountWrapper(defaultStore, <AppRepoForm {...defaultProps} onSubmit={install} />);
+    wrapper = mountWrapper(defaultStore, <PkgRepoForm {...defaultProps} onSubmit={install} />);
   });
   const form = wrapper.find("form");
   await act(async () => {
@@ -177,7 +177,7 @@ it("should call the install method with OCI information", async () => {
   };
   let wrapper: any;
   await act(async () => {
-    wrapper = mountWrapper(defaultStore, <AppRepoForm {...defaultProps} onSubmit={install} />);
+    wrapper = mountWrapper(defaultStore, <PkgRepoForm {...defaultProps} onSubmit={install} />);
   });
   wrapper.find("#kubeapps-plugin-helm").simulate("change");
   wrapper.find("#kubeapps-repo-name").simulate("change", { target: { value: "oci-repo" } });
@@ -215,7 +215,7 @@ it("should call the install skipping TLS verification", async () => {
   };
   let wrapper: any;
   await act(async () => {
-    wrapper = mountWrapper(defaultStore, <AppRepoForm {...defaultProps} onSubmit={install} />);
+    wrapper = mountWrapper(defaultStore, <PkgRepoForm {...defaultProps} onSubmit={install} />);
   });
   wrapper.find("#kubeapps-plugin-helm").simulate("change");
   wrapper.find("#kubeapps-repo-name").simulate("change", { target: { value: "helm-repo" } });
@@ -252,7 +252,7 @@ it("should call the install passing credentials", async () => {
   };
   let wrapper: any;
   await act(async () => {
-    wrapper = mountWrapper(defaultStore, <AppRepoForm {...defaultProps} onSubmit={install} />);
+    wrapper = mountWrapper(defaultStore, <PkgRepoForm {...defaultProps} onSubmit={install} />);
   });
   wrapper.find("#kubeapps-plugin-helm").simulate("change");
   wrapper.find("#kubeapps-repo-name").simulate("change", { target: { value: "helm-repo" } });
@@ -287,7 +287,7 @@ describe("when using a filter", () => {
     const install = jest.fn().mockReturnValue(true);
     let wrapper: any;
     await act(async () => {
-      wrapper = mountWrapper(defaultStore, <AppRepoForm {...defaultProps} onSubmit={install} />);
+      wrapper = mountWrapper(defaultStore, <PkgRepoForm {...defaultProps} onSubmit={install} />);
     });
     wrapper.find("#kubeapps-plugin-helm").simulate("change");
     wrapper.find("#kubeapps-repo-name").simulate("change", { target: { value: "helm-repo" } });
@@ -325,7 +325,7 @@ describe("when using a filter", () => {
     const install = jest.fn().mockReturnValue(true);
     let wrapper: any;
     await act(async () => {
-      wrapper = mountWrapper(defaultStore, <AppRepoForm {...defaultProps} onSubmit={install} />);
+      wrapper = mountWrapper(defaultStore, <PkgRepoForm {...defaultProps} onSubmit={install} />);
     });
     wrapper.find("#kubeapps-plugin-helm").simulate("change");
     wrapper.find("#kubeapps-repo-name").simulate("change", { target: { value: "helm-repo" } });
@@ -369,7 +369,7 @@ describe("when using a filter", () => {
     };
     let wrapper: any;
     await act(async () => {
-      wrapper = mountWrapper(defaultStore, <AppRepoForm {...defaultProps} onSubmit={install} />);
+      wrapper = mountWrapper(defaultStore, <PkgRepoForm {...defaultProps} onSubmit={install} />);
     });
     wrapper.find("#kubeapps-plugin-helm").simulate("change");
     wrapper.find("#kubeapps-repo-name").simulate("change", { target: { value: "oci-repo" } });
@@ -409,7 +409,7 @@ it("should call the install method with a description", async () => {
   const install = jest.fn().mockReturnValue(true);
   let wrapper: any;
   await act(async () => {
-    wrapper = mountWrapper(defaultStore, <AppRepoForm {...defaultProps} onSubmit={install} />);
+    wrapper = mountWrapper(defaultStore, <PkgRepoForm {...defaultProps} onSubmit={install} />);
   });
   wrapper.find("#kubeapps-plugin-helm").simulate("change");
   wrapper.find("#kubeapps-repo-name").simulate("change", { target: { value: "helm-repo" } });
@@ -441,7 +441,7 @@ it("should call the install method with a description", async () => {
 it("should not show the list of OCI repositories if using a Helm repo (default)", async () => {
   let wrapper: any;
   await act(async () => {
-    wrapper = mountWrapper(defaultStore, <AppRepoForm {...defaultProps} />);
+    wrapper = mountWrapper(defaultStore, <PkgRepoForm {...defaultProps} />);
   });
   wrapper.find("#kubeapps-plugin-helm").simulate("change");
   wrapper.find("#kubeapps-repo-name").simulate("change", { target: { value: "helm-repo" } });
@@ -475,7 +475,7 @@ describe("when the repository info is already populated", () => {
     await act(async () => {
       wrapper = mountWrapper(
         getStore({ ...defaultState, repos: { ...defaultState.repos, repo: testRepo } }),
-        <AppRepoForm {...defaultProps} packageRepoRef={packageRepoRef} />,
+        <PkgRepoForm {...defaultProps} packageRepoRef={packageRepoRef} />,
       );
     });
     await waitFor(() => {
@@ -495,7 +495,7 @@ describe("when the repository info is already populated", () => {
     await act(async () => {
       wrapper = mountWrapper(
         getStore({ ...defaultState, repos: { ...defaultState.repos, repo: testRepo } }),
-        <AppRepoForm {...defaultProps} packageRepoRef={packageRepoRef} />,
+        <PkgRepoForm {...defaultProps} packageRepoRef={packageRepoRef} />,
       );
     });
     await waitFor(() => {
@@ -520,7 +520,7 @@ describe("when the repository info is already populated", () => {
     await act(async () => {
       wrapper = mountWrapper(
         getStore({ ...defaultState, repos: { ...defaultState.repos, repo: testRepo } }),
-        <AppRepoForm {...defaultProps} packageRepoRef={packageRepoRef} />,
+        <PkgRepoForm {...defaultProps} packageRepoRef={packageRepoRef} />,
       );
     });
     await waitFor(() => {
@@ -546,7 +546,7 @@ describe("when the repository info is already populated", () => {
     await act(async () => {
       wrapper = mountWrapper(
         getStore({ ...defaultState, repos: { ...defaultState.repos, repo: testRepo } }),
-        <AppRepoForm {...defaultProps} packageRepoRef={packageRepoRef} />,
+        <PkgRepoForm {...defaultProps} packageRepoRef={packageRepoRef} />,
       );
     });
     await waitFor(() => {
@@ -566,7 +566,7 @@ describe("when the repository info is already populated", () => {
     await act(async () => {
       wrapper = mountWrapper(
         getStore({ ...defaultState, repos: { ...defaultState.repos, repo: testRepo } }),
-        <AppRepoForm {...defaultProps} packageRepoRef={packageRepoRef} />,
+        <PkgRepoForm {...defaultProps} packageRepoRef={packageRepoRef} />,
       );
     });
     await waitFor(() => {
@@ -586,7 +586,7 @@ describe("when the repository info is already populated", () => {
     await act(async () => {
       wrapper = mountWrapper(
         getStore({ ...defaultState, repos: { ...defaultState.repos, repo: testRepo } }),
-        <AppRepoForm {...defaultProps} packageRepoRef={packageRepoRef} />,
+        <PkgRepoForm {...defaultProps} packageRepoRef={packageRepoRef} />,
       );
     });
     expect(wrapper.find("#kubeapps-repo-skip-tls")).toBeChecked();
@@ -601,7 +601,7 @@ describe("when the repository info is already populated", () => {
     await act(async () => {
       wrapper = mountWrapper(
         getStore({ ...defaultState, repos: { ...defaultState.repos, repo: testRepo } }),
-        <AppRepoForm {...defaultProps} packageRepoRef={packageRepoRef} />,
+        <PkgRepoForm {...defaultProps} packageRepoRef={packageRepoRef} />,
       );
     });
     expect(wrapper.find("#kubeapps-repo-pass-credentials")).toBeChecked();
@@ -617,7 +617,7 @@ describe("when the repository info is already populated", () => {
       await act(async () => {
         wrapper = mountWrapper(
           getStore({ ...defaultState, repos: { ...defaultState.repos, repo: testRepo } }),
-          <AppRepoForm {...defaultProps} packageRepoRef={packageRepoRef} />,
+          <PkgRepoForm {...defaultProps} packageRepoRef={packageRepoRef} />,
         );
       });
       wrapper.update();
@@ -636,7 +636,7 @@ describe("when the repository info is already populated", () => {
       await act(async () => {
         wrapper = mountWrapper(
           getStore({ ...defaultState, repos: { ...defaultState.repos, repo: testRepo } }),
-          <AppRepoForm {...defaultProps} packageRepoRef={packageRepoRef} />,
+          <PkgRepoForm {...defaultProps} packageRepoRef={packageRepoRef} />,
         );
       });
       await waitFor(() => {
@@ -658,7 +658,7 @@ describe("when the repository info is already populated", () => {
       await act(async () => {
         wrapper = mountWrapper(
           getStore({ ...defaultState, repos: { ...defaultState.repos, repo: testRepo } }),
-          <AppRepoForm {...defaultProps} packageRepoRef={packageRepoRef} />,
+          <PkgRepoForm {...defaultProps} packageRepoRef={packageRepoRef} />,
         );
       });
       await waitFor(() => {
@@ -681,7 +681,7 @@ describe("when the repository info is already populated", () => {
       await act(async () => {
         wrapper = mountWrapper(
           getStore({ ...defaultState, repos: { ...defaultState.repos, repo: testRepo } }),
-          <AppRepoForm {...defaultProps} packageRepoRef={packageRepoRef} />,
+          <PkgRepoForm {...defaultProps} packageRepoRef={packageRepoRef} />,
         );
       });
       await waitFor(() => {
@@ -708,7 +708,7 @@ describe("when the repository info is already populated", () => {
       await act(async () => {
         wrapper = mountWrapper(
           getStore({ ...defaultState, repos: { ...defaultState.repos, repo: testRepo } }),
-          <AppRepoForm {...defaultProps} packageRepoRef={packageRepoRef} />,
+          <PkgRepoForm {...defaultProps} packageRepoRef={packageRepoRef} />,
         );
       });
       await waitFor(() => {
@@ -735,7 +735,7 @@ describe("when the repository info is already populated", () => {
       await act(async () => {
         wrapper = mountWrapper(
           getStore({ ...defaultState, repos: { ...defaultState.repos, repo: testRepo } }),
-          <AppRepoForm {...defaultProps} packageRepoRef={packageRepoRef} />,
+          <PkgRepoForm {...defaultProps} packageRepoRef={packageRepoRef} />,
         );
       });
       await waitFor(() => {
@@ -760,7 +760,7 @@ describe("when the repository info is already populated", () => {
       await act(async () => {
         wrapper = mountWrapper(
           getStore({ ...defaultState, repos: { ...defaultState.repos, repo: testRepo } }),
-          <AppRepoForm {...defaultProps} packageRepoRef={packageRepoRef} />,
+          <PkgRepoForm {...defaultProps} packageRepoRef={packageRepoRef} />,
         );
       });
       await waitFor(() => {
@@ -786,7 +786,7 @@ describe("when the repository info is already populated", () => {
       await act(async () => {
         wrapper = mountWrapper(
           getStore({ ...defaultState, repos: { ...defaultState.repos, repo: testRepo } }),
-          <AppRepoForm {...defaultProps} packageRepoRef={packageRepoRef} />,
+          <PkgRepoForm {...defaultProps} packageRepoRef={packageRepoRef} />,
         );
       });
       await waitFor(() => {

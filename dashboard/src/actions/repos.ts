@@ -78,7 +78,7 @@ const allActions = [
 ];
 export type PkgReposAction = ActionType<typeof allActions[number]>;
 
-// fetchRepos fetches the AppRepositories in a specified namespace.
+// fetchRepos fetches the PackageRepositories in a specified namespace.
 export const fetchRepos = (
   namespace: string,
   listGlobal?: boolean,
@@ -124,19 +124,20 @@ export const fetchRepo = (
     try {
       dispatch(requestRepo());
       // Check if we have enough data to retrieve the package manually (instead of using its own availablePackageRef)
-      const appRepository = await PackageRepositoriesService.getPackageRepositoryDetail(
-        packageRepoRef,
-      );
-      if (!appRepository?.detail) {
+      const getPackageRepositoryDetailResponse =
+        await PackageRepositoriesService.getPackageRepositoryDetail(packageRepoRef);
+      if (!getPackageRepositoryDetailResponse?.detail) {
         dispatch(
           errorRepos(
-            new Error(`Can't get the repository: ${JSON.stringify(appRepository)}`),
+            new Error(
+              `Can't get the repository: ${JSON.stringify(getPackageRepositoryDetailResponse)}`,
+            ),
             "fetch",
           ),
         );
         return false;
       }
-      dispatch(receiveRepo(appRepository.detail));
+      dispatch(receiveRepo(getPackageRepositoryDetailResponse.detail));
       return true;
     } catch (e: any) {
       dispatch(errorRepos(e, "fetch"));
@@ -163,27 +164,40 @@ export const installRepo = (
         namespaceScoped = false;
       }
 
-      const data = await PackageRepositoriesService.addPackageRepository(
+      const addPackageRepositoryResponse = await PackageRepositoriesService.addPackageRepository(
         currentCluster,
         namespace,
         request,
         namespaceScoped,
       );
       // Ensure the repo have been created
-      if (!data?.packageRepoRef) {
+      if (!addPackageRepositoryResponse?.packageRepoRef) {
         dispatch(
-          errorRepos(new Error(`Can't create the repository: ${JSON.stringify(data)}`), "create"),
+          errorRepos(
+            new Error(
+              `Can't create the repository: ${JSON.stringify(addPackageRepositoryResponse)}`,
+            ),
+            "create",
+          ),
         );
         return false;
       }
-      const repo = await PackageRepositoriesService.getPackageRepositoryDetail(data.packageRepoRef);
-      if (!repo?.detail) {
+      const getPackageRepositoryDetailResponse =
+        await PackageRepositoriesService.getPackageRepositoryDetail(
+          addPackageRepositoryResponse.packageRepoRef,
+        );
+      if (!getPackageRepositoryDetailResponse?.detail) {
         dispatch(
-          errorRepos(new Error(`The repo wasn't created: ${JSON.stringify(repo)}`), "create"),
+          errorRepos(
+            new Error(
+              `The repo wasn't created: ${JSON.stringify(getPackageRepositoryDetailResponse)}`,
+            ),
+            "create",
+          ),
         );
         return false;
       }
-      dispatch(addedRepo(repo.detail));
+      dispatch(addedRepo(getPackageRepositoryDetailResponse.detail));
       return true;
     } catch (e: any) {
       dispatch(errorRepos(e, "create"));
@@ -202,27 +216,41 @@ export const updateRepo = (
     } = getState();
     try {
       dispatch(requestRepoUpdate());
-      const data = await PackageRepositoriesService.updatePackageRepository(
-        currentCluster,
-        namespace,
-        request,
-      );
+      const updatePackageRepositoryResponse =
+        await PackageRepositoriesService.updatePackageRepository(
+          currentCluster,
+          namespace,
+          request,
+        );
 
       // Ensure the repo have been updated
-      if (!data?.packageRepoRef) {
+      if (!updatePackageRepositoryResponse?.packageRepoRef) {
         dispatch(
-          errorRepos(new Error(`Can't update the repository: ${JSON.stringify(data)}`), "update"),
+          errorRepos(
+            new Error(
+              `Can't update the repository: ${JSON.stringify(updatePackageRepositoryResponse)}`,
+            ),
+            "update",
+          ),
         );
         return false;
       }
-      const repo = await PackageRepositoriesService.getPackageRepositoryDetail(data.packageRepoRef);
-      if (!repo?.detail) {
+      const getPackageRepositoryDetailResponse =
+        await PackageRepositoriesService.getPackageRepositoryDetail(
+          updatePackageRepositoryResponse.packageRepoRef,
+        );
+      if (!getPackageRepositoryDetailResponse?.detail) {
         dispatch(
-          errorRepos(new Error(`The repo wasn't updated: ${JSON.stringify(repo)}`), "update"),
+          errorRepos(
+            new Error(
+              `The repo wasn't updated: ${JSON.stringify(getPackageRepositoryDetailResponse)}`,
+            ),
+            "update",
+          ),
         );
         return false;
       }
-      dispatch(repoUpdated(repo.detail));
+      dispatch(repoUpdated(getPackageRepositoryDetailResponse.detail));
       return true;
     } catch (e: any) {
       dispatch(errorRepos(e, "update"));
@@ -255,18 +283,19 @@ export const findPackageInRepo = (
     dispatch(requestRepo());
     // Check if we have enough data to retrieve the package manually (instead of using its own availablePackageRef)
     if (app?.availablePackageRef?.identifier && app?.availablePackageRef?.plugin) {
-      const appRepository = await PackageRepositoriesService.getPackageRepositoryDetail({
-        identifier: repoName,
-        context: { cluster, namespace: repoNamespace },
-        plugin: app.availablePackageRef.plugin,
-      });
+      const getPackageRepositoryDetailResponse =
+        await PackageRepositoriesService.getPackageRepositoryDetail({
+          identifier: repoName,
+          context: { cluster, namespace: repoNamespace },
+          plugin: app.availablePackageRef.plugin,
+        });
       try {
         await PackagesService.getAvailablePackageVersions({
           context: { cluster: cluster, namespace: repoNamespace },
           plugin: app.availablePackageRef.plugin,
           identifier: app.availablePackageRef.identifier,
         } as AvailablePackageReference);
-        if (!appRepository?.detail) {
+        if (!getPackageRepositoryDetailResponse?.detail) {
           dispatch(
             createErrorPackage(
               new NotFoundError(
@@ -276,7 +305,7 @@ export const findPackageInRepo = (
           );
           return false;
         }
-        dispatch(receiveRepo(appRepository.detail));
+        dispatch(receiveRepo(getPackageRepositoryDetailResponse.detail));
         return true;
       } catch (e: any) {
         dispatch(

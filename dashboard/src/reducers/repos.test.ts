@@ -7,10 +7,10 @@ import {
 } from "gen/kubeappsapis/core/packages/v1alpha1/repositories";
 import { getType } from "typesafe-actions";
 import actions from "../actions";
-import reposReducer, { IAppRepositoryState } from "./repos";
+import reposReducer, { IPackageRepositoryState } from "./repos";
 
 describe("reposReducer", () => {
-  let initialState: IAppRepositoryState;
+  let initialState: IPackageRepositoryState;
 
   beforeEach(() => {
     initialState = {
