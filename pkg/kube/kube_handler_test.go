@@ -2116,7 +2116,7 @@ func TestParseClusterConfig(t *testing.T) {
 			path := createConfigFile(t, tc.configJSON)
 			defer os.Remove(path)
 
-			config, deferFn, err := ParseClusterConfig(path, "/tmp", defaultPinnipedURL)
+			config, deferFn, err := ParseClusterConfig(path, "/tmp", defaultPinnipedURL, "")
 			if got, want := err != nil, tc.expectedErr; got != want {
 				t.Errorf("got: %t, want: %t: err: %+v", got, want, err)
 			}

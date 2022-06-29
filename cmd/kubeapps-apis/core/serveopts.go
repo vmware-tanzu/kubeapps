@@ -18,6 +18,7 @@ type ServeOptions struct {
 	ClustersConfigPath       string
 	PluginConfigPath         string
 	PinnipedProxyURL         string
+	PinnipedProxyCACert      string
 	GlobalReposNamespace     string
 	UnsafeLocalDevKubeconfig bool
 	QPS                      float32

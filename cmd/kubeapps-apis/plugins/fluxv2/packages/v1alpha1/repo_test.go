@@ -2286,11 +2286,11 @@ func redisMockSetValueForRepo(mock redismock.ClientMock, key string, newValue, o
 }
 
 func (s *Server) redisKeyValueForRepo(r sourcev1.HelmRepository) (key string, byteArray []byte, err error) {
-	sink := repoEventSink{
-		clientGetter: s.newBackgroundClientGetter(),
-		chartCache:   nil,
+	cg := func(ctx context.Context) (clientgetter.ClientInterfaces, error) {
+		return s.clientGetter(ctx, s.kubeappsCluster)
 	}
-	return sink.redisKeyValueForRepo(r)
+	sinkNoChartCache := repoEventSink{clientGetter: cg}
+	return sinkNoChartCache.redisKeyValueForRepo(r)
 }
 
 func (sink *repoEventSink) redisKeyValueForRepo(r sourcev1.HelmRepository) (key string, byteArray []byte, err error) {

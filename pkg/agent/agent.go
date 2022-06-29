@@ -132,7 +132,7 @@ func UpgradeRelease(actionConfig *action.Configuration, name, valuesYaml string,
 	if err != nil {
 		return nil, err
 	}
-	log.Infof("Upgrading release %s", name)
+	log.InfoS("Upgrading release", "release-name", name)
 	cmd := action.NewUpgrade(actionConfig)
 	if timeoutSeconds > 0 {
 		// Given that `cmd.Wait` is not used, this timeout will only affect pre/post hooks
