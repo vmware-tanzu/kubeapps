@@ -81,7 +81,7 @@ The Service Account can be created in any namespace, the above example uses _kub
 Then the Cluster Operator will need to create a set of RBAC roles and binding for the user. The Kubeapps documentation will need to define the set of roles for different features. For the purpose of this example, we will bind the Service Account to the _cluster-admin_ role.
 
 ```yaml
-apiVersion: rbac.authorization.k8s.io/v1beta1
+apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
   name: johnsmith
