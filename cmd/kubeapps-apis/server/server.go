@@ -123,13 +123,15 @@ func Serve(serveOpts core.ServeOptions) error {
 	)
 
 	httpSrv := &http.Server{
+		ReadHeaderTimeout: 60 * time.Second, // mitigate slowloris attacks, set to nginx's default
 		Handler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			if webrpcProxy.IsGrpcWebRequest(r) || webrpcProxy.IsAcceptableGrpcCorsRequest(r) || webrpcProxy.IsGrpcWebSocketRequest(r) {
 				webrpcProxy.ServeHTTP(w, r)
 			} else {
 				gwArgs.Mux.ServeHTTP(w, r)
 			}
-		}),
+		},
+		),
 	}
 
 	go func() {
