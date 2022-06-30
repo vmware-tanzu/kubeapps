@@ -9,7 +9,7 @@ COPY go.mod go.sum ./
 ARG VERSION="devel"
 
 ARG BUF_VERSION="1.5.0"
-ARG GOSEC_VERSION="2.11.0"
+ARG GOSEC_VERSION="2.12.0"
 
 # Install lint tools
 RUN curl -sSL "https://github.com/bufbuild/buf/releases/download/v$BUF_VERSION/buf-Linux-x86_64" -o "/tmp/buf" && chmod +x "/tmp/buf"
