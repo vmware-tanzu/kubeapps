@@ -290,8 +290,8 @@ func defaultValues(x interface{}, s *structuralschema.Structural) {
 
 	switch x := x.(type) {
 	case map[string]interface{}:
-		for k, prop := range s.Properties {
-			prop := prop // avoid implicit memory aliasing
+		for k := range s.Properties {
+			prop := s.Properties[k] // avoid implicit memory aliasing
 			// if Default for object is nil, scan first level of properties for any defaults to create an empty default
 			if prop.Default.Object == nil {
 				createDefault := false

@@ -245,8 +245,8 @@ func (s *Server) GetAvailablePackageDetail(ctx context.Context, request *corev1.
 	var foundPkgSemver = &pkgSemver{}
 	if requestedPkgVersion != "" {
 		// Ensure the version is available.
-		for _, v := range pkgVersionsMap[pkgName] {
-			v := v // avoid implicit memory aliasing
+		for i := range pkgVersionsMap[pkgName] {
+			v := pkgVersionsMap[pkgName][i] // avoid implicit memory aliasing
 			if v.version.String() == requestedPkgVersion {
 				foundPkgSemver = &v
 				break
