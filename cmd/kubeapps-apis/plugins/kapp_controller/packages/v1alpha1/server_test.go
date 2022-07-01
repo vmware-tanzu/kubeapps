@@ -8701,6 +8701,7 @@ func TestGetPackageRepositorySummaries(t *testing.T) {
 				NamespaceScoped: true,
 				Type:            Type_ImgPkgBundle,
 				Url:             "projects.registry.example.com/repo-1/main@sha256:abcd",
+				Auth:            nil,
 			},
 		},
 		{
@@ -8729,6 +8730,7 @@ func TestGetPackageRepositorySummaries(t *testing.T) {
 				NamespaceScoped: false,
 				Type:            Type_ImgPkgBundle,
 				Url:             "projects.registry.example.com/repo-1/main@sha256:abcd",
+				Auth:            nil,
 			},
 		},
 		{
@@ -8756,6 +8758,7 @@ func TestGetPackageRepositorySummaries(t *testing.T) {
 				Name: "globalrepo",
 				Type: Type_ImgPkgBundle,
 				Url:  "projects.registry.example.com/repo-1/main@sha256:abcd",
+				Auth: nil,
 			},
 		},
 		{
@@ -8783,6 +8786,7 @@ func TestGetPackageRepositorySummaries(t *testing.T) {
 				Name: "globalrepo",
 				Type: Type_Image,
 				Url:  "projects.registry.example.com/repo-1/main@sha256:abcd",
+				Auth: nil,
 			},
 		},
 		{
@@ -8810,6 +8814,7 @@ func TestGetPackageRepositorySummaries(t *testing.T) {
 				Name: "globalrepo",
 				Type: Type_GIT,
 				Url:  "https://github.com/projects.registry.vmware.com/tce/main",
+				Auth: nil,
 			},
 		},
 		{
@@ -8837,6 +8842,7 @@ func TestGetPackageRepositorySummaries(t *testing.T) {
 				Name: "globalrepo",
 				Type: Type_HTTP,
 				Url:  "https://projects.registry.vmware.com/tce/main",
+				Auth: nil,
 			},
 		},
 		{
@@ -8861,6 +8867,7 @@ func TestGetPackageRepositorySummaries(t *testing.T) {
 				},
 				Name: "globalrepo",
 				Type: Type_Inline,
+				Auth: nil,
 			},
 		},
 		{
@@ -8896,6 +8903,7 @@ func TestGetPackageRepositorySummaries(t *testing.T) {
 				Name: "globalrepo",
 				Type: Type_ImgPkgBundle,
 				Url:  "projects.registry.example.com/repo-1/main@sha256:abcd",
+				Auth: nil,
 			},
 		},
 		{
@@ -8926,6 +8934,7 @@ func TestGetPackageRepositorySummaries(t *testing.T) {
 				Name: "globalrepo",
 				Type: Type_ImgPkgBundle,
 				Url:  "projects.registry.example.com/repo-1/main@sha256:abcd",
+				Auth: &corev1.PackageRepositoryAuth{},
 			},
 		},
 	}

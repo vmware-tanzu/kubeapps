@@ -126,6 +126,7 @@ var repo1Summary = &corev1.PackageRepositorySummary{
 	NamespaceScoped: true,
 	Type:            "helm",
 	Url:             "https://test-repo",
+	Auth:            nil,
 }
 
 var repo2Summary = &corev1.PackageRepositorySummary{
@@ -135,6 +136,17 @@ var repo2Summary = &corev1.PackageRepositorySummary{
 	NamespaceScoped: true,
 	Type:            "oci",
 	Url:             "https://test-repo2",
+	Auth:            nil,
+}
+
+var repo3Summary = &corev1.PackageRepositorySummary{
+	PackageRepoRef:  repoRef("repo-d", KubeappsCluster, "ns-3"),
+	Name:            "repo-3",
+	Description:     "description 3",
+	NamespaceScoped: true,
+	Type:            "helm",
+	Url:             "https://test-repo3",
+	Auth:            &corev1.PackageRepositoryAuth{},
 }
 
 var appReposAPIVersion = fmt.Sprintf("%s/%s", appRepov1alpha1.SchemeGroupVersion.Group, appRepov1alpha1.SchemeGroupVersion.Version)
@@ -501,8 +513,13 @@ func TestGetPackageRepositorySummaries(t *testing.T) {
 
 	repo1b := *repo1
 	repo1b.Spec.URL = ts.URL
+
 	repo2b := *repo2
 	repo2b.Spec.URL = ts.URL
+
+	repo3 := *repo3
+	repo3.Spec.URL = ts.URL
+
 	repo1Summary.Url = ts.URL
 	repo2Summary.Url = ts.URL
 
@@ -543,6 +560,21 @@ func TestGetPackageRepositorySummaries(t *testing.T) {
 			expectedResponse: &corev1.GetPackageRepositorySummariesResponse{
 				PackageRepositorySummaries: []*corev1.PackageRepositorySummary{
 					repo2Summary,
+				},
+			},
+		},
+		{
+			name: "returns package summaries with auth",
+			request: &corev1.GetPackageRepositorySummariesRequest{
+				Context: &corev1.Context{Cluster: KubeappsCluster, Namespace: globalPackagingNamespace},
+			},
+			existingRepos: []k8sruntime.Object{
+				&repo3,
+			},
+			expectedStatusCode: codes.OK,
+			expectedResponse: &corev1.GetPackageRepositorySummariesResponse{
+				PackageRepositorySummaries: []*corev1.PackageRepositorySummary{
+					repo3Summary,
 				},
 			},
 		},

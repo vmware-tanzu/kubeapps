@@ -2466,8 +2466,9 @@ var (
 
 	get_summaries_repo_1 = newRepo("bar", "foo",
 		&sourcev1.HelmRepositorySpec{
-			URL:      "http://example.com",
-			Interval: metav1.Duration{Duration: 10 * time.Minute},
+			URL:       "http://example.com",
+			Interval:  metav1.Duration{Duration: 10 * time.Minute},
+			SecretRef: &fluxmeta.LocalObjectReference{},
 		},
 		&sourcev1.HelmRepositoryStatus{
 			Artifact: &sourcev1.Artifact{
@@ -2547,6 +2548,7 @@ var (
 		Type:            "helm",
 		Url:             "http://example.com",
 		Status:          podinfo_repo_status_2,
+		Auth:            &corev1.PackageRepositoryAuth{},
 	}
 
 	get_summaries_summary_2 = &corev1.PackageRepositorySummary{
@@ -2557,6 +2559,7 @@ var (
 		Type:            "helm",
 		Url:             "http://example.com",
 		Status:          podinfo_repo_status_2,
+		Auth:            nil,
 	}
 
 	get_summaries_summary_3 = &corev1.PackageRepositorySummary{
@@ -2567,6 +2570,7 @@ var (
 		Type:            "helm",
 		Url:             "http://example.com",
 		Status:          repo_status_pending,
+		Auth:            nil,
 	}
 
 	get_summaries_summary_4 = &corev1.PackageRepositorySummary{
@@ -2581,6 +2585,7 @@ var (
 			Reason:     corev1.PackageRepositoryStatus_STATUS_REASON_FAILED,
 			UserReason: "Failed: failed to fetch https://invalid.example.com/index.yaml : 404 Not Found",
 		},
+		Auth: nil,
 	}
 
 	get_summaries_summary_5 = func(name types.NamespacedName) *corev1.PackageRepositorySummary {
@@ -2592,6 +2597,7 @@ var (
 			Type:            "helm",
 			Url:             podinfo_repo_url,
 			Status:          podinfo_repo_status_3,
+			Auth:            nil,
 		}
 	}
 
@@ -2604,6 +2610,7 @@ var (
 			Type:            "oci",
 			Url:             podinfo_oci_repo_url,
 			Status:          podinfo_repo_status_4,
+			Auth:            nil,
 		}
 	}
 
