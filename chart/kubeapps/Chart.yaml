@@ -2,7 +2,6 @@ annotations:
   category: Infrastructure
 apiVersion: v2
 appVersion: DEVEL
-kubeVersion: ">=1.21"
 dependencies:
   - name: redis
     repository: https://charts.bitnami.com/bitnami
@@ -31,4 +30,4 @@ maintainers:
 name: kubeapps
 sources:
   - https://github.com/vmware-tanzu/kubeapps
-version: 9.0.3-dev0
+version: 9.0.3
