@@ -376,6 +376,10 @@ func (s *Server) repoSummaries(ctx context.Context, cluster string, namespace st
 			NamespaceScoped: s.globalPackagingNamespace != repo.Namespace,
 			Type:            repo.Spec.Type,
 			Url:             repo.Spec.URL,
+			// TODO(agamez): check if we can get the status from the repo somehow
+			Status: &corev1.PackageRepositoryStatus{
+				Ready: true,
+			},
 		}
 		summaries = append(summaries, summary)
 	}
