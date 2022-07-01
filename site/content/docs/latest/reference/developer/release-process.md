@@ -70,7 +70,7 @@ cd integration
 yarn upgrade
 ```
 
-- The [integration/Dockerfile](https://github.com/vmware-tanzu/kubeapps/blob/main/integration/Dockerfile) uses a [bitnami/node](https://hub.docker.com/r/bitnami/node/tags) image for running the e2e tests.
+- The [integration/Dockerfile](https://github.com/vmware-tanzu/kubeapps/blob/main/integration/Dockerfile) uses a [mcr.microsoft.com/playwright](https://mcr.microsoft.com/v2/playwright/tags/list) image for running the e2e tests.
 
 > As part of this release process, this Node image tag _may_ be updated to the latest minor/patch version. In case of a major version, the change _should_ be tracked in a separate PR. Analogously, its dependencies _may_ also be updated, but in case of a major change, it _should_ be tracked in a separate PR.
 > **Note**: this image is not being built automatically. Consequently, a [manual build process](../testing/end-to-end-tests.md#building-the-kubeappsintegration-tests-image) _must_ be triggered if you happen to upgrade the integration image or its dependencies.

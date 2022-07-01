@@ -9,7 +9,7 @@ IMAGE_TAG ?= dev
 default: build
 
 build:
-	docker build -t kubeapps/integration-tests:$(IMAGE_TAG) .
+	docker build -t kubeapps/integration-tests:v2.0.0 .
 
 push:
-	docker push kubeapps/integration-tests:$(IMAGE_TAG)
+	docker push kubeapps/integration-tests:v2.0.0
