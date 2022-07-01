@@ -107,7 +107,7 @@ func NewController(
 	// Add apprepository-controller types to the default Kubernetes Scheme so
 	// Events can be logged for apprepository-controller types.
 	err := appreposcheme.AddToScheme(scheme.Scheme)
-	if err == nil {
+	if err != nil {
 		return nil
 	}
 
