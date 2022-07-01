@@ -442,6 +442,7 @@ func ParsePluginConfig(pluginConfigPath string) (*FluxPluginConfig, error) {
 	}
 	var config internalFluxPluginConfig
 
+	// #nosec G304
 	pluginConfig, err := ioutil.ReadFile(pluginConfigPath)
 	if err != nil {
 		return nil, fmt.Errorf("unable to open plugin config at %q: %w", pluginConfigPath, err)

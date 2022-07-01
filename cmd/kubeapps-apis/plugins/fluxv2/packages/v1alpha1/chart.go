@@ -232,7 +232,8 @@ func filterAndPaginateCharts(filters *corev1.FilterOptions, pageSize int32, item
 		startAt = itemOffset
 	}
 	for _, packages := range charts {
-		for _, chart := range packages {
+		for p := range packages {
+			chart := packages[p] // avoid implicit memory aliasing
 			if passesFilter(chart, filters) {
 				i++
 				if startAt < i {
