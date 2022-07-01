@@ -29,11 +29,14 @@ func parseRepoIndex(contents []byte) (*repo.IndexFile, error) {
 // object.
 func newChart(entry repo.ChartVersions, r *models.Repo, shallow bool) models.Chart {
 	var c models.Chart
-	copier.Copy(&c, entry[0])
+	err := copier.Copy(&c, entry[0])
 	if shallow {
-		copier.Copy(&c.ChartVersions, []repo.ChartVersion{*entry[0]})
+		err = copier.Copy(&c.ChartVersions, []repo.ChartVersion{*entry[0]})
 	} else {
-		copier.Copy(&c.ChartVersions, entry)
+		err = copier.Copy(&c.ChartVersions, entry)
+	}
+	if err != nil {
+		return models.Chart{}
 	}
 	c.Repo = r
 	c.Name = url.PathEscape(c.Name) // escaped chart name eg. foo/bar becomes foo%2Fbar

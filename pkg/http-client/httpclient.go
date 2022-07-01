@@ -59,6 +59,7 @@ func New() *http.Client {
 func NewWithCertFile(certFile string, skipTLS bool) (*http.Client, error) {
 	// If additionalCA exists, load it
 	if _, err := os.Stat(certFile); !os.IsNotExist(err) {
+		// #nosec G304
 		certs, err := ioutil.ReadFile(certFile)
 		if err != nil {
 			return nil, fmt.Errorf("failed to append %s to RootCAs: %v", certFile, err)
@@ -68,6 +69,7 @@ func NewWithCertFile(certFile string, skipTLS bool) (*http.Client, error) {
 
 	// Return client with TLS skipVerify but no additional certs
 	client := New()
+	// #nosec G402
 	config := &tls.Config{
 		InsecureSkipVerify: skipTLS,
 	}
@@ -88,6 +90,7 @@ func NewWithCertBytes(certs []byte, skipTLS bool) (*http.Client, error) {
 
 	// create and configure client
 	client := New()
+	// #nosec G402
 	config := &tls.Config{
 		RootCAs:            caCertPool,
 		InsecureSkipVerify: skipTLS,
@@ -144,7 +147,7 @@ func SetClientTLS(client *http.Client, config *tls.Config) error {
 }
 
 func NewClientTLS(certBytes, keyBytes, caBytes []byte) (*tls.Config, error) {
-	config := tls.Config{}
+	config := tls.Config{MinVersion: tls.VersionTLS12}
 
 	if len(certBytes) != 0 && len(keyBytes) != 0 {
 		cert, err := tls.X509KeyPair(certBytes, keyBytes)
