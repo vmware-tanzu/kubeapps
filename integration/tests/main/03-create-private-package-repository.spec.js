@@ -19,23 +19,28 @@ test("Create a new private package repository successfully", async ({ page }) =>
 
   // Go to repos page
   await page.click(".dropdown.kubeapps-menu button.kubeapps-nav-link");
-  await page.click('a.dropdown-menu-link:has-text("Package Repositories")');
-  await page.waitForTimeout(3000);
+  await page.locator("text=Package Repositories").click();
+  await expect(page).not.toContain("text=Fetching Package Repositories...");
 
   // Add new repo
-  await page.click('cds-button:has-text("Add Package Repository")');
   const repoName = utils.getRandomName("my-repo");
   console.log(`Creating package repository "${repoName}"`);
+
+  await page.locator("text=Add Package Repository >> div").click();
   await page.fill("input#kubeapps-repo-name", repoName);
   await page.fill("input#kubeapps-repo-url", "http://chartmuseum-chartmuseum.kubeapps:8080");
+  await page.locator("text=Helm Charts").first().click();
+  await page.locator("text=Helm Repository").click();
 
   // Set credentials
-  await page.click('label:has-text("Basic Auth")');
-  await page.fill("input#kubeapps-repo-username", "admin");
-  await page.fill("input#kubeapps-repo-password", "password");
+  await page.locator("#panel-auth cds-accordion-header div >> nth=0").first().click();
+  // Basic auth
+  await page.locator("text=Basic Auth").click();
+  await page.locator('[id="kubeapps-repo-username"]').fill("admin");
+  await page.locator('[id="kubeapps-repo-password"]').fill("password");
 
   // Create repository
-  await page.click('cds-button:has-text("Install Repo")');
+  await page.locator("text=Install Repository >> div").click();
 
   // Wait for new packages to be indexed
   await page.waitForTimeout(5000);
