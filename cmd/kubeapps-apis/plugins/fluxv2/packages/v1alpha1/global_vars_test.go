@@ -1089,7 +1089,7 @@ var (
 		Name:    "my-podinfo-5",
 		Context: &corev1.Context{Namespace: "default"},
 		Type:    "oci",
-		Url:     podinfo_oci_repo_url,
+		Url:     podinfo_oci_registry_url,
 	}
 
 	add_repo_expected_resp = &corev1.AddPackageRepositoryResponse{
@@ -2430,7 +2430,7 @@ var (
 			Description:     "",
 			NamespaceScoped: false,
 			Type:            "helm",
-			Url:             podinfo_oci_repo_url,
+			Url:             podinfo_oci_registry_url,
 			Interval:        "10m",
 			Auth:            &corev1.PackageRepositoryAuth{},
 			Status: &corev1.PackageRepositoryStatus{
@@ -2453,7 +2453,7 @@ var (
 			Description:     "",
 			NamespaceScoped: false,
 			Type:            "oci",
-			Url:             podinfo_oci_repo_url,
+			Url:             podinfo_oci_registry_url,
 			Interval:        "10m",
 			Auth:            &corev1.PackageRepositoryAuth{},
 			Status: &corev1.PackageRepositoryStatus{
@@ -2602,7 +2602,7 @@ var (
 			Description:     "",
 			NamespaceScoped: false,
 			Type:            "oci",
-			Url:             podinfo_oci_repo_url,
+			Url:             podinfo_oci_registry_url,
 			Status:          podinfo_repo_status_4,
 		}
 	}

@@ -22,22 +22,37 @@ function deploy {
   # set up OCI registry
   # ref https://helm.sh/docs/topics/registries/
   # only has a single user: foo, password: bar
-  docker rm -f registry
-  docker run -dp 5000:5000 --restart=always --name registry \
-    -v $(pwd)/bcrypt.htpasswd:/etc/docker/registry/auth.htpasswd \
-    -e REGISTRY_AUTH="{htpasswd: {realm: localhost, path: /etc/docker/registry/auth.htpasswd}}" \
-    registry
-  # TODO retries
-  helm registry login -u foo localhost:5000 -p bar
-  helm push charts/podinfo-6.0.3.tgz oci://localhost:5000/helm-charts 
+  kubectl create configmap registry-configmap --from-file ./bcrypt.htpasswd
+  kubectl apply -f registry-app.yaml
+  kubectl expose deployment registry-app --port=5000 --target-port=5000 --name=registry-app-svc --context kind-kubeapps
+  # TODO gfichtenholt this needs to be done asynchronously
+  kubectl -n default port-forward svc/registry-app-svc 5000:5000 --context kind-kubeapps 
+
+  local max=5  
+  local n=0
+  until [ "$n" -ge "$max" ]
+  do
+   helm registry login -u foo localhost:5000 -p bar && break
+   n=$((n+1)) 
+   echo "Retrying helm login in 5s [$n/5]..."
+   sleep 5
+  done
+  if [[ $n -ge $max ]]; then
+    echo "Failed to login with [5] attempts.Exiting script..."
+    exit 1
+  fi
+
+  # these .tgz files were pulled from https://stefanprodan.github.io/podinfo/ 
+  helm push charts/podinfo-6.0.0.tgz oci://localhost:5000/helm-charts 
   helm show all oci://localhost:5000/helm-charts/podinfo | head -9
   helm registry logout localhost:5000
 }
 
 function undeploy {
-  docker rm -f registry
   kubectl delete svc/fluxv2plugin-testdata-svc
   kubectl delete svc/fluxv2plugin-testdata-ssl-svc
+  kubectl delete svc/registry-app-svc
+  kubectl delete deployment/registry-app --context kind-kubeapps 
   kubectl delete deployment fluxv2plugin-testdata-app --context kind-kubeapps 
 }
 

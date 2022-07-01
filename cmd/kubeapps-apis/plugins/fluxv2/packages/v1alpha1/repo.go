@@ -208,6 +208,7 @@ func (s *Server) newRepo(ctx context.Context, request *corev1.AddPackageReposito
 	if url == "" {
 		return nil, status.Errorf(codes.InvalidArgument, "repository url may not be empty")
 	} else if tlsConfig != nil && tlsConfig.InsecureSkipVerify {
+		// ref https://github.com/fluxcd/source-controller/issues/807
 		return nil, status.Errorf(codes.InvalidArgument, "TLS flag insecureSkipVerify is not supported")
 	}
 
@@ -591,6 +592,7 @@ func (s *Server) updateRepo(ctx context.Context, repoRef *corev1.PackageReposito
 	}
 
 	if tlsConfig != nil && tlsConfig.InsecureSkipVerify {
+		// ref https://github.com/fluxcd/source-controller/issues/807
 		return nil, status.Errorf(codes.InvalidArgument, "TLS flag insecureSkipVerify is not supported")
 	}
 
