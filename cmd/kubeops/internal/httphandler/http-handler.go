@@ -45,7 +45,10 @@ func JSONError(w http.ResponseWriter, err interface{}, code int) {
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	w.Header().Set("X-Content-Type-Options", "nosniff")
 	w.WriteHeader(code)
-	json.NewEncoder(w).Encode(err)
+	e := json.NewEncoder(w).Encode(err)
+	if e != nil {
+		return
+	}
 }
 
 func returnK8sError(err error, action string, resource string, w http.ResponseWriter) {
@@ -119,7 +122,10 @@ func ListAppRepositories(handler kube.AuthHandler) func(w http.ResponseWriter, r
 			JSONError(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
-		w.Write(responseBody)
+		_, err = w.Write(responseBody)
+		if err != nil {
+			return
+		}
 	}
 }
 
@@ -149,7 +155,10 @@ func CreateAppRepository(handler kube.AuthHandler) func(w http.ResponseWriter, r
 			JSONError(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
-		w.Write(responseBody)
+		_, err = w.Write(responseBody)
+		if err != nil {
+			return
+		}
 	}
 }
 
@@ -179,7 +188,10 @@ func UpdateAppRepository(handler kube.AuthHandler) func(w http.ResponseWriter, r
 			JSONError(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
-		w.Write(responseBody)
+		_, err = w.Write(responseBody)
+		if err != nil {
+			return
+		}
 	}
 }
 
@@ -210,7 +222,10 @@ func RefreshAppRepository(handler kube.AuthHandler) func(w http.ResponseWriter, 
 			JSONError(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
-		w.Write(responseBody)
+		_, err = w.Write(responseBody)
+		if err != nil {
+			return
+		}
 	}
 }
 
@@ -236,7 +251,10 @@ func ValidateAppRepository(handler kube.AuthHandler) func(w http.ResponseWriter,
 			JSONError(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
-		w.Write(responseBody)
+		_, err = w.Write(responseBody)
+		if err != nil {
+			return
+		}
 	}
 }
 
@@ -306,7 +324,10 @@ func GetAppRepository(kubeHandler kube.AuthHandler) func(w http.ResponseWriter, 
 			JSONError(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
-		w.Write(responseBody)
+		_, err = w.Write(responseBody)
+		if err != nil {
+			return
+		}
 	}
 }
 
@@ -342,7 +363,10 @@ func GetNamespaces(kubeHandler kube.AuthHandler) func(w http.ResponseWriter, req
 			JSONError(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
-		w.Write(responseBody)
+		_, err = w.Write(responseBody)
+		if err != nil {
+			return
+		}
 	}
 }
 
@@ -368,7 +392,10 @@ func GetOperatorLogo(kubeHandler kube.AuthHandler) func(w http.ResponseWriter, r
 			ctype = "image/svg+xml"
 		}
 		w.Header().Set("Content-Type", ctype)
-		w.Write(logo)
+		_, err = w.Write(logo)
+		if err != nil {
+			return
+		}
 	}
 }
 
@@ -405,7 +432,10 @@ func CanI(kubeHandler kube.AuthHandler) func(w http.ResponseWriter, req *http.Re
 			JSONError(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
-		w.Write(responseBody)
+		_, err = w.Write(responseBody)
+		if err != nil {
+			return
+		}
 	}
 }
 
