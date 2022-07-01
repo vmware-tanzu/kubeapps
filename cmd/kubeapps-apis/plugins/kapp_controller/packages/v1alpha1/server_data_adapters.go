@@ -425,6 +425,12 @@ func (s *Server) buildPkgInstall(installedPackageName, targetCluster, targetName
 
 func (s *Server) buildPackageRepositorySummary(pkgRepository *packagingv1alpha1.PackageRepository, cluster string) (*corev1.PackageRepositorySummary, error) {
 
+	// for the summaries response, setting a non-nil auth field is enough
+	var auth *corev1.PackageRepositoryAuth
+	if pkgSecretRef := repositorySecretRef(pkgRepository); pkgSecretRef != nil {
+		auth = &corev1.PackageRepositoryAuth{}
+	}
+
 	// base struct
 	repository := &corev1.PackageRepositorySummary{
 		PackageRepoRef: &corev1.PackageRepositoryReference{
@@ -437,6 +443,7 @@ func (s *Server) buildPackageRepositorySummary(pkgRepository *packagingv1alpha1.
 		},
 		Name:            pkgRepository.Name,
 		NamespaceScoped: s.globalPackagingNamespace != pkgRepository.Namespace,
+		Auth:            auth,
 	}
 
 	// handle fetch-specific configuration

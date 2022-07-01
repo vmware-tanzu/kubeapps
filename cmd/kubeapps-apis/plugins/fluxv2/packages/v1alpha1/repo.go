@@ -351,6 +351,13 @@ func (s *Server) repoSummaries(ctx context.Context, namespace string) ([]*corev1
 		if typ == "" {
 			typ = "helm"
 		}
+
+		var auth *corev1.PackageRepositoryAuth
+		// for the summaries response, setting a non-nil auth field is enough
+		if repo.Spec.SecretRef != nil {
+			auth = &corev1.PackageRepositoryAuth{}
+		}
+
 		summary := &corev1.PackageRepositorySummary{
 			PackageRepoRef: &corev1.PackageRepositoryReference{
 				Context: &corev1.Context{
@@ -367,6 +374,7 @@ func (s *Server) repoSummaries(ctx context.Context, namespace string) ([]*corev1
 			Type:            typ,
 			Url:             repo.Spec.URL,
 			Status:          repoStatus(repo),
+			Auth:            auth,
 		}
 		summaries = append(summaries, summary)
 	}
