@@ -312,5 +312,8 @@ func DeleteRelease(cfg Config, w http.ResponseWriter, req *http.Request, params 
 		return
 	}
 	w.Header().Set("Status-Code", "200")
-	w.Write([]byte("OK"))
+	_, err = w.Write([]byte("OK"))
+	if err != nil {
+		return
+	}
 }
