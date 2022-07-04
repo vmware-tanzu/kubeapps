@@ -2,14 +2,14 @@
 # SPDX-License-Identifier: Apache-2.0
 
 FROM mcr.microsoft.com/playwright:v1.23.0-focal
-ADD . /app/
-# Make sure we don't ship the current tests with the image
-# Renaming or relocating tests might mess things up otherwise
-RUN rm -rf /app/tests
-RUN yarn install
+WORKDIR  /app/
 
-# RUN npm install
+# Copy and install deps
+COPY package.json yarn.lock /app/
+RUN yarn install --frozen-lockfile
+
+# Install browsers
 RUN npx playwright install
 
-# Run playwright test
-CMD [ "npx", "playwright", "test", "--workers=1" ]
+# Note that the playwright config and the actual test files
+# will be later passed via kubectl cp in runtime

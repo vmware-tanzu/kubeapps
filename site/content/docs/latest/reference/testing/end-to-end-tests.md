@@ -40,7 +40,7 @@ To run the tests locally you just need to install the required dependencies and 
 ```bash
 cd integration
 yarn install
-INTEGRATION_ENTRYPOINT=http://kubeapps.local USE_MULTICLUSTER_OIDC_ENV=false ADMIN_TOKEN=foo1 VIEW_TOKEN=foo2 EDIT_TOKEN=foo3 yarn start
+INTEGRATION_ENTRYPOINT=http://kubeapps.local USE_MULTICLUSTER_OIDC_ENV=false ADMIN_TOKEN=foo1 VIEW_TOKEN=foo2 EDIT_TOKEN=foo3 yarn test
 
 ```
 
@@ -71,7 +71,7 @@ kubectl cp ./tests ${pod}:/app/
 
 
 # Run tests (you must fill these vars accordingly)
-kubectl exec -it ${pod} -- /bin/sh -c "INTEGRATION_ENTRYPOINT=http://kubeapps.kubeapps USE_MULTICLUSTER_OIDC_ENV=${USE_MULTICLUSTER_OIDC_ENV} ADMIN_TOKEN=${admin_token} VIEW_TOKEN=${view_token} EDIT_TOKEN=${edit_token} yarn start"
+kubectl exec -it ${pod} -- /bin/sh -c "INTEGRATION_ENTRYPOINT=http://kubeapps.kubeapps USE_MULTICLUSTER_OIDC_ENV=${USE_MULTICLUSTER_OIDC_ENV} ADMIN_TOKEN=${admin_token} VIEW_TOKEN=${view_token} EDIT_TOKEN=${edit_token} yarn test"
 
 # If the tests fail, get report screenshot
 kubectl cp ${pod}:/app/reports ./reports
