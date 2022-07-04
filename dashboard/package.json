@@ -75,7 +75,7 @@
     "yaml": "^2.1.1"
   },
   "devDependencies": {
-    "@craco/craco": "^6.4.3",
+    "@craco/craco": "^6.4.4",
     "@formatjs/cli": "^5.0.2",
     "@improbable-eng/grpc-web-fake-transport": "^0.15.0",
     "@testing-library/react": "^12.1.5",

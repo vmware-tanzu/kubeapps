@@ -1116,10 +1116,10 @@
     exec-sh "^0.3.2"
     minimist "^1.2.0"
 
-"@craco/craco@^6.4.3":
-  version "6.4.3"
-  resolved "https://registry.yarnpkg.com/@craco/craco/-/craco-6.4.3.tgz#784395b6ebab764056550a2860494d24c3abd44e"
-  integrity sha512-RzkXYmNzRCGUyG7mM+IUMM+nvrpSfA34352sPSGQN76UivAmCAht3sI4v5JKgzO05oUK9Zwi6abCKD7iKXI8hQ==
+"@craco/craco@^6.4.4":
+  version "6.4.4"
+  resolved "https://registry.yarnpkg.com/@craco/craco/-/craco-6.4.4.tgz#dbd899c19a668ec3960c1893f5ae24b874911a8f"
+  integrity sha512-KkgsN1wVQq+RsmZecm7MCQStNPwB1mrzaE6Z9v/NSJT92DAq7XPwxaEpo0ox83DZHSMvqVbk8jeTYNJdr57WzQ==
   dependencies:
     cosmiconfig "^7.0.1"
     cosmiconfig-typescript-loader "^1.0.0"
