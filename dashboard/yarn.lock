@@ -2448,10 +2448,10 @@
   resolved "https://registry.yarnpkg.com/@types/range-parser/-/range-parser-1.2.4.tgz#cd667bcfdd025213aafb7ca5915a932590acdcdc"
   integrity sha512-EEhsLsD6UsDM1yFhAvy0Cjr6VwmpMWqFBCb9w07wVugF7w9nfajxLuVmngTIpgS6svCnm6Vaw+MZhoDCKnOfsw==
 
-"@types/react-copy-to-clipboard@^5.0.2":
-  version "5.0.2"
-  resolved "https://registry.yarnpkg.com/@types/react-copy-to-clipboard/-/react-copy-to-clipboard-5.0.2.tgz#c29690b472a54edff35916f0d1c6c797ad0fd34b"
-  integrity sha512-O29AThfxrkUFRsZXjfSWR2yaWo0ppB1yLEnHA+Oh24oNetjBAwTDu1PmolIqdJKzsZiO4J1jn6R6TmO96uBvGg==
+"@types/react-copy-to-clipboard@^5.0.3":
+  version "5.0.3"
+  resolved "https://registry.yarnpkg.com/@types/react-copy-to-clipboard/-/react-copy-to-clipboard-5.0.3.tgz#208e37c91ad56be794b42e37f02dc6ac254c368d"
+  integrity sha512-B7vrRXqxGuzL0dxth6skt8EyZ7gHmAARXBsFHiY92TJOJPMrTVRJlp78XuQ0LgwTPDYnSRgYH/kaDWi4UC566A==
   dependencies:
     "@types/react" "*"
 
@@ -5475,10 +5475,10 @@ eslint-import-resolver-node@^0.3.6:
     debug "^3.2.7"
     resolve "^1.20.0"
 
-eslint-import-resolver-typescript@^3.1.3:
-  version "3.1.3"
-  resolved "https://registry.yarnpkg.com/eslint-import-resolver-typescript/-/eslint-import-resolver-typescript-3.1.3.tgz#ffb2014469184d64ff5ee4cb5b944d9115838fb4"
-  integrity sha512-u7YJAWmgJlpwvKsEl0khVJdRsdLNfReL2Sc8hrc21iEEVEOTKH0Ea3nUtfdlhHuQieJ7lFpOJd0LbDaWpb3+RA==
+eslint-import-resolver-typescript@^3.2.1:
+  version "3.2.1"
+  resolved "https://registry.yarnpkg.com/eslint-import-resolver-typescript/-/eslint-import-resolver-typescript-3.2.1.tgz#62770f5659547f258ade68ff69661894dfd86efd"
+  integrity sha512-3BStJ19GFJCzvhyPV8UO2xPxsAqQ5v41h4WeUsF/Oyy70AjeQx2l1RfzpJL1H7K7xNMiayty4uj3BkNWhgHDtg==
   dependencies:
     debug "^4.3.4"
     enhanced-resolve "^5.10.0"
@@ -13226,33 +13226,33 @@ ts-node@^10.7.0:
     v8-compile-cache-lib "^3.0.1"
     yn "3.1.1"
 
-ts-poet@^4.11.0:
-  version "4.11.0"
-  resolved "https://registry.yarnpkg.com/ts-poet/-/ts-poet-4.11.0.tgz#5566f499ec767920cc18b977624f084c52e8734a"
-  integrity sha512-OaXnCKsRs0yrc0O7LFhnq/US2DB4Wd313cS+qjG2XMksZ74pF/jvMHkJdURXJiAo4kSahL2N4e8JOdwUjOMNdw==
+ts-poet@^4.15.0:
+  version "4.15.0"
+  resolved "https://registry.yarnpkg.com/ts-poet/-/ts-poet-4.15.0.tgz#637145fa554d3b27c56541578df0ce08cd9eb328"
+  integrity sha512-sLLR8yQBvHzi9d4R1F4pd+AzQxBfzOSSjfxiJxQhkUoH5bL7RsAC6wgvtVUQdGqiCsyS9rT6/8X2FI7ipdir5g==
   dependencies:
     lodash "^4.17.15"
     prettier "^2.5.1"
 
-ts-proto-descriptors@1.6.0:
-  version "1.6.0"
-  resolved "https://registry.yarnpkg.com/ts-proto-descriptors/-/ts-proto-descriptors-1.6.0.tgz#ca6eafc882495a2e920da5b981d7b181b4e49c38"
-  integrity sha512-Vrhue2Ti99us/o76mGy28nF3W/Uanl1/8detyJw2yyRwiBC5yxy+hEZqQ/ZX2PbZ1vyCpJ51A9L4PnCCnkBMTQ==
+ts-proto-descriptors@1.7.0:
+  version "1.7.0"
+  resolved "https://registry.yarnpkg.com/ts-proto-descriptors/-/ts-proto-descriptors-1.7.0.tgz#bd465a17642b23747c21a2442a2ec379446cd18b"
+  integrity sha512-FydY8jv+V/y48LNGy/UX1H5p2z6mV/dP8kgn+4VqZ6VI7pw/JTgWaxF3SRuCPxEhzDFB5WaLVLlnbDXrPzyHWQ==
   dependencies:
     long "^4.0.0"
     protobufjs "^6.8.8"
 
-ts-proto@^1.115.5:
-  version "1.115.5"
-  resolved "https://registry.yarnpkg.com/ts-proto/-/ts-proto-1.115.5.tgz#3cbb34698f59601b79ddbab6dee42cf1a0b8cf9d"
-  integrity sha512-JGk6hln3JP0T0wJlqIOUGE/qHDYcI547hrJwAzeLq1E2l7IdYnYiAJRsvJEOsvotIyZXMbHNlZedIZEVIPAspQ==
+ts-proto@^1.116.1:
+  version "1.116.1"
+  resolved "https://registry.yarnpkg.com/ts-proto/-/ts-proto-1.116.1.tgz#c2e2b6074919e4499ff8c46c75c4f25ac0af89ed"
+  integrity sha512-H5hkmIgJHkKsX7VDqpt6fFrN4M7yyLl4FCfmUDQA4w8/HYF/WAkVzJ9617JPmfh0c/UYckCtk4SArDnU5LDgUw==
   dependencies:
     "@types/object-hash" "^1.3.0"
     dataloader "^1.4.0"
     object-hash "^1.3.1"
     protobufjs "^6.11.3"
-    ts-poet "^4.11.0"
-    ts-proto-descriptors "1.6.0"
+    ts-poet "^4.15.0"
+    ts-proto-descriptors "1.7.0"
 
 tsconfig-paths@^3.14.1:
   version "3.14.1"
