@@ -140,10 +140,10 @@ var repo2Summary = &corev1.PackageRepositorySummary{
 }
 
 var repo3Summary = &corev1.PackageRepositorySummary{
-	PackageRepoRef:  repoRef("repo-d", KubeappsCluster, "ns-3"),
+	PackageRepoRef:  repoRef("repo-3", KubeappsCluster, globalPackagingNamespace),
 	Name:            "repo-3",
 	Description:     "description 3",
-	NamespaceScoped: true,
+	NamespaceScoped: false,
 	Type:            "helm",
 	Url:             "https://test-repo3",
 	Auth:            &corev1.PackageRepositoryAuth{},
@@ -522,6 +522,7 @@ func TestGetPackageRepositorySummaries(t *testing.T) {
 
 	repo1Summary.Url = ts.URL
 	repo2Summary.Url = ts.URL
+	repo3Summary.Url = ts.URL
 
 	testCases := []struct {
 		name               string
@@ -609,6 +610,7 @@ func TestGetPackageRepositorySummaries(t *testing.T) {
 				corev1.PackageRepositorySummary{},
 				corev1.PackageRepositoryReference{},
 				corev1.PackageRepositoryStatus{},
+				corev1.PackageRepositoryAuth{},
 			)
 			opts2 := cmpopts.SortSlices(lessPackageRepositorySummaryFunc)
 			if got, want := response, tc.expectedResponse; !cmp.Equal(want, got, opts, opts2) {
