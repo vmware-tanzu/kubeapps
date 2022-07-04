@@ -615,6 +615,7 @@ func TestGetPackageRepositoryDetail(t *testing.T) {
 				Url:             url,
 				Auth:            auth,
 				TlsConfig:       tlsConfig,
+				Status:          &corev1.PackageRepositoryStatus{Ready: true},
 			},
 		}
 		if customDetails != nil {
