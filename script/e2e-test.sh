@@ -376,7 +376,7 @@ done
 
 # Browser tests
 cd "${ROOT_DIR}/integration"
-kubectl apply -f manifests/executor.yaml
+kubectl apply -f manifests/e2e-runner.yaml
 k8s_wait_for_deployment default integration
 pod=$(kubectl get po -l run=integration -o jsonpath="{.items[0].metadata.name}")
 ## Copy config and latest tests
