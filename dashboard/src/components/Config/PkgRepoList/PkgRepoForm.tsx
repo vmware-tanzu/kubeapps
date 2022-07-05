@@ -1326,7 +1326,7 @@ export function PkgRepoForm(props: IPkgRepoFormProps) {
                           PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_DOCKER_CONFIG_JSON
                         }
                       >
-                        {/* TODO(agamez): enable the selection once the API supports it */}
+                        {/* TODO(agamez): enable the selection once the API supports it (#5015) */}
                         {/* <CdsToggleGroup className="flex-v-center">
                           <CdsToggle>
                             <label>
@@ -1548,7 +1548,7 @@ export function PkgRepoForm(props: IPkgRepoFormProps) {
                     <input
                       id="kubeapps-repo-interval"
                       type="text"
-                      placeholder="10m"
+                      placeholder={initialInterval}
                       value={interval}
                       onChange={handleIntervalChange}
                     />
