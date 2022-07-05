@@ -29,7 +29,6 @@ import (
 	chartutils "github.com/vmware-tanzu/kubeapps/pkg/chart"
 	"github.com/vmware-tanzu/kubeapps/pkg/chart/models"
 	"github.com/vmware-tanzu/kubeapps/pkg/dbutils"
-	"github.com/vmware-tanzu/kubeapps/pkg/handlerutil"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/anypb"
@@ -866,7 +865,7 @@ func (s *Server) fetchChartWithRegistrySecrets(ctx context.Context, chartDetails
 	}
 
 	// Grab the chart itself
-	ch, err := handlerutil.GetChart(
+	ch, err := utils.GetChart(
 		&chartutils.Details{
 			AppRepositoryResourceName:      appRepo.Name,
 			AppRepositoryResourceNamespace: appRepo.Namespace,
