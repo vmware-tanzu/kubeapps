@@ -56,10 +56,8 @@ func setFlags(c *cobra.Command) {
 	c.Flags().StringVar(&serveOpts.NamespaceHeaderPattern, "namespace-header-pattern", "", "regular expression that matches only single group, e.g. namespace-header-pattern=^namespace:([\\w]+):\\w+$, to match namespace:ns:read")
 
 	// TODO(agamez): remove once a new version of the chart is released
-	err := c.Flags().MarkDeprecated("user-agent-comment", "(deprecated) UserAgent comment used during outbound requests")
-	if err != nil {
-		log.Errorf("%v", err)
-	}
+	var deprecated string
+	c.Flags().StringVar(&deprecated, "user-agent-comment", "", "(deprecated) UserAgent comment used during outbound requests")
 }
 
 // initConfig reads in config file and ENV variables if set.
