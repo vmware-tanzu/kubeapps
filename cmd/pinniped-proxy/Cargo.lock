@@ -129,9 +129,9 @@ checksum = "c4872d67bab6358e59559027aa3b9157c53d9358c51423c17554809a8858e0f8"
 
 [[package]]
 name = "cached"
-version = "0.34.1"
+version = "0.36.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "12f5cd208ba696f870238022d81ca1d80ed9d696fd62341c747f2d8f6ecdd9fe"
+checksum = "76d9447b2a367383a918fbbe62f6892da68000170c7331003d132b4805b63214"
 dependencies = [
  "async-trait",
  "async_once",
@@ -139,6 +139,7 @@ dependencies = [
  "cached_proc_macro_types",
  "futures",
  "hashbrown 0.12.1",
+ "instant",
  "lazy_static",
  "once_cell",
  "thiserror",
@@ -147,9 +148,9 @@ dependencies = [
 
 [[package]]
 name = "cached_proc_macro"
-version = "0.12.0"
+version = "0.13.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "bce0f37f9b77c6b93cdf3f060c89adca303d2ab052cacb3c3d1ab543e8cecd2f"
+checksum = "4797df465f7409b55bab9ccd1edbf1d279ffdf763772c2804b96740ee72f3b82"
 dependencies = [
  "cached_proc_macro_types",
  "darling 0.13.4",
@@ -1379,9 +1380,9 @@ dependencies = [
 
 [[package]]
 name = "serde"
-version = "1.0.137"
+version = "1.0.138"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "61ea8d54c77f8315140a05f4c7237403bf38b72704d031543aa1d16abbf517d1"
+checksum = "1578c6245786b9d168c5447eeacfb96856573ca56c9d68fdcf394be134882a47"
 dependencies = [
  "serde_derive",
 ]
@@ -1398,9 +1399,9 @@ dependencies = [
 
 [[package]]
 name = "serde_derive"
-version = "1.0.137"
+version = "1.0.138"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1f26faba0c3959972377d3b2d306ee9f71faee9714294e41bb777f83f88578be"
+checksum = "023e9b1467aef8a10fb88f25611870ada9800ef7e22afce356bb0d2387b6f27c"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -1409,9 +1410,9 @@ dependencies = [
 
 [[package]]
 name = "serde_json"
-version = "1.0.81"
+version = "1.0.82"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9b7ce2b32a1aed03c558dc61a5cd328f15aff2dbc17daad8fb8af04d2100e15c"
+checksum = "82c2c1fdcd807d1098552c5b9a36e425e42e9fbd7c6a37a8425f390f781f7fa7"
 dependencies = [
  "indexmap",
  "itoa",

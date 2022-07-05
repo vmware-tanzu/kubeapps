@@ -106,9 +106,12 @@ func (q *rateLimitingType) WaitUntilForgotten(item string) {
 	// a call to .Forget(item).
 	// TODO: (gfichtenholt) don't do wait.PollInfinite() here, use some sensible
 	// timeout instead, and then this func will need to return an error
-	wait.PollInfinite(10*time.Millisecond, func() (bool, error) {
+	err := wait.PollInfinite(10*time.Millisecond, func() (bool, error) {
 		return q.rateLimiter.NumRequeues(item) == 0, nil
 	})
+	if err != nil {
+		log.Errorf("error when WaitUntilForgotten, error: %v", err)
+	}
 }
 
 func newQueue(name string, verbose bool) *Type {

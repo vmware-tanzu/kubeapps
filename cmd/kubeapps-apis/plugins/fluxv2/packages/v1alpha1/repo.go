@@ -113,7 +113,8 @@ func (s *Server) filterReadyReposByName(repoList []sourcev1.HelmRepository, matc
 	}
 
 	resultKeys := sets.String{}
-	for _, repo := range repoList {
+	for r := range repoList {
+		repo := repoList[r] // avoid implicit memory aliasing
 		// first check if repo is in ready state
 		if !isRepoReady(repo) {
 			// just skip it
@@ -121,6 +122,7 @@ func (s *Server) filterReadyReposByName(repoList []sourcev1.HelmRepository, matc
 		}
 		name, err := common.NamespacedName(&repo)
 		if err != nil {
+			// #nosec G104
 			// just skip it
 			continue
 		}

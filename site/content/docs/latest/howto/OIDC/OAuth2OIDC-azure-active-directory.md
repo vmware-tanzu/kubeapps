@@ -86,6 +86,19 @@ We highlight here:
 
 > In `v1` tokens, you had to pass this value as part of the `--resource=6dae42f8-4368-4678-94ff-3960e28e3630` flag, but in `v2` tokens, this claim is performed just using the scope.
 
+### Troubleshooting
+
+If you are getting a 500 error with the following message: `could not get claim "groups": failed to fetch claims from profile URL`, it is probably due to a [issue in oauth2-proxy](https://github.com/oauth2-proxy/oauth2-proxy/issues/1680) in the `v7.3.0`. You can work arount it by using the former `v7.2.1` version as follows:
+
+```yaml
+authProxy:
+  ...
+  image:
+    registry: docker.io
+    repository: bitnami/oauth2-proxy
+    tag: 7.2.1
+```
+
 ## Azure Active Directory integration (legacy)
 
 For setting up an Azure Kubernetes cluster (aks) with Azure Active Directory (legacy) you can follow [this guide](https://docs.microsoft.com/en-us/azure/aks/azure-ad-integration-cli). At the end of the tutorial you should have an Active Directory Application (Server). That's the Application from which we will get the needed parameters.

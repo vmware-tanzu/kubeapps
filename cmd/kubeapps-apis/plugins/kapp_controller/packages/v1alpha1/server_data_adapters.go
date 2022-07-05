@@ -6,6 +6,8 @@ package main
 import (
 	"context"
 	"fmt"
+	"strings"
+
 	kappctrlv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
 	packagingv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/packaging/v1alpha1"
 	datapackagingv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/apis/datapackaging/v1alpha1"
@@ -22,7 +24,6 @@ import (
 	k8scorev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	log "k8s.io/klog/v2"
-	"strings"
 )
 
 const (
@@ -326,6 +327,7 @@ func (s *Server) buildInstalledPackageDetail(pkgInstall *packagingv1alpha1.Packa
 func (s *Server) buildSecret(installedPackageName, values, targetNamespace string) (*k8scorev1.Secret, error) {
 	// Using this pattern as per:
 	// https://github.com/vmware-tanzu/carvel-kapp-controller/blob/v0.36.1/cli/pkg/kctrl/cmd/package/installed/created_resource_annotations.go#L19
+	// #nosec G101
 	kappctrlSecretName := "%s-%s-values"
 
 	return &k8scorev1.Secret{
