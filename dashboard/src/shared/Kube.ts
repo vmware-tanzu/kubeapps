@@ -52,6 +52,7 @@ export class Kube {
     return u;
   }
 
+  // TODO(agamez): Migrate API call, see #4785
   public static async getResource(
     cluster: string,
     apiVersion: string,
@@ -80,11 +81,13 @@ export class Kube {
     });
   }
 
+  // TODO(agamez): Migrate API call, see #4785
   public static async getAPIGroups(cluster: string) {
     const { data: apiGroups } = await axiosWithAuth.get<any>(`${url.api.k8s.base(cluster)}/apis`);
     return apiGroups.groups;
   }
 
+  // TODO(agamez): Migrate API call, see #4785
   public static async getResourceKinds(cluster: string, groups: any[]) {
     const result: IKubeState["kinds"] = {};
     const addResource = (r: any, version: string) => {
@@ -115,6 +118,7 @@ export class Kube {
     return result;
   }
 
+  // TODO(agamez): Migrate API call, see #4785
   public static async canI(
     cluster: string,
     group: string,
