@@ -88,7 +88,6 @@ spec:
           args: {{- include "common.tplvalues.render" (dict "value" .Values.kubeops.args "context" $) | nindent 12 }}
           {{- else }}
           args:
-            - --user-agent-comment=kubeapps/{{ .Chart.AppVersion }}
             {{- if .Values.clusters }}
             - --clusters-config-path=/config/clusters.conf
             {{- end }}
