@@ -18,6 +18,8 @@ export enum PluginNames {
   PACKAGES_KAPP = "kapp_controller.packages",
 }
 
+export const k8sObjectNameRegex = "[a-z0-9]([-a-z0-9]*[a-z0-9])?(.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*";
+
 export function escapeRegExp(str: string) {
   return str.replace(/[-[\]/{}()*+?.\\^$|]/g, "\\$&");
 }

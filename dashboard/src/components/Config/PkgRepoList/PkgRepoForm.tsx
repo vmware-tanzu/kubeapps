@@ -30,7 +30,12 @@ import { Action } from "redux";
 import { ThunkDispatch } from "redux-thunk";
 import { toFilterRule, toParams } from "shared/jq";
 import { IPkgRepoFormData, IPkgRepositoryFilter, IStoreState } from "shared/types";
-import { getPluginByName, getPluginPackageName, PluginNames } from "shared/utils";
+import {
+  getPluginByName,
+  getPluginPackageName,
+  k8sObjectNameRegex,
+  PluginNames,
+} from "shared/utils";
 import "./PkgRepoForm.css";
 
 interface IPkgRepoFormProps {
@@ -479,7 +484,7 @@ export function PkgRepoForm(props: IPkgRepoFormProps) {
             authMethod !==
               PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_UNSPECIFIED
           }
-          pattern="[a-z0-9]([-a-z0-9]*[a-z0-9])?(\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*"
+          pattern={k8sObjectNameRegex}
           title="Use lower case alphanumeric characters, '-' or '.'"
         />
       </CdsInput>
@@ -510,7 +515,7 @@ export function PkgRepoForm(props: IPkgRepoFormProps) {
                     value={name}
                     onChange={handleNameChange}
                     required={true}
-                    pattern="[a-z0-9]([-a-z0-9]*[a-z0-9])?(\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*"
+                    pattern={k8sObjectNameRegex}
                     title="Use lower case alphanumeric characters, '-' or '.'"
                     disabled={!!repo?.name}
                   />
@@ -1358,7 +1363,7 @@ export function PkgRepoForm(props: IPkgRepoFormProps) {
                                   helmPSAuthMethod !==
                                     PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_UNSPECIFIED
                                 }
-                                pattern="[a-z0-9]([-a-z0-9]*[a-z0-9])?(\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*"
+                                pattern={k8sObjectNameRegex}
                                 title="Use lower case alphanumeric characters, '-' or '.'"
                               />
                             </CdsInput>
@@ -1601,7 +1606,7 @@ export function PkgRepoForm(props: IPkgRepoFormProps) {
                         id="kubeapps-repo-secret-ca"
                         type="text"
                         placeholder="my-ca-secret"
-                        pattern="[a-z0-9]([-a-z0-9]*[a-z0-9])?(\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*"
+                        pattern={k8sObjectNameRegex}
                         title="Use lower case alphanumeric characters, '-' or '.'"
                         value={secretTLSName}
                         disabled={skipTLS}
