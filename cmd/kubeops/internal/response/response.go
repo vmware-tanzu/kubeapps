@@ -32,7 +32,10 @@ func (e ErrorResponse) Write(w http.ResponseWriter) {
 		return
 	}
 	w.WriteHeader(e.Code)
-	w.Write(responseBody)
+	_, err = w.Write(responseBody)
+	if err != nil {
+		return
+	}
 }
 
 /*
@@ -62,5 +65,8 @@ func (d DataResponse) Write(w http.ResponseWriter) {
 		return
 	}
 	w.WriteHeader(d.Code)
-	w.Write(responseBody)
+	_, err = w.Write(responseBody)
+	if err != nil {
+		return
+	}
 }

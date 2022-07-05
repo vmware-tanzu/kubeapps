@@ -53,7 +53,7 @@
     "react-diff-viewer": "^3.1.1",
     "react-dom": "^17.0.2",
     "react-helmet": "^6.1.0",
-    "react-intl": "^6.0.4",
+    "react-intl": "^6.0.5",
     "react-markdown": "^8.0.3",
     "react-minimal-pie-chart": "^8.3.0",
     "react-redux": "^7.2.8",
@@ -75,7 +75,7 @@
     "yaml": "^2.1.1"
   },
   "devDependencies": {
-    "@craco/craco": "^6.4.3",
+    "@craco/craco": "^6.4.4",
     "@formatjs/cli": "^5.0.2",
     "@improbable-eng/grpc-web-fake-transport": "^0.15.0",
     "@testing-library/react": "^12.1.5",
@@ -86,7 +86,7 @@
     "@types/lodash": "^4.14.182",
     "@types/moxios": "^0.4.15",
     "@types/qs": "^6.9.7",
-    "@types/react-copy-to-clipboard": "^5.0.2",
+    "@types/react-copy-to-clipboard": "^5.0.3",
     "@types/react-dom": "^18.0.3",
     "@types/react-helmet": "^6.1.5",
     "@types/react-router-dom": "^5.3.3",
@@ -98,9 +98,9 @@
     "cross-env": "^7.0.3",
     "enzyme": "^3.11.0",
     "eslint-config-prettier": "^8.5.0",
-    "eslint-import-resolver-typescript": "^2.7.1",
+    "eslint-import-resolver-typescript": "^3.2.1",
     "eslint-plugin-prettier": "^4.2.1",
-    "eslint-plugin-redos": "^4.4.0",
+    "eslint-plugin-redos": "^4.4.1",
     "jest-enzyme": "^7.1.2",
     "jest-plugin-context": "^2.9.0",
     "mock-socket": "^9.1.5",
@@ -120,7 +120,7 @@
     "stylelint-config-standard-scss": "^4.0.0",
     "stylelint-scss": "^4.2.0",
     "ts-jest": "^28.0.5",
-    "ts-proto": "^1.115.5",
+    "ts-proto": "^1.116.1",
     "typescript": "^4.7.4"
   },
   "resolutions": {
