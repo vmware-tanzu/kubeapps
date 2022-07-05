@@ -55,11 +55,11 @@ func setFlags(c *cobra.Command) {
 	c.Flags().StringVar(&serveOpts.NamespaceHeaderName, "namespace-header-name", "", "name of the header field, e.g. namespace-header-name=X-Consumer-Groups")
 	c.Flags().StringVar(&serveOpts.NamespaceHeaderPattern, "namespace-header-pattern", "", "regular expression that matches only single group, e.g. namespace-header-pattern=^namespace:([\\w]+):\\w+$, to match namespace:ns:read")
 
-	c.Flags().MarkDeprecated("helm-driver", "(deprecated) which Helm driver type to use")
-	c.Flags().MarkDeprecated("list-max", "(deprecated) maximum number of releases to fetch")
-	c.Flags().MarkDeprecated("user-agent-comment", "(deprecated) UserAgent comment used during outbound requests")
-	c.Flags().MarkDeprecated("global-repos-namespace", "(deprecated) Namespace of global repositories")
-	c.Flags().MarkDeprecated("timeout", "(deprecated) Timeout to perform release operations (install, upgrade, rollback, delete)")
+	// TODO(agamez): remove once a new version of the chart is released
+	err := c.Flags().MarkDeprecated("user-agent-comment", "(deprecated) UserAgent comment used during outbound requests")
+	if err != nil {
+		log.Errorf("%v", err)
+	}
 }
 
 // initConfig reads in config file and ENV variables if set.
