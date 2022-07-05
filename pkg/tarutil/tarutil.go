@@ -50,8 +50,7 @@ func FetchChartDetailFromTarballUrl(name string, chartTarballURL string, userAge
 //
 func FetchChartDetailFromTarball(reader io.Reader, name string) (map[string]string, error) {
 	// We read the whole chart into memory, this should be okay since the chart
-	// tarball needs to be small enough to fit into a GRPC call (Tiller
-	// requirement)
+	// tarball needs to be small enough to fit into a GRPC call
 	gzf, err := gzip.NewReader(reader)
 	if err != nil {
 		return nil, err

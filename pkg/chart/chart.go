@@ -57,7 +57,7 @@ type Details struct {
 	// resource for the request.
 	// ChartName is the name of the chart within the repo.
 	ChartName string `json:"chartName"`
-	// ReleaseName is the Name of the release given to Tiller.
+	// ReleaseName is the Name of the release given to Helm.
 	ReleaseName string `json:"releaseName"`
 	// Version is the chart version.
 	Version string `json:"version"`
