@@ -104,9 +104,6 @@ func GetCertPool(certs []byte) (*x509.CertPool, error) {
 	// Require the SystemCertPool unless the env var is explicitly set.
 	caCertPool, err := x509.SystemCertPool()
 	if err != nil {
-		if _, ok := os.LookupEnv("TILLER_PROXY_ALLOW_EMPTY_CERT_POOL"); !ok {
-			return nil, err
-		}
 		caCertPool = x509.NewCertPool()
 	}
 
