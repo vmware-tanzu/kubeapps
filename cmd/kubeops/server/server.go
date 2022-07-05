@@ -22,14 +22,13 @@ import (
 )
 
 type ServeOptions struct {
-	Timeout                int64
-	ClustersConfigPath     string  // ok
-	PinnipedProxyURL       string  // ok
-	PinnipedProxyCACert    string  // ok
-	Burst                  int     // ok
-	Qps                    float32 // ok
-	NamespaceHeaderName    string  // ok
-	NamespaceHeaderPattern string  // ok
+	ClustersConfigPath     string
+	PinnipedProxyURL       string
+	PinnipedProxyCACert    string
+	Burst                  int
+	Qps                    float32
+	NamespaceHeaderName    string
+	NamespaceHeaderPattern string
 }
 
 const clustersCAFilesPrefix = "/etc/additional-clusters-cafiles"
