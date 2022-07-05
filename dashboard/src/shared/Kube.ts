@@ -14,14 +14,6 @@ import { axiosWithAuth } from "./AxiosInstance";
 import { KubeappsGrpcClient } from "./KubeappsGrpcClient";
 import { IK8sList, IKubeState, IResource } from "./types";
 
-export const APIBase = (cluster: string) => `api/clusters/${cluster}`;
-export let WebSocketAPIBase: string;
-if (window.location.protocol === "https:") {
-  WebSocketAPIBase = `wss://${window.location.host}${window.location.pathname}`;
-} else {
-  WebSocketAPIBase = `ws://${window.location.host}${window.location.pathname}`;
-}
-
 // Kube is a lower-level class for interacting with the Kubernetes API. Use
 // ResourceRef to interact with a single API resource rather than using Kube
 // directly.
@@ -83,7 +75,7 @@ export class Kube {
 
   // TODO(agamez): Migrate API call, see #4785
   public static async getAPIGroups(cluster: string) {
-    const { data: apiGroups } = await axiosWithAuth.get<any>(`${url.api.k8s.base(cluster)}/apis`);
+    const { data: apiGroups } = await axiosWithAuth.get<any>(url.api.k8s.apis(cluster));
     return apiGroups.groups;
   }
 
@@ -101,16 +93,14 @@ export class Kube {
       }
     };
     // Handle v1 separately
-    const { data: coreResourceList } = await axiosWithAuth.get<any>(
-      `${url.api.k8s.base(cluster)}/api/v1`,
-    );
+    const { data: coreResourceList } = await axiosWithAuth.get<any>(url.api.k8s.v1(cluster));
     coreResourceList.resources?.forEach((r: any) => addResource(r, "v1"));
 
     await Promise.all(
       groups.map(async (g: any) => {
         const groupVersion = g.preferredVersion.groupVersion;
         const { data: resourceList } = await axiosWithAuth.get<any>(
-          `${url.api.k8s.base(cluster)}/apis/${groupVersion}`,
+          url.api.k8s.groupVersion(cluster, groupVersion),
         );
         resourceList.resources?.forEach((r: any) => addResource(r, groupVersion));
       }),
