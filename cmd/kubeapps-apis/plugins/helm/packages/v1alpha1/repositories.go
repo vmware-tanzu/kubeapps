@@ -367,13 +367,6 @@ func (s *Server) repoSummaries(ctx context.Context, cluster string, namespace st
 	}
 
 	for _, repo := range repos {
-
-		// for the summaries response, setting a non-nil auth field is enough
-		var auth *corev1.PackageRepositoryAuth
-		if repo.Spec.Auth.Header != nil {
-			auth = &corev1.PackageRepositoryAuth{}
-		}
-
 		summary := &corev1.PackageRepositorySummary{
 			PackageRepoRef: &corev1.PackageRepositoryReference{
 				Context: &corev1.Context{
@@ -388,7 +381,7 @@ func (s *Server) repoSummaries(ctx context.Context, cluster string, namespace st
 			NamespaceScoped: s.globalPackagingNamespace != repo.Namespace,
 			Type:            repo.Spec.Type,
 			Url:             repo.Spec.URL,
-			Auth:            auth,
+			HasAuth:         repo.Spec.Auth.Header != nil,
 			// TODO(agamez): check if we can get the status from the repo somehow
 			// https://github.com/vmware-tanzu/kubeapps/issues/153
 			Status: &corev1.PackageRepositoryStatus{

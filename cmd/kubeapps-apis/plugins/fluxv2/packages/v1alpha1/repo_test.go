@@ -1783,7 +1783,6 @@ func TestGetPackageRepositorySummaries(t *testing.T) {
 				corev1.PackageRepositorySummary{},
 				corev1.PackageRepositoryReference{},
 				corev1.PackageRepositoryStatus{},
-				corev1.PackageRepositoryAuth{},
 			)
 			opts2 := cmpopts.SortSlices(lessPackageRepositorySummaryFunc)
 			if got, want := response, tc.expectedResponse; !cmp.Equal(want, got, opts, opts2) {

@@ -126,7 +126,7 @@ var repo1Summary = &corev1.PackageRepositorySummary{
 	NamespaceScoped: true,
 	Type:            "helm",
 	Url:             "https://test-repo",
-	Auth:            nil,
+	HasAuth:         false,
 	Status:          &corev1.PackageRepositoryStatus{Ready: true},
 }
 
@@ -137,7 +137,7 @@ var repo2Summary = &corev1.PackageRepositorySummary{
 	NamespaceScoped: true,
 	Type:            "oci",
 	Url:             "https://test-repo2",
-	Auth:            nil,
+	HasAuth:         false,
 	Status:          &corev1.PackageRepositoryStatus{Ready: true},
 }
 
@@ -148,7 +148,8 @@ var repo3Summary = &corev1.PackageRepositorySummary{
 	NamespaceScoped: false,
 	Type:            "helm",
 	Url:             "https://test-repo3",
-	Auth:            &corev1.PackageRepositoryAuth{},
+	HasAuth:         true,
+	Status:          &corev1.PackageRepositoryStatus{Ready: true},
 }
 
 var appReposAPIVersion = fmt.Sprintf("%s/%s", appRepov1alpha1.SchemeGroupVersion.Group, appRepov1alpha1.SchemeGroupVersion.Version)
