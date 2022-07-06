@@ -1,0 +1,9 @@
+# Copyright 2022 the Kubeapps contributors.
+# SPDX-License-Identifier: Apache-2.0
+
+apiVersion: v2
+name: simplechart
+description: A simple chart for testing
+type: application
+version: 0.1.0
+appVersion: "1.0.0"

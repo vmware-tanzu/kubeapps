@@ -260,7 +260,7 @@ func (r *OCIRegistry) downloadChart(chart *repo.ChartVersion) (*bytes.Buffer, er
 // logout attempts to logout from the OCI registry.
 // It returns an error on failure.
 func (r *OCIRegistry) logout() error {
-	log.Infof("+logout")
+	log.Info("+logout")
 	err := r.registryClient.Logout(r.url.Host)
 	if err != nil {
 		return err
@@ -357,7 +357,7 @@ func newRegistryClient(isLogin bool) (*registry.Client, string, error) {
 // TODO: this function is way too long. Break it up
 func (s *repoEventSink) onAddOciRepo(repo sourcev1.HelmRepository) ([]byte, bool, error) {
 	log.Infof("+onAddOciRepo(%s)", common.PrettyPrint(repo))
-	defer log.Infof("-onAddOciRepo")
+	defer log.Info("-onAddOciRepo")
 
 	ociRegistry, err := s.newOCIRegistryAndLoginWithRepo(context.Background(), repo)
 	if err != nil {
@@ -478,7 +478,7 @@ func (s *repoEventSink) onAddOciRepo(repo sourcev1.HelmRepository) ([]byte, bool
 
 func (s *repoEventSink) onModifyOciRepo(key string, oldValue interface{}, repo sourcev1.HelmRepository) ([]byte, bool, error) {
 	log.Infof("+onModifyOciRepo(%s)", common.PrettyPrint(repo))
-	defer log.Infof("-onModifyOciRepo")
+	defer log.Info("-onModifyOciRepo")
 
 	// We should to compare checksums on what's stored in the cache
 	// vs the modified object to see if the contents has really changed before embarking on
@@ -639,7 +639,7 @@ func (s *repoEventSink) newOCIRegistryAndLoginWithOptions(registryURL string, lo
 
 func (s *repoEventSink) ociClientOptionsForRepo(ctx context.Context, repo sourcev1.HelmRepository) ([]registry.LoginOption, []getter.Option, *orasregistryauthv2.Credential, error) {
 	log.Infof("+ociClientOptionsForRepo(%s)", common.PrettyPrint(repo))
-	log.Infof("-ociClientOptionsForRepo")
+	log.Info("-ociClientOptionsForRepo")
 
 	var loginOpts []registry.LoginOption
 	var cred *orasregistryauthv2.Credential

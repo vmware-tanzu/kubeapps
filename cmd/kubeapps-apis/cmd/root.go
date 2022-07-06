@@ -34,7 +34,7 @@ func newRootCmd() *cobra.Command {
 The api service serves both gRPC and HTTP requests for the configured APIs.`,
 
 		PreRun: func(cmd *cobra.Command, args []string) {
-			log.Infof("kubeapps-apis has been configured with: %#v", serveOpts)
+			log.InfoS("kubeapps-apis has been configured with serverOptions", "serverOptions", serveOpts)
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return server.Serve(serveOpts)

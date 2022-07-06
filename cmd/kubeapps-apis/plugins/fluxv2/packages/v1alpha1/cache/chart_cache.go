@@ -119,7 +119,7 @@ func NewChartCache(name string, redisCli *redis.Client, stopCh <-chan struct{}) 
 // this func will enqueue work items into chart work queue and return.
 // the charts will be synced worker threads running in the background
 func (c *ChartCache) SyncCharts(charts []models.Chart, downloadFn DownloadChartFn) error {
-	log.Infof("+SyncCharts()")
+	log.Info("+SyncCharts()")
 	totalToSync := 0
 	defer func() {
 		log.Infof("-SyncCharts(): [%d] total charts to sync", totalToSync)
@@ -173,7 +173,10 @@ func (c *ChartCache) SyncCharts(charts []models.Chart, downloadFn DownloadChartF
 		if key, err := chartCacheKeyFunc(entry); err != nil {
 			log.Errorf("Failed to get key for chart due to %+v", err)
 		} else {
-			c.processing.Add(entry)
+			err := c.processing.Add(entry)
+			if err != nil {
+				log.Errorf("Failed to sync chart due to %+v", err)
+			}
 			c.queue.AddRateLimited(key)
 			totalToSync++
 		}
@@ -235,7 +238,10 @@ func (c *ChartCache) processNextWorkItem(workerName string) bool {
 	if err := c.syncHandler(workerName, key); err == nil {
 		// No error, reset the ratelimit counters
 		c.queue.Forget(key)
-		c.processing.Delete(key)
+		errDel := c.processing.Delete(key)
+		if err != nil {
+			runtime.HandleError(fmt.Errorf("error deleting key [%s] due to: %v", key, errDel))
+		}
 	} else if c.queue.NumRequeues(key) < maxChartCacheRetries {
 		log.Errorf("Error processing [%s] (will retry [%d] times): %v",
 			key, maxChartCacheRetries-c.queue.NumRequeues(key), err)
@@ -244,7 +250,10 @@ func (c *ChartCache) processNextWorkItem(workerName string) bool {
 		// err != nil and too many retries
 		log.Errorf("Error processing %s (giving up): %v", key, err)
 		c.queue.Forget(key)
-		c.processing.Delete(key)
+		errDel := c.processing.Delete(key)
+		if err != nil {
+			runtime.HandleError(fmt.Errorf("error deleting key [%s] due to: %v", key, errDel))
+		}
 		runtime.HandleError(fmt.Errorf("error syncing key [%s] due to: %v", key, err))
 	}
 	return true
@@ -309,7 +318,10 @@ func (c *ChartCache) DeleteChartsForRepo(repo *types.NamespacedName) error {
 				version:   chartVersion,
 				deleted:   true,
 			}
-			c.processing.Add(entry)
+			err = c.processing.Add(entry)
+			if err != nil {
+				log.Errorf("Failed to delete chart due to %+v", err)
+			}
 			log.V(4).Infof("Marked key [%s] to be deleted", k)
 			c.queue.Add(k)
 		}
@@ -489,7 +501,10 @@ func (c *ChartCache) GetForOne(key string, chart *models.Chart, downloadFn Downl
 			}
 		}
 		if entry != nil {
-			c.processing.Add(*entry)
+			err = c.processing.Add(*entry)
+			if err != nil {
+				log.Errorf("Failed to get chart due to %+v", err)
+			}
 			c.queue.Add(key)
 			// now need to wait until this item has been processed by runWorker().
 			c.queue.WaitUntilForgotten(key)
@@ -536,11 +551,11 @@ func (c *ChartCache) Shutdown() {
 // at the time of the resync() call and guarantees no more work items will be processed
 // until resync() finishes
 func (c *ChartCache) ExpectResync() (chan int, error) {
-	log.Infof("+ExpectResync()")
+	log.Info("+ExpectResync()")
 	c.resyncCond.L.Lock()
 	defer func() {
 		c.resyncCond.L.Unlock()
-		log.Infof("-ExpectResync()")
+		log.Info("-ExpectResync()")
 	}()
 
 	if c.resyncCh != nil {
@@ -554,11 +569,11 @@ func (c *ChartCache) ExpectResync() (chan int, error) {
 // this func is used by unit tests only
 // By the end of the call the work queue should be empty
 func (c *ChartCache) WaitUntilResyncComplete() {
-	log.Infof("+WaitUntilResyncComplete()")
+	log.Info("+WaitUntilResyncComplete()")
 	c.resyncCond.L.Lock()
 	defer func() {
 		c.resyncCond.L.Unlock()
-		log.Infof("-WaitUntilResyncComplete()")
+		log.Info("-WaitUntilResyncComplete()")
 	}()
 
 	for c.resyncCh != nil {

@@ -17,7 +17,7 @@ import (
 // RegisterWithGRPCServer enables a plugin to register with a gRPC server
 // returning the server implementation.
 func RegisterWithGRPCServer(opts pluginsv1alpha1.GRPCPluginRegistrationOptions) (interface{}, error) {
-	log.Infof("+fluxv2 RegisterWithGRPCServer")
+	log.Info("+fluxv2 RegisterWithGRPCServer")
 
 	// TODO (gfichtenholt) stub channel for now. Ideally, the caller (kubeappsapis-server)
 	// passes that in and closes when is being gracefully shut down. That, or provide a
@@ -36,7 +36,7 @@ func RegisterWithGRPCServer(opts pluginsv1alpha1.GRPCPluginRegistrationOptions) 
 // RegisterHTTPHandlerFromEndpoint enables a plugin to register an http
 // handler to translate to the gRPC request.
 func RegisterHTTPHandlerFromEndpoint(ctx context.Context, mux *runtime.ServeMux, endpoint string, opts []grpc.DialOption) error {
-	log.Infof("+fluxv2 RegisterHTTPHandlerFromEndpoint")
+	log.Info("+fluxv2 RegisterHTTPHandlerFromEndpoint")
 	err := v1alpha1.RegisterFluxV2PackagesServiceHandlerFromEndpoint(ctx, mux, endpoint, opts)
 	if err != nil {
 		return err
