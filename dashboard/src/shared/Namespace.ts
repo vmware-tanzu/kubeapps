@@ -11,6 +11,7 @@ import { KubeappsGrpcClient } from "./KubeappsGrpcClient";
 export default class Namespace {
   private static resourcesClient = () => new KubeappsGrpcClient().getResourcesServiceClientImpl();
 
+  // TODO(agamez): Migrate API call, see #4785
   public static async list(cluster: string) {
     // This call is hitting an actual backend endpoint (see cmd\kubeops\internal\http-handler)
     // while the other two calls (create, get) have been updated to use the

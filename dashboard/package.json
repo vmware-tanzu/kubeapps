@@ -53,7 +53,7 @@
     "react-diff-viewer": "^3.1.1",
     "react-dom": "^17.0.2",
     "react-helmet": "^6.1.0",
-    "react-intl": "^6.0.4",
+    "react-intl": "^6.0.5",
     "react-markdown": "^8.0.3",
     "react-minimal-pie-chart": "^8.3.0",
     "react-redux": "^7.2.8",
@@ -75,7 +75,7 @@
     "yaml": "^2.1.1"
   },
   "devDependencies": {
-    "@craco/craco": "^6.4.3",
+    "@craco/craco": "^6.4.4",
     "@formatjs/cli": "^5.0.2",
     "@improbable-eng/grpc-web-fake-transport": "^0.15.0",
     "@testing-library/react": "^12.1.5",
