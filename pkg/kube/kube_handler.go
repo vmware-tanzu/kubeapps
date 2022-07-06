@@ -347,7 +347,7 @@ func (a *kubeHandler) getSvcClientsetForCluster(cluster string, config *rest.Con
 		svcConfig := *config
 		svcConfig.BearerToken = additionalCluster.ServiceToken
 
-		svcClientset, err = a.clientsetForConfig(config)
+		svcClientset, err = a.clientsetForConfig(&svcConfig)
 		if err != nil {
 			log.Errorf("unable to create clientset: %v", err)
 			return nil, err
