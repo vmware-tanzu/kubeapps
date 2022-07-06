@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import axios from "axios";
+import * as url from "shared/url";
 
 export enum SupportedThemes {
   dark = "dark",
@@ -39,8 +40,7 @@ export interface IFeatureFlags {
 
 export default class Config {
   public static async getConfig() {
-    const url = Config.APIEndpoint;
-    const { data } = await axios.get<IConfig>(url);
+    const { data } = await axios.get<IConfig>(url.api.config);
     return data;
   }
 
@@ -82,7 +82,4 @@ export default class Config {
     this.setTheme(theme);
     localStorage.setItem("user-theme", theme);
   }
-
-  private static APIEndpoint = "config.json";
-  public static OperatorsApi = "operators.coreos.com";
 }
