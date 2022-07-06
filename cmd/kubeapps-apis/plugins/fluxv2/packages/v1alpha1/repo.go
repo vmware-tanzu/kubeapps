@@ -1236,8 +1236,17 @@ func getRepoTlsConfigAndAuthWithKubeappsManagedSecrets(secret *apiv1.Secret) (*c
 				},
 			}
 		}
+	} else if _, ok := secret.Data[apiv1.DockerConfigJsonKey]; ok {
+		auth.Type = corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_DOCKER_CONFIG_JSON
+		auth.PackageRepoAuthOneOf = &corev1.PackageRepositoryAuth_DockerCreds{
+			DockerCreds: &corev1.DockerCredentials{
+				Username: redactedString,
+				Password: redactedString,
+				Server:   redactedString,
+			},
+		}
 	} else {
-		log.Warning("Unrecognized type of secret [%s]", secret.Name)
+		log.Warning("Unrecognized type of secret: [%s]", secret.Name)
 	}
 	return tlsConfig, auth, nil
 }

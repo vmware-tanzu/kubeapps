@@ -379,6 +379,12 @@ func TestKindClusterGetPackageRepositoryDetail(t *testing.T) {
 		t.Fatal(err)
 	}
 
+	ghUser := os.Getenv("GITHUB_USER")
+	ghToken := os.Getenv("GITHUB_TOKEN")
+	if ghUser == "" || ghToken == "" {
+		t.Fatalf("Environment variables GITHUB_USER and GITHUB_TOKEN need to be set to run this test")
+	}
+
 	testCases := []struct {
 		testName           string
 		request            *corev1.GetPackageRepositoryDetailRequest
@@ -471,6 +477,32 @@ func TestKindClusterGetPackageRepositoryDetail(t *testing.T) {
 			repoUrl:            github_podinfo_oci_registry_url,
 			expectedStatusCode: codes.OK,
 			expectedResponse:   get_repo_detail_resp_16,
+		},
+		{
+			testName: "get details for OCI repo with basic auth",
+			request:  get_repo_detail_req_14,
+			repoName: "my-podinfo-14",
+			repoType: "oci",
+			repoUrl:  github_podinfo_oci_registry_url,
+			existingSecret: newBasicAuthSecret(types.NamespacedName{
+				Name:      "secret-1",
+				Namespace: "TBD",
+			}, ghUser, ghToken),
+			expectedStatusCode: codes.OK,
+			expectedResponse:   get_repo_detail_resp_17,
+		},
+		{
+			testName: "get details for OCI repo with docker config json cred",
+			request:  get_repo_detail_req_15,
+			repoName: "my-podinfo-15",
+			repoType: "oci",
+			repoUrl:  github_podinfo_oci_registry_url,
+			existingSecret: newDockerConfigJsonSecret(types.NamespacedName{
+				Name:      "secret-1",
+				Namespace: "TBD",
+			}, "ghcr.io", ghUser, ghToken),
+			expectedStatusCode: codes.OK,
+			expectedResponse:   get_repo_detail_resp_18,
 		},
 	}
 
@@ -1319,6 +1351,7 @@ func compareActualVsExpectedPackageRepositoryDetail(t *testing.T, actualDetail *
 		corev1.PackageRepositoryTlsConfig{},
 		corev1.SecretKeyReference{},
 		corev1.UsernamePassword{},
+		corev1.DockerCredentials{},
 	)
 
 	opts2 := cmpopts.IgnoreFields(corev1.PackageRepositoryStatus{}, "UserReason")
