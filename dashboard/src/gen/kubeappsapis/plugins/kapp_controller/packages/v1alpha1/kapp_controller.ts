@@ -19,7 +19,7 @@ import {
   UpdateInstalledPackageResponse,
   DeleteInstalledPackageResponse,
   GetInstalledPackageResourceRefsResponse,
-} from "../../../../core/packages/v1alpha1/packages.js";
+} from "../../../../core/packages/v1alpha1/packages";
 import {
   AddPackageRepositoryRequest,
   GetPackageRepositoryDetailRequest,
@@ -31,7 +31,7 @@ import {
   GetPackageRepositorySummariesResponse,
   UpdatePackageRepositoryResponse,
   DeletePackageRepositoryResponse,
-} from "../../../../core/packages/v1alpha1/repositories.js";
+} from "../../../../core/packages/v1alpha1/repositories";
 import { BrowserHeaders } from "browser-headers";
 import * as _m0 from "protobufjs/minimal";
 

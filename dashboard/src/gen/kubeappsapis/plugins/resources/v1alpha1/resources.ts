@@ -4,7 +4,7 @@ import {
   InstalledPackageReference,
   ResourceRef,
   Context,
-} from "../../../core/packages/v1alpha1/packages.js";
+} from "../../../core/packages/v1alpha1/packages";
 import { BrowserHeaders } from "browser-headers";
 import { share } from "rxjs/operators";
 import { Observable } from "rxjs";

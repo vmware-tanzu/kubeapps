@@ -475,7 +475,7 @@ message PackageRepositorySummary {
   PackageRepositoryStatus status = 7;
 
   // existence of any authentication parameters for connecting to a repository.
-  bool hasAuth = 8;
+  bool has_auth = 8;
 }
 
 // GetPackageRepositorySummariesResponse

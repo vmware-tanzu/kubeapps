@@ -1,8 +1,8 @@
 /* eslint-disable */
 import { grpc } from "@improbable-eng/grpc-web";
-import { Context } from "./packages.js";
-import { Plugin } from "../../plugins/v1alpha1/plugins.js";
-import { Any } from "../../../../google/protobuf/any.js";
+import { Context } from "./packages";
+import { Plugin } from "../../plugins/v1alpha1/plugins";
+import { Any } from "../../../../google/protobuf/any";
 import { BrowserHeaders } from "browser-headers";
 import * as _m0 from "protobufjs/minimal";
 
