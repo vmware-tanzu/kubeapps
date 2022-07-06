@@ -191,6 +191,11 @@ func (s *Server) mapToPackageRepositoryDetail(source *apprepov1alpha1.AppReposit
 		Url:             source.Spec.URL,
 		Auth:            auth,
 		TlsConfig:       tlsConfig,
+		// TODO(agamez): check if we can get the status from the repo somehow
+		// https://github.com/vmware-tanzu/kubeapps/issues/153
+		Status: &corev1.PackageRepositoryStatus{
+			Ready: true,
+		},
 	}
 
 	// Custom details
@@ -376,6 +381,11 @@ func (s *Server) repoSummaries(ctx context.Context, cluster string, namespace st
 			NamespaceScoped: s.globalPackagingNamespace != repo.Namespace,
 			Type:            repo.Spec.Type,
 			Url:             repo.Spec.URL,
+			// TODO(agamez): check if we can get the status from the repo somehow
+			// https://github.com/vmware-tanzu/kubeapps/issues/153
+			Status: &corev1.PackageRepositoryStatus{
+				Ready: true,
+			},
 		}
 		summaries = append(summaries, summary)
 	}

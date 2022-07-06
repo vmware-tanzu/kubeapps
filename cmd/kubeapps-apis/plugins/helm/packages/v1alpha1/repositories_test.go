@@ -126,6 +126,7 @@ var repo1Summary = &corev1.PackageRepositorySummary{
 	NamespaceScoped: true,
 	Type:            "helm",
 	Url:             "https://test-repo",
+	Status:          &corev1.PackageRepositoryStatus{Ready: true},
 }
 
 var repo2Summary = &corev1.PackageRepositorySummary{
@@ -135,6 +136,7 @@ var repo2Summary = &corev1.PackageRepositorySummary{
 	NamespaceScoped: true,
 	Type:            "oci",
 	Url:             "https://test-repo2",
+	Status:          &corev1.PackageRepositoryStatus{Ready: true},
 }
 
 var appReposAPIVersion = fmt.Sprintf("%s/%s", appRepov1alpha1.SchemeGroupVersion.Group, appRepov1alpha1.SchemeGroupVersion.Version)
@@ -613,6 +615,7 @@ func TestGetPackageRepositoryDetail(t *testing.T) {
 				Url:             url,
 				Auth:            auth,
 				TlsConfig:       tlsConfig,
+				Status:          &corev1.PackageRepositoryStatus{Ready: true},
 			},
 		}
 		if customDetails != nil {
