@@ -15,6 +15,7 @@ RUN curl -sfL https://raw.githubusercontent.com/securego/gosec/master/install.sh
 
 # Run gosec to detect any security-related error at build time
 RUN gosec ./cmd/apprepository-controller/...
+RUN gosec ./pkg/...
 
 # With the trick below, Go's build cache is kept between builds.
 # https://github.com/golang/go/issues/27719#issuecomment-514747274

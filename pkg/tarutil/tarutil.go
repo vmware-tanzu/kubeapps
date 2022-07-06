@@ -107,7 +107,10 @@ func ExtractFilesFromTarball(filenames map[string]string, tarf *tar.Reader) (map
 		for id, f := range filenames {
 			if strings.EqualFold(header.Name, f) {
 				var b bytes.Buffer
-				io.Copy(&b, tarf)
+				_, err := io.Copy(&b, tarf)
+				if err != nil {
+					return ret, err
+				}
 				ret[id] = b.String()
 				break
 			}

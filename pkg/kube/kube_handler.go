@@ -169,7 +169,12 @@ func ParseClusterConfig(configPath, caFilesPrefix string, pinnipedProxyURL, Pinn
 	if err != nil {
 		return ClustersConfig{}, func() {}, err
 	}
-	deferFn := func() { os.RemoveAll(caFilesDir) }
+	deferFn := func() {
+		err = os.RemoveAll(caFilesDir)
+		return
+	}
+
+	// #nosec G304
 	content, err := ioutil.ReadFile(configPath)
 	if err != nil {
 		return ClustersConfig{}, deferFn, err
@@ -207,6 +212,8 @@ func ParseClusterConfig(configPath, caFilesPrefix string, pinnipedProxyURL, Pinn
 			// struct which does not support CAData.
 			// https://github.com/kubernetes/cli-runtime/issues/8
 			c.CAFile = filepath.Join(caFilesDir, c.Name)
+			// #nosec G306
+			// TODO(agamez): check if we can set perms to 0600 instead of 0644.
 			err = ioutil.WriteFile(c.CAFile, decodedCAData, 0644)
 			if err != nil {
 				return ClustersConfig{}, deferFn, err
