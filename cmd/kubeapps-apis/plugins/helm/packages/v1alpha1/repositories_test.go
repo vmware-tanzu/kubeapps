@@ -127,6 +127,7 @@ var repo1Summary = &corev1.PackageRepositorySummary{
 	Type:            "helm",
 	Url:             "https://test-repo",
 	Auth:            nil,
+	Status:          &corev1.PackageRepositoryStatus{Ready: true},
 }
 
 var repo2Summary = &corev1.PackageRepositorySummary{
@@ -137,6 +138,7 @@ var repo2Summary = &corev1.PackageRepositorySummary{
 	Type:            "oci",
 	Url:             "https://test-repo2",
 	Auth:            nil,
+	Status:          &corev1.PackageRepositoryStatus{Ready: true},
 }
 
 var repo3Summary = &corev1.PackageRepositorySummary{
@@ -647,6 +649,7 @@ func TestGetPackageRepositoryDetail(t *testing.T) {
 				Url:             url,
 				Auth:            auth,
 				TlsConfig:       tlsConfig,
+				Status:          &corev1.PackageRepositoryStatus{Ready: true},
 			},
 		}
 		if customDetails != nil {

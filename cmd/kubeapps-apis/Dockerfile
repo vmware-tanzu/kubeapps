@@ -32,6 +32,7 @@ RUN /tmp/buf lint ./cmd/kubeapps-apis
 
 # Run gosec to detect any security-related error at build time
 RUN gosec ./cmd/kubeapps-apis/...
+RUN gosec ./pkg/...
 
 # Build the main grpc server
 RUN --mount=type=cache,target=/go/pkg/mod \

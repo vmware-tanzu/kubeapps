@@ -117,8 +117,9 @@ func Serve(serveOpts ServeOptions) error {
 	addr := ":" + port
 
 	srv := &http.Server{
-		Addr:    addr,
-		Handler: n,
+		ReadHeaderTimeout: 60 * time.Second, // mitigate slowloris attacks, set to nginx's default
+		Addr:              addr,
+		Handler:           n,
 	}
 
 	go func() {
