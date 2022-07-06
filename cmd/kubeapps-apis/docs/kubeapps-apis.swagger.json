@@ -5129,7 +5129,7 @@
           "$ref": "#/definitions/v1alpha1PackageRepositoryStatus",
           "description": "current status of the repository which can include reconciliation\r\nstatus, where relevant."
         },
-        "hasAuth": {
+        "requiresAuth": {
           "type": "boolean",
           "description": "existence of any authentication parameters for connecting to a repository."
         }

@@ -552,7 +552,7 @@ export interface PackageRepositorySummary {
    */
   status?: PackageRepositoryStatus;
   /** existence of any authentication parameters for connecting to a repository. */
-  hasAuth: boolean;
+  requiresAuth: boolean;
 }
 
 /**
@@ -2251,7 +2251,7 @@ function createBasePackageRepositorySummary(): PackageRepositorySummary {
     type: "",
     url: "",
     status: undefined,
-    hasAuth: false,
+    requiresAuth: false,
   };
 }
 
@@ -2278,8 +2278,8 @@ export const PackageRepositorySummary = {
     if (message.status !== undefined) {
       PackageRepositoryStatus.encode(message.status, writer.uint32(58).fork()).ldelim();
     }
-    if (message.hasAuth === true) {
-      writer.uint32(64).bool(message.hasAuth);
+    if (message.requiresAuth === true) {
+      writer.uint32(64).bool(message.requiresAuth);
     }
     return writer;
   },
@@ -2313,7 +2313,7 @@ export const PackageRepositorySummary = {
           message.status = PackageRepositoryStatus.decode(reader, reader.uint32());
           break;
         case 8:
-          message.hasAuth = reader.bool();
+          message.requiresAuth = reader.bool();
           break;
         default:
           reader.skipType(tag & 7);
@@ -2334,7 +2334,7 @@ export const PackageRepositorySummary = {
       type: isSet(object.type) ? String(object.type) : "",
       url: isSet(object.url) ? String(object.url) : "",
       status: isSet(object.status) ? PackageRepositoryStatus.fromJSON(object.status) : undefined,
-      hasAuth: isSet(object.hasAuth) ? Boolean(object.hasAuth) : false,
+      requiresAuth: isSet(object.requiresAuth) ? Boolean(object.requiresAuth) : false,
     };
   },
 
@@ -2351,7 +2351,7 @@ export const PackageRepositorySummary = {
     message.url !== undefined && (obj.url = message.url);
     message.status !== undefined &&
       (obj.status = message.status ? PackageRepositoryStatus.toJSON(message.status) : undefined);
-    message.hasAuth !== undefined && (obj.hasAuth = message.hasAuth);
+    message.requiresAuth !== undefined && (obj.requiresAuth = message.requiresAuth);
     return obj;
   },
 
@@ -2372,7 +2372,7 @@ export const PackageRepositorySummary = {
       object.status !== undefined && object.status !== null
         ? PackageRepositoryStatus.fromPartial(object.status)
         : undefined;
-    message.hasAuth = object.hasAuth ?? false;
+    message.requiresAuth = object.requiresAuth ?? false;
     return message;
   },
 };

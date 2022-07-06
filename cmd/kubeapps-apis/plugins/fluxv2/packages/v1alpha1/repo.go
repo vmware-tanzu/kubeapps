@@ -368,7 +368,7 @@ func (s *Server) repoSummaries(ctx context.Context, namespace string) ([]*corev1
 			Type:            typ,
 			Url:             repo.Spec.URL,
 			Status:          repoStatus(repo),
-			HasAuth:         repo.Spec.SecretRef != nil,
+			RequiresAuth:    repo.Spec.SecretRef != nil,
 		}
 		summaries = append(summaries, summary)
 	}

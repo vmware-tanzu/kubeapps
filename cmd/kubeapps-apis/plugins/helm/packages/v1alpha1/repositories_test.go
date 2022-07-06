@@ -126,7 +126,7 @@ var repo1Summary = &corev1.PackageRepositorySummary{
 	NamespaceScoped: true,
 	Type:            "helm",
 	Url:             "https://test-repo",
-	HasAuth:         false,
+	RequiresAuth:    false,
 	Status:          &corev1.PackageRepositoryStatus{Ready: true},
 }
 
@@ -137,7 +137,7 @@ var repo2Summary = &corev1.PackageRepositorySummary{
 	NamespaceScoped: true,
 	Type:            "oci",
 	Url:             "https://test-repo2",
-	HasAuth:         false,
+	RequiresAuth:    false,
 	Status:          &corev1.PackageRepositoryStatus{Ready: true},
 }
 
@@ -148,7 +148,7 @@ var repo3Summary = &corev1.PackageRepositorySummary{
 	NamespaceScoped: false,
 	Type:            "helm",
 	Url:             "https://test-repo3",
-	HasAuth:         true,
+	RequiresAuth:    true,
 	Status:          &corev1.PackageRepositoryStatus{Ready: true},
 }
 

@@ -437,7 +437,7 @@ func (s *Server) buildPackageRepositorySummary(pkgRepository *packagingv1alpha1.
 		},
 		Name:            pkgRepository.Name,
 		NamespaceScoped: s.globalPackagingNamespace != pkgRepository.Namespace,
-		HasAuth:         repositorySecretRef(pkgRepository) != nil,
+		RequiresAuth:    repositorySecretRef(pkgRepository) != nil,
 	}
 
 	// handle fetch-specific configuration

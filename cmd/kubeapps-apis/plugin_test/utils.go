@@ -194,6 +194,6 @@ func MakePackageRepositorySummary(name string, plugin *plugins.Plugin) *corev1.P
 		Type:            "helm",
 		Url:             DefaultRepoURL,
 		Status:          defaultRepoStatus,
-		HasAuth:         false,
+		RequiresAuth:    false,
 	}
 }
