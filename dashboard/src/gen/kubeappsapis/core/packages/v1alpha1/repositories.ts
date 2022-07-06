@@ -1,11 +1,10 @@
 /* eslint-disable */
-import Long from "long";
 import { grpc } from "@improbable-eng/grpc-web";
-import * as _m0 from "protobufjs/minimal";
-import { Context } from "../../../../kubeappsapis/core/packages/v1alpha1/packages";
-import { Plugin } from "../../../../kubeappsapis/core/plugins/v1alpha1/plugins";
-import { Any } from "../../../../google/protobuf/any";
+import { Context } from "./packages.js";
+import { Plugin } from "../../plugins/v1alpha1/plugins.js";
+import { Any } from "../../../../google/protobuf/any.js";
 import { BrowserHeaders } from "browser-headers";
+import * as _m0 from "protobufjs/minimal";
 
 export const protobufPackage = "kubeappsapis.core.packages.v1alpha1";
 
@@ -552,12 +551,8 @@ export interface PackageRepositorySummary {
    * status, where relevant.
    */
   status?: PackageRepositoryStatus;
-  /**
-   * authentication parameters for connecting to a repository.
-   * If the repo doesn't have any auth configured, then this field will be nil;
-   * otherwise, it will not. However, the fields will be optionally populated.
-   */
-  auth?: PackageRepositoryAuth;
+  /** existence of any authentication parameters for connecting to a repository. */
+  hasAuth: boolean;
 }
 
 /**
@@ -2256,7 +2251,7 @@ function createBasePackageRepositorySummary(): PackageRepositorySummary {
     type: "",
     url: "",
     status: undefined,
-    auth: undefined,
+    hasAuth: false,
   };
 }
 
@@ -2283,8 +2278,8 @@ export const PackageRepositorySummary = {
     if (message.status !== undefined) {
       PackageRepositoryStatus.encode(message.status, writer.uint32(58).fork()).ldelim();
     }
-    if (message.auth !== undefined) {
-      PackageRepositoryAuth.encode(message.auth, writer.uint32(66).fork()).ldelim();
+    if (message.hasAuth === true) {
+      writer.uint32(64).bool(message.hasAuth);
     }
     return writer;
   },
@@ -2318,7 +2313,7 @@ export const PackageRepositorySummary = {
           message.status = PackageRepositoryStatus.decode(reader, reader.uint32());
           break;
         case 8:
-          message.auth = PackageRepositoryAuth.decode(reader, reader.uint32());
+          message.hasAuth = reader.bool();
           break;
         default:
           reader.skipType(tag & 7);
@@ -2339,7 +2334,7 @@ export const PackageRepositorySummary = {
       type: isSet(object.type) ? String(object.type) : "",
       url: isSet(object.url) ? String(object.url) : "",
       status: isSet(object.status) ? PackageRepositoryStatus.fromJSON(object.status) : undefined,
-      auth: isSet(object.auth) ? PackageRepositoryAuth.fromJSON(object.auth) : undefined,
+      hasAuth: isSet(object.hasAuth) ? Boolean(object.hasAuth) : false,
     };
   },
 
@@ -2356,8 +2351,7 @@ export const PackageRepositorySummary = {
     message.url !== undefined && (obj.url = message.url);
     message.status !== undefined &&
       (obj.status = message.status ? PackageRepositoryStatus.toJSON(message.status) : undefined);
-    message.auth !== undefined &&
-      (obj.auth = message.auth ? PackageRepositoryAuth.toJSON(message.auth) : undefined);
+    message.hasAuth !== undefined && (obj.hasAuth = message.hasAuth);
     return obj;
   },
 
@@ -2378,10 +2372,7 @@ export const PackageRepositorySummary = {
       object.status !== undefined && object.status !== null
         ? PackageRepositoryStatus.fromPartial(object.status)
         : undefined;
-    message.auth =
-      object.auth !== undefined && object.auth !== null
-        ? PackageRepositoryAuth.fromPartial(object.auth)
-        : undefined;
+    message.hasAuth = object.hasAuth ?? false;
     return message;
   },
 };
@@ -2848,11 +2839,6 @@ type KeysOfUnion<T> = T extends T ? keyof T : never;
 export type Exact<P, I extends P> = P extends Builtin
   ? P
   : P & { [K in keyof P]: Exact<P[K], I[K]> } & Record<Exclude<keyof I, KeysOfUnion<P>>, never>;
-
-if (_m0.util.Long !== Long) {
-  _m0.util.Long = Long as any;
-  _m0.configure();
-}
 
 function isObject(value: any): boolean {
   return typeof value === "object" && value !== null;

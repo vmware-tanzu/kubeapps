@@ -474,10 +474,8 @@ message PackageRepositorySummary {
   // status, where relevant.
   PackageRepositoryStatus status = 7;
 
-  // authentication parameters for connecting to a repository.
-  // If the repo doesn't have any auth configured, then this field will be nil;
-  // otherwise, it will not. However, the fields will be optionally populated.
-  PackageRepositoryAuth auth = 8;
+  // existence of any authentication parameters for connecting to a repository.
+  bool hasAuth = 8;
 }
 
 // GetPackageRepositorySummariesResponse

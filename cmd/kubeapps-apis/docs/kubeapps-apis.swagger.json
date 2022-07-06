@@ -5129,9 +5129,9 @@
           "$ref": "#/definitions/v1alpha1PackageRepositoryStatus",
           "description": "current status of the repository which can include reconciliation\nstatus, where relevant."
         },
-        "auth": {
-          "$ref": "#/definitions/v1alpha1PackageRepositoryAuth",
-          "description": "authentication parameters for connecting to a repository.\nIf the repo doesn't have any auth configured, then this field will be nil;\notherwise, it will not. However, the fields will be optionally populated."
+        "hasAuth": {
+          "type": "boolean",
+          "description": "existence of any authentication parameters for connecting to a repository."
         }
       },
       "title": "PackageRepositorySummary"
