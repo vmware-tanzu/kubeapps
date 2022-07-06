@@ -22,16 +22,6 @@ import (
 	"sigs.k8s.io/yaml"
 )
 
-type AppOverview struct {
-	ReleaseName   string         `json:"releaseName"`
-	Version       string         `json:"version"`
-	Namespace     string         `json:"namespace"`
-	Icon          string         `json:"icon,omitempty"`
-	Status        string         `json:"status"`
-	Chart         string         `json:"chart"`
-	ChartMetadata chart.Metadata `json:"chartMetadata"`
-}
-
 // StorageForDriver is a function type which returns a specific storage.
 type StorageForDriver func(namespace string, clientset *kubernetes.Clientset) *storage.Storage
 
@@ -40,43 +30,6 @@ func StorageForSecrets(namespace string, clientset *kubernetes.Clientset) *stora
 	d := driver.NewSecrets(clientset.CoreV1().Secrets(namespace))
 	d.Log = log.Infof
 	return storage.Init(d)
-}
-
-// StorageForConfigMaps returns a storage using the ConfigMap driver.
-func StorageForConfigMaps(namespace string, clientset *kubernetes.Clientset) *storage.Storage {
-	d := driver.NewConfigMaps(clientset.CoreV1().ConfigMaps(namespace))
-	d.Log = log.Infof
-	return storage.Init(d)
-}
-
-// StorageForMemory returns a storage using the Memory driver.
-func StorageForMemory(_ string, _ *kubernetes.Clientset) *storage.Storage {
-	d := driver.NewMemory()
-	return storage.Init(d)
-}
-
-// ListReleases lists releases in the specified namespace, or all namespaces if the empty string is given.
-func ListReleases(actionConfig *action.Configuration, namespace string, listLimit int, status string) ([]AppOverview, error) {
-	allNamespaces := namespace == ""
-	cmd := action.NewList(actionConfig)
-	if allNamespaces {
-		cmd.AllNamespaces = true
-	}
-	cmd.Limit = listLimit
-	if status == "all" {
-		cmd.StateMask = action.ListAll
-	}
-	releases, err := cmd.Run()
-	if err != nil {
-		return nil, err
-	}
-	appOverviews := make([]AppOverview, 0)
-	for _, r := range releases {
-		if allNamespaces || r.Namespace == namespace {
-			appOverviews = append(appOverviews, appOverviewFromRelease(r))
-		}
-	}
-	return appOverviews, nil
 }
 
 // CreateRelease creates a release.
@@ -245,30 +198,4 @@ func getValues(raw []byte) (Values, error) {
 
 func stringptr(val string) *string {
 	return &val
-}
-
-// ParseDriverType maps strings to well-typed driver representations.
-func ParseDriverType(raw string) (StorageForDriver, error) {
-	switch raw {
-	case "secret", "secrets":
-		return StorageForSecrets, nil
-	case "configmap", "configmaps":
-		return StorageForConfigMaps, nil
-	case "memory":
-		return StorageForMemory, nil
-	default:
-		return nil, fmt.Errorf("Invalid Helm driver type: %s", raw)
-	}
-}
-
-func appOverviewFromRelease(r *release.Release) AppOverview {
-	return AppOverview{
-		ReleaseName:   r.Name,
-		Version:       r.Chart.Metadata.Version,
-		Icon:          r.Chart.Metadata.Icon,
-		Namespace:     r.Namespace,
-		Status:        r.Info.Status.String(),
-		Chart:         r.Chart.Name(),
-		ChartMetadata: *r.Chart.Metadata,
-	}
 }
