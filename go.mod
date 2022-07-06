@@ -100,7 +100,7 @@ require (
 
 require (
 	github.com/oras-project/artifacts-spec v1.0.0-draft.1.1 // indirect
-	oras.land/oras-go/v2 v2.0.0-20220621073716-14422086e418 // indirect
+	oras.land/oras-go/v2 v2.0.0-alpha // indirect
 )
 
 require (

@@ -83,7 +83,7 @@ const (
 	outside_cluster_bitnami_url = "http://localhost:50057/bitnami"
 
 	// an OCI registry with a single chart (podinfo)
-	podinfo_oci_registry_url = "oci://ghcr.io/stefanprodan/charts"
+	github_podinfo_oci_registry_url = "oci://ghcr.io/stefanprodan/charts"
 
 	// the URL of local in cluster helm registry. Gets deployed via ./kind-cluster-setup.sh
 	in_cluster_oci_registry_url = "oci://registry-app-svc.default.svc.cluster.local:5000/helm-charts"

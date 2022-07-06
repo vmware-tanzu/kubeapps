@@ -1089,7 +1089,74 @@ var (
 		Name:    "my-podinfo-5",
 		Context: &corev1.Context{Namespace: "default"},
 		Type:    "oci",
-		Url:     podinfo_oci_registry_url,
+		Url:     github_podinfo_oci_registry_url,
+	}
+
+	add_repo_req_22 = func(user, password string) *corev1.AddPackageRepositoryRequest {
+		return &corev1.AddPackageRepositoryRequest{
+			Name:    "my-podinfo-6",
+			Context: &corev1.Context{Namespace: "default"},
+			Type:    "oci",
+			Url:     github_podinfo_oci_registry_url,
+			Auth: &corev1.PackageRepositoryAuth{
+				Type: corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_BASIC_AUTH,
+				PackageRepoAuthOneOf: &corev1.PackageRepositoryAuth_UsernamePassword{
+					UsernamePassword: &corev1.UsernamePassword{
+						Username: user,
+						Password: password,
+					},
+				},
+			},
+		}
+	}
+
+	add_repo_req_23 = &corev1.AddPackageRepositoryRequest{
+		Name:    "my-podinfo-7",
+		Context: &corev1.Context{Namespace: "default"},
+		Type:    "oci",
+		Url:     github_podinfo_oci_registry_url,
+		Auth: &corev1.PackageRepositoryAuth{
+			Type: corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_BASIC_AUTH,
+			PackageRepoAuthOneOf: &corev1.PackageRepositoryAuth_SecretRef{
+				SecretRef: &corev1.SecretKeyReference{
+					Name: "secret-3",
+				},
+			},
+		},
+	}
+
+	add_repo_req_24 = func(server, user, password string) *corev1.AddPackageRepositoryRequest {
+		return &corev1.AddPackageRepositoryRequest{
+			Name:    "my-podinfo-8",
+			Context: &corev1.Context{Namespace: "default"},
+			Type:    "oci",
+			Url:     github_podinfo_oci_registry_url,
+			Auth: &corev1.PackageRepositoryAuth{
+				Type: corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_DOCKER_CONFIG_JSON,
+				PackageRepoAuthOneOf: &corev1.PackageRepositoryAuth_DockerCreds{
+					DockerCreds: &corev1.DockerCredentials{
+						Server:   server,
+						Username: user,
+						Password: password,
+					},
+				},
+			},
+		}
+	}
+
+	add_repo_req_25 = &corev1.AddPackageRepositoryRequest{
+		Name:    "my-podinfo-9",
+		Context: &corev1.Context{Namespace: "default"},
+		Type:    "oci",
+		Url:     github_podinfo_oci_registry_url,
+		Auth: &corev1.PackageRepositoryAuth{
+			Type: corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_DOCKER_CONFIG_JSON,
+			PackageRepoAuthOneOf: &corev1.PackageRepositoryAuth_SecretRef{
+				SecretRef: &corev1.SecretKeyReference{
+					Name: "secret-4",
+				},
+			},
+		},
 	}
 
 	add_repo_expected_resp = &corev1.AddPackageRepositoryResponse{
@@ -1114,6 +1181,22 @@ var (
 
 	add_repo_expected_resp_6 = &corev1.AddPackageRepositoryResponse{
 		PackageRepoRef: repoRef("my-podinfo-5", "default"),
+	}
+
+	add_repo_expected_resp_7 = &corev1.AddPackageRepositoryResponse{
+		PackageRepoRef: repoRef("my-podinfo-6", "default"),
+	}
+
+	add_repo_expected_resp_8 = &corev1.AddPackageRepositoryResponse{
+		PackageRepoRef: repoRef("my-podinfo-7", "default"),
+	}
+
+	add_repo_expected_resp_9 = &corev1.AddPackageRepositoryResponse{
+		PackageRepoRef: repoRef("my-podinfo-8", "default"),
+	}
+
+	add_repo_expected_resp_10 = &corev1.AddPackageRepositoryResponse{
+		PackageRepoRef: repoRef("my-podinfo-9", "default"),
 	}
 
 	status_installed = &corev1.InstalledPackageStatus{
@@ -2430,7 +2513,7 @@ var (
 			Description:     "",
 			NamespaceScoped: false,
 			Type:            "helm",
-			Url:             podinfo_oci_registry_url,
+			Url:             github_podinfo_oci_registry_url,
 			Interval:        "10m",
 			Auth:            &corev1.PackageRepositoryAuth{},
 			Status: &corev1.PackageRepositoryStatus{
@@ -2453,7 +2536,7 @@ var (
 			Description:     "",
 			NamespaceScoped: false,
 			Type:            "oci",
-			Url:             podinfo_oci_registry_url,
+			Url:             github_podinfo_oci_registry_url,
 			Interval:        "10m",
 			Auth:            &corev1.PackageRepositoryAuth{},
 			Status: &corev1.PackageRepositoryStatus{
@@ -2602,7 +2685,7 @@ var (
 			Description:     "",
 			NamespaceScoped: false,
 			Type:            "oci",
-			Url:             podinfo_oci_registry_url,
+			Url:             github_podinfo_oci_registry_url,
 			Status:          podinfo_repo_status_4,
 		}
 	}

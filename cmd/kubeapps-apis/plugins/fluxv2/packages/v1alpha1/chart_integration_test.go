@@ -524,24 +524,52 @@ func TestKindClusterAvailablePackageEndpointsForOCI(t *testing.T) {
 		t.Fatal(err)
 	}
 
+	ghUser := os.Getenv("GITHUB_USER")
+	ghToken := os.Getenv("GITHUB_TOKEN")
+	if ghUser == "" || ghToken == "" {
+		t.Fatalf("Environment variables GITHUB_USER and GITHUB_TOKEN need to be set to run this test")
+	}
+
 	testCases := []struct {
 		testName    string
 		registryUrl string
-		username    string
-		password    string
+		secret      *apiv1.Secret
 	}{
+		/*
+			{
+				testName:    "Testing [" + github_podinfo_oci_registry_url + "] with basic auth secret",
+				registryUrl: github_podinfo_oci_registry_url,
+				// this is a secret for authentication with GitHub (ghcr.io)
+				//    personal access token ghp_... can be seen on https://github.com/settings/tokens
+				// and has "admin:repo_hook, delete_repo, repo" scopes
+				// one should be able to login successfully like this:
+				//   docker login ghcr.io -u $GITHUB_USER -p $GITHUB_TOKEN AND/OR
+				//   helm registry login ghcr.io -u $GITHUB_USER -p $GITHUB_TOKEN
+				secret: newBasicAuthSecret(types.NamespacedName{
+					Name:      "oci-repo-secret-" + randSeq(4),
+					Namespace: "default"},
+					ghUser,
+					ghToken,
+				),
+			},
+		*/
 		{
-			testName:    "Testing [" + podinfo_oci_registry_url + "]",
-			registryUrl: podinfo_oci_registry_url,
+			testName:    "Testing [" + github_podinfo_oci_registry_url + "] with dockerconfigjson secret",
+			registryUrl: github_podinfo_oci_registry_url,
 			// this is a secret for authentication with GitHub (ghcr.io)
 			//    personal access token ghp_... can be seen on https://github.com/settings/tokens
 			// and has "admin:repo_hook, delete_repo, repo" scopes
 			// one should be able to login successfully like this:
 			//   docker login ghcr.io -u $GITHUB_USER -p $GITHUB_TOKEN AND/OR
 			//   helm registry login ghcr.io -u $GITHUB_USER -p $GITHUB_TOKEN
-			username: os.Getenv("GITHUB_USER"),
-			password: os.Getenv("GITHUB_TOKEN"),
+			secret: newDockerConfigJsonSecret(types.NamespacedName{
+				Name:      "oci-repo-secret-" + randSeq(4),
+				Namespace: "default"},
+				"ghcr.io", ghUser, ghToken,
+			),
 		},
+		// TODO (gfichtenholt) TLS secret
+
 		/*
 			{
 				// this gets set up in ./testdata/kind-cluster-setup.sh
@@ -555,8 +583,12 @@ func TestKindClusterAvailablePackageEndpointsForOCI(t *testing.T) {
 
 				testName:    "Testing [" + in_cluster_oci_registry_url + "]",
 				registryUrl: in_cluster_oci_registry_url,
-				username:    "foo",
-				password:    "bar",
+				secret: newBasicAuthSecret(types.NamespacedName{
+					Name:      "oci-repo-secret-" + randSeq(4),
+					Namespace: "default"},
+					"foo",
+					"bar",
+				),
 			},
 		*/
 	}
@@ -572,27 +604,16 @@ func TestKindClusterAvailablePackageEndpointsForOCI(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.testName, func(t *testing.T) {
-			if strings.HasPrefix(tc.registryUrl, "oci://ghcr.io/") {
-				if tc.username == "" || tc.password == "" {
-					t.Fatalf("Environment variable GITHUB_USER and GITHUB_TOKEN need to be set")
-				}
-			}
-
 			repoName := types.NamespacedName{
 				Name:      "my-podinfo-" + randSeq(4),
 				Namespace: "default",
 			}
 
 			secretName := ""
-			var secret *apiv1.Secret
-			if tc.username != "" && tc.password != "" {
-				secret = newBasicAuthSecret(types.NamespacedName{
-					Name:      "oci-repo-secret-" + randSeq(4),
-					Namespace: repoName.Namespace},
-					tc.username, tc.password)
-				secretName = secret.Name
+			if tc.secret != nil {
+				secretName = tc.secret.Name
 
-				if err := kubeCreateSecretAndCleanup(t, secret); err != nil {
+				if err := kubeCreateSecretAndCleanup(t, tc.secret); err != nil {
 					t.Fatal(err)
 				}
 			}
@@ -698,5 +719,4 @@ func TestKindClusterAvailablePackageEndpointsForOCI(t *testing.T) {
 				expected_detail_oci_stefanprodan_podinfo_2(repoName.Name).AvailablePackageDetail)
 		})
 	}
-
 }

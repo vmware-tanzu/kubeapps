@@ -6,6 +6,7 @@ package main
 import (
 	"context"
 	"math"
+	"os"
 	"strings"
 	"testing"
 	"time"
@@ -195,6 +196,12 @@ func TestKindClusterAddPackageRepository(t *testing.T) {
 	// byte arrays up front so they can be re-used in multiple places later
 	ca, pub, priv := getCertsForTesting(t)
 
+	ghUser := os.Getenv("GITHUB_USER")
+	ghToken := os.Getenv("GITHUB_TOKEN")
+	if ghUser == "" || ghToken == "" {
+		t.Fatalf("Environment variables GITHUB_USER and GITHUB_TOKEN need to be set to run this test")
+	}
+
 	testCases := []struct {
 		testName                 string
 		request                  *corev1.AddPackageRepositoryRequest
@@ -268,6 +275,40 @@ func TestKindClusterAddPackageRepository(t *testing.T) {
 			request:            add_repo_req_21,
 			expectedResponse:   add_repo_expected_resp_6,
 			expectedStatusCode: codes.OK,
+		},
+		{
+			testName:           "test add OCI repo with basic auth secret (kubeapps managed)",
+			request:            add_repo_req_22(ghUser, ghToken),
+			expectedResponse:   add_repo_expected_resp_7,
+			expectedStatusCode: codes.OK,
+		},
+		{
+			testName: "test add OCI repo with basic auth secret (user managed)",
+			request:  add_repo_req_23,
+			existingSecret: newBasicAuthSecret(types.NamespacedName{
+				Name:      "secret-3",
+				Namespace: "default",
+			}, ghUser, ghToken),
+			expectedResponse:   add_repo_expected_resp_8,
+			expectedStatusCode: codes.OK,
+			userManagedSecrets: true,
+		},
+		{
+			testName:           "test add OCI repo with dockerconfigjson secret (kubeapps managed)",
+			request:            add_repo_req_24("ghcr.io", ghUser, ghToken),
+			expectedResponse:   add_repo_expected_resp_9,
+			expectedStatusCode: codes.OK,
+		},
+		{
+			testName: "test add OCI repo with dockerconfigjson secret (user managed)",
+			request:  add_repo_req_25,
+			existingSecret: newDockerConfigJsonSecret(types.NamespacedName{
+				Name:      "secret-4",
+				Namespace: "default",
+			}, "ghcr.io", ghUser, ghToken),
+			expectedResponse:   add_repo_expected_resp_10,
+			expectedStatusCode: codes.OK,
+			userManagedSecrets: true,
 		},
 	}
 
@@ -418,7 +459,7 @@ func TestKindClusterGetPackageRepositoryDetail(t *testing.T) {
 			testName:           "returns failed status for helm repository with OCI url",
 			request:            get_repo_detail_req_12,
 			repoName:           "my-podinfo-12",
-			repoUrl:            podinfo_oci_registry_url,
+			repoUrl:            github_podinfo_oci_registry_url,
 			expectedStatusCode: codes.OK,
 			expectedResponse:   get_repo_detail_resp_15,
 		},
@@ -427,7 +468,7 @@ func TestKindClusterGetPackageRepositoryDetail(t *testing.T) {
 			request:            get_repo_detail_req_13,
 			repoName:           "my-podinfo-13",
 			repoType:           "oci",
-			repoUrl:            podinfo_oci_registry_url,
+			repoUrl:            github_podinfo_oci_registry_url,
 			expectedStatusCode: codes.OK,
 			expectedResponse:   get_repo_detail_resp_16,
 		},
@@ -623,7 +664,7 @@ func TestKindClusterGetPackageRepositorySummaries(t *testing.T) {
 					name: "podinfo-13",
 					ns:   ns1,
 					typ:  "oci",
-					url:  podinfo_oci_registry_url,
+					url:  github_podinfo_oci_registry_url,
 				},
 			},
 			expectedStatusCode: codes.OK,

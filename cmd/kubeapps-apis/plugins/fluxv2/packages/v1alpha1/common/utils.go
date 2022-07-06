@@ -133,6 +133,17 @@ func NewLocalOpaqueSecret(ownerRepo types.NamespacedName) *apiv1.Secret {
 	}
 }
 
+// "Local" in the sense of no namespace is specified
+func NewLocalDockerConfigJsonSecret(ownerRepo types.NamespacedName) *apiv1.Secret {
+	return &apiv1.Secret{
+		ObjectMeta: metav1.ObjectMeta{
+			GenerateName: ownerRepo.Name + "-",
+		},
+		Type: apiv1.SecretTypeDockerConfigJson,
+		Data: map[string][]byte{},
+	}
+}
+
 // ref: https://blog.trailofbits.com/2020/06/09/how-to-check-if-a-mutex-is-locked-in-go/
 // I understand this is not really "kosher" in general for production usage,
 // but in one specific case (cache populateWith() func) it's okay as a confidence test

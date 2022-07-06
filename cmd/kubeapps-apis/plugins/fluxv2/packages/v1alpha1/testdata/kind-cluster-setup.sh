@@ -25,6 +25,10 @@ function deploy {
   kubectl create configmap registry-configmap --from-file ./bcrypt.htpasswd
   kubectl apply -f registry-app.yaml
   kubectl expose deployment registry-app --port=5000 --target-port=5000 --name=registry-app-svc --context kind-kubeapps
+  while [[ $(kubectl get pods -l app=registry-app -o 'jsonpath={..status.conditions[?(@.type=="Ready")].status}') != "True" ]]; do
+    echo "Waiting for registry-app to reach Ready state..."
+    sleep 1
+  done
   # TODO gfichtenholt this needs to be done asynchronously
   kubectl -n default port-forward svc/registry-app-svc 5000:5000 --context kind-kubeapps 
 

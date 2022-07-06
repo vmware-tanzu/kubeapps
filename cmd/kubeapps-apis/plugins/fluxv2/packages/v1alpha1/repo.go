@@ -6,6 +6,7 @@ package main
 import (
 	"bytes"
 	"context"
+	"encoding/base64"
 	"encoding/gob"
 	"fmt"
 	"reflect"
@@ -434,6 +435,10 @@ func (s *Server) validateUserManagedRepoSecret(
 				case corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_TLS:
 					if secret.Data["keyFile"] == nil || secret.Data["certFile"] == nil {
 						return nil, status.Errorf(codes.Internal, "Specified secret [%s] missing fields 'keyFile' and/or 'certFile'", secretRef)
+					}
+				case corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_DOCKER_CONFIG_JSON:
+					if secret.Data[apiv1.DockerConfigJsonKey] == nil {
+						return nil, status.Errorf(codes.Internal, "Specified secret [%s] missing field '%s'", secretRef, apiv1.DockerConfigJsonKey)
 					}
 				default:
 					return nil, status.Errorf(codes.Internal, "Package repository authentication type %q is not supported", auth.Type)
@@ -1096,7 +1101,11 @@ func newSecretFromTlsConfigAndAuth(repoName types.NamespacedName,
 			return nil, false, status.Errorf(codes.InvalidArgument, "SecretRef may not be used with kubeapps managed secrets")
 		}
 		if secret == nil {
-			secret = common.NewLocalOpaqueSecret(repoName)
+			if auth.Type == corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_DOCKER_CONFIG_JSON {
+				secret = common.NewLocalDockerConfigJsonSecret(repoName)
+			} else {
+				secret = common.NewLocalOpaqueSecret(repoName)
+			}
 		}
 		switch auth.Type {
 		case corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_BASIC_AUTH:
@@ -1121,10 +1130,23 @@ func newSecretFromTlsConfigAndAuth(repoName types.NamespacedName,
 			} else {
 				return nil, false, status.Errorf(codes.Internal, "TLS Cert/Key configuration is missing")
 			}
+		case corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_DOCKER_CONFIG_JSON:
+			if dc := auth.GetDockerCreds(); dc != nil {
+				if dc.Username == redactedString && dc.Password == redactedString && dc.Server == redactedString {
+					isSameSecret = true
+				} else {
+					secret.Data = map[string][]byte{
+						apiv1.DockerConfigJsonKey: []byte(`{"auths":{"` +
+							dc.Server + `":{"` +
+							`auth":"` + base64.StdEncoding.EncodeToString([]byte(dc.Username+":"+dc.Password)) + `"}}}`),
+					}
+				}
+			} else {
+				return nil, false, status.Errorf(codes.Internal, "Docker credentials configuration is missing")
+			}
 		case corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_BEARER,
-			corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_AUTHORIZATION_HEADER,
-			corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_DOCKER_CONFIG_JSON:
-			return nil, false, status.Errorf(codes.Unimplemented, "Package repository authentication type %q is not supported", auth.Type)
+			corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_AUTHORIZATION_HEADER:
+			return nil, false, status.Errorf(codes.Internal, "Package repository authentication type %q is not supported", auth.Type)
 		case corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_UNSPECIFIED:
 			return nil, true, nil
 		default:
