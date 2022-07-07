@@ -45,11 +45,6 @@ export const receiveRepoDetail = createAction("RECEIVE_REPO", resolve => {
   return (repo: PackageRepositoryDetail) => resolve(repo);
 });
 
-export const repoValidating = createAction("REPO_VALIDATING");
-export const repoValidated = createAction("REPO_VALIDATED", resolve => {
-  return (data: any) => resolve(data);
-});
-
 export const redirect = createAction("REDIRECT", resolve => {
   return (path: string) => resolve(path);
 });
@@ -65,8 +60,6 @@ const allActions = [
   addedRepo,
   requestRepoUpdate,
   repoUpdated,
-  repoValidating,
-  repoValidated,
   errorRepos,
   requestRepoSummaries,
   receiveRepoDetail,

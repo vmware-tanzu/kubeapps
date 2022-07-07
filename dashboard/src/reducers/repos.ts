@@ -127,10 +127,6 @@ const reposReducer = (
         repo: action.payload,
       };
     }
-    case getType(actions.repos.repoValidating):
-      return { ...state, validating: true };
-    case getType(actions.repos.repoValidated):
-      return { ...state, validating: false, errors: { ...state.errors, validate: undefined } };
     case getType(actions.repos.redirect):
       return { ...state, redirectTo: action.payload };
     case getType(actions.repos.redirected):
