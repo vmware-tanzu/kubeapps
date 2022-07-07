@@ -113,6 +113,10 @@ export const api = {
   // access the k8s api server directly).
   k8s: {
     base: (cluster: string) => `api/clusters/${cluster}`,
+    apis: (cluster: string) => `${api.k8s.base(cluster)}/apis`,
+    v1: (cluster: string) => `${api.k8s.base(cluster)}/api/v1`,
+    groupVersion: (cluster: string, groupVersion: string) =>
+      `${api.k8s.base(cluster)}/apis/${groupVersion}`,
     operators: {
       operators: (cluster: string, namespace: string) =>
         `${api.k8s.base(cluster)}/apis/packages.operators.coreos.com/v1/${withNS(
@@ -161,4 +165,6 @@ export const api = {
   },
 
   kubeappsapis: "apis",
+  config: "config.json",
+  custom_locale: "custom_locale.json",
 };

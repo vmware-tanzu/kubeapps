@@ -94,6 +94,7 @@ func InitHTTPClient(appRepo *v1alpha1.AppRepository, caCertSecret *corev1.Secret
 
 	// create client
 	client := httpclient.New()
+	// #nosec G402
 	tlsConfig := &tls.Config{
 		RootCAs:            caCertPool,
 		InsecureSkipVerify: appRepo.Spec.TLSInsecureSkipVerify,
