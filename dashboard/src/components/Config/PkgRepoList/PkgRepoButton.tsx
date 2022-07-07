@@ -15,7 +15,7 @@ import { PkgRepoForm } from "./PkgRepoForm";
 
 interface IPkgRepoAddButtonProps {
   namespace: string;
-  kubeappsNamespace: string;
+  globalReposNamespace: string;
   text?: string;
   primary?: boolean;
   packageRepoRef?: PackageRepositoryReference;
@@ -26,7 +26,7 @@ interface IPkgRepoAddButtonProps {
 export function PkgRepoAddButton({
   text,
   namespace,
-  kubeappsNamespace,
+  globalReposNamespace: kubeappsNamespace,
   packageRepoRef,
   primary = true,
   title,

@@ -150,7 +150,7 @@ function PkgRepoList() {
           <PkgRepoControl
             repo={repo}
             refetchRepos={refetchRepos}
-            kubeappsNamespace={globalReposNamespace}
+            globalReposNamespace={globalReposNamespace}
           />
         ),
       };
@@ -167,7 +167,7 @@ function PkgRepoList() {
             title="Add a Package Repository"
             key="add-repo-button"
             namespace={currentNamespace}
-            kubeappsNamespace={globalReposNamespace}
+            globalReposNamespace={globalReposNamespace}
           />,
         ]}
         filter={

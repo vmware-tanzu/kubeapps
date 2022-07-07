@@ -28,7 +28,7 @@ afterEach(() => {
 });
 
 const defaultProps = {
-  kubeappsNamespace: "kubeapps",
+  globalReposNamespace: "kubeapps",
   repo: {
     name: "bitnami",
     packageRepoRef: { context: { namespace: "kubeapps" } },

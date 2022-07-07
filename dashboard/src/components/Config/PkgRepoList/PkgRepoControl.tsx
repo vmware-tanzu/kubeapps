@@ -18,11 +18,15 @@ import "./PkgRepoControl.css";
 
 interface IPkgRepoListItemProps {
   repo: PackageRepositorySummary;
-  kubeappsNamespace: string;
+  globalReposNamespace: string;
   refetchRepos: () => void;
 }
 
-export function PkgRepoControl({ repo, kubeappsNamespace, refetchRepos }: IPkgRepoListItemProps) {
+export function PkgRepoControl({
+  repo,
+  globalReposNamespace: kubeappsNamespace,
+  refetchRepos,
+}: IPkgRepoListItemProps) {
   const [modalIsOpen, setModalOpen] = useState(false);
   const openModal = () => setModalOpen(true);
   const closeModal = () => setModalOpen(false);
@@ -50,7 +54,7 @@ export function PkgRepoControl({ repo, kubeappsNamespace, refetchRepos }: IPkgRe
       <PkgRepoAddButton
         title={`Edit the '${repo.name}' Package Repository`}
         namespace={repo.packageRepoRef?.context?.namespace || ""}
-        kubeappsNamespace={kubeappsNamespace}
+        globalReposNamespace={kubeappsNamespace}
         text="Edit"
         packageRepoRef={repo.packageRepoRef}
         primary={false}
