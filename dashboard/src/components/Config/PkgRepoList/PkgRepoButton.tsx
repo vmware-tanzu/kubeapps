@@ -35,7 +35,7 @@ export function PkgRepoAddButton({
   const dispatch: ThunkDispatch<IStoreState, null, Action> = useDispatch();
   const [modalIsOpen, setModalOpen] = useState(false);
   const openModal = () => {
-    dispatch(actions.repos.requestRepo());
+    dispatch(actions.repos.requestRepoDetail());
     setModalOpen(true);
   };
   const closeModal = () => setModalOpen(false);

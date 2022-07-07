@@ -27,7 +27,7 @@ const kubeaActions = { ...actions.kube };
 beforeEach(() => {
   actions.repos = {
     ...actions.repos,
-    fetchRepos: jest.fn(),
+    fetchRepoSummaries: jest.fn(),
   };
   const mockDispatch = jest.fn();
   spyOnUseDispatch = jest.spyOn(ReactRedux, "useDispatch").mockReturnValue(mockDispatch);
@@ -44,7 +44,7 @@ afterEach(() => {
 
 it("fetches repos and imagePullSecrets", () => {
   mountWrapper(defaultStore, <PkgRepoList />);
-  expect(actions.repos.fetchRepos).toHaveBeenCalledWith(namespace, true);
+  expect(actions.repos.fetchRepoSummaries).toHaveBeenCalledWith(namespace, true);
 });
 
 it("fetches repos only from the globalReposNamespace", () => {
@@ -62,7 +62,7 @@ it("fetches repos only from the globalReposNamespace", () => {
     }),
     <PkgRepoList />,
   );
-  expect(actions.repos.fetchRepos).toHaveBeenCalledWith("");
+  expect(actions.repos.fetchRepoSummaries).toHaveBeenCalledWith("");
 });
 
 it("fetches repos from all namespaces (without kubeappsNamespace)", () => {
@@ -70,7 +70,7 @@ it("fetches repos from all namespaces (without kubeappsNamespace)", () => {
   act(() => {
     wrapper.find("input[type='checkbox']").simulate("change");
   });
-  expect(actions.repos.fetchRepos).toHaveBeenCalledWith("");
+  expect(actions.repos.fetchRepoSummaries).toHaveBeenCalledWith("");
 });
 
 it("should hide the all-namespace switch if the user doesn't have permissions", async () => {

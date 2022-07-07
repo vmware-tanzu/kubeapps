@@ -620,7 +620,7 @@ describe("filters by package repository", () => {
     spyOnUseDispatch = jest.spyOn(ReactRedux, "useDispatch").mockReturnValue(mockDispatch);
     // Can't just assign a mock fn to actions.repos.fetchRepos because it is (correctly) exported
     // as a const fn.
-    fetchRepos = jest.spyOn(actions.repos, "fetchRepos").mockImplementation(() => {
+    fetchRepos = jest.spyOn(actions.repos, "fetchRepoSummaries").mockImplementation(() => {
       return jest.fn();
     });
   });

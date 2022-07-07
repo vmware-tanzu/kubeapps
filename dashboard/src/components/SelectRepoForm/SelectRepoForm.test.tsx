@@ -29,7 +29,7 @@ const kubeaActions = { ...actions.operators };
 beforeEach(() => {
   actions.repos = {
     ...actions.repos,
-    fetchRepos: jest.fn(),
+    fetchRepoSummaries: jest.fn(),
   };
   const mockDispatch = jest.fn();
   spyOnUseDispatch = jest.spyOn(ReactRedux, "useDispatch").mockReturnValue(mockDispatch);
@@ -42,7 +42,7 @@ afterEach(() => {
 
 it("should fetch only the global repository", () => {
   const fetch = jest.fn();
-  actions.repos = { ...actions.repos, fetchRepos: fetch };
+  actions.repos = { ...actions.repos, fetchRepoSummaries: fetch };
   const props = {
     cluster: defaultContext.cluster,
     namespace: initialState.config.kubeappsNamespace, // global
@@ -54,7 +54,7 @@ it("should fetch only the global repository", () => {
 
 it("should fetch repositories", () => {
   const fetch = jest.fn();
-  actions.repos = { ...actions.repos, fetchRepos: fetch };
+  actions.repos = { ...actions.repos, fetchRepoSummaries: fetch };
   mountWrapper(defaultStore, <SelectRepoForm {...defaultContext} />);
   expect(fetch).toHaveBeenCalledWith(defaultContext.namespace, true);
 });

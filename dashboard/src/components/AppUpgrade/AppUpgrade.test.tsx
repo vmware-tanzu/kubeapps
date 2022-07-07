@@ -14,7 +14,7 @@ import {
   PackageAppVersion,
   VersionReference,
 } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
-import { PackageRepositorySummary } from "gen/kubeappsapis/core/packages/v1alpha1/repositories";
+import { PackageRepositoryDetail, PackageRepositorySummary } from "gen/kubeappsapis/core/packages/v1alpha1/repositories";
 import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins";
 import * as ReactRedux from "react-redux";
 import * as ReactRouter from "react-router";
@@ -84,7 +84,7 @@ const selectedPackage = {
   availablePackageDetail: { name: "test" } as AvailablePackageDetail,
 } as IPackageState["selected"];
 
-const repo1 = {
+const repo1Summary = {
   name: defaultProps.repo,
   packageRepoRef: {
     context: { namespace: defaultProps.repoNamespace, cluster: defaultProps.cluster },
@@ -92,6 +92,15 @@ const repo1 = {
     plugin: defaultProps.plugin,
   },
 } as PackageRepositorySummary;
+
+const repo1Detail = {
+  name: defaultProps.repo,
+  packageRepoRef: {
+    context: { namespace: defaultProps.repoNamespace, cluster: defaultProps.cluster },
+    identifier: defaultProps.repo,
+    plugin: defaultProps.plugin,
+  },
+} as PackageRepositoryDetail;
 
 let spyOnUseDispatch: jest.SpyInstance;
 let spyOnUseHistory: jest.SpyInstance;
@@ -133,7 +142,7 @@ it("renders the repo selection form if not introduced", () => {
 it("renders the repo selection form if not introduced when the app is loaded", () => {
   const state = {
     repos: {
-      repos: [repo1],
+      repos: [repo1Summary],
     } as IPackageRepositoryState,
     apps: {
       selected: { name: "foo" },
@@ -251,8 +260,8 @@ it("renders the upgrade form when the repo is available, clears state and fetche
       selectedDetails: availablePackageDetail,
     } as IInstalledPackageState,
     repos: {
-      repo: repo1,
-      repos: [repo1],
+      repo: repo1Detail,
+      repos: [repo1Summary],
       isFetching: false,
     } as IPackageRepositoryState,
     packages: { selected: selectedPackage } as IPackageState,
@@ -287,10 +296,10 @@ it("renders the upgrade form with the version property", () => {
       selectedDetails: availablePackageDetail,
     } as IInstalledPackageState,
     repos: {
-      repo: repo1,
-      repos: [repo1],
+      repo: repo1Detail,
+      repos: [repo1Summary],
       isFetching: false,
-    } as IPackageRepositoryState,
+    }  as Partial<IPackageRepositoryState>,
     packages: { selected: selectedPackage } as IPackageState,
   };
   const wrapper = mountWrapper(
@@ -315,8 +324,8 @@ it("skips the repo selection form if the app contains upgrade info", () => {
       selectedDetails: availablePackageDetail,
     } as IInstalledPackageState,
     repos: {
-      repo: repo1,
-      repos: [repo1],
+      repo: repo1Detail,
+      repos: [repo1Summary],
       isFetching: false,
     } as IPackageRepositoryState,
     packages: { selected: selectedPackage } as IPackageState,

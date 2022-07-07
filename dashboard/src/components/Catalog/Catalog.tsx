@@ -218,11 +218,11 @@ export default function Catalog() {
   useEffect(() => {
     if (!namespace || !supportedCluster || namespace === globalReposNamespace) {
       // All Namespaces. Global namespace or other cluster, show global repos only
-      dispatch(actions.repos.fetchRepos(""));
+      dispatch(actions.repos.fetchRepoSummaries(""));
       return () => {};
     }
     // In other case, fetch global and namespace repos
-    dispatch(actions.repos.fetchRepos(namespace, true));
+    dispatch(actions.repos.fetchRepoSummaries(namespace, true));
     return () => {};
   }, [dispatch, supportedCluster, namespace, globalReposNamespace]);
 

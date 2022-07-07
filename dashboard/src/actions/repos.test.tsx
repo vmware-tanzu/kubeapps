@@ -159,22 +159,22 @@ const actionTestCases: ITestCase[] = [
   {
     name: "addedRepo",
     action: repoActions.addedRepo,
-    args: packageRepositorySummary,
-    payload: packageRepositorySummary,
+    args: packageRepositoryDetail,
+    payload: packageRepositoryDetail,
   },
-  { name: "requestRepos", action: repoActions.requestRepos },
+  { name: "requestRepoSummaries", action: repoActions.requestRepoSummaries },
   {
-    name: "receiveRepos",
-    action: repoActions.receiveRepos,
+    name: "receiveRepoSummaries",
+    action: repoActions.receiveRepoSummaries,
     args: [[packageRepositorySummary]],
     payload: [packageRepositorySummary],
   },
-  { name: "requestRepo", action: repoActions.requestRepo },
+  { name: "requestRepoDetail", action: repoActions.requestRepoDetail },
   {
-    name: "receiveRepo",
-    action: repoActions.receiveRepo,
-    args: packageRepositorySummary,
-    payload: packageRepositorySummary,
+    name: "receiveRepoDetail",
+    action: repoActions.receiveRepoDetail,
+    args: [packageRepositoryDetail],
+    payload: packageRepositoryDetail,
   },
   { name: "redirect", action: repoActions.redirect, args: "/foo", payload: "/foo" },
   { name: "redirected", action: repoActions.redirected },
@@ -203,9 +203,9 @@ actionTestCases.forEach(tc => {
 
 // Async action creators
 describe("deleteRepo", () => {
-  context("dispatches requestRepos and receivedRepos after deletion if no error", () => {
+  context("dispatches requestRepoSummaries and receivedRepos after deletion if no error", () => {
     const currentNamespace = "current-namespace";
-    it("dispatches requestRepos with current namespace", async () => {
+    it("dispatches requestRepoSummaries with current namespace", async () => {
       const storeWithFlag: any = mockStore({
         clusters: {
           currentCluster: "defaultCluster",
@@ -250,25 +250,25 @@ describe("deleteRepo", () => {
   });
 });
 
-describe("fetchRepos", () => {
+describe("fetchRepoSummaries", () => {
   const namespace = "default";
-  it("dispatches requestRepos and receivedRepos if no error", async () => {
+  it("dispatches requestRepoSummaries and receivedRepos if no error", async () => {
     const expectedActions = [
       {
-        type: getType(repoActions.requestRepos),
+        type: getType(repoActions.requestRepoSummaries),
         payload: namespace,
       },
       {
-        type: getType(repoActions.receiveRepos),
+        type: getType(repoActions.receiveRepoSummaries),
         payload: [packageRepositorySummary],
       },
     ];
 
-    await store.dispatch(repoActions.fetchRepos(namespace));
+    await store.dispatch(repoActions.fetchRepoSummaries(namespace));
     expect(store.getActions()).toEqual(expectedActions);
   });
 
-  it("dispatches requestRepos and errorRepos if error fetching", async () => {
+  it("dispatches requestRepoSummaries and errorRepos if error fetching", async () => {
     PackageRepositoriesService.getPackageRepositorySummaries = jest
       .fn()
       .mockImplementationOnce(() => {
@@ -277,7 +277,7 @@ describe("fetchRepos", () => {
 
     const expectedActions = [
       {
-        type: getType(repoActions.requestRepos),
+        type: getType(repoActions.requestRepoSummaries),
         payload: namespace,
       },
       {
@@ -286,7 +286,7 @@ describe("fetchRepos", () => {
       },
     ];
 
-    await store.dispatch(repoActions.fetchRepos(namespace));
+    await store.dispatch(repoActions.fetchRepoSummaries(namespace));
     expect(store.getActions()).toEqual(expectedActions);
   });
 
@@ -306,22 +306,22 @@ describe("fetchRepos", () => {
 
     const expectedActions = [
       {
-        type: getType(repoActions.requestRepos),
+        type: getType(repoActions.requestRepoSummaries),
         payload: namespace,
       },
       {
-        type: getType(repoActions.requestRepos),
+        type: getType(repoActions.requestRepoSummaries),
         payload: globalReposNamespace,
       },
       {
-        type: getType(repoActions.receiveRepos),
+        type: getType(repoActions.receiveRepoSummaries),
         payload: [
           { name: "repo1", packageRepoRef: { identifier: "repo1" } },
           { name: "repo2", packageRepoRef: { identifier: "repo2" } },
         ] as PackageRepositorySummary[],
       },
     ];
-    await store.dispatch(repoActions.fetchRepos(namespace, true));
+    await store.dispatch(repoActions.fetchRepoSummaries(namespace, true));
     expect(store.getActions()).toEqual(expectedActions);
   });
 
@@ -344,15 +344,15 @@ describe("fetchRepos", () => {
 
     const expectedActions = [
       {
-        type: getType(repoActions.requestRepos),
+        type: getType(repoActions.requestRepoSummaries),
         payload: namespace,
       },
       {
-        type: getType(repoActions.requestRepos),
+        type: getType(repoActions.requestRepoSummaries),
         payload: globalReposNamespace,
       },
       {
-        type: getType(repoActions.receiveRepos),
+        type: getType(repoActions.receiveRepoSummaries),
         payload: [
           { name: "repo1", packageRepoRef: { identifier: "repo1" } },
           { name: "repo2", packageRepoRef: { identifier: "repo2" } },
@@ -360,7 +360,7 @@ describe("fetchRepos", () => {
       },
     ];
 
-    await store.dispatch(repoActions.fetchRepos(namespace, true));
+    await store.dispatch(repoActions.fetchRepoSummaries(namespace, true));
     expect(store.getActions()).toEqual(expectedActions);
   });
 
@@ -380,16 +380,16 @@ describe("fetchRepos", () => {
 
     const expectedActions = [
       {
-        type: getType(repoActions.requestRepos),
+        type: getType(repoActions.requestRepoSummaries),
         payload: globalReposNamespace,
       },
       {
-        type: getType(repoActions.receiveRepos),
+        type: getType(repoActions.receiveRepoSummaries),
         payload: [{ name: "repo1" }],
       },
     ];
 
-    await store.dispatch(repoActions.fetchRepos(globalReposNamespace, true));
+    await store.dispatch(repoActions.fetchRepoSummaries(globalReposNamespace, true));
     expect(store.getActions()).toEqual(expectedActions);
   });
 });
@@ -741,10 +741,10 @@ describe("findPackageInRepo", () => {
     PackagesService.getAvailablePackageVersions = jest.fn();
     const expectedActions = [
       {
-        type: getType(repoActions.requestRepo),
+        type: getType(repoActions.requestRepoDetail),
       },
       {
-        type: getType(repoActions.receiveRepo),
+        type: getType(repoActions.receiveRepoDetail),
         payload: packageRepositoryDetail,
       },
     ];
@@ -771,7 +771,7 @@ describe("findPackageInRepo", () => {
 
     const expectedActions = [
       {
-        type: getType(repoActions.requestRepo),
+        type: getType(repoActions.requestRepoDetail),
       },
       {
         type: getType(actions.availablepackages.createErrorPackage),

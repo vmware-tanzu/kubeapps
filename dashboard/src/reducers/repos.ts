@@ -14,7 +14,6 @@ import actions from "../actions";
 import { PkgReposAction } from "../actions/repos";
 
 export interface IPackageRepositoryState {
-  addingRepo: boolean;
   errors: {
     create?: Error;
     delete?: Error;
@@ -42,7 +41,6 @@ export interface IPackageRepositoryState {
 }
 
 export const initialState: IPackageRepositoryState = {
-  addingRepo: false,
   errors: {},
   form: {
     name: "",
@@ -77,14 +75,14 @@ const reposReducer = (
   action: PkgReposAction | LocationChangeAction,
 ): IPackageRepositoryState => {
   switch (action.type) {
-    case getType(actions.repos.receiveRepos):
+    case getType(actions.repos.receiveRepoSummaries):
       return {
         ...state,
         ...isFetching(state, "repositories", false),
         repos: action.payload,
         errors: {},
       };
-    case getType(actions.repos.receiveRepo):
+    case getType(actions.repos.receiveRepoDetail):
       // eslint-disable-next-line no-case-declarations
       let customDetail: any;
 
@@ -113,28 +111,21 @@ const reposReducer = (
         repo: { ...action.payload, customDetail: customDetail },
         errors: {},
       };
-    case getType(actions.repos.requestRepos):
+    case getType(actions.repos.requestRepoSummaries):
       return { ...state, ...isFetching(state, "repositories", true) };
-    case getType(actions.repos.requestRepo):
+    case getType(actions.repos.requestRepoDetail):
       return { ...state, repo: initialState.repo, errors: {} };
-    case getType(actions.repos.addRepo):
-      return { ...state, addingRepo: true };
     case getType(actions.repos.addedRepo):
       return {
         ...state,
-        addingRepo: false,
         lastAdded: action.payload,
-        repos: [...state.repos, action.payload],
+        repo: action.payload,
       };
     case getType(actions.repos.repoUpdated): {
-      const updatedRepo = action.payload;
-      const repos = state.repos.map(r =>
-        r.name === updatedRepo.name &&
-        r.packageRepoRef?.context?.namespace === updatedRepo.packageRepoRef?.context?.namespace
-          ? updatedRepo
-          : r,
-      );
-      return { ...state, repos };
+      return {
+        ...state,
+        repo: action.payload,
+      };
     }
     case getType(actions.repos.repoValidating):
       return { ...state, validating: true };

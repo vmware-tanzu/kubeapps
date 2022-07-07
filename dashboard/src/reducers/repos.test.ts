@@ -14,7 +14,6 @@ describe("reposReducer", () => {
 
   beforeEach(() => {
     initialState = {
-      addingRepo: false,
       errors: {},
       form: {
         name: "",
@@ -40,10 +39,10 @@ describe("reposReducer", () => {
       addedRepo: getType(actions.repos.addedRepo),
       requestRepoUpdate: getType(actions.repos.requestRepoUpdate),
       repoUpdated: getType(actions.repos.repoUpdated),
-      requestRepos: getType(actions.repos.requestRepos),
-      receiveRepos: getType(actions.repos.receiveRepos),
-      requestRepo: getType(actions.repos.requestRepo),
-      receiveRepo: getType(actions.repos.receiveRepo),
+      requestRepos: getType(actions.repos.requestRepoSummaries),
+      receiveRepos: getType(actions.repos.receiveRepoSummaries),
+      requestRepo: getType(actions.repos.requestRepoDetail),
+      receiveRepo: getType(actions.repos.receiveRepoDetail),
       repoValidating: getType(actions.repos.repoValidating),
       repoValidated: getType(actions.repos.repoValidated),
       redirect: getType(actions.repos.redirect),
@@ -108,7 +107,6 @@ describe("reposReducer", () => {
       });
       expect(state).toEqual({
         ...initialState,
-        addingRepo: true,
       });
       expect(
         reposReducer(state, {

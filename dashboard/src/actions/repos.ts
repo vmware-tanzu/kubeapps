@@ -30,18 +30,18 @@ export const repoUpdated = createAction("REPO_UPDATED", resolve => {
   return (updated: PackageRepositoryDetail) => resolve(updated);
 });
 
-export const requestRepos = createAction("REQUEST_REPOS", resolve => {
+export const requestRepoSummaries = createAction("REQUEST_REPOS", resolve => {
   return (namespace: string) => resolve(namespace);
 });
-export const receiveRepos = createAction("RECEIVE_REPOS", resolve => {
+export const receiveRepoSummaries = createAction("RECEIVE_REPOS", resolve => {
   return (repos: PackageRepositorySummary[]) => resolve(repos);
 });
 export const concatRepos = createAction("RECEIVE_REPOS", resolve => {
   return (repos: PackageRepositorySummary[]) => resolve(repos);
 });
 
-export const requestRepo = createAction("REQUEST_REPO");
-export const receiveRepo = createAction("RECEIVE_REPO", resolve => {
+export const requestRepoDetail = createAction("REQUEST_REPO");
+export const receiveRepoDetail = createAction("RECEIVE_REPO", resolve => {
   return (repo: PackageRepositoryDetail) => resolve(repo);
 });
 
@@ -68,18 +68,18 @@ const allActions = [
   repoValidating,
   repoValidated,
   errorRepos,
-  requestRepos,
-  receiveRepo,
-  receiveRepos,
+  requestRepoSummaries,
+  receiveRepoDetail,
+  receiveRepoSummaries,
   createErrorPackage,
-  requestRepo,
+  requestRepoDetail,
   redirect,
   redirected,
 ];
 export type PkgReposAction = ActionType<typeof allActions[number]>;
 
 // fetchRepos fetches the PackageRepositories in a specified namespace.
-export const fetchRepos = (
+export const fetchRepoSummaries = (
   namespace: string,
   listGlobal?: boolean,
 ): ThunkAction<Promise<void>, IStoreState, null, PkgReposAction> => {
@@ -89,17 +89,17 @@ export const fetchRepos = (
       config: { globalReposNamespace },
     } = getState();
     try {
-      dispatch(requestRepos(namespace));
+      dispatch(requestRepoSummaries(namespace));
       const repos = await PackageRepositoriesService.getPackageRepositorySummaries({
         cluster: currentCluster,
         namespace: namespace,
       });
       if (!listGlobal || namespace === globalReposNamespace) {
-        dispatch(receiveRepos(repos.packageRepositorySummaries));
+        dispatch(receiveRepoSummaries(repos.packageRepositorySummaries));
       } else {
         // Global repos need to be added
         let totalRepos = repos.packageRepositorySummaries;
-        dispatch(requestRepos(globalReposNamespace));
+        dispatch(requestRepoSummaries(globalReposNamespace));
         const globalRepos = await PackageRepositoriesService.getPackageRepositorySummaries({
           cluster: currentCluster,
           namespace: "",
@@ -109,7 +109,7 @@ export const fetchRepos = (
           totalRepos.concat(globalRepos.packageRepositorySummaries),
           "packageRepoRef.identifier",
         );
-        dispatch(receiveRepos(totalRepos));
+        dispatch(receiveRepoSummaries(totalRepos));
       }
     } catch (e: any) {
       dispatch(errorRepos(e, "fetch"));
@@ -122,7 +122,7 @@ export const fetchRepo = (
 ): ThunkAction<Promise<boolean>, IStoreState, null, PkgReposAction> => {
   return async dispatch => {
     try {
-      dispatch(requestRepo());
+      dispatch(requestRepoDetail());
       // Check if we have enough data to retrieve the package manually (instead of using its own availablePackageRef)
       const getPackageRepositoryDetailResponse =
         await PackageRepositoriesService.getPackageRepositoryDetail(packageRepoRef);
@@ -137,7 +137,7 @@ export const fetchRepo = (
         );
         return false;
       }
-      dispatch(receiveRepo(getPackageRepositoryDetailResponse.detail));
+      dispatch(receiveRepoDetail(getPackageRepositoryDetailResponse.detail));
       return true;
     } catch (e: any) {
       dispatch(errorRepos(e, "fetch"));
@@ -280,7 +280,7 @@ export const findPackageInRepo = (
   app?: InstalledPackageDetail,
 ): ThunkAction<Promise<boolean>, IStoreState, null, PkgReposAction> => {
   return async dispatch => {
-    dispatch(requestRepo());
+    dispatch(requestRepoDetail());
     // Check if we have enough data to retrieve the package manually (instead of using its own availablePackageRef)
     if (app?.availablePackageRef?.identifier && app?.availablePackageRef?.plugin) {
       const getPackageRepositoryDetailResponse =
@@ -305,7 +305,7 @@ export const findPackageInRepo = (
           );
           return false;
         }
-        dispatch(receiveRepo(getPackageRepositoryDetailResponse.detail));
+        dispatch(receiveRepoDetail(getPackageRepositoryDetailResponse.detail));
         return true;
       } catch (e: any) {
         dispatch(
