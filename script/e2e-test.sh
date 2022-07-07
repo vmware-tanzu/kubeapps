@@ -377,8 +377,8 @@ done
 # Browser tests
 cd "${ROOT_DIR}/integration"
 kubectl apply -f manifests/e2e-runner.yaml
-k8s_wait_for_deployment default integration
-pod=$(kubectl get po -l run=integration -o jsonpath="{.items[0].metadata.name}")
+k8s_wait_for_deployment default e2e-runner
+pod=$(kubectl get po -l run=e2e-runner -o jsonpath="{.items[0].metadata.name}")
 ## Copy config and latest tests
 for f in *.js; do
   kubectl cp "./${f}" "${pod}:/app/"
@@ -394,7 +394,7 @@ fi
 testsArgs="$(printf "%s " "${testsToRun[@]}")"
 
 kubectl cp ./tests "${pod}:/app/"
-info "Copied tests to integration pod ${pod}"
+info "Copied tests to e2e-runner pod ${pod}"
 ## Create admin user
 kubectl create serviceaccount kubeapps-operator -n kubeapps
 kubectl create clusterrolebinding kubeapps-operator-admin --clusterrole=cluster-admin --serviceaccount kubeapps:kubeapps-operator
