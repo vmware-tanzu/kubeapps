@@ -14,7 +14,10 @@ import {
   PackageAppVersion,
   VersionReference,
 } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
-import { PackageRepositoryDetail, PackageRepositorySummary } from "gen/kubeappsapis/core/packages/v1alpha1/repositories";
+import {
+  PackageRepositoryDetail,
+  PackageRepositorySummary,
+} from "gen/kubeappsapis/core/packages/v1alpha1/repositories";
 import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins";
 import * as ReactRedux from "react-redux";
 import * as ReactRouter from "react-router";
@@ -299,7 +302,7 @@ it("renders the upgrade form with the version property", () => {
       repo: repo1Detail,
       repos: [repo1Summary],
       isFetching: false,
-    }  as Partial<IPackageRepositoryState>,
+    } as Partial<IPackageRepositoryState>,
     packages: { selected: selectedPackage } as IPackageState,
   };
   const wrapper = mountWrapper(

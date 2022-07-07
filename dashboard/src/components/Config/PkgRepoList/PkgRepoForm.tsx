@@ -332,6 +332,15 @@ export function PkgRepoForm(props: IPkgRepoFormProps) {
   };
   const handleAuthRadioButtonChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setAuthMethod(PackageRepositoryAuth_PackageRepositoryAuthType[e.target.value]);
+    // if the user selects the docker config, suggest also setting the pull secret
+    if (
+      PackageRepositoryAuth_PackageRepositoryAuthType[e.target.value] ===
+      PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_DOCKER_CONFIG_JSON
+    ) {
+      setHelmPsAuthMethod(
+        PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_DOCKER_CONFIG_JSON,
+      );
+    }
   };
   const handleImgPSChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setHelmPsAuthMethod(PackageRepositoryAuth_PackageRepositoryAuthType[e.target.value]);
@@ -431,6 +440,10 @@ export function PkgRepoForm(props: IPkgRepoFormProps) {
   };
   const handleIsUserManagedSecretChange = (_e: React.ChangeEvent<HTMLInputElement>) => {
     setIsUserManagedSecret(!isUserManagedSecret);
+    // if the user hasn't set the secret name, use the same selection for the pullsecrets
+    // if (!secretPSName) {
+    //   setIsUserManagedPSSecret(!isUserManagedPSSecret);
+    // }
   };
   // const handleIsUserManagedPSSecretChange = (_e: React.ChangeEvent<HTMLInputElement>) => {
   //   setIsUserManagedPSSecret(!isUserManagedPSSecret);
