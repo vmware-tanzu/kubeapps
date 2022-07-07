@@ -203,7 +203,7 @@ it("should call the install method with OCI information", async () => {
       filterRule: undefined,
       performValidation: true,
     },
-    interval: undefined,
+    interval: "",
     description: undefined,
   } as unknown as IPkgRepoFormData);
 });
@@ -240,7 +240,7 @@ it("should call the install skipping TLS verification", async () => {
       performValidation: true,
     },
     skipTLS: true,
-    interval: undefined,
+    interval: "",
     description: undefined,
   } as unknown as IPkgRepoFormData);
 });
@@ -277,7 +277,7 @@ it("should call the install passing credentials", async () => {
       performValidation: true,
     },
     passCredentials: true,
-    interval: undefined,
+    interval: "",
     description: undefined,
   } as unknown as IPkgRepoFormData);
 });
@@ -316,7 +316,7 @@ describe("when using a filter", () => {
         },
         performValidation: true,
       },
-      interval: undefined,
+      interval: "",
       description: undefined,
     } as unknown as IPkgRepoFormData);
   });
@@ -357,7 +357,7 @@ describe("when using a filter", () => {
         },
         performValidation: true,
       },
-      interval: undefined,
+      interval: "",
       description: undefined,
     } as unknown as IPkgRepoFormData);
   });
@@ -399,7 +399,7 @@ describe("when using a filter", () => {
         filterRule: undefined,
         performValidation: true,
       },
-      interval: undefined,
+      interval: "",
       description: undefined,
     } as unknown as IPkgRepoFormData);
   });
@@ -433,7 +433,7 @@ it("should call the install method with a description", async () => {
       filterRule: undefined,
       performValidation: true,
     },
-    interval: undefined,
+    interval: "",
     description: "description test",
   } as unknown as IPkgRepoFormData);
 });

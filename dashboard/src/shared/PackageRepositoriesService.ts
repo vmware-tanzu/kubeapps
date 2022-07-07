@@ -55,6 +55,7 @@ export class PackageRepositoriesService {
       namespace,
       request,
       namespaceScoped,
+      this.buildEncodedCustomDetails(request),
     );
 
     return await this.coreRepositoriesClient().AddPackageRepository(addPackageRepositoryRequest);
@@ -71,7 +72,24 @@ export class PackageRepositoriesService {
       namespace,
       request,
       undefined,
+      this.buildEncodedCustomDetails(request),
     );
+
+    // if using the Helm plugin, add its custom fields.
+    // An "Any" object has  "typeUrl" with the FQN of the type and a "value",
+    // which is the result of the encoding (+finish(), to get the Uint8Array)
+    // of the actual custom object
+    if (request.plugin?.name === PluginNames.PACKAGES_HELM) {
+      addPackageRepositoryRequest.customDetail = {
+        typeUrl: `${helmProtobufPackage}.RepositoryCustomDetails`,
+        value: RepositoryCustomDetails.encode({
+          dockerRegistrySecrets: request.customDetails.dockerRegistrySecrets,
+          ociRepositories: request.customDetails.ociRepositories,
+          filterRule: request.customDetails.filterRule,
+          performValidation: request.customDetails.performValidation,
+        } as RepositoryCustomDetails).finish(),
+      } as Any;
+    }
 
     return await this.coreRepositoriesClient().UpdatePackageRepository(
       updatePackageRepositoryRequest,
@@ -92,6 +110,7 @@ export class PackageRepositoriesService {
     namespace: string,
     request: IPkgRepoFormData,
     namespaceScoped?: boolean,
+    customDetails?: any,
   ) {
     const addPackageRepositoryRequest = {
       context: { cluster, namespace },
@@ -102,6 +121,7 @@ export class PackageRepositoriesService {
       url: request.url,
       interval: request.interval,
       plugin: request.plugin,
+      customDetails: customDetails,
     } as AddPackageRepositoryRequest;
 
     // add optional fields if present in the request
@@ -186,21 +206,6 @@ export class PackageRepositoriesService {
         } as SecretKeyReference,
       } as PackageRepositoryAuth;
     }
-    // if using the Helm plugin, add its custom fields.
-    // An "Any" object has  "typeUrl" with the FQN of the type and a "value",
-    // which is the result of the encoding (+finish(), to get the Uint8Array)
-    // of the actual custom object
-    if (request.plugin?.name === PluginNames.PACKAGES_HELM) {
-      addPackageRepositoryRequest.customDetail = {
-        typeUrl: `${helmProtobufPackage}.RepositoryCustomDetails`,
-        value: RepositoryCustomDetails.encode({
-          dockerRegistrySecrets: request.customDetails.dockerRegistrySecrets,
-          ociRepositories: request.customDetails.ociRepositories,
-          filterRule: request.customDetails.filterRule,
-          performValidation: request.customDetails.performValidation,
-        } as RepositoryCustomDetails).finish(),
-      } as Any;
-    }
 
     if (isUpdate) {
       const updatePackageRepositoryRequest: UpdatePackageRepositoryRequest = {
@@ -219,5 +224,26 @@ export class PackageRepositoriesService {
       return updatePackageRepositoryRequest;
     }
     return addPackageRepositoryRequest;
+  }
+
+  private static buildEncodedCustomDetails(request: IPkgRepoFormData) {
+    // if using the Helm plugin, add its custom fields.
+    // An "Any" object has  "typeUrl" with the FQN of the type and a "value",
+    // which is the result of the encoding (+finish(), to get the Uint8Array)
+    // of the actual custom object
+    switch (request.plugin?.name) {
+      case PluginNames.PACKAGES_HELM:
+        return {
+          typeUrl: `${helmProtobufPackage}.RepositoryCustomDetails`,
+          value: RepositoryCustomDetails.encode({
+            dockerRegistrySecrets: request.customDetails.dockerRegistrySecrets,
+            ociRepositories: request.customDetails.ociRepositories,
+            filterRule: request.customDetails.filterRule,
+            performValidation: request.customDetails.performValidation,
+          } as RepositoryCustomDetails).finish(),
+        } as Any;
+      default:
+        return undefined;
+    }
   }
 }
