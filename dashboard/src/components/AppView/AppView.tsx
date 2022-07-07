@@ -101,6 +101,7 @@ function getButtons(app: CustomInstalledPackageDetail, error: any, revision: num
 
   const buttons = [];
 
+
   // Upgrade is a core operation, it will always be available
   buttons.push(
     <UpgradeButton
@@ -111,16 +112,6 @@ function getButtons(app: CustomInstalledPackageDetail, error: any, revision: num
     />,
   );
  
-  // Start can only be operated on packages that are stopped
- if (getPluginsSupportingRollback().includes(app.installedPackageRef.plugin.name)) {
-  buttons.push(
-    <StartButton
-      key="start-button"
-      installedPackageRef={app.installedPackageRef}
-      releaseStatus={app?.status}
-      disabled={error !== undefined}
-    />,
-  );
 
   // Rollback is a helm-only operation, it will only be available for helm-plugin packages
   if (getPluginsSupportingRollback().includes(app.installedPackageRef.plugin.name)) {
@@ -134,6 +125,15 @@ function getButtons(app: CustomInstalledPackageDetail, error: any, revision: num
       />,
     );
   }
+
+  buttons.push(
+    <StartButton
+      key="start-button"
+      installedPackageRef={app.installedPackageRef}
+      releaseStatus={app?.status}
+      disabled={error !== undefined}
+    />,
+  );
 
   // Delete is a core operation, it will always be available
   buttons.push(
@@ -333,6 +333,10 @@ export default function AppView() {
             ) : error.constructor === DeleteError ? (
               <Alert theme="danger">
                 Unable to delete the application. Received: {error["message"]}
+              </Alert>
+            ) : error.constructor === StartError ? (
+              <Alert theme="warning">
+                Unable to start the application. Received: {error["message"]}
               </Alert>
             ) : (
               <Alert theme="danger">An error occurred: {error["message"]}</Alert>

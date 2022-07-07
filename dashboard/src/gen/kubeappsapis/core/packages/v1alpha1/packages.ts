@@ -174,7 +174,7 @@ export interface DeleteInstalledPackageRequest {
  * Request for StartInstalledPackage
  */
  export interface StartInstalledPackageRequest {
-  /** A reference to uniquely identify the installed package to be deleted. */
+  /** A reference to uniquely identify the installed package to be started. */
   installedPackageRef?: InstalledPackageReference;
 }
 
@@ -321,6 +321,15 @@ export interface UpdateInstalledPackageResponse {
  * Response for DeleteInstalledPackage
  */
 export interface DeleteInstalledPackageResponse {}
+
+/**
+ * StarteInstalledPackageResponse
+ *
+ * Response for StartInstalledPackage
+ */
+ export interface StartInstalledPackageResponse {
+  installedPackageRef?: InstalledPackageReference;
+ }
 
 /**
  * GetInstalledPackageResourceRefsResponse
@@ -878,6 +887,8 @@ export enum InstalledPackageStatus_StatusReason {
   STATUS_REASON_UNINSTALLED = 2,
   STATUS_REASON_FAILED = 3,
   STATUS_REASON_PENDING = 4,
+  STATUS_REASON_STARTED = 5,
+  STATUS_REASON_STOPPED = 6,
   UNRECOGNIZED = -1,
 }
 
@@ -900,6 +911,12 @@ export function installedPackageStatus_StatusReasonFromJSON(
     case 4:
     case "STATUS_REASON_PENDING":
       return InstalledPackageStatus_StatusReason.STATUS_REASON_PENDING;
+    case 5:
+    case "STATUS_REASON_STARTED":
+      return InstalledPackageStatus_StatusReason.STATUS_REASON_STARTED;
+    case 6:
+    case "STATUS_REASON_STOPPED":
+      return InstalledPackageStatus_StatusReason.STATUS_REASON_STOPPED;
     case -1:
     case "UNRECOGNIZED":
     default:
@@ -921,6 +938,10 @@ export function installedPackageStatus_StatusReasonToJSON(
       return "STATUS_REASON_FAILED";
     case InstalledPackageStatus_StatusReason.STATUS_REASON_PENDING:
       return "STATUS_REASON_PENDING";
+    case InstalledPackageStatus_StatusReason.STATUS_REASON_STARTED:
+      return "STATUS_REASON_STARTED";
+    case InstalledPackageStatus_StatusReason.STATUS_REASON_STOPPED:
+      return "STATUS_REASON_STOPPED";
     case InstalledPackageStatus_StatusReason.UNRECOGNIZED:
     default:
       return "UNRECOGNIZED";
@@ -2305,6 +2326,47 @@ export const DeleteInstalledPackageResponse = {
     _: I,
   ): DeleteInstalledPackageResponse {
     const message = createBaseDeleteInstalledPackageResponse();
+    return message;
+  },
+};
+
+function createBaseStartInstalledPackageResponse(): StartInstalledPackageResponse {
+  return {};
+}
+
+export const StartInstalledPackageResponse = {
+  encode(_: StartInstalledPackageResponse, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
+    return writer;
+  },
+
+  decode(input: _m0.Reader | Uint8Array, length?: number): StartInstalledPackageResponse {
+    const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseStartInstalledPackageResponse();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        default:
+          reader.skipType(tag & 7);
+          break;
+      }
+    }
+    return message;
+  },
+
+  fromJSON(_: any): StartInstalledPackageResponse {
+    return {};
+  },
+
+  toJSON(_: StartInstalledPackageResponse): unknown {
+    const obj: any = {};
+    return obj;
+  },
+
+  fromPartial<I extends Exact<DeepPartial<StartInstalledPackageResponse>, I>>(
+    _: I,
+  ): StartInstalledPackageResponse {
+    const message = createBaseStartInstalledPackageResponse();
     return message;
   },
 };
@@ -3995,6 +4057,7 @@ export class PackagesServiceClientImpl implements PackagesService {
     this.GetInstalledPackageDetail = this.GetInstalledPackageDetail.bind(this);
     this.CreateInstalledPackage = this.CreateInstalledPackage.bind(this);
     this.UpdateInstalledPackage = this.UpdateInstalledPackage.bind(this);
+    this.StartInstalledPackage = this.StartInstalledPackage.bind(this);
     this.DeleteInstalledPackage = this.DeleteInstalledPackage.bind(this);
     this.GetInstalledPackageResourceRefs = this.GetInstalledPackageResourceRefs.bind(this);
   }
@@ -4083,6 +4146,17 @@ export class PackagesServiceClientImpl implements PackagesService {
     return this.rpc.unary(
       PackagesServiceDeleteInstalledPackageDesc,
       DeleteInstalledPackageRequest.fromPartial(request),
+      metadata,
+    );
+  }
+
+  StartInstalledPackage(
+    request: DeepPartial<StartInstalledPackageRequest>,
+    metadata?: grpc.Metadata,
+  ): Promise<StartInstalledPackageResponse> {
+    return this.rpc.unary(
+      PackagesServiceStartInstalledPackageDesc,
+      StartInstalledPackageRequest.fromPartial(request),
       metadata,
     );
   }
@@ -4271,6 +4345,28 @@ export const PackagesServiceDeleteInstalledPackageDesc: UnaryMethodDefinitionish
     deserializeBinary(data: Uint8Array) {
       return {
         ...DeleteInstalledPackageResponse.decode(data),
+        toObject() {
+          return this;
+        },
+      };
+    },
+  } as any,
+};
+
+export const PackagesServiceStartInstalledPackageDesc: UnaryMethodDefinitionish = {
+  methodName: "StartInstalledPackage",
+  service: PackagesServiceDesc,
+  requestStream: false,
+  responseStream: false,
+  requestType: {
+    serializeBinary() {
+      return StartInstalledPackageRequest.encode(this).finish();
+    },
+  } as any,
+  responseType: {
+    deserializeBinary(data: Uint8Array) {
+      return {
+        ...StartInstalledPackageResponse.decode(data),
         toObject() {
           return this;
         },

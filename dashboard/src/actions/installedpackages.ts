@@ -17,6 +17,7 @@ import PackagesService from "shared/PackagesService";
 import {
   CreateError,
   DeleteError,
+  StartError,
   FetchError,
   FetchWarning,
   IStoreState,
@@ -52,6 +53,10 @@ export const requestInstallPackage = createAction("REQUEST_INSTALL_PACKAGE");
 
 export const receiveInstallPackage = createAction("RECEIVE_INSTALL_PACKAGE_CONFIRMATION");
 
+export const requestStartInstalledPackage = createAction("REQUEST_START_INSTALLED_PACKAGE")
+
+export const receiveStartInstalledPackage = createAction("REQUEST_START_INSTALLED_PACKAGE_CONFIRMATION")
+
 export const requestUpdateInstalledPackage = createAction("REQUEST_UPDATE_INSTALLED_PACKAGE");
 
 export const receiveUpdateInstalledPackage = createAction(
@@ -74,7 +79,7 @@ export const receiveInstalledPackageStatus = createAction(
 );
 
 export const errorInstalledPackage = createAction("ERROR_INSTALLED_PACKAGE", resolve => {
-  return (err: FetchError | CreateError | UpgradeError | RollbackError | DeleteError) =>
+  return (err: FetchError | CreateError | UpgradeError | RollbackError | DeleteError | StartError) =>
     resolve(err);
 });
 
@@ -84,8 +89,6 @@ export const selectInstalledPackage = createAction("SELECT_INSTALLED_PACKAGE", r
   return (pkg: InstalledPackageDetail, details?: AvailablePackageDetail) =>
     resolve({ pkg, details });
 });
-
-export const requestStartInstalledPackage = createAction("REQUEST_START_INSTALLED_PACKAGE");
 
 const allActions = [
   requestInstalledPackageList,
@@ -97,6 +100,8 @@ const allActions = [
   receiveDeleteInstalledPackage,
   requestInstallPackage,
   receiveInstallPackage,
+  requestStartInstalledPackage,
+  receiveStartInstalledPackage,
   requestUpdateInstalledPackage,
   receiveUpdateInstalledPackage,
   requestRollbackInstalledPackage,
@@ -331,13 +336,13 @@ export function startInstalledPackage(
   installedPackageRef: InstalledPackageReference,
 ): ThunkAction<Promise<boolean>, IStoreState, null, InstalledPackagesAction> {
   return async dispatch => {
-    dispatch(requestDeleteInstalledPackage());
+    dispatch(requestStartInstalledPackage());
     try {
-      await InstalledPackage.DeleteInstalledPackage(installedPackageRef);
-      dispatch(receiveDeleteInstalledPackage());
+      await InstalledPackage.StartInstalledPackage(installedPackageRef);
+      dispatch(receiveStartInstalledPackage());
       return true;
     } catch (e: any) {
-      dispatch(errorInstalledPackage(new DeleteError(e.message)));
+      dispatch(errorInstalledPackage(new StartError(e.message)));
       return false;
     }
   };

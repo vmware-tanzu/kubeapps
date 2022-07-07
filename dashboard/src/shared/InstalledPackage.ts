@@ -6,6 +6,7 @@ import {
   Context,
   CreateInstalledPackageRequest,
   DeleteInstalledPackageRequest,
+  StartInstalledPackageRequest,
   InstalledPackageReference,
   ReconciliationOptions,
   UpdateInstalledPackageRequest,
@@ -101,5 +102,11 @@ export class InstalledPackage {
     return await this.coreClient().DeleteInstalledPackage({
       installedPackageRef,
     } as DeleteInstalledPackageRequest);
+  }
+
+  public static async StartInstalledPackage(installedPackageRef: InstalledPackageReference) {
+    return await this.coreClient().StartInstalledPackage({
+      installedPackageRef,
+    } as StartInstalledPackageRequest);
   }
 }
