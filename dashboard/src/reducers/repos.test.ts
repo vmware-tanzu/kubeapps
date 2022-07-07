@@ -119,6 +119,28 @@ describe("reposReducer", () => {
       ).toEqual({ ...initialState, repos: [repoSummary] });
     });
 
+    it("adds a repo sorting the result", () => {
+      const repoSummary1 = { name: "zzz" } as PackageRepositorySummary;
+      const repoSummary2 = { name: "aaa" } as PackageRepositorySummary;
+      const state = reposReducer(
+        { ...initialState, repos: [repoSummary1] },
+        {
+          type: actionTypes.addRepo,
+        },
+      );
+      expect(state).toEqual({
+        ...initialState,
+        repos: [repoSummary1],
+        addingRepo: true,
+      });
+      expect(
+        reposReducer(state, {
+          type: actionTypes.addedRepo,
+          payload: repoSummary2,
+        }),
+      ).toEqual({ ...initialState, repos: [repoSummary2, repoSummary1] });
+    });
+
     it("updates a repo", () => {
       const repoSummary = {
         name: "foo",
