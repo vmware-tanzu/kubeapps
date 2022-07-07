@@ -213,6 +213,7 @@ export function PkgRepoForm(props: IPkgRepoFormProps) {
             ? PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_DOCKER_CONFIG_JSON
             : PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_UNSPECIFIED,
         );
+        setSecretPSName(repositoryCustomDetails?.dockerRegistrySecrets?.[0] || "");
       }
     }
   }, [repo, namespace, currentCluster, dispatch]);
@@ -355,6 +356,8 @@ export function PkgRepoForm(props: IPkgRepoFormProps) {
       case PluginNames.PACKAGES_HELM:
         setType(RepositoryStorageTypes.PACKAGE_REPOSITORY_STORAGE_HELM);
         // helm plugin doesn't allow interval
+        // eslint-disable-next-line no-implied-eval
+        setInterval("");
         break;
       case PluginNames.PACKAGES_FLUX:
         setType(RepositoryStorageTypes.PACKAGE_REPOSITORY_STORAGE_HELM);
@@ -1376,7 +1379,7 @@ export function PkgRepoForm(props: IPkgRepoFormProps) {
                         }
                       >
                         {/* TODO(agamez): enable the selection once the API supports it (#5015) */}
-                        {/* <CdsToggleGroup className="flex-v-center">
+                        <CdsToggleGroup className="flex-v-center">
                           <CdsToggle>
                             <label>
                               {isUserManagedPSSecret
@@ -1385,16 +1388,17 @@ export function PkgRepoForm(props: IPkgRepoFormProps) {
                             </label>
                             <input
                               type="checkbox"
-                              onChange={handleIsUserManagedPSSecretChange}
+                              // onChange={handleIsUserManagedPSSecretChange}
                               checked={isUserManagedPSSecret}
-                              disabled={
-                                !!(repo?.customDetail as Partial<RepositoryCustomDetails>)
-                                  ?.dockerRegistrySecrets?.length
-                              }
+                              disabled={true}
+                              // disabled={
+                              //   !!(repo?.customDetail as Partial<RepositoryCustomDetails>)
+                              //     ?.dockerRegistrySecrets?.length
+                              // }
                             />
                           </CdsToggle>
                         </CdsToggleGroup>
-                        <br /> */}
+                        <br />
                         {isUserManagedPSSecret ? (
                           <>
                             <CdsInput>

@@ -30,8 +30,6 @@ import { PluginNames } from "./utils";
 export class PackageRepositoriesService {
   public static coreRepositoriesClient = () =>
     new KubeappsGrpcClient().getRepositoriesServiceClientImpl();
-  public static helmRepositoriesClient = () =>
-    new KubeappsGrpcClient().getHelmRepositoriesServiceClientImpl();
 
   public static async getPackageRepositorySummaries(
     context: Context,
@@ -42,14 +40,7 @@ export class PackageRepositoriesService {
   public static async getPackageRepositoryDetail(
     packageRepoRef: PackageRepositoryReference,
   ): Promise<GetPackageRepositoryDetailResponse> {
-    // since the Helm plugin has its own fields (dockerRegistrySecrets, ociRepositories, filterRule, performValidation),
-    // we invoke it directly instead of using kthe core API client.
-    switch (packageRepoRef?.plugin?.name) {
-      case PluginNames.PACKAGES_HELM:
-        return await this.helmRepositoriesClient().GetPackageRepositoryDetail({ packageRepoRef });
-      default:
-        return await this.coreRepositoriesClient().GetPackageRepositoryDetail({ packageRepoRef });
-    }
+    return await this.coreRepositoriesClient().GetPackageRepositoryDetail({ packageRepoRef });
   }
 
   public static async addPackageRepository(
@@ -66,18 +57,7 @@ export class PackageRepositoriesService {
       namespaceScoped,
     );
 
-    // since the Helm plugin has its own fields (dockerRegistrySecrets, ociRepositories, filterRule, performValidation),
-    // we invoke it directly instead of using kthe core API client.
-    switch (request.plugin.name) {
-      case PluginNames.PACKAGES_HELM:
-        return await this.helmRepositoriesClient().AddPackageRepository(
-          addPackageRepositoryRequest,
-        );
-      default:
-        return await this.coreRepositoriesClient().AddPackageRepository(
-          addPackageRepositoryRequest,
-        );
-    }
+    return await this.coreRepositoriesClient().AddPackageRepository(addPackageRepositoryRequest);
   }
 
   public static async updatePackageRepository(
@@ -93,18 +73,9 @@ export class PackageRepositoriesService {
       undefined,
     );
 
-    // since the Helm plugin has its own fields (dockerRegistrySecrets, ociRepositories, filterRule, performValidation),
-    // we invoke it directly instead of using kthe core API client.
-    switch (request.plugin.name) {
-      case PluginNames.PACKAGES_HELM:
-        return await this.helmRepositoriesClient().UpdatePackageRepository(
-          updatePackageRepositoryRequest,
-        );
-      default:
-        return await this.coreRepositoriesClient().UpdatePackageRepository(
-          updatePackageRepositoryRequest,
-        );
-    }
+    return await this.coreRepositoriesClient().UpdatePackageRepository(
+      updatePackageRepositoryRequest,
+    );
   }
 
   public static async deletePackageRepository(
