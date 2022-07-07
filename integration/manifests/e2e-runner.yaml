@@ -5,16 +5,16 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   labels:
-    run: integration
-  name: integration
+    run: e2e-runner
+  name: e2e-runner
 spec:
   selector:
     matchLabels:
-      run: integration
+      run: e2e-runner
   template:
     metadata:
       labels:
-        run: integration
+        run: e2e-runner
     spec:
       containers:
         - args:
