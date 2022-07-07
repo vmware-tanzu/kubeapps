@@ -75,22 +75,6 @@ export class PackageRepositoriesService {
       this.buildEncodedCustomDetails(request),
     );
 
-    // if using the Helm plugin, add its custom fields.
-    // An "Any" object has  "typeUrl" with the FQN of the type and a "value",
-    // which is the result of the encoding (+finish(), to get the Uint8Array)
-    // of the actual custom object
-    if (request.plugin?.name === PluginNames.PACKAGES_HELM) {
-      addPackageRepositoryRequest.customDetail = {
-        typeUrl: `${helmProtobufPackage}.RepositoryCustomDetails`,
-        value: RepositoryCustomDetails.encode({
-          dockerRegistrySecrets: request.customDetails.dockerRegistrySecrets,
-          ociRepositories: request.customDetails.ociRepositories,
-          filterRule: request.customDetails.filterRule,
-          performValidation: request.customDetails.performValidation,
-        } as RepositoryCustomDetails).finish(),
-      } as Any;
-    }
-
     return await this.coreRepositoriesClient().UpdatePackageRepository(
       updatePackageRepositoryRequest,
     );
