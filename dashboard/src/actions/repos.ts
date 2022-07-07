@@ -22,12 +22,12 @@ import { createErrorPackage } from "./availablepackages";
 const { createAction } = deprecated;
 export const addRepo = createAction("ADD_REPO");
 export const addedRepo = createAction("ADDED_REPO", resolve => {
-  return (added: PackageRepositoryDetail) => resolve(added);
+  return (added: PackageRepositorySummary) => resolve(added);
 });
 
 export const requestRepoUpdate = createAction("REQUEST_REPO_UPDATE");
 export const repoUpdated = createAction("REPO_UPDATED", resolve => {
-  return (updated: PackageRepositoryDetail) => resolve(updated);
+  return (updated: PackageRepositorySummary) => resolve(updated);
 });
 
 export const requestRepoSummaries = createAction("REQUEST_REPOS", resolve => {
@@ -190,7 +190,8 @@ export const installRepo = (
         );
         return false;
       }
-      dispatch(addedRepo(getPackageRepositoryDetailResponse.detail));
+      const repoSummary = convertPkgRepoDetailToSummary(getPackageRepositoryDetailResponse.detail);
+      dispatch(addedRepo(repoSummary));
       return true;
     } catch (e: any) {
       dispatch(errorRepos(e, "create"));
@@ -243,7 +244,8 @@ export const updateRepo = (
         );
         return false;
       }
-      dispatch(repoUpdated(getPackageRepositoryDetailResponse.detail));
+      const repoSummary = convertPkgRepoDetailToSummary(getPackageRepositoryDetailResponse.detail);
+      dispatch(repoUpdated(repoSummary));
       return true;
     } catch (e: any) {
       dispatch(errorRepos(e, "update"));
@@ -321,4 +323,20 @@ export const findPackageInRepo = (
       return false;
     }
   };
+};
+
+export const convertPkgRepoDetailToSummary = (
+  repoDetail: PackageRepositoryDetail,
+): PackageRepositorySummary => {
+  const repoSummary: PackageRepositorySummary = {
+    description: repoDetail.description,
+    name: repoDetail.name,
+    type: repoDetail.type,
+    url: repoDetail.url,
+    namespaceScoped: repoDetail.namespaceScoped,
+    requiresAuth: !!repoDetail.auth,
+    packageRepoRef: repoDetail.packageRepoRef,
+    status: repoDetail.status,
+  };
+  return repoSummary;
 };

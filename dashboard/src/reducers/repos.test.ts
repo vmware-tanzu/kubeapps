@@ -14,6 +14,7 @@ describe("reposReducer", () => {
 
   beforeEach(() => {
     initialState = {
+      addingRepo: false,
       errors: {},
       form: {
         name: "",
@@ -52,7 +53,8 @@ describe("reposReducer", () => {
       it("sets isFetching when requesting repos", () => {
         expect(
           reposReducer(undefined, {
-            type: actionTypes.requestRepos as any,
+            type: actionTypes.requestRepos,
+            payload: "",
           }),
         ).toEqual({
           ...initialState,
@@ -64,7 +66,8 @@ describe("reposReducer", () => {
       it("unsets isFetching and receive repos", () => {
         const repoSummary = { name: "foo" } as PackageRepositorySummary;
         const state = reposReducer(undefined, {
-          type: actionTypes.requestRepos as any,
+          type: actionTypes.requestRepos,
+          payload: "",
         });
         expect(state).toEqual({
           ...initialState,
@@ -73,7 +76,7 @@ describe("reposReducer", () => {
         });
         expect(
           reposReducer(state, {
-            type: actionTypes.receiveRepos as any,
+            type: actionTypes.receiveRepos,
             payload: [repoSummary],
           }),
         ).toEqual({ ...initialState, repos: [repoSummary] });
@@ -82,7 +85,8 @@ describe("reposReducer", () => {
       it("unsets isFetching and receive repo", () => {
         const repoDetail = { name: "foo" } as PackageRepositoryDetail;
         const state = reposReducer(undefined, {
-          type: actionTypes.requestRepos as any,
+          type: actionTypes.requestRepos,
+          payload: "",
         });
         expect(state).toEqual({
           ...initialState,
@@ -91,7 +95,7 @@ describe("reposReducer", () => {
         });
         expect(
           reposReducer(state, {
-            type: actionTypes.receiveRepo as any,
+            type: actionTypes.receiveRepo,
             payload: repoDetail,
           }),
         ).toEqual({ ...initialState, repo: repoDetail });
@@ -99,32 +103,37 @@ describe("reposReducer", () => {
     });
 
     it("adds a repo", () => {
-      const repoDetail = { name: "foo" } as PackageRepositoryDetail;
+      const repoSummary = { name: "foo" } as PackageRepositorySummary;
       const state = reposReducer(undefined, {
-        type: actionTypes.addRepo as any,
+        type: actionTypes.addRepo,
       });
       expect(state).toEqual({
         ...initialState,
+        addingRepo: true,
       });
       expect(
         reposReducer(state, {
-          type: actionTypes.addedRepo as any,
-          payload: repoDetail,
+          type: actionTypes.addedRepo,
+          payload: repoSummary,
         }),
-      ).toEqual({ ...initialState, lastAdded: repoDetail, repo: repoDetail });
+      ).toEqual({ ...initialState, repos: [repoSummary] });
     });
 
     it("updates a repo", () => {
-      const repoDetail = { name: "foo" } as PackageRepositoryDetail;
+      const repoSummary = {
+        name: "foo",
+        url: "foo",
+        packageRepoRef: { context: { namespace: "ns" } },
+      } as PackageRepositorySummary;
       expect(
         reposReducer(
-          { ...initialState, repo: repoDetail },
+          { ...initialState, repos: [repoSummary] },
           {
-            type: actionTypes.repoUpdated as any,
-            payload: { ...repoDetail, name: "b" },
+            type: actionTypes.repoUpdated,
+            payload: { ...repoSummary, url: "bar" },
           },
         ),
-      ).toEqual({ ...initialState, repo: { ...repoDetail, name: "b" } });
+      ).toEqual({ ...initialState, repos: [{ ...repoSummary, url: "bar" }] });
     });
   });
 });

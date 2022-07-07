@@ -14,6 +14,7 @@ import actions from "../actions";
 import { PkgReposAction } from "../actions/repos";
 
 export interface IPackageRepositoryState {
+  addingRepo: boolean;
   errors: {
     create?: Error;
     delete?: Error;
@@ -41,6 +42,7 @@ export interface IPackageRepositoryState {
 }
 
 export const initialState: IPackageRepositoryState = {
+  addingRepo: false,
   errors: {},
   form: {
     name: "",
@@ -115,17 +117,29 @@ const reposReducer = (
       return { ...state, ...isFetching(state, "repositories", true) };
     case getType(actions.repos.requestRepoDetail):
       return { ...state, repo: initialState.repo, errors: {} };
+    case getType(actions.repos.addRepo):
+      return { ...state, addingRepo: true };
     case getType(actions.repos.addedRepo):
       return {
         ...state,
-        lastAdded: action.payload,
-        repo: action.payload,
+        addingRepo: false,
+        repos: [...state.repos, action.payload].sort((a, b) =>
+          a.name.toLowerCase() > b.name.toLowerCase()
+            ? 1
+            : b.name.toLowerCase() > a.name.toLowerCase()
+            ? -1
+            : 0,
+        ),
       };
     case getType(actions.repos.repoUpdated): {
-      return {
-        ...state,
-        repo: action.payload,
-      };
+      const updatedRepo = action.payload;
+      const repos = state.repos.map(r =>
+        r.name === updatedRepo.name &&
+        r.packageRepoRef?.context?.namespace === updatedRepo.packageRepoRef?.context?.namespace
+          ? updatedRepo
+          : r,
+      );
+      return { ...state, repos };
     }
     case getType(actions.repos.redirect):
       return { ...state, redirectTo: action.payload };

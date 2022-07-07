@@ -25,6 +25,7 @@ import PackagesService from "shared/PackagesService";
 import { IPkgRepoFormData, NotFoundError, RepositoryStorageTypes } from "shared/types";
 import { getType } from "typesafe-actions";
 import actions from ".";
+import { convertPkgRepoDetailToSummary } from "./repos";
 
 const { repos: repoActions } = actions;
 const mockStore = configureMockStore([thunk]);
@@ -540,7 +541,7 @@ describe("installRepo", () => {
       },
       {
         type: getType(repoActions.addedRepo),
-        payload: packageRepositoryDetail,
+        payload: convertPkgRepoDetailToSummary(packageRepositoryDetail),
       },
     ];
 
@@ -588,7 +589,7 @@ describe("installRepo", () => {
 
 describe("updateRepo", () => {
   it("updates a repo with an auth header", async () => {
-    const r = {
+    const pkgRepoDetail = {
       ...packageRepositoryDetail,
       auth: {
         header: "foo",
@@ -596,10 +597,10 @@ describe("updateRepo", () => {
     } as PackageRepositoryDetail;
 
     PackageRepositoriesService.updatePackageRepository = jest.fn().mockReturnValue({
-      packageRepoRef: packageRepositoryDetail.packageRepoRef,
+      packageRepoRef: pkgRepoDetail.packageRepoRef,
     } as UpdatePackageRepositoryResponse);
     PackageRepositoriesService.getPackageRepositoryDetail = jest.fn().mockReturnValue({
-      detail: r,
+      detail: pkgRepoDetail,
     } as GetPackageRepositoryDetailResponse);
     const expectedActions = [
       {
@@ -607,7 +608,7 @@ describe("updateRepo", () => {
       },
       {
         type: getType(repoActions.repoUpdated),
-        payload: r,
+        payload: convertPkgRepoDetailToSummary(pkgRepoDetail),
       },
     ];
 
@@ -630,7 +631,7 @@ describe("updateRepo", () => {
   });
 
   it("updates a repo with an customCA", async () => {
-    const r = {
+    const pkgRepoDetail = {
       ...packageRepositoryDetail,
       tlsConfig: {
         secretRef: { name: "pkgrepo-repo-abc", key: "data" },
@@ -642,7 +643,7 @@ describe("updateRepo", () => {
       packageRepoRef: packageRepositoryDetail.packageRepoRef,
     } as UpdatePackageRepositoryResponse);
     PackageRepositoriesService.getPackageRepositoryDetail = jest.fn().mockReturnValue({
-      detail: r,
+      detail: pkgRepoDetail,
     } as GetPackageRepositoryDetailResponse);
     const expectedActions = [
       {
@@ -650,7 +651,7 @@ describe("updateRepo", () => {
       },
       {
         type: getType(repoActions.repoUpdated),
-        payload: r,
+        payload: convertPkgRepoDetailToSummary(pkgRepoDetail),
       },
     ];
 
