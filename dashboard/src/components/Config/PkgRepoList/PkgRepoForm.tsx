@@ -33,6 +33,7 @@ import { IPkgRepoFormData, IPkgRepositoryFilter, IStoreState } from "shared/type
 import {
   getPluginByName,
   getPluginPackageName,
+  getSupportedAuthMethods,
   k8sObjectNameRegex,
   PluginNames,
 } from "shared/utils";
@@ -770,7 +771,12 @@ export function PkgRepoForm(props: IPkgRepoFormProps) {
                           PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_BASIC_AUTH
                         }
                         onChange={handleAuthRadioButtonChange}
-                        disabled={!!repo.auth?.type}
+                        disabled={
+                          !!repo.auth?.type ||
+                          !getSupportedAuthMethods(plugin).includes(
+                            PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_BASIC_AUTH,
+                          )
+                        }
                       />
                     </CdsRadio>
                     <CdsRadio>
@@ -790,7 +796,12 @@ export function PkgRepoForm(props: IPkgRepoFormProps) {
                           PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_BEARER
                         }
                         onChange={handleAuthRadioButtonChange}
-                        disabled={!!repo.auth?.type}
+                        disabled={
+                          !!repo.auth?.type ||
+                          !getSupportedAuthMethods(plugin).includes(
+                            PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_BEARER,
+                          )
+                        }
                       />
                     </CdsRadio>
                     <CdsRadio>
@@ -812,7 +823,12 @@ export function PkgRepoForm(props: IPkgRepoFormProps) {
                           PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_DOCKER_CONFIG_JSON
                         }
                         onChange={handleAuthRadioButtonChange}
-                        disabled={!!repo.auth?.type}
+                        disabled={
+                          !!repo.auth?.type ||
+                          !getSupportedAuthMethods(plugin).includes(
+                            PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_DOCKER_CONFIG_JSON,
+                          )
+                        }
                       />
                     </CdsRadio>
                     <CdsRadio>
@@ -834,7 +850,12 @@ export function PkgRepoForm(props: IPkgRepoFormProps) {
                           PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_AUTHORIZATION_HEADER
                         }
                         onChange={handleAuthRadioButtonChange}
-                        disabled={!!repo.auth?.type}
+                        disabled={
+                          !!repo.auth?.type ||
+                          !getSupportedAuthMethods(plugin).includes(
+                            PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_AUTHORIZATION_HEADER,
+                          )
+                        }
                       />
                     </CdsRadio>
                     <CdsRadio>
@@ -856,7 +877,12 @@ export function PkgRepoForm(props: IPkgRepoFormProps) {
                           PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_SSH
                         }
                         onChange={handleAuthRadioButtonChange}
-                        disabled={!!repo.auth?.type}
+                        disabled={
+                          !!repo.auth?.type ||
+                          !getSupportedAuthMethods(plugin).includes(
+                            PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_SSH,
+                          )
+                        }
                       />
                     </CdsRadio>
                     <CdsRadio>
@@ -878,7 +904,12 @@ export function PkgRepoForm(props: IPkgRepoFormProps) {
                           PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_TLS
                         }
                         onChange={handleAuthRadioButtonChange}
-                        disabled={!!repo.auth?.type}
+                        disabled={
+                          !!repo.auth?.type ||
+                          !getSupportedAuthMethods(plugin).includes(
+                            PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_TLS,
+                          )
+                        }
                       />
                     </CdsRadio>
                     <CdsRadio>
@@ -900,7 +931,12 @@ export function PkgRepoForm(props: IPkgRepoFormProps) {
                           PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_OPAQUE
                         }
                         onChange={handleAuthRadioButtonChange}
-                        disabled={!!repo.auth?.type}
+                        disabled={
+                          !!repo.auth?.type ||
+                          !getSupportedAuthMethods(plugin).includes(
+                            PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_OPAQUE,
+                          )
+                        }
                       />
                     </CdsRadio>
                   </CdsRadioGroup>

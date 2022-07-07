@@ -11,6 +11,7 @@ import fluxIcon from "../icons/flux.svg";
 import helmIcon from "../icons/helm.svg";
 import olmIcon from "../icons/olm-icon.svg";
 import placeholder from "../placeholder.png";
+import { PackageRepositoryAuth_PackageRepositoryAuthType } from "gen/kubeappsapis/core/packages/v1alpha1/repositories";
 
 export enum PluginNames {
   PACKAGES_HELM = "helm.packages",
@@ -179,4 +180,34 @@ export function getAppStatusLabel(
   // pattern STATUS_REASON_<reason> by buf.
   const jsonReason = installedPackageStatus_StatusReasonToJSON(statusReason);
   return jsonReason.replace("STATUS_REASON_", "").toLowerCase();
+}
+
+export function getSupportedAuthMethods(
+  plugin: Plugin,
+): PackageRepositoryAuth_PackageRepositoryAuthType[] {
+  switch (plugin.name) {
+    case PluginNames.PACKAGES_HELM:
+      return [
+        PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_AUTHORIZATION_HEADER,
+        PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_BASIC_AUTH,
+        PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_BEARER,
+        PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_DOCKER_CONFIG_JSON,
+      ];
+    case PluginNames.PACKAGES_FLUX:
+      return [
+        PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_BASIC_AUTH,
+        PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_OPAQUE,
+        PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_SSH,
+        PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_TLS,
+      ];
+    case PluginNames.PACKAGES_KAPP:
+      return [
+        PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_BASIC_AUTH,
+        PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_BEARER,
+        PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_DOCKER_CONFIG_JSON,
+        PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_SSH,
+      ];
+    default:
+      return [];
+  }
 }
