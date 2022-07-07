@@ -1,11 +1,10 @@
 /* eslint-disable */
-import Long from "long";
 import { grpc } from "@improbable-eng/grpc-web";
-import * as _m0 from "protobufjs/minimal";
-import { Context } from "../../../../kubeappsapis/core/packages/v1alpha1/packages";
-import { Plugin } from "../../../../kubeappsapis/core/plugins/v1alpha1/plugins";
+import { Context } from "./packages";
+import { Plugin } from "../../plugins/v1alpha1/plugins";
 import { Any } from "../../../../google/protobuf/any";
 import { BrowserHeaders } from "browser-headers";
+import * as _m0 from "protobufjs/minimal";
 
 export const protobufPackage = "kubeappsapis.core.packages.v1alpha1";
 
@@ -32,8 +31,8 @@ export interface AddPackageRepositoryRequest {
   /**
    * Package storage type
    * In general, each plug-in will define an acceptable set of valid types
-   * - for direct helm plug-in valid values are: helm, oci
-   * - for flux plug-in currently only supported value is helm. In the
+   * - for direct helm plug-in valid values are: "helm" and "oci"
+   * - for flux plug-in valid values are: "helm" and "oci". In the
    *   future, we may add support for git and/or AWS s3-style buckets
    */
   type: string;
@@ -552,6 +551,8 @@ export interface PackageRepositorySummary {
    * status, where relevant.
    */
   status?: PackageRepositoryStatus;
+  /** existence of any authentication parameters for connecting to a repository. */
+  requiresAuth: boolean;
 }
 
 /**
@@ -2250,6 +2251,7 @@ function createBasePackageRepositorySummary(): PackageRepositorySummary {
     type: "",
     url: "",
     status: undefined,
+    requiresAuth: false,
   };
 }
 
@@ -2275,6 +2277,9 @@ export const PackageRepositorySummary = {
     }
     if (message.status !== undefined) {
       PackageRepositoryStatus.encode(message.status, writer.uint32(58).fork()).ldelim();
+    }
+    if (message.requiresAuth === true) {
+      writer.uint32(64).bool(message.requiresAuth);
     }
     return writer;
   },
@@ -2307,6 +2312,9 @@ export const PackageRepositorySummary = {
         case 7:
           message.status = PackageRepositoryStatus.decode(reader, reader.uint32());
           break;
+        case 8:
+          message.requiresAuth = reader.bool();
+          break;
         default:
           reader.skipType(tag & 7);
           break;
@@ -2326,6 +2334,7 @@ export const PackageRepositorySummary = {
       type: isSet(object.type) ? String(object.type) : "",
       url: isSet(object.url) ? String(object.url) : "",
       status: isSet(object.status) ? PackageRepositoryStatus.fromJSON(object.status) : undefined,
+      requiresAuth: isSet(object.requiresAuth) ? Boolean(object.requiresAuth) : false,
     };
   },
 
@@ -2342,6 +2351,7 @@ export const PackageRepositorySummary = {
     message.url !== undefined && (obj.url = message.url);
     message.status !== undefined &&
       (obj.status = message.status ? PackageRepositoryStatus.toJSON(message.status) : undefined);
+    message.requiresAuth !== undefined && (obj.requiresAuth = message.requiresAuth);
     return obj;
   },
 
@@ -2362,6 +2372,7 @@ export const PackageRepositorySummary = {
       object.status !== undefined && object.status !== null
         ? PackageRepositoryStatus.fromPartial(object.status)
         : undefined;
+    message.requiresAuth = object.requiresAuth ?? false;
     return message;
   },
 };
@@ -2828,11 +2839,6 @@ type KeysOfUnion<T> = T extends T ? keyof T : never;
 export type Exact<P, I extends P> = P extends Builtin
   ? P
   : P & { [K in keyof P]: Exact<P[K], I[K]> } & Record<Exclude<keyof I, KeysOfUnion<P>>, never>;
-
-if (_m0.util.Long !== Long) {
-  _m0.util.Long = Long as any;
-  _m0.configure();
-}
 
 function isObject(value: any): boolean {
   return typeof value === "object" && value !== null;

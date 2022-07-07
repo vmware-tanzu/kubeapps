@@ -381,6 +381,7 @@ func (s *Server) repoSummaries(ctx context.Context, cluster string, namespace st
 			NamespaceScoped: s.globalPackagingNamespace != repo.Namespace,
 			Type:            repo.Spec.Type,
 			Url:             repo.Spec.URL,
+			RequiresAuth:    repo.Spec.Auth.Header != nil,
 			// TODO(agamez): check if we can get the status from the repo somehow
 			// https://github.com/vmware-tanzu/kubeapps/issues/153
 			Status: &corev1.PackageRepositoryStatus{

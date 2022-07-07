@@ -351,6 +351,7 @@ func (s *Server) repoSummaries(ctx context.Context, namespace string) ([]*corev1
 		if typ == "" {
 			typ = "helm"
 		}
+
 		summary := &corev1.PackageRepositorySummary{
 			PackageRepoRef: &corev1.PackageRepositoryReference{
 				Context: &corev1.Context{
@@ -367,6 +368,7 @@ func (s *Server) repoSummaries(ctx context.Context, namespace string) ([]*corev1
 			Type:            typ,
 			Url:             repo.Spec.URL,
 			Status:          repoStatus(repo),
+			RequiresAuth:    repo.Spec.SecretRef != nil,
 		}
 		summaries = append(summaries, summary)
 	}
