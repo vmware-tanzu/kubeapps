@@ -260,45 +260,45 @@ export function PkgRepoForm(props: IPkgRepoFormProps) {
     }
 
     const success = await onSubmit({
-      authHeader: finalHeader,
+      authHeader: isUserManagedSecret ? "" : finalHeader,
       authMethod,
       basicAuth: {
-        password: basicPassword,
-        username: basicUser,
+        password: isUserManagedSecret ? "" : basicPassword,
+        username: isUserManagedSecret ? "" : basicUser,
       } as UsernamePassword,
-      customCA,
+      customCA: isUserManagedCASecret ? "" : customCA,
       customDetails: {
         ociRepositories: ociRepoList,
         performValidation,
         filterRule: filter,
-        dockerRegistrySecrets: secretPSName ? [secretPSName] : [],
+        dockerRegistrySecrets: isUserManagedPSSecret && secretPSName ? [secretPSName] : [],
       } as RepositoryCustomDetails,
       description,
       dockerRegCreds: {
-        username: secretUser,
-        email: secretEmail,
-        password: secretPassword,
-        server: secretServer,
+        username: isUserManagedSecret ? "" : secretUser,
+        email: isUserManagedSecret ? "" : secretEmail,
+        password: isUserManagedSecret ? "" : secretPassword,
+        server: isUserManagedSecret ? "" : secretServer,
       } as DockerCredentials,
       interval,
       name,
       passCredentials,
       plugin,
-      secretAuthName,
-      secretTLSName,
+      secretAuthName: !isUserManagedSecret ? "" : secretAuthName,
+      secretTLSName: !isUserManagedCASecret ? "" : secretTLSName,
       skipTLS,
       type,
       url: finalURL,
       opaqueCreds: {
-        data: opaqueData ? JSON.parse(opaqueData) : {},
+        data: !isUserManagedSecret && opaqueData ? JSON.parse(opaqueData) : {},
       },
       sshCreds: {
-        knownHosts: sshKnownHosts,
-        privateKey: sshPrivateKey,
+        knownHosts: isUserManagedSecret ? "" : sshKnownHosts,
+        privateKey: isUserManagedSecret ? "" : sshPrivateKey,
       },
       tlsCertKey: {
-        cert: tlsAuthCert,
-        key: tlsAuthKey,
+        cert: isUserManagedSecret ? "" : tlsAuthCert,
+        key: isUserManagedSecret ? "" : tlsAuthKey,
       },
     } as IPkgRepoFormData);
     if (success && onAfterInstall) {
