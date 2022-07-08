@@ -219,12 +219,9 @@ export class PackageRepositoriesService {
       case PluginNames.PACKAGES_HELM:
         return {
           typeUrl: `${helmProtobufPackage}.RepositoryCustomDetails`,
-          value: RepositoryCustomDetails.encode({
-            dockerRegistrySecrets: request.customDetails.dockerRegistrySecrets,
-            ociRepositories: request.customDetails.ociRepositories,
-            filterRule: request.customDetails.filterRule,
-            performValidation: request.customDetails.performValidation,
-          } as RepositoryCustomDetails).finish(),
+          value: RepositoryCustomDetails.encode(
+            request.customDetails as RepositoryCustomDetails,
+          ).finish(),
         } as Any;
       default:
         return undefined;
