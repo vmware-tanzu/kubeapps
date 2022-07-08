@@ -536,7 +536,7 @@ func (s *Server) buildPackageRepository(pkgRepository *packagingv1alpha1.Package
 	}
 
 	if customFetch != nil {
-		if customDetail, err := anypb.New(&kappcorev1.PackageRepositoryCustomDetail{
+		if customDetail, err := anypb.New(&kappcorev1.KappControllerPackageRepositoryCustomDetail{
 			Fetch: customFetch,
 		}); err != nil {
 			return nil, err
@@ -628,7 +628,7 @@ func (s *Server) buildPkgRepositoryCreate(request *corev1.AddPackageRepositoryRe
 	name := request.Name
 
 	// custom details
-	details := &kappcorev1.PackageRepositoryCustomDetail{}
+	details := &kappcorev1.KappControllerPackageRepositoryCustomDetail{}
 	if request.CustomDetail != nil {
 		if err := request.CustomDetail.UnmarshalTo(details); err != nil {
 			return nil, fmt.Errorf("custom details are invalid: %v", err)
@@ -667,7 +667,7 @@ func (s *Server) buildPkgRepositoryUpdate(request *corev1.UpdatePackageRepositor
 	}
 
 	// custom details
-	details := &kappcorev1.PackageRepositoryCustomDetail{}
+	details := &kappcorev1.KappControllerPackageRepositoryCustomDetail{}
 	if request.CustomDetail != nil {
 		if err := request.CustomDetail.UnmarshalTo(details); err != nil {
 			return nil, fmt.Errorf("custom details are invalid: %v", err)
@@ -680,7 +680,7 @@ func (s *Server) buildPkgRepositoryUpdate(request *corev1.UpdatePackageRepositor
 	return repository, nil
 }
 
-func (s *Server) buildPkgRepositorySpec(rptype string, interval string, url string, auth *corev1.PackageRepositoryAuth, pkgSecret *k8scorev1.Secret, details *kappcorev1.PackageRepositoryCustomDetail) packagingv1alpha1.PackageRepositorySpec {
+func (s *Server) buildPkgRepositorySpec(rptype string, interval string, url string, auth *corev1.PackageRepositoryAuth, pkgSecret *k8scorev1.Secret, details *kappcorev1.KappControllerPackageRepositoryCustomDetail) packagingv1alpha1.PackageRepositorySpec {
 	// spec stub
 	spec := packagingv1alpha1.PackageRepositorySpec{
 		Fetch: &packagingv1alpha1.PackageRepositoryFetch{},
@@ -857,7 +857,7 @@ func (s *Server) validatePackageRepositoryUpdate(ctx context.Context, cluster st
 }
 
 func (s *Server) validatePackageRepositoryDetails(rptype string, any *anypb.Any) error {
-	details := &kappcorev1.PackageRepositoryCustomDetail{}
+	details := &kappcorev1.KappControllerPackageRepositoryCustomDetail{}
 	if err := any.UnmarshalTo(details); err != nil {
 		return status.Errorf(codes.InvalidArgument, "custom details are invalid: %v", err)
 	}
