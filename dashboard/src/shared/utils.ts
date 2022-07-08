@@ -11,12 +11,15 @@ import fluxIcon from "../icons/flux.svg";
 import helmIcon from "../icons/helm.svg";
 import olmIcon from "../icons/olm-icon.svg";
 import placeholder from "../placeholder.png";
+import { PackageRepositoryAuth_PackageRepositoryAuthType } from "gen/kubeappsapis/core/packages/v1alpha1/repositories";
 
 export enum PluginNames {
   PACKAGES_HELM = "helm.packages",
   PACKAGES_FLUX = "fluxv2.packages",
   PACKAGES_KAPP = "kapp_controller.packages",
 }
+
+export const k8sObjectNameRegex = "[a-z0-9]([-a-z0-9]*[a-z0-9])?(.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*";
 
 export function escapeRegExp(str: string) {
   return str.replace(/[-[\]/{}()*+?.\\^$|]/g, "\\$&");
@@ -105,33 +108,33 @@ export function getPluginName(plugin?: Plugin | string) {
   }
 }
 
-export function getPluginPackageName(plugin?: Plugin | PluginNames | string) {
+export function getPluginPackageName(plugin?: Plugin | PluginNames | string, plural = false) {
   // Temporary case while operators are not supported as kubeapps apis plugin
   if (typeof plugin === "string") {
     switch (plugin) {
       case "chart":
       case "helm":
       case PluginNames.PACKAGES_HELM:
-        return "Helm Chart";
+        return plural ? "Helm Charts" : "Helm Chart";
       case PluginNames.PACKAGES_FLUX:
-        return "Helm Chart via Flux";
+        return plural ? "Helm Charts via Flux" : "Helm Chart via Flux";
       case PluginNames.PACKAGES_KAPP:
-        return "Carvel Package";
+        return plural ? "Carvel Packages" : "Carvel Package";
       case "operator":
-        return "Operator";
+        return plural ? "Operators" : "Operator";
       default:
-        return "unknown plugin package";
+        return `unknown plugin ${plural ? "packages" : "package"}`;
     }
   } else {
     switch (plugin?.name) {
       case PluginNames.PACKAGES_HELM:
-        return "Helm Chart";
+        return plural ? "Helm Charts" : "Helm Chart";
       case PluginNames.PACKAGES_FLUX:
-        return "Helm Chart via Flux";
+        return plural ? "Helm Charts via Flux" : "Helm Chart via Flux";
       case PluginNames.PACKAGES_KAPP:
-        return "Carvel Package";
+        return plural ? "Carvel Packages" : "Carvel Package";
       default:
-        return `${plugin?.name} package`;
+        return `${plugin?.name ? plugin.name : "unknown"} ${plural ? "packages" : "package"}`;
     }
   }
 }
@@ -177,4 +180,35 @@ export function getAppStatusLabel(
   // pattern STATUS_REASON_<reason> by buf.
   const jsonReason = installedPackageStatus_StatusReasonToJSON(statusReason);
   return jsonReason.replace("STATUS_REASON_", "").toLowerCase();
+}
+
+export function getSupportedAuthMethods(
+  plugin: Plugin,
+): PackageRepositoryAuth_PackageRepositoryAuthType[] {
+  switch (plugin.name) {
+    case PluginNames.PACKAGES_HELM:
+      return [
+        PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_AUTHORIZATION_HEADER,
+        PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_BASIC_AUTH,
+        PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_BEARER,
+        PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_DOCKER_CONFIG_JSON,
+      ];
+    case PluginNames.PACKAGES_FLUX:
+      return [
+        PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_BASIC_AUTH,
+        PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_OPAQUE,
+        PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_SSH,
+        PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_TLS,
+        PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_DOCKER_CONFIG_JSON,
+      ];
+    case PluginNames.PACKAGES_KAPP:
+      return [
+        PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_BASIC_AUTH,
+        PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_BEARER,
+        PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_DOCKER_CONFIG_JSON,
+        PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_SSH,
+      ];
+    default:
+      return [];
+  }
 }

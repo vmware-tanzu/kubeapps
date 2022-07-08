@@ -5,43 +5,44 @@ import {
   AvailablePackageReference,
   InstalledPackageDetail,
 } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
+import {
+  PackageRepositoryDetail,
+  PackageRepositoryReference,
+  PackageRepositorySummary,
+} from "gen/kubeappsapis/core/packages/v1alpha1/repositories";
 import { uniqBy } from "lodash";
 import { ThunkAction } from "redux-thunk";
-import { AppRepository } from "shared/AppRepository";
+import { PackageRepositoriesService } from "shared/PackageRepositoriesService";
 import PackagesService from "shared/PackagesService";
-import { IAppRepository, IPkgRepoFormData, IStoreState, NotFoundError } from "shared/types";
+import { IPkgRepoFormData, IStoreState, NotFoundError } from "shared/types";
+import { PluginNames } from "shared/utils";
 import { ActionType, deprecated } from "typesafe-actions";
 import { createErrorPackage } from "./availablepackages";
 
 const { createAction } = deprecated;
 export const addRepo = createAction("ADD_REPO");
 export const addedRepo = createAction("ADDED_REPO", resolve => {
-  return (added: IAppRepository) => resolve(added);
+  return (added: PackageRepositorySummary) => resolve(added);
 });
 
 export const requestRepoUpdate = createAction("REQUEST_REPO_UPDATE");
 export const repoUpdated = createAction("REPO_UPDATED", resolve => {
-  return (updated: IAppRepository) => resolve(updated);
+  return (updated: PackageRepositorySummary) => resolve(updated);
 });
 
-export const requestRepos = createAction("REQUEST_REPOS", resolve => {
+export const requestRepoSummaries = createAction("REQUEST_REPOS", resolve => {
   return (namespace: string) => resolve(namespace);
 });
-export const receiveRepos = createAction("RECEIVE_REPOS", resolve => {
-  return (repos: IAppRepository[]) => resolve(repos);
+export const receiveRepoSummaries = createAction("RECEIVE_REPOS", resolve => {
+  return (repos: PackageRepositorySummary[]) => resolve(repos);
 });
 export const concatRepos = createAction("RECEIVE_REPOS", resolve => {
-  return (repos: IAppRepository[]) => resolve(repos);
+  return (repos: PackageRepositorySummary[]) => resolve(repos);
 });
 
-export const requestRepo = createAction("REQUEST_REPO");
-export const receiveRepo = createAction("RECEIVE_REPO", resolve => {
-  return (repo: IAppRepository) => resolve(repo);
-});
-
-export const repoValidating = createAction("REPO_VALIDATING");
-export const repoValidated = createAction("REPO_VALIDATED", resolve => {
-  return (data: any) => resolve(data);
+export const requestRepoDetail = createAction("REQUEST_REPO");
+export const receiveRepoDetail = createAction("RECEIVE_REPO", resolve => {
+  return (repo: PackageRepositoryDetail) => resolve(repo);
 });
 
 export const redirect = createAction("REDIRECT", resolve => {
@@ -59,42 +60,49 @@ const allActions = [
   addedRepo,
   requestRepoUpdate,
   repoUpdated,
-  repoValidating,
-  repoValidated,
   errorRepos,
-  requestRepos,
-  receiveRepo,
-  receiveRepos,
+  requestRepoSummaries,
+  receiveRepoDetail,
+  receiveRepoSummaries,
   createErrorPackage,
-  requestRepo,
+  requestRepoDetail,
   redirect,
   redirected,
 ];
-export type AppReposAction = ActionType<typeof allActions[number]>;
+export type PkgReposAction = ActionType<typeof allActions[number]>;
 
-// fetchRepos fetches the AppRepositories in a specified namespace.
-export const fetchRepos = (
+// fetchRepos fetches the PackageRepositories in a specified namespace.
+export const fetchRepoSummaries = (
   namespace: string,
   listGlobal?: boolean,
-): ThunkAction<Promise<void>, IStoreState, null, AppReposAction> => {
+): ThunkAction<Promise<void>, IStoreState, null, PkgReposAction> => {
   return async (dispatch, getState) => {
     const {
       clusters: { currentCluster },
       config: { globalReposNamespace },
     } = getState();
     try {
-      dispatch(requestRepos(namespace));
-      const repos = await AppRepository.list(currentCluster, namespace);
+      dispatch(requestRepoSummaries(namespace));
+      const repos = await PackageRepositoriesService.getPackageRepositorySummaries({
+        cluster: currentCluster,
+        namespace: namespace,
+      });
       if (!listGlobal || namespace === globalReposNamespace) {
-        dispatch(receiveRepos(repos.items));
+        dispatch(receiveRepoSummaries(repos.packageRepositorySummaries));
       } else {
         // Global repos need to be added
-        let totalRepos = repos.items;
-        dispatch(requestRepos(globalReposNamespace));
-        const globalRepos = await AppRepository.list(currentCluster, globalReposNamespace);
+        let totalRepos = repos.packageRepositorySummaries;
+        dispatch(requestRepoSummaries(globalReposNamespace));
+        const globalRepos = await PackageRepositoriesService.getPackageRepositorySummaries({
+          cluster: currentCluster,
+          namespace: "",
+        });
         // Avoid adding duplicated repos: if two repos have the same uid, filter out
-        totalRepos = uniqBy(totalRepos.concat(globalRepos.items), "metadata.uid");
-        dispatch(receiveRepos(totalRepos));
+        totalRepos = uniqBy(
+          totalRepos.concat(globalRepos.packageRepositorySummaries),
+          "packageRepoRef.identifier",
+        );
+        dispatch(receiveRepoSummaries(totalRepos));
       }
     } catch (e: any) {
       dispatch(errorRepos(e, "fetch"));
@@ -103,24 +111,26 @@ export const fetchRepos = (
 };
 
 export const fetchRepo = (
-  cluster: string,
-  repoNamespace: string,
-  repoName: string,
-): ThunkAction<Promise<boolean>, IStoreState, null, AppReposAction> => {
+  packageRepoRef: PackageRepositoryReference,
+): ThunkAction<Promise<boolean>, IStoreState, null, PkgReposAction> => {
   return async dispatch => {
     try {
-      dispatch(requestRepo());
-      const appRepository = await AppRepository.get(cluster, repoNamespace, repoName);
-      if (!appRepository) {
+      dispatch(requestRepoDetail());
+      // Check if we have enough data to retrieve the package manually (instead of using its own availablePackageRef)
+      const getPackageRepositoryDetailResponse =
+        await PackageRepositoriesService.getPackageRepositoryDetail(packageRepoRef);
+      if (!getPackageRepositoryDetailResponse?.detail) {
         dispatch(
           errorRepos(
-            new Error(`Can't get the repository: ${JSON.stringify(appRepository)}`),
+            new Error(
+              `Can't get the repository: ${JSON.stringify(getPackageRepositoryDetailResponse)}`,
+            ),
             "fetch",
           ),
         );
         return false;
       }
-      dispatch(receiveRepo(appRepository.data));
+      dispatch(receiveRepoDetail(getPackageRepositoryDetailResponse.detail));
       return true;
     } catch (e: any) {
       dispatch(errorRepos(e, "fetch"));
@@ -132,16 +142,56 @@ export const fetchRepo = (
 export const installRepo = (
   namespace: string,
   request: IPkgRepoFormData,
-): ThunkAction<Promise<boolean>, IStoreState, null, AppReposAction> => {
+): ThunkAction<Promise<boolean>, IStoreState, null, PkgReposAction> => {
   return async (dispatch, getState) => {
     const {
       clusters: { currentCluster },
+      config: { globalReposNamespace },
     } = getState();
     try {
       dispatch(addRepo());
-      const data = await AppRepository.create(currentCluster, namespace, request);
-      dispatch(addedRepo(data.appRepository));
 
+      let namespaceScoped = namespace !== globalReposNamespace;
+      // TODO(agamez): currently, flux doesn't support this value to be true
+      if (request.plugin?.name === PluginNames.PACKAGES_FLUX) {
+        namespaceScoped = false;
+      }
+
+      const addPackageRepositoryResponse = await PackageRepositoriesService.addPackageRepository(
+        currentCluster,
+        namespace,
+        request,
+        namespaceScoped,
+      );
+      // Ensure the repo have been created
+      if (!addPackageRepositoryResponse?.packageRepoRef) {
+        dispatch(
+          errorRepos(
+            new Error(
+              `Can't create the repository: ${JSON.stringify(addPackageRepositoryResponse)}`,
+            ),
+            "create",
+          ),
+        );
+        return false;
+      }
+      const getPackageRepositoryDetailResponse =
+        await PackageRepositoriesService.getPackageRepositoryDetail(
+          addPackageRepositoryResponse.packageRepoRef,
+        );
+      if (!getPackageRepositoryDetailResponse?.detail) {
+        dispatch(
+          errorRepos(
+            new Error(
+              `The repo wasn't created: ${JSON.stringify(getPackageRepositoryDetailResponse)}`,
+            ),
+            "create",
+          ),
+        );
+        return false;
+      }
+      const repoSummary = convertPkgRepoDetailToSummary(getPackageRepositoryDetailResponse.detail);
+      dispatch(addedRepo(repoSummary));
       return true;
     } catch (e: any) {
       dispatch(errorRepos(e, "create"));
@@ -153,15 +203,49 @@ export const installRepo = (
 export const updateRepo = (
   namespace: string,
   request: IPkgRepoFormData,
-): ThunkAction<Promise<boolean>, IStoreState, null, AppReposAction> => {
+): ThunkAction<Promise<boolean>, IStoreState, null, PkgReposAction> => {
   return async (dispatch, getState) => {
     const {
       clusters: { currentCluster },
     } = getState();
     try {
       dispatch(requestRepoUpdate());
-      const data = await AppRepository.update(currentCluster, namespace, request);
-      dispatch(repoUpdated(data.appRepository));
+      const updatePackageRepositoryResponse =
+        await PackageRepositoriesService.updatePackageRepository(
+          currentCluster,
+          namespace,
+          request,
+        );
+
+      // Ensure the repo have been updated
+      if (!updatePackageRepositoryResponse?.packageRepoRef) {
+        dispatch(
+          errorRepos(
+            new Error(
+              `Can't update the repository: ${JSON.stringify(updatePackageRepositoryResponse)}`,
+            ),
+            "update",
+          ),
+        );
+        return false;
+      }
+      const getPackageRepositoryDetailResponse =
+        await PackageRepositoriesService.getPackageRepositoryDetail(
+          updatePackageRepositoryResponse.packageRepoRef,
+        );
+      if (!getPackageRepositoryDetailResponse?.detail) {
+        dispatch(
+          errorRepos(
+            new Error(
+              `The repo wasn't updated: ${JSON.stringify(getPackageRepositoryDetailResponse)}`,
+            ),
+            "update",
+          ),
+        );
+        return false;
+      }
+      const repoSummary = convertPkgRepoDetailToSummary(getPackageRepositoryDetailResponse.detail);
+      dispatch(repoUpdated(repoSummary));
       return true;
     } catch (e: any) {
       dispatch(errorRepos(e, "update"));
@@ -171,15 +255,11 @@ export const updateRepo = (
 };
 
 export const deleteRepo = (
-  name: string,
-  namespace: string,
-): ThunkAction<Promise<boolean>, IStoreState, null, AppReposAction> => {
-  return async (dispatch, getState) => {
-    const {
-      clusters: { currentCluster },
-    } = getState();
+  packageRepoRef: PackageRepositoryReference,
+): ThunkAction<Promise<boolean>, IStoreState, null, PkgReposAction> => {
+  return async dispatch => {
     try {
-      await AppRepository.delete(currentCluster, namespace, name);
+      await PackageRepositoriesService.deletePackageRepository(packageRepoRef);
       return true;
     } catch (e: any) {
       dispatch(errorRepos(e, "delete"));
@@ -188,24 +268,39 @@ export const deleteRepo = (
   };
 };
 
-export function findPackageInRepo(
+export const findPackageInRepo = (
   cluster: string,
   repoNamespace: string,
   repoName: string,
   app?: InstalledPackageDetail,
-): ThunkAction<Promise<boolean>, IStoreState, null, AppReposAction> {
+): ThunkAction<Promise<boolean>, IStoreState, null, PkgReposAction> => {
   return async dispatch => {
-    dispatch(requestRepo());
+    dispatch(requestRepoDetail());
     // Check if we have enough data to retrieve the package manually (instead of using its own availablePackageRef)
     if (app?.availablePackageRef?.identifier && app?.availablePackageRef?.plugin) {
-      const appRepository = await AppRepository.get(cluster, repoNamespace, repoName);
+      const getPackageRepositoryDetailResponse =
+        await PackageRepositoriesService.getPackageRepositoryDetail({
+          identifier: repoName,
+          context: { cluster, namespace: repoNamespace },
+          plugin: app.availablePackageRef.plugin,
+        });
       try {
         await PackagesService.getAvailablePackageVersions({
           context: { cluster: cluster, namespace: repoNamespace },
           plugin: app.availablePackageRef.plugin,
           identifier: app.availablePackageRef.identifier,
         } as AvailablePackageReference);
-        dispatch(receiveRepo(appRepository));
+        if (!getPackageRepositoryDetailResponse?.detail) {
+          dispatch(
+            createErrorPackage(
+              new NotFoundError(
+                `Package ${app.availablePackageRef.identifier} not found in the repository ${repoNamespace}.`,
+              ),
+            ),
+          );
+          return false;
+        }
+        dispatch(receiveRepoDetail(getPackageRepositoryDetailResponse.detail));
         return true;
       } catch (e: any) {
         dispatch(
@@ -228,48 +323,20 @@ export function findPackageInRepo(
       return false;
     }
   };
-}
+};
 
-// to be deprecated
-export const validateRepo = (
-  repoURL: string,
-  type: string,
-  authHeader: string,
-  authRegCreds: string,
-  customCA: string,
-  ociRepositories: string[],
-  skipTLS: boolean,
-  passCredentials: boolean,
-): ThunkAction<Promise<boolean>, IStoreState, null, AppReposAction> => {
-  return async (dispatch, getState) => {
-    const {
-      clusters: { currentCluster, clusters },
-    } = getState();
-    const namespace = clusters[currentCluster].currentNamespace;
-    try {
-      dispatch(repoValidating());
-      const data = await AppRepository.validate(
-        currentCluster,
-        namespace,
-        repoURL,
-        type,
-        authHeader,
-        authRegCreds,
-        customCA,
-        ociRepositories,
-        skipTLS,
-        passCredentials,
-      );
-      if (data.code === 200) {
-        dispatch(repoValidated(data));
-        return true;
-      } else {
-        dispatch(errorRepos(new Error(JSON.stringify(data)), "validate"));
-        return false;
-      }
-    } catch (e: any) {
-      dispatch(errorRepos(e, "validate"));
-      return false;
-    }
+export const convertPkgRepoDetailToSummary = (
+  repoDetail: PackageRepositoryDetail,
+): PackageRepositorySummary => {
+  const repoSummary: PackageRepositorySummary = {
+    description: repoDetail.description,
+    name: repoDetail.name,
+    type: repoDetail.type,
+    url: repoDetail.url,
+    namespaceScoped: repoDetail.namespaceScoped,
+    requiresAuth: !!repoDetail.auth,
+    packageRepoRef: repoDetail.packageRepoRef,
+    status: repoDetail.status,
   };
+  return repoSummary;
 };

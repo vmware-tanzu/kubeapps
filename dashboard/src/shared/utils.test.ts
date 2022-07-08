@@ -16,6 +16,7 @@ import {
   getPluginPackageName,
   getPluginsRequiringSA,
   getPluginsSupportingRollback,
+  getSupportedAuthMethods,
   getValueFromEvent,
   MAX_DESC_LENGTH,
   PluginNames,
@@ -106,6 +107,19 @@ it("getPluginPackageName", () => {
   expect(getPluginPackageName({ name: PluginNames.PACKAGES_KAPP, version: "" })).toBe(
     "Carvel Package",
   );
+  expect(getPluginPackageName("chart", true)).toBe("Helm Charts");
+  expect(getPluginPackageName("helm", true)).toBe("Helm Charts");
+  expect(getPluginPackageName("operator", true)).toBe("Operators");
+  expect(getPluginPackageName("fluflu", true)).toBe("unknown plugin packages");
+  expect(getPluginPackageName({ name: PluginNames.PACKAGES_HELM, version: "" }, true)).toBe(
+    "Helm Charts",
+  );
+  expect(getPluginPackageName({ name: PluginNames.PACKAGES_FLUX, version: "" }, true)).toBe(
+    "Helm Charts via Flux",
+  );
+  expect(getPluginPackageName({ name: PluginNames.PACKAGES_KAPP, version: "" }, true)).toBe(
+    "Carvel Packages",
+  );
 });
 
 it("getPluginByName", () => {
@@ -155,4 +169,11 @@ it("getAppStatusLabel", () => {
     "uninstalled",
   );
   expect(getAppStatusLabel(InstalledPackageStatus_StatusReason.UNRECOGNIZED)).toBe("unrecognized");
+});
+
+it("getSupportedAuthMethods", () => {
+  expect(getSupportedAuthMethods({ name: PluginNames.PACKAGES_HELM, version: "" })).toHaveLength(4);
+  expect(getSupportedAuthMethods({ name: PluginNames.PACKAGES_FLUX, version: "" })).toHaveLength(5);
+  expect(getSupportedAuthMethods({ name: PluginNames.PACKAGES_KAPP, version: "" })).toHaveLength(4);
+  expect(getSupportedAuthMethods({ name: "foo", version: "" })).toHaveLength(0);
 });

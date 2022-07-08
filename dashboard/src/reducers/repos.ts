@@ -2,12 +2,18 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { LocationChangeAction, LOCATION_CHANGE } from "connected-react-router";
-import { IAppRepository, ISecret } from "shared/types";
+import {
+  PackageRepositoryDetail,
+  PackageRepositorySummary,
+} from "gen/kubeappsapis/core/packages/v1alpha1/repositories";
+import { RepositoryCustomDetails } from "gen/kubeappsapis/plugins/helm/packages/v1alpha1/helm";
+import { ISecret } from "shared/types";
+import { PluginNames } from "shared/utils";
 import { getType } from "typesafe-actions";
 import actions from "../actions";
-import { AppReposAction } from "../actions/repos";
+import { PkgReposAction } from "../actions/repos";
 
-export interface IAppRepositoryState {
+export interface IPackageRepositoryState {
   addingRepo: boolean;
   errors: {
     create?: Error;
@@ -16,15 +22,15 @@ export interface IAppRepositoryState {
     update?: Error;
     validate?: Error;
   };
-  lastAdded?: IAppRepository;
+  lastAdded?: PackageRepositoryDetail;
   isFetching: boolean;
   isFetchingElem: {
     repositories: boolean;
     secrets: boolean;
   };
   validating: boolean;
-  repo: IAppRepository;
-  repos: IAppRepository[];
+  repo: PackageRepositoryDetail;
+  repos: PackageRepositorySummary[];
   form: {
     name: string;
     namespace: string;
@@ -35,7 +41,7 @@ export interface IAppRepositoryState {
   redirectTo?: string;
 }
 
-export const initialState: IAppRepositoryState = {
+export const initialState: IPackageRepositoryState = {
   addingRepo: false,
   errors: {},
   form: {
@@ -50,12 +56,12 @@ export const initialState: IAppRepositoryState = {
     secrets: false,
   },
   validating: false,
-  repo: {} as IAppRepository,
-  repos: [],
+  repo: {} as PackageRepositoryDetail,
+  repos: [] as PackageRepositorySummary[],
   imagePullSecrets: [],
 };
 
-function isFetching(state: IAppRepositoryState, item: string, fetching: boolean) {
+function isFetching(state: IPackageRepositoryState, item: string, fetching: boolean) {
   const composedIsFetching = {
     ...state.isFetchingElem,
     [item]: fetching,
@@ -67,49 +73,74 @@ function isFetching(state: IAppRepositoryState, item: string, fetching: boolean)
 }
 
 const reposReducer = (
-  state: IAppRepositoryState = initialState,
-  action: AppReposAction | LocationChangeAction,
-): IAppRepositoryState => {
+  state: IPackageRepositoryState = initialState,
+  action: PkgReposAction | LocationChangeAction,
+): IPackageRepositoryState => {
   switch (action.type) {
-    case getType(actions.repos.receiveRepos):
+    case getType(actions.repos.receiveRepoSummaries):
       return {
         ...state,
         ...isFetching(state, "repositories", false),
         repos: action.payload,
         errors: {},
       };
-    case getType(actions.repos.receiveRepo):
+    case getType(actions.repos.receiveRepoDetail):
+      // eslint-disable-next-line no-case-declarations
+      let customDetail: any;
+
+      // TODO(agamez): decoding customDetail just for the helm plugin
+      if (action.payload.packageRepoRef?.plugin?.name === PluginNames.PACKAGES_HELM) {
+        customDetail = {
+          dockerRegistrySecrets: [],
+          ociRepositories: [],
+          performValidation: false,
+        } as RepositoryCustomDetails;
+
+        try {
+          if (action.payload?.customDetail?.value) {
+            // TODO(agamez): verify why the field is not automatically decoded.
+            customDetail = RepositoryCustomDetails.decode(
+              action.payload.customDetail.value as unknown as Uint8Array,
+            );
+          }
+          // eslint-disable-next-line no-empty
+        } catch (error) {}
+      }
+
       return {
         ...state,
         ...isFetching(state, "repositories", false),
-        repo: action.payload,
+        repo: { ...action.payload, customDetail: customDetail },
         errors: {},
       };
-    case getType(actions.repos.requestRepos):
+    case getType(actions.repos.requestRepoSummaries):
       return { ...state, ...isFetching(state, "repositories", true) };
+    case getType(actions.repos.requestRepoDetail):
+      return { ...state, repo: initialState.repo, errors: {} };
     case getType(actions.repos.addRepo):
       return { ...state, addingRepo: true };
     case getType(actions.repos.addedRepo):
       return {
         ...state,
         addingRepo: false,
-        lastAdded: action.payload,
-        repos: [...state.repos, action.payload],
+        repos: [...state.repos, action.payload].sort((a, b) =>
+          a.name.toLowerCase() > b.name.toLowerCase()
+            ? 1
+            : b.name.toLowerCase() > a.name.toLowerCase()
+            ? -1
+            : 0,
+        ),
       };
     case getType(actions.repos.repoUpdated): {
       const updatedRepo = action.payload;
       const repos = state.repos.map(r =>
-        r.metadata.name === updatedRepo.metadata.name &&
-        r.metadata.namespace === updatedRepo.metadata.namespace
+        r.name === updatedRepo.name &&
+        r.packageRepoRef?.context?.namespace === updatedRepo.packageRepoRef?.context?.namespace
           ? updatedRepo
           : r,
       );
       return { ...state, repos };
     }
-    case getType(actions.repos.repoValidating):
-      return { ...state, validating: true };
-    case getType(actions.repos.repoValidated):
-      return { ...state, validating: false, errors: { ...state.errors, validate: undefined } };
     case getType(actions.repos.redirect):
       return { ...state, redirectTo: action.payload };
     case getType(actions.repos.redirected):

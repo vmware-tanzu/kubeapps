@@ -1,13 +1,16 @@
 // Copyright 2020-2022 the Kubeapps contributors.
 // SPDX-License-Identifier: Apache-2.0
 
-import { IAppRepository } from "shared/types";
+import {
+  PackageRepositoryDetail,
+  PackageRepositorySummary,
+} from "gen/kubeappsapis/core/packages/v1alpha1/repositories";
 import { getType } from "typesafe-actions";
 import actions from "../actions";
-import reposReducer, { IAppRepositoryState } from "./repos";
+import reposReducer, { IPackageRepositoryState } from "./repos";
 
 describe("reposReducer", () => {
-  let initialState: IAppRepositoryState;
+  let initialState: IPackageRepositoryState;
 
   beforeEach(() => {
     initialState = {
@@ -25,8 +28,8 @@ describe("reposReducer", () => {
         secrets: false,
       },
       validating: false,
-      repo: {} as IAppRepository,
-      repos: [],
+      repo: {} as PackageRepositoryDetail,
+      repos: [] as PackageRepositorySummary[],
       imagePullSecrets: [],
     };
   });
@@ -37,12 +40,10 @@ describe("reposReducer", () => {
       addedRepo: getType(actions.repos.addedRepo),
       requestRepoUpdate: getType(actions.repos.requestRepoUpdate),
       repoUpdated: getType(actions.repos.repoUpdated),
-      requestRepos: getType(actions.repos.requestRepos),
-      receiveRepos: getType(actions.repos.receiveRepos),
-      requestRepo: getType(actions.repos.requestRepo),
-      receiveRepo: getType(actions.repos.receiveRepo),
-      repoValidating: getType(actions.repos.repoValidating),
-      repoValidated: getType(actions.repos.repoValidated),
+      requestRepos: getType(actions.repos.requestRepoSummaries),
+      receiveRepos: getType(actions.repos.receiveRepoSummaries),
+      requestRepo: getType(actions.repos.requestRepoDetail),
+      receiveRepo: getType(actions.repos.receiveRepoDetail),
       redirect: getType(actions.repos.redirect),
       redirected: getType(actions.repos.redirected),
       errorRepos: getType(actions.repos.errorRepos),
@@ -52,7 +53,8 @@ describe("reposReducer", () => {
       it("sets isFetching when requesting repos", () => {
         expect(
           reposReducer(undefined, {
-            type: actionTypes.requestRepos as any,
+            type: actionTypes.requestRepos,
+            payload: "",
           }),
         ).toEqual({
           ...initialState,
@@ -62,9 +64,10 @@ describe("reposReducer", () => {
       });
 
       it("unsets isFetching and receive repos", () => {
-        const repo = { metadata: { name: "foo" } };
+        const repoSummary = { name: "foo" } as PackageRepositorySummary;
         const state = reposReducer(undefined, {
-          type: actionTypes.requestRepos as any,
+          type: actionTypes.requestRepos,
+          payload: "",
         });
         expect(state).toEqual({
           ...initialState,
@@ -73,16 +76,17 @@ describe("reposReducer", () => {
         });
         expect(
           reposReducer(state, {
-            type: actionTypes.receiveRepos as any,
-            payload: [repo],
+            type: actionTypes.receiveRepos,
+            payload: [repoSummary],
           }),
-        ).toEqual({ ...initialState, repos: [repo] });
+        ).toEqual({ ...initialState, repos: [repoSummary] });
       });
 
       it("unsets isFetching and receive repo", () => {
-        const repo = { metadata: { name: "foo" } };
+        const repoDetail = { name: "foo" } as PackageRepositoryDetail;
         const state = reposReducer(undefined, {
-          type: actionTypes.requestRepos as any,
+          type: actionTypes.requestRepos,
+          payload: "",
         });
         expect(state).toEqual({
           ...initialState,
@@ -91,17 +95,17 @@ describe("reposReducer", () => {
         });
         expect(
           reposReducer(state, {
-            type: actionTypes.receiveRepo as any,
-            payload: repo,
+            type: actionTypes.receiveRepo,
+            payload: repoDetail,
           }),
-        ).toEqual({ ...initialState, repo });
+        ).toEqual({ ...initialState, repo: repoDetail });
       });
     });
 
     it("adds a repo", () => {
-      const repo = { metadata: { name: "foo" } };
+      const repoSummary = { name: "foo" } as PackageRepositorySummary;
       const state = reposReducer(undefined, {
-        type: actionTypes.addRepo as any,
+        type: actionTypes.addRepo,
       });
       expect(state).toEqual({
         ...initialState,
@@ -109,38 +113,49 @@ describe("reposReducer", () => {
       });
       expect(
         reposReducer(state, {
-          type: actionTypes.addedRepo as any,
-          payload: repo,
+          type: actionTypes.addedRepo,
+          payload: repoSummary,
         }),
-      ).toEqual({ ...initialState, lastAdded: repo, repos: [repo] });
+      ).toEqual({ ...initialState, repos: [repoSummary] });
     });
 
-    it("updates a repo", () => {
-      const repo = { metadata: { name: "foo" } } as any;
-      expect(
-        reposReducer(
-          { ...initialState, repos: [repo] },
-          {
-            type: actionTypes.repoUpdated as any,
-            payload: { ...repo, spec: { a: "b" } },
-          },
-        ),
-      ).toEqual({ ...initialState, repos: [{ ...repo, spec: { a: "b" } }] });
-    });
-
-    it("validates a repo", () => {
-      const state = reposReducer(undefined, {
-        type: actionTypes.repoValidating as any,
-      });
+    it("adds a repo sorting the result", () => {
+      const repoSummary1 = { name: "zzz" } as PackageRepositorySummary;
+      const repoSummary2 = { name: "aaa" } as PackageRepositorySummary;
+      const state = reposReducer(
+        { ...initialState, repos: [repoSummary1] },
+        {
+          type: actionTypes.addRepo,
+        },
+      );
       expect(state).toEqual({
         ...initialState,
-        validating: true,
+        repos: [repoSummary1],
+        addingRepo: true,
       });
       expect(
         reposReducer(state, {
-          type: actionTypes.repoValidated as any,
+          type: actionTypes.addedRepo,
+          payload: repoSummary2,
         }),
-      ).toEqual({ ...initialState });
+      ).toEqual({ ...initialState, repos: [repoSummary2, repoSummary1] });
+    });
+
+    it("updates a repo", () => {
+      const repoSummary = {
+        name: "foo",
+        url: "foo",
+        packageRepoRef: { context: { namespace: "ns" } },
+      } as PackageRepositorySummary;
+      expect(
+        reposReducer(
+          { ...initialState, repos: [repoSummary] },
+          {
+            type: actionTypes.repoUpdated,
+            payload: { ...repoSummary, url: "bar" },
+          },
+        ),
+      ).toEqual({ ...initialState, repos: [{ ...repoSummary, url: "bar" }] });
     });
   });
 });

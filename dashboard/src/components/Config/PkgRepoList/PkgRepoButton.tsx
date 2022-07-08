@@ -5,36 +5,37 @@ import { CdsButton } from "@cds/react/button";
 import { CdsIcon } from "@cds/react/icon";
 import { CdsModal, CdsModalContent, CdsModalHeader } from "@cds/react/modal";
 import actions from "actions";
+import { PackageRepositoryReference } from "gen/kubeappsapis/core/packages/v1alpha1/repositories";
 import { useState } from "react";
 import { useDispatch } from "react-redux";
 import { Action } from "redux";
 import { ThunkDispatch } from "redux-thunk";
-import { IAppRepository, IPkgRepoFormData, IStoreState } from "shared/types";
-import { AppRepoForm } from "./AppRepoForm";
+import { IPkgRepoFormData, IStoreState } from "shared/types";
+import { PkgRepoForm } from "./PkgRepoForm";
 
-interface IAppRepoAddButtonProps {
+interface IPkgRepoAddButtonProps {
   namespace: string;
-  kubeappsNamespace: string;
+  globalReposNamespace: string;
   text?: string;
   primary?: boolean;
-  packageRepoRef?: IAppRepository;
+  packageRepoRef?: PackageRepositoryReference;
   disabled?: boolean;
   title?: string;
 }
 
-export function AppRepoAddButton({
+export function PkgRepoAddButton({
   text,
   namespace,
-  kubeappsNamespace,
+  globalReposNamespace: kubeappsNamespace,
   packageRepoRef,
   primary = true,
   title,
   disabled,
-}: IAppRepoAddButtonProps) {
+}: IPkgRepoAddButtonProps) {
   const dispatch: ThunkDispatch<IStoreState, null, Action> = useDispatch();
   const [modalIsOpen, setModalOpen] = useState(false);
   const openModal = () => {
-    dispatch(actions.repos.requestRepo());
+    dispatch(actions.repos.requestRepoDetail());
     setModalOpen(true);
   };
   const closeModal = () => setModalOpen(false);
@@ -61,7 +62,7 @@ export function AppRepoAddButton({
         <CdsModal size={"lg"} onCloseChange={closeModal}>
           <CdsModalHeader>{title}</CdsModalHeader>
           <CdsModalContent>
-            <AppRepoForm
+            <PkgRepoForm
               onSubmit={onSubmit}
               onAfterInstall={closeModal}
               packageRepoRef={packageRepoRef}

@@ -8,6 +8,7 @@ import InfoCard from "components/InfoCard/InfoCard";
 import Alert from "components/js/Alert";
 import LoadingWrapper from "components/LoadingWrapper";
 import { AvailablePackageSummary, Context } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
+import { PackageRepositorySummary } from "gen/kubeappsapis/core/packages/v1alpha1/repositories";
 import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins";
 import { createMemoryHistory } from "history";
 import React from "react";
@@ -17,14 +18,9 @@ import * as ReactRouter from "react-router";
 import { MemoryRouter, Route, Router } from "react-router-dom";
 import { IConfigState } from "reducers/config";
 import { IOperatorsState } from "reducers/operators";
-import { IAppRepositoryState } from "reducers/repos";
+import { IPackageRepositoryState } from "reducers/repos";
 import { getStore, initialState, mountWrapper } from "shared/specs/mountWrapper";
-import {
-  IAppRepository,
-  IPackageState,
-  IClusterServiceVersion,
-  IStoreState,
-} from "../../shared/types";
+import { IClusterServiceVersion, IPackageState, IStoreState } from "../../shared/types";
 import SearchFilter from "../SearchFilter/SearchFilter";
 import Catalog, { filterNames } from "./Catalog";
 import CatalogItems from "./CatalogItems";
@@ -99,7 +95,7 @@ const csv = {
 const defaultState = {
   packages: defaultPackageState,
   operators: { csvs: [] } as Partial<IOperatorsState>,
-  repos: { repos: [] } as Partial<IAppRepositoryState>,
+  repos: { repos: [] } as Partial<IPackageRepositoryState>,
   config: {
     kubeappsCluster: defaultProps.cluster,
     kubeappsNamespace: defaultProps.kubeappsNamespace,
@@ -624,7 +620,7 @@ describe("filters by package repository", () => {
     spyOnUseDispatch = jest.spyOn(ReactRedux, "useDispatch").mockReturnValue(mockDispatch);
     // Can't just assign a mock fn to actions.repos.fetchRepos because it is (correctly) exported
     // as a const fn.
-    fetchRepos = jest.spyOn(actions.repos, "fetchRepos").mockImplementation(() => {
+    fetchRepos = jest.spyOn(actions.repos, "fetchRepoSummaries").mockImplementation(() => {
       return jest.fn();
     });
   });
@@ -665,7 +661,7 @@ describe("filters by package repository", () => {
     const wrapper = mountWrapper(
       getStore({
         ...populatedState,
-        repos: { repos: [{ metadata: { name: "foo" } } as IAppRepository] },
+        repos: { repos: [{ name: "foo" } as PackageRepositorySummary] },
       }),
       <MemoryRouter initialEntries={[routePathParam]}>
         <Route path={routePath}>
@@ -693,7 +689,7 @@ describe("filters by package repository", () => {
     const wrapper = mountWrapper(
       getStore({
         ...populatedState,
-        repos: { repos: [{ metadata: { name: "foo" } } as IAppRepository] },
+        repos: { repos: [{ name: "foo" } as PackageRepositorySummary] },
       }),
       <MemoryRouter initialEntries={[`/c/${defaultProps.cluster}/ns/my-ns/catalog`]}>
         <Route path={routePath}>
@@ -721,7 +717,7 @@ describe("filters by package repository", () => {
     mountWrapper(
       getStore({
         ...populatedState,
-        repos: { repos: [{ metadata: { name: "foo" } } as IAppRepository] },
+        repos: { repos: [{ name: "foo" } as PackageRepositorySummary] },
       }),
       <MemoryRouter
         initialEntries={[
@@ -735,14 +731,14 @@ describe("filters by package repository", () => {
     );
 
     // Called without the boolean `true` option to additionally fetch global repos.
-    expect(fetchRepos).toHaveBeenCalledWith(initialState.config.globalReposNamespace);
+    expect(fetchRepos).toHaveBeenCalledWith("");
   });
 
   it("fetches from the global repos namespace for other clusters", () => {
     mountWrapper(
       getStore({
         ...populatedState,
-        repos: { repos: [{ metadata: { name: "foo" } } as IAppRepository] },
+        repos: { repos: [{ name: "foo" } as PackageRepositorySummary] },
       }),
       <MemoryRouter initialEntries={[`/c/other-cluster/ns/my-ns/catalog`]}>
         <Route path={routePath}>
@@ -752,7 +748,7 @@ describe("filters by package repository", () => {
     );
 
     // Only the global repos should have been fetched.
-    expect(fetchRepos).toHaveBeenCalledWith(initialState.config.globalReposNamespace);
+    expect(fetchRepos).toHaveBeenCalledWith("");
   });
 });
 

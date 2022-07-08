@@ -89,7 +89,7 @@ export const app = {
       `/c/${cluster}/ns/${namespace}/operators-instances/new/${csvName}/${crdName}`,
   },
   config: {
-    apprepositories: (cluster: string, namespace: string) =>
+    pkgrepositories: (cluster: string, namespace: string) =>
       `/c/${cluster}/ns/${namespace}/config/repos`,
     operators: (cluster: string, namespace: string) => `/c/${cluster}/ns/${namespace}/operators`,
   },
@@ -104,24 +104,6 @@ export const backend = {
     list: (cluster: string) => `api/v1/clusters/${cluster}/namespaces`,
   },
   canI: (cluster: string) => `api/v1/clusters/${cluster}/can-i`,
-  // TODO(agamez): Remove this once we have a proper API for this.
-  apprepositories: {
-    base: (cluster: string, namespace: string) =>
-      `api/v1/clusters/${cluster}/${withNS(namespace)}apprepositories`,
-    create: (cluster: string, namespace: string) =>
-      backend.apprepositories.base(cluster, namespace),
-    list: (cluster: string, namespace: string) => backend.apprepositories.base(cluster, namespace),
-    validate: (cluster: string, namespace: string) =>
-      `${backend.apprepositories.base(cluster, namespace)}/validate`,
-    get: (cluster: string, namespace: string, name: string) =>
-      `${backend.apprepositories.base(cluster, namespace)}/${name}`,
-    delete: (cluster: string, namespace: string, name: string) =>
-      `${backend.apprepositories.base(cluster, namespace)}/${name}`,
-    refresh: (cluster: string, namespace: string, name: string) =>
-      `${backend.apprepositories.base(cluster, namespace)}/${name}/refresh`,
-    update: (cluster: string, namespace: string, name: string) =>
-      `${backend.apprepositories.base(cluster, namespace)}/${name}`,
-  },
 };
 
 export const api = {
