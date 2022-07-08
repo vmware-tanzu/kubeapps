@@ -1,6 +1,10 @@
 # Step 2A: Deploy a VMware Tanzu™ Community Edition unmanaged cluster
 
+In this step of the tutorial, we will install an unmanaged TCE cluster.
+
 By default, unmanaged clusters run locally via kind (default) or minikube with Tanzu components installed atop.
+
+## Spinp up a TCE unmanaged cluster
 
 1. Create a cluster named for example `kubeapps-cluster`:
 
@@ -67,9 +71,9 @@ By default, unmanaged clusters run locally via kind (default) or minikube with T
         tanzu unmanaged delete kubeapps-cluster
     ```
 
-3. The new cluster is automatically added to your local kubeconfig, so if you have [kubectl](https://kubernetes.io/docs/tasks/tools/#kubectl) installed, you can now use it to interact with the cluster.
+3. The new unmanaged cluster is automatically added to your local kubeconfig. If you have [kubectl](https://kubernetes.io/docs/tasks/tools/#kubectl) installed locally, you can now use it to interact with the cluster.
 
-4. Check that TCE catalog has been automatically added to your cluster.
+4. Once the cluster is up and running, let's check that the TCE catalog has been automatically added to it.
 
     ```bash
     tanzu package repository list --all-namespaces
@@ -83,41 +87,53 @@ By default, unmanaged clusters run locally via kind (default) or minikube with T
     tkg-core-repository                           projects.registry.vmware.com/tce/repo-12  0.12.0  Reconcile succeeded           tkg-system
     ```
 
-5. Set up authentication. Unmanaged clusters are meant for development/testing mainly and for this tutorial we will use the service account authentication. Remember that for any user-facing installation you should [configure an OAuth2/OIDC provider](/site/content/docs/latest/tutorials/using-an-OIDC-provider.md) to enable secure user authentication with Kubeapps and the cluster.
+## Authentication for an unmanaged cluster
 
-    Create a demo credential with which to access Kubeapps and Kubernetes:
+Unmanaged clusters are meant for development/testing mainly, and for this tutorial we will use the **service account authentication**.
 
-    ```bash
-    kubectl create --namespace default serviceaccount kubeapps-operator
-    kubectl create clusterrolebinding kubeapps-operator --clusterrole=cluster-admin --serviceaccount=default:kubeapps-operator
-    cat <<EOF | kubectl apply -f -
-    apiVersion: v1
-    kind: Secret
-    metadata:
-    name: kubeapps-operator-token
-    namespace: default
-    annotations:
-        kubernetes.io/service-account.name: kubeapps-operator
-    type: kubernetes.io/service-account-token
-    EOF
-    ```
+Please remember that for any user-facing installation you should [configure an OAuth2/OIDC provider](/site/content/docs/latest/tutorials/using-an-OIDC-provider.md) to enable secure user authentication with Kubeapps and the cluster.
 
-    > **NOTE** It's not recommended to assign users the `cluster-admin` role for Kubeapps production usage. Please refer to the [Access Control](../howto/access-control.md) documentation to configure fine-grained access control for users.
+### Credentials creation
 
-    To retrieve the token:
+Let's continue by creating a demo credential with which to access Kubeapps and Kubernetes.
+Service account will be named `kubeapps-operator` and will have `cluster-admin` role.
 
-    **On Linux/macOS**
+```bash
+kubectl create --namespace default serviceaccount kubeapps-operator
+kubectl create clusterrolebinding kubeapps-operator --clusterrole=cluster-admin --serviceaccount=default:kubeapps-operator
+cat <<EOF | kubectl apply -f -
+apiVersion: v1
+kind: Secret
+metadata:
+name: kubeapps-operator-token
+namespace: default
+annotations:
+    kubernetes.io/service-account.name: kubeapps-operator
+type: kubernetes.io/service-account-token
+EOF
+```
 
-    ```bash
-    kubectl get --namespace default secret kubeapps-operator-token -o jsonpath='{.data.token}' -o go-template='{{.data.token | base64decode}}' && echo
-    ```
+> **NOTE** It's not recommended to assign users the `cluster-admin` role for Kubeapps production usage.
+>  
+> Please refer to the [Access Control](../howto/access-control.md) documentation to configure fine-grained access control for users.
 
-    **On Windows**
+### Credentials retrieval
 
-    Open a Powershell terminal and run:
+In order to access Kubeapps, a token will be required. Given that we are using plain service account authentication, it is straight forward to obtain a token.
+Keep the obtained token for later steps of the tutorial.
 
-    ```powershell
-    [Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String($(kubectl get --namespace default secret kubeapps-operator-token -o jsonpath='{.data.token}')))
-    ```
+#### On Linux/macOS
 
-> Continue the tutorial by [deploying Kubeapps](./03-deploying-kubeapps.md).
+```bash
+kubectl get --namespace default secret kubeapps-operator-token -o jsonpath='{.data.token}' -o go-template='{{.data.token | base64decode}}' && echo
+```
+
+#### On Windows
+
+Open a Powershell terminal and run:
+
+```powershell
+[Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String($(kubectl get --namespace default secret kubeapps-operator-token -o jsonpath='{.data.token}')))
+```
+
+> Continue the tutorial by [deploying Kubeapps](./03-preparing-kubeapps-deployment.md).

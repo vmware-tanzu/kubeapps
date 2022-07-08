@@ -1,5 +1,6 @@
-# Deploying Kubeapps on a VMware Tanzu™ Community Edition cluster
+# Step 4: Deploying Kubeapps on a VMware Tanzu™ Community Edition cluster
 
+In the
 Once your TCE cluster is up and running, you can deploy Kubeapps into it.
 
 1. Check that Kubeapps is an available package in the cluster with:
@@ -8,9 +9,17 @@ Once your TCE cluster is up and running, you can deploy Kubeapps into it.
     tanzu package available list kubeapps.community.tanzu.vmware.com
     ```
 
-    > If Kubeapps is not present, please check that your version of TCE is v0.13 or higher.
+    > If Kubeapps package is not present, please check that your version of TCE is v0.13 or higher.
 
-2. Install Kubeapps with an optional _configuration values file_
+    In case you could not get Kubeapps showing up in the list of available packages, add it manually to the catalog by running (please change version accordingly):
+
+    ```bash
+    kubectl apply \
+        -f https://raw.githubusercontent.com/vmware-tanzu/package-for-kubeapps/main/metadata.yaml \
+        -f https://raw.githubusercontent.com/vmware-tanzu/package-for-kubeapps/main/9.0.3/package.yaml
+    ```
+
+2. Install Kubeapps with the _configuration values file_ created in the previous step of the tutorial
 
     ```bash
     tanzu package install kubeapps --create-namespace -n kubeapps \
@@ -18,10 +27,6 @@ Once your TCE cluster is up and running, you can deploy Kubeapps into it.
        --version 8.1.7 \
        --values-file your-values-file.yaml
     ```
-
-    Configuration values file is optional and allows you to customize the deployment of Kubeapps.
-
-    > For your configuration values file, you can use exactly the same parameters specified in the [Bitnami Kubeapps chart.](https://github.com/bitnami/charts/tree/master/bitnami/kubeapps#parameters)
 
 3. Check that Kubeapps has been successfully reconciled by running
 
@@ -48,4 +53,6 @@ Once your TCE cluster is up and running, you can deploy Kubeapps into it.
     kapp inspect -a kubeapps-ctrl -n kubeapps
     ```
 
-> Continue the tutorial by [bringing traffic into Kubeapps](./04-ingress-traffic.md).
+5. At this point, Kubeapps should be deployed and running in the TCE cluster. Open a browser and navigate to the URL defined for Kubeapps, for example [https://tce-cluster.foo.com](https://tce-cluster.foo.com).
+
+> Continue the tutorial by [managing applications with Kubeapps](./05-Managing-applications.md).

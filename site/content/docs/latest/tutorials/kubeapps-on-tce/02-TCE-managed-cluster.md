@@ -42,6 +42,8 @@ This information will be used to set up Kubernetes cluster and Kubeapps in order
 
 2. Choose your infrastructure provider and follow the wizard steps in the UI. For more information, visit the [official TCE documentation on clusters deployment](https://tanzucommunityedition.io/docs/v0.12/getting-started/#deploy-clusters).
 
+    > OIDC data obtained in the previous section needs to be set in this step, inside the UI for deploying the cluster.
+
 3. Once the management cluster is created, validate that it started successfully.
 
     ```bash
@@ -94,8 +96,8 @@ This information will be used to set up Kubernetes cluster and Kubeapps in order
     tanzu package repository add tce-repo --url projects.registry.vmware.com/tce/main:0.12.0 --namespace tanzu-package-repo-global
     ```
 
-At this point, workload clusters could be created and be controlled from this management cluster. For simplicity reasons, we will continue the tutorial using only the management cluster, but it is not a recommended strategy for production setups.
+The outcome of the actions above will be a management, managed TCE cluster running on your preferred infrastructure provider. Starting with that, workload clusters could be created and be controlled from this management cluster. For simplicity reasons, we will continue the tutorial using only the management cluster, but it is not a recommended strategy for production setups.
 
 For information on how to create TCE workload clusters please check [the official documentation](https://tanzucommunityedition.io/docs/v0.12/getting-started/#deploy-a-workload-cluster).
 
-> Continue the tutorial by [deploying Kubeapps](./03-deploying-kubeapps.md).
+> Continue the tutorial by [deploying Kubeapps](./03-preparing-kubeapps-deployment.md).

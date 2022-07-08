@@ -1,6 +1,8 @@
 # Step 1: VMware Tanzu™ Community Edition cluster preparation
 
-VMware Tanzu™ Community Edition consists of a variety of components that enable the bootstrapping and management of Kubernetes clusters. The main components are:
+VMware Tanzu™ Community Edition consists of a variety of components that enable the bootstrapping and management of Kubernetes clusters.
+
+The main components are:
 
 - **Tanzu CLI**
 
@@ -13,6 +15,8 @@ VMware Tanzu™ Community Edition consists of a variety of components that enabl
 - **Unmanaged clusters**
 
     Offer a single node, local workstation cluster suitable for a development/test environment.
+
+In this step of the tutorial, we will prepare the installation of the TCE cluster.
 
 ## Step 1.1: Install Tanzu CLI
 
@@ -34,7 +38,9 @@ buildDate: 2022-05-17
 sha: a9b8f3a
 ```
 
-## Step 1.2: Choose and deploy your cluster
+## Step 1.2: Choose the type of your cluster
+
+Tanzu Community Edition has different flavours of clusters, that can adapt to different needs.
 
 You must decide, which of the following suits your desired outcome:
 
