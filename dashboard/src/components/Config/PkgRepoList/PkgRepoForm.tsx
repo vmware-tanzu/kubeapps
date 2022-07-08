@@ -468,13 +468,14 @@ export function PkgRepoForm(props: IPkgRepoFormProps) {
     return message;
   };
 
+  const userManagedSecretText = "Use an existing secret";
+  const kubeappsManagedSecretText = "Provide the secret values";
+
   const isUserManagedSecretToggle = (
     <>
       <CdsToggleGroup className="flex-v-center">
         <CdsToggle>
-          <label>
-            {isUserManagedSecret ? "Use user-managed secrets" : "Use Kubeapps-managed secrets"}
-          </label>
+          <label>{isUserManagedSecret ? userManagedSecretText : kubeappsManagedSecretText}</label>
           <input
             type="checkbox"
             onChange={handleIsUserManagedSecretChange}
@@ -1383,8 +1384,8 @@ export function PkgRepoForm(props: IPkgRepoFormProps) {
                           <CdsToggle>
                             <label>
                               {isUserManagedPSSecret
-                                ? "Use user-managed secrets"
-                                : "Use Kubeapps-managed secrets"}
+                                ? userManagedSecretText
+                                : kubeappsManagedSecretText}
                             </label>
                             <input
                               type="checkbox"
@@ -1637,9 +1638,7 @@ export function PkgRepoForm(props: IPkgRepoFormProps) {
                 <CdsToggleGroup>
                   <CdsToggle>
                     <label>
-                      {isUserManagedCASecret
-                        ? "Use user-managed secrets"
-                        : "Use Kubeapps-managed secrets"}
+                      {isUserManagedCASecret ? userManagedSecretText : kubeappsManagedSecretText}
                     </label>
                     <input
                       type="checkbox"
