@@ -26,12 +26,33 @@ function deploy {
   kubectl apply -f registry-app.yaml
   kubectl expose deployment registry-app --port=5000 --target-port=5000 --name=registry-app-svc --context kind-kubeapps
   while [[ $(kubectl get pods -l app=registry-app -o 'jsonpath={..status.conditions[?(@.type=="Ready")].status}') != "True" ]]; do
-    echo "Waiting for registry-app to reach Ready state..."
+    echo "Waiting 1s for registry-app to reach Ready state..."
     sleep 1
   done
-  # TODO gfichtenholt this needs to be done asynchronously
-  kubectl -n default port-forward svc/registry-app-svc 5000:5000 --context kind-kubeapps 
 
+  # ref https://stackoverflow.com/questions/67415637/kubectl-port-forward-reliably-in-a-shell-script
+  localPort=5000
+  remotePort=5000
+  kubectl -n default port-forward svc/registry-app-svc $localPort:$remotePort --context kind-kubeapps &
+  
+  pid=$!
+
+  # kill the port-forward regardless of how this script exits
+  trap '{
+    echo Killing process kubectl port-forward to 5000 with id [$pid]...
+    kill $pid
+  }' EXIT  
+
+  # wait for $localport to become available
+  while ! nc -vz localhost $localPort > /dev/null 2>&1 ; do
+    echo Sleeping 1s until local port [$localPort] becomes available...
+    sleep 1
+  done
+  
+  # This would show that the port is open, like this:
+  # 5000/tcp open  upnp
+  nmap -sT -p $localPort localhost
+  
   local max=5  
   local n=0
   until [ "$n" -ge "$max" ]
@@ -42,7 +63,7 @@ function deploy {
    sleep 5
   done
   if [[ $n -ge $max ]]; then
-    echo "Failed to login with [5] attempts.Exiting script..."
+    echo "Failed to login to [localhost:5000] with [5] attempts. Exiting script..."
     exit 1
   fi
 
@@ -53,11 +74,20 @@ function deploy {
 }
 
 function undeploy {
+  set +e
+  pid="$(ps -ef | grep port-forward | grep 5000 | awk '{print $2}')"
+  if [[ "$pid" != "" ]]; then
+    echo "Killing process 'kubectl port-forward to 5000' with id [$pid]..."
+    kill $pid
+  fi
+
   kubectl delete svc/fluxv2plugin-testdata-svc
   kubectl delete svc/fluxv2plugin-testdata-ssl-svc
   kubectl delete svc/registry-app-svc
+  kubectl delete configmap registry-configmap  
   kubectl delete deployment/registry-app --context kind-kubeapps 
   kubectl delete deployment fluxv2plugin-testdata-app --context kind-kubeapps 
+  set -e
 }
 
 function redeploy {
