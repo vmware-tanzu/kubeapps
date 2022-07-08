@@ -1,0 +1,192 @@
+server\server.go:88:34: SA1019: grpc.WithInsecure is deprecated: use WithTransportCredentials and insecure.NewCredentials() instead. Will be supported throughout 1.x. (staticcheck)
+		DialOptions: []grpc.DialOption{grpc.WithInsecure()},
+		                               ^
+core\plugins\v1alpha1\plugins_test.go:429:32: SA5011: possible nil pointer dereference (staticcheck)
+				if got, want := restConfig.Host, tc.expectedAPIHost; got != want {
+				                           ^
+core\plugins\v1alpha1\plugins_test.go:426:8: SA5011(related information): this check suggests that the pointer can be nil (staticcheck)
+				if restConfig == nil {
+				   ^
+plugins\helm\packages\v1alpha1\utils\postgresql_utils.go:76:6: S1002: should omit comparison to bool constant, can be simplified to `withFallback` (gosimple)
+		if withFallback == true && len(splittedID) == 2 {
+		   ^
+plugins\helm\packages\v1alpha1\utils\postgresql_utils.go:123:6: S1002: should omit comparison to bool constant, can be simplified to `withFallback` (gosimple)
+		if withFallback == true && len(splittedID) == 2 {
+		   ^
+plugins\helm\packages\v1alpha1\utils\postgresql_utils.go:160:6: S1002: should omit comparison to bool constant, can be simplified to `withFallback` (gosimple)
+		if withFallback == true && len(splittedID) == 2 {
+		   ^
+plugins\resources\v1alpha1\main.go:23:2: `version` is unused (deadcode)
+	version = "devel"
+	^
+plugins\resources\v1alpha1\main.go:35:6: `RegisterWithGRPCServer` is unused (deadcode)
+func RegisterWithGRPCServer(opts pluginsv1alpha1.GRPCPluginRegistrationOptions) (interface{}, error) {
+     ^
+plugins\resources\v1alpha1\main.go:46:6: `RegisterHTTPHandlerFromEndpoint` is unused (deadcode)
+func RegisterHTTPHandlerFromEndpoint(ctx context.Context, mux *runtime.ServeMux, endpoint string, opts []grpc.DialOption) error {
+     ^
+plugins\resources\v1alpha1\main.go:51:6: `GetPluginDetail` is unused (deadcode)
+func GetPluginDetail() *pluginsgrpcv1alpha1.Plugin {
+     ^
+plugins\resources\v1alpha1\server_test.go:439:28: Error return value of `responseStream.CloseSend` is not checked (errcheck)
+			responseStream.CloseSend()
+			                        ^
+plugins\resources\v1alpha1\server.go:118:46: SA1019: grpc.WithInsecure is deprecated: use WithTransportCredentials and insecure.NewCredentials() instead. Will be supported throughout 1.x. (staticcheck)
+			conn, err := grpc.Dial("localhost:"+port, grpc.WithInsecure())
+			                                          ^
+plugins\resources\v1alpha1\server_test.go:74:82: SA1019: grpc.WithInsecure is deprecated: use WithTransportCredentials and insecure.NewCredentials() instead. Will be supported throughout 1.x. (staticcheck)
+	conn, err := grpc.DialContext(ctx, "bufnet", grpc.WithContextDialer(bufDialer), grpc.WithInsecure())
+	                                                                                ^
+plugins\pkg\agent\agent_test.go:347:9: ineffectual assignment to err (ineffassign)
+			rel, err = cfg.Releases.Get(tc.release, revisionBeingUpdated)
+			     ^
+plugins\pkg\pkgutils\pkgutils_test.go:864:14: composites: `k8s.io/apiextensions-apiserver/pkg/apiserver/schema.JSON` composite literal uses unkeyed fields (govet)
+				Default: structuralschema.JSON{"foo"},
+				         ^
+plugins\pkg\pkgutils\pkgutils_test.go:870:15: composites: `k8s.io/apiextensions-apiserver/pkg/apiserver/schema.JSON` composite literal uses unkeyed fields (govet)
+					Default: structuralschema.JSON{"foo"},
+					         ^
+plugins\pkg\pkgutils\pkgutils_test.go:879:17: composites: `k8s.io/apiextensions-apiserver/pkg/apiserver/schema.JSON` composite literal uses unkeyed fields (govet)
+							Default: structuralschema.JSON{"A"},
+							         ^
+plugins\fluxv2\packages\v1alpha1\main.go:19:6: `RegisterWithGRPCServer` is unused (deadcode)
+func RegisterWithGRPCServer(opts pluginsv1alpha1.GRPCPluginRegistrationOptions) (interface{}, error) {
+     ^
+plugins\fluxv2\packages\v1alpha1\main.go:38:6: `RegisterHTTPHandlerFromEndpoint` is unused (deadcode)
+func RegisterHTTPHandlerFromEndpoint(ctx context.Context, mux *runtime.ServeMux, endpoint string, opts []grpc.DialOption) error {
+     ^
+plugins\fluxv2\packages\v1alpha1\repo.go:43:2: `fluxHelmRepositoryList` is unused (deadcode)
+	fluxHelmRepositoryList = "HelmRepositoryList"
+	^
+plugins\fluxv2\packages\v1alpha1\release_integration_test.go:29:2: `fluxHelmReleaseList` is unused (deadcode)
+	fluxHelmReleaseList = "HelmReleaseList"
+	^
+plugins\fluxv2\packages\v1alpha1\chart_test.go:130:13: Error return value of `w.Write` is not checked (errcheck)
+					w.Write(tarGzBytes)
+					       ^
+plugins\fluxv2\packages\v1alpha1\chart_test.go:196:37: Error return value of `s.redisMockExpectGetFromRepoCache` is not checked (errcheck)
+			s.redisMockExpectGetFromRepoCache(mock, nil, *repo)
+			                                 ^
+plugins\fluxv2\packages\v1alpha1\chart_test.go:260:13: Error return value of `w.Write` is not checked (errcheck)
+					w.Write([]byte(fmt.Sprintf("The server is not ready to handle the request: [%d try left before OK]", failuresAllowed)))
+					       ^
+plugins\fluxv2\packages\v1alpha1\chart_test.go:263:13: Error return value of `w.Write` is not checked (errcheck)
+					w.Write(tarGzBytes)
+					       ^
+plugins\fluxv2\packages\v1alpha1\chart_test.go:295:36: Error return value of `s.redisMockExpectGetFromRepoCache` is not checked (errcheck)
+		s.redisMockExpectGetFromRepoCache(mock, nil, *repo)
+		                                 ^
+plugins\fluxv2\packages\v1alpha1\chart_test.go:467:38: Error return value of `s.redisMockExpectGetFromRepoCache` is not checked (errcheck)
+				s.redisMockExpectGetFromRepoCache(mock, nil, *repo)
+				                                 ^
+plugins\fluxv2\packages\v1alpha1\integration_utils_test.go:957:24: Error return value is not checked (errcheck)
+			sourcev1.AddToScheme(scheme)
+			                    ^
+plugins\fluxv2\packages\v1alpha1\integration_utils_test.go:958:22: Error return value is not checked (errcheck)
+			helmv2.AddToScheme(scheme)
+			                  ^
+plugins\fluxv2\packages\v1alpha1\oci_repo.go:253:25: Error return value of `transport.Release` is not checked (errcheck)
+	defer transport.Release(t)
+	                       ^
+plugins\fluxv2\packages\v1alpha1\repo_integration_test.go:1303:46: Error return value of `fluxPluginReposClient.SetUserManagedSecrets` is not checked (errcheck)
+		fluxPluginReposClient.SetUserManagedSecrets(
+		                                           ^
+plugins\fluxv2\packages\v1alpha1\test_util_test.go:307:22: Error return value is not checked (errcheck)
+	sourcev1.AddToScheme(scheme)
+	                    ^
+plugins\fluxv2\packages\v1alpha1\oci_repo.go:262:23: func `(*OCIRegistry).logout` is unused (unused)
+func (r *OCIRegistry) logout() error {
+                      ^
+plugins\helm\packages\v1alpha1\main.go:35:6: `RegisterWithGRPCServer` is unused (deadcode)
+func RegisterWithGRPCServer(opts pluginsv1alpha1.GRPCPluginRegistrationOptions) (interface{}, error) {
+     ^
+plugins\helm\packages\v1alpha1\main.go:44:6: `RegisterHTTPHandlerFromEndpoint` is unused (deadcode)
+func RegisterHTTPHandlerFromEndpoint(ctx context.Context, mux *runtime.ServeMux, endpoint string, opts []grpc.DialOption) error {
+     ^
+plugins\helm\packages\v1alpha1\globals_vars_test.go:267:2: `addRepoReqTlsSkipVerify` is unused (deadcode)
+	addRepoReqTlsSkipVerify = &corev1.AddPackageRepositoryRequest{
+	^
+plugins\helm\packages\v1alpha1\server_test.go:2057:6: `chartAssetForPackage` is unused (deadcode)
+func chartAssetForPackage(pkg *corev1.InstalledPackageSummary) *models.Chart {
+     ^
+plugins\helm\packages\v1alpha1\server_test.go:76:13: composites: `github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/helm/packages/v1alpha1/utils.PostgresAssetManager` composite literal uses unkeyed fields (govet)
+	manager = &utils.PostgresAssetManager{&dbutils.PostgresAssetManager{DB: db, GlobalReposNamespace: globalPackagingNamespace}}
+	           ^
+plugins\helm\packages\v1alpha1\server_test.go:1205:29: composites: `github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/pkg/pkgutils.VersionsInSummary` composite literal uses unkeyed fields (govet)
+			exp_versions_in_summary: pkgutils.VersionsInSummary{0, 0, 0},
+			                         ^
+plugins\helm\packages\v1alpha1\server_test.go:1219:29: composites: `github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/pkg/pkgutils.VersionsInSummary` composite literal uses unkeyed fields (govet)
+			exp_versions_in_summary: pkgutils.VersionsInSummary{4, 2, 1},
+			                         ^
+plugins\helm\packages\v1alpha1\server_test.go:1231:29: composites: `github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/pkg/pkgutils.VersionsInSummary` composite literal uses unkeyed fields (govet)
+			exp_versions_in_summary: pkgutils.VersionsInSummary{1, 0, 0},
+			                         ^
+plugins\helm\packages\v1alpha1\test_util_test.go:195:59: composites: `k8s.io/apimachinery/pkg/runtime/schema.GroupVersion` composite literal uses unkeyed fields (govet)
+	rm := apimeta.NewDefaultRESTMapper([]schema.GroupVersion{{AppRepositoryGroup, AppRepositoryVersion}})
+	                                                         ^
+plugins\helm\packages\v1alpha1\server.go:308:3: ineffectual assignment to version (ineffassign)
+		version = chart.ChartVersions[0].Version
+		^
+plugins\helm\packages\v1alpha1\server.go:997:72: SA5011: possible nil pointer dereference (staticcheck)
+	log.Infof("+helm AddPackageRepository '%s' pointing to '%s'", request.Name, request.Url)
+	                                                                      ^
+plugins\helm\packages\v1alpha1\server.go:998:5: SA5011(related information): this check suggests that the pointer can be nil (staticcheck)
+	if request == nil {
+	   ^
+cmd\root_test.go:61:15: Error return value of `cmd.Execute` is not checked (errcheck)
+			cmd.Execute()
+			           ^
+core\packages\v1alpha1\packages_fan_in.go:97:6: ineffectual assignment to ok (ineffassign)
+					ok := true
+					^
+core\packages\v1alpha1\packages_fan_in.go:291:6: ineffectual assignment to ok (ineffassign)
+					ok := true
+					^
+plugins\kapp_controller\packages\v1alpha1\server_data_resources.go:38:2: `appLabelKey` is unused (deadcode)
+	appLabelKey             = "kapp.k14s.io/app"
+	^
+plugins\kapp_controller\packages\v1alpha1\server_data_resources.go:116:18: func `(*Server).getPkg` is unused (unused)
+func (s *Server) getPkg(ctx context.Context, cluster, namespace, identifier string) (*datapackagingv1alpha1.Package, error) {
+                 ^
+plugins\kapp_controller\packages\v1alpha1\server_data_resources.go:343:18: func `(*Server).getApps` is unused (unused)
+func (s *Server) getApps(ctx context.Context, cluster, namespace, identifier string) ([]*kappctrlv1alpha1.App, error) {
+                 ^
+plugins\kapp_controller\packages\v1alpha1\server_utils.go:251:3: S1011: should replace loop with `prereleases.Identifiers = append(prereleases.Identifiers, prereleasesVersionSelection...)` (gosimple)
+		for _, prereleaseVersionSelectionId := range prereleasesVersionSelection {
+		^
+plugins\kapp_controller\packages\v1alpha1\server_test.go:303:40: composites: `k8s.io/apimachinery/pkg/apis/meta/v1.Time` composite literal uses unkeyed fields (govet)
+						ReleasedAt:                      metav1.Time{time.Date(1984, time.June, 6, 0, 0, 0, 0, time.UTC)},
+						                                 ^
+plugins\kapp_controller\packages\v1alpha1\server_test.go:321:40: composites: `k8s.io/apimachinery/pkg/apis/meta/v1.Time` composite literal uses unkeyed fields (govet)
+						ReleasedAt:                      metav1.Time{time.Date(1997, time.December, 25, 0, 0, 0, 0, time.UTC)},
+						                                 ^
+plugins\kapp_controller\packages\v1alpha1\server_test.go:420:40: composites: `k8s.io/apimachinery/pkg/apis/meta/v1.Time` composite literal uses unkeyed fields (govet)
+						ReleasedAt:                      metav1.Time{time.Date(1984, time.June, 6, 0, 0, 0, 0, time.UTC)},
+						                                 ^
+plugins\kapp_controller\packages\v1alpha1\server_test.go:1751:20: composites: `k8s.io/apimachinery/pkg/apis/meta/v1.Duration` composite literal uses unkeyed fields (govet)
+						SyncPeriod: &metav1.Duration{(time.Second * 30)},
+						             ^
+plugins\kapp_controller\packages\v1alpha1\server_test.go:1885:20: composites: `k8s.io/apimachinery/pkg/apis/meta/v1.Duration` composite literal uses unkeyed fields (govet)
+						SyncPeriod: &metav1.Duration{(time.Second * 30)},
+						             ^
+plugins\kapp_controller\packages\v1alpha1\server_test.go:2013:20: composites: `k8s.io/apimachinery/pkg/apis/meta/v1.Duration` composite literal uses unkeyed fields (govet)
+						SyncPeriod: &metav1.Duration{(time.Second * 30)},
+						             ^
+plugins\kapp_controller\packages\v1alpha1\server_test.go:1081:9: copylocks: range var tc copies lock: struct{name string; existingObjects []k8s.io/apimachinery/pkg/runtime.Object; expectedPackages []*github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1.AvailablePackageSummary; paginationOptions github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1.PaginationOptions; filterOptions github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1.FilterOptions; expectedStatusCode google.golang.org/grpc/codes.Code} contains github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1.PaginationOptions contains google.golang.org/protobuf/internal/impl.MessageState contains sync.Mutex (govet)
+	for _, tc := range testCases {
+	       ^
+plugins\kapp_controller\packages\v1alpha1\server_utils_test.go:824:9: copylocks: range var tc copies lock: struct{name string; metadatas []*github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/apis/datapackaging/v1alpha1.PackageMetadata; filterOptions github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1.FilterOptions; expectedMetadatas []*github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/apis/datapackaging/v1alpha1.PackageMetadata} contains github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1.FilterOptions contains google.golang.org/protobuf/internal/impl.MessageState contains sync.Mutex (govet)
+	for _, tc := range testCases {
+	       ^
+plugins\kapp_controller\packages\v1alpha1\server_ctrl_packages.go:306:3: ineffectual assignment to startAt (ineffassign)
+		startAt := -1
+		^
+plugins\kapp_controller\packages\v1alpha1\server_ctrl_repositories.go:68:3: ineffectual assignment to pkgSecret (ineffassign)
+		pkgSecret, err = s.updateSecret(ctx, cluster, pkgSecret)
+		^
+plugins\kapp_controller\packages\v1alpha1\server_ctrl_packages.go:526:46: SA1024: cutset contains duplicate characters (staticcheck)
+	valuesApplied = strings.Trim(valuesApplied, "---")
+	                                            ^
+plugins\kapp_controller\packages\v1alpha1\server_ctrl_repositories.go:264:2: SA4006: this value of `pkgRepository` is never used (staticcheck)
+	pkgRepository, err = s.updatePkgRepository(ctx, cluster, namespace, pkgRepository)
+	^
