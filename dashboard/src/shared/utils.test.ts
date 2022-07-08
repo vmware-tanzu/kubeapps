@@ -173,7 +173,7 @@ it("getAppStatusLabel", () => {
 
 it("getSupportedAuthMethods", () => {
   expect(getSupportedAuthMethods({ name: PluginNames.PACKAGES_HELM, version: "" })).toHaveLength(4);
-  expect(getSupportedAuthMethods({ name: PluginNames.PACKAGES_FLUX, version: "" })).toHaveLength(4);
+  expect(getSupportedAuthMethods({ name: PluginNames.PACKAGES_FLUX, version: "" })).toHaveLength(5);
   expect(getSupportedAuthMethods({ name: PluginNames.PACKAGES_KAPP, version: "" })).toHaveLength(4);
   expect(getSupportedAuthMethods({ name: "foo", version: "" })).toHaveLength(0);
 });
