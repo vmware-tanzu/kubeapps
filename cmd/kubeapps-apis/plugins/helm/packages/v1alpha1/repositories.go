@@ -39,7 +39,7 @@ type HelmRepository struct {
 	interval      string
 	tlsConfig     *corev1.PackageRepositoryTlsConfig
 	auth          *corev1.PackageRepositoryAuth
-	customDetails *v1alpha1.RepositoryCustomDetails
+	customDetails *v1alpha1.HelmPackageRepositoryCustomDetail
 }
 
 var ValidRepoTypes = []string{HelmRepoType, OCIRepoType}
@@ -200,7 +200,7 @@ func (s *Server) mapToPackageRepositoryDetail(source *apprepov1alpha1.AppReposit
 
 	// Custom details
 	if source.Spec.DockerRegistrySecrets != nil || source.Spec.FilterRule.JQ != "" || source.Spec.OCIRepositories != nil {
-		var customDetails = &v1alpha1.RepositoryCustomDetails{}
+		var customDetails = &v1alpha1.HelmPackageRepositoryCustomDetail{}
 		customDetails.DockerRegistrySecrets = source.Spec.DockerRegistrySecrets
 		if source.Spec.FilterRule.JQ != "" {
 			customDetails.FilterRule = &v1alpha1.RepositoryFilterRule{

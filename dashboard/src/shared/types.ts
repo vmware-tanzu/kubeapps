@@ -21,7 +21,7 @@ import {
   UsernamePassword,
 } from "gen/kubeappsapis/core/packages/v1alpha1/repositories";
 import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins";
-import { RepositoryCustomDetails } from "gen/kubeappsapis/plugins/helm/packages/v1alpha1/helm";
+import { HelmPackageRepositoryCustomDetail } from "gen/kubeappsapis/plugins/helm/packages/v1alpha1/helm";
 import { IOperatorsState } from "reducers/operators";
 import { Subscription } from "rxjs";
 import { IAuthState } from "../reducers/auth";
@@ -443,5 +443,5 @@ export interface IPkgRepoFormData {
   skipTLS: boolean;
   type: string;
   url: string;
-  customDetails: Partial<RepositoryCustomDetails>; // add more types if necesary, currently just helm's custom details
+  customDetails: Partial<HelmPackageRepositoryCustomDetail>; // add more types if necesary, currently just helm's custom details
 }

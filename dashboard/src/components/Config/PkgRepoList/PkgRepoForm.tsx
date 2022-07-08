@@ -23,7 +23,7 @@ import {
   UsernamePassword,
 } from "gen/kubeappsapis/core/packages/v1alpha1/repositories";
 import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins";
-import { RepositoryCustomDetails } from "gen/kubeappsapis/plugins/helm/packages/v1alpha1/helm";
+import { HelmPackageRepositoryCustomDetail } from "gen/kubeappsapis/plugins/helm/packages/v1alpha1/helm";
 import { useEffect, useRef, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { Action } from "redux";
@@ -199,21 +199,22 @@ export function PkgRepoForm(props: IPkgRepoFormProps) {
 
       // setting custom details for the Helm plugin
       if (repo.packageRepoRef?.plugin?.name === PluginNames.PACKAGES_HELM) {
-        const repositoryCustomDetails = repo.customDetail as Partial<RepositoryCustomDetails>;
-        setOCIRepositories(repositoryCustomDetails?.ociRepositories?.join(", ") || "");
-        setPerformValidation(repositoryCustomDetails?.performValidation || false);
-        if (repositoryCustomDetails?.filterRule?.jq) {
-          const { names, regex, exclude } = toParams(repositoryCustomDetails.filterRule!);
+        const HelmPackageRepositoryCustomDetail =
+          repo.customDetail as Partial<HelmPackageRepositoryCustomDetail>;
+        setOCIRepositories(HelmPackageRepositoryCustomDetail?.ociRepositories?.join(", ") || "");
+        setPerformValidation(HelmPackageRepositoryCustomDetail?.performValidation || false);
+        if (HelmPackageRepositoryCustomDetail?.filterRule?.jq) {
+          const { names, regex, exclude } = toParams(HelmPackageRepositoryCustomDetail.filterRule!);
           setFilterRegex(regex);
           setFilterExclude(exclude);
           setFilterNames(names);
         }
         setHelmPsAuthMethod(
-          repositoryCustomDetails?.dockerRegistrySecrets?.length
+          HelmPackageRepositoryCustomDetail?.dockerRegistrySecrets?.length
             ? PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_DOCKER_CONFIG_JSON
             : PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_UNSPECIFIED,
         );
-        setSecretPSName(repositoryCustomDetails?.dockerRegistrySecrets?.[0] || "");
+        setSecretPSName(HelmPackageRepositoryCustomDetail?.dockerRegistrySecrets?.[0] || "");
       }
     }
   }, [repo, namespace, currentCluster, dispatch]);
@@ -272,7 +273,7 @@ export function PkgRepoForm(props: IPkgRepoFormProps) {
         performValidation,
         filterRule: filter,
         dockerRegistrySecrets: isUserManagedPSSecret && secretPSName ? [secretPSName] : [],
-      } as RepositoryCustomDetails,
+      } as HelmPackageRepositoryCustomDetail,
       description,
       dockerRegCreds: {
         username: isUserManagedSecret ? "" : secretUser,
@@ -1336,7 +1337,7 @@ export function PkgRepoForm(props: IPkgRepoFormProps) {
                           }
                           onChange={handleImgPSChange}
                           disabled={
-                            !!(repo?.customDetail as Partial<RepositoryCustomDetails>)
+                            !!(repo?.customDetail as Partial<HelmPackageRepositoryCustomDetail>)
                               ?.dockerRegistrySecrets?.length
                           }
                           required={
@@ -1366,7 +1367,7 @@ export function PkgRepoForm(props: IPkgRepoFormProps) {
                           }
                           onChange={handleImgPSChange}
                           disabled={
-                            !!(repo?.customDetail as Partial<RepositoryCustomDetails>)
+                            !!(repo?.customDetail as Partial<HelmPackageRepositoryCustomDetail>)
                               ?.dockerRegistrySecrets?.length
                           }
                           required={
@@ -1401,7 +1402,7 @@ export function PkgRepoForm(props: IPkgRepoFormProps) {
                               checked={isUserManagedPSSecret}
                               disabled={true}
                               // disabled={
-                              //   !!(repo?.customDetail as Partial<RepositoryCustomDetails>)
+                              //   !!(repo?.customDetail as Partial<HelmPackageRepositoryCustomDetail>)
                               //     ?.dockerRegistrySecrets?.length
                               // }
                             />
@@ -1457,8 +1458,9 @@ export function PkgRepoForm(props: IPkgRepoFormProps) {
                                   PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_DOCKER_CONFIG_JSON
                                 }
                                 disabled={
-                                  !!(repo?.customDetail as Partial<RepositoryCustomDetails>)
-                                    ?.dockerRegistrySecrets?.length
+                                  !!(
+                                    repo?.customDetail as Partial<HelmPackageRepositoryCustomDetail>
+                                  )?.dockerRegistrySecrets?.length
                                 }
                               />
                             </CdsInput>
@@ -1477,8 +1479,9 @@ export function PkgRepoForm(props: IPkgRepoFormProps) {
                                   PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_DOCKER_CONFIG_JSON
                                 }
                                 disabled={
-                                  !!(repo?.customDetail as Partial<RepositoryCustomDetails>)
-                                    ?.dockerRegistrySecrets?.length
+                                  !!(
+                                    repo?.customDetail as Partial<HelmPackageRepositoryCustomDetail>
+                                  )?.dockerRegistrySecrets?.length
                                 }
                               />
                             </CdsInput>
@@ -1498,8 +1501,9 @@ export function PkgRepoForm(props: IPkgRepoFormProps) {
                                   PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_DOCKER_CONFIG_JSON
                                 }
                                 disabled={
-                                  !!(repo?.customDetail as Partial<RepositoryCustomDetails>)
-                                    ?.dockerRegistrySecrets?.length
+                                  !!(
+                                    repo?.customDetail as Partial<HelmPackageRepositoryCustomDetail>
+                                  )?.dockerRegistrySecrets?.length
                                 }
                               />
                             </CdsInput>
@@ -1512,8 +1516,9 @@ export function PkgRepoForm(props: IPkgRepoFormProps) {
                                 onChange={handleImgPSEmailChange}
                                 placeholder="user@example.com"
                                 disabled={
-                                  !!(repo?.customDetail as Partial<RepositoryCustomDetails>)
-                                    ?.dockerRegistrySecrets?.length
+                                  !!(
+                                    repo?.customDetail as Partial<HelmPackageRepositoryCustomDetail>
+                                  )?.dockerRegistrySecrets?.length
                                 }
                               />
                             </CdsInput>

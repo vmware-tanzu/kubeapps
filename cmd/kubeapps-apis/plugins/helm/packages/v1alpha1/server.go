@@ -1022,9 +1022,9 @@ func (s *Server) AddPackageRepository(ctx context.Context, request *corev1.AddPa
 	}
 
 	// Get Helm-specific values
-	var customDetails *helmv1.RepositoryCustomDetails
+	var customDetails *helmv1.HelmPackageRepositoryCustomDetail
 	if request.CustomDetail != nil {
-		customDetails = &helmv1.RepositoryCustomDetails{}
+		customDetails = &helmv1.HelmPackageRepositoryCustomDetail{}
 		if err := request.CustomDetail.UnmarshalTo(customDetails); err != nil {
 			return nil, status.Errorf(codes.InvalidArgument, "customDetails could not be parsed: [%v]", request.CustomDetail)
 		}
@@ -1119,9 +1119,9 @@ func (s *Server) UpdatePackageRepository(ctx context.Context, request *corev1.Up
 	log.Infof("+helm UpdatePackageRepository '%s' in context [%v]", repoRef.Identifier, repoRef.Context)
 
 	// Get Helm-specific values
-	var customDetails *helmv1.RepositoryCustomDetails
+	var customDetails *helmv1.HelmPackageRepositoryCustomDetail
 	if request.CustomDetail != nil {
-		customDetails = &helmv1.RepositoryCustomDetails{}
+		customDetails = &helmv1.HelmPackageRepositoryCustomDetail{}
 		if err := request.CustomDetail.UnmarshalTo(customDetails); err != nil {
 			return nil, status.Errorf(codes.InvalidArgument, "customDetails could not be parsed: [%v]", request.CustomDetail)
 		}

@@ -21,7 +21,7 @@ import {
 } from "gen/kubeappsapis/core/packages/v1alpha1/repositories";
 import {
   protobufPackage as helmProtobufPackage,
-  RepositoryCustomDetails,
+  HelmPackageRepositoryCustomDetail,
 } from "gen/kubeappsapis/plugins/helm/packages/v1alpha1/helm";
 import KubeappsGrpcClient from "./KubeappsGrpcClient";
 import { IPkgRepoFormData } from "./types";
@@ -218,9 +218,9 @@ export class PackageRepositoriesService {
     switch (request.plugin?.name) {
       case PluginNames.PACKAGES_HELM:
         return {
-          typeUrl: `${helmProtobufPackage}.RepositoryCustomDetails`,
-          value: RepositoryCustomDetails.encode(
-            request.customDetails as RepositoryCustomDetails,
+          typeUrl: `${helmProtobufPackage}.HelmPackageRepositoryCustomDetail`,
+          value: HelmPackageRepositoryCustomDetail.encode(
+            request.customDetails as HelmPackageRepositoryCustomDetail,
           ).finish(),
         } as Any;
       default:
