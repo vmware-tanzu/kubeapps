@@ -508,8 +508,16 @@ export function PkgRepoForm(props: IPkgRepoFormProps) {
       </CdsInput>
       <br />
       <CdsControlMessage>
-        Name of the Kubernetes Secret object holding the auth data. Please ensure that secret has
-        the proper type as expected by the selected authentication method.
+        Name of the{" "}
+        <a
+          href="https://kubernetes.io/docs/concepts/configuration/secret/"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          Kubernetes Secret
+        </a>{" "}
+        object holding the authentication data. Please ensure that this secret's type is the
+        expected one by the selected authentication method.
       </CdsControlMessage>
     </>
   );
@@ -1423,9 +1431,16 @@ export function PkgRepoForm(props: IPkgRepoFormProps) {
                             </CdsInput>
                             <br />
                             <CdsControlMessage>
-                              Name of the Kubernetes Secret object holding the auth data. Please
-                              ensure that secret has the proper type as expected by the selected
-                              authentication method.
+                              Name of the{" "}
+                              <a
+                                href="https://kubernetes.io/docs/concepts/configuration/secret/"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                              >
+                                Kubernetes Secret
+                              </a>{" "}
+                              object holding the registry secret data. Please ensure that this
+                              secret's type is <i>dockerconfigjson</i>.
                             </CdsControlMessage>
                           </>
                         ) : (
@@ -1667,8 +1682,15 @@ export function PkgRepoForm(props: IPkgRepoFormProps) {
                     </CdsInput>
                     <br />
                     <CdsControlMessage>
-                      Name of the Kubernetes Secret object holding the TLS Certificate Authority
-                      data.
+                      Name of the{" "}
+                      <a
+                        href="https://kubernetes.io/docs/concepts/configuration/secret/"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        Kubernetes Secret
+                      </a>{" "}
+                      object holding the TLS Certificate Authority data.
                     </CdsControlMessage>
                   </>
                 ) : (
