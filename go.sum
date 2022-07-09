@@ -2213,8 +2213,8 @@ nhooyr.io/websocket v1.8.7/go.mod h1:B70DZP8IakI65RVQ51MsWP/8jndNma26DVA/nFSCgW0
 oras.land/oras-go v1.1.1/go.mod h1:n2TE1ummt9MUyprGhT+Q7kGZUF4kVUpYysPFxeV2IpQ=
 oras.land/oras-go v1.2.0 h1:yoKosVIbsPoFMqAIFHTnrmOuafHal+J/r+I5bdbVWu4=
 oras.land/oras-go v1.2.0/go.mod h1:pFNs7oHp2dYsYMSS82HaX5l4mpnGO7hbpPN6EWH2ltc=
-oras.land/oras-go/v2 v2.0.0-20220621073716-14422086e418 h1:eFXe4uXwdAQA9LLsaAqyscEB99ngao9xTVoPMYQoaSI=
-oras.land/oras-go/v2 v2.0.0-20220621073716-14422086e418/go.mod h1:0IQiLwHUJuMs0+QYGavaeQWw5FD4ABD/RP5YamXT/sc=
+oras.land/oras-go/v2 v2.0.0-alpha h1:Uwso3p1KMTmm7YheWBkGNjf8xqXZ2AYxMfxu1DoQiH0=
+oras.land/oras-go/v2 v2.0.0-alpha/go.mod h1:0IQiLwHUJuMs0+QYGavaeQWw5FD4ABD/RP5YamXT/sc=
 rsc.io/binaryregexp v0.2.0/go.mod h1:qTv7/COck+e2FymRvadv62gMdZztPaShugOCi3I+8D8=
 rsc.io/pdf v0.1.1/go.mod h1:n8OzWcQ6Sp37PL01nO98y4iUCRdTGarVfzxY20ICaU4=
 rsc.io/quote/v3 v3.1.0/go.mod h1:yEA65RcK8LyAZtP9Kv3t0HmxON59tX3rD+tICJqUlj0=
