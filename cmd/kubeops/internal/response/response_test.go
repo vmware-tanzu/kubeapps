@@ -49,7 +49,8 @@ func TestErrorResponse_Write(t *testing.T) {
 			tt.e.Write(w)
 			assert.Equal(t, tt.e.Code, w.Code)
 			var body ErrorResponse
-			json.NewDecoder(w.Body).Decode(&body)
+			err := json.NewDecoder(w.Body).Decode(&body)
+			assert.NoError(t, err)
 			assert.Equal(t, tt.e, body)
 		})
 	}
