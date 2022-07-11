@@ -26,6 +26,7 @@ func TestParseFlagsCorrect(t *testing.T) {
 				"--plugin-dir", "foo01",
 				"--clusters-config-path", "foo02",
 				"--pinniped-proxy-url", "foo03",
+				"--pinniped-proxy-ca-cert", "foo06",
 				"--global-repos-namespace", "kubeapps-global",
 				"--unsafe-local-dev-kubeconfig", "true",
 				"--plugin-config-path", "foo05",

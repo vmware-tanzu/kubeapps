@@ -821,6 +821,7 @@ func TestFilterMetadatas(t *testing.T) {
 		},
 	}
 
+	//nolint:govet
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			if got, want := FilterMetadatas(tc.metadatas, &tc.filterOptions), tc.expectedMetadatas; !cmp.Equal(want, got) {
