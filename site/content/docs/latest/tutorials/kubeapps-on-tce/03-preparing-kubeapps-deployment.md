@@ -3,7 +3,7 @@
 Before Kubeapps is deployed to the TCE cluster, there are some decisions that need to be taken. This will shape the installation structure and functioning of the application.
 There are topics like routing traffic into Kubeapps, TLS, or which plugins need to be enabled, that will be set up in a _configuration values file_.
 
-A configuration values file is a Yaml file that allows you to customize the deployment of Kubeapps. TCE makes use of Carvel for installing application, and in the case of Kubeapps, the configuration file uses exactly the same parameters specified in the [Bitnami Kubeapps Helm chart.](https://github.com/bitnami/charts/tree/master/bitnami/kubeapps#parameters) It is highly recommended that you take a look at the possible parameters and adjust the values file accordingly.
+A configuration values file is a Yaml file that allows you to customize the deployment of Kubeapps. TCE makes use of Carvel for installing applications, and in the case of the Kubeapps package, the configuration file uses exactly the same parameters specified in the [Bitnami Kubeapps Helm chart.](https://github.com/bitnami/charts/tree/master/bitnami/kubeapps#parameters) It is highly recommended that you take a look at the possible parameters and get familiar with them.
 
 The outcome of this tutorial step will be:
 
@@ -23,12 +23,6 @@ frontend:
 ## Option B: Getting traffic using an ingress
 
 Using an ingress is one of the most common ways for getting access to Kubeapps.
-To enable ingress integration, please enable it in the configuration values:
-
-```yaml
-ingress:
-  enabled: true
-```
 
 In order to do so, you need to define a _fully qualified domain name_, and preferably a TLS certificate available so that clients, like browsers, can safely navigate the UI.
 

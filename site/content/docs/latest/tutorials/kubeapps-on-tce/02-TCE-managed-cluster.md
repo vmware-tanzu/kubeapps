@@ -14,7 +14,7 @@ In the case of managed clusters, TCE offers a UI for setting up all the differen
 Before creating the cluster, we will need to setup a proper OIDC provider that Kubernetes will use to authenticate requests.
 This is a more secure approach than using service account tokens, specially for managed clusters, more suitable for production uses.
 
-For this tutorial we will use a combination of DEX with a Google Identity Platform credential, but there are more options of [using an OAuth2/OIDC Provider with Kubeapps](/site/content/docs/latest/tutorials/using-an-OIDC-provider.md).
+For this tutorial we will use Google Identity Platform OIDC provider, but there are more options of [using an OAuth2/OIDC Provider with Kubeapps](/site/content/docs/latest/tutorials/using-an-OIDC-provider.md).
 
 ### Setting up Google credentials client
 
@@ -100,4 +100,4 @@ The outcome of the actions above will be a management, managed TCE cluster runni
 
 For information on how to create TCE workload clusters please check [the official documentation](https://tanzucommunityedition.io/docs/v0.12/getting-started/#deploy-a-workload-cluster).
 
-> Continue the tutorial by [deploying Kubeapps](./03-preparing-kubeapps-deployment.md).
+> Continue the tutorial by [preparing the Kubeapps deployment](./03-preparing-kubeapps-deployment.md).

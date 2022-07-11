@@ -136,4 +136,4 @@ Open a Powershell terminal and run:
 [Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String($(kubectl get --namespace default secret kubeapps-operator-token -o jsonpath='{.data.token}')))
 ```
 
-> Continue the tutorial by [deploying Kubeapps](./03-preparing-kubeapps-deployment.md).
+> Continue the tutorial by [preparing the Kubeapps deployment](./03-preparing-kubeapps-deployment.md).
