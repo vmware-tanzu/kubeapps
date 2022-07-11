@@ -44,7 +44,8 @@ func (l *dockerRegistryApiV2RepositoryLister) IsApplicableFor(ociRegistry *OCIRe
 		if err != nil {
 			ping = fmt.Sprintf("%v", err)
 		}
-		log.Infof("ORAS Registry [%s] Ping: %s", ociRegistry.url.String(), ping)
+		log.Infof("ORAS v2 Registry [%s PlainHTTP=%t] PING: %s",
+			ociRegistry.url.String(), orasRegistry.PlainHTTP, ping)
 		return err == nil, err
 	}
 }

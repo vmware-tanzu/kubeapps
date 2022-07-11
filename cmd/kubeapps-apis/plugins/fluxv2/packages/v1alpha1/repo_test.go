@@ -1295,17 +1295,17 @@ func TestAddPackageRepository(t *testing.T) {
 		{
 			name:       "errors for package repository with bearer token",
 			request:    add_repo_req_10,
-			statusCode: codes.Unimplemented,
+			statusCode: codes.Internal,
 		},
 		{
 			name:       "errors for package repository with custom auth token",
 			request:    add_repo_req_11,
-			statusCode: codes.Unimplemented,
+			statusCode: codes.Internal,
 		},
 		{
 			name:       "package repository with docker config JSON authentication",
 			request:    add_repo_req_12,
-			statusCode: codes.Unimplemented,
+			statusCode: codes.Internal,
 		},
 		{
 			name:             "package repository with basic auth and existing secret",
