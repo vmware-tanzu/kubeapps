@@ -14,39 +14,23 @@ describe("reposReducer", () => {
 
   beforeEach(() => {
     initialState = {
-      addingRepo: false,
       errors: {},
-      form: {
-        name: "",
-        namespace: "",
-        show: false,
-        url: "",
-      },
       isFetching: false,
-      isFetchingElem: {
-        repositories: false,
-        secrets: false,
-      },
-      validating: false,
       repo: {} as PackageRepositoryDetail,
       repos: [] as PackageRepositorySummary[],
-      imagePullSecrets: [],
-    };
+    } as IPackageRepositoryState;
   });
 
   describe("repos", () => {
     const actionTypes = {
-      addRepo: getType(actions.repos.addRepo),
+      addOrUpdateRepo: getType(actions.repos.addOrUpdateRepo),
       addedRepo: getType(actions.repos.addedRepo),
-      requestRepoUpdate: getType(actions.repos.requestRepoUpdate),
-      repoUpdated: getType(actions.repos.repoUpdated),
-      requestRepos: getType(actions.repos.requestRepoSummaries),
-      receiveRepos: getType(actions.repos.receiveRepoSummaries),
-      requestRepo: getType(actions.repos.requestRepoDetail),
-      receiveRepo: getType(actions.repos.receiveRepoDetail),
-      redirect: getType(actions.repos.redirect),
-      redirected: getType(actions.repos.redirected),
       errorRepos: getType(actions.repos.errorRepos),
+      receiveRepo: getType(actions.repos.receiveRepoDetail),
+      receiveRepos: getType(actions.repos.receiveRepoSummaries),
+      repoUpdated: getType(actions.repos.repoUpdated),
+      requestRepo: getType(actions.repos.requestRepoDetail),
+      requestRepos: getType(actions.repos.requestRepoSummaries),
     };
 
     describe("reducer actions", () => {
@@ -59,7 +43,6 @@ describe("reposReducer", () => {
         ).toEqual({
           ...initialState,
           isFetching: true,
-          isFetchingElem: { repositories: true, secrets: false },
         });
       });
 
@@ -72,7 +55,6 @@ describe("reposReducer", () => {
         expect(state).toEqual({
           ...initialState,
           isFetching: true,
-          isFetchingElem: { repositories: true, secrets: false },
         });
         expect(
           reposReducer(state, {
@@ -91,7 +73,6 @@ describe("reposReducer", () => {
         expect(state).toEqual({
           ...initialState,
           isFetching: true,
-          isFetchingElem: { repositories: true, secrets: false },
         });
         expect(
           reposReducer(state, {
@@ -105,14 +86,14 @@ describe("reposReducer", () => {
     it("adds a repo", () => {
       const repoSummary = { name: "foo" } as PackageRepositorySummary;
       const state = reposReducer(undefined, {
-        type: actionTypes.addRepo,
+        type: actionTypes.addOrUpdateRepo,
       });
       expect(state).toEqual({
         ...initialState,
-        addingRepo: true,
+        isFetching: true,
       });
       expect(
-        reposReducer(state, {
+        reposReducer(initialState, {
           type: actionTypes.addedRepo,
           payload: repoSummary,
         }),
@@ -122,17 +103,8 @@ describe("reposReducer", () => {
     it("adds a repo sorting the result", () => {
       const repoSummary1 = { name: "zzz" } as PackageRepositorySummary;
       const repoSummary2 = { name: "aaa" } as PackageRepositorySummary;
-      const state = reposReducer(
-        { ...initialState, repos: [repoSummary1] },
-        {
-          type: actionTypes.addRepo,
-        },
-      );
-      expect(state).toEqual({
-        ...initialState,
-        repos: [repoSummary1],
-        addingRepo: true,
-      });
+      const state = { ...initialState, repos: [repoSummary1] };
+
       expect(
         reposReducer(state, {
           type: actionTypes.addedRepo,

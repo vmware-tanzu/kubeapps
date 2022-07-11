@@ -17,58 +17,48 @@ import PackagesService from "shared/PackagesService";
 import { IPkgRepoFormData, IStoreState, NotFoundError } from "shared/types";
 import { PluginNames } from "shared/utils";
 import { ActionType, deprecated } from "typesafe-actions";
-import { createErrorPackage } from "./availablepackages";
 
 const { createAction } = deprecated;
-export const addRepo = createAction("ADD_REPO");
+
+export const addOrUpdateRepo = createAction("ADD_OR_UPDATE_REPO");
+
 export const addedRepo = createAction("ADDED_REPO", resolve => {
   return (added: PackageRepositorySummary) => resolve(added);
 });
 
-export const requestRepoUpdate = createAction("REQUEST_REPO_UPDATE");
-export const repoUpdated = createAction("REPO_UPDATED", resolve => {
-  return (updated: PackageRepositorySummary) => resolve(updated);
+export const errorRepos = createAction("ERROR_REPOS", resolve => {
+  return (err: Error, op: "create" | "update" | "fetch" | "delete") => resolve({ err, op });
 });
 
-export const requestRepoSummaries = createAction("REQUEST_REPOS", resolve => {
-  return (namespace: string) => resolve(namespace);
-});
-export const receiveRepoSummaries = createAction("RECEIVE_REPOS", resolve => {
-  return (repos: PackageRepositorySummary[]) => resolve(repos);
-});
-export const concatRepos = createAction("RECEIVE_REPOS", resolve => {
-  return (repos: PackageRepositorySummary[]) => resolve(repos);
-});
-
-export const requestRepoDetail = createAction("REQUEST_REPO");
 export const receiveRepoDetail = createAction("RECEIVE_REPO", resolve => {
   return (repo: PackageRepositoryDetail) => resolve(repo);
 });
 
-export const redirect = createAction("REDIRECT", resolve => {
-  return (path: string) => resolve(path);
+export const receiveRepoSummaries = createAction("RECEIVE_REPOS", resolve => {
+  return (repos: PackageRepositorySummary[]) => resolve(repos);
 });
 
-export const redirected = createAction("REDIRECTED");
-export const errorRepos = createAction("ERROR_REPOS", resolve => {
-  return (err: Error, op: "create" | "update" | "fetch" | "delete" | "validate") =>
-    resolve({ err, op });
+export const repoUpdated = createAction("REPO_UPDATED", resolve => {
+  return (updated: PackageRepositorySummary) => resolve(updated);
+});
+
+export const requestRepoDetail = createAction("REQUEST_REPO");
+
+export const requestRepoSummaries = createAction("REQUEST_REPOS", resolve => {
+  return (namespace: string) => resolve(namespace);
 });
 
 const allActions = [
-  addRepo,
+  addOrUpdateRepo,
   addedRepo,
-  requestRepoUpdate,
-  repoUpdated,
   errorRepos,
-  requestRepoSummaries,
   receiveRepoDetail,
   receiveRepoSummaries,
-  createErrorPackage,
+  repoUpdated,
   requestRepoDetail,
-  redirect,
-  redirected,
+  requestRepoSummaries,
 ];
+
 export type PkgReposAction = ActionType<typeof allActions[number]>;
 
 // fetchRepos fetches the PackageRepositories in a specified namespace.
@@ -149,8 +139,7 @@ export const installRepo = (
       config: { globalReposNamespace },
     } = getState();
     try {
-      dispatch(addRepo());
-
+      dispatch(addOrUpdateRepo());
       let namespaceScoped = namespace !== globalReposNamespace;
       // TODO(agamez): currently, flux doesn't support this value to be true
       if (request.plugin?.name === PluginNames.PACKAGES_FLUX) {
@@ -209,7 +198,7 @@ export const updateRepo = (
       clusters: { currentCluster },
     } = getState();
     try {
-      dispatch(requestRepoUpdate());
+      dispatch(addOrUpdateRepo());
       const updatePackageRepositoryResponse =
         await PackageRepositoriesService.updatePackageRepository(
           currentCluster,
@@ -292,10 +281,11 @@ export const findPackageInRepo = (
         } as AvailablePackageReference);
         if (!getPackageRepositoryDetailResponse?.detail) {
           dispatch(
-            createErrorPackage(
+            errorRepos(
               new NotFoundError(
                 `Package ${app.availablePackageRef.identifier} not found in the repository ${repoNamespace}.`,
               ),
+              "fetch",
             ),
           );
           return false;
@@ -304,20 +294,22 @@ export const findPackageInRepo = (
         return true;
       } catch (e: any) {
         dispatch(
-          createErrorPackage(
+          errorRepos(
             new NotFoundError(
               `Package ${app.availablePackageRef.identifier} not found in the repository ${repoNamespace}.`,
             ),
+            "fetch",
           ),
         );
         return false;
       }
     } else {
       dispatch(
-        createErrorPackage(
+        errorRepos(
           new NotFoundError(
             `The installed application '${app?.name}' does not have any matching package in the repository '${repoName}'. Are you sure you installed this application from a repository?`,
           ),
+          "fetch",
         ),
       );
       return false;

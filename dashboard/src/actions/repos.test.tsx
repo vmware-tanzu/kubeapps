@@ -156,7 +156,7 @@ const pkgRepoFormData = {
 } as IPkgRepoFormData;
 
 const actionTestCases: ITestCase[] = [
-  { name: "addRepo", action: repoActions.addRepo },
+  { name: "addOrUpdateRepo", action: repoActions.addOrUpdateRepo },
   {
     name: "addedRepo",
     action: repoActions.addedRepo,
@@ -177,8 +177,6 @@ const actionTestCases: ITestCase[] = [
     args: [packageRepositoryDetail],
     payload: packageRepositoryDetail,
   },
-  { name: "redirect", action: repoActions.redirect, args: "/foo", payload: "/foo" },
-  { name: "redirected", action: repoActions.redirected },
   {
     name: "errorRepos",
     action: repoActions.errorRepos,
@@ -506,14 +504,14 @@ describe("installRepo", () => {
     });
   });
 
-  it("dispatches addRepo and errorRepos if error fetching", async () => {
+  it("dispatches addOrUpdateRepo and errorRepos if error fetching", async () => {
     PackageRepositoriesService.addPackageRepository = jest.fn().mockImplementationOnce(() => {
       throw new Error("Boom!");
     });
 
     const expectedActions = [
       {
-        type: getType(repoActions.addRepo),
+        type: getType(repoActions.addOrUpdateRepo),
       },
       {
         type: getType(repoActions.errorRepos),
@@ -534,10 +532,10 @@ describe("installRepo", () => {
     expect(res).toEqual(false);
   });
 
-  it("dispatches addRepo and addedRepo if no error", async () => {
+  it("dispatches addOrUpdateRepo and addedRepo if no error", async () => {
     const expectedActions = [
       {
-        type: getType(repoActions.addRepo),
+        type: getType(repoActions.addOrUpdateRepo),
       },
       {
         type: getType(repoActions.addedRepo),
@@ -604,7 +602,7 @@ describe("updateRepo", () => {
     } as GetPackageRepositoryDetailResponse);
     const expectedActions = [
       {
-        type: getType(repoActions.requestRepoUpdate),
+        type: getType(repoActions.addOrUpdateRepo),
       },
       {
         type: getType(repoActions.repoUpdated),
@@ -647,7 +645,7 @@ describe("updateRepo", () => {
     } as GetPackageRepositoryDetailResponse);
     const expectedActions = [
       {
-        type: getType(repoActions.requestRepoUpdate),
+        type: getType(repoActions.addOrUpdateRepo),
       },
       {
         type: getType(repoActions.repoUpdated),
@@ -675,7 +673,7 @@ describe("updateRepo", () => {
     });
     const expectedActions = [
       {
-        type: getType(repoActions.requestRepoUpdate),
+        type: getType(repoActions.addOrUpdateRepo),
       },
       {
         type: getType(repoActions.errorRepos),
@@ -775,10 +773,13 @@ describe("findPackageInRepo", () => {
         type: getType(repoActions.requestRepoDetail),
       },
       {
-        type: getType(actions.availablepackages.createErrorPackage),
-        payload: new NotFoundError(
-          "Package my-repo/my-package not found in the repository other-namespace.",
-        ),
+        type: getType(repoActions.errorRepos),
+        payload: {
+          err: new NotFoundError(
+            "Package my-repo/my-package not found in the repository other-namespace.",
+          ),
+          op: "fetch",
+        },
       },
     ];
 
