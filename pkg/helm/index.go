@@ -30,6 +30,9 @@ func parseRepoIndex(contents []byte) (*repo.IndexFile, error) {
 func newChart(entry repo.ChartVersions, r *models.Repo, shallow bool) models.Chart {
 	var c models.Chart
 	err := copier.Copy(&c, entry[0])
+	if err != nil {
+		return models.Chart{}
+	}
 	if shallow {
 		err = copier.Copy(&c.ChartVersions, []repo.ChartVersion{*entry[0]})
 	} else {

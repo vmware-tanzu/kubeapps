@@ -33,8 +33,6 @@ import (
 	"k8s.io/client-go/kubernetes/fake"
 )
 
-const testChartArchive = "./testdata/nginx-apiVersion-v1-5.1.1.tgz"
-
 func Test_resolveChartURL(t *testing.T) {
 	tests := []struct {
 		name      string
@@ -678,8 +676,10 @@ func TestClientWithDefaultHeaders(t *testing.T) {
 			for k, v := range tc.requestHeaders {
 				request.Header[k] = v
 			}
-			client.Do(request)
-
+			_, err = client.Do(request)
+			if err != nil {
+				t.Fatalf("%+v", err)
+			}
 			requestsWithHeaders := getFakeClientRequests(t, client)
 			if got, want := len(requestsWithHeaders), 1; got != want {
 				t.Fatalf("got: %d, want: %d", got, want)
@@ -845,7 +845,10 @@ func TestGetRegistrySecretsPerDomain(t *testing.T) {
 func TestOCIClient(t *testing.T) {
 	t.Run("InitClient - Creates puller with User-Agent header", func(t *testing.T) {
 		cli := NewOCIClient("foo")
-		cli.Init(&appRepov1.AppRepository{}, &corev1.Secret{}, &corev1.Secret{})
+		err := cli.Init(&appRepov1.AppRepository{}, &corev1.Secret{}, &corev1.Secret{})
+		if err != nil {
+			t.Errorf("unexpected error: %v", err)
+		}
 		helmtest.CheckHeader(t, cli.(*OCIRepoClient).puller, "User-Agent", "foo")
 	})
 
@@ -868,7 +871,10 @@ func TestOCIClient(t *testing.T) {
 				"custom-secret-key": []byte("Basic Auth"),
 			},
 		}
-		cli.Init(appRepo, &corev1.Secret{}, authSecret)
+		err := cli.Init(appRepo, &corev1.Secret{}, authSecret)
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
 		helmtest.CheckHeader(t, cli.(*OCIRepoClient).puller, "Authorization", "Basic Auth")
 	})
 
