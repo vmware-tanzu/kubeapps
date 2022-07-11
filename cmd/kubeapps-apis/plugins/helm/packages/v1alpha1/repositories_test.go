@@ -635,7 +635,7 @@ func TestGetPackageRepositoryDetail(t *testing.T) {
 	}
 	buildResponse := func(namespace, name, repoType, url, description string,
 		auth *corev1.PackageRepositoryAuth, tlsConfig *corev1.PackageRepositoryTlsConfig,
-		customDetails *v1alpha1.RepositoryCustomDetails) *corev1.GetPackageRepositoryDetailResponse {
+		customDetails *v1alpha1.HelmPackageRepositoryCustomDetail) *corev1.GetPackageRepositoryDetailResponse {
 		response := &corev1.GetPackageRepositoryDetailResponse{
 			Detail: &corev1.PackageRepositoryDetail{
 				PackageRepoRef: &corev1.PackageRepositoryReference{
@@ -713,7 +713,7 @@ func TestGetPackageRepositoryDetail(t *testing.T) {
 						CertAuthority: "REDACTED",
 					},
 				},
-				&v1alpha1.RepositoryCustomDetails{
+				&v1alpha1.HelmPackageRepositoryCustomDetail{
 					DockerRegistrySecrets: []string{"repo-4-secret"},
 					OciRepositories:       []string{"oci-repo-1", "oci-repo-2"},
 					FilterRule: &v1alpha1.RepositoryFilterRule{
@@ -765,7 +765,7 @@ func TestGetPackageRepositoryDetail(t *testing.T) {
 				corev1.PackageRepositoryStatus{},
 				corev1.PackageRepositoryTlsConfig{},
 				corev1.PackageRepositoryAuth{},
-				v1alpha1.RepositoryCustomDetails{},
+				v1alpha1.HelmPackageRepositoryCustomDetail{},
 				anypb.Any{},
 				corev1.PackageRepositoryAuth_UsernamePassword{},
 				corev1.UsernamePassword{},
@@ -1066,7 +1066,7 @@ func TestUpdatePackageRepository(t *testing.T) {
 				corev1.PackageRepositoryStatus{},
 				corev1.PackageRepositoryTlsConfig{},
 				corev1.PackageRepositoryAuth{},
-				v1alpha1.RepositoryCustomDetails{},
+				v1alpha1.HelmPackageRepositoryCustomDetail{},
 				anypb.Any{},
 				corev1.PackageRepositoryAuth_UsernamePassword{},
 				corev1.UsernamePassword{},
