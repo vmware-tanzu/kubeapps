@@ -1,7 +1,9 @@
 # Step 4: Deploying Kubeapps on a VMware Tanzu™ Community Edition cluster
 
-In the
 Once your TCE cluster is up and running, you can deploy Kubeapps into it.
+
+One of the key features of Tanzu is its use of _Carvel_.
+[Carvel](https://carvel.dev/) is a project that provides a set of reliable, single-purpose, composable tools that aid in your application building, configuration, and deployment to Kubernetes. In this tutorial, you will use the Carvel packaging format to install Kubeapps.
 
 1. Check that Kubeapps is an available package in the cluster with:
 
@@ -11,7 +13,7 @@ Once your TCE cluster is up and running, you can deploy Kubeapps into it.
 
     > If Kubeapps package is not present, please check that your version of TCE is v0.13 or higher.
 
-    In case you could not get Kubeapps showing up in the list of available packages, add it manually to the catalog by running (please change version accordingly):
+    In case you could not get Kubeapps showing up in the list of available packages, add it manually to the catalog by running (please change package version accordingly):
 
     ```bash
     kubectl apply \
@@ -53,6 +55,16 @@ Once your TCE cluster is up and running, you can deploy Kubeapps into it.
     kapp inspect -a kubeapps-ctrl -n kubeapps
     ```
 
-5. At this point, Kubeapps should be deployed and running in the TCE cluster. Open a browser and navigate to the URL defined for Kubeapps, for example [https://tce-cluster.foo.com](https://tce-cluster.foo.com).
+5. At this point, Kubeapps should be deployed and running in the TCE cluster.
+
+    If you chose a **LoadBalancer** to access Kubeapps: wait for your cluster to assign a `LoadBalancer` IP or Hostname to the kubeapps Service and access it on that address:
+
+    ```bash
+    kubectl get service kubeapps --namespace kubeapps --watch
+    ```
+
+    If you chose an **Ingress** to access Kubeapps: open a browser and navigate to the FQDN defined for Kubeapps, for example [https://tce-cluster.foo.com](https://tce-cluster.foo.com).
+
+    > When using OIDC, you will need to configure your client to admit the `LoadBalancer` IP/Host or the `Ingress` FQDN as authorized origins and redirects. Please add the suffix `/oauth2/callback` to the redirect URLs.
 
 > Continue the tutorial by [managing applications with Kubeapps](./05-Managing-applications.md).

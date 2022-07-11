@@ -30,7 +30,7 @@ As the outcome for this section, we should have:
 - Username Claim: The name of your username claim. This is used to set a user’s username in the JSON Web Token (JWT) claim.
 - Groups Claim: The name of your groups claim. This is used to set a user’s group in the JWT claim.
 
-This information will be used to set up Kubernetes cluster and Kubeapps in order to use Google as an identity provider.
+This information will be used to set up Kubernetes cluster, and in a further step to configure Kubeapps, in order to use Google as an identity provider.
 
 ## Deploying the cluster
 
