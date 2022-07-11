@@ -24,7 +24,7 @@ frontend:
 
 Using an ingress is one of the most common ways for getting access to Kubeapps.
 
-In order to do so, you need to define a _fully qualified domain name_, and preferably a TLS certificate available so that clients, like browsers, can safely navigate the UI.
+In order to do so, you need to define a _fully qualified domain name (FQDN)_, and preferably a TLS certificate available so that clients, like browsers, can safely navigate the UI.
 
 In this tutorial we will use the FQDN `kubeapps.foo.com` to access Kubeapps as an example.
 
@@ -98,7 +98,7 @@ If that is your case, for example with a TCE unmanaged cluster, you can simply m
 
 ### Option B2: Using Nginx ingress
 
-NGinx configuration comes shipped with the Kubeapps package out of the box.
+Nginx configuration comes shipped with the Kubeapps package out of the box.
 In order to enable it, add the following to the configuration values:
 
 ```yaml
@@ -118,7 +118,7 @@ ingress:
 
 Please notice how the configuration above references both the secret holding the TLS certificate and the FQDN.
 
-As mentioned, Kubeapps provides the configuration handling for NGinx. But NGinx needs to be installed in the cluster.
+As mentioned, Kubeapps provides the configuration handling for Nginx. But Nginx needs to be installed in the cluster.
 To install it use the official resources like:
 
 ```bash
@@ -127,9 +127,9 @@ kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/main
 
 > When using OauthProxy for OIDC authentication, there is [an issue with the proxy buffers](https://github.com/vmware-tanzu/kubeapps/pull/1944) that needs some workaround.
 >
-> You can [use a modified NGinx resources file to install NGinx](/site/content/docs/latest/reference/manifests/ingress-nginx-kind-with-large-proxy-buffers.yaml) that Kubeapps provides. This is limited to the specific version shipped with Kubeapps.
+> You can [use a modified resources file to install Nginx](/site/content/docs/latest/reference/manifests/ingress-nginx-kind-with-large-proxy-buffers.yaml) that Kubeapps provides. This is limited to the specific version shipped with Kubeapps.
 > 
-> Alternatively, you can make the change manually on top of your NGinx installation running `kubectl -n ingress-nginx edit cm ingress-nginx-controller` and adding the following to the `data:` section of the `ConfigMap`:
+> Alternatively, you can make the change manually on top of your Nginx installation running `kubectl -n ingress-nginx edit cm ingress-nginx-controller` and adding the following to the `data:` section of the `ConfigMap`:
 >
 >  ```bash
 >  proxy-buffer-size: 8k
@@ -140,7 +140,7 @@ kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/main
 
 In case you selected OIDC as your authentication method, you will need to set some parameters in the configuration values file. This is needed so that the OAuth proxy used in Kubeapps can contact with the OIDC provider and exchange the tokens.
 
-Please retrieve the values obtained in the [Setting up Google credentials client](02-TCE-managed-cluster.md#setting-up-google-credentials-client) section and set them in your configuration values:
+Please retrieve the values obtained in the [Setting up Google credentials client](./02-TCE-managed-cluster.md#setting-up-google-credentials-client) section and set them in your configuration values:
 
 ```yaml
 authProxy:
