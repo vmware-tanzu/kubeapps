@@ -39,9 +39,8 @@ import (
 const (
 	// see docs at https://fluxcd.io/docs/components/source/ and
 	// https://fluxcd.io/docs/components/helm/api/
-	fluxHelmRepositories   = "helmrepositories"
-	fluxHelmRepositoryList = "HelmRepositoryList"
-	redactedString         = "REDACTED"
+	fluxHelmRepositories = "helmrepositories"
+	redactedString       = "REDACTED"
 )
 
 var (

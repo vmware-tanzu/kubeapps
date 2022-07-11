@@ -16,12 +16,7 @@ import (
 
 // Set the pluginDetail once during a module init function so the single struct
 // can be used throughout the plugin.
-var (
-	pluginDetail pluginsgrpcv1alpha1.Plugin
-	// This version var is updated during the build (see the -ldflags option
-	// in the cmd/kubeapps-apis/Dockerfile)
-	version = "devel"
-)
+var pluginDetail pluginsgrpcv1alpha1.Plugin
 
 func init() {
 	pluginDetail = pluginsgrpcv1alpha1.Plugin{
@@ -32,6 +27,7 @@ func init() {
 
 // RegisterWithGRPCServer enables a plugin to register with a gRPC server
 // returning the server implementation.
+//nolint:deadcode
 func RegisterWithGRPCServer(opts pluginsv1alpha1.GRPCPluginRegistrationOptions) (interface{}, error) {
 	svr, err := NewServer(opts.ConfigGetter, opts.ClientQPS, opts.ClientBurst)
 	if err != nil {
@@ -43,11 +39,13 @@ func RegisterWithGRPCServer(opts pluginsv1alpha1.GRPCPluginRegistrationOptions) 
 
 // RegisterHTTPHandlerFromEndpoint enables a plugin to register an http
 // handler to translate to the gRPC request.
+//nolint:deadcode
 func RegisterHTTPHandlerFromEndpoint(ctx context.Context, mux *runtime.ServeMux, endpoint string, opts []grpc.DialOption) error {
 	return v1alpha1.RegisterResourcesServiceHandlerFromEndpoint(ctx, mux, endpoint, opts)
 }
 
 // GetPluginDetail returns a core.plugins.Plugin describing itself.
+//nolint:deadcode
 func GetPluginDetail() *pluginsgrpcv1alpha1.Plugin {
 	return &pluginDetail
 }
