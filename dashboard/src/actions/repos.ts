@@ -23,7 +23,7 @@ const { createAction } = deprecated;
 export const addOrUpdateRepo = createAction("ADD_OR_UPDATE_REPO");
 
 export const addedRepo = createAction("ADDED_REPO", resolve => {
-  return (added: PackageRepositorySummary) => resolve(added);
+  return (repoSummary: PackageRepositorySummary) => resolve(repoSummary);
 });
 
 export const errorRepos = createAction("ERROR_REPOS", resolve => {
@@ -31,15 +31,15 @@ export const errorRepos = createAction("ERROR_REPOS", resolve => {
 });
 
 export const receiveRepoDetail = createAction("RECEIVE_REPO", resolve => {
-  return (repo: PackageRepositoryDetail) => resolve(repo);
+  return (repoDetail: PackageRepositoryDetail) => resolve(repoDetail);
 });
 
 export const receiveRepoSummaries = createAction("RECEIVE_REPOS", resolve => {
-  return (repos: PackageRepositorySummary[]) => resolve(repos);
+  return (repoSummaries: PackageRepositorySummary[]) => resolve(repoSummaries);
 });
 
 export const repoUpdated = createAction("REPO_UPDATED", resolve => {
-  return (updated: PackageRepositorySummary) => resolve(updated);
+  return (repoSummary: PackageRepositorySummary) => resolve(repoSummary);
 });
 
 export const requestRepoDetail = createAction("REQUEST_REPO");

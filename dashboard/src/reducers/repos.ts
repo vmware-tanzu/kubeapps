@@ -24,15 +24,15 @@ export interface IPackageRepositoryState {
     update?: Error;
   };
   isFetching: boolean;
-  repo: PackageRepositoryDetail;
-  repos: PackageRepositorySummary[];
+  repoDetail: PackageRepositoryDetail;
+  reposSummaries: PackageRepositorySummary[];
 }
 
 export const initialState: IPackageRepositoryState = {
   errors: {},
   isFetching: false,
-  repo: {} as PackageRepositoryDetail,
-  repos: [] as PackageRepositorySummary[],
+  repoDetail: {} as PackageRepositoryDetail,
+  reposSummaries: [] as PackageRepositorySummary[],
 };
 
 const helmPackageRepositoryCustomDetail = {
@@ -54,7 +54,7 @@ const reposReducer = (
       return {
         ...state,
         isFetching: false,
-        repos: action.payload,
+        reposSummaries: action.payload,
         errors: {},
       };
     case getType(actions.repos.receiveRepoDetail):
@@ -96,19 +96,19 @@ const reposReducer = (
       return {
         ...state,
         isFetching: false,
-        repo: repoWithCustomDetail,
+        repoDetail: repoWithCustomDetail,
         errors: {},
       };
     case getType(actions.repos.requestRepoSummaries):
     case getType(actions.repos.addOrUpdateRepo):
       return { ...state, isFetching: true };
     case getType(actions.repos.requestRepoDetail):
-      return { ...state, repo: initialState.repo, errors: {} };
+      return { ...state, repoDetail: initialState.repoDetail, errors: {} };
     case getType(actions.repos.addedRepo):
       return {
         ...state,
         isFetching: false,
-        repos: [...state.repos, action.payload].sort((a, b) =>
+        reposSummaries: [...state.reposSummaries, action.payload].sort((a, b) =>
           a.name.toLowerCase() > b.name.toLowerCase()
             ? 1
             : b.name.toLowerCase() > a.name.toLowerCase()
@@ -118,13 +118,13 @@ const reposReducer = (
       };
     case getType(actions.repos.repoUpdated): {
       const updatedRepo = action.payload;
-      const repos = state.repos.map(r =>
+      const repos = state.reposSummaries.map(r =>
         r.name === updatedRepo.name &&
         r.packageRepoRef?.context?.namespace === updatedRepo.packageRepoRef?.context?.namespace
           ? updatedRepo
           : r,
       );
-      return { ...state, repos };
+      return { ...state, reposSummaries: repos };
     }
     case getType(actions.repos.errorRepos):
       return {

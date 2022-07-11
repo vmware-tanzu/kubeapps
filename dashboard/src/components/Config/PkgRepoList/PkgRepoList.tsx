@@ -30,7 +30,7 @@ function PkgRepoList() {
   const dispatch = useDispatch();
   const location = useLocation();
   const {
-    repos: { errors, isFetching, repos },
+    repos: { errors, isFetching, reposSummaries: repos },
     clusters: { clusters, currentCluster },
     config: { kubeappsCluster, kubeappsNamespace, globalReposNamespace },
   } = useSelector((state: IStoreState) => state);

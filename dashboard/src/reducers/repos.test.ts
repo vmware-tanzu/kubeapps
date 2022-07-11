@@ -16,8 +16,8 @@ describe("reposReducer", () => {
     initialState = {
       errors: {},
       isFetching: false,
-      repo: {} as PackageRepositoryDetail,
-      repos: [] as PackageRepositorySummary[],
+      repoDetail: {} as PackageRepositoryDetail,
+      reposSummaries: [] as PackageRepositorySummary[],
     } as IPackageRepositoryState;
   });
 
@@ -61,7 +61,7 @@ describe("reposReducer", () => {
             type: actionTypes.receiveRepos,
             payload: [repoSummary],
           }),
-        ).toEqual({ ...initialState, repos: [repoSummary] });
+        ).toEqual({ ...initialState, reposSummaries: [repoSummary] } as IPackageRepositoryState);
       });
 
       it("unsets isFetching and receive repo", () => {
@@ -79,7 +79,7 @@ describe("reposReducer", () => {
             type: actionTypes.receiveRepo,
             payload: repoDetail,
           }),
-        ).toEqual({ ...initialState, repo: repoDetail });
+        ).toEqual({ ...initialState, repoDetail: repoDetail } as IPackageRepositoryState);
       });
     });
 
@@ -97,20 +97,23 @@ describe("reposReducer", () => {
           type: actionTypes.addedRepo,
           payload: repoSummary,
         }),
-      ).toEqual({ ...initialState, repos: [repoSummary] });
+      ).toEqual({ ...initialState, reposSummaries: [repoSummary] } as IPackageRepositoryState);
     });
 
     it("adds a repo sorting the result", () => {
       const repoSummary1 = { name: "zzz" } as PackageRepositorySummary;
       const repoSummary2 = { name: "aaa" } as PackageRepositorySummary;
-      const state = { ...initialState, repos: [repoSummary1] };
+      const state = { ...initialState, reposSummaries: [repoSummary1] } as IPackageRepositoryState;
 
       expect(
         reposReducer(state, {
           type: actionTypes.addedRepo,
           payload: repoSummary2,
         }),
-      ).toEqual({ ...initialState, repos: [repoSummary2, repoSummary1] });
+      ).toEqual({
+        ...initialState,
+        reposSummaries: [repoSummary2, repoSummary1],
+      } as IPackageRepositoryState);
     });
 
     it("updates a repo", () => {
@@ -121,13 +124,16 @@ describe("reposReducer", () => {
       } as PackageRepositorySummary;
       expect(
         reposReducer(
-          { ...initialState, repos: [repoSummary] },
+          { ...initialState, reposSummaries: [repoSummary] },
           {
             type: actionTypes.repoUpdated,
             payload: { ...repoSummary, url: "bar" },
           },
         ),
-      ).toEqual({ ...initialState, repos: [{ ...repoSummary, url: "bar" }] });
+      ).toEqual({
+        ...initialState,
+        reposSummaries: [{ ...repoSummary, url: "bar" }],
+      } as IPackageRepositoryState);
     });
   });
 });

@@ -145,7 +145,7 @@ it("renders the repo selection form if not introduced", () => {
 it("renders the repo selection form if not introduced when the app is loaded", () => {
   const state = {
     repos: {
-      repos: [repo1Summary],
+      reposSummaries: [repo1Summary],
     } as IPackageRepositoryState,
     apps: {
       selected: { name: "foo" },
@@ -198,7 +198,7 @@ describe("when an error exists", () => {
   it("renders a warning message if there are no repositories", () => {
     const state = {
       repos: {
-        repos: [] as PackageRepositorySummary[],
+        reposSummaries: [] as PackageRepositorySummary[],
       } as IPackageRepositoryState,
       apps: {
         selected: { name: "foo" },
@@ -263,8 +263,8 @@ it("renders the upgrade form when the repo is available, clears state and fetche
       selectedDetails: availablePackageDetail,
     } as IInstalledPackageState,
     repos: {
-      repo: repo1Detail,
-      repos: [repo1Summary],
+      repoDetail: repo1Detail,
+      reposSummaries: [repo1Summary],
       isFetching: false,
     } as IPackageRepositoryState,
     packages: { selected: selectedPackage } as IPackageState,
@@ -299,8 +299,8 @@ it("renders the upgrade form with the version property", () => {
       selectedDetails: availablePackageDetail,
     } as IInstalledPackageState,
     repos: {
-      repo: repo1Detail,
-      repos: [repo1Summary],
+      repoDetail: repo1Detail,
+      reposSummaries: [repo1Summary],
       isFetching: false,
     } as Partial<IPackageRepositoryState>,
     packages: { selected: selectedPackage } as IPackageState,
@@ -327,8 +327,8 @@ it("skips the repo selection form if the app contains upgrade info", () => {
       selectedDetails: availablePackageDetail,
     } as IInstalledPackageState,
     repos: {
-      repo: repo1Detail,
-      repos: [repo1Summary],
+      repoDetail: repo1Detail,
+      reposSummaries: [repo1Summary],
       isFetching: false,
     } as IPackageRepositoryState,
     packages: { selected: selectedPackage } as IPackageState,

@@ -31,8 +31,8 @@ const defaultProps = {
 const defaultState = {
   repos: {
     isFetching: false,
-    repos: [] as PackageRepositorySummary[],
-    repo: {} as PackageRepositoryDetail,
+    reposSummaries: [] as PackageRepositorySummary[],
+    repoDetail: {} as PackageRepositoryDetail,
     errors: {},
   } as IPackageRepositoryState,
 } as IStoreState;
@@ -526,7 +526,7 @@ describe("when the repository info is already populated", () => {
       wrapper = mountWrapper(
         getStore({
           ...defaultState,
-          repos: { ...defaultState.repos, repo: testRepo } as IPackageRepositoryState,
+          repos: { ...defaultState.repos, repoDetail: testRepo } as IPackageRepositoryState,
         }),
         <PkgRepoForm {...defaultProps} packageRepoRef={packageRepoRef} />,
       );
@@ -549,7 +549,7 @@ describe("when the repository info is already populated", () => {
       wrapper = mountWrapper(
         getStore({
           ...defaultState,
-          repos: { ...defaultState.repos, repo: testRepo } as IPackageRepositoryState,
+          repos: { ...defaultState.repos, repoDetail: testRepo } as IPackageRepositoryState,
         }),
         <PkgRepoForm {...defaultProps} packageRepoRef={packageRepoRef} />,
       );
@@ -577,7 +577,7 @@ describe("when the repository info is already populated", () => {
       wrapper = mountWrapper(
         getStore({
           ...defaultState,
-          repos: { ...defaultState.repos, repo: testRepo } as IPackageRepositoryState,
+          repos: { ...defaultState.repos, repoDetail: testRepo } as IPackageRepositoryState,
         }),
         <PkgRepoForm {...defaultProps} packageRepoRef={packageRepoRef} />,
       );
@@ -606,7 +606,7 @@ describe("when the repository info is already populated", () => {
       wrapper = mountWrapper(
         getStore({
           ...defaultState,
-          repos: { ...defaultState.repos, repo: testRepo } as IPackageRepositoryState,
+          repos: { ...defaultState.repos, repoDetail: testRepo } as IPackageRepositoryState,
         }),
         <PkgRepoForm {...defaultProps} packageRepoRef={packageRepoRef} />,
       );
@@ -629,7 +629,7 @@ describe("when the repository info is already populated", () => {
       wrapper = mountWrapper(
         getStore({
           ...defaultState,
-          repos: { ...defaultState.repos, repo: testRepo } as IPackageRepositoryState,
+          repos: { ...defaultState.repos, repoDetail: testRepo } as IPackageRepositoryState,
         }),
         <PkgRepoForm {...defaultProps} packageRepoRef={packageRepoRef} />,
       );
@@ -652,7 +652,7 @@ describe("when the repository info is already populated", () => {
       wrapper = mountWrapper(
         getStore({
           ...defaultState,
-          repos: { ...defaultState.repos, repo: testRepo } as IPackageRepositoryState,
+          repos: { ...defaultState.repos, repoDetail: testRepo } as IPackageRepositoryState,
         }),
         <PkgRepoForm {...defaultProps} packageRepoRef={packageRepoRef} />,
       );
@@ -670,7 +670,7 @@ describe("when the repository info is already populated", () => {
       wrapper = mountWrapper(
         getStore({
           ...defaultState,
-          repos: { ...defaultState.repos, repo: testRepo } as IPackageRepositoryState,
+          repos: { ...defaultState.repos, repoDetail: testRepo } as IPackageRepositoryState,
         }),
         <PkgRepoForm {...defaultProps} packageRepoRef={packageRepoRef} />,
       );
@@ -689,7 +689,7 @@ describe("when the repository info is already populated", () => {
         wrapper = mountWrapper(
           getStore({
             ...defaultState,
-            repos: { ...defaultState.repos, repo: testRepo } as IPackageRepositoryState,
+            repos: { ...defaultState.repos, repoDetail: testRepo } as IPackageRepositoryState,
           }),
           <PkgRepoForm {...defaultProps} packageRepoRef={packageRepoRef} />,
         );
@@ -711,7 +711,7 @@ describe("when the repository info is already populated", () => {
         wrapper = mountWrapper(
           getStore({
             ...defaultState,
-            repos: { ...defaultState.repos, repo: testRepo } as IPackageRepositoryState,
+            repos: { ...defaultState.repos, repoDetail: testRepo } as IPackageRepositoryState,
           }),
           <PkgRepoForm {...defaultProps} packageRepoRef={packageRepoRef} />,
         );
@@ -736,7 +736,7 @@ describe("when the repository info is already populated", () => {
         wrapper = mountWrapper(
           getStore({
             ...defaultState,
-            repos: { ...defaultState.repos, repo: testRepo } as IPackageRepositoryState,
+            repos: { ...defaultState.repos, repoDetail: testRepo } as IPackageRepositoryState,
           }),
           <PkgRepoForm {...defaultProps} packageRepoRef={packageRepoRef} />,
         );
@@ -762,7 +762,7 @@ describe("when the repository info is already populated", () => {
         wrapper = mountWrapper(
           getStore({
             ...defaultState,
-            repos: { ...defaultState.repos, repo: testRepo } as IPackageRepositoryState,
+            repos: { ...defaultState.repos, repoDetail: testRepo } as IPackageRepositoryState,
           }),
           <PkgRepoForm {...defaultProps} packageRepoRef={packageRepoRef} />,
         );
@@ -792,7 +792,7 @@ describe("when the repository info is already populated", () => {
         wrapper = mountWrapper(
           getStore({
             ...defaultState,
-            repos: { ...defaultState.repos, repo: testRepo } as IPackageRepositoryState,
+            repos: { ...defaultState.repos, repoDetail: testRepo } as IPackageRepositoryState,
           }),
           <PkgRepoForm {...defaultProps} packageRepoRef={packageRepoRef} />,
         );
@@ -822,7 +822,7 @@ describe("when the repository info is already populated", () => {
         wrapper = mountWrapper(
           getStore({
             ...defaultState,
-            repos: { ...defaultState.repos, repo: testRepo } as IPackageRepositoryState,
+            repos: { ...defaultState.repos, repoDetail: testRepo } as IPackageRepositoryState,
           }),
           <PkgRepoForm {...defaultProps} packageRepoRef={packageRepoRef} />,
         );
@@ -850,7 +850,7 @@ describe("when the repository info is already populated", () => {
         wrapper = mountWrapper(
           getStore({
             ...defaultState,
-            repos: { ...defaultState.repos, repo: testRepo } as IPackageRepositoryState,
+            repos: { ...defaultState.repos, repoDetail: testRepo } as IPackageRepositoryState,
           }),
           <PkgRepoForm {...defaultProps} packageRepoRef={packageRepoRef} />,
         );
@@ -879,7 +879,7 @@ describe("when the repository info is already populated", () => {
         wrapper = mountWrapper(
           getStore({
             ...defaultState,
-            repos: { ...defaultState.repos, repo: testRepo } as IPackageRepositoryState,
+            repos: { ...defaultState.repos, repoDetail: testRepo } as IPackageRepositoryState,
           }),
           <PkgRepoForm {...defaultProps} packageRepoRef={packageRepoRef} />,
         );

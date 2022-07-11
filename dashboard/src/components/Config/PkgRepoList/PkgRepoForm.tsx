@@ -71,7 +71,7 @@ export function PkgRepoForm(props: IPkgRepoFormProps) {
 
   const {
     repos: {
-      repo,
+      repoDetail: repo,
       isFetching,
       errors: { create: createError, update: updateError, delete: deleteError, fetch: fetchError },
     },

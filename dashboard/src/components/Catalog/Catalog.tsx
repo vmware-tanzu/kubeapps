@@ -87,7 +87,7 @@ export default function Catalog() {
       isFetching,
     },
     operators,
-    repos: { repos },
+    repos: { reposSummaries: repos },
     config: { appVersion, kubeappsCluster, globalReposNamespace, featureFlags },
   } = useSelector((state: IStoreState) => state);
   const { cluster, namespace } = ReactRouter.useParams() as IRouteParams;
