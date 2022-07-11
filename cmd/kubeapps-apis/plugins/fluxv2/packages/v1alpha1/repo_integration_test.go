@@ -1300,8 +1300,11 @@ func setUserManagedSecretsAndCleanup(t *testing.T, fluxPluginReposClient v1alpha
 		t.Fatal(err)
 	}
 	t.Cleanup(func() {
-		fluxPluginReposClient.SetUserManagedSecrets(
+		_, err = fluxPluginReposClient.SetUserManagedSecrets(
 			ctx, &v1alpha1.SetUserManagedSecretsRequest{Value: oldValue.Value})
+		if err != nil {
+			t.Fatalf("%+v", err)
+		}
 	})
 }
 

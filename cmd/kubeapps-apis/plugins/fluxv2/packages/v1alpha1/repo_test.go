@@ -718,7 +718,10 @@ func TestGetAvailablePackageSummaryAfterFluxHelmRepoDelete(t *testing.T) {
 			// stand up an http server just for the duration of this test
 			ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				w.WriteHeader(200)
-				w.Write(tarGzBytes)
+				_, err = w.Write(tarGzBytes)
+				if err != nil {
+					t.Fatalf("%+v", err)
+				}
 			}))
 			defer ts.Close()
 			replaceUrls[fmt.Sprintf("{{%s}}", s.tgzFile)] = ts.URL

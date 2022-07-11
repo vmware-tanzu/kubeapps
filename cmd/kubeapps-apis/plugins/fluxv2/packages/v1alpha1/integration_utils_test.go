@@ -954,8 +954,14 @@ func kubeGetCtrlClient() (ctrlclient.WithWatch, error) {
 			return nil, err
 		} else {
 			scheme := runtime.NewScheme()
-			sourcev1.AddToScheme(scheme)
-			helmv2.AddToScheme(scheme)
+			err = sourcev1.AddToScheme(scheme)
+			if err != nil {
+				return nil, err
+			}
+			err = helmv2.AddToScheme(scheme)
+			if err != nil {
+				return nil, err
+			}
 
 			return ctrlclient.NewWithWatch(config, ctrlclient.Options{Scheme: scheme})
 		}
