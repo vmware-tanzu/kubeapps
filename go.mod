@@ -94,12 +94,15 @@ require (
 	k8s.io/kubernetes v1.22.10
 	k8s.io/utils v0.0.0-20220210201930-3a6ce19ff2f9
 	oras.land/oras-go v1.2.0
-	oras.land/oras-go/v2 v2.0.0-alpha
+	oras.land/oras-go/v2 v2.0.0-rc.1
 	sigs.k8s.io/controller-runtime v0.11.2
 	sigs.k8s.io/yaml v1.3.0
 )
 
-require github.com/oras-project/artifacts-spec v1.0.0-draft.1.1 // indirect
+require (
+	github.com/opencontainers/distribution-spec/specs-go v0.0.0-20220620172159-4ab4752c3b86 // indirect
+	github.com/oras-project/artifacts-spec v1.0.0-rc.1.0.20220707054150-eddd1d8790c9 // indirect
+)
 
 require (
 	github.com/Azure/go-ansiterm v0.0.0-20210617225240-d185dfc1b5a1 // indirect
