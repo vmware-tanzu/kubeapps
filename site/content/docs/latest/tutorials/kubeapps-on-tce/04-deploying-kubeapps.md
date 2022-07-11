@@ -13,12 +13,12 @@ One of the key features of Tanzu is its use of _Carvel_.
 
     > If Kubeapps package is not present, please check that your version of TCE is v0.13 or higher.
 
-    In case you could not get Kubeapps showing up in the list of available packages, add it manually to the catalog by running (please change package version accordingly):
+    In case you could not get Kubeapps showing up in the list of available packages, add it manually to the catalog by running (please change [package version accordingly](https://github.com/vmware-tanzu/package-for-kubeapps/tags)):
 
     ```bash
     kubectl apply \
         -f https://raw.githubusercontent.com/vmware-tanzu/package-for-kubeapps/main/metadata.yaml \
-        -f https://raw.githubusercontent.com/vmware-tanzu/package-for-kubeapps/main/9.0.3/package.yaml
+        -f https://raw.githubusercontent.com/vmware-tanzu/package-for-kubeapps/main/8.1.7/package.yaml
     ```
 
 2. Install Kubeapps with the _configuration values file_ created in the previous step of the tutorial
@@ -65,6 +65,6 @@ One of the key features of Tanzu is its use of _Carvel_.
 
     If you chose an **Ingress** to access Kubeapps: open a browser and navigate to the FQDN defined for Kubeapps, for example [https://tce-cluster.foo.com](https://tce-cluster.foo.com).
 
-    > When using OIDC, you will need to configure your client to admit the `LoadBalancer` IP/Host or the `Ingress` FQDN as authorized origins and redirects. Please add the suffix `/oauth2/callback` to the redirect URLs.
+    > When using OIDC, you will need to configure your OAuth2 client to admit the `LoadBalancer` IP/Host or the `Ingress` FQDN as authorized origins and redirects. Please add the suffix `/oauth2/callback` to the redirect URLs.
 
 > Continue the tutorial by [managing applications with Kubeapps](./05-Managing-applications.md).
