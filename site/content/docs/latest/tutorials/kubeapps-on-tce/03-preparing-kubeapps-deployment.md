@@ -173,3 +173,7 @@ packaging:
   flux:
     enabled: false
 ```
+
+At this point we have a proper Yaml file with configuration values.
+
+> Continue the tutorial by [deploying Kubeapps](./04-deploying-kubeapps.md).
