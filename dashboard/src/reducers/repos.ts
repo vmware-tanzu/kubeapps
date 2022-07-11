@@ -6,7 +6,7 @@ import {
   PackageRepositoryDetail,
   PackageRepositorySummary,
 } from "gen/kubeappsapis/core/packages/v1alpha1/repositories";
-import { RepositoryCustomDetails } from "gen/kubeappsapis/plugins/helm/packages/v1alpha1/helm";
+import { HelmPackageRepositoryCustomDetail } from "gen/kubeappsapis/plugins/helm/packages/v1alpha1/helm";
 import { ISecret } from "shared/types";
 import { PluginNames } from "shared/utils";
 import { getType } from "typesafe-actions";
@@ -94,12 +94,12 @@ const reposReducer = (
           dockerRegistrySecrets: [],
           ociRepositories: [],
           performValidation: false,
-        } as RepositoryCustomDetails;
+        } as HelmPackageRepositoryCustomDetail;
 
         try {
           if (action.payload?.customDetail?.value) {
             // TODO(agamez): verify why the field is not automatically decoded.
-            customDetail = RepositoryCustomDetails.decode(
+            customDetail = HelmPackageRepositoryCustomDetail.decode(
               action.payload.customDetail.value as unknown as Uint8Array,
             );
           }

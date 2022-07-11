@@ -11,7 +11,7 @@ import {
   PackageRepositoryReference,
 } from "gen/kubeappsapis/core/packages/v1alpha1/repositories";
 import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins";
-import { RepositoryCustomDetails } from "gen/kubeappsapis/plugins/helm/packages/v1alpha1/helm";
+import { HelmPackageRepositoryCustomDetail } from "gen/kubeappsapis/plugins/helm/packages/v1alpha1/helm";
 import { act } from "react-dom/test-utils";
 import * as ReactRedux from "react-redux";
 import { IPackageRepositoryState } from "reducers/repos";
@@ -513,7 +513,7 @@ describe("when the repository info is already populated", () => {
           jq: ".name == $var0 or .name == $var1",
           variables: { $var0: "nginx", $var1: "wordpress" },
         },
-      } as Partial<RepositoryCustomDetails>,
+      } as Partial<HelmPackageRepositoryCustomDetail>,
     } as PackageRepositoryDetail;
 
     let wrapper: any;
@@ -539,7 +539,7 @@ describe("when the repository info is already populated", () => {
       type: "helm",
       customDetail: {
         filterRule: { jq: ".name | test($var) | not", variables: { $var: "nginx" } },
-      } as Partial<RepositoryCustomDetails>,
+      } as Partial<HelmPackageRepositoryCustomDetail>,
     } as PackageRepositoryDetail;
 
     let wrapper: any;
