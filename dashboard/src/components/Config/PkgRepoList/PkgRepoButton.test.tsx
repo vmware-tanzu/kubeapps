@@ -73,11 +73,11 @@ it("should render a secondary button", () => {
   expect(wrapper.find(CdsIcon)).not.toExist();
 });
 
-it("calls installRepo when submitting", () => {
-  const installRepo = jest.fn();
+it("calls addRepo when submitting", () => {
+  const addRepo = jest.fn();
   actions.repos = {
     ...actions.repos,
-    installRepo,
+    addRepo,
   };
 
   const wrapper = mountWrapper(defaultStore, <PkgRepoAddButton {...defaultProps} />);
@@ -86,7 +86,7 @@ it("calls installRepo when submitting", () => {
   });
   wrapper.update();
   (wrapper.find(PkgRepoForm).prop("onSubmit") as any)();
-  expect(installRepo).toHaveBeenCalled();
+  expect(addRepo).toHaveBeenCalled();
 });
 
 it("calls updateRepo when submitting and there is a repo available", () => {

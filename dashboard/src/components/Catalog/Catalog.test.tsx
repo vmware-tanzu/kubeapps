@@ -36,13 +36,9 @@ const defaultPackageState = {
   size: 20,
 } as IPackageState;
 const defaultProps = {
-  packages: defaultPackageState,
-  repo: "",
-  filter: {},
   cluster: initialState.config.kubeappsCluster,
   namespace: "kubeapps",
   kubeappsNamespace: "kubeapps",
-  csvs: [],
 };
 const availablePkgSummary1: AvailablePackageSummary = {
   name: "foo",
@@ -95,7 +91,7 @@ const csv = {
 const defaultState = {
   packages: defaultPackageState,
   operators: { csvs: [] } as Partial<IOperatorsState>,
-  repos: { repos: [] } as Partial<IPackageRepositoryState>,
+  repos: { reposSummaries: [] } as Partial<IPackageRepositoryState>,
   config: {
     kubeappsCluster: defaultProps.cluster,
     kubeappsNamespace: defaultProps.kubeappsNamespace,
@@ -661,7 +657,9 @@ describe("filters by package repository", () => {
     const wrapper = mountWrapper(
       getStore({
         ...populatedState,
-        repos: { repos: [{ name: "foo" } as PackageRepositorySummary] },
+        repos: {
+          reposSummaries: [{ name: "foo" } as PackageRepositorySummary],
+        } as IPackageRepositoryState,
       }),
       <MemoryRouter initialEntries={[routePathParam]}>
         <Route path={routePath}>
@@ -689,7 +687,9 @@ describe("filters by package repository", () => {
     const wrapper = mountWrapper(
       getStore({
         ...populatedState,
-        repos: { repos: [{ name: "foo" } as PackageRepositorySummary] },
+        repos: {
+          reposSummaries: [{ name: "foo" } as PackageRepositorySummary],
+        } as IPackageRepositoryState,
       }),
       <MemoryRouter initialEntries={[`/c/${defaultProps.cluster}/ns/my-ns/catalog`]}>
         <Route path={routePath}>

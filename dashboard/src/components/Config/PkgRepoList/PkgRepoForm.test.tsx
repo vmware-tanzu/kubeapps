@@ -9,6 +9,7 @@ import {
   PackageRepositoryAuth_PackageRepositoryAuthType,
   PackageRepositoryDetail,
   PackageRepositoryReference,
+  PackageRepositorySummary,
 } from "gen/kubeappsapis/core/packages/v1alpha1/repositories";
 import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins";
 import { HelmPackageRepositoryCustomDetail } from "gen/kubeappsapis/plugins/helm/packages/v1alpha1/helm";
@@ -28,7 +29,12 @@ const defaultProps = {
 };
 
 const defaultState = {
-  repos: { repo: {} } as Partial<IPackageRepositoryState>,
+  repos: {
+    isFetching: false,
+    reposSummaries: [] as PackageRepositorySummary[],
+    repoDetail: {} as PackageRepositoryDetail,
+    errors: {},
+  } as IPackageRepositoryState,
 } as IStoreState;
 
 const pkgRepoFormData = {
@@ -90,20 +96,26 @@ afterEach(() => {
   spyOnUseDispatch.mockRestore();
 });
 
-it("disables the submit button while fetching", async () => {
+it("disables the submit button while loading", async () => {
   let wrapper: any;
   await act(async () => {
     wrapper = mountWrapper(
-      getStore({ repos: { validating: true } }),
+      getStore({
+        ...defaultState,
+        repos: { ...defaultState.repos, isFetching: true } as IPackageRepositoryState,
+      }),
       <PkgRepoForm {...defaultProps} />,
     );
   });
-  expect(
-    wrapper
-      .find(CdsButton)
-      .filterWhere((b: any) => b.html().includes("Validating"))
-      .prop("disabled"),
-  ).toBe(true);
+  await waitFor(() => {
+    wrapper.update();
+    expect(
+      wrapper
+        .find(CdsButton)
+        .filterWhere((b: any) => b.html().includes("Loading"))
+        .prop("disabled"),
+    ).toBe(true);
+  });
 });
 
 it("submit button can not be fired more than once", async () => {
@@ -130,29 +142,67 @@ it("submit button can not be fired more than once", async () => {
   expect(onSubmit.mock.calls.length).toBe(1);
 });
 
-it("should show a validation error", async () => {
+it("shows an error creating a repo", async () => {
   let wrapper: any;
   await act(async () => {
     wrapper = mountWrapper(
-      getStore({ repos: { errors: { validate: new Error("Boom!") } } }),
-      <PkgRepoForm {...defaultProps} />,
-    );
-  });
-  expect(wrapper.find(Alert).text()).toContain("Boom!");
-});
-
-it("shows an error updating a repo", async () => {
-  let wrapper: any;
-  await act(async () => {
-    wrapper = mountWrapper(
-      getStore({ repos: { errors: { update: new Error("boom!") } } }),
+      getStore({
+        repos: {
+          errors: { create: new Error("boom!") },
+        } as IPackageRepositoryState,
+      }),
       <PkgRepoForm {...defaultProps} />,
     );
   });
   expect(wrapper.find(Alert)).toIncludeText("boom!");
 });
 
-it("should call the install method when the validation success", async () => {
+it("shows an error deleting a repo", async () => {
+  let wrapper: any;
+  await act(async () => {
+    wrapper = mountWrapper(
+      getStore({
+        repos: {
+          errors: { delete: new Error("boom!") },
+        } as IPackageRepositoryState,
+      }),
+      <PkgRepoForm {...defaultProps} />,
+    );
+  });
+  expect(wrapper.find(Alert)).toIncludeText("boom!");
+});
+
+it("shows an error fetching a repo", async () => {
+  let wrapper: any;
+  await act(async () => {
+    wrapper = mountWrapper(
+      getStore({
+        repos: {
+          errors: { fetch: new Error("boom!") },
+        } as IPackageRepositoryState,
+      }),
+      <PkgRepoForm {...defaultProps} />,
+    );
+  });
+  expect(wrapper.find(Alert)).toIncludeText("boom!");
+});
+
+it("shows an error updating a repo", async () => {
+  let wrapper: any;
+  await act(async () => {
+    wrapper = mountWrapper(
+      getStore({
+        repos: {
+          errors: { update: new Error("boom!") },
+        } as IPackageRepositoryState,
+      }),
+      <PkgRepoForm {...defaultProps} />,
+    );
+  });
+  expect(wrapper.find(Alert)).toIncludeText("boom!");
+});
+
+it("should call the install method", async () => {
   const install = jest.fn().mockReturnValue(true);
   actions.repos = {
     ...actions.repos,
@@ -474,7 +524,10 @@ describe("when the repository info is already populated", () => {
     let wrapper: any;
     await act(async () => {
       wrapper = mountWrapper(
-        getStore({ ...defaultState, repos: { ...defaultState.repos, repo: testRepo } }),
+        getStore({
+          ...defaultState,
+          repos: { ...defaultState.repos, repoDetail: testRepo } as IPackageRepositoryState,
+        }),
         <PkgRepoForm {...defaultProps} packageRepoRef={packageRepoRef} />,
       );
     });
@@ -494,7 +547,10 @@ describe("when the repository info is already populated", () => {
     let wrapper: any;
     await act(async () => {
       wrapper = mountWrapper(
-        getStore({ ...defaultState, repos: { ...defaultState.repos, repo: testRepo } }),
+        getStore({
+          ...defaultState,
+          repos: { ...defaultState.repos, repoDetail: testRepo } as IPackageRepositoryState,
+        }),
         <PkgRepoForm {...defaultProps} packageRepoRef={packageRepoRef} />,
       );
     });
@@ -519,7 +575,10 @@ describe("when the repository info is already populated", () => {
     let wrapper: any;
     await act(async () => {
       wrapper = mountWrapper(
-        getStore({ ...defaultState, repos: { ...defaultState.repos, repo: testRepo } }),
+        getStore({
+          ...defaultState,
+          repos: { ...defaultState.repos, repoDetail: testRepo } as IPackageRepositoryState,
+        }),
         <PkgRepoForm {...defaultProps} packageRepoRef={packageRepoRef} />,
       );
     });
@@ -545,7 +604,10 @@ describe("when the repository info is already populated", () => {
     let wrapper: any;
     await act(async () => {
       wrapper = mountWrapper(
-        getStore({ ...defaultState, repos: { ...defaultState.repos, repo: testRepo } }),
+        getStore({
+          ...defaultState,
+          repos: { ...defaultState.repos, repoDetail: testRepo } as IPackageRepositoryState,
+        }),
         <PkgRepoForm {...defaultProps} packageRepoRef={packageRepoRef} />,
       );
     });
@@ -565,7 +627,10 @@ describe("when the repository info is already populated", () => {
     let wrapper: any;
     await act(async () => {
       wrapper = mountWrapper(
-        getStore({ ...defaultState, repos: { ...defaultState.repos, repo: testRepo } }),
+        getStore({
+          ...defaultState,
+          repos: { ...defaultState.repos, repoDetail: testRepo } as IPackageRepositoryState,
+        }),
         <PkgRepoForm {...defaultProps} packageRepoRef={packageRepoRef} />,
       );
     });
@@ -585,7 +650,10 @@ describe("when the repository info is already populated", () => {
     let wrapper: any;
     await act(async () => {
       wrapper = mountWrapper(
-        getStore({ ...defaultState, repos: { ...defaultState.repos, repo: testRepo } }),
+        getStore({
+          ...defaultState,
+          repos: { ...defaultState.repos, repoDetail: testRepo } as IPackageRepositoryState,
+        }),
         <PkgRepoForm {...defaultProps} packageRepoRef={packageRepoRef} />,
       );
     });
@@ -600,7 +668,10 @@ describe("when the repository info is already populated", () => {
     let wrapper: any;
     await act(async () => {
       wrapper = mountWrapper(
-        getStore({ ...defaultState, repos: { ...defaultState.repos, repo: testRepo } }),
+        getStore({
+          ...defaultState,
+          repos: { ...defaultState.repos, repoDetail: testRepo } as IPackageRepositoryState,
+        }),
         <PkgRepoForm {...defaultProps} packageRepoRef={packageRepoRef} />,
       );
     });
@@ -616,7 +687,10 @@ describe("when the repository info is already populated", () => {
       let wrapper: any;
       await act(async () => {
         wrapper = mountWrapper(
-          getStore({ ...defaultState, repos: { ...defaultState.repos, repo: testRepo } }),
+          getStore({
+            ...defaultState,
+            repos: { ...defaultState.repos, repoDetail: testRepo } as IPackageRepositoryState,
+          }),
           <PkgRepoForm {...defaultProps} packageRepoRef={packageRepoRef} />,
         );
       });
@@ -635,7 +709,10 @@ describe("when the repository info is already populated", () => {
       let wrapper: any;
       await act(async () => {
         wrapper = mountWrapper(
-          getStore({ ...defaultState, repos: { ...defaultState.repos, repo: testRepo } }),
+          getStore({
+            ...defaultState,
+            repos: { ...defaultState.repos, repoDetail: testRepo } as IPackageRepositoryState,
+          }),
           <PkgRepoForm {...defaultProps} packageRepoRef={packageRepoRef} />,
         );
       });
@@ -657,7 +734,10 @@ describe("when the repository info is already populated", () => {
       let wrapper: any;
       await act(async () => {
         wrapper = mountWrapper(
-          getStore({ ...defaultState, repos: { ...defaultState.repos, repo: testRepo } }),
+          getStore({
+            ...defaultState,
+            repos: { ...defaultState.repos, repoDetail: testRepo } as IPackageRepositoryState,
+          }),
           <PkgRepoForm {...defaultProps} packageRepoRef={packageRepoRef} />,
         );
       });
@@ -680,7 +760,10 @@ describe("when the repository info is already populated", () => {
       let wrapper: any;
       await act(async () => {
         wrapper = mountWrapper(
-          getStore({ ...defaultState, repos: { ...defaultState.repos, repo: testRepo } }),
+          getStore({
+            ...defaultState,
+            repos: { ...defaultState.repos, repoDetail: testRepo } as IPackageRepositoryState,
+          }),
           <PkgRepoForm {...defaultProps} packageRepoRef={packageRepoRef} />,
         );
       });
@@ -707,7 +790,10 @@ describe("when the repository info is already populated", () => {
       let wrapper: any;
       await act(async () => {
         wrapper = mountWrapper(
-          getStore({ ...defaultState, repos: { ...defaultState.repos, repo: testRepo } }),
+          getStore({
+            ...defaultState,
+            repos: { ...defaultState.repos, repoDetail: testRepo } as IPackageRepositoryState,
+          }),
           <PkgRepoForm {...defaultProps} packageRepoRef={packageRepoRef} />,
         );
       });
@@ -734,7 +820,10 @@ describe("when the repository info is already populated", () => {
       let wrapper: any;
       await act(async () => {
         wrapper = mountWrapper(
-          getStore({ ...defaultState, repos: { ...defaultState.repos, repo: testRepo } }),
+          getStore({
+            ...defaultState,
+            repos: { ...defaultState.repos, repoDetail: testRepo } as IPackageRepositoryState,
+          }),
           <PkgRepoForm {...defaultProps} packageRepoRef={packageRepoRef} />,
         );
       });
@@ -759,7 +848,10 @@ describe("when the repository info is already populated", () => {
       let wrapper: any;
       await act(async () => {
         wrapper = mountWrapper(
-          getStore({ ...defaultState, repos: { ...defaultState.repos, repo: testRepo } }),
+          getStore({
+            ...defaultState,
+            repos: { ...defaultState.repos, repoDetail: testRepo } as IPackageRepositoryState,
+          }),
           <PkgRepoForm {...defaultProps} packageRepoRef={packageRepoRef} />,
         );
       });
@@ -785,7 +877,10 @@ describe("when the repository info is already populated", () => {
       let wrapper: any;
       await act(async () => {
         wrapper = mountWrapper(
-          getStore({ ...defaultState, repos: { ...defaultState.repos, repo: testRepo } }),
+          getStore({
+            ...defaultState,
+            repos: { ...defaultState.repos, repoDetail: testRepo } as IPackageRepositoryState,
+          }),
           <PkgRepoForm {...defaultProps} packageRepoRef={packageRepoRef} />,
         );
       });

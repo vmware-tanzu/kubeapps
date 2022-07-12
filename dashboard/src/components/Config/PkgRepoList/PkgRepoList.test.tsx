@@ -15,6 +15,7 @@ import { PkgRepoControl } from "./PkgRepoControl";
 import { PkgRepoDisabledControl } from "./PkgRepoDisabledControl";
 import PkgRepoList from "./PkgRepoList";
 import TableRow from "components/js/Table/components/TableRow";
+import { IPackageRepositoryState } from "reducers/repos";
 
 const {
   clusters: { currentCluster, clusters },
@@ -106,7 +107,7 @@ it("shows a warning if the cluster is not the default one", () => {
 
 it("shows an error fetching a repo", () => {
   const wrapper = mountWrapper(
-    getStore({ repos: { errors: { fetch: new Error("boom!") } } }),
+    getStore({ repos: { errors: { fetch: new Error("boom!") } } as IPackageRepositoryState }),
     <PkgRepoList />,
   );
   expect(wrapper.find(Alert)).toIncludeText("boom!");
@@ -114,7 +115,7 @@ it("shows an error fetching a repo", () => {
 
 it("shows an error deleting a repo", () => {
   const wrapper = mountWrapper(
-    getStore({ repos: { errors: { delete: new Error("boom!") } } }),
+    getStore({ repos: { errors: { delete: new Error("boom!") } } as IPackageRepositoryState }),
     <PkgRepoList />,
   );
   expect(wrapper.find(Alert)).toIncludeText("boom!");
@@ -164,8 +165,8 @@ describe("global and namespaced repositories", () => {
           },
         },
         repos: {
-          repos: [globalRepo],
-        },
+          reposSummaries: [globalRepo],
+        } as IPackageRepositoryState,
       }),
       <PkgRepoList />,
     );
@@ -192,8 +193,8 @@ describe("global and namespaced repositories", () => {
           },
         },
         repos: {
-          repos: [globalRepo],
-        },
+          reposSummaries: [globalRepo],
+        } as IPackageRepositoryState,
       }),
       <PkgRepoList />,
     );
@@ -225,8 +226,8 @@ describe("global and namespaced repositories", () => {
           },
         },
         repos: {
-          repos: [globalRepo, namespacedRepo],
-        },
+          reposSummaries: [globalRepo, namespacedRepo],
+        } as IPackageRepositoryState,
       }),
       <PkgRepoList />,
     );
@@ -238,8 +239,8 @@ describe("global and namespaced repositories", () => {
     const wrapper = mountWrapper(
       getStore({
         repos: {
-          repos: [namespacedRepo],
-        },
+          reposSummaries: [namespacedRepo],
+        } as IPackageRepositoryState,
       }),
       <PkgRepoList />,
     );
@@ -252,8 +253,8 @@ describe("global and namespaced repositories", () => {
     const wrapper = mountWrapper(
       getStore({
         repos: {
-          repos: [namespacedRepo],
-        },
+          reposSummaries: [namespacedRepo],
+        } as IPackageRepositoryState,
       }),
       <PkgRepoList />,
     );
@@ -268,8 +269,8 @@ describe("global and namespaced repositories", () => {
     const wrapper = mountWrapper(
       getStore({
         repos: {
-          repos: [namespacedRepo],
-        },
+          reposSummaries: [namespacedRepo],
+        } as IPackageRepositoryState,
       }),
       <PkgRepoList />,
     );

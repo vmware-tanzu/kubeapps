@@ -30,7 +30,7 @@ function PkgRepoList() {
   const dispatch = useDispatch();
   const location = useLocation();
   const {
-    repos: { errors, isFetchingElem, repos },
+    repos: { errors, isFetching, reposSummaries: repos },
     clusters: { clusters, currentCluster },
     config: { kubeappsCluster, kubeappsNamespace, globalReposNamespace },
   } = useSelector((state: IStoreState) => state);
@@ -216,7 +216,7 @@ function PkgRepoList() {
                 <LoadingWrapper
                   className="margin-t-xxl"
                   loadingText="Fetching Package Repositories..."
-                  loaded={!isFetchingElem.repositories}
+                  loaded={!isFetching}
                 >
                   <h3>Global Repositories:</h3>
                   <p>Global Package Repositories are available for all Kubeapps users.</p>

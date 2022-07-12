@@ -8,6 +8,7 @@ import { InstalledPackageDetail } from "gen/kubeappsapis/core/packages/v1alpha1/
 import { PackageRepositorySummary } from "gen/kubeappsapis/core/packages/v1alpha1/repositories";
 import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins";
 import * as ReactRedux from "react-redux";
+import { IPackageRepositoryState } from "reducers/repos";
 import { defaultStore, getStore, initialState, mountWrapper } from "shared/specs/mountWrapper";
 import SelectRepoForm from "./SelectRepoForm";
 
@@ -96,7 +97,7 @@ it("should select a repo", () => {
 
   const props = { ...defaultContext, app: installedPackageDetail };
   const wrapper = mountWrapper(
-    getStore({ repos: { repos: [repo] } }),
+    getStore({ repos: { reposSummaries: [repo] } as IPackageRepositoryState }),
     <SelectRepoForm {...props} />,
   );
   wrapper.find("select").simulate("change", { target: { value: "default/bitnami" } });

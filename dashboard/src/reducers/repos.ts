@@ -7,70 +7,43 @@ import {
   PackageRepositorySummary,
 } from "gen/kubeappsapis/core/packages/v1alpha1/repositories";
 import { HelmPackageRepositoryCustomDetail } from "gen/kubeappsapis/plugins/helm/packages/v1alpha1/helm";
-import { ISecret } from "shared/types";
+import {
+  KappControllerPackageRepositoryCustomDetail,
+  PackageRepositoryFetch,
+} from "gen/kubeappsapis/plugins/kapp_controller/packages/v1alpha1/kapp_controller";
 import { PluginNames } from "shared/utils";
 import { getType } from "typesafe-actions";
 import actions from "../actions";
 import { PkgReposAction } from "../actions/repos";
 
 export interface IPackageRepositoryState {
-  addingRepo: boolean;
   errors: {
     create?: Error;
     delete?: Error;
     fetch?: Error;
     update?: Error;
-    validate?: Error;
   };
-  lastAdded?: PackageRepositoryDetail;
   isFetching: boolean;
-  isFetchingElem: {
-    repositories: boolean;
-    secrets: boolean;
-  };
-  validating: boolean;
-  repo: PackageRepositoryDetail;
-  repos: PackageRepositorySummary[];
-  form: {
-    name: string;
-    namespace: string;
-    url: string;
-    show: boolean;
-  };
-  imagePullSecrets: ISecret[];
-  redirectTo?: string;
+  repoDetail: PackageRepositoryDetail;
+  reposSummaries: PackageRepositorySummary[];
 }
 
 export const initialState: IPackageRepositoryState = {
-  addingRepo: false,
   errors: {},
-  form: {
-    name: "",
-    namespace: "",
-    show: false,
-    url: "",
-  },
   isFetching: false,
-  isFetchingElem: {
-    repositories: false,
-    secrets: false,
-  },
-  validating: false,
-  repo: {} as PackageRepositoryDetail,
-  repos: [] as PackageRepositorySummary[],
-  imagePullSecrets: [],
+  repoDetail: {} as PackageRepositoryDetail,
+  reposSummaries: [] as PackageRepositorySummary[],
 };
 
-function isFetching(state: IPackageRepositoryState, item: string, fetching: boolean) {
-  const composedIsFetching = {
-    ...state.isFetchingElem,
-    [item]: fetching,
-  };
-  return {
-    isFetching: Object.values(composedIsFetching).some(v => v),
-    isFetchingElem: composedIsFetching,
-  };
-}
+const helmPackageRepositoryCustomDetail = {
+  dockerRegistrySecrets: [],
+  ociRepositories: [],
+  performValidation: false,
+} as HelmPackageRepositoryCustomDetail;
+
+const kappPackageRepositoryCustomDetail = {
+  fetch: {} as PackageRepositoryFetch,
+} as KappControllerPackageRepositoryCustomDetail;
 
 const reposReducer = (
   state: IPackageRepositoryState = initialState,
@@ -80,50 +53,62 @@ const reposReducer = (
     case getType(actions.repos.receiveRepoSummaries):
       return {
         ...state,
-        ...isFetching(state, "repositories", false),
-        repos: action.payload,
+        isFetching: false,
+        reposSummaries: action.payload,
         errors: {},
       };
     case getType(actions.repos.receiveRepoDetail):
       // eslint-disable-next-line no-case-declarations
       let customDetail: any;
+      // eslint-disable-next-line no-case-declarations
+      let repoWithCustomDetail = { ...action.payload };
 
-      // TODO(agamez): decoding customDetail just for the helm plugin
-      if (action.payload.packageRepoRef?.plugin?.name === PluginNames.PACKAGES_HELM) {
-        customDetail = {
-          dockerRegistrySecrets: [],
-          ociRepositories: [],
-          performValidation: false,
-        } as HelmPackageRepositoryCustomDetail;
-
-        try {
-          if (action.payload?.customDetail?.value) {
-            // TODO(agamez): verify why the field is not automatically decoded.
-            customDetail = HelmPackageRepositoryCustomDetail.decode(
-              action.payload.customDetail.value as unknown as Uint8Array,
-            );
-          }
-          // eslint-disable-next-line no-empty
-        } catch (error) {}
+      if (action.payload?.customDetail?.value) {
+        switch (action.payload.packageRepoRef?.plugin?.name) {
+          // handle the decoding of the customDetail for the helm plugin
+          case PluginNames.PACKAGES_HELM:
+            customDetail = helmPackageRepositoryCustomDetail;
+            try {
+              customDetail = HelmPackageRepositoryCustomDetail.decode(
+                action.payload.customDetail.value,
+              );
+              repoWithCustomDetail = { ...action.payload, customDetail: customDetail };
+            } catch (error) {
+              repoWithCustomDetail = { ...action.payload };
+            }
+            break;
+          case PluginNames.PACKAGES_KAPP:
+            customDetail = kappPackageRepositoryCustomDetail;
+            try {
+              customDetail = KappControllerPackageRepositoryCustomDetail.decode(
+                action.payload.customDetail.value,
+              );
+              repoWithCustomDetail = { ...action.payload, customDetail: customDetail };
+            } catch (error) {
+              repoWithCustomDetail = { ...action.payload };
+            }
+            break;
+          default:
+            repoWithCustomDetail = { ...action.payload };
+            break;
+        }
       }
-
       return {
         ...state,
-        ...isFetching(state, "repositories", false),
-        repo: { ...action.payload, customDetail: customDetail },
+        isFetching: false,
+        repoDetail: repoWithCustomDetail,
         errors: {},
       };
     case getType(actions.repos.requestRepoSummaries):
-      return { ...state, ...isFetching(state, "repositories", true) };
+    case getType(actions.repos.addOrUpdateRepo):
+      return { ...state, isFetching: true };
     case getType(actions.repos.requestRepoDetail):
-      return { ...state, repo: initialState.repo, errors: {} };
-    case getType(actions.repos.addRepo):
-      return { ...state, addingRepo: true };
+      return { ...state, repoDetail: initialState.repoDetail, errors: {} };
     case getType(actions.repos.addedRepo):
       return {
         ...state,
-        addingRepo: false,
-        repos: [...state.repos, action.payload].sort((a, b) =>
+        isFetching: false,
+        reposSummaries: [...state.reposSummaries, action.payload].sort((a, b) =>
           a.name.toLowerCase() > b.name.toLowerCase()
             ? 1
             : b.name.toLowerCase() > a.name.toLowerCase()
@@ -133,39 +118,26 @@ const reposReducer = (
       };
     case getType(actions.repos.repoUpdated): {
       const updatedRepo = action.payload;
-      const repos = state.repos.map(r =>
+      const repos = state.reposSummaries.map(r =>
         r.name === updatedRepo.name &&
         r.packageRepoRef?.context?.namespace === updatedRepo.packageRepoRef?.context?.namespace
           ? updatedRepo
           : r,
       );
-      return { ...state, repos };
+      return { ...state, reposSummaries: repos };
     }
-    case getType(actions.repos.redirect):
-      return { ...state, redirectTo: action.payload };
-    case getType(actions.repos.redirected):
-      return { ...state, redirectTo: undefined };
     case getType(actions.repos.errorRepos):
       return {
         ...state,
         // don't reset the fetch error
         errors: { fetch: state.errors.fetch, [action.payload.op]: action.payload.err },
         isFetching: false,
-        isFetchingElem: {
-          repositories: false,
-          secrets: false,
-        },
-        validating: false,
       };
     case LOCATION_CHANGE:
       return {
         ...state,
         errors: {},
         isFetching: false,
-        isFetchingElem: {
-          repositories: false,
-          secrets: false,
-        },
       };
     default:
       return state;

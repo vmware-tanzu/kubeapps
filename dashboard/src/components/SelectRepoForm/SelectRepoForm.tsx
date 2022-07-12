@@ -24,8 +24,8 @@ function SelectRepoForm({ cluster, namespace, app }: ISelectRepoFormProps) {
   const {
     repos: {
       isFetching,
-      repos,
-      repo,
+      reposSummaries: repos,
+      repoDetail: repo,
       errors: { fetch: fetchError },
     },
     packages: {

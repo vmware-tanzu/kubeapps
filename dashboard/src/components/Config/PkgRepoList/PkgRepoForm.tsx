@@ -71,9 +71,9 @@ export function PkgRepoForm(props: IPkgRepoFormProps) {
 
   const {
     repos: {
-      repo,
-      errors: { create: createError, update: updateError, validate: validationError },
-      validating,
+      repoDetail: repo,
+      isFetching,
+      errors: { create: createError, update: updateError, delete: deleteError, fetch: fetchError },
     },
     clusters: { currentCluster },
   } = useSelector((state: IStoreState) => state);
@@ -160,7 +160,7 @@ export function PkgRepoForm(props: IPkgRepoFormProps) {
 
   useEffect(() => {
     if (selectedPkgRepo) {
-      dispatch(actions.repos.fetchRepo(selectedPkgRepo));
+      dispatch(actions.repos.fetchRepoDetail(selectedPkgRepo));
     }
   }, [dispatch, selectedPkgRepo]);
 
@@ -454,19 +454,6 @@ export function PkgRepoForm(props: IPkgRepoFormProps) {
   // };
   const handleIsUserManagedCASecretChange = (_e: React.ChangeEvent<HTMLInputElement>) => {
     setIsUserManagedCASecret(!isUserManagedCASecret);
-  };
-
-  const parseValidationError = (error: Error) => {
-    let message = error.message;
-    try {
-      const parsedMessage = JSON.parse(message);
-      if (parsedMessage.code && parsedMessage.message) {
-        message = `Code: ${parsedMessage.code}. Message: ${parsedMessage.message}`;
-      }
-    } catch (e: any) {
-      // Not a json message
-    }
-    return message;
   };
 
   const userManagedSecretText = "Use an existing secret";
@@ -1757,11 +1744,6 @@ export function PkgRepoForm(props: IPkgRepoFormProps) {
             installation in every namespace and cluster.
           </p>
         )}
-        {validationError && (
-          <Alert theme="danger">
-            Validation Failed. Got: {parseValidationError(validationError)}
-          </Alert>
-        )}
         {createError && (
           <Alert theme="danger">
             An error occurred while creating the repository: {createError.message}
@@ -1772,10 +1754,20 @@ export function PkgRepoForm(props: IPkgRepoFormProps) {
             An error occurred while updating the repository: {updateError.message}
           </Alert>
         )}
+        {deleteError && (
+          <Alert theme="danger">
+            An error occurred while deleting the repository: {deleteError.message}
+          </Alert>
+        )}
+        {fetchError && (
+          <Alert theme="danger">
+            An error occurred while fetching the repository: {fetchError.message}
+          </Alert>
+        )}
         <div className="margin-t-xl">
-          <CdsButton type="submit" disabled={validating}>
-            {validating
-              ? "Validating..."
+          <CdsButton type="submit" disabled={isFetching}>
+            {isFetching
+              ? "Loading..."
               : `${repo.name ? `Update '${repo.name}'` : "Install"} Repository`}
           </CdsButton>
         </div>
