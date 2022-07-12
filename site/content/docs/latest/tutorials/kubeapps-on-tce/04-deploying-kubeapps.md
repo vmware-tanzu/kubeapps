@@ -11,15 +11,13 @@ One of the key features of Tanzu is its use of _Carvel_.
     tanzu package available list kubeapps.community.tanzu.vmware.com
     ```
 
-    > If Kubeapps package is not present, please check that your version of TCE is v0.13 or higher.
-
-    In case you could not get Kubeapps showing up in the list of available packages, add it manually to the catalog by running (please change [package version accordingly](https://github.com/vmware-tanzu/package-for-kubeapps/tags)):
-
-    ```bash
-    kubectl apply \
-        -f https://raw.githubusercontent.com/vmware-tanzu/package-for-kubeapps/main/metadata.yaml \
-        -f https://raw.githubusercontent.com/vmware-tanzu/package-for-kubeapps/main/8.1.7/package.yaml
-    ```
+    > In case you could not get Kubeapps showing up in the list of available packages, add it manually to the catalog by running (please change [package version accordingly](https://github.com/vmware-tanzu/package-for-kubeapps/tags)):
+    >
+    > ```bash
+    > kubectl apply \
+    >    -f https://raw.githubusercontent.com/vmware-tanzu/package-for-kubeapps/main/metadata.yaml \
+    >    -f https://raw.githubusercontent.com/vmware-tanzu/package-for-kubeapps/main/8.1.7/package.yaml
+    > ```
 
 2. Install Kubeapps with the _configuration values file_ created in the previous step of the tutorial
 
