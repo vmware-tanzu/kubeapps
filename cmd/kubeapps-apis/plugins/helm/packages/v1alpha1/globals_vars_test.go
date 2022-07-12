@@ -431,7 +431,7 @@ var (
 		Type:            "helm",
 		Url:             "https://example.com",
 		NamespaceScoped: true,
-		CustomDetail: toProtoBufAny(&helmv1.RepositoryCustomDetails{
+		CustomDetail: toProtoBufAny(&helmv1.HelmPackageRepositoryCustomDetail{
 			OciRepositories: []string{"repo1", "repo2"},
 			FilterRule: &helmv1.RepositoryFilterRule{
 				Jq:        ".name == $var0 or .name == $var1",
@@ -447,7 +447,7 @@ var (
 		Type:            "helm",
 		Url:             "https://example.com",
 		NamespaceScoped: true,
-		CustomDetail: toProtoBufAny(&helmv1.RepositoryCustomDetails{
+		CustomDetail: toProtoBufAny(&helmv1.HelmPackageRepositoryCustomDetail{
 			OciRepositories: []string{"repo1", "repo2"},
 			FilterRule: &helmv1.RepositoryFilterRule{
 				Jq:        ".name == $var0 or .name == $var1",
@@ -464,7 +464,7 @@ var (
 		Type:            "oci",
 		Url:             "https://example.com",
 		NamespaceScoped: true,
-		CustomDetail: toProtoBufAny(&helmv1.RepositoryCustomDetails{
+		CustomDetail: toProtoBufAny(&helmv1.HelmPackageRepositoryCustomDetail{
 			OciRepositories:   []string{"repo1"},
 			PerformValidation: true,
 		}),

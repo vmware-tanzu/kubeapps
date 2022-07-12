@@ -556,7 +556,6 @@ func (r *OCIRegistry) checksum() (string, error) {
 			return "", err
 		}
 
-		//ref := fmt.Sprintf("%s/%s", r.url.String(), fullAppName)
 		tags[appName] = TagList{Name: appName, Tags: tagz}
 	}
 
