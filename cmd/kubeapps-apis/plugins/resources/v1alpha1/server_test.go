@@ -16,6 +16,7 @@ import (
 	"github.com/google/go-cmp/cmp/cmpopts"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
 	"google.golang.org/grpc/test/bufconn"
@@ -71,7 +72,7 @@ func getResourcesClient(t *testing.T, objects ...runtime.Object) (v1alpha1.Resou
 		return lis.Dial()
 	}
 	ctx := context.Background()
-	conn, err := grpc.DialContext(ctx, "bufnet", grpc.WithContextDialer(bufDialer), grpc.WithInsecure())
+	conn, err := grpc.DialContext(ctx, "bufnet", grpc.WithContextDialer(bufDialer), grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		t.Fatalf("Failed to dial bufnet: %v", err)
 	}
@@ -436,7 +437,10 @@ func TestGetResources(t *testing.T) {
 				}
 				resources = append(resources, resource)
 			}
-			responseStream.CloseSend()
+			err = responseStream.CloseSend()
+			if err != nil {
+				t.Fatalf("%+v", err)
+			}
 
 			if got, want := resources, tc.expectedResources; !cmp.Equal(got, want, ignoredUnexported, ignoreManifest) {
 				t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, ignoredUnexported, ignoreManifest))

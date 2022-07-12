@@ -26,6 +26,7 @@ func TestParseFlagsCorrect(t *testing.T) {
 				"--plugin-dir", "foo01",
 				"--clusters-config-path", "foo02",
 				"--pinniped-proxy-url", "foo03",
+				"--pinniped-proxy-ca-cert", "foo06",
 				"--global-repos-namespace", "kubeapps-global",
 				"--unsafe-local-dev-kubeconfig", "true",
 				"--plugin-config-path", "foo05",
@@ -58,7 +59,10 @@ func TestParseFlagsCorrect(t *testing.T) {
 			cmd.SetErr(b)
 			setFlags(cmd)
 			cmd.SetArgs(tt.args)
-			cmd.Execute()
+			err := cmd.Execute()
+			if err != nil {
+				t.Errorf("unexpected error: %v", err)
+			}
 			if got, want := serveOpts, tt.conf; !cmp.Equal(want, got) {
 				t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got))
 			}

@@ -308,7 +308,7 @@ func (s *Server) GetAvailablePackageDetail(ctx context.Context, request *corev1.
 	if version == "" {
 		version = chart.ChartVersions[0].Version
 	}
-	fileID := fileIDForChart(unescapedChartID, chart.ChartVersions[0].Version)
+	fileID := fileIDForChart(unescapedChartID, version)
 	chartFiles, err := s.manager.GetChartFiles(namespace, fileID)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "Unable to retrieve chart files: %v", err)
@@ -995,7 +995,7 @@ func (s *Server) GetInstalledPackageResourceRefs(ctx context.Context, request *c
 }
 
 func (s *Server) AddPackageRepository(ctx context.Context, request *corev1.AddPackageRepositoryRequest) (*corev1.AddPackageRepositoryResponse, error) {
-	log.Infof("+helm AddPackageRepository '%s' pointing to '%s'", request.Name, request.Url)
+	log.Infof("+helm AddPackageRepository '%s' pointing to '%s'", request.GetName(), request.GetUrl())
 	if request == nil {
 		return nil, status.Errorf(codes.InvalidArgument, "no request provided")
 	}

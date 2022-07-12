@@ -6,11 +6,12 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"k8s.io/apimachinery/pkg/runtime/schema"
-	"k8s.io/kubernetes/pkg/credentialprovider"
 	"sort"
 	"strings"
 	"time"
+
+	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/kubernetes/pkg/credentialprovider"
 
 	k8scorev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -248,9 +249,7 @@ func prereleasesVersionSelection(prereleasesVersionSelection []string) *vendirve
 	} else {
 		// `prereleases: {Identifiers: []string{"foo"}}`: allow only prerelease with "foo" as part of the name if the version constraint allows it
 		prereleases := &vendirversions.VersionSelectionSemverPrereleases{Identifiers: []string{}}
-		for _, prereleaseVersionSelectionId := range prereleasesVersionSelection {
-			prereleases.Identifiers = append(prereleases.Identifiers, prereleaseVersionSelectionId)
-		}
+		prereleases.Identifiers = append(prereleases.Identifiers, prereleasesVersionSelection...)
 		return prereleases
 	}
 }
@@ -284,14 +283,17 @@ func FilterMetadatas(metadatas []*datapackagingv1alpha1.PackageMetadata, filterO
 	// Once the UX does, we should be able to filter by repository
 	// also as its now an annotation:
 	// https://github.com/vmware-tanzu/carvel-kapp-controller/pull/532
-	if filterOptions.Query == "" && len(filterOptions.Categories) == 0 {
+	if filterOptions != nil && filterOptions.Query == "" && len(filterOptions.Categories) == 0 {
 		return metadatas
 	}
 	filteredMeta := []*datapackagingv1alpha1.PackageMetadata{}
 	for _, metadata := range metadatas {
-		if (filterOptions.Query != "" && testMetadataMatchesQuery(metadata, filterOptions.Query)) ||
-			(len(filterOptions.Categories) > 0 && testMetadataMatchesCategories(metadata, filterOptions.Categories)) {
-			filteredMeta = append(filteredMeta, metadata)
+		if filterOptions != nil {
+			matchesQuery := filterOptions.Query != "" && testMetadataMatchesQuery(metadata, filterOptions.Query)
+			matchesCategories := len(filterOptions.Categories) > 0 && testMetadataMatchesCategories(metadata, filterOptions.Categories)
+			if matchesQuery || matchesCategories {
+				filteredMeta = append(filteredMeta, metadata)
+			}
 		}
 	}
 	return filteredMeta

@@ -25,8 +25,7 @@ import (
 )
 
 const (
-	fluxHelmReleases    = "helmreleases"
-	fluxHelmReleaseList = "HelmReleaseList"
+	fluxHelmReleases = "helmreleases"
 )
 
 // This is an integration test: it tests the full integration of flux plugin with flux back-end
