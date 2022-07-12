@@ -160,7 +160,7 @@ export function PkgRepoForm(props: IPkgRepoFormProps) {
 
   useEffect(() => {
     if (selectedPkgRepo) {
-      dispatch(actions.repos.fetchRepo(selectedPkgRepo));
+      dispatch(actions.repos.fetchRepoDetail(selectedPkgRepo));
     }
   }, [dispatch, selectedPkgRepo]);
 

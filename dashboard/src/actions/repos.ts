@@ -100,7 +100,7 @@ export const fetchRepoSummaries = (
   };
 };
 
-export const fetchRepo = (
+export const fetchRepoDetail = (
   packageRepoRef: PackageRepositoryReference,
 ): ThunkAction<Promise<boolean>, IStoreState, null, PkgReposAction> => {
   return async dispatch => {
@@ -129,7 +129,7 @@ export const fetchRepo = (
   };
 };
 
-export const installRepo = (
+export const addRepo = (
   namespace: string,
   request: IPkgRepoFormData,
 ): ThunkAction<Promise<boolean>, IStoreState, null, PkgReposAction> => {

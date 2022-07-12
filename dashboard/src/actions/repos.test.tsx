@@ -393,17 +393,17 @@ describe("fetchRepoSummaries", () => {
   });
 });
 
-describe("installRepo", () => {
-  const installRepoCMD = repoActions.installRepo("my-namespace", pkgRepoFormData);
+describe("addRepo", () => {
+  const addRepoCMD = repoActions.addRepo("my-namespace", pkgRepoFormData);
 
   context("when authHeader provided", () => {
-    const installRepoCMDAuth = repoActions.installRepo("my-namespace", {
+    const addRepoCMDAuth = repoActions.addRepo("my-namespace", {
       ...pkgRepoFormData,
       authHeader: "Bearer: abc",
     });
 
     it("calls PackageRepositoriesService create including a auth struct (authHeader)", async () => {
-      await store.dispatch(installRepoCMDAuth);
+      await store.dispatch(addRepoCMDAuth);
       expect(PackageRepositoriesService.addPackageRepository).toHaveBeenCalledWith(
         "default",
         "my-namespace",
@@ -417,7 +417,7 @@ describe("installRepo", () => {
 
     it("calls PackageRepositoriesService create including ociRepositories", async () => {
       await store.dispatch(
-        repoActions.installRepo("my-namespace", {
+        repoActions.addRepo("my-namespace", {
           ...pkgRepoFormData,
           type: RepositoryStorageTypes.PACKAGE_REPOSITORY_STORAGE_OCI,
           customDetails: {
@@ -443,7 +443,7 @@ describe("installRepo", () => {
 
     it("calls PackageRepositoriesService create skipping TLS verification", async () => {
       await store.dispatch(
-        repoActions.installRepo("my-namespace", { ...pkgRepoFormData, skipTLS: true }),
+        repoActions.addRepo("my-namespace", { ...pkgRepoFormData, skipTLS: true }),
       );
       expect(PackageRepositoriesService.addPackageRepository).toHaveBeenCalledWith(
         "default",
@@ -457,19 +457,19 @@ describe("installRepo", () => {
     });
 
     it("returns true", async () => {
-      const res = await store.dispatch(installRepoCMDAuth);
+      const res = await store.dispatch(addRepoCMDAuth);
       expect(res).toBe(true);
     });
   });
 
   context("when a customCA is provided", () => {
-    const installRepoCMDAuth = repoActions.installRepo("my-namespace", {
+    const addRepoCMDAuth = repoActions.addRepo("my-namespace", {
       ...pkgRepoFormData,
       customCA: "This is a cert!",
     });
 
     it("calls PackageRepositoriesService create including a auth struct (custom CA)", async () => {
-      await store.dispatch(installRepoCMDAuth);
+      await store.dispatch(addRepoCMDAuth);
       expect(PackageRepositoriesService.addPackageRepository).toHaveBeenCalledWith(
         "default",
         "my-namespace",
@@ -481,15 +481,15 @@ describe("installRepo", () => {
       );
     });
 
-    it("returns true (installRepoCMDAuth)", async () => {
-      const res = await store.dispatch(installRepoCMDAuth);
+    it("returns true (addRepoCMDAuth)", async () => {
+      const res = await store.dispatch(addRepoCMDAuth);
       expect(res).toBe(true);
     });
   });
 
   context("when authHeader and customCA are empty", () => {
     it("calls PackageRepositoriesService create without a auth struct", async () => {
-      await store.dispatch(installRepoCMD);
+      await store.dispatch(addRepoCMD);
       expect(PackageRepositoriesService.addPackageRepository).toHaveBeenCalledWith(
         "default",
         "my-namespace",
@@ -498,8 +498,8 @@ describe("installRepo", () => {
       );
     });
 
-    it("returns true (installRepoCMD)", async () => {
-      const res = await store.dispatch(installRepoCMD);
+    it("returns true (addRepoCMD)", async () => {
+      const res = await store.dispatch(addRepoCMD);
       expect(res).toBe(true);
     });
   });
@@ -519,7 +519,7 @@ describe("installRepo", () => {
       },
     ];
 
-    await store.dispatch(installRepoCMD);
+    await store.dispatch(addRepoCMD);
     expect(store.getActions()).toEqual(expectedActions);
   });
 
@@ -528,7 +528,7 @@ describe("installRepo", () => {
       throw new Error("Boom!");
     });
 
-    const res = await store.dispatch(installRepoCMD);
+    const res = await store.dispatch(addRepoCMD);
     expect(res).toEqual(false);
   });
 
@@ -543,13 +543,13 @@ describe("installRepo", () => {
       },
     ];
 
-    await store.dispatch(installRepoCMD);
+    await store.dispatch(addRepoCMD);
     expect(store.getActions()).toEqual(expectedActions);
   });
 
   it("includes registry secrets if given", async () => {
     await store.dispatch(
-      repoActions.installRepo("my-namespace", {
+      repoActions.addRepo("my-namespace", {
         ...pkgRepoFormData,
         customDetails: { ...pkgRepoFormData.customDetails, dockerRegistrySecrets: ["repo-1"] },
       }),
@@ -568,7 +568,7 @@ describe("installRepo", () => {
 
   it("calls PackageRepositoriesService create with description", async () => {
     await store.dispatch(
-      repoActions.installRepo("my-namespace", {
+      repoActions.addRepo("my-namespace", {
         ...pkgRepoFormData,
         description: "This is a weird description 123!@#$%^&&*()_+-=<>?/.,;:'\"",
       }),

@@ -44,7 +44,7 @@ export function PkgRepoAddButton({
     if (packageRepoRef) {
       return dispatch(actions.repos.updateRepo(namespace, request));
     } else {
-      return dispatch(actions.repos.installRepo(namespace, request));
+      return dispatch(actions.repos.addRepo(namespace, request));
     }
   };
 
