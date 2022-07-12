@@ -86,7 +86,7 @@ const (
 	github_podinfo_oci_registry_url = "oci://ghcr.io/stefanprodan/charts"
 
 	// the URL of local in cluster helm registry. Gets deployed via ./kind-cluster-setup.sh
-	in_cluster_oci_registry_url = "oci://registry-app-svc.default.svc.cluster.local:5000/helm-charts"
+	// in_cluster_oci_registry_url = "oci://registry-app-svc.default.svc.cluster.local:5000/helm-charts"
 )
 
 func checkEnv(t *testing.T) (fluxplugin.FluxV2PackagesServiceClient, fluxplugin.FluxV2RepositoriesServiceClient, error) {
