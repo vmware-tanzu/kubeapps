@@ -1,6 +1,6 @@
 # Step 4: Deploying Kubeapps on a VMware Tanzu™ Community Edition cluster
 
-Once your TCE cluster is up and running, you can deploy Kubeapps into it.
+Once your TCE cluster is up and running and you have a valid configuration values file, you can proceed to deploy Kubeapps.
 
 One of the key features of Tanzu is its use of _Carvel_.
 [Carvel](https://carvel.dev/) is a project that provides a set of reliable, single-purpose, composable tools that aid in your application building, configuration, and deployment to Kubernetes. In this tutorial, you will use the Carvel packaging format to install Kubeapps.
@@ -47,7 +47,7 @@ One of the key features of Tanzu is its use of _Carvel_.
     tanzu package installed get kubeapps -n kubeapps
     ```
 
-4. **Optionally** you can check with Kapp which resources have been created when deploying Kubeapps:
+4. **Optionally** you can check with Kapp (part of Carvel tools) which resources have been created when deploying Kubeapps:
 
     ```bash
     kapp inspect -a kubeapps-ctrl -n kubeapps
