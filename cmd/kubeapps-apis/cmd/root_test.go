@@ -39,6 +39,7 @@ func TestParseFlagsCorrect(t *testing.T) {
 				PluginDirs:               []string{"foo01"},
 				ClustersConfigPath:       "foo02",
 				PinnipedProxyURL:         "foo03",
+				PinnipedProxyCACert:      "foo06",
 				UnsafeLocalDevKubeconfig: true,
 				GlobalReposNamespace:     "kubeapps-global",
 				PluginConfigPath:         "foo05",
