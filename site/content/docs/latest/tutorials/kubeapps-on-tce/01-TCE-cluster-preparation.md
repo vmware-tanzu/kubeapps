@@ -48,6 +48,6 @@ You must decide, which of the following suits your desired outcome:
 
 or
 
-- Do you want a full-featured, scalable Kubernetes implementation suitable for a development or production environment? If so, deploy a [managed cluster](#deploy-a-managed-cluster).
+- Do you want a full-featured, scalable Kubernetes implementation suitable for a development or production environment? If so, deploy a [managed cluster](./02-TCE-managed-cluster.md).
 
 If you want to know more about planning your deployment check out [the official TCE documentation](https://tanzucommunityedition.io/docs/v0.12/planning/).
