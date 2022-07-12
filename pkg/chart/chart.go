@@ -450,7 +450,6 @@ func (c *ChartClientFactory) New(repoType, userAgent string) ChartClient {
 	switch repoType {
 	case "oci":
 		client = NewOCIClient(userAgent)
-		break
 	default:
 		client = NewChartClient(userAgent)
 	}

@@ -71,7 +71,10 @@ func TestSetClientProxy(t *testing.T) {
 
 		testerror := errors.New("Test Proxy Error")
 		proxyFunc := func(r *http.Request) (*url.URL, error) { return nil, testerror }
-		SetClientProxy(client, proxyFunc)
+		err := SetClientProxy(client, proxyFunc)
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
 
 		if transport.Proxy == nil {
 			t.Fatal("expected proxy to have been set")
@@ -100,7 +103,10 @@ func TestSetClientTls(t *testing.T) {
 			RootCAs:            systemCertPool,
 			InsecureSkipVerify: true,
 		}
-		SetClientTLS(client, tlsConf)
+		err = SetClientTLS(client, tlsConf)
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
 
 		if transport.TLSClientConfig == nil {
 			t.Fatal("expected TLS config to have been set but it is nil")
@@ -115,7 +121,10 @@ func TestSetClientTls(t *testing.T) {
 		expectedPayload := []byte("Bob's your uncle")
 		ts := httptest.NewUnstartedServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			w.WriteHeader(200)
-			w.Write(expectedPayload)
+			_, err := w.Write(expectedPayload)
+			if err != nil {
+				t.Fatalf("%+v", err)
+			}
 		}))
 		ts.TLS = tlsConf
 		ts.StartTLS()
