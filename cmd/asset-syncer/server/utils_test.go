@@ -6,7 +6,6 @@ package server
 import (
 	"bytes"
 	"compress/gzip"
-	"encoding/base64"
 	"errors"
 	"fmt"
 	"image"
@@ -46,7 +45,10 @@ func (h *badHTTPClient) Do(req *http.Request) (*http.Response, error) {
 	w := httptest.NewRecorder()
 	w.WriteHeader(500)
 	if len(h.errMsg) > 0 {
-		w.Write([]byte(h.errMsg))
+		_, err := w.Write([]byte(h.errMsg))
+		if err != nil {
+			return nil, err
+		}
 	}
 	return w.Result(), nil
 }
@@ -119,12 +121,11 @@ type goodIconClient struct{}
 func iconBytes() []byte {
 	var b bytes.Buffer
 	img := imaging.New(1, 1, color.White)
-	imaging.Encode(&b, img, imaging.PNG)
+	err := imaging.Encode(&b, img, imaging.PNG)
+	if err != nil {
+		return nil
+	}
 	return b.Bytes()
-}
-
-func iconB64() string {
-	return base64.StdEncoding.EncodeToString(iconBytes())
 }
 
 func (h *goodIconClient) Do(req *http.Request) (*http.Response, error) {

@@ -405,7 +405,10 @@ func TestRepoAlreadyProcessed(t *testing.T) {
 	}
 
 	// not processed when repo exists but has not been processed
-	pam.EnsureRepoExists(repoNamespace, repoName)
+	_, err := pam.EnsureRepoExists(repoNamespace, repoName)
+	if err != nil {
+		t.Errorf("%+v", err)
+	}
 	got = pam.LastChecksum(repo)
 	if got != "" {
 		t.Errorf("got: %s, want: %s", got, "")
@@ -413,7 +416,10 @@ func TestRepoAlreadyProcessed(t *testing.T) {
 
 	pam.UpdateLastCheck(repoNamespace, repoName, checksum, time.Now())
 	// processed when checksums match
-	pam.EnsureRepoExists(repoNamespace, repoName)
+	_, err := pam.EnsureRepoExists(repoNamespace, repoName)
+	if err != nil {
+		t.Errorf("%+v", err)
+	}
 	got = pam.LastChecksum(repo)
 	if got != checksum {
 		t.Errorf("got: %s, want: %s", got, checksum)

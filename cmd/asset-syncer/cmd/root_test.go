@@ -117,7 +117,10 @@ func TestParseFlagsCorrect(t *testing.T) {
 			cmd.SetOut(b)
 			cmd.SetErr(b)
 			cmd.SetArgs(tt.args)
-			cmd.Execute()
+			err := cmd.Execute()
+			if err != nil {
+				t.Errorf("unexpected error: %v", err)
+			}
 			if got, want := serveOpts, tt.conf; !cmp.Equal(want, got) {
 				t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got))
 			}
