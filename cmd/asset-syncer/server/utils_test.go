@@ -21,7 +21,6 @@ import (
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/disintegration/imaging"
 	"github.com/google/go-cmp/cmp"
-	log "github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 	apprepov1alpha1 "github.com/vmware-tanzu/kubeapps/cmd/apprepository-controller/pkg/apis/apprepository/v1alpha1"
 	"github.com/vmware-tanzu/kubeapps/pkg/chart/models"
@@ -32,6 +31,7 @@ import (
 	httpclient "github.com/vmware-tanzu/kubeapps/pkg/http-client"
 	tartest "github.com/vmware-tanzu/kubeapps/pkg/tarutil/test"
 	"helm.sh/helm/v3/pkg/chart"
+	log "k8s.io/klog/v2"
 )
 
 var validRepoIndexYAMLBytes, _ = ioutil.ReadFile("testdata/valid-index.yaml")
@@ -74,7 +74,10 @@ func (h *goodHTTPClient) Do(req *http.Request) (*http.Response, error) {
 		w.WriteHeader(500)
 	}
 
-	w.Write([]byte(validRepoIndexYAML))
+	_, err := w.Write([]byte(validRepoIndexYAML))
+	if err != nil {
+		log.Fatalf("%+v", err)
+	}
 	return w.Result(), nil
 }
 
@@ -90,7 +93,10 @@ func (h *goodAuthenticatedHTTPClient) Do(req *http.Request) (*http.Response, err
 		// Ensure we're sending the right Authorization header
 		w.WriteHeader(403)
 	} else {
-		w.Write(iconBytes())
+		_, err := w.Write(iconBytes())
+		if err != nil {
+			log.Fatalf("%+v", err)
+		}
 	}
 	return w.Result(), nil
 }
@@ -104,7 +110,10 @@ func (h *authenticatedHTTPClient) Do(req *http.Request) (*http.Response, error) 
 	if !strings.Contains(req.Header.Get("Authorization"), "Bearer ThisSecretAccessTokenAuthenticatesTheClient") {
 		w.WriteHeader(500)
 	}
-	w.Write([]byte(validRepoIndexYAML))
+	_, err := w.Write([]byte(validRepoIndexYAML))
+	if err != nil {
+		log.Fatalf("%+v", err)
+	}
 	return w.Result(), nil
 }
 
@@ -112,7 +121,10 @@ type badIconClient struct{}
 
 func (h *badIconClient) Do(req *http.Request) (*http.Response, error) {
 	w := httptest.NewRecorder()
-	w.Write([]byte("not-an-image"))
+	_, err := w.Write([]byte("not-an-image"))
+	if err != nil {
+		log.Fatalf("%+v", err)
+	}
 	return w.Result(), nil
 }
 
@@ -130,7 +142,10 @@ func iconBytes() []byte {
 
 func (h *goodIconClient) Do(req *http.Request) (*http.Response, error) {
 	w := httptest.NewRecorder()
-	w.Write(iconBytes())
+	_, err := w.Write(iconBytes())
+	if err != nil {
+		log.Fatalf("%+v", err)
+	}
 	return w.Result(), nil
 }
 
@@ -138,7 +153,10 @@ type svgIconClient struct{}
 
 func (h *svgIconClient) Do(req *http.Request) (*http.Response, error) {
 	w := httptest.NewRecorder()
-	w.Write([]byte("<svg width='100' height='100'></svg>"))
+	_, err := w.Write([]byte("<svg width='100' height='100'></svg>"))
+	if err != nil {
+		log.Fatalf("%+v", err)
+	}
 	res := w.Result()
 	res.Header.Set("Content-Type", "image/svg")
 	return res, nil
@@ -283,7 +301,10 @@ func Test_fetchRepoIndexUserAgent(t *testing.T) {
 
 			server := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 				assert.Equal(t, req.Header.Get("User-Agent"), tt.expectedUserAgent, "expected user agent")
-				rw.Write([]byte(validRepoIndexYAML))
+				_, err := rw.Write([]byte(validRepoIndexYAML))
+				if err != nil {
+					log.Fatalf("%+v", err)
+				}
 			}))
 			// Close the server when test finishes
 			defer server.Close()
@@ -658,9 +679,15 @@ func (h *goodOCIAPIHTTPClient) Do(req *http.Request) (*http.Response, error) {
 	}
 
 	if r, ok := h.responseByPath[req.URL.Path]; ok {
-		w.Write([]byte(r))
+		_, err := w.Write([]byte(r))
+		if err != nil {
+			log.Fatalf("%+v", err)
+		}
 	} else {
-		w.Write([]byte(h.response))
+		_, err := w.Write([]byte(h.response))
+		if err != nil {
+			log.Fatalf("%+v", err)
+		}
 	}
 	return w.Result(), nil
 }
@@ -676,7 +703,10 @@ func (h *authenticatedOCIAPIHTTPClient) Do(req *http.Request) (*http.Response, e
 	if req.Header.Get("Authorization") != "Bearer ThisSecretAccessTokenAuthenticatesTheClient" {
 		w.WriteHeader(500)
 	}
-	w.Write([]byte(h.response))
+	_, err := w.Write([]byte(h.response))
+	if err != nil {
+		log.Fatalf("%+v", err)
+	}
 	return w.Result(), nil
 }
 
@@ -1012,7 +1042,6 @@ version: 1.0.0
 	}
 	for _, tt := range tests {
 		t.Run(tt.description, func(t *testing.T) {
-			log.SetLevel(log.DebugLevel)
 			w := map[string]*httptest.ResponseRecorder{}
 			content := map[string]*bytes.Buffer{}
 			for _, tag := range tt.tags {

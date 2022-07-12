@@ -14,9 +14,10 @@ import (
 
 func TestParseFlagsCorrect(t *testing.T) {
 	var tests = []struct {
-		name string
-		args []string
-		conf core.ServeOptions
+		name        string
+		args        []string
+		conf        core.ServeOptions
+		errExpected bool
 	}{
 		{
 			"all arguments are captured",
@@ -44,6 +45,7 @@ func TestParseFlagsCorrect(t *testing.T) {
 				QPS:                      1.0,
 				Burst:                    1,
 			},
+			true,
 		},
 	}
 
@@ -60,7 +62,7 @@ func TestParseFlagsCorrect(t *testing.T) {
 			setFlags(cmd)
 			cmd.SetArgs(tt.args)
 			err := cmd.Execute()
-			if err != nil {
+			if !tt.errExpected && err != nil {
 				t.Errorf("unexpected error: %v", err)
 			}
 			if got, want := serveOpts, tt.conf; !cmp.Equal(want, got) {

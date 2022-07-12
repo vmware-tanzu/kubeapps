@@ -13,9 +13,10 @@ import (
 
 func TestParseFlagsCorrect(t *testing.T) {
 	var tests = []struct {
-		name string
-		args []string
-		conf server.Config
+		name        string
+		args        []string
+		conf        server.Config
+		errExpected bool
 	}{
 		{
 			"all arguments are captured (invalidate command)",
@@ -46,6 +47,7 @@ func TestParseFlagsCorrect(t *testing.T) {
 				UserAgent:             "asset-syncer/devel (foo05)",
 				UserAgentComment:      "foo05",
 			},
+			true,
 		},
 		{
 			"all arguments are captured (sync command)",
@@ -77,6 +79,7 @@ func TestParseFlagsCorrect(t *testing.T) {
 				UserAgent:             "asset-syncer/devel (foo05)",
 				UserAgentComment:      "foo05",
 			},
+			true,
 		},
 		{
 			"all arguments are captured (delete command)",
@@ -107,6 +110,7 @@ func TestParseFlagsCorrect(t *testing.T) {
 				UserAgent:             "asset-syncer/devel (foo05)",
 				UserAgentComment:      "foo05",
 			},
+			true,
 		},
 	}
 
@@ -118,7 +122,7 @@ func TestParseFlagsCorrect(t *testing.T) {
 			cmd.SetErr(b)
 			cmd.SetArgs(tt.args)
 			err := cmd.Execute()
-			if err != nil {
+			if !tt.errExpected && err != nil {
 				t.Errorf("unexpected error: %v", err)
 			}
 			if got, want := serveOpts, tt.conf; !cmp.Equal(want, got) {

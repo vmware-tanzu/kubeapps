@@ -677,7 +677,7 @@ func TestClientWithDefaultHeaders(t *testing.T) {
 				request.Header[k] = v
 			}
 			_, err = client.Do(request)
-			if err != nil {
+			if err != nil && !strings.Contains(err.Error(), "Unexpected path") {
 				t.Fatalf("%+v", err)
 			}
 			requestsWithHeaders := getFakeClientRequests(t, client)

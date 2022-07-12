@@ -16,9 +16,10 @@ import (
 
 func TestParseFlagsCorrect(t *testing.T) {
 	var tests = []struct {
-		name string
-		args []string
-		conf server.Config
+		name        string
+		args        []string
+		conf        server.Config
+		errExpected bool
 	}{
 		{
 			"no arguments returns default flag values",
@@ -45,6 +46,7 @@ func TestParseFlagsCorrect(t *testing.T) {
 				ParsedCustomAnnotations:  map[string]string{},
 				ParsedCustomLabels:       map[string]string{},
 			},
+			true,
 		},
 		{
 			"pullSecrets with spaces",
@@ -75,6 +77,7 @@ func TestParseFlagsCorrect(t *testing.T) {
 				ParsedCustomAnnotations:  map[string]string{},
 				ParsedCustomLabels:       map[string]string{},
 			},
+			true,
 		},
 		{
 			"all arguments are captured",
@@ -122,6 +125,7 @@ func TestParseFlagsCorrect(t *testing.T) {
 				ParsedCustomAnnotations:  map[string]string{"foo13": "bar13", "foo13x": "bar13x", "extra13": "extra13"},
 				ParsedCustomLabels:       map[string]string{"foo14": "bar14", "foo14x": "bar14x"},
 			},
+			true,
 		},
 	}
 
@@ -134,7 +138,7 @@ func TestParseFlagsCorrect(t *testing.T) {
 			setFlags(cmd)
 			cmd.SetArgs(tt.args)
 			err := cmd.Execute()
-			if err != nil {
+			if !tt.errExpected && err != nil {
 				t.Errorf("unexpected error: %v", err)
 			}
 			if got, want := serveOpts, tt.conf; !cmp.Equal(want, got) {

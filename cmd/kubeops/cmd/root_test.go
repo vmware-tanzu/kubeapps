@@ -13,9 +13,10 @@ import (
 
 func TestParseFlagsCorrect(t *testing.T) {
 	var tests = []struct {
-		name string
-		args []string
-		conf server.ServeOptions
+		name        string
+		args        []string
+		conf        server.ServeOptions
+		errExpected bool
 	}{
 		{
 			"all arguments are captured",
@@ -49,6 +50,7 @@ func TestParseFlagsCorrect(t *testing.T) {
 				UserAgent:              "kubeops/devel (foo03)",
 				GlobalReposNamespace:   "kubeapps-global",
 			},
+			true,
 		},
 	}
 
@@ -61,7 +63,7 @@ func TestParseFlagsCorrect(t *testing.T) {
 			setFlags(cmd)
 			cmd.SetArgs(tt.args)
 			err := cmd.Execute()
-			if err != nil {
+			if !tt.errExpected && err != nil {
 				t.Errorf("unexpected error: %v", err)
 			}
 			if got, want := serveOpts, tt.conf; !cmp.Equal(want, got) {
