@@ -9,7 +9,12 @@ COPY go.mod go.sum ./
 ARG VERSION="devel"
 
 ARG BUF_VERSION="1.5.0"
+ARG GOSEC_VERSION="2.12.0"
+
+# Install lint tools
 RUN curl -sSL "https://github.com/bufbuild/buf/releases/download/v$BUF_VERSION/buf-Linux-x86_64" -o "/tmp/buf" && chmod +x "/tmp/buf"
+RUN curl -sfL https://raw.githubusercontent.com/securego/gosec/master/install.sh | sh -s -- -b $(go env GOPATH)/bin v$GOSEC_VERSION
+
 
 # With the trick below, Go's build cache is kept between builds.
 # https://github.com/golang/go/issues/27719#issuecomment-514747274
@@ -24,6 +29,10 @@ COPY cmd cmd
 
 # Lint the proto files to detect errors at build time
 RUN /tmp/buf lint ./cmd/kubeapps-apis
+
+# Run gosec to detect any security-related error at build time
+RUN gosec ./cmd/kubeapps-apis/...
+RUN gosec ./pkg/...
 
 # Build the main grpc server
 RUN --mount=type=cache,target=/go/pkg/mod \

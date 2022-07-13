@@ -30,6 +30,7 @@ type ServeOptions struct {
 	Timeout                int64
 	ClustersConfigPath     string
 	PinnipedProxyURL       string
+	PinnipedProxyCACert    string
 	Burst                  int
 	Qps                    float32
 	NamespaceHeaderName    string
@@ -54,7 +55,7 @@ func Serve(serveOpts ServeOptions) error {
 	if serveOpts.ClustersConfigPath != "" {
 		var err error
 		var cleanupCAFiles func()
-		clustersConfig, cleanupCAFiles, err = kube.ParseClusterConfig(serveOpts.ClustersConfigPath, clustersCAFilesPrefix, serveOpts.PinnipedProxyURL)
+		clustersConfig, cleanupCAFiles, err = kube.ParseClusterConfig(serveOpts.ClustersConfigPath, clustersCAFilesPrefix, serveOpts.PinnipedProxyURL, serveOpts.PinnipedProxyCACert)
 		if err != nil {
 			return fmt.Errorf("unable to parse additional clusters config: %+v", err)
 		}
@@ -116,8 +117,9 @@ func Serve(serveOpts ServeOptions) error {
 	addr := ":" + port
 
 	srv := &http.Server{
-		Addr:    addr,
-		Handler: n,
+		ReadHeaderTimeout: 60 * time.Second, // mitigate slowloris attacks, set to nginx's default
+		Addr:              addr,
+		Handler:           n,
 	}
 
 	go func() {

@@ -5,7 +5,7 @@ package main
 
 import (
 	"context"
-	"fmt"
+
 	corev1 "github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
 	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/pkg/statuserror"
 	"google.golang.org/grpc/codes"
@@ -27,8 +27,7 @@ func (s *Server) AddPackageRepository(ctx context.Context, request *corev1.AddPa
 	}
 
 	// trace logging
-	logctx := fmt.Sprintf("(cluster=%q, namespace=%q, name=%q)", cluster, namespace, request.GetName())
-	log.Infof("+kapp-controller AddPackageRepository %s", logctx)
+	log.InfoS("+kapp-controller AddPackageRepository", "cluster", cluster, "namespace", namespace, "name", request.GetName())
 
 	// validation
 	if cluster != s.globalPackagingCluster {
@@ -84,7 +83,7 @@ func (s *Server) AddPackageRepository(ctx context.Context, request *corev1.AddPa
 		},
 	}
 
-	log.Infof("-kapp-controller AddPackageRepository %s", logctx)
+	log.InfoS("-kapp-controller AddPackageRepository", "cluster", cluster, "namespace", namespace, "name", request.GetName())
 	return response, nil
 }
 
@@ -102,8 +101,7 @@ func (s *Server) GetPackageRepositoryDetail(ctx context.Context, request *corev1
 	name := request.GetPackageRepoRef().GetIdentifier()
 
 	// trace logging
-	logctx := fmt.Sprintf("(cluster=%q, namespace=%q, name=%q)", cluster, namespace, name)
-	log.Infof("+kapp-controller GetPackageRepositoryDetail %s", logctx)
+	log.InfoS("+kapp-controller GetPackageRepositoryDetail", "cluster", cluster, "namespace", namespace, "name", name)
 
 	// fetch repository
 	pkgRepository, err := s.getPkgRepository(ctx, cluster, namespace, name)
@@ -131,7 +129,7 @@ func (s *Server) GetPackageRepositoryDetail(ctx context.Context, request *corev1
 		Detail: repository,
 	}
 
-	log.Infof("-kapp-controller GetPackageRepositoryDetail %s", logctx)
+	log.InfoS("-kapp-controller GetPackageRepositoryDetail", "cluster", cluster, "namespace", namespace, "name", name)
 	return response, nil
 }
 
@@ -145,8 +143,7 @@ func (s *Server) GetPackageRepositorySummaries(ctx context.Context, request *cor
 	namespace := request.GetContext().GetNamespace()
 
 	// trace logging
-	logctx := fmt.Sprintf("(cluster=%q, namespace=%q)", cluster, namespace)
-	log.Infof("+kapp-controller GetPackageRepositories %s", logctx)
+	log.InfoS("+kapp-controller GetPackageRepositories", "cluster", cluster, "namespace", namespace)
 
 	// retrieve the list of installed packages
 	pkgRepositories, err := s.getPkgRepositories(ctx, cluster, namespace)
@@ -170,7 +167,7 @@ func (s *Server) GetPackageRepositorySummaries(ctx context.Context, request *cor
 		PackageRepositorySummaries: repositories,
 	}
 
-	log.Infof("-kapp-controller GetPackageRepositories %s", logctx)
+	log.InfoS("-kapp-controller GetPackageRepositories", "cluster", cluster, "namespace", namespace)
 	return response, nil
 }
 
@@ -188,8 +185,7 @@ func (s *Server) UpdatePackageRepository(ctx context.Context, request *corev1.Up
 	name := request.GetPackageRepoRef().GetIdentifier()
 
 	// trace logging
-	logctx := fmt.Sprintf("(cluster=%q, namespace=%q, name=%q)", cluster, namespace, name)
-	log.Infof("+kapp-controller UpdatePackageRepository %s", logctx)
+	log.InfoS("+kapp-controller UpdatePackageRepository", "cluster", cluster, "namespace", namespace, "name", name)
 
 	// identity validation
 	if cluster != s.globalPackagingCluster {
@@ -282,7 +278,7 @@ func (s *Server) UpdatePackageRepository(ctx context.Context, request *corev1.Up
 		},
 	}
 
-	log.Infof("-kapp-controller UpdatePackageRepository %s", logctx)
+	log.InfoS("-kapp-controller UpdatePackageRepository", "cluster", cluster, "namespace", namespace, "name", name)
 	return response, nil
 }
 
@@ -300,8 +296,7 @@ func (s *Server) DeletePackageRepository(ctx context.Context, request *corev1.De
 	name := request.GetPackageRepoRef().GetIdentifier()
 
 	// trace logging
-	logctx := fmt.Sprintf("(cluster=%q, namespace=%q, name=%q)", cluster, namespace, name)
-	log.Infof("+kapp-controller DeletePackageRepository %s", logctx)
+	log.InfoS("+kapp-controller DeletePackageRepository", "cluster", cluster, "namespace", namespace, "name", name)
 
 	// delete
 	err := s.deletePkgRepository(ctx, cluster, namespace, name)
@@ -312,6 +307,6 @@ func (s *Server) DeletePackageRepository(ctx context.Context, request *corev1.De
 	// response
 	response := &corev1.DeletePackageRepositoryResponse{}
 
-	log.Infof("-kapp-controller DeletePackageRepository %s", logctx)
+	log.InfoS("-kapp-controller DeletePackageRepository", "cluster", cluster, "namespace", namespace, "name", name)
 	return response, nil
 }

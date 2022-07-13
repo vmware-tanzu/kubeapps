@@ -39,7 +39,7 @@ type HelmRepository struct {
 	interval      string
 	tlsConfig     *corev1.PackageRepositoryTlsConfig
 	auth          *corev1.PackageRepositoryAuth
-	customDetails *v1alpha1.RepositoryCustomDetails
+	customDetails *v1alpha1.HelmPackageRepositoryCustomDetail
 }
 
 var ValidRepoTypes = []string{HelmRepoType, OCIRepoType}
@@ -191,11 +191,16 @@ func (s *Server) mapToPackageRepositoryDetail(source *apprepov1alpha1.AppReposit
 		Url:             source.Spec.URL,
 		Auth:            auth,
 		TlsConfig:       tlsConfig,
+		// TODO(agamez): check if we can get the status from the repo somehow
+		// https://github.com/vmware-tanzu/kubeapps/issues/153
+		Status: &corev1.PackageRepositoryStatus{
+			Ready: true,
+		},
 	}
 
 	// Custom details
 	if source.Spec.DockerRegistrySecrets != nil || source.Spec.FilterRule.JQ != "" || source.Spec.OCIRepositories != nil {
-		var customDetails = &v1alpha1.RepositoryCustomDetails{}
+		var customDetails = &v1alpha1.HelmPackageRepositoryCustomDetail{}
 		customDetails.DockerRegistrySecrets = source.Spec.DockerRegistrySecrets
 		if source.Spec.FilterRule.JQ != "" {
 			customDetails.FilterRule = &v1alpha1.RepositoryFilterRule{
@@ -376,6 +381,12 @@ func (s *Server) repoSummaries(ctx context.Context, cluster string, namespace st
 			NamespaceScoped: s.globalPackagingNamespace != repo.Namespace,
 			Type:            repo.Spec.Type,
 			Url:             repo.Spec.URL,
+			RequiresAuth:    repo.Spec.Auth.Header != nil,
+			// TODO(agamez): check if we can get the status from the repo somehow
+			// https://github.com/vmware-tanzu/kubeapps/issues/153
+			Status: &corev1.PackageRepositoryStatus{
+				Ready: true,
+			},
 		}
 		summaries = append(summaries, summary)
 	}

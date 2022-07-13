@@ -111,12 +111,15 @@ func NewServer(configGetter core.KubernetesConfigGetter, globalPackagingCluster 
 		}
 		log.Infof("+helm using custom config: [%v]", *pluginConfig)
 	} else {
-		log.Infof("+helm using default config since pluginConfigPath is empty")
+		log.Info("+helm using default config since pluginConfigPath is empty")
 	}
 
 	// Register custom scheme
 	scheme := runtime.NewScheme()
-	appRepov1.AddToScheme(scheme)
+	err = appRepov1.AddToScheme(scheme)
+	if err != nil {
+		log.Fatalf("%s", err)
+	}
 
 	return &Server{
 		clientGetter: clientgetter.NewClientGetter(configGetter, clientgetter.Options{Scheme: scheme}),
@@ -173,8 +176,7 @@ func (s *Server) GetManager() (utils.AssetManager, error) {
 
 // GetAvailablePackageSummaries returns the available packages based on the request.
 func (s *Server) GetAvailablePackageSummaries(ctx context.Context, request *corev1.GetAvailablePackageSummariesRequest) (*corev1.GetAvailablePackageSummariesResponse, error) {
-	contextMsg := fmt.Sprintf("(cluster=%q, namespace=%q)", request.GetContext().GetCluster(), request.GetContext().GetNamespace())
-	log.Infof("+helm GetAvailablePackageSummaries %s", contextMsg)
+	log.InfoS("+helm GetAvailablePackageSummaries", "cluster", request.GetContext().GetCluster(), "namespace", request.GetContext().GetNamespace())
 
 	namespace := request.GetContext().GetNamespace()
 	cluster := request.GetContext().GetCluster()
@@ -260,8 +262,7 @@ func (s *Server) GetAvailablePackageSummaries(ctx context.Context, request *core
 
 // GetAvailablePackageDetail returns the package metadata managed by the 'helm' plugin
 func (s *Server) GetAvailablePackageDetail(ctx context.Context, request *corev1.GetAvailablePackageDetailRequest) (*corev1.GetAvailablePackageDetailResponse, error) {
-	contextMsg := fmt.Sprintf("(cluster=%q, namespace=%q)", request.GetAvailablePackageRef().GetContext().GetCluster(), request.GetAvailablePackageRef().GetContext().GetNamespace())
-	log.Infof("+helm GetAvailablePackageDetail %s", contextMsg)
+	log.InfoS("+helm GetAvailablePackageDetail", "cluster", request.GetAvailablePackageRef().GetContext().GetCluster(), "namespace", request.GetAvailablePackageRef().GetContext().GetNamespace())
 
 	if request.GetAvailablePackageRef().GetContext() == nil {
 		return nil, status.Errorf(codes.InvalidArgument, "No request AvailablePackageRef.Context provided")
@@ -330,8 +331,7 @@ func fileIDForChart(id, version string) string {
 
 // GetAvailablePackageVersions returns the package versions managed by the 'helm' plugin
 func (s *Server) GetAvailablePackageVersions(ctx context.Context, request *corev1.GetAvailablePackageVersionsRequest) (*corev1.GetAvailablePackageVersionsResponse, error) {
-	contextMsg := fmt.Sprintf("(cluster=%q, namespace=%q)", request.GetAvailablePackageRef().GetContext().GetCluster(), request.GetAvailablePackageRef().GetContext().GetNamespace())
-	log.Infof("+helm GetAvailablePackageVersions %s", contextMsg)
+	log.InfoS("+helm GetAvailablePackageVersions", "cluster", request.GetAvailablePackageRef().GetContext().GetCluster(), "namespace", request.GetAvailablePackageRef().GetContext().GetNamespace())
 
 	namespace := request.GetAvailablePackageRef().GetContext().GetNamespace()
 	if namespace == "" || request.GetAvailablePackageRef().GetIdentifier() == "" {
@@ -442,8 +442,7 @@ func (s *Server) hasAccessToNamespace(ctx context.Context, cluster, namespace st
 
 // GetInstalledPackageSummaries returns the installed packages managed by the 'helm' plugin
 func (s *Server) GetInstalledPackageSummaries(ctx context.Context, request *corev1.GetInstalledPackageSummariesRequest) (*corev1.GetInstalledPackageSummariesResponse, error) {
-	contextMsg := fmt.Sprintf("(cluster=%q, namespace=%q)", request.GetContext().GetCluster(), request.GetContext().GetNamespace())
-	log.Infof("+helm GetInstalledPackageSummaries %s", contextMsg)
+	log.InfoS("+helm GetInstalledPackageSummaries", "cluster", request.GetContext().GetCluster(), "namespace", request.GetContext().GetNamespace())
 
 	actionConfig, err := s.actionConfigGetter(ctx, request.GetContext())
 	if err != nil {
@@ -562,8 +561,7 @@ func installedPkgSummaryFromRelease(r *release.Release) *corev1.InstalledPackage
 
 // GetInstalledPackageDetail returns the package metadata managed by the 'helm' plugin
 func (s *Server) GetInstalledPackageDetail(ctx context.Context, request *corev1.GetInstalledPackageDetailRequest) (*corev1.GetInstalledPackageDetailResponse, error) {
-	contextMsg := fmt.Sprintf("(cluster=%q, namespace=%q)", request.GetInstalledPackageRef().GetContext().GetCluster(), request.GetInstalledPackageRef().GetContext().GetNamespace())
-	log.Infof("+helm GetInstalledPackageDetail %s", contextMsg)
+	log.InfoS("+helm GetInstalledPackageDetail", "cluster", request.GetInstalledPackageRef().GetContext().GetCluster(), "namespace", request.GetInstalledPackageRef().GetContext().GetNamespace())
 
 	namespace := request.GetInstalledPackageRef().GetContext().GetNamespace()
 	identifier := request.GetInstalledPackageRef().GetIdentifier()
@@ -666,8 +664,7 @@ func installedPkgDetailFromRelease(r *release.Release, ref *corev1.InstalledPack
 
 // CreateInstalledPackage creates an installed package.
 func (s *Server) CreateInstalledPackage(ctx context.Context, request *corev1.CreateInstalledPackageRequest) (*corev1.CreateInstalledPackageResponse, error) {
-	contextMsg := fmt.Sprintf("(cluster=%q, namespace=%q)", request.GetTargetContext().GetCluster(), request.GetTargetContext().GetNamespace())
-	log.Infof("+helm CreateInstalledPackage %s", contextMsg)
+	log.InfoS("+helm CreateInstalledPackage", "cluster", request.GetTargetContext().GetCluster(), "namespace", request.GetTargetContext().GetNamespace())
 
 	typedClient, _, err := s.GetClients(ctx, s.globalPackagingCluster)
 	if err != nil {
@@ -721,8 +718,7 @@ func (s *Server) CreateInstalledPackage(ctx context.Context, request *corev1.Cre
 func (s *Server) UpdateInstalledPackage(ctx context.Context, request *corev1.UpdateInstalledPackageRequest) (*corev1.UpdateInstalledPackageResponse, error) {
 	installedRef := request.GetInstalledPackageRef()
 	releaseName := installedRef.GetIdentifier()
-	contextMsg := fmt.Sprintf("(cluster=%q, namespace=%q)", installedRef.GetContext().GetCluster(), installedRef.GetContext().GetNamespace())
-	log.Infof("+helm UpdateInstalledPackage %s", contextMsg)
+	log.InfoS("+helm UpdateInstalledPackage", "cluster", installedRef.GetContext().GetCluster(), "namespace", installedRef.GetContext().GetNamespace())
 
 	// Determine the chart used for this installed package.
 	// We may want to include the AvailablePackageRef in the request, given
@@ -853,7 +849,7 @@ func (s *Server) fetchChartWithRegistrySecrets(ctx context.Context, chartDetails
 	userAgentString := fmt.Sprintf("%s/%s/%s/%s", UserAgentPrefix, pluginDetail.Name, pluginDetail.Version, version)
 
 	chartID := fmt.Sprintf("%s/%s", appRepo.Name, chartDetails.ChartName)
-	log.Infof("fetching chart %q with user-agent %q", chartID, userAgentString)
+	log.InfoS("fetching chart with user-agent", "chartID", chartID, "userAgentString", userAgentString)
 
 	// Look up the cachedChart cached in our DB to populate the tarball URL
 	cachedChart, err := s.manager.GetChartVersion(chartDetails.AppRepositoryResourceNamespace, chartID, chartDetails.Version)
@@ -866,7 +862,7 @@ func (s *Server) fetchChartWithRegistrySecrets(ctx context.Context, chartDetails
 		// https://helm.sh/docs/topics/chart_repository/#the-index-file
 		// https://github.com/helm/helm/blob/v3.7.1/cmd/helm/search/search_test.go#L63
 		tarballURL = chartTarballURL(cachedChart.Repo, cachedChart.ChartVersions[0])
-		log.Infof("using chart tarball url %q", tarballURL)
+		log.InfoS("using chart tarball", "url", tarballURL)
 	}
 
 	// Grab the chart itself
@@ -913,8 +909,7 @@ func (s *Server) DeleteInstalledPackage(ctx context.Context, request *corev1.Del
 	installedRef := request.GetInstalledPackageRef()
 	releaseName := installedRef.GetIdentifier()
 	namespace := installedRef.GetContext().GetNamespace()
-	contextMsg := fmt.Sprintf("(cluster=%q, namespace=%q)", installedRef.GetContext().GetCluster(), namespace)
-	log.Infof("+helm DeleteInstalledPackage %s", contextMsg)
+	log.InfoS("+helm DeleteInstalledPackage", "cluster", installedRef.GetContext().GetCluster(), "namespace", namespace)
 
 	// Create an action config for the installed pkg context.
 	actionConfig, err := s.actionConfigGetter(ctx, installedRef.GetContext())
@@ -939,8 +934,7 @@ func (s *Server) DeleteInstalledPackage(ctx context.Context, request *corev1.Del
 func (s *Server) RollbackInstalledPackage(ctx context.Context, request *helmv1.RollbackInstalledPackageRequest) (*helmv1.RollbackInstalledPackageResponse, error) {
 	installedRef := request.GetInstalledPackageRef()
 	releaseName := installedRef.GetIdentifier()
-	contextMsg := fmt.Sprintf("(cluster=%q, namespace=%q)", installedRef.GetContext().GetCluster(), installedRef.GetContext().GetNamespace())
-	log.Infof("+helm RollbackInstalledPackage %s", contextMsg)
+	log.InfoS("+helm RollbackInstalledPackage", "cluster", installedRef.GetContext().GetCluster(), "namespace", installedRef.GetContext().GetNamespace())
 
 	// Create an action config for the installed pkg context.
 	actionConfig, err := s.actionConfigGetter(ctx, installedRef.GetContext())
@@ -977,9 +971,8 @@ func (s *Server) RollbackInstalledPackage(ctx context.Context, request *helmv1.R
 // resources created by an installed package.
 func (s *Server) GetInstalledPackageResourceRefs(ctx context.Context, request *corev1.GetInstalledPackageResourceRefsRequest) (*corev1.GetInstalledPackageResourceRefsResponse, error) {
 	pkgRef := request.GetInstalledPackageRef()
-	contextMsg := fmt.Sprintf("(cluster=%q, namespace=%q)", pkgRef.GetContext().GetCluster(), pkgRef.GetContext().GetNamespace())
 	identifier := pkgRef.GetIdentifier()
-	log.Infof("+helm GetInstalledPackageResourceRefs %s %s", contextMsg, identifier)
+	log.InfoS("+helm GetInstalledPackageResourceRefs", "cluster", pkgRef.GetContext().GetCluster(), "namespace", pkgRef.GetContext().GetNamespace(), "id", identifier)
 
 	fn := func(ctx context.Context, namespace string) (*action.Configuration, error) {
 		actionGetter, err := s.actionConfigGetter(ctx, pkgRef.GetContext())
@@ -1030,9 +1023,9 @@ func (s *Server) AddPackageRepository(ctx context.Context, request *corev1.AddPa
 	}
 
 	// Get Helm-specific values
-	var customDetails *helmv1.RepositoryCustomDetails
+	var customDetails *helmv1.HelmPackageRepositoryCustomDetail
 	if request.CustomDetail != nil {
-		customDetails = &helmv1.RepositoryCustomDetails{}
+		customDetails = &helmv1.HelmPackageRepositoryCustomDetail{}
 		if err := request.CustomDetail.UnmarshalTo(customDetails); err != nil {
 			return nil, status.Errorf(codes.InvalidArgument, "customDetails could not be parsed: [%v]", request.CustomDetail)
 		}
@@ -1079,7 +1072,7 @@ func (s *Server) GetPackageRepositoryDetail(ctx context.Context, request *corev1
 	namespace := repoRef.GetContext().GetNamespace()
 	name := repoRef.GetIdentifier()
 
-	log.Infof("+helm GetPackageRepositoryDetail (cluster=%s, namespace=%s, name=%s)", cluster, namespace, name)
+	log.InfoS("+helm GetPackageRepositoryDetail", "cluster", cluster, "namespace", namespace, "name", name)
 
 	// Retrieve repository
 	appRepo, caCertSecret, authSecret, err := s.getAppRepoAndRelatedSecrets(ctx, cluster, name, namespace)
@@ -1127,9 +1120,9 @@ func (s *Server) UpdatePackageRepository(ctx context.Context, request *corev1.Up
 	log.Infof("+helm UpdatePackageRepository '%s' in context [%v]", repoRef.Identifier, repoRef.Context)
 
 	// Get Helm-specific values
-	var customDetails *helmv1.RepositoryCustomDetails
+	var customDetails *helmv1.HelmPackageRepositoryCustomDetail
 	if request.CustomDetail != nil {
-		customDetails = &helmv1.RepositoryCustomDetails{}
+		customDetails = &helmv1.HelmPackageRepositoryCustomDetail{}
 		if err := request.CustomDetail.UnmarshalTo(customDetails); err != nil {
 			return nil, status.Errorf(codes.InvalidArgument, "customDetails could not be parsed: [%v]", request.CustomDetail)
 		}

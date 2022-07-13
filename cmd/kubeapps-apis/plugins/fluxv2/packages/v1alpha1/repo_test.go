@@ -1295,17 +1295,17 @@ func TestAddPackageRepository(t *testing.T) {
 		{
 			name:       "errors for package repository with bearer token",
 			request:    add_repo_req_10,
-			statusCode: codes.Unimplemented,
+			statusCode: codes.Internal,
 		},
 		{
 			name:       "errors for package repository with custom auth token",
 			request:    add_repo_req_11,
-			statusCode: codes.Unimplemented,
+			statusCode: codes.Internal,
 		},
 		{
 			name:       "package repository with docker config JSON authentication",
 			request:    add_repo_req_12,
-			statusCode: codes.Unimplemented,
+			statusCode: codes.Internal,
 		},
 		{
 			name:             "package repository with basic auth and existing secret",
@@ -2286,11 +2286,11 @@ func redisMockSetValueForRepo(mock redismock.ClientMock, key string, newValue, o
 }
 
 func (s *Server) redisKeyValueForRepo(r sourcev1.HelmRepository) (key string, byteArray []byte, err error) {
-	sink := repoEventSink{
-		clientGetter: s.newBackgroundClientGetter(),
-		chartCache:   nil,
+	cg := func(ctx context.Context) (clientgetter.ClientInterfaces, error) {
+		return s.clientGetter(ctx, s.kubeappsCluster)
 	}
-	return sink.redisKeyValueForRepo(r)
+	sinkNoChartCache := repoEventSink{clientGetter: cg}
+	return sinkNoChartCache.redisKeyValueForRepo(r)
 }
 
 func (sink *repoEventSink) redisKeyValueForRepo(r sourcev1.HelmRepository) (key string, byteArray []byte, err error) {

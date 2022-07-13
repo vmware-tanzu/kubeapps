@@ -1089,7 +1089,74 @@ var (
 		Name:    "my-podinfo-5",
 		Context: &corev1.Context{Namespace: "default"},
 		Type:    "oci",
-		Url:     podinfo_oci_repo_url,
+		Url:     github_podinfo_oci_registry_url,
+	}
+
+	add_repo_req_22 = func(user, password string) *corev1.AddPackageRepositoryRequest {
+		return &corev1.AddPackageRepositoryRequest{
+			Name:    "my-podinfo-6",
+			Context: &corev1.Context{Namespace: "default"},
+			Type:    "oci",
+			Url:     github_podinfo_oci_registry_url,
+			Auth: &corev1.PackageRepositoryAuth{
+				Type: corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_BASIC_AUTH,
+				PackageRepoAuthOneOf: &corev1.PackageRepositoryAuth_UsernamePassword{
+					UsernamePassword: &corev1.UsernamePassword{
+						Username: user,
+						Password: password,
+					},
+				},
+			},
+		}
+	}
+
+	add_repo_req_23 = &corev1.AddPackageRepositoryRequest{
+		Name:    "my-podinfo-7",
+		Context: &corev1.Context{Namespace: "default"},
+		Type:    "oci",
+		Url:     github_podinfo_oci_registry_url,
+		Auth: &corev1.PackageRepositoryAuth{
+			Type: corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_BASIC_AUTH,
+			PackageRepoAuthOneOf: &corev1.PackageRepositoryAuth_SecretRef{
+				SecretRef: &corev1.SecretKeyReference{
+					Name: "secret-3",
+				},
+			},
+		},
+	}
+
+	add_repo_req_24 = func(server, user, password string) *corev1.AddPackageRepositoryRequest {
+		return &corev1.AddPackageRepositoryRequest{
+			Name:    "my-podinfo-8",
+			Context: &corev1.Context{Namespace: "default"},
+			Type:    "oci",
+			Url:     github_podinfo_oci_registry_url,
+			Auth: &corev1.PackageRepositoryAuth{
+				Type: corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_DOCKER_CONFIG_JSON,
+				PackageRepoAuthOneOf: &corev1.PackageRepositoryAuth_DockerCreds{
+					DockerCreds: &corev1.DockerCredentials{
+						Server:   server,
+						Username: user,
+						Password: password,
+					},
+				},
+			},
+		}
+	}
+
+	add_repo_req_25 = &corev1.AddPackageRepositoryRequest{
+		Name:    "my-podinfo-9",
+		Context: &corev1.Context{Namespace: "default"},
+		Type:    "oci",
+		Url:     github_podinfo_oci_registry_url,
+		Auth: &corev1.PackageRepositoryAuth{
+			Type: corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_DOCKER_CONFIG_JSON,
+			PackageRepoAuthOneOf: &corev1.PackageRepositoryAuth_SecretRef{
+				SecretRef: &corev1.SecretKeyReference{
+					Name: "secret-4",
+				},
+			},
+		},
 	}
 
 	add_repo_expected_resp = &corev1.AddPackageRepositoryResponse{
@@ -1114,6 +1181,22 @@ var (
 
 	add_repo_expected_resp_6 = &corev1.AddPackageRepositoryResponse{
 		PackageRepoRef: repoRef("my-podinfo-5", "default"),
+	}
+
+	add_repo_expected_resp_7 = &corev1.AddPackageRepositoryResponse{
+		PackageRepoRef: repoRef("my-podinfo-6", "default"),
+	}
+
+	add_repo_expected_resp_8 = &corev1.AddPackageRepositoryResponse{
+		PackageRepoRef: repoRef("my-podinfo-7", "default"),
+	}
+
+	add_repo_expected_resp_9 = &corev1.AddPackageRepositoryResponse{
+		PackageRepoRef: repoRef("my-podinfo-8", "default"),
+	}
+
+	add_repo_expected_resp_10 = &corev1.AddPackageRepositoryResponse{
+		PackageRepoRef: repoRef("my-podinfo-9", "default"),
 	}
 
 	status_installed = &corev1.InstalledPackageStatus{
@@ -1950,6 +2033,14 @@ var (
 		},
 	}
 
+	expected_versions_stefanprodan_podinfo = &corev1.GetAvailablePackageVersionsResponse{
+		PackageAppVersions: []*corev1.PackageAppVersion{
+			{PkgVersion: "6.1.6"},
+			{PkgVersion: "6.1.5"},
+			{PkgVersion: "6.1.4"},
+		},
+	}
+
 	create_package_simple_req = &corev1.CreateInstalledPackageRequest{
 		AvailablePackageRef: availableRef("podinfo/podinfo", "namespace-1"),
 		Name:                "my-podinfo",
@@ -2422,7 +2513,7 @@ var (
 			Description:     "",
 			NamespaceScoped: false,
 			Type:            "helm",
-			Url:             podinfo_oci_repo_url,
+			Url:             github_podinfo_oci_registry_url,
 			Interval:        "10m",
 			Auth:            &corev1.PackageRepositoryAuth{},
 			Status: &corev1.PackageRepositoryStatus{
@@ -2438,6 +2529,16 @@ var (
 		PackageRepoRef: repoRefInReq("my-podinfo-13", "TBD"),
 	}
 
+	get_repo_detail_req_14 = &corev1.GetPackageRepositoryDetailRequest{
+		// namespace will be set when test scenario is run
+		PackageRepoRef: repoRefInReq("my-podinfo-14", "TBD"),
+	}
+
+	get_repo_detail_req_15 = &corev1.GetPackageRepositoryDetailRequest{
+		// namespace will be set when test scenario is run
+		PackageRepoRef: repoRefInReq("my-podinfo-15", "TBD"),
+	}
+
 	get_repo_detail_resp_16 = &corev1.GetPackageRepositoryDetailResponse{
 		Detail: &corev1.PackageRepositoryDetail{
 			PackageRepoRef:  repoRefWithId("my-podinfo-13"),
@@ -2445,7 +2546,7 @@ var (
 			Description:     "",
 			NamespaceScoped: false,
 			Type:            "oci",
-			Url:             podinfo_oci_repo_url,
+			Url:             github_podinfo_oci_registry_url,
 			Interval:        "10m",
 			Auth:            &corev1.PackageRepositoryAuth{},
 			Status: &corev1.PackageRepositoryStatus{
@@ -2456,10 +2557,64 @@ var (
 		},
 	}
 
+	get_repo_detail_resp_17 = &corev1.GetPackageRepositoryDetailResponse{
+		Detail: &corev1.PackageRepositoryDetail{
+			PackageRepoRef:  repoRefWithId("my-podinfo-14"),
+			Name:            "my-podinfo-14",
+			Description:     "",
+			NamespaceScoped: false,
+			Type:            "oci",
+			Url:             github_podinfo_oci_registry_url,
+			Interval:        "10m",
+			Auth: &corev1.PackageRepositoryAuth{
+				Type: corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_BASIC_AUTH,
+				PackageRepoAuthOneOf: &corev1.PackageRepositoryAuth_UsernamePassword{
+					UsernamePassword: &corev1.UsernamePassword{
+						Username: redactedString,
+						Password: redactedString,
+					},
+				},
+			},
+			Status: &corev1.PackageRepositoryStatus{
+				Ready:      true,
+				Reason:     corev1.PackageRepositoryStatus_STATUS_REASON_SUCCESS,
+				UserReason: "Succeeded: Helm repository is ready",
+			},
+		},
+	}
+
+	get_repo_detail_resp_18 = &corev1.GetPackageRepositoryDetailResponse{
+		Detail: &corev1.PackageRepositoryDetail{
+			PackageRepoRef:  repoRefWithId("my-podinfo-15"),
+			Name:            "my-podinfo-15",
+			Description:     "",
+			NamespaceScoped: false,
+			Type:            "oci",
+			Url:             github_podinfo_oci_registry_url,
+			Interval:        "10m",
+			Auth: &corev1.PackageRepositoryAuth{
+				Type: corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_DOCKER_CONFIG_JSON,
+				PackageRepoAuthOneOf: &corev1.PackageRepositoryAuth_DockerCreds{
+					DockerCreds: &corev1.DockerCredentials{
+						Username: redactedString,
+						Password: redactedString,
+						Server:   redactedString,
+					},
+				},
+			},
+			Status: &corev1.PackageRepositoryStatus{
+				Ready:      true,
+				Reason:     corev1.PackageRepositoryStatus_STATUS_REASON_SUCCESS,
+				UserReason: "Succeeded: Helm repository is ready",
+			},
+		},
+	}
+
 	get_summaries_repo_1 = newRepo("bar", "foo",
 		&sourcev1.HelmRepositorySpec{
-			URL:      "http://example.com",
-			Interval: metav1.Duration{Duration: 10 * time.Minute},
+			URL:       "http://example.com",
+			Interval:  metav1.Duration{Duration: 10 * time.Minute},
+			SecretRef: &fluxmeta.LocalObjectReference{},
 		},
 		&sourcev1.HelmRepositoryStatus{
 			Artifact: &sourcev1.Artifact{
@@ -2539,6 +2694,7 @@ var (
 		Type:            "helm",
 		Url:             "http://example.com",
 		Status:          podinfo_repo_status_2,
+		RequiresAuth:    true,
 	}
 
 	get_summaries_summary_2 = &corev1.PackageRepositorySummary{
@@ -2549,6 +2705,7 @@ var (
 		Type:            "helm",
 		Url:             "http://example.com",
 		Status:          podinfo_repo_status_2,
+		RequiresAuth:    false,
 	}
 
 	get_summaries_summary_3 = &corev1.PackageRepositorySummary{
@@ -2559,6 +2716,7 @@ var (
 		Type:            "helm",
 		Url:             "http://example.com",
 		Status:          repo_status_pending,
+		RequiresAuth:    false,
 	}
 
 	get_summaries_summary_4 = &corev1.PackageRepositorySummary{
@@ -2573,6 +2731,7 @@ var (
 			Reason:     corev1.PackageRepositoryStatus_STATUS_REASON_FAILED,
 			UserReason: "Failed: failed to fetch https://invalid.example.com/index.yaml : 404 Not Found",
 		},
+		RequiresAuth: false,
 	}
 
 	get_summaries_summary_5 = func(name types.NamespacedName) *corev1.PackageRepositorySummary {
@@ -2584,6 +2743,7 @@ var (
 			Type:            "helm",
 			Url:             podinfo_repo_url,
 			Status:          podinfo_repo_status_3,
+			RequiresAuth:    false,
 		}
 	}
 
@@ -2594,8 +2754,9 @@ var (
 			Description:     "",
 			NamespaceScoped: false,
 			Type:            "oci",
-			Url:             podinfo_oci_repo_url,
+			Url:             github_podinfo_oci_registry_url,
 			Status:          podinfo_repo_status_4,
+			RequiresAuth:    false,
 		}
 	}
 
@@ -3122,5 +3283,62 @@ var (
 
 	delete_repo_req_6 = &corev1.DeletePackageRepositoryRequest{
 		PackageRepoRef: repoRefInReq("my-podinfo-4", "TBD"),
+	}
+
+	expected_oci_stefanprodan_podinfo_available_summaries = func(name string) *corev1.GetAvailablePackageSummariesResponse {
+		return &corev1.GetAvailablePackageSummariesResponse{
+			AvailablePackageSummaries: []*corev1.AvailablePackageSummary{
+				{
+					Name:                "podinfo",
+					AvailablePackageRef: availableRef(name+"/podinfo", "default"),
+					LatestVersion: &corev1.PackageAppVersion{
+						PkgVersion: "6.1.6",
+					},
+					DisplayName:      "podinfo",
+					ShortDescription: "Podinfo Helm chart for Kubernetes",
+					Categories:       []string{""},
+				},
+			},
+		}
+	}
+
+	expected_detail_oci_stefanprodan_podinfo = func(name string) *corev1.GetAvailablePackageDetailResponse {
+		return &corev1.GetAvailablePackageDetailResponse{
+			AvailablePackageDetail: &corev1.AvailablePackageDetail{
+				AvailablePackageRef: availableRef(name+"/podinfo", "default"),
+				Name:                "podinfo",
+				Version:             pkgAppVersion("6.1.6"),
+				RepoUrl:             "oci://ghcr.io/stefanprodan/charts",
+				HomeUrl:             "https://github.com/stefanprodan/podinfo",
+				DisplayName:         "podinfo",
+				ShortDescription:    "Podinfo Helm chart for Kubernetes",
+				SourceUrls:          []string{"https://github.com/stefanprodan/podinfo"},
+				Maintainers: []*corev1.Maintainer{
+					{Name: "stefanprodan", Email: "stefanprodan@users.noreply.github.com"},
+				},
+				Readme:        "Podinfo is a tiny web application made with Go",
+				DefaultValues: "Default values for podinfo.\n\nreplicaCount: 1\n",
+			},
+		}
+	}
+
+	expected_detail_oci_stefanprodan_podinfo_2 = func(name string) *corev1.GetAvailablePackageDetailResponse {
+		return &corev1.GetAvailablePackageDetailResponse{
+			AvailablePackageDetail: &corev1.AvailablePackageDetail{
+				AvailablePackageRef: availableRef(name+"/podinfo", "default"),
+				Name:                "podinfo",
+				Version:             pkgAppVersion("6.1.5"),
+				RepoUrl:             "oci://ghcr.io/stefanprodan/charts",
+				HomeUrl:             "https://github.com/stefanprodan/podinfo",
+				DisplayName:         "podinfo",
+				ShortDescription:    "Podinfo Helm chart for Kubernetes",
+				SourceUrls:          []string{"https://github.com/stefanprodan/podinfo"},
+				Maintainers: []*corev1.Maintainer{
+					{Name: "stefanprodan", Email: "stefanprodan@users.noreply.github.com"},
+				},
+				Readme:        "Podinfo is a tiny web application made with Go",
+				DefaultValues: "Default values for podinfo.\n\nreplicaCount: 1\n",
+			},
+		}
 	}
 )

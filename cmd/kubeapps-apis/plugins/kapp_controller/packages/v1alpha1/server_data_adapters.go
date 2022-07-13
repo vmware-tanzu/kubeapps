@@ -6,6 +6,8 @@ package main
 import (
 	"context"
 	"fmt"
+	"strings"
+
 	kappctrlv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
 	packagingv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/packaging/v1alpha1"
 	datapackagingv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/apis/datapackaging/v1alpha1"
@@ -22,7 +24,6 @@ import (
 	k8scorev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	log "k8s.io/klog/v2"
-	"strings"
 )
 
 const (
@@ -326,6 +327,7 @@ func (s *Server) buildInstalledPackageDetail(pkgInstall *packagingv1alpha1.Packa
 func (s *Server) buildSecret(installedPackageName, values, targetNamespace string) (*k8scorev1.Secret, error) {
 	// Using this pattern as per:
 	// https://github.com/vmware-tanzu/carvel-kapp-controller/blob/v0.36.1/cli/pkg/kctrl/cmd/package/installed/created_resource_annotations.go#L19
+	// #nosec G101
 	kappctrlSecretName := "%s-%s-values"
 
 	return &k8scorev1.Secret{
@@ -435,6 +437,7 @@ func (s *Server) buildPackageRepositorySummary(pkgRepository *packagingv1alpha1.
 		},
 		Name:            pkgRepository.Name,
 		NamespaceScoped: s.globalPackagingNamespace != pkgRepository.Namespace,
+		RequiresAuth:    repositorySecretRef(pkgRepository) != nil,
 	}
 
 	// handle fetch-specific configuration
@@ -533,7 +536,7 @@ func (s *Server) buildPackageRepository(pkgRepository *packagingv1alpha1.Package
 	}
 
 	if customFetch != nil {
-		if customDetail, err := anypb.New(&kappcorev1.PackageRepositoryCustomDetail{
+		if customDetail, err := anypb.New(&kappcorev1.KappControllerPackageRepositoryCustomDetail{
 			Fetch: customFetch,
 		}); err != nil {
 			return nil, err
@@ -625,7 +628,7 @@ func (s *Server) buildPkgRepositoryCreate(request *corev1.AddPackageRepositoryRe
 	name := request.Name
 
 	// custom details
-	details := &kappcorev1.PackageRepositoryCustomDetail{}
+	details := &kappcorev1.KappControllerPackageRepositoryCustomDetail{}
 	if request.CustomDetail != nil {
 		if err := request.CustomDetail.UnmarshalTo(details); err != nil {
 			return nil, fmt.Errorf("custom details are invalid: %v", err)
@@ -664,7 +667,7 @@ func (s *Server) buildPkgRepositoryUpdate(request *corev1.UpdatePackageRepositor
 	}
 
 	// custom details
-	details := &kappcorev1.PackageRepositoryCustomDetail{}
+	details := &kappcorev1.KappControllerPackageRepositoryCustomDetail{}
 	if request.CustomDetail != nil {
 		if err := request.CustomDetail.UnmarshalTo(details); err != nil {
 			return nil, fmt.Errorf("custom details are invalid: %v", err)
@@ -677,7 +680,7 @@ func (s *Server) buildPkgRepositoryUpdate(request *corev1.UpdatePackageRepositor
 	return repository, nil
 }
 
-func (s *Server) buildPkgRepositorySpec(rptype string, interval string, url string, auth *corev1.PackageRepositoryAuth, pkgSecret *k8scorev1.Secret, details *kappcorev1.PackageRepositoryCustomDetail) packagingv1alpha1.PackageRepositorySpec {
+func (s *Server) buildPkgRepositorySpec(rptype string, interval string, url string, auth *corev1.PackageRepositoryAuth, pkgSecret *k8scorev1.Secret, details *kappcorev1.KappControllerPackageRepositoryCustomDetail) packagingv1alpha1.PackageRepositorySpec {
 	// spec stub
 	spec := packagingv1alpha1.PackageRepositorySpec{
 		Fetch: &packagingv1alpha1.PackageRepositoryFetch{},
@@ -854,7 +857,7 @@ func (s *Server) validatePackageRepositoryUpdate(ctx context.Context, cluster st
 }
 
 func (s *Server) validatePackageRepositoryDetails(rptype string, any *anypb.Any) error {
-	details := &kappcorev1.PackageRepositoryCustomDetail{}
+	details := &kappcorev1.KappControllerPackageRepositoryCustomDetail{}
 	if err := any.UnmarshalTo(details); err != nil {
 		return status.Errorf(codes.InvalidArgument, "custom details are invalid: %v", err)
 	}

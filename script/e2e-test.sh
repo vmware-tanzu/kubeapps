@@ -16,9 +16,7 @@ IMG_MODIFIER=${4:-""}
 TEST_TIMEOUT_MINUTES=${5:-"4"}
 DEX_IP=${6:-"172.18.0.2"}
 ADDITIONAL_CLUSTER_IP=${7:-"172.18.0.3"}
-DOCKER_USERNAME=${8:-""}
-DOCKER_PASSWORD=${9:-""}
-KAPP_CONTROLLER_VERSION=${10:-"v0.32.0"}
+KAPP_CONTROLLER_VERSION=${8:-"v0.32.0"}
 
 # TODO(andresmgot): While we work with beta releases, the Bitnami pipeline
 # removes the pre-release part of the tag
@@ -34,6 +32,9 @@ fi
 # shellcheck disable=SC1090
 . "${ROOT_DIR}/script/lib/libutil.sh"
 
+# Functions for local Docker registry mgmt
+. "${ROOT_DIR}/script/install-local-registry.sh"
+
 info "Root dir: ${ROOT_DIR}"
 info "Use multicluster+OIDC: ${USE_MULTICLUSTER_OIDC_ENV}"
 info "OLM version: ${OLM_VERSION}"
@@ -47,6 +48,28 @@ info "Kubectl Version: $(kubectl version -o json | jq -r '.clientVersion.gitVers
 echo ""
 
 # Auxiliar functions
+
+#
+# Install an authenticated Docker registry inside the cluster
+#
+setupLocalDockerRegistry() {
+    info "Installing local Docker registry with authentication"
+    installLocalRegistry $ROOT_DIR
+
+    info "Pushing test container to local Docker registry"
+    pushContainerToLocalRegistry
+}
+
+#
+# Push a chart that uses container image from the local registry
+#
+pushLocalChart() {
+    info "Packaging local test chart"
+    helm package $ROOT_DIR/integration/charts/simplechart
+
+    info "Pushing local test chart to ChartMuseum"
+    pushChartToChartMuseum kubeapps admin password simplechart "0.1.0"
+}
 
 ########################
 # Check if the pod that populates de OperatorHub catalog is running
@@ -305,6 +328,10 @@ installChartmuseum admin password
 pushChart apache 8.6.2 admin password
 pushChart apache 8.6.3 admin password
 
+# Setting up local Docker registry
+setupLocalDockerRegistry
+pushLocalChart
+
 # Ensure that we are testing the correct image
 info ""
 k8s_ensure_image kubeapps kubeapps-ci-internal-apprepository-controller "$DEV_TAG"
@@ -349,9 +376,9 @@ done
 
 # Browser tests
 cd "${ROOT_DIR}/integration"
-kubectl apply -f manifests/executor.yaml
-k8s_wait_for_deployment default integration
-pod=$(kubectl get po -l run=integration -o jsonpath="{.items[0].metadata.name}")
+kubectl apply -f manifests/e2e-runner.yaml
+k8s_wait_for_deployment default e2e-runner
+pod=$(kubectl get po -l run=e2e-runner -o jsonpath="{.items[0].metadata.name}")
 ## Copy config and latest tests
 for f in *.js; do
   kubectl cp "./${f}" "${pod}:/app/"
@@ -367,7 +394,7 @@ fi
 testsArgs="$(printf "%s " "${testsToRun[@]}")"
 
 kubectl cp ./tests "${pod}:/app/"
-info "Copied tests to integration pod ${pod}"
+info "Copied tests to e2e-runner pod ${pod}"
 ## Create admin user
 kubectl create serviceaccount kubeapps-operator -n kubeapps
 kubectl create clusterrolebinding kubeapps-operator-admin --clusterrole=cluster-admin --serviceaccount kubeapps:kubeapps-operator
@@ -409,7 +436,7 @@ view_token="$(kubectl get -n kubeapps secret "$(kubectl get -n kubeapps servicea
 edit_token="$(kubectl get -n kubeapps secret "$(kubectl get -n kubeapps serviceaccount kubeapps-edit -o jsonpath='{.secrets[].name}')" -o go-template='{{.data.token | base64decode}}' && echo)"
 
 info "Running main Integration tests without k8s API access..."
-if ! kubectl exec -it "$pod" -- /bin/sh -c "CI_TIMEOUT_MINUTES=40 DOCKER_USERNAME=${DOCKER_USERNAME} DOCKER_PASSWORD=${DOCKER_PASSWORD} TEST_TIMEOUT_MINUTES=${TEST_TIMEOUT_MINUTES} INTEGRATION_ENTRYPOINT=http://kubeapps-ci.kubeapps USE_MULTICLUSTER_OIDC_ENV=${USE_MULTICLUSTER_OIDC_ENV} ADMIN_TOKEN=${admin_token} VIEW_TOKEN=${view_token} EDIT_TOKEN=${edit_token} yarn test ${testsArgs}"; then
+if ! kubectl exec -it "$pod" -- /bin/sh -c "CI_TIMEOUT_MINUTES=40 DOCKER_USERNAME=${DOCKER_USERNAME} DOCKER_PASSWORD=${DOCKER_PASSWORD} DOCKER_REGISTRY_URL=${DOCKER_REGISTRY_URL} TEST_TIMEOUT_MINUTES=${TEST_TIMEOUT_MINUTES} INTEGRATION_ENTRYPOINT=http://kubeapps-ci.kubeapps USE_MULTICLUSTER_OIDC_ENV=${USE_MULTICLUSTER_OIDC_ENV} ADMIN_TOKEN=${admin_token} VIEW_TOKEN=${view_token} EDIT_TOKEN=${edit_token} yarn test ${testsArgs}"; then
   ## Integration tests failed, get report screenshot
   warn "PODS status on failure"
   kubectl cp "${pod}:/app/reports" ./reports

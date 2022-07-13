@@ -204,7 +204,7 @@ frontend:
   image:
     registry: docker.io
     repository: bitnami/nginx
-    tag: 1.21.6-debian-11-r3
+    tag: 1.21.6-debian-11-r10
     ## Specify a imagePullPolicy
     ## Defaults to 'Always' if image tag is 'latest', else set to 'IfNotPresent'
     ## ref: https://kubernetes.io/docs/user-guide/images/#pre-pulling-images
@@ -1423,7 +1423,7 @@ authProxy:
   image:
     registry: docker.io
     repository: bitnami/oauth2-proxy
-    tag: 7.3.0-debian-11-r2
+    tag: 7.3.0-debian-11-r10
     ## Specify a imagePullPolicy
     ## Defaults to 'Always' if image tag is 'latest', else set to 'IfNotPresent'
     ## ref: https://kubernetes.io/docs/user-guide/images/#pre-pulling-images
@@ -1581,6 +1581,14 @@ pinnipedProxy:
   ## @param pinnipedProxy.defaultPinnipedAPISuffix Specify the (default) API suffix
   ##
   defaultPinnipedAPISuffix: pinniped.dev
+  ## @param pinnipedProxy.TLSSecret Specify an optional TLS secret with which to proxy requests
+  ##
+  TLSSecret: ""
+  ## @param pinnipedProxy.CACert Specify the TLS CA cert config map which
+  ## clients of pinniped proxy should use with tls requests. This config map
+  ## must contain a ca.crt key with the CA cert content as the value.
+  ##
+  CACert: ""
   ## @param pinnipedProxy.lifecycleHooks for the Pinniped Proxy container(s) to automate configuration before or after startup
   ##
   lifecycleHooks: {}
@@ -1709,7 +1717,7 @@ rbac:
 testImage:
   registry: docker.io
   repository: bitnami/nginx
-  tag: 1.21.6-debian-11-r3
+  tag: 1.21.6-debian-11-r10
   ## Specify a imagePullPolicy
   ## Defaults to 'Always' if image tag is 'latest', else set to 'IfNotPresent'
   ## ref: https://kubernetes.io/docs/user-guide/images/#pre-pulling-images

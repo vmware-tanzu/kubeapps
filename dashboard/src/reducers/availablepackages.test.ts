@@ -273,6 +273,50 @@ describe("packageReducer", () => {
     expect(state2.items.length).toBe(2);
   });
 
+  it("two receiveAvailablePackageSummaries should add categories (no dups)", () => {
+    const state1 = packageReducer(
+      {
+        ...initialState,
+        isFetching: true,
+      },
+      {
+        type: getType(actions.availablepackages.receiveAvailablePackageSummaries) as any,
+        payload: {
+          response: {
+            availablePackageSummaries: [availablePackageSummary1],
+            nextPageToken,
+            categories: ["foo", "bar"],
+          },
+        } as IReceivePackagesActionPayload,
+      },
+    );
+    const state2 = packageReducer(
+      {
+        ...state1,
+        isFetching: true,
+      },
+      {
+        type: getType(actions.availablepackages.receiveAvailablePackageSummaries) as any,
+        payload: {
+          response: {
+            availablePackageSummaries: [availablePackageSummary1],
+            nextPageToken: "",
+            categories: ["foo"],
+          },
+        } as IReceivePackagesActionPayload,
+      },
+    );
+    expect(state2).toEqual({
+      ...initialState,
+      isFetching: false,
+      hasFinishedFetching: true,
+      categories: ["foo", "bar"],
+      items: [availablePackageSummary1],
+      nextPageToken: "",
+    });
+    expect(state2.categories.length).toBe(2);
+  });
+
   it("requestAvailablePackageSummaries and receiveAvailablePackageSummaries with multiple pages", () => {
     const stateReq1 = packageReducer(initialState, {
       type: getType(actions.availablepackages.requestAvailablePackageSummaries) as any,
