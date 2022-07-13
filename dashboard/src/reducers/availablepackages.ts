@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { JSONSchemaType } from "ajv";
-import { uniqBy } from "lodash";
+import { uniq, uniqBy } from "lodash";
 import { IPackageState } from "shared/types";
 import { getType } from "typesafe-actions";
 import actions from "../actions";
@@ -84,7 +84,7 @@ const packageReducer = (
         isFetching: false,
         hasFinishedFetching: isLastPage,
         nextPageToken: action.payload.response.nextPageToken,
-        categories: action.payload.response.categories,
+        categories: uniq([...state.categories, ...action.payload.response.categories]),
         items: uniqBy(
           [...state.items, ...action.payload.response.availablePackageSummaries],
           "availablePackageRef.identifier",
