@@ -27,7 +27,7 @@ import { MemoryRouter, Route } from "react-router-dom";
 import { IConfigState } from "reducers/config";
 import { InstalledPackage } from "shared/InstalledPackage";
 import PackagesService from "shared/PackagesService";
-import { defaultStore, getStore, mountWrapper } from "shared/specs/mountWrapper";
+import { getStore, mountWrapper } from "shared/specs/mountWrapper";
 import { DeleteError, FetchError, IInstalledPackageState } from "shared/types";
 import { PluginNames } from "shared/utils";
 import { getType } from "typesafe-actions";
@@ -154,9 +154,21 @@ describe("AppView", () => {
   it("renders a loading wrapper", async () => {
     let wrapper: any;
     await act(async () => {
-      wrapper = mountWrapper(defaultStore, <AppView />);
+      wrapper = mountWrapper(
+        getStore({
+          apps: {
+            selected: undefined,
+            isFetching: true,
+          } as IInstalledPackageState,
+        }),
+        <MemoryRouter initialEntries={[routePathParam]}>
+          <Route path={routePath}>
+            <AppView />
+          </Route>
+        </MemoryRouter>,
+      );
     });
-    expect(wrapper.find(LoadingWrapper)).toExist();
+    expect(wrapper.find(LoadingWrapper).prop("loaded")).toBe(false);
   });
 
   it("renders a fetch error only", async () => {
