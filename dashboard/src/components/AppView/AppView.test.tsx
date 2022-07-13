@@ -171,6 +171,29 @@ describe("AppView", () => {
     expect(wrapper.find(LoadingWrapper).prop("loaded")).toBe(false);
   });
 
+  it("does not render an loading wrapper if it isn't fetching", async () => {
+    let wrapper: any;
+    await act(async () => {
+      wrapper = mountWrapper(
+        getStore({
+          apps: {
+            selected: undefined,
+            isFetching: false,
+            error: new Error("foo not found"),
+          } as IInstalledPackageState,
+        }),
+        <MemoryRouter initialEntries={[routePathParam]}>
+          <Route path={routePath}>
+            <AppView />
+          </Route>
+        </MemoryRouter>,
+      );
+    });
+    expect(wrapper.find(LoadingWrapper).prop("loaded")).toBe(true);
+    expect(wrapper.find(Alert).html()).toContain("foo not found");
+    expect(wrapper.find(PageHeader)).not.toExist();
+  });
+
   it("renders a fetch error only", async () => {
     let wrapper: any;
 
