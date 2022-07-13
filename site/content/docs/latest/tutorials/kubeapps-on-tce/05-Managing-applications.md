@@ -4,7 +4,7 @@ You can explore the excellent existing documentation for operating Kubeapps and 
 
 ## Using Kubeapps
 
-- [Managing applications in Kubeapps](/site/content/docs/latest/howto/dashboard.md#work-with-charts)
-- [Listing applications running in your cluster](/site/content/docs/latest/howto/dashboard.md#list-all-the-applications-running-in-your-cluster)
-- [Remove existing applications](/site/content/docs/latest/howto/dashboard.md#remove-existing-application-deployments)
-- [Use private repositories with Kubeapps](/site/content/docs/latest/howto/private-app-repository.md)
+- [Managing applications in Kubeapps](https://github.com/vmware-tanzu/kubeapps/blob/main/site/content/docs/latest/howto/dashboard.md#work-with-charts)
+- [Listing applications running in your cluster](https://github.com/vmware-tanzu/kubeapps/blob/main/site/content/docs/latest/howto/dashboard.md#list-all-the-applications-running-in-your-cluster)
+- [Remove existing applications](https://github.com/vmware-tanzu/kubeapps/blob/main/site/content/docs/latest/howto/dashboard.md#remove-existing-application-deployments)
+- [Use private repositories with Kubeapps](https://github.com/vmware-tanzu/kubeapps/blob/main/site/content/docs/latest/howto/private-app-repository.md#using-a-private-repository-with-kubeapps)
