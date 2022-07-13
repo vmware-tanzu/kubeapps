@@ -30,14 +30,14 @@ import {
   FetchWarning,
   IStoreState,
 } from "shared/types";
-import { getPluginsSupportingRollback } from "shared/utils";
+import { getPluginsSupportingRollback, getAppStatusLabel } from "shared/utils";
 import ApplicationStatus from "../../containers/ApplicationStatusContainer";
 import placeholder from "../../placeholder.png";
 import * as url from "../../shared/url";
 import LoadingWrapper from "../LoadingWrapper/LoadingWrapper";
 import AccessURLTable from "./AccessURLTable/AccessURLTable";
-import StartButton from "./AppControls/StartButton/StartButton";
 import DeleteButton from "./AppControls/DeleteButton/DeleteButton";
+import StartButton from "./AppControls/StartButton/StartButton";
 import RollbackButton from "./AppControls/RollbackButton/RollbackButton";
 import UpgradeButton from "./AppControls/UpgradeButton/UpgradeButton";
 import AppNotes from "./AppNotes/AppNotes";
@@ -101,7 +101,6 @@ function getButtons(app: CustomInstalledPackageDetail, error: any, revision: num
 
   const buttons = [];
 
-
   // Upgrade is a core operation, it will always be available
   buttons.push(
     <UpgradeButton
@@ -111,7 +110,6 @@ function getButtons(app: CustomInstalledPackageDetail, error: any, revision: num
       disabled={error !== undefined}
     />,
   );
- 
 
   // Rollback is a helm-only operation, it will only be available for helm-plugin packages
   if (getPluginsSupportingRollback().includes(app.installedPackageRef.plugin.name)) {
@@ -126,15 +124,6 @@ function getButtons(app: CustomInstalledPackageDetail, error: any, revision: num
     );
   }
 
-  buttons.push(
-    <StartButton
-      key="start-button"
-      installedPackageRef={app.installedPackageRef}
-      releaseStatus={app?.status}
-      disabled={error !== undefined}
-    />,
-  );
-
   // Delete is a core operation, it will always be available
   buttons.push(
     <DeleteButton
@@ -143,6 +132,18 @@ function getButtons(app: CustomInstalledPackageDetail, error: any, revision: num
       releaseStatus={app?.status}
     />,
   );
+
+  // Start should only be available for a stopped application.
+  if (getAppStatusLabel(app.status?.reason).includes("stopped")) {
+    buttons.push(
+      <StartButton
+        key="start-button"
+        installedPackageRef={app.installedPackageRef}
+        releaseStatus={app?.status}
+        disabled={error !== undefined}
+      />,
+    );
+  }
 
   return buttons;
 }

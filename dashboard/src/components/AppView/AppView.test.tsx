@@ -32,6 +32,7 @@ import { PluginNames } from "shared/utils";
 import { getType } from "typesafe-actions";
 import AccessURLTable from "./AccessURLTable/AccessURLTable";
 import DeleteButton from "./AppControls/DeleteButton/DeleteButton";
+import StartButton from "./AppControls/StartButton/StartButton";
 import RollbackButton from "./AppControls/RollbackButton";
 import UpgradeButton from "./AppControls/UpgradeButton/UpgradeButton";
 import AppNotes from "./AppNotes/AppNotes";
@@ -272,6 +273,7 @@ describe("AppView", () => {
     expect(wrapper.find(UpgradeButton)).toExist();
     expect(wrapper.find(RollbackButton)).toExist();
     expect(wrapper.find(DeleteButton)).toExist();
+    expect(wrapper.find(StartButton)).toExist();
   });
 
   it("does not render a RollBack button if the installedPackage is not from PACKAGES_HELM", async () => {
@@ -292,6 +294,7 @@ describe("AppView", () => {
     expect(wrapper.find(UpgradeButton)).toExist();
     expect(wrapper.find(RollbackButton)).not.toExist();
     expect(wrapper.find(DeleteButton)).toExist();
+    expect(wrapper.find(StartButton)).toExist();
   });
 
   describe("State initialization", () => {

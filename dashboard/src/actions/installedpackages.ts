@@ -53,9 +53,11 @@ export const requestInstallPackage = createAction("REQUEST_INSTALL_PACKAGE");
 
 export const receiveInstallPackage = createAction("RECEIVE_INSTALL_PACKAGE_CONFIRMATION");
 
-export const requestStartInstalledPackage = createAction("REQUEST_START_INSTALLED_PACKAGE")
+export const requestStartInstalledPackage = createAction("REQUEST_START_INSTALLED_PACKAGE");
 
-export const receiveStartInstalledPackage = createAction("REQUEST_START_INSTALLED_PACKAGE_CONFIRMATION")
+export const receiveStartInstalledPackage = createAction(
+  "RECEIVE_START_INSTALLED_PACKAGE_CONFIRMATION",
+);
 
 export const requestUpdateInstalledPackage = createAction("REQUEST_UPDATE_INSTALLED_PACKAGE");
 
@@ -79,8 +81,9 @@ export const receiveInstalledPackageStatus = createAction(
 );
 
 export const errorInstalledPackage = createAction("ERROR_INSTALLED_PACKAGE", resolve => {
-  return (err: FetchError | CreateError | UpgradeError | RollbackError | DeleteError | StartError) =>
-    resolve(err);
+  return (
+    err: FetchError | CreateError | UpgradeError | RollbackError | DeleteError | StartError,
+  ) => resolve(err);
 });
 
 export const clearErrorInstalledPackage = createAction("CLEAR_ERROR_INSTALLED_PACKAGE");

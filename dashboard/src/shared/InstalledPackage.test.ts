@@ -6,6 +6,7 @@ import {
   Context,
   CreateInstalledPackageResponse,
   DeleteInstalledPackageResponse,
+  StartInstalledPackageResponse,
   GetInstalledPackageResourceRefsResponse,
   InstalledPackageReference,
   UpdateInstalledPackageResponse,
@@ -138,6 +139,33 @@ describe("InstalledPackage", () => {
         const res = await InstalledPackage.DeleteInstalledPackage(t.args.installedPackageReference);
         expect(res).toStrictEqual({} as DeleteInstalledPackageResponse);
         expect(mockDeleteInstalledPackage).toHaveBeenCalledWith(...Object.values(t.args));
+      });
+    });
+  });
+
+  describe("startInstalledPackage", () => {
+    [
+      {
+        description: "should call to startInstalledPackage",
+        args: {
+          installedPackageReference: {
+            context: { cluster: "default-c", namespace: "default-ns" },
+            identifier: "foo",
+            plugin: { name: "my.plugin", version: "0.0.1" } as Plugin,
+          } as InstalledPackageReference,
+        },
+      },
+    ].forEach(t => {
+      it(t.description, async () => {
+        const mockStartInstalledPackage = jest
+          .fn()
+          .mockImplementation(() => Promise.resolve({} as StartInstalledPackageResponse));
+        jest
+          .spyOn(InstalledPackage, "StartInstalledPackage")
+          .mockImplementation(mockStartInstalledPackage);
+        const res = await InstalledPackage.StartInstalledPackage(t.args.installedPackageReference);
+        expect(res).toStrictEqual({} as StartInstalledPackageResponse);
+        expect(mockStartInstalledPackage).toHaveBeenCalledWith(...Object.values(t.args));
       });
     });
   });

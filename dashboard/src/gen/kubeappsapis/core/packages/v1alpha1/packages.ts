@@ -1738,6 +1738,71 @@ export const DeleteInstalledPackageRequest = {
   },
 };
 
+function createBaseStartInstalledPackageRequest(): StartInstalledPackageRequest {
+  return { installedPackageRef: undefined };
+}
+
+export const StartInstalledPackageRequest = {
+  encode(
+    message: StartInstalledPackageRequest,
+    writer: _m0.Writer = _m0.Writer.create(),
+  ): _m0.Writer {
+    if (message.installedPackageRef !== undefined) {
+      InstalledPackageReference.encode(
+        message.installedPackageRef,
+        writer.uint32(10).fork(),
+      ).ldelim();
+    }
+    return writer;
+  },
+
+  decode(input: _m0.Reader | Uint8Array, length?: number): StartInstalledPackageRequest {
+    const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseStartInstalledPackageRequest();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1:
+          message.installedPackageRef = InstalledPackageReference.decode(reader, reader.uint32());
+          break;
+        default:
+          reader.skipType(tag & 7);
+          break;
+      }
+    }
+    return message;
+  },
+
+  fromJSON(object: any): StartInstalledPackageRequest {
+    return {
+      installedPackageRef: isSet(object.installedPackageRef)
+        ? InstalledPackageReference.fromJSON(object.installedPackageRef)
+        : undefined,
+    };
+  },
+
+  toJSON(message: StartInstalledPackageRequest): unknown {
+    const obj: any = {};
+    message.installedPackageRef !== undefined &&
+      (obj.installedPackageRef = message.installedPackageRef
+        ? InstalledPackageReference.toJSON(message.installedPackageRef)
+        : undefined);
+    return obj;
+  },
+
+  fromPartial<I extends Exact<DeepPartial<StartInstalledPackageRequest>, I>>(
+    object: I,
+  ): StartInstalledPackageRequest {
+    const message = createBaseStartInstalledPackageRequest();
+    message.installedPackageRef =
+      object.installedPackageRef !== undefined && object.installedPackageRef !== null
+        ? InstalledPackageReference.fromPartial(object.installedPackageRef)
+        : undefined;
+    return message;
+  },
+};
+
 function createBaseGetInstalledPackageResourceRefsRequest(): GetInstalledPackageResourceRefsRequest {
   return { installedPackageRef: undefined };
 }
@@ -4039,6 +4104,10 @@ export interface PackagesService {
     request: DeepPartial<DeleteInstalledPackageRequest>,
     metadata?: grpc.Metadata,
   ): Promise<DeleteInstalledPackageResponse>;
+  StartInstalledPackage(
+    request: DeepPartial<StartInstalledPackageRequest>,
+    metadata?: grpc.Metadata,
+  ): Promise<StartInstalledPackageResponse>;
   GetInstalledPackageResourceRefs(
     request: DeepPartial<GetInstalledPackageResourceRefsRequest>,
     metadata?: grpc.Metadata,
@@ -4057,8 +4126,8 @@ export class PackagesServiceClientImpl implements PackagesService {
     this.GetInstalledPackageDetail = this.GetInstalledPackageDetail.bind(this);
     this.CreateInstalledPackage = this.CreateInstalledPackage.bind(this);
     this.UpdateInstalledPackage = this.UpdateInstalledPackage.bind(this);
-    this.StartInstalledPackage = this.StartInstalledPackage.bind(this);
     this.DeleteInstalledPackage = this.DeleteInstalledPackage.bind(this);
+    this.StartInstalledPackage = this.StartInstalledPackage.bind(this);
     this.GetInstalledPackageResourceRefs = this.GetInstalledPackageResourceRefs.bind(this);
   }
 
