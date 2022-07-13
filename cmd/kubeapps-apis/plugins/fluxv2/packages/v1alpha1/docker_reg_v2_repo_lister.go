@@ -13,6 +13,8 @@ import (
 	"helm.sh/helm/v3/pkg/registry"
 
 	// ORAS => OCI Registry AS Storage
+	// project home page: https://oras.land/
+	// releases: https://github.com/oras-project/oras-go/releases
 	orasregistryv2 "oras.land/oras-go/v2/registry"
 	orasregistryremotev2 "oras.land/oras-go/v2/registry/remote"
 	orasregistryauthv2 "oras.land/oras-go/v2/registry/remote/auth"
@@ -58,35 +60,37 @@ func (l *dockerRegistryApiV2RepositoryLister) ListRepositoryNames(ociRegistry *O
 	if err != nil {
 		return nil, err
 	} else {
-		// this is the way to stop the loop in
-		// https://github.com/oras-project/oras-go/blob/14422086e41897a44cb706726e687d39dc728805/registry/remote/registry.go#L112
+		// this is where we will start, e.g. "stefanprodan/charts"
+		startAt := strings.Trim(ociRegistry.url.Path, "/")
+
+		repositoryList := []string{}
+
 		done := errors.New("(done) backstop")
 
 		fn := func(repos []string) error {
 			log.Infof("orasRegistry.Repositories fn: %s", repos)
-			return done
+			for _, r := range repos {
+				if strings.HasPrefix(r, startAt+"/") {
+					repositoryList = append(repositoryList, r)
+				} else {
+					// this is the way to stop the loop in
+					// https://github.com/oras-project/oras-go/blob/14422086e41897a44cb706726e687d39dc728805/registry/remote/registry.go#L112
+					return done
+				}
+			}
+			return nil
 		}
 
-		// see https://github.com/vmware-tanzu/kubeapps/pull/4932#issuecomment-1164004999
-		// and https://github.com/oras-project/oras-go/issues/196
-		// TODO (gfichtenholt) need to append
-		// "?last=" + orasRegistry.Reference.Repository
-		// to req.Query so we don't start at the beggining of the alphabet
-
 		// impl refs:
-		// 1. https://github.com/oras-project/oras-go/blob/14422086e41897a44cb706726e687d39dc728805/registry/remote/registry.go#L105
+		// 1. https://github.com/oras-project/oras-go/blob/4660638096b4b4b5c368ce98cd7040485b5ad776/registry/remote/registry.go#L105
 		// 2. https://github.com/oras-project/oras-go/blob/14422086e41897a44cb706726e687d39dc728805/registry/remote/url.go#L43
-		err = orasRegistry.Repositories(context.Background(), fn)
+		err = orasRegistry.Repositories(context.Background(), startAt, fn)
 		log.Infof("ORAS Repositories returned: %v", err)
 		if err != nil && err != done {
 			return nil, err
 		}
-		//repositoryList := []string{}
-		//return repositoryList, nil
+		return repositoryList, nil
 	}
-
-	// OLD
-	return []string{"stefanprodan/charts/podinfo"}, nil
 }
 
 func newRemoteOrasRegistry(ociRegistry *OCIRegistry) (*orasregistryremotev2.Registry, error) {

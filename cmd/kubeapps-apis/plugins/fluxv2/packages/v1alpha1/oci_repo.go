@@ -179,7 +179,7 @@ func (r *OCIRegistry) listRepositoryNames() ([]string, error) {
 			r.repositoryLister = lister
 			break
 		} else {
-			log.Infof("Lister [%v] not applicable for registry for URL: [%s] [%v]", reflect.TypeOf(lister), &r.url, err)
+			log.Infof("Lister [%v] not applicable for registry for URL: [%s] [%v]", reflect.TypeOf(lister), r.url.String(), err)
 		}
 	}
 
