@@ -297,14 +297,16 @@ export default function AppView() {
       className="margin-t-xl"
     >
       {!app || !app?.installedPackageRef ? (
-        <Alert theme="danger">
-          An error occurred while fetching the application: {error?.message}.{" "}
-          {!isFetching && (
+        error ? (
+          <Alert theme="danger">
+            An error occurred while fetching the application: {error?.message}.{" "}
             <CdsButton size="sm" action="flat" onClick={goToAppsView} type="button">
               Go Back{" "}
             </CdsButton>
-          )}
-        </Alert>
+          </Alert>
+        ) : (
+          <></>
+        )
       ) : (
         <section>
           <PageHeader
