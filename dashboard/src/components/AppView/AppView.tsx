@@ -9,6 +9,7 @@ import Alert from "components/js/Alert";
 import Column from "components/js/Column";
 import Row from "components/js/Row";
 import PageHeader from "components/PageHeader/PageHeader";
+import { push } from "connected-react-router";
 import {
   InstalledPackageReference,
   ResourceRef,
@@ -156,7 +157,7 @@ export default function AppView() {
     secrets: [],
   } as IAppViewResourceRefs);
   const {
-    apps: { error, selected: app, selectedDetails: appDetails },
+    apps: { error, isFetching, selected: app, selectedDetails: appDetails },
     config: { customAppViews },
   } = useSelector((state: IStoreState) => state);
 
@@ -256,6 +257,10 @@ export default function AppView() {
     dispatch(actions.installedpackages.getInstalledPackage(installedPkgRef));
   };
 
+  const goToAppsView = () => {
+    dispatch(push(url.app.apps.list(cluster, namespace)));
+  };
+
   if (fetchError) {
     if (fetchError.constructor === FetchError) {
       return (
@@ -286,9 +291,20 @@ export default function AppView() {
     return <CustomAppView resourceRefs={appViewResourceRefs} app={app!} appDetails={appDetails!} />;
   }
   return (
-    <LoadingWrapper loaded={!!app} loadingText="Retrieving application..." className="margin-t-xl">
+    <LoadingWrapper
+      loaded={!isFetching}
+      loadingText="Retrieving application..."
+      className="margin-t-xl"
+    >
       {!app || !app?.installedPackageRef ? (
-        <Alert theme="danger">There is a problem with this package</Alert>
+        <Alert theme="danger">
+          An error occurred while fetching the application: {error?.message}.{" "}
+          {!isFetching && (
+            <CdsButton size="sm" action="flat" onClick={goToAppsView} type="button">
+              Go Back{" "}
+            </CdsButton>
+          )}
+        </Alert>
       ) : (
         <section>
           <PageHeader
