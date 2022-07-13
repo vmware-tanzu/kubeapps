@@ -30,7 +30,7 @@ import {
   FetchWarning,
   IStoreState,
 } from "shared/types";
-import { getPluginsSupportingRollback, getAppStatusLabel } from "shared/utils";
+import { getPluginsSupportingRollback } from "shared/utils";
 import ApplicationStatus from "../../containers/ApplicationStatusContainer";
 import placeholder from "../../placeholder.png";
 import * as url from "../../shared/url";
@@ -101,6 +101,16 @@ function getButtons(app: CustomInstalledPackageDetail, error: any, revision: num
 
   const buttons = [];
 
+  // Start is a core operation, it will always be available.
+  buttons.push(
+    <StartButton
+      key="start-button"
+      installedPackageRef={app.installedPackageRef}
+      releaseStatus={app?.status}
+      disabled={error !== undefined}
+    />,
+  );
+
   // Upgrade is a core operation, it will always be available
   buttons.push(
     <UpgradeButton
@@ -132,18 +142,6 @@ function getButtons(app: CustomInstalledPackageDetail, error: any, revision: num
       releaseStatus={app?.status}
     />,
   );
-
-  // Start should only be available for a stopped application.
-  if (getAppStatusLabel(app.status?.reason).includes("stopped")) {
-    buttons.push(
-      <StartButton
-        key="start-button"
-        installedPackageRef={app.installedPackageRef}
-        releaseStatus={app?.status}
-        disabled={error !== undefined}
-      />,
-    );
-  }
 
   return buttons;
 }
