@@ -618,9 +618,9 @@ jobs:
       <<: *common_envars
     docker:
       - image: cimg/go:<< pipeline.parameters.GOLANG_VERSION >>
-      auth:
-        username: $DOCKER_USERNAME
-        password: $DOCKER_PASSWORD
+        auth:
+          username: $DOCKER_USERNAME
+          password: $DOCKER_PASSWORD
     steps:
       - checkout
       - <<: *exports
@@ -645,9 +645,9 @@ jobs:
       NODE_OPTIONS: "--max-old-space-size=512"
     docker:
       - image: cimg/node:<< pipeline.parameters.NODE_VERSION >>
-      auth:
-        username: $DOCKER_USERNAME
-        password: $DOCKER_PASSWORD
+        auth:
+          username: $DOCKER_USERNAME
+          password: $DOCKER_PASSWORD
     steps:
       - checkout
       - run:
@@ -665,9 +665,9 @@ jobs:
   test_pinniped_proxy:
     docker:
       - image: cimg/rust:<< pipeline.parameters.RUST_VERSION >>
-      auth:
-        username: $DOCKER_USERNAME
-        password: $DOCKER_PASSWORD
+        auth:
+          username: $DOCKER_USERNAME
+          password: $DOCKER_PASSWORD
     steps:
       - checkout
       - run:
@@ -679,9 +679,9 @@ jobs:
       <<: *common_envars
     docker:
       - image: cimg/go:<< pipeline.parameters.GOLANG_VERSION >>
-      auth:
-        username: $DOCKER_USERNAME
-        password: $DOCKER_PASSWORD
+        auth:
+          username: $DOCKER_USERNAME
+          password: $DOCKER_PASSWORD
     steps:
       - <<: *exports
       - checkout
@@ -693,9 +693,9 @@ jobs:
   build_go_images:
     docker:
       - image: cimg/go:<< pipeline.parameters.GOLANG_VERSION >>
-      auth:
-        username: $DOCKER_USERNAME
-        password: $DOCKER_PASSWORD
+        auth:
+          username: $DOCKER_USERNAME
+          password: $DOCKER_PASSWORD
     working_directory: /home/circleci/go/src/github.com/vmware-tanzu/kubeapps
     environment:
       GOPATH: ${HOME}/.go_workspace
@@ -704,9 +704,9 @@ jobs:
   build_dashboard:
     docker:
       - image: cimg/go:<< pipeline.parameters.GOLANG_VERSION >>
-      auth:
-        username: $DOCKER_USERNAME
-        password: $DOCKER_PASSWORD
+        auth:
+          username: $DOCKER_USERNAME
+          password: $DOCKER_PASSWORD
     environment:
       IMAGES: "dashboard"
     <<: *build_images
@@ -714,9 +714,9 @@ jobs:
     docker:
       # We're building the image in a docker container anyway so just re-use the golang image already in use.
       - image: cimg/go:<< pipeline.parameters.GOLANG_VERSION >>
-      auth:
-        username: $DOCKER_USERNAME
-        password: $DOCKER_PASSWORD
+        auth:
+          username: $DOCKER_USERNAME
+          password: $DOCKER_PASSWORD
     environment:
       IMAGES: "pinniped-proxy"
     <<: *build_images
@@ -725,9 +725,9 @@ jobs:
       <<: *common_envars
     docker:
       - image: cimg/go:<< pipeline.parameters.GOLANG_VERSION >>
-      auth:
-        username: $DOCKER_USERNAME
-        password: $DOCKER_PASSWORD
+        auth:
+          username: $DOCKER_USERNAME
+          password: $DOCKER_PASSWORD
     steps:
       - checkout
       - <<: *install_github
@@ -782,9 +782,9 @@ jobs:
       <<: *common_envars
     docker:
       - image: cimg/node:<< pipeline.parameters.NODE_VERSION >>
-      auth:
-        username: $DOCKER_USERNAME
-        password: $DOCKER_PASSWORD
+        auth:
+          username: $DOCKER_USERNAME
+          password: $DOCKER_PASSWORD
     steps:
       - checkout
       - <<: *install_github
@@ -817,9 +817,9 @@ jobs:
       <<: *common_envars
     docker:
       - image: cimg/node:<< pipeline.parameters.NODE_VERSION >>
-      auth:
-        username: $DOCKER_USERNAME
-        password: $DOCKER_PASSWORD
+        auth:
+          username: $DOCKER_USERNAME
+          password: $DOCKER_PASSWORD
     steps:
       - checkout
       - <<: *install_github
@@ -853,9 +853,9 @@ jobs:
   push_images:
     docker:
       - image: cimg/go:<< pipeline.parameters.GOLANG_VERSION >>
-      auth:
-        username: $DOCKER_USERNAME
-        password: $DOCKER_PASSWORD
+        auth:
+          username: $DOCKER_USERNAME
+          password: $DOCKER_PASSWORD
     steps:
       - setup_remote_docker:
           version: << pipeline.parameters.DOCKER_VERSION >>
