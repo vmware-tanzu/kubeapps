@@ -91,7 +91,7 @@ require (
 	k8s.io/client-go v0.23.5
 	k8s.io/klog/v2 v2.70.1
 	k8s.io/kubectl v0.23.5
-	k8s.io/kubernetes v1.22.10
+	k8s.io/kubernetes v1.24.3
 	k8s.io/utils v0.0.0-20220210201930-3a6ce19ff2f9
 	oras.land/oras-go v1.2.0
 	oras.land/oras-go/v2 v2.0.0-rc.1
@@ -100,6 +100,7 @@ require (
 )
 
 require (
+	github.com/google/gnostic v0.5.7-v3refs // indirect
 	github.com/opencontainers/distribution-spec/specs-go v0.0.0-20220620172159-4ab4752c3b86 // indirect
 	github.com/oras-project/artifacts-spec v1.0.0-rc.1.0.20220707054150-eddd1d8790c9 // indirect
 )
@@ -232,7 +233,7 @@ require (
 	gopkg.in/ini.v1 v1.66.6 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	k8s.io/component-base v0.23.5 // indirect
-	k8s.io/kube-openapi v0.0.0-20220124234850-424119656bbf // indirect
+	k8s.io/kube-openapi v0.0.0-20220328201542-3ee0da9b0b42 // indirect
 	nhooyr.io/websocket v1.8.7 // indirect
 	sigs.k8s.io/kustomize/api v0.11.1 // indirect
 	sigs.k8s.io/kustomize/kyaml v0.13.3 // indirect
