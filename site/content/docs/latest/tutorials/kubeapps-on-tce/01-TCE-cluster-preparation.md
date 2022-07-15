@@ -30,7 +30,7 @@ In order to check that Tanzu CLI is properly installed, run this in the command 
 tanzu version
 ```
 
-And output should be similar to this:
+And the output should be similar to this:
 
 ```bash
 version: v0.11.4
