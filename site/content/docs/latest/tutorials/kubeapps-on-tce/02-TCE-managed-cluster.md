@@ -11,7 +11,7 @@ In the case of managed clusters, TCE offers a UI for setting up all the differen
 
 ## Preparing the OpenID Connect (OIDC) authentication
 
-Before creating the cluster, we will need to setup a proper OIDC provider that Kubernetes will use to authenticate requests.
+Before creating the cluster, we will need to set up a proper OIDC provider that Kubernetes will use to authenticate requests.
 This is a more secure approach than using service account tokens, specially for managed clusters, more suitable for production uses.
 
 For this tutorial we will use Google Identity Platform OIDC provider, but there are more options of [using an OAuth2/OIDC Provider with Kubeapps](/site/content/docs/latest/tutorials/using-an-OIDC-provider.md).
