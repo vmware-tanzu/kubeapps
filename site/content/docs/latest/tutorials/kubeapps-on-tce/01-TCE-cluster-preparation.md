@@ -20,7 +20,7 @@ In this step of the tutorial, we will prepare the installation of the TCE cluste
 
 ## Step 1.1: Install Tanzu CLI
 
-Tanzu CLI can be installed on the three major operating systems (Linux, MacOS and Windows).
+Tanzu CLI can be installed on the three major operating systems (Linux, macOS and Windows).
 
 [Follow the instructions here to install Tanzu CLI selecting your operating system](https://tanzucommunityedition.io/docs/v0.12/cli-installation/).
 
