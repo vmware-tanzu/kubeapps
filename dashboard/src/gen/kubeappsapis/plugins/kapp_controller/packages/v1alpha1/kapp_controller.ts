@@ -1,5 +1,7 @@
 /* eslint-disable */
+import Long from "long";
 import { grpc } from "@improbable-eng/grpc-web";
+import * as _m0 from "protobufjs/minimal";
 import {
   GetAvailablePackageSummariesRequest,
   GetAvailablePackageDetailRequest,
@@ -19,7 +21,7 @@ import {
   UpdateInstalledPackageResponse,
   DeleteInstalledPackageResponse,
   GetInstalledPackageResourceRefsResponse,
-} from "../../../../core/packages/v1alpha1/packages";
+} from "../../../../../kubeappsapis/core/packages/v1alpha1/packages";
 import {
   AddPackageRepositoryRequest,
   GetPackageRepositoryDetailRequest,
@@ -31,9 +33,8 @@ import {
   GetPackageRepositorySummariesResponse,
   UpdatePackageRepositoryResponse,
   DeletePackageRepositoryResponse,
-} from "../../../../core/packages/v1alpha1/repositories";
+} from "../../../../../kubeappsapis/core/packages/v1alpha1/repositories";
 import { BrowserHeaders } from "browser-headers";
-import * as _m0 from "protobufjs/minimal";
 
 export const protobufPackage = "kubeappsapis.plugins.kapp_controller.packages.v1alpha1";
 
@@ -1730,6 +1731,11 @@ type KeysOfUnion<T> = T extends T ? keyof T : never;
 export type Exact<P, I extends P> = P extends Builtin
   ? P
   : P & { [K in keyof P]: Exact<P[K], I[K]> } & Record<Exclude<keyof I, KeysOfUnion<P>>, never>;
+
+if (_m0.util.Long !== Long) {
+  _m0.util.Long = Long as any;
+  _m0.configure();
+}
 
 function isObject(value: any): boolean {
   return typeof value === "object" && value !== null;

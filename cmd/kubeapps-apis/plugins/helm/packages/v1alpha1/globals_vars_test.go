@@ -263,17 +263,6 @@ var (
 		NamespaceScoped: false,
 	}
 
-	addRepoReqTlsSkipVerify = &corev1.AddPackageRepositoryRequest{
-		Name:            "bar",
-		Context:         &corev1.Context{Namespace: "foo"},
-		Type:            "helm",
-		Url:             "http://example.com",
-		NamespaceScoped: true,
-		TlsConfig: &corev1.PackageRepositoryTlsConfig{
-			InsecureSkipVerify: true,
-		},
-	}
-
 	addRepoReqSimple = func(repoType string) *corev1.AddPackageRepositoryRequest {
 		return &corev1.AddPackageRepositoryRequest{
 			Name:            "bar",

@@ -14,5 +14,6 @@
   "theme": "light",
   "remoteComponentsUrl": "",
   "customAppViews": [],
-  "skipAvailablePackageDetails": false
+  "skipAvailablePackageDetails": false,
+  "createNamespaceLabels": {}
 }

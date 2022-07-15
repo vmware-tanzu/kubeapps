@@ -21,6 +21,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	log "k8s.io/klog/v2"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	ctrlfake "sigs.k8s.io/controller-runtime/pkg/client/fake"
 )
@@ -195,9 +196,12 @@ func getCertsForTesting(t *testing.T) (ca, pub, priv []byte) {
 func newCtrlClient(repos []*appRepov1.AppRepository) client.WithWatch {
 	// Register required schema definitions
 	scheme := runtime.NewScheme()
-	appRepov1.AddToScheme(scheme)
+	err := appRepov1.AddToScheme(scheme)
+	if err != nil {
+		log.Fatalf("%s", err)
+	}
 
-	rm := apimeta.NewDefaultRESTMapper([]schema.GroupVersion{{AppRepositoryGroup, AppRepositoryVersion}})
+	rm := apimeta.NewDefaultRESTMapper([]schema.GroupVersion{{Group: AppRepositoryGroup, Version: AppRepositoryVersion}})
 	rm.Add(schema.GroupVersionKind{
 		Group:   AppRepositoryGroup,
 		Version: AppRepositoryVersion,

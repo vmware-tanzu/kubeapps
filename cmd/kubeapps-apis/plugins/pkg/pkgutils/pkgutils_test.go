@@ -861,13 +861,13 @@ func TestDefaultValues(t *testing.T) {
 		{"empty", "null", nil, "null"},
 		{"scalar", "4", &structuralschema.Structural{
 			Generic: structuralschema.Generic{
-				Default: structuralschema.JSON{"foo"},
+				Default: structuralschema.JSON{Object: "foo"},
 			},
 		}, "4"},
 		{"scalar array", "[1,2]", &structuralschema.Structural{
 			Items: &structuralschema.Structural{
 				Generic: structuralschema.Generic{
-					Default: structuralschema.JSON{"foo"},
+					Default: structuralschema.JSON{Object: "foo"},
 				},
 			},
 		}, "[1,2]"},
@@ -876,17 +876,17 @@ func TestDefaultValues(t *testing.T) {
 				Properties: map[string]structuralschema.Structural{
 					"a": {
 						Generic: structuralschema.Generic{
-							Default: structuralschema.JSON{"A"},
+							Default: structuralschema.JSON{Object: "A"},
 						},
 					},
 					"b": {
 						Generic: structuralschema.Generic{
-							Default: structuralschema.JSON{"B"},
+							Default: structuralschema.JSON{Object: "B"},
 						},
 					},
 					"c": {
 						Generic: structuralschema.Generic{
-							Default: structuralschema.JSON{"C"},
+							Default: structuralschema.JSON{Object: "C"},
 						},
 					},
 				},
@@ -942,12 +942,12 @@ func TestDefaultValues(t *testing.T) {
 						Properties: map[string]structuralschema.Structural{
 							"a": {
 								Generic: structuralschema.Generic{
-									Default: structuralschema.JSON{"A"},
+									Default: structuralschema.JSON{Object: "A"},
 								},
 							},
 							"b": {
 								Generic: structuralschema.Generic{
-									Default: structuralschema.JSON{"B"},
+									Default: structuralschema.JSON{Object: "B"},
 								},
 							},
 						},
@@ -957,12 +957,12 @@ func TestDefaultValues(t *testing.T) {
 					Properties: map[string]structuralschema.Structural{
 						"a": {
 							Generic: structuralschema.Generic{
-								Default: structuralschema.JSON{"N"},
+								Default: structuralschema.JSON{Object: "N"},
 							},
 						},
 						"b": {
 							Generic: structuralschema.Generic{
-								Default: structuralschema.JSON{"O"},
+								Default: structuralschema.JSON{Object: "O"},
 							},
 						},
 					},
@@ -974,12 +974,12 @@ func TestDefaultValues(t *testing.T) {
 								Properties: map[string]structuralschema.Structural{
 									"a": {
 										Generic: structuralschema.Generic{
-											Default: structuralschema.JSON{"alpha"},
+											Default: structuralschema.JSON{Object: "alpha"},
 										},
 									},
 									"b": {
 										Generic: structuralschema.Generic{
-											Default: structuralschema.JSON{"beta"},
+											Default: structuralschema.JSON{Object: "beta"},
 										},
 									},
 								},
@@ -989,7 +989,7 @@ func TestDefaultValues(t *testing.T) {
 				},
 				"foo": {
 					Generic: structuralschema.Generic{
-						Default: structuralschema.JSON{"bar"},
+						Default: structuralschema.JSON{Object: "bar"},
 					},
 				},
 			},
@@ -999,7 +999,7 @@ func TestDefaultValues(t *testing.T) {
 				Properties: map[string]structuralschema.Structural{
 					"a": {
 						Generic: structuralschema.Generic{
-							Default: structuralschema.JSON{"A"},
+							Default: structuralschema.JSON{Object: "A"},
 						},
 					},
 				},
@@ -1013,7 +1013,7 @@ func TestDefaultValues(t *testing.T) {
 				Properties: map[string]structuralschema.Structural{
 					"a": {
 						Generic: structuralschema.Generic{
-							Default: structuralschema.JSON{"A"},
+							Default: structuralschema.JSON{Object: "A"},
 						},
 					},
 				},
@@ -1025,7 +1025,7 @@ func TestDefaultValues(t *testing.T) {
 			},
 			Items: &structuralschema.Structural{
 				Generic: structuralschema.Generic{
-					Default: structuralschema.JSON{"A"},
+					Default: structuralschema.JSON{Object: "A"},
 				},
 			},
 		}, `["A"]`},
@@ -1035,7 +1035,7 @@ func TestDefaultValues(t *testing.T) {
 				"a": {
 					Generic: structuralschema.Generic{
 						Nullable: true,
-						Default:  structuralschema.JSON{"A"},
+						Default:  structuralschema.JSON{Object: "A"},
 					},
 				},
 			},
@@ -1045,7 +1045,7 @@ func TestDefaultValues(t *testing.T) {
 				"a": {
 					Generic: structuralschema.Generic{
 						Nullable: false,
-						Default:  structuralschema.JSON{"A"},
+						Default:  structuralschema.JSON{Object: "A"},
 					},
 				},
 			},
@@ -1056,7 +1056,7 @@ func TestDefaultValues(t *testing.T) {
 					Structural: &structuralschema.Structural{
 						Generic: structuralschema.Generic{
 							Nullable: true,
-							Default:  structuralschema.JSON{"A"},
+							Default:  structuralschema.JSON{Object: "A"},
 						},
 					},
 				},
@@ -1068,7 +1068,7 @@ func TestDefaultValues(t *testing.T) {
 					Structural: &structuralschema.Structural{
 						Generic: structuralschema.Generic{
 							Nullable: false,
-							Default:  structuralschema.JSON{"A"},
+							Default:  structuralschema.JSON{Object: "A"},
 						},
 					},
 				},
