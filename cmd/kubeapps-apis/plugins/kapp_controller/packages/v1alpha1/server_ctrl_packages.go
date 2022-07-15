@@ -303,6 +303,7 @@ func (s *Server) GetInstalledPackageSummaries(ctx context.Context, request *core
 	installedPkgSummaries := []*corev1.InstalledPackageSummary{}
 
 	if len(pkgInstalls) > 0 {
+		//nolint:ineffassign
 		startAt := -1
 		if pageSize > 0 {
 			startAt = itemOffset
@@ -523,6 +524,7 @@ func (s *Server) GetInstalledPackageDetail(ctx context.Context, request *corev1.
 		}
 	}
 	// trim the new doc separator in the last element
+	//nolint:staticcheck
 	valuesApplied = strings.Trim(valuesApplied, "---")
 
 	installedPackageDetail, err := s.buildInstalledPackageDetail(pkgInstall, pkgMetadata, pkgVersionsMap, app, valuesApplied, cluster)
