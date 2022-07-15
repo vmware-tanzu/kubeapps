@@ -130,7 +130,39 @@ it("submits the form to create a new namespace", () => {
   });
   wrapper.update();
 
-  expect(createNamespace).toHaveBeenCalledWith(initialState.clusters.currentCluster, "new-ns");
+  expect(createNamespace).toHaveBeenCalledWith(initialState.clusters.currentCluster, "new-ns", {});
+});
+
+it("submits the form to create a new namespace with custom labels", () => {
+  const createNamespace = jest.fn();
+  actions.namespace.createNamespace = createNamespace;
+
+  const config = cloneDeep(initialState.config);
+  config.createNamespaceLabels = {
+    "managed-by": "kubeapps",
+  };
+  const wrapper = mountWrapper(getStore({ config }), <ContextSelector />);
+
+  const modalButton = wrapper.find(".flat-btn").first();
+  act(() => {
+    (modalButton.prop("onClick") as any)();
+  });
+  wrapper.update();
+  expect(wrapper.find(CdsModal)).toExist();
+
+  act(() => {
+    wrapper.find("input").simulate("change", { target: { value: "new-ns" } });
+  });
+  wrapper.update();
+
+  act(() => {
+    wrapper.find("form").simulate("submit", { preventDefault: jest.fn() });
+  });
+  wrapper.update();
+
+  expect(createNamespace).toHaveBeenCalledWith(initialState.clusters.currentCluster, "new-ns", {
+    "managed-by": "kubeapps",
+  });
 });
 
 it("shows an error creating a namespace", () => {
