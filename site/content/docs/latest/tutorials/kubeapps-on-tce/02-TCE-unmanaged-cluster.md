@@ -105,9 +105,9 @@ cat <<EOF | kubectl apply -f -
 apiVersion: v1
 kind: Secret
 metadata:
-name: kubeapps-operator-token
-namespace: default
-annotations:
+  name: kubeapps-operator-token
+  namespace: default
+  annotations:
     kubernetes.io/service-account.name: kubeapps-operator
 type: kubernetes.io/service-account-token
 EOF
