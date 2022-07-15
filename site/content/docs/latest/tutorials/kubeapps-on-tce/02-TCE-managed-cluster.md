@@ -9,7 +9,7 @@ VMware Tanzu™ Community Edition supports the following infrastructure provider
 
 In the case of managed clusters, TCE offers a UI for setting up all the different parameters needed.
 
-## Preparing the OpenID Connect authentication
+## Preparing the OpenID Connect (OIDC) authentication
 
 Before creating the cluster, we will need to setup a proper OIDC provider that Kubernetes will use to authenticate requests.
 This is a more secure approach than using service account tokens, specially for managed clusters, more suitable for production uses.
