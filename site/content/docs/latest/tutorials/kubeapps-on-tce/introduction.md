@@ -11,7 +11,7 @@
 - upgrade, manage and delete the applications that are deployed in your Kubernetes cluster
 - expose an API to manage your package repositories and your applications
 
-Kubeapps can be configured with public catalogs, such as the [VMware Marketplace™](https://marketplace.cloud.vmware.com/) catalog, the [Bitnami Application Catalog](https://bitnami.com/stacks/helm) or with private Helm repositories such as ChartMuseum or Harbor. It also integrates with [VMware Tanzu™ Application Catalog™ (TAC) for Tanzu™ Advanced](https://tanzu.vmware.com/application-catalog), which provides an enterprise-ready Helm chart catalog.
+Kubeapps can be configured with public catalogs, such as the [VMware Marketplace™](https://marketplace.cloud.vmware.com/) catalog, the [Bitnami Application Catalog](https://bitnami.com/application-catalog) or with private Helm repositories such as ChartMuseum or Harbor. It also integrates with [VMware Application Catalog](https://tanzu.vmware.com/application-catalog), which provides an enterprise-ready Helm chart catalog.
 
 This guide walks you through the process of configuring, deploying and using Kubeapps on a VMware Tanzu™ Community Edition cluster of your choice. It covers the following tasks:
 
