@@ -376,9 +376,9 @@ done
 
 # Browser tests
 cd "${ROOT_DIR}/integration"
-kubectl apply -f manifests/e2e-runner.yaml
+kubectl create deployment e2e-runner --image kubeapps/integration-tests${IMG_MODIFIER}:${DEV_TAG}
 k8s_wait_for_deployment default e2e-runner
-pod=$(kubectl get po -l run=e2e-runner -o jsonpath="{.items[0].metadata.name}")
+pod=$(kubectl get po -l app=e2e-runner -o custom-columns=:metadata.name --no-headers)
 ## Copy config and latest tests
 for f in *.js; do
   kubectl cp "./${f}" "${pod}:/app/"
