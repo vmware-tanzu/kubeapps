@@ -13,3 +13,5 @@ RUN npx playwright install
 
 # Note that the playwright config and the actual test files
 # will be later passed via kubectl cp in runtime
+
+CMD ["tail", "-f", "/dev/null"]
