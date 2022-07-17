@@ -30,5 +30,7 @@ ingress:
       secretName: localhost-tls
   annotations:
     nginx.ingress.kubernetes.io/proxy-read-timeout: "600"
+    nginx.ingress.kubernetes.io/proxy-buffer-size: "8k"
+    nginx.ingress.kubernetes.io/proxy-buffers: "4"
     # Required for ingress-nginx 1.0.0 for a valid ingress.
     kubernetes.io/ingress.class: nginx
