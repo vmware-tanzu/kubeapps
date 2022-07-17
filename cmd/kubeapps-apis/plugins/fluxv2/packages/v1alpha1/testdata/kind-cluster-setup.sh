@@ -10,6 +10,11 @@ set -o errexit
 set -o nounset
 set -o pipefail
 
+OCI_REGISTRY_REMOTE_PORT=5000
+OCI_REGISTRY_LOCAL_PORT=5000
+#OCI_REGISTRY_REMOTE_PORT=443
+#OCI_REGISTRY_LOCAL_PORT=52443
+
 function deploy {
   TAG=0.0.11
   docker build -t kubeapps/fluxv2plugin-testdata:$TAG .
@@ -23,61 +28,81 @@ function deploy {
   # ref https://helm.sh/docs/topics/registries/
   # only has a single user: foo, password: bar
   kubectl create configmap registry-configmap --from-file ./bcrypt.htpasswd
+  kubectl create secret tls registry-tls --key ./cert/server-key.pem --cert ./cert/ssl-bundle.pem
   kubectl apply -f registry-app.yaml
-  kubectl expose deployment registry-app --port=5000 --target-port=5000 --name=registry-app-svc --context kind-kubeapps
+  kubectl expose deployment registry-app --port=$OCI_REGISTRY_REMOTE_PORT --target-port=$OCI_REGISTRY_REMOTE_PORT --name=registry-app-svc --context kind-kubeapps
+  local max=20
+  local n=0
   while [[ $(kubectl get pods -l app=registry-app -o 'jsonpath={..status.conditions[?(@.type=="Ready")].status}') != "True" ]]; do
-    echo "Waiting 1s for registry-app to reach Ready state..."
+    n=$((n+1))
+    if [[ $n -ge $max ]]; then
+      echo "registry-app pod did not reach Ready state within expected time limit..."
+      exit 1
+    fi
+    echo "Waiting 1s for registry-app to reach Ready state [$n/$max]..."
     sleep 1
   done
 
   # ref https://stackoverflow.com/questions/67415637/kubectl-port-forward-reliably-in-a-shell-script
-  localPort=5000
-  remotePort=5000
-  kubectl -n default port-forward svc/registry-app-svc $localPort:$remotePort --context kind-kubeapps &
+  kubectl -n default port-forward svc/registry-app-svc $OCI_REGISTRY_LOCAL_PORT:$OCI_REGISTRY_REMOTE_PORT --context kind-kubeapps &
   
   pid=$!
 
   # kill the port-forward regardless of how this script exits
   trap '{
-    echo Killing process kubectl port-forward to 5000 with id [$pid]...
+    echo Killing process kubectl port-forward to [$OCI_REGISTRY_LOCAL_PORT:$OCI_REGISTRY_REMOTE_PORT] with id [$pid]...
     kill $pid
   }' EXIT  
 
-  # wait for $localport to become available
-  while ! nc -vz localhost $localPort > /dev/null 2>&1 ; do
-    echo Sleeping 1s until local port [$localPort] becomes available...
+  # wait for $OCI_REGISTRY_LOCAL_PORT to become available
+  while ! nc -vz localhost $OCI_REGISTRY_LOCAL_PORT > /dev/null 2>&1 ; do
+    echo Sleeping 1s until local port [$OCI_REGISTRY_LOCAL_PORT] becomes available...
     sleep 1
   done
   
-  # This would show that the port is open, like this:
-  # 5000/tcp open  upnp
-  nmap -sT -p $localPort localhost
+  # This should show that the port is open, like this:
+  # PORT      STATE SERVICE
+  # 52443/tcp open  unknown
+  nmap -sT -p $OCI_REGISTRY_LOCAL_PORT localhost
   
-  local max=5  
-  local n=0
-  until [ "$n" -ge "$max" ]
+  max=5  
+  n=0
+  until [ $n -ge $max ]
   do
-   helm registry login -u foo localhost:5000 -p bar && break
+   helm registry login -u foo localhost:$OCI_REGISTRY_LOCAL_PORT -p bar && break
    n=$((n+1)) 
-   echo "Retrying helm login in 5s [$n/5]..."
+   echo "Retrying helm login in 5s [$n/$max]..."
    sleep 5
   done
   if [[ $n -ge $max ]]; then
-    echo "Failed to login to [localhost:5000] with [5] attempts. Exiting script..."
+    echo "Failed to login to helm registry [localhost:$OCI_REGISTRY_LOCAL_PORT] with [$max] attempts. Exiting script..."
     exit 1
   fi
 
   # these .tgz files were pulled from https://stefanprodan.github.io/podinfo/ 
-  helm push charts/podinfo-6.0.0.tgz oci://localhost:5000/helm-charts 
-  helm show all oci://localhost:5000/helm-charts/podinfo | head -9
-  helm registry logout localhost:5000
+  echo about to run command helm push charts/podinfo-6.0.0.tgz oci://localhost:$OCI_REGISTRY_LOCAL_PORT/helm-charts...
+  helm push charts/podinfo-6.0.0.tgz oci://localhost:$OCI_REGISTRY_LOCAL_PORT/helm-charts 
+  # currently fails due to server error 
+  # time="2022-07-17T04:42:10.0289284Z" level=warning msg="error authorizing context: basic 
+  # authentication challenge for realm "Registry Realm": invalid authorization credential" 
+  # go.version=go1.16.15 http.request.host="localhost:52443" 
+  # http.request.id=52e52475-08f0-4bb2-bc8a-9e8d09b93291 
+  # http.request.method=GET http.request.remoteaddr="127.0.0.1:36168" 
+  # http.request.uri="/v2/" http.request.useragent="Helm/3.9.1" 
+  #
+  # I think this is https://github.com/helm/helm/issues/6324
+  # How can I push chart to an insecure OCI registry with helm v3 
+  #
+  echo command completed 
+  helm show all oci://localhost:$OCI_REGISTRY_LOCAL_PORT/helm-charts/podinfo | head -9
+  helm registry logout localhost:$OCI_REGISTRY_LOCAL_PORT
 }
 
 function undeploy {
   set +e
-  pid="$(ps -ef | grep port-forward | grep 5000 | awk '{print $2}')"
+  pid="$(ps -ef | grep port-forward | grep $OCI_REGISTRY_LOCAL_PORT | awk '{print $2}')"
   if [[ "$pid" != "" ]]; then
-    echo "Killing process 'kubectl port-forward to 5000' with id [$pid]..."
+    echo "Killing process 'kubectl port-forward to [$OCI_REGISTRY_LOCAL_PORT]' with id [$pid]..."
     kill $pid
   fi
 
@@ -87,6 +112,7 @@ function undeploy {
   kubectl delete configmap registry-configmap  
   kubectl delete deployment/registry-app --context kind-kubeapps 
   kubectl delete deployment fluxv2plugin-testdata-app --context kind-kubeapps 
+  kubectl delete secret registry-tls --ignore-not-found=true
   set -e
 }
 
