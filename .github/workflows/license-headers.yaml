@@ -1,0 +1,15 @@
+# Copyright 2022 VMware, Inc.
+# SPDX-License-Identifier: Apache-2.0
+
+name: license-headers
+
+on:
+  pull_request:
+
+jobs:
+  golangci:
+    name: check-license-headers
+    runs-on: ubuntu-latest
+    steps:
+      - name: Fix License Header
+        uses: apache/skywalking-eyes/header@main
