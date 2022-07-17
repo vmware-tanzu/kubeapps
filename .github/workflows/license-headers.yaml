@@ -4,7 +4,7 @@
 name: license-headers
 
 on:
-  push:
+  pull_request:
 
 jobs:
   golangci:
