@@ -1,15 +1,38 @@
+# Copyright 2022 VMware, Inc.
+# SPDX-License-Identifier: Apache-2.0
+
 header:
+  comment: on-failure
   license:
     spdx-id: Apache-2.0
     copyright-owner: the Kubeapps contributors
 
+    pattern: |
+      Copyright (?:\d{4}-\d{4}|\d{4}) the Kubeapps contributors.
+      SPDX-License-Identifier: Apache-2.0
+
+  # paths:
+  #   - "**/*.ts*"
   paths-ignore:
-    - "**/*.md"
     - LICENSE
     - NOTICE
     - open_source_licenses.txt
-
-  comment: on-failure
+    - "**/*.md"
+    - "**/*.css"
+    - "**/*.lock"
+    - "**/*.svg"
+    - "**/*.sum"
+    - "**/*.json"
+    - "**/*.pem"
+    - "**/*.dccache"
+    - "**/*.html"
+    - "**/*.htpasswd"
+    - "**/node_modules/**"
+    - "**/gen/**"
+    - "**/site/**"
+    - "**/target/**"
+    - "**/chart/**"
+    - "**/devel/**"
 
 dependency:
   files:
