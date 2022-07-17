@@ -1,0 +1,18 @@
+header:
+  license:
+    spdx-id: Apache-2.0
+    copyright-owner: the Kubeapps contributors
+
+  paths-ignore:
+    - "**/*.md"
+    - LICENSE
+    - NOTICE
+    - open_source_licenses.txt
+
+  comment: on-failure
+
+dependency:
+  files:
+    - go.mod
+    - dashboard/package.json
+    - cmd/pinniped-proxy/Cargo.toml
