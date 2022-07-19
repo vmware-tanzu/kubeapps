@@ -161,24 +161,28 @@ func TestGetCertPool(t *testing.T) {
 		expectedSubjectCount int
 	}{
 		{
-			name:                 "invocation with nil cert",
-			cert:                 nil,
+			name: "invocation with nil cert",
+			cert: nil,
+			//nolint:staticcheck
 			expectedSubjectCount: len(systemCertPool.Subjects()),
 		},
 		{
-			name:                 "invocation with empty cert",
-			cert:                 []byte{},
+			name: "invocation with empty cert",
+			cert: []byte{},
+			//nolint:staticcheck
 			expectedSubjectCount: len(systemCertPool.Subjects()),
 		},
 		{
-			name:                 "invocation with valid cert",
-			cert:                 []byte(pemCert),
+			name: "invocation with valid cert",
+			cert: []byte(pemCert),
+			//nolint:staticcheck
 			expectedSubjectCount: len(systemCertPool.Subjects()) + 1,
 		},
 		{
-			name:                 "invocation with invalid cert",
-			cert:                 []byte("not valid cert"),
-			expectError:          true,
+			name:        "invocation with invalid cert",
+			cert:        []byte("not valid cert"),
+			expectError: true,
+			//nolint:staticcheck
 			expectedSubjectCount: len(systemCertPool.Subjects()) + 1,
 		},
 	}
@@ -199,6 +203,8 @@ func TestGetCertPool(t *testing.T) {
 			if err != nil {
 				t.Fatalf("error creating the cert pool: {%+v}", err)
 			}
+
+			//nolint:staticcheck
 			if got, want := len(caCertPool.Subjects()), tc.expectedSubjectCount; got != want {
 				t.Fatalf("cert pool subjects is not as expected, got {%d} instead of {%d}", got, want)
 			}
