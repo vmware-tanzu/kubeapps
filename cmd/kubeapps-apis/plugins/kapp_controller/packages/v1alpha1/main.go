@@ -27,6 +27,7 @@ func init() {
 
 // RegisterWithGRPCServer enables a plugin to register with a gRPC server
 // returning the server implementation.
+//nolint:deadcode
 func RegisterWithGRPCServer(opts pluginsv1alpha1.GRPCPluginRegistrationOptions) (interface{}, error) {
 	svr := NewServer(opts.ConfigGetter, opts.ClustersConfig.KubeappsClusterName, opts.PluginConfigPath)
 	v1alpha1.RegisterKappControllerPackagesServiceServer(opts.Registrar, svr)
@@ -35,6 +36,7 @@ func RegisterWithGRPCServer(opts pluginsv1alpha1.GRPCPluginRegistrationOptions) 
 
 // RegisterHTTPHandlerFromEndpoint enables a plugin to register an http
 // handler to translate to the gRPC request.
+//nolint:deadcode
 func RegisterHTTPHandlerFromEndpoint(ctx context.Context, mux *runtime.ServeMux, endpoint string, opts []grpc.DialOption) error {
 	return v1alpha1.RegisterKappControllerPackagesServiceHandlerFromEndpoint(ctx, mux, endpoint, opts)
 }

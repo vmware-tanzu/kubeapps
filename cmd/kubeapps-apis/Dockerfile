@@ -10,10 +10,12 @@ ARG VERSION="devel"
 
 ARG BUF_VERSION="1.5.0"
 ARG GOSEC_VERSION="2.12.0"
+ARG GOLANGCILINT_VERSION="1.46.2"
 
 # Install lint tools
 RUN curl -sSL "https://github.com/bufbuild/buf/releases/download/v$BUF_VERSION/buf-Linux-x86_64" -o "/tmp/buf" && chmod +x "/tmp/buf"
 RUN curl -sfL https://raw.githubusercontent.com/securego/gosec/master/install.sh | sh -s -- -b $(go env GOPATH)/bin v$GOSEC_VERSION
+RUN go install github.com/golangci/golangci-lint/cmd/golangci-lint@v$GOLANGCILINT_VERSION
 
 
 # With the trick below, Go's build cache is kept between builds.
@@ -27,12 +29,16 @@ RUN --mount=type=cache,target=/go/pkg/mod  \
 COPY pkg pkg
 COPY cmd cmd
 
-# Lint the proto files to detect errors at build time
-RUN /tmp/buf lint ./cmd/kubeapps-apis
+# Run golangci-lint to detect issues
+RUN golangci-lint run --timeout=10m ./cmd/kubeapps-apis/...
+RUN golangci-lint run --timeout=10m ./pkg/...
 
 # Run gosec to detect any security-related error at build time
 RUN gosec ./cmd/kubeapps-apis/...
 RUN gosec ./pkg/...
+
+# Lint the proto files to detect errors at build time
+RUN /tmp/buf lint ./cmd/kubeapps-apis
 
 # Build the main grpc server
 RUN --mount=type=cache,target=/go/pkg/mod \

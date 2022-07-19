@@ -425,8 +425,7 @@ func TestCreateConfigGetterWithParams(t *testing.T) {
 			if tc.expectedErrMsg == nil {
 				if restConfig == nil {
 					t.Errorf("got: nil, want: rest.Config")
-				}
-				if got, want := restConfig.Host, tc.expectedAPIHost; got != want {
+				} else if got, want := restConfig.Host, tc.expectedAPIHost; got != want {
 					t.Errorf("got: %q, want: %q", got, want)
 				}
 			}

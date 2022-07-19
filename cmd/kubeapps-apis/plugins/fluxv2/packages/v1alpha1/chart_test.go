@@ -127,7 +127,10 @@ func TestGetAvailablePackageDetail(t *testing.T) {
 				// stand up an http server just for the duration of this test
 				var handler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 					w.WriteHeader(200)
-					w.Write(tarGzBytes)
+					_, err = w.Write(tarGzBytes)
+					if err != nil {
+						t.Fatalf("%+v", err)
+					}
 				})
 				if tc.basicAuth {
 					handler = basicAuth(handler, "foo", "bar", "myrealm")
@@ -193,7 +196,10 @@ func TestGetAvailablePackageDetail(t *testing.T) {
 				t.Fatalf("%+v", err)
 			}
 
-			s.redisMockExpectGetFromRepoCache(mock, nil, *repo)
+			err = s.redisMockExpectGetFromRepoCache(mock, nil, *repo)
+			if err != nil {
+				t.Fatalf("%+v", err)
+			}
 			chartVersion := tc.request.PkgVersion
 			if chartVersion == "" {
 				chartVersion = charts[0].chartRevision
@@ -257,10 +263,16 @@ func TestTransientHttpFailuresAreRetriedForChartCache(t *testing.T) {
 				if !nofail && failuresAllowed > 0 {
 					failuresAllowed--
 					w.WriteHeader(503)
-					w.Write([]byte(fmt.Sprintf("The server is not ready to handle the request: [%d try left before OK]", failuresAllowed)))
+					_, err = w.Write([]byte(fmt.Sprintf("The server is not ready to handle the request: [%d try left before OK]", failuresAllowed)))
+					if err != nil {
+						t.Fatalf("%+v", err)
+					}
 				} else {
 					w.WriteHeader(200)
-					w.Write(tarGzBytes)
+					_, err := w.Write(tarGzBytes)
+					if err != nil {
+						t.Fatalf("%+v", err)
+					}
 				}
 			})
 			ts := httptest.NewServer(handler)
@@ -292,7 +304,10 @@ func TestTransientHttpFailuresAreRetriedForChartCache(t *testing.T) {
 		chartVersion := charts[0].chartRevision
 		requestChartUrl := charts[0].chartUrl
 
-		s.redisMockExpectGetFromRepoCache(mock, nil, *repo)
+		err = s.redisMockExpectGetFromRepoCache(mock, nil, *repo)
+		if err != nil {
+			t.Fatalf("%+v", err)
+		}
 		chartCacheKey, err := s.chartCache.KeyFor(
 			repoNamespace,
 			packageIdentifier,
@@ -434,7 +449,10 @@ func TestNonExistingRepoOrInvalidPkgVersionGetAvailablePackageDetail(t *testing.
 				// stand up an http server just for the duration of this test
 				ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 					w.WriteHeader(200)
-					w.Write(tarGzBytes)
+					_, err = w.Write(tarGzBytes)
+					if err != nil {
+						t.Fatalf("%+v", err)
+					}
 				}))
 				defer ts.Close()
 				replaceUrls[fmt.Sprintf("{{%s}}", s.tgzFile)] = ts.URL
@@ -464,7 +482,10 @@ func TestNonExistingRepoOrInvalidPkgVersionGetAvailablePackageDetail(t *testing.
 
 			repoExists := requestRepoName == tc.repoName && requestRepoNamespace == tc.repoNamespace
 			if repoExists {
-				s.redisMockExpectGetFromRepoCache(mock, nil, *repo)
+				err = s.redisMockExpectGetFromRepoCache(mock, nil, *repo)
+				if err != nil {
+					t.Fatalf("%+v", err)
+				}
 				requestChartName := strings.Split(tc.request.AvailablePackageRef.Identifier, "/")[1]
 				chartExists := requestChartName == "redis"
 				if chartExists {
@@ -615,7 +636,10 @@ func TestGetAvailablePackageVersions(t *testing.T) {
 				// stand up an http server just for the duration of this test
 				ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 					w.WriteHeader(200)
-					w.Write(tarGzBytes)
+					_, err = w.Write(tarGzBytes)
+					if err != nil {
+						t.Fatalf("%+v", err)
+					}
 				}))
 				defer ts.Close()
 				replaceUrls[fmt.Sprintf("{{%s}}", s.tgzFile)] = ts.URL
@@ -696,7 +720,10 @@ func TestChartCacheResyncNotIdle(t *testing.T) {
 		// stand up an http server just for the duration of this test
 		var handler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			w.WriteHeader(200)
-			w.Write(tarGzBytes)
+			_, err = w.Write(tarGzBytes)
+			if err != nil {
+				t.Fatalf("%+v", err)
+			}
 		})
 		ts := httptest.NewServer(handler)
 		defer ts.Close()
@@ -869,7 +896,10 @@ func TestChartWithRelativeURL(t *testing.T) {
 			fmt.Fprintln(w, string(indexYAMLBytes))
 		} else if r.RequestURI == "/charts/airflow-1.0.0.tgz" {
 			w.WriteHeader(200)
-			w.Write(tarGzBytes)
+			_, err = w.Write(tarGzBytes)
+			if err != nil {
+				t.Fatalf("%+v", err)
+			}
 		} else {
 			w.WriteHeader(404)
 		}

@@ -28,6 +28,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/watch"
+	log "k8s.io/klog/v2"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	ctrlfake "sigs.k8s.io/controller-runtime/pkg/client/fake"
 )
@@ -175,7 +176,10 @@ func basicAuth(handler http.HandlerFunc, username, password, realm string) http.
 		if !ok || subtle.ConstantTimeCompare([]byte(user), []byte(username)) != 1 || subtle.ConstantTimeCompare([]byte(pass), []byte(password)) != 1 {
 			w.Header().Set("WWW-Authenticate", `Basic realm="`+realm+`"`)
 			w.WriteHeader(401)
-			w.Write([]byte("Unauthorised.\n"))
+			_, err := w.Write([]byte("Unauthorised.\n"))
+			if err != nil {
+				log.Fatalf("%+v", err)
+			}
 			return
 		}
 		handler(w, r)
@@ -322,8 +326,14 @@ func repoRef(id, namespace string) *corev1.PackageRepositoryReference {
 func newCtrlClient(repos []sourcev1.HelmRepository, charts []sourcev1.HelmChart, releases []helmv2.HelmRelease) withWatchWrapper {
 	// register the flux GitOps Toolkit schema definitions
 	scheme := runtime.NewScheme()
-	sourcev1.AddToScheme(scheme)
-	helmv2.AddToScheme(scheme)
+	err := sourcev1.AddToScheme(scheme)
+	if err != nil {
+		log.Fatal(err)
+	}
+	err = helmv2.AddToScheme(scheme)
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	rm := apimeta.NewDefaultRESTMapper([]schema.GroupVersion{sourcev1.GroupVersion, helmv2.GroupVersion})
 	rm.Add(schema.GroupVersionKind{

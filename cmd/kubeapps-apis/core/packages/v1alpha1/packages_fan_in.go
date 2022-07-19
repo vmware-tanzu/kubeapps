@@ -94,6 +94,7 @@ func fanInAvailablePackageSummaries(ctx context.Context, pkgPlugins []pkgPluginW
 			for i, ch := range fanInput {
 				if nextItems[i] == nil {
 					// If the channel is closed, the value will remain nil.
+					//nolint:ineffassign
 					ok := true
 					nextItems[i], ok = <-ch
 					if !ok {
@@ -288,6 +289,7 @@ func fanInInstalledPackageSummaries(ctx context.Context, pkgPlugins []pkgPluginW
 			for i, ch := range fanInput {
 				if nextItems[i] == nil {
 					// If the channel is closed, the value will remain nil.
+					//nolint:ineffassign
 					ok := true
 					nextItems[i], ok = <-ch
 					if !ok {

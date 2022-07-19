@@ -47,6 +47,9 @@ func Sync(serveOpts Config, version string, args []string) error {
 			return fmt.Errorf("Error: %v", err)
 		}
 		authorizationHeader, err = kube.GetAuthHeaderFromDockerConfig(dockerConfig)
+		if err != nil {
+			return fmt.Errorf("Error: %v", err)
+		}
 	}
 
 	filters, err := parseFilters(serveOpts.FilterRules)
