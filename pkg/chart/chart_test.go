@@ -215,6 +215,7 @@ func TestParseDetailsForHTTPClient(t *testing.T) {
 				AppRepositoryResourceName:      appRepoName,
 				AppRepositoryResourceNamespace: appRepoNamespace,
 			},
+			//nolint:staticcheck
 			numCertsExpected:  len(systemCertPool.Subjects()),
 			cluster:           "",
 			kubeappsNamespace: appRepoNamespace,
@@ -226,6 +227,7 @@ func TestParseDetailsForHTTPClient(t *testing.T) {
 				AppRepositoryResourceName:      appRepoName,
 				AppRepositoryResourceNamespace: appRepoNamespace,
 			},
+			//nolint:staticcheck
 			numCertsExpected:  len(systemCertPool.Subjects()),
 			cluster:           "target-cluster",
 			kubeappsNamespace: appRepoNamespace,
@@ -237,6 +239,7 @@ func TestParseDetailsForHTTPClient(t *testing.T) {
 				AppRepositoryResourceName:      appRepoName,
 				AppRepositoryResourceNamespace: appRepoNamespace,
 			},
+			//nolint:staticcheck
 			numCertsExpected:  len(systemCertPool.Subjects()),
 			cluster:           "",
 			kubeappsNamespace: "",
@@ -258,6 +261,7 @@ func TestParseDetailsForHTTPClient(t *testing.T) {
 					},
 				},
 			},
+			//nolint:staticcheck
 			numCertsExpected:  len(systemCertPool.Subjects()) + 1,
 			cluster:           "",
 			kubeappsNamespace: "",
@@ -300,6 +304,7 @@ func TestParseDetailsForHTTPClient(t *testing.T) {
 					},
 				},
 			},
+			//nolint:staticcheck
 			numCertsExpected:  len(systemCertPool.Subjects()),
 			cluster:           "",
 			kubeappsNamespace: "",
@@ -342,6 +347,7 @@ func TestParseDetailsForHTTPClient(t *testing.T) {
 					},
 				},
 			},
+			//nolint:staticcheck
 			numCertsExpected:  len(systemCertPool.Subjects()),
 			cluster:           "",
 			kubeappsNamespace: "",
