@@ -1060,7 +1060,7 @@ func (s *Server) buildPkgRepositorySecretCreate(namespace, name string, auth *co
 	case corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_BEARER:
 		pkgSecret.Type = k8scorev1.SecretTypeOpaque
 		if token := auth.GetHeader(); token != "" {
-			pkgSecret.StringData[BearerAuthToken] = "Bearer " + strings.Trim(token, "Bearer ")
+			pkgSecret.StringData[BearerAuthToken] = "Bearer " + strings.TrimPrefix(token, "Bearer ")
 		} else {
 			return nil, status.Errorf(codes.InvalidArgument, "Bearer token is missing")
 		}
@@ -1154,12 +1154,12 @@ func (s *Server) buildPkgRepositorySecretUpdate(pkgSecret *k8scorev1.Secret, aut
 			if token == Redacted {
 				return false, nil
 			} else {
-				pkgSecret.StringData[BearerAuthToken] = "Bearer " + strings.Trim(token, "Bearer ")
+				pkgSecret.StringData[BearerAuthToken] = "Bearer " + strings.TrimPrefix(token, "Bearer ")
 			}
 		} else {
 			pkgSecret.Type = k8scorev1.SecretTypeOpaque
 			pkgSecret.Data = nil
-			pkgSecret.StringData[BearerAuthToken] = "Bearer " + strings.Trim(token, "Bearer ")
+			pkgSecret.StringData[BearerAuthToken] = "Bearer " + strings.TrimPrefix(token, "Bearer ")
 		}
 	}
 
