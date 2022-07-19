@@ -26,7 +26,7 @@ function pushChartToLocalRegistryUsingHelmCLI() {
    sleep 5
   done
   if [[ $n -ge $max ]]; then
-    echo "Failed to login to helm registry [localhost:$OCI_REGISTRY_LOCAL_PORT] with [$max] attempts. Exiting script..."
+    echo "Failed to login to helm registry [localhost:$OCI_REGISTRY_LOCAL_PORT] after [$max] attempts. Exiting script..."
     exit 1
   fi
 
@@ -77,7 +77,7 @@ function pushChartToLocalRegistryUsingDockerCLI() {
    sleep 5
   done
   if [[ $n -ge $max ]]; then
-    echo "Failed to login to docker registry [localhost:$OCI_REGISTRY_LOCAL_PORT] with [$max] attempts. Exiting script..."
+    echo "Failed to login to docker registry [localhost:$OCI_REGISTRY_LOCAL_PORT] after [$max] attempts. Exiting script..."
     exit 1
   fi
 
@@ -120,6 +120,39 @@ function portForwardToLocalRegistry() {
   done
 }
 
+# the goal is to create an OCI registry whose contents I completely control and will modify 
+# by running integration tests. Therefore 'pushChartToMyGitHubRegistry'
+function pushChartToMyGitHubRegistry() {
+  docker rmi -f stefanprodan/podinfo:6.0.0
+  # pull from docker hub
+  docker pull stefanprodan/podinfo:6.0.0
+  docker tag stefanprodan/podinfo:6.0.0 ghcr.io/gfichtenholt/helm-charts/podinfo:6.0.0
+
+  max=5  
+  n=0
+  until [ $n -ge $max ]
+  do
+   docker login ghcr.io -u $GITHUB_USER -p $GITHUB_TOKEN && break
+   n=$((n+1)) 
+   echo "Retrying docker login in 5s [$n/$max]..."
+   sleep 5
+  done
+  if [[ $n -ge $max ]]; then
+    echo "Failed to login to docker registry ghcr.io after [$max] attempts. Exiting script..."
+    exit 1
+  fi
+
+  trap '{
+    docker logout ghcr.io
+  }' EXIT  
+
+  # push to my github registry
+  CMD="docker push ghcr.io/gfichtenholt/helm-charts/podinfo:6.0.0"
+  echo Starting command: $CMD...
+  $CMD
+  echo Command completed
+}
+
 function deploy {
   TAG=0.0.11
   docker build -t kubeapps/fluxv2plugin-testdata:$TAG .
@@ -145,10 +178,12 @@ function deploy {
     sleep 1
   done
 
-  portForwardToLocalRegistry
-
-  #pushChartToLocalRegistryUsingHelmCLI
-  pushChartToLocalRegistryUsingDockerCLI
+  # can't quite get local registry to work yet. Want to move on. I will come back to 
+  # this as time allows
+  # portForwardToLocalRegistry
+  # pushChartToLocalRegistryUsingHelmCLI
+  # pushChartToLocalRegistryUsingDockerCLI
+  pushChartToMyGitHubRegistry
 }
 
 function undeploy {
