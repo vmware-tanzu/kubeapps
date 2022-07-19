@@ -293,8 +293,16 @@ func TestAddPackageRepository(t *testing.T) {
 		},
 		// BEARER TOKEN
 		{
-			name:                  "package repository with bearer token",
-			request:               addRepoReqBearerToken("the-token"),
+			name:                  "package repository with bearer token w/o prefix",
+			request:               addRepoReqBearerToken("the-token", false),
+			expectedResponse:      addRepoExpectedResp,
+			expectedRepo:          addRepoAuthHeaderWithSecretRef("apprepo-bar"),
+			statusCode:            codes.OK,
+			expectedCreatedSecret: setSecretOwnerRef("bar", newAuthTokenSecret("apprepo-bar", "foo", "Bearer the-token")),
+		},
+		{
+			name:                  "package repository with bearer token w/ prefix",
+			request:               addRepoReqBearerToken("the-token", true),
 			expectedResponse:      addRepoExpectedResp,
 			expectedRepo:          addRepoAuthHeaderWithSecretRef("apprepo-bar"),
 			statusCode:            codes.OK,
@@ -302,7 +310,7 @@ func TestAddPackageRepository(t *testing.T) {
 		},
 		{
 			name:       "package repository with no bearer token",
-			request:    addRepoReqBearerToken(""),
+			request:    addRepoReqBearerToken("", false),
 			statusCode: codes.InvalidArgument,
 		},
 		{
@@ -321,7 +329,7 @@ func TestAddPackageRepository(t *testing.T) {
 		},
 		{
 			name:               "package repository bearer token (user managed secrets)",
-			request:            addRepoReqBearerToken("the-token"),
+			request:            addRepoReqBearerToken("the-token", false),
 			userManagedSecrets: true,
 			statusCode:         codes.InvalidArgument,
 		},
