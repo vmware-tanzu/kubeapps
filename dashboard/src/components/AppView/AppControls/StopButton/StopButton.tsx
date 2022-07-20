@@ -71,6 +71,7 @@ export default function StopButton({
         closeModal={closeModal}
         headerText={"Stop application"}
         confirmationText="Are you sure you want to stop the application?"
+        confirmationButtonText="Stop"
         error={error}
       />
     </>

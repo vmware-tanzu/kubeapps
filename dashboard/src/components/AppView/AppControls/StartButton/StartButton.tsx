@@ -71,6 +71,7 @@ export default function StartButton({
         closeModal={closeModal}
         headerText={"Start application"}
         confirmationText="Are you sure you want to start the application?"
+        confirmationButtonText="Start"
         error={error}
       />
     </>
