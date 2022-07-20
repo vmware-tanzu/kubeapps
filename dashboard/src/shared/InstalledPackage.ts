@@ -106,13 +106,13 @@ export class InstalledPackage {
   }
 
   public static async StartInstalledPackage(installedPackageRef: InstalledPackageReference) {
-    return await this.coreClient().StartInstalledPackage({
+    return await this.helmPluginClient().UpdateInstalledPackage({
       installedPackageRef,
     } as StartInstalledPackageRequest);
   }
 
   public static async StopInstalledPackage(installedPackageRef: InstalledPackageReference) {
-    return await this.coreClient().StopInstalledPackage({
+    return await this.helmPluginClient().UpdateInstalledPackage({
       installedPackageRef,
     } as StopInstalledPackageRequest);
   }
