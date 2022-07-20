@@ -14,6 +14,7 @@ OCI_REGISTRY_REMOTE_PORT=5000
 OCI_REGISTRY_LOCAL_PORT=5000
 OCI_REGISTRY_USER=foo
 OCI_REGISTRY_PWD=bar
+OCI_REGISTRY_PODINFO_CHART=podinfo:6.1.6
 
 function pushChartToLocalRegistryUsingHelmCLI() {
   max=5  
@@ -63,37 +64,6 @@ function pushChartToLocalRegistryUsingHelmCLI() {
   helm registry logout localhost:$OCI_REGISTRY_LOCAL_PORT
 }
 
-function pushChartToLocalRegistryUsingDockerCLI() {
-  # pull from docker.io
-  docker pull stefanprodan/podinfo:6.0.0
-  docker tag stefanprodan/podinfo:6.0.0 localhost:5000/podinfo:6.0.0
-  max=5  
-  n=0
-  until [ $n -ge $max ]
-  do
-   docker --tls --tlscacert=/Users/gfichtenholt/gitlocal/kubeapps-gfichtenholt/cmd/kubeapps-apis/plugins/fluxv2/packages/v1alpha1/testdata/cert/ca.pem login localhost:5000 -u foo -p bar && break
-   n=$((n+1)) 
-   echo "Retrying docker login in 5s [$n/$max]..."
-   sleep 5
-  done
-  if [[ $n -ge $max ]]; then
-    echo "Failed to login to docker registry [localhost:$OCI_REGISTRY_LOCAL_PORT] after [$max] attempts. Exiting script..."
-    exit 1
-  fi
-
-  trap '{
-    docker logout localhost:5000
-  }' EXIT  
-
-  # push to local registry
-  CMD="docker --tls --tlscacert=/Users/gfichtenholt/gitlocal/kubeapps-gfichtenholt/cmd/kubeapps-apis/plugins/fluxv2/packages/v1alpha1/testdata/cert/ca.pem push localhost:5000/podinfo:6.0.0"
-  echo Starting command: $CMD...
-  $CMD
-  echo Command completed
-  # currently fails with 
-  # Cannot connect to the Docker daemon at tcp://localhost:2376. Is the docker daemon running?
-}
-
 function portForwardToLocalRegistry() {
   # ref https://stackoverflow.com/questions/67415637/kubectl-port-forward-reliably-in-a-shell-script
   kubectl -n default port-forward svc/registry-svc $OCI_REGISTRY_LOCAL_PORT:$OCI_REGISTRY_REMOTE_PORT --context kind-kubeapps &
@@ -122,35 +92,46 @@ function portForwardToLocalRegistry() {
 
 # the goal is to create an OCI registry whose contents I completely control and will modify 
 # by running integration tests. Therefore 'pushChartToMyGitHubRegistry'
+# ref https://docs.github.com/en/packages/working-with-a-github-packages-registry/working-with-the-container-registry
+# TODO gfichtenholtz By default the new OCI registry is private. Attempts to pull a chart down
+# from this repo from the code fails with:
+# I0720 03:07:23.083292       1 oci_repo.go:269] helmGetter.Get(ghcr.io/gfichtenholt/helm-charts/podinfo:6.1.6) returned error: failed to authorize: failed to fetch anonymous token: unexpected status: 401 Unauthorized 
+# Even though the Helm getter is programmatically configured with GITHUB_USER/GITHUB_TOKEN
+# In order to make progress I made my OCI registry public per
+# https://docs.github.com/en/packages/learn-github-packages/configuring-a-packages-access-control-and-visibility
 function pushChartToMyGitHubRegistry() {
-  docker rmi -f stefanprodan/podinfo:6.0.0
-  # pull from docker hub
-  docker pull stefanprodan/podinfo:6.0.0
-  docker tag stefanprodan/podinfo:6.0.0 ghcr.io/gfichtenholt/helm-charts/podinfo:6.0.0
-
   max=5  
   n=0
   until [ $n -ge $max ]
   do
-   docker login ghcr.io -u $GITHUB_USER -p $GITHUB_TOKEN && break
+   helm registry login ghcr.io -u $GITHUB_USER -p $GITHUB_TOKEN && break
    n=$((n+1)) 
-   echo "Retrying docker login in 5s [$n/$max]..."
+   echo "Retrying helm login in 5s [$n/$max]..."
    sleep 5
   done
   if [[ $n -ge $max ]]; then
-    echo "Failed to login to docker registry ghcr.io after [$max] attempts. Exiting script..."
+    echo "Failed to login to helm registry [ghcr.io] after [$max] attempts. Exiting script..."
     exit 1
   fi
 
   trap '{
-    docker logout ghcr.io
+    helm registry logout ghcr.io
   }' EXIT  
 
-  # push to my github registry
-  CMD="docker push ghcr.io/gfichtenholt/helm-charts/podinfo:6.0.0"
+  # TODO (gfichtenholt) remove all charts from remote before pushing
+
+  # these .tgz files were pulled from https://stefanprodan.github.io/podinfo/ 
+  CMD="helm push charts/podinfo-6.1.6.tgz oci://ghcr.io/gfichtenholt/helm-charts"
   echo Starting command: $CMD...
   $CMD
   echo Command completed
+
+  # sanity check
+  helm show all oci://ghcr.io/gfichtenholt/helm-charts/podinfo | head -9
+
+  # TODO (gfichtenholt) check package visibility on 
+  # https://github.com/users/gfichtenholt/packages/container/helm-charts%2Fpodinfo/settings
+  # must be Public
 }
 
 function deploy {
