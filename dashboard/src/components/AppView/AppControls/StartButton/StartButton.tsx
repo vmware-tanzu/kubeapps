@@ -56,7 +56,7 @@ export default function StartButton({
   return (
     <>
       <StatusAwareButton
-        status="danger"
+        status="primary"
         onClick={openModal}
         releaseStatus={releaseStatus}
         id="start-button"

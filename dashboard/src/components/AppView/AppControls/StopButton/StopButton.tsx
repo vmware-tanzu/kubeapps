@@ -56,7 +56,7 @@ export default function StopButton({
   return (
     <>
       <StatusAwareButton
-        status="danger"
+        status="primary"
         onClick={openModal}
         releaseStatus={releaseStatus}
         id="stop-button"
