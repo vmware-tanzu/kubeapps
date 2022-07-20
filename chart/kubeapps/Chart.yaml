@@ -2,16 +2,15 @@ annotations:
   category: Infrastructure
 apiVersion: v2
 appVersion: DEVEL
-kubeVersion: ">=1.21"
 dependencies:
-  - name: redis
+  - condition: packaging.flux.enabled
+    name: redis
     repository: https://charts.bitnami.com/bitnami
     version: 17.x.x
-    condition: packaging.flux.enabled
-  - name: postgresql
+  - condition: packaging.helm.enabled
+    name: postgresql
     repository: https://charts.bitnami.com/bitnami
     version: 11.x.x
-    condition: packaging.helm.enabled
   - name: common
     repository: https://charts.bitnami.com/bitnami
     tags:
@@ -31,4 +30,4 @@ maintainers:
 name: kubeapps
 sources:
   - https://github.com/vmware-tanzu/kubeapps
-version: 10.0.1-dev0
+version: 10.0.1
