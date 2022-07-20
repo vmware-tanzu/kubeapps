@@ -18,6 +18,7 @@ import {
   CreateError,
   DeleteError,
   StartError,
+  StopError,
   FetchError,
   FetchWarning,
   IStoreState,
@@ -59,6 +60,12 @@ export const receiveStartInstalledPackage = createAction(
   "RECEIVE_START_INSTALLED_PACKAGE_CONFIRMATION",
 );
 
+export const requestStopInstalledPackage = createAction("REQUEST_STOP_INSTALLED_PACKAGE");
+
+export const receiveStopInstalledPackage = createAction(
+  "RECEIVE_STOP_INSTALLED_PACKAGE_CONFIRMATION",
+);
+
 export const requestUpdateInstalledPackage = createAction("REQUEST_UPDATE_INSTALLED_PACKAGE");
 
 export const receiveUpdateInstalledPackage = createAction(
@@ -82,7 +89,14 @@ export const receiveInstalledPackageStatus = createAction(
 
 export const errorInstalledPackage = createAction("ERROR_INSTALLED_PACKAGE", resolve => {
   return (
-    err: FetchError | CreateError | UpgradeError | RollbackError | DeleteError | StartError,
+    err:
+      | FetchError
+      | CreateError
+      | UpgradeError
+      | RollbackError
+      | DeleteError
+      | StartError
+      | StopError,
   ) => resolve(err);
 });
 
@@ -105,6 +119,8 @@ const allActions = [
   receiveInstallPackage,
   requestStartInstalledPackage,
   receiveStartInstalledPackage,
+  requestStopInstalledPackage,
+  receiveStopInstalledPackage,
   requestUpdateInstalledPackage,
   receiveUpdateInstalledPackage,
   requestRollbackInstalledPackage,
@@ -346,6 +362,22 @@ export function startInstalledPackage(
       return true;
     } catch (e: any) {
       dispatch(errorInstalledPackage(new StartError(e.message)));
+      return false;
+    }
+  };
+}
+
+export function stopInstalledPackage(
+  installedPackageRef: InstalledPackageReference,
+): ThunkAction<Promise<boolean>, IStoreState, null, InstalledPackagesAction> {
+  return async dispatch => {
+    dispatch(requestStopInstalledPackage());
+    try {
+      await InstalledPackage.StopInstalledPackage(installedPackageRef);
+      dispatch(receiveStopInstalledPackage());
+      return true;
+    } catch (e: any) {
+      dispatch(errorInstalledPackage(new StopError(e.message)));
       return false;
     }
   };

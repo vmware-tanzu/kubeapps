@@ -178,6 +178,16 @@ export interface DeleteInstalledPackageRequest {
 }
 
 /**
+ * StopInstalledPackageRequest
+ *
+ * Request for StopInstalledPackage
+ */
+ export interface StopInstalledPackageRequest {
+  /** A reference to uniquely identify the installed package to be stopped. */
+  installedPackageRef?: InstalledPackageReference;
+}
+
+/**
  * GetInstalledPackageResourceRefsRequest
  *
  * Request for GetInstalledPackageResourceRefs
@@ -322,13 +332,22 @@ export interface UpdateInstalledPackageResponse {
 export interface DeleteInstalledPackageResponse {}
 
 /**
- * StarteInstalledPackageResponse
+ * StartInstalledPackageResponse
  *
  * Response for StartInstalledPackage
  */
  export interface StartInstalledPackageResponse {
   installedPackageRef?: InstalledPackageReference;
  }
+
+ /**
+ * StopInstalledPackageResponse
+ *
+ * Response for StopInstalledPackage
+ */
+  export interface StopInstalledPackageResponse {
+    installedPackageRef?: InstalledPackageReference;
+   }
 
 /**
  * GetInstalledPackageResourceRefsResponse
@@ -1802,6 +1821,71 @@ export const StartInstalledPackageRequest = {
   },
 };
 
+function createBaseStopInstalledPackageRequest(): StopInstalledPackageRequest {
+  return { installedPackageRef: undefined };
+}
+
+export const StopInstalledPackageRequest = {
+  encode(
+    message: StopInstalledPackageRequest,
+    writer: _m0.Writer = _m0.Writer.create(),
+  ): _m0.Writer {
+    if (message.installedPackageRef !== undefined) {
+      InstalledPackageReference.encode(
+        message.installedPackageRef,
+        writer.uint32(10).fork(),
+      ).ldelim();
+    }
+    return writer;
+  },
+
+  decode(input: _m0.Reader | Uint8Array, length?: number): StopInstalledPackageRequest {
+    const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseStopInstalledPackageRequest();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1:
+          message.installedPackageRef = InstalledPackageReference.decode(reader, reader.uint32());
+          break;
+        default:
+          reader.skipType(tag & 7);
+          break;
+      }
+    }
+    return message;
+  },
+
+  fromJSON(object: any): StopInstalledPackageRequest {
+    return {
+      installedPackageRef: isSet(object.installedPackageRef)
+        ? InstalledPackageReference.fromJSON(object.installedPackageRef)
+        : undefined,
+    };
+  },
+
+  toJSON(message: StopInstalledPackageRequest): unknown {
+    const obj: any = {};
+    message.installedPackageRef !== undefined &&
+      (obj.installedPackageRef = message.installedPackageRef
+        ? InstalledPackageReference.toJSON(message.installedPackageRef)
+        : undefined);
+    return obj;
+  },
+
+  fromPartial<I extends Exact<DeepPartial<StopInstalledPackageRequest>, I>>(
+    object: I,
+  ): StopInstalledPackageRequest {
+    const message = createBaseStopInstalledPackageRequest();
+    message.installedPackageRef =
+      object.installedPackageRef !== undefined && object.installedPackageRef !== null
+        ? InstalledPackageReference.fromPartial(object.installedPackageRef)
+        : undefined;
+    return message;
+  },
+};
+
 function createBaseGetInstalledPackageResourceRefsRequest(): GetInstalledPackageResourceRefsRequest {
   return { installedPackageRef: undefined };
 }
@@ -2431,6 +2515,47 @@ export const StartInstalledPackageResponse = {
     _: I,
   ): StartInstalledPackageResponse {
     const message = createBaseStartInstalledPackageResponse();
+    return message;
+  },
+};
+
+function createBaseStopInstalledPackageResponse(): StopInstalledPackageResponse {
+  return {};
+}
+
+export const StopInstalledPackageResponse = {
+  encode(_: StopInstalledPackageResponse, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
+    return writer;
+  },
+
+  decode(input: _m0.Reader | Uint8Array, length?: number): StopInstalledPackageResponse {
+    const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseStopInstalledPackageResponse();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        default:
+          reader.skipType(tag & 7);
+          break;
+      }
+    }
+    return message;
+  },
+
+  fromJSON(_: any): StopInstalledPackageResponse {
+    return {};
+  },
+
+  toJSON(_: StopInstalledPackageResponse): unknown {
+    const obj: any = {};
+    return obj;
+  },
+
+  fromPartial<I extends Exact<DeepPartial<StopInstalledPackageResponse>, I>>(
+    _: I,
+  ): StopInstalledPackageResponse {
+    const message = createBaseStopInstalledPackageResponse();
     return message;
   },
 };
@@ -4107,6 +4232,10 @@ export interface PackagesService {
     request: DeepPartial<StartInstalledPackageRequest>,
     metadata?: grpc.Metadata,
   ): Promise<StartInstalledPackageResponse>;
+  StopInstalledPackage(
+    request: DeepPartial<StopInstalledPackageRequest>,
+    metadata?: grpc.Metadata,
+  ): Promise<StopInstalledPackageResponse>;
   GetInstalledPackageResourceRefs(
     request: DeepPartial<GetInstalledPackageResourceRefsRequest>,
     metadata?: grpc.Metadata,
@@ -4127,6 +4256,7 @@ export class PackagesServiceClientImpl implements PackagesService {
     this.UpdateInstalledPackage = this.UpdateInstalledPackage.bind(this);
     this.DeleteInstalledPackage = this.DeleteInstalledPackage.bind(this);
     this.StartInstalledPackage = this.StartInstalledPackage.bind(this);
+    this.StopInstalledPackage = this.StopInstalledPackage.bind(this);
     this.GetInstalledPackageResourceRefs = this.GetInstalledPackageResourceRefs.bind(this);
   }
 
@@ -4225,6 +4355,17 @@ export class PackagesServiceClientImpl implements PackagesService {
     return this.rpc.unary(
       PackagesServiceStartInstalledPackageDesc,
       StartInstalledPackageRequest.fromPartial(request),
+      metadata,
+    );
+  }
+
+  StopInstalledPackage(
+    request: DeepPartial<StopInstalledPackageRequest>,
+    metadata?: grpc.Metadata,
+  ): Promise<StopInstalledPackageResponse> {
+    return this.rpc.unary(
+      PackagesServiceStopInstalledPackageDesc,
+      StopInstalledPackageRequest.fromPartial(request),
       metadata,
     );
   }
@@ -4435,6 +4576,28 @@ export const PackagesServiceStartInstalledPackageDesc: UnaryMethodDefinitionish 
     deserializeBinary(data: Uint8Array) {
       return {
         ...StartInstalledPackageResponse.decode(data),
+        toObject() {
+          return this;
+        },
+      };
+    },
+  } as any,
+};
+
+export const PackagesServiceStopInstalledPackageDesc: UnaryMethodDefinitionish = {
+  methodName: "StopInstalledPackage",
+  service: PackagesServiceDesc,
+  requestStream: false,
+  responseStream: false,
+  requestType: {
+    serializeBinary() {
+      return StopInstalledPackageRequest.encode(this).finish();
+    },
+  } as any,
+  responseType: {
+    deserializeBinary(data: Uint8Array) {
+      return {
+        ...StopInstalledPackageResponse.decode(data),
         toObject() {
           return this;
         },
