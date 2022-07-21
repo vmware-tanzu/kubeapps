@@ -24,7 +24,7 @@ import {
 } from "gen/kubeappsapis/core/packages/v1alpha1/repositories";
 import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins";
 import { HelmPackageRepositoryCustomDetail } from "gen/kubeappsapis/plugins/helm/packages/v1alpha1/helm";
-import { KappControllerPackageRepositoryCustomDetail } from "gen/kubeappsapis/plugins/kapp_controller/packages/v1alpha1/kapp_controller";
+// import { KappControllerPackageRepositoryCustomDetail } from "gen/kubeappsapis/plugins/kapp_controller/packages/v1alpha1/kapp_controller";
 import { useEffect, useRef, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { Action } from "redux";
@@ -308,7 +308,7 @@ export function PkgRepoForm(props: IPkgRepoFormProps) {
     } as HelmPackageRepositoryCustomDetail;
 
     //TODO(agamez): add support for kapp's custom details
-    const kappCustomDetail = undefined as unknown as KappControllerPackageRepositoryCustomDetail;
+    // const kappCustomDetail = undefined as unknown as KappControllerPackageRepositoryCustomDetail;
 
     // build request object for the install call
     const request = {
@@ -353,9 +353,10 @@ export function PkgRepoForm(props: IPkgRepoFormProps) {
       case PluginNames.PACKAGES_HELM:
         request.customDetail = helmCustomDetail;
         break;
-      case PluginNames.PACKAGES_KAPP:
-        request.customDetail = kappCustomDetail;
-        break;
+      //TODO(agamez): add it once other PRs get merged
+      // case PluginNames.PACKAGES_KAPP:
+      //   request.customDetail = kappCustomDetail;
+      //   break;
       default:
         break;
     }
