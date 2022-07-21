@@ -215,8 +215,12 @@ export class PackageRepositoriesService {
   }
 
   private static buildEncodedCustomDetails(request: IPkgRepoFormData) {
-    // if using the Helm plugin, add its custom fields.
-    // An "Any" object has  "typeUrl" with the FQN of the type and a "value",
+    // if using a plugin with customDetail, encode its custom fields,
+    // otherwise skip it
+    if (!request.customDetails) {
+      return undefined;
+    }
+    // An "Any" object has "typeUrl" with the FQN of the type and a "value",
     // which is the result of the encoding (+finish(), to get the Uint8Array)
     // of the actual custom object
     switch (request.plugin?.name) {
