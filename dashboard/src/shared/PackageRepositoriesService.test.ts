@@ -29,7 +29,7 @@ const pkgRepoFormData = {
     username: "",
   },
   customCA: "",
-  customDetails: {
+  customDetail: {
     dockerRegistrySecrets: [],
     ociRepositories: [],
     performValidation: false,

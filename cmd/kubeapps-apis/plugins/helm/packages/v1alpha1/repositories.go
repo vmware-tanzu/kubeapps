@@ -31,15 +31,15 @@ const (
 )
 
 type HelmRepository struct {
-	cluster       string
-	name          types.NamespacedName
-	url           string
-	repoType      string
-	description   string
-	interval      string
-	tlsConfig     *corev1.PackageRepositoryTlsConfig
-	auth          *corev1.PackageRepositoryAuth
-	customDetails *v1alpha1.HelmPackageRepositoryCustomDetail
+	cluster      string
+	name         types.NamespacedName
+	url          string
+	repoType     string
+	description  string
+	interval     string
+	tlsConfig    *corev1.PackageRepositoryTlsConfig
+	auth         *corev1.PackageRepositoryAuth
+	customDetail *v1alpha1.HelmPackageRepositoryCustomDetail
 }
 
 var ValidRepoTypes = []string{HelmRepoType, OCIRepoType}
@@ -80,7 +80,7 @@ func (s *Server) newRepo(ctx context.Context, repo *HelmRepository) (*corev1.Pac
 	}
 
 	// Repository validation
-	if repo.customDetails != nil && repo.customDetails.PerformValidation {
+	if repo.customDetail != nil && repo.customDetail.PerformValidation {
 		if err = s.ValidateRepository(helmRepoCrd, secret); err != nil {
 			return nil, err
 		}
@@ -140,18 +140,18 @@ func newHelmRepoCrd(repo *HelmRepository, secret *k8scorev1.Secret) (*apprepov1a
 			appRepoCrd.Spec.Auth = *repoAuth
 		}
 	}
-	if repo.customDetails != nil {
-		if repo.customDetails.DockerRegistrySecrets != nil {
-			appRepoCrd.Spec.DockerRegistrySecrets = repo.customDetails.DockerRegistrySecrets
+	if repo.customDetail != nil {
+		if repo.customDetail.DockerRegistrySecrets != nil {
+			appRepoCrd.Spec.DockerRegistrySecrets = repo.customDetail.DockerRegistrySecrets
 		}
-		if repo.customDetails.FilterRule != nil {
+		if repo.customDetail.FilterRule != nil {
 			appRepoCrd.Spec.FilterRule = apprepov1alpha1.FilterRuleSpec{
-				JQ:        repo.customDetails.FilterRule.Jq,
-				Variables: repo.customDetails.FilterRule.Variables,
+				JQ:        repo.customDetail.FilterRule.Jq,
+				Variables: repo.customDetail.FilterRule.Variables,
 			}
 		}
-		if repo.customDetails.OciRepositories != nil {
-			appRepoCrd.Spec.OCIRepositories = repo.customDetails.OciRepositories
+		if repo.customDetail.OciRepositories != nil {
+			appRepoCrd.Spec.OCIRepositories = repo.customDetail.OciRepositories
 		}
 	}
 	return appRepoCrd, nil
@@ -200,16 +200,16 @@ func (s *Server) mapToPackageRepositoryDetail(source *apprepov1alpha1.AppReposit
 
 	// Custom details
 	if source.Spec.DockerRegistrySecrets != nil || source.Spec.FilterRule.JQ != "" || source.Spec.OCIRepositories != nil {
-		var customDetails = &v1alpha1.HelmPackageRepositoryCustomDetail{}
-		customDetails.DockerRegistrySecrets = source.Spec.DockerRegistrySecrets
+		var customDetail = &v1alpha1.HelmPackageRepositoryCustomDetail{}
+		customDetail.DockerRegistrySecrets = source.Spec.DockerRegistrySecrets
 		if source.Spec.FilterRule.JQ != "" {
-			customDetails.FilterRule = &v1alpha1.RepositoryFilterRule{
+			customDetail.FilterRule = &v1alpha1.RepositoryFilterRule{
 				Jq:        source.Spec.FilterRule.JQ,
 				Variables: source.Spec.FilterRule.Variables,
 			}
 		}
-		customDetails.OciRepositories = source.Spec.OCIRepositories
-		target.CustomDetail, err = anypb.New(customDetails)
+		customDetail.OciRepositories = source.Spec.OCIRepositories
+		target.CustomDetail, err = anypb.New(customDetail)
 		if err != nil {
 			return nil, err
 		}
@@ -316,17 +316,17 @@ func (s *Server) updateRepo(ctx context.Context, repo *HelmRepository) (*corev1.
 	appRepo.Spec.PassCredentials = repo.auth != nil && repo.auth.PassCredentials
 
 	// Custom details
-	if repo.customDetails != nil {
-		appRepo.Spec.DockerRegistrySecrets = repo.customDetails.DockerRegistrySecrets
-		if repo.customDetails.FilterRule != nil {
+	if repo.customDetail != nil {
+		appRepo.Spec.DockerRegistrySecrets = repo.customDetail.DockerRegistrySecrets
+		if repo.customDetail.FilterRule != nil {
 			appRepo.Spec.FilterRule = apprepov1alpha1.FilterRuleSpec{
-				JQ:        repo.customDetails.FilterRule.Jq,
-				Variables: repo.customDetails.FilterRule.Variables,
+				JQ:        repo.customDetail.FilterRule.Jq,
+				Variables: repo.customDetail.FilterRule.Variables,
 			}
 		} else {
 			appRepo.Spec.FilterRule = apprepov1alpha1.FilterRuleSpec{}
 		}
-		appRepo.Spec.OCIRepositories = repo.customDetails.OciRepositories
+		appRepo.Spec.OCIRepositories = repo.customDetail.OciRepositories
 	} else {
 		appRepo.Spec.DockerRegistrySecrets = nil
 		appRepo.Spec.OCIRepositories = nil
