@@ -8,12 +8,11 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
-	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/plugins/helm/packages/v1alpha1"
-	v1 "k8s.io/client-go/kubernetes/typed/core/v1"
 	"strings"
 
 	apprepov1alpha1 "github.com/vmware-tanzu/kubeapps/cmd/apprepository-controller/pkg/apis/apprepository/v1alpha1"
 	corev1 "github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
+	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/plugins/helm/packages/v1alpha1"
 	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/pkg/statuserror"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -21,6 +20,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/kubernetes"
+	v1 "k8s.io/client-go/kubernetes/typed/core/v1"
 	log "k8s.io/klog/v2"
 	"k8s.io/kubernetes/pkg/credentialprovider"
 )
@@ -141,6 +141,11 @@ func newSecretFromTlsConfigAndAuth(repoName types.NamespacedName,
 func newAppRepositoryAuth(secret *k8scorev1.Secret,
 	tlsConfig *corev1.PackageRepositoryTlsConfig,
 	auth *corev1.PackageRepositoryAuth) (*apprepov1alpha1.AppRepositoryAuth, error) {
+
+	if secret == nil {
+		return nil, status.Errorf(codes.InvalidArgument, "Secret is missing")
+	}
+
 	var appRepoAuth = &apprepov1alpha1.AppRepositoryAuth{}
 
 	if tlsConfig != nil {
@@ -272,7 +277,7 @@ func newDockerImagePullSecret(ownerRepo types.NamespacedName, credentials *corev
 
 func deleteSecret(ctx context.Context, secretsInterface v1.SecretInterface, secretName string) error {
 	// Ignore action if secret didn't exist
-	if secret, _ := secretsInterface.Get(ctx, secretName, metav1.GetOptions{}); secret != nil {
+	if _, err := secretsInterface.Get(ctx, secretName, metav1.GetOptions{}); err == nil {
 		if err := secretsInterface.Delete(ctx, secretName, metav1.DeleteOptions{}); err != nil {
 			return statuserror.FromK8sError("delete", "secret", secretName, err)
 		}
