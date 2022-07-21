@@ -22,6 +22,7 @@ import {
 } from "gen/kubeappsapis/core/packages/v1alpha1/repositories";
 import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins";
 import { HelmPackageRepositoryCustomDetail } from "gen/kubeappsapis/plugins/helm/packages/v1alpha1/helm";
+import { KappControllerPackageRepositoryCustomDetail } from "gen/kubeappsapis/plugins/kapp_controller/packages/v1alpha1/kapp_controller";
 import { IOperatorsState } from "reducers/operators";
 import { Subscription } from "rxjs";
 import { IAuthState } from "../reducers/auth";
@@ -443,5 +444,8 @@ export interface IPkgRepoFormData {
   skipTLS: boolean;
   type: string;
   url: string;
-  customDetails: Partial<HelmPackageRepositoryCustomDetail>; // add more types if necesary, currently just helm's custom details
+  // add more types if necesary
+  customDetails: Partial<
+    HelmPackageRepositoryCustomDetail | KappControllerPackageRepositoryCustomDetail
+  >;
 }

@@ -20,9 +20,13 @@ import {
   UsernamePassword,
 } from "gen/kubeappsapis/core/packages/v1alpha1/repositories";
 import {
-  protobufPackage as helmProtobufPackage,
   HelmPackageRepositoryCustomDetail,
+  protobufPackage as helmProtobufPackage,
 } from "gen/kubeappsapis/plugins/helm/packages/v1alpha1/helm";
+import {
+  KappControllerPackageRepositoryCustomDetail,
+  protobufPackage as kappControllerProtobufPackage,
+} from "gen/kubeappsapis/plugins/kapp_controller/packages/v1alpha1/kapp_controller";
 import KubeappsGrpcClient from "./KubeappsGrpcClient";
 import { IPkgRepoFormData } from "./types";
 import { PluginNames } from "./utils";
@@ -221,6 +225,13 @@ export class PackageRepositoriesService {
           typeUrl: `${helmProtobufPackage}.HelmPackageRepositoryCustomDetail`,
           value: HelmPackageRepositoryCustomDetail.encode(
             request.customDetails as HelmPackageRepositoryCustomDetail,
+          ).finish(),
+        } as Any;
+      case PluginNames.PACKAGES_KAPP:
+        return {
+          typeUrl: `${kappControllerProtobufPackage}.KappControllerPackageRepositoryCustomDetail`,
+          value: KappControllerPackageRepositoryCustomDetail.encode(
+            request.customDetail as KappControllerPackageRepositoryCustomDetail,
           ).finish(),
         } as Any;
       default:
