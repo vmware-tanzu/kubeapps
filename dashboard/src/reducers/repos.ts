@@ -124,7 +124,7 @@ const reposReducer = (
           ? updatedRepo
           : r,
       );
-      return { ...state, reposSummaries: repos };
+      return { ...state, isFetching: false, reposSummaries: repos };
     }
     case getType(actions.repos.errorRepos):
       return {
