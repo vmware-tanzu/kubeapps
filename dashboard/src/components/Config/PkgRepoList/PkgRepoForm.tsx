@@ -24,6 +24,7 @@ import {
 } from "gen/kubeappsapis/core/packages/v1alpha1/repositories";
 import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins";
 import { HelmPackageRepositoryCustomDetail } from "gen/kubeappsapis/plugins/helm/packages/v1alpha1/helm";
+import { KappControllerPackageRepositoryCustomDetail } from "gen/kubeappsapis/plugins/kapp_controller/packages/v1alpha1/kapp_controller";
 import { useEffect, useRef, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { Action } from "redux";
@@ -78,6 +79,8 @@ export function PkgRepoForm(props: IPkgRepoFormProps) {
     clusters: { currentCluster },
   } = useSelector((state: IStoreState) => state);
 
+  const initialInterval = "10m";
+
   // -- Auth-related variables --
 
   // Auth type of the package repository
@@ -106,6 +109,7 @@ export function PkgRepoForm(props: IPkgRepoFormProps) {
   const [secretServer, setSecretServer] = useState("");
 
   // Registry pullsecrets
+  const [useSameAuthCreds, setUseSameAuthCreds] = useState(false);
   const [pullSecretEmail, setPullSecretEmail] = useState("");
   const [pullSecretUser, setPullSecretUser] = useState("");
   const [pullSecretPassword, setPullSecretPassword] = useState("");
@@ -129,24 +133,29 @@ export function PkgRepoForm(props: IPkgRepoFormProps) {
 
   // rest of the package repo form variables
 
-  const initialInterval = "10m";
-
-  const [customCA, setCustomCA] = useState("");
-  const [description, setDescription] = useState("");
-  const [filterExclude, setFilterExclude] = useState(false);
-  const [filterNames, setFilterNames] = useState("");
-  const [filterRegex, setFilterRegex] = useState(false);
-  const [interval, setInterval] = useState(initialInterval);
+  // -- Basic info variables --
   const [name, setName] = useState("");
-  const [ociRepositories, setOCIRepositories] = useState("");
-  const [passCredentials, setPassCredentials] = useState(!!repo?.auth?.passCredentials);
-  const [performValidation, setPerformValidation] = useState(true);
-  const [plugin, setPlugin] = useState({} as Plugin);
-  const [skipTLS, setSkipTLS] = useState(!!repo?.tlsConfig?.insecureSkipVerify);
-  const [type, setType] = useState("");
   const [url, setURL] = useState("");
+  const [description, setDescription] = useState("");
+  const [plugin, setPlugin] = useState({} as Plugin);
+  const [type, setType] = useState("");
+
+  // -- Filtering  variables --
+  const [ociRepositories, setOCIRepositories] = useState("");
+  const [filterNames, setFilterNames] = useState("");
+  const [filterExclude, setFilterExclude] = useState(false);
+  const [filterRegex, setFilterRegex] = useState(false);
+
+  // -- Advanced  variables --
+  const [interval, setInterval] = useState(initialInterval);
+  const [performValidation, setPerformValidation] = useState(true);
+  const [customCA, setCustomCA] = useState("");
+  const [skipTLS, setSkipTLS] = useState(!!repo?.tlsConfig?.insecureSkipVerify);
+  const [passCredentials, setPassCredentials] = useState(!!repo?.auth?.passCredentials);
+
+  // -- Kubeapps/User-managed secrets  variables --
   const [isUserManagedSecret, setIsUserManagedSecret] = useState(false);
-  const [isUserManagedPSSecret] = useState(true);
+  const [isUserManagedPSSecret, setIsUserManagedPSSecret] = useState(false);
   const [isUserManagedCASecret, setIsUserManagedCASecret] = useState(false);
 
   // initial state (collapsed or not) of each accordion tab
@@ -199,22 +208,41 @@ export function PkgRepoForm(props: IPkgRepoFormProps) {
 
       // setting custom details for the Helm plugin
       if (repo.packageRepoRef?.plugin?.name === PluginNames.PACKAGES_HELM) {
-        const HelmPackageRepositoryCustomDetail =
+        const helmPackageRepositoryCustomDetail =
           repo.customDetail as Partial<HelmPackageRepositoryCustomDetail>;
-        setOCIRepositories(HelmPackageRepositoryCustomDetail?.ociRepositories?.join(", ") || "");
-        setPerformValidation(HelmPackageRepositoryCustomDetail?.performValidation || false);
-        if (HelmPackageRepositoryCustomDetail?.filterRule?.jq) {
-          const { names, regex, exclude } = toParams(HelmPackageRepositoryCustomDetail.filterRule!);
+        setOCIRepositories(helmPackageRepositoryCustomDetail?.ociRepositories?.join(", ") || "");
+        setPerformValidation(helmPackageRepositoryCustomDetail?.performValidation || false);
+        if (helmPackageRepositoryCustomDetail?.filterRule?.jq) {
+          const { names, regex, exclude } = toParams(helmPackageRepositoryCustomDetail.filterRule!);
           setFilterRegex(regex);
           setFilterExclude(exclude);
           setFilterNames(names);
         }
-        setHelmPsAuthMethod(
-          HelmPackageRepositoryCustomDetail?.dockerRegistrySecrets?.length
-            ? PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_DOCKER_CONFIG_JSON
-            : PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_UNSPECIFIED,
-        );
-        setSecretPSName(HelmPackageRepositoryCustomDetail?.dockerRegistrySecrets?.[0] || "");
+        if (
+          helmPackageRepositoryCustomDetail?.imagesPullSecret?.secretRef ||
+          helmPackageRepositoryCustomDetail?.imagesPullSecret?.credentials
+        ) {
+          setUseSameAuthCreds(false);
+          setIsUserManagedPSSecret(
+            !!helmPackageRepositoryCustomDetail?.imagesPullSecret?.secretRef,
+          );
+          setHelmPsAuthMethod(
+            PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_DOCKER_CONFIG_JSON,
+          );
+          setSecretPSName(helmPackageRepositoryCustomDetail?.imagesPullSecret?.secretRef || "");
+          setPullSecretEmail(
+            helmPackageRepositoryCustomDetail?.imagesPullSecret?.credentials?.email || "",
+          );
+          setPullSecretUser(
+            helmPackageRepositoryCustomDetail?.imagesPullSecret?.credentials?.username || "",
+          );
+          setPullSecretPassword(
+            helmPackageRepositoryCustomDetail?.imagesPullSecret?.credentials?.password || "",
+          );
+          setPullSecretServer(
+            helmPackageRepositoryCustomDetail?.imagesPullSecret?.credentials?.server || "",
+          );
+        }
       }
     }
   }, [repo, namespace, currentCluster, dispatch]);
@@ -260,33 +288,50 @@ export function PkgRepoForm(props: IPkgRepoFormProps) {
       filter = toFilterRule(filterNames, filterRegex, filterExclude);
     }
 
-    const success = await onSubmit({
-      authHeader: isUserManagedSecret ? "" : finalHeader,
+    // build the custum details object based for each plugin
+    const helmCustomDetail = {
+      ociRepositories: ociRepoList,
+      performValidation,
+      filterRule: filter,
+      imagesPullSecret: {
+        // if using the same credentials toggle is set, use the repo auth's creds instead
+        secretRef: isUserManagedPSSecret ? (useSameAuthCreds ? secretAuthName : secretPSName) : "",
+        credentials: !isUserManagedPSSecret
+          ? {
+              email: useSameAuthCreds ? secretEmail : pullSecretEmail,
+              username: useSameAuthCreds ? secretUser : pullSecretUser,
+              password: useSameAuthCreds ? secretPassword : pullSecretPassword,
+              server: useSameAuthCreds ? secretServer : pullSecretServer,
+            }
+          : undefined,
+      },
+    } as HelmPackageRepositoryCustomDetail;
+
+    //TODO(agamez): add support for kapp's custom details
+    const kappCustomDetail = undefined as unknown as KappControllerPackageRepositoryCustomDetail;
+
+    // build request object for the install call
+    const request = {
+      authHeader: !isUserManagedSecret ? finalHeader : "",
       authMethod,
       basicAuth: {
-        password: isUserManagedSecret ? "" : basicPassword,
-        username: isUserManagedSecret ? "" : basicUser,
+        password: !isUserManagedSecret ? basicPassword : "",
+        username: !isUserManagedSecret ? basicUser : "",
       } as UsernamePassword,
-      customCA: isUserManagedCASecret ? "" : customCA,
-      customDetail: {
-        ociRepositories: ociRepoList,
-        performValidation,
-        filterRule: filter,
-        dockerRegistrySecrets: isUserManagedPSSecret && secretPSName ? [secretPSName] : [],
-      } as HelmPackageRepositoryCustomDetail,
+      customCA: !isUserManagedCASecret ? customCA : "",
       description,
       dockerRegCreds: {
-        username: isUserManagedSecret ? "" : secretUser,
-        email: isUserManagedSecret ? "" : secretEmail,
-        password: isUserManagedSecret ? "" : secretPassword,
-        server: isUserManagedSecret ? "" : secretServer,
+        username: !isUserManagedSecret ? secretUser : "",
+        email: !isUserManagedSecret ? secretEmail : "",
+        password: !isUserManagedSecret ? secretPassword : "",
+        server: !isUserManagedSecret ? secretServer : "",
       } as DockerCredentials,
       interval,
       name,
       passCredentials,
       plugin,
-      secretAuthName: !isUserManagedSecret ? "" : secretAuthName,
-      secretTLSName: !isUserManagedCASecret ? "" : secretTLSName,
+      secretAuthName: isUserManagedSecret ? secretAuthName : "",
+      secretTLSName: isUserManagedCASecret ? secretTLSName : "",
       skipTLS,
       type,
       url: finalURL,
@@ -294,14 +339,28 @@ export function PkgRepoForm(props: IPkgRepoFormProps) {
         data: !isUserManagedSecret && opaqueData ? JSON.parse(opaqueData) : {},
       },
       sshCreds: {
-        knownHosts: isUserManagedSecret ? "" : sshKnownHosts,
-        privateKey: isUserManagedSecret ? "" : sshPrivateKey,
+        knownHosts: !isUserManagedSecret ? sshKnownHosts : "",
+        privateKey: !isUserManagedSecret ? sshPrivateKey : "",
       },
       tlsCertKey: {
-        cert: isUserManagedSecret ? "" : tlsAuthCert,
-        key: isUserManagedSecret ? "" : tlsAuthKey,
+        cert: !isUserManagedSecret ? tlsAuthCert : "",
+        key: !isUserManagedSecret ? tlsAuthKey : "",
       },
-    } as IPkgRepoFormData);
+    } as IPkgRepoFormData;
+
+    // enrich the request object with the corresponding plugin's custom details
+    switch (plugin?.name) {
+      case PluginNames.PACKAGES_HELM:
+        request.customDetail = helmCustomDetail;
+        break;
+      case PluginNames.PACKAGES_KAPP:
+        request.customDetail = kappCustomDetail;
+        break;
+      default:
+        break;
+    }
+
+    const success = await onSubmit(request);
     if (success && onAfterInstall) {
       onAfterInstall();
     }
@@ -334,6 +393,10 @@ export function PkgRepoForm(props: IPkgRepoFormProps) {
   };
   const handleAuthRadioButtonChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setAuthMethod(PackageRepositoryAuth_PackageRepositoryAuthType[e.target.value]);
+
+    // reset the pull secret copy from auth
+    setUseSameAuthCreds(false);
+
     // if the user selects the docker config, suggest also setting the pull secret
     if (
       PackageRepositoryAuth_PackageRepositoryAuthType[e.target.value] ===
@@ -342,6 +405,16 @@ export function PkgRepoForm(props: IPkgRepoFormProps) {
       setHelmPsAuthMethod(
         PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_DOCKER_CONFIG_JSON,
       );
+      // if user hasn't set any field yet, suggest using the same pullsecret
+      if (
+        !secretPSName &&
+        !pullSecretServer &&
+        !pullSecretEmail &&
+        !pullSecretUser &&
+        !pullSecretPassword
+      ) {
+        setUseSameAuthCreds(true);
+      }
     }
   };
   const handleImgPSChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -444,16 +517,15 @@ export function PkgRepoForm(props: IPkgRepoFormProps) {
   };
   const handleIsUserManagedSecretChange = (_e: React.ChangeEvent<HTMLInputElement>) => {
     setIsUserManagedSecret(!isUserManagedSecret);
-    // if the user hasn't set the secret name, use the same selection for the pullsecrets
-    // if (!secretPSName) {
-    //   setIsUserManagedPSSecret(!isUserManagedPSSecret);
-    // }
   };
-  // const handleIsUserManagedPSSecretChange = (_e: React.ChangeEvent<HTMLInputElement>) => {
-  //   setIsUserManagedPSSecret(!isUserManagedPSSecret);
-  // };
+  const handleIsUserManagedPSSecretChange = (_e: React.ChangeEvent<HTMLInputElement>) => {
+    setIsUserManagedPSSecret(!isUserManagedPSSecret);
+  };
   const handleIsUserManagedCASecretChange = (_e: React.ChangeEvent<HTMLInputElement>) => {
     setIsUserManagedCASecret(!isUserManagedCASecret);
+  };
+  const handelUseSameAuthCredsChange = (_e: React.ChangeEvent<HTMLInputElement>) => {
+    setUseSameAuthCreds(!useSameAuthCreds);
   };
 
   const userManagedSecretText = "Use an existing secret";
@@ -483,7 +555,7 @@ export function PkgRepoForm(props: IPkgRepoFormProps) {
           id={`kubeapps-repo-auth-secret-name-${authType}`}
           type="text"
           placeholder="my-secret-name"
-          value={secretAuthName}
+          value={secretAuthName || ""}
           onChange={handleSecretAuthNameChange}
           required={
             isUserManagedSecret &&
@@ -526,7 +598,7 @@ export function PkgRepoForm(props: IPkgRepoFormProps) {
                     id="kubeapps-repo-name"
                     type="text"
                     placeholder="example"
-                    value={name}
+                    value={name || ""}
                     onChange={handleNameChange}
                     required={true}
                     pattern={k8sObjectNameRegex}
@@ -540,7 +612,7 @@ export function PkgRepoForm(props: IPkgRepoFormProps) {
                     id="kubeapps-repo-url"
                     type="text"
                     placeholder="https://charts.example.com/stable"
-                    value={url}
+                    value={url || ""}
                     onChange={handleURLChange}
                     required={true}
                   />
@@ -551,7 +623,7 @@ export function PkgRepoForm(props: IPkgRepoFormProps) {
                     id="kubeapps-repo-description"
                     type="text"
                     placeholder="Description of the repository"
-                    value={description}
+                    value={description || ""}
                     onChange={handleDescriptionChange}
                   />
                 </CdsInput>
@@ -567,7 +639,7 @@ export function PkgRepoForm(props: IPkgRepoFormProps) {
                       id="kubeapps-plugin-helm"
                       type="radio"
                       name="plugin"
-                      value={PluginNames.PACKAGES_HELM}
+                      value={PluginNames.PACKAGES_HELM || ""}
                       checked={plugin?.name === PluginNames.PACKAGES_HELM}
                       onChange={handlePluginRadioButtonChange}
                       disabled={!!repo.packageRepoRef?.plugin}
@@ -580,7 +652,7 @@ export function PkgRepoForm(props: IPkgRepoFormProps) {
                       id="kubeapps-plugin-fluxv2"
                       type="radio"
                       name="plugin"
-                      value={PluginNames.PACKAGES_FLUX}
+                      value={PluginNames.PACKAGES_FLUX || ""}
                       checked={plugin?.name === PluginNames.PACKAGES_FLUX}
                       onChange={handlePluginRadioButtonChange}
                       disabled={!!repo.packageRepoRef?.plugin}
@@ -593,7 +665,7 @@ export function PkgRepoForm(props: IPkgRepoFormProps) {
                       id="kubeapps-plugin-kappcontroller"
                       type="radio"
                       name="plugin"
-                      value={PluginNames.PACKAGES_KAPP}
+                      value={PluginNames.PACKAGES_KAPP || ""}
                       checked={plugin?.name === PluginNames.PACKAGES_KAPP}
                       onChange={handlePluginRadioButtonChange}
                       disabled={!!repo.packageRepoRef?.plugin}
@@ -615,7 +687,7 @@ export function PkgRepoForm(props: IPkgRepoFormProps) {
                             id="kubeapps-repo-type-helm"
                             type="radio"
                             name="type"
-                            value={RepositoryStorageTypes.PACKAGE_REPOSITORY_STORAGE_HELM}
+                            value={RepositoryStorageTypes.PACKAGE_REPOSITORY_STORAGE_HELM || ""}
                             checked={
                               type === RepositoryStorageTypes.PACKAGE_REPOSITORY_STORAGE_HELM
                             }
@@ -635,7 +707,7 @@ export function PkgRepoForm(props: IPkgRepoFormProps) {
                             name="type"
                             // TODO(agamez): workaround until Flux plugin also supports OCI artifacts
                             disabled={plugin?.name === PluginNames.PACKAGES_FLUX || !!repo?.type}
-                            value={RepositoryStorageTypes.PACKAGE_REPOSITORY_STORAGE_OCI}
+                            value={RepositoryStorageTypes.PACKAGE_REPOSITORY_STORAGE_OCI || ""}
                             checked={type === RepositoryStorageTypes.PACKAGE_REPOSITORY_STORAGE_OCI}
                             onChange={handleTypeRadioButtonChange}
                             required={
@@ -656,7 +728,8 @@ export function PkgRepoForm(props: IPkgRepoFormProps) {
                             name="type"
                             disabled={!!repo?.type}
                             value={
-                              RepositoryStorageTypes.PACKAGE_REPOSITORY_STORAGE_CARVEL_IMGPKGBUNDLE
+                              RepositoryStorageTypes.PACKAGE_REPOSITORY_STORAGE_CARVEL_IMGPKGBUNDLE ||
+                              ""
                             }
                             checked={
                               type ===
@@ -673,7 +746,9 @@ export function PkgRepoForm(props: IPkgRepoFormProps) {
                             type="radio"
                             name="type"
                             disabled={!!repo?.type}
-                            value={RepositoryStorageTypes.PACKAGE_REPOSITORY_STORAGE_CARVEL_INLINE}
+                            value={
+                              RepositoryStorageTypes.PACKAGE_REPOSITORY_STORAGE_CARVEL_INLINE || ""
+                            }
                             checked={
                               type ===
                               RepositoryStorageTypes.PACKAGE_REPOSITORY_STORAGE_CARVEL_INLINE
@@ -689,7 +764,9 @@ export function PkgRepoForm(props: IPkgRepoFormProps) {
                             type="radio"
                             name="type"
                             disabled={!!repo?.type}
-                            value={RepositoryStorageTypes.PACKAGE_REPOSITORY_STORAGE_CARVEL_IMAGE}
+                            value={
+                              RepositoryStorageTypes.PACKAGE_REPOSITORY_STORAGE_CARVEL_IMAGE || ""
+                            }
                             checked={
                               type ===
                               RepositoryStorageTypes.PACKAGE_REPOSITORY_STORAGE_CARVEL_IMAGE
@@ -705,7 +782,9 @@ export function PkgRepoForm(props: IPkgRepoFormProps) {
                             type="radio"
                             name="type"
                             disabled={!!repo?.type}
-                            value={RepositoryStorageTypes.PACKAGE_REPOSITORY_STORAGE_CARVEL_HTTP}
+                            value={
+                              RepositoryStorageTypes.PACKAGE_REPOSITORY_STORAGE_CARVEL_HTTP || ""
+                            }
                             checked={
                               type === RepositoryStorageTypes.PACKAGE_REPOSITORY_STORAGE_CARVEL_HTTP
                             }
@@ -720,7 +799,9 @@ export function PkgRepoForm(props: IPkgRepoFormProps) {
                             type="radio"
                             name="type"
                             disabled={!!repo?.type}
-                            value={RepositoryStorageTypes.PACKAGE_REPOSITORY_STORAGE_CARVEL_GIT}
+                            value={
+                              RepositoryStorageTypes.PACKAGE_REPOSITORY_STORAGE_CARVEL_GIT || ""
+                            }
                             checked={
                               type === RepositoryStorageTypes.PACKAGE_REPOSITORY_STORAGE_CARVEL_GIT
                             }
@@ -757,7 +838,7 @@ export function PkgRepoForm(props: IPkgRepoFormProps) {
                           PackageRepositoryAuth_PackageRepositoryAuthType[
                             PackageRepositoryAuth_PackageRepositoryAuthType
                               .PACKAGE_REPOSITORY_AUTH_TYPE_UNSPECIFIED
-                          ]
+                          ] || ""
                         }
                         checked={
                           authMethod ===
@@ -777,7 +858,7 @@ export function PkgRepoForm(props: IPkgRepoFormProps) {
                           PackageRepositoryAuth_PackageRepositoryAuthType[
                             PackageRepositoryAuth_PackageRepositoryAuthType
                               .PACKAGE_REPOSITORY_AUTH_TYPE_BASIC_AUTH
-                          ]
+                          ] || ""
                         }
                         checked={
                           authMethod ===
@@ -802,7 +883,7 @@ export function PkgRepoForm(props: IPkgRepoFormProps) {
                           PackageRepositoryAuth_PackageRepositoryAuthType[
                             PackageRepositoryAuth_PackageRepositoryAuthType
                               .PACKAGE_REPOSITORY_AUTH_TYPE_BEARER
-                          ]
+                          ] || ""
                         }
                         checked={
                           authMethod ===
@@ -829,7 +910,7 @@ export function PkgRepoForm(props: IPkgRepoFormProps) {
                           PackageRepositoryAuth_PackageRepositoryAuthType[
                             PackageRepositoryAuth_PackageRepositoryAuthType
                               .PACKAGE_REPOSITORY_AUTH_TYPE_DOCKER_CONFIG_JSON
-                          ]
+                          ] || ""
                         }
                         checked={
                           authMethod ===
@@ -856,7 +937,7 @@ export function PkgRepoForm(props: IPkgRepoFormProps) {
                           PackageRepositoryAuth_PackageRepositoryAuthType[
                             PackageRepositoryAuth_PackageRepositoryAuthType
                               .PACKAGE_REPOSITORY_AUTH_TYPE_AUTHORIZATION_HEADER
-                          ]
+                          ] || ""
                         }
                         checked={
                           authMethod ===
@@ -883,7 +964,7 @@ export function PkgRepoForm(props: IPkgRepoFormProps) {
                           PackageRepositoryAuth_PackageRepositoryAuthType[
                             PackageRepositoryAuth_PackageRepositoryAuthType
                               .PACKAGE_REPOSITORY_AUTH_TYPE_SSH
-                          ]
+                          ] || ""
                         }
                         checked={
                           authMethod ===
@@ -910,7 +991,7 @@ export function PkgRepoForm(props: IPkgRepoFormProps) {
                           PackageRepositoryAuth_PackageRepositoryAuthType[
                             PackageRepositoryAuth_PackageRepositoryAuthType
                               .PACKAGE_REPOSITORY_AUTH_TYPE_TLS
-                          ]
+                          ] || ""
                         }
                         checked={
                           authMethod ===
@@ -937,7 +1018,7 @@ export function PkgRepoForm(props: IPkgRepoFormProps) {
                           PackageRepositoryAuth_PackageRepositoryAuthType[
                             PackageRepositoryAuth_PackageRepositoryAuthType
                               .PACKAGE_REPOSITORY_AUTH_TYPE_OPAQUE
-                          ]
+                          ] || ""
                         }
                         checked={
                           authMethod ===
@@ -976,7 +1057,7 @@ export function PkgRepoForm(props: IPkgRepoFormProps) {
                             <input
                               id="kubeapps-repo-username"
                               type="text"
-                              value={basicUser}
+                              value={basicUser || ""}
                               onChange={handleBasicUserChange}
                               placeholder="username"
                               required={
@@ -992,7 +1073,7 @@ export function PkgRepoForm(props: IPkgRepoFormProps) {
                             <input
                               id="kubeapps-repo-password"
                               type="password"
-                              value={basicPassword}
+                              value={basicPassword || ""}
                               onChange={handleBasicPasswordChange}
                               placeholder="password"
                               required={
@@ -1025,7 +1106,7 @@ export function PkgRepoForm(props: IPkgRepoFormProps) {
                             <label htmlFor="kubeapps-repo-token">Token</label>
                             <input
                               type="text"
-                              value={bearerToken}
+                              value={bearerToken || ""}
                               onChange={handleAuthBearerTokenChange}
                               id="kubeapps-repo-token"
                               placeholder="xrxNcWghpRLdcPHFgVRM73rr4N7qjvjm"
@@ -1059,7 +1140,7 @@ export function PkgRepoForm(props: IPkgRepoFormProps) {
                             <label htmlFor="kubeapps-docker-cred-server">Server</label>
                             <input
                               id="kubeapps-docker-cred-server"
-                              value={secretServer}
+                              value={secretServer || ""}
                               onChange={handleAuthSecretServerChange}
                               placeholder="https://index.docker.io/v1/"
                               required={
@@ -1074,7 +1155,7 @@ export function PkgRepoForm(props: IPkgRepoFormProps) {
                             <label htmlFor="kubeapps-docker-cred-username">Username</label>
                             <input
                               id="kubeapps-docker-cred-username"
-                              value={secretUser}
+                              value={secretUser || ""}
                               onChange={handleAuthSecretUserChange}
                               placeholder="Username"
                               required={
@@ -1090,7 +1171,7 @@ export function PkgRepoForm(props: IPkgRepoFormProps) {
                             <input
                               id="kubeapps-docker-cred-password"
                               type="password"
-                              value={secretPassword}
+                              value={secretPassword || ""}
                               onChange={handleAuthSecretPasswordChange}
                               placeholder="Password"
                               required={
@@ -1105,7 +1186,7 @@ export function PkgRepoForm(props: IPkgRepoFormProps) {
                             <label htmlFor="kubeapps-docker-cred-email">Email</label>
                             <input
                               id="kubeapps-docker-cred-email"
-                              value={secretEmail}
+                              value={secretEmail || ""}
                               onChange={handleAuthSecretEmailChange}
                               placeholder="user@example.com"
                               disabled={!!repo.auth?.type}
@@ -1138,7 +1219,7 @@ export function PkgRepoForm(props: IPkgRepoFormProps) {
                               id="kubeapps-repo-custom-header"
                               type="text"
                               placeholder="MyAuth xrxNcWghpRLdcPHFgVRM73rr4N7qjvjm"
-                              value={authCustomHeader}
+                              value={authCustomHeader || ""}
                               onChange={handleAuthCustomHeaderChange}
                               required={
                                 authMethod ===
@@ -1174,7 +1255,7 @@ export function PkgRepoForm(props: IPkgRepoFormProps) {
                               id="kubeapps-repo-ssh-knownhosts"
                               className="cds-textarea-fix"
                               placeholder="github.com ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIOMqqnkVzrm0SdG6UOoqKLsabgH5C9okWi0dh2l9GKJl"
-                              value={sshKnownHosts}
+                              value={sshKnownHosts || ""}
                               onChange={handleSshKnownHostsChange}
                               required={
                                 authMethod ===
@@ -1194,7 +1275,7 @@ export function PkgRepoForm(props: IPkgRepoFormProps) {
                               placeholder={
                                 "-----BEGIN CERTIFICATE-----\n...\n-----END CERTIFICATE-----"
                               }
-                              value={sshPrivateKey}
+                              value={sshPrivateKey || ""}
                               onChange={handleSshPrivateKeyChange}
                               required={
                                 authMethod ===
@@ -1230,7 +1311,7 @@ export function PkgRepoForm(props: IPkgRepoFormProps) {
                               placeholder={
                                 "-----BEGIN CERTIFICATE-----\n...\n-----END CERTIFICATE-----"
                               }
-                              value={tlsAuthCert}
+                              value={tlsAuthCert || ""}
                               onChange={handleTlsAuthCertChange}
                               required={
                                 authMethod ===
@@ -1248,7 +1329,7 @@ export function PkgRepoForm(props: IPkgRepoFormProps) {
                               placeholder={
                                 "-----BEGIN CERTIFICATE-----\n...\n-----END CERTIFICATE-----"
                               }
-                              value={tlsAuthKey}
+                              value={tlsAuthKey || ""}
                               onChange={handleTlsAuthKeyChange}
                               required={
                                 authMethod ===
@@ -1284,7 +1365,7 @@ export function PkgRepoForm(props: IPkgRepoFormProps) {
                               id="kubeapps-repo-opaque-data"
                               className="cds-textarea-fix"
                               placeholder={'{\n  "username": "admin",\n  "password": "admin"\n}'}
-                              value={opaqueData}
+                              value={opaqueData || ""}
                               onChange={handleOpaqueDataChange}
                               required={
                                 authMethod ===
@@ -1316,7 +1397,7 @@ export function PkgRepoForm(props: IPkgRepoFormProps) {
                             PackageRepositoryAuth_PackageRepositoryAuthType[
                               PackageRepositoryAuth_PackageRepositoryAuthType
                                 .PACKAGE_REPOSITORY_AUTH_TYPE_UNSPECIFIED
-                            ]
+                            ] || ""
                           }
                           checked={
                             helmPSAuthMethod ===
@@ -1325,7 +1406,9 @@ export function PkgRepoForm(props: IPkgRepoFormProps) {
                           onChange={handleImgPSChange}
                           disabled={
                             !!(repo?.customDetail as Partial<HelmPackageRepositoryCustomDetail>)
-                              ?.dockerRegistrySecrets?.length
+                              ?.imagesPullSecret?.credentials ||
+                            !!(repo?.customDetail as Partial<HelmPackageRepositoryCustomDetail>)
+                              ?.imagesPullSecret?.secretRef
                           }
                           required={
                             authMethod ===
@@ -1346,7 +1429,7 @@ export function PkgRepoForm(props: IPkgRepoFormProps) {
                             PackageRepositoryAuth_PackageRepositoryAuthType[
                               PackageRepositoryAuth_PackageRepositoryAuthType
                                 .PACKAGE_REPOSITORY_AUTH_TYPE_DOCKER_CONFIG_JSON
-                            ]
+                            ] || ""
                           }
                           checked={
                             helmPSAuthMethod ===
@@ -1355,7 +1438,9 @@ export function PkgRepoForm(props: IPkgRepoFormProps) {
                           onChange={handleImgPSChange}
                           disabled={
                             !!(repo?.customDetail as Partial<HelmPackageRepositoryCustomDetail>)
-                              ?.dockerRegistrySecrets?.length
+                              ?.imagesPullSecret?.credentials ||
+                            !!(repo?.customDetail as Partial<HelmPackageRepositoryCustomDetail>)
+                              ?.imagesPullSecret?.secretRef
                           }
                           required={
                             authMethod ===
@@ -1375,140 +1460,182 @@ export function PkgRepoForm(props: IPkgRepoFormProps) {
                           PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_DOCKER_CONFIG_JSON
                         }
                       >
-                        {/* TODO(agamez): enable the selection once the API supports it (#5015) */}
-                        <CdsToggleGroup className="flex-v-center">
-                          <CdsToggle>
-                            <label>
-                              {isUserManagedPSSecret
-                                ? userManagedSecretText
-                                : kubeappsManagedSecretText}
-                            </label>
-                            <input
-                              type="checkbox"
-                              // onChange={handleIsUserManagedPSSecretChange}
-                              checked={isUserManagedPSSecret}
-                              disabled={true}
-                              // disabled={
-                              //   !!(repo?.customDetail as Partial<HelmPackageRepositoryCustomDetail>)
-                              //     ?.dockerRegistrySecrets?.length
-                              // }
-                            />
-                          </CdsToggle>
-                        </CdsToggleGroup>
+                        {authMethod ===
+                          PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_DOCKER_CONFIG_JSON && (
+                          <CdsToggleGroup className="flex-v-center">
+                            <CdsToggle>
+                              {/* eslint-disable-next-line jsx-a11y/label-has-associated-control */}
+                              <label>
+                                {useSameAuthCreds
+                                  ? "Use the same auth credentials as the container registry credentials"
+                                  : "Manually set the container registry credentials"}
+                              </label>
+                              <input
+                                type="checkbox"
+                                onChange={handelUseSameAuthCredsChange}
+                                checked={useSameAuthCreds}
+                                disabled={
+                                  !!(
+                                    repo?.customDetail as Partial<HelmPackageRepositoryCustomDetail>
+                                  )?.imagesPullSecret?.credentials ||
+                                  !!(
+                                    repo?.customDetail as Partial<HelmPackageRepositoryCustomDetail>
+                                  )?.imagesPullSecret?.secretRef
+                                }
+                              />
+                            </CdsToggle>
+                          </CdsToggleGroup>
+                        )}
                         <br />
-                        {isUserManagedPSSecret ? (
+                        {!useSameAuthCreds && (
                           <>
-                            <CdsInput>
-                              <label htmlFor={`kubeapps-repo-auth-secret-name-pullsecret`}>
-                                Registry Secret Name
-                              </label>
-                              <input
-                                id={`kubeapps-repo-auth-secret-name-pullsecret`}
-                                type="text"
-                                placeholder="my-registry-secret-name"
-                                value={secretPSName}
-                                onChange={setSecretPSNameChange}
-                                required={
-                                  isUserManagedPSSecret &&
-                                  helmPSAuthMethod !==
-                                    PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_UNSPECIFIED
-                                }
-                                pattern={k8sObjectNameRegex}
-                                title="Use lower case alphanumeric characters, '-' or '.'"
-                              />
-                            </CdsInput>
+                            <CdsToggleGroup className="flex-v-center">
+                              <CdsToggle>
+                                <label>
+                                  {isUserManagedPSSecret
+                                    ? userManagedSecretText
+                                    : kubeappsManagedSecretText}
+                                </label>
+                                <input
+                                  type="checkbox"
+                                  onChange={handleIsUserManagedPSSecretChange}
+                                  checked={isUserManagedPSSecret}
+                                  disabled={
+                                    !!(
+                                      repo?.customDetail as Partial<HelmPackageRepositoryCustomDetail>
+                                    )?.imagesPullSecret?.credentials
+                                  }
+                                />
+                              </CdsToggle>
+                            </CdsToggleGroup>
                             <br />
-                            <CdsControlMessage>
-                              Name of the{" "}
-                              <a
-                                href="https://kubernetes.io/docs/concepts/configuration/secret/"
-                                target="_blank"
-                                rel="noopener noreferrer"
-                              >
-                                Kubernetes Secret
-                              </a>{" "}
-                              object holding the registry secret data. Please ensure that this
-                              secret's type is <i>dockerconfigjson</i>.
-                            </CdsControlMessage>
-                          </>
-                        ) : (
-                          <>
-                            <CdsInput className="margin-t-sm">
-                              <label htmlFor="kubeapps-imagePullSecrets-cred-server">Server</label>
-                              <input
-                                id="kubeapps-imagePullSecrets-cred-server"
-                                value={pullSecretServer}
-                                onChange={handleImgPSServerChange}
-                                placeholder="https://index.docker.io/v1/"
-                                required={
-                                  authMethod ===
-                                  PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_DOCKER_CONFIG_JSON
-                                }
-                                disabled={
-                                  !!(
-                                    repo?.customDetail as Partial<HelmPackageRepositoryCustomDetail>
-                                  )?.dockerRegistrySecrets?.length
-                                }
-                              />
-                            </CdsInput>
-                            <br />
-                            <CdsInput className="margin-t-sm">
-                              <label htmlFor="kubeapps-imagePullSecrets-cred-username">
-                                Username
-                              </label>
-                              <input
-                                id="kubeapps-imagePullSecrets-cred-username"
-                                value={pullSecretUser}
-                                onChange={handleImgPSUserChange}
-                                placeholder="Username"
-                                required={
-                                  authMethod ===
-                                  PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_DOCKER_CONFIG_JSON
-                                }
-                                disabled={
-                                  !!(
-                                    repo?.customDetail as Partial<HelmPackageRepositoryCustomDetail>
-                                  )?.dockerRegistrySecrets?.length
-                                }
-                              />
-                            </CdsInput>
-                            <br />
-                            <CdsInput className="margin-t-sm">
-                              <label htmlFor="kubeapps-imagePullSecrets-cred-password">
-                                Password
-                              </label>
-                              <input
-                                id="kubeapps-imagePullSecrets-cred-password"
-                                type="password"
-                                value={pullSecretPassword}
-                                onChange={handleImgPSPasswordChange}
-                                placeholder="Password"
-                                required={
-                                  authMethod ===
-                                  PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_DOCKER_CONFIG_JSON
-                                }
-                                disabled={
-                                  !!(
-                                    repo?.customDetail as Partial<HelmPackageRepositoryCustomDetail>
-                                  )?.dockerRegistrySecrets?.length
-                                }
-                              />
-                            </CdsInput>
-                            <br />
-                            <CdsInput className="margin-t-sm">
-                              <label htmlFor="kubeapps-imagePullSecrets-cred-email">Email</label>
-                              <input
-                                id="kubeapps-imagePullSecrets-cred-email"
-                                value={pullSecretEmail}
-                                onChange={handleImgPSEmailChange}
-                                placeholder="user@example.com"
-                                disabled={
-                                  !!(
-                                    repo?.customDetail as Partial<HelmPackageRepositoryCustomDetail>
-                                  )?.dockerRegistrySecrets?.length
-                                }
-                              />
-                            </CdsInput>
+                            {isUserManagedPSSecret ? (
+                              <>
+                                <CdsInput>
+                                  <label htmlFor={`kubeapps-repo-auth-secret-name-pullsecret`}>
+                                    Registry Secret Name
+                                  </label>
+                                  <input
+                                    id={`kubeapps-repo-auth-secret-name-pullsecret`}
+                                    type="text"
+                                    placeholder="my-registry-secret-name"
+                                    value={secretPSName || ""}
+                                    onChange={setSecretPSNameChange}
+                                    required={
+                                      isUserManagedPSSecret &&
+                                      helmPSAuthMethod !==
+                                        PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_UNSPECIFIED
+                                    }
+                                    pattern={k8sObjectNameRegex}
+                                    title="Use lower case alphanumeric characters, '-' or '.'"
+                                    disabled={
+                                      !!(
+                                        repo?.customDetail as Partial<HelmPackageRepositoryCustomDetail>
+                                      )?.imagesPullSecret?.secretRef
+                                    }
+                                  />
+                                </CdsInput>
+                                <br />
+                                <CdsControlMessage>
+                                  Name of the{" "}
+                                  <a
+                                    href="https://kubernetes.io/docs/concepts/configuration/secret/"
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                  >
+                                    Kubernetes Secret
+                                  </a>{" "}
+                                  object holding the registry secret data. Please ensure that this
+                                  secret's type is <i>dockerconfigjson</i>.
+                                </CdsControlMessage>
+                              </>
+                            ) : (
+                              <>
+                                <CdsInput className="margin-t-sm">
+                                  <label htmlFor="kubeapps-imagePullSecrets-cred-server">
+                                    Server
+                                  </label>
+                                  <input
+                                    id="kubeapps-imagePullSecrets-cred-server"
+                                    value={pullSecretServer || ""}
+                                    onChange={handleImgPSServerChange}
+                                    placeholder="https://index.docker.io/v1/"
+                                    required={
+                                      !isUserManagedPSSecret &&
+                                      helmPSAuthMethod !==
+                                        PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_UNSPECIFIED
+                                    }
+                                    disabled={
+                                      !!(
+                                        repo?.customDetail as Partial<HelmPackageRepositoryCustomDetail>
+                                      )?.imagesPullSecret?.credentials
+                                    }
+                                  />
+                                </CdsInput>
+                                <br />
+                                <CdsInput className="margin-t-sm">
+                                  <label htmlFor="kubeapps-imagePullSecrets-cred-username">
+                                    Username
+                                  </label>
+                                  <input
+                                    id="kubeapps-imagePullSecrets-cred-username"
+                                    value={pullSecretUser || ""}
+                                    onChange={handleImgPSUserChange}
+                                    placeholder="Username"
+                                    required={
+                                      !isUserManagedPSSecret &&
+                                      helmPSAuthMethod !==
+                                        PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_UNSPECIFIED
+                                    }
+                                    disabled={
+                                      !!(
+                                        repo?.customDetail as Partial<HelmPackageRepositoryCustomDetail>
+                                      )?.imagesPullSecret?.credentials
+                                    }
+                                  />
+                                </CdsInput>
+                                <br />
+                                <CdsInput className="margin-t-sm">
+                                  <label htmlFor="kubeapps-imagePullSecrets-cred-password">
+                                    Password
+                                  </label>
+                                  <input
+                                    id="kubeapps-imagePullSecrets-cred-password"
+                                    type="password"
+                                    value={pullSecretPassword || ""}
+                                    onChange={handleImgPSPasswordChange}
+                                    placeholder="Password"
+                                    required={
+                                      !isUserManagedPSSecret &&
+                                      helmPSAuthMethod !==
+                                        PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_UNSPECIFIED
+                                    }
+                                    disabled={
+                                      !!(
+                                        repo?.customDetail as Partial<HelmPackageRepositoryCustomDetail>
+                                      )?.imagesPullSecret?.credentials
+                                    }
+                                  />
+                                </CdsInput>
+                                <br />
+                                <CdsInput className="margin-t-sm">
+                                  <label htmlFor="kubeapps-imagePullSecrets-cred-email">
+                                    Email
+                                  </label>
+                                  <input
+                                    id="kubeapps-imagePullSecrets-cred-email"
+                                    value={pullSecretEmail || ""}
+                                    onChange={handleImgPSEmailChange}
+                                    placeholder="user@example.com"
+                                    disabled={
+                                      !!(
+                                        repo?.customDetail as Partial<HelmPackageRepositoryCustomDetail>
+                                      )?.imagesPullSecret?.credentials
+                                    }
+                                  />
+                                </CdsInput>
+                              </>
+                            )}
                           </>
                         )}
                       </div>
@@ -1545,7 +1672,7 @@ export function PkgRepoForm(props: IPkgRepoFormProps) {
                       id="kubeapps-oci-repositories"
                       className="cds-textarea-fix"
                       placeholder={"nginx, jenkins"}
-                      value={ociRepositories}
+                      value={ociRepositories || ""}
                       onChange={handleOCIRepositoriesChange}
                       required={type === RepositoryStorageTypes.PACKAGE_REPOSITORY_STORAGE_OCI}
                     />
@@ -1566,7 +1693,7 @@ export function PkgRepoForm(props: IPkgRepoFormProps) {
                         className="cds-textarea-fix"
                         id="kubeapps-repo-filter-repositories"
                         placeholder={"nginx, jenkins"}
-                        value={filterNames}
+                        value={filterNames || ""}
                         onChange={handleFilterNamesChange}
                       />
                     </CdsTextarea>
@@ -1610,7 +1737,7 @@ export function PkgRepoForm(props: IPkgRepoFormProps) {
                       id="kubeapps-repo-interval"
                       type="text"
                       placeholder={initialInterval}
-                      value={interval}
+                      value={interval || ""}
                       onChange={handleIntervalChange}
                     />
                     <CdsControlMessage>
@@ -1667,7 +1794,7 @@ export function PkgRepoForm(props: IPkgRepoFormProps) {
                         placeholder="my-ca-secret"
                         pattern={k8sObjectNameRegex}
                         title="Use lower case alphanumeric characters, '-' or '.'"
-                        value={secretTLSName}
+                        value={secretTLSName || ""}
                         disabled={skipTLS}
                         onChange={handleSecretTLSNameChange}
                       />
@@ -1695,7 +1822,7 @@ export function PkgRepoForm(props: IPkgRepoFormProps) {
                         id="kubeapps-repo-custom-ca"
                         placeholder={"-----BEGIN CERTIFICATE-----\n...\n-----END CERTIFICATE-----"}
                         className="cds-textarea-fix"
-                        value={customCA}
+                        value={customCA || ""}
                         disabled={skipTLS}
                         onChange={handleCustomCAChange}
                       />

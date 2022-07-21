@@ -30,7 +30,9 @@ const pkgRepoFormData = {
   },
   customCA: "",
   customDetail: {
-    dockerRegistrySecrets: [],
+    imagesPullSecret: {
+      secretRef: "",
+    },
     ociRepositories: [],
     performValidation: false,
     filterRules: [],
