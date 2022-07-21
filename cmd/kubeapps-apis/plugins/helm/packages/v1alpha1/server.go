@@ -1031,25 +1031,25 @@ func (s *Server) AddPackageRepository(ctx context.Context, request *corev1.AddPa
 	}
 
 	// Get Helm-specific values
-	var customDetails *helmv1.HelmPackageRepositoryCustomDetail
+	var customDetail *helmv1.HelmPackageRepositoryCustomDetail
 	if request.CustomDetail != nil {
-		customDetails = &helmv1.HelmPackageRepositoryCustomDetail{}
-		if err := request.CustomDetail.UnmarshalTo(customDetails); err != nil {
-			return nil, status.Errorf(codes.InvalidArgument, "customDetails could not be parsed: [%v]", request.CustomDetail)
+		customDetail = &helmv1.HelmPackageRepositoryCustomDetail{}
+		if err := request.CustomDetail.UnmarshalTo(customDetail); err != nil {
+			return nil, status.Errorf(codes.InvalidArgument, "customDetail could not be parsed: [%v]", request.CustomDetail)
 		}
-		log.Infof("+helm customDetails [%v]", customDetails)
+		log.Infof("+helm customDetail [%v]", customDetail)
 	}
 
 	helmRepo := &HelmRepository{
-		cluster:       cluster,
-		name:          name,
-		url:           request.GetUrl(),
-		repoType:      request.GetType(),
-		description:   request.GetDescription(),
-		interval:      request.GetInterval(),
-		tlsConfig:     request.GetTlsConfig(),
-		auth:          request.GetAuth(),
-		customDetails: customDetails,
+		cluster:      cluster,
+		name:         name,
+		url:          request.GetUrl(),
+		repoType:     request.GetType(),
+		description:  request.GetDescription(),
+		interval:     request.GetInterval(),
+		tlsConfig:    request.GetTlsConfig(),
+		auth:         request.GetAuth(),
+		customDetail: customDetail,
 	}
 	if repoRef, err := s.newRepo(ctx, helmRepo); err != nil {
 		return nil, err
@@ -1128,13 +1128,13 @@ func (s *Server) UpdatePackageRepository(ctx context.Context, request *corev1.Up
 	log.Infof("+helm UpdatePackageRepository '%s' in context [%v]", repoRef.Identifier, repoRef.Context)
 
 	// Get Helm-specific values
-	var customDetails *helmv1.HelmPackageRepositoryCustomDetail
+	var customDetail *helmv1.HelmPackageRepositoryCustomDetail
 	if request.CustomDetail != nil {
-		customDetails = &helmv1.HelmPackageRepositoryCustomDetail{}
-		if err := request.CustomDetail.UnmarshalTo(customDetails); err != nil {
-			return nil, status.Errorf(codes.InvalidArgument, "customDetails could not be parsed: [%v]", request.CustomDetail)
+		customDetail = &helmv1.HelmPackageRepositoryCustomDetail{}
+		if err := request.CustomDetail.UnmarshalTo(customDetail); err != nil {
+			return nil, status.Errorf(codes.InvalidArgument, "customDetail could not be parsed: [%v]", request.CustomDetail)
 		}
-		log.V(4).Infof("+helm upgrade repo %s customDetails [%v]", repoRef.Identifier, customDetails)
+		log.V(4).Infof("+helm upgrade repo %s customDetail [%v]", repoRef.Identifier, customDetail)
 	}
 
 	helmRepo := &HelmRepository{
@@ -1143,12 +1143,12 @@ func (s *Server) UpdatePackageRepository(ctx context.Context, request *corev1.Up
 			Name:      repoRef.Identifier,
 			Namespace: repoRef.GetContext().GetNamespace(),
 		},
-		url:           request.GetUrl(),
-		description:   request.GetDescription(),
-		interval:      request.GetInterval(),
-		tlsConfig:     request.GetTlsConfig(),
-		auth:          request.GetAuth(),
-		customDetails: customDetails,
+		url:          request.GetUrl(),
+		description:  request.GetDescription(),
+		interval:     request.GetInterval(),
+		tlsConfig:    request.GetTlsConfig(),
+		auth:         request.GetAuth(),
+		customDetail: customDetail,
 	}
 	if responseRef, err := s.updateRepo(ctx, helmRepo); err != nil {
 		return nil, err

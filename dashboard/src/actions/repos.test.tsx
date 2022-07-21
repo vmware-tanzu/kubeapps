@@ -121,7 +121,7 @@ const pkgRepoFormData = {
     username: "",
   },
   customCA: "",
-  customDetails: {
+  customDetail: {
     dockerRegistrySecrets: [],
     ociRepositories: [],
     performValidation: false,
@@ -420,8 +420,8 @@ describe("addRepo", () => {
         repoActions.addRepo("my-namespace", {
           ...pkgRepoFormData,
           type: RepositoryStorageTypes.PACKAGE_REPOSITORY_STORAGE_OCI,
-          customDetails: {
-            ...pkgRepoFormData.customDetails,
+          customDetail: {
+            ...pkgRepoFormData.customDetail,
             ociRepositories: ["apache", "jenkins"],
           },
         }),
@@ -432,8 +432,8 @@ describe("addRepo", () => {
         {
           ...pkgRepoFormData,
           type: RepositoryStorageTypes.PACKAGE_REPOSITORY_STORAGE_OCI,
-          customDetails: {
-            ...pkgRepoFormData.customDetails,
+          customDetail: {
+            ...pkgRepoFormData.customDetail,
             ociRepositories: ["apache", "jenkins"],
           },
         },
@@ -551,7 +551,7 @@ describe("addRepo", () => {
     await store.dispatch(
       repoActions.addRepo("my-namespace", {
         ...pkgRepoFormData,
-        customDetails: { ...pkgRepoFormData.customDetails, dockerRegistrySecrets: ["repo-1"] },
+        customDetail: { ...pkgRepoFormData.customDetail, dockerRegistrySecrets: ["repo-1"] },
       }),
     );
 
@@ -560,7 +560,7 @@ describe("addRepo", () => {
       "my-namespace",
       {
         ...pkgRepoFormData,
-        customDetails: { ...pkgRepoFormData.customDetails, dockerRegistrySecrets: ["repo-1"] },
+        customDetail: { ...pkgRepoFormData.customDetail, dockerRegistrySecrets: ["repo-1"] },
       },
       true,
     );
@@ -693,7 +693,7 @@ describe("updateRepo", () => {
       repoActions.updateRepo("my-namespace", {
         ...pkgRepoFormData,
         type: RepositoryStorageTypes.PACKAGE_REPOSITORY_STORAGE_OCI,
-        customDetails: { ...pkgRepoFormData.customDetails, ociRepositories: ["apache", "jenkins"] },
+        customDetail: { ...pkgRepoFormData.customDetail, ociRepositories: ["apache", "jenkins"] },
       }),
     );
     expect(PackageRepositoriesService.updatePackageRepository).toHaveBeenCalledWith(
@@ -702,7 +702,7 @@ describe("updateRepo", () => {
       {
         ...pkgRepoFormData,
         type: RepositoryStorageTypes.PACKAGE_REPOSITORY_STORAGE_OCI,
-        customDetails: { ...pkgRepoFormData.customDetails, ociRepositories: ["apache", "jenkins"] },
+        customDetail: { ...pkgRepoFormData.customDetail, ociRepositories: ["apache", "jenkins"] },
       },
     );
   });

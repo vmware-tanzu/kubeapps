@@ -5,6 +5,7 @@ package main
 
 import (
 	"context"
+
 	apprepov1alpha1 "github.com/vmware-tanzu/kubeapps/cmd/apprepository-controller/pkg/apis/apprepository/v1alpha1"
 	corev1 "github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
 	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/plugins/helm/packages/v1alpha1"
@@ -31,15 +32,15 @@ const (
 )
 
 type HelmRepository struct {
-	cluster       string
-	name          types.NamespacedName
-	url           string
-	repoType      string
-	description   string
-	interval      string
-	tlsConfig     *corev1.PackageRepositoryTlsConfig
-	auth          *corev1.PackageRepositoryAuth
-	customDetails *v1alpha1.HelmPackageRepositoryCustomDetail
+	cluster      string
+	name         types.NamespacedName
+	url          string
+	repoType     string
+	description  string
+	interval     string
+	tlsConfig    *corev1.PackageRepositoryTlsConfig
+	auth         *corev1.PackageRepositoryAuth
+	customDetail *v1alpha1.HelmPackageRepositoryCustomDetail
 }
 
 var ValidRepoTypes = []string{HelmRepoType, OCIRepoType}
@@ -86,7 +87,7 @@ func (s *Server) newRepo(ctx context.Context, repo *HelmRepository) (*corev1.Pac
 	}
 
 	// Repository validation
-	if repo.customDetails != nil && repo.customDetails.PerformValidation {
+	if repo.customDetail != nil && repo.customDetail.PerformValidation {
 		if err = s.ValidateRepository(helmRepoCrd, secret); err != nil {
 			return nil, err
 		}
@@ -154,15 +155,15 @@ func newHelmRepoCrd(repo *HelmRepository, secret *k8scorev1.Secret, imagePullSec
 	} else {
 		appRepoCrd.Spec.DockerRegistrySecrets = nil
 	}
-	if repo.customDetails != nil {
-		if repo.customDetails.FilterRule != nil {
+	if repo.customDetail != nil {
+		if repo.customDetail.FilterRule != nil {
 			appRepoCrd.Spec.FilterRule = apprepov1alpha1.FilterRuleSpec{
-				JQ:        repo.customDetails.FilterRule.Jq,
-				Variables: repo.customDetails.FilterRule.Variables,
+				JQ:        repo.customDetail.FilterRule.Jq,
+				Variables: repo.customDetail.FilterRule.Variables,
 			}
 		}
-		if repo.customDetails.OciRepositories != nil {
-			appRepoCrd.Spec.OCIRepositories = repo.customDetails.OciRepositories
+		if repo.customDetail.OciRepositories != nil {
+			appRepoCrd.Spec.OCIRepositories = repo.customDetail.OciRepositories
 		}
 	}
 	return appRepoCrd, nil
@@ -212,25 +213,25 @@ func (s *Server) mapToPackageRepositoryDetail(source *apprepov1alpha1.AppReposit
 
 	// Custom details
 	if source.Spec.DockerRegistrySecrets != nil || source.Spec.FilterRule.JQ != "" || source.Spec.OCIRepositories != nil {
-		var customDetails = &v1alpha1.HelmPackageRepositoryCustomDetail{}
+		var customDetail = &v1alpha1.HelmPackageRepositoryCustomDetail{}
 
 		if source.Spec.DockerRegistrySecrets != nil {
 			// Set Docker image pull secrets
-			customDetails.ImagesPullSecret = &v1alpha1.ImagesPullSecret{}
+			customDetail.ImagesPullSecret = &v1alpha1.ImagesPullSecret{}
 			if s.pluginConfig.UserManagedSecrets {
-				customDetails.ImagesPullSecret.DockerRegistryCredentialOneOf = getRepoImagesPullSecretWithUserManagedSecrets(imagesPullSecret)
+				customDetail.ImagesPullSecret.DockerRegistryCredentialOneOf = getRepoImagesPullSecretWithUserManagedSecrets(imagesPullSecret)
 			} else {
-				customDetails.ImagesPullSecret.DockerRegistryCredentialOneOf = getRepoImagesPullSecretWithKubeappsManagedSecrets(imagesPullSecret)
+				customDetail.ImagesPullSecret.DockerRegistryCredentialOneOf = getRepoImagesPullSecretWithKubeappsManagedSecrets(imagesPullSecret)
 			}
 		}
 		if source.Spec.FilterRule.JQ != "" {
-			customDetails.FilterRule = &v1alpha1.RepositoryFilterRule{
+			customDetail.FilterRule = &v1alpha1.RepositoryFilterRule{
 				Jq:        source.Spec.FilterRule.JQ,
 				Variables: source.Spec.FilterRule.Variables,
 			}
 		}
-		customDetails.OciRepositories = source.Spec.OCIRepositories
-		target.CustomDetail, err = anypb.New(customDetails)
+		customDetail.OciRepositories = source.Spec.OCIRepositories
+		target.CustomDetail, err = anypb.New(customDetail)
 		if err != nil {
 			return nil, err
 		}
@@ -349,16 +350,16 @@ func (s *Server) updateRepo(ctx context.Context, repo *HelmRepository) (*corev1.
 	}
 
 	// Custom details
-	if repo.customDetails != nil {
-		if repo.customDetails.FilterRule != nil {
+	if repo.customDetail != nil {
+		if repo.customDetail.FilterRule != nil {
 			appRepo.Spec.FilterRule = apprepov1alpha1.FilterRuleSpec{
-				JQ:        repo.customDetails.FilterRule.Jq,
-				Variables: repo.customDetails.FilterRule.Variables,
+				JQ:        repo.customDetail.FilterRule.Jq,
+				Variables: repo.customDetail.FilterRule.Variables,
 			}
 		} else {
 			appRepo.Spec.FilterRule = apprepov1alpha1.FilterRuleSpec{}
 		}
-		appRepo.Spec.OCIRepositories = repo.customDetails.OciRepositories
+		appRepo.Spec.OCIRepositories = repo.customDetail.OciRepositories
 	} else {
 		appRepo.Spec.DockerRegistrySecrets = nil
 		appRepo.Spec.OCIRepositories = nil
@@ -397,7 +398,7 @@ func (s *Server) updateRepo(ctx context.Context, repo *HelmRepository) (*corev1.
 
 func handleImagesPullSecret(ctx context.Context, typedClient kubernetes.Interface,
 	isUserManagedSecrets bool, repo *HelmRepository, newRepo bool) (imgPullSecret *k8scorev1.Secret, updateImgPullSecret bool, err error) {
-	if repo.customDetails == nil || repo.customDetails.ImagesPullSecret == nil {
+	if repo.customDetail == nil || repo.customDetail.ImagesPullSecret == nil {
 		if !isUserManagedSecrets {
 			managedSecretName := imagesPullSecretName(repo.name.Name)
 			secretsInterface := typedClient.CoreV1().Secrets(repo.name.Namespace)
@@ -408,34 +409,34 @@ func handleImagesPullSecret(ctx context.Context, typedClient kubernetes.Interfac
 		return nil, false, nil
 	}
 	if isUserManagedSecrets {
-		if repo.customDetails.ImagesPullSecret.GetSecretRef() != "" {
+		if repo.customDetail.ImagesPullSecret.GetSecretRef() != "" {
 			// Validate existing images pull secret managed by user
-			if validSecret, err := validateDockerImagePullSecret(ctx, typedClient, repo.name, repo.customDetails.ImagesPullSecret.GetSecretRef()); err != nil {
+			if validSecret, err := validateDockerImagePullSecret(ctx, typedClient, repo.name, repo.customDetail.ImagesPullSecret.GetSecretRef()); err != nil {
 				return nil, false, err
 			} else {
 				return validSecret, false, nil
 			}
-		} else if repo.customDetails.ImagesPullSecret.GetCredentials() != nil {
+		} else if repo.customDetail.ImagesPullSecret.GetCredentials() != nil {
 			return nil, false, status.Errorf(codes.InvalidArgument, "full credentials are not valid having user managed secrets")
 		}
 	} else {
-		if repo.customDetails.ImagesPullSecret.GetCredentials() != nil {
+		if repo.customDetail.ImagesPullSecret.GetCredentials() != nil {
 			if newRepo {
 				// Create a new secret due to new repo
-				if newSecret, _, err := newDockerImagePullSecret(repo.name, repo.customDetails.ImagesPullSecret.GetCredentials()); err != nil {
+				if newSecret, _, err := newDockerImagePullSecret(repo.name, repo.customDetail.ImagesPullSecret.GetCredentials()); err != nil {
 					return nil, false, err
 				} else {
 					return newSecret, false, nil
 				}
 			} else {
 				// When updating repo check if secret needs creation, update or removal
-				if updatedSecret, isSameSecret, err := updateKubeappsManagedImagesPullSecret(ctx, typedClient, repo.name, repo.customDetails.ImagesPullSecret.GetCredentials()); err != nil {
+				if updatedSecret, isSameSecret, err := updateKubeappsManagedImagesPullSecret(ctx, typedClient, repo.name, repo.customDetail.ImagesPullSecret.GetCredentials()); err != nil {
 					return nil, false, err
 				} else {
 					return updatedSecret, !isSameSecret, nil
 				}
 			}
-		} else if repo.customDetails.ImagesPullSecret.GetSecretRef() != "" {
+		} else if repo.customDetail.ImagesPullSecret.GetSecretRef() != "" {
 			return nil, false, status.Errorf(codes.InvalidArgument, "secret ref is not valid having kubeapps managed secrets")
 		}
 	}
