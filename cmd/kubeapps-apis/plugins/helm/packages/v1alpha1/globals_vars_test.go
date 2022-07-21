@@ -199,10 +199,9 @@ var (
 			ResourceVersion: "1",
 		},
 		Spec: v1alpha1.AppRepositorySpec{
-			URL:                   "https://example.com",
-			Type:                  "helm",
-			DockerRegistrySecrets: []string{"docker-secret1", "docker-secret2"},
-			OCIRepositories:       []string{"repo1", "repo2"},
+			URL:             "https://example.com",
+			Type:            "helm",
+			OCIRepositories: []string{"repo1", "repo2"},
 			FilterRule: v1alpha1.FilterRuleSpec{
 				JQ:        ".name == $var0 or .name == $var1",
 				Variables: map[string]string{"$var0": "package1", "$var1": "package2"},
@@ -437,7 +436,6 @@ var (
 				Jq:        ".name == $var0 or .name == $var1",
 				Variables: map[string]string{"$var0": "package1", "$var1": "package2"},
 			},
-			DockerRegistrySecrets: []string{"docker-secret1", "docker-secret2"},
 		}),
 	}
 
@@ -453,8 +451,7 @@ var (
 				Jq:        ".name == $var0 or .name == $var1",
 				Variables: map[string]string{"$var0": "package1", "$var1": "package2"},
 			},
-			DockerRegistrySecrets: []string{"docker-secret1", "docker-secret2"},
-			PerformValidation:     true,
+			PerformValidation: true,
 		}),
 	}
 
