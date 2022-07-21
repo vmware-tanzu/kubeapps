@@ -4291,7 +4291,7 @@
         },
         "type": {
           "type": "string",
-          "title": "Package storage type\nIn general, each plug-in will define an acceptable set of valid types\n- for direct helm plug-in valid values are: helm, oci\n- for flux plug-in currently only supported value is helm. In the\n  future, we may add support for git and/or AWS s3-style buckets"
+          "title": "Package storage type\nIn general, each plug-in will define an acceptable set of valid types\n- for direct helm plug-in valid values are: \"helm\" and \"oci\"\n- for flux plug-in valid values are: \"helm\" and \"oci\". In the\n  future, we may add support for git and/or AWS s3-style buckets"
         },
         "url": {
           "type": "string",
@@ -5250,6 +5250,10 @@
         "status": {
           "$ref": "#/definitions/v1alpha1PackageRepositoryStatus",
           "description": "current status of the repository which can include reconciliation\nstatus, where relevant."
+        },
+        "requiresAuth": {
+          "type": "boolean",
+          "description": "existence of any authentication parameters for connecting to a repository."
         }
       },
       "title": "PackageRepositorySummary"

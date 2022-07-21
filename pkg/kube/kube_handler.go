@@ -171,7 +171,6 @@ func ParseClusterConfig(configPath, caFilesPrefix string, pinnipedProxyURL, Pinn
 	}
 	deferFn := func() {
 		err = os.RemoveAll(caFilesDir)
-		return
 	}
 
 	// #nosec G304
@@ -889,14 +888,12 @@ type HelmNonOCIValidator struct {
 
 func (r HelmNonOCIValidator) Validate(cli httpclient.Client) (*ValidationResponse, error) {
 
-	response := &ValidationResponse{}
-
 	res, err := cli.Do(r.Req)
 	if err != nil {
 		// If the request fail, it's not an internal error
 		return &ValidationResponse{Code: 400, Message: err.Error()}, nil
 	}
-	response = &ValidationResponse{Code: res.StatusCode, Message: "OK"}
+	response := &ValidationResponse{Code: res.StatusCode, Message: "OK"}
 	if response.Code != 200 {
 		body, err := ioutil.ReadAll(res.Body)
 		if err != nil {

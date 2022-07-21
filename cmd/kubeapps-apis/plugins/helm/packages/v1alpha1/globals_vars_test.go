@@ -264,17 +264,6 @@ var (
 		NamespaceScoped: false,
 	}
 
-	addRepoReqTlsSkipVerify = &corev1.AddPackageRepositoryRequest{
-		Name:            "bar",
-		Context:         &corev1.Context{Namespace: "foo"},
-		Type:            "helm",
-		Url:             "http://example.com",
-		NamespaceScoped: true,
-		TlsConfig: &corev1.PackageRepositoryTlsConfig{
-			InsecureSkipVerify: true,
-		},
-	}
-
 	addRepoReqSimple = func(repoType string) *corev1.AddPackageRepositoryRequest {
 		return &corev1.AddPackageRepositoryRequest{
 			Name:            "bar",
@@ -442,7 +431,7 @@ var (
 		Type:            "helm",
 		Url:             "https://example.com",
 		NamespaceScoped: true,
-		CustomDetail: toProtoBufAny(&helmv1.RepositoryCustomDetails{
+		CustomDetail: toProtoBufAny(&helmv1.HelmPackageRepositoryCustomDetail{
 			OciRepositories: []string{"repo1", "repo2"},
 			FilterRule: &helmv1.RepositoryFilterRule{
 				Jq:        ".name == $var0 or .name == $var1",
@@ -458,7 +447,7 @@ var (
 		Type:            "helm",
 		Url:             "https://example.com",
 		NamespaceScoped: true,
-		CustomDetail: toProtoBufAny(&helmv1.RepositoryCustomDetails{
+		CustomDetail: toProtoBufAny(&helmv1.HelmPackageRepositoryCustomDetail{
 			OciRepositories: []string{"repo1", "repo2"},
 			FilterRule: &helmv1.RepositoryFilterRule{
 				Jq:        ".name == $var0 or .name == $var1",
@@ -475,7 +464,7 @@ var (
 		Type:            "oci",
 		Url:             "https://example.com",
 		NamespaceScoped: true,
-		CustomDetail: toProtoBufAny(&helmv1.RepositoryCustomDetails{
+		CustomDetail: toProtoBufAny(&helmv1.HelmPackageRepositoryCustomDetail{
 			OciRepositories:   []string{"repo1"},
 			PerformValidation: true,
 		}),

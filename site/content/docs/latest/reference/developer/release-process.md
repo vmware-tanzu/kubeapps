@@ -22,7 +22,7 @@ For building the [development container images](https://hub.docker.com/u/kubeapp
   - [\_/rust](https://hub.docker.com/_/rust) for building the binary.
   - [bitnami/minideb](https://hub.docker.com/r/bitnami/minideb) for running it.
 
-In some images, some build-time linters are used (e.g., `buf` linter, `gosec` checker, etc.). When updating the base container image, these linters (like `BUF_VERSION`, `GOSEC_VERSION`) _should_ be updated to the latest minor/patch version.
+In some images, some build-time linters are used (e.g., `buf` linter, `gosec` or `golangci-lint` checkers, etc.). When updating the base container image, these linters (like `BUF_VERSION`, `GOSEC_VERSION`, `GOLANGCILINT_VERSION`) _should_ be updated to the latest minor/patch version.
 
 > As part of this release process, these image tags _must_ be updated to the latest minor/patch version. In case of a major version, the change _should_ be tracked in a separate PR.
 > **Note**: as the official container images are those being created by Bitnami, we _should_ ensure that we are using the same major version as they are using.
@@ -70,7 +70,7 @@ cd integration
 yarn upgrade
 ```
 
-- The [integration/Dockerfile](https://github.com/vmware-tanzu/kubeapps/blob/main/integration/Dockerfile) uses a [bitnami/node](https://hub.docker.com/r/bitnami/node/tags) image for running the e2e tests.
+- The [integration/Dockerfile](https://github.com/vmware-tanzu/kubeapps/blob/main/integration/Dockerfile) uses a [mcr.microsoft.com/playwright](https://mcr.microsoft.com/v2/playwright/tags/list) image for running the e2e tests.
 
 > As part of this release process, this Node image tag _may_ be updated to the latest minor/patch version. In case of a major version, the change _should_ be tracked in a separate PR. Analogously, its dependencies _may_ also be updated, but in case of a major change, it _should_ be tracked in a separate PR.
 > **Note**: this image is not being built automatically. Consequently, a [manual build process](../testing/end-to-end-tests.md#building-the-kubeappsintegration-tests-image) _must_ be triggered if you happen to upgrade the integration image or its dependencies.

@@ -39,11 +39,13 @@ import { BrowserHeaders } from "browser-headers";
 export const protobufPackage = "kubeappsapis.plugins.kapp_controller.packages.v1alpha1";
 
 /**
+ * KappControllerPackageRepositoryCustomDetail
+ *
  * custom fields to support other carvel repository types
  * this is mirror from https://github.com/vmware-tanzu/carvel-kapp-controller/blob/develop/pkg/apis/kappctrl/v1alpha1/generated.proto
  * todo -> find a way to define those messages by referencing proto files from kapp_controller rather than duplication
  */
-export interface PackageRepositoryCustomDetail {
+export interface KappControllerPackageRepositoryCustomDetail {
   fetch?: PackageRepositoryFetch;
 }
 
@@ -109,13 +111,13 @@ export interface VersionSelectionSemverPrereleases {
   identifiers: string[];
 }
 
-function createBasePackageRepositoryCustomDetail(): PackageRepositoryCustomDetail {
+function createBaseKappControllerPackageRepositoryCustomDetail(): KappControllerPackageRepositoryCustomDetail {
   return { fetch: undefined };
 }
 
-export const PackageRepositoryCustomDetail = {
+export const KappControllerPackageRepositoryCustomDetail = {
   encode(
-    message: PackageRepositoryCustomDetail,
+    message: KappControllerPackageRepositoryCustomDetail,
     writer: _m0.Writer = _m0.Writer.create(),
   ): _m0.Writer {
     if (message.fetch !== undefined) {
@@ -124,10 +126,13 @@ export const PackageRepositoryCustomDetail = {
     return writer;
   },
 
-  decode(input: _m0.Reader | Uint8Array, length?: number): PackageRepositoryCustomDetail {
+  decode(
+    input: _m0.Reader | Uint8Array,
+    length?: number,
+  ): KappControllerPackageRepositoryCustomDetail {
     const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
     let end = length === undefined ? reader.len : reader.pos + length;
-    const message = createBasePackageRepositoryCustomDetail();
+    const message = createBaseKappControllerPackageRepositoryCustomDetail();
     while (reader.pos < end) {
       const tag = reader.uint32();
       switch (tag >>> 3) {
@@ -142,23 +147,23 @@ export const PackageRepositoryCustomDetail = {
     return message;
   },
 
-  fromJSON(object: any): PackageRepositoryCustomDetail {
+  fromJSON(object: any): KappControllerPackageRepositoryCustomDetail {
     return {
       fetch: isSet(object.fetch) ? PackageRepositoryFetch.fromJSON(object.fetch) : undefined,
     };
   },
 
-  toJSON(message: PackageRepositoryCustomDetail): unknown {
+  toJSON(message: KappControllerPackageRepositoryCustomDetail): unknown {
     const obj: any = {};
     message.fetch !== undefined &&
       (obj.fetch = message.fetch ? PackageRepositoryFetch.toJSON(message.fetch) : undefined);
     return obj;
   },
 
-  fromPartial<I extends Exact<DeepPartial<PackageRepositoryCustomDetail>, I>>(
+  fromPartial<I extends Exact<DeepPartial<KappControllerPackageRepositoryCustomDetail>, I>>(
     object: I,
-  ): PackageRepositoryCustomDetail {
-    const message = createBasePackageRepositoryCustomDetail();
+  ): KappControllerPackageRepositoryCustomDetail {
+    const message = createBaseKappControllerPackageRepositoryCustomDetail();
     message.fetch =
       object.fetch !== undefined && object.fetch !== null
         ? PackageRepositoryFetch.fromPartial(object.fetch)

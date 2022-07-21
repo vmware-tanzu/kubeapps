@@ -241,6 +241,7 @@ describe("Auth", () => {
         remoteComponentsUrl: "",
         customAppViews: [],
         skipAvailablePackageDetails: false,
+        createNamespaceLabels: {},
       });
 
       expect(mockedAssign).toBeCalledWith(oauthLogoutURI);
@@ -263,6 +264,7 @@ describe("Auth", () => {
         remoteComponentsUrl: "",
         customAppViews: [],
         skipAvailablePackageDetails: false,
+        createNamespaceLabels: {},
       });
 
       expect(mockedAssign).toBeCalledWith("/oauth2/sign_out");

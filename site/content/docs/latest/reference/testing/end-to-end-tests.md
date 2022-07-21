@@ -40,7 +40,7 @@ To run the tests locally you just need to install the required dependencies and 
 ```bash
 cd integration
 yarn install
-INTEGRATION_ENTRYPOINT=http://kubeapps.local USE_MULTICLUSTER_OIDC_ENV=false ADMIN_TOKEN=foo1 VIEW_TOKEN=foo2 EDIT_TOKEN=foo3 yarn start
+INTEGRATION_ENTRYPOINT=http://kubeapps.local USE_MULTICLUSTER_OIDC_ENV=false ADMIN_TOKEN=foo1 VIEW_TOKEN=foo2 EDIT_TOKEN=foo3 yarn test
 
 ```
 
@@ -52,15 +52,15 @@ Since the CI environment doesn't have the required dependencies and to provide a
 
 To do so, you can spin up an instance running the image [kubeapps/integration-tests](https://hub.docker.com/r/kubeapps/integration-tests).
 This image contains all the required dependencies and it waits forever so you can run commands within it.
-We also provide a simple [Kubernetes Deployment manifest](https://github.com/vmware-tanzu/kubeapps/blob/main/integration/manifests/executor.yaml) for launching this container.
+We also provide a simple [Kubernetes Deployment manifest](https://github.com/vmware-tanzu/kubeapps/blob/main/integration/manifests/e2e-runner.yaml) for launching this container.
 
 The goal of this setup is that you can copy the latest tests to the image, run the tests and extract the screenshots in case of failure:
 
 ```bash
 cd integration
 
-# Deploy the executor pod
-kubectl apply -f manifests/executor.yaml
+# Deploy the e2e-runner pod
+kubectl apply -f manifests/e2e-runner.yaml
 pod=$(kubectl get po -l run=integration -o jsonpath="{.items[0].metadata.name}")
 
 # Copy latest tests
@@ -71,7 +71,7 @@ kubectl cp ./tests ${pod}:/app/
 
 
 # Run tests (you must fill these vars accordingly)
-kubectl exec -it ${pod} -- /bin/sh -c "INTEGRATION_ENTRYPOINT=http://kubeapps.kubeapps USE_MULTICLUSTER_OIDC_ENV=${USE_MULTICLUSTER_OIDC_ENV} ADMIN_TOKEN=${admin_token} VIEW_TOKEN=${view_token} EDIT_TOKEN=${edit_token} yarn start"
+kubectl exec -it ${pod} -- /bin/sh -c "INTEGRATION_ENTRYPOINT=http://kubeapps.kubeapps USE_MULTICLUSTER_OIDC_ENV=${USE_MULTICLUSTER_OIDC_ENV} ADMIN_TOKEN=${admin_token} VIEW_TOKEN=${view_token} EDIT_TOKEN=${edit_token} yarn test"
 
 # If the tests fail, get report screenshot
 kubectl cp ${pod}:/app/reports ./reports
@@ -96,7 +96,7 @@ IMAGE_TAG=v1.0.1 make push
 
 When pushing a new image, also update the field `version` in the [package.json](https://github.com/vmware-tanzu/kubeapps/blob/main/integration/package.json).
 
-Then, update the [Kubernetes Deployment manifest](https://github.com/vmware-tanzu/kubeapps/blob/main/integration/manifests/executor.yaml) to point to the version you have built and pushed.
+Then, update the [Kubernetes Deployment manifest](https://github.com/vmware-tanzu/kubeapps/blob/main/integration/manifests/e2e-runner.yaml) to point to the version you have built and pushed.
 
 To sum up, whenever a change triggers a new `kubeapps/integration-tests` version (new NodeJS image, updating the integration dependencies, other changes, etc.), you will have to release a new version. This process involves:
 
@@ -104,4 +104,4 @@ To sum up, whenever a change triggers a new `kubeapps/integration-tests` version
 - Ensuring we are not using any deprecated dependency in the [package.json](https://github.com/vmware-tanzu/kubeapps/blob/main/integration/package.json).
 - Updating the [Makefile](https://github.com/vmware-tanzu/kubeapps/blob/main/integration/Makefile) with the new version tag.
 - running `make build && make push` to release a new image version.
-- Modifying the [Kubernetes Deployment manifest](https://github.com/vmware-tanzu/kubeapps/blob/main/integration/manifests/executor.yaml) with the new version.
+- Modifying the [Kubernetes Deployment manifest](https://github.com/vmware-tanzu/kubeapps/blob/main/integration/manifests/e2e-runner.yaml) with the new version.

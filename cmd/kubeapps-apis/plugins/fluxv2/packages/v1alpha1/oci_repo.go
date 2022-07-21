@@ -179,7 +179,7 @@ func (r *OCIRegistry) listRepositoryNames() ([]string, error) {
 			r.repositoryLister = lister
 			break
 		} else {
-			log.Infof("Lister [%v] not applicable for registry for URL: [%s] [%v]", reflect.TypeOf(lister), &r.url, err)
+			log.Infof("Lister [%v] not applicable for registry for URL: [%s] [%v]", reflect.TypeOf(lister), r.url.String(), err)
 		}
 	}
 
@@ -250,7 +250,14 @@ func (r *OCIRegistry) downloadChart(chart *repo.ChartVersion) (*bytes.Buffer, er
 
 	t := transport.NewOrIdle(r.tlsConfig)
 	clientOpts := append(r.helmOptions, getter.WithTransport(t))
-	defer transport.Release(t)
+
+	defer func() {
+		err = transport.Release(t)
+	}()
+
+	if err != nil {
+		return nil, err
+	}
 
 	// trim the oci scheme prefix if needed
 	getThis := strings.TrimPrefix(u.String(), fmt.Sprintf("%s://", registry.OCIScheme))
@@ -259,6 +266,7 @@ func (r *OCIRegistry) downloadChart(chart *repo.ChartVersion) (*bytes.Buffer, er
 
 // logout attempts to logout from the OCI registry.
 // It returns an error on failure.
+//nolint:unused
 func (r *OCIRegistry) logout() error {
 	log.Info("+logout")
 	err := r.registryClient.Logout(r.url.Host)
@@ -548,7 +556,6 @@ func (r *OCIRegistry) checksum() (string, error) {
 			return "", err
 		}
 
-		//ref := fmt.Sprintf("%s/%s", r.url.String(), fullAppName)
 		tags[appName] = TagList{Name: appName, Tags: tagz}
 	}
 

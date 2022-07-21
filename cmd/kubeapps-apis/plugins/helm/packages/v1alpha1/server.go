@@ -308,7 +308,7 @@ func (s *Server) GetAvailablePackageDetail(ctx context.Context, request *corev1.
 	if version == "" {
 		version = chart.ChartVersions[0].Version
 	}
-	fileID := fileIDForChart(unescapedChartID, chart.ChartVersions[0].Version)
+	fileID := fileIDForChart(unescapedChartID, version)
 	chartFiles, err := s.manager.GetChartFiles(namespace, fileID)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "Unable to retrieve chart files: %v", err)
@@ -995,7 +995,7 @@ func (s *Server) GetInstalledPackageResourceRefs(ctx context.Context, request *c
 }
 
 func (s *Server) AddPackageRepository(ctx context.Context, request *corev1.AddPackageRepositoryRequest) (*corev1.AddPackageRepositoryResponse, error) {
-	log.Infof("+helm AddPackageRepository '%s' pointing to '%s'", request.Name, request.Url)
+	log.Infof("+helm AddPackageRepository '%s' pointing to '%s'", request.GetName(), request.GetUrl())
 	if request == nil {
 		return nil, status.Errorf(codes.InvalidArgument, "no request provided")
 	}
@@ -1023,9 +1023,9 @@ func (s *Server) AddPackageRepository(ctx context.Context, request *corev1.AddPa
 	}
 
 	// Get Helm-specific values
-	var customDetails *helmv1.RepositoryCustomDetails
+	var customDetails *helmv1.HelmPackageRepositoryCustomDetail
 	if request.CustomDetail != nil {
-		customDetails = &helmv1.RepositoryCustomDetails{}
+		customDetails = &helmv1.HelmPackageRepositoryCustomDetail{}
 		if err := request.CustomDetail.UnmarshalTo(customDetails); err != nil {
 			return nil, status.Errorf(codes.InvalidArgument, "customDetails could not be parsed: [%v]", request.CustomDetail)
 		}
@@ -1120,9 +1120,9 @@ func (s *Server) UpdatePackageRepository(ctx context.Context, request *corev1.Up
 	log.Infof("+helm UpdatePackageRepository '%s' in context [%v]", repoRef.Identifier, repoRef.Context)
 
 	// Get Helm-specific values
-	var customDetails *helmv1.RepositoryCustomDetails
+	var customDetails *helmv1.HelmPackageRepositoryCustomDetail
 	if request.CustomDetail != nil {
-		customDetails = &helmv1.RepositoryCustomDetails{}
+		customDetails = &helmv1.HelmPackageRepositoryCustomDetail{}
 		if err := request.CustomDetail.UnmarshalTo(customDetails); err != nil {
 			return nil, status.Errorf(codes.InvalidArgument, "customDetails could not be parsed: [%v]", request.CustomDetail)
 		}

@@ -1,0 +1,39 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: registry-app
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: registry-app
+  template:
+    metadata:
+      labels:
+        app: registry-app
+    spec:
+      containers:
+      - name: registry
+        image: registry
+        resources:
+          limits:
+            memory: 512Mi
+            cpu: "1"
+          requests:
+            memory: 256Mi
+            cpu: "0.2"
+        volumeMounts:
+        - name: "config"
+          mountPath: "/etc/docker/registry/bcrypt.htpasswd"
+          subPath: "bcrypt.htpasswd"
+        env:
+          - name: REGISTRY_AUTH
+            value: "{htpasswd: {realm: localhost, path: /etc/docker/registry/bcrypt.htpasswd}}"
+        ports:
+        - containerPort: 5000
+          protocol: TCP
+          name: http-port
+      volumes:
+        - name: "config"
+          configMap:
+            name: "registry-configmap"

@@ -93,15 +93,18 @@ export interface SetUserManagedSecretsResponse {
 }
 
 /**
- * RepositoryCustomDetails
+ * HelmPackageRepositoryCustomDetail
  *
  * Custom details for a Helm repository
  */
-export interface RepositoryCustomDetails {
+export interface HelmPackageRepositoryCustomDetail {
+  /** list of docker registry secrets */
   dockerRegistrySecrets: string[];
+  /** list of oci repositories */
   ociRepositories: string[];
+  /** filter rule to apply to the repository */
   filterRule?: RepositoryFilterRule;
-  /** Perform repository validation test */
+  /** whether to perform validation on the repository */
   performValidation: boolean;
 }
 
@@ -111,7 +114,9 @@ export interface RepositoryCustomDetails {
  * JQ expression for filtering packages
  */
 export interface RepositoryFilterRule {
+  /** jq string expression */
   jq: string;
+  /** map of variables */
   variables: { [key: string]: string };
 }
 
@@ -423,7 +428,7 @@ export const SetUserManagedSecretsResponse = {
   },
 };
 
-function createBaseRepositoryCustomDetails(): RepositoryCustomDetails {
+function createBaseHelmPackageRepositoryCustomDetail(): HelmPackageRepositoryCustomDetail {
   return {
     dockerRegistrySecrets: [],
     ociRepositories: [],
@@ -432,8 +437,11 @@ function createBaseRepositoryCustomDetails(): RepositoryCustomDetails {
   };
 }
 
-export const RepositoryCustomDetails = {
-  encode(message: RepositoryCustomDetails, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
+export const HelmPackageRepositoryCustomDetail = {
+  encode(
+    message: HelmPackageRepositoryCustomDetail,
+    writer: _m0.Writer = _m0.Writer.create(),
+  ): _m0.Writer {
     for (const v of message.dockerRegistrySecrets) {
       writer.uint32(10).string(v!);
     }
@@ -449,10 +457,10 @@ export const RepositoryCustomDetails = {
     return writer;
   },
 
-  decode(input: _m0.Reader | Uint8Array, length?: number): RepositoryCustomDetails {
+  decode(input: _m0.Reader | Uint8Array, length?: number): HelmPackageRepositoryCustomDetail {
     const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
     let end = length === undefined ? reader.len : reader.pos + length;
-    const message = createBaseRepositoryCustomDetails();
+    const message = createBaseHelmPackageRepositoryCustomDetail();
     while (reader.pos < end) {
       const tag = reader.uint32();
       switch (tag >>> 3) {
@@ -476,7 +484,7 @@ export const RepositoryCustomDetails = {
     return message;
   },
 
-  fromJSON(object: any): RepositoryCustomDetails {
+  fromJSON(object: any): HelmPackageRepositoryCustomDetail {
     return {
       dockerRegistrySecrets: Array.isArray(object?.dockerRegistrySecrets)
         ? object.dockerRegistrySecrets.map((e: any) => String(e))
@@ -493,7 +501,7 @@ export const RepositoryCustomDetails = {
     };
   },
 
-  toJSON(message: RepositoryCustomDetails): unknown {
+  toJSON(message: HelmPackageRepositoryCustomDetail): unknown {
     const obj: any = {};
     if (message.dockerRegistrySecrets) {
       obj.dockerRegistrySecrets = message.dockerRegistrySecrets.map(e => e);
@@ -513,10 +521,10 @@ export const RepositoryCustomDetails = {
     return obj;
   },
 
-  fromPartial<I extends Exact<DeepPartial<RepositoryCustomDetails>, I>>(
+  fromPartial<I extends Exact<DeepPartial<HelmPackageRepositoryCustomDetail>, I>>(
     object: I,
-  ): RepositoryCustomDetails {
-    const message = createBaseRepositoryCustomDetails();
+  ): HelmPackageRepositoryCustomDetail {
+    const message = createBaseHelmPackageRepositoryCustomDetail();
     message.dockerRegistrySecrets = object.dockerRegistrySecrets?.map(e => e) || [];
     message.ociRepositories = object.ociRepositories?.map(e => e) || [];
     message.filterRule =

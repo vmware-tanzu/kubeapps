@@ -12,6 +12,7 @@ import (
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
 	"k8s.io/apimachinery/pkg/api/meta"
@@ -115,7 +116,7 @@ func NewServer(configGetter core.KubernetesConfigGetter, clientQPS float32, clie
 		},
 		corePackagesClientGetter: func() (pkgsGRPCv1alpha1.PackagesServiceClient, error) {
 			port := os.Getenv("PORT")
-			conn, err := grpc.Dial("localhost:"+port, grpc.WithInsecure())
+			conn, err := grpc.Dial("localhost:"+port, grpc.WithTransportCredentials(insecure.NewCredentials()))
 			if err != nil {
 				return nil, status.Errorf(codes.Internal, "unable to dial to localhost grpc service: %s", err.Error())
 			}

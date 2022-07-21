@@ -126,6 +126,7 @@ var repo1Summary = &corev1.PackageRepositorySummary{
 	NamespaceScoped: true,
 	Type:            "helm",
 	Url:             "https://test-repo",
+	RequiresAuth:    false,
 	Status:          &corev1.PackageRepositoryStatus{Ready: true},
 }
 
@@ -136,6 +137,18 @@ var repo2Summary = &corev1.PackageRepositorySummary{
 	NamespaceScoped: true,
 	Type:            "oci",
 	Url:             "https://test-repo2",
+	RequiresAuth:    false,
+	Status:          &corev1.PackageRepositoryStatus{Ready: true},
+}
+
+var repo3Summary = &corev1.PackageRepositorySummary{
+	PackageRepoRef:  repoRef("repo-3", KubeappsCluster, globalPackagingNamespace),
+	Name:            "repo-3",
+	Description:     "description 3",
+	NamespaceScoped: false,
+	Type:            "helm",
+	Url:             "https://test-repo3",
+	RequiresAuth:    true,
 	Status:          &corev1.PackageRepositoryStatus{Ready: true},
 }
 
@@ -503,10 +516,16 @@ func TestGetPackageRepositorySummaries(t *testing.T) {
 
 	repo1b := *repo1
 	repo1b.Spec.URL = ts.URL
+
 	repo2b := *repo2
 	repo2b.Spec.URL = ts.URL
+
+	repo3 := *repo3
+	repo3.Spec.URL = ts.URL
+
 	repo1Summary.Url = ts.URL
 	repo2Summary.Url = ts.URL
+	repo3Summary.Url = ts.URL
 
 	testCases := []struct {
 		name               string
@@ -548,6 +567,21 @@ func TestGetPackageRepositorySummaries(t *testing.T) {
 				},
 			},
 		},
+		{
+			name: "returns package summaries with auth",
+			request: &corev1.GetPackageRepositorySummariesRequest{
+				Context: &corev1.Context{Cluster: KubeappsCluster, Namespace: globalPackagingNamespace},
+			},
+			existingRepos: []k8sruntime.Object{
+				&repo3,
+			},
+			expectedStatusCode: codes.OK,
+			expectedResponse: &corev1.GetPackageRepositorySummariesResponse{
+				PackageRepositorySummaries: []*corev1.PackageRepositorySummary{
+					repo3Summary,
+				},
+			},
+		},
 	}
 
 	for _, tc := range testCases {
@@ -579,6 +613,7 @@ func TestGetPackageRepositorySummaries(t *testing.T) {
 				corev1.PackageRepositorySummary{},
 				corev1.PackageRepositoryReference{},
 				corev1.PackageRepositoryStatus{},
+				corev1.PackageRepositoryAuth{},
 			)
 			opts2 := cmpopts.SortSlices(lessPackageRepositorySummaryFunc)
 			if got, want := response, tc.expectedResponse; !cmp.Equal(want, got, opts, opts2) {
@@ -600,7 +635,7 @@ func TestGetPackageRepositoryDetail(t *testing.T) {
 	}
 	buildResponse := func(namespace, name, repoType, url, description string,
 		auth *corev1.PackageRepositoryAuth, tlsConfig *corev1.PackageRepositoryTlsConfig,
-		customDetails *v1alpha1.RepositoryCustomDetails) *corev1.GetPackageRepositoryDetailResponse {
+		customDetails *v1alpha1.HelmPackageRepositoryCustomDetail) *corev1.GetPackageRepositoryDetailResponse {
 		response := &corev1.GetPackageRepositoryDetailResponse{
 			Detail: &corev1.PackageRepositoryDetail{
 				PackageRepoRef: &corev1.PackageRepositoryReference{
@@ -678,7 +713,7 @@ func TestGetPackageRepositoryDetail(t *testing.T) {
 						CertAuthority: "REDACTED",
 					},
 				},
-				&v1alpha1.RepositoryCustomDetails{
+				&v1alpha1.HelmPackageRepositoryCustomDetail{
 					DockerRegistrySecrets: []string{"repo-4-secret"},
 					OciRepositories:       []string{"oci-repo-1", "oci-repo-2"},
 					FilterRule: &v1alpha1.RepositoryFilterRule{
@@ -730,7 +765,7 @@ func TestGetPackageRepositoryDetail(t *testing.T) {
 				corev1.PackageRepositoryStatus{},
 				corev1.PackageRepositoryTlsConfig{},
 				corev1.PackageRepositoryAuth{},
-				v1alpha1.RepositoryCustomDetails{},
+				v1alpha1.HelmPackageRepositoryCustomDetail{},
 				anypb.Any{},
 				corev1.PackageRepositoryAuth_UsernamePassword{},
 				corev1.UsernamePassword{},
@@ -1031,7 +1066,7 @@ func TestUpdatePackageRepository(t *testing.T) {
 				corev1.PackageRepositoryStatus{},
 				corev1.PackageRepositoryTlsConfig{},
 				corev1.PackageRepositoryAuth{},
-				v1alpha1.RepositoryCustomDetails{},
+				v1alpha1.HelmPackageRepositoryCustomDetail{},
 				anypb.Any{},
 				corev1.PackageRepositoryAuth_UsernamePassword{},
 				corev1.UsernamePassword{},
