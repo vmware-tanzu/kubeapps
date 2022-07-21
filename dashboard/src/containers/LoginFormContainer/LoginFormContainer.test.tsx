@@ -45,6 +45,7 @@ const makeStore = (
     remoteComponentsUrl: "",
     customAppViews: [],
     skipAvailablePackageDetails: false,
+    createNamespaceLabels: {},
   };
   const clusters: IClustersState = {
     currentCluster: "default",

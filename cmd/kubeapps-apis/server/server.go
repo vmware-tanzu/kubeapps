@@ -22,6 +22,7 @@ import (
 	packagesGRPCv1alpha1 "github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
 	pluginsGRPCv1alpha1 "github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/core/plugins/v1alpha1"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/reflection"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/encoding/protojson"
@@ -85,7 +86,7 @@ func Serve(serveOpts core.ServeOptions) error {
 		Ctx:         ctx,
 		Mux:         gw,
 		Addr:        listenAddr,
-		DialOptions: []grpc.DialOption{grpc.WithInsecure()},
+		DialOptions: []grpc.DialOption{grpc.WithTransportCredentials(insecure.NewCredentials())},
 	}
 
 	// Create the core.plugins.v1alpha1 server which handles registration of

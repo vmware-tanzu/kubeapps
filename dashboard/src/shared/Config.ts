@@ -32,6 +32,7 @@ export interface IConfig {
   remoteComponentsUrl: string;
   customAppViews: ICustomAppViewIdentifier[];
   skipAvailablePackageDetails: boolean;
+  createNamespaceLabels: { [key: string]: string };
 }
 
 export interface IFeatureFlags {

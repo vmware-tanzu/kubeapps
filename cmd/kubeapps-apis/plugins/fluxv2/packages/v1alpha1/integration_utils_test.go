@@ -86,7 +86,7 @@ const (
 	github_podinfo_oci_registry_url = "oci://ghcr.io/stefanprodan/charts"
 
 	// the URL of local in cluster helm registry. Gets deployed via ./kind-cluster-setup.sh
-	in_cluster_oci_registry_url = "oci://registry-app-svc.default.svc.cluster.local:5000/helm-charts"
+	// in_cluster_oci_registry_url = "oci://registry-app-svc.default.svc.cluster.local:5000/helm-charts"
 )
 
 func checkEnv(t *testing.T) (fluxplugin.FluxV2PackagesServiceClient, fluxplugin.FluxV2RepositoriesServiceClient, error) {
@@ -958,8 +958,14 @@ func kubeGetCtrlClient() (ctrlclient.WithWatch, error) {
 			return nil, err
 		} else {
 			scheme := runtime.NewScheme()
-			sourcev1.AddToScheme(scheme)
-			helmv2.AddToScheme(scheme)
+			err = sourcev1.AddToScheme(scheme)
+			if err != nil {
+				return nil, err
+			}
+			err = helmv2.AddToScheme(scheme)
+			if err != nil {
+				return nil, err
+			}
 
 			return ctrlclient.NewWithWatch(config, ctrlclient.Options{Scheme: scheme})
 		}
