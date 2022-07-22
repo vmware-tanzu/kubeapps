@@ -1290,6 +1290,7 @@ func getFluxPluginTestdataPodName() (*types.NamespacedName, error) {
 // It is left here on purpose waiting for
 // https://github.com/fluxcd/source-controller/issues/839
 // to get resolved one way or another
+/*
 func helmPushChartToMyGithubRegistry(t *testing.T) error {
 	t.Logf("+helmPushChartToMyGithubRegistry")
 	defer t.Logf("-helmPushChartToMyGithubRegistry")
@@ -1309,6 +1310,7 @@ func helmPushChartToMyGithubRegistry(t *testing.T) error {
 	t.Logf("Executed command: [%s], output: [%s]", cmd.String(), out)
 	return err
 }
+*/
 
 // global vars
 var (
