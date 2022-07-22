@@ -2,13 +2,13 @@
 # yarn lockfile v1
 
 
-"@playwright/test@^1.23.4":
-  version "1.23.4"
-  resolved "https://registry.yarnpkg.com/@playwright/test/-/test-1.23.4.tgz#d742ed34fc3eb09e29c2e652c2a646ba1e3c6b08"
-  integrity sha512-iIsoMJDS/lyuhw82FtcV/B3PXikgVD3hNe5hyvOpRM0uRr1OIpN3LgPeRbBjhzBWmyf6RgRg5fqK5sVcpA03yA==
+"@playwright/test@^1.24.0":
+  version "1.24.0"
+  resolved "https://registry.yarnpkg.com/@playwright/test/-/test-1.24.0.tgz#bef07eddeebba21358ab15e9b0b7a79df0479b76"
+  integrity sha512-sZLH2N6aWN9TtG+vMjNSomSfX0dSVHwWE+GhHQPV+ZeGcuZ/6CgMCGFuGjobgq/hNF9ZkuVOjeyoceZ0owKnHQ==
   dependencies:
     "@types/node" "*"
-    playwright-core "1.23.4"
+    playwright-core "1.24.0"
 
 "@types/node@*":
   version "18.0.3"
@@ -66,10 +66,10 @@ mime-types@^2.1.12:
   dependencies:
     mime-db "1.52.0"
 
-playwright-core@1.23.4:
-  version "1.23.4"
-  resolved "https://registry.yarnpkg.com/playwright-core/-/playwright-core-1.23.4.tgz#e8a45e549faf6bfad24a0e9998e451979514d41e"
-  integrity sha512-h5V2yw7d8xIwotjyNrkLF13nV9RiiZLHdXeHo+nVJIYGVlZ8U2qV0pMxNJKNTvfQVT0N8/A4CW6/4EW2cOcTiA==
+playwright-core@1.24.0:
+  version "1.24.0"
+  resolved "https://registry.yarnpkg.com/playwright-core/-/playwright-core-1.24.0.tgz#ece821ceaf241bb7206329b1242b0cf6c1c60bdb"
+  integrity sha512-BkDWdVsoEEC8m2glQlfNu1EN2qvjBsLIg5bD0wjrfwv9zVHktIsp80yYFObAcWreLNYhfRP4PlXE04lr5R4DFQ==
 
 prettier@^2.7.1:
   version "2.7.1"
