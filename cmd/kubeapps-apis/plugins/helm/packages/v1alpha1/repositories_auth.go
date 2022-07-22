@@ -142,13 +142,12 @@ func newAppRepositoryAuth(secret *k8scorev1.Secret,
 	tlsConfig *corev1.PackageRepositoryTlsConfig,
 	auth *corev1.PackageRepositoryAuth) (*apprepov1alpha1.AppRepositoryAuth, error) {
 
-	if secret == nil {
-		return nil, status.Errorf(codes.InvalidArgument, "Secret is missing")
-	}
-
 	var appRepoAuth = &apprepov1alpha1.AppRepositoryAuth{}
 
 	if tlsConfig != nil {
+		if secret == nil {
+			return nil, status.Errorf(codes.InvalidArgument, "Secret is missing")
+		}
 		appRepoAuth.CustomCA = &apprepov1alpha1.AppRepositoryCustomCA{
 			SecretKeyRef: k8scorev1.SecretKeySelector{
 				Key: SecretCaKey,
@@ -164,6 +163,9 @@ func newAppRepositoryAuth(secret *k8scorev1.Secret,
 		case corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_BASIC_AUTH,
 			corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_BEARER,
 			corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_AUTHORIZATION_HEADER:
+			if secret == nil {
+				return nil, status.Errorf(codes.InvalidArgument, "Secret is missing")
+			}
 			if _, ok := secret.Data[SecretAuthHeaderKey]; ok {
 				appRepoAuth.Header = &apprepov1alpha1.AppRepositoryAuthHeader{
 					SecretKeyRef: k8scorev1.SecretKeySelector{
@@ -177,6 +179,9 @@ func newAppRepositoryAuth(secret *k8scorev1.Secret,
 				return nil, status.Errorf(codes.InvalidArgument, "Authentication header is missing")
 			}
 		case corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_DOCKER_CONFIG_JSON:
+			if secret == nil {
+				return nil, status.Errorf(codes.InvalidArgument, "Secret is missing")
+			}
 			if _, ok := secret.Data[DockerConfigJsonKey]; ok {
 				appRepoAuth.Header = &apprepov1alpha1.AppRepositoryAuthHeader{
 					SecretKeyRef: k8scorev1.SecretKeySelector{
