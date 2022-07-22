@@ -217,11 +217,26 @@ export class PackageRepositoriesService {
     // of the actual custom object
     switch (request.plugin?.name) {
       case PluginNames.PACKAGES_HELM:
+        // populate the non-optional fields
+        // eslint-disable-next-line no-case-declarations
+        const helmCustomDetail: HelmPackageRepositoryCustomDetail = {
+          ociRepositories: request.customDetail.ociRepositories || [],
+          performValidation: !!request.customDetail.performValidation,
+        };
+        // populate the filterRule if it's not empty
+        if (request.customDetail.filterRule) {
+          helmCustomDetail.filterRule = request.customDetail.filterRule;
+        }
+        // populate the imagesPullSecret if it's not empty
+        if (
+          request.customDetail.imagesPullSecret?.secretRef ||
+          Object.values(request.customDetail?.imagesPullSecret?.credentials as any).some(e => !!e)
+        ) {
+          helmCustomDetail.imagesPullSecret = request.customDetail.imagesPullSecret;
+        }
         return {
           typeUrl: `${helmProtobufPackage}.HelmPackageRepositoryCustomDetail`,
-          value: HelmPackageRepositoryCustomDetail.encode(
-            request.customDetail as HelmPackageRepositoryCustomDetail,
-          ).finish(),
+          value: HelmPackageRepositoryCustomDetail.encode(helmCustomDetail).finish(),
         } as Any;
       default:
         return undefined;
