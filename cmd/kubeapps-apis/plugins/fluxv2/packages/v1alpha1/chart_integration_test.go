@@ -617,7 +617,7 @@ func TestKindClusterAvailablePackageEndpointsForOCI(t *testing.T) {
 				}
 			}
 
-			setUserManagedSecretsAndCleanup(t, fluxPluginReposClient, grpcContext, true)
+			setUserManagedSecretsAndCleanup(t, fluxPluginReposClient, true)
 
 			if err := kubeAddHelmRepositoryAndCleanup(
 				t, repoName, "oci", tc.registryUrl, secretName, 0); err != nil {

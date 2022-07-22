@@ -14,7 +14,6 @@ OCI_REGISTRY_REMOTE_PORT=5000
 OCI_REGISTRY_LOCAL_PORT=5000
 OCI_REGISTRY_USER=foo
 OCI_REGISTRY_PWD=bar
-OCI_REGISTRY_PODINFO_CHART=podinfo:6.1.6
 
 function pushChartToLocalRegistryUsingHelmCLI() {
   max=5  
@@ -100,6 +99,12 @@ function portForwardToLocalRegistry() {
 # In order to make progress I made my OCI registry public per
 # https://docs.github.com/en/packages/learn-github-packages/configuring-a-packages-access-control-and-visibility
 function pushChartToMyGitHubRegistry() {
+  if [ $# -lt 1 ]
+  then
+    echo "Usage : $0 chart.tgz"
+    exit
+  fi
+
   max=5  
   n=0
   until [ $n -ge $max ]
@@ -118,20 +123,14 @@ function pushChartToMyGitHubRegistry() {
     helm registry logout ghcr.io
   }' EXIT  
 
-  # TODO (gfichtenholt) remove all charts from remote before pushing
-
-  # these .tgz files were pulled from https://stefanprodan.github.io/podinfo/ 
-  CMD="helm push charts/podinfo-6.1.6.tgz oci://ghcr.io/gfichtenholt/helm-charts"
+  CMD="helm push $1 oci://ghcr.io/gfichtenholt/helm-charts"
   echo Starting command: $CMD...
   $CMD
   echo Command completed
 
-  # sanity check
+  # sanity checks
+  # TODO (gfichtenholt) display all versions. 'show all' only shows the latest 
   helm show all oci://ghcr.io/gfichtenholt/helm-charts/podinfo | head -9
-
-  # TODO (gfichtenholt) check package visibility on 
-  # https://github.com/users/gfichtenholt/packages/container/helm-charts%2Fpodinfo/settings
-  # must be Public
 }
 
 function deploy {
@@ -163,8 +162,17 @@ function deploy {
   # this as time allows
   # portForwardToLocalRegistry
   # pushChartToLocalRegistryUsingHelmCLI
-  # pushChartToLocalRegistryUsingDockerCLI
-  pushChartToMyGitHubRegistry
+
+  # TODO (gfichtenholt) remove all charts from remote before pushing
+  echo 
+  echo Make sure to manually delete the package before next command is run 
+  echo and set the package visibility to 'public' afterwards 
+  echo at https://github.com/users/gfichtenholt/packages/container/helm-charts%2Fpodinfo/settings 
+  echo 
+  read -p "Press any key to resume ..."
+
+  # these .tgz files were pulled from https://stefanprodan.github.io/podinfo/ 
+  pushChartToMyGitHubRegistry "charts/podinfo-6.1.6.tgz"
 }
 
 function undeploy {
@@ -215,6 +223,9 @@ redeploy) redeploy
 shell) shell
     ;;
 logs) logs
+    ;;
+# this is for TestKindClusterAddTagsToOciRepository
+pushChartToMyGithub) pushChartToMyGitHubRegistry $2
     ;;
 *) echo "Invalid command: $1"
    ;;

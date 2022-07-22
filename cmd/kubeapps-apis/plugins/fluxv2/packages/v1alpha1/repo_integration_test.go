@@ -323,20 +323,19 @@ func TestKindClusterAddPackageRepository(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.testName, func(t *testing.T) {
-			ctx, cancel := context.WithTimeout(grpcContext, defaultContextTimeout)
-			defer cancel()
+
 			if tc.existingSecret != nil {
 				if err := kubeCreateSecretAndCleanup(t, tc.existingSecret); err != nil {
 					t.Fatalf("%v", err)
 				}
 			}
 
-			setUserManagedSecretsAndCleanup(t, fluxPluginReposClient, ctx, tc.userManagedSecrets)
+			setUserManagedSecretsAndCleanup(t, fluxPluginReposClient, tc.userManagedSecrets)
 
-			grpcContext, cancel = context.WithTimeout(grpcContext, defaultContextTimeout)
+			grpcContext, cancel := context.WithTimeout(grpcContext, defaultContextTimeout)
 			defer cancel()
 
-			resp, err := fluxPluginReposClient.AddPackageRepository(ctx, tc.request)
+			resp, err := fluxPluginReposClient.AddPackageRepository(grpcContext, tc.request)
 			if tc.expectedStatusCode != codes.OK {
 				if status.Code(err) != tc.expectedStatusCode {
 					t.Fatalf("Expected %v, got: %v", tc.expectedStatusCode, err)
@@ -563,7 +562,7 @@ func TestKindClusterGetPackageRepositoryDetail(t *testing.T) {
 				grpcCtx = grpcAdmin
 			}
 
-			setUserManagedSecretsAndCleanup(t, fluxPluginReposClient, grpcCtx, tc.userManagedSecrets)
+			setUserManagedSecretsAndCleanup(t, fluxPluginReposClient, tc.userManagedSecrets)
 
 			var resp *corev1.GetPackageRepositoryDetailResponse
 			for {
@@ -865,6 +864,8 @@ func TestKindClusterUpdatePackageRepository(t *testing.T) {
 			expectedResponse:   update_repo_resp_5,
 			expectedDetail:     update_repo_detail_14,
 		},
+
+		// TODO (gfichtenholt) Update OCI repository interval
 	}
 
 	adminAcctName := types.NamespacedName{
@@ -946,7 +947,7 @@ func TestKindClusterUpdatePackageRepository(t *testing.T) {
 				grpcCtx = grpcAdmin
 			}
 
-			setUserManagedSecretsAndCleanup(t, fluxPluginReposClient, grpcCtx, tc.userManagedSecrets)
+			setUserManagedSecretsAndCleanup(t, fluxPluginReposClient, tc.userManagedSecrets)
 
 			tc.request.PackageRepoRef.Context.Namespace = repoNamespace
 			if tc.expectedResponse != nil {
@@ -1089,21 +1090,16 @@ func TestKindClusterDeletePackageRepository(t *testing.T) {
 			oldSecretName := ""
 			if tc.oldSecret != nil {
 				tc.oldSecret.Namespace = repoNamespace
-				if err := kubeCreateSecret(t, tc.oldSecret); err != nil {
-					t.Fatalf("%v", err)
+				if tc.userManagedSecrets {
+					if err := kubeCreateSecretAndCleanup(t, tc.oldSecret); err != nil {
+						t.Fatalf("%v", err)
+					}
+				} else {
+					if err := kubeCreateSecret(t, tc.oldSecret); err != nil {
+						t.Fatalf("%v", err)
+					}
 				}
 				oldSecretName = tc.oldSecret.GetName()
-				if tc.userManagedSecrets {
-					t.Cleanup(func() {
-						err := kubeDeleteSecret(t,
-							types.NamespacedName{
-								Namespace: tc.oldSecret.Namespace,
-								Name:      tc.oldSecret.Name})
-						if err != nil {
-							t.Logf("Failed to delete secret [%s] due to [%v]", tc.oldSecret.Name, err)
-						}
-					})
-				}
 			}
 			if tc.newSecret != nil {
 				tc.newSecret.Namespace = repoNamespace
@@ -1145,7 +1141,7 @@ func TestKindClusterDeletePackageRepository(t *testing.T) {
 				grpcCtx = grpcAdmin
 			}
 
-			setUserManagedSecretsAndCleanup(t, fluxPluginReposClient, grpcCtx, tc.userManagedSecrets)
+			setUserManagedSecretsAndCleanup(t, fluxPluginReposClient, tc.userManagedSecrets)
 
 			tc.request.PackageRepoRef.Context.Namespace = repoNamespace
 
@@ -1248,7 +1244,7 @@ func TestKindClusterUpdatePackageRepoSecretUnchanged(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	setUserManagedSecretsAndCleanup(t, fluxPluginReposClient, grpcAdmin, false)
+	setUserManagedSecretsAndCleanup(t, fluxPluginReposClient, false)
 
 	request.PackageRepoRef.Context.Namespace = repoNamespace
 	expectedResponse.PackageRepoRef.Context.Namespace = repoNamespace
@@ -1343,7 +1339,7 @@ func TestKindClusterUpdatePackageRepoSecretUnchanged(t *testing.T) {
 	compareActualVsExpectedPackageRepositoryDetail(t, actualDetail, expectedDetail)
 }
 
-func TestKindClusterModifyOCIRepositoryContents(t *testing.T) {
+func TestKindClusterAddTagsToOciRepository(t *testing.T) {
 	fluxPluginClient, _, err := checkEnv(t)
 	if err != nil {
 		t.Fatal(err)
@@ -1382,9 +1378,10 @@ func TestKindClusterModifyOCIRepositoryContents(t *testing.T) {
 		}
 
 		repo_url := "oci://ghcr.io/gfichtenholt/helm-charts"
+		interval := time.Duration(5 * time.Second)
 
 		if err := kubeAddHelmRepositoryAndCleanup(
-			t, repoName, "oci", repo_url, secret.Name, 0); err != nil {
+			t, repoName, "oci", repo_url, secret.Name, interval); err != nil {
 			t.Fatal(err)
 		}
 
@@ -1413,6 +1410,13 @@ func TestKindClusterModifyOCIRepositoryContents(t *testing.T) {
 		if got, want := resp2, expected_versions_gfichtenholt_podinfo; !cmp.Equal(want, got, opts) {
 			t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opts))
 		}
+
+		// TODO: (gfichtenholt) This test is unfinished due to
+		// https://github.com/fluxcd/source-controller/issues/839
+		// Requested feature: flux OCI helm repositories notice when tags on remote registry change
+		//if err := helmPushChartToMyGithubRegistry(t); err != nil {
+		//		t.Fatal(err)
+		//}
 	})
 }
 
@@ -1444,8 +1448,8 @@ func compareActualVsExpectedPackageRepositoryDetail(t *testing.T, actualDetail *
 	}
 }
 
-func setUserManagedSecretsAndCleanup(t *testing.T, fluxPluginReposClient v1alpha1.FluxV2RepositoriesServiceClient, ctx context.Context, value bool) {
-	ctx, cancel := context.WithTimeout(ctx, defaultContextTimeout)
+func setUserManagedSecretsAndCleanup(t *testing.T, fluxPluginReposClient v1alpha1.FluxV2RepositoriesServiceClient, value bool) {
+	ctx, cancel := context.WithTimeout(context.Background(), defaultContextTimeout)
 	defer cancel()
 
 	oldValue, err := fluxPluginReposClient.SetUserManagedSecrets(
@@ -1453,18 +1457,15 @@ func setUserManagedSecretsAndCleanup(t *testing.T, fluxPluginReposClient v1alpha
 	if err != nil {
 		t.Fatal(err)
 	}
+
 	t.Cleanup(func() {
-		ctx, cancel := context.WithTimeout(ctx, defaultContextTimeout)
+		ctx, cancel = context.WithTimeout(context.Background(), defaultContextTimeout)
 		defer cancel()
 
 		_, err = fluxPluginReposClient.SetUserManagedSecrets(
 			ctx, &v1alpha1.SetUserManagedSecretsRequest{Value: oldValue.Value})
 		if err != nil {
-			// TODO (gifchtenholt) this fails now.
-			// repo_integration_test.go:1592: Failed to reset user managed secrets flag due to:
-			// rpc error: code = Canceled desc = context canceled
-			// Find out why and fix it
-			t.Logf("Failed to reset user managed secrets flag due to: %+v", err)
+			t.Fatalf("Failed to reset user managed secrets flag back to [%t] due to: %+v", oldValue.Value, err)
 		}
 	})
 }

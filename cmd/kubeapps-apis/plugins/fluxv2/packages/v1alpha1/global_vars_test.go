@@ -2044,7 +2044,6 @@ var (
 	expected_versions_gfichtenholt_podinfo = &corev1.GetAvailablePackageVersionsResponse{
 		PackageAppVersions: []*corev1.PackageAppVersion{
 			{PkgVersion: "6.1.6"},
-			{PkgVersion: "6.0.0"},
 		},
 	}
 

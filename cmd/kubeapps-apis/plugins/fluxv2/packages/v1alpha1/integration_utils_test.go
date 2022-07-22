@@ -1285,6 +1285,26 @@ func getFluxPluginTestdataPodName() (*types.NamespacedName, error) {
 	return nil, fmt.Errorf("fluxplugin testdata pod not found")
 }
 
+func helmPushChartToMyGithubRegistry(t *testing.T) error {
+	t.Logf("+helmPushChartToMyGithubRegistry")
+	defer t.Logf("-helmPushChartToMyGithubRegistry")
+
+	// use the helm CLI for now
+	args := []string{
+		"pushChartToMyGithub",
+		"testdata/charts/podinfo-6.1.5.tgz",
+	}
+
+	script := "./testdata/kind-cluster-setup.sh"
+	t.Logf("About to execute command: [%s]...", script)
+	// TODO (gfichtenholt) it'd be nice to have real-time updates
+	cmd := exec.Command(script, args...)
+	byteArray, err := cmd.CombinedOutput()
+	out := strings.Trim(string(byteArray), "\n")
+	t.Logf("Executed command: [%s], output: [%s]", cmd.String(), out)
+	return err
+}
+
 // global vars
 var (
 	typedClient kubernetes.Interface
