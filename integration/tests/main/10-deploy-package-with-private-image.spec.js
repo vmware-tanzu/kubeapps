@@ -39,61 +39,60 @@ test("Deploy a chart using a private container image", async ({ page }) => {
   await page.locator('[id="kubeapps-repo-password"]').fill("password");
 
   // Set the Docker repo credentials
-  // TODO(agamez): currently, the API doesn't allow creating this secret, and the UI is not dealing with
-  // secret creation anymore.
-  // Instead, either 1) wait until the API supports it and use the commented-out snippet below:
-
-  // await page.locator('[id="kubeapps-imagePullSecrets-cred-server"]').fill( process.env.DOCKER_REGISTRY_UR);
-  // await page.locator('[id="kubeapps-imagePullSecrets-cred-username"]').fill(process.env.DOCKER_USERNAME);
-  // await page.locator('[id="kubeapps-imagePullSecrets-cred-password"]').fill(process.env.DOCKER_PASSWORD);
-  // await page.locator('[id="kubeapps-imagePullSecrets-cred-email"]').fill("test@example.com");
-
-  // or 2) create a "my-repo-secret" secret with the Docker repo credentials in this very test case
-  // by manually invoking the resources API
   await page.locator("text=Docker Registry Credentials").nth(1).click();
-  await page.locator('[id="kubeapps-repo-auth-secret-name-pullsecret"]').fill("my-repo-secret");
+  debugger;
 
+  await page
+    .locator('[id="kubeapps-imagePullSecrets-cred-server"]')
+    .fill(process.env.DOCKER_REGISTRY_URL);
+  await page
+    .locator('[id="kubeapps-imagePullSecrets-cred-username"]')
+    .fill(process.env.DOCKER_USERNAME);
+  await page
+    .locator('[id="kubeapps-imagePullSecrets-cred-password"]')
+    .fill(process.env.DOCKER_PASSWORD);
+  await page.locator('[id="kubeapps-imagePullSecrets-cred-email"]').fill("test@example.com");
   await page.locator("text=Install Repository >> div").click();
 
   // For now, disabling the this test case temporarily.
 
   // Wait for new packages to be indexed
-  // await page.waitForTimeout(5000);
+  await page.waitForTimeout(5000);
 
-  // // Check if our package shows up in catalog
-  // await page.click(`a:has-text("${repoName}")`);
-  // await page.click('a:has-text("simplechart")');
+  // Check if our package shows up in catalog
+  await page.click(`a:has-text("${repoName}")`);
+  await page.click('a:has-text("simplechart")');
 
-  // // Deploy package
-  // await page.click('cds-button:has-text("Deploy")');
-  // await page.selectOption('select[name="package-versions"]', "0.1.0");
-  // const releaseNameLocator = page.locator("#releaseName");
-  // await releaseNameLocator.waitFor();
-  // await expect(releaseNameLocator).toHaveText("");
-  // const appName = utils.getRandomName("test-10-release");
-  // console.log(`Creating release "${appName}"`);
-  // await releaseNameLocator.fill(appName);
+  // Deploy package
+  await page.click('cds-button:has-text("Deploy")');
+  await page.selectOption('select[name="package-versions"]', "0.1.0");
+  const releaseNameLocator = page.locator("#releaseName");
+  await releaseNameLocator.waitFor();
+  await expect(releaseNameLocator).toHaveText("");
+  const appName = utils.getRandomName("test-10-release");
+  console.log(`Creating release "${appName}"`);
+  await releaseNameLocator.fill(appName);
 
-  // // Select version and deploy
-  // await page.locator('cds-button:has-text("Deploy")').click();
+  // Select version and deploy
+  await page.locator('cds-button:has-text("Deploy")').click();
 
-  // // Assertions
-  // // Wait for the app to be deployed and select it from "Applications"
-  // await page.waitForTimeout(5000);
-  // await page.click('a.nav-link:has-text("Applications")');
-  // await page.waitForTimeout(3000); // Sometimes typing was too fast to get the result shown
-  // await page.locator("input#search").fill(appName);
-  // await page.waitForTimeout(3000);
-  // await page.click(`a .card-title:has-text("${appName}")`);
+  // Assertions
+  // Wait for the app to be deployed and select it from "Applications"
+  await page.waitForTimeout(5000);
+  await page.click('a.nav-link:has-text("Applications")');
+  await page.waitForTimeout(3000); // Sometimes typing was too fast to get the result shown
+  await page.locator("input#search").fill(appName);
+  await page.waitForTimeout(3000);
+  await page.click(`a .card-title:has-text("${appName}")`);
 
-  // await page.waitForSelector("css=.application-status-pie-chart-number >> text=1", {
-  //   timeout: deployTimeout,
-  // });
-  // await page.waitForSelector("css=.application-status-pie-chart-title >> text=Ready", {
-  //   timeout: deployTimeout,
-  // });
+  await page.waitForSelector("css=.application-status-pie-chart-number >> text=1", {
+    timeout: deployTimeout,
+  });
+  await page.waitForSelector("css=.application-status-pie-chart-title >> text=Ready", {
+    timeout: deployTimeout,
+  });
 
-  // // Clean up
-  // await page.locator('cds-button:has-text("Delete")').click();
-  // await page.locator('cds-modal-actions button:has-text("Delete")').click();
+  // Clean up
+  await page.locator('cds-button:has-text("Delete")').click();
+  await page.locator('cds-modal-actions button:has-text("Delete")').click();
 });
