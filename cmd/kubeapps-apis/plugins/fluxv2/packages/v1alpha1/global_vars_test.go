@@ -2872,6 +2872,15 @@ var (
 		Auth:           foo_bar_auth_redacted,
 	}
 
+	update_repo_req_18 = func(ghUser, ghPasswd string) *corev1.UpdatePackageRepositoryRequest {
+		return &corev1.UpdatePackageRepositoryRequest{
+			PackageRepoRef: repoRefInReq("my-podinfo-7", "TBD"),
+			Url:            github_podinfo_oci_registry_url,
+			Auth:           github_auth(ghUser, ghPasswd),
+			Interval:       "4m44s",
+		}
+	}
+
 	update_repo_resp_1 = &corev1.UpdatePackageRepositoryResponse{
 		PackageRepoRef: repoRef("repo-1", "namespace-1"),
 	}
@@ -2894,6 +2903,10 @@ var (
 
 	update_repo_resp_6 = &corev1.UpdatePackageRepositoryResponse{
 		PackageRepoRef: repoRefWithId("my-podinfo-6"),
+	}
+
+	update_repo_resp_7 = &corev1.UpdatePackageRepositoryResponse{
+		PackageRepoRef: repoRefWithId("my-podinfo-7"),
 	}
 
 	update_repo_detail_1 = &corev1.GetPackageRepositoryDetailResponse{
@@ -3128,6 +3141,20 @@ var (
 		},
 	}
 
+	update_repo_detail_17 = &corev1.GetPackageRepositoryDetailResponse{
+		Detail: &corev1.PackageRepositoryDetail{
+			PackageRepoRef:  repoRefWithId("my-podinfo-7"),
+			Name:            "my-podinfo-7",
+			Description:     "",
+			NamespaceScoped: false,
+			Type:            "oci",
+			Url:             github_podinfo_oci_registry_url,
+			Interval:        "4m44s",
+			Auth:            foo_bar_auth_redacted,
+			Status:          podinfo_repo_status_4,
+		},
+	}
+
 	foo_bar_auth = &corev1.PackageRepositoryAuth{
 		Type: corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_BASIC_AUTH,
 		PackageRepoAuthOneOf: &corev1.PackageRepositoryAuth_UsernamePassword{
@@ -3146,6 +3173,18 @@ var (
 				Password: redactedString,
 			},
 		},
+	}
+
+	github_auth = func(ghUser, ghToken string) *corev1.PackageRepositoryAuth {
+		return &corev1.PackageRepositoryAuth{
+			Type: corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_BASIC_AUTH,
+			PackageRepoAuthOneOf: &corev1.PackageRepositoryAuth_UsernamePassword{
+				UsernamePassword: &corev1.UsernamePassword{
+					Username: ghUser,
+					Password: ghToken,
+				},
+			},
+		}
 	}
 
 	tls_auth = func(pub, priv []byte) *corev1.PackageRepositoryAuth {

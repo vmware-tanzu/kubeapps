@@ -232,7 +232,7 @@ func kubeAddHelmRepository(t *testing.T, name types.NamespacedName, typ, url, se
 	if ifc, err := kubeGetCtrlClient(); err != nil {
 		return err
 	} else {
-		t.Logf("Creating: %s\n...", common.PrettyPrint(repo))
+		t.Logf("Creating HelmRepository: %s\n...", common.PrettyPrint(repo))
 		return ifc.Create(ctx, &repo)
 	}
 }
@@ -1285,6 +1285,11 @@ func getFluxPluginTestdataPodName() (*types.NamespacedName, error) {
 	return nil, fmt.Errorf("fluxplugin testdata pod not found")
 }
 
+// TODO (gfichtenholt)
+// This func is commented out is so that it doesn't trigger lint warning
+// It is left here on purpose waiting for
+// https://github.com/fluxcd/source-controller/issues/839
+// to get resolved one way or another
 func helmPushChartToMyGithubRegistry(t *testing.T) error {
 	t.Logf("+helmPushChartToMyGithubRegistry")
 	defer t.Logf("-helmPushChartToMyGithubRegistry")

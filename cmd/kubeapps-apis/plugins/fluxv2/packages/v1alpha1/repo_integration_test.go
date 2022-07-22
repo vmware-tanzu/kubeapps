@@ -789,11 +789,19 @@ func TestKindClusterUpdatePackageRepository(t *testing.T) {
 
 	ca, pub, priv := getCertsForTesting(t)
 
+	// see TestKindClusterAvailablePackageEndpointsForOCI for explanation
+	ghUser := os.Getenv("GITHUB_USER")
+	ghToken := os.Getenv("GITHUB_TOKEN")
+	if ghUser == "" || ghToken == "" {
+		t.Fatalf("Environment variables GITHUB_USER and GITHUB_TOKEN need to be set to run this test")
+	}
+
 	testCases := []struct {
 		name               string
 		request            *corev1.UpdatePackageRepositoryRequest
 		repoName           string
 		repoUrl            string
+		repoType           string
 		unauthorized       bool
 		failed             bool
 		expectedResponse   *corev1.UpdatePackageRepositoryResponse
@@ -864,8 +872,16 @@ func TestKindClusterUpdatePackageRepository(t *testing.T) {
 			expectedResponse:   update_repo_resp_5,
 			expectedDetail:     update_repo_detail_14,
 		},
-
-		// TODO (gfichtenholt) Update OCI repository interval
+		{
+			name:               "update OCI repository change interval (kubeapps-managed secrets)",
+			request:            update_repo_req_18(ghUser, ghToken),
+			repoName:           "my-podinfo-7",
+			repoUrl:            github_podinfo_oci_registry_url,
+			repoType:           "oci",
+			expectedStatusCode: codes.OK,
+			expectedResponse:   update_repo_resp_7,
+			expectedDetail:     update_repo_detail_17,
+		},
 	}
 
 	adminAcctName := types.NamespacedName{
@@ -924,7 +940,7 @@ func TestKindClusterUpdatePackageRepository(t *testing.T) {
 				Namespace: repoNamespace,
 			}
 			if err = kubeAddHelmRepositoryAndCleanup(t, name,
-				"", tc.repoUrl, oldSecretName, 0); err != nil {
+				tc.repoType, tc.repoUrl, oldSecretName, 0); err != nil {
 				t.Fatal(err)
 			}
 			// wait until this repo reaches 'Ready' state so that long indexation process kicks in
