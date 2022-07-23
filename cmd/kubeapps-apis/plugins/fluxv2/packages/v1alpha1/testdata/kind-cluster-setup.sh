@@ -131,6 +131,47 @@ function pushChartToMyGitHubRegistry() {
   # sanity checks
   # TODO (gfichtenholt) display all versions. 'show all' only shows the latest 
   helm show all oci://ghcr.io/gfichtenholt/helm-charts/podinfo | head -9
+
+  echo 
+  echo You can see all packages at https://github.com/gfichtenholt?tab=packages
+  echo You can see and delete any specific package version at 
+  echo   https://github.com/users/gfichtenholt/packages/container/helm-charts%2Fpodinfo/versions
+  echo
+}
+
+function deleteChartVersionFromMyGitHubRegistry() {
+  if [ $# -lt 1 ]
+  then
+    echo "Usage : $0 version"
+    exit
+  fi
+
+  max=5  
+  n=0
+  until [ $n -ge $max ]
+  do
+   helm registry login ghcr.io -u $GITHUB_USER -p $GITHUB_TOKEN && break
+   n=$((n+1)) 
+   echo "Retrying helm login in 5s [$n/$max]..."
+   sleep 5
+  done
+  if [[ $n -ge $max ]]; then
+    echo "Failed to login to helm registry [ghcr.io] after [$max] attempts. Exiting script..."
+    exit 1
+  fi
+
+  trap '{
+    helm registry logout ghcr.io
+  }' EXIT  
+
+  open https://github.com/users/gfichtenholt/packages/container/helm-charts%2Fpodinfo/versions
+  echo 
+  echo You can see delete a specific package version [$1] at 
+  echo https://github.com/users/gfichtenholt/packages/container/helm-charts%2Fpodinfo/versions
+  echo
+  read -p "Press any key to resume ..."
+
+  # TODO (gfichtenholt) sanity check 
 }
 
 function deploy {
@@ -163,16 +204,24 @@ function deploy {
   # portForwardToLocalRegistry
   # pushChartToLocalRegistryUsingHelmCLI
 
-  # TODO (gfichtenholt) remove all charts from remote before pushing
+  VERSION=6.1.5 
+
+  # these .tgz files were pulled from https://stefanprodan.github.io/podinfo/ + .tgz
+  pushChartToMyGitHubRegistry "charts/podinfo-$VERSION.tgz"
+
+  # TODO (gfichtenholt) automate this so it does not require interaction
+  open https://github.com/users/gfichtenholt/packages/container/helm-charts%2Fpodinfo/versions
   echo 
-  echo Make sure to manually delete the package before next command is run 
-  echo and set the package visibility to 'public' afterwards 
-  echo at https://github.com/users/gfichtenholt/packages/container/helm-charts%2Fpodinfo/settings 
+  echo Make sure that: 
+  echo  - package visibility for [podinfo] is [public] 
+  echo    at https://github.com/users/gfichtenholt/packages/container/helm-charts%2Fpodinfo/settings 
+  echo - the only package version is [$VERSION] 
+  echo    at https://github.com/users/gfichtenholt/packages/container/helm-charts%2Fpodinfo/versions
+  echo before running the integration tests
   echo 
   read -p "Press any key to resume ..."
 
-  # these .tgz files were pulled from https://stefanprodan.github.io/podinfo/ 
-  pushChartToMyGitHubRegistry "charts/podinfo-6.1.6.tgz"
+  # TODO (gfichtenholt) sanity check
 }
 
 function undeploy {
@@ -209,7 +258,7 @@ function logs {
 
 if [ $# -lt 1 ]
 then
-  echo "Usage : $0 deploy|undeploy|redeploy|shell|logs"
+  echo "Usage : $0 deploy|undeploy|redeploy|shell|logs|pushChartToMyGithub|deleteChartVersionFromMyGitHub"
   exit
 fi
 
@@ -224,8 +273,13 @@ shell) shell
     ;;
 logs) logs
     ;;
-# this is for TestKindClusterAddTagsToOciRepository
+# this is for integration tests TestKindClusterAddTagsToOciRepository and 
+# TestKindClusterAutoUpdateInstalledPackageFromOciRepo
 pushChartToMyGithub) pushChartToMyGitHubRegistry $2
+    ;;
+# this is for integration tests TestKindClusterAddTagsToOciRepository and 
+# TestKindClusterAutoUpdateInstalledPackageFromOciRepo
+deleteChartVersionFromMyGitHub) deleteChartVersionFromMyGitHubRegistry $2
     ;;
 *) echo "Invalid command: $1"
    ;;

@@ -511,6 +511,53 @@ var (
 		TargetContext:       targetContext("test-17"),
 	}
 
+	create_installed_package_request_auto_update_oci = &corev1.CreateInstalledPackageRequest{
+		AvailablePackageRef: availableRef("podinfo-18/podinfo", "default"),
+		Name:                "my-podinfo-18",
+		TargetContext:       targetContext("test-18"),
+		PkgVersionReference: &corev1.VersionReference{
+			Version: ">= 6",
+		},
+		ReconciliationOptions: &corev1.ReconciliationOptions{
+			Interval: "30s",
+		},
+	}
+
+	expected_detail_installed_package_auto_update_oci = &corev1.InstalledPackageDetail{
+		PkgVersionReference: &corev1.VersionReference{
+			Version: ">= 6",
+		},
+		CurrentVersion: pkgAppVersion("6.1.5"),
+		Status:         status_installed,
+		ReconciliationOptions: &corev1.ReconciliationOptions{
+			Interval: "30s",
+		},
+		PostInstallationNotes: podinfo_notes("my-podinfo-18"),
+	}
+
+	expected_resource_refs_auto_update_oci = podinfo_installed_refs("my-podinfo-18")
+
+	expected_detail_installed_package_auto_update_oci_2 = &corev1.InstalledPackageDetail{
+		PkgVersionReference: &corev1.VersionReference{
+			Version: ">= 6",
+		},
+		CurrentVersion: pkgAppVersion("6.1.6"),
+		Name:           "my-podinfo-18",
+		Status:         status_installed,
+		ReconciliationOptions: &corev1.ReconciliationOptions{
+			Interval: "30s",
+		},
+		AvailablePackageRef: &corev1.AvailablePackageReference{
+			Context: &corev1.Context{
+				Cluster:   KubeappsCluster,
+				Namespace: "default",
+			},
+			Identifier: "podinfo-18/podinfo",
+			Plugin:     fluxPlugin,
+		},
+		PostInstallationNotes: podinfo_notes("my-podinfo-18"),
+	}
+
 	expected_detail_test_release_rbac = &corev1.InstalledPackageDetail{
 		PkgVersionReference: &corev1.VersionReference{
 			Version: "*",
@@ -1106,7 +1153,7 @@ var (
 		Name:    "my-podinfo-5",
 		Context: &corev1.Context{Namespace: "default"},
 		Type:    "oci",
-		Url:     github_podinfo_oci_registry_url,
+		Url:     github_stefanprodan_podinfo_oci_registry_url,
 	}
 
 	add_repo_req_22 = func(user, password string) *corev1.AddPackageRepositoryRequest {
@@ -1114,7 +1161,7 @@ var (
 			Name:    "my-podinfo-6",
 			Context: &corev1.Context{Namespace: "default"},
 			Type:    "oci",
-			Url:     github_podinfo_oci_registry_url,
+			Url:     github_stefanprodan_podinfo_oci_registry_url,
 			Auth: &corev1.PackageRepositoryAuth{
 				Type: corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_BASIC_AUTH,
 				PackageRepoAuthOneOf: &corev1.PackageRepositoryAuth_UsernamePassword{
@@ -1131,7 +1178,7 @@ var (
 		Name:    "my-podinfo-7",
 		Context: &corev1.Context{Namespace: "default"},
 		Type:    "oci",
-		Url:     github_podinfo_oci_registry_url,
+		Url:     github_stefanprodan_podinfo_oci_registry_url,
 		Auth: &corev1.PackageRepositoryAuth{
 			Type: corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_BASIC_AUTH,
 			PackageRepoAuthOneOf: &corev1.PackageRepositoryAuth_SecretRef{
@@ -1147,7 +1194,7 @@ var (
 			Name:    "my-podinfo-8",
 			Context: &corev1.Context{Namespace: "default"},
 			Type:    "oci",
-			Url:     github_podinfo_oci_registry_url,
+			Url:     github_stefanprodan_podinfo_oci_registry_url,
 			Auth: &corev1.PackageRepositoryAuth{
 				Type: corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_DOCKER_CONFIG_JSON,
 				PackageRepoAuthOneOf: &corev1.PackageRepositoryAuth_DockerCreds{
@@ -1165,7 +1212,7 @@ var (
 		Name:    "my-podinfo-9",
 		Context: &corev1.Context{Namespace: "default"},
 		Type:    "oci",
-		Url:     github_podinfo_oci_registry_url,
+		Url:     github_stefanprodan_podinfo_oci_registry_url,
 		Auth: &corev1.PackageRepositoryAuth{
 			Type: corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_DOCKER_CONFIG_JSON,
 			PackageRepoAuthOneOf: &corev1.PackageRepositoryAuth_SecretRef{
@@ -2060,7 +2107,7 @@ var (
 
 	expected_versions_gfichtenholt_podinfo = &corev1.GetAvailablePackageVersionsResponse{
 		PackageAppVersions: []*corev1.PackageAppVersion{
-			{PkgVersion: "6.1.6"},
+			{PkgVersion: "6.1.5"},
 		},
 	}
 
@@ -2536,7 +2583,7 @@ var (
 			Description:     "",
 			NamespaceScoped: false,
 			Type:            "helm",
-			Url:             github_podinfo_oci_registry_url,
+			Url:             github_stefanprodan_podinfo_oci_registry_url,
 			Interval:        "10m",
 			Auth:            &corev1.PackageRepositoryAuth{},
 			Status: &corev1.PackageRepositoryStatus{
@@ -2569,7 +2616,7 @@ var (
 			Description:     "",
 			NamespaceScoped: false,
 			Type:            "oci",
-			Url:             github_podinfo_oci_registry_url,
+			Url:             github_stefanprodan_podinfo_oci_registry_url,
 			Interval:        "10m",
 			Auth:            &corev1.PackageRepositoryAuth{},
 			Status: &corev1.PackageRepositoryStatus{
@@ -2587,7 +2634,7 @@ var (
 			Description:     "",
 			NamespaceScoped: false,
 			Type:            "oci",
-			Url:             github_podinfo_oci_registry_url,
+			Url:             github_stefanprodan_podinfo_oci_registry_url,
 			Interval:        "10m",
 			Auth: &corev1.PackageRepositoryAuth{
 				Type: corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_BASIC_AUTH,
@@ -2613,7 +2660,7 @@ var (
 			Description:     "",
 			NamespaceScoped: false,
 			Type:            "oci",
-			Url:             github_podinfo_oci_registry_url,
+			Url:             github_stefanprodan_podinfo_oci_registry_url,
 			Interval:        "10m",
 			Auth: &corev1.PackageRepositoryAuth{
 				Type: corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_DOCKER_CONFIG_JSON,
@@ -2777,7 +2824,7 @@ var (
 			Description:     "",
 			NamespaceScoped: false,
 			Type:            "oci",
-			Url:             github_podinfo_oci_registry_url,
+			Url:             github_stefanprodan_podinfo_oci_registry_url,
 			Status:          podinfo_repo_status_4,
 			RequiresAuth:    false,
 		}
@@ -2892,7 +2939,7 @@ var (
 	update_repo_req_18 = func(ghUser, ghPasswd string) *corev1.UpdatePackageRepositoryRequest {
 		return &corev1.UpdatePackageRepositoryRequest{
 			PackageRepoRef: repoRefInReq("my-podinfo-7", "TBD"),
-			Url:            github_podinfo_oci_registry_url,
+			Url:            github_stefanprodan_podinfo_oci_registry_url,
 			Auth:           github_auth(ghUser, ghPasswd),
 			Interval:       "4m44s",
 		}
@@ -3165,7 +3212,7 @@ var (
 			Description:     "",
 			NamespaceScoped: false,
 			Type:            "oci",
-			Url:             github_podinfo_oci_registry_url,
+			Url:             github_stefanprodan_podinfo_oci_registry_url,
 			Interval:        "4m44s",
 			Auth:            foo_bar_auth_redacted,
 			Status:          podinfo_repo_status_4,

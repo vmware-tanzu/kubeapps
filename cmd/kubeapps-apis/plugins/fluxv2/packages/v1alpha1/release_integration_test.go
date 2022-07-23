@@ -21,6 +21,7 @@ import (
 	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/fluxv2/packages/v1alpha1/common"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	apiv1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
 	"k8s.io/apimachinery/pkg/types"
 )
@@ -42,6 +43,7 @@ type integrationTestCreatePackageSpec struct {
 	repoType          string
 	repoUrl           string
 	repoInterval      time.Duration // 0 for default (10m)
+	repoSecret        *apiv1.Secret
 	request           *corev1.CreateInstalledPackageRequest
 	expectedDetail    *corev1.InstalledPackageDetail
 	expectedPodPrefix string
@@ -55,7 +57,7 @@ type integrationTestCreatePackageSpec struct {
 }
 
 func TestKindClusterCreateInstalledPackage(t *testing.T) {
-	fluxPluginClient, _, err := checkEnv(t)
+	fluxPluginPackagesClient, fluxPluginReposClient, err := checkEnv(t)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -134,7 +136,7 @@ func TestKindClusterCreateInstalledPackage(t *testing.T) {
 		{
 			testName:             "create OCI helm release",
 			repoType:             "oci",
-			repoUrl:              github_podinfo_oci_registry_url,
+			repoUrl:              github_stefanprodan_podinfo_oci_registry_url,
 			request:              create_installed_package_request_oci,
 			expectedDetail:       expected_detail_installed_package_oci,
 			expectedPodPrefix:    "my-podinfo-17",
@@ -154,13 +156,13 @@ func TestKindClusterCreateInstalledPackage(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.testName, func(t *testing.T) {
-			createAndWaitForHelmRelease(t, tc, fluxPluginClient, grpcContext)
+			createAndWaitForHelmRelease(t, tc, fluxPluginPackagesClient, fluxPluginReposClient, grpcContext)
 		})
 	}
 }
 
 func TestKindClusterUpdateInstalledPackage(t *testing.T) {
-	fluxPluginClient, _, err := checkEnv(t)
+	fluxPluginPackagesClient, fluxPluginReposClient, err := checkEnv(t)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -262,6 +264,7 @@ func TestKindClusterUpdateInstalledPackage(t *testing.T) {
 			expectedDetailAfterUpdate: expected_detail_installed_package_podinfo_9,
 			expectedRefsAfterUpdate:   expected_resource_refs_podinfo_9,
 		},
+		// TODO (gfichtenholt) update OCI helmrelease
 	}
 
 	name := types.NamespacedName{
@@ -275,9 +278,8 @@ func TestKindClusterUpdateInstalledPackage(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.testName, func(t *testing.T) {
-
 			installedRef := createAndWaitForHelmRelease(
-				t, tc.integrationTestCreatePackageSpec, fluxPluginClient, grpcContext)
+				t, tc.integrationTestCreatePackageSpec, fluxPluginPackagesClient, fluxPluginReposClient, grpcContext)
 			tc.request.InstalledPackageRef = installedRef
 
 			ctx := grpcContext
@@ -293,7 +295,7 @@ func TestKindClusterUpdateInstalledPackage(t *testing.T) {
 			// ... so this is the reason for the loop loop with retries
 			var i, maxRetries = 0, 5
 			for ; i < maxRetries; i++ {
-				_, err := fluxPluginClient.UpdateInstalledPackage(ctx, tc.request)
+				_, err := fluxPluginPackagesClient.UpdateInstalledPackage(ctx, tc.request)
 				if tc.unauthorized {
 					if status.Code(err) != codes.Unauthenticated {
 						t.Fatalf("Expected Unathenticated, got: %v", status.Code(err))
@@ -316,7 +318,7 @@ func TestKindClusterUpdateInstalledPackage(t *testing.T) {
 			}
 
 			actualRespAfterUpdate, actualRefsAfterUpdate :=
-				waitUntilInstallCompletes(t, fluxPluginClient, grpcContext, installedRef, false)
+				waitUntilInstallCompletes(t, fluxPluginPackagesClient, grpcContext, installedRef, false)
 
 			tc.expectedDetailAfterUpdate.InstalledPackageRef = installedRef
 			tc.expectedDetailAfterUpdate.Name = tc.integrationTestCreatePackageSpec.request.Name
@@ -355,14 +357,16 @@ func TestKindClusterUpdateInstalledPackage(t *testing.T) {
 	}
 }
 
-func TestKindClusterAutoUpdateInstalledPackage(t *testing.T) {
-	fluxPluginClient, _, err := checkEnv(t)
+// The goal of this integration test is to ensure that when the contents of remote HTTP helm repo is changed,
+// that fact is recorded locally and processed properly (repo/chart cache is updated with latest, etc.)
+func TestKindClusterAutoUpdateInstalledPackageFromHttpRepo(t *testing.T) {
+	fluxPluginPackagesClient, fluxPluginReposClient, err := checkEnv(t)
 	if err != nil {
 		t.Fatal(err)
 	}
 
 	spec := integrationTestCreatePackageSpec{
-		testName:             "create test (auto update)",
+		testName:             "create test (HTTP repo auto update)",
 		repoUrl:              podinfo_repo_url,
 		repoInterval:         30 * time.Second,
 		request:              create_installed_package_request_auto_update,
@@ -373,7 +377,7 @@ func TestKindClusterAutoUpdateInstalledPackage(t *testing.T) {
 	}
 
 	name := types.NamespacedName{
-		Name:      "test-auto-update" + randSeq(4),
+		Name:      "test-auto-update-" + randSeq(4),
 		Namespace: "default",
 	}
 	grpcContext, err := newGrpcAdminContext(t, name)
@@ -382,7 +386,7 @@ func TestKindClusterAutoUpdateInstalledPackage(t *testing.T) {
 	}
 
 	// this will also make sure that response looks like expected_detail_installed_package_auto_update
-	installedRef := createAndWaitForHelmRelease(t, spec, fluxPluginClient, grpcContext)
+	installedRef := createAndWaitForHelmRelease(t, spec, fluxPluginPackagesClient, fluxPluginReposClient, grpcContext)
 	podName, err := getFluxPluginTestdataPodName()
 	if err != nil {
 		t.Fatal(err)
@@ -416,7 +420,7 @@ func TestKindClusterAutoUpdateInstalledPackage(t *testing.T) {
 	t.Logf("Waiting 45 seconds...")
 	time.Sleep(45 * time.Second)
 
-	resp, err := fluxPluginClient.GetInstalledPackageDetail(
+	resp, err := fluxPluginPackagesClient.GetInstalledPackageDetail(
 		grpcContext, &corev1.GetInstalledPackageDetailRequest{
 			InstalledPackageRef: installedRef,
 		})
@@ -434,8 +438,86 @@ func TestKindClusterAutoUpdateInstalledPackage(t *testing.T) {
 		})
 }
 
+// The goal of this integration test is to ensure that when the contents of remote OCI helm repo is changed,
+// that fact is recorded locally and processed properly (repo/chart cache is updated with latest, etc.)
+func TestKindClusterAutoUpdateInstalledPackageFromOciRepo(t *testing.T) {
+	fluxPluginPackagesClient, fluxPluginReposClient, err := checkEnv(t)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// see TestKindClusterAvailablePackageEndpointsForOCI for explanation
+	ghUser := os.Getenv("GITHUB_USER")
+	ghToken := os.Getenv("GITHUB_TOKEN")
+	if ghUser == "" || ghToken == "" {
+		t.Fatalf("Environment variables GITHUB_USER and GITHUB_TOKEN need to be set to run this test")
+	}
+
+	spec := integrationTestCreatePackageSpec{
+		testName:             "create test (OCI repo auto update)",
+		repoUrl:              github_gfichtenholt_podinfo_oci_registry_url,
+		repoType:             "oci",
+		repoInterval:         30 * time.Second,
+		request:              create_installed_package_request_auto_update_oci,
+		expectedDetail:       expected_detail_installed_package_auto_update_oci,
+		expectedPodPrefix:    "my-podinfo-18",
+		expectedStatusCode:   codes.OK,
+		expectedResourceRefs: expected_resource_refs_auto_update_oci,
+	}
+
+	name := types.NamespacedName{
+		Name:      "test-auto-update-" + randSeq(4),
+		Namespace: "default",
+	}
+	grpcContext, err := newGrpcAdminContext(t, name)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// this will also make sure that response looks like expected_detail_installed_package_auto_update
+	// if the next command fails with rpc error: code = NotFound desc = chart [podinfo] not found] most
+	// likely you forgot to set the package visibility to public at
+	// https://github.com/users/gfichtenholt/packages/container/helm-charts%2Fpodinfo/settings
+	installedRef := createAndWaitForHelmRelease(t, spec, fluxPluginPackagesClient, fluxPluginReposClient, grpcContext)
+
+	podName, err := getFluxPluginTestdataPodName()
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Logf("podName = [%s]", podName)
+
+	if err = helmPushChartToMyGithubRegistry(t); err != nil {
+		t.Fatal(err)
+	}
+
+	// TODO: (gfichtenholt) need to delete remote chart version at the end of the test
+	// so there are no side-effects. Looks like there is no generic way to do that, need to
+	// use GitHub API
+
+	t.Logf("Waiting 45 seconds...")
+	time.Sleep(45 * time.Second)
+
+	resp, err := fluxPluginPackagesClient.GetInstalledPackageDetail(
+		grpcContext, &corev1.GetInstalledPackageDetailRequest{
+			InstalledPackageRef: installedRef,
+		})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	expected_detail_installed_package_auto_update_oci_2.InstalledPackageRef = installedRef
+	expected_detail_installed_package_auto_update_oci_2.PostInstallationNotes = strings.ReplaceAll(
+		expected_detail_installed_package_auto_update_oci_2.PostInstallationNotes,
+		"@TARGET_NS@",
+		spec.request.TargetContext.Namespace)
+	compareActualVsExpectedGetInstalledPackageDetailResponse(
+		t, resp, &corev1.GetInstalledPackageDetailResponse{
+			InstalledPackageDetail: expected_detail_installed_package_auto_update_oci_2,
+		})
+}
+
 func TestKindClusterDeleteInstalledPackage(t *testing.T) {
-	fluxPluginClient, _, err := checkEnv(t)
+	fluxPluginPackagesClient, fluxPluginReposClient, err := checkEnv(t)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -467,6 +549,7 @@ func TestKindClusterDeleteInstalledPackage(t *testing.T) {
 			},
 			unauthorized: true,
 		},
+		// TODO (gifchtenholt) delete OCI helmrelease
 	}
 
 	name := types.NamespacedName{
@@ -480,13 +563,13 @@ func TestKindClusterDeleteInstalledPackage(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.testName, func(t *testing.T) {
-			installedRef := createAndWaitForHelmRelease(t, tc.integrationTestCreatePackageSpec, fluxPluginClient, grpcContext)
+			installedRef := createAndWaitForHelmRelease(t, tc.integrationTestCreatePackageSpec, fluxPluginPackagesClient, fluxPluginReposClient, grpcContext)
 
 			ctx := grpcContext
 			if tc.unauthorized {
 				ctx = context.TODO()
 			}
-			_, err := fluxPluginClient.DeleteInstalledPackage(ctx, &corev1.DeleteInstalledPackageRequest{
+			_, err := fluxPluginPackagesClient.DeleteInstalledPackage(ctx, &corev1.DeleteInstalledPackageRequest{
 				InstalledPackageRef: installedRef,
 			})
 			if tc.unauthorized {
@@ -511,7 +594,7 @@ func TestKindClusterDeleteInstalledPackage(t *testing.T) {
 				grpcContext, cancel := context.WithTimeout(grpcContext, defaultContextTimeout)
 				defer cancel()
 
-				_, err := fluxPluginClient.GetInstalledPackageDetail(
+				_, err := fluxPluginPackagesClient.GetInstalledPackageDetail(
 					grpcContext, &corev1.GetInstalledPackageDetailRequest{
 						InstalledPackageRef: installedRef,
 					})
@@ -593,7 +676,7 @@ func TestKindClusterDeleteInstalledPackage(t *testing.T) {
 //    c) as 4c) returns all refs
 // ref https://github.com/vmware-tanzu/kubeapps/issues/4390
 func TestKindClusterRBAC_ReadRelease(t *testing.T) {
-	fluxPluginClient, _, err := checkEnv(t)
+	fluxPluginPackagesClient, fluxPluginReposClient, err := checkEnv(t)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -650,7 +733,7 @@ func TestKindClusterRBAC_ReadRelease(t *testing.T) {
 		expectedResourceRefs: expected_resource_refs_basic,
 	}
 
-	installedRef := createAndWaitForHelmRelease(t, tc, fluxPluginClient, grpcCtxAdmin)
+	installedRef := createAndWaitForHelmRelease(t, tc, fluxPluginPackagesClient, fluxPluginReposClient, grpcCtxAdmin)
 
 	ns2 := tc.request.TargetContext.Namespace
 
@@ -662,7 +745,7 @@ func TestKindClusterRBAC_ReadRelease(t *testing.T) {
 	grpcCtx, cancel := context.WithTimeout(grpcCtxAdmin, defaultContextTimeout)
 	defer cancel()
 
-	resp, err := fluxPluginClient.GetInstalledPackageSummaries(
+	resp, err := fluxPluginPackagesClient.GetInstalledPackageSummaries(
 		grpcCtx,
 		&corev1.GetInstalledPackageSummariesRequest{
 			Context: &corev1.Context{
@@ -678,7 +761,7 @@ func TestKindClusterRBAC_ReadRelease(t *testing.T) {
 	grpcCtx, cancel = context.WithTimeout(grpcCtxAdmin, defaultContextTimeout)
 	defer cancel()
 
-	resp2, err := fluxPluginClient.GetInstalledPackageDetail(
+	resp2, err := fluxPluginPackagesClient.GetInstalledPackageDetail(
 		grpcCtx,
 		&corev1.GetInstalledPackageDetailRequest{
 			InstalledPackageRef: installedRef,
@@ -708,7 +791,7 @@ func TestKindClusterRBAC_ReadRelease(t *testing.T) {
 		expectedRefsCopy = append(expectedRefsCopy, newR)
 	}
 
-	resp3, err := fluxPluginClient.GetInstalledPackageResourceRefs(
+	resp3, err := fluxPluginPackagesClient.GetInstalledPackageResourceRefs(
 		grpcCtx,
 		&corev1.GetInstalledPackageResourceRefsRequest{
 			InstalledPackageRef: installedRef,
@@ -730,7 +813,7 @@ func TestKindClusterRBAC_ReadRelease(t *testing.T) {
 	grpcCtx, cancel = context.WithTimeout(grpcCtxLoser, defaultContextTimeout)
 	defer cancel()
 
-	_, err = fluxPluginClient.GetInstalledPackageSummaries(
+	_, err = fluxPluginPackagesClient.GetInstalledPackageSummaries(
 		grpcCtx,
 		&corev1.GetInstalledPackageSummariesRequest{
 			Context: &corev1.Context{
@@ -744,7 +827,7 @@ func TestKindClusterRBAC_ReadRelease(t *testing.T) {
 	grpcCtx, cancel = context.WithTimeout(grpcCtxLoser, defaultContextTimeout)
 	defer cancel()
 
-	_, err = fluxPluginClient.GetInstalledPackageDetail(
+	_, err = fluxPluginPackagesClient.GetInstalledPackageDetail(
 		grpcCtx,
 		&corev1.GetInstalledPackageDetailRequest{
 			InstalledPackageRef: installedRef,
@@ -756,7 +839,7 @@ func TestKindClusterRBAC_ReadRelease(t *testing.T) {
 	grpcCtx, cancel = context.WithTimeout(grpcCtxLoser, defaultContextTimeout)
 	defer cancel()
 
-	_, err = fluxPluginClient.GetInstalledPackageResourceRefs(
+	_, err = fluxPluginPackagesClient.GetInstalledPackageResourceRefs(
 		grpcCtx,
 		&corev1.GetInstalledPackageResourceRefsRequest{
 			InstalledPackageRef: installedRef,
@@ -813,7 +896,7 @@ func TestKindClusterRBAC_ReadRelease(t *testing.T) {
 	grpcCtx, cancel = context.WithTimeout(grpcCtxReadHelmReleases, defaultContextTimeout)
 	defer cancel()
 
-	resp, err = fluxPluginClient.GetInstalledPackageSummaries(
+	resp, err = fluxPluginPackagesClient.GetInstalledPackageSummaries(
 		grpcCtx,
 		&corev1.GetInstalledPackageSummariesRequest{
 			Context: &corev1.Context{
@@ -844,7 +927,7 @@ func TestKindClusterRBAC_ReadRelease(t *testing.T) {
 	grpcCtx, cancel = context.WithTimeout(grpcCtxReadHelmReleases, defaultContextTimeout)
 	defer cancel()
 
-	resp2, err = fluxPluginClient.GetInstalledPackageDetail(
+	resp2, err = fluxPluginPackagesClient.GetInstalledPackageDetail(
 		grpcCtx,
 		&corev1.GetInstalledPackageDetailRequest{
 			InstalledPackageRef: installedRef,
@@ -858,7 +941,7 @@ func TestKindClusterRBAC_ReadRelease(t *testing.T) {
 	grpcCtx, cancel = context.WithTimeout(grpcCtxReadHelmReleases, defaultContextTimeout)
 	defer cancel()
 
-	resp3, err = fluxPluginClient.GetInstalledPackageResourceRefs(
+	resp3, err = fluxPluginPackagesClient.GetInstalledPackageResourceRefs(
 		grpcCtx,
 		&corev1.GetInstalledPackageResourceRefsRequest{
 			InstalledPackageRef: installedRef,
@@ -916,7 +999,7 @@ func TestKindClusterRBAC_ReadRelease(t *testing.T) {
 	grpcCtx, cancel = context.WithTimeout(grpcCtxReadHelmReleasesAndCharts, defaultContextTimeout)
 	defer cancel()
 
-	resp, err = fluxPluginClient.GetInstalledPackageSummaries(
+	resp, err = fluxPluginPackagesClient.GetInstalledPackageSummaries(
 		grpcCtx,
 		&corev1.GetInstalledPackageSummariesRequest{
 			Context: &corev1.Context{
@@ -936,7 +1019,7 @@ func TestKindClusterRBAC_ReadRelease(t *testing.T) {
 	grpcCtx, cancel = context.WithTimeout(grpcCtxReadHelmReleasesAndCharts, defaultContextTimeout)
 	defer cancel()
 
-	resp2, err = fluxPluginClient.GetInstalledPackageDetail(
+	resp2, err = fluxPluginPackagesClient.GetInstalledPackageDetail(
 		grpcCtx,
 		&corev1.GetInstalledPackageDetailRequest{
 			InstalledPackageRef: installedRef,
@@ -949,7 +1032,7 @@ func TestKindClusterRBAC_ReadRelease(t *testing.T) {
 }
 
 func TestKindClusterRBAC_CreateRelease(t *testing.T) {
-	fluxPluginClient, _, err := checkEnv(t)
+	fluxPluginPackagesClient, _, err := checkEnv(t)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -1013,7 +1096,7 @@ func TestKindClusterRBAC_CreateRelease(t *testing.T) {
 			Cluster:   KubeappsCluster,
 		},
 	}
-	_, err = fluxPluginClient.CreateInstalledPackage(ctx, req)
+	_, err = fluxPluginPackagesClient.CreateInstalledPackage(ctx, req)
 	if status.Code(err) != codes.PermissionDenied {
 		t.Errorf("Expected PermissionDenied, got %v", err)
 	}
@@ -1041,7 +1124,7 @@ func TestKindClusterRBAC_CreateRelease(t *testing.T) {
 	ctx, cancel = context.WithTimeout(grpcCtx2, defaultContextTimeout)
 	defer cancel()
 
-	_, err = fluxPluginClient.CreateInstalledPackage(ctx, req)
+	_, err = fluxPluginPackagesClient.CreateInstalledPackage(ctx, req)
 	// perhaps not super intuitive BUT
 	// this should fail due to not having 'get' access for HelmCharts in ns1
 	if status.Code(err) != codes.PermissionDenied {
@@ -1078,7 +1161,7 @@ func TestKindClusterRBAC_CreateRelease(t *testing.T) {
 	ctx, cancel = context.WithTimeout(grpcCtx3, defaultContextTimeout)
 	defer cancel()
 
-	resp, err := fluxPluginClient.CreateInstalledPackage(ctx, req)
+	resp, err := fluxPluginPackagesClient.CreateInstalledPackage(ctx, req)
 	if err != nil {
 		t.Fatal(err)
 	} else {
@@ -1096,7 +1179,7 @@ func TestKindClusterRBAC_CreateRelease(t *testing.T) {
 }
 
 func TestKindClusterRBAC_UpdateRelease(t *testing.T) {
-	fluxPluginClient, _, err := checkEnv(t)
+	fluxPluginPackagesClient, fluxPluginReposClient, err := checkEnv(t)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -1134,7 +1217,7 @@ func TestKindClusterRBAC_UpdateRelease(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	installedRef := createAndWaitForHelmRelease(t, tc, fluxPluginClient, grpcCtxAdmin)
+	installedRef := createAndWaitForHelmRelease(t, tc, fluxPluginPackagesClient, fluxPluginReposClient, grpcCtxAdmin)
 
 	ns2 := tc.request.TargetContext.Namespace
 
@@ -1155,7 +1238,7 @@ func TestKindClusterRBAC_UpdateRelease(t *testing.T) {
 		InstalledPackageRef: installedRef,
 		Values:              "{\"ui\": { \"message\": \"what we do in the shadows\" } }",
 	}
-	_, err = fluxPluginClient.UpdateInstalledPackage(ctx, req)
+	_, err = fluxPluginPackagesClient.UpdateInstalledPackage(ctx, req)
 	// should fail due to rpc error: code = PermissionDenied desc = Forbidden to get the
 	// HelmRelease 'test-ns2-b8jg/my-podinfo' due to 'helmreleases.helm.toolkit.fluxcd.io
 	// "my-podinfo" is forbidden: User "system:serviceaccount:default:test-release-rbac-loser"
@@ -1188,7 +1271,7 @@ func TestKindClusterRBAC_UpdateRelease(t *testing.T) {
 	ctx, cancel = context.WithTimeout(grpcCtx2, defaultContextTimeout)
 	defer cancel()
 
-	_, err = fluxPluginClient.UpdateInstalledPackage(ctx, req)
+	_, err = fluxPluginPackagesClient.UpdateInstalledPackage(ctx, req)
 	// should fail due to rpc error: code = PermissionDenied desc = Forbidden to update the
 	// HelmRelease 'test-ns2-w8xd/my-podinfo' due to 'helmreleases.helm.toolkit.fluxcd.io
 	// "my-podinfo" is forbidden: User "system:serviceaccount:default:test-release-rbac-helmreleases-2"
@@ -1221,7 +1304,7 @@ func TestKindClusterRBAC_UpdateRelease(t *testing.T) {
 	ctx, cancel = context.WithTimeout(grpcCtx3, defaultContextTimeout)
 	defer cancel()
 
-	resp, err := fluxPluginClient.UpdateInstalledPackage(ctx, req)
+	resp, err := fluxPluginPackagesClient.UpdateInstalledPackage(ctx, req)
 	if err != nil {
 		t.Fatal(err)
 	} else {
@@ -1238,7 +1321,7 @@ func TestKindClusterRBAC_UpdateRelease(t *testing.T) {
 }
 
 func TestKindClusterRBAC_DeleteRelease(t *testing.T) {
-	fluxPluginClient, _, err := checkEnv(t)
+	fluxPluginPackagesClient, fluxPluginReposClient, err := checkEnv(t)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -1276,7 +1359,7 @@ func TestKindClusterRBAC_DeleteRelease(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	installedRef := createAndWaitForHelmRelease(t, tc, fluxPluginClient, grpcCtxAdmin)
+	installedRef := createAndWaitForHelmRelease(t, tc, fluxPluginPackagesClient, fluxPluginReposClient, grpcCtxAdmin)
 
 	ns2 := tc.request.TargetContext.Namespace
 
@@ -1297,7 +1380,7 @@ func TestKindClusterRBAC_DeleteRelease(t *testing.T) {
 		InstalledPackageRef: installedRef,
 	}
 
-	_, err = fluxPluginClient.DeleteInstalledPackage(ctx, req)
+	_, err = fluxPluginPackagesClient.DeleteInstalledPackage(ctx, req)
 	// should fail due to rpc error: code = PermissionDenied desc = Forbidden to delete the
 	// HelmRelease 'my-podinfo' due to 'helmreleases.helm.toolkit.fluxcd.io "my-podinfo" is
 	// forbidden: User "system:serviceaccount:default:test-release-rbac-loser" cannot delete
@@ -1329,20 +1412,38 @@ func TestKindClusterRBAC_DeleteRelease(t *testing.T) {
 	ctx, cancel = context.WithTimeout(grpcCtx3, defaultContextTimeout)
 	defer cancel()
 
-	_, err = fluxPluginClient.DeleteInstalledPackage(ctx, req)
+	_, err = fluxPluginPackagesClient.DeleteInstalledPackage(ctx, req)
 	if err != nil {
 		t.Fatal(err)
 	}
 }
 
-func createAndWaitForHelmRelease(t *testing.T, tc integrationTestCreatePackageSpec, fluxPluginClient fluxplugin.FluxV2PackagesServiceClient, grpcContext context.Context) *corev1.InstalledPackageReference {
+func createAndWaitForHelmRelease(
+	t *testing.T,
+	tc integrationTestCreatePackageSpec,
+	fluxPluginPackagesClient fluxplugin.FluxV2PackagesServiceClient,
+	fluxPluginReposClient fluxplugin.FluxV2RepositoriesServiceClient,
+	grpcContext context.Context) *corev1.InstalledPackageReference {
+
 	availablePackageRef := tc.request.AvailablePackageRef
 	idParts := strings.Split(availablePackageRef.Identifier, "/")
 	name := types.NamespacedName{
 		Name:      idParts[0],
 		Namespace: availablePackageRef.Context.Namespace,
 	}
-	err := kubeAddHelmRepositoryAndCleanup(t, name, tc.repoType, tc.repoUrl, "", tc.repoInterval)
+
+	secretName := ""
+	if tc.repoSecret != nil {
+		secretName = tc.repoSecret.Name
+
+		if err := kubeCreateSecretAndCleanup(t, tc.repoSecret); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	setUserManagedSecretsAndCleanup(t, fluxPluginReposClient, true)
+
+	err := kubeAddHelmRepositoryAndCleanup(t, name, tc.repoType, tc.repoUrl, secretName, tc.repoInterval)
 	if err != nil {
 		t.Fatalf("%+v", err)
 	}
@@ -1353,7 +1454,7 @@ func createAndWaitForHelmRelease(t *testing.T, tc integrationTestCreatePackageSp
 		grpcContext, cancel := context.WithTimeout(grpcContext, defaultContextTimeout)
 		defer cancel()
 
-		resp, err := fluxPluginClient.GetAvailablePackageDetail(
+		resp, err := fluxPluginPackagesClient.GetAvailablePackageDetail(
 			grpcContext,
 			&corev1.GetAvailablePackageDetailRequest{AvailablePackageRef: availablePackageRef})
 		if err == nil {
@@ -1433,7 +1534,7 @@ func createAndWaitForHelmRelease(t *testing.T, tc integrationTestCreatePackageSp
 	if tc.expectedStatusCode == codes.Unauthenticated {
 		ctx = context.TODO()
 	}
-	resp, err := fluxPluginClient.CreateInstalledPackage(ctx, tc.request)
+	resp, err := fluxPluginPackagesClient.CreateInstalledPackage(ctx, tc.request)
 	if tc.expectedStatusCode != codes.OK {
 		if status.Code(err) != tc.expectedStatusCode {
 			t.Fatalf("Expected %v, got: %v", tc.expectedStatusCode, err)
@@ -1479,7 +1580,7 @@ func createAndWaitForHelmRelease(t *testing.T, tc integrationTestCreatePackageSp
 		})
 	}
 
-	actualDetailResp, actualRefsResp := waitUntilInstallCompletes(t, fluxPluginClient, grpcContext, installedPackageRef, tc.expectInstallFailure)
+	actualDetailResp, actualRefsResp := waitUntilInstallCompletes(t, fluxPluginPackagesClient, grpcContext, installedPackageRef, tc.expectInstallFailure)
 
 	tc.expectedDetail.PostInstallationNotes = strings.ReplaceAll(
 		tc.expectedDetail.PostInstallationNotes, "@TARGET_NS@", tc.request.TargetContext.Namespace)
@@ -1527,7 +1628,7 @@ func createAndWaitForHelmRelease(t *testing.T, tc integrationTestCreatePackageSp
 
 func waitUntilInstallCompletes(
 	t *testing.T,
-	fluxPluginClient fluxplugin.FluxV2PackagesServiceClient,
+	fluxPluginPackagesClient fluxplugin.FluxV2PackagesServiceClient,
 	grpcContext context.Context,
 	installedPackageRef *corev1.InstalledPackageReference,
 	expectInstallFailure bool) (
@@ -1537,7 +1638,7 @@ func waitUntilInstallCompletes(
 	for ; i < maxRetries; i++ {
 		grpcContext, cancel := context.WithTimeout(grpcContext, defaultContextTimeout)
 		defer cancel()
-		resp2, err := fluxPluginClient.GetInstalledPackageDetail(
+		resp2, err := fluxPluginPackagesClient.GetInstalledPackageDetail(
 			grpcContext,
 			&corev1.GetInstalledPackageDetailRequest{InstalledPackageRef: installedPackageRef})
 		if err != nil {
@@ -1571,7 +1672,7 @@ func waitUntilInstallCompletes(
 		grpcContext, cancel := context.WithTimeout(grpcContext, defaultContextTimeout)
 		defer cancel()
 		var err error
-		actualRefsResp, err = fluxPluginClient.GetInstalledPackageResourceRefs(
+		actualRefsResp, err = fluxPluginPackagesClient.GetInstalledPackageResourceRefs(
 			grpcContext,
 			&corev1.GetInstalledPackageResourceRefsRequest{InstalledPackageRef: installedPackageRef})
 		if err != nil {

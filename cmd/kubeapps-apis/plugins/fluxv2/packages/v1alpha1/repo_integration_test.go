@@ -468,7 +468,7 @@ func TestKindClusterGetPackageRepositoryDetail(t *testing.T) {
 			testName:           "returns failed status for helm repository with OCI url",
 			request:            get_repo_detail_req_12,
 			repoName:           "my-podinfo-12",
-			repoUrl:            github_podinfo_oci_registry_url,
+			repoUrl:            github_stefanprodan_podinfo_oci_registry_url,
 			expectedStatusCode: codes.OK,
 			expectedResponse:   get_repo_detail_resp_15,
 		},
@@ -477,7 +477,7 @@ func TestKindClusterGetPackageRepositoryDetail(t *testing.T) {
 			request:            get_repo_detail_req_13,
 			repoName:           "my-podinfo-13",
 			repoType:           "oci",
-			repoUrl:            github_podinfo_oci_registry_url,
+			repoUrl:            github_stefanprodan_podinfo_oci_registry_url,
 			expectedStatusCode: codes.OK,
 			expectedResponse:   get_repo_detail_resp_16,
 		},
@@ -486,7 +486,7 @@ func TestKindClusterGetPackageRepositoryDetail(t *testing.T) {
 			request:  get_repo_detail_req_14,
 			repoName: "my-podinfo-14",
 			repoType: "oci",
-			repoUrl:  github_podinfo_oci_registry_url,
+			repoUrl:  github_stefanprodan_podinfo_oci_registry_url,
 			existingSecret: newBasicAuthSecret(types.NamespacedName{
 				Name:      "secret-1",
 				Namespace: "TBD",
@@ -499,7 +499,7 @@ func TestKindClusterGetPackageRepositoryDetail(t *testing.T) {
 			request:  get_repo_detail_req_15,
 			repoName: "my-podinfo-15",
 			repoType: "oci",
-			repoUrl:  github_podinfo_oci_registry_url,
+			repoUrl:  github_stefanprodan_podinfo_oci_registry_url,
 			existingSecret: newDockerConfigJsonSecret(types.NamespacedName{
 				Name:      "secret-1",
 				Namespace: "TBD",
@@ -697,7 +697,7 @@ func TestKindClusterGetPackageRepositorySummaries(t *testing.T) {
 					name: "podinfo-13",
 					ns:   ns1,
 					typ:  "oci",
-					url:  github_podinfo_oci_registry_url,
+					url:  github_stefanprodan_podinfo_oci_registry_url,
 				},
 			},
 			expectedStatusCode: codes.OK,
@@ -876,7 +876,7 @@ func TestKindClusterUpdatePackageRepository(t *testing.T) {
 			name:               "update OCI repository change interval (kubeapps-managed secrets)",
 			request:            update_repo_req_18(ghUser, ghToken),
 			repoName:           "my-podinfo-7",
-			repoUrl:            github_podinfo_oci_registry_url,
+			repoUrl:            github_stefanprodan_podinfo_oci_registry_url,
 			repoType:           "oci",
 			expectedStatusCode: codes.OK,
 			expectedResponse:   update_repo_resp_7,
@@ -1393,11 +1393,10 @@ func TestKindClusterAddTagsToOciRepository(t *testing.T) {
 			t.Fatal(err)
 		}
 
-		repo_url := "oci://ghcr.io/gfichtenholt/helm-charts"
 		interval := time.Duration(5 * time.Second)
 
 		if err := kubeAddHelmRepositoryAndCleanup(
-			t, repoName, "oci", repo_url, secret.Name, interval); err != nil {
+			t, repoName, "oci", github_gfichtenholt_podinfo_oci_registry_url, secret.Name, interval); err != nil {
 			t.Fatal(err)
 		}
 

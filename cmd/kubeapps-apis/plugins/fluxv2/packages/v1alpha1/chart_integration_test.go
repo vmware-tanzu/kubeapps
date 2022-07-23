@@ -536,8 +536,8 @@ func TestKindClusterAvailablePackageEndpointsForOCI(t *testing.T) {
 		secret      *apiv1.Secret
 	}{
 		{
-			testName:    "Testing [" + github_podinfo_oci_registry_url + "] with basic auth secret",
-			registryUrl: github_podinfo_oci_registry_url,
+			testName:    "Testing [" + github_stefanprodan_podinfo_oci_registry_url + "] with basic auth secret",
+			registryUrl: github_stefanprodan_podinfo_oci_registry_url,
 			// this is a secret for authentication with GitHub (ghcr.io)
 			//    personal access token ghp_... can be seen on https://github.com/settings/tokens
 			// and has "admin:repo_hook, delete_repo, repo" scopes
@@ -552,8 +552,8 @@ func TestKindClusterAvailablePackageEndpointsForOCI(t *testing.T) {
 			),
 		},
 		{
-			testName:    "Testing [" + github_podinfo_oci_registry_url + "] with dockerconfigjson secret",
-			registryUrl: github_podinfo_oci_registry_url,
+			testName:    "Testing [" + github_stefanprodan_podinfo_oci_registry_url + "] with dockerconfigjson secret",
+			registryUrl: github_stefanprodan_podinfo_oci_registry_url,
 			// this is a secret for authentication with GitHub (ghcr.io)
 			//    personal access token ghp_... can be seen on https://github.com/settings/tokens
 			// and has "admin:repo_hook, delete_repo, repo" scopes

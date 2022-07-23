@@ -83,10 +83,12 @@ const (
 	outside_cluster_bitnami_url = "http://localhost:50057/bitnami"
 
 	// an OCI registry with a single chart (podinfo)
-	github_podinfo_oci_registry_url = "oci://ghcr.io/stefanprodan/charts"
+	github_stefanprodan_podinfo_oci_registry_url = "oci://ghcr.io/stefanprodan/charts"
 
 	// the URL of local in cluster helm registry. Gets deployed via ./kind-cluster-setup.sh
 	// in_cluster_oci_registry_url = "oci://registry-app-svc.default.svc.cluster.local:5000/helm-charts"
+
+	github_gfichtenholt_podinfo_oci_registry_url = "oci://ghcr.io/gfichtenholt/helm-charts"
 )
 
 func checkEnv(t *testing.T) (fluxplugin.FluxV2PackagesServiceClient, fluxplugin.FluxV2RepositoriesServiceClient, error) {
@@ -1285,12 +1287,6 @@ func getFluxPluginTestdataPodName() (*types.NamespacedName, error) {
 	return nil, fmt.Errorf("fluxplugin testdata pod not found")
 }
 
-// TODO (gfichtenholt)
-// This func is commented out is so that it doesn't trigger lint warning
-// It is left here on purpose waiting for
-// https://github.com/fluxcd/source-controller/issues/839
-// to get resolved one way or another
-/*
 func helmPushChartToMyGithubRegistry(t *testing.T) error {
 	t.Logf("+helmPushChartToMyGithubRegistry")
 	defer t.Logf("-helmPushChartToMyGithubRegistry")
@@ -1298,7 +1294,7 @@ func helmPushChartToMyGithubRegistry(t *testing.T) error {
 	// use the helm CLI for now
 	args := []string{
 		"pushChartToMyGithub",
-		"testdata/charts/podinfo-6.1.5.tgz",
+		"testdata/charts/podinfo-6.1.6.tgz",
 	}
 
 	script := "./testdata/kind-cluster-setup.sh"
@@ -1310,7 +1306,6 @@ func helmPushChartToMyGithubRegistry(t *testing.T) error {
 	t.Logf("Executed command: [%s], output: [%s]", cmd.String(), out)
 	return err
 }
-*/
 
 // global vars
 var (
