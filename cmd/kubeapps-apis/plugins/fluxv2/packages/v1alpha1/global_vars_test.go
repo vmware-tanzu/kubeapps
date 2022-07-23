@@ -22,14 +22,14 @@ import (
 // plus I am putting them in a separate file, since they take up so much space they distract from
 // overall test logic
 var (
-	create_request_basic = &corev1.CreateInstalledPackageRequest{
+	create_installed_package_request_basic = &corev1.CreateInstalledPackageRequest{
 		AvailablePackageRef: availableRef("podinfo-1/podinfo", "default"),
 		Name:                "my-podinfo",
 		TargetContext:       targetContext("test-1"),
 	}
 
 	// specify just the fields that cannot be easily computed based on the request
-	expected_detail_basic = &corev1.InstalledPackageDetail{
+	expected_detail_installed_package_basic = &corev1.InstalledPackageDetail{
 		PkgVersionReference: &corev1.VersionReference{
 			Version: "*",
 		},
@@ -40,7 +40,7 @@ var (
 
 	expected_resource_refs_basic = podinfo_installed_refs("my-podinfo")
 
-	create_request_semver_constraint = &corev1.CreateInstalledPackageRequest{
+	create_installed_package_request_semver_constraint = &corev1.CreateInstalledPackageRequest{
 		AvailablePackageRef: availableRef("podinfo-2/podinfo", "default"),
 		Name:                "my-podinfo-2",
 		TargetContext:       targetContext("test-2"),
@@ -49,7 +49,7 @@ var (
 		},
 	}
 
-	expected_detail_semver_constraint = &corev1.InstalledPackageDetail{
+	expected_detail_installed_package_semver_constraint = &corev1.InstalledPackageDetail{
 		PkgVersionReference: &corev1.VersionReference{
 			Version: "> 5",
 		},
@@ -60,7 +60,7 @@ var (
 
 	expected_resource_refs_semver_constraint = podinfo_installed_refs("my-podinfo-2")
 
-	create_request_reconcile_options = &corev1.CreateInstalledPackageRequest{
+	create_installed_package_request_reconcile_options = &corev1.CreateInstalledPackageRequest{
 		AvailablePackageRef: availableRef("podinfo-3/podinfo", "default"),
 		Name:                "my-podinfo-3",
 		TargetContext:       targetContext("test-3"),
@@ -71,7 +71,7 @@ var (
 		},
 	}
 
-	expected_detail_reconcile_options = &corev1.InstalledPackageDetail{
+	expected_detail_installed_package_reconcile_options = &corev1.InstalledPackageDetail{
 		PkgVersionReference: &corev1.VersionReference{
 			Version: "*",
 		},
@@ -87,14 +87,14 @@ var (
 
 	expected_resource_refs_reconcile_options = podinfo_installed_refs("my-podinfo-3")
 
-	create_request_with_values = &corev1.CreateInstalledPackageRequest{
+	create_installed_package_request_with_values = &corev1.CreateInstalledPackageRequest{
 		AvailablePackageRef: availableRef("podinfo-4/podinfo", "default"),
 		Name:                "my-podinfo-4",
 		TargetContext:       targetContext("test-4"),
 		Values:              "{\"ui\": { \"message\": \"what we do in the shadows\" } }",
 	}
 
-	expected_detail_with_values = &corev1.InstalledPackageDetail{
+	expected_detail_installed_package_with_values = &corev1.InstalledPackageDetail{
 		CurrentVersion: pkgAppVersion("6.0.0"),
 		PkgVersionReference: &corev1.VersionReference{
 			Version: "*",
@@ -106,14 +106,14 @@ var (
 
 	expected_resource_refs_with_values = podinfo_installed_refs("my-podinfo-4")
 
-	create_request_install_fails = &corev1.CreateInstalledPackageRequest{
+	create_installed_package_request_install_fails = &corev1.CreateInstalledPackageRequest{
 		AvailablePackageRef: availableRef("podinfo-5/podinfo", "default"),
 		Name:                "my-podinfo-5",
 		TargetContext:       targetContext("test-5"),
 		Values:              "{\"replicaCount\": \"what we do in the shadows\" }",
 	}
 
-	expected_detail_install_fails = &corev1.InstalledPackageDetail{
+	expected_detail_installed_package_install_fails = &corev1.InstalledPackageDetail{
 		CurrentVersion: &corev1.PackageAppVersion{
 			PkgVersion: "6.0.0",
 		},
@@ -135,7 +135,7 @@ var (
 		ValuesApplied: "{\"replicaCount\":\"what we do in the shadows\"}",
 	}
 
-	create_request_podinfo_5_2_1 = &corev1.CreateInstalledPackageRequest{
+	create_installed_package_request_podinfo_5_2_1 = &corev1.CreateInstalledPackageRequest{
 		AvailablePackageRef: availableRef("podinfo-6/podinfo", "default"),
 		Name:                "my-podinfo-6",
 		TargetContext:       targetContext("test-1"),
@@ -144,7 +144,7 @@ var (
 		},
 	}
 
-	expected_detail_podinfo_5_2_1 = &corev1.InstalledPackageDetail{
+	expected_detail_installed_package_podinfo_5_2_1 = &corev1.InstalledPackageDetail{
 		PkgVersionReference: &corev1.VersionReference{
 			Version: "=5.2.1",
 		},
@@ -155,7 +155,7 @@ var (
 
 	expected_resource_refs_podinfo_5_2_1 = podinfo_installed_refs("my-podinfo-6")
 
-	expected_detail_podinfo_6_0_0 = &corev1.InstalledPackageDetail{
+	expected_detail_installed_package_podinfo_6_0_0 = &corev1.InstalledPackageDetail{
 		PkgVersionReference: &corev1.VersionReference{
 			Version: "6.0.0",
 		},
@@ -164,7 +164,7 @@ var (
 		PostInstallationNotes: podinfo_notes("my-podinfo-6"),
 	}
 
-	create_request_podinfo_5_2_1_no_values = &corev1.CreateInstalledPackageRequest{
+	create_installed_package_request_podinfo_5_2_1_no_values = &corev1.CreateInstalledPackageRequest{
 		AvailablePackageRef: availableRef("podinfo-7/podinfo", "default"),
 		Name:                "my-podinfo-7",
 		TargetContext:       targetContext("test-7"),
@@ -173,7 +173,7 @@ var (
 		},
 	}
 
-	expected_detail_podinfo_5_2_1_no_values = &corev1.InstalledPackageDetail{
+	expected_detail_installed_package_podinfo_5_2_1_no_values = &corev1.InstalledPackageDetail{
 		PkgVersionReference: &corev1.VersionReference{
 			Version: "=5.2.1",
 		},
@@ -184,7 +184,7 @@ var (
 
 	expected_resource_refs_podinfo_5_2_1_no_values = podinfo_installed_refs("my-podinfo-7")
 
-	expected_detail_podinfo_5_2_1_values = &corev1.InstalledPackageDetail{
+	expected_detail_installed_package_podinfo_5_2_1_values = &corev1.InstalledPackageDetail{
 		PkgVersionReference: &corev1.VersionReference{
 			Version: "=5.2.1",
 		},
@@ -194,7 +194,7 @@ var (
 		PostInstallationNotes: podinfo_notes("my-podinfo-7"),
 	}
 
-	create_request_podinfo_5_2_1_values_2 = &corev1.CreateInstalledPackageRequest{
+	create_installed_package_request_podinfo_5_2_1_values_2 = &corev1.CreateInstalledPackageRequest{
 		AvailablePackageRef: availableRef("podinfo-8/podinfo", "default"),
 		Name:                "my-podinfo-8",
 		TargetContext:       targetContext("test-8"),
@@ -204,7 +204,7 @@ var (
 		Values: "{\"ui\":{\"message\":\"what we do in the shadows\"}}",
 	}
 
-	expected_detail_podinfo_5_2_1_values_2 = &corev1.InstalledPackageDetail{
+	expected_detail_installed_package_podinfo_5_2_1_values_2 = &corev1.InstalledPackageDetail{
 		PkgVersionReference: &corev1.VersionReference{
 			Version: "=5.2.1",
 		},
@@ -216,7 +216,7 @@ var (
 
 	expected_resource_refs_podinfo_5_2_1_values_2 = podinfo_installed_refs("my-podinfo-8")
 
-	expected_detail_podinfo_5_2_1_values_3 = &corev1.InstalledPackageDetail{
+	expected_detail_installed_package_podinfo_5_2_1_values_3 = &corev1.InstalledPackageDetail{
 		PkgVersionReference: &corev1.VersionReference{
 			Version: "=5.2.1",
 		},
@@ -226,7 +226,7 @@ var (
 		PostInstallationNotes: podinfo_notes("my-podinfo-8"),
 	}
 
-	create_request_podinfo_5_2_1_values_4 = &corev1.CreateInstalledPackageRequest{
+	create_installed_package_request_podinfo_5_2_1_values_4 = &corev1.CreateInstalledPackageRequest{
 		AvailablePackageRef: availableRef("podinfo-9/podinfo", "default"),
 		Name:                "my-podinfo-9",
 		TargetContext:       targetContext("test-9"),
@@ -236,7 +236,7 @@ var (
 		Values: "{\"ui\":{\"message\":\"what we do in the shadows\"}}",
 	}
 
-	expected_detail_podinfo_5_2_1_values_4 = &corev1.InstalledPackageDetail{
+	expected_detail_installed_package_podinfo_5_2_1_values_4 = &corev1.InstalledPackageDetail{
 		PkgVersionReference: &corev1.VersionReference{
 			Version: "=5.2.1",
 		},
@@ -248,7 +248,7 @@ var (
 
 	expected_resource_refs_podinfo_5_2_1_values_4 = podinfo_installed_refs("my-podinfo-9")
 
-	expected_detail_podinfo_5_2_1_values_5 = &corev1.InstalledPackageDetail{
+	expected_detail_installed_package_podinfo_5_2_1_values_5 = &corev1.InstalledPackageDetail{
 		PkgVersionReference: &corev1.VersionReference{
 			Version: "=5.2.1",
 		},
@@ -257,7 +257,7 @@ var (
 		PostInstallationNotes: podinfo_notes("my-podinfo-9"),
 	}
 
-	create_request_podinfo_5_2_1_values_6 = &corev1.CreateInstalledPackageRequest{
+	create_installed_package_request_podinfo_5_2_1_values_6 = &corev1.CreateInstalledPackageRequest{
 		AvailablePackageRef: availableRef("podinfo-10/podinfo", "default"),
 		Name:                "my-podinfo-10",
 		TargetContext:       targetContext("test-10"),
@@ -267,7 +267,7 @@ var (
 		Values: "{\"ui\":{\"message\":\"what we do in the shadows\"}}",
 	}
 
-	expected_detail_podinfo_5_2_1_values_6 = &corev1.InstalledPackageDetail{
+	expected_detail_installed_package_podinfo_5_2_1_values_6 = &corev1.InstalledPackageDetail{
 		PkgVersionReference: &corev1.VersionReference{
 			Version: "=5.2.1",
 		},
@@ -279,20 +279,20 @@ var (
 
 	expected_resource_refs_podinfo_5_2_1_values_6 = podinfo_installed_refs("my-podinfo-10")
 
-	create_request_podinfo_7 = &corev1.CreateInstalledPackageRequest{
+	create_installed_package_request_podinfo_7 = &corev1.CreateInstalledPackageRequest{
 		AvailablePackageRef: availableRef("podinfo-11/podinfo", "default"),
 		Name:                "my-podinfo-11",
 		TargetContext:       targetContext("test-11"),
 	}
 
-	create_request_podinfo_8 = &corev1.CreateInstalledPackageRequest{
+	create_installed_package_request_podinfo_8 = &corev1.CreateInstalledPackageRequest{
 		AvailablePackageRef: availableRef("podinfo-12/podinfo", "default"),
 		Name:                "my-podinfo-12",
 		TargetContext:       targetContext("test-12"),
 		Values:              "{\"replicaCount\": \"what we do in the shadows\" }",
 	}
 
-	expected_detail_podinfo_7 = &corev1.InstalledPackageDetail{
+	expected_detail_installed_package_podinfo_7 = &corev1.InstalledPackageDetail{
 		PkgVersionReference: &corev1.VersionReference{
 			Version: "*",
 		},
@@ -301,7 +301,7 @@ var (
 		PostInstallationNotes: podinfo_notes("my-podinfo-11"),
 	}
 
-	expected_detail_podinfo_8 = &corev1.InstalledPackageDetail{
+	expected_detail_installed_package_podinfo_8 = &corev1.InstalledPackageDetail{
 		CurrentVersion: &corev1.PackageAppVersion{
 			PkgVersion: "6.0.0",
 		},
@@ -323,7 +323,7 @@ var (
 		ValuesApplied: "{\"replicaCount\":\"what we do in the shadows\"}",
 	}
 
-	expected_detail_podinfo_9 = &corev1.InstalledPackageDetail{
+	expected_detail_installed_package_podinfo_9 = &corev1.InstalledPackageDetail{
 		PkgVersionReference: &corev1.VersionReference{
 			Version: "6.0.0",
 		},
@@ -336,6 +336,17 @@ var (
 	expected_resource_refs_podinfo_7 = podinfo_installed_refs("my-podinfo-11")
 
 	expected_resource_refs_podinfo_9 = podinfo_installed_refs("my-podinfo-12")
+
+	expected_detail_installed_package_oci = &corev1.InstalledPackageDetail{
+		PkgVersionReference: &corev1.VersionReference{
+			Version: "*",
+		},
+		CurrentVersion:        pkgAppVersion("6.1.6"),
+		Status:                status_installed,
+		PostInstallationNotes: podinfo_notes("my-podinfo-17"),
+	}
+
+	expected_resource_refs_oci = podinfo_installed_refs("my-podinfo-17")
 
 	update_request_1 = &corev1.UpdateInstalledPackageRequest{
 		// InstalledPackageRef will be filled in by the code below after a call to create(...) completes
@@ -392,7 +403,7 @@ var (
 		Values: "{\"replicaCount\": 1 }",
 	}
 
-	create_request_podinfo_for_delete_1 = &corev1.CreateInstalledPackageRequest{
+	create_installed_package_request_podinfo_for_delete_1 = &corev1.CreateInstalledPackageRequest{
 		AvailablePackageRef: availableRef("podinfo-12/podinfo", "default"),
 		Name:                "my-podinfo-12",
 		TargetContext:       targetContext("test-12"),
@@ -401,7 +412,7 @@ var (
 		},
 	}
 
-	expected_detail_podinfo_for_delete_1 = &corev1.InstalledPackageDetail{
+	expected_detail_installed_package_podinfo_for_delete_1 = &corev1.InstalledPackageDetail{
 		PkgVersionReference: &corev1.VersionReference{
 			Version: "=5.2.1",
 		},
@@ -412,7 +423,7 @@ var (
 
 	expected_resource_refs_for_delete_1 = podinfo_installed_refs("my-podinfo-12")
 
-	create_request_podinfo_for_delete_2 = &corev1.CreateInstalledPackageRequest{
+	create_installed_package_request_podinfo_for_delete_2 = &corev1.CreateInstalledPackageRequest{
 		AvailablePackageRef: availableRef("podinfo-13/podinfo", "default"),
 		Name:                "my-podinfo-13",
 		TargetContext:       targetContext("test-13"),
@@ -421,7 +432,7 @@ var (
 		},
 	}
 
-	expected_detail_podinfo_for_delete_2 = &corev1.InstalledPackageDetail{
+	expected_detail_installed_package_podinfo_for_delete_2 = &corev1.InstalledPackageDetail{
 		PkgVersionReference: &corev1.VersionReference{
 			Version: "=5.2.1",
 		},
@@ -432,7 +443,7 @@ var (
 
 	expected_resource_refs_for_delete_2 = podinfo_installed_refs("my-podinfo-13")
 
-	create_request_wrong_cluster = &corev1.CreateInstalledPackageRequest{
+	create_installed_package_request_wrong_cluster = &corev1.CreateInstalledPackageRequest{
 		AvailablePackageRef: availableRef("podinfo-14/podinfo", "default"),
 		Name:                "my-podinfo",
 		TargetContext: &corev1.Context{
@@ -441,13 +452,13 @@ var (
 		},
 	}
 
-	create_request_target_ns_doesnt_exist = &corev1.CreateInstalledPackageRequest{
+	create_installed_package_request_target_ns_doesnt_exist = &corev1.CreateInstalledPackageRequest{
 		AvailablePackageRef: availableRef("podinfo-15/podinfo", "default"),
 		Name:                "my-podinfo",
 		TargetContext:       targetContext("test-15"),
 	}
 
-	create_request_auto_update = &corev1.CreateInstalledPackageRequest{
+	create_installed_package_request_auto_update = &corev1.CreateInstalledPackageRequest{
 		AvailablePackageRef: availableRef("podinfo-16/podinfo", "default"),
 		Name:                "my-podinfo-16",
 		TargetContext:       targetContext("test-16"),
@@ -459,7 +470,7 @@ var (
 		},
 	}
 
-	expected_detail_auto_update = &corev1.InstalledPackageDetail{
+	expected_detail_installed_package_auto_update = &corev1.InstalledPackageDetail{
 		PkgVersionReference: &corev1.VersionReference{
 			Version: ">= 6",
 		},
@@ -471,7 +482,7 @@ var (
 		PostInstallationNotes: podinfo_notes("my-podinfo-16"),
 	}
 
-	expected_detail_auto_update_2 = &corev1.InstalledPackageDetail{
+	expected_detail_installed_package_auto_update_2 = &corev1.InstalledPackageDetail{
 		PkgVersionReference: &corev1.VersionReference{
 			Version: ">= 6",
 		},
@@ -493,6 +504,12 @@ var (
 	}
 
 	expected_resource_refs_auto_update = podinfo_installed_refs("my-podinfo-16")
+
+	create_installed_package_request_oci = &corev1.CreateInstalledPackageRequest{
+		AvailablePackageRef: availableRef("podinfo-17/podinfo", "default"),
+		Name:                "my-podinfo-17",
+		TargetContext:       targetContext("test-17"),
+	}
 
 	expected_detail_test_release_rbac = &corev1.InstalledPackageDetail{
 		PkgVersionReference: &corev1.VersionReference{

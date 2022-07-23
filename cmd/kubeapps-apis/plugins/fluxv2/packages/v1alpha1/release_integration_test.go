@@ -6,6 +6,7 @@ package main
 import (
 	"context"
 	"math"
+	"os"
 	"strings"
 	"testing"
 	"time"
@@ -38,6 +39,7 @@ const (
 
 type integrationTestCreatePackageSpec struct {
 	testName          string
+	repoType          string
 	repoUrl           string
 	repoInterval      time.Duration // 0 for default (10m)
 	request           *corev1.CreateInstalledPackageRequest
@@ -46,7 +48,7 @@ type integrationTestCreatePackageSpec struct {
 	// what follows are boolean flags to test various negative scenarios
 	// different from expectedStatusCode due to async nature of install
 	expectInstallFailure bool
-	noPreCreateNs        bool
+	dontCreateNs         bool
 	noCleanup            bool
 	expectedStatusCode   codes.Code
 	expectedResourceRefs []*corev1.ResourceRef
@@ -58,12 +60,19 @@ func TestKindClusterCreateInstalledPackage(t *testing.T) {
 		t.Fatal(err)
 	}
 
+	// see TestKindClusterAvailablePackageEndpointsForOCI for explanation
+	ghUser := os.Getenv("GITHUB_USER")
+	ghToken := os.Getenv("GITHUB_TOKEN")
+	if ghUser == "" || ghToken == "" {
+		t.Fatalf("Environment variables GITHUB_USER and GITHUB_TOKEN need to be set to run this test")
+	}
+
 	testCases := []integrationTestCreatePackageSpec{
 		{
 			testName:             "create test (simplest case)",
 			repoUrl:              podinfo_repo_url,
-			request:              create_request_basic,
-			expectedDetail:       expected_detail_basic,
+			request:              create_installed_package_request_basic,
+			expectedDetail:       expected_detail_installed_package_basic,
 			expectedPodPrefix:    "my-podinfo-",
 			expectedStatusCode:   codes.OK,
 			expectedResourceRefs: expected_resource_refs_basic,
@@ -71,8 +80,8 @@ func TestKindClusterCreateInstalledPackage(t *testing.T) {
 		{
 			testName:             "create package (semver constraint)",
 			repoUrl:              podinfo_repo_url,
-			request:              create_request_semver_constraint,
-			expectedDetail:       expected_detail_semver_constraint,
+			request:              create_installed_package_request_semver_constraint,
+			expectedDetail:       expected_detail_installed_package_semver_constraint,
 			expectedPodPrefix:    "my-podinfo-2-",
 			expectedStatusCode:   codes.OK,
 			expectedResourceRefs: expected_resource_refs_semver_constraint,
@@ -80,8 +89,8 @@ func TestKindClusterCreateInstalledPackage(t *testing.T) {
 		{
 			testName:             "create package (reconcile options)",
 			repoUrl:              podinfo_repo_url,
-			request:              create_request_reconcile_options,
-			expectedDetail:       expected_detail_reconcile_options,
+			request:              create_installed_package_request_reconcile_options,
+			expectedDetail:       expected_detail_installed_package_reconcile_options,
 			expectedPodPrefix:    "my-podinfo-3-",
 			expectedStatusCode:   codes.OK,
 			expectedResourceRefs: expected_resource_refs_reconcile_options,
@@ -89,8 +98,8 @@ func TestKindClusterCreateInstalledPackage(t *testing.T) {
 		{
 			testName:             "create package (with values)",
 			repoUrl:              podinfo_repo_url,
-			request:              create_request_with_values,
-			expectedDetail:       expected_detail_with_values,
+			request:              create_installed_package_request_with_values,
+			expectedDetail:       expected_detail_installed_package_with_values,
 			expectedPodPrefix:    "my-podinfo-4-",
 			expectedStatusCode:   codes.OK,
 			expectedResourceRefs: expected_resource_refs_with_values,
@@ -98,29 +107,39 @@ func TestKindClusterCreateInstalledPackage(t *testing.T) {
 		{
 			testName:             "install fails",
 			repoUrl:              podinfo_repo_url,
-			request:              create_request_install_fails,
-			expectedDetail:       expected_detail_install_fails,
+			request:              create_installed_package_request_install_fails,
+			expectedDetail:       expected_detail_installed_package_install_fails,
 			expectInstallFailure: true,
 			expectedStatusCode:   codes.OK,
 		},
 		{
 			testName:           "unauthorized",
 			repoUrl:            podinfo_repo_url,
-			request:            create_request_basic,
+			request:            create_installed_package_request_basic,
 			expectedStatusCode: codes.Unauthenticated,
 		},
 		{
 			testName:           "wrong cluster",
 			repoUrl:            podinfo_repo_url,
-			request:            create_request_wrong_cluster,
+			request:            create_installed_package_request_wrong_cluster,
 			expectedStatusCode: codes.Unimplemented,
 		},
 		{
 			testName:           "target namespace does not exist",
 			repoUrl:            podinfo_repo_url,
-			request:            create_request_target_ns_doesnt_exist,
-			noPreCreateNs:      true,
+			request:            create_installed_package_request_target_ns_doesnt_exist,
+			dontCreateNs:       true,
 			expectedStatusCode: codes.NotFound,
+		},
+		{
+			testName:             "create OCI helm release",
+			repoType:             "oci",
+			repoUrl:              github_podinfo_oci_registry_url,
+			request:              create_installed_package_request_oci,
+			expectedDetail:       expected_detail_installed_package_oci,
+			expectedPodPrefix:    "my-podinfo-17",
+			expectedStatusCode:   codes.OK,
+			expectedResourceRefs: expected_resource_refs_oci,
 		},
 	}
 
@@ -158,73 +177,73 @@ func TestKindClusterUpdateInstalledPackage(t *testing.T) {
 			integrationTestCreatePackageSpec: integrationTestCreatePackageSpec{
 				testName:             "update test (simplest case)",
 				repoUrl:              podinfo_repo_url,
-				request:              create_request_podinfo_5_2_1,
-				expectedDetail:       expected_detail_podinfo_5_2_1,
+				request:              create_installed_package_request_podinfo_5_2_1,
+				expectedDetail:       expected_detail_installed_package_podinfo_5_2_1,
 				expectedPodPrefix:    "my-podinfo-6-",
 				expectedResourceRefs: expected_resource_refs_podinfo_5_2_1,
 			},
 			request:                   update_request_1,
-			expectedDetailAfterUpdate: expected_detail_podinfo_6_0_0,
+			expectedDetailAfterUpdate: expected_detail_installed_package_podinfo_6_0_0,
 			expectedRefsAfterUpdate:   expected_resource_refs_podinfo_5_2_1,
 		},
 		{
 			integrationTestCreatePackageSpec: integrationTestCreatePackageSpec{
 				testName:             "update test (add values)",
 				repoUrl:              podinfo_repo_url,
-				request:              create_request_podinfo_5_2_1_no_values,
-				expectedDetail:       expected_detail_podinfo_5_2_1_no_values,
+				request:              create_installed_package_request_podinfo_5_2_1_no_values,
+				expectedDetail:       expected_detail_installed_package_podinfo_5_2_1_no_values,
 				expectedPodPrefix:    "my-podinfo-7-",
 				expectedResourceRefs: expected_resource_refs_podinfo_5_2_1_no_values,
 			},
 			request:                   update_request_2,
-			expectedDetailAfterUpdate: expected_detail_podinfo_5_2_1_values,
+			expectedDetailAfterUpdate: expected_detail_installed_package_podinfo_5_2_1_values,
 			expectedRefsAfterUpdate:   expected_resource_refs_podinfo_5_2_1_no_values,
 		},
 		{
 			integrationTestCreatePackageSpec: integrationTestCreatePackageSpec{
 				testName:             "update test (change values)",
 				repoUrl:              podinfo_repo_url,
-				request:              create_request_podinfo_5_2_1_values_2,
-				expectedDetail:       expected_detail_podinfo_5_2_1_values_2,
+				request:              create_installed_package_request_podinfo_5_2_1_values_2,
+				expectedDetail:       expected_detail_installed_package_podinfo_5_2_1_values_2,
 				expectedPodPrefix:    "my-podinfo-8-",
 				expectedResourceRefs: expected_resource_refs_podinfo_5_2_1_values_2,
 			},
 			request:                   update_request_3,
-			expectedDetailAfterUpdate: expected_detail_podinfo_5_2_1_values_3,
+			expectedDetailAfterUpdate: expected_detail_installed_package_podinfo_5_2_1_values_3,
 			expectedRefsAfterUpdate:   expected_resource_refs_podinfo_5_2_1_values_2,
 		},
 		{
 			integrationTestCreatePackageSpec: integrationTestCreatePackageSpec{
 				testName:             "update test (remove values)",
 				repoUrl:              podinfo_repo_url,
-				request:              create_request_podinfo_5_2_1_values_4,
-				expectedDetail:       expected_detail_podinfo_5_2_1_values_4,
+				request:              create_installed_package_request_podinfo_5_2_1_values_4,
+				expectedDetail:       expected_detail_installed_package_podinfo_5_2_1_values_4,
 				expectedPodPrefix:    "my-podinfo-9-",
 				expectedResourceRefs: expected_resource_refs_podinfo_5_2_1_values_4,
 			},
 			request:                   update_request_4,
-			expectedDetailAfterUpdate: expected_detail_podinfo_5_2_1_values_5,
+			expectedDetailAfterUpdate: expected_detail_installed_package_podinfo_5_2_1_values_5,
 			expectedRefsAfterUpdate:   expected_resource_refs_podinfo_5_2_1_values_4,
 		},
 		{
 			integrationTestCreatePackageSpec: integrationTestCreatePackageSpec{
 				testName:             "update test (values dont change)",
 				repoUrl:              podinfo_repo_url,
-				request:              create_request_podinfo_5_2_1_values_6,
-				expectedDetail:       expected_detail_podinfo_5_2_1_values_6,
+				request:              create_installed_package_request_podinfo_5_2_1_values_6,
+				expectedDetail:       expected_detail_installed_package_podinfo_5_2_1_values_6,
 				expectedPodPrefix:    "my-podinfo-10-",
 				expectedResourceRefs: expected_resource_refs_podinfo_5_2_1_values_6,
 			},
 			request:                   update_request_5,
-			expectedDetailAfterUpdate: expected_detail_podinfo_5_2_1_values_6,
+			expectedDetailAfterUpdate: expected_detail_installed_package_podinfo_5_2_1_values_6,
 			expectedRefsAfterUpdate:   expected_resource_refs_podinfo_5_2_1_values_6,
 		},
 		{
 			integrationTestCreatePackageSpec: integrationTestCreatePackageSpec{
 				testName:             "update unauthorized test",
 				repoUrl:              podinfo_repo_url,
-				request:              create_request_podinfo_7,
-				expectedDetail:       expected_detail_podinfo_7,
+				request:              create_installed_package_request_podinfo_7,
+				expectedDetail:       expected_detail_installed_package_podinfo_7,
 				expectedPodPrefix:    "my-podinfo-11-",
 				expectedResourceRefs: expected_resource_refs_podinfo_7,
 			},
@@ -235,12 +254,12 @@ func TestKindClusterUpdateInstalledPackage(t *testing.T) {
 			integrationTestCreatePackageSpec: integrationTestCreatePackageSpec{
 				testName:             "update installed package in failed state is allowed",
 				repoUrl:              podinfo_repo_url,
-				request:              create_request_podinfo_8,
-				expectedDetail:       expected_detail_podinfo_8,
+				request:              create_installed_package_request_podinfo_8,
+				expectedDetail:       expected_detail_installed_package_podinfo_8,
 				expectInstallFailure: true,
 			},
 			request:                   update_request_7,
-			expectedDetailAfterUpdate: expected_detail_podinfo_9,
+			expectedDetailAfterUpdate: expected_detail_installed_package_podinfo_9,
 			expectedRefsAfterUpdate:   expected_resource_refs_podinfo_9,
 		},
 	}
@@ -346,8 +365,8 @@ func TestKindClusterAutoUpdateInstalledPackage(t *testing.T) {
 		testName:             "create test (auto update)",
 		repoUrl:              podinfo_repo_url,
 		repoInterval:         30 * time.Second,
-		request:              create_request_auto_update,
-		expectedDetail:       expected_detail_auto_update,
+		request:              create_installed_package_request_auto_update,
+		expectedDetail:       expected_detail_installed_package_auto_update,
 		expectedPodPrefix:    "my-podinfo-16",
 		expectedStatusCode:   codes.OK,
 		expectedResourceRefs: expected_resource_refs_auto_update,
@@ -362,7 +381,7 @@ func TestKindClusterAutoUpdateInstalledPackage(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	// this will also make sure that response looks like expected_detail_auto_update
+	// this will also make sure that response looks like expected_detail_installed_package_auto_update
 	installedRef := createAndWaitForHelmRelease(t, spec, fluxPluginClient, grpcContext)
 	podName, err := getFluxPluginTestdataPodName()
 	if err != nil {
@@ -404,14 +423,14 @@ func TestKindClusterAutoUpdateInstalledPackage(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	expected_detail_auto_update_2.InstalledPackageRef = installedRef
-	expected_detail_auto_update_2.PostInstallationNotes = strings.ReplaceAll(
-		expected_detail_auto_update_2.PostInstallationNotes,
+	expected_detail_installed_package_auto_update_2.InstalledPackageRef = installedRef
+	expected_detail_installed_package_auto_update_2.PostInstallationNotes = strings.ReplaceAll(
+		expected_detail_installed_package_auto_update_2.PostInstallationNotes,
 		"@TARGET_NS@",
 		spec.request.TargetContext.Namespace)
 	compareActualVsExpectedGetInstalledPackageDetailResponse(
 		t, resp, &corev1.GetInstalledPackageDetailResponse{
-			InstalledPackageDetail: expected_detail_auto_update_2,
+			InstalledPackageDetail: expected_detail_installed_package_auto_update_2,
 		})
 }
 
@@ -429,8 +448,8 @@ func TestKindClusterDeleteInstalledPackage(t *testing.T) {
 			integrationTestCreatePackageSpec: integrationTestCreatePackageSpec{
 				testName:             "delete test (simplest case)",
 				repoUrl:              podinfo_repo_url,
-				request:              create_request_podinfo_for_delete_1,
-				expectedDetail:       expected_detail_podinfo_for_delete_1,
+				request:              create_installed_package_request_podinfo_for_delete_1,
+				expectedDetail:       expected_detail_installed_package_podinfo_for_delete_1,
 				expectedPodPrefix:    "my-podinfo-12-",
 				expectedResourceRefs: expected_resource_refs_for_delete_1,
 				noCleanup:            true,
@@ -440,8 +459,8 @@ func TestKindClusterDeleteInstalledPackage(t *testing.T) {
 			integrationTestCreatePackageSpec: integrationTestCreatePackageSpec{
 				testName:             "delete test (unauthorized)",
 				repoUrl:              podinfo_repo_url,
-				request:              create_request_podinfo_for_delete_2,
-				expectedDetail:       expected_detail_podinfo_for_delete_2,
+				request:              create_installed_package_request_podinfo_for_delete_2,
+				expectedDetail:       expected_detail_installed_package_podinfo_for_delete_2,
 				expectedPodPrefix:    "my-podinfo-13-",
 				expectedResourceRefs: expected_resource_refs_for_delete_2,
 				noCleanup:            true,
@@ -1323,7 +1342,7 @@ func createAndWaitForHelmRelease(t *testing.T, tc integrationTestCreatePackageSp
 		Name:      idParts[0],
 		Namespace: availablePackageRef.Context.Namespace,
 	}
-	err := kubeAddHelmRepositoryAndCleanup(t, name, "", tc.repoUrl, "", tc.repoInterval)
+	err := kubeAddHelmRepositoryAndCleanup(t, name, tc.repoType, tc.repoUrl, "", tc.repoInterval)
 	if err != nil {
 		t.Fatalf("%+v", err)
 	}
@@ -1333,13 +1352,20 @@ func createAndWaitForHelmRelease(t *testing.T, tc integrationTestCreatePackageSp
 	for i := 0; i <= maxWait; i++ {
 		grpcContext, cancel := context.WithTimeout(grpcContext, defaultContextTimeout)
 		defer cancel()
+
 		resp, err := fluxPluginClient.GetAvailablePackageDetail(
 			grpcContext,
 			&corev1.GetAvailablePackageDetailRequest{AvailablePackageRef: availablePackageRef})
 		if err == nil {
 			break
 		} else if i == maxWait {
-			t.Fatalf("Timed out waiting for available package [%s], last response: %v, last error: [%v]", availablePackageRef, resp, err)
+			if repo, err2 := kubeGetHelmRepository(t, name); err2 == nil && repo != nil {
+				t.Fatalf("Timed out waiting for available package [%s], last response: %v, last error: [%v],\nhelm repository:%s",
+					availablePackageRef, resp, err, common.PrettyPrint(repo))
+			} else {
+				t.Fatalf("Timed out waiting for available package [%s], last response: %v, last error: [%v]",
+					availablePackageRef, resp, err)
+			}
 		} else {
 			t.Logf("Waiting 1s for repository [%s] to be indexed, attempt [%d/%d]...", idParts[0], i+1, maxWait)
 			time.Sleep(1 * time.Second)
@@ -1352,7 +1378,7 @@ func createAndWaitForHelmRelease(t *testing.T, tc integrationTestCreatePackageSp
 	if tc.request.TargetContext.Namespace != "" {
 		tc.request.TargetContext.Namespace += "-" + randSeq(4)
 
-		if !tc.noPreCreateNs {
+		if !tc.dontCreateNs {
 			// per https://github.com/vmware-tanzu/kubeapps/pull/3640#issuecomment-950383123
 			if err := kubeCreateNamespaceAndCleanup(t, tc.request.TargetContext.Namespace); err != nil {
 				t.Fatal(err)
