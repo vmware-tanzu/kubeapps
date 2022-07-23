@@ -454,10 +454,16 @@ func TestKindClusterAutoUpdateInstalledPackageFromOciRepo(t *testing.T) {
 	}
 
 	spec := integrationTestCreatePackageSpec{
-		testName:             "create test (OCI repo auto update)",
-		repoUrl:              github_gfichtenholt_podinfo_oci_registry_url,
-		repoType:             "oci",
-		repoInterval:         30 * time.Second,
+		testName:     "create test (OCI repo auto update)",
+		repoUrl:      github_gfichtenholt_podinfo_oci_registry_url,
+		repoType:     "oci",
+		repoInterval: 30 * time.Second,
+		repoSecret: newBasicAuthSecret(types.NamespacedName{
+			Name:      "oci-repo-secret-" + randSeq(4),
+			Namespace: "default"},
+			ghUser,
+			ghToken,
+		),
 		request:              create_installed_package_request_auto_update_oci,
 		expectedDetail:       expected_detail_installed_package_auto_update_oci,
 		expectedPodPrefix:    "my-podinfo-18",
@@ -486,13 +492,13 @@ func TestKindClusterAutoUpdateInstalledPackageFromOciRepo(t *testing.T) {
 	}
 	t.Logf("podName = [%s]", podName)
 
-	if err = helmPushChartToMyGithubRegistry(t); err != nil {
+	if err = helmPushChartToMyGithubRegistry(t, "testdata/charts/podinfo-6.1.6.tgz"); err != nil {
 		t.Fatal(err)
 	}
-
-	// TODO: (gfichtenholt) need to delete remote chart version at the end of the test
-	// so there are no side-effects. Looks like there is no generic way to do that, need to
-	// use GitHub API
+	t.Cleanup(func() {
+		// Delete remote chart version at the end of the test so there are no side-effects.
+		deleteChartFromMyGithubRegistry(t, "6.1.6")
+	})
 
 	t.Logf("Waiting 45 seconds...")
 	time.Sleep(45 * time.Second)

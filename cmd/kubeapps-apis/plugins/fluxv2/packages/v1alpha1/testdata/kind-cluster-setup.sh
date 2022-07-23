@@ -26,7 +26,7 @@ function pushChartToLocalRegistryUsingHelmCLI() {
    sleep 5
   done
   if [[ $n -ge $max ]]; then
-    echo "Failed to login to helm registry [localhost:$OCI_REGISTRY_LOCAL_PORT] after [$max] attempts. Exiting script..."
+    echo "Failed to login to helm registry [localhost:$OCI_REGISTRY_LOCAL_PORT] after [$max] attempts. Exiting..."
     exit 1
   fi
 
@@ -115,7 +115,7 @@ function pushChartToMyGitHubRegistry() {
    sleep 5
   done
   if [[ $n -ge $max ]]; then
-    echo "Failed to login to helm registry [ghcr.io] after [$max] attempts. Exiting script..."
+    echo "Failed to login to helm registry [ghcr.io] after [$max] attempts. Exiting..."
     exit 1
   fi
 
@@ -133,9 +133,9 @@ function pushChartToMyGitHubRegistry() {
   helm show all oci://ghcr.io/gfichtenholt/helm-charts/podinfo | head -9
 
   echo 
-  echo You can see all packages at https://github.com/gfichtenholt?tab=packages
+  echo You can see all packages at [https://github.com/gfichtenholt?tab=packages]
   echo You can see and delete any specific package version at 
-  echo   https://github.com/users/gfichtenholt/packages/container/helm-charts%2Fpodinfo/versions
+  echo  [https://github.com/users/gfichtenholt/packages/container/helm-charts%2Fpodinfo/versions]
   echo
 }
 
@@ -146,30 +146,15 @@ function deleteChartVersionFromMyGitHubRegistry() {
     exit
   fi
 
-  max=5  
-  n=0
-  until [ $n -ge $max ]
-  do
-   helm registry login ghcr.io -u $GITHUB_USER -p $GITHUB_TOKEN && break
-   n=$((n+1)) 
-   echo "Retrying helm login in 5s [$n/$max]..."
-   sleep 5
-  done
-  if [[ $n -ge $max ]]; then
-    echo "Failed to login to helm registry [ghcr.io] after [$max] attempts. Exiting script..."
-    exit 1
+  # ref https://docs.github.com/en/rest/packages#get-all-package-versions-for-a-package-owned-by-the-authenticated-user
+  PACKAGE_VERSION_ID=$(gh api   -H "Accept: application/vnd.github+json" /users/gfichtenholt/packages/container/helm-charts%2Fpodinfo/versions | jq -rc '.[] | select(.metadata.container.tags[] | contains("6.1.6")) | .id')
+  if [[ "$PACKAGE_VERSION_ID" != "" ]]; then
+     # ref https://docs.github.com/en/rest/packages#delete-a-package-version-for-the-authenticated-user
+     # ref https://github.com/cli/cli/issues/3937
+     echo -n | gh api   --method DELETE   -H "Accept: application/vnd.github+json"   /user/packages/container/helm-charts%2Fpodinfo/versions/$PACKAGE_VERSION_ID --input -
+     # one can verify that the version has been deleted on web portal
+     # https://github.com/users/gfichtenholt/packages/container/helm-charts%2Fpodinfo/versions
   fi
-
-  trap '{
-    helm registry logout ghcr.io
-  }' EXIT  
-
-  open https://github.com/users/gfichtenholt/packages/container/helm-charts%2Fpodinfo/versions
-  echo 
-  echo You can see delete a specific package version [$1] at 
-  echo https://github.com/users/gfichtenholt/packages/container/helm-charts%2Fpodinfo/versions
-  echo
-  read -p "Press any key to resume ..."
 
   # TODO (gfichtenholt) sanity check 
 }
@@ -210,6 +195,7 @@ function deploy {
   pushChartToMyGitHubRegistry "charts/podinfo-$VERSION.tgz"
 
   # TODO (gfichtenholt) automate this so it does not require interaction
+  # ref https://docs.github.com/en/rest/packages#about-the-github-packages-api
   open https://github.com/users/gfichtenholt/packages/container/helm-charts%2Fpodinfo/versions
   echo 
   echo Make sure that: 

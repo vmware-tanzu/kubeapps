@@ -137,6 +137,7 @@ func checkEnv(t *testing.T) (fluxplugin.FluxV2PackagesServiceClient, fluxplugin.
 
 func isLocalKindClusterUp(t *testing.T) (up bool, err error) {
 	t.Logf("+isLocalKindClusterUp")
+
 	cmd := exec.Command("kind", "get", "clusters")
 	bytes, err := cmd.CombinedOutput()
 	if err != nil {
@@ -1043,10 +1044,7 @@ func kubectlCanI(t *testing.T, name types.NamespacedName, verb, resource, checkT
 		"--as",
 		"system:serviceaccount:" + name.Namespace + ":" + name.Name,
 	}
-	cmd := exec.Command("kubectl", args...)
-	byteArray, _ := cmd.CombinedOutput()
-	out := strings.Trim(string(byteArray), "\n")
-	t.Logf("Executed command: [%s], output: [%s]", cmd.String(), out)
+	out, _ := execCommand(t, "kubectl", args)
 	return out
 }
 
@@ -1287,24 +1285,42 @@ func getFluxPluginTestdataPodName() (*types.NamespacedName, error) {
 	return nil, fmt.Errorf("fluxplugin testdata pod not found")
 }
 
-func helmPushChartToMyGithubRegistry(t *testing.T) error {
-	t.Logf("+helmPushChartToMyGithubRegistry")
-	defer t.Logf("-helmPushChartToMyGithubRegistry")
+func helmPushChartToMyGithubRegistry(t *testing.T, chartTgz string) error {
+	t.Logf("+helmPushChartToMyGithubRegistry(%s)", chartTgz)
+	defer t.Logf("-helmPushChartToMyGithubRegistry(%s)", chartTgz)
 
-	// use the helm CLI for now
 	args := []string{
 		"pushChartToMyGithub",
-		"testdata/charts/podinfo-6.1.6.tgz",
+		chartTgz,
 	}
 
-	script := "./testdata/kind-cluster-setup.sh"
-	t.Logf("About to execute command: [%s]...", script)
+	// use the CLI for now
+	_, err := execCommand(t, "./testdata/kind-cluster-setup.sh", args)
+	return err
+}
+
+func deleteChartFromMyGithubRegistry(t *testing.T, version string) error {
+	t.Logf("+deleteChartFromMyGithubRegistry(%s)", version)
+	defer t.Logf("-deleteChartFromMyGithubRegistry(%s)", version)
+
+	args := []string{
+		"deleteChartVersionFromMyGitHub",
+		"6.1.6",
+	}
+
+	// use the CLI for now
+	_, err := execCommand(t, "./testdata/kind-cluster-setup.sh", args)
+	return err
+}
+
+func execCommand(t *testing.T, name string, args []string) (string, error) {
+	t.Logf("About to execute command: [%s] with args [%s]...", name, args)
 	// TODO (gfichtenholt) it'd be nice to have real-time updates
-	cmd := exec.Command(script, args...)
+	cmd := exec.Command(name, args...)
 	byteArray, err := cmd.CombinedOutput()
 	out := strings.Trim(string(byteArray), "\n")
-	t.Logf("Executed command: [%s], output: [%s]", cmd.String(), out)
-	return err
+	t.Logf("Executed command: [%s], err: [%v], output: [\n%s\n]", cmd.String(), err, out)
+	return cmd.String(), err
 }
 
 // global vars
