@@ -3,10 +3,14 @@
 # Copyright 2021-2022 the Kubeapps contributors.
 # SPDX-License-Identifier: Apache-2.0
 
-# this is used to build an image that can be used to stand-up a pod that serves static test-data in 
-# local kind cluster. Used by the integration tests. This script needs to be run once before the running
-# the test(s). This script requires GitHub CLI (gh) to be installed locally. On MacOS you can
-# install it via 'brew install gh'
+# This script is used to:
+# - build an image that can be used to stand-up a pod that serves static test-data in 
+# local kind cluster. 
+# - create and seed an OCI registry on ghcr.io
+# These are usedby the integration tests. 
+# This script needs to be run once before the running the test(s).
+# This script requires GitHub CLI (gh) to be installed locally. On MacOS you can
+# install it via 'brew install gh'. gh releases page: https://github.com/cli/cli/releases 
 set -o errexit
 set -o nounset
 set -o pipefail
