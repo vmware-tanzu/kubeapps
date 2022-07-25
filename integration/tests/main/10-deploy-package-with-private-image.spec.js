@@ -40,7 +40,6 @@ test("Deploy a chart using a private container image", async ({ page }) => {
 
   // Set the Docker repo credentials
   await page.locator("text=Docker Registry Credentials").nth(1).click();
-  debugger;
 
   await page
     .locator('[id="kubeapps-imagePullSecrets-cred-server"]')
