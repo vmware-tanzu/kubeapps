@@ -11,7 +11,7 @@ parameters:
     default: "16.16.0"
   RUST_VERSION:
     type: string
-    default: "1.62.1"
+    default: "1.62.0"
   DOCKER_VERSION:
     type: string
     default: "20.10.14"
