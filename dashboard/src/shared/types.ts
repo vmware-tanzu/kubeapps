@@ -434,7 +434,7 @@ export interface IPkgRepoFormData {
   // user-managed secrets
   secretAuthName: string;
   secretTLSName: string;
-  // rest of the paramters
+  // rest of the parameters
   customCA: string;
   description: string;
   interval: string;
@@ -444,8 +444,8 @@ export interface IPkgRepoFormData {
   skipTLS: boolean;
   type: string;
   url: string;
-  // add more types if necesary
-  customDetails: Partial<
+  // add more types if necessary
+  customDetail: Partial<
     HelmPackageRepositoryCustomDetail | KappControllerPackageRepositoryCustomDetail
   >;
 }

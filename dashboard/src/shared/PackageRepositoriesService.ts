@@ -59,7 +59,7 @@ export class PackageRepositoriesService {
       namespace,
       request,
       namespaceScoped,
-      this.buildEncodedCustomDetails(request),
+      this.buildEncodedCustomDetail(request),
     );
 
     return await this.coreRepositoriesClient().AddPackageRepository(addPackageRepositoryRequest);
@@ -76,7 +76,7 @@ export class PackageRepositoriesService {
       namespace,
       request,
       undefined,
-      this.buildEncodedCustomDetails(request),
+      this.buildEncodedCustomDetail(request),
     );
 
     return await this.coreRepositoriesClient().UpdatePackageRepository(
@@ -98,7 +98,7 @@ export class PackageRepositoriesService {
     namespace: string,
     request: IPkgRepoFormData,
     namespaceScoped?: boolean,
-    customDetails?: any,
+    pluginCustomDetail?: any,
   ) {
     const addPackageRepositoryRequest = {
       context: { cluster, namespace },
@@ -109,7 +109,7 @@ export class PackageRepositoriesService {
       url: request.url,
       interval: request.interval,
       plugin: request.plugin,
-      customDetails: customDetails,
+      customDetail: pluginCustomDetail,
     } as AddPackageRepositoryRequest;
 
     // add optional fields if present in the request
@@ -214,11 +214,11 @@ export class PackageRepositoriesService {
     return addPackageRepositoryRequest;
   }
 
-  private static buildEncodedCustomDetails(request: IPkgRepoFormData) {
+  private static buildEncodedCustomDetail(request: IPkgRepoFormData) {
     // if using a plugin with customDetail, encode its custom fields,
     // otherwise skip it
-    if (!request.customDetails) {
-      return undefined;
+    if (!request.customDetail) {
+      return;
     }
     // An "Any" object has "typeUrl" with the FQN of the type and a "value",
     // which is the result of the encoding (+finish(), to get the Uint8Array)
@@ -228,7 +228,7 @@ export class PackageRepositoriesService {
         return {
           typeUrl: `${helmProtobufPackage}.HelmPackageRepositoryCustomDetail`,
           value: HelmPackageRepositoryCustomDetail.encode(
-            request.customDetails as HelmPackageRepositoryCustomDetail,
+            request.customDetail as HelmPackageRepositoryCustomDetail,
           ).finish(),
         } as Any;
       case PluginNames.PACKAGES_KAPP:

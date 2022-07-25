@@ -268,7 +268,7 @@ export function PkgRepoForm(props: IPkgRepoFormProps) {
         username: isUserManagedSecret ? "" : basicUser,
       } as UsernamePassword,
       customCA: isUserManagedCASecret ? "" : customCA,
-      customDetails: {
+      customDetail: {
         ociRepositories: ociRepoList,
         performValidation,
         filterRule: filter,
