@@ -1547,7 +1547,7 @@ export const ResourcesServiceDesc = {
   serviceName: "kubeappsapis.plugins.resources.v1alpha1.ResourcesService",
 };
 
-export const ResourcesServiceGetResourcesDesc: MethodDefinitionish = {
+export const ResourcesServiceGetResourcesDesc: UnaryMethodDefinitionish = {
   methodName: "GetResources",
   service: ResourcesServiceDesc,
   requestStream: false,
@@ -1708,13 +1708,6 @@ interface UnaryMethodDefinitionishR extends grpc.UnaryMethodDefinition<any, any>
 
 type UnaryMethodDefinitionish = UnaryMethodDefinitionishR;
 
-interface MethodDefinitionishR extends grpc.MethodDefinition<any, any> {
-  requestStream: any;
-  responseStream: any;
-}
-
-type MethodDefinitionish = MethodDefinitionishR;
-
 interface Rpc {
   unary<T extends UnaryMethodDefinitionish>(
     methodDesc: T,
@@ -1725,12 +1718,6 @@ interface Rpc {
     methodDesc: T,
     request: any,
     metadata: grpc.Metadata | undefined,
-  ): Observable<any>;
-  stream<T extends MethodDefinitionish>(
-    methodDesc: T,
-    request: Observable<any>,
-    metadata: grpc.Metadata | undefined,
-    rpcOptions: grpc.RpcOptions | undefined,
   ): Observable<any>;
 }
 
@@ -1816,66 +1803,19 @@ export class GrpcWebImpl {
           metadata: maybeCombinedMetadata,
           debug: this.options.debug,
           onMessage: next => observer.next(next),
-          onEnd: (code: grpc.Code, message: string, trailers: grpc.Metadata) => {
+          onEnd: (code: grpc.Code, message: string) => {
             if (code === 0) {
               observer.complete();
             } else if (upStreamCodes.includes(code)) {
               setTimeout(upStream, DEFAULT_TIMEOUT_TIME);
             } else {
-              const err = new Error(message) as any;
-              err.code = code;
-              err.metadata = trailers;
-              observer.error(err);
+              observer.error(new Error(`Error ${code} ${message}`));
             }
           },
         });
         observer.add(() => client.close());
       };
       upStream();
-    }).pipe(share());
-  }
-
-  stream<T extends MethodDefinitionish>(
-    methodDesc: T,
-    _request: Observable<any>,
-    metadata: grpc.Metadata | undefined,
-    rpcOptions: grpc.RpcOptions | undefined,
-  ): Observable<any> {
-    const defaultOptions = {
-      host: this.host,
-      debug: rpcOptions?.debug || this.options.debug,
-      transport: rpcOptions?.transport || this.options.streamingTransport || this.options.transport,
-    };
-
-    let started = false;
-    const client = grpc.client(methodDesc, defaultOptions);
-
-    const subscription = _request.subscribe((_req: any) => {
-      const request = { ..._req, ...methodDesc.requestType };
-      if (!started) {
-        client.start(metadata);
-        started = true;
-      }
-      client.send(request);
-    });
-
-    subscription.add(() => {
-      client.finishSend();
-    });
-
-    return new Observable(observer => {
-      client.onEnd((code: grpc.Code, message: string, trailers: grpc.Metadata) => {
-        subscription.unsubscribe();
-        if (code === 0) {
-          observer.complete();
-        } else {
-          observer.error(new Error(`Error ${code} ${message}`));
-        }
-      });
-      client.onMessage((res: any) => {
-        observer.next(res);
-      });
-      observer.add(() => client.close());
     }).pipe(share());
   }
 }
