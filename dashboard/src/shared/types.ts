@@ -443,5 +443,5 @@ export interface IPkgRepoFormData {
   skipTLS: boolean;
   type: string;
   url: string;
-  customDetails: Partial<HelmPackageRepositoryCustomDetail>; // add more types if necesary, currently just helm's custom details
+  customDetail: Partial<HelmPackageRepositoryCustomDetail>; // add more types if necesary, currently just helm's custom details
 }

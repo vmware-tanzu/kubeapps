@@ -47,7 +47,7 @@ const pkgRepoFormData = {
     username: "",
   },
   customCA: "",
-  customDetails: {
+  customDetail: {
     dockerRegistrySecrets: [],
     ociRepositories: [],
     performValidation: true,
@@ -247,7 +247,7 @@ it("should call the install method with OCI information", async () => {
     type: "oci",
     url: "https://oci.repo",
     plugin: { name: PluginNames.PACKAGES_HELM, version: "v1alpha1" },
-    customDetails: {
+    customDetail: {
       ociRepositories: ["apache", "jenkins"],
       dockerRegistrySecrets: [],
       filterRule: undefined,
@@ -283,7 +283,7 @@ it("should call the install skipping TLS verification", async () => {
     type: "helm",
     url: "https://helm.repo",
     plugin: { name: PluginNames.PACKAGES_HELM, version: "v1alpha1" },
-    customDetails: {
+    customDetail: {
       ociRepositories: [],
       dockerRegistrySecrets: [],
       filterRule: undefined,
@@ -320,7 +320,7 @@ it("should call the install passing credentials", async () => {
     type: "helm",
     url: "https://helm.repo",
     plugin: { name: PluginNames.PACKAGES_HELM, version: "v1alpha1" },
-    customDetails: {
+    customDetail: {
       ociRepositories: [],
       dockerRegistrySecrets: [],
       filterRule: undefined,
@@ -357,7 +357,7 @@ describe("when using a filter", () => {
       type: "helm",
       url: "https://helm.repo",
       plugin: { name: PluginNames.PACKAGES_HELM, version: "v1alpha1" },
-      customDetails: {
+      customDetail: {
         ociRepositories: [],
         dockerRegistrySecrets: [],
         filterRule: {
@@ -398,7 +398,7 @@ describe("when using a filter", () => {
       type: "helm",
       url: "https://helm.repo",
       plugin: { name: PluginNames.PACKAGES_HELM, version: "v1alpha1" },
-      customDetails: {
+      customDetail: {
         ociRepositories: [],
         dockerRegistrySecrets: [],
         filterRule: {
@@ -443,7 +443,7 @@ describe("when using a filter", () => {
       type: "oci",
       url: "https://oci.repo",
       plugin: { name: PluginNames.PACKAGES_HELM, version: "v1alpha1" },
-      customDetails: {
+      customDetail: {
         ociRepositories: ["apache", "jenkins"],
         dockerRegistrySecrets: [],
         filterRule: undefined,
@@ -477,7 +477,7 @@ it("should call the install method with a description", async () => {
     name: "helm-repo",
     type: "helm",
     url: "https://helm.repo",
-    customDetails: {
+    customDetail: {
       ociRepositories: [],
       dockerRegistrySecrets: [],
       filterRule: undefined,

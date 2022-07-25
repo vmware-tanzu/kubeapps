@@ -401,7 +401,7 @@ func TestAddPackageRepository(t *testing.T) {
 			name:             "package repository with custom values",
 			request:          addRepoReqCustomValues,
 			expectedResponse: addRepoExpectedResp,
-			expectedRepo:     &addRepoCustomDetailsHelm,
+			expectedRepo:     &addRepoCustomDetailHelm,
 			statusCode:       codes.OK,
 		},
 		{
@@ -414,7 +414,7 @@ func TestAddPackageRepository(t *testing.T) {
 			name:             "package repository with validation success (Helm)",
 			request:          addRepoReqCustomValuesHelmValid,
 			expectedResponse: addRepoExpectedResp,
-			expectedRepo:     &addRepoCustomDetailsHelm,
+			expectedRepo:     &addRepoCustomDetailHelm,
 			repoClientGetter: newRepoHttpClient(map[string]*http.Response{"https://example.com/index.yaml": {StatusCode: 200}}),
 			statusCode:       codes.OK,
 		},
@@ -422,7 +422,7 @@ func TestAddPackageRepository(t *testing.T) {
 			name:             "package repository with validation success (OCI)",
 			request:          addRepoReqCustomValuesOCIValid,
 			expectedResponse: addRepoExpectedResp,
-			expectedRepo:     &addRepoCustomDetailsOci,
+			expectedRepo:     &addRepoCustomDetailOci,
 			repoClientGetter: newRepoHttpClient(map[string]*http.Response{
 				"https://example.com/v2/repo1/tags/list?n=1":  httpResponse(200, "{ \"name\":\"repo1\", \"tags\":[\"tag1\"] }"),
 				"https://example.com/v2/repo1/manifests/tag1": httpResponse(200, "{ \"config\":{ \"mediaType\":\"application/vnd.cncf.helm.config\" } }"),
@@ -635,7 +635,7 @@ func TestGetPackageRepositoryDetail(t *testing.T) {
 	}
 	buildResponse := func(namespace, name, repoType, url, description string,
 		auth *corev1.PackageRepositoryAuth, tlsConfig *corev1.PackageRepositoryTlsConfig,
-		customDetails *v1alpha1.HelmPackageRepositoryCustomDetail) *corev1.GetPackageRepositoryDetailResponse {
+		customDetail *v1alpha1.HelmPackageRepositoryCustomDetail) *corev1.GetPackageRepositoryDetailResponse {
 		response := &corev1.GetPackageRepositoryDetailResponse{
 			Detail: &corev1.PackageRepositoryDetail{
 				PackageRepoRef: &corev1.PackageRepositoryReference{
@@ -653,8 +653,8 @@ func TestGetPackageRepositoryDetail(t *testing.T) {
 				Status:          &corev1.PackageRepositoryStatus{Ready: true},
 			},
 		}
-		if customDetails != nil {
-			response.Detail.CustomDetail = toProtoBufAny(customDetails)
+		if customDetail != nil {
+			response.Detail.CustomDetail = toProtoBufAny(customDetail)
 		}
 		return response
 	}
