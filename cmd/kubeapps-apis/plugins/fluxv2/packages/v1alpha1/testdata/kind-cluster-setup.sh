@@ -5,22 +5,26 @@
 
 # this is used to build an image that can be used to stand-up a pod that serves static test-data in 
 # local kind cluster. Used by the integration tests. This script needs to be run once before the running
-# the test(s) 
+# the test(s). This script requires GitHub CLI (gh) to be installed locally. On MacOS you can
+# install it via 'brew install gh'
 set -o errexit
 set -o nounset
 set -o pipefail
 
 OCI_REGISTRY_REMOTE_PORT=5000
 OCI_REGISTRY_LOCAL_PORT=5000
-OCI_REGISTRY_USER=foo
-OCI_REGISTRY_PWD=bar
+LOCAL_OCI_REGISTRY_USER=foo
+LOCAL_OCI_REGISTRY_PWD=bar
+GITHUB_OCI_REGISTRY_URL=oci://ghcr.io/gfichtenholt/helm-charts
+# this is the only package version used to seed podinfo OCI repository
+OCI_PODINFO_CHART_VERSION=6.1.5
 
 function pushChartToLocalRegistryUsingHelmCLI() {
   max=5  
   n=0
   until [ $n -ge $max ]
   do
-   helm registry login -u $OCI_REGISTRY_USER localhost:$OCI_REGISTRY_LOCAL_PORT -p $OCI_REGISTRY_PWD && break
+   helm registry login -u $LOCAL_OCI_REGISTRY_USER localhost:$OCI_REGISTRY_LOCAL_PORT -p $LOCAL_OCI_REGISTRY_PWD && break
    n=$((n+1)) 
    echo "Retrying helm login in 5s [$n/$max]..."
    sleep 5
@@ -31,7 +35,7 @@ function pushChartToLocalRegistryUsingHelmCLI() {
   fi
 
   # these .tgz files were pulled from https://stefanprodan.github.io/podinfo/ 
-  CMD="helm push charts/podinfo-6.0.0.tgz oci://localhost:$OCI_REGISTRY_LOCAL_PORT/helm-charts"
+  CMD="helm push charts/podinfo-$OCI_PODINFO_CHART_VERSION.tgz oci://localhost:$OCI_REGISTRY_LOCAL_PORT/helm-charts"
   echo Starting command: $CMD...
   $CMD
   echo Command completed
@@ -92,16 +96,10 @@ function portForwardToLocalRegistry() {
 # the goal is to create an OCI registry whose contents I completely control and will modify 
 # by running integration tests. Therefore 'pushChartToMyGitHubRegistry'
 # ref https://docs.github.com/en/packages/working-with-a-github-packages-registry/working-with-the-container-registry
-# TODO gfichtenholtz By default the new OCI registry is private. Attempts to pull a chart down
-# from this repo from the code fails with:
-# I0720 03:07:23.083292       1 oci_repo.go:269] helmGetter.Get(ghcr.io/gfichtenholt/helm-charts/podinfo:6.1.6) returned error: failed to authorize: failed to fetch anonymous token: unexpected status: 401 Unauthorized 
-# Even though the Helm getter is programmatically configured with GITHUB_USER/GITHUB_TOKEN
-# In order to make progress I made my OCI registry public per
-# https://docs.github.com/en/packages/learn-github-packages/configuring-a-packages-access-control-and-visibility
 function pushChartToMyGitHubRegistry() {
   if [ $# -lt 1 ]
   then
-    echo "Usage : $0 chart.tgz"
+    echo "Usage : $0 version"
     exit
   fi
 
@@ -123,20 +121,45 @@ function pushChartToMyGitHubRegistry() {
     helm registry logout ghcr.io
   }' EXIT  
 
-  CMD="helm push $1 oci://ghcr.io/gfichtenholt/helm-charts"
+  # these .tgz files were originally sourced from https://stefanprodan.github.io/podinfo/podinfo-{version}.tgz
+  CMD="helm push charts/podinfo-$1.tgz $GITHUB_OCI_REGISTRY_URL"
   echo Starting command: $CMD...
   $CMD
   echo Command completed
 
   # sanity checks
-  # TODO (gfichtenholt) display all versions. 'show all' only shows the latest 
-  helm show all oci://ghcr.io/gfichtenholt/helm-charts/podinfo | head -9
+ 
+  # Display all chart versions
+ 
+  # TODO (gfichtenholt) currently prints:
+  # github.com
+  # ✓ Logged in to github.com as gfichtenholt (GITHUB_TOKEN)
+  # ✓ Git operations for github.com configured to use https protocol.
+  # ✓ Token: *******************
+  # find out if/when I need to login and logout via
+  # gh auth login --hostname github.com --web --scopes read:packages
+  # gh auth logout --hostname github.com
+  gh auth status
 
-  echo 
-  echo You can see all packages at [https://github.com/gfichtenholt?tab=packages]
-  echo You can see and delete any specific package version at 
-  echo  [https://github.com/users/gfichtenholt/packages/container/helm-charts%2Fpodinfo/versions]
+  # ref https://docs.github.com/en/rest/packages#get-all-package-versions-for-a-package-owned-by-the-authenticated-user
+  ALL_VERSIONS=$(gh api \
+  -H "Accept: application/vnd.github+json" \
+  /user/packages/container/helm-charts%2Fpodinfo/versions | jq -rc '.[].metadata.container.tags[]')
   echo
+  echo Remote Repository aka Package [$GITHUB_OCI_REGISTRY_UR/podinfo] / All Versions 
+  echo ================================================================================
+  echo "$ALL_VERSIONS"
+  echo ================================================================================
+  # You can also see all package versions on GitHub web portal at 
+  # [https://github.com/users/gfichtenholt/packages/container/helm-charts%2Fpodinfo/versions]
+  # change dots to dashes for grep to work on whole words
+  ALL_VERSIONS_DASHES=${ALL_VERSIONS//./-}
+  VERSION_DASHES=${1//./-}
+  EXPECTED_VERSION=$(echo $ALL_VERSIONS_DASHES | grep -w $VERSION_DASHES)
+  if [[ "$EXPECTED_VERSION" == "" ]]; then
+    echo Expected version [$1] missing from the remote [$GITHUB_OCI_REGISTRY_URL/podinfo]. Exiting...
+    exit 1
+  fi
 }
 
 function deleteChartVersionFromMyGitHubRegistry() {
@@ -146,17 +169,20 @@ function deleteChartVersionFromMyGitHubRegistry() {
     exit
   fi
 
-  # ref https://docs.github.com/en/rest/packages#get-all-package-versions-for-a-package-owned-by-the-authenticated-user
-  PACKAGE_VERSION_ID=$(gh api   -H "Accept: application/vnd.github+json" /users/gfichtenholt/packages/container/helm-charts%2Fpodinfo/versions | jq -rc '.[] | select(.metadata.container.tags[] | contains("6.1.6")) | .id')
-  if [[ "$PACKAGE_VERSION_ID" != "" ]]; then
-     # ref https://docs.github.com/en/rest/packages#delete-a-package-version-for-the-authenticated-user
-     # ref https://github.com/cli/cli/issues/3937
-     echo -n | gh api   --method DELETE   -H "Accept: application/vnd.github+json"   /user/packages/container/helm-charts%2Fpodinfo/versions/$PACKAGE_VERSION_ID --input -
-     # one can verify that the version has been deleted on web portal
-     # https://github.com/users/gfichtenholt/packages/container/helm-charts%2Fpodinfo/versions
-  fi
-
-  # TODO (gfichtenholt) sanity check 
+  while true; do
+    # ref https://docs.github.com/en/rest/packages#get-all-package-versions-for-a-package-owned-by-the-authenticated-user
+    PACKAGE_VERSION_ID=$(gh api -H "Accept: application/vnd.github+json" /users/gfichtenholt/packages/container/helm-charts%2Fpodinfo/versions | jq --arg arg1 $1 -rc '.[] | select(.metadata.container.tags[] | contains($arg1)) | .id')
+    if [[ "$PACKAGE_VERSION_ID" != "" ]]; then
+      echo Deleting package version [$1] from remote [$GITHUB_OCI_REGISTRY_URL/podinfo]...
+      # ref https://docs.github.com/en/rest/packages#delete-a-package-version-for-the-authenticated-user
+      # ref https://github.com/cli/cli/issues/3937
+      echo -n | gh api   --method DELETE   -H "Accept: application/vnd.github+json"   /user/packages/container/helm-charts%2Fpodinfo/versions/$PACKAGE_VERSION_ID --input -
+      # one can verify that the version has been deleted on web portal
+      # https://github.com/users/gfichtenholt/packages/container/helm-charts%2Fpodinfo/versions
+    else 
+      break
+    fi
+  done
 }
 
 function deploy {
@@ -189,25 +215,40 @@ function deploy {
   # portForwardToLocalRegistry
   # pushChartToLocalRegistryUsingHelmCLI
 
-  VERSION=6.1.5 
+  pushChartToMyGitHubRegistry "$OCI_PODINFO_CHART_VERSION"
 
-  # these .tgz files were pulled from https://stefanprodan.github.io/podinfo/ + .tgz
-  pushChartToMyGitHubRegistry "charts/podinfo-$VERSION.tgz"
+  # sanity checks
+  
+  # 1. check the version we pushed exists on the remote and is the only version avaialble
+  ALL_VERSIONS=$(gh api \
+  -H "Accept: application/vnd.github+json" \
+  /user/packages/container/helm-charts%2Fpodinfo/versions | jq -rc '.[].metadata.container.tags[]')
+  # GH web portal: You can see all package versions at 
+  # [https://github.com/users/gfichtenholt/packages/container/helm-charts%2Fpodinfo/versions]
+  NUM_VERSIONS=$(echo $ALL_VERSIONS | wc -l)
+  if [ $NUM_VERSIONS != 1 ] 
+  then
+    echo "Expected exactly [1] version on the remote [$GITHUB_OCI_REGISTRY_URL/podinfo], got [$NUM_VERSIONS]. Exiting..."
+    exit 1
+  fi
 
-  # TODO (gfichtenholt) automate this so it does not require interaction
-  # ref https://docs.github.com/en/rest/packages#about-the-github-packages-api
-  open https://github.com/users/gfichtenholt/packages/container/helm-charts%2Fpodinfo/versions
-  echo 
-  echo Make sure that: 
-  echo  - package visibility for [podinfo] is [public] 
-  echo    at https://github.com/users/gfichtenholt/packages/container/helm-charts%2Fpodinfo/settings 
-  echo - the only package version is [$VERSION] 
-  echo    at https://github.com/users/gfichtenholt/packages/container/helm-charts%2Fpodinfo/versions
-  echo before running the integration tests
-  echo 
-  read -p "Press any key to resume ..."
-
-  # TODO (gfichtenholt) sanity check
+  # 2. By default the new OCI registry is private. 
+  # In order for the intergration test to work the OCI registry needs 'public' visibility
+  # https://docs.github.com/en/packages/learn-github-packages/configuring-a-packages-access-control-and-visibility
+  # API ref https://docs.github.com/en/rest/packages#get-a-package-for-the-authenticated-user
+  # GitHub web portal: https://github.com/users/gfichtenholt/packages/container/helm-charts%2Fpodinfo/settings 
+  while true; do
+    VISIBILITY=$(gh api   -H "Accept: application/vnd.github+json"   /user/packages/container/helm-charts%2Fpodinfo | jq -rc '.visibility')
+    if [[ "$VISIBILITY" != "public" ]]; then
+      # TODO (gfichtenholt) can't seem to find docs for an API to change the package visibility on 
+      # https://docs.github.com/en/rest/packages, so for now just ask to do this in web portal 
+      echo "Please change package [helm-charts/podinfo] visibility from [$VISIBILITY] to [public] on [https://github.com/users/gfichtenholt/packages/container/helm-charts%2Fpodinfo/settings]..." 
+      open https://github.com/users/gfichtenholt/packages/container/helm-charts%2Fpodinfo/settings
+      read -p "Press any key to continue..."
+    else 
+      break
+    fi
+  done
 }
 
 function undeploy {
@@ -223,6 +264,24 @@ function undeploy {
   kubectl delete -f registry-app.yaml
   kubectl delete deployment fluxv2plugin-testdata-app --context kind-kubeapps 
   kubectl delete secret registry-tls --ignore-not-found=true
+  while true; do 
+    # GitHub API ref https://docs.github.com/en/rest/packages#list-packages-for-the-authenticated-users-namespace
+    # GitHub web portal: https://github.com/gfichtenholt?tab=packages&ecosystem=container
+    ALL_PACKAGES=$(gh api -H "Accept: application/vnd.github+json" /user/packages?package_type=container | jq '.[].name')
+    echo Remote Repository [$GITHUB_OCI_REGISTRY_URL] / All Packages 
+    echo ================================================================================
+    echo "$ALL_PACKAGES"
+    echo ================================================================================
+    PODINFO_EXISTS=$(echo $ALL_PACKAGES | grep -sw 'helm-charts/podinfo')
+    if [[ "$PODINFO_EXISTS" != "" ]]; then
+      echo Deleting package [podinfo] from [$GITHUB_OCI_REGISTRY_URL]...
+      # GitHub API ref https://docs.github.com/en/rest/packages#delete-a-package-for-the-authenticated-user
+      # GitHub web portal: https://github.com/users/gfichtenholt/packages/container/helm-charts%2Fpodinfo/settings 
+      echo -n | gh api --method DELETE -H "Accept: application/vnd.github+json" /user/packages/container/helm-charts%2Fpodinfo --input -
+    else 
+      break  
+    fi
+  done
   set -e
 }
 

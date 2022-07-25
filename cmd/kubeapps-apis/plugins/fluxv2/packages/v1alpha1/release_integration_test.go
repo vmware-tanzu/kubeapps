@@ -480,10 +480,6 @@ func TestKindClusterAutoUpdateInstalledPackageFromOciRepo(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	// this will also make sure that response looks like expected_detail_installed_package_auto_update
-	// if the next command fails with rpc error: code = NotFound desc = chart [podinfo] not found] most
-	// likely you forgot to set the package visibility to public at
-	// https://github.com/users/gfichtenholt/packages/container/helm-charts%2Fpodinfo/settings
 	installedRef := createAndWaitForHelmRelease(t, spec, fluxPluginPackagesClient, fluxPluginReposClient, grpcContext)
 
 	podName, err := getFluxPluginTestdataPodName()
@@ -492,7 +488,7 @@ func TestKindClusterAutoUpdateInstalledPackageFromOciRepo(t *testing.T) {
 	}
 	t.Logf("podName = [%s]", podName)
 
-	if err = helmPushChartToMyGithubRegistry(t, "testdata/charts/podinfo-6.1.6.tgz"); err != nil {
+	if err = helmPushChartToMyGithubRegistry(t, "6.1.6"); err != nil {
 		t.Fatal(err)
 	}
 	t.Cleanup(func() {

@@ -1285,17 +1285,17 @@ func getFluxPluginTestdataPodName() (*types.NamespacedName, error) {
 	return nil, fmt.Errorf("fluxplugin testdata pod not found")
 }
 
-func helmPushChartToMyGithubRegistry(t *testing.T, chartTgz string) error {
-	t.Logf("+helmPushChartToMyGithubRegistry(%s)", chartTgz)
-	defer t.Logf("-helmPushChartToMyGithubRegistry(%s)", chartTgz)
+func helmPushChartToMyGithubRegistry(t *testing.T, version string) error {
+	t.Logf("+helmPushChartToMyGithubRegistry(%s)", version)
+	defer t.Logf("-helmPushChartToMyGithubRegistry(%s)", version)
 
 	args := []string{
 		"pushChartToMyGithub",
-		chartTgz,
+		version,
 	}
 
 	// use the CLI for now
-	_, err := execCommand(t, "./testdata/kind-cluster-setup.sh", args)
+	_, err := execCommand(t, "./kind-cluster-setup.sh", args)
 	return err
 }
 
@@ -1309,7 +1309,7 @@ func deleteChartFromMyGithubRegistry(t *testing.T, version string) error {
 	}
 
 	// use the CLI for now
-	_, err := execCommand(t, "./testdata/kind-cluster-setup.sh", args)
+	_, err := execCommand(t, "./kind-cluster-setup.sh", args)
 	return err
 }
 
@@ -1317,6 +1317,7 @@ func execCommand(t *testing.T, name string, args []string) (string, error) {
 	t.Logf("About to execute command: [%s] with args [%s]...", name, args)
 	// TODO (gfichtenholt) it'd be nice to have real-time updates
 	cmd := exec.Command(name, args...)
+	cmd.Dir = "./testdata"
 	byteArray, err := cmd.CombinedOutput()
 	out := strings.Trim(string(byteArray), "\n")
 	t.Logf("Executed command: [%s], err: [%v], output: [\n%s\n]", cmd.String(), err, out)
