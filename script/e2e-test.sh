@@ -134,6 +134,7 @@ installOLM() {
 # Arguments:
 #   $1: Username
 #   $2: Password
+#   $3: ChartMuseum version
 # Returns: None
 #########################
 installChartmuseum() {
@@ -141,7 +142,6 @@ installChartmuseum() {
   local password=$2
   local version=$3
   info "Installing ChartMuseum ${version}..."
-  helm install chartmuseum --namespace kubeapps https://github.com/chartmuseum/charts/releases/download/chartmuseum-3.9.0/chartmuseum-3.9.0.tgz \
   helm install chartmuseum --namespace kubeapps "https://github.com/chartmuseum/charts/releases/download/chartmuseum-${version}/chartmuseum-${version}.tgz" \
     --set env.open.DISABLE_API=false \
     --set persistence.enabled=true \
