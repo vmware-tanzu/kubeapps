@@ -235,11 +235,11 @@ export class PackageRepositoriesService {
         return {
           typeUrl: `${kappControllerProtobufPackage}.KappControllerPackageRepositoryCustomDetail`,
           value: KappControllerPackageRepositoryCustomDetail.encode(
-            request.customDetails as KappControllerPackageRepositoryCustomDetail,
+            request.customDetail as KappControllerPackageRepositoryCustomDetail,
           ).finish(),
         } as Any;
       default:
-        return undefined;
+        return;
     }
   }
 }
