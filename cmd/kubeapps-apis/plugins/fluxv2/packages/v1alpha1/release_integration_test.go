@@ -391,7 +391,7 @@ func TestKindClusterAutoUpdateInstalledPackage(t *testing.T) {
 			testYaml("podinfo-index.yaml"),
 			*podName,
 			"/usr/share/nginx/html/podinfo/index.yaml"); err != nil {
-			t.Logf("Error reverting to previos podinfo index: %v", err)
+			t.Logf("Error reverting to previous podinfo index: %v", err)
 		}
 	})
 	t.Logf("Waiting 45 seconds...")

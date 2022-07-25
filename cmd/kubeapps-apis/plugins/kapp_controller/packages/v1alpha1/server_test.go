@@ -3709,7 +3709,7 @@ func TestCreateInstalledPackage(t *testing.T) {
 				},
 			},
 			pluginConfig: &kappControllerPluginParsedConfig{
-				timeoutSeconds:                     1, //to avoid unnecesary test delays
+				timeoutSeconds:                     1, //to avoid unnecessary test delays
 				defaultUpgradePolicy:               defaultPluginConfig.defaultUpgradePolicy,
 				defaultPrereleasesVersionSelection: defaultPluginConfig.defaultPrereleasesVersionSelection,
 				defaultAllowDowngrades:             defaultPluginConfig.defaultAllowDowngrades,
@@ -9211,7 +9211,7 @@ func TestGetPackageRepositoryStatus(t *testing.T) {
 			},
 		},
 		{
-			name: "reconcilation failure",
+			name: "reconciliation failure",
 			existingStatus: kappctrlv1alpha1.GenericStatus{
 				Conditions: []kappctrlv1alpha1.Condition{
 					{
@@ -9226,7 +9226,7 @@ func TestGetPackageRepositoryStatus(t *testing.T) {
 			},
 		},
 		{
-			name: "reconcilation failure, extra error message",
+			name: "reconciliation failure, extra error message",
 			existingStatus: kappctrlv1alpha1.GenericStatus{
 				Conditions: []kappctrlv1alpha1.Condition{
 					{
