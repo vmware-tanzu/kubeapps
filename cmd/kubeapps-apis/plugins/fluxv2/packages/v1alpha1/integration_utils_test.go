@@ -138,35 +138,41 @@ func checkEnv(t *testing.T) (fluxplugin.FluxV2PackagesServiceClient, fluxplugin.
 func isLocalKindClusterUp(t *testing.T) (up bool, err error) {
 	t.Logf("+isLocalKindClusterUp")
 
-	cmd := exec.Command("kind", "get", "clusters")
-	bytes, err := cmd.CombinedOutput()
+	out, err := execCommand(t, "", "kind", []string{"get", "clusters"})
 	if err != nil {
-		t.Logf("%s", string(bytes))
 		return false, err
 	}
-	if !strings.Contains(string(bytes), "kubeapps\n") {
+	words := strings.Split(out, " \n")
+	found := false
+	for _, word := range words {
+		if word == "kubeapps" {
+			found = true
+		}
+	}
+	if !found {
 		return false, nil
 	}
 
 	// naively assume that if the api server reports nodes, the cluster is up
 	typedClient, err := kubeGetTypedClient()
 	if err != nil {
-		t.Logf("%s", string(bytes))
+		t.Logf("Failed to get typed client due to: %+v", err)
 		return false, err
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), defaultContextTimeout)
 	defer cancel()
+
 	nodeList, err := typedClient.CoreV1().Nodes().List(ctx, metav1.ListOptions{})
 	if err != nil {
-		t.Logf("%s", string(bytes))
+		t.Logf("Failed to get list of nodes due to %+v", err)
 		return false, err
 	}
 
 	if len(nodeList.Items) == 1 || nodeList.Items[0].Name == "node/kubeapps-control-plane" {
 		return true, nil
 	} else {
-		return false, fmt.Errorf("Unexpected cluster nodes: [%v]", nodeList)
+		return false, fmt.Errorf("unexpected cluster nodes: [%v]", nodeList)
 	}
 }
 
@@ -1044,10 +1050,8 @@ func kubectlCanI(t *testing.T, name types.NamespacedName, verb, resource, checkT
 		"--as",
 		"system:serviceaccount:" + name.Namespace + ":" + name.Name,
 	}
-	cmd := exec.Command("kubectl", args...)
-	byteArray, err := cmd.CombinedOutput()
-	out := strings.Trim(string(byteArray), "\n")
-	t.Logf("Executed command: [%s], err: [%v], output: [\n%s\n]", cmd.String(), err, out)
+
+	out, _ := execCommand(t, "", "kubectl", args)
 	return out
 }
 
@@ -1298,7 +1302,7 @@ func helmPushChartToMyGithubRegistry(t *testing.T, version string) error {
 	}
 
 	// use the CLI for now
-	_, err := execCommand(t, "./kind-cluster-setup.sh", args)
+	_, err := execCommand(t, "./testdata", "./kind-cluster-setup.sh", args)
 	return err
 }
 
@@ -1312,19 +1316,21 @@ func deleteChartFromMyGithubRegistry(t *testing.T, version string) error {
 	}
 
 	// use the CLI for now
-	_, err := execCommand(t, "./kind-cluster-setup.sh", args)
+	_, err := execCommand(t, "./testdata", "./kind-cluster-setup.sh", args)
 	return err
 }
 
-func execCommand(t *testing.T, name string, args []string) (string, error) {
-	t.Logf("About to execute command: [%s] with args [%s]...", name, args)
+func execCommand(t *testing.T, dir, name string, args []string) (string, error) {
+	t.Logf("About to execute command: [%s] with args %s...", name, args)
 	// TODO (gfichtenholt) it'd be nice to have real-time updates
 	cmd := exec.Command(name, args...)
-	cmd.Dir = "./testdata"
+	if dir != "" {
+		cmd.Dir = dir
+	}
 	byteArray, err := cmd.CombinedOutput()
 	out := strings.Trim(string(byteArray), "\n")
 	t.Logf("Executed command: [%s], err: [%v], output: [\n%s\n]", cmd.String(), err, out)
-	return cmd.String(), err
+	return out, err
 }
 
 // global vars
