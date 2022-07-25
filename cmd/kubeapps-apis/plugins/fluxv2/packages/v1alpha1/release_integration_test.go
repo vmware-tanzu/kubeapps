@@ -493,7 +493,9 @@ func TestKindClusterAutoUpdateInstalledPackageFromOciRepo(t *testing.T) {
 	}
 	t.Cleanup(func() {
 		// Delete remote chart version at the end of the test so there are no side-effects.
-		deleteChartFromMyGithubRegistry(t, "6.1.6")
+		if err = deleteChartFromMyGithubRegistry(t, "6.1.6"); err != nil {
+			t.Fatal(err)
+		}
 	})
 
 	t.Logf("Waiting 45 seconds...")
