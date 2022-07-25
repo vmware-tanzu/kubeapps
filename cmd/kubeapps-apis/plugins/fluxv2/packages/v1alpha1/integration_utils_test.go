@@ -1044,7 +1044,10 @@ func kubectlCanI(t *testing.T, name types.NamespacedName, verb, resource, checkT
 		"--as",
 		"system:serviceaccount:" + name.Namespace + ":" + name.Name,
 	}
-	out, _ := execCommand(t, "kubectl", args)
+	cmd := exec.Command("kubectl", args...)
+	byteArray, err := cmd.CombinedOutput()
+	out := strings.Trim(string(byteArray), "\n")
+	t.Logf("Executed command: [%s], err: [%v], output: [\n%s\n]", cmd.String(), err, out)
 	return out
 }
 

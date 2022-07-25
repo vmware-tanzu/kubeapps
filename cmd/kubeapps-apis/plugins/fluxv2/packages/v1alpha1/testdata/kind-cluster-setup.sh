@@ -146,7 +146,7 @@ function pushChartToMyGitHubRegistry() {
   -H "Accept: application/vnd.github+json" \
   /user/packages/container/helm-charts%2Fpodinfo/versions | jq -rc '.[].metadata.container.tags[]')
   echo
-  echo Remote Repository aka Package [$GITHUB_OCI_REGISTRY_UR/podinfo] / All Versions 
+  echo Remote Repository aka Package [$GITHUB_OCI_REGISTRY_URL/podinfo] / All Versions 
   echo ================================================================================
   echo "$ALL_VERSIONS"
   echo ================================================================================
