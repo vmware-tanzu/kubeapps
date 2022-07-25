@@ -261,7 +261,14 @@ func (r *OCIRegistry) downloadChart(chart *repo.ChartVersion) (*bytes.Buffer, er
 
 	// trim the oci scheme prefix if needed
 	getThis := strings.TrimPrefix(u.String(), fmt.Sprintf("%s://", registry.OCIScheme))
-	return r.helmGetter.Get(getThis, clientOpts...)
+	log.Infof("about to call helmGetter.Get(%s)", getThis)
+	buf, err := r.helmGetter.Get(getThis, clientOpts...)
+	if buf != nil {
+		log.Infof("helmGetter.Get(%s) returned buffer size: [%d] error: %v", getThis, len(buf.Bytes()), err)
+	} else {
+		log.Infof("helmGetter.Get(%s) returned error: %v", getThis, err)
+	}
+	return buf, err
 }
 
 // logout attempts to logout from the OCI registry.
@@ -516,7 +523,7 @@ func (s *repoEventSink) onModifyOciRepo(key string, oldValue interface{}, repo s
 
 	if cacheEntry.Checksum != newChecksum {
 		// TODO (gfichtenholt)
-		return nil, false, status.Errorf(codes.Unimplemented, "TODO")
+		return nil, false, status.Errorf(codes.Unimplemented, "OnModifyRepo TODO")
 	} else {
 		// skip because the content did not change
 		return nil, false, nil
@@ -671,10 +678,11 @@ func (s *repoEventSink) ociClientOptionsForRepo(ctx context.Context, repo source
 		if err != nil {
 			return nil, nil, nil, err
 		}
-
-		loginOpt := registry.LoginOptBasicAuth(cred.Username, cred.Password)
-		if loginOpt != nil {
-			loginOpts = append(loginOpts, loginOpt)
+		if cred != nil {
+			loginOpt := registry.LoginOptBasicAuth(cred.Username, cred.Password)
+			if loginOpt != nil {
+				loginOpts = append(loginOpts, loginOpt)
+			}
 		}
 	}
 	return loginOpts, getterOpts, cred, nil
@@ -689,7 +697,8 @@ func getOCIChartTarball(ociRegistry *OCIRegistry, chartID string, chartVersion *
 }
 
 func getOCIChartMetadata(ociRegistry *OCIRegistry, chartID string, chartVersion *repo.ChartVersion) (*chart.Metadata, error) {
-	log.Infof("getOCIChartMetadata(%s, %s)", chartID, chartVersion.Metadata.Version)
+	log.Infof("+getOCIChartMetadata(%s, %s)", chartID, chartVersion.Metadata.Version)
+	defer log.Infof("-getOCIChartMetadata(%s, %s)", chartID, chartVersion.Metadata.Version)
 
 	chartTarball, err := getOCIChartTarball(ociRegistry, chartID, chartVersion)
 	if err != nil {
