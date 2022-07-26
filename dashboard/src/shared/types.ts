@@ -445,7 +445,7 @@ export interface IPkgRepoFormData {
   type: string;
   url: string;
   // add more types if necessary
-  customDetail: Partial<
+  customDetail?: Partial<
     HelmPackageRepositoryCustomDetail | KappControllerPackageRepositoryCustomDetail
   >;
 }

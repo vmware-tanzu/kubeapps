@@ -11,13 +11,41 @@ import {
   UpdatePackageRepositoryResponse,
 } from "gen/kubeappsapis/core/packages/v1alpha1/repositories";
 import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins";
+import { HelmPackageRepositoryCustomDetail } from "gen/kubeappsapis/plugins/helm/packages/v1alpha1/helm";
+import { KappControllerPackageRepositoryCustomDetail } from "gen/kubeappsapis/plugins/kapp_controller/packages/v1alpha1/kapp_controller";
 import KubeappsGrpcClient from "./KubeappsGrpcClient";
 import { PackageRepositoriesService } from "./PackageRepositoriesService";
 import { IPkgRepoFormData, RepositoryStorageTypes } from "./types";
+import { PluginNames } from "./utils";
 
 const cluster = "cluster";
 const namespace = "namespace";
 const plugin: Plugin = { name: "my.plugin", version: "0.0.1" };
+
+const helmCustomDetail: HelmPackageRepositoryCustomDetail = {
+  dockerRegistrySecrets: ["test-1"],
+  ociRepositories: ["apache", "jenkins"],
+  performValidation: true,
+  filterRule: {
+    jq: ".name == $var0 or .name == $var1",
+    variables: { $var0: "nginx", $var1: "wordpress" },
+  },
+};
+
+const kappCustomDetail: KappControllerPackageRepositoryCustomDetail = {
+  fetch: {
+    imgpkgBundle: {
+      tagSelection: {
+        semver: {
+          constraints: ">= 1.0.0",
+          prereleases: {
+            identifiers: ["alpha", "beta"],
+          },
+        },
+      },
+    },
+  },
+};
 
 const pkgRepoFormData = {
   plugin,
@@ -29,12 +57,7 @@ const pkgRepoFormData = {
     username: "",
   },
   customCA: "",
-  customDetail: {
-    dockerRegistrySecrets: [],
-    ociRepositories: [],
-    performValidation: false,
-    filterRules: [],
-  },
+  customDetail: {},
   description: "",
   dockerRegCreds: {
     password: "",
@@ -222,6 +245,59 @@ describe("RepositoriesService", () => {
         plugin,
       },
     });
+  });
+});
+
+describe("buildEncodedCustomDetail encoding", () => {
+  it("returns undefined if the plugin is not supported)", async () => {
+    const encodedCustomDetail = PackageRepositoriesService["buildEncodedCustomDetail"]({
+      ...pkgRepoFormData,
+      plugin: { name: "my.plugin", version: "0.0.1" },
+      customDetail: undefined,
+    });
+    expect(encodedCustomDetail).toStrictEqual(undefined);
+  });
+
+  it("returns undefined if no custom details (helm)", async () => {
+    const encodedCustomDetail = PackageRepositoriesService["buildEncodedCustomDetail"]({
+      ...pkgRepoFormData,
+      plugin: { name: PluginNames.PACKAGES_HELM, version: "v1alpha1" },
+      customDetail: undefined,
+    });
+    expect(encodedCustomDetail).toBe(undefined);
+  });
+
+  it("returns encoded empty value if no custom details (kapp)", async () => {
+    const encodedCustomDetail = PackageRepositoriesService["buildEncodedCustomDetail"]({
+      ...pkgRepoFormData,
+      plugin: { name: PluginNames.PACKAGES_KAPP, version: "v1alpha1" },
+      customDetail: undefined,
+    });
+    expect(encodedCustomDetail).toBe(undefined);
+  });
+
+  it("encodes the custom details (helm)", async () => {
+    const encodedCustomDetail = PackageRepositoriesService["buildEncodedCustomDetail"]({
+      ...pkgRepoFormData,
+      plugin: { name: PluginNames.PACKAGES_HELM, version: "v1alpha1" },
+      customDetail: helmCustomDetail,
+    });
+    expect(encodedCustomDetail?.typeUrl).toBe(
+      "kubeappsapis.plugins.helm.packages.v1alpha1.HelmPackageRepositoryCustomDetail",
+    );
+    expect(encodedCustomDetail?.value.byteLength).toBe(99);
+  });
+
+  it("encodes the custom details (kapp)", async () => {
+    const encodedCustomDetail = PackageRepositoriesService["buildEncodedCustomDetail"]({
+      ...pkgRepoFormData,
+      plugin: { name: PluginNames.PACKAGES_KAPP, version: "v1alpha1" },
+      customDetail: kappCustomDetail,
+    });
+    expect(encodedCustomDetail?.typeUrl).toBe(
+      "kubeappsapis.plugins.kapp_controller.packages.v1alpha1.KappControllerPackageRepositoryCustomDetail",
+    );
+    expect(encodedCustomDetail?.value.byteLength).toBe(33);
   });
 });
 

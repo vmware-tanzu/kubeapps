@@ -53,13 +53,13 @@ export class PackageRepositoriesService {
     request: IPkgRepoFormData,
     namespaceScoped: boolean,
   ) {
-    const addPackageRepositoryRequest = this.buildAddOrUpdateRequest(
+    const addPackageRepositoryRequest = PackageRepositoriesService.buildAddOrUpdateRequest(
       false,
       cluster,
       namespace,
       request,
       namespaceScoped,
-      this.buildEncodedCustomDetail(request),
+      PackageRepositoriesService.buildEncodedCustomDetail(request),
     );
 
     return await this.coreRepositoriesClient().AddPackageRepository(addPackageRepositoryRequest);
@@ -70,13 +70,13 @@ export class PackageRepositoriesService {
     namespace: string,
     request: IPkgRepoFormData,
   ) {
-    const updatePackageRepositoryRequest = this.buildAddOrUpdateRequest(
+    const updatePackageRepositoryRequest = PackageRepositoriesService.buildAddOrUpdateRequest(
       true,
       cluster,
       namespace,
       request,
       undefined,
-      this.buildEncodedCustomDetail(request),
+      PackageRepositoriesService.buildEncodedCustomDetail(request),
     );
 
     return await this.coreRepositoriesClient().UpdatePackageRepository(
