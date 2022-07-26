@@ -3,7 +3,7 @@
 
 import Icon from "components/Icon/Icon";
 import { Link } from "react-router-dom";
-import placeholder from "../../placeholder.png";
+import placeholder from "icons/placeholder.svg";
 import Card, { CardBlock, CardFooter, CardHeader } from "../js/Card";
 import Column from "../js/Column";
 import Row from "../js/Row";
