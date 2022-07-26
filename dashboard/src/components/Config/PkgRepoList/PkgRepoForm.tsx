@@ -318,7 +318,17 @@ export function PkgRepoForm(props: IPkgRepoFormProps) {
         password: !isUserManagedSecret ? basicPassword : "",
         username: !isUserManagedSecret ? basicUser : "",
       } as UsernamePassword,
+<<<<<<< HEAD
       customCA: !isUserManagedCASecret ? customCA : "",
+=======
+      customCA: isUserManagedCASecret ? "" : customCA,
+      customDetail: {
+        ociRepositories: ociRepoList,
+        performValidation,
+        filterRule: filter,
+        dockerRegistrySecrets: isUserManagedPSSecret && secretPSName ? [secretPSName] : [],
+      } as HelmPackageRepositoryCustomDetail,
+>>>>>>> 4764-pkg-repos-ui
       description,
       dockerRegCreds: {
         username: !isUserManagedSecret ? secretUser : "",

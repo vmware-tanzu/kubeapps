@@ -20,9 +20,13 @@ import {
   UsernamePassword,
 } from "gen/kubeappsapis/core/packages/v1alpha1/repositories";
 import {
-  protobufPackage as helmProtobufPackage,
   HelmPackageRepositoryCustomDetail,
+  protobufPackage as helmProtobufPackage,
 } from "gen/kubeappsapis/plugins/helm/packages/v1alpha1/helm";
+import {
+  KappControllerPackageRepositoryCustomDetail,
+  protobufPackage as kappControllerProtobufPackage,
+} from "gen/kubeappsapis/plugins/kapp_controller/packages/v1alpha1/kapp_controller";
 import KubeappsGrpcClient from "./KubeappsGrpcClient";
 import { IPkgRepoFormData } from "./types";
 import { PluginNames } from "./utils";
@@ -49,13 +53,17 @@ export class PackageRepositoriesService {
     request: IPkgRepoFormData,
     namespaceScoped: boolean,
   ) {
-    const addPackageRepositoryRequest = this.buildAddOrUpdateRequest(
+    const addPackageRepositoryRequest = PackageRepositoriesService.buildAddOrUpdateRequest(
       false,
       cluster,
       namespace,
       request,
       namespaceScoped,
+<<<<<<< HEAD
       this.buildEncodedCustomDetail(request),
+=======
+      PackageRepositoriesService.buildEncodedCustomDetail(request),
+>>>>>>> 4764-pkg-repos-ui
     );
 
     return await this.coreRepositoriesClient().AddPackageRepository(addPackageRepositoryRequest);
@@ -66,13 +74,17 @@ export class PackageRepositoriesService {
     namespace: string,
     request: IPkgRepoFormData,
   ) {
-    const updatePackageRepositoryRequest = this.buildAddOrUpdateRequest(
+    const updatePackageRepositoryRequest = PackageRepositoriesService.buildAddOrUpdateRequest(
       true,
       cluster,
       namespace,
       request,
       undefined,
+<<<<<<< HEAD
       this.buildEncodedCustomDetail(request),
+=======
+      PackageRepositoriesService.buildEncodedCustomDetail(request),
+>>>>>>> 4764-pkg-repos-ui
     );
 
     return await this.coreRepositoriesClient().UpdatePackageRepository(
@@ -211,8 +223,17 @@ export class PackageRepositoriesService {
   }
 
   private static buildEncodedCustomDetail(request: IPkgRepoFormData) {
+<<<<<<< HEAD
     // if using the Helm plugin, add its custom fields.
     // An "Any" object has  "typeUrl" with the FQN of the type and a "value",
+=======
+    // if using a plugin with customDetail, encode its custom fields,
+    // otherwise skip it
+    if (!request.customDetail) {
+      return;
+    }
+    // An "Any" object has "typeUrl" with the FQN of the type and a "value",
+>>>>>>> 4764-pkg-repos-ui
     // which is the result of the encoding (+finish(), to get the Uint8Array)
     // of the actual custom object
     switch (request.plugin?.name) {
@@ -236,10 +257,23 @@ export class PackageRepositoriesService {
         }
         return {
           typeUrl: `${helmProtobufPackage}.HelmPackageRepositoryCustomDetail`,
+<<<<<<< HEAD
           value: HelmPackageRepositoryCustomDetail.encode(helmCustomDetail).finish(),
+=======
+          value: HelmPackageRepositoryCustomDetail.encode(
+            request.customDetail as HelmPackageRepositoryCustomDetail,
+          ).finish(),
+        } as Any;
+      case PluginNames.PACKAGES_KAPP:
+        return {
+          typeUrl: `${kappControllerProtobufPackage}.KappControllerPackageRepositoryCustomDetail`,
+          value: KappControllerPackageRepositoryCustomDetail.encode(
+            request.customDetail as KappControllerPackageRepositoryCustomDetail,
+          ).finish(),
+>>>>>>> 4764-pkg-repos-ui
         } as Any;
       default:
-        return undefined;
+        return;
     }
   }
 }

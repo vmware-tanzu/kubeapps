@@ -123,10 +123,14 @@ const pkgRepoFormData = {
   },
   customCA: "",
   customDetail: {
+<<<<<<< HEAD
     imagesPullSecret: {
       secretRef: "repo-1",
       credentials: { server: "", username: "", password: "", email: "" },
     },
+=======
+    dockerRegistrySecrets: [],
+>>>>>>> 4764-pkg-repos-ui
     ociRepositories: [],
     performValidation: false,
     filterRules: [],
@@ -555,6 +559,7 @@ describe("addRepo", () => {
     await store.dispatch(
       repoActions.addRepo("my-namespace", {
         ...pkgRepoFormData,
+<<<<<<< HEAD
         customDetail: {
           ...pkgRepoFormData.customDetail,
           imagesPullSecret: {
@@ -562,6 +567,9 @@ describe("addRepo", () => {
             credentials: { server: "", username: "", password: "", email: "" },
           },
         },
+=======
+        customDetail: { ...pkgRepoFormData.customDetail, dockerRegistrySecrets: ["repo-1"] },
+>>>>>>> 4764-pkg-repos-ui
       }),
     );
 
@@ -570,6 +578,7 @@ describe("addRepo", () => {
       "my-namespace",
       {
         ...pkgRepoFormData,
+<<<<<<< HEAD
         customDetail: {
           ...pkgRepoFormData.customDetail,
           imagesPullSecret: {
@@ -577,6 +586,9 @@ describe("addRepo", () => {
             credentials: { server: "", username: "", password: "", email: "" },
           },
         },
+=======
+        customDetail: { ...pkgRepoFormData.customDetail, dockerRegistrySecrets: ["repo-1"] },
+>>>>>>> 4764-pkg-repos-ui
       },
       true,
     );
