@@ -43,7 +43,7 @@ it("renders an cr item", () => {
   const card = wrapper.find(InfoCard);
   expect(card.props()).toMatchObject({
     description: crd.description,
-    icon: "placeholder.png",
+    icon: "placeholder.svg",
     link: app.operatorInstances.view(
       defaultProps.cluster,
       resource.metadata.namespace,
