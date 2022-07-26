@@ -9,9 +9,10 @@ import Alert from "components/js/Alert";
 import Column from "components/js/Column";
 import Row from "components/js/Row";
 import PageHeader from "components/PageHeader/PageHeader";
+import { push } from "connected-react-router";
 import {
   InstalledPackageReference,
-  ResourceRef,
+  ResourceRef
 } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
 import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins";
 import * as yaml from "js-yaml";
@@ -27,7 +28,7 @@ import {
   DeleteError,
   FetchError,
   FetchWarning,
-  IStoreState,
+  IStoreState
 } from "shared/types";
 import { getPluginsSupportingRollback } from "shared/utils";
 import ApplicationStatus from "../../containers/ApplicationStatusContainer";
@@ -160,7 +161,7 @@ export default function AppView() {
     secrets: [],
   } as IAppViewResourceRefs);
   const {
-    apps: { error, selected: selectedInstalledPkg, selectedDetails: selectedAvailablePkg },
+    apps: { error, isFetching, selected: selectedInstalledPkg, selectedDetails: selectedAvailablePkg },
     config: { customAppViews },
   } = useSelector((state: IStoreState) => state);
 
@@ -260,6 +261,10 @@ export default function AppView() {
     dispatch(actions.installedpackages.getInstalledPackage(installedPkgRef));
   };
 
+  const goToAppsView = () => {
+    dispatch(push(url.app.apps.list(cluster, namespace)));
+  };
+
   if (fetchError) {
     if (fetchError.constructor === FetchError) {
       return (
@@ -297,12 +302,21 @@ export default function AppView() {
   }
   return (
     <LoadingWrapper
-      loaded={!!selectedInstalledPkg}
+      loaded={!isFetching}
       loadingText="Retrieving application..."
       className="margin-t-xl"
     >
       {!selectedInstalledPkg || !selectedInstalledPkg?.installedPackageRef ? (
-        <Alert theme="danger">There is a problem with this package</Alert>
+        error ? (
+          <Alert theme="danger">
+            An error occurred while fetching the application: {error?.message}.{" "}
+            <CdsButton size="sm" action="flat" onClick={goToAppsView} type="button">
+              Go Back{" "}
+            </CdsButton>
+          </Alert>
+        ) : (
+          <></>
+        )
       ) : (
         <section>
           <PageHeader

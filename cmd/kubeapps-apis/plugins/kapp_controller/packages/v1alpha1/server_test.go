@@ -3709,7 +3709,7 @@ func TestCreateInstalledPackage(t *testing.T) {
 				},
 			},
 			pluginConfig: &kappControllerPluginParsedConfig{
-				timeoutSeconds:                     1, //to avoid unnecesary test delays
+				timeoutSeconds:                     1, //to avoid unnecessary test delays
 				defaultUpgradePolicy:               defaultPluginConfig.defaultUpgradePolicy,
 				defaultPrereleasesVersionSelection: defaultPluginConfig.defaultPrereleasesVersionSelection,
 				defaultAllowDowngrades:             defaultPluginConfig.defaultAllowDowngrades,
@@ -7054,6 +7054,66 @@ func TestAddPackageRepository(t *testing.T) {
 			},
 		},
 		{
+			name: "create with auth (plugin managed, bearer auth w/ Bearer prefix)",
+			requestCustomizer: func(request *corev1.AddPackageRepositoryRequest) *corev1.AddPackageRepositoryRequest {
+				request.Auth = &corev1.PackageRepositoryAuth{
+					Type: corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_BEARER,
+					PackageRepoAuthOneOf: &corev1.PackageRepositoryAuth_Header{
+						Header: "Bearer foo",
+					},
+				}
+				return request
+			},
+			repositoryCustomizer: func(repository *packagingv1alpha1.PackageRepository) *packagingv1alpha1.PackageRepository {
+				repository.Spec.Fetch.ImgpkgBundle.SecretRef = &kappctrlv1alpha1.AppFetchLocalRef{} // the name will be empty as the fake client does not handle generating names
+				return repository
+			},
+			expectedStatusCode: codes.OK,
+			expectedRef:        defaultRef,
+			customChecks: func(t *testing.T, s *Server) {
+				secret, err := s.getSecret(context.Background(), defaultGlobalContext.Cluster, globalPackagingNamespace, "")
+				if err != nil {
+					t.Fatalf("error fetching newly created secret:%+v", err)
+				}
+				if !isPluginManaged(defaultRepository(), secret) {
+					t.Errorf("annotations and ownership was not properly set: %+v", secret)
+				}
+				if secret.Type != k8scorev1.SecretTypeOpaque || secret.StringData[BearerAuthToken] != "Bearer foo" {
+					t.Errorf("secret data was not properly constructed: %+v", secret)
+				}
+			},
+		},
+		{
+			name: "create with auth (plugin managed, bearer auth w/o Bearer prefix)",
+			requestCustomizer: func(request *corev1.AddPackageRepositoryRequest) *corev1.AddPackageRepositoryRequest {
+				request.Auth = &corev1.PackageRepositoryAuth{
+					Type: corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_BEARER,
+					PackageRepoAuthOneOf: &corev1.PackageRepositoryAuth_Header{
+						Header: "foo",
+					},
+				}
+				return request
+			},
+			repositoryCustomizer: func(repository *packagingv1alpha1.PackageRepository) *packagingv1alpha1.PackageRepository {
+				repository.Spec.Fetch.ImgpkgBundle.SecretRef = &kappctrlv1alpha1.AppFetchLocalRef{} // the name will be empty as the fake client does not handle generating names
+				return repository
+			},
+			expectedStatusCode: codes.OK,
+			expectedRef:        defaultRef,
+			customChecks: func(t *testing.T, s *Server) {
+				secret, err := s.getSecret(context.Background(), defaultGlobalContext.Cluster, globalPackagingNamespace, "")
+				if err != nil {
+					t.Fatalf("error fetching newly created secret:%+v", err)
+				}
+				if !isPluginManaged(defaultRepository(), secret) {
+					t.Errorf("annotations and ownership was not properly set: %+v", secret)
+				}
+				if secret.Type != k8scorev1.SecretTypeOpaque || secret.StringData[BearerAuthToken] != "Bearer foo" {
+					t.Errorf("secret data was not properly constructed: %+v", secret)
+				}
+			},
+		},
+		{
 			name: "create with auth (plugin managed, docker auth)",
 			requestCustomizer: func(request *corev1.AddPackageRepositoryRequest) *corev1.AddPackageRepositoryRequest {
 				request.Auth = &corev1.PackageRepositoryAuth{
@@ -7785,6 +7845,66 @@ func TestUpdatePackageRepository(t *testing.T) {
 					t.Errorf("annotations and ownership was not properly set: %+v", secret)
 				}
 				if secret.Type != k8scorev1.SecretTypeBasicAuth || secret.StringData[k8scorev1.BasicAuthUsernameKey] != "foo" || secret.StringData[k8scorev1.BasicAuthPasswordKey] != "bar" {
+					t.Errorf("secret data was not properly constructed: %+v", secret)
+				}
+			},
+		},
+		{
+			name: "updated with auth (plugin managed, bearer auth w/ Bearer prefix)",
+			requestCustomizer: func(request *corev1.UpdatePackageRepositoryRequest) *corev1.UpdatePackageRepositoryRequest {
+				request.Auth = &corev1.PackageRepositoryAuth{
+					Type: corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_BEARER,
+					PackageRepoAuthOneOf: &corev1.PackageRepositoryAuth_Header{
+						Header: "Bearer foo",
+					},
+				}
+				return request
+			},
+			repositoryCustomizer: func(repository *packagingv1alpha1.PackageRepository) *packagingv1alpha1.PackageRepository {
+				repository.Spec.Fetch.ImgpkgBundle.SecretRef = &kappctrlv1alpha1.AppFetchLocalRef{} // the name will be empty as the fake client does not handle generating names
+				return repository
+			},
+			expectedStatusCode: codes.OK,
+			expectedRef:        defaultRef,
+			customChecks: func(t *testing.T, s *Server) {
+				secret, err := s.getSecret(context.Background(), defaultGlobalContext.Cluster, globalPackagingNamespace, "")
+				if err != nil {
+					t.Fatalf("error fetching newly created secret:%+v", err)
+				}
+				if !isPluginManaged(defaultRepository(), secret) {
+					t.Errorf("annotations and ownership was not properly set: %+v", secret)
+				}
+				if secret.Type != k8scorev1.SecretTypeOpaque || secret.StringData[BearerAuthToken] != "Bearer foo" {
+					t.Errorf("secret data was not properly constructed: %+v", secret)
+				}
+			},
+		},
+		{
+			name: "updated with auth (plugin managed, bearer auth w/o Bearer prefix)",
+			requestCustomizer: func(request *corev1.UpdatePackageRepositoryRequest) *corev1.UpdatePackageRepositoryRequest {
+				request.Auth = &corev1.PackageRepositoryAuth{
+					Type: corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_BEARER,
+					PackageRepoAuthOneOf: &corev1.PackageRepositoryAuth_Header{
+						Header: "foo",
+					},
+				}
+				return request
+			},
+			repositoryCustomizer: func(repository *packagingv1alpha1.PackageRepository) *packagingv1alpha1.PackageRepository {
+				repository.Spec.Fetch.ImgpkgBundle.SecretRef = &kappctrlv1alpha1.AppFetchLocalRef{} // the name will be empty as the fake client does not handle generating names
+				return repository
+			},
+			expectedStatusCode: codes.OK,
+			expectedRef:        defaultRef,
+			customChecks: func(t *testing.T, s *Server) {
+				secret, err := s.getSecret(context.Background(), defaultGlobalContext.Cluster, globalPackagingNamespace, "")
+				if err != nil {
+					t.Fatalf("error fetching newly created secret:%+v", err)
+				}
+				if !isPluginManaged(defaultRepository(), secret) {
+					t.Errorf("annotations and ownership was not properly set: %+v", secret)
+				}
+				if secret.Type != k8scorev1.SecretTypeOpaque || secret.StringData[BearerAuthToken] != "Bearer foo" {
 					t.Errorf("secret data was not properly constructed: %+v", secret)
 				}
 			},
@@ -9211,7 +9331,7 @@ func TestGetPackageRepositoryStatus(t *testing.T) {
 			},
 		},
 		{
-			name: "reconcilation failure",
+			name: "reconciliation failure",
 			existingStatus: kappctrlv1alpha1.GenericStatus{
 				Conditions: []kappctrlv1alpha1.Condition{
 					{
@@ -9226,7 +9346,7 @@ func TestGetPackageRepositoryStatus(t *testing.T) {
 			},
 		},
 		{
-			name: "reconcilation failure, extra error message",
+			name: "reconciliation failure, extra error message",
 			existingStatus: kappctrlv1alpha1.GenericStatus{
 				Conditions: []kappctrlv1alpha1.Condition{
 					{

@@ -6,9 +6,9 @@ use std::fs;
 
 use anyhow::{Context, Result};
 use hyper::{
+    server::conn::AddrIncoming,
     service::{make_service_fn, service_fn},
     Server,
-    server::conn::AddrIncoming,
 };
 use log::info;
 use structopt::StructOpt;
@@ -16,7 +16,6 @@ use tls_listener::TlsListener;
 
 // Ensure the root crate is aware of the child modules.
 mod cli;
-mod expired_value_cache;
 mod https;
 mod logging;
 mod pinniped;
@@ -42,7 +41,10 @@ async fn main() -> Result<()> {
     // Run the server for ever. If it returns with an error, return the
     // result, otherwise, if it completes, we return Ok.
     if with_tls {
-        info!("Configuring with TLS cert filepath {} and key filepath {}", opt.proxy_tls_cert, opt.proxy_tls_cert_key);
+        info!(
+            "Configuring with TLS cert filepath {} and key filepath {}",
+            opt.proxy_tls_cert, opt.proxy_tls_cert_key
+        );
         // For every incoming connection, we make a new hyper `Service` to handle
         // all incoming HTTP requests on that connection. This is done by passing a
         // closure to the hyper `make_service_fn` which returns our custom `make_svc`
@@ -63,11 +65,9 @@ async fn main() -> Result<()> {
         });
 
         let incoming = TlsListener::new(
-            tls_config::tls_acceptor(
-                opt.proxy_tls_cert,
-                opt.proxy_tls_cert_key
-            ).expect("unable to create tls acceptor"),
-            AddrIncoming::bind(&addr).expect("unable to bind to address")
+            tls_config::tls_acceptor(opt.proxy_tls_cert, opt.proxy_tls_cert_key)
+                .expect("unable to create tls acceptor"),
+            AddrIncoming::bind(&addr).expect("unable to bind to address"),
         );
         let server = Server::builder(incoming).serve(make_svc);
         info!("Listening on https://{}", addr);

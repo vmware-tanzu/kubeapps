@@ -18,6 +18,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/client-go/kubernetes"
 	log "k8s.io/klog/v2"
 	"k8s.io/utils/strings/slices"
 )
@@ -73,8 +74,14 @@ func (s *Server) newRepo(ctx context.Context, repo *HelmRepository) (*corev1.Pac
 		}
 	}
 
+	// Handle imagesPullSecret if any
+	imagePullSecret, _, err := handleImagesPullSecret(ctx, typedClient, s.pluginConfig.UserManagedSecrets, repo, true)
+	if err != nil {
+		return nil, err
+	}
+
 	// Map data to a repository CRD
-	helmRepoCrd, err := newHelmRepoCrd(repo, secret)
+	helmRepoCrd, err := newHelmRepoCrd(repo, secret, imagePullSecret)
 	if err != nil {
 		return nil, err
 	}
@@ -92,7 +99,7 @@ func (s *Server) newRepo(ctx context.Context, repo *HelmRepository) (*corev1.Pac
 		// but then I need to set the owner reference on this secret to the repo. In has to be done
 		// in that order because to set an owner ref you need object (i.e. repo) UID, which you only get
 		// once the object's been created
-		if secret, err = createKubeappsManagedRepoSecret(ctx, typedClient, repo.name.Namespace, secret); err != nil {
+		if secret, imagePullSecret, err = createKubeappsManagedRepoSecrets(ctx, typedClient, repo.name.Namespace, secret, imagePullSecret); err != nil {
 			return nil, err
 		}
 	}
@@ -107,6 +114,9 @@ func (s *Server) newRepo(ctx context.Context, repo *HelmRepository) (*corev1.Pac
 			if err = s.setOwnerReferencesForRepoSecret(ctx, secret, repo.cluster, helmRepoCrd); err != nil {
 				return nil, err
 			}
+			if err = s.setOwnerReferencesForRepoSecret(ctx, imagePullSecret, repo.cluster, helmRepoCrd); err != nil {
+				return nil, err
+			}
 		}
 		return &corev1.PackageRepositoryReference{
 			Context: &corev1.Context{
@@ -119,7 +129,7 @@ func (s *Server) newRepo(ctx context.Context, repo *HelmRepository) (*corev1.Pac
 	}
 }
 
-func newHelmRepoCrd(repo *HelmRepository, secret *k8scorev1.Secret) (*apprepov1alpha1.AppRepository, error) {
+func newHelmRepoCrd(repo *HelmRepository, secret *k8scorev1.Secret, imagePullSecret *k8scorev1.Secret) (*apprepov1alpha1.AppRepository, error) {
 	appRepoCrd := &apprepov1alpha1.AppRepository{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      repo.name.Name,
@@ -140,10 +150,12 @@ func newHelmRepoCrd(repo *HelmRepository, secret *k8scorev1.Secret) (*apprepov1a
 			appRepoCrd.Spec.Auth = *repoAuth
 		}
 	}
+	if imagePullSecret != nil {
+		appRepoCrd.Spec.DockerRegistrySecrets = []string{imagePullSecret.Name}
+	} else {
+		appRepoCrd.Spec.DockerRegistrySecrets = nil
+	}
 	if repo.customDetail != nil {
-		if repo.customDetail.DockerRegistrySecrets != nil {
-			appRepoCrd.Spec.DockerRegistrySecrets = repo.customDetail.DockerRegistrySecrets
-		}
 		if repo.customDetail.FilterRule != nil {
 			appRepoCrd.Spec.FilterRule = apprepov1alpha1.FilterRuleSpec{
 				JQ:        repo.customDetail.FilterRule.Jq,
@@ -159,7 +171,8 @@ func newHelmRepoCrd(repo *HelmRepository, secret *k8scorev1.Secret) (*apprepov1a
 
 func (s *Server) mapToPackageRepositoryDetail(source *apprepov1alpha1.AppRepository,
 	cluster, namespace string,
-	caSecret *k8scorev1.Secret, authSecret *k8scorev1.Secret) (*corev1.PackageRepositoryDetail, error) {
+	caSecret *k8scorev1.Secret, authSecret *k8scorev1.Secret,
+	imagesPullSecret *k8scorev1.Secret) (*corev1.PackageRepositoryDetail, error) {
 
 	// Auth
 	var tlsConfig *corev1.PackageRepositoryTlsConfig
@@ -201,7 +214,16 @@ func (s *Server) mapToPackageRepositoryDetail(source *apprepov1alpha1.AppReposit
 	// Custom details
 	if source.Spec.DockerRegistrySecrets != nil || source.Spec.FilterRule.JQ != "" || source.Spec.OCIRepositories != nil {
 		var customDetail = &v1alpha1.HelmPackageRepositoryCustomDetail{}
-		customDetail.DockerRegistrySecrets = source.Spec.DockerRegistrySecrets
+
+		if source.Spec.DockerRegistrySecrets != nil {
+			// Set Docker image pull secrets
+			customDetail.ImagesPullSecret = &v1alpha1.ImagesPullSecret{}
+			if s.pluginConfig.UserManagedSecrets {
+				customDetail.ImagesPullSecret.DockerRegistryCredentialOneOf = getRepoImagesPullSecretWithUserManagedSecrets(imagesPullSecret)
+			} else {
+				customDetail.ImagesPullSecret.DockerRegistryCredentialOneOf = getRepoImagesPullSecretWithKubeappsManagedSecrets(imagesPullSecret)
+			}
+		}
 		if source.Spec.FilterRule.JQ != "" {
 			customDetail.FilterRule = &v1alpha1.RepositoryFilterRule{
 				Jq:        source.Spec.FilterRule.JQ,
@@ -230,7 +252,7 @@ func (s *Server) setOwnerReferencesForRepoSecret(
 	cluster string,
 	repo *apprepov1alpha1.AppRepository) error {
 
-	if (repo.Spec.Auth.Header != nil || repo.Spec.Auth.CustomCA != nil) && secret != nil {
+	if secret != nil {
 		if typedClient, err := s.clientGetter.Typed(ctx, cluster); err != nil {
 			return err
 		} else {
@@ -300,6 +322,12 @@ func (s *Server) updateRepo(ctx context.Context, repo *HelmRepository) (*corev1.
 		}
 	}
 
+	// Handle imagesPullSecret if any
+	imagePullSecret, updateImgPullSecret, err := handleImagesPullSecret(ctx, typedClient, s.pluginConfig.UserManagedSecrets, repo, false)
+	if err != nil {
+		return nil, err
+	}
+
 	if s.pluginConfig.UserManagedSecrets || updateRepoSecret {
 		if secret != nil {
 			if repoAuth, err := newAppRepositoryAuth(secret, repo.tlsConfig, repo.auth); err != nil {
@@ -315,9 +343,14 @@ func (s *Server) updateRepo(ctx context.Context, repo *HelmRepository) (*corev1.
 
 	appRepo.Spec.PassCredentials = repo.auth != nil && repo.auth.PassCredentials
 
+	if imagePullSecret != nil || (imagePullSecret != nil && !updateImgPullSecret) {
+		appRepo.Spec.DockerRegistrySecrets = []string{imagePullSecret.Name}
+	} else {
+		appRepo.Spec.DockerRegistrySecrets = nil
+	}
+
 	// Custom details
 	if repo.customDetail != nil {
-		appRepo.Spec.DockerRegistrySecrets = repo.customDetail.DockerRegistrySecrets
 		if repo.customDetail.FilterRule != nil {
 			appRepo.Spec.FilterRule = apprepov1alpha1.FilterRuleSpec{
 				JQ:        repo.customDetail.FilterRule.Jq,
@@ -345,6 +378,11 @@ func (s *Server) updateRepo(ctx context.Context, repo *HelmRepository) (*corev1.
 			return nil, err
 		}
 	}
+	if imagePullSecret != nil && updateImgPullSecret {
+		if err = s.setOwnerReferencesForRepoSecret(ctx, imagePullSecret, repo.cluster, appRepo); err != nil {
+			return nil, err
+		}
+	}
 
 	log.V(4).Infof("Updated AppRepository '%s' in namespace '%s' of cluster '%s'", repo.name.Name, repo.name.Namespace, repo.cluster)
 
@@ -356,6 +394,53 @@ func (s *Server) updateRepo(ctx context.Context, repo *HelmRepository) (*corev1.
 		Identifier: repo.name.Name,
 		Plugin:     GetPluginDetail(),
 	}, nil
+}
+
+func handleImagesPullSecret(ctx context.Context, typedClient kubernetes.Interface,
+	isUserManagedSecrets bool, repo *HelmRepository, newRepo bool) (imgPullSecret *k8scorev1.Secret, updateImgPullSecret bool, err error) {
+	if repo.customDetail == nil || repo.customDetail.ImagesPullSecret == nil {
+		if !isUserManagedSecrets {
+			managedSecretName := imagesPullSecretName(repo.name.Name)
+			secretsInterface := typedClient.CoreV1().Secrets(repo.name.Namespace)
+			if deleteErr := deleteSecret(ctx, secretsInterface, managedSecretName); deleteErr != nil {
+				return nil, false, deleteErr
+			}
+		}
+		return nil, false, nil
+	}
+	if isUserManagedSecrets {
+		if repo.customDetail.ImagesPullSecret.GetSecretRef() != "" {
+			// Validate existing images pull secret managed by user
+			if validSecret, err := validateDockerImagePullSecret(ctx, typedClient, repo.name, repo.customDetail.ImagesPullSecret.GetSecretRef()); err != nil {
+				return nil, false, err
+			} else {
+				return validSecret, false, nil
+			}
+		} else if repo.customDetail.ImagesPullSecret.GetCredentials() != nil {
+			return nil, false, status.Errorf(codes.InvalidArgument, "full credentials are not valid having user managed secrets")
+		}
+	} else {
+		if repo.customDetail.ImagesPullSecret.GetCredentials() != nil {
+			if newRepo {
+				// Create a new secret due to new repo
+				if newSecret, _, err := newDockerImagePullSecret(repo.name, repo.customDetail.ImagesPullSecret.GetCredentials()); err != nil {
+					return nil, false, err
+				} else {
+					return newSecret, false, nil
+				}
+			} else {
+				// When updating repo check if secret needs creation, update or removal
+				if updatedSecret, isSameSecret, err := updateKubeappsManagedImagesPullSecret(ctx, typedClient, repo.name, repo.customDetail.ImagesPullSecret.GetCredentials()); err != nil {
+					return nil, false, err
+				} else {
+					return updatedSecret, !isSameSecret, nil
+				}
+			}
+		} else if repo.customDetail.ImagesPullSecret.GetSecretRef() != "" {
+			return nil, false, status.Errorf(codes.InvalidArgument, "secret ref is not valid having kubeapps managed secrets")
+		}
+	}
+	return nil, false, nil
 }
 
 func (s *Server) repoSummaries(ctx context.Context, cluster string, namespace string) ([]*corev1.PackageRepositorySummary, error) {
