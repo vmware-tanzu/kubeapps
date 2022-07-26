@@ -524,8 +524,7 @@ func (s *Server) GetInstalledPackageDetail(ctx context.Context, request *corev1.
 		}
 	}
 	// trim the new doc separator in the last element
-	//nolint:staticcheck
-	valuesApplied = strings.Trim(valuesApplied, "---")
+	valuesApplied = strings.TrimSuffix(valuesApplied, "---")
 
 	installedPackageDetail, err := s.buildInstalledPackageDetail(pkgInstall, pkgMetadata, pkgVersionsMap, app, valuesApplied, cluster)
 	if err != nil {

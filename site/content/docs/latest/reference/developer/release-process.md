@@ -41,9 +41,11 @@ The versions used there _must_ match the ones used for building the container im
 - `NODE_VERSION` _must_ match the **major** version used by the [dashboard](https://github.com/vmware-tanzu/kubeapps/blob/main/dashboard/Dockerfile).
 - `RUST_VERSION` _must_ match the version used by the [pinniped-proxy](https://github.com/vmware-tanzu/kubeapps/blob/main/dashboard/Dockerfile).
 - `DOCKER_VERSION` can be updated to the [latest version provided by CircleCI](https://circleci.com/docs/2.0/building-docker-images/#docker-version).
+- `DOCKER_REGISTRY_VERSION` can be updated to the [latest tag provided by Docker](https://hub.docker.com/_/registry).
 - `HELM_VERSION_MIN` _must_ match the one listed in the [Bitnami Application Catalog prerequisites](https://github.com/bitnami/charts#prerequisites).
 - `HELM_VERSION_STABLE` should be updated with the [latest stable version from the Helm releases](https://github.com/helm/helm/releases).
 - `OLM_VERSION` should be updated with the [latest stable version from the OLM releases](https://github.com/operator-framework/operator-lifecycle-manager/releases).
+- `CHARTMUSEUM_VERSION` should be updated with the [latest stable version from the chartmuseum/charts releases](https://github.com/chartmuseum/charts/releases).
 - `KAPP_CONTROLLER_VERSION` should be updated with the [latest stable version from the Kapp Controller releases](https://github.com/vmware-tanzu/carvel-kapp-controller/releases).
 - `MKCERT_VERSION` should be updated with the [latest stable version from the mkcert releases](https://github.com/FiloSottile/mkcert/releases).
 - `KUBECTL_VERSION` _should_ match the Kubernetes minor version (or minor version +1) used in `GKE_REGULAR_VERSION_XX` and listed in the [Kubernetes releases page](https://kubernetes.io/releases/).

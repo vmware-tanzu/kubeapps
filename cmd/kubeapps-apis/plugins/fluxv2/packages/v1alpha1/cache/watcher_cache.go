@@ -505,7 +505,7 @@ func (c *NamespacedResourceWatcherCache) processOneEvent(event watch.Event) {
 		// not quite sure why this happens (the docs don't say), but it seems to happen quite often
 		return
 	}
-	log.Infof("Got event: type: [%v] object:\n[%s]", event.Type, common.PrettyPrint(event.Object))
+	log.Infof("Got event: type: [%v], object:\n[%s]", event.Type, common.PrettyPrint(event.Object))
 	switch event.Type {
 	case watch.Added, watch.Modified, watch.Deleted:
 		if obj, ok := event.Object.(ctrlclient.Object); !ok {
