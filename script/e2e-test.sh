@@ -17,7 +17,7 @@ TEST_TIMEOUT_MINUTES=${5:-"4"}
 DEX_IP=${6:-"172.18.0.2"}
 ADDITIONAL_CLUSTER_IP=${7:-"172.18.0.3"}
 KAPP_CONTROLLER_VERSION=${8:-"v0.32.0"}
-CM_VERSION=${9:-"2.14.2"}
+CHARTMUSEUM_VERSION=${9:-"2.14.2"}
 
 # TODO(andresmgot): While we work with beta releases, the Bitnami pipeline
 # removes the pre-release part of the tag
@@ -39,7 +39,7 @@ fi
 info "Root dir: ${ROOT_DIR}"
 info "Use multicluster+OIDC: ${USE_MULTICLUSTER_OIDC_ENV}"
 info "OLM version: ${OLM_VERSION}"
-info "ChartMuseum version: ${CM_VERSION}"
+info "ChartMuseum version: ${CHARTMUSEUM_VERSION}"
 info "Image tag: ${DEV_TAG}"
 info "Image repo suffix: ${IMG_MODIFIER}"
 info "Dex IP: ${DEX_IP}"
@@ -328,7 +328,7 @@ fi
 installOrUpgradeKubeapps "${ROOT_DIR}/chart/kubeapps"
 info "Waiting for Kubeapps components to be ready (local chart)..."
 k8s_wait_for_deployment kubeapps kubeapps-ci
-installChartmuseum admin password "${CM_VERSION}"
+installChartmuseum admin password "${CHARTMUSEUM_VERSION}"
 pushChart apache 8.6.2 admin password
 pushChart apache 8.6.3 admin password
 
