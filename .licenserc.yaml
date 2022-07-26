@@ -11,29 +11,28 @@ header:
       Copyright (?:\d{4}-\d{4}|\d{4}) the Kubeapps contributors.
       SPDX-License-Identifier: Apache-2.0
 
-  # paths:
-  #   - "**/*.ts*"
   paths-ignore:
     - LICENSE
     - NOTICE
     - open_source_licenses.txt
-    - "**/*.md"
     - "**/*.css"
-    - "**/*.lock"
-    - "**/*.svg"
-    - "**/*.sum"
-    - "**/*.json"
-    - "**/*.pem"
     - "**/*.dccache"
     - "**/*.html"
-    - "**/*.snap"
     - "**/*.htpasswd"
-    - "**/node_modules/**"
-    - "**/gen/**"
-    - "**/site/**"
-    - "**/target/**"
+    - "**/*.json"
+    - "**/*.lock"
+    - "**/*.md"
+    - "**/*.pem"
+    - "**/*.snap"
+    - "**/*.sum"
+    - "**/*.svg"
+    - "**/*.webmanifest"
     - "**/chart/**"
     - "**/devel/**"
+    - "**/gen/**"
+    - "**/node_modules/**"
+    - "**/site/**"
+    - "**/target/**"
 
 dependency:
   files:
