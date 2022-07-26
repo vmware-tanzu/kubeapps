@@ -272,7 +272,7 @@ func newDockerImagePullSecret(ownerRepo types.NamespacedName, credentials *corev
 
 func deleteSecret(ctx context.Context, secretsInterface v1.SecretInterface, secretName string) error {
 	// Ignore action if secret didn't exist
-	if secret, _ := secretsInterface.Get(ctx, secretName, metav1.GetOptions{}); secret != nil {
+	if _, err := secretsInterface.Get(ctx, secretName, metav1.GetOptions{}); err == nil {
 		if err := secretsInterface.Delete(ctx, secretName, metav1.DeleteOptions{}); err != nil {
 			return statuserror.FromK8sError("delete", "secret", secretName, err)
 		}
