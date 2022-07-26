@@ -27,9 +27,9 @@
   },
   "dependencies": {
     "@cds/city": "^1.1.0",
-    "@cds/core": "^6.0.1",
-    "@cds/react": "^6.0.1",
-    "@clr/ui": "^13.5.0",
+    "@cds/core": "^6.1.0",
+    "@cds/react": "^6.1.0",
+    "@clr/ui": "^13.6.0",
     "@improbable-eng/grpc-web": "^0.15.0",
     "@paciolan/remote-component": "^2.12.1",
     "ajv": "^8.11.0",
@@ -70,13 +70,13 @@
     "remark-breaks": "^3.0.2",
     "remark-gfm": "^3.0.1",
     "rxjs": "^7.5.6",
-    "swagger-ui-react": "^4.12.0",
+    "swagger-ui-react": "^4.13.0",
     "typesafe-actions": "^5.1.0",
     "yaml": "^2.1.1"
   },
   "devDependencies": {
     "@craco/craco": "^6.4.5",
-    "@formatjs/cli": "^5.0.5",
+    "@formatjs/cli": "^5.0.6",
     "@improbable-eng/grpc-web-fake-transport": "^0.15.0",
     "@testing-library/react": "^12.1.5",
     "@types/enzyme": "^3.10.12",
@@ -87,7 +87,7 @@
     "@types/moxios": "^0.4.15",
     "@types/qs": "^6.9.7",
     "@types/react-copy-to-clipboard": "^5.0.3",
-    "@types/react-dom": "^18.0.3",
+    "@types/react-dom": "^18.0.6",
     "@types/react-helmet": "^6.1.5",
     "@types/react-router-dom": "^5.3.3",
     "@types/react-router-hash-link": "^2.4.5",
@@ -98,7 +98,7 @@
     "cross-env": "^7.0.3",
     "enzyme": "^3.11.0",
     "eslint-config-prettier": "^8.5.0",
-    "eslint-import-resolver-typescript": "^3.2.6",
+    "eslint-import-resolver-typescript": "^3.3.0",
     "eslint-plugin-prettier": "^4.2.1",
     "eslint-plugin-redos": "^4.4.1",
     "jest-enzyme": "^7.1.2",
@@ -112,15 +112,15 @@
     "prettier": "^2.7.1",
     "react-scripts": "^5.0.1",
     "redux-mock-store": "^1.5.4",
-    "sass": "^1.53.0",
+    "sass": "^1.54.0",
     "shx": "^0.3.4",
     "stylelint": "^14.9.1",
     "stylelint-config-idiomatic-order": "^8.1.0",
     "stylelint-config-prettier": "^9.0.3",
-    "stylelint-config-standard-scss": "^4.0.0",
+    "stylelint-config-standard-scss": "^5.0.0",
     "stylelint-scss": "^4.3.0",
-    "ts-jest": "^28.0.5",
-    "ts-proto": "^1.117.1",
+    "ts-jest": "^28.0.7",
+    "ts-proto": "^1.120.0",
     "typescript": "^4.7.4"
   },
   "resolutions": {
@@ -134,7 +134,7 @@
       "!src/**/*.d.ts"
     ],
     "transformIgnorePatterns": [
-      "node_modules/(?!@cds|@clr|@lit|bail|ccount|character-entities|comma-separated-tokens|decode-named-character-reference|escape-string-regexp|hast-util-whitespace|is-plain-obj|lit|lodash-es|markdown-table|mdast-util-definitions|mdast-util-find-and-replace|mdast-util-from-markdown|mdast-util-gfm|mdast-util-gfm-autolink-literal|mdast-util-to-hast|mdast-util-to-markdown|mdast-util-to-string|micromark|micromark-core-commonmark|parse-entities|property-information|ramda|react-markdown|react-markdown|react-syntax-highlighter|remark-breaks|remark-gfm|remark-parse|remark-rehype|space-separated-tokens|swagger-client|swagger-ui-react|trough|unified|unist-builder|unist-util-generated|unist-util-is|unist-util-position|unist-util-stringify-position|unist-util-visit|unist-util-visit-parents|util-find-and-replace|vfile|vfile-message|.*css)"
+      "node_modules/(?!@cds|@clr|@lit|bail|ccount|cds|character-entities|comma-separated-tokens|decode-named-character-reference|escape-string-regexp|hast-util-whitespace|is-plain-obj|lit|lodash-es|markdown-table|mdast-util-definitions|mdast-util-find-and-replace|mdast-util-from-markdown|mdast-util-gfm-autolink-literal|mdast-util-gfm|mdast-util-to-hast|mdast-util-to-markdown|mdast-util-to-string|micromark-core-commonmark|micromark|parse-entities|property-information|ramda|react-markdown|react-syntax-highlighter|remark-breaks|remark-gfm|remark-parse|remark-rehype|space-separated-tokens|swagger-client|swagger-ui-react|trim-lines|trough|unified|unist-builder|unist-util-generated|unist-util-is|unist-util-position|unist-util-stringify-position|unist-util-visit-parents|unist-util-visit|util-find-and-replace|vfile-message|vfile|.*css)"
     ]
   },
   "browserslist": {
