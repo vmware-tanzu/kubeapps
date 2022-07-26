@@ -288,7 +288,7 @@ export function PkgRepoForm(props: IPkgRepoFormProps) {
       filter = toFilterRule(filterNames, filterRegex, filterExclude);
     }
 
-    // build the custum details object based for each plugin
+    // build the custom details object based for each plugin
     const helmCustomDetail = {
       ociRepositories: ociRepoList,
       performValidation,
