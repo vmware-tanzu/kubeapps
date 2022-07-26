@@ -59,11 +59,7 @@ export class PackageRepositoriesService {
       namespace,
       request,
       namespaceScoped,
-<<<<<<< HEAD
-      this.buildEncodedCustomDetail(request),
-=======
       PackageRepositoriesService.buildEncodedCustomDetail(request),
->>>>>>> 4764-pkg-repos-ui
     );
 
     return await this.coreRepositoriesClient().AddPackageRepository(addPackageRepositoryRequest);
@@ -80,11 +76,7 @@ export class PackageRepositoriesService {
       namespace,
       request,
       undefined,
-<<<<<<< HEAD
-      this.buildEncodedCustomDetail(request),
-=======
       PackageRepositoriesService.buildEncodedCustomDetail(request),
->>>>>>> 4764-pkg-repos-ui
     );
 
     return await this.coreRepositoriesClient().UpdatePackageRepository(
@@ -223,54 +215,44 @@ export class PackageRepositoriesService {
   }
 
   private static buildEncodedCustomDetail(request: IPkgRepoFormData) {
-<<<<<<< HEAD
-    // if using the Helm plugin, add its custom fields.
-    // An "Any" object has  "typeUrl" with the FQN of the type and a "value",
-=======
     // if using a plugin with customDetail, encode its custom fields,
     // otherwise skip it
     if (!request.customDetail) {
       return;
     }
     // An "Any" object has "typeUrl" with the FQN of the type and a "value",
->>>>>>> 4764-pkg-repos-ui
     // which is the result of the encoding (+finish(), to get the Uint8Array)
     // of the actual custom object
+    let detail, helmCustomDetail: HelmPackageRepositoryCustomDetail;
     switch (request.plugin?.name) {
       case PluginNames.PACKAGES_HELM:
-        // populate the non-optional fields
-        // eslint-disable-next-line no-case-declarations
-        const helmCustomDetail: HelmPackageRepositoryCustomDetail = {
-          ociRepositories: request.customDetail.ociRepositories || [],
-          performValidation: !!request.customDetail.performValidation,
+        detail = request.customDetail as HelmPackageRepositoryCustomDetail;
+        helmCustomDetail = {
+          // populate the non-optional fields
+          ociRepositories: detail?.ociRepositories || [],
+          performValidation: !!detail?.performValidation,
+          filterRule: detail?.filterRule,
         };
-        // populate the filterRule if it's not empty
-        if (request.customDetail.filterRule) {
-          helmCustomDetail.filterRule = request.customDetail.filterRule;
-        }
+
         // populate the imagesPullSecret if it's not empty
         if (
-          request.customDetail.imagesPullSecret?.secretRef ||
-          Object.values(request.customDetail?.imagesPullSecret?.credentials as any).some(e => !!e)
+          detail?.imagesPullSecret?.secretRef ||
+          Object.values(detail?.imagesPullSecret?.credentials as DockerCredentials).some(e => !!e)
         ) {
-          helmCustomDetail.imagesPullSecret = request.customDetail.imagesPullSecret;
+          helmCustomDetail.imagesPullSecret = detail.imagesPullSecret;
         }
+
         return {
           typeUrl: `${helmProtobufPackage}.HelmPackageRepositoryCustomDetail`,
-<<<<<<< HEAD
           value: HelmPackageRepositoryCustomDetail.encode(helmCustomDetail).finish(),
-=======
-          value: HelmPackageRepositoryCustomDetail.encode(
-            request.customDetail as HelmPackageRepositoryCustomDetail,
-          ).finish(),
         } as Any;
+
       case PluginNames.PACKAGES_KAPP:
         return {
           typeUrl: `${kappControllerProtobufPackage}.KappControllerPackageRepositoryCustomDetail`,
           value: KappControllerPackageRepositoryCustomDetail.encode(
             request.customDetail as KappControllerPackageRepositoryCustomDetail,
           ).finish(),
->>>>>>> 4764-pkg-repos-ui
         } as Any;
       default:
         return;

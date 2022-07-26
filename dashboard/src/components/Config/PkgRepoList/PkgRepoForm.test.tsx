@@ -48,14 +48,10 @@ const pkgRepoFormData = {
   },
   customCA: "",
   customDetail: {
-<<<<<<< HEAD
     imagesPullSecret: {
       secretRef: "",
       credentials: { server: "", username: "", password: "", email: "" },
     },
-=======
-    dockerRegistrySecrets: [],
->>>>>>> 4764-pkg-repos-ui
     ociRepositories: [],
     performValidation: true,
     filterRules: [],

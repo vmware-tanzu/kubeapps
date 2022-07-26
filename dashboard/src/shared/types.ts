@@ -444,12 +444,8 @@ export interface IPkgRepoFormData {
   skipTLS: boolean;
   type: string;
   url: string;
-<<<<<<< HEAD
-  customDetail: Partial<HelmPackageRepositoryCustomDetail>; // add more types if necesary, currently just helm's custom details
-=======
   // add more types if necessary
   customDetail?: Partial<
     HelmPackageRepositoryCustomDetail | KappControllerPackageRepositoryCustomDetail
   >;
->>>>>>> 4764-pkg-repos-ui
 }
