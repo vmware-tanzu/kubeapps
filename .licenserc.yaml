@@ -26,6 +26,7 @@ header:
     - "**/*.pem"
     - "**/*.dccache"
     - "**/*.html"
+    - "**/*.snap"
     - "**/*.htpasswd"
     - "**/node_modules/**"
     - "**/gen/**"

@@ -1,6 +1,3 @@
-// Copyright 2018-2022 VMware, Inc.
-// SPDX-License-Identifier: Apache-2.0
-
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`should render the 404 page 1`] = `
@@ -9,7 +6,7 @@ exports[`should render the 404 page 1`] = `
 >
   <div>
     <img
-      alt="Kubeapps logo"
+      alt="Not found logo"
       src="404.svg"
     />
     <h3>

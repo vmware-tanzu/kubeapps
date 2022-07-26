@@ -1,6 +1,3 @@
-// Copyright 2019-2022 VMware, Inc.
-// SPDX-License-Identifier: Apache-2.0
-
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`should render a boolean param with title and description 1`] = `
