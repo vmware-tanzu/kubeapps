@@ -14,7 +14,7 @@ If you're using Kubeapps and want to add your organization to this list, follow 
 
 <a href="https://www.terasky.com/" border="0" target="_blank"><img alt="Terasky" src="./site/content/docs/latest/img/adopters/terasky.svg" height="40" style="background-color: #FFF;"></a>
 
-## Sucess Stories
+## Success Stories
 
 Below is a list of adopters of Kubeapps that have publicly shared the details of how they use it (in alphabetical order).
 
