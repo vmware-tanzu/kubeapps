@@ -10,11 +10,11 @@ The main components are:
 
 - **Managed clusters**
 
-    This is the primary deployment model for clusters in the Tanzu ecosystem and is recommended for production scenarios.
+    This is the primary deployment model for clusters in the Tanzu ecosystem and is recommended for production scenarios. You can read more about [managed clusters in the official Tanzu Community Edition documentation](https://tanzucommunityedition.io/docs/v0.12/planning/#managed-cluster).
 
 - **Unmanaged clusters**
 
-    Offer a single node, local workstation cluster suitable for a development/test environment.
+    Offer a single node, local workstation cluster suitable for a development/test environment. You can read more about [unmanaged clusters in the official Tanzu Community Edition documentation](https://tanzucommunityedition.io/docs/v0.12/planning/#unmanaged-cluster).
 
 In this step of the tutorial, we will prepare the installation of the TCE cluster.
 
@@ -40,14 +40,14 @@ sha: a9b8f3a
 
 ## Step 1.2: Choose the type of your cluster
 
-Tanzu Community Edition has different flavours of clusters, that can adapt to different needs.
+As stated at the beginning of this document, Tanzu Community Edition allows to work with two different types of clusters: managed and unmanaged.
 
-You must decide, which of the following suits your desired outcome:
+To continue the tutorial, you must decide which of the following mutually exclusive options suits your desired outcome:
 
-- Do you want a single node, local workstation cluster suitable for a development/test environment? If so, deploy an [unmanaged cluster](./02-TCE-unmanaged-cluster.md).
+- Do you want a single node, local workstation cluster suitable for a development/test environment? If so, continue the tutorial by deploying an [unmanaged cluster](./02-TCE-unmanaged-cluster.md).
 
 or
 
-- Do you want a full-featured, scalable Kubernetes implementation suitable for a development or production environment? If so, deploy a [managed cluster](./02-TCE-managed-cluster.md).
+- Do you want a full-featured, scalable Kubernetes implementation suitable for a development or production environment? If so, continue the tutorial by deploying an [managed cluster](./02-TCE-managed-cluster.md).
 
 If you want to know more about planning your deployment check out [the official TCE documentation](https://tanzucommunityedition.io/docs/v0.12/planning/).

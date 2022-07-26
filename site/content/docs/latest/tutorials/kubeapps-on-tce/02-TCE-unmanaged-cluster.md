@@ -1,10 +1,10 @@
 # Step 2A: Deploy a VMware Tanzu™ Community Edition unmanaged cluster
 
-In this step of the tutorial, we will install an unmanaged TCE cluster.
+In this step of the tutorial, we will install an [unmanaged TCE cluster](https://tanzucommunityedition.io/docs/v0.12/planning/#unmanaged-cluster).
 
 By default, unmanaged clusters run locally via kind (default) or minikube with Tanzu components installed atop.
 
-## Spinp up a TCE unmanaged cluster
+## Spin up a TCE unmanaged cluster
 
 1. Create a cluster named for example `kubeapps-cluster`:
 
@@ -12,7 +12,7 @@ By default, unmanaged clusters run locally via kind (default) or minikube with T
     tanzu unmanaged-cluster create kubeapps-cluster
     ```
 
-2. Wait for the cluster to initialize:
+2. Wait for the cluster to initialise:
 
     ```bash
     📁 Created cluster directory
@@ -119,7 +119,7 @@ EOF
 
 ### Credentials retrieval
 
-In order to access Kubeapps, a token will be required. Given that we are using plain service account authentication, it is straight forward to obtain a token.
+In order to access Kubeapps, a token will be required. Given that we are using plain service account authentication, it is straightforward to obtain a token.
 Keep the obtained token for later steps of the tutorial.
 
 #### On Linux/macOS

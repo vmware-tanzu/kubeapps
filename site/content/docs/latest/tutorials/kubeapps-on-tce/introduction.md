@@ -26,7 +26,7 @@ This guide walks you through the process of configuring, deploying and using Kub
 This guide is intended for the following user roles:
 
 - System administrators who want to install Kubeapps on a VMware Tanzu™ Community Edition cluster and use it to deploy and manage applications from any package repository.
-- Application administrators and developers who want to use Kubeapps to deploy and manage modern applications in a Kubernetes architecture.
+- Application administrators and developers who want to use Kubeapps to deploy and manage modern applications in a Kubernetes environment.
 - Any user willing to play around with Kubeapps and TCE
 
 In-depth knowledge of Kubernetes is not required.
@@ -39,7 +39,7 @@ The tutorial is organized in the following sections:
 2. [Deploying a managed cluster](./02-TCE-managed-cluster.md) or [Deploy an unmanaged cluster](./02-TCE-unmanaged-cluster.md)
 3. [Preparing the Kubeapps deployment](./03-preparing-kubeapps-deployment.md)
 4. [Deploying Kubeapps](./04-deploying-kubeapps.md)
-5. [Further documentation for managing applications in Kubeapps](./05-Managing-applications.md)
+5. [Further documentation for managing applications in Kubeapps](./05-managing-applications.md)
 
 ## Begin
 

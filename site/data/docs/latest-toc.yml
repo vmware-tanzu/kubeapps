@@ -47,7 +47,7 @@ toc:
           - subpage: "Step 4: Deploy Kubeapps"
             suburl: /tutorials/kubeapps-on-tce/04-deploying-kubeapps
           - subpage: "Step 5: Managing applications"
-            suburl: /tutorials/kubeapps-on-tce/05-Managing-applications
+            suburl: /tutorials/kubeapps-on-tce/05-managing-applications
 
   - title: How-to guides
     subfolderitems:

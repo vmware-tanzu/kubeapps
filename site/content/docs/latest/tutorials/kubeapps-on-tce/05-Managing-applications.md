@@ -1,6 +1,6 @@
 # Managing applications with Kubeapps
 
-You can explore the excellent existing documentation for operating Kubeapps and all its functionalities.
+You can explore the existing documentation for operating Kubeapps and all its functionalities.
 
 ## Using Kubeapps
 

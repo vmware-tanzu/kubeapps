@@ -47,7 +47,7 @@ One of the key features of Tanzu is its use of _Carvel_.
     tanzu package installed get kubeapps -n kubeapps
     ```
 
-4. **Optionally** you can check with Kapp (part of Carvel tools) which resources have been created when deploying Kubeapps:
+4. **Optionally** you can check with [Kapp](https://carvel.dev/kapp/) (part of Carvel tools) which resources have been created when deploying Kubeapps:
 
     ```bash
     kapp inspect -a kubeapps-ctrl -n kubeapps
@@ -63,6 +63,6 @@ One of the key features of Tanzu is its use of _Carvel_.
 
     If you chose an **Ingress** to access Kubeapps: open a browser and navigate to the FQDN defined for Kubeapps, for example [https://tce-cluster.foo.com](https://tce-cluster.foo.com).
 
-    > When using OIDC, you will need to configure your OAuth2 client to admit the `LoadBalancer` IP/Host or the `Ingress` FQDN as authorized origins and redirects. Please add the suffix `/oauth2/callback` to the redirect URLs.
+    > When using OIDC, you will need to configure your OAuth2 client to admit the `LoadBalancer` IP/Host or the `Ingress` FQDN as authorized origins and redirects. Please add the suffix `/oauth2/callback` to the redirect URLs in your OIDC provider setup.
 
-> Continue the tutorial by [managing applications with Kubeapps](./05-Managing-applications.md).
+> Continue the tutorial by [managing applications with Kubeapps](./05-managing-applications.md).
