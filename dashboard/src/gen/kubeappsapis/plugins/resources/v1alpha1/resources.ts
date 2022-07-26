@@ -8,7 +8,7 @@ import {
 import { BrowserHeaders } from "browser-headers";
 import { share } from "rxjs/operators";
 import { Observable } from "rxjs";
-import _m0 from "protobufjs/minimal";
+import * as _m0 from "protobufjs/minimal";
 
 export const protobufPackage = "kubeappsapis.plugins.resources.v1alpha1";
 
@@ -1728,7 +1728,6 @@ export class GrpcWebImpl {
     streamingTransport?: grpc.TransportFactory;
     debug?: boolean;
     metadata?: grpc.Metadata;
-    upStreamRetryCodes?: number[];
   };
 
   constructor(
@@ -1738,7 +1737,6 @@ export class GrpcWebImpl {
       streamingTransport?: grpc.TransportFactory;
       debug?: boolean;
       metadata?: grpc.Metadata;
-      upStreamRetryCodes?: number[];
     },
   ) {
     this.host = host;
@@ -1784,7 +1782,8 @@ export class GrpcWebImpl {
     _request: any,
     metadata: grpc.Metadata | undefined,
   ): Observable<any> {
-    const upStreamCodes = this.options.upStreamRetryCodes || [];
+    // Status Response Codes (https://developers.google.com/maps-booking/reference/grpc-api/status_codes)
+    const upStreamCodes = [2, 4, 8, 9, 10, 13, 14, 15];
     const DEFAULT_TIMEOUT_TIME: number = 3_000;
     const request = { ..._request, ...methodDesc.requestType };
     const maybeCombinedMetadata =

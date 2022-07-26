@@ -106,6 +106,11 @@ func newAuthDockerSecret(name, namespace, jsonData string) *apiv1.Secret {
 	}
 }
 
+func dockerAuthJson(server, username, password, email, auth string) string {
+	return fmt.Sprintf("{\"auths\":{\"%s\":{\"username\":\"%s\",\"password\":\"%s\",\"email\":\"%s\",\"auth\":\"%s\"}}}",
+		server, username, password, email, auth)
+}
+
 func setSecretOwnerRef(repoName string, secret *apiv1.Secret) *apiv1.Secret {
 	tRue := true
 	secret.OwnerReferences = []metav1.OwnerReference{
