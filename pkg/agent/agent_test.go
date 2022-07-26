@@ -693,6 +693,9 @@ func TestUpgradeRelease(t *testing.T) {
 			}
 			//check original version is superseded
 			rel, err = cfg.Releases.Get(tc.release, revisionBeingUpdated)
+			if err != nil {
+				t.Fatalf("%+v", err)
+			}
 			if got, want := rel.Info.Status, release.StatusSuperseded; got != want {
 				t.Errorf("got: %q, want: %q", got, want)
 			}

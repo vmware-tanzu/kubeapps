@@ -13,13 +13,13 @@ build = "build.rs"
 [dependencies]
 anyhow = "1.0"
 base64 = "0.13"
-cached = "0.34"
+cached = "0.37"
 chrono = "0.4"
 hyper = { version = "0.14", features = ["server"] }
 hyper-tls = "0.5"
-kube = { version = "0.73.0" }
-kube-derive = { version = "0.73.1"}
-kube-runtime = "0.73.0"
+kube = { version = "0.74.0" }
+kube-derive = { version = "0.74.0"}
+kube-runtime = "0.74.0"
 k8s-openapi = { version = "0.15.0", default-features = false}
 log = "0.4"
 native-tls = "0.2"
@@ -28,6 +28,7 @@ pretty_env_logger = "0.4"
 reqwest = "0.11"
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
+tls-listener = { version = "0.5", features = ["native-tls", "hyper-h1"] }
 structopt = "0.3"
 thiserror = "1.0"
 tokio = { version = "1", features = ["full"] }
@@ -47,4 +48,4 @@ v1_24 = ["k8s-openapi/v1_24"]
 
 [dev-dependencies]
 tokio-test = "0.4"
-serial_test = "0.7"
+serial_test = "0.8"

@@ -1,22 +1,52 @@
 # Contributing to Kubeapps
 
-Contributions to Kubeapps are welcome. Here are some things to help you get started.
+We welcome contributions from the community and first want to thank you for taking the time to contribute!
 
-## Code of Conduct
+Please familiarize yourself with the [Code of Conduct](https://github.com/vmware/.github/blob/main/CODE_OF_CONDUCT.md) before contributing.
 
-Please note we have a [Code of Conduct](./CODE_OF_CONDUCT.md), please follow it in all your interactions with the project.
+* _CLA: Before you start working with Kubeapps, please read and sign our Contributor License Agreement [CLA](https://cla.vmware.com/cla/1/preview). If you wish to contribute code and you have not signed our contributor license agreement (CLA), our bot will update the issue when you open a Pull Request. For any questions about the CLA process, please refer to our [FAQ](https://cla.vmware.com/faq)._
 
-## Roadmap
+## Ways to contribute
 
-The near-term and mid-term roadmap for the work planned for the project [maintainers](./MAINTAINERS.md) is documented in [ROADMAP.md](./ROADMAP.md).
+We welcome many different types of contributions and not all of them need a Pull request. Contributions may include:
 
-## Community Meetings
+* New features and proposals
+* Documentation
+* Bug fixes
+* Issue Triage
+* Answering questions and giving feedback
+* Helping to onboard new contributors
+* Other related activities
 
-Please join us during our online community meetings, occurring every two Mondays at 10:30 AM UTC. Add the [ics invitation](https://kubernetes.slack.com/files/U91HAPE5R/F01EGHESH4L/kubeapps-iteration-planning.ics) to your calendar.
+## Getting started
 
-## Discussion
+Find information about how to set up the development environment on this [developer guide](./site/content/docs/latest/reference/developer/README.md).
 
-Got a question, comment, or idea? Please don't hesitate to reach out via [GitHub Discussions](https://github.com/vmware-tanzu/kubeapps/discussions), [GitHub Issues](https://github.com/vmware-tanzu/kubeapps/issues), or in the Kubernetes Slack Workspace within the [#kubeapps channel](https://kubernetes.slack.com/messages/kubeapps).
+## Contribution Flow
+
+This is a rough outline of what a contributor's workflow looks like:
+
+* Make a fork of the repository within your GitHub account
+* Create a topic branch in your fork from where you want to base your work
+* Make commits of logical units
+* Make sure your commit messages are with the proper format, quality and descriptiveness (see below)
+* Push your changes to the topic branch in your fork
+* Create a pull request containing that commit
+
+We follow the GitHub workflow and you can find more details on the [GitHub flow documentation](https://docs.github.com/en/get-started/quickstart/github-flow).
+
+Before submitting your pull request, we advise you to use the following:
+
+### Pull Request Checklist
+
+1. Check if your code changes will pass both code linting checks and unit tests.
+2. Ensure your commit messages are descriptive. We follow the conventions on [How to Write a Git Commit Message](http://chris.beams.io/posts/git-commit/). Be sure to include any related GitHub issue references in the commit message. See [GFM syntax](https://guides.github.com/features/mastering-markdown/#GitHub-flavored-markdown) for referencing issues and commits.
+3. Check the commits and commits messages and ensure they are free from typos.
+4. Any pull request which adds a new feature or changes the behavior of any feature which was previously documented should include updates to the documentation. All documentation lives in this repository.
+
+## Reporting Bugs and Creating Issues
+
+For specifics on what to include in your report, please follow the guidelines in the issue and pull request templates when available.
 
 ### Issues
 
@@ -34,7 +64,6 @@ Once the bug has been validated, a [pull request](https://github.com/vmware-tanz
 
 For specifics on what to include in your bug report, please follow the guidelines in the issue and pull request templates.
 
-
 ### Features
 
 To suggest a feature, please first open an [issue](https://github.com/vmware-tanzu/kubeapps/issues/new?assignees=&labels=kind%2Ffeature&template=feature_request.md&title=) that will be tagged with ["kind/proposal"](https://github.com/vmware-tanzu/kubeapps/labels/kind%2Fproposal), or create a new [Discussion](https://github.com/vmware-tanzu/kubeapps/discussions/new). The project maintainers will work with you on your feature request.
@@ -43,26 +72,22 @@ Once the feature request has been validated, a pull request can be opened to imp
 
 For specifics on what to include in your feature request, please follow the guidelines in the issue and pull request templates.
 
+## Ask for Help
 
-## Pull Request Process
+The best way to reach us with a question when contributing is to ask on:
 
-1. Ensure any install or build dependencies are removed before the end of the layer when doing a build.
-2. Update the README.md with details of changes to the interface, this includes new environment variables, exposed ports, useful file locations and container parameters.
-3. Increase the version numbers in any examples files and the README.md to the new version that this Pull Request would represent. The versioning scheme we use is [SemVer](https://semver.org/).
-4. You may merge the Pull Request in once you have the sign-off of two other developers, or if you do not have permission to do that, you may request the second reviewer to merge it for you.
+* [GitHub Issues](https://github.com/vmware-tanzu/kubeapps/issues)
+* [GitHub Discussions](https://github.com/vmware-tanzu/kubeapps/discussions)
+* [#kubeapps Slack channel](https://kubernetes.slack.com/messages/kubeapps)
 
-## VMware Contributors License Agreement (CLA)
-
-Kubeapps project team welcomes contributions from the community. If you wish to contribute code and you have not signed our contributor license agreement (CLA), our bot will update the issue when you open a Pull Request. For any questions about the CLA process, please refer to our [FAQ](https://cla.vmware.com/faq).
-
-## Documentation
-
-Any pull request which adds a new feature or changes the behavior of any feature which was previously documented should include updates to the documentation. All documentation lives in this repository.
-
-## Learning about Kubeapps
+## Additional Resources
 
 New to Kubeapps?
 
-- Start here to learn how to install and use Kubeapps: [Getting started in Kubeapps](./site/content/docs/latest/tutorials/getting-started.md) 
-- Start here to learn how to develop for Kubeapps components: [Kubeapps Developer guidelines](./site/content/docs/latest/reference/developer/README.md)
-- Other more detailed documentation can be found at: [Kubeapps Docs](./site/content/docs/latest/README.md)
+* Start here to learn how to install and use Kubeapps: [Getting started in Kubeapps](./site/content/docs/latest/tutorials/getting-started.md)
+* Start here to learn how to develop for Kubeapps components: [Kubeapps Developer guidelines](./site/content/docs/latest/reference/developer/README.md)
+* Other more detailed documentation can be found at: [Kubeapps Docs](./site/content/docs/latest/README.md)
+
+## Roadmap
+
+The near-term and mid-term roadmap for the work planned for the project [maintainers](./MAINTAINERS.md) is documented in [ROADMAP.md](./ROADMAP.md).

@@ -13,9 +13,10 @@ import (
 
 func TestParseFlagsCorrect(t *testing.T) {
 	var tests = []struct {
-		name string
-		args []string
-		conf server.ServeOptions
+		name        string
+		args        []string
+		conf        server.ServeOptions
+		errExpected bool
 	}{
 		{
 			"all arguments are captured",
@@ -27,6 +28,7 @@ func TestParseFlagsCorrect(t *testing.T) {
 				"--timeout", "902",
 				"--clusters-config-path", "foo04",
 				"--pinniped-proxy-url", "foo05",
+				"--pinniped-proxy-ca-cert", "/etc/foo/my-ca.crt",
 				"--burst", "903",
 				"--qps", "904",
 				"--namespace-header-name", "foo06",
@@ -40,6 +42,7 @@ func TestParseFlagsCorrect(t *testing.T) {
 				Timeout:                902,
 				ClustersConfigPath:     "foo04",
 				PinnipedProxyURL:       "foo05",
+				PinnipedProxyCACert:    "/etc/foo/my-ca.crt",
 				Burst:                  903,
 				Qps:                    904,
 				NamespaceHeaderName:    "foo06",
@@ -47,6 +50,7 @@ func TestParseFlagsCorrect(t *testing.T) {
 				UserAgent:              "kubeops/devel (foo03)",
 				GlobalReposNamespace:   "kubeapps-global",
 			},
+			true,
 		},
 	}
 
@@ -58,7 +62,10 @@ func TestParseFlagsCorrect(t *testing.T) {
 			cmd.SetErr(b)
 			setFlags(cmd)
 			cmd.SetArgs(tt.args)
-			cmd.Execute()
+			err := cmd.Execute()
+			if !tt.errExpected && err != nil {
+				t.Errorf("unexpected error: %v", err)
+			}
 			if got, want := serveOpts, tt.conf; !cmp.Equal(want, got) {
 				t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got))
 			}

@@ -1,15 +1,14 @@
 /* eslint-disable */
-import Long from "long";
 import { grpc } from "@improbable-eng/grpc-web";
-import * as _m0 from "protobufjs/minimal";
 import {
   InstalledPackageReference,
   ResourceRef,
   Context,
-} from "../../../../kubeappsapis/core/packages/v1alpha1/packages";
-import { Observable } from "rxjs";
+} from "../../../core/packages/v1alpha1/packages";
 import { BrowserHeaders } from "browser-headers";
 import { share } from "rxjs/operators";
+import { Observable } from "rxjs";
+import * as _m0 from "protobufjs/minimal";
 
 export const protobufPackage = "kubeappsapis.plugins.resources.v1alpha1";
 
@@ -210,6 +209,17 @@ export interface CreateNamespaceRequest {
    * The context of the namespace being created.
    */
   context?: Context;
+  /**
+   * Labels
+   *
+   * The additional labels added to the namespace at creation time
+   */
+  labels: { [key: string]: string };
+}
+
+export interface CreateNamespaceRequest_LabelsEntry {
+  key: string;
+  value: string;
 }
 
 /**
@@ -698,7 +708,7 @@ export const GetNamespaceNamesResponse = {
 };
 
 function createBaseCreateNamespaceRequest(): CreateNamespaceRequest {
-  return { context: undefined };
+  return { context: undefined, labels: {} };
 }
 
 export const CreateNamespaceRequest = {
@@ -706,6 +716,12 @@ export const CreateNamespaceRequest = {
     if (message.context !== undefined) {
       Context.encode(message.context, writer.uint32(10).fork()).ldelim();
     }
+    Object.entries(message.labels).forEach(([key, value]) => {
+      CreateNamespaceRequest_LabelsEntry.encode(
+        { key: key as any, value },
+        writer.uint32(18).fork(),
+      ).ldelim();
+    });
     return writer;
   },
 
@@ -719,6 +735,12 @@ export const CreateNamespaceRequest = {
         case 1:
           message.context = Context.decode(reader, reader.uint32());
           break;
+        case 2:
+          const entry2 = CreateNamespaceRequest_LabelsEntry.decode(reader, reader.uint32());
+          if (entry2.value !== undefined) {
+            message.labels[entry2.key] = entry2.value;
+          }
+          break;
         default:
           reader.skipType(tag & 7);
           break;
@@ -730,6 +752,12 @@ export const CreateNamespaceRequest = {
   fromJSON(object: any): CreateNamespaceRequest {
     return {
       context: isSet(object.context) ? Context.fromJSON(object.context) : undefined,
+      labels: isObject(object.labels)
+        ? Object.entries(object.labels).reduce<{ [key: string]: string }>((acc, [key, value]) => {
+            acc[key] = String(value);
+            return acc;
+          }, {})
+        : {},
     };
   },
 
@@ -737,6 +765,12 @@ export const CreateNamespaceRequest = {
     const obj: any = {};
     message.context !== undefined &&
       (obj.context = message.context ? Context.toJSON(message.context) : undefined);
+    obj.labels = {};
+    if (message.labels) {
+      Object.entries(message.labels).forEach(([k, v]) => {
+        obj.labels[k] = v;
+      });
+    }
     return obj;
   },
 
@@ -748,6 +782,77 @@ export const CreateNamespaceRequest = {
       object.context !== undefined && object.context !== null
         ? Context.fromPartial(object.context)
         : undefined;
+    message.labels = Object.entries(object.labels ?? {}).reduce<{
+      [key: string]: string;
+    }>((acc, [key, value]) => {
+      if (value !== undefined) {
+        acc[key] = String(value);
+      }
+      return acc;
+    }, {});
+    return message;
+  },
+};
+
+function createBaseCreateNamespaceRequest_LabelsEntry(): CreateNamespaceRequest_LabelsEntry {
+  return { key: "", value: "" };
+}
+
+export const CreateNamespaceRequest_LabelsEntry = {
+  encode(
+    message: CreateNamespaceRequest_LabelsEntry,
+    writer: _m0.Writer = _m0.Writer.create(),
+  ): _m0.Writer {
+    if (message.key !== "") {
+      writer.uint32(10).string(message.key);
+    }
+    if (message.value !== "") {
+      writer.uint32(18).string(message.value);
+    }
+    return writer;
+  },
+
+  decode(input: _m0.Reader | Uint8Array, length?: number): CreateNamespaceRequest_LabelsEntry {
+    const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseCreateNamespaceRequest_LabelsEntry();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1:
+          message.key = reader.string();
+          break;
+        case 2:
+          message.value = reader.string();
+          break;
+        default:
+          reader.skipType(tag & 7);
+          break;
+      }
+    }
+    return message;
+  },
+
+  fromJSON(object: any): CreateNamespaceRequest_LabelsEntry {
+    return {
+      key: isSet(object.key) ? String(object.key) : "",
+      value: isSet(object.value) ? String(object.value) : "",
+    };
+  },
+
+  toJSON(message: CreateNamespaceRequest_LabelsEntry): unknown {
+    const obj: any = {};
+    message.key !== undefined && (obj.key = message.key);
+    message.value !== undefined && (obj.value = message.value);
+    return obj;
+  },
+
+  fromPartial<I extends Exact<DeepPartial<CreateNamespaceRequest_LabelsEntry>, I>>(
+    object: I,
+  ): CreateNamespaceRequest_LabelsEntry {
+    const message = createBaseCreateNamespaceRequest_LabelsEntry();
+    message.key = object.key ?? "";
+    message.value = object.value ?? "";
     return message;
   },
 };
@@ -1730,11 +1835,6 @@ type KeysOfUnion<T> = T extends T ? keyof T : never;
 export type Exact<P, I extends P> = P extends Builtin
   ? P
   : P & { [K in keyof P]: Exact<P[K], I[K]> } & Record<Exclude<keyof I, KeysOfUnion<P>>, never>;
-
-if (_m0.util.Long !== Long) {
-  _m0.util.Long = Long as any;
-  _m0.configure();
-}
 
 function isObject(value: any): boolean {
   return typeof value === "object" && value !== null;

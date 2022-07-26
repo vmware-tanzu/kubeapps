@@ -21,6 +21,9 @@ import (
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
+	v1alpha1 "github.com/vmware-tanzu/kubeapps/cmd/apprepository-controller/pkg/apis/apprepository/v1alpha1"
+	fakeapprepoclientset "github.com/vmware-tanzu/kubeapps/cmd/apprepository-controller/pkg/client/clientset/versioned/fake"
+	httpclient "github.com/vmware-tanzu/kubeapps/pkg/http-client"
 	authorizationapi "k8s.io/api/authorization/v1"
 	authorizationv1 "k8s.io/api/authorization/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -33,10 +36,7 @@ import (
 	"k8s.io/client-go/rest"
 	fakeRest "k8s.io/client-go/rest/fake"
 	k8stesting "k8s.io/client-go/testing"
-
-	v1alpha1 "github.com/vmware-tanzu/kubeapps/cmd/apprepository-controller/pkg/apis/apprepository/v1alpha1"
-	fakeapprepoclientset "github.com/vmware-tanzu/kubeapps/cmd/apprepository-controller/pkg/client/clientset/versioned/fake"
-	httpclient "github.com/vmware-tanzu/kubeapps/pkg/http-client"
+	log "k8s.io/klog/v2"
 )
 
 type repoStub struct {
@@ -77,22 +77,6 @@ func makeAppRepoObjects(reposPerNamespace map[string][]repoStub) []k8sruntime.Ob
 				appRepo.Spec.Auth.Header = authHeader
 			}
 			objects = append(objects, k8sruntime.Object(appRepo))
-		}
-	}
-	return objects
-}
-
-func makeSecretObjects(secretsPerNamespace map[string][]secretStub) []k8sruntime.Object {
-	objects := []k8sruntime.Object{}
-	for namespace, secretsStubs := range secretsPerNamespace {
-		for _, secretStub := range secretsStubs {
-			secret := &corev1.Secret{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      secretStub.name,
-					Namespace: namespace,
-				},
-			}
-			objects = append(objects, k8sruntime.Object(secret))
 		}
 	}
 	return objects
@@ -1082,7 +1066,6 @@ func setClientsetData(cs fakeCombinedClientset, namespaceNames []existingNs, err
 }
 
 func TestGetValidator(t *testing.T) {
-	const kubeappsNamespace = "kubeapps"
 	testCases := []struct {
 		name              string
 		appRepo           *v1alpha1.AppRepository
@@ -1271,13 +1254,22 @@ func makeTestOCIServer(t *testing.T, registryName string, repos map[string]fakeO
 		authHeader := r.Header.Get("Authorization")
 		if authHeader != requiredAuthHeader {
 			w.WriteHeader(401)
-			w.Write([]byte("{}"))
+			_, err := w.Write([]byte("{}"))
+			if err != nil {
+				log.Fatalf("%+v", err)
+			}
 		}
 		if response, ok := responses[r.URL.Path]; !ok {
 			w.WriteHeader(404)
-			w.Write([]byte("{}"))
+			_, err := w.Write([]byte("{}"))
+			if err != nil {
+				log.Fatalf("%+v", err)
+			}
 		} else {
-			w.Write([]byte(response))
+			_, err := w.Write([]byte(response))
+			if err != nil {
+				log.Fatalf("%+v", err)
+			}
 		}
 	}))
 }
@@ -1820,7 +1812,10 @@ func TestNewClusterConfig(t *testing.T) {
 				} else {
 					req := http.Request{}
 					roundTripper := config.WrapTransport(&fakeRoundTripper{})
-					roundTripper.RoundTrip(&req)
+					_, err := roundTripper.RoundTrip(&req)
+					if err != nil {
+						t.Errorf("unexpected error: %v", err)
+					}
 					want := http.Header{}
 					if clusterConfig.APIServiceURL != "" {
 						want["Pinniped_proxy_api_server_url"] = []string{clusterConfig.APIServiceURL}
@@ -2116,7 +2111,7 @@ func TestParseClusterConfig(t *testing.T) {
 			path := createConfigFile(t, tc.configJSON)
 			defer os.Remove(path)
 
-			config, deferFn, err := ParseClusterConfig(path, "/tmp", defaultPinnipedURL)
+			config, deferFn, err := ParseClusterConfig(path, "/tmp", defaultPinnipedURL, "")
 			if got, want := err != nil, tc.expectedErr; got != want {
 				t.Errorf("got: %t, want: %t: err: %+v", got, want, err)
 			}

@@ -35,15 +35,17 @@ import (
 	"github.com/Masterminds/semver/v3"
 	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/fluxv2/packages/v1alpha1/common"
 	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/fluxv2/packages/v1alpha1/common/transport"
+	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/pkg/pkgutils"
 	"github.com/vmware-tanzu/kubeapps/pkg/chart/models"
 	"github.com/vmware-tanzu/kubeapps/pkg/tarutil"
+	"k8s.io/apimachinery/pkg/types"
 	log "k8s.io/klog/v2"
 
 	"github.com/fluxcd/pkg/version"
 	sourcev1 "github.com/fluxcd/source-controller/api/v1beta2"
 
 	// OCI Registry As a Storage (ORAS)
-	registryauth "oras.land/oras-go/pkg/registry/remote/auth"
+	orasregistryauthv2 "oras.land/oras-go/v2/registry/remote/auth"
 )
 
 // RegistryClient is an interface for interacting with OCI registries
@@ -60,7 +62,7 @@ type RegistryClient interface {
 // registry repository name lister applies, and then executes specific logic
 type OCIRepositoryLister interface {
 	IsApplicableFor(*OCIRegistry) (bool, error)
-	ListRepositoryNames() ([]string, error)
+	ListRepositoryNames(ociRegistry *OCIRegistry) ([]string, error)
 }
 
 // OCIRegistry represents a Helm chart repository, and the configuration
@@ -93,7 +95,7 @@ type OCIRegistry struct {
 // to configure an OCIRegistry.
 type OCIRegistryOption func(*OCIRegistry) error
 
-type OCIRegistryCredentialFn func(ctx context.Context, reg string) (registryauth.Credential, error)
+type OCIRegistryCredentialFn func(ctx context.Context, reg string) (orasregistryauthv2.Credential, error)
 
 var (
 	helmGetters = getter.Providers{
@@ -110,7 +112,7 @@ var (
 	// TODO: make this thing extensible so code coming from other plugs/modules
 	// can register new repository listers
 	builtInRepoListers = []OCIRepositoryLister{
-		NewGitHubRepositoryLister(),
+		NewDockerRegistryApiV2RepositoryLister(),
 		// TODO
 	}
 )
@@ -177,7 +179,7 @@ func (r *OCIRegistry) listRepositoryNames() ([]string, error) {
 			r.repositoryLister = lister
 			break
 		} else {
-			log.Infof("Lister [%v] not applicable for registry for URL: [%s] [%v]", reflect.TypeOf(lister), &r.url, err)
+			log.Infof("Lister [%v] not applicable for registry for URL: [%s] [%v]", reflect.TypeOf(lister), r.url.String(), err)
 		}
 	}
 
@@ -185,26 +187,15 @@ func (r *OCIRegistry) listRepositoryNames() ([]string, error) {
 		return nil, status.Errorf(codes.Internal, "No repository lister found for OCI registry with url: [%s]", &r.url)
 	}
 
-	return r.repositoryLister.ListRepositoryNames()
+	return r.repositoryLister.ListRepositoryNames(r)
 }
 
-// Get returns the ChartVersion for the given name, the version is expected
+// pickChartVersionFrom returns the ChartVersion for the given name, the version is expected
 // to be a semver.Constraints compatible string. If version is empty, the latest
 // stable version will be returned and prerelease versions will be ignored.
 // adapted from https://github.com/helm/helm/blob/49819b4ef782e80b0c7f78c30bd76b51ebb56dc8/pkg/downloader/chart_downloader.go#L162
-func (r *OCIRegistry) getChartVersion(name, ver string) (*repo.ChartVersion, error) {
-	log.Infof("+getChartVersion(%s,%s", name, ver)
-	// Find chart versions matching the given name.
-	// Either in an index file or from a registry.
-	ref := fmt.Sprintf("%s/%s", r.url.String(), name)
-	cvs, err := r.getTags(ref)
-	if err != nil {
-		return nil, err
-	}
-
-	if len(cvs) == 0 {
-		return nil, status.Errorf(codes.Internal, "unable to locate any tags in provided repository: %s", name)
-	}
+func (r *OCIRegistry) pickChartVersionFrom(name, ver string, cvs []string) (*repo.ChartVersion, error) {
+	log.Infof("+pickChartVersionFrom(%s,%s,%s)", name, ver, cvs)
 
 	// Determine if version provided
 	// If empty, try to get the highest available tag
@@ -223,14 +214,18 @@ func (r *OCIRegistry) getChartVersion(name, ver string) (*repo.ChartVersion, err
 // This function shall be called for OCI registries only
 // It assumes that the ref has been validated to be an OCI reference.
 func (r *OCIRegistry) getTags(ref string) ([]string, error) {
+	log.Infof("+getTags(%s)", ref)
+	defer log.Infof("-getTags(%s)", ref)
+
 	ref = strings.TrimPrefix(ref, fmt.Sprintf("%s://", registry.OCIScheme))
 
+	log.Infof("getTags: about to call .Tags(%s)", ref)
 	tags, err := r.registryClient.Tags(ref)
+	log.Infof("getTags: done with call .Tags(%s): %s %v", ref, tags, err)
 	if err != nil {
 		return nil, err
 	}
 
-	log.Infof("getTags(%s): %s %v", ref, tags, err)
 	if len(tags) == 0 {
 		return nil, fmt.Errorf("unable to locate any tags in provided repository: %s", ref)
 	}
@@ -255,17 +250,32 @@ func (r *OCIRegistry) downloadChart(chart *repo.ChartVersion) (*bytes.Buffer, er
 
 	t := transport.NewOrIdle(r.tlsConfig)
 	clientOpts := append(r.helmOptions, getter.WithTransport(t))
-	defer transport.Release(t)
+
+	defer func() {
+		err = transport.Release(t)
+	}()
+
+	if err != nil {
+		return nil, err
+	}
 
 	// trim the oci scheme prefix if needed
 	getThis := strings.TrimPrefix(u.String(), fmt.Sprintf("%s://", registry.OCIScheme))
-	return r.helmGetter.Get(getThis, clientOpts...)
+	log.Infof("about to call helmGetter.Get(%s)", getThis)
+	buf, err := r.helmGetter.Get(getThis, clientOpts...)
+	if buf != nil {
+		log.Infof("helmGetter.Get(%s) returned buffer size: [%d] error: %v", getThis, len(buf.Bytes()), err)
+	} else {
+		log.Infof("helmGetter.Get(%s) returned error: %v", getThis, err)
+	}
+	return buf, err
 }
 
 // logout attempts to logout from the OCI registry.
 // It returns an error on failure.
+//nolint:unused
 func (r *OCIRegistry) logout() error {
-	log.Infof("+logout")
+	log.Info("+logout")
 	err := r.registryClient.Logout(r.url.Host)
 	if err != nil {
 		return err
@@ -358,11 +368,13 @@ func newRegistryClient(isLogin bool) (*registry.Client, string, error) {
 
 // OCI Helm repository, which defines a source, does not produce an Artifact
 // ref https://fluxcd.io/docs/components/source/helmrepositories/#helm-oci-repository
+
+// TODO: this function is way too long. Break it up
 func (s *repoEventSink) onAddOciRepo(repo sourcev1.HelmRepository) ([]byte, bool, error) {
 	log.Infof("+onAddOciRepo(%s)", common.PrettyPrint(repo))
-	defer log.Infof("-onAddOciRepo")
+	defer log.Info("-onAddOciRepo")
 
-	ociRegistry, err := s.newOCIRegistryAndLogin(repo)
+	ociRegistry, err := s.newOCIRegistryAndLoginWithRepo(context.Background(), repo)
 	if err != nil {
 		return nil, false, err
 	}
@@ -381,80 +393,75 @@ func (s *repoEventSink) onAddOciRepo(repo sourcev1.HelmRepository) ([]byte, bool
 	}
 
 	charts := []models.Chart{}
-	for _, appName := range appNames {
-		log.Infof("==========>: app name: [%s]", appName)
-
-		chartVersion, err := ociRegistry.getChartVersion(appName, "")
-		if err != nil {
-			return nil, false, status.Errorf(codes.Internal, "%v", err)
-		}
-		log.Infof("==========>: chart version: %s", common.PrettyPrint(chartVersion))
-
-		chartBuffer, err := ociRegistry.downloadChart(chartVersion)
-		if err != nil {
-			return nil, false, status.Errorf(codes.Internal, "%v", err)
-		}
-		log.Infof("==========>: chart buffer: [%d] bytes", chartBuffer.Len())
-
-		// Encode repository names to store them in the database.
-		encodedAppName := url.PathEscape(appName)
-
-		// not sure yet why flux untars into a temp directory
-		chartID := path.Join(repo.Name, encodedAppName)
-		files, err := tarutil.FetchChartDetailFromTarball(
-			bytes.NewReader(chartBuffer.Bytes()), chartID)
-		if err != nil {
-			return nil, false, status.Errorf(codes.Internal, "%v", err)
-		}
-
-		log.Infof("==========>: files: [%d]", len(files))
-
-		chartYaml, ok := files[models.ChartYamlKey]
-		// TODO (gfichtenholt): if there is no chart yaml (is that even possible?),
-		// fall back to chart info from repo index.yaml
-		if !ok || chartYaml == "" {
-			return nil, false, status.Errorf(codes.Internal, "No chart manifest found for chart [%s]", chartID)
-		}
-		var chartMetadata chart.Metadata
-		err = yaml.Unmarshal([]byte(chartYaml), &chartMetadata)
+	for _, fullAppName := range appNames {
+		appName, err := ociRegistry.shortRepoName(fullAppName)
 		if err != nil {
 			return nil, false, err
 		}
 
-		log.Infof("==========>: chart metadata: %s", common.PrettyPrint(chartMetadata))
+		// Encode repository names to store them in the database.
+		encodedAppName := url.PathEscape(appName)
+		chartID := path.Join(repo.Name, encodedAppName)
+
+		log.Infof("==========>: app name: [%s], chartID: [%s]", appName, chartID)
+
+		ref := fmt.Sprintf("%s/%s", ociRegistry.url.String(), appName)
+		allTags, err := ociRegistry.getTags(ref)
+		if err != nil {
+			return nil, false, err
+		}
+
+		// to be consistent with how we support helm http repos
+		// the chart fields like Desciption, home, sources come from the
+		// most recent chart version
+		// ref https://github.com/vmware-tanzu/kubeapps/blob/11c87926d6cd798af72875d01437d15ae8d85b9a/pkg/helm/index.go#L30
+		log.Infof("==========>: most recent chart version: %s", allTags[0])
+		latestChartVersion, err := ociRegistry.pickChartVersionFrom(appName, allTags[0], allTags)
+		if err != nil {
+			return nil, false, status.Errorf(codes.Internal, "%v", err)
+		}
+
+		latestChartMetadata, err := getOCIChartMetadata(ociRegistry, chartID, latestChartVersion)
+		if err != nil {
+			return nil, false, err
+		}
 
 		maintainers := []chart.Maintainer{}
-		for _, maintainer := range chartMetadata.Maintainers {
+		for _, maintainer := range latestChartMetadata.Maintainers {
 			maintainers = append(maintainers, *maintainer)
 		}
 
-		modelsChartVersion := models.ChartVersion{
-			Version:    chartVersion.Version,
-			AppVersion: chartVersion.AppVersion,
-			Created:    chartVersion.Created,
-			Digest:     chartVersion.Digest,
-			URLs:       chartVersion.URLs,
-			Readme:     files[models.ReadmeKey],
-			Values:     files[models.ValuesKey],
-			Schema:     files[models.SchemaKey],
+		mc := models.Chart{
+			ID:            chartID,
+			Name:          encodedAppName,
+			Repo:          chartRepo,
+			Description:   latestChartMetadata.Description,
+			Home:          latestChartMetadata.Home,
+			Keywords:      latestChartMetadata.Keywords,
+			Maintainers:   maintainers,
+			Sources:       latestChartMetadata.Sources,
+			Icon:          latestChartMetadata.Icon,
+			Category:      latestChartMetadata.Annotations["category"],
+			ChartVersions: []models.ChartVersion{},
 		}
 
-		chart := models.Chart{
-			ID:          path.Join(repo.Name, encodedAppName),
-			Name:        encodedAppName,
-			Repo:        chartRepo,
-			Description: chartMetadata.Description,
-			Home:        chartMetadata.Home,
-			Keywords:    chartMetadata.Keywords,
-			Maintainers: maintainers,
-			Sources:     chartMetadata.Sources,
-			Icon:        chartMetadata.Icon,
-			Category:    chartMetadata.Annotations["category"],
-			ChartVersions: []models.ChartVersion{
-				modelsChartVersion,
-			},
+		for _, tag := range allTags {
+			chartVersion, err := ociRegistry.pickChartVersionFrom(appName, tag, allTags)
+			if err != nil {
+				return nil, false, status.Errorf(codes.Internal, "%v", err)
+			}
+			log.Infof("==========>: chart version: %s", common.PrettyPrint(chartVersion))
+
+			mcv := models.ChartVersion{
+				Version:    chartVersion.Version,
+				AppVersion: chartVersion.AppVersion,
+				Created:    chartVersion.Created,
+				Digest:     chartVersion.Digest,
+				URLs:       chartVersion.URLs,
+			}
+			mc.ChartVersions = append(mc.ChartVersions, mcv)
 		}
-		charts = append(charts, chart)
+		charts = append(charts, mc)
 	}
 
 	checksum, err := ociRegistry.checksum()
@@ -473,12 +480,20 @@ func (s *repoEventSink) onAddOciRepo(repo sourcev1.HelmRepository) ([]byte, bool
 	if err = enc.Encode(cacheEntryValue); err != nil {
 		return nil, false, err
 	}
+
+	if s.chartCache != nil {
+		fn := downloadOCIChartFn(ociRegistry)
+		if err = s.chartCache.SyncCharts(charts, fn); err != nil {
+			return nil, false, err
+		}
+	}
+
 	return buf.Bytes(), true, nil
 }
 
 func (s *repoEventSink) onModifyOciRepo(key string, oldValue interface{}, repo sourcev1.HelmRepository) ([]byte, bool, error) {
 	log.Infof("+onModifyOciRepo(%s)", common.PrettyPrint(repo))
-	defer log.Infof("-onModifyOciRepo")
+	defer log.Info("-onModifyOciRepo")
 
 	// We should to compare checksums on what's stored in the cache
 	// vs the modified object to see if the contents has really changed before embarking on
@@ -496,7 +511,7 @@ func (s *repoEventSink) onModifyOciRepo(key string, oldValue interface{}, repo s
 			key, cacheEntryUntyped)
 	}
 
-	ociRegistry, err := s.newOCIRegistryAndLogin(repo)
+	ociRegistry, err := s.newOCIRegistryAndLoginWithRepo(context.Background(), repo)
 	if err != nil {
 		return nil, false, err
 	}
@@ -507,7 +522,8 @@ func (s *repoEventSink) onModifyOciRepo(key string, oldValue interface{}, repo s
 	}
 
 	if cacheEntry.Checksum != newChecksum {
-		return nil, false, status.Errorf(codes.Unimplemented, "TODO")
+		// TODO (gfichtenholt)
+		return nil, false, status.Errorf(codes.Unimplemented, "OnModifyRepo TODO")
 	} else {
 		// skip because the content did not change
 		return nil, false, nil
@@ -529,18 +545,25 @@ type TagList struct {
 // all repositories within the registry and returning the sha256.
 // Caveat: Mutated image tags won't be detected as new
 func (r *OCIRegistry) checksum() (string, error) {
+	log.Infof("+checksum()")
+	defer log.Infof("-checksum()")
 	appNames, err := r.listRepositoryNames()
 	if err != nil {
 		return "", err
 	}
 	tags := map[string]TagList{}
-	for _, appName := range appNames {
-		ref := fmt.Sprintf("%s/%s", r.url.String(), appName)
-		tagss, err := r.getTags(ref)
+	for _, fullAppName := range appNames {
+		appName, err := r.shortRepoName(fullAppName)
 		if err != nil {
 			return "", err
 		}
-		tags[appName] = TagList{Name: appName, Tags: tagss}
+		ref := fmt.Sprintf("%s/%s", r.url.String(), appName)
+		tagz, err := r.getTags(ref)
+		if err != nil {
+			return "", err
+		}
+
+		tags[appName] = TagList{Name: appName, Tags: tagz}
 	}
 
 	content, err := json.Marshal(tags)
@@ -551,57 +574,71 @@ func (r *OCIRegistry) checksum() (string, error) {
 	return common.GetSha256(content)
 }
 
-func (s *repoEventSink) newOCIRegistryAndLogin(repo sourcev1.HelmRepository) (*OCIRegistry, error) {
-	// Construct the Getter options from the HelmRepository data
-	loginOpts, getterOpts, cred, err := s.clientOptionsForRepo(repo)
-	if err != nil {
-		return nil, status.Errorf(codes.Internal, "failed to create registry client options: %v", err)
+func (r *OCIRegistry) shortRepoName(fullRepoName string) (string, error) {
+	expectedPrefix := strings.TrimLeft(r.url.Path, "/") + "/"
+	if strings.HasPrefix(fullRepoName, expectedPrefix) {
+		return fullRepoName[len(expectedPrefix):], nil
+	} else {
+		err := status.Errorf(codes.Internal,
+			"Unexpected repository name: expected prefix: [%s], actual name: [%s]",
+			expectedPrefix, fullRepoName)
+		return "", err
 	}
-	log.Infof("=====================> loginOpts: [%v], getterOpts: [%v], cred: %t", len(loginOpts), len(getterOpts), cred != nil)
+}
 
+func (s *Server) newOCIRegistryAndLoginWithRepo(ctx context.Context, repoName types.NamespacedName) (*OCIRegistry, error) {
+	repo, err := s.getRepoInCluster(ctx, repoName)
+	if err != nil {
+		return nil, err
+	} else {
+		sink := s.newRepoEventSink()
+		return sink.newOCIRegistryAndLoginWithRepo(ctx, *repo)
+	}
+}
+
+func (s *repoEventSink) newOCIRegistryAndLoginWithRepo(ctx context.Context, repo sourcev1.HelmRepository) (*OCIRegistry, error) {
+	if loginOpts, getterOpts, cred, err := s.ociClientOptionsForRepo(ctx, repo); err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to create registry client: %v", err)
+	} else {
+		return s.newOCIRegistryAndLoginWithOptions(repo.Spec.URL, loginOpts, getterOpts, cred)
+	}
+}
+
+func (s *repoEventSink) newOCIRegistryAndLoginWithOptions(registryURL string, loginOpts []registry.LoginOption, getterOpts []getter.Option, cred *orasregistryauthv2.Credential) (*OCIRegistry, error) {
 	// Create registry client and login if needed.
 	registryClient, file, err := newRegistryClient(loginOpts != nil)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to create registry client: %v", err)
 	}
 	if file != "" {
-		/*
-			defer func() {
-				byteArray, err := ioutil.ReadFile(file)
-				if err != nil {
-					log.Infof("Failed to read temporary credentials file [%s]: %v", file, err)
-				}
-
-				// Convert []byte to string and print to screen
-				log.Infof("about to remove temporary credentials file [%s] content\n[%s]",
-					file, string(byteArray))
-
-				if err := os.Remove(file); err != nil {
-					log.Infof("Failed to delete temporary credentials file: %v", err)
-				}
-			}()
-		*/
+		defer func() {
+			if err := os.Remove(file); err != nil {
+				log.Infof("Failed to delete temporary credentials file: %v", err)
+			}
+			log.Infof("Removed temporary credentials file: [%s]", file)
+		}()
 	}
 
-	registryCredentialFn := func(ctx context.Context, reg string) (registryauth.Credential, error) {
+	registryCredentialFn := func(ctx context.Context, reg string) (orasregistryauthv2.Credential, error) {
 		if cred != nil {
 			return *cred, nil
 		} else {
-			return registryauth.EmptyCredential, nil
+			return orasregistryauthv2.EmptyCredential, nil
 		}
 	}
+
 	// a little bit misleading, since repo.Spec.URL is really an OCI Registry URL,
 	// which may contain zero or more "helm repositories", such as
 	// oci://demo.goharbor.io/test-oci-1, which may contain repositories "repo-1", "repo2", etc
 
 	ociRegistry, err := newOCIRegistry(
-		repo.Spec.URL,
+		registryURL,
 		withOCIGetter(helmGetters),
 		withOCIGetterOptions(getterOpts),
 		withOCIRegistryClient(registryClient),
 		withRegistryCredentialFn(registryCredentialFn))
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "failed to parse URL '%s': %v", repo.Spec.URL, err)
+		return nil, status.Errorf(codes.Internal, "failed to parse URL '%s': %v", registryURL, err)
 	}
 
 	// Attempt to login to the registry if credentials are provided.
@@ -615,18 +652,19 @@ func (s *repoEventSink) newOCIRegistryAndLogin(repo sourcev1.HelmRepository) (*O
 	return ociRegistry, nil
 }
 
-func (s *repoEventSink) clientOptionsForRepo(repo sourcev1.HelmRepository) ([]registry.LoginOption, []getter.Option, *registryauth.Credential, error) {
-	log.Infof("+clientOptionsForRepo()")
+func (s *repoEventSink) ociClientOptionsForRepo(ctx context.Context, repo sourcev1.HelmRepository) ([]registry.LoginOption, []getter.Option, *orasregistryauthv2.Credential, error) {
+	log.Infof("+ociClientOptionsForRepo(%s)", common.PrettyPrint(repo))
+	log.Info("-ociClientOptionsForRepo")
 
 	var loginOpts []registry.LoginOption
-	var cred *registryauth.Credential
+	var cred *orasregistryauthv2.Credential
 	getterOpts := []getter.Option{
 		getter.WithURL(repo.Spec.URL),
 		getter.WithTimeout(repo.Spec.Timeout.Duration),
 		getter.WithPassCredentialsAll(repo.Spec.PassCredentials),
 	}
 
-	secret, err := s.getRepoSecret(context.Background(), repo)
+	secret, err := s.getRepoSecret(ctx, repo)
 	if err != nil {
 		return nil, nil, nil, err
 	} else if secret != nil {
@@ -640,11 +678,70 @@ func (s *repoEventSink) clientOptionsForRepo(repo sourcev1.HelmRepository) ([]re
 		if err != nil {
 			return nil, nil, nil, err
 		}
-
-		loginOpt := registry.LoginOptBasicAuth(cred.Username, cred.Password)
-		if loginOpt != nil {
-			loginOpts = append(loginOpts, loginOpt)
+		if cred != nil {
+			loginOpt := registry.LoginOptBasicAuth(cred.Username, cred.Password)
+			if loginOpt != nil {
+				loginOpts = append(loginOpts, loginOpt)
+			}
 		}
 	}
 	return loginOpts, getterOpts, cred, nil
+}
+
+func getOCIChartTarball(ociRegistry *OCIRegistry, chartID string, chartVersion *repo.ChartVersion) ([]byte, error) {
+	chartBuffer, err := ociRegistry.downloadChart(chartVersion)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "%v", err)
+	}
+	return chartBuffer.Bytes(), nil
+}
+
+func getOCIChartMetadata(ociRegistry *OCIRegistry, chartID string, chartVersion *repo.ChartVersion) (*chart.Metadata, error) {
+	log.Infof("+getOCIChartMetadata(%s, %s)", chartID, chartVersion.Metadata.Version)
+	defer log.Infof("-getOCIChartMetadata(%s, %s)", chartID, chartVersion.Metadata.Version)
+
+	chartTarball, err := getOCIChartTarball(ociRegistry, chartID, chartVersion)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "%v", err)
+	}
+	log.Infof("==========>: chart .tgz: [%d] bytes", len(chartTarball))
+
+	// not sure yet why flux untars into a temp directory
+	files, err := tarutil.FetchChartDetailFromTarball(bytes.NewReader(chartTarball), chartID)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "%v", err)
+	}
+
+	log.Infof("==========>: files: [%d]", len(files))
+
+	chartYaml, ok := files[models.ChartYamlKey]
+	// TODO (gfichtenholt): if there is no chart yaml (is that even possible?),
+	// fall back to chart info from repo index.yaml
+	if !ok || chartYaml == "" {
+		return nil, status.Errorf(codes.Internal, "No chart manifest found for chart [%s]", chartID)
+	}
+	var chartMetadata chart.Metadata
+	err = yaml.Unmarshal([]byte(chartYaml), &chartMetadata)
+	if err != nil {
+		return nil, err
+	}
+	log.Infof("==========>: chart metadata: %s", common.PrettyPrint(chartMetadata))
+	return &chartMetadata, nil
+}
+
+func downloadOCIChartFn(ociRegistry *OCIRegistry) func(chartID, chartUrl, chartVersion string) ([]byte, error) {
+	return func(chartID, chartUrl, chartVersion string) ([]byte, error) {
+		_, chartName, err := pkgutils.SplitPackageIdentifier(chartID)
+		if err != nil {
+			return nil, err
+		}
+		cv := &repo.ChartVersion{
+			URLs: []string{chartUrl},
+			Metadata: &chart.Metadata{
+				Name:    chartName,
+				Version: chartVersion,
+			},
+		}
+		return getOCIChartTarball(ociRegistry, chartID, cv)
+	}
 }

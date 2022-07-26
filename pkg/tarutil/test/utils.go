@@ -7,7 +7,7 @@ import (
 	"archive/tar"
 	"io"
 
-	log "github.com/sirupsen/logrus"
+	log "k8s.io/klog/v2"
 )
 
 type TarballFile struct {

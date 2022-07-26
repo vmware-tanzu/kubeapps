@@ -12,6 +12,7 @@ import (
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
 	"k8s.io/apimachinery/pkg/api/meta"
@@ -115,7 +116,7 @@ func NewServer(configGetter core.KubernetesConfigGetter, clientQPS float32, clie
 		},
 		corePackagesClientGetter: func() (pkgsGRPCv1alpha1.PackagesServiceClient, error) {
 			port := os.Getenv("PORT")
-			conn, err := grpc.Dial("localhost:"+port, grpc.WithInsecure())
+			conn, err := grpc.Dial("localhost:"+port, grpc.WithTransportCredentials(insecure.NewCredentials()))
 			if err != nil {
 				return nil, status.Errorf(codes.Internal, "unable to dial to localhost grpc service: %s", err.Error())
 			}
@@ -136,7 +137,7 @@ func NewServer(configGetter core.KubernetesConfigGetter, clientQPS float32, clie
 func (s *Server) GetResources(r *v1alpha1.GetResourcesRequest, stream v1alpha1.ResourcesService_GetResourcesServer) error {
 	namespace := r.GetInstalledPackageRef().GetContext().GetNamespace()
 	cluster := r.GetInstalledPackageRef().GetContext().GetCluster()
-	log.Infof("+resources GetResources (cluster: %q, namespace=%q)", cluster, namespace)
+	log.InfoS("+resources GetResources ", "cluster", cluster, "namespace", namespace)
 
 	ctx, err := copyAuthorizationMetadataForOutgoing(stream.Context())
 	if err != nil {
@@ -245,7 +246,10 @@ func (s *Server) GetResources(r *v1alpha1.GetResourcesRequest, stream v1alpha1.R
 	// data as it arrives.
 	resourceWatcher := mergeWatchers(watchers)
 	for e := range resourceWatcher.ResultChan() {
-		sendResourceData(e.ResourceRef, e.Object, stream)
+		err = sendResourceData(e.ResourceRef, e.Object, stream)
+		if err != nil {
+			return err
+		}
 	}
 
 	return nil
@@ -255,7 +259,7 @@ func (s *Server) GetResources(r *v1alpha1.GetResourcesRequest, stream v1alpha1.R
 func (s *Server) GetServiceAccountNames(ctx context.Context, r *v1alpha1.GetServiceAccountNamesRequest) (*v1alpha1.GetServiceAccountNamesResponse, error) {
 	namespace := r.GetContext().GetNamespace()
 	cluster := r.GetContext().GetCluster()
-	log.Infof("+resources GetServiceAccountNames (cluster: %q, namespace=%q)", cluster, namespace)
+	log.InfoS("+resources GetServiceAccountNames ", "cluster", cluster, "namespace", namespace)
 
 	typedClient, _, err := s.clientGetter(ctx, cluster)
 	if err != nil {
@@ -289,10 +293,13 @@ func sendResourceData(ref *pkgsGRPCv1alpha1.ResourceRef, obj interface{}, s v1al
 
 	// Note, a string in Go is effectively a read-only slice of bytes.
 	// See https://stackoverflow.com/a/50880408 for interesting links.
-	s.Send(&v1alpha1.GetResourcesResponse{
+	err = s.Send(&v1alpha1.GetResourcesResponse{
 		ResourceRef: ref,
 		Manifest:    string(resourceBytes),
 	})
+	if err != nil {
+		return status.Errorf(codes.Internal, "unable send GetResourcesResponse: %s", err.Error())
+	}
 
 	return nil
 }

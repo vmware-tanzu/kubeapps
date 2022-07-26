@@ -174,7 +174,7 @@ func (r *DockerSecretsPostRenderer) updatePodSpecWithPullSecrets(podSpec map[str
 		}
 		image, ok := container["image"].(string)
 		if !ok {
-			// NOTE: in https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.20/#container-v1-core
+			// NOTE: in https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.22/#container-v1-core
 			// the image is optional to allow higher level config management to default or override (such as
 			// deployments or statefulsets), but both only define pod templates which in turn define containers?
 			log.Errorf("pod spec container does not define an string image: %+v", container)
@@ -218,13 +218,13 @@ func getResourcePodSpec(kind string, resource map[string]interface{}) map[string
 		return getMapForKeys([]string{"spec"}, resource)
 	case "DaemonSet", "Deployment", "Job", "ReplicaSet", "ReplicationController", "StatefulSet":
 		// These resources all include a spec.template.spec PodSpec.
-		// https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.20/#podtemplatespec-v1-core
+		// https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.22/#podtemplatespec-v1-core
 		return getMapForKeys([]string{"spec", "template", "spec"}, resource)
 	case "PodTemplate":
 		return getMapForKeys([]string{"template", "spec"}, resource)
 	case "CronJob":
 		// A CronJob spec contains a jobTemplate:
-		// https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.20/#cronjobspec-v1beta1-batch
+		// https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.22/#cronjob-v1-batch
 		return getMapForKeys([]string{"spec", "jobTemplate", "spec", "template", "spec"}, resource)
 	}
 

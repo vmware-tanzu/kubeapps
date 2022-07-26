@@ -73,7 +73,7 @@ func (m *PostgresAssetManager) GetChartWithFallback(namespace, chartID string, w
 	err := m.QueryOne(&chart, fmt.Sprintf("SELECT info FROM %s WHERE repo_namespace = $1 AND chart_id = $2", dbutils.ChartTable), namespace, chartID)
 	if err != nil {
 		splittedID := strings.Split(chartID, "/")
-		if withFallback == true && len(splittedID) == 2 {
+		if withFallback && len(splittedID) == 2 {
 			// fallback query when a chart_id is not being retrieved
 			// it may occur when upgrading a mirrored chart (eg, jfrog/bitnami/wordpress)
 			// and helms only gives 'jfrog/wordpress' but we want to retrieve 'jfrog/bitnami/wordpress'
@@ -120,7 +120,7 @@ func (m *PostgresAssetManager) GetChartVersionWithFallback(namespace, chartID, v
 	err := m.QueryOne(&chart, fmt.Sprintf("SELECT info FROM %s WHERE repo_namespace = $1 AND chart_id = $2", dbutils.ChartTable), namespace, chartID)
 	if err != nil {
 		splittedID := strings.Split(chartID, "/")
-		if withFallback == true && len(splittedID) == 2 {
+		if withFallback && len(splittedID) == 2 {
 			// fallback query when a chart_id is not being retrieved
 			// it may occur when upgrading a mirrored chart (eg, jfrog/bitnami/wordpress)
 			// and helms only gives 'jfrog/wordpress' but we want to retrieve 'jfrog/bitnami/wordpress'
@@ -157,7 +157,7 @@ func (m *PostgresAssetManager) GetChartFilesWithFallback(namespace, filesID stri
 	err := m.QueryOne(&chartFiles, fmt.Sprintf("SELECT info FROM %s WHERE repo_namespace = $1 AND chart_files_id = $2", dbutils.ChartFilesTable), namespace, filesID)
 	if err != nil {
 		splittedID := strings.Split(filesID, "/")
-		if withFallback == true && len(splittedID) == 2 {
+		if withFallback && len(splittedID) == 2 {
 			// fallback query when a chart_files_id is not being retrieved
 			// it may occur when upgrading a mirrored chart (eg, jfrog/bitnami/wordpress)
 			// and helms only gives 'jfrog/wordpress' but we want to retrieve 'jfrog/bitnami/wordpress'

@@ -127,7 +127,10 @@ func TestGetAvailablePackageDetail(t *testing.T) {
 				// stand up an http server just for the duration of this test
 				var handler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 					w.WriteHeader(200)
-					w.Write(tarGzBytes)
+					_, err = w.Write(tarGzBytes)
+					if err != nil {
+						t.Fatalf("%+v", err)
+					}
 				})
 				if tc.basicAuth {
 					handler = basicAuth(handler, "foo", "bar", "myrealm")
@@ -193,7 +196,10 @@ func TestGetAvailablePackageDetail(t *testing.T) {
 				t.Fatalf("%+v", err)
 			}
 
-			s.redisMockExpectGetFromRepoCache(mock, nil, *repo)
+			err = s.redisMockExpectGetFromRepoCache(mock, nil, *repo)
+			if err != nil {
+				t.Fatalf("%+v", err)
+			}
 			chartVersion := tc.request.PkgVersion
 			if chartVersion == "" {
 				chartVersion = charts[0].chartRevision
@@ -257,10 +263,16 @@ func TestTransientHttpFailuresAreRetriedForChartCache(t *testing.T) {
 				if !nofail && failuresAllowed > 0 {
 					failuresAllowed--
 					w.WriteHeader(503)
-					w.Write([]byte(fmt.Sprintf("The server is not ready to handle the request: [%d try left before OK]", failuresAllowed)))
+					_, err = w.Write([]byte(fmt.Sprintf("The server is not ready to handle the request: [%d try left before OK]", failuresAllowed)))
+					if err != nil {
+						t.Fatalf("%+v", err)
+					}
 				} else {
 					w.WriteHeader(200)
-					w.Write(tarGzBytes)
+					_, err := w.Write(tarGzBytes)
+					if err != nil {
+						t.Fatalf("%+v", err)
+					}
 				}
 			})
 			ts := httptest.NewServer(handler)
@@ -292,7 +304,10 @@ func TestTransientHttpFailuresAreRetriedForChartCache(t *testing.T) {
 		chartVersion := charts[0].chartRevision
 		requestChartUrl := charts[0].chartUrl
 
-		s.redisMockExpectGetFromRepoCache(mock, nil, *repo)
+		err = s.redisMockExpectGetFromRepoCache(mock, nil, *repo)
+		if err != nil {
+			t.Fatalf("%+v", err)
+		}
 		chartCacheKey, err := s.chartCache.KeyFor(
 			repoNamespace,
 			packageIdentifier,
@@ -434,7 +449,10 @@ func TestNonExistingRepoOrInvalidPkgVersionGetAvailablePackageDetail(t *testing.
 				// stand up an http server just for the duration of this test
 				ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 					w.WriteHeader(200)
-					w.Write(tarGzBytes)
+					_, err = w.Write(tarGzBytes)
+					if err != nil {
+						t.Fatalf("%+v", err)
+					}
 				}))
 				defer ts.Close()
 				replaceUrls[fmt.Sprintf("{{%s}}", s.tgzFile)] = ts.URL
@@ -464,7 +482,10 @@ func TestNonExistingRepoOrInvalidPkgVersionGetAvailablePackageDetail(t *testing.
 
 			repoExists := requestRepoName == tc.repoName && requestRepoNamespace == tc.repoNamespace
 			if repoExists {
-				s.redisMockExpectGetFromRepoCache(mock, nil, *repo)
+				err = s.redisMockExpectGetFromRepoCache(mock, nil, *repo)
+				if err != nil {
+					t.Fatalf("%+v", err)
+				}
 				requestChartName := strings.Split(tc.request.AvailablePackageRef.Identifier, "/")[1]
 				chartExists := requestChartName == "redis"
 				if chartExists {
@@ -615,7 +636,10 @@ func TestGetAvailablePackageVersions(t *testing.T) {
 				// stand up an http server just for the duration of this test
 				ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 					w.WriteHeader(200)
-					w.Write(tarGzBytes)
+					_, err = w.Write(tarGzBytes)
+					if err != nil {
+						t.Fatalf("%+v", err)
+					}
 				}))
 				defer ts.Close()
 				replaceUrls[fmt.Sprintf("{{%s}}", s.tgzFile)] = ts.URL
@@ -696,7 +720,10 @@ func TestChartCacheResyncNotIdle(t *testing.T) {
 		// stand up an http server just for the duration of this test
 		var handler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			w.WriteHeader(200)
-			w.Write(tarGzBytes)
+			_, err = w.Write(tarGzBytes)
+			if err != nil {
+				t.Fatalf("%+v", err)
+			}
 		})
 		ts := httptest.NewServer(handler)
 		defer ts.Close()
@@ -754,7 +781,8 @@ func TestChartCacheResyncNotIdle(t *testing.T) {
 				t.Fatalf("%+v", err)
 			}
 			if i == 0 {
-				chartBytes, err = cache.ChartCacheComputeValue(chartID, ts.URL, chartVersion, opts)
+				fn := downloadChartViaHttpFn(opts)
+				chartBytes, err = cache.ChartCacheComputeValue(chartID, ts.URL, chartVersion, fn)
 				if err != nil {
 					t.Fatalf("%+v", err)
 				}
@@ -868,7 +896,10 @@ func TestChartWithRelativeURL(t *testing.T) {
 			fmt.Fprintln(w, string(indexYAMLBytes))
 		} else if r.RequestURI == "/charts/airflow-1.0.0.tgz" {
 			w.WriteHeader(200)
-			w.Write(tarGzBytes)
+			_, err = w.Write(tarGzBytes)
+			if err != nil {
+				t.Fatalf("%+v", err)
+			}
 		} else {
 			w.WriteHeader(404)
 		}
@@ -961,10 +992,7 @@ func newChart(name, namespace string, spec *sourcev1.HelmChartSpec, status *sour
 }
 
 func (s *Server) redisMockSetValueForChart(mock redismock.ClientMock, key, url string, opts *common.HttpClientOptions) error {
-	sink := repoEventSink{
-		clientGetter: s.newBackgroundClientGetter(),
-		chartCache:   s.chartCache,
-	}
+	sink := s.newRepoEventSink()
 	return sink.redisMockSetValueForChart(mock, key, url, opts)
 }
 
@@ -973,7 +1001,8 @@ func (cs *repoEventSink) redisMockSetValueForChart(mock redismock.ClientMock, ke
 	if err != nil {
 		return err
 	}
-	byteArray, err := cache.ChartCacheComputeValue(chartID, url, version, opts)
+	fn := downloadChartViaHttpFn(opts)
+	byteArray, err := cache.ChartCacheComputeValue(chartID, url, version, fn)
 	if err != nil {
 		return fmt.Errorf("chartCacheComputeValue failed due to: %+v", err)
 	}
@@ -994,7 +1023,8 @@ func redisMockExpectGetFromChartCache(mock redismock.ClientMock, key, url string
 		if err != nil {
 			return err
 		}
-		bytes, err := cache.ChartCacheComputeValue(chartID, url, version, opts)
+		fn := downloadChartViaHttpFn(opts)
+		bytes, err := cache.ChartCacheComputeValue(chartID, url, version, fn)
 		if err != nil {
 			return err
 		}

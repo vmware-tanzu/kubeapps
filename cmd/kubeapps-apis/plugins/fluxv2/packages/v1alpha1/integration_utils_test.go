@@ -82,7 +82,13 @@ const (
 	// port forward is done programmatically
 	outside_cluster_bitnami_url = "http://localhost:50057/bitnami"
 
-	podinfo_oci_repo_url = "oci://ghcr.io/stefanprodan/charts"
+	// an OCI registry with a single chart (podinfo)
+	github_stefanprodan_podinfo_oci_registry_url = "oci://ghcr.io/stefanprodan/charts"
+
+	// the URL of local in cluster helm registry. Gets deployed via ./kind-cluster-setup.sh
+	// in_cluster_oci_registry_url = "oci://registry-app-svc.default.svc.cluster.local:5000/helm-charts"
+
+	github_gfichtenholt_podinfo_oci_registry_url = "oci://ghcr.io/gfichtenholt/helm-charts"
 )
 
 func checkEnv(t *testing.T) (fluxplugin.FluxV2PackagesServiceClient, fluxplugin.FluxV2RepositoriesServiceClient, error) {
@@ -131,35 +137,42 @@ func checkEnv(t *testing.T) (fluxplugin.FluxV2PackagesServiceClient, fluxplugin.
 
 func isLocalKindClusterUp(t *testing.T) (up bool, err error) {
 	t.Logf("+isLocalKindClusterUp")
-	cmd := exec.Command("kind", "get", "clusters")
-	bytes, err := cmd.CombinedOutput()
+
+	out, err := execCommand(t, "", "kind", []string{"get", "clusters"})
 	if err != nil {
-		t.Logf("%s", string(bytes))
 		return false, err
 	}
-	if !strings.Contains(string(bytes), "kubeapps\n") {
+	words := strings.Split(out, " \n")
+	found := false
+	for _, word := range words {
+		if word == "kubeapps" {
+			found = true
+		}
+	}
+	if !found {
 		return false, nil
 	}
 
 	// naively assume that if the api server reports nodes, the cluster is up
 	typedClient, err := kubeGetTypedClient()
 	if err != nil {
-		t.Logf("%s", string(bytes))
+		t.Logf("Failed to get typed client due to: %+v", err)
 		return false, err
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), defaultContextTimeout)
 	defer cancel()
+
 	nodeList, err := typedClient.CoreV1().Nodes().List(ctx, metav1.ListOptions{})
 	if err != nil {
-		t.Logf("%s", string(bytes))
+		t.Logf("Failed to get list of nodes due to %+v", err)
 		return false, err
 	}
 
 	if len(nodeList.Items) == 1 || nodeList.Items[0].Name == "node/kubeapps-control-plane" {
 		return true, nil
 	} else {
-		return false, fmt.Errorf("Unexpected cluster nodes: [%v]", nodeList)
+		return false, fmt.Errorf("unexpected cluster nodes: [%v]", nodeList)
 	}
 }
 
@@ -228,7 +241,7 @@ func kubeAddHelmRepository(t *testing.T, name types.NamespacedName, typ, url, se
 	if ifc, err := kubeGetCtrlClient(); err != nil {
 		return err
 	} else {
-		t.Logf("Creating: %s\n...", common.PrettyPrint(repo))
+		t.Logf("Creating HelmRepository: %s\n...", common.PrettyPrint(repo))
 		return ifc.Create(ctx, &repo)
 	}
 }
@@ -954,8 +967,14 @@ func kubeGetCtrlClient() (ctrlclient.WithWatch, error) {
 			return nil, err
 		} else {
 			scheme := runtime.NewScheme()
-			sourcev1.AddToScheme(scheme)
-			helmv2.AddToScheme(scheme)
+			err = sourcev1.AddToScheme(scheme)
+			if err != nil {
+				return nil, err
+			}
+			err = helmv2.AddToScheme(scheme)
+			if err != nil {
+				return nil, err
+			}
 
 			return ctrlclient.NewWithWatch(config, ctrlclient.Options{Scheme: scheme})
 		}
@@ -1031,10 +1050,8 @@ func kubectlCanI(t *testing.T, name types.NamespacedName, verb, resource, checkT
 		"--as",
 		"system:serviceaccount:" + name.Namespace + ":" + name.Name,
 	}
-	cmd := exec.Command("kubectl", args...)
-	byteArray, _ := cmd.CombinedOutput()
-	out := strings.Trim(string(byteArray), "\n")
-	t.Logf("Executed command: [%s], output: [%s]", cmd.String(), out)
+
+	out, _ := execCommand(t, "", "kubectl", args)
 	return out
 }
 
@@ -1273,6 +1290,47 @@ func getFluxPluginTestdataPodName() (*types.NamespacedName, error) {
 		}
 	}
 	return nil, fmt.Errorf("fluxplugin testdata pod not found")
+}
+
+func helmPushChartToMyGithubRegistry(t *testing.T, version string) error {
+	t.Logf("+helmPushChartToMyGithubRegistry(%s)", version)
+	defer t.Logf("-helmPushChartToMyGithubRegistry(%s)", version)
+
+	args := []string{
+		"pushChartToMyGithub",
+		version,
+	}
+
+	// use the CLI for now
+	_, err := execCommand(t, "./testdata", "./kind-cluster-setup.sh", args)
+	return err
+}
+
+func deleteChartFromMyGithubRegistry(t *testing.T, version string) error {
+	t.Logf("+deleteChartFromMyGithubRegistry(%s)", version)
+	defer t.Logf("-deleteChartFromMyGithubRegistry(%s)", version)
+
+	args := []string{
+		"deleteChartVersionFromMyGitHub",
+		"6.1.6",
+	}
+
+	// use the CLI for now
+	_, err := execCommand(t, "./testdata", "./kind-cluster-setup.sh", args)
+	return err
+}
+
+func execCommand(t *testing.T, dir, name string, args []string) (string, error) {
+	t.Logf("About to execute command: [%s] with args %s...", name, args)
+	// TODO (gfichtenholt) it'd be nice to have real-time updates
+	cmd := exec.Command(name, args...)
+	if dir != "" {
+		cmd.Dir = dir
+	}
+	byteArray, err := cmd.CombinedOutput()
+	out := strings.Trim(string(byteArray), "\n")
+	t.Logf("Executed command: [%s], err: [%v], output: [\n%s\n]", cmd.String(), err, out)
+	return out, err
 }
 
 // global vars

@@ -21,7 +21,7 @@ import (
 func (s *Server) CheckNamespaceExists(ctx context.Context, r *v1alpha1.CheckNamespaceExistsRequest) (*v1alpha1.CheckNamespaceExistsResponse, error) {
 	namespace := r.GetContext().GetNamespace()
 	cluster := r.GetContext().GetCluster()
-	log.Infof("+resources CheckNamespaceExists (cluster: %q, namespace=%q)", cluster, namespace)
+	log.InfoS("+resources CheckNamespaceExists", "cluster", cluster, "namespace", namespace)
 
 	typedClient, _, err := s.clientGetter(ctx, cluster)
 	if err != nil {
@@ -48,7 +48,7 @@ func (s *Server) CheckNamespaceExists(ctx context.Context, r *v1alpha1.CheckName
 func (s *Server) CreateNamespace(ctx context.Context, r *v1alpha1.CreateNamespaceRequest) (*v1alpha1.CreateNamespaceResponse, error) {
 	namespace := r.GetContext().GetNamespace()
 	cluster := r.GetContext().GetCluster()
-	log.Infof("+resources CreateNamespace (cluster: %q, namespace=%q)", cluster, namespace)
+	log.InfoS("+resources CreateNamespace", "cluster", cluster, "namespace", namespace, "labels", r.Labels)
 
 	typedClient, _, err := s.clientGetter(ctx, cluster)
 	if err != nil {
@@ -61,7 +61,8 @@ func (s *Server) CreateNamespace(ctx context.Context, r *v1alpha1.CreateNamespac
 			Kind:       "Namespace",
 		},
 		ObjectMeta: metav1.ObjectMeta{
-			Name: namespace,
+			Name:   namespace,
+			Labels: r.Labels,
 		},
 	}, metav1.CreateOptions{})
 	if err != nil {
@@ -79,7 +80,7 @@ func (s *Server) CreateNamespace(ctx context.Context, r *v1alpha1.CreateNamespac
 // passed in (resources plugin config) and used if the user does not have RBAC.
 func (s *Server) GetNamespaceNames(ctx context.Context, r *v1alpha1.GetNamespaceNamesRequest) (*v1alpha1.GetNamespaceNamesResponse, error) {
 	cluster := r.GetCluster()
-	log.Infof("+resources GetNamespaceNames (cluster: %q)", cluster)
+	log.InfoS("+resources GetNamespaceNames ", "cluster", cluster)
 
 	typedClient, _, err := s.clientGetter(ctx, cluster)
 	if err != nil {

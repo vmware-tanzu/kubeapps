@@ -22,7 +22,7 @@ For building the [development container images](https://hub.docker.com/u/kubeapp
   - [\_/rust](https://hub.docker.com/_/rust) for building the binary.
   - [bitnami/minideb](https://hub.docker.com/r/bitnami/minideb) for running it.
 
-In some images, some build-time linters are used (e.g., `buf` linter, etc.). When updating the base container image, these linters (namely, `BUF_VERSION` - [source](https://github.com/bufbuild/buf/releases/)) _should_ be updated to the latest minor/patch version.
+In some images, some build-time linters are used (e.g., `buf` linter, `gosec` or `golangci-lint` checkers, etc.). When updating the base container image, these linters (like `BUF_VERSION`, `GOSEC_VERSION`, `GOLANGCILINT_VERSION`) _should_ be updated to the latest minor/patch version.
 
 > As part of this release process, these image tags _must_ be updated to the latest minor/patch version. In case of a major version, the change _should_ be tracked in a separate PR.
 > **Note**: as the official container images are those being created by Bitnami, we _should_ ensure that we are using the same major version as they are using.
@@ -41,9 +41,11 @@ The versions used there _must_ match the ones used for building the container im
 - `NODE_VERSION` _must_ match the **major** version used by the [dashboard](https://github.com/vmware-tanzu/kubeapps/blob/main/dashboard/Dockerfile).
 - `RUST_VERSION` _must_ match the version used by the [pinniped-proxy](https://github.com/vmware-tanzu/kubeapps/blob/main/dashboard/Dockerfile).
 - `DOCKER_VERSION` can be updated to the [latest version provided by CircleCI](https://circleci.com/docs/2.0/building-docker-images/#docker-version).
+- `DOCKER_REGISTRY_VERSION` can be updated to the [latest tag provided by Docker](https://hub.docker.com/_/registry).
 - `HELM_VERSION_MIN` _must_ match the one listed in the [Bitnami Application Catalog prerequisites](https://github.com/bitnami/charts#prerequisites).
 - `HELM_VERSION_STABLE` should be updated with the [latest stable version from the Helm releases](https://github.com/helm/helm/releases).
 - `OLM_VERSION` should be updated with the [latest stable version from the OLM releases](https://github.com/operator-framework/operator-lifecycle-manager/releases).
+- `CHARTMUSEUM_VERSION` should be updated with the [latest stable version from the chartmuseum/charts releases](https://github.com/chartmuseum/charts/releases).
 - `KAPP_CONTROLLER_VERSION` should be updated with the [latest stable version from the Kapp Controller releases](https://github.com/vmware-tanzu/carvel-kapp-controller/releases).
 - `MKCERT_VERSION` should be updated with the [latest stable version from the mkcert releases](https://github.com/FiloSottile/mkcert/releases).
 - `KUBECTL_VERSION` _should_ match the Kubernetes minor version (or minor version +1) used in `GKE_REGULAR_VERSION_XX` and listed in the [Kubernetes releases page](https://kubernetes.io/releases/).
@@ -70,7 +72,7 @@ cd integration
 yarn upgrade
 ```
 
-- The [integration/Dockerfile](https://github.com/vmware-tanzu/kubeapps/blob/main/integration/Dockerfile) uses a [bitnami/node](https://hub.docker.com/r/bitnami/node/tags) image for running the e2e tests.
+- The [integration/Dockerfile](https://github.com/vmware-tanzu/kubeapps/blob/main/integration/Dockerfile) uses a [mcr.microsoft.com/playwright](https://mcr.microsoft.com/v2/playwright/tags/list) image for running the e2e tests.
 
 > As part of this release process, this Node image tag _may_ be updated to the latest minor/patch version. In case of a major version, the change _should_ be tracked in a separate PR. Analogously, its dependencies _may_ also be updated, but in case of a major change, it _should_ be tracked in a separate PR.
 > **Note**: this image is not being built automatically. Consequently, a [manual build process](../testing/end-to-end-tests.md#building-the-kubeappsintegration-tests-image) _must_ be triggered if you happen to upgrade the integration image or its dependencies.

@@ -16,9 +16,8 @@ IMG_MODIFIER=${4:-""}
 TEST_TIMEOUT_MINUTES=${5:-"4"}
 DEX_IP=${6:-"172.18.0.2"}
 ADDITIONAL_CLUSTER_IP=${7:-"172.18.0.3"}
-DOCKER_USERNAME=${8:-""}
-DOCKER_PASSWORD=${9:-""}
-KAPP_CONTROLLER_VERSION=${10:-"v0.32.0"}
+KAPP_CONTROLLER_VERSION=${8:-"v0.32.0"}
+CHARTMUSEUM_VERSION=${9:-"2.14.2"}
 
 # TODO(andresmgot): While we work with beta releases, the Bitnami pipeline
 # removes the pre-release part of the tag
@@ -34,9 +33,13 @@ fi
 # shellcheck disable=SC1090
 . "${ROOT_DIR}/script/lib/libutil.sh"
 
+# Functions for local Docker registry mgmt
+. "${ROOT_DIR}/script/install-local-registry.sh"
+
 info "Root dir: ${ROOT_DIR}"
 info "Use multicluster+OIDC: ${USE_MULTICLUSTER_OIDC_ENV}"
 info "OLM version: ${OLM_VERSION}"
+info "ChartMuseum version: ${CHARTMUSEUM_VERSION}"
 info "Image tag: ${DEV_TAG}"
 info "Image repo suffix: ${IMG_MODIFIER}"
 info "Dex IP: ${DEX_IP}"
@@ -47,6 +50,28 @@ info "Kubectl Version: $(kubectl version -o json | jq -r '.clientVersion.gitVers
 echo ""
 
 # Auxiliar functions
+
+#
+# Install an authenticated Docker registry inside the cluster
+#
+setupLocalDockerRegistry() {
+    info "Installing local Docker registry with authentication"
+    installLocalRegistry $ROOT_DIR
+
+    info "Pushing test container to local Docker registry"
+    pushContainerToLocalRegistry
+}
+
+#
+# Push a chart that uses container image from the local registry
+#
+pushLocalChart() {
+    info "Packaging local test chart"
+    helm package $ROOT_DIR/integration/charts/simplechart
+
+    info "Pushing local test chart to ChartMuseum"
+    pushChartToChartMuseum kubeapps admin password simplechart "0.1.0"
+}
 
 ########################
 # Check if the pod that populates de OperatorHub catalog is running
@@ -109,13 +134,15 @@ installOLM() {
 # Arguments:
 #   $1: Username
 #   $2: Password
+#   $3: ChartMuseum version
 # Returns: None
 #########################
 installChartmuseum() {
   local user=$1
   local password=$2
-  info "Installing ChartMuseum ..."
-  helm install chartmuseum --namespace kubeapps https://github.com/chartmuseum/charts/releases/download/chartmuseum-2.14.2/chartmuseum-2.14.2.tgz \
+  local version=$3
+  info "Installing ChartMuseum ${version}..."
+  helm install chartmuseum --namespace kubeapps "https://github.com/chartmuseum/charts/releases/download/chartmuseum-${version}/chartmuseum-${version}.tgz" \
     --set env.open.DISABLE_API=false \
     --set persistence.enabled=true \
     --set secret.AUTH_USER=$user \
@@ -301,9 +328,13 @@ fi
 installOrUpgradeKubeapps "${ROOT_DIR}/chart/kubeapps"
 info "Waiting for Kubeapps components to be ready (local chart)..."
 k8s_wait_for_deployment kubeapps kubeapps-ci
-installChartmuseum admin password
+installChartmuseum admin password "${CHARTMUSEUM_VERSION}"
 pushChart apache 8.6.2 admin password
 pushChart apache 8.6.3 admin password
+
+# Setting up local Docker registry
+setupLocalDockerRegistry
+pushLocalChart
 
 # Ensure that we are testing the correct image
 info ""
@@ -349,9 +380,9 @@ done
 
 # Browser tests
 cd "${ROOT_DIR}/integration"
-kubectl apply -f manifests/executor.yaml
-k8s_wait_for_deployment default integration
-pod=$(kubectl get po -l run=integration -o jsonpath="{.items[0].metadata.name}")
+kubectl apply -f manifests/e2e-runner.yaml
+k8s_wait_for_deployment default e2e-runner
+pod=$(kubectl get po -l run=e2e-runner -o jsonpath="{.items[0].metadata.name}")
 ## Copy config and latest tests
 for f in *.js; do
   kubectl cp "./${f}" "${pod}:/app/"
@@ -367,7 +398,7 @@ fi
 testsArgs="$(printf "%s " "${testsToRun[@]}")"
 
 kubectl cp ./tests "${pod}:/app/"
-info "Copied tests to integration pod ${pod}"
+info "Copied tests to e2e-runner pod ${pod}"
 ## Create admin user
 kubectl create serviceaccount kubeapps-operator -n kubeapps
 kubectl create clusterrolebinding kubeapps-operator-admin --clusterrole=cluster-admin --serviceaccount kubeapps:kubeapps-operator
@@ -409,7 +440,7 @@ view_token="$(kubectl get -n kubeapps secret "$(kubectl get -n kubeapps servicea
 edit_token="$(kubectl get -n kubeapps secret "$(kubectl get -n kubeapps serviceaccount kubeapps-edit -o jsonpath='{.secrets[].name}')" -o go-template='{{.data.token | base64decode}}' && echo)"
 
 info "Running main Integration tests without k8s API access..."
-if ! kubectl exec -it "$pod" -- /bin/sh -c "CI_TIMEOUT_MINUTES=40 DOCKER_USERNAME=${DOCKER_USERNAME} DOCKER_PASSWORD=${DOCKER_PASSWORD} TEST_TIMEOUT_MINUTES=${TEST_TIMEOUT_MINUTES} INTEGRATION_ENTRYPOINT=http://kubeapps-ci.kubeapps USE_MULTICLUSTER_OIDC_ENV=${USE_MULTICLUSTER_OIDC_ENV} ADMIN_TOKEN=${admin_token} VIEW_TOKEN=${view_token} EDIT_TOKEN=${edit_token} yarn test ${testsArgs}"; then
+if ! kubectl exec -it "$pod" -- /bin/sh -c "CI_TIMEOUT_MINUTES=40 DOCKER_USERNAME=${DOCKER_USERNAME} DOCKER_PASSWORD=${DOCKER_PASSWORD} DOCKER_REGISTRY_URL=${DOCKER_REGISTRY_URL} TEST_TIMEOUT_MINUTES=${TEST_TIMEOUT_MINUTES} INTEGRATION_ENTRYPOINT=http://kubeapps-ci.kubeapps USE_MULTICLUSTER_OIDC_ENV=${USE_MULTICLUSTER_OIDC_ENV} ADMIN_TOKEN=${admin_token} VIEW_TOKEN=${view_token} EDIT_TOKEN=${edit_token} yarn test ${testsArgs}"; then
   ## Integration tests failed, get report screenshot
   warn "PODS status on failure"
   kubectl cp "${pod}:/app/reports" ./reports

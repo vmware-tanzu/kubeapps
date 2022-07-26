@@ -170,20 +170,40 @@ message SetUserManagedSecretsResponse {
   bool value = 1;
 }
 
-// RepositoryCustomDetails
+message ImagesPullSecret {
+  oneof docker_registry_credential_one_of {
+    // docker credentials secret reference
+    string secret_ref = 1;
+
+    // docker credentials data
+    kubeappsapis.core.packages.v1alpha1.DockerCredentials credentials = 2;
+  }
+}
+
+// HelmPackageRepositoryCustomDetail
 //
 // Custom details for a Helm repository
-message RepositoryCustomDetails {
-  repeated string docker_registry_secrets = 1;
+message HelmPackageRepositoryCustomDetail {
+  // docker registry credentials for pull secrets
+  ImagesPullSecret images_pull_secret = 1;
+
+  // list of oci repositories
   repeated string oci_repositories = 2;
+
+  // filter rule to apply to the repository
   RepositoryFilterRule filter_rule = 3;
-  bool perform_validation = 4; // Perform repository validation test
+
+  // whether to perform validation on the repository
+  bool perform_validation = 4;
 }
 
 // RepositoryFilterRule
 //
 // JQ expression for filtering packages
 message RepositoryFilterRule {
+  // jq string expression
   string jq = 1;
+
+  // map of variables
   map<string, string> variables = 4;
 }

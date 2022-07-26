@@ -40,10 +40,12 @@ func newPGManager(config dbutils.Config, globalReposNamespace string) (assetMana
 // imported into the database as fast as possible. E.g. we want all icons for
 // charts before fetching readmes for each chart and version pair.
 func (m *postgresAssetManager) Sync(repo models.Repo, charts []models.Chart) error {
-	m.InitTables()
-
+	err := m.InitTables()
+	if err != nil {
+		return err
+	}
 	// Ensure the repo exists so FK constraints will be met.
-	_, err := m.EnsureRepoExists(repo.Namespace, repo.Name)
+	_, err = m.EnsureRepoExists(repo.Namespace, repo.Name)
 	if err != nil {
 		return err
 	}
@@ -61,7 +63,10 @@ func (m *postgresAssetManager) LastChecksum(repo models.Repo) string {
 	var lastChecksum string
 	row := m.DB.QueryRow(fmt.Sprintf("SELECT checksum FROM %s WHERE name = $1 AND namespace = $2", dbutils.RepositoryTable), repo.Name, repo.Namespace)
 	if row != nil {
-		row.Scan(&lastChecksum)
+		err := row.Scan(&lastChecksum)
+		if err != nil {
+			return ""
+		}
 	}
 	return lastChecksum
 }

@@ -57,7 +57,7 @@ type Details struct {
 	// resource for the request.
 	// ChartName is the name of the chart within the repo.
 	ChartName string `json:"chartName"`
-	// ReleaseName is the Name of the release given to Tiller.
+	// ReleaseName is the Name of the release given to Helm.
 	ReleaseName string `json:"releaseName"`
 	// Version is the chart version.
 	Version string `json:"version"`
@@ -331,7 +331,7 @@ func (c *HelmRepoClient) GetChart(details *Details, repoURL string) (*chart.Char
 		}
 	} else {
 		// TODO(agamez): remove this branch as it is really expensive and it is solely used in a few places in kubeops
-		log.Infof("calling GetChart without any tarball url, please note this action is memory-expensive")
+		log.Info("calling GetChart without any tarball url, please note this action is memory-expensive")
 		indexURL := strings.TrimSuffix(strings.TrimSpace(repoURL), "/") + "/index.yaml"
 		repoIndex, err := fetchRepoIndex(&c.netClient, indexURL)
 		if err != nil {
@@ -450,7 +450,6 @@ func (c *ChartClientFactory) New(repoType, userAgent string) ChartClient {
 	switch repoType {
 	case "oci":
 		client = NewOCIClient(userAgent)
-		break
 	default:
 		client = NewChartClient(userAgent)
 	}

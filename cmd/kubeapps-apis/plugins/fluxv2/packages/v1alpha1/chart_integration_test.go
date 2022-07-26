@@ -12,11 +12,15 @@ import (
 	"time"
 
 	sourcev1 "github.com/fluxcd/source-controller/api/v1beta2"
+	"github.com/google/go-cmp/cmp"
+	"github.com/google/go-cmp/cmp/cmpopts"
 	corev1 "github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
+	plugins "github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/core/plugins/v1alpha1"
 	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/fluxv2/packages/v1alpha1/common"
 	"golang.org/x/sync/semaphore"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	apiv1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/sets"
@@ -514,19 +518,79 @@ func TestKindClusterRepoAndChartRBAC(t *testing.T) {
 	}
 }
 
-func TestKindClusterGetAvailablePackageSummariesForOCI(t *testing.T) {
+func TestKindClusterAvailablePackageEndpointsForOCI(t *testing.T) {
 	fluxPluginClient, fluxPluginReposClient, err := checkEnv(t)
 	if err != nil {
 		t.Fatal(err)
 	}
 
 	ghUser := os.Getenv("GITHUB_USER")
-	if ghUser == "" {
-		t.Fatalf("Environment variable GITHUB_USER needs to be set")
-	}
 	ghToken := os.Getenv("GITHUB_TOKEN")
-	if ghToken == "" {
-		t.Fatalf("Environment variable GITHUB_TOKEN needs to be set")
+	if ghUser == "" || ghToken == "" {
+		t.Fatalf("Environment variables GITHUB_USER and GITHUB_TOKEN need to be set to run this test")
+	}
+
+	testCases := []struct {
+		testName    string
+		registryUrl string
+		secret      *apiv1.Secret
+	}{
+		{
+			testName:    "Testing [" + github_stefanprodan_podinfo_oci_registry_url + "] with basic auth secret",
+			registryUrl: github_stefanprodan_podinfo_oci_registry_url,
+			// this is a secret for authentication with GitHub (ghcr.io)
+			//    personal access token ghp_... can be seen on https://github.com/settings/tokens
+			// and has scopes:
+			// "admin:org, admin:repo_hook, delete:packages, delete_repo, repo, workflow, write:packages"
+			// one should be able to login successfully like this:
+			//   docker login ghcr.io -u $GITHUB_USER -p $GITHUB_TOKEN AND/OR
+			//   helm registry login ghcr.io -u $GITHUB_USER -p $GITHUB_TOKEN
+			secret: newBasicAuthSecret(types.NamespacedName{
+				Name:      "oci-repo-secret-" + randSeq(4),
+				Namespace: "default"},
+				ghUser,
+				ghToken,
+			),
+		},
+		{
+			testName:    "Testing [" + github_stefanprodan_podinfo_oci_registry_url + "] with dockerconfigjson secret",
+			registryUrl: github_stefanprodan_podinfo_oci_registry_url,
+			// this is a secret for authentication with GitHub (ghcr.io)
+			//    personal access token ghp_... can be seen on https://github.com/settings/tokens
+			// and has "admin:repo_hook, delete_repo, repo" scopes
+			// one should be able to login successfully like this:
+			//   docker login ghcr.io -u $GITHUB_USER -p $GITHUB_TOKEN AND/OR
+			//   helm registry login ghcr.io -u $GITHUB_USER -p $GITHUB_TOKEN
+			secret: newDockerConfigJsonSecret(types.NamespacedName{
+				Name:      "oci-repo-secret-" + randSeq(4),
+				Namespace: "default"},
+				"ghcr.io", ghUser, ghToken,
+			),
+		},
+		// TODO (gfichtenholt) TLS secret with CA
+		// TODO (gfichtenholt) TLS secret with CA, pub, priv
+
+		/*
+			{
+				// this gets set up in ./testdata/kind-cluster-setup.sh
+				// currently fails with AuthenticationFailed: failed to log into registry
+				//  'oci://registry-app-svc.default.svc.cluster.local:5000/helm-charts':
+				// Get "https://registry-app-svc.default.svc.cluster.local:5000/v2/":
+				// http: server gave HTTP response to HTTPS client
+				// the error comes from flux source-controller
+				// opened a new issue per souleb's request:
+				// https://github.com/fluxcd/source-controller/issues/805
+
+				testName:    "Testing [" + in_cluster_oci_registry_url + "]",
+				registryUrl: in_cluster_oci_registry_url,
+				secret: newBasicAuthSecret(types.NamespacedName{
+					Name:      "oci-repo-secret-" + randSeq(4),
+					Namespace: "default"},
+					"foo",
+					"bar",
+				),
+			},
+		*/
 	}
 
 	adminName := types.NamespacedName{
@@ -538,46 +602,119 @@ func TestKindClusterGetAvailablePackageSummariesForOCI(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	repoName := types.NamespacedName{
-		Name:      "my-podinfo-" + randSeq(4),
-		Namespace: "default",
+	for _, tc := range testCases {
+		t.Run(tc.testName, func(t *testing.T) {
+			repoName := types.NamespacedName{
+				Name:      "my-podinfo-" + randSeq(4),
+				Namespace: "default",
+			}
+
+			secretName := ""
+			if tc.secret != nil {
+				secretName = tc.secret.Name
+
+				if err := kubeCreateSecretAndCleanup(t, tc.secret); err != nil {
+					t.Fatal(err)
+				}
+			}
+
+			setUserManagedSecretsAndCleanup(t, fluxPluginReposClient, true)
+
+			if err := kubeAddHelmRepositoryAndCleanup(
+				t, repoName, "oci", tc.registryUrl, secretName, 0); err != nil {
+				t.Fatal(err)
+			}
+			// wait until this repo reaches 'Ready'
+			if err = kubeWaitUntilHelmRepositoryIsReady(t, repoName); err != nil {
+				t.Fatal(err)
+			}
+
+			grpcContext, cancel := context.WithTimeout(grpcContext, defaultContextTimeout)
+			defer cancel()
+
+			resp, err := fluxPluginClient.GetAvailablePackageSummaries(
+				grpcContext,
+				&corev1.GetAvailablePackageSummariesRequest{})
+			if err != nil {
+				t.Fatalf("%v", err)
+			}
+
+			opt1 := cmpopts.IgnoreUnexported(
+				corev1.GetAvailablePackageSummariesResponse{},
+				corev1.AvailablePackageSummary{},
+				corev1.AvailablePackageReference{},
+				corev1.Context{},
+				plugins.Plugin{},
+				corev1.PackageAppVersion{})
+			opt2 := cmpopts.SortSlices(lessAvailablePackageFunc)
+			if got, want := resp, expected_oci_stefanprodan_podinfo_available_summaries(repoName.Name); !cmp.Equal(got, want, opt1, opt2) {
+				t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opt1, opt2))
+			}
+
+			grpcContext, cancel = context.WithTimeout(grpcContext, defaultContextTimeout)
+			defer cancel()
+			resp2, err := fluxPluginClient.GetAvailablePackageVersions(
+				grpcContext, &corev1.GetAvailablePackageVersionsRequest{
+					AvailablePackageRef: &corev1.AvailablePackageReference{
+						Context: &corev1.Context{
+							Namespace: "default",
+						},
+						Identifier: repoName.Name + "/podinfo",
+					},
+				})
+			if err != nil {
+				t.Fatal(err)
+			}
+			opts := cmpopts.IgnoreUnexported(
+				corev1.GetAvailablePackageVersionsResponse{},
+				corev1.PackageAppVersion{})
+			if got, want := resp2, expected_versions_stefanprodan_podinfo; !cmp.Equal(want, got, opts) {
+				t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opts))
+			}
+
+			grpcContext, cancel = context.WithTimeout(grpcContext, defaultContextTimeout)
+			defer cancel()
+			resp3, err := fluxPluginClient.GetAvailablePackageDetail(
+				grpcContext,
+				&corev1.GetAvailablePackageDetailRequest{
+					AvailablePackageRef: &corev1.AvailablePackageReference{
+						Context: &corev1.Context{
+							Namespace: "default",
+						},
+						Identifier: repoName.Name + "/podinfo",
+					},
+				})
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			compareActualVsExpectedAvailablePackageDetail(
+				t,
+				resp3.AvailablePackageDetail,
+				expected_detail_oci_stefanprodan_podinfo(repoName.Name).AvailablePackageDetail)
+
+			// try a few older versions
+			grpcContext, cancel = context.WithTimeout(grpcContext, defaultContextTimeout)
+			defer cancel()
+			resp4, err := fluxPluginClient.GetAvailablePackageDetail(
+				grpcContext,
+				&corev1.GetAvailablePackageDetailRequest{
+					AvailablePackageRef: &corev1.AvailablePackageReference{
+						Context: &corev1.Context{
+							Namespace: "default",
+						},
+						Identifier: repoName.Name + "/podinfo",
+					},
+					PkgVersion: "6.1.5",
+				})
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			compareActualVsExpectedAvailablePackageDetail(
+				t,
+				resp4.AvailablePackageDetail,
+				expected_detail_oci_stefanprodan_podinfo_2(repoName.Name).AvailablePackageDetail)
+		})
 	}
-
-	// this is a secret for authentication with GitHub (ghcr.io)
-	//    personal access token ghp_... can be seen on https://github.com/settings/tokens
-	// and has "admin:repo_hook, delete_repo, repo" scopes
-	// one should be able to login successfully like this:
-	//   docker login ghcr.io -u $GITHUB_USER -p $GITHUB_TOKEN
-
-	ghSecret := newBasicAuthSecret(types.NamespacedName{
-		Name:      "github-secret-1",
-		Namespace: repoName.Namespace},
-		ghUser, ghToken)
-
-	if err := kubeCreateSecretAndCleanup(t, ghSecret); err != nil {
-		t.Fatal(err)
-	}
-	ctx, cancel := context.WithTimeout(grpcContext, defaultContextTimeout)
-	defer cancel()
-	setUserManagedSecretsAndCleanup(t, fluxPluginReposClient, ctx, true)
-
-	if err := kubeAddHelmRepositoryAndCleanup(
-		t, repoName, "oci", "oci://ghcr.io/stefanprodan/charts", ghSecret.Name, 0); err != nil {
-		t.Fatalf("%v", err)
-	}
-	// wait until this repo reaches 'Ready'
-	if err = kubeWaitUntilHelmRepositoryIsReady(t, repoName); err != nil {
-		t.Fatal(err)
-	}
-
-	grpcContext, cancel = context.WithTimeout(grpcContext, 90*time.Second)
-	defer cancel()
-	resp, err := fluxPluginClient.GetAvailablePackageSummaries(
-		grpcContext,
-		&corev1.GetAvailablePackageSummariesRequest{})
-	if err != nil {
-		t.Fatalf("%v", err)
-	}
-
-	t.Logf("=======> %s", common.PrettyPrint(resp))
 }
