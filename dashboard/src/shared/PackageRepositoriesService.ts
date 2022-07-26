@@ -223,29 +223,30 @@ export class PackageRepositoriesService {
     // An "Any" object has "typeUrl" with the FQN of the type and a "value",
     // which is the result of the encoding (+finish(), to get the Uint8Array)
     // of the actual custom object
+    let detail, helmCustomDetail: HelmPackageRepositoryCustomDetail;
     switch (request.plugin?.name) {
       case PluginNames.PACKAGES_HELM:
-        // populate the non-optional fields
-        // eslint-disable-next-line no-case-declarations
-        const helmCustomDetail: HelmPackageRepositoryCustomDetail = {
-          ociRepositories: request.customDetail.ociRepositories || [],
-          performValidation: !!request.customDetail.performValidation,
+        detail = request.customDetail as HelmPackageRepositoryCustomDetail;
+        helmCustomDetail = {
+          // populate the non-optional fields
+          ociRepositories: detail?.ociRepositories || [],
+          performValidation: !!detail?.performValidation,
+          filterRule: detail?.filterRule,
         };
-        // populate the filterRule if it's not empty
-        if (request.customDetail.filterRule) {
-          helmCustomDetail.filterRule = request.customDetail.filterRule;
-        }
+
         // populate the imagesPullSecret if it's not empty
         if (
-          request.customDetail.imagesPullSecret?.secretRef ||
-          Object.values(request.customDetail?.imagesPullSecret?.credentials as any).some(e => !!e)
+          detail?.imagesPullSecret?.secretRef ||
+          Object.values(detail?.imagesPullSecret?.credentials as DockerCredentials).some(e => !!e)
         ) {
-          helmCustomDetail.imagesPullSecret = request.customDetail.imagesPullSecret;
+          helmCustomDetail.imagesPullSecret = detail.imagesPullSecret;
         }
+
         return {
           typeUrl: `${helmProtobufPackage}.HelmPackageRepositoryCustomDetail`,
           value: HelmPackageRepositoryCustomDetail.encode(helmCustomDetail).finish(),
         } as Any;
+
       case PluginNames.PACKAGES_KAPP:
         return {
           typeUrl: `${kappControllerProtobufPackage}.KappControllerPackageRepositoryCustomDetail`,

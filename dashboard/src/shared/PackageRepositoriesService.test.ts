@@ -23,7 +23,9 @@ const namespace = "namespace";
 const plugin: Plugin = { name: "my.plugin", version: "0.0.1" };
 
 const helmCustomDetail: HelmPackageRepositoryCustomDetail = {
-  dockerRegistrySecrets: ["test-1"],
+  imagesPullSecret: {
+    secretRef: "test-1",
+  },
   ociRepositories: ["apache", "jenkins"],
   performValidation: true,
   filterRule: {
@@ -285,7 +287,7 @@ describe("buildEncodedCustomDetail encoding", () => {
     expect(encodedCustomDetail?.typeUrl).toBe(
       "kubeappsapis.plugins.helm.packages.v1alpha1.HelmPackageRepositoryCustomDetail",
     );
-    expect(encodedCustomDetail?.value.byteLength).toBe(91);
+    expect(encodedCustomDetail?.value.byteLength).toBe(101);
   });
 
   it("encodes the custom details (kapp)", async () => {
