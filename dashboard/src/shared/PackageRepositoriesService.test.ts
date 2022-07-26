@@ -285,7 +285,7 @@ describe("buildEncodedCustomDetail encoding", () => {
     expect(encodedCustomDetail?.typeUrl).toBe(
       "kubeappsapis.plugins.helm.packages.v1alpha1.HelmPackageRepositoryCustomDetail",
     );
-    expect(encodedCustomDetail?.value.byteLength).toBe(99);
+    expect(encodedCustomDetail?.value.byteLength).toBe(91);
   });
 
   it("encodes the custom details (kapp)", async () => {
