@@ -105,7 +105,7 @@ function PkgRepoList() {
   const tableColumns = [
     { accessor: "name", Header: "Name" },
     { accessor: "url", Header: "URL" },
-    { accessor: "packageFormat", Header: "Package Format" },
+    { accessor: "packageFormat", Header: "Packaging Format" },
     { accessor: "accessLevel", Header: "Access Level" },
     { accessor: "namespace", Header: "Namespace" },
     { accessor: "status", Header: "Status" },
@@ -116,11 +116,9 @@ function PkgRepoList() {
       return {
         name: getRepoNameLinkAndTooltip(cluster, repo),
         url: repo.url,
-        // TODO(agamez): the PackageRepositorySummary API doesn't expose this field. It will be added in upcoming PRs; in the meantime, set to "unknown"
-        // accessLevel: repo.type?.auth?.header ? "Private" : "Public",
-        accessLevel: "unknown",
+        accessLevel: repo.requiresAuth ? "Private" : "Public",
         namespace: repo.packageRepoRef?.context?.namespace,
-        packageFormat: getPluginName(repo.packageRepoRef?.plugin),
+        packageFormat: `${getPluginName(repo.packageRepoRef?.plugin)} (${repo.type})`,
         status: repo.status?.ready ? (
           <>Ready</>
         ) : (
@@ -283,7 +281,7 @@ function getRepoNameLinkAndTooltip(cluster: string, repo: PackageRepositorySumma
           label="pending-tooltip"
           id={`${repo.name}-pending-tooltip`}
           icon="info-circle"
-          position="bottom-left"
+          position="top-right"
           small={true}
           iconProps={{ solid: true, size: "sm" }}
         >
