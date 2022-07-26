@@ -340,7 +340,12 @@ var (
 		},
 	}
 
-	addRepoReqBearerToken = func(token string) *corev1.AddPackageRepositoryRequest {
+	addRepoReqBearerToken = func(token string, withPrefix bool) *corev1.AddPackageRepositoryRequest {
+		prefixedToken := token
+		if withPrefix {
+			prefixedToken = "Bearer " + token
+		}
+
 		return &corev1.AddPackageRepositoryRequest{
 			Name:            "bar",
 			Context:         &corev1.Context{Namespace: "foo", Cluster: KubeappsCluster},
@@ -350,7 +355,7 @@ var (
 			Auth: &corev1.PackageRepositoryAuth{
 				Type: corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_BEARER,
 				PackageRepoAuthOneOf: &corev1.PackageRepositoryAuth_Header{
-					Header: token,
+					Header: prefixedToken,
 				},
 			},
 		}

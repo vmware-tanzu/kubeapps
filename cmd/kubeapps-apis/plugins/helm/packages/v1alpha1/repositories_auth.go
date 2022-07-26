@@ -88,7 +88,7 @@ func newSecretFromTlsConfigAndAuth(repoName types.NamespacedName,
 				if token == RedactedString {
 					isSameSecret = true
 				} else {
-					secret.Data[SecretAuthHeaderKey] = []byte("Bearer " + token)
+					secret.Data[SecretAuthHeaderKey] = []byte("Bearer " + strings.TrimPrefix(token, "Bearer "))
 				}
 			} else {
 				return nil, false, status.Errorf(codes.InvalidArgument, "Bearer token is missing")
