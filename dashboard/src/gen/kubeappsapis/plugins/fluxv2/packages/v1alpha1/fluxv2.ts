@@ -33,7 +33,7 @@ import {
   DeletePackageRepositoryResponse,
 } from "../../../../core/packages/v1alpha1/repositories";
 import { BrowserHeaders } from "browser-headers";
-import _m0 from "protobufjs/minimal";
+import * as _m0 from "protobufjs/minimal";
 
 export const protobufPackage = "kubeappsapis.plugins.fluxv2.packages.v1alpha1";
 
@@ -793,7 +793,6 @@ export class GrpcWebImpl {
 
     debug?: boolean;
     metadata?: grpc.Metadata;
-    upStreamRetryCodes?: number[];
   };
 
   constructor(
@@ -803,7 +802,6 @@ export class GrpcWebImpl {
 
       debug?: boolean;
       metadata?: grpc.Metadata;
-      upStreamRetryCodes?: number[];
     },
   ) {
     this.host = host;
