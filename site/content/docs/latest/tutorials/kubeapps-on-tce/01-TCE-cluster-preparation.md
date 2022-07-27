@@ -6,15 +6,15 @@ The main components are:
 
 - **Tanzu CLI**
 
-    A CLI installed on your local machine and then used to operate with clusters on your chosen target platform.
+  A CLI installed on your local machine and then used to operate with clusters on your chosen target platform.
 
 - **Managed clusters**
 
-    This is the primary deployment model for clusters in the Tanzu ecosystem and is recommended for production scenarios. You can read more about [managed clusters in the official Tanzu Community Edition documentation](https://tanzucommunityedition.io/docs/v0.12/planning/#managed-cluster).
+  This is the primary deployment model for clusters in the Tanzu ecosystem and is recommended for production scenarios. You can read more about [managed clusters in the official Tanzu Community Edition documentation](https://tanzucommunityedition.io/docs/v0.12/planning/#managed-cluster).
 
 - **Unmanaged clusters**
 
-    Offer a single node, local workstation cluster suitable for a development/test environment. You can read more about [unmanaged clusters in the official Tanzu Community Edition documentation](https://tanzucommunityedition.io/docs/v0.12/planning/#unmanaged-cluster).
+  Offer a single node, local workstation cluster suitable for a development/test environment. You can read more about [unmanaged clusters in the official Tanzu Community Edition documentation](https://tanzucommunityedition.io/docs/v0.12/planning/#unmanaged-cluster).
 
 In this step of the tutorial, we will prepare the installation of the TCE cluster.
 
