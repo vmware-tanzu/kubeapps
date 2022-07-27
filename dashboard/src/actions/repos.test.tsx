@@ -17,6 +17,7 @@ import {
   UpdatePackageRepositoryResponse,
 } from "gen/kubeappsapis/core/packages/v1alpha1/repositories";
 import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins";
+import { HelmPackageRepositoryCustomDetail } from "gen/kubeappsapis/plugins/helm/packages/v1alpha1/helm";
 import context from "jest-plugin-context";
 import configureMockStore from "redux-mock-store";
 import thunk from "redux-thunk";
@@ -122,11 +123,14 @@ const pkgRepoFormData = {
   },
   customCA: "",
   customDetail: {
-    dockerRegistrySecrets: [],
+    imagesPullSecret: {
+      secretRef: "repo-1",
+      credentials: { server: "", username: "", password: "", email: "" },
+    },
     ociRepositories: [],
     performValidation: false,
     filterRules: [],
-  },
+  } as HelmPackageRepositoryCustomDetail,
   description: "",
   dockerRegCreds: {
     password: "",
@@ -551,7 +555,13 @@ describe("addRepo", () => {
     await store.dispatch(
       repoActions.addRepo("my-namespace", {
         ...pkgRepoFormData,
-        customDetail: { ...pkgRepoFormData.customDetail, dockerRegistrySecrets: ["repo-1"] },
+        customDetail: {
+          ...pkgRepoFormData.customDetail,
+          imagesPullSecret: {
+            secretRef: "repo-1",
+            credentials: { server: "", username: "", password: "", email: "" },
+          },
+        },
       }),
     );
 
@@ -560,7 +570,13 @@ describe("addRepo", () => {
       "my-namespace",
       {
         ...pkgRepoFormData,
-        customDetail: { ...pkgRepoFormData.customDetail, dockerRegistrySecrets: ["repo-1"] },
+        customDetail: {
+          ...pkgRepoFormData.customDetail,
+          imagesPullSecret: {
+            secretRef: "repo-1",
+            credentials: { server: "", username: "", password: "", email: "" },
+          },
+        },
       },
       true,
     );

@@ -12,7 +12,7 @@ import PageHeader from "components/PageHeader/PageHeader";
 import { push } from "connected-react-router";
 import {
   InstalledPackageReference,
-  ResourceRef
+  ResourceRef,
 } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
 import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins";
 import * as yaml from "js-yaml";
@@ -28,7 +28,7 @@ import {
   DeleteError,
   FetchError,
   FetchWarning,
-  IStoreState
+  IStoreState,
 } from "shared/types";
 import { getPluginsSupportingRollback } from "shared/utils";
 import ApplicationStatus from "../../containers/ApplicationStatusContainer";
@@ -161,7 +161,12 @@ export default function AppView() {
     secrets: [],
   } as IAppViewResourceRefs);
   const {
-    apps: { error, isFetching, selected: selectedInstalledPkg, selectedDetails: selectedAvailablePkg },
+    apps: {
+      error,
+      isFetching,
+      selected: selectedInstalledPkg,
+      selectedDetails: selectedAvailablePkg,
+    },
     config: { customAppViews },
   } = useSelector((state: IStoreState) => state);
 

@@ -36,7 +36,9 @@ export const initialState: IPackageRepositoryState = {
 };
 
 const helmPackageRepositoryCustomDetail = {
-  dockerRegistrySecrets: [],
+  imagesPullSecret: {
+    secretRef: "",
+  },
   ociRepositories: [],
   performValidation: false,
 } as HelmPackageRepositoryCustomDetail;
@@ -57,22 +59,20 @@ const reposReducer = (
         reposSummaries: action.payload,
         errors: {},
       };
-    case getType(actions.repos.receiveRepoDetail):
-      // eslint-disable-next-line no-case-declarations
+    case getType(actions.repos.receiveRepoDetail): {
       let customDetail: any;
-      // eslint-disable-next-line no-case-declarations
       let repoWithCustomDetail = { ...action.payload };
 
       if (action.payload?.customDetail?.value) {
         switch (action.payload.packageRepoRef?.plugin?.name) {
-          // handle the decoding of the customDetail for the helm plugin
+          // handle the decoding of each plugin's customDetail
           case PluginNames.PACKAGES_HELM:
             customDetail = helmPackageRepositoryCustomDetail;
             try {
               customDetail = HelmPackageRepositoryCustomDetail.decode(
                 action.payload.customDetail.value,
               );
-              repoWithCustomDetail = { ...action.payload, customDetail: customDetail };
+              repoWithCustomDetail = { ...action.payload, customDetail };
             } catch (error) {
               repoWithCustomDetail = { ...action.payload };
             }
@@ -83,7 +83,7 @@ const reposReducer = (
               customDetail = KappControllerPackageRepositoryCustomDetail.decode(
                 action.payload.customDetail.value,
               );
-              repoWithCustomDetail = { ...action.payload, customDetail: customDetail };
+              repoWithCustomDetail = { ...action.payload, customDetail };
             } catch (error) {
               repoWithCustomDetail = { ...action.payload };
             }
@@ -99,6 +99,7 @@ const reposReducer = (
         repoDetail: repoWithCustomDetail,
         errors: {},
       };
+    }
     case getType(actions.repos.requestRepoSummaries):
     case getType(actions.repos.addOrUpdateRepo):
       return { ...state, isFetching: true };

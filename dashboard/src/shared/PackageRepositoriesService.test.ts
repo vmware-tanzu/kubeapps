@@ -23,7 +23,10 @@ const namespace = "namespace";
 const plugin: Plugin = { name: "my.plugin", version: "0.0.1" };
 
 const helmCustomDetail: HelmPackageRepositoryCustomDetail = {
-  dockerRegistrySecrets: ["test-1"],
+  imagesPullSecret: {
+    secretRef: "test-1",
+    credentials: undefined,
+  },
   ociRepositories: ["apache", "jenkins"],
   performValidation: true,
   filterRule: {
@@ -44,6 +47,10 @@ const kappCustomDetail: KappControllerPackageRepositoryCustomDetail = {
         },
       },
     },
+    git: undefined,
+    http: undefined,
+    image: undefined,
+    inline: undefined,
   },
 };
 
@@ -285,7 +292,10 @@ describe("buildEncodedCustomDetail encoding", () => {
     expect(encodedCustomDetail?.typeUrl).toBe(
       "kubeappsapis.plugins.helm.packages.v1alpha1.HelmPackageRepositoryCustomDetail",
     );
-    expect(encodedCustomDetail?.value.byteLength).toBe(91);
+    expect(encodedCustomDetail?.value.byteLength).toBe(101);
+    expect(
+      HelmPackageRepositoryCustomDetail.decode(encodedCustomDetail?.value as any),
+    ).toStrictEqual(helmCustomDetail);
   });
 
   it("encodes the custom details (kapp)", async () => {
@@ -298,6 +308,9 @@ describe("buildEncodedCustomDetail encoding", () => {
       "kubeappsapis.plugins.kapp_controller.packages.v1alpha1.KappControllerPackageRepositoryCustomDetail",
     );
     expect(encodedCustomDetail?.value.byteLength).toBe(33);
+    expect(
+      KappControllerPackageRepositoryCustomDetail.decode(encodedCustomDetail?.value as any),
+    ).toStrictEqual(kappCustomDetail);
   });
 });
 

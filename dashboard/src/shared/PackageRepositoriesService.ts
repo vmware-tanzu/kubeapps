@@ -224,13 +224,28 @@ export class PackageRepositoriesService {
     // which is the result of the encoding (+finish(), to get the Uint8Array)
     // of the actual custom object
     switch (request.plugin?.name) {
-      case PluginNames.PACKAGES_HELM:
+      case PluginNames.PACKAGES_HELM: {
+        const detail = request.customDetail as HelmPackageRepositoryCustomDetail;
+        const helmCustomDetail = {
+          // populate the non-optional fields
+          ociRepositories: detail?.ociRepositories || [],
+          performValidation: !!detail?.performValidation,
+          filterRule: detail?.filterRule,
+        } as HelmPackageRepositoryCustomDetail;
+
+        // populate the imagesPullSecret if it's not empty
+        if (
+          detail?.imagesPullSecret?.secretRef ||
+          Object.values(detail?.imagesPullSecret?.credentials as DockerCredentials).some(e => !!e)
+        ) {
+          helmCustomDetail.imagesPullSecret = detail.imagesPullSecret;
+        }
+
         return {
           typeUrl: `${helmProtobufPackage}.HelmPackageRepositoryCustomDetail`,
-          value: HelmPackageRepositoryCustomDetail.encode(
-            request.customDetail as HelmPackageRepositoryCustomDetail,
-          ).finish(),
+          value: HelmPackageRepositoryCustomDetail.encode(helmCustomDetail).finish(),
         } as Any;
+      }
       case PluginNames.PACKAGES_KAPP:
         return {
           typeUrl: `${kappControllerProtobufPackage}.KappControllerPackageRepositoryCustomDetail`,

@@ -39,20 +39,18 @@ test("Deploy a chart using a private container image", async ({ page }) => {
   await page.locator('[id="kubeapps-repo-password"]').fill("password");
 
   // Set the Docker repo credentials
-  // TODO(agamez): currently, the API doesn't allow creating this secret, and the UI is not dealing with
-  // secret creation anymore.
-  // Instead, either 1) wait until the API supports it and use the commented-out snippet below:
-
-  // await page.locator('[id="kubeapps-imagePullSecrets-cred-server"]').fill( process.env.DOCKER_REGISTRY_UR);
-  // await page.locator('[id="kubeapps-imagePullSecrets-cred-username"]').fill(process.env.DOCKER_USERNAME);
-  // await page.locator('[id="kubeapps-imagePullSecrets-cred-password"]').fill(process.env.DOCKER_PASSWORD);
-  // await page.locator('[id="kubeapps-imagePullSecrets-cred-email"]').fill("test@example.com");
-
-  // or 2) create a "my-repo-secret" secret with the Docker repo credentials in this very test case
-  // by manually invoking the resources API
   await page.locator("text=Docker Registry Credentials").nth(1).click();
-  await page.locator('[id="kubeapps-repo-auth-secret-name-pullsecret"]').fill("my-repo-secret");
 
+  await page
+    .locator('[id="kubeapps-imagePullSecrets-cred-server"]')
+    .fill(process.env.DOCKER_REGISTRY_URL);
+  await page
+    .locator('[id="kubeapps-imagePullSecrets-cred-username"]')
+    .fill(process.env.DOCKER_USERNAME);
+  await page
+    .locator('[id="kubeapps-imagePullSecrets-cred-password"]')
+    .fill(process.env.DOCKER_PASSWORD);
+  await page.locator('[id="kubeapps-imagePullSecrets-cred-email"]').fill("test@example.com");
   await page.locator("text=Install Repository >> div").click();
 
   // For now, disabling the this test case temporarily.
