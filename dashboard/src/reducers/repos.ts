@@ -59,10 +59,8 @@ const reposReducer = (
         reposSummaries: action.payload,
         errors: {},
       };
-    case getType(actions.repos.receiveRepoDetail):
-      // eslint-disable-next-line no-case-declarations
+    case getType(actions.repos.receiveRepoDetail): {
       let customDetail: any;
-      // eslint-disable-next-line no-case-declarations
       let repoWithCustomDetail = { ...action.payload };
 
       if (action.payload?.customDetail?.value) {
@@ -101,6 +99,7 @@ const reposReducer = (
         repoDetail: repoWithCustomDetail,
         errors: {},
       };
+    }
     case getType(actions.repos.requestRepoSummaries):
     case getType(actions.repos.addOrUpdateRepo):
       return { ...state, isFetching: true };

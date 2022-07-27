@@ -223,16 +223,15 @@ export class PackageRepositoriesService {
     // An "Any" object has "typeUrl" with the FQN of the type and a "value",
     // which is the result of the encoding (+finish(), to get the Uint8Array)
     // of the actual custom object
-    let detail, helmCustomDetail: HelmPackageRepositoryCustomDetail;
     switch (request.plugin?.name) {
-      case PluginNames.PACKAGES_HELM:
-        detail = request.customDetail as HelmPackageRepositoryCustomDetail;
-        helmCustomDetail = {
+      case PluginNames.PACKAGES_HELM: {
+        const detail = request.customDetail as HelmPackageRepositoryCustomDetail;
+        const helmCustomDetail = {
           // populate the non-optional fields
           ociRepositories: detail?.ociRepositories || [],
           performValidation: !!detail?.performValidation,
           filterRule: detail?.filterRule,
-        };
+        } as HelmPackageRepositoryCustomDetail;
 
         // populate the imagesPullSecret if it's not empty
         if (
@@ -246,7 +245,7 @@ export class PackageRepositoriesService {
           typeUrl: `${helmProtobufPackage}.HelmPackageRepositoryCustomDetail`,
           value: HelmPackageRepositoryCustomDetail.encode(helmCustomDetail).finish(),
         } as Any;
-
+      }
       case PluginNames.PACKAGES_KAPP:
         return {
           typeUrl: `${kappControllerProtobufPackage}.KappControllerPackageRepositoryCustomDetail`,
