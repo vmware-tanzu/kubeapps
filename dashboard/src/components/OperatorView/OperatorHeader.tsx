@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import PageHeader from "components/PageHeader/PageHeader";
-import placeholder from "../../placeholder.png";
+import placeholder from "icons/placeholder.svg";
 
 interface IOperatorHeaderProps {
   title: string;

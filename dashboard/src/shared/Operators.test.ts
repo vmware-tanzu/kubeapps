@@ -278,7 +278,7 @@ describe("#getIcon", () => {
     const csv = {
       spec: {},
     } as IClusterServiceVersion;
-    expect(getIcon(csv)).toEqual("placeholder.png");
+    expect(getIcon(csv)).toEqual("placeholder.svg");
   });
 });
 
