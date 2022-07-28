@@ -74,7 +74,9 @@ func (s *Server) newRepo(ctx context.Context, repo *HelmRepository) (*corev1.Pac
 	}
 	// Copy secret to global namespace if needed
 	if repo.name.Namespace != s.globalPackagingNamespace && secret != nil {
-		s.copyRepositorySecret(typedClient, secret, repo.name)
+		if err = s.copyRepositorySecret(typedClient, secret, repo.name); err != nil {
+			return nil, err
+		}
 	}
 
 	// Handle imagesPullSecret if any
@@ -326,7 +328,9 @@ func (s *Server) updateRepo(ctx context.Context, repo *HelmRepository) (*corev1.
 	}
 	// Copy secret to global namespace if needed
 	if repo.name.Namespace != s.globalPackagingNamespace && secret != nil {
-		s.copyRepositorySecret(typedClient, secret, repo.name)
+		if err = s.copyRepositorySecret(typedClient, secret, repo.name); err != nil {
+			return nil, err
+		}
 	}
 
 	// Handle imagesPullSecret if any
