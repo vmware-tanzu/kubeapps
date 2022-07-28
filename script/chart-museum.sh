@@ -109,6 +109,5 @@ case $1 in
     ;;
 
   *)
-    echo -n "unknown command"
     ;;
 esac
