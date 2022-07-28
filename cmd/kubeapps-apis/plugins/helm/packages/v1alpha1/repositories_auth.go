@@ -9,6 +9,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/plugins/helm/packages/v1alpha1"
+	k8sErrors "k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/client-go/kubernetes/typed/core/v1"
 	"strings"
 
@@ -33,6 +34,11 @@ const (
 
 func secretNameForRepo(repoName string) string {
 	return fmt.Sprintf("apprepo-%s", repoName)
+}
+
+// Generate a suitable name for per-namespace repository secret
+func namespacedSecretNameForRepo(repoName, namespace string) string {
+	return fmt.Sprintf("%s-%s", namespace, secretNameForRepo(repoName))
 }
 
 func newLocalOpaqueSecret(ownerRepo types.NamespacedName) *k8scorev1.Secret {
@@ -278,6 +284,23 @@ func deleteSecret(ctx context.Context, secretsInterface v1.SecretInterface, secr
 		}
 	}
 	return nil
+}
+
+func (s *Server) copyRepositorySecret(typedClient kubernetes.Interface, secret *k8scorev1.Secret, repoName types.NamespacedName) error {
+	targetNamespace := s.globalPackagingNamespace
+	globalSecret := &k8scorev1.Secret{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      namespacedSecretNameForRepo(repoName.Name, repoName.Namespace),
+			Namespace: targetNamespace,
+		},
+		Type: secret.Type,
+		Data: secret.Data,
+	}
+	_, err := typedClient.CoreV1().Secrets(targetNamespace).Create(context.TODO(), globalSecret, metav1.CreateOptions{})
+	if err != nil && k8sErrors.IsAlreadyExists(err) {
+		_, err = typedClient.CoreV1().Secrets(targetNamespace).Update(context.TODO(), globalSecret, metav1.UpdateOptions{})
+	}
+	return err
 }
 
 func updateKubeappsManagedImagesPullSecret(ctx context.Context, typedClient kubernetes.Interface,
