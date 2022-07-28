@@ -6,7 +6,6 @@ import (
 	"bytes"
 	"crypto/tls"
 	"fmt"
-	"reflect"
 	"strings"
 
 	"helm.sh/helm/v3/pkg/getter"
@@ -65,8 +64,14 @@ func (r *fakeRegistryClient) downloadChart(chart *repo.ChartVersion) (*bytes.Buf
 	return nil, fmt.Errorf("TODO implement fakeRegistryClient.downloadChart")
 }
 
-func newFakeRegistryClient() (RegistryClient, string, error) {
-	return &fakeRegistryClient{}, "", nil
+func newFakeRegistryClientAndChartDownloader(isLogin bool, tlsConfig *tls.Config, getterOpts []getter.Option, helmGetter getter.Getter) (*registryClientWithChartDownloader, string, error) {
+	client := &fakeRegistryClient{}
+	chartDownloader := func(chartVersion *repo.ChartVersion) (*bytes.Buffer, error) {
+		return client.downloadChart(chartVersion)
+	}
+	return &registryClientWithChartDownloader{
+		client, chartDownloader,
+	}, "", nil
 }
 
 func initOciFakeClientBuilder() {
@@ -76,17 +81,7 @@ func initOciFakeClientBuilder() {
 		newFakeDockerRegistryApiV2RepositoryLister(),
 	}
 
-	registryClientBuilderFn = func(isLogin bool) (RegistryClient, string, error) {
-		return newFakeRegistryClient()
-	}
-
-	registryChartDownloaderFn = func(client RegistryClient, tlsConfig *tls.Config, getterOpts []getter.Option, helmGetter getter.Getter) RegistryClientChartDownloaderFn {
-		return func(chart *repo.ChartVersion) (*bytes.Buffer, error) {
-			fake, ok := client.(*fakeRegistryClient)
-			if !ok {
-				return nil, fmt.Errorf("Unexpected client: %s", reflect.TypeOf(client))
-			}
-			return fake.downloadChart(chart)
-		}
+	registryClientBuilderFn = func(isLogin bool, tlsConfig *tls.Config, getterOpts []getter.Option, helmGetter getter.Getter) (*registryClientWithChartDownloader, string, error) {
+		return newFakeRegistryClientAndChartDownloader(isLogin, tlsConfig, getterOpts, helmGetter)
 	}
 }
