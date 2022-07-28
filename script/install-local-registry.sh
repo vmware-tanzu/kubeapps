@@ -61,31 +61,6 @@ pushContainerToLocalRegistry() {
     pkill -f "kubectl -n ${REGISTRY_NS} port-forward service/docker-registry 5600:5600"
 }
 
-pushChartToChartMuseum() {
-    CHART_MUSEUM_NS=$1
-    CM_USER=$2
-    CM_PASSWORD=$3
-    CHART_NAME=$4
-    CHART_VERSION=$5
-
-    local POD_NAME=$(kubectl get pods --namespace ${CHART_MUSEUM_NS} -l "app=chartmuseum" -l "release=chartmuseum" -o jsonpath="{.items[0].metadata.name}")
-    /bin/sh -c "kubectl port-forward $POD_NAME 8080:8080 --namespace ${CHART_MUSEUM_NS} &"
-    waitForPort localhost 8080
-
-    CHART_EXISTS=$(curl -u "${CM_USER}:${CM_PASSWORD}" -X GET http://localhost:8080/api/charts/${CHART_NAME}/${CHART_VERSION} | jq -r 'any([ .error] ; . > 0)')
-    if [ "$CHART_EXISTS" == "true" ]; then
-        # Charts exists and must be deleted first
-        curl -u "${CM_USER}:${CM_PASSWORD}" -X DELETE http://localhost:8080/api/charts/${CHART_NAME}/${CHART_VERSION}
-    fi
-
-    # Upload chart to Chart Museum
-    FILE_NAME="${CHART_NAME}-${CHART_VERSION}.tgz"
-    curl -u "${CM_USER}:${CM_PASSWORD}" --data-binary "@${FILE_NAME}" http://localhost:8080/api/charts  
-
-    # End port forward
-    pkill -f "kubectl port-forward $POD_NAME 8080:8080 --namespace ${CHART_MUSEUM_NS}"
-}
-
 # Scans for opened port during max. 10 seconds
 waitForPort() {
   HOST_NAME=$1

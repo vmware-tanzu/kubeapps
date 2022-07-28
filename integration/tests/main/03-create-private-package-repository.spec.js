@@ -27,7 +27,7 @@ test("Create a new private package repository successfully", async ({ page }) =>
   const repoName = utils.getRandomName("my-repo");
   console.log(`Creating package repository "${repoName}"`);
   await page.fill("input#kubeapps-repo-name", repoName);
-  await page.fill("input#kubeapps-repo-url", "http://chartmuseum-chartmuseum.kubeapps:8080");
+  await page.fill("input#kubeapps-repo-url", "http://chartmuseum.chart-museum.svc.cluster.local:8080");
 
   // Set credentials
   await page.click('label:has-text("Basic Auth")');

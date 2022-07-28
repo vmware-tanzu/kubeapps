@@ -27,7 +27,7 @@ test("Deploy a chart using a private container image", async ({ page }) => {
   const repoName = utils.getRandomName("private-img-repo");
   console.log(`Creating package repository "${repoName}"`);
   await page.fill("input#kubeapps-repo-name", repoName);
-  await page.fill("input#kubeapps-repo-url", "http://chartmuseum-chartmuseum.kubeapps:8080");
+  await page.fill("input#kubeapps-repo-url", "http://chartmuseum.chart-museum.svc.cluster.local:8080");
 
   // Set credentials for repository
   await page.click('label:has-text("Basic Auth")');
