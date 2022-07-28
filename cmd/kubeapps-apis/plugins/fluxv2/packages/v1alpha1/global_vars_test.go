@@ -928,6 +928,23 @@ var (
 		},
 	}
 
+	add_repo_6 = sourcev1.HelmRepository{
+		TypeMeta: metav1.TypeMeta{
+			Kind:       sourcev1.HelmRepositoryKind,
+			APIVersion: sourcev1.GroupVersion.String(),
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:            "bar",
+			Namespace:       "foo",
+			ResourceVersion: "1",
+		},
+		Spec: sourcev1.HelmRepositorySpec{
+			URL:      github_stefanprodan_podinfo_oci_registry_url,
+			Interval: metav1.Duration{Duration: 10 * time.Minute},
+			Type:     "oci",
+		},
+	}
+
 	add_repo_req_1 = &corev1.AddPackageRepositoryRequest{
 		Name:            "bar",
 		Context:         &corev1.Context{Namespace: "foo"},
@@ -1221,6 +1238,13 @@ var (
 				},
 			},
 		},
+	}
+
+	add_repo_req_26 = &corev1.AddPackageRepositoryRequest{
+		Name:    "bar",
+		Context: &corev1.Context{Namespace: "foo"},
+		Type:    "oci",
+		Url:     github_stefanprodan_podinfo_oci_registry_url,
 	}
 
 	add_repo_expected_resp = &corev1.AddPackageRepositoryResponse{
@@ -2677,6 +2701,20 @@ var (
 				Reason:     corev1.PackageRepositoryStatus_STATUS_REASON_SUCCESS,
 				UserReason: "Succeeded: Helm repository is ready",
 			},
+		},
+	}
+
+	get_repo_detail_resp_19 = &corev1.GetPackageRepositoryDetailResponse{
+		Detail: &corev1.PackageRepositoryDetail{
+			PackageRepoRef:  get_repo_detail_package_resp_ref,
+			Name:            "repo-1",
+			Description:     "",
+			NamespaceScoped: false,
+			Type:            "oci",
+			Url:             "oci://localhost:54321/userX/charts",
+			Interval:        "1m",
+			Auth:            &corev1.PackageRepositoryAuth{},
+			Status:          podinfo_repo_status_4,
 		},
 	}
 

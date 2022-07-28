@@ -193,7 +193,7 @@ func TestGetInstalledPackageSummariesWithoutPagination(t *testing.T) {
 			defer cleanup()
 
 			for _, existing := range tc.existingObjs {
-				ts2, repo, err := newRepoWithIndex(
+				ts2, repo, err := newHttpRepoAndServeIndex(
 					existing.repoIndex, existing.repoName, existing.repoNamespace, nil, "")
 				if err != nil {
 					t.Fatalf("%+v", err)
@@ -257,7 +257,7 @@ func TestGetInstalledPackageSummariesWithPagination(t *testing.T) {
 		defer cleanup()
 
 		for _, existing := range existingObjs {
-			ts2, repo, err := newRepoWithIndex(
+			ts2, repo, err := newHttpRepoAndServeIndex(
 				existing.repoIndex, existing.repoName, existing.repoNamespace, nil, "")
 			if err != nil {
 				t.Fatalf("%+v", err)
@@ -625,7 +625,7 @@ func TestCreateInstalledPackage(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			ts, repo, err := newRepoWithIndex(
+			ts, repo, err := newHttpRepoAndServeIndex(
 				tc.existingObjs.repoIndex, tc.existingObjs.repoName, tc.existingObjs.repoNamespace, nil, "")
 			if err != nil {
 				t.Fatalf("%+v", err)

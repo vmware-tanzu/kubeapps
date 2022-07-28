@@ -1393,7 +1393,7 @@ func TestKindClusterAddTagsToOciRepository(t *testing.T) {
 			t.Fatal(err)
 		}
 
-		interval := time.Duration(5 * time.Second)
+		interval := time.Duration(30 * time.Second)
 
 		if err := kubeAddHelmRepositoryAndCleanup(
 			t, repoName, "oci", github_gfichtenholt_podinfo_oci_registry_url, secret.Name, interval); err != nil {
@@ -1405,10 +1405,11 @@ func TestKindClusterAddTagsToOciRepository(t *testing.T) {
 			t.Fatal(err)
 		}
 
-		grpcContext, cancel := context.WithTimeout(grpcContext, defaultContextTimeout)
+		grpcContext2, cancel := context.WithTimeout(grpcContext, defaultContextTimeout)
 		defer cancel()
+
 		resp2, err := fluxPluginClient.GetAvailablePackageVersions(
-			grpcContext, &corev1.GetAvailablePackageVersionsRequest{
+			grpcContext2, &corev1.GetAvailablePackageVersionsRequest{
 				AvailablePackageRef: &corev1.AvailablePackageReference{
 					Context: &corev1.Context{
 						Namespace: "default",
@@ -1426,12 +1427,42 @@ func TestKindClusterAddTagsToOciRepository(t *testing.T) {
 			t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opts))
 		}
 
-		// TODO: (gfichtenholt) This test is unfinished due to
+		// just codifying the behavior described in
 		// https://github.com/fluxcd/source-controller/issues/839
 		// Requested feature: flux OCI helm repositories notice when tags on remote registry change
-		//if err := helmPushChartToMyGithubRegistry(t); err != nil {
-		//		t.Fatal(err)
-		//}
+		// Should flux guys ever change their decision, this test should fail.
+		// P.S. Yuck
+		if err = helmPushChartToMyGithubRegistry(t, "6.1.6"); err != nil {
+			t.Fatal(err)
+		}
+		t.Cleanup(func() {
+			// Delete remote chart version at the end of the test so there are no side-effects.
+			if err = deleteChartFromMyGithubRegistry(t, "6.1.6"); err != nil {
+				t.Fatal(err)
+			}
+		})
+
+		t.Logf("Waiting 45 seconds...")
+		time.Sleep(45 * time.Second)
+
+		grpcContext3, cancel := context.WithTimeout(grpcContext, defaultContextTimeout)
+		defer cancel()
+
+		resp3, err := fluxPluginClient.GetAvailablePackageVersions(
+			grpcContext3, &corev1.GetAvailablePackageVersionsRequest{
+				AvailablePackageRef: &corev1.AvailablePackageReference{
+					Context: &corev1.Context{
+						Namespace: "default",
+					},
+					Identifier: repoName.Name + "/podinfo",
+				},
+			})
+		if err != nil {
+			t.Fatal(err)
+		}
+		if got, want := resp3, expected_versions_gfichtenholt_podinfo; !cmp.Equal(want, got, opts) {
+			t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opts))
+		}
 	})
 }
 

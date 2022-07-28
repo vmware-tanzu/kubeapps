@@ -184,7 +184,7 @@ func TestGetAvailablePackageDetail(t *testing.T) {
 				secretObjs = append(secretObjs, secret)
 			}
 
-			ts2, repo, err := newRepoWithIndex(
+			ts2, repo, err := newHttpRepoAndServeIndex(
 				testYaml("redis-two-versions.yaml"), repoName, repoNamespace, replaceUrls, secretRef)
 			if err != nil {
 				t.Fatalf("%+v", err)
@@ -288,7 +288,7 @@ func TestTransientHttpFailuresAreRetriedForChartCache(t *testing.T) {
 			charts = append(charts, c)
 		}
 
-		ts2, repo, err := newRepoWithIndex(
+		ts2, repo, err := newHttpRepoAndServeIndex(
 			testYaml("redis-two-versions.yaml"), repoName, repoNamespace, replaceUrls, "")
 		if err != nil {
 			t.Fatalf("%+v", err)
@@ -465,7 +465,7 @@ func TestNonExistingRepoOrInvalidPkgVersionGetAvailablePackageDetail(t *testing.
 				charts = append(charts, c)
 			}
 
-			ts2, repo, err := newRepoWithIndex(
+			ts2, repo, err := newHttpRepoAndServeIndex(
 				testYaml("redis-two-versions.yaml"), tc.repoName, tc.repoNamespace, replaceUrls, "")
 			if err != nil {
 				t.Fatalf("%+v", err)
@@ -651,7 +651,7 @@ func TestGetAvailablePackageVersions(t *testing.T) {
 				}
 				charts = append(charts, c)
 			}
-			ts, repo, err := newRepoWithIndex(tc.repoIndex, tc.repoName, tc.repoNamespace, replaceUrls, "")
+			ts, repo, err := newHttpRepoAndServeIndex(tc.repoIndex, tc.repoName, tc.repoNamespace, replaceUrls, "")
 			if err != nil {
 				t.Fatalf("%+v", err)
 			}
@@ -756,7 +756,7 @@ func TestChartCacheResyncNotIdle(t *testing.T) {
 		repoNamespace := "default"
 		replaceUrls := make(map[string]string)
 		replaceUrls["{{./testdata/charts/redis-14.4.0.tgz}}"] = ts.URL
-		ts2, r, err := newRepoWithIndex(
+		ts2, r, err := newHttpRepoAndServeIndex(
 			tmpFile.Name(), repoName, repoNamespace, replaceUrls, "")
 		if err != nil {
 			t.Fatalf("%+v", err)

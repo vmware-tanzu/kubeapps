@@ -100,6 +100,30 @@ function portForwardToLocalRegistry() {
 # the goal is to create an OCI registry whose contents I completely control and will modify 
 # by running integration tests. Therefore 'pushChartToMyGitHubRegistry'
 # ref https://docs.github.com/en/packages/working-with-a-github-packages-registry/working-with-the-container-registry
+#
+# Note the difference between flux/helm and GitHub terminology:
+#   1) flux and helm uses the following terms:
+#      Given a URL like "oci://ghcr.io/stefanprodan/charts" and 
+#      a repository like "podinfo" and 
+#      an image/version like "podinfo:6.1.5", the terms are
+#      - oci://              - URL scheme, indicating this is an OCI registry, compared with HTTP registry
+#      - ghcr.io             - registry host
+#      - stefanprodan/charts - registry path
+#      - podinfo             - repository
+#      - podinfo:6.1.5       - application, a.k.a. package and version, a.k.a. tag
+#      "oci://ghcr.io/stefanprodan/charts" is the registry URL
+#      A given registry may have multiple repositories 
+#      A given repository may have multiple packages
+#      A given package may have multiple versions
+#   2) GitHub Container Registry WebPortal and API do not use the term "OCI registry" and "OCI repository":  
+#      - oci://ghcr.io         - host or "base", always the same
+#        - stefanprodan        - owner
+#        - charts/podinfo      - package, whose type is "container". 
+#                                In some docs, also referred to by IMAGE_NAME
+#        - 6.1.5               - package version a.k.a. tag
+#      A given owner may have mutiple packages, e.g. "nginx/nginx", "charts/podinfo", etc
+#      A given package may have multiple versions
+#      There is no concept of a single repository containing multiple packages
 function pushChartToMyGitHubRegistry() {
   if [ $# -lt 1 ]
   then
@@ -246,6 +270,7 @@ function deploy {
     if [[ "$VISIBILITY" != "public" ]]; then
       # TODO (gfichtenholt) can't seem to find docs for an API to change the package visibility on 
       # https://docs.github.com/en/rest/packages, so for now just ask to do this in web portal 
+      # ref https://github.com/cli/cli/discussions/6003
       echo "Please change package [helm-charts/podinfo] visibility from [$VISIBILITY] to [public] on [https://github.com/users/gfichtenholt/packages/container/helm-charts%2Fpodinfo/settings]..." 
       open https://github.com/users/gfichtenholt/packages/container/helm-charts%2Fpodinfo/settings
       read -p "Press any key to continue..."
