@@ -40,38 +40,32 @@ func (l *fakeDockerRegistryApiV2RepositoryLister) ListRepositoryNames(ociRegistr
 	}, nil
 }
 
-type fakeRegistryClient struct {
+type fakeRegistryClientType struct {
 }
 
-func (r *fakeRegistryClient) Login(host string, opts ...registry.LoginOption) error {
+func (r *fakeRegistryClientType) Login(host string, opts ...registry.LoginOption) error {
 	log.Infof("+Login")
 	return nil
 }
 
-func (r *fakeRegistryClient) Logout(host string, opts ...registry.LogoutOption) error {
+func (r *fakeRegistryClientType) Logout(host string, opts ...registry.LogoutOption) error {
 	log.Infof("+Logout")
 	return nil
 }
 
-func (r *fakeRegistryClient) Tags(url string) ([]string, error) {
+func (r *fakeRegistryClientType) Tags(url string) ([]string, error) {
 	log.Infof("+Tags(%s)", url)
 	return []string{"6.1.5"}, nil
 }
 
-func (r *fakeRegistryClient) downloadChart(chart *repo.ChartVersion) (*bytes.Buffer, error) {
-	log.Infof("+downloadChart(%s)", chart.Version)
+func (r *fakeRegistryClientType) DownloadChart(chartVersion *repo.ChartVersion) (*bytes.Buffer, error) {
+	log.Infof("+DownloadChart(%s)", chartVersion.Version)
 	// TODO: return bytes from .tgz file
-	return nil, fmt.Errorf("TODO implement fakeRegistryClient.downloadChart")
+	return nil, fmt.Errorf("TODO implement fakeRegistryClient.DownloadChart")
 }
 
-func newFakeRegistryClientAndChartDownloader(isLogin bool, tlsConfig *tls.Config, getterOpts []getter.Option, helmGetter getter.Getter) (*registryClientWithChartDownloader, string, error) {
-	client := &fakeRegistryClient{}
-	chartDownloader := func(chartVersion *repo.ChartVersion) (*bytes.Buffer, error) {
-		return client.downloadChart(chartVersion)
-	}
-	return &registryClientWithChartDownloader{
-		client, chartDownloader,
-	}, "", nil
+func newFakeRegistryClient(isLogin bool, tlsConfig *tls.Config, getterOpts []getter.Option, helmGetter getter.Getter) (RegistryClient, string, error) {
+	return &fakeRegistryClientType{}, "", nil
 }
 
 func initOciFakeClientBuilder() {
@@ -81,7 +75,7 @@ func initOciFakeClientBuilder() {
 		newFakeDockerRegistryApiV2RepositoryLister(),
 	}
 
-	registryClientBuilderFn = func(isLogin bool, tlsConfig *tls.Config, getterOpts []getter.Option, helmGetter getter.Getter) (*registryClientWithChartDownloader, string, error) {
-		return newFakeRegistryClientAndChartDownloader(isLogin, tlsConfig, getterOpts, helmGetter)
+	registryClientBuilderFn = func(isLogin bool, tlsConfig *tls.Config, getterOpts []getter.Option, helmGetter getter.Getter) (RegistryClient, string, error) {
+		return newFakeRegistryClient(isLogin, tlsConfig, getterOpts, helmGetter)
 	}
 }
