@@ -248,6 +248,7 @@ function deploy {
   # sanity checks
   
   # 1. check the version we pushed exists on the remote and is the only version avaialble
+  # ref https://docs.github.com/en/rest/packages#get-all-package-versions-for-a-package-owned-by-the-authenticated-user
   ALL_VERSIONS=$(gh api \
   -H "Accept: application/vnd.github+json" \
   /user/packages/container/helm-charts%2Fpodinfo/versions | jq -rc '.[].metadata.container.tags[]')
@@ -329,10 +330,61 @@ function logs {
   kubectl logs pod/$(kubectl get pod -n default | grep fluxv2plugin | head -n 1 | awk '{print $1}') -n default --context kind-kubeapps 
 }
 
+function setupGithubStefanProdanClone {
+  # this creates a clone of what was out on "oci://ghcr.io/stefanprodan/charts" as of Jul 28 2022
+  # to oci://ghcr.io/gfichtenholt/stefanprodan-podinfo-clone
+  SRC_URL_PREFIX=https://stefanprodan.github.io/podinfo
+  curl -O $SRC_URL_PREFIX/podinfo-6.1.0.tgz 
+  curl -O $SRC_URL_PREFIX/podinfo-6.1.1.tgz 
+  curl -O $SRC_URL_PREFIX/podinfo-6.1.2.tgz
+  curl -O $SRC_URL_PREFIX/podinfo-6.1.3.tgz  
+  curl -O $SRC_URL_PREFIX/podinfo-6.1.4.tgz 
+  curl -O $SRC_URL_PREFIX/podinfo-6.1.5.tgz 
+  curl -O $SRC_URL_PREFIX/podinfo-6.1.6.tgz 
+  curl -O $SRC_URL_PREFIX/podinfo-6.1.7.tgz 
+  curl -O $SRC_URL_PREFIX/podinfo-6.1.8.tgz 
+  helm registry login ghcr.io -u $GITHUB_USER -p $GITHUB_TOKEN
+  DEST_URL=oci://ghcr.io/gfichtenholt/stefanprodan-podinfo-clone
+  helm push podinfo-6.1.0.tgz $DEST_URL
+  helm push podinfo-6.1.1.tgz $DEST_URL
+  helm push podinfo-6.1.2.tgz $DEST_URL
+  helm push podinfo-6.1.3.tgz $DEST_URL
+  helm push podinfo-6.1.4.tgz $DEST_URL
+  helm push podinfo-6.1.5.tgz $DEST_URL
+  helm push podinfo-6.1.6.tgz $DEST_URL
+  helm push podinfo-6.1.7.tgz $DEST_URL
+  helm push podinfo-6.1.8.tgz $DEST_URL
+  helm registry logout ghcr.io
+  echo
+  echo Running sanity checks...
+  echo
+  gh auth status
+  ALL_VERSIONS=$(gh api \
+    -H "Accept: application/vnd.github+json" \
+    /user/packages/container/stefanprodan-podinfo-clone%2Fpodinfo/versions | jq -rc '.[].metadata.container.tags[]')
+  echo
+  echo Remote Repository aka Package [$DEST_URL/podinfo] / All Versions 
+  echo ================================================================================
+  echo "$ALL_VERSIONS"
+  echo ================================================================================  
+  while true; do
+    VISIBILITY=$(gh api   -H "Accept: application/vnd.github+json"   /user/packages/container/stefanprodan-podinfo-clone%2Fpodinfo | jq -rc '.visibility')
+    if [[ "$VISIBILITY" != "public" ]]; then
+      # TODO (gfichtenholt) can't seem to find docs for an API to change the package visibility on 
+      # https://docs.github.com/en/rest/packages, so for now just ask to do this in web portal 
+      # ref https://github.com/cli/cli/discussions/6003
+      echo "Please change package [stefanprodan-podinfo-clone/podinfo] visibility from [$VISIBILITY] to [public] on [https://github.com/users/gfichtenholt/packages/container/stefanprodan-podinfo-clone%2Fpodinfo/settings]..." 
+      open https://github.com/users/gfichtenholt/packages/container/stefanprodan-podinfo-clone%2Fpodinfo/settings
+      read -p "Press any key to continue..."
+    else 
+      break
+    fi
+  done
+}
 
 if [ $# -lt 1 ]
 then
-  echo "Usage : $0 deploy|undeploy|redeploy|shell|logs|pushChartToMyGithub|deleteChartVersionFromMyGitHub"
+  echo "Usage : $0 deploy|undeploy|redeploy|shell|logs|pushChartToMyGithub|deleteChartVersionFromMyGitHub|setupGithubStefanProdanClone"
   exit
 fi
 
@@ -354,6 +406,8 @@ pushChartToMyGithub) pushChartToMyGitHubRegistry $2
 # this is for integration tests TestKindClusterAddTagsToOciRepository and 
 # TestKindClusterAutoUpdateInstalledPackageFromOciRepo
 deleteChartVersionFromMyGitHub) deleteChartVersionFromMyGitHubRegistry $2
+    ;;
+setupGithubStefanProdanClone) setupGithubStefanProdanClone
     ;;
 *) echo "Invalid command: $1"
    ;;

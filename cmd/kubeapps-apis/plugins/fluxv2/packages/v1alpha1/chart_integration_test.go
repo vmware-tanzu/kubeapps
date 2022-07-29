@@ -709,7 +709,7 @@ func TestKindClusterAvailablePackageEndpointsForOCI(t *testing.T) {
 						},
 						Identifier: repoName.Name + "/podinfo",
 					},
-					PkgVersion: "6.1.5",
+					PkgVersion: "6.1.6",
 				})
 			if err != nil {
 				t.Fatal(err)

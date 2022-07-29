@@ -2123,9 +2123,9 @@ var (
 
 	expected_versions_stefanprodan_podinfo = &corev1.GetAvailablePackageVersionsResponse{
 		PackageAppVersions: []*corev1.PackageAppVersion{
+			{PkgVersion: "6.1.8"},
+			{PkgVersion: "6.1.7"},
 			{PkgVersion: "6.1.6"},
-			{PkgVersion: "6.1.5"},
-			{PkgVersion: "6.1.4"},
 		},
 	}
 
@@ -3439,7 +3439,7 @@ var (
 					Name:                "podinfo",
 					AvailablePackageRef: availableRef(name+"/podinfo", "default"),
 					LatestVersion: &corev1.PackageAppVersion{
-						PkgVersion: "6.1.6",
+						PkgVersion: "6.1.8",
 					},
 					DisplayName:      "podinfo",
 					ShortDescription: "Podinfo Helm chart for Kubernetes",
@@ -3454,8 +3454,8 @@ var (
 			AvailablePackageDetail: &corev1.AvailablePackageDetail{
 				AvailablePackageRef: availableRef(name+"/podinfo", "default"),
 				Name:                "podinfo",
-				Version:             pkgAppVersion("6.1.6"),
-				RepoUrl:             "oci://ghcr.io/stefanprodan/charts",
+				Version:             pkgAppVersion("6.1.8"),
+				RepoUrl:             github_stefanprodan_podinfo_oci_registry_url,
 				HomeUrl:             "https://github.com/stefanprodan/podinfo",
 				DisplayName:         "podinfo",
 				ShortDescription:    "Podinfo Helm chart for Kubernetes",
@@ -3474,8 +3474,8 @@ var (
 			AvailablePackageDetail: &corev1.AvailablePackageDetail{
 				AvailablePackageRef: availableRef(name+"/podinfo", "default"),
 				Name:                "podinfo",
-				Version:             pkgAppVersion("6.1.5"),
-				RepoUrl:             "oci://ghcr.io/stefanprodan/charts",
+				Version:             pkgAppVersion("6.1.6"),
+				RepoUrl:             github_stefanprodan_podinfo_oci_registry_url,
 				HomeUrl:             "https://github.com/stefanprodan/podinfo",
 				DisplayName:         "podinfo",
 				ShortDescription:    "Podinfo Helm chart for Kubernetes",

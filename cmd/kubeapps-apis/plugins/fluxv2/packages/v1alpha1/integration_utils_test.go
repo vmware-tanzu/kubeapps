@@ -83,7 +83,9 @@ const (
 	outside_cluster_bitnami_url = "http://localhost:50057/bitnami"
 
 	// an OCI registry with a single chart (podinfo)
-	github_stefanprodan_podinfo_oci_registry_url = "oci://ghcr.io/stefanprodan/charts"
+	// a clone of "oci://ghcr.io/stefanprodan/charts"
+	// gets setup by kind-cluster-setup.sh
+	github_stefanprodan_podinfo_oci_registry_url = "oci://ghcr.io/gfichtenholt/stefanprodan-podinfo-clone"
 
 	// the URL of local in cluster helm registry. Gets deployed via ./kind-cluster-setup.sh
 	// in_cluster_oci_registry_url = "oci://registry-app-svc.default.svc.cluster.local:5000/helm-charts"
@@ -128,6 +130,20 @@ func checkEnv(t *testing.T) (fluxplugin.FluxV2PackagesServiceClient, fluxplugin.
 		_, err = typedClient.CoreV1().Services("default").Get(ctx, "fluxv2plugin-testdata-svc", metav1.GetOptions{})
 		if err != nil {
 			return nil, nil, fmt.Errorf("Failed to get service [default/fluxv2plugin-testdata-svc] due to: [%v]", err)
+		}
+
+		// unintended helmrepositories left over from manual testing this has caused me a lot grief
+		l, err := kubeListAllHelmRepositories(t)
+		if err != nil {
+			return nil, nil, fmt.Errorf("Failed to get list of HelmRepositories due to: [%v]", err)
+		} else if len(l.Items) != 0 {
+			names := []string{}
+			for _, p := range l.Items {
+				names = append(names, p.GetNamespace()+"/"+p.GetName())
+			}
+			t.Logf("The following existing HelmRepositories where found in the cluster: %s", names)
+			t.Logf("You may use kubectl delete helmrepositories --all to delete them")
+			return nil, nil, fmt.Errorf("Failed due to existing HelmRepositores in the cluster")
 		}
 
 		rand.Seed(time.Now().UnixNano())
@@ -273,6 +289,22 @@ func kubeGetHelmRepository(t *testing.T, name types.NamespacedName) (*sourcev1.H
 			return nil, err
 		}
 		return &repo, nil
+	}
+}
+
+func kubeListAllHelmRepositories(t *testing.T) (*sourcev1.HelmRepositoryList, error) {
+	t.Logf("+kubeListAllHelmRepositories()")
+
+	ctx, cancel := context.WithTimeout(context.Background(), defaultContextTimeout)
+	defer cancel()
+	if ifc, err := kubeGetCtrlClient(); err != nil {
+		return nil, err
+	} else {
+		var repoList sourcev1.HelmRepositoryList
+		if err := ifc.List(ctx, &repoList); err != nil {
+			return nil, err
+		}
+		return &repoList, nil
 	}
 }
 
