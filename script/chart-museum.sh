@@ -1,5 +1,8 @@
 #!/bin/bash
 
+# Copyright 2022 the Kubeapps contributors.
+# SPDX-License-Identifier: Apache-2.0
+
 CM_PORT=${CM_PORT:-8090}
 CM_USER=${CM_USER:-"admin"}
 CM_PWD=${CM_PWD:-"password"}
