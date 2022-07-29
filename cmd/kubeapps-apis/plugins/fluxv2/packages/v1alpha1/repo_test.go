@@ -1728,14 +1728,31 @@ func TestGetOciPackageRepositoryDetail(t *testing.T) {
 		},
 	}
 
+	initOciFakeClientBuilder(t, fakeClientData{
+		repositories: []fakeRepo{
+			{
+				name: "podinfo",
+				charts: []fakeChart{
+					{
+						name: "podinfo",
+						versions: []fakeChartVersion{
+							{
+								version:  "6.1.5",
+								tgzBytes: nil,
+							},
+						},
+					},
+				},
+			},
+		},
+	})
+
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			repo, err := newOciRepo(tc.repoName, tc.repoNamespace, tc.repoUrl)
 			if err != nil {
 				t.Fatal(err)
 			}
-
-			initOciFakeClientBuilder()
 
 			s, _, err := newServerWithRepos(t, []sourcev1.HelmRepository{*repo}, nil, nil)
 			if err != nil {

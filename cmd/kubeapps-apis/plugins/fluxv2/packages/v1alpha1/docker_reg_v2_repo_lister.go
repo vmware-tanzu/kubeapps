@@ -52,9 +52,12 @@ func (l *dockerRegistryApiV2RepositoryLister) IsApplicableFor(ociRegistry *OCIRe
 	}
 }
 
-// ref https://github.com/distribution/distribution/blob/main/docs/spec/api.md#listing-repositories
+// given an OCIRegistry instance, returns a list of repository names, e.g.
+// given an OCIRegistry instance with url "oci://ghcr.io/stefanprodan/charts"
+//    may return ["stefanprodan/charts/podinfo", "stefanprodan/charts/podinfo-2"]
+// ref: https://github.com/distribution/distribution/blob/main/docs/spec/api.md#listing-repositories
 func (l *dockerRegistryApiV2RepositoryLister) ListRepositoryNames(ociRegistry *OCIRegistry) ([]string, error) {
-	log.Infof("+ListRepositoryNames()")
+	log.Infof("+ListRepositoryNames(%s)", ociRegistry.url.String())
 
 	orasRegistry, err := newRemoteOrasRegistry(ociRegistry)
 	if err != nil {
@@ -85,10 +88,11 @@ func (l *dockerRegistryApiV2RepositoryLister) ListRepositoryNames(ociRegistry *O
 		// 1. https://github.com/oras-project/oras-go/blob/4660638096b4b4b5c368ce98cd7040485b5ad776/registry/remote/registry.go#L105
 		// 2. https://github.com/oras-project/oras-go/blob/14422086e41897a44cb706726e687d39dc728805/registry/remote/url.go#L43
 		err = orasRegistry.Repositories(context.Background(), startAt, fn)
-		log.Infof("ORAS Repositories returned: %v", err)
+		log.Infof("ORAS .Repositories() returned err: %v", err)
 		if err != nil && err != done {
 			return nil, err
 		}
+		log.Infof("-ListRepositoryNames(%s): returned %s", ociRegistry.url.String(), repositoryList)
 		return repositoryList, nil
 	}
 }

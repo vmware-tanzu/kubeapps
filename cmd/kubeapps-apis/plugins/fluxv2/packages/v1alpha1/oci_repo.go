@@ -94,8 +94,6 @@ type OCIRegistry struct {
 	repositoryLister OCIRepositoryLister
 }
 
-type OCIRegistryClientBuilderFn func(bool) (RegistryClient, string, error)
-
 // OCIRegistryOption is a function that can be passed to newOCIRegistry()
 // to configure an OCIRegistry.
 type OCIRegistryOption func(*OCIRegistry) error
@@ -336,7 +334,10 @@ func getLastMatchingVersionOrConstraint(cvs []string, ver string) (string, error
 // The client is meant to be used for a single reconciliation.
 // The file is meant to be used for a single reconciliation and deleted after.
 func newHelmRegistryClient(isLogin bool) (*registry.Client, string, error) {
-	var clientOpts []registry.ClientOption
+	clientOpts := []registry.ClientOption{
+		registry.ClientOptWriter(io.Discard),
+	}
+
 	var file string
 	if isLogin {
 		// create a temporary file to store the credentials
@@ -347,16 +348,10 @@ func newHelmRegistryClient(isLogin bool) (*registry.Client, string, error) {
 		}
 		file = credentialFile.Name()
 
-		clientOpts = []registry.ClientOption{
-			registry.ClientOptWriter(io.Discard),
+		clientOpts = append(clientOpts,
 			registry.ClientOptCredentialsFile(credentialFile.Name()),
-		}
-	} else {
-		clientOpts = []registry.ClientOption{
-			registry.ClientOptWriter(io.Discard),
-		}
+		)
 	}
-
 	rClient, err := registry.NewClient(clientOpts...)
 	return rClient, file, err
 }
@@ -584,6 +579,7 @@ func (r *OCIRegistry) checksum() (string, error) {
 	return common.GetSha256(content)
 }
 
+// given fullRepoName like "stefanprodan/charts/podinfo", returns "podinfo"
 func (r *OCIRegistry) shortRepoName(fullRepoName string) (string, error) {
 	expectedPrefix := strings.TrimLeft(r.url.Path, "/") + "/"
 	if strings.HasPrefix(fullRepoName, expectedPrefix) {
@@ -625,15 +621,17 @@ func (s *repoEventSink) newOCIRegistryAndLoginWithOptions(registryURL string, lo
 		return nil, err
 	}
 
-	tlsConfig := &tls.Config{}
+	var tlsConfig *tls.Config
 
 	// Create new registry client and login if needed.
 	registryClient, file, err := registryClientBuilderFn(loginOpts != nil, tlsConfig, getterOpts, helmGetter)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to create registry client due to: %v", err)
-	} else if registryClient == nil {
+	}
+	if registryClient == nil {
 		return nil, status.Errorf(codes.Internal, "failed to create registry client")
-	} else if file != "" {
+	}
+	if file != "" {
 		defer func() {
 			if err := os.Remove(file); err != nil {
 				log.Infof("Failed to delete temporary credentials file: %v", err)

@@ -105,7 +105,7 @@ function portForwardToLocalRegistry() {
 #   1) flux and helm uses the following terms:
 #      Given a URL like "oci://ghcr.io/stefanprodan/charts" and 
 #      a repository like "podinfo" and 
-#      an image/version like "podinfo:6.1.5", the terms are
+#      an image and version like "podinfo:6.1.5", the terms are
 #      - oci://              - URL scheme, indicating this is an OCI registry, compared with HTTP registry
 #      - ghcr.io             - registry host
 #      - stefanprodan/charts - registry path
@@ -123,7 +123,7 @@ function portForwardToLocalRegistry() {
 #        - 6.1.5               - package version a.k.a. tag
 #      A given owner may have mutiple packages, e.g. "nginx/nginx", "charts/podinfo", etc
 #      A given package may have multiple versions
-#      There is no concept of a single repository containing multiple packages
+#      ====> There is no concept of a single repository containing multiple packages <=====
 function pushChartToMyGitHubRegistry() {
   if [ $# -lt 1 ]
   then
