@@ -19,7 +19,7 @@ import (
 // References:
 // - https://docs.docker.com/registry/spec/api/#base
 // - https://github.com/opencontainers/distribution-spec/blob/main/spec.md#api
-func newFakeDockerRegistryApiV2RepositoryLister(t *testing.T, r []fakeRepo) OCIRepositoryLister {
+func newFakeDockerRegistryApiV2RepositoryLister(t *testing.T, r []fakeRepo) OCIChartRepositoryLister {
 	return &fakeDockerRegistryApiV2RepositoryLister{
 		t:            t,
 		repositories: r,
@@ -33,23 +33,23 @@ type fakeDockerRegistryApiV2RepositoryLister struct {
 
 // ref https://github.com/distribution/distribution/blob/main/docs/spec/api.md#api-version-check
 // also https://github.com/oras-project/oras-go/blob/14422086e418/registry/remote/registry.go
-func (fake *fakeDockerRegistryApiV2RepositoryLister) IsApplicableFor(ociRegistry *OCIRegistry) (bool, error) {
-	fake.t.Logf("+IsApplicableFor(%s)", ociRegistry.url.String())
+func (fake *fakeDockerRegistryApiV2RepositoryLister) IsApplicableFor(ociRepo *OCIChartRepository) (bool, error) {
+	fake.t.Logf("+IsApplicableFor(%s)", ociRepo.url.String())
 	return true, nil
 }
 
-// given an OCIRegistry instance, returns a list of repository names, e.g.
-// given an OCIRegistry instance with url "oci://ghcr.io/stefanprodan/charts"
+// given an OCIChartRepository instance, returns a list of repository names, e.g.
+// given an OCIChartRepository instance with url "oci://ghcr.io/stefanprodan/charts"
 //    may return ["stefanprodan/charts/podinfo", "stefanprodan/charts/podinfo-2"]
 // ref: https://github.com/distribution/distribution/blob/main/docs/spec/api.md#listing-repositories
-func (fake *fakeDockerRegistryApiV2RepositoryLister) ListRepositoryNames(ociRegistry *OCIRegistry) ([]string, error) {
-	fake.t.Logf("+ListRepositoryNames(%s)", ociRegistry.url.String())
+func (fake *fakeDockerRegistryApiV2RepositoryLister) ListRepositoryNames(ociRepo *OCIChartRepository) ([]string, error) {
+	fake.t.Logf("+ListRepositoryNames(%s)", ociRepo.url.String())
 	names := []string{}
-	prefix := strings.TrimPrefix(ociRegistry.url.Path, "/")
+	prefix := strings.TrimPrefix(ociRepo.url.Path, "/")
 	for _, r := range fake.repositories {
 		names = append(names, prefix+"/"+r.name)
 	}
-	fake.t.Logf("-ListRepositoryNames(%s): returned %s", ociRegistry.url.String(), names)
+	fake.t.Logf("-ListRepositoryNames(%s): returned %s", ociRepo.url.String(), names)
 	return names, nil
 }
 
@@ -133,7 +133,7 @@ type fakeClientData struct {
 func initOciFakeClientBuilder(t *testing.T, data fakeClientData) {
 	t.Logf("+initOciFakeClientFactoryAndLister()")
 
-	builtInRepoListers = []OCIRepositoryLister{
+	builtInRepoListers = []OCIChartRepositoryLister{
 		newFakeDockerRegistryApiV2RepositoryLister(t, data.repositories),
 	}
 

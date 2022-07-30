@@ -5,6 +5,7 @@ package main
 
 import (
 	"encoding/json"
+	"io/ioutil"
 	"time"
 
 	helmv2 "github.com/fluxcd/helm-controller/api/v2beta1"
@@ -3487,5 +3488,30 @@ var (
 				DefaultValues: "Default values for podinfo.\n\nreplicaCount: 1\n",
 			},
 		}
+	}
+
+	newFakeClientData_1 = func() (*fakeClientData, error) {
+		chartBytes, err := ioutil.ReadFile("testdata/charts/podinfo-6.1.5.tgz")
+		if err != nil {
+			return nil, err
+		}
+		return &fakeClientData{
+			repositories: []fakeRepo{
+				{
+					name: "podinfo",
+					charts: []fakeChart{
+						{
+							name: "podinfo",
+							versions: []fakeChartVersion{
+								{
+									version:  "6.1.5",
+									tgzBytes: chartBytes,
+								},
+							},
+						},
+					},
+				},
+			},
+		}, nil
 	}
 )
