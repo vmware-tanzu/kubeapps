@@ -1728,7 +1728,7 @@ func TestGetOciPackageRepositoryDetail(t *testing.T) {
 		},
 	}
 
-	data, err := newFakeClientData_1()
+	data, err := newFakeRemoteOciRegistryData_1()
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -1774,6 +1774,8 @@ func TestGetOciPackageRepositoryDetail(t *testing.T) {
 					}
 				}
 			}
+
+			// TODO redisMock check repo cache and chart cache
 		})
 	}
 }

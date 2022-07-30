@@ -3490,12 +3490,12 @@ var (
 		}
 	}
 
-	newFakeClientData_1 = func() (*fakeClientData, error) {
+	newFakeRemoteOciRegistryData_1 = func() (*fakeRemoteOciRegistryData, error) {
 		chartBytes, err := ioutil.ReadFile("testdata/charts/podinfo-6.1.5.tgz")
 		if err != nil {
 			return nil, err
 		}
-		return &fakeClientData{
+		return &fakeRemoteOciRegistryData{
 			repositories: []fakeRepo{
 				{
 					name: "podinfo",

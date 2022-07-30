@@ -9,6 +9,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/pkg/pkgutils"
 	"helm.sh/helm/v3/pkg/getter"
 	"helm.sh/helm/v3/pkg/registry"
 	"helm.sh/helm/v3/pkg/repo"
@@ -92,16 +93,37 @@ func (fake *fakeRegistryClientType) Tags(ref string) ([]string, error) {
 					return tags, nil
 				}
 			}
-			return nil, fmt.Errorf("no charts found for ref [%s] in the registry", ref)
+			return nil, fmt.Errorf("no chart named [%s] found for repository [%s] in the registry", refChart, refRepository)
 		}
 	}
 	return nil, fmt.Errorf("no repositories found for ref [%s] in the registry", ref)
 }
 
-func (fake *fakeRegistryClientType) DownloadChart(chartVersion *repo.ChartVersion) (*bytes.Buffer, error) {
-	fake.t.Logf("+DownloadChart(%s)", chartVersion.Version)
-	// TODO: return bytes from .tgz file
-	return nil, fmt.Errorf("TODO implement fakeRegistryClient.DownloadChart")
+func (fake *fakeRegistryClientType) DownloadChart(chartID string, chartVersion *repo.ChartVersion) (*bytes.Buffer, error) {
+	fake.t.Logf("+DownloadChart(%s, %s, %s)", chartID, chartVersion.Version, chartVersion.URLs[0])
+	_, chartName, err := pkgutils.SplitPackageIdentifier(chartID)
+	if err != nil {
+		return nil, err
+	}
+
+	// see OCI_TERMINOLOGY.md
+	repoName := chartName
+	for _, r := range fake.repositories {
+		if repoName == r.name {
+			for _, c := range r.charts {
+				if chartName == c.name {
+					for _, v := range c.versions {
+						if chartVersion.Version == v.version {
+							return bytes.NewBuffer(v.tgzBytes), nil
+						}
+					}
+					return nil, fmt.Errorf("no version [%s] found for chart [%s]", chartVersion.Version, chartID)
+				}
+			}
+			return nil, fmt.Errorf("no charts named [%s] found in the repository [%s]", chartName, repoName)
+		}
+	}
+	return nil, fmt.Errorf("no repositories named [%s] found in the registry", repoName)
 }
 
 func newFakeRegistryClient(t *testing.T, r []fakeRepo) (RegistryClient, string, error) {
@@ -126,11 +148,11 @@ type fakeRepo struct {
 	charts []fakeChart
 }
 
-type fakeClientData struct {
+type fakeRemoteOciRegistryData struct {
 	repositories []fakeRepo
 }
 
-func initOciFakeClientBuilder(t *testing.T, data fakeClientData) {
+func initOciFakeClientBuilder(t *testing.T, data fakeRemoteOciRegistryData) {
 	t.Logf("+initOciFakeClientFactoryAndLister()")
 
 	builtInRepoListers = []OCIChartRepositoryLister{

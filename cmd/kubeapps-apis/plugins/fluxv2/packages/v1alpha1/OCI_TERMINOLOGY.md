@@ -8,7 +8,7 @@ Given an OCI HelmRepository CRD with URL like `"oci://ghcr.io/stefanprodan/chart
 - `oci://ghcr.io/stefanprodan/charts` is the *OCI chart repository* URL with the following components:
   - `oci://` - URL scheme, indicating this is an *OCI chart repository*, as opposed to an *HTTP chart repository*
   - `ghcr.io` - OCI registry host
-  - `/stefanprodan/charts` - repository path
+  - `/stefanprodan/charts` - registry path
 - That repository may contain multiple charts, e.g. `"podinfo"` and `"nginx"`. Chart names are not part of the URL and must be specified by user when creating HelmChart or HelmRelease CRD
 - Each of the charts may have multiple versions a.k.a. tags, e.g. "`6.1.5"`, `"6.1.4"`, etc.
 
@@ -18,11 +18,16 @@ References:
   - https://github.com/fluxcd/source-controller/blob/main/controllers/helmrepository_controller_oci.go
 
 ## ORAS v2 go libraries
-Given a remote OCI registry, such as `ghcr.io`, will list all repository names hosted. The names are listed in the format
-`"stefanprodan/charts/podinfo"`, `"stefanprodan/charts/podinfo-2"`, etc.
+Given a remote OCI registry, such as `ghcr.io`, will list all repository names hosted in the format `"{REGISTRY_PATH}/{NAME}"`. Unlike the flux section, REGISTRY_PATH does not begin with a slash. For example, assuming the remote registry with the URL `"oci://ghcr.io/stefanprodan/charts"` contains 2 repositories, `"podinfo"` and `"podinfo-2"`, then  the following list is returned:
+  1. `"stefanprodan/charts/podinfo"`
+  2. `"stefanprodan/charts/podinfo-2"`
 
 References: 
   - https://github.com/distribution/distribution/blob/main/docs/spec/api.md#listing-repositories
+  - https://oras.land/ 
+  - https://github.com/oras-project/oras-go/blob/14422086e41897a44cb706726e687d39dc728805/registry/remote/url.go#L43
+
+
 
 ## Helm
 
@@ -83,7 +88,16 @@ helm push podinfo-6.1.5.tgz oci://ghcr.io/gfichtenholt/charts/podinfo
 Pushed: ghcr.io/gfichtenholt/charts/podinfo/podinfo:6.1.5
 Digest: sha256:80e6d2e7f6d21800621530fc4c5b70d0e458f11b2c05386ea5d058c4e86d6e93
 ```
-In this case, the repository name is `"gfichtenholt/charts/podinfo/podinfo"`, while the rest is the same. And so on and so forth
+In this case, the repository name is `"gfichtenholt/charts/podinfo/podinfo"`, while the rest is the same. And so on and so forth. 
+
+---
+Here is probably the most confusing part:
+  1. Assume we have a Flux OCI HelmRepository CRD with URL `"oci://ghcr.io/gfichtenholt/helm-charts"` 
+  2. Assume the remote OCI registry contains a single chart `"podinfo"` with version `"6.1.5"`
+  3. ORAS go library will return repository list `["gfichtenholt/helm-charts/podinfo"]`
+  4. kubeapps flux plugin will call `RegistryClient.Tags()` with respect to OCI reference `"ghcr.io/gfichtenholt/helm-charts/podinfo"` which will return `["6.1.5"]`
+  5. kubeapps flux plugin will call `RegistryClient.DownloadChart()` with respect to URL `"ghcr.io/gfichtenholt/helm-charts/podinfo:6.1.5"`. Here, `podinfo` refers BOTH to repository name AND the chart name!
+---
 
 References:
   - https://helm.sh/blog/storing-charts-in-oci/
