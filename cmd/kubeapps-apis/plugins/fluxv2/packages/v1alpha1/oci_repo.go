@@ -59,12 +59,12 @@ import (
 // from OCI registries. Functions Login/Logout/Tags are implemented by
 // https://github.com/helm/helm/blob/main/pkg/registry/client.go
 // DownloadChart is implemented below
-type RegistryClientDownloadChartFn func(string, *repo.ChartVersion) (*bytes.Buffer, error)
+type RegistryClientDownloadChartFn func(*repo.ChartVersion) (*bytes.Buffer, error)
 type RegistryClient interface {
 	Login(host string, opts ...registry.LoginOption) error
 	Logout(host string, opts ...registry.LogoutOption) error
 	Tags(url string) ([]string, error)
-	DownloadChart(chartID string, chartVersion *repo.ChartVersion) (*bytes.Buffer, error)
+	DownloadChart(chartVersion *repo.ChartVersion) (*bytes.Buffer, error)
 }
 
 // an interface flux plugin uses to determine what kind of vendor-specific
@@ -150,8 +150,8 @@ func (c *registryClientType) Tags(url string) ([]string, error) {
 	return c.registryClient.Tags(url)
 }
 
-func (c *registryClientType) DownloadChart(chartID string, chartVersion *repo.ChartVersion) (*bytes.Buffer, error) {
-	return c.chartDownloader(chartID, chartVersion)
+func (c *registryClientType) DownloadChart(chartVersion *repo.ChartVersion) (*bytes.Buffer, error) {
+	return c.chartDownloader(chartVersion)
 }
 
 // withRegistryClient returns a OCIChartRepositoryOption that will set the registry client
@@ -368,8 +368,8 @@ func newRegistryClient(isLogin bool, tlsConfig *tls.Config, getterOpts []getter.
 		return nil, file, err
 	}
 
-	chartDownloader := func(chartID string, chartVersion *repo.ChartVersion) (*bytes.Buffer, error) {
-		return downloadChartWithHelmGetter(tlsConfig, getterOpts, helmGetter, chartID, chartVersion)
+	chartDownloader := func(chartVersion *repo.ChartVersion) (*bytes.Buffer, error) {
+		return downloadChartWithHelmGetter(tlsConfig, getterOpts, helmGetter, chartVersion)
 	}
 
 	return &registryClientType{
@@ -719,8 +719,8 @@ func (s *repoEventSink) ociClientOptionsForRepo(ctx context.Context, repo source
 // and then attempts to download the chart using the Client and Options of the
 // OCIChartRepository. It returns a bytes.Buffer containing the chart data.
 // In case of an OCI hosted chart, this function assumes that the chartVersion url is valid.
-func downloadChartWithHelmGetter(tlsConfig *tls.Config, getterOptions []getter.Option, helmGetter getter.Getter, chartID string, chartVersion *repo.ChartVersion) (*bytes.Buffer, error) {
-	log.Infof("+downloadChartWithHelmGetter(%s,%s)", chartID, chartVersion.Version)
+func downloadChartWithHelmGetter(tlsConfig *tls.Config, getterOptions []getter.Option, helmGetter getter.Getter, chartVersion *repo.ChartVersion) (*bytes.Buffer, error) {
+	log.Infof("+downloadChartWithHelmGetter(%s)", chartVersion.Version)
 	if len(chartVersion.URLs) == 0 {
 		return nil, fmt.Errorf("chart '%s' has no downloadable URLs", chartVersion.Name)
 	}
@@ -757,8 +757,8 @@ func downloadChartWithHelmGetter(tlsConfig *tls.Config, getterOptions []getter.O
 	return buf, err
 }
 
-func getOCIChartTarball(ociRepo *OCIChartRepository, chartID string, chartVersion *repo.ChartVersion) ([]byte, error) {
-	chartBuffer, err := ociRepo.registryClient.DownloadChart(chartID, chartVersion)
+func getOCIChartTarball(ociRepo *OCIChartRepository, chartVersion *repo.ChartVersion) ([]byte, error) {
+	chartBuffer, err := ociRepo.registryClient.DownloadChart(chartVersion)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "%v", err)
 	}
@@ -769,7 +769,7 @@ func getOCIChartMetadata(ociRepo *OCIChartRepository, chartID string, chartVersi
 	log.Infof("+getOCIChartMetadata(%s, %s)", chartID, chartVersion.Metadata.Version)
 	defer log.Infof("-getOCIChartMetadata(%s, %s)", chartID, chartVersion.Metadata.Version)
 
-	chartTarball, err := getOCIChartTarball(ociRepo, chartID, chartVersion)
+	chartTarball, err := getOCIChartTarball(ociRepo, chartVersion)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "%v", err)
 	}
@@ -811,6 +811,6 @@ func downloadOCIChartFn(ociRepo *OCIChartRepository) func(chartID, chartUrl, cha
 				Version: chartVersion,
 			},
 		}
-		return getOCIChartTarball(ociRepo, chartID, cv)
+		return getOCIChartTarball(ociRepo, cv)
 	}
 }

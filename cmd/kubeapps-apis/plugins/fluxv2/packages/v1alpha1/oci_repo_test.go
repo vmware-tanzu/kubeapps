@@ -9,7 +9,6 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/pkg/pkgutils"
 	"helm.sh/helm/v3/pkg/getter"
 	"helm.sh/helm/v3/pkg/registry"
 	"helm.sh/helm/v3/pkg/repo"
@@ -99,28 +98,24 @@ func (fake *fakeRegistryClientType) Tags(ref string) ([]string, error) {
 	return nil, fmt.Errorf("no repositories found for ref [%s] in the registry", ref)
 }
 
-func (fake *fakeRegistryClientType) DownloadChart(chartID string, chartVersion *repo.ChartVersion) (*bytes.Buffer, error) {
-	fake.t.Logf("+DownloadChart(%s, %s, %s)", chartID, chartVersion.Version, chartVersion.URLs[0])
-	_, chartName, err := pkgutils.SplitPackageIdentifier(chartID)
-	if err != nil {
-		return nil, err
-	}
+func (fake *fakeRegistryClientType) DownloadChart(chartVersion *repo.ChartVersion) (*bytes.Buffer, error) {
+	fake.t.Logf("+DownloadChart(%s, %s, %s)", chartVersion.Name, chartVersion.Version, chartVersion.URLs[0])
 
 	// see OCI_TERMINOLOGY.md
-	repoName := chartName
+	repoName := chartVersion.Name
 	for _, r := range fake.repositories {
 		if repoName == r.name {
 			for _, c := range r.charts {
-				if chartName == c.name {
+				if chartVersion.Name == c.name {
 					for _, v := range c.versions {
 						if chartVersion.Version == v.version {
 							return bytes.NewBuffer(v.tgzBytes), nil
 						}
 					}
-					return nil, fmt.Errorf("no version [%s] found for chart [%s]", chartVersion.Version, chartID)
+					return nil, fmt.Errorf("no version [%s] found for chart [%s]", chartVersion.Version, chartVersion.Name)
 				}
 			}
-			return nil, fmt.Errorf("no charts named [%s] found in the repository [%s]", chartName, repoName)
+			return nil, fmt.Errorf("no charts named [%s] found in the repository [%s]", chartVersion.Name, repoName)
 		}
 	}
 	return nil, fmt.Errorf("no repositories named [%s] found in the registry", repoName)

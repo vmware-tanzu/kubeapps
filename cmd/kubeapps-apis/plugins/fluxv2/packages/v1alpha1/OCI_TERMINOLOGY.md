@@ -90,15 +90,6 @@ Digest: sha256:80e6d2e7f6d21800621530fc4c5b70d0e458f11b2c05386ea5d058c4e86d6e93
 ```
 In this case, the repository name is `"gfichtenholt/charts/podinfo/podinfo"`, while the rest is the same. And so on and so forth. 
 
----
-Here is probably the most confusing part:
-  1. Assume we have a Flux OCI HelmRepository CRD with URL `"oci://ghcr.io/gfichtenholt/helm-charts"` 
-  2. Assume the remote OCI registry contains a single chart `"podinfo"` with version `"6.1.5"`
-  3. ORAS go library will return repository list `["gfichtenholt/helm-charts/podinfo"]`
-  4. kubeapps flux plugin will call `RegistryClient.Tags()` with respect to OCI reference `"ghcr.io/gfichtenholt/helm-charts/podinfo"` which will return `["6.1.5"]`
-  5. kubeapps flux plugin will call `RegistryClient.DownloadChart()` with respect to URL `"ghcr.io/gfichtenholt/helm-charts/podinfo:6.1.5"`. Here, `podinfo` refers BOTH to repository name AND the chart name!
----
-
 References:
   - https://helm.sh/blog/storing-charts-in-oci/
   - https://helm.sh/docs/topics/registries/
@@ -122,3 +113,12 @@ References:
   - https://docs.github.com/en/rest/packages
   - https://docs.github.com/en/packages/working-with-a-github-packages-registry/working-with-the-container-registry
   - https://github.com/gfichtenholt?tab=packages
+
+---
+Here is probably the most confusing part of the whole document:
+  1. Assume we have a Flux OCI HelmRepository CRD with URL `"oci://ghcr.io/gfichtenholt/helm-charts"` 
+  2. Assume the remote OCI registry contains a single chart `"podinfo"` with version `"6.1.5"`
+  3. ORAS go library will return repository list `["gfichtenholt/helm-charts/podinfo"]`
+  4. kubeapps flux plugin will call `RegistryClient.Tags()` with respect to OCI reference `"ghcr.io/gfichtenholt/helm-charts/podinfo"` which will return `["6.1.5"]`
+  5. kubeapps flux plugin will call `RegistryClient.DownloadChart()` with respect to a chart with version `"6.1.5"` a URL `"ghcr.io/gfichtenholt/helm-charts/podinfo:6.1.5"`. Here, the identifier `"podinfo"` refers BOTH to repository name AND the chart name!
+---
