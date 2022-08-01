@@ -27,6 +27,17 @@ Access the site at [http://localhost:1313](http://localhost:1313). Press `Ctrl-C
 
 The [site/content/docs/latest](./content/docs/latest) directory holds the project documentation whereas [site/themes/template/static../img/docs](./themes/template/static../img/docs) contains the images used in the documentation. Note they have to be under that folder to be properly served.
 
+#### Run Hugo with Docker
+
+To ease the local development and prevent you from polluting your local environment with tools that rarely use, 
+we have added the option of running the `Hugo` server via `Docker` through a `Make` target.
+
+```
+make site-server
+```
+
+After that, you can access the site at [http://localhost:1313](http://localhost:1313). Press `Ctrl-C` when done viewing.
+
 ## Check writing
 
 In order to validate and ensure a proper style of writing, it is recommended to run the [vale validator](https://vale.sh/docs/vale-cli/installation/) with a set of [style rules](https://github.com/errata-ai/styles). The rules are present in the project codebase in the directory. Some of them have been slightly modified to fit our project needs.
