@@ -5,6 +5,7 @@ package main
 
 import (
 	"context"
+
 	apprepov1alpha1 "github.com/vmware-tanzu/kubeapps/cmd/apprepository-controller/pkg/apis/apprepository/v1alpha1"
 	corev1 "github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
 	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/plugins/helm/packages/v1alpha1"
@@ -72,7 +73,7 @@ func (s *Server) newRepo(ctx context.Context, repo *HelmRepository) (*corev1.Pac
 			return nil, err
 		}
 	}
-	// Copy secret to global namespace if needed
+	// Copy secret to global namespace if needed. See issue #5129.
 	if repo.name.Namespace != s.globalPackagingNamespace && secret != nil {
 		if err = s.copyRepositorySecret(typedClient, secret, repo.name); err != nil {
 			return nil, err
@@ -326,7 +327,7 @@ func (s *Server) updateRepo(ctx context.Context, repo *HelmRepository) (*corev1.
 			return nil, err
 		}
 	}
-	// Copy secret to global namespace if needed
+	// Copy secret to global namespace if needed. See issue #5129.
 	if repo.name.Namespace != s.globalPackagingNamespace && secret != nil {
 		if err = s.copyRepositorySecret(typedClient, secret, repo.name); err != nil {
 			return nil, err
