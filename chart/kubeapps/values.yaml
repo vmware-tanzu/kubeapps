@@ -204,7 +204,7 @@ frontend:
   image:
     registry: docker.io
     repository: bitnami/nginx
-    tag: 1.21.6-debian-11-r10
+    tag: 1.23.1-debian-11-r3
     ## Specify a imagePullPolicy
     ## Defaults to 'Always' if image tag is 'latest', else set to 'IfNotPresent'
     ## ref: https://kubernetes.io/docs/user-guide/images/#pre-pulling-images
@@ -579,11 +579,6 @@ dashboard:
   defaultTheme: ""
   ## @param dashboard.replicaCount Number of Dashboard replicas to deploy
   ##
-  ## @param dashboard.createNamespaceLabels Labels added to newly created namespaces
-  ## e.g:
-  # createNamespaceLabels:
-  #   "managed-by": "kubeapps"
-  createNamespaceLabels: {}
   replicaCount: 2
   ## @param dashboard.updateStrategy.type Dashboard deployment strategy type.
   ## ref: https://kubernetes.io/docs/concepts/workloads/controllers/deployment/#strategy
@@ -1428,7 +1423,7 @@ authProxy:
   image:
     registry: docker.io
     repository: bitnami/oauth2-proxy
-    tag: 7.3.0-debian-11-r10
+    tag: 7.3.0-debian-11-r21
     ## Specify a imagePullPolicy
     ## Defaults to 'Always' if image tag is 'latest', else set to 'IfNotPresent'
     ## ref: https://kubernetes.io/docs/user-guide/images/#pre-pulling-images
@@ -1586,14 +1581,6 @@ pinnipedProxy:
   ## @param pinnipedProxy.defaultPinnipedAPISuffix Specify the (default) API suffix
   ##
   defaultPinnipedAPISuffix: pinniped.dev
-  ## @param pinnipedProxy.TLSSecret Specify an optional TLS secret with which to proxy requests
-  ##
-  TLSSecret: ""
-  ## @param pinnipedProxy.CACert Specify the TLS CA cert config map which
-  ## clients of pinniped proxy should use with tls requests. This config map
-  ## must contain a ca.crt key with the CA cert content as the value.
-  ##
-  CACert: ""
   ## @param pinnipedProxy.lifecycleHooks for the Pinniped Proxy container(s) to automate configuration before or after startup
   ##
   lifecycleHooks: {}
@@ -1722,7 +1709,7 @@ rbac:
 testImage:
   registry: docker.io
   repository: bitnami/nginx
-  tag: 1.21.6-debian-11-r10
+  tag: 1.23.1-debian-11-r3
   ## Specify a imagePullPolicy
   ## Defaults to 'Always' if image tag is 'latest', else set to 'IfNotPresent'
   ## ref: https://kubernetes.io/docs/user-guide/images/#pre-pulling-images
@@ -1743,7 +1730,7 @@ testImage:
 ## ref: https://github.com/bitnami/charts/blob/master/bitnami/postgresql/values.yaml
 ## @param postgresql.enabled Deploy a PostgreSQL server to satisfy the applications database requirements
 ## @param postgresql.auth.postgresPassword Password for 'postgres' user
-## ref: https://github.com/bitnami/bitnami-docker-postgresql/blob/master/README.md#setting-the-root-password-on-first-run
+## ref: https://github.com/bitnami/containers/tree/main/bitnami/postgresql#setting-the-root-password-on-first-run
 ## @param postgresql.auth.database Name for a custom database to create
 ## @param postgresql.auth.existingSecret Name of existing secret to use for PostgreSQL credentials
 ##
