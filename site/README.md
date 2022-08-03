@@ -30,7 +30,7 @@ The [site/content/docs/latest](./content/docs/latest) directory holds the projec
 #### Run Hugo with Docker
 
 To ease the local development and prevent you from polluting your local environment with tools that rarely use, 
-we have added the option of running the `Hugo` server via `Docker` through a `Make` target.
+it is possible running the `Hugo` server via `Docker` through a `Make` target.
 
 ```
 make site-server
