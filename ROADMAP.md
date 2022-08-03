@@ -24,7 +24,7 @@ Please open an issue to track any initiative on the roadmap of Kubeapps (usually
 
 The following table includes the current roadmap for Kubeapps. If you have any questions or would like to contribute to Kubeapps, please contact us by Slack on the [#Kubeapps channel](https://kubernetes.slack.com/messages/kubeapps) to discuss with Kubeapps maintainers team.
 
-If you don't know where to start, kubeapps maintainers are always looking for contributors that will help to reduce technical, automation, and documentation debt. Please take the timelines & dates as proposals and goals. Priorities and requirements change based on community feedback, roadblocks encountered, community contributions, etc. If you depend on a specific item, kubeapps maintainers team encourage you to contact them by Slack, or help them deliver that feature by contributing to Kubeapps.
+If you don't know where to start, Kubeapps maintainers are always looking for contributors that will help to reduce technical, automation, and documentation debt. Please take the timelines & dates as proposals and goals. Priorities and requirements change based on community feedback, roadblocks encountered, community contributions, etc. If you depend on a specific item, kubeapps maintainers team encourage you to contact them by Slack, or help them deliver that feature by contributing to Kubeapps.
 
 Last Updated: Aug 2022
 Epic|Description|Timeline|
