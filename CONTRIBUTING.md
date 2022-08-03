@@ -74,7 +74,7 @@ For specifics on what to include in your feature request, please follow the guid
 
 ## Ask for Help
 
-The best way to reach kubeapps maintainers team with a question when contributing is to ask on:
+The best way to reach Kubeapps maintainers team with a question when contributing is to ask on:
 
 - [GitHub Issues](https://github.com/vmware-tanzu/kubeapps/issues)
 - [GitHub Discussions](https://github.com/vmware-tanzu/kubeapps/discussions)
