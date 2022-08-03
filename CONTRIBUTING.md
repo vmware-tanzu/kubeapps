@@ -8,7 +8,7 @@ Please familiarize yourself with the [Code of Conduct](https://github.com/vmware
 
 ## Ways to contribute
 
-We welcome many different types of contributions and not all of them need a Pull request. Contributions may include:
+Kubeapps project welcomes many different types of contributions and not all of them need a Pull request. Contributions may include:
 
 - New features and proposals
 - Documentation
