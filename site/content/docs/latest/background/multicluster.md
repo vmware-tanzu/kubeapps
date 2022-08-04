@@ -36,10 +36,10 @@ Kubeapps offers many features, but not all are available in the multicluster mod
 |               | HELM - Get installed package details                              | Yes             | Yes                 |                                                                                                    |
 |               | CARVEL - Get installed package details                            | Yes             | No\*                | \* It could be done if kubeconfig provided to Kapp                                                 |
 |               | FLUX - Get installed package details                              | Yes             | No                  |                                                                                                    |
-|               | HELM - Install package without imagePullSecrets                   | Yes             | Yes                 | In additional clusters, only possible from Global repositories                                     |
-|               | HELM - Install package with imagePullSecrets                      | Yes             | No                  |                                                                                                    |
-|               | CARVEL - Install package                                          | Yes             | No\*                | \* Throws error message `installing packages in other clusters in not supported yet`             |
-|               | FLUX - Install package                                            | Yes             | No\*                | \* Throws error message `not supported yet: request.AvailablePackageRef.Context.Cluster: \[%v\]` |
+|               | HELM - Package management (install, delete, etc.) without imagePullSecrets                   | Yes             | Yes                 | In additional clusters, only possible from Global repositories                                     |
+|               | HELM - Package management (install, delete, etc.) with imagePullSecrets                      | Yes             | No                  |                                                                                                    |
+|               | CARVEL - Package management (install, delete, etc.)                                         | Yes             | No\*                | \* Throws error message `installing packages in other clusters in not supported yet`             |
+|               | FLUX - Package management (install, delete, etc.)                                         | Yes             | No\*                | \* Throws error message `not supported yet: request.AvailablePackageRef.Context.Cluster: \[%v\]` |
 
 ## Limitations
 
