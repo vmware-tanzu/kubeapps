@@ -611,6 +611,25 @@ func TestBuildPackageIdentifier(t *testing.T) {
 		})
 	}
 }
+func TestGetRepoNameFromAnnotation(t *testing.T) {
+	tests := []struct {
+		name              string
+		repoRefAnnotation string
+		expected          string
+	}{
+		{"empty", "", "unknown"},
+		{"a valid annotation", "default/tce-repo", "tce-repo"},
+		{"an invalid annotation", "default/foo/tce-repo", "unknown"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			repoName := getRepoNameFromAnnotation(tt.repoRefAnnotation)
+			if want, got := tt.expected, repoName; !cmp.Equal(want, got) {
+				t.Errorf("in %s: mismatch (-want +got):\n%s", tt.name, cmp.Diff(want, got))
+			}
+		})
+	}
+}
 
 func TestPrereleasesVersionSelection(t *testing.T) {
 	tests := []struct {
