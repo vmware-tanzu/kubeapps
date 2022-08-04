@@ -282,25 +282,24 @@ func (f *ConfigurableConfigFactoryImpl) RESTConfig() (*rest.Config, error) {
 // FilterMetadatas returns a slice where the content has been filtered
 // according to the provided filter options.
 func FilterMetadatas(metadatas []*datapackagingv1alpha1.PackageMetadata, filterOptions *corev1.FilterOptions) []*datapackagingv1alpha1.PackageMetadata {
-	// Currently we support filtering by query or category but not by repository
-	// (UX doesn't yet display carvel repo in filter options).
-	// Once the UX does, we should be able to filter by repository
-	// also as its now an annotation:
-	// https://github.com/vmware-tanzu/carvel-kapp-controller/pull/532
-	if filterOptions != nil && filterOptions.Query == "" && len(filterOptions.Categories) == 0 {
-		return metadatas
-	}
-	filteredMeta := []*datapackagingv1alpha1.PackageMetadata{}
-	for _, metadata := range metadatas {
-		if filterOptions != nil {
-			matchesQuery := filterOptions.Query != "" && testMetadataMatchesQuery(metadata, filterOptions.Query)
-			matchesCategories := len(filterOptions.Categories) > 0 && testMetadataMatchesCategories(metadata, filterOptions.Categories)
-			if matchesQuery || matchesCategories {
-				filteredMeta = append(filteredMeta, metadata)
+	filteredMetadatas := metadatas
+	if filterOptions != nil {
+		filteredMetadatas = []*datapackagingv1alpha1.PackageMetadata{}
+
+		skipQueryFilter := filterOptions.Query == ""
+		skipCategoriesFilter := len(filterOptions.Categories) == 0
+		skipRepositoriesFilter := len(filterOptions.Repositories) == 0
+
+		for _, metadata := range metadatas {
+			matchesQuery := skipQueryFilter || testMetadataMatchesQuery(metadata, filterOptions.Query)
+			matchesCategories := skipCategoriesFilter || testMetadataMatchesCategories(metadata, filterOptions.Categories)
+			matchesRepos := skipRepositoriesFilter || testMetadataMatchesRepos(metadata, filterOptions.Repositories)
+			if matchesRepos && matchesQuery && matchesCategories {
+				filteredMetadatas = append(filteredMetadatas, metadata)
 			}
 		}
 	}
-	return filteredMeta
+	return filteredMetadatas
 }
 
 func testMetadataMatchesQuery(metadata *datapackagingv1alpha1.PackageMetadata, query string) bool {
@@ -323,6 +322,18 @@ func testMetadataMatchesCategories(metadata *datapackagingv1alpha1.PackageMetada
 	}
 
 	return intersection
+}
+
+// testMetadataMatchesRepos returns true if the metadata matches the provided repositories.
+func testMetadataMatchesRepos(metadata *datapackagingv1alpha1.PackageMetadata, repositories []string) bool {
+	metadataRepoName := getRepoNameFromAnnotation(metadata.Annotations[REPO_REF_ANNOTATION])
+	// if the package is from one of the given repositories, it matches
+	for _, repo := range repositories {
+		if metadataRepoName == repo {
+			return true
+		}
+	}
+	return false
 }
 
 //
