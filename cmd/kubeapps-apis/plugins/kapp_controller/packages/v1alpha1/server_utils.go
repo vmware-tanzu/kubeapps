@@ -143,18 +143,22 @@ func buildReadme(pkgMetadata *datapackagingv1alpha1.PackageMetadata, foundPkgSem
 func buildPackageIdentifier(pkgMetadata *datapackagingv1alpha1.PackageMetadata) string {
 	// default repo name if using kapp controller < v0.36.1
 	repoName := DEFAULT_REPO_NAME
-
 	// See https://github.com/vmware-tanzu/carvel-kapp-controller/pull/532
 	if repoRefAnnotation := pkgMetadata.Annotations[REPO_REF_ANNOTATION]; repoRefAnnotation != "" {
-		// this annotation returns "namespace/reponame", for instance "default/tce-repo",
-		// but we just want the "reponame" part
-		splitRepoRefAnnotation := strings.Split(repoRefAnnotation, "/")
-		// just change the repo name if we have a valid annotation
-		if len(splitRepoRefAnnotation) == 2 {
-			repoName = strings.Split(repoRefAnnotation, "/")[1]
-		}
+		repoName = getRepoNameFromAnnotation(repoRefAnnotation)
 	}
 	return fmt.Sprintf("%s/%s", repoName, pkgMetadata.Name)
+}
+
+func getRepoNameFromAnnotation(repoRefAnnotation string) string {
+	// this annotation returns "namespace/reponame", for instance "default/tce-repo",
+	// but we just want the "reponame" part
+	splitRepoRefAnnotation := strings.Split(repoRefAnnotation, "/")
+	// just change the repo name if we have a valid annotation
+	if len(splitRepoRefAnnotation) == 2 {
+		return strings.Split(repoRefAnnotation, "/")[1]
+	}
+	return ""
 }
 
 // buildPostInstallationNotes generates the installation notes based on the application status
