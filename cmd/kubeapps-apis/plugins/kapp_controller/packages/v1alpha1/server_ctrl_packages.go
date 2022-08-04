@@ -63,7 +63,7 @@ func (s *Server) GetAvailablePackageSummaries(ctx context.Context, request *core
 		if pageSize > 0 {
 			startAt = itemOffset
 			if startAt > len(pkgMetadatas) {
-				return nil, status.Errorf(codes.InvalidArgument, "invalid pagination arguments %v", request.GetPaginationOptions(), "startAt", startAt, "total", len(pkgMetadatas))
+				return nil, status.Errorf(codes.InvalidArgument, "invalid pagination arguments %v", request.GetPaginationOptions())
 			}
 			pkgMetadatas = pkgMetadatas[startAt:]
 			if len(pkgMetadatas) > int(pageSize) {
