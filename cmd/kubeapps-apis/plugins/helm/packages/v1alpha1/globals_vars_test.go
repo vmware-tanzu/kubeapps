@@ -88,34 +88,7 @@ var (
 		},
 	}
 
-	addRepoAuthHeaderPassCredentials = v1alpha1.AppRepository{
-		TypeMeta: metav1.TypeMeta{
-			Kind:       AppRepositoryKind,
-			APIVersion: AppRepositoryApi,
-		},
-		ObjectMeta: metav1.ObjectMeta{
-			Name:            "bar",
-			Namespace:       "foo",
-			ResourceVersion: "1",
-		},
-		Spec: v1alpha1.AppRepositorySpec{
-			URL:  "http://example.com",
-			Type: "helm",
-			Auth: v1alpha1.AppRepositoryAuth{
-				Header: &v1alpha1.AppRepositoryAuthHeader{
-					SecretKeyRef: v1.SecretKeySelector{
-						LocalObjectReference: v1.LocalObjectReference{
-							Name: "apprepo-bar",
-						},
-						Key: "authorizationHeader",
-					},
-				},
-			},
-			PassCredentials: true,
-		},
-	}
-
-	addRepoAuthHeaderWithSecretRef = func(secretName string) *v1alpha1.AppRepository {
+	addRepoAuthHeaderPassCredentials = func(namespace string) *v1alpha1.AppRepository {
 		return &v1alpha1.AppRepository{
 			TypeMeta: metav1.TypeMeta{
 				Kind:       AppRepositoryKind,
@@ -123,7 +96,36 @@ var (
 			},
 			ObjectMeta: metav1.ObjectMeta{
 				Name:            "bar",
-				Namespace:       "foo",
+				Namespace:       namespace,
+				ResourceVersion: "1",
+			},
+			Spec: v1alpha1.AppRepositorySpec{
+				URL:  "http://example.com",
+				Type: "helm",
+				Auth: v1alpha1.AppRepositoryAuth{
+					Header: &v1alpha1.AppRepositoryAuthHeader{
+						SecretKeyRef: v1.SecretKeySelector{
+							LocalObjectReference: v1.LocalObjectReference{
+								Name: "apprepo-bar",
+							},
+							Key: "authorizationHeader",
+						},
+					},
+				},
+				PassCredentials: true,
+			},
+		}
+	}
+
+	addRepoAuthHeaderWithSecretRef = func(namespace, secretName string) *v1alpha1.AppRepository {
+		return &v1alpha1.AppRepository{
+			TypeMeta: metav1.TypeMeta{
+				Kind:       AppRepositoryKind,
+				APIVersion: AppRepositoryApi,
+			},
+			ObjectMeta: metav1.ObjectMeta{
+				Name:            "bar",
+				Namespace:       namespace,
 				ResourceVersion: "1",
 			},
 			Spec: v1alpha1.AppRepositorySpec{
@@ -361,10 +363,10 @@ var (
 		}
 	}
 
-	addRepoReqAuthWithSecret = func(authType corev1.PackageRepositoryAuth_PackageRepositoryAuthType, secretName string) *corev1.AddPackageRepositoryRequest {
+	addRepoReqAuthWithSecret = func(authType corev1.PackageRepositoryAuth_PackageRepositoryAuthType, namespace, secretName string) *corev1.AddPackageRepositoryRequest {
 		return &corev1.AddPackageRepositoryRequest{
 			Name:            "bar",
-			Context:         &corev1.Context{Namespace: "foo", Cluster: KubeappsCluster},
+			Context:         &corev1.Context{Namespace: namespace, Cluster: KubeappsCluster},
 			Type:            "helm",
 			Url:             "http://example.com",
 			NamespaceScoped: true,
@@ -496,7 +498,7 @@ var (
 	}
 
 	addRepoExpectedGlobalResp = &corev1.AddPackageRepositoryResponse{
-		PackageRepoRef: repoRef("bar", KubeappsCluster, "kubeapps"),
+		PackageRepoRef: repoRef("bar", KubeappsCluster, globalPackagingNamespace),
 	}
 
 	packageRepoSecretBasicAuth = func(secretName string) *corev1.PackageRepositoryAuth {

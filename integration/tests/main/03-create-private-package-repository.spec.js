@@ -28,7 +28,7 @@ test("Create a new private package repository successfully", async ({ page }) =>
 
   await page.locator("text=Add Package Repository >> div").click();
   await page.fill("input#kubeapps-repo-name", repoName);
-  await page.fill("input#kubeapps-repo-url", "http://chartmuseum-chartmuseum.kubeapps:8080");
+  await page.fill("input#kubeapps-repo-url", "http://chartmuseum.chart-museum.svc.cluster.local:8080");
   await page.locator("text=Helm Charts").first().click();
   await page.locator("text=Helm Repository").click();
 

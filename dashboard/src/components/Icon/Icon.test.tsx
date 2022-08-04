@@ -12,7 +12,7 @@ it("should render an icon", () => {
 
 it("should use the default icon if not given", () => {
   const wrapper = mountWrapper(defaultStore, <Icon />);
-  expect(wrapper.find("img").prop("src")).toBe("placeholder.png");
+  expect(wrapper.find("img").prop("src")).toBe("placeholder.svg");
 });
 
 it("should fallback to the placeholder if an error happens", () => {
@@ -22,5 +22,5 @@ it("should fallback to the placeholder if an error happens", () => {
     wrapper.find("img").simulate("error", {});
   });
   wrapper.update();
-  expect(wrapper.find("img").prop("src")).toBe("placeholder.png");
+  expect(wrapper.find("img").prop("src")).toBe("placeholder.svg");
 });

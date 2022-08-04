@@ -26,7 +26,6 @@ Kubeapps maintainers team operates with 4 groups of labels:
 
 The type of issue. kind powers our filtering to understand what qualifies as a bug, proposal, feature, enhancement, question or documentation.
 
-
 | Label                | Description                                                       |
 | -------------------- | ----------------------------------------------------------------- |
 | `kind/bug`           | An issue that reports a defect in an existing feature             |
@@ -35,7 +34,6 @@ The type of issue. kind powers our filtering to understand what qualifies as a b
 | `kind/feature`       | An issue that reports a feature (approved) to be implemented      |
 | `kind/proposal`      | An issue that reports a new feature proposal to be discussed      |
 | `kind/question`      | An issue that request for feedback or support to maintainers team |
-
 
 ### `component/*`:
 
@@ -49,6 +47,7 @@ The relevant component(s) for the issue. Components are high level areas of the 
 | `component/authentication`   | An issue related to kubeapps authentication                                                       |
 | `component/ci`               | An issue related to kubeapps ci system                                                            |
 | `component/kubeops`          | An issue related to kubeops (to be deprecated)                                                    |
+| `component/multi-cluster`    | An issue related to Kubeapps configuration for multi-cluster support                              |
 | `component/packages`         | An issue related to kubeapps packaging formats to be distributed (Helm chart and Carvel packages) |
 | `component/pinniped-proxy`   | An issue related to kubeapps integration with pinniped-proxy                                      |
 | `component/plugin-carvel`    | An issue related to kubeapps plugin to manage Carvel packages                                     |
@@ -58,7 +57,6 @@ The relevant component(s) for the issue. Components are high level areas of the 
 | `component/plugin-resources` | An issue related to kubeapps plugin to manage resources                                           |
 | `component/ui`               | An issue related to kubeapps UI                                                                   |
 | `component/website`          | An issue related to kubeapps website                                                              |
-
 
 ### `contribution labels`:
 
