@@ -217,7 +217,7 @@ export default function DeploymentForm() {
                   <label>Name</label>
                   <input
                     id="releaseName"
-                    pattern="[a-z0-9]([-a-z0-9]*[a-z0-9])?(\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*"
+                    pattern="[a-z]([-a-z0-9]*[a-z0-9])?(\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*"
                     title="Use lowercase alphanumeric characters, '-' or '.'"
                     onChange={handleReleaseNameChange}
                     value={releaseName}
