@@ -133,7 +133,7 @@ it("changes the bgIcon based on the plugin name - default", () => {
       .find(InfoCard)
       .findWhere(s => s.prop("link")?.includes(pluginName))
       .prop("bgIcon"),
-  ).toBe("placeholder.png");
+  ).toBe("placeholder.svg");
 });
 
 it("changes the bgIcon based on the plugin name - helm", () => {

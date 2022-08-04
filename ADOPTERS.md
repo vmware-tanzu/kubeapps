@@ -4,17 +4,17 @@ If you're using Kubeapps and want to add your organization to this list, follow 
 
 ## Organizations using Kubeapps
 
-<a href="https://www.coreweave.com/" border="0" target="_blank"><img alt="CoreWeave" src="./site/content/docs/latest/img/adopters/coreweave.svg" height="90" style="background-color: #FFF;"></a>
+<a href="https://www.coreweave.com/" border="0" target="_blank"><img alt="CoreWeave" src="./site/content/docs/latest/img/adopters/coreweave.jpg" height="90"></a>
 
-<a href="https://h8l.io/" border="0" target="_blank"><img alt="h8lio" src="./site/content/docs/latest/img/adopters/h8lio.svg" height="70" style="background-color: #FFF;"></a>
+<a href="https://h8l.io/" border="0" target="_blank"><img alt="h8lio" src="./site/content/docs/latest/img/adopters/h8lio.jpg" height="70"></a>
 
-<a href="https://www.ledger.com/" border="0" target="_blank"><img alt="Ledger" src="./site/content/docs/latest/img/adopters/ledger.svg" height="50" style="background-color: #FFF;"></a>
+<a href="https://www.ledger.com/" border="0" target="_blank"><img alt="Ledger" src="./site/content/docs/latest/img/adopters/ledger.jpg" height="50"></a>
 
-<a href="https://otomi.io/" border="0" target="_blank"><img alt="Otomi" src="./site/content/docs/latest/img/adopters/otomi.svg" height="70" style="background-color: #FFF;"></a>
+<a href="https://otomi.io/" border="0" target="_blank"><img alt="Otomi" src="./site/content/docs/latest/img/adopters/otomi.jpg" height="70"></a>
 
-<a href="https://www.terasky.com/" border="0" target="_blank"><img alt="Terasky" src="./site/content/docs/latest/img/adopters/terasky.svg" height="40" style="background-color: #FFF;"></a>
+<a href="https://www.terasky.com/" border="0" target="_blank"><img alt="Terasky" src="./site/content/docs/latest/img/adopters/terasky.jpg" height="40"></a>
 
-## Sucess Stories
+## Success Stories
 
 Below is a list of adopters of Kubeapps that have publicly shared the details of how they use it (in alphabetical order).
 
@@ -44,10 +44,10 @@ TeraSky is a Global Advanced Technology Solutions Provider. We utilize Kubeapps 
 
 ## Adding your organization to the list of adopters
 
-If you are using Kubeapps and would like to be included in the list of Kubeapps Adopters it is possible through the following options:
+If you are using Kubeapps and would like to include your organization/use case in the list of Kubeapps Adopters it is possible through the following options:
 
-- **Send a PR**: add an SVG/PNG version of your logo to the [img/adopters directory](./site/content/docs/latest/img/adopters/) in this repo and submit a pull request with your change including 1-2 sentences describing how your organization is using Kubeapps. Name the image file something that reflects your company (e.g., if your company is called Acme, name the image acme.svg).
+- **Send a PR**: add an jpg/PNG version of your logo to the [img/adopters directory](./site/content/docs/latest/img/adopters/) in this repo and submit a pull request with your change including 1-2 sentences describing how your organization use Kubeapps. Name the image file something that reflects your company (e.g., if your company is called Acme, name the image acme.jpg).
 - **Slack**: Open a new thread in the [Kubeapps slack channel](https://kubernetes.slack.com/messages/kubeapps) with the request and the information described above.
-- **Email**: Directly contact through [email](mailto:tanzu-kubeapps-team@vmware.com) to our DL.
+- **Email**: Directly contact through [email](mailto:tanzu-kubeapps-team@vmware.com) to Kubeapps maintainers DL.
 
-Project maintainers will help and assess to include your organization as a Kubeapps adopter. Please feel free to send us a message in [#kubeapps](https://kubernetes.slack.com/messages/kubeapps) with any questions you may have.
+Project maintainers will help and assess to include your organization as a Kubeapps adopter. Please feel free to send a message in [#kubeapps](https://kubernetes.slack.com/messages/kubeapps) with any questions you may have.

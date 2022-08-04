@@ -73,6 +73,18 @@ func (s *Server) newRepo(ctx context.Context, repo *HelmRepository) (*corev1.Pac
 			return nil, err
 		}
 	}
+	// Copy secret to global namespace if needed. See issue #5129.
+	if repo.name.Namespace != s.globalPackagingNamespace && secret != nil {
+		if err = s.copyRepositorySecret(typedClient, secret, repo.name); err != nil {
+			return nil, err
+		}
+	}
+
+	// Handle imagesPullSecret if any
+	imagePullSecret, _, err := handleImagesPullSecret(ctx, typedClient, s.pluginConfig.UserManagedSecrets, repo, true)
+	if err != nil {
+		return nil, err
+	}
 
 	// Handle imagesPullSecret if any
 	imagePullSecret, _, err := handleImagesPullSecret(ctx, typedClient, s.pluginConfig.UserManagedSecrets, repo, true)
@@ -320,6 +332,18 @@ func (s *Server) updateRepo(ctx context.Context, repo *HelmRepository) (*corev1.
 		if secret, updateRepoSecret, err = s.updateKubeappsManagedRepoSecret(ctx, repo, secretRef); err != nil {
 			return nil, err
 		}
+	}
+	// Copy secret to global namespace if needed. See issue #5129.
+	if repo.name.Namespace != s.globalPackagingNamespace && secret != nil {
+		if err = s.copyRepositorySecret(typedClient, secret, repo.name); err != nil {
+			return nil, err
+		}
+	}
+
+	// Handle imagesPullSecret if any
+	imagePullSecret, updateImgPullSecret, err := handleImagesPullSecret(ctx, typedClient, s.pluginConfig.UserManagedSecrets, repo, false)
+	if err != nil {
+		return nil, err
 	}
 
 	// Handle imagesPullSecret if any

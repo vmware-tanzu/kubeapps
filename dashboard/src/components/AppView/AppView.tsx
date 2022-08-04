@@ -9,6 +9,7 @@ import Alert from "components/js/Alert";
 import Column from "components/js/Column";
 import Row from "components/js/Row";
 import PageHeader from "components/PageHeader/PageHeader";
+import { push } from "connected-react-router";
 import {
   InstalledPackageReference,
   ResourceRef,
@@ -31,7 +32,7 @@ import {
 } from "shared/types";
 import { getPluginsSupportingRollback } from "shared/utils";
 import ApplicationStatus from "../../containers/ApplicationStatusContainer";
-import placeholder from "../../placeholder.png";
+import placeholder from "icons/placeholder.svg";
 import * as url from "../../shared/url";
 import LoadingWrapper from "../LoadingWrapper/LoadingWrapper";
 import AccessURLTable from "./AccessURLTable/AccessURLTable";
@@ -160,7 +161,12 @@ export default function AppView() {
     secrets: [],
   } as IAppViewResourceRefs);
   const {
-    apps: { error, selected: selectedInstalledPkg, selectedDetails: selectedAvailablePkg },
+    apps: {
+      error,
+      isFetching,
+      selected: selectedInstalledPkg,
+      selectedDetails: selectedAvailablePkg,
+    },
     config: { customAppViews },
   } = useSelector((state: IStoreState) => state);
 
@@ -260,6 +266,10 @@ export default function AppView() {
     dispatch(actions.installedpackages.getInstalledPackage(installedPkgRef));
   };
 
+  const goToAppsView = () => {
+    dispatch(push(url.app.apps.list(cluster, namespace)));
+  };
+
   if (fetchError) {
     if (fetchError.constructor === FetchError) {
       return (
@@ -297,12 +307,21 @@ export default function AppView() {
   }
   return (
     <LoadingWrapper
-      loaded={!!selectedInstalledPkg}
+      loaded={!isFetching}
       loadingText="Retrieving application..."
       className="margin-t-xl"
     >
       {!selectedInstalledPkg || !selectedInstalledPkg?.installedPackageRef ? (
-        <Alert theme="danger">There is a problem with this package</Alert>
+        error ? (
+          <Alert theme="danger">
+            An error occurred while fetching the application: {error?.message}.{" "}
+            <CdsButton size="sm" action="flat" onClick={goToAppsView} type="button">
+              Go Back{" "}
+            </CdsButton>
+          </Alert>
+        ) : (
+          <></>
+        )
       ) : (
         <section>
           <PageHeader

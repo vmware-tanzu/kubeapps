@@ -106,7 +106,6 @@ export const fetchRepoDetail = (
   return async dispatch => {
     try {
       dispatch(requestRepoDetail());
-      // Check if we have enough data to retrieve the package manually (instead of using its own availablePackageRef)
       const getPackageRepositoryDetailResponse =
         await PackageRepositoriesService.getPackageRepositoryDetail(packageRepoRef);
       if (!getPackageRepositoryDetailResponse?.detail) {

@@ -22,6 +22,7 @@ import (
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/anypb"
 	apiv1 "k8s.io/api/core/v1"
+	k8sErrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	k8sruntime "k8s.io/apimachinery/pkg/runtime"
@@ -198,6 +199,7 @@ func TestAddPackageRepository(t *testing.T) {
 		expectedCreatedSecret *apiv1.Secret
 		userManagedSecrets    bool
 		repoClientGetter      newRepoClient
+		expectedGlobalSecret  *apiv1.Secret
 	}{
 		{
 			name:       "returns error if no namespace is provided",
@@ -259,6 +261,7 @@ func TestAddPackageRepository(t *testing.T) {
 			expectedResponse:      addRepoExpectedResp,
 			expectedRepo:          &addRepoWithTLSCA,
 			expectedCreatedSecret: setSecretOwnerRef("bar", newTlsSecret("apprepo-bar", "foo", nil, nil, ca)),
+			expectedGlobalSecret:  newTlsSecret("foo-apprepo-bar", globalPackagingNamespace, nil, nil, ca),
 			statusCode:            codes.OK,
 		},
 		{
@@ -267,19 +270,20 @@ func TestAddPackageRepository(t *testing.T) {
 			statusCode: codes.InvalidArgument,
 		},
 		{
-			name:               "package repository with secret key reference",
-			request:            addRepoReqTLSSecretRef,
-			expectedResponse:   addRepoExpectedResp,
-			expectedRepo:       &addRepoTLSSecret,
-			statusCode:         codes.OK,
-			existingSecret:     newTlsSecret("secret-1", "foo", nil, nil, ca),
-			userManagedSecrets: true,
+			name:                 "package repository with secret key reference",
+			request:              addRepoReqTLSSecretRef,
+			userManagedSecrets:   true,
+			existingSecret:       newTlsSecret("secret-1", "foo", nil, nil, ca),
+			expectedResponse:     addRepoExpectedResp,
+			expectedRepo:         &addRepoTLSSecret,
+			expectedGlobalSecret: newTlsSecret("foo-apprepo-bar", globalPackagingNamespace, nil, nil, ca),
+			statusCode:           codes.OK,
 		},
 		{
 			name:               "fails when package repository links to non-existing secret",
 			request:            addRepoReqTLSSecretRef,
-			statusCode:         codes.NotFound,
 			userManagedSecrets: true,
+			statusCode:         codes.NotFound,
 		},
 		{
 			name:       "fails when package repository links to non-existing secret (kubeapps managed secrets)",
@@ -288,11 +292,36 @@ func TestAddPackageRepository(t *testing.T) {
 		},
 		// BASIC AUTH
 		{
-			name:                  "package repository with basic auth and pass_credentials flag",
+			name:                  "[kubeapps managed secrets] package repository with basic auth and pass_credentials flag",
 			request:               addRepoReqBasicAuth("baz", "zot"),
 			expectedResponse:      addRepoExpectedResp,
-			expectedRepo:          &addRepoAuthHeaderPassCredentials,
+			expectedRepo:          addRepoAuthHeaderPassCredentials("foo"),
 			expectedCreatedSecret: setSecretOwnerRef("bar", newBasicAuthSecret("apprepo-bar", "foo", "baz", "zot")),
+			expectedGlobalSecret:  newBasicAuthSecret("foo-apprepo-bar", globalPackagingNamespace, "baz", "zot"),
+			statusCode:            codes.OK,
+		},
+		{
+			name: "[kubeapps managed secrets] package repository with basic auth and pass_credentials flag in global namespace",
+			request: &corev1.AddPackageRepositoryRequest{
+				Name:            "bar",
+				Context:         &corev1.Context{Namespace: globalPackagingNamespace, Cluster: KubeappsCluster},
+				Type:            "helm",
+				Url:             "http://example.com",
+				NamespaceScoped: false,
+				Auth: &corev1.PackageRepositoryAuth{
+					Type: corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_BASIC_AUTH,
+					PackageRepoAuthOneOf: &corev1.PackageRepositoryAuth_UsernamePassword{
+						UsernamePassword: &corev1.UsernamePassword{
+							Username: "the-user",
+							Password: "the-pwd",
+						},
+					},
+					PassCredentials: true,
+				},
+			},
+			expectedResponse:      addRepoExpectedGlobalResp,
+			expectedRepo:          addRepoAuthHeaderPassCredentials(globalPackagingNamespace),
+			expectedCreatedSecret: setSecretOwnerRef("bar", newBasicAuthSecret("apprepo-bar", globalPackagingNamespace, "the-user", "the-pwd")),
 			statusCode:            codes.OK,
 		},
 		{
@@ -307,50 +336,85 @@ func TestAddPackageRepository(t *testing.T) {
 			statusCode:         codes.InvalidArgument,
 		},
 		{
-			name:               "package repository basic auth with existing secret (user managed secrets)",
-			request:            addRepoReqAuthWithSecret(corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_BASIC_AUTH, "secret-basic"),
-			expectedResponse:   addRepoExpectedResp,
-			expectedRepo:       addRepoAuthHeaderWithSecretRef("secret-basic"),
-			existingSecret:     newBasicAuthSecret("secret-basic", "foo", "baz-user", "zot-pwd"),
-			statusCode:         codes.OK,
+			name:                 "[user managed secrets] package repository basic auth with existing secret",
+			request:              addRepoReqAuthWithSecret(corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_BASIC_AUTH, "foo", "secret-basic"),
+			userManagedSecrets:   true,
+			existingSecret:       newBasicAuthSecret("secret-basic", "foo", "baz-user", "zot-pwd"),
+			expectedResponse:     addRepoExpectedResp,
+			expectedRepo:         addRepoAuthHeaderWithSecretRef("foo", "secret-basic"),
+			expectedGlobalSecret: newBasicAuthSecret("foo-apprepo-bar", globalPackagingNamespace, "baz-user", "zot-pwd"),
+			statusCode:           codes.OK,
+		},
+		{
+			name: "[user managed secrets] add repository to global namespace does not create global secret",
+			request: &corev1.AddPackageRepositoryRequest{
+				Name:            "bar",
+				Context:         &corev1.Context{Namespace: globalPackagingNamespace, Cluster: KubeappsCluster},
+				Type:            "helm",
+				Url:             "http://example.com",
+				NamespaceScoped: false,
+				Auth: &corev1.PackageRepositoryAuth{
+					Type: corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_BASIC_AUTH,
+					PackageRepoAuthOneOf: &corev1.PackageRepositoryAuth_SecretRef{
+						SecretRef: &corev1.SecretKeyReference{
+							Name: "secret-basic",
+						},
+					},
+				},
+			},
 			userManagedSecrets: true,
+			existingSecret:     newBasicAuthSecret("secret-basic", globalPackagingNamespace, "baz-user", "zot-pwd"),
+			expectedResponse:   addRepoExpectedGlobalResp,
+			expectedRepo:       addRepoAuthHeaderWithSecretRef(globalPackagingNamespace, "secret-basic"),
+			statusCode:         codes.OK,
 		},
 		{
 			name:       "package repository basic auth with existing secret (kubeapps managed secrets)",
-			request:    addRepoReqAuthWithSecret(corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_BASIC_AUTH, "secret-basic"), //addRepoReq13,
+			request:    addRepoReqAuthWithSecret(corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_BASIC_AUTH, "foo", "secret-basic"), //addRepoReq13,
 			statusCode: codes.InvalidArgument,
 		},
 		// BEARER TOKEN
 		{
-			name:                  "package repository with bearer token",
-			request:               addRepoReqBearerToken("the-token"),
+			name:                  "package repository with bearer token w/o prefix",
+			request:               addRepoReqBearerToken("the-token", false),
 			expectedResponse:      addRepoExpectedResp,
-			expectedRepo:          addRepoAuthHeaderWithSecretRef("apprepo-bar"),
-			statusCode:            codes.OK,
+			expectedRepo:          addRepoAuthHeaderWithSecretRef("foo", "apprepo-bar"),
 			expectedCreatedSecret: setSecretOwnerRef("bar", newAuthTokenSecret("apprepo-bar", "foo", "Bearer the-token")),
+			expectedGlobalSecret:  newAuthTokenSecret("foo-apprepo-bar", globalPackagingNamespace, "Bearer the-token"),
+			statusCode:            codes.OK,
+		},
+		{
+			name:                  "package repository with bearer token w/ prefix",
+			request:               addRepoReqBearerToken("the-token", true),
+			expectedResponse:      addRepoExpectedResp,
+			expectedRepo:          addRepoAuthHeaderWithSecretRef("foo", "apprepo-bar"),
+			expectedCreatedSecret: setSecretOwnerRef("bar", newAuthTokenSecret("apprepo-bar", "foo", "Bearer the-token")),
+			expectedGlobalSecret:  newAuthTokenSecret("foo-apprepo-bar", globalPackagingNamespace, "Bearer the-token"),
+			statusCode:            codes.OK,
 		},
 		{
 			name:       "package repository with no bearer token",
-			request:    addRepoReqBearerToken(""),
+			request:    addRepoReqBearerToken("", false),
 			statusCode: codes.InvalidArgument,
 		},
 		{
-			name:               "package repository bearer token with secret (user managed secrets)",
-			request:            addRepoReqAuthWithSecret(corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_BEARER, "secret-bearer"),
-			expectedResponse:   addRepoExpectedResp,
-			expectedRepo:       addRepoAuthHeaderWithSecretRef("secret-bearer"),
-			userManagedSecrets: true,
-			existingSecret:     newAuthTokenSecret("secret-bearer", "foo", "Bearer the-token"),
-			statusCode:         codes.OK,
+			name:                 "package repository bearer token with secret (user managed secrets)",
+			request:              addRepoReqAuthWithSecret(corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_BEARER, "foo", "secret-bearer"),
+			userManagedSecrets:   true,
+			existingSecret:       newAuthTokenSecret("secret-bearer", "foo", "Bearer the-token"),
+			expectedResponse:     addRepoExpectedResp,
+			expectedRepo:         addRepoAuthHeaderWithSecretRef("foo", "secret-bearer"),
+			expectedGlobalSecret: newAuthTokenSecret("foo-apprepo-bar", globalPackagingNamespace, "Bearer the-token"),
+			statusCode:           codes.OK,
 		},
 		{
 			name:       "package repository bearer token with secret (kubeapps managed secrets)",
-			request:    addRepoReqAuthWithSecret(corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_BEARER, "secret-bearer"),
+			request:    addRepoReqAuthWithSecret(corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_BEARER, "foo", "secret-bearer"),
 			statusCode: codes.InvalidArgument,
 		},
 		{
 			name:               "package repository bearer token (user managed secrets)",
-			request:            addRepoReqBearerToken("the-token"),
+			request:            addRepoReqBearerToken("the-token", false),
 			userManagedSecrets: true,
 			statusCode:         codes.InvalidArgument,
 		},
@@ -359,18 +423,43 @@ func TestAddPackageRepository(t *testing.T) {
 			name:                  "package repository with custom auth",
 			request:               addRepoReqCustomAuth,
 			expectedResponse:      addRepoExpectedResp,
-			expectedRepo:          addRepoAuthHeaderWithSecretRef("apprepo-bar"),
-			statusCode:            codes.OK,
+			expectedRepo:          addRepoAuthHeaderWithSecretRef("foo", "apprepo-bar"),
 			expectedCreatedSecret: setSecretOwnerRef("bar", newAuthTokenSecret("apprepo-bar", "foo", "foobarzot")),
+			expectedGlobalSecret:  newAuthTokenSecret("foo-apprepo-bar", globalPackagingNamespace, "foobarzot"),
+			statusCode:            codes.OK,
 		},
 		{
-			name:               "package repository custom auth with existing secret (user managed secrets)",
-			request:            addRepoReqAuthWithSecret(corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_AUTHORIZATION_HEADER, "secret-custom"),
-			expectedResponse:   addRepoExpectedResp,
-			expectedRepo:       addRepoAuthHeaderWithSecretRef("secret-custom"),
-			existingSecret:     newBasicAuthSecret("secret-custom", "foo", "baz", "zot"),
-			statusCode:         codes.OK,
+			name:                 "package repository custom auth with existing secret (user managed secrets)",
+			request:              addRepoReqAuthWithSecret(corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_AUTHORIZATION_HEADER, "foo", "secret-custom"),
+			userManagedSecrets:   true,
+			existingSecret:       newBasicAuthSecret("secret-custom", "foo", "baz", "zot"),
+			expectedResponse:     addRepoExpectedResp,
+			expectedRepo:         addRepoAuthHeaderWithSecretRef("foo", "secret-custom"),
+			expectedGlobalSecret: newBasicAuthSecret("foo-apprepo-bar", globalPackagingNamespace, "baz", "zot"),
+			statusCode:           codes.OK,
+		},
+		{
+			name: "global package repository custom auth with existing secret does not generate copied global secret (user managed secrets)",
+			request: &corev1.AddPackageRepositoryRequest{
+				Name:            "bar",
+				Context:         &corev1.Context{Namespace: globalPackagingNamespace, Cluster: KubeappsCluster},
+				Type:            "helm",
+				Url:             "http://example.com",
+				NamespaceScoped: false,
+				Auth: &corev1.PackageRepositoryAuth{
+					Type: corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_AUTHORIZATION_HEADER,
+					PackageRepoAuthOneOf: &corev1.PackageRepositoryAuth_SecretRef{
+						SecretRef: &corev1.SecretKeyReference{
+							Name: "secret-custom",
+						},
+					},
+				},
+			},
 			userManagedSecrets: true,
+			existingSecret:     newBasicAuthSecret("secret-custom", globalPackagingNamespace, "baz", "zot"),
+			expectedResponse:   addRepoExpectedGlobalResp,
+			expectedRepo:       addRepoAuthHeaderWithSecretRef(globalPackagingNamespace, "secret-custom"),
+			statusCode:         codes.OK,
 		},
 		// DOCKER AUTH
 		{
@@ -386,17 +475,21 @@ func TestAddPackageRepository(t *testing.T) {
 			expectedCreatedSecret: setSecretOwnerRef("bar",
 				newAuthDockerSecret("apprepo-bar", "foo",
 					dockerAuthJson("https://docker-server", "the-user", "the-password", "foo@bar.com", "dGhlLXVzZXI6dGhlLXBhc3N3b3Jk"))),
+			expectedGlobalSecret: newAuthDockerSecret("foo-apprepo-bar", globalPackagingNamespace,
+				dockerAuthJson("https://docker-server", "the-user", "the-password", "foo@bar.com", "dGhlLXVzZXI6dGhlLXBhc3N3b3Jk")),
 			statusCode: codes.OK,
 		},
 		{
 			name:               "package repository with Docker auth (user managed secrets)",
-			request:            addRepoReqAuthWithSecret(corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_DOCKER_CONFIG_JSON, "secret-docker"),
-			expectedResponse:   addRepoExpectedResp,
+			request:            addRepoReqAuthWithSecret(corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_DOCKER_CONFIG_JSON, "foo", "secret-docker"),
 			userManagedSecrets: true,
 			existingSecret: newAuthDockerSecret("secret-docker", "foo",
 				dockerAuthJson("https://docker-server", "the-user", "the-password", "foo@bar.com", "dGhlLXVzZXI6dGhlLXBhc3N3b3Jk")),
-			expectedRepo: addRepoAuthDocker("secret-docker"),
-			statusCode:   codes.OK,
+			expectedResponse: addRepoExpectedResp,
+			expectedRepo:     addRepoAuthDocker("secret-docker"),
+			expectedGlobalSecret: newAuthDockerSecret("foo-apprepo-bar", globalPackagingNamespace,
+				dockerAuthJson("https://docker-server", "the-user", "the-password", "foo@bar.com", "dGhlLXVzZXI6dGhlLXBhc3N3b3Jk")),
+			statusCode: codes.OK,
 		},
 		// Others
 		{
@@ -419,7 +512,7 @@ func TestAddPackageRepository(t *testing.T) {
 		},
 		{
 			name:               "package repository with reference to malformed secret",
-			request:            addRepoReqAuthWithSecret(corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_BASIC_AUTH, "secret-basic"),
+			request:            addRepoReqAuthWithSecret(corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_BASIC_AUTH, "foo", "secret-basic"),
 			existingSecret:     newTlsSecret("secret-basic", "foo", nil, nil, nil), // Creates empty secret
 			userManagedSecrets: true,
 			statusCode:         codes.Internal,
@@ -692,7 +785,7 @@ func TestAddPackageRepository(t *testing.T) {
 				if err = ctrlClient.Get(ctx, nsname, &actualRepo); err != nil {
 					t.Fatal(err)
 				} else {
-					checkRepoSecrets(s, t, nsname.Namespace, tc.userManagedSecrets, &actualRepo, tc.expectedRepo, tc.expectedCreatedSecret)
+					checkRepoSecrets(s, t, tc.userManagedSecrets, &actualRepo, tc.expectedRepo, tc.expectedCreatedSecret, tc.expectedGlobalSecret)
 				}
 			}
 		})
@@ -1026,6 +1119,7 @@ func TestUpdatePackageRepository(t *testing.T) {
 		existingSecret         *apiv1.Secret
 		expectedSecret         *apiv1.Secret
 		userManagedSecrets     bool
+		expectedGlobalSecret   *apiv1.Secret
 	}{
 		{
 			name: "invalid package repo ref",
@@ -1087,9 +1181,10 @@ func TestUpdatePackageRepository(t *testing.T) {
 				repository.Spec.URL = "https://new-repo-url"
 				return &repository
 			},
-			expectedRef:        defaultRef,
-			expectedSecret:     setSecretOwnerRef("repo-1", newTlsSecret("apprepo-repo-1", "ns-1", nil, nil, ca)),
-			expectedStatusCode: codes.OK,
+			expectedRef:          defaultRef,
+			expectedSecret:       setSecretOwnerRef("repo-1", newTlsSecret("apprepo-repo-1", "ns-1", nil, nil, ca)),
+			expectedGlobalSecret: newTlsSecret("ns-1-apprepo-repo-1", globalPackagingNamespace, nil, nil, ca),
+			expectedStatusCode:   codes.OK,
 		},
 		{
 			name:           "update removing tsl config",
@@ -1145,9 +1240,10 @@ func TestUpdatePackageRepository(t *testing.T) {
 				repository.Spec.URL = "https://new-repo-url"
 				return &repository
 			},
-			expectedRef:        defaultRef,
-			expectedSecret:     setSecretOwnerRef("repo-1", newAuthTokenSecret("apprepo-repo-1", "ns-1", "Bearer foobarzot")),
-			expectedStatusCode: codes.OK,
+			expectedRef:          defaultRef,
+			expectedSecret:       setSecretOwnerRef("repo-1", newAuthTokenSecret("apprepo-repo-1", "ns-1", "Bearer foobarzot")),
+			expectedGlobalSecret: newAuthTokenSecret("ns-1-apprepo-repo-1", globalPackagingNamespace, "Bearer foobarzot"),
+			expectedStatusCode:   codes.OK,
 		},
 		{
 			name: "update adding auth (user managed secrets)",
@@ -1178,9 +1274,9 @@ func TestUpdatePackageRepository(t *testing.T) {
 				repository.Spec.URL = "https://new-repo-url"
 				return &repository
 			},
-			expectedRef: defaultRef,
-			//expectedSecret:     setSecretOwnerRef("repo-1", newAuthTokenSecret("apprepo-repo-1", "ns-1", "Bearer foobarzot")),
-			expectedStatusCode: codes.OK,
+			expectedRef:          defaultRef,
+			expectedGlobalSecret: newAuthTokenSecret("ns-1-apprepo-repo-1", globalPackagingNamespace, "Bearer foobarzot"),
+			expectedStatusCode:   codes.OK,
 		},
 		{
 			name:           "update removing auth",
@@ -1462,9 +1558,7 @@ func TestUpdatePackageRepository(t *testing.T) {
 				t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opts))
 			}
 
-			if tc.expectedSecret != nil {
-				checkRepoSecrets(s, t, tc.expectedRef.Context.Namespace, tc.userManagedSecrets, appRepo, expectedRepository, tc.expectedSecret)
-			}
+			checkRepoSecrets(s, t, tc.userManagedSecrets, appRepo, expectedRepository, tc.expectedSecret, tc.expectedGlobalSecret)
 		})
 	}
 }
@@ -1535,8 +1629,9 @@ func TestDeletePackageRepository(t *testing.T) {
 	}
 }
 
-func checkRepoSecrets(s *Server, t *testing.T, namespace string, userManagedSecrets bool,
-	actualRepo *appRepov1alpha1.AppRepository, expectedRepo *appRepov1alpha1.AppRepository, expectedSecret *apiv1.Secret) {
+func checkRepoSecrets(s *Server, t *testing.T, userManagedSecrets bool,
+	actualRepo *appRepov1alpha1.AppRepository, expectedRepo *appRepov1alpha1.AppRepository,
+	expectedSecret *apiv1.Secret, expectedGlobalSecret *apiv1.Secret) {
 	ctx := context.Background()
 	if userManagedSecrets {
 		if expectedSecret != nil {
@@ -1572,6 +1667,35 @@ func checkRepoSecrets(s *Server, t *testing.T, namespace string, userManagedSecr
 			t.Fatalf("Expected no secret, but found CustomCA: [%v]", actualRepo.Spec.Auth.CustomCA.SecretKeyRef)
 		} else if expectedRepo.Spec.Auth.Header != nil {
 			t.Fatalf("Error: unexpected state")
+		}
+	}
+	checkGlobalSecret(s, t, expectedRepo, expectedGlobalSecret, expectedSecret != nil || expectedRepo.Spec.Auth.Header != nil || expectedRepo.Spec.Auth.CustomCA != nil)
+}
+
+func checkGlobalSecret(s *Server, t *testing.T, expectedRepo *appRepov1alpha1.AppRepository, expectedGlobalSecret *apiv1.Secret, checkNoGlobalSecret bool) {
+	ctx := context.Background()
+	typedClient, err := s.clientGetter.Typed(ctx, s.kubeappsCluster)
+	if err != nil {
+		t.Fatal(err)
+	}
+	repoGlobalSecretName := fmt.Sprintf("%s-apprepo-%s", expectedRepo.Namespace, expectedRepo.Name)
+	if expectedGlobalSecret != nil {
+		// Check for copied secret to global namespace
+		actualGlobalSecret, err := typedClient.CoreV1().Secrets(s.globalPackagingNamespace).Get(ctx, repoGlobalSecretName, metav1.GetOptions{})
+		if err != nil {
+			t.Fatal(err)
+		}
+		if got, want := actualGlobalSecret, expectedGlobalSecret; !cmp.Equal(want, got) {
+			t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got))
+		}
+	} else if checkNoGlobalSecret {
+		// Check that global secret does not exist
+		secret, err := typedClient.CoreV1().Secrets(s.globalPackagingNamespace).Get(ctx, repoGlobalSecretName, metav1.GetOptions{})
+		if err != nil && !k8sErrors.IsNotFound(err) {
+			t.Fatal(err)
+		}
+		if secret != nil {
+			t.Errorf("global secret was found")
 		}
 	}
 }

@@ -326,16 +326,16 @@ func OCIRegistryCredentialFromSecret(registryURL string, secret apiv1.Secret) (*
 	if secret.Type == apiv1.SecretTypeDockerConfigJson {
 		dockerCfg, err := config.LoadFromReader(bytes.NewReader(secret.Data[apiv1.DockerConfigJsonKey]))
 		if err != nil {
-			return nil, fmt.Errorf("unable to load Docker config from Secret '%s': %w", secret.Name, err)
+			return nil, fmt.Errorf("unable to load docker config from secret '%s': %w", secret.Name, err)
 		}
 		parsedURL, err := url.Parse(registryURL)
 		if err != nil {
-			return nil, fmt.Errorf("unable to parse registry URL '%s' while reconciling Secret '%s': %w",
+			return nil, fmt.Errorf("unable to parse registry URL '%s' while reconciling secret '%s': %w",
 				registryURL, secret.Name, err)
 		}
 		authConfig, err := dockerCfg.GetAuthConfig(parsedURL.Host)
 		if err != nil {
-			return nil, fmt.Errorf("unable to get authentication data from Secret '%s': %w", secret.Name, err)
+			return nil, fmt.Errorf("unable to get authentication data from secret '%s': %w", secret.Name, err)
 		}
 
 		// Make sure that the obtained auth config is for the requested host.
@@ -343,7 +343,7 @@ func OCIRegistryCredentialFromSecret(registryURL string, secret apiv1.Secret) (*
 		// the credential store returns an empty auth config.
 		// Refer: https://github.com/docker/cli/blob/v20.10.16/cli/config/credentials/file_store.go#L44
 		if credentials.ConvertToHostname(authConfig.ServerAddress) != parsedURL.Host {
-			return nil, fmt.Errorf("no auth config for '%s' in the docker-registry Secret '%s'", parsedURL.Host, secret.Name)
+			return nil, fmt.Errorf("no auth config for '%s' in the docker-registry secret '%s'", parsedURL.Host, secret.Name)
 		}
 		username = authConfig.Username
 		password = authConfig.Password
