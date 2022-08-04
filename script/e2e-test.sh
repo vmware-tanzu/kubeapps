@@ -17,7 +17,7 @@ TEST_TIMEOUT_MINUTES=${5:-"4"}
 DEX_IP=${6:-"172.18.0.2"}
 ADDITIONAL_CLUSTER_IP=${7:-"172.18.0.3"}
 KAPP_CONTROLLER_VERSION=${8:-"v0.32.0"}
-CHARTMUSEUM_VERSION=${9:-"2.14.2"}
+CHARTMUSEUM_VERSION=${9:-"3.9.0"}
 
 # TODO(andresmgot): While we work with beta releases, the Bitnami pipeline
 # removes the pre-release part of the tag
@@ -35,6 +35,9 @@ fi
 
 # Functions for local Docker registry mgmt
 . "${ROOT_DIR}/script/install-local-registry.sh"
+
+# Functions for handling Chart Museum
+. "${ROOT_DIR}/script/chart-museum.sh"
 
 info "Root dir: ${ROOT_DIR}"
 info "Use multicluster+OIDC: ${USE_MULTICLUSTER_OIDC_ENV}"
@@ -70,7 +73,7 @@ pushLocalChart() {
     helm package $ROOT_DIR/integration/charts/simplechart
 
     info "Pushing local test chart to ChartMuseum"
-    pushChartToChartMuseum kubeapps admin password simplechart "0.1.0"
+    pushChartToChartMuseum "simplechart" "0.1.0" "simplechart-0.1.0.tgz"
 }
 
 ########################
@@ -129,28 +132,6 @@ installOLM() {
 }
 
 ########################
-# Install chartmuseum
-# Globals: None
-# Arguments:
-#   $1: Username
-#   $2: Password
-#   $3: ChartMuseum version
-# Returns: None
-#########################
-installChartmuseum() {
-  local user=$1
-  local password=$2
-  local version=$3
-  info "Installing ChartMuseum ${version}..."
-  helm install chartmuseum --namespace kubeapps "https://github.com/chartmuseum/charts/releases/download/chartmuseum-${version}/chartmuseum-${version}.tgz" \
-    --set env.open.DISABLE_API=false \
-    --set persistence.enabled=true \
-    --set secret.AUTH_USER=$user \
-    --set secret.AUTH_PASS=$password
-  kubectl rollout status -w deployment/chartmuseum-chartmuseum --namespace=kubeapps
-}
-
-########################
 # Push a chart to chartmusem
 # Globals: None
 # Arguments:
@@ -169,7 +150,7 @@ pushChart() {
   description="foo ${chart} chart for CI"
 
   info "Adding ${chart}-${version} to ChartMuseum ..."
-  curl -LO "https://charts.bitnami.com/bitnami/${chart}-${version}.tgz"
+  pullBitnamiChart "${chart}" "${version}"
 
   # Mutate the chart name and description, then re-package the tarball
   # For instance, the apache's Chart.yaml file becomes modified to:
@@ -183,11 +164,7 @@ pushChart() {
   sed -i "0,/^\([[:space:]]*description: *\).*/s//\1${description}/" ./${chart}-${version}/${chart}/Chart.yaml
   helm package ./${chart}-${version}/${chart} -d .
 
-  local POD_NAME=$(kubectl get pods --namespace kubeapps -l "app=chartmuseum" -l "release=chartmuseum" -o jsonpath="{.items[0].metadata.name}")
-  /bin/sh -c "kubectl port-forward $POD_NAME 8080:8080 --namespace kubeapps &"
-  sleep 2
-  curl -u "${user}:${password}" --data-binary "@${prefix}${chart}-${version}.tgz" http://localhost:8080/api/charts
-  pkill -f "kubectl port-forward $POD_NAME 8080:8080 --namespace kubeapps"
+  pushChartToChartMuseum "${chart}" "${version}" "${prefix}${chart}-${version}.tgz"
 }
 
 ########################
@@ -244,7 +221,7 @@ installOrUpgradeKubeapps() {
     --set postgresql.auth.password=password
     --set redis.auth.password=password
     --set apprepository.initialRepos[0].name=bitnami
-    --set apprepository.initialRepos[0].url=http://chartmuseum-chartmuseum.kubeapps:8080
+    --set apprepository.initialRepos[0].url=http://chartmuseum.chart-museum.svc.cluster.local:8080
     --set apprepository.initialRepos[0].basicAuth.user=admin
     --set apprepository.initialRepos[0].basicAuth.password=password
     --set apprepository.globalReposNamespaceSuffix=-repos-global
@@ -328,7 +305,7 @@ fi
 installOrUpgradeKubeapps "${ROOT_DIR}/chart/kubeapps"
 info "Waiting for Kubeapps components to be ready (local chart)..."
 k8s_wait_for_deployment kubeapps kubeapps-ci
-installChartmuseum admin password "${CHARTMUSEUM_VERSION}"
+installChartMuseum "${CHARTMUSEUM_VERSION}"
 pushChart apache 8.6.2 admin password
 pushChart apache 8.6.3 admin password
 

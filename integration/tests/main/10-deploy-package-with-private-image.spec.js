@@ -27,7 +27,7 @@ test("Deploy a chart using a private container image", async ({ page }) => {
   console.log(`Creating package repository "${repoName}"`);
   await page.locator("text=Add Package Repository >> div").click();
   await page.fill("input#kubeapps-repo-name", repoName);
-  await page.fill("input#kubeapps-repo-url", "http://chartmuseum-chartmuseum.kubeapps:8080");
+  await page.fill("input#kubeapps-repo-url", "http://chartmuseum.chart-museum.svc.cluster.local:8080");
   await page.locator("text=Helm Charts").first().click();
   await page.locator("text=Helm Repository").click();
 

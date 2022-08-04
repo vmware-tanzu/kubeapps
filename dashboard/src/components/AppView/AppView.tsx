@@ -32,7 +32,7 @@ import {
 } from "shared/types";
 import { getPluginsSupportingRollback } from "shared/utils";
 import ApplicationStatus from "../../containers/ApplicationStatusContainer";
-import placeholder from "../../placeholder.png";
+import placeholder from "icons/placeholder.svg";
 import * as url from "../../shared/url";
 import LoadingWrapper from "../LoadingWrapper/LoadingWrapper";
 import AccessURLTable from "./AccessURLTable/AccessURLTable";
