@@ -2,11 +2,11 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { InstalledPackageStatus_StatusReason } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
-import carvelIcon from "../icons/carvel.svg";
-import fluxIcon from "../icons/flux.svg";
-import helmIcon from "../icons/helm.svg";
-import olmIcon from "../icons/olm-icon.svg";
-import placeholder from "../placeholder.png";
+import carvelIcon from "icons/carvel.svg";
+import fluxIcon from "icons/flux.svg";
+import helmIcon from "icons/helm.svg";
+import olmIcon from "icons/olm-icon.svg";
+import placeholder from "icons/placeholder.svg";
 import {
   escapeRegExp,
   getAppStatusLabel,
