@@ -98,15 +98,18 @@ export default function Catalog() {
   // pageNum is only used to avoid flicker in the CatalogItems.
   // It is no longer used for pagination which is handled by the server's
   // opaque nextPageToken etc.
-  const [pageNum, setPageNum] = React.useState(0);
+  const [localNextPageToken, setPageNum] = React.useState("");
   const [hasRequestedFirstPage, setHasRequestedFirstPage] = React.useState(false);
   const [hasLoadedFirstPage, setHasLoadedFirstPage] = React.useState(false);
+  const localIsFetchingRef = React.useRef(isFetching);
 
   const csvs = operators.csvs;
 
   // Only one search filter can be set
   const searchFilter = filters[filterNames.SEARCH]?.toString().replace(tmpStrRegex, ",") || "";
   const reposFilter = filters[filterNames.REPO]?.join(",") || "";
+
+  const timeout = (ms: number) => new Promise(r => setTimeout(r, ms));
 
   // Detect changes in cluster/ns/repos/search and reset the current package
   // list Note: useEffect is called on every render - the initial render and any
@@ -121,7 +124,7 @@ export default function Catalog() {
     // so that it is reloaded cleanly for the given inputs next time it is
     // loaded.
     return function cleanup() {
-      setPageNum(0);
+      setPageNum("");
       dispatch(actions.availablepackages.resetAvailablePackageSummaries());
       dispatch(actions.availablepackages.resetSelectedAvailablePackageDetail());
     };
@@ -140,29 +143,47 @@ export default function Catalog() {
     });
   }, [location.search]);
 
+  // set the local reference to the isFetching state
+  // using the local reference to the isFetching state to avoid re-rendering on each isFetching actual change
   useEffect(() => {
-    if (hasFinishedFetching) {
-      return;
-    }
-    dispatch(
-      actions.availablepackages.fetchAvailablePackageSummaries(
-        cluster,
-        namespace,
-        reposFilter,
-        nextPageToken,
-        size,
-        searchFilter,
-      ),
-    );
+    localIsFetchingRef.current = isFetching;
+  }, [isFetching]);
+
+  useEffect(() => {
+    const isFetchingAwareFetching = async () => {
+      if (hasFinishedFetching) {
+        return;
+      }
+      // if the local isFetching is true, we need to wait for the rest of the actions to take effect.
+      // this state seldom happens (eg. clicking buttons quickly) but it is possible, so we need to wait,
+      // otherwise the UI will be in an inconsistent state due to race conditions
+      // Note that the "receiveAvailablePackageSummaries" is ignoring the received data if it wasn't previously fetching.
+      if (localIsFetchingRef.current) {
+        await timeout(1500);
+        localIsFetchingRef.current = false;
+      }
+      dispatch(
+        actions.availablepackages.fetchAvailablePackageSummaries(
+          cluster,
+          namespace,
+          reposFilter,
+          localNextPageToken,
+          size,
+          searchFilter,
+        ),
+      );
+    };
+    isFetchingAwareFetching();
   }, [
     dispatch,
-    nextPageToken,
-    size,
+    localIsFetchingRef,
+    hasFinishedFetching,
     cluster,
     namespace,
     reposFilter,
+    localNextPageToken,
+    size,
     searchFilter,
-    hasFinishedFetching,
   ]);
 
   // hasLoadedFirstPage is used to not bump the current page until the first page is fully
@@ -300,7 +321,7 @@ export default function Catalog() {
         cluster,
         namespace,
         reposFilter,
-        nextPageToken,
+        localNextPageToken,
         size,
         searchFilter,
       ),
@@ -308,7 +329,7 @@ export default function Catalog() {
   };
 
   const increaseRequestedPage = () => {
-    setPageNum(pageNum + 1);
+    setPageNum(nextPageToken);
   };
 
   const observeBorder = (node: any) => {
@@ -431,6 +452,7 @@ export default function Catalog() {
                     currentFilters={filters[filterNames.CATEGORY]}
                     onAddFilter={addFilter}
                     onRemoveFilter={removeFilter}
+                    disabled={isFetching}
                   />
                 </div>
               )}
@@ -443,6 +465,7 @@ export default function Catalog() {
                     currentFilters={filters[filterNames.REPO]}
                     onAddFilter={addFilter}
                     onRemoveFilter={removeFilter}
+                    disabled={isFetching}
                   />
                 </div>
               )}
@@ -490,9 +513,8 @@ export default function Catalog() {
                       csvs={filteredCSVs}
                       cluster={cluster}
                       namespace={namespace}
-                      isFirstPage={pageNum === 1}
                       hasLoadedFirstPage={hasLoadedFirstPage}
-                      hasFinishedFetching={hasFinishedFetching}
+                      hasFinishedFetching={hasFinishedFetching && !localIsFetchingRef.current}
                     />
                     {!hasFinishedFetching &&
                       (!filters[filterNames.TYPE].length ||

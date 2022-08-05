@@ -16,6 +16,7 @@ const MultiCheckbox = ({ options, span, value, ...otherProps }) => (
           value={opt}
           id={`${otherProps.name}-${i}`}
           checked={value.includes(opt)}
+          disabled={otherProps.disabled}
         />
         <label className="clr-control-label" htmlFor={`${otherProps.name}-${i}`}>
           {opt}
