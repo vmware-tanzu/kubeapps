@@ -757,7 +757,7 @@ func downloadChartWithHelmGetter(tlsConfig *tls.Config, getterOptions []getter.O
 	return buf, err
 }
 
-func getOCIChartTarball(ociRepo *OCIChartRepository, chartVersion *repo.ChartVersion) ([]byte, error) {
+func getOCIChartTarball(ociRepo *OCIChartRepository, chartID string, chartVersion *repo.ChartVersion) ([]byte, error) {
 	chartBuffer, err := ociRepo.registryClient.DownloadChart(chartVersion)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "%v", err)
@@ -769,7 +769,7 @@ func getOCIChartMetadata(ociRepo *OCIChartRepository, chartID string, chartVersi
 	log.Infof("+getOCIChartMetadata(%s, %s)", chartID, chartVersion.Metadata.Version)
 	defer log.Infof("-getOCIChartMetadata(%s, %s)", chartID, chartVersion.Metadata.Version)
 
-	chartTarball, err := getOCIChartTarball(ociRepo, chartVersion)
+	chartTarball, err := getOCIChartTarball(ociRepo, chartID, chartVersion)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "%v", err)
 	}
@@ -811,6 +811,6 @@ func downloadOCIChartFn(ociRepo *OCIChartRepository) func(chartID, chartUrl, cha
 				Version: chartVersion,
 			},
 		}
-		return getOCIChartTarball(ociRepo, cv)
+		return getOCIChartTarball(ociRepo, chartID, cv)
 	}
 }

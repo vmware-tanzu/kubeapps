@@ -233,7 +233,7 @@ function deploy {
   /user/packages/container/helm-charts%2Fpodinfo/versions | jq -rc '.[].metadata.container.tags[]')
   # GH web portal: You can see all package versions at 
   # [https://github.com/users/gfichtenholt/packages/container/helm-charts%2Fpodinfo/versions]
-  NUM_VERSIONS=$(echo $ALL_VERSIONS | wc -l)
+  NUM_VERSIONS=$(echo "$ALL_VERSIONS" | wc -l)
   if [ $NUM_VERSIONS != 1 ] 
   then
     echo "Expected exactly [1] version on the remote [$GITHUB_OCI_REGISTRY_URL/podinfo], got [$NUM_VERSIONS]. Exiting..."
@@ -314,30 +314,22 @@ function setupGithubStefanProdanClone {
   trap '{
     cd ..
   }' EXIT  
+
   # this creates a clone of what was out on "oci://ghcr.io/stefanprodan/charts" as of Jul 28 2022
   # to oci://ghcr.io/gfichtenholt/stefanprodan-podinfo-clone
-  SRC_URL_PREFIX=https://stefanprodan.github.io/podinfo
-  curl -O $SRC_URL_PREFIX/podinfo-6.1.0.tgz 
-  curl -O $SRC_URL_PREFIX/podinfo-6.1.1.tgz 
-  curl -O $SRC_URL_PREFIX/podinfo-6.1.2.tgz
-  curl -O $SRC_URL_PREFIX/podinfo-6.1.3.tgz  
-  curl -O $SRC_URL_PREFIX/podinfo-6.1.4.tgz 
-  curl -O $SRC_URL_PREFIX/podinfo-6.1.5.tgz 
-  curl -O $SRC_URL_PREFIX/podinfo-6.1.6.tgz 
-  curl -O $SRC_URL_PREFIX/podinfo-6.1.7.tgz 
-  curl -O $SRC_URL_PREFIX/podinfo-6.1.8.tgz 
   helm registry login ghcr.io -u $GITHUB_USER -p $GITHUB_TOKEN
   DEST_URL=oci://ghcr.io/gfichtenholt/stefanprodan-podinfo-clone
-  helm push podinfo-6.1.0.tgz $DEST_URL
-  helm push podinfo-6.1.1.tgz $DEST_URL
-  helm push podinfo-6.1.2.tgz $DEST_URL
-  helm push podinfo-6.1.3.tgz $DEST_URL
-  helm push podinfo-6.1.4.tgz $DEST_URL
-  helm push podinfo-6.1.5.tgz $DEST_URL
-  helm push podinfo-6.1.6.tgz $DEST_URL
-  helm push podinfo-6.1.7.tgz $DEST_URL
-  helm push podinfo-6.1.8.tgz $DEST_URL
-  helm registry logout ghcr.io
+  trap '{
+    helm registry logout ghcr.io
+  }' EXIT  
+
+  SRC_URL_PREFIX=https://stefanprodan.github.io/podinfo
+  ALL_VERSIONS=("6.1.0" "6.1.1" "6.1.2" "6.1.3" "6.1.4" "6.1.5" "6.1.6" "6.1.7" "6.1.8")
+  for v in ${ALL_VERSIONS[@]}; do
+    curl -O $SRC_URL_PREFIX/podinfo-$v.tgz
+    helm push podinfo-$v.tgz $DEST_URL
+  done
+  
   echo
   echo Running sanity checks...
   echo
@@ -350,6 +342,14 @@ function setupGithubStefanProdanClone {
   echo ================================================================================
   echo "$ALL_VERSIONS"
   echo ================================================================================  
+  # GH web portal: You can see all package versions at 
+  # [https://github.com/users/gfichtenholt/packages/container/stefanprodan-podinfo-clone%2Fpodinfo/versions]
+  NUM_VERSIONS=$(echo "$ALL_VERSIONS" | wc -l)
+  if [ $NUM_VERSIONS != 9 ] 
+  then
+    echo "Expected exactly [9] versions on the remote [$DEST_URL/podinfo], got [$NUM_VERSIONS]. Exiting..."
+    exit 1
+  fi
   while true; do
     VISIBILITY=$(gh api   -H "Accept: application/vnd.github+json"   /user/packages/container/stefanprodan-podinfo-clone%2Fpodinfo | jq -rc '.visibility')
     if [[ "$VISIBILITY" != "public" ]]; then
