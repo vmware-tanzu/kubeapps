@@ -84,7 +84,7 @@ EOF
 The `<TOKEN>` for the ServiceAccount _apprepositories-refresh_ is retrieved:
 
 ```bash
-kubectl get secret $(kubectl get serviceaccount apprepositories-refresh -o jsonpath='{range .secrets[*]}{.name}{"\n"}{end}' | grep apprepositories-refresh) -o jsonpath='{.data.token}' -o go-template='{{.data.token | base64decode}}' && echo
+kubectl get secret $(kubectl get serviceaccount apprepositories-refresh -o jsonpath='{range .secrets[*]}{.name}{"\n"}{end}' | grep apprepositories-refresh) -o go-template='{{.data.token | base64decode}}'
 ```
 
 This value will be the Bearer token to be passed in the `Authentication` HTTP header.
