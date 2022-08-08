@@ -46,7 +46,7 @@ it("renders an app item", () => {
   const card = wrapper.find(InfoCard);
   expect(card.props()).toMatchObject({
     description: defaultProps.app.shortDescription,
-    icon: "placeholder.png",
+    icon: "placeholder.svg",
     link: app.apps.get({
       context: {
         cluster: defaultProps.cluster,

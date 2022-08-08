@@ -787,12 +787,12 @@ func (s *Server) UpdateInstalledPackage(ctx context.Context, request *corev1.Upd
 }
 
 // getAppRepoAndRelatedSecrets retrieves the given repo from its cluster and namespace
-func (s *Server) getAppRepoAndRelatedSecrets(ctx context.Context, cluster, appRepoName, appRepoNamespace string) (*appRepov1.AppRepository, *corek8sv1.Secret, *corek8sv1.Secret, error) {
+func (s *Server) getAppRepoAndRelatedSecrets(ctx context.Context, cluster, appRepoName, appRepoNamespace string) (*appRepov1.AppRepository, *corek8sv1.Secret, *corek8sv1.Secret, *corek8sv1.Secret, error) {
 
 	// We currently get app repositories on the kubeapps cluster only.
 	typedClient, dynClient, err := s.GetClients(ctx, cluster)
 	if err != nil {
-		return nil, nil, nil, err
+		return nil, nil, nil, nil, err
 	}
 
 	// Using the dynamic client to get the AppRepository rather than updating the interface
@@ -805,13 +805,13 @@ func (s *Server) getAppRepoAndRelatedSecrets(ctx context.Context, cluster, appRe
 	}
 	appRepoUnstructured, err := dynClient.Resource(gvr).Namespace(appRepoNamespace).Get(ctx, appRepoName, metav1.GetOptions{})
 	if err != nil {
-		return nil, nil, nil, fmt.Errorf("unable to get app repository %s/%s: %v", appRepoNamespace, appRepoName, err)
+		return nil, nil, nil, nil, fmt.Errorf("unable to get app repository %s/%s: %v", appRepoNamespace, appRepoName, err)
 	}
 
 	var appRepo appRepov1.AppRepository
 	err = runtime.DefaultUnstructuredConverter.FromUnstructured(appRepoUnstructured.UnstructuredContent(), &appRepo)
 	if err != nil {
-		return nil, nil, nil, fmt.Errorf("failed to convert unstructured AppRepository for %s/%s to a structured AppRepository: %v", appRepoNamespace, appRepoName, err)
+		return nil, nil, nil, nil, fmt.Errorf("failed to convert unstructured AppRepository for %s/%s to a structured AppRepository: %v", appRepoNamespace, appRepoName, err)
 	}
 
 	auth := appRepo.Spec.Auth
@@ -820,7 +820,7 @@ func (s *Server) getAppRepoAndRelatedSecrets(ctx context.Context, cluster, appRe
 		secretName := auth.CustomCA.SecretKeyRef.Name
 		caCertSecret, err = typedClient.CoreV1().Secrets(appRepoNamespace).Get(ctx, secretName, metav1.GetOptions{})
 		if err != nil {
-			return nil, nil, nil, fmt.Errorf("unable to read secret %q: %v", auth.CustomCA.SecretKeyRef.Name, err)
+			return nil, nil, nil, nil, fmt.Errorf("unable to read secret %q: %v", auth.CustomCA.SecretKeyRef.Name, err)
 		}
 	}
 
@@ -829,11 +829,20 @@ func (s *Server) getAppRepoAndRelatedSecrets(ctx context.Context, cluster, appRe
 		secretName := auth.Header.SecretKeyRef.Name
 		authSecret, err = typedClient.CoreV1().Secrets(appRepoNamespace).Get(ctx, secretName, metav1.GetOptions{})
 		if err != nil {
-			return nil, nil, nil, fmt.Errorf("unable to read secret %q: %v", secretName, err)
+			return nil, nil, nil, nil, fmt.Errorf("unable to read secret %q: %v", secretName, err)
 		}
 	}
 
-	return &appRepo, caCertSecret, authSecret, nil
+	var imagesPullSecret *corek8sv1.Secret
+	if len(appRepo.Spec.DockerRegistrySecrets) > 0 {
+		secretName := appRepo.Spec.DockerRegistrySecrets[0]
+		imagesPullSecret, err = typedClient.CoreV1().Secrets(appRepoNamespace).Get(ctx, secretName, metav1.GetOptions{})
+		if err != nil {
+			return nil, nil, nil, nil, fmt.Errorf("unable to read images pull secret %q: %v", secretName, err)
+		}
+	}
+
+	return &appRepo, caCertSecret, authSecret, imagesPullSecret, nil
 }
 
 // fetchChartWithRegistrySecrets returns the chart and related registry secrets.
@@ -841,7 +850,7 @@ func (s *Server) getAppRepoAndRelatedSecrets(ctx context.Context, cluster, appRe
 // Mainly to DRY up similar code in the create and update methods.
 func (s *Server) fetchChartWithRegistrySecrets(ctx context.Context, chartDetails *chartutils.Details, client kubernetes.Interface) (*chart.Chart, map[string]string, error) {
 	// Most of the existing code that we want to reuse is based on having a typed AppRepository.
-	appRepo, caCertSecret, authSecret, err := s.getAppRepoAndRelatedSecrets(ctx, s.globalPackagingCluster, chartDetails.AppRepositoryResourceName, chartDetails.AppRepositoryResourceNamespace)
+	appRepo, caCertSecret, authSecret, _, err := s.getAppRepoAndRelatedSecrets(ctx, s.globalPackagingCluster, chartDetails.AppRepositoryResourceName, chartDetails.AppRepositoryResourceNamespace)
 	if err != nil {
 		return nil, nil, status.Errorf(codes.Internal, "Unable to fetch app repo %q from namespace %q: %v", chartDetails.AppRepositoryResourceName, chartDetails.AppRepositoryResourceNamespace, err)
 	}
@@ -1075,13 +1084,13 @@ func (s *Server) GetPackageRepositoryDetail(ctx context.Context, request *corev1
 	log.InfoS("+helm GetPackageRepositoryDetail", "cluster", cluster, "namespace", namespace, "name", name)
 
 	// Retrieve repository
-	appRepo, caCertSecret, authSecret, err := s.getAppRepoAndRelatedSecrets(ctx, cluster, name, namespace)
+	appRepo, caCertSecret, authSecret, imagesPullSecret, err := s.getAppRepoAndRelatedSecrets(ctx, cluster, name, namespace)
 	if err != nil {
 		return nil, status.Errorf(codes.NotFound, "Unable to retrieve AppRepository '%s/%s' due to [%v]", namespace, name, err)
 	}
 
 	// Map to target struct
-	repositoryDetail, err := s.mapToPackageRepositoryDetail(appRepo, cluster, namespace, caCertSecret, authSecret)
+	repositoryDetail, err := s.mapToPackageRepositoryDetail(appRepo, cluster, namespace, caCertSecret, authSecret, imagesPullSecret)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "unable to convert the AppRepository: %v", err)
 	}

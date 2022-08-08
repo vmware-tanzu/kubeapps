@@ -1,11 +1,10 @@
 /* eslint-disable */
-import Long from "long";
 import { grpc } from "@improbable-eng/grpc-web";
-import * as _m0 from "protobufjs/minimal";
-import { Context } from "../../../../kubeappsapis/core/packages/v1alpha1/packages";
-import { Plugin } from "../../../../kubeappsapis/core/plugins/v1alpha1/plugins";
+import { Context } from "./packages";
+import { Plugin } from "../../plugins/v1alpha1/plugins";
 import { Any } from "../../../../google/protobuf/any";
 import { BrowserHeaders } from "browser-headers";
+import * as _m0 from "protobufjs/minimal";
 
 export const protobufPackage = "kubeappsapis.core.packages.v1alpha1";
 
@@ -2840,11 +2839,6 @@ type KeysOfUnion<T> = T extends T ? keyof T : never;
 export type Exact<P, I extends P> = P extends Builtin
   ? P
   : P & { [K in keyof P]: Exact<P[K], I[K]> } & Record<Exclude<keyof I, KeysOfUnion<P>>, never>;
-
-if (_m0.util.Long !== Long) {
-  _m0.util.Long = Long as any;
-  _m0.configure();
-}
 
 function isObject(value: any): boolean {
   return typeof value === "object" && value !== null;

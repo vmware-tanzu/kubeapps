@@ -3,7 +3,7 @@
 
 # this Dockerfile is for building a docker image for a pod that can be deployed into a k8s cluster
 # that serves some of the content of test-data (index.yaml, charts .tgz)
-FROM nginx:1.21.3
+FROM nginx:1.23.1
 COPY ./nginx.conf /etc/nginx/nginx.conf
 
 # only has a single user: foo, password: bar
@@ -24,4 +24,3 @@ COPY ./charts/podinfo-6.0.0.tgz /usr/share/nginx/html/podinfo-tls/
 COPY ./charts/podinfo-5.2.1.tgz /usr/share/nginx/html/podinfo-tls/
 
 RUN mkdir /usr/share/nginx/html/bitnami/ ; curl "https://charts.bitnami.com/bitnami/index.yaml" -o /usr/share/nginx/html/bitnami/index.yaml
-
