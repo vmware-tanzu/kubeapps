@@ -141,20 +141,20 @@ workflows:
   version: 2
   kubeapps:
     jobs:
-      - test_go:
-          <<: *build_always
-      - test_dashboard:
-          <<: *build_always
-      - test_pinniped_proxy:
-          <<: *build_always
-      - test_chart_render:
-          <<: *build_always
-      - build_go_images:
-          <<: *build_always
-      - build_dashboard:
-          <<: *build_always
-      - build_pinniped_proxy:
-          <<: *build_always
+      # - test_go:
+      #     <<: *build_always
+      # - test_dashboard:
+      #     <<: *build_always
+      # - test_pinniped_proxy:
+      #     <<: *build_always
+      # - test_chart_render:
+      #     <<: *build_always
+      # - build_go_images:
+      #     <<: *build_always
+      # - build_dashboard:
+      #     <<: *build_always
+      # - build_pinniped_proxy:
+      #     <<: *build_always
       - local_e2e_tests:
           <<: *build_always
           matrix:
@@ -225,6 +225,10 @@ workflows:
       #     <<: *build_on_main
       #     requires:
       #       - push_images
+      # BEGIN TEMP REMOVE
+      - report_srp:
+          <<: *build_always
+      # END TEMP REMOVE
       - sync_chart_to_bitnami:
           <<: *build_on_tag
           requires:
