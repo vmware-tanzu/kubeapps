@@ -881,6 +881,7 @@ jobs:
             wget https://srp-cli.s3.amazonaws.com/srp-cli-latest.tgz
             tar zxf srp-cli-latest.tgz
             sudo mv srp /usr/local/bin/
+            srp config --srp-endpoint https://apigw.vmware.com/v1/s1/api/helix-beta
             srp config auth --client-id $SRP_CLIENTID --client-secret $SRP_CLIENTSECRET
       - run:
           name: Generate the "source provenance" file
