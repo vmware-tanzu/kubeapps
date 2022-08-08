@@ -313,7 +313,7 @@ func getLastMatchingVersionOrConstraint(cvs []string, ver string) (string, error
 		}
 	}
 
-	matchingVersions := make([]string, 0, len(cvs))
+	matchingVersions := make([]*semver.Version, 0, len(cvs))
 	for _, cv := range cvs {
 		v, err := version.ParseVersion(cv)
 		if err != nil {
@@ -324,16 +324,16 @@ func getLastMatchingVersionOrConstraint(cvs []string, ver string) (string, error
 			continue
 		}
 
-		matchingVersions = append(matchingVersions, cv)
+		matchingVersions = append(matchingVersions, v)
 	}
 	if len(matchingVersions) == 0 {
 		return "", fmt.Errorf("could not locate a version matching provided version string %s", ver)
 	}
 
 	// Sort versions
-	sort.Sort(sort.Reverse(sort.StringSlice(matchingVersions)))
+	sort.Sort(sort.Reverse(semver.Collection(matchingVersions)))
 
-	return matchingVersions[0], nil
+	return matchingVersions[0].Original(), nil
 }
 
 // newRegistryClient generates a registry client and a temporary credential file.
@@ -426,11 +426,11 @@ func (s *repoEventSink) onAddOciRepo(repo sourcev1.HelmRepository) ([]byte, bool
 		// the chart fields like Desciption, home, sources come from the
 		// most recent chart version
 		// ref https://github.com/vmware-tanzu/kubeapps/blob/11c87926d6cd798af72875d01437d15ae8d85b9a/pkg/helm/index.go#L30
-		log.Infof("==========>: most recent chart version: %s", allTags[0])
-		latestChartVersion, err := ociChartRepo.pickChartVersionFrom(appName, allTags[0], allTags)
+		latestChartVersion, err := ociChartRepo.pickChartVersionFrom(appName, "", allTags)
 		if err != nil {
 			return nil, false, status.Errorf(codes.Internal, "%v", err)
 		}
+		log.Infof("==========> most recent chart version: %s", latestChartVersion.Version)
 
 		latestChartMetadata, err := getOCIChartMetadata(ociChartRepo, chartID, latestChartVersion)
 		if err != nil {

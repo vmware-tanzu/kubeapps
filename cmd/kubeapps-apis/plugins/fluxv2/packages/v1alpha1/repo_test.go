@@ -2428,9 +2428,6 @@ func (s *Server) redisMockSetValueForRepo(mock redismock.ClientMock, repo source
 }
 
 func (sink *repoEventSink) redisMockSetValueForRepo(mock redismock.ClientMock, repo sourcev1.HelmRepository, oldValue []byte) (key string, newValue []byte, err error) {
-	if key, err = redisKeyForRepo(repo); err != nil {
-		return key, nil, err
-	}
 	if key, newValue, err = sink.redisKeyValueForRepo(repo); err != nil {
 		if oldValue == nil {
 			mock.ExpectGet(key).RedisNil()

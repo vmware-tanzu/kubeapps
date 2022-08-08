@@ -664,15 +664,12 @@ func TestGetAvailablePackageVersions(t *testing.T) {
 
 			// we make sure that all expectations were met
 			if err := mock.ExpectationsWereMet(); err != nil {
-				t.Errorf("there were unfulfilled expectations: %s", err)
+				t.Fatal(err)
 			}
 
-			key, bytes, err := s.redisKeyValueForRepo(*repo)
-			if err != nil {
-				t.Fatalf("%+v", err)
+			if err = s.redisMockExpectGetFromRepoCache(mock, nil, *repo); err != nil {
+				t.Fatal(err)
 			}
-
-			mock.ExpectGet(key).SetVal(string(bytes))
 
 			response, err := s.GetAvailablePackageVersions(context.Background(), tc.request)
 
@@ -683,6 +680,100 @@ func TestGetAvailablePackageVersions(t *testing.T) {
 			// we make sure that all expectations were met
 			if err := mock.ExpectationsWereMet(); err != nil {
 				t.Errorf("there were unfulfilled expectations: %s", err)
+			}
+
+			// We don't need to check anything else for non-OK codes.
+			if tc.expectedStatusCode != codes.OK {
+				return
+			}
+
+			opts := cmpopts.IgnoreUnexported(
+				corev1.GetAvailablePackageVersionsResponse{},
+				corev1.PackageAppVersion{})
+			if got, want := response, tc.expectedResponse; !cmp.Equal(want, got, opts) {
+				t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opts))
+			}
+		})
+	}
+}
+
+func TestGetOciAvailablePackageVersions(t *testing.T) {
+	seed_data_2, err := newFakeRemoteOciRegistryData_2()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	testCases := []struct {
+		name               string
+		repoNamespace      string
+		repoName           string
+		repoUrl            string
+		request            *corev1.GetAvailablePackageVersionsRequest
+		expectedStatusCode codes.Code
+		expectedResponse   *corev1.GetAvailablePackageVersionsResponse
+		seedData           *fakeRemoteOciRegistryData
+		charts             []testSpecChartWithUrl
+	}{
+		{
+			name:          "it returns the package version summary for podinfo chart in oci repo",
+			repoNamespace: "namespace-1",
+			repoName:      "repo-1",
+			request: &corev1.GetAvailablePackageVersionsRequest{
+				AvailablePackageRef: availableRef("repo-1/podinfo", "namespace-1"),
+			},
+			expectedStatusCode: codes.OK,
+			expectedResponse:   expected_versions_podinfo_2,
+			seedData:           seed_data_2,
+			charts:             oci_podinfo_charts_spec_2,
+			repoUrl:            "oci://localhost:54321/userX/charts",
+		},
+		{
+			name:          "it returns error for non-existent chart",
+			repoNamespace: "namespace-1",
+			repoName:      "repo-1",
+			repoUrl:       "oci://localhost:54321/userX/charts",
+			request: &corev1.GetAvailablePackageVersionsRequest{
+				AvailablePackageRef: availableRef("repo-1/zippity", "namespace-1"),
+			},
+			expectedStatusCode: codes.Internal,
+			seedData:           seed_data_2,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			initOciFakeClientBuilder(t, *tc.seedData)
+			repoName := strings.Split(tc.request.AvailablePackageRef.Identifier, "/")[0]
+			repoNamespace := tc.request.AvailablePackageRef.Context.Namespace
+
+			repo, err := newOciRepo(repoName, repoNamespace, tc.repoUrl)
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			s, mock, err := newServerWithRepos(t, []sourcev1.HelmRepository{*repo}, tc.charts, nil)
+			if err != nil {
+				t.Fatalf("%+v", err)
+			}
+
+			// we make sure that all expectations were met
+			if err := mock.ExpectationsWereMet(); err != nil {
+				t.Fatal(err)
+			}
+
+			if err = s.redisMockExpectGetFromRepoCache(mock, nil, *repo); err != nil {
+				t.Fatal(err)
+			}
+
+			response, err := s.GetAvailablePackageVersions(context.Background(), tc.request)
+
+			if got, want := status.Code(err), tc.expectedStatusCode; got != want {
+				t.Fatalf("got: %+v, want: %+v, err: %+v", got, want, err)
+			}
+
+			// we make sure that all expectations were met
+			if err := mock.ExpectationsWereMet(); err != nil {
+				t.Fatal(err)
 			}
 
 			// We don't need to check anything else for non-OK codes.
@@ -942,12 +1033,9 @@ func TestChartWithRelativeURL(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	key, bytes, err := s.redisKeyValueForRepo(repo)
-	if err != nil {
+	if err = s.redisMockExpectGetFromRepoCache(mock, nil, repo); err != nil {
 		t.Fatal(err)
 	}
-
-	mock.ExpectGet(key).SetVal(string(bytes))
 
 	response, err := s.GetAvailablePackageVersions(
 		context.Background(), &corev1.GetAvailablePackageVersionsRequest{

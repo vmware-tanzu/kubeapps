@@ -200,12 +200,9 @@ func TestGetInstalledPackageSummariesWithoutPagination(t *testing.T) {
 				}
 				defer ts2.Close()
 
-				redisKey, bytes, err := s.redisKeyValueForRepo(*repo)
-				if err != nil {
-					t.Fatalf("%+v", err)
+				if err = s.redisMockExpectGetFromRepoCache(mock, nil, *repo); err != nil {
+					t.Fatal(err)
 				}
-
-				mock.ExpectGet(redisKey).SetVal(string(bytes))
 			}
 
 			response, err := s.GetInstalledPackageSummaries(context.Background(), tc.request)
@@ -264,12 +261,9 @@ func TestGetInstalledPackageSummariesWithPagination(t *testing.T) {
 			}
 			defer ts2.Close()
 
-			redisKey, bytes, err := s.redisKeyValueForRepo(*repo)
-			if err != nil {
-				t.Fatalf("%+v", err)
+			if err = s.redisMockExpectGetFromRepoCache(mock, nil, *repo); err != nil {
+				t.Fatal(err)
 			}
-
-			mock.ExpectGet(redisKey).SetVal(string(bytes))
 		}
 
 		request1 := &corev1.GetInstalledPackageSummariesRequest{
@@ -637,12 +631,9 @@ func TestCreateInstalledPackage(t *testing.T) {
 				t.Fatalf("%+v", err)
 			}
 
-			redisKey, bytes, err := s.redisKeyValueForRepo(*repo)
-			if err != nil {
-				t.Fatalf("%+v", err)
+			if err = s.redisMockExpectGetFromRepoCache(mock, nil, *repo); err != nil {
+				t.Fatal(err)
 			}
-
-			mock.ExpectGet(redisKey).SetVal(string(bytes))
 
 			if tc.defaultUpgradePolicyStr != "" {
 				policy, err := pkgutils.UpgradePolicyFromString(tc.defaultUpgradePolicyStr)

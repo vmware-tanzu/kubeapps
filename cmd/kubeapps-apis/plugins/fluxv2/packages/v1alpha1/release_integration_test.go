@@ -136,7 +136,7 @@ func TestKindClusterCreateInstalledPackage(t *testing.T) {
 		{
 			testName:             "create OCI helm release",
 			repoType:             "oci",
-			repoUrl:              github_stefanprodan_podinfo_oci_registry_url,
+			repoUrl:              github_gfichtenholt_podinfo_oci_registry_url,
 			request:              create_installed_package_request_oci,
 			expectedDetail:       expected_detail_installed_package_oci,
 			expectedPodPrefix:    "my-podinfo-17",

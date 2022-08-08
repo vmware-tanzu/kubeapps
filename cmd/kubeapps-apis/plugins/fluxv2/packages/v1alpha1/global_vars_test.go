@@ -342,7 +342,7 @@ var (
 		PkgVersionReference: &corev1.VersionReference{
 			Version: "*",
 		},
-		CurrentVersion:        pkgAppVersion("6.1.6"),
+		CurrentVersion:        pkgAppVersion("6.1.5"),
 		Status:                status_installed,
 		PostInstallationNotes: podinfo_notes("my-podinfo-17"),
 	}
@@ -2136,6 +2136,14 @@ var (
 		},
 	}
 
+	expected_versions_podinfo_2 = &corev1.GetAvailablePackageVersionsResponse{
+		PackageAppVersions: []*corev1.PackageAppVersion{
+			{PkgVersion: "6.1.5"},
+			{PkgVersion: "6.0.3"},
+			{PkgVersion: "6.0.0"},
+		},
+	}
+
 	create_package_simple_req = &corev1.CreateInstalledPackageRequest{
 		AvailablePackageRef: availableRef("podinfo/podinfo", "namespace-1"),
 		Name:                "my-podinfo",
@@ -3537,6 +3545,27 @@ var (
 		},
 	}
 
+	oci_podinfo_charts_spec_2 = []testSpecChartWithUrl{
+		{
+			chartID:       "repo-1/podinfo",
+			chartUrl:      "oci://localhost:54321/userX/charts/podinfo:6.1.5",
+			chartRevision: "6.1.5",
+			repoNamespace: "namespace-1",
+		},
+		{
+			chartID:       "repo-1/podinfo",
+			chartUrl:      "oci://localhost:54321/userX/charts/podinfo:6.0.3",
+			chartRevision: "6.0.3",
+			repoNamespace: "namespace-1",
+		},
+		{
+			chartID:       "repo-1/podinfo",
+			chartUrl:      "oci://localhost:54321/userX/charts/podinfo:6.0.0",
+			chartRevision: "6.0.0",
+			repoNamespace: "namespace-1",
+		},
+	}
+
 	expected_detail_podinfo_1 = &corev1.AvailablePackageDetail{
 		AvailablePackageRef: availableRef("repo-1/podinfo", "namespace-1"),
 		Name:                "podinfo",
@@ -3557,5 +3586,46 @@ var (
 				Email: "stefanprodan@users.noreply.github.com",
 			},
 		},
+	}
+
+	newFakeRemoteOciRegistryData_2 = func() (*fakeRemoteOciRegistryData, error) {
+		chartBytes1, err := ioutil.ReadFile(testTgz("podinfo-6.1.5.tgz"))
+		if err != nil {
+			return nil, err
+		}
+		chartBytes2, err := ioutil.ReadFile(testTgz("podinfo-6.0.0.tgz"))
+		if err != nil {
+			return nil, err
+		}
+		chartBytes3, err := ioutil.ReadFile(testTgz("podinfo-6.0.3.tgz"))
+		if err != nil {
+			return nil, err
+		}
+		return &fakeRemoteOciRegistryData{
+			repositories: []fakeRepo{
+				{
+					name: "podinfo",
+					charts: []fakeChart{
+						{
+							name: "podinfo",
+							versions: []fakeChartVersion{
+								{
+									version:  "6.1.5",
+									tgzBytes: chartBytes1,
+								},
+								{
+									version:  "6.0.0",
+									tgzBytes: chartBytes2,
+								},
+								{
+									version:  "6.0.3",
+									tgzBytes: chartBytes3,
+								},
+							},
+						},
+					},
+				},
+			},
+		}, nil
 	}
 )

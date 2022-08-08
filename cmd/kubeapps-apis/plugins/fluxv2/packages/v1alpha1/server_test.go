@@ -440,6 +440,8 @@ func seedRepoCacheWithRepos(t *testing.T, mock redismock.ClientMock, sink repoEv
 }
 
 func seedChartCacheWithCharts(t *testing.T, redisCli *redis.Client, mock redismock.ClientMock, sink repoEventSink, stopCh <-chan struct{}, repos map[string]sourcev1.HelmRepository, charts []testSpecChartWithUrl) (*cache.ChartCache, func(), error) {
+	t.Logf("+seedChartCacheWithCharts(%v)", charts)
+
 	var chartCache *cache.ChartCache
 	var err error
 	cachedChartKeys := sets.String{}
