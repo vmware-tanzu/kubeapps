@@ -872,6 +872,10 @@ jobs:
     steps:
       - checkout
       - run:
+          name: Init submodules
+          command: |
+            git submodule update --init --recursive
+      - run:
           name: Install and configure the SRP tool
           command: |
             wget https://srp-cli.s3.amazonaws.com/srp-cli-latest.tgz
