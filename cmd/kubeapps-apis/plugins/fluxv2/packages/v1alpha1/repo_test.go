@@ -58,7 +58,7 @@ func TestGetAvailablePackageSummariesWithoutPagination(t *testing.T) {
 			},
 			request: &corev1.GetAvailablePackageSummariesRequest{Context: &corev1.Context{}},
 			expectedResponse: &corev1.GetAvailablePackageSummariesResponse{
-				AvailablePackageSummaries: valid_index_package_summaries,
+				AvailablePackageSummaries: valid_index_available_package_summaries,
 			},
 		},
 		{
@@ -73,7 +73,7 @@ func TestGetAvailablePackageSummariesWithoutPagination(t *testing.T) {
 			},
 			request: &corev1.GetAvailablePackageSummariesRequest{Context: &corev1.Context{Namespace: "default"}},
 			expectedResponse: &corev1.GetAvailablePackageSummariesResponse{
-				AvailablePackageSummaries: valid_index_package_summaries,
+				AvailablePackageSummaries: valid_index_available_package_summaries,
 			},
 		},
 		{
@@ -91,7 +91,7 @@ func TestGetAvailablePackageSummariesWithoutPagination(t *testing.T) {
 				Namespace: "default",
 			}},
 			expectedResponse: &corev1.GetAvailablePackageSummariesResponse{
-				AvailablePackageSummaries: valid_index_package_summaries,
+				AvailablePackageSummaries: valid_index_available_package_summaries,
 			},
 		},
 		{
@@ -112,7 +112,7 @@ func TestGetAvailablePackageSummariesWithoutPagination(t *testing.T) {
 			},
 			request: &corev1.GetAvailablePackageSummariesRequest{Context: &corev1.Context{Namespace: "non-default"}},
 			expectedResponse: &corev1.GetAvailablePackageSummariesResponse{
-				AvailablePackageSummaries: append(valid_index_package_summaries, cert_manager_summary),
+				AvailablePackageSummaries: append(valid_index_available_package_summaries, cert_manager_summary),
 			},
 		},
 		{
@@ -774,7 +774,7 @@ func TestGetAvailablePackageSummaryAfterFluxHelmRepoDelete(t *testing.T) {
 			corev1.Maintainer{},
 			corev1.PackageAppVersion{})
 		opt2 := cmpopts.SortSlices(lessAvailablePackageFunc)
-		if got, want := responseBeforeDelete.AvailablePackageSummaries, valid_index_package_summaries; !cmp.Equal(got, want, opt1, opt2) {
+		if got, want := responseBeforeDelete.AvailablePackageSummaries, valid_index_available_package_summaries; !cmp.Equal(got, want, opt1, opt2) {
 			t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opt1, opt2))
 		}
 
@@ -874,7 +874,7 @@ func TestGetAvailablePackageSummaryAfterCacheResync(t *testing.T) {
 			corev1.Maintainer{},
 			corev1.PackageAppVersion{})
 		opt2 := cmpopts.SortSlices(lessAvailablePackageFunc)
-		if got, want := responseBeforeResync.AvailablePackageSummaries, valid_index_package_summaries; !cmp.Equal(got, want, opt1, opt2) {
+		if got, want := responseBeforeResync.AvailablePackageSummaries, valid_index_available_package_summaries; !cmp.Equal(got, want, opt1, opt2) {
 			t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opt1, opt2))
 		}
 
@@ -926,7 +926,7 @@ func TestGetAvailablePackageSummaryAfterCacheResync(t *testing.T) {
 			t.Fatalf("%v", err)
 		}
 
-		if got, want := responseAfterResync.AvailablePackageSummaries, valid_index_package_summaries; !cmp.Equal(got, want, opt1, opt2) {
+		if got, want := responseAfterResync.AvailablePackageSummaries, valid_index_available_package_summaries; !cmp.Equal(got, want, opt1, opt2) {
 			t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opt1, opt2))
 		}
 	})
@@ -1708,6 +1708,11 @@ func TestGetPackageRepositoryDetail(t *testing.T) {
 }
 
 func TestGetOciPackageRepositoryDetail(t *testing.T) {
+	seed_data_1, err := newFakeRemoteOciRegistryData_1()
+	if err != nil {
+		t.Fatal(err)
+	}
+
 	testCases := []struct {
 		name               string
 		request            *corev1.GetPackageRepositoryDetailRequest
@@ -1716,6 +1721,7 @@ func TestGetOciPackageRepositoryDetail(t *testing.T) {
 		repoUrl            string
 		expectedStatusCode codes.Code
 		expectedResponse   *corev1.GetPackageRepositoryDetailResponse
+		seedData           *fakeRemoteOciRegistryData
 	}{
 		{
 			name:               "get package repository detail for OCI repository",
@@ -1725,23 +1731,20 @@ func TestGetOciPackageRepositoryDetail(t *testing.T) {
 			request:            get_repo_detail_req_1,
 			expectedStatusCode: codes.OK,
 			expectedResponse:   get_repo_detail_resp_19,
+			seedData:           seed_data_1,
 		},
 	}
 
-	data, err := newFakeRemoteOciRegistryData_1()
-	if err != nil {
-		t.Fatal(err)
-	}
-	initOciFakeClientBuilder(t, *data)
-
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
+			initOciFakeClientBuilder(t, *tc.seedData)
+
 			repo, err := newOciRepo(tc.repoName, tc.repoNamespace, tc.repoUrl)
 			if err != nil {
 				t.Fatal(err)
 			}
 
-			s, _, err := newServerWithRepos(t, []sourcev1.HelmRepository{*repo}, nil, nil)
+			s, mock, err := newServerWithRepos(t, []sourcev1.HelmRepository{*repo}, nil, nil)
 			if err != nil {
 				t.Fatalf("error instantiating the server: %v", err)
 			}
@@ -1775,7 +1778,10 @@ func TestGetOciPackageRepositoryDetail(t *testing.T) {
 				}
 			}
 
-			// TODO redisMock check repo cache and chart cache
+			// FWIW GetPackageRepositoryDetail curently does not use the redis cache
+			if err = mock.ExpectationsWereMet(); err != nil {
+				t.Fatalf("%v", err)
+			}
 		})
 	}
 }
@@ -2261,6 +2267,87 @@ func TestDeletePackageRepository(t *testing.T) {
 				if err = ctrlClient.Get(ctx, nsname, &actualRepo); err == nil {
 					t.Fatalf("Expected repository [%s] to have been deleted but still exists", nsname)
 				}
+			}
+		})
+	}
+}
+
+func TestGetOciAvailablePackageSummariesWithoutPagination(t *testing.T) {
+	type testSpecGetOciAvailablePackageSummaries struct {
+		repoName      string
+		repoNamespace string
+		repoUrl       string
+	}
+
+	data, err := newFakeRemoteOciRegistryData_1()
+	if err != nil {
+		t.Fatal(err)
+	}
+	initOciFakeClientBuilder(t, *data)
+
+	testCases := []struct {
+		name              string
+		request           *corev1.GetAvailablePackageSummariesRequest
+		repos             []testSpecGetOciAvailablePackageSummaries
+		expectedResponse  *corev1.GetAvailablePackageSummariesResponse
+		expectedErrorCode codes.Code
+	}{
+		{
+			name: "returns a single available package",
+			repos: []testSpecGetOciAvailablePackageSummaries{
+				{
+					repoName:      "repo-1",
+					repoNamespace: "namespace-1",
+					repoUrl:       "oci://localhost:54321/userX/charts",
+				},
+			},
+			request: &corev1.GetAvailablePackageSummariesRequest{Context: &corev1.Context{}},
+			expectedResponse: &corev1.GetAvailablePackageSummariesResponse{
+				AvailablePackageSummaries: oci_repo_available_package_summaries,
+			},
+			expectedErrorCode: codes.OK,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			repos := []sourcev1.HelmRepository{}
+
+			for _, rs := range tc.repos {
+				repo, err := newOciRepo(rs.repoName, rs.repoNamespace, rs.repoUrl)
+				if err != nil {
+					t.Fatal(err)
+				}
+				repos = append(repos, *repo)
+			}
+
+			s, mock, err := newSimpleServerWithRepos(t, repos)
+			if err != nil {
+				t.Fatalf("error instantiating the server: %v", err)
+			}
+
+			if err = s.redisMockExpectGetFromRepoCache(mock, tc.request.FilterOptions, repos...); err != nil {
+				t.Fatalf("%v", err)
+			}
+
+			response, err := s.GetAvailablePackageSummaries(context.Background(), tc.request)
+			if got, want := status.Code(err), tc.expectedErrorCode; got != want {
+				t.Fatalf("got: %v, want: %v, err: %v", got, want, err)
+			}
+			// If an error code was expected, then no need to continue checking
+			// the response.
+			if tc.expectedErrorCode != codes.OK {
+				return
+			}
+
+			if err = mock.ExpectationsWereMet(); err != nil {
+				t.Fatalf("%v", err)
+			}
+
+			opt1 := cmpopts.IgnoreUnexported(corev1.GetAvailablePackageSummariesResponse{}, corev1.AvailablePackageSummary{}, corev1.AvailablePackageReference{}, corev1.Context{}, plugins.Plugin{}, corev1.PackageAppVersion{})
+			opt2 := cmpopts.SortSlices(lessAvailablePackageFunc)
+			if got, want := response, tc.expectedResponse; !cmp.Equal(got, want, opt1, opt2) {
+				t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opt1, opt2))
 			}
 		})
 	}

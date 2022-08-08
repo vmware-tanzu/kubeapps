@@ -101,7 +101,7 @@ func (s *Server) availableChartDetail(ctx context.Context, packageRef *corev1.Av
 			if opts, err := s.httpClientOptionsForRepo(ctx, repoName); err != nil {
 				return nil, err
 			} else {
-				fn = downloadHttpChart(opts)
+				fn = downloadHttpChartFn(opts)
 			}
 		}
 		if byteArray, err = s.chartCache.GetForOne(key, chartModel, fn); err != nil {
@@ -309,7 +309,7 @@ func availablePackageDetailFromChartDetail(chartID string, chartDetail map[strin
 	return pkg, nil
 }
 
-func downloadHttpChart(options *common.HttpClientOptions) func(chartID, chartUrl, chartVersion string) ([]byte, error) {
+func downloadHttpChartFn(options *common.HttpClientOptions) func(chartID, chartUrl, chartVersion string) ([]byte, error) {
 	return func(chartID, chartUrl, chartVersion string) ([]byte, error) {
 		client, headers, err := common.NewHttpClientAndHeaders(options)
 		if err != nil {

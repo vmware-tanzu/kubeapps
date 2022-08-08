@@ -769,7 +769,7 @@ func (s *repoEventSink) indexAndEncode(checksum string, repo sourcev1.HelmReposi
 			// So we still finish the indexing of the repo but skip the charts
 			log.Errorf("Failed to read secret for repo due to: %+v", err)
 		} else {
-			fn := downloadHttpChart(opts)
+			fn := downloadHttpChartFn(opts)
 			if err = s.chartCache.SyncCharts(charts, fn); err != nil {
 				return nil, false, err
 			}

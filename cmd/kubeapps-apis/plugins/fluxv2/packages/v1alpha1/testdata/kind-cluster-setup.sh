@@ -205,7 +205,7 @@ function deploy {
   # ref https://helm.sh/docs/topics/registries/
   kubectl create secret tls registry-tls --key ./cert/server-key.pem --cert ./cert/ssl-bundle.pem
   kubectl apply -f registry-app.yaml
-  local max=20
+  local max=25
   local n=0
   while [[ $(kubectl get pods -l app=registry-app -o 'jsonpath={..status.conditions[?(@.type=="Ready")].status}') != "True" ]]; do
     n=$((n+1))

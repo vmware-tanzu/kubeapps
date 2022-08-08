@@ -694,7 +694,7 @@ var (
 		},
 	}
 
-	valid_index_package_summaries = []*corev1.AvailablePackageSummary{
+	valid_index_available_package_summaries = []*corev1.AvailablePackageSummary{
 		{
 			Name:             "acs-engine-autoscaler",
 			DisplayName:      "acs-engine-autoscaler",
@@ -3491,7 +3491,7 @@ var (
 	}
 
 	newFakeRemoteOciRegistryData_1 = func() (*fakeRemoteOciRegistryData, error) {
-		chartBytes, err := ioutil.ReadFile("testdata/charts/podinfo-6.1.5.tgz")
+		chartBytes, err := ioutil.ReadFile(testTgz("podinfo-6.1.5.tgz"))
 		if err != nil {
 			return nil, err
 		}
@@ -3513,5 +3513,49 @@ var (
 				},
 			},
 		}, nil
+	}
+
+	oci_repo_available_package_summaries = []*corev1.AvailablePackageSummary{
+		{
+			Name:        "podinfo",
+			DisplayName: "podinfo",
+			LatestVersion: &corev1.PackageAppVersion{
+				PkgVersion: "6.1.5",
+			},
+			AvailablePackageRef: availableRef("repo-1/podinfo", "namespace-1"),
+			Categories:          []string{""},
+			ShortDescription:    "Podinfo Helm chart for Kubernetes",
+		},
+	}
+
+	oci_podinfo_charts_spec = []testSpecChartWithUrl{
+		{
+			chartID:       "repo-1/podinfo",
+			chartUrl:      "oci://localhost:54321/userX/charts/podinfo:6.1.5",
+			chartRevision: "6.1.5",
+			repoNamespace: "namespace-1",
+		},
+	}
+
+	expected_detail_podinfo_1 = &corev1.AvailablePackageDetail{
+		AvailablePackageRef: availableRef("repo-1/podinfo", "namespace-1"),
+		Name:                "podinfo",
+		Version: &corev1.PackageAppVersion{
+			PkgVersion: "6.1.5",
+			AppVersion: "6.1.5",
+		},
+		RepoUrl:          "oci://localhost:54321/userX/charts",
+		HomeUrl:          "https://github.com/stefanprodan/podinfo",
+		DisplayName:      "podinfo",
+		ShortDescription: "Podinfo Helm chart for Kubernetes",
+		Readme:           "Podinfo is a tiny web application made with Go",
+		DefaultValues:    "Default values for podinfo.",
+		SourceUrls:       []string{"https://github.com/stefanprodan/podinfo"},
+		Maintainers: []*corev1.Maintainer{
+			{
+				Name:  "stefanprodan",
+				Email: "stefanprodan@users.noreply.github.com",
+			},
+		},
 	}
 )
