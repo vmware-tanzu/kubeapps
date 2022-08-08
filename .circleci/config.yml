@@ -221,6 +221,10 @@ workflows:
           <<: *build_on_main
           requires:
             - local_e2e_tests
+      # - report_srp:
+      #     <<: *build_on_main
+      #     requires:
+      #       - push_images
       - sync_chart_to_bitnami:
           <<: *build_on_tag
           requires:
@@ -853,6 +857,36 @@ jobs:
           name: Run the check_upstream_chart script
           command: |
             ./script/chart_upstream_checker.sh << pipeline.parameters.CI_BOT_USERNAME >> << pipeline.parameters.CI_BOT_EMAIL >> << pipeline.parameters.CI_BOT_GPG >> << pipeline.parameters.CI_BOT_FORKED_CHARTS_DEPLOYKEY_FILENAME >> << pipeline.parameters.CHARTS_REPO_ORIGINAL >> << pipeline.parameters.BRANCH_CHARTS_REPO_ORIGINAL >> << pipeline.parameters.CHARTS_REPO_FORKED >> << pipeline.parameters.BRANCH_CHARTS_REPO_FORKED >> << pipeline.parameters.KUBEAPPS_REPO >> << pipeline.parameters.BRANCH_KUBEAPPS_REPO >> << pipeline.parameters.README_GENERATOR_REPO >>
+  report_srp:
+    environment:
+      <<: *common_envars
+    docker:
+      - image: cimg/go:<< pipeline.parameters.GOLANG_VERSION >>
+        auth:
+          username: $DOCKER_USERNAME
+          password: $DOCKER_PASSWORD
+    steps:
+      - checkout
+      - run:
+          name: Install and configure the SRP tool
+          command: |
+            wget https://srp-cli.s3.amazonaws.com/srp-cli-latest.tgz
+            tar zxf srp-cli-latest.tgz
+            sudo mv srp /usr/local/bin/
+            srp config auth --client-id $SRP_CLIENTID --client-secret $SRP_CLIENTSECRET
+      - run:
+          name: Generate the "source provenance" file
+          command: |
+            # This UID should have been already set in the internal tool.
+            PROV_OBJ_UID="uid.obj.build.circleci(namespace='vmware-tanzu/kubeapps',ref='refs/heads/main',workflow='kubeapps',workflow_id='${CIRCLE_WORKFLOW_ID}')"
+            srp provenance source --verbose --scm-type git --name "kubeapps" --path ./ --saveto ./source-provenance.json --comp-uid "${PROV_OBJ_UID}" --build-number "${CIRCLE_WORKFLOW_ID}" --version "${CIRCLE_TAG}" --all-ephemeral true --build-type release
+            cat ./source-provenance.json
+      # TODO(agamez): we will need to create the "network provenance" file soon.
+      - run:
+          name: Submit the provenance files to the SRP Metadata service
+          command: |
+            srp metadata submit --verbose --path ./source-provenance.json
+
   push_images:
     docker:
       - image: cimg/go:<< pipeline.parameters.GOLANG_VERSION >>
