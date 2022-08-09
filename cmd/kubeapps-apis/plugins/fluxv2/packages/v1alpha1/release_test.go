@@ -193,19 +193,16 @@ func TestGetInstalledPackageSummariesWithoutPagination(t *testing.T) {
 			defer cleanup()
 
 			for _, existing := range tc.existingObjs {
-				ts2, repo, err := newRepoWithIndex(
+				ts2, repo, err := newHttpRepoAndServeIndex(
 					existing.repoIndex, existing.repoName, existing.repoNamespace, nil, "")
 				if err != nil {
 					t.Fatalf("%+v", err)
 				}
 				defer ts2.Close()
 
-				redisKey, bytes, err := s.redisKeyValueForRepo(*repo)
-				if err != nil {
-					t.Fatalf("%+v", err)
+				if err = s.redisMockExpectGetFromRepoCache(mock, nil, *repo); err != nil {
+					t.Fatal(err)
 				}
-
-				mock.ExpectGet(redisKey).SetVal(string(bytes))
 			}
 
 			response, err := s.GetInstalledPackageSummaries(context.Background(), tc.request)
@@ -257,19 +254,16 @@ func TestGetInstalledPackageSummariesWithPagination(t *testing.T) {
 		defer cleanup()
 
 		for _, existing := range existingObjs {
-			ts2, repo, err := newRepoWithIndex(
+			ts2, repo, err := newHttpRepoAndServeIndex(
 				existing.repoIndex, existing.repoName, existing.repoNamespace, nil, "")
 			if err != nil {
 				t.Fatalf("%+v", err)
 			}
 			defer ts2.Close()
 
-			redisKey, bytes, err := s.redisKeyValueForRepo(*repo)
-			if err != nil {
-				t.Fatalf("%+v", err)
+			if err = s.redisMockExpectGetFromRepoCache(mock, nil, *repo); err != nil {
+				t.Fatal(err)
 			}
-
-			mock.ExpectGet(redisKey).SetVal(string(bytes))
 		}
 
 		request1 := &corev1.GetInstalledPackageSummariesRequest{
@@ -625,7 +619,7 @@ func TestCreateInstalledPackage(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			ts, repo, err := newRepoWithIndex(
+			ts, repo, err := newHttpRepoAndServeIndex(
 				tc.existingObjs.repoIndex, tc.existingObjs.repoName, tc.existingObjs.repoNamespace, nil, "")
 			if err != nil {
 				t.Fatalf("%+v", err)
@@ -637,12 +631,9 @@ func TestCreateInstalledPackage(t *testing.T) {
 				t.Fatalf("%+v", err)
 			}
 
-			redisKey, bytes, err := s.redisKeyValueForRepo(*repo)
-			if err != nil {
-				t.Fatalf("%+v", err)
+			if err = s.redisMockExpectGetFromRepoCache(mock, nil, *repo); err != nil {
+				t.Fatal(err)
 			}
-
-			mock.ExpectGet(redisKey).SetVal(string(bytes))
 
 			if tc.defaultUpgradePolicyStr != "" {
 				policy, err := pkgutils.UpgradePolicyFromString(tc.defaultUpgradePolicyStr)

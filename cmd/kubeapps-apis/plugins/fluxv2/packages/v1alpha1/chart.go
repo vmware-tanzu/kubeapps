@@ -92,16 +92,16 @@ func (s *Server) availableChartDetail(ctx context.Context, packageRef *corev1.Av
 
 		var fn cache.DownloadChartFn
 		if chartModel.Repo.Type == "oci" {
-			if ociRegistry, err := s.newOCIRegistryAndLoginWithRepo(ctx, repoName); err != nil {
+			if ociRepo, err := s.newOCIChartRepositoryAndLogin(ctx, repoName); err != nil {
 				return nil, err
 			} else {
-				fn = downloadOCIChartFn(ociRegistry)
+				fn = downloadOCIChartFn(ociRepo)
 			}
 		} else {
 			if opts, err := s.httpClientOptionsForRepo(ctx, repoName); err != nil {
 				return nil, err
 			} else {
-				fn = downloadChartViaHttpFn(opts)
+				fn = downloadHttpChartFn(opts)
 			}
 		}
 		if byteArray, err = s.chartCache.GetForOne(key, chartModel, fn); err != nil {
@@ -309,7 +309,7 @@ func availablePackageDetailFromChartDetail(chartID string, chartDetail map[strin
 	return pkg, nil
 }
 
-func downloadChartViaHttpFn(options *common.HttpClientOptions) func(chartID, chartUrl, chartVersion string) ([]byte, error) {
+func downloadHttpChartFn(options *common.HttpClientOptions) func(chartID, chartUrl, chartVersion string) ([]byte, error) {
 	return func(chartID, chartUrl, chartVersion string) ([]byte, error) {
 		client, headers, err := common.NewHttpClientAndHeaders(options)
 		if err != nil {
