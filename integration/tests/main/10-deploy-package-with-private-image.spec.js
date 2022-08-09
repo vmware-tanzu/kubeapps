@@ -27,7 +27,10 @@ test("Deploy a chart using a private container image", async ({ page }) => {
   console.log(`Creating package repository "${repoName}"`);
   await page.locator("text=Add Package Repository >> div").click();
   await page.fill("input#kubeapps-repo-name", repoName);
-  await page.fill("input#kubeapps-repo-url", "http://chartmuseum.chart-museum.svc.cluster.local:8080");
+  await page.fill(
+    "input#kubeapps-repo-url",
+    "http://chartmuseum.chart-museum.svc.cluster.local:8080",
+  );
   await page.locator("text=Helm Charts").first().click();
   await page.locator("text=Helm Repository").click();
 
@@ -56,42 +59,42 @@ test("Deploy a chart using a private container image", async ({ page }) => {
   // For now, disabling the this test case temporarily.
 
   // Wait for new packages to be indexed
-  // await page.waitForTimeout(5000);
+  await page.waitForTimeout(5000);
 
-  // // Check if our package shows up in catalog
-  // await page.click(`a:has-text("${repoName}")`);
-  // await page.click('a:has-text("simplechart")');
+  // Check if our package shows up in catalog
+  await page.click(`a:has-text("${repoName}")`);
+  await page.click('a:has-text("simplechart")');
 
-  // // Deploy package
-  // await page.click('cds-button:has-text("Deploy")');
-  // await page.selectOption('select[name="package-versions"]', "0.1.0");
-  // const releaseNameLocator = page.locator("#releaseName");
-  // await releaseNameLocator.waitFor();
-  // await expect(releaseNameLocator).toHaveText("");
-  // const appName = utils.getRandomName("test-10-release");
-  // console.log(`Creating release "${appName}"`);
-  // await releaseNameLocator.fill(appName);
+  // Deploy package
+  await page.click('cds-button:has-text("Deploy")');
+  await page.selectOption('select[name="package-versions"]', "0.1.0");
+  const releaseNameLocator = page.locator("#releaseName");
+  await releaseNameLocator.waitFor();
+  await expect(releaseNameLocator).toHaveText("");
+  const appName = utils.getRandomName("test-10-release");
+  console.log(`Creating release "${appName}"`);
+  await releaseNameLocator.fill(appName);
 
-  // // Select version and deploy
-  // await page.locator('cds-button:has-text("Deploy")').click();
+  // Select version and deploy
+  await page.locator('cds-button:has-text("Deploy")').click();
 
-  // // Assertions
-  // // Wait for the app to be deployed and select it from "Applications"
-  // await page.waitForTimeout(5000);
-  // await page.click('a.nav-link:has-text("Applications")');
-  // await page.waitForTimeout(3000); // Sometimes typing was too fast to get the result shown
-  // await page.locator("input#search").fill(appName);
-  // await page.waitForTimeout(3000);
-  // await page.click(`a .card-title:has-text("${appName}")`);
+  // Assertions
+  // Wait for the app to be deployed and select it from "Applications"
+  await page.waitForTimeout(5000);
+  await page.click('a.nav-link:has-text("Applications")');
+  await page.waitForTimeout(3000); // Sometimes typing was too fast to get the result shown
+  await page.locator("input#search").fill(appName);
+  await page.waitForTimeout(3000);
+  await page.click(`a .card-title:has-text("${appName}")`);
 
-  // await page.waitForSelector("css=.application-status-pie-chart-number >> text=1", {
-  //   timeout: deployTimeout,
-  // });
-  // await page.waitForSelector("css=.application-status-pie-chart-title >> text=Ready", {
-  //   timeout: deployTimeout,
-  // });
+  await page.waitForSelector("css=.application-status-pie-chart-number >> text=1", {
+    timeout: deployTimeout,
+  });
+  await page.waitForSelector("css=.application-status-pie-chart-title >> text=Ready", {
+    timeout: deployTimeout,
+  });
 
-  // // Clean up
-  // await page.locator('cds-button:has-text("Delete")').click();
-  // await page.locator('cds-modal-actions button:has-text("Delete")').click();
+  // Clean up
+  await page.locator('cds-button:has-text("Delete")').click();
+  await page.locator('cds-modal-actions button:has-text("Delete")').click();
 });
