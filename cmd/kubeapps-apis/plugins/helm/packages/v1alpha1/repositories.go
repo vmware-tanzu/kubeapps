@@ -73,9 +73,11 @@ func (s *Server) newRepo(ctx context.Context, repo *HelmRepository) (*corev1.Pac
 			return nil, err
 		}
 	}
-	// Copy secret to global namespace if needed. See issue #5129.
-	if repo.name.Namespace != s.globalPackagingNamespace && secret != nil {
-		if err = s.copyRepositorySecret(typedClient, secret, repo.name); err != nil {
+	// Copy secret to the namespace of asset syncer if needed. See issue #5129.
+	if repo.name.Namespace != s.kubeappsNamespace && secret != nil {
+		// Target namespace must be the same as the asset syncer job,
+		// otherwise the job won't be able to access the secret
+		if err = s.copyRepositorySecret(typedClient, s.kubeappsNamespace, secret, repo.name); err != nil {
 			return nil, err
 		}
 	}
@@ -327,9 +329,11 @@ func (s *Server) updateRepo(ctx context.Context, repo *HelmRepository) (*corev1.
 			return nil, err
 		}
 	}
-	// Copy secret to global namespace if needed. See issue #5129.
-	if repo.name.Namespace != s.globalPackagingNamespace && secret != nil {
-		if err = s.copyRepositorySecret(typedClient, secret, repo.name); err != nil {
+	// Copy secret to the namespace of asset syncer if needed. See issue #5129.
+	if repo.name.Namespace != s.kubeappsNamespace && secret != nil {
+		// Target namespace must be the same as the asset syncer job,
+		// otherwise the job won't be able to access the secret
+		if err = s.copyRepositorySecret(typedClient, s.kubeappsNamespace, secret, repo.name); err != nil {
 			return nil, err
 		}
 	}

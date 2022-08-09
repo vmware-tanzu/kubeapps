@@ -286,8 +286,7 @@ func deleteSecret(ctx context.Context, secretsInterface v1.SecretInterface, secr
 	return nil
 }
 
-func (s *Server) copyRepositorySecret(typedClient kubernetes.Interface, secret *k8scorev1.Secret, repoName types.NamespacedName) error {
-	targetNamespace := s.globalPackagingNamespace
+func (s *Server) copyRepositorySecret(typedClient kubernetes.Interface, targetNamespace string, secret *k8scorev1.Secret, repoName types.NamespacedName) error {
 	globalSecret := &k8scorev1.Secret{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      namespacedSecretNameForRepo(repoName.Name, repoName.Namespace),
