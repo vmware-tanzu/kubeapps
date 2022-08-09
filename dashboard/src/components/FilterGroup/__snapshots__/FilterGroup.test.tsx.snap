@@ -113,6 +113,7 @@ exports[`renders a multicheckbox 1`] = `
       >
         <FilterGroup
           currentFilters={Array []}
+          disabled={false}
           name="test"
           onAddFilter={[MockFunction]}
           onRemoveFilter={[MockFunction]}
@@ -124,6 +125,7 @@ exports[`renders a multicheckbox 1`] = `
           }
         >
           <MultiCheckbox
+            disabled={false}
             name="test"
             onChange={[Function]}
             options={
@@ -152,6 +154,7 @@ exports[`renders a multicheckbox 1`] = `
               >
                 <input
                   checked={false}
+                  disabled={false}
                   id="test-0"
                   name="test"
                   onChange={[Function]}
@@ -171,6 +174,7 @@ exports[`renders a multicheckbox 1`] = `
               >
                 <input
                   checked={false}
+                  disabled={false}
                   id="test-1"
                   name="test"
                   onChange={[Function]}

@@ -10,12 +10,14 @@ interface IFilterGroupProps {
   currentFilters: string[];
   onAddFilter: (type: string, value: string) => void;
   onRemoveFilter: (etype: string, value: string) => void;
+  disabled?: boolean;
 }
 
 function FilterGroup({
   name,
   currentFilters,
   options,
+  disabled = false,
   onAddFilter,
   onRemoveFilter,
 }: IFilterGroupProps) {
@@ -37,6 +39,7 @@ function FilterGroup({
       span={1}
       value={currentFilters}
       onChange={onChange}
+      disabled={disabled}
     />
   );
 }

@@ -10,6 +10,7 @@ const defaultProps = {
   name: "test",
   options: ["foo", "bar"],
   currentFilters: [],
+  disabled: false,
   onAddFilter: jest.fn(),
   onRemoveFilter: jest.fn(),
 };
