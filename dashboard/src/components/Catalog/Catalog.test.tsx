@@ -497,8 +497,8 @@ describe("pagination and package fetching", () => {
       </MemoryRouter>,
     );
 
-    expect(wrapper.find(CatalogItems).prop("isFirstPage")).toBe(false);
-    expect(wrapper.find(PackageCatalogItem).length).toBe(1);
+    expect(wrapper.find(CatalogItems).prop("isFirstPage")).toBe(true);
+    expect(wrapper.find(PackageCatalogItem).length).toBe(0);
     expect(fetchAvailablePackageSummaries).toHaveBeenCalledWith(
       "default-cluster",
       "kubeapps",
