@@ -57,7 +57,8 @@ import (
 )
 
 const (
-	globalPackagingNamespace = "kubeapps"
+	globalPackagingNamespace = "kubeapps-repos-global"
+	kubeappsNamespace        = "kubeapps"
 	globalPackagingCluster   = "default"
 	DefaultAppVersion        = "1.2.6"
 	DefaultReleaseRevision   = 1
@@ -265,6 +266,7 @@ func makeServer(t *testing.T, authorized bool, actionConfig *action.Configuratio
 	return &Server{
 		clientGetter:             clientGetter,
 		manager:                  manager,
+		kubeappsNamespace:        kubeappsNamespace,
 		globalPackagingNamespace: globalPackagingNamespace,
 		globalPackagingCluster:   globalPackagingCluster,
 		actionConfigGetter: func(context.Context, *corev1.Context) (*action.Configuration, error) {
@@ -331,6 +333,7 @@ func newServerWithSecretsAndRepos(t *testing.T, secrets []k8sruntime.Object, uns
 
 	return &Server{
 		clientGetter:             clientGetter,
+		kubeappsNamespace:        kubeappsNamespace,
 		globalPackagingNamespace: globalPackagingNamespace,
 		globalPackagingCluster:   globalPackagingCluster,
 		chartClientFactory:       &fake.ChartClientFactory{},
