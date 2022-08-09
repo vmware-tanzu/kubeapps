@@ -235,7 +235,7 @@ var (
 		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:            "bar",
-			Namespace:       "kubeapps",
+			Namespace:       globalPackagingNamespace,
 			ResourceVersion: "1",
 		},
 		Spec: v1alpha1.AppRepositorySpec{
@@ -259,7 +259,7 @@ var (
 
 	addRepoReqGlobal = &corev1.AddPackageRepositoryRequest{
 		Name:            "bar",
-		Context:         &corev1.Context{Namespace: "kubeapps", Cluster: KubeappsCluster},
+		Context:         &corev1.Context{Namespace: globalPackagingNamespace, Cluster: KubeappsCluster},
 		Type:            "helm",
 		Url:             "http://example.com",
 		NamespaceScoped: false,

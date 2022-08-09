@@ -73,6 +73,7 @@ type Server struct {
 	chartClientFactory       chartutils.ChartClientFactoryInterface
 	createReleaseFunc        createRelease
 	kubeappsCluster          string // Specifies the cluster on which Kubeapps is installed.
+	kubeappsNamespace        string // Namespace in which Kubeapps is installed
 	pluginConfig             *common.HelmPluginConfig
 	repoClientGetter         newRepoClient
 }
@@ -84,6 +85,12 @@ func NewServer(configGetter core.KubernetesConfigGetter, globalPackagingCluster 
 	var ASSET_SYNCER_DB_NAME = os.Getenv("ASSET_SYNCER_DB_NAME")
 	var ASSET_SYNCER_DB_USERNAME = os.Getenv("ASSET_SYNCER_DB_USERNAME")
 	var ASSET_SYNCER_DB_USERPASSWORD = os.Getenv("ASSET_SYNCER_DB_USERPASSWORD")
+
+	// Namespace where Kubeapps is installed to be in line with the asset syncer
+	kubeappsNamespace := os.Getenv("POD_NAMESPACE")
+	if kubeappsNamespace == "" {
+		log.Fatal("POD_NAMESPACE environment variable should be defined")
+	}
 
 	var dbConfig = dbutils.Config{URL: ASSET_SYNCER_DB_URL, Database: ASSET_SYNCER_DB_NAME, Username: ASSET_SYNCER_DB_USERNAME, Password: ASSET_SYNCER_DB_USERPASSWORD}
 
@@ -132,6 +139,7 @@ func NewServer(configGetter core.KubernetesConfigGetter, globalPackagingCluster 
 			return fn(ctx, pkgContext.GetNamespace())
 		},
 		manager:                  manager,
+		kubeappsNamespace:        kubeappsNamespace,
 		globalPackagingNamespace: globalReposNamespace,
 		globalPackagingCluster:   globalPackagingCluster,
 		chartClientFactory:       &chartutils.ChartClientFactory{},

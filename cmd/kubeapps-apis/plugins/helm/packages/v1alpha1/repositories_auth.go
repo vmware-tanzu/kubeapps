@@ -296,9 +296,8 @@ func deleteSecret(ctx context.Context, secretsInterface v1.SecretInterface, secr
 	return nil
 }
 
-func (s *Server) copyRepositorySecret(typedClient kubernetes.Interface, secret *k8scorev1.Secret, repoName types.NamespacedName) error {
-	targetNamespace := s.globalPackagingNamespace
-	globalSecret := &k8scorev1.Secret{
+func (s *Server) copyRepositorySecretToNamespace(typedClient kubernetes.Interface, targetNamespace string, secret *k8scorev1.Secret, repoName types.NamespacedName) (copiedSecret *k8scorev1.Secret, err error) {
+	newSecret := &k8scorev1.Secret{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      namespacedSecretNameForRepo(repoName.Name, repoName.Namespace),
 			Namespace: targetNamespace,
@@ -306,11 +305,19 @@ func (s *Server) copyRepositorySecret(typedClient kubernetes.Interface, secret *
 		Type: secret.Type,
 		Data: secret.Data,
 	}
-	_, err := typedClient.CoreV1().Secrets(targetNamespace).Create(context.TODO(), globalSecret, metav1.CreateOptions{})
+	copiedSecret, err = typedClient.CoreV1().Secrets(targetNamespace).Create(context.TODO(), newSecret, metav1.CreateOptions{})
 	if err != nil && k8sErrors.IsAlreadyExists(err) {
-		_, err = typedClient.CoreV1().Secrets(targetNamespace).Update(context.TODO(), globalSecret, metav1.UpdateOptions{})
+		copiedSecret, err = typedClient.CoreV1().Secrets(targetNamespace).Update(context.TODO(), newSecret, metav1.UpdateOptions{})
 	}
-	return err
+	return copiedSecret, err
+}
+
+func (s *Server) deleteRepositorySecretFromNamespace(typedClient kubernetes.Interface, targetNamespace, secretName string) error {
+	secretsInterface := typedClient.CoreV1().Secrets(targetNamespace)
+	if deleteErr := deleteSecret(context.TODO(), secretsInterface, secretName); deleteErr != nil {
+		return deleteErr
+	}
+	return nil
 }
 
 func updateKubeappsManagedImagesPullSecret(ctx context.Context, typedClient kubernetes.Interface,
