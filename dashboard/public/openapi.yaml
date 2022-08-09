@@ -147,6 +147,7 @@ paths:
     get:
       tags:
         - kubeops
+      deprecated: true
       summary: "ListAppRepositories"
       description: ""
       operationId: "ListAppRepositories"
@@ -181,6 +182,7 @@ paths:
     get:
       tags:
         - kubeops
+      deprecated: true
       summary: "ListAppRepositories_ns"
       description: ""
       operationId: "ListAppRepositories_ns"
@@ -221,6 +223,7 @@ paths:
     post:
       tags:
         - kubeops
+      deprecated: true
       summary: "CreateAppRepository"
       description: ""
       operationId: "CreateAppRepository"
@@ -271,6 +274,7 @@ paths:
     post:
       tags:
         - kubeops
+      deprecated: true
       summary: "ValidateAppRepository"
       description: ""
       operationId: "ValidateAppRepository"
@@ -319,6 +323,7 @@ paths:
     put:
       tags:
         - kubeops
+      deprecated: true
       summary: "UpdateAppRepository"
       description: ""
       operationId: "UpdateAppRepository"
@@ -373,6 +378,7 @@ paths:
     delete:
       tags:
         - kubeops
+      deprecated: true
       summary: "DeleteAppRepository"
       description: ""
       operationId: "DeleteAppRepository"
@@ -421,6 +427,7 @@ paths:
     post:
       tags:
         - kubeops
+      deprecated: true
       summary: "RefreshAppRepository"
       description: ""
       operationId: "RefreshAppRepository"
@@ -523,6 +530,7 @@ paths:
     get:
       tags:
         - kubeops
+      deprecated: true
       summary: "ListAllReleases"
       description: ""
       operationId: "ListAllReleases"
@@ -562,6 +570,7 @@ paths:
     get:
       tags:
         - kubeops
+      deprecated: true
       summary: "ListReleases"
       description: ""
       operationId: "ListReleases"
@@ -607,6 +616,7 @@ paths:
     post:
       tags:
         - kubeops
+      deprecated: true
       summary: "CreateRelease"
       description: ""
       operationId: "CreateRelease"
@@ -664,6 +674,7 @@ paths:
     get:
       tags:
         - kubeops
+      deprecated: true
       summary: "GetRelease"
       description: ""
       operationId: "GetRelease"
@@ -714,6 +725,7 @@ paths:
     delete:
       tags:
         - kubeops
+      deprecated: true
       summary: "DeleteRelease"
       description: ""
       operationId: "DeleteRelease"
@@ -767,6 +779,7 @@ paths:
     put:
       tags:
         - kubeops
+      deprecated: true
       summary: "OperateRelease"
       description: ""
       operationId: "OperateRelease"
