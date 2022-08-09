@@ -892,7 +892,9 @@ jobs:
             # This UID should have been already set in the internal tool.
             PROV_OBJ_UID="uid.obj.build.circleci(instance='circleci.com',type='<< pipeline.project.type >>',namespace='${CIRCLE_PROJECT_USERNAME}/${CIRCLE_PROJECT_REPONAME}',branch='${CIRCLE_BRANCH}',commit_id='${CIRCLE_SHA1}',build_id='<< pipeline.number >>/${CIRCLE_WORKFLOW_ID}/${CIRCLE_BUILD_NUM}')"
             echo "PROV_OBJ_UID=${PROV_OBJ_UID}"
-            srp provenance source --verbose --scm-type git --name "kubeapps" --path ./ --saveto ./source-provenance.json --comp-uid "${PROV_OBJ_UID}" --build-number "${CIRCLE_WORKFLOW_ID}" --version "${CIRCLE_TAG}" --all-ephemeral true --build-type release
+            # Using CIRCLE_TAG as the version if defined (i.e., when releasing a version); use the commit SHA otherwise.
+            VERSION=$([ -z "${CIRCLE_TAG}" ] && echo "${CIRCLE_SHA1}" || echo "${CIRCLE_TAG}")
+            srp provenance source --verbose --scm-type git --name "kubeapps" --path ./ --saveto ./source-provenance.json --comp-uid "${PROV_OBJ_UID}" --build-number "${CIRCLE_WORKFLOW_ID}" --version "${VERSION}" --all-ephemeral true --build-type release
             cat ./source-provenance.json
       - store_artifacts:
           path: source-provenance.json
