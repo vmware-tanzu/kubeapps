@@ -13,6 +13,7 @@ include ./script/makefiles/cluster-kind.mk
 include ./script/makefiles/cluster-kind-for-pinniped.mk
 include ./script/makefiles/deploy-dev.mk
 include ./script/makefiles/deploy-dev-for-pinniped.mk
+include ./script/makefiles/site.mk
 
 IMG_MODIFIER ?=
 

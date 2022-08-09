@@ -133,15 +133,19 @@ function AppRepoList() {
     <>
       <PageHeader
         title="Package Repositories"
-        buttons={[
-          <AppRepoAddButton
-            title="Add a Package Repository"
-            key="add-repo-button"
-            namespace={currentNamespace}
-            kubeappsNamespace={globalReposNamespace}
-          />,
-          <AppRepoRefreshAllButton key="refresh-all-button" />,
-        ]}
+        buttons={
+          supportedCluster
+            ? [
+                <AppRepoAddButton
+                  title="Add a Package Repository"
+                  key="add-repo-button"
+                  namespace={currentNamespace}
+                  kubeappsNamespace={globalReposNamespace}
+                />,
+                <AppRepoRefreshAllButton key="refresh-all-button" />,
+              ]
+            : []
+        }
         filter={
           canSetAllNS ? (
             <CdsToggleGroup className="flex-v-center">
