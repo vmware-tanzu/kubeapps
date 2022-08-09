@@ -3507,14 +3507,11 @@ var (
 			repositories: []fakeRepo{
 				{
 					name: "podinfo",
-					charts: []fakeChart{
-						{
-							name: "podinfo",
-							versions: []fakeChartVersion{
-								{
-									version:  "6.1.5",
-									tgzBytes: chartBytes,
-								},
+					chart: fakeChart{
+						versions: []fakeChartVersion{
+							{
+								version:  "6.1.5",
+								tgzBytes: chartBytes,
 							},
 						},
 					},
@@ -3533,6 +3530,30 @@ var (
 			AvailablePackageRef: availableRef("repo-1/podinfo", "namespace-1"),
 			Categories:          []string{""},
 			ShortDescription:    "Podinfo Helm chart for Kubernetes",
+		},
+	}
+
+	oci_repo_available_package_summaries_2 = []*corev1.AvailablePackageSummary{
+		{
+			Name:        "podinfo",
+			DisplayName: "podinfo",
+			LatestVersion: &corev1.PackageAppVersion{
+				PkgVersion: "6.1.5",
+			},
+			AvailablePackageRef: availableRef("repo-1/podinfo", "namespace-1"),
+			Categories:          []string{""},
+			ShortDescription:    "Podinfo Helm chart for Kubernetes",
+		},
+		{
+			Name:        "airflow",
+			DisplayName: "airflow",
+			LatestVersion: &corev1.PackageAppVersion{
+				PkgVersion: "6.7.1",
+			},
+			IconUrl:             "https://bitnami.com/assets/stacks/airflow/img/airflow-stack-110x117.png",
+			AvailablePackageRef: availableRef("repo-1/airflow", "namespace-1"),
+			Categories:          []string{"WorkFlow"},
+			ShortDescription:    "Apache Airflow is a platform to programmatically author, schedule and monitor workflows.",
 		},
 	}
 
@@ -3605,22 +3626,56 @@ var (
 			repositories: []fakeRepo{
 				{
 					name: "podinfo",
-					charts: []fakeChart{
-						{
-							name: "podinfo",
-							versions: []fakeChartVersion{
-								{
-									version:  "6.1.5",
-									tgzBytes: chartBytes1,
-								},
-								{
-									version:  "6.0.0",
-									tgzBytes: chartBytes2,
-								},
-								{
-									version:  "6.0.3",
-									tgzBytes: chartBytes3,
-								},
+					chart: fakeChart{
+						versions: []fakeChartVersion{
+							{
+								version:  "6.1.5",
+								tgzBytes: chartBytes1,
+							},
+							{
+								version:  "6.0.0",
+								tgzBytes: chartBytes2,
+							},
+							{
+								version:  "6.0.3",
+								tgzBytes: chartBytes3,
+							},
+						},
+					},
+				},
+			},
+		}, nil
+	}
+
+	newFakeRemoteOciRegistryData_3 = func() (*fakeRemoteOciRegistryData, error) {
+		chartBytes1, err := ioutil.ReadFile(testTgz("podinfo-6.1.5.tgz"))
+		if err != nil {
+			return nil, err
+		}
+		chartBytes2, err := ioutil.ReadFile(testTgz("airflow-6.7.1.tgz"))
+		if err != nil {
+			return nil, err
+		}
+		return &fakeRemoteOciRegistryData{
+			repositories: []fakeRepo{
+				{
+					name: "podinfo",
+					chart: fakeChart{
+						versions: []fakeChartVersion{
+							{
+								version:  "6.1.5",
+								tgzBytes: chartBytes1,
+							},
+						},
+					},
+				},
+				{
+					name: "airflow",
+					chart: fakeChart{
+						versions: []fakeChartVersion{
+							{
+								version:  "6.7.1",
+								tgzBytes: chartBytes2,
 							},
 						},
 					},

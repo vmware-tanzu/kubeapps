@@ -9,7 +9,10 @@ Given an OCI HelmRepository CRD with URL like `"oci://ghcr.io/stefanprodan/chart
   - `oci://` - URL scheme, indicating this is an *OCI chart repository*, as opposed to an *HTTP chart repository*
   - `ghcr.io` - OCI registry host
   - `/stefanprodan/charts` - registry path
-- That repository may contain multiple charts, e.g. `"podinfo"` and `"nginx"`. Chart names are not part of the URL and must be specified by user when creating HelmChart or HelmRelease CRD
+- That OCI registry may contain multiple helm chart repositories, such as `"podinfo"` and `"nginx"`. The associated OCI references would be: 
+  - `oci://ghcr.io/stefanprodan/charts/podinfo`
+  - `oci://ghcr.io/stefanprodan/charts/nginx`
+- Each of the repositories may only contain a single chart, whose name matches that of the repository basename. For example, repository with the basename (the last segment of the URL path) `"podinfo"` may only contain a single chart also called `"podinfo"`. Also see helm section below.
 - Each of the charts may have multiple versions a.k.a. tags, e.g. "`6.1.5"`, `"6.1.4"`, etc.
 
 References:
@@ -18,7 +21,7 @@ References:
   - https://github.com/fluxcd/source-controller/blob/main/controllers/helmrepository_controller_oci.go
 
 ## ORAS v2 go libraries
-Given a remote OCI registry, such as `ghcr.io`, will list all repository names hosted in the format `"{REGISTRY_PATH}/{NAME}"`. Unlike the flux section, REGISTRY_PATH does not begin with a slash. For example, assuming the remote registry with the URL `"oci://ghcr.io/stefanprodan/charts"` contains 2 repositories, `"podinfo"` and `"podinfo-2"`, then  the following list is returned:
+Given a remote OCI registry, such as `ghcr.io`, will list all repository names hosted in the format `"{REGISTRY_PATH}/{NAME}"`. Unlike the flux section, REGISTRY_PATH does not begin with a slash. For example, assuming the remote registry with the URL `"oci://ghcr.io/stefanprodan/charts"` contains 2 repositories, `"podinfo"` and `"podinfo-2"`, then the following list is returned from ORAS `Registry.Repositories()` API:
   1. `"stefanprodan/charts/podinfo"`
   2. `"stefanprodan/charts/podinfo-2"`
 
@@ -26,8 +29,6 @@ References:
   - https://github.com/distribution/distribution/blob/main/docs/spec/api.md#listing-repositories
   - https://oras.land/ 
   - https://github.com/oras-project/oras-go/blob/14422086e41897a44cb706726e687d39dc728805/registry/remote/url.go#L43
-
-
 
 ## Helm
 
@@ -51,48 +52,45 @@ The registry reference basename is inferred from the chart's name, and the tag i
 Certain registries require the repository and/or namespace (if specified) to be created beforehand
 ```
 
-For example, once logged in, you may use the command ```"helm push"```, with repository URL like this:
+From [helm HIPS spec](https://github.com/helm/community/blob/main/hips/hip-0006.md#4-chart-names--oci-reference-basenames):
 ```
-$ helm push podinfo-6.1.5.tgz oci://ghcr.io/gfichtenholt
-Pushed: ghcr.io/gfichtenholt/podinfo:6.1.5
-Digest: sha256:80e6d2e7f6d21800621530fc4c5b70d0e458f11b2c05386ea5d058c4e86d6e93
-```
-In this case:
-    - a single repository named `"gfichtenholt/podinfo"` will be created if one does not exist
-    - the repository contains a chart named `"podinfo"`
-    - the chart `"podinfo"` has a version `"6.1.5"`   
+To keep things simple, the basename (the last segment of the URL path) on a registry reference should be equivalent to the chart name.
 
-Or you may use ```"helm push"```, with repository URL like this:
+For example, given a chart with the name pepper and the version 1.2.3, users may run a command such as the following:
+
+$ helm push pepper-1.2.3.tgz oci://r.myreg.io/mycharts
+
+which would result in the following reference:
+
+oci://r.myreg.io/mycharts/pepper:1.2.3
+
+By placing such restrictions on registry URLs Helm users are less likely to do "strange things" with charts in registries
 ```
-$ helm push podinfo-6.1.5.tgz oci://ghcr.io/gfichtenholt/charts
-Pushed: ghcr.io/gfichtenholt/charts/podinfo:6.1.5
-Digest: sha256:80e6d2e7f6d21800621530fc4c5b70d0e458f11b2c05386ea5d058c4e86d6e93
+
+In this case:
+    - a single repository named `"mycharts/pepper"` will be created if one does not exist
+    - the repository contains a chart named `"pepper"`
+    - the chart `"pepper"` has a version `"1.2.3"`   
+
+You can use the command ```helm show all``` to see (some) information about the `"pepper"` chart:
 ```
-In this case the repository name is `"gfichtenholt/charts/podinfo"` while the rest is as above.  You can use the command ```helm show all``` to see (some) information about the `"podinfo"` chart:
-```
-$ helm show all oci://ghcr.io/gfichtenholt/charts/podinfo | head -9 
+$ helm show all oci://r.myreg.io/mycharts/pepper | head -9 
 apiVersion: v1
-appVersion: 6.1.5
-description: Podinfo Helm chart for Kubernetes
-home: https://github.com/stefanprodan/podinfo
+appVersion: 1.2.3
+description: ...
+home: ...
 kubeVersion: '>=1.19.0-0'
 maintainers:
 - email: stefanprodan@users.noreply.github.com
   name: stefanprodan
-name: podinfo
+name: pepper
 ...
 ```
-Or you may use 
-```
-helm push podinfo-6.1.5.tgz oci://ghcr.io/gfichtenholt/charts/podinfo
-Pushed: ghcr.io/gfichtenholt/charts/podinfo/podinfo:6.1.5
-Digest: sha256:80e6d2e7f6d21800621530fc4c5b70d0e458f11b2c05386ea5d058c4e86d6e93
-```
-In this case, the repository name is `"gfichtenholt/charts/podinfo/podinfo"`, while the rest is the same. And so on and so forth. 
 
 References:
   - https://helm.sh/blog/storing-charts-in-oci/
   - https://helm.sh/docs/topics/registries/
+  - https://github.com/helm/community/blob/main/hips/hip-0006.md#specification
 
 ## GitHub Container Registry `ghcr.io`
 Take an OCI registry URL like `"oci://ghcr.io/gfichtenholt/charts/podinfo:6.1.5"`
@@ -120,5 +118,5 @@ Here is probably the most confusing part of the whole document:
   2. Assume the remote OCI registry contains a single chart `"podinfo"` with version `"6.1.5"`
   3. ORAS go library will return repository list `["gfichtenholt/helm-charts/podinfo"]`
   4. kubeapps flux plugin will call `RegistryClient.Tags()` with respect to OCI reference `"ghcr.io/gfichtenholt/helm-charts/podinfo"` which will return `["6.1.5"]`
-  5. kubeapps flux plugin will call `RegistryClient.DownloadChart()` with respect to a chart with version `"6.1.5"` a URL `"ghcr.io/gfichtenholt/helm-charts/podinfo:6.1.5"`. Here, the identifier `"podinfo"` refers BOTH to repository name AND the chart name!
+  5. kubeapps flux plugin will call `RegistryClient.DownloadChart()` with respect to a chart with version `"6.1.5"` a URL `"ghcr.io/gfichtenholt/helm-charts/podinfo:6.1.5"`. Here, the identifier `"podinfo"` refers **BOTH to repository basename AND the chart name!**
 ---

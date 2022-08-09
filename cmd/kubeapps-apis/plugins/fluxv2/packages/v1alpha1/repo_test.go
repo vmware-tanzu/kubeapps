@@ -2273,17 +2273,21 @@ func TestDeletePackageRepository(t *testing.T) {
 }
 
 func TestGetOciAvailablePackageSummariesWithoutPagination(t *testing.T) {
+	seed_data_1, err := newFakeRemoteOciRegistryData_1()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	seed_data_3, err := newFakeRemoteOciRegistryData_3()
+	if err != nil {
+		t.Fatal(err)
+	}
+
 	type testSpecGetOciAvailablePackageSummaries struct {
 		repoName      string
 		repoNamespace string
 		repoUrl       string
 	}
-
-	data, err := newFakeRemoteOciRegistryData_1()
-	if err != nil {
-		t.Fatal(err)
-	}
-	initOciFakeClientBuilder(t, *data)
 
 	testCases := []struct {
 		name              string
@@ -2291,6 +2295,7 @@ func TestGetOciAvailablePackageSummariesWithoutPagination(t *testing.T) {
 		repos             []testSpecGetOciAvailablePackageSummaries
 		expectedResponse  *corev1.GetAvailablePackageSummariesResponse
 		expectedErrorCode codes.Code
+		seedData          *fakeRemoteOciRegistryData
 	}{
 		{
 			name: "returns a single available package",
@@ -2306,11 +2311,30 @@ func TestGetOciAvailablePackageSummariesWithoutPagination(t *testing.T) {
 				AvailablePackageSummaries: oci_repo_available_package_summaries,
 			},
 			expectedErrorCode: codes.OK,
+			seedData:          seed_data_1,
+		},
+		{
+			name: "returns available packages from multiple repos",
+			repos: []testSpecGetOciAvailablePackageSummaries{
+				{
+					repoName:      "repo-1",
+					repoNamespace: "namespace-1",
+					repoUrl:       "oci://localhost:54321/userX/charts",
+				},
+			},
+			request: &corev1.GetAvailablePackageSummariesRequest{Context: &corev1.Context{}},
+			expectedResponse: &corev1.GetAvailablePackageSummariesResponse{
+				AvailablePackageSummaries: oci_repo_available_package_summaries_2,
+			},
+			expectedErrorCode: codes.OK,
+			seedData:          seed_data_3,
 		},
 	}
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
+			initOciFakeClientBuilder(t, *tc.seedData)
+
 			repos := []sourcev1.HelmRepository{}
 
 			for _, rs := range tc.repos {

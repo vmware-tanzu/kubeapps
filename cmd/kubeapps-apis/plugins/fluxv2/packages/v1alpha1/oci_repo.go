@@ -397,7 +397,11 @@ func (s *repoEventSink) onAddOciRepo(repo sourcev1.HelmRepository) ([]byte, bool
 		Type:      repo.Spec.Type,
 	}
 
-	// repository names a.k.a. application names, e.g. "stefanprodan/charts/podinfo"
+	// repository names, e.g. "stefanprodan/charts/podinfo"
+	// asset-syncer calls them appNames
+	// see func (r *OCIRegistry) Charts(fetchLatestOnly bool) ([]models.Chart, error) {
+	// also per https://github.com/helm/community/blob/main/hips/hip-0006.md#4-chart-names--oci-reference-basenames
+	// appName == chartName == the basename (the last segment of the URL path) on a registry reference
 	appNames, err := ociChartRepo.listRepositoryNames()
 	if err != nil {
 		return nil, false, err

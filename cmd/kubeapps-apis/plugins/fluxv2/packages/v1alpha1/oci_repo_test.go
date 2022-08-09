@@ -80,19 +80,13 @@ func (fake *fakeRegistryClientType) Tags(ref string) ([]string, error) {
 		return nil, fmt.Errorf("ref [%s] is not in expected format", ref)
 	}
 	refRepository := parts[2]
-	refChart := refRepository // just for now
 	for _, r := range fake.repositories {
 		if refRepository == r.name {
-			for _, c := range r.charts {
-				if refChart == c.name {
-					tags := []string{}
-					for _, cv := range c.versions {
-						tags = append(tags, cv.version)
-					}
-					return tags, nil
-				}
+			tags := []string{}
+			for _, cv := range r.chart.versions {
+				tags = append(tags, cv.version)
 			}
-			return nil, fmt.Errorf("no chart named [%s] found for repository [%s] in the registry", refChart, refRepository)
+			return tags, nil
 		}
 	}
 	return nil, fmt.Errorf("no repositories found for ref [%s] in the registry", ref)
@@ -104,18 +98,13 @@ func (fake *fakeRegistryClientType) DownloadChart(chartVersion *repo.ChartVersio
 	// see OCI_TERMINOLOGY.md
 	repoName := chartVersion.Name
 	for _, r := range fake.repositories {
-		if repoName == r.name {
-			for _, c := range r.charts {
-				if chartVersion.Name == c.name {
-					for _, v := range c.versions {
-						if chartVersion.Version == v.version {
-							return bytes.NewBuffer(v.tgzBytes), nil
-						}
-					}
-					return nil, fmt.Errorf("no version [%s] found for chart [%s]", chartVersion.Version, chartVersion.Name)
+		if repoName == r.name && chartVersion.Name == r.name {
+			for _, v := range r.chart.versions {
+				if chartVersion.Version == v.version {
+					return bytes.NewBuffer(v.tgzBytes), nil
 				}
 			}
-			return nil, fmt.Errorf("no charts named [%s] found in the repository [%s]", chartVersion.Name, repoName)
+			return nil, fmt.Errorf("no version [%s] found for chart [%s]", chartVersion.Version, chartVersion.Name)
 		}
 	}
 	return nil, fmt.Errorf("no repositories named [%s] found in the registry", repoName)
@@ -134,13 +123,13 @@ type fakeChartVersion struct {
 }
 
 type fakeChart struct {
-	name     string
 	versions []fakeChartVersion
 }
 
 type fakeRepo struct {
-	name   string
-	charts []fakeChart
+	name string
+	// see OCI_TERMINOLOGY.md. Only a single chart is allowed
+	chart fakeChart
 }
 
 type fakeRemoteOciRegistryData struct {
