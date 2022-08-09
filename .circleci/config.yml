@@ -884,6 +884,7 @@ jobs:
             wget https://srp-cli.s3.amazonaws.com/srp-cli-latest.tgz
             tar zxf srp-cli-latest.tgz
             sudo mv srp /usr/local/bin/
+            srp --version
             srp config --srp-endpoint << pipeline.parameters.SRP_ENDPOINT >>
             srp config auth --client-id $KUBEAPPS_SRP_CLIENT_ID --client-secret $KUBEAPPS_SRP_CLIENT_SECRET
       - run:
