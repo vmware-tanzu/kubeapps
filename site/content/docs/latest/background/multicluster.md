@@ -43,4 +43,5 @@ Kubeapps offers many features, but not all are available in the multicluster mod
 
 ## Limitations
 
-As it can be seen in the table of features, Kubeapps is capable to work in multicluster mode only using Helm plugin and global repositories. At the moment, dynamically managing additional clusters, Carvel and Flux operations, or namespaced repositories are not supported.
+As it can be seen in the table of features, Kubeapps can work in multicluster mode only by using Helm plugin together with global repositories.
+At the moment, dynamically managing additional clusters, Carvel and Flux operations, or namespaced repositories are not supported.
