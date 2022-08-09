@@ -77,7 +77,7 @@ func (s *Server) newRepo(ctx context.Context, repo *HelmRepository) (*corev1.Pac
 	if repo.name.Namespace != s.kubeappsNamespace && secret != nil {
 		// Target namespace must be the same as the asset syncer job,
 		// otherwise the job won't be able to access the secret
-		if err = s.copyRepositorySecret(typedClient, s.kubeappsNamespace, secret, repo.name); err != nil {
+		if _, err = s.copyRepositorySecretToNamespace(typedClient, s.kubeappsNamespace, secret, repo.name); err != nil {
 			return nil, err
 		}
 	}
@@ -333,7 +333,7 @@ func (s *Server) updateRepo(ctx context.Context, repo *HelmRepository) (*corev1.
 	if repo.name.Namespace != s.kubeappsNamespace && secret != nil {
 		// Target namespace must be the same as the asset syncer job,
 		// otherwise the job won't be able to access the secret
-		if err = s.copyRepositorySecret(typedClient, s.kubeappsNamespace, secret, repo.name); err != nil {
+		if _, err = s.copyRepositorySecretToNamespace(typedClient, s.kubeappsNamespace, secret, repo.name); err != nil {
 			return nil, err
 		}
 	}
@@ -536,6 +536,16 @@ func (s *Server) deleteRepo(ctx context.Context, cluster string, repoRef *corev1
 	if err = client.Delete(ctx, repo); err != nil {
 		return statuserror.FromK8sError("delete", AppRepositoryKind, repoRef.Identifier, err)
 	} else {
+		// Cross-namespace owner references are disallowed by design.
+		// We need to explicitly delete the repo secret from the namespace of the asset syncer.
+		typedClient, err := s.clientGetter.Typed(ctx, cluster)
+		if err != nil {
+			return err
+		}
+		namespacedSecretName := namespacedSecretNameForRepo(repoRef.Identifier, repoRef.Context.Namespace)
+		if deleteErr := s.deleteRepositorySecretFromNamespace(typedClient, s.kubeappsNamespace, namespacedSecretName); deleteErr != nil {
+			return statuserror.FromK8sError("delete", "Secret", namespacedSecretName, deleteErr)
+		}
 		return nil
 	}
 }

@@ -1571,10 +1571,11 @@ func TestDeletePackageRepository(t *testing.T) {
 	repos := []*appRepov1alpha1.AppRepository{repo1}
 
 	testCases := []struct {
-		name               string
-		existingObjects    []k8sruntime.Object
-		request            *corev1.DeletePackageRepositoryRequest
-		expectedStatusCode codes.Code
+		name                       string
+		existingObjects            []k8sruntime.Object
+		request                    *corev1.DeletePackageRepositoryRequest
+		expectedStatusCode         codes.Code
+		expectedNonExistingSecrets []metav1.ObjectMeta
 	}{
 		{
 			name: "no context provided",
@@ -1608,6 +1609,27 @@ func TestDeletePackageRepository(t *testing.T) {
 			},
 			expectedStatusCode: codes.NotFound,
 		},
+		{
+			name: "delete - deletes associated secrets",
+			request: &corev1.DeletePackageRepositoryRequest{
+				PackageRepoRef: &corev1.PackageRepositoryReference{
+					Plugin:     plugin,
+					Context:    &corev1.Context{Namespace: "ns-1", Cluster: KubeappsCluster},
+					Identifier: "repo-1",
+				},
+			},
+			expectedStatusCode: codes.OK,
+			expectedNonExistingSecrets: []metav1.ObjectMeta{
+				{
+					Name:      "apprepo-repo-1",
+					Namespace: "ns-1",
+				},
+				{
+					Name:      "ns-1-apprepo-repo-1",
+					Namespace: kubeappsNamespace,
+				},
+			},
+		},
 	}
 
 	for _, tc := range testCases {
@@ -1627,6 +1649,23 @@ func TestDeletePackageRepository(t *testing.T) {
 				t.Fatalf("got error: %d, want: %d, err: %+v", got, want, err)
 			} else if got != codes.OK {
 				return
+			}
+
+			if tc.expectedNonExistingSecrets != nil {
+				ctx := context.Background()
+				typedClient, err := s.clientGetter.Typed(ctx, s.kubeappsCluster)
+				if err != nil {
+					t.Fatal(err)
+				}
+				for _, deletedSecret := range tc.expectedNonExistingSecrets {
+					secret, err := typedClient.CoreV1().Secrets(deletedSecret.Namespace).Get(ctx, deletedSecret.Name, metav1.GetOptions{})
+					if err != nil && !k8sErrors.IsNotFound(err) {
+						t.Fatal(err)
+					}
+					if secret != nil {
+						t.Fatalf("found existing secret '%s' in namespace '%s'", deletedSecret.Name, deletedSecret.Namespace)
+					}
+				}
 			}
 		})
 	}
