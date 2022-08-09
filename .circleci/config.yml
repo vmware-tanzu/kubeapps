@@ -903,7 +903,9 @@ jobs:
       - run:
           name: Submit the provenance files to the SRP Metadata service
           command: |
-            srp metadata submit --verbose --path ./source-provenance.json
+            # srp metadata submit --verbose --path ./source-provenance.json
+            # Replacing the submit command with just a validate until we are ready to start actually pushing the data
+            srp uid validate "uid.mtd.provenance_2_5.fragment(obj_uid=uid.obj.build.circleci(instance='circleci.com',type='github',namespace='vmware-tanzu/kubeapps',branch='main',commit_id='11c87926d6cd798af72875d01437d15ae8d85b9a',build_id='7653/2bb4c509-3597-4673-b819-d6d1be9abc52/87960'),revision='')"
 
   push_images:
     docker:
