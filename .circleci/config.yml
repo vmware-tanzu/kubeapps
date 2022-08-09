@@ -108,6 +108,9 @@ parameters:
   README_GENERATOR_REPO:
     type: "string"
     default: "bitnami-labs/readme-generator-for-helm"
+  SRP_ENDPOINT:
+    type: "string"
+    default: "https://apigw.vmware.com/v1/s1/api/helix-beta"
 
 ## Build conditions
 # Build on any branch or tag
@@ -876,32 +879,24 @@ jobs:
           command: |
             git submodule update --init --recursive
       - run:
-          name: TEMP step for echoing some vars
-          command: |
-              UID_PARAMS="uid.obj.build.circleci(instance='circleci.com',type='<< pipeline.project.type >>',namespace='${CIRCLE_PROJECT_USERNAME}/${CIRCLE_PROJECT_REPONAME}',branch='${CIRCLE_BRANCH}',commit_id='${CIRCLE_SHA1}',build_id='<< pipeline.number >>/${CIRCLE_WORKFLOW_ID}/${CIRCLE_BUILD_NUM}')"
-
-              PIPELINE_PARAMS="id=<< pipeline.id >>, number=<< pipeline.number >>, url=<< pipeline.project.git_url >>, type=<< pipeline.project.type >>, tag=<< pipeline.git.tag >>, branch=<< pipeline.git.branch >>, revision=<< pipeline.git.revision >>, baserevision=<< pipeline.git.base_revision >>, setup=<< pipeline.in_setup >>, trigger=<< pipeline.trigger_source >>, schedulename=<< pipeline.schedule.name >>, scheduleid=<< pipeline.schedule.id >>"
-
-              CIRCLEPARAMS="CI=${CI},CIRCLECI=${CIRCLECI},CIRCLE_BRANCH=${CIRCLE_BRANCH},CIRCLE_BUILD_NUM=${CIRCLE_BUILD_NUM},CIRCLE_BUILD_URL=${CIRCLE_BUILD_URL},CIRCLE_JOB=${CIRCLE_JOB},CIRCLE_NODE_INDEX=${CIRCLE_NODE_INDEX},CIRCLE_NODE_TOTAL=${CIRCLE_NODE_TOTAL},CIRCLE_OIDC_TOKEN=${CIRCLE_OIDC_TOKEN},CIRCLE_PR_NUMBER=${CIRCLE_PR_NUMBER},CIRCLE_PR_REPONAME=${CIRCLE_PR_REPONAME},CIRCLE_PR_USERNAME=${CIRCLE_PR_USERNAME},CIRCLE_PROJECT_REPONAME=${CIRCLE_PROJECT_REPONAME},CIRCLE_PROJECT_USERNAME=${CIRCLE_PROJECT_USERNAME},CIRCLE_PULL_REQUEST=${CIRCLE_PULL_REQUEST},CIRCLE_PULL_REQUESTS=${CIRCLE_PULL_REQUESTS},CIRCLE_REPOSITORY_URL=${CIRCLE_REPOSITORY_URL},CIRCLE_SHA1=${CIRCLE_SHA1},CIRCLE_TAG=${CIRCLE_TAG},CIRCLE_USERNAME=${CIRCLE_USERNAME},CIRCLE_WORKFLOW_ID=${CIRCLE_WORKFLOW_ID},CIRCLE_WORKFLOW_JOB_ID=${CIRCLE_WORKFLOW_JOB_ID},CIRCLE_WORKFLOW_WORKSPACE_ID=${CIRCLE_WORKFLOW_WORKSPACE_ID},CIRCLE_WORKING_DIRECTORY=${CIRCLE_WORKING_DIRECTORY}"
-
-              echo $UID_PARAMS
-              echo $PIPELINE_PARAMS
-              echo $CIRCLEPARAMS
-      - run:
           name: Install and configure the SRP tool
           command: |
             wget https://srp-cli.s3.amazonaws.com/srp-cli-latest.tgz
             tar zxf srp-cli-latest.tgz
             sudo mv srp /usr/local/bin/
-            srp config --srp-endpoint https://apigw.vmware.com/v1/s1/api/helix-beta
-            srp config auth --client-id $SRP_CLIENTID --client-secret $SRP_CLIENTSECRET
+            srp update -y
+            srp config --srp-endpoint << pipeline.parameters.SRP_ENDPOINT >>
+            srp config auth --client-id $KUBEAPPS_SRP_CLIENT_ID --client-secret $KUBEAPPS_SRP_CLIENT_SECRET
       - run:
           name: Generate the "source provenance" file
           command: |
             # This UID should have been already set in the internal tool.
-            PROV_OBJ_UID="uid.obj.build.circleci(namespace='vmware-tanzu/kubeapps',ref='refs/heads/main',workflow='kubeapps',workflow_id='${CIRCLE_WORKFLOW_ID}')"
+            PROV_OBJ_UID="uid.obj.build.circleci(instance='circleci.com',type='<< pipeline.project.type >>',namespace='${CIRCLE_PROJECT_USERNAME}/${CIRCLE_PROJECT_REPONAME}',branch='${CIRCLE_BRANCH}',commit_id='${CIRCLE_SHA1}',build_id='<< pipeline.number >>/${CIRCLE_WORKFLOW_ID}/${CIRCLE_BUILD_NUM}')"
+            echo "PROV_OBJ_UID=${PROV_OBJ_UID}"
             srp provenance source --verbose --scm-type git --name "kubeapps" --path ./ --saveto ./source-provenance.json --comp-uid "${PROV_OBJ_UID}" --build-number "${CIRCLE_WORKFLOW_ID}" --version "${CIRCLE_TAG}" --all-ephemeral true --build-type release
             cat ./source-provenance.json
+      - store_artifacts:
+          path: source-provenance.json
       # TODO(agamez): we will need to create the "network provenance" file soon.
       - run:
           name: Submit the provenance files to the SRP Metadata service
