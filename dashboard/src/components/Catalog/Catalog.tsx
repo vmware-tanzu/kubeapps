@@ -158,7 +158,6 @@ export default function Catalog() {
     );
   }, [
     dispatch,
-    nextPageToken,
     size,
     cluster,
     namespace,
