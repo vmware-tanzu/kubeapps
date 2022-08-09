@@ -1,4 +1,3 @@
-<!--- app-name: Kubeapps -->
 
 # Kubeapps packaged by Bitnami
 
@@ -215,6 +214,7 @@ Once you have installed Kubeapps follow the [Getting Started Guide](https://gith
 | `dashboard.customLocale`                          | Custom translations injected to the Dashboard to customize the strings used in Kubeapps      | `""`                 |
 | `dashboard.defaultTheme`                          | Default theme used in the Dashboard if the user has not selected any theme yet.              | `""`                 |
 | `dashboard.replicaCount`                          | Number of Dashboard replicas to deploy                                                       | `2`                  |
+| `dashboard.createNamespaceLabels`                 | Labels added to newly created namespaces                                                     | `{}`                 |
 | `dashboard.updateStrategy.type`                   | Dashboard deployment strategy type.                                                          | `RollingUpdate`      |
 | `dashboard.extraEnvVars`                          | Array with extra environment variables to add to the Dashboard container                     | `[]`                 |
 | `dashboard.extraEnvVarsCM`                        | Name of existing ConfigMap containing extra env vars for the Dashboard container             | `""`                 |
@@ -475,6 +475,8 @@ Once you have installed Kubeapps follow the [Getting Started Guide](https://gith
 | `pinnipedProxy.defaultAuthenticatorType`              | Specify the (default) authenticator type                                                     | `JWTAuthenticator`        |
 | `pinnipedProxy.defaultAuthenticatorName`              | Specify the (default) authenticator name                                                     | `jwt-authenticator`       |
 | `pinnipedProxy.defaultPinnipedAPISuffix`              | Specify the (default) API suffix                                                             | `pinniped.dev`            |
+| `pinnipedProxy.TLSSecret`                             | Specify an optional TLS secret with which to proxy requests                                  | `""`                      |
+| `pinnipedProxy.CACert`                                | Specify the TLS CA cert config map which                                                     | `""`                      |
 | `pinnipedProxy.lifecycleHooks`                        | for the Pinniped Proxy container(s) to automate configuration before or after startup        | `{}`                      |
 | `pinnipedProxy.command`                               | Override default container command (useful when using custom images)                         | `[]`                      |
 | `pinnipedProxy.args`                                  | Override default container args (useful when using custom images)                            | `[]`                      |
