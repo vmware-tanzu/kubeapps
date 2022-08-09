@@ -878,8 +878,7 @@ jobs:
       - run:
           name: TEMP step for echoing some vars
           command: |
-              UID_PARAMS="uid.obj.build.circleci(  instance='circleci.com',type='<< pipeline.project.type >>',namespace='${CIRCLE_PROJECT_USERNAME}/${CIRCLE_PROJECT_REPONAME}',branch='${CIRCLE_BRANCH}',build_id='<< pipeline.number >>-$CIRCLE_WORKFLOW_ID}-${CIRCLE_BUILD_NUM}')"
-
+              UID_PARAMS="uid.obj.build.circleci(instance='circleci.com',type='<< pipeline.project.type >>',namespace='${CIRCLE_PROJECT_USERNAME}/${CIRCLE_PROJECT_REPONAME}',branch='${CIRCLE_BRANCH}',build_id='<< pipeline.number >>-${CIRCLE_WORKFLOW_ID}-${CIRCLE_BUILD_NUM}')"
 
               PIPELINE_PARAMS="id=<< pipeline.id >>, number=<< pipeline.number >>, url=<< pipeline.project.git_url >>, type=<< pipeline.project.type >>, tag=<< pipeline.git.tag >>, branch=<< pipeline.git.branch >>, revision=<< pipeline.git.revision >>, baserevision=<< pipeline.git.base_revision >>, setup=<< pipeline.in_setup >>, trigger=<< pipeline.trigger_source >>, schedulename=<< pipeline.schedule.name >>, scheduleid=<< pipeline.schedule.id >>"
 
