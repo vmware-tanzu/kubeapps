@@ -888,6 +888,11 @@ jobs:
             srp config --srp-endpoint << pipeline.parameters.SRP_ENDPOINT >>
             srp config auth --client-id $KUBEAPPS_SRP_CLIENT_ID --client-secret $KUBEAPPS_SRP_CLIENT_SECRET
       - run:
+          name: Install and configure the SRP observer tool
+          command: |
+            wget https://s3.amazonaws.com/srp-cli/linux-observer-latest.tar.gz
+            tar zxf linux-observer-latest.tar.gz
+      - run:
           name: Generate the "source provenance" file
           command: |
             # This UID should have been already set in the internal tool.
@@ -900,6 +905,27 @@ jobs:
       - store_artifacts:
           path: source-provenance.json
       # TODO(agamez): we will need to create the "network provenance" file soon.
+      - run:
+          name: Generate the "network provenance" file
+          command: |
+            alias observer_agent="$(pwd)/bin/observer_agent.bash"
+            JAVA_HOME="/dev/null"
+            mkdir provenance-go
+            observer_agent -t -o ./provenance-go -- go mod download -x
+            cat provenance-go/provenance.json
+            mkdir provenance-yarn
+            observer_agent -t -o ./provenance-yarn -- yarn install --cwd=dashboard --frozen-lockfile
+            cat provenance-yarn/provenance.json
+            jq -s 'flatten | group_by(.artifact_repositories) | map(reduce .[] as $x ({}; . * $x))'  provenance-go/provenance.json  provenance-yarn/provenance.json > network-provenance.json
+            cat network-provenance.json
+      - store_artifacts:
+          path: network-provenance.json
+      - run:
+          name: Merge the provenance files
+          command: |
+            srp provenance merge --verbose --source ./source-provenance.json --network ./network-provenance.json --saveto ./merged-provenance.json
+      - store_artifacts:
+          path: merged-provenance.json
       - run:
           name: Submit the provenance files to the SRP Metadata service
           command: |
