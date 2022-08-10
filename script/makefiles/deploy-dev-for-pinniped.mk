@@ -9,6 +9,8 @@
 
 # Have a look at /docs/reference/developer/pinniped-proxy.md for instructions on how to run this makefile
 
+PINNIPED_VERSION ?= v0.18.0
+
 deploy-dex-for-pinniped: devel/dex.crt-for-pinniped devel/dex.key-for-pinniped
 	kubectl --kubeconfig=${CLUSTER_CONFIG_FOR_PINNIPED} create namespace dex
 	kubectl --kubeconfig=${CLUSTER_CONFIG_FOR_PINNIPED} -n dex create secret tls dex-web-server-tls \
@@ -33,12 +35,12 @@ deploy-dependencies-for-pinniped: deploy-dex-for-pinniped deploy-openldap-for-pi
 		--from-literal=postgres-password=dev-only-fake-password
 
 deploy-pinniped:
-	kubectl --kubeconfig=${CLUSTER_CONFIG_FOR_PINNIPED} apply -f https://get.pinniped.dev/v0.18.0/install-pinniped-concierge-crds.yaml
-	kubectl --kubeconfig=${CLUSTER_CONFIG_FOR_PINNIPED} apply -f https://get.pinniped.dev/v0.18.0/install-pinniped-concierge.yaml
+	kubectl --kubeconfig=${CLUSTER_CONFIG_FOR_PINNIPED} apply -f https://get.pinniped.dev/${PINNIPED_VERSION}/install-pinniped-concierge-crds.yaml
+	kubectl --kubeconfig=${CLUSTER_CONFIG_FOR_PINNIPED} apply -f https://get.pinniped.dev/${PINNIPED_VERSION}/install-pinniped-concierge.yaml
 
 deploy-pinniped-additional:
-	kubectl --kubeconfig=${ADDITIONAL_CLUSTER_CONFIG_FOR_PINNIPED} apply -f https://get.pinniped.dev/v0.18.0/install-pinniped-concierge-crds.yaml
-	kubectl --kubeconfig=${ADDITIONAL_CLUSTER_CONFIG_FOR_PINNIPED} apply -f https://get.pinniped.dev/v0.18.0/install-pinniped-concierge.yaml
+	kubectl --kubeconfig=${ADDITIONAL_CLUSTER_CONFIG_FOR_PINNIPED} apply -f https://get.pinniped.dev/${PINNIPED_VERSION}/install-pinniped-concierge-crds.yaml
+	kubectl --kubeconfig=${ADDITIONAL_CLUSTER_CONFIG_FOR_PINNIPED} apply -f https://get.pinniped.dev/${PINNIPED_VERSION}/install-pinniped-concierge.yaml
 
 add-pinniped-jwt-authenticator:
 	kubectl --kubeconfig=${CLUSTER_CONFIG_FOR_PINNIPED} apply -f ./site/content/docs/latest/reference/manifests/kubeapps-pinniped-jwt-authenticator.yaml
@@ -50,6 +52,7 @@ delete-pinniped-jwt-authenticator:
 	kubectl --kubeconfig=${CLUSTER_CONFIG_FOR_PINNIPED} delete -f ./site/content/docs/latest/reference/manifests/kubeapps-pinniped-jwt-authenticator.yaml
 	kubectl --kubeconfig=${ADDITIONAL_CLUSTER_CONFIG_FOR_PINNIPED} delete -f ./site/content/docs/latest/reference/manifests/kubeapps-pinniped-jwt-authenticator.yaml
 
+# Using old version for deletion due to error for missing secret "pinniped-concierge-impersonation-proxy" not found
 delete-pinniped:
 	kubectl --kubeconfig=${CLUSTER_CONFIG_FOR_PINNIPED} delete -f https://get.pinniped.dev/v0.7.0/install-pinniped-concierge.yaml
 	kubectl --kubeconfig=${ADDITIONAL_CLUSTER_CONFIG_FOR_PINNIPED} delete -f https://get.pinniped.dev/v0.7.0/install-pinniped-concierge.yaml
