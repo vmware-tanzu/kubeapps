@@ -887,11 +887,11 @@ jobs:
             srp --version
             srp config --srp-endpoint << pipeline.parameters.SRP_ENDPOINT >>
             srp config auth --client-id $KUBEAPPS_SRP_CLIENT_ID --client-secret $KUBEAPPS_SRP_CLIENT_SECRET
-      - run:
-          name: Install and configure the SRP observer tool
-          command: |
-            wget https://s3.amazonaws.com/srp-cli/linux-observer-latest.tar.gz
-            tar zxf linux-observer-latest.tar.gz
+      # - run:
+      #     name: Install and configure the SRP observer tool
+      #     command: |
+      #       wget https://s3.amazonaws.com/srp-cli/linux-observer-latest.tar.gz
+      #       tar zxf linux-observer-latest.tar.gz
       - run:
           name: Generate the "source provenance" file
           command: |
