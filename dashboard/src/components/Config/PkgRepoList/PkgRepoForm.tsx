@@ -24,7 +24,6 @@ import {
 } from "gen/kubeappsapis/core/packages/v1alpha1/repositories";
 import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins";
 import { HelmPackageRepositoryCustomDetail } from "gen/kubeappsapis/plugins/helm/packages/v1alpha1/helm";
-// import { KappControllerPackageRepositoryCustomDetail } from "gen/kubeappsapis/plugins/kapp_controller/packages/v1alpha1/kapp_controller";
 import { useEffect, useRef, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { Action } from "redux";
@@ -34,7 +33,7 @@ import { IPkgRepoFormData, IPkgRepositoryFilter, IStoreState } from "shared/type
 import {
   getPluginByName,
   getPluginPackageName,
-  getSupportedAuthMethods,
+  getSupportedPackageRepositoryAuthTypes,
   k8sObjectNameRegex,
   PluginNames,
 } from "shared/utils";
@@ -868,7 +867,7 @@ export function PkgRepoForm(props: IPkgRepoFormProps) {
                         onChange={handleAuthRadioButtonChange}
                         disabled={
                           !!repo.auth?.type ||
-                          !getSupportedAuthMethods(plugin).includes(
+                          !getSupportedPackageRepositoryAuthTypes(plugin).includes(
                             PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_BASIC_AUTH,
                           )
                         }
@@ -893,7 +892,7 @@ export function PkgRepoForm(props: IPkgRepoFormProps) {
                         onChange={handleAuthRadioButtonChange}
                         disabled={
                           !!repo.auth?.type ||
-                          !getSupportedAuthMethods(plugin).includes(
+                          !getSupportedPackageRepositoryAuthTypes(plugin).includes(
                             PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_BEARER,
                           )
                         }
@@ -920,7 +919,7 @@ export function PkgRepoForm(props: IPkgRepoFormProps) {
                         onChange={handleAuthRadioButtonChange}
                         disabled={
                           !!repo.auth?.type ||
-                          !getSupportedAuthMethods(plugin).includes(
+                          !getSupportedPackageRepositoryAuthTypes(plugin).includes(
                             PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_DOCKER_CONFIG_JSON,
                           )
                         }
@@ -947,7 +946,7 @@ export function PkgRepoForm(props: IPkgRepoFormProps) {
                         onChange={handleAuthRadioButtonChange}
                         disabled={
                           !!repo.auth?.type ||
-                          !getSupportedAuthMethods(plugin).includes(
+                          !getSupportedPackageRepositoryAuthTypes(plugin).includes(
                             PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_AUTHORIZATION_HEADER,
                           )
                         }
@@ -974,7 +973,7 @@ export function PkgRepoForm(props: IPkgRepoFormProps) {
                         onChange={handleAuthRadioButtonChange}
                         disabled={
                           !!repo.auth?.type ||
-                          !getSupportedAuthMethods(plugin).includes(
+                          !getSupportedPackageRepositoryAuthTypes(plugin).includes(
                             PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_SSH,
                           )
                         }
@@ -1001,7 +1000,7 @@ export function PkgRepoForm(props: IPkgRepoFormProps) {
                         onChange={handleAuthRadioButtonChange}
                         disabled={
                           !!repo.auth?.type ||
-                          !getSupportedAuthMethods(plugin).includes(
+                          !getSupportedPackageRepositoryAuthTypes(plugin).includes(
                             PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_TLS,
                           )
                         }
@@ -1028,7 +1027,7 @@ export function PkgRepoForm(props: IPkgRepoFormProps) {
                         onChange={handleAuthRadioButtonChange}
                         disabled={
                           !!repo.auth?.type ||
-                          !getSupportedAuthMethods(plugin).includes(
+                          !getSupportedPackageRepositoryAuthTypes(plugin).includes(
                             PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_OPAQUE,
                           )
                         }

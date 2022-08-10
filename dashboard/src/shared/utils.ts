@@ -182,7 +182,7 @@ export function getAppStatusLabel(
   return jsonReason.replace("STATUS_REASON_", "").toLowerCase();
 }
 
-export function getSupportedAuthMethods(
+export function getSupportedPackageRepositoryAuthTypes(
   plugin: Plugin,
 ): PackageRepositoryAuth_PackageRepositoryAuthType[] {
   switch (plugin.name) {

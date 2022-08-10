@@ -16,7 +16,7 @@ import {
   getPluginPackageName,
   getPluginsRequiringSA,
   getPluginsSupportingRollback,
-  getSupportedAuthMethods,
+  getSupportedPackageRepositoryAuthTypes,
   getValueFromEvent,
   MAX_DESC_LENGTH,
   PluginNames,
@@ -171,9 +171,15 @@ it("getAppStatusLabel", () => {
   expect(getAppStatusLabel(InstalledPackageStatus_StatusReason.UNRECOGNIZED)).toBe("unrecognized");
 });
 
-it("getSupportedAuthMethods", () => {
-  expect(getSupportedAuthMethods({ name: PluginNames.PACKAGES_HELM, version: "" })).toHaveLength(4);
-  expect(getSupportedAuthMethods({ name: PluginNames.PACKAGES_FLUX, version: "" })).toHaveLength(5);
-  expect(getSupportedAuthMethods({ name: PluginNames.PACKAGES_KAPP, version: "" })).toHaveLength(4);
-  expect(getSupportedAuthMethods({ name: "foo", version: "" })).toHaveLength(0);
+it("getSupportedPackageRepositoryAuthTypes", () => {
+  expect(
+    getSupportedPackageRepositoryAuthTypes({ name: PluginNames.PACKAGES_HELM, version: "" }),
+  ).toHaveLength(4);
+  expect(
+    getSupportedPackageRepositoryAuthTypes({ name: PluginNames.PACKAGES_FLUX, version: "" }),
+  ).toHaveLength(5);
+  expect(
+    getSupportedPackageRepositoryAuthTypes({ name: PluginNames.PACKAGES_KAPP, version: "" }),
+  ).toHaveLength(4);
+  expect(getSupportedPackageRepositoryAuthTypes({ name: "foo", version: "" })).toHaveLength(0);
 });
