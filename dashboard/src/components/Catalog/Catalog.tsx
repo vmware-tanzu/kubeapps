@@ -454,6 +454,7 @@ export default function Catalog() {
                     currentFilters={filters[filterNames.OPERATOR_PROVIDER]}
                     onAddFilter={addFilter}
                     onRemoveFilter={removeFilter}
+                    disabled={isFetching}
                   />
                 </div>
               )}
