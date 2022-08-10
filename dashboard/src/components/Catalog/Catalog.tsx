@@ -95,12 +95,13 @@ export default function Catalog() {
   const dispatch = useDispatch();
 
   const [filters, setFilters] = React.useState(initialFilterState());
-  // pageNum is only used to avoid flicker in the CatalogItems.
-  // It is no longer used for pagination which is handled by the server's
-  // opaque nextPageToken etc.
-  const [pageNum, setPageNum] = React.useState(0);
+  // localNextPageToken is only used to avoid flicker in the CatalogItems.
+  // It is no longer used for calculating pagination, which is now handled
+  // by the server's opaque nextPageToken etc.
+  const [localNextPageToken, setLocalNextPageToken] = React.useState("");
   const [hasRequestedFirstPage, setHasRequestedFirstPage] = React.useState(false);
   const [hasLoadedFirstPage, setHasLoadedFirstPage] = React.useState(false);
+  const [isFirstPage, setIsFirstPage] = React.useState(false);
   const localIsFetchingRef = React.useRef(isFetching);
 
   const csvs = operators.csvs;
@@ -124,7 +125,8 @@ export default function Catalog() {
     // so that it is reloaded cleanly for the given inputs next time it is
     // loaded.
     return function cleanup() {
-      setPageNum(0);
+      setLocalNextPageToken("");
+      setIsFirstPage(false);
       dispatch(actions.availablepackages.resetAvailablePackageSummaries());
       dispatch(actions.availablepackages.resetSelectedAvailablePackageDetail());
     };
@@ -166,7 +168,7 @@ export default function Catalog() {
           cluster,
           namespace,
           reposFilter,
-          nextPageToken,
+          localNextPageToken,
           size,
           searchFilter,
         ),
@@ -175,14 +177,14 @@ export default function Catalog() {
     isFetchingAwareFetching();
   }, [
     dispatch,
-    localIsFetchingRef,
-    nextPageToken,
     size,
     cluster,
+    localIsFetchingRef,
     namespace,
     reposFilter,
     searchFilter,
     hasFinishedFetching,
+    localNextPageToken,
   ]);
 
   // hasLoadedFirstPage is used to not bump the current page until the first page is fully
@@ -190,9 +192,11 @@ export default function Catalog() {
   useEffect(() => {
     if (isFetching) {
       setHasRequestedFirstPage(true);
+      setIsFirstPage(true);
     }
     if (hasRequestedFirstPage && !isFetching) {
       setHasLoadedFirstPage(true);
+      setIsFirstPage(false);
     }
   }, [hasRequestedFirstPage, isFetching]);
 
@@ -320,7 +324,7 @@ export default function Catalog() {
         cluster,
         namespace,
         reposFilter,
-        nextPageToken,
+        localNextPageToken,
         size,
         searchFilter,
       ),
@@ -328,7 +332,7 @@ export default function Catalog() {
   };
 
   const increaseRequestedPage = () => {
-    setPageNum(pageNum + 1);
+    setLocalNextPageToken(nextPageToken);
   };
 
   const observeBorder = (node: any) => {
@@ -514,7 +518,7 @@ export default function Catalog() {
                       csvs={filteredCSVs}
                       cluster={cluster}
                       namespace={namespace}
-                      isFirstPage={pageNum === 1}
+                      isFirstPage={isFirstPage}
                       hasLoadedFirstPage={hasLoadedFirstPage}
                       hasFinishedFetching={hasFinishedFetching && !localIsFetchingRef.current}
                     />

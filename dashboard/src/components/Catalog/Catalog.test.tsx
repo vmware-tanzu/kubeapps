@@ -519,8 +519,7 @@ describe("pagination and package fetching", () => {
     );
     jest.advanceTimersByTime(2000);
 
-    expect(wrapper.find(CatalogItems).prop("isFirstPage")).toBe(false);
-    expect(wrapper.find(PackageCatalogItem).length).toBe(1);
+    expect(wrapper.find(CatalogItems).prop("isFirstPage")).toBe(true);
     expect(fetchAvailablePackageSummaries).not.toBeCalled();
   });
 
