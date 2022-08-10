@@ -471,13 +471,13 @@ Once you have installed Kubeapps follow the [Getting Started Guide](https://gith
 | `pinnipedProxy.image.tag`                             | Pinniped Proxy image tag (immutable tags are recommended)                                    | `latest`                  |
 | `pinnipedProxy.image.pullPolicy`                      | Pinniped Proxy image pull policy                                                             | `IfNotPresent`            |
 | `pinnipedProxy.image.pullSecrets`                     | Pinniped Proxy image pull secrets                                                            | `[]`                      |
-| `pinnipedProxy.defaultPinnipedNamespace`              | Specify the (default) namespace in which pinniped concierge is installed                     | `pinniped-concierge`      |
-| `pinnipedProxy.defaultAuthenticatorType`              | Specify the (default) authenticator type                                                     | `JWTAuthenticator`        |
-| `pinnipedProxy.defaultAuthenticatorName`              | Specify the (default) authenticator name                                                     | `jwt-authenticator`       |
-| `pinnipedProxy.defaultPinnipedAPISuffix`              | Specify the (default) API suffix                                                             | `pinniped.dev`            |
-| `pinnipedProxy.TLSSecret`                             | Specify an optional TLS secret with which to proxy requests                                  | `""`                      |
-| `pinnipedProxy.CACert`                                | Specify the TLS CA cert config map which                                                     | `""`                      |
-| `pinnipedProxy.lifecycleHooks`                        | for the Pinniped Proxy container(s) to automate configuration before or after startup        | `{}`                      |
+| `pinnipedProxy.defaultPinnipedNamespace`              | Namespace in which pinniped concierge is installed                                           | `pinniped-concierge`      |
+| `pinnipedProxy.defaultAuthenticatorType`              | Authenticator type                                                                           | `JWTAuthenticator`        |
+| `pinnipedProxy.defaultAuthenticatorName`              | Authenticator name                                                                           | `jwt-authenticator`       |
+| `pinnipedProxy.defaultPinnipedAPISuffix`              | API suffix                                                                                   | `pinniped.dev`            |
+| `pinnipedProxy.tls.existingSecret`                    | TLS secret with which to proxy requests                                                      | `""`                      |
+| `pinnipedProxy.tls.caCertificate`                     | TLS CA cert config map which clients of pinniped proxy should use with TLS requests          | `""`                      |
+| `pinnipedProxy.lifecycleHooks`                        | For the Pinniped Proxy container(s) to automate configuration before or after startup        | `{}`                      |
 | `pinnipedProxy.command`                               | Override default container command (useful when using custom images)                         | `[]`                      |
 | `pinnipedProxy.args`                                  | Override default container args (useful when using custom images)                            | `[]`                      |
 | `pinnipedProxy.extraEnvVars`                          | Array with extra environment variables to add to Pinniped Proxy container(s)                 | `[]`                      |
