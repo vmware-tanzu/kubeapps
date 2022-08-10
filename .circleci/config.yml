@@ -908,13 +908,12 @@ jobs:
       - run:
           name: Generate the "network provenance" file
           command: |
-            alias observer_agent="$(pwd)/bin/observer_agent.bash"
             JAVA_HOME="/dev/null"
             mkdir provenance-go
-            observer_agent -t -o ./provenance-go -- go mod download -x
+            ./bin/observer_agent -t -o ./provenance-go -- go mod download -x
             cat provenance-go/provenance.json
             mkdir provenance-yarn
-            observer_agent -t -o ./provenance-yarn -- yarn install --cwd=dashboard --frozen-lockfile
+            ./bin/observer_agent -t -o ./provenance-yarn -- yarn install --cwd=dashboard --frozen-lockfile
             cat provenance-yarn/provenance.json
             jq -s 'flatten | group_by(.artifact_repositories) | map(reduce .[] as $x ({}; . * $x))'  provenance-go/provenance.json  provenance-yarn/provenance.json > network-provenance.json
             cat network-provenance.json
