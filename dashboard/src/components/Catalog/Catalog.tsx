@@ -87,7 +87,7 @@ export default function Catalog() {
       isFetching,
     },
     operators,
-    repos: { repos },
+    repos: { reposSummaries: repos },
     config: { appVersion, kubeappsCluster, globalReposNamespace, featureFlags },
   } = useSelector((state: IStoreState) => state);
   const { cluster, namespace } = ReactRouter.useParams() as IRouteParams;
@@ -205,7 +205,11 @@ export default function Catalog() {
     pushFilters(filters);
   };
 
-  const allRepos = uniq(repos.map(c => c.metadata.name));
+  const allRepos = uniq(
+    repos
+      .filter(r => !r.namespaceScoped || r.packageRepoRef?.context?.namespace === namespace)
+      .map(r => r.name),
+  );
   const allProviders = uniq(csvs.map(c => c.spec.provider.name));
   const allCategories = uniq(
     categories
@@ -216,13 +220,13 @@ export default function Catalog() {
   // We do not currently support package repositories on additional clusters.
   const supportedCluster = cluster === kubeappsCluster;
   useEffect(() => {
-    if (!supportedCluster || namespace === globalReposNamespace) {
-      // Global namespace or other cluster, show global repos only
-      dispatch(actions.repos.fetchRepos(globalReposNamespace));
+    if (!namespace || !supportedCluster || namespace === globalReposNamespace) {
+      // All Namespaces. Global namespace or other cluster, show global repos only
+      dispatch(actions.repos.fetchRepoSummaries(""));
       return () => {};
     }
     // In other case, fetch global and namespace repos
-    dispatch(actions.repos.fetchRepos(namespace, true));
+    dispatch(actions.repos.fetchRepoSummaries(namespace, true));
     return () => {};
   }, [dispatch, supportedCluster, namespace, globalReposNamespace]);
 
@@ -381,7 +385,7 @@ export default function Catalog() {
             Manage your Package Repositories in Kubeapps by visiting the Package repositories
             configuration page.
           </p>
-          <Link to={app.config.apprepositories(cluster, namespace)}>
+          <Link to={app.config.pkgrepositories(cluster, namespace)}>
             <CdsButton>Manage Package Repositories</CdsButton>
           </Link>
           <p>
@@ -419,6 +423,7 @@ export default function Catalog() {
                     currentFilters={filters[filterNames.TYPE]}
                     onAddFilter={addFilter}
                     onRemoveFilter={removeFilter}
+                    disabled={isFetching}
                   />
                 </div>
               )}
@@ -431,6 +436,7 @@ export default function Catalog() {
                     currentFilters={filters[filterNames.CATEGORY]}
                     onAddFilter={addFilter}
                     onRemoveFilter={removeFilter}
+                    disabled={isFetching}
                   />
                 </div>
               )}
@@ -443,6 +449,7 @@ export default function Catalog() {
                     currentFilters={filters[filterNames.REPO]}
                     onAddFilter={addFilter}
                     onRemoveFilter={removeFilter}
+                    disabled={isFetching}
                   />
                 </div>
               )}
@@ -455,6 +462,7 @@ export default function Catalog() {
                     currentFilters={filters[filterNames.OPERATOR_PROVIDER]}
                     onAddFilter={addFilter}
                     onRemoveFilter={removeFilter}
+                    disabled={isFetching}
                   />
                 </div>
               )}

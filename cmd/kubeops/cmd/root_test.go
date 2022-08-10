@@ -21,11 +21,6 @@ func TestParseFlagsCorrect(t *testing.T) {
 		{
 			"all arguments are captured",
 			[]string{
-
-				"--helm-driver", "foo02",
-				"--list-max", "901",
-				"--user-agent-comment", "foo03",
-				"--timeout", "902",
 				"--clusters-config-path", "foo04",
 				"--pinniped-proxy-url", "foo05",
 				"--pinniped-proxy-ca-cert", "/etc/foo/my-ca.crt",
@@ -33,13 +28,8 @@ func TestParseFlagsCorrect(t *testing.T) {
 				"--qps", "904",
 				"--namespace-header-name", "foo06",
 				"--namespace-header-pattern", "foo07",
-				"--global-repos-namespace", "kubeapps-global",
 			},
 			server.ServeOptions{
-				HelmDriverArg:          "foo02",
-				ListLimit:              901,
-				UserAgentComment:       "foo03",
-				Timeout:                902,
 				ClustersConfigPath:     "foo04",
 				PinnipedProxyURL:       "foo05",
 				PinnipedProxyCACert:    "/etc/foo/my-ca.crt",
@@ -47,8 +37,6 @@ func TestParseFlagsCorrect(t *testing.T) {
 				Qps:                    904,
 				NamespaceHeaderName:    "foo06",
 				NamespaceHeaderPattern: "foo07",
-				UserAgent:              "kubeops/devel (foo03)",
-				GlobalReposNamespace:   "kubeapps-global",
 			},
 			true,
 		},
@@ -71,34 +59,4 @@ func TestParseFlagsCorrect(t *testing.T) {
 			}
 		})
 	}
-}
-
-func TestGetUserAgent(t *testing.T) {
-	testCases := []struct {
-		name     string
-		version  string
-		comment  string
-		expected string
-	}{
-		{
-			name:     "creates a user agent without a comment",
-			version:  "2.1.6",
-			expected: "kubeops/2.1.6",
-		},
-		{
-			name:     "creates a user agent with comment",
-			version:  "2.1.6",
-			comment:  "foobar",
-			expected: "kubeops/2.1.6 (foobar)",
-		},
-	}
-
-	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			if got, want := getUserAgent(tc.version, tc.comment), tc.expected; got != want {
-				t.Errorf("got: %q, want: %q", got, want)
-			}
-		})
-	}
-
 }

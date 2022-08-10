@@ -190,7 +190,7 @@ var (
 		}
 	}
 
-	addRepoCustomDetailsHelm = v1alpha1.AppRepository{
+	addRepoCustomDetailHelm = v1alpha1.AppRepository{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       AppRepositoryKind,
 			APIVersion: AppRepositoryApi,
@@ -211,7 +211,7 @@ var (
 		},
 	}
 
-	addRepoCustomDetailsOci = v1alpha1.AppRepository{
+	addRepoCustomDetailOci = v1alpha1.AppRepository{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       AppRepositoryKind,
 			APIVersion: AppRepositoryApi,

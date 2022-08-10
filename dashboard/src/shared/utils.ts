@@ -1,11 +1,12 @@
 // Copyright 2018-2022 the Kubeapps contributors.
 // SPDX-License-Identifier: Apache-2.0
 
-import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins";
 import {
   InstalledPackageStatus_StatusReason,
   installedPackageStatus_StatusReasonToJSON,
 } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
+import { PackageRepositoryAuth_PackageRepositoryAuthType } from "gen/kubeappsapis/core/packages/v1alpha1/repositories";
+import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins";
 import carvelIcon from "icons/carvel.svg";
 import fluxIcon from "icons/flux.svg";
 import helmIcon from "icons/helm.svg";
@@ -17,6 +18,8 @@ export enum PluginNames {
   PACKAGES_FLUX = "fluxv2.packages",
   PACKAGES_KAPP = "kapp_controller.packages",
 }
+
+export const k8sObjectNameRegex = "[a-z0-9]([-a-z0-9]*[a-z0-9])?(.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*";
 
 export function escapeRegExp(str: string) {
   return str.replace(/[-[\]/{}()*+?.\\^$|]/g, "\\$&");
@@ -40,7 +43,7 @@ export function getValueFromEvent(
 }
 
 // 3 lines description max
-const MAX_DESC_LENGTH = 90;
+export const MAX_DESC_LENGTH = 90;
 
 export function trimDescription(desc: string): string {
   if (desc.length > MAX_DESC_LENGTH) {
@@ -57,7 +60,6 @@ export function getPluginIcon(plugin?: Plugin | string) {
   if (typeof plugin === "string") {
     switch (plugin) {
       case "chart":
-        return helmIcon;
       case "helm":
         return helmIcon;
       case "operator":
@@ -106,34 +108,60 @@ export function getPluginName(plugin?: Plugin | string) {
   }
 }
 
-export function getPluginPackageName(plugin?: Plugin | PluginNames | string) {
+export function getPluginPackageName(plugin?: Plugin | PluginNames | string, plural = false) {
   // Temporary case while operators are not supported as kubeapps apis plugin
   if (typeof plugin === "string") {
     switch (plugin) {
       case "chart":
       case "helm":
       case PluginNames.PACKAGES_HELM:
-        return "Helm Chart";
+        return plural ? "Helm Charts" : "Helm Chart";
       case PluginNames.PACKAGES_FLUX:
-        return "Helm Chart via Flux";
+        return plural ? "Helm Charts via Flux" : "Helm Chart via Flux";
       case PluginNames.PACKAGES_KAPP:
-        return "Carvel Package";
+        return plural ? "Carvel Packages" : "Carvel Package";
       case "operator":
-        return "Operator";
+        return plural ? "Operators" : "Operator";
       default:
-        return "unknown plugin package";
+        return `unknown plugin ${plural ? "packages" : "package"}`;
     }
   } else {
     switch (plugin?.name) {
       case PluginNames.PACKAGES_HELM:
-        return "Helm Chart";
+        return plural ? "Helm Charts" : "Helm Chart";
       case PluginNames.PACKAGES_FLUX:
-        return "Helm Chart via Flux";
+        return plural ? "Helm Charts via Flux" : "Helm Chart via Flux";
       case PluginNames.PACKAGES_KAPP:
-        return "Carvel Package";
+        return plural ? "Carvel Packages" : "Carvel Package";
       default:
-        return `${plugin?.name} package`;
+        return `${plugin?.name ? plugin.name : "unknown"} ${plural ? "packages" : "package"}`;
     }
+  }
+}
+
+// TODO(agamez): replace with a proper call to the plugins server (see getPluginsServiceClientImpl)
+export function getPluginByName(pluginName: PluginNames | string) {
+  switch (pluginName) {
+    case PluginNames.PACKAGES_HELM:
+      return {
+        name: PluginNames.PACKAGES_HELM,
+        version: "v1alpha1",
+      } as Plugin;
+    case PluginNames.PACKAGES_FLUX:
+      return {
+        name: PluginNames.PACKAGES_FLUX,
+        version: "v1alpha1",
+      } as Plugin;
+    case PluginNames.PACKAGES_KAPP:
+      return {
+        name: PluginNames.PACKAGES_KAPP,
+        version: "v1alpha1",
+      } as Plugin;
+    default:
+      return {
+        name: "",
+        version: "",
+      } as Plugin;
   }
 }
 
@@ -152,4 +180,35 @@ export function getAppStatusLabel(
   // pattern STATUS_REASON_<reason> by buf.
   const jsonReason = installedPackageStatus_StatusReasonToJSON(statusReason);
   return jsonReason.replace("STATUS_REASON_", "").toLowerCase();
+}
+
+export function getSupportedPackageRepositoryAuthTypes(
+  plugin: Plugin,
+): PackageRepositoryAuth_PackageRepositoryAuthType[] {
+  switch (plugin.name) {
+    case PluginNames.PACKAGES_HELM:
+      return [
+        PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_AUTHORIZATION_HEADER,
+        PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_BASIC_AUTH,
+        PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_BEARER,
+        PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_DOCKER_CONFIG_JSON,
+      ];
+    case PluginNames.PACKAGES_FLUX:
+      return [
+        PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_BASIC_AUTH,
+        PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_OPAQUE,
+        PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_SSH,
+        PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_TLS,
+        PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_DOCKER_CONFIG_JSON,
+      ];
+    case PluginNames.PACKAGES_KAPP:
+      return [
+        PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_BASIC_AUTH,
+        PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_BEARER,
+        PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_DOCKER_CONFIG_JSON,
+        PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_SSH,
+      ];
+    default:
+      return [];
+  }
 }

@@ -1165,6 +1165,48 @@ func TestKindClusterDeletePackageRepository(t *testing.T) {
 			defer cancel()
 
 			_, err = fluxPluginReposClient.DeletePackageRepository(grpcCtx, tc.request)
+			if tc.unauthorized {
+				if _, err2 := fluxPluginReposClient.DeletePackageRepository(grpcAdmin, tc.request); err2 != nil {
+					t.Fatal(err2)
+				}
+			}
+			t.Cleanup(func() {
+				const maxWait = 25
+				for i := 0; i <= maxWait; i++ {
+					exists, err := kubeExistsHelmRepository(t, name)
+					if err != nil {
+						t.Fatal(err)
+					} else if !exists {
+						break
+					} else if i == maxWait {
+						t.Fatalf("Timed out waiting for delete of repository [%s], last error: [%v]", tc.repoName, err)
+					} else {
+						t.Logf("Waiting 1s for repository [%s] to be deleted, attempt [%d/%d]...", tc.repoName, i+1, maxWait)
+						time.Sleep(1 * time.Second)
+					}
+				}
+
+				// check the secret is gone too in kubeapps-managed secrets env
+				if !tc.userManagedSecrets && tc.oldSecret != nil {
+					for i := 0; i <= maxWait; i++ {
+						exists, err := kubeExistsSecret(t, types.NamespacedName{
+							Name:      tc.oldSecret.Name,
+							Namespace: repoNamespace,
+						})
+						if err != nil {
+							t.Fatal(err)
+						} else if !exists {
+							break
+						} else if i == maxWait {
+							t.Fatalf("Timed out waiting for delete of secret [%s], last error: [%v]", tc.oldSecret.Name, err)
+						} else {
+							t.Logf("Waiting 1s for secret [%s] to be deleted, attempt [%d/%d]...", tc.oldSecret.Name, i+1, maxWait)
+							time.Sleep(1 * time.Second)
+						}
+					}
+				}
+			})
+
 			if got, want := status.Code(err), tc.expectedStatusCode; got != want {
 				t.Fatalf("got: %v, want: %v", err, want)
 			}
@@ -1172,41 +1214,6 @@ func TestKindClusterDeletePackageRepository(t *testing.T) {
 			if tc.expectedStatusCode != codes.OK {
 				// we are done
 				return
-			}
-
-			const maxWait = 25
-			for i := 0; i <= maxWait; i++ {
-				exists, err := kubeExistsHelmRepository(t, name)
-				if err != nil {
-					t.Fatal(err)
-				} else if !exists {
-					break
-				} else if i == maxWait {
-					t.Fatalf("Timed out waiting for delete of repository [%s], last error: [%v]", tc.repoName, err)
-				} else {
-					t.Logf("Waiting 1s for repository [%s] to be deleted, attempt [%d/%d]...", tc.repoName, i+1, maxWait)
-					time.Sleep(1 * time.Second)
-				}
-			}
-
-			// check the secret is gone too in kubeapps-managed secrets env
-			if !tc.userManagedSecrets && tc.oldSecret != nil {
-				for i := 0; i <= maxWait; i++ {
-					exists, err := kubeExistsSecret(t, types.NamespacedName{
-						Name:      tc.oldSecret.Name,
-						Namespace: repoNamespace,
-					})
-					if err != nil {
-						t.Fatal(err)
-					} else if !exists {
-						break
-					} else if i == maxWait {
-						t.Fatalf("Timed out waiting for delete of secret [%s], last error: [%v]", tc.oldSecret.Name, err)
-					} else {
-						t.Logf("Waiting 1s for secret [%s] to be deleted, attempt [%d/%d]...", tc.oldSecret.Name, i+1, maxWait)
-						time.Sleep(1 * time.Second)
-					}
-				}
 			}
 		})
 	}
@@ -1393,7 +1400,7 @@ func TestKindClusterAddTagsToOciRepository(t *testing.T) {
 			t.Fatal(err)
 		}
 
-		interval := time.Duration(5 * time.Second)
+		interval := time.Duration(30 * time.Second)
 
 		if err := kubeAddHelmRepositoryAndCleanup(
 			t, repoName, "oci", github_gfichtenholt_podinfo_oci_registry_url, secret.Name, interval); err != nil {
@@ -1405,10 +1412,11 @@ func TestKindClusterAddTagsToOciRepository(t *testing.T) {
 			t.Fatal(err)
 		}
 
-		grpcContext, cancel := context.WithTimeout(grpcContext, defaultContextTimeout)
+		grpcContext2, cancel := context.WithTimeout(grpcContext, defaultContextTimeout)
 		defer cancel()
+
 		resp2, err := fluxPluginClient.GetAvailablePackageVersions(
-			grpcContext, &corev1.GetAvailablePackageVersionsRequest{
+			grpcContext2, &corev1.GetAvailablePackageVersionsRequest{
 				AvailablePackageRef: &corev1.AvailablePackageReference{
 					Context: &corev1.Context{
 						Namespace: "default",
@@ -1426,12 +1434,42 @@ func TestKindClusterAddTagsToOciRepository(t *testing.T) {
 			t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opts))
 		}
 
-		// TODO: (gfichtenholt) This test is unfinished due to
+		// just codifying the behavior described in
 		// https://github.com/fluxcd/source-controller/issues/839
 		// Requested feature: flux OCI helm repositories notice when tags on remote registry change
-		//if err := helmPushChartToMyGithubRegistry(t); err != nil {
-		//		t.Fatal(err)
-		//}
+		// Should flux guys ever change their decision, this test should fail.
+		// P.S. Yuck
+		if err = helmPushChartToMyGithubRegistry(t, "6.1.6"); err != nil {
+			t.Fatal(err)
+		}
+		t.Cleanup(func() {
+			// Delete remote chart version at the end of the test so there are no side-effects.
+			if err = deleteChartFromMyGithubRegistry(t, "6.1.6"); err != nil {
+				t.Fatal(err)
+			}
+		})
+
+		t.Logf("Waiting 45 seconds...")
+		time.Sleep(45 * time.Second)
+
+		grpcContext3, cancel := context.WithTimeout(grpcContext, defaultContextTimeout)
+		defer cancel()
+
+		resp3, err := fluxPluginClient.GetAvailablePackageVersions(
+			grpcContext3, &corev1.GetAvailablePackageVersionsRequest{
+				AvailablePackageRef: &corev1.AvailablePackageReference{
+					Context: &corev1.Context{
+						Namespace: "default",
+					},
+					Identifier: repoName.Name + "/podinfo",
+				},
+			})
+		if err != nil {
+			t.Fatal(err)
+		}
+		if got, want := resp3, expected_versions_gfichtenholt_podinfo; !cmp.Equal(want, got, opts) {
+			t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opts))
+		}
 	})
 }
 
