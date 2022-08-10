@@ -101,12 +101,15 @@ export default function Catalog() {
   const [pageNum, setPageNum] = React.useState(0);
   const [hasRequestedFirstPage, setHasRequestedFirstPage] = React.useState(false);
   const [hasLoadedFirstPage, setHasLoadedFirstPage] = React.useState(false);
+  const localIsFetchingRef = React.useRef(isFetching);
 
   const csvs = operators.csvs;
 
   // Only one search filter can be set
   const searchFilter = filters[filterNames.SEARCH]?.toString().replace(tmpStrRegex, ",") || "";
   const reposFilter = filters[filterNames.REPO]?.join(",") || "";
+
+  const timeout = (ms: number) => new Promise(r => setTimeout(r, ms));
 
   // Detect changes in cluster/ns/repos/search and reset the current package
   // list Note: useEffect is called on every render - the initial render and any
@@ -140,22 +143,39 @@ export default function Catalog() {
     });
   }, [location.search]);
 
+  // using the local reference to the isFetching state to avoid re-rendering on each isFetching actual change
   useEffect(() => {
-    if (hasFinishedFetching) {
-      return;
-    }
-    dispatch(
-      actions.availablepackages.fetchAvailablePackageSummaries(
-        cluster,
-        namespace,
-        reposFilter,
-        nextPageToken,
-        size,
-        searchFilter,
-      ),
-    );
+    localIsFetchingRef.current = isFetching;
+  }, [isFetching]);
+
+  useEffect(() => {
+    const isFetchingAwareFetching = async () => {
+      if (hasFinishedFetching) {
+        return;
+      }
+      // if the local isFetching is true, we need to wait for the rest of the actions to take effect.
+      // this state seldom happens (eg. clicking buttons quickly) but it is possible, so we need to wait,
+      // otherwise the UI will be in an inconsistent state due to race conditions
+      // Note that the "receiveAvailablePackageSummaries" is ignoring the received data if it wasn't previously fetching.
+      if (localIsFetchingRef.current) {
+        await timeout(1500);
+        localIsFetchingRef.current = false;
+      }
+      dispatch(
+        actions.availablepackages.fetchAvailablePackageSummaries(
+          cluster,
+          namespace,
+          reposFilter,
+          nextPageToken,
+          size,
+          searchFilter,
+        ),
+      );
+    };
+    isFetchingAwareFetching();
   }, [
     dispatch,
+    localIsFetchingRef,
     nextPageToken,
     size,
     cluster,
@@ -496,7 +516,7 @@ export default function Catalog() {
                       namespace={namespace}
                       isFirstPage={pageNum === 1}
                       hasLoadedFirstPage={hasLoadedFirstPage}
-                      hasFinishedFetching={hasFinishedFetching}
+                      hasFinishedFetching={hasFinishedFetching && !localIsFetchingRef.current}
                     />
                     {!hasFinishedFetching &&
                       (!filters[filterNames.TYPE].length ||
