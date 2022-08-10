@@ -1587,15 +1587,15 @@ pinnipedProxy:
   ##
   defaultPinnipedAPISuffix: pinniped.dev
   ## TLS settings for Pinniped Proxy
-  ## @param pinnipedProxy.tls.existingSecret TLS secret with which to proxy requests
-  ## @param pinnipedProxy.tls.caCertificate TLS CA cert config map which clients of pinniped proxy should use with TLS requests
-  ## This config map must contain a ca.crt key with the CA cert content as the value.
+  ## ref: https://kubeapps.dev/docs/latest/howto/oidc/using-an-oidc-provider-with-pinniped/#running-the-pinniped-proxy-service-over-tls
   ##
   tls:
-    ## Optional TLS secret with which to proxy requests
+    ## @param pinnipedProxy.tls.existingSecret TLS secret with which to proxy requests
+    ##
     existingSecret: ""
-    ## TLS CA cert config map which clients of pinniped proxy should use with tls requests.
+    ## @param pinnipedProxy.tls.caCertificate TLS CA cert config map which clients of pinniped proxy should use with TLS requests
     ## This config map must contain a ca.crt key with the CA cert content as the value.
+    ##
     caCertificate: ""
   ## @param pinnipedProxy.lifecycleHooks For the Pinniped Proxy container(s) to automate configuration before or after startup
   ##
