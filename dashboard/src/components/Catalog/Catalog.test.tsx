@@ -438,6 +438,33 @@ describe("filters by application type", () => {
 });
 
 describe("pagination and package fetching", () => {
+  let spyOnUseRef: jest.SpyInstance;
+  const refFalse = { current: {} };
+  const refTrue = { current: {} };
+  Object.defineProperty(refFalse, "current", {
+    set(_current) {
+      // do nothing
+    },
+    get() {
+      return false;
+    },
+  });
+  Object.defineProperty(refTrue, "current", {
+    set(_current) {
+      // do nothing
+    },
+    get() {
+      return true;
+    },
+  });
+
+  beforeEach(() => {
+    spyOnUseRef = jest.spyOn(React, "useRef").mockReturnValue(refFalse);
+  });
+  afterEach(() => {
+    spyOnUseRef.mockRestore();
+  });
+
   it("sets the initial state page to 0 before fetching packages", () => {
     const fetchAvailablePackageSummaries = jest.fn();
     actions.availablepackages.fetchAvailablePackageSummaries = fetchAvailablePackageSummaries;
@@ -470,9 +497,11 @@ describe("pagination and package fetching", () => {
     );
   });
 
-  it("sets the state page when fetching packages", () => {
+  it("avoids re-fetching if isFetching=true", () => {
+    jest.useFakeTimers();
     const fetchAvailablePackageSummaries = jest.fn();
     actions.availablepackages.fetchAvailablePackageSummaries = fetchAvailablePackageSummaries;
+    spyOnUseRef = jest.spyOn(React, "useRef").mockReturnValue(refTrue);
 
     const packages = {
       ...defaultPackageState,
@@ -488,17 +517,10 @@ describe("pagination and package fetching", () => {
         </Route>
       </MemoryRouter>,
     );
+    jest.advanceTimersByTime(2000);
 
     expect(wrapper.find(CatalogItems).prop("isFirstPage")).toBe(true);
-    expect(wrapper.find(PackageCatalogItem).length).toBe(0);
-    expect(fetchAvailablePackageSummaries).toHaveBeenCalledWith(
-      "default-cluster",
-      "kubeapps",
-      "",
-      "",
-      20,
-      "",
-    );
+    expect(fetchAvailablePackageSummaries).not.toBeCalled();
   });
 
   it("disables the filtergroups when isFetching", () => {
