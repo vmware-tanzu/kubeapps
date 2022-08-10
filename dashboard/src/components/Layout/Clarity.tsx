@@ -39,6 +39,7 @@ import {
 import "@cds/core/icon/register.js";
 import "@cds/core/accordion/register.js";
 import "@clr/ui/clr-ui.min.css"; // light clarity UI theme
+import "@cds/core/checkbox/register.js";
 
 Icons.addIcons(
   angleIcon,

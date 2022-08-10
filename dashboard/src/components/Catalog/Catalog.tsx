@@ -419,6 +419,7 @@ export default function Catalog() {
                     currentFilters={filters[filterNames.TYPE]}
                     onAddFilter={addFilter}
                     onRemoveFilter={removeFilter}
+                    disabled={isFetching}
                   />
                 </div>
               )}
@@ -431,6 +432,7 @@ export default function Catalog() {
                     currentFilters={filters[filterNames.CATEGORY]}
                     onAddFilter={addFilter}
                     onRemoveFilter={removeFilter}
+                    disabled={isFetching}
                   />
                 </div>
               )}
@@ -443,6 +445,7 @@ export default function Catalog() {
                     currentFilters={filters[filterNames.REPO]}
                     onAddFilter={addFilter}
                     onRemoveFilter={removeFilter}
+                    disabled={isFetching}
                   />
                 </div>
               )}
@@ -455,6 +458,7 @@ export default function Catalog() {
                     currentFilters={filters[filterNames.OPERATOR_PROVIDER]}
                     onAddFilter={addFilter}
                     onRemoveFilter={removeFilter}
+                    disabled={isFetching}
                   />
                 </div>
               )}

@@ -501,6 +501,28 @@ describe("pagination and package fetching", () => {
     );
   });
 
+  it("disables the filtergroups when isFetching", () => {
+    const packages = {
+      ...defaultPackageState,
+      hasFinishedFetching: true,
+      isFetching: true,
+      items: [availablePkgSummary1, availablePkgSummary2],
+    } as any;
+    const wrapper = mountWrapper(
+      getStore({ ...populatedState, packages: packages } as IStoreState),
+      <MemoryRouter initialEntries={[routePathParam]}>
+        <Route path={routePath}>
+          <Catalog />
+        </Route>
+      </MemoryRouter>,
+    );
+
+    wrapper
+      .find(FilterGroup)
+      .find("input")
+      .forEach(i => expect(i.prop("disabled")).toBe(true));
+  });
+
   it("items are translated to CatalogItems after fetching packages", () => {
     const fetchAvailablePackageSummaries = jest.fn();
     actions.availablepackages.fetchAvailablePackageSummaries = fetchAvailablePackageSummaries;
