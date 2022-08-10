@@ -450,13 +450,17 @@ describe("pagination and package fetching", () => {
   const refFalse = { current: {} };
   const refTrue = { current: {} };
   Object.defineProperty(refFalse, "current", {
-    set(_current) {},
+    set(_current) {
+      // do nothing
+    },
     get() {
       return false;
     },
   });
   Object.defineProperty(refTrue, "current", {
-    set(_current) {},
+    set(_current) {
+      // do nothing
+    },
     get() {
       return true;
     },
