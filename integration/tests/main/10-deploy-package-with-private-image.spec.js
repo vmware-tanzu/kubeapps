@@ -19,34 +19,44 @@ test("Deploy a chart using a private container image", async ({ page }) => {
 
   // Go to repos page
   await page.click(".dropdown.kubeapps-menu button.kubeapps-nav-link");
-  await page.click('a.dropdown-menu-link:has-text("Package Repositories")');
-  await page.waitForTimeout(3000);
+  await page.locator("text=Package Repositories").click();
+  await expect(page).not.toContain("text=Fetching Package Repositories...");
 
   // Add new repo
-  await page.click('cds-button:has-text("Add Package Repository")');
-  const repoName = utils.getRandomName("private-img-repo");
+  const repoName = utils.getRandomName("my-repo");
   console.log(`Creating package repository "${repoName}"`);
+  await page.locator("text=Add Package Repository >> div").click();
   await page.fill("input#kubeapps-repo-name", repoName);
-  await page.fill("input#kubeapps-repo-url", "http://chartmuseum.chart-museum.svc.cluster.local:8080");
+  await page.fill(
+    "input#kubeapps-repo-url",
+    "http://chartmuseum.chart-museum.svc.cluster.local:8080",
+  );
+  await page.locator("text=Helm Charts").first().click();
+  await page.locator("text=Helm Repository").click();
 
   // Set credentials for repository
-  await page.click('label:has-text("Basic Auth")');
-  await page.fill("input#kubeapps-repo-username", "admin");
-  await page.fill("input#kubeapps-repo-password", "password");
+  await page.locator("#panel-auth cds-accordion-header div >> nth=0").first().click();
+  // Basic auth
+  await page.locator("text=Basic Auth").click();
+  await page.locator('[id="kubeapps-repo-username"]').fill("admin");
+  await page.locator('[id="kubeapps-repo-password"]').fill("password");
 
-  // Create a new secret for Docker repo credentials
-  const secretName = utils.getRandomName("my-repo-secret");
-  await page.click('.docker-creds-subform-button button:has-text("Add new credentials")');
-  await page.fill("input#kubeapps-docker-cred-secret-name", secretName);
-  await page.fill("input#kubeapps-docker-cred-server", process.env.DOCKER_REGISTRY_URL);
-  await page.fill("input#kubeapps-docker-cred-username", process.env.DOCKER_USERNAME);
-  await page.fill("input#kubeapps-docker-cred-password", process.env.DOCKER_PASSWORD);
-  await page.click('.docker-creds-subform button:has-text("Submit")');
+  // Set the Docker repo credentials
+  await page.locator("text=Docker Registry Credentials").nth(1).click();
 
-  // Select the newly created secret
-  await page.selectOption("form cds-form-group cds-select select", secretName);
+  await page
+    .locator('[id="kubeapps-imagePullSecrets-cred-server"]')
+    .fill(process.env.DOCKER_REGISTRY_URL);
+  await page
+    .locator('[id="kubeapps-imagePullSecrets-cred-username"]')
+    .fill(process.env.DOCKER_USERNAME);
+  await page
+    .locator('[id="kubeapps-imagePullSecrets-cred-password"]')
+    .fill(process.env.DOCKER_PASSWORD);
+  await page.locator('[id="kubeapps-imagePullSecrets-cred-email"]').fill("test@example.com");
+  await page.locator("text=Install Repository >> div").click();
 
-  await page.click('cds-button:has-text("Install Repo")');
+  // For now, disabling the this test case temporarily.
 
   // Wait for new packages to be indexed
   await page.waitForTimeout(5000);

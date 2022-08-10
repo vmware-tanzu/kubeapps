@@ -5,17 +5,17 @@ import actions from "actions";
 import Alert from "components/js/Alert";
 import Table from "components/js/Table";
 import Tooltip from "components/js/Tooltip";
-import PageHeader from "components/PageHeader/PageHeader";
+import { PackageRepositorySummary } from "gen/kubeappsapis/core/packages/v1alpha1/repositories";
 import { act } from "react-dom/test-utils";
 import * as ReactRedux from "react-redux";
 import { Link } from "react-router-dom";
 import { Kube } from "shared/Kube";
 import { defaultStore, getStore, initialState, mountWrapper } from "shared/specs/mountWrapper";
-import { AppRepoAddButton } from "./AppRepoButton";
-import { AppRepoControl } from "./AppRepoControl";
-import { AppRepoDisabledControl } from "./AppRepoDisabledControl";
-import AppRepoList from "./AppRepoList";
-import { AppRepoRefreshAllButton } from "./AppRepoRefreshAllButton";
+import { PkgRepoControl } from "./PkgRepoControl";
+import { PkgRepoDisabledControl } from "./PkgRepoDisabledControl";
+import PkgRepoList from "./PkgRepoList";
+import TableRow from "components/js/Table/components/TableRow";
+import { IPackageRepositoryState } from "reducers/repos";
 
 const {
   clusters: { currentCluster, clusters },
@@ -28,7 +28,7 @@ const kubeaActions = { ...actions.kube };
 beforeEach(() => {
   actions.repos = {
     ...actions.repos,
-    fetchRepos: jest.fn(),
+    fetchRepoSummaries: jest.fn(),
   };
   const mockDispatch = jest.fn();
   spyOnUseDispatch = jest.spyOn(ReactRedux, "useDispatch").mockReturnValue(mockDispatch);
@@ -44,8 +44,8 @@ afterEach(() => {
 });
 
 it("fetches repos and imagePullSecrets", () => {
-  mountWrapper(defaultStore, <AppRepoList />);
-  expect(actions.repos.fetchRepos).toHaveBeenCalledWith(namespace, true);
+  mountWrapper(defaultStore, <PkgRepoList />);
+  expect(actions.repos.fetchRepoSummaries).toHaveBeenCalledWith(namespace, true);
 });
 
 it("fetches repos only from the globalReposNamespace", () => {
@@ -61,17 +61,17 @@ it("fetches repos only from the globalReposNamespace", () => {
         },
       },
     }),
-    <AppRepoList />,
+    <PkgRepoList />,
   );
-  expect(actions.repos.fetchRepos).toHaveBeenCalledWith(globalReposNamespace);
+  expect(actions.repos.fetchRepoSummaries).toHaveBeenCalledWith("");
 });
 
 it("fetches repos from all namespaces (without kubeappsNamespace)", () => {
-  const wrapper = mountWrapper(defaultStore, <AppRepoList />);
+  const wrapper = mountWrapper(defaultStore, <PkgRepoList />);
   act(() => {
     wrapper.find("input[type='checkbox']").simulate("change");
   });
-  expect(actions.repos.fetchRepos).toHaveBeenCalledWith("");
+  expect(actions.repos.fetchRepoSummaries).toHaveBeenCalledWith("");
 });
 
 it("should hide the all-namespace switch if the user doesn't have permissions", async () => {
@@ -79,7 +79,7 @@ it("should hide the all-namespace switch if the user doesn't have permissions", 
     then: jest.fn((f: any) => f(false)),
     catch: jest.fn(f => f(false)),
   });
-  const wrapper = mountWrapper(defaultStore, <AppRepoList />);
+  const wrapper = mountWrapper(defaultStore, <PkgRepoList />);
   expect(wrapper.find("input[type='checkbox']")).not.toExist();
 });
 
@@ -98,31 +98,25 @@ it("shows a warning if the cluster is not the default one", () => {
         },
       },
     }),
-    <AppRepoList />,
+    <PkgRepoList />,
   );
   expect(wrapper.find(Alert)).toIncludeText(
     "Package Repositories can't be managed from this cluster",
   );
 });
 
-it("renders the button to add a repo and refresh all", () => {
-  const wrapper = mountWrapper(defaultStore, <AppRepoList />);
-  expect(wrapper.find(PageHeader).find(AppRepoAddButton)).toExist();
-  expect(wrapper.find(PageHeader).find(AppRepoRefreshAllButton)).toExist();
-});
-
 it("shows an error fetching a repo", () => {
   const wrapper = mountWrapper(
-    getStore({ repos: { errors: { fetch: new Error("boom!") } } }),
-    <AppRepoList />,
+    getStore({ repos: { errors: { fetch: new Error("boom!") } } as IPackageRepositoryState }),
+    <PkgRepoList />,
   );
   expect(wrapper.find(Alert)).toIncludeText("boom!");
 });
 
 it("shows an error deleting a repo", () => {
   const wrapper = mountWrapper(
-    getStore({ repos: { errors: { delete: new Error("boom!") } } }),
-    <AppRepoList />,
+    getStore({ repos: { errors: { delete: new Error("boom!") } } as IPackageRepositoryState }),
+    <PkgRepoList />,
   );
   expect(wrapper.find(Alert)).toIncludeText("boom!");
 });
@@ -130,25 +124,18 @@ it("shows an error deleting a repo", () => {
 // TODO(andresmgot): Re-enable when the repo list is refactored
 describe("global and namespaced repositories", () => {
   const globalRepo = {
-    metadata: {
-      name: "bitnami",
-      namespace: globalReposNamespace,
-    },
-    spec: {},
-  };
+    name: "bitnami",
+    packageRepoRef: { context: { cluster: "default-cluster", namespace: globalReposNamespace } },
+  } as PackageRepositorySummary;
 
   const namespacedRepo = {
-    metadata: {
-      name: "my-repo",
-      namespace,
-    },
-    spec: {
-      description: "my description 1 2 3 4",
-    },
-  };
+    name: "my-repo",
+    packageRepoRef: { context: { cluster: "default-cluster", namespace: namespace } },
+    description: "my description 1 2 3 4",
+  } as PackageRepositorySummary;
 
   it("shows a message if no global or namespaced repos exist", () => {
-    const wrapper = mountWrapper(defaultStore, <AppRepoList />);
+    const wrapper = mountWrapper(defaultStore, <PkgRepoList />);
     expect(
       wrapper
         .find("p")
@@ -178,15 +165,15 @@ describe("global and namespaced repositories", () => {
           },
         },
         repos: {
-          repos: [globalRepo],
-        },
+          reposSummaries: [globalRepo],
+        } as IPackageRepositoryState,
       }),
-      <AppRepoList />,
+      <PkgRepoList />,
     );
     expect(wrapper.find(Table)).toHaveLength(1);
     // The control buttons should be deactivated
-    expect(wrapper.find(AppRepoDisabledControl)).toExist();
-    expect(wrapper.find(AppRepoControl)).not.toExist();
+    expect(wrapper.find(PkgRepoDisabledControl)).toExist();
+    expect(wrapper.find(PkgRepoControl)).not.toExist();
     // The content related to namespaced repositories should exist
     expect(
       wrapper.find("h3").filterWhere(h => h.text().includes("Namespaced Repositories")),
@@ -206,18 +193,18 @@ describe("global and namespaced repositories", () => {
           },
         },
         repos: {
-          repos: [globalRepo],
-        },
+          reposSummaries: [globalRepo],
+        } as IPackageRepositoryState,
       }),
-      <AppRepoList />,
+      <PkgRepoList />,
     );
 
     // A link to manage the repos should not exist since we are already there
     expect(wrapper.find("p").find(Link)).not.toExist();
     expect(wrapper.find(Table)).toHaveLength(1);
     // The control buttons should be enabled
-    expect(wrapper.find(AppRepoDisabledControl)).not.toExist();
-    expect(wrapper.find(AppRepoControl)).toExist();
+    expect(wrapper.find(PkgRepoDisabledControl)).not.toExist();
+    expect(wrapper.find(PkgRepoControl)).toExist();
     // The content related to namespaced repositories should be hidden
     expect(
       wrapper.find("h3").filterWhere(h => h.text().includes("Namespace Repositories")),
@@ -234,32 +221,31 @@ describe("global and namespaced repositories", () => {
           clusters: {
             [currentCluster]: {
               ...initialState.clusters.clusters[currentCluster],
-              currentNamespace: namespacedRepo.metadata.namespace,
+              currentNamespace: namespacedRepo.packageRepoRef?.context?.namespace,
             },
           },
         },
         repos: {
-          repos: [globalRepo, namespacedRepo],
-        },
+          reposSummaries: [globalRepo, namespacedRepo],
+        } as IPackageRepositoryState,
       }),
-      <AppRepoList />,
+      <PkgRepoList />,
     );
-
     // A table per repository type
-    expect(wrapper.find(Table)).toHaveLength(2);
+    expect(wrapper.find(TableRow)).toHaveLength(2);
   });
 
   it("shows a link to the repo catalog", () => {
     const wrapper = mountWrapper(
       getStore({
         repos: {
-          repos: [namespacedRepo],
-        },
+          reposSummaries: [namespacedRepo],
+        } as IPackageRepositoryState,
       }),
-      <AppRepoList />,
+      <PkgRepoList />,
     );
     expect(wrapper.find(Table).find(Link).prop("to")).toEqual(
-      `/c/${currentCluster}/ns/${namespacedRepo.metadata.namespace}/catalog?Repository=my-repo`,
+      `/c/${currentCluster}/ns/${namespacedRepo.packageRepoRef?.context?.namespace}/catalog?Repository=my-repo`,
     );
   });
 
@@ -267,10 +253,10 @@ describe("global and namespaced repositories", () => {
     const wrapper = mountWrapper(
       getStore({
         repos: {
-          repos: [namespacedRepo],
-        },
+          reposSummaries: [namespacedRepo],
+        } as IPackageRepositoryState,
       }),
-      <AppRepoList />,
+      <PkgRepoList />,
     );
     act(() => {
       wrapper.find("input[type='checkbox']").simulate("change");
@@ -283,16 +269,16 @@ describe("global and namespaced repositories", () => {
     const wrapper = mountWrapper(
       getStore({
         repos: {
-          repos: [namespacedRepo],
-        },
+          reposSummaries: [namespacedRepo],
+        } as IPackageRepositoryState,
       }),
-      <AppRepoList />,
+      <PkgRepoList />,
     );
     act(() => {
       wrapper.find("input[type='checkbox']").simulate("change");
     });
     expect(wrapper.find(Table).find(Link).prop("to")).toEqual(
-      `/c/${currentCluster}/ns/${namespacedRepo.metadata.namespace}/catalog?Repository=my-repo`,
+      `/c/${currentCluster}/ns/${namespacedRepo.packageRepoRef?.context?.namespace}/catalog?Repository=my-repo`,
     );
   });
 });

@@ -4,12 +4,12 @@
 import { CdsButton } from "@cds/react/button";
 import actions from "actions";
 import ConfirmDialog from "components/ConfirmDialog/ConfirmDialog";
+import { PackageRepositorySummary } from "gen/kubeappsapis/core/packages/v1alpha1/repositories";
 import { act } from "react-dom/test-utils";
 import * as ReactRedux from "react-redux";
 import { defaultStore, mountWrapper } from "shared/specs/mountWrapper";
-import { IAppRepository } from "shared/types";
-import { AppRepoAddButton } from "./AppRepoButton";
-import { AppRepoControl } from "./AppRepoControl";
+import { PkgRepoAddButton } from "./PkgRepoButton";
+import { PkgRepoControl } from "./PkgRepoControl";
 
 let spyOnUseDispatch: jest.SpyInstance;
 const kubeaActions = { ...actions.kube };
@@ -17,7 +17,6 @@ beforeEach(() => {
   actions.repos = {
     ...actions.repos,
     deleteRepo: jest.fn(),
-    resyncRepo: jest.fn(),
   };
   const mockDispatch = jest.fn();
   spyOnUseDispatch = jest.spyOn(ReactRedux, "useDispatch").mockReturnValue(mockDispatch);
@@ -29,13 +28,11 @@ afterEach(() => {
 });
 
 const defaultProps = {
-  kubeappsNamespace: "kubeapps",
+  globalReposNamespace: "kubeapps",
   repo: {
-    metadata: {
-      name: "bitnami",
-      namespace: "kubeapps",
-    },
-  } as IAppRepository,
+    name: "bitnami",
+    packageRepoRef: { context: { namespace: "kubeapps" } },
+  } as PackageRepositorySummary,
   refetchRepos: jest.fn(),
 };
 
@@ -48,7 +45,7 @@ it("deletes the repo and refreshes list", async () => {
   };
   const wrapper = mountWrapper(
     defaultStore,
-    <AppRepoControl {...defaultProps} refetchRepos={refetchRepos} />,
+    <PkgRepoControl {...defaultProps} refetchRepos={refetchRepos} />,
   );
   const deleteButton = wrapper.find(CdsButton).filterWhere(b => b.text() === "Delete");
   act(() => {
@@ -69,22 +66,7 @@ it("deletes the repo and refreshes list", async () => {
   expect(refetchRepos).toHaveBeenCalled();
 });
 
-it("refreshes the repo", () => {
-  const resyncRepo = jest.fn();
-  actions.repos = {
-    ...actions.repos,
-    resyncRepo,
-  };
-  const wrapper = mountWrapper(defaultStore, <AppRepoControl {...defaultProps} />);
-  const refreshButton = wrapper.find(CdsButton).filterWhere(b => b.text() === "Refresh");
-  act(() => {
-    (refreshButton.prop("onClick") as any)();
-  });
-  wrapper.update();
-  expect(resyncRepo).toHaveBeenCalled();
-});
-
 it("renders the button to edit the repo", () => {
-  const wrapper = mountWrapper(defaultStore, <AppRepoControl {...defaultProps} />);
-  expect(wrapper.find(AppRepoAddButton).prop("text")).toBe("Edit");
+  const wrapper = mountWrapper(defaultStore, <PkgRepoControl {...defaultProps} />);
+  expect(wrapper.find(PkgRepoAddButton).prop("text")).toBe("Edit");
 });

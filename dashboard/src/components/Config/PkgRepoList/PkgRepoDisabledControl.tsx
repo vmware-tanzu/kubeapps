@@ -2,11 +2,11 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { CdsButton } from "@cds/react/button";
-import "./AppRepoControl.css";
+import "./PkgRepoControl.css";
 
-export function AppRepoDisabledControl() {
+export function PkgRepoDisabledControl() {
   return (
-    <div className="apprepo-control-buttons">
+    <div className="pkgrepo-control-buttons">
       <CdsButton disabled={true} action="outline">
         Edit
       </CdsButton>

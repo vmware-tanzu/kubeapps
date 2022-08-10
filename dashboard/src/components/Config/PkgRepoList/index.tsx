@@ -1,6 +1,6 @@
 // Copyright 2018-2022 the Kubeapps contributors.
 // SPDX-License-Identifier: Apache-2.0
 
-import AppRepoList from "./AppRepoList";
+import PkgRepoList from "./PkgRepoList";
 
-export default AppRepoList;
+export default PkgRepoList;

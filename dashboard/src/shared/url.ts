@@ -89,7 +89,7 @@ export const app = {
       `/c/${cluster}/ns/${namespace}/operators-instances/new/${csvName}/${crdName}`,
   },
   config: {
-    apprepositories: (cluster: string, namespace: string) =>
+    pkgrepositories: (cluster: string, namespace: string) =>
       `/c/${cluster}/ns/${namespace}/config/repos`,
     operators: (cluster: string, namespace: string) => `/c/${cluster}/ns/${namespace}/operators`,
   },
@@ -102,23 +102,6 @@ function withNS(namespace: string) {
 export const backend = {
   namespaces: {
     list: (cluster: string) => `api/v1/clusters/${cluster}/namespaces`,
-  },
-  apprepositories: {
-    base: (cluster: string, namespace: string) =>
-      `api/v1/clusters/${cluster}/${withNS(namespace)}apprepositories`,
-    create: (cluster: string, namespace: string) =>
-      backend.apprepositories.base(cluster, namespace),
-    list: (cluster: string, namespace: string) => backend.apprepositories.base(cluster, namespace),
-    validate: (cluster: string, namespace: string) =>
-      `${backend.apprepositories.base(cluster, namespace)}/validate`,
-    get: (cluster: string, namespace: string, name: string) =>
-      `${backend.apprepositories.base(cluster, namespace)}/${name}`,
-    delete: (cluster: string, namespace: string, name: string) =>
-      `${backend.apprepositories.base(cluster, namespace)}/${name}`,
-    refresh: (cluster: string, namespace: string, name: string) =>
-      `${backend.apprepositories.base(cluster, namespace)}/${name}/refresh`,
-    update: (cluster: string, namespace: string, name: string) =>
-      `${backend.apprepositories.base(cluster, namespace)}/${name}`,
   },
   canI: (cluster: string) => `api/v1/clusters/${cluster}/can-i`,
 };
@@ -134,9 +117,6 @@ export const api = {
     v1: (cluster: string) => `${api.k8s.base(cluster)}/api/v1`,
     groupVersion: (cluster: string, groupVersion: string) =>
       `${api.k8s.base(cluster)}/apis/${groupVersion}`,
-    namespaces: (cluster: string) => `${api.k8s.base(cluster)}/api/v1/namespaces`,
-    namespace: (cluster: string, namespace: string) =>
-      namespace ? `${api.k8s.namespaces(cluster)}/${namespace}` : `${api.k8s.base(cluster)}/api/v1`,
     operators: {
       operators: (cluster: string, namespace: string) =>
         `${api.k8s.base(cluster)}/apis/packages.operators.coreos.com/v1/${withNS(
