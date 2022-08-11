@@ -30,8 +30,7 @@ const installedPackagesReducer = (
       return { ...state, isFetching: false, error: action.payload };
     case getType(actions.installedpackages.clearErrorInstalledPackage):
       return { ...state, error: undefined };
-    case getType(actions.installedpackages.selectInstalledPackage):
-      /* eslint-disable-next-line no-case-declarations */
+    case getType(actions.installedpackages.selectInstalledPackage): {
       let revision: number;
       try {
         // TODO(agamez): verify why the field is not automatically decoded.
@@ -52,6 +51,7 @@ const installedPackagesReducer = (
         },
         selectedDetails: action.payload.details,
       };
+    }
     case getType(actions.installedpackages.receiveInstalledPackageStatus):
       if (state.selected) {
         return {

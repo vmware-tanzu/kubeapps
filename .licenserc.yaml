@@ -1,0 +1,41 @@
+# Copyright 2022 VMware, Inc.
+# SPDX-License-Identifier: Apache-2.0
+
+header:
+  comment: on-failure
+  license:
+    spdx-id: Apache-2.0
+    copyright-owner: the Kubeapps contributors
+
+    pattern: |
+      Copyright (?:\d{4}-\d{4}|\d{4}) the Kubeapps contributors.
+      SPDX-License-Identifier: Apache-2.0
+
+  paths-ignore:
+    - LICENSE
+    - NOTICE
+    - open_source_licenses.txt
+    - "**/*.css"
+    - "**/*.dccache"
+    - "**/*.html"
+    - "**/*.htpasswd"
+    - "**/*.json"
+    - "**/*.lock"
+    - "**/*.md"
+    - "**/*.pem"
+    - "**/*.snap"
+    - "**/*.sum"
+    - "**/*.svg"
+    - "**/*.webmanifest"
+    - "**/chart/**"
+    - "**/devel/**"
+    - "**/gen/**"
+    - "**/node_modules/**"
+    - "**/site/**"
+    - "**/target/**"
+
+dependency:
+  files:
+    - go.mod
+    - dashboard/package.json
+    - cmd/pinniped-proxy/Cargo.toml

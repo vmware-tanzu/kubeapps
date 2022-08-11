@@ -3,7 +3,6 @@
 
 import { JSONSchemaType } from "ajv";
 import { RouterState } from "connected-react-router";
-import { Subscription } from "rxjs";
 import {
   AvailablePackageDetail,
   AvailablePackageSummary,
@@ -13,11 +12,23 @@ import {
   PackageAppVersion,
   ResourceRef,
 } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
+import {
+  DockerCredentials,
+  OpaqueCredentials,
+  PackageRepositoryAuth_PackageRepositoryAuthType,
+  SshCredentials,
+  TlsCertKey,
+  UsernamePassword,
+} from "gen/kubeappsapis/core/packages/v1alpha1/repositories";
+import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins";
+import { HelmPackageRepositoryCustomDetail } from "gen/kubeappsapis/plugins/helm/packages/v1alpha1/helm";
+import { KappControllerPackageRepositoryCustomDetail } from "gen/kubeappsapis/plugins/kapp_controller/packages/v1alpha1/kapp_controller";
 import { IOperatorsState } from "reducers/operators";
+import { Subscription } from "rxjs";
 import { IAuthState } from "../reducers/auth";
 import { IClustersState } from "../reducers/cluster";
 import { IConfigState } from "../reducers/config";
-import { IAppRepositoryState } from "../reducers/repos";
+import { IPackageRepositoryState } from "../reducers/repos";
 import { RpcError } from "./RpcError";
 
 export class CustomError extends Error {
@@ -68,12 +79,6 @@ export class RollbackError extends CustomError {}
 export class DeleteError extends CustomError {}
 
 export type DeploymentEvent = "install" | "upgrade";
-
-export interface IRepo {
-  namespace: string;
-  name: string;
-  url: string;
-}
 
 export interface IReceivePackagesActionPayload {
   response: GetAvailablePackageSummariesResponse;
@@ -303,7 +308,7 @@ export interface IClusterServiceVersion extends IResource {
   spec: IClusterServiceVersionSpec;
 }
 
-export interface IAppRepositoryFilter {
+export interface IPkgRepositoryFilter {
   jq: string;
   variables?: { [key: string]: string };
 }
@@ -326,7 +331,7 @@ export interface IStoreState {
   packages: IPackageState;
   config: IConfigState;
   kube: IKubeState;
-  repos: IAppRepositoryState;
+  repos: IPackageRepositoryState;
   clusters: IClustersState;
   operators: IOperatorsState;
 }
@@ -336,24 +341,6 @@ interface IK8sResource {
   kind: string;
 }
 
-/** @see https://github.com/kubernetes/community/blob/master/contributors/devel/api-conventions.md#objects */
-export interface IK8sObject<M, SP, ST> extends IK8sResource {
-  metadata: {
-    annotations?: { [key: string]: string };
-    creationTimestamp?: string;
-    deletionTimestamp?: string | null;
-    generation?: number;
-    labels?: { [key: string]: string };
-    name: string;
-    namespace: string;
-    resourceVersion?: string;
-    uid: string;
-    selfLink?: string; // Not in docs, but seems to exist everywhere
-  } & M;
-  spec?: SP;
-  status?: ST;
-}
-
 /** @see https://github.com/kubernetes/community/blob/master/contributors/devel/api-conventions.md#lists-and-simple-kinds */
 export interface IK8sList<I, M> extends IK8sResource {
   items: I[];
@@ -361,83 +348,6 @@ export interface IK8sList<I, M> extends IK8sResource {
     resourceVersion?: string;
     selfLink?: string; // Not in docs, but seems to exist everywhere
   } & M;
-}
-
-export type IAppRepository = IK8sObject<
-  {
-    clusterName: string;
-    creationTimestamp: string;
-    deletionGracePeriodSeconds: string | null;
-    deletionTimestamp: string | null;
-    resourceVersion: string;
-    selfLink: string;
-  },
-  {
-    type: string;
-    url: string;
-    description?: string;
-    auth?: {
-      header?: {
-        secretKeyRef: {
-          name: string;
-          key: string;
-        };
-      };
-      customCA?: {
-        secretKeyRef: {
-          name: string;
-          key: string;
-        };
-      };
-    };
-    resyncRequests: number;
-    syncJobPodTemplate?: object;
-    dockerRegistrySecrets?: string[];
-    ociRepositories?: string[];
-    tlsInsecureSkipVerify?: boolean;
-    filterRule?: IAppRepositoryFilter;
-    passCredentials?: boolean;
-  },
-  undefined
->;
-
-export interface ICreateAppRepositoryResponse {
-  appRepository: IAppRepository;
-}
-
-export interface IAppRepositoryKey {
-  name: string;
-  namespace: string;
-}
-
-/** @see https://github.com/kubernetes/community/blob/master/contributors/devel/api-conventions.md#response-status-kind */
-export interface IStatus extends IK8sResource {
-  kind: "Status";
-  status: "Success" | "Failure";
-  message: string;
-  reason:
-    | "BadRequest"
-    | "Unauthorized"
-    | "Forbidden"
-    | "NotFound"
-    | "AlreadyExists"
-    | "Conflict"
-    | "Invalid"
-    | "Timeout"
-    | "ServerTimeout"
-    | "MethodNotAllowed"
-    | "InternalError";
-  details?: {
-    kind?: string;
-    name?: string;
-    causes?: IStatusCause[] | string;
-  };
-}
-
-interface IStatusCause {
-  field: string;
-  message: string;
-  reason: string;
 }
 
 export interface IRBACRole {
@@ -504,4 +414,38 @@ export interface IBasicFormSliderParam extends IBasicFormParam {
 
 export interface CustomInstalledPackageDetail extends InstalledPackageDetail {
   revision: number;
+}
+
+//  enum for the type of package repository storage
+export enum RepositoryStorageTypes {
+  PACKAGE_REPOSITORY_STORAGE_HELM = "helm",
+  PACKAGE_REPOSITORY_STORAGE_OCI = "oci",
+}
+
+export interface IPkgRepoFormData {
+  authMethod: PackageRepositoryAuth_PackageRepositoryAuthType;
+  // kubeapps-managed secrets
+  authHeader: string; // used if type == PACKAGE_REPOSITORY_AUTH_TYPE_BEARER || type == PACKAGE_REPOSITORY_AUTH_TYPE_AUTHORIZATION_HEADER
+  basicAuth: UsernamePassword; // used if type == PACKAGE_REPOSITORY_AUTH_TYPE_BASIC_AUTH
+  dockerRegCreds: DockerCredentials; // used if type == PACKAGE_REPOSITORY_AUTH_TYPE_DOCKER_CONFIG_JSON
+  sshCreds: SshCredentials; // used if type == PACKAGE_REPOSITORY_AUTH_TYPE_SSH
+  opaqueCreds: OpaqueCredentials; // used if type == PACKAGE_REPOSITORY_AUTH_TYPE_OPAQUE
+  tlsCertKey: TlsCertKey; // used if type == PACKAGE_REPOSITORY_AUTH_TYPE_TLS
+  // user-managed secrets
+  secretAuthName: string;
+  secretTLSName: string;
+  // rest of the parameters
+  customCA: string;
+  description: string;
+  interval: string;
+  name: string;
+  passCredentials: boolean;
+  plugin: Plugin;
+  skipTLS: boolean;
+  type: string;
+  url: string;
+  // add more types if necessary
+  customDetail?: Partial<
+    HelmPackageRepositoryCustomDetail | KappControllerPackageRepositoryCustomDetail
+  >;
 }

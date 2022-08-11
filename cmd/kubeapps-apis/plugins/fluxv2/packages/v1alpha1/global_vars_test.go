@@ -5,6 +5,7 @@ package main
 
 import (
 	"encoding/json"
+	"io/ioutil"
 	"time"
 
 	helmv2 "github.com/fluxcd/helm-controller/api/v2beta1"
@@ -22,14 +23,14 @@ import (
 // plus I am putting them in a separate file, since they take up so much space they distract from
 // overall test logic
 var (
-	create_request_basic = &corev1.CreateInstalledPackageRequest{
+	create_installed_package_request_basic = &corev1.CreateInstalledPackageRequest{
 		AvailablePackageRef: availableRef("podinfo-1/podinfo", "default"),
 		Name:                "my-podinfo",
 		TargetContext:       targetContext("test-1"),
 	}
 
 	// specify just the fields that cannot be easily computed based on the request
-	expected_detail_basic = &corev1.InstalledPackageDetail{
+	expected_detail_installed_package_basic = &corev1.InstalledPackageDetail{
 		PkgVersionReference: &corev1.VersionReference{
 			Version: "*",
 		},
@@ -40,7 +41,7 @@ var (
 
 	expected_resource_refs_basic = podinfo_installed_refs("my-podinfo")
 
-	create_request_semver_constraint = &corev1.CreateInstalledPackageRequest{
+	create_installed_package_request_semver_constraint = &corev1.CreateInstalledPackageRequest{
 		AvailablePackageRef: availableRef("podinfo-2/podinfo", "default"),
 		Name:                "my-podinfo-2",
 		TargetContext:       targetContext("test-2"),
@@ -49,7 +50,7 @@ var (
 		},
 	}
 
-	expected_detail_semver_constraint = &corev1.InstalledPackageDetail{
+	expected_detail_installed_package_semver_constraint = &corev1.InstalledPackageDetail{
 		PkgVersionReference: &corev1.VersionReference{
 			Version: "> 5",
 		},
@@ -60,7 +61,7 @@ var (
 
 	expected_resource_refs_semver_constraint = podinfo_installed_refs("my-podinfo-2")
 
-	create_request_reconcile_options = &corev1.CreateInstalledPackageRequest{
+	create_installed_package_request_reconcile_options = &corev1.CreateInstalledPackageRequest{
 		AvailablePackageRef: availableRef("podinfo-3/podinfo", "default"),
 		Name:                "my-podinfo-3",
 		TargetContext:       targetContext("test-3"),
@@ -71,7 +72,7 @@ var (
 		},
 	}
 
-	expected_detail_reconcile_options = &corev1.InstalledPackageDetail{
+	expected_detail_installed_package_reconcile_options = &corev1.InstalledPackageDetail{
 		PkgVersionReference: &corev1.VersionReference{
 			Version: "*",
 		},
@@ -87,14 +88,14 @@ var (
 
 	expected_resource_refs_reconcile_options = podinfo_installed_refs("my-podinfo-3")
 
-	create_request_with_values = &corev1.CreateInstalledPackageRequest{
+	create_installed_package_request_with_values = &corev1.CreateInstalledPackageRequest{
 		AvailablePackageRef: availableRef("podinfo-4/podinfo", "default"),
 		Name:                "my-podinfo-4",
 		TargetContext:       targetContext("test-4"),
 		Values:              "{\"ui\": { \"message\": \"what we do in the shadows\" } }",
 	}
 
-	expected_detail_with_values = &corev1.InstalledPackageDetail{
+	expected_detail_installed_package_with_values = &corev1.InstalledPackageDetail{
 		CurrentVersion: pkgAppVersion("6.0.0"),
 		PkgVersionReference: &corev1.VersionReference{
 			Version: "*",
@@ -106,14 +107,14 @@ var (
 
 	expected_resource_refs_with_values = podinfo_installed_refs("my-podinfo-4")
 
-	create_request_install_fails = &corev1.CreateInstalledPackageRequest{
+	create_installed_package_request_install_fails = &corev1.CreateInstalledPackageRequest{
 		AvailablePackageRef: availableRef("podinfo-5/podinfo", "default"),
 		Name:                "my-podinfo-5",
 		TargetContext:       targetContext("test-5"),
 		Values:              "{\"replicaCount\": \"what we do in the shadows\" }",
 	}
 
-	expected_detail_install_fails = &corev1.InstalledPackageDetail{
+	expected_detail_installed_package_install_fails = &corev1.InstalledPackageDetail{
 		CurrentVersion: &corev1.PackageAppVersion{
 			PkgVersion: "6.0.0",
 		},
@@ -135,7 +136,7 @@ var (
 		ValuesApplied: "{\"replicaCount\":\"what we do in the shadows\"}",
 	}
 
-	create_request_podinfo_5_2_1 = &corev1.CreateInstalledPackageRequest{
+	create_installed_package_request_podinfo_5_2_1 = &corev1.CreateInstalledPackageRequest{
 		AvailablePackageRef: availableRef("podinfo-6/podinfo", "default"),
 		Name:                "my-podinfo-6",
 		TargetContext:       targetContext("test-1"),
@@ -144,7 +145,7 @@ var (
 		},
 	}
 
-	expected_detail_podinfo_5_2_1 = &corev1.InstalledPackageDetail{
+	expected_detail_installed_package_podinfo_5_2_1 = &corev1.InstalledPackageDetail{
 		PkgVersionReference: &corev1.VersionReference{
 			Version: "=5.2.1",
 		},
@@ -155,7 +156,7 @@ var (
 
 	expected_resource_refs_podinfo_5_2_1 = podinfo_installed_refs("my-podinfo-6")
 
-	expected_detail_podinfo_6_0_0 = &corev1.InstalledPackageDetail{
+	expected_detail_installed_package_podinfo_6_0_0 = &corev1.InstalledPackageDetail{
 		PkgVersionReference: &corev1.VersionReference{
 			Version: "6.0.0",
 		},
@@ -164,7 +165,7 @@ var (
 		PostInstallationNotes: podinfo_notes("my-podinfo-6"),
 	}
 
-	create_request_podinfo_5_2_1_no_values = &corev1.CreateInstalledPackageRequest{
+	create_installed_package_request_podinfo_5_2_1_no_values = &corev1.CreateInstalledPackageRequest{
 		AvailablePackageRef: availableRef("podinfo-7/podinfo", "default"),
 		Name:                "my-podinfo-7",
 		TargetContext:       targetContext("test-7"),
@@ -173,7 +174,7 @@ var (
 		},
 	}
 
-	expected_detail_podinfo_5_2_1_no_values = &corev1.InstalledPackageDetail{
+	expected_detail_installed_package_podinfo_5_2_1_no_values = &corev1.InstalledPackageDetail{
 		PkgVersionReference: &corev1.VersionReference{
 			Version: "=5.2.1",
 		},
@@ -184,7 +185,7 @@ var (
 
 	expected_resource_refs_podinfo_5_2_1_no_values = podinfo_installed_refs("my-podinfo-7")
 
-	expected_detail_podinfo_5_2_1_values = &corev1.InstalledPackageDetail{
+	expected_detail_installed_package_podinfo_5_2_1_values = &corev1.InstalledPackageDetail{
 		PkgVersionReference: &corev1.VersionReference{
 			Version: "=5.2.1",
 		},
@@ -194,7 +195,7 @@ var (
 		PostInstallationNotes: podinfo_notes("my-podinfo-7"),
 	}
 
-	create_request_podinfo_5_2_1_values_2 = &corev1.CreateInstalledPackageRequest{
+	create_installed_package_request_podinfo_5_2_1_values_2 = &corev1.CreateInstalledPackageRequest{
 		AvailablePackageRef: availableRef("podinfo-8/podinfo", "default"),
 		Name:                "my-podinfo-8",
 		TargetContext:       targetContext("test-8"),
@@ -204,7 +205,7 @@ var (
 		Values: "{\"ui\":{\"message\":\"what we do in the shadows\"}}",
 	}
 
-	expected_detail_podinfo_5_2_1_values_2 = &corev1.InstalledPackageDetail{
+	expected_detail_installed_package_podinfo_5_2_1_values_2 = &corev1.InstalledPackageDetail{
 		PkgVersionReference: &corev1.VersionReference{
 			Version: "=5.2.1",
 		},
@@ -216,7 +217,7 @@ var (
 
 	expected_resource_refs_podinfo_5_2_1_values_2 = podinfo_installed_refs("my-podinfo-8")
 
-	expected_detail_podinfo_5_2_1_values_3 = &corev1.InstalledPackageDetail{
+	expected_detail_installed_package_podinfo_5_2_1_values_3 = &corev1.InstalledPackageDetail{
 		PkgVersionReference: &corev1.VersionReference{
 			Version: "=5.2.1",
 		},
@@ -226,7 +227,7 @@ var (
 		PostInstallationNotes: podinfo_notes("my-podinfo-8"),
 	}
 
-	create_request_podinfo_5_2_1_values_4 = &corev1.CreateInstalledPackageRequest{
+	create_installed_package_request_podinfo_5_2_1_values_4 = &corev1.CreateInstalledPackageRequest{
 		AvailablePackageRef: availableRef("podinfo-9/podinfo", "default"),
 		Name:                "my-podinfo-9",
 		TargetContext:       targetContext("test-9"),
@@ -236,7 +237,7 @@ var (
 		Values: "{\"ui\":{\"message\":\"what we do in the shadows\"}}",
 	}
 
-	expected_detail_podinfo_5_2_1_values_4 = &corev1.InstalledPackageDetail{
+	expected_detail_installed_package_podinfo_5_2_1_values_4 = &corev1.InstalledPackageDetail{
 		PkgVersionReference: &corev1.VersionReference{
 			Version: "=5.2.1",
 		},
@@ -248,7 +249,7 @@ var (
 
 	expected_resource_refs_podinfo_5_2_1_values_4 = podinfo_installed_refs("my-podinfo-9")
 
-	expected_detail_podinfo_5_2_1_values_5 = &corev1.InstalledPackageDetail{
+	expected_detail_installed_package_podinfo_5_2_1_values_5 = &corev1.InstalledPackageDetail{
 		PkgVersionReference: &corev1.VersionReference{
 			Version: "=5.2.1",
 		},
@@ -257,7 +258,7 @@ var (
 		PostInstallationNotes: podinfo_notes("my-podinfo-9"),
 	}
 
-	create_request_podinfo_5_2_1_values_6 = &corev1.CreateInstalledPackageRequest{
+	create_installed_package_request_podinfo_5_2_1_values_6 = &corev1.CreateInstalledPackageRequest{
 		AvailablePackageRef: availableRef("podinfo-10/podinfo", "default"),
 		Name:                "my-podinfo-10",
 		TargetContext:       targetContext("test-10"),
@@ -267,7 +268,7 @@ var (
 		Values: "{\"ui\":{\"message\":\"what we do in the shadows\"}}",
 	}
 
-	expected_detail_podinfo_5_2_1_values_6 = &corev1.InstalledPackageDetail{
+	expected_detail_installed_package_podinfo_5_2_1_values_6 = &corev1.InstalledPackageDetail{
 		PkgVersionReference: &corev1.VersionReference{
 			Version: "=5.2.1",
 		},
@@ -279,20 +280,20 @@ var (
 
 	expected_resource_refs_podinfo_5_2_1_values_6 = podinfo_installed_refs("my-podinfo-10")
 
-	create_request_podinfo_7 = &corev1.CreateInstalledPackageRequest{
+	create_installed_package_request_podinfo_7 = &corev1.CreateInstalledPackageRequest{
 		AvailablePackageRef: availableRef("podinfo-11/podinfo", "default"),
 		Name:                "my-podinfo-11",
 		TargetContext:       targetContext("test-11"),
 	}
 
-	create_request_podinfo_8 = &corev1.CreateInstalledPackageRequest{
+	create_installed_package_request_podinfo_8 = &corev1.CreateInstalledPackageRequest{
 		AvailablePackageRef: availableRef("podinfo-12/podinfo", "default"),
 		Name:                "my-podinfo-12",
 		TargetContext:       targetContext("test-12"),
 		Values:              "{\"replicaCount\": \"what we do in the shadows\" }",
 	}
 
-	expected_detail_podinfo_7 = &corev1.InstalledPackageDetail{
+	expected_detail_installed_package_podinfo_7 = &corev1.InstalledPackageDetail{
 		PkgVersionReference: &corev1.VersionReference{
 			Version: "*",
 		},
@@ -301,7 +302,7 @@ var (
 		PostInstallationNotes: podinfo_notes("my-podinfo-11"),
 	}
 
-	expected_detail_podinfo_8 = &corev1.InstalledPackageDetail{
+	expected_detail_installed_package_podinfo_8 = &corev1.InstalledPackageDetail{
 		CurrentVersion: &corev1.PackageAppVersion{
 			PkgVersion: "6.0.0",
 		},
@@ -323,7 +324,7 @@ var (
 		ValuesApplied: "{\"replicaCount\":\"what we do in the shadows\"}",
 	}
 
-	expected_detail_podinfo_9 = &corev1.InstalledPackageDetail{
+	expected_detail_installed_package_podinfo_9 = &corev1.InstalledPackageDetail{
 		PkgVersionReference: &corev1.VersionReference{
 			Version: "6.0.0",
 		},
@@ -336,6 +337,17 @@ var (
 	expected_resource_refs_podinfo_7 = podinfo_installed_refs("my-podinfo-11")
 
 	expected_resource_refs_podinfo_9 = podinfo_installed_refs("my-podinfo-12")
+
+	expected_detail_installed_package_oci = &corev1.InstalledPackageDetail{
+		PkgVersionReference: &corev1.VersionReference{
+			Version: "*",
+		},
+		CurrentVersion:        pkgAppVersion("6.1.5"),
+		Status:                status_installed,
+		PostInstallationNotes: podinfo_notes("my-podinfo-17"),
+	}
+
+	expected_resource_refs_oci = podinfo_installed_refs("my-podinfo-17")
 
 	update_request_1 = &corev1.UpdateInstalledPackageRequest{
 		// InstalledPackageRef will be filled in by the code below after a call to create(...) completes
@@ -392,7 +404,7 @@ var (
 		Values: "{\"replicaCount\": 1 }",
 	}
 
-	create_request_podinfo_for_delete_1 = &corev1.CreateInstalledPackageRequest{
+	create_installed_package_request_podinfo_for_delete_1 = &corev1.CreateInstalledPackageRequest{
 		AvailablePackageRef: availableRef("podinfo-12/podinfo", "default"),
 		Name:                "my-podinfo-12",
 		TargetContext:       targetContext("test-12"),
@@ -401,7 +413,7 @@ var (
 		},
 	}
 
-	expected_detail_podinfo_for_delete_1 = &corev1.InstalledPackageDetail{
+	expected_detail_installed_package_podinfo_for_delete_1 = &corev1.InstalledPackageDetail{
 		PkgVersionReference: &corev1.VersionReference{
 			Version: "=5.2.1",
 		},
@@ -412,7 +424,7 @@ var (
 
 	expected_resource_refs_for_delete_1 = podinfo_installed_refs("my-podinfo-12")
 
-	create_request_podinfo_for_delete_2 = &corev1.CreateInstalledPackageRequest{
+	create_installed_package_request_podinfo_for_delete_2 = &corev1.CreateInstalledPackageRequest{
 		AvailablePackageRef: availableRef("podinfo-13/podinfo", "default"),
 		Name:                "my-podinfo-13",
 		TargetContext:       targetContext("test-13"),
@@ -421,7 +433,7 @@ var (
 		},
 	}
 
-	expected_detail_podinfo_for_delete_2 = &corev1.InstalledPackageDetail{
+	expected_detail_installed_package_podinfo_for_delete_2 = &corev1.InstalledPackageDetail{
 		PkgVersionReference: &corev1.VersionReference{
 			Version: "=5.2.1",
 		},
@@ -432,7 +444,7 @@ var (
 
 	expected_resource_refs_for_delete_2 = podinfo_installed_refs("my-podinfo-13")
 
-	create_request_wrong_cluster = &corev1.CreateInstalledPackageRequest{
+	create_installed_package_request_wrong_cluster = &corev1.CreateInstalledPackageRequest{
 		AvailablePackageRef: availableRef("podinfo-14/podinfo", "default"),
 		Name:                "my-podinfo",
 		TargetContext: &corev1.Context{
@@ -441,13 +453,13 @@ var (
 		},
 	}
 
-	create_request_target_ns_doesnt_exist = &corev1.CreateInstalledPackageRequest{
+	create_installed_package_request_target_ns_doesnt_exist = &corev1.CreateInstalledPackageRequest{
 		AvailablePackageRef: availableRef("podinfo-15/podinfo", "default"),
 		Name:                "my-podinfo",
 		TargetContext:       targetContext("test-15"),
 	}
 
-	create_request_auto_update = &corev1.CreateInstalledPackageRequest{
+	create_installed_package_request_auto_update = &corev1.CreateInstalledPackageRequest{
 		AvailablePackageRef: availableRef("podinfo-16/podinfo", "default"),
 		Name:                "my-podinfo-16",
 		TargetContext:       targetContext("test-16"),
@@ -459,7 +471,7 @@ var (
 		},
 	}
 
-	expected_detail_auto_update = &corev1.InstalledPackageDetail{
+	expected_detail_installed_package_auto_update = &corev1.InstalledPackageDetail{
 		PkgVersionReference: &corev1.VersionReference{
 			Version: ">= 6",
 		},
@@ -471,7 +483,7 @@ var (
 		PostInstallationNotes: podinfo_notes("my-podinfo-16"),
 	}
 
-	expected_detail_auto_update_2 = &corev1.InstalledPackageDetail{
+	expected_detail_installed_package_auto_update_2 = &corev1.InstalledPackageDetail{
 		PkgVersionReference: &corev1.VersionReference{
 			Version: ">= 6",
 		},
@@ -493,6 +505,59 @@ var (
 	}
 
 	expected_resource_refs_auto_update = podinfo_installed_refs("my-podinfo-16")
+
+	create_installed_package_request_oci = &corev1.CreateInstalledPackageRequest{
+		AvailablePackageRef: availableRef("podinfo-17/podinfo", "default"),
+		Name:                "my-podinfo-17",
+		TargetContext:       targetContext("test-17"),
+	}
+
+	create_installed_package_request_auto_update_oci = &corev1.CreateInstalledPackageRequest{
+		AvailablePackageRef: availableRef("podinfo-18/podinfo", "default"),
+		Name:                "my-podinfo-18",
+		TargetContext:       targetContext("test-18"),
+		PkgVersionReference: &corev1.VersionReference{
+			Version: ">= 6",
+		},
+		ReconciliationOptions: &corev1.ReconciliationOptions{
+			Interval: "30s",
+		},
+	}
+
+	expected_detail_installed_package_auto_update_oci = &corev1.InstalledPackageDetail{
+		PkgVersionReference: &corev1.VersionReference{
+			Version: ">= 6",
+		},
+		CurrentVersion: pkgAppVersion("6.1.5"),
+		Status:         status_installed,
+		ReconciliationOptions: &corev1.ReconciliationOptions{
+			Interval: "30s",
+		},
+		PostInstallationNotes: podinfo_notes("my-podinfo-18"),
+	}
+
+	expected_resource_refs_auto_update_oci = podinfo_installed_refs("my-podinfo-18")
+
+	expected_detail_installed_package_auto_update_oci_2 = &corev1.InstalledPackageDetail{
+		PkgVersionReference: &corev1.VersionReference{
+			Version: ">= 6",
+		},
+		CurrentVersion: pkgAppVersion("6.1.6"),
+		Name:           "my-podinfo-18",
+		Status:         status_installed,
+		ReconciliationOptions: &corev1.ReconciliationOptions{
+			Interval: "30s",
+		},
+		AvailablePackageRef: &corev1.AvailablePackageReference{
+			Context: &corev1.Context{
+				Cluster:   KubeappsCluster,
+				Namespace: "default",
+			},
+			Identifier: "podinfo-18/podinfo",
+			Plugin:     fluxPlugin,
+		},
+		PostInstallationNotes: podinfo_notes("my-podinfo-18"),
+	}
 
 	expected_detail_test_release_rbac = &corev1.InstalledPackageDetail{
 		PkgVersionReference: &corev1.VersionReference{
@@ -629,7 +694,7 @@ var (
 		},
 	}
 
-	valid_index_package_summaries = []*corev1.AvailablePackageSummary{
+	valid_index_available_package_summaries = []*corev1.AvailablePackageSummary{
 		{
 			Name:             "acs-engine-autoscaler",
 			DisplayName:      "acs-engine-autoscaler",
@@ -864,6 +929,23 @@ var (
 		},
 	}
 
+	add_repo_6 = sourcev1.HelmRepository{
+		TypeMeta: metav1.TypeMeta{
+			Kind:       sourcev1.HelmRepositoryKind,
+			APIVersion: sourcev1.GroupVersion.String(),
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:            "bar",
+			Namespace:       "foo",
+			ResourceVersion: "1",
+		},
+		Spec: sourcev1.HelmRepositorySpec{
+			URL:      github_stefanprodan_podinfo_oci_registry_url,
+			Interval: metav1.Duration{Duration: 10 * time.Minute},
+			Type:     "oci",
+		},
+	}
+
 	add_repo_req_1 = &corev1.AddPackageRepositoryRequest{
 		Name:            "bar",
 		Context:         &corev1.Context{Namespace: "foo"},
@@ -1089,7 +1171,7 @@ var (
 		Name:    "my-podinfo-5",
 		Context: &corev1.Context{Namespace: "default"},
 		Type:    "oci",
-		Url:     github_podinfo_oci_registry_url,
+		Url:     github_stefanprodan_podinfo_oci_registry_url,
 	}
 
 	add_repo_req_22 = func(user, password string) *corev1.AddPackageRepositoryRequest {
@@ -1097,7 +1179,7 @@ var (
 			Name:    "my-podinfo-6",
 			Context: &corev1.Context{Namespace: "default"},
 			Type:    "oci",
-			Url:     github_podinfo_oci_registry_url,
+			Url:     github_stefanprodan_podinfo_oci_registry_url,
 			Auth: &corev1.PackageRepositoryAuth{
 				Type: corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_BASIC_AUTH,
 				PackageRepoAuthOneOf: &corev1.PackageRepositoryAuth_UsernamePassword{
@@ -1114,7 +1196,7 @@ var (
 		Name:    "my-podinfo-7",
 		Context: &corev1.Context{Namespace: "default"},
 		Type:    "oci",
-		Url:     github_podinfo_oci_registry_url,
+		Url:     github_stefanprodan_podinfo_oci_registry_url,
 		Auth: &corev1.PackageRepositoryAuth{
 			Type: corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_BASIC_AUTH,
 			PackageRepoAuthOneOf: &corev1.PackageRepositoryAuth_SecretRef{
@@ -1130,7 +1212,7 @@ var (
 			Name:    "my-podinfo-8",
 			Context: &corev1.Context{Namespace: "default"},
 			Type:    "oci",
-			Url:     github_podinfo_oci_registry_url,
+			Url:     github_stefanprodan_podinfo_oci_registry_url,
 			Auth: &corev1.PackageRepositoryAuth{
 				Type: corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_DOCKER_CONFIG_JSON,
 				PackageRepoAuthOneOf: &corev1.PackageRepositoryAuth_DockerCreds{
@@ -1148,7 +1230,7 @@ var (
 		Name:    "my-podinfo-9",
 		Context: &corev1.Context{Namespace: "default"},
 		Type:    "oci",
-		Url:     github_podinfo_oci_registry_url,
+		Url:     github_stefanprodan_podinfo_oci_registry_url,
 		Auth: &corev1.PackageRepositoryAuth{
 			Type: corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_DOCKER_CONFIG_JSON,
 			PackageRepoAuthOneOf: &corev1.PackageRepositoryAuth_SecretRef{
@@ -1157,6 +1239,13 @@ var (
 				},
 			},
 		},
+	}
+
+	add_repo_req_26 = &corev1.AddPackageRepositoryRequest{
+		Name:    "bar",
+		Context: &corev1.Context{Namespace: "foo"},
+		Type:    "oci",
+		Url:     github_stefanprodan_podinfo_oci_registry_url,
 	}
 
 	add_repo_expected_resp = &corev1.AddPackageRepositoryResponse{
@@ -2035,9 +2124,23 @@ var (
 
 	expected_versions_stefanprodan_podinfo = &corev1.GetAvailablePackageVersionsResponse{
 		PackageAppVersions: []*corev1.PackageAppVersion{
+			{PkgVersion: "6.1.8"},
+			{PkgVersion: "6.1.7"},
 			{PkgVersion: "6.1.6"},
+		},
+	}
+
+	expected_versions_gfichtenholt_podinfo = &corev1.GetAvailablePackageVersionsResponse{
+		PackageAppVersions: []*corev1.PackageAppVersion{
 			{PkgVersion: "6.1.5"},
-			{PkgVersion: "6.1.4"},
+		},
+	}
+
+	expected_versions_podinfo_2 = &corev1.GetAvailablePackageVersionsResponse{
+		PackageAppVersions: []*corev1.PackageAppVersion{
+			{PkgVersion: "6.1.5"},
+			{PkgVersion: "6.0.3"},
+			{PkgVersion: "6.0.0"},
 		},
 	}
 
@@ -2513,7 +2616,7 @@ var (
 			Description:     "",
 			NamespaceScoped: false,
 			Type:            "helm",
-			Url:             github_podinfo_oci_registry_url,
+			Url:             github_stefanprodan_podinfo_oci_registry_url,
 			Interval:        "10m",
 			Auth:            &corev1.PackageRepositoryAuth{},
 			Status: &corev1.PackageRepositoryStatus{
@@ -2546,7 +2649,7 @@ var (
 			Description:     "",
 			NamespaceScoped: false,
 			Type:            "oci",
-			Url:             github_podinfo_oci_registry_url,
+			Url:             github_stefanprodan_podinfo_oci_registry_url,
 			Interval:        "10m",
 			Auth:            &corev1.PackageRepositoryAuth{},
 			Status: &corev1.PackageRepositoryStatus{
@@ -2564,7 +2667,7 @@ var (
 			Description:     "",
 			NamespaceScoped: false,
 			Type:            "oci",
-			Url:             github_podinfo_oci_registry_url,
+			Url:             github_stefanprodan_podinfo_oci_registry_url,
 			Interval:        "10m",
 			Auth: &corev1.PackageRepositoryAuth{
 				Type: corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_BASIC_AUTH,
@@ -2590,7 +2693,7 @@ var (
 			Description:     "",
 			NamespaceScoped: false,
 			Type:            "oci",
-			Url:             github_podinfo_oci_registry_url,
+			Url:             github_stefanprodan_podinfo_oci_registry_url,
 			Interval:        "10m",
 			Auth: &corev1.PackageRepositoryAuth{
 				Type: corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_DOCKER_CONFIG_JSON,
@@ -2607,6 +2710,20 @@ var (
 				Reason:     corev1.PackageRepositoryStatus_STATUS_REASON_SUCCESS,
 				UserReason: "Succeeded: Helm repository is ready",
 			},
+		},
+	}
+
+	get_repo_detail_resp_19 = &corev1.GetPackageRepositoryDetailResponse{
+		Detail: &corev1.PackageRepositoryDetail{
+			PackageRepoRef:  get_repo_detail_package_resp_ref,
+			Name:            "repo-1",
+			Description:     "",
+			NamespaceScoped: false,
+			Type:            "oci",
+			Url:             "oci://localhost:54321/userX/charts",
+			Interval:        "1m",
+			Auth:            &corev1.PackageRepositoryAuth{},
+			Status:          podinfo_repo_status_4,
 		},
 	}
 
@@ -2754,7 +2871,7 @@ var (
 			Description:     "",
 			NamespaceScoped: false,
 			Type:            "oci",
-			Url:             github_podinfo_oci_registry_url,
+			Url:             github_stefanprodan_podinfo_oci_registry_url,
 			Status:          podinfo_repo_status_4,
 			RequiresAuth:    false,
 		}
@@ -2866,6 +2983,15 @@ var (
 		Auth:           foo_bar_auth_redacted,
 	}
 
+	update_repo_req_18 = func(ghUser, ghPasswd string) *corev1.UpdatePackageRepositoryRequest {
+		return &corev1.UpdatePackageRepositoryRequest{
+			PackageRepoRef: repoRefInReq("my-podinfo-7", "TBD"),
+			Url:            github_stefanprodan_podinfo_oci_registry_url,
+			Auth:           github_auth(ghUser, ghPasswd),
+			Interval:       "4m44s",
+		}
+	}
+
 	update_repo_resp_1 = &corev1.UpdatePackageRepositoryResponse{
 		PackageRepoRef: repoRef("repo-1", "namespace-1"),
 	}
@@ -2888,6 +3014,10 @@ var (
 
 	update_repo_resp_6 = &corev1.UpdatePackageRepositoryResponse{
 		PackageRepoRef: repoRefWithId("my-podinfo-6"),
+	}
+
+	update_repo_resp_7 = &corev1.UpdatePackageRepositoryResponse{
+		PackageRepoRef: repoRefWithId("my-podinfo-7"),
 	}
 
 	update_repo_detail_1 = &corev1.GetPackageRepositoryDetailResponse{
@@ -3122,6 +3252,20 @@ var (
 		},
 	}
 
+	update_repo_detail_17 = &corev1.GetPackageRepositoryDetailResponse{
+		Detail: &corev1.PackageRepositoryDetail{
+			PackageRepoRef:  repoRefWithId("my-podinfo-7"),
+			Name:            "my-podinfo-7",
+			Description:     "",
+			NamespaceScoped: false,
+			Type:            "oci",
+			Url:             github_stefanprodan_podinfo_oci_registry_url,
+			Interval:        "4m44s",
+			Auth:            foo_bar_auth_redacted,
+			Status:          podinfo_repo_status_4,
+		},
+	}
+
 	foo_bar_auth = &corev1.PackageRepositoryAuth{
 		Type: corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_BASIC_AUTH,
 		PackageRepoAuthOneOf: &corev1.PackageRepositoryAuth_UsernamePassword{
@@ -3140,6 +3284,18 @@ var (
 				Password: redactedString,
 			},
 		},
+	}
+
+	github_auth = func(ghUser, ghToken string) *corev1.PackageRepositoryAuth {
+		return &corev1.PackageRepositoryAuth{
+			Type: corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_BASIC_AUTH,
+			PackageRepoAuthOneOf: &corev1.PackageRepositoryAuth_UsernamePassword{
+				UsernamePassword: &corev1.UsernamePassword{
+					Username: ghUser,
+					Password: ghToken,
+				},
+			},
+		}
 	}
 
 	tls_auth = func(pub, priv []byte) *corev1.PackageRepositoryAuth {
@@ -3292,7 +3448,7 @@ var (
 					Name:                "podinfo",
 					AvailablePackageRef: availableRef(name+"/podinfo", "default"),
 					LatestVersion: &corev1.PackageAppVersion{
-						PkgVersion: "6.1.6",
+						PkgVersion: "6.1.8",
 					},
 					DisplayName:      "podinfo",
 					ShortDescription: "Podinfo Helm chart for Kubernetes",
@@ -3307,8 +3463,8 @@ var (
 			AvailablePackageDetail: &corev1.AvailablePackageDetail{
 				AvailablePackageRef: availableRef(name+"/podinfo", "default"),
 				Name:                "podinfo",
-				Version:             pkgAppVersion("6.1.6"),
-				RepoUrl:             "oci://ghcr.io/stefanprodan/charts",
+				Version:             pkgAppVersion("6.1.8"),
+				RepoUrl:             github_stefanprodan_podinfo_oci_registry_url,
 				HomeUrl:             "https://github.com/stefanprodan/podinfo",
 				DisplayName:         "podinfo",
 				ShortDescription:    "Podinfo Helm chart for Kubernetes",
@@ -3327,8 +3483,8 @@ var (
 			AvailablePackageDetail: &corev1.AvailablePackageDetail{
 				AvailablePackageRef: availableRef(name+"/podinfo", "default"),
 				Name:                "podinfo",
-				Version:             pkgAppVersion("6.1.5"),
-				RepoUrl:             "oci://ghcr.io/stefanprodan/charts",
+				Version:             pkgAppVersion("6.1.6"),
+				RepoUrl:             github_stefanprodan_podinfo_oci_registry_url,
 				HomeUrl:             "https://github.com/stefanprodan/podinfo",
 				DisplayName:         "podinfo",
 				ShortDescription:    "Podinfo Helm chart for Kubernetes",
@@ -3340,5 +3496,191 @@ var (
 				DefaultValues: "Default values for podinfo.\n\nreplicaCount: 1\n",
 			},
 		}
+	}
+
+	newFakeRemoteOciRegistryData_1 = func() (*fakeRemoteOciRegistryData, error) {
+		chartBytes, err := ioutil.ReadFile(testTgz("podinfo-6.1.5.tgz"))
+		if err != nil {
+			return nil, err
+		}
+		return &fakeRemoteOciRegistryData{
+			repositories: []fakeRepo{
+				{
+					name: "podinfo",
+					chart: fakeChart{
+						versions: []fakeChartVersion{
+							{
+								version:  "6.1.5",
+								tgzBytes: chartBytes,
+							},
+						},
+					},
+				},
+			},
+		}, nil
+	}
+
+	oci_repo_available_package_summaries = []*corev1.AvailablePackageSummary{
+		{
+			Name:        "podinfo",
+			DisplayName: "podinfo",
+			LatestVersion: &corev1.PackageAppVersion{
+				PkgVersion: "6.1.5",
+			},
+			AvailablePackageRef: availableRef("repo-1/podinfo", "namespace-1"),
+			Categories:          []string{""},
+			ShortDescription:    "Podinfo Helm chart for Kubernetes",
+		},
+	}
+
+	oci_repo_available_package_summaries_2 = []*corev1.AvailablePackageSummary{
+		{
+			Name:        "podinfo",
+			DisplayName: "podinfo",
+			LatestVersion: &corev1.PackageAppVersion{
+				PkgVersion: "6.1.5",
+			},
+			AvailablePackageRef: availableRef("repo-1/podinfo", "namespace-1"),
+			Categories:          []string{""},
+			ShortDescription:    "Podinfo Helm chart for Kubernetes",
+		},
+		{
+			Name:        "airflow",
+			DisplayName: "airflow",
+			LatestVersion: &corev1.PackageAppVersion{
+				PkgVersion: "6.7.1",
+			},
+			IconUrl:             "https://bitnami.com/assets/stacks/airflow/img/airflow-stack-110x117.png",
+			AvailablePackageRef: availableRef("repo-1/airflow", "namespace-1"),
+			Categories:          []string{"WorkFlow"},
+			ShortDescription:    "Apache Airflow is a platform to programmatically author, schedule and monitor workflows.",
+		},
+	}
+
+	oci_podinfo_charts_spec = []testSpecChartWithUrl{
+		{
+			chartID:       "repo-1/podinfo",
+			chartUrl:      "oci://localhost:54321/userX/charts/podinfo:6.1.5",
+			chartRevision: "6.1.5",
+			repoNamespace: "namespace-1",
+		},
+	}
+
+	oci_podinfo_charts_spec_2 = []testSpecChartWithUrl{
+		{
+			chartID:       "repo-1/podinfo",
+			chartUrl:      "oci://localhost:54321/userX/charts/podinfo:6.1.5",
+			chartRevision: "6.1.5",
+			repoNamespace: "namespace-1",
+		},
+		{
+			chartID:       "repo-1/podinfo",
+			chartUrl:      "oci://localhost:54321/userX/charts/podinfo:6.0.3",
+			chartRevision: "6.0.3",
+			repoNamespace: "namespace-1",
+		},
+		{
+			chartID:       "repo-1/podinfo",
+			chartUrl:      "oci://localhost:54321/userX/charts/podinfo:6.0.0",
+			chartRevision: "6.0.0",
+			repoNamespace: "namespace-1",
+		},
+	}
+
+	expected_detail_podinfo_1 = &corev1.AvailablePackageDetail{
+		AvailablePackageRef: availableRef("repo-1/podinfo", "namespace-1"),
+		Name:                "podinfo",
+		Version: &corev1.PackageAppVersion{
+			PkgVersion: "6.1.5",
+			AppVersion: "6.1.5",
+		},
+		RepoUrl:          "oci://localhost:54321/userX/charts",
+		HomeUrl:          "https://github.com/stefanprodan/podinfo",
+		DisplayName:      "podinfo",
+		ShortDescription: "Podinfo Helm chart for Kubernetes",
+		Readme:           "Podinfo is a tiny web application made with Go",
+		DefaultValues:    "Default values for podinfo.",
+		SourceUrls:       []string{"https://github.com/stefanprodan/podinfo"},
+		Maintainers: []*corev1.Maintainer{
+			{
+				Name:  "stefanprodan",
+				Email: "stefanprodan@users.noreply.github.com",
+			},
+		},
+	}
+
+	newFakeRemoteOciRegistryData_2 = func() (*fakeRemoteOciRegistryData, error) {
+		chartBytes1, err := ioutil.ReadFile(testTgz("podinfo-6.1.5.tgz"))
+		if err != nil {
+			return nil, err
+		}
+		chartBytes2, err := ioutil.ReadFile(testTgz("podinfo-6.0.0.tgz"))
+		if err != nil {
+			return nil, err
+		}
+		chartBytes3, err := ioutil.ReadFile(testTgz("podinfo-6.0.3.tgz"))
+		if err != nil {
+			return nil, err
+		}
+		return &fakeRemoteOciRegistryData{
+			repositories: []fakeRepo{
+				{
+					name: "podinfo",
+					chart: fakeChart{
+						versions: []fakeChartVersion{
+							{
+								version:  "6.1.5",
+								tgzBytes: chartBytes1,
+							},
+							{
+								version:  "6.0.0",
+								tgzBytes: chartBytes2,
+							},
+							{
+								version:  "6.0.3",
+								tgzBytes: chartBytes3,
+							},
+						},
+					},
+				},
+			},
+		}, nil
+	}
+
+	newFakeRemoteOciRegistryData_3 = func() (*fakeRemoteOciRegistryData, error) {
+		chartBytes1, err := ioutil.ReadFile(testTgz("podinfo-6.1.5.tgz"))
+		if err != nil {
+			return nil, err
+		}
+		chartBytes2, err := ioutil.ReadFile(testTgz("airflow-6.7.1.tgz"))
+		if err != nil {
+			return nil, err
+		}
+		return &fakeRemoteOciRegistryData{
+			repositories: []fakeRepo{
+				{
+					name: "podinfo",
+					chart: fakeChart{
+						versions: []fakeChartVersion{
+							{
+								version:  "6.1.5",
+								tgzBytes: chartBytes1,
+							},
+						},
+					},
+				},
+				{
+					name: "airflow",
+					chart: fakeChart{
+						versions: []fakeChartVersion{
+							{
+								version:  "6.7.1",
+								tgzBytes: chartBytes2,
+							},
+						},
+					},
+				},
+			},
+		}, nil
 	}
 )
