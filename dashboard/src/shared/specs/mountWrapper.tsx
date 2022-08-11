@@ -31,6 +31,7 @@ export const initialState = {
     kubeappsCluster: "default-cluster",
     kubeappsNamespace: "kubeapps",
     globalReposNamespace: "kubeapps-repos-global",
+    carvelGlobalNamespace: "kapp-controller-packaging-global",
   },
   kube: cloneDeep(kubeInitialState),
   clusters: {
