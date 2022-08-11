@@ -27,7 +27,7 @@ const defaultProps = {
   cluster: "default",
   kubeappsNamespace: "kubeapps",
   globalReposNamespace: "kubeapps",
-  carvelGlobalNamespace: "carvel-global"
+  carvelGlobalNamespace: "carvel-global",
 };
 
 const defaultState = {
