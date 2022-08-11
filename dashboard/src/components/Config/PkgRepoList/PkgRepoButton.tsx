@@ -16,6 +16,7 @@ import { PkgRepoForm } from "./PkgRepoForm";
 interface IPkgRepoAddButtonProps {
   namespace: string;
   globalReposNamespace: string;
+  carvelGlobalNamespace: string;
   text?: string;
   primary?: boolean;
   packageRepoRef?: PackageRepositoryReference;
@@ -26,7 +27,8 @@ interface IPkgRepoAddButtonProps {
 export function PkgRepoAddButton({
   text,
   namespace,
-  globalReposNamespace: kubeappsNamespace,
+  globalReposNamespace: globalReposNamespace,
+  carvelGlobalNamespace: carvelGlobalNamespace,
   packageRepoRef,
   primary = true,
   title,
@@ -67,7 +69,8 @@ export function PkgRepoAddButton({
               onAfterInstall={closeModal}
               packageRepoRef={packageRepoRef}
               namespace={namespace}
-              kubeappsNamespace={kubeappsNamespace}
+              globalReposNamespace={globalReposNamespace}
+              carvelGlobalNamespace={carvelGlobalNamespace}
             />
           </CdsModalContent>
         </CdsModal>

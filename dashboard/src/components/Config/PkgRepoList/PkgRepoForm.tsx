@@ -28,12 +28,14 @@ import { useEffect, useRef, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { Action } from "redux";
 import { ThunkDispatch } from "redux-thunk";
+import { IConfig } from "shared/Config";
 import { toFilterRule, toParams } from "shared/jq";
 import { IPkgRepoFormData, IPkgRepositoryFilter, IStoreState } from "shared/types";
 import {
   getPluginByName,
   getPluginPackageName,
   getSupportedPackageRepositoryAuthTypes,
+  isGlobalNamespace,
   k8sObjectNameRegex,
   PluginNames,
 } from "shared/utils";
@@ -43,7 +45,8 @@ interface IPkgRepoFormProps {
   onSubmit: (data: IPkgRepoFormData) => Promise<boolean>;
   onAfterInstall?: () => void;
   namespace: string;
-  kubeappsNamespace: string;
+  globalReposNamespace: string;
+  carvelGlobalNamespace: string;
   packageRepoRef?: PackageRepositoryReference;
 }
 
@@ -63,7 +66,8 @@ export function PkgRepoForm(props: IPkgRepoFormProps) {
     onSubmit,
     onAfterInstall,
     namespace,
-    kubeappsNamespace,
+    globalReposNamespace,
+    carvelGlobalNamespace,
     packageRepoRef: selectedPkgRepo,
   } = props;
   const isInstallingRef = useRef(false);
@@ -1864,11 +1868,14 @@ export function PkgRepoForm(props: IPkgRepoFormProps) {
           </CdsAccordionPanel>
         </CdsAccordion>
 
-        {namespace === kubeappsNamespace && (
+        {isGlobalNamespace(namespace, plugin.name, {
+          globalReposNamespace: globalReposNamespace,
+          carvelGlobalNamespace: carvelGlobalNamespace,
+        } as IConfig) && (
           <p>
-            <strong>NOTE:</strong> This Package Repository will be created in the "
-            {kubeappsNamespace}" global namespace. Consequently, its packages will be available for
-            installation in every namespace and cluster.
+            <strong>NOTE:</strong> This Package Repository will be created in the "{namespace}"
+            global namespace. Consequently, its packages will be available for installation in every
+            namespace and cluster.
           </p>
         )}
         {createError && (

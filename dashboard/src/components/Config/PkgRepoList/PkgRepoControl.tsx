@@ -19,12 +19,14 @@ import "./PkgRepoControl.css";
 interface IPkgRepoListItemProps {
   repo: PackageRepositorySummary;
   globalReposNamespace: string;
+  carvelGlobalNamespace: string;
   refetchRepos: () => void;
 }
 
 export function PkgRepoControl({
   repo,
-  globalReposNamespace: kubeappsNamespace,
+  globalReposNamespace: globalReposNamespace,
+  carvelGlobalNamespace: carvelGlobalNamespace,
   refetchRepos,
 }: IPkgRepoListItemProps) {
   const [modalIsOpen, setModalOpen] = useState(false);
@@ -54,7 +56,8 @@ export function PkgRepoControl({
       <PkgRepoAddButton
         title={`Edit the '${repo.name}' Package Repository`}
         namespace={repo.packageRepoRef?.context?.namespace || ""}
-        globalReposNamespace={kubeappsNamespace}
+        globalReposNamespace={globalReposNamespace}
+        carvelGlobalNamespace={carvelGlobalNamespace}
         text="Edit"
         packageRepoRef={repo.packageRepoRef}
         primary={false}

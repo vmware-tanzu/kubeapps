@@ -7,6 +7,7 @@ import fluxIcon from "icons/flux.svg";
 import helmIcon from "icons/helm.svg";
 import olmIcon from "icons/olm-icon.svg";
 import placeholder from "icons/placeholder.svg";
+import { IConfig } from "./Config";
 import {
   escapeRegExp,
   getAppStatusLabel,
@@ -18,6 +19,7 @@ import {
   getPluginsSupportingRollback,
   getSupportedPackageRepositoryAuthTypes,
   getValueFromEvent,
+  isGlobalNamespace,
   MAX_DESC_LENGTH,
   PluginNames,
   trimDescription,
@@ -182,4 +184,14 @@ it("getSupportedPackageRepositoryAuthTypes", () => {
     getSupportedPackageRepositoryAuthTypes({ name: PluginNames.PACKAGES_KAPP, version: "" }),
   ).toHaveLength(4);
   expect(getSupportedPackageRepositoryAuthTypes({ name: "foo", version: "" })).toHaveLength(0);
+});
+
+it("isGlobalNamespace", () => {
+  const kubeappsConfig = { globalReposNamespace: "helm-global", carvelGlobalNamespace: "carvel-global" } as IConfig;
+  expect(isGlobalNamespace("helm-global", PluginNames.PACKAGES_HELM, kubeappsConfig)).toBe(true);
+  expect(isGlobalNamespace("helm-global", PluginNames.PACKAGES_KAPP, kubeappsConfig)).toBe(false);
+  expect(isGlobalNamespace("helm-global", PluginNames.PACKAGES_FLUX, kubeappsConfig)).toBe(false);
+  expect(isGlobalNamespace("carvel-global", PluginNames.PACKAGES_HELM, kubeappsConfig)).toBe(false);
+  expect(isGlobalNamespace("carvel-global", PluginNames.PACKAGES_KAPP, kubeappsConfig)).toBe(true);
+  expect(isGlobalNamespace("carvel-global", PluginNames.PACKAGES_FLUX, kubeappsConfig)).toBe(false);
 });

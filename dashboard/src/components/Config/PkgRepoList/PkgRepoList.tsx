@@ -32,7 +32,7 @@ function PkgRepoList() {
   const {
     repos: { errors, isFetching, reposSummaries: repos },
     clusters: { clusters, currentCluster },
-    config: { kubeappsCluster, kubeappsNamespace, globalReposNamespace },
+    config: { kubeappsCluster, kubeappsNamespace, globalReposNamespace, carvelGlobalNamespace },
   } = useSelector((state: IStoreState) => state);
   const cluster = currentCluster;
   const { currentNamespace } = clusters[cluster];
@@ -149,6 +149,7 @@ function PkgRepoList() {
             repo={repo}
             refetchRepos={refetchRepos}
             globalReposNamespace={globalReposNamespace}
+            carvelGlobalNamespace={carvelGlobalNamespace}
           />
         ),
       };
@@ -166,6 +167,7 @@ function PkgRepoList() {
             key="add-repo-button"
             namespace={currentNamespace}
             globalReposNamespace={globalReposNamespace}
+            carvelGlobalNamespace={carvelGlobalNamespace}
           />,
         ]}
         filter={

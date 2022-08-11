@@ -15,7 +15,7 @@ import { ThunkAction } from "redux-thunk";
 import { PackageRepositoriesService } from "shared/PackageRepositoriesService";
 import PackagesService from "shared/PackagesService";
 import { IPkgRepoFormData, IStoreState, NotFoundError } from "shared/types";
-import { PluginNames } from "shared/utils";
+import { isGlobalNamespace } from "shared/utils";
 import { ActionType, deprecated } from "typesafe-actions";
 
 const { createAction } = deprecated;
@@ -135,16 +135,11 @@ export const addRepo = (
   return async (dispatch, getState) => {
     const {
       clusters: { currentCluster },
-      config: { globalReposNamespace },
+      config,
     } = getState();
     try {
       dispatch(addOrUpdateRepo());
-      let namespaceScoped = namespace !== globalReposNamespace;
-      // TODO(agamez): currently, flux doesn't support this value to be true
-      if (request.plugin?.name === PluginNames.PACKAGES_FLUX) {
-        namespaceScoped = false;
-      }
-
+      const namespaceScoped = !isGlobalNamespace(namespace, request.plugin?.name, config);
       const addPackageRepositoryResponse = await PackageRepositoriesService.addPackageRepository(
         currentCluster,
         namespace,
