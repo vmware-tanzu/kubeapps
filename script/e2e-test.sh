@@ -309,9 +309,11 @@ installChartMuseum "${CHARTMUSEUM_VERSION}"
 pushChart apache 8.6.2 admin password
 pushChart apache 8.6.3 admin password
 
-# Setting up local Docker registry
-setupLocalDockerRegistry
-pushLocalChart
+# Setting up local Docker registry if not in GKE
+if [[ -z "${GKE_BRANCH-}" ]]
+  setupLocalDockerRegistry
+  pushLocalChart
+fi
 
 # Ensure that we are testing the correct image
 info ""
