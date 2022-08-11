@@ -310,6 +310,12 @@ func TestKindClusterAddPackageRepository(t *testing.T) {
 			expectedStatusCode: codes.OK,
 			userManagedSecrets: true,
 		},
+		{
+			testName:           "test add OCI repo from harbor registry with dockerconfigjson secret (kubeapps managed)",
+			request:            add_repo_req_27("demo.goharbor.io", "admin", "Harbor12345"),
+			expectedResponse:   add_repo_expected_resp_11,
+			expectedStatusCode: codes.OK,
+		},
 	}
 
 	adminAcctName := types.NamespacedName{
@@ -1064,9 +1070,7 @@ func TestKindClusterDeletePackageRepository(t *testing.T) {
 			expectedStatusCode: codes.PermissionDenied,
 			unauthorized:       true,
 		},
-		{ //TODO rewrite this test to use AddPackageRepository
-			//Instead of kubeAddHelmRepository so we don't need to copy
-			//production code bizness logic here
+		{
 			name:     "delete repo also deletes the corresponding secret in kubeapps managed env",
 			request:  delete_repo_req_6,
 			repoName: "my-podinfo-4",

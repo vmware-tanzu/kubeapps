@@ -1,0 +1,9 @@
+{
+    "project_name": "$NAME",
+    "metadata": {
+      "public": "true"
+    },
+    "count_limit": -1,
+    "storage_limit": -1
+  }
+  

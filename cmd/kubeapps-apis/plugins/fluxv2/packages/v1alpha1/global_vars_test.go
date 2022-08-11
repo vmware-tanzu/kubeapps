@@ -1248,6 +1248,25 @@ var (
 		Url:     github_stefanprodan_podinfo_oci_registry_url,
 	}
 
+	add_repo_req_27 = func(server, user, password string) *corev1.AddPackageRepositoryRequest {
+		return &corev1.AddPackageRepositoryRequest{
+			Name:    "my-podinfo-10",
+			Context: &corev1.Context{Namespace: "default"},
+			Type:    "oci",
+			Url:     harbor_stefanprodan_podinfo_oci_registry_url,
+			Auth: &corev1.PackageRepositoryAuth{
+				Type: corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_DOCKER_CONFIG_JSON,
+				PackageRepoAuthOneOf: &corev1.PackageRepositoryAuth_DockerCreds{
+					DockerCreds: &corev1.DockerCredentials{
+						Server:   server,
+						Username: user,
+						Password: password,
+					},
+				},
+			},
+		}
+	}
+
 	add_repo_expected_resp = &corev1.AddPackageRepositoryResponse{
 		PackageRepoRef: repoRef("bar", "foo"),
 	}
@@ -1286,6 +1305,10 @@ var (
 
 	add_repo_expected_resp_10 = &corev1.AddPackageRepositoryResponse{
 		PackageRepoRef: repoRef("my-podinfo-9", "default"),
+	}
+
+	add_repo_expected_resp_11 = &corev1.AddPackageRepositoryResponse{
+		PackageRepoRef: repoRef("my-podinfo-10", "default"),
 	}
 
 	status_installed = &corev1.InstalledPackageStatus{

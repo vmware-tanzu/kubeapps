@@ -569,10 +569,6 @@ func TestKindClusterAvailablePackageEndpointsForOCI(t *testing.T) {
 		},
 		// TODO (gfichtenholt) TLS secret with CA
 		// TODO (gfichtenholt) TLS secret with CA, pub, priv
-		// TODO (gfichtenholt) OCI repo with multiple packages/charts,
-		//      e.g. podinfo/podinfo and podinfo/foo
-		//      flux supports this, but ghcr.io does not (see comment in kind-cluster-setup.sh)
-		//      so I need somewhere to host it
 
 		/*
 			{

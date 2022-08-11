@@ -51,7 +51,6 @@ The registry reference basename is inferred from the chart's name, and the tag i
 
 Certain registries require the repository and/or namespace (if specified) to be created beforehand
 ```
-
 From [helm HIPS spec](https://github.com/helm/community/blob/main/hips/hip-0006.md#4-chart-names--oci-reference-basenames):
 ```
 To keep things simple, the basename (the last segment of the URL path) on a registry reference should be equivalent to the chart name.
@@ -111,6 +110,11 @@ References:
   - https://docs.github.com/en/rest/packages
   - https://docs.github.com/en/packages/working-with-a-github-packages-registry/working-with-the-container-registry
   - https://github.com/gfichtenholt?tab=packages
+
+
+## Harbor Container Registry `demo.goharbor.io` v2.5.0
+Like ghcr.io, appears to support 
+[Docker Registry HTTP API V2](https://github.com/distribution/distribution/blob/main/docs/spec/api.md#listing-repositories) for listing of repostories
 
 ---
 Here is probably the most confusing part of the whole document:
