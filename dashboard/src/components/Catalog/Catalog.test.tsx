@@ -8,6 +8,7 @@ import InfoCard from "components/InfoCard/InfoCard";
 import Alert from "components/js/Alert";
 import LoadingWrapper from "components/LoadingWrapper";
 import { AvailablePackageSummary, Context } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
+import { PackageRepositorySummary } from "gen/kubeappsapis/core/packages/v1alpha1/repositories";
 import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins";
 import { createMemoryHistory } from "history";
 import React from "react";
@@ -17,14 +18,9 @@ import * as ReactRouter from "react-router";
 import { MemoryRouter, Route, Router } from "react-router-dom";
 import { IConfigState } from "reducers/config";
 import { IOperatorsState } from "reducers/operators";
-import { IAppRepositoryState } from "reducers/repos";
+import { IPackageRepositoryState } from "reducers/repos";
 import { getStore, initialState, mountWrapper } from "shared/specs/mountWrapper";
-import {
-  IAppRepository,
-  IPackageState,
-  IClusterServiceVersion,
-  IStoreState,
-} from "../../shared/types";
+import { IClusterServiceVersion, IPackageState, IStoreState } from "../../shared/types";
 import SearchFilter from "../SearchFilter/SearchFilter";
 import Catalog, { filterNames } from "./Catalog";
 import CatalogItems from "./CatalogItems";
@@ -40,13 +36,9 @@ const defaultPackageState = {
   size: 20,
 } as IPackageState;
 const defaultProps = {
-  packages: defaultPackageState,
-  repo: "",
-  filter: {},
   cluster: initialState.config.kubeappsCluster,
   namespace: "kubeapps",
   kubeappsNamespace: "kubeapps",
-  csvs: [],
 };
 const availablePkgSummary1: AvailablePackageSummary = {
   name: "foo",
@@ -99,7 +91,7 @@ const csv = {
 const defaultState = {
   packages: defaultPackageState,
   operators: { csvs: [] } as Partial<IOperatorsState>,
-  repos: { repos: [] } as Partial<IAppRepositoryState>,
+  repos: { reposSummaries: [] } as Partial<IPackageRepositoryState>,
   config: {
     kubeappsCluster: defaultProps.cluster,
     kubeappsNamespace: defaultProps.kubeappsNamespace,
@@ -446,6 +438,33 @@ describe("filters by application type", () => {
 });
 
 describe("pagination and package fetching", () => {
+  let spyOnUseRef: jest.SpyInstance;
+  const refFalse = { current: {} };
+  const refTrue = { current: {} };
+  Object.defineProperty(refFalse, "current", {
+    set(_current) {
+      // do nothing
+    },
+    get() {
+      return false;
+    },
+  });
+  Object.defineProperty(refTrue, "current", {
+    set(_current) {
+      // do nothing
+    },
+    get() {
+      return true;
+    },
+  });
+
+  beforeEach(() => {
+    spyOnUseRef = jest.spyOn(React, "useRef").mockReturnValue(refFalse);
+  });
+  afterEach(() => {
+    spyOnUseRef.mockRestore();
+  });
+
   it("sets the initial state page to 0 before fetching packages", () => {
     const fetchAvailablePackageSummaries = jest.fn();
     actions.availablepackages.fetchAvailablePackageSummaries = fetchAvailablePackageSummaries;
@@ -478,9 +497,11 @@ describe("pagination and package fetching", () => {
     );
   });
 
-  it("sets the state page when fetching packages", () => {
+  it("avoids re-fetching if isFetching=true", () => {
+    jest.useFakeTimers();
     const fetchAvailablePackageSummaries = jest.fn();
     actions.availablepackages.fetchAvailablePackageSummaries = fetchAvailablePackageSummaries;
+    spyOnUseRef = jest.spyOn(React, "useRef").mockReturnValue(refTrue);
 
     const packages = {
       ...defaultPackageState,
@@ -496,17 +517,32 @@ describe("pagination and package fetching", () => {
         </Route>
       </MemoryRouter>,
     );
+    jest.advanceTimersByTime(2000);
 
-    expect(wrapper.find(CatalogItems).prop("isFirstPage")).toBe(false);
-    expect(wrapper.find(PackageCatalogItem).length).toBe(1);
-    expect(fetchAvailablePackageSummaries).toHaveBeenCalledWith(
-      "default-cluster",
-      "kubeapps",
-      "",
-      "",
-      20,
-      "",
+    expect(wrapper.find(CatalogItems).prop("isFirstPage")).toBe(true);
+    expect(fetchAvailablePackageSummaries).not.toBeCalled();
+  });
+
+  it("disables the filtergroups when isFetching", () => {
+    const packages = {
+      ...defaultPackageState,
+      hasFinishedFetching: true,
+      isFetching: true,
+      items: [availablePkgSummary1, availablePkgSummary2],
+    } as any;
+    const wrapper = mountWrapper(
+      getStore({ ...populatedState, packages: packages } as IStoreState),
+      <MemoryRouter initialEntries={[routePathParam]}>
+        <Route path={routePath}>
+          <Catalog />
+        </Route>
+      </MemoryRouter>,
     );
+
+    wrapper
+      .find(FilterGroup)
+      .find("input")
+      .forEach(i => expect(i.prop("disabled")).toBe(true));
   });
 
   it("items are translated to CatalogItems after fetching packages", () => {
@@ -624,7 +660,7 @@ describe("filters by package repository", () => {
     spyOnUseDispatch = jest.spyOn(ReactRedux, "useDispatch").mockReturnValue(mockDispatch);
     // Can't just assign a mock fn to actions.repos.fetchRepos because it is (correctly) exported
     // as a const fn.
-    fetchRepos = jest.spyOn(actions.repos, "fetchRepos").mockImplementation(() => {
+    fetchRepos = jest.spyOn(actions.repos, "fetchRepoSummaries").mockImplementation(() => {
       return jest.fn();
     });
   });
@@ -665,7 +701,9 @@ describe("filters by package repository", () => {
     const wrapper = mountWrapper(
       getStore({
         ...populatedState,
-        repos: { repos: [{ metadata: { name: "foo" } } as IAppRepository] },
+        repos: {
+          reposSummaries: [{ name: "foo" } as PackageRepositorySummary],
+        } as IPackageRepositoryState,
       }),
       <MemoryRouter initialEntries={[routePathParam]}>
         <Route path={routePath}>
@@ -693,7 +731,9 @@ describe("filters by package repository", () => {
     const wrapper = mountWrapper(
       getStore({
         ...populatedState,
-        repos: { repos: [{ metadata: { name: "foo" } } as IAppRepository] },
+        repos: {
+          reposSummaries: [{ name: "foo" } as PackageRepositorySummary],
+        } as IPackageRepositoryState,
       }),
       <MemoryRouter initialEntries={[`/c/${defaultProps.cluster}/ns/my-ns/catalog`]}>
         <Route path={routePath}>
@@ -721,7 +761,7 @@ describe("filters by package repository", () => {
     mountWrapper(
       getStore({
         ...populatedState,
-        repos: { repos: [{ metadata: { name: "foo" } } as IAppRepository] },
+        repos: { repos: [{ name: "foo" } as PackageRepositorySummary] },
       }),
       <MemoryRouter
         initialEntries={[
@@ -735,14 +775,14 @@ describe("filters by package repository", () => {
     );
 
     // Called without the boolean `true` option to additionally fetch global repos.
-    expect(fetchRepos).toHaveBeenCalledWith(initialState.config.globalReposNamespace);
+    expect(fetchRepos).toHaveBeenCalledWith("");
   });
 
   it("fetches from the global repos namespace for other clusters", () => {
     mountWrapper(
       getStore({
         ...populatedState,
-        repos: { repos: [{ metadata: { name: "foo" } } as IAppRepository] },
+        repos: { repos: [{ name: "foo" } as PackageRepositorySummary] },
       }),
       <MemoryRouter initialEntries={[`/c/other-cluster/ns/my-ns/catalog`]}>
         <Route path={routePath}>
@@ -752,7 +792,7 @@ describe("filters by package repository", () => {
     );
 
     // Only the global repos should have been fetched.
-    expect(fetchRepos).toHaveBeenCalledWith(initialState.config.globalReposNamespace);
+    expect(fetchRepos).toHaveBeenCalledWith("");
   });
 });
 

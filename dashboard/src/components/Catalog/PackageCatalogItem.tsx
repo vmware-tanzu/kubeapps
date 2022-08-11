@@ -3,7 +3,7 @@
 
 import * as url from "shared/url";
 import { getPluginIcon, getPluginName, trimDescription } from "shared/utils";
-import placeholder from "../../placeholder.png";
+import placeholder from "icons/placeholder.svg";
 import InfoCard from "../InfoCard/InfoCard";
 import { IPackageCatalogItem } from "./CatalogItem";
 

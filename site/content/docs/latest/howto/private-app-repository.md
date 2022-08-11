@@ -275,3 +275,20 @@ spec:
 ```
 
 The above will generate a Pod with the label `my-repo: isPrivate` and the environment variable `FOO=BAR`.
+
+### Running the synchronization jobs behind a proxy
+
+If you are behind a proxy and need to run the sync jobs, you can specify the proxy URLs as environment variables of the sync job's pods; namely `https_proxy`, `http_proxy` and `no_proxy`. However, this configuration can be easily set by modifying the `apprepository.initialReposProxy` configuration object. For instance:
+
+```yaml
+apprepository:
+    initialReposProxy:
+      enabled: true
+      httpProxy: "http://192.168.10.10:8080/"
+      httpsProxy: "http://192.168.10.10:8080/"
+      noProxy: "10.0.0.0/8,172.16.0.0/16,192.168.0.0/16,localhost,127.0.0.1.svc,.svc.cluster.local"
+```
+
+Please mind the `noProxy` section, otherwise, you might not be able to access the charts.
+
+> **NOTE**: this configuration is only available for the Helm repositories.

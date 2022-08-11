@@ -21,7 +21,7 @@ import {
   IStoreState,
 } from "shared/types";
 import * as url from "shared/url";
-import placeholder from "../../placeholder.png";
+import placeholder from "icons/placeholder.svg";
 import OperatorInstanceFormBody from "../OperatorInstanceFormBody/OperatorInstanceFormBody";
 
 export interface IOperatorInstanceFormProps {

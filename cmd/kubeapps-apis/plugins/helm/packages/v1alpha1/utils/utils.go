@@ -4,8 +4,12 @@
 package utils
 
 import (
+	appRepov1 "github.com/vmware-tanzu/kubeapps/cmd/apprepository-controller/pkg/apis/apprepository/v1alpha1"
+	chartUtils "github.com/vmware-tanzu/kubeapps/pkg/chart"
 	"github.com/vmware-tanzu/kubeapps/pkg/chart/models"
 	"github.com/vmware-tanzu/kubeapps/pkg/dbutils"
+	"helm.sh/helm/v3/pkg/chart"
+	k8scorev1 "k8s.io/api/core/v1"
 )
 
 type AssetManager interface {
@@ -31,4 +35,17 @@ type ChartQuery struct {
 
 func NewManager(databaseType string, config dbutils.Config, globalReposNamespace string) (AssetManager, error) {
 	return NewPGManager(config, globalReposNamespace)
+}
+
+// GetChart retrieves a chart
+func GetChart(chartDetails *chartUtils.Details, appRepo *appRepov1.AppRepository, caCertSecret *k8scorev1.Secret, authSecret *k8scorev1.Secret, chartClient chartUtils.ChartClient) (*chart.Chart, error) {
+	err := chartClient.Init(appRepo, caCertSecret, authSecret)
+	if err != nil {
+		return nil, err
+	}
+	ch, err := chartClient.GetChart(chartDetails, appRepo.Spec.URL)
+	if err != nil {
+		return nil, err
+	}
+	return ch, nil
 }

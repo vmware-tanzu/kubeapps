@@ -31,3 +31,6 @@ telepresence.log
 
 # Use yarn for package management
 package-lock.json
+
+# React-app proxy
+src/setupProxy.js

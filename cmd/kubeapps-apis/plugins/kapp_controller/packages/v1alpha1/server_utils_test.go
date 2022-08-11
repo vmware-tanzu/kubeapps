@@ -611,6 +611,25 @@ func TestBuildPackageIdentifier(t *testing.T) {
 		})
 	}
 }
+func TestGetRepoNameFromAnnotation(t *testing.T) {
+	tests := []struct {
+		name              string
+		repoRefAnnotation string
+		expected          string
+	}{
+		{"empty", "", "unknown"},
+		{"a valid annotation", "default/tce-repo", "tce-repo"},
+		{"an invalid annotation", "default/foo/tce-repo", "unknown"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			repoName := getRepoNameFromAnnotation(tt.repoRefAnnotation)
+			if want, got := tt.expected, repoName; !cmp.Equal(want, got) {
+				t.Errorf("in %s: mismatch (-want +got):\n%s", tt.name, cmp.Diff(want, got))
+			}
+		})
+	}
+}
 
 func TestPrereleasesVersionSelection(t *testing.T) {
 	tests := []struct {
@@ -818,6 +837,162 @@ func TestFilterMetadatas(t *testing.T) {
 				Categories: []string{"category6", "category3"},
 			},
 			expectedMetadatas: []*datapackagingv1alpha1.PackageMetadata{},
+		},
+		{
+			name: "does not match unless metadata has all categories from filter",
+			metadatas: []*datapackagingv1alpha1.PackageMetadata{
+				{
+					Spec: datapackagingv1alpha1.PackageMetadataSpec{
+						Categories: []string{"category1", "category2", "category3"},
+					},
+				},
+				{
+					Spec: datapackagingv1alpha1.PackageMetadataSpec{
+						Categories: []string{"category4", "category5", "category6"},
+					},
+				},
+			},
+			filterOptions: corev1.FilterOptions{
+				Categories: []string{"category6", "category3"},
+			},
+			expectedMetadatas: []*datapackagingv1alpha1.PackageMetadata{},
+		},
+		{
+			name: "does match if metadata has a repo from filter",
+			metadatas: []*datapackagingv1alpha1.PackageMetadata{
+				{
+					ObjectMeta: metav1.ObjectMeta{
+						Namespace: "default",
+						Name:      "tetris.foo.example.com",
+						Annotations: map[string]string{
+							REPO_REF_ANNOTATION: "default/tce-repo",
+						},
+					},
+				},
+				{
+					ObjectMeta: metav1.ObjectMeta{
+						Namespace: "default",
+						Name:      "tetris.foo.example.com",
+						Annotations: map[string]string{
+							REPO_REF_ANNOTATION: "default/another-repo",
+						},
+					},
+				},
+			},
+			filterOptions: corev1.FilterOptions{
+				Repositories: []string{"tce-repo"},
+			},
+			expectedMetadatas: []*datapackagingv1alpha1.PackageMetadata{
+				{
+					ObjectMeta: metav1.ObjectMeta{
+						Namespace: "default",
+						Name:      "tetris.foo.example.com",
+						Annotations: map[string]string{
+							REPO_REF_ANNOTATION: "default/tce-repo",
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "does not match if metadata has an unkown repo",
+			metadatas: []*datapackagingv1alpha1.PackageMetadata{
+				{
+					ObjectMeta: metav1.ObjectMeta{
+						Namespace: "default",
+						Name:      "tetris.foo.example.com",
+					},
+				},
+				{
+					ObjectMeta: metav1.ObjectMeta{
+						Namespace: "default",
+						Name:      "tetris.foo.example.com",
+						Annotations: map[string]string{
+							REPO_REF_ANNOTATION: "default/another-repo",
+						},
+					},
+				},
+			},
+			filterOptions: corev1.FilterOptions{
+				Repositories: []string{"tce-repo"},
+			},
+			expectedMetadatas: []*datapackagingv1alpha1.PackageMetadata{},
+		},
+		{
+			name: "does match if every filterOptions is met",
+			metadatas: []*datapackagingv1alpha1.PackageMetadata{
+				{
+					Spec: datapackagingv1alpha1.PackageMetadataSpec{
+						DisplayName: "match-pkg",
+						Categories:  []string{"match-category"},
+					},
+					ObjectMeta: metav1.ObjectMeta{
+						Namespace: "default",
+						Name:      "tetris.foo.example.com",
+						Annotations: map[string]string{
+							REPO_REF_ANNOTATION: "default/match-repo",
+						},
+					},
+				},
+				{
+					Spec: datapackagingv1alpha1.PackageMetadataSpec{
+						DisplayName: "non-match-by-display-name",
+						Categories:  []string{"match-category"},
+					},
+					ObjectMeta: metav1.ObjectMeta{
+						Namespace: "default",
+						Name:      "tetris.foo.example.com",
+						Annotations: map[string]string{
+							REPO_REF_ANNOTATION: "default/match-repo",
+						},
+					},
+				},
+				{
+					Spec: datapackagingv1alpha1.PackageMetadataSpec{
+						DisplayName: "match-pkg",
+						Categories:  []string{"non-match-by-category"},
+					},
+					ObjectMeta: metav1.ObjectMeta{
+						Namespace: "default",
+						Name:      "tetris.foo.example.com",
+						Annotations: map[string]string{
+							REPO_REF_ANNOTATION: "default/match-repo",
+						},
+					},
+				},
+				{
+					Spec: datapackagingv1alpha1.PackageMetadataSpec{
+						DisplayName: "match-pkg",
+						Categories:  []string{"match-category"},
+					},
+					ObjectMeta: metav1.ObjectMeta{
+						Namespace: "default",
+						Name:      "tetris.foo.example.com",
+						Annotations: map[string]string{
+							REPO_REF_ANNOTATION: "default/non-match-by-repo",
+						},
+					},
+				},
+			},
+			filterOptions: corev1.FilterOptions{
+				Query:        "match-pkg",
+				Categories:   []string{"match-category"},
+				Repositories: []string{"match-repo"},
+			},
+			expectedMetadatas: []*datapackagingv1alpha1.PackageMetadata{{
+				Spec: datapackagingv1alpha1.PackageMetadataSpec{
+					DisplayName: "match-pkg",
+					Categories:  []string{"match-category"},
+				},
+				ObjectMeta: metav1.ObjectMeta{
+					Namespace: "default",
+					Name:      "tetris.foo.example.com",
+					Annotations: map[string]string{
+						REPO_REF_ANNOTATION: "default/match-repo",
+					},
+				},
+			},
+			},
 		},
 	}
 

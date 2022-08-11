@@ -12,13 +12,16 @@ import (
 
 	apprepov1alpha1 "github.com/vmware-tanzu/kubeapps/cmd/apprepository-controller/pkg/apis/apprepository/v1alpha1"
 	corev1 "github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
+	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/plugins/helm/packages/v1alpha1"
 	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/pkg/statuserror"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	k8scorev1 "k8s.io/api/core/v1"
+	k8sErrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/kubernetes"
+	v1 "k8s.io/client-go/kubernetes/typed/core/v1"
 	log "k8s.io/klog/v2"
 	"k8s.io/kubernetes/pkg/credentialprovider"
 )
@@ -31,6 +34,11 @@ const (
 
 func secretNameForRepo(repoName string) string {
 	return fmt.Sprintf("apprepo-%s", repoName)
+}
+
+// Generate a suitable name for per-namespace repository secret
+func namespacedSecretNameForRepo(repoName, namespace string) string {
+	return fmt.Sprintf("%s-%s", namespace, secretNameForRepo(repoName))
 }
 
 func newLocalOpaqueSecret(ownerRepo types.NamespacedName) *k8scorev1.Secret {
@@ -86,7 +94,7 @@ func newSecretFromTlsConfigAndAuth(repoName types.NamespacedName,
 				if token == RedactedString {
 					isSameSecret = true
 				} else {
-					secret.Data[SecretAuthHeaderKey] = []byte("Bearer " + token)
+					secret.Data[SecretAuthHeaderKey] = []byte("Bearer " + strings.TrimPrefix(token, "Bearer "))
 				}
 			} else {
 				return nil, false, status.Errorf(codes.InvalidArgument, "Bearer token is missing")
@@ -139,9 +147,13 @@ func newSecretFromTlsConfigAndAuth(repoName types.NamespacedName,
 func newAppRepositoryAuth(secret *k8scorev1.Secret,
 	tlsConfig *corev1.PackageRepositoryTlsConfig,
 	auth *corev1.PackageRepositoryAuth) (*apprepov1alpha1.AppRepositoryAuth, error) {
+
 	var appRepoAuth = &apprepov1alpha1.AppRepositoryAuth{}
 
 	if tlsConfig != nil {
+		if secret == nil {
+			return nil, status.Errorf(codes.InvalidArgument, "Secret for AppRepository auth is missing")
+		}
 		appRepoAuth.CustomCA = &apprepov1alpha1.AppRepositoryCustomCA{
 			SecretKeyRef: k8scorev1.SecretKeySelector{
 				Key: SecretCaKey,
@@ -157,6 +169,9 @@ func newAppRepositoryAuth(secret *k8scorev1.Secret,
 		case corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_BASIC_AUTH,
 			corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_BEARER,
 			corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_AUTHORIZATION_HEADER:
+			if secret == nil {
+				return nil, status.Errorf(codes.InvalidArgument, "Secret for AppRepository auth is missing")
+			}
 			if _, ok := secret.Data[SecretAuthHeaderKey]; ok {
 				appRepoAuth.Header = &apprepov1alpha1.AppRepositoryAuthHeader{
 					SecretKeyRef: k8scorev1.SecretKeySelector{
@@ -170,6 +185,9 @@ func newAppRepositoryAuth(secret *k8scorev1.Secret,
 				return nil, status.Errorf(codes.InvalidArgument, "Authentication header is missing")
 			}
 		case corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_DOCKER_CONFIG_JSON:
+			if secret == nil {
+				return nil, status.Errorf(codes.InvalidArgument, "Secret for AppRepository auth is missing")
+			}
 			if _, ok := secret.Data[DockerConfigJsonKey]; ok {
 				appRepoAuth.Header = &apprepov1alpha1.AppRepositoryAuthHeader{
 					SecretKeyRef: k8scorev1.SecretKeySelector{
@@ -192,19 +210,152 @@ func newAppRepositoryAuth(secret *k8scorev1.Secret,
 	return appRepoAuth, nil
 }
 
-func createKubeappsManagedRepoSecret(
+func createKubeappsManagedRepoSecrets(
 	ctx context.Context,
 	typedClient kubernetes.Interface,
 	namespace string,
-	secret *k8scorev1.Secret) (*k8scorev1.Secret, error) {
+	secret *k8scorev1.Secret, imagesPullSecret *k8scorev1.Secret) (newSecret *k8scorev1.Secret, newImgPullSecret *k8scorev1.Secret, err error) {
 
 	if secret != nil {
 		// create a secret first, if applicable
-		if secret, err := typedClient.CoreV1().Secrets(namespace).Create(ctx, secret, metav1.CreateOptions{}); err != nil {
-			return nil, statuserror.FromK8sError("create", "secret", secret.GetName(), err)
+		secretName := secret.GetName()
+		newSecret, err = typedClient.CoreV1().Secrets(namespace).Create(ctx, secret, metav1.CreateOptions{})
+		if err != nil {
+			return nil, nil, statuserror.FromK8sError("create", "secret", secretName, err)
 		}
 	}
-	return secret, nil
+	if imagesPullSecret != nil {
+		secretName := imagesPullSecret.GetName()
+		newImgPullSecret, err = typedClient.CoreV1().Secrets(namespace).Create(ctx, imagesPullSecret, metav1.CreateOptions{})
+		if err != nil {
+			return nil, nil, statuserror.FromK8sError("create", "secret", secretName, err)
+		}
+	}
+	return newSecret, newImgPullSecret, nil
+}
+
+func validateDockerImagePullSecret(ctx context.Context,
+	typedClient kubernetes.Interface,
+	repoName types.NamespacedName,
+	secretName string) (*k8scorev1.Secret, error) {
+
+	if secret, err := typedClient.CoreV1().Secrets(repoName.Namespace).Get(ctx, secretName, metav1.GetOptions{}); err != nil {
+		return nil, statuserror.FromK8sError("get", "secret", secretName, err)
+	} else if secret.Type != k8scorev1.SecretTypeDockerConfigJson {
+		return nil, status.Errorf(codes.InvalidArgument, "Images Docker pull secret %s does not have valid type", secretName)
+	} else if _, ok := secret.Data[k8scorev1.DockerConfigJsonKey]; !ok {
+		return nil, status.Errorf(codes.InvalidArgument, "Images Docker pull secret %s does not have valid data", secretName)
+	} else {
+		return secret, nil
+	}
+}
+
+func imagesPullSecretName(repoName string) string {
+	return fmt.Sprintf("pullsecret-%s", repoName)
+}
+
+func newDockerImagePullSecret(ownerRepo types.NamespacedName, credentials *corev1.DockerCredentials) (secret *k8scorev1.Secret, isSameSecret bool, err error) {
+
+	secret = &k8scorev1.Secret{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: imagesPullSecretName(ownerRepo.Name),
+		},
+		Type: k8scorev1.SecretTypeDockerConfigJson,
+		Data: map[string][]byte{},
+	}
+
+	if credentials.Password == RedactedString {
+		isSameSecret = true
+	} else {
+		dockerConfig := &credentialprovider.DockerConfigJSON{
+			Auths: map[string]credentialprovider.DockerConfigEntry{
+				credentials.Server: {
+					Username: credentials.Username,
+					Password: credentials.Password,
+					Email:    credentials.Email,
+				},
+			},
+		}
+		dockerConfigJson, err := json.Marshal(dockerConfig)
+		if err != nil {
+			return nil, false, status.Errorf(codes.InvalidArgument, "Docker credentials are malformed")
+		}
+		secret.Data[k8scorev1.DockerConfigJsonKey] = dockerConfigJson
+	}
+
+	return secret, isSameSecret, nil
+}
+
+func deleteSecret(ctx context.Context, secretsInterface v1.SecretInterface, secretName string) error {
+	// Ignore action if secret didn't exist
+	if _, err := secretsInterface.Get(ctx, secretName, metav1.GetOptions{}); err == nil {
+		if err := secretsInterface.Delete(ctx, secretName, metav1.DeleteOptions{}); err != nil {
+			return statuserror.FromK8sError("delete", "secret", secretName, err)
+		}
+	}
+	return nil
+}
+
+func (s *Server) copyRepositorySecretToNamespace(typedClient kubernetes.Interface, targetNamespace string, secret *k8scorev1.Secret, repoName types.NamespacedName) (copiedSecret *k8scorev1.Secret, err error) {
+	newSecret := &k8scorev1.Secret{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      namespacedSecretNameForRepo(repoName.Name, repoName.Namespace),
+			Namespace: targetNamespace,
+		},
+		Type: secret.Type,
+		Data: secret.Data,
+	}
+	copiedSecret, err = typedClient.CoreV1().Secrets(targetNamespace).Create(context.TODO(), newSecret, metav1.CreateOptions{})
+	if err != nil && k8sErrors.IsAlreadyExists(err) {
+		copiedSecret, err = typedClient.CoreV1().Secrets(targetNamespace).Update(context.TODO(), newSecret, metav1.UpdateOptions{})
+	}
+	return copiedSecret, err
+}
+
+func (s *Server) deleteRepositorySecretFromNamespace(typedClient kubernetes.Interface, targetNamespace, secretName string) error {
+	secretsInterface := typedClient.CoreV1().Secrets(targetNamespace)
+	if deleteErr := deleteSecret(context.TODO(), secretsInterface, secretName); deleteErr != nil {
+		return deleteErr
+	}
+	return nil
+}
+
+func updateKubeappsManagedImagesPullSecret(ctx context.Context, typedClient kubernetes.Interface,
+	ownerRepo types.NamespacedName, credentials *corev1.DockerCredentials) (*k8scorev1.Secret, bool, error) {
+
+	secretsInterface := typedClient.CoreV1().Secrets(ownerRepo.Namespace)
+	secretName := imagesPullSecretName(ownerRepo.Name)
+	existingSecret, _ := secretsInterface.Get(ctx, secretName, metav1.GetOptions{})
+
+	// Check that the provided Docker credentials are ok
+	if credentials != nil && (credentials.Server == "" || credentials.Username == "" || credentials.Password == "" || credentials.Email == "") {
+		return nil, false, status.Errorf(codes.InvalidArgument, "Images pull secret Docker credentials are wrong")
+	}
+
+	// Remove any existing managed secret
+	if existingSecret != nil {
+		if err := deleteSecret(ctx, secretsInterface, secretName); err != nil {
+			return nil, false, err
+		}
+	}
+
+	if credentials != nil {
+		newSecret, isSameSecret, err := newDockerImagePullSecret(ownerRepo, credentials)
+		if err != nil {
+			return nil, false, err
+		}
+		if !isSameSecret {
+			createdSecret, err := secretsInterface.Create(ctx, newSecret, metav1.CreateOptions{})
+			if err != nil {
+				return nil, false, statuserror.FromK8sError("create", "secret", newSecret.GetGenerateName(), err)
+			}
+			return createdSecret, false, nil
+		} else {
+			return existingSecret, true, nil
+		}
+	}
+
+	return nil, false, nil
 }
 
 func validateUserManagedRepoSecret(
@@ -319,6 +470,29 @@ func (s *Server) updateKubeappsManagedRepoSecret(ctx context.Context, repo *Helm
 		}
 	}
 	return secret, true, nil
+}
+
+func getRepoImagesPullSecretWithUserManagedSecrets(imagesPullSecret *k8scorev1.Secret) *v1alpha1.ImagesPullSecret_SecretRef {
+	if imagesPullSecret != nil {
+		return &v1alpha1.ImagesPullSecret_SecretRef{
+			SecretRef: imagesPullSecret.Name,
+		}
+	}
+	return nil
+}
+
+func getRepoImagesPullSecretWithKubeappsManagedSecrets(imagesPullSecret *k8scorev1.Secret) *v1alpha1.ImagesPullSecret_Credentials {
+	if imagesPullSecret != nil {
+		return &v1alpha1.ImagesPullSecret_Credentials{
+			Credentials: &corev1.DockerCredentials{
+				Server:   RedactedString,
+				Username: RedactedString,
+				Password: RedactedString,
+				Email:    RedactedString,
+			},
+		}
+	}
+	return nil
 }
 
 func getRepoTlsConfigAndAuthWithUserManagedSecrets(source *apprepov1alpha1.AppRepository,
