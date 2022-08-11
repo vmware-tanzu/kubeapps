@@ -6,16 +6,17 @@ package main
 import (
 	"context"
 	"fmt"
-	"time"
+	"strings"
 
+	ctlapp "github.com/k14s/kapp/pkg/kapp/app"
 	ctlres "github.com/k14s/kapp/pkg/kapp/resources"
 	kappctrlv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
 	packagingv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/packaging/v1alpha1"
 	datapackagingv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/apis/datapackaging/v1alpha1"
 	corev1 "github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
-	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/pkg/k8sutils"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	k8scorev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -34,7 +35,6 @@ const (
 	pkgInstallsResource     = "packageinstalls"
 	appResource             = "App"
 	appsResource            = "apps"
-	appLabelKey             = "kapp.k14s.io/app"
 )
 
 // Dynamic ResourceInterface getters to encapsulate the logic of getting the proper group version API resources
@@ -112,6 +112,7 @@ func (s *Server) getAppResource(ctx context.Context, cluster, namespace string) 
 //  Single resource getters
 
 // getPkg returns the package for the given cluster, namespace and identifier
+//nolint:unused
 func (s *Server) getPkg(ctx context.Context, cluster, namespace, identifier string) (*datapackagingv1alpha1.Package, error) {
 	var pkg datapackagingv1alpha1.Package
 	resource, err := s.getPkgResource(ctx, cluster, namespace)
@@ -199,6 +200,19 @@ func (s *Server) getApp(ctx context.Context, cluster, namespace, identifier stri
 		return nil, err
 	}
 	return &app, nil
+}
+
+// get Secret
+func (s *Server) getSecret(ctx context.Context, cluster, namespace, name string) (*k8scorev1.Secret, error) {
+	client, _, err := s.GetClients(ctx, cluster)
+	if err != nil {
+		return nil, err
+	}
+	secret, err := client.CoreV1().Secrets(namespace).Get(ctx, name, metav1.GetOptions{})
+	if err != nil {
+		return nil, err
+	}
+	return secret, nil
 }
 
 //  List of resources getters
@@ -326,6 +340,7 @@ func (s *Server) getPkgRepositories(ctx context.Context, cluster, namespace stri
 }
 
 // getApps returns the list of apps for the given cluster and namespace
+//nolint:unused
 func (s *Server) getApps(ctx context.Context, cluster, namespace, identifier string) ([]*kappctrlv1alpha1.App, error) {
 	resource, err := s.getAppResource(ctx, cluster, namespace)
 	if err != nil {
@@ -376,6 +391,46 @@ func (s *Server) createPkgInstall(ctx context.Context, cluster, namespace string
 	return &pkgInstall, nil
 }
 
+// createPkgRepository creates a package repository for the given cluster, namespace and identifier
+func (s *Server) createPkgRepository(ctx context.Context, cluster, namespace string, newPkgRepository *packagingv1alpha1.PackageRepository) (*packagingv1alpha1.PackageRepository, error) {
+	var pkgRepository packagingv1alpha1.PackageRepository
+	resource, err := s.getPkgRepositoryResource(ctx, cluster, namespace)
+	if err != nil {
+		return nil, err
+	}
+
+	unstructuredPkgRepositoryContent, err := runtime.DefaultUnstructuredConverter.ToUnstructured(newPkgRepository)
+	if err != nil {
+		return nil, err
+	}
+	unstructuredPkgRepository := unstructured.Unstructured{}
+	unstructuredPkgRepository.SetUnstructuredContent(unstructuredPkgRepositoryContent)
+
+	unstructuredNewPkgRepository, err := resource.Create(ctx, &unstructuredPkgRepository, metav1.CreateOptions{})
+	if err != nil {
+		return nil, err
+	}
+
+	err = runtime.DefaultUnstructuredConverter.FromUnstructured(unstructuredNewPkgRepository.Object, &pkgRepository)
+	if err != nil {
+		return nil, err
+	}
+	return &pkgRepository, nil
+}
+
+// create Secret
+func (s *Server) createSecret(ctx context.Context, cluster string, secret *k8scorev1.Secret) (*k8scorev1.Secret, error) {
+	client, _, err := s.GetClients(ctx, cluster)
+	if err != nil {
+		return nil, err
+	}
+	secret, err = client.CoreV1().Secrets(secret.GetNamespace()).Create(ctx, secret, metav1.CreateOptions{})
+	if err != nil {
+		return nil, err
+	}
+	return secret, nil
+}
+
 // Deletion functions
 
 // deletePkgInstall deletes a package install for the given cluster, namespace and identifier
@@ -385,6 +440,32 @@ func (s *Server) deletePkgInstall(ctx context.Context, cluster, namespace, ident
 		return err
 	}
 	err = resource.Delete(ctx, identifier, metav1.DeleteOptions{})
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+// deletePkgRepository deletes a package repository for the given cluster, namespace and identifier
+func (s *Server) deletePkgRepository(ctx context.Context, cluster, namespace, identifier string) error {
+	resource, err := s.getPkgRepositoryResource(ctx, cluster, namespace)
+	if err != nil {
+		return err
+	}
+	err = resource.Delete(ctx, identifier, metav1.DeleteOptions{})
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+// create Secret
+func (s *Server) deleteSecret(ctx context.Context, cluster, namespace, name string) error {
+	client, _, err := s.GetClients(ctx, cluster)
+	if err != nil {
+		return err
+	}
+	err = client.CoreV1().Secrets(namespace).Delete(ctx, name, metav1.DeleteOptions{})
 	if err != nil {
 		return err
 	}
@@ -420,27 +501,48 @@ func (s *Server) updatePkgInstall(ctx context.Context, cluster, namespace string
 	return &pkgInstall, nil
 }
 
+// getAppUsedGVs returns the list of GVs used by the given app, falling back to pre 0.47 Kapp version behavior with regards to suffixes
+func getAppUsedGVs(appsClient ctlapp.Apps, packageId string, namespace string, useNewCtrlAppSuffix bool) ([]schema.GroupVersion, ctlapp.App, error) {
+	// We first try to fetch the app using the suffixed name (kapp >= 0.47)
+	appName := fmt.Sprintf("%s%s", packageId, ctlapp.AppSuffix)
+
+	// Workaround to also support pre-0.47 kapp versions, whose ConfigMap were suffixed with "-ctrl" instead of ".apps.k14s.io"
+	if !useNewCtrlAppSuffix {
+		// As per https://github.com/vmware-tanzu/carvel-kapp-controller/blob/v0.32.0/pkg/deploy/kapp.go#L151
+		appName = fmt.Sprintf("%s%s", packageId, "-ctrl")
+	}
+
+	// Fetch the Kapp App
+	app, err := appsClient.Find(appName)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	// Fetch the GroupVersions used by the app
+	usedGVs, err := app.UsedGVs()
+	if err != nil {
+		// TODO(minelson): We can't currently use `errors.IsNotFound(err)` here.
+		// See https://github.com/vmware-tanzu/carvel-kapp/issues/498
+		// Instead we need to match on the error string :/
+		cmErrPattern := "configmaps %q not found"
+		appErrPattern := "App '%s' (namespace: %s) does not exist"
+		if strings.Contains(err.Error(), fmt.Sprintf(cmErrPattern, appName)) || strings.Contains(err.Error(), fmt.Sprintf(appErrPattern, appName, namespace)) || strings.Contains(err.Error(), fmt.Sprintf(appErrPattern, packageId, namespace)) {
+			// If using the new suffix and getting a not found error, fall back to the pre-0.47 Kapp prefix
+			if useNewCtrlAppSuffix {
+				return getAppUsedGVs(appsClient, packageId, namespace, false)
+			}
+			// We want to return a NotFound here because the dashboard already
+			// handles this case, knowing that the references may not be
+			// available immediately.
+			return nil, nil, status.Errorf(codes.NotFound, "App not found: %+v", err)
+		}
+		return nil, nil, err
+	}
+	return usedGVs, app, nil
+}
+
 // inspectKappK8sResources returns the list of k8s resources matching the given listOptions
 func (s *Server) inspectKappK8sResources(ctx context.Context, cluster, namespace, packageId string) ([]*corev1.ResourceRef, error) {
-	// As per https://github.com/vmware-tanzu/carvel-kapp-controller/blob/v0.32.0/pkg/deploy/kapp.go#L151
-	appName := fmt.Sprintf("%s-ctrl", packageId)
-
-	_, dynClient, err := s.GetClients(ctx, cluster)
-	if err != nil {
-		return nil, status.Errorf(codes.Internal, "unable to get the k8s client: '%v'", err)
-	}
-
-	gvr := schema.GroupVersionResource{Group: "", Version: "v1", Resource: "configmaps"}
-	resource := dynClient.Resource(gvr).Namespace(namespace)
-
-	// In order to be able to fetch the resources created by the kapp-controller, we need to fetch a ConfigMap
-	// that contains the label (the application id) used for query the k8s resources.
-	// We actively wait for this ConfigMap to be present in the cluster before returning the list of resources
-	err = k8sutils.WaitForResource(ctx, resource, appName, time.Second*1, time.Second*time.Duration(s.pluginConfig.timeoutSeconds))
-	if err != nil {
-		return nil, status.Errorf(codes.Internal, "timeout exceeded (%v s) waiting for resource to be installed: '%v'", s.pluginConfig.timeoutSeconds, err)
-	}
-
 	refs := []*corev1.ResourceRef{}
 
 	// Get the Kapp different clients
@@ -449,14 +551,8 @@ func (s *Server) inspectKappK8sResources(ctx context.Context, cluster, namespace
 		return nil, err
 	}
 
-	// Fetch the Kapp App
-	app, err := appsClient.Find(appName)
-	if err != nil {
-		return nil, err
-	}
-
-	// Fetch the GroupVersions used by the app
-	usedGVs, err := app.UsedGVs()
+	// Get the App and its used GVs initially considering the post-0.47 Kapp suffix, but falling back to pre-0.47 behavior
+	usedGVs, app, err := getAppUsedGVs(appsClient, packageId, namespace, true)
 	if err != nil {
 		return nil, err
 	}
@@ -485,5 +581,49 @@ func (s *Server) inspectKappK8sResources(ctx context.Context, cluster, namespace
 			Namespace:  resource.Namespace(),
 		})
 	}
+	// Package exists but no resourceRefs found
+	if refs != nil && len(refs) == 0 {
+		return nil, status.Errorf(codes.NotFound, "No resource references available for '%s' in plugin '%s'", packageId, namespace)
+	}
 	return refs, nil
+}
+
+// updatePkgRepository updates a package repository for the given cluster, namespace and identifier
+func (s *Server) updatePkgRepository(ctx context.Context, cluster, namespace string, newPkgRepository *packagingv1alpha1.PackageRepository) (*packagingv1alpha1.PackageRepository, error) {
+	var pkgRepository packagingv1alpha1.PackageRepository
+	resource, err := s.getPkgRepositoryResource(ctx, cluster, namespace)
+	if err != nil {
+		return nil, err
+	}
+
+	unstructuredPkgRepositoryContent, err := runtime.DefaultUnstructuredConverter.ToUnstructured(newPkgRepository)
+	if err != nil {
+		return nil, err
+	}
+	unstructuredPkgRepository := unstructured.Unstructured{}
+	unstructuredPkgRepository.SetUnstructuredContent(unstructuredPkgRepositoryContent)
+
+	unstructuredNewPkgRepository, err := resource.Update(ctx, &unstructuredPkgRepository, metav1.UpdateOptions{})
+	if err != nil {
+		return nil, err
+	}
+
+	err = runtime.DefaultUnstructuredConverter.FromUnstructured(unstructuredNewPkgRepository.Object, &pkgRepository)
+	if err != nil {
+		return nil, err
+	}
+	return &pkgRepository, nil
+}
+
+// create Secret
+func (s *Server) updateSecret(ctx context.Context, cluster string, secret *k8scorev1.Secret) (*k8scorev1.Secret, error) {
+	client, _, err := s.GetClients(ctx, cluster)
+	if err != nil {
+		return nil, err
+	}
+	secret, err = client.CoreV1().Secrets(secret.GetNamespace()).Update(ctx, secret, metav1.UpdateOptions{})
+	if err != nil {
+		return nil, err
+	}
+	return secret, nil
 }

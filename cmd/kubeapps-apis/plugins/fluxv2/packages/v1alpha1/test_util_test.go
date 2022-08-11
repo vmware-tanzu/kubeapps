@@ -1,3 +1,6 @@
+// Copyright 2022 the Kubeapps contributors.
+// SPDX-License-Identifier: Apache-2.0
+
 package main
 
 import (
@@ -23,7 +26,9 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/watch"
+	log "k8s.io/klog/v2"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	ctrlfake "sigs.k8s.io/controller-runtime/pkg/client/fake"
 )
@@ -171,7 +176,10 @@ func basicAuth(handler http.HandlerFunc, username, password, realm string) http.
 		if !ok || subtle.ConstantTimeCompare([]byte(user), []byte(username)) != 1 || subtle.ConstantTimeCompare([]byte(pass), []byte(password)) != 1 {
 			w.Header().Set("WWW-Authenticate", `Basic realm="`+realm+`"`)
 			w.WriteHeader(401)
-			w.Write([]byte("Unauthorised.\n"))
+			_, err := w.Write([]byte("Unauthorised.\n"))
+			if err != nil {
+				log.Fatalf("%+v", err)
+			}
 			return
 		}
 		handler(w, r)
@@ -179,11 +187,11 @@ func basicAuth(handler http.HandlerFunc, username, password, realm string) http.
 }
 
 // ref: https://kubernetes.io/docs/concepts/configuration/secret/#basic-authentication-secret
-func newBasicAuthSecret(name, namespace, user, password string) *apiv1.Secret {
+func newBasicAuthSecret(name types.NamespacedName, user, password string) *apiv1.Secret {
 	return &apiv1.Secret{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      name,
-			Namespace: namespace,
+			Name:      name.Name,
+			Namespace: name.Namespace,
 		},
 		Type: apiv1.SecretTypeOpaque,
 		Data: map[string][]byte{
@@ -198,11 +206,11 @@ func newBasicAuthSecret(name, namespace, user, password string) *apiv1.Secret {
 // https://fluxcd.io/docs/components/source/helmrepositories/#spec-examples they expect TLS secrets
 // in a different format:
 // certFile/keyFile/caFile vs tls.crt/tls.key. I am going with flux's example for now:
-func newTlsSecret(name, namespace string, pub, priv, ca []byte) *apiv1.Secret {
+func newTlsSecret(name types.NamespacedName, pub, priv, ca []byte) *apiv1.Secret {
 	s := &apiv1.Secret{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      name,
-			Namespace: namespace,
+			Name:      name.Name,
+			Namespace: name.Namespace,
 		},
 		Type: apiv1.SecretTypeOpaque,
 		Data: map[string][]byte{},
@@ -219,11 +227,11 @@ func newTlsSecret(name, namespace string, pub, priv, ca []byte) *apiv1.Secret {
 	return s
 }
 
-func newBasicAuthTlsSecret(name, namespace, user, password string, pub, priv, ca []byte) *apiv1.Secret {
+func newBasicAuthTlsSecret(name types.NamespacedName, user, password string, pub, priv, ca []byte) *apiv1.Secret {
 	s := &apiv1.Secret{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      name,
-			Namespace: namespace,
+			Name:      name.Name,
+			Namespace: name.Namespace,
 		},
 		Type: apiv1.SecretTypeOpaque,
 		Data: map[string][]byte{},
@@ -246,22 +254,35 @@ func newBasicAuthTlsSecret(name, namespace, user, password string, pub, priv, ca
 	return s
 }
 
-func newDockerConfigJSONSecret(name, namespace, server, username, password, email string) *apiv1.Secret {
-	// ref https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/
-	authStr := base64.StdEncoding.EncodeToString([]byte(fmt.Sprintf("%s:%s", username, password)))
-	configStr := fmt.Sprintf("{\"auths\":{\"%s\":{\"username\":\"%s\",\"password\":\"%s\",\"email\":\"%s\",\"auth\":\"%s\"}}}",
-		server, username, password, email, authStr)
+// ref https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/
+func newDockerConfigJsonSecret(name types.NamespacedName, server, user, password string) *apiv1.Secret {
 	s := &apiv1.Secret{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      name,
-			Namespace: namespace,
+			Name:      name.Name,
+			Namespace: name.Namespace,
 		},
 		Type: apiv1.SecretTypeDockerConfigJson,
 		Data: map[string][]byte{
-			".dockerconfigjson": []byte(base64.StdEncoding.EncodeToString([]byte(configStr))),
+			apiv1.DockerConfigJsonKey: []byte(`{"auths":{"` +
+				server + `":{"` +
+				`auth":"` + base64.StdEncoding.EncodeToString([]byte(user+":"+password)) + `"}}}`),
 		},
 	}
 	return s
+}
+
+func setSecretOwnerRef(repoName string, secret *apiv1.Secret) *apiv1.Secret {
+	tRue := true
+	secret.OwnerReferences = []metav1.OwnerReference{
+		{
+			APIVersion:         sourcev1.GroupVersion.String(),
+			Kind:               sourcev1.HelmRepositoryKind,
+			Name:               repoName,
+			Controller:         &tRue,
+			BlockOwnerDeletion: &tRue,
+		},
+	}
+	return secret
 }
 
 func availableRef(id, namespace string) *corev1.AvailablePackageReference {
@@ -286,11 +307,33 @@ func installedRef(id, namespace string) *corev1.InstalledPackageReference {
 	}
 }
 
+func repoRefWithId(id string) *corev1.PackageRepositoryReference {
+	// namespace will be set when scenario is run
+	return repoRef(id, "TBD")
+}
+
+func repoRef(id, namespace string) *corev1.PackageRepositoryReference {
+	return &corev1.PackageRepositoryReference{
+		Context: &corev1.Context{
+			Cluster:   KubeappsCluster,
+			Namespace: namespace,
+		},
+		Identifier: id,
+		Plugin:     fluxPlugin,
+	}
+}
+
 func newCtrlClient(repos []sourcev1.HelmRepository, charts []sourcev1.HelmChart, releases []helmv2.HelmRelease) withWatchWrapper {
 	// register the flux GitOps Toolkit schema definitions
 	scheme := runtime.NewScheme()
-	sourcev1.AddToScheme(scheme)
-	helmv2.AddToScheme(scheme)
+	err := sourcev1.AddToScheme(scheme)
+	if err != nil {
+		log.Fatal(err)
+	}
+	err = helmv2.AddToScheme(scheme)
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	rm := apimeta.NewDefaultRESTMapper([]schema.GroupVersion{sourcev1.GroupVersion, helmv2.GroupVersion})
 	rm.Add(schema.GroupVersionKind{

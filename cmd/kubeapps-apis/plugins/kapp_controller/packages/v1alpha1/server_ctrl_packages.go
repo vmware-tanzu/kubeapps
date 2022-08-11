@@ -7,7 +7,6 @@ import (
 	"context"
 	"fmt"
 	"strings"
-	"sync"
 	"time"
 
 	packagingv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/packaging/v1alpha1"
@@ -34,12 +33,11 @@ func (s *Server) GetAvailablePackageSummaries(ctx context.Context, request *core
 	// Retrieve parameters from the request
 	namespace := request.GetContext().GetNamespace()
 	cluster := request.GetContext().GetCluster()
-	contextMsg := fmt.Sprintf("(cluster=%q, namespace=%q)", cluster, namespace)
-	log.Infof("+kapp-controller GetAvailablePackageSummaries %s", contextMsg)
+	log.InfoS("+kapp-controller GetAvailablePackageSummaries", "cluster", cluster, "namespace", namespace)
 
 	// Retrieve additional parameters from the request
 	pageSize := request.GetPaginationOptions().GetPageSize()
-	pageOffset, err := paginate.PageOffsetFromAvailableRequest(request)
+	itemOffset, err := paginate.ItemOffsetFromPageToken(request.GetPaginationOptions().GetPageToken())
 	if err != nil {
 		return nil, err
 	}
@@ -48,96 +46,101 @@ func (s *Server) GetAvailablePackageSummaries(ctx context.Context, request *core
 		cluster = s.globalPackagingCluster
 	}
 	// fetch all the package metadatas
-	// TODO(minelson): We should be grabbing only the requested page
-	// of results here.
 	pkgMetadatas, err := s.getPkgMetadatas(ctx, cluster, namespace)
 	if err != nil {
 		return nil, statuserror.FromK8sError("get", "PackageMetadata", "", err)
 	}
-	// Until the above request uses the pagination, update the slice
-	// to be the correct page of results.
-	startAt := 0
-	if pageSize > 0 {
-		startAt = int(pageSize) * pageOffset
-		if startAt > len(pkgMetadatas) {
-			return nil, status.Errorf(codes.InvalidArgument, "invalid pagination arguments %v", request.GetPaginationOptions())
-		}
-		pkgMetadatas = pkgMetadatas[startAt:]
-		if len(pkgMetadatas) > int(pageSize) {
-			pkgMetadatas = pkgMetadatas[:pageSize]
-		}
-	}
 
-	// Create a channel to receive all packages available in the namespace.
-	// Using a buffered channel so that we don't block the network request if we
-	// can't process fast enough.
-	getPkgsChannel := make(chan *datapackagingv1alpha1.Package, PACKAGES_CHANNEL_BUFFER_SIZE)
-	var getPkgsError error
-	go func() {
-		getPkgsError = s.getPkgs(ctx, cluster, namespace, getPkgsChannel)
-	}()
+	// Filter the package metadatas using any specified filter.
+	pkgMetadatas = FilterMetadatas(pkgMetadatas, request.GetFilterOptions())
 
-	// Skip through the packages until we get to the first item in our
-	// paginated results.
-	currentPkg := <-getPkgsChannel
-	for currentPkg != nil && currentPkg.Spec.RefName != pkgMetadatas[0].Name {
-		currentPkg = <-getPkgsChannel
-	}
-
-	availablePackageSummaries := make([]*corev1.AvailablePackageSummary, len(pkgMetadatas))
+	availablePackageSummaries := []*corev1.AvailablePackageSummary{}
 	categories := []string{}
-	pkgsForMeta := []*datapackagingv1alpha1.Package{}
-	for i, pkgMetadata := range pkgMetadatas {
-		// currentPkg will be nil if the channel is closed and there's no
-		// more items to consume.
-		if currentPkg == nil {
-			return nil, statuserror.FromK8sError("get", "Package", pkgMetadata.Name, fmt.Errorf("no package versions for the package %q", pkgMetadata.Name))
-		}
-		// The kapp-controller returns both packages and package metadata
-		// in order. But some repositories have invalid data (TAP 1.0.2)
-		// where a package is present *without* corresponding metadata.
-		for currentPkg.Spec.RefName != pkgMetadata.Name {
-			if currentPkg.Spec.RefName > pkgMetadata.Name {
-				return nil, status.Errorf(codes.Internal, fmt.Sprintf("unexpected order for kapp-controller packages, expected %q, found %q", pkgMetadata.Name, currentPkg.Spec.RefName))
+
+	if len(pkgMetadatas) > 0 {
+		// Update the slice to be the correct page of results.
+		startAt := 0
+		if pageSize > 0 {
+			startAt = itemOffset
+			if startAt > len(pkgMetadatas) {
+				return nil, status.Errorf(codes.InvalidArgument, "invalid pagination arguments %v", request.GetPaginationOptions())
 			}
-			log.Errorf("Package %q did not have a corresponding metadata", currentPkg.Spec.RefName)
+			pkgMetadatas = pkgMetadatas[startAt:]
+			if len(pkgMetadatas) > int(pageSize) {
+				pkgMetadatas = pkgMetadatas[:pageSize]
+			}
+		}
+
+		// Create a channel to receive all packages available in the namespace.
+		// Using a buffered channel so that we don't block the network request if we
+		// can't process fast enough.
+		getPkgsChannel := make(chan *datapackagingv1alpha1.Package, PACKAGES_CHANNEL_BUFFER_SIZE)
+		var getPkgsError error
+		go func() {
+			getPkgsError = s.getPkgs(ctx, cluster, namespace, getPkgsChannel)
+		}()
+
+		// Skip through the packages until we get to the first item in our
+		// paginated results.
+		currentPkg := <-getPkgsChannel
+		for currentPkg != nil && len(pkgMetadatas) > 0 && currentPkg.Spec.RefName != pkgMetadatas[0].Name {
 			currentPkg = <-getPkgsChannel
 		}
-		// Collect the packages for a particular refName to be able to send the
-		// latest semver version. For the moment, kapp-controller just returns
-		// CRs with the default alpha sorting of the CR name.
-		// Ref https://kubernetes.slack.com/archives/CH8KCCKA5/p1646285201181119
-		pkgsForMeta = append(pkgsForMeta, currentPkg)
-		currentPkg = <-getPkgsChannel
-		for currentPkg != nil && currentPkg.Spec.RefName == pkgMetadata.Name {
+
+		availablePackageSummaries = make([]*corev1.AvailablePackageSummary, len(pkgMetadatas))
+		pkgsForMeta := []*datapackagingv1alpha1.Package{}
+		for i, pkgMetadata := range pkgMetadatas {
+			// currentPkg will be nil if the channel is closed and there's no
+			// more items to consume.
+			if currentPkg == nil {
+				return nil, statuserror.FromK8sError("get", "Package", pkgMetadata.Name, fmt.Errorf("no package versions for the package %q", pkgMetadata.Name))
+			}
+			// The kapp-controller returns both packages and package metadata
+			// in order. But some repositories have invalid data (TAP 1.0.2)
+			// where a package is present *without* corresponding metadata.
+			for currentPkg.Spec.RefName != pkgMetadata.Name {
+				if currentPkg.Spec.RefName > pkgMetadata.Name {
+					return nil, status.Errorf(codes.Internal, fmt.Sprintf("unexpected order for kapp-controller packages, expected %q, found %q", pkgMetadata.Name, currentPkg.Spec.RefName))
+				}
+				log.Errorf("Package %q did not have a corresponding metadata (want %q)", currentPkg.Spec.RefName, pkgMetadata.Name)
+				currentPkg = <-getPkgsChannel
+			}
+			// Collect the packages for a particular refName to be able to send the
+			// latest semver version. For the moment, kapp-controller just returns
+			// CRs with the default alpha sorting of the CR name.
+			// Ref https://kubernetes.slack.com/archives/CH8KCCKA5/p1646285201181119
 			pkgsForMeta = append(pkgsForMeta, currentPkg)
 			currentPkg = <-getPkgsChannel
-		}
-		// At this point, we have all the packages collected that match
-		// this ref name, and currentPkg is for the next meta name.
-		pkgVersionMap, err := getPkgVersionsMap(pkgsForMeta)
-		if err != nil || len(pkgVersionMap[pkgMetadata.Name]) == 0 {
-			return nil, status.Errorf(codes.Internal, fmt.Sprintf("unable to calculate package versions map for packages: %v, err: %v", pkgsForMeta, err))
-		}
-		latestVersion := pkgVersionMap[pkgMetadata.Name][0].version.String()
-		availablePackageSummary := s.buildAvailablePackageSummary(pkgMetadata, latestVersion, cluster)
-		availablePackageSummaries[i] = availablePackageSummary
-		categories = append(categories, availablePackageSummary.Categories...)
+			for currentPkg != nil && currentPkg.Spec.RefName == pkgMetadata.Name {
+				pkgsForMeta = append(pkgsForMeta, currentPkg)
+				currentPkg = <-getPkgsChannel
+			}
+			// At this point, we have all the packages collected that match
+			// this ref name, and currentPkg is for the next meta name.
+			pkgVersionMap, err := getPkgVersionsMap(pkgsForMeta)
+			if err != nil || len(pkgVersionMap[pkgMetadata.Name]) == 0 {
+				return nil, status.Errorf(codes.Internal, fmt.Sprintf("unable to calculate package versions map for packages: %v, err: %v", pkgsForMeta, err))
+			}
+			latestVersion := pkgVersionMap[pkgMetadata.Name][0].version.String()
+			availablePackageSummary := s.buildAvailablePackageSummary(pkgMetadata, latestVersion, cluster)
+			availablePackageSummaries[i] = availablePackageSummary
+			categories = append(categories, availablePackageSummary.Categories...)
 
-		// Reset the packages for the current meta name.
-		pkgsForMeta = pkgsForMeta[:0]
-	}
+			// Reset the packages for the current meta name.
+			pkgsForMeta = pkgsForMeta[:0]
+		}
 
-	// Verify no error during go routine.
-	if getPkgsError != nil {
-		return nil, statuserror.FromK8sError("get", "Package", "", err)
+		// Verify no error during go routine.
+		if getPkgsError != nil {
+			return nil, statuserror.FromK8sError("get", "Package", "", err)
+		}
 	}
 
 	// Only return a next page token if the request was for pagination and
 	// the results are a full page.
 	nextPageToken := ""
 	if pageSize > 0 && len(availablePackageSummaries) == int(pageSize) {
-		nextPageToken = fmt.Sprintf("%d", pageOffset+1)
+		nextPageToken = fmt.Sprintf("%d", itemOffset+int(pageSize))
 	}
 	response := &corev1.GetAvailablePackageSummariesResponse{
 		AvailablePackageSummaries: availablePackageSummaries,
@@ -153,8 +156,7 @@ func (s *Server) GetAvailablePackageVersions(ctx context.Context, request *corev
 	namespace := request.GetAvailablePackageRef().GetContext().GetNamespace()
 	cluster := request.GetAvailablePackageRef().GetContext().GetCluster()
 	identifier := request.GetAvailablePackageRef().GetIdentifier()
-	contextMsg := fmt.Sprintf("(cluster=%q, namespace=%q, id=%q)", cluster, namespace, identifier)
-	log.Infof("+kapp-controller GetAvailablePackageVersions %s", contextMsg)
+	log.InfoS("+kapp-controller GetAvailablePackageVersions", "cluster", cluster, "namespace", namespace, "id", identifier)
 
 	// Validate the request
 	if namespace == "" || identifier == "" {
@@ -165,8 +167,13 @@ func (s *Server) GetAvailablePackageVersions(ctx context.Context, request *corev
 		cluster = s.globalPackagingCluster
 	}
 
+	_, pkgName, err := pkgutils.SplitPackageIdentifier(identifier)
+	if err != nil {
+		return nil, err
+	}
+
 	// Use the field selector to return only Package CRs that match on the spec.refName.
-	fieldSelector := fmt.Sprintf("spec.refName=%s", identifier)
+	fieldSelector := fmt.Sprintf("spec.refName=%s", pkgName)
 	pkgs, err := s.getPkgsWithFieldSelector(ctx, cluster, namespace, fieldSelector)
 	if err != nil {
 		return nil, statuserror.FromK8sError("get", "Package", "", err)
@@ -179,8 +186,8 @@ func (s *Server) GetAvailablePackageVersions(ctx context.Context, request *corev
 
 	// TODO(minelson): support configurable version summary for kapp-controller pkgs
 	// as already done for Helm (see #3588 for more info).
-	versions := make([]*corev1.PackageAppVersion, len(pkgVersionsMap[identifier]))
-	for i, v := range pkgVersionsMap[identifier] {
+	versions := make([]*corev1.PackageAppVersion, len(pkgVersionsMap[pkgName]))
+	for i, v := range pkgVersionsMap[pkgName] {
 		// Currently, PkgVersion and AppVersion are the same
 		// https://kubernetes.slack.com/archives/CH8KCCKA5/p1636386358322000?thread_ts=1636371493.320900&cid=CH8KCCKA5
 		versions[i] = &corev1.PackageAppVersion{
@@ -200,8 +207,7 @@ func (s *Server) GetAvailablePackageDetail(ctx context.Context, request *corev1.
 	namespace := request.GetAvailablePackageRef().GetContext().GetNamespace()
 	cluster := request.GetAvailablePackageRef().GetContext().GetCluster()
 	identifier := request.GetAvailablePackageRef().GetIdentifier()
-	contextMsg := fmt.Sprintf("(cluster=%q, namespace=%q, id=%q)", cluster, namespace, identifier)
-	log.Infof("+kapp-controller GetAvailablePackageDetail %s", contextMsg)
+	log.InfoS("+kapp-controller GetAvailablePackageDetail", "cluster", cluster, "namespace", namespace, "identifier", identifier)
 
 	// Retrieve additional parameters from the request
 	requestedPkgVersion := request.GetPkgVersion()
@@ -215,17 +221,22 @@ func (s *Server) GetAvailablePackageDetail(ctx context.Context, request *corev1.
 		cluster = s.globalPackagingCluster
 	}
 
-	// fetch the package metadata
-	pkgMetadata, err := s.getPkgMetadata(ctx, cluster, namespace, identifier)
+	_, pkgName, err := pkgutils.SplitPackageIdentifier(identifier)
 	if err != nil {
-		return nil, statuserror.FromK8sError("get", "PackageMetadata", identifier, err)
+		return nil, err
+	}
+
+	// fetch the package metadata
+	pkgMetadata, err := s.getPkgMetadata(ctx, cluster, namespace, pkgName)
+	if err != nil {
+		return nil, statuserror.FromK8sError("get", "PackageMetadata", pkgName, err)
 	}
 
 	// Use the field selector to return only Package CRs that match on the spec.refName.
-	fieldSelector := fmt.Sprintf("spec.refName=%s", identifier)
+	fieldSelector := fmt.Sprintf("spec.refName=%s", pkgName)
 	pkgs, err := s.getPkgsWithFieldSelector(ctx, cluster, namespace, fieldSelector)
 	if err != nil {
-		return nil, statuserror.FromK8sError("get", "Package", identifier, err)
+		return nil, statuserror.FromK8sError("get", "Package", pkgName, err)
 	}
 	pkgVersionsMap, err := getPkgVersionsMap(pkgs)
 	if err != nil {
@@ -235,22 +246,23 @@ func (s *Server) GetAvailablePackageDetail(ctx context.Context, request *corev1.
 	var foundPkgSemver = &pkgSemver{}
 	if requestedPkgVersion != "" {
 		// Ensure the version is available.
-		for _, v := range pkgVersionsMap[identifier] {
+		for i := range pkgVersionsMap[pkgName] {
+			v := pkgVersionsMap[pkgName][i] // avoid implicit memory aliasing
 			if v.version.String() == requestedPkgVersion {
 				foundPkgSemver = &v
 				break
 			}
 		}
 		if foundPkgSemver.version == nil {
-			return nil, status.Errorf(codes.NotFound, fmt.Sprintf("unable to find %q package with version %q", identifier, requestedPkgVersion))
+			return nil, status.Errorf(codes.NotFound, fmt.Sprintf("unable to find %q package with version %q", pkgName, requestedPkgVersion))
 		}
 	} else {
 		// If the pkgVersion wasn't specified, grab the packages to find the latest.
-		if len(pkgVersionsMap[identifier]) > 0 {
-			foundPkgSemver = &pkgVersionsMap[identifier][0]
+		if len(pkgVersionsMap[pkgName]) > 0 {
+			foundPkgSemver = &pkgVersionsMap[pkgName][0]
 			requestedPkgVersion = foundPkgSemver.version.String()
 		} else {
-			return nil, status.Errorf(codes.NotFound, fmt.Sprintf("unable to find any versions for the package %q", identifier))
+			return nil, status.Errorf(codes.NotFound, fmt.Sprintf("unable to find any versions for the package %q", pkgName))
 		}
 	}
 
@@ -270,12 +282,11 @@ func (s *Server) GetInstalledPackageSummaries(ctx context.Context, request *core
 	// Retrieve parameters from the request
 	namespace := request.GetContext().GetNamespace()
 	cluster := request.GetContext().GetCluster()
-	contextMsg := fmt.Sprintf("(cluster=%q, namespace=%q)", cluster, namespace)
-	log.Infof("+kapp-controller GetInstalledPackageSummaries %s", contextMsg)
+	log.Info("+kapp-controller GetInstalledPackageSummaries", "cluster", cluster, "namespace", namespace)
 
 	// Retrieve additional parameters from the request
 	pageSize := request.GetPaginationOptions().GetPageSize()
-	pageOffset, err := paginate.PageOffsetFromInstalledRequest(request)
+	itemOffset, err := paginate.ItemOffsetFromPageToken(request.GetPaginationOptions().GetPageToken())
 	if err != nil {
 		return nil, err
 	}
@@ -285,7 +296,7 @@ func (s *Server) GetInstalledPackageSummaries(ctx context.Context, request *core
 		cluster = s.globalPackagingCluster
 	}
 
-	// retrieve the list of installed packages
+	// retrieve the paginated list of installed packages
 	// TODO(agamez): we should be paginating this request rather than requesting everything every time
 	pkgInstalls, err := s.getPkgInstalls(ctx, cluster, namespace)
 	if err != nil {
@@ -293,83 +304,155 @@ func (s *Server) GetInstalledPackageSummaries(ctx context.Context, request *core
 	}
 
 	// paginate the list of results
-	installedPkgSummaries := make([]*corev1.InstalledPackageSummary, len(pkgInstalls))
+	installedPkgSummaries := []*corev1.InstalledPackageSummary{}
 
-	// create the waiting group for processing each item aynchronously
-	var wg sync.WaitGroup
-
-	// TODO(agamez): DRY up this logic (cf GetAvailablePackageSummaries)
 	if len(pkgInstalls) > 0 {
+		//nolint:ineffassign
 		startAt := -1
 		if pageSize > 0 {
-			startAt = int(pageSize) * pageOffset
-		}
-		for i, pkgInstall := range pkgInstalls {
-			wg.Add(1)
-			if startAt <= i {
-				go func(i int, pkgInstall *packagingv1alpha1.PackageInstall) error {
-					defer wg.Done()
-					// fetch additional information from the package metadata
-					// TODO(agamez): if the repository where the package belongs to is not installed, it will throw an error;
-					// decide whether we should ignore it or it is ok with returning an error
-					pkgMetadata, err := s.getPkgMetadata(ctx, cluster, pkgInstall.ObjectMeta.Namespace, pkgInstall.Spec.PackageRef.RefName)
-					if err != nil {
-						return statuserror.FromK8sError("get", "PackageMetadata", pkgInstall.Spec.PackageRef.RefName, err)
-					}
-
-					// Use the field selector to return only Package CRs that match on the spec.refName.
-					fieldSelector := fmt.Sprintf("spec.refName=%s", pkgInstall.Spec.PackageRef.RefName)
-					pkgs, err := s.getPkgsWithFieldSelector(ctx, cluster, pkgInstall.ObjectMeta.Namespace, fieldSelector)
-					if err != nil {
-						return statuserror.FromK8sError("get", "Package", "", err)
-					}
-					pkgVersionsMap, err := getPkgVersionsMap(pkgs)
-					if err != nil {
-						return err
-					}
-
-					// generate the installedPackageSummary from the fetched information
-					installedPackageSummary, err := s.buildInstalledPackageSummary(pkgInstall, pkgMetadata, pkgVersionsMap, cluster)
-					if err != nil {
-						return status.Errorf(codes.Internal, fmt.Sprintf("unable to create the InstalledPackageSummary: %v", err))
-					}
-
-					// append the availablePackageSummary to the slice
-					installedPkgSummaries[i] = installedPackageSummary
-
-					return nil
-				}(i, pkgInstall)
+			startAt = itemOffset
+			if startAt > len(pkgInstalls) {
+				return nil, status.Errorf(codes.InvalidArgument, "invalid pagination arguments %v", request.GetPaginationOptions())
 			}
-			// if we've reached the end of the page, stop iterating
-			if pageSize > 0 && len(installedPkgSummaries) == int(pageSize) {
-				break
+			pkgInstalls = pkgInstalls[startAt:]
+			if len(pkgInstalls) > int(pageSize) {
+				pkgInstalls = pkgInstalls[:pageSize]
 			}
 		}
-	}
-	// Wait until each goroutine has finished
-	wg.Wait()
 
-	// TODO(agamez): the slice with make is filled with <nil>, in case of an error in the
-	// i goroutine, the i-th <nil> stub will remain. Check if 'errgroup' works here, but I haven't
-	// been able so far.
-	// An alternative is using channels to perform a fine-grained control... but not sure if it worths
-	// However, should we just return an error if so? See https://github.com/vmware-tanzu/kubeapps/pull/3784#discussion_r754836475
-	// filter out <nil> values
-	installedPkgSummariesNilSafe := []*corev1.InstalledPackageSummary{}
-	for _, installedPkgSummary := range installedPkgSummaries {
-		if installedPkgSummary != nil {
-			installedPkgSummariesNilSafe = append(installedPkgSummariesNilSafe, installedPkgSummary)
+		// Collect a set of all package names with their corresponding package
+		// metadata and package version data.
+		// Complication 1: PackageMetadata and Package resources are not CRs,
+		// but rather aggregated API resources, which means a PackageInstall in
+		// namespace "default" may refer to a Package (and metadata) in the same
+		// "default" namespace, or from the global namespace.
+		// Complication 2: PackageMetadata and Package resources for can be
+		// present in different namespaces with the same name and different
+		// versions etc.
+		// With this in mind, we create a data structure that records the
+		// metadata and versions per package refName per namespace.
+		// TODO(minelson) move this struct initialization out.
+		type pkgMetaAndVersionsData struct {
+			meta     *datapackagingv1alpha1.PackageMetadata
+			versions map[string]*datapackagingv1alpha1.Package
+		}
+		pkgDatas := make(map[string]map[string]*pkgMetaAndVersionsData)
+		for _, pkgInstall := range pkgInstalls {
+			pkgDataForNamespaces, ok := pkgDatas[pkgInstall.Spec.PackageRef.RefName]
+			if !ok {
+				pkgDataForNamespaces = map[string]*pkgMetaAndVersionsData{}
+				pkgDatas[pkgInstall.Spec.PackageRef.RefName] = pkgDataForNamespaces
+			}
+			// As each package install could potentially be from a pkg in the same
+			// namespace or a package in the global namespace, we track both.
+			for _, ns := range []string{pkgInstall.Namespace, s.globalPackagingNamespace} {
+				pkgData, ok := pkgDataForNamespaces[ns]
+				if !ok {
+					pkgData = &pkgMetaAndVersionsData{
+						versions: make(map[string]*datapackagingv1alpha1.Package),
+					}
+					pkgDataForNamespaces[ns] = pkgData
+				}
+				_, ok = pkgData.versions[pkgInstall.Status.Version]
+				if !ok {
+					pkgData.versions[pkgInstall.Status.Version] = nil
+				}
+			}
+		}
+
+		// First get all the package metadatas for the namespace (or across
+		// namespaces) and filter to match the pkgInstalls. While filtering, we
+		// populate the collected package data with the metadata.
+		pkgMetadatas, err := s.getPkgMetadatas(ctx, cluster, namespace)
+		if err != nil {
+			return nil, statuserror.FromK8sError("get", "PackageMetadata", "", err)
+		}
+		for _, pm := range pkgMetadatas {
+			if pkgDataForNamespaces, ok := pkgDatas[pm.Name]; ok {
+				if pkgData, ok := pkgDataForNamespaces[pm.Namespace]; ok {
+					pkgData.meta = pm
+				}
+			}
+		}
+
+		// Create a channel to receive all packages available in the namespace
+		// (or across namespaces) Using a buffered channel so that we don't
+		// block the network request if we can't process fast enough.
+		getPkgsChannel := make(chan *datapackagingv1alpha1.Package, PACKAGES_CHANNEL_BUFFER_SIZE)
+		var getPkgsError error
+		go func() {
+			getPkgsError = s.getPkgs(ctx, cluster, namespace, getPkgsChannel)
+		}()
+
+		// For each package, we check if we need it to populate our
+		// package data.
+		pkgsForVersionMap := []*datapackagingv1alpha1.Package{}
+		for pkg := range getPkgsChannel {
+			pkgDataForNamespaces, ok := pkgDatas[pkg.Spec.RefName]
+			if !ok {
+				continue
+			}
+			pkgData, ok := pkgDataForNamespaces[pkg.Namespace]
+			if !ok {
+				continue
+			}
+			pkgsForVersionMap = append(pkgsForVersionMap, pkg)
+			_, ok = pkgData.versions[pkg.Spec.Version]
+			if !ok {
+				continue
+			}
+			pkgData.versions[pkg.Spec.Version] = pkg
+		}
+
+		// Verify no error during go routine.
+		if getPkgsError != nil {
+			return nil, statuserror.FromK8sError("get", "Package", "", err)
+		}
+
+		// Calculate the version map for all packages that we're interested
+		// in for this paginated call.
+		// TODO(minelson): Check if getPkgVersionsMap currently handles packages
+		// in different namespaces (suspect not).
+		pkgVersionsMap, err := getPkgVersionsMap(pkgsForVersionMap)
+		if err != nil {
+			return nil, status.Errorf(codes.Internal, fmt.Sprintf("unable to calculate package versions map: %v", err))
+		}
+
+		// We now have all the data we need to return the result:
+		for _, pkgi := range pkgInstalls {
+			pkgName := pkgi.Spec.PackageRef.RefName
+			pkgDataForNamespaces := pkgDatas[pkgName]
+			// Check if there was package metadata for the specific namespace.
+			pkgData := pkgDataForNamespaces[pkgi.Namespace]
+			var ok bool
+			if pkgData.meta == nil {
+				pkgData, ok = pkgDataForNamespaces[s.globalPackagingNamespace]
+				// Ignore packages which do not have associated metadata
+				// available. See https://github.com/vmware-tanzu/kubeapps/issues/4901
+				if !ok || pkgData.meta == nil {
+					log.Errorf("+kapp-controller GetInstalledPackageSummary: No corresponding package metadata found for package %q. Ignoring package.", pkgName)
+					continue
+				}
+			}
+			// generate the installedPackageSummary from the fetched information
+			installedPackageSummary, err := s.buildInstalledPackageSummary(pkgi, pkgData.meta, pkgVersionsMap, cluster)
+			if err != nil {
+				return nil, status.Errorf(codes.Internal, fmt.Sprintf("unable to create the InstalledPackageSummary: %v", err))
+			}
+
+			// append the availablePackageSummary to the slice
+			installedPkgSummaries = append(installedPkgSummaries, installedPackageSummary)
 		}
 	}
 
 	// Only return a next page token if the request was for pagination and
 	// the results are a full page.
 	nextPageToken := ""
-	if pageSize > 0 && len(installedPkgSummariesNilSafe) == int(pageSize) {
-		nextPageToken = fmt.Sprintf("%d", pageOffset+1)
+	if pageSize > 0 && len(installedPkgSummaries) == int(pageSize) {
+		nextPageToken = fmt.Sprintf("%d", itemOffset+int(pageSize))
 	}
 	response := &corev1.GetInstalledPackageSummariesResponse{
-		InstalledPackageSummaries: installedPkgSummariesNilSafe,
+		InstalledPackageSummaries: installedPkgSummaries,
 		NextPageToken:             nextPageToken,
 	}
 	return response, nil
@@ -381,8 +464,7 @@ func (s *Server) GetInstalledPackageDetail(ctx context.Context, request *corev1.
 	cluster := request.GetInstalledPackageRef().GetContext().GetCluster()
 	namespace := request.GetInstalledPackageRef().GetContext().GetNamespace()
 	installedPackageRefId := request.GetInstalledPackageRef().GetIdentifier()
-	contextMsg := fmt.Sprintf("(cluster=%q, namespace=%q, id=%q)", cluster, namespace, installedPackageRefId)
-	log.Infof("+kapp-controller GetInstalledPackageDetail %s", contextMsg)
+	log.InfoS("+kapp-controller GetInstalledPackageDetail", "cluster", cluster, "namespace", namespace, "id", installedPackageRefId)
 
 	if cluster == "" {
 		cluster = s.globalPackagingCluster
@@ -446,7 +528,7 @@ func (s *Server) GetInstalledPackageDetail(ctx context.Context, request *corev1.
 		}
 	}
 	// trim the new doc separator in the last element
-	valuesApplied = strings.Trim(valuesApplied, "---")
+	valuesApplied = strings.TrimSuffix(valuesApplied, "---")
 
 	installedPackageDetail, err := s.buildInstalledPackageDetail(pkgInstall, pkgMetadata, pkgVersionsMap, app, valuesApplied, cluster)
 	if err != nil {
@@ -466,8 +548,8 @@ func (s *Server) CreateInstalledPackage(ctx context.Context, request *corev1.Cre
 	targetCluster := request.GetTargetContext().GetCluster()
 	targetNamespace := request.GetTargetContext().GetNamespace()
 	installedPackageName := request.GetName()
-	contextMsg := fmt.Sprintf("(cluster=%q, namespace=%q, id=%q)", targetCluster, targetNamespace, installedPackageName)
-	log.Infof("+kapp-controller CreateInstalledPackage %s", contextMsg)
+
+	log.InfoS("+kapp-controller CreateInstalledPackage %s", "cluster", targetCluster, "namespace", targetNamespace, "id", installedPackageName)
 
 	// Validate the request
 	if request.GetAvailablePackageRef().GetContext().GetNamespace() == "" || request.GetAvailablePackageRef().GetIdentifier() == "" {
@@ -487,12 +569,17 @@ func (s *Server) CreateInstalledPackage(ctx context.Context, request *corev1.Cre
 	}
 
 	// Retrieve additional parameters from the request
-	packageRef := request.GetAvailablePackageRef()
+	identifier := request.GetAvailablePackageRef().GetIdentifier()
 	packageCluster := request.GetAvailablePackageRef().GetContext().GetCluster()
 	packageNamespace := request.GetAvailablePackageRef().GetContext().GetNamespace()
 	reconciliationOptions := request.GetReconciliationOptions()
 	pkgVersion := request.GetPkgVersionReference().GetVersion()
 	values := request.GetValues()
+
+	_, pkgName, err := pkgutils.SplitPackageIdentifier(identifier)
+	if err != nil {
+		return nil, err
+	}
 
 	if targetCluster == "" {
 		targetCluster = s.globalPackagingCluster
@@ -508,9 +595,9 @@ func (s *Server) CreateInstalledPackage(ctx context.Context, request *corev1.Cre
 	}
 
 	// fetch the package metadata
-	pkgMetadata, err := s.getPkgMetadata(ctx, packageCluster, packageNamespace, packageRef.Identifier)
+	pkgMetadata, err := s.getPkgMetadata(ctx, packageCluster, packageNamespace, pkgName)
 	if err != nil {
-		return nil, statuserror.FromK8sError("get", "PackageMetadata", packageRef.Identifier, err)
+		return nil, statuserror.FromK8sError("get", "PackageMetadata", pkgName, err)
 	}
 
 	// build a new secret object with the values
@@ -586,8 +673,7 @@ func (s *Server) UpdateInstalledPackage(ctx context.Context, request *corev1.Upd
 	packageCluster := request.GetInstalledPackageRef().GetContext().GetCluster()
 	packageNamespace := request.GetInstalledPackageRef().GetContext().GetNamespace()
 	installedPackageName := request.GetInstalledPackageRef().GetIdentifier()
-	contextMsg := fmt.Sprintf("(cluster=%q, namespace=%q, id=%q)", packageCluster, packageNamespace, installedPackageName)
-	log.Infof("+kapp-controller UpdateInstalledPackage %s", contextMsg)
+	log.InfoS("+kapp-controller UpdateInstalledPackage", "cluster", packageCluster, "namespace", "packageNamespace", "id", installedPackageName)
 
 	// Validate the request
 	if request == nil || request.GetInstalledPackageRef() == nil {
@@ -652,8 +738,8 @@ func (s *Server) UpdateInstalledPackage(ctx context.Context, request *corev1.Upd
 
 	// Update the rest of the fields
 	if reconciliationOptions != nil {
-		if reconciliationOptions.Interval > 0 {
-			pkgInstall.Spec.SyncPeriod = &metav1.Duration{Duration: time.Duration(reconciliationOptions.Interval) * time.Second}
+		if pkgInstall.Spec.SyncPeriod, err = pkgutils.ToDuration(reconciliationOptions.Interval); err != nil {
+			return nil, status.Errorf(codes.InvalidArgument, "The interval is invalid: %v", err)
 		}
 		if reconciliationOptions.ServiceAccountName != "" {
 			pkgInstall.Spec.ServiceAccountName = reconciliationOptions.ServiceAccountName
@@ -724,8 +810,7 @@ func (s *Server) DeleteInstalledPackage(ctx context.Context, request *corev1.Del
 	namespace := request.GetInstalledPackageRef().GetContext().GetNamespace()
 	cluster := request.GetInstalledPackageRef().GetContext().GetCluster()
 	identifier := request.GetInstalledPackageRef().GetIdentifier()
-	contextMsg := fmt.Sprintf("(cluster=%q, namespace=%q, id=%q)", namespace, cluster, identifier)
-	log.Infof("+kapp-controller DeleteInstalledPackage %s", contextMsg)
+	log.InfoS("+kapp-controller DeleteInstalledPackage", "namespace", namespace, "cluster", cluster, "id", identifier)
 
 	// Validate the request
 	if request == nil || request.GetInstalledPackageRef() == nil {
@@ -778,8 +863,7 @@ func (s *Server) GetInstalledPackageResourceRefs(ctx context.Context, request *c
 	cluster := request.GetInstalledPackageRef().GetContext().GetCluster()
 	namespace := request.GetInstalledPackageRef().GetContext().GetNamespace()
 	installedPackageRefId := request.GetInstalledPackageRef().GetIdentifier()
-	contextMsg := fmt.Sprintf("(cluster=%q, namespace=%q, id=%q)", namespace, cluster, installedPackageRefId)
-	log.Infof("+kapp-controller GetInstalledPackageResourceRefs %s", contextMsg)
+	log.InfoS("+kapp-controller GetInstalledPackageResourceRefs", "cluster", cluster, "namespace", namespace, "id", installedPackageRefId)
 
 	if cluster == "" {
 		cluster = s.globalPackagingCluster

@@ -85,6 +85,7 @@ exports[`renders a multicheckbox 1`] = `
       }
     }
     onError={[Function]}
+    onWarn={[Function]}
     textComponent={Symbol(react.fragment)}
   >
     <BrowserRouter>
@@ -112,6 +113,7 @@ exports[`renders a multicheckbox 1`] = `
       >
         <FilterGroup
           currentFilters={Array []}
+          disabled={false}
           name="test"
           onAddFilter={[MockFunction]}
           onRemoveFilter={[MockFunction]}
@@ -123,6 +125,7 @@ exports[`renders a multicheckbox 1`] = `
           }
         >
           <MultiCheckbox
+            disabled={false}
             name="test"
             onChange={[Function]}
             options={
@@ -131,57 +134,64 @@ exports[`renders a multicheckbox 1`] = `
                 "bar",
               ]
             }
-            span={1}
             value={Array []}
           >
             <div
               className="multicheckbox-wrapper"
-              style={
-                Object {
-                  "--col-lg-num": 1,
-                  "--col-md-num": 1,
-                  "--col-sm-num": 1,
-                  "--col-xl-num": 1,
-                }
-              }
             >
               <div
-                className="clr-checkbox-wrapper"
                 key="0"
               >
-                <input
-                  checked={false}
-                  id="test-0"
-                  name="test"
-                  onChange={[Function]}
-                  type="checkbox"
-                  value="foo"
-                />
-                <label
-                  className="clr-control-label"
-                  htmlFor="test-0"
-                >
-                  foo
-                </label>
+                <CdsCheckbox>
+                  <CdsCheckbox
+                    _$Gl={null}
+                  >
+                    <cds-checkbox
+                      _$Gl={null}
+                    >
+                      <label
+                        htmlFor="test-0"
+                      >
+                        foo
+                      </label>
+                      <input
+                        checked={false}
+                        disabled={false}
+                        id="test-0"
+                        onChange={[Function]}
+                        type="checkbox"
+                        value="foo"
+                      />
+                    </cds-checkbox>
+                  </CdsCheckbox>
+                </CdsCheckbox>
               </div>
               <div
-                className="clr-checkbox-wrapper"
                 key="1"
               >
-                <input
-                  checked={false}
-                  id="test-1"
-                  name="test"
-                  onChange={[Function]}
-                  type="checkbox"
-                  value="bar"
-                />
-                <label
-                  className="clr-control-label"
-                  htmlFor="test-1"
-                >
-                  bar
-                </label>
+                <CdsCheckbox>
+                  <CdsCheckbox
+                    _$Gl={null}
+                  >
+                    <cds-checkbox
+                      _$Gl={null}
+                    >
+                      <label
+                        htmlFor="test-1"
+                      >
+                        bar
+                      </label>
+                      <input
+                        checked={false}
+                        disabled={false}
+                        id="test-1"
+                        onChange={[Function]}
+                        type="checkbox"
+                        value="bar"
+                      />
+                    </cds-checkbox>
+                  </CdsCheckbox>
+                </CdsCheckbox>
               </div>
             </div>
           </MultiCheckbox>

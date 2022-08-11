@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"runtime"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
@@ -66,7 +67,8 @@ func TestInitNetClient(t *testing.T) {
 		expectSkipTLS    bool
 	}{
 		{
-			name:             "default cert pool without auth",
+			name: "default cert pool without auth",
+			//nolint:staticcheck
 			numCertsExpected: len(systemCertPool.Subjects()),
 		},
 		{
@@ -81,7 +83,8 @@ func TestInitNetClient(t *testing.T) {
 					},
 				},
 			},
-			customCAData:     pemCert,
+			customCAData: pemCert,
+			//nolint:staticcheck
 			numCertsExpected: len(systemCertPool.Subjects()) + 1,
 		},
 		{
@@ -126,6 +129,7 @@ func TestInitNetClient(t *testing.T) {
 					},
 				},
 			},
+			//nolint:staticcheck
 			numCertsExpected: len(systemCertPool.Subjects()),
 			expectedHeaders:  http.Header{"Authorization": []string{authHeaderSecretData}},
 		},
@@ -147,7 +151,8 @@ func TestInitNetClient(t *testing.T) {
 					},
 				},
 			},
-			expectProxied:    true,
+			expectProxied: true,
+			//nolint:staticcheck
 			numCertsExpected: len(systemCertPool.Subjects()),
 		},
 		{
@@ -155,7 +160,8 @@ func TestInitNetClient(t *testing.T) {
 			appRepoSpec: v1alpha1.AppRepositorySpec{
 				TLSInsecureSkipVerify: true,
 			},
-			expectSkipTLS:    true,
+			expectSkipTLS: true,
+			//nolint:staticcheck
 			numCertsExpected: len(systemCertPool.Subjects()),
 		},
 	}
@@ -227,6 +233,7 @@ func TestInitNetClient(t *testing.T) {
 			}
 			certPool := transport.TLSClientConfig.RootCAs
 
+			//nolint:staticcheck
 			if got, want := len(certPool.Subjects()), tc.numCertsExpected; got != want {
 				t.Errorf("got: %d, want: %d", got, want)
 			}
@@ -344,7 +351,10 @@ func TestGetProxyConfig(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-
+			// TODO(agamez): env vars and file paths should be handled properly for Windows operating system
+			if runtime.GOOS == "windows" {
+				t.Skip("Skipping in a Windows OS")
+			}
 			// Set the env for the test ensuring to restore after.
 			originalValues := map[string]string{}
 			for _, key := range proxyVars {

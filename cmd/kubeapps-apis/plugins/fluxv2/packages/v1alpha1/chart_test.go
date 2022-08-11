@@ -108,7 +108,7 @@ func TestGetAvailablePackageDetail(t *testing.T) {
 			requestChartUrl := ""
 
 			// these will be used later in a few places
-			opts := &common.ClientOptions{}
+			opts := &common.HttpClientOptions{}
 			if tc.basicAuth {
 				opts.Username = "foo"
 				opts.Password = "bar"
@@ -127,7 +127,10 @@ func TestGetAvailablePackageDetail(t *testing.T) {
 				// stand up an http server just for the duration of this test
 				var handler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 					w.WriteHeader(200)
-					w.Write(tarGzBytes)
+					_, err = w.Write(tarGzBytes)
+					if err != nil {
+						t.Fatalf("%+v", err)
+					}
 				})
 				if tc.basicAuth {
 					handler = basicAuth(handler, "foo", "bar", "myrealm")
@@ -163,18 +166,25 @@ func TestGetAvailablePackageDetail(t *testing.T) {
 			secretObjs := []runtime.Object{}
 			if tc.basicAuth && tc.tls {
 				secretRef = "both-credentials"
-				secret := newBasicAuthTlsSecret(secretRef, repoNamespace, "foo", "bar", pub, priv, ca)
+				secret := newBasicAuthTlsSecret(types.NamespacedName{
+					Name:      secretRef,
+					Namespace: repoNamespace}, "foo", "bar", pub, priv, ca)
 				secretObjs = append(secretObjs, secret)
 			} else if tc.basicAuth {
 				secretRef = "http-credentials"
-				secretObjs = append(secretObjs, newBasicAuthSecret(secretRef, repoNamespace, "foo", "bar"))
+				secretObjs = append(secretObjs, newBasicAuthSecret(
+					types.NamespacedName{
+						Name:      secretRef,
+						Namespace: repoNamespace}, "foo", "bar"))
 			} else if tc.tls {
 				secretRef = "https-credentials"
-				secret := newTlsSecret(secretRef, repoNamespace, pub, priv, ca)
+				secret := newTlsSecret(types.NamespacedName{
+					Name:      secretRef,
+					Namespace: repoNamespace}, pub, priv, ca)
 				secretObjs = append(secretObjs, secret)
 			}
 
-			ts2, repo, err := newRepoWithIndex(
+			ts2, repo, err := newHttpRepoAndServeIndex(
 				testYaml("redis-two-versions.yaml"), repoName, repoNamespace, replaceUrls, secretRef)
 			if err != nil {
 				t.Fatalf("%+v", err)
@@ -186,7 +196,10 @@ func TestGetAvailablePackageDetail(t *testing.T) {
 				t.Fatalf("%+v", err)
 			}
 
-			s.redisMockExpectGetFromRepoCache(mock, nil, *repo)
+			err = s.redisMockExpectGetFromRepoCache(mock, nil, *repo)
+			if err != nil {
+				t.Fatalf("%+v", err)
+			}
 			chartVersion := tc.request.PkgVersion
 			if chartVersion == "" {
 				chartVersion = charts[0].chartRevision
@@ -203,16 +216,16 @@ func TestGetAvailablePackageDetail(t *testing.T) {
 			if !tc.chartCacheHit {
 				// first a miss (there will be actually two calls to Redis GET based on current code path)
 				for i := 0; i < 2; i++ {
-					if err = redisMockExpectGetFromChartCache(mock, chartCacheKey, "", nil); err != nil {
+					if err = redisMockExpectGetFromHttpChartCache(mock, chartCacheKey, "", nil); err != nil {
 						t.Fatalf("%+v", err)
 					}
 				}
 				// followed by a set and a hit
-				if err = s.redisMockSetValueForChart(mock, chartCacheKey, requestChartUrl, opts); err != nil {
+				if err = redisMockSetValueForHttpChart(mock, chartCacheKey, requestChartUrl, opts); err != nil {
 					t.Fatalf("%+v", err)
 				}
 			}
-			if err = redisMockExpectGetFromChartCache(mock, chartCacheKey, requestChartUrl, opts); err != nil {
+			if err = redisMockExpectGetFromHttpChartCache(mock, chartCacheKey, requestChartUrl, opts); err != nil {
 				t.Fatalf("%+v", err)
 			}
 
@@ -250,10 +263,16 @@ func TestTransientHttpFailuresAreRetriedForChartCache(t *testing.T) {
 				if !nofail && failuresAllowed > 0 {
 					failuresAllowed--
 					w.WriteHeader(503)
-					w.Write([]byte(fmt.Sprintf("The server is not ready to handle the request: [%d try left before OK]", failuresAllowed)))
+					_, err = w.Write([]byte(fmt.Sprintf("The server is not ready to handle the request: [%d try left before OK]", failuresAllowed)))
+					if err != nil {
+						t.Fatalf("%+v", err)
+					}
 				} else {
 					w.WriteHeader(200)
-					w.Write(tarGzBytes)
+					_, err := w.Write(tarGzBytes)
+					if err != nil {
+						t.Fatalf("%+v", err)
+					}
 				}
 			})
 			ts := httptest.NewServer(handler)
@@ -269,7 +288,7 @@ func TestTransientHttpFailuresAreRetriedForChartCache(t *testing.T) {
 			charts = append(charts, c)
 		}
 
-		ts2, repo, err := newRepoWithIndex(
+		ts2, repo, err := newHttpRepoAndServeIndex(
 			testYaml("redis-two-versions.yaml"), repoName, repoNamespace, replaceUrls, "")
 		if err != nil {
 			t.Fatalf("%+v", err)
@@ -285,7 +304,10 @@ func TestTransientHttpFailuresAreRetriedForChartCache(t *testing.T) {
 		chartVersion := charts[0].chartRevision
 		requestChartUrl := charts[0].chartUrl
 
-		s.redisMockExpectGetFromRepoCache(mock, nil, *repo)
+		err = s.redisMockExpectGetFromRepoCache(mock, nil, *repo)
+		if err != nil {
+			t.Fatalf("%+v", err)
+		}
 		chartCacheKey, err := s.chartCache.KeyFor(
 			repoNamespace,
 			packageIdentifier,
@@ -294,7 +316,7 @@ func TestTransientHttpFailuresAreRetriedForChartCache(t *testing.T) {
 			t.Fatalf("%+v", err)
 		}
 
-		if err = redisMockExpectGetFromChartCache(mock, chartCacheKey, requestChartUrl, nil); err != nil {
+		if err = redisMockExpectGetFromHttpChartCache(mock, chartCacheKey, requestChartUrl, nil); err != nil {
 			t.Fatalf("%+v", err)
 		}
 
@@ -427,7 +449,10 @@ func TestNonExistingRepoOrInvalidPkgVersionGetAvailablePackageDetail(t *testing.
 				// stand up an http server just for the duration of this test
 				ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 					w.WriteHeader(200)
-					w.Write(tarGzBytes)
+					_, err = w.Write(tarGzBytes)
+					if err != nil {
+						t.Fatalf("%+v", err)
+					}
 				}))
 				defer ts.Close()
 				replaceUrls[fmt.Sprintf("{{%s}}", s.tgzFile)] = ts.URL
@@ -440,7 +465,7 @@ func TestNonExistingRepoOrInvalidPkgVersionGetAvailablePackageDetail(t *testing.
 				charts = append(charts, c)
 			}
 
-			ts2, repo, err := newRepoWithIndex(
+			ts2, repo, err := newHttpRepoAndServeIndex(
 				testYaml("redis-two-versions.yaml"), tc.repoName, tc.repoNamespace, replaceUrls, "")
 			if err != nil {
 				t.Fatalf("%+v", err)
@@ -457,7 +482,10 @@ func TestNonExistingRepoOrInvalidPkgVersionGetAvailablePackageDetail(t *testing.
 
 			repoExists := requestRepoName == tc.repoName && requestRepoNamespace == tc.repoNamespace
 			if repoExists {
-				s.redisMockExpectGetFromRepoCache(mock, nil, *repo)
+				err = s.redisMockExpectGetFromRepoCache(mock, nil, *repo)
+				if err != nil {
+					t.Fatalf("%+v", err)
+				}
 				requestChartName := strings.Split(tc.request.AvailablePackageRef.Identifier, "/")[1]
 				chartExists := requestChartName == "redis"
 				if chartExists {
@@ -470,7 +498,7 @@ func TestNonExistingRepoOrInvalidPkgVersionGetAvailablePackageDetail(t *testing.
 					}
 					// on a cache miss (there will be actually two calls to Redis GET based on current code path)
 					for i := 0; i < 2; i++ {
-						if err = redisMockExpectGetFromChartCache(mock, chartCacheKey, "", nil); err != nil {
+						if err = redisMockExpectGetFromHttpChartCache(mock, chartCacheKey, "", nil); err != nil {
 							t.Fatalf("%+v", err)
 						}
 					}
@@ -608,7 +636,10 @@ func TestGetAvailablePackageVersions(t *testing.T) {
 				// stand up an http server just for the duration of this test
 				ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 					w.WriteHeader(200)
-					w.Write(tarGzBytes)
+					_, err = w.Write(tarGzBytes)
+					if err != nil {
+						t.Fatalf("%+v", err)
+					}
 				}))
 				defer ts.Close()
 				replaceUrls[fmt.Sprintf("{{%s}}", s.tgzFile)] = ts.URL
@@ -620,7 +651,7 @@ func TestGetAvailablePackageVersions(t *testing.T) {
 				}
 				charts = append(charts, c)
 			}
-			ts, repo, err := newRepoWithIndex(tc.repoIndex, tc.repoName, tc.repoNamespace, replaceUrls, "")
+			ts, repo, err := newHttpRepoAndServeIndex(tc.repoIndex, tc.repoName, tc.repoNamespace, replaceUrls, "")
 			if err != nil {
 				t.Fatalf("%+v", err)
 			}
@@ -633,15 +664,12 @@ func TestGetAvailablePackageVersions(t *testing.T) {
 
 			// we make sure that all expectations were met
 			if err := mock.ExpectationsWereMet(); err != nil {
-				t.Errorf("there were unfulfilled expectations: %s", err)
+				t.Fatal(err)
 			}
 
-			key, bytes, err := s.redisKeyValueForRepo(*repo)
-			if err != nil {
-				t.Fatalf("%+v", err)
+			if err = s.redisMockExpectGetFromRepoCache(mock, nil, *repo); err != nil {
+				t.Fatal(err)
 			}
-
-			mock.ExpectGet(key).SetVal(string(bytes))
 
 			response, err := s.GetAvailablePackageVersions(context.Background(), tc.request)
 
@@ -652,6 +680,100 @@ func TestGetAvailablePackageVersions(t *testing.T) {
 			// we make sure that all expectations were met
 			if err := mock.ExpectationsWereMet(); err != nil {
 				t.Errorf("there were unfulfilled expectations: %s", err)
+			}
+
+			// We don't need to check anything else for non-OK codes.
+			if tc.expectedStatusCode != codes.OK {
+				return
+			}
+
+			opts := cmpopts.IgnoreUnexported(
+				corev1.GetAvailablePackageVersionsResponse{},
+				corev1.PackageAppVersion{})
+			if got, want := response, tc.expectedResponse; !cmp.Equal(want, got, opts) {
+				t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opts))
+			}
+		})
+	}
+}
+
+func TestGetOciAvailablePackageVersions(t *testing.T) {
+	seed_data_2, err := newFakeRemoteOciRegistryData_2()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	testCases := []struct {
+		name               string
+		repoNamespace      string
+		repoName           string
+		repoUrl            string
+		request            *corev1.GetAvailablePackageVersionsRequest
+		expectedStatusCode codes.Code
+		expectedResponse   *corev1.GetAvailablePackageVersionsResponse
+		seedData           *fakeRemoteOciRegistryData
+		charts             []testSpecChartWithUrl
+	}{
+		{
+			name:          "it returns the package version summary for podinfo chart in oci repo",
+			repoNamespace: "namespace-1",
+			repoName:      "repo-1",
+			request: &corev1.GetAvailablePackageVersionsRequest{
+				AvailablePackageRef: availableRef("repo-1/podinfo", "namespace-1"),
+			},
+			expectedStatusCode: codes.OK,
+			expectedResponse:   expected_versions_podinfo_2,
+			seedData:           seed_data_2,
+			charts:             oci_podinfo_charts_spec_2,
+			repoUrl:            "oci://localhost:54321/userX/charts",
+		},
+		{
+			name:          "it returns error for non-existent chart",
+			repoNamespace: "namespace-1",
+			repoName:      "repo-1",
+			repoUrl:       "oci://localhost:54321/userX/charts",
+			request: &corev1.GetAvailablePackageVersionsRequest{
+				AvailablePackageRef: availableRef("repo-1/zippity", "namespace-1"),
+			},
+			expectedStatusCode: codes.Internal,
+			seedData:           seed_data_2,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			initOciFakeClientBuilder(t, *tc.seedData)
+			repoName := strings.Split(tc.request.AvailablePackageRef.Identifier, "/")[0]
+			repoNamespace := tc.request.AvailablePackageRef.Context.Namespace
+
+			repo, err := newOciRepo(repoName, repoNamespace, tc.repoUrl)
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			s, mock, err := newServerWithRepos(t, []sourcev1.HelmRepository{*repo}, tc.charts, nil)
+			if err != nil {
+				t.Fatalf("%+v", err)
+			}
+
+			// we make sure that all expectations were met
+			if err := mock.ExpectationsWereMet(); err != nil {
+				t.Fatal(err)
+			}
+
+			if err = s.redisMockExpectGetFromRepoCache(mock, nil, *repo); err != nil {
+				t.Fatal(err)
+			}
+
+			response, err := s.GetAvailablePackageVersions(context.Background(), tc.request)
+
+			if got, want := status.Code(err), tc.expectedStatusCode; got != want {
+				t.Fatalf("got: %+v, want: %+v, err: %+v", got, want, err)
+			}
+
+			// we make sure that all expectations were met
+			if err := mock.ExpectationsWereMet(); err != nil {
+				t.Fatal(err)
 			}
 
 			// We don't need to check anything else for non-OK codes.
@@ -689,7 +811,10 @@ func TestChartCacheResyncNotIdle(t *testing.T) {
 		// stand up an http server just for the duration of this test
 		var handler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			w.WriteHeader(200)
-			w.Write(tarGzBytes)
+			_, err = w.Write(tarGzBytes)
+			if err != nil {
+				t.Fatalf("%+v", err)
+			}
 		})
 		ts := httptest.NewServer(handler)
 		defer ts.Close()
@@ -722,7 +847,7 @@ func TestChartCacheResyncNotIdle(t *testing.T) {
 		repoNamespace := "default"
 		replaceUrls := make(map[string]string)
 		replaceUrls["{{./testdata/charts/redis-14.4.0.tgz}}"] = ts.URL
-		ts2, r, err := newRepoWithIndex(
+		ts2, r, err := newHttpRepoAndServeIndex(
 			tmpFile.Name(), repoName, repoNamespace, replaceUrls, "")
 		if err != nil {
 			t.Fatalf("%+v", err)
@@ -736,7 +861,7 @@ func TestChartCacheResyncNotIdle(t *testing.T) {
 			redisMockSetValueForRepo(mock, repoKey, repoBytes, nil)
 		}
 
-		opts := &common.ClientOptions{}
+		opts := &common.HttpClientOptions{}
 		chartCacheKeys := []string{}
 		var chartBytes []byte
 		for i := 0; i < NUM_CHARTS; i++ {
@@ -747,7 +872,8 @@ func TestChartCacheResyncNotIdle(t *testing.T) {
 				t.Fatalf("%+v", err)
 			}
 			if i == 0 {
-				chartBytes, err = cache.ChartCacheComputeValue(chartID, ts.URL, chartVersion, opts)
+				fn := downloadHttpChartFn(opts)
+				chartBytes, err = cache.ChartCacheComputeValue(chartID, ts.URL, chartVersion, fn)
 				if err != nil {
 					t.Fatalf("%+v", err)
 				}
@@ -861,7 +987,10 @@ func TestChartWithRelativeURL(t *testing.T) {
 			fmt.Fprintln(w, string(indexYAMLBytes))
 		} else if r.RequestURI == "/charts/airflow-1.0.0.tgz" {
 			w.WriteHeader(200)
-			w.Write(tarGzBytes)
+			_, err = w.Write(tarGzBytes)
+			if err != nil {
+				t.Fatalf("%+v", err)
+			}
 		} else {
 			w.WriteHeader(404)
 		}
@@ -904,12 +1033,9 @@ func TestChartWithRelativeURL(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	key, bytes, err := s.redisKeyValueForRepo(repo)
-	if err != nil {
+	if err = s.redisMockExpectGetFromRepoCache(mock, nil, repo); err != nil {
 		t.Fatal(err)
 	}
-
-	mock.ExpectGet(key).SetVal(string(bytes))
 
 	response, err := s.GetAvailablePackageVersions(
 		context.Background(), &corev1.GetAvailablePackageVersionsRequest{
@@ -930,12 +1056,106 @@ func TestChartWithRelativeURL(t *testing.T) {
 	}
 }
 
+func TestGetOciAvailablePackageDetail(t *testing.T) {
+	seed_data_1, err := newFakeRemoteOciRegistryData_1()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	testCases := []struct {
+		testName              string
+		request               *corev1.GetAvailablePackageDetailRequest
+		chartCacheHit         bool
+		expectedPackageDetail *corev1.AvailablePackageDetail
+		seedData              *fakeRemoteOciRegistryData
+		charts                []testSpecChartWithUrl
+		repoUrl               string
+	}{
+		{
+			testName: "it returns details about the latest podinfo package in oci repo",
+			request: &corev1.GetAvailablePackageDetailRequest{
+				AvailablePackageRef: availableRef("repo-1/podinfo", "namespace-1"),
+			},
+			chartCacheHit:         true,
+			expectedPackageDetail: expected_detail_podinfo_1,
+			seedData:              seed_data_1,
+			charts:                oci_podinfo_charts_spec,
+			repoUrl:               "oci://localhost:54321/userX/charts",
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.testName, func(t *testing.T) {
+			initOciFakeClientBuilder(t, *tc.seedData)
+			repoName := strings.Split(tc.request.AvailablePackageRef.Identifier, "/")[0]
+			repoNamespace := tc.request.AvailablePackageRef.Context.Namespace
+
+			repo, err := newOciRepo(repoName, repoNamespace, tc.repoUrl)
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			s, mock, err := newServerWithRepos(t, []sourcev1.HelmRepository{*repo}, tc.charts, nil)
+			if err != nil {
+				t.Fatalf("%+v", err)
+			}
+
+			err = s.redisMockExpectGetFromRepoCache(mock, nil, *repo)
+			if err != nil {
+				t.Fatalf("%+v", err)
+			}
+			chartVersion := tc.request.PkgVersion
+			if chartVersion == "" {
+				chartVersion = tc.charts[0].chartRevision
+			}
+			chartCacheKey, err := s.chartCache.KeyFor(
+				repoNamespace,
+				tc.request.AvailablePackageRef.Identifier,
+				chartVersion)
+			if err != nil {
+				t.Fatalf("%+v", err)
+			}
+
+			namespacedRepoName := types.NamespacedName{
+				Name:      repoName,
+				Namespace: repoNamespace}
+			ociChartRepo, err := s.newOCIChartRepositoryAndLogin(context.Background(), namespacedRepoName)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if !tc.chartCacheHit {
+				// first a miss (there will be actually two calls to Redis GET based on current code path)
+				for i := 0; i < 2; i++ {
+					if err = redisMockExpectGetFromOciChartCache(mock, chartCacheKey, "", nil); err != nil {
+						t.Fatal(err)
+					}
+				}
+				// followed by a set and a hit
+				err = redisMockSetValueForOciChart(mock, chartCacheKey, tc.charts[0].chartUrl, ociChartRepo)
+				if err != nil {
+					t.Fatal(err)
+				}
+			}
+			if err = redisMockExpectGetFromOciChartCache(mock, chartCacheKey, tc.charts[0].chartUrl, ociChartRepo); err != nil {
+				t.Fatal(err)
+			}
+
+			response, err := s.GetAvailablePackageDetail(context.Background(), tc.request)
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			compareActualVsExpectedAvailablePackageDetail(t, response.AvailablePackageDetail, tc.expectedPackageDetail)
+
+			if err = mock.ExpectationsWereMet(); err != nil {
+				t.Fatal(err)
+			}
+		})
+	}
+}
+
 func newChart(name, namespace string, spec *sourcev1.HelmChartSpec, status *sourcev1.HelmChartStatus) sourcev1.HelmChart {
 	helmChart := sourcev1.HelmChart{
-		TypeMeta: metav1.TypeMeta{
-			Kind:       sourcev1.HelmChartKind,
-			APIVersion: sourcev1.GroupVersion.String(),
-		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:       name,
 			Generation: int64(1),
@@ -957,20 +1177,27 @@ func newChart(name, namespace string, spec *sourcev1.HelmChartSpec, status *sour
 	return helmChart
 }
 
-func (s *Server) redisMockSetValueForChart(mock redismock.ClientMock, key, url string, opts *common.ClientOptions) error {
-	sink := repoEventSink{
-		clientGetter: s.newBackgroundClientGetter(),
-		chartCache:   s.chartCache,
-	}
-	return sink.redisMockSetValueForChart(mock, key, url, opts)
-}
-
-func (cs *repoEventSink) redisMockSetValueForChart(mock redismock.ClientMock, key, url string, opts *common.ClientOptions) error {
+func redisMockSetValueForHttpChart(mock redismock.ClientMock, key, url string, opts *common.HttpClientOptions) error {
 	_, chartID, version, err := fromRedisKeyForChart(key)
 	if err != nil {
 		return err
 	}
-	byteArray, err := cache.ChartCacheComputeValue(chartID, url, version, opts)
+	fn := downloadHttpChartFn(opts)
+	byteArray, err := cache.ChartCacheComputeValue(chartID, url, version, fn)
+	if err != nil {
+		return fmt.Errorf("chartCacheComputeValue failed due to: %+v", err)
+	}
+	redisMockSetValueForChart(mock, key, byteArray)
+	return nil
+}
+
+func redisMockSetValueForOciChart(mock redismock.ClientMock, key, url string, ociRepo *OCIChartRepository) error {
+	_, chartID, version, err := fromRedisKeyForChart(key)
+	if err != nil {
+		return err
+	}
+	fn := downloadOCIChartFn(ociRepo)
+	byteArray, err := cache.ChartCacheComputeValue(chartID, url, version, fn)
 	if err != nil {
 		return fmt.Errorf("chartCacheComputeValue failed due to: %+v", err)
 	}
@@ -985,13 +1212,33 @@ func redisMockSetValueForChart(mock redismock.ClientMock, key string, byteArray 
 }
 
 // does a series of mock.ExpectGet(...)
-func redisMockExpectGetFromChartCache(mock redismock.ClientMock, key, url string, opts *common.ClientOptions) error {
+func redisMockExpectGetFromHttpChartCache(mock redismock.ClientMock, key, url string, opts *common.HttpClientOptions) error {
 	if url != "" {
 		_, chartID, version, err := fromRedisKeyForChart(key)
 		if err != nil {
 			return err
 		}
-		bytes, err := cache.ChartCacheComputeValue(chartID, url, version, opts)
+		fn := downloadHttpChartFn(opts)
+		bytes, err := cache.ChartCacheComputeValue(chartID, url, version, fn)
+		if err != nil {
+			return err
+		}
+		mock.ExpectGet(key).SetVal(string(bytes))
+	} else {
+		mock.ExpectGet(key).RedisNil()
+	}
+	return nil
+}
+
+// does a series of mock.ExpectGet(...)
+func redisMockExpectGetFromOciChartCache(mock redismock.ClientMock, key, url string, ociRepo *OCIChartRepository) error {
+	if url != "" {
+		_, chartID, version, err := fromRedisKeyForChart(key)
+		if err != nil {
+			return err
+		}
+		fn := downloadOCIChartFn(ociRepo)
+		bytes, err := cache.ChartCacheComputeValue(chartID, url, version, fn)
 		if err != nil {
 			return err
 		}

@@ -2,12 +2,12 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import actions from "actions";
-import { getType } from "typesafe-actions";
 import Alert from "components/js/Alert";
 import LoadingWrapper from "components/LoadingWrapper/LoadingWrapper";
 import PageHeader from "components/PageHeader";
 import ApplicationStatusContainer from "containers/ApplicationStatusContainer";
 import {
+  AvailablePackageDetail,
   AvailablePackageReference,
   Context,
   GetAvailablePackageDetailResponse,
@@ -22,22 +22,24 @@ import {
   VersionReference,
 } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
 import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins";
-import { MemoryRouter, Route } from "react-router-dom";
 import { act } from "react-dom/test-utils";
-import { defaultStore, getStore, mountWrapper } from "shared/specs/mountWrapper";
-import { DeleteError, FetchError } from "shared/types";
+import { MemoryRouter, Route } from "react-router-dom";
+import { IConfigState } from "reducers/config";
+import { InstalledPackage } from "shared/InstalledPackage";
+import PackagesService from "shared/PackagesService";
+import { getStore, mountWrapper } from "shared/specs/mountWrapper";
+import { DeleteError, FetchError, IInstalledPackageState } from "shared/types";
 import { PluginNames } from "shared/utils";
+import { getType } from "typesafe-actions";
 import AccessURLTable from "./AccessURLTable/AccessURLTable";
 import DeleteButton from "./AppControls/DeleteButton/DeleteButton";
 import RollbackButton from "./AppControls/RollbackButton";
 import UpgradeButton from "./AppControls/UpgradeButton/UpgradeButton";
 import AppNotes from "./AppNotes/AppNotes";
 import AppView from "./AppView";
-import PackageInfo from "./PackageInfo/PackageInfo";
 import CustomAppView from "./CustomAppView";
+import PackageInfo from "./PackageInfo/PackageInfo";
 import ResourceTabs from "./ResourceTabs";
-import { InstalledPackage } from "shared/InstalledPackage";
-import PackagesService from "shared/PackagesService";
 
 const routeParams = {
   cluster: "cluster-1",
@@ -75,16 +77,26 @@ const installedPackage = {
   } as InstalledPackageStatus,
 } as InstalledPackageDetail;
 
+const availablePackageDetail = {
+  displayName: "my-cool-package-1",
+  availablePackageRef: {
+    identifier: "apache/1",
+    plugin: { name: PluginNames.PACKAGES_HELM },
+    context: { cluster: "", namespace: "chart-namespace" } as Context,
+  } as AvailablePackageReference,
+  version: { appVersion: "4.5.6", pkgVersion: "1.2.3" },
+} as AvailablePackageDetail;
+
 const resourceRefs = {
   configMap: { apiVersion: "v1", kind: "ConfigMap", name: "cm-one" } as ResourceRef,
   deployment: {
-    apiVersion: "apps/v1beta1",
+    apiVersion: "apps/v1",
     kind: "Deployment",
     name: "deployment-one",
   } as ResourceRef,
   service: { apiVersion: "v1", kind: "Service", name: "svc-one" } as ResourceRef,
   ingress: {
-    apiVersion: "extensions/v1beta1",
+    apiVersion: "extensions/v1",
     kind: "Ingress",
     name: "ingress-one",
   } as ResourceRef,
@@ -94,12 +106,12 @@ const resourceRefs = {
     name: "secret-one",
   } as ResourceRef,
   daemonset: {
-    apiVersion: "apps/v1beta1",
+    apiVersion: "apps/v1",
     kind: "DaemonSet",
     name: "daemonset-one",
   } as ResourceRef,
   statefulset: {
-    apiVersion: "apps/v1beta1",
+    apiVersion: "apps/v1",
     kind: "StatefulSet",
     name: "statefulset-one",
   } as ResourceRef,
@@ -107,11 +119,14 @@ const resourceRefs = {
 
 const validState = {
   apps: {
+    isFetching: false,
+    items: [installedPackage],
     selected: {
       ...installedPackage,
       resourceRefs: [resourceRefs.configMap] as ResourceRef[],
+      revision: 1,
     },
-  },
+  } as IInstalledPackageState,
 };
 
 beforeEach(() => {
@@ -139,9 +154,44 @@ describe("AppView", () => {
   it("renders a loading wrapper", async () => {
     let wrapper: any;
     await act(async () => {
-      wrapper = mountWrapper(defaultStore, <AppView />);
+      wrapper = mountWrapper(
+        getStore({
+          apps: {
+            selected: undefined,
+            isFetching: true,
+          } as IInstalledPackageState,
+        }),
+        <MemoryRouter initialEntries={[routePathParam]}>
+          <Route path={routePath}>
+            <AppView />
+          </Route>
+        </MemoryRouter>,
+      );
     });
-    expect(wrapper.find(LoadingWrapper)).toExist();
+    expect(wrapper.find(LoadingWrapper).prop("loaded")).toBe(false);
+  });
+
+  it("does not render an loading wrapper if it isn't fetching", async () => {
+    let wrapper: any;
+    await act(async () => {
+      wrapper = mountWrapper(
+        getStore({
+          apps: {
+            selected: undefined,
+            isFetching: false,
+            error: new Error("foo not found"),
+          } as IInstalledPackageState,
+        }),
+        <MemoryRouter initialEntries={[routePathParam]}>
+          <Route path={routePath}>
+            <AppView />
+          </Route>
+        </MemoryRouter>,
+      );
+    });
+    expect(wrapper.find(LoadingWrapper).prop("loaded")).toBe(true);
+    expect(wrapper.find(Alert).html()).toContain("foo not found");
+    expect(wrapper.find(PageHeader)).not.toExist();
   });
 
   it("renders a fetch error only", async () => {
@@ -149,7 +199,7 @@ describe("AppView", () => {
 
     await act(async () => {
       wrapper = mountWrapper(
-        getStore({ apps: { error: new FetchError("boom!") } }),
+        getStore({ apps: { error: new FetchError("boom!") } as IInstalledPackageState }),
         <MemoryRouter initialEntries={[routePathParam]}>
           <Route path={routePath}>
             <AppView />
@@ -166,7 +216,7 @@ describe("AppView", () => {
     await act(async () => {
       wrapper = mountWrapper(
         getStore({
-          apps: { selected: { ...installedPackage } },
+          apps: { selected: { ...installedPackage } } as IInstalledPackageState,
           config: {
             customAppViews: [
               {
@@ -175,7 +225,7 @@ describe("AppView", () => {
                 repository: "apache",
               },
             ],
-          },
+          } as IConfigState,
         }),
         <MemoryRouter initialEntries={[routePathParam]}>
           <Route path={routePath}>
@@ -192,7 +242,7 @@ describe("AppView", () => {
     await act(async () => {
       wrapper = mountWrapper(
         getStore({
-          apps: { selected: { ...installedPackage } },
+          apps: { selected: { ...installedPackage } } as IInstalledPackageState,
           config: {
             customAppViews: [
               {
@@ -201,7 +251,7 @@ describe("AppView", () => {
                 repository: "demo-repo",
               },
             ],
-          },
+          } as IConfigState,
         }),
         <MemoryRouter initialEntries={[routePathParam]}>
           <Route path={routePath}>
@@ -211,6 +261,26 @@ describe("AppView", () => {
       );
     });
     expect(wrapper.find(CustomAppView)).not.toExist();
+  });
+
+  it("renders a PackageHeader with the information about the associated available package", async () => {
+    let wrapper: any;
+    await act(async () => {
+      wrapper = mountWrapper(
+        getStore({
+          apps: {
+            selected: { ...installedPackage },
+            selectedDetails: { ...availablePackageDetail },
+          } as IInstalledPackageState,
+        }),
+        <MemoryRouter initialEntries={[routePathParam]}>
+          <Route path={routePath}>
+            <AppView />
+          </Route>
+        </MemoryRouter>,
+      );
+    });
+    expect(wrapper.find(PageHeader).text()).toContain("from package my-cool-package-1");
   });
 
   it("renders a RollBack button if the installedPackage is from PACKAGES_HELM", async () => {
@@ -226,8 +296,7 @@ describe("AppView", () => {
                 plugin: { name: PluginNames.PACKAGES_HELM, version: "v1alpha1" } as Plugin,
               } as InstalledPackageReference,
             },
-          },
-          config: {},
+          } as IInstalledPackageState,
         }),
         <MemoryRouter initialEntries={[routePathParam]}>
           <Route path={routePath}>
@@ -247,8 +316,7 @@ describe("AppView", () => {
     await act(async () => {
       wrapper = mountWrapper(
         getStore({
-          apps: { selected: { ...installedPackage } },
-          config: {},
+          apps: { selected: { ...installedPackage } } as IInstalledPackageState,
         }),
         <MemoryRouter initialEntries={[routePathParam]}>
           <Route path={routePath}>
@@ -283,7 +351,7 @@ describe("AppView", () => {
       let wrapper: any;
       await act(async () => {
         wrapper = mountWrapper(
-          getStore({ apps: { selected: installedPackage } }),
+          getStore({ apps: { selected: installedPackage } as IInstalledPackageState }),
           <MemoryRouter initialEntries={[routePathParam]}>
             <Route path={routePath}>
               <AppView />
@@ -315,7 +383,7 @@ describe("AppView", () => {
       let wrapper: any;
       await act(async () => {
         wrapper = mountWrapper(
-          getStore({ apps: { selected: installedPackage } }),
+          getStore({ apps: { selected: installedPackage } as IInstalledPackageState }),
           <MemoryRouter initialEntries={[routePathParam]}>
             <Route path={routePath}>
               <AppView />
@@ -354,7 +422,10 @@ describe("AppView", () => {
       let wrapper: any;
       await act(async () => {
         wrapper = mountWrapper(
-          getStore({ ...validState, apps: { ...validState.apps, error: new Error("Boom!") } }),
+          getStore({
+            ...validState,
+            apps: { ...validState.apps, error: new Error("Boom!") } as IInstalledPackageState,
+          }),
           <MemoryRouter initialEntries={[routePathParam]}>
             <Route path={routePath}>
               <AppView />
@@ -373,7 +444,7 @@ describe("AppView", () => {
         wrapper = mountWrapper(
           getStore({
             ...validState,
-            apps: { ...validState.apps, error: new DeleteError("Boom!") },
+            apps: { ...validState.apps, error: new DeleteError("Boom!") } as IInstalledPackageState,
           }),
           <MemoryRouter initialEntries={[routePathParam]}>
             <Route path={routePath}>
@@ -398,7 +469,7 @@ describe("AppView", () => {
     let wrapper: any;
     await act(async () => {
       wrapper = mountWrapper(
-        getStore({ apps: { selected: installedPackage } }),
+        getStore({ apps: { selected: installedPackage } as IInstalledPackageState }),
         <MemoryRouter initialEntries={[routePathParam]}>
           <Route path={routePath}>
             <AppView />
@@ -428,7 +499,7 @@ describe("AppView actions", () => {
         resourceRefs: apiResourceRefs,
       } as GetInstalledPackageResourceRefsResponse),
     );
-    const store = getStore({ apps: { selected: installedPackage } });
+    const store = getStore({ apps: { selected: installedPackage } as IInstalledPackageState });
 
     await act(async () => {
       mountWrapper(
@@ -484,7 +555,7 @@ describe("AppView actions", () => {
       } as GetInstalledPackageResourceRefsResponse),
     );
 
-    const store = getStore({ apps: { selected: installedPackage } });
+    const store = getStore({ apps: { selected: installedPackage } as IInstalledPackageState });
     let wrapper: any;
     await act(async () => {
       wrapper = mountWrapper(

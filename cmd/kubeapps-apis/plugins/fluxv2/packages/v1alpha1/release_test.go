@@ -193,19 +193,16 @@ func TestGetInstalledPackageSummariesWithoutPagination(t *testing.T) {
 			defer cleanup()
 
 			for _, existing := range tc.existingObjs {
-				ts2, repo, err := newRepoWithIndex(
+				ts2, repo, err := newHttpRepoAndServeIndex(
 					existing.repoIndex, existing.repoName, existing.repoNamespace, nil, "")
 				if err != nil {
 					t.Fatalf("%+v", err)
 				}
 				defer ts2.Close()
 
-				redisKey, bytes, err := s.redisKeyValueForRepo(*repo)
-				if err != nil {
-					t.Fatalf("%+v", err)
+				if err = s.redisMockExpectGetFromRepoCache(mock, nil, *repo); err != nil {
+					t.Fatal(err)
 				}
-
-				mock.ExpectGet(redisKey).SetVal(string(bytes))
 			}
 
 			response, err := s.GetInstalledPackageSummaries(context.Background(), tc.request)
@@ -257,19 +254,16 @@ func TestGetInstalledPackageSummariesWithPagination(t *testing.T) {
 		defer cleanup()
 
 		for _, existing := range existingObjs {
-			ts2, repo, err := newRepoWithIndex(
+			ts2, repo, err := newHttpRepoAndServeIndex(
 				existing.repoIndex, existing.repoName, existing.repoNamespace, nil, "")
 			if err != nil {
 				t.Fatalf("%+v", err)
 			}
 			defer ts2.Close()
 
-			redisKey, bytes, err := s.redisKeyValueForRepo(*repo)
-			if err != nil {
-				t.Fatalf("%+v", err)
+			if err = s.redisMockExpectGetFromRepoCache(mock, nil, *repo); err != nil {
+				t.Fatal(err)
 			}
-
-			mock.ExpectGet(redisKey).SetVal(string(bytes))
 		}
 
 		request1 := &corev1.GetInstalledPackageSummariesRequest{
@@ -625,7 +619,7 @@ func TestCreateInstalledPackage(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			ts, repo, err := newRepoWithIndex(
+			ts, repo, err := newHttpRepoAndServeIndex(
 				tc.existingObjs.repoIndex, tc.existingObjs.repoName, tc.existingObjs.repoNamespace, nil, "")
 			if err != nil {
 				t.Fatalf("%+v", err)
@@ -637,12 +631,9 @@ func TestCreateInstalledPackage(t *testing.T) {
 				t.Fatalf("%+v", err)
 			}
 
-			redisKey, bytes, err := s.redisKeyValueForRepo(*repo)
-			if err != nil {
-				t.Fatalf("%+v", err)
+			if err = s.redisMockExpectGetFromRepoCache(mock, nil, *repo); err != nil {
+				t.Fatal(err)
 			}
-
-			mock.ExpectGet(redisKey).SetVal(string(bytes))
 
 			if tc.defaultUpgradePolicyStr != "" {
 				policy, err := pkgutils.UpgradePolicyFromString(tc.defaultUpgradePolicyStr)
@@ -825,6 +816,20 @@ func TestUpdateInstalledPackage(t *testing.T) {
 			expectedRelease:         flux_helm_release_updated_upgrade_patch,
 			defaultUpgradePolicyStr: "patch",
 		},
+		{
+			name: "update package pending reconciliation errors",
+			request: &corev1.UpdateInstalledPackageRequest{
+				InstalledPackageRef: my_redis_ref,
+				PkgVersionReference: &corev1.VersionReference{
+					Version: "14.4.0",
+				},
+			},
+			existingK8sObjs:    &redis_existing_spec_pending,
+			expectedStatusCode: codes.Internal,
+		},
+
+		// test case update installed package that has failed reconciliation will be done
+		// in integration test
 	}
 
 	for _, tc := range testCases {
@@ -1129,7 +1134,10 @@ func newChartsAndReleases(t *testing.T, existingK8sObjs []testSpecGetInstalledPa
 		// stand up an http server just for the duration of this test
 		ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			w.WriteHeader(200)
-			w.Write(tarGzBytes)
+			_, err = w.Write(tarGzBytes)
+			if err != nil {
+				t.Fatalf("%+v", err)
+			}
 		}))
 		httpServers = append(httpServers, ts)
 
@@ -1222,10 +1230,6 @@ func compareActualVsExpectedGetInstalledPackageDetailResponse(t *testing.T, actu
 
 func newRelease(name string, namespace string, spec *helmv2.HelmReleaseSpec, status *helmv2.HelmReleaseStatus) helmv2.HelmRelease {
 	helmRelease := helmv2.HelmRelease{
-		TypeMeta: metav1.TypeMeta{
-			Kind:       helmv2.HelmReleaseKind,
-			APIVersion: helmv2.GroupVersion.String(),
-		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:       name,
 			Generation: int64(1),

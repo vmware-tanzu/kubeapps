@@ -8,6 +8,7 @@ import InfoCard from "components/InfoCard/InfoCard";
 import Alert from "components/js/Alert";
 import LoadingWrapper from "components/LoadingWrapper";
 import { AvailablePackageSummary, Context } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
+import { PackageRepositorySummary } from "gen/kubeappsapis/core/packages/v1alpha1/repositories";
 import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins";
 import { createMemoryHistory } from "history";
 import React from "react";
@@ -17,14 +18,9 @@ import * as ReactRouter from "react-router";
 import { MemoryRouter, Route, Router } from "react-router-dom";
 import { IConfigState } from "reducers/config";
 import { IOperatorsState } from "reducers/operators";
-import { IAppRepositoryState } from "reducers/repos";
+import { IPackageRepositoryState } from "reducers/repos";
 import { getStore, initialState, mountWrapper } from "shared/specs/mountWrapper";
-import {
-  IAppRepository,
-  IPackageState,
-  IClusterServiceVersion,
-  IStoreState,
-} from "../../shared/types";
+import { IClusterServiceVersion, IPackageState, IStoreState } from "../../shared/types";
 import SearchFilter from "../SearchFilter/SearchFilter";
 import Catalog, { filterNames } from "./Catalog";
 import CatalogItems from "./CatalogItems";
@@ -36,16 +32,13 @@ const defaultPackageState = {
   selected: {} as IPackageState["selected"],
   items: [],
   categories: [],
+  nextPageToken: "",
   size: 20,
 } as IPackageState;
 const defaultProps = {
-  packages: defaultPackageState,
-  repo: "",
-  filter: {},
   cluster: initialState.config.kubeappsCluster,
   namespace: "kubeapps",
   kubeappsNamespace: "kubeapps",
-  csvs: [],
 };
 const availablePkgSummary1: AvailablePackageSummary = {
   name: "foo",
@@ -98,7 +91,7 @@ const csv = {
 const defaultState = {
   packages: defaultPackageState,
   operators: { csvs: [] } as Partial<IOperatorsState>,
-  repos: { repos: [] } as Partial<IAppRepositoryState>,
+  repos: { reposSummaries: [] } as Partial<IPackageRepositoryState>,
   config: {
     kubeappsCluster: defaultProps.cluster,
     kubeappsNamespace: defaultProps.kubeappsNamespace,
@@ -445,6 +438,33 @@ describe("filters by application type", () => {
 });
 
 describe("pagination and package fetching", () => {
+  let spyOnUseRef: jest.SpyInstance;
+  const refFalse = { current: {} };
+  const refTrue = { current: {} };
+  Object.defineProperty(refFalse, "current", {
+    set(_current) {
+      // do nothing
+    },
+    get() {
+      return false;
+    },
+  });
+  Object.defineProperty(refTrue, "current", {
+    set(_current) {
+      // do nothing
+    },
+    get() {
+      return true;
+    },
+  });
+
+  beforeEach(() => {
+    spyOnUseRef = jest.spyOn(React, "useRef").mockReturnValue(refFalse);
+  });
+  afterEach(() => {
+    spyOnUseRef.mockRestore();
+  });
+
   it("sets the initial state page to 0 before fetching packages", () => {
     const fetchAvailablePackageSummaries = jest.fn();
     actions.availablepackages.fetchAvailablePackageSummaries = fetchAvailablePackageSummaries;
@@ -464,22 +484,24 @@ describe("pagination and package fetching", () => {
       </MemoryRouter>,
     );
 
-    expect(wrapper.find(CatalogItems).prop("page")).toBe(0);
+    expect(wrapper.find(CatalogItems).prop("isFirstPage")).toBe(false);
     expect(wrapper.find(PackageCatalogItem).length).toBe(0);
     expect(fetchAvailablePackageSummaries).toHaveBeenNthCalledWith(
       1,
       "default-cluster",
       "kubeapps",
       "",
-      0,
+      "",
       20,
       "",
     );
   });
 
-  it("sets the state page when fetching packages", () => {
+  it("avoids re-fetching if isFetching=true", () => {
+    jest.useFakeTimers();
     const fetchAvailablePackageSummaries = jest.fn();
     actions.availablepackages.fetchAvailablePackageSummaries = fetchAvailablePackageSummaries;
+    spyOnUseRef = jest.spyOn(React, "useRef").mockReturnValue(refTrue);
 
     const packages = {
       ...defaultPackageState,
@@ -495,27 +517,17 @@ describe("pagination and package fetching", () => {
         </Route>
       </MemoryRouter>,
     );
+    jest.advanceTimersByTime(2000);
 
-    expect(wrapper.find(CatalogItems).prop("page")).toBe(0);
-    expect(wrapper.find(PackageCatalogItem).length).toBe(1);
-    expect(fetchAvailablePackageSummaries).toHaveBeenCalledWith(
-      "default-cluster",
-      "kubeapps",
-      "",
-      0,
-      20,
-      "",
-    );
+    expect(wrapper.find(CatalogItems).prop("isFirstPage")).toBe(true);
+    expect(fetchAvailablePackageSummaries).not.toBeCalled();
   });
 
-  it("items are translated to CatalogItems after fetching packages", () => {
-    const fetchAvailablePackageSummaries = jest.fn();
-    actions.availablepackages.fetchAvailablePackageSummaries = fetchAvailablePackageSummaries;
-
+  it("disables the filtergroups when isFetching", () => {
     const packages = {
       ...defaultPackageState,
       hasFinishedFetching: true,
-      isFetching: false,
+      isFetching: true,
       items: [availablePkgSummary1, availablePkgSummary2],
     } as any;
     const wrapper = mountWrapper(
@@ -527,54 +539,74 @@ describe("pagination and package fetching", () => {
       </MemoryRouter>,
     );
 
-    expect(wrapper.find(CatalogItems).prop("page")).toBe(0);
-    expect(wrapper.find(PackageCatalogItem).length).toBe(2);
-    expect(fetchAvailablePackageSummaries).toHaveBeenCalledWith(
-      "default-cluster",
-      "kubeapps",
-      "",
-      0,
-      20,
-      "",
-    );
+    wrapper
+      .find(FilterGroup)
+      .find("input")
+      .forEach(i => expect(i.prop("disabled")).toBe(true));
   });
 
-  describe("pagination", () => {
-    let spyOnUseState: jest.SpyInstance;
-    const setState = jest.fn();
-    const setPage = jest.fn();
+  it("items are translated to CatalogItems after fetching packages", () => {
+    const fetchAvailablePackageSummaries = jest.fn();
+    actions.availablepackages.fetchAvailablePackageSummaries = fetchAvailablePackageSummaries;
 
+    const packages = {
+      ...defaultPackageState,
+      hasFinishedFetching: true,
+      isFetching: false,
+      items: [availablePkgSummary1, availablePkgSummary2],
+      nextPageToken: "nextPageToken",
+    } as IPackageState;
+    const wrapper = mountWrapper(
+      getStore({ ...populatedState, packages: packages } as IStoreState),
+      <MemoryRouter initialEntries={[routePathParam]}>
+        <Route path={routePath}>
+          <Catalog />
+        </Route>
+      </MemoryRouter>,
+    );
+
+    expect(wrapper.find(PackageCatalogItem).length).toBe(2);
+  });
+
+  it("does not fetch again after finishing pagination", () => {
+    const fetchAvailablePackageSummaries = jest.fn();
+    actions.availablepackages.fetchAvailablePackageSummaries = fetchAvailablePackageSummaries;
+
+    const packages = {
+      ...defaultPackageState,
+      hasFinishedFetching: true,
+      isFetching: false,
+      items: [availablePkgSummary1],
+    } as any;
+    const wrapper = mountWrapper(
+      getStore({ ...populatedState, packages: packages } as IStoreState),
+      <MemoryRouter initialEntries={[routePathParam]}>
+        <Route path={routePath}>
+          <Catalog />
+        </Route>
+      </MemoryRouter>,
+    );
+
+    expect(wrapper.find(CatalogItems).prop("isFirstPage")).toBe(false);
+    expect(wrapper.find(PackageCatalogItem).length).toBe(1);
+    expect(fetchAvailablePackageSummaries).not.toHaveBeenCalled();
+  });
+
+  describe("reset", () => {
+    const mockDispatch = jest.fn();
+    let spyOnUseDispatch: jest.SpyInstance;
+    let resetAvailablePackageSummaries: jest.SpyInstance;
     beforeEach(() => {
-      spyOnUseState = jest
-        .spyOn(React, "useState")
-        /* @ts-expect-error: Argument of type '(init: any) => any' is not assignable to parameter of type '() => [unknown, Dispatch<unknown>]' */
-        .mockImplementation((init: any) => {
-          if (init === false) {
-            // Mocking the result of hasLoadedFirstPage to simulate that is already loaded
-            return [true, setState];
-          }
-          if (init === 0) {
-            // Mocking the result of setPage to ensure it's called
-            return [0, setPage];
-          }
-          return [init, setState];
-        });
-
-      // Mock intersection observer
-      const observe = jest.fn();
-      const unobserve = jest.fn();
-
-      window.IntersectionObserver = jest.fn(callback => {
-        (callback as (e: any) => void)([{ isIntersecting: true }]);
-        return { observe, unobserve } as any;
-      });
+      spyOnUseDispatch = jest.spyOn(ReactRedux, "useDispatch").mockReturnValue(mockDispatch);
+      resetAvailablePackageSummaries = jest
+        .spyOn(actions.availablepackages, "resetAvailablePackageSummaries")
+        .mockImplementation();
     });
-
     afterEach(() => {
-      spyOnUseState.mockRestore();
+      spyOnUseDispatch.mockRestore();
     });
 
-    it("changes page", () => {
+    it("does not reset during the initial page render", () => {
       const packages = {
         ...defaultPackageState,
         hasFinishedFetching: false,
@@ -590,14 +622,36 @@ describe("pagination and package fetching", () => {
           </Route>
         </MemoryRouter>,
       );
-      expect(setPage).toHaveBeenCalledWith(0);
+
+      expect(resetAvailablePackageSummaries).not.toHaveBeenCalledWith();
+    });
+
+    it("resets the package state when unmounted", () => {
+      const packages = {
+        ...defaultPackageState,
+        hasFinishedFetching: false,
+        isFetching: false,
+        items: [],
+      } as any;
+
+      const wrapper = mountWrapper(
+        getStore({ ...populatedState, packages: packages } as IStoreState),
+        <MemoryRouter initialEntries={[routePathParam]}>
+          <Route path={routePath}>
+            <Catalog />
+          </Route>
+        </MemoryRouter>,
+      );
+      wrapper.unmount();
+
+      expect(resetAvailablePackageSummaries).toHaveBeenCalledWith();
     });
     // TODO(agamez): add a test case covering it "resets page when one of the filters changes"
     // https://github.com/vmware-tanzu/kubeapps/pull/2264/files/0d3c77448543668255809bf05039aca704cf729f..22343137efb1c2292b0aa4795f02124306cb055e#r565486271
   });
 });
 
-describe("filters by application repository", () => {
+describe("filters by package repository", () => {
   const mockDispatch = jest.fn();
   let spyOnUseDispatch: jest.SpyInstance;
   let fetchRepos: jest.SpyInstance;
@@ -606,7 +660,7 @@ describe("filters by application repository", () => {
     spyOnUseDispatch = jest.spyOn(ReactRedux, "useDispatch").mockReturnValue(mockDispatch);
     // Can't just assign a mock fn to actions.repos.fetchRepos because it is (correctly) exported
     // as a const fn.
-    fetchRepos = jest.spyOn(actions.repos, "fetchRepos").mockImplementation(() => {
+    fetchRepos = jest.spyOn(actions.repos, "fetchRepoSummaries").mockImplementation(() => {
       return jest.fn();
     });
   });
@@ -647,7 +701,9 @@ describe("filters by application repository", () => {
     const wrapper = mountWrapper(
       getStore({
         ...populatedState,
-        repos: { repos: [{ metadata: { name: "foo" } } as IAppRepository] },
+        repos: {
+          reposSummaries: [{ name: "foo" } as PackageRepositorySummary],
+        } as IPackageRepositoryState,
       }),
       <MemoryRouter initialEntries={[routePathParam]}>
         <Route path={routePath}>
@@ -675,7 +731,9 @@ describe("filters by application repository", () => {
     const wrapper = mountWrapper(
       getStore({
         ...populatedState,
-        repos: { repos: [{ metadata: { name: "foo" } } as IAppRepository] },
+        repos: {
+          reposSummaries: [{ name: "foo" } as PackageRepositorySummary],
+        } as IPackageRepositoryState,
       }),
       <MemoryRouter initialEntries={[`/c/${defaultProps.cluster}/ns/my-ns/catalog`]}>
         <Route path={routePath}>
@@ -703,7 +761,7 @@ describe("filters by application repository", () => {
     mountWrapper(
       getStore({
         ...populatedState,
-        repos: { repos: [{ metadata: { name: "foo" } } as IAppRepository] },
+        repos: { repos: [{ name: "foo" } as PackageRepositorySummary] },
       }),
       <MemoryRouter
         initialEntries={[
@@ -717,14 +775,14 @@ describe("filters by application repository", () => {
     );
 
     // Called without the boolean `true` option to additionally fetch global repos.
-    expect(fetchRepos).toHaveBeenCalledWith(initialState.config.globalReposNamespace);
+    expect(fetchRepos).toHaveBeenCalledWith("");
   });
 
   it("fetches from the global repos namespace for other clusters", () => {
     mountWrapper(
       getStore({
         ...populatedState,
-        repos: { repos: [{ metadata: { name: "foo" } } as IAppRepository] },
+        repos: { repos: [{ name: "foo" } as PackageRepositorySummary] },
       }),
       <MemoryRouter initialEntries={[`/c/other-cluster/ns/my-ns/catalog`]}>
         <Route path={routePath}>
@@ -734,7 +792,7 @@ describe("filters by application repository", () => {
     );
 
     // Only the global repos should have been fetched.
-    expect(fetchRepos).toHaveBeenCalledWith(initialState.config.globalReposNamespace);
+    expect(fetchRepos).toHaveBeenCalledWith("");
   });
 });
 

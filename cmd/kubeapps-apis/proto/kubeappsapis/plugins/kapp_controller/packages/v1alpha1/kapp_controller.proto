@@ -7,6 +7,7 @@ option go_package = "github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/plug
 
 import "google/api/annotations.proto";
 import "kubeappsapis/core/packages/v1alpha1/packages.proto";
+import "kubeappsapis/core/packages/v1alpha1/repositories.proto";
 import "kubeappsapis/core/plugins/v1alpha1/plugins.proto";
 import "protoc-gen-openapiv2/options/annotations.proto";
 
@@ -24,13 +25,6 @@ service KappControllerPackagesService {
       get: "/plugins/kapp_controller/packages/v1alpha1/availablepackages/c/{available_package_ref.context.cluster}/ns/{available_package_ref.context.namespace}/{available_package_ref.identifier=**}"
     };
   }
-
-  // GetPackageRepositories returns the repositories managed by the 'kapp_controller' plugin
-  rpc GetPackageRepositories(GetPackageRepositoriesRequest) returns (GetPackageRepositoriesResponse) {
-    option (google.api.http) = {
-      get: "/plugins/kapp_controller/packages/v1alpha1/packagerepositories"
-    };
-  };
 
   // GetAvailablePackageVersions returns the package versions managed by the 'kapp_controller' plugin
   rpc GetAvailablePackageVersions(kubeappsapis.core.packages.v1alpha1.GetAvailablePackageVersionsRequest) returns (kubeappsapis.core.packages.v1alpha1.GetAvailablePackageVersionsResponse) {
@@ -85,59 +79,99 @@ service KappControllerPackagesService {
   }
 }
 
-// Specific messages used by the 'kapp_controller' plugin
+service KappControllerRepositoriesService {
+  // AddPackageRepository add an existing package repository to the set of ones already managed by the 'kapp_controller' plugin
+  rpc AddPackageRepository(kubeappsapis.core.packages.v1alpha1.AddPackageRepositoryRequest) returns (kubeappsapis.core.packages.v1alpha1.AddPackageRepositoryResponse) {
+    option (google.api.http) = {
+      post: "/plugins/kapp_controller/packages/v1alpha1/repositories"
+      body: "*"
+    };
+  }
 
-// GetPackageRepositories
-//
-// Request for GetPackageRepositories
-message GetPackageRepositoriesRequest {
-  // The context (cluster/namespace) for the request
-  kubeappsapis.core.packages.v1alpha1.Context context = 1;
-  // TODO: Add standard filters.
+  rpc GetPackageRepositoryDetail(kubeappsapis.core.packages.v1alpha1.GetPackageRepositoryDetailRequest) returns (kubeappsapis.core.packages.v1alpha1.GetPackageRepositoryDetailResponse) {
+    option (google.api.http) = {
+      get: "/plugins/kapp_controller/packages/v1alpha1/repositories/c/{package_repo_ref.context.cluster}/ns/{package_repo_ref.context.namespace}/{package_repo_ref.identifier=**}"
+    };
+  }
+
+  rpc GetPackageRepositorySummaries(kubeappsapis.core.packages.v1alpha1.GetPackageRepositorySummariesRequest) returns (kubeappsapis.core.packages.v1alpha1.GetPackageRepositorySummariesResponse) {
+    option (google.api.http) = {
+      get: "/plugins/kapp_controller/packages/v1alpha1/repositories"
+    };
+  }
+
+  rpc UpdatePackageRepository(kubeappsapis.core.packages.v1alpha1.UpdatePackageRepositoryRequest) returns (kubeappsapis.core.packages.v1alpha1.UpdatePackageRepositoryResponse) {
+    option (google.api.http) = {
+      put: "/plugins/kapp_controller/packages/v1alpha1/repositories/c/{package_repo_ref.context.cluster}/ns/{package_repo_ref.context.namespace}/{package_repo_ref.identifier=**}"
+      body: "*"
+    };
+  }
+
+  rpc DeletePackageRepository(kubeappsapis.core.packages.v1alpha1.DeletePackageRepositoryRequest) returns (kubeappsapis.core.packages.v1alpha1.DeletePackageRepositoryResponse) {
+    option (google.api.http) = {
+      delete: "/plugins/kapp_controller/packages/v1alpha1/repositories/c/{package_repo_ref.context.cluster}/ns/{package_repo_ref.context.namespace}/{package_repo_ref.identifier=**}"
+    };
+  }
 }
 
-// GetPackageRepositories
+// KappControllerPackageRepositoryCustomDetail
 //
-// Response for GetPackageRepositories
-message GetPackageRepositoriesResponse {
-  option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
-    example: '{"repositories": [{"name": "repo-name.example.com", "namespace": "", "url": "foo.registry.example.com/repo-name/main@sha256:cecd9b51b1f29a773a5228fe04faec121c9fbd2969de55b0c3804269a1d57aa5"}]}'
-  };
-
-  // Repositories
-  //
-  // List of PackageRepository
-  repeated PackageRepository repositories = 1;
+// custom fields to support other carvel repository types
+// this is mirror from https://github.com/vmware-tanzu/carvel-kapp-controller/blob/develop/pkg/apis/kappctrl/v1alpha1/generated.proto
+// todo -> find a way to define those messages by referencing proto files from kapp_controller rather than duplication
+message KappControllerPackageRepositoryCustomDetail {
+   PackageRepositoryFetch fetch   = 1;
 }
 
-// PackageRepository
-//
-// A PackageRepository defines a repository of packages for installation.
-message PackageRepository {
-  // TODO: add example for API docs
-  // option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
-  //   example: '{}'
-  // };
+message PackageRepositoryFetch {
+  PackageRepositoryImgpkg imgpkg_bundle = 1;
+  PackageRepositoryImage image          = 2;
+  PackageRepositoryGit git              = 3;
+  PackageRepositoryHttp http            = 4;
+  PackageRepositoryInline inline        = 5;
+}
 
-  // Package repository name
-  //
-  // The name identifying package repository on the cluster.
-  string name = 1;
+message PackageRepositoryImgpkg {
+  VersionSelection tag_selection = 1;
+}
 
-  // Package repository namespace
-  //
-  // An optional namespace for namespaced package repositories.
-  string namespace = 2;
+message PackageRepositoryImage {
+  VersionSelection tag_selection = 1;
+  string sub_path = 2;
+}
 
-  // Package repository URL
-  //
-  // A url identifying the package repository location.
-  string url = 3;
+message PackageRepositoryGit {
+  string ref = 1;
+  VersionSelection ref_selection = 2;
+  string sub_path = 3;
+  bool lfs_skip_smudge = 4;
+}
 
-  // Package repository plugin
-  //
-  // The plugin used to interact with this package repository.
-  kubeappsapis.core.plugins.v1alpha1.Plugin plugin = 4;
+message PackageRepositoryHttp {
+  string sub_path = 1;
+  string sha256 = 2;
+}
 
-  // TODO: Other fields such as type, status... TBD.
+message PackageRepositoryInline {
+  message SourceRef {
+    string name = 1;
+    string directory_path = 2;
+  }
+  message Source {
+      SourceRef secret_ref = 1;
+      SourceRef config_map_ref = 2;
+  }
+  map<string,string> paths = 1;
+  repeated Source paths_from = 2;
+}
+
+message VersionSelection {
+  VersionSelectionSemver semver = 1;
+}
+message VersionSelectionSemver {
+  string constraints = 1;
+  VersionSelectionSemverPrereleases prereleases = 2;
+}
+message VersionSelectionSemverPrereleases {
+  repeated string identifiers = 1;
 }

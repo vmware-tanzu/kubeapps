@@ -1,9 +1,6 @@
 /* eslint-disable */
-import Long from "long";
 import { grpc } from "@improbable-eng/grpc-web";
-import _m0 from "protobufjs/minimal";
 import {
-  Context,
   GetAvailablePackageSummariesRequest,
   GetAvailablePackageDetailRequest,
   GetAvailablePackageVersionsRequest,
@@ -22,92 +19,124 @@ import {
   UpdateInstalledPackageResponse,
   DeleteInstalledPackageResponse,
   GetInstalledPackageResourceRefsResponse,
-} from "../../../../../kubeappsapis/core/packages/v1alpha1/packages";
-import { Plugin } from "../../../../../kubeappsapis/core/plugins/v1alpha1/plugins";
+} from "../../../../core/packages/v1alpha1/packages";
+import {
+  AddPackageRepositoryRequest,
+  GetPackageRepositoryDetailRequest,
+  GetPackageRepositorySummariesRequest,
+  UpdatePackageRepositoryRequest,
+  DeletePackageRepositoryRequest,
+  AddPackageRepositoryResponse,
+  GetPackageRepositoryDetailResponse,
+  GetPackageRepositorySummariesResponse,
+  UpdatePackageRepositoryResponse,
+  DeletePackageRepositoryResponse,
+} from "../../../../core/packages/v1alpha1/repositories";
 import { BrowserHeaders } from "browser-headers";
+import * as _m0 from "protobufjs/minimal";
 
 export const protobufPackage = "kubeappsapis.plugins.kapp_controller.packages.v1alpha1";
 
 /**
- * GetPackageRepositories
+ * KappControllerPackageRepositoryCustomDetail
  *
- * Request for GetPackageRepositories
+ * custom fields to support other carvel repository types
+ * this is mirror from https://github.com/vmware-tanzu/carvel-kapp-controller/blob/develop/pkg/apis/kappctrl/v1alpha1/generated.proto
+ * todo -> find a way to define those messages by referencing proto files from kapp_controller rather than duplication
  */
-export interface GetPackageRepositoriesRequest {
-  /** The context (cluster/namespace) for the request */
-  context?: Context;
+export interface KappControllerPackageRepositoryCustomDetail {
+  fetch?: PackageRepositoryFetch;
 }
 
-/**
- * GetPackageRepositories
- *
- * Response for GetPackageRepositories
- */
-export interface GetPackageRepositoriesResponse {
-  /**
-   * Repositories
-   *
-   * List of PackageRepository
-   */
-  repositories: PackageRepository[];
+export interface PackageRepositoryFetch {
+  imgpkgBundle?: PackageRepositoryImgpkg;
+  image?: PackageRepositoryImage;
+  git?: PackageRepositoryGit;
+  http?: PackageRepositoryHttp;
+  inline?: PackageRepositoryInline;
 }
 
-/**
- * PackageRepository
- *
- * A PackageRepository defines a repository of packages for installation.
- */
-export interface PackageRepository {
-  /**
-   * Package repository name
-   *
-   * The name identifying package repository on the cluster.
-   */
+export interface PackageRepositoryImgpkg {
+  tagSelection?: VersionSelection;
+}
+
+export interface PackageRepositoryImage {
+  tagSelection?: VersionSelection;
+  subPath: string;
+}
+
+export interface PackageRepositoryGit {
+  ref: string;
+  refSelection?: VersionSelection;
+  subPath: string;
+  lfsSkipSmudge: boolean;
+}
+
+export interface PackageRepositoryHttp {
+  subPath: string;
+  sha256: string;
+}
+
+export interface PackageRepositoryInline {
+  paths: { [key: string]: string };
+  pathsFrom: PackageRepositoryInline_Source[];
+}
+
+export interface PackageRepositoryInline_SourceRef {
   name: string;
-  /**
-   * Package repository namespace
-   *
-   * An optional namespace for namespaced package repositories.
-   */
-  namespace: string;
-  /**
-   * Package repository URL
-   *
-   * A url identifying the package repository location.
-   */
-  url: string;
-  /**
-   * Package repository plugin
-   *
-   * The plugin used to interact with this package repository.
-   */
-  plugin?: Plugin;
+  directoryPath: string;
 }
 
-const baseGetPackageRepositoriesRequest: object = {};
+export interface PackageRepositoryInline_Source {
+  secretRef?: PackageRepositoryInline_SourceRef;
+  configMapRef?: PackageRepositoryInline_SourceRef;
+}
 
-export const GetPackageRepositoriesRequest = {
+export interface PackageRepositoryInline_PathsEntry {
+  key: string;
+  value: string;
+}
+
+export interface VersionSelection {
+  semver?: VersionSelectionSemver;
+}
+
+export interface VersionSelectionSemver {
+  constraints: string;
+  prereleases?: VersionSelectionSemverPrereleases;
+}
+
+export interface VersionSelectionSemverPrereleases {
+  identifiers: string[];
+}
+
+function createBaseKappControllerPackageRepositoryCustomDetail(): KappControllerPackageRepositoryCustomDetail {
+  return { fetch: undefined };
+}
+
+export const KappControllerPackageRepositoryCustomDetail = {
   encode(
-    message: GetPackageRepositoriesRequest,
+    message: KappControllerPackageRepositoryCustomDetail,
     writer: _m0.Writer = _m0.Writer.create(),
   ): _m0.Writer {
-    if (message.context !== undefined) {
-      Context.encode(message.context, writer.uint32(10).fork()).ldelim();
+    if (message.fetch !== undefined) {
+      PackageRepositoryFetch.encode(message.fetch, writer.uint32(10).fork()).ldelim();
     }
     return writer;
   },
 
-  decode(input: _m0.Reader | Uint8Array, length?: number): GetPackageRepositoriesRequest {
+  decode(
+    input: _m0.Reader | Uint8Array,
+    length?: number,
+  ): KappControllerPackageRepositoryCustomDetail {
     const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
     let end = length === undefined ? reader.len : reader.pos + length;
-    const message = {
-      ...baseGetPackageRepositoriesRequest,
-    } as GetPackageRepositoriesRequest;
+    const message = createBaseKappControllerPackageRepositoryCustomDetail();
     while (reader.pos < end) {
       const tag = reader.uint32();
       switch (tag >>> 3) {
         case 1:
-          message.context = Context.decode(reader, reader.uint32());
+          message.fetch = PackageRepositoryFetch.decode(reader, reader.uint32());
           break;
         default:
           reader.skipType(tag & 7);
@@ -117,63 +146,82 @@ export const GetPackageRepositoriesRequest = {
     return message;
   },
 
-  fromJSON(object: any): GetPackageRepositoriesRequest {
-    const message = {
-      ...baseGetPackageRepositoriesRequest,
-    } as GetPackageRepositoriesRequest;
-    if (object.context !== undefined && object.context !== null) {
-      message.context = Context.fromJSON(object.context);
-    } else {
-      message.context = undefined;
-    }
-    return message;
+  fromJSON(object: any): KappControllerPackageRepositoryCustomDetail {
+    return {
+      fetch: isSet(object.fetch) ? PackageRepositoryFetch.fromJSON(object.fetch) : undefined,
+    };
   },
 
-  toJSON(message: GetPackageRepositoriesRequest): unknown {
+  toJSON(message: KappControllerPackageRepositoryCustomDetail): unknown {
     const obj: any = {};
-    message.context !== undefined &&
-      (obj.context = message.context ? Context.toJSON(message.context) : undefined);
+    message.fetch !== undefined &&
+      (obj.fetch = message.fetch ? PackageRepositoryFetch.toJSON(message.fetch) : undefined);
     return obj;
   },
 
-  fromPartial(object: DeepPartial<GetPackageRepositoriesRequest>): GetPackageRepositoriesRequest {
-    const message = {
-      ...baseGetPackageRepositoriesRequest,
-    } as GetPackageRepositoriesRequest;
-    if (object.context !== undefined && object.context !== null) {
-      message.context = Context.fromPartial(object.context);
-    } else {
-      message.context = undefined;
-    }
+  fromPartial<I extends Exact<DeepPartial<KappControllerPackageRepositoryCustomDetail>, I>>(
+    object: I,
+  ): KappControllerPackageRepositoryCustomDetail {
+    const message = createBaseKappControllerPackageRepositoryCustomDetail();
+    message.fetch =
+      object.fetch !== undefined && object.fetch !== null
+        ? PackageRepositoryFetch.fromPartial(object.fetch)
+        : undefined;
     return message;
   },
 };
 
-const baseGetPackageRepositoriesResponse: object = {};
+function createBasePackageRepositoryFetch(): PackageRepositoryFetch {
+  return {
+    imgpkgBundle: undefined,
+    image: undefined,
+    git: undefined,
+    http: undefined,
+    inline: undefined,
+  };
+}
 
-export const GetPackageRepositoriesResponse = {
-  encode(
-    message: GetPackageRepositoriesResponse,
-    writer: _m0.Writer = _m0.Writer.create(),
-  ): _m0.Writer {
-    for (const v of message.repositories) {
-      PackageRepository.encode(v!, writer.uint32(10).fork()).ldelim();
+export const PackageRepositoryFetch = {
+  encode(message: PackageRepositoryFetch, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
+    if (message.imgpkgBundle !== undefined) {
+      PackageRepositoryImgpkg.encode(message.imgpkgBundle, writer.uint32(10).fork()).ldelim();
+    }
+    if (message.image !== undefined) {
+      PackageRepositoryImage.encode(message.image, writer.uint32(18).fork()).ldelim();
+    }
+    if (message.git !== undefined) {
+      PackageRepositoryGit.encode(message.git, writer.uint32(26).fork()).ldelim();
+    }
+    if (message.http !== undefined) {
+      PackageRepositoryHttp.encode(message.http, writer.uint32(34).fork()).ldelim();
+    }
+    if (message.inline !== undefined) {
+      PackageRepositoryInline.encode(message.inline, writer.uint32(42).fork()).ldelim();
     }
     return writer;
   },
 
-  decode(input: _m0.Reader | Uint8Array, length?: number): GetPackageRepositoriesResponse {
+  decode(input: _m0.Reader | Uint8Array, length?: number): PackageRepositoryFetch {
     const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
     let end = length === undefined ? reader.len : reader.pos + length;
-    const message = {
-      ...baseGetPackageRepositoriesResponse,
-    } as GetPackageRepositoriesResponse;
-    message.repositories = [];
+    const message = createBasePackageRepositoryFetch();
     while (reader.pos < end) {
       const tag = reader.uint32();
       switch (tag >>> 3) {
         case 1:
-          message.repositories.push(PackageRepository.decode(reader, reader.uint32()));
+          message.imgpkgBundle = PackageRepositoryImgpkg.decode(reader, reader.uint32());
+          break;
+        case 2:
+          message.image = PackageRepositoryImage.decode(reader, reader.uint32());
+          break;
+        case 3:
+          message.git = PackageRepositoryGit.decode(reader, reader.uint32());
+          break;
+        case 4:
+          message.http = PackageRepositoryHttp.decode(reader, reader.uint32());
+          break;
+        case 5:
+          message.inline = PackageRepositoryInline.decode(reader, reader.uint32());
           break;
         default:
           reader.skipType(tag & 7);
@@ -183,68 +231,455 @@ export const GetPackageRepositoriesResponse = {
     return message;
   },
 
-  fromJSON(object: any): GetPackageRepositoriesResponse {
-    const message = {
-      ...baseGetPackageRepositoriesResponse,
-    } as GetPackageRepositoriesResponse;
-    message.repositories = [];
-    if (object.repositories !== undefined && object.repositories !== null) {
-      for (const e of object.repositories) {
-        message.repositories.push(PackageRepository.fromJSON(e));
+  fromJSON(object: any): PackageRepositoryFetch {
+    return {
+      imgpkgBundle: isSet(object.imgpkgBundle)
+        ? PackageRepositoryImgpkg.fromJSON(object.imgpkgBundle)
+        : undefined,
+      image: isSet(object.image) ? PackageRepositoryImage.fromJSON(object.image) : undefined,
+      git: isSet(object.git) ? PackageRepositoryGit.fromJSON(object.git) : undefined,
+      http: isSet(object.http) ? PackageRepositoryHttp.fromJSON(object.http) : undefined,
+      inline: isSet(object.inline) ? PackageRepositoryInline.fromJSON(object.inline) : undefined,
+    };
+  },
+
+  toJSON(message: PackageRepositoryFetch): unknown {
+    const obj: any = {};
+    message.imgpkgBundle !== undefined &&
+      (obj.imgpkgBundle = message.imgpkgBundle
+        ? PackageRepositoryImgpkg.toJSON(message.imgpkgBundle)
+        : undefined);
+    message.image !== undefined &&
+      (obj.image = message.image ? PackageRepositoryImage.toJSON(message.image) : undefined);
+    message.git !== undefined &&
+      (obj.git = message.git ? PackageRepositoryGit.toJSON(message.git) : undefined);
+    message.http !== undefined &&
+      (obj.http = message.http ? PackageRepositoryHttp.toJSON(message.http) : undefined);
+    message.inline !== undefined &&
+      (obj.inline = message.inline ? PackageRepositoryInline.toJSON(message.inline) : undefined);
+    return obj;
+  },
+
+  fromPartial<I extends Exact<DeepPartial<PackageRepositoryFetch>, I>>(
+    object: I,
+  ): PackageRepositoryFetch {
+    const message = createBasePackageRepositoryFetch();
+    message.imgpkgBundle =
+      object.imgpkgBundle !== undefined && object.imgpkgBundle !== null
+        ? PackageRepositoryImgpkg.fromPartial(object.imgpkgBundle)
+        : undefined;
+    message.image =
+      object.image !== undefined && object.image !== null
+        ? PackageRepositoryImage.fromPartial(object.image)
+        : undefined;
+    message.git =
+      object.git !== undefined && object.git !== null
+        ? PackageRepositoryGit.fromPartial(object.git)
+        : undefined;
+    message.http =
+      object.http !== undefined && object.http !== null
+        ? PackageRepositoryHttp.fromPartial(object.http)
+        : undefined;
+    message.inline =
+      object.inline !== undefined && object.inline !== null
+        ? PackageRepositoryInline.fromPartial(object.inline)
+        : undefined;
+    return message;
+  },
+};
+
+function createBasePackageRepositoryImgpkg(): PackageRepositoryImgpkg {
+  return { tagSelection: undefined };
+}
+
+export const PackageRepositoryImgpkg = {
+  encode(message: PackageRepositoryImgpkg, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
+    if (message.tagSelection !== undefined) {
+      VersionSelection.encode(message.tagSelection, writer.uint32(10).fork()).ldelim();
+    }
+    return writer;
+  },
+
+  decode(input: _m0.Reader | Uint8Array, length?: number): PackageRepositoryImgpkg {
+    const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBasePackageRepositoryImgpkg();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1:
+          message.tagSelection = VersionSelection.decode(reader, reader.uint32());
+          break;
+        default:
+          reader.skipType(tag & 7);
+          break;
       }
     }
     return message;
   },
 
-  toJSON(message: GetPackageRepositoriesResponse): unknown {
+  fromJSON(object: any): PackageRepositoryImgpkg {
+    return {
+      tagSelection: isSet(object.tagSelection)
+        ? VersionSelection.fromJSON(object.tagSelection)
+        : undefined,
+    };
+  },
+
+  toJSON(message: PackageRepositoryImgpkg): unknown {
     const obj: any = {};
-    if (message.repositories) {
-      obj.repositories = message.repositories.map(e =>
-        e ? PackageRepository.toJSON(e) : undefined,
+    message.tagSelection !== undefined &&
+      (obj.tagSelection = message.tagSelection
+        ? VersionSelection.toJSON(message.tagSelection)
+        : undefined);
+    return obj;
+  },
+
+  fromPartial<I extends Exact<DeepPartial<PackageRepositoryImgpkg>, I>>(
+    object: I,
+  ): PackageRepositoryImgpkg {
+    const message = createBasePackageRepositoryImgpkg();
+    message.tagSelection =
+      object.tagSelection !== undefined && object.tagSelection !== null
+        ? VersionSelection.fromPartial(object.tagSelection)
+        : undefined;
+    return message;
+  },
+};
+
+function createBasePackageRepositoryImage(): PackageRepositoryImage {
+  return { tagSelection: undefined, subPath: "" };
+}
+
+export const PackageRepositoryImage = {
+  encode(message: PackageRepositoryImage, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
+    if (message.tagSelection !== undefined) {
+      VersionSelection.encode(message.tagSelection, writer.uint32(10).fork()).ldelim();
+    }
+    if (message.subPath !== "") {
+      writer.uint32(18).string(message.subPath);
+    }
+    return writer;
+  },
+
+  decode(input: _m0.Reader | Uint8Array, length?: number): PackageRepositoryImage {
+    const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBasePackageRepositoryImage();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1:
+          message.tagSelection = VersionSelection.decode(reader, reader.uint32());
+          break;
+        case 2:
+          message.subPath = reader.string();
+          break;
+        default:
+          reader.skipType(tag & 7);
+          break;
+      }
+    }
+    return message;
+  },
+
+  fromJSON(object: any): PackageRepositoryImage {
+    return {
+      tagSelection: isSet(object.tagSelection)
+        ? VersionSelection.fromJSON(object.tagSelection)
+        : undefined,
+      subPath: isSet(object.subPath) ? String(object.subPath) : "",
+    };
+  },
+
+  toJSON(message: PackageRepositoryImage): unknown {
+    const obj: any = {};
+    message.tagSelection !== undefined &&
+      (obj.tagSelection = message.tagSelection
+        ? VersionSelection.toJSON(message.tagSelection)
+        : undefined);
+    message.subPath !== undefined && (obj.subPath = message.subPath);
+    return obj;
+  },
+
+  fromPartial<I extends Exact<DeepPartial<PackageRepositoryImage>, I>>(
+    object: I,
+  ): PackageRepositoryImage {
+    const message = createBasePackageRepositoryImage();
+    message.tagSelection =
+      object.tagSelection !== undefined && object.tagSelection !== null
+        ? VersionSelection.fromPartial(object.tagSelection)
+        : undefined;
+    message.subPath = object.subPath ?? "";
+    return message;
+  },
+};
+
+function createBasePackageRepositoryGit(): PackageRepositoryGit {
+  return {
+    ref: "",
+    refSelection: undefined,
+    subPath: "",
+    lfsSkipSmudge: false,
+  };
+}
+
+export const PackageRepositoryGit = {
+  encode(message: PackageRepositoryGit, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
+    if (message.ref !== "") {
+      writer.uint32(10).string(message.ref);
+    }
+    if (message.refSelection !== undefined) {
+      VersionSelection.encode(message.refSelection, writer.uint32(18).fork()).ldelim();
+    }
+    if (message.subPath !== "") {
+      writer.uint32(26).string(message.subPath);
+    }
+    if (message.lfsSkipSmudge === true) {
+      writer.uint32(32).bool(message.lfsSkipSmudge);
+    }
+    return writer;
+  },
+
+  decode(input: _m0.Reader | Uint8Array, length?: number): PackageRepositoryGit {
+    const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBasePackageRepositoryGit();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1:
+          message.ref = reader.string();
+          break;
+        case 2:
+          message.refSelection = VersionSelection.decode(reader, reader.uint32());
+          break;
+        case 3:
+          message.subPath = reader.string();
+          break;
+        case 4:
+          message.lfsSkipSmudge = reader.bool();
+          break;
+        default:
+          reader.skipType(tag & 7);
+          break;
+      }
+    }
+    return message;
+  },
+
+  fromJSON(object: any): PackageRepositoryGit {
+    return {
+      ref: isSet(object.ref) ? String(object.ref) : "",
+      refSelection: isSet(object.refSelection)
+        ? VersionSelection.fromJSON(object.refSelection)
+        : undefined,
+      subPath: isSet(object.subPath) ? String(object.subPath) : "",
+      lfsSkipSmudge: isSet(object.lfsSkipSmudge) ? Boolean(object.lfsSkipSmudge) : false,
+    };
+  },
+
+  toJSON(message: PackageRepositoryGit): unknown {
+    const obj: any = {};
+    message.ref !== undefined && (obj.ref = message.ref);
+    message.refSelection !== undefined &&
+      (obj.refSelection = message.refSelection
+        ? VersionSelection.toJSON(message.refSelection)
+        : undefined);
+    message.subPath !== undefined && (obj.subPath = message.subPath);
+    message.lfsSkipSmudge !== undefined && (obj.lfsSkipSmudge = message.lfsSkipSmudge);
+    return obj;
+  },
+
+  fromPartial<I extends Exact<DeepPartial<PackageRepositoryGit>, I>>(
+    object: I,
+  ): PackageRepositoryGit {
+    const message = createBasePackageRepositoryGit();
+    message.ref = object.ref ?? "";
+    message.refSelection =
+      object.refSelection !== undefined && object.refSelection !== null
+        ? VersionSelection.fromPartial(object.refSelection)
+        : undefined;
+    message.subPath = object.subPath ?? "";
+    message.lfsSkipSmudge = object.lfsSkipSmudge ?? false;
+    return message;
+  },
+};
+
+function createBasePackageRepositoryHttp(): PackageRepositoryHttp {
+  return { subPath: "", sha256: "" };
+}
+
+export const PackageRepositoryHttp = {
+  encode(message: PackageRepositoryHttp, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
+    if (message.subPath !== "") {
+      writer.uint32(10).string(message.subPath);
+    }
+    if (message.sha256 !== "") {
+      writer.uint32(18).string(message.sha256);
+    }
+    return writer;
+  },
+
+  decode(input: _m0.Reader | Uint8Array, length?: number): PackageRepositoryHttp {
+    const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBasePackageRepositoryHttp();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1:
+          message.subPath = reader.string();
+          break;
+        case 2:
+          message.sha256 = reader.string();
+          break;
+        default:
+          reader.skipType(tag & 7);
+          break;
+      }
+    }
+    return message;
+  },
+
+  fromJSON(object: any): PackageRepositoryHttp {
+    return {
+      subPath: isSet(object.subPath) ? String(object.subPath) : "",
+      sha256: isSet(object.sha256) ? String(object.sha256) : "",
+    };
+  },
+
+  toJSON(message: PackageRepositoryHttp): unknown {
+    const obj: any = {};
+    message.subPath !== undefined && (obj.subPath = message.subPath);
+    message.sha256 !== undefined && (obj.sha256 = message.sha256);
+    return obj;
+  },
+
+  fromPartial<I extends Exact<DeepPartial<PackageRepositoryHttp>, I>>(
+    object: I,
+  ): PackageRepositoryHttp {
+    const message = createBasePackageRepositoryHttp();
+    message.subPath = object.subPath ?? "";
+    message.sha256 = object.sha256 ?? "";
+    return message;
+  },
+};
+
+function createBasePackageRepositoryInline(): PackageRepositoryInline {
+  return { paths: {}, pathsFrom: [] };
+}
+
+export const PackageRepositoryInline = {
+  encode(message: PackageRepositoryInline, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
+    Object.entries(message.paths).forEach(([key, value]) => {
+      PackageRepositoryInline_PathsEntry.encode(
+        { key: key as any, value },
+        writer.uint32(10).fork(),
+      ).ldelim();
+    });
+    for (const v of message.pathsFrom) {
+      PackageRepositoryInline_Source.encode(v!, writer.uint32(18).fork()).ldelim();
+    }
+    return writer;
+  },
+
+  decode(input: _m0.Reader | Uint8Array, length?: number): PackageRepositoryInline {
+    const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBasePackageRepositoryInline();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1:
+          const entry1 = PackageRepositoryInline_PathsEntry.decode(reader, reader.uint32());
+          if (entry1.value !== undefined) {
+            message.paths[entry1.key] = entry1.value;
+          }
+          break;
+        case 2:
+          message.pathsFrom.push(PackageRepositoryInline_Source.decode(reader, reader.uint32()));
+          break;
+        default:
+          reader.skipType(tag & 7);
+          break;
+      }
+    }
+    return message;
+  },
+
+  fromJSON(object: any): PackageRepositoryInline {
+    return {
+      paths: isObject(object.paths)
+        ? Object.entries(object.paths).reduce<{ [key: string]: string }>((acc, [key, value]) => {
+            acc[key] = String(value);
+            return acc;
+          }, {})
+        : {},
+      pathsFrom: Array.isArray(object?.pathsFrom)
+        ? object.pathsFrom.map((e: any) => PackageRepositoryInline_Source.fromJSON(e))
+        : [],
+    };
+  },
+
+  toJSON(message: PackageRepositoryInline): unknown {
+    const obj: any = {};
+    obj.paths = {};
+    if (message.paths) {
+      Object.entries(message.paths).forEach(([k, v]) => {
+        obj.paths[k] = v;
+      });
+    }
+    if (message.pathsFrom) {
+      obj.pathsFrom = message.pathsFrom.map(e =>
+        e ? PackageRepositoryInline_Source.toJSON(e) : undefined,
       );
     } else {
-      obj.repositories = [];
+      obj.pathsFrom = [];
     }
     return obj;
   },
 
-  fromPartial(object: DeepPartial<GetPackageRepositoriesResponse>): GetPackageRepositoriesResponse {
-    const message = {
-      ...baseGetPackageRepositoriesResponse,
-    } as GetPackageRepositoriesResponse;
-    message.repositories = [];
-    if (object.repositories !== undefined && object.repositories !== null) {
-      for (const e of object.repositories) {
-        message.repositories.push(PackageRepository.fromPartial(e));
+  fromPartial<I extends Exact<DeepPartial<PackageRepositoryInline>, I>>(
+    object: I,
+  ): PackageRepositoryInline {
+    const message = createBasePackageRepositoryInline();
+    message.paths = Object.entries(object.paths ?? {}).reduce<{
+      [key: string]: string;
+    }>((acc, [key, value]) => {
+      if (value !== undefined) {
+        acc[key] = String(value);
       }
-    }
+      return acc;
+    }, {});
+    message.pathsFrom =
+      object.pathsFrom?.map(e => PackageRepositoryInline_Source.fromPartial(e)) || [];
     return message;
   },
 };
 
-const basePackageRepository: object = { name: "", namespace: "", url: "" };
+function createBasePackageRepositoryInline_SourceRef(): PackageRepositoryInline_SourceRef {
+  return { name: "", directoryPath: "" };
+}
 
-export const PackageRepository = {
-  encode(message: PackageRepository, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
+export const PackageRepositoryInline_SourceRef = {
+  encode(
+    message: PackageRepositoryInline_SourceRef,
+    writer: _m0.Writer = _m0.Writer.create(),
+  ): _m0.Writer {
     if (message.name !== "") {
       writer.uint32(10).string(message.name);
     }
-    if (message.namespace !== "") {
-      writer.uint32(18).string(message.namespace);
-    }
-    if (message.url !== "") {
-      writer.uint32(26).string(message.url);
-    }
-    if (message.plugin !== undefined) {
-      Plugin.encode(message.plugin, writer.uint32(34).fork()).ldelim();
+    if (message.directoryPath !== "") {
+      writer.uint32(18).string(message.directoryPath);
     }
     return writer;
   },
 
-  decode(input: _m0.Reader | Uint8Array, length?: number): PackageRepository {
+  decode(input: _m0.Reader | Uint8Array, length?: number): PackageRepositoryInline_SourceRef {
     const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
     let end = length === undefined ? reader.len : reader.pos + length;
-    const message = { ...basePackageRepository } as PackageRepository;
+    const message = createBasePackageRepositoryInline_SourceRef();
     while (reader.pos < end) {
       const tag = reader.uint32();
       switch (tag >>> 3) {
@@ -252,13 +687,7 @@ export const PackageRepository = {
           message.name = reader.string();
           break;
         case 2:
-          message.namespace = reader.string();
-          break;
-        case 3:
-          message.url = reader.string();
-          break;
-        case 4:
-          message.plugin = Plugin.decode(reader, reader.uint32());
+          message.directoryPath = reader.string();
           break;
         default:
           reader.skipType(tag & 7);
@@ -268,63 +697,358 @@ export const PackageRepository = {
     return message;
   },
 
-  fromJSON(object: any): PackageRepository {
-    const message = { ...basePackageRepository } as PackageRepository;
-    if (object.name !== undefined && object.name !== null) {
-      message.name = String(object.name);
-    } else {
-      message.name = "";
+  fromJSON(object: any): PackageRepositoryInline_SourceRef {
+    return {
+      name: isSet(object.name) ? String(object.name) : "",
+      directoryPath: isSet(object.directoryPath) ? String(object.directoryPath) : "",
+    };
+  },
+
+  toJSON(message: PackageRepositoryInline_SourceRef): unknown {
+    const obj: any = {};
+    message.name !== undefined && (obj.name = message.name);
+    message.directoryPath !== undefined && (obj.directoryPath = message.directoryPath);
+    return obj;
+  },
+
+  fromPartial<I extends Exact<DeepPartial<PackageRepositoryInline_SourceRef>, I>>(
+    object: I,
+  ): PackageRepositoryInline_SourceRef {
+    const message = createBasePackageRepositoryInline_SourceRef();
+    message.name = object.name ?? "";
+    message.directoryPath = object.directoryPath ?? "";
+    return message;
+  },
+};
+
+function createBasePackageRepositoryInline_Source(): PackageRepositoryInline_Source {
+  return { secretRef: undefined, configMapRef: undefined };
+}
+
+export const PackageRepositoryInline_Source = {
+  encode(
+    message: PackageRepositoryInline_Source,
+    writer: _m0.Writer = _m0.Writer.create(),
+  ): _m0.Writer {
+    if (message.secretRef !== undefined) {
+      PackageRepositoryInline_SourceRef.encode(
+        message.secretRef,
+        writer.uint32(10).fork(),
+      ).ldelim();
     }
-    if (object.namespace !== undefined && object.namespace !== null) {
-      message.namespace = String(object.namespace);
-    } else {
-      message.namespace = "";
+    if (message.configMapRef !== undefined) {
+      PackageRepositoryInline_SourceRef.encode(
+        message.configMapRef,
+        writer.uint32(18).fork(),
+      ).ldelim();
     }
-    if (object.url !== undefined && object.url !== null) {
-      message.url = String(object.url);
-    } else {
-      message.url = "";
-    }
-    if (object.plugin !== undefined && object.plugin !== null) {
-      message.plugin = Plugin.fromJSON(object.plugin);
-    } else {
-      message.plugin = undefined;
+    return writer;
+  },
+
+  decode(input: _m0.Reader | Uint8Array, length?: number): PackageRepositoryInline_Source {
+    const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBasePackageRepositoryInline_Source();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1:
+          message.secretRef = PackageRepositoryInline_SourceRef.decode(reader, reader.uint32());
+          break;
+        case 2:
+          message.configMapRef = PackageRepositoryInline_SourceRef.decode(reader, reader.uint32());
+          break;
+        default:
+          reader.skipType(tag & 7);
+          break;
+      }
     }
     return message;
   },
 
-  toJSON(message: PackageRepository): unknown {
+  fromJSON(object: any): PackageRepositoryInline_Source {
+    return {
+      secretRef: isSet(object.secretRef)
+        ? PackageRepositoryInline_SourceRef.fromJSON(object.secretRef)
+        : undefined,
+      configMapRef: isSet(object.configMapRef)
+        ? PackageRepositoryInline_SourceRef.fromJSON(object.configMapRef)
+        : undefined,
+    };
+  },
+
+  toJSON(message: PackageRepositoryInline_Source): unknown {
     const obj: any = {};
-    message.name !== undefined && (obj.name = message.name);
-    message.namespace !== undefined && (obj.namespace = message.namespace);
-    message.url !== undefined && (obj.url = message.url);
-    message.plugin !== undefined &&
-      (obj.plugin = message.plugin ? Plugin.toJSON(message.plugin) : undefined);
+    message.secretRef !== undefined &&
+      (obj.secretRef = message.secretRef
+        ? PackageRepositoryInline_SourceRef.toJSON(message.secretRef)
+        : undefined);
+    message.configMapRef !== undefined &&
+      (obj.configMapRef = message.configMapRef
+        ? PackageRepositoryInline_SourceRef.toJSON(message.configMapRef)
+        : undefined);
     return obj;
   },
 
-  fromPartial(object: DeepPartial<PackageRepository>): PackageRepository {
-    const message = { ...basePackageRepository } as PackageRepository;
-    if (object.name !== undefined && object.name !== null) {
-      message.name = object.name;
-    } else {
-      message.name = "";
+  fromPartial<I extends Exact<DeepPartial<PackageRepositoryInline_Source>, I>>(
+    object: I,
+  ): PackageRepositoryInline_Source {
+    const message = createBasePackageRepositoryInline_Source();
+    message.secretRef =
+      object.secretRef !== undefined && object.secretRef !== null
+        ? PackageRepositoryInline_SourceRef.fromPartial(object.secretRef)
+        : undefined;
+    message.configMapRef =
+      object.configMapRef !== undefined && object.configMapRef !== null
+        ? PackageRepositoryInline_SourceRef.fromPartial(object.configMapRef)
+        : undefined;
+    return message;
+  },
+};
+
+function createBasePackageRepositoryInline_PathsEntry(): PackageRepositoryInline_PathsEntry {
+  return { key: "", value: "" };
+}
+
+export const PackageRepositoryInline_PathsEntry = {
+  encode(
+    message: PackageRepositoryInline_PathsEntry,
+    writer: _m0.Writer = _m0.Writer.create(),
+  ): _m0.Writer {
+    if (message.key !== "") {
+      writer.uint32(10).string(message.key);
     }
-    if (object.namespace !== undefined && object.namespace !== null) {
-      message.namespace = object.namespace;
-    } else {
-      message.namespace = "";
+    if (message.value !== "") {
+      writer.uint32(18).string(message.value);
     }
-    if (object.url !== undefined && object.url !== null) {
-      message.url = object.url;
-    } else {
-      message.url = "";
+    return writer;
+  },
+
+  decode(input: _m0.Reader | Uint8Array, length?: number): PackageRepositoryInline_PathsEntry {
+    const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBasePackageRepositoryInline_PathsEntry();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1:
+          message.key = reader.string();
+          break;
+        case 2:
+          message.value = reader.string();
+          break;
+        default:
+          reader.skipType(tag & 7);
+          break;
+      }
     }
-    if (object.plugin !== undefined && object.plugin !== null) {
-      message.plugin = Plugin.fromPartial(object.plugin);
-    } else {
-      message.plugin = undefined;
+    return message;
+  },
+
+  fromJSON(object: any): PackageRepositoryInline_PathsEntry {
+    return {
+      key: isSet(object.key) ? String(object.key) : "",
+      value: isSet(object.value) ? String(object.value) : "",
+    };
+  },
+
+  toJSON(message: PackageRepositoryInline_PathsEntry): unknown {
+    const obj: any = {};
+    message.key !== undefined && (obj.key = message.key);
+    message.value !== undefined && (obj.value = message.value);
+    return obj;
+  },
+
+  fromPartial<I extends Exact<DeepPartial<PackageRepositoryInline_PathsEntry>, I>>(
+    object: I,
+  ): PackageRepositoryInline_PathsEntry {
+    const message = createBasePackageRepositoryInline_PathsEntry();
+    message.key = object.key ?? "";
+    message.value = object.value ?? "";
+    return message;
+  },
+};
+
+function createBaseVersionSelection(): VersionSelection {
+  return { semver: undefined };
+}
+
+export const VersionSelection = {
+  encode(message: VersionSelection, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
+    if (message.semver !== undefined) {
+      VersionSelectionSemver.encode(message.semver, writer.uint32(10).fork()).ldelim();
     }
+    return writer;
+  },
+
+  decode(input: _m0.Reader | Uint8Array, length?: number): VersionSelection {
+    const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseVersionSelection();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1:
+          message.semver = VersionSelectionSemver.decode(reader, reader.uint32());
+          break;
+        default:
+          reader.skipType(tag & 7);
+          break;
+      }
+    }
+    return message;
+  },
+
+  fromJSON(object: any): VersionSelection {
+    return {
+      semver: isSet(object.semver) ? VersionSelectionSemver.fromJSON(object.semver) : undefined,
+    };
+  },
+
+  toJSON(message: VersionSelection): unknown {
+    const obj: any = {};
+    message.semver !== undefined &&
+      (obj.semver = message.semver ? VersionSelectionSemver.toJSON(message.semver) : undefined);
+    return obj;
+  },
+
+  fromPartial<I extends Exact<DeepPartial<VersionSelection>, I>>(object: I): VersionSelection {
+    const message = createBaseVersionSelection();
+    message.semver =
+      object.semver !== undefined && object.semver !== null
+        ? VersionSelectionSemver.fromPartial(object.semver)
+        : undefined;
+    return message;
+  },
+};
+
+function createBaseVersionSelectionSemver(): VersionSelectionSemver {
+  return { constraints: "", prereleases: undefined };
+}
+
+export const VersionSelectionSemver = {
+  encode(message: VersionSelectionSemver, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
+    if (message.constraints !== "") {
+      writer.uint32(10).string(message.constraints);
+    }
+    if (message.prereleases !== undefined) {
+      VersionSelectionSemverPrereleases.encode(
+        message.prereleases,
+        writer.uint32(18).fork(),
+      ).ldelim();
+    }
+    return writer;
+  },
+
+  decode(input: _m0.Reader | Uint8Array, length?: number): VersionSelectionSemver {
+    const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseVersionSelectionSemver();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1:
+          message.constraints = reader.string();
+          break;
+        case 2:
+          message.prereleases = VersionSelectionSemverPrereleases.decode(reader, reader.uint32());
+          break;
+        default:
+          reader.skipType(tag & 7);
+          break;
+      }
+    }
+    return message;
+  },
+
+  fromJSON(object: any): VersionSelectionSemver {
+    return {
+      constraints: isSet(object.constraints) ? String(object.constraints) : "",
+      prereleases: isSet(object.prereleases)
+        ? VersionSelectionSemverPrereleases.fromJSON(object.prereleases)
+        : undefined,
+    };
+  },
+
+  toJSON(message: VersionSelectionSemver): unknown {
+    const obj: any = {};
+    message.constraints !== undefined && (obj.constraints = message.constraints);
+    message.prereleases !== undefined &&
+      (obj.prereleases = message.prereleases
+        ? VersionSelectionSemverPrereleases.toJSON(message.prereleases)
+        : undefined);
+    return obj;
+  },
+
+  fromPartial<I extends Exact<DeepPartial<VersionSelectionSemver>, I>>(
+    object: I,
+  ): VersionSelectionSemver {
+    const message = createBaseVersionSelectionSemver();
+    message.constraints = object.constraints ?? "";
+    message.prereleases =
+      object.prereleases !== undefined && object.prereleases !== null
+        ? VersionSelectionSemverPrereleases.fromPartial(object.prereleases)
+        : undefined;
+    return message;
+  },
+};
+
+function createBaseVersionSelectionSemverPrereleases(): VersionSelectionSemverPrereleases {
+  return { identifiers: [] };
+}
+
+export const VersionSelectionSemverPrereleases = {
+  encode(
+    message: VersionSelectionSemverPrereleases,
+    writer: _m0.Writer = _m0.Writer.create(),
+  ): _m0.Writer {
+    for (const v of message.identifiers) {
+      writer.uint32(10).string(v!);
+    }
+    return writer;
+  },
+
+  decode(input: _m0.Reader | Uint8Array, length?: number): VersionSelectionSemverPrereleases {
+    const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseVersionSelectionSemverPrereleases();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1:
+          message.identifiers.push(reader.string());
+          break;
+        default:
+          reader.skipType(tag & 7);
+          break;
+      }
+    }
+    return message;
+  },
+
+  fromJSON(object: any): VersionSelectionSemverPrereleases {
+    return {
+      identifiers: Array.isArray(object?.identifiers)
+        ? object.identifiers.map((e: any) => String(e))
+        : [],
+    };
+  },
+
+  toJSON(message: VersionSelectionSemverPrereleases): unknown {
+    const obj: any = {};
+    if (message.identifiers) {
+      obj.identifiers = message.identifiers.map(e => e);
+    } else {
+      obj.identifiers = [];
+    }
+    return obj;
+  },
+
+  fromPartial<I extends Exact<DeepPartial<VersionSelectionSemverPrereleases>, I>>(
+    object: I,
+  ): VersionSelectionSemverPrereleases {
+    const message = createBaseVersionSelectionSemverPrereleases();
+    message.identifiers = object.identifiers?.map(e => e) || [];
     return message;
   },
 };
@@ -340,11 +1064,6 @@ export interface KappControllerPackagesService {
     request: DeepPartial<GetAvailablePackageDetailRequest>,
     metadata?: grpc.Metadata,
   ): Promise<GetAvailablePackageDetailResponse>;
-  /** GetPackageRepositories returns the repositories managed by the 'kapp_controller' plugin */
-  GetPackageRepositories(
-    request: DeepPartial<GetPackageRepositoriesRequest>,
-    metadata?: grpc.Metadata,
-  ): Promise<GetPackageRepositoriesResponse>;
   /** GetAvailablePackageVersions returns the package versions managed by the 'kapp_controller' plugin */
   GetAvailablePackageVersions(
     request: DeepPartial<GetAvailablePackageVersionsRequest>,
@@ -392,7 +1111,6 @@ export class KappControllerPackagesServiceClientImpl implements KappControllerPa
     this.rpc = rpc;
     this.GetAvailablePackageSummaries = this.GetAvailablePackageSummaries.bind(this);
     this.GetAvailablePackageDetail = this.GetAvailablePackageDetail.bind(this);
-    this.GetPackageRepositories = this.GetPackageRepositories.bind(this);
     this.GetAvailablePackageVersions = this.GetAvailablePackageVersions.bind(this);
     this.GetInstalledPackageSummaries = this.GetInstalledPackageSummaries.bind(this);
     this.GetInstalledPackageDetail = this.GetInstalledPackageDetail.bind(this);
@@ -420,17 +1138,6 @@ export class KappControllerPackagesServiceClientImpl implements KappControllerPa
     return this.rpc.unary(
       KappControllerPackagesServiceGetAvailablePackageDetailDesc,
       GetAvailablePackageDetailRequest.fromPartial(request),
-      metadata,
-    );
-  }
-
-  GetPackageRepositories(
-    request: DeepPartial<GetPackageRepositoriesRequest>,
-    metadata?: grpc.Metadata,
-  ): Promise<GetPackageRepositoriesResponse> {
-    return this.rpc.unary(
-      KappControllerPackagesServiceGetPackageRepositoriesDesc,
-      GetPackageRepositoriesRequest.fromPartial(request),
       metadata,
     );
   }
@@ -563,28 +1270,6 @@ export const KappControllerPackagesServiceGetAvailablePackageDetailDesc: UnaryMe
       },
     } as any,
   };
-
-export const KappControllerPackagesServiceGetPackageRepositoriesDesc: UnaryMethodDefinitionish = {
-  methodName: "GetPackageRepositories",
-  service: KappControllerPackagesServiceDesc,
-  requestStream: false,
-  responseStream: false,
-  requestType: {
-    serializeBinary() {
-      return GetPackageRepositoriesRequest.encode(this).finish();
-    },
-  } as any,
-  responseType: {
-    deserializeBinary(data: Uint8Array) {
-      return {
-        ...GetPackageRepositoriesResponse.decode(data),
-        toObject() {
-          return this;
-        },
-      };
-    },
-  } as any,
-};
 
 export const KappControllerPackagesServiceGetAvailablePackageVersionsDesc: UnaryMethodDefinitionish =
   {
@@ -744,6 +1429,219 @@ export const KappControllerPackagesServiceGetInstalledPackageResourceRefsDesc: U
     } as any,
   };
 
+export interface KappControllerRepositoriesService {
+  /** AddPackageRepository add an existing package repository to the set of ones already managed by the 'kapp_controller' plugin */
+  AddPackageRepository(
+    request: DeepPartial<AddPackageRepositoryRequest>,
+    metadata?: grpc.Metadata,
+  ): Promise<AddPackageRepositoryResponse>;
+  GetPackageRepositoryDetail(
+    request: DeepPartial<GetPackageRepositoryDetailRequest>,
+    metadata?: grpc.Metadata,
+  ): Promise<GetPackageRepositoryDetailResponse>;
+  GetPackageRepositorySummaries(
+    request: DeepPartial<GetPackageRepositorySummariesRequest>,
+    metadata?: grpc.Metadata,
+  ): Promise<GetPackageRepositorySummariesResponse>;
+  UpdatePackageRepository(
+    request: DeepPartial<UpdatePackageRepositoryRequest>,
+    metadata?: grpc.Metadata,
+  ): Promise<UpdatePackageRepositoryResponse>;
+  DeletePackageRepository(
+    request: DeepPartial<DeletePackageRepositoryRequest>,
+    metadata?: grpc.Metadata,
+  ): Promise<DeletePackageRepositoryResponse>;
+}
+
+export class KappControllerRepositoriesServiceClientImpl
+  implements KappControllerRepositoriesService
+{
+  private readonly rpc: Rpc;
+
+  constructor(rpc: Rpc) {
+    this.rpc = rpc;
+    this.AddPackageRepository = this.AddPackageRepository.bind(this);
+    this.GetPackageRepositoryDetail = this.GetPackageRepositoryDetail.bind(this);
+    this.GetPackageRepositorySummaries = this.GetPackageRepositorySummaries.bind(this);
+    this.UpdatePackageRepository = this.UpdatePackageRepository.bind(this);
+    this.DeletePackageRepository = this.DeletePackageRepository.bind(this);
+  }
+
+  AddPackageRepository(
+    request: DeepPartial<AddPackageRepositoryRequest>,
+    metadata?: grpc.Metadata,
+  ): Promise<AddPackageRepositoryResponse> {
+    return this.rpc.unary(
+      KappControllerRepositoriesServiceAddPackageRepositoryDesc,
+      AddPackageRepositoryRequest.fromPartial(request),
+      metadata,
+    );
+  }
+
+  GetPackageRepositoryDetail(
+    request: DeepPartial<GetPackageRepositoryDetailRequest>,
+    metadata?: grpc.Metadata,
+  ): Promise<GetPackageRepositoryDetailResponse> {
+    return this.rpc.unary(
+      KappControllerRepositoriesServiceGetPackageRepositoryDetailDesc,
+      GetPackageRepositoryDetailRequest.fromPartial(request),
+      metadata,
+    );
+  }
+
+  GetPackageRepositorySummaries(
+    request: DeepPartial<GetPackageRepositorySummariesRequest>,
+    metadata?: grpc.Metadata,
+  ): Promise<GetPackageRepositorySummariesResponse> {
+    return this.rpc.unary(
+      KappControllerRepositoriesServiceGetPackageRepositorySummariesDesc,
+      GetPackageRepositorySummariesRequest.fromPartial(request),
+      metadata,
+    );
+  }
+
+  UpdatePackageRepository(
+    request: DeepPartial<UpdatePackageRepositoryRequest>,
+    metadata?: grpc.Metadata,
+  ): Promise<UpdatePackageRepositoryResponse> {
+    return this.rpc.unary(
+      KappControllerRepositoriesServiceUpdatePackageRepositoryDesc,
+      UpdatePackageRepositoryRequest.fromPartial(request),
+      metadata,
+    );
+  }
+
+  DeletePackageRepository(
+    request: DeepPartial<DeletePackageRepositoryRequest>,
+    metadata?: grpc.Metadata,
+  ): Promise<DeletePackageRepositoryResponse> {
+    return this.rpc.unary(
+      KappControllerRepositoriesServiceDeletePackageRepositoryDesc,
+      DeletePackageRepositoryRequest.fromPartial(request),
+      metadata,
+    );
+  }
+}
+
+export const KappControllerRepositoriesServiceDesc = {
+  serviceName:
+    "kubeappsapis.plugins.kapp_controller.packages.v1alpha1.KappControllerRepositoriesService",
+};
+
+export const KappControllerRepositoriesServiceAddPackageRepositoryDesc: UnaryMethodDefinitionish = {
+  methodName: "AddPackageRepository",
+  service: KappControllerRepositoriesServiceDesc,
+  requestStream: false,
+  responseStream: false,
+  requestType: {
+    serializeBinary() {
+      return AddPackageRepositoryRequest.encode(this).finish();
+    },
+  } as any,
+  responseType: {
+    deserializeBinary(data: Uint8Array) {
+      return {
+        ...AddPackageRepositoryResponse.decode(data),
+        toObject() {
+          return this;
+        },
+      };
+    },
+  } as any,
+};
+
+export const KappControllerRepositoriesServiceGetPackageRepositoryDetailDesc: UnaryMethodDefinitionish =
+  {
+    methodName: "GetPackageRepositoryDetail",
+    service: KappControllerRepositoriesServiceDesc,
+    requestStream: false,
+    responseStream: false,
+    requestType: {
+      serializeBinary() {
+        return GetPackageRepositoryDetailRequest.encode(this).finish();
+      },
+    } as any,
+    responseType: {
+      deserializeBinary(data: Uint8Array) {
+        return {
+          ...GetPackageRepositoryDetailResponse.decode(data),
+          toObject() {
+            return this;
+          },
+        };
+      },
+    } as any,
+  };
+
+export const KappControllerRepositoriesServiceGetPackageRepositorySummariesDesc: UnaryMethodDefinitionish =
+  {
+    methodName: "GetPackageRepositorySummaries",
+    service: KappControllerRepositoriesServiceDesc,
+    requestStream: false,
+    responseStream: false,
+    requestType: {
+      serializeBinary() {
+        return GetPackageRepositorySummariesRequest.encode(this).finish();
+      },
+    } as any,
+    responseType: {
+      deserializeBinary(data: Uint8Array) {
+        return {
+          ...GetPackageRepositorySummariesResponse.decode(data),
+          toObject() {
+            return this;
+          },
+        };
+      },
+    } as any,
+  };
+
+export const KappControllerRepositoriesServiceUpdatePackageRepositoryDesc: UnaryMethodDefinitionish =
+  {
+    methodName: "UpdatePackageRepository",
+    service: KappControllerRepositoriesServiceDesc,
+    requestStream: false,
+    responseStream: false,
+    requestType: {
+      serializeBinary() {
+        return UpdatePackageRepositoryRequest.encode(this).finish();
+      },
+    } as any,
+    responseType: {
+      deserializeBinary(data: Uint8Array) {
+        return {
+          ...UpdatePackageRepositoryResponse.decode(data),
+          toObject() {
+            return this;
+          },
+        };
+      },
+    } as any,
+  };
+
+export const KappControllerRepositoriesServiceDeletePackageRepositoryDesc: UnaryMethodDefinitionish =
+  {
+    methodName: "DeletePackageRepository",
+    service: KappControllerRepositoriesServiceDesc,
+    requestStream: false,
+    responseStream: false,
+    requestType: {
+      serializeBinary() {
+        return DeletePackageRepositoryRequest.encode(this).finish();
+      },
+    } as any,
+    responseType: {
+      deserializeBinary(data: Uint8Array) {
+        return {
+          ...DeletePackageRepositoryResponse.decode(data),
+          toObject() {
+            return this;
+          },
+        };
+      },
+    } as any,
+  };
+
 interface UnaryMethodDefinitionishR extends grpc.UnaryMethodDefinition<any, any> {
   requestStream: any;
   responseStream: any;
@@ -817,6 +1715,7 @@ export class GrpcWebImpl {
 }
 
 type Builtin = Date | Function | Uint8Array | string | number | boolean | undefined;
+
 export type DeepPartial<T> = T extends Builtin
   ? T
   : T extends Array<infer U>
@@ -827,7 +1726,15 @@ export type DeepPartial<T> = T extends Builtin
   ? { [K in keyof T]?: DeepPartial<T[K]> }
   : Partial<T>;
 
-if (_m0.util.Long !== Long) {
-  _m0.util.Long = Long as any;
-  _m0.configure();
+type KeysOfUnion<T> = T extends T ? keyof T : never;
+export type Exact<P, I extends P> = P extends Builtin
+  ? P
+  : P & { [K in keyof P]: Exact<P[K], I[K]> } & Record<Exclude<keyof I, KeysOfUnion<P>>, never>;
+
+function isObject(value: any): boolean {
+  return typeof value === "object" && value !== null;
+}
+
+function isSet(value: any): boolean {
+  return value !== null && value !== undefined;
 }

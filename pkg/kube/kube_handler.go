@@ -104,6 +104,7 @@ type ClustersConfig struct {
 	KubeappsClusterName  string
 	GlobalReposNamespace string
 	PinnipedProxyURL     string
+	PinnipedProxyCACert  string
 	Clusters             map[string]ClusterConfig
 }
 
@@ -150,6 +151,11 @@ func NewClusterConfig(inClusterConfig *rest.Config, userToken string, cluster st
 				rt:      rt,
 			}
 		}
+
+		// If pinniped-proxy is configured with TLS, we need to set the
+		// CACert.
+		config.CAFile = clustersConfig.PinnipedProxyCACert
+
 		return config, nil
 	}
 
@@ -167,12 +173,16 @@ func NewClusterConfig(inClusterConfig *rest.Config, userToken string, cluster st
 	return config, nil
 }
 
-func ParseClusterConfig(configPath, caFilesPrefix string, pinnipedProxyURL string) (ClustersConfig, func(), error) {
+func ParseClusterConfig(configPath, caFilesPrefix string, pinnipedProxyURL, PinnipedProxyCACert string) (ClustersConfig, func(), error) {
 	caFilesDir, err := ioutil.TempDir(caFilesPrefix, "")
 	if err != nil {
 		return ClustersConfig{}, func() {}, err
 	}
-	deferFn := func() { os.RemoveAll(caFilesDir) }
+	deferFn := func() {
+		err = os.RemoveAll(caFilesDir)
+	}
+
+	// #nosec G304
 	content, err := ioutil.ReadFile(configPath)
 	if err != nil {
 		return ClustersConfig{}, deferFn, err
@@ -185,6 +195,7 @@ func ParseClusterConfig(configPath, caFilesPrefix string, pinnipedProxyURL strin
 
 	configs := ClustersConfig{Clusters: map[string]ClusterConfig{}}
 	configs.PinnipedProxyURL = pinnipedProxyURL
+	configs.PinnipedProxyCACert = PinnipedProxyCACert
 	for _, c := range clusterConfigs {
 		// Select the cluster in which Kubeapps in installed. We look for either
 		// `isKubeappsCluster: true` or an empty `APIServiceURL`.
@@ -209,6 +220,8 @@ func ParseClusterConfig(configPath, caFilesPrefix string, pinnipedProxyURL strin
 			// struct which does not support CAData.
 			// https://github.com/kubernetes/cli-runtime/issues/8
 			c.CAFile = filepath.Join(caFilesDir, c.Name)
+			// #nosec G306
+			// TODO(agamez): check if we can set perms to 0600 instead of 0644.
 			err = ioutil.WriteFile(c.CAFile, decodedCAData, 0644)
 			if err != nil {
 				return ClustersConfig{}, deferFn, err
@@ -420,7 +433,7 @@ type appRepositoryRequestDetails struct {
 	AuthRegCreds          string                  `json:"authRegCreds"`
 	RegistrySecrets       []string                `json:"registrySecrets"`
 	SyncJobPodTemplate    corev1.PodTemplateSpec  `json:"syncJobPodTemplate"`
-	ResyncRequests        uint                    `json:"resyncRequests"`
+	ResyncRequests        int                     `json:"resyncRequests"`
 	OCIRepositories       []string                `json:"ociRepositories"`
 	TLSInsecureSkipVerify bool                    `json:"tlsInsecureSkipVerify"`
 	FilterRule            v1alpha1.FilterRuleSpec `json:"filterRule"`
@@ -505,7 +518,7 @@ func parseRepoRequest(appRepoBody io.ReadCloser) (*appRepositoryRequest, error) 
 	var appRepoRequest appRepositoryRequest
 	err := json.NewDecoder(appRepoBody).Decode(&appRepoRequest)
 	if err != nil {
-		log.Infof("unable to decode: %v", err)
+		log.InfoS("unable to decode", "err", err)
 		return nil, err
 	}
 	return &appRepoRequest, nil
@@ -521,6 +534,7 @@ func (a *userHandler) applyAppRepositorySecret(repoSecret *corev1.Secret, reques
 	return err
 }
 
+// Deprecated: Remove when the new Package Repository API implementation is completed
 // TODO(#1647): Move app repo sync to namespaces so secret copy not required.
 func (a *userHandler) copyAppRepositorySecret(repoSecret *corev1.Secret, appRepo *v1alpha1.AppRepository) error {
 	repoSecret.ObjectMeta.Name = KubeappsSecretNameForRepo(appRepo.ObjectMeta.Name, appRepo.ObjectMeta.Namespace)
@@ -542,6 +556,7 @@ func (a *userHandler) ListAppRepositories(requestNamespace string) (*v1alpha1.Ap
 	return a.clientset.KubeappsV1alpha1().AppRepositories(requestNamespace).List(context.TODO(), metav1.ListOptions{})
 }
 
+// Deprecated: Remove when the new Package Repository API implementation is completed
 // CreateAppRepository creates an AppRepository resource based on the request data
 func (a *userHandler) CreateAppRepository(appRepoBody io.ReadCloser, requestNamespace string) (*v1alpha1.AppRepository, error) {
 	if a.kubeappsNamespace == "" {
@@ -692,6 +707,7 @@ func (a *userHandler) DeleteAppRepository(repoName, repoNamespace string) error 
 	return err
 }
 
+// Deprecated: Remove when the new Package Repository API implementation is completed
 func (a *userHandler) getValidationCli(appRepoBody io.ReadCloser, requestNamespace, kubeappsNamespace string) (*v1alpha1.AppRepository, httpclient.Client, error) {
 	appRepoRequest, err := parseRepoRequest(appRepoBody)
 	if err != nil {
@@ -735,6 +751,7 @@ type repoManifest struct {
 	Config repoConfig `json:"config"`
 }
 
+// Deprecated: Remove when the new Package Repository API implementation is completed
 //  getOCIAppRepositoryTag  get a tag for the given repoURL & repoName
 func getOCIAppRepositoryTag(cli httpclient.Client, repoURL string, repoName string) (string, error) {
 	// This function is the implementation of below curl command
@@ -794,6 +811,7 @@ func getOCIAppRepositoryTag(cli httpclient.Client, repoURL string, repoName stri
 	return tagVersion, nil
 }
 
+// Deprecated: Remove when the new Package Repository API implementation is completed
 //  getOCIAppRepositoryMediaType  get manifests config.MediaType for the given repoURL & repoName
 func getOCIAppRepositoryMediaType(cli httpclient.Client, repoURL string, repoName string, tagVersion string) (string, error) {
 	// This function is the implementation of below curl command
@@ -807,7 +825,7 @@ func getOCIAppRepositoryMediaType(cli httpclient.Client, repoURL string, repoNam
 	}
 	parsedURL.Path = path.Join("v2", parsedURL.Path, repoName, "manifests", tagVersion)
 
-	log.Infof("parsedURL %v", parsedURL.String())
+	log.InfoS("parsedURL", "URL", parsedURL.String())
 	req, err := http.NewRequest("GET", parsedURL.String(), nil)
 	if err != nil {
 		return "", err
@@ -881,14 +899,12 @@ type HelmNonOCIValidator struct {
 
 func (r HelmNonOCIValidator) Validate(cli httpclient.Client) (*ValidationResponse, error) {
 
-	response := &ValidationResponse{}
-
 	res, err := cli.Do(r.Req)
 	if err != nil {
 		// If the request fail, it's not an internal error
 		return &ValidationResponse{Code: 400, Message: err.Error()}, nil
 	}
-	response = &ValidationResponse{Code: res.StatusCode, Message: "OK"}
+	response := &ValidationResponse{Code: res.StatusCode, Message: "OK"}
 	if response.Code != 200 {
 		body, err := ioutil.ReadAll(res.Body)
 		if err != nil {
@@ -917,6 +933,7 @@ func (r HelmOCIValidator) Validate(cli httpclient.Client) (*ValidationResponse, 
 	return response, nil
 }
 
+// Deprecated: Remove when the new Package Repository API implementation is completed
 // getValidator return appropriate HttpValidator interface for OCI and non-OCI Repos
 func getValidator(appRepo *v1alpha1.AppRepository) (HttpValidator, error) {
 
@@ -947,6 +964,7 @@ func getValidator(appRepo *v1alpha1.AppRepository) (HttpValidator, error) {
 	}
 }
 
+// Deprecated: Remove when the new Package Repository API implementation is completed
 func (a *userHandler) ValidateAppRepository(appRepoBody io.ReadCloser, requestNamespace string) (*ValidationResponse, error) {
 	// Split body parsing to a different function for ease testing
 	appRepo, cli, err := a.getValidationCli(appRepoBody, requestNamespace, a.kubeappsNamespace)
@@ -973,6 +991,7 @@ func (a *userHandler) GetAppRepository(repoName, repoNamespace string) (*v1alpha
 	return a.clientset.KubeappsV1alpha1().AppRepositories(repoNamespace).Get(context.TODO(), repoName, metav1.GetOptions{})
 }
 
+// Deprecated: Remove when the new Package Repository API implementation is completed
 // appRepositoryForRequest takes care of parsing the request data into an AppRepository.
 func appRepositoryForRequest(appRepoRequest *appRepositoryRequest) *v1alpha1.AppRepository {
 	appRepo := appRepoRequest.AppRepository
@@ -1035,6 +1054,7 @@ func appRepositoryForRequest(appRepoRequest *appRepositoryRequest) *v1alpha1.App
 	}
 }
 
+// Deprecated: Remove when the new Package Repository API implementation is completed
 // secretForRequest takes care of parsing the request data into a secret for an AppRepository.
 func (a *userHandler) secretForRequest(appRepoRequest *appRepositoryRequest, appRepo *v1alpha1.AppRepository, namespace string) (*corev1.Secret, error) {
 	if len(appRepoRequest.AppRepository.AuthRegCreds) > 0 {
@@ -1070,6 +1090,7 @@ func (a *userHandler) secretForRequest(appRepoRequest *appRepositoryRequest, app
 	}, nil
 }
 
+// Deprecated: Remove when the new Package Repository API implementation is completed
 func secretNameForRepo(repoName string) string {
 	return fmt.Sprintf("apprepo-%s", repoName)
 }
@@ -1211,7 +1232,7 @@ func ParseSelfSubjectAccessRequest(selfSubjectAccessReviewBody io.ReadCloser) (*
 	var request authorizationapi.ResourceAttributes
 	err := json.NewDecoder(selfSubjectAccessReviewBody).Decode(&request)
 	if err != nil {
-		log.Infof("unable to decode: %v", err)
+		log.InfoS("unable to decode:", "err", err)
 		return nil, err
 	}
 	return &request, nil

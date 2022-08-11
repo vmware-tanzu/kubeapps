@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"io/fs"
 	"path/filepath"
+	"runtime"
 	"testing"
 	"testing/fstest"
 
@@ -242,6 +243,10 @@ func TestListOSFiles(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
+			// TODO(agamez): env vars and file paths should be handled properly for Windows operating system
+			if runtime.GOOS == "windows" {
+				t.Skip("Skipping in a Windows OS")
+			}
 			fs := createTestFS(t, tc.filenames)
 
 			got, err := listSOFiles(fs, tc.pluginsDirs)
@@ -421,8 +426,7 @@ func TestCreateConfigGetterWithParams(t *testing.T) {
 			if tc.expectedErrMsg == nil {
 				if restConfig == nil {
 					t.Errorf("got: nil, want: rest.Config")
-				}
-				if got, want := restConfig.Host, tc.expectedAPIHost; got != want {
+				} else if got, want := restConfig.Host, tc.expectedAPIHost; got != want {
 					t.Errorf("got: %q, want: %q", got, want)
 				}
 			}

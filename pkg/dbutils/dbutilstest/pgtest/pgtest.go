@@ -44,7 +44,12 @@ func openTestManager(t *testing.T) *dbutils.PostgresAssetManager {
 // GetInitializedPGManager returns an initialized postgres manager ready for testing.
 func GetInitializedManager(t *testing.T) (*dbutils.PostgresAssetManager, func()) {
 	pam := openTestManager(t)
-	cleanup := func() { pam.Close() }
+	cleanup := func() {
+		err := pam.Close()
+		if err != nil {
+			t.Fatalf("%+v", err)
+		}
+	}
 
 	err := pam.InvalidateCache()
 	if err != nil {

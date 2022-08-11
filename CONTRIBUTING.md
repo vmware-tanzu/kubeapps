@@ -1,83 +1,93 @@
-# Contributing
+# Contributing to Kubeapps
+
+Kubeapps maintainers welcome contributions from the community and first want to thank you for taking the time to contribute!
+
+Please familiarize yourself with the [Code of Conduct](https://github.com/vmware/.github/blob/main/CODE_OF_CONDUCT.md) before contributing.
+
+- _CLA: Before you start working with Kubeapps, please read and sign our Contributor License Agreement [CLA](https://cla.vmware.com/cla/1/preview). If you wish to contribute code and you have not signed our contributor license agreement (CLA), our bot will update the issue when you open a Pull Request. For any questions about the CLA process, please refer to our [FAQ](https://cla.vmware.com/faq)._
+
+## Ways to contribute
+
+Kubeapps project welcomes many different types of contributions and not all of them need a Pull request. Contributions may include:
+
+- New features and proposals
+- Documentation
+- Bug fixes
+- Issue Triage
+- Answering questions and giving feedback
+- Helping to onboard new contributors
+- Other related activities
+
+## Getting started
+
+Find information about how to set up the development environment on the [developer guide](./site/content/docs/latest/reference/developer/README.md).
+
+## Contribution Flow
+
+This is a rough outline of what a contributor's workflow looks like:
+
+- Make a fork of the repository within your GitHub account
+- Create a topic branch in your fork from where you want to base your work
+- Make commits of logical units
+- Make sure your commit messages are with the proper format, quality and descriptiveness (see below)
+- Push your changes to the topic branch in your fork
+- Create a pull request containing that commit
+
+Kubeapps maintainers team follow the GitHub workflow and you can find more details on the [GitHub flow documentation](https://docs.github.com/en/get-started/quickstart/github-flow).
+
+Before submitting your pull request use the following checklist:
+
+### Pull Request Checklist
+
+1. Check if your code changes will pass both code linting checks and unit tests.
+2. Ensure your commit messages are descriptive. Kubeapps follow the conventions on [How to Write a Git Commit Message](http://chris.beams.io/posts/git-commit/). Be sure to include any related GitHub issue references in the commit message. See [GFM syntax](https://guides.github.com/features/mastering-markdown/#GitHub-flavored-markdown) for referencing issues and commits.
+3. Check the commits and commits messages and ensure they are free from typos.
+4. Any pull request which adds a new feature or changes the behavior of any feature which was previously documented should include updates to the documentation. All documentation lives in this repository.
+
+## Reporting Bugs and Creating Issues
+
+For specifics on what to include in your report, please follow the guidelines in the issue and pull request templates when available.
+
+### Issues
+
+Need an idea for a project to get started contributing? Take a look at the [open issues](https://github.com/vmware-tanzu/kubeapps/issues?q=is%3Aopen+is%3Aissue). Also check to see if any open issues are labeled with [`good first issue`](https://github.com/vmware-tanzu/kubeapps/labels/good%20first%20issue) or [`help wanted`](https://github.com/vmware-tanzu/kubeapps/labels/help%20wanted).
 
 When contributing to Kubeapps, please first discuss the change you wish to make via an issue with this repository before making a change.
 
 > Kubeapps distribution is delegated to the official [Bitnami Kubeapps chart](https://github.com/bitnami/charts/tree/master/bitnami/kubeapps) from the separate Bitnami charts repository. PRs and issues related to the official chart should be created in the Bitnami charts repository.
 
-Please note we have a [code of conduct](./CODE_OF_CONDUCT.md), please follow it in all your interactions with the project.
+### Bugs
 
-## Pull Request Process
+To file a bug report, please first open an [issue](https://github.com/vmware-tanzu/kubeapps/issues/new?assignees=&labels=kind%2Fbug&template=bug_report.md&title=). The project maintainers team will work with you on your bug report.
 
-1. Ensure any install or build dependencies are removed before the end of the layer when doing a build.
-2. Update the README.md with details of changes to the interface, this includes new environment variables, exposed ports, useful file locations and container parameters.
-3. Increase the version numbers in any examples files and the README.md to the new version that this Pull Request would represent. The versioning scheme we use is [SemVer](https://semver.org/).
-4. You may merge the Pull Request in once you have the sign-off of two other developers, or if you do not have permission to do that, you may request the second reviewer to merge it for you.
+Once the bug has been validated, a [pull request](https://github.com/vmware-tanzu/kubeapps/compare) can be opened to fix the bug.
 
-## DCO Sign off
+For specifics on what to include in your bug report, please follow the guidelines in the issue and pull request templates.
 
-All authors to the project retain copyright to their work. However, to ensure
-that they are only submitting work that they have rights to, we are requiring
-everyone to acknowledge this by signing their work.
+### Features
 
-Any copyright notices in this repo should specify the authors as "the contributors".
+To suggest a feature, please first open an [issue](https://github.com/vmware-tanzu/kubeapps/issues/new?assignees=&labels=kind%2Ffeature&template=feature_request.md&title=) that will be tagged with [`kind/proposal`](https://github.com/vmware-tanzu/kubeapps/labels/kind%2Fproposal), or create a new [Discussion](https://github.com/vmware-tanzu/kubeapps/discussions/new). The project maintainers will work with you on your feature request.
 
-To sign your work, just add a line like this at the end of your commit message:
+Once the feature request has been validated, a pull request can be opened to implement the feature.
 
-```text
-Signed-off-by: Michael Nelson <minelson@vmware.com>
-```
+For specifics on what to include in your feature request, please follow the guidelines in the issue and pull request templates.
 
-This can easily be done with the `--signoff` option to `git commit`.
+## Ask for Help
 
-By doing this you state that you can certify the following (from [https://developercertificate.org/](https://developercertificate.org/):
+The best way to reach Kubeapps maintainers team with a question when contributing is to ask on:
 
-```text
-Developer Certificate of Origin
-Version 1.1
+- [GitHub Issues](https://github.com/vmware-tanzu/kubeapps/issues)
+- [GitHub Discussions](https://github.com/vmware-tanzu/kubeapps/discussions)
+- [#kubeapps Slack channel](https://kubernetes.slack.com/messages/kubeapps)
 
-Copyright (C) 2004, 2006 The Linux Foundation and its contributors.
-1 Letterman Drive
-Suite D4700
-San Francisco, CA, 94129
+## Additional Resources
 
-Everyone is permitted to copy and distribute verbatim copies of this
-license document, but changing it is not allowed.
+New to Kubeapps?
 
+- Start here to learn how to install and use Kubeapps: [Getting started in Kubeapps](./site/content/docs/latest/tutorials/getting-started.md)
+- Start here to learn how to develop for Kubeapps components: [Kubeapps Developer guidelines](./site/content/docs/latest/reference/developer/README.md)
+- Other more detailed documentation can be found at: [Kubeapps Docs](./site/content/docs/latest/README.md)
 
-Developer's Certificate of Origin 1.1
+## Roadmap
 
-By making a contribution to this project, I certify that:
-
-(a) The contribution was created in whole or in part by me and I
-    have the right to submit it under the open source license
-    indicated in the file; or
-
-(b) The contribution is based upon previous work that, to the best
-    of my knowledge, is covered under an appropriate open source
-    license and I have the right under that license to submit that
-    work with modifications, whether created in whole or in part
-    by me, under the same open source license (unless I am
-    permitted to submit under a different license), as indicated
-    in the file; or
-
-(c) The contribution was provided directly to me by some other
-    person who certified (a), (b) or (c) and I have not modified
-    it.
-
-(d) I understand and agree that this project and the contribution
-    are public and that a record of the contribution (including all
-    personal information I submit with it, including my sign-off) is
-    maintained indefinitely and may be redistributed consistent with
-    this project or the open source license(s) involved.
-```
-
-If you find yourself in the position where you've created a pull-request and it's failing the DCO check because some of your commits are not signed off, you can just follow the details of the DCO check failure to sign-off on those commits with a single command, such as:
-
-```bash
-git rebase HEAD~N --signoff
-git push --force-with-lease
-```
-
-where N is the number of commits you've added.
-
-You can also setup a [commit template for your local git config](https://stackoverflow.com/a/34687806) that includes your sign-off.
+The near-term and mid-term roadmap for the work planned for the project [maintainers](./MAINTAINERS.md) is documented in [ROADMAP.md](./ROADMAP.md).

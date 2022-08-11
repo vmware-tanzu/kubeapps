@@ -7,6 +7,7 @@ option go_package = "github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/plug
 
 import "google/api/annotations.proto";
 import "kubeappsapis/core/packages/v1alpha1/packages.proto";
+import "kubeappsapis/core/packages/v1alpha1/repositories.proto";
 import "kubeappsapis/core/plugins/v1alpha1/plugins.proto";
 import "protoc-gen-openapiv2/options/annotations.proto";
 
@@ -120,4 +121,89 @@ message RollbackInstalledPackageResponse {
   //   example: '{"installed_package_ref": {}}'
   // };
   kubeappsapis.core.packages.v1alpha1.InstalledPackageReference installed_package_ref = 1;
+}
+
+service HelmRepositoriesService {
+  // AddPackageRepository add an existing package repository to the set of ones already managed by the Helm plugin
+  rpc AddPackageRepository(kubeappsapis.core.packages.v1alpha1.AddPackageRepositoryRequest) returns (kubeappsapis.core.packages.v1alpha1.AddPackageRepositoryResponse) {
+    option (google.api.http) = {
+      post: "/plugins/helm/packages/v1alpha1/repositories"
+      body: "*"
+    };
+  }
+
+  rpc GetPackageRepositoryDetail(kubeappsapis.core.packages.v1alpha1.GetPackageRepositoryDetailRequest) returns (kubeappsapis.core.packages.v1alpha1.GetPackageRepositoryDetailResponse) {
+    option (google.api.http) = {
+      get: "/plugins/helm/packages/v1alpha1/repositories/c/{package_repo_ref.context.cluster}/ns/{package_repo_ref.context.namespace}/{package_repo_ref.identifier=**}"
+    };
+  }
+
+  rpc GetPackageRepositorySummaries(kubeappsapis.core.packages.v1alpha1.GetPackageRepositorySummariesRequest) returns (kubeappsapis.core.packages.v1alpha1.GetPackageRepositorySummariesResponse) {
+    option (google.api.http) = {
+      get: "/plugins/helm/packages/v1alpha1/repositories"
+    };
+  }
+
+  rpc UpdatePackageRepository(kubeappsapis.core.packages.v1alpha1.UpdatePackageRepositoryRequest) returns (kubeappsapis.core.packages.v1alpha1.UpdatePackageRepositoryResponse) {
+    option (google.api.http) = {
+      put: "/plugins/helm/packages/v1alpha1/repositories/c/{package_repo_ref.context.cluster}/ns/{package_repo_ref.context.namespace}/{package_repo_ref.identifier=**}"
+      body: "*"
+    };
+  }
+
+  rpc DeletePackageRepository(kubeappsapis.core.packages.v1alpha1.DeletePackageRepositoryRequest) returns (kubeappsapis.core.packages.v1alpha1.DeletePackageRepositoryResponse) {
+    option (google.api.http) = {
+      delete: "/plugins/helm/packages/v1alpha1/repositories/c/{package_repo_ref.context.cluster}/ns/{package_repo_ref.context.namespace}/{package_repo_ref.identifier=**}"
+    };
+  }
+
+  // this endpoint only exists for the purpose of integration tests
+  rpc SetUserManagedSecrets(SetUserManagedSecretsRequest) returns (SetUserManagedSecretsResponse) {
+  }
+}
+
+message SetUserManagedSecretsRequest {
+  bool value = 1;
+}
+
+message SetUserManagedSecretsResponse {
+  bool value = 1;
+}
+
+message ImagesPullSecret {
+  oneof docker_registry_credential_one_of {
+    // docker credentials secret reference
+    string secret_ref = 1;
+
+    // docker credentials data
+    kubeappsapis.core.packages.v1alpha1.DockerCredentials credentials = 2;
+  }
+}
+
+// HelmPackageRepositoryCustomDetail
+//
+// Custom details for a Helm repository
+message HelmPackageRepositoryCustomDetail {
+  // docker registry credentials for pull secrets
+  ImagesPullSecret images_pull_secret = 1;
+
+  // list of oci repositories
+  repeated string oci_repositories = 2;
+
+  // filter rule to apply to the repository
+  RepositoryFilterRule filter_rule = 3;
+
+  // whether to perform validation on the repository
+  bool perform_validation = 4;
+}
+
+// RepositoryFilterRule
+//
+// JQ expression for filtering packages
+message RepositoryFilterRule {
+  // jq string expression
+  string jq = 1;
+
+  // map of variables
+  map<string, string> variables = 4;
 }

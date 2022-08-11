@@ -7,6 +7,10 @@ import { getType } from "typesafe-actions";
 import actions from "../actions";
 import { IPackageState, IReceivePackagesActionPayload } from "../shared/types";
 import packageReducer from "./availablepackages";
+import { PackagesAction } from "../actions/availablepackages";
+
+const nextPageToken = "nextPageToken";
+const currentPageToken = "currentPageToken";
 
 describe("packageReducer", () => {
   let initialState: IPackageState;
@@ -47,13 +51,14 @@ describe("packageReducer", () => {
       selected: {
         versions: [],
       },
+      nextPageToken: "",
       size: 20,
     };
   });
   const error = new Error("Boom");
 
   it("unsets an error when changing namespace", () => {
-    const state = packageReducer(undefined, {
+    const state = packageReducer(initialState, {
       type: getType(actions.availablepackages.createErrorPackage) as any,
       payload: error,
     });
@@ -67,14 +72,14 @@ describe("packageReducer", () => {
     });
 
     expect(
-      packageReducer(undefined, {
+      packageReducer(initialState, {
         type: getType(actions.namespace.setNamespaceState) as any,
       }),
     ).toEqual({ ...initialState });
   });
 
   it("requestAvailablePackageSummaries (without page)", () => {
-    const state = packageReducer(undefined, {
+    const state = packageReducer(initialState, {
       type: getType(actions.availablepackages.requestAvailablePackageSummaries) as any,
     });
     expect(state).toEqual({
@@ -84,9 +89,9 @@ describe("packageReducer", () => {
   });
 
   it("requestAvailablePackageSummaries (with page)", () => {
-    const state = packageReducer(undefined, {
+    const state = packageReducer(initialState, {
       type: getType(actions.availablepackages.requestAvailablePackageSummaries) as any,
-      payload: 2,
+      payload: "currentPageToken",
     });
     expect(state).toEqual({
       ...initialState,
@@ -94,39 +99,70 @@ describe("packageReducer", () => {
     });
   });
 
-  it("single receiveAvailablePackageSummaries (first page) should be returned", () => {
-    const state = packageReducer(undefined, {
-      type: getType(actions.availablepackages.receiveAvailablePackageSummaries) as any,
-      payload: {
-        response: {
-          availablePackageSummaries: [availablePackageSummary1],
-          nextPageToken: "3",
-          categories: ["foo"],
-        },
-        page: 1,
-      } as IReceivePackagesActionPayload,
+  it("ignores a receiveAvailablePackageSummaries when not fetching (ie. after a reset)", () => {
+    const state = packageReducer(
+      {
+        ...initialState,
+        isFetching: false,
+      },
+      {
+        type: getType(actions.availablepackages.receiveAvailablePackageSummaries) as any,
+        payload: {
+          response: {
+            availablePackageSummaries: [availablePackageSummary1],
+            nextPageToken,
+            categories: ["foo"],
+          },
+        } as IReceivePackagesActionPayload,
+      },
+    );
+    expect(state).toEqual({
+      ...initialState,
+      isFetching: false,
     });
+  });
+
+  it("single receiveAvailablePackageSummaries (first page) should be returned", () => {
+    const state = packageReducer(
+      {
+        ...initialState,
+        isFetching: true,
+      },
+      {
+        type: getType(actions.availablepackages.receiveAvailablePackageSummaries) as any,
+        payload: {
+          response: {
+            availablePackageSummaries: [availablePackageSummary1],
+            nextPageToken,
+            categories: ["foo"],
+          },
+        } as IReceivePackagesActionPayload,
+      },
+    );
     expect(state).toEqual({
       ...initialState,
       isFetching: false,
       hasFinishedFetching: false,
       categories: ["foo"],
       items: [availablePackageSummary1],
+      nextPageToken,
     });
   });
 
   it("single receiveAvailablePackageSummaries (middle page) having visited the previous ones should be ignored", () => {
     const state = packageReducer(
-      { ...initialState },
+      {
+        ...initialState,
+        isFetching: true,
+      },
       {
         type: getType(actions.availablepackages.receiveAvailablePackageSummaries) as any,
         payload: {
           response: {
             availablePackageSummaries: [availablePackageSummary1],
-            nextPageToken: "3",
+            nextPageToken,
             categories: ["foo"],
           },
-          page: 2,
         } as IReceivePackagesActionPayload,
       },
     );
@@ -136,21 +172,24 @@ describe("packageReducer", () => {
       hasFinishedFetching: false,
       categories: ["foo"],
       items: [availablePackageSummary1],
+      nextPageToken,
     });
   });
 
   it("single receiveAvailablePackageSummaries (middle page) not visiting the previous ones should be ignored", () => {
     const state = packageReducer(
-      { ...initialState },
+      {
+        ...initialState,
+        isFetching: true,
+      },
       {
         type: getType(actions.availablepackages.receiveAvailablePackageSummaries) as any,
         payload: {
           response: {
             availablePackageSummaries: [availablePackageSummary1],
-            nextPageToken: "3",
+            nextPageToken,
             categories: ["foo"],
           },
-          page: 2,
         } as IReceivePackagesActionPayload,
       },
     );
@@ -160,6 +199,7 @@ describe("packageReducer", () => {
       hasFinishedFetching: false,
       categories: ["foo"],
       items: [availablePackageSummary1],
+      nextPageToken,
     });
   });
 
@@ -167,16 +207,16 @@ describe("packageReducer", () => {
     const state = packageReducer(
       {
         ...initialState,
+        isFetching: true,
       },
       {
         type: getType(actions.availablepackages.receiveAvailablePackageSummaries) as any,
         payload: {
           response: {
             availablePackageSummaries: [availablePackageSummary1],
-            nextPageToken: "3",
+            nextPageToken: "",
             categories: ["foo"],
           },
-          page: 3,
         } as IReceivePackagesActionPayload,
       },
     );
@@ -190,43 +230,97 @@ describe("packageReducer", () => {
   });
 
   it("two receiveAvailablePackageSummaries should add items (no dups)", () => {
-    const state1 = packageReducer(undefined, {
-      type: getType(actions.availablepackages.receiveAvailablePackageSummaries) as any,
-      payload: {
-        response: {
-          availablePackageSummaries: [availablePackageSummary1],
-          nextPageToken: "2",
-          categories: ["foo"],
-        },
-        page: 1,
-      } as IReceivePackagesActionPayload,
-    });
-    const state2 = packageReducer(state1, {
-      type: getType(actions.availablepackages.receiveAvailablePackageSummaries) as any,
-      payload: {
-        response: {
-          availablePackageSummaries: [availablePackageSummary2],
-          nextPageToken: "2",
-          categories: ["foo"],
-        },
-        page: 2,
-      } as IReceivePackagesActionPayload,
-    });
+    const state1 = packageReducer(
+      {
+        ...initialState,
+        isFetching: true,
+      },
+      {
+        type: getType(actions.availablepackages.receiveAvailablePackageSummaries) as any,
+        payload: {
+          response: {
+            availablePackageSummaries: [availablePackageSummary1],
+            nextPageToken,
+            categories: ["foo"],
+          },
+        } as IReceivePackagesActionPayload,
+      },
+    );
+    const state2 = packageReducer(
+      {
+        ...state1,
+        isFetching: true,
+      },
+      {
+        type: getType(actions.availablepackages.receiveAvailablePackageSummaries) as any,
+        payload: {
+          response: {
+            availablePackageSummaries: [availablePackageSummary2],
+            nextPageToken: "",
+            categories: ["foo"],
+          },
+        } as IReceivePackagesActionPayload,
+      },
+    );
     expect(state2).toEqual({
       ...initialState,
       isFetching: false,
       hasFinishedFetching: true,
       categories: ["foo"],
       items: [availablePackageSummary1, availablePackageSummary2],
+      nextPageToken: "",
     });
     expect(state2.items.length).toBe(2);
+  });
+
+  it("two receiveAvailablePackageSummaries should add categories (no dups)", () => {
+    const state1 = packageReducer(
+      {
+        ...initialState,
+        isFetching: true,
+      },
+      {
+        type: getType(actions.availablepackages.receiveAvailablePackageSummaries) as any,
+        payload: {
+          response: {
+            availablePackageSummaries: [availablePackageSummary1],
+            nextPageToken,
+            categories: ["foo", "bar"],
+          },
+        } as IReceivePackagesActionPayload,
+      },
+    );
+    const state2 = packageReducer(
+      {
+        ...state1,
+        isFetching: true,
+      },
+      {
+        type: getType(actions.availablepackages.receiveAvailablePackageSummaries) as any,
+        payload: {
+          response: {
+            availablePackageSummaries: [availablePackageSummary1],
+            nextPageToken: "",
+            categories: ["foo"],
+          },
+        } as IReceivePackagesActionPayload,
+      },
+    );
+    expect(state2).toEqual({
+      ...initialState,
+      isFetching: false,
+      hasFinishedFetching: true,
+      categories: ["foo", "bar"],
+      items: [availablePackageSummary1],
+      nextPageToken: "",
+    });
+    expect(state2.categories.length).toBe(2);
   });
 
   it("requestAvailablePackageSummaries and receiveAvailablePackageSummaries with multiple pages", () => {
     const stateReq1 = packageReducer(initialState, {
       type: getType(actions.availablepackages.requestAvailablePackageSummaries) as any,
-      payload: 1,
-    });
+    } as PackagesAction);
     expect(stateReq1).toEqual({
       ...initialState,
       isFetching: true,
@@ -238,10 +332,9 @@ describe("packageReducer", () => {
       payload: {
         response: {
           availablePackageSummaries: [availablePackageSummary1],
-          nextPageToken: "3",
+          nextPageToken: "page-2",
           categories: ["foo"],
         },
-        page: 1,
       } as IReceivePackagesActionPayload,
     });
     expect(stateRec1).toEqual({
@@ -250,10 +343,10 @@ describe("packageReducer", () => {
       categories: ["foo"],
       items: [availablePackageSummary1],
       hasFinishedFetching: false,
+      nextPageToken: "page-2",
     });
     const stateReq2 = packageReducer(stateRec1, {
       type: getType(actions.availablepackages.requestAvailablePackageSummaries) as any,
-      payload: 2,
     });
     expect(stateReq2).toEqual({
       ...initialState,
@@ -261,16 +354,16 @@ describe("packageReducer", () => {
       hasFinishedFetching: false,
       categories: ["foo"],
       items: [availablePackageSummary1],
+      nextPageToken: "page-2",
     });
     const stateRec2 = packageReducer(stateReq2, {
       type: getType(actions.availablepackages.receiveAvailablePackageSummaries) as any,
       payload: {
         response: {
           availablePackageSummaries: [availablePackageSummary2],
-          nextPageToken: "3",
+          nextPageToken: "page-3",
           categories: ["foo"],
         },
-        page: 2,
       } as IReceivePackagesActionPayload,
     });
     expect(stateRec2).toEqual({
@@ -279,10 +372,10 @@ describe("packageReducer", () => {
       hasFinishedFetching: false,
       categories: ["foo"],
       items: [availablePackageSummary1, availablePackageSummary2],
+      nextPageToken: "page-3",
     });
     const stateReq3 = packageReducer(stateRec2, {
       type: getType(actions.availablepackages.requestAvailablePackageSummaries) as any,
-      payload: 3,
     });
     expect(stateReq3).toEqual({
       ...initialState,
@@ -290,16 +383,16 @@ describe("packageReducer", () => {
       hasFinishedFetching: false,
       categories: ["foo"],
       items: [availablePackageSummary1, availablePackageSummary2],
+      nextPageToken: "page-3",
     });
     const stateRec3 = packageReducer(stateReq3, {
       type: getType(actions.availablepackages.receiveAvailablePackageSummaries) as any,
       payload: {
         response: {
           availablePackageSummaries: [availablePackageSummary1],
-          nextPageToken: "3",
+          nextPageToken: "",
           categories: ["foo"],
         },
-        page: 3,
       } as IReceivePackagesActionPayload,
     });
     expect(stateRec3).toEqual({
@@ -308,32 +401,39 @@ describe("packageReducer", () => {
       hasFinishedFetching: true,
       categories: ["foo"],
       items: [availablePackageSummary1, availablePackageSummary2],
+      nextPageToken: "",
     });
   });
 
   // TODO(agamez): check whether or not we really want to filter out duplicates. If so, add some deleted tests back
 
   it("two receiveAvailablePackageSummaries and then createErrorPackage", () => {
-    const state1 = packageReducer(undefined, {
-      type: getType(actions.availablepackages.receiveAvailablePackageSummaries) as any,
-      payload: {
-        response: {
-          availablePackageSummaries: [availablePackageSummary1],
-          nextPageToken: "1",
-          categories: ["foo"],
-        },
-        page: 1,
-      } as IReceivePackagesActionPayload,
-    });
+    const state1 = packageReducer(
+      {
+        ...initialState,
+        isFetching: true,
+      },
+      {
+        type: getType(actions.availablepackages.receiveAvailablePackageSummaries) as any,
+        payload: {
+          response: {
+            availablePackageSummaries: [availablePackageSummary1],
+            nextPageToken,
+            categories: ["foo"],
+          },
+          paginationToken: currentPageToken,
+        } as IReceivePackagesActionPayload,
+      },
+    );
     const state2 = packageReducer(state1, {
       type: getType(actions.availablepackages.receiveAvailablePackageSummaries) as any,
       payload: {
         response: {
           availablePackageSummaries: [],
-          nextPageToken: "2",
+          nextPageToken,
           categories: ["foo"],
         },
-        page: 2,
+        paginationToken: currentPageToken,
       } as IReceivePackagesActionPayload,
     });
     const state3 = packageReducer(state2, {
@@ -343,22 +443,28 @@ describe("packageReducer", () => {
       ...initialState,
       isFetching: false,
       categories: ["foo"],
+      nextPageToken,
       items: [availablePackageSummary1],
     });
   });
 
   it("clears errors after clearErrorPackage", () => {
-    const state1 = packageReducer(undefined, {
-      type: getType(actions.availablepackages.receiveAvailablePackageSummaries) as any,
-      payload: {
-        response: {
-          availablePackageSummaries: [availablePackageSummary1],
-          nextPageToken: "5",
-          categories: ["foo"],
-        },
-        page: 1,
-      } as IReceivePackagesActionPayload,
-    });
+    const state1 = packageReducer(
+      {
+        ...initialState,
+        isFetching: true,
+      },
+      {
+        type: getType(actions.availablepackages.receiveAvailablePackageSummaries) as any,
+        payload: {
+          response: {
+            availablePackageSummaries: [availablePackageSummary1],
+            nextPageToken,
+            categories: ["foo"],
+          },
+        } as IReceivePackagesActionPayload,
+      },
+    );
     const state2 = packageReducer(state1, {
       type: getType(actions.availablepackages.createErrorPackage) as any,
     });
@@ -370,12 +476,13 @@ describe("packageReducer", () => {
       isFetching: false,
       items: [availablePackageSummary1],
       categories: ["foo"],
+      nextPageToken,
       selected: initialState.selected,
     });
   });
 
   it("resetAvailablePackageSummaries resets to the initial", () => {
-    const state = packageReducer(undefined, {
+    const state = packageReducer(initialState, {
       type: getType(actions.availablepackages.resetAvailablePackageSummaries) as any,
     });
     expect(state).toEqual({
@@ -384,7 +491,7 @@ describe("packageReducer", () => {
   });
 
   it("createErrorPackage resets to the initial state", () => {
-    const state = packageReducer(undefined, {
+    const state = packageReducer(initialState, {
       type: getType(actions.availablepackages.createErrorPackage) as any,
     });
     expect(state).toEqual({

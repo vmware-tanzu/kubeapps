@@ -4,35 +4,42 @@
 package common
 
 import (
+	"bytes"
+	"crypto/sha256"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"net/http"
 	"net/url"
 	"os"
 	"reflect"
+	"runtime"
 	"strconv"
 	"strings"
 	"sync"
 	"time"
 
+	"github.com/docker/cli/cli/config"
+	"github.com/docker/cli/cli/config/credentials"
 	helmv2 "github.com/fluxcd/helm-controller/api/v2beta1"
 	sourcev1 "github.com/fluxcd/source-controller/api/v1beta2"
 	"github.com/go-redis/redis/v8"
-	corev1 "github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
 	plugins "github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/core/plugins/v1alpha1"
 	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/pkg/pkgutils"
 	httpclient "github.com/vmware-tanzu/kubeapps/pkg/http-client"
 	"golang.org/x/net/http/httpproxy"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"helm.sh/helm/v3/pkg/getter"
 	apiv1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/wait"
 	log "k8s.io/klog/v2"
+	orasregistryauthv2 "oras.land/oras-go/v2/registry/remote/auth"
 	ctrlclient "sigs.k8s.io/controller-runtime/pkg/client"
 )
 
@@ -116,12 +123,23 @@ func NamespacedName(obj ctrlclient.Object) (*types.NamespacedName, error) {
 }
 
 // "Local" in the sense of no namespace is specified
-func NewLocalOpaqueSecret(name string) *apiv1.Secret {
+func NewLocalOpaqueSecret(ownerRepo types.NamespacedName) *apiv1.Secret {
 	return &apiv1.Secret{
 		ObjectMeta: metav1.ObjectMeta{
-			GenerateName: name,
+			GenerateName: ownerRepo.Name + "-",
 		},
 		Type: apiv1.SecretTypeOpaque,
+		Data: map[string][]byte{},
+	}
+}
+
+// "Local" in the sense of no namespace is specified
+func NewLocalDockerConfigJsonSecret(ownerRepo types.NamespacedName) *apiv1.Secret {
+	return &apiv1.Secret{
+		ObjectMeta: metav1.ObjectMeta{
+			GenerateName: ownerRepo.Name + "-",
+		},
+		Type: apiv1.SecretTypeDockerConfigJson,
 		Data: map[string][]byte{},
 	}
 }
@@ -197,7 +215,7 @@ func NewRedisClientFromEnv(stopCh <-chan struct{}) (*redis.Client, error) {
 	if maxmemory, err := redisCli.ConfigGet(redisCli.Context(), "maxmemory").Result(); err != nil {
 		return nil, err
 	} else if len(maxmemory) > 1 {
-		log.Infof("Redis [CONFIG GET maxmemory]: %v", maxmemory[1])
+		log.InfoS("Redis [CONFIG GET maxmemory]", "maxmemory", maxmemory[1])
 	}
 
 	return redisCli, nil
@@ -224,7 +242,7 @@ func RedisMemoryStats(redisCli *redis.Client) (used, total string) {
 }
 
 // options are generic parameters to be provided to the httpclient during instantiation.
-type ClientOptions struct {
+type HttpClientOptions struct {
 	// for TLS connections
 	CertBytes []byte
 	KeyBytes  []byte
@@ -237,12 +255,9 @@ type ClientOptions struct {
 	UserAgent string
 }
 
-// inspired by https://github.com/fluxcd/source-controller/blob/main/internal/helm/getter/getter.go#L29
-
-// ClientOptionsFromSecret constructs a getter.Option slice for the given secret.
-// It returns the slice, or an error.
-func ClientOptionsFromSecret(secret apiv1.Secret) (*ClientOptions, error) {
-	var opts ClientOptions
+// HttpClientOptionsFromSecret constructs a getter.Option slice for the given secret.
+func HttpClientOptionsFromSecret(secret apiv1.Secret) (*HttpClientOptions, error) {
+	var opts HttpClientOptions
 	if err := basicAuthFromSecret(secret, &opts); err != nil {
 		return nil, err
 	}
@@ -252,10 +267,24 @@ func ClientOptionsFromSecret(secret apiv1.Secret) (*ClientOptions, error) {
 	return &opts, nil
 }
 
+// HelmGetterOptionsFromSecret attempts to construct a basic auth getter.Option for the
+// given v1.Secret and returns the result.
+// It returns the slice, or an error.
+func HelmGetterOptionsFromSecret(secret apiv1.Secret) ([]getter.Option, error) {
+	var opts HttpClientOptions
+	if err := basicAuthFromSecret(secret, &opts); err != nil {
+		return nil, err
+	} else {
+		return []getter.Option{
+			getter.WithBasicAuth(opts.Username, opts.Password),
+		}, nil
+	}
+}
+
 //
 // Secrets with no username AND password are ignored, if only one is defined it
 // returns an error.
-func basicAuthFromSecret(secret apiv1.Secret, options *ClientOptions) error {
+func basicAuthFromSecret(secret apiv1.Secret, options *HttpClientOptions) error {
 	username, password := string(secret.Data["username"]), string(secret.Data["password"])
 	switch {
 	case username == "" && password == "":
@@ -270,7 +299,7 @@ func basicAuthFromSecret(secret apiv1.Secret, options *ClientOptions) error {
 
 // Secrets with no certFile, keyFile, AND caFile are ignored, if only a
 // certBytes OR keyBytes is defined it returns an error.
-func tlsClientConfigFromSecret(secret apiv1.Secret, options *ClientOptions) error {
+func tlsClientConfigFromSecret(secret apiv1.Secret, options *HttpClientOptions) error {
 	certBytes, keyBytes, caBytes := secret.Data["certFile"], secret.Data["keyFile"], secret.Data["caFile"]
 	switch {
 	case len(certBytes)+len(keyBytes)+len(caBytes) == 0:
@@ -286,11 +315,63 @@ func tlsClientConfigFromSecret(secret apiv1.Secret, options *ClientOptions) erro
 	return nil
 }
 
-func NewHttpClientAndHeaders(clientOptions *ClientOptions) (*http.Client, map[string]string, error) {
-	// I wish I could have re-used the code in pkg/chart/chart.go and pkg/kube_utils/kube_utils.go
+// OCIChartRepositoryCredentialFromSecret derives authentication data from a Secret to login to an OCI registry.
+// This Secret may either hold "username" and "password" fields or be of the
+// apiv1.SecretTypeDockerConfigJson type and hold a apiv1.DockerConfigJsonKey field with a
+// complete Docker configuration. If both, "username" and "password" are
+// empty, a nil LoginOption and a nil error will be returned.
+// ref https://github.com/fluxcd/source-controller/blob/main/internal/helm/registry/auth.go
+func OCIChartRepositoryCredentialFromSecret(registryURL string, secret apiv1.Secret) (*orasregistryauthv2.Credential, error) {
+	var username, password string
+	if secret.Type == apiv1.SecretTypeDockerConfigJson {
+		dockerCfg, err := config.LoadFromReader(bytes.NewReader(secret.Data[apiv1.DockerConfigJsonKey]))
+		if err != nil {
+			return nil, fmt.Errorf("unable to load docker config from secret '%s': %w", secret.Name, err)
+		}
+		parsedURL, err := url.Parse(registryURL)
+		if err != nil {
+			return nil, fmt.Errorf("unable to parse registry URL '%s' while reconciling secret '%s': %w",
+				registryURL, secret.Name, err)
+		}
+		authConfig, err := dockerCfg.GetAuthConfig(parsedURL.Host)
+		if err != nil {
+			return nil, fmt.Errorf("unable to get authentication data from secret '%s': %w", secret.Name, err)
+		}
+
+		// Make sure that the obtained auth config is for the requested host.
+		// When the docker config does not contain the credentials for a host,
+		// the credential store returns an empty auth config.
+		// Refer: https://github.com/docker/cli/blob/v20.10.16/cli/config/credentials/file_store.go#L44
+		if credentials.ConvertToHostname(authConfig.ServerAddress) != parsedURL.Host {
+			return nil, fmt.Errorf("no auth config for '%s' in the docker-registry secret '%s'", parsedURL.Host, secret.Name)
+		}
+		username = authConfig.Username
+		password = authConfig.Password
+	} else {
+		username, password = string(secret.Data["username"]), string(secret.Data["password"])
+	}
+	switch {
+	case username == "" && password == "":
+		return nil, nil
+	case username == "" || password == "":
+		return nil, fmt.Errorf("invalid '%s' secret data: required fields 'username' and 'password'", secret.Name)
+	}
+	pwdRedacted := password
+	if len(pwdRedacted) > 4 {
+		pwdRedacted = pwdRedacted[0:3] + "..."
+	}
+	log.Infof("-OCIRegOCIChartRepositoryCredentialFromSecret: username: [%s], password: [%s]", username, pwdRedacted)
+	return &orasregistryauthv2.Credential{
+		Username: username,
+		Password: password,
+	}, nil
+}
+
+func NewHttpClientAndHeaders(clientOptions *HttpClientOptions) (*http.Client, map[string]string, error) {
+	// I wish I could reuse the code in pkg/chart/chart.go and pkg/kube_utils/kube_utils.go
 	// InitHTTPClient(), etc. but alas, it's all built around AppRepository CRD, which I don't have.
 	headers := make(map[string]string)
-	headers["User-Agent"] = userAgentString()
+	headers["User-Agent"] = UserAgentString()
 	if clientOptions != nil {
 		if clientOptions.Username != "" && clientOptions.Password != "" {
 			auth := clientOptions.Username + ":" + clientOptions.Password
@@ -326,7 +407,7 @@ func NewHttpClientAndHeaders(clientOptions *ClientOptions) (*http.Client, map[st
 }
 
 // this string is the same for all outbound calls
-func userAgentString() string {
+func UserAgentString() string {
 	return fmt.Sprintf("%s/%s/%s/%s", UserAgentPrefix, pluginDetail.Name, pluginDetail.Version, version)
 }
 
@@ -365,12 +446,14 @@ func ParsePluginConfig(pluginConfigPath string) (*FluxPluginConfig, error) {
 			Packages struct {
 				V1alpha1 struct {
 					DefaultUpgradePolicy string `json:"defaultUpgradePolicy"`
+					UserManagedSecrets   bool   `json:"userManagedSecrets"`
 				} `json:"v1alpha1"`
 			} `json:"packages"`
 		} `json:"flux"`
 	}
 	var config internalFluxPluginConfig
 
+	// #nosec G304
 	pluginConfig, err := ioutil.ReadFile(pluginConfigPath)
 	if err != nil {
 		return nil, fmt.Errorf("unable to open plugin config at %q: %w", pluginConfigPath, err)
@@ -389,7 +472,7 @@ func ParsePluginConfig(pluginConfigPath string) (*FluxPluginConfig, error) {
 			VersionsInSummary:    config.Core.Packages.V1alpha1.VersionsInSummary,
 			TimeoutSeconds:       config.Core.Packages.V1alpha1.TimeoutSeconds,
 			DefaultUpgradePolicy: defaultUpgradePolicy,
-			UserManagedSecrets:   false,
+			UserManagedSecrets:   config.Flux.Packages.V1alpha1.UserManagedSecrets,
 		}, nil
 	}
 }
@@ -406,60 +489,19 @@ func GetReleasesGvr() schema.GroupVersionResource {
 	return releasesGvr
 }
 
-func DockerCredentialsToSecretData(dc *corev1.DockerCredentials) []byte {
-	// ref https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/
-	authStr := base64.StdEncoding.EncodeToString([]byte(fmt.Sprintf("%s:%s", dc.Username, dc.Password)))
-	configStr := fmt.Sprintf("{\"auths\":{\"%s\":{\"username\":\"%s\",\"password\":\"%s\",\"email\":\"%s\",\"auth\":\"%s\"}}}",
-		dc.Server, dc.Username, dc.Password, dc.Email, authStr)
-	return []byte(base64.StdEncoding.EncodeToString([]byte(configStr)))
+func GetSha256(src []byte) (string, error) {
+	f := bytes.NewReader(src)
+	h := sha256.New()
+	if _, err := io.Copy(h, f); err != nil {
+		return "", err
+	}
+	return fmt.Sprintf("%x", h.Sum(nil)), nil
 }
 
-func SecretDataToDockerCredentials(configStr string) (*corev1.DockerCredentials, error) {
-	decodedStr, err := base64.StdEncoding.DecodeString(string(configStr))
-	if err != nil {
-		return nil, err
-	}
-	var configMap map[string]interface{}
-	err = json.Unmarshal(decodedStr, &configMap)
-	if err != nil {
-		return nil, err
-	}
-	auths, ok := configMap["auths"]
-	if !ok {
-		return nil, status.Errorf(codes.Internal, "secret data is not in expected format")
-	}
-	authsMap, ok := auths.(map[string]interface{})
-	if !ok {
-		return nil, status.Errorf(codes.Internal, "secret data is not in expected format")
-	}
-	server := ""
-	for k := range authsMap {
-		server = k
-		break
-	}
-	if server == "" {
-		return nil, status.Errorf(codes.Internal, "secret data is not in expected format")
-	}
-	serverMap, ok := authsMap[server].(map[string]interface{})
-	if !ok {
-		return nil, status.Errorf(codes.Internal, "secret data is not in expected format")
-	}
-	username, ok := serverMap["username"].(string)
-	if !ok {
-		return nil, status.Errorf(codes.Internal, "secret data is not in expected format")
-	}
-	password, ok := serverMap["password"].(string)
-	if !ok {
-		return nil, status.Errorf(codes.Internal, "secret data is not in expected format")
-	}
-	email, ok := serverMap["email"].(string)
-	if !ok {
-		return nil, status.Errorf(codes.Internal, "secret data is not in expected format")
-	}
-	return &corev1.DockerCredentials{
-		Server:   server,
-		Username: username,
-		Password: password,
-		Email:    email,
-	}, nil
+// https://stackoverflow.com/questions/28712397/put-stack-trace-to-string-variable
+func GetStackTrace() string {
+	// adjust buffer size to be larger than expected stack
+	b := make([]byte, 2048)
+	n := runtime.Stack(b, false)
+	return string(b[:n])
 }

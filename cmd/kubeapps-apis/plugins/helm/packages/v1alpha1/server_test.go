@@ -11,6 +11,7 @@ import (
 	"net/url"
 	"os"
 	"regexp"
+	"runtime"
 	"sort"
 	"strings"
 	"testing"
@@ -19,16 +20,15 @@ import (
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/vmware-tanzu/kubeapps/cmd/apprepository-controller/pkg/apis/apprepository/v1alpha1"
-	"github.com/vmware-tanzu/kubeapps/cmd/assetsvc/pkg/utils"
 	corev1 "github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
 	plugins "github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/core/plugins/v1alpha1"
 	helmv1 "github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/plugins/helm/packages/v1alpha1"
+	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/helm/packages/v1alpha1/common"
+	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/helm/packages/v1alpha1/utils"
+	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/pkg/agent"
 	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/pkg/clientgetter"
 	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/pkg/paginate"
 	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/pkg/pkgutils"
-	"sigs.k8s.io/yaml"
-
-	"github.com/vmware-tanzu/kubeapps/pkg/agent"
 	"github.com/vmware-tanzu/kubeapps/pkg/chart/fake"
 	"github.com/vmware-tanzu/kubeapps/pkg/chart/models"
 	"github.com/vmware-tanzu/kubeapps/pkg/dbutils"
@@ -38,22 +38,27 @@ import (
 	"helm.sh/helm/v3/pkg/action"
 	"helm.sh/helm/v3/pkg/chart"
 	"helm.sh/helm/v3/pkg/chartutil"
-	kube "helm.sh/helm/v3/pkg/kube"
+	"helm.sh/helm/v3/pkg/kube"
 	kubefake "helm.sh/helm/v3/pkg/kube/fake"
 	"helm.sh/helm/v3/pkg/release"
 	"helm.sh/helm/v3/pkg/storage"
 	"helm.sh/helm/v3/pkg/storage/driver"
 	authorizationv1 "k8s.io/api/authorization/v1"
-	"k8s.io/apimachinery/pkg/runtime"
+	apiextfake "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset/fake"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	k8sruntime "k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apiserver/pkg/storage/names"
 	dynfake "k8s.io/client-go/dynamic/fake"
 	typfake "k8s.io/client-go/kubernetes/fake"
 	k8stesting "k8s.io/client-go/testing"
 	log "k8s.io/klog/v2"
+	"sigs.k8s.io/yaml"
 )
 
 const (
-	globalPackagingNamespace = "kubeapps"
+	globalPackagingNamespace = "kubeapps-repos-global"
+	kubeappsNamespace        = "kubeapps"
 	globalPackagingCluster   = "default"
 	DefaultAppVersion        = "1.2.6"
 	DefaultReleaseRevision   = 1
@@ -69,12 +74,12 @@ func setMockManager(t *testing.T) (sqlmock.Sqlmock, func(), utils.AssetManager) 
 	if err != nil {
 		t.Fatalf("%+v", err)
 	}
-	manager = &utils.PostgresAssetManager{&dbutils.PostgresAssetManager{DB: db, GlobalReposNamespace: globalPackagingNamespace}}
+	manager = &utils.PostgresAssetManager{PostgresAssetManagerIface: &dbutils.PostgresAssetManager{DB: db, GlobalReposNamespace: globalPackagingNamespace}}
 	return mock, func() { db.Close() }, manager
 }
 
 func TestGetClient(t *testing.T) {
-	dbConfig := dbutils.Config{URL: "localhost:5432", Database: "assetsvc", Username: "postgres", Password: "password"}
+	dbConfig := dbutils.Config{URL: "localhost:5432", Database: "assets", Username: "postgres", Password: "password"}
 	manager, err := utils.NewPGManager(dbConfig, globalPackagingNamespace)
 	if err != nil {
 		log.Fatalf("%s", err)
@@ -83,7 +88,7 @@ func TestGetClient(t *testing.T) {
 		return clientgetter.NewBuilder().
 			WithTyped(typfake.NewSimpleClientset()).
 			WithDynamic(dynfake.NewSimpleDynamicClientWithCustomListKinds(
-				runtime.NewScheme(),
+				k8sruntime.NewScheme(),
 				map[schema.GroupVersionResource]string{
 					{Group: "foo", Version: "bar", Resource: "baz"}: "PackageList",
 				},
@@ -210,14 +215,14 @@ func makeChartRowsJSON(t *testing.T, charts []*models.Chart, pageToken string, p
 	}
 
 	if pageToken != "" {
-		pageOffset, err := paginate.PageOffsetFromPageToken(pageToken)
+		itemOffset, err := paginate.ItemOffsetFromPageToken(pageToken)
 		if err != nil {
 			t.Fatalf("%+v", err)
 		}
 		if pageSize == 0 {
 			t.Fatalf("pagesize must be > 0 when using a page token")
 		}
-		rowsJSON = rowsJSON[((pageOffset - 1) * pageSize):]
+		rowsJSON = rowsJSON[itemOffset:]
 	}
 	if pageSize > 0 && pageSize < len(rowsJSON) {
 		rowsJSON = rowsJSON[0:pageSize]
@@ -226,9 +231,9 @@ func makeChartRowsJSON(t *testing.T, charts []*models.Chart, pageToken string, p
 }
 
 // makeServer returns a server backed with an sql mock and a cleanup function
-func makeServer(t *testing.T, authorized bool, actionConfig *action.Configuration, objects ...runtime.Object) (*Server, sqlmock.Sqlmock, func()) {
+func makeServer(t *testing.T, authorized bool, actionConfig *action.Configuration, objects ...k8sruntime.Object) (*Server, sqlmock.Sqlmock, func()) {
 	// Creating the dynamic client
-	scheme := runtime.NewScheme()
+	scheme := k8sruntime.NewScheme()
 	err := v1alpha1.AddToScheme(scheme)
 	if err != nil {
 		t.Fatalf("%+v", err)
@@ -243,7 +248,7 @@ func makeServer(t *testing.T, authorized bool, actionConfig *action.Configuratio
 
 	// Creating an authorized clientGetter
 	clientSet := typfake.NewSimpleClientset()
-	clientSet.PrependReactor("create", "selfsubjectaccessreviews", func(action k8stesting.Action) (handled bool, ret runtime.Object, err error) {
+	clientSet.PrependReactor("create", "selfsubjectaccessreviews", func(action k8stesting.Action) (handled bool, ret k8sruntime.Object, err error) {
 		return true, &authorizationv1.SelfSubjectAccessReview{
 			Status: authorizationv1.SubjectAccessReviewStatus{Allowed: authorized},
 		}, nil
@@ -261,15 +266,81 @@ func makeServer(t *testing.T, authorized bool, actionConfig *action.Configuratio
 	return &Server{
 		clientGetter:             clientGetter,
 		manager:                  manager,
+		kubeappsNamespace:        kubeappsNamespace,
 		globalPackagingNamespace: globalPackagingNamespace,
 		globalPackagingCluster:   globalPackagingCluster,
 		actionConfigGetter: func(context.Context, *corev1.Context) (*action.Configuration, error) {
 			return actionConfig, nil
 		},
 		chartClientFactory: &fake.ChartClientFactory{},
-		versionsInSummary:  pkgutils.GetDefaultVersionsInSummary(),
+		pluginConfig:       common.NewDefaultPluginConfig(),
 		createReleaseFunc:  agent.CreateRelease,
 	}, mock, cleanup
+}
+
+func newServerWithSecretsAndRepos(t *testing.T, secrets []k8sruntime.Object, unstructuredObjs []k8sruntime.Object, repos []*v1alpha1.AppRepository) *Server {
+	typedClient := typfake.NewSimpleClientset(secrets...)
+
+	// ref https://stackoverflow.com/questions/68794562/kubernetes-fake-client-doesnt-handle-generatename-in-objectmeta/68794563#68794563
+	typedClient.PrependReactor(
+		"create", "*",
+		func(action k8stesting.Action) (handled bool, ret k8sruntime.Object, err error) {
+			ret = action.(k8stesting.CreateAction).GetObject()
+			meta, ok := ret.(metav1.Object)
+			if !ok {
+				return
+			}
+			if meta.GetName() == "" && meta.GetGenerateName() != "" {
+				meta.SetName(names.SimpleNameGenerator.GenerateName(meta.GetGenerateName()))
+			}
+			return
+		})
+
+	// Creating an authorized clientGetter
+	typedClient.PrependReactor("create", "selfsubjectaccessreviews", func(action k8stesting.Action) (handled bool, ret k8sruntime.Object, err error) {
+		return true, &authorizationv1.SelfSubjectAccessReview{
+			Status: authorizationv1.SubjectAccessReviewStatus{Allowed: true},
+		}, nil
+	})
+
+	apiExtIfc := apiextfake.NewSimpleClientset(helmAppRepositoryCRD)
+	ctrlClient := newCtrlClient(repos)
+	scheme := k8sruntime.NewScheme()
+	err := v1alpha1.AddToScheme(scheme)
+	if err != nil {
+		log.Fatalf("%s", err)
+	}
+
+	clientGetter := func(context.Context, string) (clientgetter.ClientInterfaces, error) {
+		return clientgetter.
+			NewBuilder().
+			WithTyped(typedClient).
+			WithApiExt(apiExtIfc).
+			WithControllerRuntime(ctrlClient).
+			WithDynamic(dynfake.NewSimpleDynamicClientWithCustomListKinds(
+				scheme,
+				map[schema.GroupVersionResource]string{
+					{
+						Group:    v1alpha1.SchemeGroupVersion.Group,
+						Version:  v1alpha1.SchemeGroupVersion.Version,
+						Resource: AppRepositoryResource,
+					}: AppRepositoryResource + "List",
+				},
+				unstructuredObjs...,
+			)).
+			Build(), nil
+	}
+
+	return &Server{
+		clientGetter:             clientGetter,
+		kubeappsNamespace:        kubeappsNamespace,
+		globalPackagingNamespace: globalPackagingNamespace,
+		globalPackagingCluster:   globalPackagingCluster,
+		chartClientFactory:       &fake.ChartClientFactory{},
+		createReleaseFunc:        agent.CreateRelease,
+		kubeappsCluster:          KubeappsCluster,
+		pluginConfig:             common.NewDefaultPluginConfig(),
+	}
 }
 
 func TestGetAvailablePackageSummaries(t *testing.T) {
@@ -502,7 +573,7 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 					Namespace: globalPackagingNamespace,
 				},
 				PaginationOptions: &corev1.PaginationOptions{
-					PageToken: "2",
+					PageToken: "1",
 					PageSize:  1,
 				},
 			},
@@ -531,7 +602,7 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 						},
 					},
 				},
-				NextPageToken: "3",
+				NextPageToken: "2",
 				Categories:    []string{"cat1"},
 			},
 		},
@@ -708,12 +779,6 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 				mock.ExpectQuery("SELECT info FROM").
 					WithArgs(tc.expectDBQueryNamespace, server.globalPackagingNamespace).
 					WillReturnRows(rows)
-
-				if tc.request.GetPaginationOptions().GetPageSize() > 0 {
-					mock.ExpectQuery("SELECT count").
-						WithArgs(tc.request.Context.Namespace, server.globalPackagingNamespace).
-						WillReturnRows(sqlmock.NewRows([]string{"count"}).AddRow(3))
-				}
 			}
 
 			availablePackageSummaries, err := server.GetAvailablePackageSummaries(context.Background(), tc.request)
@@ -1143,7 +1208,7 @@ func TestParsePluginConfig(t *testing.T) {
 		{
 			name:                    "non existing plugin-config file",
 			pluginYAMLConf:          nil,
-			exp_versions_in_summary: pkgutils.VersionsInSummary{0, 0, 0},
+			exp_versions_in_summary: pkgutils.VersionsInSummary{Major: 0, Minor: 0, Patch: 0},
 			exp_error_str:           "no such file or directory",
 		},
 		{
@@ -1157,7 +1222,7 @@ core:
         minor: 2
         patch: 1
       `),
-			exp_versions_in_summary: pkgutils.VersionsInSummary{4, 2, 1},
+			exp_versions_in_summary: pkgutils.VersionsInSummary{Major: 4, Minor: 2, Patch: 1},
 			exp_error_str:           "",
 		},
 		{
@@ -1169,7 +1234,7 @@ core:
       versionsInSummary:
         major: 1
         `),
-			exp_versions_in_summary: pkgutils.VersionsInSummary{1, 0, 0},
+			exp_versions_in_summary: pkgutils.VersionsInSummary{Major: 1, Minor: 0, Patch: 0},
 			exp_error_str:           "",
 		},
 		{
@@ -1190,6 +1255,10 @@ core:
 	opts := cmpopts.IgnoreUnexported(pkgutils.VersionsInSummary{})
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
+			// TODO(agamez): env vars and file paths should be handled properly for Windows operating system
+			if runtime.GOOS == "windows" {
+				t.Skip("Skipping in a Windows OS")
+			}
 			filename := ""
 			if tc.pluginYAMLConf != nil {
 				pluginJSONConf, err := yaml.YAMLToJSON(tc.pluginYAMLConf)
@@ -1209,12 +1278,13 @@ core:
 				}
 				filename = f.Name()
 			}
-			versions_in_summary, _, goterr := parsePluginConfig(filename)
-			if goterr != nil && !strings.Contains(goterr.Error(), tc.exp_error_str) {
-				t.Errorf("err got %q, want to find %q", goterr.Error(), tc.exp_error_str)
-			}
-			if got, want := versions_in_summary, tc.exp_versions_in_summary; !cmp.Equal(want, got, opts) {
-				t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opts))
+			pluginConfig, err := common.ParsePluginConfig(filename)
+			if err != nil && !strings.Contains(err.Error(), tc.exp_error_str) {
+				t.Errorf("err got %q, want to find %q", err.Error(), tc.exp_error_str)
+			} else if pluginConfig != nil {
+				if got, want := pluginConfig.VersionsInSummary, tc.exp_versions_in_summary; !cmp.Equal(want, got, opts) {
+					t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opts))
+				}
 			}
 		})
 	}
@@ -1266,12 +1336,13 @@ core:
 				}
 				filename = f.Name()
 			}
-			_, timeoutSeconds, goterr := parsePluginConfig(filename)
-			if goterr != nil && !strings.Contains(goterr.Error(), tc.exp_error_str) {
-				t.Errorf("err got %q, want to find %q", goterr.Error(), tc.exp_error_str)
-			}
-			if got, want := timeoutSeconds, tc.exp_timeout; !cmp.Equal(want, got, opts) {
-				t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opts))
+			pluginConfig, err := common.ParsePluginConfig(filename)
+			if err != nil && !strings.Contains(err.Error(), tc.exp_error_str) {
+				t.Errorf("err got %q, want to find %q", err.Error(), tc.exp_error_str)
+			} else if pluginConfig != nil {
+				if got, want := pluginConfig.TimeoutSeconds, tc.exp_timeout; !cmp.Equal(want, got, opts) {
+					t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opts))
+				}
 			}
 		})
 	}
@@ -1321,6 +1392,7 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 								Namespace: "namespace-1",
 							},
 							Identifier: "my-release-1",
+							Plugin:     GetPluginDetail(),
 						},
 						Name:    "my-release-1",
 						IconUrl: "https://example.com/icon.png",
@@ -1348,6 +1420,7 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 								Namespace: "namespace-1",
 							},
 							Identifier: "my-release-3",
+							Plugin:     GetPluginDetail(),
 						},
 						Name:    "my-release-3",
 						IconUrl: "https://example.com/icon.png",
@@ -1409,6 +1482,7 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 								Namespace: "namespace-1",
 							},
 							Identifier: "my-release-1",
+							Plugin:     GetPluginDetail(),
 						},
 						Name:    "my-release-1",
 						IconUrl: "https://example.com/icon.png",
@@ -1436,6 +1510,7 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 								Namespace: "namespace-2",
 							},
 							Identifier: "my-release-2",
+							Plugin:     GetPluginDetail(),
 						},
 						Name:    "my-release-2",
 						IconUrl: "https://example.com/icon.png",
@@ -1463,6 +1538,7 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 								Namespace: "namespace-3",
 							},
 							Identifier: "my-release-3",
+							Plugin:     GetPluginDetail(),
 						},
 						Name:    "my-release-3",
 						IconUrl: "https://example.com/icon.png",
@@ -1527,6 +1603,7 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 								Namespace: "namespace-1",
 							},
 							Identifier: "my-release-1",
+							Plugin:     GetPluginDetail(),
 						},
 						Name:    "my-release-1",
 						IconUrl: "https://example.com/icon.png",
@@ -1554,6 +1631,7 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 								Namespace: "namespace-2",
 							},
 							Identifier: "my-release-2",
+							Plugin:     GetPluginDetail(),
 						},
 						Name:    "my-release-2",
 						IconUrl: "https://example.com/icon.png",
@@ -1575,7 +1653,7 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 						},
 					},
 				},
-				NextPageToken: "3",
+				NextPageToken: "2",
 			},
 		},
 		{
@@ -1620,6 +1698,7 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 								Namespace: "namespace-3",
 							},
 							Identifier: "my-release-3",
+							Plugin:     GetPluginDetail(),
 						},
 						Name:    "my-release-3",
 						IconUrl: "https://example.com/icon.png",
@@ -1668,6 +1747,7 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 								Namespace: "namespace-1",
 							},
 							Identifier: "my-release-1",
+							Plugin:     GetPluginDetail(),
 						},
 						Name:    "my-release-1",
 						IconUrl: "https://example.com/icon.png",
@@ -1715,7 +1795,7 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 				return
 			}
 
-			opts := cmpopts.IgnoreUnexported(corev1.GetInstalledPackageSummariesResponse{}, corev1.InstalledPackageSummary{}, corev1.InstalledPackageReference{}, corev1.Context{}, corev1.VersionReference{}, corev1.InstalledPackageStatus{}, corev1.PackageAppVersion{})
+			opts := cmpopts.IgnoreUnexported(corev1.GetInstalledPackageSummariesResponse{}, corev1.InstalledPackageSummary{}, corev1.InstalledPackageReference{}, corev1.Context{}, corev1.VersionReference{}, corev1.InstalledPackageStatus{}, corev1.PackageAppVersion{}, plugins.Plugin{})
 			if got, want := response, tc.expectedResponse; !cmp.Equal(want, got, opts) {
 				t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opts))
 			}
@@ -1977,23 +2057,6 @@ func releaseForStub(t *testing.T, r releaseStub) *release.Release {
 			},
 		},
 		Config: config,
-	}
-}
-
-func chartAssetForPackage(pkg *corev1.InstalledPackageSummary) *models.Chart {
-	chartVersions := []models.ChartVersion{}
-	if pkg.LatestVersion.PkgVersion != "" {
-		chartVersions = append(chartVersions, models.ChartVersion{
-			Version: pkg.LatestVersion.PkgVersion,
-		})
-	}
-	chartVersions = append(chartVersions, models.ChartVersion{
-		Version: pkg.CurrentVersion.PkgVersion,
-	})
-
-	return &models.Chart{
-		Name:          pkg.Name,
-		ChartVersions: chartVersions,
 	}
 }
 

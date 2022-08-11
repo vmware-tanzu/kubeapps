@@ -15,7 +15,7 @@ export interface ICatalogItemsProps {
   csvs: IClusterServiceVersion[];
   cluster: string;
   namespace: string;
-  page: number;
+  isFirstPage: boolean;
   hasLoadedFirstPage: boolean;
   hasFinishedFetching: boolean;
 }
@@ -25,7 +25,7 @@ export default function CatalogItems({
   csvs,
   cluster,
   namespace,
-  page,
+  isFirstPage,
   hasLoadedFirstPage,
   hasFinishedFetching,
 }: ICatalogItemsProps) {
@@ -76,11 +76,17 @@ export default function CatalogItems({
   );
 
   const sortedItems =
-    !hasLoadedFirstPage && page === 1
+    !hasLoadedFirstPage && isFirstPage
       ? []
       : packageItems
           .concat(crdItems)
-          .sort((a, b) => (a.item.name.toLowerCase() > b.item.name.toLowerCase() ? 1 : -1));
+          .sort((a, b) =>
+            a.item.name.toLowerCase() > b.item.name.toLowerCase()
+              ? 1
+              : b.item.name.toLowerCase() > a.item.name.toLowerCase()
+              ? -1
+              : 0,
+          );
 
   if (hasFinishedFetching && sortedItems.length === 0) {
     return <p>No application matches the current filter.</p>;

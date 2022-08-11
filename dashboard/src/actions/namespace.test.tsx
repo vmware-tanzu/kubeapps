@@ -137,7 +137,7 @@ describe("createNamespace", () => {
       },
     ];
 
-    const res = await store.dispatch(createNamespace("default-c", "overlook-hotel"));
+    const res = await store.dispatch(createNamespace("default-c", "overlook-hotel", {}));
     expect(res).toBe(true);
     expect(store.getActions()).toEqual(expectedActions);
   });
@@ -152,7 +152,7 @@ describe("createNamespace", () => {
       },
     ];
 
-    const res = await store.dispatch(createNamespace("default-c", "foo"));
+    const res = await store.dispatch(createNamespace("default-c", "foo", {}));
     expect(res).toBe(false);
     expect(store.getActions()).toEqual(expectedActions);
   });
@@ -231,7 +231,10 @@ describe("setNamespace", () => {
 
 describe("canCreate", () => {
   it("checks if it can create namespaces", async () => {
-    Kube.canI = jest.fn().mockReturnValue(true);
+    Kube.canI = jest.fn().mockReturnValue({
+      then: jest.fn(f => f(true)),
+      catch: jest.fn(f => f(false)),
+    });
     const expectedActions = [
       {
         type: getType(setAllowCreate),

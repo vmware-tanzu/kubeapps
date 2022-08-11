@@ -11,8 +11,9 @@ import { KubeappsGrpcClient } from "./KubeappsGrpcClient";
 export default class Namespace {
   private static resourcesClient = () => new KubeappsGrpcClient().getResourcesServiceClientImpl();
 
+  // TODO(agamez): Migrate API call, see #4785
   public static async list(cluster: string) {
-    // This call is hitting an actual backend endpoint (see pkg/http-handler.go)
+    // This call is hitting an actual backend endpoint (see cmd\kubeops\internal\http-handler)
     // while the other two calls (create, get) have been updated to use the
     // resources client rather than the k8s API server.
     const { data } = await axiosWithAuth.get<{ namespaces: IResource[] }>(
@@ -21,12 +22,17 @@ export default class Namespace {
     return data;
   }
 
-  public static async create(cluster: string, namespace: string) {
+  public static async create(
+    cluster: string,
+    namespace: string,
+    labels: { [key: string]: string },
+  ) {
     await this.resourcesClient().CreateNamespace({
       context: {
         cluster,
         namespace,
       },
+      labels: labels,
     });
   }
 

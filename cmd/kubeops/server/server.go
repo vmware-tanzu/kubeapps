@@ -7,8 +7,6 @@ import (
 	"context"
 	"fmt"
 	"net/http"
-	"net/http/httputil"
-	"net/url"
 	"os"
 	"os/signal"
 	"syscall"
@@ -17,29 +15,20 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/heptiolabs/healthcheck"
 	negroni "github.com/urfave/negroni/v2"
-	"github.com/vmware-tanzu/kubeapps/cmd/kubeops/internal/handler"
-	"github.com/vmware-tanzu/kubeapps/pkg/agent"
-	"github.com/vmware-tanzu/kubeapps/pkg/auth"
-	backendHandlers "github.com/vmware-tanzu/kubeapps/pkg/http-handler"
+	"github.com/vmware-tanzu/kubeapps/cmd/kubeops/internal/httphandler"
 	"github.com/vmware-tanzu/kubeapps/pkg/kube"
 
 	log "k8s.io/klog/v2"
 )
 
 type ServeOptions struct {
-	AssetsvcURL            string
-	HelmDriverArg          string
-	ListLimit              int
-	UserAgentComment       string
-	Timeout                int64
 	ClustersConfigPath     string
 	PinnipedProxyURL       string
+	PinnipedProxyCACert    string
 	Burst                  int
 	Qps                    float32
 	NamespaceHeaderName    string
 	NamespaceHeaderPattern string
-	UserAgent              string
-	GlobalReposNamespace   string
 }
 
 const clustersCAFilesPrefix = "/etc/additional-clusters-cafiles"
@@ -58,34 +47,13 @@ func Serve(serveOpts ServeOptions) error {
 	if serveOpts.ClustersConfigPath != "" {
 		var err error
 		var cleanupCAFiles func()
-		clustersConfig, cleanupCAFiles, err = kube.ParseClusterConfig(serveOpts.ClustersConfigPath, clustersCAFilesPrefix, serveOpts.PinnipedProxyURL)
+		clustersConfig, cleanupCAFiles, err = kube.ParseClusterConfig(serveOpts.ClustersConfigPath, clustersCAFilesPrefix, serveOpts.PinnipedProxyURL, serveOpts.PinnipedProxyCACert)
 		if err != nil {
 			return fmt.Errorf("unable to parse additional clusters config: %+v", err)
 		}
 		defer cleanupCAFiles()
 	}
 
-	options := handler.Options{
-		ListLimit:              serveOpts.ListLimit,
-		Timeout:                serveOpts.Timeout,
-		KubeappsNamespace:      kubeappsNamespace,
-		ClustersConfig:         clustersConfig,
-		Burst:                  serveOpts.Burst,
-		QPS:                    serveOpts.Qps,
-		NamespaceHeaderName:    serveOpts.NamespaceHeaderName,
-		NamespaceHeaderPattern: serveOpts.NamespaceHeaderPattern,
-		UserAgent:              serveOpts.UserAgent,
-	}
-
-	storageForDriver := agent.StorageForSecrets
-	if serveOpts.HelmDriverArg != "" {
-		var err error
-		storageForDriver, err = agent.ParseDriverType(serveOpts.HelmDriverArg)
-		if err != nil {
-			panic(err)
-		}
-	}
-	withHandlerConfig := handler.WithHandlerConfig(storageForDriver, options)
 	r := mux.NewRouter()
 
 	// Healthcheck
@@ -94,43 +62,10 @@ func Serve(serveOpts ServeOptions) error {
 	r.Handle("/live", health)
 	r.Handle("/ready", health)
 
-	// Routes
-	// Auth not necessary here with Helm 3 because it's done by Kubernetes.
-	addRoute := handler.AddRouteWith(r.PathPrefix("/v1").Subrouter(), withHandlerConfig)
-	addRoute("GET", "/clusters/{cluster}/releases", handler.ListAllReleases)
-	addRoute("GET", "/clusters/{cluster}/namespaces/{namespace}/releases", handler.ListReleases)
-	addRoute("POST", "/clusters/{cluster}/namespaces/{namespace}/releases", handler.CreateRelease)
-	addRoute("GET", "/clusters/{cluster}/namespaces/{namespace}/releases/{releaseName}", handler.GetRelease)
-	addRoute("PUT", "/clusters/{cluster}/namespaces/{namespace}/releases/{releaseName}", handler.OperateRelease)
-	addRoute("DELETE", "/clusters/{cluster}/namespaces/{namespace}/releases/{releaseName}", handler.DeleteRelease)
-
-	// Backend routes unrelated to kubeops functionality.
-	err := backendHandlers.SetupDefaultRoutes(r.PathPrefix("/backend/v1").Subrouter(), serveOpts.NamespaceHeaderName, serveOpts.NamespaceHeaderPattern, serveOpts.Burst, serveOpts.Qps, clustersConfig)
+	err := httphandler.SetupDefaultRoutes(r.PathPrefix("/backend/v1").Subrouter(), serveOpts.NamespaceHeaderName, serveOpts.NamespaceHeaderPattern, serveOpts.Burst, serveOpts.Qps, clustersConfig)
 	if err != nil {
 		return fmt.Errorf("Unable to setup backend routes: %+v", err)
 	}
-
-	// assetsvc reverse proxy
-	// TODO(mnelson) remove this reverse proxy once the haproxy frontend
-	// proxies requests directly to the assetsvc. Move the authz to the
-	// assetsvc itself.
-	authGate := auth.AuthGate(clustersConfig, kubeappsNamespace)
-	parsedAssetsvcURL, err := url.Parse(serveOpts.AssetsvcURL)
-	if err != nil {
-		return fmt.Errorf("Unable to parse the assetsvc URL: %v", err)
-	}
-	assetsvcProxy := httputil.NewSingleHostReverseProxy(parsedAssetsvcURL)
-	assetsvcPrefix := "/assetsvc"
-	assetsvcRouter := r.PathPrefix(assetsvcPrefix).Subrouter()
-	// Logos don't require authentication so bypass that step. Nor are they cluster-aware as they're
-	// embedded as links in the stored chart data.
-	assetsvcRouter.Methods("GET").Path("/v1/ns/{namespace}/assets/{repo}/{id}/logo").Handler(negroni.New(
-		negroni.Wrap(http.StripPrefix(assetsvcPrefix, assetsvcProxy)),
-	))
-	assetsvcRouter.PathPrefix("/v1/clusters/{cluster}/namespaces/{namespace}/").Handler(negroni.New(
-		authGate,
-		negroni.Wrap(http.StripPrefix(assetsvcPrefix, assetsvcProxy)),
-	))
 
 	n := negroni.Classic()
 	n.UseHandler(r)
@@ -142,8 +77,9 @@ func Serve(serveOpts ServeOptions) error {
 	addr := ":" + port
 
 	srv := &http.Server{
-		Addr:    addr,
-		Handler: n,
+		ReadHeaderTimeout: 60 * time.Second, // mitigate slowloris attacks, set to nginx's default
+		Addr:              addr,
+		Handler:           n,
 	}
 
 	go func() {

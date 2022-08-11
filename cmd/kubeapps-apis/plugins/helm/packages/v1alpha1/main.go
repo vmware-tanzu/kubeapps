@@ -6,12 +6,11 @@ package main
 import (
 	"context"
 
-	"google.golang.org/grpc"
-
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	pluginsv1alpha1 "github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/core/plugins/v1alpha1"
 	pluginsgrpcv1alpha1 "github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/core/plugins/v1alpha1"
 	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/plugins/helm/packages/v1alpha1"
+	"google.golang.org/grpc"
 )
 
 // Set the pluginDetail once during a module init function so the single struct
@@ -32,14 +31,17 @@ func init() {
 
 // RegisterWithGRPCServer enables a plugin to register with a gRPC server
 // returning the server implementation.
+//nolint:deadcode
 func RegisterWithGRPCServer(opts pluginsv1alpha1.GRPCPluginRegistrationOptions) (interface{}, error) {
 	svr := NewServer(opts.ConfigGetter, opts.ClustersConfig.KubeappsClusterName, opts.ClustersConfig.GlobalReposNamespace, opts.PluginConfigPath)
 	v1alpha1.RegisterHelmPackagesServiceServer(opts.Registrar, svr)
+	v1alpha1.RegisterHelmRepositoriesServiceServer(opts.Registrar, svr)
 	return svr, nil
 }
 
 // RegisterHTTPHandlerFromEndpoint enables a plugin to register an http
 // handler to translate to the gRPC request.
+//nolint:deadcode
 func RegisterHTTPHandlerFromEndpoint(ctx context.Context, mux *runtime.ServeMux, endpoint string, opts []grpc.DialOption) error {
 	return v1alpha1.RegisterHelmPackagesServiceHandlerFromEndpoint(ctx, mux, endpoint, opts)
 }

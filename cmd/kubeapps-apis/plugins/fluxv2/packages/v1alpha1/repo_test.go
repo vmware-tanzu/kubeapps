@@ -58,7 +58,7 @@ func TestGetAvailablePackageSummariesWithoutPagination(t *testing.T) {
 			},
 			request: &corev1.GetAvailablePackageSummariesRequest{Context: &corev1.Context{}},
 			expectedResponse: &corev1.GetAvailablePackageSummariesResponse{
-				AvailablePackageSummaries: valid_index_package_summaries,
+				AvailablePackageSummaries: valid_index_available_package_summaries,
 			},
 		},
 		{
@@ -73,7 +73,7 @@ func TestGetAvailablePackageSummariesWithoutPagination(t *testing.T) {
 			},
 			request: &corev1.GetAvailablePackageSummariesRequest{Context: &corev1.Context{Namespace: "default"}},
 			expectedResponse: &corev1.GetAvailablePackageSummariesResponse{
-				AvailablePackageSummaries: valid_index_package_summaries,
+				AvailablePackageSummaries: valid_index_available_package_summaries,
 			},
 		},
 		{
@@ -91,7 +91,7 @@ func TestGetAvailablePackageSummariesWithoutPagination(t *testing.T) {
 				Namespace: "default",
 			}},
 			expectedResponse: &corev1.GetAvailablePackageSummariesResponse{
-				AvailablePackageSummaries: valid_index_package_summaries,
+				AvailablePackageSummaries: valid_index_available_package_summaries,
 			},
 		},
 		{
@@ -112,7 +112,7 @@ func TestGetAvailablePackageSummariesWithoutPagination(t *testing.T) {
 			},
 			request: &corev1.GetAvailablePackageSummariesRequest{Context: &corev1.Context{Namespace: "non-default"}},
 			expectedResponse: &corev1.GetAvailablePackageSummariesResponse{
-				AvailablePackageSummaries: append(valid_index_package_summaries, cert_manager_summary),
+				AvailablePackageSummaries: append(valid_index_available_package_summaries, cert_manager_summary),
 			},
 		},
 		{
@@ -393,7 +393,7 @@ func TestGetAvailablePackageSummariesWithoutPagination(t *testing.T) {
 			repos := []sourcev1.HelmRepository{}
 
 			for _, rs := range tc.repos {
-				ts2, repo, err := newRepoWithIndex(rs.index, rs.name, rs.namespace, nil, "")
+				ts2, repo, err := newHttpRepoAndServeIndex(rs.index, rs.name, rs.namespace, nil, "")
 				if err != nil {
 					t.Fatalf("%+v", err)
 				}
@@ -451,7 +451,7 @@ func TestGetAvailablePackageSummariesWithPagination(t *testing.T) {
 		}
 		repos := []sourcev1.HelmRepository{}
 		for _, rs := range existingRepos {
-			ts2, repo, err := newRepoWithIndex(rs.index, rs.name, rs.namespace, nil, "")
+			ts2, repo, err := newHttpRepoAndServeIndex(rs.index, rs.name, rs.namespace, nil, "")
 			if err != nil {
 				t.Fatalf("%+v", err)
 			}
@@ -718,7 +718,10 @@ func TestGetAvailablePackageSummaryAfterFluxHelmRepoDelete(t *testing.T) {
 			// stand up an http server just for the duration of this test
 			ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				w.WriteHeader(200)
-				w.Write(tarGzBytes)
+				_, err = w.Write(tarGzBytes)
+				if err != nil {
+					t.Fatalf("%+v", err)
+				}
 			}))
 			defer ts.Close()
 			replaceUrls[fmt.Sprintf("{{%s}}", s.tgzFile)] = ts.URL
@@ -730,7 +733,7 @@ func TestGetAvailablePackageSummaryAfterFluxHelmRepoDelete(t *testing.T) {
 			}
 			charts = append(charts, c)
 		}
-		ts, repo, err := newRepoWithIndex(
+		ts, repo, err := newHttpRepoAndServeIndex(
 			testYaml("valid-index.yaml"), repoName.Name, repoName.Namespace, replaceUrls, "")
 		if err != nil {
 			t.Fatalf("%+v", err)
@@ -771,7 +774,7 @@ func TestGetAvailablePackageSummaryAfterFluxHelmRepoDelete(t *testing.T) {
 			corev1.Maintainer{},
 			corev1.PackageAppVersion{})
 		opt2 := cmpopts.SortSlices(lessAvailablePackageFunc)
-		if got, want := responseBeforeDelete.AvailablePackageSummaries, valid_index_package_summaries; !cmp.Equal(got, want, opt1, opt2) {
+		if got, want := responseBeforeDelete.AvailablePackageSummaries, valid_index_available_package_summaries; !cmp.Equal(got, want, opt1, opt2) {
 			t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opt1, opt2))
 		}
 
@@ -837,7 +840,7 @@ func TestGetAvailablePackageSummaryAfterFluxHelmRepoDelete(t *testing.T) {
 // test that causes RetryWatcher to stop and the cache needs to resync
 func TestGetAvailablePackageSummaryAfterCacheResync(t *testing.T) {
 	t.Run("test that causes RetryWatcher to stop and the cache needs to resync", func(t *testing.T) {
-		ts2, repo, err := newRepoWithIndex(testYaml("valid-index.yaml"), "bitnami-1", "default", nil, "")
+		ts2, repo, err := newHttpRepoAndServeIndex(testYaml("valid-index.yaml"), "bitnami-1", "default", nil, "")
 		if err != nil {
 			t.Fatalf("%+v", err)
 		}
@@ -871,7 +874,7 @@ func TestGetAvailablePackageSummaryAfterCacheResync(t *testing.T) {
 			corev1.Maintainer{},
 			corev1.PackageAppVersion{})
 		opt2 := cmpopts.SortSlices(lessAvailablePackageFunc)
-		if got, want := responseBeforeResync.AvailablePackageSummaries, valid_index_package_summaries; !cmp.Equal(got, want, opt1, opt2) {
+		if got, want := responseBeforeResync.AvailablePackageSummaries, valid_index_available_package_summaries; !cmp.Equal(got, want, opt1, opt2) {
 			t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opt1, opt2))
 		}
 
@@ -923,7 +926,7 @@ func TestGetAvailablePackageSummaryAfterCacheResync(t *testing.T) {
 			t.Fatalf("%v", err)
 		}
 
-		if got, want := responseAfterResync.AvailablePackageSummaries, valid_index_package_summaries; !cmp.Equal(got, want, opt1, opt2) {
+		if got, want := responseAfterResync.AvailablePackageSummaries, valid_index_available_package_summaries; !cmp.Equal(got, want, opt1, opt2) {
 			t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opt1, opt2))
 		}
 	})
@@ -948,7 +951,7 @@ func TestGetAvailablePackageSummariesAfterCacheResyncQueueNotIdle(t *testing.T) 
 		for i := 0; i < MAX_REPOS; i++ {
 			repoName := fmt.Sprintf("bitnami-%d", i)
 
-			ts, repo, err := newRepoWithIndex(testYaml("valid-index.yaml"), repoName, "default", nil, "")
+			ts, repo, err := newHttpRepoAndServeIndex(testYaml("valid-index.yaml"), repoName, "default", nil, "")
 			if err != nil {
 				t.Fatalf("%+v", err)
 			}
@@ -1085,7 +1088,7 @@ func TestGetAvailablePackageSummariesAfterCacheResyncQueueIdle(t *testing.T) {
 		repoName := "bitnami-0"
 		repoNamespace := "default"
 
-		ts, repo, err := newRepoWithIndex(testYaml("valid-index.yaml"), repoName, repoNamespace, nil, "")
+		ts, repo, err := newHttpRepoAndServeIndex(testYaml("valid-index.yaml"), repoName, repoNamespace, nil, "")
 		if err != nil {
 			t.Fatalf("%+v", err)
 		}
@@ -1233,12 +1236,15 @@ func TestAddPackageRepository(t *testing.T) {
 			statusCode:       codes.OK,
 		},
 		{
-			name:                  "package repository with tls cert authority",
-			request:               add_repo_req_6(ca),
-			expectedResponse:      add_repo_expected_resp,
-			expectedRepo:          &add_repo_2,
-			expectedCreatedSecret: newTlsSecret("bar-", "foo", nil, nil, ca),
-			statusCode:            codes.OK,
+			name:             "package repository with tls cert authority",
+			request:          add_repo_req_6(ca),
+			expectedResponse: add_repo_expected_resp,
+			expectedRepo:     &add_repo_2,
+			expectedCreatedSecret: setSecretOwnerRef("bar",
+				newTlsSecret(types.NamespacedName{
+					Name:      "bar-",
+					Namespace: "foo"}, nil, nil, ca)),
+			statusCode: codes.OK,
 		},
 		{
 			name:       "errors when package repository with secret key reference (kubeapps managed secrets)",
@@ -1246,12 +1252,14 @@ func TestAddPackageRepository(t *testing.T) {
 			statusCode: codes.InvalidArgument,
 		},
 		{
-			name:               "package repository with secret key reference",
-			request:            add_repo_req_7,
-			expectedResponse:   add_repo_expected_resp,
-			expectedRepo:       &add_repo_3,
-			statusCode:         codes.OK,
-			existingSecret:     newTlsSecret("secret-1", "foo", nil, nil, ca),
+			name:             "package repository with secret key reference",
+			request:          add_repo_req_7,
+			expectedResponse: add_repo_expected_resp,
+			expectedRepo:     &add_repo_3,
+			statusCode:       codes.OK,
+			existingSecret: newTlsSecret(types.NamespacedName{
+				Name:      "secret-1",
+				Namespace: "foo"}, nil, nil, ca),
 			userManagedSecrets: true,
 		},
 		{
@@ -1261,50 +1269,55 @@ func TestAddPackageRepository(t *testing.T) {
 			userManagedSecrets: true,
 		},
 		{
-			name:       "failes when package repository links to non-existing secret (kubeapps managed secrets)",
+			name:       "fails when package repository links to non-existing secret (kubeapps managed secrets)",
 			request:    add_repo_req_7,
 			statusCode: codes.InvalidArgument,
 		},
 		{
-			name:                  "package repository with basic auth and pass_credentials flag",
-			request:               add_repo_req_8,
-			expectedResponse:      add_repo_expected_resp,
-			expectedRepo:          &add_repo_4,
-			expectedCreatedSecret: newBasicAuthSecret("bar-", "foo", "baz", "zot"),
-			statusCode:            codes.OK,
+			name:             "package repository with basic auth and pass_credentials flag",
+			request:          add_repo_req_8,
+			expectedResponse: add_repo_expected_resp,
+			expectedRepo:     &add_repo_4,
+			expectedCreatedSecret: setSecretOwnerRef("bar",
+				newBasicAuthSecret(types.NamespacedName{
+					Name:      "bar-",
+					Namespace: "foo"}, "baz", "zot")),
+			statusCode: codes.OK,
 		},
 		{
-			name:                  "package repository with TLS authentication",
-			request:               add_repo_req_9(pub, priv),
-			expectedResponse:      add_repo_expected_resp,
-			expectedRepo:          &add_repo_2,
-			expectedCreatedSecret: newTlsSecret("bar-", "foo", pub, priv, nil),
-			statusCode:            codes.OK,
+			name:             "package repository with TLS authentication",
+			request:          add_repo_req_9(pub, priv),
+			expectedResponse: add_repo_expected_resp,
+			expectedRepo:     &add_repo_2,
+			expectedCreatedSecret: setSecretOwnerRef("bar",
+				newTlsSecret(types.NamespacedName{
+					Name:      "bar-",
+					Namespace: "foo"}, pub, priv, nil)),
+			statusCode: codes.OK,
 		},
 		{
 			name:       "errors for package repository with bearer token",
 			request:    add_repo_req_10,
-			statusCode: codes.Unimplemented,
+			statusCode: codes.Internal,
 		},
 		{
 			name:       "errors for package repository with custom auth token",
 			request:    add_repo_req_11,
-			statusCode: codes.Unimplemented,
+			statusCode: codes.Internal,
 		},
 		{
-			name:                  "package repository with docker config JSON authentication",
-			request:               add_repo_req_12,
-			expectedResponse:      add_repo_expected_resp,
-			expectedRepo:          &add_repo_2,
-			expectedCreatedSecret: newDockerConfigJSONSecret("bar-", "foo", "your.private.registry.example.com", "janedoe", "xxxxxxxx", "jdoe@example.com"),
-			statusCode:            codes.OK,
+			name:       "package repository with docker config JSON authentication",
+			request:    add_repo_req_12,
+			statusCode: codes.Internal,
 		},
 		{
-			name:               "package repository with basic auth and existing secret",
-			request:            add_repo_req_13,
-			expectedResponse:   add_repo_expected_resp,
-			expectedRepo:       &add_repo_3,
-			existingSecret:     newBasicAuthSecret("secret-1", "foo", "baz", "zot"),
+			name:             "package repository with basic auth and existing secret",
+			request:          add_repo_req_13,
+			expectedResponse: add_repo_expected_resp,
+			expectedRepo:     &add_repo_3,
+			existingSecret: newBasicAuthSecret(types.NamespacedName{
+				Name:      "secret-1",
+				Namespace: "foo"}, "baz", "zot"),
 			statusCode:         codes.OK,
 			userManagedSecrets: true,
 		},
@@ -1323,6 +1336,20 @@ func TestAddPackageRepository(t *testing.T) {
 			request:            add_repo_req_14,
 			statusCode:         codes.InvalidArgument,
 			userManagedSecrets: true,
+		},
+		{
+			name:             "package repository with just pass_credentials flag",
+			request:          add_repo_req_20,
+			expectedResponse: add_repo_expected_resp,
+			expectedRepo:     &add_repo_5,
+			statusCode:       codes.OK,
+		},
+		{
+			name:             "add basic OCI package repository",
+			request:          add_repo_req_26,
+			expectedResponse: add_repo_expected_resp,
+			expectedRepo:     &add_repo_6,
+			statusCode:       codes.OK,
 		},
 	}
 
@@ -1389,28 +1416,41 @@ func TestAddPackageRepository(t *testing.T) {
 				if err = ctrlClient.Get(ctx, nsname, &actualRepo); err != nil {
 					t.Fatal(err)
 				} else {
-					opt1 := cmpopts.IgnoreFields(sourcev1.HelmRepositorySpec{}, "SecretRef")
-
-					if got, want := &actualRepo, tc.expectedRepo; !cmp.Equal(want, got, opt1) {
-						t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opt1))
-					}
-
-					if tc.expectedCreatedSecret != nil {
-						if !strings.HasPrefix(actualRepo.Spec.SecretRef.Name, tc.expectedRepo.Spec.SecretRef.Name) {
-							t.Errorf("SecretRef [%s] was expected to start with [%s]",
-								actualRepo.Spec.SecretRef.Name, tc.expectedRepo.Spec.SecretRef.Name)
+					if tc.userManagedSecrets {
+						if tc.expectedCreatedSecret != nil {
+							t.Fatalf("Error: unexpected state")
 						}
-						opt2 := cmpopts.IgnoreFields(metav1.ObjectMeta{}, "Name", "GenerateName")
-						// check expected secret has been created
-						if typedClient, err := s.clientGetter.Typed(ctx, s.kubeappsCluster); err != nil {
-							t.Fatal(err)
-						} else if secret, err := typedClient.CoreV1().Secrets(nsname.Namespace).Get(ctx, actualRepo.Spec.SecretRef.Name, metav1.GetOptions{}); err != nil {
-							t.Fatal(err)
-						} else if got, want := secret, tc.expectedCreatedSecret; !cmp.Equal(want, got, opt2) {
-							t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opt2))
-						} else if !strings.HasPrefix(secret.Name, tc.expectedCreatedSecret.Name) {
-							t.Errorf("Secret Name [%s] was expected to start with [%s]",
-								secret.Name, tc.expectedCreatedSecret.Name)
+						if got, want := &actualRepo, tc.expectedRepo; !cmp.Equal(want, got) {
+							t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got))
+						}
+					} else {
+						opt1 := cmpopts.IgnoreFields(sourcev1.HelmRepositorySpec{}, "SecretRef")
+
+						if got, want := &actualRepo, tc.expectedRepo; !cmp.Equal(want, got, opt1) {
+							t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opt1))
+						}
+
+						if tc.expectedCreatedSecret != nil {
+							if !strings.HasPrefix(actualRepo.Spec.SecretRef.Name, tc.expectedRepo.Spec.SecretRef.Name) {
+								t.Errorf("SecretRef [%s] was expected to start with [%s]",
+									actualRepo.Spec.SecretRef.Name, tc.expectedRepo.Spec.SecretRef.Name)
+							}
+							opt2 := cmpopts.IgnoreFields(metav1.ObjectMeta{}, "Name", "GenerateName")
+							// check expected secret has been created
+							if typedClient, err := s.clientGetter.Typed(ctx, s.kubeappsCluster); err != nil {
+								t.Fatal(err)
+							} else if secret, err := typedClient.CoreV1().Secrets(nsname.Namespace).Get(ctx, actualRepo.Spec.SecretRef.Name, metav1.GetOptions{}); err != nil {
+								t.Fatal(err)
+							} else if got, want := secret, tc.expectedCreatedSecret; !cmp.Equal(want, got, opt2) {
+								t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opt2))
+							} else if !strings.HasPrefix(secret.Name, tc.expectedCreatedSecret.Name) {
+								t.Errorf("Secret Name [%s] was expected to start with [%s]",
+									secret.Name, tc.expectedCreatedSecret.Name)
+							}
+						} else if actualRepo.Spec.SecretRef != nil {
+							t.Fatalf("Expected no secret, but found: [%q]", actualRepo.Spec.SecretRef.Name)
+						} else if tc.expectedRepo.Spec.SecretRef != nil {
+							t.Fatalf("Error: unexpected state")
 						}
 					}
 				}
@@ -1476,25 +1516,29 @@ func TestGetPackageRepositoryDetail(t *testing.T) {
 			expectedStatusCode: codes.Unimplemented,
 		},
 		{
-			name:               "it returns package repository detail with TLS cert aurthority",
-			repoIndex:          testYaml("valid-index.yaml"),
-			repoName:           "repo-1",
-			repoNamespace:      "namespace-1",
-			repoSecret:         newTlsSecret("secret-1", "namespace-1", nil, nil, ca),
+			name:          "it returns package repository detail with TLS cert aurthority",
+			repoIndex:     testYaml("valid-index.yaml"),
+			repoName:      "repo-1",
+			repoNamespace: "namespace-1",
+			repoSecret: newTlsSecret(types.NamespacedName{
+				Name:      "secret-1",
+				Namespace: "namespace-1"}, nil, nil, ca),
 			request:            get_repo_detail_req_1,
 			expectedStatusCode: codes.OK,
 			expectedResponse:   get_repo_detail_resp_6,
 			userManagedSecrets: true,
 		},
 		{
-			name:               "it returns package repository detail with TLS cert aurthority (kubeapps managed secrets)",
-			repoIndex:          testYaml("valid-index.yaml"),
-			repoName:           "repo-1",
-			repoNamespace:      "namespace-1",
-			repoSecret:         newTlsSecret("secret-1", "namespace-1", nil, nil, ca),
+			name:          "it returns package repository detail with TLS cert authority (kubeapps managed secrets)",
+			repoIndex:     testYaml("valid-index.yaml"),
+			repoName:      "repo-1",
+			repoNamespace: "namespace-1",
+			repoSecret: newTlsSecret(types.NamespacedName{
+				Name:      "secret-1",
+				Namespace: "namespace-1"}, nil, nil, ca),
 			request:            get_repo_detail_req_1,
 			expectedStatusCode: codes.OK,
-			expectedResponse:   get_repo_detail_resp_6a(ca),
+			expectedResponse:   get_repo_detail_resp_6a,
 		},
 		{
 			name:               "get package repository with pending status",
@@ -1517,43 +1561,51 @@ func TestGetPackageRepositoryDetail(t *testing.T) {
 			failed:             true,
 		},
 		{
-			name:               "it returns package repository detail with TLS cert authentication",
-			repoIndex:          testYaml("valid-index.yaml"),
-			repoName:           "repo-1",
-			repoNamespace:      "namespace-1",
-			repoSecret:         newTlsSecret("secret-1", "namespace-1", pub, priv, nil),
+			name:          "it returns package repository detail with TLS cert authentication",
+			repoIndex:     testYaml("valid-index.yaml"),
+			repoName:      "repo-1",
+			repoNamespace: "namespace-1",
+			repoSecret: newTlsSecret(types.NamespacedName{
+				Name:      "secret-1",
+				Namespace: "namespace-1"}, pub, priv, nil),
 			request:            get_repo_detail_req_1,
 			expectedStatusCode: codes.OK,
 			expectedResponse:   get_repo_detail_resp_9,
 			userManagedSecrets: true,
 		},
 		{
-			name:               "it returns package repository detail with TLS cert authentication (kubeapps managed secrets)",
-			repoIndex:          testYaml("valid-index.yaml"),
-			repoName:           "repo-1",
-			repoNamespace:      "namespace-1",
-			repoSecret:         newTlsSecret("secret-1", "namespace-1", pub, priv, nil),
+			name:          "it returns package repository detail with TLS cert authentication (kubeapps managed secrets)",
+			repoIndex:     testYaml("valid-index.yaml"),
+			repoName:      "repo-1",
+			repoNamespace: "namespace-1",
+			repoSecret: newTlsSecret(types.NamespacedName{
+				Name:      "secret-1",
+				Namespace: "namespace-1"}, pub, priv, nil),
 			request:            get_repo_detail_req_1,
 			expectedStatusCode: codes.OK,
-			expectedResponse:   get_repo_detail_resp_9a(pub, priv),
+			expectedResponse:   get_repo_detail_resp_9a,
 		},
 		{
-			name:               "it returns package repository detail with basic authentication",
-			repoIndex:          testYaml("valid-index.yaml"),
-			repoName:           "repo-1",
-			repoNamespace:      "namespace-1",
-			repoSecret:         newBasicAuthSecret("secret-1", "namespace-1", "foo", "bar"),
+			name:          "it returns package repository detail with basic authentication",
+			repoIndex:     testYaml("valid-index.yaml"),
+			repoName:      "repo-1",
+			repoNamespace: "namespace-1",
+			repoSecret: newBasicAuthSecret(types.NamespacedName{
+				Name:      "secret-1",
+				Namespace: "namespace-1"}, "foo", "bar"),
 			request:            get_repo_detail_req_1,
 			expectedStatusCode: codes.OK,
 			expectedResponse:   get_repo_detail_resp_10,
 			userManagedSecrets: true,
 		},
 		{
-			name:               "it returns package repository detail with basic authentication (kubeapps managed secrets)",
-			repoIndex:          testYaml("valid-index.yaml"),
-			repoName:           "repo-1",
-			repoNamespace:      "namespace-1",
-			repoSecret:         newBasicAuthSecret("secret-1", "namespace-1", "foo", "bar"),
+			name:          "it returns package repository detail with basic authentication (kubeapps managed secrets)",
+			repoIndex:     testYaml("valid-index.yaml"),
+			repoName:      "repo-1",
+			repoNamespace: "namespace-1",
+			repoSecret: newBasicAuthSecret(types.NamespacedName{
+				Name:      "secret-1",
+				Namespace: "namespace-1"}, "foo", "bar"),
 			request:            get_repo_detail_req_1,
 			expectedStatusCode: codes.OK,
 			expectedResponse:   get_repo_detail_resp_10a,
@@ -1572,7 +1624,7 @@ func TestGetPackageRepositoryDetail(t *testing.T) {
 			if !tc.pending && !tc.failed {
 				var ts *httptest.Server
 				var err error
-				ts, repo, err = newRepoWithIndex(tc.repoIndex, tc.repoName, tc.repoNamespace, nil, secretRef)
+				ts, repo, err = newHttpRepoAndServeIndex(tc.repoIndex, tc.repoName, tc.repoNamespace, nil, secretRef)
 				if err != nil {
 					t.Fatalf("%+v", err)
 				}
@@ -1650,6 +1702,85 @@ func TestGetPackageRepositoryDetail(t *testing.T) {
 						t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opt1))
 					}
 				}
+			}
+		})
+	}
+}
+
+func TestGetOciPackageRepositoryDetail(t *testing.T) {
+	seed_data_1, err := newFakeRemoteOciRegistryData_1()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	testCases := []struct {
+		name               string
+		request            *corev1.GetPackageRepositoryDetailRequest
+		repoName           string
+		repoNamespace      string
+		repoUrl            string
+		expectedStatusCode codes.Code
+		expectedResponse   *corev1.GetPackageRepositoryDetailResponse
+		seedData           *fakeRemoteOciRegistryData
+	}{
+		{
+			name:               "get package repository detail for OCI repository",
+			repoName:           "repo-1",
+			repoNamespace:      "namespace-1",
+			repoUrl:            "oci://localhost:54321/userX/charts",
+			request:            get_repo_detail_req_1,
+			expectedStatusCode: codes.OK,
+			expectedResponse:   get_repo_detail_resp_19,
+			seedData:           seed_data_1,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			initOciFakeClientBuilder(t, *tc.seedData)
+
+			repo, err := newOciRepo(tc.repoName, tc.repoNamespace, tc.repoUrl)
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			s, mock, err := newServerWithRepos(t, []sourcev1.HelmRepository{*repo}, nil, nil)
+			if err != nil {
+				t.Fatalf("error instantiating the server: %v", err)
+			}
+
+			ctx := context.Background()
+			actualResp, err := s.GetPackageRepositoryDetail(ctx, tc.request)
+			if got, want := status.Code(err), tc.expectedStatusCode; got != want {
+				t.Fatalf("got: %+v, want: %+v, err: %+v", got, want, err)
+			}
+
+			if tc.expectedStatusCode == codes.OK {
+				if actualResp == nil {
+					t.Fatalf("got: nil, want: response")
+				} else {
+					opt1 := cmpopts.IgnoreUnexported(
+						corev1.Context{},
+						corev1.PackageRepositoryReference{},
+						plugins.Plugin{},
+						corev1.GetPackageRepositoryDetailResponse{},
+						corev1.PackageRepositoryDetail{},
+						corev1.PackageRepositoryStatus{},
+						corev1.PackageRepositoryAuth{},
+						corev1.PackageRepositoryTlsConfig{},
+						corev1.SecretKeyReference{},
+						corev1.TlsCertKey{},
+						corev1.UsernamePassword{},
+					)
+					if got, want := actualResp, tc.expectedResponse; !cmp.Equal(got, want, opt1) {
+						t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opt1))
+					}
+				}
+			}
+
+			// FWIW GetPackageRepositoryDetail curently does not use the redis cache
+			if err = mock.ExpectationsWereMet(); err != nil {
+				t.Fatalf("%v", err)
 			}
 		})
 	}
@@ -1754,12 +1885,500 @@ func TestGetPackageRepositorySummaries(t *testing.T) {
 	}
 }
 
+func TestUpdatePackageRepository(t *testing.T) {
+	ca, pub, priv := getCertsForTesting(t)
+	testCases := []struct {
+		name               string
+		request            *corev1.UpdatePackageRepositoryRequest
+		repoIndex          string
+		repoName           string
+		repoNamespace      string
+		oldRepoSecret      *apiv1.Secret
+		newRepoSecret      *apiv1.Secret
+		pending            bool
+		expectedStatusCode codes.Code
+		expectedResponse   *corev1.UpdatePackageRepositoryResponse
+		expectedDetail     *corev1.GetPackageRepositoryDetailResponse
+		userManagedSecrets bool
+	}{
+		{
+			name:               "update repository url",
+			repoIndex:          testYaml("valid-index.yaml"),
+			repoName:           "repo-1",
+			repoNamespace:      "namespace-1",
+			request:            update_repo_req_1,
+			expectedStatusCode: codes.OK,
+			expectedResponse:   update_repo_resp_1,
+			expectedDetail:     update_repo_detail_1,
+		},
+		{
+			name:               "update repository poll interval",
+			repoIndex:          testYaml("valid-index.yaml"),
+			repoName:           "repo-1",
+			repoNamespace:      "namespace-1",
+			request:            update_repo_req_2,
+			expectedStatusCode: codes.OK,
+			expectedResponse:   update_repo_resp_1,
+			expectedDetail:     update_repo_detail_2,
+		},
+		{
+			name:               "update repository pass credentials flag",
+			repoIndex:          testYaml("valid-index.yaml"),
+			repoName:           "repo-1",
+			repoNamespace:      "namespace-1",
+			request:            update_repo_req_3,
+			expectedStatusCode: codes.OK,
+			expectedResponse:   update_repo_resp_1,
+			expectedDetail:     update_repo_detail_3,
+		},
+		{
+			name:          "update repository set TLS cert authority",
+			repoIndex:     testYaml("valid-index.yaml"),
+			repoName:      "repo-1",
+			repoNamespace: "namespace-1",
+			newRepoSecret: newTlsSecret(types.NamespacedName{
+				Name:      "secret-1",
+				Namespace: "namespace-1"}, nil, nil, ca),
+			request:            update_repo_req_4,
+			expectedStatusCode: codes.OK,
+			expectedResponse:   update_repo_resp_1,
+			expectedDetail:     update_repo_detail_4,
+			userManagedSecrets: true,
+		},
+		{
+			name:          "update repository unset TLS cert authority",
+			repoIndex:     testYaml("valid-index.yaml"),
+			repoName:      "repo-1",
+			repoNamespace: "namespace-1",
+			oldRepoSecret: newTlsSecret(types.NamespacedName{
+				Name:      "secret-1",
+				Namespace: "namespace-1"}, nil, nil, ca),
+			request:            update_repo_req_5,
+			expectedStatusCode: codes.OK,
+			expectedResponse:   update_repo_resp_1,
+			expectedDetail:     update_repo_detail_5,
+			userManagedSecrets: true,
+		},
+		{
+			name:          "update repository set basic auth",
+			repoIndex:     testYaml("valid-index.yaml"),
+			repoName:      "repo-1",
+			repoNamespace: "namespace-1",
+			newRepoSecret: newBasicAuthSecret(types.NamespacedName{
+				Name:      "secret-1",
+				Namespace: "namespace-1"}, "foo", "bar"),
+			request:            update_repo_req_6,
+			expectedStatusCode: codes.OK,
+			expectedResponse:   update_repo_resp_1,
+			expectedDetail:     update_repo_detail_6,
+			userManagedSecrets: true,
+		},
+		{
+			name:          "update repository unset basic auth",
+			repoIndex:     testYaml("valid-index.yaml"),
+			repoName:      "repo-1",
+			repoNamespace: "namespace-1",
+			oldRepoSecret: newBasicAuthSecret(types.NamespacedName{
+				Name:      "secret-1",
+				Namespace: "namespace-1"}, "foo", "bar"),
+			request:            update_repo_req_7,
+			expectedStatusCode: codes.OK,
+			expectedResponse:   update_repo_resp_1,
+			expectedDetail:     update_repo_detail_7,
+			userManagedSecrets: true,
+		},
+		{
+			name:               "update repository set TLS cert/key (kubeapps-managed secrets)",
+			repoIndex:          testYaml("valid-index.yaml"),
+			repoName:           "repo-1",
+			repoNamespace:      "namespace-1",
+			request:            update_repo_req_8(pub, priv),
+			expectedStatusCode: codes.OK,
+			expectedResponse:   update_repo_resp_1,
+			expectedDetail:     update_repo_detail_8,
+		},
+		{
+			name:          "update repository unset TLS cert/key (kubeapps-managed secrets)",
+			repoIndex:     testYaml("valid-index.yaml"),
+			repoName:      "repo-1",
+			repoNamespace: "namespace-1",
+			oldRepoSecret: newTlsSecret(types.NamespacedName{
+				Name:      "secret-1",
+				Namespace: "namespace-1"}, pub, priv, nil),
+			request:            update_repo_req_9,
+			expectedStatusCode: codes.OK,
+			expectedResponse:   update_repo_resp_1,
+			expectedDetail:     update_repo_detail_9,
+		},
+		{
+			name:          "update repository change from TLS cert/key to basic auth (kubeapps-managed secrets)",
+			repoIndex:     testYaml("valid-index.yaml"),
+			repoName:      "repo-1",
+			repoNamespace: "namespace-1",
+			oldRepoSecret: newTlsSecret(types.NamespacedName{
+				Name:      "secret-1",
+				Namespace: "namespace-1"}, pub, priv, nil),
+			request:            update_repo_req_10,
+			expectedStatusCode: codes.OK,
+			expectedResponse:   update_repo_resp_1,
+			expectedDetail:     update_repo_detail_10,
+		},
+		{
+			name:               "updates to pending repo is not allowed",
+			repoIndex:          testYaml("valid-index.yaml"),
+			repoName:           "repo-1",
+			repoNamespace:      "namespace-1",
+			request:            update_repo_req_1,
+			expectedStatusCode: codes.Internal,
+			pending:            true,
+		},
+		{
+			name:          "updates url for repo preserve secret in kubeapps managed env",
+			repoIndex:     testYaml("valid-index.yaml"),
+			repoName:      "repo-1",
+			repoNamespace: "namespace-1",
+			oldRepoSecret: newBasicAuthSecret(types.NamespacedName{
+				Name:      "secret-1",
+				Namespace: "namespace-1"}, "foo", "bar"),
+			request:            update_repo_req_16,
+			expectedStatusCode: codes.OK,
+			expectedResponse:   update_repo_resp_1,
+			expectedDetail:     update_repo_detail_15,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			oldSecretRef := ""
+			secrets := []runtime.Object{}
+			if tc.oldRepoSecret != nil {
+				oldSecretRef = tc.oldRepoSecret.Name
+				secrets = append(secrets, tc.oldRepoSecret)
+			}
+			if tc.newRepoSecret != nil {
+				secrets = append(secrets, tc.newRepoSecret)
+			}
+			var repo *sourcev1.HelmRepository
+			if !tc.pending {
+				var ts *httptest.Server
+				var err error
+				ts, repo, err = newHttpRepoAndServeIndex(tc.repoIndex, tc.repoName, tc.repoNamespace, nil, oldSecretRef)
+				if err != nil {
+					t.Fatalf("%+v", err)
+				}
+				defer ts.Close()
+			} else {
+				repoSpec := &sourcev1.HelmRepositorySpec{
+					URL:      "https://example.repo.com/charts",
+					Interval: metav1.Duration{Duration: 1 * time.Minute},
+				}
+				repoStatus := &sourcev1.HelmRepositoryStatus{
+					Conditions: []metav1.Condition{
+						{
+							LastTransitionTime: metav1.Time{Time: lastTransitionTime},
+							Type:               fluxmeta.ReadyCondition,
+							Status:             metav1.ConditionUnknown,
+							Reason:             fluxmeta.ProgressingReason,
+							Message:            "reconciliation in progress",
+						},
+					},
+				}
+				repo1 := newRepo(tc.repoName, tc.repoNamespace, repoSpec, repoStatus)
+				repo = &repo1
+			}
+			// update to the repo in a failed state will be tested in integration test
+
+			// the index.yaml will contain links to charts but for the purposes
+			// of this test they do not matter
+			s, _, err := newServerWithRepos(t, []sourcev1.HelmRepository{*repo}, nil, secrets)
+			if err != nil {
+				t.Fatalf("error instantiating the server: %v", err)
+			}
+			s.pluginConfig.UserManagedSecrets = tc.userManagedSecrets
+
+			ctx := context.Background()
+			actualResp, err := s.UpdatePackageRepository(ctx, tc.request)
+			if got, want := status.Code(err), tc.expectedStatusCode; got != want {
+				t.Fatalf("got: %+v, want: %+v, err: %+v", got, want, err)
+			}
+
+			if tc.expectedStatusCode == codes.OK {
+				if actualResp == nil {
+					t.Fatalf("got: nil, want: response")
+				} else {
+					opt1 := cmpopts.IgnoreUnexported(
+						corev1.Context{},
+						corev1.PackageRepositoryReference{},
+						plugins.Plugin{},
+						corev1.UpdatePackageRepositoryResponse{},
+					)
+					if got, want := actualResp, tc.expectedResponse; !cmp.Equal(got, want, opt1) {
+						t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opt1))
+					}
+				}
+			} else {
+				// We don't need to check anything else for non-OK codes.
+				return
+			}
+
+			actualDetail, err := s.GetPackageRepositoryDetail(ctx, &corev1.GetPackageRepositoryDetailRequest{
+				PackageRepoRef: actualResp.PackageRepoRef,
+			})
+			if got, want := status.Code(err), codes.OK; got != want {
+				t.Fatalf("got: %+v, want: %+v, err: %+v", got, want, err)
+			}
+
+			if actualDetail == nil {
+				t.Fatalf("got: nil, want: detail")
+			} else {
+				opt1 := cmpopts.IgnoreUnexported(
+					corev1.Context{},
+					corev1.PackageRepositoryReference{},
+					plugins.Plugin{},
+					corev1.GetPackageRepositoryDetailResponse{},
+					corev1.PackageRepositoryDetail{},
+					corev1.PackageRepositoryStatus{},
+					corev1.PackageRepositoryAuth{},
+					corev1.PackageRepositoryTlsConfig{},
+					corev1.SecretKeyReference{},
+					corev1.TlsCertKey{},
+					corev1.UsernamePassword{},
+				)
+				if got, want := actualDetail, tc.expectedDetail; !cmp.Equal(got, want, opt1) {
+					t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opt1))
+				}
+			}
+
+			if !tc.userManagedSecrets && tc.oldRepoSecret != nil && actualDetail.Detail.Auth.Type == corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_UNSPECIFIED {
+				// check the secret's been deleted
+				if typedClient, err := s.clientGetter.Typed(ctx, s.kubeappsCluster); err != nil {
+					t.Fatal(err)
+				} else if _, err = typedClient.CoreV1().Secrets(tc.repoNamespace).Get(ctx, tc.oldRepoSecret.Name, metav1.GetOptions{}); err == nil {
+					t.Fatalf("Expected secret [%q] to have been deleted", tc.oldRepoSecret.Name)
+				}
+			}
+		})
+	}
+}
+
+func TestDeletePackageRepository(t *testing.T) {
+	testCases := []struct {
+		name               string
+		request            *corev1.DeletePackageRepositoryRequest
+		repoIndex          string
+		repoName           string
+		repoNamespace      string
+		oldRepoSecret      *apiv1.Secret
+		newRepoSecret      *apiv1.Secret
+		pending            bool
+		expectedStatusCode codes.Code
+		userManagedSecrets bool
+	}{
+		{
+			name:               "delete repository",
+			request:            delete_repo_req_1,
+			repoIndex:          testYaml("valid-index.yaml"),
+			repoName:           "repo-1",
+			repoNamespace:      "namespace-1",
+			expectedStatusCode: codes.OK,
+		},
+		{
+			name:               "returns not found if package repo doesn't exist",
+			request:            delete_repo_req_2,
+			repoIndex:          testYaml("valid-index.yaml"),
+			repoName:           "repo-1",
+			repoNamespace:      "namespace-1",
+			expectedStatusCode: codes.NotFound,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			oldSecretRef := ""
+			secrets := []runtime.Object{}
+			if tc.oldRepoSecret != nil {
+				oldSecretRef = tc.oldRepoSecret.Name
+				secrets = append(secrets, tc.oldRepoSecret)
+			}
+			if tc.newRepoSecret != nil {
+				secrets = append(secrets, tc.newRepoSecret)
+			}
+			var repo *sourcev1.HelmRepository
+			if !tc.pending {
+				var ts *httptest.Server
+				var err error
+				ts, repo, err = newHttpRepoAndServeIndex(tc.repoIndex, tc.repoName, tc.repoNamespace, nil, oldSecretRef)
+				if err != nil {
+					t.Fatalf("%+v", err)
+				}
+				defer ts.Close()
+			} else {
+				repoSpec := &sourcev1.HelmRepositorySpec{
+					URL:      "https://example.repo.com/charts",
+					Interval: metav1.Duration{Duration: 1 * time.Minute},
+				}
+				repoStatus := &sourcev1.HelmRepositoryStatus{
+					Conditions: []metav1.Condition{
+						{
+							LastTransitionTime: metav1.Time{Time: lastTransitionTime},
+							Type:               fluxmeta.ReadyCondition,
+							Status:             metav1.ConditionUnknown,
+							Reason:             fluxmeta.ProgressingReason,
+							Message:            "reconciliation in progress",
+						},
+					},
+				}
+				repo1 := newRepo(tc.repoName, tc.repoNamespace, repoSpec, repoStatus)
+				repo = &repo1
+			}
+			// update to the repo in a failed state will be tested in integration test
+
+			// the index.yaml will contain links to charts but for the purposes
+			// of this test they do not matter
+			s, _, err := newServerWithRepos(t, []sourcev1.HelmRepository{*repo}, nil, secrets)
+			if err != nil {
+				t.Fatalf("error instantiating the server: %v", err)
+			}
+			s.pluginConfig.UserManagedSecrets = tc.userManagedSecrets
+
+			ctx := context.Background()
+			ctrlClient, err := s.clientGetter.ControllerRuntime(ctx, s.kubeappsCluster)
+			if err != nil {
+				t.Fatal(err)
+			}
+			nsname := types.NamespacedName{
+				Namespace: tc.request.PackageRepoRef.Context.Namespace,
+				Name:      tc.request.PackageRepoRef.Identifier,
+			}
+			var actualRepo sourcev1.HelmRepository
+			if tc.expectedStatusCode == codes.OK {
+				if err = ctrlClient.Get(ctx, nsname, &actualRepo); err != nil {
+					t.Fatal(err)
+				}
+			}
+
+			_, err = s.DeletePackageRepository(ctx, tc.request)
+			if got, want := status.Code(err), tc.expectedStatusCode; got != want {
+				t.Fatalf("got: %+v, want: %+v, err: %+v", got, want, err)
+			}
+
+			if tc.expectedStatusCode == codes.OK {
+				// check the repository CRD is gone from the cluster
+				if err = ctrlClient.Get(ctx, nsname, &actualRepo); err == nil {
+					t.Fatalf("Expected repository [%s] to have been deleted but still exists", nsname)
+				}
+			}
+		})
+	}
+}
+
+func TestGetOciAvailablePackageSummariesWithoutPagination(t *testing.T) {
+	seed_data_1, err := newFakeRemoteOciRegistryData_1()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	seed_data_3, err := newFakeRemoteOciRegistryData_3()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	type testSpecGetOciAvailablePackageSummaries struct {
+		repoName      string
+		repoNamespace string
+		repoUrl       string
+	}
+
+	testCases := []struct {
+		name              string
+		request           *corev1.GetAvailablePackageSummariesRequest
+		repos             []testSpecGetOciAvailablePackageSummaries
+		expectedResponse  *corev1.GetAvailablePackageSummariesResponse
+		expectedErrorCode codes.Code
+		seedData          *fakeRemoteOciRegistryData
+	}{
+		{
+			name: "returns a single available package",
+			repos: []testSpecGetOciAvailablePackageSummaries{
+				{
+					repoName:      "repo-1",
+					repoNamespace: "namespace-1",
+					repoUrl:       "oci://localhost:54321/userX/charts",
+				},
+			},
+			request: &corev1.GetAvailablePackageSummariesRequest{Context: &corev1.Context{}},
+			expectedResponse: &corev1.GetAvailablePackageSummariesResponse{
+				AvailablePackageSummaries: oci_repo_available_package_summaries,
+			},
+			expectedErrorCode: codes.OK,
+			seedData:          seed_data_1,
+		},
+		{
+			name: "returns available packages from multiple repos",
+			repos: []testSpecGetOciAvailablePackageSummaries{
+				{
+					repoName:      "repo-1",
+					repoNamespace: "namespace-1",
+					repoUrl:       "oci://localhost:54321/userX/charts",
+				},
+			},
+			request: &corev1.GetAvailablePackageSummariesRequest{Context: &corev1.Context{}},
+			expectedResponse: &corev1.GetAvailablePackageSummariesResponse{
+				AvailablePackageSummaries: oci_repo_available_package_summaries_2,
+			},
+			expectedErrorCode: codes.OK,
+			seedData:          seed_data_3,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			initOciFakeClientBuilder(t, *tc.seedData)
+
+			repos := []sourcev1.HelmRepository{}
+
+			for _, rs := range tc.repos {
+				repo, err := newOciRepo(rs.repoName, rs.repoNamespace, rs.repoUrl)
+				if err != nil {
+					t.Fatal(err)
+				}
+				repos = append(repos, *repo)
+			}
+
+			s, mock, err := newSimpleServerWithRepos(t, repos)
+			if err != nil {
+				t.Fatalf("error instantiating the server: %v", err)
+			}
+
+			if err = s.redisMockExpectGetFromRepoCache(mock, tc.request.FilterOptions, repos...); err != nil {
+				t.Fatalf("%v", err)
+			}
+
+			response, err := s.GetAvailablePackageSummaries(context.Background(), tc.request)
+			if got, want := status.Code(err), tc.expectedErrorCode; got != want {
+				t.Fatalf("got: %v, want: %v, err: %v", got, want, err)
+			}
+			// If an error code was expected, then no need to continue checking
+			// the response.
+			if tc.expectedErrorCode != codes.OK {
+				return
+			}
+
+			if err = mock.ExpectationsWereMet(); err != nil {
+				t.Fatalf("%v", err)
+			}
+
+			opt1 := cmpopts.IgnoreUnexported(corev1.GetAvailablePackageSummariesResponse{}, corev1.AvailablePackageSummary{}, corev1.AvailablePackageReference{}, corev1.Context{}, plugins.Plugin{}, corev1.PackageAppVersion{})
+			opt2 := cmpopts.SortSlices(lessAvailablePackageFunc)
+			if got, want := response, tc.expectedResponse; !cmp.Equal(got, want, opt1, opt2) {
+				t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opt1, opt2))
+			}
+		})
+	}
+}
+
 func newRepo(name string, namespace string, spec *sourcev1.HelmRepositorySpec, status *sourcev1.HelmRepositoryStatus) sourcev1.HelmRepository {
 	helmRepository := sourcev1.HelmRepository{
-		TypeMeta: metav1.TypeMeta{
-			Kind:       sourcev1.HelmRepositoryKind,
-			APIVersion: sourcev1.GroupVersion.String(),
-		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:       name,
 			Generation: 1,
@@ -1833,9 +2452,6 @@ func (s *Server) redisMockSetValueForRepo(mock redismock.ClientMock, repo source
 }
 
 func (sink *repoEventSink) redisMockSetValueForRepo(mock redismock.ClientMock, repo sourcev1.HelmRepository, oldValue []byte) (key string, newValue []byte, err error) {
-	if key, err = redisKeyForRepo(repo); err != nil {
-		return key, nil, err
-	}
 	if key, newValue, err = sink.redisKeyValueForRepo(repo); err != nil {
 		if oldValue == nil {
 			mock.ExpectGet(key).RedisNil()
@@ -1861,11 +2477,11 @@ func redisMockSetValueForRepo(mock redismock.ClientMock, key string, newValue, o
 }
 
 func (s *Server) redisKeyValueForRepo(r sourcev1.HelmRepository) (key string, byteArray []byte, err error) {
-	sink := repoEventSink{
-		clientGetter: s.newBackgroundClientGetter(),
-		chartCache:   nil,
+	cg := func(ctx context.Context) (clientgetter.ClientInterfaces, error) {
+		return s.clientGetter(ctx, s.kubeappsCluster)
 	}
-	return sink.redisKeyValueForRepo(r)
+	sinkNoChartCache := repoEventSink{clientGetter: cg}
+	return sinkNoChartCache.redisKeyValueForRepo(r)
 }
 
 func (sink *repoEventSink) redisKeyValueForRepo(r sourcev1.HelmRepository) (key string, byteArray []byte, err error) {
@@ -1907,7 +2523,7 @@ func redisKeyForRepoNamespacedName(name types.NamespacedName) (string, error) {
 	return fmt.Sprintf("%s:%s:%s", fluxHelmRepositories, name.Namespace, name.Name), nil
 }
 
-func newRepoWithIndex(repoIndex, repoName, repoNamespace string, replaceUrls map[string]string, secretRef string) (*httptest.Server, *sourcev1.HelmRepository, error) {
+func newHttpRepoAndServeIndex(repoIndex, repoName, repoNamespace string, replaceUrls map[string]string, secretRef string) (*httptest.Server, *sourcev1.HelmRepository, error) {
 	indexYAMLBytes, err := ioutil.ReadFile(repoIndex)
 	if err != nil {
 		return nil, nil, err
@@ -1917,7 +2533,7 @@ func newRepoWithIndex(repoIndex, repoName, repoNamespace string, replaceUrls map
 		indexYAMLBytes = []byte(strings.ReplaceAll(string(indexYAMLBytes), k, v))
 	}
 
-	// stand up a plain text http server to server the contents of index.yaml just for the
+	// stand up a plain text http server to serve the contents of index.yaml just for the
 	// duration of this test. We are never standing up a TLS server (or any kind of secured
 	// server for that matter) for repo index.yaml file because this scenario should never
 	// happen in production. See comments in repo.go for explanation
@@ -1961,4 +2577,29 @@ func newRepoWithIndex(repoIndex, repoName, repoNamespace string, replaceUrls map
 	}
 	repo := newRepo(repoName, repoNamespace, repoSpec, repoStatus)
 	return ts, &repo, nil
+}
+
+func newOciRepo(repoName, repoNamespace, repoUrl string) (*sourcev1.HelmRepository, error) {
+	timeout := metav1.Duration{Duration: 60 * time.Second}
+	repoSpec := &sourcev1.HelmRepositorySpec{
+		URL:      repoUrl,
+		Interval: metav1.Duration{Duration: 1 * time.Minute},
+		Timeout:  &timeout,
+		Type:     "oci",
+	}
+
+	repoStatus := &sourcev1.HelmRepositoryStatus{
+		Conditions: []metav1.Condition{
+			{
+				Type:               fluxmeta.ReadyCondition,
+				Status:             metav1.ConditionTrue,
+				Reason:             fluxmeta.SucceededReason,
+				Message:            "Helm repository is ready",
+				LastTransitionTime: metav1.Time{Time: lastTransitionTime},
+				ObservedGeneration: 1,
+			},
+		},
+	}
+	repo := newRepo(repoName, repoNamespace, repoSpec, repoStatus)
+	return &repo, nil
 }

@@ -25,25 +25,25 @@ describe("when loaded is false", () => {
   });
 
   it("does not render any children", () => {
-    const wrapper = renderComponent(props);
-    expect(wrapper.find(ChildrenComponent)).not.toExist();
+    const view = renderComponent(props);
+    expect(view.find(ChildrenComponent)).not.toExist();
   });
 
   it("renders a progress circle", () => {
-    const wrapper = renderComponent(props);
-    expect(wrapper.find(CdsProgressCircle)).toExist();
+    const view = renderComponent(props);
+    expect(view.find(CdsProgressCircle)).toExist();
   });
 
   it("renders a mid size progress circle", () => {
-    const wrapper = renderComponent({ ...props, size: "md" });
-    expect(wrapper.find(CdsProgressCircle)).toExist();
-    expect(wrapper.find(CdsProgressCircle).prop("size")).toBe("md");
+    const view = renderComponent({ ...props, size: "md" });
+    expect(view.find(CdsProgressCircle)).toExist();
+    expect(view.find(CdsProgressCircle).prop("size")).toBe("md");
   });
 
   it("renders a small progress circle", () => {
-    const wrapper = renderComponent({ ...props, size: "sm" });
-    expect(wrapper.find(CdsProgressCircle)).toExist();
-    expect(wrapper.find(CdsProgressCircle).prop("size")).toBe("sm");
+    const view = renderComponent({ ...props, size: "sm" });
+    expect(view.find(CdsProgressCircle)).toExist();
+    expect(view.find(CdsProgressCircle).prop("size")).toBe("sm");
   });
 });
 
@@ -55,7 +55,7 @@ describe("when loaded is true", () => {
   });
 
   it("renders it wrapped component", () => {
-    const wrapper = renderComponent(props);
-    expect(wrapper.find(ChildrenComponent)).toExist();
+    const view = renderComponent(props);
+    expect(view.find(ChildrenComponent)).toExist();
   });
 });

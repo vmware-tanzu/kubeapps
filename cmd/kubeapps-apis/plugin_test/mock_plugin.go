@@ -5,9 +5,11 @@ package plugin_test
 
 import (
 	"context"
+	"fmt"
 
 	corev1 "github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
 	plugins "github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/core/plugins/v1alpha1"
+	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/pkg/paginate"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
@@ -37,10 +39,21 @@ func (s TestPackagingPluginServer) GetAvailablePackageSummaries(ctx context.Cont
 	if s.Status != codes.OK {
 		return nil, status.Errorf(s.Status, "Non-OK response")
 	}
+	itemOffset, err := paginate.ItemOffsetFromPageToken(request.PaginationOptions.GetPageToken())
+	if err != nil {
+		return nil, err
+	}
+	summaries := s.AvailablePackageSummaries[itemOffset:]
+	pageSize := int(request.PaginationOptions.GetPageSize())
+	nextPageToken := ""
+	if pageSize > 0 && pageSize < len(summaries) {
+		summaries = summaries[:pageSize]
+		nextPageToken = fmt.Sprintf("%d", itemOffset+pageSize)
+	}
 	return &corev1.GetAvailablePackageSummariesResponse{
-		AvailablePackageSummaries: s.AvailablePackageSummaries,
+		AvailablePackageSummaries: summaries,
 		Categories:                s.Categories,
-		NextPageToken:             s.NextPageToken,
+		NextPageToken:             nextPageToken,
 	}, nil
 }
 
@@ -186,4 +199,11 @@ func (s TestRepositoriesPluginServer) UpdatePackageRepository(ctx context.Contex
 			Plugin:     s.Plugin,
 		},
 	}, nil
+}
+
+func (s TestRepositoriesPluginServer) DeletePackageRepository(ctx context.Context, request *corev1.DeletePackageRepositoryRequest) (*corev1.DeletePackageRepositoryResponse, error) {
+	if s.Status != codes.OK {
+		return nil, status.Errorf(s.Status, "Non-OK response")
+	}
+	return &corev1.DeletePackageRepositoryResponse{}, nil
 }

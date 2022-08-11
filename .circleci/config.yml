@@ -5,61 +5,67 @@ version: 2.1
 parameters:
   GOLANG_VERSION:
     type: string
-    default: "1.18"
+    default: "1.18.4"
   NODE_VERSION:
     type: string
-    default: "16.14.2"
+    default: "16.16.0"
   RUST_VERSION:
     type: string
-    default: "1.59.0"
+    default: "1.62.0"
   DOCKER_VERSION:
     type: string
-    default: "20.10.11"
+    default: "20.10.14"
+  DOCKER_REGISTRY_VERSION:
+    type: string
+    default: "2.8.1"
   HELM_VERSION_MIN:
     type: "string"
     default: "v3.2.0"
   HELM_VERSION_STABLE:
     type: "string"
-    default: "v3.8.1"
+    default: "v3.9.2"
   OLM_VERSION:
     type: "string"
-    default: "v0.20.0"
+    default: "v0.21.2"
+  CHARTMUSEUM_VERSION:
+    type: "string"
+    default: "3.9.0"
   KAPP_CONTROLLER_VERSION:
     type: "string"
-    default: "v0.32.0"
+    default: "v0.38.4"
   MKCERT_VERSION:
     type: "string"
-    default: "v1.4.3"
+    default: "v1.4.4"
   KUBECTL_VERSION:
     type: "string"
-    default: "v1.22.8"
+    default: "v1.22.12"
   GITHUB_VERSION:
     type: "string"
-    default: "2.4.0"
+    default: "2.14.2"
   SEMVER_VERSION:
     type: "string"
     default: "3.3.0"
   KIND_VERSION:
     type: "string"
-    default: "v0.11.1"
+    default: "v0.14.0"
   K8S_KIND_VERSION:
     type: "string"
-    default: "v1.21.1@sha256:69860bda5563ac81e3c0057d654b5253219618a22ec3a346306239bba8cfa1a6"
+    default: "v1.22.9@sha256:8135260b959dfe320206eb36b3aeda9cffcb262f4b44cda6b33f7bb73f453105"
   POSTGRESQL_VERSION:
     type: "string"
-    default: "14.2.0-debian-10-r45"
+    default: "14.4.0-debian-11-r13"
   GKE_STABLE_VERSION:
     type: "string"
-    default: "1.20"
+    default: "1.21"
   GKE_REGULAR_VERSION:
     type: "string"
-    default: "1.21"
+    default: "1.22"
   DEFAULT_MACHINE_IMG:
     type: "string"
-    default: "ubuntu-2004:202111-02"
+    default: "ubuntu-2204:2022.04.1"
   IMAGES_TO_PUSH:
     type: "string"
-    default: "kubeapps/apprepository-controller kubeapps/dashboard kubeapps/asset-syncer kubeapps/assetsvc kubeapps/kubeops kubeapps/pinniped-proxy kubeapps/kubeapps-apis"
+    default: "kubeapps/apprepository-controller kubeapps/dashboard kubeapps/asset-syncer kubeapps/kubeops kubeapps/pinniped-proxy kubeapps/kubeapps-apis"
   CI_BOT_USERNAME:
     type: "string"
     default: "kubeapps-bot"
@@ -236,6 +242,7 @@ workflows:
 ## Definitions
 common_envars: &common_envars
   DOCKER_VERSION: << pipeline.parameters.DOCKER_VERSION >>
+  DOCKER_REGISTRY_VERSION: << pipeline.parameters.DOCKER_REGISTRY_VERSION >>
   GOLANG_VERSION: << pipeline.parameters.GOLANG_VERSION >>
   HELM_VERSION_MIN: << pipeline.parameters.HELM_VERSION_MIN >>
   HELM_VERSION_STABLE: << pipeline.parameters.HELM_VERSION_STABLE >>
@@ -317,13 +324,13 @@ install_cluster: &install_cluster
   run:
     name: "Install cluster"
     command: |
-      sed -i "s/172.18.0.2/$DEFAULT_DEX_IP/g" ./docs/howto/manifests/kubeapps-local-dev-apiserver-config.yaml
+      sed -i "s/172.18.0.2/$DEFAULT_DEX_IP/g" ./site/content/docs/latest/reference/manifests/kubeapps-local-dev-apiserver-config.yaml
       {
         echo "Creating cluster..."
-        kind create cluster --image kindest/node:${K8S_KIND_VERSION} --name kubeapps-ci --config=./docs/howto/manifests/kubeapps-local-dev-apiserver-config.yaml --kubeconfig=${HOME}/.kube/kind-config-kubeapps-ci --retain --wait 120s &&
-        kubectl --context kind-kubeapps-ci --kubeconfig ${HOME}/.kube/kind-config-kubeapps-ci apply -f ./docs/howto/manifests/kubeapps-local-dev-users-rbac.yaml &&
+        kind create cluster --image kindest/node:${K8S_KIND_VERSION} --name kubeapps-ci --config=./site/content/docs/latest/reference/manifests/kubeapps-local-dev-apiserver-config.yaml --kubeconfig=${HOME}/.kube/kind-config-kubeapps-ci --retain --wait 120s &&
+        kubectl --context kind-kubeapps-ci --kubeconfig ${HOME}/.kube/kind-config-kubeapps-ci apply -f ./site/content/docs/latest/reference/manifests/kubeapps-local-dev-users-rbac.yaml &&
 
-        kubectl --context kind-kubeapps-ci --kubeconfig ${HOME}/.kube/kind-config-kubeapps-ci apply -f ./docs/howto/manifests/ingress-nginx-kind-with-large-proxy-buffers.yaml &&
+        kubectl --context kind-kubeapps-ci --kubeconfig ${HOME}/.kube/kind-config-kubeapps-ci apply -f ./site/content/docs/latest/reference/manifests/ingress-nginx-kind-with-large-proxy-buffers.yaml &&
         sleep 5 &&
         kubectl --context kind-kubeapps-ci --kubeconfig ${HOME}/.kube/kind-config-kubeapps-ci wait --namespace ingress-nginx --for=condition=ready pod --selector=app.kubernetes.io/component=controller --timeout=120s &&
 
@@ -333,9 +340,9 @@ install_cluster: &install_cluster
       } || {
         echo "Cluster creation failed, retrying..."
         kind delete clusters kubeapps-ci || true
-        kind create cluster --image kindest/node:${K8S_KIND_VERSION} --name kubeapps-ci --config=./docs/howto/manifests/kubeapps-local-dev-apiserver-config.yaml --kubeconfig=${HOME}/.kube/kind-config-kubeapps-ci --retain --wait 120s || true &&
-        kubectl --context kind-kubeapps-ci --kubeconfig ${HOME}/.kube/kind-config-kubeapps-ci apply -f ./docs/howto/manifests/kubeapps-local-dev-users-rbac.yaml &&
-        kubectl --context kind-kubeapps-ci --kubeconfig ${HOME}/.kube/kind-config-kubeapps-ci apply -f ./docs/howto/manifests/ingress-nginx-kind-with-large-proxy-buffers.yaml &&
+        kind create cluster --image kindest/node:${K8S_KIND_VERSION} --name kubeapps-ci --config=./site/content/docs/latest/reference/manifests/kubeapps-local-dev-apiserver-config.yaml --kubeconfig=${HOME}/.kube/kind-config-kubeapps-ci --retain --wait 120s || true &&
+        kubectl --context kind-kubeapps-ci --kubeconfig ${HOME}/.kube/kind-config-kubeapps-ci apply -f ./site/content/docs/latest/reference/manifests/kubeapps-local-dev-users-rbac.yaml &&
+        kubectl --context kind-kubeapps-ci --kubeconfig ${HOME}/.kube/kind-config-kubeapps-ci apply -f ./site/content/docs/latest/reference/manifests/ingress-nginx-kind-with-large-proxy-buffers.yaml &&
         sleep 5 &&
         kubectl wait --namespace ingress-nginx --for=condition=ready pod --selector=app.kubernetes.io/component=controller --timeout=120s &&
 
@@ -370,12 +377,12 @@ install_additional_cluster: &install_additional_cluster
   run:
     name: "Install additional cluster"
     command: |
-      sed -i "s/172.18.0.2/$DEFAULT_DEX_IP/g" ./docs/howto/manifests/kubeapps-local-dev-additional-apiserver-config.yaml
+      sed -i "s/172.18.0.2/$DEFAULT_DEX_IP/g" ./site/content/docs/latest/reference/manifests/kubeapps-local-dev-additional-apiserver-config.yaml
       {
         echo "Creating additional cluster..."
-        kind create cluster --image kindest/node:${K8S_KIND_VERSION} --name kubeapps-ci-additional --config=./docs/howto/manifests/kubeapps-local-dev-additional-apiserver-config.yaml --kubeconfig=${HOME}/.kube/kind-config-kubeapps-ci-additional --retain --wait 120s &&
-        kubectl --context kind-kubeapps-ci-additional --kubeconfig ${HOME}/.kube/kind-config-kubeapps-ci-additional apply --kubeconfig=${HOME}/.kube/kind-config-kubeapps-ci-additional -f ./docs/howto/manifests/kubeapps-local-dev-users-rbac.yaml &&
-        kubectl --context kind-kubeapps-ci-additional --kubeconfig ${HOME}/.kube/kind-config-kubeapps-ci-additional apply --kubeconfig=${HOME}/.kube/kind-config-kubeapps-ci-additional -f ./docs/howto/manifests/kubeapps-local-dev-namespace-discovery-rbac.yaml &&
+        kind create cluster --image kindest/node:${K8S_KIND_VERSION} --name kubeapps-ci-additional --config=./site/content/docs/latest/reference/manifests/kubeapps-local-dev-additional-apiserver-config.yaml --kubeconfig=${HOME}/.kube/kind-config-kubeapps-ci-additional --retain --wait 120s &&
+        kubectl --context kind-kubeapps-ci-additional --kubeconfig ${HOME}/.kube/kind-config-kubeapps-ci-additional apply --kubeconfig=${HOME}/.kube/kind-config-kubeapps-ci-additional -f ./site/content/docs/latest/reference/manifests/kubeapps-local-dev-users-rbac.yaml &&
+        kubectl --context kind-kubeapps-ci-additional --kubeconfig ${HOME}/.kube/kind-config-kubeapps-ci-additional apply --kubeconfig=${HOME}/.kube/kind-config-kubeapps-ci-additional -f ./site/content/docs/latest/reference/manifests/kubeapps-local-dev-namespace-discovery-rbac.yaml &&
 
         kubectl --context kind-kubeapps-ci-additional --kubeconfig ${HOME}/.kube/kind-config-kubeapps-ci-additional create rolebinding kubeapps-view-secret-oidc --role view-secrets --user oidc:kubeapps-user@example.com &&
         kubectl --context kind-kubeapps-ci-additional --kubeconfig ${HOME}/.kube/kind-config-kubeapps-ci-additional create clusterrolebinding kubeapps-view-oidc  --clusterrole=view --user oidc:kubeapps-user@example.com &&
@@ -383,9 +390,9 @@ install_additional_cluster: &install_additional_cluster
       } || {
         echo "Additional cluster creation failed, retrying..."
         kind delete clusters kubeapps-ci-additional || true
-        kind create cluster --image kindest/node:${K8S_KIND_VERSION} --name kubeapps-ci-additional --config=./docs/howto/manifests/kubeapps-local-dev-additional-apiserver-config.yaml --kubeconfig=${HOME}/.kube/kind-config-kubeapps-ci-additional --retain --wait 120s &&
-        kubectl --context kind-kubeapps-ci-additional --kubeconfig ${HOME}/.kube/kind-config-kubeapps-ci-additional apply --kubeconfig=${HOME}/.kube/kind-config-kubeapps-ci-additional -f ./docs/howto/manifests/kubeapps-local-dev-users-rbac.yaml &&
-        kubectl --context kind-kubeapps-ci-additional --kubeconfig ${HOME}/.kube/kind-config-kubeapps-ci-additional apply --kubeconfig=${HOME}/.kube/kind-config-kubeapps-ci-additional -f ./docs/howto/manifests/kubeapps-local-dev-namespace-discovery-rbac.yaml &&
+        kind create cluster --image kindest/node:${K8S_KIND_VERSION} --name kubeapps-ci-additional --config=./site/content/docs/latest/reference/manifests/kubeapps-local-dev-additional-apiserver-config.yaml --kubeconfig=${HOME}/.kube/kind-config-kubeapps-ci-additional --retain --wait 120s &&
+        kubectl --context kind-kubeapps-ci-additional --kubeconfig ${HOME}/.kube/kind-config-kubeapps-ci-additional apply --kubeconfig=${HOME}/.kube/kind-config-kubeapps-ci-additional -f ./site/content/docs/latest/reference/manifests/kubeapps-local-dev-users-rbac.yaml &&
+        kubectl --context kind-kubeapps-ci-additional --kubeconfig ${HOME}/.kube/kind-config-kubeapps-ci-additional apply --kubeconfig=${HOME}/.kube/kind-config-kubeapps-ci-additional -f ./site/content/docs/latest/reference/manifests/kubeapps-local-dev-namespace-discovery-rbac.yaml &&
 
         kubectl --context kind-kubeapps-ci-additional --kubeconfig ${HOME}/.kube/kind-config-kubeapps-ci-additional create rolebinding kubeapps-view-secret-oidc --role view-secrets --user oidc:kubeapps-user@example.com &&
         kubectl --context kind-kubeapps-ci-additional --kubeconfig ${HOME}/.kube/kind-config-kubeapps-ci-additional create clusterrolebinding kubeapps-view-oidc  --clusterrole=view --user oidc:kubeapps-user@example.com &&
@@ -398,7 +405,8 @@ load_kind_images: &load_kind_images
     name: "Load needed images into Kind"
     command:
       ./script/load-kind-image.sh docker.io/bitnami/apache:2.4.48-debian-10-r74 kubeapps-ci kubeapps-ci-additional &&
-      ./script/load-kind-image.sh docker.io/bitnami/apache:2.4.48-debian-10-r75 kubeapps-ci kubeapps-ci-additional
+      ./script/load-kind-image.sh docker.io/bitnami/apache:2.4.48-debian-10-r75 kubeapps-ci kubeapps-ci-additional &&
+      ./script/load-kind-image.sh registry:$DOCKER_REGISTRY_VERSION kubeapps-ci kubeapps-ci-additional
 copy_apiserver_certificates: &copy_apiserver_certificates
   run:
     name: "Copy apiserver certificates"
@@ -474,12 +482,12 @@ install_multicluster_deps: &install_multicluster_deps
   run:
     name: "Install multicluster deps"
     command: |
-      sed -i -e "s/172.18.0.2/$DEFAULT_DEX_IP/g;s/localhost/kubeapps-ci.kubeapps/g" ./docs/howto/manifests/kubeapps-local-dev-dex-values.yaml
+      sed -i -e "s/172.18.0.2/$DEFAULT_DEX_IP/g;s/localhost/kubeapps-ci.kubeapps/g" ./site/content/docs/latest/reference/manifests/kubeapps-local-dev-dex-values.yaml
       helm repo add dex https://charts.dexidp.io
 
       # Install dex
       kubectl create namespace dex
-      helm install dex dex/dex --version 0.5.0 --namespace dex --values ./docs/howto/manifests/kubeapps-local-dev-dex-values.yaml
+      helm install dex dex/dex --version 0.5.0 --namespace dex --values ./site/content/docs/latest/reference/manifests/kubeapps-local-dev-dex-values.yaml
 
       # Install openldap
       helm repo add stable https://charts.helm.sh/stable
@@ -501,7 +509,7 @@ run_e2e_tests: &run_e2e_tests
         DEV_TAG=${latest/v/}
         IMG_MODIFIER=""
       fi
-      if ./script/e2e-test.sh $USE_MULTICLUSTER_OIDC_ENV $OLM_VERSION $DEV_TAG $IMG_MODIFIER $DOCKER_USERNAME $DOCKER_PASSWORD $TEST_TIMEOUT_MINUTES $DEFAULT_DEX_IP $ADDITIONAL_CLUSTER_IP $KAPP_CONTROLLER_VERSION; then
+      if ./script/e2e-test.sh $USE_MULTICLUSTER_OIDC_ENV $OLM_VERSION $DEV_TAG $IMG_MODIFIER $TEST_TIMEOUT_MINUTES $DEFAULT_DEX_IP $ADDITIONAL_CLUSTER_IP $KAPP_CONTROLLER_VERSION $CHARTMUSEUM_VERSION; then
         # Test success
         echo "export TEST_RESULT=$?" >> $BASH_ENV
       else
@@ -511,6 +519,9 @@ run_e2e_tests: &run_e2e_tests
 gke_test: &gke_test
   docker:
     - image: cimg/go:<< pipeline.parameters.GOLANG_VERSION >>
+      auth:
+        username: $DOCKER_USERNAME
+        password: $DOCKER_PASSWORD
   steps:
     - checkout
     - run:
@@ -610,6 +621,9 @@ jobs:
       <<: *common_envars
     docker:
       - image: cimg/go:<< pipeline.parameters.GOLANG_VERSION >>
+        auth:
+          username: $DOCKER_USERNAME
+          password: $DOCKER_PASSWORD
     steps:
       - checkout
       - <<: *exports
@@ -634,6 +648,9 @@ jobs:
       NODE_OPTIONS: "--max-old-space-size=512"
     docker:
       - image: cimg/node:<< pipeline.parameters.NODE_VERSION >>
+        auth:
+          username: $DOCKER_USERNAME
+          password: $DOCKER_PASSWORD
     steps:
       - checkout
       - run:
@@ -651,6 +668,9 @@ jobs:
   test_pinniped_proxy:
     docker:
       - image: cimg/rust:<< pipeline.parameters.RUST_VERSION >>
+        auth:
+          username: $DOCKER_USERNAME
+          password: $DOCKER_PASSWORD
     steps:
       - checkout
       - run:
@@ -662,6 +682,9 @@ jobs:
       <<: *common_envars
     docker:
       - image: cimg/go:<< pipeline.parameters.GOLANG_VERSION >>
+        auth:
+          username: $DOCKER_USERNAME
+          password: $DOCKER_PASSWORD
     steps:
       - <<: *exports
       - checkout
@@ -673,14 +696,20 @@ jobs:
   build_go_images:
     docker:
       - image: cimg/go:<< pipeline.parameters.GOLANG_VERSION >>
+        auth:
+          username: $DOCKER_USERNAME
+          password: $DOCKER_PASSWORD
     working_directory: /home/circleci/go/src/github.com/vmware-tanzu/kubeapps
     environment:
       GOPATH: ${HOME}/.go_workspace
-      IMAGES: "kubeops apprepository-controller asset-syncer assetsvc kubeapps-apis"
+      IMAGES: "kubeops apprepository-controller asset-syncer kubeapps-apis"
     <<: *build_images
   build_dashboard:
     docker:
       - image: cimg/go:<< pipeline.parameters.GOLANG_VERSION >>
+        auth:
+          username: $DOCKER_USERNAME
+          password: $DOCKER_PASSWORD
     environment:
       IMAGES: "dashboard"
     <<: *build_images
@@ -688,6 +717,9 @@ jobs:
     docker:
       # We're building the image in a docker container anyway so just re-use the golang image already in use.
       - image: cimg/go:<< pipeline.parameters.GOLANG_VERSION >>
+        auth:
+          username: $DOCKER_USERNAME
+          password: $DOCKER_PASSWORD
     environment:
       IMAGES: "pinniped-proxy"
     <<: *build_images
@@ -696,6 +728,9 @@ jobs:
       <<: *common_envars
     docker:
       - image: cimg/go:<< pipeline.parameters.GOLANG_VERSION >>
+        auth:
+          username: $DOCKER_USERNAME
+          password: $DOCKER_PASSWORD
     steps:
       - checkout
       - <<: *install_github
@@ -750,6 +785,9 @@ jobs:
       <<: *common_envars
     docker:
       - image: cimg/node:<< pipeline.parameters.NODE_VERSION >>
+        auth:
+          username: $DOCKER_USERNAME
+          password: $DOCKER_PASSWORD
     steps:
       - checkout
       - <<: *install_github
@@ -782,6 +820,9 @@ jobs:
       <<: *common_envars
     docker:
       - image: cimg/node:<< pipeline.parameters.NODE_VERSION >>
+        auth:
+          username: $DOCKER_USERNAME
+          password: $DOCKER_PASSWORD
     steps:
       - checkout
       - <<: *install_github
@@ -815,6 +856,9 @@ jobs:
   push_images:
     docker:
       - image: cimg/go:<< pipeline.parameters.GOLANG_VERSION >>
+        auth:
+          username: $DOCKER_USERNAME
+          password: $DOCKER_PASSWORD
     steps:
       - setup_remote_docker:
           version: << pipeline.parameters.DOCKER_VERSION >>

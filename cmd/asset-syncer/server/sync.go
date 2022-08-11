@@ -47,6 +47,9 @@ func Sync(serveOpts Config, version string, args []string) error {
 			return fmt.Errorf("Error: %v", err)
 		}
 		authorizationHeader, err = kube.GetAuthHeaderFromDockerConfig(dockerConfig)
+		if err != nil {
+			return fmt.Errorf("Error: %v", err)
+		}
 	}
 
 	filters, err := parseFilters(serveOpts.FilterRules)
@@ -91,6 +94,10 @@ func Sync(serveOpts Config, version string, args []string) error {
 		charts, err := repoIface.Charts(fetchLatestOnly)
 		if err != nil {
 			return fmt.Errorf("Error: %v", err)
+		}
+		if len(charts) == 0 {
+			log.Infof("No charts in repository to be synced, repo.URL= %v", repo.URL)
+			return nil
 		}
 		if err = manager.Sync(models.Repo{Name: repo.Name, Namespace: repo.Namespace}, charts); err != nil {
 			return fmt.Errorf("Can't add chart repository to database: %v", err)

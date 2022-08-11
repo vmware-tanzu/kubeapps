@@ -11,7 +11,9 @@ import (
 	"fmt"
 	"net/url"
 	"reflect"
+	"sort"
 	"strings"
+	"time"
 
 	"github.com/Masterminds/semver/v3"
 	corev1 "github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
@@ -22,6 +24,7 @@ import (
 	"gopkg.in/yaml.v3" // The usual "sigs.k8s.io/yaml" doesn't work: https://github.com/vmware-tanzu/kubeapps/pull/4050
 	"k8s.io/apiextensions-apiserver/pkg/apis/apiextensions"
 	structuralschema "k8s.io/apiextensions-apiserver/pkg/apiserver/schema"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 )
 
@@ -51,33 +54,56 @@ func GetDefaultVersionsInSummary() VersionsInSummary {
 	return defaultVersionsInSummary
 }
 
-// packageAppVersionsSummary converts the model chart versions into the required version summary.
-func PackageAppVersionsSummary(versions []models.ChartVersion, versionInSummary VersionsInSummary) []*corev1.PackageAppVersion {
-	pav := []*corev1.PackageAppVersion{}
+type packageSemVersion struct {
+	*semver.Version
+	appVersion string
+}
 
-	// Use a version map to be able to count how many major, minor and patch versions
-	// we have included.
-	version_map := map[uint64]map[uint64][]uint64{}
+func sortByPackageVersion(versions []models.ChartVersion) []*packageSemVersion {
+	var sortedVersions []*packageSemVersion
 	for _, v := range versions {
 		version, err := semver.NewVersion(v.Version)
 		if err != nil {
 			continue
 		}
 
-		if _, ok := version_map[version.Major()]; !ok {
+		sortedVersions = append(sortedVersions, &packageSemVersion{
+			Version:    version,
+			appVersion: v.AppVersion,
+		})
+	}
+	sort.Slice(sortedVersions, func(i, j int) bool {
+		return sortedVersions[i].Version.GreaterThan(sortedVersions[j].Version)
+	})
+	return sortedVersions
+}
+
+// PackageAppVersionsSummary converts the model chart versions into the required version summary.
+func PackageAppVersionsSummary(versions []models.ChartVersion, versionInSummary VersionsInSummary) []*corev1.PackageAppVersion {
+
+	// Sort versions
+	sortedVersions := sortByPackageVersion(versions)
+
+	var pav []*corev1.PackageAppVersion
+
+	// Use a version map to be able to count how many major, minor and patch versions
+	// we have included.
+	versionMap := map[uint64]map[uint64][]uint64{}
+	for _, version := range sortedVersions {
+		if _, ok := versionMap[version.Major()]; !ok {
 			// Don't add a new major version if we already have enough
-			if len(version_map) >= versionInSummary.Major {
+			if len(versionMap) >= versionInSummary.Major {
 				continue
 			}
 		} else {
 			// If we don't yet have this minor version
-			if _, ok := version_map[version.Major()][version.Minor()]; !ok {
+			if _, ok := versionMap[version.Major()][version.Minor()]; !ok {
 				// Don't add a new minor version if we already have enough for this major version
-				if len(version_map[version.Major()]) >= versionInSummary.Minor {
+				if len(versionMap[version.Major()]) >= versionInSummary.Minor {
 					continue
 				}
 			} else {
-				if len(version_map[version.Major()][version.Minor()]) >= versionInSummary.Patch {
+				if len(versionMap[version.Major()][version.Minor()]) >= versionInSummary.Patch {
 					continue
 				}
 			}
@@ -85,20 +111,20 @@ func PackageAppVersionsSummary(versions []models.ChartVersion, versionInSummary 
 
 		// Include the version and update the version map.
 		pav = append(pav, &corev1.PackageAppVersion{
-			PkgVersion: v.Version,
-			AppVersion: v.AppVersion,
+			PkgVersion: version.Version.String(),
+			AppVersion: version.appVersion,
 		})
 
-		if _, ok := version_map[version.Major()]; !ok {
-			version_map[version.Major()] = map[uint64][]uint64{}
+		if _, ok := versionMap[version.Major()]; !ok {
+			versionMap[version.Major()] = map[uint64][]uint64{}
 		}
-		version_map[version.Major()][version.Minor()] = append(version_map[version.Major()][version.Minor()], version.Patch())
+		versionMap[version.Major()][version.Minor()] = append(versionMap[version.Major()][version.Minor()], version.Patch())
 	}
 
 	return pav
 }
 
-// isValidChart returns true if the chart model passed defines a value
+// IsValidChart returns true if the chart model passed defines a value
 // for each required field described at the Helm website:
 // https://helm.sh/docs/topics/charts/#the-chartyaml-file
 // together with required fields for our model.
@@ -182,71 +208,38 @@ func AvailablePackageSummaryFromChart(chart *models.Chart, plugin *plugins.Plugi
 // https://github.com/vmware-tanzu/kubeapps/pull/4094#discussion_r790349962.
 // Will come back to this
 
-// GetUnescapedChartID takes a chart id with URI-encoded characters and decode them. Ex: 'foo%2Fbar' becomes 'foo/bar'
-// also checks that the chart ID is in the expected format, namely "repoName/chartName"
-func GetUnescapedChartID(chartID string) (string, error) {
-	unescapedChartID, err := url.QueryUnescape(chartID)
+// GetUnescapedPackageID takes a package id with URI-encoded characters and decode them. Ex: 'repoName/foo/bar' becomes 'repoName/foo%2Fbar'
+// also checks that the package ID is in the expected format, namely "repoName/packageName"
+func GetUnescapedPackageID(packageID string) (string, error) {
+	unescapedPackageID, err := url.QueryUnescape(packageID)
 	if err != nil {
-		return "", status.Errorf(codes.InvalidArgument, "Unable to decode chart ID chart: %v", chartID)
+		return "", status.Errorf(codes.InvalidArgument, "Unable to decode package ID: %v", packageID)
 	}
-	// TODO(agamez): support ID with multiple slashes, eg: aaa/bbb/ccc
-	chartIDParts := strings.Split(unescapedChartID, "/")
-	if len(chartIDParts) != 2 {
-		return "", status.Errorf(codes.InvalidArgument, "Incorrect package ref dentifier, currently just 'foo/bar' patterns are supported: %s", chartID)
+	// Ensure it has at least a / character, like "my-repo/foo/bar"
+	if idx := strings.IndexByte(unescapedPackageID, '/'); idx >= 0 {
+		repo := unescapedPackageID[:idx]                    // first part of the package ID is the repo name
+		id := url.QueryEscape(unescapedPackageID[idx+1:])   // the rest is the package name, which should remain escaped
+		unescapedPackageID = fmt.Sprintf("%s/%s", repo, id) // combine the repo and package name like "my-repo/foo%2Fbar"
+	} else {
+		return "", status.Errorf(codes.InvalidArgument, "Incorrect package ref dentifier, expecting 'my-repo/foo/.../bar' %s", packageID)
 	}
-	return unescapedChartID, nil
+	return unescapedPackageID, nil
 }
 
-func SplitChartIdentifier(chartID string) (repoName, chartName string, err error) {
-	// getUnescapedChartID also ensures that there are two parts (ie. repo/chart-name only)
-	unescapedChartID, err := GetUnescapedChartID(chartID)
+// SplitPackageIdentifier takes a package id  and slplits it into repoName and packageName
+// Ex: 'repoName/foo/bar' becomes 'repoName/foo%2Fbar'
+func SplitPackageIdentifier(packageID string) (repoName, packageName string, err error) {
+	// GetUnescapedPackageID also ensures that there is at least a / character, like "my-repo/foo/bar" (ie. repoName/packageName only)
+	unescapedPackageID, err := GetUnescapedPackageID(packageID)
 	if err != nil {
 		return "", "", err
 	}
-	chartIDParts := strings.Split(unescapedChartID, "/")
-	return chartIDParts[0], chartIDParts[1], nil
+	packageIDParts := strings.Split(unescapedPackageID, "/")
+	return packageIDParts[0], packageIDParts[1], nil
 }
 
 // DefaultValuesFromSchema returns a yaml string with default values generated from an OpenAPI v3 Schema
 func DefaultValuesFromSchema(schema []byte, isCommentedOut bool) (string, error) {
-	if len(schema) == 0 {
-		return "", nil
-	}
-	// Deserialize the schema passed into the function
-	jsonSchemaProps := &apiextensions.JSONSchemaProps{}
-	if err := yaml.Unmarshal(schema, jsonSchemaProps); err != nil {
-		return "", err
-	}
-	structural, err := structuralschema.NewStructural(jsonSchemaProps)
-	if err != nil {
-		return "", err
-	}
-
-	// Generate the default values
-	unstructuredDefaultValues := make(map[string]interface{})
-	defaultValues(unstructuredDefaultValues, structural)
-	yamlDefaultValues, err := yaml.Marshal(unstructuredDefaultValues)
-	if err != nil {
-		return "", err
-	}
-	strYamlDefaultValues := string(yamlDefaultValues)
-
-	// If isCommentedOut, add a yaml comment character '#' to the beginning of each line
-	if isCommentedOut {
-		var sb strings.Builder
-		scanner := bufio.NewScanner(strings.NewReader(strYamlDefaultValues))
-		scanner.Split(bufio.ScanLines)
-		for scanner.Scan() {
-			sb.WriteString("# ")
-			sb.WriteString(fmt.Sprintln(scanner.Text()))
-		}
-		strYamlDefaultValues = sb.String()
-	}
-	return strYamlDefaultValues, nil
-}
-
-// defaultValuesFromSchema returns a yaml string with default values generated from an OpenAPI v3 Schema
-func defaultValuesFromSchema(schema []byte, isCommentedOut bool) (string, error) {
 	if len(schema) == 0 {
 		return "", nil
 	}
@@ -297,12 +290,13 @@ func defaultValues(x interface{}, s *structuralschema.Structural) {
 
 	switch x := x.(type) {
 	case map[string]interface{}:
-		for k, prop := range s.Properties { //nolint
+		for k := range s.Properties {
+			prop := s.Properties[k] // avoid implicit memory aliasing
 			// if Default for object is nil, scan first level of properties for any defaults to create an empty default
 			if prop.Default.Object == nil {
 				createDefault := false
 				if prop.Properties != nil {
-					for _, v := range prop.Properties { //nolint
+					for _, v := range prop.Properties {
 						if v.Default.Object != nil {
 							createDefault = true
 							break
@@ -375,4 +369,29 @@ func isNonNullableNull(x interface{}, s *structuralschema.Structural) bool {
 // isKindInt returns true if the item is an int
 func isKindInt(src interface{}) bool {
 	return src != nil && reflect.TypeOf(src).Kind() == reflect.Int
+}
+
+// translation to duration
+func ToDuration(duration string) (*metav1.Duration, error) {
+	if duration == "" {
+		return nil, nil
+	} else {
+		if d, err := time.ParseDuration(duration); err != nil {
+			return nil, err
+		} else {
+			return &metav1.Duration{Duration: d}, nil
+		}
+	}
+}
+
+// translation from duration
+func FromDuration(duration *metav1.Duration) string {
+	if duration == nil {
+		return ""
+	} else {
+		s := duration.Duration.String()
+		s = strings.Replace(s, "m0s", "m", 1)
+		s = strings.Replace(s, "h0m", "h", 1)
+		return s
+	}
 }

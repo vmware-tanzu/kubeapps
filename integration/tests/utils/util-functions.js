@@ -12,7 +12,11 @@ module.exports = {
 
   getDeploymentTimeout: () => {
     // TODO(castelblanque) Fine tune this for cases of tests with two deployments or more
-    return (process.env.TEST_TIMEOUT_MINUTES ? parseInt(process.env.TEST_TIMEOUT_MINUTES) / 2 : 2) * 60 * 1000;
+    return (
+      (process.env.TEST_TIMEOUT_MINUTES ? parseInt(process.env.TEST_TIMEOUT_MINUTES) / 2 : 2) *
+      60 *
+      1000
+    );
   },
 
   getUrl: path => `${process.env.INTEGRATION_ENTRYPOINT}${path}`,

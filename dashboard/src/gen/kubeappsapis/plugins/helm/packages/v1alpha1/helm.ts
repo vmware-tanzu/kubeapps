@@ -1,7 +1,5 @@
 /* eslint-disable */
-import Long from "long";
 import { grpc } from "@improbable-eng/grpc-web";
-import _m0 from "protobufjs/minimal";
 import {
   InstalledPackageReference,
   GetAvailablePackageSummariesRequest,
@@ -22,8 +20,22 @@ import {
   UpdateInstalledPackageResponse,
   DeleteInstalledPackageResponse,
   GetInstalledPackageResourceRefsResponse,
-} from "../../../../../kubeappsapis/core/packages/v1alpha1/packages";
+} from "../../../../core/packages/v1alpha1/packages";
+import {
+  AddPackageRepositoryRequest,
+  GetPackageRepositoryDetailRequest,
+  GetPackageRepositorySummariesRequest,
+  UpdatePackageRepositoryRequest,
+  DeletePackageRepositoryRequest,
+  AddPackageRepositoryResponse,
+  GetPackageRepositoryDetailResponse,
+  GetPackageRepositorySummariesResponse,
+  UpdatePackageRepositoryResponse,
+  DeletePackageRepositoryResponse,
+  DockerCredentials,
+} from "../../../../core/packages/v1alpha1/repositories";
 import { BrowserHeaders } from "browser-headers";
+import * as _m0 from "protobufjs/minimal";
 
 export const protobufPackage = "kubeappsapis.plugins.helm.packages.v1alpha1";
 
@@ -72,7 +84,57 @@ export interface RollbackInstalledPackageResponse {
   installedPackageRef?: InstalledPackageReference;
 }
 
-const baseInstalledPackageDetailCustomDataHelm: object = { releaseRevision: 0 };
+export interface SetUserManagedSecretsRequest {
+  value: boolean;
+}
+
+export interface SetUserManagedSecretsResponse {
+  value: boolean;
+}
+
+export interface ImagesPullSecret {
+  /** docker credentials secret reference */
+  secretRef: string | undefined;
+  /** docker credentials data */
+  credentials?: DockerCredentials | undefined;
+}
+
+/**
+ * HelmPackageRepositoryCustomDetail
+ *
+ * Custom details for a Helm repository
+ */
+export interface HelmPackageRepositoryCustomDetail {
+  /** docker registry credentials for pull secrets */
+  imagesPullSecret?: ImagesPullSecret;
+  /** list of oci repositories */
+  ociRepositories: string[];
+  /** filter rule to apply to the repository */
+  filterRule?: RepositoryFilterRule;
+  /** whether to perform validation on the repository */
+  performValidation: boolean;
+}
+
+/**
+ * RepositoryFilterRule
+ *
+ * JQ expression for filtering packages
+ */
+export interface RepositoryFilterRule {
+  /** jq string expression */
+  jq: string;
+  /** map of variables */
+  variables: { [key: string]: string };
+}
+
+export interface RepositoryFilterRule_VariablesEntry {
+  key: string;
+  value: string;
+}
+
+function createBaseInstalledPackageDetailCustomDataHelm(): InstalledPackageDetailCustomDataHelm {
+  return { releaseRevision: 0 };
+}
 
 export const InstalledPackageDetailCustomDataHelm = {
   encode(
@@ -88,9 +150,7 @@ export const InstalledPackageDetailCustomDataHelm = {
   decode(input: _m0.Reader | Uint8Array, length?: number): InstalledPackageDetailCustomDataHelm {
     const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
     let end = length === undefined ? reader.len : reader.pos + length;
-    const message = {
-      ...baseInstalledPackageDetailCustomDataHelm,
-    } as InstalledPackageDetailCustomDataHelm;
+    const message = createBaseInstalledPackageDetailCustomDataHelm();
     while (reader.pos < end) {
       const tag = reader.uint32();
       switch (tag >>> 3) {
@@ -106,39 +166,30 @@ export const InstalledPackageDetailCustomDataHelm = {
   },
 
   fromJSON(object: any): InstalledPackageDetailCustomDataHelm {
-    const message = {
-      ...baseInstalledPackageDetailCustomDataHelm,
-    } as InstalledPackageDetailCustomDataHelm;
-    if (object.releaseRevision !== undefined && object.releaseRevision !== null) {
-      message.releaseRevision = Number(object.releaseRevision);
-    } else {
-      message.releaseRevision = 0;
-    }
-    return message;
+    return {
+      releaseRevision: isSet(object.releaseRevision) ? Number(object.releaseRevision) : 0,
+    };
   },
 
   toJSON(message: InstalledPackageDetailCustomDataHelm): unknown {
     const obj: any = {};
-    message.releaseRevision !== undefined && (obj.releaseRevision = message.releaseRevision);
+    message.releaseRevision !== undefined &&
+      (obj.releaseRevision = Math.round(message.releaseRevision));
     return obj;
   },
 
-  fromPartial(
-    object: DeepPartial<InstalledPackageDetailCustomDataHelm>,
+  fromPartial<I extends Exact<DeepPartial<InstalledPackageDetailCustomDataHelm>, I>>(
+    object: I,
   ): InstalledPackageDetailCustomDataHelm {
-    const message = {
-      ...baseInstalledPackageDetailCustomDataHelm,
-    } as InstalledPackageDetailCustomDataHelm;
-    if (object.releaseRevision !== undefined && object.releaseRevision !== null) {
-      message.releaseRevision = object.releaseRevision;
-    } else {
-      message.releaseRevision = 0;
-    }
+    const message = createBaseInstalledPackageDetailCustomDataHelm();
+    message.releaseRevision = object.releaseRevision ?? 0;
     return message;
   },
 };
 
-const baseRollbackInstalledPackageRequest: object = { releaseRevision: 0 };
+function createBaseRollbackInstalledPackageRequest(): RollbackInstalledPackageRequest {
+  return { installedPackageRef: undefined, releaseRevision: 0 };
+}
 
 export const RollbackInstalledPackageRequest = {
   encode(
@@ -160,9 +211,7 @@ export const RollbackInstalledPackageRequest = {
   decode(input: _m0.Reader | Uint8Array, length?: number): RollbackInstalledPackageRequest {
     const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
     let end = length === undefined ? reader.len : reader.pos + length;
-    const message = {
-      ...baseRollbackInstalledPackageRequest,
-    } as RollbackInstalledPackageRequest;
+    const message = createBaseRollbackInstalledPackageRequest();
     while (reader.pos < end) {
       const tag = reader.uint32();
       switch (tag >>> 3) {
@@ -181,20 +230,12 @@ export const RollbackInstalledPackageRequest = {
   },
 
   fromJSON(object: any): RollbackInstalledPackageRequest {
-    const message = {
-      ...baseRollbackInstalledPackageRequest,
-    } as RollbackInstalledPackageRequest;
-    if (object.installedPackageRef !== undefined && object.installedPackageRef !== null) {
-      message.installedPackageRef = InstalledPackageReference.fromJSON(object.installedPackageRef);
-    } else {
-      message.installedPackageRef = undefined;
-    }
-    if (object.releaseRevision !== undefined && object.releaseRevision !== null) {
-      message.releaseRevision = Number(object.releaseRevision);
-    } else {
-      message.releaseRevision = 0;
-    }
-    return message;
+    return {
+      installedPackageRef: isSet(object.installedPackageRef)
+        ? InstalledPackageReference.fromJSON(object.installedPackageRef)
+        : undefined,
+      releaseRevision: isSet(object.releaseRevision) ? Number(object.releaseRevision) : 0,
+    };
   },
 
   toJSON(message: RollbackInstalledPackageRequest): unknown {
@@ -203,33 +244,27 @@ export const RollbackInstalledPackageRequest = {
       (obj.installedPackageRef = message.installedPackageRef
         ? InstalledPackageReference.toJSON(message.installedPackageRef)
         : undefined);
-    message.releaseRevision !== undefined && (obj.releaseRevision = message.releaseRevision);
+    message.releaseRevision !== undefined &&
+      (obj.releaseRevision = Math.round(message.releaseRevision));
     return obj;
   },
 
-  fromPartial(
-    object: DeepPartial<RollbackInstalledPackageRequest>,
+  fromPartial<I extends Exact<DeepPartial<RollbackInstalledPackageRequest>, I>>(
+    object: I,
   ): RollbackInstalledPackageRequest {
-    const message = {
-      ...baseRollbackInstalledPackageRequest,
-    } as RollbackInstalledPackageRequest;
-    if (object.installedPackageRef !== undefined && object.installedPackageRef !== null) {
-      message.installedPackageRef = InstalledPackageReference.fromPartial(
-        object.installedPackageRef,
-      );
-    } else {
-      message.installedPackageRef = undefined;
-    }
-    if (object.releaseRevision !== undefined && object.releaseRevision !== null) {
-      message.releaseRevision = object.releaseRevision;
-    } else {
-      message.releaseRevision = 0;
-    }
+    const message = createBaseRollbackInstalledPackageRequest();
+    message.installedPackageRef =
+      object.installedPackageRef !== undefined && object.installedPackageRef !== null
+        ? InstalledPackageReference.fromPartial(object.installedPackageRef)
+        : undefined;
+    message.releaseRevision = object.releaseRevision ?? 0;
     return message;
   },
 };
 
-const baseRollbackInstalledPackageResponse: object = {};
+function createBaseRollbackInstalledPackageResponse(): RollbackInstalledPackageResponse {
+  return { installedPackageRef: undefined };
+}
 
 export const RollbackInstalledPackageResponse = {
   encode(
@@ -248,9 +283,7 @@ export const RollbackInstalledPackageResponse = {
   decode(input: _m0.Reader | Uint8Array, length?: number): RollbackInstalledPackageResponse {
     const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
     let end = length === undefined ? reader.len : reader.pos + length;
-    const message = {
-      ...baseRollbackInstalledPackageResponse,
-    } as RollbackInstalledPackageResponse;
+    const message = createBaseRollbackInstalledPackageResponse();
     while (reader.pos < end) {
       const tag = reader.uint32();
       switch (tag >>> 3) {
@@ -266,15 +299,11 @@ export const RollbackInstalledPackageResponse = {
   },
 
   fromJSON(object: any): RollbackInstalledPackageResponse {
-    const message = {
-      ...baseRollbackInstalledPackageResponse,
-    } as RollbackInstalledPackageResponse;
-    if (object.installedPackageRef !== undefined && object.installedPackageRef !== null) {
-      message.installedPackageRef = InstalledPackageReference.fromJSON(object.installedPackageRef);
-    } else {
-      message.installedPackageRef = undefined;
-    }
-    return message;
+    return {
+      installedPackageRef: isSet(object.installedPackageRef)
+        ? InstalledPackageReference.fromJSON(object.installedPackageRef)
+        : undefined,
+    };
   },
 
   toJSON(message: RollbackInstalledPackageResponse): unknown {
@@ -286,19 +315,447 @@ export const RollbackInstalledPackageResponse = {
     return obj;
   },
 
-  fromPartial(
-    object: DeepPartial<RollbackInstalledPackageResponse>,
+  fromPartial<I extends Exact<DeepPartial<RollbackInstalledPackageResponse>, I>>(
+    object: I,
   ): RollbackInstalledPackageResponse {
-    const message = {
-      ...baseRollbackInstalledPackageResponse,
-    } as RollbackInstalledPackageResponse;
-    if (object.installedPackageRef !== undefined && object.installedPackageRef !== null) {
-      message.installedPackageRef = InstalledPackageReference.fromPartial(
-        object.installedPackageRef,
-      );
-    } else {
-      message.installedPackageRef = undefined;
+    const message = createBaseRollbackInstalledPackageResponse();
+    message.installedPackageRef =
+      object.installedPackageRef !== undefined && object.installedPackageRef !== null
+        ? InstalledPackageReference.fromPartial(object.installedPackageRef)
+        : undefined;
+    return message;
+  },
+};
+
+function createBaseSetUserManagedSecretsRequest(): SetUserManagedSecretsRequest {
+  return { value: false };
+}
+
+export const SetUserManagedSecretsRequest = {
+  encode(
+    message: SetUserManagedSecretsRequest,
+    writer: _m0.Writer = _m0.Writer.create(),
+  ): _m0.Writer {
+    if (message.value === true) {
+      writer.uint32(8).bool(message.value);
     }
+    return writer;
+  },
+
+  decode(input: _m0.Reader | Uint8Array, length?: number): SetUserManagedSecretsRequest {
+    const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseSetUserManagedSecretsRequest();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1:
+          message.value = reader.bool();
+          break;
+        default:
+          reader.skipType(tag & 7);
+          break;
+      }
+    }
+    return message;
+  },
+
+  fromJSON(object: any): SetUserManagedSecretsRequest {
+    return {
+      value: isSet(object.value) ? Boolean(object.value) : false,
+    };
+  },
+
+  toJSON(message: SetUserManagedSecretsRequest): unknown {
+    const obj: any = {};
+    message.value !== undefined && (obj.value = message.value);
+    return obj;
+  },
+
+  fromPartial<I extends Exact<DeepPartial<SetUserManagedSecretsRequest>, I>>(
+    object: I,
+  ): SetUserManagedSecretsRequest {
+    const message = createBaseSetUserManagedSecretsRequest();
+    message.value = object.value ?? false;
+    return message;
+  },
+};
+
+function createBaseSetUserManagedSecretsResponse(): SetUserManagedSecretsResponse {
+  return { value: false };
+}
+
+export const SetUserManagedSecretsResponse = {
+  encode(
+    message: SetUserManagedSecretsResponse,
+    writer: _m0.Writer = _m0.Writer.create(),
+  ): _m0.Writer {
+    if (message.value === true) {
+      writer.uint32(8).bool(message.value);
+    }
+    return writer;
+  },
+
+  decode(input: _m0.Reader | Uint8Array, length?: number): SetUserManagedSecretsResponse {
+    const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseSetUserManagedSecretsResponse();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1:
+          message.value = reader.bool();
+          break;
+        default:
+          reader.skipType(tag & 7);
+          break;
+      }
+    }
+    return message;
+  },
+
+  fromJSON(object: any): SetUserManagedSecretsResponse {
+    return {
+      value: isSet(object.value) ? Boolean(object.value) : false,
+    };
+  },
+
+  toJSON(message: SetUserManagedSecretsResponse): unknown {
+    const obj: any = {};
+    message.value !== undefined && (obj.value = message.value);
+    return obj;
+  },
+
+  fromPartial<I extends Exact<DeepPartial<SetUserManagedSecretsResponse>, I>>(
+    object: I,
+  ): SetUserManagedSecretsResponse {
+    const message = createBaseSetUserManagedSecretsResponse();
+    message.value = object.value ?? false;
+    return message;
+  },
+};
+
+function createBaseImagesPullSecret(): ImagesPullSecret {
+  return { secretRef: undefined, credentials: undefined };
+}
+
+export const ImagesPullSecret = {
+  encode(message: ImagesPullSecret, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
+    if (message.secretRef !== undefined) {
+      writer.uint32(10).string(message.secretRef);
+    }
+    if (message.credentials !== undefined) {
+      DockerCredentials.encode(message.credentials, writer.uint32(18).fork()).ldelim();
+    }
+    return writer;
+  },
+
+  decode(input: _m0.Reader | Uint8Array, length?: number): ImagesPullSecret {
+    const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseImagesPullSecret();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1:
+          message.secretRef = reader.string();
+          break;
+        case 2:
+          message.credentials = DockerCredentials.decode(reader, reader.uint32());
+          break;
+        default:
+          reader.skipType(tag & 7);
+          break;
+      }
+    }
+    return message;
+  },
+
+  fromJSON(object: any): ImagesPullSecret {
+    return {
+      secretRef: isSet(object.secretRef) ? String(object.secretRef) : undefined,
+      credentials: isSet(object.credentials)
+        ? DockerCredentials.fromJSON(object.credentials)
+        : undefined,
+    };
+  },
+
+  toJSON(message: ImagesPullSecret): unknown {
+    const obj: any = {};
+    message.secretRef !== undefined && (obj.secretRef = message.secretRef);
+    message.credentials !== undefined &&
+      (obj.credentials = message.credentials
+        ? DockerCredentials.toJSON(message.credentials)
+        : undefined);
+    return obj;
+  },
+
+  fromPartial<I extends Exact<DeepPartial<ImagesPullSecret>, I>>(object: I): ImagesPullSecret {
+    const message = createBaseImagesPullSecret();
+    message.secretRef = object.secretRef ?? undefined;
+    message.credentials =
+      object.credentials !== undefined && object.credentials !== null
+        ? DockerCredentials.fromPartial(object.credentials)
+        : undefined;
+    return message;
+  },
+};
+
+function createBaseHelmPackageRepositoryCustomDetail(): HelmPackageRepositoryCustomDetail {
+  return {
+    imagesPullSecret: undefined,
+    ociRepositories: [],
+    filterRule: undefined,
+    performValidation: false,
+  };
+}
+
+export const HelmPackageRepositoryCustomDetail = {
+  encode(
+    message: HelmPackageRepositoryCustomDetail,
+    writer: _m0.Writer = _m0.Writer.create(),
+  ): _m0.Writer {
+    if (message.imagesPullSecret !== undefined) {
+      ImagesPullSecret.encode(message.imagesPullSecret, writer.uint32(10).fork()).ldelim();
+    }
+    for (const v of message.ociRepositories) {
+      writer.uint32(18).string(v!);
+    }
+    if (message.filterRule !== undefined) {
+      RepositoryFilterRule.encode(message.filterRule, writer.uint32(26).fork()).ldelim();
+    }
+    if (message.performValidation === true) {
+      writer.uint32(32).bool(message.performValidation);
+    }
+    return writer;
+  },
+
+  decode(input: _m0.Reader | Uint8Array, length?: number): HelmPackageRepositoryCustomDetail {
+    const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseHelmPackageRepositoryCustomDetail();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1:
+          message.imagesPullSecret = ImagesPullSecret.decode(reader, reader.uint32());
+          break;
+        case 2:
+          message.ociRepositories.push(reader.string());
+          break;
+        case 3:
+          message.filterRule = RepositoryFilterRule.decode(reader, reader.uint32());
+          break;
+        case 4:
+          message.performValidation = reader.bool();
+          break;
+        default:
+          reader.skipType(tag & 7);
+          break;
+      }
+    }
+    return message;
+  },
+
+  fromJSON(object: any): HelmPackageRepositoryCustomDetail {
+    return {
+      imagesPullSecret: isSet(object.imagesPullSecret)
+        ? ImagesPullSecret.fromJSON(object.imagesPullSecret)
+        : undefined,
+      ociRepositories: Array.isArray(object?.ociRepositories)
+        ? object.ociRepositories.map((e: any) => String(e))
+        : [],
+      filterRule: isSet(object.filterRule)
+        ? RepositoryFilterRule.fromJSON(object.filterRule)
+        : undefined,
+      performValidation: isSet(object.performValidation)
+        ? Boolean(object.performValidation)
+        : false,
+    };
+  },
+
+  toJSON(message: HelmPackageRepositoryCustomDetail): unknown {
+    const obj: any = {};
+    message.imagesPullSecret !== undefined &&
+      (obj.imagesPullSecret = message.imagesPullSecret
+        ? ImagesPullSecret.toJSON(message.imagesPullSecret)
+        : undefined);
+    if (message.ociRepositories) {
+      obj.ociRepositories = message.ociRepositories.map(e => e);
+    } else {
+      obj.ociRepositories = [];
+    }
+    message.filterRule !== undefined &&
+      (obj.filterRule = message.filterRule
+        ? RepositoryFilterRule.toJSON(message.filterRule)
+        : undefined);
+    message.performValidation !== undefined && (obj.performValidation = message.performValidation);
+    return obj;
+  },
+
+  fromPartial<I extends Exact<DeepPartial<HelmPackageRepositoryCustomDetail>, I>>(
+    object: I,
+  ): HelmPackageRepositoryCustomDetail {
+    const message = createBaseHelmPackageRepositoryCustomDetail();
+    message.imagesPullSecret =
+      object.imagesPullSecret !== undefined && object.imagesPullSecret !== null
+        ? ImagesPullSecret.fromPartial(object.imagesPullSecret)
+        : undefined;
+    message.ociRepositories = object.ociRepositories?.map(e => e) || [];
+    message.filterRule =
+      object.filterRule !== undefined && object.filterRule !== null
+        ? RepositoryFilterRule.fromPartial(object.filterRule)
+        : undefined;
+    message.performValidation = object.performValidation ?? false;
+    return message;
+  },
+};
+
+function createBaseRepositoryFilterRule(): RepositoryFilterRule {
+  return { jq: "", variables: {} };
+}
+
+export const RepositoryFilterRule = {
+  encode(message: RepositoryFilterRule, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
+    if (message.jq !== "") {
+      writer.uint32(10).string(message.jq);
+    }
+    Object.entries(message.variables).forEach(([key, value]) => {
+      RepositoryFilterRule_VariablesEntry.encode(
+        { key: key as any, value },
+        writer.uint32(34).fork(),
+      ).ldelim();
+    });
+    return writer;
+  },
+
+  decode(input: _m0.Reader | Uint8Array, length?: number): RepositoryFilterRule {
+    const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseRepositoryFilterRule();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1:
+          message.jq = reader.string();
+          break;
+        case 4:
+          const entry4 = RepositoryFilterRule_VariablesEntry.decode(reader, reader.uint32());
+          if (entry4.value !== undefined) {
+            message.variables[entry4.key] = entry4.value;
+          }
+          break;
+        default:
+          reader.skipType(tag & 7);
+          break;
+      }
+    }
+    return message;
+  },
+
+  fromJSON(object: any): RepositoryFilterRule {
+    return {
+      jq: isSet(object.jq) ? String(object.jq) : "",
+      variables: isObject(object.variables)
+        ? Object.entries(object.variables).reduce<{ [key: string]: string }>(
+            (acc, [key, value]) => {
+              acc[key] = String(value);
+              return acc;
+            },
+            {},
+          )
+        : {},
+    };
+  },
+
+  toJSON(message: RepositoryFilterRule): unknown {
+    const obj: any = {};
+    message.jq !== undefined && (obj.jq = message.jq);
+    obj.variables = {};
+    if (message.variables) {
+      Object.entries(message.variables).forEach(([k, v]) => {
+        obj.variables[k] = v;
+      });
+    }
+    return obj;
+  },
+
+  fromPartial<I extends Exact<DeepPartial<RepositoryFilterRule>, I>>(
+    object: I,
+  ): RepositoryFilterRule {
+    const message = createBaseRepositoryFilterRule();
+    message.jq = object.jq ?? "";
+    message.variables = Object.entries(object.variables ?? {}).reduce<{
+      [key: string]: string;
+    }>((acc, [key, value]) => {
+      if (value !== undefined) {
+        acc[key] = String(value);
+      }
+      return acc;
+    }, {});
+    return message;
+  },
+};
+
+function createBaseRepositoryFilterRule_VariablesEntry(): RepositoryFilterRule_VariablesEntry {
+  return { key: "", value: "" };
+}
+
+export const RepositoryFilterRule_VariablesEntry = {
+  encode(
+    message: RepositoryFilterRule_VariablesEntry,
+    writer: _m0.Writer = _m0.Writer.create(),
+  ): _m0.Writer {
+    if (message.key !== "") {
+      writer.uint32(10).string(message.key);
+    }
+    if (message.value !== "") {
+      writer.uint32(18).string(message.value);
+    }
+    return writer;
+  },
+
+  decode(input: _m0.Reader | Uint8Array, length?: number): RepositoryFilterRule_VariablesEntry {
+    const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseRepositoryFilterRule_VariablesEntry();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1:
+          message.key = reader.string();
+          break;
+        case 2:
+          message.value = reader.string();
+          break;
+        default:
+          reader.skipType(tag & 7);
+          break;
+      }
+    }
+    return message;
+  },
+
+  fromJSON(object: any): RepositoryFilterRule_VariablesEntry {
+    return {
+      key: isSet(object.key) ? String(object.key) : "",
+      value: isSet(object.value) ? String(object.value) : "",
+    };
+  },
+
+  toJSON(message: RepositoryFilterRule_VariablesEntry): unknown {
+    const obj: any = {};
+    message.key !== undefined && (obj.key = message.key);
+    message.value !== undefined && (obj.value = message.value);
+    return obj;
+  },
+
+  fromPartial<I extends Exact<DeepPartial<RepositoryFilterRule_VariablesEntry>, I>>(
+    object: I,
+  ): RepositoryFilterRule_VariablesEntry {
+    const message = createBaseRepositoryFilterRule_VariablesEntry();
+    message.key = object.key ?? "";
+    message.value = object.value ?? "";
     return message;
   },
 };
@@ -711,6 +1168,251 @@ export const HelmPackagesServiceGetInstalledPackageResourceRefsDesc: UnaryMethod
   } as any,
 };
 
+export interface HelmRepositoriesService {
+  /** AddPackageRepository add an existing package repository to the set of ones already managed by the Helm plugin */
+  AddPackageRepository(
+    request: DeepPartial<AddPackageRepositoryRequest>,
+    metadata?: grpc.Metadata,
+  ): Promise<AddPackageRepositoryResponse>;
+  GetPackageRepositoryDetail(
+    request: DeepPartial<GetPackageRepositoryDetailRequest>,
+    metadata?: grpc.Metadata,
+  ): Promise<GetPackageRepositoryDetailResponse>;
+  GetPackageRepositorySummaries(
+    request: DeepPartial<GetPackageRepositorySummariesRequest>,
+    metadata?: grpc.Metadata,
+  ): Promise<GetPackageRepositorySummariesResponse>;
+  UpdatePackageRepository(
+    request: DeepPartial<UpdatePackageRepositoryRequest>,
+    metadata?: grpc.Metadata,
+  ): Promise<UpdatePackageRepositoryResponse>;
+  DeletePackageRepository(
+    request: DeepPartial<DeletePackageRepositoryRequest>,
+    metadata?: grpc.Metadata,
+  ): Promise<DeletePackageRepositoryResponse>;
+  /** this endpoint only exists for the purpose of integration tests */
+  SetUserManagedSecrets(
+    request: DeepPartial<SetUserManagedSecretsRequest>,
+    metadata?: grpc.Metadata,
+  ): Promise<SetUserManagedSecretsResponse>;
+}
+
+export class HelmRepositoriesServiceClientImpl implements HelmRepositoriesService {
+  private readonly rpc: Rpc;
+
+  constructor(rpc: Rpc) {
+    this.rpc = rpc;
+    this.AddPackageRepository = this.AddPackageRepository.bind(this);
+    this.GetPackageRepositoryDetail = this.GetPackageRepositoryDetail.bind(this);
+    this.GetPackageRepositorySummaries = this.GetPackageRepositorySummaries.bind(this);
+    this.UpdatePackageRepository = this.UpdatePackageRepository.bind(this);
+    this.DeletePackageRepository = this.DeletePackageRepository.bind(this);
+    this.SetUserManagedSecrets = this.SetUserManagedSecrets.bind(this);
+  }
+
+  AddPackageRepository(
+    request: DeepPartial<AddPackageRepositoryRequest>,
+    metadata?: grpc.Metadata,
+  ): Promise<AddPackageRepositoryResponse> {
+    return this.rpc.unary(
+      HelmRepositoriesServiceAddPackageRepositoryDesc,
+      AddPackageRepositoryRequest.fromPartial(request),
+      metadata,
+    );
+  }
+
+  GetPackageRepositoryDetail(
+    request: DeepPartial<GetPackageRepositoryDetailRequest>,
+    metadata?: grpc.Metadata,
+  ): Promise<GetPackageRepositoryDetailResponse> {
+    return this.rpc.unary(
+      HelmRepositoriesServiceGetPackageRepositoryDetailDesc,
+      GetPackageRepositoryDetailRequest.fromPartial(request),
+      metadata,
+    );
+  }
+
+  GetPackageRepositorySummaries(
+    request: DeepPartial<GetPackageRepositorySummariesRequest>,
+    metadata?: grpc.Metadata,
+  ): Promise<GetPackageRepositorySummariesResponse> {
+    return this.rpc.unary(
+      HelmRepositoriesServiceGetPackageRepositorySummariesDesc,
+      GetPackageRepositorySummariesRequest.fromPartial(request),
+      metadata,
+    );
+  }
+
+  UpdatePackageRepository(
+    request: DeepPartial<UpdatePackageRepositoryRequest>,
+    metadata?: grpc.Metadata,
+  ): Promise<UpdatePackageRepositoryResponse> {
+    return this.rpc.unary(
+      HelmRepositoriesServiceUpdatePackageRepositoryDesc,
+      UpdatePackageRepositoryRequest.fromPartial(request),
+      metadata,
+    );
+  }
+
+  DeletePackageRepository(
+    request: DeepPartial<DeletePackageRepositoryRequest>,
+    metadata?: grpc.Metadata,
+  ): Promise<DeletePackageRepositoryResponse> {
+    return this.rpc.unary(
+      HelmRepositoriesServiceDeletePackageRepositoryDesc,
+      DeletePackageRepositoryRequest.fromPartial(request),
+      metadata,
+    );
+  }
+
+  SetUserManagedSecrets(
+    request: DeepPartial<SetUserManagedSecretsRequest>,
+    metadata?: grpc.Metadata,
+  ): Promise<SetUserManagedSecretsResponse> {
+    return this.rpc.unary(
+      HelmRepositoriesServiceSetUserManagedSecretsDesc,
+      SetUserManagedSecretsRequest.fromPartial(request),
+      metadata,
+    );
+  }
+}
+
+export const HelmRepositoriesServiceDesc = {
+  serviceName: "kubeappsapis.plugins.helm.packages.v1alpha1.HelmRepositoriesService",
+};
+
+export const HelmRepositoriesServiceAddPackageRepositoryDesc: UnaryMethodDefinitionish = {
+  methodName: "AddPackageRepository",
+  service: HelmRepositoriesServiceDesc,
+  requestStream: false,
+  responseStream: false,
+  requestType: {
+    serializeBinary() {
+      return AddPackageRepositoryRequest.encode(this).finish();
+    },
+  } as any,
+  responseType: {
+    deserializeBinary(data: Uint8Array) {
+      return {
+        ...AddPackageRepositoryResponse.decode(data),
+        toObject() {
+          return this;
+        },
+      };
+    },
+  } as any,
+};
+
+export const HelmRepositoriesServiceGetPackageRepositoryDetailDesc: UnaryMethodDefinitionish = {
+  methodName: "GetPackageRepositoryDetail",
+  service: HelmRepositoriesServiceDesc,
+  requestStream: false,
+  responseStream: false,
+  requestType: {
+    serializeBinary() {
+      return GetPackageRepositoryDetailRequest.encode(this).finish();
+    },
+  } as any,
+  responseType: {
+    deserializeBinary(data: Uint8Array) {
+      return {
+        ...GetPackageRepositoryDetailResponse.decode(data),
+        toObject() {
+          return this;
+        },
+      };
+    },
+  } as any,
+};
+
+export const HelmRepositoriesServiceGetPackageRepositorySummariesDesc: UnaryMethodDefinitionish = {
+  methodName: "GetPackageRepositorySummaries",
+  service: HelmRepositoriesServiceDesc,
+  requestStream: false,
+  responseStream: false,
+  requestType: {
+    serializeBinary() {
+      return GetPackageRepositorySummariesRequest.encode(this).finish();
+    },
+  } as any,
+  responseType: {
+    deserializeBinary(data: Uint8Array) {
+      return {
+        ...GetPackageRepositorySummariesResponse.decode(data),
+        toObject() {
+          return this;
+        },
+      };
+    },
+  } as any,
+};
+
+export const HelmRepositoriesServiceUpdatePackageRepositoryDesc: UnaryMethodDefinitionish = {
+  methodName: "UpdatePackageRepository",
+  service: HelmRepositoriesServiceDesc,
+  requestStream: false,
+  responseStream: false,
+  requestType: {
+    serializeBinary() {
+      return UpdatePackageRepositoryRequest.encode(this).finish();
+    },
+  } as any,
+  responseType: {
+    deserializeBinary(data: Uint8Array) {
+      return {
+        ...UpdatePackageRepositoryResponse.decode(data),
+        toObject() {
+          return this;
+        },
+      };
+    },
+  } as any,
+};
+
+export const HelmRepositoriesServiceDeletePackageRepositoryDesc: UnaryMethodDefinitionish = {
+  methodName: "DeletePackageRepository",
+  service: HelmRepositoriesServiceDesc,
+  requestStream: false,
+  responseStream: false,
+  requestType: {
+    serializeBinary() {
+      return DeletePackageRepositoryRequest.encode(this).finish();
+    },
+  } as any,
+  responseType: {
+    deserializeBinary(data: Uint8Array) {
+      return {
+        ...DeletePackageRepositoryResponse.decode(data),
+        toObject() {
+          return this;
+        },
+      };
+    },
+  } as any,
+};
+
+export const HelmRepositoriesServiceSetUserManagedSecretsDesc: UnaryMethodDefinitionish = {
+  methodName: "SetUserManagedSecrets",
+  service: HelmRepositoriesServiceDesc,
+  requestStream: false,
+  responseStream: false,
+  requestType: {
+    serializeBinary() {
+      return SetUserManagedSecretsRequest.encode(this).finish();
+    },
+  } as any,
+  responseType: {
+    deserializeBinary(data: Uint8Array) {
+      return {
+        ...SetUserManagedSecretsResponse.decode(data),
+        toObject() {
+          return this;
+        },
+      };
+    },
+  } as any,
+};
+
 interface UnaryMethodDefinitionishR extends grpc.UnaryMethodDefinition<any, any> {
   requestStream: any;
   responseStream: any;
@@ -784,6 +1486,7 @@ export class GrpcWebImpl {
 }
 
 type Builtin = Date | Function | Uint8Array | string | number | boolean | undefined;
+
 export type DeepPartial<T> = T extends Builtin
   ? T
   : T extends Array<infer U>
@@ -794,7 +1497,15 @@ export type DeepPartial<T> = T extends Builtin
   ? { [K in keyof T]?: DeepPartial<T[K]> }
   : Partial<T>;
 
-if (_m0.util.Long !== Long) {
-  _m0.util.Long = Long as any;
-  _m0.configure();
+type KeysOfUnion<T> = T extends T ? keyof T : never;
+export type Exact<P, I extends P> = P extends Builtin
+  ? P
+  : P & { [K in keyof P]: Exact<P[K], I[K]> } & Record<Exclude<keyof I, KeysOfUnion<P>>, never>;
+
+function isObject(value: any): boolean {
+  return typeof value === "object" && value !== null;
+}
+
+function isSet(value: any): boolean {
+  return value !== null && value !== undefined;
 }

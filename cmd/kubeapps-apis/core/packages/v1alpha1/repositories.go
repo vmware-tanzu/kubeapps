@@ -46,7 +46,7 @@ func NewRepositoriesServer(pkgingPlugins []pluginsv1alpha1.PluginWithServer) (*r
 			plugin: p.Plugin,
 			server: pkgsSrv,
 		}
-		log.Infof("Registered %v for core.packaging.v1alpha1 aggregation.", p.Plugin)
+		log.Infof("Registered %v for core.packaging.v1alpha1 repositories aggregation.", p.Plugin)
 	}
 	return &repositoriesServer{
 		pluginsWithServers: pluginsWithServer,
@@ -54,8 +54,7 @@ func NewRepositoriesServer(pkgingPlugins []pluginsv1alpha1.PluginWithServer) (*r
 }
 
 func (s repositoriesServer) AddPackageRepository(ctx context.Context, request *packages.AddPackageRepositoryRequest) (*packages.AddPackageRepositoryResponse, error) {
-	contextMsg := fmt.Sprintf("(name=%q, cluster=%q, namespace=%q)", request.GetName(), request.GetContext().GetCluster(), request.GetContext().GetNamespace())
-	log.Infof("+core AddPackageRepository %s", contextMsg)
+	log.InfoS("+core AddPackageRepository", "name", request.GetName(), "cluster", request.GetContext().GetCluster(), "namespace", request.GetContext().GetNamespace())
 
 	if request.GetPlugin() == nil {
 		return nil, status.Errorf(codes.InvalidArgument, "Unable to retrieve the plugin (missing request.Plugin)")
@@ -82,8 +81,7 @@ func (s repositoriesServer) AddPackageRepository(ctx context.Context, request *p
 }
 
 func (s repositoriesServer) GetPackageRepositoryDetail(ctx context.Context, request *packages.GetPackageRepositoryDetailRequest) (*packages.GetPackageRepositoryDetailResponse, error) {
-	contextMsg := fmt.Sprintf("(identifier=%q, cluster=%q, namespace=%q)", request.GetPackageRepoRef().GetIdentifier(), request.GetPackageRepoRef().GetContext().GetCluster(), request.GetPackageRepoRef().GetContext().GetNamespace())
-	log.Infof("+core GetPackageRepositoryDetail %s", contextMsg)
+	log.InfoS("+core GetPackageRepositoryDetail", "identifier", request.GetPackageRepoRef().GetIdentifier(), "cluster", request.GetPackageRepoRef().GetContext().GetCluster(), "namespace", request.GetPackageRepoRef().GetContext().GetNamespace())
 
 	if request.GetPackageRepoRef().GetPlugin() == nil {
 		return nil, status.Errorf(codes.InvalidArgument, "Unable to retrieve the plugin (missing PackageRepoRef.Plugin)")
@@ -114,8 +112,7 @@ func (s repositoriesServer) GetPackageRepositoryDetail(ctx context.Context, requ
 
 // GetPackageRepositorySummaries returns the package repository summaries based on the request.
 func (s repositoriesServer) GetPackageRepositorySummaries(ctx context.Context, request *packages.GetPackageRepositorySummariesRequest) (*packages.GetPackageRepositorySummariesResponse, error) {
-	contextMsg := fmt.Sprintf("(cluster=%q, namespace=%q)", request.GetContext().GetCluster(), request.GetContext().GetNamespace())
-	log.Infof("+core GetPackageRepositorySummaries %s", contextMsg)
+	log.InfoS("+core GetPackageRepositorySummaries", "cluster", request.GetContext().GetCluster(), "namespace", request.GetContext().GetNamespace())
 
 	// Aggregate the response for each plugin
 	summaries := []*packages.PackageRepositorySummary{}
@@ -124,6 +121,10 @@ func (s repositoriesServer) GetPackageRepositorySummaries(ctx context.Context, r
 		response, err := p.server.GetPackageRepositorySummaries(ctx, request)
 		if err != nil {
 			return nil, status.Errorf(status.Convert(err).Code(), "Invalid GetPackageRepositorySummaries response from the plugin %v: %v", p.plugin.Name, err)
+		}
+		if response == nil {
+			log.Infof("core GetPackageRepositorySummaries received nil response from plugin %s / %s", p.plugin.GetName(), p.plugin.GetVersion())
+			continue
 		}
 
 		// Add the plugin for the pkgs
@@ -151,11 +152,7 @@ func (s repositoriesServer) GetPackageRepositorySummaries(ctx context.Context, r
 
 // UpdatePackageRepository updates a package repository using configured plugins.
 func (s repositoriesServer) UpdatePackageRepository(ctx context.Context, request *packages.UpdatePackageRepositoryRequest) (*packages.UpdatePackageRepositoryResponse, error) {
-	contextMsg := fmt.Sprintf("(cluster=%q, namespace=%q, id=%q)",
-		request.GetPackageRepoRef().GetContext().GetCluster(),
-		request.GetPackageRepoRef().GetContext().GetNamespace(),
-		request.GetPackageRepoRef().GetIdentifier())
-	log.Infof("+core UpdatePackageRepository %s", contextMsg)
+	log.InfoS("+core UpdatePackageRepository", "cluster", request.GetPackageRepoRef().GetContext().GetCluster(), "namespace", request.GetPackageRepoRef().GetContext().GetNamespace(), "id", request.GetPackageRepoRef().GetIdentifier())
 
 	if request.GetPackageRepoRef().GetPlugin() == nil {
 		return nil, status.Errorf(codes.InvalidArgument, "Unable to retrieve the plugin (missing PackageRepoRef.Plugin)")
@@ -177,6 +174,30 @@ func (s repositoriesServer) UpdatePackageRepository(ctx context.Context, request
 	// Validate the plugin response
 	if response.PackageRepoRef == nil {
 		return nil, status.Errorf(codes.Internal, "Invalid UpdatePackageRepository response from the plugin %v: %v", pluginWithServer.plugin.Name, err)
+	}
+
+	return response, nil
+}
+
+// DeletePackageRepository deletes a package repository using configured plugins.
+func (s repositoriesServer) DeletePackageRepository(ctx context.Context, request *packages.DeletePackageRepositoryRequest) (*packages.DeletePackageRepositoryResponse, error) {
+	log.InfoS("+core DeletePackageRepository", "cluster", request.GetPackageRepoRef().GetContext().GetCluster(), "namespace", request.GetPackageRepoRef().GetContext().GetNamespace(), "id", request.GetPackageRepoRef().GetIdentifier())
+
+	if request.GetPackageRepoRef().GetPlugin() == nil {
+		return nil, status.Errorf(codes.InvalidArgument, "Unable to retrieve the plugin (missing PackageRepoRef.Plugin)")
+	}
+
+	// Retrieve the plugin with server matching the requested plugin name
+	pluginWithServer := s.getPluginWithServer(request.PackageRepoRef.Plugin)
+	if pluginWithServer == nil {
+		return nil, status.Errorf(codes.Internal, "Unable to get the plugin %v", request.PackageRepoRef.Plugin)
+	}
+
+	// Get the response from the requested plugin
+	response, err := pluginWithServer.server.DeletePackageRepository(ctx, request)
+	if err != nil {
+		return nil, status.Errorf(status.Convert(err).Code(), "Unable to delete the package repository %q using the plugin %q: %v",
+			request.PackageRepoRef.Identifier, request.PackageRepoRef.Plugin.Name, err)
 	}
 
 	return response, nil

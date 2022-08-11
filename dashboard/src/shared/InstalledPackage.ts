@@ -26,12 +26,12 @@ export class InstalledPackage {
   public static async GetInstalledPackageSummaries(
     cluster: string,
     namespace?: string,
-    page?: number,
+    pageToken?: string,
     size?: number,
   ) {
     return await this.coreClient().GetInstalledPackageSummaries({
       context: { cluster: cluster, namespace: namespace },
-      paginationOptions: { pageSize: size || 0, pageToken: page?.toString() || "0" },
+      paginationOptions: { pageSize: size || 0, pageToken: pageToken || "" },
     });
   }
 

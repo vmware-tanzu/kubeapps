@@ -34,11 +34,6 @@ import (
 	"sigs.k8s.io/yaml"
 )
 
-const (
-	fluxHelmReleases    = "helmreleases"
-	fluxHelmReleaseList = "HelmReleaseList"
-)
-
 var (
 	// default reconcile interval is 1 min
 	defaultReconcileInterval = metav1.Duration{Duration: 1 * time.Minute}
@@ -79,7 +74,7 @@ func (s *Server) getReleaseInCluster(ctx context.Context, key types.NamespacedNa
 	return &rel, nil
 }
 
-func (s *Server) paginatedInstalledPkgSummaries(ctx context.Context, namespace string, pageSize int32, pageOffset int) ([]*corev1.InstalledPackageSummary, error) {
+func (s *Server) paginatedInstalledPkgSummaries(ctx context.Context, namespace string, pageSize int32, itemOffset int) ([]*corev1.InstalledPackageSummary, error) {
 	releasesFromCluster, err := s.listReleasesInCluster(ctx, namespace)
 	if err != nil {
 		return nil, err
@@ -89,7 +84,7 @@ func (s *Server) paginatedInstalledPkgSummaries(ctx context.Context, namespace s
 	if len(releasesFromCluster) > 0 {
 		startAt := -1
 		if pageSize > 0 {
-			startAt = int(pageSize) * pageOffset
+			startAt = itemOffset
 		}
 
 		for i, r := range releasesFromCluster {
@@ -321,7 +316,7 @@ func (s *Server) getReleaseViaHelmApi(ctx context.Context, key types.NamespacedN
 }
 
 func (s *Server) newRelease(ctx context.Context, packageRef *corev1.AvailablePackageReference, targetName types.NamespacedName, versionRef *corev1.VersionReference, reconcile *corev1.ReconciliationOptions, valuesString string) (*corev1.InstalledPackageReference, error) {
-	repoName, chartName, err := pkgutils.SplitChartIdentifier(packageRef.Identifier)
+	repoName, chartName, err := pkgutils.SplitPackageIdentifier(packageRef.Identifier)
 	if err != nil {
 		return nil, err
 	}
@@ -386,6 +381,30 @@ func (s *Server) updateRelease(ctx context.Context, packageRef *corev1.Installed
 		return nil, err
 	}
 
+	// TODO (gfichtenholt): there is an intermittent issue
+	// rpc error: code = Internal desc = unable to update the HelmRelease
+	// 'test-12-i7a4/my-podinfo-12' due to 'Operation cannot be fulfilled on
+	// helmreleases.helm.toolkit.fluxcd.io "my-podinfo-12": the object has been
+	// modified; please apply your changes to the latest version and try again'
+	// the problem is
+	//  1) we get a CR then
+	//  2) do some modifications of this CR
+	//  3) call Update() with this CR.
+	// Every once in a while there the CR gets updated (by flux) between (1) and (3)
+	// and we get this error.
+	// I think one way to fix it would be to implement a fixed number of retries in
+	// flux plugin with exponential back-off.
+	// Another solution might be to push the decision all the way to the end user to retry
+	// the Update operation
+
+	// As Michael and I agreed 4/12/2022, initially we'll disallow updates to pending releases
+	// to simplify the initial case, though we may implement support later. Updates to
+	// non-pending releases  (i.e. success or failed status) are allowed
+	_, reason, _ := isHelmReleaseReady(*rel)
+	if reason == corev1.InstalledPackageStatus_STATUS_REASON_PENDING {
+		return nil, status.Errorf(codes.Internal, "updates to helm releases pending reconciliation are not supported")
+	}
+
 	versionExpr := versionRef.GetVersion()
 	if versionExpr != "" {
 		versionExpr, err = pkgutils.VersionConstraintWithUpgradePolicy(
@@ -415,9 +434,12 @@ func (s *Server) updateRelease(ctx context.Context, packageRef *corev1.Installed
 
 	setInterval, setServiceAccount := false, false
 	if reconcile != nil {
-		if reconcile.Interval > 0 {
-			reconcileInterval := (time.Duration(reconcile.Interval) * time.Second)
-			rel.Spec.Interval = metav1.Duration{Duration: reconcileInterval}
+		if reconcile.Interval != "" {
+			reconcileInterval, err := pkgutils.ToDuration(reconcile.Interval)
+			if err != nil {
+				return nil, status.Errorf(codes.InvalidArgument, "the reconciliation interval is invalid: %v", err)
+			}
+			rel.Spec.Interval = *reconcileInterval
 			setInterval = true
 		}
 		if reconcile.ServiceAccountName != "" {
@@ -491,10 +513,6 @@ func (s *Server) deleteRelease(ctx context.Context, packageRef *corev1.Installed
 // 3. spec.targetNamespace, where flux will install any artifacts from the release
 func (s *Server) newFluxHelmRelease(chart *models.Chart, targetName types.NamespacedName, versionExpr string, reconcile *corev1.ReconciliationOptions, values map[string]interface{}) (*helmv2.HelmRelease, error) {
 	fluxRelease := &helmv2.HelmRelease{
-		TypeMeta: metav1.TypeMeta{
-			Kind:       helmv2.HelmReleaseKind,
-			APIVersion: helmv2.GroupVersion.String(),
-		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      targetName.Name,
 			Namespace: targetName.Namespace,
@@ -518,8 +536,12 @@ func (s *Server) newFluxHelmRelease(chart *models.Chart, targetName types.Namesp
 
 	reconcileInterval := defaultReconcileInterval // unless explicitly specified
 	if reconcile != nil {
-		if reconcile.Interval > 0 {
-			reconcileInterval = metav1.Duration{Duration: (time.Duration(reconcile.Interval) * time.Second)}
+		if reconcile.Interval != "" {
+			if duration, err := pkgutils.ToDuration(reconcile.Interval); err != nil {
+				return nil, status.Errorf(codes.InvalidArgument, "the reconciliation interval is invalid: %v", err)
+			} else {
+				reconcileInterval = *duration
+			}
 		}
 		fluxRelease.Spec.Suspend = reconcile.Suspend
 		if reconcile.ServiceAccountName != "" {
@@ -571,13 +593,15 @@ func isHelmReleaseReady(rel helmv2.HelmRelease) (ready bool, status corev1.Insta
 
 	isInstallFailed := false
 	readyCond := meta.FindStatusCondition(rel.GetConditions(), fluxmeta.ReadyCondition)
+
 	if readyCond != nil {
 		if readyCond.Reason != "" {
 			// this could be something like
 			// "reason": "InstallFailed"
 			// i.e. not super-useful
 			userReason = readyCond.Reason
-			if userReason == helmv2.InstallFailedReason {
+			if userReason == helmv2.InstallFailedReason ||
+				userReason == helmv2.UpgradeFailedReason {
 				isInstallFailed = true
 			}
 		}
@@ -612,7 +636,7 @@ func installedPackageStatus(rel helmv2.HelmRelease) *corev1.InstalledPackageStat
 
 func installedPackageReconciliationOptions(rel *helmv2.HelmRelease) *corev1.ReconciliationOptions {
 	reconciliationOptions := &corev1.ReconciliationOptions{}
-	reconciliationOptions.Interval = int32(rel.Spec.Interval.Seconds())
+	reconciliationOptions.Interval = pkgutils.FromDuration(&rel.Spec.Interval)
 	reconciliationOptions.Suspend = rel.Spec.Suspend
 	reconciliationOptions.ServiceAccountName = rel.Spec.ServiceAccountName
 	return reconciliationOptions

@@ -24,28 +24,32 @@ function SelectRepoForm({ cluster, namespace, app }: ISelectRepoFormProps) {
   const {
     repos: {
       isFetching,
-      repos,
-      repo,
+      reposSummaries: repos,
+      repoDetail: repo,
       errors: { fetch: fetchError },
     },
     packages: {
       selected: { error: packageError },
     },
-    config: { kubeappsNamespace, kubeappsCluster },
+    config: { kubeappsNamespace, kubeappsCluster, globalReposNamespace },
   } = useSelector((state: IStoreState) => state);
 
-  const [userRepoName, setUserRepoName] = useState(repo?.metadata?.name ?? "");
-  const [userRepoNamespace, setUserRepoNamepace] = useState(repo?.metadata?.namespace ?? "");
-
+  const [userRepoName, setUserRepoName] = useState(repo?.name ?? "");
+  const [userRepoNamespace, setUserRepoNamepace] = useState(
+    repo.packageRepoRef?.context?.namespace ?? "",
+  );
+  // We do not currently support package repositories on additional clusters.
+  const supportedCluster = cluster === kubeappsCluster;
   useEffect(() => {
-    if (namespace !== kubeappsNamespace) {
-      // Normal namespace, show local and global repos
-      dispatch(actions.repos.fetchRepos(namespace, true));
-    } else {
-      // Global namespace, show global repos only
-      dispatch(actions.repos.fetchRepos(kubeappsNamespace));
+    if (!namespace || !supportedCluster || namespace === globalReposNamespace) {
+      // All Namespaces. Global namespace or other cluster, show global repos only
+      dispatch(actions.repos.fetchRepoSummaries(""));
+      return () => {};
     }
-  }, [dispatch, namespace, kubeappsNamespace]);
+    // In other case, fetch global and namespace repos
+    dispatch(actions.repos.fetchRepoSummaries(namespace, true));
+    return () => {};
+  }, [dispatch, namespace, kubeappsNamespace, globalReposNamespace, supportedCluster]);
 
   const handleRepoNameChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     if (e.target.value) {
@@ -64,18 +68,18 @@ function SelectRepoForm({ cluster, namespace, app }: ISelectRepoFormProps) {
   };
 
   const findRepo = (ns: string, name: string) => {
-    return repos.find(r => r.metadata.name === name && r.metadata.namespace === ns);
+    return repos.find(r => r.name === name && r.packageRepoRef?.context?.namespace === ns);
   };
 
   const getRepoURL = (ns: string, name: string) => {
     const r = findRepo(ns, name);
-    return r && r.spec ? r.spec.url : "";
+    return r?.url || "";
   };
 
   return (
     <LoadingWrapper
       className="margin-t-xxl"
-      loadingText="Fetching Application Repositories..."
+      loadingText="Fetching Package Repositories..."
       loaded={!isFetching}
     >
       {fetchError && <Alert theme="danger">An error occurred: {fetchError.message}</Alert>}
@@ -83,8 +87,8 @@ function SelectRepoForm({ cluster, namespace, app }: ISelectRepoFormProps) {
         <Alert theme="warning">
           <h5>Repositories not found. </h5>
           Manage your repositories in Kubeapps by visiting the{" "}
-          <Link to={url.app.config.apprepositories(cluster, namespace)}>
-            App repositories configuration
+          <Link to={url.app.config.pkgrepositories(cluster, namespace)}>
+            Package Repositories configuration
           </Link>{" "}
           page.
         </Alert>
@@ -108,10 +112,10 @@ function SelectRepoForm({ cluster, namespace, app }: ISelectRepoFormProps) {
             >
               {!userRepoName && <option key="" value="" />}
               {repos.map(r => {
-                const value = `${r.metadata.namespace}/${r.metadata.name}`;
+                const value = `${r.packageRepoRef?.context?.namespace}/${r.name}`;
                 return (
                   <option key={value} value={value}>
-                    {value} ({getRepoURL(r.metadata.namespace, r.metadata.name)})
+                    {value} ({getRepoURL(r.packageRepoRef?.context?.namespace || "", r.name)})
                   </option>
                 );
               })}
@@ -124,7 +128,7 @@ function SelectRepoForm({ cluster, namespace, app }: ISelectRepoFormProps) {
             {" "}
             * If the repository containing '{app?.availablePackageRef?.identifier ?? app?.name}' is
             not in the list, add it{" "}
-            <Link to={url.app.config.apprepositories(cluster, namespace)}>here</Link>.{" "}
+            <Link to={url.app.config.pkgrepositories(cluster, namespace)}>here</Link>.{" "}
           </p>
         </div>
       )}

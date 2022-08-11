@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { JSONSchemaType } from "ajv";
-import { uniqBy } from "lodash";
+import { uniq, uniqBy } from "lodash";
 import { IPackageState } from "shared/types";
 import { getType } from "typesafe-actions";
 import actions from "../actions";
@@ -12,6 +12,7 @@ import { NamespaceAction } from "../actions/namespace";
 export const initialState: IPackageState = {
   isFetching: false,
   hasFinishedFetching: false,
+  nextPageToken: "",
   items: [],
   categories: [],
   selected: {
@@ -63,18 +64,26 @@ const packageReducer = (
 ): IPackageState => {
   switch (action.type) {
     case getType(actions.availablepackages.requestAvailablePackageSummaries):
-      return { ...state, isFetching: true };
     case getType(actions.availablepackages.requestSelectedAvailablePackageVersions):
       return { ...state, isFetching: true };
     case getType(actions.availablepackages.receiveAvailablePackageSummaries): {
-      const isLastPage =
-        action.payload.page >= parseInt(action.payload.response.nextPageToken) ||
-        action.payload.response.nextPageToken === "";
+      // If there has been a call to reset the state since the request was
+      // issued, we ignore the received available package summaries until
+      // a new request is issued.
+      if (!state.isFetching) {
+        return state;
+      }
+      // Note that the same condition identifies *before* we've fetched
+      // the first page and *after* we've fetched the last page. In both
+      // cases, the nextPageToken is empty. Since we have just fetched a
+      // page, only one option is possible.
+      const isLastPage = action.payload.response.nextPageToken === "";
       return {
         ...state,
         isFetching: false,
         hasFinishedFetching: isLastPage,
-        categories: action.payload.response.categories,
+        nextPageToken: action.payload.response.nextPageToken,
+        categories: uniq([...state.categories, ...action.payload.response.categories]),
         items: uniqBy(
           [...state.items, ...action.payload.response.availablePackageSummaries],
           "availablePackageRef.identifier",
@@ -82,6 +91,7 @@ const packageReducer = (
       };
     }
     case getType(actions.availablepackages.receiveSelectedAvailablePackageVersions):
+    case getType(actions.availablepackages.receiveSelectedAvailablePackageDetail):
       return {
         ...state,
         isFetching: false,
@@ -93,17 +103,13 @@ const packageReducer = (
         isFetching: true,
         selected: selectedPackageReducer(state.selected, action),
       };
-    case getType(actions.availablepackages.receiveSelectedAvailablePackageDetail):
-      return {
-        ...state,
-        isFetching: false,
-        selected: selectedPackageReducer(state.selected, action),
-      };
     case getType(actions.availablepackages.resetAvailablePackageSummaries):
       return {
         ...state,
         hasFinishedFetching: false,
+        isFetching: false,
         items: [],
+        nextPageToken: "",
       };
     case getType(actions.availablepackages.createErrorPackage):
       return {

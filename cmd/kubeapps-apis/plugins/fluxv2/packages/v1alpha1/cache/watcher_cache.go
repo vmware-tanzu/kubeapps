@@ -243,8 +243,8 @@ func (c *NamespacedResourceWatcherCache) syncAndStartWatchLoop(stopCh <-chan str
 // processNextWorkItem function in order to read and process a message on the
 // workqueue.
 func (c *NamespacedResourceWatcherCache) runWorker() {
-	log.Infof("+runWorker()")
-	defer log.Infof("-runWorker()")
+	log.Info("+runWorker()")
+	defer log.Info("-runWorker()")
 
 	for c.processNextWorkItem() {
 	}
@@ -253,8 +253,8 @@ func (c *NamespacedResourceWatcherCache) runWorker() {
 // processNextWorkItem will read a single work item off the work queue and
 // attempt to process it, by calling the syncHandler.
 func (c *NamespacedResourceWatcherCache) processNextWorkItem() bool {
-	log.Infof("+processNextWorkItem()")
-	defer log.Infof("-processNextWorkItem()")
+	log.Info("+processNextWorkItem()")
+	defer log.Info("-processNextWorkItem()")
 
 	var obj interface{}
 	var shutdown bool
@@ -324,7 +324,7 @@ func (c *NamespacedResourceWatcherCache) watchLoop(watcher *watchutil.RetryWatch
 		}
 
 		// per https://kubernetes.io/docs/reference/using-api/api-concepts/#efficient-detection-of-changes
-		log.Infof("Current watcher stopped. Will try resync/create a new RetryWatcher...")
+		log.Info("Current watcher stopped. Will try resync/create a new RetryWatcher...")
 
 		var err error
 		if watcher, err = c.resyncAndNewRetryWatcher(false); err != nil {
@@ -343,7 +343,7 @@ func (c *NamespacedResourceWatcherCache) watchLoop(watcher *watchutil.RetryWatch
 }
 
 func (c *NamespacedResourceWatcherCache) resyncAndNewRetryWatcher(bootstrap bool) (watcher *watchutil.RetryWatcher, eror error) {
-	log.Infof("+resyncAndNewRetryWatcher()")
+	log.Info("+resyncAndNewRetryWatcher()")
 	c.resyncCond.L.Lock()
 	defer func() {
 		if c.resyncCh != nil {
@@ -352,7 +352,7 @@ func (c *NamespacedResourceWatcherCache) resyncAndNewRetryWatcher(bootstrap bool
 		}
 		c.resyncCond.L.Unlock()
 		c.resyncCond.Broadcast()
-		log.Infof("-resyncAndNewRetryWatcher()")
+		log.Info("-resyncAndNewRetryWatcher()")
 	}()
 
 	var err error
@@ -505,7 +505,7 @@ func (c *NamespacedResourceWatcherCache) processOneEvent(event watch.Event) {
 		// not quite sure why this happens (the docs don't say), but it seems to happen quite often
 		return
 	}
-	log.Infof("Got event: type: [%v] object:\n[%s]", event.Type, common.PrettyPrint(event.Object))
+	log.Infof("Got event: type: [%v], object:\n[%s]", event.Type, common.PrettyPrint(event.Object))
 	switch event.Type {
 	case watch.Added, watch.Modified, watch.Deleted:
 		if obj, ok := event.Object.(ctrlclient.Object); !ok {
@@ -646,7 +646,7 @@ func (c *NamespacedResourceWatcherCache) onDelete(key string) error {
 
 // this is effectively a cache GET operation
 func (c *NamespacedResourceWatcherCache) fetchForOne(key string) (interface{}, error) {
-	log.Infof("+fetchForOne(%s)", key)
+	log.InfoS("+fetchForOne", "key", key)
 	// read back from cache: should be either:
 	//  - what we previously wrote OR
 	//  - redis.Nil if the key does  not exist or has been evicted due to memory pressure/TTL expiry
@@ -1000,11 +1000,11 @@ func (c *NamespacedResourceWatcherCache) WaitUntilForgotten(key string) {
 // at the time of the resync() call and guarantees no more work items will be processed
 // until resync() finishes
 func (c *NamespacedResourceWatcherCache) ExpectResync() (chan int, error) {
-	log.Infof("+ExpectResync()")
+	log.Info("+ExpectResync()")
 	c.resyncCond.L.Lock()
 	defer func() {
 		c.resyncCond.L.Unlock()
-		log.Infof("-ExpectResync()")
+		log.Info("-ExpectResync()")
 	}()
 
 	if c.resyncCh != nil {
@@ -1019,11 +1019,11 @@ func (c *NamespacedResourceWatcherCache) ExpectResync() (chan int, error) {
 // this func is used by unit tests only
 // By the end of the call the work queue should be empty
 func (c *NamespacedResourceWatcherCache) WaitUntilResyncComplete() {
-	log.Infof("+WaitUntilResyncComplete()")
+	log.Info("+WaitUntilResyncComplete()")
 	c.resyncCond.L.Lock()
 	defer func() {
 		c.resyncCond.L.Unlock()
-		log.Infof("-WaitUntilResyncComplete()")
+		log.Info("-WaitUntilResyncComplete()")
 	}()
 
 	for c.resyncCh != nil {

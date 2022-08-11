@@ -46,7 +46,7 @@ it("renders an app item", () => {
   const card = wrapper.find(InfoCard);
   expect(card.props()).toMatchObject({
     description: defaultProps.app.shortDescription,
-    icon: "placeholder.png",
+    icon: "placeholder.svg",
     link: app.apps.get({
       context: {
         cluster: defaultProps.cluster,
@@ -57,6 +57,8 @@ it("renders an app item", () => {
     } as InstalledPackageReference),
     tag1Class: "label-success",
     tag1Content: "installed",
+    tag2Class: "label-info-secondary",
+    tag2Content: "my.plugin",
     title: defaultProps.app.name,
   });
 });
@@ -129,4 +131,19 @@ it("doesn't include a double v prefix", () => {
   } as IAppListItemProps;
   const wrapper = mountWrapper(defaultStore, <AppListItem {...props} />);
   expect(wrapper.find("span").findWhere(s => s.text() === "App: foo v1.0.0")).toExist();
+});
+
+it("includes namespace", () => {
+  const props = {
+    ...defaultProps,
+    app: {
+      ...defaultProps.app,
+      latestVersion: { appVersion: "1.0.0", pkgVersion: "1.1.0" } as PackageAppVersion,
+      currentVersion: { appVersion: "1.0.0", pkgVersion: "1.0.0" } as PackageAppVersion,
+    },
+  } as IAppListItemProps;
+  const wrapper = mountWrapper(defaultStore, <AppListItem {...props} />);
+  expect(
+    wrapper.find("span").findWhere(s => s.text() === "Namespace: package-namespace"),
+  ).toExist();
 });

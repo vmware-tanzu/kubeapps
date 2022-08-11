@@ -13,13 +13,14 @@ include ./script/makefiles/cluster-kind.mk
 include ./script/makefiles/cluster-kind-for-pinniped.mk
 include ./script/makefiles/deploy-dev.mk
 include ./script/makefiles/deploy-dev-for-pinniped.mk
+include ./script/makefiles/site.mk
 
 IMG_MODIFIER ?=
 
 GO_PACKAGES = ./...
 # GO_FILES := $(shell find $(shell $(GO) list -f '{{.Dir}}' $(GO_PACKAGES)) -name \*.go)
 
-all: kubeapps/dashboard kubeapps/apprepository-controller kubeapps/kubeops kubeapps/assetsvc kubeapps/asset-syncer kubeapps/pinniped-proxy kubeapps/kubeapps-apis
+all: kubeapps/dashboard kubeapps/apprepository-controller kubeapps/kubeops kubeapps/asset-syncer kubeapps/pinniped-proxy kubeapps/kubeapps-apis
 
 # TODO(miguel) Create Makefiles per component
 # TODO(mnelson) Or at least don't send the whole repo as the context for each project.
@@ -38,7 +39,6 @@ test-db:
 	# It's not supported to run tests that involve a database in parallel since they are currently
 	# using the same PG schema. We need to run them sequentially
 	cd cmd/asset-syncer; ENABLE_PG_INTEGRATION_TESTS=1 go test -count=1 ./...
-	cd cmd/assetsvc; ENABLE_PG_INTEGRATION_TESTS=1 go test -count=1 ./...
 
 test-all: test-apprepository-controller test-dashboard
 
