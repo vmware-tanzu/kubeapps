@@ -1873,8 +1873,8 @@ export function PkgRepoForm(props: IPkgRepoFormProps) {
           carvelGlobalNamespace: carvelGlobalNamespace,
         } as IConfig) && (
           <p>
-            <strong>NOTE:</strong> This Package Repository will be created in the "{namespace}"
-            global namespace. Consequently, its packages will be available for installation in every
+            <strong>NOTE:</strong> This Package Repository is assigned to the "{namespace}" global
+            namespace. Consequently, its packages will be available for installation in every
             namespace and cluster.
           </p>
         )}
