@@ -14,6 +14,7 @@ import (
 	helmv2 "github.com/fluxcd/helm-controller/api/v2beta1"
 	fluxmeta "github.com/fluxcd/pkg/apis/meta"
 	sourcev1 "github.com/fluxcd/source-controller/api/v1beta2"
+	"github.com/go-redis/redis/v8"
 	redismock "github.com/go-redis/redismock/v8"
 	corev1 "github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
 	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/fluxv2/packages/v1alpha1/cache"
@@ -196,6 +197,7 @@ type testSpecChartWithUrl struct {
 	chartID       string
 	chartRevision string
 	chartUrl      string
+	// only applicable for HTTP charts
 	opts          *common.HttpClientOptions
 	repoNamespace string
 	// this is for a negative test TestTransientHttpFailuresAreRetriedForChartCache
@@ -346,71 +348,14 @@ func newServer(t *testing.T,
 		chartCache:   nil,
 	}
 
-	okRepos := sets.String{}
-	for _, r := range repos {
-		key, err := redisKeyForRepo(r)
-		if err != nil {
-			t.Logf("Skipping repo [%s] due to %+v", key, err)
-			continue
-		}
-		if isRepoReady(r) {
-			// we are willfully just logging any errors coming from redisMockSetValueForRepo()
-			// here and just skipping over to next repo. This is done for test
-			// TestGetAvailablePackagesStatus where we make sure that even if the flux CRD happens
-			// to be invalid flux plug in can still operate
-			_, _, err = sink.redisMockSetValueForRepo(mock, r, nil)
-			if err != nil {
-				t.Logf("Skipping repo [%s] due to %+v", key, err)
-			} else {
-				okRepos.Insert(key)
-			}
-		} else {
-			mock.ExpectGet(key).RedisNil()
-		}
-	}
+	okRepos := seedRepoCacheWithRepos(t, mock, sink, repos)
 
-	var chartCache *cache.ChartCache
-	var err error
-	cachedChartKeys := sets.String{}
-	cachedChartIds := sets.String{}
-
-	if charts != nil {
-		chartCache, err = cache.NewChartCache("chartCacheTest", redisCli, stopCh)
-		if err != nil {
-			return nil, mock, err
-		}
-		t.Cleanup(func() { chartCache.Shutdown() })
-
+	chartCache, waitTilChartCacheSyncComplete, err :=
+		seedChartCacheWithCharts(t, redisCli, mock, sink, stopCh, okRepos, charts)
+	if err != nil {
+		return nil, mock, err
+	} else {
 		sink.chartCache = chartCache
-
-		// for now we only cache latest version of each chart
-		for _, c := range charts {
-			// very simple logic for now, relies on the order of elements in the array
-			// to pick the latest version.
-			if !cachedChartIds.Has(c.chartID) {
-				cachedChartIds.Insert(c.chartID)
-				key, err := chartCache.KeyFor(c.repoNamespace, c.chartID, c.chartRevision)
-				if err != nil {
-					return nil, mock, err
-				}
-				repoName := types.NamespacedName{
-					Name:      strings.Split(c.chartID, "/")[0],
-					Namespace: c.repoNamespace}
-
-				repoKey, err := redisKeyForRepoNamespacedName(repoName)
-				if err == nil && okRepos.Has(repoKey) {
-					for i := 0; i < c.numRetries; i++ {
-						mock.ExpectExists(key).SetVal(0)
-					}
-					err = sink.redisMockSetValueForChart(mock, key, c.chartUrl, c.opts)
-					if err != nil {
-						return nil, mock, err
-					}
-					cachedChartKeys.Insert(key)
-					chartCache.ExpectAdd(key)
-				}
-			}
-		}
 	}
 
 	cacheConfig := cache.NamespacedResourceWatcherCacheConfig{
@@ -448,9 +393,7 @@ func newServer(t *testing.T,
 	repoCache.WaitUntilResyncComplete()
 
 	// need to wait until chartCache has finished syncing
-	for key := range cachedChartKeys {
-		chartCache.WaitUntilForgotten(key)
-	}
+	waitTilChartCacheSyncComplete()
 
 	if err := mock.ExpectationsWereMet(); err != nil {
 		return nil, mock, err
@@ -468,4 +411,98 @@ func newServer(t *testing.T,
 		pluginConfig:    common.NewDefaultPluginConfig(),
 	}
 	return s, mock, nil
+}
+
+func seedRepoCacheWithRepos(t *testing.T, mock redismock.ClientMock, sink repoEventSink, repos []sourcev1.HelmRepository) map[string]sourcev1.HelmRepository {
+	okRepos := make(map[string]sourcev1.HelmRepository)
+	for _, r := range repos {
+		key, err := redisKeyForRepo(r)
+		if err != nil {
+			t.Logf("Skipping repo [%s] due to %+v", key, err)
+			continue
+		}
+		if isRepoReady(r) {
+			// we are willfully just logging any errors coming from redisMockSetValueForRepo()
+			// here and just skipping over to next repo. This is done for test
+			// TestGetAvailablePackagesStatus where we make sure that even if the flux CRD happens
+			// to be invalid flux plug in can still operate
+			_, _, err = sink.redisMockSetValueForRepo(mock, r, nil)
+			if err != nil {
+				t.Logf("Skipping repo [%s] due to %+v", key, err)
+			} else {
+				okRepos[key] = r
+			}
+		} else {
+			mock.ExpectGet(key).RedisNil()
+		}
+	}
+	return okRepos
+}
+
+func seedChartCacheWithCharts(t *testing.T, redisCli *redis.Client, mock redismock.ClientMock, sink repoEventSink, stopCh <-chan struct{}, repos map[string]sourcev1.HelmRepository, charts []testSpecChartWithUrl) (*cache.ChartCache, func(), error) {
+	t.Logf("+seedChartCacheWithCharts(%v)", charts)
+
+	var chartCache *cache.ChartCache
+	var err error
+	cachedChartKeys := sets.String{}
+	cachedChartIds := sets.String{}
+
+	if charts != nil {
+		chartCache, err = cache.NewChartCache("chartCacheTest", redisCli, stopCh)
+		if err != nil {
+			return nil, nil, err
+		}
+		t.Cleanup(func() { chartCache.Shutdown() })
+
+		// for now we only cache latest version of each chart
+		for _, c := range charts {
+			// very simple logic for now, relies on the order of elements in the array
+			// to pick the latest version.
+			if !cachedChartIds.Has(c.chartID) {
+				cachedChartIds.Insert(c.chartID)
+				key, err := chartCache.KeyFor(c.repoNamespace, c.chartID, c.chartRevision)
+				if err != nil {
+					return nil, nil, err
+				}
+				repoName := types.NamespacedName{
+					Name:      strings.Split(c.chartID, "/")[0],
+					Namespace: c.repoNamespace}
+
+				repoKey, err := redisKeyForRepoNamespacedName(repoName)
+				if err == nil {
+					if r, ok := repos[repoKey]; ok {
+						for i := 0; i < c.numRetries; i++ {
+							mock.ExpectExists(key).SetVal(0)
+						}
+						isOci := strings.HasPrefix(c.chartUrl, "oci://")
+						if isOci {
+							ociChartRepo, err := sink.newOCIChartRepositoryAndLogin(context.Background(), r)
+							if err != nil {
+								return nil, nil, err
+							}
+							err = redisMockSetValueForOciChart(mock, key, c.chartUrl, ociChartRepo)
+							if err != nil {
+								return nil, nil, err
+							}
+						} else {
+							err = redisMockSetValueForHttpChart(mock, key, c.chartUrl, c.opts)
+							if err != nil {
+								return nil, nil, err
+							}
+						}
+					}
+					cachedChartKeys.Insert(key)
+					chartCache.ExpectAdd(key)
+				}
+			}
+		}
+	}
+
+	waitTilFn := func() {
+		for key := range cachedChartKeys {
+			chartCache.WaitUntilForgotten(key)
+		}
+	}
+
+	return chartCache, waitTilFn, err
 }

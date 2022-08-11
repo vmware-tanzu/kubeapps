@@ -107,9 +107,15 @@ export function fetchAvailablePackageSummaries(
   size: number,
   query?: string,
 ): ThunkAction<Promise<void>, IStoreState, null, PackagesAction> {
-  return async dispatch => {
-    dispatch(requestAvailablePackageSummaries(paginationToken));
+  return async (dispatch, getState) => {
+    const {
+      packages: { isFetching },
+    } = getState();
     try {
+      if (isFetching) {
+        throw Error("unexpected request, it was already fetching data");
+      }
+      dispatch(requestAvailablePackageSummaries(paginationToken));
       const response = await PackagesService.getAvailablePackageSummaries(
         cluster,
         namespace,

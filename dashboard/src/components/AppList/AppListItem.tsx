@@ -4,7 +4,7 @@
 import Tooltip from "components/js/Tooltip";
 import { InstalledPackageSummary } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
 import { getAppStatusLabel, getPluginIcon, getPluginName } from "shared/utils";
-import placeholder from "../../placeholder.png";
+import placeholder from "icons/placeholder.svg";
 import * as url from "../../shared/url";
 import InfoCard from "../InfoCard/InfoCard";
 import "./AppListItem.css";

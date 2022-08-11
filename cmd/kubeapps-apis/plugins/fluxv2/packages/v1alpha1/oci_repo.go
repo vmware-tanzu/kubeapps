@@ -3,7 +3,13 @@
 
 // Inspired by
 // https://github.com/fluxcd/source-controller/blob/main/internal/helm/repository/oci_chart_repository.go
-// and adapted for kubeapps use.
+// and adapted for kubeapps use. Why is there a need for this? There are features flux chose not to address,
+// such as
+//   - listing of available repositories for a given registry
+//     ref https://github.com/fluxcd/source-controller/issues/839
+//   - listing of available charts for a given repository
+// while kubeapps needs those features in order to support plugin features like
+// GetAvailablePackageSummaries/GetAvailablePackageVersions, etc.
 // OCI spec ref
 //   https://github.com/opencontainers/distribution-spec/blob/main/spec.md
 
@@ -49,26 +55,29 @@ import (
 )
 
 // RegistryClient is an interface for interacting with OCI registries
-// It is used by the OCIRegistry to retrieve chart versions
-// from OCI registries. These signatures are implemented by
+// It is used by the OCIChartRepository to retrieve chart versions
+// from OCI registries. Functions Login/Logout/Tags are implemented by
 // https://github.com/helm/helm/blob/main/pkg/registry/client.go
+// DownloadChart is implemented below
+type RegistryClientDownloadChartFn func(*repo.ChartVersion) (*bytes.Buffer, error)
 type RegistryClient interface {
 	Login(host string, opts ...registry.LoginOption) error
 	Logout(host string, opts ...registry.LogoutOption) error
 	Tags(url string) ([]string, error)
+	DownloadChart(chartVersion *repo.ChartVersion) (*bytes.Buffer, error)
 }
 
 // an interface flux plugin uses to determine what kind of vendor-specific
 // registry repository name lister applies, and then executes specific logic
-type OCIRepositoryLister interface {
-	IsApplicableFor(*OCIRegistry) (bool, error)
-	ListRepositoryNames(ociRegistry *OCIRegistry) ([]string, error)
+type OCIChartRepositoryLister interface {
+	IsApplicableFor(*OCIChartRepository) (bool, error)
+	ListRepositoryNames(OCIChartRepository *OCIChartRepository) ([]string, error)
 }
 
-// OCIRegistry represents a Helm chart repository, and the configuration
+// OCIChartRepository represents a Helm chart repository, and the configuration
 // required to download the repository tags and charts from the repository.
 // All methods are thread safe unless defined otherwise.
-type OCIRegistry struct {
+type OCIChartRepository struct {
 	// url is the location of the repository.
 	url url.URL
 	// helmGetter to use while accessing the repository's contents.
@@ -86,16 +95,16 @@ type OCIRegistry struct {
 	// (Login/Logout/Tags). I need to be able to query remote OCI repo for ListRepositoryNames(),
 	// which is not in the set and all fields of RegistryClient,
 	//  including repositoryAuthorizer are internal, so this is a workaround
-	registryCredentialFn OCIRegistryCredentialFn
+	registryCredentialFn OCIChartRepositoryCredentialFn
 
-	repositoryLister OCIRepositoryLister
+	repositoryLister OCIChartRepositoryLister
 }
 
-// OCIRegistryOption is a function that can be passed to NewOCIRegistry
-// to configure an OCIRegistry.
-type OCIRegistryOption func(*OCIRegistry) error
+// OCIChartRepositoryOption is a function that can be passed to newOCIChartRepository()
+// to configure an OCIChartRepository.
+type OCIChartRepositoryOption func(*OCIChartRepository) error
 
-type OCIRegistryCredentialFn func(ctx context.Context, reg string) (orasregistryauthv2.Credential, error)
+type OCIChartRepositoryCredentialFn func(ctx context.Context, reg string) (orasregistryauthv2.Credential, error)
 
 var (
 	helmGetters = getter.Providers{
@@ -109,25 +118,53 @@ var (
 		},
 	}
 
-	// TODO: make this thing extensible so code coming from other plugs/modules
+	// TODO (gfichtenholt) make this thing extensible so code coming from other plugs/modules
 	// can register new repository listers
-	builtInRepoListers = []OCIRepositoryLister{
+	builtInRepoListers = []OCIChartRepositoryLister{
 		NewDockerRegistryApiV2RepositoryLister(),
-		// TODO
+		// TODO (gfichtenholt) other container registry providers, like Harbor, GCR, AWS, Azure CR, etc
+	}
+
+	// the reason for so many arguments to this func, as opposed to an OCIChartRepository instance is
+	// the result of this func is used to build a new instance of OCIChartRepository, i.e. a avoiding
+	// catch-22
+	registryClientBuilderFn = func(isLogin bool, tlsConfig *tls.Config, getterOpts []getter.Option, helmGetter getter.Getter) (RegistryClient, string, error) {
+		return newRegistryClient(isLogin, tlsConfig, getterOpts, helmGetter)
 	}
 )
 
-// withOCIRegistryClient returns a OCIRegistryOption that will set the registry client
-func withOCIRegistryClient(client RegistryClient) OCIRegistryOption {
-	return func(r *OCIRegistry) error {
+type registryClientType struct {
+	registryClient  *registry.Client
+	chartDownloader RegistryClientDownloadChartFn
+}
+
+func (c *registryClientType) Login(host string, opts ...registry.LoginOption) error {
+	return c.registryClient.Login(host, opts...)
+}
+
+func (c *registryClientType) Logout(host string, opts ...registry.LogoutOption) error {
+	return c.registryClient.Logout(host, opts...)
+}
+
+func (c *registryClientType) Tags(url string) ([]string, error) {
+	return c.registryClient.Tags(url)
+}
+
+func (c *registryClientType) DownloadChart(chartVersion *repo.ChartVersion) (*bytes.Buffer, error) {
+	return c.chartDownloader(chartVersion)
+}
+
+// withRegistryClient returns a OCIChartRepositoryOption that will set the registry client
+func withRegistryClient(client RegistryClient) OCIChartRepositoryOption {
+	return func(r *OCIChartRepository) error {
 		r.registryClient = client
 		return nil
 	}
 }
 
-// withOCIGetter returns a OCIRegistryOption that will set the getter.Getter
-func withOCIGetter(providers getter.Providers) OCIRegistryOption {
-	return func(r *OCIRegistry) error {
+// withHelmGetter returns a OCIChartRepositoryOption that will set the getter.Getter
+func withHelmGetter(providers getter.Providers) OCIChartRepositoryOption {
+	return func(r *OCIChartRepository) error {
 		c, err := providers.ByScheme(r.url.Scheme)
 		if err != nil {
 			return err
@@ -137,32 +174,39 @@ func withOCIGetter(providers getter.Providers) OCIRegistryOption {
 	}
 }
 
-// withOCIGetterOptions returns a OCIRegistryOption that will set the getter.Options
-func withOCIGetterOptions(getterOpts []getter.Option) OCIRegistryOption {
-	return func(r *OCIRegistry) error {
+// withHelmGetterOptions returns a OCIChartRepositoryOption that will set the getter.Options
+func withHelmGetterOptions(getterOpts []getter.Option) OCIChartRepositoryOption {
+	return func(r *OCIChartRepository) error {
 		r.helmOptions = getterOpts
 		return nil
 	}
 }
 
-func withRegistryCredentialFn(fn OCIRegistryCredentialFn) OCIRegistryOption {
-	return func(r *OCIRegistry) error {
+func withRegistryCredentialFn(fn OCIChartRepositoryCredentialFn) OCIChartRepositoryOption {
+	return func(r *OCIChartRepository) error {
 		r.registryCredentialFn = fn
 		return nil
 	}
 }
 
-// newOCIRegistry constructs and returns a new OCIRegistry with
+func withTlsConfig(c *tls.Config) OCIChartRepositoryOption {
+	return func(r *OCIChartRepository) error {
+		r.tlsConfig = c
+		return nil
+	}
+}
+
+// newOCIChartRepository constructs and returns a new OCIChartRepository with
 // the RegistryClient configured to the getter.Getter for the
 // registry URL scheme. It returns an error on URL parsing failures.
 // It assumes that the url scheme has been validated to be an OCI scheme.
-func newOCIRegistry(registryURL string, registryOpts ...OCIRegistryOption) (*OCIRegistry, error) {
+func newOCIChartRepository(registryURL string, registryOpts ...OCIChartRepositoryOption) (*OCIChartRepository, error) {
 	u, err := url.Parse(registryURL)
 	if err != nil {
 		return nil, err
 	}
 
-	r := &OCIRegistry{}
+	r := &OCIChartRepository{}
 	r.url = *u
 	for _, opt := range registryOpts {
 		if err := opt(r); err != nil {
@@ -172,7 +216,7 @@ func newOCIRegistry(registryURL string, registryOpts ...OCIRegistryOption) (*OCI
 	return r, nil
 }
 
-func (r *OCIRegistry) listRepositoryNames() ([]string, error) {
+func (r *OCIChartRepository) listRepositoryNames() ([]string, error) {
 	// this needs to be done after a call to login()
 	for _, lister := range builtInRepoListers {
 		if ok, err := lister.IsApplicableFor(r); ok && err == nil {
@@ -194,7 +238,7 @@ func (r *OCIRegistry) listRepositoryNames() ([]string, error) {
 // to be a semver.Constraints compatible string. If version is empty, the latest
 // stable version will be returned and prerelease versions will be ignored.
 // adapted from https://github.com/helm/helm/blob/49819b4ef782e80b0c7f78c30bd76b51ebb56dc8/pkg/downloader/chart_downloader.go#L162
-func (r *OCIRegistry) pickChartVersionFrom(name, ver string, cvs []string) (*repo.ChartVersion, error) {
+func (r *OCIChartRepository) pickChartVersionFrom(name, ver string, cvs []string) (*repo.ChartVersion, error) {
 	log.Infof("+pickChartVersionFrom(%s,%s,%s)", name, ver, cvs)
 
 	// Determine if version provided
@@ -213,7 +257,7 @@ func (r *OCIRegistry) pickChartVersionFrom(name, ver string, cvs []string) (*rep
 
 // This function shall be called for OCI registries only
 // It assumes that the ref has been validated to be an OCI reference.
-func (r *OCIRegistry) getTags(ref string) ([]string, error) {
+func (r *OCIChartRepository) getTags(ref string) ([]string, error) {
 	log.Infof("+getTags(%s)", ref)
 	defer log.Infof("-getTags(%s)", ref)
 
@@ -221,7 +265,7 @@ func (r *OCIRegistry) getTags(ref string) ([]string, error) {
 
 	log.Infof("getTags: about to call .Tags(%s)", ref)
 	tags, err := r.registryClient.Tags(ref)
-	log.Infof("getTags: done with call .Tags(%s): %s %v", ref, tags, err)
+	log.Infof("getTags: done with call .Tags(%s): tags: %s, err: %v", ref, tags, err)
 	if err != nil {
 		return nil, err
 	}
@@ -232,42 +276,10 @@ func (r *OCIRegistry) getTags(ref string) ([]string, error) {
 	return tags, nil
 }
 
-// downloadChart confirms the given repo.ChartVersion has a downloadable URL,
-// and then attempts to download the chart using the Client and Options of the
-// OCIRegistry. It returns a bytes.Buffer containing the chart data.
-// In case of an OCI hosted chart, this function assumes that the chartVersion url is valid.
-func (r *OCIRegistry) downloadChart(chart *repo.ChartVersion) (*bytes.Buffer, error) {
-	if len(chart.URLs) == 0 {
-		return nil, fmt.Errorf("chart '%s' has no downloadable URLs", chart.Name)
-	}
-
-	ref := chart.URLs[0]
-	u, err := url.Parse(ref)
-	if err != nil {
-		err = fmt.Errorf("invalid chart URL format '%s': %w", ref, err)
-		return nil, err
-	}
-
-	t := transport.NewOrIdle(r.tlsConfig)
-	clientOpts := append(r.helmOptions, getter.WithTransport(t))
-
-	defer func() {
-		err = transport.Release(t)
-	}()
-
-	if err != nil {
-		return nil, err
-	}
-
-	// trim the oci scheme prefix if needed
-	getThis := strings.TrimPrefix(u.String(), fmt.Sprintf("%s://", registry.OCIScheme))
-	return r.helmGetter.Get(getThis, clientOpts...)
-}
-
+// TODO (gfichtenholt) Call this at some point :)
 // logout attempts to logout from the OCI registry.
-// It returns an error on failure.
 //nolint:unused
-func (r *OCIRegistry) logout() error {
+func (r *OCIChartRepository) logout() error {
 	log.Info("+logout")
 	err := r.registryClient.Logout(r.url.Host)
 	if err != nil {
@@ -327,7 +339,12 @@ func getLastMatchingVersionOrConstraint(cvs []string, ver string) (string, error
 // newRegistryClient generates a registry client and a temporary credential file.
 // The client is meant to be used for a single reconciliation.
 // The file is meant to be used for a single reconciliation and deleted after.
-func newRegistryClient(isLogin bool) (*registry.Client, string, error) {
+func newHelmRegistryClient(isLogin bool) (*registry.Client, string, error) {
+	clientOpts := []registry.ClientOption{
+		registry.ClientOptWriter(io.Discard),
+	}
+
+	var file string
 	if isLogin {
 		// create a temporary file to store the credentials
 		// this is needed because otherwise the credentials are stored in ~/.docker/config.json.
@@ -335,28 +352,29 @@ func newRegistryClient(isLogin bool) (*registry.Client, string, error) {
 		if err != nil {
 			return nil, "", err
 		}
+		file = credentialFile.Name()
 
-		clientOpts := []registry.ClientOption{
-			registry.ClientOptWriter(io.Discard),
+		clientOpts = append(clientOpts,
 			registry.ClientOptCredentialsFile(credentialFile.Name()),
-		}
-		rClient, err := registry.NewClient(clientOpts...)
-		if err != nil {
-			return nil, "", err
-		}
-		return rClient, credentialFile.Name(), nil
+		)
 	}
-
-	clientOpts := []registry.ClientOption{
-		registry.ClientOptWriter(io.Discard),
-		registry.ClientOptDebug(true),
-	}
-
 	rClient, err := registry.NewClient(clientOpts...)
+	return rClient, file, err
+}
+
+func newRegistryClient(isLogin bool, tlsConfig *tls.Config, getterOpts []getter.Option, helmGetter getter.Getter) (RegistryClient, string, error) {
+	rClient, file, err := newHelmRegistryClient(isLogin)
 	if err != nil {
-		return nil, "", err
+		return nil, file, err
 	}
-	return rClient, "", nil
+
+	chartDownloader := func(chartVersion *repo.ChartVersion) (*bytes.Buffer, error) {
+		return downloadChartWithHelmGetter(tlsConfig, getterOpts, helmGetter, chartVersion)
+	}
+
+	return &registryClientType{
+		rClient, chartDownloader,
+	}, file, nil
 }
 
 // OCI Helm repository, which defines a source, does not produce an Artifact
@@ -367,7 +385,7 @@ func (s *repoEventSink) onAddOciRepo(repo sourcev1.HelmRepository) ([]byte, bool
 	log.Infof("+onAddOciRepo(%s)", common.PrettyPrint(repo))
 	defer log.Info("-onAddOciRepo")
 
-	ociRegistry, err := s.newOCIRegistryAndLoginWithRepo(context.Background(), repo)
+	ociChartRepo, err := s.newOCIChartRepositoryAndLogin(context.Background(), repo)
 	if err != nil {
 		return nil, false, err
 	}
@@ -379,15 +397,19 @@ func (s *repoEventSink) onAddOciRepo(repo sourcev1.HelmRepository) ([]byte, bool
 		Type:      repo.Spec.Type,
 	}
 
-	// repository names aka application names
-	appNames, err := ociRegistry.listRepositoryNames()
+	// repository names, e.g. "stefanprodan/charts/podinfo"
+	// asset-syncer calls them appNames
+	// see func (r *OCIRegistry) Charts(fetchLatestOnly bool) ([]models.Chart, error) {
+	// also per https://github.com/helm/community/blob/main/hips/hip-0006.md#4-chart-names--oci-reference-basenames
+	// appName == chartName == the basename (the last segment of the URL path) on a registry reference
+	appNames, err := ociChartRepo.listRepositoryNames()
 	if err != nil {
 		return nil, false, err
 	}
 
 	charts := []models.Chart{}
 	for _, fullAppName := range appNames {
-		appName, err := ociRegistry.shortRepoName(fullAppName)
+		appName, err := ociChartRepo.shortRepoName(fullAppName)
 		if err != nil {
 			return nil, false, err
 		}
@@ -398,8 +420,8 @@ func (s *repoEventSink) onAddOciRepo(repo sourcev1.HelmRepository) ([]byte, bool
 
 		log.Infof("==========>: app name: [%s], chartID: [%s]", appName, chartID)
 
-		ref := fmt.Sprintf("%s/%s", ociRegistry.url.String(), appName)
-		allTags, err := ociRegistry.getTags(ref)
+		ref := fmt.Sprintf("%s/%s", ociChartRepo.url.String(), appName)
+		allTags, err := ociChartRepo.getTags(ref)
 		if err != nil {
 			return nil, false, err
 		}
@@ -408,13 +430,13 @@ func (s *repoEventSink) onAddOciRepo(repo sourcev1.HelmRepository) ([]byte, bool
 		// the chart fields like Desciption, home, sources come from the
 		// most recent chart version
 		// ref https://github.com/vmware-tanzu/kubeapps/blob/11c87926d6cd798af72875d01437d15ae8d85b9a/pkg/helm/index.go#L30
-		log.Infof("==========>: most recent chart version: %s", allTags[0])
-		latestChartVersion, err := ociRegistry.pickChartVersionFrom(appName, allTags[0], allTags)
+		latestChartVersion, err := ociChartRepo.pickChartVersionFrom(appName, "", allTags)
 		if err != nil {
 			return nil, false, status.Errorf(codes.Internal, "%v", err)
 		}
+		log.Infof("==========> most recent chart version: %s", latestChartVersion.Version)
 
-		latestChartMetadata, err := getOCIChartMetadata(ociRegistry, chartID, latestChartVersion)
+		latestChartMetadata, err := getOCIChartMetadata(ociChartRepo, chartID, latestChartVersion)
 		if err != nil {
 			return nil, false, err
 		}
@@ -439,7 +461,7 @@ func (s *repoEventSink) onAddOciRepo(repo sourcev1.HelmRepository) ([]byte, bool
 		}
 
 		for _, tag := range allTags {
-			chartVersion, err := ociRegistry.pickChartVersionFrom(appName, tag, allTags)
+			chartVersion, err := ociChartRepo.pickChartVersionFrom(appName, tag, allTags)
 			if err != nil {
 				return nil, false, status.Errorf(codes.Internal, "%v", err)
 			}
@@ -457,7 +479,7 @@ func (s *repoEventSink) onAddOciRepo(repo sourcev1.HelmRepository) ([]byte, bool
 		charts = append(charts, mc)
 	}
 
-	checksum, err := ociRegistry.checksum()
+	checksum, err := ociChartRepo.checksum()
 	if err != nil {
 		return nil, false, status.Errorf(codes.Internal, "%v", err)
 	}
@@ -475,7 +497,7 @@ func (s *repoEventSink) onAddOciRepo(repo sourcev1.HelmRepository) ([]byte, bool
 	}
 
 	if s.chartCache != nil {
-		fn := downloadOCIChartFn(ociRegistry)
+		fn := downloadOCIChartFn(ociChartRepo)
 		if err = s.chartCache.SyncCharts(charts, fn); err != nil {
 			return nil, false, err
 		}
@@ -504,23 +526,23 @@ func (s *repoEventSink) onModifyOciRepo(key string, oldValue interface{}, repo s
 			key, cacheEntryUntyped)
 	}
 
-	ociRegistry, err := s.newOCIRegistryAndLoginWithRepo(context.Background(), repo)
+	ociRepo, err := s.newOCIChartRepositoryAndLogin(context.Background(), repo)
 	if err != nil {
 		return nil, false, err
 	}
 
-	newChecksum, err := ociRegistry.checksum()
+	newChecksum, err := ociRepo.checksum()
 	if err != nil {
 		return nil, false, err
 	}
 
 	if cacheEntry.Checksum != newChecksum {
-		// TODO (gfichtenholt)
-		return nil, false, status.Errorf(codes.Unimplemented, "TODO")
-	} else {
+		// currently this cannot happen due to https://github.com/fluxcd/source-controller/issues/839
 		// skip because the content did not change
-		return nil, false, nil
+		log.Warningf("Unexpected state in onModifyOciRepo(%s)", common.PrettyPrint(repo))
+		// then just move on, same as if the remote contents did not change
 	}
+	return nil, false, nil
 }
 
 //
@@ -537,7 +559,7 @@ type TagList struct {
 // Checksum returns the sha256 of the repo by concatenating tags for
 // all repositories within the registry and returning the sha256.
 // Caveat: Mutated image tags won't be detected as new
-func (r *OCIRegistry) checksum() (string, error) {
+func (r *OCIChartRepository) checksum() (string, error) {
 	log.Infof("+checksum()")
 	defer log.Infof("-checksum()")
 	appNames, err := r.listRepositoryNames()
@@ -567,7 +589,8 @@ func (r *OCIRegistry) checksum() (string, error) {
 	return common.GetSha256(content)
 }
 
-func (r *OCIRegistry) shortRepoName(fullRepoName string) (string, error) {
+// given fullRepoName like "stefanprodan/charts/podinfo", returns "podinfo"
+func (r *OCIChartRepository) shortRepoName(fullRepoName string) (string, error) {
 	expectedPrefix := strings.TrimLeft(r.url.Path, "/") + "/"
 	if strings.HasPrefix(fullRepoName, expectedPrefix) {
 		return fullRepoName[len(expectedPrefix):], nil
@@ -579,29 +602,44 @@ func (r *OCIRegistry) shortRepoName(fullRepoName string) (string, error) {
 	}
 }
 
-func (s *Server) newOCIRegistryAndLoginWithRepo(ctx context.Context, repoName types.NamespacedName) (*OCIRegistry, error) {
+func (s *Server) newOCIChartRepositoryAndLogin(ctx context.Context, repoName types.NamespacedName) (*OCIChartRepository, error) {
 	repo, err := s.getRepoInCluster(ctx, repoName)
 	if err != nil {
 		return nil, err
 	} else {
 		sink := s.newRepoEventSink()
-		return sink.newOCIRegistryAndLoginWithRepo(ctx, *repo)
+		return sink.newOCIChartRepositoryAndLogin(ctx, *repo)
 	}
 }
 
-func (s *repoEventSink) newOCIRegistryAndLoginWithRepo(ctx context.Context, repo sourcev1.HelmRepository) (*OCIRegistry, error) {
+func (s *repoEventSink) newOCIChartRepositoryAndLogin(ctx context.Context, repo sourcev1.HelmRepository) (*OCIChartRepository, error) {
 	if loginOpts, getterOpts, cred, err := s.ociClientOptionsForRepo(ctx, repo); err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to create registry client: %v", err)
 	} else {
-		return s.newOCIRegistryAndLoginWithOptions(repo.Spec.URL, loginOpts, getterOpts, cred)
+		return s.newOCIChartRepositoryAndLoginWithOptions(repo.Spec.URL, loginOpts, getterOpts, cred)
 	}
 }
 
-func (s *repoEventSink) newOCIRegistryAndLoginWithOptions(registryURL string, loginOpts []registry.LoginOption, getterOpts []getter.Option, cred *orasregistryauthv2.Credential) (*OCIRegistry, error) {
-	// Create registry client and login if needed.
-	registryClient, file, err := newRegistryClient(loginOpts != nil)
+func (s *repoEventSink) newOCIChartRepositoryAndLoginWithOptions(registryURL string, loginOpts []registry.LoginOption, getterOpts []getter.Option, cred *orasregistryauthv2.Credential) (*OCIChartRepository, error) {
+	// TODO (gfichtenholt) DRY
+	u, err := url.Parse(registryURL)
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "failed to create registry client: %v", err)
+		return nil, err
+	}
+	helmGetter, err := helmGetters.ByScheme(u.Scheme)
+	if err != nil {
+		return nil, err
+	}
+
+	var tlsConfig *tls.Config
+
+	// Create new registry client and login if needed.
+	registryClient, file, err := registryClientBuilderFn(loginOpts != nil, tlsConfig, getterOpts, helmGetter)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to create registry client due to: %v", err)
+	}
+	if registryClient == nil {
+		return nil, status.Errorf(codes.Internal, "failed to create registry client")
 	}
 	if file != "" {
 		defer func() {
@@ -623,26 +661,26 @@ func (s *repoEventSink) newOCIRegistryAndLoginWithOptions(registryURL string, lo
 	// a little bit misleading, since repo.Spec.URL is really an OCI Registry URL,
 	// which may contain zero or more "helm repositories", such as
 	// oci://demo.goharbor.io/test-oci-1, which may contain repositories "repo-1", "repo2", etc
-
-	ociRegistry, err := newOCIRegistry(
+	ociRepo, err := newOCIChartRepository(
 		registryURL,
-		withOCIGetter(helmGetters),
-		withOCIGetterOptions(getterOpts),
-		withOCIRegistryClient(registryClient),
-		withRegistryCredentialFn(registryCredentialFn))
+		withHelmGetter(helmGetters),
+		withHelmGetterOptions(getterOpts),
+		withRegistryClient(registryClient),
+		withRegistryCredentialFn(registryCredentialFn),
+		withTlsConfig(tlsConfig))
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to parse URL '%s': %v", registryURL, err)
 	}
 
 	// Attempt to login to the registry if credentials are provided.
 	if loginOpts != nil {
-		err := ociRegistry.registryClient.Login(ociRegistry.url.Host, loginOpts...)
-		log.Infof("login(%s): %v", ociRegistry.url.Host, err)
+		err := ociRepo.registryClient.Login(ociRepo.url.Host, loginOpts...)
+		log.Infof("login(%s): %v", ociRepo.url.Host, err)
 		if err != nil {
 			return nil, err
 		}
 	}
-	return ociRegistry, nil
+	return ociRepo, nil
 }
 
 func (s *repoEventSink) ociClientOptionsForRepo(ctx context.Context, repo sourcev1.HelmRepository) ([]registry.LoginOption, []getter.Option, *orasregistryauthv2.Credential, error) {
@@ -667,31 +705,75 @@ func (s *repoEventSink) ociClientOptionsForRepo(ctx context.Context, repo source
 		}
 		getterOpts = append(getterOpts, opts...)
 
-		cred, err = common.OCIRegistryCredentialFromSecret(repo.Spec.URL, *secret)
+		cred, err = common.OCIChartRepositoryCredentialFromSecret(repo.Spec.URL, *secret)
 		if err != nil {
 			return nil, nil, nil, err
 		}
-
-		loginOpt := registry.LoginOptBasicAuth(cred.Username, cred.Password)
-		if loginOpt != nil {
-			loginOpts = append(loginOpts, loginOpt)
+		if cred != nil {
+			loginOpt := registry.LoginOptBasicAuth(cred.Username, cred.Password)
+			if loginOpt != nil {
+				loginOpts = append(loginOpts, loginOpt)
+			}
 		}
 	}
 	return loginOpts, getterOpts, cred, nil
 }
 
-func getOCIChartTarball(ociRegistry *OCIRegistry, chartID string, chartVersion *repo.ChartVersion) ([]byte, error) {
-	chartBuffer, err := ociRegistry.downloadChart(chartVersion)
+// downloadChartWithHelmGetter() confirms the given repo.ChartVersion has a downloadable URL,
+// and then attempts to download the chart using the Client and Options of the
+// OCIChartRepository. It returns a bytes.Buffer containing the chart data.
+// In case of an OCI hosted chart, this function assumes that the chartVersion url is valid.
+func downloadChartWithHelmGetter(tlsConfig *tls.Config, getterOptions []getter.Option, helmGetter getter.Getter, chartVersion *repo.ChartVersion) (*bytes.Buffer, error) {
+	log.Infof("+downloadChartWithHelmGetter(%s)", chartVersion.Version)
+	if len(chartVersion.URLs) == 0 {
+		return nil, fmt.Errorf("chart '%s' has no downloadable URLs", chartVersion.Name)
+	}
+
+	ref := chartVersion.URLs[0]
+	u, err := url.Parse(ref)
+	if err != nil {
+		err = fmt.Errorf("invalid chart URL format '%s': %w", ref, err)
+		return nil, err
+	}
+
+	t := transport.NewOrIdle(tlsConfig)
+	clientOpts := append(getterOptions, getter.WithTransport(t))
+
+	defer func() {
+		if err = transport.Release(t); err != nil {
+			log.Errorf("%+v", err)
+		}
+	}()
+
+	if err != nil {
+		return nil, err
+	}
+
+	// trim the oci scheme prefix if needed
+	getThis := strings.TrimPrefix(u.String(), fmt.Sprintf("%s://", registry.OCIScheme))
+	log.Infof("about to call helmGetter.Get(%s)", getThis)
+	buf, err := helmGetter.Get(getThis, clientOpts...)
+	if buf != nil {
+		log.Infof("helmGetter.Get(%s) returned buffer size: [%d] error: %v", getThis, len(buf.Bytes()), err)
+	} else {
+		log.Infof("helmGetter.Get(%s) returned error: %v", getThis, err)
+	}
+	return buf, err
+}
+
+func getOCIChartTarball(ociRepo *OCIChartRepository, chartID string, chartVersion *repo.ChartVersion) ([]byte, error) {
+	chartBuffer, err := ociRepo.registryClient.DownloadChart(chartVersion)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "%v", err)
 	}
 	return chartBuffer.Bytes(), nil
 }
 
-func getOCIChartMetadata(ociRegistry *OCIRegistry, chartID string, chartVersion *repo.ChartVersion) (*chart.Metadata, error) {
-	log.Infof("getOCIChartMetadata(%s, %s)", chartID, chartVersion.Metadata.Version)
+func getOCIChartMetadata(ociRepo *OCIChartRepository, chartID string, chartVersion *repo.ChartVersion) (*chart.Metadata, error) {
+	log.Infof("+getOCIChartMetadata(%s, %s)", chartID, chartVersion.Metadata.Version)
+	defer log.Infof("-getOCIChartMetadata(%s, %s)", chartID, chartVersion.Metadata.Version)
 
-	chartTarball, err := getOCIChartTarball(ociRegistry, chartID, chartVersion)
+	chartTarball, err := getOCIChartTarball(ociRepo, chartID, chartVersion)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "%v", err)
 	}
@@ -720,7 +802,7 @@ func getOCIChartMetadata(ociRegistry *OCIRegistry, chartID string, chartVersion 
 	return &chartMetadata, nil
 }
 
-func downloadOCIChartFn(ociRegistry *OCIRegistry) func(chartID, chartUrl, chartVersion string) ([]byte, error) {
+func downloadOCIChartFn(ociRepo *OCIChartRepository) func(chartID, chartUrl, chartVersion string) ([]byte, error) {
 	return func(chartID, chartUrl, chartVersion string) ([]byte, error) {
 		_, chartName, err := pkgutils.SplitPackageIdentifier(chartID)
 		if err != nil {
@@ -733,6 +815,6 @@ func downloadOCIChartFn(ociRegistry *OCIRegistry) func(chartID, chartUrl, chartV
 				Version: chartVersion,
 			},
 		}
-		return getOCIChartTarball(ociRegistry, chartID, cv)
+		return getOCIChartTarball(ociRepo, chartID, cv)
 	}
 }

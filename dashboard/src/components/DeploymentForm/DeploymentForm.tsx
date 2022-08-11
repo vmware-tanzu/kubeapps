@@ -25,7 +25,7 @@ import { ThunkDispatch } from "redux-thunk";
 import { Kube } from "shared/Kube";
 import { FetchError, IStoreState } from "shared/types";
 import * as url from "shared/url";
-import { getPluginsRequiringSA } from "shared/utils";
+import { getPluginsRequiringSA, k8sObjectNameRegex } from "shared/utils";
 import DeploymentFormBody from "../DeploymentFormBody/DeploymentFormBody";
 import LoadingWrapper from "../LoadingWrapper/LoadingWrapper";
 interface IRouteParams {
@@ -217,7 +217,7 @@ export default function DeploymentForm() {
                   <label>Name</label>
                   <input
                     id="releaseName"
-                    pattern="[a-z0-9]([-a-z0-9]*[a-z0-9])?(\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*"
+                    pattern={k8sObjectNameRegex}
                     title="Use lowercase alphanumeric characters, '-' or '.'"
                     onChange={handleReleaseNameChange}
                     value={releaseName}
