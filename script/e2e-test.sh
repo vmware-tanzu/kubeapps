@@ -310,7 +310,7 @@ pushChart apache 8.6.2 admin password
 pushChart apache 8.6.3 admin password
 
 # Setting up local Docker registry if not in GKE
-if [[ -z "${GKE_BRANCH-}" ]]
+if [[ -z "${GKE_BRANCH-}" ]]; then
   setupLocalDockerRegistry
   pushLocalChart
 fi
