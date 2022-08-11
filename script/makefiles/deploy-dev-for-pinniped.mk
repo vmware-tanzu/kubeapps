@@ -52,7 +52,6 @@ delete-pinniped-jwt-authenticator:
 	kubectl --kubeconfig=${CLUSTER_CONFIG_FOR_PINNIPED} delete -f ./site/content/docs/latest/reference/manifests/kubeapps-pinniped-jwt-authenticator.yaml
 	kubectl --kubeconfig=${ADDITIONAL_CLUSTER_CONFIG_FOR_PINNIPED} delete -f ./site/content/docs/latest/reference/manifests/kubeapps-pinniped-jwt-authenticator.yaml
 
-# Using old version for deletion due to error for missing secret "pinniped-concierge-impersonation-proxy" not found
 delete-pinniped:
 	kubectl --kubeconfig=${CLUSTER_CONFIG_FOR_PINNIPED} delete -f https://get.pinniped.dev/${PINNIPED_VERSION}/install-pinniped-concierge-resources.yaml
 	kubectl --kubeconfig=${ADDITIONAL_CLUSTER_CONFIG_FOR_PINNIPED} delete -f https://get.pinniped.dev/${PINNIPED_VERSION}/install-pinniped-concierge-crds.yaml
