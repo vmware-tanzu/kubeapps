@@ -27,8 +27,8 @@ interface IPkgRepoAddButtonProps {
 export function PkgRepoAddButton({
   text,
   namespace,
-  globalReposNamespace: globalReposNamespace,
-  carvelGlobalNamespace: carvelGlobalNamespace,
+  globalReposNamespace,
+  carvelGlobalNamespace,
   packageRepoRef,
   primary = true,
   title,

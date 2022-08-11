@@ -25,8 +25,8 @@ interface IPkgRepoListItemProps {
 
 export function PkgRepoControl({
   repo,
-  globalReposNamespace: globalReposNamespace,
-  carvelGlobalNamespace: carvelGlobalNamespace,
+  globalReposNamespace,
+  carvelGlobalNamespace,
   refetchRepos,
 }: IPkgRepoListItemProps) {
   const [modalIsOpen, setModalOpen] = useState(false);
