@@ -21,7 +21,8 @@ import (
 )
 
 // This flavor of OCI lister Works with respect to those OCI registry vendors that implement
-// Docker Registry API V2 or OCI Distribution Specification. For example, GitHub (ghcr.io)
+// Docker Registry API V2 or OCI Distribution Specification. For example,
+// GitHub (ghcr.io) and harbor CR
 // References:
 // - https://docs.docker.com/registry/spec/api/#base
 // - https://github.com/opencontainers/distribution-spec/blob/main/spec.md#api

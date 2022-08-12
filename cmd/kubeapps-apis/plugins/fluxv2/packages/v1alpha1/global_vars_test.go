@@ -2665,6 +2665,11 @@ var (
 		PackageRepoRef: repoRefInReq("my-podinfo-15", "TBD"),
 	}
 
+	get_repo_detail_req_16 = &corev1.GetPackageRepositoryDetailRequest{
+		// namespace will be set when test scenario is run
+		PackageRepoRef: repoRefInReq("my-podinfo-16", "TBD"),
+	}
+
 	get_repo_detail_resp_16 = &corev1.GetPackageRepositoryDetailResponse{
 		Detail: &corev1.PackageRepositoryDetail{
 			PackageRepoRef:  repoRefWithId("my-podinfo-13"),
@@ -2747,6 +2752,33 @@ var (
 			Interval:        "1m",
 			Auth:            &corev1.PackageRepositoryAuth{},
 			Status:          podinfo_repo_status_4,
+		},
+	}
+
+	get_repo_detail_resp_20 = &corev1.GetPackageRepositoryDetailResponse{
+		Detail: &corev1.PackageRepositoryDetail{
+			PackageRepoRef:  repoRefWithId("my-podinfo-16"),
+			Name:            "my-podinfo-16",
+			Description:     "",
+			NamespaceScoped: false,
+			Type:            "oci",
+			Url:             harbor_stefanprodan_podinfo_oci_registry_url,
+			Interval:        "10m",
+			Auth: &corev1.PackageRepositoryAuth{
+				Type: corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_DOCKER_CONFIG_JSON,
+				PackageRepoAuthOneOf: &corev1.PackageRepositoryAuth_DockerCreds{
+					DockerCreds: &corev1.DockerCredentials{
+						Username: redactedString,
+						Password: redactedString,
+						Server:   redactedString,
+					},
+				},
+			},
+			Status: &corev1.PackageRepositoryStatus{
+				Ready:      true,
+				Reason:     corev1.PackageRepositoryStatus_STATUS_REASON_SUCCESS,
+				UserReason: "Succeeded: Helm repository is ready",
+			},
 		},
 	}
 
@@ -2895,6 +2927,19 @@ var (
 			NamespaceScoped: false,
 			Type:            "oci",
 			Url:             github_stefanprodan_podinfo_oci_registry_url,
+			Status:          podinfo_repo_status_4,
+			RequiresAuth:    false,
+		}
+	}
+
+	get_summaries_summary_7 = func(name types.NamespacedName) *corev1.PackageRepositorySummary {
+		return &corev1.PackageRepositorySummary{
+			PackageRepoRef:  repoRef(name.Name, name.Namespace),
+			Name:            name.Name,
+			Description:     "",
+			NamespaceScoped: false,
+			Type:            "oci",
+			Url:             harbor_stefanprodan_podinfo_oci_registry_url,
 			Status:          podinfo_repo_status_4,
 			RequiresAuth:    false,
 		}
