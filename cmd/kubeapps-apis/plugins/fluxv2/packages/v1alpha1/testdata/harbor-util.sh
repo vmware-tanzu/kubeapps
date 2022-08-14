@@ -19,7 +19,7 @@ function createHarborProject()
     echo -e "Project [${L_YELLOW}${PROJECT_NAME}${NC}] already exists in harbor..."
   elif [[ "$status_code" -eq 404 ]] ; then
     echo -e "Creating public project [${L_YELLOW}$PROJECT_NAME${NC}] in harbor..."
-    local payload=$(sed "s/\$NAME/${PROJECT_NAME}/g" ./harbor-create-project.json)
+    local payload=$(sed "s/\$NAME/${PROJECT_NAME}/g" $SCRIPTPATH/harbor-create-project.json)
     local status_code=$(curl -L --write-out %{http_code} --silent \
                         --output /dev/null \
                         -X POST ${FLUX_TEST_HARBOR_URL}/api/v2.0/projects \
@@ -54,24 +54,27 @@ function deleteHarborProject()
                       -u $FLUX_TEST_HARBOR_ADMIN_USER:$FLUX_TEST_HARBOR_ADMIN_PWD)
   if [[ "$status_code" -eq 200 ]] ; then
     echo -e "Project [${L_YELLOW}$PROJECT_NAME${NC}] exists in harbor. This script will now delete it..."
-    RESP=$(curl -L --silent --show-error \
+    CMD="curl -L --silent --show-error \
            ${FLUX_TEST_HARBOR_URL}/api/v2.0/projects/$PROJECT_NAME/repositories \
-           -u $FLUX_TEST_HARBOR_ADMIN_USER:$FLUX_TEST_HARBOR_ADMIN_PWD)
-    RESP=$(echo $RESP | jq .[].name | tr -d '"')
-    IFS='/' read -ra SEGMENTS <<< "$RESP"
-    for n in ${SEGMENTS[1]}
-    do
-      echo -e Deleting repository [${L_YELLOW}$n${NC}]...
-      status_code=$(curl -L --write-out %{http_code} --silent \
-            --show-error -X DELETE --output /dev/null \
-             ${FLUX_TEST_HARBOR_URL}/api/v2.0/projects/$PROJECT_NAME/repositories/$n \
-             -u $FLUX_TEST_HARBOR_ADMIN_USER:$FLUX_TEST_HARBOR_ADMIN_PWD)
-      if [[ "$status_code" -eq 200 ]] ; then
-          echo -e Repository [${L_YELLOW}$n${NC}] deleted
-      else
-          error_exit "Failed to delete repository [$n] due to HTTP status: [$status_code]"
-      fi
-    done
+           -u $FLUX_TEST_HARBOR_ADMIN_USER:$FLUX_TEST_HARBOR_ADMIN_PWD"
+    RESP=$($CMD)
+    RESP=$(echo "$RESP" | jq .[].name | tr -d '"')
+    if [[ ! -z "$RESP" ]] ; then
+      IFS='/' read -ra SEGMENTS <<< "$RESP"
+      for n in "${SEGMENTS[1]}"
+      do
+        echo -e Deleting repository [${L_YELLOW}$n${NC}]...
+        status_code=$(curl -L --write-out %{http_code} --silent \
+              --show-error -X DELETE --output /dev/null \
+              ${FLUX_TEST_HARBOR_URL}/api/v2.0/projects/$PROJECT_NAME/repositories/$n \
+              -u $FLUX_TEST_HARBOR_ADMIN_USER:$FLUX_TEST_HARBOR_ADMIN_PWD)
+        if [[ "$status_code" -eq 200 ]] ; then
+            echo -e Repository [${L_YELLOW}$n${NC}] deleted
+        else
+            error_exit "Failed to delete repository [$n] due to HTTP status: [$status_code]"
+        fi
+      done
+    fi
     status_code=$(curl -L --write-out %{http_code} --silent \
           --show-error -X DELETE \
           --output /dev/null \

@@ -26,6 +26,12 @@ L_YELLOW='\033[0;33m'
 YELLOW='\033[1;33m'
 NC='\033[0m' # No Color
 
+#!/bin/bash 
+# Absolute path to this script, e.g. /home/user/bin/foo.sh
+SCRIPT=$(readlink -f "$0")
+# Absolute path this script is in, thus /home/user/bin
+SCRIPTPATH=$(dirname "$SCRIPT")
+
 # An error exit function
 function error_exit()
 {
@@ -154,7 +160,9 @@ function deploy {
 
   # sanity checks
   myGithubRegistrySanityCheck
- 
+  
+  setupGithubStefanProdanClone
+  setupHarborStefanProdanClone
 }
 
 function undeploy {
@@ -191,14 +199,14 @@ function logs {
 }
 
 function setupGithubStefanProdanClone {
-  cd charts
-  trap '{
-    cd ..
-  }' EXIT  
-
   helm registry login ghcr.io -u $GITHUB_USER -p $GITHUB_TOKEN
   trap '{
     helm registry logout ghcr.io
+  }' EXIT  
+
+  pushd $SCRIPTPATH/charts
+  trap '{
+    popd
   }' EXIT  
 
   # this creates a clone of what was out on "oci://ghcr.io/stefanprodan/charts" as of Jul 28 2022
@@ -220,15 +228,12 @@ function setupHarborStefanProdanClone {
   local PROJECT_NAME=stefanprodan-podinfo-clone
   deleteHarborProject $PROJECT_NAME
   createHarborProject $PROJECT_NAME
-
-  cd charts
-  trap '{
-    cd ..
-  }' EXIT  
-
+  
   helm registry login $FLUX_TEST_HARBOR_HOST -u $FLUX_TEST_HARBOR_ADMIN_USER -p $FLUX_TEST_HARBOR_ADMIN_PWD
+
+  pushd $SCRIPTPATH/charts
   trap '{
-    helm registry logout $FLUX_TEST_HARBOR_HOST
+    popd
   }' EXIT  
 
   SRC_URL_PREFIX=https://stefanprodan.github.io/podinfo
