@@ -92,6 +92,11 @@ const (
 	// in_cluster_oci_registry_url = "oci://registry-app-svc.default.svc.cluster.local:5000/helm-charts"
 
 	github_gfichtenholt_podinfo_oci_registry_url = "oci://ghcr.io/gfichtenholt/helm-charts"
+
+	// admin/Harbor12345 is a well known default login for harbor registries
+	harbor_host = "demo.goharbor.io"
+	harbor_user = "admin"
+	harbor_pwd  = "Harbor12345"
 )
 
 func checkEnv(t *testing.T) (fluxplugin.FluxV2PackagesServiceClient, fluxplugin.FluxV2RepositoriesServiceClient, error) {

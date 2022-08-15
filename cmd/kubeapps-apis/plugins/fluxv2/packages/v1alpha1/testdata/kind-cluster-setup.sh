@@ -52,6 +52,7 @@ OCI_PODINFO_CHART_VERSION=6.1.5
 
 FLUX_TEST_HARBOR_HOST=demo.goharbor.io
 FLUX_TEST_HARBOR_URL=https://${FLUX_TEST_HARBOR_HOST}
+# admin/Harbor12345 is a well known default login for harbor registries
 FLUX_TEST_HARBOR_ADMIN_USER=admin
 FLUX_TEST_HARBOR_ADMIN_PWD=Harbor12345
 

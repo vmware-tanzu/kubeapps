@@ -312,7 +312,7 @@ func TestKindClusterAddPackageRepository(t *testing.T) {
 		},
 		{
 			testName:           "test add OCI repo from harbor registry with dockerconfigjson secret (kubeapps managed)",
-			request:            add_repo_req_27("demo.goharbor.io", "admin", "Harbor12345"),
+			request:            add_repo_req_27(harbor_host, harbor_user, harbor_pwd),
 			expectedResponse:   add_repo_expected_resp_11,
 			expectedStatusCode: codes.OK,
 		},
@@ -522,7 +522,7 @@ func TestKindClusterGetPackageRepositoryDetail(t *testing.T) {
 			existingSecret: newDockerConfigJsonSecret(types.NamespacedName{
 				Name:      "secret-1",
 				Namespace: "TBD",
-			}, "demo.goharbor.io", "admin", "Harbor12345"),
+			}, harbor_host, harbor_user, harbor_pwd),
 			expectedStatusCode: codes.OK,
 			expectedResponse:   get_repo_detail_resp_20,
 		},
