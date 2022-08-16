@@ -4,16 +4,17 @@
 package main
 
 import (
+	"net/http"
+	"net/url"
+	"path"
+	"strings"
+
 	apprepov1alpha1 "github.com/vmware-tanzu/kubeapps/cmd/apprepository-controller/pkg/apis/apprepository/v1alpha1"
 	httpclient "github.com/vmware-tanzu/kubeapps/pkg/http-client"
 	"github.com/vmware-tanzu/kubeapps/pkg/kube"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	corev1 "k8s.io/api/core/v1"
-	"net/http"
-	"net/url"
-	"path"
-	"strings"
 )
 
 /**
