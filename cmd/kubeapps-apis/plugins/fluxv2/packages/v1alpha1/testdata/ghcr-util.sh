@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Copyright 2021-2022 the Kubeapps contributors.
+# Copyright 2022 the Kubeapps contributors.
 # SPDX-License-Identifier: Apache-2.0
 
 # This script requires GitHub CLI (gh) to be installed locally. On MacOS you can
