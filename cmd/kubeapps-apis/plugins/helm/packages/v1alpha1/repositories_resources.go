@@ -84,7 +84,7 @@ func (s *Server) updatePkgRepository(ctx context.Context, cluster, namespace str
 	}
 
 	if err = client.Update(ctx, newPkgRepository); err != nil {
-		return statuserror.FromK8sError("get", AppRepositoryKind, newPkgRepository.Name, err)
+		return statuserror.FromK8sError("update", AppRepositoryKind, newPkgRepository.Name, err)
 	}
 	return nil
 }
