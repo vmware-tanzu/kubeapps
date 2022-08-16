@@ -310,6 +310,12 @@ func TestKindClusterAddPackageRepository(t *testing.T) {
 			expectedStatusCode: codes.OK,
 			userManagedSecrets: true,
 		},
+		{
+			testName:           "test add OCI repo from harbor registry with dockerconfigjson secret (kubeapps managed)",
+			request:            add_repo_req_27(harbor_host, harbor_user, harbor_pwd),
+			expectedResponse:   add_repo_expected_resp_11,
+			expectedStatusCode: codes.OK,
+		},
 	}
 
 	adminAcctName := types.NamespacedName{
@@ -495,7 +501,7 @@ func TestKindClusterGetPackageRepositoryDetail(t *testing.T) {
 			expectedResponse:   get_repo_detail_resp_17,
 		},
 		{
-			testName: "get details for OCI repo with docker config json cred",
+			testName: "get details for OCI repo hosted on github with docker config json cred",
 			request:  get_repo_detail_req_15,
 			repoName: "my-podinfo-15",
 			repoType: "oci",
@@ -506,6 +512,19 @@ func TestKindClusterGetPackageRepositoryDetail(t *testing.T) {
 			}, "ghcr.io", ghUser, ghToken),
 			expectedStatusCode: codes.OK,
 			expectedResponse:   get_repo_detail_resp_18,
+		},
+		{
+			testName: "get details for OCI repo hosted on harbor with docker config json cred",
+			request:  get_repo_detail_req_16,
+			repoName: "my-podinfo-16",
+			repoType: "oci",
+			repoUrl:  harbor_stefanprodan_podinfo_oci_registry_url,
+			existingSecret: newDockerConfigJsonSecret(types.NamespacedName{
+				Name:      "secret-1",
+				Namespace: "TBD",
+			}, harbor_host, harbor_user, harbor_pwd),
+			expectedStatusCode: codes.OK,
+			expectedResponse:   get_repo_detail_resp_20,
 		},
 	}
 
@@ -688,7 +707,7 @@ func TestKindClusterGetPackageRepositorySummaries(t *testing.T) {
 			unauthorized: true,
 		},
 		{
-			testName: "summaries from OCI repo",
+			testName: "summaries from OCI repo hosted on ghcr.io",
 			request: &corev1.GetPackageRepositorySummariesRequest{
 				Context: &corev1.Context{},
 			},
@@ -705,6 +724,28 @@ func TestKindClusterGetPackageRepositorySummaries(t *testing.T) {
 				PackageRepositorySummaries: []*corev1.PackageRepositorySummary{
 					get_summaries_summary_6(types.NamespacedName{
 						Name:      "podinfo-13",
+						Namespace: ns1}),
+				},
+			},
+		},
+		{
+			testName: "summaries from OCI repo hosted on harbor CR",
+			request: &corev1.GetPackageRepositorySummariesRequest{
+				Context: &corev1.Context{},
+			},
+			existingRepos: []repoSpec{
+				{
+					name: "podinfo-14",
+					ns:   ns1,
+					typ:  "oci",
+					url:  harbor_stefanprodan_podinfo_oci_registry_url,
+				},
+			},
+			expectedStatusCode: codes.OK,
+			expectedResponse: &corev1.GetPackageRepositorySummariesResponse{
+				PackageRepositorySummaries: []*corev1.PackageRepositorySummary{
+					get_summaries_summary_7(types.NamespacedName{
+						Name:      "podinfo-14",
 						Namespace: ns1}),
 				},
 			},
@@ -1064,9 +1105,7 @@ func TestKindClusterDeletePackageRepository(t *testing.T) {
 			expectedStatusCode: codes.PermissionDenied,
 			unauthorized:       true,
 		},
-		{ //TODO rewrite this test to use AddPackageRepository
-			//Instead of kubeAddHelmRepository so we don't need to copy
-			//production code bizness logic here
+		{
 			name:     "delete repo also deletes the corresponding secret in kubeapps managed env",
 			request:  delete_repo_req_6,
 			repoName: "my-podinfo-4",
