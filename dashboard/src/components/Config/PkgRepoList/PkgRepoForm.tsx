@@ -150,7 +150,7 @@ export function PkgRepoForm(props: IPkgRepoFormProps) {
   const [filterRegex, setFilterRegex] = useState(false);
 
   // -- Advanced  variables --
-  const [interval, setInterval] = useState(initialInterval);
+  const [syncInterval, setSyncInterval] = useState(initialInterval);
   const [performValidation, setPerformValidation] = useState(true);
   const [customCA, setCustomCA] = useState("");
   const [skipTLS, setSkipTLS] = useState(!!repo?.tlsConfig?.insecureSkipVerify);
@@ -186,7 +186,7 @@ export function PkgRepoForm(props: IPkgRepoFormProps) {
       setDescription(repo.description);
       setSkipTLS(!!repo.tlsConfig?.insecureSkipVerify);
       setPassCredentials(!!repo.auth?.passCredentials);
-      setInterval(repo.interval);
+      setSyncInterval(repo.interval);
       setCustomCA(repo.tlsConfig?.certAuthority || "");
       setAuthCustomHeader(repo.auth?.header || "");
       setBearerToken(repo.auth?.header || "");
@@ -329,7 +329,7 @@ export function PkgRepoForm(props: IPkgRepoFormProps) {
         password: !isUserManagedSecret ? secretPassword : "",
         server: !isUserManagedSecret ? secretServer : "",
       } as DockerCredentials,
-      interval,
+      interval: syncInterval,
       name,
       passCredentials,
       plugin,
@@ -378,7 +378,7 @@ export function PkgRepoForm(props: IPkgRepoFormProps) {
     setDescription(e.target.value);
   };
   const handleIntervalChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setInterval(e.target.value);
+    setSyncInterval(e.target.value);
   };
   const handlePerformValidationChange = (_e: React.ChangeEvent<HTMLInputElement>) => {
     setPerformValidation(!performValidation);
@@ -435,15 +435,17 @@ export function PkgRepoForm(props: IPkgRepoFormProps) {
         setType(RepositoryStorageTypes.PACKAGE_REPOSITORY_STORAGE_HELM);
         // helm plugin doesn't allow interval
         // eslint-disable-next-line no-implied-eval
-        setInterval("");
+        setSyncInterval("");
         break;
       case PluginNames.PACKAGES_FLUX:
         setType(RepositoryStorageTypes.PACKAGE_REPOSITORY_STORAGE_HELM);
         setInterval(interval || initialInterval);
+        setSyncInterval(syncInterval || initialInterval);
         break;
       case PluginNames.PACKAGES_KAPP:
         setType(RepositoryStorageTypes.PACKAGE_REPOSITORY_STORAGE_CARVEL_IMGPKGBUNDLE);
         setInterval(interval || initialInterval);
+        setSyncInterval(syncInterval || initialInterval);
         break;
     }
   };
@@ -1741,7 +1743,7 @@ export function PkgRepoForm(props: IPkgRepoFormProps) {
                       id="kubeapps-repo-interval"
                       type="text"
                       placeholder={initialInterval}
-                      value={interval || ""}
+                      value={syncInterval || ""}
                       onChange={handleIntervalChange}
                     />
                     <CdsControlMessage>
