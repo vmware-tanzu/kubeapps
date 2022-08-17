@@ -278,10 +278,10 @@ export function PkgRepoForm(props: IPkgRepoFormProps) {
       ? ociRepositories?.split(",").map(r => r.trim())
       : [];
 
-    // If the scheme is not specified, assume HTTPS. This is common for OCI registries
-    // unless using the kapp plugin, which explicitly should not include https:// protocol prefix
+    // In the Helm plugin, if the scheme is not specified, assume HTTPS (also for OCI registries)
+    // Other plugins don't allow passing a scheme (eg. carvel) and others require a different one (eg. flux: oci://)
     let finalURL = url;
-    if (plugin?.name !== PluginNames.PACKAGES_KAPP && !url?.startsWith("http")) {
+    if (plugin?.name === PluginNames.PACKAGES_HELM && !url?.startsWith("http")) {
       finalURL = `https://${url}`;
     }
 
