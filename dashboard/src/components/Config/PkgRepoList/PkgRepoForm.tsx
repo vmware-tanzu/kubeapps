@@ -431,20 +431,26 @@ export function PkgRepoForm(props: IPkgRepoFormProps) {
     setPlugin(getPluginByName(e.target.value));
     // set some default values based on the selected plugin
     switch (getPluginByName(e.target.value)?.name) {
-      case PluginNames.PACKAGES_HELM:
-        setType(RepositoryStorageTypes.PACKAGE_REPOSITORY_STORAGE_HELM);
+      case PluginNames.PACKAGES_HELM: {
+        if (!type) {
+          setType(RepositoryStorageTypes.PACKAGE_REPOSITORY_STORAGE_HELM);
+        }
         // helm plugin doesn't allow interval
         // eslint-disable-next-line no-implied-eval
         setSyncInterval("");
         break;
-      case PluginNames.PACKAGES_FLUX:
-        setType(RepositoryStorageTypes.PACKAGE_REPOSITORY_STORAGE_HELM);
-        setInterval(interval || initialInterval);
+      }
+      case PluginNames.PACKAGES_FLUX: {
+        if (!type) {
+          setType(RepositoryStorageTypes.PACKAGE_REPOSITORY_STORAGE_HELM);
+        }
         setSyncInterval(syncInterval || initialInterval);
         break;
+      }
       case PluginNames.PACKAGES_KAPP:
-        setType(RepositoryStorageTypes.PACKAGE_REPOSITORY_STORAGE_CARVEL_IMGPKGBUNDLE);
-        setInterval(interval || initialInterval);
+        if (!type) {
+          setType(RepositoryStorageTypes.PACKAGE_REPOSITORY_STORAGE_CARVEL_IMGPKGBUNDLE);
+        }
         setSyncInterval(syncInterval || initialInterval);
         break;
     }
