@@ -4,18 +4,19 @@
 import actions from "actions";
 import Alert from "components/js/Alert";
 import Table from "components/js/Table";
+import TableRow from "components/js/Table/components/TableRow";
 import Tooltip from "components/js/Tooltip";
 import { PackageRepositorySummary } from "gen/kubeappsapis/core/packages/v1alpha1/repositories";
 import { act } from "react-dom/test-utils";
 import * as ReactRedux from "react-redux";
 import { Link } from "react-router-dom";
+import { IPackageRepositoryState } from "reducers/repos";
 import { Kube } from "shared/Kube";
 import { defaultStore, getStore, initialState, mountWrapper } from "shared/specs/mountWrapper";
+import { IStoreState } from "shared/types";
 import { PkgRepoControl } from "./PkgRepoControl";
 import { PkgRepoDisabledControl } from "./PkgRepoDisabledControl";
 import PkgRepoList from "./PkgRepoList";
-import TableRow from "components/js/Table/components/TableRow";
-import { IPackageRepositoryState } from "reducers/repos";
 
 const {
   clusters: { currentCluster, clusters },
@@ -60,7 +61,7 @@ it("fetches repos only from the globalReposNamespace", () => {
           },
         },
       },
-    }),
+    } as Partial<IStoreState>),
     <PkgRepoList />,
   );
   expect(actions.repos.fetchRepoSummaries).toHaveBeenCalledWith("");
@@ -97,7 +98,7 @@ it("shows a warning if the cluster is not the default one", () => {
           },
         },
       },
-    }),
+    } as Partial<IStoreState>),
     <PkgRepoList />,
   );
   expect(wrapper.find(Alert)).toIncludeText(
@@ -107,7 +108,9 @@ it("shows a warning if the cluster is not the default one", () => {
 
 it("shows an error fetching a repo", () => {
   const wrapper = mountWrapper(
-    getStore({ repos: { errors: { fetch: new Error("boom!") } } as IPackageRepositoryState }),
+    getStore({
+      repos: { errors: { fetch: new Error("boom!") } } as IPackageRepositoryState,
+    } as Partial<IStoreState>),
     <PkgRepoList />,
   );
   expect(wrapper.find(Alert)).toIncludeText("boom!");
@@ -115,7 +118,9 @@ it("shows an error fetching a repo", () => {
 
 it("shows an error deleting a repo", () => {
   const wrapper = mountWrapper(
-    getStore({ repos: { errors: { delete: new Error("boom!") } } as IPackageRepositoryState }),
+    getStore({
+      repos: { errors: { delete: new Error("boom!") } } as IPackageRepositoryState,
+    } as Partial<IStoreState>),
     <PkgRepoList />,
   );
   expect(wrapper.find(Alert)).toIncludeText("boom!");
@@ -159,7 +164,7 @@ describe("global and namespaced repositories", () => {
           ...initialState.clusters,
           clusters: {
             [currentCluster]: {
-              ...initialState.clusters.clusters[currentCluster],
+              ...initialState.clusters.clusters[initialState.clusters.currentCluster],
               currentNamespace: "other",
             },
           },
@@ -167,7 +172,7 @@ describe("global and namespaced repositories", () => {
         repos: {
           reposSummaries: [globalRepo],
         } as IPackageRepositoryState,
-      }),
+      } as Partial<IStoreState>),
       <PkgRepoList />,
     );
     expect(wrapper.find(Table)).toHaveLength(1);
@@ -195,7 +200,7 @@ describe("global and namespaced repositories", () => {
         repos: {
           reposSummaries: [globalRepo],
         } as IPackageRepositoryState,
-      }),
+      } as Partial<IStoreState>),
       <PkgRepoList />,
     );
 
@@ -228,7 +233,7 @@ describe("global and namespaced repositories", () => {
         repos: {
           reposSummaries: [globalRepo, namespacedRepo],
         } as IPackageRepositoryState,
-      }),
+      } as Partial<IStoreState>),
       <PkgRepoList />,
     );
     // A table per repository type
@@ -241,7 +246,7 @@ describe("global and namespaced repositories", () => {
         repos: {
           reposSummaries: [namespacedRepo],
         } as IPackageRepositoryState,
-      }),
+      } as Partial<IStoreState>),
       <PkgRepoList />,
     );
     expect(wrapper.find(Table).find(Link).prop("to")).toEqual(
@@ -255,7 +260,7 @@ describe("global and namespaced repositories", () => {
         repos: {
           reposSummaries: [namespacedRepo],
         } as IPackageRepositoryState,
-      }),
+      } as Partial<IStoreState>),
       <PkgRepoList />,
     );
     act(() => {
@@ -271,7 +276,7 @@ describe("global and namespaced repositories", () => {
         repos: {
           reposSummaries: [namespacedRepo],
         } as IPackageRepositoryState,
-      }),
+      } as Partial<IStoreState>),
       <PkgRepoList />,
     );
     act(() => {

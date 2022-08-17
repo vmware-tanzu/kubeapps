@@ -5,7 +5,9 @@ import LoadingWrapper from "components/LoadingWrapper";
 import { Location } from "history";
 import { act } from "react-dom/test-utils";
 import { MemoryRouter, Redirect } from "react-router-dom";
+import { IConfigState } from "reducers/config";
 import { defaultStore, getStore, mountWrapper } from "shared/specs/mountWrapper";
+import { IStoreState } from "shared/types";
 import LoginForm from "./LoginForm";
 import OAuthLogin from "./OauthLogin";
 import TokenLogin from "./TokenLogin";
@@ -191,9 +193,12 @@ describe("oauth login form", () => {
       ...defaultStore,
       config: {
         authProxyEnabled: true,
-      },
+      } as IConfigState,
     };
-    const wrapper = mountWrapper(getStore({ ...state }), <LoginForm {...props} />);
+    const wrapper = mountWrapper(
+      getStore({ ...state } as Partial<IStoreState>),
+      <LoginForm {...props} />,
+    );
     expect(props.checkCookieAuthentication).toHaveBeenCalled();
     expect(wrapper.find(OAuthLogin)).toExist();
     expect(wrapper.find("a").findWhere(a => a.prop("href") === props.oauthLoginURI)).toExist();
@@ -204,7 +209,7 @@ describe("oauth login form", () => {
       ...defaultStore,
       config: {
         authProxyEnabled: true,
-      },
+      } as IConfigState,
     };
     const props2 = {
       ...props,
@@ -212,7 +217,10 @@ describe("oauth login form", () => {
         then: jest.fn(() => false),
       }),
     };
-    const wrapper = mountWrapper(getStore({ ...state }), <LoginForm {...props2} />);
+    const wrapper = mountWrapper(
+      getStore({ ...state } as Partial<IStoreState>),
+      <LoginForm {...props2} />,
+    );
     expect(wrapper.find(LoadingWrapper)).toExist();
     expect(wrapper.find(OAuthLogin)).not.toExist();
   });

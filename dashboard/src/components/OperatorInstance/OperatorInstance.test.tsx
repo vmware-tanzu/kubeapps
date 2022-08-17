@@ -16,7 +16,7 @@ import ApplicationStatusContainer from "containers/ApplicationStatusContainer";
 import { act } from "react-dom/test-utils";
 import * as ReactRedux from "react-redux";
 import { defaultStore, getStore, initialState, mountWrapper } from "shared/specs/mountWrapper";
-import { FetchError } from "shared/types";
+import { FetchError, IStoreState } from "shared/types";
 import OperatorInstance from "./OperatorInstance";
 
 const defaultProps = {
@@ -71,10 +71,12 @@ afterEach(() => {
 it("renders a fetch error", () => {
   const wrapper = mountWrapper(
     getStore({
+      ...initialState,
       operators: {
-        errors: { resource: { fetch: new FetchError("Boom!") } },
+        ...initialState.operators,
+        errors: { ...initialState.operators.errors, resource: { fetch: new FetchError("Boom!") } },
       },
-    }),
+    } as Partial<IStoreState>),
     <OperatorInstance {...defaultProps} />,
   );
   expect(wrapper.find(Alert)).toIncludeText("Boom!");
@@ -88,7 +90,7 @@ it("renders an update error", () => {
         csv: defaultCSV,
         errors: { resource: { update: new Error("Boom!") } },
       },
-    }),
+    } as Partial<IStoreState>),
     <OperatorInstance {...defaultProps} />,
   );
   expect(wrapper.find(Alert)).toIncludeText("Boom!");
@@ -101,7 +103,7 @@ it("renders an delete error", () => {
         csv: defaultCSV,
         errors: { resource: { update: new Error("Boom!") } },
       },
-    }),
+    } as Partial<IStoreState>),
     <OperatorInstance {...defaultProps} />,
   );
   expect(wrapper.find(Alert)).toIncludeText("Boom!");
@@ -129,7 +131,7 @@ it("retrieves CSV and resource when mounted", () => {
 
 it("renders a loading wrapper", () => {
   const wrapper = mountWrapper(
-    getStore({ operators: { isFetching: true } }),
+    getStore({ operators: { isFetching: true } } as Partial<IStoreState>),
     <OperatorInstance {...defaultProps} />,
   );
   expect(wrapper.find(LoadingWrapper)).toExist();
@@ -137,7 +139,7 @@ it("renders a loading wrapper", () => {
 
 it("renders all the subcomponents", () => {
   const wrapper = mountWrapper(
-    getStore({ operators: { csv: defaultCSV, resource } }),
+    getStore({ operators: { csv: defaultCSV, resource } } as Partial<IStoreState>),
     <OperatorInstance {...defaultProps} />,
   );
   expect(wrapper.find(ApplicationStatusContainer)).toExist();
@@ -152,7 +154,7 @@ it("skips AppNotes and AppValues if the resource doesn't have spec or status", (
   const wrapper = mountWrapper(
     getStore({
       operators: { csv: defaultCSV, resource: { ...resource, spec: undefined, status: undefined } },
-    }),
+    } as Partial<IStoreState>),
     <OperatorInstance {...defaultProps} />,
   );
   expect(wrapper.find(AppNotes)).not.toExist();
@@ -163,7 +165,7 @@ it("deletes the resource", async () => {
   const deleteResource = jest.fn().mockReturnValue(true);
   actions.operators.deleteResource = deleteResource;
   const wrapper = mountWrapper(
-    getStore({ operators: { csv: defaultCSV, resource } }),
+    getStore({ operators: { csv: defaultCSV, resource } } as Partial<IStoreState>),
     <OperatorInstance {...defaultProps} />,
   );
 
@@ -192,9 +194,13 @@ it("deletes the resource", async () => {
 it("updates the state with the CRD resources", () => {
   const wrapper = mountWrapper(
     getStore({
-      operators: { csv: defaultCSV, resource },
-      kube: { kinds: { Foo: { apiVersion: "apps/v1", plural: "foos", namespaced: true } } },
-    }),
+      ...initialState,
+      operators: { ...initialState.operators, csv: defaultCSV, resource },
+      kube: {
+        ...initialState.kube,
+        kinds: { Foo: { apiVersion: "apps/v1", plural: "foos", namespaced: true } },
+      },
+    } as Partial<IStoreState>),
     <OperatorInstance {...defaultProps} />,
   );
   expect(wrapper.find(ResourceTabs).prop("deployments")).toMatchObject([
@@ -232,9 +238,13 @@ it("updates the state with all the resources if the CRD doesn't define any", () 
   } as any;
   const wrapper = mountWrapper(
     getStore({
-      operators: { csv: csvWithoutResource, resource },
-      kube: { kinds: { Foo: { apiVersion: "apps/v1", plural: "foos", namespaced: true } } },
-    }),
+      ...initialState,
+      operators: { ...initialState.operators, csv: csvWithoutResource, resource },
+      kube: {
+        ...initialState.kube,
+        kinds: { Foo: { apiVersion: "apps/v1", plural: "foos", namespaced: true } },
+      },
+    } as Partial<IStoreState>),
     <OperatorInstance {...defaultProps} />,
   );
   const resources = wrapper.find(ResourceTabs).props();

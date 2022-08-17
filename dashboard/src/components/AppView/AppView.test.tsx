@@ -28,7 +28,7 @@ import { IConfigState } from "reducers/config";
 import { InstalledPackage } from "shared/InstalledPackage";
 import PackagesService from "shared/PackagesService";
 import { getStore, mountWrapper } from "shared/specs/mountWrapper";
-import { DeleteError, FetchError, IInstalledPackageState } from "shared/types";
+import { DeleteError, FetchError, IInstalledPackageState, IStoreState } from "shared/types";
 import { PluginNames } from "shared/utils";
 import { getType } from "typesafe-actions";
 import AccessURLTable from "./AccessURLTable/AccessURLTable";
@@ -160,7 +160,7 @@ describe("AppView", () => {
             selected: undefined,
             isFetching: true,
           } as IInstalledPackageState,
-        }),
+        } as Partial<IStoreState>),
         <MemoryRouter initialEntries={[routePathParam]}>
           <Route path={routePath}>
             <AppView />
@@ -181,7 +181,7 @@ describe("AppView", () => {
             isFetching: false,
             error: new Error("foo not found"),
           } as IInstalledPackageState,
-        }),
+        } as Partial<IStoreState>),
         <MemoryRouter initialEntries={[routePathParam]}>
           <Route path={routePath}>
             <AppView />
@@ -199,7 +199,9 @@ describe("AppView", () => {
 
     await act(async () => {
       wrapper = mountWrapper(
-        getStore({ apps: { error: new FetchError("boom!") } as IInstalledPackageState }),
+        getStore({
+          apps: { error: new FetchError("boom!") } as IInstalledPackageState,
+        } as Partial<IStoreState>),
         <MemoryRouter initialEntries={[routePathParam]}>
           <Route path={routePath}>
             <AppView />
@@ -226,7 +228,7 @@ describe("AppView", () => {
               },
             ],
           } as IConfigState,
-        }),
+        } as Partial<IStoreState>),
         <MemoryRouter initialEntries={[routePathParam]}>
           <Route path={routePath}>
             <AppView />
@@ -252,7 +254,7 @@ describe("AppView", () => {
               },
             ],
           } as IConfigState,
-        }),
+        } as Partial<IStoreState>),
         <MemoryRouter initialEntries={[routePathParam]}>
           <Route path={routePath}>
             <AppView />
@@ -272,7 +274,7 @@ describe("AppView", () => {
             selected: { ...installedPackage },
             selectedDetails: { ...availablePackageDetail },
           } as IInstalledPackageState,
-        }),
+        } as Partial<IStoreState>),
         <MemoryRouter initialEntries={[routePathParam]}>
           <Route path={routePath}>
             <AppView />
@@ -297,7 +299,7 @@ describe("AppView", () => {
               } as InstalledPackageReference,
             },
           } as IInstalledPackageState,
-        }),
+        } as Partial<IStoreState>),
         <MemoryRouter initialEntries={[routePathParam]}>
           <Route path={routePath}>
             <AppView />
@@ -317,7 +319,7 @@ describe("AppView", () => {
       wrapper = mountWrapper(
         getStore({
           apps: { selected: { ...installedPackage } } as IInstalledPackageState,
-        }),
+        } as Partial<IStoreState>),
         <MemoryRouter initialEntries={[routePathParam]}>
           <Route path={routePath}>
             <AppView />
@@ -351,7 +353,9 @@ describe("AppView", () => {
       let wrapper: any;
       await act(async () => {
         wrapper = mountWrapper(
-          getStore({ apps: { selected: installedPackage } as IInstalledPackageState }),
+          getStore({
+            apps: { selected: installedPackage } as IInstalledPackageState,
+          } as Partial<IStoreState>),
           <MemoryRouter initialEntries={[routePathParam]}>
             <Route path={routePath}>
               <AppView />
@@ -383,7 +387,9 @@ describe("AppView", () => {
       let wrapper: any;
       await act(async () => {
         wrapper = mountWrapper(
-          getStore({ apps: { selected: installedPackage } as IInstalledPackageState }),
+          getStore({
+            apps: { selected: installedPackage } as IInstalledPackageState,
+          } as Partial<IStoreState>),
           <MemoryRouter initialEntries={[routePathParam]}>
             <Route path={routePath}>
               <AppView />
@@ -425,7 +431,7 @@ describe("AppView", () => {
           getStore({
             ...validState,
             apps: { ...validState.apps, error: new Error("Boom!") } as IInstalledPackageState,
-          }),
+          } as Partial<IStoreState>),
           <MemoryRouter initialEntries={[routePathParam]}>
             <Route path={routePath}>
               <AppView />
@@ -445,7 +451,7 @@ describe("AppView", () => {
           getStore({
             ...validState,
             apps: { ...validState.apps, error: new DeleteError("Boom!") } as IInstalledPackageState,
-          }),
+          } as Partial<IStoreState>),
           <MemoryRouter initialEntries={[routePathParam]}>
             <Route path={routePath}>
               <AppView />
@@ -469,7 +475,9 @@ describe("AppView", () => {
     let wrapper: any;
     await act(async () => {
       wrapper = mountWrapper(
-        getStore({ apps: { selected: installedPackage } as IInstalledPackageState }),
+        getStore({
+          apps: { selected: installedPackage } as IInstalledPackageState,
+        } as Partial<IStoreState>),
         <MemoryRouter initialEntries={[routePathParam]}>
           <Route path={routePath}>
             <AppView />
@@ -499,7 +507,9 @@ describe("AppView actions", () => {
         resourceRefs: apiResourceRefs,
       } as GetInstalledPackageResourceRefsResponse),
     );
-    const store = getStore({ apps: { selected: installedPackage } as IInstalledPackageState });
+    const store = getStore({
+      apps: { selected: installedPackage } as IInstalledPackageState,
+    } as Partial<IStoreState>);
 
     await act(async () => {
       mountWrapper(
@@ -555,7 +565,9 @@ describe("AppView actions", () => {
       } as GetInstalledPackageResourceRefsResponse),
     );
 
-    const store = getStore({ apps: { selected: installedPackage } as IInstalledPackageState });
+    const store = getStore({
+      apps: { selected: installedPackage } as IInstalledPackageState,
+    } as Partial<IStoreState>);
     let wrapper: any;
     await act(async () => {
       wrapper = mountWrapper(

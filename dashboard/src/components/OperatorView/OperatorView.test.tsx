@@ -6,6 +6,7 @@ import actions from "actions";
 import Alert from "components/js/Alert";
 import * as ReactRedux from "react-redux";
 import { defaultStore, getStore, initialState, mountWrapper } from "shared/specs/mountWrapper";
+import { IStoreState } from "shared/types";
 import OperatorDescription from "./OperatorDescription";
 import OperatorView from "./OperatorView";
 
@@ -78,7 +79,7 @@ it("tries to get the CSV for the current operator", () => {
   const getCSV = jest.fn();
   actions.operators.getCSV = getCSV;
   mountWrapper(
-    getStore({ operators: { operator: defaultOperator } }),
+    getStore({ operators: { operator: defaultOperator } } as Partial<IStoreState>),
     <OperatorView {...defaultProps} />,
   );
 
@@ -91,7 +92,9 @@ it("tries to get the CSV for the current operator", () => {
 
 it("shows an error if it exists", () => {
   const wrapper = mountWrapper(
-    getStore({ operators: { errors: { operator: { fetch: new Error("boom") } } } }),
+    getStore({
+      operators: { errors: { operator: { fetch: new Error("boom") } } },
+    } as Partial<IStoreState>),
     <OperatorView {...defaultProps} />,
   );
   expect(wrapper.find(Alert)).toIncludeText("boom");
@@ -99,12 +102,17 @@ it("shows an error if it exists", () => {
 
 it("shows an error if the operator doesn't have any channel defined", () => {
   const operator = {
+    ...initialState.operators.operator,
     status: {
+      ...initialState.operators.operator?.status,
       channels: [],
     },
   };
   const wrapper = mountWrapper(
-    getStore({ operators: { operator } }),
+    getStore({
+      ...initialState,
+      operators: { ...initialState.operators, operator },
+    } as Partial<IStoreState>),
     <OperatorView {...defaultProps} />,
   );
   expect(wrapper.find(Alert)).toIncludeText(
@@ -121,7 +129,7 @@ it("selects the default channel", () => {
     },
   };
   const wrapper = mountWrapper(
-    getStore({ operators: { operator } }),
+    getStore({ operators: { operator } } as Partial<IStoreState>),
     <OperatorView {...defaultProps} />,
   );
   expect(wrapper.find(OperatorDescription).prop("description")).toEqual(
@@ -136,7 +144,7 @@ it("disables the Header deploy button if the subscription already exists", () =>
         operator: defaultOperator,
         subscriptions: [{ spec: { name: defaultOperator.metadata.name } }],
       },
-    }),
+    } as Partial<IStoreState>),
     <OperatorView {...defaultProps} />,
   );
   wrapper.find(CdsButton).forEach(button => expect(button).toBeDisabled());

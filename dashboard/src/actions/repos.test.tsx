@@ -23,6 +23,7 @@ import configureMockStore from "redux-mock-store";
 import thunk from "redux-thunk";
 import { PackageRepositoriesService } from "shared/PackageRepositoriesService";
 import PackagesService from "shared/PackagesService";
+import { initialState } from "shared/specs/mountWrapper";
 import { IPkgRepoFormData, NotFoundError, RepositoryStorageTypes } from "shared/types";
 import { getType } from "typesafe-actions";
 import actions from ".";
@@ -211,14 +212,17 @@ describe("deleteRepo", () => {
     it("dispatches requestRepoSummaries with current namespace", async () => {
       const storeWithFlag: any = mockStore({
         clusters: {
+          ...initialState.clusters,
           currentCluster: "defaultCluster",
           clusters: {
+            ...initialState.clusters.clusters,
             defaultCluster: {
+              ...initialState.clusters.clusters[initialState.clusters.currentCluster],
               currentNamespace,
             },
           },
         },
-      });
+      } as Partial<IStoreState>);
       await storeWithFlag.dispatch(
         repoActions.deleteRepo({
           context: { cluster: "default", namespace: "my-namespace" },

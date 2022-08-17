@@ -7,7 +7,7 @@ import OperatorInstanceFormBody from "components/OperatorInstanceFormBody/Operat
 import OperatorHeader from "components/OperatorView/OperatorHeader";
 import * as ReactRedux from "react-redux";
 import { defaultStore, getStore, initialState, mountWrapper } from "shared/specs/mountWrapper";
-import { FetchError } from "shared/types";
+import { FetchError, IStoreState } from "shared/types";
 import OperatorInstanceUpdateForm, {
   IOperatorInstanceUpgradeFormProps,
 } from "./OperatorInstanceUpdateForm";
@@ -91,7 +91,7 @@ it("set default and deployed values", () => {
         resource: defaultResource,
         csv: defaultCSV,
       },
-    }),
+    } as Partial<IStoreState>),
     <OperatorInstanceUpdateForm {...defaultProps} />,
   );
   expect(wrapper.find(OperatorInstanceFormBody).props()).toMatchObject({
@@ -108,12 +108,15 @@ it("renders an error if the resource is not populated", () => {
 it("renders only an error if the resource is not found", () => {
   const wrapper = mountWrapper(
     getStore({
+      ...initialState,
       operators: {
+        ...initialState.operators,
         errors: {
+          ...initialState.operators.errors,
           fetch: new FetchError("not found"),
         },
       },
-    }),
+    } as Partial<IStoreState>),
     <OperatorInstanceUpdateForm {...defaultProps} />,
   );
   expect(wrapper.find(Alert)).toIncludeText("not found");
@@ -129,7 +132,7 @@ it("should submit the form", () => {
         resource: defaultResource,
         csv: defaultCSV,
       },
-    }),
+    } as Partial<IStoreState>),
     <OperatorInstanceUpdateForm {...defaultProps} />,
   );
 
