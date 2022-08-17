@@ -717,8 +717,7 @@ export function PkgRepoForm(props: IPkgRepoFormProps) {
                             id="kubeapps-repo-type-oci"
                             type="radio"
                             name="type"
-                            // TODO(agamez): workaround until Flux plugin also supports OCI artifacts
-                            disabled={plugin?.name === PluginNames.PACKAGES_FLUX || !!repo?.type}
+                            disabled={!!repo?.type}
                             value={RepositoryStorageTypes.PACKAGE_REPOSITORY_STORAGE_OCI || ""}
                             checked={type === RepositoryStorageTypes.PACKAGE_REPOSITORY_STORAGE_OCI}
                             onChange={handleTypeRadioButtonChange}
@@ -1664,35 +1663,34 @@ export function PkgRepoForm(props: IPkgRepoFormProps) {
             id="panel-filtering"
             expanded={accordion[2]}
             hidden={
-              type !== RepositoryStorageTypes.PACKAGE_REPOSITORY_STORAGE_OCI &&
+              type !== RepositoryStorageTypes.PACKAGE_REPOSITORY_STORAGE_OCI ||
               plugin?.name !== PluginNames.PACKAGES_HELM
             }
           >
             <CdsAccordionHeader onClick={() => toggleAccordion(2)}>Filtering</CdsAccordionHeader>
             <CdsAccordionContent>
               <CdsFormGroup layout="vertical">
-                {type === RepositoryStorageTypes.PACKAGE_REPOSITORY_STORAGE_OCI && (
-                  <CdsTextarea>
-                    <label htmlFor="kubeapps-oci-repositories">
-                      List of Repositories (required)
-                    </label>
-                    <CdsControlMessage>
-                      Include a list of comma-separated OCI repositories that will be available in
-                      Kubeapps.
-                    </CdsControlMessage>
-                    <textarea
-                      id="kubeapps-oci-repositories"
-                      className="cds-textarea-fix"
-                      placeholder={"nginx, jenkins"}
-                      value={ociRepositories || ""}
-                      onChange={handleOCIRepositoriesChange}
-                      required={type === RepositoryStorageTypes.PACKAGE_REPOSITORY_STORAGE_OCI}
-                    />
-                  </CdsTextarea>
-                )}
-                {/* TODO(agamez): workaround until Flux plugin also supports OCI artifacts */}
                 {plugin?.name === PluginNames.PACKAGES_HELM && (
                   <>
+                    {type === RepositoryStorageTypes.PACKAGE_REPOSITORY_STORAGE_OCI && (
+                      <CdsTextarea>
+                        <label htmlFor="kubeapps-oci-repositories">
+                          List of Repositories (required)
+                        </label>
+                        <CdsControlMessage>
+                          Include a list of comma-separated OCI repositories that will be available
+                          in Kubeapps.
+                        </CdsControlMessage>
+                        <textarea
+                          id="kubeapps-oci-repositories"
+                          className="cds-textarea-fix"
+                          placeholder={"nginx, jenkins"}
+                          value={ociRepositories || ""}
+                          onChange={handleOCIRepositoriesChange}
+                          required={type === RepositoryStorageTypes.PACKAGE_REPOSITORY_STORAGE_OCI}
+                        />
+                      </CdsTextarea>
+                    )}
                     <CdsTextarea>
                       <label htmlFor="kubeapps-repo-filter-repositories">
                         Filter Applications (optional)
