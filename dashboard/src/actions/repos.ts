@@ -15,7 +15,7 @@ import { ThunkAction } from "redux-thunk";
 import { PackageRepositoriesService } from "shared/PackageRepositoriesService";
 import PackagesService from "shared/PackagesService";
 import { IPkgRepoFormData, IStoreState, NotFoundError } from "shared/types";
-import { isGlobalNamespace } from "shared/utils";
+import { isGlobalNamespace, PluginNames } from "shared/utils";
 import { ActionType, deprecated } from "typesafe-actions";
 
 const { createAction } = deprecated;
@@ -139,7 +139,12 @@ export const addRepo = (
     } = getState();
     try {
       dispatch(addOrUpdateRepo());
-      const namespaceScoped = !isGlobalNamespace(namespace, request.plugin?.name, config);
+      // TODO(agamez): improve the global/namespaced repos UX
+      // to avoid hacks like this (flux repos are always global)
+      // https://github.com/vmware-tanzu/kubeapps/issues/2995
+      const namespaceScoped =
+        !isGlobalNamespace(namespace, request.plugin?.name, config) &&
+        request.plugin?.name !== PluginNames.PACKAGES_FLUX;
       const addPackageRepositoryResponse = await PackageRepositoriesService.addPackageRepository(
         currentCluster,
         namespace,
