@@ -180,7 +180,7 @@ function deleteChartFromMyGithubRegistry() {
     echo ================================================================================
     PODINFO_EXISTS=$(echo $ALL_PACKAGES | grep -sw 'helm-charts/podinfo')
     if [[ "$PODINFO_EXISTS" != "" ]]; then
-      echo Deleting package [${L_YELLOW}podinfo${NC}] from [${L_YELLOW}$GITHUB_OCI_REGISTRY_URL${NC}]...
+      echo -e Deleting package [${L_YELLOW}podinfo${NC}] from [${L_YELLOW}$GITHUB_OCI_REGISTRY_URL${NC}]...
       # GitHub API ref https://docs.github.com/en/rest/packages#delete-a-package-for-the-authenticated-user
       # GitHub web portal: https://github.com/users/gfichtenholt/packages/container/helm-charts%2Fpodinfo/settings 
       echo -n | gh api --method DELETE -H "Accept: application/vnd.github+json" /user/packages/container/helm-charts%2Fpodinfo --input -

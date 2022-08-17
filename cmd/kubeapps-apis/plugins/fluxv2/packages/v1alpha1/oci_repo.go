@@ -218,12 +218,14 @@ func newOCIChartRepository(registryURL string, registryOpts ...OCIChartRepositor
 
 func (r *OCIChartRepository) listRepositoryNames() ([]string, error) {
 	// this needs to be done after a call to login()
-	for _, lister := range builtInRepoListers {
-		if ok, err := lister.IsApplicableFor(r); ok && err == nil {
-			r.repositoryLister = lister
-			break
-		} else {
-			log.Infof("Lister [%v] not applicable for registry for URL: [%s] [%v]", reflect.TypeOf(lister), r.url.String(), err)
+	if r.repositoryLister == nil {
+		for _, lister := range builtInRepoListers {
+			if ok, err := lister.IsApplicableFor(r); ok && err == nil {
+				r.repositoryLister = lister
+				break
+			} else {
+				log.Infof("Lister [%v] not applicable for registry for URL: [%s] [%v]", reflect.TypeOf(lister), r.url.String(), err)
+			}
 		}
 	}
 
@@ -390,7 +392,7 @@ func (s *repoEventSink) onAddOciRepo(repo sourcev1.HelmRepository) ([]byte, bool
 		return nil, false, err
 	}
 
-	chartRepo := &models.Repo{
+	modelRepo := &models.Repo{
 		Namespace: repo.Namespace,
 		Name:      repo.Name,
 		URL:       repo.Spec.URL,
@@ -407,76 +409,9 @@ func (s *repoEventSink) onAddOciRepo(repo sourcev1.HelmRepository) ([]byte, bool
 		return nil, false, err
 	}
 
-	charts := []models.Chart{}
-	for _, fullAppName := range appNames {
-		appName, err := ociChartRepo.shortRepoName(fullAppName)
-		if err != nil {
-			return nil, false, err
-		}
-
-		// Encode repository names to store them in the database.
-		encodedAppName := url.PathEscape(appName)
-		chartID := path.Join(repo.Name, encodedAppName)
-
-		log.Infof("==========>: app name: [%s], chartID: [%s]", appName, chartID)
-
-		ref := fmt.Sprintf("%s/%s", ociChartRepo.url.String(), appName)
-		allTags, err := ociChartRepo.getTags(ref)
-		if err != nil {
-			return nil, false, err
-		}
-
-		// to be consistent with how we support helm http repos
-		// the chart fields like Desciption, home, sources come from the
-		// most recent chart version
-		// ref https://github.com/vmware-tanzu/kubeapps/blob/11c87926d6cd798af72875d01437d15ae8d85b9a/pkg/helm/index.go#L30
-		latestChartVersion, err := ociChartRepo.pickChartVersionFrom(appName, "", allTags)
-		if err != nil {
-			return nil, false, status.Errorf(codes.Internal, "%v", err)
-		}
-		log.Infof("==========> most recent chart version: %s", latestChartVersion.Version)
-
-		latestChartMetadata, err := getOCIChartMetadata(ociChartRepo, chartID, latestChartVersion)
-		if err != nil {
-			return nil, false, err
-		}
-
-		maintainers := []chart.Maintainer{}
-		for _, maintainer := range latestChartMetadata.Maintainers {
-			maintainers = append(maintainers, *maintainer)
-		}
-
-		mc := models.Chart{
-			ID:            chartID,
-			Name:          encodedAppName,
-			Repo:          chartRepo,
-			Description:   latestChartMetadata.Description,
-			Home:          latestChartMetadata.Home,
-			Keywords:      latestChartMetadata.Keywords,
-			Maintainers:   maintainers,
-			Sources:       latestChartMetadata.Sources,
-			Icon:          latestChartMetadata.Icon,
-			Category:      latestChartMetadata.Annotations["category"],
-			ChartVersions: []models.ChartVersion{},
-		}
-
-		for _, tag := range allTags {
-			chartVersion, err := ociChartRepo.pickChartVersionFrom(appName, tag, allTags)
-			if err != nil {
-				return nil, false, status.Errorf(codes.Internal, "%v", err)
-			}
-			log.Infof("==========>: chart version: %s", common.PrettyPrint(chartVersion))
-
-			mcv := models.ChartVersion{
-				Version:    chartVersion.Version,
-				AppVersion: chartVersion.AppVersion,
-				Created:    chartVersion.Created,
-				Digest:     chartVersion.Digest,
-				URLs:       chartVersion.URLs,
-			}
-			mc.ChartVersions = append(mc.ChartVersions, mcv)
-		}
-		charts = append(charts, mc)
+	charts, err := getModelChartsFor(appNames, ociChartRepo, modelRepo)
+	if err != nil {
+		return nil, false, err
 	}
 
 	checksum, err := ociChartRepo.checksum()
@@ -759,6 +694,81 @@ func downloadChartWithHelmGetter(tlsConfig *tls.Config, getterOptions []getter.O
 		log.Infof("helmGetter.Get(%s) returned error: %v", getThis, err)
 	}
 	return buf, err
+}
+
+func getModelChartsFor(appNames []string, ociChartRepo *OCIChartRepository, modelRepo *models.Repo) ([]models.Chart, error) {
+	charts := []models.Chart{}
+	for _, fullAppName := range appNames {
+		appName, err := ociChartRepo.shortRepoName(fullAppName)
+		if err != nil {
+			return nil, err
+		}
+
+		// Encode repository names to store them in the database.
+		encodedAppName := url.PathEscape(appName)
+		chartID := path.Join(modelRepo.Name, encodedAppName)
+
+		log.Infof("==========>: app name: [%s], chartID: [%s]", appName, chartID)
+
+		ref := fmt.Sprintf("%s/%s", ociChartRepo.url.String(), appName)
+		allTags, err := ociChartRepo.getTags(ref)
+		if err != nil {
+			return nil, err
+		}
+
+		// to be consistent with how we support helm http repos
+		// the chart fields like Desciption, home, sources come from the
+		// most recent chart version
+		// ref https://github.com/vmware-tanzu/kubeapps/blob/11c87926d6cd798af72875d01437d15ae8d85b9a/pkg/helm/index.go#L30
+		latestChartVersion, err := ociChartRepo.pickChartVersionFrom(appName, "", allTags)
+		if err != nil {
+			return nil, status.Errorf(codes.Internal, "%v", err)
+		}
+		log.Infof("==========> most recent chart version: %s", latestChartVersion.Version)
+
+		latestChartMetadata, err := getOCIChartMetadata(ociChartRepo, chartID, latestChartVersion)
+		if err != nil {
+			return nil, err
+		}
+
+		maintainers := []chart.Maintainer{}
+		for _, maintainer := range latestChartMetadata.Maintainers {
+			maintainers = append(maintainers, *maintainer)
+		}
+
+		mc := models.Chart{
+			ID:            chartID,
+			Name:          encodedAppName,
+			Repo:          modelRepo,
+			Description:   latestChartMetadata.Description,
+			Home:          latestChartMetadata.Home,
+			Keywords:      latestChartMetadata.Keywords,
+			Maintainers:   maintainers,
+			Sources:       latestChartMetadata.Sources,
+			Icon:          latestChartMetadata.Icon,
+			Category:      latestChartMetadata.Annotations["category"],
+			ChartVersions: []models.ChartVersion{},
+		}
+
+		for _, tag := range allTags {
+			chartVersion, err := ociChartRepo.pickChartVersionFrom(appName, tag, allTags)
+			if err != nil {
+				return nil, status.Errorf(codes.Internal, "%v", err)
+			}
+			log.Infof("==========>: chart version: %s", common.PrettyPrint(chartVersion))
+
+			mcv := models.ChartVersion{
+				Version:    chartVersion.Version,
+				AppVersion: chartVersion.AppVersion,
+				Created:    chartVersion.Created,
+				Digest:     chartVersion.Digest,
+				URLs:       chartVersion.URLs,
+			}
+			mc.ChartVersions = append(mc.ChartVersions, mcv)
+		}
+		charts = append(charts, mc)
+	}
+	return charts, nil
 }
 
 func getOCIChartTarball(ociRepo *OCIChartRepository, chartID string, chartVersion *repo.ChartVersion) ([]byte, error) {
