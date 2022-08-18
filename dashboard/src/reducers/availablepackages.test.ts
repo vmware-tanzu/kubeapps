@@ -58,7 +58,7 @@ describe("packageReducer", () => {
   const error = new Error("Boom");
 
   it("unsets an error when changing namespace", () => {
-    const state = packageReducer(undefined, {
+    const state = packageReducer(initialState, {
       type: getType(actions.availablepackages.createErrorPackage) as any,
       payload: error,
     });
@@ -72,14 +72,14 @@ describe("packageReducer", () => {
     });
 
     expect(
-      packageReducer(undefined, {
+      packageReducer(initialState, {
         type: getType(actions.namespace.setNamespaceState) as any,
       }),
     ).toEqual({ ...initialState });
   });
 
   it("requestAvailablePackageSummaries (without page)", () => {
-    const state = packageReducer(undefined, {
+    const state = packageReducer(initialState, {
       type: getType(actions.availablepackages.requestAvailablePackageSummaries) as any,
     });
     expect(state).toEqual({
@@ -89,7 +89,7 @@ describe("packageReducer", () => {
   });
 
   it("requestAvailablePackageSummaries (with page)", () => {
-    const state = packageReducer(undefined, {
+    const state = packageReducer(initialState, {
       type: getType(actions.availablepackages.requestAvailablePackageSummaries) as any,
       payload: "currentPageToken",
     });
@@ -482,7 +482,7 @@ describe("packageReducer", () => {
   });
 
   it("resetAvailablePackageSummaries resets to the initial", () => {
-    const state = packageReducer(undefined, {
+    const state = packageReducer(initialState, {
       type: getType(actions.availablepackages.resetAvailablePackageSummaries) as any,
     });
     expect(state).toEqual({
@@ -491,7 +491,7 @@ describe("packageReducer", () => {
   });
 
   it("createErrorPackage resets to the initial state", () => {
-    const state = packageReducer(undefined, {
+    const state = packageReducer(initialState, {
       type: getType(actions.availablepackages.createErrorPackage) as any,
     });
     expect(state).toEqual({

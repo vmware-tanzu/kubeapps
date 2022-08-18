@@ -64,7 +64,6 @@ const packageReducer = (
 ): IPackageState => {
   switch (action.type) {
     case getType(actions.availablepackages.requestAvailablePackageSummaries):
-      return { ...state, isFetching: true };
     case getType(actions.availablepackages.requestSelectedAvailablePackageVersions):
       return { ...state, isFetching: true };
     case getType(actions.availablepackages.receiveAvailablePackageSummaries): {
@@ -92,6 +91,7 @@ const packageReducer = (
       };
     }
     case getType(actions.availablepackages.receiveSelectedAvailablePackageVersions):
+    case getType(actions.availablepackages.receiveSelectedAvailablePackageDetail):
       return {
         ...state,
         isFetching: false,
@@ -101,12 +101,6 @@ const packageReducer = (
       return {
         ...state,
         isFetching: true,
-        selected: selectedPackageReducer(state.selected, action),
-      };
-    case getType(actions.availablepackages.receiveSelectedAvailablePackageDetail):
-      return {
-        ...state,
-        isFetching: false,
         selected: selectedPackageReducer(state.selected, action),
       };
     case getType(actions.availablepackages.resetAvailablePackageSummaries):

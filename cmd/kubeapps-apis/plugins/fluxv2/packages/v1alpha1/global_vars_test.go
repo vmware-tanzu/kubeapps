@@ -5,6 +5,7 @@ package main
 
 import (
 	"encoding/json"
+	"io/ioutil"
 	"time"
 
 	helmv2 "github.com/fluxcd/helm-controller/api/v2beta1"
@@ -341,7 +342,7 @@ var (
 		PkgVersionReference: &corev1.VersionReference{
 			Version: "*",
 		},
-		CurrentVersion:        pkgAppVersion("6.1.6"),
+		CurrentVersion:        pkgAppVersion("6.1.5"),
 		Status:                status_installed,
 		PostInstallationNotes: podinfo_notes("my-podinfo-17"),
 	}
@@ -693,7 +694,7 @@ var (
 		},
 	}
 
-	valid_index_package_summaries = []*corev1.AvailablePackageSummary{
+	valid_index_available_package_summaries = []*corev1.AvailablePackageSummary{
 		{
 			Name:             "acs-engine-autoscaler",
 			DisplayName:      "acs-engine-autoscaler",
@@ -925,6 +926,23 @@ var (
 			URL:             "http://example.com",
 			Interval:        metav1.Duration{Duration: 10 * time.Minute},
 			PassCredentials: true,
+		},
+	}
+
+	add_repo_6 = sourcev1.HelmRepository{
+		TypeMeta: metav1.TypeMeta{
+			Kind:       sourcev1.HelmRepositoryKind,
+			APIVersion: sourcev1.GroupVersion.String(),
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:            "bar",
+			Namespace:       "foo",
+			ResourceVersion: "1",
+		},
+		Spec: sourcev1.HelmRepositorySpec{
+			URL:      github_stefanprodan_podinfo_oci_registry_url,
+			Interval: metav1.Duration{Duration: 10 * time.Minute},
+			Type:     "oci",
 		},
 	}
 
@@ -1223,6 +1241,32 @@ var (
 		},
 	}
 
+	add_repo_req_26 = &corev1.AddPackageRepositoryRequest{
+		Name:    "bar",
+		Context: &corev1.Context{Namespace: "foo"},
+		Type:    "oci",
+		Url:     github_stefanprodan_podinfo_oci_registry_url,
+	}
+
+	add_repo_req_27 = func(server, user, password string) *corev1.AddPackageRepositoryRequest {
+		return &corev1.AddPackageRepositoryRequest{
+			Name:    "my-podinfo-10",
+			Context: &corev1.Context{Namespace: "default"},
+			Type:    "oci",
+			Url:     harbor_stefanprodan_podinfo_oci_registry_url,
+			Auth: &corev1.PackageRepositoryAuth{
+				Type: corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_DOCKER_CONFIG_JSON,
+				PackageRepoAuthOneOf: &corev1.PackageRepositoryAuth_DockerCreds{
+					DockerCreds: &corev1.DockerCredentials{
+						Server:   server,
+						Username: user,
+						Password: password,
+					},
+				},
+			},
+		}
+	}
+
 	add_repo_expected_resp = &corev1.AddPackageRepositoryResponse{
 		PackageRepoRef: repoRef("bar", "foo"),
 	}
@@ -1261,6 +1305,10 @@ var (
 
 	add_repo_expected_resp_10 = &corev1.AddPackageRepositoryResponse{
 		PackageRepoRef: repoRef("my-podinfo-9", "default"),
+	}
+
+	add_repo_expected_resp_11 = &corev1.AddPackageRepositoryResponse{
+		PackageRepoRef: repoRef("my-podinfo-10", "default"),
 	}
 
 	status_installed = &corev1.InstalledPackageStatus{
@@ -2099,15 +2147,23 @@ var (
 
 	expected_versions_stefanprodan_podinfo = &corev1.GetAvailablePackageVersionsResponse{
 		PackageAppVersions: []*corev1.PackageAppVersion{
+			{PkgVersion: "6.1.8"},
+			{PkgVersion: "6.1.7"},
 			{PkgVersion: "6.1.6"},
-			{PkgVersion: "6.1.5"},
-			{PkgVersion: "6.1.4"},
 		},
 	}
 
 	expected_versions_gfichtenholt_podinfo = &corev1.GetAvailablePackageVersionsResponse{
 		PackageAppVersions: []*corev1.PackageAppVersion{
 			{PkgVersion: "6.1.5"},
+		},
+	}
+
+	expected_versions_podinfo_2 = &corev1.GetAvailablePackageVersionsResponse{
+		PackageAppVersions: []*corev1.PackageAppVersion{
+			{PkgVersion: "6.1.5"},
+			{PkgVersion: "6.0.3"},
+			{PkgVersion: "6.0.0"},
 		},
 	}
 
@@ -2609,6 +2665,11 @@ var (
 		PackageRepoRef: repoRefInReq("my-podinfo-15", "TBD"),
 	}
 
+	get_repo_detail_req_16 = &corev1.GetPackageRepositoryDetailRequest{
+		// namespace will be set when test scenario is run
+		PackageRepoRef: repoRefInReq("my-podinfo-16", "TBD"),
+	}
+
 	get_repo_detail_resp_16 = &corev1.GetPackageRepositoryDetailResponse{
 		Detail: &corev1.PackageRepositoryDetail{
 			PackageRepoRef:  repoRefWithId("my-podinfo-13"),
@@ -2661,6 +2722,47 @@ var (
 			NamespaceScoped: false,
 			Type:            "oci",
 			Url:             github_stefanprodan_podinfo_oci_registry_url,
+			Interval:        "10m",
+			Auth: &corev1.PackageRepositoryAuth{
+				Type: corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_DOCKER_CONFIG_JSON,
+				PackageRepoAuthOneOf: &corev1.PackageRepositoryAuth_DockerCreds{
+					DockerCreds: &corev1.DockerCredentials{
+						Username: redactedString,
+						Password: redactedString,
+						Server:   redactedString,
+					},
+				},
+			},
+			Status: &corev1.PackageRepositoryStatus{
+				Ready:      true,
+				Reason:     corev1.PackageRepositoryStatus_STATUS_REASON_SUCCESS,
+				UserReason: "Succeeded: Helm repository is ready",
+			},
+		},
+	}
+
+	get_repo_detail_resp_19 = &corev1.GetPackageRepositoryDetailResponse{
+		Detail: &corev1.PackageRepositoryDetail{
+			PackageRepoRef:  get_repo_detail_package_resp_ref,
+			Name:            "repo-1",
+			Description:     "",
+			NamespaceScoped: false,
+			Type:            "oci",
+			Url:             "oci://localhost:54321/userX/charts",
+			Interval:        "1m",
+			Auth:            &corev1.PackageRepositoryAuth{},
+			Status:          podinfo_repo_status_4,
+		},
+	}
+
+	get_repo_detail_resp_20 = &corev1.GetPackageRepositoryDetailResponse{
+		Detail: &corev1.PackageRepositoryDetail{
+			PackageRepoRef:  repoRefWithId("my-podinfo-16"),
+			Name:            "my-podinfo-16",
+			Description:     "",
+			NamespaceScoped: false,
+			Type:            "oci",
+			Url:             harbor_stefanprodan_podinfo_oci_registry_url,
 			Interval:        "10m",
 			Auth: &corev1.PackageRepositoryAuth{
 				Type: corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_DOCKER_CONFIG_JSON,
@@ -2825,6 +2927,19 @@ var (
 			NamespaceScoped: false,
 			Type:            "oci",
 			Url:             github_stefanprodan_podinfo_oci_registry_url,
+			Status:          podinfo_repo_status_4,
+			RequiresAuth:    false,
+		}
+	}
+
+	get_summaries_summary_7 = func(name types.NamespacedName) *corev1.PackageRepositorySummary {
+		return &corev1.PackageRepositorySummary{
+			PackageRepoRef:  repoRef(name.Name, name.Namespace),
+			Name:            name.Name,
+			Description:     "",
+			NamespaceScoped: false,
+			Type:            "oci",
+			Url:             harbor_stefanprodan_podinfo_oci_registry_url,
 			Status:          podinfo_repo_status_4,
 			RequiresAuth:    false,
 		}
@@ -3401,7 +3516,7 @@ var (
 					Name:                "podinfo",
 					AvailablePackageRef: availableRef(name+"/podinfo", "default"),
 					LatestVersion: &corev1.PackageAppVersion{
-						PkgVersion: "6.1.6",
+						PkgVersion: "6.1.8",
 					},
 					DisplayName:      "podinfo",
 					ShortDescription: "Podinfo Helm chart for Kubernetes",
@@ -3411,13 +3526,13 @@ var (
 		}
 	}
 
-	expected_detail_oci_stefanprodan_podinfo = func(name string) *corev1.GetAvailablePackageDetailResponse {
+	expected_detail_oci_stefanprodan_podinfo = func(name, url string) *corev1.GetAvailablePackageDetailResponse {
 		return &corev1.GetAvailablePackageDetailResponse{
 			AvailablePackageDetail: &corev1.AvailablePackageDetail{
 				AvailablePackageRef: availableRef(name+"/podinfo", "default"),
 				Name:                "podinfo",
-				Version:             pkgAppVersion("6.1.6"),
-				RepoUrl:             "oci://ghcr.io/stefanprodan/charts",
+				Version:             pkgAppVersion("6.1.8"),
+				RepoUrl:             url,
 				HomeUrl:             "https://github.com/stefanprodan/podinfo",
 				DisplayName:         "podinfo",
 				ShortDescription:    "Podinfo Helm chart for Kubernetes",
@@ -3431,13 +3546,13 @@ var (
 		}
 	}
 
-	expected_detail_oci_stefanprodan_podinfo_2 = func(name string) *corev1.GetAvailablePackageDetailResponse {
+	expected_detail_oci_stefanprodan_podinfo_2 = func(name, url string) *corev1.GetAvailablePackageDetailResponse {
 		return &corev1.GetAvailablePackageDetailResponse{
 			AvailablePackageDetail: &corev1.AvailablePackageDetail{
 				AvailablePackageRef: availableRef(name+"/podinfo", "default"),
 				Name:                "podinfo",
-				Version:             pkgAppVersion("6.1.5"),
-				RepoUrl:             "oci://ghcr.io/stefanprodan/charts",
+				Version:             pkgAppVersion("6.1.6"),
+				RepoUrl:             url,
 				HomeUrl:             "https://github.com/stefanprodan/podinfo",
 				DisplayName:         "podinfo",
 				ShortDescription:    "Podinfo Helm chart for Kubernetes",
@@ -3449,5 +3564,191 @@ var (
 				DefaultValues: "Default values for podinfo.\n\nreplicaCount: 1\n",
 			},
 		}
+	}
+
+	newFakeRemoteOciRegistryData_1 = func() (*fakeRemoteOciRegistryData, error) {
+		chartBytes, err := ioutil.ReadFile(testTgz("podinfo-6.1.5.tgz"))
+		if err != nil {
+			return nil, err
+		}
+		return &fakeRemoteOciRegistryData{
+			repositories: []fakeRepo{
+				{
+					name: "podinfo",
+					chart: fakeChart{
+						versions: []fakeChartVersion{
+							{
+								version:  "6.1.5",
+								tgzBytes: chartBytes,
+							},
+						},
+					},
+				},
+			},
+		}, nil
+	}
+
+	oci_repo_available_package_summaries = []*corev1.AvailablePackageSummary{
+		{
+			Name:        "podinfo",
+			DisplayName: "podinfo",
+			LatestVersion: &corev1.PackageAppVersion{
+				PkgVersion: "6.1.5",
+			},
+			AvailablePackageRef: availableRef("repo-1/podinfo", "namespace-1"),
+			Categories:          []string{""},
+			ShortDescription:    "Podinfo Helm chart for Kubernetes",
+		},
+	}
+
+	oci_repo_available_package_summaries_2 = []*corev1.AvailablePackageSummary{
+		{
+			Name:        "podinfo",
+			DisplayName: "podinfo",
+			LatestVersion: &corev1.PackageAppVersion{
+				PkgVersion: "6.1.5",
+			},
+			AvailablePackageRef: availableRef("repo-1/podinfo", "namespace-1"),
+			Categories:          []string{""},
+			ShortDescription:    "Podinfo Helm chart for Kubernetes",
+		},
+		{
+			Name:        "airflow",
+			DisplayName: "airflow",
+			LatestVersion: &corev1.PackageAppVersion{
+				PkgVersion: "6.7.1",
+			},
+			IconUrl:             "https://bitnami.com/assets/stacks/airflow/img/airflow-stack-110x117.png",
+			AvailablePackageRef: availableRef("repo-1/airflow", "namespace-1"),
+			Categories:          []string{"WorkFlow"},
+			ShortDescription:    "Apache Airflow is a platform to programmatically author, schedule and monitor workflows.",
+		},
+	}
+
+	oci_podinfo_charts_spec = []testSpecChartWithUrl{
+		{
+			chartID:       "repo-1/podinfo",
+			chartUrl:      "oci://localhost:54321/userX/charts/podinfo:6.1.5",
+			chartRevision: "6.1.5",
+			repoNamespace: "namespace-1",
+		},
+	}
+
+	oci_podinfo_charts_spec_2 = []testSpecChartWithUrl{
+		{
+			chartID:       "repo-1/podinfo",
+			chartUrl:      "oci://localhost:54321/userX/charts/podinfo:6.1.5",
+			chartRevision: "6.1.5",
+			repoNamespace: "namespace-1",
+		},
+		{
+			chartID:       "repo-1/podinfo",
+			chartUrl:      "oci://localhost:54321/userX/charts/podinfo:6.0.3",
+			chartRevision: "6.0.3",
+			repoNamespace: "namespace-1",
+		},
+		{
+			chartID:       "repo-1/podinfo",
+			chartUrl:      "oci://localhost:54321/userX/charts/podinfo:6.0.0",
+			chartRevision: "6.0.0",
+			repoNamespace: "namespace-1",
+		},
+	}
+
+	expected_detail_podinfo_1 = &corev1.AvailablePackageDetail{
+		AvailablePackageRef: availableRef("repo-1/podinfo", "namespace-1"),
+		Name:                "podinfo",
+		Version: &corev1.PackageAppVersion{
+			PkgVersion: "6.1.5",
+			AppVersion: "6.1.5",
+		},
+		RepoUrl:          "oci://localhost:54321/userX/charts",
+		HomeUrl:          "https://github.com/stefanprodan/podinfo",
+		DisplayName:      "podinfo",
+		ShortDescription: "Podinfo Helm chart for Kubernetes",
+		Readme:           "Podinfo is a tiny web application made with Go",
+		DefaultValues:    "Default values for podinfo.",
+		SourceUrls:       []string{"https://github.com/stefanprodan/podinfo"},
+		Maintainers: []*corev1.Maintainer{
+			{
+				Name:  "stefanprodan",
+				Email: "stefanprodan@users.noreply.github.com",
+			},
+		},
+	}
+
+	newFakeRemoteOciRegistryData_2 = func() (*fakeRemoteOciRegistryData, error) {
+		chartBytes1, err := ioutil.ReadFile(testTgz("podinfo-6.1.5.tgz"))
+		if err != nil {
+			return nil, err
+		}
+		chartBytes2, err := ioutil.ReadFile(testTgz("podinfo-6.0.0.tgz"))
+		if err != nil {
+			return nil, err
+		}
+		chartBytes3, err := ioutil.ReadFile(testTgz("podinfo-6.0.3.tgz"))
+		if err != nil {
+			return nil, err
+		}
+		return &fakeRemoteOciRegistryData{
+			repositories: []fakeRepo{
+				{
+					name: "podinfo",
+					chart: fakeChart{
+						versions: []fakeChartVersion{
+							{
+								version:  "6.1.5",
+								tgzBytes: chartBytes1,
+							},
+							{
+								version:  "6.0.0",
+								tgzBytes: chartBytes2,
+							},
+							{
+								version:  "6.0.3",
+								tgzBytes: chartBytes3,
+							},
+						},
+					},
+				},
+			},
+		}, nil
+	}
+
+	newFakeRemoteOciRegistryData_3 = func() (*fakeRemoteOciRegistryData, error) {
+		chartBytes1, err := ioutil.ReadFile(testTgz("podinfo-6.1.5.tgz"))
+		if err != nil {
+			return nil, err
+		}
+		chartBytes2, err := ioutil.ReadFile(testTgz("airflow-6.7.1.tgz"))
+		if err != nil {
+			return nil, err
+		}
+		return &fakeRemoteOciRegistryData{
+			repositories: []fakeRepo{
+				{
+					name: "podinfo",
+					chart: fakeChart{
+						versions: []fakeChartVersion{
+							{
+								version:  "6.1.5",
+								tgzBytes: chartBytes1,
+							},
+						},
+					},
+				},
+				{
+					name: "airflow",
+					chart: fakeChart{
+						versions: []fakeChartVersion{
+							{
+								version:  "6.7.1",
+								tgzBytes: chartBytes2,
+							},
+						},
+					},
+				},
+			},
+		}, nil
 	}
 )

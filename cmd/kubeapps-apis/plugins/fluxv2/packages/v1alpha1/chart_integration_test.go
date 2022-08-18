@@ -591,6 +591,16 @@ func TestKindClusterAvailablePackageEndpointsForOCI(t *testing.T) {
 				),
 			},
 		*/
+		{
+			testName:    "Testing [" + harbor_stefanprodan_podinfo_oci_registry_url + "] with basic auth secret",
+			registryUrl: harbor_stefanprodan_podinfo_oci_registry_url,
+			secret: newBasicAuthSecret(types.NamespacedName{
+				Name:      "oci-repo-secret-" + randSeq(4),
+				Namespace: "default"},
+				harbor_user,
+				harbor_pwd,
+			),
+		},
 	}
 
 	adminName := types.NamespacedName{
@@ -691,7 +701,7 @@ func TestKindClusterAvailablePackageEndpointsForOCI(t *testing.T) {
 			compareActualVsExpectedAvailablePackageDetail(
 				t,
 				resp3.AvailablePackageDetail,
-				expected_detail_oci_stefanprodan_podinfo(repoName.Name).AvailablePackageDetail)
+				expected_detail_oci_stefanprodan_podinfo(repoName.Name, tc.registryUrl).AvailablePackageDetail)
 
 			// try a few older versions
 			grpcContext, cancel = context.WithTimeout(grpcContext, defaultContextTimeout)
@@ -705,7 +715,7 @@ func TestKindClusterAvailablePackageEndpointsForOCI(t *testing.T) {
 						},
 						Identifier: repoName.Name + "/podinfo",
 					},
-					PkgVersion: "6.1.5",
+					PkgVersion: "6.1.6",
 				})
 			if err != nil {
 				t.Fatal(err)
@@ -714,7 +724,7 @@ func TestKindClusterAvailablePackageEndpointsForOCI(t *testing.T) {
 			compareActualVsExpectedAvailablePackageDetail(
 				t,
 				resp4.AvailablePackageDetail,
-				expected_detail_oci_stefanprodan_podinfo_2(repoName.Name).AvailablePackageDetail)
+				expected_detail_oci_stefanprodan_podinfo_2(repoName.Name, tc.registryUrl).AvailablePackageDetail)
 		})
 	}
 }

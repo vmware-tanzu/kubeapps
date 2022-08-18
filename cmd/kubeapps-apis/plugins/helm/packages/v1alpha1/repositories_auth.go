@@ -8,20 +8,20 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
-	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/plugins/helm/packages/v1alpha1"
-	k8sErrors "k8s.io/apimachinery/pkg/api/errors"
-	v1 "k8s.io/client-go/kubernetes/typed/core/v1"
 	"strings"
 
 	apprepov1alpha1 "github.com/vmware-tanzu/kubeapps/cmd/apprepository-controller/pkg/apis/apprepository/v1alpha1"
 	corev1 "github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
+	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/plugins/helm/packages/v1alpha1"
 	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/pkg/statuserror"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	k8scorev1 "k8s.io/api/core/v1"
+	k8sErrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/kubernetes"
+	v1 "k8s.io/client-go/kubernetes/typed/core/v1"
 	log "k8s.io/klog/v2"
 	"k8s.io/kubernetes/pkg/credentialprovider"
 )
@@ -147,9 +147,13 @@ func newSecretFromTlsConfigAndAuth(repoName types.NamespacedName,
 func newAppRepositoryAuth(secret *k8scorev1.Secret,
 	tlsConfig *corev1.PackageRepositoryTlsConfig,
 	auth *corev1.PackageRepositoryAuth) (*apprepov1alpha1.AppRepositoryAuth, error) {
+
 	var appRepoAuth = &apprepov1alpha1.AppRepositoryAuth{}
 
 	if tlsConfig != nil {
+		if secret == nil {
+			return nil, status.Errorf(codes.InvalidArgument, "Secret for AppRepository auth is missing")
+		}
 		appRepoAuth.CustomCA = &apprepov1alpha1.AppRepositoryCustomCA{
 			SecretKeyRef: k8scorev1.SecretKeySelector{
 				Key: SecretCaKey,
@@ -165,6 +169,9 @@ func newAppRepositoryAuth(secret *k8scorev1.Secret,
 		case corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_BASIC_AUTH,
 			corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_BEARER,
 			corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_AUTHORIZATION_HEADER:
+			if secret == nil {
+				return nil, status.Errorf(codes.InvalidArgument, "Secret for AppRepository auth is missing")
+			}
 			if _, ok := secret.Data[SecretAuthHeaderKey]; ok {
 				appRepoAuth.Header = &apprepov1alpha1.AppRepositoryAuthHeader{
 					SecretKeyRef: k8scorev1.SecretKeySelector{
@@ -178,6 +185,9 @@ func newAppRepositoryAuth(secret *k8scorev1.Secret,
 				return nil, status.Errorf(codes.InvalidArgument, "Authentication header is missing")
 			}
 		case corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_DOCKER_CONFIG_JSON:
+			if secret == nil {
+				return nil, status.Errorf(codes.InvalidArgument, "Secret for AppRepository auth is missing")
+			}
 			if _, ok := secret.Data[DockerConfigJsonKey]; ok {
 				appRepoAuth.Header = &apprepov1alpha1.AppRepositoryAuthHeader{
 					SecretKeyRef: k8scorev1.SecretKeySelector{
@@ -286,9 +296,8 @@ func deleteSecret(ctx context.Context, secretsInterface v1.SecretInterface, secr
 	return nil
 }
 
-func (s *Server) copyRepositorySecret(typedClient kubernetes.Interface, secret *k8scorev1.Secret, repoName types.NamespacedName) error {
-	targetNamespace := s.globalPackagingNamespace
-	globalSecret := &k8scorev1.Secret{
+func (s *Server) copyRepositorySecretToNamespace(typedClient kubernetes.Interface, targetNamespace string, secret *k8scorev1.Secret, repoName types.NamespacedName) (copiedSecret *k8scorev1.Secret, err error) {
+	newSecret := &k8scorev1.Secret{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      namespacedSecretNameForRepo(repoName.Name, repoName.Namespace),
 			Namespace: targetNamespace,
@@ -296,11 +305,19 @@ func (s *Server) copyRepositorySecret(typedClient kubernetes.Interface, secret *
 		Type: secret.Type,
 		Data: secret.Data,
 	}
-	_, err := typedClient.CoreV1().Secrets(targetNamespace).Create(context.TODO(), globalSecret, metav1.CreateOptions{})
+	copiedSecret, err = typedClient.CoreV1().Secrets(targetNamespace).Create(context.TODO(), newSecret, metav1.CreateOptions{})
 	if err != nil && k8sErrors.IsAlreadyExists(err) {
-		_, err = typedClient.CoreV1().Secrets(targetNamespace).Update(context.TODO(), globalSecret, metav1.UpdateOptions{})
+		copiedSecret, err = typedClient.CoreV1().Secrets(targetNamespace).Update(context.TODO(), newSecret, metav1.UpdateOptions{})
 	}
-	return err
+	return copiedSecret, err
+}
+
+func (s *Server) deleteRepositorySecretFromNamespace(typedClient kubernetes.Interface, targetNamespace, secretName string) error {
+	secretsInterface := typedClient.CoreV1().Secrets(targetNamespace)
+	if deleteErr := deleteSecret(context.TODO(), secretsInterface, secretName); deleteErr != nil {
+		return deleteErr
+	}
+	return nil
 }
 
 func updateKubeappsManagedImagesPullSecret(ctx context.Context, typedClient kubernetes.Interface,

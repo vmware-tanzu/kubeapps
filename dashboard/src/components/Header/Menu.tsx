@@ -75,7 +75,7 @@ function Menu({ clusters, appVersion, logout }: IContextSelectorProps) {
             <div>
               <label className="dropdown-menu-padding dropdown-menu-label">Administration</label>
               <Link
-                to={app.config.apprepositories(clusters.currentCluster, namespaceSelected)}
+                to={app.config.pkgrepositories(clusters.currentCluster, namespaceSelected)}
                 className="dropdown-menu-link"
                 onClick={toggleOpen}
               >
