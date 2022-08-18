@@ -24,7 +24,7 @@ import thunk from "redux-thunk";
 import { PackageRepositoriesService } from "shared/PackageRepositoriesService";
 import PackagesService from "shared/PackagesService";
 import { initialState } from "shared/specs/mountWrapper";
-import { IPkgRepoFormData, NotFoundError, RepositoryStorageTypes } from "shared/types";
+import { IPkgRepoFormData, IStoreState, NotFoundError, RepositoryStorageTypes } from "shared/types";
 import { getType } from "typesafe-actions";
 import actions from ".";
 import { convertPkgRepoDetailToSummary } from "./repos";
