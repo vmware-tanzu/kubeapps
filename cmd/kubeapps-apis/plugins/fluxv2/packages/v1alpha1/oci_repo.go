@@ -217,6 +217,8 @@ func newOCIChartRepository(registryURL string, registryOpts ...OCIChartRepositor
 }
 
 func (r *OCIChartRepository) listRepositoryNames() ([]string, error) {
+	log.Infof("+listRepositoryNames(stack:\n%s)", common.GetStackTrace())
+
 	// this needs to be done after a call to login()
 	if r.repositoryLister == nil {
 		for _, lister := range builtInRepoListers {
@@ -382,23 +384,17 @@ func newRegistryClient(isLogin bool, tlsConfig *tls.Config, getterOpts []getter.
 // OCI Helm repository, which defines a source, does not produce an Artifact
 // ref https://fluxcd.io/docs/components/source/helmrepositories/#helm-oci-repository
 
-// TODO: this function is way too long. Break it up
 func (s *repoEventSink) onAddOciRepo(repo sourcev1.HelmRepository) ([]byte, bool, error) {
 	log.Infof("+onAddOciRepo(%s)", common.PrettyPrint(repo))
 	defer log.Info("-onAddOciRepo")
 
+	// I am disabling repo cache due to
+	// https://github.com/vmware-tanzu/kubeapps/issues/5007#issuecomment-1217293240
+	// until a clean fix is found.
 	ociChartRepo, err := s.newOCIChartRepositoryAndLogin(context.Background(), repo)
 	if err != nil {
 		return nil, false, err
 	}
-
-	modelRepo := &models.Repo{
-		Namespace: repo.Namespace,
-		Name:      repo.Name,
-		URL:       repo.Spec.URL,
-		Type:      repo.Spec.Type,
-	}
-
 	// repository names, e.g. "stefanprodan/charts/podinfo"
 	// asset-syncer calls them appNames
 	// see func (r *OCIRegistry) Charts(fetchLatestOnly bool) ([]models.Chart, error) {
@@ -409,12 +405,17 @@ func (s *repoEventSink) onAddOciRepo(repo sourcev1.HelmRepository) ([]byte, bool
 		return nil, false, err
 	}
 
-	charts, err := getModelChartsFor(appNames, ociChartRepo, modelRepo)
+	allTags, err := ociChartRepo.getTagsForApps(appNames)
 	if err != nil {
 		return nil, false, err
 	}
 
-	checksum, err := ociChartRepo.checksum()
+	charts, err := getOciChartModels(appNames, allTags, ociChartRepo, &repo)
+	if err != nil {
+		return nil, false, err
+	}
+
+	checksum, err := ociChartRepo.checksum(appNames, allTags)
 	if err != nil {
 		return nil, false, status.Errorf(codes.Internal, "%v", err)
 	}
@@ -422,6 +423,7 @@ func (s *repoEventSink) onAddOciRepo(repo sourcev1.HelmRepository) ([]byte, bool
 	cacheEntryValue := repoCacheEntryValue{
 		Checksum: checksum,
 		Charts:   charts,
+		Type:     "oci",
 	}
 
 	// use gob encoding instead of json, it peforms much better
@@ -437,12 +439,11 @@ func (s *repoEventSink) onAddOciRepo(repo sourcev1.HelmRepository) ([]byte, bool
 			return nil, false, err
 		}
 	}
-
 	return buf.Bytes(), true, nil
 }
 
 func (s *repoEventSink) onModifyOciRepo(key string, oldValue interface{}, repo sourcev1.HelmRepository) ([]byte, bool, error) {
-	log.Infof("+onModifyOciRepo(%s)", common.PrettyPrint(repo))
+	log.Infof("+onModifyOciRepo(stack:\n%s,\nrepo:%s)", common.GetStackTrace(), common.PrettyPrint(repo))
 	defer log.Info("-onModifyOciRepo")
 
 	// We should to compare checksums on what's stored in the cache
@@ -461,28 +462,55 @@ func (s *repoEventSink) onModifyOciRepo(key string, oldValue interface{}, repo s
 			key, cacheEntryUntyped)
 	}
 
-	ociRepo, err := s.newOCIChartRepositoryAndLogin(context.Background(), repo)
+	ociChartRepo, err := s.newOCIChartRepositoryAndLogin(context.Background(), repo)
 	if err != nil {
 		return nil, false, err
 	}
 
-	newChecksum, err := ociRepo.checksum()
+	appNames, err := ociChartRepo.listRepositoryNames()
+	if err != nil {
+		return nil, false, err
+	}
+
+	allTags, err := ociChartRepo.getTagsForApps(appNames)
+	if err != nil {
+		return nil, false, err
+	}
+
+	newChecksum, err := ociChartRepo.checksum(appNames, allTags)
 	if err != nil {
 		return nil, false, err
 	}
 
 	if cacheEntry.Checksum != newChecksum {
-		// currently this cannot happen due to https://github.com/fluxcd/source-controller/issues/839
-		// skip because the content did not change
-		log.Warningf("Unexpected state in onModifyOciRepo(%s)", common.PrettyPrint(repo))
-		// then just move on, same as if the remote contents did not change
+		charts, err := getOciChartModels(appNames, allTags, ociChartRepo, &repo)
+		if err != nil {
+			return nil, false, err
+		}
+
+		cacheEntryValue := repoCacheEntryValue{
+			Checksum: newChecksum,
+			Charts:   charts,
+			Type:     "oci",
+		}
+
+		// use gob encoding instead of json, it peforms much better
+		var buf bytes.Buffer
+		enc := gob.NewEncoder(&buf)
+		if err = enc.Encode(cacheEntryValue); err != nil {
+			return nil, false, err
+		}
+
+		if s.chartCache != nil {
+			fn := downloadOCIChartFn(ociChartRepo)
+			if err = s.chartCache.SyncCharts(charts, fn); err != nil {
+				return nil, false, err
+			}
+		}
+		return buf.Bytes(), true, nil
 	}
 	return nil, false, nil
 }
-
-//
-// misc OCI repo utilities
-//
 
 // TagList represents a list of tags as specified at
 // https://github.com/opencontainers/distribution-spec/blob/main/spec.md#content-discovery
@@ -494,35 +522,38 @@ type TagList struct {
 // Checksum returns the sha256 of the repo by concatenating tags for
 // all repositories within the registry and returning the sha256.
 // Caveat: Mutated image tags won't be detected as new
-func (r *OCIChartRepository) checksum() (string, error) {
-	log.Infof("+checksum()")
-	defer log.Infof("-checksum()")
-	appNames, err := r.listRepositoryNames()
-	if err != nil {
-		return "", err
-	}
+func (r *OCIChartRepository) getTagsForApps(appNames []string) (map[string]TagList, error) {
 	tags := map[string]TagList{}
 	for _, fullAppName := range appNames {
 		appName, err := r.shortRepoName(fullAppName)
 		if err != nil {
-			return "", err
+			return nil, err
 		}
 		ref := fmt.Sprintf("%s/%s", r.url.String(), appName)
 		tagz, err := r.getTags(ref)
 		if err != nil {
-			return "", err
+			return nil, err
 		}
-
 		tags[appName] = TagList{Name: appName, Tags: tagz}
 	}
+	return tags, nil
+}
 
-	content, err := json.Marshal(tags)
+func (r *OCIChartRepository) checksum(appNames []string, allTags map[string]TagList) (string, error) {
+	log.Infof("+checksum(%s)", appNames)
+	defer log.Infof("-checksum()")
+
+	content, err := json.Marshal(allTags)
 	if err != nil {
 		return "", err
 	}
 
 	return common.GetSha256(content)
 }
+
+//
+// misc OCI repo utilities
+//
 
 // given fullRepoName like "stefanprodan/charts/podinfo", returns "podinfo"
 func (r *OCIChartRepository) shortRepoName(fullRepoName string) (string, error) {
@@ -556,7 +587,6 @@ func (s *repoEventSink) newOCIChartRepositoryAndLogin(ctx context.Context, repo 
 }
 
 func (s *repoEventSink) newOCIChartRepositoryAndLoginWithOptions(registryURL string, loginOpts []registry.LoginOption, getterOpts []getter.Option, cred *orasregistryauthv2.Credential) (*OCIChartRepository, error) {
-	// TODO (gfichtenholt) DRY
 	u, err := url.Parse(registryURL)
 	if err != nil {
 		return nil, err
@@ -696,7 +726,7 @@ func downloadChartWithHelmGetter(tlsConfig *tls.Config, getterOptions []getter.O
 	return buf, err
 }
 
-func getModelChartsFor(appNames []string, ociChartRepo *OCIChartRepository, modelRepo *models.Repo) ([]models.Chart, error) {
+func getOciChartModels(appNames []string, allTags map[string]TagList, ociChartRepo *OCIChartRepository, repo *sourcev1.HelmRepository) ([]models.Chart, error) {
 	charts := []models.Chart{}
 	for _, fullAppName := range appNames {
 		appName, err := ociChartRepo.shortRepoName(fullAppName)
@@ -704,71 +734,85 @@ func getModelChartsFor(appNames []string, ociChartRepo *OCIChartRepository, mode
 			return nil, err
 		}
 
-		// Encode repository names to store them in the database.
-		encodedAppName := url.PathEscape(appName)
-		chartID := path.Join(modelRepo.Name, encodedAppName)
+		tags, ok := allTags[appName]
+		if !ok {
+			return nil, status.Errorf(codes.Internal, "Missing tags for app [%s]", appName)
+		}
 
-		log.Infof("==========>: app name: [%s], chartID: [%s]", appName, chartID)
-
-		ref := fmt.Sprintf("%s/%s", ociChartRepo.url.String(), appName)
-		allTags, err := ociChartRepo.getTags(ref)
+		mc, err := getOciChartModel(appName, tags, ociChartRepo, repo)
 		if err != nil {
 			return nil, err
 		}
+		charts = append(charts, *mc)
+	}
+	return charts, nil
+}
 
-		// to be consistent with how we support helm http repos
-		// the chart fields like Desciption, home, sources come from the
-		// most recent chart version
-		// ref https://github.com/vmware-tanzu/kubeapps/blob/11c87926d6cd798af72875d01437d15ae8d85b9a/pkg/helm/index.go#L30
-		latestChartVersion, err := ociChartRepo.pickChartVersionFrom(appName, "", allTags)
+func getOciChartModel(appName string, tags TagList, ociChartRepo *OCIChartRepository, repo *sourcev1.HelmRepository) (*models.Chart, error) {
+	// Encode repository names to store them in the database.
+	encodedAppName := url.PathEscape(appName)
+	chartID := path.Join(repo.Name, encodedAppName)
+
+	log.Infof("==========>: app name: [%s], chartID: [%s]", appName, chartID)
+
+	// to be consistent with how we support helm http repos
+	// the chart fields like Desciption, home, sources come from the
+	// most recent chart version
+	// ref https://github.com/vmware-tanzu/kubeapps/blob/11c87926d6cd798af72875d01437d15ae8d85b9a/pkg/helm/index.go#L30
+	latestChartVersion, err := ociChartRepo.pickChartVersionFrom(appName, "", tags.Tags)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "%v", err)
+	}
+	log.Infof("==========> most recent chart version: %s", latestChartVersion.Version)
+
+	latestChartMetadata, err := getOCIChartMetadata(ociChartRepo, chartID, latestChartVersion)
+	if err != nil {
+		return nil, err
+	}
+
+	maintainers := []chart.Maintainer{}
+	for _, maintainer := range latestChartMetadata.Maintainers {
+		maintainers = append(maintainers, *maintainer)
+	}
+
+	modelRepo := &models.Repo{
+		Namespace: repo.Namespace,
+		Name:      repo.Name,
+		URL:       repo.Spec.URL,
+		Type:      repo.Spec.Type,
+	}
+
+	mc := models.Chart{
+		ID:            chartID,
+		Name:          encodedAppName,
+		Repo:          modelRepo,
+		Description:   latestChartMetadata.Description,
+		Home:          latestChartMetadata.Home,
+		Keywords:      latestChartMetadata.Keywords,
+		Maintainers:   maintainers,
+		Sources:       latestChartMetadata.Sources,
+		Icon:          latestChartMetadata.Icon,
+		Category:      latestChartMetadata.Annotations["category"],
+		ChartVersions: []models.ChartVersion{},
+	}
+
+	for _, tag := range tags.Tags {
+		chartVersion, err := ociChartRepo.pickChartVersionFrom(appName, tag, tags.Tags)
 		if err != nil {
 			return nil, status.Errorf(codes.Internal, "%v", err)
 		}
-		log.Infof("==========> most recent chart version: %s", latestChartVersion.Version)
+		log.Infof("==========>: chart version: %s", common.PrettyPrint(chartVersion))
 
-		latestChartMetadata, err := getOCIChartMetadata(ociChartRepo, chartID, latestChartVersion)
-		if err != nil {
-			return nil, err
+		mcv := models.ChartVersion{
+			Version:    chartVersion.Version,
+			AppVersion: chartVersion.AppVersion,
+			Created:    chartVersion.Created,
+			Digest:     chartVersion.Digest,
+			URLs:       chartVersion.URLs,
 		}
-
-		maintainers := []chart.Maintainer{}
-		for _, maintainer := range latestChartMetadata.Maintainers {
-			maintainers = append(maintainers, *maintainer)
-		}
-
-		mc := models.Chart{
-			ID:            chartID,
-			Name:          encodedAppName,
-			Repo:          modelRepo,
-			Description:   latestChartMetadata.Description,
-			Home:          latestChartMetadata.Home,
-			Keywords:      latestChartMetadata.Keywords,
-			Maintainers:   maintainers,
-			Sources:       latestChartMetadata.Sources,
-			Icon:          latestChartMetadata.Icon,
-			Category:      latestChartMetadata.Annotations["category"],
-			ChartVersions: []models.ChartVersion{},
-		}
-
-		for _, tag := range allTags {
-			chartVersion, err := ociChartRepo.pickChartVersionFrom(appName, tag, allTags)
-			if err != nil {
-				return nil, status.Errorf(codes.Internal, "%v", err)
-			}
-			log.Infof("==========>: chart version: %s", common.PrettyPrint(chartVersion))
-
-			mcv := models.ChartVersion{
-				Version:    chartVersion.Version,
-				AppVersion: chartVersion.AppVersion,
-				Created:    chartVersion.Created,
-				Digest:     chartVersion.Digest,
-				URLs:       chartVersion.URLs,
-			}
-			mc.ChartVersions = append(mc.ChartVersions, mcv)
-		}
-		charts = append(charts, mc)
+		mc.ChartVersions = append(mc.ChartVersions, mcv)
 	}
-	return charts, nil
+	return &mc, nil
 }
 
 func getOCIChartTarball(ociRepo *OCIChartRepository, chartID string, chartVersion *repo.ChartVersion) ([]byte, error) {

@@ -74,7 +74,7 @@ func (s *Server) availableChartDetail(ctx context.Context, packageRef *corev1.Av
 
 	if byteArray == nil {
 		// no specific chart version was provided or a cache miss, need to do a bit of work
-		chartModel, err := s.getChart(ctx, repoName, chartName)
+		chartModel, err := s.getChartModel(ctx, repoName, chartName)
 		if err != nil {
 			return nil, err
 		} else if chartModel == nil {
@@ -136,25 +136,44 @@ func (s *Server) availableChartDetail(ctx context.Context, packageRef *corev1.Av
 	return pkgDetail, nil
 }
 
-func (s *Server) getChart(ctx context.Context, repo types.NamespacedName, chartName string) (*models.Chart, error) {
+func (s *Server) getChartModel(ctx context.Context, repoName types.NamespacedName, chartName string) (*models.Chart, error) {
 	if s.repoCache == nil {
 		return nil, status.Errorf(codes.FailedPrecondition, "server cache has not been properly initialized")
-	} else if ok, err := s.hasAccessToNamespace(ctx, common.GetChartsGvr(), repo.Namespace); err != nil {
+	} else if ok, err := s.hasAccessToNamespace(ctx, common.GetChartsGvr(), repoName.Namespace); err != nil {
 		return nil, err
 	} else if !ok {
-		return nil, status.Errorf(codes.PermissionDenied, "user has no [get] access for HelmCharts in namespace [%s]", repo.Namespace)
+		return nil, status.Errorf(codes.PermissionDenied, "user has no [get] access for HelmCharts in namespace [%s]", repoName.Namespace)
 	}
 
-	key := s.repoCache.KeyForNamespacedName(repo)
-	if entry, err := s.repoCache.GetForOne(key); err != nil {
+	key := s.repoCache.KeyForNamespacedName(repoName)
+	value, err := s.repoCache.Get(key)
+	if err != nil {
 		return nil, err
-	} else if entry != nil {
-		if typedEntry, ok := entry.(repoCacheEntryValue); !ok {
+	} else if value != nil {
+		if typedValue, ok := value.(repoCacheEntryValue); !ok {
 			return nil, status.Errorf(
 				codes.Internal,
-				"unexpected value fetched from cache: type: [%s], value: [%v]", reflect.TypeOf(entry), entry)
+				"unexpected value fetched from cache: type: [%s], value: [%v]",
+				reflect.TypeOf(value), value)
 		} else {
-			for _, chart := range typedEntry.Charts {
+			if typedValue.Type == "oci" {
+				// ref https://github.com/vmware-tanzu/kubeapps/issues/5007#issuecomment-1217293240
+				// helm OCI chart repos are not automatically updated when the
+				// state on remote changes. So we will force new checksum
+				// computation and update local cache if needed
+				value, err := s.repoCache.ForceAndFetch(key)
+				if err != nil {
+					return nil, err
+				}
+				typedValue, ok = value.(repoCacheEntryValue)
+				if !ok {
+					return nil, status.Errorf(
+						codes.Internal,
+						"unexpected value fetched from cache: type: [%s], value: [%v]",
+						reflect.TypeOf(value), value)
+				}
+			}
+			for _, chart := range typedValue.Charts {
 				if chart.Name == chartName {
 					return &chart, nil // found it
 				}

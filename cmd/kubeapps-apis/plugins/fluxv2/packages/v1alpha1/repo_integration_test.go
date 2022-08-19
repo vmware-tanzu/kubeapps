@@ -1473,11 +1473,6 @@ func TestKindClusterAddTagsToOciRepository(t *testing.T) {
 			t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opts))
 		}
 
-		// just codifying the behavior described in
-		// https://github.com/fluxcd/source-controller/issues/839
-		// Requested feature: flux OCI helm repositories notice when tags on remote registry change
-		// Should flux guys ever change their decision, this test should fail.
-		// P.S. Yuck
 		if err = helmPushChartToMyGithubRegistry(t, "6.1.6"); err != nil {
 			t.Fatal(err)
 		}
@@ -1506,7 +1501,7 @@ func TestKindClusterAddTagsToOciRepository(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		if got, want := resp3, expected_versions_gfichtenholt_podinfo; !cmp.Equal(want, got, opts) {
+		if got, want := resp3, expected_versions_gfichtenholt_podinfo_3; !cmp.Equal(want, got, opts) {
 			t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opts))
 		}
 	})

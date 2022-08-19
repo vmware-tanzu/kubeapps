@@ -59,7 +59,7 @@ function pushChartToMyGitHubRegistry() {
   -H "Accept: application/vnd.github+json" \
   /user/packages/container/helm-charts%2Fpodinfo/versions | jq -rc '.[].metadata.container.tags[]')
   echo
-  echo Remote Repository aka Package [${L_YELLOW}$GITHUB_OCI_REGISTRY_URL/podinfo${NC}] / All Versions 
+  echo -e Remote Repository aka Package [${L_YELLOW}$GITHUB_OCI_REGISTRY_URL/podinfo${NC}] / All Versions 
   echo ================================================================================
   echo "$ALL_VERSIONS"
   echo ================================================================================
@@ -174,7 +174,7 @@ function deleteChartFromMyGithubRegistry() {
     # GitHub API ref https://docs.github.com/en/rest/packages#list-packages-for-the-authenticated-users-namespace
     # GitHub web portal: https://github.com/gfichtenholt?tab=packages&ecosystem=container
     ALL_PACKAGES=$(gh api -H "Accept: application/vnd.github+json" /user/packages?package_type=container | jq '.[].name')
-    echo Remote Repository [${L_YELLOW}$GITHUB_OCI_REGISTRY_URL${NC}] / All Packages 
+    echo -e Remote Repository [${L_YELLOW}$GITHUB_OCI_REGISTRY_URL${NC}] / All Packages 
     echo ================================================================================
     echo "$ALL_PACKAGES"
     echo ================================================================================
