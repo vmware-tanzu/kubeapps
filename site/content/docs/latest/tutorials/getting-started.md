@@ -4,13 +4,17 @@ This guide will walk you through the process of deploying Kubeapps for your clus
 
 ## Prerequisites
 
-Kubeapps assumes a working Kubernetes cluster (v1.15+), as well as the [`helm`](https://helm.sh/docs/intro/install/) (3.1.0+) and [`kubectl`](https://kubernetes.io/docs/tasks/tools/install-kubectl/) command-line interfaces installed and configured to talk to your Kubernetes cluster. Kubeapps has been tested with Azure Kubernetes Service (AKS), Google Kubernetes Engine (GKE), `minikube` and Docker for Desktop Kubernetes. Kubeapps works on RBAC-enabled clusters and this configuration is encouraged for a more secure install.
+- Kubeapps assumes a working Kubernetes cluster (v1.21+), as well as the [`helm`](https://helm.sh/docs/intro/install/) (3.1.0+) and [`kubectl`](https://kubernetes.io/docs/tasks/tools/install-kubectl/) command-line interfaces installed and configured to talk to your Kubernetes cluster.
 
-> On GKE, you must either be an "Owner" or have the "Container Engine Admin" role in order to install Kubeapps.
+- Kubeapps has been tested with Azure Kubernetes Service (AKS), Google Kubernetes Engine (GKE), kind, minikube and Docker for Desktop Kubernetes.
+
+- Kubeapps works on RBAC-enabled clusters and this configuration is encouraged for a more secure install.
+
+  > On GKE, you must either be an "Owner" or have the "Container Engine Admin" role in order to install Kubeapps.
 
 ## Step 1: Install Kubeapps
 
-Use the Helm chart to install the latest version of Kubeapps:
+Use the official [Bitnami Kubeapps chart](https://github.com/bitnami/charts/tree/master/bitnami/kubeapps) to install the latest version of Kubeapps:
 
 ```bash
 helm repo add bitnami https://charts.bitnami.com/bitnami
@@ -95,23 +99,23 @@ Paste the token generated in the previous step to authenticate and access the Ku
 
 **_Note:_** If you are setting up Kubeapps for other people to access, you will want to use a different service type or setup Ingress rather than using the above `kubectl port-forward`. For detailed information on installing, configuring and upgrading Kubeapps, checkout the [chart README](https://github.com/vmware-tanzu/kubeapps/blob/main/chart/kubeapps/README.md)
 
-## Step 4: Deploy WordPress
+## Step 4: Deploy applications: WordPress
 
 Once you have the Kubeapps Dashboard up and running, you can start deploying applications into your cluster.
 
-- Use the "Deploy" button or click on the "Catalog" page in the Dashboard to select an application from the list of charts in any of the configured Helm chart repositories. This example assumes you want to deploy WordPress.
+- Use the **Deploy** button or click on the **Catalog** page in the Dashboard to select an application from the list of packages in any of the configured repositories. This example assumes you want to deploy WordPress.
 
-  ![WordPress chart](../img/wordpress-search.png)
+  ![WordPress search](../img/wordpress-search.png)
 
 - Click the "Deploy" button.
 
   ![WordPress chart](../img/wordpress-chart.png)
 
-- You will be prompted for the release name and values for the application. The form is populated by the values (YAML), which you can see in the adjacent tab.
+- You will be prompted for the release name and values for the application. The form is populated by the values (**YAML**), which you can see in the adjacent tab.
 
   ![WordPress installation](../img/wordpress-installation.png)
 
-- Click the "Deploy" button. The application will be deployed. You will be able to track the new Helm deployment directly from the browser. The status will be shown at the top, including the access URL and any secret included with the app. You can also look at the individual resources lower in the page. It will also show the number of ready pods. If you run your cursor over the status, you can see the workloads and number of ready and total pods within them.
+- Click the **Deploy** button. The application will be deployed. You will be able to track the new deployment directly from the browser. The status will be shown at the top, including the `access URL` and any `secret` included with the app. You can also look at the individual resources lower in the page. It will also show the number of ready pods. If you run your cursor over the **status**, you can see the workloads and number of ready and total pods within them.
 
   ![WordPress deployment](../img/wordpress-deployment.png)
 
@@ -121,7 +125,7 @@ To access your new WordPress site, you can run the commands in the "Notes" secti
 
 ![WordPress deployment notes](../img/wordpress-url.png)
 
-To get the credentials for logging into your WordPress account, refer to the "Notes" section. You can also get the WordPress password by clicking on the eye next to `wordpress-password`.
+To get the credentials for logging into your WordPress account, refer to the **Notes** section. You can also get the WordPress password by clicking on the eye next to **wordpress-password**.
 
 ![WordPress deployment notes](../img/wordpress-credentials.png)
 
@@ -135,8 +139,7 @@ If you want to uninstall/delete your WordPress application, you can do so by cli
 
 Learn more about Kubeapps with the links below:
 
-- [Detailed installation instructions](https://github.com/vmware-tanzu/kubeapps/blob/main/chart/kubeapps/README.md)
-- [Deploying Operators](./operators.md)
-- [Kubeapps Dashboard documentation](../howto/dashboard.md)
-- [Project board](https://github.com/orgs/vmware-tanzu/projects/38/views/2)
+- [Kubeapps documentation](https://github.com/vmware-tanzu/kubeapps/tree/main/docs)
+- [Kubeapps website](https://kubeapps.dev/)
 - [Roadmap](https://github.com/vmware-tanzu/kubeapps/milestones)
+- [Project board](https://github.com/orgs/vmware-tanzu/projects/38/views/2)
