@@ -67,7 +67,7 @@ func (s *Server) availableChartDetail(ctx context.Context, packageRef *corev1.Av
 	if chartVersion != "" {
 		if key, err := s.chartCache.KeyFor(repoName.Namespace, chartID, chartVersion); err != nil {
 			return nil, err
-		} else if byteArray, err = s.chartCache.FetchForOne(key); err != nil {
+		} else if byteArray, err = s.chartCache.Fetch(key); err != nil {
 			return nil, err
 		}
 	}
@@ -104,7 +104,7 @@ func (s *Server) availableChartDetail(ctx context.Context, packageRef *corev1.Av
 				fn = downloadHttpChartFn(opts)
 			}
 		}
-		if byteArray, err = s.chartCache.GetForOne(key, chartModel, fn); err != nil {
+		if byteArray, err = s.chartCache.Get(key, chartModel, fn); err != nil {
 			return nil, err
 		}
 
