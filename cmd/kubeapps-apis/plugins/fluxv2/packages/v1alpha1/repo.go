@@ -159,7 +159,7 @@ func (s *Server) getChartsForRepos(ctx context.Context, match []string) (map[str
 		return nil, err
 	}
 
-	chartsUntyped, err := s.repoCache.GetForMultiple(repoNames)
+	chartsUntyped, err := s.repoCache.GetMultiple(repoNames)
 	if err != nil {
 		return nil, err
 	}

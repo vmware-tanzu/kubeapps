@@ -67,7 +67,7 @@ func (s *Server) availableChartDetail(ctx context.Context, packageRef *corev1.Av
 	if chartVersion != "" {
 		if key, err := s.chartCache.KeyFor(repoName.Namespace, chartID, chartVersion); err != nil {
 			return nil, err
-		} else if byteArray, err = s.chartCache.FetchForOne(key); err != nil {
+		} else if byteArray, err = s.chartCache.Fetch(key); err != nil {
 			return nil, err
 		}
 	}
@@ -104,7 +104,7 @@ func (s *Server) availableChartDetail(ctx context.Context, packageRef *corev1.Av
 				fn = downloadHttpChartFn(opts)
 			}
 		}
-		if byteArray, err = s.chartCache.GetForOne(key, chartModel, fn); err != nil {
+		if byteArray, err = s.chartCache.Get(key, chartModel, fn); err != nil {
 			return nil, err
 		}
 
@@ -146,13 +146,14 @@ func (s *Server) getChart(ctx context.Context, repo types.NamespacedName, chartN
 	}
 
 	key := s.repoCache.KeyForNamespacedName(repo)
-	if entry, err := s.repoCache.GetForOne(key); err != nil {
+	if entry, err := s.repoCache.Get(key); err != nil {
 		return nil, err
 	} else if entry != nil {
 		if typedEntry, ok := entry.(repoCacheEntryValue); !ok {
 			return nil, status.Errorf(
 				codes.Internal,
-				"unexpected value fetched from cache: type: [%s], value: [%v]", reflect.TypeOf(entry), entry)
+				"unexpected value fetched from cache: type: [%s], value: [%v]",
+				reflect.TypeOf(entry), entry)
 		} else {
 			for _, chart := range typedEntry.Charts {
 				if chart.Name == chartName {
