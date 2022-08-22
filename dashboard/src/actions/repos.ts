@@ -139,12 +139,7 @@ export const addRepo = (
     } = getState();
     try {
       dispatch(addOrUpdateRepo());
-      // TODO(agamez): improve the global/namespaced repos UX
-      // to avoid hacks like this (flux repos are always global)
-      // https://github.com/vmware-tanzu/kubeapps/issues/2995
-      const namespaceScoped =
-        !isGlobalNamespace(namespace, request.plugin?.name, config) &&
-        request.plugin?.name !== PluginNames.PACKAGES_FLUX;
+      const namespaceScoped = !isGlobalNamespace(namespace, request.plugin?.name, config);
       const addPackageRepositoryResponse = await PackageRepositoriesService.addPackageRepository(
         currentCluster,
         namespace,
