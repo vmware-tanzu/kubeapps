@@ -69,7 +69,7 @@ export const fetchRepoSummaries = (
   return async (dispatch, getState) => {
     const {
       clusters: { currentCluster },
-      config: { globalReposNamespace },
+      config: { globalReposNamespace, carvelGlobalNamespace },
     } = getState();
     try {
       dispatch(requestRepoSummaries(namespace));
@@ -77,12 +77,14 @@ export const fetchRepoSummaries = (
         cluster: currentCluster,
         namespace: namespace,
       });
-      if (!listGlobal || namespace === globalReposNamespace) {
+      if (!listGlobal || [globalReposNamespace, carvelGlobalNamespace].includes(namespace)) {
         dispatch(receiveRepoSummaries(repos.packageRepositorySummaries));
       } else {
         // Global repos need to be added
+        // instead of passing each global repo's namespace, we defer the decision to the backend using ns=""
+        // however, this can cause issues when using unprivileged users, see #5215
         let totalRepos = repos.packageRepositorySummaries;
-        dispatch(requestRepoSummaries(globalReposNamespace));
+        dispatch(requestRepoSummaries(""));
         const globalRepos = await PackageRepositoriesService.getPackageRepositorySummaries({
           cluster: currentCluster,
           namespace: "",
