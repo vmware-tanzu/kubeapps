@@ -22,12 +22,17 @@ export default class Namespace {
     return data;
   }
 
-  public static async create(cluster: string, namespace: string) {
+  public static async create(
+    cluster: string,
+    namespace: string,
+    labels: { [key: string]: string },
+  ) {
     await this.resourcesClient().CreateNamespace({
       context: {
         cluster,
         namespace,
       },
+      labels: labels,
     });
   }
 

@@ -15,6 +15,7 @@ export const initialState: IConfigState = {
   kubeappsCluster: "",
   kubeappsNamespace: "",
   globalReposNamespace: "",
+  carvelGlobalNamespace: "",
   appVersion: "",
   authProxyEnabled: false,
   oauthLoginURI: "",
@@ -26,6 +27,7 @@ export const initialState: IConfigState = {
   remoteComponentsUrl: "",
   customAppViews: [],
   skipAvailablePackageDetails: false,
+  createNamespaceLabels: {},
 };
 
 const configReducer = (state: IConfigState = initialState, action: ConfigAction): IConfigState => {

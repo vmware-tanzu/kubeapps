@@ -7,7 +7,6 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -20,20 +19,7 @@ import (
 	k8sErrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
-
-	v1alpha1 "github.com/vmware-tanzu/kubeapps/cmd/apprepository-controller/pkg/apis/apprepository/v1alpha1"
 )
-
-func checkAppResponse(t *testing.T, response *httptest.ResponseRecorder, expectedResponse appRepositoryResponse) {
-	var appRepoResponse appRepositoryResponse
-	err := json.NewDecoder(response.Body).Decode(&appRepoResponse)
-	if err != nil {
-		t.Fatalf("%+v", err)
-	}
-	if got, want := appRepoResponse, expectedResponse; !cmp.Equal(want, got) {
-		t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got))
-	}
-}
 
 func checkError(t *testing.T, response *httptest.ResponseRecorder, expectedError error) {
 	if response.Code == 500 {
@@ -59,274 +45,27 @@ func checkError(t *testing.T, response *httptest.ResponseRecorder, expectedError
 	}
 }
 
-func TestListAppRepositories(t *testing.T) {
-	testCases := []struct {
-		name         string
-		appRepos     []*v1alpha1.AppRepository
-		err          error
-		expectedCode int
+func TestExtractToken(t *testing.T) {
+	testSuite := []struct {
+		Name          string
+		TokenRaw      string
+		ExpectedToken string
 	}{
 		{
-			name:         "it should return the list of repos",
-			expectedCode: 200,
+			"Token ok",
+			"Bearer foo",
+			"foo",
 		},
 		{
-			name:         "it should return an error",
-			err:          fmt.Errorf("boom"),
-			expectedCode: 500,
+			"Token nok",
+			"foo bar",
+			"",
 		},
 	}
-	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			listFunc := ListAppRepositories(&kube.FakeHandler{AppRepos: []*v1alpha1.AppRepository{
-				{ObjectMeta: metav1.ObjectMeta{Name: "foo"}},
-			}, Err: tc.err})
-			req := httptest.NewRequest("GET", "https://foo.bar/backend/v1/namespaces/kubeapps/apprepositories", strings.NewReader("data"))
-			req = mux.SetURLVars(req, map[string]string{"namespace": "kubeapps"})
-
-			response := httptest.NewRecorder()
-			listFunc(response, req)
-
-			if got, want := response.Code, tc.expectedCode; got != want {
-				t.Errorf("got: %d, want: %d\nBody: %s", got, want, response.Body)
-			}
-
-			if response.Code != 200 {
-				checkError(t, response, tc.err)
-			}
-		})
-	}
-}
-
-func TestGetAppRepository(t *testing.T) {
-	testCases := []struct {
-		name         string
-		appRepo      *v1alpha1.AppRepository
-		secret       *corev1.Secret
-		err          error
-		expectedCode int
-	}{
-		{
-			name:         "it should return a 200 if the repo is found",
-			appRepo:      &v1alpha1.AppRepository{ObjectMeta: metav1.ObjectMeta{Name: "foo", Namespace: "kubeapps"}},
-			expectedCode: 200,
-		},
-		{
-			name: "it should return a corresponding secret if present",
-			appRepo: &v1alpha1.AppRepository{
-				ObjectMeta: metav1.ObjectMeta{Name: "foo", Namespace: "kubeapps"},
-				Spec: v1alpha1.AppRepositorySpec{
-					Auth: v1alpha1.AppRepositoryAuth{
-						Header: &v1alpha1.AppRepositoryAuthHeader{
-							SecretKeyRef: corev1.SecretKeySelector{
-								LocalObjectReference: corev1.LocalObjectReference{
-									Name: "repo-secret",
-								},
-								Key: "authorizationHeader",
-							},
-						},
-					},
-				},
-			},
-			secret: &corev1.Secret{
-				ObjectMeta: metav1.ObjectMeta{Name: "repo-secret", Namespace: "kubeapps"},
-				StringData: map[string]string{
-					"authorizationHeader": "someheader",
-				},
-			},
-			expectedCode: 200,
-		},
-		{
-			name:         "it should return a 404 if app repository not found",
-			appRepo:      &v1alpha1.AppRepository{ObjectMeta: metav1.ObjectMeta{Name: "bar", Namespace: "kubeapps"}},
-			err:          k8sErrors.NewNotFound(schema.GroupResource{}, "foo"),
-			expectedCode: 404,
-		},
-		{
-			name: "it should return a 404 if related secret is not found",
-			appRepo: &v1alpha1.AppRepository{
-				ObjectMeta: metav1.ObjectMeta{Name: "foo", Namespace: "kubeapps"},
-				Spec: v1alpha1.AppRepositorySpec{
-					Auth: v1alpha1.AppRepositoryAuth{
-						Header: &v1alpha1.AppRepositoryAuthHeader{
-							SecretKeyRef: corev1.SecretKeySelector{
-								LocalObjectReference: corev1.LocalObjectReference{
-									Name: "repo-secret",
-								},
-								Key: "authorizationHeader",
-							},
-						},
-					},
-				},
-			},
-			secret: &corev1.Secret{
-				ObjectMeta: metav1.ObjectMeta{Name: "another-repo-secret", Namespace: "kubeapps"},
-				StringData: map[string]string{
-					"authorizationHeader": "someheader",
-				},
-			},
-			expectedCode: 404,
-		},
-		{
-			name:         "it should return a 403 when forbidden",
-			appRepo:      &v1alpha1.AppRepository{ObjectMeta: metav1.ObjectMeta{Name: "bar", Namespace: "kubeapps"}},
-			err:          k8sErrors.NewForbidden(schema.GroupResource{}, "foo", fmt.Errorf("nope")),
-			expectedCode: 403,
-		},
-	}
-	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			getAppFunc := GetAppRepository(&kube.FakeHandler{
-				AppRepos: []*v1alpha1.AppRepository{tc.appRepo},
-				Secrets:  []*corev1.Secret{tc.secret},
-				Err:      tc.err,
-			})
-			req := httptest.NewRequest("GET", "https://foo.bar/backend/v1/namespaces/kubeapps/apprepositories/foo", strings.NewReader(""))
-			req = mux.SetURLVars(req, map[string]string{"namespace": "kubeapps", "name": "foo"})
-
-			response := httptest.NewRecorder()
-			getAppFunc(response, req)
-
-			if got, want := response.Code, tc.expectedCode; got != want {
-				t.Errorf("got: %d, want: %d\nBody: %s", got, want, response.Body)
-			}
-			expectedResponse := appRepositoryResponse{AppRepository: *tc.appRepo}
-			if tc.secret != nil {
-				expectedResponse.Secret = *tc.secret
-			}
-			if response.Code == 200 {
-				checkAppResponse(t, response, expectedResponse)
-			}
-		})
-	}
-}
-func TestCreateAppRepository(t *testing.T) {
-	testCases := []struct {
-		name         string
-		appRepo      *v1alpha1.AppRepository
-		err          error
-		expectedCode int
-	}{
-		{
-			name:         "it should return the repo and a 200 if the repo is created",
-			appRepo:      &v1alpha1.AppRepository{ObjectMeta: metav1.ObjectMeta{Name: "foo"}},
-			expectedCode: 201,
-		},
-		{
-			name:         "it should return a 404 if not found",
-			err:          k8sErrors.NewNotFound(schema.GroupResource{}, "foo"),
-			expectedCode: 404,
-		},
-		{
-			name:         "it should return a 409 when conflict",
-			err:          k8sErrors.NewConflict(schema.GroupResource{}, "foo", fmt.Errorf("already exists")),
-			expectedCode: 409,
-		},
-		{
-			name:         "it returns a json 500 error as a plain string for internal backend errors",
-			err:          fmt.Errorf("bang"),
-			expectedCode: 500,
-		},
-	}
-	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			createAppFunc := CreateAppRepository(&kube.FakeHandler{CreatedRepo: tc.appRepo, Err: tc.err})
-			req := httptest.NewRequest("POST", "https://foo.bar/backend/v1/namespaces/kubeapps/apprepositories", strings.NewReader("data"))
-			req = mux.SetURLVars(req, map[string]string{"namespace": "kubeapps"})
-
-			response := httptest.NewRecorder()
-			createAppFunc(response, req)
-
-			if got, want := response.Code, tc.expectedCode; got != want {
-				t.Errorf("got: %d, want: %d\nBody: %s", got, want, response.Body)
-			}
-
-			if response.Code == 201 {
-				checkAppResponse(t, response, appRepositoryResponse{AppRepository: *tc.appRepo})
-			} else {
-				checkError(t, response, tc.err)
-			}
-		})
-	}
-}
-
-func TestUpdateAppRepository(t *testing.T) {
-	testCases := []struct {
-		name         string
-		appRepo      *v1alpha1.AppRepository
-		err          error
-		expectedCode int
-	}{
-		{
-			name:         "it should return the repo and a 200 if the repo is updated",
-			appRepo:      &v1alpha1.AppRepository{ObjectMeta: metav1.ObjectMeta{Name: "foo"}},
-			expectedCode: 200,
-		},
-		{
-			name:         "it should return a 404 if not found",
-			err:          k8sErrors.NewNotFound(schema.GroupResource{}, "foo"),
-			expectedCode: 404,
-		},
-		{
-			name:         "it returns a json 500 error as a plain string for internal backend errors",
-			err:          fmt.Errorf("bang"),
-			expectedCode: 500,
-		},
-	}
-	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			createAppFunc := UpdateAppRepository(&kube.FakeHandler{UpdatedRepo: tc.appRepo, Err: tc.err})
-			req := httptest.NewRequest("POST", "https://foo.bar/backend/v1/namespaces/kubeapps/apprepositories/foo", strings.NewReader("data"))
-			req = mux.SetURLVars(req, map[string]string{"namespace": "kubeapps"})
-
-			response := httptest.NewRecorder()
-			createAppFunc(response, req)
-
-			if got, want := response.Code, tc.expectedCode; got != want {
-				t.Errorf("got: %d, want: %d\nBody: %s", got, want, response.Body)
-			}
-
-			if response.Code == 200 {
-				checkAppResponse(t, response, appRepositoryResponse{AppRepository: *tc.appRepo})
-			} else {
-				checkError(t, response, tc.err)
-			}
-		})
-	}
-}
-
-func TestDeleteAppRepository(t *testing.T) {
-	testCases := []struct {
-		name         string
-		err          error
-		expectedCode int
-	}{
-		{
-			name:         "it should return a 200 if the repo is deleted",
-			expectedCode: 200,
-		},
-		{
-			name:         "it should return a 404 if not found",
-			err:          k8sErrors.NewNotFound(schema.GroupResource{}, "foo"),
-			expectedCode: 404,
-		},
-		{
-			name:         "it should return a 403 when forbidden",
-			err:          k8sErrors.NewForbidden(schema.GroupResource{}, "foo", fmt.Errorf("nope")),
-			expectedCode: 403,
-		},
-	}
-	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			deleteAppFunc := DeleteAppRepository(&kube.FakeHandler{Err: tc.err})
-			req := httptest.NewRequest("POST", "https://foo.bar/backend/v1/namespaces/kubeapps/apprepositories", strings.NewReader("data"))
-			req = mux.SetURLVars(req, map[string]string{"namespace": "kubeapps"})
-
-			response := httptest.NewRecorder()
-			deleteAppFunc(response, req)
-
-			if got, want := response.Code, tc.expectedCode; got != want {
-				t.Errorf("got: %d, want: %d\nBody: %s", got, want, response.Body)
+	for _, test := range testSuite {
+		t.Run(test.Name, func(t *testing.T) {
+			if got, want := extractToken(test.TokenRaw), test.ExpectedToken; !cmp.Equal(want, got) {
+				t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got))
 			}
 		})
 	}
@@ -452,54 +191,6 @@ func TestGetNamespaces(t *testing.T) {
 				if got, want := nsResponse, expectedResponse; !cmp.Equal(want, got) {
 					t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got))
 				}
-			}
-		})
-	}
-}
-
-func TestValidateAppRepository(t *testing.T) {
-	testCases := []struct {
-		name               string
-		err                error
-		validationResponse kube.ValidationResponse
-		expectedCode       int
-		expectedBody       string
-	}{
-		{
-			name:               "it should return OK if no error is detected",
-			validationResponse: kube.ValidationResponse{Code: 200, Message: "OK"},
-			expectedCode:       200,
-			expectedBody:       `{"code":200,"message":"OK"}`,
-		},
-		{
-			name:               "it should return the error code if given",
-			err:                fmt.Errorf("Boom"),
-			validationResponse: kube.ValidationResponse{},
-			expectedCode:       500,
-			expectedBody:       "\"Boom\"\n",
-		},
-		{
-			name:               "it should return an error in the validation response",
-			validationResponse: kube.ValidationResponse{Code: 401, Message: "Forbidden"},
-			expectedCode:       200,
-			expectedBody:       `{"code":401,"message":"Forbidden"}`,
-		},
-	}
-	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			validateAppRepoFunc := ValidateAppRepository(&kube.FakeHandler{ValRes: &tc.validationResponse, Err: tc.err})
-			req := httptest.NewRequest("POST", "https://foo.bar/backend/v1/namespaces/kubeapps/apprepositories/validate", strings.NewReader("data"))
-
-			response := httptest.NewRecorder()
-			validateAppRepoFunc(response, req)
-
-			if got, want := response.Code, tc.expectedCode; got != want {
-				t.Errorf("got: %d, want: %d\nBody: %s", got, want, response.Body)
-			}
-
-			responseBody, _ := ioutil.ReadAll(response.Body)
-			if got, want := string(responseBody), tc.expectedBody; got != want {
-				t.Errorf("got: %s, want: %s\n", got, want)
 			}
 		})
 	}

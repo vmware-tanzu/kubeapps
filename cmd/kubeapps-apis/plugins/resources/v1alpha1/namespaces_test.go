@@ -6,6 +6,7 @@ package main
 import (
 	"context"
 	"errors"
+	"github.com/stretchr/testify/assert"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
@@ -145,6 +146,7 @@ func TestCreateNamespace(t *testing.T) {
 		expectedResponse  *v1alpha1.CreateNamespaceResponse
 		expectedErrorCode codes.Code
 		existingObjects   []runtime.Object
+		validator         func(action clientGoTesting.Action) (handled bool, ret runtime.Object, err error)
 	}{
 		{
 			name: "creates a new namespace",
@@ -155,6 +157,33 @@ func TestCreateNamespace(t *testing.T) {
 				},
 			},
 			expectedResponse: emptyResponse,
+			validator: func(action clientGoTesting.Action) (handled bool, ret runtime.Object, err error) {
+				createAction := action.(clientGoTesting.CreateActionImpl)
+				createNamespace := createAction.GetObject().(*v1.Namespace)
+				assert.Nil(t, createNamespace.ObjectMeta.Labels)
+				return false, nil, err
+			},
+		},
+		{
+			name: "creates a new namespace with labels",
+			request: &v1alpha1.CreateNamespaceRequest{
+				Context: &pkgsGRPCv1alpha1.Context{
+					Cluster:   "default",
+					Namespace: "default",
+				},
+				Labels: map[string]string{
+					"label1": "value1",
+					"label2": "value2",
+				},
+			},
+			expectedResponse: emptyResponse,
+			validator: func(action clientGoTesting.Action) (handled bool, ret runtime.Object, err error) {
+				createAction := action.(clientGoTesting.CreateActionImpl)
+				createNamespace := createAction.GetObject().(*v1.Namespace)
+				assert.Contains(t, createNamespace.ObjectMeta.Labels, "label1")
+				assert.Contains(t, createNamespace.ObjectMeta.Labels, "label2")
+				return false, nil, err
+			},
 		},
 		{
 			name: "returns permission denied if k8s returns a forbidden error",
@@ -205,6 +234,9 @@ func TestCreateNamespace(t *testing.T) {
 				fakeClient.CoreV1().(*fakecorev1.FakeCoreV1).PrependReactor("create", "namespaces", func(action clientGoTesting.Action) (handled bool, ret runtime.Object, err error) {
 					return true, &v1.Namespace{}, tc.k8sError
 				})
+			}
+			if tc.validator != nil {
+				fakeClient.PrependReactor("create", "namespaces", tc.validator)
 			}
 			s := Server{
 				clientGetter: func(context.Context, string) (kubernetes.Interface, dynamic.Interface, error) {

@@ -16,7 +16,7 @@ import { ThunkDispatch } from "redux-thunk";
 import { SupportedThemes } from "shared/Config";
 import { IStoreState } from "shared/types";
 import { app } from "shared/url";
-import operatorIcon from "../../icons/olm-icon-white.svg";
+import operatorIcon from "icons/olm-icon-white.svg";
 import { IClustersState } from "../../reducers/cluster";
 import useOutsideClick from "../js/hooks/useOutsideClick/useOutsideClick";
 import Row from "../js/Row";
@@ -75,7 +75,7 @@ function Menu({ clusters, appVersion, logout }: IContextSelectorProps) {
             <div>
               <label className="dropdown-menu-padding dropdown-menu-label">Administration</label>
               <Link
-                to={app.config.apprepositories(clusters.currentCluster, namespaceSelected)}
+                to={app.config.pkgrepositories(clusters.currentCluster, namespaceSelected)}
                 className="dropdown-menu-link"
                 onClick={toggleOpen}
               >

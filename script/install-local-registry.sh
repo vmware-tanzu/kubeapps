@@ -3,7 +3,7 @@
 # Copyright 2022 the Kubeapps contributors.
 # SPDX-License-Identifier: Apache-2.0
 
-CONTROL_PLANE_CONTAINER="kubeapps-ci-control-plane"
+CONTROL_PLANE_CONTAINER=${CONTROL_PLANE_CONTAINER:-"kubeapps-ci-control-plane"}
 REGISTRY_NS=ci
 DOCKER_REGISTRY_HOST=local-docker-registry
 DOCKER_REGISTRY_PORT=5600
@@ -12,7 +12,17 @@ DOCKER_USERNAME=testuser
 DOCKER_PASSWORD=testpassword
 
 installLocalRegistry() {
-    PROJECT_PATH=$1
+    if [ -z "$DOCKER_REGISTRY_VERSION" ]; then
+      echo "No Docker registry version supplied"
+      exit 1
+    fi
+    if [ -z "$1" ]; then
+      echo "No project path supplied"
+      exit 1
+    fi
+    local PROJECT_PATH=$1
+
+    echo "Installing local Docker registry v${DOCKER_REGISTRY_VERSION} in control plane '${CONTROL_PLANE_CONTAINER}'"
 
     kubectl create namespace $REGISTRY_NS
 
@@ -61,31 +71,6 @@ pushContainerToLocalRegistry() {
     pkill -f "kubectl -n ${REGISTRY_NS} port-forward service/docker-registry 5600:5600"
 }
 
-pushChartToChartMuseum() {
-    CHART_MUSEUM_NS=$1
-    CM_USER=$2
-    CM_PASSWORD=$3
-    CHART_NAME=$4
-    CHART_VERSION=$5
-
-    local POD_NAME=$(kubectl get pods --namespace ${CHART_MUSEUM_NS} -l "app=chartmuseum" -l "release=chartmuseum" -o jsonpath="{.items[0].metadata.name}")
-    /bin/sh -c "kubectl port-forward $POD_NAME 8080:8080 --namespace ${CHART_MUSEUM_NS} &"
-    waitForPort localhost 8080
-
-    CHART_EXISTS=$(curl -u "${CM_USER}:${CM_PASSWORD}" -X GET http://localhost:8080/api/charts/${CHART_NAME}/${CHART_VERSION} | jq -r 'any([ .error] ; . > 0)')
-    if [ "$CHART_EXISTS" == "true" ]; then
-        # Charts exists and must be deleted first
-        curl -u "${CM_USER}:${CM_PASSWORD}" -X DELETE http://localhost:8080/api/charts/${CHART_NAME}/${CHART_VERSION}
-    fi
-
-    # Upload chart to Chart Museum
-    FILE_NAME="${CHART_NAME}-${CHART_VERSION}.tgz"
-    curl -u "${CM_USER}:${CM_PASSWORD}" --data-binary "@${FILE_NAME}" http://localhost:8080/api/charts  
-
-    # End port forward
-    pkill -f "kubectl port-forward $POD_NAME 8080:8080 --namespace ${CHART_MUSEUM_NS}"
-}
-
 # Scans for opened port during max. 10 seconds
 waitForPort() {
   HOST_NAME=$1
@@ -94,3 +79,15 @@ waitForPort() {
   # shellcheck disable=SC2016
   timeout 10 sh -c 'until nc -z $0 $1; do sleep 1; done' "$HOST_NAME" "$PORT"
 }
+
+case $1 in
+
+  install)
+    installLocalRegistry $2
+    ;;
+
+  pushNginx)
+    pushContainerToLocalRegistry
+    ;;
+
+esac

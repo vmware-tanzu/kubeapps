@@ -17,8 +17,6 @@ import PackagesService from "shared/PackagesService";
 import {
   CreateError,
   DeleteError,
-  StartError,
-  StopError,
   FetchError,
   FetchWarning,
   IStoreState,
@@ -54,18 +52,6 @@ export const requestInstallPackage = createAction("REQUEST_INSTALL_PACKAGE");
 
 export const receiveInstallPackage = createAction("RECEIVE_INSTALL_PACKAGE_CONFIRMATION");
 
-export const requestStartInstalledPackage = createAction("REQUEST_START_INSTALLED_PACKAGE");
-
-export const receiveStartInstalledPackage = createAction(
-  "RECEIVE_START_INSTALLED_PACKAGE_CONFIRMATION",
-);
-
-export const requestStopInstalledPackage = createAction("REQUEST_STOP_INSTALLED_PACKAGE");
-
-export const receiveStopInstalledPackage = createAction(
-  "RECEIVE_STOP_INSTALLED_PACKAGE_CONFIRMATION",
-);
-
 export const requestUpdateInstalledPackage = createAction("REQUEST_UPDATE_INSTALLED_PACKAGE");
 
 export const receiveUpdateInstalledPackage = createAction(
@@ -88,16 +74,8 @@ export const receiveInstalledPackageStatus = createAction(
 );
 
 export const errorInstalledPackage = createAction("ERROR_INSTALLED_PACKAGE", resolve => {
-  return (
-    err:
-      | FetchError
-      | CreateError
-      | UpgradeError
-      | RollbackError
-      | DeleteError
-      | StartError
-      | StopError,
-  ) => resolve(err);
+  return (err: FetchError | CreateError | UpgradeError | RollbackError | DeleteError) =>
+    resolve(err);
 });
 
 export const clearErrorInstalledPackage = createAction("CLEAR_ERROR_INSTALLED_PACKAGE");
@@ -117,10 +95,6 @@ const allActions = [
   receiveDeleteInstalledPackage,
   requestInstallPackage,
   receiveInstallPackage,
-  requestStartInstalledPackage,
-  receiveStartInstalledPackage,
-  requestStopInstalledPackage,
-  receiveStopInstalledPackage,
   requestUpdateInstalledPackage,
   receiveUpdateInstalledPackage,
   requestRollbackInstalledPackage,
@@ -172,16 +146,24 @@ export function getInstalledPackage(
 export function getInstalledPkgStatus(
   installedPackageRef?: InstalledPackageReference,
 ): ThunkAction<Promise<void>, IStoreState, null, InstalledPackagesAction> {
-  return async dispatch => {
-    dispatch(requestInstalledPackageStatus());
-    try {
-      // Get the details of an installed package for the status.
-      const { installedPackageDetail } = await InstalledPackage.GetInstalledPackageDetail(
-        installedPackageRef,
-      );
-      dispatch(receiveInstalledPackageStatus(installedPackageDetail!.status!));
-    } catch (e: any) {
-      dispatch(errorInstalledPackage(new FetchError("Unable to refresh installed package", [e])));
+  return async (dispatch, getState) => {
+    const {
+      kube: { subscriptions },
+    } = getState();
+    const subscriptionId = `${installedPackageRef?.context?.cluster}/${installedPackageRef?.context?.namespace}/${installedPackageRef?.identifier}`;
+
+    // only get the status if the subscription is active, otherwise the component would have been unmounted
+    if (subscriptions[subscriptionId]) {
+      dispatch(requestInstalledPackageStatus());
+      try {
+        // Get the details of an installed package for the status.
+        const { installedPackageDetail } = await InstalledPackage.GetInstalledPackageDetail(
+          installedPackageRef,
+        );
+        dispatch(receiveInstalledPackageStatus(installedPackageDetail!.status!));
+      } catch (e: any) {
+        dispatch(errorInstalledPackage(new FetchError("Unable to refresh installed package", [e])));
+      }
     }
   };
 }
@@ -346,38 +328,6 @@ export function rollbackInstalledPackage(
           ),
         ),
       );
-      return false;
-    }
-  };
-}
-
-export function startInstalledPackage(
-  installedPackageRef: InstalledPackageReference,
-): ThunkAction<Promise<boolean>, IStoreState, null, InstalledPackagesAction> {
-  return async dispatch => {
-    dispatch(requestStartInstalledPackage());
-    try {
-      await InstalledPackage.StartInstalledPackage(installedPackageRef);
-      dispatch(receiveStartInstalledPackage());
-      return true;
-    } catch (e: any) {
-      dispatch(errorInstalledPackage(new StartError(e.message)));
-      return false;
-    }
-  };
-}
-
-export function stopInstalledPackage(
-  installedPackageRef: InstalledPackageReference,
-): ThunkAction<Promise<boolean>, IStoreState, null, InstalledPackagesAction> {
-  return async dispatch => {
-    dispatch(requestStopInstalledPackage());
-    try {
-      await InstalledPackage.StopInstalledPackage(installedPackageRef);
-      dispatch(receiveStopInstalledPackage());
-      return true;
-    } catch (e: any) {
-      dispatch(errorInstalledPackage(new StopError(e.message)));
       return false;
     }
   };

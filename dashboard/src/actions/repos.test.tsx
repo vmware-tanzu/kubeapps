@@ -5,32 +5,65 @@ import {
   AvailablePackageReference,
   InstalledPackageDetail,
 } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
+import {
+  AddPackageRepositoryResponse,
+  DeletePackageRepositoryResponse,
+  GetPackageRepositoryDetailResponse,
+  GetPackageRepositorySummariesResponse,
+  PackageRepositoryAuth_PackageRepositoryAuthType,
+  PackageRepositoryDetail,
+  PackageRepositoryReference,
+  PackageRepositorySummary,
+  UpdatePackageRepositoryResponse,
+} from "gen/kubeappsapis/core/packages/v1alpha1/repositories";
 import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins";
+import { HelmPackageRepositoryCustomDetail } from "gen/kubeappsapis/plugins/helm/packages/v1alpha1/helm";
 import context from "jest-plugin-context";
 import configureMockStore from "redux-mock-store";
 import thunk from "redux-thunk";
-import { AppRepository } from "shared/AppRepository";
+import { PackageRepositoriesService } from "shared/PackageRepositoriesService";
 import PackagesService from "shared/PackagesService";
-import Secret from "shared/Secret";
-import { IAppRepository, NotFoundError } from "shared/types";
+import { IPkgRepoFormData, NotFoundError, RepositoryStorageTypes } from "shared/types";
 import { getType } from "typesafe-actions";
 import actions from ".";
+import { convertPkgRepoDetailToSummary } from "./repos";
 
 const { repos: repoActions } = actions;
 const mockStore = configureMockStore([thunk]);
 
 let store: any;
-const appRepo = { spec: { resyncRequests: 10000 } };
+const plugin = { name: "my.plugin", version: "0.0.1" } as Plugin;
+const packageRepoRef = {
+  identifier: "repo-abc",
+  context: { cluster: "default", namespace: "default" },
+  plugin: plugin,
+} as PackageRepositoryReference;
+
+const packageRepositorySummary = {
+  name: "repo-abc",
+  description: "",
+  namespaceScoped: false,
+  type: "helm",
+  url: "https://helm.repo",
+  packageRepoRef: packageRepoRef,
+} as PackageRepositorySummary;
+
+const packageRepositoryDetail = {
+  name: "repo-abc",
+  type: "helm",
+  description: "",
+  interval: "10m",
+  namespaceScoped: false,
+  url: "https://helm.repo",
+  packageRepoRef: {
+    identifier: "repo-abc",
+    context: { cluster: "default", namespace: "default" },
+    plugin: plugin,
+  },
+} as PackageRepositoryDetail;
+
 const kubeappsNamespace = "kubeapps-namespace";
 const globalReposNamespace = "kubeapps-repos-global";
-
-const safeYAMLTemplate = `
-spec:
-  containers:
-    - env:
-      - name: FOO
-        value: BAR
-`;
 
 beforeEach(() => {
   store = mockStore({
@@ -44,16 +77,28 @@ beforeEach(() => {
       },
     },
   });
-  AppRepository.list = jest.fn().mockImplementationOnce(() => {
-    return { items: { foo: "bar" } };
+  PackageRepositoriesService.getPackageRepositorySummaries = jest
+    .fn()
+    .mockImplementationOnce(() => {
+      return {
+        packageRepositorySummaries: [packageRepositorySummary],
+      } as GetPackageRepositorySummariesResponse;
+    });
+  PackageRepositoriesService.deletePackageRepository = jest.fn().mockImplementationOnce(() => {
+    return {} as DeletePackageRepositoryResponse;
   });
-  AppRepository.delete = jest.fn();
-  AppRepository.get = jest.fn().mockImplementationOnce(() => {
-    return appRepo;
+  PackageRepositoriesService.getPackageRepositoryDetail = jest.fn().mockImplementationOnce(() => {
+    return { detail: packageRepositoryDetail } as GetPackageRepositoryDetailResponse;
   });
-  AppRepository.update = jest.fn();
-  AppRepository.create = jest.fn().mockImplementationOnce(() => {
-    return { appRepository: { metadata: { name: "repo-abc" } } };
+  PackageRepositoriesService.updatePackageRepository = jest.fn().mockImplementationOnce(() => {
+    return {
+      packageRepoRef: packageRepoRef,
+    } as UpdatePackageRepositoryResponse;
+  });
+  PackageRepositoriesService.addPackageRepository = jest.fn().mockImplementationOnce(() => {
+    return {
+      packageRepoRef: packageRepoRef,
+    } as AddPackageRepositoryResponse;
   });
 });
 
@@ -67,17 +112,75 @@ interface ITestCase {
   payload?: any;
 }
 
-const repo = { metadata: { name: "my-repo" } } as IAppRepository;
+const pkgRepoFormData = {
+  plugin: plugin,
+  authHeader: "",
+  authMethod:
+    PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_UNSPECIFIED,
+  basicAuth: {
+    password: "",
+    username: "",
+  },
+  customCA: "",
+  customDetail: {
+    imagesPullSecret: {
+      secretRef: "repo-1",
+      credentials: { server: "", username: "", password: "", email: "" },
+    },
+    ociRepositories: [],
+    performValidation: false,
+    filterRules: [],
+  } as HelmPackageRepositoryCustomDetail,
+  description: "",
+  dockerRegCreds: {
+    password: "",
+    username: "",
+    email: "",
+    server: "",
+  },
+  interval: "",
+  name: "",
+  passCredentials: false,
+  secretAuthName: "",
+  secretTLSName: "",
+  skipTLS: false,
+  type: RepositoryStorageTypes.PACKAGE_REPOSITORY_STORAGE_HELM,
+  url: "",
+  opaqueCreds: {
+    data: {},
+  },
+  sshCreds: {
+    knownHosts: "",
+    privateKey: "",
+  },
+  tlsCertKey: {
+    cert: "",
+    key: "",
+  },
+} as IPkgRepoFormData;
 
 const actionTestCases: ITestCase[] = [
-  { name: "addRepo", action: repoActions.addRepo },
-  { name: "addedRepo", action: repoActions.addedRepo, args: repo, payload: repo },
-  { name: "requestRepos", action: repoActions.requestRepos },
-  { name: "receiveRepos", action: repoActions.receiveRepos, args: [[repo]], payload: [repo] },
-  { name: "requestRepo", action: repoActions.requestRepo },
-  { name: "receiveRepo", action: repoActions.receiveRepo, args: repo, payload: repo },
-  { name: "redirect", action: repoActions.redirect, args: "/foo", payload: "/foo" },
-  { name: "redirected", action: repoActions.redirected },
+  { name: "addOrUpdateRepo", action: repoActions.addOrUpdateRepo },
+  {
+    name: "addedRepo",
+    action: repoActions.addedRepo,
+    args: packageRepositoryDetail,
+    payload: packageRepositoryDetail,
+  },
+  { name: "requestRepoSummaries", action: repoActions.requestRepoSummaries },
+  {
+    name: "receiveRepoSummaries",
+    action: repoActions.receiveRepoSummaries,
+    args: [[packageRepositorySummary]],
+    payload: [packageRepositorySummary],
+  },
+  { name: "requestRepoDetail", action: repoActions.requestRepoDetail },
+  {
+    name: "receiveRepoDetail",
+    action: repoActions.receiveRepoDetail,
+    args: [packageRepositoryDetail],
+    payload: packageRepositoryDetail,
+  },
   {
     name: "errorRepos",
     action: repoActions.errorRepos,
@@ -103,9 +206,9 @@ actionTestCases.forEach(tc => {
 
 // Async action creators
 describe("deleteRepo", () => {
-  context("dispatches requestRepos and receivedRepos after deletion if no error", () => {
+  context("dispatches requestRepoSummaries and receivedRepos after deletion if no error", () => {
     const currentNamespace = "current-namespace";
-    it("dispatches requestRepos with current namespace", async () => {
+    it("dispatches requestRepoSummaries with current namespace", async () => {
       const storeWithFlag: any = mockStore({
         clusters: {
           currentCluster: "defaultCluster",
@@ -116,13 +219,19 @@ describe("deleteRepo", () => {
           },
         },
       });
-      await storeWithFlag.dispatch(repoActions.deleteRepo("foo", "my-namespace"));
+      await storeWithFlag.dispatch(
+        repoActions.deleteRepo({
+          context: { cluster: "default", namespace: "my-namespace" },
+          identifier: "foo",
+          plugin: plugin,
+        } as PackageRepositoryReference),
+      );
       expect(storeWithFlag.getActions()).toEqual([]);
     });
   });
 
   it("dispatches errorRepos if error deleting", async () => {
-    AppRepository.delete = jest.fn().mockImplementationOnce(() => {
+    PackageRepositoriesService.deletePackageRepository = jest.fn().mockImplementationOnce(() => {
       throw new Error("Boom!");
     });
 
@@ -133,78 +242,45 @@ describe("deleteRepo", () => {
       },
     ];
 
-    await store.dispatch(repoActions.deleteRepo("foo", "my-namespace"));
-    expect(store.getActions()).toEqual(expectedActions);
-  });
-});
-
-describe("resyncRepo", () => {
-  it("dispatches errorRepos if error on #update", async () => {
-    AppRepository.resync = jest.fn().mockImplementationOnce(() => {
-      throw new Error("Boom!");
-    });
-
-    const expectedActions = [
-      {
-        type: getType(repoActions.errorRepos),
-        payload: { err: new Error("Boom!"), op: "update" },
-      },
-    ];
-
-    await store.dispatch(repoActions.resyncRepo("foo", "my-namespace"));
-    expect(store.getActions()).toEqual(expectedActions);
-  });
-});
-
-describe("resyncAllRepos", () => {
-  it("resyncs each repo using its namespace", async () => {
-    const appRepoGetMock = jest.fn();
-    AppRepository.resync = appRepoGetMock;
     await store.dispatch(
-      repoActions.resyncAllRepos([
-        {
-          namespace: "namespace-1",
-          name: "foo",
-        },
-        {
-          namespace: "namespace-2",
-          name: "bar",
-        },
-      ]),
+      repoActions.deleteRepo({
+        context: { cluster: "default", namespace: "my-namespace" },
+        identifier: "foo",
+        plugin: plugin,
+      } as PackageRepositoryReference),
     );
-
-    expect(appRepoGetMock).toHaveBeenCalledTimes(2);
-    expect(appRepoGetMock.mock.calls[0]).toEqual(["default", "namespace-1", "foo"]);
-    expect(appRepoGetMock.mock.calls[1]).toEqual(["default", "namespace-2", "bar"]);
+    expect(store.getActions()).toEqual(expectedActions);
   });
 });
 
-describe("fetchRepos", () => {
+describe("fetchRepoSummaries", () => {
   const namespace = "default";
-  it("dispatches requestRepos and receivedRepos if no error", async () => {
+  it("dispatches requestRepoSummaries and receivedRepos if no error", async () => {
     const expectedActions = [
       {
-        type: getType(repoActions.requestRepos),
+        type: getType(repoActions.requestRepoSummaries),
         payload: namespace,
       },
       {
-        type: getType(repoActions.receiveRepos),
-        payload: { foo: "bar" },
+        type: getType(repoActions.receiveRepoSummaries),
+        payload: [packageRepositorySummary],
       },
     ];
 
-    await store.dispatch(repoActions.fetchRepos(namespace));
+    await store.dispatch(repoActions.fetchRepoSummaries(namespace));
     expect(store.getActions()).toEqual(expectedActions);
   });
 
-  it("dispatches requestRepos and errorRepos if error fetching", async () => {
-    AppRepository.list = jest.fn().mockImplementationOnce(() => {
-      throw new Error("Boom!");
-    });
+  it("dispatches requestRepoSummaries and errorRepos if error fetching", async () => {
+    PackageRepositoriesService.getPackageRepositorySummaries = jest
+      .fn()
+      .mockImplementationOnce(() => {
+        throw new Error("Boom!");
+      });
 
     const expectedActions = [
       {
-        type: getType(repoActions.requestRepos),
+        type: getType(repoActions.requestRepoSummaries),
         payload: namespace,
       },
       {
@@ -213,399 +289,233 @@ describe("fetchRepos", () => {
       },
     ];
 
-    await store.dispatch(repoActions.fetchRepos(namespace));
+    await store.dispatch(repoActions.fetchRepoSummaries(namespace));
     expect(store.getActions()).toEqual(expectedActions);
   });
 
   it("fetches additional repos from the global namespace and joins them", async () => {
-    AppRepository.list = jest
+    PackageRepositoriesService.getPackageRepositorySummaries = jest
       .fn()
       .mockImplementationOnce(() => {
-        return { items: [{ name: "repo1", metadata: { uid: "123" } }] };
+        return {
+          packageRepositorySummaries: [{ name: "repo1", packageRepoRef: { identifier: "repo1" } }],
+        } as GetPackageRepositorySummariesResponse;
       })
       .mockImplementationOnce(() => {
-        return { items: [{ name: "repo2", metadata: { uid: "321" } }] };
+        return {
+          packageRepositorySummaries: [{ name: "repo2", packageRepoRef: { identifier: "repo2" } }],
+        } as GetPackageRepositorySummariesResponse;
       });
 
     const expectedActions = [
       {
-        type: getType(repoActions.requestRepos),
+        type: getType(repoActions.requestRepoSummaries),
         payload: namespace,
       },
       {
-        type: getType(repoActions.requestRepos),
+        type: getType(repoActions.requestRepoSummaries),
         payload: globalReposNamespace,
       },
       {
-        type: getType(repoActions.receiveRepos),
+        type: getType(repoActions.receiveRepoSummaries),
         payload: [
-          { name: "repo1", metadata: { uid: "123" } },
-          { name: "repo2", metadata: { uid: "321" } },
-        ],
+          { name: "repo1", packageRepoRef: { identifier: "repo1" } },
+          { name: "repo2", packageRepoRef: { identifier: "repo2" } },
+        ] as PackageRepositorySummary[],
       },
     ];
-
-    await store.dispatch(repoActions.fetchRepos(namespace, true));
+    await store.dispatch(repoActions.fetchRepoSummaries(namespace, true));
     expect(store.getActions()).toEqual(expectedActions);
   });
 
   it("fetches duplicated repos from several namespaces and joins them", async () => {
-    AppRepository.list = jest
+    PackageRepositoriesService.getPackageRepositorySummaries = jest
       .fn()
       .mockImplementationOnce(() => {
-        return { items: [{ name: "repo1", metadata: { uid: "123" } }] };
+        return {
+          packageRepositorySummaries: [{ name: "repo1", packageRepoRef: { identifier: "repo1" } }],
+        } as GetPackageRepositorySummariesResponse;
       })
       .mockImplementationOnce(() => {
         return {
-          items: [
-            { name: "repo2", metadata: { uid: "321" } },
-            { name: "repo3", metadata: { uid: "321" } },
+          packageRepositorySummaries: [
+            { name: "repo1", packageRepoRef: { identifier: "repo1" } },
+            { name: "repo2", packageRepoRef: { identifier: "repo2" } },
           ],
-        };
+        } as GetPackageRepositorySummariesResponse;
       });
 
     const expectedActions = [
       {
-        type: getType(repoActions.requestRepos),
+        type: getType(repoActions.requestRepoSummaries),
         payload: namespace,
       },
       {
-        type: getType(repoActions.requestRepos),
+        type: getType(repoActions.requestRepoSummaries),
         payload: globalReposNamespace,
       },
       {
-        type: getType(repoActions.receiveRepos),
+        type: getType(repoActions.receiveRepoSummaries),
         payload: [
-          { name: "repo1", metadata: { uid: "123" } },
-          { name: "repo2", metadata: { uid: "321" } },
-        ],
+          { name: "repo1", packageRepoRef: { identifier: "repo1" } },
+          { name: "repo2", packageRepoRef: { identifier: "repo2" } },
+        ] as PackageRepositorySummary[],
       },
     ];
 
-    await store.dispatch(repoActions.fetchRepos(namespace, true));
+    await store.dispatch(repoActions.fetchRepoSummaries(namespace, true));
     expect(store.getActions()).toEqual(expectedActions);
   });
 
   it("fetches repos only if the namespace is the one used for global repos", async () => {
-    AppRepository.list = jest
+    PackageRepositoriesService.getPackageRepositorySummaries = jest
       .fn()
       .mockImplementationOnce(() => {
-        return { items: [{ name: "repo1", metadata: { uid: "123" } }] };
+        return {
+          packageRepositorySummaries: [{ name: "repo1" }],
+        } as GetPackageRepositorySummariesResponse;
       })
       .mockImplementationOnce(() => {
         return {
-          items: [
-            { name: "repo1", metadata: { uid: "321" } },
-            { name: "repo2", metadata: { uid: "123" } },
-          ],
-        };
+          packageRepositorySummaries: [{ name: "repo1" }, { name: "repo2" }],
+        } as GetPackageRepositorySummariesResponse;
       });
 
     const expectedActions = [
       {
-        type: getType(repoActions.requestRepos),
+        type: getType(repoActions.requestRepoSummaries),
         payload: globalReposNamespace,
       },
       {
-        type: getType(repoActions.receiveRepos),
-        payload: [{ name: "repo1", metadata: { uid: "123" } }],
+        type: getType(repoActions.receiveRepoSummaries),
+        payload: [{ name: "repo1" }],
       },
     ];
 
-    await store.dispatch(repoActions.fetchRepos(globalReposNamespace, true));
+    await store.dispatch(repoActions.fetchRepoSummaries(globalReposNamespace, true));
     expect(store.getActions()).toEqual(expectedActions);
   });
 });
 
-describe("installRepo", () => {
-  const installRepoCMD = repoActions.installRepo(
-    "my-repo",
-    "my-namespace",
-    "http://foo.bar",
-    "helm",
-    "",
-    "",
-    "",
-    "",
-    "",
-    [],
-    [],
-    false,
-    false,
-    undefined,
-  );
+describe("addRepo", () => {
+  const addRepoCMD = repoActions.addRepo("my-namespace", pkgRepoFormData);
 
   context("when authHeader provided", () => {
-    const installRepoCMDAuth = repoActions.installRepo(
-      "my-repo",
-      "my-namespace",
-      "http://foo.bar",
-      "helm",
-      "",
-      "Bearer: abc",
-      "",
-      "",
-      "",
-      [],
-      [],
-      false,
-      false,
-      undefined,
-    );
-
-    it("calls AppRepository create including a auth struct (authHeader)", async () => {
-      await store.dispatch(installRepoCMDAuth);
-      expect(AppRepository.create).toHaveBeenCalledWith(
-        "default",
-        "my-repo",
-        "my-namespace",
-        "http://foo.bar",
-        "helm",
-        "",
-        "Bearer: abc",
-        "",
-        "",
-        {},
-        [],
-        [],
-        false,
-        false,
-        undefined,
-      );
+    const addRepoCMDAuth = repoActions.addRepo("my-namespace", {
+      ...pkgRepoFormData,
+      authHeader: "Bearer: abc",
     });
 
-    it("calls AppRepository create including ociRepositories", async () => {
-      await store.dispatch(
-        repoActions.installRepo(
-          "my-repo",
-          "my-namespace",
-          "http://foo.bar",
-          "oci",
-          "",
-          "",
-          "",
-          "",
-          "",
-          [],
-          ["apache", "jenkins"],
-          false,
-          false,
-          undefined,
-        ),
-      );
-      expect(AppRepository.create).toHaveBeenCalledWith(
+    it("calls PackageRepositoriesService create including a auth struct (authHeader)", async () => {
+      await store.dispatch(addRepoCMDAuth);
+      expect(PackageRepositoriesService.addPackageRepository).toHaveBeenCalledWith(
         "default",
-        "my-repo",
         "my-namespace",
-        "http://foo.bar",
-        "oci",
-        "",
-        "",
-        "",
-        "",
-        {},
-        [],
-        ["apache", "jenkins"],
-        false,
-        false,
-        undefined,
-      );
-    });
-
-    it("calls AppRepository create skipping TLS verification", async () => {
-      await store.dispatch(
-        repoActions.installRepo(
-          "my-repo",
-          "my-namespace",
-          "http://foo.bar",
-          "oci",
-          "",
-          "",
-          "",
-          "",
-          "",
-          [],
-          [],
-          true,
-          false,
-          undefined,
-        ),
-      );
-      expect(AppRepository.create).toHaveBeenCalledWith(
-        "default",
-        "my-repo",
-        "my-namespace",
-        "http://foo.bar",
-        "oci",
-        "",
-        "",
-        "",
-        "",
-        {},
-        [],
-        [],
+        {
+          ...pkgRepoFormData,
+          authHeader: "Bearer: abc",
+        },
         true,
-        false,
-        undefined,
+      );
+    });
+
+    it("calls PackageRepositoriesService create including ociRepositories", async () => {
+      await store.dispatch(
+        repoActions.addRepo("my-namespace", {
+          ...pkgRepoFormData,
+          type: RepositoryStorageTypes.PACKAGE_REPOSITORY_STORAGE_OCI,
+          customDetail: {
+            ...pkgRepoFormData.customDetail,
+            ociRepositories: ["apache", "jenkins"],
+          },
+        }),
+      );
+      expect(PackageRepositoriesService.addPackageRepository).toHaveBeenCalledWith(
+        "default",
+        "my-namespace",
+        {
+          ...pkgRepoFormData,
+          type: RepositoryStorageTypes.PACKAGE_REPOSITORY_STORAGE_OCI,
+          customDetail: {
+            ...pkgRepoFormData.customDetail,
+            ociRepositories: ["apache", "jenkins"],
+          },
+        },
+        true,
+      );
+    });
+
+    it("calls PackageRepositoriesService create skipping TLS verification", async () => {
+      await store.dispatch(
+        repoActions.addRepo("my-namespace", { ...pkgRepoFormData, skipTLS: true }),
+      );
+      expect(PackageRepositoriesService.addPackageRepository).toHaveBeenCalledWith(
+        "default",
+        "my-namespace",
+        {
+          ...pkgRepoFormData,
+          skipTLS: true,
+        },
+        true,
       );
     });
 
     it("returns true", async () => {
-      const res = await store.dispatch(installRepoCMDAuth);
+      const res = await store.dispatch(addRepoCMDAuth);
       expect(res).toBe(true);
     });
   });
 
   context("when a customCA is provided", () => {
-    const installRepoCMDAuth = repoActions.installRepo(
-      "my-repo",
-      "my-namespace",
-      "http://foo.bar",
-      "helm",
-      "",
-      "",
-      "",
-      "This is a cert!",
-      "",
-      [],
-      [],
-      false,
-      false,
-      undefined,
-    );
+    const addRepoCMDAuth = repoActions.addRepo("my-namespace", {
+      ...pkgRepoFormData,
+      customCA: "This is a cert!",
+    });
 
-    it("calls AppRepository create including a auth struct (custom CA)", async () => {
-      await store.dispatch(installRepoCMDAuth);
-      expect(AppRepository.create).toHaveBeenCalledWith(
+    it("calls PackageRepositoriesService create including a auth struct (custom CA)", async () => {
+      await store.dispatch(addRepoCMDAuth);
+      expect(PackageRepositoriesService.addPackageRepository).toHaveBeenCalledWith(
         "default",
-        "my-repo",
         "my-namespace",
-        "http://foo.bar",
-        "helm",
-        "",
-        "",
-        "",
-        "This is a cert!",
-        {},
-        [],
-        [],
-        false,
-        false,
-        undefined,
+        {
+          ...pkgRepoFormData,
+          customCA: "This is a cert!",
+        },
+        true,
       );
     });
 
-    it("returns true (installRepoCMDAuth)", async () => {
-      const res = await store.dispatch(installRepoCMDAuth);
+    it("returns true (addRepoCMDAuth)", async () => {
+      const res = await store.dispatch(addRepoCMDAuth);
       expect(res).toBe(true);
-    });
-
-    context("when a pod template is provided", () => {
-      it("calls AppRepository create including pod template", async () => {
-        await store.dispatch(
-          repoActions.installRepo(
-            "my-repo",
-            "my-namespace",
-            "http://foo.bar",
-            "helm",
-            "",
-            "",
-            "",
-            "",
-            safeYAMLTemplate,
-            [],
-            [],
-            false,
-            false,
-            undefined,
-          ),
-        );
-
-        expect(AppRepository.create).toHaveBeenCalledWith(
-          "default",
-          "my-repo",
-          "my-namespace",
-          "http://foo.bar",
-          "helm",
-          "",
-          "",
-          "",
-          "",
-          {
-            spec: { containers: [{ env: [{ name: "FOO", value: "BAR" }] }] },
-          },
-          [],
-          [],
-          false,
-          false,
-          undefined,
-        );
-      });
-
-      // Example from https://nealpoole.com/blog/2013/06/code-execution-via-yaml-in-js-yaml-nodejs-module/
-      const unsafeYAMLTemplate =
-        '"toString": !<tag:yaml.org,2002:js/function> "function (){very_evil_thing();}"';
-
-      it("does not call AppRepository create with an unsafe pod template", async () => {
-        await store.dispatch(
-          repoActions.installRepo(
-            "my-repo",
-            "my-namespace",
-            "http://foo.bar",
-            "helm",
-            "",
-            "",
-            "",
-            "",
-            unsafeYAMLTemplate,
-            [],
-            [],
-            false,
-            false,
-            undefined,
-          ),
-        );
-        expect(AppRepository.create).not.toHaveBeenCalled();
-      });
     });
   });
 
   context("when authHeader and customCA are empty", () => {
-    it("calls AppRepository create without a auth struct", async () => {
-      await store.dispatch(installRepoCMD);
-      expect(AppRepository.create).toHaveBeenCalledWith(
+    it("calls PackageRepositoriesService create without a auth struct", async () => {
+      await store.dispatch(addRepoCMD);
+      expect(PackageRepositoriesService.addPackageRepository).toHaveBeenCalledWith(
         "default",
-        "my-repo",
         "my-namespace",
-        "http://foo.bar",
-        "helm",
-        "",
-        "",
-        "",
-        "",
-        {},
-        [],
-        [],
-        false,
-        false,
-        undefined,
+        pkgRepoFormData,
+        true,
       );
     });
 
-    it("returns true (installRepoCMD)", async () => {
-      const res = await store.dispatch(installRepoCMD);
+    it("returns true (addRepoCMD)", async () => {
+      const res = await store.dispatch(addRepoCMD);
       expect(res).toBe(true);
     });
   });
 
-  it("dispatches addRepo and errorRepos if error fetching", async () => {
-    AppRepository.create = jest.fn().mockImplementationOnce(() => {
+  it("dispatches addOrUpdateRepo and errorRepos if error fetching", async () => {
+    PackageRepositoriesService.addPackageRepository = jest.fn().mockImplementationOnce(() => {
       throw new Error("Boom!");
     });
 
     const expectedActions = [
       {
-        type: getType(repoActions.addRepo),
+        type: getType(repoActions.addOrUpdateRepo),
       },
       {
         type: getType(repoActions.errorRepos),
@@ -613,232 +523,173 @@ describe("installRepo", () => {
       },
     ];
 
-    await store.dispatch(installRepoCMD);
+    await store.dispatch(addRepoCMD);
     expect(store.getActions()).toEqual(expectedActions);
   });
 
   it("returns false if error fetching", async () => {
-    AppRepository.create = jest.fn().mockImplementationOnce(() => {
+    PackageRepositoriesService.addPackageRepository = jest.fn().mockImplementationOnce(() => {
       throw new Error("Boom!");
     });
 
-    const res = await store.dispatch(installRepoCMD);
+    const res = await store.dispatch(addRepoCMD);
     expect(res).toEqual(false);
   });
 
-  it("dispatches addRepo and addedRepo if no error", async () => {
+  it("dispatches addOrUpdateRepo and addedRepo if no error", async () => {
     const expectedActions = [
       {
-        type: getType(repoActions.addRepo),
+        type: getType(repoActions.addOrUpdateRepo),
       },
       {
         type: getType(repoActions.addedRepo),
-        payload: { metadata: { name: "repo-abc" } },
+        payload: convertPkgRepoDetailToSummary(packageRepositoryDetail),
       },
     ];
 
-    await store.dispatch(installRepoCMD);
+    await store.dispatch(addRepoCMD);
     expect(store.getActions()).toEqual(expectedActions);
   });
 
   it("includes registry secrets if given", async () => {
     await store.dispatch(
-      repoActions.installRepo(
-        "my-repo",
-        "foo",
-        "http://foo.bar",
-        "helm",
-        "",
-        "",
-        "",
-        "",
-        "",
-        ["repo-1"],
-        [],
-        false,
-        false,
-        undefined,
-      ),
+      repoActions.addRepo("my-namespace", {
+        ...pkgRepoFormData,
+        customDetail: {
+          ...pkgRepoFormData.customDetail,
+          imagesPullSecret: {
+            secretRef: "repo-1",
+            credentials: { server: "", username: "", password: "", email: "" },
+          },
+        },
+      }),
     );
 
-    expect(AppRepository.create).toHaveBeenCalledWith(
+    expect(PackageRepositoriesService.addPackageRepository).toHaveBeenCalledWith(
       "default",
-      "my-repo",
-      "foo",
-      "http://foo.bar",
-      "helm",
-      "",
-      "",
-      "",
-      "",
-      {},
-      ["repo-1"],
-      [],
-      false,
-      false,
-      undefined,
+      "my-namespace",
+      {
+        ...pkgRepoFormData,
+        customDetail: {
+          ...pkgRepoFormData.customDetail,
+          imagesPullSecret: {
+            secretRef: "repo-1",
+            credentials: { server: "", username: "", password: "", email: "" },
+          },
+        },
+      },
+      true,
     );
   });
 
-  it("calls AppRepository create with description", async () => {
+  it("calls PackageRepositoriesService create with description", async () => {
     await store.dispatch(
-      repoActions.installRepo(
-        "my-repo",
-        "my-namespace",
-        "http://foo.bar",
-        "oci",
-        "This is a weird description 123!@#$%^&&*()_+-=<>?/.,;:'\"",
-        "",
-        "",
-        "",
-        "",
-        [],
-        ["apache", "jenkins"],
-        false,
-        false,
-        undefined,
-      ),
+      repoActions.addRepo("my-namespace", {
+        ...pkgRepoFormData,
+        description: "This is a weird description 123!@#$%^&&*()_+-=<>?/.,;:'\"",
+      }),
     );
-    expect(AppRepository.create).toHaveBeenCalledWith(
+    expect(PackageRepositoriesService.addPackageRepository).toHaveBeenCalledWith(
       "default",
-      "my-repo",
       "my-namespace",
-      "http://foo.bar",
-      "oci",
-      "This is a weird description 123!@#$%^&&*()_+-=<>?/.,;:'\"",
-      "",
-      "",
-      "",
-      {},
-      [],
-      ["apache", "jenkins"],
-      false,
-      false,
-      undefined,
+      {
+        ...pkgRepoFormData,
+        description: "This is a weird description 123!@#$%^&&*()_+-=<>?/.,;:'\"",
+      },
+      true,
     );
   });
 });
 
 describe("updateRepo", () => {
   it("updates a repo with an auth header", async () => {
-    const r = {
-      metadata: { name: "repo-abc" },
-      spec: { auth: { header: { secretKeyRef: { name: "apprepo-repo-abc" } } } },
-    };
-    AppRepository.update = jest.fn().mockReturnValue({
-      appRepository: r,
-    });
+    const pkgRepoDetail = {
+      ...packageRepositoryDetail,
+      auth: {
+        header: "foo",
+      },
+    } as PackageRepositoryDetail;
+
+    PackageRepositoriesService.updatePackageRepository = jest.fn().mockReturnValue({
+      packageRepoRef: pkgRepoDetail.packageRepoRef,
+    } as UpdatePackageRepositoryResponse);
+    PackageRepositoriesService.getPackageRepositoryDetail = jest.fn().mockReturnValue({
+      detail: pkgRepoDetail,
+    } as GetPackageRepositoryDetailResponse);
     const expectedActions = [
       {
-        type: getType(repoActions.requestRepoUpdate),
+        type: getType(repoActions.addOrUpdateRepo),
       },
       {
         type: getType(repoActions.repoUpdated),
-        payload: r,
+        payload: convertPkgRepoDetailToSummary(pkgRepoDetail),
       },
     ];
 
     await store.dispatch(
-      repoActions.updateRepo(
-        "my-repo",
-        "my-namespace",
-        "http://foo.bar",
-        "helm",
-        "",
-        "foo",
-        "",
-        "bar",
-        safeYAMLTemplate,
-        ["repo-1"],
-        [],
-        false,
-        false,
-        undefined,
-      ),
+      repoActions.updateRepo("my-namespace", {
+        ...pkgRepoFormData,
+        authHeader: "foo",
+      }),
     );
+
     expect(store.getActions()).toEqual(expectedActions);
-    expect(AppRepository.update).toHaveBeenCalledWith(
+    expect(PackageRepositoriesService.updatePackageRepository).toHaveBeenCalledWith(
       "default",
-      "my-repo",
       "my-namespace",
-      "http://foo.bar",
-      "helm",
-      "",
-      "foo",
-      "",
-      "bar",
-      { spec: { containers: [{ env: [{ name: "FOO", value: "BAR" }] }] } },
-      ["repo-1"],
-      [],
-      false,
-      false,
-      undefined,
+      {
+        ...pkgRepoFormData,
+        authHeader: "foo",
+      },
     );
   });
 
   it("updates a repo with an customCA", async () => {
-    const r = {
-      metadata: { name: "repo-abc" },
-      spec: { auth: { customCA: { secretKeyRef: { name: "apprepo-repo-abc" } } } },
-    };
-    AppRepository.update = jest.fn().mockReturnValue({
-      appRepository: r,
-    });
+    const pkgRepoDetail = {
+      ...packageRepositoryDetail,
+      tlsConfig: {
+        secretRef: { name: "pkgrepo-repo-abc", key: "data" },
+        certAuthority: "",
+        insecureSkipVerify: false,
+      },
+    } as PackageRepositoryDetail;
+    PackageRepositoriesService.updatePackageRepository = jest.fn().mockReturnValue({
+      packageRepoRef: packageRepositoryDetail.packageRepoRef,
+    } as UpdatePackageRepositoryResponse);
+    PackageRepositoriesService.getPackageRepositoryDetail = jest.fn().mockReturnValue({
+      detail: pkgRepoDetail,
+    } as GetPackageRepositoryDetailResponse);
     const expectedActions = [
       {
-        type: getType(repoActions.requestRepoUpdate),
+        type: getType(repoActions.addOrUpdateRepo),
       },
       {
         type: getType(repoActions.repoUpdated),
-        payload: r,
+        payload: convertPkgRepoDetailToSummary(pkgRepoDetail),
       },
     ];
 
     await store.dispatch(
-      repoActions.updateRepo(
-        "my-repo",
-        "my-namespace",
-        "http://foo.bar",
-        "helm",
-        "",
-        "foo",
-        "",
-        "bar",
-        safeYAMLTemplate,
-        ["repo-1"],
-        [],
-        false,
-        false,
-        undefined,
-      ),
+      repoActions.updateRepo("my-namespace", { ...pkgRepoFormData, customCA: "This is a cert!" }),
     );
     expect(store.getActions()).toEqual(expectedActions);
-    expect(AppRepository.update).toHaveBeenCalledWith(
+    expect(PackageRepositoriesService.updatePackageRepository).toHaveBeenCalledWith(
       "default",
-      "my-repo",
       "my-namespace",
-      "http://foo.bar",
-      "helm",
-      "",
-      "foo",
-      "",
-      "bar",
-      { spec: { containers: [{ env: [{ name: "FOO", value: "BAR" }] }] } },
-      ["repo-1"],
-      [],
-      false,
-      false,
-      undefined,
+      {
+        ...pkgRepoFormData,
+        customCA: "This is a cert!",
+      },
     );
   });
 
   it("returns an error if failed", async () => {
-    AppRepository.update = jest.fn(() => {
+    PackageRepositoriesService.updatePackageRepository = jest.fn(() => {
       throw new Error("boom");
     });
     const expectedActions = [
       {
-        type: getType(repoActions.requestRepoUpdate),
+        type: getType(repoActions.addOrUpdateRepo),
       },
       {
         type: getType(repoActions.errorRepos),
@@ -846,106 +697,49 @@ describe("updateRepo", () => {
       },
     ];
 
-    await store.dispatch(
-      repoActions.updateRepo(
-        "my-repo",
-        "my-namespace",
-        "http://foo.bar",
-        "helm",
-        "",
-        "foo",
-        "",
-        "bar",
-        safeYAMLTemplate,
-        [],
-        [],
-        false,
-        false,
-        undefined,
-      ),
-    );
+    await store.dispatch(repoActions.updateRepo("my-namespace", pkgRepoFormData));
     expect(store.getActions()).toEqual(expectedActions);
   });
 
   it("updates a repo with ociRepositories", async () => {
-    AppRepository.update = jest.fn().mockReturnValue({
-      appRepository: {},
-    });
+    PackageRepositoriesService.updatePackageRepository = jest.fn().mockReturnValue({
+      packageRepoRef: packageRepositoryDetail.packageRepoRef,
+    } as UpdatePackageRepositoryResponse);
     await store.dispatch(
-      repoActions.updateRepo(
-        "my-repo",
-        "my-namespace",
-        "http://foo.bar",
-        "oci",
-        "",
-        "",
-        "",
-        "",
-        "",
-        [],
-        ["apache", "jenkins"],
-        false,
-        false,
-        undefined,
-      ),
+      repoActions.updateRepo("my-namespace", {
+        ...pkgRepoFormData,
+        type: RepositoryStorageTypes.PACKAGE_REPOSITORY_STORAGE_OCI,
+        customDetail: { ...pkgRepoFormData.customDetail, ociRepositories: ["apache", "jenkins"] },
+      }),
     );
-    expect(AppRepository.update).toHaveBeenCalledWith(
+    expect(PackageRepositoriesService.updatePackageRepository).toHaveBeenCalledWith(
       "default",
-      "my-repo",
       "my-namespace",
-      "http://foo.bar",
-      "oci",
-      "",
-      "",
-      "",
-      "",
-      {},
-      [],
-      ["apache", "jenkins"],
-      false,
-      false,
-      undefined,
+      {
+        ...pkgRepoFormData,
+        type: RepositoryStorageTypes.PACKAGE_REPOSITORY_STORAGE_OCI,
+        customDetail: { ...pkgRepoFormData.customDetail, ociRepositories: ["apache", "jenkins"] },
+      },
     );
   });
 
   it("updates a repo with description", async () => {
-    AppRepository.update = jest.fn().mockReturnValue({
-      appRepository: {},
-    });
+    PackageRepositoriesService.updatePackageRepository = jest.fn().mockReturnValue({
+      packageRepoRef: packageRepositoryDetail.packageRepoRef,
+    } as UpdatePackageRepositoryResponse);
     await store.dispatch(
-      repoActions.updateRepo(
-        "my-repo",
-        "my-namespace",
-        "http://foo.bar",
-        "oci",
-        "updated description",
-        "",
-        "",
-        "",
-        "",
-        [],
-        ["apache", "jenkins"],
-        false,
-        false,
-        undefined,
-      ),
+      repoActions.updateRepo("my-namespace", {
+        ...pkgRepoFormData,
+        description: "updated description",
+      }),
     );
-    expect(AppRepository.update).toHaveBeenCalledWith(
+    expect(PackageRepositoriesService.updatePackageRepository).toHaveBeenCalledWith(
       "default",
-      "my-repo",
       "my-namespace",
-      "http://foo.bar",
-      "oci",
-      "updated description",
-      "",
-      "",
-      "",
-      {},
-      [],
-      ["apache", "jenkins"],
-      false,
-      false,
-      undefined,
+      {
+        ...pkgRepoFormData,
+        description: "updated description",
+      },
     );
   });
 });
@@ -955,18 +749,18 @@ describe("findPackageInRepo", () => {
     availablePackageRef: {
       context: { cluster: "default", namespace: "my-ns" },
       identifier: "my-repo/my-package",
-      plugin: { name: "my.plugin", version: "0.0.1" } as Plugin,
+      plugin: plugin,
     },
   } as InstalledPackageDetail;
   it("dispatches requestRepo and receivedRepo if no error", async () => {
     PackagesService.getAvailablePackageVersions = jest.fn();
     const expectedActions = [
       {
-        type: getType(repoActions.requestRepo),
+        type: getType(repoActions.requestRepoDetail),
       },
       {
-        type: getType(repoActions.receiveRepo),
-        payload: appRepo,
+        type: getType(repoActions.receiveRepoDetail),
+        payload: packageRepositoryDetail,
       },
     ];
     await store.dispatch(
@@ -981,7 +775,7 @@ describe("findPackageInRepo", () => {
     expect(PackagesService.getAvailablePackageVersions).toBeCalledWith({
       context: { cluster: "default", namespace: "other-namespace" },
       identifier: "my-repo/my-package",
-      plugin: { name: "my.plugin", version: "0.0.1" } as Plugin,
+      plugin: plugin,
     } as AvailablePackageReference);
   });
 
@@ -992,13 +786,16 @@ describe("findPackageInRepo", () => {
 
     const expectedActions = [
       {
-        type: getType(repoActions.requestRepo),
+        type: getType(repoActions.requestRepoDetail),
       },
       {
-        type: getType(actions.availablepackages.createErrorPackage),
-        payload: new NotFoundError(
-          "Package my-repo/my-package not found in the repository other-namespace.",
-        ),
+        type: getType(repoActions.errorRepos),
+        payload: {
+          err: new NotFoundError(
+            "Package my-repo/my-package not found in the repository other-namespace.",
+          ),
+          op: "fetch",
+        },
       },
     ];
 
@@ -1014,148 +811,7 @@ describe("findPackageInRepo", () => {
     expect(PackagesService.getAvailablePackageVersions).toBeCalledWith({
       context: { cluster: "default", namespace: "other-namespace" },
       identifier: "my-repo/my-package",
-      plugin: { name: "my.plugin", version: "0.0.1" } as Plugin,
+      plugin: plugin,
     } as AvailablePackageReference);
-  });
-});
-
-describe("validateRepo", () => {
-  it("dispatches repoValidating and repoValidated if no error", async () => {
-    AppRepository.validate = jest.fn().mockReturnValue({
-      code: 200,
-      message: "OK",
-    });
-    const expectedActions = [
-      {
-        type: getType(repoActions.repoValidating),
-      },
-      {
-        type: getType(repoActions.repoValidated),
-        payload: { code: 200, message: "OK" },
-      },
-    ];
-
-    const res = await store.dispatch(
-      repoActions.validateRepo("url", "helm", "auth", "", "cert", [], false, false),
-    );
-    expect(store.getActions()).toEqual(expectedActions);
-    expect(res).toBe(true);
-  });
-
-  it("dispatches checkRepo and errorRepos when the validation failed", async () => {
-    const error = new Error("boom!");
-    AppRepository.validate = jest.fn(() => {
-      throw error;
-    });
-    const expectedActions = [
-      {
-        type: getType(repoActions.repoValidating),
-      },
-      {
-        type: getType(repoActions.errorRepos),
-        payload: { err: error, op: "validate" },
-      },
-    ];
-    const res = await store.dispatch(
-      repoActions.validateRepo("url", "helm", "auth", "", "cert", [], false, false),
-    );
-    expect(store.getActions()).toEqual(expectedActions);
-    expect(res).toBe(false);
-  });
-
-  it("dispatches checkRepo and errorRepos when the validation cannot be parsed", async () => {
-    AppRepository.validate = jest.fn().mockReturnValue({
-      code: 409,
-      message: "forbidden",
-    });
-    const expectedActions = [
-      {
-        type: getType(repoActions.repoValidating),
-      },
-      {
-        type: getType(repoActions.errorRepos),
-        payload: {
-          err: new Error('{"code":409,"message":"forbidden"}'),
-          op: "validate",
-        },
-      },
-    ];
-    const res = await store.dispatch(
-      repoActions.validateRepo("url", "helm", "auth", "", "cert", [], false, false),
-    );
-    expect(store.getActions()).toEqual(expectedActions);
-    expect(res).toBe(false);
-  });
-
-  it("validates repo with ociRepositories", async () => {
-    AppRepository.validate = jest.fn().mockReturnValue({
-      code: 200,
-    });
-    const res = await store.dispatch(
-      repoActions.validateRepo("url", "oci", "", "", "", ["apache", "jenkins"], false, false),
-    );
-    expect(res).toBe(true);
-    expect(AppRepository.validate).toHaveBeenCalledWith(
-      "default",
-      "kubeapps-namespace",
-      "url",
-      "oci",
-      "",
-      "",
-      "",
-      ["apache", "jenkins"],
-      false,
-      false,
-    );
-  });
-});
-
-describe("createDockerRegistrySecret", () => {
-  it("creates a docker registry", async () => {
-    Secret.createPullSecret = jest.fn();
-    const expectedActions = [
-      {
-        type: getType(repoActions.createImagePullSecret),
-        payload: "secret-name",
-      },
-    ];
-
-    await store.dispatch(
-      repoActions.createDockerRegistrySecret(
-        "secret-name",
-        "user",
-        "password",
-        "email",
-        "server",
-        "namespace",
-      ),
-    );
-    expect(Secret.createPullSecret).toHaveBeenCalledWith(
-      "default",
-      "secret-name",
-      "user",
-      "password",
-      "email",
-      "server",
-      "namespace",
-    );
-    expect(store.getActions()).toEqual(expectedActions);
-  });
-
-  it("dispatches an error", async () => {
-    Secret.createPullSecret = jest.fn(() => {
-      throw new Error("boom");
-    });
-    const expectedActions = [
-      {
-        type: getType(repoActions.errorRepos),
-        payload: {
-          err: new Error("boom"),
-          op: "fetch",
-        },
-      },
-    ];
-    await store.dispatch(repoActions.createDockerRegistrySecret("", "", "", "", "", ""));
-    expect(store.getActions()).toEqual(expectedActions);
   });
 });

@@ -6,7 +6,6 @@ package main
 import (
 	"context"
 	"fmt"
-	k8scorev1 "k8s.io/api/core/v1"
 	"strings"
 
 	ctlapp "github.com/k14s/kapp/pkg/kapp/app"
@@ -17,6 +16,7 @@ import (
 	corev1 "github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	k8scorev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -35,7 +35,6 @@ const (
 	pkgInstallsResource     = "packageinstalls"
 	appResource             = "App"
 	appsResource            = "apps"
-	appLabelKey             = "kapp.k14s.io/app"
 )
 
 // Dynamic ResourceInterface getters to encapsulate the logic of getting the proper group version API resources
@@ -113,6 +112,7 @@ func (s *Server) getAppResource(ctx context.Context, cluster, namespace string) 
 //  Single resource getters
 
 // getPkg returns the package for the given cluster, namespace and identifier
+//nolint:unused
 func (s *Server) getPkg(ctx context.Context, cluster, namespace, identifier string) (*datapackagingv1alpha1.Package, error) {
 	var pkg datapackagingv1alpha1.Package
 	resource, err := s.getPkgResource(ctx, cluster, namespace)
@@ -340,6 +340,7 @@ func (s *Server) getPkgRepositories(ctx context.Context, cluster, namespace stri
 }
 
 // getApps returns the list of apps for the given cluster and namespace
+//nolint:unused
 func (s *Server) getApps(ctx context.Context, cluster, namespace, identifier string) ([]*kappctrlv1alpha1.App, error) {
 	resource, err := s.getAppResource(ctx, cluster, namespace)
 	if err != nil {

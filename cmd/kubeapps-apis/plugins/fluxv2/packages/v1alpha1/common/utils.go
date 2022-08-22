@@ -315,27 +315,27 @@ func tlsClientConfigFromSecret(secret apiv1.Secret, options *HttpClientOptions) 
 	return nil
 }
 
-// OCIRegistryCredentialFromSecret derives authentication data from a Secret to login to an OCI registry.
+// OCIChartRepositoryCredentialFromSecret derives authentication data from a Secret to login to an OCI registry.
 // This Secret may either hold "username" and "password" fields or be of the
 // apiv1.SecretTypeDockerConfigJson type and hold a apiv1.DockerConfigJsonKey field with a
 // complete Docker configuration. If both, "username" and "password" are
 // empty, a nil LoginOption and a nil error will be returned.
 // ref https://github.com/fluxcd/source-controller/blob/main/internal/helm/registry/auth.go
-func OCIRegistryCredentialFromSecret(registryURL string, secret apiv1.Secret) (*orasregistryauthv2.Credential, error) {
+func OCIChartRepositoryCredentialFromSecret(registryURL string, secret apiv1.Secret) (*orasregistryauthv2.Credential, error) {
 	var username, password string
 	if secret.Type == apiv1.SecretTypeDockerConfigJson {
 		dockerCfg, err := config.LoadFromReader(bytes.NewReader(secret.Data[apiv1.DockerConfigJsonKey]))
 		if err != nil {
-			return nil, fmt.Errorf("unable to load Docker config from Secret '%s': %w", secret.Name, err)
+			return nil, fmt.Errorf("unable to load docker config from secret '%s': %w", secret.Name, err)
 		}
 		parsedURL, err := url.Parse(registryURL)
 		if err != nil {
-			return nil, fmt.Errorf("unable to parse registry URL '%s' while reconciling Secret '%s': %w",
+			return nil, fmt.Errorf("unable to parse registry URL '%s' while reconciling secret '%s': %w",
 				registryURL, secret.Name, err)
 		}
 		authConfig, err := dockerCfg.GetAuthConfig(parsedURL.Host)
 		if err != nil {
-			return nil, fmt.Errorf("unable to get authentication data from Secret '%s': %w", secret.Name, err)
+			return nil, fmt.Errorf("unable to get authentication data from secret '%s': %w", secret.Name, err)
 		}
 
 		// Make sure that the obtained auth config is for the requested host.
@@ -343,7 +343,7 @@ func OCIRegistryCredentialFromSecret(registryURL string, secret apiv1.Secret) (*
 		// the credential store returns an empty auth config.
 		// Refer: https://github.com/docker/cli/blob/v20.10.16/cli/config/credentials/file_store.go#L44
 		if credentials.ConvertToHostname(authConfig.ServerAddress) != parsedURL.Host {
-			return nil, fmt.Errorf("no auth config for '%s' in the docker-registry Secret '%s'", parsedURL.Host, secret.Name)
+			return nil, fmt.Errorf("no auth config for '%s' in the docker-registry secret '%s'", parsedURL.Host, secret.Name)
 		}
 		username = authConfig.Username
 		password = authConfig.Password
@@ -360,7 +360,7 @@ func OCIRegistryCredentialFromSecret(registryURL string, secret apiv1.Secret) (*
 	if len(pwdRedacted) > 4 {
 		pwdRedacted = pwdRedacted[0:3] + "..."
 	}
-	log.Infof("-OCIRegistryCredentialFromSecret: username: [%s], password: [%s]", username, pwdRedacted)
+	log.Infof("-OCIRegOCIChartRepositoryCredentialFromSecret: username: [%s], password: [%s]", username, pwdRedacted)
 	return &orasregistryauthv2.Credential{
 		Username: username,
 		Password: password,

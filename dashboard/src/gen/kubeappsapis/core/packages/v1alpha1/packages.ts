@@ -1,9 +1,10 @@
 /* eslint-disable */
+import Long from "long";
 import { grpc } from "@improbable-eng/grpc-web";
-import { Any } from "../../../../google/protobuf/any";
-import { Plugin } from "../../plugins/v1alpha1/plugins";
-import { BrowserHeaders } from "browser-headers";
 import * as _m0 from "protobufjs/minimal";
+import { Any } from "../../../../google/protobuf/any";
+import { Plugin } from "../../../../kubeappsapis/core/plugins/v1alpha1/plugins";
+import { BrowserHeaders } from "browser-headers";
 
 export const protobufPackage = "kubeappsapis.core.packages.v1alpha1";
 
@@ -168,26 +169,6 @@ export interface DeleteInstalledPackageRequest {
 }
 
 /**
- * StartInstalledPackageRequest
- *
- * Request for StartInstalledPackage
- */
- export interface StartInstalledPackageRequest {
-  /** A reference to uniquely identify the installed package to be started. */
-  installedPackageRef?: InstalledPackageReference;
-}
-
-/**
- * StopInstalledPackageRequest
- *
- * Request for StopInstalledPackage
- */
- export interface StopInstalledPackageRequest {
-  /** A reference to uniquely identify the installed package to be stopped. */
-  installedPackageRef?: InstalledPackageReference;
-}
-
-/**
  * GetInstalledPackageResourceRefsRequest
  *
  * Request for GetInstalledPackageResourceRefs
@@ -330,24 +311,6 @@ export interface UpdateInstalledPackageResponse {
  * Response for DeleteInstalledPackage
  */
 export interface DeleteInstalledPackageResponse {}
-
-/**
- * StartInstalledPackageResponse
- *
- * Response for StartInstalledPackage
- */
- export interface StartInstalledPackageResponse {
-  installedPackageRef?: InstalledPackageReference;
- }
-
- /**
- * StopInstalledPackageResponse
- *
- * Response for StopInstalledPackage
- */
-  export interface StopInstalledPackageResponse {
-    installedPackageRef?: InstalledPackageReference;
-   }
 
 /**
  * GetInstalledPackageResourceRefsResponse
@@ -905,8 +868,6 @@ export enum InstalledPackageStatus_StatusReason {
   STATUS_REASON_UNINSTALLED = 2,
   STATUS_REASON_FAILED = 3,
   STATUS_REASON_PENDING = 4,
-  STATUS_REASON_STARTED = 5,
-  STATUS_REASON_STOPPED = 6,
   UNRECOGNIZED = -1,
 }
 
@@ -929,12 +890,6 @@ export function installedPackageStatus_StatusReasonFromJSON(
     case 4:
     case "STATUS_REASON_PENDING":
       return InstalledPackageStatus_StatusReason.STATUS_REASON_PENDING;
-    case 5:
-    case "STATUS_REASON_STARTED":
-      return InstalledPackageStatus_StatusReason.STATUS_REASON_STARTED;
-    case 6:
-    case "STATUS_REASON_STOPPED":
-      return InstalledPackageStatus_StatusReason.STATUS_REASON_STOPPED;
     case -1:
     case "UNRECOGNIZED":
     default:
@@ -956,10 +911,6 @@ export function installedPackageStatus_StatusReasonToJSON(
       return "STATUS_REASON_FAILED";
     case InstalledPackageStatus_StatusReason.STATUS_REASON_PENDING:
       return "STATUS_REASON_PENDING";
-    case InstalledPackageStatus_StatusReason.STATUS_REASON_STARTED:
-      return "STATUS_REASON_STARTED";
-    case InstalledPackageStatus_StatusReason.STATUS_REASON_STOPPED:
-      return "STATUS_REASON_STOPPED";
     case InstalledPackageStatus_StatusReason.UNRECOGNIZED:
     default:
       return "UNRECOGNIZED";
@@ -1756,136 +1707,6 @@ export const DeleteInstalledPackageRequest = {
   },
 };
 
-function createBaseStartInstalledPackageRequest(): StartInstalledPackageRequest {
-  return { installedPackageRef: undefined };
-}
-
-export const StartInstalledPackageRequest = {
-  encode(
-    message: StartInstalledPackageRequest,
-    writer: _m0.Writer = _m0.Writer.create(),
-  ): _m0.Writer {
-    if (message.installedPackageRef !== undefined) {
-      InstalledPackageReference.encode(
-        message.installedPackageRef,
-        writer.uint32(10).fork(),
-      ).ldelim();
-    }
-    return writer;
-  },
-
-  decode(input: _m0.Reader | Uint8Array, length?: number): StartInstalledPackageRequest {
-    const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
-    let end = length === undefined ? reader.len : reader.pos + length;
-    const message = createBaseStartInstalledPackageRequest();
-    while (reader.pos < end) {
-      const tag = reader.uint32();
-      switch (tag >>> 3) {
-        case 1:
-          message.installedPackageRef = InstalledPackageReference.decode(reader, reader.uint32());
-          break;
-        default:
-          reader.skipType(tag & 7);
-          break;
-      }
-    }
-    return message;
-  },
-
-  fromJSON(object: any): StartInstalledPackageRequest {
-    return {
-      installedPackageRef: isSet(object.installedPackageRef)
-        ? InstalledPackageReference.fromJSON(object.installedPackageRef)
-        : undefined,
-    };
-  },
-
-  toJSON(message: StartInstalledPackageRequest): unknown {
-    const obj: any = {};
-    message.installedPackageRef !== undefined &&
-      (obj.installedPackageRef = message.installedPackageRef
-        ? InstalledPackageReference.toJSON(message.installedPackageRef)
-        : undefined);
-    return obj;
-  },
-
-  fromPartial<I extends Exact<DeepPartial<StartInstalledPackageRequest>, I>>(
-    object: I,
-  ): StartInstalledPackageRequest {
-    const message = createBaseStartInstalledPackageRequest();
-    message.installedPackageRef =
-      object.installedPackageRef !== undefined && object.installedPackageRef !== null
-        ? InstalledPackageReference.fromPartial(object.installedPackageRef)
-        : undefined;
-    return message;
-  },
-};
-
-function createBaseStopInstalledPackageRequest(): StopInstalledPackageRequest {
-  return { installedPackageRef: undefined };
-}
-
-export const StopInstalledPackageRequest = {
-  encode(
-    message: StopInstalledPackageRequest,
-    writer: _m0.Writer = _m0.Writer.create(),
-  ): _m0.Writer {
-    if (message.installedPackageRef !== undefined) {
-      InstalledPackageReference.encode(
-        message.installedPackageRef,
-        writer.uint32(10).fork(),
-      ).ldelim();
-    }
-    return writer;
-  },
-
-  decode(input: _m0.Reader | Uint8Array, length?: number): StopInstalledPackageRequest {
-    const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
-    let end = length === undefined ? reader.len : reader.pos + length;
-    const message = createBaseStopInstalledPackageRequest();
-    while (reader.pos < end) {
-      const tag = reader.uint32();
-      switch (tag >>> 3) {
-        case 1:
-          message.installedPackageRef = InstalledPackageReference.decode(reader, reader.uint32());
-          break;
-        default:
-          reader.skipType(tag & 7);
-          break;
-      }
-    }
-    return message;
-  },
-
-  fromJSON(object: any): StopInstalledPackageRequest {
-    return {
-      installedPackageRef: isSet(object.installedPackageRef)
-        ? InstalledPackageReference.fromJSON(object.installedPackageRef)
-        : undefined,
-    };
-  },
-
-  toJSON(message: StopInstalledPackageRequest): unknown {
-    const obj: any = {};
-    message.installedPackageRef !== undefined &&
-      (obj.installedPackageRef = message.installedPackageRef
-        ? InstalledPackageReference.toJSON(message.installedPackageRef)
-        : undefined);
-    return obj;
-  },
-
-  fromPartial<I extends Exact<DeepPartial<StopInstalledPackageRequest>, I>>(
-    object: I,
-  ): StopInstalledPackageRequest {
-    const message = createBaseStopInstalledPackageRequest();
-    message.installedPackageRef =
-      object.installedPackageRef !== undefined && object.installedPackageRef !== null
-        ? InstalledPackageReference.fromPartial(object.installedPackageRef)
-        : undefined;
-    return message;
-  },
-};
-
 function createBaseGetInstalledPackageResourceRefsRequest(): GetInstalledPackageResourceRefsRequest {
   return { installedPackageRef: undefined };
 }
@@ -2474,88 +2295,6 @@ export const DeleteInstalledPackageResponse = {
     _: I,
   ): DeleteInstalledPackageResponse {
     const message = createBaseDeleteInstalledPackageResponse();
-    return message;
-  },
-};
-
-function createBaseStartInstalledPackageResponse(): StartInstalledPackageResponse {
-  return {};
-}
-
-export const StartInstalledPackageResponse = {
-  encode(_: StartInstalledPackageResponse, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
-    return writer;
-  },
-
-  decode(input: _m0.Reader | Uint8Array, length?: number): StartInstalledPackageResponse {
-    const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
-    let end = length === undefined ? reader.len : reader.pos + length;
-    const message = createBaseStartInstalledPackageResponse();
-    while (reader.pos < end) {
-      const tag = reader.uint32();
-      switch (tag >>> 3) {
-        default:
-          reader.skipType(tag & 7);
-          break;
-      }
-    }
-    return message;
-  },
-
-  fromJSON(_: any): StartInstalledPackageResponse {
-    return {};
-  },
-
-  toJSON(_: StartInstalledPackageResponse): unknown {
-    const obj: any = {};
-    return obj;
-  },
-
-  fromPartial<I extends Exact<DeepPartial<StartInstalledPackageResponse>, I>>(
-    _: I,
-  ): StartInstalledPackageResponse {
-    const message = createBaseStartInstalledPackageResponse();
-    return message;
-  },
-};
-
-function createBaseStopInstalledPackageResponse(): StopInstalledPackageResponse {
-  return {};
-}
-
-export const StopInstalledPackageResponse = {
-  encode(_: StopInstalledPackageResponse, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
-    return writer;
-  },
-
-  decode(input: _m0.Reader | Uint8Array, length?: number): StopInstalledPackageResponse {
-    const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
-    let end = length === undefined ? reader.len : reader.pos + length;
-    const message = createBaseStopInstalledPackageResponse();
-    while (reader.pos < end) {
-      const tag = reader.uint32();
-      switch (tag >>> 3) {
-        default:
-          reader.skipType(tag & 7);
-          break;
-      }
-    }
-    return message;
-  },
-
-  fromJSON(_: any): StopInstalledPackageResponse {
-    return {};
-  },
-
-  toJSON(_: StopInstalledPackageResponse): unknown {
-    const obj: any = {};
-    return obj;
-  },
-
-  fromPartial<I extends Exact<DeepPartial<StopInstalledPackageResponse>, I>>(
-    _: I,
-  ): StopInstalledPackageResponse {
-    const message = createBaseStopInstalledPackageResponse();
     return message;
   },
 };
@@ -4228,14 +3967,6 @@ export interface PackagesService {
     request: DeepPartial<DeleteInstalledPackageRequest>,
     metadata?: grpc.Metadata,
   ): Promise<DeleteInstalledPackageResponse>;
-  StartInstalledPackage(
-    request: DeepPartial<StartInstalledPackageRequest>,
-    metadata?: grpc.Metadata,
-  ): Promise<StartInstalledPackageResponse>;
-  StopInstalledPackage(
-    request: DeepPartial<StopInstalledPackageRequest>,
-    metadata?: grpc.Metadata,
-  ): Promise<StopInstalledPackageResponse>;
   GetInstalledPackageResourceRefs(
     request: DeepPartial<GetInstalledPackageResourceRefsRequest>,
     metadata?: grpc.Metadata,
@@ -4255,8 +3986,6 @@ export class PackagesServiceClientImpl implements PackagesService {
     this.CreateInstalledPackage = this.CreateInstalledPackage.bind(this);
     this.UpdateInstalledPackage = this.UpdateInstalledPackage.bind(this);
     this.DeleteInstalledPackage = this.DeleteInstalledPackage.bind(this);
-    this.StartInstalledPackage = this.StartInstalledPackage.bind(this);
-    this.StopInstalledPackage = this.StopInstalledPackage.bind(this);
     this.GetInstalledPackageResourceRefs = this.GetInstalledPackageResourceRefs.bind(this);
   }
 
@@ -4344,28 +4073,6 @@ export class PackagesServiceClientImpl implements PackagesService {
     return this.rpc.unary(
       PackagesServiceDeleteInstalledPackageDesc,
       DeleteInstalledPackageRequest.fromPartial(request),
-      metadata,
-    );
-  }
-
-  StartInstalledPackage(
-    request: DeepPartial<StartInstalledPackageRequest>,
-    metadata?: grpc.Metadata,
-  ): Promise<StartInstalledPackageResponse> {
-    return this.rpc.unary(
-      PackagesServiceStartInstalledPackageDesc,
-      StartInstalledPackageRequest.fromPartial(request),
-      metadata,
-    );
-  }
-
-  StopInstalledPackage(
-    request: DeepPartial<StopInstalledPackageRequest>,
-    metadata?: grpc.Metadata,
-  ): Promise<StopInstalledPackageResponse> {
-    return this.rpc.unary(
-      PackagesServiceStopInstalledPackageDesc,
-      StopInstalledPackageRequest.fromPartial(request),
       metadata,
     );
   }
@@ -4562,50 +4269,6 @@ export const PackagesServiceDeleteInstalledPackageDesc: UnaryMethodDefinitionish
   } as any,
 };
 
-export const PackagesServiceStartInstalledPackageDesc: UnaryMethodDefinitionish = {
-  methodName: "StartInstalledPackage",
-  service: PackagesServiceDesc,
-  requestStream: false,
-  responseStream: false,
-  requestType: {
-    serializeBinary() {
-      return StartInstalledPackageRequest.encode(this).finish();
-    },
-  } as any,
-  responseType: {
-    deserializeBinary(data: Uint8Array) {
-      return {
-        ...StartInstalledPackageResponse.decode(data),
-        toObject() {
-          return this;
-        },
-      };
-    },
-  } as any,
-};
-
-export const PackagesServiceStopInstalledPackageDesc: UnaryMethodDefinitionish = {
-  methodName: "StopInstalledPackage",
-  service: PackagesServiceDesc,
-  requestStream: false,
-  responseStream: false,
-  requestType: {
-    serializeBinary() {
-      return StopInstalledPackageRequest.encode(this).finish();
-    },
-  } as any,
-  responseType: {
-    deserializeBinary(data: Uint8Array) {
-      return {
-        ...StopInstalledPackageResponse.decode(data),
-        toObject() {
-          return this;
-        },
-      };
-    },
-  } as any,
-};
-
 export const PackagesServiceGetInstalledPackageResourceRefsDesc: UnaryMethodDefinitionish = {
   methodName: "GetInstalledPackageResourceRefs",
   service: PackagesServiceDesc,
@@ -4716,6 +4379,11 @@ type KeysOfUnion<T> = T extends T ? keyof T : never;
 export type Exact<P, I extends P> = P extends Builtin
   ? P
   : P & { [K in keyof P]: Exact<P[K], I[K]> } & Record<Exclude<keyof I, KeysOfUnion<P>>, never>;
+
+if (_m0.util.Long !== Long) {
+  _m0.util.Long = Long as any;
+  _m0.configure();
+}
 
 function isSet(value: any): boolean {
   return value !== null && value !== undefined;

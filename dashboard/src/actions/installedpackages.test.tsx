@@ -3,41 +3,41 @@
 
 import {
   AvailablePackageDetail,
-  InstalledPackageDetail,
-  InstalledPackageSummary,
   GetInstalledPackageSummariesResponse,
+  InstalledPackageDetail,
   InstalledPackageReference,
   InstalledPackageStatus,
-  VersionReference,
-  ReconciliationOptions,
   InstalledPackageStatus_StatusReason,
+  InstalledPackageSummary,
+  ReconciliationOptions,
+  VersionReference,
 } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
 import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins";
-import configureMockStore from "redux-mock-store";
-import thunk from "redux-thunk";
 import { InstalledPackage } from "shared/InstalledPackage";
-import { IInstalledPackageState, UnprocessableEntity, UpgradeError } from "shared/types";
+import { getStore, initialState } from "shared/specs/mountWrapper";
+import { IStoreState, UnprocessableEntity, UpgradeError } from "shared/types";
 import { PluginNames } from "shared/utils";
 import { getType } from "typesafe-actions";
 import actions from ".";
 
-const mockStore = configureMockStore([thunk]);
-
 let store: any;
 
 beforeEach(() => {
-  const state: IInstalledPackageState = {
-    isFetching: false,
-    items: [],
-  };
-  store = mockStore({
+  store = getStore({
     apps: {
-      state,
+      ...initialState.apps,
+      isFetching: false,
+      items: [],
     },
     config: {
+      ...initialState.config,
       namespace: "kubeapps-ns",
     },
-  });
+    kube: {
+      ...initialState.kube,
+      subscriptions: { "default-c/default-ns/my-release": {} } as any,
+    },
+  } as Partial<IStoreState>);
 });
 
 describe("fetches installed packages", () => {
@@ -131,59 +131,6 @@ describe("delete applications", () => {
     expect(
       await store.dispatch(
         actions.installedpackages.deleteInstalledPackage({
-          context: { cluster: "default-c", namespace: "default-ns" },
-          identifier: "foo",
-          plugin: { name: "my.plugin", version: "0.0.1" } as Plugin,
-        } as InstalledPackageReference),
-      ),
-    ).toBe(false);
-    expect(store.getActions()).toEqual(expectedActions);
-  });
-});
-
-describe("start applications", () => {
-  const startInstalledPackageOrig = InstalledPackage.StartInstalledPackage;
-  let startInstalledPackage: jest.Mock;
-  beforeEach(() => {
-    startInstalledPackage = jest.fn(() => []);
-    InstalledPackage.StartInstalledPackage = startInstalledPackage;
-  });
-  afterEach(() => {
-    InstalledPackage.StartInstalledPackage = startInstalledPackageOrig;
-  });
-  it("start an application", async () => {
-    await store.dispatch(
-      actions.installedpackages.startInstalledPackage({
-        context: { cluster: "default-c", namespace: "default-ns" },
-        identifier: "foo",
-        plugin: { name: "my.plugin", version: "0.0.1" } as Plugin,
-      } as InstalledPackageReference),
-    );
-    const expectedActions = [
-      { type: getType(actions.installedpackages.requestStartInstalledPackage) },
-      { type: getType(actions.installedpackages.receiveStartInstalledPackage) },
-    ];
-    expect(store.getActions()).toEqual(expectedActions);
-    expect(startInstalledPackage.mock.calls[0]).toEqual([
-      {
-        context: { cluster: "default-c", namespace: "default-ns" },
-        identifier: "foo",
-        plugin: { name: "my.plugin", version: "0.0.1" } as Plugin,
-      } as InstalledPackageReference,
-    ]);
-  });
-  it("start and throw an error", async () => {
-    const error = new Error("something went wrong!");
-    const expectedActions = [
-      { type: getType(actions.installedpackages.requestStartInstalledPackage) },
-      { type: getType(actions.installedpackages.errorInstalledPackage), payload: error },
-    ];
-    startInstalledPackage.mockImplementation(() => {
-      throw error;
-    });
-    expect(
-      await store.dispatch(
-        actions.installedpackages.startInstalledPackage({
           context: { cluster: "default-c", namespace: "default-ns" },
           identifier: "foo",
           plugin: { name: "my.plugin", version: "0.0.1" } as Plugin,
