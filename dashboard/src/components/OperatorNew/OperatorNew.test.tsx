@@ -6,6 +6,7 @@ import actions from "actions";
 import Alert from "components/js/Alert";
 import * as ReactRedux from "react-redux";
 import { defaultStore, getStore, initialState, mountWrapper } from "shared/specs/mountWrapper";
+import { IStoreState } from "shared/types";
 import OperatorNew from "./OperatorNew";
 
 const defaultProps = {
@@ -79,7 +80,7 @@ it("calls getOperator when mounting the component", () => {
 
 it("parses the default channel when receiving the operator", () => {
   const wrapper = mountWrapper(
-    getStore({ operators: { operator: defaultOperator } }),
+    getStore({ operators: { operator: defaultOperator } } as Partial<IStoreState>),
     <OperatorNew {...defaultProps} />,
   );
   const input = wrapper.find("#operator-channel-beta");
@@ -89,7 +90,9 @@ it("parses the default channel when receiving the operator", () => {
 
 it("renders a fetch error if present", () => {
   const wrapper = mountWrapper(
-    getStore({ operators: { errors: { operator: { fetch: new Error("Boom") } } } }),
+    getStore({
+      operators: { errors: { operator: { fetch: new Error("Boom") } } },
+    } as Partial<IStoreState>),
     <OperatorNew {...defaultProps} />,
   );
   expect(wrapper.find(Alert)).toIncludeText("Boom");
@@ -97,7 +100,9 @@ it("renders a fetch error if present", () => {
 
 it("renders a create error if present", () => {
   const wrapper = mountWrapper(
-    getStore({ operators: { errors: { operator: { create: new Error("Boom") } } } }),
+    getStore({
+      operators: { errors: { operator: { create: new Error("Boom") } } },
+    } as Partial<IStoreState>),
     <OperatorNew {...defaultProps} />,
   );
   expect(wrapper.find(Alert)).toIncludeText("Boom");
@@ -105,12 +110,17 @@ it("renders a create error if present", () => {
 
 it("shows an error if the operator doesn't have any channel defined", () => {
   const operator = {
+    ...initialState.operators.operator,
     status: {
+      ...initialState.operators.operator?.status,
       channels: [],
     },
   };
   const wrapper = mountWrapper(
-    getStore({ operators: { operator } }),
+    getStore({
+      ...initialState,
+      operators: { ...initialState.operators, operator },
+    } as Partial<IStoreState>),
     <OperatorNew {...defaultProps} />,
   );
   expect(wrapper.find(Alert)).toIncludeText(
@@ -120,7 +130,7 @@ it("shows an error if the operator doesn't have any channel defined", () => {
 
 it("disables the submit button if the operators ns is selected", () => {
   const wrapper = mountWrapper(
-    getStore({ operators: { operator: defaultOperator } }),
+    getStore({ operators: { operator: defaultOperator } } as Partial<IStoreState>),
     <OperatorNew {...defaultProps} namespace="operators" />,
   );
   expect(wrapper.find(CdsButton)).toBeDisabled();
@@ -132,7 +142,7 @@ it("disables the submit button if the operators ns is selected", () => {
 it("deploys an operator", async () => {
   const createOperator = jest.fn().mockReturnValue(true);
   actions.operators.createOperator = createOperator;
-  const store = getStore({ operators: { operator: defaultOperator } });
+  const store = getStore({ operators: { operator: defaultOperator } } as Partial<IStoreState>);
 
   const wrapper = mountWrapper(store, <OperatorNew {...defaultProps} />);
   const onSubmit = wrapper.find("form").prop("onSubmit") as () => Promise<void>;

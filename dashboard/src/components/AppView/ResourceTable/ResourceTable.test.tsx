@@ -3,10 +3,10 @@
 
 import Table from "components/js/Table";
 import LoadingWrapper from "components/LoadingWrapper/LoadingWrapper";
-import { keyForResourceRef } from "shared/ResourceRef";
 import { ResourceRef } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
-import { getStore, mountWrapper } from "shared/specs/mountWrapper";
-import { IResource } from "shared/types";
+import { keyForResourceRef } from "shared/ResourceRef";
+import { getStore, initialState, mountWrapper } from "shared/specs/mountWrapper";
+import { IResource, IStoreState } from "shared/types";
 import ResourceTable from "./ResourceTable";
 
 const defaultProps = {
@@ -37,6 +37,7 @@ const deployment = {
 
 it("renders a table with a resource", () => {
   const state = getStore({
+    ...initialState,
     kube: {
       items: {
         [sampleKey]: {
@@ -45,7 +46,7 @@ it("renders a table with a resource", () => {
         },
       },
     },
-  });
+  } as Partial<IStoreState>);
   const wrapper = mountWrapper(
     state,
     <ResourceTable {...defaultProps} resourceRefs={[sampleResourceRef]} />,
@@ -57,6 +58,7 @@ it("renders a table with a resource", () => {
 
 it("renders a table with a loading resource", () => {
   const state = getStore({
+    ...initialState,
     kube: {
       items: {
         [sampleKey]: {
@@ -64,7 +66,7 @@ it("renders a table with a loading resource", () => {
         },
       },
     },
-  });
+  } as Partial<IStoreState>);
   const wrapper = mountWrapper(
     state,
     <ResourceTable {...defaultProps} resourceRefs={[sampleResourceRef]} />,
@@ -78,6 +80,7 @@ it("renders a table with a loading resource", () => {
 
 it("renders a table with an error", () => {
   const state = getStore({
+    ...initialState,
     kube: {
       items: {
         [sampleKey]: {
@@ -86,7 +89,7 @@ it("renders a table with an error", () => {
         },
       },
     },
-  });
+  } as Partial<IStoreState>);
   const wrapper = mountWrapper(
     state,
     <ResourceTable {...defaultProps} resourceRefs={[sampleResourceRef]} />,
@@ -100,6 +103,7 @@ it("renders a table with an error", () => {
 
 it("do not fail if the resources are already populated but the refs not yet", () => {
   const state = getStore({
+    ...initialState,
     kube: {
       items: {
         [sampleKey]: {
@@ -108,7 +112,7 @@ it("do not fail if the resources are already populated but the refs not yet", ()
         },
       },
     },
-  });
+  } as Partial<IStoreState>);
   const wrapper = mountWrapper(state, <ResourceTable {...defaultProps} resourceRefs={[]} />);
   expect(wrapper.find(Table)).not.toExist();
 });

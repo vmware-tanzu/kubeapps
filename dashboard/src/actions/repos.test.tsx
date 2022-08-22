@@ -226,14 +226,17 @@ describe("deleteRepo", () => {
     it("dispatches requestRepoSummaries with current namespace", async () => {
       const storeWithFlag: any = mockStore({
         clusters: {
+          ...initialState.clusters,
           currentCluster: "defaultCluster",
           clusters: {
+            ...initialState.clusters.clusters,
             defaultCluster: {
+              ...initialState.clusters.clusters[initialState.clusters.currentCluster],
               currentNamespace,
             },
           },
         },
-      });
+      } as Partial<IStoreState>);
       await storeWithFlag.dispatch(
         repoActions.deleteRepo({
           context: { cluster: "default", namespace: "my-namespace" },

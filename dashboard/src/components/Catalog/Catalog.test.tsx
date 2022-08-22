@@ -8,7 +8,10 @@ import InfoCard from "components/InfoCard/InfoCard";
 import Alert from "components/js/Alert";
 import LoadingWrapper from "components/LoadingWrapper";
 import { AvailablePackageSummary, Context } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
-import { PackageRepositorySummary } from "gen/kubeappsapis/core/packages/v1alpha1/repositories";
+import {
+  PackageRepositoryDetail,
+  PackageRepositorySummary,
+} from "gen/kubeappsapis/core/packages/v1alpha1/repositories";
 import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins";
 import { createMemoryHistory } from "history";
 import React from "react";
@@ -91,7 +94,12 @@ const csv = {
 const defaultState = {
   packages: defaultPackageState,
   operators: { csvs: [] } as Partial<IOperatorsState>,
-  repos: { reposSummaries: [] } as Partial<IPackageRepositoryState>,
+  repos: {
+    reposSummaries: [],
+    isFetching: false,
+    repoDetail: {} as PackageRepositoryDetail,
+    errors: [],
+  } as IPackageRepositoryState,
   config: {
     kubeappsCluster: defaultProps.cluster,
     kubeappsNamespace: defaultProps.kubeappsNamespace,
@@ -182,8 +190,8 @@ it("should render a message if there are no elements in the catalog and the fetc
   const wrapper = mountWrapper(
     getStore({
       ...defaultState,
-      packages: { hasFinishedFetching: true } as IPackageState,
-    }),
+      packages: { hasFinishedFetching: true },
+    } as Partial<IStoreState>),
     <Catalog />,
   );
   wrapper.setProps({ searchFilter: "" });
@@ -194,7 +202,7 @@ it("should render a message if there are no elements in the catalog and the fetc
 
 it("should render a spinner if there are no elements but it's still fetching", () => {
   const wrapper = mountWrapper(
-    getStore({ ...defaultState, packages: { hasFinishedFetching: false } }),
+    getStore({ ...defaultState, packages: { hasFinishedFetching: false } } as Partial<IStoreState>),
     <Catalog />,
   );
   expect(wrapper.find(LoadingWrapper)).toExist();
@@ -202,7 +210,7 @@ it("should render a spinner if there are no elements but it's still fetching", (
 
 it("should not render a spinner if there are no elements and it finished fetching", () => {
   const wrapper = mountWrapper(
-    getStore({ ...defaultState, packages: { hasFinishedFetching: true } }),
+    getStore({ ...defaultState, packages: { hasFinishedFetching: true } } as Partial<IStoreState>),
     <Catalog />,
   );
   expect(wrapper.find(LoadingWrapper)).not.toExist();
@@ -210,7 +218,10 @@ it("should not render a spinner if there are no elements and it finished fetchin
 
 it("should render a spinner if there already pending elements", () => {
   const wrapper = mountWrapper(
-    getStore({ ...populatedState, packages: { hasFinishedFetching: false } }),
+    getStore({
+      ...populatedState,
+      packages: { hasFinishedFetching: false },
+    } as Partial<IStoreState>),
     <Catalog />,
   );
   expect(wrapper.find(LoadingWrapper)).toExist();
@@ -218,7 +229,10 @@ it("should render a spinner if there already pending elements", () => {
 
 it("should not render a message if only operators are selected", () => {
   const wrapper = mountWrapper(
-    getStore({ ...populatedState, packages: { hasFinishedFetching: true } }),
+    getStore({
+      ...populatedState,
+      packages: { hasFinishedFetching: true },
+    } as Partial<IStoreState>),
     <MemoryRouter initialEntries={[routePathParam + "?Operators=bar"]}>
       <Route path={routePath}>
         <Catalog />
@@ -230,7 +244,10 @@ it("should not render a message if only operators are selected", () => {
 
 it("should not render a message if there are no more elements", () => {
   const wrapper = mountWrapper(
-    getStore({ ...populatedState, packages: { hasFinishedFetching: true } }),
+    getStore({
+      ...populatedState,
+      packages: { hasFinishedFetching: true },
+    } as Partial<IStoreState>),
     <Catalog />,
   );
   const message = wrapper.find(".end-page-message");
@@ -239,7 +256,10 @@ it("should not render a message if there are no more elements", () => {
 
 it("should not render a message if there are no more elements but it's searching", () => {
   const wrapper = mountWrapper(
-    getStore({ ...populatedState, packages: { hasFinishedFetching: true } }),
+    getStore({
+      ...populatedState,
+      packages: { hasFinishedFetching: true },
+    } as Partial<IStoreState>),
     <MemoryRouter initialEntries={[routePathParam + "?Search=bar"]}>
       <Route path={routePath}>
         <Catalog />
@@ -252,7 +272,10 @@ it("should not render a message if there are no more elements but it's searching
 
 it("should render the scroll handler if not finished", () => {
   const wrapper = mountWrapper(
-    getStore({ ...populatedState, packages: { hasFinishedFetching: false } }),
+    getStore({
+      ...populatedState,
+      packages: { hasFinishedFetching: false },
+    } as Partial<IStoreState>),
     <Catalog />,
   );
   const scroll = wrapper.find(".scroll-handler");
@@ -262,7 +285,10 @@ it("should render the scroll handler if not finished", () => {
 
 it("should not render the scroll handler if finished", () => {
   const wrapper = mountWrapper(
-    getStore({ ...populatedState, packages: { hasFinishedFetching: true } }),
+    getStore({
+      ...populatedState,
+      packages: { hasFinishedFetching: true },
+    } as Partial<IStoreState>),
     <Catalog />,
   );
   const scroll = wrapper.find(".scroll-handler");
@@ -703,8 +729,8 @@ describe("filters by package repository", () => {
         ...populatedState,
         repos: {
           reposSummaries: [{ name: "foo" } as PackageRepositorySummary],
-        } as IPackageRepositoryState,
-      }),
+        },
+      } as Partial<IStoreState>),
       <MemoryRouter initialEntries={[routePathParam]}>
         <Route path={routePath}>
           <Catalog />
@@ -733,8 +759,8 @@ describe("filters by package repository", () => {
         ...populatedState,
         repos: {
           reposSummaries: [{ name: "foo" } as PackageRepositorySummary],
-        } as IPackageRepositoryState,
-      }),
+        },
+      } as Partial<IStoreState>),
       <MemoryRouter initialEntries={[`/c/${defaultProps.cluster}/ns/my-ns/catalog`]}>
         <Route path={routePath}>
           <Catalog />
@@ -761,8 +787,8 @@ describe("filters by package repository", () => {
     mountWrapper(
       getStore({
         ...populatedState,
-        repos: { repos: [{ name: "foo" } as PackageRepositorySummary] },
-      }),
+        repos: { ...populatedState.repos, repos: [{ name: "foo" } as PackageRepositorySummary] },
+      } as Partial<IStoreState>),
       <MemoryRouter
         initialEntries={[
           `/c/${defaultProps.cluster}/ns/${initialState.config.globalReposNamespace}/catalog`,
@@ -782,8 +808,8 @@ describe("filters by package repository", () => {
     mountWrapper(
       getStore({
         ...populatedState,
-        repos: { repos: [{ name: "foo" } as PackageRepositorySummary] },
-      }),
+        repos: { ...populatedState.repos, repos: [{ name: "foo" } as PackageRepositorySummary] },
+      } as Partial<IStoreState>),
       <MemoryRouter initialEntries={[`/c/other-cluster/ns/my-ns/catalog`]}>
         <Route path={routePath}>
           <Catalog />
@@ -831,7 +857,7 @@ describe("filters by operator provider", () => {
       getStore({
         ...populatedState,
         operators: { csvs: [csv, csv2] },
-      }),
+      } as Partial<IStoreState>),
       <MemoryRouter initialEntries={[routePathParam]}>
         <Route path={routePath}>
           <Catalog />
@@ -855,7 +881,7 @@ describe("filters by operator provider", () => {
       getStore({
         ...populatedState,
         operators: { csvs: [csv, csv2] },
-      }),
+      } as Partial<IStoreState>),
       <MemoryRouter initialEntries={[routePathParam]}>
         <Route path={routePath}>
           <Catalog />
@@ -879,7 +905,7 @@ describe("filters by operator provider", () => {
       getStore({
         ...populatedState,
         operators: { csvs: [csv, csv2] },
-      }),
+      } as Partial<IStoreState>),
       <MemoryRouter initialEntries={[routePathParam + "?Provider=you"]}>
         <Route path={routePath}>
           <Catalog />
@@ -973,7 +999,10 @@ describe("filters by category", () => {
       },
     } as any;
     const wrapper = mountWrapper(
-      getStore({ ...populatedState, operators: { csvs: [csv, csvWithCat] } }),
+      getStore({
+        ...populatedState,
+        operators: { csvs: [csv, csvWithCat] },
+      } as Partial<IStoreState>),
       <MemoryRouter initialEntries={[routePathParam + "?Category=E-Learning"]}>
         <Route path={routePath}>
           <Catalog />
@@ -994,7 +1023,10 @@ describe("filters by category", () => {
       },
     } as any;
     const wrapper = mountWrapper(
-      getStore({ ...populatedState, operators: { csvs: [csv, csvWithCat] } }),
+      getStore({
+        ...populatedState,
+        operators: { csvs: [csv, csvWithCat] },
+      } as Partial<IStoreState>),
       <MemoryRouter
         initialEntries={[routePathParam + "?Category=Developer%20Tools,Infrastructure"]}
       >
