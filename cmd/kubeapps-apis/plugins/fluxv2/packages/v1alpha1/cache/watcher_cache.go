@@ -945,7 +945,7 @@ func (c *NamespacedResourceWatcherCache) NamespacedNameFromKey(key string) (*typ
 	return &types.NamespacedName{Namespace: parts[1], Name: parts[2]}, nil
 }
 
-// Get() is like fetchForOne() but if there is a cache miss, it will also check the
+// Get() is like fetch() but if there is a cache miss, it will also check the
 // k8s for the corresponding object, process it and then add it to the cache and return the
 // result.
 func (c *NamespacedResourceWatcherCache) Get(key string) (interface{}, error) {

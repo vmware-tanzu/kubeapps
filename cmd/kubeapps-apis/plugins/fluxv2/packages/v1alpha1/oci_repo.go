@@ -388,9 +388,6 @@ func (s *repoEventSink) onAddOciRepo(repo sourcev1.HelmRepository) ([]byte, bool
 	log.Infof("+onAddOciRepo(%s)", common.PrettyPrint(repo))
 	defer log.Info("-onAddOciRepo")
 
-	// I am disabling repo cache due to
-	// https://github.com/vmware-tanzu/kubeapps/issues/5007#issuecomment-1217293240
-	// until a clean fix is found.
 	ociChartRepo, err := s.newOCIChartRepositoryAndLogin(context.Background(), repo)
 	if err != nil {
 		return nil, false, err
