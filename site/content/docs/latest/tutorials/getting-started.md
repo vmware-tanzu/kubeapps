@@ -4,7 +4,7 @@ This guide will walk you through the process of deploying Kubeapps for your clus
 
 ## Prerequisites
 
-- Kubeapps assumes a working Kubernetes cluster (v1.21+), as well as the [`helm`](https://helm.sh/docs/intro/install/) (3.1.0+) and [`kubectl`](https://kubernetes.io/docs/tasks/tools/install-kubectl/) command-line interfaces installed and configured to talk to your Kubernetes cluster.
+- Kubeapps assumes a working Kubernetes cluster (v1.21+), as well as the [`helm`](https://helm.sh/docs/intro/install/) (v3.2.0+) and [`kubectl`](https://kubernetes.io/docs/tasks/tools/install-kubectl/) command-line interfaces installed and configured to talk to your Kubernetes cluster.
 
 - Kubeapps has been tested with Azure Kubernetes Service (AKS), Google Kubernetes Engine (GKE), kind, minikube and Docker for Desktop Kubernetes.
 
