@@ -15,7 +15,7 @@ import { ThunkAction } from "redux-thunk";
 import { PackageRepositoriesService } from "shared/PackageRepositoriesService";
 import PackagesService from "shared/PackagesService";
 import { IPkgRepoFormData, IStoreState, NotFoundError } from "shared/types";
-import { isGlobalNamespace, PluginNames } from "shared/utils";
+import { isGlobalNamespace } from "shared/utils";
 import { ActionType, deprecated } from "typesafe-actions";
 
 const { createAction } = deprecated;
