@@ -15,19 +15,13 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/heptiolabs/healthcheck"
 	negroni "github.com/urfave/negroni/v2"
-	"github.com/vmware-tanzu/kubeapps/cmd/kubeops/internal/handler"
 	"github.com/vmware-tanzu/kubeapps/cmd/kubeops/internal/httphandler"
-	"github.com/vmware-tanzu/kubeapps/pkg/agent"
 	"github.com/vmware-tanzu/kubeapps/pkg/kube"
 
 	log "k8s.io/klog/v2"
 )
 
 type ServeOptions struct {
-	HelmDriverArg          string
-	ListLimit              int
-	UserAgentComment       string
-	Timeout                int64
 	ClustersConfigPath     string
 	PinnipedProxyURL       string
 	PinnipedProxyCACert    string
@@ -35,8 +29,6 @@ type ServeOptions struct {
 	Qps                    float32
 	NamespaceHeaderName    string
 	NamespaceHeaderPattern string
-	UserAgent              string
-	GlobalReposNamespace   string
 }
 
 const clustersCAFilesPrefix = "/etc/additional-clusters-cafiles"
@@ -62,27 +54,6 @@ func Serve(serveOpts ServeOptions) error {
 		defer cleanupCAFiles()
 	}
 
-	options := handler.Options{
-		ListLimit:              serveOpts.ListLimit,
-		Timeout:                serveOpts.Timeout,
-		KubeappsNamespace:      kubeappsNamespace,
-		ClustersConfig:         clustersConfig,
-		Burst:                  serveOpts.Burst,
-		QPS:                    serveOpts.Qps,
-		NamespaceHeaderName:    serveOpts.NamespaceHeaderName,
-		NamespaceHeaderPattern: serveOpts.NamespaceHeaderPattern,
-		UserAgent:              serveOpts.UserAgent,
-	}
-
-	storageForDriver := agent.StorageForSecrets
-	if serveOpts.HelmDriverArg != "" {
-		var err error
-		storageForDriver, err = agent.ParseDriverType(serveOpts.HelmDriverArg)
-		if err != nil {
-			panic(err)
-		}
-	}
-	withHandlerConfig := handler.WithHandlerConfig(storageForDriver, options)
 	r := mux.NewRouter()
 
 	// Healthcheck
@@ -91,17 +62,6 @@ func Serve(serveOpts ServeOptions) error {
 	r.Handle("/live", health)
 	r.Handle("/ready", health)
 
-	// Routes
-	// Auth not necessary here with Helm 3 because it's done by Kubernetes.
-	addRoute := handler.AddRouteWith(r.PathPrefix("/v1").Subrouter(), withHandlerConfig)
-	addRoute("GET", "/clusters/{cluster}/releases", handler.ListAllReleases)
-	addRoute("GET", "/clusters/{cluster}/namespaces/{namespace}/releases", handler.ListReleases)
-	addRoute("POST", "/clusters/{cluster}/namespaces/{namespace}/releases", handler.CreateRelease)
-	addRoute("GET", "/clusters/{cluster}/namespaces/{namespace}/releases/{releaseName}", handler.GetRelease)
-	addRoute("PUT", "/clusters/{cluster}/namespaces/{namespace}/releases/{releaseName}", handler.OperateRelease)
-	addRoute("DELETE", "/clusters/{cluster}/namespaces/{namespace}/releases/{releaseName}", handler.DeleteRelease)
-
-	// Backend routes unrelated to kubeops functionality.
 	err := httphandler.SetupDefaultRoutes(r.PathPrefix("/backend/v1").Subrouter(), serveOpts.NamespaceHeaderName, serveOpts.NamespaceHeaderPattern, serveOpts.Burst, serveOpts.Qps, clustersConfig)
 	if err != nil {
 		return fmt.Errorf("Unable to setup backend routes: %+v", err)

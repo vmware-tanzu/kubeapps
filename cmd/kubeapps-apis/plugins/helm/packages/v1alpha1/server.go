@@ -13,23 +13,21 @@ import (
 	"path"
 	"strings"
 
-	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/helm/packages/v1alpha1/common"
-	httpclient "github.com/vmware-tanzu/kubeapps/pkg/http-client"
-
 	appRepov1 "github.com/vmware-tanzu/kubeapps/cmd/apprepository-controller/pkg/apis/apprepository/v1alpha1"
 	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/core"
 	corev1 "github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
 	helmv1 "github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/plugins/helm/packages/v1alpha1"
+	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/helm/packages/v1alpha1/common"
 	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/helm/packages/v1alpha1/utils"
+	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/pkg/agent"
 	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/pkg/clientgetter"
 	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/pkg/paginate"
 	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/pkg/pkgutils"
 	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/pkg/resourcerefs"
-	"github.com/vmware-tanzu/kubeapps/pkg/agent"
 	chartutils "github.com/vmware-tanzu/kubeapps/pkg/chart"
 	"github.com/vmware-tanzu/kubeapps/pkg/chart/models"
 	"github.com/vmware-tanzu/kubeapps/pkg/dbutils"
-	"github.com/vmware-tanzu/kubeapps/pkg/handlerutil"
+	httpclient "github.com/vmware-tanzu/kubeapps/pkg/http-client"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/anypb"
@@ -75,6 +73,7 @@ type Server struct {
 	chartClientFactory       chartutils.ChartClientFactoryInterface
 	createReleaseFunc        createRelease
 	kubeappsCluster          string // Specifies the cluster on which Kubeapps is installed.
+	kubeappsNamespace        string // Namespace in which Kubeapps is installed
 	pluginConfig             *common.HelmPluginConfig
 	repoClientGetter         newRepoClient
 }
@@ -86,6 +85,12 @@ func NewServer(configGetter core.KubernetesConfigGetter, globalPackagingCluster 
 	var ASSET_SYNCER_DB_NAME = os.Getenv("ASSET_SYNCER_DB_NAME")
 	var ASSET_SYNCER_DB_USERNAME = os.Getenv("ASSET_SYNCER_DB_USERNAME")
 	var ASSET_SYNCER_DB_USERPASSWORD = os.Getenv("ASSET_SYNCER_DB_USERPASSWORD")
+
+	// Namespace where Kubeapps is installed to be in line with the asset syncer
+	kubeappsNamespace := os.Getenv("POD_NAMESPACE")
+	if kubeappsNamespace == "" {
+		log.Fatal("POD_NAMESPACE environment variable should be defined")
+	}
 
 	var dbConfig = dbutils.Config{URL: ASSET_SYNCER_DB_URL, Database: ASSET_SYNCER_DB_NAME, Username: ASSET_SYNCER_DB_USERNAME, Password: ASSET_SYNCER_DB_USERPASSWORD}
 
@@ -134,6 +139,7 @@ func NewServer(configGetter core.KubernetesConfigGetter, globalPackagingCluster 
 			return fn(ctx, pkgContext.GetNamespace())
 		},
 		manager:                  manager,
+		kubeappsNamespace:        kubeappsNamespace,
 		globalPackagingNamespace: globalReposNamespace,
 		globalPackagingCluster:   globalPackagingCluster,
 		chartClientFactory:       &chartutils.ChartClientFactory{},
@@ -875,7 +881,7 @@ func (s *Server) fetchChartWithRegistrySecrets(ctx context.Context, chartDetails
 	}
 
 	// Grab the chart itself
-	ch, err := handlerutil.GetChart(
+	ch, err := utils.GetChart(
 		&chartutils.Details{
 			AppRepositoryResourceName:      appRepo.Name,
 			AppRepositoryResourceNamespace: appRepo.Namespace,
@@ -1032,25 +1038,25 @@ func (s *Server) AddPackageRepository(ctx context.Context, request *corev1.AddPa
 	}
 
 	// Get Helm-specific values
-	var customDetails *helmv1.HelmPackageRepositoryCustomDetail
+	var customDetail *helmv1.HelmPackageRepositoryCustomDetail
 	if request.CustomDetail != nil {
-		customDetails = &helmv1.HelmPackageRepositoryCustomDetail{}
-		if err := request.CustomDetail.UnmarshalTo(customDetails); err != nil {
-			return nil, status.Errorf(codes.InvalidArgument, "customDetails could not be parsed: [%v]", request.CustomDetail)
+		customDetail = &helmv1.HelmPackageRepositoryCustomDetail{}
+		if err := request.CustomDetail.UnmarshalTo(customDetail); err != nil {
+			return nil, status.Errorf(codes.InvalidArgument, "customDetail could not be parsed: [%v]", request.CustomDetail)
 		}
-		log.Infof("+helm customDetails [%v]", customDetails)
+		log.Infof("+helm customDetail [%v]", customDetail)
 	}
 
 	helmRepo := &HelmRepository{
-		cluster:       cluster,
-		name:          name,
-		url:           request.GetUrl(),
-		repoType:      request.GetType(),
-		description:   request.GetDescription(),
-		interval:      request.GetInterval(),
-		tlsConfig:     request.GetTlsConfig(),
-		auth:          request.GetAuth(),
-		customDetails: customDetails,
+		cluster:      cluster,
+		name:         name,
+		url:          request.GetUrl(),
+		repoType:     request.GetType(),
+		description:  request.GetDescription(),
+		interval:     request.GetInterval(),
+		tlsConfig:    request.GetTlsConfig(),
+		auth:         request.GetAuth(),
+		customDetail: customDetail,
 	}
 	if repoRef, err := s.newRepo(ctx, helmRepo); err != nil {
 		return nil, err
@@ -1129,13 +1135,13 @@ func (s *Server) UpdatePackageRepository(ctx context.Context, request *corev1.Up
 	log.Infof("+helm UpdatePackageRepository '%s' in context [%v]", repoRef.Identifier, repoRef.Context)
 
 	// Get Helm-specific values
-	var customDetails *helmv1.HelmPackageRepositoryCustomDetail
+	var customDetail *helmv1.HelmPackageRepositoryCustomDetail
 	if request.CustomDetail != nil {
-		customDetails = &helmv1.HelmPackageRepositoryCustomDetail{}
-		if err := request.CustomDetail.UnmarshalTo(customDetails); err != nil {
-			return nil, status.Errorf(codes.InvalidArgument, "customDetails could not be parsed: [%v]", request.CustomDetail)
+		customDetail = &helmv1.HelmPackageRepositoryCustomDetail{}
+		if err := request.CustomDetail.UnmarshalTo(customDetail); err != nil {
+			return nil, status.Errorf(codes.InvalidArgument, "customDetail could not be parsed: [%v]", request.CustomDetail)
 		}
-		log.V(4).Infof("+helm upgrade repo %s customDetails [%v]", repoRef.Identifier, customDetails)
+		log.V(4).Infof("+helm upgrade repo %s customDetail [%v]", repoRef.Identifier, customDetail)
 	}
 
 	helmRepo := &HelmRepository{
@@ -1144,12 +1150,12 @@ func (s *Server) UpdatePackageRepository(ctx context.Context, request *corev1.Up
 			Name:      repoRef.Identifier,
 			Namespace: repoRef.GetContext().GetNamespace(),
 		},
-		url:           request.GetUrl(),
-		description:   request.GetDescription(),
-		interval:      request.GetInterval(),
-		tlsConfig:     request.GetTlsConfig(),
-		auth:          request.GetAuth(),
-		customDetails: customDetails,
+		url:          request.GetUrl(),
+		description:  request.GetDescription(),
+		interval:     request.GetInterval(),
+		tlsConfig:    request.GetTlsConfig(),
+		auth:         request.GetAuth(),
+		customDetail: customDetail,
 	}
 	if responseRef, err := s.updateRepo(ctx, helmRepo); err != nil {
 		return nil, err

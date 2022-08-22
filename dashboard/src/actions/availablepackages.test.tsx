@@ -69,7 +69,11 @@ const defaultAvailablePackageDetail: AvailablePackageDetail = {
 };
 
 beforeEach(() => {
-  store = mockStore();
+  store = mockStore({
+    packages: {
+      isFetching: false,
+    },
+  });
 });
 
 afterEach(() => {

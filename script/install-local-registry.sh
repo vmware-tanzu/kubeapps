@@ -3,7 +3,7 @@
 # Copyright 2022 the Kubeapps contributors.
 # SPDX-License-Identifier: Apache-2.0
 
-CONTROL_PLANE_CONTAINER="kubeapps-ci-control-plane"
+CONTROL_PLANE_CONTAINER=${CONTROL_PLANE_CONTAINER:-"kubeapps-ci-control-plane"}
 REGISTRY_NS=ci
 DOCKER_REGISTRY_HOST=local-docker-registry
 DOCKER_REGISTRY_PORT=5600
@@ -12,7 +12,17 @@ DOCKER_USERNAME=testuser
 DOCKER_PASSWORD=testpassword
 
 installLocalRegistry() {
-    PROJECT_PATH=$1
+    if [ -z "$DOCKER_REGISTRY_VERSION" ]; then
+      echo "No Docker registry version supplied"
+      exit 1
+    fi
+    if [ -z "$1" ]; then
+      echo "No project path supplied"
+      exit 1
+    fi
+    local PROJECT_PATH=$1
+
+    echo "Installing local Docker registry v${DOCKER_REGISTRY_VERSION} in control plane '${CONTROL_PLANE_CONTAINER}'"
 
     kubectl create namespace $REGISTRY_NS
 
@@ -69,3 +79,15 @@ waitForPort() {
   # shellcheck disable=SC2016
   timeout 10 sh -c 'until nc -z $0 $1; do sleep 1; done' "$HOST_NAME" "$PORT"
 }
+
+case $1 in
+
+  install)
+    installLocalRegistry $2
+    ;;
+
+  pushNginx)
+    pushContainerToLocalRegistry
+    ;;
+
+esac

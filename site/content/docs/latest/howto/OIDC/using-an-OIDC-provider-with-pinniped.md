@@ -144,8 +144,9 @@ and finally configure Kubeapps' `pinniped-proxy` service to use TLS and the back
 
 ```yaml
 pinnipedProxy:
-  tlsSecret: pinniped-proxy-tls
-  CACert: pinniped-proxy-ca
+  tls:
+    existingSecret: pinniped-proxy-tls
+    caCertificate: pinniped-proxy-ca
 ```
 
 Note that this does not eliminate internal clear-text communication of credentials within the cluster because currently the `oauth2-proxy` service communicates with the `kubeapps-apis` backend over http with the user `id_token` in the headers.

@@ -309,9 +309,11 @@ installChartMuseum "${CHARTMUSEUM_VERSION}"
 pushChart apache 8.6.2 admin password
 pushChart apache 8.6.3 admin password
 
-# Setting up local Docker registry
-setupLocalDockerRegistry
-pushLocalChart
+# Setting up local Docker registry if not in GKE
+if [[ -z "${GKE_BRANCH-}" ]]; then
+  setupLocalDockerRegistry
+  pushLocalChart
+fi
 
 # Ensure that we are testing the correct image
 info ""
@@ -396,7 +398,7 @@ kubectl create serviceaccount kubeapps-edit -n kubeapps
 # default). See https://github.com/vmware-tanzu/kubeapps/issues/4435
 kubectl create rolebinding kubeapps-edit -n kubeapps --clusterrole=edit --serviceaccount kubeapps:kubeapps-edit
 kubectl create rolebinding kubeapps-edit -n default --clusterrole=edit --serviceaccount kubeapps:kubeapps-edit
-kubectl create rolebinding kubeapps-repositories-read -n kubeapps --clusterrole kubeapps:kubeapps:apprepositories-read --serviceaccount kubeapps:kubeapps-edit
+kubectl create clusterrolebinding kubeapps-repositories-read --clusterrole kubeapps:kubeapps:apprepositories-read --serviceaccount kubeapps:kubeapps-edit
 # TODO(minelson): Similar to the `global-repos-read` rolebinding that the chart
 # adds to the `kubeapps-repos-global` namespace for all authenticated users, we
 # should eventually consider adding a similar rolebinding for secrets in the
