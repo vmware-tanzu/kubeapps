@@ -148,6 +148,5 @@
       "last 1 firefox version",
       "last 1 safari version"
     ]
-  },
-  "proxy": "http://127.0.0.1:8080"
+  }
 }

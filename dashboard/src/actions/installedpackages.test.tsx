@@ -141,59 +141,6 @@ describe("delete applications", () => {
   });
 });
 
-describe("start applications", () => {
-  const startInstalledPackageOrig = InstalledPackage.StartInstalledPackage;
-  let startInstalledPackage: jest.Mock;
-  beforeEach(() => {
-    startInstalledPackage = jest.fn(() => []);
-    InstalledPackage.StartInstalledPackage = startInstalledPackage;
-  });
-  afterEach(() => {
-    InstalledPackage.StartInstalledPackage = startInstalledPackageOrig;
-  });
-  it("start an application", async () => {
-    await store.dispatch(
-      actions.installedpackages.startInstalledPackage({
-        context: { cluster: "default-c", namespace: "default-ns" },
-        identifier: "foo",
-        plugin: { name: "my.plugin", version: "0.0.1" } as Plugin,
-      } as InstalledPackageReference),
-    );
-    const expectedActions = [
-      { type: getType(actions.installedpackages.requestStartInstalledPackage) },
-      { type: getType(actions.installedpackages.receiveStartInstalledPackage) },
-    ];
-    expect(store.getActions()).toEqual(expectedActions);
-    expect(startInstalledPackage.mock.calls[0]).toEqual([
-      {
-        context: { cluster: "default-c", namespace: "default-ns" },
-        identifier: "foo",
-        plugin: { name: "my.plugin", version: "0.0.1" } as Plugin,
-      } as InstalledPackageReference,
-    ]);
-  });
-  it("start and throw an error", async () => {
-    const error = new Error("something went wrong!");
-    const expectedActions = [
-      { type: getType(actions.installedpackages.requestStartInstalledPackage) },
-      { type: getType(actions.installedpackages.errorInstalledPackage), payload: error },
-    ];
-    startInstalledPackage.mockImplementation(() => {
-      throw error;
-    });
-    expect(
-      await store.dispatch(
-        actions.installedpackages.startInstalledPackage({
-          context: { cluster: "default-c", namespace: "default-ns" },
-          identifier: "foo",
-          plugin: { name: "my.plugin", version: "0.0.1" } as Plugin,
-        } as InstalledPackageReference),
-      ),
-    ).toBe(false);
-    expect(store.getActions()).toEqual(expectedActions);
-  });
-});
-
 describe("deploy package", () => {
   beforeEach(() => {
     InstalledPackage.CreateInstalledPackage = jest.fn();

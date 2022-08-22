@@ -72,14 +72,6 @@ const installedPackagesReducer = (
       return { ...state, isFetching: true };
     case getType(actions.installedpackages.receiveDeleteInstalledPackage):
       return { ...state, isFetching: false };
-    case getType(actions.installedpackages.requestStartInstalledPackage):
-      return { ...state, isFetching: true };
-    case getType(actions.installedpackages.receiveStartInstalledPackage):
-      return { ...state, isFetching: false };
-    case getType(actions.installedpackages.requestStopInstalledPackage):
-      return { ...state, isFetching: true };
-    case getType(actions.installedpackages.receiveStopInstalledPackage):
-      return { ...state, isFetching: false };
     case getType(actions.installedpackages.requestInstallPackage):
       return { ...state, isFetching: true };
     case getType(actions.installedpackages.receiveInstallPackage):

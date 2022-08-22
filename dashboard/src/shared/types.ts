@@ -67,10 +67,6 @@ export class RollbackError extends CustomError {}
 
 export class DeleteError extends CustomError {}
 
-export class StartError extends CustomError {}
-
-export class StopError extends CustomError {}
-
 export type DeploymentEvent = "install" | "upgrade";
 
 export interface IRepo {
@@ -314,14 +310,7 @@ export interface IAppRepositoryFilter {
 
 export interface IInstalledPackageState {
   isFetching: boolean;
-  error?:
-    | FetchError
-    | CreateError
-    | UpgradeError
-    | RollbackError
-    | DeleteError
-    | StartError
-    | StopError;
+  error?: FetchError | CreateError | UpgradeError | RollbackError | DeleteError;
   items: InstalledPackageDetail[];
   listOverview?: InstalledPackageSummary[];
   selected?: CustomInstalledPackageDetail;

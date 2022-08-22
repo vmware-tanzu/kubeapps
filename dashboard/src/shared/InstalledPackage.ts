@@ -6,8 +6,6 @@ import {
   Context,
   CreateInstalledPackageRequest,
   DeleteInstalledPackageRequest,
-  StartInstalledPackageRequest,
-  StopInstalledPackageRequest,
   InstalledPackageReference,
   ReconciliationOptions,
   UpdateInstalledPackageRequest,
@@ -103,17 +101,5 @@ export class InstalledPackage {
     return await this.coreClient().DeleteInstalledPackage({
       installedPackageRef,
     } as DeleteInstalledPackageRequest);
-  }
-
-  public static async StartInstalledPackage(installedPackageRef: InstalledPackageReference) {
-    return await this.helmPluginClient().UpdateInstalledPackage({
-      installedPackageRef,
-    } as StartInstalledPackageRequest);
-  }
-
-  public static async StopInstalledPackage(installedPackageRef: InstalledPackageReference) {
-    return await this.helmPluginClient().UpdateInstalledPackage({
-      installedPackageRef,
-    } as StopInstalledPackageRequest);
   }
 }
