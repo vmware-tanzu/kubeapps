@@ -531,7 +531,7 @@ func (c *NamespacedResourceWatcherCache) syncHandler(key string) error {
 	defer log.Infof("-syncHandler(%s)", key)
 
 	// Convert the namespace/name string into a distinct namespace and name
-	name, err := c.fromKey(key)
+	name, err := c.NamespacedNameFromKey(key)
 	if err != nil {
 		return err
 	}
@@ -877,7 +877,7 @@ func (c *NamespacedResourceWatcherCache) computeAndFetchValuesForKeys(keys sets.
 			// closed (and there are no more items)
 			for job := range requestChan {
 				// see Get() for explanation of what is happening below
-				value, err := c.forceAndFetchKey(job.key)
+				value, err := c.ForceAndFetch(job.key)
 				responseChan <- computeValueJobResult{job, value, err}
 			}
 			wg.Done()
@@ -937,7 +937,7 @@ func (c *NamespacedResourceWatcherCache) KeyForNamespacedName(name types.Namespa
 
 // the opposite of keyFor()
 // the goal is to keep the details of what exactly the key looks like localized to one piece of code
-func (c *NamespacedResourceWatcherCache) fromKey(key string) (*types.NamespacedName, error) {
+func (c *NamespacedResourceWatcherCache) NamespacedNameFromKey(key string) (*types.NamespacedName, error) {
 	parts := strings.Split(key, KeySegmentsSeparator)
 	if len(parts) != 3 || parts[0] != c.config.Gvr.Resource || len(parts[1]) == 0 || len(parts[2]) == 0 {
 		return nil, status.Errorf(codes.Internal, "invalid key [%s]", key)
@@ -959,7 +959,7 @@ func (c *NamespacedResourceWatcherCache) Get(key string) (interface{}, error) {
 		return nil, err
 	} else if value == nil {
 		// cache miss
-		return c.forceAndFetchKey(key)
+		return c.ForceAndFetch(key)
 	}
 	return value, nil
 }
@@ -975,7 +975,7 @@ func (c *NamespacedResourceWatcherCache) forceKey(key string) {
 	c.queue.WaitUntilForgotten(key)
 }
 
-func (c *NamespacedResourceWatcherCache) forceAndFetchKey(key string) (interface{}, error) {
+func (c *NamespacedResourceWatcherCache) ForceAndFetch(key string) (interface{}, error) {
 	c.forceKey(key)
 	// yes, there is a small time window here between after we are done with WaitUntilForgotten()
 	// and the following fetch, where another concurrent goroutine may force the newly added

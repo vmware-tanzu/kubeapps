@@ -7,6 +7,8 @@
 # - build an image that can be used to stand-up a pod that serves static test-data in 
 # local kind cluster. 
 # - create and seed an OCI registry on ghcr.io
+# - create and seed an OCI registry on demo.goharbor.io
+# - create and seed an OCI registry on gcr.io
 # These are usedby the integration tests. 
 # This script needs to be run once before the running the test(s).
 set -o errexit
@@ -55,6 +57,9 @@ FLUX_TEST_HARBOR_URL=https://${FLUX_TEST_HARBOR_HOST}
 # admin/Harbor12345 is a well known default login for harbor registries
 FLUX_TEST_HARBOR_ADMIN_USER=admin
 FLUX_TEST_HARBOR_ADMIN_PWD=Harbor12345
+
+FLUX_TEST_GCP_LOCATION=us-west1
+FLUX_TEST_GCP_REGISTRY_DOMAIN=us-west1-docker.pkg.dev
 
 function pushChartToLocalRegistryUsingHelmCLI() {
   max=5  
@@ -164,6 +169,7 @@ function deploy {
   
   setupGithubStefanProdanClone
   setupHarborStefanProdanClone
+  setupGcrStefanProdanClone
 }
 
 function undeploy {
@@ -231,6 +237,9 @@ function setupHarborStefanProdanClone {
   createHarborProject $PROJECT_NAME
   
   helm registry login $FLUX_TEST_HARBOR_HOST -u $FLUX_TEST_HARBOR_ADMIN_USER -p $FLUX_TEST_HARBOR_ADMIN_PWD
+  trap '{
+    helm registry logout $FLUX_TEST_HARBOR_HOST 
+  }' EXIT  
 
   pushd $SCRIPTPATH/charts
   trap '{
@@ -251,12 +260,46 @@ function setupHarborStefanProdanClone {
   echo
 }
 
+function setupGcrStefanProdanClone {
+  # this creates a clone of what was out on "oci://ghcr.io/stefanprodan/charts" as of Jul 28 2022
+  # to oci://demo.goharbor.io/stefanprodan-podinfo-clone
+  local REGISTRY_NAME=stefanprodan-podinfo-clone
+  deleteArtifactRegistry $REGISTRY_NAME
+  createArtifactRegistry $REGISTRY_NAME
+
+  gcloud auth print-access-token | helm registry login -u oauth2accesstoken \
+    --password-stdin $FLUX_TEST_GCP_REGISTRY_DOMAIN
+  
+  trap '{
+    helm registry logout $FLUX_TEST_GCP_REGISTRY_DOMAIN
+  }' EXIT  
+
+  pushd $SCRIPTPATH/charts
+  trap '{
+    popd
+  }' EXIT  
+
+  SRC_URL_PREFIX=https://stefanprodan.github.io/podinfo
+  ALL_VERSIONS=("6.1.0" "6.1.1" "6.1.2" "6.1.3" "6.1.4" "6.1.5" "6.1.6" "6.1.7" "6.1.8")
+  DEST_URL=oci://$FLUX_TEST_GCP_REGISTRY_DOMAIN/vmware-kubeapps-ci/$REGISTRY_NAME/podinfo
+  for v in ${ALL_VERSIONS[@]}; do
+    curl --silent -O $SRC_URL_PREFIX/podinfo-$v.tgz
+    helm push podinfo-$v.tgz $DEST_URL
+  done
+  
+  echo
+  echo Running sanity checks...
+  echo TODO 
+  echo
+}
+
 . ./ghcr-util.sh
 . ./harbor-util.sh
+. ./gcloud-util.sh
 
 if [ $# -lt 1 ]
 then
-  echo "Usage : $0 deploy|undeploy|redeploy|shell|logs|pushChartToMyGithub|deleteChartVersionFromMyGitHub|setupGithubStefanProdanClone|setupHarborStefanProdanClone"
+  echo "Usage : $0 deploy|undeploy|redeploy|shell|logs|pushChartToMyGithub|deleteChartVersionFromMyGitHub|setupGithubStefanProdanClone|setupHarborStefanProdanClone|setupGcrStefanProdanClone"
   exit
 fi
 
@@ -282,6 +325,8 @@ deleteChartVersionFromMyGitHub) deleteChartVersionFromMyGitHubRegistry $2
 setupGithubStefanProdanClone) setupGithubStefanProdanClone
     ;;
 setupHarborStefanProdanClone) setupHarborStefanProdanClone
+    ;;
+setupGcrStefanProdanClone) setupGcrStefanProdanClone
     ;;
 *) error_exit "Invalid command: $1"
    ;;

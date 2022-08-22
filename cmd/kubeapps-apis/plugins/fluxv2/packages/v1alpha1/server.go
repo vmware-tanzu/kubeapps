@@ -279,7 +279,7 @@ func (s *Server) GetAvailablePackageVersions(ctx context.Context, request *corev
 
 	log.Infof("Requesting chart [%s] in namespace [%s]", chartName, namespace)
 	repo := types.NamespacedName{Namespace: namespace, Name: repoName}
-	chart, err := s.getChart(ctx, repo, chartName)
+	chart, err := s.getChartModel(ctx, repo, chartName)
 	if err != nil {
 		return nil, err
 	} else if chart != nil {
