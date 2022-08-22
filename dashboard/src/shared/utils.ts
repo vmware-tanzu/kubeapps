@@ -228,8 +228,10 @@ export function isGlobalNamespace(namespace: string, pluginName: string, kubeapp
       return namespace === kubeappsConfig.globalReposNamespace;
     case PluginNames.PACKAGES_KAPP:
       return namespace === kubeappsConfig.carvelGlobalNamespace;
+    // Currently, Flux doesn't namespaced repos, so it will always be global
+    case PluginNames.PACKAGES_FLUX:
+      return true;
     default:
-      // Currently, Flux doesn't support global namespaces
       return false;
   }
 }

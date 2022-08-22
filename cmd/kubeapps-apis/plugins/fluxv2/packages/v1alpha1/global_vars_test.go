@@ -1267,6 +1267,25 @@ var (
 		}
 	}
 
+	add_repo_req_28 = func(server, user, password string) *corev1.AddPackageRepositoryRequest {
+		return &corev1.AddPackageRepositoryRequest{
+			Name:    "my-podinfo-10",
+			Context: &corev1.Context{Namespace: "default"},
+			Type:    "oci",
+			Url:     gcp_stefanprodan_podinfo_oci_registry_url,
+			Auth: &corev1.PackageRepositoryAuth{
+				Type: corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_DOCKER_CONFIG_JSON,
+				PackageRepoAuthOneOf: &corev1.PackageRepositoryAuth_DockerCreds{
+					DockerCreds: &corev1.DockerCredentials{
+						Server:   server,
+						Username: user,
+						Password: password,
+					},
+				},
+			},
+		}
+	}
+
 	add_repo_expected_resp = &corev1.AddPackageRepositoryResponse{
 		PackageRepoRef: repoRef("bar", "foo"),
 	}
@@ -2164,6 +2183,13 @@ var (
 			{PkgVersion: "6.1.5"},
 			{PkgVersion: "6.0.3"},
 			{PkgVersion: "6.0.0"},
+		},
+	}
+
+	expected_versions_gfichtenholt_podinfo_3 = &corev1.GetAvailablePackageVersionsResponse{
+		PackageAppVersions: []*corev1.PackageAppVersion{
+			{PkgVersion: "6.1.6"},
+			{PkgVersion: "6.1.5"},
 		},
 	}
 
