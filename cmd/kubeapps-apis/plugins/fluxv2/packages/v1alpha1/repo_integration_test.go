@@ -202,6 +202,11 @@ func TestKindClusterAddPackageRepository(t *testing.T) {
 		t.Fatalf("Environment variables GITHUB_USER and GITHUB_TOKEN need to be set to run this test")
 	}
 
+	// TODO: probably requires TLS
+	gcp_host := "us-west1-docker.pkg.dev"
+	gcp_user := ""
+	gcp_pwd := ""
+
 	testCases := []struct {
 		testName                 string
 		request                  *corev1.AddPackageRepositoryRequest
@@ -313,6 +318,12 @@ func TestKindClusterAddPackageRepository(t *testing.T) {
 		{
 			testName:           "test add OCI repo from harbor registry with dockerconfigjson secret (kubeapps managed)",
 			request:            add_repo_req_27(harbor_host, harbor_user, harbor_pwd),
+			expectedResponse:   add_repo_expected_resp_11,
+			expectedStatusCode: codes.OK,
+		},
+		{
+			testName:           "test add OCI repo from GCP with dockerconfigjson secret (kubeapps managed)",
+			request:            add_repo_req_28(gcp_host, gcp_user, gcp_pwd),
 			expectedResponse:   add_repo_expected_resp_11,
 			expectedStatusCode: codes.OK,
 		},
