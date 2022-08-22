@@ -15,7 +15,7 @@ import * as ReactRedux from "react-redux";
 import ReactTooltip from "react-tooltip";
 import { defaultStore, getStore, mountWrapper } from "shared/specs/mountWrapper";
 import { StartError } from "shared/types";
-import StopButton from "./StopButton";
+import PauseButton from "./PauseButton";
 
 const defaultProps = {
   installedPackageRef: {
@@ -31,7 +31,7 @@ const kubeaActions = { ...actions.kube };
 beforeEach(() => {
   actions.installedpackages = {
     ...actions.installedpackages,
-    stopInstalledPackage: jest.fn(),
+    pauseInstalledPackage: jest.fn(),
   };
   const mockDispatch = jest.fn();
   spyOnUseDispatch = jest.spyOn(ReactRedux, "useDispatch").mockReturnValue(mockDispatch);
@@ -42,10 +42,10 @@ afterEach(() => {
   spyOnUseDispatch.mockRestore();
 });
 
-it("stops an application", async () => {
-  const stopInstalledPackage = jest.fn();
-  actions.installedpackages.stopInstalledPackage = stopInstalledPackage;
-  const wrapper = mountWrapper(defaultStore, <StopButton {...defaultProps} />);
+it("pauses an application", async () => {
+  const pauseInstalledPackage = jest.fn();
+  actions.installedpackages.pauseInstalledPackage = pauseInstalledPackage;
+  const wrapper = mountWrapper(defaultStore, <PauseButton {...defaultProps} />);
   act(() => {
     (wrapper.find(CdsButton).prop("onClick") as any)();
   });
@@ -55,16 +55,16 @@ it("stops an application", async () => {
     await (
       wrapper
         .find(".btn")
-        .filterWhere(b => b.text() === "Stop")
+        .filterWhere(b => b.text() === "Pause")
         .prop("onClick") as any
     )();
   });
-  expect(stopInstalledPackage).toHaveBeenCalledWith(defaultProps.installedPackageRef);
+  expect(pauseInstalledPackage).toHaveBeenCalledWith(defaultProps.installedPackageRef);
 });
 
 it("renders an error", async () => {
   const store = getStore({ apps: { error: new StartError("Boom!") } });
-  const wrapper = mountWrapper(store, <StopButton {...defaultProps} />);
+  const wrapper = mountWrapper(store, <PauseButton {...defaultProps} />);
   // Open modal
   act(() => {
     (wrapper.find(CdsButton).prop("onClick") as any)();
@@ -74,16 +74,16 @@ it("renders an error", async () => {
   expect(wrapper.find(Alert)).toIncludeText("Boom!");
 });
 
-it("should render a deactivated button if when passing a stopped status", async () => {
+it("should render a deactivated button if when passing a paused status", async () => {
   const disabledProps = {
     ...defaultProps,
     releaseStatus: {
       ready: false,
-      reason: InstalledPackageStatus_StatusReason.STATUS_REASON_STOPPED,
-      userReason: "Stopped",
+      reason: InstalledPackageStatus_StatusReason.STATUS_REASON_PAUSED,
+      userReason: "Paused",
     } as InstalledPackageStatus,
   };
-  const wrapper = mountWrapper(defaultStore, <StopButton {...disabledProps} />);
+  const wrapper = mountWrapper(defaultStore, <PauseButton {...disabledProps} />);
 
   expect(wrapper.find(CdsButton)).toBeDisabled();
   expect(wrapper.find(ReactTooltip)).toExist();

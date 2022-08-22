@@ -25,7 +25,7 @@ import { InstalledPackage } from "shared/InstalledPackage";
 import {
   CustomInstalledPackageDetail,
   StartError,
-  StopError,
+  PauseError,
   DeleteError,
   FetchError,
   FetchWarning,
@@ -39,7 +39,7 @@ import LoadingWrapper from "../LoadingWrapper/LoadingWrapper";
 import AccessURLTable from "./AccessURLTable/AccessURLTable";
 import DeleteButton from "./AppControls/DeleteButton/DeleteButton";
 import StartButton from "./AppControls/StartButton/StartButton";
-import StopButton from "./AppControls/StopButton/StopButton";
+import PauseButton from "./AppControls/PauseButton/PauseButton";
 import RollbackButton from "./AppControls/RollbackButton/RollbackButton";
 import UpgradeButton from "./AppControls/UpgradeButton/UpgradeButton";
 import AppNotes from "./AppNotes/AppNotes";
@@ -103,7 +103,7 @@ function getButtons(app: CustomInstalledPackageDetail, error: any, revision: num
 
   const buttons = [];
 
-  // Start is a core operation, it will always be available.
+  // Start will only be available for paused applications.
   buttons.push(
     <StartButton
       key="start-button"
@@ -113,10 +113,10 @@ function getButtons(app: CustomInstalledPackageDetail, error: any, revision: num
     />,
   );
 
-  // Stop is a core operation, it will always be available.
+  // Pause will only be available for started applications.
   buttons.push(
-    <StopButton
-      key="stop-button"
+    <PauseButton
+      key="pause-button"
       installedPackageRef={app.installedPackageRef}
       releaseStatus={app?.status}
       disabled={error !== undefined}
@@ -349,9 +349,9 @@ export default function AppView() {
               <Alert theme="warning">
                 Unable to start the application. Received: {error["message"]}
               </Alert>
-            ) : error.constructor === StopError ? (
+            ) : error.constructor === PauseError ? (
               <Alert theme="warning">
-                Unable to stop the application. Received: {error["message"]}
+                Unable to pause the application. Received: {error["message"]}
               </Alert>
             ) : (
               <Alert theme="danger">An error occurred: {error["message"]}</Alert>

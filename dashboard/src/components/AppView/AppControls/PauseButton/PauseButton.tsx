@@ -17,31 +17,31 @@ import { IStoreState } from "shared/types";
 import { app } from "shared/url";
 import StatusAwareButton from "../StatusAwareButton/StatusAwareButton";
 
-interface IStopButtonProps {
+interface IPauseButtonProps {
   installedPackageRef: InstalledPackageReference;
   releaseStatus: InstalledPackageStatus | undefined | null;
   disabled?: boolean;
 }
 
-export default function StopButton({
+export default function PauseButton({
   installedPackageRef,
   releaseStatus,
   disabled,
-}: IStopButtonProps) {
+}: IPauseButtonProps) {
   const [modalIsOpen, setModal] = useState(false);
-  const [stopping, setStopping] = useState(false);
+  const [pausing, setPausing] = useState(false);
   const dispatch: ThunkDispatch<IStoreState, null, Action> = useDispatch();
   const error = useSelector((state: IStoreState) => state.apps.error);
 
   const openModal = () => setModal(true);
   const closeModal = () => setModal(false);
-  const handleStopClick = async () => {
-    setStopping(true);
-    const stopped = await dispatch(
-      actions.installedpackages.stopInstalledPackage(installedPackageRef),
+  const handlePauseClick = async () => {
+    setPausing(true);
+    const paused = await dispatch(
+      actions.installedpackages.pauseInstalledPackage(installedPackageRef),
     );
-    setStopping(false);
-    if (stopped) {
+    setPausing(false);
+    if (paused) {
       dispatch(
         push(
           app.apps.list(
@@ -59,19 +59,19 @@ export default function StopButton({
         status="primary"
         onClick={openModal}
         releaseStatus={releaseStatus}
-        id="stop-button"
+        id="pause-button"
         disabled={disabled}
       >
-        <CdsIcon shape="stop" /> Stop
+        <CdsIcon shape="stop" /> Pause
       </StatusAwareButton>
       <ConfirmDialog
         modalIsOpen={modalIsOpen}
-        loading={stopping}
-        onConfirm={handleStopClick}
+        loading={pausing}
+        onConfirm={handlePauseClick}
         closeModal={closeModal}
-        headerText={"Stop application"}
-        confirmationText="Are you sure you want to stop the application?"
-        confirmationButtonText="Stop"
+        headerText={"Pause application"}
+        confirmationText="Are you sure you want to pause the application?"
+        confirmationButtonText="Pause"
         error={error}
       />
     </>

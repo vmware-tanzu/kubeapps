@@ -33,7 +33,7 @@ import { getType } from "typesafe-actions";
 import AccessURLTable from "./AccessURLTable/AccessURLTable";
 import DeleteButton from "./AppControls/DeleteButton/DeleteButton";
 import StartButton from "./AppControls/StartButton/StartButton";
-import StopButton from "./AppControls/StopButton/StopButton";
+import PauseButton from "./AppControls/PauseButton/PauseButton";
 import RollbackButton from "./AppControls/RollbackButton";
 import UpgradeButton from "./AppControls/UpgradeButton/UpgradeButton";
 import AppNotes from "./AppNotes/AppNotes";
@@ -275,7 +275,7 @@ describe("AppView", () => {
     expect(wrapper.find(RollbackButton)).toExist();
     expect(wrapper.find(DeleteButton)).toExist();
     expect(wrapper.find(StartButton)).toExist();
-    expect(wrapper.find(StopButton)).toExist();
+    expect(wrapper.find(PauseButton)).toExist();
   });
 
   it("does not render a RollBack button if the installedPackage is not from PACKAGES_HELM", async () => {
@@ -297,7 +297,7 @@ describe("AppView", () => {
     expect(wrapper.find(RollbackButton)).not.toExist();
     expect(wrapper.find(DeleteButton)).toExist();
     expect(wrapper.find(StartButton)).toExist();
-    expect(wrapper.find(StopButton)).toExist();
+    expect(wrapper.find(PauseButton)).toExist();
   });
 
   describe("State initialization", () => {
