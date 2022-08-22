@@ -9,6 +9,7 @@ import Alert from "components/js/Alert";
 import Column from "components/js/Column";
 import Row from "components/js/Row";
 import PageHeader from "components/PageHeader/PageHeader";
+import { push } from "connected-react-router";
 import {
   InstalledPackageReference,
   ResourceRef,
@@ -33,7 +34,7 @@ import {
 } from "shared/types";
 import { getPluginsSupportingRollback } from "shared/utils";
 import ApplicationStatus from "../../containers/ApplicationStatusContainer";
-import placeholder from "../../placeholder.png";
+import placeholder from "icons/placeholder.svg";
 import * as url from "../../shared/url";
 import LoadingWrapper from "../LoadingWrapper/LoadingWrapper";
 import AccessURLTable from "./AccessURLTable/AccessURLTable";
@@ -96,8 +97,12 @@ function parseResources(resourceRefs: Array<ResourceRef>) {
   return result;
 }
 
-function getButtons(app: CustomInstalledPackageDetail, error: any, revision: number) {
-  if (!app || !app?.installedPackageRef || !app.installedPackageRef.plugin) {
+function getButtons(installedPkg: CustomInstalledPackageDetail, error: any, revision: number) {
+  if (
+    !installedPkg ||
+    !installedPkg?.installedPackageRef ||
+    !installedPkg.installedPackageRef.plugin
+  ) {
     return [];
   }
 
@@ -127,20 +132,20 @@ function getButtons(app: CustomInstalledPackageDetail, error: any, revision: num
   buttons.push(
     <UpgradeButton
       key="upgrade-button"
-      installedPackageRef={app.installedPackageRef}
-      releaseStatus={app?.status}
+      installedPackageRef={installedPkg.installedPackageRef}
+      releaseStatus={installedPkg?.status}
       disabled={error !== undefined}
     />,
   );
 
   // Rollback is a helm-only operation, it will only be available for helm-plugin packages
-  if (getPluginsSupportingRollback().includes(app.installedPackageRef.plugin.name)) {
+  if (getPluginsSupportingRollback().includes(installedPkg.installedPackageRef.plugin.name)) {
     buttons.push(
       <RollbackButton
         key="rollback-button"
-        installedPackageRef={app.installedPackageRef}
+        installedPackageRef={installedPkg.installedPackageRef}
         revision={revision}
-        releaseStatus={app?.status}
+        releaseStatus={installedPkg?.status}
         disabled={error !== undefined}
       />,
     );
@@ -150,8 +155,8 @@ function getButtons(app: CustomInstalledPackageDetail, error: any, revision: num
   buttons.push(
     <DeleteButton
       key="delete-button"
-      installedPackageRef={app.installedPackageRef}
-      releaseStatus={app?.status}
+      installedPackageRef={installedPkg.installedPackageRef}
+      releaseStatus={installedPkg?.status}
     />,
   );
 
@@ -180,7 +185,12 @@ export default function AppView() {
     secrets: [],
   } as IAppViewResourceRefs);
   const {
-    apps: { error, selected: app, selectedDetails: appDetails },
+    apps: {
+      error,
+      isFetching,
+      selected: selectedInstalledPkg,
+      selectedDetails: selectedAvailablePkg,
+    },
     config: { customAppViews },
   } = useSelector((state: IStoreState) => state);
 
@@ -250,10 +260,10 @@ export default function AppView() {
   }, [resourceRefs]);
 
   useEffect(() => {
-    if (!app?.installedPackageRef) {
+    if (!selectedInstalledPkg?.installedPackageRef) {
       return () => {};
     }
-    const installedPackageRef = app.installedPackageRef;
+    const installedPackageRef = selectedInstalledPkg.installedPackageRef;
     // Watch Deployments, StatefulSets, DaemonSets, Ingresses and Services.
     const refsToWatch = appViewResourceRefs.deployments.concat(
       appViewResourceRefs.statefulsets,
@@ -273,11 +283,15 @@ export default function AppView() {
       };
     }
     return () => {};
-  }, [dispatch, app?.installedPackageRef, appViewResourceRefs]);
+  }, [dispatch, selectedInstalledPkg?.installedPackageRef, appViewResourceRefs]);
 
   const forceRetry = () => {
     dispatch(actions.installedpackages.clearErrorInstalledPackage());
     dispatch(actions.installedpackages.getInstalledPackage(installedPkgRef));
+  };
+
+  const goToAppsView = () => {
+    dispatch(push(url.app.apps.list(cluster, namespace)));
   };
 
   if (fetchError) {
@@ -294,47 +308,70 @@ export default function AppView() {
   }
   const { services, ingresses, deployments, statefulsets, daemonsets, secrets, otherResources } =
     appViewResourceRefs;
-  const revision = app?.revision ?? 0;
-  const icon = appDetails?.iconUrl ?? placeholder;
+  const revision = selectedInstalledPkg?.revision ?? 0;
+  const icon = selectedAvailablePkg?.iconUrl ?? placeholder;
 
   // If the package identifier matches the current list of loaded customAppViews,
   // then load the custom view from external bundle instead of the default one.
-  const appRepo = app?.availablePackageRef?.identifier.split("/")[0];
-  const appName = app?.availablePackageRef?.identifier.split("/")[1];
-  const appPlugin = app?.availablePackageRef?.plugin?.name;
+  const pkgRepo = selectedInstalledPkg?.availablePackageRef?.identifier.split("/")[0];
+  const pkgName = selectedInstalledPkg?.availablePackageRef?.identifier.split("/")[1];
+  const pkgPlugin = selectedInstalledPkg?.availablePackageRef?.plugin?.name;
   if (
     customAppViews.some(
-      entry => entry.name === appName && entry.plugin === appPlugin && entry.repository === appRepo,
+      entry => entry.name === pkgName && entry.plugin === pkgPlugin && entry.repository === pkgRepo,
     )
   ) {
-    return <CustomAppView resourceRefs={appViewResourceRefs} app={app!} appDetails={appDetails!} />;
+    return (
+      <CustomAppView
+        resourceRefs={appViewResourceRefs}
+        app={selectedInstalledPkg!}
+        appDetails={selectedAvailablePkg!}
+      />
+    );
   }
   return (
-    <LoadingWrapper loaded={!!app} loadingText="Retrieving application..." className="margin-t-xl">
-      {!app || !app?.installedPackageRef ? (
-        <Alert theme="danger">There is a problem with this package</Alert>
+    <LoadingWrapper
+      loaded={!isFetching}
+      loadingText="Retrieving application..."
+      className="margin-t-xl"
+    >
+      {!selectedInstalledPkg || !selectedInstalledPkg?.installedPackageRef ? (
+        error ? (
+          <Alert theme="danger">
+            An error occurred while fetching the application: {error?.message}.{" "}
+            <CdsButton size="sm" action="flat" onClick={goToAppsView} type="button">
+              Go Back{" "}
+            </CdsButton>
+          </Alert>
+        ) : (
+          <></>
+        )
       ) : (
         <section>
           <PageHeader
             title={releaseName}
             titleSize="md"
             subtitle={
-              appDetails?.availablePackageRef ? (
+              selectedAvailablePkg?.availablePackageRef ? (
                 <span>
                   from package{" "}
                   <Link
-                    to={url.app.packages.get(cluster, namespace, appDetails.availablePackageRef)}
+                    to={url.app.packages.get(
+                      cluster,
+                      namespace,
+                      selectedAvailablePkg.availablePackageRef,
+                    )}
                   >
-                    {appDetails.displayName}
+                    {selectedAvailablePkg.displayName}
                   </Link>
                 </span>
               ) : (
                 <span>from an unknown package</span>
               )
             }
-            plugin={app?.availablePackageRef?.plugin}
+            plugin={selectedInstalledPkg?.availablePackageRef?.plugin}
             icon={icon}
-            buttons={getButtons(app, error, revision)}
+            buttons={getButtons(selectedInstalledPkg, error, revision)}
           />
           {error &&
             (error.constructor === FetchWarning ? (
@@ -356,12 +393,15 @@ export default function AppView() {
             ) : (
               <Alert theme="danger">An error occurred: {error["message"]}</Alert>
             ))}
-          {!app || !app?.status ? (
+          {!selectedInstalledPkg || !selectedInstalledPkg?.status ? (
             <LoadingWrapper loadingText={`Loading ${releaseName}...`} />
           ) : (
             <Row>
               <Column span={3}>
-                <PackageInfo installedPackageDetail={app} availablePackageDetail={appDetails!} />
+                <PackageInfo
+                  installedPackageDetail={selectedInstalledPkg}
+                  availablePackageDetail={selectedAvailablePkg!}
+                />
               </Column>
               <Column span={9}>
                 <div className="appview-separator">
@@ -370,14 +410,14 @@ export default function AppView() {
                       deployRefs={deployments}
                       statefulsetRefs={statefulsets}
                       daemonsetRefs={daemonsets}
-                      info={app}
+                      info={selectedInstalledPkg}
                     />
                     <AccessURLTable serviceRefs={services} ingressRefs={ingresses} />
                     <AppSecrets secretRefs={secrets} />
                   </div>
                 </div>
                 <div className="appview-separator">
-                  <AppNotes notes={app?.postInstallationNotes} />
+                  <AppNotes notes={selectedInstalledPkg?.postInstallationNotes} />
                 </div>
                 <div className="appview-separator">
                   <ResourceTabs
@@ -393,7 +433,11 @@ export default function AppView() {
                 </div>
                 <div className="appview-separator">
                   <AppValues
-                    values={app?.valuesApplied ? yaml.dump(yaml.load(app.valuesApplied)) : ""}
+                    values={
+                      selectedInstalledPkg?.valuesApplied
+                        ? yaml.dump(yaml.load(selectedInstalledPkg.valuesApplied))
+                        : ""
+                    }
                   />
                 </div>
               </Column>

@@ -20,6 +20,8 @@ export interface IConfig {
   kubeappsCluster: string;
   kubeappsNamespace: string;
   globalReposNamespace: string;
+  // TODO(castelblanque) Global namespaces should be well organized by plugin, or come from plugins API
+  carvelGlobalNamespace: string;
   appVersion: string;
   authProxyEnabled: boolean;
   oauthLoginURI: string;
@@ -32,6 +34,7 @@ export interface IConfig {
   remoteComponentsUrl: string;
   customAppViews: ICustomAppViewIdentifier[];
   skipAvailablePackageDetails: boolean;
+  createNamespaceLabels: { [key: string]: string };
 }
 
 export interface IFeatureFlags {

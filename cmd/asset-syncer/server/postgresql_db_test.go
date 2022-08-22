@@ -4,7 +4,7 @@
 // Currently these tests will be skipped entirely unless the
 // ENABLE_PG_INTEGRATION_TESTS env var is set.
 // Run the local postgres with
-// docker run --publish 5432:5432 -e ALLOW_EMPTY_PASSWORD=yes bitnami/postgresql:14.3.0-debian-11-r3
+// docker run --publish 5432:5432 -e ALLOW_EMPTY_PASSWORD=yes bitnami/postgresql:14.4.0-debian-11-r13
 // in another terminal.
 package server
 
@@ -405,15 +405,24 @@ func TestRepoAlreadyProcessed(t *testing.T) {
 	}
 
 	// not processed when repo exists but has not been processed
-	pam.EnsureRepoExists(repoNamespace, repoName)
+	_, err := pam.EnsureRepoExists(repoNamespace, repoName)
+	if err != nil {
+		t.Errorf("%+v", err)
+	}
 	got = pam.LastChecksum(repo)
 	if got != "" {
 		t.Errorf("got: %s, want: %s", got, "")
 	}
 
-	pam.UpdateLastCheck(repoNamespace, repoName, checksum, time.Now())
+	err = pam.UpdateLastCheck(repoNamespace, repoName, checksum, time.Now())
+	if err != nil {
+		t.Errorf("%+v", err)
+	}
 	// processed when checksums match
-	pam.EnsureRepoExists(repoNamespace, repoName)
+	_, err = pam.EnsureRepoExists(repoNamespace, repoName)
+	if err != nil {
+		t.Errorf("%+v", err)
+	}
 	got = pam.LastChecksum(repo)
 	if got != checksum {
 		t.Errorf("got: %s, want: %s", got, checksum)

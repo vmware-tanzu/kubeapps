@@ -1,5 +1,8 @@
 #!/bin/bash
 
+# Copyright 2022 the Kubeapps contributors.
+# SPDX-License-Identifier: Apache-2.0
+
 IMAGE=$1
 MAIN_CLUSTER=$2
 ADDITIONAL_CLUSTER=$3

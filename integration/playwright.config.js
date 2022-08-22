@@ -27,8 +27,8 @@ const config = {
       use: { ...devices["Desktop Chrome"] },
     },
   ],
-  reporter: [["list"], ["html", { open: "never", outputFolder: "reports-html/" }]],
-  outputDir: "reports/",
+  reporter: [["list"], ["html", { open: "never", outputFolder: "reports/html" }]],
+  outputDir: "reports/tests",
 };
 
 module.exports = config;

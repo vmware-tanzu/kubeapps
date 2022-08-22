@@ -7,7 +7,7 @@ import (
 	"context"
 
 	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/core"
-	"github.com/vmware-tanzu/kubeapps/pkg/agent"
+	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/pkg/agent"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"helm.sh/helm/v3/pkg/action"

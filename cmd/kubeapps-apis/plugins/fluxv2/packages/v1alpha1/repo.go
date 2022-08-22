@@ -40,9 +40,8 @@ import (
 const (
 	// see docs at https://fluxcd.io/docs/components/source/ and
 	// https://fluxcd.io/docs/components/helm/api/
-	fluxHelmRepositories   = "helmrepositories"
-	fluxHelmRepositoryList = "HelmRepositoryList"
-	redactedString         = "REDACTED"
+	fluxHelmRepositories = "helmrepositories"
+	redactedString       = "REDACTED"
 )
 
 var (
@@ -770,7 +769,7 @@ func (s *repoEventSink) indexAndEncode(checksum string, repo sourcev1.HelmReposi
 			// So we still finish the indexing of the repo but skip the charts
 			log.Errorf("Failed to read secret for repo due to: %+v", err)
 		} else {
-			fn := downloadChartViaHttpFn(opts)
+			fn := downloadHttpChartFn(opts)
 			if err = s.chartCache.SyncCharts(charts, fn); err != nil {
 				return nil, false, err
 			}

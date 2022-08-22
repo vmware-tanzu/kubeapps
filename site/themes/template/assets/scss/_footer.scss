@@ -10,6 +10,10 @@ footer {
     justify-content: space-between;
   }
 
+  .footer-logo {
+    height: 3em;
+  }
+
   .left-links {
     padding: 0px;
 
@@ -52,11 +56,6 @@ footer {
       vertical-align: middle;
     }
 
-    #vmware-logo {
-      // margin-left: 20px;
-      // max-width: 100px;
-      // margin-top: 5px;
-    }
   }
 
   .bottom-links {

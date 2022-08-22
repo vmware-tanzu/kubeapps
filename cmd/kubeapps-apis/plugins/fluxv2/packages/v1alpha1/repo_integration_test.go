@@ -310,6 +310,12 @@ func TestKindClusterAddPackageRepository(t *testing.T) {
 			expectedStatusCode: codes.OK,
 			userManagedSecrets: true,
 		},
+		{
+			testName:           "test add OCI repo from harbor registry with dockerconfigjson secret (kubeapps managed)",
+			request:            add_repo_req_27(harbor_host, harbor_user, harbor_pwd),
+			expectedResponse:   add_repo_expected_resp_11,
+			expectedStatusCode: codes.OK,
+		},
 	}
 
 	adminAcctName := types.NamespacedName{
@@ -323,16 +329,19 @@ func TestKindClusterAddPackageRepository(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.testName, func(t *testing.T) {
-			ctx, cancel := context.WithTimeout(grpcContext, defaultContextTimeout)
-			defer cancel()
+
 			if tc.existingSecret != nil {
 				if err := kubeCreateSecretAndCleanup(t, tc.existingSecret); err != nil {
 					t.Fatalf("%v", err)
 				}
 			}
-			setUserManagedSecretsAndCleanup(t, fluxPluginReposClient, ctx, tc.userManagedSecrets)
 
-			resp, err := fluxPluginReposClient.AddPackageRepository(ctx, tc.request)
+			setUserManagedSecretsAndCleanup(t, fluxPluginReposClient, tc.userManagedSecrets)
+
+			grpcContext, cancel := context.WithTimeout(grpcContext, defaultContextTimeout)
+			defer cancel()
+
+			resp, err := fluxPluginReposClient.AddPackageRepository(grpcContext, tc.request)
 			if tc.expectedStatusCode != codes.OK {
 				if status.Code(err) != tc.expectedStatusCode {
 					t.Fatalf("Expected %v, got: %v", tc.expectedStatusCode, err)
@@ -465,7 +474,7 @@ func TestKindClusterGetPackageRepositoryDetail(t *testing.T) {
 			testName:           "returns failed status for helm repository with OCI url",
 			request:            get_repo_detail_req_12,
 			repoName:           "my-podinfo-12",
-			repoUrl:            github_podinfo_oci_registry_url,
+			repoUrl:            github_stefanprodan_podinfo_oci_registry_url,
 			expectedStatusCode: codes.OK,
 			expectedResponse:   get_repo_detail_resp_15,
 		},
@@ -474,7 +483,7 @@ func TestKindClusterGetPackageRepositoryDetail(t *testing.T) {
 			request:            get_repo_detail_req_13,
 			repoName:           "my-podinfo-13",
 			repoType:           "oci",
-			repoUrl:            github_podinfo_oci_registry_url,
+			repoUrl:            github_stefanprodan_podinfo_oci_registry_url,
 			expectedStatusCode: codes.OK,
 			expectedResponse:   get_repo_detail_resp_16,
 		},
@@ -483,7 +492,7 @@ func TestKindClusterGetPackageRepositoryDetail(t *testing.T) {
 			request:  get_repo_detail_req_14,
 			repoName: "my-podinfo-14",
 			repoType: "oci",
-			repoUrl:  github_podinfo_oci_registry_url,
+			repoUrl:  github_stefanprodan_podinfo_oci_registry_url,
 			existingSecret: newBasicAuthSecret(types.NamespacedName{
 				Name:      "secret-1",
 				Namespace: "TBD",
@@ -492,17 +501,30 @@ func TestKindClusterGetPackageRepositoryDetail(t *testing.T) {
 			expectedResponse:   get_repo_detail_resp_17,
 		},
 		{
-			testName: "get details for OCI repo with docker config json cred",
+			testName: "get details for OCI repo hosted on github with docker config json cred",
 			request:  get_repo_detail_req_15,
 			repoName: "my-podinfo-15",
 			repoType: "oci",
-			repoUrl:  github_podinfo_oci_registry_url,
+			repoUrl:  github_stefanprodan_podinfo_oci_registry_url,
 			existingSecret: newDockerConfigJsonSecret(types.NamespacedName{
 				Name:      "secret-1",
 				Namespace: "TBD",
 			}, "ghcr.io", ghUser, ghToken),
 			expectedStatusCode: codes.OK,
 			expectedResponse:   get_repo_detail_resp_18,
+		},
+		{
+			testName: "get details for OCI repo hosted on harbor with docker config json cred",
+			request:  get_repo_detail_req_16,
+			repoName: "my-podinfo-16",
+			repoType: "oci",
+			repoUrl:  harbor_stefanprodan_podinfo_oci_registry_url,
+			existingSecret: newDockerConfigJsonSecret(types.NamespacedName{
+				Name:      "secret-1",
+				Namespace: "TBD",
+			}, harbor_host, harbor_user, harbor_pwd),
+			expectedStatusCode: codes.OK,
+			expectedResponse:   get_repo_detail_resp_20,
 		},
 	}
 
@@ -553,19 +575,17 @@ func TestKindClusterGetPackageRepositoryDetail(t *testing.T) {
 			}
 
 			var grpcCtx context.Context
-			var cancel context.CancelFunc
 			if tc.unauthorized {
-				grpcCtx, cancel = context.WithTimeout(grpcLoser, defaultContextTimeout)
+				grpcCtx = grpcLoser
 			} else {
-				grpcCtx, cancel = context.WithTimeout(grpcAdmin, defaultContextTimeout)
+				grpcCtx = grpcAdmin
 			}
-			defer cancel()
 
-			setUserManagedSecretsAndCleanup(t, fluxPluginReposClient, grpcCtx, tc.userManagedSecrets)
+			setUserManagedSecretsAndCleanup(t, fluxPluginReposClient, tc.userManagedSecrets)
 
 			var resp *corev1.GetPackageRepositoryDetailResponse
 			for {
-				grpcCtx, cancel = context.WithTimeout(grpcCtx, defaultContextTimeout)
+				grpcCtx, cancel := context.WithTimeout(grpcCtx, defaultContextTimeout)
 				defer cancel()
 
 				resp, err = fluxPluginReposClient.GetPackageRepositoryDetail(grpcCtx, tc.request)
@@ -687,7 +707,7 @@ func TestKindClusterGetPackageRepositorySummaries(t *testing.T) {
 			unauthorized: true,
 		},
 		{
-			testName: "summaries from OCI repo",
+			testName: "summaries from OCI repo hosted on ghcr.io",
 			request: &corev1.GetPackageRepositorySummariesRequest{
 				Context: &corev1.Context{},
 			},
@@ -696,7 +716,7 @@ func TestKindClusterGetPackageRepositorySummaries(t *testing.T) {
 					name: "podinfo-13",
 					ns:   ns1,
 					typ:  "oci",
-					url:  github_podinfo_oci_registry_url,
+					url:  github_stefanprodan_podinfo_oci_registry_url,
 				},
 			},
 			expectedStatusCode: codes.OK,
@@ -704,6 +724,28 @@ func TestKindClusterGetPackageRepositorySummaries(t *testing.T) {
 				PackageRepositorySummaries: []*corev1.PackageRepositorySummary{
 					get_summaries_summary_6(types.NamespacedName{
 						Name:      "podinfo-13",
+						Namespace: ns1}),
+				},
+			},
+		},
+		{
+			testName: "summaries from OCI repo hosted on harbor CR",
+			request: &corev1.GetPackageRepositorySummariesRequest{
+				Context: &corev1.Context{},
+			},
+			existingRepos: []repoSpec{
+				{
+					name: "podinfo-14",
+					ns:   ns1,
+					typ:  "oci",
+					url:  harbor_stefanprodan_podinfo_oci_registry_url,
+				},
+			},
+			expectedStatusCode: codes.OK,
+			expectedResponse: &corev1.GetPackageRepositorySummariesResponse{
+				PackageRepositorySummaries: []*corev1.PackageRepositorySummary{
+					get_summaries_summary_7(types.NamespacedName{
+						Name:      "podinfo-14",
 						Namespace: ns1}),
 				},
 			},
@@ -788,11 +830,19 @@ func TestKindClusterUpdatePackageRepository(t *testing.T) {
 
 	ca, pub, priv := getCertsForTesting(t)
 
+	// see TestKindClusterAvailablePackageEndpointsForOCI for explanation
+	ghUser := os.Getenv("GITHUB_USER")
+	ghToken := os.Getenv("GITHUB_TOKEN")
+	if ghUser == "" || ghToken == "" {
+		t.Fatalf("Environment variables GITHUB_USER and GITHUB_TOKEN need to be set to run this test")
+	}
+
 	testCases := []struct {
 		name               string
 		request            *corev1.UpdatePackageRepositoryRequest
 		repoName           string
 		repoUrl            string
+		repoType           string
 		unauthorized       bool
 		failed             bool
 		expectedResponse   *corev1.UpdatePackageRepositoryResponse
@@ -863,6 +913,16 @@ func TestKindClusterUpdatePackageRepository(t *testing.T) {
 			expectedResponse:   update_repo_resp_5,
 			expectedDetail:     update_repo_detail_14,
 		},
+		{
+			name:               "update OCI repository change interval (kubeapps-managed secrets)",
+			request:            update_repo_req_18(ghUser, ghToken),
+			repoName:           "my-podinfo-7",
+			repoUrl:            github_stefanprodan_podinfo_oci_registry_url,
+			repoType:           "oci",
+			expectedStatusCode: codes.OK,
+			expectedResponse:   update_repo_resp_7,
+			expectedDetail:     update_repo_detail_17,
+		},
 	}
 
 	adminAcctName := types.NamespacedName{
@@ -921,7 +981,7 @@ func TestKindClusterUpdatePackageRepository(t *testing.T) {
 				Namespace: repoNamespace,
 			}
 			if err = kubeAddHelmRepositoryAndCleanup(t, name,
-				"", tc.repoUrl, oldSecretName, 0); err != nil {
+				tc.repoType, tc.repoUrl, oldSecretName, 0); err != nil {
 				t.Fatal(err)
 			}
 			// wait until this repo reaches 'Ready' state so that long indexation process kicks in
@@ -938,15 +998,13 @@ func TestKindClusterUpdatePackageRepository(t *testing.T) {
 			}
 
 			var grpcCtx context.Context
-			var cancel context.CancelFunc
 			if tc.unauthorized {
-				grpcCtx, cancel = context.WithTimeout(grpcLoser, defaultContextTimeout)
+				grpcCtx = grpcLoser
 			} else {
-				grpcCtx, cancel = context.WithTimeout(grpcAdmin, defaultContextTimeout)
+				grpcCtx = grpcAdmin
 			}
-			defer cancel()
 
-			setUserManagedSecretsAndCleanup(t, fluxPluginReposClient, grpcCtx, tc.userManagedSecrets)
+			setUserManagedSecretsAndCleanup(t, fluxPluginReposClient, tc.userManagedSecrets)
 
 			tc.request.PackageRepoRef.Context.Namespace = repoNamespace
 			if tc.expectedResponse != nil {
@@ -965,6 +1023,9 @@ func TestKindClusterUpdatePackageRepository(t *testing.T) {
 			var i, maxRetries = 0, 5
 			var resp *corev1.UpdatePackageRepositoryResponse
 			for ; i < maxRetries; i++ {
+				grpcCtx, cancel := context.WithTimeout(grpcCtx, defaultContextTimeout)
+				defer cancel()
+
 				resp, err = fluxPluginReposClient.UpdatePackageRepository(grpcCtx, tc.request)
 				if err != nil && strings.Contains(err.Error(), " the object has been modified; please apply your changes to the latest version and try again") {
 					waitTime := int64(math.Pow(2, float64(i)))
@@ -1044,9 +1105,7 @@ func TestKindClusterDeletePackageRepository(t *testing.T) {
 			expectedStatusCode: codes.PermissionDenied,
 			unauthorized:       true,
 		},
-		{ //TODO rewrite this test to use AddPackageRepository
-			//Instead of kubeAddHelmRepository so we don't need to copy
-			//production code bizness logic here
+		{
 			name:     "delete repo also deletes the corresponding secret in kubeapps managed env",
 			request:  delete_repo_req_6,
 			repoName: "my-podinfo-4",
@@ -1086,21 +1145,16 @@ func TestKindClusterDeletePackageRepository(t *testing.T) {
 			oldSecretName := ""
 			if tc.oldSecret != nil {
 				tc.oldSecret.Namespace = repoNamespace
-				if err := kubeCreateSecret(t, tc.oldSecret); err != nil {
-					t.Fatalf("%v", err)
+				if tc.userManagedSecrets {
+					if err := kubeCreateSecretAndCleanup(t, tc.oldSecret); err != nil {
+						t.Fatalf("%v", err)
+					}
+				} else {
+					if err := kubeCreateSecret(t, tc.oldSecret); err != nil {
+						t.Fatalf("%v", err)
+					}
 				}
 				oldSecretName = tc.oldSecret.GetName()
-				if tc.userManagedSecrets {
-					t.Cleanup(func() {
-						err := kubeDeleteSecret(t,
-							types.NamespacedName{
-								Namespace: tc.oldSecret.Namespace,
-								Name:      tc.oldSecret.Name})
-						if err != nil {
-							t.Logf("Failed to delete secret [%s] due to [%v]", tc.oldSecret.Name, err)
-						}
-					})
-				}
 			}
 			if tc.newSecret != nil {
 				tc.newSecret.Namespace = repoNamespace
@@ -1136,19 +1190,62 @@ func TestKindClusterDeletePackageRepository(t *testing.T) {
 			}
 
 			var grpcCtx context.Context
-			var cancel context.CancelFunc
 			if tc.unauthorized {
-				grpcCtx, cancel = context.WithTimeout(grpcLoser, defaultContextTimeout)
+				grpcCtx = grpcLoser
 			} else {
-				grpcCtx, cancel = context.WithTimeout(grpcAdmin, defaultContextTimeout)
+				grpcCtx = grpcAdmin
 			}
-			defer cancel()
 
-			setUserManagedSecretsAndCleanup(t, fluxPluginReposClient, grpcCtx, tc.userManagedSecrets)
+			setUserManagedSecretsAndCleanup(t, fluxPluginReposClient, tc.userManagedSecrets)
 
 			tc.request.PackageRepoRef.Context.Namespace = repoNamespace
 
+			grpcCtx, cancel := context.WithTimeout(grpcCtx, defaultContextTimeout)
+			defer cancel()
+
 			_, err = fluxPluginReposClient.DeletePackageRepository(grpcCtx, tc.request)
+			if tc.unauthorized {
+				if _, err2 := fluxPluginReposClient.DeletePackageRepository(grpcAdmin, tc.request); err2 != nil {
+					t.Fatal(err2)
+				}
+			}
+			t.Cleanup(func() {
+				const maxWait = 25
+				for i := 0; i <= maxWait; i++ {
+					exists, err := kubeExistsHelmRepository(t, name)
+					if err != nil {
+						t.Fatal(err)
+					} else if !exists {
+						break
+					} else if i == maxWait {
+						t.Fatalf("Timed out waiting for delete of repository [%s], last error: [%v]", tc.repoName, err)
+					} else {
+						t.Logf("Waiting 1s for repository [%s] to be deleted, attempt [%d/%d]...", tc.repoName, i+1, maxWait)
+						time.Sleep(1 * time.Second)
+					}
+				}
+
+				// check the secret is gone too in kubeapps-managed secrets env
+				if !tc.userManagedSecrets && tc.oldSecret != nil {
+					for i := 0; i <= maxWait; i++ {
+						exists, err := kubeExistsSecret(t, types.NamespacedName{
+							Name:      tc.oldSecret.Name,
+							Namespace: repoNamespace,
+						})
+						if err != nil {
+							t.Fatal(err)
+						} else if !exists {
+							break
+						} else if i == maxWait {
+							t.Fatalf("Timed out waiting for delete of secret [%s], last error: [%v]", tc.oldSecret.Name, err)
+						} else {
+							t.Logf("Waiting 1s for secret [%s] to be deleted, attempt [%d/%d]...", tc.oldSecret.Name, i+1, maxWait)
+							time.Sleep(1 * time.Second)
+						}
+					}
+				}
+			})
+
 			if got, want := status.Code(err), tc.expectedStatusCode; got != want {
 				t.Fatalf("got: %v, want: %v", err, want)
 			}
@@ -1156,41 +1253,6 @@ func TestKindClusterDeletePackageRepository(t *testing.T) {
 			if tc.expectedStatusCode != codes.OK {
 				// we are done
 				return
-			}
-
-			const maxWait = 25
-			for i := 0; i <= maxWait; i++ {
-				exists, err := kubeExistsHelmRepository(t, name)
-				if err != nil {
-					t.Fatal(err)
-				} else if !exists {
-					break
-				} else if i == maxWait {
-					t.Fatalf("Timed out waiting for delete of repository [%s], last error: [%v]", tc.repoName, err)
-				} else {
-					t.Logf("Waiting 1s for repository [%s] to be deleted, attempt [%d/%d]...", tc.repoName, i+1, maxWait)
-					time.Sleep(1 * time.Second)
-				}
-			}
-
-			// check the secret is gone too in kubeapps-managed secrets env
-			if !tc.userManagedSecrets && tc.oldSecret != nil {
-				for i := 0; i <= maxWait; i++ {
-					exists, err := kubeExistsSecret(t, types.NamespacedName{
-						Name:      tc.oldSecret.Name,
-						Namespace: repoNamespace,
-					})
-					if err != nil {
-						t.Fatal(err)
-					} else if !exists {
-						break
-					} else if i == maxWait {
-						t.Fatalf("Timed out waiting for delete of secret [%s], last error: [%v]", tc.oldSecret.Name, err)
-					} else {
-						t.Logf("Waiting 1s for secret [%s] to be deleted, attempt [%d/%d]...", tc.oldSecret.Name, i+1, maxWait)
-						time.Sleep(1 * time.Second)
-					}
-				}
 			}
 		})
 	}
@@ -1244,10 +1306,7 @@ func TestKindClusterUpdatePackageRepoSecretUnchanged(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	grpcCtx, cancel := context.WithTimeout(grpcAdmin, defaultContextTimeout)
-	defer cancel()
-
-	setUserManagedSecretsAndCleanup(t, fluxPluginReposClient, grpcCtx, false)
+	setUserManagedSecretsAndCleanup(t, fluxPluginReposClient, false)
 
 	request.PackageRepoRef.Context.Namespace = repoNamespace
 	expectedResponse.PackageRepoRef.Context.Namespace = repoNamespace
@@ -1282,6 +1341,9 @@ func TestKindClusterUpdatePackageRepoSecretUnchanged(t *testing.T) {
 	var i, maxRetries = 0, 5
 	var resp *corev1.UpdatePackageRepositoryResponse
 	for ; i < maxRetries; i++ {
+		grpcCtx, cancel := context.WithTimeout(grpcAdmin, defaultContextTimeout)
+		defer cancel()
+
 		resp, err = fluxPluginReposClient.UpdatePackageRepository(grpcCtx, request)
 		if err != nil && strings.Contains(err.Error(), " the object has been modified; please apply your changes to the latest version and try again") {
 			waitTime := int64(math.Pow(2, float64(i)))
@@ -1335,8 +1397,119 @@ func TestKindClusterUpdatePackageRepoSecretUnchanged(t *testing.T) {
 	}
 
 	actualDetail := waitForRepoToReconcileWithSuccess(
-		t, fluxPluginReposClient, grpcCtx, repoName, repoNamespace)
+		t, fluxPluginReposClient, grpcAdmin, repoName, repoNamespace)
 	compareActualVsExpectedPackageRepositoryDetail(t, actualDetail, expectedDetail)
+}
+
+func TestKindClusterAddTagsToOciRepository(t *testing.T) {
+	fluxPluginClient, _, err := checkEnv(t)
+	if err != nil {
+		t.Fatal(err)
+	}
+	// see TestKindClusterAvailablePackageEndpointsForOCI for explanation
+	ghUser := os.Getenv("GITHUB_USER")
+	ghToken := os.Getenv("GITHUB_TOKEN")
+	if ghUser == "" || ghToken == "" {
+		t.Fatalf("Environment variables GITHUB_USER and GITHUB_TOKEN need to be set to run this test")
+	}
+
+	adminName := types.NamespacedName{
+		Name:      "test-admin-" + randSeq(4),
+		Namespace: "default",
+	}
+	grpcContext, err := newGrpcAdminContext(t, adminName)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	t.Run("tests whether modifications of OCI repository contents are processed correctly", func(t *testing.T) {
+		repoName := types.NamespacedName{
+			Name:      "my-podinfo-" + randSeq(4),
+			Namespace: "default",
+		}
+
+		secret := newBasicAuthSecret(types.NamespacedName{
+			Name:      "oci-repo-secret-" + randSeq(4),
+			Namespace: "default"},
+			ghUser,
+			ghToken,
+		)
+
+		if err := kubeCreateSecretAndCleanup(t, secret); err != nil {
+			t.Fatal(err)
+		}
+
+		interval := time.Duration(30 * time.Second)
+
+		if err := kubeAddHelmRepositoryAndCleanup(
+			t, repoName, "oci", github_gfichtenholt_podinfo_oci_registry_url, secret.Name, interval); err != nil {
+			t.Fatal(err)
+		}
+
+		// wait until this repo reaches 'Ready' state
+		if err = kubeWaitUntilHelmRepositoryIsReady(t, repoName); err != nil {
+			t.Fatal(err)
+		}
+
+		grpcContext2, cancel := context.WithTimeout(grpcContext, defaultContextTimeout)
+		defer cancel()
+
+		resp2, err := fluxPluginClient.GetAvailablePackageVersions(
+			grpcContext2, &corev1.GetAvailablePackageVersionsRequest{
+				AvailablePackageRef: &corev1.AvailablePackageReference{
+					Context: &corev1.Context{
+						Namespace: "default",
+					},
+					Identifier: repoName.Name + "/podinfo",
+				},
+			})
+		if err != nil {
+			t.Fatal(err)
+		}
+		opts := cmpopts.IgnoreUnexported(
+			corev1.GetAvailablePackageVersionsResponse{},
+			corev1.PackageAppVersion{})
+		if got, want := resp2, expected_versions_gfichtenholt_podinfo; !cmp.Equal(want, got, opts) {
+			t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opts))
+		}
+
+		// just codifying the behavior described in
+		// https://github.com/fluxcd/source-controller/issues/839
+		// Requested feature: flux OCI helm repositories notice when tags on remote registry change
+		// Should flux guys ever change their decision, this test should fail.
+		// P.S. Yuck
+		if err = helmPushChartToMyGithubRegistry(t, "6.1.6"); err != nil {
+			t.Fatal(err)
+		}
+		t.Cleanup(func() {
+			// Delete remote chart version at the end of the test so there are no side-effects.
+			if err = deleteChartFromMyGithubRegistry(t, "6.1.6"); err != nil {
+				t.Fatal(err)
+			}
+		})
+
+		t.Logf("Waiting 45 seconds...")
+		time.Sleep(45 * time.Second)
+
+		grpcContext3, cancel := context.WithTimeout(grpcContext, defaultContextTimeout)
+		defer cancel()
+
+		resp3, err := fluxPluginClient.GetAvailablePackageVersions(
+			grpcContext3, &corev1.GetAvailablePackageVersionsRequest{
+				AvailablePackageRef: &corev1.AvailablePackageReference{
+					Context: &corev1.Context{
+						Namespace: "default",
+					},
+					Identifier: repoName.Name + "/podinfo",
+				},
+			})
+		if err != nil {
+			t.Fatal(err)
+		}
+		if got, want := resp3, expected_versions_gfichtenholt_podinfo; !cmp.Equal(want, got, opts) {
+			t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opts))
+		}
+	})
 }
 
 func compareActualVsExpectedPackageRepositoryDetail(t *testing.T, actualDetail *corev1.GetPackageRepositoryDetailResponse, expectedDetail *corev1.GetPackageRepositoryDetailResponse) {
@@ -1367,15 +1540,25 @@ func compareActualVsExpectedPackageRepositoryDetail(t *testing.T, actualDetail *
 	}
 }
 
-func setUserManagedSecretsAndCleanup(t *testing.T, fluxPluginReposClient v1alpha1.FluxV2RepositoriesServiceClient, ctx context.Context, value bool) {
+func setUserManagedSecretsAndCleanup(t *testing.T, fluxPluginReposClient v1alpha1.FluxV2RepositoriesServiceClient, value bool) {
+	ctx, cancel := context.WithTimeout(context.Background(), defaultContextTimeout)
+	defer cancel()
+
 	oldValue, err := fluxPluginReposClient.SetUserManagedSecrets(
 		ctx, &v1alpha1.SetUserManagedSecretsRequest{Value: value})
 	if err != nil {
 		t.Fatal(err)
 	}
+
 	t.Cleanup(func() {
-		fluxPluginReposClient.SetUserManagedSecrets(
+		ctx, cancel = context.WithTimeout(context.Background(), defaultContextTimeout)
+		defer cancel()
+
+		_, err = fluxPluginReposClient.SetUserManagedSecrets(
 			ctx, &v1alpha1.SetUserManagedSecretsRequest{Value: oldValue.Value})
+		if err != nil {
+			t.Fatalf("Failed to reset user managed secrets flag back to [%t] due to: %+v", oldValue.Value, err)
+		}
 	})
 }
 

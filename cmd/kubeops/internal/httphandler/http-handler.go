@@ -11,8 +11,6 @@ import (
 	"strings"
 
 	"github.com/gorilla/mux"
-	"github.com/vmware-tanzu/kubeapps/cmd/apprepository-controller/pkg/apis/apprepository/v1alpha1"
-	"github.com/vmware-tanzu/kubeapps/cmd/kubeops/internal/auth"
 	"github.com/vmware-tanzu/kubeapps/pkg/kube"
 	corev1 "k8s.io/api/core/v1"
 	k8sErrors "k8s.io/apimachinery/pkg/api/errors"
@@ -25,19 +23,20 @@ type namespacesResponse struct {
 	Namespaces []corev1.Namespace `json:"namespaces"`
 }
 
-// appRepositoryResponse is used to marshal the JSON response
-type appRepositoryResponse struct {
-	AppRepository v1alpha1.AppRepository `json:"appRepository"`
-	Secret        corev1.Secret          `json:"secret"`
-}
-
-// appRepositoryListResponse is used to marshal the JSON response
-type appRepositoryListResponse struct {
-	AppRepositoryList v1alpha1.AppRepositoryList `json:"appRepository"`
-}
-
 type allowedResponse struct {
 	Allowed bool `json:"allowed"`
+}
+
+// tokenPrefix is the string preceding the token in the Authorization header.
+const tokenPrefix = "Bearer "
+
+// ExtractToken extracts the token from a correctly formatted Authorization header.
+func extractToken(headerValue string) string {
+	if strings.HasPrefix(headerValue, tokenPrefix) {
+		return headerValue[len(tokenPrefix):]
+	} else {
+		return ""
+	}
 }
 
 // JSONError returns an error code and a JSON response
@@ -97,244 +96,10 @@ func getHeaderNamespaces(req *http.Request, headerName, headerPattern string) ([
 	return namespaces, nil
 }
 
-// ListAppRepositories list app repositories
-func ListAppRepositories(handler kube.AuthHandler) func(w http.ResponseWriter, req *http.Request) {
-	return func(w http.ResponseWriter, req *http.Request) {
-		requestNamespace, requestCluster := getNamespaceAndCluster(req)
-		token := auth.ExtractToken(req.Header.Get("Authorization"))
-
-		clientset, err := handler.AsUser(token, requestCluster)
-		if err != nil {
-			returnK8sError(err, "list", "AppRepositories", w)
-			return
-		}
-
-		appRepos, err := clientset.ListAppRepositories(requestNamespace)
-		if err != nil {
-			returnK8sError(err, "list", "AppRepositories", w)
-			return
-		}
-		response := appRepositoryListResponse{
-			AppRepositoryList: *appRepos,
-		}
-		responseBody, err := json.Marshal(response)
-		if err != nil {
-			JSONError(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
-		_, err = w.Write(responseBody)
-		if err != nil {
-			return
-		}
-	}
-}
-
-// CreateAppRepository creates App Repository
-func CreateAppRepository(handler kube.AuthHandler) func(w http.ResponseWriter, req *http.Request) {
-	return func(w http.ResponseWriter, req *http.Request) {
-		requestNamespace, requestCluster := getNamespaceAndCluster(req)
-		token := auth.ExtractToken(req.Header.Get("Authorization"))
-
-		clientset, err := handler.AsUser(token, requestCluster)
-		if err != nil {
-			returnK8sError(err, "create", "AppRepository", w)
-			return
-		}
-
-		appRepo, err := clientset.CreateAppRepository(req.Body, requestNamespace)
-		if err != nil {
-			returnK8sError(err, "create", "AppRepository", w)
-			return
-		}
-		w.WriteHeader(http.StatusCreated)
-		response := appRepositoryResponse{
-			AppRepository: *appRepo,
-		}
-		responseBody, err := json.Marshal(response)
-		if err != nil {
-			JSONError(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
-		_, err = w.Write(responseBody)
-		if err != nil {
-			return
-		}
-	}
-}
-
-// UpdateAppRepository updates an App Repository
-func UpdateAppRepository(handler kube.AuthHandler) func(w http.ResponseWriter, req *http.Request) {
-	return func(w http.ResponseWriter, req *http.Request) {
-		requestNamespace, requestCluster := getNamespaceAndCluster(req)
-		token := auth.ExtractToken(req.Header.Get("Authorization"))
-
-		clientset, err := handler.AsUser(token, requestCluster)
-		if err != nil {
-			returnK8sError(err, "update", "AppRepository", w)
-			return
-		}
-
-		appRepo, err := clientset.UpdateAppRepository(req.Body, requestNamespace)
-		if err != nil {
-			returnK8sError(err, "update", "AppRepository", w)
-			return
-		}
-		w.WriteHeader(http.StatusOK)
-		response := appRepositoryResponse{
-			AppRepository: *appRepo,
-		}
-		responseBody, err := json.Marshal(response)
-		if err != nil {
-			JSONError(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
-		_, err = w.Write(responseBody)
-		if err != nil {
-			return
-		}
-	}
-}
-
-// RefreshAppRepository forces a refresh in a given apprepository (by updating resyncRequests property)
-func RefreshAppRepository(handler kube.AuthHandler) func(w http.ResponseWriter, req *http.Request) {
-	return func(w http.ResponseWriter, req *http.Request) {
-		requestNamespace, requestCluster := getNamespaceAndCluster(req)
-		repoName := mux.Vars(req)["name"]
-		token := auth.ExtractToken(req.Header.Get("Authorization"))
-
-		clientset, err := handler.AsUser(token, requestCluster)
-		if err != nil {
-			returnK8sError(err, "refresh", "AppRepository", w)
-			return
-		}
-
-		appRepo, err := clientset.RefreshAppRepository(repoName, requestNamespace)
-		if err != nil {
-			returnK8sError(err, "refresh", "AppRepository", w)
-			return
-		}
-		w.WriteHeader(http.StatusOK)
-		response := appRepositoryResponse{
-			AppRepository: *appRepo,
-		}
-		responseBody, err := json.Marshal(response)
-		if err != nil {
-			JSONError(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
-		_, err = w.Write(responseBody)
-		if err != nil {
-			return
-		}
-	}
-}
-
-// ValidateAppRepository returns a 200 if the connection to the AppRepo can be established
-func ValidateAppRepository(handler kube.AuthHandler) func(w http.ResponseWriter, req *http.Request) {
-	return func(w http.ResponseWriter, req *http.Request) {
-		requestNamespace, requestCluster := getNamespaceAndCluster(req)
-		token := auth.ExtractToken(req.Header.Get("Authorization"))
-
-		clientset, err := handler.AsUser(token, requestCluster)
-		if err != nil {
-			returnK8sError(err, "validate", "AppRepository", w)
-			return
-		}
-
-		res, err := clientset.ValidateAppRepository(req.Body, requestNamespace)
-		if err != nil {
-			returnK8sError(err, "validate", "AppRepository", w)
-			return
-		}
-		responseBody, err := json.Marshal(res)
-		if err != nil {
-			JSONError(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
-		_, err = w.Write(responseBody)
-		if err != nil {
-			return
-		}
-	}
-}
-
-// DeleteAppRepository deletes an App Repository
-func DeleteAppRepository(kubeHandler kube.AuthHandler) func(w http.ResponseWriter, req *http.Request) {
-	return func(w http.ResponseWriter, req *http.Request) {
-		requestNamespace, requestCluster := getNamespaceAndCluster(req)
-		repoName := mux.Vars(req)["name"]
-		token := auth.ExtractToken(req.Header.Get("Authorization"))
-
-		clientset, err := kubeHandler.AsUser(token, requestCluster)
-		if err != nil {
-			returnK8sError(err, "delete", "AppRepository", w)
-			return
-		}
-
-		err = clientset.DeleteAppRepository(repoName, requestNamespace)
-		if err != nil {
-			returnK8sError(err, "delete", "AppRepository", w)
-		}
-	}
-}
-
-// GetAppRepository gets an App Repository with a related secret if present.
-func GetAppRepository(kubeHandler kube.AuthHandler) func(w http.ResponseWriter, req *http.Request) {
-	return func(w http.ResponseWriter, req *http.Request) {
-		requestNamespace, requestCluster := getNamespaceAndCluster(req)
-		repoName := mux.Vars(req)["name"]
-		token := auth.ExtractToken(req.Header.Get("Authorization"))
-
-		clientset, err := kubeHandler.AsUser(token, requestCluster)
-		if err != nil {
-			returnK8sError(err, "get", "AppRepository", w)
-			return
-		}
-
-		appRepo, err := clientset.GetAppRepository(repoName, requestNamespace)
-		if err != nil {
-			returnK8sError(err, "get", "AppRepository", w)
-			return
-		}
-
-		response := appRepositoryResponse{
-			AppRepository: *appRepo,
-		}
-
-		auth := &appRepo.Spec.Auth
-		if auth != nil {
-			var secretSelector *corev1.SecretKeySelector
-			if auth.CustomCA != nil {
-				secretSelector = &auth.CustomCA.SecretKeyRef
-			} else if auth.Header != nil {
-				secretSelector = &auth.Header.SecretKeyRef
-			}
-			if secretSelector != nil {
-				secret, err := clientset.GetSecret(secretSelector.Name, requestNamespace)
-				if err != nil {
-					returnK8sError(err, "get", "Secret", w)
-					return
-				}
-				response.Secret = *secret
-			}
-		}
-
-		responseBody, err := json.Marshal(response)
-		if err != nil {
-			JSONError(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
-		_, err = w.Write(responseBody)
-		if err != nil {
-			return
-		}
-	}
-}
-
 // GetNamespaces return the list of namespaces
 func GetNamespaces(kubeHandler kube.AuthHandler) func(w http.ResponseWriter, req *http.Request) {
 	return func(w http.ResponseWriter, req *http.Request) {
-		token := auth.ExtractToken(req.Header.Get("Authorization"))
+		token := extractToken(req.Header.Get("Authorization"))
 		_, requestCluster := getNamespaceAndCluster(req)
 
 		options := kubeHandler.GetOptions()
@@ -402,7 +167,7 @@ func GetOperatorLogo(kubeHandler kube.AuthHandler) func(w http.ResponseWriter, r
 // CanI returns a boolean if the user can do the given action
 func CanI(kubeHandler kube.AuthHandler) func(w http.ResponseWriter, req *http.Request) {
 	return func(w http.ResponseWriter, req *http.Request) {
-		token := auth.ExtractToken(req.Header.Get("Authorization"))
+		token := extractToken(req.Header.Get("Authorization"))
 		_, requestCluster := getNamespaceAndCluster(req)
 
 		clientset, err := kubeHandler.AsUser(token, requestCluster)
@@ -448,14 +213,6 @@ func SetupDefaultRoutes(r *mux.Router, namespaceHeaderName, namespaceHeaderPatte
 	//TODO(agamez): move these endpoints to a separate plugin when possible
 	r.Methods("POST").Path("/clusters/{cluster}/can-i").Handler(http.HandlerFunc(CanI(backendHandler)))
 	r.Methods("GET").Path("/clusters/{cluster}/namespaces").Handler(http.HandlerFunc(GetNamespaces(backendHandler)))
-	r.Methods("GET").Path("/clusters/{cluster}/apprepositories").Handler(http.HandlerFunc(ListAppRepositories(backendHandler)))
-	r.Methods("GET").Path("/clusters/{cluster}/namespaces/{namespace}/apprepositories").Handler(http.HandlerFunc(ListAppRepositories(backendHandler)))
-	r.Methods("POST").Path("/clusters/{cluster}/namespaces/{namespace}/apprepositories").Handler(http.HandlerFunc(CreateAppRepository(backendHandler)))
-	r.Methods("POST").Path("/clusters/{cluster}/namespaces/{namespace}/apprepositories/validate").Handler(http.HandlerFunc(ValidateAppRepository(backendHandler)))
-	r.Methods("GET").Path("/clusters/{cluster}/namespaces/{namespace}/apprepositories/{name}").Handler(http.HandlerFunc(GetAppRepository(backendHandler)))
-	r.Methods("PUT").Path("/clusters/{cluster}/namespaces/{namespace}/apprepositories/{name}").Handler(http.HandlerFunc(UpdateAppRepository(backendHandler)))
-	r.Methods("POST").Path("/clusters/{cluster}/namespaces/{namespace}/apprepositories/{name}/refresh").Handler(http.HandlerFunc(RefreshAppRepository(backendHandler)))
-	r.Methods("DELETE").Path("/clusters/{cluster}/namespaces/{namespace}/apprepositories/{name}").Handler(http.HandlerFunc(DeleteAppRepository(backendHandler)))
 	r.Methods("GET").Path("/clusters/{cluster}/namespaces/{namespace}/operator/{name}/logo").Handler(http.HandlerFunc(GetOperatorLogo(backendHandler)))
 	return nil
 }
