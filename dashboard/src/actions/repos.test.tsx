@@ -25,6 +25,7 @@ import { PackageRepositoriesService } from "shared/PackageRepositoriesService";
 import PackagesService from "shared/PackagesService";
 import { initialState } from "shared/specs/mountWrapper";
 import { IPkgRepoFormData, IStoreState, NotFoundError, RepositoryStorageTypes } from "shared/types";
+import { PluginNames } from "shared/utils";
 import { getType } from "typesafe-actions";
 import actions from ".";
 import { convertPkgRepoDetailToSummary } from "./repos";
@@ -33,7 +34,10 @@ const { repos: repoActions } = actions;
 const mockStore = configureMockStore([thunk]);
 
 let store: any;
-const plugin = { name: "my.plugin", version: "0.0.1" } as Plugin;
+const plugin = { name: PluginNames.PACKAGES_HELM, version: "0.0.1" } as Plugin;
+const fluxPlugin = { name: PluginNames.PACKAGES_FLUX, version: "v1beta1" } as Plugin;
+const carvelPlugin = { name: PluginNames.PACKAGES_KAPP, version: "v1beta1" } as Plugin;
+
 const packageRepoRef = {
   identifier: "repo-abc",
   context: { cluster: "default", namespace: "default" },
@@ -65,19 +69,29 @@ const packageRepositoryDetail = {
 
 const kubeappsNamespace = "kubeapps-namespace";
 const globalReposNamespace = "kubeapps-repos-global";
+const carvelGlobalNamespace = "carvel-repos-global";
 
 beforeEach(() => {
   store = mockStore({
-    config: { kubeappsNamespace, globalReposNamespace },
+    config: {
+      ...initialState.config,
+      kubeappsNamespace,
+      globalReposNamespace,
+      carvelGlobalNamespace,
+    },
     clusters: {
+      ...initialState.clusters,
       currentCluster: "default",
       clusters: {
+        ...initialState.clusters.clusters,
         default: {
+          ...initialState.clusters.clusters[initialState.clusters.currentCluster],
           currentNamespace: kubeappsNamespace,
         },
       },
     },
-  });
+  } as Partial<IStoreState>);
+
   PackageRepositoriesService.getPackageRepositorySummaries = jest
     .fn()
     .mockImplementationOnce(() => {
@@ -318,7 +332,7 @@ describe("fetchRepoSummaries", () => {
       },
       {
         type: getType(repoActions.requestRepoSummaries),
-        payload: globalReposNamespace,
+        payload: "",
       },
       {
         type: getType(repoActions.receiveRepoSummaries),
@@ -356,7 +370,7 @@ describe("fetchRepoSummaries", () => {
       },
       {
         type: getType(repoActions.requestRepoSummaries),
-        payload: globalReposNamespace,
+        payload: "",
       },
       {
         type: getType(repoActions.receiveRepoSummaries),
@@ -492,6 +506,42 @@ describe("addRepo", () => {
     it("returns true (addRepoCMDAuth)", async () => {
       const res = await store.dispatch(addRepoCMDAuth);
       expect(res).toBe(true);
+    });
+
+    it("sets flux repos as global", async () => {
+      await store.dispatch(
+        repoActions.addRepo("my-namespace", {
+          ...pkgRepoFormData,
+          plugin: fluxPlugin as Plugin,
+        }),
+      );
+      expect(PackageRepositoriesService.addPackageRepository).toHaveBeenCalledWith(
+        "default",
+        "my-namespace",
+        {
+          ...pkgRepoFormData,
+          plugin: fluxPlugin,
+        },
+        false,
+      );
+    });
+
+    it("sets carvel repos as global if using the carvelGlobalNamespace", async () => {
+      await store.dispatch(
+        repoActions.addRepo(carvelGlobalNamespace, {
+          ...pkgRepoFormData,
+          plugin: carvelPlugin as Plugin,
+        }),
+      );
+      expect(PackageRepositoriesService.addPackageRepository).toHaveBeenCalledWith(
+        "default",
+        carvelGlobalNamespace,
+        {
+          ...pkgRepoFormData,
+          plugin: carvelPlugin,
+        },
+        false,
+      );
     });
   });
 
