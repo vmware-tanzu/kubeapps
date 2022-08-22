@@ -535,27 +535,26 @@ func TestKindClusterAvailablePackageEndpointsForOCI(t *testing.T) {
 		registryUrl string
 		secret      *apiv1.Secret
 	}{
-		/*
-			{
-				testName:    "Testing [" + github_podinfo_oci_registry_url + "] with basic auth secret",
-				registryUrl: github_podinfo_oci_registry_url,
-				// this is a secret for authentication with GitHub (ghcr.io)
-				//    personal access token ghp_... can be seen on https://github.com/settings/tokens
-				// and has "admin:repo_hook, delete_repo, repo" scopes
-				// one should be able to login successfully like this:
-				//   docker login ghcr.io -u $GITHUB_USER -p $GITHUB_TOKEN AND/OR
-				//   helm registry login ghcr.io -u $GITHUB_USER -p $GITHUB_TOKEN
-				secret: newBasicAuthSecret(types.NamespacedName{
-					Name:      "oci-repo-secret-" + randSeq(4),
-					Namespace: "default"},
-					ghUser,
-					ghToken,
-				),
-			},
-		*/
 		{
-			testName:    "Testing [" + github_podinfo_oci_registry_url + "] with dockerconfigjson secret",
-			registryUrl: github_podinfo_oci_registry_url,
+			testName:    "Testing [" + github_stefanprodan_podinfo_oci_registry_url + "] with basic auth secret",
+			registryUrl: github_stefanprodan_podinfo_oci_registry_url,
+			// this is a secret for authentication with GitHub (ghcr.io)
+			//    personal access token ghp_... can be seen on https://github.com/settings/tokens
+			// and has scopes:
+			// "admin:org, admin:repo_hook, delete:packages, delete_repo, repo, workflow, write:packages"
+			// one should be able to login successfully like this:
+			//   docker login ghcr.io -u $GITHUB_USER -p $GITHUB_TOKEN AND/OR
+			//   helm registry login ghcr.io -u $GITHUB_USER -p $GITHUB_TOKEN
+			secret: newBasicAuthSecret(types.NamespacedName{
+				Name:      "oci-repo-secret-" + randSeq(4),
+				Namespace: "default"},
+				ghUser,
+				ghToken,
+			),
+		},
+		{
+			testName:    "Testing [" + github_stefanprodan_podinfo_oci_registry_url + "] with dockerconfigjson secret",
+			registryUrl: github_stefanprodan_podinfo_oci_registry_url,
 			// this is a secret for authentication with GitHub (ghcr.io)
 			//    personal access token ghp_... can be seen on https://github.com/settings/tokens
 			// and has "admin:repo_hook, delete_repo, repo" scopes
@@ -568,7 +567,8 @@ func TestKindClusterAvailablePackageEndpointsForOCI(t *testing.T) {
 				"ghcr.io", ghUser, ghToken,
 			),
 		},
-		// TODO (gfichtenholt) TLS secret
+		// TODO (gfichtenholt) TLS secret with CA
+		// TODO (gfichtenholt) TLS secret with CA, pub, priv
 
 		/*
 			{
@@ -591,6 +591,16 @@ func TestKindClusterAvailablePackageEndpointsForOCI(t *testing.T) {
 				),
 			},
 		*/
+		{
+			testName:    "Testing [" + harbor_stefanprodan_podinfo_oci_registry_url + "] with basic auth secret",
+			registryUrl: harbor_stefanprodan_podinfo_oci_registry_url,
+			secret: newBasicAuthSecret(types.NamespacedName{
+				Name:      "oci-repo-secret-" + randSeq(4),
+				Namespace: "default"},
+				harbor_user,
+				harbor_pwd,
+			),
+		},
 	}
 
 	adminName := types.NamespacedName{
@@ -618,9 +628,7 @@ func TestKindClusterAvailablePackageEndpointsForOCI(t *testing.T) {
 				}
 			}
 
-			ctx, cancel := context.WithTimeout(grpcContext, defaultContextTimeout)
-			defer cancel()
-			setUserManagedSecretsAndCleanup(t, fluxPluginReposClient, ctx, true)
+			setUserManagedSecretsAndCleanup(t, fluxPluginReposClient, true)
 
 			if err := kubeAddHelmRepositoryAndCleanup(
 				t, repoName, "oci", tc.registryUrl, secretName, 0); err != nil {
@@ -631,7 +639,7 @@ func TestKindClusterAvailablePackageEndpointsForOCI(t *testing.T) {
 				t.Fatal(err)
 			}
 
-			grpcContext, cancel = context.WithTimeout(grpcContext, defaultContextTimeout)
+			grpcContext, cancel := context.WithTimeout(grpcContext, defaultContextTimeout)
 			defer cancel()
 
 			resp, err := fluxPluginClient.GetAvailablePackageSummaries(
@@ -693,7 +701,7 @@ func TestKindClusterAvailablePackageEndpointsForOCI(t *testing.T) {
 			compareActualVsExpectedAvailablePackageDetail(
 				t,
 				resp3.AvailablePackageDetail,
-				expected_detail_oci_stefanprodan_podinfo(repoName.Name).AvailablePackageDetail)
+				expected_detail_oci_stefanprodan_podinfo(repoName.Name, tc.registryUrl).AvailablePackageDetail)
 
 			// try a few older versions
 			grpcContext, cancel = context.WithTimeout(grpcContext, defaultContextTimeout)
@@ -707,7 +715,7 @@ func TestKindClusterAvailablePackageEndpointsForOCI(t *testing.T) {
 						},
 						Identifier: repoName.Name + "/podinfo",
 					},
-					PkgVersion: "6.1.5",
+					PkgVersion: "6.1.6",
 				})
 			if err != nil {
 				t.Fatal(err)
@@ -716,7 +724,7 @@ func TestKindClusterAvailablePackageEndpointsForOCI(t *testing.T) {
 			compareActualVsExpectedAvailablePackageDetail(
 				t,
 				resp4.AvailablePackageDetail,
-				expected_detail_oci_stefanprodan_podinfo_2(repoName.Name).AvailablePackageDetail)
+				expected_detail_oci_stefanprodan_podinfo_2(repoName.Name, tc.registryUrl).AvailablePackageDetail)
 		})
 	}
 }

@@ -13,17 +13,20 @@ import (
 	"helm.sh/helm/v3/pkg/registry"
 
 	// ORAS => OCI Registry AS Storage
+	// project home page: https://oras.land/
+	// releases: https://github.com/oras-project/oras-go/releases
 	orasregistryv2 "oras.land/oras-go/v2/registry"
 	orasregistryremotev2 "oras.land/oras-go/v2/registry/remote"
 	orasregistryauthv2 "oras.land/oras-go/v2/registry/remote/auth"
 )
 
 // This flavor of OCI lister Works with respect to those OCI registry vendors that implement
-// Docker Registry API V2 or OCI Distribution Specification. For example, GitHub (ghcr.io)
+// Docker Registry API V2 or OCI Distribution Specification. For example,
+// GitHub (ghcr.io) and harbor CR
 // References:
 // - https://docs.docker.com/registry/spec/api/#base
 // - https://github.com/opencontainers/distribution-spec/blob/main/spec.md#api
-func NewDockerRegistryApiV2RepositoryLister() OCIRepositoryLister {
+func NewDockerRegistryApiV2RepositoryLister() OCIChartRepositoryLister {
 	return &dockerRegistryApiV2RepositoryLister{}
 }
 
@@ -32,10 +35,10 @@ type dockerRegistryApiV2RepositoryLister struct {
 
 // ref https://github.com/distribution/distribution/blob/main/docs/spec/api.md#api-version-check
 // also https://github.com/oras-project/oras-go/blob/14422086e418/registry/remote/registry.go
-func (l *dockerRegistryApiV2RepositoryLister) IsApplicableFor(ociRegistry *OCIRegistry) (bool, error) {
-	log.Infof("+IsApplicableFor(%s)", ociRegistry.url.String())
+func (l *dockerRegistryApiV2RepositoryLister) IsApplicableFor(ociRepo *OCIChartRepository) (bool, error) {
+	log.Infof("+IsApplicableFor(%s)", ociRepo.url.String())
 
-	orasRegistry, err := newRemoteOrasRegistry(ociRegistry)
+	orasRegistry, err := newRemoteOrasRegistry(ociRepo)
 	if err != nil {
 		return false, err
 	} else {
@@ -45,52 +48,61 @@ func (l *dockerRegistryApiV2RepositoryLister) IsApplicableFor(ociRegistry *OCIRe
 			ping = fmt.Sprintf("%v", err)
 		}
 		log.Infof("ORAS v2 Registry [%s PlainHTTP=%t] PING: %s",
-			ociRegistry.url.String(), orasRegistry.PlainHTTP, ping)
+			ociRepo.url.String(), orasRegistry.PlainHTTP, ping)
 		return err == nil, err
 	}
 }
 
-// ref https://github.com/distribution/distribution/blob/main/docs/spec/api.md#listing-repositories
-func (l *dockerRegistryApiV2RepositoryLister) ListRepositoryNames(ociRegistry *OCIRegistry) ([]string, error) {
-	log.Infof("+ListRepositoryNames()")
+// given an OCIChartRepository instance, returns a list of repository names, e.g.
+// given an OCIChartRepository instance with url "oci://ghcr.io/stefanprodan/charts"
+//    may return ["stefanprodan/charts/podinfo", "stefanprodan/charts/podinfo-2"]
+// ref: https://github.com/distribution/distribution/blob/main/docs/spec/api.md#listing-repositories
+func (l *dockerRegistryApiV2RepositoryLister) ListRepositoryNames(ociRepo *OCIChartRepository) ([]string, error) {
+	log.Infof("+ListRepositoryNames(%s)", ociRepo.url.String())
 
-	orasRegistry, err := newRemoteOrasRegistry(ociRegistry)
+	orasRegistry, err := newRemoteOrasRegistry(ociRepo)
 	if err != nil {
 		return nil, err
 	} else {
+		// this is where we will start, e.g. "stefanprodan/charts"
+		startAt := strings.Trim(ociRepo.url.Path, "/")
+
+		repositoryList := []string{}
+
 		// this is the way to stop the loop in
 		// https://github.com/oras-project/oras-go/blob/14422086e41897a44cb706726e687d39dc728805/registry/remote/registry.go#L112
 		done := errors.New("(done) backstop")
 
 		fn := func(repos []string) error {
 			log.Infof("orasRegistry.Repositories fn: %s", repos)
-			return done
+			lastRepoMatch := false
+			for _, r := range repos {
+				if lastRepoMatch = strings.HasPrefix(r, startAt+"/"); lastRepoMatch {
+					repositoryList = append(repositoryList, r)
+				}
+			}
+			if !lastRepoMatch {
+				return done
+			} else {
+				return nil
+			}
 		}
 
-		// see https://github.com/vmware-tanzu/kubeapps/pull/4932#issuecomment-1164004999
-		// and https://github.com/oras-project/oras-go/issues/196
-		// TODO (gfichtenholt) need to append
-		// "?last=" + orasRegistry.Reference.Repository
-		// to req.Query so we don't start at the beggining of the alphabet
-
 		// impl refs:
-		// 1. https://github.com/oras-project/oras-go/blob/14422086e41897a44cb706726e687d39dc728805/registry/remote/registry.go#L105
+		// 1. https://github.com/oras-project/oras-go/blob/4660638096b4b4b5c368ce98cd7040485b5ad776/registry/remote/registry.go#L105
 		// 2. https://github.com/oras-project/oras-go/blob/14422086e41897a44cb706726e687d39dc728805/registry/remote/url.go#L43
-		err = orasRegistry.Repositories(context.Background(), fn)
-		log.Infof("ORAS Repositories returned: %v", err)
+		err = orasRegistry.Repositories(context.Background(), startAt, fn)
+		log.Infof("ORAS .Repositories() returned err: %v", err)
 		if err != nil && err != done {
 			return nil, err
 		}
-		//repositoryList := []string{}
-		//return repositoryList, nil
+		log.Infof("-ListRepositoryNames(%s): returned %s", ociRepo.url.String(), repositoryList)
+		return repositoryList, nil
 	}
-
-	// OLD
-	return []string{"stefanprodan/charts/podinfo"}, nil
 }
 
-func newRemoteOrasRegistry(ociRegistry *OCIRegistry) (*orasregistryremotev2.Registry, error) {
-	ref := strings.TrimPrefix(ociRegistry.url.String(), fmt.Sprintf("%s://", registry.OCIScheme))
+func newRemoteOrasRegistry(ociRepo *OCIChartRepository) (*orasregistryremotev2.Registry, error) {
+	ref := strings.TrimPrefix(ociRepo.url.String(), fmt.Sprintf("%s://", registry.OCIScheme))
 	parsedRef, err := orasregistryv2.ParseReference(ref)
 	if err != nil {
 		return nil, err
@@ -102,7 +114,7 @@ func newRemoteOrasRegistry(ociRegistry *OCIRegistry) (*orasregistryremotev2.Regi
 	orasRegistry.Client = &orasregistryauthv2.Client{
 		Header:     orasregistryauthv2.DefaultClient.Header.Clone(),
 		Cache:      orasregistryauthv2.DefaultCache,
-		Credential: ociRegistry.registryCredentialFn,
+		Credential: ociRepo.registryCredentialFn,
 	}
 	return orasRegistry, nil
 }

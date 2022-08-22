@@ -65,7 +65,7 @@ func (s *Server) AddPackageRepository(ctx context.Context, request *corev1.AddPa
 	// update secret with owner reference if needed
 	if pkgSecret != nil {
 		setOwnerReference(pkgSecret, pkgRepository)
-		pkgSecret, err = s.updateSecret(ctx, cluster, pkgSecret)
+		_, err = s.updateSecret(ctx, cluster, pkgSecret)
 		if err != nil {
 			return nil, statuserror.FromK8sError("update", "Secret", request.Name, err)
 		}
@@ -261,7 +261,7 @@ func (s *Server) UpdatePackageRepository(ctx context.Context, request *corev1.Up
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "unable to build the PackageRepository: %v", err)
 	}
-	pkgRepository, err = s.updatePkgRepository(ctx, cluster, namespace, pkgRepository)
+	_, err = s.updatePkgRepository(ctx, cluster, namespace, pkgRepository)
 	if err != nil {
 		return nil, statuserror.FromK8sError("update", "PackageRepository", name, err)
 	}

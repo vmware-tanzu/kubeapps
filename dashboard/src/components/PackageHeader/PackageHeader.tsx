@@ -8,7 +8,7 @@ import {
   PackageAppVersion,
 } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
 import React from "react";
-import placeholder from "../../placeholder.png";
+import placeholder from "icons/placeholder.svg";
 import "./PackageHeader.css";
 import PackageVersionSelector from "./PackageVersionSelector";
 

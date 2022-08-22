@@ -439,6 +439,7 @@ describe("clusterReducer", () => {
       kubeappsCluster: "",
       kubeappsNamespace: "kubeapps",
       globalReposNamespace: "kubeapps-global",
+      carvelGlobalNamespace: "kapp-controller-packaging-global",
       appVersion: "dev",
       authProxyEnabled: false,
       oauthLoginURI: "",
@@ -453,6 +454,7 @@ describe("clusterReducer", () => {
       remoteComponentsUrl: "",
       customAppViews: [],
       skipAvailablePackageDetails: false,
+      createNamespaceLabels: {},
     } as IConfig;
     it("re-writes the clusters to match the config.clusters state", () => {
       expect(

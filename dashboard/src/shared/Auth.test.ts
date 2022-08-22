@@ -233,6 +233,7 @@ describe("Auth", () => {
         kubeappsCluster: "default",
         kubeappsNamespace: "ns",
         globalReposNamespace: "ns-global",
+        carvelGlobalNamespace: "kapp-controller-packaging-global",
         appVersion: "2",
         clusters: [],
         featureFlags: { operators: false },
@@ -241,6 +242,7 @@ describe("Auth", () => {
         remoteComponentsUrl: "",
         customAppViews: [],
         skipAvailablePackageDetails: false,
+        createNamespaceLabels: {},
       });
 
       expect(mockedAssign).toBeCalledWith(oauthLogoutURI);
@@ -255,6 +257,7 @@ describe("Auth", () => {
         kubeappsCluster: "default",
         kubeappsNamespace: "ns",
         globalReposNamespace: "ns-global",
+        carvelGlobalNamespace: "kapp-controller-packaging-global",
         appVersion: "2",
         clusters: [],
         featureFlags: { operators: false },
@@ -263,6 +266,7 @@ describe("Auth", () => {
         remoteComponentsUrl: "",
         customAppViews: [],
         skipAvailablePackageDetails: false,
+        createNamespaceLabels: {},
       });
 
       expect(mockedAssign).toBeCalledWith("/oauth2/sign_out");

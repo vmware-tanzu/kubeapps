@@ -5,10 +5,9 @@ import AppList from "components/AppList/AppList";
 import AppUpgrade from "components/AppUpgrade";
 import AppView from "components/AppView";
 import Catalog from "components/Catalog/Catalog";
-import PackageView from "components/PackageHeader";
-import AppRepoList from "components/Config/AppRepoList";
 import DeploymentForm from "components/DeploymentForm";
 import LoadingWrapper from "components/LoadingWrapper";
+import PackageView from "components/PackageHeader";
 import React from "react";
 import {
   Redirect,
@@ -21,6 +20,10 @@ import {
 import { app } from "shared/url";
 import ApiDocs from "../../components/ApiDocs";
 import NotFound from "../../components/NotFound";
+import AlertGroup from "components/AlertGroup";
+import PkgRepoList from "components/Config/PkgRepoList/PkgRepoList";
+import { IFeatureFlags } from "shared/Config";
+
 // TODO(andresmgot): Containers should be no longer needed, replace them when possible
 import LoginFormContainer from "../../containers/LoginFormContainer";
 import OperatorInstanceCreateContainer from "../../containers/OperatorInstanceCreateContainer";
@@ -30,8 +33,6 @@ import OperatorNewContainer from "../../containers/OperatorNewContainer";
 import OperatorsListContainer from "../../containers/OperatorsListContainer";
 import OperatorViewContainer from "../../containers/OperatorViewContainer";
 import PrivateRouteContainer from "../../containers/PrivateRouteContainer";
-import { IFeatureFlags } from "shared/Config";
-import AlertGroup from "components/AlertGroup";
 
 type IRouteComponentPropsAndRouteProps = RouteProps & RouteComponentProps<any>;
 
@@ -51,7 +52,7 @@ const privateRoutes = {
     PackageView,
   "/c/:cluster/ns/:namespace/packages/:pluginName/:pluginVersion/:packageCluster/:packageNamespace/:packageId/versions/:packageVersion":
     PackageView,
-  "/c/:cluster/ns/:namespace/config/repos": AppRepoList,
+  "/c/:cluster/ns/:namespace/config/repos": PkgRepoList,
   "/docs": ApiDocs,
 } as const;
 

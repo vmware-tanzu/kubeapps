@@ -36,6 +36,7 @@ const makeStore = (
     kubeappsCluster: "",
     kubeappsNamespace: "",
     globalReposNamespace: "",
+    carvelGlobalNamespace: "",
     appVersion: "",
     oauthLogoutURI: "",
     featureFlags: { operators: false },
@@ -45,6 +46,7 @@ const makeStore = (
     remoteComponentsUrl: "",
     customAppViews: [],
     skipAvailablePackageDetails: false,
+    createNamespaceLabels: {},
   };
   const clusters: IClustersState = {
     currentCluster: "default",
