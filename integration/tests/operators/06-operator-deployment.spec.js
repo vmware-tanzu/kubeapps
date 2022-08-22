@@ -14,11 +14,14 @@ test("Deploys an Operator", async ({ page }) => {
 
   // Go to operators page
   await page.goto(utils.getUrl("/#/c/default/ns/kubeapps/operators"));
-  await page.waitForTimeout(10000);
+  await page.waitForFunction('document.querySelector("cds-progress-circle") === null');
 
   // Select operator to deploy
   await page.locator("input#search").fill("prometheus");
   await page.waitForTimeout(3000);
+  // using locator with "has" instead of "hasText" to search by this exact name (and exclude others like "Red Hat, Inc.")
+  await page.locator("cds-checkbox", { has: page.locator('text="Red Hat"') }).click();
+
   await page.click('a:has-text("prometheus")');
   await page.click('cds-button:has-text("Deploy") >> nth=0');
   await page.click('cds-button:has-text("Deploy")');
