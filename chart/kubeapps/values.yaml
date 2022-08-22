@@ -204,7 +204,7 @@ frontend:
   image:
     registry: docker.io
     repository: bitnami/nginx
-    tag: 1.23.1-debian-11-r7
+    tag: 1.23.1-debian-11-r10
     ## Specify a imagePullPolicy
     ## Defaults to 'Always' if image tag is 'latest', else set to 'IfNotPresent'
     ## ref: https://kubernetes.io/docs/user-guide/images/#pre-pulling-images
@@ -1428,7 +1428,7 @@ authProxy:
   image:
     registry: docker.io
     repository: bitnami/oauth2-proxy
-    tag: 7.3.0-debian-11-r22
+    tag: 7.3.0-debian-11-r25
     ## Specify a imagePullPolicy
     ## Defaults to 'Always' if image tag is 'latest', else set to 'IfNotPresent'
     ## ref: https://kubernetes.io/docs/user-guide/images/#pre-pulling-images
@@ -1725,7 +1725,7 @@ rbac:
 testImage:
   registry: docker.io
   repository: bitnami/nginx
-  tag: 1.23.1-debian-11-r7
+  tag: 1.23.1-debian-11-r10
   ## Specify a imagePullPolicy
   ## Defaults to 'Always' if image tag is 'latest', else set to 'IfNotPresent'
   ## ref: https://kubernetes.io/docs/user-guide/images/#pre-pulling-images
