@@ -49,7 +49,11 @@ function PkgRepoList() {
   // so calling several times to refetchRepos would run the code inside, even
   // if the dependencies do not change.
   const refetchRepos: () => void = useCallback(() => {
-    if (!namespace || !supportedCluster || namespace === globalReposNamespace) {
+    if (
+      !namespace ||
+      !supportedCluster ||
+      [globalReposNamespace, carvelGlobalNamespace].includes(namespace)
+    ) {
       // All Namespaces. Global namespace or other cluster, show global repos only
       dispatch(actions.repos.fetchRepoSummaries(""));
       return () => {};
@@ -57,7 +61,7 @@ function PkgRepoList() {
     // In other case, fetch global and namespace repos
     dispatch(actions.repos.fetchRepoSummaries(namespace, true));
     return () => {};
-  }, [dispatch, supportedCluster, namespace, globalReposNamespace]);
+  }, [dispatch, supportedCluster, namespace, globalReposNamespace, carvelGlobalNamespace]);
 
   useEffect(() => {
     refetchRepos();
@@ -232,7 +236,7 @@ function PkgRepoList() {
                       Repository" button to create one.
                     </p>
                   )}
-                  {namespace !== globalReposNamespace && (
+                  {![globalReposNamespace, carvelGlobalNamespace].includes(namespace) && (
                     <>
                       <h3>Namespaced Repositories: {namespace}</h3>
                       <p>

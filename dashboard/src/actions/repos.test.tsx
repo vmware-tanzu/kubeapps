@@ -329,7 +329,7 @@ describe("fetchRepoSummaries", () => {
       },
       {
         type: getType(repoActions.requestRepoSummaries),
-        payload: globalReposNamespace,
+        payload: "",
       },
       {
         type: getType(repoActions.receiveRepoSummaries),
@@ -367,7 +367,7 @@ describe("fetchRepoSummaries", () => {
       },
       {
         type: getType(repoActions.requestRepoSummaries),
-        payload: globalReposNamespace,
+        payload: "",
       },
       {
         type: getType(repoActions.receiveRepoSummaries),
