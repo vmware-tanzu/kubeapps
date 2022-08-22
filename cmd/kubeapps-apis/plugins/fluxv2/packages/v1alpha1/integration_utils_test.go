@@ -87,6 +87,7 @@ const (
 	// gets setup by kind-cluster-setup.sh
 	github_stefanprodan_podinfo_oci_registry_url = "oci://ghcr.io/gfichtenholt/stefanprodan-podinfo-clone"
 	harbor_stefanprodan_podinfo_oci_registry_url = "oci://demo.goharbor.io/stefanprodan-podinfo-clone"
+	gcp_stefanprodan_podinfo_oci_registry_url    = "oci://us-west1-docker.pkg.dev/vmware-kubeapps-ci/stefanprodan-podinfo-clone/podinfo"
 
 	// the URL of local in cluster helm registry. Gets deployed via ./kind-cluster-setup.sh
 	// in_cluster_oci_registry_url = "oci://registry-app-svc.default.svc.cluster.local:5000/helm-charts"
@@ -111,7 +112,7 @@ func checkEnv(t *testing.T) (fluxplugin.FluxV2PackagesServiceClient, fluxplugin.
 	}
 
 	if !runTests {
-		t.Skipf("skipping flux plugin integration tests because environment variable %q not set to be true", envVarFluxIntegrationTests)
+		t.Skipf("skipping flux plugin integration tests because environment variable [%q] not set to be true", envVarFluxIntegrationTests)
 		return nil, nil, nil
 	} else {
 		if up, err := isLocalKindClusterUp(t); err != nil || !up {
