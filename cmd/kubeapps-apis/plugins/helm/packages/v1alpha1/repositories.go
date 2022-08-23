@@ -251,8 +251,10 @@ func (s *Server) mapToPackageRepositoryDetail(source *apprepov1alpha1.AppReposit
 // Using owner references on the secret so that it can be
 // (1) cleaned up automatically and/or
 // (2) enable some control (ie. if I add a secret manually
-//   via kubectl before running kubeapps, it won't get deleted just
-//   because Kubeapps is deleting it)?
+//
+//	via kubectl before running kubeapps, it won't get deleted just
+//	because Kubeapps is deleting it)?
+//
 // See https://github.com/vmware-tanzu/kubeapps/pull/4630#discussion_r861446394 for details
 func (s *Server) setOwnerReferencesForRepoSecret(
 	ctx context.Context,
@@ -500,6 +502,7 @@ func (s *Server) GetPkgRepositories(ctx context.Context, cluster, namespace stri
 	if err != nil {
 		return nil, err
 	}
+	// TODO(agamez): handle permission denied scenario when listing w/o namespace, which would need a ClusterRole
 	unstructured, err := resource.List(ctx, metav1.ListOptions{})
 	if err != nil {
 		return nil, err

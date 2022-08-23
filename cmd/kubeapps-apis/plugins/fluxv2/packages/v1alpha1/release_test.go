@@ -279,8 +279,6 @@ func TestGetInstalledPackageSummariesWithPagination(t *testing.T) {
 			t.Fatalf("got: %+v, want: %+v, err: %+v", got, want, err)
 		}
 
-		t.Logf("got response: [%s]", response1.InstalledPackageSummaries[0].Name)
-
 		opts := cmpopts.IgnoreUnexported(
 			corev1.GetInstalledPackageSummariesResponse{},
 			corev1.InstalledPackageSummary{},

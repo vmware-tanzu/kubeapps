@@ -9,6 +9,7 @@ import { IConfigState } from "reducers/config";
 import configureMockStore from "redux-mock-store";
 import thunk from "redux-thunk";
 import { SupportedThemes } from "shared/Config";
+import { IStoreState } from "shared/types";
 import LoginForm from "./LoginFormContainer";
 
 const mockStore = configureMockStore([thunk]);
@@ -36,6 +37,7 @@ const makeStore = (
     kubeappsCluster: "",
     kubeappsNamespace: "",
     globalReposNamespace: "",
+    carvelGlobalNamespace: "",
     appVersion: "",
     oauthLogoutURI: "",
     featureFlags: { operators: false },
@@ -57,7 +59,7 @@ const makeStore = (
       },
     },
   };
-  return mockStore({ auth, config, clusters });
+  return mockStore({ auth, config, clusters } as Partial<IStoreState>);
 };
 
 const emptyLocation: Location = {
