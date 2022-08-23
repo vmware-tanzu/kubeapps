@@ -6,6 +6,8 @@ import configureMockStore from "redux-mock-store";
 import thunk from "redux-thunk";
 import { Auth } from "shared/Auth";
 import Namespace, * as NS from "shared/Namespace";
+import { initialState } from "shared/specs/mountWrapper";
+import { IStoreState } from "shared/types";
 import { getType } from "typesafe-actions";
 import actions from ".";
 
@@ -35,12 +37,14 @@ beforeEach(() => {
 
   store = mockStore({
     auth: {
+      ...initialState.auth,
       state,
     },
     config: {
+      ...initialState.config,
       oauthLogoutURI: "/log/out",
     },
-  });
+  } as Partial<IStoreState>);
 });
 
 afterEach(() => {

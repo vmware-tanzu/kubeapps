@@ -21,7 +21,8 @@ import (
 )
 
 // This flavor of OCI lister Works with respect to those OCI registry vendors that implement
-// Docker Registry API V2 or OCI Distribution Specification. For example, GitHub (ghcr.io)
+// Docker Registry API V2 or OCI Distribution Specification. For example,
+// GitHub (ghcr.io) and harbor CR
 // References:
 // - https://docs.docker.com/registry/spec/api/#base
 // - https://github.com/opencontainers/distribution-spec/blob/main/spec.md#api
@@ -68,20 +69,23 @@ func (l *dockerRegistryApiV2RepositoryLister) ListRepositoryNames(ociRepo *OCICh
 
 		repositoryList := []string{}
 
+		// this is the way to stop the loop in
+		// https://github.com/oras-project/oras-go/blob/14422086e41897a44cb706726e687d39dc728805/registry/remote/registry.go#L112
 		done := errors.New("(done) backstop")
 
 		fn := func(repos []string) error {
 			log.Infof("orasRegistry.Repositories fn: %s", repos)
+			lastRepoMatch := false
 			for _, r := range repos {
-				if strings.HasPrefix(r, startAt+"/") {
+				if lastRepoMatch = strings.HasPrefix(r, startAt+"/"); lastRepoMatch {
 					repositoryList = append(repositoryList, r)
-				} else {
-					// this is the way to stop the loop in
-					// https://github.com/oras-project/oras-go/blob/14422086e41897a44cb706726e687d39dc728805/registry/remote/registry.go#L112
-					return done
 				}
 			}
-			return nil
+			if !lastRepoMatch {
+				return done
+			} else {
+				return nil
+			}
 		}
 
 		// impl refs:

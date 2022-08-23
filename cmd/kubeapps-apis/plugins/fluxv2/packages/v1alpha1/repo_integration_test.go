@@ -202,6 +202,11 @@ func TestKindClusterAddPackageRepository(t *testing.T) {
 		t.Fatalf("Environment variables GITHUB_USER and GITHUB_TOKEN need to be set to run this test")
 	}
 
+	// TODO: probably requires TLS
+	gcp_host := "us-west1-docker.pkg.dev"
+	gcp_user := ""
+	gcp_pwd := ""
+
 	testCases := []struct {
 		testName                 string
 		request                  *corev1.AddPackageRepositoryRequest
@@ -309,6 +314,18 @@ func TestKindClusterAddPackageRepository(t *testing.T) {
 			expectedResponse:   add_repo_expected_resp_10,
 			expectedStatusCode: codes.OK,
 			userManagedSecrets: true,
+		},
+		{
+			testName:           "test add OCI repo from harbor registry with dockerconfigjson secret (kubeapps managed)",
+			request:            add_repo_req_27(harbor_host, harbor_user, harbor_pwd),
+			expectedResponse:   add_repo_expected_resp_11,
+			expectedStatusCode: codes.OK,
+		},
+		{
+			testName:           "test add OCI repo from GCP with dockerconfigjson secret (kubeapps managed)",
+			request:            add_repo_req_28(gcp_host, gcp_user, gcp_pwd),
+			expectedResponse:   add_repo_expected_resp_11,
+			expectedStatusCode: codes.OK,
 		},
 	}
 
@@ -495,7 +512,7 @@ func TestKindClusterGetPackageRepositoryDetail(t *testing.T) {
 			expectedResponse:   get_repo_detail_resp_17,
 		},
 		{
-			testName: "get details for OCI repo with docker config json cred",
+			testName: "get details for OCI repo hosted on github with docker config json cred",
 			request:  get_repo_detail_req_15,
 			repoName: "my-podinfo-15",
 			repoType: "oci",
@@ -506,6 +523,19 @@ func TestKindClusterGetPackageRepositoryDetail(t *testing.T) {
 			}, "ghcr.io", ghUser, ghToken),
 			expectedStatusCode: codes.OK,
 			expectedResponse:   get_repo_detail_resp_18,
+		},
+		{
+			testName: "get details for OCI repo hosted on harbor with docker config json cred",
+			request:  get_repo_detail_req_16,
+			repoName: "my-podinfo-16",
+			repoType: "oci",
+			repoUrl:  harbor_stefanprodan_podinfo_oci_registry_url,
+			existingSecret: newDockerConfigJsonSecret(types.NamespacedName{
+				Name:      "secret-1",
+				Namespace: "TBD",
+			}, harbor_host, harbor_user, harbor_pwd),
+			expectedStatusCode: codes.OK,
+			expectedResponse:   get_repo_detail_resp_20,
 		},
 	}
 
@@ -688,7 +718,7 @@ func TestKindClusterGetPackageRepositorySummaries(t *testing.T) {
 			unauthorized: true,
 		},
 		{
-			testName: "summaries from OCI repo",
+			testName: "summaries from OCI repo hosted on ghcr.io",
 			request: &corev1.GetPackageRepositorySummariesRequest{
 				Context: &corev1.Context{},
 			},
@@ -705,6 +735,28 @@ func TestKindClusterGetPackageRepositorySummaries(t *testing.T) {
 				PackageRepositorySummaries: []*corev1.PackageRepositorySummary{
 					get_summaries_summary_6(types.NamespacedName{
 						Name:      "podinfo-13",
+						Namespace: ns1}),
+				},
+			},
+		},
+		{
+			testName: "summaries from OCI repo hosted on harbor CR",
+			request: &corev1.GetPackageRepositorySummariesRequest{
+				Context: &corev1.Context{},
+			},
+			existingRepos: []repoSpec{
+				{
+					name: "podinfo-14",
+					ns:   ns1,
+					typ:  "oci",
+					url:  harbor_stefanprodan_podinfo_oci_registry_url,
+				},
+			},
+			expectedStatusCode: codes.OK,
+			expectedResponse: &corev1.GetPackageRepositorySummariesResponse{
+				PackageRepositorySummaries: []*corev1.PackageRepositorySummary{
+					get_summaries_summary_7(types.NamespacedName{
+						Name:      "podinfo-14",
 						Namespace: ns1}),
 				},
 			},
@@ -1064,9 +1116,7 @@ func TestKindClusterDeletePackageRepository(t *testing.T) {
 			expectedStatusCode: codes.PermissionDenied,
 			unauthorized:       true,
 		},
-		{ //TODO rewrite this test to use AddPackageRepository
-			//Instead of kubeAddHelmRepository so we don't need to copy
-			//production code bizness logic here
+		{
 			name:     "delete repo also deletes the corresponding secret in kubeapps managed env",
 			request:  delete_repo_req_6,
 			repoName: "my-podinfo-4",
@@ -1434,11 +1484,6 @@ func TestKindClusterAddTagsToOciRepository(t *testing.T) {
 			t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opts))
 		}
 
-		// just codifying the behavior described in
-		// https://github.com/fluxcd/source-controller/issues/839
-		// Requested feature: flux OCI helm repositories notice when tags on remote registry change
-		// Should flux guys ever change their decision, this test should fail.
-		// P.S. Yuck
 		if err = helmPushChartToMyGithubRegistry(t, "6.1.6"); err != nil {
 			t.Fatal(err)
 		}
@@ -1467,7 +1512,7 @@ func TestKindClusterAddTagsToOciRepository(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		if got, want := resp3, expected_versions_gfichtenholt_podinfo; !cmp.Equal(want, got, opts) {
+		if got, want := resp3, expected_versions_gfichtenholt_podinfo_3; !cmp.Equal(want, got, opts) {
 			t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opts))
 		}
 	})

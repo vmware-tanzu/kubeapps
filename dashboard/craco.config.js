@@ -8,7 +8,11 @@ module.exports = {
   webpack: {
     configure: {
       plugins: [
-        new NodePolyfillPlugin(), // add the required polyfills (not included in webpack 5)
+        // add the required polyfills (not included in webpack 5)
+        new NodePolyfillPlugin({
+          // Allow using console.log
+          excludeAliases: ['console'],
+        }),
         new webpack.ProvidePlugin({
           process: 'process/browser.js',
           Buffer: ['buffer', 'Buffer'],

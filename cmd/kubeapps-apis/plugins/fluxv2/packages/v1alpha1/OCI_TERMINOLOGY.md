@@ -51,7 +51,6 @@ The registry reference basename is inferred from the chart's name, and the tag i
 
 Certain registries require the repository and/or namespace (if specified) to be created beforehand
 ```
-
 From [helm HIPS spec](https://github.com/helm/community/blob/main/hips/hip-0006.md#4-chart-names--oci-reference-basenames):
 ```
 To keep things simple, the basename (the last segment of the URL path) on a registry reference should be equivalent to the chart name.
@@ -111,6 +110,21 @@ References:
   - https://docs.github.com/en/rest/packages
   - https://docs.github.com/en/packages/working-with-a-github-packages-registry/working-with-the-container-registry
   - https://github.com/gfichtenholt?tab=packages
+
+
+## Harbor Container Registry `demo.goharbor.io` v2.5.0
+Like ghcr.io, appears to support 
+[Docker Registry HTTP API V2](https://github.com/distribution/distribution/blob/main/docs/spec/api.md#listing-repositories) for listing of repostories with one caveat:
+  - suppose I am looking for list of repository names that have prefix `'stefanprodan-podinfo-clone'`.
+    To do this, I pass in a parameter startAt `'stefanprodan-podinfo-clone'` to ORAS v2 libraries (see `docker_reg_v2_repo_lister.go`) and I get back this list:
+    ```
+    [1uoih/ap-alertmanager 1uoih/ap-astro-ui 1uoih/ap-base 1uoih/ap-cli-install 1uoih/ap-commander 1uoih/ap-configmap-reloader 1uoih/ap-curator 1uoih/ap-db-bootstrapper 1uoih/ap-default-backend 1uoih/ap-elasticsearch 1uoih/ap-elasticsearch-exporter 1uoih/ap-grafana 1uoih/ap-houston-api 1uoih/ap-kibana 1uoih/ap-kube-state 1uoih/ap-nats-exporter 1uoih/ap-nats-server 1uoih/ap-nats-streaming 1uoih/ap-nginx 1uoih/ap-nginx-es 1uoih/ap-node-exporter 1uoih/ap-postgresql 1uoih/ap-prometheus 1uoih/ap-registry aaa/bb/ccv.a-prod al/aaa al/aalllaa al/ahaha al/alllaa al/blabla al/ddd al/dsdsd al/fff al/hehe al/mammamia al/pupeczka al/siup fs8v0/ap-alertmanager fs8v0/ap-astro-ui fs8v0/ap-base fs8v0/ap-cli-install fs8v0/ap-commander fs8v0/ap-configmap-reloader fs8v0/ap-curator fs8v0/ap-db-bootstrapper fs8v0/ap-default-backend fs8v0/ap-elasticsearch fs8v0/ap-elasticsearch-exporter fs8v0/ap-grafana fs8v0/ap-houston-api fs8v0/ap-kibana fs8v0/ap-kube-state fs8v0/ap-nats-exporter fs8v0/ap-nats-server fs8v0/ap-nats-streaming fs8v0/ap-nginx fs8v0/ap-nginx-es fs8v0/ap-node-exporter fs8v0/ap-postgresql fs8v0/ap-prometheus fs8v0/ap-registry hello/awesome-redis library/harbor-portal ocis/ocis oioi/test-image oioi/test-image2 privatetest/linuxserver/emby secure_project/nginx sriniharbor/ap-airflow-dev stefanprodan-podinfo-clone/podinfo tce/harbor tce/main techedu/alpine test/test test/test1 test/test2 wrj/redis-image wrj/ubuntu-image]
+    ```
+    Notice that list does not really start with `'stefanprodan-podinfo-clone'`. The response does contain `stefanprodan-podinfo-clone/podinfo` but I am having some concerns why it works the way it does. For comparison, same scenario w.r.t. ghcr.io gives the following response: 
+    ```
+    [stefanprodan-podinfo-clone/podinfo gfoidl/datacompression/dotnet-gnuplot5 gfoidl-Tests/Vue_Server_Test/web-app gforestier2000/simple-mariadb-ci-cd gforien/dockeragent gforien/reas gforien/webapp-nodejs gfw404/scripts/jd_scripts gg-martins091/forgottenserver/forgottenserver 
+    ... 
+    ghcr-library/golang]
 
 ---
 Here is probably the most confusing part of the whole document:

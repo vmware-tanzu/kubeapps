@@ -7,6 +7,7 @@ import { Helmet } from "react-helmet";
 import * as ReactRedux from "react-redux";
 import { SupportedThemes } from "shared/Config";
 import { defaultStore, getStore, mountWrapper } from "shared/specs/mountWrapper";
+import { IStoreState } from "shared/types";
 import HeadManager from "./HeadManager";
 
 let spyOnUseDispatch: jest.SpyInstance;
@@ -40,7 +41,7 @@ it("should use the light theme by default", () => {
 
 it("should use the dark theme", () => {
   mountWrapper(
-    getStore({ config: { theme: SupportedThemes.dark } }),
+    getStore({ config: { theme: SupportedThemes.dark } } as Partial<IStoreState>),
     <HeadManager>
       <></>
     </HeadManager>,

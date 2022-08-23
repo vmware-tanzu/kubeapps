@@ -4,6 +4,7 @@
 import ReactDiffViewer from "react-diff-viewer";
 import { SupportedThemes } from "shared/Config";
 import { defaultStore, getStore, mountWrapper } from "shared/specs/mountWrapper";
+import { IStoreState } from "shared/types";
 import Differential from "./Differential";
 
 it("should render a diff between two strings", () => {
@@ -37,7 +38,7 @@ it("sets light theme by default", () => {
 
 it("changes theme", () => {
   const wrapper = mountWrapper(
-    getStore({ config: { theme: SupportedThemes.dark } }),
+    getStore({ config: { theme: SupportedThemes.dark } } as Partial<IStoreState>),
     <Differential oldValues="foo" newValues="bar" emptyDiffElement={<span>empty</span>} />,
   );
   expect(wrapper.find(ReactDiffViewer).prop("useDarkTheme")).toBe(true);

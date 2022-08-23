@@ -26,6 +26,8 @@ const defaultProps = {
   namespace: "default",
   cluster: "default",
   kubeappsNamespace: "kubeapps",
+  globalReposNamespace: "kubeapps",
+  carvelGlobalNamespace: "carvel-global",
 };
 
 const defaultState = {
@@ -106,7 +108,7 @@ it("disables the submit button while loading", async () => {
       getStore({
         ...defaultState,
         repos: { ...defaultState.repos, isFetching: true } as IPackageRepositoryState,
-      }),
+      } as Partial<IStoreState>),
       <PkgRepoForm {...defaultProps} />,
     );
   });
@@ -153,7 +155,7 @@ it("shows an error creating a repo", async () => {
         repos: {
           errors: { create: new Error("boom!") },
         } as IPackageRepositoryState,
-      }),
+      } as Partial<IStoreState>),
       <PkgRepoForm {...defaultProps} />,
     );
   });
@@ -168,7 +170,7 @@ it("shows an error deleting a repo", async () => {
         repos: {
           errors: { delete: new Error("boom!") },
         } as IPackageRepositoryState,
-      }),
+      } as Partial<IStoreState>),
       <PkgRepoForm {...defaultProps} />,
     );
   });
@@ -183,7 +185,7 @@ it("shows an error fetching a repo", async () => {
         repos: {
           errors: { fetch: new Error("boom!") },
         } as IPackageRepositoryState,
-      }),
+      } as Partial<IStoreState>),
       <PkgRepoForm {...defaultProps} />,
     );
   });
@@ -198,7 +200,7 @@ it("shows an error updating a repo", async () => {
         repos: {
           errors: { update: new Error("boom!") },
         } as IPackageRepositoryState,
-      }),
+      } as Partial<IStoreState>),
       <PkgRepoForm {...defaultProps} />,
     );
   });
@@ -551,7 +553,7 @@ describe("when the repository info is already populated", () => {
         getStore({
           ...defaultState,
           repos: { ...defaultState.repos, repoDetail: testRepo } as IPackageRepositoryState,
-        }),
+        } as Partial<IStoreState>),
         <PkgRepoForm {...defaultProps} packageRepoRef={packageRepoRef} />,
       );
     });
@@ -574,7 +576,7 @@ describe("when the repository info is already populated", () => {
         getStore({
           ...defaultState,
           repos: { ...defaultState.repos, repoDetail: testRepo } as IPackageRepositoryState,
-        }),
+        } as Partial<IStoreState>),
         <PkgRepoForm {...defaultProps} packageRepoRef={packageRepoRef} />,
       );
     });
@@ -602,7 +604,7 @@ describe("when the repository info is already populated", () => {
         getStore({
           ...defaultState,
           repos: { ...defaultState.repos, repoDetail: testRepo } as IPackageRepositoryState,
-        }),
+        } as Partial<IStoreState>),
         <PkgRepoForm {...defaultProps} packageRepoRef={packageRepoRef} />,
       );
     });
@@ -631,7 +633,7 @@ describe("when the repository info is already populated", () => {
         getStore({
           ...defaultState,
           repos: { ...defaultState.repos, repoDetail: testRepo } as IPackageRepositoryState,
-        }),
+        } as Partial<IStoreState>),
         <PkgRepoForm {...defaultProps} packageRepoRef={packageRepoRef} />,
       );
     });
@@ -654,7 +656,7 @@ describe("when the repository info is already populated", () => {
         getStore({
           ...defaultState,
           repos: { ...defaultState.repos, repoDetail: testRepo } as IPackageRepositoryState,
-        }),
+        } as Partial<IStoreState>),
         <PkgRepoForm {...defaultProps} packageRepoRef={packageRepoRef} />,
       );
     });
@@ -677,7 +679,7 @@ describe("when the repository info is already populated", () => {
         getStore({
           ...defaultState,
           repos: { ...defaultState.repos, repoDetail: testRepo } as IPackageRepositoryState,
-        }),
+        } as Partial<IStoreState>),
         <PkgRepoForm {...defaultProps} packageRepoRef={packageRepoRef} />,
       );
     });
@@ -695,7 +697,7 @@ describe("when the repository info is already populated", () => {
         getStore({
           ...defaultState,
           repos: { ...defaultState.repos, repoDetail: testRepo } as IPackageRepositoryState,
-        }),
+        } as Partial<IStoreState>),
         <PkgRepoForm {...defaultProps} packageRepoRef={packageRepoRef} />,
       );
     });
@@ -714,7 +716,7 @@ describe("when the repository info is already populated", () => {
           getStore({
             ...defaultState,
             repos: { ...defaultState.repos, repoDetail: testRepo } as IPackageRepositoryState,
-          }),
+          } as Partial<IStoreState>),
           <PkgRepoForm {...defaultProps} packageRepoRef={packageRepoRef} />,
         );
       });
@@ -736,7 +738,7 @@ describe("when the repository info is already populated", () => {
           getStore({
             ...defaultState,
             repos: { ...defaultState.repos, repoDetail: testRepo } as IPackageRepositoryState,
-          }),
+          } as Partial<IStoreState>),
           <PkgRepoForm {...defaultProps} packageRepoRef={packageRepoRef} />,
         );
       });
@@ -761,7 +763,7 @@ describe("when the repository info is already populated", () => {
           getStore({
             ...defaultState,
             repos: { ...defaultState.repos, repoDetail: testRepo } as IPackageRepositoryState,
-          }),
+          } as Partial<IStoreState>),
           <PkgRepoForm {...defaultProps} packageRepoRef={packageRepoRef} />,
         );
       });
@@ -787,7 +789,7 @@ describe("when the repository info is already populated", () => {
           getStore({
             ...defaultState,
             repos: { ...defaultState.repos, repoDetail: testRepo } as IPackageRepositoryState,
-          }),
+          } as Partial<IStoreState>),
           <PkgRepoForm {...defaultProps} packageRepoRef={packageRepoRef} />,
         );
       });
@@ -817,7 +819,7 @@ describe("when the repository info is already populated", () => {
           getStore({
             ...defaultState,
             repos: { ...defaultState.repos, repoDetail: testRepo } as IPackageRepositoryState,
-          }),
+          } as Partial<IStoreState>),
           <PkgRepoForm {...defaultProps} packageRepoRef={packageRepoRef} />,
         );
       });
@@ -847,7 +849,7 @@ describe("when the repository info is already populated", () => {
           getStore({
             ...defaultState,
             repos: { ...defaultState.repos, repoDetail: testRepo } as IPackageRepositoryState,
-          }),
+          } as Partial<IStoreState>),
           <PkgRepoForm {...defaultProps} packageRepoRef={packageRepoRef} />,
         );
       });
@@ -875,7 +877,7 @@ describe("when the repository info is already populated", () => {
           getStore({
             ...defaultState,
             repos: { ...defaultState.repos, repoDetail: testRepo } as IPackageRepositoryState,
-          }),
+          } as Partial<IStoreState>),
           <PkgRepoForm {...defaultProps} packageRepoRef={packageRepoRef} />,
         );
       });
@@ -904,7 +906,7 @@ describe("when the repository info is already populated", () => {
           getStore({
             ...defaultState,
             repos: { ...defaultState.repos, repoDetail: testRepo } as IPackageRepositoryState,
-          }),
+          } as Partial<IStoreState>),
           <PkgRepoForm {...defaultProps} packageRepoRef={packageRepoRef} />,
         );
       });

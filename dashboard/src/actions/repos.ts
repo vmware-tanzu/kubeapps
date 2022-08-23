@@ -15,7 +15,7 @@ import { ThunkAction } from "redux-thunk";
 import { PackageRepositoriesService } from "shared/PackageRepositoriesService";
 import PackagesService from "shared/PackagesService";
 import { IPkgRepoFormData, IStoreState, NotFoundError } from "shared/types";
-import { PluginNames } from "shared/utils";
+import { isGlobalNamespace } from "shared/utils";
 import { ActionType, deprecated } from "typesafe-actions";
 
 const { createAction } = deprecated;
@@ -69,7 +69,7 @@ export const fetchRepoSummaries = (
   return async (dispatch, getState) => {
     const {
       clusters: { currentCluster },
-      config: { globalReposNamespace },
+      config: { globalReposNamespace, carvelGlobalNamespace },
     } = getState();
     try {
       dispatch(requestRepoSummaries(namespace));
@@ -77,12 +77,14 @@ export const fetchRepoSummaries = (
         cluster: currentCluster,
         namespace: namespace,
       });
-      if (!listGlobal || namespace === globalReposNamespace) {
+      if (!listGlobal || [globalReposNamespace, carvelGlobalNamespace].includes(namespace)) {
         dispatch(receiveRepoSummaries(repos.packageRepositorySummaries));
       } else {
         // Global repos need to be added
+        // instead of passing each global repo's namespace, we defer the decision to the backend using ns=""
+        // however, this can cause issues when using unprivileged users, see #5215
         let totalRepos = repos.packageRepositorySummaries;
-        dispatch(requestRepoSummaries(globalReposNamespace));
+        dispatch(requestRepoSummaries(""));
         const globalRepos = await PackageRepositoriesService.getPackageRepositorySummaries({
           cluster: currentCluster,
           namespace: "",
@@ -135,16 +137,11 @@ export const addRepo = (
   return async (dispatch, getState) => {
     const {
       clusters: { currentCluster },
-      config: { globalReposNamespace },
+      config,
     } = getState();
     try {
       dispatch(addOrUpdateRepo());
-      let namespaceScoped = namespace !== globalReposNamespace;
-      // TODO(agamez): currently, flux doesn't support this value to be true
-      if (request.plugin?.name === PluginNames.PACKAGES_FLUX) {
-        namespaceScoped = false;
-      }
-
+      const namespaceScoped = !isGlobalNamespace(namespace, request.plugin?.name, config);
       const addPackageRepositoryResponse = await PackageRepositoriesService.addPackageRepository(
         currentCluster,
         namespace,

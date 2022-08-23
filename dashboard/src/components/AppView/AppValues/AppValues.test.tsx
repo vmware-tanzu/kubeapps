@@ -3,7 +3,8 @@
 
 import AceEditor from "react-ace";
 import { SupportedThemes } from "shared/Config";
-import { defaultStore, getStore, mountWrapper } from "shared/specs/mountWrapper";
+import { defaultStore, getStore, initialState, mountWrapper } from "shared/specs/mountWrapper";
+import { IStoreState } from "shared/types";
 import AppValues from "./AppValues";
 
 it("includes values", () => {
@@ -26,7 +27,7 @@ it("sets light theme by default", () => {
 
 it("changes theme", () => {
   const wrapper = mountWrapper(
-    getStore({ config: { theme: SupportedThemes.dark } }),
+    getStore({ ...initialState, config: { theme: SupportedThemes.dark } } as Partial<IStoreState>),
     <AppValues values="foo: bar" />,
   );
   expect(wrapper.find(AceEditor).prop("theme")).toBe("solarized_dark");

@@ -62,7 +62,7 @@ type ChartCache struct {
 	// significant in that it flushes the whole redis cache and re-populates the state from k8s.
 	// When that happens we don't really want any concurrent access to the cache until the resync()
 	// operation is complete. In other words, we want to:
-	//  - be able to have multiple concurrent readers (goroutines doing GetForOne())
+	//  - be able to have multiple concurrent readers (goroutines doing Get())
 	//  - only a single writer (goroutine doing a resync()) is allowed, and while its doing its job
 	//    no readers are allowed
 	resyncCond *sync.Cond
@@ -424,11 +424,11 @@ func (c *ChartCache) syncHandler(workerName, key string) error {
 }
 
 // this is effectively a cache GET operation
-func (c *ChartCache) FetchForOne(key string) ([]byte, error) {
+func (c *ChartCache) Fetch(key string) ([]byte, error) {
 	c.resyncCond.L.(*sync.RWMutex).RLock()
 	defer c.resyncCond.L.(*sync.RWMutex).RUnlock()
 
-	log.Infof("+FetchForOne(%s)", key)
+	log.Infof("+Fetch(%s)", key)
 
 	// read back from cache: should be either:
 	//  - what we previously wrote OR
@@ -440,7 +440,7 @@ func (c *ChartCache) FetchForOne(key string) ([]byte, error) {
 		log.Infof("Redis [GET %s]: Nil", key)
 		return nil, nil
 	} else if err != nil {
-		return nil, fmt.Errorf("fetchForOne() failed to get value for key [%s] from cache due to: %v", key, err)
+		return nil, fmt.Errorf("fetch() failed to get value for key [%s] from cache due to: %v", key, err)
 	}
 	log.Infof("Redis [GET %s]: %d bytes read", key, len(byteArray))
 
@@ -453,7 +453,7 @@ func (c *ChartCache) FetchForOne(key string) ([]byte, error) {
 }
 
 /*
- GetForOne() is like FetchForOne() but if there is a cache miss, it will then get chart data based on
+ Get() is like Fetch() but if there is a cache miss, it will then get chart data based on
  the corresponding repo object, process it and then add it to the cache and return the
  result.
  This func should:
@@ -466,13 +466,13 @@ func (c *ChartCache) FetchForOne(key string) ([]byte, error) {
  • otherwise return the bytes stored in the
  chart cache for the given entry
 */
-func (c *ChartCache) GetForOne(key string, chart *models.Chart, downloadFn DownloadChartFn) ([]byte, error) {
+func (c *ChartCache) Get(key string, chart *models.Chart, downloadFn DownloadChartFn) ([]byte, error) {
 	// TODO (gfichtenholt) it'd be nice to get rid of all arguments except for the key, similar to that of
-	// NamespacedResourceWatcherCache.GetForOne()
-	log.Infof("+GetForOne(%s)", key)
+	// NamespacedResourceWatcherCache.Get()
+	log.Infof("+Get(%s)", key)
 	var value []byte
 	var err error
-	if value, err = c.FetchForOne(key); err != nil {
+	if value, err = c.Fetch(key); err != nil {
 		return nil, err
 	} else if value == nil {
 		// cache miss
@@ -508,7 +508,7 @@ func (c *ChartCache) GetForOne(key string, chart *models.Chart, downloadFn Downl
 			c.queue.Add(key)
 			// now need to wait until this item has been processed by runWorker().
 			c.queue.WaitUntilForgotten(key)
-			return c.FetchForOne(key)
+			return c.Fetch(key)
 		}
 	}
 	return value, nil
@@ -613,7 +613,7 @@ func chartCacheKeyFor(namespace, chartID, chartVersion string) (string, error) {
 		chartVersion), nil
 }
 
-// FYI: The work queue is able to retry transient HTTP errors
+// FYI: The work queue is able to retry transient HTTP errors that occur while invoking downloadFn
 func ChartCacheComputeValue(chartID, chartUrl, chartVersion string, downloadFn DownloadChartFn) ([]byte, error) {
 	chartTgz, err := downloadFn(chartID, chartUrl, chartVersion)
 	if err != nil {
