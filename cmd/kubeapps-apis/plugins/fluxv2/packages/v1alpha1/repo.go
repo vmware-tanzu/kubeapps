@@ -159,10 +159,12 @@ func (s *Server) getChartsForRepos(ctx context.Context, match []string) (map[str
 		return nil, err
 	}
 
-	chartsUntyped, err := s.repoCache.GetForMultiple(repoNames)
+	chartsUntyped, err := s.repoCache.GetMultiple(repoNames)
 	if err != nil {
 		return nil, err
 	}
+
+	log.Infof("=======> getChartsForRepos chartsUntyped: %v", chartsUntyped)
 
 	chartsTyped := make(map[string][]models.Chart)
 	for key, value := range chartsUntyped {
@@ -175,6 +177,23 @@ func (s *Server) getChartsForRepos(ctx context.Context, match []string) (map[str
 					codes.Internal,
 					"unexpected value fetched from cache: type: [%s], value: [%v]",
 					reflect.TypeOf(value), value)
+			}
+			if typedValue.Type == "oci" {
+				// ref https://github.com/vmware-tanzu/kubeapps/issues/5007#issuecomment-1217293240
+				// helm OCI chart repos are not automatically updated when the
+				// state on remote changes. So we will force new checksum
+				// computation and update local cache if needed
+				value, err = s.repoCache.ForceAndFetch(key)
+				if err != nil {
+					return nil, err
+				}
+				typedValue, ok = value.(repoCacheEntryValue)
+				if !ok {
+					return nil, status.Errorf(
+						codes.Internal,
+						"unexpected value fetched from cache: type: [%s], value: [%v]",
+						reflect.TypeOf(value), value)
+				}
 			}
 			chartsTyped[key] = typedValue.Charts
 		}
@@ -699,6 +718,7 @@ type repoEventSink struct {
 // all struct fields are capitalized so they're exported by gob encoding
 type repoCacheEntryValue struct {
 	Checksum string
+	Type     string // if missing, repo is assumed to be regular old HTTP
 	Charts   []models.Chart
 }
 

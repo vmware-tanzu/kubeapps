@@ -26,7 +26,7 @@ parameters:
     default: "v3.9.2"
   OLM_VERSION:
     type: "string"
-    default: "v0.21.2"
+    default: "v0.22.0"
   CHARTMUSEUM_VERSION:
     type: "string"
     default: "3.9.0"

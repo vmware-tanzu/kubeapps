@@ -177,7 +177,7 @@ func (s *Server) installedPkgSummaryFromRelease(ctx context.Context, rel helmv2.
 		repoNamespace = name.Namespace
 	}
 	repo := types.NamespacedName{Namespace: repoNamespace, Name: repoName}
-	chartFromCache, err := s.getChart(ctx, repo, chartName)
+	chartFromCache, err := s.getChartModel(ctx, repo, chartName)
 	if err != nil {
 		log.Warningf("%v", err)
 	} else if chartFromCache != nil && len(chartFromCache.ChartVersions) > 0 {
@@ -322,7 +322,7 @@ func (s *Server) newRelease(ctx context.Context, packageRef *corev1.AvailablePac
 	}
 
 	repo := types.NamespacedName{Namespace: packageRef.Context.Namespace, Name: repoName}
-	chart, err := s.getChart(ctx, repo, chartName)
+	chart, err := s.getChartModel(ctx, repo, chartName)
 	if err != nil {
 		return nil, err
 	}

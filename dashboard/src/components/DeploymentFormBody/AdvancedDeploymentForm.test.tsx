@@ -4,6 +4,7 @@
 import AceEditor from "react-ace";
 import { SupportedThemes } from "shared/Config";
 import { defaultStore, getStore, mountWrapper } from "shared/specs/mountWrapper";
+import { IStoreState } from "shared/types";
 import AdvancedDeploymentForm from "./AdvancedDeploymentForm";
 
 const defaultProps = {
@@ -25,7 +26,7 @@ it("sets light theme by default", () => {
 
 it("changes theme", () => {
   const wrapper = mountWrapper(
-    getStore({ config: { theme: SupportedThemes.dark } }),
+    getStore({ config: { theme: SupportedThemes.dark } } as Partial<IStoreState>),
     <AdvancedDeploymentForm {...defaultProps} />,
   );
   expect(wrapper.find(AceEditor).prop("theme")).toBe("solarized_dark");

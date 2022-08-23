@@ -76,7 +76,7 @@ it("fetches the available versions", () => {
   actions.availablepackages.fetchAndSelectAvailablePackageDetail = fetchAvailablePackageVersions;
 
   mountWrapper(
-    getStore({}),
+    getStore({} as Partial<IStoreState>),
     <MemoryRouter initialEntries={[routePathParam]}>
       <Route path={routePath}>
         <DeploymentForm />
@@ -102,7 +102,7 @@ describe("renders an error", () => {
           selected: { ...defaultSelectedPkg },
         },
         apps: { error: new Error("wrong format!") },
-      }),
+      } as Partial<IStoreState>),
       <Router history={history}>
         <Route path={routePath}>
           <DeploymentForm />
@@ -121,7 +121,7 @@ describe("renders an error", () => {
       getStore({
         packages: { selected: { ...defaultSelectedPkg, error: new FetchError("not found") } },
         apps: { error: undefined },
-      }),
+      } as Partial<IStoreState>),
       <Router history={history}>
         <Route path={routePath}>
           <DeploymentForm />
