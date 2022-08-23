@@ -81,7 +81,7 @@ type NamespacedResourceWatcherCache struct {
 	// significant in that it flushes the whole redis cache and re-populates the state from k8s.
 	// When that happens we don't really want any concurrent access to the cache until the resync()
 	// operation is complete. In other words, we want to:
-	//  - be able to have multiple concurrent readers (goroutines doing GetForOne()/GetForMultiple())
+	//  - be able to have multiple concurrent readers (goroutines doing Get()/GetMultiple())
 	//  - only a single writer (goroutine doing a resync()) is allowed, and while its doing its job
 	//    no readers are allowed
 	resyncCond *sync.Cond
@@ -531,7 +531,7 @@ func (c *NamespacedResourceWatcherCache) syncHandler(key string) error {
 	defer log.Infof("-syncHandler(%s)", key)
 
 	// Convert the namespace/name string into a distinct namespace and name
-	name, err := c.fromKey(key)
+	name, err := c.NamespacedNameFromKey(key)
 	if err != nil {
 		return err
 	}
@@ -645,8 +645,8 @@ func (c *NamespacedResourceWatcherCache) onDelete(key string) error {
 }
 
 // this is effectively a cache GET operation
-func (c *NamespacedResourceWatcherCache) fetchForOne(key string) (interface{}, error) {
-	log.InfoS("+fetchForOne", "key", key)
+func (c *NamespacedResourceWatcherCache) fetch(key string) (interface{}, error) {
+	log.InfoS("+fetch", "key", key)
 	// read back from cache: should be either:
 	//  - what we previously wrote OR
 	//  - redis.Nil if the key does  not exist or has been evicted due to memory pressure/TTL expiry
@@ -657,7 +657,7 @@ func (c *NamespacedResourceWatcherCache) fetchForOne(key string) (interface{}, e
 		log.V(4).Infof("Redis [GET %s]: Nil", key)
 		return nil, nil
 	} else if err != nil {
-		return nil, fmt.Errorf("fetchForOne() failed to get value for key [%s] from cache due to: %v", key, err)
+		return nil, fmt.Errorf("fetch() failed to get value for key [%s] from cache due to: %v", key, err)
 	}
 	log.V(4).Infof("Redis [GET %s]: %d bytes read", key, len(byteArray))
 
@@ -683,10 +683,10 @@ func (c *NamespacedResourceWatcherCache) fetchForOne(key string) (interface{}, e
 // be relied upon to be the "source of truth". So I removed it for now as I found it
 // of no use
 
-// parallelize the process of value retrieval because fetchForOne() calls
+// parallelize the process of value retrieval because fetch() calls
 // c.config.onGet() which will de-code the data from bytes into expected struct, which
 // may be computationally expensive and thus benefit from multiple threads of execution
-func (c *NamespacedResourceWatcherCache) fetchForMultiple(keys sets.String) (map[string]interface{}, error) {
+func (c *NamespacedResourceWatcherCache) fetchMultiple(keys sets.String) (map[string]interface{}, error) {
 	response := make(map[string]interface{})
 
 	type fetchValueJob struct {
@@ -710,7 +710,7 @@ func (c *NamespacedResourceWatcherCache) fetchForMultiple(keys sets.String) (map
 			// The following loop will only terminate when the request channel is
 			// closed (and there are no more items)
 			for job := range requestChan {
-				result, err := c.fetchForOne(job.key)
+				result, err := c.fetch(job.key)
 				responseChan <- fetchValueJobResult{job, result, err}
 			}
 			wg.Done()
@@ -743,25 +743,25 @@ func (c *NamespacedResourceWatcherCache) fetchForMultiple(keys sets.String) (map
 	return response, errorutil.NewAggregate(errs)
 }
 
-// the difference between 'fetchForMultiple' and 'GetForMultiple' is that 'fetch' will only
+// the difference between 'fetchMultiple' and 'GetMultiple' is that 'fetch' will only
 // get the value from the cache for a given or return nil if one is missing, whereas
-// 'GetForMultiple' will first call 'fetch' but then for any cache misses it will force
+// 'GetMultiple' will first call 'fetch' but then for any cache misses it will force
 // a re-computation of the value, if available, based on the input argument itemList and load
-// that result into the cache. So, 'GetForMultiple' provides a guarantee that if a key exists,
+// that result into the cache. So, 'GetMultiple' provides a guarantee that if a key exists,
 // it's value will be returned,
-// whereas 'fetchForMultiple' does not guarantee that.
+// whereas 'fetchMultiple' does not guarantee that.
 // The keys are expected to be in the format of the cache (the caller does that)
-func (c *NamespacedResourceWatcherCache) GetForMultiple(keys sets.String) (map[string]interface{}, error) {
+func (c *NamespacedResourceWatcherCache) GetMultiple(keys sets.String) (map[string]interface{}, error) {
 	c.resyncCond.L.(*sync.RWMutex).RLock()
 	defer c.resyncCond.L.(*sync.RWMutex).RUnlock()
 
-	log.Infof("+GetForMultiple(%s)", keys)
+	log.Infof("+GetMultiple(%s)", keys)
 	// at any given moment, the redis cache may only have a subset of the entire set of existing keys.
 	// Some key may have been evicted due to memory pressure and LRU eviction policy.
 	// ref: https://redis.io/topics/lru-cache
 	// so, first, let's fetch the entries that are still cached at this moment
 	// before redis maybe forced to evict those in order to make room for new ones
-	chartsUntyped, err := c.fetchForMultiple(keys)
+	chartsUntyped, err := c.fetchMultiple(keys)
 	if err != nil {
 		return nil, err
 	}
@@ -836,7 +836,7 @@ func (c *NamespacedResourceWatcherCache) computeValuesForKeys(keys sets.String) 
 			// The following loop will only terminate when the request channel is
 			// closed (and there are no more items)
 			for key := range requestChan {
-				// see GetForOne() for explanation of what is happening below
+				// see Get() for explanation of what is happening below
 				c.forceKey(key)
 			}
 			wg.Done()
@@ -876,8 +876,8 @@ func (c *NamespacedResourceWatcherCache) computeAndFetchValuesForKeys(keys sets.
 			// The following loop will only terminate when the request channel is
 			// closed (and there are no more items)
 			for job := range requestChan {
-				// see GetForOne() for explanation of what is happening below
-				value, err := c.forceAndFetchKey(job.key)
+				// see Get() for explanation of what is happening below
+				value, err := c.ForceAndFetch(job.key)
 				responseChan <- computeValueJobResult{job, value, err}
 			}
 			wg.Done()
@@ -937,7 +937,7 @@ func (c *NamespacedResourceWatcherCache) KeyForNamespacedName(name types.Namespa
 
 // the opposite of keyFor()
 // the goal is to keep the details of what exactly the key looks like localized to one piece of code
-func (c *NamespacedResourceWatcherCache) fromKey(key string) (*types.NamespacedName, error) {
+func (c *NamespacedResourceWatcherCache) NamespacedNameFromKey(key string) (*types.NamespacedName, error) {
 	parts := strings.Split(key, KeySegmentsSeparator)
 	if len(parts) != 3 || parts[0] != c.config.Gvr.Resource || len(parts[1]) == 0 || len(parts[2]) == 0 {
 		return nil, status.Errorf(codes.Internal, "invalid key [%s]", key)
@@ -945,21 +945,21 @@ func (c *NamespacedResourceWatcherCache) fromKey(key string) (*types.NamespacedN
 	return &types.NamespacedName{Namespace: parts[1], Name: parts[2]}, nil
 }
 
-// GetForOne() is like fetchForOne() but if there is a cache miss, it will also check the
+// Get() is like fetch() but if there is a cache miss, it will also check the
 // k8s for the corresponding object, process it and then add it to the cache and return the
 // result.
-func (c *NamespacedResourceWatcherCache) GetForOne(key string) (interface{}, error) {
+func (c *NamespacedResourceWatcherCache) Get(key string) (interface{}, error) {
 	c.resyncCond.L.(*sync.RWMutex).RLock()
 	defer c.resyncCond.L.(*sync.RWMutex).RUnlock()
 
-	log.Infof("+GetForOne(%s)", key)
+	log.Infof("+Get(%s)", key)
 	var value interface{}
 	var err error
-	if value, err = c.fetchForOne(key); err != nil {
+	if value, err = c.fetch(key); err != nil {
 		return nil, err
 	} else if value == nil {
 		// cache miss
-		return c.forceAndFetchKey(key)
+		return c.ForceAndFetch(key)
 	}
 	return value, nil
 }
@@ -975,14 +975,14 @@ func (c *NamespacedResourceWatcherCache) forceKey(key string) {
 	c.queue.WaitUntilForgotten(key)
 }
 
-func (c *NamespacedResourceWatcherCache) forceAndFetchKey(key string) (interface{}, error) {
+func (c *NamespacedResourceWatcherCache) ForceAndFetch(key string) (interface{}, error) {
 	c.forceKey(key)
 	// yes, there is a small time window here between after we are done with WaitUntilForgotten()
 	// and the following fetch, where another concurrent goroutine may force the newly added
 	// cache entry out, but that is an edge case and I am willing to overlook it for now
 	// To fix it, would somehow require WaitUntilForgotten() returning a value from a cache, so
 	// the whole thing would be atomic. Don't know how to do this yet
-	return c.fetchForOne(key)
+	return c.fetch(key)
 }
 
 // this func is used by unit tests only

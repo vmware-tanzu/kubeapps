@@ -123,6 +123,7 @@ type fakeChartVersion struct {
 }
 
 type fakeChart struct {
+	// name is inferred from parent fakeRepo
 	versions []fakeChartVersion
 }
 

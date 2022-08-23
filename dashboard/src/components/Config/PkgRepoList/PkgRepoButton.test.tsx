@@ -39,6 +39,7 @@ afterEach(() => {
 const defaultProps = {
   namespace: "default",
   globalReposNamespace: "kubeapps",
+  carvelGlobalNamespace: "carvel-global",
 };
 
 it("should open a modal with the repository form", () => {

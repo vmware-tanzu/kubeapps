@@ -12,6 +12,7 @@ import fluxIcon from "icons/flux.svg";
 import helmIcon from "icons/helm.svg";
 import olmIcon from "icons/olm-icon.svg";
 import placeholder from "icons/placeholder.svg";
+import { IConfig } from "./Config";
 
 export enum PluginNames {
   PACKAGES_HELM = "helm.packages",
@@ -210,5 +211,27 @@ export function getSupportedPackageRepositoryAuthTypes(
       ];
     default:
       return [];
+  }
+}
+
+/**
+ * Check if namespace is global depending on the plugin
+ *
+ * @param namespace Namespace to check
+ * @param pluginName Plugin name
+ * @param kubeappsConfig Kubeapps configuration
+ * @returns true if namespace is global
+ */
+export function isGlobalNamespace(namespace: string, pluginName: string, kubeappsConfig: IConfig) {
+  switch (pluginName) {
+    case PluginNames.PACKAGES_HELM:
+      return namespace === kubeappsConfig.globalReposNamespace;
+    case PluginNames.PACKAGES_KAPP:
+      return namespace === kubeappsConfig.carvelGlobalNamespace;
+    // Currently, Flux doesn't namespaced repos, so it will always be global
+    case PluginNames.PACKAGES_FLUX:
+      return true;
+    default:
+      return false;
   }
 }

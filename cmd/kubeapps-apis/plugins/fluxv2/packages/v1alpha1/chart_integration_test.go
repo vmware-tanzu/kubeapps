@@ -569,10 +569,6 @@ func TestKindClusterAvailablePackageEndpointsForOCI(t *testing.T) {
 		},
 		// TODO (gfichtenholt) TLS secret with CA
 		// TODO (gfichtenholt) TLS secret with CA, pub, priv
-		// TODO (gfichtenholt) OCI repo with multiple packages/charts,
-		//      e.g. podinfo/podinfo and podinfo/foo
-		//      flux supports this, but ghcr.io does not (see comment in kind-cluster-setup.sh)
-		//      so I need somewhere to host it
 
 		/*
 			{
@@ -595,7 +591,43 @@ func TestKindClusterAvailablePackageEndpointsForOCI(t *testing.T) {
 				),
 			},
 		*/
+		{
+			testName:    "Testing [" + harbor_stefanprodan_podinfo_oci_registry_url + "] with basic auth secret",
+			registryUrl: harbor_stefanprodan_podinfo_oci_registry_url,
+			secret: newBasicAuthSecret(types.NamespacedName{
+				Name:      "oci-repo-secret-" + randSeq(4),
+				Namespace: "default"},
+				harbor_user,
+				harbor_pwd,
+			),
+		},
 	}
+
+	/*
+		gcp_user := "oauth2accesstoken"
+		// token is very short lived
+		gcp_pwd, err := gcloudPrintAccessToken(t)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		testCases := []struct {
+			testName    string
+			registryUrl string
+			secret      *apiv1.Secret
+		}{
+			{
+				testName:    "Testing [" + gcp_stefanprodan_podinfo_oci_registry_url + "] with basic auth secret",
+				registryUrl: gcp_stefanprodan_podinfo_oci_registry_url,
+				secret: newBasicAuthSecret(types.NamespacedName{
+					Name:      "oci-repo-secret-" + randSeq(4),
+					Namespace: "default"},
+					gcp_user,
+					gcp_pwd,
+				),
+			},
+		}
+	*/
 
 	adminName := types.NamespacedName{
 		Name:      "test-admin-" + randSeq(4),
@@ -695,7 +727,7 @@ func TestKindClusterAvailablePackageEndpointsForOCI(t *testing.T) {
 			compareActualVsExpectedAvailablePackageDetail(
 				t,
 				resp3.AvailablePackageDetail,
-				expected_detail_oci_stefanprodan_podinfo(repoName.Name).AvailablePackageDetail)
+				expected_detail_oci_stefanprodan_podinfo(repoName.Name, tc.registryUrl).AvailablePackageDetail)
 
 			// try a few older versions
 			grpcContext, cancel = context.WithTimeout(grpcContext, defaultContextTimeout)
@@ -718,7 +750,7 @@ func TestKindClusterAvailablePackageEndpointsForOCI(t *testing.T) {
 			compareActualVsExpectedAvailablePackageDetail(
 				t,
 				resp4.AvailablePackageDetail,
-				expected_detail_oci_stefanprodan_podinfo_2(repoName.Name).AvailablePackageDetail)
+				expected_detail_oci_stefanprodan_podinfo_2(repoName.Name, tc.registryUrl).AvailablePackageDetail)
 		})
 	}
 }

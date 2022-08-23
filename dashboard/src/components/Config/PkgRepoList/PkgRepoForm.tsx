@@ -28,12 +28,14 @@ import { useEffect, useRef, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { Action } from "redux";
 import { ThunkDispatch } from "redux-thunk";
+import { IConfig } from "shared/Config";
 import { toFilterRule, toParams } from "shared/jq";
 import { IPkgRepoFormData, IPkgRepositoryFilter, IStoreState } from "shared/types";
 import {
   getPluginByName,
   getPluginPackageName,
   getSupportedPackageRepositoryAuthTypes,
+  isGlobalNamespace,
   k8sObjectNameRegex,
   PluginNames,
 } from "shared/utils";
@@ -43,7 +45,8 @@ interface IPkgRepoFormProps {
   onSubmit: (data: IPkgRepoFormData) => Promise<boolean>;
   onAfterInstall?: () => void;
   namespace: string;
-  kubeappsNamespace: string;
+  globalReposNamespace: string;
+  carvelGlobalNamespace: string;
   packageRepoRef?: PackageRepositoryReference;
 }
 
@@ -63,7 +66,8 @@ export function PkgRepoForm(props: IPkgRepoFormProps) {
     onSubmit,
     onAfterInstall,
     namespace,
-    kubeappsNamespace,
+    globalReposNamespace,
+    carvelGlobalNamespace,
     packageRepoRef: selectedPkgRepo,
   } = props;
   const isInstallingRef = useRef(false);
@@ -146,7 +150,7 @@ export function PkgRepoForm(props: IPkgRepoFormProps) {
   const [filterRegex, setFilterRegex] = useState(false);
 
   // -- Advanced  variables --
-  const [interval, setInterval] = useState(initialInterval);
+  const [syncInterval, setSyncInterval] = useState(initialInterval);
   const [performValidation, setPerformValidation] = useState(true);
   const [customCA, setCustomCA] = useState("");
   const [skipTLS, setSkipTLS] = useState(!!repo?.tlsConfig?.insecureSkipVerify);
@@ -182,7 +186,7 @@ export function PkgRepoForm(props: IPkgRepoFormProps) {
       setDescription(repo.description);
       setSkipTLS(!!repo.tlsConfig?.insecureSkipVerify);
       setPassCredentials(!!repo.auth?.passCredentials);
-      setInterval(repo.interval);
+      setSyncInterval(repo.interval);
       setCustomCA(repo.tlsConfig?.certAuthority || "");
       setAuthCustomHeader(repo.auth?.header || "");
       setBearerToken(repo.auth?.header || "");
@@ -274,10 +278,10 @@ export function PkgRepoForm(props: IPkgRepoFormProps) {
       ? ociRepositories?.split(",").map(r => r.trim())
       : [];
 
-    // If the scheme is not specified, assume HTTPS. This is common for OCI registries
-    // unless using the kapp plugin, which explicitly should not include https:// protocol prefix
+    // In the Helm plugin, if the scheme is not specified, assume HTTPS (also for OCI registries)
+    // Other plugins don't allow passing a scheme (eg. carvel) and others require a different one (eg. flux: oci://)
     let finalURL = url;
-    if (plugin?.name !== PluginNames.PACKAGES_KAPP && !url?.startsWith("http")) {
+    if (plugin?.name === PluginNames.PACKAGES_HELM && !url?.startsWith("http")) {
       finalURL = `https://${url}`;
     }
 
@@ -325,7 +329,7 @@ export function PkgRepoForm(props: IPkgRepoFormProps) {
         password: !isUserManagedSecret ? secretPassword : "",
         server: !isUserManagedSecret ? secretServer : "",
       } as DockerCredentials,
-      interval,
+      interval: syncInterval,
       name,
       passCredentials,
       plugin,
@@ -374,7 +378,7 @@ export function PkgRepoForm(props: IPkgRepoFormProps) {
     setDescription(e.target.value);
   };
   const handleIntervalChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setInterval(e.target.value);
+    setSyncInterval(e.target.value);
   };
   const handlePerformValidationChange = (_e: React.ChangeEvent<HTMLInputElement>) => {
     setPerformValidation(!performValidation);
@@ -427,19 +431,27 @@ export function PkgRepoForm(props: IPkgRepoFormProps) {
     setPlugin(getPluginByName(e.target.value));
     // set some default values based on the selected plugin
     switch (getPluginByName(e.target.value)?.name) {
-      case PluginNames.PACKAGES_HELM:
-        setType(RepositoryStorageTypes.PACKAGE_REPOSITORY_STORAGE_HELM);
+      case PluginNames.PACKAGES_HELM: {
+        if (!type) {
+          setType(RepositoryStorageTypes.PACKAGE_REPOSITORY_STORAGE_HELM);
+        }
         // helm plugin doesn't allow interval
         // eslint-disable-next-line no-implied-eval
-        setInterval("");
+        setSyncInterval("");
         break;
-      case PluginNames.PACKAGES_FLUX:
-        setType(RepositoryStorageTypes.PACKAGE_REPOSITORY_STORAGE_HELM);
-        setInterval(interval || initialInterval);
+      }
+      case PluginNames.PACKAGES_FLUX: {
+        if (!type) {
+          setType(RepositoryStorageTypes.PACKAGE_REPOSITORY_STORAGE_HELM);
+        }
+        setSyncInterval(syncInterval || initialInterval);
         break;
+      }
       case PluginNames.PACKAGES_KAPP:
-        setType(RepositoryStorageTypes.PACKAGE_REPOSITORY_STORAGE_CARVEL_IMGPKGBUNDLE);
-        setInterval(interval || initialInterval);
+        if (!type) {
+          setType(RepositoryStorageTypes.PACKAGE_REPOSITORY_STORAGE_CARVEL_IMGPKGBUNDLE);
+        }
+        setSyncInterval(syncInterval || initialInterval);
         break;
     }
   };
@@ -705,8 +717,7 @@ export function PkgRepoForm(props: IPkgRepoFormProps) {
                             id="kubeapps-repo-type-oci"
                             type="radio"
                             name="type"
-                            // TODO(agamez): workaround until Flux plugin also supports OCI artifacts
-                            disabled={plugin?.name === PluginNames.PACKAGES_FLUX || !!repo?.type}
+                            disabled={!!repo?.type}
                             value={RepositoryStorageTypes.PACKAGE_REPOSITORY_STORAGE_OCI || ""}
                             checked={type === RepositoryStorageTypes.PACKAGE_REPOSITORY_STORAGE_OCI}
                             onChange={handleTypeRadioButtonChange}
@@ -1652,35 +1663,34 @@ export function PkgRepoForm(props: IPkgRepoFormProps) {
             id="panel-filtering"
             expanded={accordion[2]}
             hidden={
-              type !== RepositoryStorageTypes.PACKAGE_REPOSITORY_STORAGE_OCI &&
+              type !== RepositoryStorageTypes.PACKAGE_REPOSITORY_STORAGE_OCI ||
               plugin?.name !== PluginNames.PACKAGES_HELM
             }
           >
             <CdsAccordionHeader onClick={() => toggleAccordion(2)}>Filtering</CdsAccordionHeader>
             <CdsAccordionContent>
               <CdsFormGroup layout="vertical">
-                {type === RepositoryStorageTypes.PACKAGE_REPOSITORY_STORAGE_OCI && (
-                  <CdsTextarea>
-                    <label htmlFor="kubeapps-oci-repositories">
-                      List of Repositories (required)
-                    </label>
-                    <CdsControlMessage>
-                      Include a list of comma-separated OCI repositories that will be available in
-                      Kubeapps.
-                    </CdsControlMessage>
-                    <textarea
-                      id="kubeapps-oci-repositories"
-                      className="cds-textarea-fix"
-                      placeholder={"nginx, jenkins"}
-                      value={ociRepositories || ""}
-                      onChange={handleOCIRepositoriesChange}
-                      required={type === RepositoryStorageTypes.PACKAGE_REPOSITORY_STORAGE_OCI}
-                    />
-                  </CdsTextarea>
-                )}
-                {/* TODO(agamez): workaround until Flux plugin also supports OCI artifacts */}
                 {plugin?.name === PluginNames.PACKAGES_HELM && (
                   <>
+                    {type === RepositoryStorageTypes.PACKAGE_REPOSITORY_STORAGE_OCI && (
+                      <CdsTextarea>
+                        <label htmlFor="kubeapps-oci-repositories">
+                          List of Repositories (required)
+                        </label>
+                        <CdsControlMessage>
+                          Include a list of comma-separated OCI repositories that will be available
+                          in Kubeapps.
+                        </CdsControlMessage>
+                        <textarea
+                          id="kubeapps-oci-repositories"
+                          className="cds-textarea-fix"
+                          placeholder={"nginx, jenkins"}
+                          value={ociRepositories || ""}
+                          onChange={handleOCIRepositoriesChange}
+                          required={type === RepositoryStorageTypes.PACKAGE_REPOSITORY_STORAGE_OCI}
+                        />
+                      </CdsTextarea>
+                    )}
                     <CdsTextarea>
                       <label htmlFor="kubeapps-repo-filter-repositories">
                         Filter Applications (optional)
@@ -1737,7 +1747,7 @@ export function PkgRepoForm(props: IPkgRepoFormProps) {
                       id="kubeapps-repo-interval"
                       type="text"
                       placeholder={initialInterval}
-                      value={interval || ""}
+                      value={syncInterval || ""}
                       onChange={handleIntervalChange}
                     />
                     <CdsControlMessage>
@@ -1864,11 +1874,14 @@ export function PkgRepoForm(props: IPkgRepoFormProps) {
           </CdsAccordionPanel>
         </CdsAccordion>
 
-        {namespace === kubeappsNamespace && (
+        {isGlobalNamespace(namespace, plugin.name, {
+          globalReposNamespace: globalReposNamespace,
+          carvelGlobalNamespace: carvelGlobalNamespace,
+        } as IConfig) && (
           <p>
-            <strong>NOTE:</strong> This Package Repository will be created in the "
-            {kubeappsNamespace}" global namespace. Consequently, its packages will be available for
-            installation in every namespace and cluster.
+            <strong>NOTE:</strong> This Package Repository is assigned to the "{namespace}" global
+            namespace. Consequently, its packages will be available for installation in every
+            namespace and cluster.
           </p>
         )}
         {createError && (
