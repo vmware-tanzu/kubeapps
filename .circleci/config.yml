@@ -885,7 +885,8 @@ jobs:
           name: Install and configure the SRP tool
           command: |
             wget https://vmwaresaas.jfrog.io/artifactory/srp-tools/srpcli/<< pipeline.parameters.SRP_VERSION >>/linux/srp
-            sudo mv srp /usr/local/bin/
+            sudo chmod +x srp
+            sudo mv ./srp /usr/local/bin/
             srp --version
             srp config --srp-endpoint << pipeline.parameters.SRP_ENDPOINT >>
             srp config auth --client-id $KUBEAPPS_SRP_CLIENT_ID --client-secret $KUBEAPPS_SRP_CLIENT_SECRET
