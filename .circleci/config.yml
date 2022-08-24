@@ -928,7 +928,7 @@ jobs:
           name: Validate and submit the provenance files to the SRP Metadata service
           command: |
             srp uid validate "uid.mtd.provenance_2_5.fragment(obj_uid=uid.obj.build.circleci(instance='circleci.com',type='<< pipeline.project.type >>',namespace='${CIRCLE_PROJECT_USERNAME}/${CIRCLE_PROJECT_REPONAME}',branch='${CIRCLE_BRANCH}',commit_id='${CIRCLE_SHA1}',build_id='<< pipeline.number >>/${CIRCLE_WORKFLOW_ID}/${CIRCLE_BUILD_NUM}'),revision='')"
-            # srp metadata submit --verbose --path ./source-provenance.json
+            srp metadata submit --verbose --path ./source-provenance.json
   push_images:
     docker:
       - image: cimg/go:<< pipeline.parameters.GOLANG_VERSION >>
