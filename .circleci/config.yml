@@ -733,6 +733,9 @@ jobs:
   build_e2e_runner:
     docker:
       - image: cimg/go:<< pipeline.parameters.GOLANG_VERSION >>
+        auth:
+          username: $DOCKER_USERNAME
+          password: $DOCKER_PASSWORD
     environment:
       <<: *common_envars
       IMAGE: "integration-tests"
@@ -741,6 +744,8 @@ jobs:
           version: << pipeline.parameters.DOCKER_VERSION >>
       - checkout
       - <<: *exports
+      # TODO(agamez): build only if dependencies change
+      # See https://github.com/vmware-tanzu/kubeapps/pull/5083
       - run:
           name: Build and push CI image
           command: |
