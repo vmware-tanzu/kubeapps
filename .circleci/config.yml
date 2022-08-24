@@ -885,7 +885,6 @@ jobs:
           name: Install and configure the SRP tool
           command: |
             wget https://vmwaresaas.jfrog.io/artifactory/srp-tools/srpcli/<< pipeline.parameters.SRP_VERSION >>/linux/srp
-            tar zxf srp-cli-latest.tgz
             sudo mv srp /usr/local/bin/
             srp --version
             srp config --srp-endpoint << pipeline.parameters.SRP_ENDPOINT >>
