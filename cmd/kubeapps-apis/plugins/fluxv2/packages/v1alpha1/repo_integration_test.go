@@ -202,6 +202,11 @@ func TestKindClusterAddPackageRepository(t *testing.T) {
 		t.Fatalf("Environment variables GITHUB_USER and GITHUB_TOKEN need to be set to run this test")
 	}
 
+	// TODO: probably requires TLS
+	gcp_host := "us-west1-docker.pkg.dev"
+	gcp_user := ""
+	gcp_pwd := ""
+
 	testCases := []struct {
 		testName                 string
 		request                  *corev1.AddPackageRepositoryRequest
@@ -313,6 +318,12 @@ func TestKindClusterAddPackageRepository(t *testing.T) {
 		{
 			testName:           "test add OCI repo from harbor registry with dockerconfigjson secret (kubeapps managed)",
 			request:            add_repo_req_27(harbor_host, harbor_user, harbor_pwd),
+			expectedResponse:   add_repo_expected_resp_11,
+			expectedStatusCode: codes.OK,
+		},
+		{
+			testName:           "test add OCI repo from GCP with dockerconfigjson secret (kubeapps managed)",
+			request:            add_repo_req_28(gcp_host, gcp_user, gcp_pwd),
 			expectedResponse:   add_repo_expected_resp_11,
 			expectedStatusCode: codes.OK,
 		},
@@ -1473,11 +1484,6 @@ func TestKindClusterAddTagsToOciRepository(t *testing.T) {
 			t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opts))
 		}
 
-		// just codifying the behavior described in
-		// https://github.com/fluxcd/source-controller/issues/839
-		// Requested feature: flux OCI helm repositories notice when tags on remote registry change
-		// Should flux guys ever change their decision, this test should fail.
-		// P.S. Yuck
 		if err = helmPushChartToMyGithubRegistry(t, "6.1.6"); err != nil {
 			t.Fatal(err)
 		}
@@ -1506,7 +1512,7 @@ func TestKindClusterAddTagsToOciRepository(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		if got, want := resp3, expected_versions_gfichtenholt_podinfo; !cmp.Equal(want, got, opts) {
+		if got, want := resp3, expected_versions_gfichtenholt_podinfo_3; !cmp.Equal(want, got, opts) {
 			t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opts))
 		}
 	})

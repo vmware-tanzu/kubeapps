@@ -2417,22 +2417,40 @@ func newRepo(name string, namespace string, spec *sourcev1.HelmRepositorySpec, s
 // does a series of mock.ExpectGet(...)
 func (s *Server) redisMockExpectGetFromRepoCache(mock redismock.ClientMock, filterOptions *corev1.FilterOptions, repos ...sourcev1.HelmRepository) error {
 	mapVals := make(map[string][]byte)
+	ociRepoKeys := sets.String{}
 	for _, r := range repos {
 		key, bytes, err := s.redisKeyValueForRepo(r)
 		if err != nil {
 			return err
 		}
 		mapVals[key] = bytes
+		if r.Spec.Type == "oci" {
+			ociRepoKeys.Insert(key)
+		}
 	}
 	if filterOptions == nil || len(filterOptions.GetRepositories()) == 0 {
 		for k, v := range mapVals {
-			mock.ExpectGet(k).SetVal(string(v))
+			maxTries := 1
+			if ociRepoKeys.Has(k) {
+				// see comment in chart.go about caching helm OCI chart repos
+				maxTries = 3
+			}
+			for i := 0; i < maxTries; i++ {
+				mock.ExpectGet(k).SetVal(string(v))
+			}
 		}
 	} else {
 		for _, r := range filterOptions.GetRepositories() {
 			for k, v := range mapVals {
 				if strings.HasSuffix(k, ":"+r) {
-					mock.ExpectGet(k).SetVal(string(v))
+					maxTries := 1
+					if ociRepoKeys.Has(k) {
+						// see comment in chart.go about caching helm OCI chart repos
+						maxTries = 3
+					}
+					for i := 0; i < maxTries; i++ {
+						mock.ExpectGet(k).SetVal(string(v))
+					}
 				}
 			}
 		}
