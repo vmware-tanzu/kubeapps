@@ -111,6 +111,9 @@ parameters:
   SRP_ENDPOINT:
     type: "string"
     default: "https://apigw.vmware.com/v1/s1/api/helix-beta"
+  SRP_VERSION:
+    type: "string"
+    default: "0.2.20220809201724-53aa841-38"
 
 ## Build conditions
 # Build on any branch or tag
@@ -881,7 +884,7 @@ jobs:
       - run:
           name: Install and configure the SRP tool
           command: |
-            wget https://srp-cli.s3.amazonaws.com/srp-cli-latest.tgz
+            wget https://vmwaresaas.jfrog.io/artifactory/srp-tools/srpcli/<< pipeline.parameters.SRP_VERSION >>/linux/srp
             tar zxf srp-cli-latest.tgz
             sudo mv srp /usr/local/bin/
             srp --version
