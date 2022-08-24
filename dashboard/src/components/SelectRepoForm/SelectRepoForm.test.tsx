@@ -10,6 +10,7 @@ import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins";
 import * as ReactRedux from "react-redux";
 import { IPackageRepositoryState } from "reducers/repos";
 import { defaultStore, getStore, initialState, mountWrapper } from "shared/specs/mountWrapper";
+import { IStoreState } from "shared/types";
 import SelectRepoForm from "./SelectRepoForm";
 
 const defaultContext = {
@@ -63,7 +64,7 @@ it("should fetch repositories", () => {
 it("should render a loading page if fetching", () => {
   expect(
     mountWrapper(
-      getStore({ repos: { isFetching: true } }),
+      getStore({ repos: { isFetching: true } } as Partial<IStoreState>),
       <SelectRepoForm {...defaultContext} />,
     ).find("LoadingWrapper"),
   ).toExist();
@@ -71,7 +72,7 @@ it("should render a loading page if fetching", () => {
 
 it("render an error if failed to request repos", () => {
   const wrapper = mountWrapper(
-    getStore({ repos: { errors: { fetch: new Error("boom") } } }),
+    getStore({ repos: { errors: { fetch: new Error("boom") } } } as Partial<IStoreState>),
     <SelectRepoForm {...defaultContext} />,
   );
   expect(wrapper.find(Alert)).toIncludeText("boom");
@@ -97,7 +98,9 @@ it("should select a repo", () => {
 
   const props = { ...defaultContext, app: installedPackageDetail };
   const wrapper = mountWrapper(
-    getStore({ repos: { reposSummaries: [repo] } as IPackageRepositoryState }),
+    getStore({
+      repos: { reposSummaries: [repo] } as IPackageRepositoryState,
+    } as Partial<IStoreState>),
     <SelectRepoForm {...props} />,
   );
   wrapper.find("select").simulate("change", { target: { value: "default/bitnami" } });

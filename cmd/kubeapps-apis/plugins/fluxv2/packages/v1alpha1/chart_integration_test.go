@@ -603,6 +603,32 @@ func TestKindClusterAvailablePackageEndpointsForOCI(t *testing.T) {
 		},
 	}
 
+	/*
+		gcp_user := "oauth2accesstoken"
+		// token is very short lived
+		gcp_pwd, err := gcloudPrintAccessToken(t)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		testCases := []struct {
+			testName    string
+			registryUrl string
+			secret      *apiv1.Secret
+		}{
+			{
+				testName:    "Testing [" + gcp_stefanprodan_podinfo_oci_registry_url + "] with basic auth secret",
+				registryUrl: gcp_stefanprodan_podinfo_oci_registry_url,
+				secret: newBasicAuthSecret(types.NamespacedName{
+					Name:      "oci-repo-secret-" + randSeq(4),
+					Namespace: "default"},
+					gcp_user,
+					gcp_pwd,
+				),
+			},
+		}
+	*/
+
 	adminName := types.NamespacedName{
 		Name:      "test-admin-" + randSeq(4),
 		Namespace: "default",

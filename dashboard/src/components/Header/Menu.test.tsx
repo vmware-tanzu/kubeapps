@@ -94,7 +94,7 @@ describe("theme switcher toggle", () => {
 
   it("toggle checked if dark theme is configured", () => {
     const wrapper = mountWrapper(
-      getStore({ config: { theme: SupportedThemes.dark } }),
+      getStore({ config: { theme: SupportedThemes.dark } } as Partial<IStoreState>),
       <Menu {...defaultProps} />,
     );
     const toggle = wrapper.find("cds-toggle input");

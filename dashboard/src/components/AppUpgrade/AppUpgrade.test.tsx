@@ -29,6 +29,7 @@ import {
   FetchError,
   IInstalledPackageState,
   IPackageState,
+  IStoreState,
   UpgradeError,
 } from "shared/types";
 import { PluginNames } from "shared/utils";
@@ -132,7 +133,7 @@ it("renders the repo selection form if not introduced", () => {
     } as IInstalledPackageState,
   };
   const wrapper = mountWrapper(
-    getStore({ ...defaultStore, ...state }),
+    getStore({ ...defaultStore, ...state } as Partial<IStoreState>),
     <MemoryRouter initialEntries={[routePathParam]}>
       <Route path={routePath}>
         <AppUpgrade />,
@@ -157,7 +158,7 @@ it("renders the repo selection form if not introduced when the app is loaded", (
     getStore({
       ...defaultStore,
       ...state,
-    }),
+    } as Partial<IStoreState>),
     <MemoryRouter initialEntries={[routePathParam]}>
       <Route path={routePath}>
         <AppUpgrade />,
@@ -180,7 +181,7 @@ describe("when an error exists", () => {
       getStore({
         ...defaultStore,
         ...state,
-      }),
+      } as Partial<IStoreState>),
       <MemoryRouter initialEntries={[routePathParam]}>
         <Route path={routePath}>
           <AppUpgrade />,
@@ -210,7 +211,7 @@ describe("when an error exists", () => {
       getStore({
         ...defaultStore,
         ...state,
-      }),
+      } as Partial<IStoreState>),
       <MemoryRouter initialEntries={[routePathParam]}>
         <Route path={routePath}>
           <AppUpgrade />,
@@ -238,7 +239,7 @@ describe("when an error exists", () => {
       getStore({
         ...defaultStore,
         ...state,
-      }),
+      } as Partial<IStoreState>),
       <MemoryRouter initialEntries={[routePathParam]}>
         <Route path={routePath}>
           <AppUpgrade />,
@@ -273,7 +274,7 @@ it("renders the upgrade form when the repo is available, clears state and fetche
     getStore({
       ...defaultStore,
       ...state,
-    }),
+    } as Partial<IStoreState>),
     <MemoryRouter initialEntries={[routePathParam]}>
       <Route path={routePath}>
         <AppUpgrade />,
@@ -309,7 +310,7 @@ it("renders the upgrade form with the version property", () => {
     getStore({
       ...defaultStore,
       ...state,
-    }),
+    } as Partial<IStoreState>),
     <MemoryRouter initialEntries={[routePathParam + "/0.0.1"]}>
       <Route path={routePath + "/:version"}>
         <AppUpgrade />,
@@ -337,7 +338,7 @@ it("skips the repo selection form if the app contains upgrade info", () => {
     getStore({
       ...defaultStore,
       ...state,
-    }),
+    } as Partial<IStoreState>),
     <MemoryRouter initialEntries={[routePathParam]}>
       <Route path={routePath}>
         <AppUpgrade />,

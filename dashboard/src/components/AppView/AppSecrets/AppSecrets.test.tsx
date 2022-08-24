@@ -3,8 +3,8 @@
 
 import { keyForResourceRef } from "shared/ResourceRef";
 import { ResourceRef } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
-import { defaultStore, getStore, mountWrapper } from "shared/specs/mountWrapper";
-import { ISecret } from "shared/types";
+import { defaultStore, getStore, initialState, mountWrapper } from "shared/specs/mountWrapper";
+import { ISecret, IStoreState } from "shared/types";
 import SecretItemDatum from "../ResourceTable/ResourceItem/SecretItem/SecretItemDatum";
 import AppSecrets from "./AppSecrets";
 
@@ -38,15 +38,18 @@ it("shows a message if there are no secrets", () => {
 it("renders a secretItemDatum per secret", () => {
   const key = keyForResourceRef(sampleResourceRef);
   const state = getStore({
+    ...initialState,
     kube: {
+      ...initialState.kube,
       items: {
+        ...initialState.kube.items,
         [key]: {
           isFetching: false,
           item: secret,
         },
       },
     },
-  });
+  } as Partial<IStoreState>);
   const wrapper = mountWrapper(state, <AppSecrets secretRefs={[sampleResourceRef]} />);
   expect(wrapper.find(SecretItemDatum)).toHaveLength(2);
 });

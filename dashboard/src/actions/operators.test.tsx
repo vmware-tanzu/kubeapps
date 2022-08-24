@@ -4,7 +4,7 @@
 import configureMockStore from "redux-mock-store";
 import thunk from "redux-thunk";
 import { Operators } from "shared/Operators";
-import { IResource } from "shared/types";
+import { IResource, IStoreState } from "shared/types";
 import { getType } from "typesafe-actions";
 import actions from ".";
 
@@ -14,7 +14,7 @@ const mockStore = configureMockStore([thunk]);
 let store: any;
 
 beforeEach(() => {
-  store = mockStore({});
+  store = mockStore({} as Partial<IStoreState>);
 });
 
 afterEach(jest.restoreAllMocks);

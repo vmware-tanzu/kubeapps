@@ -6,7 +6,8 @@ import {
   AvailablePackageDetail,
   ResourceRef,
 } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
-import { getStore, mountWrapper } from "shared/specs/mountWrapper";
+import { getStore, initialState, mountWrapper } from "shared/specs/mountWrapper";
+import { IStoreState } from "shared/types";
 import CustomAppView from ".";
 import { CustomComponent } from "../../../RemoteComponent";
 import { IAppViewResourceRefs } from "../AppView";
@@ -96,8 +97,9 @@ it("should render the remote component with the default URL", () => {
 it("should render the remote component with the URL if set in the config", () => {
   const wrapper = mountWrapper(
     getStore({
+      ...initialState,
       config: { remoteComponentsUrl: "www.thiswebsite.com" },
-    }),
+    } as Partial<IStoreState>),
     <CustomAppView {...defaultProps} />,
   );
   expect(wrapper.find(CustomComponent).prop("url")).toBe("www.thiswebsite.com");
