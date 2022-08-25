@@ -302,12 +302,15 @@ if [[ -n "${TEST_UPGRADE:-}" ]]; then
   k8s_wait_for_deployment kubeapps kubeapps-ci
 fi
 
-installOrUpgradeKubeapps "${ROOT_DIR}/chart/kubeapps"
-info "Waiting for Kubeapps components to be ready (local chart)..."
-k8s_wait_for_deployment kubeapps kubeapps-ci
+# Install ChartMuseum
 installChartMuseum "${CHARTMUSEUM_VERSION}"
 pushChart apache 8.6.2 admin password
 pushChart apache 8.6.3 admin password
+
+# Install Kubeapps
+installOrUpgradeKubeapps "${ROOT_DIR}/chart/kubeapps"
+info "Waiting for Kubeapps components to be ready (local chart)..."
+k8s_wait_for_deployment kubeapps kubeapps-ci
 
 # Setting up local Docker registry if not in GKE
 if [[ -z "${GKE_BRANCH-}" ]]; then
