@@ -17,7 +17,7 @@ Google Cloud Console
 ```
 I0825 06:01:17.145356       1 docker_reg_v2_repo_lister.go:50] ORAS v2 Registry [oci://us-west1-docker.pkg.dev/vmware-kubeapps-ci/stefanprodan-podinfo-clone PlainHTTP=false] PING: GET "https://us-west1-docker.pkg.dev/v2/": unexpected status code 401: unauthorized: No valid credential was supplied.
 ```
-  An intermittent issue?
+  An intermittent issue? TBD
 
   **TODO** need to reduce permissions to smallest workable set. 
   Probably some combination of these and others:
