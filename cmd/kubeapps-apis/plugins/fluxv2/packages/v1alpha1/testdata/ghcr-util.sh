@@ -9,6 +9,8 @@
 # the goal is to create an OCI registry whose contents I completely control and will modify 
 # by running integration tests. Therefore 'pushChartToMyGitHubRegistry'
 # ref https://docs.github.com/en/packages/working-with-a-github-packages-registry/working-with-the-container-registry
+GITHUB_OCI_REGISTRY_URL=oci://ghcr.io/gfichtenholt/helm-charts
+
 function pushChartToMyGitHubRegistry() {
   if [ $# -lt 1 ]
   then
@@ -26,8 +28,7 @@ function pushChartToMyGitHubRegistry() {
    sleep 5
   done
   if [[ $n -ge $max ]]; then
-    echo "Failed to login to helm registry [ghcr.io] after [$max] attempts. Exiting..."
-    exit 1
+    error_exit "Failed to login to helm registry [ghcr.io] after [$max] attempts. Exiting..."
   fi
 
   trap '{
@@ -188,4 +189,47 @@ function deleteChartFromMyGithubRegistry() {
       break  
     fi
   done
+}
+
+# $GITHUB_USER/$GITHUB_TOKEN is a secret for authentication with GitHub (ghcr.io)
+#	I used my GitHub handle [gfichtenholt@vmware.com] and 
+# personal access token [ghp_...] can be seen on https://github.com/settings/tokens
+# and has scopes:
+# "repo, workflow, write:packages, delete:packages, read:org, admin:repo_hook, delete_repo"
+# Current token expires Nov 
+# current token expires Mon, Nov 21 2022
+function setupGithubStefanProdanClone {
+  max=5  
+  n=0
+  until [ $n -ge $max ]
+  do
+   helm registry login ghcr.io -u $GITHUB_USER -p $GITHUB_TOKEN && break
+   n=$((n+1)) 
+   echo "Retrying helm login in 5s [$n/$max]..."
+   sleep 5
+  done
+  if [[ $n -ge $max ]]; then
+    error_exit "Failed to login to helm registry [ghcr.io] after [$max] attempts. Exiting..."
+  fi
+
+  trap '{
+    helm registry logout ghcr.io
+  }' EXIT  
+
+  pushd $SCRIPTPATH/charts
+  trap '{
+    popd
+  }' EXIT  
+
+  # this creates a clone of what was out on "oci://ghcr.io/stefanprodan/charts" as of Jul 28 2022
+  # to oci://ghcr.io/gfichtenholt/stefanprodan-podinfo-clone
+  SRC_URL_PREFIX=https://stefanprodan.github.io/podinfo
+  ALL_VERSIONS=("6.1.0" "6.1.1" "6.1.2" "6.1.3" "6.1.4" "6.1.5" "6.1.6" "6.1.7" "6.1.8")
+  DEST_URL=oci://ghcr.io/gfichtenholt/stefanprodan-podinfo-clone
+  for v in ${ALL_VERSIONS[@]}; do
+    curl -O --silent $SRC_URL_PREFIX/podinfo-$v.tgz
+    helm push podinfo-$v.tgz $DEST_URL
+  done
+  
+  stefanProdanCloneRegistrySanityCheck
 }
