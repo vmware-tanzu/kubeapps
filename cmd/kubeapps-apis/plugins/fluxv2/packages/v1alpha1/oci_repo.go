@@ -26,6 +26,7 @@ import (
 	"net/url"
 	"os"
 	"path"
+	"path/filepath"
 	"reflect"
 	"sort"
 	"strings"
@@ -107,7 +108,7 @@ type OCIChartRepositoryOption func(*OCIChartRepository) error
 type OCIChartRepositoryCredentialFn func(ctx context.Context, reg string) (orasregistryauthv2.Credential, error)
 
 var (
-	helmGetters = getter.Providers{
+	helmProviders = getter.Providers{
 		getter.Provider{
 			Schemes: []string{"http", "https"},
 			New:     getter.NewHTTPGetter,
@@ -373,6 +374,7 @@ func newRegistryClient(isLogin bool, tlsConfig *tls.Config, getterOpts []getter.
 	}
 
 	chartDownloader := func(chartVersion *repo.ChartVersion) (*bytes.Buffer, error) {
+		getterOpts = append(getterOpts, getter.WithRegistryClient(rClient))
 		return downloadChartWithHelmGetter(tlsConfig, getterOpts, helmGetter, chartVersion)
 	}
 
@@ -588,7 +590,7 @@ func (s *repoEventSink) newOCIChartRepositoryAndLoginWithOptions(registryURL str
 	if err != nil {
 		return nil, err
 	}
-	helmGetter, err := helmGetters.ByScheme(u.Scheme)
+	helmProvider, err := helmProviders.ByScheme(u.Scheme)
 	if err != nil {
 		return nil, err
 	}
@@ -596,7 +598,7 @@ func (s *repoEventSink) newOCIChartRepositoryAndLoginWithOptions(registryURL str
 	var tlsConfig *tls.Config
 
 	// Create new registry client and login if needed.
-	registryClient, file, err := registryClientBuilderFn(loginOpts != nil, tlsConfig, getterOpts, helmGetter)
+	registryClient, file, err := registryClientBuilderFn(loginOpts != nil, tlsConfig, getterOpts, helmProvider)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to create registry client due to: %v", err)
 	}
@@ -605,15 +607,34 @@ func (s *repoEventSink) newOCIChartRepositoryAndLoginWithOptions(registryURL str
 	}
 	if file != "" {
 		defer func() {
+			if byteArray, err := os.ReadFile(filepath.Clean(file)); err == nil {
+				log.Infof("Temporary credentials file [%s] contents:\n%s", file, byteArray)
+			}
 			if err := os.Remove(file); err != nil {
 				log.Infof("Failed to delete temporary credentials file: %v", err)
 			}
-			log.Infof("Removed temporary credentials file: [%s]", file)
+			log.Infof("Successfully removed temporary credentials file: [%s]", file)
 		}()
 	}
 
 	registryCredentialFn := func(ctx context.Context, reg string) (orasregistryauthv2.Credential, error) {
+		log.Infof("+ORAS registryCredentialFn(%s)", reg)
 		if cred != nil {
+			// workaround for GCP, which, based on my testing, wants (token) Bearer Auth,
+			// not Basic Auth when ORAS modules are used to list repositories
+			// per https://cloud.google.com/artifact-registry/docs/helm/authentication:
+			//  "oauth2accesstoken" is the user name to use when authenticating with an access token
+			// Ideally, I would want to push this logic all the way down the stack as far as possible,
+			// e.g. into common.OCIChartRepositoryCredentialFromSecret
+			// but alas, helm libraries curently appear to expect username and password
+			// TODO: (gfichtenholt) Also support (long-lived) json keys
+			// ref: https://fluxcd.io/docs/guides/cron-job-image-auth/#using-a-json-key-long-lived
+			if cred.Username == "oauth2accesstoken" {
+				// cred.Password will contain service account access token
+				return orasregistryauthv2.Credential{
+					AccessToken: cred.Password,
+				}, nil
+			}
 			return *cred, nil
 		} else {
 			return orasregistryauthv2.EmptyCredential, nil
@@ -625,7 +646,7 @@ func (s *repoEventSink) newOCIChartRepositoryAndLoginWithOptions(registryURL str
 	// oci://demo.goharbor.io/test-oci-1, which may contain repositories "repo-1", "repo2", etc
 	ociRepo, err := newOCIChartRepository(
 		registryURL,
-		withHelmGetter(helmGetters),
+		withHelmGetter(helmProviders),
 		withHelmGetterOptions(getterOpts),
 		withRegistryClient(registryClient),
 		withRegistryCredentialFn(registryCredentialFn),
