@@ -62,13 +62,6 @@ func TestKindClusterCreateInstalledPackage(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	// see TestKindClusterAvailablePackageEndpointsForOCI for explanation
-	ghUser := os.Getenv("GITHUB_USER")
-	ghToken := os.Getenv("GITHUB_TOKEN")
-	if ghUser == "" || ghToken == "" {
-		t.Fatalf("Environment variables GITHUB_USER and GITHUB_TOKEN need to be set to run this test")
-	}
-
 	testCases := []integrationTestCreatePackageSpec{
 		{
 			testName:             "create test (simplest case)",
@@ -134,6 +127,7 @@ func TestKindClusterCreateInstalledPackage(t *testing.T) {
 			expectedStatusCode: codes.NotFound,
 		},
 		{
+			// notice this test does not use repo secret, so it relies on the repo being public
 			testName:             "create OCI helm release",
 			repoType:             "oci",
 			repoUrl:              github_gfichtenholt_podinfo_oci_registry_url,

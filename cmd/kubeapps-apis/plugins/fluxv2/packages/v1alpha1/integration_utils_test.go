@@ -1372,8 +1372,13 @@ func deleteChartFromMyGithubRegistry(t *testing.T, version string) error {
 // ref https://cloud.google.com/artifact-registry/docs/helm/store-helm-charts#auth-token
 // this token lasts 60 mins
 func gcloudPrintAccessToken(t *testing.T) (string, error) {
+	credFile := os.Getenv("GOOGLE_APPLICATION_CREDENTIALS")
+	if credFile == "" {
+		t.Fatalf("Environment variable [GOOGLE_APPLICATION_CREDENTIALS] needs to be set to run this test")
+	}
 	args := []string{
 		"auth",
+		"application-default",
 		"print-access-token",
 	}
 	return execCommand(t, ".", "gcloud", args)

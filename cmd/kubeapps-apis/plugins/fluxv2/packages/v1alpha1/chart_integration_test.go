@@ -554,12 +554,6 @@ func TestKindClusterAvailablePackageEndpointsForOCI(t *testing.T) {
 		{
 			testName:    "Testing [" + github_stefanprodan_podinfo_oci_registry_url + "] with dockerconfigjson secret",
 			registryUrl: github_stefanprodan_podinfo_oci_registry_url,
-			// this is a secret for authentication with GitHub (ghcr.io)
-			//    personal access token ghp_... can be seen on https://github.com/settings/tokens
-			// and has "admin:repo_hook, delete_repo, repo" scopes
-			// one should be able to login successfully like this:
-			//   docker login ghcr.io -u $GITHUB_USER -p $GITHUB_TOKEN AND/OR
-			//   helm registry login ghcr.io -u $GITHUB_USER -p $GITHUB_TOKEN
 			secret: newDockerConfigJsonSecret(types.NamespacedName{
 				Name:      "oci-repo-secret-" + randSeq(4),
 				Namespace: "default"},
@@ -601,7 +595,7 @@ func TestKindClusterAvailablePackageEndpointsForOCI(t *testing.T) {
 			),
 		},
 		{
-			testName:    "Testing [" + gcp_stefanprodan_podinfo_oci_registry_url + "] with logged in user access token",
+			testName:    "Testing [" + gcp_stefanprodan_podinfo_oci_registry_url + "] with service access token",
 			registryUrl: gcp_stefanprodan_podinfo_oci_registry_url,
 			secret: newBasicAuthSecret(types.NamespacedName{
 				Name:      "oci-repo-secret-" + randSeq(4),
