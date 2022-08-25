@@ -223,11 +223,9 @@ function setupGithubStefanProdanClone {
 
   # this creates a clone of what was out on "oci://ghcr.io/stefanprodan/charts" as of Jul 28 2022
   # to oci://ghcr.io/gfichtenholt/stefanprodan-podinfo-clone
-  SRC_URL_PREFIX=https://stefanprodan.github.io/podinfo
   ALL_VERSIONS=("6.1.0" "6.1.1" "6.1.2" "6.1.3" "6.1.4" "6.1.5" "6.1.6" "6.1.7" "6.1.8")
   DEST_URL=oci://ghcr.io/gfichtenholt/stefanprodan-podinfo-clone
   for v in ${ALL_VERSIONS[@]}; do
-    curl -O --silent $SRC_URL_PREFIX/podinfo-$v.tgz
     helm push podinfo-$v.tgz $DEST_URL
   done
   

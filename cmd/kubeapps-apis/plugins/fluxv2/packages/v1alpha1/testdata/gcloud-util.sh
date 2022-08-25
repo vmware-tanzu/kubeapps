@@ -76,11 +76,9 @@ function setupGcrStefanProdanClone {
     popd
   }' EXIT  
 
-  SRC_URL_PREFIX=https://stefanprodan.github.io/podinfo
   ALL_VERSIONS=("6.1.0" "6.1.1" "6.1.2" "6.1.3" "6.1.4" "6.1.5" "6.1.6" "6.1.7" "6.1.8")
   DEST_URL=oci://$FLUX_TEST_GCP_REGISTRY_DOMAIN/vmware-kubeapps-ci/$REPOSITORY_NAME
   for v in ${ALL_VERSIONS[@]}; do
-    curl --silent -O $SRC_URL_PREFIX/podinfo-$v.tgz
     helm push podinfo-$v.tgz $DEST_URL
     # this should result in something like
     # Pushed: us-west1-docker.pkg.dev/vmware-kubeapps-ci/stefanprodan-podinfo-clone/podinfo:6.1.0

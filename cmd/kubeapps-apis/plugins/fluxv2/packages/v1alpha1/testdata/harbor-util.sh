@@ -117,7 +117,6 @@ function setupHarborStefanProdanClone {
   ALL_VERSIONS=("6.1.0" "6.1.1" "6.1.2" "6.1.3" "6.1.4" "6.1.5" "6.1.6" "6.1.7" "6.1.8")
   DEST_URL=oci://demo.goharbor.io/$PROJECT_NAME
   for v in ${ALL_VERSIONS[@]}; do
-    curl --silent -O $SRC_URL_PREFIX/podinfo-$v.tgz
     helm push podinfo-$v.tgz $DEST_URL
   done
   
