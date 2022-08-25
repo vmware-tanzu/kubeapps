@@ -7,7 +7,7 @@ import configureMockStore from "redux-mock-store";
 import thunk from "redux-thunk";
 import { keyForResourceRef } from "shared/ResourceRef";
 import { ResourceRef } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
-import { IKubeItem, IKubeState, IResource } from "shared/types";
+import { IKubeItem, IKubeState, IResource, IStoreState } from "shared/types";
 import AccessURLTableContainer from ".";
 import AccessURLTable from "../../components/AppView/AccessURLTable";
 
@@ -19,7 +19,7 @@ const makeStore = (resources: { [s: string]: IKubeItem<IResource> }) => {
     kinds: initialKinds,
     subscriptions: {},
   };
-  return mockStore({ kube: state, config: { featureFlags: {} } });
+  return mockStore({ kube: state, config: { featureFlags: {} } } as Partial<IStoreState>);
 };
 
 describe("AccessURLTableContainer", () => {

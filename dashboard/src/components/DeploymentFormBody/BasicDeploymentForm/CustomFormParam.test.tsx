@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { getStore, mountWrapper } from "shared/specs/mountWrapper";
-import { IBasicFormParam } from "shared/types";
+import { IBasicFormParam, IStoreState } from "shared/types";
 import { CustomComponent } from "../../../RemoteComponent";
 import CustomFormComponentLoader from "./CustomFormParam";
 
@@ -71,7 +71,7 @@ it("should render the remote component with the URL if set in the config", () =>
   const wrapper = mountWrapper(
     getStore({
       config: { remoteComponentsUrl: "www.thiswebsite.com" },
-    }),
+    } as Partial<IStoreState>),
     <CustomFormComponentLoader {...defaultProps} />,
   );
   expect(wrapper.find(CustomComponent).prop("url")).toBe("www.thiswebsite.com");
