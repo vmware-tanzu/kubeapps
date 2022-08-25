@@ -318,8 +318,7 @@ func tlsClientConfigFromSecret(secret apiv1.Secret, options *HttpClientOptions) 
 // OCIChartRepositoryCredentialFromSecret derives authentication data from a Secret to login to an OCI registry.
 // This Secret may either hold "username" and "password" fields or be of the
 // apiv1.SecretTypeDockerConfigJson type and hold a apiv1.DockerConfigJsonKey field with a
-// complete Docker configuration. If both, "username" and "password" are
-// empty, a nil LoginOption and a nil error will be returned.
+// complete Docker configuration. If both, "username" and "password" are empty, a nil error will be returned.
 // ref https://github.com/fluxcd/source-controller/blob/main/internal/helm/registry/auth.go
 func OCIChartRepositoryCredentialFromSecret(registryURL string, secret apiv1.Secret) (*orasregistryauthv2.Credential, error) {
 	var username, password string
@@ -356,11 +355,12 @@ func OCIChartRepositoryCredentialFromSecret(registryURL string, secret apiv1.Sec
 	case username == "" || password == "":
 		return nil, fmt.Errorf("invalid '%s' secret data: required fields 'username' and 'password'", secret.Name)
 	}
+
 	pwdRedacted := password
 	if len(pwdRedacted) > 4 {
 		pwdRedacted = pwdRedacted[0:3] + "..."
 	}
-	log.Infof("-OCIRegOCIChartRepositoryCredentialFromSecret: username: [%s], password: [%s]", username, pwdRedacted)
+	log.Infof("-OCIChartRepositoryCredentialFromSecret: username: [%s], password: [%s]", username, pwdRedacted)
 	return &orasregistryauthv2.Credential{
 		Username: username,
 		Password: password,

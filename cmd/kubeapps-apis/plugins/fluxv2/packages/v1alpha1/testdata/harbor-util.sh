@@ -3,6 +3,12 @@
 # Copyright 2022 the Kubeapps contributors.
 # SPDX-License-Identifier: Apache-2.0
 
+FLUX_TEST_HARBOR_HOST=demo.goharbor.io
+FLUX_TEST_HARBOR_URL=https://${FLUX_TEST_HARBOR_HOST}
+# admin/Harbor12345 is a well known default login for harbor registries
+FLUX_TEST_HARBOR_ADMIN_USER=admin
+FLUX_TEST_HARBOR_ADMIN_PWD=Harbor12345
+
 function createHarborProject()
 {
   # sanity check
@@ -88,4 +94,35 @@ function deleteHarborProject()
   elif [[ "$status_code" -ne 404 ]] ; then
     error_exit "Unexpected HTTP status checking if project [$PROJECT_NAME] exists: [$status_code]"
   fi
+}
+
+function setupHarborStefanProdanClone {
+  # this creates a clone of what was out on "oci://ghcr.io/stefanprodan/charts" as of Jul 28 2022
+  # to oci://demo.goharbor.io/stefanprodan-podinfo-clone
+  local PROJECT_NAME=stefanprodan-podinfo-clone
+  deleteHarborProject $PROJECT_NAME
+  createHarborProject $PROJECT_NAME
+  
+  helm registry login $FLUX_TEST_HARBOR_HOST -u $FLUX_TEST_HARBOR_ADMIN_USER -p $FLUX_TEST_HARBOR_ADMIN_PWD
+  trap '{
+    helm registry logout $FLUX_TEST_HARBOR_HOST 
+  }' EXIT  
+
+  pushd $SCRIPTPATH/charts
+  trap '{
+    popd
+  }' EXIT  
+
+  SRC_URL_PREFIX=https://stefanprodan.github.io/podinfo
+  ALL_VERSIONS=("6.1.0" "6.1.1" "6.1.2" "6.1.3" "6.1.4" "6.1.5" "6.1.6" "6.1.7" "6.1.8")
+  DEST_URL=oci://demo.goharbor.io/$PROJECT_NAME
+  for v in ${ALL_VERSIONS[@]}; do
+    curl --silent -O $SRC_URL_PREFIX/podinfo-$v.tgz
+    helm push podinfo-$v.tgz $DEST_URL
+  done
+  
+  echo
+  echo Running sanity checks...
+  echo TODO 
+  echo
 }

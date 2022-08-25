@@ -530,6 +530,12 @@ func TestKindClusterAvailablePackageEndpointsForOCI(t *testing.T) {
 		t.Fatalf("Environment variables GITHUB_USER and GITHUB_TOKEN need to be set to run this test")
 	}
 
+	gcpUser := "oauth2accesstoken"
+	gcpPasswd, err := gcloudPrintAccessToken(t)
+	if err != nil {
+		t.Fatal(err)
+	}
+
 	testCases := []struct {
 		testName    string
 		registryUrl string
@@ -538,13 +544,6 @@ func TestKindClusterAvailablePackageEndpointsForOCI(t *testing.T) {
 		{
 			testName:    "Testing [" + github_stefanprodan_podinfo_oci_registry_url + "] with basic auth secret",
 			registryUrl: github_stefanprodan_podinfo_oci_registry_url,
-			// this is a secret for authentication with GitHub (ghcr.io)
-			//    personal access token ghp_... can be seen on https://github.com/settings/tokens
-			// and has scopes:
-			// "admin:org, admin:repo_hook, delete:packages, delete_repo, repo, workflow, write:packages"
-			// one should be able to login successfully like this:
-			//   docker login ghcr.io -u $GITHUB_USER -p $GITHUB_TOKEN AND/OR
-			//   helm registry login ghcr.io -u $GITHUB_USER -p $GITHUB_TOKEN
 			secret: newBasicAuthSecret(types.NamespacedName{
 				Name:      "oci-repo-secret-" + randSeq(4),
 				Namespace: "default"},
@@ -601,33 +600,17 @@ func TestKindClusterAvailablePackageEndpointsForOCI(t *testing.T) {
 				harbor_pwd,
 			),
 		},
+		{
+			testName:    "Testing [" + gcp_stefanprodan_podinfo_oci_registry_url + "] with logged in user access token",
+			registryUrl: gcp_stefanprodan_podinfo_oci_registry_url,
+			secret: newBasicAuthSecret(types.NamespacedName{
+				Name:      "oci-repo-secret-" + randSeq(4),
+				Namespace: "default"},
+				gcpUser,
+				string(gcpPasswd),
+			),
+		},
 	}
-
-	/*
-		gcp_user := "oauth2accesstoken"
-		// token is very short lived
-		gcp_pwd, err := gcloudPrintAccessToken(t)
-		if err != nil {
-			t.Fatal(err)
-		}
-
-		testCases := []struct {
-			testName    string
-			registryUrl string
-			secret      *apiv1.Secret
-		}{
-			{
-				testName:    "Testing [" + gcp_stefanprodan_podinfo_oci_registry_url + "] with basic auth secret",
-				registryUrl: gcp_stefanprodan_podinfo_oci_registry_url,
-				secret: newBasicAuthSecret(types.NamespacedName{
-					Name:      "oci-repo-secret-" + randSeq(4),
-					Namespace: "default"},
-					gcp_user,
-					gcp_pwd,
-				),
-			},
-		}
-	*/
 
 	adminName := types.NamespacedName{
 		Name:      "test-admin-" + randSeq(4),
