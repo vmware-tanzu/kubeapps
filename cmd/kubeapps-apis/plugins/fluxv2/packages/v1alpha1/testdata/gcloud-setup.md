@@ -29,12 +29,15 @@ Google Cloud Console
 ## Sanity checks 
 Here are (some of) the sanity checks I use to make sure everything is working that don't involve kubeapps:
 ```
-$ export GOOGLE_APPLICATION_CREDENTIALS=/Users/gfichtenholt/gitlocal/kubeapps-gfichtenholt/cmd/kubeapps-apis/plugins/fluxv2/packages/v1alpha1/testdata/gcloud-kubeapps-flux-test-sa-key-file.json
+$ export GOOGLE_APPLICATION_CREDENTIALS=..../gcloud-kubeapps-flux-test-sa-key-file.json
 
 $ export GCP_TOKEN=$(gcloud auth application-default print-access-token)
 ```
+FYI: GCP token expires an hour after it's issued
 
 1. check PING is working 
+  * with service account access token 
+
 ```
 $ curl -iL https://us-west1-docker.pkg.dev/v2/ -H "Authorization: Bearer $GCP_TOKEN"
 HTTP/2 200 
@@ -44,7 +47,19 @@ content-length: 0
 content-type: text/html; charset=UTF-8
 ```
 
+  * with JSON key file
+  You will need to install [oauth2l tool](https://github.com/google/oauth2l) locally
+```
+$ curl -iL https://us-west1-docker.pkg.dev/v2/ -H "$(oauth2l header --scope=cloud-platform)"
+HTTP/2 200 
+docker-distribution-api-version: registry/2.0
+date: Fri, 26 Aug 2022 02:18:15 GMT
+content-length: 0
+content-type: text/html; charset=UTF-8
+```
+
 2. check [catalog API](https://github.com/opencontainers/distribution-spec/blob/main/spec.md#listing-repositories) is working 
+  * with service account access token
 ```
 $ curl -iL https://us-west1-docker.pkg.dev/v2/_catalog -H "Authorization: Bearer $GCP_TOKEN"
   HTTP/2 200
@@ -55,9 +70,20 @@ $ curl -iL https://us-west1-docker.pkg.dev/v2/_catalog -H "Authorization: Bearer
 
   {"repositories":["vmware-kubeapps-ci/stefanprodan-podinfo-clone/podinfo"]}
 ```
+  * with JSON key file
+```
+$ curl -iL https://us-west1-docker.pkg.dev/v2/_catalog -H "$(oauth2l header --scope=cloud-platform)"
+HTTP/2 200 
+content-type: application/json; charset=utf-8
+docker-distribution-api-version: registry/2.0
+date: Fri, 26 Aug 2022 02:22:52 GMT
+content-length: 75
+
+{"repositories":["vmware-kubeapps-ci/stefanprodan-podinfo-clone/podinfo"]}
+```
 
 3. check flux is able to reconcile a `HelmRepository` and a `HelmRelease`:
-
+  * with service account access tokens (short-lived)
 ```
 $ kubectl create secret docker-registry gcp-repo-auth-9 \
   --docker-server=us-west1-docker.pkg.dev \
@@ -77,6 +103,33 @@ $ flux create hr podinfo-9 \
 ✔ HelmRelease created
 ◎ waiting for HelmRelease reconciliation
 ✔ HelmRelease podinfo-9 is ready
+✔ applied revision 6.1.8
+```
+  * with JSON key file (long-lived)
+```
+kubectl create secret docker-registry gcp-repo-auth \
+  --docker-server=us-west1-docker.pkg.dev \
+  --docker-username=_json_key \
+  --docker-password="$(cat $GOOGLE_APPLICATION_CREDENTIALS)"
+
+$ flux create source helm podinfo-7 \
+       --url=oci://us-west1-docker.pkg.dev/vmware-kubeapps-ci/stefanprodan-podinfo-clone \
+       --namespace=default \
+       --secret-ref=gcp-repo-auth
+✚ generating HelmRepository source
+► applying HelmRepository source
+✔ source created
+◎ waiting for HelmRepository source reconciliation
+✔ HelmRepository source reconciliation completed
+
+$ flux create hr podinfo-7 \
+>      --source=HelmRepository/podinfo-7.default \
+>      --chart=podinfo
+✚ generating HelmRelease
+► applying HelmRelease
+✔ HelmRelease updated
+◎ waiting for HelmRelease reconciliation
+✔ HelmRelease podinfo-7 is ready
 ✔ applied revision 6.1.8
 ```
 

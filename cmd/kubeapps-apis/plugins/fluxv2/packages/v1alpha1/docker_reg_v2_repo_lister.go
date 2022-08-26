@@ -102,11 +102,6 @@ func (l *dockerRegistryApiV2RepositoryLister) ListRepositoryNames(ociRepo *OCICh
 }
 
 func newRemoteOrasRegistry(ociRepo *OCIChartRepository) (*orasregistryremotev2.Registry, error) {
-
-	fn := ociRepo.registryCredentialFn
-	cred, err := fn(context.Background(), "debug")
-	log.Infof("+newRemoteOrasRegistry: cred: %v, err: %v", cred, err)
-
 	ref := strings.TrimPrefix(ociRepo.url.String(), fmt.Sprintf("%s://", registry.OCIScheme))
 	parsedRef, err := orasregistryv2.ParseReference(ref)
 	if err != nil {
@@ -121,6 +116,5 @@ func newRemoteOrasRegistry(ociRepo *OCIChartRepository) (*orasregistryremotev2.R
 		Cache:      orasregistryauthv2.DefaultCache,
 		Credential: ociRepo.registryCredentialFn,
 	}
-
 	return orasRegistry, nil
 }

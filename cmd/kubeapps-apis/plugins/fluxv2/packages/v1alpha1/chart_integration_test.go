@@ -530,8 +530,22 @@ func TestKindClusterAvailablePackageEndpointsForOCI(t *testing.T) {
 		t.Fatalf("Environment variables GITHUB_USER and GITHUB_TOKEN need to be set to run this test")
 	}
 
+	// ref: https://cloud.google.com/artifact-registry/docs/helm/authentication#token
 	gcpUser := "oauth2accesstoken"
 	gcpPasswd, err := gcloudPrintAccessToken(t)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// ref https://cloud.google.com/artifact-registry/docs/helm/authentication#json-key
+	gcpKeyFile := os.Getenv("GOOGLE_APPLICATION_CREDENTIALS")
+	if gcpKeyFile == "" {
+		t.Fatalf("Environment variable [GOOGLE_APPLICATION_CREDENTIALS] needs to be set to run this test")
+	}
+
+	gcpUser2 := "_json_key"
+	gcpServer2 := "us-west1-docker.pkg.dev"
+	gcpPasswd2, err := os.ReadFile(gcpKeyFile)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -602,6 +616,17 @@ func TestKindClusterAvailablePackageEndpointsForOCI(t *testing.T) {
 				Namespace: "default"},
 				gcpUser,
 				string(gcpPasswd),
+			),
+		},
+		{
+			testName:    "Testing [" + gcp_stefanprodan_podinfo_oci_registry_url + "] with JSON key",
+			registryUrl: gcp_stefanprodan_podinfo_oci_registry_url,
+			secret: newDockerConfigJsonSecret(types.NamespacedName{
+				Name:      "oci-repo-secret-" + randSeq(4),
+				Namespace: "default"},
+				gcpServer2,
+				gcpUser2,
+				string(gcpPasswd2),
 			),
 		},
 	}
