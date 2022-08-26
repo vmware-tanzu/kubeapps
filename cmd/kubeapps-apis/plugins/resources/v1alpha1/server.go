@@ -7,6 +7,8 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/pkg/clientgetter"
+	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/resources/v1alpha1/common"
 	"os"
 	"sync"
 
@@ -44,6 +46,10 @@ type Server struct {
 	// non-test implementation.
 	clientGetter clientGetter
 
+	// for interactions with k8s API server in the context of
+	// kubeapps-internal-kubeappsapis service account
+	serviceAccountClientGetter clientgetter.BackgroundClientGetterFunc
+
 	// corePackagesClientGetter holds a function to obtain the core.packages.v1alpha1
 	// client. It is similarly initialised in NewServer() below.
 	corePackagesClientGetter func() (pkgsGRPCv1alpha1.PackagesServiceClient, error)
@@ -56,6 +62,11 @@ type Server struct {
 	// stub version using the unsafe helpers while the real implementation
 	// queries the k8s API for a REST mapper.
 	kindToResource func(meta.RESTMapper, schema.GroupVersionKind) (schema.GroupVersionResource, meta.RESTScopeName, error)
+
+	// pluginConfig Resources plugin configuration values
+	pluginConfig *common.ResourcesPluginConfig
+
+	clientQPS float32
 }
 
 // createRESTMapper returns a rest mapper configured with the APIs of the
@@ -90,11 +101,27 @@ func createRESTMapper(clientQPS float32, clientBurst int) (meta.RESTMapper, erro
 	return restmapper.NewDiscoveryRESTMapper(groupResources), nil
 }
 
-func NewServer(configGetter core.KubernetesConfigGetter, clientQPS float32, clientBurst int) (*Server, error) {
+func NewServer(configGetter core.KubernetesConfigGetter, clientQPS float32, clientBurst int, pluginConfigPath string) (*Server, error) {
 	mapper, err := createRESTMapper(clientQPS, clientBurst)
 	if err != nil {
 		return nil, err
 	}
+
+	// If no config is provided, we default to the existing values for backwards compatibility.
+	pluginConfig := common.NewDefaultPluginConfig()
+	if pluginConfigPath != "" {
+		pluginConfig, err = common.ParsePluginConfig(pluginConfigPath)
+		if err != nil {
+			log.Fatalf("%s", err)
+		}
+		log.Infof("+resources using custom config: [%v]", *pluginConfig)
+	} else {
+		log.Info("+resources using default config since pluginConfigPath is empty")
+	}
+
+	// Get the "in-cluster" client getter
+	backgroundClientGetter := clientgetter.NewBackgroundClientGetter(configGetter, clientgetter.Options{})
+
 	return &Server{
 		clientGetter: func(ctx context.Context, cluster string) (kubernetes.Interface, dynamic.Interface, error) {
 			if configGetter == nil {
@@ -114,6 +141,7 @@ func NewServer(configGetter core.KubernetesConfigGetter, clientQPS float32, clie
 			}
 			return typedClient, dynamicClient, nil
 		},
+		serviceAccountClientGetter: backgroundClientGetter,
 		corePackagesClientGetter: func() (pkgsGRPCv1alpha1.PackagesServiceClient, error) {
 			port := os.Getenv("PORT")
 			conn, err := grpc.Dial("localhost:"+port, grpc.WithTransportCredentials(insecure.NewCredentials()))
@@ -130,6 +158,8 @@ func NewServer(configGetter core.KubernetesConfigGetter, clientQPS float32, clie
 			}
 			return mapping.Resource, mapping.Scope.Name(), nil
 		},
+		clientQPS:    clientQPS,
+		pluginConfig: pluginConfig,
 	}, nil
 }
 

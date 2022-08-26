@@ -7,6 +7,11 @@ import (
 	"context"
 	"errors"
 	"github.com/stretchr/testify/assert"
+	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/pkg/clientgetter"
+	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/resources/v1alpha1/common"
+	"google.golang.org/grpc/metadata"
+	"net/http"
+	"strings"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
@@ -263,19 +268,23 @@ func TestGetNamespaceNames(t *testing.T) {
 		v1alpha1.GetNamespaceNamesResponse{},
 	)
 
+	defaultRequest := &v1alpha1.GetNamespaceNamesRequest{
+		Cluster: "default",
+	}
+
 	testCases := []struct {
-		name              string
-		request           *v1alpha1.GetNamespaceNamesRequest
-		k8sError          error
-		expectedResponse  *v1alpha1.GetNamespaceNamesResponse
-		expectedErrorCode codes.Code
-		existingObjects   []runtime.Object
+		name                    string
+		request                 *v1alpha1.GetNamespaceNamesRequest
+		trustedNamespacesConfig common.TrustedNamespaces
+		k8sError                error
+		requestHeaders          http.Header
+		expectedResponse        *v1alpha1.GetNamespaceNamesResponse
+		expectedErrorCode       codes.Code
+		existingObjects         []runtime.Object
 	}{
 		{
-			name: "returns existing namespaces if user has RBAC",
-			request: &v1alpha1.GetNamespaceNamesRequest{
-				Cluster: "default",
-			},
+			name:    "returns existing namespaces if user has RBAC",
+			request: defaultRequest,
 			existingObjects: []runtime.Object{
 				&core.Namespace{
 					TypeMeta: metav1.TypeMeta{
@@ -285,6 +294,9 @@ func TestGetNamespaceNames(t *testing.T) {
 					ObjectMeta: metav1.ObjectMeta{
 						Name: "default",
 					},
+					Status: v1.NamespaceStatus{
+						Phase: v1.NamespaceActive,
+					},
 				},
 				&core.Namespace{
 					TypeMeta: metav1.TypeMeta{
@@ -293,6 +305,9 @@ func TestGetNamespaceNames(t *testing.T) {
 					},
 					ObjectMeta: metav1.ObjectMeta{
 						Name: "kubeapps",
+					},
+					Status: v1.NamespaceStatus{
+						Phase: v1.NamespaceActive,
 					},
 				},
 			},
@@ -304,10 +319,8 @@ func TestGetNamespaceNames(t *testing.T) {
 			},
 		},
 		{
-			name: "returns permission denied if k8s returns a forbidden error",
-			request: &v1alpha1.GetNamespaceNamesRequest{
-				Cluster: "default",
-			},
+			name:    "returns permission denied if k8s returns a forbidden error",
+			request: defaultRequest,
 			k8sError: k8serrors.NewForbidden(schema.GroupResource{
 				Group:    "v1",
 				Resource: "namespaces",
@@ -315,12 +328,257 @@ func TestGetNamespaceNames(t *testing.T) {
 			expectedErrorCode: codes.PermissionDenied,
 		},
 		{
-			name: "returns an internal error if k8s returns an unexpected error",
-			request: &v1alpha1.GetNamespaceNamesRequest{
-				Cluster: "default",
-			},
+			name:              "returns an internal error if k8s returns an unexpected error",
+			request:           defaultRequest,
 			k8sError:          k8serrors.NewInternalError(errors.New("Bang")),
 			expectedErrorCode: codes.Internal,
+		},
+		{
+			name: "it should return the list of only active namespaces if accessible",
+			existingObjects: []runtime.Object{
+				&core.Namespace{
+					TypeMeta: metav1.TypeMeta{
+						Kind:       "Namespace",
+						APIVersion: "v1",
+					},
+					ObjectMeta: metav1.ObjectMeta{
+						Name: "foo",
+					},
+					Status: v1.NamespaceStatus{
+						Phase: v1.NamespaceActive,
+					},
+				},
+				&core.Namespace{
+					TypeMeta: metav1.TypeMeta{
+						Kind:       "Namespace",
+						APIVersion: "v1",
+					},
+					ObjectMeta: metav1.ObjectMeta{
+						Name: "terminating-ns",
+					},
+					Status: v1.NamespaceStatus{
+						Phase: v1.NamespaceTerminating,
+					},
+				},
+			},
+			expectedResponse: &v1alpha1.GetNamespaceNamesResponse{
+				NamespaceNames: []string{
+					"foo",
+				},
+			},
+		},
+		{
+			name: "it should return the list of namespaces matching the trusted namespaces header",
+			existingObjects: []runtime.Object{
+				&core.Namespace{
+					TypeMeta: metav1.TypeMeta{
+						Kind:       "Namespace",
+						APIVersion: "v1",
+					},
+					ObjectMeta: metav1.ObjectMeta{
+						Name: "foo",
+					},
+					Status: v1.NamespaceStatus{
+						Phase: v1.NamespaceActive,
+					},
+				},
+			},
+			trustedNamespacesConfig: common.TrustedNamespaces{
+				HeaderName:    "X-Consumer-Groups",
+				HeaderPattern: "^namespace:(\\w+)$",
+			},
+			requestHeaders: http.Header{"X-Consumer-Groups": []string{"namespace:ns1", "namespace:ns2"}},
+			expectedResponse: &v1alpha1.GetNamespaceNamesResponse{
+				NamespaceNames: []string{
+					"ns1",
+					"ns2",
+				},
+			},
+		},
+		{
+			name: "it should return the existing list of namespaces when trusted namespaces header does not match pattern",
+			existingObjects: []runtime.Object{
+				&core.Namespace{
+					TypeMeta: metav1.TypeMeta{
+						Kind:       "Namespace",
+						APIVersion: "v1",
+					},
+					ObjectMeta: metav1.ObjectMeta{
+						Name: "foo",
+					},
+					Status: v1.NamespaceStatus{
+						Phase: v1.NamespaceActive,
+					},
+				},
+			},
+			trustedNamespacesConfig: common.TrustedNamespaces{
+				HeaderName:    "X-Consumer-Groups",
+				HeaderPattern: "^namespace:(\\w+)$",
+			},
+			requestHeaders: http.Header{"X-Consumer-Groups": []string{"nspace:ns1", "nspace:ns2"}},
+			expectedResponse: &v1alpha1.GetNamespaceNamesResponse{
+				NamespaceNames: []string{
+					"foo",
+				},
+			},
+		},
+		{
+			name: "it should return the existing list of namespaces when trusted namespaces header does not match name",
+			existingObjects: []runtime.Object{
+				&core.Namespace{
+					TypeMeta: metav1.TypeMeta{
+						Kind:       "Namespace",
+						APIVersion: "v1",
+					},
+					ObjectMeta: metav1.ObjectMeta{
+						Name: "foo",
+					},
+					Status: v1.NamespaceStatus{
+						Phase: v1.NamespaceActive,
+					},
+				},
+			},
+			trustedNamespacesConfig: common.TrustedNamespaces{
+				HeaderName:    "X-Consumer-Groups",
+				HeaderPattern: "^namespace:(\\w+)$",
+			},
+			requestHeaders: http.Header{"Y-Consumer-Groups": []string{"namespace:ns1", "namespace:ns2"}},
+			expectedResponse: &v1alpha1.GetNamespaceNamesResponse{
+				NamespaceNames: []string{
+					"foo",
+				},
+			},
+		},
+		{
+			name: "it should return the existing list of namespaces when trusted namespaces header name is empty",
+			existingObjects: []runtime.Object{
+				&core.Namespace{
+					TypeMeta: metav1.TypeMeta{
+						Kind:       "Namespace",
+						APIVersion: "v1",
+					},
+					ObjectMeta: metav1.ObjectMeta{
+						Name: "foo",
+					},
+					Status: v1.NamespaceStatus{
+						Phase: v1.NamespaceActive,
+					},
+				},
+			},
+			trustedNamespacesConfig: common.TrustedNamespaces{
+				HeaderName:    "",
+				HeaderPattern: "^namespace:(\\w+)$",
+			},
+			requestHeaders: http.Header{"X-Consumer-Groups": []string{"namespace:ns1", "namespace:ns2"}},
+			expectedResponse: &v1alpha1.GetNamespaceNamesResponse{
+				NamespaceNames: []string{
+					"foo",
+				},
+			},
+		},
+		{
+			name: "it should return the existing list of namespaces when trusted namespaces pattern is empty",
+			existingObjects: []runtime.Object{
+				&core.Namespace{
+					TypeMeta: metav1.TypeMeta{
+						Kind:       "Namespace",
+						APIVersion: "v1",
+					},
+					ObjectMeta: metav1.ObjectMeta{
+						Name: "foo",
+					},
+					Status: v1.NamespaceStatus{
+						Phase: v1.NamespaceActive,
+					},
+				},
+			},
+			trustedNamespacesConfig: common.TrustedNamespaces{
+				HeaderName:    "X-Consumer-Groups",
+				HeaderPattern: "",
+			},
+			requestHeaders: http.Header{"X-Consumer-Groups": []string{"namespace:ns1", "namespace:ns2"}},
+			expectedResponse: &v1alpha1.GetNamespaceNamesResponse{
+				NamespaceNames: []string{
+					"foo",
+				},
+			},
+		},
+		{
+			name: "it should return some of the namespaces from trusted namespaces header when not all match the pattern",
+			existingObjects: []runtime.Object{
+				&core.Namespace{
+					TypeMeta: metav1.TypeMeta{
+						Kind:       "Namespace",
+						APIVersion: "v1",
+					},
+					ObjectMeta: metav1.ObjectMeta{
+						Name: "foo",
+					},
+					Status: v1.NamespaceStatus{
+						Phase: v1.NamespaceActive,
+					},
+				},
+			},
+			trustedNamespacesConfig: common.TrustedNamespaces{
+				HeaderName:    "X-Consumer-Groups",
+				HeaderPattern: "^namespace:(\\w+)$",
+			},
+			requestHeaders: http.Header{"X-Consumer-Groups": []string{"namespace:ns1:read", "namespace:ns2", "ns3", "namespace:ns4", "ns:ns5:write"}},
+			expectedResponse: &v1alpha1.GetNamespaceNamesResponse{
+				NamespaceNames: []string{
+					"ns2",
+					"ns4",
+				},
+			},
+		},
+		{
+			name: "it should return existing namespaces if no trusted ns header but trusted configuration is in place",
+			existingObjects: []runtime.Object{
+				&core.Namespace{
+					TypeMeta: metav1.TypeMeta{
+						Kind:       "Namespace",
+						APIVersion: "v1",
+					},
+					ObjectMeta: metav1.ObjectMeta{
+						Name: "foo",
+					},
+					Status: v1.NamespaceStatus{
+						Phase: v1.NamespaceActive,
+					},
+				},
+			},
+			trustedNamespacesConfig: common.TrustedNamespaces{
+				HeaderName:    "X-Consumer-Groups",
+				HeaderPattern: "^namespace:(\\w+)$",
+			},
+			expectedResponse: &v1alpha1.GetNamespaceNamesResponse{
+				NamespaceNames: []string{
+					"foo",
+				},
+			},
+		},
+		{
+			name: "it should ignore incoming trusted namespaces header when no trusted configuration is in place",
+			existingObjects: []runtime.Object{
+				&core.Namespace{
+					TypeMeta: metav1.TypeMeta{
+						Kind:       "Namespace",
+						APIVersion: "v1",
+					},
+					ObjectMeta: metav1.ObjectMeta{
+						Name: "foo",
+					},
+					Status: v1.NamespaceStatus{
+						Phase: v1.NamespaceActive,
+					},
+				},
+			},
+			requestHeaders: http.Header{"X-Consumer-Groups": []string{"namespace:ns1:read", "namespace:ns2", "ns3", "namespace:ns4", "ns:ns5:write"}},
+			expectedResponse: &v1alpha1.GetNamespaceNamesResponse{
+				NamespaceNames: []string{
+					"foo",
+				},
+			},
 		},
 	}
 
@@ -333,13 +591,34 @@ func TestGetNamespaceNames(t *testing.T) {
 					return true, &v1.NamespaceList{}, tc.k8sError
 				})
 			}
+
+			backgroundClientGetter := func(ctx context.Context) (clientgetter.ClientInterfaces, error) {
+				return clientgetter.
+					NewBuilder().
+					WithTyped(fakeClient).
+					Build(), nil
+			}
+
+			pluginConfig := &common.ResourcesPluginConfig{}
+			if (tc.trustedNamespacesConfig != common.TrustedNamespaces{}) {
+				pluginConfig.TrustedNamespaces = tc.trustedNamespacesConfig
+			}
+
 			s := Server{
 				clientGetter: func(context.Context, string) (kubernetes.Interface, dynamic.Interface, error) {
 					return fakeClient, nil, nil
 				},
+				serviceAccountClientGetter: backgroundClientGetter,
+				clientQPS:                  5,
+				pluginConfig:               pluginConfig,
 			}
 
-			response, err := s.GetNamespaceNames(context.Background(), tc.request)
+			ctx := context.Background()
+			for headerName, headerValue := range tc.requestHeaders {
+				ctx = metadata.NewIncomingContext(ctx, metadata.Pairs(headerName, strings.Join(headerValue, ",")))
+			}
+
+			response, err := s.GetNamespaceNames(ctx, tc.request)
 
 			if got, want := status.Code(err), tc.expectedErrorCode; got != want {
 				t.Fatalf("got: %d, want: %d, err: %+v", got, want, err)
