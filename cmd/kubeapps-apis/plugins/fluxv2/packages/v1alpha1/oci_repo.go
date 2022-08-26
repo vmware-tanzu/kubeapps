@@ -26,7 +26,6 @@ import (
 	"net/url"
 	"os"
 	"path"
-	"path/filepath"
 	"reflect"
 	"sort"
 	"strings"
@@ -607,9 +606,6 @@ func (s *repoEventSink) newOCIChartRepositoryAndLoginWithOptions(registryURL str
 	}
 	if file != "" {
 		defer func() {
-			if byteArray, err := os.ReadFile(filepath.Clean(file)); err == nil {
-				log.Infof("Temporary credentials file [%s] contents:\n%s", file, byteArray)
-			}
 			if err := os.Remove(file); err != nil {
 				log.Infof("Failed to delete temporary credentials file: %v", err)
 			}
@@ -618,24 +614,7 @@ func (s *repoEventSink) newOCIChartRepositoryAndLoginWithOptions(registryURL str
 	}
 
 	registryCredentialFn := func(ctx context.Context, reg string) (orasregistryauthv2.Credential, error) {
-		log.Infof("+ORAS registryCredentialFn(%s)", reg)
 		if cred != nil {
-			// workaround for GCP service account access token authentication,
-			// which, based on my testing, wants (token) Bearer Auth,
-			// not Basic Auth when ORAS modules are used to list repositories
-			// per https://cloud.google.com/artifact-registry/docs/helm/authentication:
-			//  "oauth2accesstoken" is the user name to use when authenticating with an access token
-			// Ideally, I would want to push this logic all the way down the stack as far as possible,
-			// e.g. into common.OCIChartRepositoryCredentialFromSecret
-			// but alas, helm libraries curently appear to expect username and password
-			// TODO: (gfichtenholt) Also support (long-lived) json keys
-			// ref: https://fluxcd.io/docs/guides/cron-job-image-auth/#using-a-json-key-long-lived
-			//if cred.Username == "oauth2accesstoken" {
-			// cred.Password will contain service account access token
-			//	return orasregistryauthv2.Credential{
-			//		AccessToken: cred.Password,
-			//	}, nil
-			//}
 			return *cred, nil
 		} else {
 			return orasregistryauthv2.EmptyCredential, nil
