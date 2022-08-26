@@ -12,12 +12,7 @@ Google Cloud Console
     - Description: `Service Account for integration testing of kubeapps flux plugin`
 
   Roles granted to this service account:
-    - Editor. 
-      Verified 8/24/22 11:39pm this works. Same code failed on the previous run with
-```
-I0825 06:01:17.145356       1 docker_reg_v2_repo_lister.go:50] ORAS v2 Registry [oci://us-west1-docker.pkg.dev/vmware-kubeapps-ci/stefanprodan-podinfo-clone PlainHTTP=false] PING: GET "https://us-west1-docker.pkg.dev/v2/": unexpected status code 401: unauthorized: No valid credential was supplied.
-```
-  An intermittent issue? TBD
+    - Editor. Verified 8/24/22 11:39pm this works. 
 
   **TODO** need to reduce permissions to smallest workable set. 
   Probably some combination of these and others:
@@ -49,7 +44,7 @@ content-length: 0
 content-type: text/html; charset=UTF-8
 ```
 
-2. check _catalog API is working 
+2. check [catalog API](https://github.com/opencontainers/distribution-spec/blob/main/spec.md#listing-repositories) is working 
 ```
 $ curl -iL https://us-west1-docker.pkg.dev/v2/_catalog -H "Authorization: Bearer $GCP_TOKEN"
   HTTP/2 200
@@ -61,4 +56,43 @@ $ curl -iL https://us-west1-docker.pkg.dev/v2/_catalog -H "Authorization: Bearer
   {"repositories":["vmware-kubeapps-ci/stefanprodan-podinfo-clone/podinfo"]}
 ```
 
-TODO add example from info.txt about kubectl create helmrepository/helmrelease
+3. check flux is able to reconcile a `HelmRepository` and a `HelmRelease`:
+
+```
+$ kubectl create secret docker-registry gcp-repo-auth-9 \
+  --docker-server=us-west1-docker.pkg.dev \
+  --docker-username=oauth2accesstoken \
+  --docker-password="$(gcloud auth application-default print-access-token)"
+
+$ flux create source helm podinfo-9 \
+       --url=oci://us-west1-docker.pkg.dev/vmware-kubeapps-ci/stefanprodan-podinfo-clone \
+       --namespace=default \
+       --secret-ref=gcp-repo-auth-9
+
+$ flux create hr podinfo-9 \
+      --source=HelmRepository/podinfo-9.default \
+      --chart=podinfo
+✚ generating HelmRelease
+► applying HelmRelease
+✔ HelmRelease created
+◎ waiting for HelmRelease reconciliation
+✔ HelmRelease podinfo-9 is ready
+✔ applied revision 6.1.8
+```
+
+## Notes
+1. After a cold start (several hours of not running the tests), running the test always first at first
+```
+$ go test -v -timeout 9999s -run TestKindClusterAvailablePackageEndpointsForOCI 
+...
+--- PASS: TestKindClusterAvailablePackageEndpointsForOCI/Testing_[oci://ghcr.io/gfichtenholt/stefanprodan-podinfo-clone]_with_basic_auth_secret (18.25s)
+--- PASS: TestKindClusterAvailablePackageEndpointsForOCI/Testing_[oci://ghcr.io/gfichtenholt/stefanprodan-podinfo-clone]_with_dockerconfigjson_secret (16.72s)
+--- PASS: TestKindClusterAvailablePackageEndpointsForOCI/Testing_[oci://demo.goharbor.io/stefanprodan-podinfo-clone]_with_basic_auth_secret (17.51s)
+--- FAIL: TestKindClusterAvailablePackageEndpointsForOCI/Testing_[oci://us-west1-docker.pkg.dev/vmware-kubeapps-ci/stefanprodan-podinfo-clone]_with_service_access_token (5.51s)
+```
+
+due to this error on server:
+```
+I0825 06:01:17.145356       1 docker_reg_v2_repo_lister.go:50] ORAS v2 Registry [oci://us-west1-docker.pkg.dev/vmware-kubeapps-ci/stefanprodan-podinfo-clone PlainHTTP=false] PING: GET "https://us-west1-docker.pkg.dev/v2/": unexpected status code 401: unauthorized: No valid credential was supplied.
+```
+**TODO** The workaround is to re-start kubeapps-internal-kubeappsapis pod. So there appears to be some stale state left on a pod. I need to find what it is and how to properly fix it

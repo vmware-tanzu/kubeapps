@@ -62,6 +62,18 @@ func TestKindClusterCreateInstalledPackage(t *testing.T) {
 		t.Fatal(err)
 	}
 
+	ghUser := os.Getenv("GITHUB_USER")
+	ghToken := os.Getenv("GITHUB_TOKEN")
+	if ghUser == "" || ghToken == "" {
+		t.Fatalf("Environment variables GITHUB_USER and GITHUB_TOKEN need to be set to run this test")
+	}
+
+	gcpUser := "oauth2accesstoken"
+	gcpPasswd, err := gcloudPrintAccessToken(t)
+	if err != nil {
+		t.Fatal(err)
+	}
+
 	testCases := []integrationTestCreatePackageSpec{
 		{
 			testName:             "create test (simplest case)",
@@ -127,15 +139,36 @@ func TestKindClusterCreateInstalledPackage(t *testing.T) {
 			expectedStatusCode: codes.NotFound,
 		},
 		{
-			// notice this test does not use repo secret, so it relies on the repo being public
-			testName:             "create OCI helm release",
-			repoType:             "oci",
-			repoUrl:              github_gfichtenholt_podinfo_oci_registry_url,
+			testName: "create OCI helm release from [" + github_gfichtenholt_podinfo_oci_registry_url + "]",
+			repoType: "oci",
+			repoUrl:  github_gfichtenholt_podinfo_oci_registry_url,
+			repoSecret: newBasicAuthSecret(types.NamespacedName{
+				Name:      "oci-repo-secret-" + randSeq(4),
+				Namespace: "default"},
+				ghUser,
+				ghToken,
+			),
 			request:              create_installed_package_request_oci,
 			expectedDetail:       expected_detail_installed_package_oci,
 			expectedPodPrefix:    "my-podinfo-17",
 			expectedStatusCode:   codes.OK,
 			expectedResourceRefs: expected_resource_refs_oci,
+		},
+		{
+			testName: "create OCI helm release from [" + gcp_stefanprodan_podinfo_oci_registry_url + "]",
+			repoType: "oci",
+			repoUrl:  gcp_stefanprodan_podinfo_oci_registry_url,
+			repoSecret: newBasicAuthSecret(types.NamespacedName{
+				Name:      "oci-repo-secret-" + randSeq(4),
+				Namespace: "default"},
+				gcpUser,
+				string(gcpPasswd),
+			),
+			request:              create_installed_package_request_oci_2,
+			expectedDetail:       expected_detail_installed_package_oci_2,
+			expectedPodPrefix:    "my-podinfo-19",
+			expectedStatusCode:   codes.OK,
+			expectedResourceRefs: expected_resource_refs_oci_2,
 		},
 	}
 
