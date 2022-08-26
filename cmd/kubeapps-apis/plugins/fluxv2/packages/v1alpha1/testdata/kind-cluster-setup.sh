@@ -47,19 +47,9 @@ OCI_REGISTRY_REMOTE_PORT=5000
 OCI_REGISTRY_LOCAL_PORT=5000
 LOCAL_OCI_REGISTRY_USER=foo
 LOCAL_OCI_REGISTRY_PWD=bar
-GITHUB_OCI_REGISTRY_URL=oci://ghcr.io/gfichtenholt/helm-charts
 
 # this is the only package version used to seed podinfo OCI repository
 OCI_PODINFO_CHART_VERSION=6.1.5
-
-FLUX_TEST_HARBOR_HOST=demo.goharbor.io
-FLUX_TEST_HARBOR_URL=https://${FLUX_TEST_HARBOR_HOST}
-# admin/Harbor12345 is a well known default login for harbor registries
-FLUX_TEST_HARBOR_ADMIN_USER=admin
-FLUX_TEST_HARBOR_ADMIN_PWD=Harbor12345
-
-FLUX_TEST_GCP_LOCATION=us-west1
-FLUX_TEST_GCP_REGISTRY_DOMAIN=us-west1-docker.pkg.dev
 
 function pushChartToLocalRegistryUsingHelmCLI() {
   max=5  
@@ -203,94 +193,6 @@ function shell {
 
 function logs {
   kubectl logs pod/$(kubectl get pod -n default | grep fluxv2plugin | head -n 1 | awk '{print $1}') -n default --context kind-kubeapps 
-}
-
-function setupGithubStefanProdanClone {
-  helm registry login ghcr.io -u $GITHUB_USER -p $GITHUB_TOKEN
-  trap '{
-    helm registry logout ghcr.io
-  }' EXIT  
-
-  pushd $SCRIPTPATH/charts
-  trap '{
-    popd
-  }' EXIT  
-
-  # this creates a clone of what was out on "oci://ghcr.io/stefanprodan/charts" as of Jul 28 2022
-  # to oci://ghcr.io/gfichtenholt/stefanprodan-podinfo-clone
-  SRC_URL_PREFIX=https://stefanprodan.github.io/podinfo
-  ALL_VERSIONS=("6.1.0" "6.1.1" "6.1.2" "6.1.3" "6.1.4" "6.1.5" "6.1.6" "6.1.7" "6.1.8")
-  DEST_URL=oci://ghcr.io/gfichtenholt/stefanprodan-podinfo-clone
-  for v in ${ALL_VERSIONS[@]}; do
-    curl -O --silent $SRC_URL_PREFIX/podinfo-$v.tgz
-    helm push podinfo-$v.tgz $DEST_URL
-  done
-  
-  stefanProdanCloneRegistrySanityCheck
-}
-
-function setupHarborStefanProdanClone {
-  # this creates a clone of what was out on "oci://ghcr.io/stefanprodan/charts" as of Jul 28 2022
-  # to oci://demo.goharbor.io/stefanprodan-podinfo-clone
-  local PROJECT_NAME=stefanprodan-podinfo-clone
-  deleteHarborProject $PROJECT_NAME
-  createHarborProject $PROJECT_NAME
-  
-  helm registry login $FLUX_TEST_HARBOR_HOST -u $FLUX_TEST_HARBOR_ADMIN_USER -p $FLUX_TEST_HARBOR_ADMIN_PWD
-  trap '{
-    helm registry logout $FLUX_TEST_HARBOR_HOST 
-  }' EXIT  
-
-  pushd $SCRIPTPATH/charts
-  trap '{
-    popd
-  }' EXIT  
-
-  SRC_URL_PREFIX=https://stefanprodan.github.io/podinfo
-  ALL_VERSIONS=("6.1.0" "6.1.1" "6.1.2" "6.1.3" "6.1.4" "6.1.5" "6.1.6" "6.1.7" "6.1.8")
-  DEST_URL=oci://demo.goharbor.io/stefanprodan-podinfo-clone
-  for v in ${ALL_VERSIONS[@]}; do
-    curl --silent -O $SRC_URL_PREFIX/podinfo-$v.tgz
-    helm push podinfo-$v.tgz $DEST_URL
-  done
-  
-  echo
-  echo Running sanity checks...
-  echo TODO 
-  echo
-}
-
-function setupGcrStefanProdanClone {
-  # this creates a clone of what was out on "oci://ghcr.io/stefanprodan/charts" as of Jul 28 2022
-  # to oci://demo.goharbor.io/stefanprodan-podinfo-clone
-  local REGISTRY_NAME=stefanprodan-podinfo-clone
-  deleteArtifactRegistry $REGISTRY_NAME
-  createArtifactRegistry $REGISTRY_NAME
-
-  gcloud auth print-access-token | helm registry login -u oauth2accesstoken \
-    --password-stdin $FLUX_TEST_GCP_REGISTRY_DOMAIN
-  
-  trap '{
-    helm registry logout $FLUX_TEST_GCP_REGISTRY_DOMAIN
-  }' EXIT  
-
-  pushd $SCRIPTPATH/charts
-  trap '{
-    popd
-  }' EXIT  
-
-  SRC_URL_PREFIX=https://stefanprodan.github.io/podinfo
-  ALL_VERSIONS=("6.1.0" "6.1.1" "6.1.2" "6.1.3" "6.1.4" "6.1.5" "6.1.6" "6.1.7" "6.1.8")
-  DEST_URL=oci://$FLUX_TEST_GCP_REGISTRY_DOMAIN/vmware-kubeapps-ci/$REGISTRY_NAME/podinfo
-  for v in ${ALL_VERSIONS[@]}; do
-    curl --silent -O $SRC_URL_PREFIX/podinfo-$v.tgz
-    helm push podinfo-$v.tgz $DEST_URL
-  done
-  
-  echo
-  echo Running sanity checks...
-  echo TODO 
-  echo
 }
 
 . ./ghcr-util.sh

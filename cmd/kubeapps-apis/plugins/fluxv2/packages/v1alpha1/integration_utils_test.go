@@ -87,7 +87,7 @@ const (
 	// gets setup by kind-cluster-setup.sh
 	github_stefanprodan_podinfo_oci_registry_url = "oci://ghcr.io/gfichtenholt/stefanprodan-podinfo-clone"
 	harbor_stefanprodan_podinfo_oci_registry_url = "oci://demo.goharbor.io/stefanprodan-podinfo-clone"
-	gcp_stefanprodan_podinfo_oci_registry_url    = "oci://us-west1-docker.pkg.dev/vmware-kubeapps-ci/stefanprodan-podinfo-clone/podinfo"
+	gcp_stefanprodan_podinfo_oci_registry_url    = "oci://us-west1-docker.pkg.dev/vmware-kubeapps-ci/stefanprodan-podinfo-clone"
 
 	// the URL of local in cluster helm registry. Gets deployed via ./kind-cluster-setup.sh
 	// in_cluster_oci_registry_url = "oci://registry-app-svc.default.svc.cluster.local:5000/helm-charts"
@@ -1367,6 +1367,21 @@ func deleteChartFromMyGithubRegistry(t *testing.T, version string) error {
 	// use the CLI for now
 	_, err := execCommand(t, "./testdata", "./kind-cluster-setup.sh", args)
 	return err
+}
+
+// ref https://cloud.google.com/artifact-registry/docs/helm/store-helm-charts#auth-token
+// this token lasts 60 mins
+func gcloudPrintAccessToken(t *testing.T) (string, error) {
+	credFile := os.Getenv("GOOGLE_APPLICATION_CREDENTIALS")
+	if credFile == "" {
+		t.Fatalf("Environment variable [GOOGLE_APPLICATION_CREDENTIALS] needs to be set to run this test")
+	}
+	args := []string{
+		"auth",
+		"application-default",
+		"print-access-token",
+	}
+	return execCommand(t, ".", "gcloud", args)
 }
 
 func execCommand(t *testing.T, dir, name string, args []string) (string, error) {
