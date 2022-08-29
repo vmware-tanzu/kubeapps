@@ -530,6 +530,26 @@ func TestKindClusterAvailablePackageEndpointsForOCI(t *testing.T) {
 		t.Fatalf("Environment variables GITHUB_USER and GITHUB_TOKEN need to be set to run this test")
 	}
 
+	// ref: https://cloud.google.com/artifact-registry/docs/helm/authentication#token
+	gcpUser := "oauth2accesstoken"
+	gcpPasswd, err := gcloudPrintAccessToken(t)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// ref https://cloud.google.com/artifact-registry/docs/helm/authentication#json-key
+	gcpKeyFile := os.Getenv("GOOGLE_APPLICATION_CREDENTIALS")
+	if gcpKeyFile == "" {
+		t.Fatalf("Environment variable [GOOGLE_APPLICATION_CREDENTIALS] needs to be set to run this test")
+	}
+
+	gcpUser2 := "_json_key"
+	gcpServer2 := "us-west1-docker.pkg.dev"
+	gcpPasswd2, err := os.ReadFile(gcpKeyFile)
+	if err != nil {
+		t.Fatal(err)
+	}
+
 	testCases := []struct {
 		testName    string
 		registryUrl string
@@ -538,13 +558,6 @@ func TestKindClusterAvailablePackageEndpointsForOCI(t *testing.T) {
 		{
 			testName:    "Testing [" + github_stefanprodan_podinfo_oci_registry_url + "] with basic auth secret",
 			registryUrl: github_stefanprodan_podinfo_oci_registry_url,
-			// this is a secret for authentication with GitHub (ghcr.io)
-			//    personal access token ghp_... can be seen on https://github.com/settings/tokens
-			// and has scopes:
-			// "admin:org, admin:repo_hook, delete:packages, delete_repo, repo, workflow, write:packages"
-			// one should be able to login successfully like this:
-			//   docker login ghcr.io -u $GITHUB_USER -p $GITHUB_TOKEN AND/OR
-			//   helm registry login ghcr.io -u $GITHUB_USER -p $GITHUB_TOKEN
 			secret: newBasicAuthSecret(types.NamespacedName{
 				Name:      "oci-repo-secret-" + randSeq(4),
 				Namespace: "default"},
@@ -555,12 +568,6 @@ func TestKindClusterAvailablePackageEndpointsForOCI(t *testing.T) {
 		{
 			testName:    "Testing [" + github_stefanprodan_podinfo_oci_registry_url + "] with dockerconfigjson secret",
 			registryUrl: github_stefanprodan_podinfo_oci_registry_url,
-			// this is a secret for authentication with GitHub (ghcr.io)
-			//    personal access token ghp_... can be seen on https://github.com/settings/tokens
-			// and has "admin:repo_hook, delete_repo, repo" scopes
-			// one should be able to login successfully like this:
-			//   docker login ghcr.io -u $GITHUB_USER -p $GITHUB_TOKEN AND/OR
-			//   helm registry login ghcr.io -u $GITHUB_USER -p $GITHUB_TOKEN
 			secret: newDockerConfigJsonSecret(types.NamespacedName{
 				Name:      "oci-repo-secret-" + randSeq(4),
 				Namespace: "default"},
@@ -601,33 +608,28 @@ func TestKindClusterAvailablePackageEndpointsForOCI(t *testing.T) {
 				harbor_pwd,
 			),
 		},
+		{
+			testName:    "Testing [" + gcp_stefanprodan_podinfo_oci_registry_url + "] with service access token",
+			registryUrl: gcp_stefanprodan_podinfo_oci_registry_url,
+			secret: newBasicAuthSecret(types.NamespacedName{
+				Name:      "oci-repo-secret-" + randSeq(4),
+				Namespace: "default"},
+				gcpUser,
+				string(gcpPasswd),
+			),
+		},
+		{
+			testName:    "Testing [" + gcp_stefanprodan_podinfo_oci_registry_url + "] with JSON key",
+			registryUrl: gcp_stefanprodan_podinfo_oci_registry_url,
+			secret: newDockerConfigJsonSecret(types.NamespacedName{
+				Name:      "oci-repo-secret-" + randSeq(4),
+				Namespace: "default"},
+				gcpServer2,
+				gcpUser2,
+				string(gcpPasswd2),
+			),
+		},
 	}
-
-	/*
-		gcp_user := "oauth2accesstoken"
-		// token is very short lived
-		gcp_pwd, err := gcloudPrintAccessToken(t)
-		if err != nil {
-			t.Fatal(err)
-		}
-
-		testCases := []struct {
-			testName    string
-			registryUrl string
-			secret      *apiv1.Secret
-		}{
-			{
-				testName:    "Testing [" + gcp_stefanprodan_podinfo_oci_registry_url + "] with basic auth secret",
-				registryUrl: gcp_stefanprodan_podinfo_oci_registry_url,
-				secret: newBasicAuthSecret(types.NamespacedName{
-					Name:      "oci-repo-secret-" + randSeq(4),
-					Namespace: "default"},
-					gcp_user,
-					gcp_pwd,
-				),
-			},
-		}
-	*/
 
 	adminName := types.NamespacedName{
 		Name:      "test-admin-" + randSeq(4),

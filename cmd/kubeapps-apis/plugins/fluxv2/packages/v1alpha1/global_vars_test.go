@@ -349,6 +349,17 @@ var (
 
 	expected_resource_refs_oci = podinfo_installed_refs("my-podinfo-17")
 
+	expected_detail_installed_package_oci_2 = &corev1.InstalledPackageDetail{
+		PkgVersionReference: &corev1.VersionReference{
+			Version: "*",
+		},
+		CurrentVersion:        pkgAppVersion("6.1.8"),
+		Status:                status_installed,
+		PostInstallationNotes: podinfo_notes("my-podinfo-19"),
+	}
+
+	expected_resource_refs_oci_2 = podinfo_installed_refs("my-podinfo-19")
+
 	update_request_1 = &corev1.UpdateInstalledPackageRequest{
 		// InstalledPackageRef will be filled in by the code below after a call to create(...) completes
 		PkgVersionReference: &corev1.VersionReference{
@@ -557,6 +568,12 @@ var (
 			Plugin:     fluxPlugin,
 		},
 		PostInstallationNotes: podinfo_notes("my-podinfo-18"),
+	}
+
+	create_installed_package_request_oci_2 = &corev1.CreateInstalledPackageRequest{
+		AvailablePackageRef: availableRef("podinfo-19/podinfo", "default"),
+		Name:                "my-podinfo-19",
+		TargetContext:       targetContext("test-19"),
 	}
 
 	expected_detail_test_release_rbac = &corev1.InstalledPackageDetail{

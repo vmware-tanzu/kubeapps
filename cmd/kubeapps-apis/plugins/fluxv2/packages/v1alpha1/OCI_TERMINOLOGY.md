@@ -126,6 +126,20 @@ Like ghcr.io, appears to support
     ... 
     ghcr-library/golang]
 
+## Google Cloud Platform Artifact Repository 
+Like ghcr.io, appears to support 
+[Docker Registry HTTP API V2](https://github.com/distribution/distribution/blob/main/docs/spec/api.md#listing-repositories) for listing of repostories:
+  - suppose I am looking for list of repository names that have prefix `'stefanprodan-podinfo-clone'`.
+    To do this, I pass in a parameter startAt `'stefanprodan-podinfo-clone'` to ORAS v2 libraries (see `docker_reg_v2_repo_lister.go`) and I get back this list:
+    ```
+    $ curl -iL https://us-west1-docker.pkg.dev/v2/_catalog?last=stefanprodan-podinfo-clone -H "Authorization: Bearer $GCP_TOKEN"
+    HTTP/2 200
+    content-type: application/json; charset=utf-8
+    docker-distribution-api-version: registry/2.0
+    
+    {"repositories":["vmware-kubeapps-ci/stefanprodan-podinfo-clone/podinfo"]}
+    ```
+    
 ---
 Here is probably the most confusing part of the whole document:
   1. Assume we have a Flux OCI HelmRepository CRD with URL `"oci://ghcr.io/gfichtenholt/helm-charts"` 
