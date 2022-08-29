@@ -84,6 +84,8 @@ const pkgRepoFormData = {
     cert: "",
     key: "",
   },
+  namespace: "default",
+  isNamespaceScoped: true,
 } as IPkgRepoFormData;
 
 let spyOnUseDispatch: jest.SpyInstance;
