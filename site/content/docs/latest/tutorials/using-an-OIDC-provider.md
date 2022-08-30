@@ -46,7 +46,7 @@ Kubeapps uses [OAuth2 Proxy](https://github.com/oauth2-proxy/oauth2-proxy) to ha
 
 ### Configure parameters
 
-The minimun set of parameters to use an Identity Provider for Kubeapps are the following:
+The minimum set of parameters to use an Identity Provider for Kubeapps are the following:
 
 - `Client ID`: Client ID of the IdP.
 - `Client Secret`: (If configured) Secret used to validate the Client ID.
