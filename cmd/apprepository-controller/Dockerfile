@@ -16,7 +16,7 @@ RUN go install github.com/golangci/golangci-lint/cmd/golangci-lint@v$GOLANGCILIN
 # If true, run golangci-lint to detect issues
 ARG lint
 
-RUN if [ -z "$lint" ]; then \
+RUN if [ ! -z "$lint" ]; then \
     # Run golangci-lint to detect issues
     golangci-lint run --timeout=10m ./cmd/apprepository-controller/... && \
     golangci-lint run --timeout=10m ./pkg/... ; \
