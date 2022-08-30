@@ -7,6 +7,14 @@ GOFMT = /usr/bin/env gofmt
 IMAGE_TAG ?= dev-$(shell date +%FT%H-%M-%S-%Z)
 VERSION ?= $$(git rev-parse HEAD)
 TARGET_ARCHITECTURE ?= amd64
+SUPPORTED_ARCHITECTURES := amd64 arm64 riscv64 ppc64le s390x 386 arm/v7 arm/v6
+
+ifeq ($(filter $(TARGET_ARCHITECTURE),$(SUPPORTED_ARCHITECTURES)),)
+COMMA:=,
+EMPTY:=
+WHITESPACE:=$(EMPTY) $(EMPTY)
+$(error The provided TARGET_ARCHITECTURE '$(TARGET_ARCHITECTURE)' is not supported, provide one of '$(subst $(WHITESPACE),$(COMMA)$(WHITESPACE),$(SUPPORTED_ARCHITECTURES))')
+endif
 
 default: all
 
