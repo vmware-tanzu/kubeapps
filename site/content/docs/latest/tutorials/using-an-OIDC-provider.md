@@ -75,7 +75,6 @@ The main difference in the authentication is that instead of accessing the Kubea
 
 There are a number of available solutions for this use-case, like [keycloak-gatekeeper](https://github.com/keycloak/keycloak-gatekeeper) or [oauth2_proxy](https://github.com/oauth2-proxy/oauth2-proxy).
 
-This guide defines the configuration using `oauth2_proxy` since it supports both OIDC and plain OAuth2 for many providers.
 
 The next sections explain how you can deploy this proxy either using the Kubeapps chart or manually:
 
