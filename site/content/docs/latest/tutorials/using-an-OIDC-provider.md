@@ -51,7 +51,7 @@ The minimun set of parameters to use an Identity Provider for Kubeapps are the f
 - `Client ID`: Client ID of the IdP.
 - `Client Secret`: (If configured) Secret used to validate the Client ID.
 - `Provider name` (which can be oidc, in which case the OIDC Issuer URL is also required).
-- `Cookie secret`: a 16, 24 or 32 byte base64 encoded seed string used to encrypt sensitive data (eg. `echo "not-good-secret" | base64`).
+- `Cookie secret`: a 16, 24 or 32 byte base64 encoded seed string used to encrypt sensitive data (eg. `echo "not-good-secret" | base64`). [More information on the OAuth2 Proxy documentation](https://oauth2-proxy.github.io/oauth2-proxy/docs/configuration/overview/#generating-a-cookie-secret).
 
 **Note**: More parameters may be necessary depending on the Identity Provider and the aimed configuration.
 
