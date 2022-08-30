@@ -32,7 +32,7 @@ This tutorial describes how to use an existing OAuth2 provider, including OIDC, 
 
 ## Identity Providers (IdP)
 
-There are several Identity Providers (IdP) that can be used in a Kubernetes cluster. The steps of this guide have been validated using the following providers:
+Any OIDC-compliant Identity Provider (IdP) that can be used in a Kubernetes cluster. The steps of this guide have been validated using the following providers:
 
 - [VMware Cloud Services](https://console.cloud.vmware.com): VMware Cloud Services as an OIDC provider.
 - [Azure Active Directory](https://docs.microsoft.com/en-us/azure/active-directory/fundamentals/active-directory-whatis): Identity Provider that can be used for AKS.
