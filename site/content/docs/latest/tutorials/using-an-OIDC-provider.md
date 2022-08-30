@@ -55,7 +55,7 @@ The minimun set of parameters to use an Identity Provider for Kubeapps are the f
 
 **Note**: More parameters may be necessary depending on the Identity Provider and the aimed configuration.
 
-The following sections explain how you can find the parameters above for the identity providers tested.
+The following sections dive deep into each validated identity provider and describe how to locate the required configuration parameters:
 
 - [VMware Cloud Services](../howto/OIDC/OAuth2OIDC-VMware-cloud-services.md)
 - [Azure Active Directory](../howto/OIDC/OAuth2OIDC-azure-active-directory.md)
