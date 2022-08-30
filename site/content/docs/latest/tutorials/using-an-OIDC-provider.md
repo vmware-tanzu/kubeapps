@@ -26,7 +26,7 @@ This tutorial describes how to use an existing OAuth2 provider, including OIDC, 
 
 - A Kubernetes cluster that is properly configured to use an OIDC Identity Provider (IdP) to handle the authentication to your cluster.
 
-  - Read [more information about the Kubernetes API server's configuration options for OIDC](https://kubernetes.io/docs/reference/access-authn-authz/authentication/#openid-connect-tokens). This allows that the Kubernetes API server itself to trust tokens from the identity provider. Some hosted Kubernetes services are already configured to accept access_tokens from their identity provider as bearer tokens (see GKE below).
+  - Read [more information about the Kubernetes API server's configuration options for OIDC](https://kubernetes.io/docs/reference/access-authn-authz/authentication/#openid-connect-tokens). This allows the Kubernetes API server itself to trust tokens from the identity provider. Some hosted Kubernetes services are already configured to accept `access_token`s from their identity provider as bearer tokens (see GKE below).
 
   - Alternatively, if you do not have access to configure your cluster's API server, you can [install and configure Pinniped in your cluster to trust your identity provider and configure Kubeapps to proxy requests via Pinniped](../howto/OIDC/using-an-OIDC-provider-with-pinniped.md).
 
