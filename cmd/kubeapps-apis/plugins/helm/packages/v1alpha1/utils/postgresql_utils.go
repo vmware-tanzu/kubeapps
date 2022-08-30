@@ -7,6 +7,7 @@ import (
 	"encoding/base64"
 	"errors"
 	"fmt"
+	"strconv"
 	"strings"
 
 	_ "github.com/lib/pq"
@@ -175,7 +176,7 @@ func (m *PostgresAssetManager) GetChartFilesWithFallback(namespace, filesID stri
 }
 
 func (m *PostgresAssetManager) GetPaginatedChartListWithFilters(cq ChartQuery, startItemNumber, pageSize int) ([]*models.Chart, error) {
-	whereQuery, whereQueryParams := m.GenerateWhereClause(cq)
+	whereQuery, whereQueryParams, err := m.GenerateWhereClause(cq)
 	charts, err := m.GetPaginatedChartList(whereQuery, whereQueryParams, startItemNumber, pageSize)
 	if err != nil {
 		return nil, err
@@ -183,7 +184,7 @@ func (m *PostgresAssetManager) GetPaginatedChartListWithFilters(cq ChartQuery, s
 	return charts, nil
 }
 
-func (m *PostgresAssetManager) GenerateWhereClause(cq ChartQuery) (string, []interface{}) {
+func (m *PostgresAssetManager) GenerateWhereClause(cq ChartQuery) (string, []interface{}, error) {
 	whereClauses := []string{}
 	whereQueryParams := []interface{}{}
 	whereQuery := ""
@@ -201,7 +202,15 @@ func (m *PostgresAssetManager) GenerateWhereClause(cq ChartQuery) (string, []int
 		))
 	}
 	if cq.Version != "" && cq.AppVersion != "" {
-		parametrizedJsonbLiteral := fmt.Sprintf(`[{"version":"%s","app_version":"%s"}]`, cq.Version, cq.AppVersion)
+		uqVersion, err := strconv.Unquote(cq.Version)
+		if err != nil {
+			return "", nil, err
+		}
+		uqAppVersion, err := strconv.Unquote(cq.AppVersion)
+		if err != nil {
+			return "", nil, err
+		}
+		parametrizedJsonbLiteral := fmt.Sprintf(`[{"version":"%s","app_version":"%s"}]`, uqVersion, uqAppVersion)
 		whereQueryParams = append(whereQueryParams, parametrizedJsonbLiteral)
 		whereClauses = append(whereClauses, fmt.Sprintf("(info->'chartVersions' @> $%d::jsonb)", len(whereQueryParams)))
 	}
