@@ -42,7 +42,7 @@ Any OIDC-compliant Identity Provider (IdP) that can be used in a Kubernetes clus
 
 ## OIDC provider configuration
 
-Kubeapps uses [OAuth2 Proxy](https://github.com/oauth2-proxy/oauth2-proxy) to handle the OAuth2/OpenIDConnect authentication.
+Kubeapps uses [OAuth2 Proxy](https://github.com/oauth2-proxy/oauth2-proxy) to handle the OIDC authentication flow (exchange the credentials, retrieve the token, redirect back to Kubeapps, etc.)
 
 ### Configure parameters
 
