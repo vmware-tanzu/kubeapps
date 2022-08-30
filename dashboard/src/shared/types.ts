@@ -448,4 +448,6 @@ export interface IPkgRepoFormData {
   customDetail?: Partial<
     HelmPackageRepositoryCustomDetail | KappControllerPackageRepositoryCustomDetail
   >;
+  namespace: string;
+  isNamespaceScoped: boolean;
 }

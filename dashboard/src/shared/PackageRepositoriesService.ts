@@ -47,35 +47,22 @@ export class PackageRepositoriesService {
     return await this.coreRepositoriesClient().GetPackageRepositoryDetail({ packageRepoRef });
   }
 
-  public static async addPackageRepository(
-    cluster: string,
-    namespace: string,
-    request: IPkgRepoFormData,
-    namespaceScoped: boolean,
-  ) {
+  public static async addPackageRepository(cluster: string, request: IPkgRepoFormData) {
     const addPackageRepositoryRequest = PackageRepositoriesService.buildAddOrUpdateRequest(
       false,
       cluster,
-      namespace,
       request,
-      namespaceScoped,
       PackageRepositoriesService.buildEncodedCustomDetail(request),
     );
 
     return await this.coreRepositoriesClient().AddPackageRepository(addPackageRepositoryRequest);
   }
 
-  public static async updatePackageRepository(
-    cluster: string,
-    namespace: string,
-    request: IPkgRepoFormData,
-  ) {
+  public static async updatePackageRepository(cluster: string, request: IPkgRepoFormData) {
     const updatePackageRepositoryRequest = PackageRepositoriesService.buildAddOrUpdateRequest(
       true,
       cluster,
-      namespace,
       request,
-      undefined,
       PackageRepositoriesService.buildEncodedCustomDetail(request),
     );
 
@@ -95,16 +82,14 @@ export class PackageRepositoriesService {
   private static buildAddOrUpdateRequest(
     isUpdate: boolean,
     cluster: string,
-    namespace: string,
     request: IPkgRepoFormData,
-    namespaceScoped?: boolean,
     pluginCustomDetail?: any,
   ) {
     const addPackageRepositoryRequest = {
-      context: { cluster, namespace },
+      context: { cluster, namespace: request.namespace },
       name: request.name,
       description: request.description,
-      namespaceScoped: namespaceScoped,
+      namespaceScoped: request.isNamespaceScoped,
       type: request.type,
       url: request.url,
       interval: request.interval,
