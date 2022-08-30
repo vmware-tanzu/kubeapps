@@ -16,7 +16,9 @@
 
 _OpenID Connect (OIDC)_ is a simple identity layer on top of the OAuth 2.0 protocol that allows clients to verify the identity of a user based on the authentication performed by an authorization server, as well as to obtain basic profile information about the user.
 
-A Kubernetes cluster can be configured to trust an external OIDC provider so that authenticated requests can be matched with defined RBAC. Additionally, some managed Kubernetes environments enable authenticating via plain OAuth2.
+In Kubernetes, one of the authentication strategies for incoming requests to the API server is using [OpenID Connect tokens](https://kubernetes.io/docs/reference/access-authn-authz/authentication/#openid-connect-tokens). The cluster can be configured to trust an external OIDC provider so that authenticated requests can be matched with defined RBAC. Additionally, some managed Kubernetes environments enable authenticating via plain OAuth2.
+
+However, for Kubernetes to be able to use OIDC-based authentication it is required to [enable certain flags in the API server](https://kubernetes.io/docs/reference/access-authn-authz/authentication/#configuring-the-api-server), which is not always possible on certain environments (such as managed Kubernetes distributions by a cloud provider). To work around this limitation, we recommend having a look at the [Pinniped project](https://pinniped.dev/).
 
 This tutorial describes how to use an existing OAuth2 provider, including OIDC, to authenticate users within Kubeapps.
 
