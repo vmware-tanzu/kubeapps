@@ -77,7 +77,13 @@ func (l *dockerRegistryApiV2RepositoryLister) ListRepositoryNames(ociRepo *OCICh
 			log.Infof("orasRegistry.Repositories fn: %s", repos)
 			lastRepoMatch := false
 			for _, r := range repos {
-				if lastRepoMatch = strings.HasPrefix(r, startAt+"/"); lastRepoMatch {
+				// Examples:
+				// GitHub and Harbor: stefanprodan-podinfo-clone/podinfo
+				// GCP Artifact Repository: vmware-kubeapps-ci/stefanprodan-podinfo-clone/podinfo
+				lastRepoMatch =
+					strings.HasPrefix(r, startAt+"/") ||
+						strings.Contains(r, "/"+startAt+"/")
+				if lastRepoMatch {
 					repositoryList = append(repositoryList, r)
 				}
 			}

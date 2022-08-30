@@ -1369,6 +1369,20 @@ func deleteChartFromMyGithubRegistry(t *testing.T, version string) error {
 	return err
 }
 
+func setupHarborStefanProdanClone(t *testing.T) error {
+	t.Logf("+setupHarborStefanProdanClone()")
+	defer t.Logf("-setupHarborStefanProdanClone()")
+
+	args := []string{
+		"setupHarborStefanProdanClone",
+		"--quick",
+	}
+
+	// use the CLI for now
+	_, err := execCommand(t, "./testdata", "./kind-cluster-setup.sh", args)
+	return err
+}
+
 // ref https://cloud.google.com/artifact-registry/docs/helm/store-helm-charts#auth-token
 // this token lasts 60 mins
 func gcloudPrintAccessToken(t *testing.T) (string, error) {

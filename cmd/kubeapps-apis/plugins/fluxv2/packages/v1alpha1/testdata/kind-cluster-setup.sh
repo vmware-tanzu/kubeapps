@@ -226,7 +226,7 @@ deleteChartVersionFromMyGitHub) deleteChartVersionFromMyGitHubRegistry $2
     ;;
 setupGithubStefanProdanClone) setupGithubStefanProdanClone
     ;;
-setupHarborStefanProdanClone) setupHarborStefanProdanClone
+setupHarborStefanProdanClone) setupHarborStefanProdanClone $2
     ;;
 setupGcrStefanProdanClone) setupGcrStefanProdanClone
     ;;

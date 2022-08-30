@@ -100,6 +100,22 @@ function setupHarborStefanProdanClone {
   # this creates a clone of what was out on "oci://ghcr.io/stefanprodan/charts" as of Jul 28 2022
   # to oci://demo.goharbor.io/stefanprodan-podinfo-clone
   local PROJECT_NAME=stefanprodan-podinfo-clone
+
+  if [[ "$1" == "--quick" ]]; then
+    # short to only look at the project existence and if so assume all is well
+    echo
+    echo -e Checking if harbor project [${L_YELLOW}$PROJECT_NAME${NC}] exists...
+    local status_code=$(curl -L --write-out %{http_code} \
+                        --silent --output /dev/null \
+                        --show-error \
+                        --head ${FLUX_TEST_HARBOR_URL}/api/v2.0/projects?project_name=${PROJECT_NAME} \
+                        -u $FLUX_TEST_HARBOR_ADMIN_USER:$FLUX_TEST_HARBOR_ADMIN_PWD)
+    if [[ "$status_code" -eq 200 ]] ; then
+      echo -e "Project [${L_YELLOW}$PROJECT_NAME${NC}] exists in harbor."
+      exit 0
+    fi
+  fi
+
   deleteHarborProject $PROJECT_NAME
   createHarborProject $PROJECT_NAME
   

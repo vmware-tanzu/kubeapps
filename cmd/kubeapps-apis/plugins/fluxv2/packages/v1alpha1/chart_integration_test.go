@@ -530,6 +530,10 @@ func TestKindClusterAvailablePackageEndpointsForOCI(t *testing.T) {
 		t.Fatalf("Environment variables GITHUB_USER and GITHUB_TOKEN need to be set to run this test")
 	}
 
+	if err := setupHarborStefanProdanClone(t); err != nil {
+		t.Fatal(err)
+	}
+
 	// ref: https://cloud.google.com/artifact-registry/docs/helm/authentication#token
 	gcpUser := "oauth2accesstoken"
 	gcpPasswd, err := gcloudPrintAccessToken(t)
