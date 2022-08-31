@@ -1128,7 +1128,7 @@ kubeops:
   ## @param kubeops.enabled Specifies whether this component should be installed.
   ## In a future release we will be setting this to default to false.
   ##
-  enabled: true
+  enabled: false
   ## Bitnami Kubeops image
   ## ref: https://hub.docker.com/r/bitnami/kubeops/tags/
   ## @param kubeops.image.registry Kubeops image registry
