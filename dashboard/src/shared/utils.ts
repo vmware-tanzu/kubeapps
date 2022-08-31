@@ -180,6 +180,7 @@ export function getAppStatusLabel(
 
 export function getSupportedPackageRepositoryAuthTypes(
   plugin: Plugin,
+  type?: string,
 ): PackageRepositoryAuth_PackageRepositoryAuthType[] {
   switch (plugin.name) {
     case PluginNames.PACKAGES_HELM:
@@ -198,12 +199,39 @@ export function getSupportedPackageRepositoryAuthTypes(
         PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_DOCKER_CONFIG_JSON,
       ];
     case PluginNames.PACKAGES_KAPP:
-      return [
-        PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_BASIC_AUTH,
-        PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_BEARER,
-        PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_DOCKER_CONFIG_JSON,
-        PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_SSH,
-      ];
+      // the available auth options in Carvel are type-specific
+      // extracted from https://github.com/vmware-tanzu/carvel-kapp-controller/blob/v0.40.0/pkg/apis/kappctrl/v1alpha1/types_fetch.go
+      // by looking for "Secret may include one"
+      switch (type) {
+        // "Secret with auth details. allowed keys: ssh-privatekey, ssh-knownhosts, username, password"
+        case RepositoryStorageTypes.PACKAGE_REPOSITORY_STORAGE_CARVEL_GIT:
+          return [
+            PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_BASIC_AUTH,
+            PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_SSH,
+          ];
+        // "Secret may include one or more keys: username, password"
+        case RepositoryStorageTypes.PACKAGE_REPOSITORY_STORAGE_CARVEL_HTTP:
+          return [
+            PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_BASIC_AUTH,
+          ];
+        // "Secret may include one or more keys: username, password, token"
+        case RepositoryStorageTypes.PACKAGE_REPOSITORY_STORAGE_CARVEL_IMAGE:
+          return [
+            PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_BASIC_AUTH,
+            PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_BEARER,
+          ];
+        // "Secret may include one or more keys: username, password, token"
+        case RepositoryStorageTypes.PACKAGE_REPOSITORY_STORAGE_CARVEL_IMGPKGBUNDLE:
+          return [
+            PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_BASIC_AUTH,
+            PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_BEARER,
+          ];
+        // TODO(agamez): populate it back once the API supports it
+        case RepositoryStorageTypes.PACKAGE_REPOSITORY_STORAGE_CARVEL_INLINE:
+          return [];
+        default:
+          return [];
+      }
     default:
       return [];
   }

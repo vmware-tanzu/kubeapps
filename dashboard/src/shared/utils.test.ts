@@ -2,13 +2,14 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { InstalledPackageStatus_StatusReason } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
+import { PackageRepositoryAuth_PackageRepositoryAuthType } from "gen/kubeappsapis/core/packages/v1alpha1/repositories";
 import carvelIcon from "icons/carvel.svg";
 import fluxIcon from "icons/flux.svg";
 import helmIcon from "icons/helm.svg";
 import olmIcon from "icons/olm-icon.svg";
 import placeholder from "icons/placeholder.svg";
 import { IConfig } from "./Config";
-import { PluginNames } from "./types";
+import { PluginNames, RepositoryStorageTypes } from "./types";
 import {
   escapeRegExp,
   getAppStatusLabel,
@@ -176,14 +177,110 @@ it("getAppStatusLabel", () => {
 it("getSupportedPackageRepositoryAuthTypes", () => {
   expect(
     getSupportedPackageRepositoryAuthTypes({ name: PluginNames.PACKAGES_HELM, version: "" }),
-  ).toHaveLength(4);
+  ).toBe([
+    PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_AUTHORIZATION_HEADER,
+    PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_BASIC_AUTH,
+    PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_BEARER,
+    PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_DOCKER_CONFIG_JSON,
+  ]);
+  expect(
+    getSupportedPackageRepositoryAuthTypes(
+      { name: PluginNames.PACKAGES_HELM, version: "" },
+      RepositoryStorageTypes.PACKAGE_REPOSITORY_STORAGE_HELM,
+    ),
+  ).toBe([
+    PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_AUTHORIZATION_HEADER,
+    PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_BASIC_AUTH,
+    PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_BEARER,
+    PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_DOCKER_CONFIG_JSON,
+  ]);
+  expect(
+    getSupportedPackageRepositoryAuthTypes(
+      { name: PluginNames.PACKAGES_HELM, version: "" },
+      RepositoryStorageTypes.PACKAGE_REPOSITORY_STORAGE_OCI,
+    ),
+  ).toBe([
+    PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_AUTHORIZATION_HEADER,
+    PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_BASIC_AUTH,
+    PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_BEARER,
+    PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_DOCKER_CONFIG_JSON,
+  ]);
   expect(
     getSupportedPackageRepositoryAuthTypes({ name: PluginNames.PACKAGES_FLUX, version: "" }),
-  ).toHaveLength(5);
+  ).toBe([
+    PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_BASIC_AUTH,
+    PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_OPAQUE,
+    PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_SSH,
+    PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_TLS,
+    PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_DOCKER_CONFIG_JSON,
+  ]);
+  expect(
+    getSupportedPackageRepositoryAuthTypes(
+      { name: PluginNames.PACKAGES_FLUX, version: "" },
+      RepositoryStorageTypes.PACKAGE_REPOSITORY_STORAGE_HELM,
+    ),
+  ).toBe([
+    PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_BASIC_AUTH,
+    PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_OPAQUE,
+    PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_SSH,
+    PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_TLS,
+    PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_DOCKER_CONFIG_JSON,
+  ]);
+  expect(
+    getSupportedPackageRepositoryAuthTypes(
+      { name: PluginNames.PACKAGES_FLUX, version: "" },
+      RepositoryStorageTypes.PACKAGE_REPOSITORY_STORAGE_OCI,
+    ),
+  ).toBe([
+    PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_BASIC_AUTH,
+    PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_OPAQUE,
+    PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_SSH,
+    PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_TLS,
+    PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_DOCKER_CONFIG_JSON,
+  ]);
   expect(
     getSupportedPackageRepositoryAuthTypes({ name: PluginNames.PACKAGES_KAPP, version: "" }),
-  ).toHaveLength(4);
-  expect(getSupportedPackageRepositoryAuthTypes({ name: "foo", version: "" })).toHaveLength(0);
+  ).toBe([]);
+  expect(
+    getSupportedPackageRepositoryAuthTypes(
+      { name: PluginNames.PACKAGES_KAPP, version: "" },
+      RepositoryStorageTypes.PACKAGE_REPOSITORY_STORAGE_CARVEL_GIT,
+    ),
+  ).toBe([
+    PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_BASIC_AUTH,
+    PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_SSH,
+  ]);
+  expect(
+    getSupportedPackageRepositoryAuthTypes(
+      { name: PluginNames.PACKAGES_KAPP, version: "" },
+      RepositoryStorageTypes.PACKAGE_REPOSITORY_STORAGE_CARVEL_HTTP,
+    ),
+  ).toBe([PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_BASIC_AUTH]);
+  expect(
+    getSupportedPackageRepositoryAuthTypes(
+      { name: PluginNames.PACKAGES_KAPP, version: "" },
+      RepositoryStorageTypes.PACKAGE_REPOSITORY_STORAGE_CARVEL_IMAGE,
+    ),
+  ).toBe([
+    PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_BASIC_AUTH,
+    PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_BEARER,
+  ]);
+  expect(
+    getSupportedPackageRepositoryAuthTypes(
+      { name: PluginNames.PACKAGES_KAPP, version: "" },
+      RepositoryStorageTypes.PACKAGE_REPOSITORY_STORAGE_CARVEL_IMGPKGBUNDLE,
+    ),
+  ).toBe([
+    PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_BASIC_AUTH,
+    PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_BEARER,
+  ]);
+  expect(
+    getSupportedPackageRepositoryAuthTypes(
+      { name: PluginNames.PACKAGES_KAPP, version: "" },
+      RepositoryStorageTypes.PACKAGE_REPOSITORY_STORAGE_CARVEL_INLINE,
+    ),
+  ).toBe([]);
+  expect(getSupportedPackageRepositoryAuthTypes({ name: "foo", version: "" })).toBe([]);
 });
 
 it("isGlobalNamespace", () => {
