@@ -81,12 +81,15 @@ export function PkgRepoForm(props: IPkgRepoFormProps) {
       errors: { create: createError, update: updateError, delete: deleteError, fetch: fetchError },
     },
     clusters: { currentCluster },
+    config: { configuredPlugins },
   } = useSelector((state: IStoreState) => state);
 
   const currentNsConfig = {
     globalReposNamespace: globalReposNamespace,
     carvelGlobalNamespace: carvelGlobalNamespace,
   } as IConfig;
+
+  const configuredPluginsNames = configuredPlugins.map(plugin => plugin.name);
 
   const initialInterval = "10m";
 
@@ -698,7 +701,10 @@ export function PkgRepoForm(props: IPkgRepoFormProps) {
                       value={PluginNames.PACKAGES_HELM || ""}
                       checked={plugin?.name === PluginNames.PACKAGES_HELM}
                       onChange={handlePluginRadioButtonChange}
-                      disabled={!!repo.packageRepoRef?.plugin}
+                      disabled={
+                        !!repo.packageRepoRef?.plugin ||
+                        !configuredPluginsNames.includes(PluginNames.PACKAGES_HELM)
+                      }
                       required={true}
                     />
                   </CdsRadio>
@@ -713,7 +719,10 @@ export function PkgRepoForm(props: IPkgRepoFormProps) {
                       value={PluginNames.PACKAGES_FLUX || ""}
                       checked={plugin?.name === PluginNames.PACKAGES_FLUX}
                       onChange={handlePluginRadioButtonChange}
-                      disabled={!!repo.packageRepoRef?.plugin}
+                      disabled={
+                        !!repo.packageRepoRef?.plugin ||
+                        !configuredPluginsNames.includes(PluginNames.PACKAGES_FLUX)
+                      }
                       required={true}
                     />
                   </CdsRadio>
@@ -728,7 +737,10 @@ export function PkgRepoForm(props: IPkgRepoFormProps) {
                       value={PluginNames.PACKAGES_KAPP || ""}
                       checked={plugin?.name === PluginNames.PACKAGES_KAPP}
                       onChange={handlePluginRadioButtonChange}
-                      disabled={!!repo.packageRepoRef?.plugin}
+                      disabled={
+                        !!repo.packageRepoRef?.plugin ||
+                        !configuredPluginsNames.includes(PluginNames.PACKAGES_KAPP)
+                      }
                       required={true}
                     />
                   </CdsRadio>

@@ -209,6 +209,23 @@ it("shows an error updating a repo", async () => {
   expect(wrapper.find(Alert)).toIncludeText("boom!");
 });
 
+it("disables unavailable plugins", async () => {
+  let wrapper: any;
+  await act(async () => {
+    wrapper = mountWrapper(
+      getStore({
+        config: {
+          configuredPlugins: [{ name: PluginNames.PACKAGES_HELM, version: "v1alpha1" }],
+        },
+      } as Partial<IStoreState>),
+      <PkgRepoForm {...defaultProps} />,
+    );
+  });
+  expect(wrapper.find("#kubeapps-plugin-helm").prop("disabled")).toBe(false);
+  expect(wrapper.find("#kubeapps-plugin-fluxv2").prop("disabled")).toBe(true);
+  expect(wrapper.find("#kubeapps-plugin-kappcontroller").prop("disabled")).toBe(true);
+});
+
 it("should call the install method", async () => {
   const install = jest.fn().mockReturnValue(true);
   actions.repos = {
