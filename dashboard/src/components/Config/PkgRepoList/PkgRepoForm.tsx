@@ -811,10 +811,9 @@ export function PkgRepoForm(props: IPkgRepoFormProps) {
                               }
                               disabled={!!repo?.type}
                               onChange={handleTypeRadioButtonChange}
-                              required={
-                                plugin?.name === (PluginNames.PACKAGES_HELM as string) ||
-                                plugin?.name === (PluginNames.PACKAGES_FLUX as string)
-                              }
+                              required={(
+                                [PluginNames.PACKAGES_HELM, PluginNames.PACKAGES_FLUX] as string[]
+                              ).includes(plugin?.name)}
                             />
                           </CdsRadio>
                           <CdsRadio>
@@ -829,10 +828,9 @@ export function PkgRepoForm(props: IPkgRepoFormProps) {
                                 type === RepositoryStorageTypes.PACKAGE_REPOSITORY_STORAGE_OCI
                               }
                               onChange={handleTypeRadioButtonChange}
-                              required={
-                                plugin?.name === (PluginNames.PACKAGES_HELM as string) ||
-                                plugin?.name === (PluginNames.PACKAGES_FLUX as string)
-                              }
+                              required={(
+                                [PluginNames.PACKAGES_HELM, PluginNames.PACKAGES_FLUX] as string[]
+                              ).includes(plugin?.name)}
                             />
                           </CdsRadio>
                         </>
@@ -1855,7 +1853,9 @@ export function PkgRepoForm(props: IPkgRepoFormProps) {
             <CdsAccordionHeader onClick={() => toggleAccordion(3)}>Advanced</CdsAccordionHeader>
             <CdsAccordionContent>
               <CdsFormGroup layout="vertical">
-                {plugin?.name !== PluginNames.PACKAGES_HELM && (
+                {([PluginNames.PACKAGES_FLUX, PluginNames.PACKAGES_KAPP] as string[]).includes(
+                  plugin?.name,
+                ) && (
                   <CdsInput>
                     <label htmlFor="kubeapps-repo-interval">Synchronization Interval</label>
                     <input
