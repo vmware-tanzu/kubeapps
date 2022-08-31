@@ -495,7 +495,7 @@ export default function Catalog() {
               )}
               {allPlugins.length > 0 && (
                 <div className="filter-section">
-                  <label className="filter-label">Package type</label>
+                  <label className="filter-label">Package Type</label>
                   <FilterGroup
                     name={filterNames.PKG_TYPE}
                     options={allPlugins}
