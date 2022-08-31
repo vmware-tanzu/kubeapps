@@ -18,7 +18,7 @@ import { IKubeState } from "./types";
 // ResourceRef to interact with a single API resource rather than using Kube
 // directly.
 export class Kube {
-  private static resourcesClient = () => new KubeappsGrpcClient().getResourcesServiceClientImpl();
+  public static resourcesClient = () => new KubeappsGrpcClient().getResourcesServiceClientImpl();
 
   // getResources returns a subscription to an observable for resources from the server.
   public static getResources(

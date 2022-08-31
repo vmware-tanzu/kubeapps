@@ -1,9 +1,11 @@
 // Copyright 2018-2022 the Kubeapps contributors.
 // SPDX-License-Identifier: Apache-2.0
 
+import { CanIRequest, CanIResponse } from "gen/kubeappsapis/plugins/resources/v1alpha1/resources";
 import * as moxios from "moxios";
 import { axiosWithAuth } from "./AxiosInstance";
 import { Kube } from "./Kube";
+import KubeappsGrpcClient from "./KubeappsGrpcClient";
 
 const clusterName = "cluster-name";
 
@@ -152,19 +154,64 @@ describe("App", () => {
   });
 
   describe("canI", () => {
-    beforeEach(() => {
-      moxios.stubRequest(/.*/, {
-        response: { allowed: true },
-        status: 200,
-      });
+    // Create a real client, but we'll stub out the function we're interested in.
+    const client = new KubeappsGrpcClient().getResourcesServiceClientImpl();
+    let mockClientCanI: jest.MockedFunction<typeof client.CanI>;
+
+    beforeEach(() => {});
+    afterEach(() => {
+      jest.resetAllMocks();
     });
+
     it("should check permissions", async () => {
+      mockClientCanI = jest
+        .fn()
+        .mockImplementation(() => Promise.resolve({ allowed: true } as CanIResponse));
+      jest.spyOn(client, "CanI").mockImplementation(mockClientCanI);
+      jest.spyOn(Kube, "resourcesClient").mockImplementation(() => client);
+
       const allowed = await Kube.canI("cluster", "v1", "namespaces", "create", "");
       expect(allowed).toBe(true);
+
+      expect(Kube.resourcesClient).toHaveBeenCalledWith();
+      expect(mockClientCanI).toHaveBeenCalledWith({
+        context: {
+          cluster: "cluster",
+          namespace: "",
+        },
+        group: "v1",
+        resource: "namespaces",
+        verb: "create",
+      } as CanIRequest);
     });
     it("should ignore empty clusters", async () => {
       const allowed = await Kube.canI("", "v1", "namespaces", "create", "");
       expect(allowed).toBe(false);
+      expect(Kube.resourcesClient).not.toHaveBeenCalled()
+    });
+    it("should default to disallow when errors", async () => {
+      mockClientCanI = jest.fn().mockImplementation(
+        () =>
+          new Promise(() => {
+            throw "err";
+          }),
+      );
+      jest.spyOn(client, "CanI").mockImplementation(mockClientCanI);
+      jest.spyOn(Kube, "resourcesClient").mockImplementation(() => client);
+
+      const allowed = await Kube.canI("cluster", "v1", "secrets", "list", "");
+      expect(allowed).toBe(false);
+
+      expect(Kube.resourcesClient).toHaveBeenCalled()
+      expect(mockClientCanI).toHaveBeenCalledWith({
+        context: {
+          cluster: "cluster",
+          namespace: "",
+        },
+        group: "v1",
+        resource: "secrets",
+        verb: "list",
+      } as CanIRequest);
     });
   });
 });
