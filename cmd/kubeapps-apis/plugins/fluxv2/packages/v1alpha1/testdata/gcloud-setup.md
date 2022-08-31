@@ -17,7 +17,7 @@ Google Cloud Console
     - Viewer
 
   Make sure you see a message "Policy Updated" at the bottom of the screen when you grant these roles. If you see "Failed to add project roles" or some other error message,
-  create the service account with a different Name/ID
+  repeat the process w.r.t. a service account with a different Name/ID and remember to clean up unused service accounts afterwards.
 - The service account key file can be downloaded with Google Cloud Console
      Under IAM & Admin -> Service Accounts
 
