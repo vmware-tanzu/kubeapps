@@ -250,9 +250,9 @@ img_flags=(
   "--set" "dashboard.image.tag=${DEV_TAG}"
   "--set" "dashboard.image.repository=${images[2]}"
   "--set" "pinnipedProxy.image.tag=${DEV_TAG}"
-  "--set" "pinnipedProxy.image.repository=${images[4]}"
+  "--set" "pinnipedProxy.image.repository=${images[3]}"
   "--set" "kubeappsapis.image.tag=${DEV_TAG}"
-  "--set" "kubeappsapis.image.repository=${images[5]}"
+  "--set" "kubeappsapis.image.repository=${images[4]}"
 )
 
 if [ "$USE_MULTICLUSTER_OIDC_ENV" = true ]; then
