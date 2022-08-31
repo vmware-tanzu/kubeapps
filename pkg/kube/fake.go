@@ -84,14 +84,6 @@ func (c *FakeHandler) GetAppRepository(name, namespace string) (*v1alpha1.AppRep
 	return nil, k8sErrors.NewNotFound(schema.GroupResource{}, "foo")
 }
 
-// GetNamespaces fake
-func (c *FakeHandler) GetNamespaces(precheckedNamespaces []corev1.Namespace) ([]corev1.Namespace, error) {
-	if len(precheckedNamespaces) > 0 {
-		return precheckedNamespaces, c.Err
-	}
-	return c.Namespaces, c.Err
-}
-
 // GetSecret fake
 func (c *FakeHandler) GetSecret(name, namespace string) (*corev1.Secret, error) {
 	for _, r := range c.Secrets {

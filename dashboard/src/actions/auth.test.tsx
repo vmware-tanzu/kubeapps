@@ -31,7 +31,7 @@ beforeEach(() => {
   Auth.setAuthToken = jest.fn();
   Auth.unsetAuthToken = jest.fn();
   Namespace.list = jest.fn(async () => {
-    return { namespaces: [] };
+    return { namespaceNames: [] };
   });
   jest.spyOn(NS, "unsetStoredNamespace");
 

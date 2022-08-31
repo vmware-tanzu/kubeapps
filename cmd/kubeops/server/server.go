@@ -22,13 +22,11 @@ import (
 )
 
 type ServeOptions struct {
-	ClustersConfigPath     string
-	PinnipedProxyURL       string
-	PinnipedProxyCACert    string
-	Burst                  int
-	Qps                    float32
-	NamespaceHeaderName    string
-	NamespaceHeaderPattern string
+	ClustersConfigPath  string
+	PinnipedProxyURL    string
+	PinnipedProxyCACert string
+	Burst               int
+	Qps                 float32
 }
 
 const clustersCAFilesPrefix = "/etc/additional-clusters-cafiles"
@@ -62,7 +60,7 @@ func Serve(serveOpts ServeOptions) error {
 	r.Handle("/live", health)
 	r.Handle("/ready", health)
 
-	err := httphandler.SetupDefaultRoutes(r.PathPrefix("/backend/v1").Subrouter(), serveOpts.NamespaceHeaderName, serveOpts.NamespaceHeaderPattern, serveOpts.Burst, serveOpts.Qps, clustersConfig)
+	err := httphandler.SetupDefaultRoutes(r.PathPrefix("/backend/v1").Subrouter(), serveOpts.Burst, serveOpts.Qps, clustersConfig)
 	if err != nil {
 		return fmt.Errorf("Unable to setup backend routes: %+v", err)
 	}
