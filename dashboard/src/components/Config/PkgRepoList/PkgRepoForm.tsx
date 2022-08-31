@@ -1894,97 +1894,118 @@ export function PkgRepoForm(props: IPkgRepoFormProps) {
                   </CdsCheckbox>
                 )}
 
-                <CdsToggleGroup>
-                  <CdsToggle>
-                    <label htmlFor="kubeapps-repo-usermanagedsecret">
-                      {isUserManagedCASecret ? userManagedSecretText : kubeappsManagedSecretText}
-                    </label>
-                    <input
-                      id="kubeapps-repo-usermanagedsecret"
-                      type="checkbox"
-                      onChange={handleIsUserManagedCASecretChange}
-                      checked={isUserManagedCASecret}
-                      disabled={skipTLS}
-                    />
-                  </CdsToggle>
-                </CdsToggleGroup>
-                {isUserManagedCASecret ? (
+                {([PluginNames.PACKAGES_HELM, PluginNames.PACKAGES_FLUX] as string[]).includes(
+                  plugin?.name,
+                ) && (
                   <>
-                    <CdsInput>
-                      <label htmlFor="kubeapps-repo-secret-ca">
-                        Custom CA Secret Name (optional)
-                      </label>
-                      <input
-                        id="kubeapps-repo-secret-ca"
-                        type="text"
-                        placeholder="my-ca-secret"
-                        pattern={k8sObjectNameRegex}
-                        title="Use lower case alphanumeric characters, '-' or '.'"
-                        value={secretTLSName || ""}
-                        disabled={skipTLS}
-                        onChange={handleSecretTLSNameChange}
-                      />
-                    </CdsInput>
-                    <br />
-                    <CdsControlMessage>
-                      Name of the{" "}
-                      <a
-                        href="https://kubernetes.io/docs/concepts/configuration/secret/"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                      >
-                        Kubernetes Secret
-                      </a>{" "}
-                      object holding the TLS Certificate Authority data.
-                    </CdsControlMessage>
-                  </>
-                ) : (
-                  <>
-                    <CdsTextarea layout="vertical">
-                      <label htmlFor="kubeapps-repo-custom-ca">
-                        Custom CA Certificate (optional)
-                      </label>
-                      <textarea
-                        id="kubeapps-repo-custom-ca"
-                        placeholder={"-----BEGIN CERTIFICATE-----\n...\n-----END CERTIFICATE-----"}
-                        className="cds-textarea-fix"
-                        value={customCA || ""}
-                        disabled={skipTLS}
-                        onChange={handleCustomCAChange}
-                      />
-                      <CdsControlMessage>
-                        Custom Certificate Authority (CA) to use when connecting to the repository.
-                      </CdsControlMessage>
-                    </CdsTextarea>
+                    <CdsToggleGroup>
+                      <CdsToggle>
+                        <label htmlFor="kubeapps-repo-usermanagedsecret">
+                          {isUserManagedCASecret
+                            ? userManagedSecretText
+                            : kubeappsManagedSecretText}
+                        </label>
+                        <input
+                          id="kubeapps-repo-usermanagedsecret"
+                          type="checkbox"
+                          onChange={handleIsUserManagedCASecretChange}
+                          checked={isUserManagedCASecret}
+                          disabled={skipTLS}
+                        />
+                      </CdsToggle>
+                    </CdsToggleGroup>
+                    {isUserManagedCASecret ? (
+                      <>
+                        <CdsInput>
+                          <label htmlFor="kubeapps-repo-secret-ca">
+                            Custom CA Secret Name (optional)
+                          </label>
+                          <input
+                            id="kubeapps-repo-secret-ca"
+                            type="text"
+                            placeholder="my-ca-secret"
+                            pattern={k8sObjectNameRegex}
+                            title="Use lower case alphanumeric characters, '-' or '.'"
+                            value={secretTLSName || ""}
+                            disabled={skipTLS}
+                            onChange={handleSecretTLSNameChange}
+                          />
+                        </CdsInput>
+                        <br />
+                        <CdsControlMessage>
+                          Name of the{" "}
+                          <a
+                            href="https://kubernetes.io/docs/concepts/configuration/secret/"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                          >
+                            Kubernetes Secret
+                          </a>{" "}
+                          object holding the TLS Certificate Authority data.
+                        </CdsControlMessage>
+                      </>
+                    ) : (
+                      <>
+                        <CdsTextarea layout="vertical">
+                          <label htmlFor="kubeapps-repo-custom-ca">
+                            Custom CA Certificate (optional)
+                          </label>
+                          <textarea
+                            id="kubeapps-repo-custom-ca"
+                            placeholder={
+                              "-----BEGIN CERTIFICATE-----\n...\n-----END CERTIFICATE-----"
+                            }
+                            className="cds-textarea-fix"
+                            value={customCA || ""}
+                            disabled={skipTLS}
+                            onChange={handleCustomCAChange}
+                          />
+                          <CdsControlMessage>
+                            Custom Certificate Authority (CA) to use when connecting to the
+                            repository.
+                          </CdsControlMessage>
+                        </CdsTextarea>
+                      </>
+                    )}
                   </>
                 )}
-                <CdsCheckbox className="reduced-margin-top">
-                  <label htmlFor="kubeapps-repo-skip-tls">Skip TLS Verification</label>
-                  <input
-                    id="kubeapps-repo-skip-tls"
-                    type="checkbox"
-                    checked={skipTLS}
-                    onChange={handleSkipTLSChange}
-                  />
-                  <CdsControlMessage>
-                    If enabled, the TLS certificate will not be verified (potentially insecure).
-                  </CdsControlMessage>
-                </CdsCheckbox>
-                <CdsCheckbox className="reduced-margin-top">
-                  <label htmlFor="kubeapps-repo-pass-credentials">
-                    Pass Credentials to 3rd party URLs
-                  </label>
-                  <input
-                    id="kubeapps-repo-pass-credentials"
-                    type="checkbox"
-                    checked={passCredentials}
-                    onChange={handlePassCredentialsChange}
-                  />
-                  <CdsControlMessage>
-                    If enabled, the same credentials will be sent to those URLs for fetching the
-                    icon and the tarball files (potentially insecure).
-                  </CdsControlMessage>
-                </CdsCheckbox>
+
+                {([PluginNames.PACKAGES_HELM, PluginNames.PACKAGES_FLUX] as string[]).includes(
+                  plugin?.name,
+                ) && (
+                  <CdsCheckbox className="reduced-margin-top">
+                    <label htmlFor="kubeapps-repo-skip-tls">Skip TLS Verification</label>
+                    <input
+                      id="kubeapps-repo-skip-tls"
+                      type="checkbox"
+                      checked={skipTLS}
+                      onChange={handleSkipTLSChange}
+                    />
+                    <CdsControlMessage>
+                      If enabled, the TLS certificate will not be verified (potentially insecure).
+                    </CdsControlMessage>
+                  </CdsCheckbox>
+                )}
+
+                {([PluginNames.PACKAGES_HELM, PluginNames.PACKAGES_FLUX] as string[]).includes(
+                  plugin?.name,
+                ) && (
+                  <CdsCheckbox className="reduced-margin-top">
+                    <label htmlFor="kubeapps-repo-pass-credentials">
+                      Pass Credentials to 3rd party URLs
+                    </label>
+                    <input
+                      id="kubeapps-repo-pass-credentials"
+                      type="checkbox"
+                      checked={passCredentials}
+                      onChange={handlePassCredentialsChange}
+                    />
+                    <CdsControlMessage>
+                      If enabled, the same credentials will be sent to those URLs for fetching the
+                      icon and the tarball files (potentially insecure).
+                    </CdsControlMessage>
+                  </CdsCheckbox>
+                )}
               </CdsFormGroup>
             </CdsAccordionContent>
           </CdsAccordionPanel>
