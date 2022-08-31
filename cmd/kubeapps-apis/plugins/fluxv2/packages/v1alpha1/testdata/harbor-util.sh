@@ -179,7 +179,7 @@ function createHarborRobotAccount()
   local PROJECT_NAME=$2
 
   echo -e "Creating robot account [${L_YELLOW}$ACCOUNT_NAME${NC}] in harbor..."
-  local payload=$(sed "s/\$NAME/${ACCOUNT_NAME}/g" $SCRIPTPATH/harbor-create-account.json)
+  local payload=$(sed "s/\$NAME/${ACCOUNT_NAME}/g" $SCRIPTPATH/harbor-create-robot-account.json)
   payload=$(echo $payload | sed "s/\$PROJECT_NAME/${PROJECT_NAME}/g")
   local RESP=$(curl -L --silent --show-error \
                 -X POST \

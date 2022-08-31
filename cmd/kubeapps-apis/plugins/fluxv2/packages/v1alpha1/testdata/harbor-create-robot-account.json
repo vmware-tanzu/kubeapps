@@ -1,0 +1,19 @@
+{
+    "name": "$NAME",
+    "duration": 30,
+    "description": null,
+    "disable": false,
+    "level": "system",
+    "permissions": [
+      {
+        "kind": "project",
+        "namespace": "$PROJECT_NAME",
+        "access": [
+          {
+            "resource": "repository",
+            "action": "list"
+          }
+        ]
+      }
+    ]
+  }
