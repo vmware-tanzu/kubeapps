@@ -228,6 +228,8 @@ setupGithubStefanProdanClone) setupGithubStefanProdanClone
     ;;
 setupHarborStefanProdanClone) setupHarborStefanProdanClone $2
     ;;
+setupHarborRobotAccount) setupHarborRobotAccount
+    ;;
 setupGcrStefanProdanClone) setupGcrStefanProdanClone
     ;;
 *) error_exit "Invalid command: $1"

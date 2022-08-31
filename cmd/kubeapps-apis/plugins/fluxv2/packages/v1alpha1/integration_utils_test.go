@@ -95,9 +95,9 @@ const (
 	github_gfichtenholt_podinfo_oci_registry_url = "oci://ghcr.io/gfichtenholt/helm-charts"
 
 	// admin/Harbor12345 is a well known default login for harbor registries
-	harbor_host = "demo.goharbor.io"
-	harbor_user = "admin"
-	harbor_pwd  = "Harbor12345"
+	harbor_host       = "demo.goharbor.io"
+	harbor_admin_user = "admin"
+	harbor_admin_pwd  = "Harbor12345"
 )
 
 func checkEnv(t *testing.T) (fluxplugin.FluxV2PackagesServiceClient, fluxplugin.FluxV2RepositoriesServiceClient, error) {
@@ -1381,6 +1381,35 @@ func setupHarborStefanProdanClone(t *testing.T) error {
 	// use the CLI for now
 	_, err := execCommand(t, "./testdata", "./kind-cluster-setup.sh", args)
 	return err
+}
+
+func setupHarborRobotAccount(t *testing.T) (string, string, error) {
+	t.Logf("+setupHarborRobotAccount()")
+	defer t.Logf("-setupHarborRobotAccount()")
+
+	args := []string{
+		"setupHarborRobotAccount",
+	}
+
+	// use the CLI for now
+	out, err := execCommand(t, "./testdata", "./kind-cluster-setup.sh", args)
+	if err != nil {
+		return "", "", err
+	} else {
+		i := strings.Index(out, "Robot account successfully created: [")
+		if i >= 0 {
+			out2 := out[i+37:]
+			j := strings.Index(out2, "]")
+			if j >= 0 {
+				out3 := out2[:j]
+				strs := strings.SplitN(out3, " ", 2)
+				if len(strs) == 2 {
+					return strs[0], strs[1], nil
+				}
+			}
+		}
+		return "", "", fmt.Errorf("unexpected response: %s", out)
+	}
 }
 
 // ref https://cloud.google.com/artifact-registry/docs/helm/store-helm-charts#auth-token

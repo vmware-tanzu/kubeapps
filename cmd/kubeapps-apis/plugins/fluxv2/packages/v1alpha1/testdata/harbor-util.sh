@@ -140,3 +140,66 @@ function setupHarborStefanProdanClone {
   echo TODO 
   echo
 }
+
+function deleteHarborRobotAccount()
+{
+  # sanity check
+  if [[ "$#" -lt 1 ]]; then
+    error_exit "Usage: deleteHarborRobotAccount name"
+  fi
+  local ACCOUNT_NAME=$1
+  echo
+  echo -e Checking if harbor robot account [${L_YELLOW}$ACCOUNT_NAME${NC}] exists...
+  local CMD="curl -L --silent --show-error \
+          ${FLUX_TEST_HARBOR_URL}/api/v2.0/robots \
+          -u $FLUX_TEST_HARBOR_ADMIN_USER:$FLUX_TEST_HARBOR_ADMIN_PWD"
+  local RESP=$($CMD)
+  local ID=$(echo "$RESP" | jq --arg NAME "robot\$$ACCOUNT_NAME" '.[] | select(.name == $NAME) | .id')
+  if [[ "$ID" != "" ]] ; then
+    echo -e "Deleting robot account [${L_YELLOW}$ACCOUNT_NAME${NC}] in harbor..." 
+    status_code=$(curl -L --write-out %{http_code} --silent \
+          --show-error -X DELETE --output /dev/null \
+          ${FLUX_TEST_HARBOR_URL}/api/v2.0/robots/$ID \
+          -u $FLUX_TEST_HARBOR_ADMIN_USER:$FLUX_TEST_HARBOR_ADMIN_PWD)
+    if [[ "$status_code" -eq 200 ]] ; then
+        echo -e Robot account [${L_YELLOW}$ACCOUNT_NAME${NC}] deleted
+    else
+        error_exit "Failed to delete robot account [$ACCOUNT_NAME] due to HTTP status: [$status_code]"
+    fi
+  fi 
+}
+
+function createHarborRobotAccount()
+{
+  # sanity check
+  if [[ "$#" -lt 2 ]]; then
+    error_exit "Usage: createHarborRobotAccount name project_name"
+  fi
+  local ACCOUNT_NAME=$1
+  local PROJECT_NAME=$2
+
+  echo -e "Creating robot account [${L_YELLOW}$ACCOUNT_NAME${NC}] in harbor..."
+  local payload=$(sed "s/\$NAME/${ACCOUNT_NAME}/g" $SCRIPTPATH/harbor-create-account.json)
+  payload=$(echo $payload | sed "s/\$PROJECT_NAME/${PROJECT_NAME}/g")
+  local RESP=$(curl -L --silent --show-error \
+                -X POST \
+                -H 'Content-Type: application/json' \
+                --data "${payload}" \
+                 ${FLUX_TEST_HARBOR_URL}/api/v2.0/robots \
+                -u $FLUX_TEST_HARBOR_ADMIN_USER:$FLUX_TEST_HARBOR_ADMIN_PWD)
+  local RESP2=$(echo "$RESP" | jq -r '. | {name,secret} | join(" ")')
+  if [[ "$RESP2" == robot* ]] ; then
+    echo -e "Robot account successfully created: [$RESP2]"
+  else
+    error_exit "Unexpected HTTP response creating robot account [$ACCOUNT_NAME]: $RESP"
+  fi
+}
+
+function setupHarborRobotAccount()
+{
+  local ACCOUNT_NAME=kubeapps-flux-plugin
+  local PROJECT_NAME=stefanprodan-podinfo-clone
+
+  deleteHarborRobotAccount $ACCOUNT_NAME
+  createHarborRobotAccount $ACCOUNT_NAME $PROJECT_NAME
+}
