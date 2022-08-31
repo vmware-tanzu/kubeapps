@@ -1,7 +1,5 @@
 # Managing Carvel Packages with Kubeapps
 
-> **NOTE**: This guide is about a feature that is under active development and, therefore, not yet ready for production use. The information herein stated is subject to change without notice until we reach a stable release.
-
 ## Table of Contents
 
 1. [Introduction](#introduction)
@@ -19,7 +17,7 @@
 
 ## Introduction
 
-Historically, Kubeapps was initially developed to solely manage [Helm Charts](https://helm.sh) on your Kubernetes clusters. However, it has evolved to support multiple formats, such as [Carvel Packages](https://carvel.dev/kapp-controller/docs/latest/packaging/#package) and [Helm releases via Fluxv2](https://fluxcd.io/docs/guides/helmreleases/).
+Historically, Kubeapps was initially developed to solely manage [Helm Charts](https://helm.sh) on your Kubernetes clusters. However, it has evolved to support multiple packaging formats, such as [Carvel Packages](https://carvel.dev/kapp-controller/docs/latest/packaging/#package) and [Helm releases via Fluxv2](https://fluxcd.io/docs/guides/helmreleases/).
 
 > **TIP**: Find more information about the architectural evolution at [this video](https://www.youtube.com/watch?v=rS2AhcIPQEs) and [this technical documentation](../reference/developer/kubeapps-apis.md).
 
@@ -34,7 +32,7 @@ This guide walks you through the process of using Kubeapps for configuring and d
 
 > **NOTE**: This section can safely be skipped if you already have kapp-controller installed in your cluster.
 
-In order to manage Carvel Packages, first of all, you will need to install kapp-controller in your cluster. That is, applying a set of Kubernetes resources and CRDs.
+In order to manage Carvel Packages, first of all, you need to install kapp-controller in your cluster. That is, applying a set of Kubernetes resources and CRDs.
 
 According to the [Carvel kapp-controller official documentation](https://carvel.dev/kapp-controller/docs/latest/install/), you can install everything it kapp-controller requires just by running the following command:
 
@@ -42,11 +40,11 @@ According to the [Carvel kapp-controller official documentation](https://carvel.
 kubectl apply -f https://github.com/vmware-tanzu/carvel-kapp-controller/releases/latest/download/release.yml
 ```
 
-After running this command, you should have everything you need to manage Carvel Packages in your cluster. Next section will give you an overview of the relevant Custom Resources included in kapp-controller.
+After running this command, you should have everything you need to manage Carvel Packages in your cluster. Next section gives you an overview of the relevant Custom Resources included in kapp-controller.
 
 ### Quick overview of the kapp-controller CRs
 
-At the time of writing this guide, kapp-controller will install the following Custom Resources Definitions:
+At the time of writing this guide, kapp-controller installs the following Custom Resources Definitions:
 
 - [PackageRepository](https://carvel.dev/kapp-controller/docs/latest/packaging/#package-repository): is a collection of packages and their metadata. Similar to a maven repository or a rpm repository, adding a package repository to a cluster gives users of that cluster the ability to install any of the packages from that repository.
 
@@ -82,7 +80,7 @@ packaging:
 
 If required, you can additionally pass the following configuration values to modify the defaults used by Kubeapps for the Carvel support. These are options passed to the `kapp-controller` plugin that handles the Carvel packaging support:
 
-- `defaultUpgradePolicy`: represents the default upgrade policy for the packages. If other than `none` is selected, the kapp-controller will automatically upgrade the packages to the latest matching semantic version. For instance, assuming we installed the version `1.2.3`:
+- `defaultUpgradePolicy`: represents the default upgrade policy for the packages. If other than `none` is selected, the kapp-controller automatically upgrades the packages to the latest matching semantic version. For instance, assuming we installed the version `1.2.3`:
   - With `major` selected, the package will be upgraded to `>=1.2.3`, for example, `2.0.0`, for
   - With `minor` selected, the package will be upgraded to `>=1.2.3 <2.0.0`, for example, `1.3.0`,
   - With `patch` selected, the package will be upgraded to `>=1.2.3 <1.3.0`, for example, `1.2.4`,
@@ -110,41 +108,40 @@ kubeappsapis:
 
 ### Installing a Package Repository
 
-> **NOTE**: Currently, Kubeapps does not offer any graphical way to manage [Carvel Packages Repositories](https://carvel.dev/kapp-controller/docs/latest/packaging/#package-repository). Therefore, you will need to install the package repository manually.
-
-Since we are actively working on [refactor the Application Repository management in Kubeapps](https://github.com/vmware-tanzu/kubeapps/milestone/25), [Carvel Packages Repositories](https://carvel.dev/kapp-controller/docs/latest/packaging/#package-repository) cannot be currently managed by Kubeapps.
-This section covers how to manage repositories manually.
+Kubeapps allows you to install [Carvel Packages Repositories](https://carvel.dev/kapp-controller/docs/latest/packaging/#package-repository) directly from the UI.
 
 First, you need to find a Carvel Package Repository already published. If not, you can always [create your own manually](https://carvel.dev/kapp-controller/docs/latest/packaging-tutorial/#creating-a-package-repository).
-In this section, we will use the `Tanzu Community Edition` package repository.
+This tutorial uses the `Tanzu Community Edition` package repository.
 
-> **TIP**: In [this Carvel website](https://carvel.dev/kapp-controller/docs/latest/oss-packages/) you will find a list of Carvel Packages and Package Repositories that are available to open-source users.
+> **TIP**: In [this Carvel website](https://carvel.dev/kapp-controller/docs/latest/oss-packages/) you can find a list of Carvel Packages and Package Repositories that are available to open-source users.
 
-Next, you need to create a `PackageRepository` CR in the global packaging namespace. This is done by running the following command:
+- To start with the installation, expand the right menu and click on the **Package Repositories** option.
 
-```bash
-cat > repo.yaml << EOF
----
-apiVersion: packaging.carvel.dev/v1alpha1
-kind: PackageRepository
-  name: tce-repo
-  namespace: kapp-controller-packaging-global
-spec:
-  fetch:
-    imgpkgBundle:
-      image: projects.registry.vmware.com/tce/main:0.9.1
-EOF
-```
+  ![Package repository right menu](../img/dashboard/right-menu.png)
 
-Then, you need to apply the `PackageRepository` CR to your cluster using `kubectl` (or, alternatively, the `kapp` CLI), by running the following command:
+- Kubeapps navigates to the **Package Repositories** page displaying a list of installed repositories (both Global and Namespaced repositories).
 
-```bash
-kubectl apply --namespace kapp-controller-packaging-global -f repo.yaml
-```
+  ![Package repository page](../img/package-repository/package-repository-page.png)
 
-Under the hood, kapp-controller will create `Package` and `PackageMetadata` CRs for each of the packages in the repository in the global packaging namespace for kapp-controller, enabling those packages to be installed via Kubeapps in any namespace. Note you can instead install the repository in a different namespace if the packages should only be available for install via Kubeapps in a particular namespace.
+  - **Global repositories** are available cluster-wide to deploy applications from those repositories to any namespace.
 
-> **TIP**: Run `kubectl get packagerepository`, `kubectl get packages` and `kubectl get packagemetadatas` to get the created CRs.
+  - **Namespace repositories** are available only in specific namespaces (to be aligned with the Kubernetes RBAC model where an account can have roles in specific namespaces).
+
+  > A Kubeapps Package Repository can be installed by anyone with the required RBAC for that namespace.
+
+- Click the **Add Package Repository** button that displays a pop-up (structured in collapsable sections) to configure the parameters for the new Package Repository.
+
+  ![Add Package repository pop-up](../img/package-repository/package-repository-pop-up-carvel.png)
+
+  > The image above shows the parameters to configure the `Tanzu Community Edition` Carvel package repository as a Global repository in Kubeapps.
+
+- Aditionally, there are two sections to provide authorization and advanced data to configure the Package Repository. Default values in these sections are enough to install the `Tanzu Community Edition` package repository.
+
+  ![Package repository pop-up advanced tabs](../img/package-repository/package-repository-pop-up-advanced.png)
+
+- Finally, click the **Install Repository** button to launch the installation process, adding the new repository to Kubeapps.
+
+  > Under the hood, kapp-controller creates `Package` and `PackageMetadata` CRs for each of the packages in the repository in the global packaging namespace for kapp-controller, enabling those packages to be installed via Kubeapps in any namespace. If you select Namespace scope for the repository, the packages will only be available for install via Kubeapps in that namespace.
 
 ### Creating a service account
 
@@ -201,21 +198,21 @@ The reason why is that kapp-controller forces to explicitly provide needed privi
 
 > **TIP**: Find more information about the kapp-controller security model in [their official documentation](https://carvel.dev/kapp-controller/docs/latest/security-model/).
 
-In Kubeapps, a dropdown will allow you to select which `ServiceAccount` you want to use, such as the `carvel-reconciler` service account created above.
+In Kubeapps, a dropdown allows you to select which `ServiceAccount` you want to use, such as the `carvel-reconciler` service account created above.
 
-> **NOTE**: As a consequence, the user logged in Kubeapps will need RBAC permissions to perform a `list` operation on `ServiceAccount` objects.
+> **NOTE**: As a consequence, the user logged in Kubeapps needs RBAC permissions to perform a `list` operation on `ServiceAccount` objects.
 
 Furthermore, there is another difference: **the values for installing the package are commented out by default**.
-This this because there is no concept of _default values_ in Carvel Packages.
+This is because there is no concept of _default values_ in Carvel Packages.
 
-In Kubeapps, we work around this decision by generating some default values based upon the OpenAPI Schema of the package.
+In Kubeapps, maintainers team work around this decision by generating some default values based upon the OpenAPI Schema of the package.
 
-> **TIP**: For instance, a property `foo-prop` whose data type is `string` will yield a default value of `foo-prop: ""`
+> **TIP**: For instance, a property `foo-prop` whose data type is `string` yields a default value of `foo-prop: ""`
 
 > **TIP**: you can uncomment a set of lines easily by selecting them and typing `Ctrl + /`.
 
-Finally, after clicking the `Install` button, the required CRs will be installed in the cluster (`PackageInstall` and the `Secret` holding the passed values).
-At this moment, kapp-controller will perform the required actions to start creating the Kubernetes resources defined by the package. This process is known as _reconciliation_.
+Finally, after clicking the `Install` button, the required CRs is installed in the cluster (`PackageInstall` and the `Secret` holding the passed values).
+At this moment, kapp-controller performs the required actions to start creating the Kubernetes resources defined by the package. This process is known as _reconciliation_.
 
 ### Viewing the Installed Packages
 
@@ -223,24 +220,24 @@ Viewing the installed Carvel Packages in Kubeapps is the same experience as view
 
 > **TIP**: Please refer to the [user documentation](../howto/dashboard.md) for more information on how to use Kubeapps as a user.
 
-Go to the `Applications` tab to see every Application that has been installed in the cluster. Click on _show apps in all namespaces_ to view the ones currently installed in every namespace of the cluster.
+Go to the `Applications` tab to see every Application installed in the cluster. Click on _show apps in all namespaces_ to view the ones currently installed in every namespace of the cluster.
 
-The following example shows an example of the Applications page with two Carvel Packages installed:
+The following image shows an example of the Applications page with two Carvel Packages installed:
 
 ![Installed applications page](../img/carvel-apps.png)
 
-Since the reconciliation process can eventually fail for several reasons, this page will show the current status of each application. If it is `deployed` it means that the application is successfully running in the cluster.
+Since the reconciliation process can eventually fail for several reasons, this page shows the current status of each application. If it is `deployed` it means that the application is successfully running in the cluster.
 
 Next, click on the application you want to view, for example, `my-test` to go to the details page, as depicted in the following image:
 
 ![Details page of an installed Carvel Package](../img/carvel-details.png)
 
-As in any other packaging format, this page will display those Kubernetes resources that have been created as a result of the Package installation.
+As in any other packaging format, this page displays those Kubernetes resources that have been created as a result of the Package installation.
 Besides, the current values are shown at the end of the page.
 
-Next, you can click on the `Delete` button to uninstall the application or the `Upgrade` button to edit the values of the application or update it to another version.
+Next, you can click on the **Delete** button to uninstall the application or the **Upgrade** button to edit the values of the application or update it to another version.
 
-> **NOTE**: as opposed to Helm Charts, Carvel Packages cannot be rolled back, hence there is no `Rollback` button.
+> **NOTE**: as opposed to Helm Charts managed by using Helm, Carvel Packages cannot be rolled back, hence there is no **Rollback** button.
 
 Finally, note that every Carvel Package installed through Kubeapps can also be managed by the [kapp](https://carvel.dev/kapp/) CLI using the `kapp inspect -a <APPLICATION_NAME>` command. For example:
 
@@ -273,7 +270,7 @@ Succeeded
 
 ## Conclusions
 
-This guide has covered how to manage Carvel Packages in Kubeapps, starting from [how to configure Kubeapps itself](#configuring-kubeapps-to-support-carvel-packages), then how to [add Carvel Packages Repositories](#installing-a-package-repository), next [how to browse and install Carvel Packages](#installing-a-package), and finally [how to view the installed Carvel Packages](#viewing-the-installed-packages).
+This guide covers how to manage Carvel Packages in Kubeapps, starting from [how to configure Kubeapps itself](#configuring-kubeapps-to-support-carvel-packages), then how to [add Carvel Packages Repositories](#installing-a-package-repository), next [how to browse and install Carvel Packages](#installing-a-package), and finally [how to view the installed Carvel Packages](#viewing-the-installed-packages).
 
 Some additional resources and references include:
 
@@ -281,5 +278,3 @@ Some additional resources and references include:
   - [kapp-controller documentation](https://carvel.dev/kapp-controller/docs/latest/)
 - [Getting Started with kapp](https://tanzu.vmware.com/developer/guides/kapp-gs/)
   - [kapp documentation](https://carvel.dev/kapp/docs/latest)
-
-Finally, we are [currently working](https://github.com/vmware-tanzu/kubeapps/milestone/19) on this kapp-controller plugin for managing Carvel Packages, so if you encounter any problems, please [file an issue](https://github.com/vmware-tanzu/kubeapps/issues/new) in the Kubeapps repository.
