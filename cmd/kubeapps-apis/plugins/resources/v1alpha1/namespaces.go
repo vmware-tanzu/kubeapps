@@ -102,8 +102,14 @@ func (s *Server) GetNamespaceNames(ctx context.Context, r *v1alpha1.GetNamespace
 
 // CanI Checks if the operation can be performed according to incoming auth rbac
 func (s *Server) CanI(ctx context.Context, r *v1alpha1.CanIRequest) (*v1alpha1.CanIResponse, error) {
+	if r.GetContext() == nil {
+		return nil, status.Errorf(codes.InvalidArgument, "context parameter is required")
+	}
 	namespace := r.GetContext().GetNamespace()
 	cluster := r.GetContext().GetCluster()
+	if cluster == "" {
+		return nil, status.Errorf(codes.InvalidArgument, "cluster parameter is required")
+	}
 	log.InfoS("+resources CanI", "cluster", cluster, "namespace", namespace, "group", r.GetGroup(), "resource", r.GetResource(), "verb", r.GetVerb())
 
 	typedClient, _, err := s.clientGetter(ctx, cluster)
