@@ -654,7 +654,7 @@ export function PkgRepoForm(props: IPkgRepoFormProps) {
                     required={true}
                     pattern={k8sObjectNameRegex}
                     title="Use lower case alphanumeric characters, '-' or '.'"
-                    disabled={!!repo?.name}
+                    disabled={!!repo.name}
                   />
                 </CdsInput>
                 <CdsInput>
@@ -676,7 +676,9 @@ export function PkgRepoForm(props: IPkgRepoFormProps) {
                     placeholder="Description of the repository"
                     value={description || ""}
                     onChange={handleDescriptionChange}
-                    disabled={plugin?.name === (PluginNames.PACKAGES_KAPP as string)}
+                    disabled={(
+                      [PluginNames.PACKAGES_FLUX, PluginNames.PACKAGES_KAPP] as string[]
+                    ).includes(plugin?.name)}
                   />
                 </CdsInput>
                 {/* TODO(agamez): these plugin selectors should be loaded
@@ -767,7 +769,8 @@ export function PkgRepoForm(props: IPkgRepoFormProps) {
                           checked={repo.namespaceScoped || isNamespaceScoped}
                           onChange={handleRepoScopeChange}
                           disabled={
-                            !!repo && isGlobalNamespace(namespace, plugin?.name, currentNsConfig)
+                            !!repo.name ||
+                            isGlobalNamespace(namespace, plugin?.name, currentNsConfig)
                           }
                           required={true}
                         />
@@ -784,10 +787,11 @@ export function PkgRepoForm(props: IPkgRepoFormProps) {
                           id="kubeapps-scope-global"
                           type="radio"
                           name="scope"
-                          checked={!repo?.namespaceScoped && !isNamespaceScoped}
+                          checked={!repo.namespaceScoped && !isNamespaceScoped}
                           onChange={handleRepoScopeChange}
                           disabled={
-                            !!repo && isGlobalNamespace(namespace, plugin?.name, currentNsConfig)
+                            !!repo.name ||
+                            isGlobalNamespace(namespace, plugin?.name, currentNsConfig)
                           }
                           required={true}
                         />
@@ -797,8 +801,9 @@ export function PkgRepoForm(props: IPkgRepoFormProps) {
                       {/* eslint-disable-next-line jsx-a11y/label-has-associated-control */}
                       <label>Package Storage Type</label>
                       <CdsControlMessage>Select the package storage type.</CdsControlMessage>
-                      {(plugin?.name === (PluginNames.PACKAGES_HELM as string) ||
-                        plugin?.name === (PluginNames.PACKAGES_FLUX as string)) && (
+                      {(
+                        [PluginNames.PACKAGES_HELM, PluginNames.PACKAGES_FLUX] as string[]
+                      ).includes(plugin?.name) && (
                         <>
                           <CdsRadio>
                             <label htmlFor="kubeapps-repo-type-helm">Helm Repository</label>
