@@ -193,7 +193,7 @@ describe("App", () => {
       mockClientCanI = jest.fn().mockImplementation(
         () =>
           new Promise(() => {
-            throw "err";
+            throw new Error("error");
           }),
       );
       jest.spyOn(client, "CanI").mockImplementation(mockClientCanI);
