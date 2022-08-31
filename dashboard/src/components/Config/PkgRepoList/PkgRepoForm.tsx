@@ -1866,15 +1866,15 @@ export function PkgRepoForm(props: IPkgRepoFormProps) {
                       onChange={handleIntervalChange}
                     />
                     <CdsControlMessage>
-                      Time (expressed as a{" "}
+                      Time to wait between each synchronization of the repository. Expressed as a{" "}
                       <a
                         href={"https://pkg.go.dev/time#ParseDuration"}
                         target="_blank"
                         rel="noopener noreferrer"
                       >
                         Golang duration
-                      </a>
-                      ) to wait between synchronizing the repository.
+                      </a>{" "}
+                      according to the Kubernetes specification.
                     </CdsControlMessage>
                   </CdsInput>
                 )}
