@@ -28,7 +28,13 @@ import { IConfigState } from "reducers/config";
 import { InstalledPackage } from "shared/InstalledPackage";
 import PackagesService from "shared/PackagesService";
 import { getStore, mountWrapper } from "shared/specs/mountWrapper";
-import { DeleteError, FetchError, IInstalledPackageState, IStoreState, PluginNames } from "shared/types";
+import {
+  DeleteError,
+  FetchError,
+  IInstalledPackageState,
+  IStoreState,
+  PluginNames,
+} from "shared/types";
 import { getType } from "typesafe-actions";
 import AccessURLTable from "./AccessURLTable/AccessURLTable";
 import DeleteButton from "./AppControls/DeleteButton/DeleteButton";
