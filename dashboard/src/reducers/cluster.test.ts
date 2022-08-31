@@ -455,6 +455,7 @@ describe("clusterReducer", () => {
       customAppViews: [],
       skipAvailablePackageDetails: false,
       createNamespaceLabels: {},
+      configuredPlugins: [],
     } as IConfig;
     it("re-writes the clusters to match the config.clusters state", () => {
       expect(

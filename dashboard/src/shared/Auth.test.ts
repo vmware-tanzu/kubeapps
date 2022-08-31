@@ -243,6 +243,7 @@ describe("Auth", () => {
         customAppViews: [],
         skipAvailablePackageDetails: false,
         createNamespaceLabels: {},
+        configuredPlugins: [],
       });
 
       expect(mockedAssign).toBeCalledWith(oauthLogoutURI);
@@ -267,6 +268,7 @@ describe("Auth", () => {
         customAppViews: [],
         skipAvailablePackageDetails: false,
         createNamespaceLabels: {},
+        configuredPlugins: [],
       });
 
       expect(mockedAssign).toBeCalledWith("/oauth2/sign_out");
