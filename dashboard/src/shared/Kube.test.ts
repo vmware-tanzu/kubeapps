@@ -187,7 +187,7 @@ describe("App", () => {
     it("should ignore empty clusters", async () => {
       const allowed = await Kube.canI("", "v1", "namespaces", "create", "");
       expect(allowed).toBe(false);
-      expect(Kube.resourcesClient).not.toHaveBeenCalled()
+      expect(Kube.resourcesClient).not.toHaveBeenCalled();
     });
     it("should default to disallow when errors", async () => {
       mockClientCanI = jest.fn().mockImplementation(
@@ -202,7 +202,7 @@ describe("App", () => {
       const allowed = await Kube.canI("cluster", "v1", "secrets", "list", "");
       expect(allowed).toBe(false);
 
-      expect(Kube.resourcesClient).toHaveBeenCalled()
+      expect(Kube.resourcesClient).toHaveBeenCalled();
       expect(mockClientCanI).toHaveBeenCalledWith({
         context: {
           cluster: "cluster",
