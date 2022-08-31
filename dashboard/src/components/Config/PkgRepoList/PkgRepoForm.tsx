@@ -1822,7 +1822,7 @@ export function PkgRepoForm(props: IPkgRepoFormProps) {
                         onChange={handleFilterNamesChange}
                       />
                     </CdsTextarea>
-                    <CdsCheckbox className="ca-skip-tls">
+                    <CdsCheckbox className="reduced-margin-top">
                       <label htmlFor="kubeapps-repo-filter-exclude">Exclude Packages</label>
                       <CdsControlMessage>
                         Exclude packages matching the given filter
@@ -1834,7 +1834,7 @@ export function PkgRepoForm(props: IPkgRepoFormProps) {
                         checked={filterExclude}
                       />
                     </CdsCheckbox>
-                    <CdsCheckbox className="ca-skip-tls">
+                    <CdsCheckbox className="reduced-margin-top">
                       <label htmlFor="kubeapps-repo-filter-regex">Regular Expression</label>
                       <CdsControlMessage>
                         Mark this box to treat the filter as a regular expression
@@ -1958,7 +1958,7 @@ export function PkgRepoForm(props: IPkgRepoFormProps) {
                     </CdsTextarea>
                   </>
                 )}
-                <CdsCheckbox className="ca-skip-tls">
+                <CdsCheckbox className="reduced-margin-top">
                   <label htmlFor="kubeapps-repo-skip-tls">Skip TLS Verification</label>
                   <input
                     id="kubeapps-repo-skip-tls"
@@ -1970,7 +1970,7 @@ export function PkgRepoForm(props: IPkgRepoFormProps) {
                     If enabled, the TLS certificate will not be verified (potentially insecure).
                   </CdsControlMessage>
                 </CdsCheckbox>
-                <CdsCheckbox className="ca-skip-tls">
+                <CdsCheckbox className="reduced-margin-top">
                   <label htmlFor="kubeapps-repo-pass-credentials">
                     Pass Credentials to 3rd party URLs
                   </label>
