@@ -433,10 +433,27 @@ export function PkgRepoForm(props: IPkgRepoFormProps) {
     setHelmPsAuthMethod(PackageRepositoryAuth_PackageRepositoryAuthType[e.target.value]);
   };
   const handleTypeRadioButtonChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setType(e.target.value);
+    const newType = e.target.value;
+    setType(newType);
+
+    // if a unsupported auth method is selected, reset it to the default one
+    if (!getSupportedPackageRepositoryAuthTypes(plugin, newType).includes(authMethod)) {
+      setAuthMethod(
+        PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_UNSPECIFIED,
+      );
+    }
   };
   const handlePluginRadioButtonChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setPlugin(getPluginByName(e.target.value));
+    const newPlugin = getPluginByName(e.target.value);
+    setPlugin(newPlugin);
+
+    // if a unsupported auth method is selected, reset it to the default one
+    if (!getSupportedPackageRepositoryAuthTypes(newPlugin, type).includes(authMethod)) {
+      setAuthMethod(
+        PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_UNSPECIFIED,
+      );
+    }
+
     // set some default values based on the selected plugin
     switch (getPluginByName(e.target.value)?.name) {
       case PluginNames.PACKAGES_HELM: {
