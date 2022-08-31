@@ -1,0 +1,27 @@
+# Copyright 2022 VMware, Inc.
+# SPDX-License-Identifier: Apache-2.0
+
+name: Kubeapps general pipeline
+
+on:
+  push:
+    branches:
+      - main
+      - migrate-ci
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  test_go:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Set up Go
+      uses: actions/setup-go@v3
+      with:
+        go-version: 1.18
+
+    - name: Test
+      run: make test
