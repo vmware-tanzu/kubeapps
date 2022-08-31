@@ -160,6 +160,7 @@ it("shows an error creating a repo", async () => {
       <PkgRepoForm {...defaultProps} />,
     );
   });
+  wrapper.update();
   expect(wrapper.find(Alert)).toIncludeText("boom!");
 });
 
@@ -175,6 +176,7 @@ it("shows an error deleting a repo", async () => {
       <PkgRepoForm {...defaultProps} />,
     );
   });
+  wrapper.update();
   expect(wrapper.find(Alert)).toIncludeText("boom!");
 });
 
@@ -190,6 +192,7 @@ it("shows an error fetching a repo", async () => {
       <PkgRepoForm {...defaultProps} />,
     );
   });
+  wrapper.update();
   expect(wrapper.find(Alert)).toIncludeText("boom!");
 });
 
@@ -205,6 +208,7 @@ it("shows an error updating a repo", async () => {
       <PkgRepoForm {...defaultProps} />,
     );
   });
+  wrapper.update();
   expect(wrapper.find(Alert)).toIncludeText("boom!");
 });
 
@@ -524,6 +528,7 @@ it("should not show the list of OCI repositories if using a Helm repo (default)"
   wrapper.find("#kubeapps-repo-name").simulate("change", { target: { value: "helm-repo" } });
   wrapper.find("#kubeapps-repo-url").simulate("change", { target: { value: "helm.repo" } });
   wrapper.find("#kubeapps-repo-type-helm").simulate("change");
+  wrapper.update();
   expect(wrapper.find("#kubeapps-oci-repositories")).not.toExist();
 });
 
@@ -684,6 +689,7 @@ describe("when the repository info is already populated", () => {
         <PkgRepoForm {...defaultProps} packageRepoRef={packageRepoRef} />,
       );
     });
+    wrapper.update();
     expect(wrapper.find("#kubeapps-repo-skip-tls")).toBeChecked();
   });
 
@@ -702,6 +708,7 @@ describe("when the repository info is already populated", () => {
         <PkgRepoForm {...defaultProps} packageRepoRef={packageRepoRef} />,
       );
     });
+    wrapper.update();
     expect(wrapper.find("#kubeapps-repo-pass-credentials")).toBeChecked();
   });
 
