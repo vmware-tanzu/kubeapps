@@ -1084,11 +1084,6 @@ func (a *userHandler) GetSecret(name, namespace string) (*corev1.Secret, error) 
 	return a.clientset.CoreV1().Secrets(namespace).Get(context.TODO(), name, metav1.GetOptions{})
 }
 
-// GetNamespaces return the list of namespaces that the user has permission to access
-func (a *userHandler) GetOperatorLogo(namespace, name string) ([]byte, error) {
-	return a.clientset.RestClient().Get().AbsPath(fmt.Sprintf("/apis/packages.operators.coreos.com/v1/namespaces/%s/packagemanifests/%s/icon", namespace, name)).Do(context.TODO()).Raw()
-}
-
 // ParseSelfSubjectAccessRequest parses a SelfSubjectAccessRequest
 func ParseSelfSubjectAccessRequest(selfSubjectAccessReviewBody io.ReadCloser) (*authorizationapi.ResourceAttributes, error) {
 	defer selfSubjectAccessReviewBody.Close()

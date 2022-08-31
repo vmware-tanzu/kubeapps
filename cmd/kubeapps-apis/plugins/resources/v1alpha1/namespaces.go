@@ -5,6 +5,7 @@ package main
 
 import (
 	"context"
+	authorizationapi "k8s.io/api/authorization/v1"
 
 	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/plugins/resources/v1alpha1"
 	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/pkg/statuserror"
@@ -96,5 +97,35 @@ func (s *Server) GetNamespaceNames(ctx context.Context, r *v1alpha1.GetNamespace
 
 	return &v1alpha1.GetNamespaceNamesResponse{
 		NamespaceNames: namespaces,
+	}, nil
+}
+
+// CanI Checks if the operation can be performed according to incoming auth rbac
+func (s *Server) CanI(ctx context.Context, r *v1alpha1.CanIRequest) (*v1alpha1.CanIResponse, error) {
+	namespace := r.GetContext().GetNamespace()
+	cluster := r.GetContext().GetCluster()
+	log.InfoS("+resources CanI", "cluster", cluster, "namespace", namespace, "group", r.GetGroup(), "resource", r.GetResource(), "verb", r.GetVerb())
+
+	typedClient, _, _, err := s.clientGetter(ctx, cluster)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "unable to get the k8s client: '%v'", err)
+	}
+
+	reviewResult, err := typedClient.AuthorizationV1().SelfSubjectAccessReviews().Create(ctx, &authorizationapi.SelfSubjectAccessReview{
+		Spec: authorizationapi.SelfSubjectAccessReviewSpec{
+			ResourceAttributes: &authorizationapi.ResourceAttributes{
+				Group:     r.Group,
+				Resource:  r.Resource,
+				Verb:      r.Verb,
+				Namespace: namespace,
+			},
+		},
+	}, metav1.CreateOptions{})
+	if err != nil {
+		return nil, err
+	}
+
+	return &v1alpha1.CanIResponse{
+		Allowed: reviewResult.Status.Allowed,
 	}, nil
 }

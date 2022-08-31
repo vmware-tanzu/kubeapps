@@ -57,7 +57,7 @@ type PluginWithServer struct {
 	Server interface{}
 }
 
-// coreServer implements the API defined in cmd/kubeapps-api-service/core/core.proto
+// PluginsServer implements the API defined in "plugins.proto"
 type PluginsServer struct {
 	plugins.UnimplementedPluginsServiceServer
 

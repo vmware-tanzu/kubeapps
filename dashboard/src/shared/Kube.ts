@@ -12,53 +12,13 @@ import {
 import * as url from "shared/url";
 import { axiosWithAuth } from "./AxiosInstance";
 import { KubeappsGrpcClient } from "./KubeappsGrpcClient";
-import { IK8sList, IKubeState, IResource } from "./types";
+import { IKubeState } from "./types";
 
 // Kube is a lower-level class for interacting with the Kubernetes API. Use
 // ResourceRef to interact with a single API resource rather than using Kube
 // directly.
 export class Kube {
   private static resourcesClient = () => new KubeappsGrpcClient().getResourcesServiceClientImpl();
-  public static getResourceURL(
-    cluster: string,
-    apiVersion: string,
-    resource: string,
-    namespaced: boolean,
-    namespace?: string,
-    name?: string,
-    query?: string,
-  ) {
-    let u = `${url.api.k8s.base(cluster)}/${
-      apiVersion === "v1" || !apiVersion ? "api/v1" : `apis/${apiVersion}`
-    }`;
-    if (namespaced && namespace) {
-      u += `/namespaces/${namespace}`;
-    }
-    u += `/${resource}`;
-    if (name) {
-      u += `/${name}`;
-    }
-    if (query) {
-      u += `?${query}`;
-    }
-    return u;
-  }
-
-  // TODO(agamez): Migrate API call, see #4785
-  public static async getResource(
-    cluster: string,
-    apiVersion: string,
-    resource: string,
-    namespaced: boolean,
-    namespace?: string,
-    name?: string,
-    query?: string,
-  ) {
-    const { data } = await axiosWithAuth.get<IResource | IK8sList<IResource, {}>>(
-      this.getResourceURL(cluster, apiVersion, resource, namespaced, namespace, name, query),
-    );
-    return data;
-  }
 
   // getResources returns a subscription to an observable for resources from the server.
   public static getResources(
@@ -108,7 +68,6 @@ export class Kube {
     return result;
   }
 
-  // TODO(agamez): Migrate API call, see #4785
   public static async canI(
     cluster: string,
     group: string,
@@ -120,13 +79,14 @@ export class Kube {
       if (!cluster) {
         return false;
       }
-      const { data } = await axiosWithAuth.post<{ allowed: boolean }>(url.backend.canI(cluster), {
-        group,
-        resource,
-        verb,
-        namespace,
+      // TODO(rcastelblanq) Migrate the CanI endpoint to a proper RBAC/Auth plugin
+      const response = await this.resourcesClient().CanI({
+        context: { cluster, namespace },
+        group: group,
+        resource: resource,
+        verb: verb,
       });
-      return data?.allowed ? data.allowed : false;
+      return response ? response.allowed : false;
     } catch (e: any) {
       return false;
     }
