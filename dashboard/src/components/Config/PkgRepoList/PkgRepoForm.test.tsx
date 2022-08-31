@@ -17,9 +17,8 @@ import { act } from "react-dom/test-utils";
 import * as ReactRedux from "react-redux";
 import { IPackageRepositoryState } from "reducers/repos";
 import { defaultStore, getStore, mountWrapper } from "shared/specs/mountWrapper";
-import { IPkgRepoFormData, IStoreState } from "shared/types";
-import { PluginNames } from "shared/utils";
-import { PkgRepoForm, RepositoryStorageTypes } from "./PkgRepoForm";
+import { IPkgRepoFormData, IStoreState, PluginNames, RepositoryStorageTypes } from "shared/types";
+import { PkgRepoForm } from "./PkgRepoForm";
 
 const defaultProps = {
   onSubmit: jest.fn(),

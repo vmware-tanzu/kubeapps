@@ -30,7 +30,13 @@ import { Action } from "redux";
 import { ThunkDispatch } from "redux-thunk";
 import { IConfig } from "shared/Config";
 import { toFilterRule, toParams } from "shared/jq";
-import { IPkgRepoFormData, IPkgRepositoryFilter, IStoreState } from "shared/types";
+import {
+  IPkgRepoFormData,
+  IPkgRepositoryFilter,
+  IStoreState,
+  PluginNames,
+  RepositoryStorageTypes,
+} from "shared/types";
 import {
   getGlobalNamespaceOrNamespace,
   getPluginByName,
@@ -38,7 +44,6 @@ import {
   getSupportedPackageRepositoryAuthTypes,
   isGlobalNamespace,
   k8sObjectNameRegex,
-  PluginNames,
 } from "shared/utils";
 import "./PkgRepoForm.css";
 
@@ -49,17 +54,6 @@ interface IPkgRepoFormProps {
   globalReposNamespace: string;
   carvelGlobalNamespace: string;
   packageRepoRef?: PackageRepositoryReference;
-}
-
-//  enum for the type of package repository storage
-export enum RepositoryStorageTypes {
-  PACKAGE_REPOSITORY_STORAGE_HELM = "helm",
-  PACKAGE_REPOSITORY_STORAGE_OCI = "oci",
-  PACKAGE_REPOSITORY_STORAGE_CARVEL_INLINE = "inline",
-  PACKAGE_REPOSITORY_STORAGE_CARVEL_IMAGE = "image",
-  PACKAGE_REPOSITORY_STORAGE_CARVEL_IMGPKGBUNDLE = "imgpkgBundle",
-  PACKAGE_REPOSITORY_STORAGE_CARVEL_HTTP = "http",
-  PACKAGE_REPOSITORY_STORAGE_CARVEL_GIT = "git",
 }
 
 export function PkgRepoForm(props: IPkgRepoFormProps) {

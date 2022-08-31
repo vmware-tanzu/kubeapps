@@ -420,6 +420,17 @@ export interface CustomInstalledPackageDetail extends InstalledPackageDetail {
 export enum RepositoryStorageTypes {
   PACKAGE_REPOSITORY_STORAGE_HELM = "helm",
   PACKAGE_REPOSITORY_STORAGE_OCI = "oci",
+  PACKAGE_REPOSITORY_STORAGE_CARVEL_INLINE = "inline",
+  PACKAGE_REPOSITORY_STORAGE_CARVEL_IMAGE = "image",
+  PACKAGE_REPOSITORY_STORAGE_CARVEL_IMGPKGBUNDLE = "imgpkgBundle",
+  PACKAGE_REPOSITORY_STORAGE_CARVEL_HTTP = "http",
+  PACKAGE_REPOSITORY_STORAGE_CARVEL_GIT = "git",
+}
+
+export enum PluginNames {
+  PACKAGES_HELM = "helm.packages",
+  PACKAGES_FLUX = "fluxv2.packages",
+  PACKAGES_KAPP = "kapp_controller.packages",
 }
 
 export interface IPkgRepoFormData {

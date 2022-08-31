@@ -15,8 +15,7 @@ import {
 import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins";
 import { InstalledPackage } from "shared/InstalledPackage";
 import { getStore, initialState } from "shared/specs/mountWrapper";
-import { IStoreState, UnprocessableEntity, UpgradeError } from "shared/types";
-import { PluginNames } from "shared/utils";
+import { IStoreState, PluginNames, UnprocessableEntity, UpgradeError } from "shared/types";
 import { getType } from "typesafe-actions";
 import actions from ".";
 

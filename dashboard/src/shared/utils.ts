@@ -13,12 +13,7 @@ import helmIcon from "icons/helm.svg";
 import olmIcon from "icons/olm-icon.svg";
 import placeholder from "icons/placeholder.svg";
 import { IConfig } from "./Config";
-
-export enum PluginNames {
-  PACKAGES_HELM = "helm.packages",
-  PACKAGES_FLUX = "fluxv2.packages",
-  PACKAGES_KAPP = "kapp_controller.packages",
-}
+import { PluginNames, RepositoryStorageTypes } from "./types";
 
 export const k8sObjectNameRegex = "[a-z0-9]([-a-z0-9]*[a-z0-9])?(.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*";
 

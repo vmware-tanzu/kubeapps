@@ -8,6 +8,7 @@ import helmIcon from "icons/helm.svg";
 import olmIcon from "icons/olm-icon.svg";
 import placeholder from "icons/placeholder.svg";
 import { IConfig } from "./Config";
+import { PluginNames } from "./types";
 import {
   escapeRegExp,
   getAppStatusLabel,
@@ -21,7 +22,6 @@ import {
   getValueFromEvent,
   isGlobalNamespace,
   MAX_DESC_LENGTH,
-  PluginNames,
   trimDescription,
 } from "./utils";
 
