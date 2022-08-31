@@ -11,11 +11,11 @@ import {
   UpdateInstalledPackageResponse,
   VersionReference,
 } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
-import { KubeappsGrpcClient } from "./KubeappsGrpcClient";
 import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins";
 import { RollbackInstalledPackageResponse } from "gen/kubeappsapis/plugins/helm/packages/v1alpha1/helm";
 import { InstalledPackage } from "./InstalledPackage";
-import { PluginNames } from "./utils";
+import { KubeappsGrpcClient } from "./KubeappsGrpcClient";
+import { PluginNames } from "./types";
 
 describe("InstalledPackage", () => {
   describe("createInstalledPackage", () => {
