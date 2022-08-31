@@ -733,7 +733,7 @@ export function PkgRepoForm(props: IPkgRepoFormProps) {
                       {/* eslint-disable-next-line jsx-a11y/label-has-associated-control */}
                       <label>Scope:</label>
                       <CdsControlMessage>
-                        If the repository is global, its packages will be availabe in every
+                        If the repository is global, its packages will be available in every
                         namespace of the cluster. If it is namespaced-scoped, its packages will be
                         available only in the namespace where the repository has been installed.
                       </CdsControlMessage>
