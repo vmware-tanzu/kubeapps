@@ -864,7 +864,9 @@ export function PkgRepoForm(props: IPkgRepoFormProps) {
                               id="kubeapps-repo-type-inline"
                               type="radio"
                               name="type"
-                              disabled={!!repo?.type}
+                              // TODO(agamez): enable it back once the API supports it
+                              disabled={true}
+                              // disabled={!!repo?.type}
                               value={
                                 RepositoryStorageTypes.PACKAGE_REPOSITORY_STORAGE_CARVEL_INLINE ||
                                 ""
