@@ -15,7 +15,6 @@ import { ThunkAction } from "redux-thunk";
 import { PackageRepositoriesService } from "shared/PackageRepositoriesService";
 import PackagesService from "shared/PackagesService";
 import { IPkgRepoFormData, IStoreState, NotFoundError } from "shared/types";
-import { isGlobalNamespace } from "shared/utils";
 import { ActionType, deprecated } from "typesafe-actions";
 
 const { createAction } = deprecated;
@@ -131,22 +130,17 @@ export const fetchRepoDetail = (
 };
 
 export const addRepo = (
-  namespace: string,
   request: IPkgRepoFormData,
 ): ThunkAction<Promise<boolean>, IStoreState, null, PkgReposAction> => {
   return async (dispatch, getState) => {
     const {
       clusters: { currentCluster },
-      config,
     } = getState();
     try {
       dispatch(addOrUpdateRepo());
-      const namespaceScoped = !isGlobalNamespace(namespace, request.plugin?.name, config);
       const addPackageRepositoryResponse = await PackageRepositoriesService.addPackageRepository(
         currentCluster,
-        namespace,
         request,
-        namespaceScoped,
       );
       // Ensure the repo have been created
       if (!addPackageRepositoryResponse?.packageRepoRef) {
@@ -186,7 +180,6 @@ export const addRepo = (
 };
 
 export const updateRepo = (
-  namespace: string,
   request: IPkgRepoFormData,
 ): ThunkAction<Promise<boolean>, IStoreState, null, PkgReposAction> => {
   return async (dispatch, getState) => {
@@ -196,11 +189,7 @@ export const updateRepo = (
     try {
       dispatch(addOrUpdateRepo());
       const updatePackageRepositoryResponse =
-        await PackageRepositoriesService.updatePackageRepository(
-          currentCluster,
-          namespace,
-          request,
-        );
+        await PackageRepositoriesService.updatePackageRepository(currentCluster, request);
 
       // Ensure the repo have been updated
       if (!updatePackageRepositoryResponse?.packageRepoRef) {
