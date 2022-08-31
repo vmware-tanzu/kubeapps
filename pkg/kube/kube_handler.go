@@ -14,7 +14,6 @@ import (
 	httpclient "github.com/vmware-tanzu/kubeapps/pkg/http-client"
 	"io"
 	"io/ioutil"
-	authorizationapi "k8s.io/api/authorization/v1"
 	corev1 "k8s.io/api/core/v1"
 	k8sErrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -310,8 +309,6 @@ type handler interface {
 	GetSecret(name, namespace string) (*corev1.Secret, error)
 	GetAppRepository(repoName, repoNamespace string) (*v1alpha1.AppRepository, error)
 	ValidateAppRepository(appRepoBody io.ReadCloser, requestNamespace string) (*ValidationResponse, error)
-	GetOperatorLogo(namespace, name string) ([]byte, error)
-	CanI(resourceAttributes *authorizationapi.ResourceAttributes) (bool, error)
 }
 
 // AuthHandler exposes Handler functionality as a user or the current serviceaccount
@@ -1082,30 +1079,4 @@ func KubeappsSecretNameForRepo(repoName, namespace string) string {
 // GetSecret return the a secret from a namespace using a token if given
 func (a *userHandler) GetSecret(name, namespace string) (*corev1.Secret, error) {
 	return a.clientset.CoreV1().Secrets(namespace).Get(context.TODO(), name, metav1.GetOptions{})
-}
-
-// ParseSelfSubjectAccessRequest parses a SelfSubjectAccessRequest
-func ParseSelfSubjectAccessRequest(selfSubjectAccessReviewBody io.ReadCloser) (*authorizationapi.ResourceAttributes, error) {
-	defer selfSubjectAccessReviewBody.Close()
-	var request authorizationapi.ResourceAttributes
-	err := json.NewDecoder(selfSubjectAccessReviewBody).Decode(&request)
-	if err != nil {
-		log.InfoS("unable to decode:", "err", err)
-		return nil, err
-	}
-	return &request, nil
-}
-
-// CanI returns if the user is allowed to do the given action
-func (a *userHandler) CanI(resourceAttributes *authorizationapi.ResourceAttributes) (bool, error) {
-	res, err := a.clientset.AuthorizationV1().SelfSubjectAccessReviews().Create(context.TODO(), &authorizationapi.SelfSubjectAccessReview{
-		Spec: authorizationapi.SelfSubjectAccessReviewSpec{
-			ResourceAttributes: resourceAttributes,
-		},
-	}, metav1.CreateOptions{})
-	if err != nil {
-		return false, err
-	}
-
-	return res.Status.Allowed, nil
 }

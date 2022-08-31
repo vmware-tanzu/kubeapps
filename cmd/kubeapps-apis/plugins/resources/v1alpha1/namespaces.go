@@ -106,7 +106,7 @@ func (s *Server) CanI(ctx context.Context, r *v1alpha1.CanIRequest) (*v1alpha1.C
 	cluster := r.GetContext().GetCluster()
 	log.InfoS("+resources CanI", "cluster", cluster, "namespace", namespace, "group", r.GetGroup(), "resource", r.GetResource(), "verb", r.GetVerb())
 
-	typedClient, _, _, err := s.clientGetter(ctx, cluster)
+	typedClient, _, err := s.clientGetter(ctx, cluster)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "unable to get the k8s client: '%v'", err)
 	}

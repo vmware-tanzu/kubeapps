@@ -245,22 +245,20 @@ func gatewayMux() (*runtime.ServeMux, error) {
 		return nil, fmt.Errorf("failed to serve: %v", err)
 	}
 
+	svcRestConfig, err := rest.InClusterConfig()
+	if err != nil {
+		return nil, fmt.Errorf("failed to retrieve in cluster configuration: %v", err)
+	}
+	coreClientSet, err := kubernetes.NewForConfig(svcRestConfig)
+	if err != nil {
+		return nil, fmt.Errorf("failed to retrieve clientset: %v", err)
+	}
+
 	// TODO(rcastelblanq) Move this endpoint to the Operators plugin when implementing #4920
 	// Proxies the operator icon request to K8s
 	err = gwmux.HandlePath(http.MethodGet, "/operators/namespaces/{namespace}/operator/{name}/logo", func(w http.ResponseWriter, r *http.Request, pathParams map[string]string) {
 		namespace := pathParams["namespace"]
 		name := pathParams["name"]
-
-		svcRestConfig, err := rest.InClusterConfig()
-		if err != nil {
-			http.Error(w, fmt.Sprintf("Unable to retrieve cluster configuration: %v", err), http.StatusInternalServerError)
-			return
-		}
-		coreClientSet, err := kubernetes.NewForConfig(svcRestConfig)
-		if err != nil {
-			http.Error(w, fmt.Sprintf("Unable to retrieve clientset: %v", err), http.StatusInternalServerError)
-			return
-		}
 
 		logoBytes, err := coreClientSet.RESTClient().Get().AbsPath(fmt.Sprintf("/apis/packages.operators.coreos.com/v1/namespaces/%s/packagemanifests/%s/icon", namespace, name)).Do(context.TODO()).Raw()
 		if err != nil {
