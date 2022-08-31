@@ -53,8 +53,11 @@ func setFlags(c *cobra.Command) {
 	c.Flags().IntVar(&serveOpts.Burst, "burst", 15, "internal burst capacity")
 	c.Flags().Float32Var(&serveOpts.Qps, "qps", 10, "internal QPS rate")
 
-	// TODO(agamez): remove once a new version of the chart is released
 	var deprecated string
+	// TODO(rcastelblanq) Remove together with the whole Kubeops
+	c.Flags().StringVar(&deprecated, "namespace-header-name", "", "(deprecated) name of the header field, e.g. namespace-header-name=X-Consumer-Groups")
+	c.Flags().StringVar(&deprecated, "namespace-header-pattern", "", "(deprecated) regular expression that matches only single group, e.g. namespace-header-pattern=^namespace:([\\w]+):\\w+$, to match namespace:ns:read")
+	// TODO(agamez): remove once a new version of the chart is released
 	c.Flags().StringVar(&deprecated, "user-agent-comment", "", "(deprecated) UserAgent comment used during outbound requests")
 }
 

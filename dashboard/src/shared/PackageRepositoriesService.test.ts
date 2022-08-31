@@ -91,6 +91,8 @@ const pkgRepoFormData = {
     cert: "",
     key: "",
   },
+  namespace,
+  isNamespaceScoped: true,
 } as IPkgRepoFormData;
 
 const packageRepoRef = {
@@ -161,9 +163,7 @@ describe("RepositoriesService", () => {
 
     const addPackageRepositoryResponse = await PackageRepositoriesService.addPackageRepository(
       cluster,
-      namespace,
-      pkgRepoFormData,
-      false,
+      { ...pkgRepoFormData, namespace, isNamespaceScoped: false },
     );
     expect(addPackageRepositoryResponse).toStrictEqual({
       packageRepoRef: {
@@ -197,7 +197,7 @@ describe("RepositoriesService", () => {
     setMockCoreClient("UpdatePackageRepository", mockUpdatePackageRepository);
 
     const updatePackageRepositoryResponse =
-      await PackageRepositoriesService.updatePackageRepository(cluster, namespace, pkgRepoFormData);
+      await PackageRepositoriesService.updatePackageRepository(cluster, pkgRepoFormData);
     expect(updatePackageRepositoryResponse).toStrictEqual({
       packageRepoRef: {
         identifier: pkgRepoFormData.name,
