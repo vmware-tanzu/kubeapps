@@ -38,7 +38,7 @@ jobs:
     - name: Set up Go
       uses: actions/setup-go@v3
       with:
-        go-version: $GOLANG_VERSION
+        go-version: ${{ env.GOLANG_VERSION }}
 
     - name: Test
       run: make test
