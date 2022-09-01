@@ -6,6 +6,8 @@ package server
 import (
 	"context"
 	"fmt"
+	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/rest"
 	"net"
 	"net/http"
 	"reflect"
@@ -113,11 +115,11 @@ func Serve(serveOpts core.ServeOptions) error {
 	// on the simpler cmux.HTTP2HeaderField("content-type", "application/grpc"). More details
 	// at https://github.com/soheilhy/cmux/issues/64
 	mux := cmux.New(lis)
-	grpcLis := mux.MatchWithWriters(cmux.HTTP2MatchHeaderFieldSendSettings("content-type", "application/grpc"))
-	grpcwebLis := mux.MatchWithWriters(cmux.HTTP2MatchHeaderFieldSendSettings("content-type", "application/grpc-web"))
-	httpLis := mux.Match(cmux.Any())
+	grpcListener := mux.MatchWithWriters(cmux.HTTP2MatchHeaderFieldSendSettings("content-type", "application/grpc"))
+	grpcWebListener := mux.MatchWithWriters(cmux.HTTP2MatchHeaderFieldSendSettings("content-type", "application/grpc-web"))
+	httpListener := mux.Match(cmux.Any())
 
-	webrpcProxy := grpcweb.WrapServer(grpcSrv,
+	webRpcProxy := grpcweb.WrapServer(grpcSrv,
 		grpcweb.WithOriginFunc(func(origin string) bool { return true }),
 		grpcweb.WithWebsockets(true),
 		grpcweb.WithWebsocketOriginFunc(func(req *http.Request) bool { return true }),
@@ -126,8 +128,8 @@ func Serve(serveOpts core.ServeOptions) error {
 	httpSrv := &http.Server{
 		ReadHeaderTimeout: 60 * time.Second, // mitigate slowloris attacks, set to nginx's default
 		Handler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			if webrpcProxy.IsGrpcWebRequest(r) || webrpcProxy.IsAcceptableGrpcCorsRequest(r) || webrpcProxy.IsGrpcWebSocketRequest(r) {
-				webrpcProxy.ServeHTTP(w, r)
+			if webRpcProxy.IsGrpcWebRequest(r) || webRpcProxy.IsAcceptableGrpcCorsRequest(r) || webRpcProxy.IsGrpcWebSocketRequest(r) {
+				webRpcProxy.ServeHTTP(w, r)
 			} else {
 				gwArgs.Mux.ServeHTTP(w, r)
 			}
@@ -136,19 +138,19 @@ func Serve(serveOpts core.ServeOptions) error {
 	}
 
 	go func() {
-		err := grpcSrv.Serve(grpcLis)
+		err := grpcSrv.Serve(grpcListener)
 		if err != nil {
 			klogv2.Fatalf("failed to serve: %v", err)
 		}
 	}()
 	go func() {
-		err := grpcSrv.Serve(grpcwebLis)
+		err := grpcSrv.Serve(grpcWebListener)
 		if err != nil {
 			klogv2.Fatalf("failed to serve: %v", err)
 		}
 	}()
 	go func() {
-		err := httpSrv.Serve(httpLis)
+		err := httpSrv.Serve(httpListener)
 		if err != nil {
 			klogv2.Fatalf("failed to serve: %v", err)
 		}
@@ -239,6 +241,42 @@ func gatewayMux() (*runtime.ServeMux, error) {
 	err = gwmux.HandlePath(http.MethodGet, "/docs", runtime.HandlerFunc(func(w http.ResponseWriter, r *http.Request, pathParams map[string]string) {
 		http.ServeFile(w, r, "docs/index.html")
 	}))
+	if err != nil {
+		return nil, fmt.Errorf("failed to serve: %v", err)
+	}
+
+	svcRestConfig, err := rest.InClusterConfig()
+	if err != nil {
+		return nil, fmt.Errorf("failed to retrieve in cluster configuration: %v", err)
+	}
+	coreClientSet, err := kubernetes.NewForConfig(svcRestConfig)
+	if err != nil {
+		return nil, fmt.Errorf("failed to retrieve clientset: %v", err)
+	}
+
+	// TODO(rcastelblanq) Move this endpoint to the Operators plugin when implementing #4920
+	// Proxies the operator icon request to K8s
+	err = gwmux.HandlePath(http.MethodGet, "/operators/namespaces/{namespace}/operator/{name}/logo", func(w http.ResponseWriter, r *http.Request, pathParams map[string]string) {
+		namespace := pathParams["namespace"]
+		name := pathParams["name"]
+
+		logoBytes, err := coreClientSet.RESTClient().Get().AbsPath(fmt.Sprintf("/apis/packages.operators.coreos.com/v1/namespaces/%s/packagemanifests/%s/icon", namespace, name)).Do(context.TODO()).Raw()
+		if err != nil {
+			http.Error(w, fmt.Sprintf("Unable to retrieve operator logo: %v", err), http.StatusInternalServerError)
+			return
+		}
+
+		contentType := http.DetectContentType(logoBytes)
+		if strings.Contains(contentType, "text/") {
+			// DetectContentType is unable to return svg icons since they are in fact text
+			contentType = "image/svg+xml"
+		}
+		w.Header().Set("Content-Type", contentType)
+		_, err = w.Write(logoBytes)
+		if err != nil {
+			return
+		}
+	})
 	if err != nil {
 		return nil, fmt.Errorf("failed to serve: %v", err)
 	}

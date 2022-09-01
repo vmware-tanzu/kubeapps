@@ -10,6 +10,9 @@ import (
 	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/pkg/clientgetter"
 	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/resources/v1alpha1/common"
 	"google.golang.org/grpc/metadata"
+
+	authorizationv1 "k8s.io/api/authorization/v1"
+
 	"net/http"
 	"strings"
 	"testing"
@@ -619,6 +622,103 @@ func TestGetNamespaceNames(t *testing.T) {
 			}
 
 			response, err := s.GetNamespaceNames(ctx, tc.request)
+
+			if got, want := status.Code(err), tc.expectedErrorCode; got != want {
+				t.Fatalf("got: %d, want: %d, err: %+v", got, want, err)
+			}
+
+			if got, want := response, tc.expectedResponse; !cmp.Equal(got, want, ignoredUnexported) {
+				t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, ignoredUnexported))
+			}
+		})
+	}
+}
+
+func TestCanI(t *testing.T) {
+
+	ignoredUnexported := cmpopts.IgnoreUnexported(
+		v1alpha1.CanIResponse{},
+	)
+
+	testCases := []struct {
+		name              string
+		isAllowed         bool
+		request           *v1alpha1.CanIRequest
+		expectedResponse  *v1alpha1.CanIResponse
+		k8sError          error
+		expectedErrorCode codes.Code
+	}{
+		{
+			name:      "returns allowed",
+			isAllowed: true,
+			request: &v1alpha1.CanIRequest{
+				Context: &pkgsGRPCv1alpha1.Context{
+					Cluster: "default",
+				},
+			},
+			expectedResponse: &v1alpha1.CanIResponse{
+				Allowed: true,
+			},
+		},
+		{
+			name:      "returns forbidden",
+			isAllowed: false,
+			request: &v1alpha1.CanIRequest{
+				Context: &pkgsGRPCv1alpha1.Context{
+					Cluster: "default",
+				},
+			},
+			expectedResponse: &v1alpha1.CanIResponse{
+				Allowed: false,
+			},
+		},
+		{
+			name:              "requires context parameter",
+			request:           &v1alpha1.CanIRequest{},
+			expectedErrorCode: codes.InvalidArgument,
+		},
+		{
+			name: "requires cluster parameter",
+			request: &v1alpha1.CanIRequest{
+				Context: &pkgsGRPCv1alpha1.Context{},
+			},
+			expectedErrorCode: codes.InvalidArgument,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+
+			fakeClient := typfake.NewSimpleClientset()
+			if tc.k8sError != nil {
+				fakeClient.CoreV1().(*fakecorev1.FakeCoreV1).PrependReactor("list", "namespaces", func(action clientGoTesting.Action) (handled bool, ret runtime.Object, err error) {
+					return true, &v1.NamespaceList{}, tc.k8sError
+				})
+			}
+
+			// Creating an authorized clientGetter
+			fakeClient.PrependReactor("create", "selfsubjectaccessreviews", func(action clientGoTesting.Action) (handled bool, ret runtime.Object, err error) {
+				return true, &authorizationv1.SelfSubjectAccessReview{
+					Status: authorizationv1.SubjectAccessReviewStatus{Allowed: tc.isAllowed},
+				}, nil
+			})
+
+			backgroundClientGetter := func(ctx context.Context) (clientgetter.ClientInterfaces, error) {
+				return clientgetter.
+					NewBuilder().
+					WithTyped(fakeClient).
+					Build(), nil
+			}
+
+			s := Server{
+				clientGetter: func(context.Context, string) (kubernetes.Interface, dynamic.Interface, error) {
+					return fakeClient, nil, nil
+				},
+				serviceAccountClientGetter: backgroundClientGetter,
+				clientQPS:                  5,
+			}
+
+			response, err := s.CanI(context.Background(), tc.request)
 
 			if got, want := status.Code(err), tc.expectedErrorCode; got != want {
 				t.Fatalf("got: %d, want: %d, err: %+v", got, want, err)
