@@ -80,7 +80,7 @@
     "@improbable-eng/grpc-web-fake-transport": "^0.15.0",
     "@testing-library/react": "^12.1.5",
     "@types/enzyme": "^3.10.12",
-    "@types/jest": "^28.1.6",
+    "@types/jest": "^29.0.0",
     "@types/js-yaml": "^4.0.5",
     "@types/jsonwebtoken": "^8.5.8",
     "@types/lodash": "^4.14.182",
@@ -120,7 +120,7 @@
     "stylelint-config-standard-scss": "^5.0.0",
     "stylelint-scss": "^4.3.0",
     "ts-jest": "^28.0.7",
-    "ts-proto": "^1.120.0",
+    "ts-proto": "^1.123.1",
     "typescript": "^4.7.4"
   },
   "resolutions": {
