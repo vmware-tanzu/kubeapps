@@ -212,10 +212,9 @@ installOrUpgradeKubeapps() {
     "${@:2}"
     "${multiclusterFlags[@]+"${multiclusterFlags[@]}"}"
     --set frontend.replicaCount=1
-    --set kubeops.replicaCount=1
     --set dashboard.replicaCount=1
     --set kubeappsapis.replicaCount=2
-    --set kubeops.enabled=true
+    --set kubeops.enabled=false
     --set postgresql.architecture=standalone
     --set postgresql.primary.persistence.enabled=false
     --set postgresql.auth.password=password
