@@ -59,7 +59,7 @@ jobs:
     runs-on: ubuntu-latest
     services:
       postgresql:
-        image: bitnami/postgresql:${{ env.POSTGRESQL_VERSION }}
+        image: bitnami/postgresql:14.4.0-debian-11-r13
         ports:
           - 5432:5432
         env:
