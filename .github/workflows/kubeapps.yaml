@@ -18,27 +18,55 @@ env:
   GOLANG_VERSION: "1.18.4"
   HELM_VERSION_MIN: "v3.2.0"
   HELM_VERSION_STABLE: "v3.9.2"
+  GITHUB_VERSION: "2.14.2"
+  # IMG_DEV_TAG is the tags used for the Kubeapps docker images. Ideally there should be an IMG_PROD_TAG
+  # but its value is dynamic and GitHub actions doesn't support it in the `env` block, so it is generated
+  # as an output of the `setup` job.
+  IMG_DEV_TAG: "build-${GITHUB_SHA}"
+  # Apart from using a dev tag we use a different image ID to avoid polluting the tag
+  # history of the production tag
+  IMG_MODIFIER: "ci"
   K8S_KIND_VERSION: "v1.22.9@sha256:8135260b959dfe320206eb36b3aeda9cffcb262f4b44cda6b33f7bb73f453105"
   KIND_VERSION: "v0.14.0"
   KUBECTL_VERSION: "v1.22.12"
-  GITHUB_VERSION: "2.14.2"
-  SEMVER_VERSION: "3.3.0"
   MKCERT_VERSION: "v1.4.4"
   NODE_VERSION: "16.16.0"
   OLM_VERSION: "v0.22.0"
   POSTGRESQL_VERSION: "14.4.0-debian-11-r13"
   RUST_VERSION: "1.62.0"
+  SEMVER_VERSION: "3.3.0"
 
 jobs:
+  setup:
+    runs-on: ubuntu-latest
+    outputs:
+      prod_tag: "steps.set-prod-tag.outputs.tag"
+    steps:
+      - uses: actions/checkout@v3
+      - name: Set tag for production image
+        id: set-prod-tag
+        run: |
+          if [[ ${{ github.ref_type }} == "tag" ]]; then
+            echo "::set-output name=tag::${{ github.ref_name }}"
+          else
+            echo "::set-output name=tag::latest"
+          fi
+
   test_go:
     runs-on: ubuntu-latest
+    services:
+      postgresql:
+        image: bitnami/postgresql:${POSTGRESQL_VERSION}
+        ports:
+          - 5432:5432
+        env:
+          ALLOW_EMPTY_PASSWORD: "yes"
     steps:
     - uses: actions/checkout@v3
-
     - name: Set up Go
       uses: actions/setup-go@v3
       with:
         go-version: ${{ env.GOLANG_VERSION }}
-
-    - name: Test
+    - name: Run go unit tests
       run: make test
+    - run: make test-db
