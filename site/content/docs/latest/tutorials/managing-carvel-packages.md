@@ -34,7 +34,7 @@ This guide walks you through the process of using Kubeapps for configuring and d
 
 In order to manage Carvel Packages, first of all, you need to install kapp-controller in your cluster. That is, applying a set of Kubernetes resources and CRDs.
 
-According to the [Carvel kapp-controller official documentation](https://carvel.dev/kapp-controller/docs/latest/install/), you can install everything it kapp-controller requires just by running the following command:
+According to the [Carvel kapp-controller official documentation](https://carvel.dev/kapp-controller/docs/latest/install/), you can install everything that kapp-controller requires just by running the following command:
 
 ```bash
 kubectl apply -f https://github.com/vmware-tanzu/carvel-kapp-controller/releases/latest/download/release.yml
