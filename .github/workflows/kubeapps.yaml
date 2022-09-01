@@ -12,6 +12,23 @@ on:
     branches:
       - main
 
+env:
+  DOCKER_VERSION: "20.10.14"
+  DOCKER_REGISTRY_VERSION: "2.8.1"
+  GOLANG_VERSION: "1.18.4"
+  HELM_VERSION_MIN: "v3.2.0"
+  HELM_VERSION_STABLE: "v3.9.2"
+  K8S_KIND_VERSION: "v1.22.9@sha256:8135260b959dfe320206eb36b3aeda9cffcb262f4b44cda6b33f7bb73f453105"
+  KIND_VERSION: "v0.14.0"
+  KUBECTL_VERSION: "v1.22.12"
+  GITHUB_VERSION: "2.14.2"
+  SEMVER_VERSION: "3.3.0"
+  MKCERT_VERSION: "v1.4.4"
+  NODE_VERSION: "16.16.0"
+  OLM_VERSION: "v0.22.0"
+  POSTGRESQL_VERSION: "14.4.0-debian-11-r13"
+  RUST_VERSION: "1.62.0"
+
 jobs:
   test_go:
     runs-on: ubuntu-latest
@@ -21,7 +38,7 @@ jobs:
     - name: Set up Go
       uses: actions/setup-go@v3
       with:
-        go-version: 1.18
+        go-version: $GOLANG_VERSION
 
     - name: Test
       run: make test
