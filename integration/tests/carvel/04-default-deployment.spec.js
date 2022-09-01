@@ -24,8 +24,7 @@ test("Deploys package with default values in main cluster", async ({ page }) => 
 
   // Deploy package
   await page.waitForSelector('select[name="package-versions"]');
-  const versionSelector = await page.$('select[name="package-versions"]')
-  await versionSelector?.selectOption("2.0.0")
+  await page.selectOption('select[name="package-versions"]', "2.0.0");
   const releaseNameLocator = page.locator("#releaseName");
   await releaseNameLocator.waitFor();
   await expect(releaseNameLocator).toHaveText("");
