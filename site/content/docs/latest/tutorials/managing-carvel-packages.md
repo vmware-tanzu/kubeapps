@@ -239,7 +239,7 @@ Next, you can click on the **Delete** button to uninstall the application or the
 
 > **NOTE**: as opposed to Helm Charts managed by using Helm, Carvel Packages cannot be rolled back, hence there is no **Rollback** button.
 
-Finally, note that every Carvel Package installed through Kubeapps can also be managed by the [kapp](https://carvel.dev/kapp/) CLI using the `kapp inspect -a <APPLICATION_NAME>` command. For example:
+Finally, note that every Carvel Package installed through Kubeapps can also be managed by the [kapp](https://carvel.dev/kapp/) CLI using the `kapp inspect -a <APPLICATION_NAME>` command (as well as every Carvel Package installed directly from the kapp CLI can also be managed by Kubeapps). For example:
 
 ```bash
 kapp inspect -a my-test-ctrl
