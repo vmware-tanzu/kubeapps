@@ -63,7 +63,7 @@
     "react-tabs": "^5.1.0",
     "react-test-renderer": "^17.0.2",
     "react-tooltip": "^4.2.21",
-    "react-transition-group": "^4.4.2",
+    "react-transition-group": "^4.4.5",
     "redux": "^4.2.0",
     "redux-devtools-extension": "^2.13.9",
     "redux-thunk": "^2.4.1",
