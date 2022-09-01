@@ -1,7 +1,6 @@
 // Copyright 2019-2022 the Kubeapps contributors.
 // SPDX-License-Identifier: Apache-2.0
 
-import { Kube } from "./Kube";
 import ResourceRef, { fromCRD } from "./ResourceRef";
 import { IClusterServiceVersionCRDResource } from "./types";
 import { ResourceRef as APIResourceRef } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
@@ -94,80 +93,6 @@ describe("ResourceRef", () => {
           filter: { metadata: { ownerReferences: [ownerRef] } },
         });
       });
-    });
-  });
-
-  describe("getResourceURL", () => {
-    let kubeGetResourceURLMock: jest.Mock;
-    beforeEach(() => {
-      kubeGetResourceURLMock = jest.fn();
-      Kube.getResourceURL = kubeGetResourceURLMock;
-    });
-    afterEach(() => {
-      jest.restoreAllMocks();
-    });
-    it("calls Kube.getResourceURL with the correct arguments", () => {
-      const r = {
-        apiVersion: "v1",
-        kind: "Service",
-        name: "foo",
-        namespace: "bar",
-      } as APIResourceRef;
-
-      const ref = new ResourceRef(r, clusterName, "services", true, "default");
-
-      ref.getResourceURL();
-      expect(kubeGetResourceURLMock).toBeCalledWith(
-        clusterName,
-        "v1",
-        "services",
-        true,
-        "bar",
-        "foo",
-      );
-    });
-  });
-
-  describe("getResource", () => {
-    let kubeGetResourceMock: jest.Mock;
-    beforeEach(() => {
-      kubeGetResourceMock = jest.fn(() => {
-        return { metadata: { name: "foo" } };
-      });
-      Kube.getResource = kubeGetResourceMock;
-    });
-    afterEach(() => {
-      jest.restoreAllMocks();
-    });
-    it("calls Kube.getResource with the correct arguments", () => {
-      const r = {
-        apiVersion: "v1",
-        kind: "Service",
-        name: "foo",
-        namespace: "bar",
-      } as APIResourceRef;
-
-      const ref = new ResourceRef(r, clusterName, "services", true, "default");
-
-      ref.getResource();
-      expect(kubeGetResourceMock).toBeCalledWith(clusterName, "v1", "services", true, "bar", "foo");
-    });
-
-    it("filters out the result when receiving a list", async () => {
-      const r = {
-        apiVersion: "v1",
-        kind: "Service",
-        name: "foo",
-        namespace: "bar",
-      } as APIResourceRef;
-
-      const ref = new ResourceRef(r, clusterName, "services", true, "default");
-      ref.filter = { metadata: { name: "bar" } };
-      Kube.getResource = jest.fn().mockReturnValue({
-        items: [r],
-      });
-      const res = await ref.getResource();
-      expect(res).toEqual({ items: [] });
     });
   });
 });

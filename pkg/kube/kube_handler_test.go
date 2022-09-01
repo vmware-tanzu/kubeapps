@@ -24,8 +24,6 @@ import (
 	v1alpha1 "github.com/vmware-tanzu/kubeapps/cmd/apprepository-controller/pkg/apis/apprepository/v1alpha1"
 	fakeapprepoclientset "github.com/vmware-tanzu/kubeapps/cmd/apprepository-controller/pkg/client/clientset/versioned/fake"
 	httpclient "github.com/vmware-tanzu/kubeapps/pkg/http-client"
-	authorizationapi "k8s.io/api/authorization/v1"
-	authorizationv1 "k8s.io/api/authorization/v1"
 	corev1 "k8s.io/api/core/v1"
 	k8sErrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -34,7 +32,6 @@ import (
 	fakecoreclientset "k8s.io/client-go/kubernetes/fake"
 	"k8s.io/client-go/rest"
 	fakeRest "k8s.io/client-go/rest/fake"
-	k8stesting "k8s.io/client-go/testing"
 	log "k8s.io/klog/v2"
 )
 
@@ -1653,110 +1650,6 @@ func TestNewClusterConfig(t *testing.T) {
 						t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got))
 					}
 				}
-			}
-		})
-	}
-}
-
-func TestParseSelfSubjectAccessRequest(t *testing.T) {
-	testCases := []struct {
-		name          string
-		body          string
-		expected      *authorizationapi.ResourceAttributes
-		errorExpected bool
-	}{
-		{
-			name: "should parse a valid body",
-			body: `{"resource":"namespaces"}`,
-			expected: &authorizationapi.ResourceAttributes{
-				Resource: "namespaces",
-			},
-		},
-		{
-			name:          "should fail with the wrong input",
-			body:          "nope",
-			errorExpected: true,
-		},
-	}
-	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			input := ioutil.NopCloser(bytes.NewReader([]byte(tc.body)))
-			res, err := ParseSelfSubjectAccessRequest(input)
-			if got, want := err != nil, tc.errorExpected; got != want {
-				t.Fatalf("got: %t, want: %t. err: %+v", got, want, err)
-			}
-
-			if got, want := res, tc.expected; !cmp.Equal(want, got) {
-				t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got))
-			}
-		})
-	}
-}
-
-func TestCanI(t *testing.T) {
-	testCases := []struct {
-		name    string
-		allowed bool
-		err     error
-	}{
-		{
-			name:    "returns allowed",
-			allowed: true,
-		},
-		{
-			name:    "returns forbidden",
-			allowed: false,
-		},
-		{
-			name:    "returns an error",
-			allowed: false,
-			err:     fmt.Errorf("boom"),
-		},
-	}
-	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			userClientSet := fakeCombinedClientset{
-				fakeapprepoclientset.NewSimpleClientset(),
-				fakecoreclientset.NewSimpleClientset(),
-				&fakeRest.RESTClient{},
-			}
-
-			userClientSet.Clientset.Fake.PrependReactor(
-				"create",
-				"selfsubjectaccessreviews",
-				func(action k8stesting.Action) (handled bool, ret k8sruntime.Object, err error) {
-					mysar := &authorizationv1.SelfSubjectAccessReview{
-						Status: authorizationv1.SubjectAccessReviewStatus{
-							Allowed: tc.allowed,
-							Reason:  "I want to test it",
-						},
-					}
-					return true, mysar, tc.err
-				},
-			)
-
-			handler := kubeHandler{
-				clientsetForConfig: func(*rest.Config) (combinedClientsetInterface, error) { return userClientSet, nil },
-				kubeappsNamespace:  "kubeapps",
-				clustersConfig: ClustersConfig{
-					KubeappsClusterName: "default",
-					Clusters: map[string]ClusterConfig{
-						"default": {},
-					},
-				},
-			}
-
-			userHandler, err := handler.AsUser("token", "default")
-			if err != nil {
-				t.Errorf("Unexpected error %v", err)
-			}
-			allowed, err := userHandler.CanI(&authorizationv1.ResourceAttributes{})
-			if err != nil && err != tc.err {
-				t.Errorf("Unexpected error %v, wanted %v", err, tc.err)
-			}
-
-			if allowed != tc.allowed {
-				t.Errorf("Expecting %v, got %v", tc.allowed, allowed)
 			}
 		})
 	}

@@ -99,13 +99,6 @@ function withNS(namespace: string) {
   return namespace ? `namespaces/${namespace}/` : "";
 }
 
-export const backend = {
-  namespaces: {
-    list: (cluster: string) => `api/v1/clusters/${cluster}/namespaces`,
-  },
-  canI: (cluster: string) => `api/v1/clusters/${cluster}/can-i`,
-};
-
 export const api = {
   // URLs which are accessing the k8s API server directly are grouped together
   // so we can clearly differentiate and possibly begin to remove.
@@ -160,8 +153,8 @@ export const api = {
   },
 
   operators: {
-    operatorIcon: (cluster: string, namespace: string, name: string) =>
-      `api/v1/clusters/${cluster}/namespaces/${namespace}/operator/${name}/logo`,
+    operatorIcon: (_cluster: string, namespace: string, name: string) =>
+      `apis/operators/namespaces/${namespace}/operator/${name}/logo`,
   },
 
   kubeappsapis: "apis",
