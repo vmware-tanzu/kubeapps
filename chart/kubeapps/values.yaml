@@ -205,7 +205,7 @@ frontend:
   image:
     registry: docker.io
     repository: bitnami/nginx
-    tag: 1.23.1-debian-11-r12
+    tag: 1.23.1-debian-11-r15
     digest: ""
     ## Specify a imagePullPolicy
     ## Defaults to 'Always' if image tag is 'latest', else set to 'IfNotPresent'
@@ -1156,6 +1156,16 @@ kubeops:
     ##   - myRegistryKeySecretName
     ##
     pullSecrets: []
+  ## @param kubeops.namespaceHeaderName Additional header name for trusted namespaces
+  ## e.g:
+  ## namespaceHeaderName: X-Consumer-Groups
+  ##
+  namespaceHeaderName: ""
+  ## @param kubeops.namespaceHeaderPattern Additional header pattern for trusted namespaces
+  ## e.g:
+  ## namespaceHeaderPattern: namespace:^([\w-]+):\w+$
+  ##
+  namespaceHeaderPattern: ""
   ## @param kubeops.qps Kubeops QPS (queries per second) rate
   ##
   qps: ""
@@ -1429,7 +1439,7 @@ authProxy:
   image:
     registry: docker.io
     repository: bitnami/oauth2-proxy
-    tag: 7.3.0-debian-11-r27
+    tag: 7.3.0-debian-11-r29
     digest: ""
     ## Specify a imagePullPolicy
     ## Defaults to 'Always' if image tag is 'latest', else set to 'IfNotPresent'
@@ -1730,7 +1740,7 @@ rbac:
 testImage:
   registry: docker.io
   repository: bitnami/nginx
-  tag: 1.23.1-debian-11-r12
+  tag: 1.23.1-debian-11-r15
   digest: ""
   ## Specify a imagePullPolicy
   ## Defaults to 'Always' if image tag is 'latest', else set to 'IfNotPresent'
@@ -1833,22 +1843,6 @@ kubeappsapis:
           defaultUpgradePolicy: none
             ## @param kubeappsapis.pluginConfig.flux.packages.v1alpha1.userManagedSecrets Default policy for handling repository secrets, either managed by the user or by kubeapps-apis
           userManagedSecrets: false
-    resources:
-      packages:
-        v1alpha1:
-          ## Trusted namespaces parameters
-          ##
-          trustedNamespaces:
-            ## @param kubeappsapis.pluginConfig.resources.packages.v1alpha1.trustedNamespaces.headerName Optional header name for trusted namespaces
-            ## e.g:
-            ## headerName: X-Consumer-Groups
-            ##
-            headerName: ""
-            ## @param kubeappsapis.pluginConfig.resources.packages.v1alpha1.trustedNamespaces.headerPattern Optional header pattern for trusted namespaces
-            ## e.g:
-            ## headerPattern: namespace:^([\w-]+):\w+$
-            ##
-            headerPattern: ""
   ## Bitnami Kubeapps-APIs image
   ## ref: https://hub.docker.com/r/bitnami/kubeapps-apis/tags/
   ## @param kubeappsapis.image.registry Kubeapps-APIs image registry
