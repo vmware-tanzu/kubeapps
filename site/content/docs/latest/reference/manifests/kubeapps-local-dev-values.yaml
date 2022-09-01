@@ -9,8 +9,6 @@ frontend:
       http: 30000
 dashboard:
   replicaCount: 1
-kubeops:
-  replicaCount: 1
 postgresql:
   architecture: standalone
   auth:

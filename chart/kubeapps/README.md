@@ -345,86 +345,6 @@ Once you have installed Kubeapps follow the [Getting Started Guide](https://gith
 | `apprepository.serviceAccount.annotations`                  | Annotations for service account. Evaluated as a template. Only used if `create` is `true`.                                        | `{}`                                |
 
 
-### Kubeops parameters
-
-| Name                                                  | Description                                                                                                         | Value              |
-| ----------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------- | ------------------ |
-| `kubeops.enabled`                                     | Specifies whether this component should be installed.                                                               | `false`            |
-| `kubeops.image.registry`                              | Kubeops image registry                                                                                              | `docker.io`        |
-| `kubeops.image.repository`                            | Kubeops image repository                                                                                            | `kubeapps/kubeops` |
-| `kubeops.image.tag`                                   | Kubeops image tag (immutable tags are recommended)                                                                  | `latest`           |
-| `kubeops.image.digest`                                | Kubeops image digest in the way sha256:aa.... Please note this parameter, if set, will override the tag             | `""`               |
-| `kubeops.image.pullPolicy`                            | Kubeops image pull policy                                                                                           | `IfNotPresent`     |
-| `kubeops.image.pullSecrets`                           | Kubeops image pull secrets                                                                                          | `[]`               |
-| `kubeops.qps`                                         | Kubeops QPS (queries per second) rate                                                                               | `""`               |
-| `kubeops.burst`                                       | Kubeops burst rate                                                                                                  | `""`               |
-| `kubeops.extraFlags`                                  | Additional command line flags for Kubeops                                                                           | `[]`               |
-| `kubeops.replicaCount`                                | Number of Kubeops replicas to deploy                                                                                | `2`                |
-| `kubeops.updateStrategy.type`                         | Kubeops deployment strategy type.                                                                                   | `RollingUpdate`    |
-| `kubeops.terminationGracePeriodSeconds`               | The grace time period for sig term                                                                                  | `300`              |
-| `kubeops.extraEnvVars`                                | Array with extra environment variables to add to the Kubeops container                                              | `[]`               |
-| `kubeops.extraEnvVarsCM`                              | Name of existing ConfigMap containing extra env vars for the Kubeops container                                      | `""`               |
-| `kubeops.extraEnvVarsSecret`                          | Name of existing Secret containing extra env vars for the Kubeops container                                         | `""`               |
-| `kubeops.containerPorts.http`                         | Kubeops HTTP container port                                                                                         | `8080`             |
-| `kubeops.resources.limits.cpu`                        | The CPU limits for the Kubeops container                                                                            | `250m`             |
-| `kubeops.resources.limits.memory`                     | The memory limits for the Kubeops container                                                                         | `256Mi`            |
-| `kubeops.resources.requests.cpu`                      | The requested CPU for the Kubeops container                                                                         | `25m`              |
-| `kubeops.resources.requests.memory`                   | The requested memory for the Kubeops container                                                                      | `32Mi`             |
-| `kubeops.podSecurityContext.enabled`                  | Enabled Kubeops pods' Security Context                                                                              | `true`             |
-| `kubeops.podSecurityContext.fsGroup`                  | Set Kubeops pod's Security Context fsGroup                                                                          | `1001`             |
-| `kubeops.containerSecurityContext.enabled`            | Enabled Kubeops containers' Security Context                                                                        | `true`             |
-| `kubeops.containerSecurityContext.runAsUser`          | Set Kubeops container's Security Context runAsUser                                                                  | `1001`             |
-| `kubeops.containerSecurityContext.runAsNonRoot`       | Set Kubeops container's Security Context runAsNonRoot                                                               | `true`             |
-| `kubeops.livenessProbe.enabled`                       | Enable livenessProbe                                                                                                | `true`             |
-| `kubeops.livenessProbe.initialDelaySeconds`           | Initial delay seconds for livenessProbe                                                                             | `60`               |
-| `kubeops.livenessProbe.periodSeconds`                 | Period seconds for livenessProbe                                                                                    | `10`               |
-| `kubeops.livenessProbe.timeoutSeconds`                | Timeout seconds for livenessProbe                                                                                   | `5`                |
-| `kubeops.livenessProbe.failureThreshold`              | Failure threshold for livenessProbe                                                                                 | `6`                |
-| `kubeops.livenessProbe.successThreshold`              | Success threshold for livenessProbe                                                                                 | `1`                |
-| `kubeops.readinessProbe.enabled`                      | Enable readinessProbe                                                                                               | `true`             |
-| `kubeops.readinessProbe.initialDelaySeconds`          | Initial delay seconds for readinessProbe                                                                            | `0`                |
-| `kubeops.readinessProbe.periodSeconds`                | Period seconds for readinessProbe                                                                                   | `10`               |
-| `kubeops.readinessProbe.timeoutSeconds`               | Timeout seconds for readinessProbe                                                                                  | `5`                |
-| `kubeops.readinessProbe.failureThreshold`             | Failure threshold for readinessProbe                                                                                | `6`                |
-| `kubeops.readinessProbe.successThreshold`             | Success threshold for readinessProbe                                                                                | `1`                |
-| `kubeops.startupProbe.enabled`                        | Enable startupProbe                                                                                                 | `false`            |
-| `kubeops.startupProbe.initialDelaySeconds`            | Initial delay seconds for startupProbe                                                                              | `0`                |
-| `kubeops.startupProbe.periodSeconds`                  | Period seconds for startupProbe                                                                                     | `10`               |
-| `kubeops.startupProbe.timeoutSeconds`                 | Timeout seconds for startupProbe                                                                                    | `5`                |
-| `kubeops.startupProbe.failureThreshold`               | Failure threshold for startupProbe                                                                                  | `6`                |
-| `kubeops.startupProbe.successThreshold`               | Success threshold for startupProbe                                                                                  | `1`                |
-| `kubeops.customLivenessProbe`                         | Custom livenessProbe that overrides the default one                                                                 | `{}`               |
-| `kubeops.customReadinessProbe`                        | Custom readinessProbe that overrides the default one                                                                | `{}`               |
-| `kubeops.customStartupProbe`                          | Custom startupProbe that overrides the default one                                                                  | `{}`               |
-| `kubeops.lifecycleHooks`                              | Custom lifecycle hooks for Kubeops containers                                                                       | `{}`               |
-| `kubeops.command`                                     | Override default container command (useful when using custom images)                                                | `[]`               |
-| `kubeops.args`                                        | Override default container args (useful when using custom images)                                                   | `[]`               |
-| `kubeops.extraVolumes`                                | Optionally specify extra list of additional volumes for the Kubeops pod(s)                                          | `[]`               |
-| `kubeops.extraVolumeMounts`                           | Optionally specify extra list of additional volumeMounts for the Kubeops container(s)                               | `[]`               |
-| `kubeops.podLabels`                                   | Extra labels for Kubeops pods                                                                                       | `{}`               |
-| `kubeops.podAnnotations`                              | Annotations for Kubeops pods                                                                                        | `{}`               |
-| `kubeops.podAffinityPreset`                           | Pod affinity preset. Ignored if `affinity` is set. Allowed values: `soft` or `hard`                                 | `""`               |
-| `kubeops.podAntiAffinityPreset`                       | Pod anti-affinity preset. Ignored if `affinity` is set. Allowed values: `soft` or `hard`                            | `soft`             |
-| `kubeops.nodeAffinityPreset.type`                     | Node affinity preset type. Ignored if `affinity` is set. Allowed values: `soft` or `hard`                           | `""`               |
-| `kubeops.nodeAffinityPreset.key`                      | Node label key to match. Ignored if `affinity` is set                                                               | `""`               |
-| `kubeops.nodeAffinityPreset.values`                   | Node label values to match. Ignored if `affinity` is set                                                            | `[]`               |
-| `kubeops.affinity`                                    | Affinity for pod assignment                                                                                         | `{}`               |
-| `kubeops.nodeSelector`                                | Node labels for pod assignment                                                                                      | `{}`               |
-| `kubeops.tolerations`                                 | Tolerations for pod assignment                                                                                      | `[]`               |
-| `kubeops.priorityClassName`                           | Priority class name for Kubeops pods                                                                                | `""`               |
-| `kubeops.schedulerName`                               | Name of the k8s scheduler (other than default)                                                                      | `""`               |
-| `kubeops.topologySpreadConstraints`                   | Topology Spread Constraints for pod assignment                                                                      | `[]`               |
-| `kubeops.hostAliases`                                 | Custom host aliases for Kubeops pods                                                                                | `[]`               |
-| `kubeops.sidecars`                                    | Add additional sidecar containers to the Kubeops pod(s)                                                             | `[]`               |
-| `kubeops.initContainers`                              | Add additional init containers to the Kubeops pod(s)                                                                | `[]`               |
-| `kubeops.service.ports.http`                          | Kubeops service HTTP port                                                                                           | `8080`             |
-| `kubeops.service.annotations`                         | Additional custom annotations for Kubeops service                                                                   | `{}`               |
-| `kubeops.serviceAccount.create`                       | Specifies whether a ServiceAccount should be created                                                                | `true`             |
-| `kubeops.serviceAccount.name`                         | Name of the service account to use. If not set and create is true, a name is generated using the fullname template. | `""`               |
-| `kubeops.serviceAccount.automountServiceAccountToken` | Automount service account token for the server service account                                                      | `true`             |
-| `kubeops.serviceAccount.annotations`                  | Annotations for service account. Evaluated as a template. Only used if `create` is `true`.                          | `{}`               |
-
-
 ### Auth Proxy parameters
 
 | Name                                              | Description                                                                                                  | Value                  |
@@ -773,19 +693,60 @@ kubectl delete namespace kubeapps
 
 ## FAQ
 
-- [How to install Kubeapps for demo purposes?](#how-to-install-kubeapps-for-demo-purposes)
-- [How to install Kubeapps in production scenarios?](#how-to-install-kubeapps-in-production-scenarios)
-- [How to use Kubeapps?](#how-to-use-kubeapps)
-- [How to configure Kubeapps with Ingress](#how-to-configure-kubeapps-with-ingress)
-  - [Serving Kubeapps in a subpath](#serving-kubeapps-in-a-subpath)
-- [Can Kubeapps install apps into more than one cluster?](#can-kubeapps-install-apps-into-more-than-one-cluster)
-- [Can Kubeapps be installed without Internet connection?](#can-kubeapps-be-installed-without-internet-connection)
-- [Does Kubeapps support private repositories?](#does-kubeapps-support-private-repositories)
-- [Is there any API documentation?](#is-there-any-api-documentation)
-- [Why can't I configure global private repositories?](#why-cant-i-configure-global-private-repositories)
-- [Does Kubeapps support Operators?](#does-kubeapps-support-operators)
-- [Slow response when listing namespaces?](#slow-response-when-listing-namespaces)
-- [More questions?](#more-questions)
+- [Kubeapps packaged by Bitnami](#kubeapps-packaged-by-bitnami)
+  - [TL;DR](#tldr)
+  - [Introduction](#introduction)
+  - [Prerequisites](#prerequisites)
+  - [Installing the Chart](#installing-the-chart)
+  - [Parameters](#parameters)
+    - [Global parameters](#global-parameters)
+    - [Common parameters](#common-parameters)
+    - [Traffic Exposure Parameters](#traffic-exposure-parameters)
+    - [Kubeapps packaging options](#kubeapps-packaging-options)
+    - [Frontend parameters](#frontend-parameters)
+    - [Dashboard parameters](#dashboard-parameters)
+    - [AppRepository Controller parameters](#apprepository-controller-parameters)
+    - [Auth Proxy parameters](#auth-proxy-parameters)
+    - [Pinniped Proxy parameters](#pinniped-proxy-parameters)
+    - [Other Parameters](#other-parameters)
+    - [Database Parameters](#database-parameters)
+    - [kubeappsapis parameters](#kubeappsapis-parameters)
+    - [Redis&reg; chart configuration](#redis-chart-configuration)
+  - [Configuration and installation details](#configuration-and-installation-details)
+    - [Configuring Initial Repositories](#configuring-initial-repositories)
+    - [Enabling Operators](#enabling-operators)
+    - [Exposing Externally](#exposing-externally)
+      - [LoadBalancer Service](#loadbalancer-service)
+      - [Ingress](#ingress)
+        - [Hosts](#hosts)
+        - [Annotations](#annotations)
+        - [TLS](#tls)
+  - [Upgrading Kubeapps](#upgrading-kubeapps)
+  - [Uninstalling the Chart](#uninstalling-the-chart)
+  - [FAQ](#faq)
+    - [How to install Kubeapps for demo purposes?](#how-to-install-kubeapps-for-demo-purposes)
+    - [How to install Kubeapps in production scenarios?](#how-to-install-kubeapps-in-production-scenarios)
+    - [How to use Kubeapps?](#how-to-use-kubeapps)
+    - [How to configure Kubeapps with Ingress](#how-to-configure-kubeapps-with-ingress)
+      - [Serving Kubeapps in a subpath](#serving-kubeapps-in-a-subpath)
+    - [Can Kubeapps install apps into more than one cluster?](#can-kubeapps-install-apps-into-more-than-one-cluster)
+    - [Can Kubeapps be installed without Internet connection?](#can-kubeapps-be-installed-without-internet-connection)
+    - [Does Kubeapps support private repositories?](#does-kubeapps-support-private-repositories)
+    - [Is there any API documentation?](#is-there-any-api-documentation)
+    - [Why can't I configure global private repositories?](#why-cant-i-configure-global-private-repositories)
+    - [Does Kubeapps support Operators?](#does-kubeapps-support-operators)
+    - [Slow response when listing namespaces](#slow-response-when-listing-namespaces)
+    - [More questions?](#more-questions)
+  - [Troubleshooting](#troubleshooting)
+    - [Upgrading to chart version 8.0.0](#upgrading-to-chart-version-800)
+    - [Nginx Ipv6 error](#nginx-ipv6-error)
+    - [Forbidden error while installing the Chart](#forbidden-error-while-installing-the-chart)
+    - [Error while upgrading the Chart](#error-while-upgrading-the-chart)
+    - [Upgrading to chart version 7.0.0](#upgrading-to-chart-version-700)
+    - [Upgrading to 2.3.1](#upgrading-to-231)
+    - [Upgrading to 2.0.1 (Chart 5.0.0)](#upgrading-to-201-chart-500)
+    - [Upgrading to 2.0](#upgrading-to-20)
+  - [License](#license)
 
 ### How to install Kubeapps for demo purposes?
 

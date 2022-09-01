@@ -520,7 +520,7 @@ func TestGetChart(t *testing.T) {
 		{
 			name:         "gets the chart with a user agent",
 			chartVersion: "5.1.1-apiVersionV1",
-			userAgent:    "kubeops/devel",
+			userAgent:    "kubeapps-apis/devel",
 		},
 		{
 			name:         "gets a v2 chart without error when v1 support not required",
