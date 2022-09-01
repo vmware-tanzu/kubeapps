@@ -530,6 +530,14 @@ func TestKindClusterAvailablePackageEndpointsForOCI(t *testing.T) {
 		t.Fatalf("Environment variables GITHUB_USER and GITHUB_TOKEN need to be set to run this test")
 	}
 
+	if err := setupHarborStefanProdanClone(t); err != nil {
+		t.Fatal(err)
+	}
+	harborRobotName, harborRobotSecret, err := setupHarborRobotAccount(t)
+	if err != nil {
+		t.Fatal(err)
+	}
+
 	// ref: https://cloud.google.com/artifact-registry/docs/helm/authentication#token
 	gcpUser := "oauth2accesstoken"
 	gcpPasswd, err := gcloudPrintAccessToken(t)
@@ -599,13 +607,23 @@ func TestKindClusterAvailablePackageEndpointsForOCI(t *testing.T) {
 			},
 		*/
 		{
-			testName:    "Testing [" + harbor_stefanprodan_podinfo_oci_registry_url + "] with basic auth secret",
+			testName:    "Testing [" + harbor_stefanprodan_podinfo_oci_registry_url + "] with basic auth secret (admin)",
 			registryUrl: harbor_stefanprodan_podinfo_oci_registry_url,
 			secret: newBasicAuthSecret(types.NamespacedName{
 				Name:      "oci-repo-secret-" + randSeq(4),
 				Namespace: "default"},
-				harbor_user,
-				harbor_pwd,
+				harbor_admin_user,
+				harbor_admin_pwd,
+			),
+		},
+		{
+			testName:    "Testing [" + harbor_stefanprodan_podinfo_oci_registry_url + "] with basic auth secret (robot)",
+			registryUrl: harbor_stefanprodan_podinfo_oci_registry_url,
+			secret: newBasicAuthSecret(types.NamespacedName{
+				Name:      "oci-repo-secret-" + randSeq(4),
+				Namespace: "default"},
+				harborRobotName,
+				harborRobotSecret,
 			),
 		},
 		{

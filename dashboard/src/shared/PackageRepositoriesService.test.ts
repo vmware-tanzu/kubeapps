@@ -15,8 +15,7 @@ import { HelmPackageRepositoryCustomDetail } from "gen/kubeappsapis/plugins/helm
 import { KappControllerPackageRepositoryCustomDetail } from "gen/kubeappsapis/plugins/kapp_controller/packages/v1alpha1/kapp_controller";
 import KubeappsGrpcClient from "./KubeappsGrpcClient";
 import { PackageRepositoriesService } from "./PackageRepositoriesService";
-import { IPkgRepoFormData, RepositoryStorageTypes } from "./types";
-import { PluginNames } from "./utils";
+import { IPkgRepoFormData, PluginNames, RepositoryStorageTypes } from "./types";
 
 const cluster = "cluster";
 const namespace = "namespace";

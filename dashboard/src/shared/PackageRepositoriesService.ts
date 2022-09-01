@@ -28,8 +28,7 @@ import {
   protobufPackage as kappControllerProtobufPackage,
 } from "gen/kubeappsapis/plugins/kapp_controller/packages/v1alpha1/kapp_controller";
 import KubeappsGrpcClient from "./KubeappsGrpcClient";
-import { IPkgRepoFormData } from "./types";
-import { PluginNames } from "./utils";
+import { IPkgRepoFormData, PluginNames } from "./types";
 
 export class PackageRepositoriesService {
   public static coreRepositoriesClient = () =>
