@@ -89,7 +89,7 @@ jobs:
       # Label used to access the service container
       postgres:
         # Docker Hub image
-        image: bitnami/postgresql:14.4.0-debian-11-r13
+        image: postgres
         # Provide the password for postgres
         env:
           POSTGRES_PASSWORD: someother
