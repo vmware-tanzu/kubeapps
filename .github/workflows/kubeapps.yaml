@@ -22,7 +22,7 @@ env:
   # IMG_DEV_TAG is the tags used for the Kubeapps docker images. Ideally there should be an IMG_PROD_TAG
   # but its value is dynamic and GitHub actions doesn't support it in the `env` block, so it is generated
   # as an output of the `setup` job.
-  IMG_DEV_TAG: "build-${GITHUB_SHA}"
+  IMG_DEV_TAG: "build-${{ github.sha }}"
   # Apart from using a dev tag we use a different image ID to avoid polluting the tag
   # history of the production tag
   IMG_MODIFIER: "ci"
@@ -51,16 +51,24 @@ jobs:
           else
             echo "::set-output name=tag::latest"
           fi
+      - name: Read exported variable
+        run: |
+          echo "PROD TAG: ${{ steps.check.test-env.tag }}"
 
   test_go:
     runs-on: ubuntu-latest
     services:
       postgresql:
-        image: bitnami/postgresql:${POSTGRESQL_VERSION}
+        image: bitnami/postgresql:${{ env.POSTGRESQL_VERSION }}
         ports:
           - 5432:5432
         env:
           ALLOW_EMPTY_PASSWORD: "yes"
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
     steps:
     - uses: actions/checkout@v3
     - name: Set up Go
