@@ -48,8 +48,8 @@ require (
 	github.com/disintegration/imaging v1.6.2
 	github.com/distribution/distribution v2.8.1+incompatible
 	github.com/fluxcd/helm-controller/api v0.22.2
-	github.com/fluxcd/pkg/apis/meta v0.14.2
-	github.com/fluxcd/source-controller/api v0.25.10
+	github.com/fluxcd/pkg/apis/meta v0.15.0
+	github.com/fluxcd/source-controller/api v0.28.0
 	github.com/go-redis/redis/v8 v8.11.5
 	github.com/go-redis/redismock/v8 v8.0.6
 	github.com/google/go-cmp v0.5.8
@@ -84,14 +84,14 @@ require (
 	helm.sh/helm/v3 v3.8.2
 	k8s.io/api v0.24.0
 	k8s.io/apiextensions-apiserver v0.24.1
-	k8s.io/apimachinery v0.24.1
+	k8s.io/apimachinery v0.25.0
 	k8s.io/apiserver v0.23.5
 	k8s.io/cli-runtime v0.23.5
 	k8s.io/client-go v0.23.5
 	k8s.io/klog/v2 v2.70.1
 	k8s.io/kubectl v0.23.5
 	k8s.io/kubernetes v1.22.10
-	k8s.io/utils v0.0.0-20220210201930-3a6ce19ff2f9
+	k8s.io/utils v0.0.0-20220728103510-ee6ede2d64ed
 	oras.land/oras-go v1.2.0
 	oras.land/oras-go/v2 v2.0.0-rc.1
 	sigs.k8s.io/controller-runtime v0.11.2
@@ -128,7 +128,7 @@ require (
 	github.com/exponent-io/jsonpath v0.0.0-20210407135951-1de76d718b3f // indirect
 	github.com/fatih/camelcase v1.0.0 // indirect
 	github.com/fatih/color v1.13.0 // indirect
-	github.com/fluxcd/pkg/apis/acl v0.0.3 // indirect
+	github.com/fluxcd/pkg/apis/acl v0.1.0 // indirect
 	github.com/fluxcd/pkg/apis/kustomize v0.4.2 // indirect
 	github.com/fluxcd/pkg/version v0.1.0
 	github.com/fsnotify/fsnotify v1.5.4 // indirect
@@ -233,5 +233,5 @@ require (
 	nhooyr.io/websocket v1.8.7 // indirect
 	sigs.k8s.io/kustomize/api v0.11.1 // indirect
 	sigs.k8s.io/kustomize/kyaml v0.13.3 // indirect
-	sigs.k8s.io/structured-merge-diff/v4 v4.2.1 // indirect
+	sigs.k8s.io/structured-merge-diff/v4 v4.2.3 // indirect
 )
