@@ -36,7 +36,7 @@
     "axios": "^0.27.2",
     "connected-react-router": "^6.9.3",
     "fast-json-patch": "^3.1.1",
-    "google-protobuf": "^3.20.1",
+    "google-protobuf": "^3.21.0",
     "history": "^4.10.1",
     "js-yaml": "^4.1.0",
     "jsonwebtoken": "^8.5.1",
