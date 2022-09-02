@@ -1857,7 +1857,7 @@ func TestParseClusterConfig(t *testing.T) {
 }
 
 func createConfigFile(t *testing.T, content string) string {
-	tmpfile, err := os.TempFile("", "")
+	tmpfile, err := os.CreateTemp("", "")
 	if err != nil {
 		t.Fatalf("%+v", err)
 	}

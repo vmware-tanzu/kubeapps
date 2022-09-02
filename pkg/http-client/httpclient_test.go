@@ -7,6 +7,7 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	errors "errors"
+	"io"
 	"github.com/google/go-cmp/cmp"
 	"net/http"
 	"net/http/httptest"
