@@ -7,15 +7,18 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"io/ioutil"
 	"reflect"
 	"strings"
 
 	sourcev1 "github.com/fluxcd/source-controller/api/v1beta2"
 	corev1 "github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
+	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/fluxv2/packages/v1alpha1/cache"
 	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/fluxv2/packages/v1alpha1/common"
 	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/pkg/pkgutils"
 	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/pkg/statuserror"
 	"github.com/vmware-tanzu/kubeapps/pkg/chart/models"
+	httpclient "github.com/vmware-tanzu/kubeapps/pkg/http-client"
 	"github.com/vmware-tanzu/kubeapps/pkg/tarutil"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -37,6 +40,7 @@ func (s *Server) getChartInCluster(ctx context.Context, key types.NamespacedName
 	return &chartObj, nil
 }
 
+// TODO (gfichtenholt) this func is too long. Break it up
 func (s *Server) availableChartDetail(ctx context.Context, packageRef *corev1.AvailablePackageReference, chartVersion string) (*corev1.AvailablePackageDetail, error) {
 	log.Infof("+availableChartDetail(%s, %s)", packageRef, chartVersion)
 
@@ -63,14 +67,14 @@ func (s *Server) availableChartDetail(ctx context.Context, packageRef *corev1.Av
 	if chartVersion != "" {
 		if key, err := s.chartCache.KeyFor(repoName.Namespace, chartID, chartVersion); err != nil {
 			return nil, err
-		} else if byteArray, err = s.chartCache.FetchForOne(key); err != nil {
+		} else if byteArray, err = s.chartCache.Fetch(key); err != nil {
 			return nil, err
 		}
 	}
 
 	if byteArray == nil {
 		// no specific chart version was provided or a cache miss, need to do a bit of work
-		chartModel, err := s.getChart(ctx, repoName, chartName)
+		chartModel, err := s.getChartModel(ctx, repoName, chartName)
 		if err != nil {
 			return nil, err
 		} else if chartModel == nil {
@@ -81,13 +85,30 @@ func (s *Server) availableChartDetail(ctx context.Context, packageRef *corev1.Av
 			chartVersion = chartModel.ChartVersions[0].Version
 		}
 
-		if key, err := s.chartCache.KeyFor(repoName.Namespace, chartID, chartVersion); err != nil {
+		var key string
+		if key, err = s.chartCache.KeyFor(repoName.Namespace, chartID, chartVersion); err != nil {
 			return nil, err
-		} else if opts, err := s.clientOptionsForRepo(ctx, repoName); err != nil {
+		}
+
+		var fn cache.DownloadChartFn
+		if chartModel.Repo.Type == "oci" {
+			if ociRepo, err := s.newOCIChartRepositoryAndLogin(ctx, repoName); err != nil {
+				return nil, err
+			} else {
+				fn = downloadOCIChartFn(ociRepo)
+			}
+		} else {
+			if opts, err := s.httpClientOptionsForRepo(ctx, repoName); err != nil {
+				return nil, err
+			} else {
+				fn = downloadHttpChartFn(opts)
+			}
+		}
+		if byteArray, err = s.chartCache.Get(key, chartModel, fn); err != nil {
 			return nil, err
-		} else if byteArray, err = s.chartCache.GetForOne(key, chartModel, opts); err != nil {
-			return nil, err
-		} else if byteArray == nil {
+		}
+
+		if byteArray == nil {
 			return nil, status.Errorf(codes.Internal, "failed to load details for chart [%s]", chartModel.ID)
 		}
 	}
@@ -115,25 +136,44 @@ func (s *Server) availableChartDetail(ctx context.Context, packageRef *corev1.Av
 	return pkgDetail, nil
 }
 
-func (s *Server) getChart(ctx context.Context, repo types.NamespacedName, chartName string) (*models.Chart, error) {
+func (s *Server) getChartModel(ctx context.Context, repoName types.NamespacedName, chartName string) (*models.Chart, error) {
 	if s.repoCache == nil {
 		return nil, status.Errorf(codes.FailedPrecondition, "server cache has not been properly initialized")
-	} else if ok, err := s.hasAccessToNamespace(ctx, common.GetChartsGvr(), repo.Namespace); err != nil {
+	} else if ok, err := s.hasAccessToNamespace(ctx, common.GetChartsGvr(), repoName.Namespace); err != nil {
 		return nil, err
 	} else if !ok {
-		return nil, status.Errorf(codes.PermissionDenied, "user has no [get] access for HelmCharts in namespace [%s]", repo.Namespace)
+		return nil, status.Errorf(codes.PermissionDenied, "user has no [get] access for HelmCharts in namespace [%s]", repoName.Namespace)
 	}
 
-	key := s.repoCache.KeyForNamespacedName(repo)
-	if entry, err := s.repoCache.GetForOne(key); err != nil {
+	key := s.repoCache.KeyForNamespacedName(repoName)
+	value, err := s.repoCache.Get(key)
+	if err != nil {
 		return nil, err
-	} else if entry != nil {
-		if typedEntry, ok := entry.(repoCacheEntryValue); !ok {
+	} else if value != nil {
+		if typedValue, ok := value.(repoCacheEntryValue); !ok {
 			return nil, status.Errorf(
 				codes.Internal,
-				"unexpected value fetched from cache: type: [%s], value: [%v]", reflect.TypeOf(entry), entry)
+				"unexpected value fetched from cache: type: [%s], value: [%v]",
+				reflect.TypeOf(value), value)
 		} else {
-			for _, chart := range typedEntry.Charts {
+			if typedValue.Type == "oci" {
+				// ref https://github.com/vmware-tanzu/kubeapps/issues/5007#issuecomment-1217293240
+				// helm OCI chart repos are not automatically updated when the
+				// state on remote changes. So we will force new checksum
+				// computation and update local cache if needed
+				value, err := s.repoCache.ForceAndFetch(key)
+				if err != nil {
+					return nil, err
+				}
+				typedValue, ok = value.(repoCacheEntryValue)
+				if !ok {
+					return nil, status.Errorf(
+						codes.Internal,
+						"unexpected value fetched from cache: type: [%s], value: [%v]",
+						reflect.TypeOf(value), value)
+				}
+			}
+			for _, chart := range typedValue.Charts {
 				if chart.Name == chartName {
 					return &chart, nil // found it
 				}
@@ -211,7 +251,8 @@ func filterAndPaginateCharts(filters *corev1.FilterOptions, pageSize int32, item
 		startAt = itemOffset
 	}
 	for _, packages := range charts {
-		for _, chart := range packages {
+		for p := range packages {
+			chart := packages[p] // avoid implicit memory aliasing
 			if passesFilter(chart, filters) {
 				i++
 				if startAt < i {
@@ -238,7 +279,7 @@ func availablePackageDetailFromChartDetail(chartID string, chartDetail map[strin
 	// TODO (gfichtenholt): if there is no chart yaml (is that even possible?),
 	// fall back to chart info from repo index.yaml
 	if !ok || chartYaml == "" {
-		return nil, status.Errorf(codes.Internal, "No chart manifest found for chart [%s]", chartID)
+		return nil, status.Errorf(codes.Internal, "No chart manifest found for chart: [%s]", chartID)
 	}
 	var chartMetadata chart.Metadata
 	err := yaml.Unmarshal([]byte(chartYaml), &chartMetadata)
@@ -285,4 +326,28 @@ func availablePackageDetailFromChartDetail(chartID string, chartDetail map[strin
 	// note, the caller will set pkg.AvailablePackageRef namespace as that information
 	// is not included in the tarball
 	return pkg, nil
+}
+
+func downloadHttpChartFn(options *common.HttpClientOptions) func(chartID, chartUrl, chartVersion string) ([]byte, error) {
+	return func(chartID, chartUrl, chartVersion string) ([]byte, error) {
+		client, headers, err := common.NewHttpClientAndHeaders(options)
+		if err != nil {
+			return nil, err
+		}
+
+		reader, _, err := httpclient.GetStream(chartUrl, client, headers)
+		if reader != nil {
+			defer reader.Close()
+		}
+		if err != nil {
+			return nil, err
+		}
+
+		chartTgz, err := ioutil.ReadAll(reader)
+		if err != nil {
+			return nil, err
+		}
+
+		return chartTgz, nil
+	}
 }

@@ -146,16 +146,24 @@ export function getInstalledPackage(
 export function getInstalledPkgStatus(
   installedPackageRef?: InstalledPackageReference,
 ): ThunkAction<Promise<void>, IStoreState, null, InstalledPackagesAction> {
-  return async dispatch => {
-    dispatch(requestInstalledPackageStatus());
-    try {
-      // Get the details of an installed package for the status.
-      const { installedPackageDetail } = await InstalledPackage.GetInstalledPackageDetail(
-        installedPackageRef,
-      );
-      dispatch(receiveInstalledPackageStatus(installedPackageDetail!.status!));
-    } catch (e: any) {
-      dispatch(errorInstalledPackage(new FetchError("Unable to refresh installed package", [e])));
+  return async (dispatch, getState) => {
+    const {
+      kube: { subscriptions },
+    } = getState();
+    const subscriptionId = `${installedPackageRef?.context?.cluster}/${installedPackageRef?.context?.namespace}/${installedPackageRef?.identifier}`;
+
+    // only get the status if the subscription is active, otherwise the component would have been unmounted
+    if (subscriptions[subscriptionId]) {
+      dispatch(requestInstalledPackageStatus());
+      try {
+        // Get the details of an installed package for the status.
+        const { installedPackageDetail } = await InstalledPackage.GetInstalledPackageDetail(
+          installedPackageRef,
+        );
+        dispatch(receiveInstalledPackageStatus(installedPackageDetail!.status!));
+      } catch (e: any) {
+        dispatch(errorInstalledPackage(new FetchError("Unable to refresh installed package", [e])));
+      }
     }
   };
 }

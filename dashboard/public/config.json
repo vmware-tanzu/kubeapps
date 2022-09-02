@@ -2,6 +2,7 @@
   "kubeappsCluster": "default",
   "kubeappsNamespace": "kubeapps",
   "globalReposNamespace": "kubeapps",
+  "carvelGlobalNamespace": "kapp-controller-packaging-global",
   "appVersion": "DEVEL",
   "authProxyEnabled": false,
   "authProxySkipLoginPage": false,
@@ -14,5 +15,6 @@
   "theme": "light",
   "remoteComponentsUrl": "",
   "customAppViews": [],
-  "skipAvailablePackageDetails": false
+  "skipAvailablePackageDetails": false,
+  "createNamespaceLabels": {}
 }

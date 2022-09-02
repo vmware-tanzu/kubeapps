@@ -1,5 +1,4 @@
 /* eslint-disable */
-import Long from "long";
 import * as _m0 from "protobufjs/minimal";
 
 export const protobufPackage = "google.protobuf";
@@ -30,7 +29,7 @@ export const protobufPackage = "google.protobuf";
  *       foo = any.unpack(Foo.class);
  *     }
  *
- *  Example 3: Pack and unpack a message in Python.
+ * Example 3: Pack and unpack a message in Python.
  *
  *     foo = Foo(...)
  *     any = Any()
@@ -40,7 +39,7 @@ export const protobufPackage = "google.protobuf";
  *       any.Unpack(foo)
  *       ...
  *
- *  Example 4: Pack and unpack a message in Go
+ * Example 4: Pack and unpack a message in Go
  *
  *      foo := &pb.Foo{...}
  *      any, err := anypb.New(foo)
@@ -61,7 +60,7 @@ export const protobufPackage = "google.protobuf";
  *
  *
  * JSON
- * ====
+ *
  * The JSON representation of an `Any` value uses the regular
  * representation of the deserialized, embedded message, with an
  * additional field `@type` which contains the type URL. Example:
@@ -230,11 +229,6 @@ type KeysOfUnion<T> = T extends T ? keyof T : never;
 export type Exact<P, I extends P> = P extends Builtin
   ? P
   : P & { [K in keyof P]: Exact<P[K], I[K]> } & Record<Exclude<keyof I, KeysOfUnion<P>>, never>;
-
-if (_m0.util.Long !== Long) {
-  _m0.util.Long = Long as any;
-  _m0.configure();
-}
 
 function isSet(value: any): boolean {
   return value !== null && value !== undefined;

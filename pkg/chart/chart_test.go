@@ -33,8 +33,6 @@ import (
 	"k8s.io/client-go/kubernetes/fake"
 )
 
-const testChartArchive = "./testdata/nginx-apiVersion-v1-5.1.1.tgz"
-
 func Test_resolveChartURL(t *testing.T) {
 	tests := []struct {
 		name      string
@@ -217,6 +215,7 @@ func TestParseDetailsForHTTPClient(t *testing.T) {
 				AppRepositoryResourceName:      appRepoName,
 				AppRepositoryResourceNamespace: appRepoNamespace,
 			},
+			//nolint:staticcheck
 			numCertsExpected:  len(systemCertPool.Subjects()),
 			cluster:           "",
 			kubeappsNamespace: appRepoNamespace,
@@ -228,6 +227,7 @@ func TestParseDetailsForHTTPClient(t *testing.T) {
 				AppRepositoryResourceName:      appRepoName,
 				AppRepositoryResourceNamespace: appRepoNamespace,
 			},
+			//nolint:staticcheck
 			numCertsExpected:  len(systemCertPool.Subjects()),
 			cluster:           "target-cluster",
 			kubeappsNamespace: appRepoNamespace,
@@ -239,6 +239,7 @@ func TestParseDetailsForHTTPClient(t *testing.T) {
 				AppRepositoryResourceName:      appRepoName,
 				AppRepositoryResourceNamespace: appRepoNamespace,
 			},
+			//nolint:staticcheck
 			numCertsExpected:  len(systemCertPool.Subjects()),
 			cluster:           "",
 			kubeappsNamespace: "",
@@ -260,6 +261,7 @@ func TestParseDetailsForHTTPClient(t *testing.T) {
 					},
 				},
 			},
+			//nolint:staticcheck
 			numCertsExpected:  len(systemCertPool.Subjects()) + 1,
 			cluster:           "",
 			kubeappsNamespace: "",
@@ -302,6 +304,7 @@ func TestParseDetailsForHTTPClient(t *testing.T) {
 					},
 				},
 			},
+			//nolint:staticcheck
 			numCertsExpected:  len(systemCertPool.Subjects()),
 			cluster:           "",
 			kubeappsNamespace: "",
@@ -344,6 +347,7 @@ func TestParseDetailsForHTTPClient(t *testing.T) {
 					},
 				},
 			},
+			//nolint:staticcheck
 			numCertsExpected:  len(systemCertPool.Subjects()),
 			cluster:           "",
 			kubeappsNamespace: "",
@@ -516,7 +520,7 @@ func TestGetChart(t *testing.T) {
 		{
 			name:         "gets the chart with a user agent",
 			chartVersion: "5.1.1-apiVersionV1",
-			userAgent:    "kubeops/devel",
+			userAgent:    "kubeapps-apis/devel",
 		},
 		{
 			name:         "gets a v2 chart without error when v1 support not required",
@@ -678,8 +682,10 @@ func TestClientWithDefaultHeaders(t *testing.T) {
 			for k, v := range tc.requestHeaders {
 				request.Header[k] = v
 			}
-			client.Do(request)
-
+			_, err = client.Do(request)
+			if err != nil && !strings.Contains(err.Error(), "Unexpected path") {
+				t.Fatalf("%+v", err)
+			}
 			requestsWithHeaders := getFakeClientRequests(t, client)
 			if got, want := len(requestsWithHeaders), 1; got != want {
 				t.Fatalf("got: %d, want: %d", got, want)
@@ -845,7 +851,10 @@ func TestGetRegistrySecretsPerDomain(t *testing.T) {
 func TestOCIClient(t *testing.T) {
 	t.Run("InitClient - Creates puller with User-Agent header", func(t *testing.T) {
 		cli := NewOCIClient("foo")
-		cli.Init(&appRepov1.AppRepository{}, &corev1.Secret{}, &corev1.Secret{})
+		err := cli.Init(&appRepov1.AppRepository{}, &corev1.Secret{}, &corev1.Secret{})
+		if err != nil {
+			t.Errorf("unexpected error: %v", err)
+		}
 		helmtest.CheckHeader(t, cli.(*OCIRepoClient).puller, "User-Agent", "foo")
 	})
 
@@ -868,7 +877,10 @@ func TestOCIClient(t *testing.T) {
 				"custom-secret-key": []byte("Basic Auth"),
 			},
 		}
-		cli.Init(appRepo, &corev1.Secret{}, authSecret)
+		err := cli.Init(appRepo, &corev1.Secret{}, authSecret)
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
 		helmtest.CheckHeader(t, cli.(*OCIRepoClient).puller, "Authorization", "Basic Auth")
 	})
 

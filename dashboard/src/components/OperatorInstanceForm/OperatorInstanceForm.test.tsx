@@ -9,7 +9,7 @@ import OperatorHeader from "components/OperatorView/OperatorHeader";
 import { act } from "react-dom/test-utils";
 import * as ReactRedux from "react-redux";
 import { defaultStore, getStore, initialState, mountWrapper } from "shared/specs/mountWrapper";
-import { FetchError, IClusterServiceVersion } from "shared/types";
+import { FetchError, IClusterServiceVersion, IStoreState } from "shared/types";
 import OperatorInstanceForm, { IOperatorInstanceFormProps } from "./OperatorInstanceForm";
 
 const defaultProps: IOperatorInstanceFormProps = {
@@ -57,10 +57,12 @@ afterEach(() => {
 it("renders a fetch error", () => {
   const wrapper = mountWrapper(
     getStore({
+      ...initialState,
       operators: {
-        errors: { csv: { fetch: new FetchError("Boom!") } },
+        ...initialState.operators,
+        errors: { ...initialState.operators.errors, csv: { fetch: new FetchError("Boom!") } },
       },
-    }),
+    } as Partial<IStoreState>),
     <OperatorInstanceForm {...defaultProps} />,
   );
   expect(wrapper.find(Alert)).toIncludeText("Boom!");
@@ -74,7 +76,7 @@ it("renders a create error", () => {
         csv: defaultCSV,
         errors: { resource: { create: new Error("Boom!") } },
       },
-    }),
+    } as Partial<IStoreState>),
     <OperatorInstanceForm {...defaultProps} />,
   );
   expect(wrapper.find(Alert)).toIncludeText("Boom!");
@@ -93,7 +95,7 @@ it("retrieves CSV when mounted", () => {
 
 it("retrieves the example values and the target CRD from the given CSV", () => {
   const wrapper = mountWrapper(
-    getStore({ operators: { csv: defaultCSV } }),
+    getStore({ operators: { csv: defaultCSV } } as Partial<IStoreState>),
     <OperatorInstanceForm {...defaultProps} />,
   );
   expect(wrapper.find(OperatorInstanceFormBody).props()).toMatchObject({
@@ -107,7 +109,7 @@ it("defaults to empty defaultValues if the examples annotation is not found", ()
     metadata: {},
   } as IClusterServiceVersion;
   const wrapper = mountWrapper(
-    getStore({ operators: { csv } }),
+    getStore({ operators: { csv } } as Partial<IStoreState>),
     <OperatorInstanceForm {...defaultProps} />,
   );
   expect(wrapper.find(OperatorInstanceFormBody).props()).toMatchObject({
@@ -124,7 +126,7 @@ it("should submit the form", () => {
   const createResource = jest.fn();
   actions.operators.createResource = createResource;
   const wrapper = mountWrapper(
-    getStore({ operators: { csv: defaultCSV } }),
+    getStore({ operators: { csv: defaultCSV } } as Partial<IStoreState>),
     <OperatorInstanceForm {...defaultProps} />,
   );
 

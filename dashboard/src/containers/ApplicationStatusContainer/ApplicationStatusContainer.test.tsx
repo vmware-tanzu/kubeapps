@@ -2,14 +2,14 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { shallow } from "enzyme";
+import { ResourceRef } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
 import { initialKinds } from "reducers/kube";
 import configureMockStore from "redux-mock-store";
 import thunk from "redux-thunk";
 import { keyForResourceRef } from "shared/ResourceRef";
-import { IKubeItem, IKubeState, IResource } from "shared/types";
+import { IKubeItem, IKubeState, IResource, IStoreState } from "shared/types";
 import ApplicationStatusContainer from ".";
 import ApplicationStatus from "../../components/ApplicationStatus";
-import { ResourceRef } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
 
 const mockStore = configureMockStore([thunk]);
 
@@ -19,7 +19,7 @@ const makeStore = (resources: { [s: string]: IKubeItem<IResource> }) => {
     kinds: initialKinds,
     subscriptions: {},
   };
-  return mockStore({ kube: state, config: { featureFlags: {} } });
+  return mockStore({ kube: state, config: { featureFlags: {} } } as Partial<IStoreState>);
 };
 
 describe("ApplicationStatusContainer", () => {

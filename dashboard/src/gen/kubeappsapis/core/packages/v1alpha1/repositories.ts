@@ -1,11 +1,10 @@
 /* eslint-disable */
-import Long from "long";
 import { grpc } from "@improbable-eng/grpc-web";
-import * as _m0 from "protobufjs/minimal";
-import { Context } from "../../../../kubeappsapis/core/packages/v1alpha1/packages";
-import { Plugin } from "../../../../kubeappsapis/core/plugins/v1alpha1/plugins";
+import { Context } from "./packages";
+import { Plugin } from "../../plugins/v1alpha1/plugins";
 import { Any } from "../../../../google/protobuf/any";
 import { BrowserHeaders } from "browser-headers";
+import * as _m0 from "protobufjs/minimal";
 
 export const protobufPackage = "kubeappsapis.core.packages.v1alpha1";
 
@@ -32,8 +31,8 @@ export interface AddPackageRepositoryRequest {
   /**
    * Package storage type
    * In general, each plug-in will define an acceptable set of valid types
-   * - for direct helm plug-in valid values are: helm, oci
-   * - for flux plug-in currently only supported value is helm. In the
+   * - for direct helm plug-in valid values are: "helm" and "oci"
+   * - for flux plug-in valid values are: "helm" and "oci". In the
    *   future, we may add support for git and/or AWS s3-style buckets
    */
   type: string;
@@ -43,10 +42,10 @@ export interface AddPackageRepositoryRequest {
    */
   url: string;
   /**
-   * The interval at which to check the upstream for updates (in seconds)
+   * The interval at which to check the upstream for updates (in time+unit)
    * Optional. Defaults to 10m if not specified
    */
-  interval: number;
+  interval: string;
   /** TLS-specific parameters for connecting to a repository. Optional */
   tlsConfig?: PackageRepositoryTlsConfig;
   /** authentication parameters for connecting to a repository. Optional */
@@ -328,10 +327,10 @@ export interface UpdatePackageRepositoryRequest {
   /** A user-provided description. */
   description: string;
   /**
-   * The interval at which to check the upstream for updates (in seconds)
+   * The interval at which to check the upstream for updates (in time+unit)
    * Optional. Defaults to 10m if not specified
    */
-  interval: number;
+  interval: string;
   /** TLS-specific parameters for connecting to a repository. Optional */
   tlsConfig?: PackageRepositoryTlsConfig;
   /** authentication parameters for connecting to a repository. Optional */
@@ -496,8 +495,8 @@ export interface PackageRepositoryDetail {
   type: string;
   /** A URL identifying the package repository location. */
   url: string;
-  /** The interval at which to check the upstream for updates (in seconds) */
-  interval: number;
+  /** The interval at which to check the upstream for updates (in time+unit) */
+  interval: string;
   /**
    * TLS-specific parameters for connecting to a repository.
    * If the cert authority was configured for this repository, then in the context
@@ -552,6 +551,8 @@ export interface PackageRepositorySummary {
    * status, where relevant.
    */
   status?: PackageRepositoryStatus;
+  /** existence of any authentication parameters for connecting to a repository. */
+  requiresAuth: boolean;
 }
 
 /**
@@ -588,7 +589,7 @@ function createBaseAddPackageRepositoryRequest(): AddPackageRepositoryRequest {
     namespaceScoped: false,
     type: "",
     url: "",
-    interval: 0,
+    interval: "",
     tlsConfig: undefined,
     auth: undefined,
     plugin: undefined,
@@ -619,8 +620,8 @@ export const AddPackageRepositoryRequest = {
     if (message.url !== "") {
       writer.uint32(50).string(message.url);
     }
-    if (message.interval !== 0) {
-      writer.uint32(56).uint32(message.interval);
+    if (message.interval !== "") {
+      writer.uint32(58).string(message.interval);
     }
     if (message.tlsConfig !== undefined) {
       PackageRepositoryTlsConfig.encode(message.tlsConfig, writer.uint32(66).fork()).ldelim();
@@ -663,7 +664,7 @@ export const AddPackageRepositoryRequest = {
           message.url = reader.string();
           break;
         case 7:
-          message.interval = reader.uint32();
+          message.interval = reader.string();
           break;
         case 8:
           message.tlsConfig = PackageRepositoryTlsConfig.decode(reader, reader.uint32());
@@ -693,7 +694,7 @@ export const AddPackageRepositoryRequest = {
       namespaceScoped: isSet(object.namespaceScoped) ? Boolean(object.namespaceScoped) : false,
       type: isSet(object.type) ? String(object.type) : "",
       url: isSet(object.url) ? String(object.url) : "",
-      interval: isSet(object.interval) ? Number(object.interval) : 0,
+      interval: isSet(object.interval) ? String(object.interval) : "",
       tlsConfig: isSet(object.tlsConfig)
         ? PackageRepositoryTlsConfig.fromJSON(object.tlsConfig)
         : undefined,
@@ -712,7 +713,7 @@ export const AddPackageRepositoryRequest = {
     message.namespaceScoped !== undefined && (obj.namespaceScoped = message.namespaceScoped);
     message.type !== undefined && (obj.type = message.type);
     message.url !== undefined && (obj.url = message.url);
-    message.interval !== undefined && (obj.interval = Math.round(message.interval));
+    message.interval !== undefined && (obj.interval = message.interval);
     message.tlsConfig !== undefined &&
       (obj.tlsConfig = message.tlsConfig
         ? PackageRepositoryTlsConfig.toJSON(message.tlsConfig)
@@ -739,7 +740,7 @@ export const AddPackageRepositoryRequest = {
     message.namespaceScoped = object.namespaceScoped ?? false;
     message.type = object.type ?? "";
     message.url = object.url ?? "";
-    message.interval = object.interval ?? 0;
+    message.interval = object.interval ?? "";
     message.tlsConfig =
       object.tlsConfig !== undefined && object.tlsConfig !== null
         ? PackageRepositoryTlsConfig.fromPartial(object.tlsConfig)
@@ -1591,7 +1592,7 @@ function createBaseUpdatePackageRepositoryRequest(): UpdatePackageRepositoryRequ
     packageRepoRef: undefined,
     url: "",
     description: "",
-    interval: 0,
+    interval: "",
     tlsConfig: undefined,
     auth: undefined,
     customDetail: undefined,
@@ -1612,8 +1613,8 @@ export const UpdatePackageRepositoryRequest = {
     if (message.description !== "") {
       writer.uint32(26).string(message.description);
     }
-    if (message.interval !== 0) {
-      writer.uint32(32).uint32(message.interval);
+    if (message.interval !== "") {
+      writer.uint32(34).string(message.interval);
     }
     if (message.tlsConfig !== undefined) {
       PackageRepositoryTlsConfig.encode(message.tlsConfig, writer.uint32(42).fork()).ldelim();
@@ -1644,7 +1645,7 @@ export const UpdatePackageRepositoryRequest = {
           message.description = reader.string();
           break;
         case 4:
-          message.interval = reader.uint32();
+          message.interval = reader.string();
           break;
         case 5:
           message.tlsConfig = PackageRepositoryTlsConfig.decode(reader, reader.uint32());
@@ -1670,7 +1671,7 @@ export const UpdatePackageRepositoryRequest = {
         : undefined,
       url: isSet(object.url) ? String(object.url) : "",
       description: isSet(object.description) ? String(object.description) : "",
-      interval: isSet(object.interval) ? Number(object.interval) : 0,
+      interval: isSet(object.interval) ? String(object.interval) : "",
       tlsConfig: isSet(object.tlsConfig)
         ? PackageRepositoryTlsConfig.fromJSON(object.tlsConfig)
         : undefined,
@@ -1687,7 +1688,7 @@ export const UpdatePackageRepositoryRequest = {
         : undefined);
     message.url !== undefined && (obj.url = message.url);
     message.description !== undefined && (obj.description = message.description);
-    message.interval !== undefined && (obj.interval = Math.round(message.interval));
+    message.interval !== undefined && (obj.interval = message.interval);
     message.tlsConfig !== undefined &&
       (obj.tlsConfig = message.tlsConfig
         ? PackageRepositoryTlsConfig.toJSON(message.tlsConfig)
@@ -1709,7 +1710,7 @@ export const UpdatePackageRepositoryRequest = {
         : undefined;
     message.url = object.url ?? "";
     message.description = object.description ?? "";
-    message.interval = object.interval ?? 0;
+    message.interval = object.interval ?? "";
     message.tlsConfig =
       object.tlsConfig !== undefined && object.tlsConfig !== null
         ? PackageRepositoryTlsConfig.fromPartial(object.tlsConfig)
@@ -2010,7 +2011,7 @@ function createBasePackageRepositoryDetail(): PackageRepositoryDetail {
     namespaceScoped: false,
     type: "",
     url: "",
-    interval: 0,
+    interval: "",
     tlsConfig: undefined,
     auth: undefined,
     customDetail: undefined,
@@ -2038,8 +2039,8 @@ export const PackageRepositoryDetail = {
     if (message.url !== "") {
       writer.uint32(50).string(message.url);
     }
-    if (message.interval !== 0) {
-      writer.uint32(56).uint32(message.interval);
+    if (message.interval !== "") {
+      writer.uint32(58).string(message.interval);
     }
     if (message.tlsConfig !== undefined) {
       PackageRepositoryTlsConfig.encode(message.tlsConfig, writer.uint32(66).fork()).ldelim();
@@ -2082,7 +2083,7 @@ export const PackageRepositoryDetail = {
           message.url = reader.string();
           break;
         case 7:
-          message.interval = reader.uint32();
+          message.interval = reader.string();
           break;
         case 8:
           message.tlsConfig = PackageRepositoryTlsConfig.decode(reader, reader.uint32());
@@ -2114,7 +2115,7 @@ export const PackageRepositoryDetail = {
       namespaceScoped: isSet(object.namespaceScoped) ? Boolean(object.namespaceScoped) : false,
       type: isSet(object.type) ? String(object.type) : "",
       url: isSet(object.url) ? String(object.url) : "",
-      interval: isSet(object.interval) ? Number(object.interval) : 0,
+      interval: isSet(object.interval) ? String(object.interval) : "",
       tlsConfig: isSet(object.tlsConfig)
         ? PackageRepositoryTlsConfig.fromJSON(object.tlsConfig)
         : undefined,
@@ -2135,7 +2136,7 @@ export const PackageRepositoryDetail = {
     message.namespaceScoped !== undefined && (obj.namespaceScoped = message.namespaceScoped);
     message.type !== undefined && (obj.type = message.type);
     message.url !== undefined && (obj.url = message.url);
-    message.interval !== undefined && (obj.interval = Math.round(message.interval));
+    message.interval !== undefined && (obj.interval = message.interval);
     message.tlsConfig !== undefined &&
       (obj.tlsConfig = message.tlsConfig
         ? PackageRepositoryTlsConfig.toJSON(message.tlsConfig)
@@ -2162,7 +2163,7 @@ export const PackageRepositoryDetail = {
     message.namespaceScoped = object.namespaceScoped ?? false;
     message.type = object.type ?? "";
     message.url = object.url ?? "";
-    message.interval = object.interval ?? 0;
+    message.interval = object.interval ?? "";
     message.tlsConfig =
       object.tlsConfig !== undefined && object.tlsConfig !== null
         ? PackageRepositoryTlsConfig.fromPartial(object.tlsConfig)
@@ -2250,6 +2251,7 @@ function createBasePackageRepositorySummary(): PackageRepositorySummary {
     type: "",
     url: "",
     status: undefined,
+    requiresAuth: false,
   };
 }
 
@@ -2275,6 +2277,9 @@ export const PackageRepositorySummary = {
     }
     if (message.status !== undefined) {
       PackageRepositoryStatus.encode(message.status, writer.uint32(58).fork()).ldelim();
+    }
+    if (message.requiresAuth === true) {
+      writer.uint32(64).bool(message.requiresAuth);
     }
     return writer;
   },
@@ -2307,6 +2312,9 @@ export const PackageRepositorySummary = {
         case 7:
           message.status = PackageRepositoryStatus.decode(reader, reader.uint32());
           break;
+        case 8:
+          message.requiresAuth = reader.bool();
+          break;
         default:
           reader.skipType(tag & 7);
           break;
@@ -2326,6 +2334,7 @@ export const PackageRepositorySummary = {
       type: isSet(object.type) ? String(object.type) : "",
       url: isSet(object.url) ? String(object.url) : "",
       status: isSet(object.status) ? PackageRepositoryStatus.fromJSON(object.status) : undefined,
+      requiresAuth: isSet(object.requiresAuth) ? Boolean(object.requiresAuth) : false,
     };
   },
 
@@ -2342,6 +2351,7 @@ export const PackageRepositorySummary = {
     message.url !== undefined && (obj.url = message.url);
     message.status !== undefined &&
       (obj.status = message.status ? PackageRepositoryStatus.toJSON(message.status) : undefined);
+    message.requiresAuth !== undefined && (obj.requiresAuth = message.requiresAuth);
     return obj;
   },
 
@@ -2362,6 +2372,7 @@ export const PackageRepositorySummary = {
       object.status !== undefined && object.status !== null
         ? PackageRepositoryStatus.fromPartial(object.status)
         : undefined;
+    message.requiresAuth = object.requiresAuth ?? false;
     return message;
   },
 };
@@ -2762,6 +2773,7 @@ export class GrpcWebImpl {
 
     debug?: boolean;
     metadata?: grpc.Metadata;
+    upStreamRetryCodes?: number[];
   };
 
   constructor(
@@ -2771,6 +2783,7 @@ export class GrpcWebImpl {
 
       debug?: boolean;
       metadata?: grpc.Metadata;
+      upStreamRetryCodes?: number[];
     },
   ) {
     this.host = host;
@@ -2828,11 +2841,6 @@ type KeysOfUnion<T> = T extends T ? keyof T : never;
 export type Exact<P, I extends P> = P extends Builtin
   ? P
   : P & { [K in keyof P]: Exact<P[K], I[K]> } & Record<Exclude<keyof I, KeysOfUnion<P>>, never>;
-
-if (_m0.util.Long !== Long) {
-  _m0.util.Long = Long as any;
-  _m0.configure();
-}
 
 function isObject(value: any): boolean {
   return typeof value === "object" && value !== null;

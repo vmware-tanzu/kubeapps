@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { JSONSchemaType } from "ajv";
-import { uniqBy } from "lodash";
+import { uniq, uniqBy } from "lodash";
 import { IPackageState } from "shared/types";
 import { getType } from "typesafe-actions";
 import actions from "../actions";
@@ -64,7 +64,6 @@ const packageReducer = (
 ): IPackageState => {
   switch (action.type) {
     case getType(actions.availablepackages.requestAvailablePackageSummaries):
-      return { ...state, isFetching: true };
     case getType(actions.availablepackages.requestSelectedAvailablePackageVersions):
       return { ...state, isFetching: true };
     case getType(actions.availablepackages.receiveAvailablePackageSummaries): {
@@ -84,7 +83,7 @@ const packageReducer = (
         isFetching: false,
         hasFinishedFetching: isLastPage,
         nextPageToken: action.payload.response.nextPageToken,
-        categories: action.payload.response.categories,
+        categories: uniq([...state.categories, ...action.payload.response.categories]),
         items: uniqBy(
           [...state.items, ...action.payload.response.availablePackageSummaries],
           "availablePackageRef.identifier",
@@ -92,6 +91,7 @@ const packageReducer = (
       };
     }
     case getType(actions.availablepackages.receiveSelectedAvailablePackageVersions):
+    case getType(actions.availablepackages.receiveSelectedAvailablePackageDetail):
       return {
         ...state,
         isFetching: false,
@@ -101,12 +101,6 @@ const packageReducer = (
       return {
         ...state,
         isFetching: true,
-        selected: selectedPackageReducer(state.selected, action),
-      };
-    case getType(actions.availablepackages.receiveSelectedAvailablePackageDetail):
-      return {
-        ...state,
-        isFetching: false,
         selected: selectedPackageReducer(state.selected, action),
       };
     case getType(actions.availablepackages.resetAvailablePackageSummaries):

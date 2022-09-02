@@ -6,6 +6,7 @@ package main
 import (
 	"context"
 	"fmt"
+
 	apprepov1alpha1 "github.com/vmware-tanzu/kubeapps/cmd/apprepository-controller/pkg/apis/apprepository/v1alpha1"
 	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/pkg/statuserror"
 	k8scorev1 "k8s.io/api/core/v1"
@@ -83,7 +84,7 @@ func (s *Server) updatePkgRepository(ctx context.Context, cluster, namespace str
 	}
 
 	if err = client.Update(ctx, newPkgRepository); err != nil {
-		return statuserror.FromK8sError("get", AppRepositoryKind, newPkgRepository.Name, err)
+		return statuserror.FromK8sError("update", AppRepositoryKind, newPkgRepository.Name, err)
 	}
 	return nil
 }

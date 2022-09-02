@@ -25,10 +25,10 @@ import (
 	helmv1 "github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/plugins/helm/packages/v1alpha1"
 	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/helm/packages/v1alpha1/common"
 	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/helm/packages/v1alpha1/utils"
+	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/pkg/agent"
 	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/pkg/clientgetter"
 	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/pkg/paginate"
 	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/pkg/pkgutils"
-	"github.com/vmware-tanzu/kubeapps/pkg/agent"
 	"github.com/vmware-tanzu/kubeapps/pkg/chart/fake"
 	"github.com/vmware-tanzu/kubeapps/pkg/chart/models"
 	"github.com/vmware-tanzu/kubeapps/pkg/dbutils"
@@ -57,7 +57,8 @@ import (
 )
 
 const (
-	globalPackagingNamespace = "kubeapps"
+	globalPackagingNamespace = "kubeapps-repos-global"
+	kubeappsNamespace        = "kubeapps"
 	globalPackagingCluster   = "default"
 	DefaultAppVersion        = "1.2.6"
 	DefaultReleaseRevision   = 1
@@ -73,7 +74,7 @@ func setMockManager(t *testing.T) (sqlmock.Sqlmock, func(), utils.AssetManager) 
 	if err != nil {
 		t.Fatalf("%+v", err)
 	}
-	manager = &utils.PostgresAssetManager{&dbutils.PostgresAssetManager{DB: db, GlobalReposNamespace: globalPackagingNamespace}}
+	manager = &utils.PostgresAssetManager{PostgresAssetManagerIface: &dbutils.PostgresAssetManager{DB: db, GlobalReposNamespace: globalPackagingNamespace}}
 	return mock, func() { db.Close() }, manager
 }
 
@@ -265,6 +266,7 @@ func makeServer(t *testing.T, authorized bool, actionConfig *action.Configuratio
 	return &Server{
 		clientGetter:             clientGetter,
 		manager:                  manager,
+		kubeappsNamespace:        kubeappsNamespace,
 		globalPackagingNamespace: globalPackagingNamespace,
 		globalPackagingCluster:   globalPackagingCluster,
 		actionConfigGetter: func(context.Context, *corev1.Context) (*action.Configuration, error) {
@@ -304,7 +306,10 @@ func newServerWithSecretsAndRepos(t *testing.T, secrets []k8sruntime.Object, uns
 	apiExtIfc := apiextfake.NewSimpleClientset(helmAppRepositoryCRD)
 	ctrlClient := newCtrlClient(repos)
 	scheme := k8sruntime.NewScheme()
-	v1alpha1.AddToScheme(scheme)
+	err := v1alpha1.AddToScheme(scheme)
+	if err != nil {
+		log.Fatalf("%s", err)
+	}
 
 	clientGetter := func(context.Context, string) (clientgetter.ClientInterfaces, error) {
 		return clientgetter.
@@ -328,6 +333,7 @@ func newServerWithSecretsAndRepos(t *testing.T, secrets []k8sruntime.Object, uns
 
 	return &Server{
 		clientGetter:             clientGetter,
+		kubeappsNamespace:        kubeappsNamespace,
 		globalPackagingNamespace: globalPackagingNamespace,
 		globalPackagingCluster:   globalPackagingCluster,
 		chartClientFactory:       &fake.ChartClientFactory{},
@@ -1202,7 +1208,7 @@ func TestParsePluginConfig(t *testing.T) {
 		{
 			name:                    "non existing plugin-config file",
 			pluginYAMLConf:          nil,
-			exp_versions_in_summary: pkgutils.VersionsInSummary{0, 0, 0},
+			exp_versions_in_summary: pkgutils.VersionsInSummary{Major: 0, Minor: 0, Patch: 0},
 			exp_error_str:           "no such file or directory",
 		},
 		{
@@ -1216,7 +1222,7 @@ core:
         minor: 2
         patch: 1
       `),
-			exp_versions_in_summary: pkgutils.VersionsInSummary{4, 2, 1},
+			exp_versions_in_summary: pkgutils.VersionsInSummary{Major: 4, Minor: 2, Patch: 1},
 			exp_error_str:           "",
 		},
 		{
@@ -1228,7 +1234,7 @@ core:
       versionsInSummary:
         major: 1
         `),
-			exp_versions_in_summary: pkgutils.VersionsInSummary{1, 0, 0},
+			exp_versions_in_summary: pkgutils.VersionsInSummary{Major: 1, Minor: 0, Patch: 0},
 			exp_error_str:           "",
 		},
 		{
@@ -2051,23 +2057,6 @@ func releaseForStub(t *testing.T, r releaseStub) *release.Release {
 			},
 		},
 		Config: config,
-	}
-}
-
-func chartAssetForPackage(pkg *corev1.InstalledPackageSummary) *models.Chart {
-	chartVersions := []models.ChartVersion{}
-	if pkg.LatestVersion.PkgVersion != "" {
-		chartVersions = append(chartVersions, models.ChartVersion{
-			Version: pkg.LatestVersion.PkgVersion,
-		})
-	}
-	chartVersions = append(chartVersions, models.ChartVersion{
-		Version: pkg.CurrentVersion.PkgVersion,
-	})
-
-	return &models.Chart{
-		Name:          pkg.Name,
-		ChartVersions: chartVersions,
 	}
 }
 

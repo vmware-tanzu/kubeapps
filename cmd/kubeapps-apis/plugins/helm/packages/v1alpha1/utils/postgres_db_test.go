@@ -4,7 +4,7 @@
 // Currently these tests will be skipped entirely unless the
 // ENABLE_PG_INTEGRATION_TESTS env var is set.
 // Run the local postgres with
-// docker run --publish 5432:5432 -e ALLOW_EMPTY_PASSWORD=yes bitnami/postgresql:14.2.0-debian-10-r88
+// docker run --publish 5432:5432 -e ALLOW_EMPTY_PASSWORD=yes bitnami/postgresql:14.4.0-debian-11-r13
 // in another terminal.
 package utils
 

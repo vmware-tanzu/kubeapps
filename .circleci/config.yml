@@ -5,61 +5,67 @@ version: 2.1
 parameters:
   GOLANG_VERSION:
     type: string
-    default: "1.18"
+    default: "1.18.4"
   NODE_VERSION:
     type: string
-    default: "16.15.0"
+    default: "16.16.0"
   RUST_VERSION:
     type: string
-    default: "1.60.0"
+    default: "1.62.0"
   DOCKER_VERSION:
     type: string
     default: "20.10.14"
+  DOCKER_REGISTRY_VERSION:
+    type: string
+    default: "2.8.1"
   HELM_VERSION_MIN:
     type: "string"
     default: "v3.2.0"
   HELM_VERSION_STABLE:
     type: "string"
-    default: "v3.8.1"
+    default: "v3.9.2"
   OLM_VERSION:
     type: "string"
-    default: "v0.21.1"
+    default: "v0.22.0"
+  CHARTMUSEUM_VERSION:
+    type: "string"
+    default: "3.9.0"
   KAPP_CONTROLLER_VERSION:
     type: "string"
-    default: "v0.36.1"
+    default: "v0.38.4"
   MKCERT_VERSION:
     type: "string"
     default: "v1.4.4"
   KUBECTL_VERSION:
     type: "string"
-    default: "v1.22.9"
+    default: "v1.22.12"
   GITHUB_VERSION:
     type: "string"
-    default: "2.9.0"
+    default: "2.14.2"
   SEMVER_VERSION:
     type: "string"
     default: "3.3.0"
   KIND_VERSION:
     type: "string"
-    default: "v0.12.0"
+    default: "v0.14.0"
   K8S_KIND_VERSION:
     type: "string"
-    default: "v1.22.7@sha256:1dfd72d193bf7da64765fd2f2898f78663b9ba366c2aa74be1fd7498a1873166"
+    default: "v1.22.9@sha256:8135260b959dfe320206eb36b3aeda9cffcb262f4b44cda6b33f7bb73f453105"
   POSTGRESQL_VERSION:
     type: "string"
-    default: "14.2.0-debian-10-r88"
+    default: "14.4.0-debian-11-r13"
   GKE_STABLE_VERSION:
     type: "string"
-    default: "1.20"
+    default: "1.21"
   GKE_REGULAR_VERSION:
     type: "string"
-    default: "1.21"
+    default: "1.22"
   DEFAULT_MACHINE_IMG:
     type: "string"
-    default: "ubuntu-2004:202201-02"
+    default: "ubuntu-2204:2022.04.1"
   IMAGES_TO_PUSH:
     type: "string"
-    default: "kubeapps/apprepository-controller kubeapps/dashboard kubeapps/asset-syncer kubeapps/kubeops kubeapps/pinniped-proxy kubeapps/kubeapps-apis"
+    default: "kubeapps/apprepository-controller kubeapps/dashboard kubeapps/asset-syncer kubeapps/pinniped-proxy kubeapps/kubeapps-apis"
   CI_BOT_USERNAME:
     type: "string"
     default: "kubeapps-bot"
@@ -102,6 +108,12 @@ parameters:
   README_GENERATOR_REPO:
     type: "string"
     default: "bitnami-labs/readme-generator-for-helm"
+  SRP_ENDPOINT:
+    type: "string"
+    default: "https://apigw.vmware.com/v1/s1/api/helix-beta"
+  SRP_VERSION:
+    type: "string"
+    default: "0.2.20220809201724-53aa841-38"
 
 ## Build conditions
 # Build on any branch or tag
@@ -149,6 +161,8 @@ workflows:
           <<: *build_always
       - build_pinniped_proxy:
           <<: *build_always
+      - build_e2e_runner:
+          <<: *build_always
       - local_e2e_tests:
           <<: *build_always
           matrix:
@@ -164,6 +178,7 @@ workflows:
             - build_go_images
             - build_dashboard
             - build_pinniped_proxy
+            - build_e2e_runner
             - sync_chart_from_bitnami
       - sync_chart_from_bitnami:
           <<: *build_on_main
@@ -177,6 +192,7 @@ workflows:
             - build_go_images
             - build_dashboard
             - build_pinniped_proxy
+            - build_e2e_runner
             - sync_chart_from_bitnami
       - GKE_REGULAR_VERSION_LATEST_RELEASE:
           <<: *build_on_tag_or_prerelease
@@ -188,6 +204,7 @@ workflows:
             - build_go_images
             - build_dashboard
             - build_pinniped_proxy
+            - build_e2e_runner
             - sync_chart_from_bitnami
       - GKE_STABLE_VERSION_MAIN:
           <<: *build_on_tag_or_prerelease
@@ -199,6 +216,7 @@ workflows:
             - build_go_images
             - build_dashboard
             - build_pinniped_proxy
+            - build_e2e_runner
             - sync_chart_from_bitnami
       - GKE_STABLE_VERSION_LATEST_RELEASE:
           <<: *build_on_tag_or_prerelease
@@ -210,11 +228,16 @@ workflows:
             - build_go_images
             - build_dashboard
             - build_pinniped_proxy
+            - build_e2e_runner
             - sync_chart_from_bitnami
       - push_images:
           <<: *build_on_main
           requires:
             - local_e2e_tests
+      - report_srp:
+          <<: *build_on_main
+          requires:
+            - push_images
       - sync_chart_to_bitnami:
           <<: *build_on_tag
           requires:
@@ -236,6 +259,7 @@ workflows:
 ## Definitions
 common_envars: &common_envars
   DOCKER_VERSION: << pipeline.parameters.DOCKER_VERSION >>
+  DOCKER_REGISTRY_VERSION: << pipeline.parameters.DOCKER_REGISTRY_VERSION >>
   GOLANG_VERSION: << pipeline.parameters.GOLANG_VERSION >>
   HELM_VERSION_MIN: << pipeline.parameters.HELM_VERSION_MIN >>
   HELM_VERSION_STABLE: << pipeline.parameters.HELM_VERSION_STABLE >>
@@ -323,7 +347,7 @@ install_cluster: &install_cluster
         kind create cluster --image kindest/node:${K8S_KIND_VERSION} --name kubeapps-ci --config=./site/content/docs/latest/reference/manifests/kubeapps-local-dev-apiserver-config.yaml --kubeconfig=${HOME}/.kube/kind-config-kubeapps-ci --retain --wait 120s &&
         kubectl --context kind-kubeapps-ci --kubeconfig ${HOME}/.kube/kind-config-kubeapps-ci apply -f ./site/content/docs/latest/reference/manifests/kubeapps-local-dev-users-rbac.yaml &&
 
-        kubectl --context kind-kubeapps-ci --kubeconfig ${HOME}/.kube/kind-config-kubeapps-ci apply -f ./site/content/docs/latest/reference/manifests/ingress-nginx-kind-with-large-proxy-buffers.yaml &&
+        kubectl --context kind-kubeapps-ci --kubeconfig ${HOME}/.kube/kind-config-kubeapps-ci apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/main/deploy/static/provider/kind/deploy.yaml &&
         sleep 5 &&
         kubectl --context kind-kubeapps-ci --kubeconfig ${HOME}/.kube/kind-config-kubeapps-ci wait --namespace ingress-nginx --for=condition=ready pod --selector=app.kubernetes.io/component=controller --timeout=120s &&
 
@@ -335,7 +359,7 @@ install_cluster: &install_cluster
         kind delete clusters kubeapps-ci || true
         kind create cluster --image kindest/node:${K8S_KIND_VERSION} --name kubeapps-ci --config=./site/content/docs/latest/reference/manifests/kubeapps-local-dev-apiserver-config.yaml --kubeconfig=${HOME}/.kube/kind-config-kubeapps-ci --retain --wait 120s || true &&
         kubectl --context kind-kubeapps-ci --kubeconfig ${HOME}/.kube/kind-config-kubeapps-ci apply -f ./site/content/docs/latest/reference/manifests/kubeapps-local-dev-users-rbac.yaml &&
-        kubectl --context kind-kubeapps-ci --kubeconfig ${HOME}/.kube/kind-config-kubeapps-ci apply -f ./site/content/docs/latest/reference/manifests/ingress-nginx-kind-with-large-proxy-buffers.yaml &&
+        kubectl --context kind-kubeapps-ci --kubeconfig ${HOME}/.kube/kind-config-kubeapps-ci apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/main/deploy/static/provider/kind/deploy.yaml &&
         sleep 5 &&
         kubectl wait --namespace ingress-nginx --for=condition=ready pod --selector=app.kubernetes.io/component=controller --timeout=120s &&
 
@@ -398,7 +422,8 @@ load_kind_images: &load_kind_images
     name: "Load needed images into Kind"
     command:
       ./script/load-kind-image.sh docker.io/bitnami/apache:2.4.48-debian-10-r74 kubeapps-ci kubeapps-ci-additional &&
-      ./script/load-kind-image.sh docker.io/bitnami/apache:2.4.48-debian-10-r75 kubeapps-ci kubeapps-ci-additional
+      ./script/load-kind-image.sh docker.io/bitnami/apache:2.4.48-debian-10-r75 kubeapps-ci kubeapps-ci-additional &&
+      ./script/load-kind-image.sh registry:$DOCKER_REGISTRY_VERSION kubeapps-ci kubeapps-ci-additional
 copy_apiserver_certificates: &copy_apiserver_certificates
   run:
     name: "Copy apiserver certificates"
@@ -501,7 +526,7 @@ run_e2e_tests: &run_e2e_tests
         DEV_TAG=${latest/v/}
         IMG_MODIFIER=""
       fi
-      if ./script/e2e-test.sh $USE_MULTICLUSTER_OIDC_ENV $OLM_VERSION $DEV_TAG $IMG_MODIFIER $DOCKER_USERNAME $DOCKER_PASSWORD $TEST_TIMEOUT_MINUTES $DEFAULT_DEX_IP $ADDITIONAL_CLUSTER_IP $KAPP_CONTROLLER_VERSION; then
+      if ./script/e2e-test.sh $USE_MULTICLUSTER_OIDC_ENV $OLM_VERSION $DEV_TAG $IMG_MODIFIER $TEST_TIMEOUT_MINUTES $DEFAULT_DEX_IP $ADDITIONAL_CLUSTER_IP $KAPP_CONTROLLER_VERSION $CHARTMUSEUM_VERSION; then
         # Test success
         echo "export TEST_RESULT=$?" >> $BASH_ENV
       else
@@ -511,6 +536,9 @@ run_e2e_tests: &run_e2e_tests
 gke_test: &gke_test
   docker:
     - image: cimg/go:<< pipeline.parameters.GOLANG_VERSION >>
+      auth:
+        username: $DOCKER_USERNAME
+        password: $DOCKER_PASSWORD
   steps:
     - checkout
     - run:
@@ -610,6 +638,9 @@ jobs:
       <<: *common_envars
     docker:
       - image: cimg/go:<< pipeline.parameters.GOLANG_VERSION >>
+        auth:
+          username: $DOCKER_USERNAME
+          password: $DOCKER_PASSWORD
     steps:
       - checkout
       - <<: *exports
@@ -634,6 +665,9 @@ jobs:
       NODE_OPTIONS: "--max-old-space-size=512"
     docker:
       - image: cimg/node:<< pipeline.parameters.NODE_VERSION >>
+        auth:
+          username: $DOCKER_USERNAME
+          password: $DOCKER_PASSWORD
     steps:
       - checkout
       - run:
@@ -651,6 +685,9 @@ jobs:
   test_pinniped_proxy:
     docker:
       - image: cimg/rust:<< pipeline.parameters.RUST_VERSION >>
+        auth:
+          username: $DOCKER_USERNAME
+          password: $DOCKER_PASSWORD
     steps:
       - checkout
       - run:
@@ -662,6 +699,9 @@ jobs:
       <<: *common_envars
     docker:
       - image: cimg/go:<< pipeline.parameters.GOLANG_VERSION >>
+        auth:
+          username: $DOCKER_USERNAME
+          password: $DOCKER_PASSWORD
     steps:
       - <<: *exports
       - checkout
@@ -673,14 +713,20 @@ jobs:
   build_go_images:
     docker:
       - image: cimg/go:<< pipeline.parameters.GOLANG_VERSION >>
+        auth:
+          username: $DOCKER_USERNAME
+          password: $DOCKER_PASSWORD
     working_directory: /home/circleci/go/src/github.com/vmware-tanzu/kubeapps
     environment:
       GOPATH: ${HOME}/.go_workspace
-      IMAGES: "kubeops apprepository-controller asset-syncer kubeapps-apis"
+      IMAGES: "apprepository-controller asset-syncer kubeapps-apis"
     <<: *build_images
   build_dashboard:
     docker:
       - image: cimg/go:<< pipeline.parameters.GOLANG_VERSION >>
+        auth:
+          username: $DOCKER_USERNAME
+          password: $DOCKER_PASSWORD
     environment:
       IMAGES: "dashboard"
     <<: *build_images
@@ -688,14 +734,54 @@ jobs:
     docker:
       # We're building the image in a docker container anyway so just re-use the golang image already in use.
       - image: cimg/go:<< pipeline.parameters.GOLANG_VERSION >>
+        auth:
+          username: $DOCKER_USERNAME
+          password: $DOCKER_PASSWORD
     environment:
       IMAGES: "pinniped-proxy"
     <<: *build_images
+  build_e2e_runner:
+    docker:
+      - image: cimg/go:<< pipeline.parameters.GOLANG_VERSION >>
+        auth:
+          username: $DOCKER_USERNAME
+          password: $DOCKER_PASSWORD
+    environment:
+      <<: *common_envars
+      IMAGE: "integration-tests"
+    steps:
+      - setup_remote_docker:
+          version: << pipeline.parameters.DOCKER_VERSION >>
+      - checkout
+      - <<: *exports
+      # TODO(agamez): build only if dependencies change
+      # See https://github.com/vmware-tanzu/kubeapps/pull/5083
+      - run:
+          name: Build and push CI image
+          command: |
+            mkdir -p images/
+            if [[ -n "${CIRCLE_TAG}" ]]; then
+              makeArgs="VERSION=${CIRCLE_TAG}"
+            fi
+            cd integration
+            make IMG_MODIFIER="$IMG_MODIFIER" IMAGE_TAG="${DEV_TAG}" $makeArgs kubeapps/${IMAGE}
+            if [[ -n "${DOCKER_USERNAME}" && -n "${DOCKER_PASSWORD}" ]]; then
+              docker login -u="${DOCKER_USERNAME}" -p="${DOCKER_PASSWORD}"
+              docker push kubeapps/${IMAGE}${IMG_MODIFIER}:${DEV_TAG}
+            fi
+            docker save kubeapps/${IMAGE}${IMG_MODIFIER}:${DEV_TAG} > ../images/${IMAGE}${IMG_MODIFIER}:${DEV_TAG}
+      - persist_to_workspace:
+          root: images
+          paths:
+            - "*"
   release:
     environment:
       <<: *common_envars
     docker:
       - image: cimg/go:<< pipeline.parameters.GOLANG_VERSION >>
+        auth:
+          username: $DOCKER_USERNAME
+          password: $DOCKER_PASSWORD
     steps:
       - checkout
       - <<: *install_github
@@ -750,6 +836,9 @@ jobs:
       <<: *common_envars
     docker:
       - image: cimg/node:<< pipeline.parameters.NODE_VERSION >>
+        auth:
+          username: $DOCKER_USERNAME
+          password: $DOCKER_PASSWORD
     steps:
       - checkout
       - <<: *install_github
@@ -782,6 +871,9 @@ jobs:
       <<: *common_envars
     docker:
       - image: cimg/node:<< pipeline.parameters.NODE_VERSION >>
+        auth:
+          username: $DOCKER_USERNAME
+          password: $DOCKER_PASSWORD
     steps:
       - checkout
       - <<: *install_github
@@ -812,9 +904,78 @@ jobs:
           name: Run the check_upstream_chart script
           command: |
             ./script/chart_upstream_checker.sh << pipeline.parameters.CI_BOT_USERNAME >> << pipeline.parameters.CI_BOT_EMAIL >> << pipeline.parameters.CI_BOT_GPG >> << pipeline.parameters.CI_BOT_FORKED_CHARTS_DEPLOYKEY_FILENAME >> << pipeline.parameters.CHARTS_REPO_ORIGINAL >> << pipeline.parameters.BRANCH_CHARTS_REPO_ORIGINAL >> << pipeline.parameters.CHARTS_REPO_FORKED >> << pipeline.parameters.BRANCH_CHARTS_REPO_FORKED >> << pipeline.parameters.KUBEAPPS_REPO >> << pipeline.parameters.BRANCH_KUBEAPPS_REPO >> << pipeline.parameters.README_GENERATOR_REPO >>
+  report_srp:
+    environment:
+      <<: *common_envars
+    docker:
+      - image: cimg/go:<< pipeline.parameters.GOLANG_VERSION >>
+        auth:
+          username: $DOCKER_USERNAME
+          password: $DOCKER_PASSWORD
+    steps:
+      - checkout
+      - run:
+          name: Init submodules
+          command: |
+            git submodule update --init --recursive
+      - run:
+          name: Install and configure the SRP tool
+          command: |
+            wget https://vmwaresaas.jfrog.io/artifactory/srp-tools/srpcli/<< pipeline.parameters.SRP_VERSION >>/linux/srp
+            sudo chmod +x srp
+            sudo mv ./srp /usr/local/bin/
+            srp --version
+            srp config --srp-endpoint << pipeline.parameters.SRP_ENDPOINT >>
+            srp config auth --client-id $KUBEAPPS_SRP_CLIENT_ID --client-secret $KUBEAPPS_SRP_CLIENT_SECRET
+      # - run:
+      #     name: Install and configure the SRP observer tool
+      #     command: |
+      #       wget https://s3.amazonaws.com/srp-cli/linux-observer-latest.tar.gz
+      #       tar zxf linux-observer-latest.tar.gz
+      - run:
+          name: Generate the "source provenance" file
+          command: |
+            # This UID should have been already set in the internal tool.
+            PROV_OBJ_UID="uid.obj.build.circleci(instance='circleci.com',type='<< pipeline.project.type >>',namespace='${CIRCLE_PROJECT_USERNAME}/${CIRCLE_PROJECT_REPONAME}',branch='${CIRCLE_BRANCH}',commit_id='${CIRCLE_SHA1}',build_id='<< pipeline.number >>/${CIRCLE_WORKFLOW_ID}/${CIRCLE_BUILD_NUM}')"
+            echo "PROV_OBJ_UID=${PROV_OBJ_UID}"
+            # Using CIRCLE_TAG as the version if defined (i.e., when releasing a version); use the commit SHA otherwise.
+            VERSION=$([ -z "${CIRCLE_TAG}" ] && echo "${CIRCLE_SHA1}" || echo "${CIRCLE_TAG}")
+            srp provenance source --verbose --scm-type git --name "kubeapps" --path ./ --saveto ./source-provenance.json --comp-uid "${PROV_OBJ_UID}" --build-number "${CIRCLE_WORKFLOW_ID}" --version "${VERSION}" --all-ephemeral true --build-type release
+            cat ./source-provenance.json
+      - store_artifacts:
+          path: source-provenance.json
+      # TODO(agamez): we will need to create the "network provenance" file soon.
+      # - run:
+      #     name: Generate the "network provenance" file
+      #     command: |
+      #       JAVA_HOME="/dev/null"
+      #       mkdir provenance-go
+      #       ./bin/observer_agent -t -o ./provenance-go -- go mod download -x
+      #       cat provenance-go/provenance.json
+      #       mkdir provenance-yarn
+      #       ./bin/observer_agent -t -o ./provenance-yarn -- yarn install --cwd=dashboard --frozen-lockfile
+      #       cat provenance-yarn/provenance.json
+      #       jq -s 'flatten | group_by(.artifact_repositories) | map(reduce .[] as $x ({}; . * $x))'  provenance-go/provenance.json  provenance-yarn/provenance.json > network-provenance.json
+      #       cat network-provenance.json
+      # - store_artifacts:
+      #     path: network-provenance.json
+      # - run:
+      #     name: Merge the provenance files
+      #     command: |
+      #       srp provenance merge --verbose --source ./source-provenance.json --network ./network-provenance.json --saveto ./merged-provenance.json
+      # - store_artifacts:
+      #     path: merged-provenance.json
+      - run:
+          name: Validate and submit the provenance files to the SRP Metadata service
+          command: |
+            srp uid validate "uid.mtd.provenance_2_5.fragment(obj_uid=uid.obj.build.circleci(instance='circleci.com',type='<< pipeline.project.type >>',namespace='${CIRCLE_PROJECT_USERNAME}/${CIRCLE_PROJECT_REPONAME}',branch='${CIRCLE_BRANCH}',commit_id='${CIRCLE_SHA1}',build_id='<< pipeline.number >>/${CIRCLE_WORKFLOW_ID}/${CIRCLE_BUILD_NUM}'),revision='')"
+            srp metadata submit --verbose --path ./source-provenance.json
   push_images:
     docker:
       - image: cimg/go:<< pipeline.parameters.GOLANG_VERSION >>
+        auth:
+          username: $DOCKER_USERNAME
+          password: $DOCKER_PASSWORD
     steps:
       - setup_remote_docker:
           version: << pipeline.parameters.DOCKER_VERSION >>

@@ -8,6 +8,10 @@ import InfoCard from "components/InfoCard/InfoCard";
 import Alert from "components/js/Alert";
 import LoadingWrapper from "components/LoadingWrapper";
 import { AvailablePackageSummary, Context } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
+import {
+  PackageRepositoryDetail,
+  PackageRepositorySummary,
+} from "gen/kubeappsapis/core/packages/v1alpha1/repositories";
 import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins";
 import { createMemoryHistory } from "history";
 import React from "react";
@@ -17,14 +21,9 @@ import * as ReactRouter from "react-router";
 import { MemoryRouter, Route, Router } from "react-router-dom";
 import { IConfigState } from "reducers/config";
 import { IOperatorsState } from "reducers/operators";
-import { IAppRepositoryState } from "reducers/repos";
+import { IPackageRepositoryState } from "reducers/repos";
 import { getStore, initialState, mountWrapper } from "shared/specs/mountWrapper";
-import {
-  IAppRepository,
-  IPackageState,
-  IClusterServiceVersion,
-  IStoreState,
-} from "../../shared/types";
+import { IClusterServiceVersion, IPackageState, IStoreState } from "../../shared/types";
 import SearchFilter from "../SearchFilter/SearchFilter";
 import Catalog, { filterNames } from "./Catalog";
 import CatalogItems from "./CatalogItems";
@@ -40,13 +39,9 @@ const defaultPackageState = {
   size: 20,
 } as IPackageState;
 const defaultProps = {
-  packages: defaultPackageState,
-  repo: "",
-  filter: {},
   cluster: initialState.config.kubeappsCluster,
   namespace: "kubeapps",
   kubeappsNamespace: "kubeapps",
-  csvs: [],
 };
 const availablePkgSummary1: AvailablePackageSummary = {
   name: "foo",
@@ -99,7 +94,12 @@ const csv = {
 const defaultState = {
   packages: defaultPackageState,
   operators: { csvs: [] } as Partial<IOperatorsState>,
-  repos: { repos: [] } as Partial<IAppRepositoryState>,
+  repos: {
+    reposSummaries: [],
+    isFetching: false,
+    repoDetail: {} as PackageRepositoryDetail,
+    errors: [],
+  } as IPackageRepositoryState,
   config: {
     kubeappsCluster: defaultProps.cluster,
     kubeappsNamespace: defaultProps.kubeappsNamespace,
@@ -190,8 +190,8 @@ it("should render a message if there are no elements in the catalog and the fetc
   const wrapper = mountWrapper(
     getStore({
       ...defaultState,
-      packages: { hasFinishedFetching: true } as IPackageState,
-    }),
+      packages: { hasFinishedFetching: true },
+    } as Partial<IStoreState>),
     <Catalog />,
   );
   wrapper.setProps({ searchFilter: "" });
@@ -202,7 +202,7 @@ it("should render a message if there are no elements in the catalog and the fetc
 
 it("should render a spinner if there are no elements but it's still fetching", () => {
   const wrapper = mountWrapper(
-    getStore({ ...defaultState, packages: { hasFinishedFetching: false } }),
+    getStore({ ...defaultState, packages: { hasFinishedFetching: false } } as Partial<IStoreState>),
     <Catalog />,
   );
   expect(wrapper.find(LoadingWrapper)).toExist();
@@ -210,7 +210,7 @@ it("should render a spinner if there are no elements but it's still fetching", (
 
 it("should not render a spinner if there are no elements and it finished fetching", () => {
   const wrapper = mountWrapper(
-    getStore({ ...defaultState, packages: { hasFinishedFetching: true } }),
+    getStore({ ...defaultState, packages: { hasFinishedFetching: true } } as Partial<IStoreState>),
     <Catalog />,
   );
   expect(wrapper.find(LoadingWrapper)).not.toExist();
@@ -218,7 +218,10 @@ it("should not render a spinner if there are no elements and it finished fetchin
 
 it("should render a spinner if there already pending elements", () => {
   const wrapper = mountWrapper(
-    getStore({ ...populatedState, packages: { hasFinishedFetching: false } }),
+    getStore({
+      ...populatedState,
+      packages: { hasFinishedFetching: false },
+    } as Partial<IStoreState>),
     <Catalog />,
   );
   expect(wrapper.find(LoadingWrapper)).toExist();
@@ -226,7 +229,10 @@ it("should render a spinner if there already pending elements", () => {
 
 it("should not render a message if only operators are selected", () => {
   const wrapper = mountWrapper(
-    getStore({ ...populatedState, packages: { hasFinishedFetching: true } }),
+    getStore({
+      ...populatedState,
+      packages: { hasFinishedFetching: true },
+    } as Partial<IStoreState>),
     <MemoryRouter initialEntries={[routePathParam + "?Operators=bar"]}>
       <Route path={routePath}>
         <Catalog />
@@ -238,7 +244,10 @@ it("should not render a message if only operators are selected", () => {
 
 it("should not render a message if there are no more elements", () => {
   const wrapper = mountWrapper(
-    getStore({ ...populatedState, packages: { hasFinishedFetching: true } }),
+    getStore({
+      ...populatedState,
+      packages: { hasFinishedFetching: true },
+    } as Partial<IStoreState>),
     <Catalog />,
   );
   const message = wrapper.find(".end-page-message");
@@ -247,7 +256,10 @@ it("should not render a message if there are no more elements", () => {
 
 it("should not render a message if there are no more elements but it's searching", () => {
   const wrapper = mountWrapper(
-    getStore({ ...populatedState, packages: { hasFinishedFetching: true } }),
+    getStore({
+      ...populatedState,
+      packages: { hasFinishedFetching: true },
+    } as Partial<IStoreState>),
     <MemoryRouter initialEntries={[routePathParam + "?Search=bar"]}>
       <Route path={routePath}>
         <Catalog />
@@ -260,7 +272,10 @@ it("should not render a message if there are no more elements but it's searching
 
 it("should render the scroll handler if not finished", () => {
   const wrapper = mountWrapper(
-    getStore({ ...populatedState, packages: { hasFinishedFetching: false } }),
+    getStore({
+      ...populatedState,
+      packages: { hasFinishedFetching: false },
+    } as Partial<IStoreState>),
     <Catalog />,
   );
   const scroll = wrapper.find(".scroll-handler");
@@ -270,7 +285,10 @@ it("should render the scroll handler if not finished", () => {
 
 it("should not render the scroll handler if finished", () => {
   const wrapper = mountWrapper(
-    getStore({ ...populatedState, packages: { hasFinishedFetching: true } }),
+    getStore({
+      ...populatedState,
+      packages: { hasFinishedFetching: true },
+    } as Partial<IStoreState>),
     <Catalog />,
   );
   const scroll = wrapper.find(".scroll-handler");
@@ -446,6 +464,33 @@ describe("filters by application type", () => {
 });
 
 describe("pagination and package fetching", () => {
+  let spyOnUseRef: jest.SpyInstance;
+  const refFalse = { current: {} };
+  const refTrue = { current: {} };
+  Object.defineProperty(refFalse, "current", {
+    set(_current) {
+      // do nothing
+    },
+    get() {
+      return false;
+    },
+  });
+  Object.defineProperty(refTrue, "current", {
+    set(_current) {
+      // do nothing
+    },
+    get() {
+      return true;
+    },
+  });
+
+  beforeEach(() => {
+    spyOnUseRef = jest.spyOn(React, "useRef").mockReturnValue(refFalse);
+  });
+  afterEach(() => {
+    spyOnUseRef.mockRestore();
+  });
+
   it("sets the initial state page to 0 before fetching packages", () => {
     const fetchAvailablePackageSummaries = jest.fn();
     actions.availablepackages.fetchAvailablePackageSummaries = fetchAvailablePackageSummaries;
@@ -478,9 +523,11 @@ describe("pagination and package fetching", () => {
     );
   });
 
-  it("sets the state page when fetching packages", () => {
+  it("avoids re-fetching if isFetching=true", () => {
+    jest.useFakeTimers();
     const fetchAvailablePackageSummaries = jest.fn();
     actions.availablepackages.fetchAvailablePackageSummaries = fetchAvailablePackageSummaries;
+    spyOnUseRef = jest.spyOn(React, "useRef").mockReturnValue(refTrue);
 
     const packages = {
       ...defaultPackageState,
@@ -496,17 +543,32 @@ describe("pagination and package fetching", () => {
         </Route>
       </MemoryRouter>,
     );
+    jest.advanceTimersByTime(2000);
 
-    expect(wrapper.find(CatalogItems).prop("isFirstPage")).toBe(false);
-    expect(wrapper.find(PackageCatalogItem).length).toBe(1);
-    expect(fetchAvailablePackageSummaries).toHaveBeenCalledWith(
-      "default-cluster",
-      "kubeapps",
-      "",
-      "",
-      20,
-      "",
+    expect(wrapper.find(CatalogItems).prop("isFirstPage")).toBe(true);
+    expect(fetchAvailablePackageSummaries).not.toBeCalled();
+  });
+
+  it("disables the filtergroups when isFetching", () => {
+    const packages = {
+      ...defaultPackageState,
+      hasFinishedFetching: true,
+      isFetching: true,
+      items: [availablePkgSummary1, availablePkgSummary2],
+    } as any;
+    const wrapper = mountWrapper(
+      getStore({ ...populatedState, packages: packages } as IStoreState),
+      <MemoryRouter initialEntries={[routePathParam]}>
+        <Route path={routePath}>
+          <Catalog />
+        </Route>
+      </MemoryRouter>,
     );
+
+    wrapper
+      .find(FilterGroup)
+      .find("input")
+      .forEach(i => expect(i.prop("disabled")).toBe(true));
   });
 
   it("items are translated to CatalogItems after fetching packages", () => {
@@ -624,7 +686,7 @@ describe("filters by package repository", () => {
     spyOnUseDispatch = jest.spyOn(ReactRedux, "useDispatch").mockReturnValue(mockDispatch);
     // Can't just assign a mock fn to actions.repos.fetchRepos because it is (correctly) exported
     // as a const fn.
-    fetchRepos = jest.spyOn(actions.repos, "fetchRepos").mockImplementation(() => {
+    fetchRepos = jest.spyOn(actions.repos, "fetchRepoSummaries").mockImplementation(() => {
       return jest.fn();
     });
   });
@@ -665,8 +727,10 @@ describe("filters by package repository", () => {
     const wrapper = mountWrapper(
       getStore({
         ...populatedState,
-        repos: { repos: [{ metadata: { name: "foo" } } as IAppRepository] },
-      }),
+        repos: {
+          reposSummaries: [{ name: "foo" } as PackageRepositorySummary],
+        },
+      } as Partial<IStoreState>),
       <MemoryRouter initialEntries={[routePathParam]}>
         <Route path={routePath}>
           <Catalog />
@@ -693,8 +757,10 @@ describe("filters by package repository", () => {
     const wrapper = mountWrapper(
       getStore({
         ...populatedState,
-        repos: { repos: [{ metadata: { name: "foo" } } as IAppRepository] },
-      }),
+        repos: {
+          reposSummaries: [{ name: "foo" } as PackageRepositorySummary],
+        },
+      } as Partial<IStoreState>),
       <MemoryRouter initialEntries={[`/c/${defaultProps.cluster}/ns/my-ns/catalog`]}>
         <Route path={routePath}>
           <Catalog />
@@ -721,8 +787,8 @@ describe("filters by package repository", () => {
     mountWrapper(
       getStore({
         ...populatedState,
-        repos: { repos: [{ metadata: { name: "foo" } } as IAppRepository] },
-      }),
+        repos: { ...populatedState.repos, repos: [{ name: "foo" } as PackageRepositorySummary] },
+      } as Partial<IStoreState>),
       <MemoryRouter
         initialEntries={[
           `/c/${defaultProps.cluster}/ns/${initialState.config.globalReposNamespace}/catalog`,
@@ -735,15 +801,15 @@ describe("filters by package repository", () => {
     );
 
     // Called without the boolean `true` option to additionally fetch global repos.
-    expect(fetchRepos).toHaveBeenCalledWith(initialState.config.globalReposNamespace);
+    expect(fetchRepos).toHaveBeenCalledWith("");
   });
 
   it("fetches from the global repos namespace for other clusters", () => {
     mountWrapper(
       getStore({
         ...populatedState,
-        repos: { repos: [{ metadata: { name: "foo" } } as IAppRepository] },
-      }),
+        repos: { ...populatedState.repos, repos: [{ name: "foo" } as PackageRepositorySummary] },
+      } as Partial<IStoreState>),
       <MemoryRouter initialEntries={[`/c/other-cluster/ns/my-ns/catalog`]}>
         <Route path={routePath}>
           <Catalog />
@@ -752,7 +818,7 @@ describe("filters by package repository", () => {
     );
 
     // Only the global repos should have been fetched.
-    expect(fetchRepos).toHaveBeenCalledWith(initialState.config.globalReposNamespace);
+    expect(fetchRepos).toHaveBeenCalledWith("");
   });
 });
 
@@ -791,7 +857,7 @@ describe("filters by operator provider", () => {
       getStore({
         ...populatedState,
         operators: { csvs: [csv, csv2] },
-      }),
+      } as Partial<IStoreState>),
       <MemoryRouter initialEntries={[routePathParam]}>
         <Route path={routePath}>
           <Catalog />
@@ -815,7 +881,7 @@ describe("filters by operator provider", () => {
       getStore({
         ...populatedState,
         operators: { csvs: [csv, csv2] },
-      }),
+      } as Partial<IStoreState>),
       <MemoryRouter initialEntries={[routePathParam]}>
         <Route path={routePath}>
           <Catalog />
@@ -839,7 +905,7 @@ describe("filters by operator provider", () => {
       getStore({
         ...populatedState,
         operators: { csvs: [csv, csv2] },
-      }),
+      } as Partial<IStoreState>),
       <MemoryRouter initialEntries={[routePathParam + "?Provider=you"]}>
         <Route path={routePath}>
           <Catalog />
@@ -933,7 +999,10 @@ describe("filters by category", () => {
       },
     } as any;
     const wrapper = mountWrapper(
-      getStore({ ...populatedState, operators: { csvs: [csv, csvWithCat] } }),
+      getStore({
+        ...populatedState,
+        operators: { csvs: [csv, csvWithCat] },
+      } as Partial<IStoreState>),
       <MemoryRouter initialEntries={[routePathParam + "?Category=E-Learning"]}>
         <Route path={routePath}>
           <Catalog />
@@ -954,7 +1023,10 @@ describe("filters by category", () => {
       },
     } as any;
     const wrapper = mountWrapper(
-      getStore({ ...populatedState, operators: { csvs: [csv, csvWithCat] } }),
+      getStore({
+        ...populatedState,
+        operators: { csvs: [csv, csvWithCat] },
+      } as Partial<IStoreState>),
       <MemoryRouter
         initialEntries={[routePathParam + "?Category=Developer%20Tools,Infrastructure"]}
       >

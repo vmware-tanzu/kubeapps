@@ -23,7 +23,7 @@ import { fromCRD } from "shared/ResourceRef";
 import { IClusterServiceVersionCRD, IKind, IResource, IStoreState } from "shared/types";
 import { app } from "shared/url";
 import ApplicationStatus from "../../containers/ApplicationStatusContainer";
-import placeholder from "../../placeholder.png";
+import placeholder from "icons/placeholder.svg";
 import AccessURLTable from "../AppView/AccessURLTable/AccessURLTable";
 import AppValues from "../AppView/AppValues/AppValues";
 import ResourceTabs from "../AppView/ResourceTabs";

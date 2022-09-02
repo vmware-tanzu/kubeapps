@@ -66,7 +66,8 @@ func Test_extractFilesFromTarball(t *testing.T) {
 
 	t.Run("not a tarball", func(t *testing.T) {
 		b := make([]byte, 4)
-		rand.Read(b)
+		_, err := rand.Read(b)
+		assert.NoError(t, err)
 		r := bytes.NewReader(b)
 		tarf := tar.NewReader(r)
 		values := "values"

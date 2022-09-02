@@ -1,17 +1,17 @@
 // Copyright 2018-2022 the Kubeapps contributors.
 // SPDX-License-Identifier: Apache-2.0
 
-import configureMockStore from "redux-mock-store";
-import thunk from "redux-thunk";
-import { Kube } from "shared/Kube";
-import { IKubeState, IResource } from "shared/types";
-import { getType } from "typesafe-actions";
-import actions from ".";
 import {
   InstalledPackageReference,
   ResourceRef as APIResourceRef,
 } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
 import { GetResourcesResponse } from "gen/kubeappsapis/plugins/resources/v1alpha1/resources";
+import configureMockStore from "redux-mock-store";
+import thunk from "redux-thunk";
+import { Kube } from "shared/Kube";
+import { IKubeState, IResource, IStoreState } from "shared/types";
+import { getType } from "typesafe-actions";
+import actions from ".";
 
 const mockStore = configureMockStore([thunk]);
 
@@ -22,23 +22,13 @@ const makeStore = (operatorsEnabled: boolean) => {
     kinds: {},
   };
   const config = operatorsEnabled ? { featureFlags: { operators: true } } : {};
-  return mockStore({ kube: state, config: config });
+  return mockStore({ kube: state, config: config } as Partial<IStoreState>);
 };
 
 let store: any;
 
 beforeEach(() => {
   store = makeStore(false);
-});
-
-const getResourceOrig = Kube.getResource;
-let getResourceMock: jest.Mock;
-beforeEach(() => {
-  getResourceMock = jest.fn(() => []);
-  Kube.getResource = getResourceMock;
-});
-afterEach(() => {
-  Kube.getResource = getResourceOrig;
 });
 
 describe("getResourceKinds", () => {

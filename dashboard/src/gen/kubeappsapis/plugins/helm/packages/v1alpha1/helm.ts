@@ -1,7 +1,5 @@
 /* eslint-disable */
-import Long from "long";
 import { grpc } from "@improbable-eng/grpc-web";
-import * as _m0 from "protobufjs/minimal";
 import {
   InstalledPackageReference,
   GetAvailablePackageSummariesRequest,
@@ -22,7 +20,7 @@ import {
   UpdateInstalledPackageResponse,
   DeleteInstalledPackageResponse,
   GetInstalledPackageResourceRefsResponse,
-} from "../../../../../kubeappsapis/core/packages/v1alpha1/packages";
+} from "../../../../core/packages/v1alpha1/packages";
 import {
   AddPackageRepositoryRequest,
   GetPackageRepositoryDetailRequest,
@@ -34,8 +32,10 @@ import {
   GetPackageRepositorySummariesResponse,
   UpdatePackageRepositoryResponse,
   DeletePackageRepositoryResponse,
-} from "../../../../../kubeappsapis/core/packages/v1alpha1/repositories";
+  DockerCredentials,
+} from "../../../../core/packages/v1alpha1/repositories";
 import { BrowserHeaders } from "browser-headers";
+import * as _m0 from "protobufjs/minimal";
 
 export const protobufPackage = "kubeappsapis.plugins.helm.packages.v1alpha1";
 
@@ -92,16 +92,26 @@ export interface SetUserManagedSecretsResponse {
   value: boolean;
 }
 
+export interface ImagesPullSecret {
+  /** docker credentials secret reference */
+  secretRef: string | undefined;
+  /** docker credentials data */
+  credentials?: DockerCredentials | undefined;
+}
+
 /**
- * RepositoryCustomDetails
+ * HelmPackageRepositoryCustomDetail
  *
  * Custom details for a Helm repository
  */
-export interface RepositoryCustomDetails {
-  dockerRegistrySecrets: string[];
+export interface HelmPackageRepositoryCustomDetail {
+  /** docker registry credentials for pull secrets */
+  imagesPullSecret?: ImagesPullSecret;
+  /** list of oci repositories */
   ociRepositories: string[];
+  /** filter rule to apply to the repository */
   filterRule?: RepositoryFilterRule;
-  /** Perform repository validation test */
+  /** whether to perform validation on the repository */
   performValidation: boolean;
 }
 
@@ -111,7 +121,9 @@ export interface RepositoryCustomDetails {
  * JQ expression for filtering packages
  */
 export interface RepositoryFilterRule {
+  /** jq string expression */
   jq: string;
+  /** map of variables */
   variables: { [key: string]: string };
 }
 
@@ -423,19 +435,88 @@ export const SetUserManagedSecretsResponse = {
   },
 };
 
-function createBaseRepositoryCustomDetails(): RepositoryCustomDetails {
+function createBaseImagesPullSecret(): ImagesPullSecret {
+  return { secretRef: undefined, credentials: undefined };
+}
+
+export const ImagesPullSecret = {
+  encode(message: ImagesPullSecret, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
+    if (message.secretRef !== undefined) {
+      writer.uint32(10).string(message.secretRef);
+    }
+    if (message.credentials !== undefined) {
+      DockerCredentials.encode(message.credentials, writer.uint32(18).fork()).ldelim();
+    }
+    return writer;
+  },
+
+  decode(input: _m0.Reader | Uint8Array, length?: number): ImagesPullSecret {
+    const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseImagesPullSecret();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1:
+          message.secretRef = reader.string();
+          break;
+        case 2:
+          message.credentials = DockerCredentials.decode(reader, reader.uint32());
+          break;
+        default:
+          reader.skipType(tag & 7);
+          break;
+      }
+    }
+    return message;
+  },
+
+  fromJSON(object: any): ImagesPullSecret {
+    return {
+      secretRef: isSet(object.secretRef) ? String(object.secretRef) : undefined,
+      credentials: isSet(object.credentials)
+        ? DockerCredentials.fromJSON(object.credentials)
+        : undefined,
+    };
+  },
+
+  toJSON(message: ImagesPullSecret): unknown {
+    const obj: any = {};
+    message.secretRef !== undefined && (obj.secretRef = message.secretRef);
+    message.credentials !== undefined &&
+      (obj.credentials = message.credentials
+        ? DockerCredentials.toJSON(message.credentials)
+        : undefined);
+    return obj;
+  },
+
+  fromPartial<I extends Exact<DeepPartial<ImagesPullSecret>, I>>(object: I): ImagesPullSecret {
+    const message = createBaseImagesPullSecret();
+    message.secretRef = object.secretRef ?? undefined;
+    message.credentials =
+      object.credentials !== undefined && object.credentials !== null
+        ? DockerCredentials.fromPartial(object.credentials)
+        : undefined;
+    return message;
+  },
+};
+
+function createBaseHelmPackageRepositoryCustomDetail(): HelmPackageRepositoryCustomDetail {
   return {
-    dockerRegistrySecrets: [],
+    imagesPullSecret: undefined,
     ociRepositories: [],
     filterRule: undefined,
     performValidation: false,
   };
 }
 
-export const RepositoryCustomDetails = {
-  encode(message: RepositoryCustomDetails, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
-    for (const v of message.dockerRegistrySecrets) {
-      writer.uint32(10).string(v!);
+export const HelmPackageRepositoryCustomDetail = {
+  encode(
+    message: HelmPackageRepositoryCustomDetail,
+    writer: _m0.Writer = _m0.Writer.create(),
+  ): _m0.Writer {
+    if (message.imagesPullSecret !== undefined) {
+      ImagesPullSecret.encode(message.imagesPullSecret, writer.uint32(10).fork()).ldelim();
     }
     for (const v of message.ociRepositories) {
       writer.uint32(18).string(v!);
@@ -449,15 +530,15 @@ export const RepositoryCustomDetails = {
     return writer;
   },
 
-  decode(input: _m0.Reader | Uint8Array, length?: number): RepositoryCustomDetails {
+  decode(input: _m0.Reader | Uint8Array, length?: number): HelmPackageRepositoryCustomDetail {
     const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
     let end = length === undefined ? reader.len : reader.pos + length;
-    const message = createBaseRepositoryCustomDetails();
+    const message = createBaseHelmPackageRepositoryCustomDetail();
     while (reader.pos < end) {
       const tag = reader.uint32();
       switch (tag >>> 3) {
         case 1:
-          message.dockerRegistrySecrets.push(reader.string());
+          message.imagesPullSecret = ImagesPullSecret.decode(reader, reader.uint32());
           break;
         case 2:
           message.ociRepositories.push(reader.string());
@@ -476,11 +557,11 @@ export const RepositoryCustomDetails = {
     return message;
   },
 
-  fromJSON(object: any): RepositoryCustomDetails {
+  fromJSON(object: any): HelmPackageRepositoryCustomDetail {
     return {
-      dockerRegistrySecrets: Array.isArray(object?.dockerRegistrySecrets)
-        ? object.dockerRegistrySecrets.map((e: any) => String(e))
-        : [],
+      imagesPullSecret: isSet(object.imagesPullSecret)
+        ? ImagesPullSecret.fromJSON(object.imagesPullSecret)
+        : undefined,
       ociRepositories: Array.isArray(object?.ociRepositories)
         ? object.ociRepositories.map((e: any) => String(e))
         : [],
@@ -493,13 +574,12 @@ export const RepositoryCustomDetails = {
     };
   },
 
-  toJSON(message: RepositoryCustomDetails): unknown {
+  toJSON(message: HelmPackageRepositoryCustomDetail): unknown {
     const obj: any = {};
-    if (message.dockerRegistrySecrets) {
-      obj.dockerRegistrySecrets = message.dockerRegistrySecrets.map(e => e);
-    } else {
-      obj.dockerRegistrySecrets = [];
-    }
+    message.imagesPullSecret !== undefined &&
+      (obj.imagesPullSecret = message.imagesPullSecret
+        ? ImagesPullSecret.toJSON(message.imagesPullSecret)
+        : undefined);
     if (message.ociRepositories) {
       obj.ociRepositories = message.ociRepositories.map(e => e);
     } else {
@@ -513,11 +593,14 @@ export const RepositoryCustomDetails = {
     return obj;
   },
 
-  fromPartial<I extends Exact<DeepPartial<RepositoryCustomDetails>, I>>(
+  fromPartial<I extends Exact<DeepPartial<HelmPackageRepositoryCustomDetail>, I>>(
     object: I,
-  ): RepositoryCustomDetails {
-    const message = createBaseRepositoryCustomDetails();
-    message.dockerRegistrySecrets = object.dockerRegistrySecrets?.map(e => e) || [];
+  ): HelmPackageRepositoryCustomDetail {
+    const message = createBaseHelmPackageRepositoryCustomDetail();
+    message.imagesPullSecret =
+      object.imagesPullSecret !== undefined && object.imagesPullSecret !== null
+        ? ImagesPullSecret.fromPartial(object.imagesPullSecret)
+        : undefined;
     message.ociRepositories = object.ociRepositories?.map(e => e) || [];
     message.filterRule =
       object.filterRule !== undefined && object.filterRule !== null
@@ -1352,6 +1435,7 @@ export class GrpcWebImpl {
 
     debug?: boolean;
     metadata?: grpc.Metadata;
+    upStreamRetryCodes?: number[];
   };
 
   constructor(
@@ -1361,6 +1445,7 @@ export class GrpcWebImpl {
 
       debug?: boolean;
       metadata?: grpc.Metadata;
+      upStreamRetryCodes?: number[];
     },
   ) {
     this.host = host;
@@ -1418,11 +1503,6 @@ type KeysOfUnion<T> = T extends T ? keyof T : never;
 export type Exact<P, I extends P> = P extends Builtin
   ? P
   : P & { [K in keyof P]: Exact<P[K], I[K]> } & Record<Exclude<keyof I, KeysOfUnion<P>>, never>;
-
-if (_m0.util.Long !== Long) {
-  _m0.util.Long = Long as any;
-  _m0.configure();
-}
 
 function isObject(value: any): boolean {
   return typeof value === "object" && value !== null;

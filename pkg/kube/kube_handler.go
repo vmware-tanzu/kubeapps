@@ -8,22 +8,12 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
-	"io"
-	"io/ioutil"
-	"math"
-	"net/http"
-	"net/url"
-	"os"
-	"path"
-	"path/filepath"
-	"strings"
-	"sync"
-
 	"github.com/vmware-tanzu/kubeapps/cmd/apprepository-controller/pkg/apis/apprepository/v1alpha1"
 	apprepoclientset "github.com/vmware-tanzu/kubeapps/cmd/apprepository-controller/pkg/client/clientset/versioned"
 	v1alpha1typed "github.com/vmware-tanzu/kubeapps/cmd/apprepository-controller/pkg/client/clientset/versioned/typed/apprepository/v1alpha1"
 	httpclient "github.com/vmware-tanzu/kubeapps/pkg/http-client"
-	authorizationapi "k8s.io/api/authorization/v1"
+	"io"
+	"io/ioutil"
 	corev1 "k8s.io/api/core/v1"
 	k8sErrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -34,6 +24,12 @@ import (
 	"k8s.io/client-go/tools/clientcmd"
 	clientcmdapi "k8s.io/client-go/tools/clientcmd/api"
 	log "k8s.io/klog/v2"
+	"net/http"
+	"net/url"
+	"os"
+	"path"
+	"path/filepath"
+	"strings"
 )
 
 const OCIImageManifestMediaType = "application/vnd.oci.image.manifest.v1+json"
@@ -96,6 +92,7 @@ type ClustersConfig struct {
 	KubeappsClusterName  string
 	GlobalReposNamespace string
 	PinnipedProxyURL     string
+	PinnipedProxyCACert  string
 	Clusters             map[string]ClusterConfig
 }
 
@@ -141,6 +138,11 @@ func NewClusterConfig(inClusterConfig *rest.Config, userToken string, cluster st
 				rt:      rt,
 			}
 		}
+
+		// If pinniped-proxy is configured with TLS, we need to set the
+		// CACert.
+		config.CAFile = clustersConfig.PinnipedProxyCACert
+
 		return config, nil
 	}
 
@@ -158,12 +160,16 @@ func NewClusterConfig(inClusterConfig *rest.Config, userToken string, cluster st
 	return config, nil
 }
 
-func ParseClusterConfig(configPath, caFilesPrefix string, pinnipedProxyURL string) (ClustersConfig, func(), error) {
+func ParseClusterConfig(configPath, caFilesPrefix string, pinnipedProxyURL, PinnipedProxyCACert string) (ClustersConfig, func(), error) {
 	caFilesDir, err := ioutil.TempDir(caFilesPrefix, "")
 	if err != nil {
 		return ClustersConfig{}, func() {}, err
 	}
-	deferFn := func() { os.RemoveAll(caFilesDir) }
+	deferFn := func() {
+		err = os.RemoveAll(caFilesDir)
+	}
+
+	// #nosec G304
 	content, err := ioutil.ReadFile(configPath)
 	if err != nil {
 		return ClustersConfig{}, deferFn, err
@@ -176,6 +182,7 @@ func ParseClusterConfig(configPath, caFilesPrefix string, pinnipedProxyURL strin
 
 	configs := ClustersConfig{Clusters: map[string]ClusterConfig{}}
 	configs.PinnipedProxyURL = pinnipedProxyURL
+	configs.PinnipedProxyCACert = PinnipedProxyCACert
 	for _, c := range clusterConfigs {
 		// Select the cluster in which Kubeapps in installed. We look for either
 		// `isKubeappsCluster: true` or an empty `APIServiceURL`.
@@ -200,6 +207,8 @@ func ParseClusterConfig(configPath, caFilesPrefix string, pinnipedProxyURL strin
 			// struct which does not support CAData.
 			// https://github.com/kubernetes/cli-runtime/issues/8
 			c.CAFile = filepath.Join(caFilesDir, c.Name)
+			// #nosec G306
+			// TODO(agamez): check if we can set perms to 0600 instead of 0644.
 			err = ioutil.WriteFile(c.CAFile, decodedCAData, 0644)
 			if err != nil {
 				return ClustersConfig{}, deferFn, err
@@ -236,8 +245,6 @@ func (c *combinedClientset) MaxWorkers() int {
 }
 
 type KubeOptions struct {
-	NamespaceHeaderName    string
-	NamespaceHeaderPattern string
 }
 
 // kubeHandler handles http requests for operating on app repositories and k8s resources
@@ -299,12 +306,9 @@ type handler interface {
 	UpdateAppRepository(appRepoBody io.ReadCloser, requestNamespace string) (*v1alpha1.AppRepository, error)
 	RefreshAppRepository(repoName string, requestNamespace string) (*v1alpha1.AppRepository, error)
 	DeleteAppRepository(name, namespace string) error
-	GetNamespaces(precheckedNamespaces []corev1.Namespace) ([]corev1.Namespace, error)
 	GetSecret(name, namespace string) (*corev1.Secret, error)
 	GetAppRepository(repoName, repoNamespace string) (*v1alpha1.AppRepository, error)
 	ValidateAppRepository(appRepoBody io.ReadCloser, requestNamespace string) (*ValidationResponse, error)
-	GetOperatorLogo(namespace, name string) ([]byte, error)
-	CanI(resourceAttributes *authorizationapi.ResourceAttributes) (bool, error)
 }
 
 // AuthHandler exposes Handler functionality as a user or the current serviceaccount
@@ -423,7 +427,7 @@ var ErrEmptyOCIRegistry = fmt.Errorf("You need to specify at least one repositor
 
 // NewHandler returns a handler configured with a service account client set and a config
 // with a blank token to be copied when creating user client sets with specific tokens.
-func NewHandler(kubeappsNamespace, namespaceHeaderName, namespaceHeaderPattern string, burst int, qps float32, clustersConfig ClustersConfig) (AuthHandler, error) {
+func NewHandler(kubeappsNamespace string, burst int, qps float32, clustersConfig ClustersConfig) (AuthHandler, error) {
 	clientConfig := clientcmd.NewNonInteractiveDeferredLoadingClientConfig(
 		clientcmd.NewDefaultClientConfigLoadingRules(),
 		&clientcmd.ConfigOverrides{
@@ -448,10 +452,7 @@ func NewHandler(kubeappsNamespace, namespaceHeaderName, namespaceHeaderPattern s
 	config.Burst = burst
 	config.QPS = qps
 
-	options := KubeOptions{
-		NamespaceHeaderName:    namespaceHeaderName,
-		NamespaceHeaderPattern: namespaceHeaderPattern,
-	}
+	options := KubeOptions{}
 
 	svcRestConfig, err := rest.InClusterConfig()
 	if err != nil {
@@ -490,7 +491,7 @@ func parseRepoRequest(appRepoBody io.ReadCloser) (*appRepositoryRequest, error) 
 	var appRepoRequest appRepositoryRequest
 	err := json.NewDecoder(appRepoBody).Decode(&appRepoRequest)
 	if err != nil {
-		log.Infof("unable to decode: %v", err)
+		log.InfoS("unable to decode", "err", err)
 		return nil, err
 	}
 	return &appRepoRequest, nil
@@ -724,7 +725,8 @@ type repoManifest struct {
 }
 
 // Deprecated: Remove when the new Package Repository API implementation is completed
-//  getOCIAppRepositoryTag  get a tag for the given repoURL & repoName
+//
+//	getOCIAppRepositoryTag  get a tag for the given repoURL & repoName
 func getOCIAppRepositoryTag(cli httpclient.Client, repoURL string, repoName string) (string, error) {
 	// This function is the implementation of below curl command
 	// curl -XGET -H "Authorization: Basic $harborauthz"
@@ -784,7 +786,8 @@ func getOCIAppRepositoryTag(cli httpclient.Client, repoURL string, repoName stri
 }
 
 // Deprecated: Remove when the new Package Repository API implementation is completed
-//  getOCIAppRepositoryMediaType  get manifests config.MediaType for the given repoURL & repoName
+//
+//	getOCIAppRepositoryMediaType  get manifests config.MediaType for the given repoURL & repoName
 func getOCIAppRepositoryMediaType(cli httpclient.Client, repoURL string, repoName string, tagVersion string) (string, error) {
 	// This function is the implementation of below curl command
 	// curl -XGET -H "Authorization: Basic $harborauthz"
@@ -797,7 +800,7 @@ func getOCIAppRepositoryMediaType(cli httpclient.Client, repoURL string, repoNam
 	}
 	parsedURL.Path = path.Join("v2", parsedURL.Path, repoName, "manifests", tagVersion)
 
-	log.Infof("parsedURL %v", parsedURL.String())
+	log.InfoS("parsedURL", "URL", parsedURL.String())
 	req, err := http.NewRequest("GET", parsedURL.String(), nil)
 	if err != nil {
 		return "", err
@@ -871,14 +874,12 @@ type HelmNonOCIValidator struct {
 
 func (r HelmNonOCIValidator) Validate(cli httpclient.Client) (*ValidationResponse, error) {
 
-	response := &ValidationResponse{}
-
 	res, err := cli.Do(r.Req)
 	if err != nil {
 		// If the request fail, it's not an internal error
 		return &ValidationResponse{Code: 400, Message: err.Error()}, nil
 	}
-	response = &ValidationResponse{Code: res.StatusCode, Message: "OK"}
+	response := &ValidationResponse{Code: res.StatusCode, Message: "OK"}
 	if response.Code != 200 {
 		body, err := ioutil.ReadAll(res.Body)
 		if err != nil {
@@ -1075,153 +1076,7 @@ func KubeappsSecretNameForRepo(repoName, namespace string) string {
 	return fmt.Sprintf("%s-%s", namespace, secretNameForRepo(repoName))
 }
 
-type checkNSJob struct {
-	ns corev1.Namespace
-}
-
-type checkNSResult struct {
-	checkNSJob
-	allowed bool
-	Error   error
-}
-
-func nsCheckerWorker(userClientset combinedClientsetInterface, nsJobs <-chan checkNSJob, resultChan chan checkNSResult) {
-	for j := range nsJobs {
-		res, err := userClientset.AuthorizationV1().SelfSubjectAccessReviews().Create(context.TODO(), &authorizationapi.SelfSubjectAccessReview{
-			Spec: authorizationapi.SelfSubjectAccessReviewSpec{
-				ResourceAttributes: &authorizationapi.ResourceAttributes{
-					Group:     "",
-					Resource:  "secrets",
-					Verb:      "get",
-					Namespace: j.ns.Name,
-				},
-			},
-		}, metav1.CreateOptions{})
-		resultChan <- checkNSResult{j, res.Status.Allowed, err}
-	}
-}
-
-func filterAllowedNamespaces(userClientset combinedClientsetInterface, namespaces []corev1.Namespace) ([]corev1.Namespace, error) {
-	allowedNamespaces := []corev1.Namespace{}
-
-	var wg sync.WaitGroup
-	workers := int(math.Min(float64(len(namespaces)), float64(userClientset.MaxWorkers())))
-	checkNSJobs := make(chan checkNSJob, workers)
-	nsCheckRes := make(chan checkNSResult, workers)
-
-	// Process maxReq ns at a time
-	for i := 0; i < workers; i++ {
-		wg.Add(1)
-		go func() {
-			nsCheckerWorker(userClientset, checkNSJobs, nsCheckRes)
-			wg.Done()
-		}()
-	}
-	go func() {
-		wg.Wait()
-		close(nsCheckRes)
-	}()
-
-	go func() {
-		for _, ns := range namespaces {
-			checkNSJobs <- checkNSJob{ns}
-		}
-		close(checkNSJobs)
-	}()
-
-	// Start receiving results
-	for res := range nsCheckRes {
-		if res.Error == nil {
-			if res.allowed {
-				allowedNamespaces = append(allowedNamespaces, res.ns)
-			}
-		} else {
-			log.Errorf("failed to check namespace permissions. Got %v", res.Error)
-		}
-	}
-	return allowedNamespaces, nil
-}
-
-func filterActiveNamespaces(namespaces []corev1.Namespace) []corev1.Namespace {
-	readyNamespaces := []corev1.Namespace{}
-	for _, namespace := range namespaces {
-		if namespace.Status.Phase == corev1.NamespaceActive {
-			readyNamespaces = append(readyNamespaces, namespace)
-		}
-	}
-	return readyNamespaces
-}
-
-// GetNamespaces return the list of namespaces that the user has permission to access
-func (a *userHandler) GetNamespaces(precheckedNamespaces []corev1.Namespace) ([]corev1.Namespace, error) {
-	var namespaceList []corev1.Namespace
-
-	if len(precheckedNamespaces) > 0 {
-		namespaceList = append(namespaceList, precheckedNamespaces...)
-	} else {
-		// Try to list namespaces with the user token, for backward compatibility
-		namespaces, err := a.clientset.CoreV1().Namespaces().List(context.TODO(), metav1.ListOptions{})
-		if err != nil {
-			if k8sErrors.IsForbidden(err) {
-				// The user doesn't have permissions to list namespaces, use the current serviceaccount
-				namespaces, err = a.svcClientset.CoreV1().Namespaces().List(context.TODO(), metav1.ListOptions{})
-				if err != nil && k8sErrors.IsForbidden(err) {
-					// If the configured svcclient doesn't have permission, just return an empty list.
-					return []corev1.Namespace{}, nil
-				}
-			} else {
-				return nil, err
-			}
-
-			// Filter namespaces in which the user has permissions to write (secrets) only
-			namespaceList, err = filterAllowedNamespaces(a.clientset, namespaces.Items)
-			if err != nil {
-				return nil, err
-			}
-		} else {
-			// If the user can list namespaces, do not filter them
-			namespaceList = namespaces.Items
-		}
-	}
-
-	// Filter namespaces that are in terminating state
-	namespaceList = filterActiveNamespaces(namespaceList)
-
-	return namespaceList, nil
-}
-
 // GetSecret return the a secret from a namespace using a token if given
 func (a *userHandler) GetSecret(name, namespace string) (*corev1.Secret, error) {
 	return a.clientset.CoreV1().Secrets(namespace).Get(context.TODO(), name, metav1.GetOptions{})
-}
-
-// GetNamespaces return the list of namespaces that the user has permission to access
-func (a *userHandler) GetOperatorLogo(namespace, name string) ([]byte, error) {
-	return a.clientset.RestClient().Get().AbsPath(fmt.Sprintf("/apis/packages.operators.coreos.com/v1/namespaces/%s/packagemanifests/%s/icon", namespace, name)).Do(context.TODO()).Raw()
-}
-
-// ParseSelfSubjectAccessRequest parses a SelfSubjectAccessRequest
-func ParseSelfSubjectAccessRequest(selfSubjectAccessReviewBody io.ReadCloser) (*authorizationapi.ResourceAttributes, error) {
-	defer selfSubjectAccessReviewBody.Close()
-	var request authorizationapi.ResourceAttributes
-	err := json.NewDecoder(selfSubjectAccessReviewBody).Decode(&request)
-	if err != nil {
-		log.Infof("unable to decode: %v", err)
-		return nil, err
-	}
-	return &request, nil
-}
-
-// CanI returns if the user is allowed to do the given action
-func (a *userHandler) CanI(resourceAttributes *authorizationapi.ResourceAttributes) (bool, error) {
-	res, err := a.clientset.AuthorizationV1().SelfSubjectAccessReviews().Create(context.TODO(), &authorizationapi.SelfSubjectAccessReview{
-		Spec: authorizationapi.SelfSubjectAccessReviewSpec{
-			ResourceAttributes: resourceAttributes,
-		},
-	}, metav1.CreateOptions{})
-	if err != nil {
-		return false, err
-	}
-
-	return res.Status.Allowed, nil
 }

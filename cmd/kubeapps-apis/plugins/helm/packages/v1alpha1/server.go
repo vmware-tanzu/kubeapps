@@ -13,23 +13,21 @@ import (
 	"path"
 	"strings"
 
-	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/helm/packages/v1alpha1/common"
-	httpclient "github.com/vmware-tanzu/kubeapps/pkg/http-client"
-
 	appRepov1 "github.com/vmware-tanzu/kubeapps/cmd/apprepository-controller/pkg/apis/apprepository/v1alpha1"
 	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/core"
 	corev1 "github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
 	helmv1 "github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/plugins/helm/packages/v1alpha1"
+	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/helm/packages/v1alpha1/common"
 	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/helm/packages/v1alpha1/utils"
+	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/pkg/agent"
 	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/pkg/clientgetter"
 	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/pkg/paginate"
 	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/pkg/pkgutils"
 	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/pkg/resourcerefs"
-	"github.com/vmware-tanzu/kubeapps/pkg/agent"
 	chartutils "github.com/vmware-tanzu/kubeapps/pkg/chart"
 	"github.com/vmware-tanzu/kubeapps/pkg/chart/models"
 	"github.com/vmware-tanzu/kubeapps/pkg/dbutils"
-	"github.com/vmware-tanzu/kubeapps/pkg/handlerutil"
+	httpclient "github.com/vmware-tanzu/kubeapps/pkg/http-client"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/anypb"
@@ -75,6 +73,7 @@ type Server struct {
 	chartClientFactory       chartutils.ChartClientFactoryInterface
 	createReleaseFunc        createRelease
 	kubeappsCluster          string // Specifies the cluster on which Kubeapps is installed.
+	kubeappsNamespace        string // Namespace in which Kubeapps is installed
 	pluginConfig             *common.HelmPluginConfig
 	repoClientGetter         newRepoClient
 }
@@ -86,6 +85,12 @@ func NewServer(configGetter core.KubernetesConfigGetter, globalPackagingCluster 
 	var ASSET_SYNCER_DB_NAME = os.Getenv("ASSET_SYNCER_DB_NAME")
 	var ASSET_SYNCER_DB_USERNAME = os.Getenv("ASSET_SYNCER_DB_USERNAME")
 	var ASSET_SYNCER_DB_USERPASSWORD = os.Getenv("ASSET_SYNCER_DB_USERPASSWORD")
+
+	// Namespace where Kubeapps is installed to be in line with the asset syncer
+	kubeappsNamespace := os.Getenv("POD_NAMESPACE")
+	if kubeappsNamespace == "" {
+		log.Fatal("POD_NAMESPACE environment variable should be defined")
+	}
 
 	var dbConfig = dbutils.Config{URL: ASSET_SYNCER_DB_URL, Database: ASSET_SYNCER_DB_NAME, Username: ASSET_SYNCER_DB_USERNAME, Password: ASSET_SYNCER_DB_USERPASSWORD}
 
@@ -111,12 +116,15 @@ func NewServer(configGetter core.KubernetesConfigGetter, globalPackagingCluster 
 		}
 		log.Infof("+helm using custom config: [%v]", *pluginConfig)
 	} else {
-		log.Infof("+helm using default config since pluginConfigPath is empty")
+		log.Info("+helm using default config since pluginConfigPath is empty")
 	}
 
 	// Register custom scheme
 	scheme := runtime.NewScheme()
-	appRepov1.AddToScheme(scheme)
+	err = appRepov1.AddToScheme(scheme)
+	if err != nil {
+		log.Fatalf("%s", err)
+	}
 
 	return &Server{
 		clientGetter: clientgetter.NewClientGetter(configGetter, clientgetter.Options{Scheme: scheme}),
@@ -131,6 +139,7 @@ func NewServer(configGetter core.KubernetesConfigGetter, globalPackagingCluster 
 			return fn(ctx, pkgContext.GetNamespace())
 		},
 		manager:                  manager,
+		kubeappsNamespace:        kubeappsNamespace,
 		globalPackagingNamespace: globalReposNamespace,
 		globalPackagingCluster:   globalPackagingCluster,
 		chartClientFactory:       &chartutils.ChartClientFactory{},
@@ -173,8 +182,7 @@ func (s *Server) GetManager() (utils.AssetManager, error) {
 
 // GetAvailablePackageSummaries returns the available packages based on the request.
 func (s *Server) GetAvailablePackageSummaries(ctx context.Context, request *corev1.GetAvailablePackageSummariesRequest) (*corev1.GetAvailablePackageSummariesResponse, error) {
-	contextMsg := fmt.Sprintf("(cluster=%q, namespace=%q)", request.GetContext().GetCluster(), request.GetContext().GetNamespace())
-	log.Infof("+helm GetAvailablePackageSummaries %s", contextMsg)
+	log.InfoS("+helm GetAvailablePackageSummaries", "cluster", request.GetContext().GetCluster(), "namespace", request.GetContext().GetNamespace())
 
 	namespace := request.GetContext().GetNamespace()
 	cluster := request.GetContext().GetCluster()
@@ -260,8 +268,7 @@ func (s *Server) GetAvailablePackageSummaries(ctx context.Context, request *core
 
 // GetAvailablePackageDetail returns the package metadata managed by the 'helm' plugin
 func (s *Server) GetAvailablePackageDetail(ctx context.Context, request *corev1.GetAvailablePackageDetailRequest) (*corev1.GetAvailablePackageDetailResponse, error) {
-	contextMsg := fmt.Sprintf("(cluster=%q, namespace=%q)", request.GetAvailablePackageRef().GetContext().GetCluster(), request.GetAvailablePackageRef().GetContext().GetNamespace())
-	log.Infof("+helm GetAvailablePackageDetail %s", contextMsg)
+	log.InfoS("+helm GetAvailablePackageDetail", "cluster", request.GetAvailablePackageRef().GetContext().GetCluster(), "namespace", request.GetAvailablePackageRef().GetContext().GetNamespace())
 
 	if request.GetAvailablePackageRef().GetContext() == nil {
 		return nil, status.Errorf(codes.InvalidArgument, "No request AvailablePackageRef.Context provided")
@@ -307,7 +314,7 @@ func (s *Server) GetAvailablePackageDetail(ctx context.Context, request *corev1.
 	if version == "" {
 		version = chart.ChartVersions[0].Version
 	}
-	fileID := fileIDForChart(unescapedChartID, chart.ChartVersions[0].Version)
+	fileID := fileIDForChart(unescapedChartID, version)
 	chartFiles, err := s.manager.GetChartFiles(namespace, fileID)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "Unable to retrieve chart files: %v", err)
@@ -330,8 +337,7 @@ func fileIDForChart(id, version string) string {
 
 // GetAvailablePackageVersions returns the package versions managed by the 'helm' plugin
 func (s *Server) GetAvailablePackageVersions(ctx context.Context, request *corev1.GetAvailablePackageVersionsRequest) (*corev1.GetAvailablePackageVersionsResponse, error) {
-	contextMsg := fmt.Sprintf("(cluster=%q, namespace=%q)", request.GetAvailablePackageRef().GetContext().GetCluster(), request.GetAvailablePackageRef().GetContext().GetNamespace())
-	log.Infof("+helm GetAvailablePackageVersions %s", contextMsg)
+	log.InfoS("+helm GetAvailablePackageVersions", "cluster", request.GetAvailablePackageRef().GetContext().GetCluster(), "namespace", request.GetAvailablePackageRef().GetContext().GetNamespace())
 
 	namespace := request.GetAvailablePackageRef().GetContext().GetNamespace()
 	if namespace == "" || request.GetAvailablePackageRef().GetIdentifier() == "" {
@@ -442,8 +448,7 @@ func (s *Server) hasAccessToNamespace(ctx context.Context, cluster, namespace st
 
 // GetInstalledPackageSummaries returns the installed packages managed by the 'helm' plugin
 func (s *Server) GetInstalledPackageSummaries(ctx context.Context, request *corev1.GetInstalledPackageSummariesRequest) (*corev1.GetInstalledPackageSummariesResponse, error) {
-	contextMsg := fmt.Sprintf("(cluster=%q, namespace=%q)", request.GetContext().GetCluster(), request.GetContext().GetNamespace())
-	log.Infof("+helm GetInstalledPackageSummaries %s", contextMsg)
+	log.InfoS("+helm GetInstalledPackageSummaries", "cluster", request.GetContext().GetCluster(), "namespace", request.GetContext().GetNamespace())
 
 	actionConfig, err := s.actionConfigGetter(ctx, request.GetContext())
 	if err != nil {
@@ -562,8 +567,7 @@ func installedPkgSummaryFromRelease(r *release.Release) *corev1.InstalledPackage
 
 // GetInstalledPackageDetail returns the package metadata managed by the 'helm' plugin
 func (s *Server) GetInstalledPackageDetail(ctx context.Context, request *corev1.GetInstalledPackageDetailRequest) (*corev1.GetInstalledPackageDetailResponse, error) {
-	contextMsg := fmt.Sprintf("(cluster=%q, namespace=%q)", request.GetInstalledPackageRef().GetContext().GetCluster(), request.GetInstalledPackageRef().GetContext().GetNamespace())
-	log.Infof("+helm GetInstalledPackageDetail %s", contextMsg)
+	log.InfoS("+helm GetInstalledPackageDetail", "cluster", request.GetInstalledPackageRef().GetContext().GetCluster(), "namespace", request.GetInstalledPackageRef().GetContext().GetNamespace())
 
 	namespace := request.GetInstalledPackageRef().GetContext().GetNamespace()
 	identifier := request.GetInstalledPackageRef().GetIdentifier()
@@ -666,8 +670,7 @@ func installedPkgDetailFromRelease(r *release.Release, ref *corev1.InstalledPack
 
 // CreateInstalledPackage creates an installed package.
 func (s *Server) CreateInstalledPackage(ctx context.Context, request *corev1.CreateInstalledPackageRequest) (*corev1.CreateInstalledPackageResponse, error) {
-	contextMsg := fmt.Sprintf("(cluster=%q, namespace=%q)", request.GetTargetContext().GetCluster(), request.GetTargetContext().GetNamespace())
-	log.Infof("+helm CreateInstalledPackage %s", contextMsg)
+	log.InfoS("+helm CreateInstalledPackage", "cluster", request.GetTargetContext().GetCluster(), "namespace", request.GetTargetContext().GetNamespace())
 
 	typedClient, _, err := s.GetClients(ctx, s.globalPackagingCluster)
 	if err != nil {
@@ -721,8 +724,7 @@ func (s *Server) CreateInstalledPackage(ctx context.Context, request *corev1.Cre
 func (s *Server) UpdateInstalledPackage(ctx context.Context, request *corev1.UpdateInstalledPackageRequest) (*corev1.UpdateInstalledPackageResponse, error) {
 	installedRef := request.GetInstalledPackageRef()
 	releaseName := installedRef.GetIdentifier()
-	contextMsg := fmt.Sprintf("(cluster=%q, namespace=%q)", installedRef.GetContext().GetCluster(), installedRef.GetContext().GetNamespace())
-	log.Infof("+helm UpdateInstalledPackage %s", contextMsg)
+	log.InfoS("+helm UpdateInstalledPackage", "cluster", installedRef.GetContext().GetCluster(), "namespace", installedRef.GetContext().GetNamespace())
 
 	// Determine the chart used for this installed package.
 	// We may want to include the AvailablePackageRef in the request, given
@@ -791,12 +793,12 @@ func (s *Server) UpdateInstalledPackage(ctx context.Context, request *corev1.Upd
 }
 
 // getAppRepoAndRelatedSecrets retrieves the given repo from its cluster and namespace
-func (s *Server) getAppRepoAndRelatedSecrets(ctx context.Context, cluster, appRepoName, appRepoNamespace string) (*appRepov1.AppRepository, *corek8sv1.Secret, *corek8sv1.Secret, error) {
+func (s *Server) getAppRepoAndRelatedSecrets(ctx context.Context, cluster, appRepoName, appRepoNamespace string) (*appRepov1.AppRepository, *corek8sv1.Secret, *corek8sv1.Secret, *corek8sv1.Secret, error) {
 
 	// We currently get app repositories on the kubeapps cluster only.
 	typedClient, dynClient, err := s.GetClients(ctx, cluster)
 	if err != nil {
-		return nil, nil, nil, err
+		return nil, nil, nil, nil, err
 	}
 
 	// Using the dynamic client to get the AppRepository rather than updating the interface
@@ -809,13 +811,13 @@ func (s *Server) getAppRepoAndRelatedSecrets(ctx context.Context, cluster, appRe
 	}
 	appRepoUnstructured, err := dynClient.Resource(gvr).Namespace(appRepoNamespace).Get(ctx, appRepoName, metav1.GetOptions{})
 	if err != nil {
-		return nil, nil, nil, fmt.Errorf("unable to get app repository %s/%s: %v", appRepoNamespace, appRepoName, err)
+		return nil, nil, nil, nil, fmt.Errorf("unable to get app repository %s/%s: %v", appRepoNamespace, appRepoName, err)
 	}
 
 	var appRepo appRepov1.AppRepository
 	err = runtime.DefaultUnstructuredConverter.FromUnstructured(appRepoUnstructured.UnstructuredContent(), &appRepo)
 	if err != nil {
-		return nil, nil, nil, fmt.Errorf("failed to convert unstructured AppRepository for %s/%s to a structured AppRepository: %v", appRepoNamespace, appRepoName, err)
+		return nil, nil, nil, nil, fmt.Errorf("failed to convert unstructured AppRepository for %s/%s to a structured AppRepository: %v", appRepoNamespace, appRepoName, err)
 	}
 
 	auth := appRepo.Spec.Auth
@@ -824,7 +826,7 @@ func (s *Server) getAppRepoAndRelatedSecrets(ctx context.Context, cluster, appRe
 		secretName := auth.CustomCA.SecretKeyRef.Name
 		caCertSecret, err = typedClient.CoreV1().Secrets(appRepoNamespace).Get(ctx, secretName, metav1.GetOptions{})
 		if err != nil {
-			return nil, nil, nil, fmt.Errorf("unable to read secret %q: %v", auth.CustomCA.SecretKeyRef.Name, err)
+			return nil, nil, nil, nil, fmt.Errorf("unable to read secret %q: %v", auth.CustomCA.SecretKeyRef.Name, err)
 		}
 	}
 
@@ -833,11 +835,20 @@ func (s *Server) getAppRepoAndRelatedSecrets(ctx context.Context, cluster, appRe
 		secretName := auth.Header.SecretKeyRef.Name
 		authSecret, err = typedClient.CoreV1().Secrets(appRepoNamespace).Get(ctx, secretName, metav1.GetOptions{})
 		if err != nil {
-			return nil, nil, nil, fmt.Errorf("unable to read secret %q: %v", secretName, err)
+			return nil, nil, nil, nil, fmt.Errorf("unable to read secret %q: %v", secretName, err)
 		}
 	}
 
-	return &appRepo, caCertSecret, authSecret, nil
+	var imagesPullSecret *corek8sv1.Secret
+	if len(appRepo.Spec.DockerRegistrySecrets) > 0 {
+		secretName := appRepo.Spec.DockerRegistrySecrets[0]
+		imagesPullSecret, err = typedClient.CoreV1().Secrets(appRepoNamespace).Get(ctx, secretName, metav1.GetOptions{})
+		if err != nil {
+			return nil, nil, nil, nil, fmt.Errorf("unable to read images pull secret %q: %v", secretName, err)
+		}
+	}
+
+	return &appRepo, caCertSecret, authSecret, imagesPullSecret, nil
 }
 
 // fetchChartWithRegistrySecrets returns the chart and related registry secrets.
@@ -845,7 +856,7 @@ func (s *Server) getAppRepoAndRelatedSecrets(ctx context.Context, cluster, appRe
 // Mainly to DRY up similar code in the create and update methods.
 func (s *Server) fetchChartWithRegistrySecrets(ctx context.Context, chartDetails *chartutils.Details, client kubernetes.Interface) (*chart.Chart, map[string]string, error) {
 	// Most of the existing code that we want to reuse is based on having a typed AppRepository.
-	appRepo, caCertSecret, authSecret, err := s.getAppRepoAndRelatedSecrets(ctx, s.globalPackagingCluster, chartDetails.AppRepositoryResourceName, chartDetails.AppRepositoryResourceNamespace)
+	appRepo, caCertSecret, authSecret, _, err := s.getAppRepoAndRelatedSecrets(ctx, s.globalPackagingCluster, chartDetails.AppRepositoryResourceName, chartDetails.AppRepositoryResourceNamespace)
 	if err != nil {
 		return nil, nil, status.Errorf(codes.Internal, "Unable to fetch app repo %q from namespace %q: %v", chartDetails.AppRepositoryResourceName, chartDetails.AppRepositoryResourceNamespace, err)
 	}
@@ -853,7 +864,7 @@ func (s *Server) fetchChartWithRegistrySecrets(ctx context.Context, chartDetails
 	userAgentString := fmt.Sprintf("%s/%s/%s/%s", UserAgentPrefix, pluginDetail.Name, pluginDetail.Version, version)
 
 	chartID := fmt.Sprintf("%s/%s", appRepo.Name, chartDetails.ChartName)
-	log.Infof("fetching chart %q with user-agent %q", chartID, userAgentString)
+	log.InfoS("fetching chart with user-agent", "chartID", chartID, "userAgentString", userAgentString)
 
 	// Look up the cachedChart cached in our DB to populate the tarball URL
 	cachedChart, err := s.manager.GetChartVersion(chartDetails.AppRepositoryResourceNamespace, chartID, chartDetails.Version)
@@ -866,11 +877,11 @@ func (s *Server) fetchChartWithRegistrySecrets(ctx context.Context, chartDetails
 		// https://helm.sh/docs/topics/chart_repository/#the-index-file
 		// https://github.com/helm/helm/blob/v3.7.1/cmd/helm/search/search_test.go#L63
 		tarballURL = chartTarballURL(cachedChart.Repo, cachedChart.ChartVersions[0])
-		log.Infof("using chart tarball url %q", tarballURL)
+		log.InfoS("using chart tarball", "url", tarballURL)
 	}
 
 	// Grab the chart itself
-	ch, err := handlerutil.GetChart(
+	ch, err := utils.GetChart(
 		&chartutils.Details{
 			AppRepositoryResourceName:      appRepo.Name,
 			AppRepositoryResourceNamespace: appRepo.Namespace,
@@ -913,8 +924,7 @@ func (s *Server) DeleteInstalledPackage(ctx context.Context, request *corev1.Del
 	installedRef := request.GetInstalledPackageRef()
 	releaseName := installedRef.GetIdentifier()
 	namespace := installedRef.GetContext().GetNamespace()
-	contextMsg := fmt.Sprintf("(cluster=%q, namespace=%q)", installedRef.GetContext().GetCluster(), namespace)
-	log.Infof("+helm DeleteInstalledPackage %s", contextMsg)
+	log.InfoS("+helm DeleteInstalledPackage", "cluster", installedRef.GetContext().GetCluster(), "namespace", namespace)
 
 	// Create an action config for the installed pkg context.
 	actionConfig, err := s.actionConfigGetter(ctx, installedRef.GetContext())
@@ -939,8 +949,7 @@ func (s *Server) DeleteInstalledPackage(ctx context.Context, request *corev1.Del
 func (s *Server) RollbackInstalledPackage(ctx context.Context, request *helmv1.RollbackInstalledPackageRequest) (*helmv1.RollbackInstalledPackageResponse, error) {
 	installedRef := request.GetInstalledPackageRef()
 	releaseName := installedRef.GetIdentifier()
-	contextMsg := fmt.Sprintf("(cluster=%q, namespace=%q)", installedRef.GetContext().GetCluster(), installedRef.GetContext().GetNamespace())
-	log.Infof("+helm RollbackInstalledPackage %s", contextMsg)
+	log.InfoS("+helm RollbackInstalledPackage", "cluster", installedRef.GetContext().GetCluster(), "namespace", installedRef.GetContext().GetNamespace())
 
 	// Create an action config for the installed pkg context.
 	actionConfig, err := s.actionConfigGetter(ctx, installedRef.GetContext())
@@ -977,9 +986,8 @@ func (s *Server) RollbackInstalledPackage(ctx context.Context, request *helmv1.R
 // resources created by an installed package.
 func (s *Server) GetInstalledPackageResourceRefs(ctx context.Context, request *corev1.GetInstalledPackageResourceRefsRequest) (*corev1.GetInstalledPackageResourceRefsResponse, error) {
 	pkgRef := request.GetInstalledPackageRef()
-	contextMsg := fmt.Sprintf("(cluster=%q, namespace=%q)", pkgRef.GetContext().GetCluster(), pkgRef.GetContext().GetNamespace())
 	identifier := pkgRef.GetIdentifier()
-	log.Infof("+helm GetInstalledPackageResourceRefs %s %s", contextMsg, identifier)
+	log.InfoS("+helm GetInstalledPackageResourceRefs", "cluster", pkgRef.GetContext().GetCluster(), "namespace", pkgRef.GetContext().GetNamespace(), "id", identifier)
 
 	fn := func(ctx context.Context, namespace string) (*action.Configuration, error) {
 		actionGetter, err := s.actionConfigGetter(ctx, pkgRef.GetContext())
@@ -1002,7 +1010,7 @@ func (s *Server) GetInstalledPackageResourceRefs(ctx context.Context, request *c
 }
 
 func (s *Server) AddPackageRepository(ctx context.Context, request *corev1.AddPackageRepositoryRequest) (*corev1.AddPackageRepositoryResponse, error) {
-	log.Infof("+helm AddPackageRepository '%s' pointing to '%s'", request.Name, request.Url)
+	log.Infof("+helm AddPackageRepository '%s' pointing to '%s'", request.GetName(), request.GetUrl())
 	if request == nil {
 		return nil, status.Errorf(codes.InvalidArgument, "no request provided")
 	}
@@ -1030,25 +1038,25 @@ func (s *Server) AddPackageRepository(ctx context.Context, request *corev1.AddPa
 	}
 
 	// Get Helm-specific values
-	var customDetails *helmv1.RepositoryCustomDetails
+	var customDetail *helmv1.HelmPackageRepositoryCustomDetail
 	if request.CustomDetail != nil {
-		customDetails = &helmv1.RepositoryCustomDetails{}
-		if err := request.CustomDetail.UnmarshalTo(customDetails); err != nil {
-			return nil, status.Errorf(codes.InvalidArgument, "customDetails could not be parsed: [%v]", request.CustomDetail)
+		customDetail = &helmv1.HelmPackageRepositoryCustomDetail{}
+		if err := request.CustomDetail.UnmarshalTo(customDetail); err != nil {
+			return nil, status.Errorf(codes.InvalidArgument, "customDetail could not be parsed: [%v]", request.CustomDetail)
 		}
-		log.Infof("+helm customDetails [%v]", customDetails)
+		log.Infof("+helm customDetail [%v]", customDetail)
 	}
 
 	helmRepo := &HelmRepository{
-		cluster:       cluster,
-		name:          name,
-		url:           request.GetUrl(),
-		repoType:      request.GetType(),
-		description:   request.GetDescription(),
-		interval:      request.GetInterval(),
-		tlsConfig:     request.GetTlsConfig(),
-		auth:          request.GetAuth(),
-		customDetails: customDetails,
+		cluster:      cluster,
+		name:         name,
+		url:          request.GetUrl(),
+		repoType:     request.GetType(),
+		description:  request.GetDescription(),
+		interval:     request.GetInterval(),
+		tlsConfig:    request.GetTlsConfig(),
+		auth:         request.GetAuth(),
+		customDetail: customDetail,
 	}
 	if repoRef, err := s.newRepo(ctx, helmRepo); err != nil {
 		return nil, err
@@ -1079,16 +1087,16 @@ func (s *Server) GetPackageRepositoryDetail(ctx context.Context, request *corev1
 	namespace := repoRef.GetContext().GetNamespace()
 	name := repoRef.GetIdentifier()
 
-	log.Infof("+helm GetPackageRepositoryDetail (cluster=%s, namespace=%s, name=%s)", cluster, namespace, name)
+	log.InfoS("+helm GetPackageRepositoryDetail", "cluster", cluster, "namespace", namespace, "name", name)
 
 	// Retrieve repository
-	appRepo, caCertSecret, authSecret, err := s.getAppRepoAndRelatedSecrets(ctx, cluster, name, namespace)
+	appRepo, caCertSecret, authSecret, imagesPullSecret, err := s.getAppRepoAndRelatedSecrets(ctx, cluster, name, namespace)
 	if err != nil {
 		return nil, status.Errorf(codes.NotFound, "Unable to retrieve AppRepository '%s/%s' due to [%v]", namespace, name, err)
 	}
 
 	// Map to target struct
-	repositoryDetail, err := s.mapToPackageRepositoryDetail(appRepo, cluster, namespace, caCertSecret, authSecret)
+	repositoryDetail, err := s.mapToPackageRepositoryDetail(appRepo, cluster, namespace, caCertSecret, authSecret, imagesPullSecret)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "unable to convert the AppRepository: %v", err)
 	}
@@ -1127,13 +1135,13 @@ func (s *Server) UpdatePackageRepository(ctx context.Context, request *corev1.Up
 	log.Infof("+helm UpdatePackageRepository '%s' in context [%v]", repoRef.Identifier, repoRef.Context)
 
 	// Get Helm-specific values
-	var customDetails *helmv1.RepositoryCustomDetails
+	var customDetail *helmv1.HelmPackageRepositoryCustomDetail
 	if request.CustomDetail != nil {
-		customDetails = &helmv1.RepositoryCustomDetails{}
-		if err := request.CustomDetail.UnmarshalTo(customDetails); err != nil {
-			return nil, status.Errorf(codes.InvalidArgument, "customDetails could not be parsed: [%v]", request.CustomDetail)
+		customDetail = &helmv1.HelmPackageRepositoryCustomDetail{}
+		if err := request.CustomDetail.UnmarshalTo(customDetail); err != nil {
+			return nil, status.Errorf(codes.InvalidArgument, "customDetail could not be parsed: [%v]", request.CustomDetail)
 		}
-		log.V(4).Infof("+helm upgrade repo %s customDetails [%v]", repoRef.Identifier, customDetails)
+		log.V(4).Infof("+helm upgrade repo %s customDetail [%v]", repoRef.Identifier, customDetail)
 	}
 
 	helmRepo := &HelmRepository{
@@ -1142,12 +1150,12 @@ func (s *Server) UpdatePackageRepository(ctx context.Context, request *corev1.Up
 			Name:      repoRef.Identifier,
 			Namespace: repoRef.GetContext().GetNamespace(),
 		},
-		url:           request.GetUrl(),
-		description:   request.GetDescription(),
-		interval:      request.GetInterval(),
-		tlsConfig:     request.GetTlsConfig(),
-		auth:          request.GetAuth(),
-		customDetails: customDetails,
+		url:          request.GetUrl(),
+		description:  request.GetDescription(),
+		interval:     request.GetInterval(),
+		tlsConfig:    request.GetTlsConfig(),
+		auth:         request.GetAuth(),
+		customDetail: customDetail,
 	}
 	if responseRef, err := s.updateRepo(ctx, helmRepo); err != nil {
 		return nil, err

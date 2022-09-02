@@ -7,7 +7,6 @@ import (
 	"io"
 
 	v1alpha1 "github.com/vmware-tanzu/kubeapps/cmd/apprepository-controller/pkg/apis/apprepository/v1alpha1"
-	authorizationapi "k8s.io/api/authorization/v1"
 	corev1 "k8s.io/api/core/v1"
 	k8sErrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -84,14 +83,6 @@ func (c *FakeHandler) GetAppRepository(name, namespace string) (*v1alpha1.AppRep
 	return nil, k8sErrors.NewNotFound(schema.GroupResource{}, "foo")
 }
 
-// GetNamespaces fake
-func (c *FakeHandler) GetNamespaces(precheckedNamespaces []corev1.Namespace) ([]corev1.Namespace, error) {
-	if len(precheckedNamespaces) > 0 {
-		return precheckedNamespaces, c.Err
-	}
-	return c.Namespaces, c.Err
-}
-
 // GetSecret fake
 func (c *FakeHandler) GetSecret(name, namespace string) (*corev1.Secret, error) {
 	for _, r := range c.Secrets {
@@ -105,14 +96,4 @@ func (c *FakeHandler) GetSecret(name, namespace string) (*corev1.Secret, error) 
 // ValidateAppRepository fake
 func (c *FakeHandler) ValidateAppRepository(appRepoBody io.ReadCloser, requestNamespace string) (*ValidationResponse, error) {
 	return c.ValRes, c.Err
-}
-
-// GetOperatorLogo fake
-func (c *FakeHandler) GetOperatorLogo(namespace, name string) ([]byte, error) {
-	return []byte{}, nil
-}
-
-// CanI fake
-func (c *FakeHandler) CanI(resourceAttributes *authorizationapi.ResourceAttributes) (bool, error) {
-	return c.Can, c.Err
 }

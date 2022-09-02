@@ -21,22 +21,18 @@ import (
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
-	authorizationapi "k8s.io/api/authorization/v1"
-	authorizationv1 "k8s.io/api/authorization/v1"
+	v1alpha1 "github.com/vmware-tanzu/kubeapps/cmd/apprepository-controller/pkg/apis/apprepository/v1alpha1"
+	fakeapprepoclientset "github.com/vmware-tanzu/kubeapps/cmd/apprepository-controller/pkg/client/clientset/versioned/fake"
+	httpclient "github.com/vmware-tanzu/kubeapps/pkg/http-client"
 	corev1 "k8s.io/api/core/v1"
 	k8sErrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	k8sruntime "k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/discovery"
 	fakecoreclientset "k8s.io/client-go/kubernetes/fake"
 	"k8s.io/client-go/rest"
 	fakeRest "k8s.io/client-go/rest/fake"
-	k8stesting "k8s.io/client-go/testing"
-
-	v1alpha1 "github.com/vmware-tanzu/kubeapps/cmd/apprepository-controller/pkg/apis/apprepository/v1alpha1"
-	fakeapprepoclientset "github.com/vmware-tanzu/kubeapps/cmd/apprepository-controller/pkg/client/clientset/versioned/fake"
-	httpclient "github.com/vmware-tanzu/kubeapps/pkg/http-client"
+	log "k8s.io/klog/v2"
 )
 
 type repoStub struct {
@@ -77,22 +73,6 @@ func makeAppRepoObjects(reposPerNamespace map[string][]repoStub) []k8sruntime.Ob
 				appRepo.Spec.Auth.Header = authHeader
 			}
 			objects = append(objects, k8sruntime.Object(appRepo))
-		}
-	}
-	return objects
-}
-
-func makeSecretObjects(secretsPerNamespace map[string][]secretStub) []k8sruntime.Object {
-	objects := []k8sruntime.Object{}
-	for namespace, secretsStubs := range secretsPerNamespace {
-		for _, secretStub := range secretsStubs {
-			secret := &corev1.Secret{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      secretStub.name,
-					Namespace: namespace,
-				},
-			}
-			objects = append(objects, k8sruntime.Object(secret))
 		}
 	}
 	return objects
@@ -907,182 +887,7 @@ func TestSecretForRequest(t *testing.T) {
 	}
 }
 
-type existingNs struct {
-	name  string
-	phase corev1.NamespacePhase
-}
-
-func TestGetNamespaces(t *testing.T) {
-
-	testCases := []struct {
-		name                 string
-		existingNamespaces   []existingNs
-		allowed              bool
-		userClientErr        error
-		svcClientErr         error
-		expectedNamespaces   []string
-		precheckedNamespaces []corev1.Namespace
-	}{
-		{
-			name: "it lists namespaces if the user client returns the namespaces",
-			existingNamespaces: []existingNs{
-				{"foo", corev1.NamespaceActive},
-				{"bar", corev1.NamespaceActive},
-				{"zed", corev1.NamespaceActive},
-			},
-			expectedNamespaces: []string{"foo", "bar", "zed"},
-			allowed:            true,
-		},
-		{
-			name: "it lists namespaces if the userclient fails but the service client succeeds",
-			existingNamespaces: []existingNs{
-				{"foo", corev1.NamespaceActive},
-			},
-			userClientErr:      k8sErrors.NewForbidden(schema.GroupResource{}, "bang", fmt.Errorf("Bang")),
-			expectedNamespaces: []string{"foo"},
-			allowed:            true,
-		},
-		{
-			name: "it filters the namespaces if the userclient fails but the service client succeeds",
-			existingNamespaces: []existingNs{
-				{"foo", corev1.NamespaceActive},
-			},
-			userClientErr:      k8sErrors.NewForbidden(schema.GroupResource{}, "bang", fmt.Errorf("Bang")),
-			expectedNamespaces: []string{},
-			allowed:            false,
-		},
-		{
-			name: "it returns an empty list if both the user and service account forbidden",
-			existingNamespaces: []existingNs{
-				{"foo", corev1.NamespaceActive},
-			},
-			userClientErr:      k8sErrors.NewForbidden(schema.GroupResource{}, "bang", fmt.Errorf("Bang")),
-			svcClientErr:       k8sErrors.NewForbidden(schema.GroupResource{}, "bang", fmt.Errorf("Bang")),
-			expectedNamespaces: []string{},
-			allowed:            true,
-		},
-		{
-			name: "it filters namespaces in terminating status",
-			existingNamespaces: []existingNs{
-				{"foo", corev1.NamespaceTerminating},
-				{"bar", corev1.NamespaceActive},
-			},
-			expectedNamespaces: []string{"bar"},
-			allowed:            true,
-		},
-		{
-			name: "it lists namespaces if the user client sends the namespaces",
-			existingNamespaces: []existingNs{
-				{"foo", corev1.NamespaceActive},
-			},
-			precheckedNamespaces: []corev1.Namespace{{
-				ObjectMeta: metav1.ObjectMeta{Name: "bar"},
-				Status:     corev1.NamespaceStatus{Phase: corev1.NamespaceActive},
-			}},
-			expectedNamespaces: []string{"bar"},
-			allowed:            true,
-		},
-		{
-			name: "it lists existing namespaces if the user client sends empty list of the namespaces",
-			existingNamespaces: []existingNs{
-				{"foo", corev1.NamespaceActive},
-			},
-			precheckedNamespaces: []corev1.Namespace{},
-			expectedNamespaces:   []string{"foo"},
-			allowed:              true,
-		},
-	}
-	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			userClientSet := fakeCombinedClientset{
-				fakeapprepoclientset.NewSimpleClientset(),
-				fakecoreclientset.NewSimpleClientset(),
-				&fakeRest.RESTClient{},
-			}
-
-			svcClientSet := fakeCombinedClientset{
-				fakeapprepoclientset.NewSimpleClientset(),
-				fakecoreclientset.NewSimpleClientset(),
-				&fakeRest.RESTClient{},
-			}
-
-			setClientsetData(userClientSet, tc.existingNamespaces, tc.userClientErr)
-			setClientsetData(svcClientSet, tc.existingNamespaces, tc.svcClientErr)
-
-			// Set whether the userClientSet is allowed to create self subject access reviews.
-			// The handler for the reactor has only the action as input, which does not convey
-			// enough info to be able to decide whether an individual namespace is allowed
-			// (as action.GetNamespace() is always empty as self subject access reviews are
-			// *not* themselves namespaced - the spec includes the namespace but is not contained
-			// in the action). As a result, we can only filter everything or nothing in tests.
-			userClientSet.Clientset.Fake.PrependReactor(
-				"create",
-				"selfsubjectaccessreviews",
-				func(action k8stesting.Action) (handled bool, ret k8sruntime.Object, err error) {
-					mysar := &authorizationv1.SelfSubjectAccessReview{
-						Status: authorizationv1.SubjectAccessReviewStatus{
-							Allowed: tc.allowed,
-							Reason:  "I want to test it",
-						},
-					}
-					return true, mysar, nil
-				},
-			)
-
-			handler := kubeHandler{
-				clientsetForConfig:   func(*rest.Config) (combinedClientsetInterface, error) { return userClientSet, nil },
-				kubeappsNamespace:    "kubeapps",
-				kubeappsSvcClientset: svcClientSet,
-				clustersConfig: ClustersConfig{
-					KubeappsClusterName: "default",
-					Clusters: map[string]ClusterConfig{
-						"default": {},
-					},
-				},
-			}
-
-			userHandler, err := handler.AsUser("token", "default")
-			if err != nil {
-				t.Errorf("Unexpected error %v", err)
-			}
-			namespaces, err := userHandler.GetNamespaces(tc.precheckedNamespaces)
-			if err != nil {
-				t.Errorf("Unexpected error %v", err)
-			}
-
-			namespaceNames := []string{}
-			for _, ns := range namespaces {
-				namespaceNames = append(namespaceNames, ns.ObjectMeta.Name)
-			}
-			if !cmp.Equal(namespaceNames, tc.expectedNamespaces) {
-				t.Errorf("Unexpected response: %s", cmp.Diff(namespaceNames, tc.expectedNamespaces))
-			}
-		})
-	}
-}
-
-// setClientsetData configures the fake clientset with the return and error.
-func setClientsetData(cs fakeCombinedClientset, namespaceNames []existingNs, err error) {
-	namespaces := []corev1.Namespace{}
-	for _, ns := range namespaceNames {
-		namespaces = append(namespaces, corev1.Namespace{
-			ObjectMeta: metav1.ObjectMeta{Name: ns.name},
-			Status: corev1.NamespaceStatus{
-				Phase: ns.phase,
-			},
-		})
-	}
-	cs.Clientset.Fake.PrependReactor(
-		"list",
-		"namespaces",
-		func(action k8stesting.Action) (bool, k8sruntime.Object, error) {
-			return true, &corev1.NamespaceList{Items: namespaces}, err
-		},
-	)
-}
-
 func TestGetValidator(t *testing.T) {
-	const kubeappsNamespace = "kubeapps"
 	testCases := []struct {
 		name              string
 		appRepo           *v1alpha1.AppRepository
@@ -1271,13 +1076,22 @@ func makeTestOCIServer(t *testing.T, registryName string, repos map[string]fakeO
 		authHeader := r.Header.Get("Authorization")
 		if authHeader != requiredAuthHeader {
 			w.WriteHeader(401)
-			w.Write([]byte("{}"))
+			_, err := w.Write([]byte("{}"))
+			if err != nil {
+				log.Fatalf("%+v", err)
+			}
 		}
 		if response, ok := responses[r.URL.Path]; !ok {
 			w.WriteHeader(404)
-			w.Write([]byte("{}"))
+			_, err := w.Write([]byte("{}"))
+			if err != nil {
+				log.Fatalf("%+v", err)
+			}
 		} else {
-			w.Write([]byte(response))
+			_, err := w.Write([]byte(response))
+			if err != nil {
+				log.Fatalf("%+v", err)
+			}
 		}
 	}))
 }
@@ -1820,7 +1634,10 @@ func TestNewClusterConfig(t *testing.T) {
 				} else {
 					req := http.Request{}
 					roundTripper := config.WrapTransport(&fakeRoundTripper{})
-					roundTripper.RoundTrip(&req)
+					_, err := roundTripper.RoundTrip(&req)
+					if err != nil {
+						t.Errorf("unexpected error: %v", err)
+					}
 					want := http.Header{}
 					if clusterConfig.APIServiceURL != "" {
 						want["Pinniped_proxy_api_server_url"] = []string{clusterConfig.APIServiceURL}
@@ -1833,110 +1650,6 @@ func TestNewClusterConfig(t *testing.T) {
 						t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got))
 					}
 				}
-			}
-		})
-	}
-}
-
-func TestParseSelfSubjectAccessRequest(t *testing.T) {
-	testCases := []struct {
-		name          string
-		body          string
-		expected      *authorizationapi.ResourceAttributes
-		errorExpected bool
-	}{
-		{
-			name: "should parse a valid body",
-			body: `{"resource":"namespaces"}`,
-			expected: &authorizationapi.ResourceAttributes{
-				Resource: "namespaces",
-			},
-		},
-		{
-			name:          "should fail with the wrong input",
-			body:          "nope",
-			errorExpected: true,
-		},
-	}
-	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			input := ioutil.NopCloser(bytes.NewReader([]byte(tc.body)))
-			res, err := ParseSelfSubjectAccessRequest(input)
-			if got, want := err != nil, tc.errorExpected; got != want {
-				t.Fatalf("got: %t, want: %t. err: %+v", got, want, err)
-			}
-
-			if got, want := res, tc.expected; !cmp.Equal(want, got) {
-				t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got))
-			}
-		})
-	}
-}
-
-func TestCanI(t *testing.T) {
-	testCases := []struct {
-		name    string
-		allowed bool
-		err     error
-	}{
-		{
-			name:    "returns allowed",
-			allowed: true,
-		},
-		{
-			name:    "returns forbidden",
-			allowed: false,
-		},
-		{
-			name:    "returns an error",
-			allowed: false,
-			err:     fmt.Errorf("boom"),
-		},
-	}
-	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			userClientSet := fakeCombinedClientset{
-				fakeapprepoclientset.NewSimpleClientset(),
-				fakecoreclientset.NewSimpleClientset(),
-				&fakeRest.RESTClient{},
-			}
-
-			userClientSet.Clientset.Fake.PrependReactor(
-				"create",
-				"selfsubjectaccessreviews",
-				func(action k8stesting.Action) (handled bool, ret k8sruntime.Object, err error) {
-					mysar := &authorizationv1.SelfSubjectAccessReview{
-						Status: authorizationv1.SubjectAccessReviewStatus{
-							Allowed: tc.allowed,
-							Reason:  "I want to test it",
-						},
-					}
-					return true, mysar, tc.err
-				},
-			)
-
-			handler := kubeHandler{
-				clientsetForConfig: func(*rest.Config) (combinedClientsetInterface, error) { return userClientSet, nil },
-				kubeappsNamespace:  "kubeapps",
-				clustersConfig: ClustersConfig{
-					KubeappsClusterName: "default",
-					Clusters: map[string]ClusterConfig{
-						"default": {},
-					},
-				},
-			}
-
-			userHandler, err := handler.AsUser("token", "default")
-			if err != nil {
-				t.Errorf("Unexpected error %v", err)
-			}
-			allowed, err := userHandler.CanI(&authorizationv1.ResourceAttributes{})
-			if err != nil && err != tc.err {
-				t.Errorf("Unexpected error %v, wanted %v", err, tc.err)
-			}
-
-			if allowed != tc.allowed {
-				t.Errorf("Expecting %v, got %v", tc.allowed, allowed)
 			}
 		})
 	}
@@ -2116,7 +1829,7 @@ func TestParseClusterConfig(t *testing.T) {
 			path := createConfigFile(t, tc.configJSON)
 			defer os.Remove(path)
 
-			config, deferFn, err := ParseClusterConfig(path, "/tmp", defaultPinnipedURL)
+			config, deferFn, err := ParseClusterConfig(path, "/tmp", defaultPinnipedURL, "")
 			if got, want := err != nil, tc.expectedErr; got != want {
 				t.Errorf("got: %t, want: %t: err: %+v", got, want, err)
 			}

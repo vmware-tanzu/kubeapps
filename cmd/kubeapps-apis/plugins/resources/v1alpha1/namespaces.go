@@ -5,6 +5,7 @@ package main
 
 import (
 	"context"
+	authorizationapi "k8s.io/api/authorization/v1"
 
 	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/plugins/resources/v1alpha1"
 	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/pkg/statuserror"
@@ -21,7 +22,7 @@ import (
 func (s *Server) CheckNamespaceExists(ctx context.Context, r *v1alpha1.CheckNamespaceExistsRequest) (*v1alpha1.CheckNamespaceExistsResponse, error) {
 	namespace := r.GetContext().GetNamespace()
 	cluster := r.GetContext().GetCluster()
-	log.Infof("+resources CheckNamespaceExists (cluster: %q, namespace=%q)", cluster, namespace)
+	log.InfoS("+resources CheckNamespaceExists", "cluster", cluster, "namespace", namespace)
 
 	typedClient, _, err := s.clientGetter(ctx, cluster)
 	if err != nil {
@@ -48,7 +49,7 @@ func (s *Server) CheckNamespaceExists(ctx context.Context, r *v1alpha1.CheckName
 func (s *Server) CreateNamespace(ctx context.Context, r *v1alpha1.CreateNamespaceRequest) (*v1alpha1.CreateNamespaceResponse, error) {
 	namespace := r.GetContext().GetNamespace()
 	cluster := r.GetContext().GetCluster()
-	log.Infof("+resources CreateNamespace (cluster: %q, namespace=%q)", cluster, namespace)
+	log.InfoS("+resources CreateNamespace", "cluster", cluster, "namespace", namespace, "labels", r.Labels)
 
 	typedClient, _, err := s.clientGetter(ctx, cluster)
 	if err != nil {
@@ -61,7 +62,8 @@ func (s *Server) CreateNamespace(ctx context.Context, r *v1alpha1.CreateNamespac
 			Kind:       "Namespace",
 		},
 		ObjectMeta: metav1.ObjectMeta{
-			Name: namespace,
+			Name:   namespace,
+			Labels: r.Labels,
 		},
 	}, metav1.CreateOptions{})
 	if err != nil {
@@ -71,32 +73,65 @@ func (s *Server) CreateNamespace(ctx context.Context, r *v1alpha1.CreateNamespac
 	return &v1alpha1.CreateNamespaceResponse{}, nil
 }
 
-// GetNamespaceNames returns the list of namespace names for a cluster if the
-// user has the required RBAC.
-//
-// Note that we can't yet use this from the dashboard to replace the similar endpoint
-// in kubeops until we update to ensure a configured service account can also be
-// passed in (resources plugin config) and used if the user does not have RBAC.
+// GetNamespaceNames returns the list of namespace names from either the cluster or the incoming trusted namespaces.
+// In any case, only if the user has the required RBAC.
 func (s *Server) GetNamespaceNames(ctx context.Context, r *v1alpha1.GetNamespaceNamesRequest) (*v1alpha1.GetNamespaceNamesResponse, error) {
 	cluster := r.GetCluster()
-	log.Infof("+resources GetNamespaceNames (cluster: %q)", cluster)
+	log.InfoS("+resources GetNamespaceNames ", "cluster", cluster)
+
+	// Check if there are trusted namespaces in the request
+	trustedNamespaces, err := getTrustedNamespacesFromHeader(ctx, s.pluginConfig.TrustedNamespaces.HeaderName, s.pluginConfig.TrustedNamespaces.HeaderPattern)
+	if err != nil {
+		return nil, statuserror.FromK8sError("get", "Namespaces", "", err)
+	}
+
+	namespaceList, err := s.GetAccessibleNamespaces(ctx, cluster, trustedNamespaces)
+	if err != nil {
+		return nil, statuserror.FromK8sError("list", "Namespaces", "", err)
+	}
+
+	namespaces := make([]string, len(namespaceList))
+	for i, ns := range namespaceList {
+		namespaces[i] = ns.Name
+	}
+
+	return &v1alpha1.GetNamespaceNamesResponse{
+		NamespaceNames: namespaces,
+	}, nil
+}
+
+// CanI Checks if the operation can be performed according to incoming auth rbac
+func (s *Server) CanI(ctx context.Context, r *v1alpha1.CanIRequest) (*v1alpha1.CanIResponse, error) {
+	if r.GetContext() == nil {
+		return nil, status.Errorf(codes.InvalidArgument, "context parameter is required")
+	}
+	namespace := r.GetContext().GetNamespace()
+	cluster := r.GetContext().GetCluster()
+	if cluster == "" {
+		return nil, status.Errorf(codes.InvalidArgument, "cluster parameter is required")
+	}
+	log.InfoS("+resources CanI", "cluster", cluster, "namespace", namespace, "group", r.GetGroup(), "resource", r.GetResource(), "verb", r.GetVerb())
 
 	typedClient, _, err := s.clientGetter(ctx, cluster)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "unable to get the k8s client: '%v'", err)
 	}
 
-	namespaceList, err := typedClient.CoreV1().Namespaces().List(ctx, metav1.ListOptions{})
+	reviewResult, err := typedClient.AuthorizationV1().SelfSubjectAccessReviews().Create(ctx, &authorizationapi.SelfSubjectAccessReview{
+		Spec: authorizationapi.SelfSubjectAccessReviewSpec{
+			ResourceAttributes: &authorizationapi.ResourceAttributes{
+				Group:     r.Group,
+				Resource:  r.Resource,
+				Verb:      r.Verb,
+				Namespace: namespace,
+			},
+		},
+	}, metav1.CreateOptions{})
 	if err != nil {
-		return nil, statuserror.FromK8sError("list", "Namespaces", "", err)
+		return nil, err
 	}
 
-	namespaces := make([]string, len(namespaceList.Items))
-	for i, ns := range namespaceList.Items {
-		namespaces[i] = ns.Name
-	}
-
-	return &v1alpha1.GetNamespaceNamesResponse{
-		NamespaceNames: namespaces,
+	return &v1alpha1.CanIResponse{
+		Allowed: reviewResult.Status.Allowed,
 	}, nil
 }

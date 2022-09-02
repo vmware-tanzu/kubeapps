@@ -45,7 +45,7 @@ export const initialKinds = {
     plural: "horizontalpodautoscalers",
     namespaced: true,
   },
-  Ingress: { apiVersion: "extensions/v1beta1", plural: "ingresses", namespaced: true },
+  Ingress: { apiVersion: "extensions/v1", plural: "ingresses", namespaced: true },
   Job: { apiVersion: "batch/v1", plural: "jobs", namespaced: true },
   Lease: { apiVersion: "coordination.k8s.io/v1", plural: "leases", namespaced: true },
   LimitRange: { apiVersion: "v1", plural: "limitranges", namespaced: true },

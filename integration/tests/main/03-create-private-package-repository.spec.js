@@ -19,40 +19,38 @@ test("Create a new private package repository successfully", async ({ page }) =>
 
   // Go to repos page
   await page.click(".dropdown.kubeapps-menu button.kubeapps-nav-link");
-  await page.click('a.dropdown-menu-link:has-text("Package Repositories")');
-  await page.waitForTimeout(3000);
+  await page.locator("text=Package Repositories").click();
+  await expect(page).not.toContain("text=Fetching Package Repositories...");
 
   // Add new repo
-  await page.click('cds-button:has-text("Add Package Repository")');
   const repoName = utils.getRandomName("my-repo");
   console.log(`Creating package repository "${repoName}"`);
+
+  await page.locator("text=Add Package Repository >> div").click();
   await page.fill("input#kubeapps-repo-name", repoName);
-  await page.fill("input#kubeapps-repo-url", "http://chartmuseum-chartmuseum.kubeapps:8080");
+  await page.fill(
+    "input#kubeapps-repo-url",
+    "http://chartmuseum.chart-museum.svc.cluster.local:8080",
+  );
+  await page.locator("text=Helm Charts").first().click();
+  await page.locator("text=Helm Repository").click();
 
   // Set credentials
-  await page.click('label:has-text("Basic Auth")');
-  await page.fill("input#kubeapps-repo-username", "admin");
-  await page.fill("input#kubeapps-repo-password", "password");
+  await page.locator("#panel-auth cds-accordion-header div >> nth=0").first().click();
+  // Basic auth
+  await page.locator("text=Basic Auth").click();
+  await page.locator('[id="kubeapps-repo-username"]').fill("admin");
+  await page.locator('[id="kubeapps-repo-password"]').fill("password");
 
-  // Create a new secret for Docker repo credentials
-  const secretName = utils.getRandomName("my-repo-secret");
-  await page.click('.docker-creds-subform-button button:has-text("Add new credentials")');
-  await page.fill("input#kubeapps-docker-cred-secret-name", secretName);
-  await page.fill("input#kubeapps-docker-cred-server", "https://index.docker.io/v1/");
-  await page.fill("input#kubeapps-docker-cred-username", process.env.DOCKER_USERNAME);
-  await page.fill("input#kubeapps-docker-cred-password", process.env.DOCKER_PASSWORD);
-  await page.click('.docker-creds-subform button:has-text("Submit")');
-
-  // Select the newly created secret
-  await page.selectOption("form cds-form-group cds-select select", secretName);
-
-  await page.click('cds-button:has-text("Install Repo")');
+  // Create repository
+  await page.locator("text=Install Repository >> div").click();
 
   // Wait for new packages to be indexed
   await page.waitForTimeout(5000);
 
   // Check if our package shows up in catalog
   await page.click(`a:has-text("${repoName}")`);
+
   await page.click('a:has-text("foo apache chart for CI")');
 
   // Deploy package
@@ -84,31 +82,6 @@ test("Create a new private package repository successfully", async ({ page }) =>
   await page.waitForSelector("css=.application-status-pie-chart-title >> text=Ready", {
     timeout: deployTimeout,
   });
-
-  // Now that the deployment has been created, we check that the imagePullSecret
-  // has been added. For doing so, we query the resources API to get info of the
-  // deployment
-  const axInstance = await utils.getAxiosInstance(page, k.token);
-  const resourceResp = await axInstance.get(
-    `/apis/plugins/resources/v1alpha1/helm.packages/v1alpha1/c/default/ns/default/${appName}`,
-  );
-  expect(resourceResp.status).toEqual(200);
-
-  let deployment;
-  resourceResp.data
-    .trim()
-    .split(/\r?\n/)
-    .forEach(r => {
-      // Axios doesn't provide streaming responses, so splitting on new line works
-      // but gives us a string, not JSON, and may leave a blank line at the end.
-      const response = JSON.parse(r);
-      const resourceRef = response.result?.resourceRef;
-      if (resourceRef.kind === "Deployment" && resourceRef.name.match(appName)) {
-        deployment = JSON.parse(response.result?.manifest);
-      }
-    });
-
-  expect(deployment?.spec?.template?.spec?.imagePullSecrets).toEqual([{ name: secretName }]);
 
   // Prepare and verify the upgrade
   await page.waitForSelector('cds-button:has-text("Upgrade")');

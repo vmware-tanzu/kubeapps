@@ -51,10 +51,10 @@ it("opens the dropdown full menu", () => {
   menu.simulate("click");
   wrapper.update();
   expect(wrapper.find(".dropdown")).toHaveClassName("open");
-  // It render links for AppRepositories and operators
+  // It render links for PackageRepositories and operators
   const links = wrapper.find(Link);
   expect(links).toHaveLength(3);
-  expect(links.get(0).props.to).toEqual(app.config.apprepositories("default", "default"));
+  expect(links.get(0).props.to).toEqual(app.config.pkgrepositories("default", "default"));
   expect(links.get(1).props.to).toEqual(app.config.operators("default", "default"));
   expect(links.get(2).props.to).toEqual("/docs");
 });
@@ -69,10 +69,10 @@ it("opens the dropdown menu without operators item", () => {
   menu.simulate("click");
   wrapper.update();
   expect(wrapper.find(".dropdown")).toHaveClassName("open");
-  // It render links for AppRepositories and operators
+  // It render links for PackageRepositories and operators
   const links = wrapper.find(Link);
   expect(links).toHaveLength(2);
-  expect(links.get(0).props.to).toEqual(app.config.apprepositories("default", "default"));
+  expect(links.get(0).props.to).toEqual(app.config.pkgrepositories("default", "default"));
   expect(links.get(1).props.to).toEqual("/docs");
 });
 
@@ -94,7 +94,7 @@ describe("theme switcher toggle", () => {
 
   it("toggle checked if dark theme is configured", () => {
     const wrapper = mountWrapper(
-      getStore({ config: { theme: SupportedThemes.dark } }),
+      getStore({ config: { theme: SupportedThemes.dark } } as Partial<IStoreState>),
       <Menu {...defaultProps} />,
     );
     const toggle = wrapper.find("cds-toggle input");

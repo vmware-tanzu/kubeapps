@@ -1,10 +1,9 @@
 /* eslint-disable */
-import Long from "long";
 import { grpc } from "@improbable-eng/grpc-web";
-import * as _m0 from "protobufjs/minimal";
 import { Any } from "../../../../google/protobuf/any";
-import { Plugin } from "../../../../kubeappsapis/core/plugins/v1alpha1/plugins";
+import { Plugin } from "../../plugins/v1alpha1/plugins";
 import { BrowserHeaders } from "browser-headers";
+import * as _m0 from "protobufjs/minimal";
 
 export const protobufPackage = "kubeappsapis.core.packages.v1alpha1";
 
@@ -929,9 +928,9 @@ export interface ReconciliationOptions {
   /**
    * Reconciliation Interval
    *
-   * The interval with which the package is checked for reconciliation (in seconds)
+   * The interval with which the package is checked for reconciliation (in time+unit)
    */
-  interval: number;
+  interval: string;
   /**
    * Suspend
    *
@@ -3730,13 +3729,13 @@ export const InstalledPackageStatus = {
 };
 
 function createBaseReconciliationOptions(): ReconciliationOptions {
-  return { interval: 0, suspend: false, serviceAccountName: "" };
+  return { interval: "", suspend: false, serviceAccountName: "" };
 }
 
 export const ReconciliationOptions = {
   encode(message: ReconciliationOptions, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
-    if (message.interval !== 0) {
-      writer.uint32(8).int32(message.interval);
+    if (message.interval !== "") {
+      writer.uint32(10).string(message.interval);
     }
     if (message.suspend === true) {
       writer.uint32(16).bool(message.suspend);
@@ -3755,7 +3754,7 @@ export const ReconciliationOptions = {
       const tag = reader.uint32();
       switch (tag >>> 3) {
         case 1:
-          message.interval = reader.int32();
+          message.interval = reader.string();
           break;
         case 2:
           message.suspend = reader.bool();
@@ -3773,7 +3772,7 @@ export const ReconciliationOptions = {
 
   fromJSON(object: any): ReconciliationOptions {
     return {
-      interval: isSet(object.interval) ? Number(object.interval) : 0,
+      interval: isSet(object.interval) ? String(object.interval) : "",
       suspend: isSet(object.suspend) ? Boolean(object.suspend) : false,
       serviceAccountName: isSet(object.serviceAccountName) ? String(object.serviceAccountName) : "",
     };
@@ -3781,7 +3780,7 @@ export const ReconciliationOptions = {
 
   toJSON(message: ReconciliationOptions): unknown {
     const obj: any = {};
-    message.interval !== undefined && (obj.interval = Math.round(message.interval));
+    message.interval !== undefined && (obj.interval = message.interval);
     message.suspend !== undefined && (obj.suspend = message.suspend);
     message.serviceAccountName !== undefined &&
       (obj.serviceAccountName = message.serviceAccountName);
@@ -3792,7 +3791,7 @@ export const ReconciliationOptions = {
     object: I,
   ): ReconciliationOptions {
     const message = createBaseReconciliationOptions();
-    message.interval = object.interval ?? 0;
+    message.interval = object.interval ?? "";
     message.suspend = object.suspend ?? false;
     message.serviceAccountName = object.serviceAccountName ?? "";
     return message;
@@ -4313,6 +4312,7 @@ export class GrpcWebImpl {
 
     debug?: boolean;
     metadata?: grpc.Metadata;
+    upStreamRetryCodes?: number[];
   };
 
   constructor(
@@ -4322,6 +4322,7 @@ export class GrpcWebImpl {
 
       debug?: boolean;
       metadata?: grpc.Metadata;
+      upStreamRetryCodes?: number[];
     },
   ) {
     this.host = host;
@@ -4379,11 +4380,6 @@ type KeysOfUnion<T> = T extends T ? keyof T : never;
 export type Exact<P, I extends P> = P extends Builtin
   ? P
   : P & { [K in keyof P]: Exact<P[K], I[K]> } & Record<Exclude<keyof I, KeysOfUnion<P>>, never>;
-
-if (_m0.util.Long !== Long) {
-  _m0.util.Long = Long as any;
-  _m0.configure();
-}
 
 function isSet(value: any): boolean {
   return value !== null && value !== undefined;

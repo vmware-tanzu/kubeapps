@@ -14,7 +14,7 @@ import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins";
 import configureMockStore from "redux-mock-store";
 import thunk from "redux-thunk";
 import PackagesService from "shared/PackagesService";
-import { FetchError, IReceivePackagesActionPayload } from "shared/types";
+import { FetchError, IReceivePackagesActionPayload, IStoreState } from "shared/types";
 import { getType } from "typesafe-actions";
 import actions from ".";
 
@@ -69,7 +69,11 @@ const defaultAvailablePackageDetail: AvailablePackageDetail = {
 };
 
 beforeEach(() => {
-  store = mockStore();
+  store = mockStore({
+    packages: {
+      isFetching: false,
+    },
+  } as Partial<IStoreState>);
 });
 
 afterEach(() => {

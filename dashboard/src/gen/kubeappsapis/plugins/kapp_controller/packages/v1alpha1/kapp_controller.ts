@@ -1,7 +1,5 @@
 /* eslint-disable */
-import Long from "long";
 import { grpc } from "@improbable-eng/grpc-web";
-import * as _m0 from "protobufjs/minimal";
 import {
   GetAvailablePackageSummariesRequest,
   GetAvailablePackageDetailRequest,
@@ -21,7 +19,7 @@ import {
   UpdateInstalledPackageResponse,
   DeleteInstalledPackageResponse,
   GetInstalledPackageResourceRefsResponse,
-} from "../../../../../kubeappsapis/core/packages/v1alpha1/packages";
+} from "../../../../core/packages/v1alpha1/packages";
 import {
   AddPackageRepositoryRequest,
   GetPackageRepositoryDetailRequest,
@@ -33,17 +31,20 @@ import {
   GetPackageRepositorySummariesResponse,
   UpdatePackageRepositoryResponse,
   DeletePackageRepositoryResponse,
-} from "../../../../../kubeappsapis/core/packages/v1alpha1/repositories";
+} from "../../../../core/packages/v1alpha1/repositories";
 import { BrowserHeaders } from "browser-headers";
+import * as _m0 from "protobufjs/minimal";
 
 export const protobufPackage = "kubeappsapis.plugins.kapp_controller.packages.v1alpha1";
 
 /**
+ * KappControllerPackageRepositoryCustomDetail
+ *
  * custom fields to support other carvel repository types
  * this is mirror from https://github.com/vmware-tanzu/carvel-kapp-controller/blob/develop/pkg/apis/kappctrl/v1alpha1/generated.proto
  * todo -> find a way to define those messages by referencing proto files from kapp_controller rather than duplication
  */
-export interface PackageRepositoryCustomDetail {
+export interface KappControllerPackageRepositoryCustomDetail {
   fetch?: PackageRepositoryFetch;
 }
 
@@ -109,13 +110,13 @@ export interface VersionSelectionSemverPrereleases {
   identifiers: string[];
 }
 
-function createBasePackageRepositoryCustomDetail(): PackageRepositoryCustomDetail {
+function createBaseKappControllerPackageRepositoryCustomDetail(): KappControllerPackageRepositoryCustomDetail {
   return { fetch: undefined };
 }
 
-export const PackageRepositoryCustomDetail = {
+export const KappControllerPackageRepositoryCustomDetail = {
   encode(
-    message: PackageRepositoryCustomDetail,
+    message: KappControllerPackageRepositoryCustomDetail,
     writer: _m0.Writer = _m0.Writer.create(),
   ): _m0.Writer {
     if (message.fetch !== undefined) {
@@ -124,10 +125,13 @@ export const PackageRepositoryCustomDetail = {
     return writer;
   },
 
-  decode(input: _m0.Reader | Uint8Array, length?: number): PackageRepositoryCustomDetail {
+  decode(
+    input: _m0.Reader | Uint8Array,
+    length?: number,
+  ): KappControllerPackageRepositoryCustomDetail {
     const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
     let end = length === undefined ? reader.len : reader.pos + length;
-    const message = createBasePackageRepositoryCustomDetail();
+    const message = createBaseKappControllerPackageRepositoryCustomDetail();
     while (reader.pos < end) {
       const tag = reader.uint32();
       switch (tag >>> 3) {
@@ -142,23 +146,23 @@ export const PackageRepositoryCustomDetail = {
     return message;
   },
 
-  fromJSON(object: any): PackageRepositoryCustomDetail {
+  fromJSON(object: any): KappControllerPackageRepositoryCustomDetail {
     return {
       fetch: isSet(object.fetch) ? PackageRepositoryFetch.fromJSON(object.fetch) : undefined,
     };
   },
 
-  toJSON(message: PackageRepositoryCustomDetail): unknown {
+  toJSON(message: KappControllerPackageRepositoryCustomDetail): unknown {
     const obj: any = {};
     message.fetch !== undefined &&
       (obj.fetch = message.fetch ? PackageRepositoryFetch.toJSON(message.fetch) : undefined);
     return obj;
   },
 
-  fromPartial<I extends Exact<DeepPartial<PackageRepositoryCustomDetail>, I>>(
+  fromPartial<I extends Exact<DeepPartial<KappControllerPackageRepositoryCustomDetail>, I>>(
     object: I,
-  ): PackageRepositoryCustomDetail {
-    const message = createBasePackageRepositoryCustomDetail();
+  ): KappControllerPackageRepositoryCustomDetail {
+    const message = createBaseKappControllerPackageRepositoryCustomDetail();
     message.fetch =
       object.fetch !== undefined && object.fetch !== null
         ? PackageRepositoryFetch.fromPartial(object.fetch)
@@ -1660,6 +1664,7 @@ export class GrpcWebImpl {
 
     debug?: boolean;
     metadata?: grpc.Metadata;
+    upStreamRetryCodes?: number[];
   };
 
   constructor(
@@ -1669,6 +1674,7 @@ export class GrpcWebImpl {
 
       debug?: boolean;
       metadata?: grpc.Metadata;
+      upStreamRetryCodes?: number[];
     },
   ) {
     this.host = host;
@@ -1726,11 +1732,6 @@ type KeysOfUnion<T> = T extends T ? keyof T : never;
 export type Exact<P, I extends P> = P extends Builtin
   ? P
   : P & { [K in keyof P]: Exact<P[K], I[K]> } & Record<Exclude<keyof I, KeysOfUnion<P>>, never>;
-
-if (_m0.util.Long !== Long) {
-  _m0.util.Long = Long as any;
-  _m0.configure();
-}
 
 function isObject(value: any): boolean {
   return typeof value === "object" && value !== null;

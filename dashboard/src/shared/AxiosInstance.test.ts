@@ -7,10 +7,12 @@ import configureMockStore from "redux-mock-store";
 import thunk from "redux-thunk";
 import { addAuthHeaders, addErrorHandling, axios } from "shared/AxiosInstance";
 import { Auth } from "./Auth";
+import { initialState } from "./specs/mountWrapper";
 import {
   ConflictError,
   ForbiddenError,
   InternalServerError,
+  IStoreState,
   NotFoundError,
   UnauthorizedError,
   UnprocessableEntity,
@@ -33,9 +35,10 @@ describe("createAxiosInterceptorWithAuth", () => {
 
     store = mockStore({
       auth: {
+        ...initialState.auth,
         state,
       },
-    });
+    } as Partial<IStoreState>);
 
     Auth.validateToken = jest.fn();
     Auth.setAuthToken = jest.fn();

@@ -7,11 +7,14 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/pkg/clientgetter"
+	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/resources/v1alpha1/common"
 	"os"
 	"sync"
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
 	"k8s.io/apimachinery/pkg/api/meta"
@@ -43,6 +46,10 @@ type Server struct {
 	// non-test implementation.
 	clientGetter clientGetter
 
+	// for interactions with k8s API server in the context of
+	// kubeapps-internal-kubeappsapis service account
+	serviceAccountClientGetter clientgetter.BackgroundClientGetterFunc
+
 	// corePackagesClientGetter holds a function to obtain the core.packages.v1alpha1
 	// client. It is similarly initialised in NewServer() below.
 	corePackagesClientGetter func() (pkgsGRPCv1alpha1.PackagesServiceClient, error)
@@ -55,6 +62,11 @@ type Server struct {
 	// stub version using the unsafe helpers while the real implementation
 	// queries the k8s API for a REST mapper.
 	kindToResource func(meta.RESTMapper, schema.GroupVersionKind) (schema.GroupVersionResource, meta.RESTScopeName, error)
+
+	// pluginConfig Resources plugin configuration values
+	pluginConfig *common.ResourcesPluginConfig
+
+	clientQPS float32
 }
 
 // createRESTMapper returns a rest mapper configured with the APIs of the
@@ -89,11 +101,27 @@ func createRESTMapper(clientQPS float32, clientBurst int) (meta.RESTMapper, erro
 	return restmapper.NewDiscoveryRESTMapper(groupResources), nil
 }
 
-func NewServer(configGetter core.KubernetesConfigGetter, clientQPS float32, clientBurst int) (*Server, error) {
+func NewServer(configGetter core.KubernetesConfigGetter, clientQPS float32, clientBurst int, pluginConfigPath string) (*Server, error) {
 	mapper, err := createRESTMapper(clientQPS, clientBurst)
 	if err != nil {
 		return nil, err
 	}
+
+	// If no config is provided, we default to the existing values for backwards compatibility.
+	pluginConfig := common.NewDefaultPluginConfig()
+	if pluginConfigPath != "" {
+		pluginConfig, err = common.ParsePluginConfig(pluginConfigPath)
+		if err != nil {
+			log.Fatalf("%s", err)
+		}
+		log.Infof("+resources using custom config: [%v]", *pluginConfig)
+	} else {
+		log.Info("+resources using default config since pluginConfigPath is empty")
+	}
+
+	// Get the "in-cluster" client getter
+	backgroundClientGetter := clientgetter.NewBackgroundClientGetter(configGetter, clientgetter.Options{})
+
 	return &Server{
 		clientGetter: func(ctx context.Context, cluster string) (kubernetes.Interface, dynamic.Interface, error) {
 			if configGetter == nil {
@@ -113,9 +141,10 @@ func NewServer(configGetter core.KubernetesConfigGetter, clientQPS float32, clie
 			}
 			return typedClient, dynamicClient, nil
 		},
+		serviceAccountClientGetter: backgroundClientGetter,
 		corePackagesClientGetter: func() (pkgsGRPCv1alpha1.PackagesServiceClient, error) {
 			port := os.Getenv("PORT")
-			conn, err := grpc.Dial("localhost:"+port, grpc.WithInsecure())
+			conn, err := grpc.Dial("localhost:"+port, grpc.WithTransportCredentials(insecure.NewCredentials()))
 			if err != nil {
 				return nil, status.Errorf(codes.Internal, "unable to dial to localhost grpc service: %s", err.Error())
 			}
@@ -129,6 +158,8 @@ func NewServer(configGetter core.KubernetesConfigGetter, clientQPS float32, clie
 			}
 			return mapping.Resource, mapping.Scope.Name(), nil
 		},
+		clientQPS:    clientQPS,
+		pluginConfig: pluginConfig,
 	}, nil
 }
 
@@ -136,7 +167,7 @@ func NewServer(configGetter core.KubernetesConfigGetter, clientQPS float32, clie
 func (s *Server) GetResources(r *v1alpha1.GetResourcesRequest, stream v1alpha1.ResourcesService_GetResourcesServer) error {
 	namespace := r.GetInstalledPackageRef().GetContext().GetNamespace()
 	cluster := r.GetInstalledPackageRef().GetContext().GetCluster()
-	log.Infof("+resources GetResources (cluster: %q, namespace=%q)", cluster, namespace)
+	log.InfoS("+resources GetResources ", "cluster", cluster, "namespace", namespace)
 
 	ctx, err := copyAuthorizationMetadataForOutgoing(stream.Context())
 	if err != nil {
@@ -245,7 +276,10 @@ func (s *Server) GetResources(r *v1alpha1.GetResourcesRequest, stream v1alpha1.R
 	// data as it arrives.
 	resourceWatcher := mergeWatchers(watchers)
 	for e := range resourceWatcher.ResultChan() {
-		sendResourceData(e.ResourceRef, e.Object, stream)
+		err = sendResourceData(e.ResourceRef, e.Object, stream)
+		if err != nil {
+			return err
+		}
 	}
 
 	return nil
@@ -255,7 +289,7 @@ func (s *Server) GetResources(r *v1alpha1.GetResourcesRequest, stream v1alpha1.R
 func (s *Server) GetServiceAccountNames(ctx context.Context, r *v1alpha1.GetServiceAccountNamesRequest) (*v1alpha1.GetServiceAccountNamesResponse, error) {
 	namespace := r.GetContext().GetNamespace()
 	cluster := r.GetContext().GetCluster()
-	log.Infof("+resources GetServiceAccountNames (cluster: %q, namespace=%q)", cluster, namespace)
+	log.InfoS("+resources GetServiceAccountNames ", "cluster", cluster, "namespace", namespace)
 
 	typedClient, _, err := s.clientGetter(ctx, cluster)
 	if err != nil {
@@ -289,10 +323,13 @@ func sendResourceData(ref *pkgsGRPCv1alpha1.ResourceRef, obj interface{}, s v1al
 
 	// Note, a string in Go is effectively a read-only slice of bytes.
 	// See https://stackoverflow.com/a/50880408 for interesting links.
-	s.Send(&v1alpha1.GetResourcesResponse{
+	err = s.Send(&v1alpha1.GetResourcesResponse{
 		ResourceRef: ref,
 		Manifest:    string(resourceBytes),
 	})
+	if err != nil {
+		return status.Errorf(codes.Internal, "unable send GetResourcesResponse: %s", err.Error())
+	}
 
 	return nil
 }

@@ -13,6 +13,7 @@ import * as ReactRouter from "react-router";
 import { Router } from "react-router-dom";
 import { IClustersState } from "reducers/cluster";
 import { defaultStore, getStore, initialState, mountWrapper } from "shared/specs/mountWrapper";
+import { IStoreState } from "shared/types";
 import ContextSelector from "./ContextSelector";
 
 let spyOnUseDispatch: jest.SpyInstance;
@@ -97,14 +98,14 @@ it("shows the current cluster", () => {
       },
     },
   } as IClustersState;
-  const wrapper = mountWrapper(getStore({ clusters }), <ContextSelector />);
+  const wrapper = mountWrapper(getStore({ clusters } as Partial<IStoreState>), <ContextSelector />);
   expect(wrapper.find("select").at(0).prop("value")).toBe("bar");
 });
 
 it("shows the current namespace", () => {
   const clusters = cloneDeep(initialState.clusters);
   clusters.clusters[clusters.currentCluster].currentNamespace = "other";
-  const wrapper = mountWrapper(getStore({ clusters }), <ContextSelector />);
+  const wrapper = mountWrapper(getStore({ clusters } as Partial<IStoreState>), <ContextSelector />);
   expect(wrapper.find("select").at(1).prop("value")).toBe("other");
 });
 
@@ -130,14 +131,46 @@ it("submits the form to create a new namespace", () => {
   });
   wrapper.update();
 
-  expect(createNamespace).toHaveBeenCalledWith(initialState.clusters.currentCluster, "new-ns");
+  expect(createNamespace).toHaveBeenCalledWith(initialState.clusters.currentCluster, "new-ns", {});
+});
+
+it("submits the form to create a new namespace with custom labels", () => {
+  const createNamespace = jest.fn();
+  actions.namespace.createNamespace = createNamespace;
+
+  const config = cloneDeep(initialState.config);
+  config.createNamespaceLabels = {
+    "managed-by": "kubeapps",
+  };
+  const wrapper = mountWrapper(getStore({ config } as Partial<IStoreState>), <ContextSelector />);
+
+  const modalButton = wrapper.find(".flat-btn").first();
+  act(() => {
+    (modalButton.prop("onClick") as any)();
+  });
+  wrapper.update();
+  expect(wrapper.find(CdsModal)).toExist();
+
+  act(() => {
+    wrapper.find("input").simulate("change", { target: { value: "new-ns" } });
+  });
+  wrapper.update();
+
+  act(() => {
+    wrapper.find("form").simulate("submit", { preventDefault: jest.fn() });
+  });
+  wrapper.update();
+
+  expect(createNamespace).toHaveBeenCalledWith(initialState.clusters.currentCluster, "new-ns", {
+    "managed-by": "kubeapps",
+  });
 });
 
 it("shows an error creating a namespace", () => {
   const clusters = cloneDeep(initialState.clusters);
   clusters.clusters[clusters.currentCluster].error = { error: new Error("Boom"), action: "create" };
 
-  const wrapper = mountWrapper(getStore({ clusters }), <ContextSelector />);
+  const wrapper = mountWrapper(getStore({ clusters } as Partial<IStoreState>), <ContextSelector />);
 
   const modalButton = wrapper.find(".flat-btn").first();
   act(() => {
@@ -160,7 +193,7 @@ it("disables the create button if not allowed", () => {
       },
     },
   } as IClustersState;
-  const wrapper = mountWrapper(getStore({ clusters }), <ContextSelector />);
+  const wrapper = mountWrapper(getStore({ clusters } as Partial<IStoreState>), <ContextSelector />);
   expect(wrapper.find(".flat-btn").first()).toBeDisabled();
 });
 
@@ -175,7 +208,7 @@ it("disables the change context button if namespace is not loaded yet", () => {
       },
     },
   } as IClustersState;
-  const wrapper = mountWrapper(getStore({ clusters }), <ContextSelector />);
+  const wrapper = mountWrapper(getStore({ clusters } as Partial<IStoreState>), <ContextSelector />);
   expect(wrapper.find(CdsButton).filterWhere(b => b.text() === "Change Context")).toBeDisabled();
 });
 

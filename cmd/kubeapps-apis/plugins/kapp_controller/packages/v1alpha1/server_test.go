@@ -6,7 +6,6 @@ package main
 import (
 	"context"
 	"fmt"
-	"google.golang.org/protobuf/types/known/anypb"
 	"log"
 	"os"
 	"runtime"
@@ -15,6 +14,8 @@ import (
 	"sync"
 	"testing"
 	"time"
+
+	"google.golang.org/protobuf/types/known/anypb"
 
 	"github.com/cppforlife/go-cli-ui/ui"
 	"github.com/google/go-cmp/cmp"
@@ -299,7 +300,7 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 						Licenses:                        []string{"my-license"},
 						ReleaseNotes:                    "release notes",
 						CapactiyRequirementsDescription: "capacity description",
-						ReleasedAt:                      metav1.Time{time.Date(1984, time.June, 6, 0, 0, 0, 0, time.UTC)},
+						ReleasedAt:                      metav1.Time{Time: time.Date(1984, time.June, 6, 0, 0, 0, 0, time.UTC)},
 					},
 				},
 				&datapackagingv1alpha1.Package{
@@ -317,7 +318,7 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 						Licenses:                        []string{"my-license"},
 						ReleaseNotes:                    "release notes",
 						CapactiyRequirementsDescription: "capacity description",
-						ReleasedAt:                      metav1.Time{time.Date(1997, time.December, 25, 0, 0, 0, 0, time.UTC)},
+						ReleasedAt:                      metav1.Time{Time: time.Date(1997, time.December, 25, 0, 0, 0, 0, time.UTC)},
 					},
 				},
 			},
@@ -416,7 +417,7 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 						Licenses:                        []string{"my-license"},
 						ReleaseNotes:                    "release notes",
 						CapactiyRequirementsDescription: "capacity description",
-						ReleasedAt:                      metav1.Time{time.Date(1984, time.June, 6, 0, 0, 0, 0, time.UTC)},
+						ReleasedAt:                      metav1.Time{Time: time.Date(1984, time.June, 6, 0, 0, 0, 0, time.UTC)},
 					},
 				},
 				&datapackagingv1alpha1.Package{
@@ -434,7 +435,7 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 						Licenses:                        []string{"my-license"},
 						ReleaseNotes:                    "release notes",
 						CapactiyRequirementsDescription: "capacity description",
-						ReleasedAt:                      metav1.Time{time.Date(1984, time.June, 6, 0, 0, 0, 0, time.UTC)},
+						ReleasedAt:                      metav1.Time{Time: time.Date(1984, time.June, 6, 0, 0, 0, 0, time.UTC)},
 					},
 				},
 				&datapackagingv1alpha1.Package{
@@ -452,7 +453,7 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 						Licenses:                        []string{"my-license"},
 						ReleaseNotes:                    "release notes",
 						CapactiyRequirementsDescription: "capacity description",
-						ReleasedAt:                      metav1.Time{time.Date(1997, time.December, 25, 0, 0, 0, 0, time.UTC)},
+						ReleasedAt:                      metav1.Time{Time: time.Date(1997, time.December, 25, 0, 0, 0, 0, time.UTC)},
 					},
 				},
 			},
@@ -529,7 +530,7 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 						Licenses:                        []string{"my-license"},
 						ReleaseNotes:                    "release notes",
 						CapactiyRequirementsDescription: "capacity description",
-						ReleasedAt:                      metav1.Time{time.Date(1984, time.June, 6, 0, 0, 0, 0, time.UTC)},
+						ReleasedAt:                      metav1.Time{Time: time.Date(1984, time.June, 6, 0, 0, 0, 0, time.UTC)},
 					},
 				},
 			},
@@ -593,7 +594,7 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 						Licenses:                        []string{"my-license"},
 						ReleaseNotes:                    "release notes",
 						CapactiyRequirementsDescription: "capacity description",
-						ReleasedAt:                      metav1.Time{time.Date(1984, time.June, 6, 0, 0, 0, 0, time.UTC)},
+						ReleasedAt:                      metav1.Time{Time: time.Date(1984, time.June, 6, 0, 0, 0, 0, time.UTC)},
 					},
 				},
 			},
@@ -654,7 +655,7 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 						Licenses:                        []string{"my-license"},
 						ReleaseNotes:                    "release notes",
 						CapactiyRequirementsDescription: "capacity description",
-						ReleasedAt:                      metav1.Time{time.Date(1984, time.June, 6, 0, 0, 0, 0, time.UTC)},
+						ReleasedAt:                      metav1.Time{Time: time.Date(1984, time.June, 6, 0, 0, 0, 0, time.UTC)},
 					},
 				},
 				&datapackagingv1alpha1.Package{
@@ -672,7 +673,7 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 						Licenses:                        []string{"my-license"},
 						ReleaseNotes:                    "release notes",
 						CapactiyRequirementsDescription: "capacity description",
-						ReleasedAt:                      metav1.Time{time.Date(1984, time.June, 6, 0, 0, 0, 0, time.UTC)},
+						ReleasedAt:                      metav1.Time{Time: time.Date(1984, time.June, 6, 0, 0, 0, 0, time.UTC)},
 					},
 				},
 				&datapackagingv1alpha1.Package{
@@ -690,7 +691,7 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 						Licenses:                        []string{"my-license"},
 						ReleaseNotes:                    "release notes",
 						CapactiyRequirementsDescription: "capacity description",
-						ReleasedAt:                      metav1.Time{time.Date(1984, time.June, 6, 0, 0, 0, 0, time.UTC)},
+						ReleasedAt:                      metav1.Time{Time: time.Date(1984, time.June, 6, 0, 0, 0, 0, time.UTC)},
 					},
 				},
 			},
@@ -791,7 +792,7 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 						Licenses:                        []string{"my-license"},
 						ReleaseNotes:                    "release notes",
 						CapactiyRequirementsDescription: "capacity description",
-						ReleasedAt:                      metav1.Time{time.Date(1984, time.June, 6, 0, 0, 0, 0, time.UTC)},
+						ReleasedAt:                      metav1.Time{Time: time.Date(1984, time.June, 6, 0, 0, 0, 0, time.UTC)},
 					},
 				},
 				&datapackagingv1alpha1.Package{
@@ -809,7 +810,7 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 						Licenses:                        []string{"my-license"},
 						ReleaseNotes:                    "release notes",
 						CapactiyRequirementsDescription: "capacity description",
-						ReleasedAt:                      metav1.Time{time.Date(1997, time.December, 25, 0, 0, 0, 0, time.UTC)},
+						ReleasedAt:                      metav1.Time{Time: time.Date(1997, time.December, 25, 0, 0, 0, 0, time.UTC)},
 					},
 				},
 				&datapackagingv1alpha1.Package{
@@ -827,7 +828,7 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 						Licenses:                        []string{"my-license"},
 						ReleaseNotes:                    "release notes",
 						CapactiyRequirementsDescription: "capacity description",
-						ReleasedAt:                      metav1.Time{time.Date(1997, time.December, 25, 0, 0, 0, 0, time.UTC)},
+						ReleasedAt:                      metav1.Time{Time: time.Date(1997, time.December, 25, 0, 0, 0, 0, time.UTC)},
 					},
 				},
 			},
@@ -928,7 +929,7 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 						Licenses:                        []string{"my-license"},
 						ReleaseNotes:                    "release notes",
 						CapactiyRequirementsDescription: "capacity description",
-						ReleasedAt:                      metav1.Time{time.Date(1984, time.June, 6, 0, 0, 0, 0, time.UTC)},
+						ReleasedAt:                      metav1.Time{Time: time.Date(1984, time.June, 6, 0, 0, 0, 0, time.UTC)},
 					},
 				},
 				&datapackagingv1alpha1.Package{
@@ -946,7 +947,7 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 						Licenses:                        []string{"my-license"},
 						ReleaseNotes:                    "release notes",
 						CapactiyRequirementsDescription: "capacity description",
-						ReleasedAt:                      metav1.Time{time.Date(1997, time.December, 25, 0, 0, 0, 0, time.UTC)},
+						ReleasedAt:                      metav1.Time{Time: time.Date(1997, time.December, 25, 0, 0, 0, 0, time.UTC)},
 					},
 				},
 			},
@@ -1034,7 +1035,7 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 						Licenses:                        []string{"my-license"},
 						ReleaseNotes:                    "release notes",
 						CapactiyRequirementsDescription: "capacity description",
-						ReleasedAt:                      metav1.Time{time.Date(1984, time.June, 6, 0, 0, 0, 0, time.UTC)},
+						ReleasedAt:                      metav1.Time{Time: time.Date(1984, time.June, 6, 0, 0, 0, 0, time.UTC)},
 					},
 				},
 				&datapackagingv1alpha1.Package{
@@ -1052,7 +1053,7 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 						Licenses:                        []string{"my-license"},
 						ReleaseNotes:                    "release notes",
 						CapactiyRequirementsDescription: "capacity description",
-						ReleasedAt:                      metav1.Time{time.Date(1997, time.December, 25, 0, 0, 0, 0, time.UTC)},
+						ReleasedAt:                      metav1.Time{Time: time.Date(1997, time.December, 25, 0, 0, 0, 0, time.UTC)},
 					},
 				},
 			},
@@ -1075,8 +1076,96 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 				},
 			},
 		},
+		{
+			name: "it returns empty carvel package summaries if not matching the filters",
+			filterOptions: corev1.FilterOptions{
+				Query:        "foo",
+				Repositories: []string{"foo"},
+				Categories:   []string{"foo"},
+			},
+			existingObjects: []k8sruntime.Object{
+				&datapackagingv1alpha1.PackageMetadata{
+					TypeMeta: metav1.TypeMeta{
+						Kind:       pkgMetadataResource,
+						APIVersion: datapackagingAPIVersion,
+					},
+					ObjectMeta: metav1.ObjectMeta{
+						Namespace: "default",
+						Name:      "tetris.foo.example.com",
+					},
+					Spec: datapackagingv1alpha1.PackageMetadataSpec{
+						DisplayName:        "Classic Tetris",
+						IconSVGBase64:      "Tm90IHJlYWxseSBTVkcK",
+						ShortDescription:   "A great game for arcade gamers",
+						LongDescription:    "A few sentences but not really a readme",
+						Categories:         []string{"logging", "daemon-set"},
+						Maintainers:        []datapackagingv1alpha1.Maintainer{{Name: "person1"}, {Name: "person2"}},
+						SupportDescription: "Some support information",
+						ProviderName:       "Tetris inc.",
+					},
+				},
+				&datapackagingv1alpha1.PackageMetadata{
+					TypeMeta: metav1.TypeMeta{
+						Kind:       pkgMetadataResource,
+						APIVersion: datapackagingAPIVersion,
+					},
+					ObjectMeta: metav1.ObjectMeta{
+						Namespace: "default",
+						Name:      "tombi.foo.example.com",
+					},
+					Spec: datapackagingv1alpha1.PackageMetadataSpec{
+						DisplayName:        "Tombi!",
+						IconSVGBase64:      "Tm90IHJlYWxseSBTVkcK",
+						ShortDescription:   "An awesome game from the 90's",
+						LongDescription:    "Tombi! is an open world platform-adventure game with RPG elements.",
+						Categories:         []string{"platforms", "rpg"},
+						Maintainers:        []datapackagingv1alpha1.Maintainer{{Name: "person1"}, {Name: "person2"}},
+						SupportDescription: "Some support information",
+						ProviderName:       "Tombi!",
+					},
+				},
+				&datapackagingv1alpha1.Package{
+					TypeMeta: metav1.TypeMeta{
+						Kind:       pkgResource,
+						APIVersion: datapackagingAPIVersion,
+					},
+					ObjectMeta: metav1.ObjectMeta{
+						Namespace: "default",
+						Name:      "tetris.foo.example.com.1.2.3",
+					},
+					Spec: datapackagingv1alpha1.PackageSpec{
+						RefName:                         "tetris.foo.example.com",
+						Version:                         "1.2.3",
+						Licenses:                        []string{"my-license"},
+						ReleaseNotes:                    "release notes",
+						CapactiyRequirementsDescription: "capacity description",
+						ReleasedAt:                      metav1.Time{Time: time.Date(1984, time.June, 6, 0, 0, 0, 0, time.UTC)},
+					},
+				},
+				&datapackagingv1alpha1.Package{
+					TypeMeta: metav1.TypeMeta{
+						Kind:       pkgResource,
+						APIVersion: datapackagingAPIVersion,
+					},
+					ObjectMeta: metav1.ObjectMeta{
+						Namespace: "default",
+						Name:      "tombi.foo.example.com.1.2.5",
+					},
+					Spec: datapackagingv1alpha1.PackageSpec{
+						RefName:                         "tombi.foo.example.com",
+						Version:                         "1.2.5",
+						Licenses:                        []string{"my-license"},
+						ReleaseNotes:                    "release notes",
+						CapactiyRequirementsDescription: "capacity description",
+						ReleasedAt:                      metav1.Time{Time: time.Date(1997, time.December, 25, 0, 0, 0, 0, time.UTC)},
+					},
+				},
+			},
+			expectedPackages: []*corev1.AvailablePackageSummary{},
+		},
 	}
 
+	//nolint:govet
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			var unstructuredObjects []k8sruntime.Object
@@ -1173,7 +1262,7 @@ func TestGetAvailablePackageVersions(t *testing.T) {
 						Licenses:                        []string{"my-license"},
 						ReleaseNotes:                    "release notes",
 						CapactiyRequirementsDescription: "capacity description",
-						ReleasedAt:                      metav1.Time{time.Date(1984, time.June, 6, 0, 0, 0, 0, time.UTC)},
+						ReleasedAt:                      metav1.Time{Time: time.Date(1984, time.June, 6, 0, 0, 0, 0, time.UTC)},
 					},
 				},
 				&datapackagingv1alpha1.Package{
@@ -1191,7 +1280,7 @@ func TestGetAvailablePackageVersions(t *testing.T) {
 						Licenses:                        []string{"my-license"},
 						ReleaseNotes:                    "release notes",
 						CapactiyRequirementsDescription: "capacity description",
-						ReleasedAt:                      metav1.Time{time.Date(1984, time.June, 6, 0, 0, 0, 0, time.UTC)},
+						ReleasedAt:                      metav1.Time{Time: time.Date(1984, time.June, 6, 0, 0, 0, 0, time.UTC)},
 					},
 				},
 				&datapackagingv1alpha1.Package{
@@ -1209,7 +1298,7 @@ func TestGetAvailablePackageVersions(t *testing.T) {
 						Licenses:                        []string{"my-license"},
 						ReleaseNotes:                    "release notes",
 						CapactiyRequirementsDescription: "capacity description",
-						ReleasedAt:                      metav1.Time{time.Date(1984, time.June, 6, 0, 0, 0, 0, time.UTC)},
+						ReleasedAt:                      metav1.Time{Time: time.Date(1984, time.June, 6, 0, 0, 0, 0, time.UTC)},
 					},
 				},
 			},
@@ -1333,7 +1422,7 @@ func TestGetAvailablePackageDetail(t *testing.T) {
 						Licenses:                        []string{"my-license"},
 						ReleaseNotes:                    "release notes",
 						CapactiyRequirementsDescription: "capacity description",
-						ReleasedAt:                      metav1.Time{time.Date(1984, time.June, 6, 0, 0, 0, 0, time.UTC)},
+						ReleasedAt:                      metav1.Time{Time: time.Date(1984, time.June, 6, 0, 0, 0, 0, time.UTC)},
 					},
 				},
 			},
@@ -1427,7 +1516,7 @@ Some support information
 						Licenses:                        []string{"my-license"},
 						ReleaseNotes:                    "release notes",
 						CapactiyRequirementsDescription: "capacity description",
-						ReleasedAt:                      metav1.Time{time.Date(1984, time.June, 6, 0, 0, 0, 0, time.UTC)},
+						ReleasedAt:                      metav1.Time{Time: time.Date(1984, time.June, 6, 0, 0, 0, 0, time.UTC)},
 					},
 				},
 			},
@@ -1518,7 +1607,7 @@ Some support information
 						Licenses:                        []string{"my-license"},
 						ReleaseNotes:                    "release notes",
 						CapactiyRequirementsDescription: "capacity description",
-						ReleasedAt:                      metav1.Time{time.Date(1984, time.June, 6, 0, 0, 0, 0, time.UTC)},
+						ReleasedAt:                      metav1.Time{Time: time.Date(1984, time.June, 6, 0, 0, 0, 0, time.UTC)},
 					},
 				},
 			},
@@ -1619,7 +1708,7 @@ Some support information
 						Licenses:                        []string{"my-license"},
 						ReleaseNotes:                    "release notes",
 						CapactiyRequirementsDescription: "capacity description",
-						ReleasedAt:                      metav1.Time{time.Date(1984, time.June, 6, 0, 0, 0, 0, time.UTC)},
+						ReleasedAt:                      metav1.Time{Time: time.Date(1984, time.June, 6, 0, 0, 0, 0, time.UTC)},
 					},
 				},
 			},
@@ -1719,7 +1808,7 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 						Licenses:                        []string{"my-license"},
 						ReleaseNotes:                    "release notes",
 						CapactiyRequirementsDescription: "capacity description",
-						ReleasedAt:                      metav1.Time{time.Date(1984, time.June, 6, 0, 0, 0, 0, time.UTC)},
+						ReleasedAt:                      metav1.Time{Time: time.Date(1984, time.June, 6, 0, 0, 0, 0, time.UTC)},
 					},
 				},
 				&packagingv1alpha1.PackageInstall{
@@ -1747,7 +1836,7 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 						},
 						Paused:     false,
 						Canceled:   false,
-						SyncPeriod: &metav1.Duration{(time.Second * 30)},
+						SyncPeriod: &metav1.Duration{Duration: (time.Second * 30)},
 						NoopDelete: false,
 					},
 					Status: packagingv1alpha1.PackageInstallStatus{
@@ -1808,7 +1897,7 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 						Licenses:                        []string{"my-license"},
 						ReleaseNotes:                    "release notes",
 						CapactiyRequirementsDescription: "capacity description",
-						ReleasedAt:                      metav1.Time{time.Date(1984, time.June, 6, 0, 0, 0, 0, time.UTC)},
+						ReleasedAt:                      metav1.Time{Time: time.Date(1984, time.June, 6, 0, 0, 0, 0, time.UTC)},
 					},
 				},
 			},
@@ -1853,7 +1942,7 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 						Licenses:                        []string{"my-license"},
 						ReleaseNotes:                    "release notes",
 						CapactiyRequirementsDescription: "capacity description",
-						ReleasedAt:                      metav1.Time{time.Date(1984, time.June, 6, 0, 0, 0, 0, time.UTC)},
+						ReleasedAt:                      metav1.Time{Time: time.Date(1984, time.June, 6, 0, 0, 0, 0, time.UTC)},
 					},
 				},
 				&packagingv1alpha1.PackageInstall{
@@ -1881,7 +1970,7 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 						},
 						Paused:     false,
 						Canceled:   false,
-						SyncPeriod: &metav1.Duration{(time.Second * 30)},
+						SyncPeriod: &metav1.Duration{Duration: (time.Second * 30)},
 						NoopDelete: false,
 					},
 					Status: packagingv1alpha1.PackageInstallStatus{
@@ -1981,7 +2070,7 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 						Licenses:                        []string{"my-license"},
 						ReleaseNotes:                    "release notes",
 						CapactiyRequirementsDescription: "capacity description",
-						ReleasedAt:                      metav1.Time{time.Date(1984, time.June, 6, 0, 0, 0, 0, time.UTC)},
+						ReleasedAt:                      metav1.Time{Time: time.Date(1984, time.June, 6, 0, 0, 0, 0, time.UTC)},
 					},
 				},
 				&packagingv1alpha1.PackageInstall{
@@ -2009,7 +2098,7 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 						},
 						Paused:     false,
 						Canceled:   false,
-						SyncPeriod: &metav1.Duration{(time.Second * 30)},
+						SyncPeriod: &metav1.Duration{Duration: (time.Second * 30)},
 						NoopDelete: false,
 					},
 					Status: packagingv1alpha1.PackageInstallStatus{
@@ -2060,6 +2149,80 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 					},
 				},
 			},
+		},
+		{
+			name: "it ignores carvel package install without any related metadata",
+			request: &corev1.GetInstalledPackageSummariesRequest{
+				Context: &corev1.Context{
+					Namespace: "",
+					Cluster:   defaultContext.Cluster,
+				},
+			},
+			existingObjects: []k8sruntime.Object{
+				&datapackagingv1alpha1.Package{
+					TypeMeta: metav1.TypeMeta{
+						Kind:       pkgResource,
+						APIVersion: datapackagingAPIVersion,
+					},
+					ObjectMeta: metav1.ObjectMeta{
+						Namespace: globalPackagingNamespace,
+						Name:      "tetris.foo.example.com.1.2.3",
+					},
+					Spec: datapackagingv1alpha1.PackageSpec{
+						RefName:                         "tetris.foo.example.com",
+						Version:                         "1.2.3",
+						Licenses:                        []string{"my-license"},
+						ReleaseNotes:                    "release notes",
+						CapactiyRequirementsDescription: "capacity description",
+						ReleasedAt:                      metav1.Time{Time: time.Date(1984, time.June, 6, 0, 0, 0, 0, time.UTC)},
+					},
+				},
+				&packagingv1alpha1.PackageInstall{
+					TypeMeta: metav1.TypeMeta{
+						Kind:       pkgInstallResource,
+						APIVersion: packagingAPIVersion,
+					},
+					ObjectMeta: metav1.ObjectMeta{
+						Namespace: "default",
+						Name:      "my-installation",
+					},
+					Spec: packagingv1alpha1.PackageInstallSpec{
+						ServiceAccountName: "default",
+						PackageRef: &packagingv1alpha1.PackageRef{
+							RefName: "tetris.foo.example.com",
+							VersionSelection: &vendirversions.VersionSelectionSemver{
+								Constraints: "1.2.3",
+							},
+						},
+						Values: []packagingv1alpha1.PackageInstallValues{{
+							SecretRef: &packagingv1alpha1.PackageInstallValuesSecretRef{
+								Name: "my-installation-default-values",
+							},
+						},
+						},
+						Paused:     false,
+						Canceled:   false,
+						SyncPeriod: &metav1.Duration{Duration: (time.Second * 30)},
+						NoopDelete: false,
+					},
+					Status: packagingv1alpha1.PackageInstallStatus{
+						GenericStatus: kappctrlv1alpha1.GenericStatus{
+							ObservedGeneration: 1,
+							Conditions: []kappctrlv1alpha1.Condition{{
+								Type:    kappctrlv1alpha1.ReconcileSucceeded,
+								Status:  k8scorev1.ConditionTrue,
+								Reason:  "baz",
+								Message: "qux",
+							}},
+							FriendlyDescription: "foo",
+							UsefulErrorMessage:  "Deployed",
+						},
+						Version:              "1.2.3",
+						LastAttemptedVersion: "1.2.3",
+					},
+				},
+			},
+			expectedPackages: []*corev1.InstalledPackageSummary{},
 		},
 		{
 			name: "it returns carvel installed package from different namespaces if context.namespace==''",
@@ -2125,7 +2288,7 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 						Licenses:                        []string{"my-license"},
 						ReleaseNotes:                    "release notes",
 						CapactiyRequirementsDescription: "capacity description",
-						ReleasedAt:                      metav1.Time{time.Date(1984, time.June, 6, 0, 0, 0, 0, time.UTC)},
+						ReleasedAt:                      metav1.Time{Time: time.Date(1984, time.June, 6, 0, 0, 0, 0, time.UTC)},
 					},
 				},
 				&datapackagingv1alpha1.Package{
@@ -2143,7 +2306,7 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 						Licenses:                        []string{"my-license"},
 						ReleaseNotes:                    "release notes",
 						CapactiyRequirementsDescription: "capacity description",
-						ReleasedAt:                      metav1.Time{time.Date(1984, time.June, 6, 0, 0, 0, 0, time.UTC)},
+						ReleasedAt:                      metav1.Time{Time: time.Date(1984, time.June, 6, 0, 0, 0, 0, time.UTC)},
 					},
 				},
 				&packagingv1alpha1.PackageInstall{
@@ -2171,7 +2334,7 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 						},
 						Paused:     false,
 						Canceled:   false,
-						SyncPeriod: &metav1.Duration{(time.Second * 30)},
+						SyncPeriod: &metav1.Duration{Duration: (time.Second * 30)},
 						NoopDelete: false,
 					},
 					Status: packagingv1alpha1.PackageInstallStatus{
@@ -2215,7 +2378,7 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 						},
 						Paused:     false,
 						Canceled:   false,
-						SyncPeriod: &metav1.Duration{(time.Second * 30)},
+						SyncPeriod: &metav1.Duration{Duration: (time.Second * 30)},
 						NoopDelete: false,
 					},
 					Status: packagingv1alpha1.PackageInstallStatus{
@@ -2335,7 +2498,7 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 						Licenses:                        []string{"my-license"},
 						ReleaseNotes:                    "release notes",
 						CapactiyRequirementsDescription: "capacity description",
-						ReleasedAt:                      metav1.Time{time.Date(1984, time.June, 6, 0, 0, 0, 0, time.UTC)},
+						ReleasedAt:                      metav1.Time{Time: time.Date(1984, time.June, 6, 0, 0, 0, 0, time.UTC)},
 					},
 				},
 				&packagingv1alpha1.PackageInstall{
@@ -2363,7 +2526,7 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 						},
 						Paused:     false,
 						Canceled:   false,
-						SyncPeriod: &metav1.Duration{(time.Second * 30)},
+						SyncPeriod: &metav1.Duration{Duration: (time.Second * 30)},
 						NoopDelete: false,
 					},
 				},
@@ -2441,7 +2604,7 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 						Licenses:                        []string{"my-license"},
 						ReleaseNotes:                    "release notes",
 						CapactiyRequirementsDescription: "capacity description",
-						ReleasedAt:                      metav1.Time{time.Date(1984, time.June, 6, 0, 0, 0, 0, time.UTC)},
+						ReleasedAt:                      metav1.Time{Time: time.Date(1984, time.June, 6, 0, 0, 0, 0, time.UTC)},
 					},
 				},
 				&datapackagingv1alpha1.Package{
@@ -2459,7 +2622,7 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 						Licenses:                        []string{"my-license"},
 						ReleaseNotes:                    "release notes",
 						CapactiyRequirementsDescription: "capacity description",
-						ReleasedAt:                      metav1.Time{time.Date(1984, time.June, 6, 0, 0, 0, 0, time.UTC)},
+						ReleasedAt:                      metav1.Time{Time: time.Date(1984, time.June, 6, 0, 0, 0, 0, time.UTC)},
 					},
 				},
 				&datapackagingv1alpha1.Package{
@@ -2477,7 +2640,7 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 						Licenses:                        []string{"my-license"},
 						ReleaseNotes:                    "release notes",
 						CapactiyRequirementsDescription: "capacity description",
-						ReleasedAt:                      metav1.Time{time.Date(1984, time.June, 6, 0, 0, 0, 0, time.UTC)},
+						ReleasedAt:                      metav1.Time{Time: time.Date(1984, time.June, 6, 0, 0, 0, 0, time.UTC)},
 					},
 				},
 				&packagingv1alpha1.PackageInstall{
@@ -2505,7 +2668,7 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 						},
 						Paused:     false,
 						Canceled:   false,
-						SyncPeriod: &metav1.Duration{(time.Second * 30)},
+						SyncPeriod: &metav1.Duration{Duration: (time.Second * 30)},
 						NoopDelete: false,
 					},
 					Status: packagingv1alpha1.PackageInstallStatus{
@@ -2640,7 +2803,7 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 						},
 						Paused:     false,
 						Canceled:   false,
-						SyncPeriod: &metav1.Duration{(time.Second * 30)},
+						SyncPeriod: &metav1.Duration{Duration: (time.Second * 30)},
 						NoopDelete: false,
 					},
 					Status: packagingv1alpha1.PackageInstallStatus{
@@ -2785,7 +2948,7 @@ func TestGetInstalledPackageDetail(t *testing.T) {
 						Licenses:                        []string{"my-license"},
 						ReleaseNotes:                    "release notes",
 						CapactiyRequirementsDescription: "capacity description",
-						ReleasedAt:                      metav1.Time{time.Date(1984, time.June, 6, 0, 0, 0, 0, time.UTC)},
+						ReleasedAt:                      metav1.Time{Time: time.Date(1984, time.June, 6, 0, 0, 0, 0, time.UTC)},
 					},
 				},
 				&datapackagingv1alpha1.Package{
@@ -2847,7 +3010,7 @@ func TestGetInstalledPackageDetail(t *testing.T) {
 						},
 						Paused:     false,
 						Canceled:   false,
-						SyncPeriod: &metav1.Duration{(time.Second * 30)},
+						SyncPeriod: &metav1.Duration{Duration: (time.Second * 30)},
 						NoopDelete: false,
 					},
 					Status: packagingv1alpha1.PackageInstallStatus{
@@ -2876,7 +3039,7 @@ func TestGetInstalledPackageDetail(t *testing.T) {
 						Name:      "my-installation",
 					},
 					Spec: kappctrlv1alpha1.AppSpec{
-						SyncPeriod: &metav1.Duration{(time.Second * 30)},
+						SyncPeriod: &metav1.Duration{Duration: (time.Second * 30)},
 					},
 					Status: kappctrlv1alpha1.AppStatus{
 						Deploy: &kappctrlv1alpha1.AppStatusDeploy{
@@ -2929,7 +3092,7 @@ func TestGetInstalledPackageDetail(t *testing.T) {
 				ValuesApplied: "\n# values.yaml\nfoo: bar\n",
 				ReconciliationOptions: &corev1.ReconciliationOptions{
 					ServiceAccountName: "default",
-					Interval:           30,
+					Interval:           "30s",
 					Suspend:            false,
 				},
 				Status: &corev1.InstalledPackageStatus{
@@ -3021,7 +3184,7 @@ fetchStderr
 						Licenses:                        []string{"my-license"},
 						ReleaseNotes:                    "release notes",
 						CapactiyRequirementsDescription: "capacity description",
-						ReleasedAt:                      metav1.Time{time.Date(1984, time.June, 6, 0, 0, 0, 0, time.UTC)},
+						ReleasedAt:                      metav1.Time{Time: time.Date(1984, time.June, 6, 0, 0, 0, 0, time.UTC)},
 					},
 				},
 				&datapackagingv1alpha1.Package{
@@ -3083,7 +3246,7 @@ fetchStderr
 						},
 						Paused:     false,
 						Canceled:   false,
-						SyncPeriod: &metav1.Duration{(time.Second * 30)},
+						SyncPeriod: &metav1.Duration{Duration: (time.Second * 30)},
 						NoopDelete: false,
 					},
 					Status: packagingv1alpha1.PackageInstallStatus{
@@ -3112,7 +3275,7 @@ fetchStderr
 						Name:      "my-installation",
 					},
 					Spec: kappctrlv1alpha1.AppSpec{
-						SyncPeriod: &metav1.Duration{(time.Second * 30)},
+						SyncPeriod: &metav1.Duration{Duration: (time.Second * 30)},
 					},
 					Status: kappctrlv1alpha1.AppStatus{
 						Deploy: &kappctrlv1alpha1.AppStatusDeploy{
@@ -3165,7 +3328,7 @@ fetchStderr
 				ValuesApplied: "\n# values.yaml\nfoo: bar\n",
 				ReconciliationOptions: &corev1.ReconciliationOptions{
 					ServiceAccountName: "default",
-					Interval:           30,
+					Interval:           "30s",
 					Suspend:            false,
 				},
 				Status: &corev1.InstalledPackageStatus{
@@ -3281,7 +3444,7 @@ fetchStderr
 						},
 						Paused:     false,
 						Canceled:   false,
-						SyncPeriod: &metav1.Duration{(time.Second * 30)},
+						SyncPeriod: &metav1.Duration{Duration: (time.Second * 30)},
 						NoopDelete: false,
 					},
 					Status: packagingv1alpha1.PackageInstallStatus{
@@ -3310,7 +3473,7 @@ fetchStderr
 						Name:      "my-installation",
 					},
 					Spec: kappctrlv1alpha1.AppSpec{
-						SyncPeriod: &metav1.Duration{(time.Second * 30)},
+						SyncPeriod: &metav1.Duration{Duration: (time.Second * 30)},
 					},
 					Status: kappctrlv1alpha1.AppStatus{
 						Deploy: &kappctrlv1alpha1.AppStatusDeploy{
@@ -3363,7 +3526,7 @@ fetchStderr
 				ValuesApplied: "\n# values.yaml\nfoo: bar\n",
 				ReconciliationOptions: &corev1.ReconciliationOptions{
 					ServiceAccountName: "default",
-					Interval:           30,
+					Interval:           "30s",
 					Suspend:            false,
 				},
 				Status: &corev1.InstalledPackageStatus{
@@ -3515,7 +3678,7 @@ func TestCreateInstalledPackage(t *testing.T) {
 						Licenses:                        []string{"my-license"},
 						ReleaseNotes:                    "release notes",
 						CapactiyRequirementsDescription: "capacity description",
-						ReleasedAt:                      metav1.Time{time.Date(1984, time.June, 6, 0, 0, 0, 0, time.UTC)},
+						ReleasedAt:                      metav1.Time{Time: time.Date(1984, time.June, 6, 0, 0, 0, 0, time.UTC)},
 					},
 				},
 				&kappctrlv1alpha1.App{
@@ -3528,7 +3691,7 @@ func TestCreateInstalledPackage(t *testing.T) {
 						Name:      "my-installation",
 					},
 					Spec: kappctrlv1alpha1.AppSpec{
-						SyncPeriod: &metav1.Duration{(time.Second * 30)},
+						SyncPeriod: &metav1.Duration{Duration: (time.Second * 30)},
 					},
 					Status: kappctrlv1alpha1.AppStatus{
 						Deploy: &kappctrlv1alpha1.AppStatusDeploy{
@@ -3633,7 +3796,7 @@ func TestCreateInstalledPackage(t *testing.T) {
 				},
 			},
 			pluginConfig: &kappControllerPluginParsedConfig{
-				timeoutSeconds:                     1, //to avoid unnecesary test delays
+				timeoutSeconds:                     1, //to avoid unnecessary test delays
 				defaultUpgradePolicy:               defaultPluginConfig.defaultUpgradePolicy,
 				defaultPrereleasesVersionSelection: defaultPluginConfig.defaultPrereleasesVersionSelection,
 				defaultAllowDowngrades:             defaultPluginConfig.defaultAllowDowngrades,
@@ -3674,7 +3837,7 @@ func TestCreateInstalledPackage(t *testing.T) {
 						Licenses:                        []string{"my-license"},
 						ReleaseNotes:                    "release notes",
 						CapactiyRequirementsDescription: "capacity description",
-						ReleasedAt:                      metav1.Time{time.Date(1984, time.June, 6, 0, 0, 0, 0, time.UTC)},
+						ReleasedAt:                      metav1.Time{Time: time.Date(1984, time.June, 6, 0, 0, 0, 0, time.UTC)},
 					},
 				},
 			},
@@ -3756,7 +3919,7 @@ func TestCreateInstalledPackage(t *testing.T) {
 						Licenses:                        []string{"my-license"},
 						ReleaseNotes:                    "release notes",
 						CapactiyRequirementsDescription: "capacity description",
-						ReleasedAt:                      metav1.Time{time.Date(1984, time.June, 6, 0, 0, 0, 0, time.UTC)},
+						ReleasedAt:                      metav1.Time{Time: time.Date(1984, time.June, 6, 0, 0, 0, 0, time.UTC)},
 					},
 				},
 				&kappctrlv1alpha1.App{
@@ -3769,7 +3932,7 @@ func TestCreateInstalledPackage(t *testing.T) {
 						Name:      "my-installation",
 					},
 					Spec: kappctrlv1alpha1.AppSpec{
-						SyncPeriod: &metav1.Duration{(time.Second * 30)},
+						SyncPeriod: &metav1.Duration{Duration: (time.Second * 30)},
 					},
 					Status: kappctrlv1alpha1.AppStatus{
 						Deploy: &kappctrlv1alpha1.AppStatusDeploy{
@@ -3865,7 +4028,7 @@ func TestCreateInstalledPackage(t *testing.T) {
 					Version: "1.2.3",
 				},
 				ReconciliationOptions: &corev1.ReconciliationOptions{
-					Interval:           99,
+					Interval:           "99s",
 					Suspend:            true,
 					ServiceAccountName: "my-sa",
 				},
@@ -3912,7 +4075,7 @@ func TestCreateInstalledPackage(t *testing.T) {
 						Licenses:                        []string{"my-license"},
 						ReleaseNotes:                    "release notes",
 						CapactiyRequirementsDescription: "capacity description",
-						ReleasedAt:                      metav1.Time{time.Date(1984, time.June, 6, 0, 0, 0, 0, time.UTC)},
+						ReleasedAt:                      metav1.Time{Time: time.Date(1984, time.June, 6, 0, 0, 0, 0, time.UTC)},
 					},
 				},
 				&kappctrlv1alpha1.App{
@@ -3925,7 +4088,7 @@ func TestCreateInstalledPackage(t *testing.T) {
 						Name:      "my-installation",
 					},
 					Spec: kappctrlv1alpha1.AppSpec{
-						SyncPeriod: &metav1.Duration{(time.Second * 30)},
+						SyncPeriod: &metav1.Duration{Duration: (time.Second * 30)},
 					},
 					Status: kappctrlv1alpha1.AppStatus{
 						Deploy: &kappctrlv1alpha1.AppStatusDeploy{
@@ -3991,7 +4154,7 @@ func TestCreateInstalledPackage(t *testing.T) {
 					},
 					Paused:     true,
 					Canceled:   false,
-					SyncPeriod: &metav1.Duration{(time.Second * 99)},
+					SyncPeriod: &metav1.Duration{Duration: (time.Second * 99)},
 					NoopDelete: false,
 				},
 				Status: packagingv1alpha1.PackageInstallStatus{
@@ -4070,7 +4233,7 @@ func TestCreateInstalledPackage(t *testing.T) {
 						Licenses:                        []string{"my-license"},
 						ReleaseNotes:                    "release notes",
 						CapactiyRequirementsDescription: "capacity description",
-						ReleasedAt:                      metav1.Time{time.Date(1984, time.June, 6, 0, 0, 0, 0, time.UTC)},
+						ReleasedAt:                      metav1.Time{Time: time.Date(1984, time.June, 6, 0, 0, 0, 0, time.UTC)},
 					},
 				},
 				&kappctrlv1alpha1.App{
@@ -4083,7 +4246,7 @@ func TestCreateInstalledPackage(t *testing.T) {
 						Name:      "my-installation",
 					},
 					Spec: kappctrlv1alpha1.AppSpec{
-						SyncPeriod: &metav1.Duration{(time.Second * 30)},
+						SyncPeriod: &metav1.Duration{Duration: (time.Second * 30)},
 					},
 					Status: kappctrlv1alpha1.AppStatus{
 						Deploy: &kappctrlv1alpha1.AppStatusDeploy{
@@ -4229,7 +4392,7 @@ func TestCreateInstalledPackage(t *testing.T) {
 						Licenses:                        []string{"my-license"},
 						ReleaseNotes:                    "release notes",
 						CapactiyRequirementsDescription: "capacity description",
-						ReleasedAt:                      metav1.Time{time.Date(1984, time.June, 6, 0, 0, 0, 0, time.UTC)},
+						ReleasedAt:                      metav1.Time{Time: time.Date(1984, time.June, 6, 0, 0, 0, 0, time.UTC)},
 					},
 				},
 				&kappctrlv1alpha1.App{
@@ -4242,7 +4405,7 @@ func TestCreateInstalledPackage(t *testing.T) {
 						Name:      "my-installation",
 					},
 					Spec: kappctrlv1alpha1.AppSpec{
-						SyncPeriod: &metav1.Duration{(time.Second * 30)},
+						SyncPeriod: &metav1.Duration{Duration: (time.Second * 30)},
 					},
 					Status: kappctrlv1alpha1.AppStatus{
 						Deploy: &kappctrlv1alpha1.AppStatusDeploy{
@@ -4341,7 +4504,7 @@ func TestCreateInstalledPackage(t *testing.T) {
 						Licenses:                        []string{"my-license"},
 						ReleaseNotes:                    "release notes",
 						CapactiyRequirementsDescription: "capacity description",
-						ReleasedAt:                      metav1.Time{time.Date(1984, time.June, 6, 0, 0, 0, 0, time.UTC)},
+						ReleasedAt:                      metav1.Time{Time: time.Date(1984, time.June, 6, 0, 0, 0, 0, time.UTC)},
 					},
 				},
 				&kappctrlv1alpha1.App{
@@ -4354,7 +4517,7 @@ func TestCreateInstalledPackage(t *testing.T) {
 						Name:      "my-installation",
 					},
 					Spec: kappctrlv1alpha1.AppSpec{
-						SyncPeriod: &metav1.Duration{(time.Second * 30)},
+						SyncPeriod: &metav1.Duration{Duration: (time.Second * 30)},
 					},
 					Status: kappctrlv1alpha1.AppStatus{
 						Deploy: &kappctrlv1alpha1.AppStatusDeploy{
@@ -4500,7 +4663,7 @@ func TestCreateInstalledPackage(t *testing.T) {
 						Licenses:                        []string{"my-license"},
 						ReleaseNotes:                    "release notes",
 						CapactiyRequirementsDescription: "capacity description",
-						ReleasedAt:                      metav1.Time{time.Date(1984, time.June, 6, 0, 0, 0, 0, time.UTC)},
+						ReleasedAt:                      metav1.Time{Time: time.Date(1984, time.June, 6, 0, 0, 0, 0, time.UTC)},
 					},
 				},
 				&kappctrlv1alpha1.App{
@@ -4513,7 +4676,7 @@ func TestCreateInstalledPackage(t *testing.T) {
 						Name:      "my-installation",
 					},
 					Spec: kappctrlv1alpha1.AppSpec{
-						SyncPeriod: &metav1.Duration{(time.Second * 30)},
+						SyncPeriod: &metav1.Duration{Duration: (time.Second * 30)},
 					},
 					Status: kappctrlv1alpha1.AppStatus{
 						Deploy: &kappctrlv1alpha1.AppStatusDeploy{
@@ -4655,7 +4818,7 @@ func TestCreateInstalledPackage(t *testing.T) {
 						Licenses:                        []string{"my-license"},
 						ReleaseNotes:                    "release notes",
 						CapactiyRequirementsDescription: "capacity description",
-						ReleasedAt:                      metav1.Time{time.Date(1984, time.June, 6, 0, 0, 0, 0, time.UTC)},
+						ReleasedAt:                      metav1.Time{Time: time.Date(1984, time.June, 6, 0, 0, 0, 0, time.UTC)},
 					},
 				},
 				&kappctrlv1alpha1.App{
@@ -4668,7 +4831,7 @@ func TestCreateInstalledPackage(t *testing.T) {
 						Name:      "my-installation",
 					},
 					Spec: kappctrlv1alpha1.AppSpec{
-						SyncPeriod: &metav1.Duration{(time.Second * 30)},
+						SyncPeriod: &metav1.Duration{Duration: (time.Second * 30)},
 					},
 					Status: kappctrlv1alpha1.AppStatus{
 						Deploy: &kappctrlv1alpha1.AppStatusDeploy{
@@ -4813,7 +4976,7 @@ func TestCreateInstalledPackage(t *testing.T) {
 						Licenses:                        []string{"my-license"},
 						ReleaseNotes:                    "release notes",
 						CapactiyRequirementsDescription: "capacity description",
-						ReleasedAt:                      metav1.Time{time.Date(1984, time.June, 6, 0, 0, 0, 0, time.UTC)},
+						ReleasedAt:                      metav1.Time{Time: time.Date(1984, time.June, 6, 0, 0, 0, 0, time.UTC)},
 					},
 				},
 				&kappctrlv1alpha1.App{
@@ -4826,7 +4989,7 @@ func TestCreateInstalledPackage(t *testing.T) {
 						Name:      "my-installation",
 					},
 					Spec: kappctrlv1alpha1.AppSpec{
-						SyncPeriod: &metav1.Duration{(time.Second * 30)},
+						SyncPeriod: &metav1.Duration{Duration: (time.Second * 30)},
 					},
 					Status: kappctrlv1alpha1.AppStatus{
 						Deploy: &kappctrlv1alpha1.AppStatusDeploy{
@@ -4971,7 +5134,7 @@ func TestCreateInstalledPackage(t *testing.T) {
 						Licenses:                        []string{"my-license"},
 						ReleaseNotes:                    "release notes",
 						CapactiyRequirementsDescription: "capacity description",
-						ReleasedAt:                      metav1.Time{time.Date(1984, time.June, 6, 0, 0, 0, 0, time.UTC)},
+						ReleasedAt:                      metav1.Time{Time: time.Date(1984, time.June, 6, 0, 0, 0, 0, time.UTC)},
 					},
 				},
 				&kappctrlv1alpha1.App{
@@ -4984,7 +5147,7 @@ func TestCreateInstalledPackage(t *testing.T) {
 						Name:      "my-installation",
 					},
 					Spec: kappctrlv1alpha1.AppSpec{
-						SyncPeriod: &metav1.Duration{(time.Second * 30)},
+						SyncPeriod: &metav1.Duration{Duration: (time.Second * 30)},
 					},
 					Status: kappctrlv1alpha1.AppStatus{
 						Deploy: &kappctrlv1alpha1.AppStatusDeploy{
@@ -5129,7 +5292,7 @@ func TestCreateInstalledPackage(t *testing.T) {
 						Licenses:                        []string{"my-license"},
 						ReleaseNotes:                    "release notes",
 						CapactiyRequirementsDescription: "capacity description",
-						ReleasedAt:                      metav1.Time{time.Date(1984, time.June, 6, 0, 0, 0, 0, time.UTC)},
+						ReleasedAt:                      metav1.Time{Time: time.Date(1984, time.June, 6, 0, 0, 0, 0, time.UTC)},
 					},
 				},
 				&kappctrlv1alpha1.App{
@@ -5142,7 +5305,7 @@ func TestCreateInstalledPackage(t *testing.T) {
 						Name:      "my-installation",
 					},
 					Spec: kappctrlv1alpha1.AppSpec{
-						SyncPeriod: &metav1.Duration{(time.Second * 30)},
+						SyncPeriod: &metav1.Duration{Duration: (time.Second * 30)},
 					},
 					Status: kappctrlv1alpha1.AppStatus{
 						Deploy: &kappctrlv1alpha1.AppStatusDeploy{
@@ -5287,7 +5450,7 @@ func TestCreateInstalledPackage(t *testing.T) {
 						Licenses:                        []string{"my-license"},
 						ReleaseNotes:                    "release notes",
 						CapactiyRequirementsDescription: "capacity description",
-						ReleasedAt:                      metav1.Time{time.Date(1984, time.June, 6, 0, 0, 0, 0, time.UTC)},
+						ReleasedAt:                      metav1.Time{Time: time.Date(1984, time.June, 6, 0, 0, 0, 0, time.UTC)},
 					},
 				},
 				&kappctrlv1alpha1.App{
@@ -5300,7 +5463,7 @@ func TestCreateInstalledPackage(t *testing.T) {
 						Name:      "my-installation",
 					},
 					Spec: kappctrlv1alpha1.AppSpec{
-						SyncPeriod: &metav1.Duration{(time.Second * 30)},
+						SyncPeriod: &metav1.Duration{Duration: (time.Second * 30)},
 					},
 					Status: kappctrlv1alpha1.AppStatus{
 						Deploy: &kappctrlv1alpha1.AppStatusDeploy{
@@ -5467,7 +5630,7 @@ func TestUpdateInstalledPackage(t *testing.T) {
 				Values: "foo: bar",
 				ReconciliationOptions: &corev1.ReconciliationOptions{
 					ServiceAccountName: "default",
-					Interval:           30,
+					Interval:           "30s",
 					Suspend:            false,
 				},
 			},
@@ -5508,7 +5671,7 @@ func TestUpdateInstalledPackage(t *testing.T) {
 						Licenses:                        []string{"my-license"},
 						ReleaseNotes:                    "release notes",
 						CapactiyRequirementsDescription: "capacity description",
-						ReleasedAt:                      metav1.Time{time.Date(1984, time.June, 6, 0, 0, 0, 0, time.UTC)},
+						ReleasedAt:                      metav1.Time{Time: time.Date(1984, time.June, 6, 0, 0, 0, 0, time.UTC)},
 					},
 				},
 				&packagingv1alpha1.PackageInstall{
@@ -5536,7 +5699,7 @@ func TestUpdateInstalledPackage(t *testing.T) {
 						},
 						Paused:     false,
 						Canceled:   false,
-						SyncPeriod: &metav1.Duration{(time.Second * 30)},
+						SyncPeriod: &metav1.Duration{Duration: (time.Second * 30)},
 						NoopDelete: false,
 					},
 					Status: packagingv1alpha1.PackageInstallStatus{
@@ -5601,7 +5764,7 @@ func TestUpdateInstalledPackage(t *testing.T) {
 					},
 					Paused:     false,
 					Canceled:   false,
-					SyncPeriod: &metav1.Duration{(time.Second * 30)},
+					SyncPeriod: &metav1.Duration{Duration: (time.Second * 30)},
 					NoopDelete: false,
 				},
 				Status: packagingv1alpha1.PackageInstallStatus{
@@ -5638,7 +5801,7 @@ func TestUpdateInstalledPackage(t *testing.T) {
 				Values: "foo: bar",
 				ReconciliationOptions: &corev1.ReconciliationOptions{
 					ServiceAccountName: "default",
-					Interval:           30,
+					Interval:           "30s",
 					Suspend:            false,
 				},
 			},
@@ -5683,7 +5846,7 @@ func TestUpdateInstalledPackage(t *testing.T) {
 						Licenses:                        []string{"my-license"},
 						ReleaseNotes:                    "release notes",
 						CapactiyRequirementsDescription: "capacity description",
-						ReleasedAt:                      metav1.Time{time.Date(1984, time.June, 6, 0, 0, 0, 0, time.UTC)},
+						ReleasedAt:                      metav1.Time{Time: time.Date(1984, time.June, 6, 0, 0, 0, 0, time.UTC)},
 					},
 				},
 				&packagingv1alpha1.PackageInstall{
@@ -5711,7 +5874,7 @@ func TestUpdateInstalledPackage(t *testing.T) {
 						},
 						Paused:     false,
 						Canceled:   false,
-						SyncPeriod: &metav1.Duration{(time.Second * 30)},
+						SyncPeriod: &metav1.Duration{Duration: (time.Second * 30)},
 						NoopDelete: false,
 					},
 					Status: packagingv1alpha1.PackageInstallStatus{
@@ -5843,7 +6006,7 @@ func TestDeleteInstalledPackage(t *testing.T) {
 						},
 						Paused:     false,
 						Canceled:   false,
-						SyncPeriod: &metav1.Duration{(time.Second * 30)},
+						SyncPeriod: &metav1.Duration{Duration: (time.Second * 30)},
 						NoopDelete: false,
 					},
 					Status: packagingv1alpha1.PackageInstallStatus{
@@ -5913,7 +6076,7 @@ func TestDeleteInstalledPackage(t *testing.T) {
 						},
 						Paused:     false,
 						Canceled:   false,
-						SyncPeriod: &metav1.Duration{(time.Second * 30)},
+						SyncPeriod: &metav1.Duration{Duration: (time.Second * 30)},
 						NoopDelete: false,
 					},
 					Status: packagingv1alpha1.PackageInstallStatus{
@@ -6035,7 +6198,7 @@ func TestGetInstalledPackageResourceRefs(t *testing.T) {
 						},
 						Paused:     false,
 						Canceled:   false,
-						SyncPeriod: &metav1.Duration{(time.Second * 30)},
+						SyncPeriod: &metav1.Duration{Duration: (time.Second * 30)},
 						NoopDelete: false,
 					},
 					Status: packagingv1alpha1.PackageInstallStatus{
@@ -6135,7 +6298,7 @@ func TestGetInstalledPackageResourceRefs(t *testing.T) {
 						},
 						Paused:     false,
 						Canceled:   false,
-						SyncPeriod: &metav1.Duration{(time.Second * 30)},
+						SyncPeriod: &metav1.Duration{Duration: (time.Second * 30)},
 						NoopDelete: false,
 					},
 					Status: packagingv1alpha1.PackageInstallStatus{
@@ -6235,7 +6398,7 @@ func TestGetInstalledPackageResourceRefs(t *testing.T) {
 						},
 						Paused:     false,
 						Canceled:   false,
-						SyncPeriod: &metav1.Duration{(time.Second * 30)},
+						SyncPeriod: &metav1.Duration{Duration: (time.Second * 30)},
 						NoopDelete: false,
 					},
 					Status: packagingv1alpha1.PackageInstallStatus{
@@ -6435,7 +6598,7 @@ func TestAddPackageRepository(t *testing.T) {
 			Name:     "globalrepo",
 			Type:     Type_ImgPkgBundle,
 			Url:      "projects.registry.example.com/repo-1/main@sha256:abcd",
-			Interval: 86400,
+			Interval: "24h",
 			Plugin:   &pluginDetail,
 		}
 	}
@@ -6603,7 +6766,7 @@ func TestAddPackageRepository(t *testing.T) {
 		{
 			name: "validate details (type mismatch)",
 			requestCustomizer: func(request *corev1.AddPackageRepositoryRequest) *corev1.AddPackageRepositoryRequest {
-				request.CustomDetail, _ = anypb.New(&kappcorev1.PackageRepositoryCustomDetail{
+				request.CustomDetail, _ = anypb.New(&kappcorev1.KappControllerPackageRepositoryCustomDetail{
 					Fetch: &kappcorev1.PackageRepositoryFetch{
 						Http: &kappcorev1.PackageRepositoryHttp{
 							SubPath: "packages",
@@ -6724,7 +6887,7 @@ func TestAddPackageRepository(t *testing.T) {
 		{
 			name: "create with no interval",
 			requestCustomizer: func(request *corev1.AddPackageRepositoryRequest) *corev1.AddPackageRepositoryRequest {
-				request.Interval = 0
+				request.Interval = ""
 				return request
 			},
 			repositoryCustomizer: func(repository *packagingv1alpha1.PackageRepository) *packagingv1alpha1.PackageRepository {
@@ -6737,7 +6900,7 @@ func TestAddPackageRepository(t *testing.T) {
 		{
 			name: "create with interval",
 			requestCustomizer: func(request *corev1.AddPackageRepositoryRequest) *corev1.AddPackageRepositoryRequest {
-				request.Interval = 12 * 3600
+				request.Interval = "12h"
 				return request
 			},
 			repositoryCustomizer: func(repository *packagingv1alpha1.PackageRepository) *packagingv1alpha1.PackageRepository {
@@ -6765,7 +6928,7 @@ func TestAddPackageRepository(t *testing.T) {
 			requestCustomizer: func(request *corev1.AddPackageRepositoryRequest) *corev1.AddPackageRepositoryRequest {
 				request.Type = Type_ImgPkgBundle
 				request.Url = "projects.registry.example.com/repo-1/main@sha256:abcd"
-				request.CustomDetail, _ = anypb.New(&kappcorev1.PackageRepositoryCustomDetail{
+				request.CustomDetail, _ = anypb.New(&kappcorev1.KappControllerPackageRepositoryCustomDetail{
 					Fetch: &kappcorev1.PackageRepositoryFetch{
 						ImgpkgBundle: &kappcorev1.PackageRepositoryImgpkg{
 							TagSelection: &kappcorev1.VersionSelection{
@@ -6805,7 +6968,7 @@ func TestAddPackageRepository(t *testing.T) {
 			requestCustomizer: func(request *corev1.AddPackageRepositoryRequest) *corev1.AddPackageRepositoryRequest {
 				request.Type = Type_Image
 				request.Url = "projects.registry.example.com/repo-1/main@sha256:abcd"
-				request.CustomDetail, _ = anypb.New(&kappcorev1.PackageRepositoryCustomDetail{
+				request.CustomDetail, _ = anypb.New(&kappcorev1.KappControllerPackageRepositoryCustomDetail{
 					Fetch: &kappcorev1.PackageRepositoryFetch{
 						Image: &kappcorev1.PackageRepositoryImage{
 							SubPath: "packages",
@@ -6847,7 +7010,7 @@ func TestAddPackageRepository(t *testing.T) {
 			requestCustomizer: func(request *corev1.AddPackageRepositoryRequest) *corev1.AddPackageRepositoryRequest {
 				request.Type = Type_GIT
 				request.Url = "https://github.com/projects.registry.vmware.com/tce/main"
-				request.CustomDetail, _ = anypb.New(&kappcorev1.PackageRepositoryCustomDetail{
+				request.CustomDetail, _ = anypb.New(&kappcorev1.KappControllerPackageRepositoryCustomDetail{
 					Fetch: &kappcorev1.PackageRepositoryFetch{
 						Git: &kappcorev1.PackageRepositoryGit{
 							SubPath: "packages",
@@ -6893,7 +7056,7 @@ func TestAddPackageRepository(t *testing.T) {
 			requestCustomizer: func(request *corev1.AddPackageRepositoryRequest) *corev1.AddPackageRepositoryRequest {
 				request.Type = Type_HTTP
 				request.Url = "https://projects.registry.vmware.com/tce/main"
-				request.CustomDetail, _ = anypb.New(&kappcorev1.PackageRepositoryCustomDetail{
+				request.CustomDetail, _ = anypb.New(&kappcorev1.KappControllerPackageRepositoryCustomDetail{
 					Fetch: &kappcorev1.PackageRepositoryFetch{
 						Http: &kappcorev1.PackageRepositoryHttp{
 							SubPath: "packages",
@@ -6973,6 +7136,66 @@ func TestAddPackageRepository(t *testing.T) {
 					t.Errorf("annotations and ownership was not properly set: %+v", secret)
 				}
 				if secret.Type != k8scorev1.SecretTypeBasicAuth || secret.StringData[k8scorev1.BasicAuthUsernameKey] != "foo" || secret.StringData[k8scorev1.BasicAuthPasswordKey] != "bar" {
+					t.Errorf("secret data was not properly constructed: %+v", secret)
+				}
+			},
+		},
+		{
+			name: "create with auth (plugin managed, bearer auth w/ Bearer prefix)",
+			requestCustomizer: func(request *corev1.AddPackageRepositoryRequest) *corev1.AddPackageRepositoryRequest {
+				request.Auth = &corev1.PackageRepositoryAuth{
+					Type: corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_BEARER,
+					PackageRepoAuthOneOf: &corev1.PackageRepositoryAuth_Header{
+						Header: "Bearer foo",
+					},
+				}
+				return request
+			},
+			repositoryCustomizer: func(repository *packagingv1alpha1.PackageRepository) *packagingv1alpha1.PackageRepository {
+				repository.Spec.Fetch.ImgpkgBundle.SecretRef = &kappctrlv1alpha1.AppFetchLocalRef{} // the name will be empty as the fake client does not handle generating names
+				return repository
+			},
+			expectedStatusCode: codes.OK,
+			expectedRef:        defaultRef,
+			customChecks: func(t *testing.T, s *Server) {
+				secret, err := s.getSecret(context.Background(), defaultGlobalContext.Cluster, globalPackagingNamespace, "")
+				if err != nil {
+					t.Fatalf("error fetching newly created secret:%+v", err)
+				}
+				if !isPluginManaged(defaultRepository(), secret) {
+					t.Errorf("annotations and ownership was not properly set: %+v", secret)
+				}
+				if secret.Type != k8scorev1.SecretTypeOpaque || secret.StringData[BearerAuthToken] != "Bearer foo" {
+					t.Errorf("secret data was not properly constructed: %+v", secret)
+				}
+			},
+		},
+		{
+			name: "create with auth (plugin managed, bearer auth w/o Bearer prefix)",
+			requestCustomizer: func(request *corev1.AddPackageRepositoryRequest) *corev1.AddPackageRepositoryRequest {
+				request.Auth = &corev1.PackageRepositoryAuth{
+					Type: corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_BEARER,
+					PackageRepoAuthOneOf: &corev1.PackageRepositoryAuth_Header{
+						Header: "foo",
+					},
+				}
+				return request
+			},
+			repositoryCustomizer: func(repository *packagingv1alpha1.PackageRepository) *packagingv1alpha1.PackageRepository {
+				repository.Spec.Fetch.ImgpkgBundle.SecretRef = &kappctrlv1alpha1.AppFetchLocalRef{} // the name will be empty as the fake client does not handle generating names
+				return repository
+			},
+			expectedStatusCode: codes.OK,
+			expectedRef:        defaultRef,
+			customChecks: func(t *testing.T, s *Server) {
+				secret, err := s.getSecret(context.Background(), defaultGlobalContext.Cluster, globalPackagingNamespace, "")
+				if err != nil {
+					t.Fatalf("error fetching newly created secret:%+v", err)
+				}
+				if !isPluginManaged(defaultRepository(), secret) {
+					t.Errorf("annotations and ownership was not properly set: %+v", secret)
+				}
+				if secret.Type != k8scorev1.SecretTypeOpaque || secret.StringData[BearerAuthToken] != "Bearer foo" {
 					t.Errorf("secret data was not properly constructed: %+v", secret)
 				}
 			},
@@ -7091,7 +7314,7 @@ func TestUpdatePackageRepository(t *testing.T) {
 				Identifier: "globalrepo",
 			},
 			Url:      "projects.registry.example.com/repo-1/main@sha256:abcd",
-			Interval: 86400,
+			Interval: "24h",
 		}
 	}
 	defaultRepository := func() *packagingv1alpha1.PackageRepository {
@@ -7341,7 +7564,7 @@ func TestUpdatePackageRepository(t *testing.T) {
 		{
 			name: "validate details (type mismatch)",
 			requestCustomizer: func(request *corev1.UpdatePackageRepositoryRequest) *corev1.UpdatePackageRepositoryRequest {
-				request.CustomDetail, _ = anypb.New(&kappcorev1.PackageRepositoryCustomDetail{
+				request.CustomDetail, _ = anypb.New(&kappcorev1.KappControllerPackageRepositoryCustomDetail{
 					Fetch: &kappcorev1.PackageRepositoryFetch{
 						Http: &kappcorev1.PackageRepositoryHttp{
 							SubPath: "packages",
@@ -7373,7 +7596,7 @@ func TestUpdatePackageRepository(t *testing.T) {
 		{
 			name: "update with no interval",
 			requestCustomizer: func(request *corev1.UpdatePackageRepositoryRequest) *corev1.UpdatePackageRepositoryRequest {
-				request.Interval = 0
+				request.Interval = ""
 				return request
 			},
 			repositoryCustomizer: func(repository *packagingv1alpha1.PackageRepository) *packagingv1alpha1.PackageRepository {
@@ -7386,7 +7609,7 @@ func TestUpdatePackageRepository(t *testing.T) {
 		{
 			name: "updated with new interval",
 			requestCustomizer: func(request *corev1.UpdatePackageRepositoryRequest) *corev1.UpdatePackageRepositoryRequest {
-				request.Interval = 12 * 3600
+				request.Interval = "12h"
 				return request
 			},
 			repositoryCustomizer: func(repository *packagingv1alpha1.PackageRepository) *packagingv1alpha1.PackageRepository {
@@ -7421,7 +7644,7 @@ func TestUpdatePackageRepository(t *testing.T) {
 			},
 			requestCustomizer: func(request *corev1.UpdatePackageRepositoryRequest) *corev1.UpdatePackageRepositoryRequest {
 				request.Url = "projects.registry.example.com/repo-1/main@sha256:abcd"
-				request.CustomDetail, _ = anypb.New(&kappcorev1.PackageRepositoryCustomDetail{
+				request.CustomDetail, _ = anypb.New(&kappcorev1.KappControllerPackageRepositoryCustomDetail{
 					Fetch: &kappcorev1.PackageRepositoryFetch{
 						ImgpkgBundle: &kappcorev1.PackageRepositoryImgpkg{
 							TagSelection: &kappcorev1.VersionSelection{
@@ -7468,7 +7691,7 @@ func TestUpdatePackageRepository(t *testing.T) {
 			},
 			requestCustomizer: func(request *corev1.UpdatePackageRepositoryRequest) *corev1.UpdatePackageRepositoryRequest {
 				request.Url = "projects.registry.example.com/repo-1/main@sha256:abcd"
-				request.CustomDetail, _ = anypb.New(&kappcorev1.PackageRepositoryCustomDetail{
+				request.CustomDetail, _ = anypb.New(&kappcorev1.KappControllerPackageRepositoryCustomDetail{
 					Fetch: &kappcorev1.PackageRepositoryFetch{
 						Image: &kappcorev1.PackageRepositoryImage{
 							SubPath: "packages",
@@ -7517,7 +7740,7 @@ func TestUpdatePackageRepository(t *testing.T) {
 			},
 			requestCustomizer: func(request *corev1.UpdatePackageRepositoryRequest) *corev1.UpdatePackageRepositoryRequest {
 				request.Url = "https://github.com/projects.registry.vmware.com/tce/main"
-				request.CustomDetail, _ = anypb.New(&kappcorev1.PackageRepositoryCustomDetail{
+				request.CustomDetail, _ = anypb.New(&kappcorev1.KappControllerPackageRepositoryCustomDetail{
 					Fetch: &kappcorev1.PackageRepositoryFetch{
 						Git: &kappcorev1.PackageRepositoryGit{
 							SubPath: "packages",
@@ -7570,7 +7793,7 @@ func TestUpdatePackageRepository(t *testing.T) {
 			},
 			requestCustomizer: func(request *corev1.UpdatePackageRepositoryRequest) *corev1.UpdatePackageRepositoryRequest {
 				request.Url = "https://projects.registry.vmware.com/tce/main"
-				request.CustomDetail, _ = anypb.New(&kappcorev1.PackageRepositoryCustomDetail{
+				request.CustomDetail, _ = anypb.New(&kappcorev1.KappControllerPackageRepositoryCustomDetail{
 					Fetch: &kappcorev1.PackageRepositoryFetch{
 						Http: &kappcorev1.PackageRepositoryHttp{
 							SubPath: "packages",
@@ -7709,6 +7932,66 @@ func TestUpdatePackageRepository(t *testing.T) {
 					t.Errorf("annotations and ownership was not properly set: %+v", secret)
 				}
 				if secret.Type != k8scorev1.SecretTypeBasicAuth || secret.StringData[k8scorev1.BasicAuthUsernameKey] != "foo" || secret.StringData[k8scorev1.BasicAuthPasswordKey] != "bar" {
+					t.Errorf("secret data was not properly constructed: %+v", secret)
+				}
+			},
+		},
+		{
+			name: "updated with auth (plugin managed, bearer auth w/ Bearer prefix)",
+			requestCustomizer: func(request *corev1.UpdatePackageRepositoryRequest) *corev1.UpdatePackageRepositoryRequest {
+				request.Auth = &corev1.PackageRepositoryAuth{
+					Type: corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_BEARER,
+					PackageRepoAuthOneOf: &corev1.PackageRepositoryAuth_Header{
+						Header: "Bearer foo",
+					},
+				}
+				return request
+			},
+			repositoryCustomizer: func(repository *packagingv1alpha1.PackageRepository) *packagingv1alpha1.PackageRepository {
+				repository.Spec.Fetch.ImgpkgBundle.SecretRef = &kappctrlv1alpha1.AppFetchLocalRef{} // the name will be empty as the fake client does not handle generating names
+				return repository
+			},
+			expectedStatusCode: codes.OK,
+			expectedRef:        defaultRef,
+			customChecks: func(t *testing.T, s *Server) {
+				secret, err := s.getSecret(context.Background(), defaultGlobalContext.Cluster, globalPackagingNamespace, "")
+				if err != nil {
+					t.Fatalf("error fetching newly created secret:%+v", err)
+				}
+				if !isPluginManaged(defaultRepository(), secret) {
+					t.Errorf("annotations and ownership was not properly set: %+v", secret)
+				}
+				if secret.Type != k8scorev1.SecretTypeOpaque || secret.StringData[BearerAuthToken] != "Bearer foo" {
+					t.Errorf("secret data was not properly constructed: %+v", secret)
+				}
+			},
+		},
+		{
+			name: "updated with auth (plugin managed, bearer auth w/o Bearer prefix)",
+			requestCustomizer: func(request *corev1.UpdatePackageRepositoryRequest) *corev1.UpdatePackageRepositoryRequest {
+				request.Auth = &corev1.PackageRepositoryAuth{
+					Type: corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_BEARER,
+					PackageRepoAuthOneOf: &corev1.PackageRepositoryAuth_Header{
+						Header: "foo",
+					},
+				}
+				return request
+			},
+			repositoryCustomizer: func(repository *packagingv1alpha1.PackageRepository) *packagingv1alpha1.PackageRepository {
+				repository.Spec.Fetch.ImgpkgBundle.SecretRef = &kappctrlv1alpha1.AppFetchLocalRef{} // the name will be empty as the fake client does not handle generating names
+				return repository
+			},
+			expectedStatusCode: codes.OK,
+			expectedRef:        defaultRef,
+			customChecks: func(t *testing.T, s *Server) {
+				secret, err := s.getSecret(context.Background(), defaultGlobalContext.Cluster, globalPackagingNamespace, "")
+				if err != nil {
+					t.Fatalf("error fetching newly created secret:%+v", err)
+				}
+				if !isPluginManaged(defaultRepository(), secret) {
+					t.Errorf("annotations and ownership was not properly set: %+v", secret)
+				}
+				if secret.Type != k8scorev1.SecretTypeOpaque || secret.StringData[BearerAuthToken] != "Bearer foo" {
 					t.Errorf("secret data was not properly constructed: %+v", secret)
 				}
 			},
@@ -8059,7 +8342,7 @@ func TestGetPackageRepositoryDetail(t *testing.T) {
 				NamespaceScoped: false,
 				Type:            Type_ImgPkgBundle,
 				Url:             "projects.registry.example.com/repo-1/main@sha256:abcd",
-				Interval:        24 * 3600,
+				Interval:        "24h",
 			},
 		}
 	}
@@ -8162,7 +8445,7 @@ func TestGetPackageRepositoryDetail(t *testing.T) {
 				return repository
 			},
 			responseCustomizer: func(response *corev1.GetPackageRepositoryDetailResponse) *corev1.GetPackageRepositoryDetailResponse {
-				response.Detail.Interval = 0
+				response.Detail.Interval = ""
 				return response
 			},
 			expectedStatusCode: codes.OK,
@@ -8174,7 +8457,7 @@ func TestGetPackageRepositoryDetail(t *testing.T) {
 				return repository
 			},
 			responseCustomizer: func(response *corev1.GetPackageRepositoryDetailResponse) *corev1.GetPackageRepositoryDetailResponse {
-				response.Detail.Interval = 12 * 3600
+				response.Detail.Interval = "12h"
 				return response
 			},
 			expectedStatusCode: codes.OK,
@@ -8200,7 +8483,7 @@ func TestGetPackageRepositoryDetail(t *testing.T) {
 			responseCustomizer: func(response *corev1.GetPackageRepositoryDetailResponse) *corev1.GetPackageRepositoryDetailResponse {
 				response.Detail.Type = Type_ImgPkgBundle
 				response.Detail.Url = "projects.registry.example.com/repo-1/main@sha256:abcd"
-				response.Detail.CustomDetail, _ = anypb.New(&kappcorev1.PackageRepositoryCustomDetail{
+				response.Detail.CustomDetail, _ = anypb.New(&kappcorev1.KappControllerPackageRepositoryCustomDetail{
 					Fetch: &kappcorev1.PackageRepositoryFetch{
 						ImgpkgBundle: &kappcorev1.PackageRepositoryImgpkg{
 							TagSelection: &kappcorev1.VersionSelection{
@@ -8240,7 +8523,7 @@ func TestGetPackageRepositoryDetail(t *testing.T) {
 			responseCustomizer: func(response *corev1.GetPackageRepositoryDetailResponse) *corev1.GetPackageRepositoryDetailResponse {
 				response.Detail.Type = Type_Image
 				response.Detail.Url = "projects.registry.example.com/repo-1/main@sha256:abcd"
-				response.Detail.CustomDetail, _ = anypb.New(&kappcorev1.PackageRepositoryCustomDetail{
+				response.Detail.CustomDetail, _ = anypb.New(&kappcorev1.KappControllerPackageRepositoryCustomDetail{
 					Fetch: &kappcorev1.PackageRepositoryFetch{
 						Image: &kappcorev1.PackageRepositoryImage{
 							SubPath: "packages",
@@ -8283,7 +8566,7 @@ func TestGetPackageRepositoryDetail(t *testing.T) {
 			responseCustomizer: func(response *corev1.GetPackageRepositoryDetailResponse) *corev1.GetPackageRepositoryDetailResponse {
 				response.Detail.Type = Type_GIT
 				response.Detail.Url = "https://github.com/projects.registry.vmware.com/tce/main"
-				response.Detail.CustomDetail, _ = anypb.New(&kappcorev1.PackageRepositoryCustomDetail{
+				response.Detail.CustomDetail, _ = anypb.New(&kappcorev1.KappControllerPackageRepositoryCustomDetail{
 					Fetch: &kappcorev1.PackageRepositoryFetch{
 						Git: &kappcorev1.PackageRepositoryGit{
 							SubPath: "packages",
@@ -8319,7 +8602,7 @@ func TestGetPackageRepositoryDetail(t *testing.T) {
 			responseCustomizer: func(response *corev1.GetPackageRepositoryDetailResponse) *corev1.GetPackageRepositoryDetailResponse {
 				response.Detail.Type = Type_HTTP
 				response.Detail.Url = "https://projects.registry.vmware.com/tce/main"
-				response.Detail.CustomDetail, _ = anypb.New(&kappcorev1.PackageRepositoryCustomDetail{
+				response.Detail.CustomDetail, _ = anypb.New(&kappcorev1.KappControllerPackageRepositoryCustomDetail{
 					Fetch: &kappcorev1.PackageRepositoryFetch{
 						Http: &kappcorev1.PackageRepositoryHttp{
 							SubPath: "packages",
@@ -8355,7 +8638,7 @@ func TestGetPackageRepositoryDetail(t *testing.T) {
 			responseCustomizer: func(response *corev1.GetPackageRepositoryDetailResponse) *corev1.GetPackageRepositoryDetailResponse {
 				response.Detail.Type = Type_Inline
 				response.Detail.Url = ""
-				response.Detail.CustomDetail, _ = anypb.New(&kappcorev1.PackageRepositoryCustomDetail{
+				response.Detail.CustomDetail, _ = anypb.New(&kappcorev1.KappControllerPackageRepositoryCustomDetail{
 					Fetch: &kappcorev1.PackageRepositoryFetch{
 						Inline: &kappcorev1.PackageRepositoryInline{
 							Paths: map[string]string{
@@ -8626,6 +8909,7 @@ func TestGetPackageRepositorySummaries(t *testing.T) {
 				NamespaceScoped: true,
 				Type:            Type_ImgPkgBundle,
 				Url:             "projects.registry.example.com/repo-1/main@sha256:abcd",
+				RequiresAuth:    false,
 			},
 		},
 		{
@@ -8654,6 +8938,7 @@ func TestGetPackageRepositorySummaries(t *testing.T) {
 				NamespaceScoped: false,
 				Type:            Type_ImgPkgBundle,
 				Url:             "projects.registry.example.com/repo-1/main@sha256:abcd",
+				RequiresAuth:    false,
 			},
 		},
 		{
@@ -8678,9 +8963,10 @@ func TestGetPackageRepositorySummaries(t *testing.T) {
 					Plugin:     &pluginDetail,
 					Identifier: "globalrepo",
 				},
-				Name: "globalrepo",
-				Type: Type_ImgPkgBundle,
-				Url:  "projects.registry.example.com/repo-1/main@sha256:abcd",
+				Name:         "globalrepo",
+				Type:         Type_ImgPkgBundle,
+				Url:          "projects.registry.example.com/repo-1/main@sha256:abcd",
+				RequiresAuth: false,
 			},
 		},
 		{
@@ -8705,9 +8991,10 @@ func TestGetPackageRepositorySummaries(t *testing.T) {
 					Plugin:     &pluginDetail,
 					Identifier: "globalrepo",
 				},
-				Name: "globalrepo",
-				Type: Type_Image,
-				Url:  "projects.registry.example.com/repo-1/main@sha256:abcd",
+				Name:         "globalrepo",
+				Type:         Type_Image,
+				Url:          "projects.registry.example.com/repo-1/main@sha256:abcd",
+				RequiresAuth: false,
 			},
 		},
 		{
@@ -8732,9 +9019,10 @@ func TestGetPackageRepositorySummaries(t *testing.T) {
 					Plugin:     &pluginDetail,
 					Identifier: "globalrepo",
 				},
-				Name: "globalrepo",
-				Type: Type_GIT,
-				Url:  "https://github.com/projects.registry.vmware.com/tce/main",
+				Name:         "globalrepo",
+				Type:         Type_GIT,
+				Url:          "https://github.com/projects.registry.vmware.com/tce/main",
+				RequiresAuth: false,
 			},
 		},
 		{
@@ -8759,9 +9047,10 @@ func TestGetPackageRepositorySummaries(t *testing.T) {
 					Plugin:     &pluginDetail,
 					Identifier: "globalrepo",
 				},
-				Name: "globalrepo",
-				Type: Type_HTTP,
-				Url:  "https://projects.registry.vmware.com/tce/main",
+				Name:         "globalrepo",
+				Type:         Type_HTTP,
+				Url:          "https://projects.registry.vmware.com/tce/main",
+				RequiresAuth: false,
 			},
 		},
 		{
@@ -8784,8 +9073,9 @@ func TestGetPackageRepositorySummaries(t *testing.T) {
 					Plugin:     &pluginDetail,
 					Identifier: "globalrepo",
 				},
-				Name: "globalrepo",
-				Type: Type_Inline,
+				Name:         "globalrepo",
+				Type:         Type_Inline,
+				RequiresAuth: false,
 			},
 		},
 		{
@@ -8818,9 +9108,10 @@ func TestGetPackageRepositorySummaries(t *testing.T) {
 					Plugin:     &pluginDetail,
 					Identifier: "globalrepo",
 				},
-				Name: "globalrepo",
-				Type: Type_ImgPkgBundle,
-				Url:  "projects.registry.example.com/repo-1/main@sha256:abcd",
+				Name:         "globalrepo",
+				Type:         Type_ImgPkgBundle,
+				Url:          "projects.registry.example.com/repo-1/main@sha256:abcd",
+				RequiresAuth: false,
 			},
 		},
 		{
@@ -8848,9 +9139,10 @@ func TestGetPackageRepositorySummaries(t *testing.T) {
 					Plugin:     &pluginDetail,
 					Identifier: "globalrepo",
 				},
-				Name: "globalrepo",
-				Type: Type_ImgPkgBundle,
-				Url:  "projects.registry.example.com/repo-1/main@sha256:abcd",
+				Name:         "globalrepo",
+				Type:         Type_ImgPkgBundle,
+				Url:          "projects.registry.example.com/repo-1/main@sha256:abcd",
+				RequiresAuth: true,
 			},
 		},
 	}
@@ -8947,7 +9239,7 @@ func TestGetPackageRepositorySummariesFiltering(t *testing.T) {
 			},
 			existingObjects: repositories,
 			expectedResponse: []metav1.ObjectMeta{
-				metav1.ObjectMeta{Name: "nsrepo", Namespace: "privatens"},
+				{Name: "nsrepo", Namespace: "privatens"},
 			},
 		},
 		{
@@ -8957,7 +9249,7 @@ func TestGetPackageRepositorySummariesFiltering(t *testing.T) {
 			},
 			existingObjects: repositories,
 			expectedResponse: []metav1.ObjectMeta{
-				metav1.ObjectMeta{Name: "globalrepo", Namespace: globalPackagingNamespace},
+				{Name: "globalrepo", Namespace: globalPackagingNamespace},
 			},
 		},
 		{
@@ -8967,8 +9259,8 @@ func TestGetPackageRepositorySummariesFiltering(t *testing.T) {
 			},
 			existingObjects: repositories,
 			expectedResponse: []metav1.ObjectMeta{
-				metav1.ObjectMeta{Name: "globalrepo", Namespace: globalPackagingNamespace},
-				metav1.ObjectMeta{Name: "nsrepo", Namespace: "privatens"},
+				{Name: "globalrepo", Namespace: globalPackagingNamespace},
+				{Name: "nsrepo", Namespace: "privatens"},
 			},
 		},
 	}
@@ -9126,7 +9418,7 @@ func TestGetPackageRepositoryStatus(t *testing.T) {
 			},
 		},
 		{
-			name: "reconcilation failure",
+			name: "reconciliation failure",
 			existingStatus: kappctrlv1alpha1.GenericStatus{
 				Conditions: []kappctrlv1alpha1.Condition{
 					{
@@ -9141,7 +9433,7 @@ func TestGetPackageRepositoryStatus(t *testing.T) {
 			},
 		},
 		{
-			name: "reconcilation failure, extra error message",
+			name: "reconciliation failure, extra error message",
 			existingStatus: kappctrlv1alpha1.GenericStatus{
 				Conditions: []kappctrlv1alpha1.Condition{
 					{

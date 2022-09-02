@@ -5,8 +5,7 @@ import InfoCard from "components/InfoCard";
 import { AvailablePackageSummary, Context } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
 import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins";
 import { defaultStore, mountWrapper } from "shared/specs/mountWrapper";
-import { IClusterServiceVersion } from "shared/types";
-import { PluginNames } from "shared/utils";
+import { IClusterServiceVersion, PluginNames } from "shared/types";
 import CatalogItem from "./CatalogItem";
 import CatalogItems, { ICatalogItemsProps } from "./CatalogItems";
 
@@ -133,7 +132,7 @@ it("changes the bgIcon based on the plugin name - default", () => {
       .find(InfoCard)
       .findWhere(s => s.prop("link")?.includes(pluginName))
       .prop("bgIcon"),
-  ).toBe("placeholder.png");
+  ).toBe("placeholder.svg");
 });
 
 it("changes the bgIcon based on the plugin name - helm", () => {

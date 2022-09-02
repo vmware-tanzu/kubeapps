@@ -20,7 +20,7 @@ import (
 func (s *Server) CreateSecret(ctx context.Context, r *v1alpha1.CreateSecretRequest) (*v1alpha1.CreateSecretResponse, error) {
 	namespace := r.GetContext().GetNamespace()
 	cluster := r.GetContext().GetCluster()
-	log.Infof("+resources CreateSecret (cluster: %q, namespace=%q)", cluster, namespace)
+	log.InfoS("+resources CreateSecret ", "cluster", cluster, "namespace", namespace)
 
 	typedClient, _, err := s.clientGetter(ctx, cluster)
 	if err != nil {
@@ -95,7 +95,7 @@ func protoTypeForK8sType(secretType core.SecretType) v1alpha1.SecretType {
 func (s *Server) GetSecretNames(ctx context.Context, r *v1alpha1.GetSecretNamesRequest) (*v1alpha1.GetSecretNamesResponse, error) {
 	cluster := r.GetContext().GetCluster()
 	namespace := r.GetContext().GetNamespace()
-	log.Infof("+resources GetSecretNames (cluster: %q, namespace: %q)", cluster, namespace)
+	log.InfoS("+resources GetSecretNames ", "cluster", cluster, "namespace", namespace)
 
 	typedClient, _, err := s.clientGetter(ctx, cluster)
 	if err != nil {

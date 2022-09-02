@@ -25,6 +25,7 @@ import (
 	"github.com/vmware-tanzu/kubeapps/cmd/apprepository-controller/pkg/client/clientset/versioned/scheme"
 	plugins "github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/core/plugins/v1alpha1"
 	fluxplugin "github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/plugins/fluxv2/packages/v1alpha1"
+	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/fluxv2/packages/v1alpha1/common"
 	"github.com/vmware-tanzu/kubeapps/pkg/chart/models"
 	"github.com/vmware-tanzu/kubeapps/pkg/helm"
 	httpclient "github.com/vmware-tanzu/kubeapps/pkg/http-client"
@@ -80,6 +81,23 @@ const (
 
 	// port forward is done programmatically
 	outside_cluster_bitnami_url = "http://localhost:50057/bitnami"
+
+	// an OCI registry with a single chart (podinfo)
+	// a clone of "oci://ghcr.io/stefanprodan/charts"
+	// gets setup by kind-cluster-setup.sh
+	github_stefanprodan_podinfo_oci_registry_url = "oci://ghcr.io/gfichtenholt/stefanprodan-podinfo-clone"
+	harbor_stefanprodan_podinfo_oci_registry_url = "oci://demo.goharbor.io/stefanprodan-podinfo-clone"
+	gcp_stefanprodan_podinfo_oci_registry_url    = "oci://us-west1-docker.pkg.dev/vmware-kubeapps-ci/stefanprodan-podinfo-clone"
+
+	// the URL of local in cluster helm registry. Gets deployed via ./kind-cluster-setup.sh
+	// in_cluster_oci_registry_url = "oci://registry-app-svc.default.svc.cluster.local:5000/helm-charts"
+
+	github_gfichtenholt_podinfo_oci_registry_url = "oci://ghcr.io/gfichtenholt/helm-charts"
+
+	// admin/Harbor12345 is a well known default login for harbor registries
+	harbor_host       = "demo.goharbor.io"
+	harbor_admin_user = "admin"
+	harbor_admin_pwd  = "Harbor12345"
 )
 
 func checkEnv(t *testing.T) (fluxplugin.FluxV2PackagesServiceClient, fluxplugin.FluxV2RepositoriesServiceClient, error) {
@@ -94,7 +112,7 @@ func checkEnv(t *testing.T) (fluxplugin.FluxV2PackagesServiceClient, fluxplugin.
 	}
 
 	if !runTests {
-		t.Skipf("skipping flux plugin integration tests because environment variable %q not set to be true", envVarFluxIntegrationTests)
+		t.Skipf("skipping flux plugin integration tests because environment variable [%q] not set to be true", envVarFluxIntegrationTests)
 		return nil, nil, nil
 	} else {
 		if up, err := isLocalKindClusterUp(t); err != nil || !up {
@@ -121,6 +139,30 @@ func checkEnv(t *testing.T) (fluxplugin.FluxV2PackagesServiceClient, fluxplugin.
 			return nil, nil, fmt.Errorf("Failed to get service [default/fluxv2plugin-testdata-svc] due to: [%v]", err)
 		}
 
+		// Check for helmrepositories left over from manual testing. This has caused me a lot grief
+		var l *sourcev1.HelmRepositoryList
+		var names []string
+		const maxWait = 25
+		for i := 0; i <= maxWait; i++ {
+			l, err = kubeListAllHelmRepositories(t)
+			if err != nil {
+				return nil, nil, fmt.Errorf("Failed to get list of HelmRepositories due to: [%v]", err)
+			} else if len(l.Items) != 0 {
+				names = []string{}
+				for _, p := range l.Items {
+					names = append(names, p.GetNamespace()+"/"+p.GetName())
+				}
+				t.Logf("Waiting 2s until HelmRepositories %s are gone...", names)
+				time.Sleep(2 * time.Second)
+			} else {
+				break
+			}
+		}
+		if len(l.Items) != 0 {
+			t.Logf("The following existing HelmRepositories where found in the cluster: %s", names)
+			t.Logf("You may use command [kubectl delete helmrepositories --all] to delete them")
+			return nil, nil, fmt.Errorf("Failed due to existing HelmRepositories in the cluster")
+		}
 		rand.Seed(time.Now().UnixNano())
 		return fluxPluginPackagesClient, fluxPluginReposClient, nil
 	}
@@ -128,35 +170,42 @@ func checkEnv(t *testing.T) (fluxplugin.FluxV2PackagesServiceClient, fluxplugin.
 
 func isLocalKindClusterUp(t *testing.T) (up bool, err error) {
 	t.Logf("+isLocalKindClusterUp")
-	cmd := exec.Command("kind", "get", "clusters")
-	bytes, err := cmd.CombinedOutput()
+
+	out, err := execCommand(t, "", "kind", []string{"get", "clusters"})
 	if err != nil {
-		t.Logf("%s", string(bytes))
 		return false, err
 	}
-	if !strings.Contains(string(bytes), "kubeapps\n") {
+	words := strings.Split(out, " \n")
+	found := false
+	for _, word := range words {
+		if word == "kubeapps" {
+			found = true
+		}
+	}
+	if !found {
 		return false, nil
 	}
 
 	// naively assume that if the api server reports nodes, the cluster is up
 	typedClient, err := kubeGetTypedClient()
 	if err != nil {
-		t.Logf("%s", string(bytes))
+		t.Logf("Failed to get typed client due to: %+v", err)
 		return false, err
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), defaultContextTimeout)
 	defer cancel()
+
 	nodeList, err := typedClient.CoreV1().Nodes().List(ctx, metav1.ListOptions{})
 	if err != nil {
-		t.Logf("%s", string(bytes))
+		t.Logf("Failed to get list of nodes due to %+v", err)
 		return false, err
 	}
 
 	if len(nodeList.Items) == 1 || nodeList.Items[0].Name == "node/kubeapps-control-plane" {
 		return true, nil
 	} else {
-		return false, fmt.Errorf("Unexpected cluster nodes: [%v]", nodeList)
+		return false, fmt.Errorf("unexpected cluster nodes: [%v]", nodeList)
 	}
 }
 
@@ -193,10 +242,9 @@ func getFluxPluginClients(t *testing.T) (fluxplugin.FluxV2PackagesServiceClient,
 	return fluxplugin.NewFluxV2PackagesServiceClient(conn), fluxplugin.NewFluxV2RepositoriesServiceClient(conn), nil
 }
 
-// This creates a flux helm repository CRD. The usage of this func should be minimized as much as
-// possible in favor of flux Plugin's AddPackageRepository() call
-func kubeAddHelmRepository(t *testing.T, name types.NamespacedName, url, secretName string, interval time.Duration) error {
-	t.Logf("+kubeAddHelmRepository(%s)", name)
+// This creates a flux helm repository CRD
+func kubeAddHelmRepository(t *testing.T, name types.NamespacedName, typ, url, secretName string, interval time.Duration) error {
+	t.Logf("+kubeAddHelmRepository(%s,%s,%s)", name, typ, url)
 	if interval <= 0 {
 		interval = time.Duration(10 * time.Minute)
 	}
@@ -211,6 +259,10 @@ func kubeAddHelmRepository(t *testing.T, name types.NamespacedName, url, secretN
 		},
 	}
 
+	if typ != "" {
+		repo.Spec.Type = typ
+	}
+
 	if secretName != "" {
 		repo.Spec.SecretRef = &meta.LocalObjectReference{
 			Name: secretName,
@@ -222,13 +274,14 @@ func kubeAddHelmRepository(t *testing.T, name types.NamespacedName, url, secretN
 	if ifc, err := kubeGetCtrlClient(); err != nil {
 		return err
 	} else {
+		t.Logf("Creating HelmRepository: %s\n...", common.PrettyPrint(repo))
 		return ifc.Create(ctx, &repo)
 	}
 }
 
-func kubeAddHelmRepositoryAndCleanup(t *testing.T, name types.NamespacedName, url, secretName string, interval time.Duration) error {
+func kubeAddHelmRepositoryAndCleanup(t *testing.T, name types.NamespacedName, typ, url, secretName string, interval time.Duration) error {
 	t.Logf("+kubeAddHelmRepositoryAndCleanup(%s)", name)
-	err := kubeAddHelmRepository(t, name, url, secretName, interval)
+	err := kubeAddHelmRepository(t, name, typ, url, secretName, interval)
 	if err == nil {
 		t.Cleanup(func() {
 			err := kubeDeleteHelmRepository(t, name)
@@ -253,6 +306,22 @@ func kubeGetHelmRepository(t *testing.T, name types.NamespacedName) (*sourcev1.H
 			return nil, err
 		}
 		return &repo, nil
+	}
+}
+
+func kubeListAllHelmRepositories(t *testing.T) (*sourcev1.HelmRepositoryList, error) {
+	t.Logf("+kubeListAllHelmRepositories()")
+
+	ctx, cancel := context.WithTimeout(context.Background(), defaultContextTimeout)
+	defer cancel()
+	if ifc, err := kubeGetCtrlClient(); err != nil {
+		return nil, err
+	} else {
+		var repoList sourcev1.HelmRepositoryList
+		if err := ifc.List(ctx, &repoList); err != nil {
+			return nil, err
+		}
+		return &repoList, nil
 	}
 }
 
@@ -947,8 +1016,14 @@ func kubeGetCtrlClient() (ctrlclient.WithWatch, error) {
 			return nil, err
 		} else {
 			scheme := runtime.NewScheme()
-			sourcev1.AddToScheme(scheme)
-			helmv2.AddToScheme(scheme)
+			err = sourcev1.AddToScheme(scheme)
+			if err != nil {
+				return nil, err
+			}
+			err = helmv2.AddToScheme(scheme)
+			if err != nil {
+				return nil, err
+			}
 
 			return ctrlclient.NewWithWatch(config, ctrlclient.Options{Scheme: scheme})
 		}
@@ -1024,10 +1099,8 @@ func kubectlCanI(t *testing.T, name types.NamespacedName, verb, resource, checkT
 		"--as",
 		"system:serviceaccount:" + name.Namespace + ":" + name.Name,
 	}
-	cmd := exec.Command("kubectl", args...)
-	byteArray, _ := cmd.CombinedOutput()
-	out := strings.Trim(string(byteArray), "\n")
-	t.Logf("Executed command: [%s], output: [%s]", cmd.String(), out)
+
+	out, _ := execCommand(t, "", "kubectl", args)
 	return out
 }
 
@@ -1266,6 +1339,105 @@ func getFluxPluginTestdataPodName() (*types.NamespacedName, error) {
 		}
 	}
 	return nil, fmt.Errorf("fluxplugin testdata pod not found")
+}
+
+func helmPushChartToMyGithubRegistry(t *testing.T, version string) error {
+	t.Logf("+helmPushChartToMyGithubRegistry(%s)", version)
+	defer t.Logf("-helmPushChartToMyGithubRegistry(%s)", version)
+
+	args := []string{
+		"pushChartToMyGithub",
+		version,
+	}
+
+	// use the CLI for now
+	_, err := execCommand(t, "./testdata", "./kind-cluster-setup.sh", args)
+	return err
+}
+
+func deleteChartFromMyGithubRegistry(t *testing.T, version string) error {
+	t.Logf("+deleteChartFromMyGithubRegistry(%s)", version)
+	defer t.Logf("-deleteChartFromMyGithubRegistry(%s)", version)
+
+	args := []string{
+		"deleteChartVersionFromMyGitHub",
+		"6.1.6",
+	}
+
+	// use the CLI for now
+	_, err := execCommand(t, "./testdata", "./kind-cluster-setup.sh", args)
+	return err
+}
+
+func setupHarborStefanProdanClone(t *testing.T) error {
+	t.Logf("+setupHarborStefanProdanClone()")
+	defer t.Logf("-setupHarborStefanProdanClone()")
+
+	args := []string{
+		"setupHarborStefanProdanClone",
+		"--quick",
+	}
+
+	// use the CLI for now
+	_, err := execCommand(t, "./testdata", "./kind-cluster-setup.sh", args)
+	return err
+}
+
+func setupHarborRobotAccount(t *testing.T) (string, string, error) {
+	t.Logf("+setupHarborRobotAccount()")
+	defer t.Logf("-setupHarborRobotAccount()")
+
+	args := []string{
+		"setupHarborRobotAccount",
+	}
+
+	// use the CLI for now
+	out, err := execCommand(t, "./testdata", "./kind-cluster-setup.sh", args)
+	if err != nil {
+		return "", "", err
+	} else {
+		i := strings.Index(out, "Robot account successfully created: [")
+		if i >= 0 {
+			out2 := out[i+37:]
+			j := strings.Index(out2, "]")
+			if j >= 0 {
+				out3 := out2[:j]
+				strs := strings.SplitN(out3, " ", 2)
+				if len(strs) == 2 {
+					return strs[0], strs[1], nil
+				}
+			}
+		}
+		return "", "", fmt.Errorf("unexpected response: %s", out)
+	}
+}
+
+// ref https://cloud.google.com/artifact-registry/docs/helm/store-helm-charts#auth-token
+// this token lasts 60 mins
+func gcloudPrintAccessToken(t *testing.T) (string, error) {
+	credFile := os.Getenv("GOOGLE_APPLICATION_CREDENTIALS")
+	if credFile == "" {
+		t.Fatalf("Environment variable [GOOGLE_APPLICATION_CREDENTIALS] needs to be set to run this test")
+	}
+	args := []string{
+		"auth",
+		"application-default",
+		"print-access-token",
+	}
+	return execCommand(t, ".", "gcloud", args)
+}
+
+func execCommand(t *testing.T, dir, name string, args []string) (string, error) {
+	t.Logf("About to execute command: [%s] with args %s...", name, args)
+	// TODO (gfichtenholt) it'd be nice to have real-time updates
+	cmd := exec.Command(name, args...)
+	if dir != "" {
+		cmd.Dir = dir
+	}
+	byteArray, err := cmd.CombinedOutput()
+	out := strings.Trim(string(byteArray), "\n")
+	t.Logf("Executed command: [%s], err: [%v], output: [\n%s\n]", cmd.String(), err, out)
+	return out, err
 }
 
 // global vars

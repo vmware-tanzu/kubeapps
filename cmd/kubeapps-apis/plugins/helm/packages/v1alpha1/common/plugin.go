@@ -6,8 +6,9 @@ package common
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/pkg/pkgutils"
 	"io/ioutil"
+
+	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/pkg/pkgutils"
 )
 
 const (
@@ -53,6 +54,7 @@ func ParsePluginConfig(pluginConfigPath string) (*HelmPluginConfig, error) {
 	}
 	var config helmConfig
 
+	// #nosec G304
 	pluginConfig, err := ioutil.ReadFile(pluginConfigPath)
 	if err != nil {
 		return nil, fmt.Errorf("unable to open plugin config at %q: %w", pluginConfigPath, err)

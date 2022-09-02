@@ -106,7 +106,11 @@ func NewController(
 	// Create event broadcaster
 	// Add apprepository-controller types to the default Kubernetes Scheme so
 	// Events can be logged for apprepository-controller types.
-	appreposcheme.AddToScheme(scheme.Scheme)
+	err := appreposcheme.AddToScheme(scheme.Scheme)
+	if err != nil {
+		return nil
+	}
+
 	log.Info("Creating event broadcaster")
 	eventBroadcaster := record.NewBroadcaster()
 	eventBroadcaster.StartLogging(log.Infof)

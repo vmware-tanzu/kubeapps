@@ -1,11 +1,10 @@
 // Copyright 2018-2022 the Kubeapps contributors.
 // SPDX-License-Identifier: Apache-2.0
 
-import { get } from "lodash";
 import { ThunkAction } from "redux-thunk";
 import { Kube } from "shared/Kube";
 import Namespace, { setStoredNamespace } from "shared/Namespace";
-import { IResource, IStoreState } from "shared/types";
+import { IStoreState } from "shared/types";
 import { ActionType, deprecated } from "typesafe-actions";
 
 const { createAction } = deprecated;
@@ -57,10 +56,7 @@ export function fetchNamespaces(
   return async dispatch => {
     try {
       const namespaceList = await Namespace.list(cluster);
-      const namespaceStrings = get(namespaceList, "namespaces", []).map(
-        (n: IResource) => n.metadata.name,
-      );
-      if (namespaceStrings.length === 0) {
+      if (!namespaceList.namespaceNames || namespaceList.namespaceNames.length === 0) {
         dispatch(
           errorNamespaces(
             cluster,
@@ -70,8 +66,8 @@ export function fetchNamespaces(
         );
         return [];
       }
-      dispatch(receiveNamespaces(cluster, namespaceStrings));
-      return namespaceStrings;
+      dispatch(receiveNamespaces(cluster, namespaceList.namespaceNames));
+      return namespaceList.namespaceNames;
     } catch (e: any) {
       dispatch(errorNamespaces(cluster, e, "list"));
       return [];
@@ -82,10 +78,11 @@ export function fetchNamespaces(
 export function createNamespace(
   cluster: string,
   ns: string,
+  labels: { [key: string]: string },
 ): ThunkAction<Promise<boolean>, IStoreState, null, NamespaceAction> {
   return async dispatch => {
     try {
-      await Namespace.create(cluster, ns);
+      await Namespace.create(cluster, ns, labels);
       dispatch(postNamespace(cluster, ns));
       dispatch(fetchNamespaces(cluster));
       return true;

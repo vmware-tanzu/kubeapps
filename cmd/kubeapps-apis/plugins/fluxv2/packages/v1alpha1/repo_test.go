@@ -58,7 +58,7 @@ func TestGetAvailablePackageSummariesWithoutPagination(t *testing.T) {
 			},
 			request: &corev1.GetAvailablePackageSummariesRequest{Context: &corev1.Context{}},
 			expectedResponse: &corev1.GetAvailablePackageSummariesResponse{
-				AvailablePackageSummaries: valid_index_package_summaries,
+				AvailablePackageSummaries: valid_index_available_package_summaries,
 			},
 		},
 		{
@@ -73,7 +73,7 @@ func TestGetAvailablePackageSummariesWithoutPagination(t *testing.T) {
 			},
 			request: &corev1.GetAvailablePackageSummariesRequest{Context: &corev1.Context{Namespace: "default"}},
 			expectedResponse: &corev1.GetAvailablePackageSummariesResponse{
-				AvailablePackageSummaries: valid_index_package_summaries,
+				AvailablePackageSummaries: valid_index_available_package_summaries,
 			},
 		},
 		{
@@ -91,7 +91,7 @@ func TestGetAvailablePackageSummariesWithoutPagination(t *testing.T) {
 				Namespace: "default",
 			}},
 			expectedResponse: &corev1.GetAvailablePackageSummariesResponse{
-				AvailablePackageSummaries: valid_index_package_summaries,
+				AvailablePackageSummaries: valid_index_available_package_summaries,
 			},
 		},
 		{
@@ -112,7 +112,7 @@ func TestGetAvailablePackageSummariesWithoutPagination(t *testing.T) {
 			},
 			request: &corev1.GetAvailablePackageSummariesRequest{Context: &corev1.Context{Namespace: "non-default"}},
 			expectedResponse: &corev1.GetAvailablePackageSummariesResponse{
-				AvailablePackageSummaries: append(valid_index_package_summaries, cert_manager_summary),
+				AvailablePackageSummaries: append(valid_index_available_package_summaries, cert_manager_summary),
 			},
 		},
 		{
@@ -393,7 +393,7 @@ func TestGetAvailablePackageSummariesWithoutPagination(t *testing.T) {
 			repos := []sourcev1.HelmRepository{}
 
 			for _, rs := range tc.repos {
-				ts2, repo, err := newRepoWithIndex(rs.index, rs.name, rs.namespace, nil, "")
+				ts2, repo, err := newHttpRepoAndServeIndex(rs.index, rs.name, rs.namespace, nil, "")
 				if err != nil {
 					t.Fatalf("%+v", err)
 				}
@@ -451,7 +451,7 @@ func TestGetAvailablePackageSummariesWithPagination(t *testing.T) {
 		}
 		repos := []sourcev1.HelmRepository{}
 		for _, rs := range existingRepos {
-			ts2, repo, err := newRepoWithIndex(rs.index, rs.name, rs.namespace, nil, "")
+			ts2, repo, err := newHttpRepoAndServeIndex(rs.index, rs.name, rs.namespace, nil, "")
 			if err != nil {
 				t.Fatalf("%+v", err)
 			}
@@ -718,7 +718,10 @@ func TestGetAvailablePackageSummaryAfterFluxHelmRepoDelete(t *testing.T) {
 			// stand up an http server just for the duration of this test
 			ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				w.WriteHeader(200)
-				w.Write(tarGzBytes)
+				_, err = w.Write(tarGzBytes)
+				if err != nil {
+					t.Fatalf("%+v", err)
+				}
 			}))
 			defer ts.Close()
 			replaceUrls[fmt.Sprintf("{{%s}}", s.tgzFile)] = ts.URL
@@ -730,7 +733,7 @@ func TestGetAvailablePackageSummaryAfterFluxHelmRepoDelete(t *testing.T) {
 			}
 			charts = append(charts, c)
 		}
-		ts, repo, err := newRepoWithIndex(
+		ts, repo, err := newHttpRepoAndServeIndex(
 			testYaml("valid-index.yaml"), repoName.Name, repoName.Namespace, replaceUrls, "")
 		if err != nil {
 			t.Fatalf("%+v", err)
@@ -771,7 +774,7 @@ func TestGetAvailablePackageSummaryAfterFluxHelmRepoDelete(t *testing.T) {
 			corev1.Maintainer{},
 			corev1.PackageAppVersion{})
 		opt2 := cmpopts.SortSlices(lessAvailablePackageFunc)
-		if got, want := responseBeforeDelete.AvailablePackageSummaries, valid_index_package_summaries; !cmp.Equal(got, want, opt1, opt2) {
+		if got, want := responseBeforeDelete.AvailablePackageSummaries, valid_index_available_package_summaries; !cmp.Equal(got, want, opt1, opt2) {
 			t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opt1, opt2))
 		}
 
@@ -837,7 +840,7 @@ func TestGetAvailablePackageSummaryAfterFluxHelmRepoDelete(t *testing.T) {
 // test that causes RetryWatcher to stop and the cache needs to resync
 func TestGetAvailablePackageSummaryAfterCacheResync(t *testing.T) {
 	t.Run("test that causes RetryWatcher to stop and the cache needs to resync", func(t *testing.T) {
-		ts2, repo, err := newRepoWithIndex(testYaml("valid-index.yaml"), "bitnami-1", "default", nil, "")
+		ts2, repo, err := newHttpRepoAndServeIndex(testYaml("valid-index.yaml"), "bitnami-1", "default", nil, "")
 		if err != nil {
 			t.Fatalf("%+v", err)
 		}
@@ -871,7 +874,7 @@ func TestGetAvailablePackageSummaryAfterCacheResync(t *testing.T) {
 			corev1.Maintainer{},
 			corev1.PackageAppVersion{})
 		opt2 := cmpopts.SortSlices(lessAvailablePackageFunc)
-		if got, want := responseBeforeResync.AvailablePackageSummaries, valid_index_package_summaries; !cmp.Equal(got, want, opt1, opt2) {
+		if got, want := responseBeforeResync.AvailablePackageSummaries, valid_index_available_package_summaries; !cmp.Equal(got, want, opt1, opt2) {
 			t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opt1, opt2))
 		}
 
@@ -923,7 +926,7 @@ func TestGetAvailablePackageSummaryAfterCacheResync(t *testing.T) {
 			t.Fatalf("%v", err)
 		}
 
-		if got, want := responseAfterResync.AvailablePackageSummaries, valid_index_package_summaries; !cmp.Equal(got, want, opt1, opt2) {
+		if got, want := responseAfterResync.AvailablePackageSummaries, valid_index_available_package_summaries; !cmp.Equal(got, want, opt1, opt2) {
 			t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opt1, opt2))
 		}
 	})
@@ -948,7 +951,7 @@ func TestGetAvailablePackageSummariesAfterCacheResyncQueueNotIdle(t *testing.T) 
 		for i := 0; i < MAX_REPOS; i++ {
 			repoName := fmt.Sprintf("bitnami-%d", i)
 
-			ts, repo, err := newRepoWithIndex(testYaml("valid-index.yaml"), repoName, "default", nil, "")
+			ts, repo, err := newHttpRepoAndServeIndex(testYaml("valid-index.yaml"), repoName, "default", nil, "")
 			if err != nil {
 				t.Fatalf("%+v", err)
 			}
@@ -1085,7 +1088,7 @@ func TestGetAvailablePackageSummariesAfterCacheResyncQueueIdle(t *testing.T) {
 		repoName := "bitnami-0"
 		repoNamespace := "default"
 
-		ts, repo, err := newRepoWithIndex(testYaml("valid-index.yaml"), repoName, repoNamespace, nil, "")
+		ts, repo, err := newHttpRepoAndServeIndex(testYaml("valid-index.yaml"), repoName, repoNamespace, nil, "")
 		if err != nil {
 			t.Fatalf("%+v", err)
 		}
@@ -1295,17 +1298,17 @@ func TestAddPackageRepository(t *testing.T) {
 		{
 			name:       "errors for package repository with bearer token",
 			request:    add_repo_req_10,
-			statusCode: codes.Unimplemented,
+			statusCode: codes.Internal,
 		},
 		{
 			name:       "errors for package repository with custom auth token",
 			request:    add_repo_req_11,
-			statusCode: codes.Unimplemented,
+			statusCode: codes.Internal,
 		},
 		{
 			name:       "package repository with docker config JSON authentication",
 			request:    add_repo_req_12,
-			statusCode: codes.Unimplemented,
+			statusCode: codes.Internal,
 		},
 		{
 			name:             "package repository with basic auth and existing secret",
@@ -1339,6 +1342,13 @@ func TestAddPackageRepository(t *testing.T) {
 			request:          add_repo_req_20,
 			expectedResponse: add_repo_expected_resp,
 			expectedRepo:     &add_repo_5,
+			statusCode:       codes.OK,
+		},
+		{
+			name:             "add basic OCI package repository",
+			request:          add_repo_req_26,
+			expectedResponse: add_repo_expected_resp,
+			expectedRepo:     &add_repo_6,
 			statusCode:       codes.OK,
 		},
 	}
@@ -1614,7 +1624,7 @@ func TestGetPackageRepositoryDetail(t *testing.T) {
 			if !tc.pending && !tc.failed {
 				var ts *httptest.Server
 				var err error
-				ts, repo, err = newRepoWithIndex(tc.repoIndex, tc.repoName, tc.repoNamespace, nil, secretRef)
+				ts, repo, err = newHttpRepoAndServeIndex(tc.repoIndex, tc.repoName, tc.repoNamespace, nil, secretRef)
 				if err != nil {
 					t.Fatalf("%+v", err)
 				}
@@ -1692,6 +1702,85 @@ func TestGetPackageRepositoryDetail(t *testing.T) {
 						t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opt1))
 					}
 				}
+			}
+		})
+	}
+}
+
+func TestGetOciPackageRepositoryDetail(t *testing.T) {
+	seed_data_1, err := newFakeRemoteOciRegistryData_1()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	testCases := []struct {
+		name               string
+		request            *corev1.GetPackageRepositoryDetailRequest
+		repoName           string
+		repoNamespace      string
+		repoUrl            string
+		expectedStatusCode codes.Code
+		expectedResponse   *corev1.GetPackageRepositoryDetailResponse
+		seedData           *fakeRemoteOciRegistryData
+	}{
+		{
+			name:               "get package repository detail for OCI repository",
+			repoName:           "repo-1",
+			repoNamespace:      "namespace-1",
+			repoUrl:            "oci://localhost:54321/userX/charts",
+			request:            get_repo_detail_req_1,
+			expectedStatusCode: codes.OK,
+			expectedResponse:   get_repo_detail_resp_19,
+			seedData:           seed_data_1,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			initOciFakeClientBuilder(t, *tc.seedData)
+
+			repo, err := newOciRepo(tc.repoName, tc.repoNamespace, tc.repoUrl)
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			s, mock, err := newServerWithRepos(t, []sourcev1.HelmRepository{*repo}, nil, nil)
+			if err != nil {
+				t.Fatalf("error instantiating the server: %v", err)
+			}
+
+			ctx := context.Background()
+			actualResp, err := s.GetPackageRepositoryDetail(ctx, tc.request)
+			if got, want := status.Code(err), tc.expectedStatusCode; got != want {
+				t.Fatalf("got: %+v, want: %+v, err: %+v", got, want, err)
+			}
+
+			if tc.expectedStatusCode == codes.OK {
+				if actualResp == nil {
+					t.Fatalf("got: nil, want: response")
+				} else {
+					opt1 := cmpopts.IgnoreUnexported(
+						corev1.Context{},
+						corev1.PackageRepositoryReference{},
+						plugins.Plugin{},
+						corev1.GetPackageRepositoryDetailResponse{},
+						corev1.PackageRepositoryDetail{},
+						corev1.PackageRepositoryStatus{},
+						corev1.PackageRepositoryAuth{},
+						corev1.PackageRepositoryTlsConfig{},
+						corev1.SecretKeyReference{},
+						corev1.TlsCertKey{},
+						corev1.UsernamePassword{},
+					)
+					if got, want := actualResp, tc.expectedResponse; !cmp.Equal(got, want, opt1) {
+						t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opt1))
+					}
+				}
+			}
+
+			// FWIW GetPackageRepositoryDetail curently does not use the redis cache
+			if err = mock.ExpectationsWereMet(); err != nil {
+				t.Fatalf("%v", err)
 			}
 		})
 	}
@@ -1973,7 +2062,7 @@ func TestUpdatePackageRepository(t *testing.T) {
 			if !tc.pending {
 				var ts *httptest.Server
 				var err error
-				ts, repo, err = newRepoWithIndex(tc.repoIndex, tc.repoName, tc.repoNamespace, nil, oldSecretRef)
+				ts, repo, err = newHttpRepoAndServeIndex(tc.repoIndex, tc.repoName, tc.repoNamespace, nil, oldSecretRef)
 				if err != nil {
 					t.Fatalf("%+v", err)
 				}
@@ -2118,7 +2207,7 @@ func TestDeletePackageRepository(t *testing.T) {
 			if !tc.pending {
 				var ts *httptest.Server
 				var err error
-				ts, repo, err = newRepoWithIndex(tc.repoIndex, tc.repoName, tc.repoNamespace, nil, oldSecretRef)
+				ts, repo, err = newHttpRepoAndServeIndex(tc.repoIndex, tc.repoName, tc.repoNamespace, nil, oldSecretRef)
 				if err != nil {
 					t.Fatalf("%+v", err)
 				}
@@ -2183,6 +2272,111 @@ func TestDeletePackageRepository(t *testing.T) {
 	}
 }
 
+func TestGetOciAvailablePackageSummariesWithoutPagination(t *testing.T) {
+	seed_data_1, err := newFakeRemoteOciRegistryData_1()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	seed_data_3, err := newFakeRemoteOciRegistryData_3()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	type testSpecGetOciAvailablePackageSummaries struct {
+		repoName      string
+		repoNamespace string
+		repoUrl       string
+	}
+
+	testCases := []struct {
+		name              string
+		request           *corev1.GetAvailablePackageSummariesRequest
+		repos             []testSpecGetOciAvailablePackageSummaries
+		expectedResponse  *corev1.GetAvailablePackageSummariesResponse
+		expectedErrorCode codes.Code
+		seedData          *fakeRemoteOciRegistryData
+	}{
+		{
+			name: "returns a single available package",
+			repos: []testSpecGetOciAvailablePackageSummaries{
+				{
+					repoName:      "repo-1",
+					repoNamespace: "namespace-1",
+					repoUrl:       "oci://localhost:54321/userX/charts",
+				},
+			},
+			request: &corev1.GetAvailablePackageSummariesRequest{Context: &corev1.Context{}},
+			expectedResponse: &corev1.GetAvailablePackageSummariesResponse{
+				AvailablePackageSummaries: oci_repo_available_package_summaries,
+			},
+			expectedErrorCode: codes.OK,
+			seedData:          seed_data_1,
+		},
+		{
+			name: "returns available packages from multiple repos",
+			repos: []testSpecGetOciAvailablePackageSummaries{
+				{
+					repoName:      "repo-1",
+					repoNamespace: "namespace-1",
+					repoUrl:       "oci://localhost:54321/userX/charts",
+				},
+			},
+			request: &corev1.GetAvailablePackageSummariesRequest{Context: &corev1.Context{}},
+			expectedResponse: &corev1.GetAvailablePackageSummariesResponse{
+				AvailablePackageSummaries: oci_repo_available_package_summaries_2,
+			},
+			expectedErrorCode: codes.OK,
+			seedData:          seed_data_3,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			initOciFakeClientBuilder(t, *tc.seedData)
+
+			repos := []sourcev1.HelmRepository{}
+
+			for _, rs := range tc.repos {
+				repo, err := newOciRepo(rs.repoName, rs.repoNamespace, rs.repoUrl)
+				if err != nil {
+					t.Fatal(err)
+				}
+				repos = append(repos, *repo)
+			}
+
+			s, mock, err := newSimpleServerWithRepos(t, repos)
+			if err != nil {
+				t.Fatalf("error instantiating the server: %v", err)
+			}
+
+			if err = s.redisMockExpectGetFromRepoCache(mock, tc.request.FilterOptions, repos...); err != nil {
+				t.Fatalf("%v", err)
+			}
+
+			response, err := s.GetAvailablePackageSummaries(context.Background(), tc.request)
+			if got, want := status.Code(err), tc.expectedErrorCode; got != want {
+				t.Fatalf("got: %v, want: %v, err: %v", got, want, err)
+			}
+			// If an error code was expected, then no need to continue checking
+			// the response.
+			if tc.expectedErrorCode != codes.OK {
+				return
+			}
+
+			if err = mock.ExpectationsWereMet(); err != nil {
+				t.Fatalf("%v", err)
+			}
+
+			opt1 := cmpopts.IgnoreUnexported(corev1.GetAvailablePackageSummariesResponse{}, corev1.AvailablePackageSummary{}, corev1.AvailablePackageReference{}, corev1.Context{}, plugins.Plugin{}, corev1.PackageAppVersion{})
+			opt2 := cmpopts.SortSlices(lessAvailablePackageFunc)
+			if got, want := response, tc.expectedResponse; !cmp.Equal(got, want, opt1, opt2) {
+				t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opt1, opt2))
+			}
+		})
+	}
+}
+
 func newRepo(name string, namespace string, spec *sourcev1.HelmRepositorySpec, status *sourcev1.HelmRepositoryStatus) sourcev1.HelmRepository {
 	helmRepository := sourcev1.HelmRepository{
 		ObjectMeta: metav1.ObjectMeta{
@@ -2223,22 +2417,40 @@ func newRepo(name string, namespace string, spec *sourcev1.HelmRepositorySpec, s
 // does a series of mock.ExpectGet(...)
 func (s *Server) redisMockExpectGetFromRepoCache(mock redismock.ClientMock, filterOptions *corev1.FilterOptions, repos ...sourcev1.HelmRepository) error {
 	mapVals := make(map[string][]byte)
+	ociRepoKeys := sets.String{}
 	for _, r := range repos {
 		key, bytes, err := s.redisKeyValueForRepo(r)
 		if err != nil {
 			return err
 		}
 		mapVals[key] = bytes
+		if r.Spec.Type == "oci" {
+			ociRepoKeys.Insert(key)
+		}
 	}
 	if filterOptions == nil || len(filterOptions.GetRepositories()) == 0 {
 		for k, v := range mapVals {
-			mock.ExpectGet(k).SetVal(string(v))
+			maxTries := 1
+			if ociRepoKeys.Has(k) {
+				// see comment in chart.go about caching helm OCI chart repos
+				maxTries = 3
+			}
+			for i := 0; i < maxTries; i++ {
+				mock.ExpectGet(k).SetVal(string(v))
+			}
 		}
 	} else {
 		for _, r := range filterOptions.GetRepositories() {
 			for k, v := range mapVals {
 				if strings.HasSuffix(k, ":"+r) {
-					mock.ExpectGet(k).SetVal(string(v))
+					maxTries := 1
+					if ociRepoKeys.Has(k) {
+						// see comment in chart.go about caching helm OCI chart repos
+						maxTries = 3
+					}
+					for i := 0; i < maxTries; i++ {
+						mock.ExpectGet(k).SetVal(string(v))
+					}
 				}
 			}
 		}
@@ -2258,9 +2470,6 @@ func (s *Server) redisMockSetValueForRepo(mock redismock.ClientMock, repo source
 }
 
 func (sink *repoEventSink) redisMockSetValueForRepo(mock redismock.ClientMock, repo sourcev1.HelmRepository, oldValue []byte) (key string, newValue []byte, err error) {
-	if key, err = redisKeyForRepo(repo); err != nil {
-		return key, nil, err
-	}
 	if key, newValue, err = sink.redisKeyValueForRepo(repo); err != nil {
 		if oldValue == nil {
 			mock.ExpectGet(key).RedisNil()
@@ -2286,11 +2495,11 @@ func redisMockSetValueForRepo(mock redismock.ClientMock, key string, newValue, o
 }
 
 func (s *Server) redisKeyValueForRepo(r sourcev1.HelmRepository) (key string, byteArray []byte, err error) {
-	sink := repoEventSink{
-		clientGetter: s.newBackgroundClientGetter(),
-		chartCache:   nil,
+	cg := func(ctx context.Context) (clientgetter.ClientInterfaces, error) {
+		return s.clientGetter(ctx, s.kubeappsCluster)
 	}
-	return sink.redisKeyValueForRepo(r)
+	sinkNoChartCache := repoEventSink{clientGetter: cg}
+	return sinkNoChartCache.redisKeyValueForRepo(r)
 }
 
 func (sink *repoEventSink) redisKeyValueForRepo(r sourcev1.HelmRepository) (key string, byteArray []byte, err error) {
@@ -2332,7 +2541,7 @@ func redisKeyForRepoNamespacedName(name types.NamespacedName) (string, error) {
 	return fmt.Sprintf("%s:%s:%s", fluxHelmRepositories, name.Namespace, name.Name), nil
 }
 
-func newRepoWithIndex(repoIndex, repoName, repoNamespace string, replaceUrls map[string]string, secretRef string) (*httptest.Server, *sourcev1.HelmRepository, error) {
+func newHttpRepoAndServeIndex(repoIndex, repoName, repoNamespace string, replaceUrls map[string]string, secretRef string) (*httptest.Server, *sourcev1.HelmRepository, error) {
 	indexYAMLBytes, err := ioutil.ReadFile(repoIndex)
 	if err != nil {
 		return nil, nil, err
@@ -2342,7 +2551,7 @@ func newRepoWithIndex(repoIndex, repoName, repoNamespace string, replaceUrls map
 		indexYAMLBytes = []byte(strings.ReplaceAll(string(indexYAMLBytes), k, v))
 	}
 
-	// stand up a plain text http server to server the contents of index.yaml just for the
+	// stand up a plain text http server to serve the contents of index.yaml just for the
 	// duration of this test. We are never standing up a TLS server (or any kind of secured
 	// server for that matter) for repo index.yaml file because this scenario should never
 	// happen in production. See comments in repo.go for explanation
@@ -2386,4 +2595,29 @@ func newRepoWithIndex(repoIndex, repoName, repoNamespace string, replaceUrls map
 	}
 	repo := newRepo(repoName, repoNamespace, repoSpec, repoStatus)
 	return ts, &repo, nil
+}
+
+func newOciRepo(repoName, repoNamespace, repoUrl string) (*sourcev1.HelmRepository, error) {
+	timeout := metav1.Duration{Duration: 60 * time.Second}
+	repoSpec := &sourcev1.HelmRepositorySpec{
+		URL:      repoUrl,
+		Interval: metav1.Duration{Duration: 1 * time.Minute},
+		Timeout:  &timeout,
+		Type:     "oci",
+	}
+
+	repoStatus := &sourcev1.HelmRepositoryStatus{
+		Conditions: []metav1.Condition{
+			{
+				Type:               fluxmeta.ReadyCondition,
+				Status:             metav1.ConditionTrue,
+				Reason:             fluxmeta.SucceededReason,
+				Message:            "Helm repository is ready",
+				LastTransitionTime: metav1.Time{Time: lastTransitionTime},
+				ObservedGeneration: 1,
+			},
+		},
+	}
+	repo := newRepo(repoName, repoNamespace, repoSpec, repoStatus)
+	return &repo, nil
 }

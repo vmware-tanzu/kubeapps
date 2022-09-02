@@ -106,9 +106,12 @@ func (q *rateLimitingType) WaitUntilForgotten(item string) {
 	// a call to .Forget(item).
 	// TODO: (gfichtenholt) don't do wait.PollInfinite() here, use some sensible
 	// timeout instead, and then this func will need to return an error
-	wait.PollInfinite(10*time.Millisecond, func() (bool, error) {
+	err := wait.PollInfinite(10*time.Millisecond, func() (bool, error) {
 		return q.rateLimiter.NumRequeues(item) == 0, nil
 	})
+	if err != nil {
+		log.Errorf("error when WaitUntilForgotten, error: %v", err)
+	}
 }
 
 func newQueue(name string, verbose bool) *Type {
@@ -268,6 +271,26 @@ func (q *Type) ShuttingDown() bool {
 	defer q.cond.L.Unlock()
 
 	return q.shuttingDown
+}
+
+// ShutDownWithDrain will cause q to ignore all new items added to it. As soon
+// as the worker goroutines have "drained", i.e: finished processing and called
+// Done on all existing items in the queue; they will be instructed to exit and
+// ShutDownWithDrain will return. Hence: a strict requirement for using this is;
+// your workers must ensure that Done is called on all items in the queue once
+// the shut down has been initiated, if that is not the case: this will block
+// indefinitely. It is, however, safe to call ShutDown after having called
+// ShutDownWithDrain, as to force the queue shut down to terminate immediately
+// without waiting for the drainage.
+//
+// TODO (gfichtenholt) put a stub in here just so kubeapps can upgrade to
+// k8s.io/client-go >= 0.23.X
+// ref https://github.com/vmware-tanzu/kubeapps/pull/5123#issuecomment-1194756900
+// I will implement once we upgrade k8s.io/client-go as stated and I can test the scenario
+func (q *Type) ShutDownWithDrain() {
+	// ref impl https://github.com/kubernetes/client-go/blob/b5c7588f8a17459d6f9c7a8dc24daecd2c35c98e/util/workqueue/queue.go#L211
+
+	log.Fatalf("func ShutDownWithDrain(%s) has not been implemented yet", q.name)
 }
 
 // expectAdd marks item as expected to be processed in the near future

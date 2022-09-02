@@ -87,26 +87,36 @@ export default function Catalog() {
       isFetching,
     },
     operators,
-    repos: { repos },
-    config: { appVersion, kubeappsCluster, globalReposNamespace, featureFlags },
+    repos: { reposSummaries: repos },
+    config: {
+      appVersion,
+      kubeappsCluster,
+      globalReposNamespace,
+      carvelGlobalNamespace,
+      featureFlags,
+    },
   } = useSelector((state: IStoreState) => state);
   const { cluster, namespace } = ReactRouter.useParams() as IRouteParams;
   const location = ReactRouter.useLocation();
   const dispatch = useDispatch();
 
   const [filters, setFilters] = React.useState(initialFilterState());
-  // pageNum is only used to avoid flicker in the CatalogItems.
-  // It is no longer used for pagination which is handled by the server's
-  // opaque nextPageToken etc.
-  const [pageNum, setPageNum] = React.useState(0);
+  // localNextPageToken is only used to avoid flicker in the CatalogItems.
+  // It is no longer used for calculating pagination, which is now handled
+  // by the server's opaque nextPageToken etc.
+  const [localNextPageToken, setLocalNextPageToken] = React.useState("");
   const [hasRequestedFirstPage, setHasRequestedFirstPage] = React.useState(false);
   const [hasLoadedFirstPage, setHasLoadedFirstPage] = React.useState(false);
+  const [isFirstPage, setIsFirstPage] = React.useState(false);
+  const localIsFetchingRef = React.useRef(isFetching);
 
   const csvs = operators.csvs;
 
   // Only one search filter can be set
   const searchFilter = filters[filterNames.SEARCH]?.toString().replace(tmpStrRegex, ",") || "";
   const reposFilter = filters[filterNames.REPO]?.join(",") || "";
+
+  const timeout = (ms: number) => new Promise(r => setTimeout(r, ms));
 
   // Detect changes in cluster/ns/repos/search and reset the current package
   // list Note: useEffect is called on every render - the initial render and any
@@ -121,7 +131,8 @@ export default function Catalog() {
     // so that it is reloaded cleanly for the given inputs next time it is
     // loaded.
     return function cleanup() {
-      setPageNum(0);
+      setLocalNextPageToken("");
+      setIsFirstPage(false);
       dispatch(actions.availablepackages.resetAvailablePackageSummaries());
       dispatch(actions.availablepackages.resetSelectedAvailablePackageDetail());
     };
@@ -140,29 +151,46 @@ export default function Catalog() {
     });
   }, [location.search]);
 
+  // using the local reference to the isFetching state to avoid re-rendering on each isFetching actual change
   useEffect(() => {
-    if (hasFinishedFetching) {
-      return;
-    }
-    dispatch(
-      actions.availablepackages.fetchAvailablePackageSummaries(
-        cluster,
-        namespace,
-        reposFilter,
-        nextPageToken,
-        size,
-        searchFilter,
-      ),
-    );
+    localIsFetchingRef.current = isFetching;
+  }, [isFetching]);
+
+  useEffect(() => {
+    const isFetchingAwareFetching = async () => {
+      if (hasFinishedFetching) {
+        return;
+      }
+      // if the local isFetching is true, we need to wait for the rest of the actions to take effect.
+      // this state seldom happens (eg. clicking buttons quickly) but it is possible, so we need to wait,
+      // otherwise the UI will be in an inconsistent state due to race conditions
+      // Note that the "receiveAvailablePackageSummaries" is ignoring the received data if it wasn't previously fetching.
+      if (localIsFetchingRef.current) {
+        await timeout(1500);
+        localIsFetchingRef.current = false;
+      }
+      dispatch(
+        actions.availablepackages.fetchAvailablePackageSummaries(
+          cluster,
+          namespace,
+          reposFilter,
+          localNextPageToken,
+          size,
+          searchFilter,
+        ),
+      );
+    };
+    isFetchingAwareFetching();
   }, [
     dispatch,
-    nextPageToken,
     size,
     cluster,
+    localIsFetchingRef,
     namespace,
     reposFilter,
     searchFilter,
     hasFinishedFetching,
+    localNextPageToken,
   ]);
 
   // hasLoadedFirstPage is used to not bump the current page until the first page is fully
@@ -170,9 +198,11 @@ export default function Catalog() {
   useEffect(() => {
     if (isFetching) {
       setHasRequestedFirstPage(true);
+      setIsFirstPage(true);
     }
     if (hasRequestedFirstPage && !isFetching) {
       setHasLoadedFirstPage(true);
+      setIsFirstPage(false);
     }
   }, [hasRequestedFirstPage, isFetching]);
 
@@ -201,7 +231,11 @@ export default function Catalog() {
     pushFilters(filters);
   };
 
-  const allRepos = uniq(repos.map(c => c.metadata.name));
+  const allRepos = uniq(
+    repos
+      .filter(r => !r.namespaceScoped || r.packageRepoRef?.context?.namespace === namespace)
+      .map(r => r.name),
+  );
   const allProviders = uniq(csvs.map(c => c.spec.provider.name));
   const allCategories = uniq(
     categories
@@ -212,15 +246,19 @@ export default function Catalog() {
   // We do not currently support package repositories on additional clusters.
   const supportedCluster = cluster === kubeappsCluster;
   useEffect(() => {
-    if (!supportedCluster || namespace === globalReposNamespace) {
-      // Global namespace or other cluster, show global repos only
-      dispatch(actions.repos.fetchRepos(globalReposNamespace));
+    if (
+      !namespace ||
+      !supportedCluster ||
+      [globalReposNamespace, carvelGlobalNamespace].includes(namespace)
+    ) {
+      // All Namespaces. Global namespace or other cluster, show global repos only
+      dispatch(actions.repos.fetchRepoSummaries(""));
       return () => {};
     }
     // In other case, fetch global and namespace repos
-    dispatch(actions.repos.fetchRepos(namespace, true));
+    dispatch(actions.repos.fetchRepoSummaries(namespace, true));
     return () => {};
-  }, [dispatch, supportedCluster, namespace, globalReposNamespace]);
+  }, [dispatch, supportedCluster, namespace, globalReposNamespace, carvelGlobalNamespace]);
 
   useEffect(() => {
     // Ignore operators if specified
@@ -296,7 +334,7 @@ export default function Catalog() {
         cluster,
         namespace,
         reposFilter,
-        nextPageToken,
+        localNextPageToken,
         size,
         searchFilter,
       ),
@@ -304,7 +342,7 @@ export default function Catalog() {
   };
 
   const increaseRequestedPage = () => {
-    setPageNum(pageNum + 1);
+    setLocalNextPageToken(nextPageToken);
   };
 
   const observeBorder = (node: any) => {
@@ -377,7 +415,7 @@ export default function Catalog() {
             Manage your Package Repositories in Kubeapps by visiting the Package repositories
             configuration page.
           </p>
-          <Link to={app.config.apprepositories(cluster, namespace)}>
+          <Link to={app.config.pkgrepositories(cluster, namespace)}>
             <CdsButton>Manage Package Repositories</CdsButton>
           </Link>
           <p>
@@ -415,6 +453,7 @@ export default function Catalog() {
                     currentFilters={filters[filterNames.TYPE]}
                     onAddFilter={addFilter}
                     onRemoveFilter={removeFilter}
+                    disabled={isFetching}
                   />
                 </div>
               )}
@@ -427,6 +466,7 @@ export default function Catalog() {
                     currentFilters={filters[filterNames.CATEGORY]}
                     onAddFilter={addFilter}
                     onRemoveFilter={removeFilter}
+                    disabled={isFetching}
                   />
                 </div>
               )}
@@ -439,6 +479,7 @@ export default function Catalog() {
                     currentFilters={filters[filterNames.REPO]}
                     onAddFilter={addFilter}
                     onRemoveFilter={removeFilter}
+                    disabled={isFetching}
                   />
                 </div>
               )}
@@ -451,6 +492,7 @@ export default function Catalog() {
                     currentFilters={filters[filterNames.OPERATOR_PROVIDER]}
                     onAddFilter={addFilter}
                     onRemoveFilter={removeFilter}
+                    disabled={isFetching}
                   />
                 </div>
               )}
@@ -486,9 +528,9 @@ export default function Catalog() {
                       csvs={filteredCSVs}
                       cluster={cluster}
                       namespace={namespace}
-                      isFirstPage={pageNum === 1}
+                      isFirstPage={isFirstPage}
                       hasLoadedFirstPage={hasLoadedFirstPage}
-                      hasFinishedFetching={hasFinishedFetching}
+                      hasFinishedFetching={hasFinishedFetching && !localIsFetchingRef.current}
                     />
                     {!hasFinishedFetching &&
                       (!filters[filterNames.TYPE].length ||

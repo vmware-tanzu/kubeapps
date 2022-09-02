@@ -1,0 +1,17 @@
+// Copyright 2020-2022 the Kubeapps contributors.
+// SPDX-License-Identifier: Apache-2.0
+
+.cds-textarea-fix {
+  // Need to re-set the font property to avoid
+  // https://github.com/vmware/clarity/issues/5687
+  font: caption;
+}
+
+.reduced-margin-top {
+  margin-top: -0.5em;
+}
+
+/* stylelint-disable-next-line selector-class-pattern */
+.ace-solarized-dark .ace_comment {
+  font-style: normal;
+}

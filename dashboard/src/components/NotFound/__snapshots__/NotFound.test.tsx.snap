@@ -6,7 +6,7 @@ exports[`should render the 404 page 1`] = `
 >
   <div>
     <img
-      alt="Kubeapps logo"
+      alt="Not found logo"
       src="404.svg"
     />
     <h3>
