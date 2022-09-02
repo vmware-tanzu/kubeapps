@@ -204,6 +204,7 @@ generateAdditionalValuesFile() {
   # But it was breaking the formatting of the file
   local valuesFile=${ROOT_DIR}/additional_chart_values.yaml;
   echo "ingress:
+  enabled: true
   hostname: localhost
   tls: true
   selfSigned: true
@@ -285,7 +286,6 @@ additional_flags_file=$(generateAdditionalValuesFile)
 
 if [ "$USE_MULTICLUSTER_OIDC_ENV" = true ]; then
   multiclusterFlags=(
-    "--set" "ingress.enabled=true"
     "--values" "${additional_flags_file}"
     "--set" "authProxy.enabled=true"
     "--set" "authProxy.provider=oidc"
