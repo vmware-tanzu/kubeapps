@@ -331,6 +331,48 @@ export interface GetSecretNamesResponse_SecretNamesEntry {
   value: SecretType;
 }
 
+/**
+ * CanIRequest
+ *
+ * Request for CanI operation
+ */
+export interface CanIRequest {
+  /**
+   * The context (cluster/namespace) for the can-i request
+   * "" (empty) namespace means "all"
+   */
+  context?: Context;
+  /**
+   * Group API Group of the Resource.  "*" means all.
+   * +optional
+   */
+  group: string;
+  /**
+   * Resource is one of the existing resource types.  "*" means all.
+   * +optional
+   */
+  resource: string;
+  /**
+   * Verb is a kubernetes resource API verb, like: get, list, watch, create, update, delete, proxy.  "*" means all.
+   * +optional
+   */
+  verb: string;
+}
+
+/**
+ * CanIResponse
+ *
+ * Response for CanI operation
+ */
+export interface CanIResponse {
+  /**
+   * allowed
+   *
+   * True if operation is allowed
+   */
+  allowed: boolean;
+}
+
 function createBaseGetResourcesRequest(): GetResourcesRequest {
   return { installedPackageRef: undefined, resourceRefs: [], watch: false };
 }
@@ -1414,6 +1456,135 @@ export const GetSecretNamesResponse_SecretNamesEntry = {
   },
 };
 
+function createBaseCanIRequest(): CanIRequest {
+  return { context: undefined, group: "", resource: "", verb: "" };
+}
+
+export const CanIRequest = {
+  encode(message: CanIRequest, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
+    if (message.context !== undefined) {
+      Context.encode(message.context, writer.uint32(10).fork()).ldelim();
+    }
+    if (message.group !== "") {
+      writer.uint32(18).string(message.group);
+    }
+    if (message.resource !== "") {
+      writer.uint32(26).string(message.resource);
+    }
+    if (message.verb !== "") {
+      writer.uint32(34).string(message.verb);
+    }
+    return writer;
+  },
+
+  decode(input: _m0.Reader | Uint8Array, length?: number): CanIRequest {
+    const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseCanIRequest();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1:
+          message.context = Context.decode(reader, reader.uint32());
+          break;
+        case 2:
+          message.group = reader.string();
+          break;
+        case 3:
+          message.resource = reader.string();
+          break;
+        case 4:
+          message.verb = reader.string();
+          break;
+        default:
+          reader.skipType(tag & 7);
+          break;
+      }
+    }
+    return message;
+  },
+
+  fromJSON(object: any): CanIRequest {
+    return {
+      context: isSet(object.context) ? Context.fromJSON(object.context) : undefined,
+      group: isSet(object.group) ? String(object.group) : "",
+      resource: isSet(object.resource) ? String(object.resource) : "",
+      verb: isSet(object.verb) ? String(object.verb) : "",
+    };
+  },
+
+  toJSON(message: CanIRequest): unknown {
+    const obj: any = {};
+    message.context !== undefined &&
+      (obj.context = message.context ? Context.toJSON(message.context) : undefined);
+    message.group !== undefined && (obj.group = message.group);
+    message.resource !== undefined && (obj.resource = message.resource);
+    message.verb !== undefined && (obj.verb = message.verb);
+    return obj;
+  },
+
+  fromPartial<I extends Exact<DeepPartial<CanIRequest>, I>>(object: I): CanIRequest {
+    const message = createBaseCanIRequest();
+    message.context =
+      object.context !== undefined && object.context !== null
+        ? Context.fromPartial(object.context)
+        : undefined;
+    message.group = object.group ?? "";
+    message.resource = object.resource ?? "";
+    message.verb = object.verb ?? "";
+    return message;
+  },
+};
+
+function createBaseCanIResponse(): CanIResponse {
+  return { allowed: false };
+}
+
+export const CanIResponse = {
+  encode(message: CanIResponse, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
+    if (message.allowed === true) {
+      writer.uint32(8).bool(message.allowed);
+    }
+    return writer;
+  },
+
+  decode(input: _m0.Reader | Uint8Array, length?: number): CanIResponse {
+    const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseCanIResponse();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1:
+          message.allowed = reader.bool();
+          break;
+        default:
+          reader.skipType(tag & 7);
+          break;
+      }
+    }
+    return message;
+  },
+
+  fromJSON(object: any): CanIResponse {
+    return {
+      allowed: isSet(object.allowed) ? Boolean(object.allowed) : false,
+    };
+  },
+
+  toJSON(message: CanIResponse): unknown {
+    const obj: any = {};
+    message.allowed !== undefined && (obj.allowed = message.allowed);
+    return obj;
+  },
+
+  fromPartial<I extends Exact<DeepPartial<CanIResponse>, I>>(object: I): CanIResponse {
+    const message = createBaseCanIResponse();
+    message.allowed = object.allowed ?? false;
+    return message;
+  },
+};
+
 /**
  * ResourcesService
  *
@@ -1449,6 +1620,7 @@ export interface ResourcesService {
     request: DeepPartial<CreateSecretRequest>,
     metadata?: grpc.Metadata,
   ): Promise<CreateSecretResponse>;
+  CanI(request: DeepPartial<CanIRequest>, metadata?: grpc.Metadata): Promise<CanIResponse>;
 }
 
 export class ResourcesServiceClientImpl implements ResourcesService {
@@ -1463,6 +1635,7 @@ export class ResourcesServiceClientImpl implements ResourcesService {
     this.CheckNamespaceExists = this.CheckNamespaceExists.bind(this);
     this.GetSecretNames = this.GetSecretNames.bind(this);
     this.CreateSecret = this.CreateSecret.bind(this);
+    this.CanI = this.CanI.bind(this);
   }
 
   GetResources(
@@ -1541,13 +1714,17 @@ export class ResourcesServiceClientImpl implements ResourcesService {
       metadata,
     );
   }
+
+  CanI(request: DeepPartial<CanIRequest>, metadata?: grpc.Metadata): Promise<CanIResponse> {
+    return this.rpc.unary(ResourcesServiceCanIDesc, CanIRequest.fromPartial(request), metadata);
+  }
 }
 
 export const ResourcesServiceDesc = {
   serviceName: "kubeappsapis.plugins.resources.v1alpha1.ResourcesService",
 };
 
-export const ResourcesServiceGetResourcesDesc: UnaryMethodDefinitionish = {
+export const ResourcesServiceGetResourcesDesc: MethodDefinitionish = {
   methodName: "GetResources",
   service: ResourcesServiceDesc,
   requestStream: false,
@@ -1701,12 +1878,41 @@ export const ResourcesServiceCreateSecretDesc: UnaryMethodDefinitionish = {
   } as any,
 };
 
+export const ResourcesServiceCanIDesc: UnaryMethodDefinitionish = {
+  methodName: "CanI",
+  service: ResourcesServiceDesc,
+  requestStream: false,
+  responseStream: false,
+  requestType: {
+    serializeBinary() {
+      return CanIRequest.encode(this).finish();
+    },
+  } as any,
+  responseType: {
+    deserializeBinary(data: Uint8Array) {
+      return {
+        ...CanIResponse.decode(data),
+        toObject() {
+          return this;
+        },
+      };
+    },
+  } as any,
+};
+
 interface UnaryMethodDefinitionishR extends grpc.UnaryMethodDefinition<any, any> {
   requestStream: any;
   responseStream: any;
 }
 
 type UnaryMethodDefinitionish = UnaryMethodDefinitionishR;
+
+interface MethodDefinitionishR extends grpc.MethodDefinition<any, any> {
+  requestStream: any;
+  responseStream: any;
+}
+
+type MethodDefinitionish = MethodDefinitionishR;
 
 interface Rpc {
   unary<T extends UnaryMethodDefinitionish>(
@@ -1719,6 +1925,12 @@ interface Rpc {
     request: any,
     metadata: grpc.Metadata | undefined,
   ): Observable<any>;
+  stream<T extends MethodDefinitionish>(
+    methodDesc: T,
+    request: Observable<any>,
+    metadata: grpc.Metadata | undefined,
+    rpcOptions: grpc.RpcOptions | undefined,
+  ): Observable<any>;
 }
 
 export class GrpcWebImpl {
@@ -1728,6 +1940,7 @@ export class GrpcWebImpl {
     streamingTransport?: grpc.TransportFactory;
     debug?: boolean;
     metadata?: grpc.Metadata;
+    upStreamRetryCodes?: number[];
   };
 
   constructor(
@@ -1737,6 +1950,7 @@ export class GrpcWebImpl {
       streamingTransport?: grpc.TransportFactory;
       debug?: boolean;
       metadata?: grpc.Metadata;
+      upStreamRetryCodes?: number[];
     },
   ) {
     this.host = host;
@@ -1782,8 +1996,7 @@ export class GrpcWebImpl {
     _request: any,
     metadata: grpc.Metadata | undefined,
   ): Observable<any> {
-    // Status Response Codes (https://developers.google.com/maps-booking/reference/grpc-api/status_codes)
-    const upStreamCodes = [2, 4, 8, 9, 10, 13, 14, 15];
+    const upStreamCodes = this.options.upStreamRetryCodes || [];
     const DEFAULT_TIMEOUT_TIME: number = 3_000;
     const request = { ..._request, ...methodDesc.requestType };
     const maybeCombinedMetadata =
@@ -1802,19 +2015,66 @@ export class GrpcWebImpl {
           metadata: maybeCombinedMetadata,
           debug: this.options.debug,
           onMessage: next => observer.next(next),
-          onEnd: (code: grpc.Code, message: string) => {
+          onEnd: (code: grpc.Code, message: string, trailers: grpc.Metadata) => {
             if (code === 0) {
               observer.complete();
             } else if (upStreamCodes.includes(code)) {
               setTimeout(upStream, DEFAULT_TIMEOUT_TIME);
             } else {
-              observer.error(new Error(`Error ${code} ${message}`));
+              const err = new Error(message) as any;
+              err.code = code;
+              err.metadata = trailers;
+              observer.error(err);
             }
           },
         });
         observer.add(() => client.close());
       };
       upStream();
+    }).pipe(share());
+  }
+
+  stream<T extends MethodDefinitionish>(
+    methodDesc: T,
+    _request: Observable<any>,
+    metadata: grpc.Metadata | undefined,
+    rpcOptions: grpc.RpcOptions | undefined,
+  ): Observable<any> {
+    const defaultOptions = {
+      host: this.host,
+      debug: rpcOptions?.debug || this.options.debug,
+      transport: rpcOptions?.transport || this.options.streamingTransport || this.options.transport,
+    };
+
+    let started = false;
+    const client = grpc.client(methodDesc, defaultOptions);
+
+    const subscription = _request.subscribe((_req: any) => {
+      const request = { ..._req, ...methodDesc.requestType };
+      if (!started) {
+        client.start(metadata);
+        started = true;
+      }
+      client.send(request);
+    });
+
+    subscription.add(() => {
+      client.finishSend();
+    });
+
+    return new Observable(observer => {
+      client.onEnd((code: grpc.Code, message: string, _trailers: grpc.Metadata) => {
+        subscription.unsubscribe();
+        if (code === 0) {
+          observer.complete();
+        } else {
+          observer.error(new Error(`Error ${code} ${message}`));
+        }
+      });
+      client.onMessage((res: any) => {
+        observer.next(res);
+      });
+      observer.add(() => client.close());
     }).pipe(share());
   }
 }
