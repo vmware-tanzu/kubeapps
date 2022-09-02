@@ -3,23 +3,14 @@
 
 import { get } from "lodash";
 import { Auth } from "./Auth";
-import { axiosWithAuth } from "./AxiosInstance";
-import { ForbiddenError, IResource, NotFoundError } from "./types";
-import * as url from "./url";
+import { ForbiddenError, NotFoundError } from "./types";
 import { KubeappsGrpcClient } from "./KubeappsGrpcClient";
 
 export default class Namespace {
   private static resourcesClient = () => new KubeappsGrpcClient().getResourcesServiceClientImpl();
 
-  // TODO(agamez): Migrate API call, see #4785
   public static async list(cluster: string) {
-    // This call is hitting an actual backend endpoint (see cmd\kubeops\internal\http-handler)
-    // while the other two calls (create, get) have been updated to use the
-    // resources client rather than the k8s API server.
-    const { data } = await axiosWithAuth.get<{ namespaces: IResource[] }>(
-      url.backend.namespaces.list(cluster),
-    );
-    return data;
+    return this.resourcesClient().GetNamespaceNames({ cluster: cluster });
   }
 
   public static async create(

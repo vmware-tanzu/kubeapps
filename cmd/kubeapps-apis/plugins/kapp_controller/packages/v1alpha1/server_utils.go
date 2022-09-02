@@ -146,7 +146,7 @@ func buildPackageIdentifier(pkgMetadata *datapackagingv1alpha1.PackageMetadata) 
 }
 
 // getRepoNameFromAnnotation gets the repo name from a string with the format "namespace/repoName",
-// for instance "default/tce-repo", and retuns just the "repoName" part, e.g., "tce-repo"
+// for instance "default/tce-repo", and returns just the "repoName" part, e.g., "tce-repo"
 func getRepoNameFromAnnotation(repoRefAnnotation string) string {
 	// falling back to a "default" repo name if using kapp controller < v0.36.1
 	// See https://github.com/vmware-tanzu/carvel-kapp-controller/pull/532
