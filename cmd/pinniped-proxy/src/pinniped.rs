@@ -520,7 +520,7 @@ mZu9A/ivt37pOQXm/HOX6tHB
 
     // Without any changes, the make_token_credential_request function
     // returns a request with the following hash.
-    const DEFAULT_TOKEN_CREDENTIAL_REQUEST_HASH: u64 = 2363471629413450951;
+    const DEFAULT_TOKEN_CREDENTIAL_REQUEST_HASH: u64 = 2671791248625081931;
 
     fn make_token_credential_request() -> TokenCredentialRequest {
         TokenCredentialRequest {
