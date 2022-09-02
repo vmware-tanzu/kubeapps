@@ -53,9 +53,7 @@ require (
 	github.com/go-redis/redis/v8 v8.11.5
 	github.com/go-redis/redismock/v8 v8.0.6
 	github.com/google/go-cmp v0.5.8
-	github.com/gorilla/mux v1.8.0
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.11.0
-	github.com/heptiolabs/healthcheck v0.0.0-20211123025425-613501dd5deb
 	github.com/improbable-eng/grpc-web v0.15.0
 	github.com/itchyny/gojq v0.12.8
 	github.com/jinzhu/copier v0.3.5
@@ -71,7 +69,6 @@ require (
 	github.com/srwiley/oksvg v0.0.0-20220128195007-1f435e4c2b44
 	github.com/srwiley/rasterx v0.0.0-20220615024203-67b7089efd25
 	github.com/stretchr/testify v1.8.0
-	github.com/urfave/negroni/v2 v2.0.2
 	github.com/vmware-tanzu/carvel-kapp-controller v0.38.4
 	github.com/vmware-tanzu/carvel-vendir v0.29.0
 	golang.org/x/net v0.0.0-20220722155237-a158d28d115b
@@ -93,10 +90,12 @@ require (
 	k8s.io/kubernetes v1.22.10
 	k8s.io/utils v0.0.0-20220728103510-ee6ede2d64ed
 	oras.land/oras-go v1.2.0
-	oras.land/oras-go/v2 v2.0.0-rc.1
+	oras.land/oras-go/v2 v2.0.0-rc.2
 	sigs.k8s.io/controller-runtime v0.11.2
 	sigs.k8s.io/yaml v1.3.0
 )
+
+require github.com/gorilla/mux v1.8.0 // indirect
 
 require (
 	github.com/Azure/go-ansiterm v0.0.0-20210617225240-d185dfc1b5a1 // indirect
@@ -224,7 +223,6 @@ require (
 	golang.org/x/time v0.0.0-20220722155302-e5dcc9cfc0b9 // indirect
 	gomodules.xyz/jsonpatch/v2 v2.2.0 // indirect
 	google.golang.org/appengine v1.6.7 // indirect
-	gopkg.in/DATA-DOG/go-sqlmock.v1 v1.3.0 // indirect
 	gopkg.in/inf.v0 v0.9.1 // indirect
 	gopkg.in/ini.v1 v1.66.6 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect

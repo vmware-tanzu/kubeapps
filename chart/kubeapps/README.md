@@ -1,3 +1,4 @@
+<!--- app-name: Kubeapps -->
 
 # Kubeapps packaged by Bitnami
 
@@ -119,7 +120,7 @@ Once you have installed Kubeapps follow the [Getting Started Guide](https://gith
 | ------------------------------------------------ | ----------------------------------------------------------------------------------------------------- | ---------------------- |
 | `frontend.image.registry`                        | NGINX image registry                                                                                  | `docker.io`            |
 | `frontend.image.repository`                      | NGINX image repository                                                                                | `bitnami/nginx`        |
-| `frontend.image.tag`                             | NGINX image tag (immutable tags are recommended)                                                      | `1.23.1-debian-11-r12` |
+| `frontend.image.tag`                             | NGINX image tag (immutable tags are recommended)                                                      | `1.23.1-debian-11-r15` |
 | `frontend.image.digest`                          | NGINX image digest in the way sha256:aa.... Please note this parameter, if set, will override the tag | `""`                   |
 | `frontend.image.pullPolicy`                      | NGINX image pull policy                                                                               | `IfNotPresent`         |
 | `frontend.image.pullSecrets`                     | NGINX image pull secrets                                                                              | `[]`                   |
@@ -352,7 +353,7 @@ Once you have installed Kubeapps follow the [Getting Started Guide](https://gith
 | `authProxy.enabled`                               | Specifies whether Kubeapps should configure OAuth login/logout                                               | `false`                |
 | `authProxy.image.registry`                        | OAuth2 Proxy image registry                                                                                  | `docker.io`            |
 | `authProxy.image.repository`                      | OAuth2 Proxy image repository                                                                                | `bitnami/oauth2-proxy` |
-| `authProxy.image.tag`                             | OAuth2 Proxy image tag (immutable tags are recommended)                                                      | `7.3.0-debian-11-r27`  |
+| `authProxy.image.tag`                             | OAuth2 Proxy image tag (immutable tags are recommended)                                                      | `7.3.0-debian-11-r29`  |
 | `authProxy.image.digest`                          | OAuth2 Proxy image digest in the way sha256:aa.... Please note this parameter, if set, will override the tag | `""`                   |
 | `authProxy.image.pullPolicy`                      | OAuth2 Proxy image pull policy                                                                               | `IfNotPresent`         |
 | `authProxy.image.pullSecrets`                     | OAuth2 Proxy image pull secrets                                                                              | `[]`                   |
@@ -431,7 +432,7 @@ Once you have installed Kubeapps follow the [Getting Started Guide](https://gith
 | `rbac.create`             | Specifies whether RBAC resources should be created                                                    | `true`                 |
 | `testImage.registry`      | NGINX image registry                                                                                  | `docker.io`            |
 | `testImage.repository`    | NGINX image repository                                                                                | `bitnami/nginx`        |
-| `testImage.tag`           | NGINX image tag (immutable tags are recommended)                                                      | `1.23.1-debian-11-r12` |
+| `testImage.tag`           | NGINX image tag (immutable tags are recommended)                                                      | `1.23.1-debian-11-r15` |
 | `testImage.digest`        | NGINX image digest in the way sha256:aa.... Please note this parameter, if set, will override the tag | `""`                   |
 | `testImage.pullPolicy`    | NGINX image pull policy                                                                               | `IfNotPresent`         |
 | `testImage.pullSecrets`   | NGINX image pull secrets                                                                              | `[]`                   |
@@ -773,6 +774,16 @@ helm install kubeapps bitnami/kubeapps \
   --set ingress.annotations."kubernetes\.io/ingress\.class"=nginx # or your preferred ingress controller
 ```
 
+If you are using LDAP via Dex with OIDC or you are getting an error message like `upstream sent too big header while reading response header from upstream` it means the cookie size is too big and can't be processed by the Ingress Controller.
+You can work around this problem by setting the following Nginx ingress annotations (look for similar annotations in your preferred Ingress Controller):
+
+```bash
+  # rest of the helm install ... command
+  --set ingress.annotations."nginx\.ingress\.kubernetes\.io/proxy-read-timeout"=600
+  --set ingress.annotations."nginx\.ingress\.kubernetes\.io/proxy-buffer-size"=8k
+  --set ingress.annotations."nginx\.ingress\.kubernetes\.io/proxy-buffers"=4
+```
+
 #### Serving Kubeapps in a subpath
 
 You may want to serve Kubeapps with a subpath, for instance `http://example.com/subpath`, you have to set the proper Ingress configuration. If you are using the ingress configuration provided by the Kubeapps chart, you will have to set the `ingress.hostname` and `path` parameters:
@@ -1077,4 +1088,3 @@ distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
-
