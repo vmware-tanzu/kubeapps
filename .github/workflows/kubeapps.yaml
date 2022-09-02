@@ -59,7 +59,7 @@ jobs:
     runs-on: ubuntu-latest
     services:
       postgresql:
-        image: bitnami/postgresql:14.4.0-debian-11-r13
+        image: bitnami/postgresql:${{env.POSTGRESQL_VERSION}}
         options: >-
           --health-cmd pg_isready
           --health-interval 10s
@@ -80,33 +80,11 @@ jobs:
       run: make test
     - run: make test-db
 
-
-#  test-postgres:
-#    # You must use a Linux environment when using service containers or container jobs
+#  test_dashboard:
 #    runs-on: ubuntu-latest
-#
-#    # Service containers to run with `runner-job`
-#    services:
-#      # Label used to access the service container
-#      postgres:
-#        # Docker Hub image
-#        image: postgres
-#        # Provide the password for postgres
-#        env:
-#          POSTGRES_PASSWORD: postgres
-#        # Set health checks to wait until postgres has started
-#        options: >-
-#          --health-cmd pg_isready
-#          --health-interval 10s
-#          --health-timeout 5s
-#          --health-retries 5
-#        ports:
-#          # Maps tcp port 5432 on service container to the host
-#          - 5432:5432
-#
+#    container:
+#      image: bitnami/node:${{ env.NODE_VERSION }}
 #    steps:
-#      # Downloads a copy of the code in your repository before running CI tests
-#      - name: Check out repository code
-#        uses: actions/checkout@v3
-#
-#      - run: echo "it works!"
+#      - uses: actions/checkout@v3
+
+
