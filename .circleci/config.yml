@@ -5,13 +5,13 @@ version: 2.1
 parameters:
   GOLANG_VERSION:
     type: string
-    default: "1.18.4"
+    default: "1.19.0"
   NODE_VERSION:
     type: string
-    default: "16.16.0"
+    default: "16.17.0"
   RUST_VERSION:
     type: string
-    default: "1.62.0"
+    default: "1.63.0"
   DOCKER_VERSION:
     type: string
     default: "20.10.14"
@@ -23,7 +23,7 @@ parameters:
     default: "v3.2.0"
   HELM_VERSION_STABLE:
     type: "string"
-    default: "v3.9.2"
+    default: "v3.9.4"
   OLM_VERSION:
     type: "string"
     default: "v0.22.0"
@@ -32,28 +32,28 @@ parameters:
     default: "3.9.0"
   KAPP_CONTROLLER_VERSION:
     type: "string"
-    default: "v0.38.4"
+    default: "v0.40.0"
   MKCERT_VERSION:
     type: "string"
     default: "v1.4.4"
   KUBECTL_VERSION:
     type: "string"
-    default: "v1.22.12"
+    default: "v1.24.3"
   GITHUB_VERSION:
     type: "string"
-    default: "2.14.2"
+    default: "2.14.7"
   SEMVER_VERSION:
     type: "string"
     default: "3.3.0"
   KIND_VERSION:
     type: "string"
-    default: "v0.14.0"
+    default: "v0.15.0"
   K8S_KIND_VERSION:
     type: "string"
-    default: "v1.22.9@sha256:8135260b959dfe320206eb36b3aeda9cffcb262f4b44cda6b33f7bb73f453105"
+    default: "kindest/node:v1.22.13@sha256:4904eda4d6e64b402169797805b8ec01f50133960ad6c19af45173a27eadf959"
   POSTGRESQL_VERSION:
     type: "string"
-    default: "14.4.0-debian-11-r13"
+    default: "14.5.0-debian-11-r6"
   GKE_STABLE_VERSION:
     type: "string"
     default: "1.21"
@@ -62,7 +62,7 @@ parameters:
     default: "1.22"
   DEFAULT_MACHINE_IMG:
     type: "string"
-    default: "ubuntu-2204:2022.04.1"
+    default: "ubuntu-2204:2022.07.1"
   IMAGES_TO_PUSH:
     type: "string"
     default: "kubeapps/apprepository-controller kubeapps/dashboard kubeapps/asset-syncer kubeapps/pinniped-proxy kubeapps/kubeapps-apis"
@@ -113,7 +113,7 @@ parameters:
     default: "https://apigw.vmware.com/v1/s1/api/helix-beta"
   SRP_VERSION:
     type: "string"
-    default: "0.2.20220809201724-53aa841-38"
+    default: "0.2.20220825211752-571e676-57"
 
 ## Build conditions
 # Build on any branch or tag
