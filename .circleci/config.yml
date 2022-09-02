@@ -347,7 +347,7 @@ install_cluster: &install_cluster
         kind create cluster --image kindest/node:${K8S_KIND_VERSION} --name kubeapps-ci --config=./site/content/docs/latest/reference/manifests/kubeapps-local-dev-apiserver-config.yaml --kubeconfig=${HOME}/.kube/kind-config-kubeapps-ci --retain --wait 120s &&
         kubectl --context kind-kubeapps-ci --kubeconfig ${HOME}/.kube/kind-config-kubeapps-ci apply -f ./site/content/docs/latest/reference/manifests/kubeapps-local-dev-users-rbac.yaml &&
 
-        kubectl --context kind-kubeapps-ci --kubeconfig ${HOME}/.kube/kind-config-kubeapps-ci apply -f ./site/content/docs/latest/reference/manifests/ingress-nginx-kind-with-large-proxy-buffers.yaml &&
+        kubectl --context kind-kubeapps-ci --kubeconfig ${HOME}/.kube/kind-config-kubeapps-ci apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/main/deploy/static/provider/kind/deploy.yaml &&
         sleep 5 &&
         kubectl --context kind-kubeapps-ci --kubeconfig ${HOME}/.kube/kind-config-kubeapps-ci wait --namespace ingress-nginx --for=condition=ready pod --selector=app.kubernetes.io/component=controller --timeout=120s &&
 
@@ -359,7 +359,7 @@ install_cluster: &install_cluster
         kind delete clusters kubeapps-ci || true
         kind create cluster --image kindest/node:${K8S_KIND_VERSION} --name kubeapps-ci --config=./site/content/docs/latest/reference/manifests/kubeapps-local-dev-apiserver-config.yaml --kubeconfig=${HOME}/.kube/kind-config-kubeapps-ci --retain --wait 120s || true &&
         kubectl --context kind-kubeapps-ci --kubeconfig ${HOME}/.kube/kind-config-kubeapps-ci apply -f ./site/content/docs/latest/reference/manifests/kubeapps-local-dev-users-rbac.yaml &&
-        kubectl --context kind-kubeapps-ci --kubeconfig ${HOME}/.kube/kind-config-kubeapps-ci apply -f ./site/content/docs/latest/reference/manifests/ingress-nginx-kind-with-large-proxy-buffers.yaml &&
+        kubectl --context kind-kubeapps-ci --kubeconfig ${HOME}/.kube/kind-config-kubeapps-ci apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/main/deploy/static/provider/kind/deploy.yaml &&
         sleep 5 &&
         kubectl wait --namespace ingress-nginx --for=condition=ready pod --selector=app.kubernetes.io/component=controller --timeout=120s &&
 
