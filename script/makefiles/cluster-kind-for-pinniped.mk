@@ -21,7 +21,7 @@ ${CLUSTER_CONFIG_FOR_PINNIPED}-for-pinniped:
 		--retain \
 		--wait 10s
 	kubectl apply --kubeconfig=${CLUSTER_CONFIG_FOR_PINNIPED} -f ./site/content/docs/latest/reference/manifests/kubeapps-local-dev-users-rbac.yaml
-	kubectl apply --kubeconfig=${CLUSTER_CONFIG_FOR_PINNIPED} -f ./site/content/docs/latest/reference/manifests/ingress-nginx-kind-with-large-proxy-buffers.yaml
+	kubectl apply --kubeconfig=${CLUSTER_CONFIG_FOR_PINNIPED} -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/main/deploy/static/provider/kind/deploy.yaml
 	# TODO: need to add wait for condition=exists or similar - https://github.com/kubernetes/kubernetes/issues/83242
 	sleep 5
 	kubectl wait --kubeconfig=${CLUSTER_CONFIG_FOR_PINNIPED} --namespace ingress-nginx \

@@ -27,9 +27,10 @@ func init() {
 
 // RegisterWithGRPCServer enables a plugin to register with a gRPC server
 // returning the server implementation.
+//
 //nolint:deadcode
 func RegisterWithGRPCServer(opts pluginsv1alpha1.GRPCPluginRegistrationOptions) (interface{}, error) {
-	svr, err := NewServer(opts.ConfigGetter, opts.ClientQPS, opts.ClientBurst)
+	svr, err := NewServer(opts.ConfigGetter, opts.ClientQPS, opts.ClientBurst, opts.PluginConfigPath)
 	if err != nil {
 		return nil, err
 	}
@@ -39,12 +40,14 @@ func RegisterWithGRPCServer(opts pluginsv1alpha1.GRPCPluginRegistrationOptions) 
 
 // RegisterHTTPHandlerFromEndpoint enables a plugin to register an http
 // handler to translate to the gRPC request.
+//
 //nolint:deadcode
 func RegisterHTTPHandlerFromEndpoint(ctx context.Context, mux *runtime.ServeMux, endpoint string, opts []grpc.DialOption) error {
 	return v1alpha1.RegisterResourcesServiceHandlerFromEndpoint(ctx, mux, endpoint, opts)
 }
 
 // GetPluginDetail returns a core.plugins.Plugin describing itself.
+//
 //nolint:deadcode
 func GetPluginDetail() *pluginsgrpcv1alpha1.Plugin {
 	return &pluginDetail

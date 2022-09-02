@@ -11,7 +11,7 @@ import {
   KappControllerPackageRepositoryCustomDetail,
   PackageRepositoryFetch,
 } from "gen/kubeappsapis/plugins/kapp_controller/packages/v1alpha1/kapp_controller";
-import { PluginNames } from "shared/utils";
+import { PluginNames } from "shared/types";
 import { getType } from "typesafe-actions";
 import actions from "../actions";
 import { PkgReposAction } from "../actions/repos";

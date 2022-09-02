@@ -26,6 +26,7 @@ import (
 	"net/url"
 	"os"
 	"path"
+	"path/filepath"
 	"reflect"
 	"sort"
 	"strings"
@@ -606,6 +607,9 @@ func (s *repoEventSink) newOCIChartRepositoryAndLoginWithOptions(registryURL str
 	}
 	if file != "" {
 		defer func() {
+			if byteArray, err := os.ReadFile(filepath.Clean(file)); err == nil {
+				log.Infof("Temporary credentials file [%s] contents:\n%s", file, byteArray)
+			}
 			if err := os.Remove(file); err != nil {
 				log.Infof("Failed to delete temporary credentials file: %v", err)
 			}
@@ -614,6 +618,7 @@ func (s *repoEventSink) newOCIChartRepositoryAndLoginWithOptions(registryURL str
 	}
 
 	registryCredentialFn := func(ctx context.Context, reg string) (orasregistryauthv2.Credential, error) {
+		log.Infof("+ORAS registryCredentialFn(%s)", reg)
 		if cred != nil {
 			return *cred, nil
 		} else {
