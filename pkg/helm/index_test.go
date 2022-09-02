@@ -4,14 +4,14 @@
 package helm
 
 import (
-	"io/ioutil"
+	"os"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/vmware-tanzu/kubeapps/pkg/chart/models"
 )
 
-var validRepoIndexYAMLBytes, _ = ioutil.ReadFile("testdata/valid-index.yaml")
+var validRepoIndexYAMLBytes, _ = os.ReadFile("testdata/valid-index.yaml")
 var validRepoIndexYAML = string(validRepoIndexYAMLBytes)
 
 func Test_parseRepoIndex(t *testing.T) {

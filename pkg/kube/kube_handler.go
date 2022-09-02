@@ -13,7 +13,6 @@ import (
 	v1alpha1typed "github.com/vmware-tanzu/kubeapps/cmd/apprepository-controller/pkg/client/clientset/versioned/typed/apprepository/v1alpha1"
 	httpclient "github.com/vmware-tanzu/kubeapps/pkg/http-client"
 	"io"
-	"io/ioutil"
 	corev1 "k8s.io/api/core/v1"
 	k8sErrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -161,7 +160,7 @@ func NewClusterConfig(inClusterConfig *rest.Config, userToken string, cluster st
 }
 
 func ParseClusterConfig(configPath, caFilesPrefix string, pinnipedProxyURL, PinnipedProxyCACert string) (ClustersConfig, func(), error) {
-	caFilesDir, err := ioutil.TempDir(caFilesPrefix, "")
+	caFilesDir, err := os.TempDir(caFilesPrefix, "")
 	if err != nil {
 		return ClustersConfig{}, func() {}, err
 	}
@@ -170,7 +169,7 @@ func ParseClusterConfig(configPath, caFilesPrefix string, pinnipedProxyURL, Pinn
 	}
 
 	// #nosec G304
-	content, err := ioutil.ReadFile(configPath)
+	content, err := os.ReadFile(configPath)
 	if err != nil {
 		return ClustersConfig{}, deferFn, err
 	}
@@ -209,7 +208,7 @@ func ParseClusterConfig(configPath, caFilesPrefix string, pinnipedProxyURL, Pinn
 			c.CAFile = filepath.Join(caFilesDir, c.Name)
 			// #nosec G306
 			// TODO(agamez): check if we can set perms to 0600 instead of 0644.
-			err = ioutil.WriteFile(c.CAFile, decodedCAData, 0644)
+			err = os.WriteFile(c.CAFile, decodedCAData, 0644)
 			if err != nil {
 				return ClustersConfig{}, deferFn, err
 			}
@@ -764,9 +763,9 @@ func getOCIAppRepositoryTag(cli httpclient.Client, repoURL string, repoName stri
 	var body []byte
 	var repoTagsData repoTagsList
 
-	body, err = ioutil.ReadAll(resp.Body)
+	body, err = io.ReadAll(resp.Body)
 	if err != nil {
-		log.Errorf("ioutil.ReadAll : unable to get: %v", err)
+		log.Errorf("io.ReadAll : unable to get: %v", err)
 		return "", err
 	}
 
@@ -818,7 +817,7 @@ func getOCIAppRepositoryMediaType(cli httpclient.Client, repoURL string, repoNam
 
 	var mediaData repoManifest
 
-	body, err := ioutil.ReadAll(resp.Body)
+	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return "", err
 	}
@@ -881,7 +880,7 @@ func (r HelmNonOCIValidator) Validate(cli httpclient.Client) (*ValidationRespons
 	}
 	response := &ValidationResponse{Code: res.StatusCode, Message: "OK"}
 	if response.Code != 200 {
-		body, err := ioutil.ReadAll(res.Body)
+		body, err := io.ReadAll(res.Body)
 		if err != nil {
 			return nil, fmt.Errorf("Unable to parse validation response. Got: %w", err)
 		}

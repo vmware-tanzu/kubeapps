@@ -9,16 +9,7 @@ import (
 	"crypto/x509"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
-	"net/http"
-	"os"
-	"path"
-	"strings"
-	"testing"
-	"time"
-
 	"github.com/google/go-cmp/cmp"
-
 	"github.com/stretchr/testify/assert"
 	appRepov1 "github.com/vmware-tanzu/kubeapps/cmd/apprepository-controller/pkg/apis/apprepository/v1alpha1"
 	helmfake "github.com/vmware-tanzu/kubeapps/pkg/helm/fake"
@@ -31,6 +22,12 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/kubernetes/fake"
+	"net/http"
+	"os"
+	"path"
+	"strings"
+	"testing"
+	"time"
 )
 
 func Test_resolveChartURL(t *testing.T) {
@@ -450,7 +447,7 @@ func (f *fakeHTTPClient) Do(h *http.Request) (*http.Response, error) {
 		if err != nil {
 			return nil, err
 		}
-		return &http.Response{StatusCode: 200, Body: ioutil.NopCloser(bytes.NewReader(body))}, nil
+		return &http.Response{StatusCode: 200, Body: io.NopCloser(bytes.NewReader(body))}, nil
 	}
 	for _, chartURL := range f.chartURLs {
 		if h.URL.String() == chartURL {
@@ -928,7 +925,7 @@ func TestOCIClient(t *testing.T) {
 
 	t.Run("GetChart - Returns a chart", func(t *testing.T) {
 		cli := NewOCIClient("foo")
-		data, err := ioutil.ReadFile("./testdata/nginx-5.1.1-apiVersionV2.tgz")
+		data, err := os.ReadFile("./testdata/nginx-5.1.1-apiVersionV2.tgz")
 		assert.NoError(t, err)
 		cli.(*OCIRepoClient).puller = &helmfake.OCIPuller{
 			ExpectedName: "foo/bar/nginx:5.1.1",
@@ -944,7 +941,7 @@ func TestOCIClient(t *testing.T) {
 
 	t.Run("GetChart - Returns a chart with multiple slashes", func(t *testing.T) {
 		cli := NewOCIClient("foo")
-		data, err := ioutil.ReadFile("./testdata/nginx-5.1.1-apiVersionV2.tgz")
+		data, err := os.ReadFile("./testdata/nginx-5.1.1-apiVersionV2.tgz")
 		assert.NoError(t, err)
 		cli.(*OCIRepoClient).puller = &helmfake.OCIPuller{
 			ExpectedName: "foo/bar/bar/nginx:5.1.1",

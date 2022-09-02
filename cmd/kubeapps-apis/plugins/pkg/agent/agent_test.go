@@ -4,7 +4,7 @@
 package agent
 
 import (
-	"io/ioutil"
+	"io"
 	"testing"
 	"time"
 
@@ -27,7 +27,7 @@ func newActionConfigFixture(t *testing.T) *action.Configuration {
 
 	return &action.Configuration{
 		Releases:     storage.Init(driver.NewMemory()),
-		KubeClient:   &kubefake.FailingKubeClient{PrintingKubeClient: kubefake.PrintingKubeClient{Out: ioutil.Discard}},
+		KubeClient:   &kubefake.FailingKubeClient{PrintingKubeClient: kubefake.PrintingKubeClient{Out: io.Discard}},
 		Capabilities: chartutil.DefaultCapabilities,
 		Log: func(format string, v ...interface{}) {
 			t.Helper()

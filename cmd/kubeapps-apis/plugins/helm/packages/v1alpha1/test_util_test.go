@@ -7,8 +7,8 @@ import (
 	"bytes"
 	"encoding/base64"
 	"fmt"
-	"io/ioutil"
 	"net/http"
+	"os"
 	"testing"
 
 	appRepov1 "github.com/vmware-tanzu/kubeapps/cmd/apprepository-controller/pkg/apis/apprepository/v1alpha1"
@@ -169,7 +169,7 @@ func (f *fakeHTTPClient) Do(h *http.Request) (*http.Response, error) {
 }
 
 func httpResponse(statusCode int, body string) *http.Response {
-	return &http.Response{StatusCode: statusCode, Body: ioutil.NopCloser(bytes.NewReader([]byte(body)))}
+	return &http.Response{StatusCode: statusCode, Body: io.NopCloser(bytes.NewReader([]byte(body)))}
 }
 
 func testCert(name string) string {
@@ -183,11 +183,11 @@ func testYaml(name string) string {
 // generate-cert.sh script in testdata directory is used to generate these files
 func getCertsForTesting(t *testing.T) (ca, pub, priv []byte) {
 	var err error
-	if ca, err = ioutil.ReadFile(testCert("ca.pem")); err != nil {
+	if ca, err = os.ReadFile(testCert("ca.pem")); err != nil {
 		t.Fatalf("%+v", err)
-	} else if pub, err = ioutil.ReadFile(testCert("server.pem")); err != nil {
+	} else if pub, err = os.ReadFile(testCert("server.pem")); err != nil {
 		t.Fatalf("%+v", err)
-	} else if priv, err = ioutil.ReadFile(testCert("server-key.pem")); err != nil {
+	} else if priv, err = os.ReadFile(testCert("server-key.pem")); err != nil {
 		t.Fatalf("%+v", err)
 	}
 	return ca, pub, priv
