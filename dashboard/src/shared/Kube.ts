@@ -13,6 +13,7 @@ import * as url from "shared/url";
 import { axiosWithAuth } from "./AxiosInstance";
 import { KubeappsGrpcClient } from "./KubeappsGrpcClient";
 import { IKubeState } from "./types";
+import { convertGrpcAuthError } from "./utils";
 
 // Kube is a lower-level class for interacting with the Kubernetes API. Use
 // ResourceRef to interact with a single API resource rather than using Kube
@@ -96,8 +97,12 @@ export class Kube {
     cluster: string,
     namespace: string,
   ): Promise<GetServiceAccountNamesResponse> {
-    return await this.resourcesClient().GetServiceAccountNames({
-      context: { cluster, namespace },
-    } as GetServiceAccountNamesRequest);
+    return await this.resourcesClient()
+      .GetServiceAccountNames({
+        context: { cluster, namespace },
+      } as GetServiceAccountNamesRequest)
+      .catch((e: any) => {
+        throw convertGrpcAuthError(e);
+      });
   }
 }

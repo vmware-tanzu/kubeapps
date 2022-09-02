@@ -16,7 +16,7 @@ import {
   RollbackInstalledPackageResponse,
 } from "gen/kubeappsapis/plugins/helm/packages/v1alpha1/helm";
 import { KubeappsGrpcClient } from "./KubeappsGrpcClient";
-import { getPluginsSupportingRollback } from "./utils";
+import { convertGrpcAuthError, getPluginsSupportingRollback } from "./utils";
 
 export class InstalledPackage {
   public static coreClient = () => new KubeappsGrpcClient().getPackagesServiceClientImpl();
@@ -29,22 +29,34 @@ export class InstalledPackage {
     pageToken?: string,
     size?: number,
   ) {
-    return await this.coreClient().GetInstalledPackageSummaries({
-      context: { cluster: cluster, namespace: namespace },
-      paginationOptions: { pageSize: size || 0, pageToken: pageToken || "" },
-    });
+    return await this.coreClient()
+      .GetInstalledPackageSummaries({
+        context: { cluster: cluster, namespace: namespace },
+        paginationOptions: { pageSize: size || 0, pageToken: pageToken || "" },
+      })
+      .catch((e: any) => {
+        throw convertGrpcAuthError(e);
+      });
   }
 
   public static async GetInstalledPackageDetail(installedPackageRef?: InstalledPackageReference) {
-    return await this.coreClient().GetInstalledPackageDetail({
-      installedPackageRef: installedPackageRef,
-    });
+    return await this.coreClient()
+      .GetInstalledPackageDetail({
+        installedPackageRef: installedPackageRef,
+      })
+      .catch((e: any) => {
+        throw convertGrpcAuthError(e);
+      });
   }
 
   public static async GetInstalledPackageResourceRefs(
     installedPackageRef?: InstalledPackageReference,
   ) {
-    return await this.coreClient().GetInstalledPackageResourceRefs({ installedPackageRef });
+    return await this.coreClient()
+      .GetInstalledPackageResourceRefs({ installedPackageRef })
+      .catch((e: any) => {
+        throw convertGrpcAuthError(e);
+      });
   }
 
   public static async CreateInstalledPackage(
@@ -55,14 +67,18 @@ export class InstalledPackage {
     values?: string,
     reconciliationOptions?: ReconciliationOptions,
   ) {
-    return await this.coreClient().CreateInstalledPackage({
-      name,
-      values,
-      targetContext,
-      availablePackageRef,
-      pkgVersionReference,
-      reconciliationOptions,
-    } as CreateInstalledPackageRequest);
+    return await this.coreClient()
+      .CreateInstalledPackage({
+        name,
+        values,
+        targetContext,
+        availablePackageRef,
+        pkgVersionReference,
+        reconciliationOptions,
+      } as CreateInstalledPackageRequest)
+      .catch((e: any) => {
+        throw convertGrpcAuthError(e);
+      });
   }
 
   public static async UpdateInstalledPackage(
@@ -71,12 +87,16 @@ export class InstalledPackage {
     values?: string,
     reconciliationOptions?: ReconciliationOptions,
   ) {
-    return await this.coreClient().UpdateInstalledPackage({
-      installedPackageRef,
-      pkgVersionReference,
-      values,
-      reconciliationOptions,
-    } as UpdateInstalledPackageRequest);
+    return await this.coreClient()
+      .UpdateInstalledPackage({
+        installedPackageRef,
+        pkgVersionReference,
+        values,
+        reconciliationOptions,
+      } as UpdateInstalledPackageRequest)
+      .catch((e: any) => {
+        throw convertGrpcAuthError(e);
+      });
   }
 
   public static async RollbackInstalledPackage(
@@ -88,18 +108,26 @@ export class InstalledPackage {
       installedPackageRef?.plugin?.name &&
       getPluginsSupportingRollback().includes(installedPackageRef.plugin.name)
     ) {
-      return await this.helmPluginClient().RollbackInstalledPackage({
-        installedPackageRef,
-        releaseRevision,
-      } as RollbackInstalledPackageRequest);
+      return await this.helmPluginClient()
+        .RollbackInstalledPackage({
+          installedPackageRef,
+          releaseRevision,
+        } as RollbackInstalledPackageRequest)
+        .catch((e: any) => {
+          throw convertGrpcAuthError(e);
+        });
     } else {
       return {} as RollbackInstalledPackageResponse;
     }
   }
 
   public static async DeleteInstalledPackage(installedPackageRef: InstalledPackageReference) {
-    return await this.coreClient().DeleteInstalledPackage({
-      installedPackageRef,
-    } as DeleteInstalledPackageRequest);
+    return await this.coreClient()
+      .DeleteInstalledPackage({
+        installedPackageRef,
+      } as DeleteInstalledPackageRequest)
+      .catch((e: any) => {
+        throw convertGrpcAuthError(e);
+      });
   }
 }

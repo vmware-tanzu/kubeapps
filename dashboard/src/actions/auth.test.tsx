@@ -30,9 +30,7 @@ beforeEach(() => {
   Auth.isAuthenticatedWithCookie = jest.fn().mockReturnValue("token");
   Auth.setAuthToken = jest.fn();
   Auth.unsetAuthToken = jest.fn();
-  Namespace.list = jest.fn(async () => {
-    return { namespaceNames: [] };
-  });
+  Namespace.list = jest.fn(async () => []);
   jest.spyOn(NS, "unsetStoredNamespace");
 
   store = mockStore({

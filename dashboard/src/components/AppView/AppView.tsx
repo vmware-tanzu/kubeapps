@@ -15,6 +15,7 @@ import {
   ResourceRef,
 } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
 import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins";
+import placeholder from "icons/placeholder.svg";
 import * as yaml from "js-yaml";
 import { useEffect, useMemo, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
@@ -29,10 +30,10 @@ import {
   FetchError,
   FetchWarning,
   IStoreState,
+  UnauthorizedError,
 } from "shared/types";
 import { getPluginsSupportingRollback } from "shared/utils";
 import ApplicationStatus from "../../containers/ApplicationStatusContainer";
-import placeholder from "icons/placeholder.svg";
 import * as url from "../../shared/url";
 import LoadingWrapper from "../LoadingWrapper/LoadingWrapper";
 import AccessURLTable from "./AccessURLTable/AccessURLTable";
@@ -208,7 +209,9 @@ export default function AppView() {
           setResourceRefs(response.resourceRefs);
           return;
         } catch (e: any) {
-          if (e.code !== grpc.Code.NotFound) {
+          if (e.constructor === UnauthorizedError) {
+            dispatch(actions.auth.logoutByAuthenticationError());
+          } else if (e.code !== grpc.Code.NotFound) {
             // If we get any other error, we want the user to know about it.
             setFetchError(new FetchError("unable to fetch resource references", [e]));
             return;
@@ -223,7 +226,7 @@ export default function AppView() {
     return () => {
       abort = true;
     };
-  }, [installedPkgRef]);
+  }, [dispatch, installedPkgRef]);
 
   useEffect(() => {
     if (resourceRefs.length === 0) {

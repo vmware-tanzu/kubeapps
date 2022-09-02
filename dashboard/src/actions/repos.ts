@@ -1,6 +1,7 @@
 // Copyright 2018-2022 the Kubeapps contributors.
 // SPDX-License-Identifier: Apache-2.0
 
+import actions from "actions";
 import {
   AvailablePackageReference,
   InstalledPackageDetail,
@@ -14,7 +15,7 @@ import { uniqBy } from "lodash";
 import { ThunkAction } from "redux-thunk";
 import { PackageRepositoriesService } from "shared/PackageRepositoriesService";
 import PackagesService from "shared/PackagesService";
-import { IPkgRepoFormData, IStoreState, NotFoundError } from "shared/types";
+import { IPkgRepoFormData, IStoreState, NotFoundError, UnauthorizedError } from "shared/types";
 import { ActionType, deprecated } from "typesafe-actions";
 
 const { createAction } = deprecated;
@@ -96,7 +97,11 @@ export const fetchRepoSummaries = (
         dispatch(receiveRepoSummaries(totalRepos));
       }
     } catch (e: any) {
-      dispatch(errorRepos(e, "fetch"));
+      if (e.constructor === UnauthorizedError) {
+        dispatch(actions.auth.logoutByAuthenticationError());
+      } else {
+        dispatch(errorRepos(e, "fetch"));
+      }
     }
   };
 };
@@ -123,7 +128,11 @@ export const fetchRepoDetail = (
       dispatch(receiveRepoDetail(getPackageRepositoryDetailResponse.detail));
       return true;
     } catch (e: any) {
-      dispatch(errorRepos(e, "fetch"));
+      if (e.constructor === UnauthorizedError) {
+        dispatch(actions.auth.logoutByAuthenticationError());
+      } else {
+        dispatch(errorRepos(e, "fetch"));
+      }
       return false;
     }
   };
@@ -173,7 +182,11 @@ export const addRepo = (
       dispatch(addedRepo(repoSummary));
       return true;
     } catch (e: any) {
-      dispatch(errorRepos(e, "create"));
+      if (e.constructor === UnauthorizedError) {
+        dispatch(actions.auth.logoutByAuthenticationError());
+      } else {
+        dispatch(errorRepos(e, "create"));
+      }
       return false;
     }
   };
@@ -222,7 +235,11 @@ export const updateRepo = (
       dispatch(repoUpdated(repoSummary));
       return true;
     } catch (e: any) {
-      dispatch(errorRepos(e, "update"));
+      if (e.constructor === UnauthorizedError) {
+        dispatch(actions.auth.logoutByAuthenticationError());
+      } else {
+        dispatch(errorRepos(e, "update"));
+      }
       return false;
     }
   };
@@ -236,7 +253,11 @@ export const deleteRepo = (
       await PackageRepositoriesService.deletePackageRepository(packageRepoRef);
       return true;
     } catch (e: any) {
-      dispatch(errorRepos(e, "delete"));
+      if (e.constructor === UnauthorizedError) {
+        dispatch(actions.auth.logoutByAuthenticationError());
+      } else {
+        dispatch(errorRepos(e, "delete"));
+      }
       return false;
     }
   };
@@ -278,14 +299,18 @@ export const findPackageInRepo = (
         dispatch(receiveRepoDetail(getPackageRepositoryDetailResponse.detail));
         return true;
       } catch (e: any) {
-        dispatch(
-          errorRepos(
-            new NotFoundError(
-              `Package ${app.availablePackageRef.identifier} not found in the repository ${repoNamespace}.`,
+        if (e.constructor === UnauthorizedError) {
+          dispatch(actions.auth.logoutByAuthenticationError());
+        } else {
+          dispatch(
+            errorRepos(
+              new NotFoundError(
+                `Package ${app.availablePackageRef.identifier} not found in the repository ${repoNamespace}.`,
+              ),
+              "fetch",
             ),
-            "fetch",
-          ),
-        );
+          );
+        }
         return false;
       }
     } else {

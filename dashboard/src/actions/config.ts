@@ -1,6 +1,7 @@
 // Copyright 2018-2022 the Kubeapps contributors.
 // SPDX-License-Identifier: Apache-2.0
 
+import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins";
 import { ThunkAction } from "redux-thunk";
 import Config, { IConfig, SupportedThemes } from "shared/Config";
 import { IStoreState } from "shared/types";

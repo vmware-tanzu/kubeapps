@@ -1,6 +1,7 @@
 // Copyright 2018-2022 the Kubeapps contributors.
 // SPDX-License-Identifier: Apache-2.0
 
+import { grpc } from "@improbable-eng/grpc-web";
 import {
   InstalledPackageStatus_StatusReason,
   installedPackageStatus_StatusReasonToJSON,
@@ -13,7 +14,16 @@ import helmIcon from "icons/helm.svg";
 import olmIcon from "icons/olm-icon.svg";
 import placeholder from "icons/placeholder.svg";
 import { IConfig } from "./Config";
-import { PluginNames, RepositoryStorageTypes } from "./types";
+import {
+  ConflictError,
+  CustomError,
+  ForbiddenError,
+  InternalServerError,
+  NotFoundError,
+  PluginNames,
+  RepositoryStorageTypes,
+  UnauthorizedError,
+} from "./types";
 
 export const k8sObjectNameRegex = "[a-z0-9]([-a-z0-9]*[a-z0-9])?(.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*";
 
@@ -274,5 +284,38 @@ export function getGlobalNamespaceOrNamespace(
       return namespace;
     default:
       return "unknown";
+  }
+}
+
+export function convertGrpcAuthError(e: any): CustomError | any {
+  const msg = e?.metadata?.headersMap?.["grpc-message"].toString();
+  switch (e?.code) {
+    case grpc.Code.Unauthenticated:
+      return new UnauthorizedError(msg);
+    case grpc.Code.FailedPrecondition:
+    case grpc.Code.Internal:
+      //TODO(agamez): this code shouldn't be returned by the API, but it is
+      if (["credentials", "unauthorized"].some(p => msg?.toLowerCase()?.includes(p))) {
+        return new UnauthorizedError(msg);
+      } else {
+        return new InternalServerError(msg);
+      }
+    case grpc.Code.PermissionDenied:
+      return new ForbiddenError(msg);
+    case grpc.Code.NotFound:
+      return new NotFoundError(msg);
+    case grpc.Code.AlreadyExists:
+      return new ConflictError(msg);
+    case grpc.Code.InvalidArgument:
+    case grpc.Code.DeadlineExceeded:
+    case grpc.Code.ResourceExhausted:
+    case grpc.Code.Aborted:
+    case grpc.Code.Unimplemented:
+    case grpc.Code.OutOfRange:
+    case grpc.Code.Unavailable:
+    case grpc.Code.DataLoss:
+      return new InternalServerError(msg);
+    default:
+      return e;
   }
 }

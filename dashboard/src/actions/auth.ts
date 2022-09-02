@@ -71,6 +71,19 @@ export function logout(): ThunkAction<
   };
 }
 
+export function logoutByAuthenticationError(): ThunkAction<
+  Promise<void>,
+  IStoreState,
+  null,
+  AuthAction | NamespaceAction
+> {
+  return async dispatch => {
+    dispatch(logout());
+    dispatch(authenticationError("Unauthorized"));
+    dispatch(expireSession());
+  };
+}
+
 export function expireSession(): ThunkAction<Promise<void>, IStoreState, null, AuthAction> {
   return async dispatch => {
     if (Auth.usingOIDCToken()) {

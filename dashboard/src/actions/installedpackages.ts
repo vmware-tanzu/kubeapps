@@ -1,6 +1,7 @@
 // Copyright 2018-2022 the Kubeapps contributors.
 // SPDX-License-Identifier: Apache-2.0
 
+import actions from "actions";
 import { JSONSchemaType } from "ajv";
 import {
   AvailablePackageDetail,
@@ -21,6 +22,7 @@ import {
   FetchWarning,
   IStoreState,
   RollbackError,
+  UnauthorizedError,
   UnprocessableEntity,
   UpgradeError,
 } from "shared/types";
@@ -128,17 +130,25 @@ export function getInstalledPackage(
         );
         availablePackageDetail = resp.availablePackageDetail;
       } catch (e: any) {
-        dispatch(
-          errorInstalledPackage(
-            new FetchWarning(
-              "this package has missing information, some actions might not be available.",
+        if (e.constructor === UnauthorizedError) {
+          dispatch(actions.auth.logoutByAuthenticationError());
+        } else {
+          dispatch(
+            errorInstalledPackage(
+              new FetchWarning(
+                "this package has missing information, some actions might not be available.",
+              ),
             ),
-          ),
-        );
+          );
+        }
       }
       dispatch(selectInstalledPackage(installedPackageDetail!, availablePackageDetail));
     } catch (e: any) {
-      dispatch(errorInstalledPackage(new FetchError("Unable to get installed package", [e])));
+      if (e.constructor === UnauthorizedError) {
+        dispatch(actions.auth.logoutByAuthenticationError());
+      } else {
+        dispatch(errorInstalledPackage(new FetchError("Unable to get installed package", [e])));
+      }
     }
   };
 }
@@ -162,7 +172,13 @@ export function getInstalledPkgStatus(
         );
         dispatch(receiveInstalledPackageStatus(installedPackageDetail!.status!));
       } catch (e: any) {
-        dispatch(errorInstalledPackage(new FetchError("Unable to refresh installed package", [e])));
+        if (e.constructor === UnauthorizedError) {
+          dispatch(actions.auth.logoutByAuthenticationError());
+        } else {
+          dispatch(
+            errorInstalledPackage(new FetchError("Unable to refresh installed package", [e])),
+          );
+        }
       }
     }
   };
@@ -178,7 +194,11 @@ export function deleteInstalledPackage(
       dispatch(receiveDeleteInstalledPackage());
       return true;
     } catch (e: any) {
-      dispatch(errorInstalledPackage(new DeleteError(e.message)));
+      if (e.constructor === UnauthorizedError) {
+        dispatch(actions.auth.logoutByAuthenticationError());
+      } else {
+        dispatch(errorInstalledPackage(new DeleteError(e.message)));
+      }
       return false;
     }
   };
@@ -199,7 +219,11 @@ export function fetchInstalledPackages(
       dispatch(receiveInstalledPackageList(installedPackageSummaries));
       return installedPackageSummaries;
     } catch (e: any) {
-      dispatch(errorInstalledPackage(new FetchError("Unable to list apps", [e])));
+      if (e.constructor === UnauthorizedError) {
+        dispatch(actions.auth.logoutByAuthenticationError());
+      } else {
+        dispatch(errorInstalledPackage(new FetchError("Unable to list apps", [e])));
+      }
       return [];
     }
   };
@@ -251,7 +275,11 @@ export function installPackage(
         return false;
       }
     } catch (e: any) {
-      dispatch(errorInstalledPackage(new CreateError(e.message)));
+      if (e.constructor === UnauthorizedError) {
+        dispatch(actions.auth.logoutByAuthenticationError());
+      } else {
+        dispatch(errorInstalledPackage(new CreateError(e.message)));
+      }
       return false;
     }
   };
@@ -294,7 +322,11 @@ export function updateInstalledPackage(
         return false;
       }
     } catch (e: any) {
-      dispatch(errorInstalledPackage(new UpgradeError(e.message)));
+      if (e.constructor === UnauthorizedError) {
+        dispatch(actions.auth.logoutByAuthenticationError());
+      } else {
+        dispatch(errorInstalledPackage(new UpgradeError(e.message)));
+      }
       return false;
     }
   };
@@ -317,7 +349,11 @@ export function rollbackInstalledPackage(
         dispatch(getInstalledPackage(installedPackageRef));
         return true;
       } catch (e: any) {
-        dispatch(errorInstalledPackage(new RollbackError(e.message)));
+        if (e.constructor === UnauthorizedError) {
+          dispatch(actions.auth.logoutByAuthenticationError());
+        } else {
+          dispatch(errorInstalledPackage(new RollbackError(e.message)));
+        }
         return false;
       }
     } else {

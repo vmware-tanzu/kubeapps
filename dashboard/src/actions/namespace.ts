@@ -1,10 +1,11 @@
 // Copyright 2018-2022 the Kubeapps contributors.
 // SPDX-License-Identifier: Apache-2.0
 
+import actions from "actions";
 import { ThunkAction } from "redux-thunk";
 import { Kube } from "shared/Kube";
 import Namespace, { setStoredNamespace } from "shared/Namespace";
-import { IStoreState } from "shared/types";
+import { IStoreState, UnauthorizedError } from "shared/types";
 import { ActionType, deprecated } from "typesafe-actions";
 
 const { createAction } = deprecated;
@@ -56,7 +57,7 @@ export function fetchNamespaces(
   return async dispatch => {
     try {
       const namespaceList = await Namespace.list(cluster);
-      if (!namespaceList.namespaceNames || namespaceList.namespaceNames.length === 0) {
+      if (!namespaceList || namespaceList.length === 0) {
         dispatch(
           errorNamespaces(
             cluster,
@@ -66,10 +67,14 @@ export function fetchNamespaces(
         );
         return [];
       }
-      dispatch(receiveNamespaces(cluster, namespaceList.namespaceNames));
-      return namespaceList.namespaceNames;
+      dispatch(receiveNamespaces(cluster, namespaceList));
+      return namespaceList;
     } catch (e: any) {
-      dispatch(errorNamespaces(cluster, e, "list"));
+      if (e.constructor === UnauthorizedError) {
+        dispatch(actions.auth.logoutByAuthenticationError());
+      } else {
+        dispatch(errorNamespaces(cluster, e, "list"));
+      }
       return [];
     }
   };
@@ -87,7 +92,11 @@ export function createNamespace(
       dispatch(fetchNamespaces(cluster));
       return true;
     } catch (e: any) {
-      dispatch(errorNamespaces(cluster, e, "create"));
+      if (e.constructor === UnauthorizedError) {
+        dispatch(actions.auth.logoutByAuthenticationError());
+      } else {
+        dispatch(errorNamespaces(cluster, e, "create"));
+      }
       return false;
     }
   };
@@ -106,7 +115,11 @@ export function checkNamespaceExists(
       }
       return exists;
     } catch (e: any) {
-      dispatch(errorNamespaces(cluster, e, "get"));
+      if (e.constructor === UnauthorizedError) {
+        dispatch(actions.auth.logoutByAuthenticationError());
+      } else {
+        dispatch(errorNamespaces(cluster, e, "get"));
+      }
       return false;
     }
   };
