@@ -12,5 +12,5 @@ COPY . /app
 RUN yarn run prettier-check && yarn run ts-compile-check
 RUN yarn run build
 
-FROM bitnami/nginx:1.23.1-debian-11
+FROM bitnami/nginx:1.23.1-debian-11-r15
 COPY --from=build /app/build /app
