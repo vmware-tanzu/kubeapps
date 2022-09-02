@@ -9,11 +9,12 @@ import { KubeappsGrpcClient } from "./KubeappsGrpcClient";
 import { convertGrpcAuthError } from "./utils";
 
 export default class Secret {
-  public static resourcesClient = () => new KubeappsGrpcClient().getResourcesServiceClientImpl();
+  public static resourcesServiceClient = () =>
+    new KubeappsGrpcClient().getResourcesServiceClientImpl();
 
   // TODO(agamez): unused method, remove?
   public static async getDockerConfigSecretNames(cluster: string, namespace: string) {
-    const result = await this.resourcesClient()
+    const result = await this.resourcesServiceClient()
       .GetSecretNames({
         context: {
           cluster,
@@ -53,7 +54,7 @@ export default class Secret {
         },
       },
     };
-    await this.resourcesClient()
+    await this.resourcesServiceClient()
       .CreateSecret({
         context: {
           cluster,

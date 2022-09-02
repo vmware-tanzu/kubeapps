@@ -28,7 +28,7 @@ describe("Auth", () => {
   it("should return without error when the endpoint succeeds with the given token", async () => {
     await Auth.validateToken("othercluster", "foo");
 
-    expect(Auth.resourcesClient).toHaveBeenCalledWith("foo");
+    expect(Auth.resourcesServiceClient).toHaveBeenCalledWith("foo");
     expect(mockClientCheckNamespaceExists).toHaveBeenCalledWith({
       context: {
         cluster: "othercluster",
@@ -44,7 +44,7 @@ describe("Auth", () => {
     jest.spyOn(client, "CheckNamespaceExists").mockImplementation(mockClientCheckNamespaceExists);
     await Auth.validateToken("othercluster", "foo");
 
-    expect(Auth.resourcesClient).toHaveBeenCalledWith("foo");
+    expect(Auth.resourcesServiceClient).toHaveBeenCalledWith("foo");
     expect(mockClientCheckNamespaceExists).toHaveBeenCalledWith({
       context: {
         cluster: "othercluster",
@@ -89,7 +89,7 @@ describe("Auth", () => {
     it("returns true if request to API root succeeds", async () => {
       const isAuthed = await Auth.isAuthenticatedWithCookie("somecluster");
 
-      expect(Auth.resourcesClient).toHaveBeenCalledWith();
+      expect(Auth.resourcesServiceClient).toHaveBeenCalledWith();
       expect(mockClientCheckNamespaceExists).toHaveBeenCalledWith({
         context: {
           cluster: "somecluster",

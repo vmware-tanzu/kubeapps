@@ -7,10 +7,11 @@ import { KubeappsGrpcClient } from "./KubeappsGrpcClient";
 import { convertGrpcAuthError } from "./utils";
 
 export default class Namespace {
-  private static resourcesClient = () => new KubeappsGrpcClient().getResourcesServiceClientImpl();
+  private static resourcesServiceClient = () =>
+    new KubeappsGrpcClient().getResourcesServiceClientImpl();
 
   public static async list(cluster: string) {
-    const { namespaceNames } = await this.resourcesClient()
+    const { namespaceNames } = await this.resourcesServiceClient()
       .GetNamespaceNames({ cluster: cluster })
       .catch((e: any) => {
         throw convertGrpcAuthError(e);
@@ -23,7 +24,7 @@ export default class Namespace {
     namespace: string,
     labels: { [key: string]: string },
   ) {
-    await this.resourcesClient()
+    await this.resourcesServiceClient()
       .CreateNamespace({
         context: {
           cluster,
@@ -37,7 +38,7 @@ export default class Namespace {
   }
 
   public static async exists(cluster: string, namespace: string) {
-    const { exists } = await this.resourcesClient()
+    const { exists } = await this.resourcesServiceClient()
       .CheckNamespaceExists({
         context: {
           cluster,

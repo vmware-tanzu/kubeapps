@@ -19,8 +19,9 @@ import { KubeappsGrpcClient } from "./KubeappsGrpcClient";
 import { convertGrpcAuthError, getPluginsSupportingRollback } from "./utils";
 
 export class InstalledPackage {
-  public static coreClient = () => new KubeappsGrpcClient().getPackagesServiceClientImpl();
-  public static helmPluginClient = () =>
+  public static packagesServiceClient = () =>
+    new KubeappsGrpcClient().getPackagesServiceClientImpl();
+  public static helmPackagesServiceClient = () =>
     new KubeappsGrpcClient().getHelmPackagesServiceClientImpl();
 
   public static async GetInstalledPackageSummaries(
@@ -29,7 +30,7 @@ export class InstalledPackage {
     pageToken?: string,
     size?: number,
   ) {
-    return await this.coreClient()
+    return await this.packagesServiceClient()
       .GetInstalledPackageSummaries({
         context: { cluster: cluster, namespace: namespace },
         paginationOptions: { pageSize: size || 0, pageToken: pageToken || "" },
@@ -40,7 +41,7 @@ export class InstalledPackage {
   }
 
   public static async GetInstalledPackageDetail(installedPackageRef?: InstalledPackageReference) {
-    return await this.coreClient()
+    return await this.packagesServiceClient()
       .GetInstalledPackageDetail({
         installedPackageRef: installedPackageRef,
       })
@@ -52,7 +53,7 @@ export class InstalledPackage {
   public static async GetInstalledPackageResourceRefs(
     installedPackageRef?: InstalledPackageReference,
   ) {
-    return await this.coreClient()
+    return await this.packagesServiceClient()
       .GetInstalledPackageResourceRefs({ installedPackageRef })
       .catch((e: any) => {
         throw convertGrpcAuthError(e);
@@ -67,7 +68,7 @@ export class InstalledPackage {
     values?: string,
     reconciliationOptions?: ReconciliationOptions,
   ) {
-    return await this.coreClient()
+    return await this.packagesServiceClient()
       .CreateInstalledPackage({
         name,
         values,
@@ -87,7 +88,7 @@ export class InstalledPackage {
     values?: string,
     reconciliationOptions?: ReconciliationOptions,
   ) {
-    return await this.coreClient()
+    return await this.packagesServiceClient()
       .UpdateInstalledPackage({
         installedPackageRef,
         pkgVersionReference,
@@ -108,7 +109,7 @@ export class InstalledPackage {
       installedPackageRef?.plugin?.name &&
       getPluginsSupportingRollback().includes(installedPackageRef.plugin.name)
     ) {
-      return await this.helmPluginClient()
+      return await this.helmPackagesServiceClient()
         .RollbackInstalledPackage({
           installedPackageRef,
           releaseRevision,
@@ -122,7 +123,7 @@ export class InstalledPackage {
   }
 
   public static async DeleteInstalledPackage(installedPackageRef: InstalledPackageReference) {
-    return await this.coreClient()
+    return await this.packagesServiceClient()
       .DeleteInstalledPackage({
         installedPackageRef,
       } as DeleteInstalledPackageRequest)

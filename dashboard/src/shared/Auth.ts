@@ -11,7 +11,7 @@ const AuthTokenKey = "kubeapps_auth_token";
 const AuthTokenOIDCKey = "kubeapps_auth_token_oidc";
 
 export class Auth {
-  public static resourcesClient = (token?: string) =>
+  public static resourcesServiceClient = (token?: string) =>
     new KubeappsGrpcClient().getResourcesServiceClientImpl(token);
 
   public static getAuthToken() {
@@ -68,7 +68,7 @@ export class Auth {
   // Throws an error if the token is invalid
   public static async validateToken(cluster: string, token: string) {
     try {
-      await this.resourcesClient(token).CheckNamespaceExists({
+      await this.resourcesServiceClient(token).CheckNamespaceExists({
         context: { cluster, namespace: "default" },
       });
     } catch (e: any) {
@@ -146,7 +146,7 @@ export class Auth {
   // it could potentially return a false positive.
   public static async isAuthenticatedWithCookie(cluster: string): Promise<boolean> {
     try {
-      await this.resourcesClient().CheckNamespaceExists({
+      await this.resourcesServiceClient().CheckNamespaceExists({
         context: { cluster, namespace: "default" },
       });
     } catch (e: any) {

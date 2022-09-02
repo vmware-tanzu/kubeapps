@@ -11,7 +11,8 @@ import { KubeappsGrpcClient } from "./KubeappsGrpcClient";
 import { convertGrpcAuthError } from "./utils";
 
 export default class PackagesService {
-  public static client = () => new KubeappsGrpcClient().getPackagesServiceClientImpl();
+  public static packagesServiceClient = () =>
+    new KubeappsGrpcClient().getPackagesServiceClientImpl();
 
   public static async getAvailablePackageSummaries(
     cluster: string,
