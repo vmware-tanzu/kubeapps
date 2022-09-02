@@ -1,6 +1,6 @@
 # Get Started with Kubeapps
 
-This guide will walk you through the process of deploying Kubeapps for your cluster and installing an example application.
+This guide walks you through the process of deploying Kubeapps for your cluster and installing an example application.
 
 ## Prerequisites
 
@@ -24,7 +24,7 @@ helm install kubeapps --namespace kubeapps bitnami/kubeapps
 
 For detailed information on installing, configuring and upgrading Kubeapps, checkout the [chart README](https://github.com/vmware-tanzu/kubeapps/blob/main/chart/kubeapps/README.md).
 
-The above commands will deploy Kubeapps into the `kubeapps` namespace in your cluster. It may take a few minutes to run. Once it has been deployed and the Kubeapps pods are running, continue to step 2.
+The above commands deploys Kubeapps into the `kubeapps` namespace in your cluster. It may take a few minutes to run. Once it has been deployed and the Kubeapps pods are running, continue to step 2.
 
 ## Step 2: Create a demo credential with which to access Kubeapps and Kubernetes
 
@@ -89,7 +89,7 @@ Once Kubeapps is installed, securely access the Kubeapps Dashboard from your sys
 kubectl port-forward -n kubeapps svc/kubeapps 8080:80
 ```
 
-This will start an HTTP proxy for secure access to the Kubeapps Dashboard. Visit <http://127.0.0.1:8080/> in your preferred web browser to open the Dashboard. Here's what you should see:
+This starts an HTTP proxy for secure access to the Kubeapps Dashboard. Visit <http://127.0.0.1:8080/> in your preferred web browser to open the Dashboard. Here's what you should see:
 
 ![Dashboard login page](../img/dashboard-login.png)
 
@@ -97,7 +97,7 @@ Paste the token generated in the previous step to authenticate and access the Ku
 
 ![Dashboard main page](../img/dashboard-home.png)
 
-**_Note:_** If you are setting up Kubeapps for other people to access, you will want to use a different service type or setup Ingress rather than using the above `kubectl port-forward`. For detailed information on installing, configuring and upgrading Kubeapps, checkout the [chart README](https://github.com/vmware-tanzu/kubeapps/blob/main/chart/kubeapps/README.md)
+**_Note:_** If you are setting up Kubeapps for other people to access, you should use a different service type or setup Ingress rather than using the above `kubectl port-forward`. For detailed information on installing, configuring and upgrading Kubeapps, checkout the [chart README](https://github.com/vmware-tanzu/kubeapps/blob/main/chart/kubeapps/README.md)
 
 ## Step 4: Deploy applications: WordPress
 
@@ -107,21 +107,21 @@ Once you have the Kubeapps Dashboard up and running, you can start deploying app
 
   ![WordPress search](../img/wordpress-search.png)
 
-- Click the "Deploy" button.
+- Click the **Deploy** button.
 
   ![WordPress chart](../img/wordpress-chart.png)
 
-- You will be prompted for the release name and values for the application. The form is populated by the values (**YAML**), which you can see in the adjacent tab.
+- Kubeapps prompts for the release name and values for the application. The form is populated by the values (**YAML**), which you can see in the adjacent tab.
 
   ![WordPress installation](../img/wordpress-installation.png)
 
-- Click the **Deploy** button. The application will be deployed. You will be able to track the new deployment directly from the browser. The status will be shown at the top, including the `access URL` and any `secret` included with the app. You can also look at the individual resources lower in the page. It will also show the number of ready pods. If you run your cursor over the **status**, you can see the workloads and number of ready and total pods within them.
+- Click the **Deploy** button to deploy the application. You can track the new deployment directly from the browser. The status is shown at the top, including the `access URL` and any `secret` included with the app. You can also look at the individual resources lower in the page. It also shows the number of ready pods. If you run your cursor over the **status**, you can see the workloads and number of ready and total pods within them.
 
   ![WordPress deployment](../img/wordpress-deployment.png)
 
-To access your new WordPress site, you can run the commands in the "Notes" section to get the URLs or simply click a URL (HTTP and HTTPS) shown.
+To access your new WordPress site, you can run the commands in the **Notes** section to get the URLs or simply click a URL (HTTP and HTTPS) shown.
 
-**_Note:_** Depending on your cloud provider of choice, it may take some time for an access URL to be available for the application and the Service will stay in a "Pending" state until a URL is assigned. If using Minikube, you will need to run `minikube tunnel` in your terminal in order for an IP address to be assigned to your application.
+**_Note:_** Depending on your cloud provider of choice, it may take some time for an access URL to be available for the application and the Service will stay in a "Pending" state until a URL is assigned. If using Minikube, you need to run `minikube tunnel` in your terminal in order for an IP address to be assigned to your application.
 
 ![WordPress deployment notes](../img/wordpress-url.png)
 

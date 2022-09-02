@@ -281,6 +281,7 @@ export class GrpcWebImpl {
 
     debug?: boolean;
     metadata?: grpc.Metadata;
+    upStreamRetryCodes?: number[];
   };
 
   constructor(
@@ -290,6 +291,7 @@ export class GrpcWebImpl {
 
       debug?: boolean;
       metadata?: grpc.Metadata;
+      upStreamRetryCodes?: number[];
     },
   ) {
     this.host = host;

@@ -212,10 +212,8 @@ installOrUpgradeKubeapps() {
     "${@:2}"
     "${multiclusterFlags[@]+"${multiclusterFlags[@]}"}"
     --set frontend.replicaCount=1
-    --set kubeops.replicaCount=1
     --set dashboard.replicaCount=1
     --set kubeappsapis.replicaCount=2
-    --set kubeops.enabled=true
     --set postgresql.architecture=standalone
     --set postgresql.primary.persistence.enabled=false
     --set postgresql.auth.password=password
@@ -239,7 +237,6 @@ images=(
   "apprepository-controller"
   "asset-syncer"
   "dashboard"
-  "kubeops"
   "pinniped-proxy"
   "${kubeapps_apis_image}"
 )
@@ -252,12 +249,10 @@ img_flags=(
   "--set" "apprepository.syncImage.repository=${images[1]}"
   "--set" "dashboard.image.tag=${DEV_TAG}"
   "--set" "dashboard.image.repository=${images[2]}"
-  "--set" "kubeops.image.tag=${DEV_TAG}"
-  "--set" "kubeops.image.repository=${images[3]}"
   "--set" "pinnipedProxy.image.tag=${DEV_TAG}"
-  "--set" "pinnipedProxy.image.repository=${images[4]}"
+  "--set" "pinnipedProxy.image.repository=${images[3]}"
   "--set" "kubeappsapis.image.tag=${DEV_TAG}"
-  "--set" "kubeappsapis.image.repository=${images[5]}"
+  "--set" "kubeappsapis.image.repository=${images[4]}"
 )
 
 if [ "$USE_MULTICLUSTER_OIDC_ENV" = true ]; then
