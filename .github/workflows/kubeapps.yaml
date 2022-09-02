@@ -41,25 +41,30 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       prod_tag: "steps.set-prod-tag.outputs.tag"
+      postgresql_version: "steps.set-output.outputs.postgresql_version"
     steps:
       - uses: actions/checkout@v3
       - name: Set tag for production image
         id: set-prod-tag
         run: |
           if [[ ${{ github.ref_type }} == "tag" ]]; then
-            echo "::set-output name=tag::${{ github.ref_name }}"
+            echo "::set-output name=tag::${{github.ref_name}}"
           else
             echo "::set-output name=tag::latest"
           fi
+      - name: Set output variables
+        id: set-output
+        run: echo "::set-output name=postgresql_version::${POSTGRESQL_VERSION}"
       - name: Read exported variable
         run: |
-          echo "PROD TAG: ${{ steps.check.test-env.tag }}"
+          echo "PROD TAG: ${{steps.set-prod-tag.outputs.tag}}"
+          echo "POSTGRESQL_VERSION: ${{steps.set-output.outputs.postgresql_version}}"
 
   test_go:
     runs-on: ubuntu-latest
     services:
       postgresql:
-        image: bitnami/postgresql:${{env.POSTGRESQL_VERSION}}
+        image: bitnami/postgresql:14.4.0-debian-11-r13
         options: >-
           --health-cmd pg_isready
           --health-interval 10s
