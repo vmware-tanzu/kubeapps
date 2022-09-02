@@ -69,8 +69,8 @@ require (
 	github.com/srwiley/oksvg v0.0.0-20220128195007-1f435e4c2b44
 	github.com/srwiley/rasterx v0.0.0-20220615024203-67b7089efd25
 	github.com/stretchr/testify v1.8.0
-	github.com/vmware-tanzu/carvel-kapp-controller v0.38.4
-	github.com/vmware-tanzu/carvel-vendir v0.29.0
+	github.com/vmware-tanzu/carvel-kapp-controller v0.40.0
+	github.com/vmware-tanzu/carvel-vendir v0.30.0
 	golang.org/x/net v0.0.0-20220722155237-a158d28d115b
 	golang.org/x/sync v0.0.0-20220722155255-886fb9371eb4
 	google.golang.org/genproto v0.0.0-20220725144611-272f38e5d71b
