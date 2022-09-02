@@ -820,7 +820,7 @@ func TestChartCacheResyncNotIdle(t *testing.T) {
 
 		const NUM_CHARTS = 20
 		// create a YAML index file that contains this many unique packages
-		tmpFile, err := os.TempFile(os.TempDir(), "*.yaml")
+		tmpFile, err := os.TempFile(os.MkdirTemp(), "*.yaml")
 		if err != nil {
 			t.Fatalf("%+v", err)
 		}

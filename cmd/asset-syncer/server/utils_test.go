@@ -336,7 +336,7 @@ func Test_chartTarballURL(t *testing.T) {
 
 func Test_initNetClient(t *testing.T) {
 	// Test env
-	otherDir, err := os.TempDir("", "ca-registry")
+	otherDir, err := os.MkdirTemp("", "ca-registry")
 	if err != nil {
 		t.Fatal(err)
 	}

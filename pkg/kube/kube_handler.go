@@ -8,11 +8,18 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"io"
+	"net/http"
+	"net/url"
+	"os"
+	"path"
+	"path/filepath"
+	"strings"
+
 	"github.com/vmware-tanzu/kubeapps/cmd/apprepository-controller/pkg/apis/apprepository/v1alpha1"
 	apprepoclientset "github.com/vmware-tanzu/kubeapps/cmd/apprepository-controller/pkg/client/clientset/versioned"
 	v1alpha1typed "github.com/vmware-tanzu/kubeapps/cmd/apprepository-controller/pkg/client/clientset/versioned/typed/apprepository/v1alpha1"
 	httpclient "github.com/vmware-tanzu/kubeapps/pkg/http-client"
-	"io"
 	corev1 "k8s.io/api/core/v1"
 	k8sErrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -23,12 +30,6 @@ import (
 	"k8s.io/client-go/tools/clientcmd"
 	clientcmdapi "k8s.io/client-go/tools/clientcmd/api"
 	log "k8s.io/klog/v2"
-	"net/http"
-	"net/url"
-	"os"
-	"path"
-	"path/filepath"
-	"strings"
 )
 
 const OCIImageManifestMediaType = "application/vnd.oci.image.manifest.v1+json"
@@ -160,7 +161,7 @@ func NewClusterConfig(inClusterConfig *rest.Config, userToken string, cluster st
 }
 
 func ParseClusterConfig(configPath, caFilesPrefix string, pinnipedProxyURL, PinnipedProxyCACert string) (ClustersConfig, func(), error) {
-	caFilesDir, err := os.TempDir(caFilesPrefix, "")
+	caFilesDir, err := os.MkdirTemp(caFilesPrefix, "")
 	if err != nil {
 		return ClustersConfig{}, func() {}, err
 	}
