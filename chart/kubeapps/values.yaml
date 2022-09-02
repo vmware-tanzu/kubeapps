@@ -1543,6 +1543,22 @@ kubeappsapis:
           defaultUpgradePolicy: none
             ## @param kubeappsapis.pluginConfig.flux.packages.v1alpha1.userManagedSecrets Default policy for handling repository secrets, either managed by the user or by kubeapps-apis
           userManagedSecrets: false
+    resources:
+      packages:
+        v1alpha1:
+          ## Trusted namespaces parameters
+          ##
+          trustedNamespaces:
+            ## @param kubeappsapis.pluginConfig.resources.packages.v1alpha1.trustedNamespaces.headerName Optional header name for trusted namespaces
+            ## e.g:
+            ## headerName: X-Consumer-Groups
+            ##
+            headerName: ""
+            ## @param kubeappsapis.pluginConfig.resources.packages.v1alpha1.trustedNamespaces.headerPattern Optional header pattern for trusted namespaces
+            ## e.g:
+            ## headerPattern: namespace:^([\w-]+):\w+$
+            ##
+            headerPattern: ""
   ## Bitnami Kubeapps-APIs image
   ## ref: https://hub.docker.com/r/bitnami/kubeapps-apis/tags/
   ## @param kubeappsapis.image.registry Kubeapps-APIs image registry
