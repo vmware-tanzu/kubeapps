@@ -773,6 +773,16 @@ helm install kubeapps bitnami/kubeapps \
   --set ingress.annotations."kubernetes\.io/ingress\.class"=nginx # or your preferred ingress controller
 ```
 
+If you are using LDAP via Dex with OIDC or you are getting an error message like `upstream sent too big header while reading response header from upstream` it means the cookie size is too big and can't be processed by the Ingress Controller.
+You can work around this problem by setting the following Nginx ingress annotations (look for similar annotations in your preferred Ingress Controller):
+
+```bash
+  # rest of the helm install ... command
+  --set ingress.annotations."nginx\.ingress\.kubernetes\.io/proxy-read-timeout"=600
+  --set ingress.annotations."nginx\.ingress\.kubernetes\.io/proxy-buffer-size"=8k
+  --set ingress.annotations."nginx\.ingress\.kubernetes\.io/proxy-buffers"=4
+```
+
 #### Serving Kubeapps in a subpath
 
 You may want to serve Kubeapps with a subpath, for instance `http://example.com/subpath`, you have to set the proper Ingress configuration. If you are using the ingress configuration provided by the Kubeapps chart, you will have to set the `ingress.hostname` and `path` parameters:
