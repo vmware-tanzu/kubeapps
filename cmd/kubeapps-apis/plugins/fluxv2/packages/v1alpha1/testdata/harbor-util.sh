@@ -101,18 +101,21 @@ function setupHarborStefanProdanClone {
   # to oci://demo.goharbor.io/stefanprodan-podinfo-clone
   local PROJECT_NAME=stefanprodan-podinfo-clone
 
-  if [[ "$1" == "--quick" ]]; then
-    # short to only look at the project existence and if so assume all is well
-    echo
-    echo -e Checking if harbor project [${L_YELLOW}$PROJECT_NAME${NC}] exists...
-    local status_code=$(curl -L --write-out %{http_code} \
-                        --silent --output /dev/null \
-                        --show-error \
-                        --head ${FLUX_TEST_HARBOR_URL}/api/v2.0/projects?project_name=${PROJECT_NAME} \
-                        -u $FLUX_TEST_HARBOR_ADMIN_USER:$FLUX_TEST_HARBOR_ADMIN_PWD)
-    if [[ "$status_code" -eq 200 ]] ; then
-      echo -e "Project [${L_YELLOW}$PROJECT_NAME${NC}] exists in harbor."
-      exit 0
+  if [ "$#" -gt 0 ]; then
+    if [ "$1" == "--quick" ]; then
+      # short to only look at the project existence and if so assume all is well
+      echo
+      echo -e Checking if harbor project [${L_YELLOW}$PROJECT_NAME${NC}] exists...
+      local status_code=$(curl -L --write-out %{http_code} \
+                          --silent --output /dev/null \
+                          --show-error \
+                          --head ${FLUX_TEST_HARBOR_URL}/api/v2.0/projects?project_name=${PROJECT_NAME} \
+                          -u $FLUX_TEST_HARBOR_ADMIN_USER:$FLUX_TEST_HARBOR_ADMIN_PWD)
+      if [[ "$status_code" -eq 200 ]] ; then
+        echo -e "Project [${L_YELLOW}$PROJECT_NAME${NC}] exists in harbor."
+        # here we assume that since project exists, it contains all the charts
+        exit 0
+      fi
     fi
   fi
 
@@ -156,7 +159,7 @@ function deleteHarborRobotAccount()
   local RESP=$($CMD)
   local ID=$(echo "$RESP" | jq --arg NAME "robot\$$ACCOUNT_NAME" '.[] | select(.name == $NAME) | .id')
   if [[ "$ID" != "" ]] ; then
-    echo -e "Deleting robot account [${L_YELLOW}$ACCOUNT_NAME${NC}] in harbor..." 
+    echo -e "Deleting robot account [${L_YELLOW}$ACCOUNT_NAME${NC}] in harbor..."
     status_code=$(curl -L --write-out %{http_code} --silent \
           --show-error -X DELETE --output /dev/null \
           ${FLUX_TEST_HARBOR_URL}/api/v2.0/robots/$ID \
@@ -166,7 +169,7 @@ function deleteHarborRobotAccount()
     else
         error_exit "Failed to delete robot account [$ACCOUNT_NAME] due to HTTP status: [$status_code]"
     fi
-  fi 
+  fi
 }
 
 function createHarborRobotAccount()
@@ -203,3 +206,5 @@ function setupHarborRobotAccount()
   deleteHarborRobotAccount $ACCOUNT_NAME
   createHarborRobotAccount $ACCOUNT_NAME $PROJECT_NAME
 }
+
+

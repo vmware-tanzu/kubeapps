@@ -12,8 +12,28 @@
           {
             "resource": "repository",
             "action": "list"
+          },
+          {
+            "resource": "repository",
+            "action": "pull"
+          },
+          {
+            "resource": "artifact",
+            "action": "read"
+          },
+          {
+            "resource": "artifact",
+            "action": "list"
+          },
+          {
+            "resource": "tag",
+            "action": "list"
+          },
+          {
+            "resource": "helm-chart",
+            "action": "read"
           }
         ]
       }
     ]
-  }
+}
