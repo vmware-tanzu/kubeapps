@@ -40,23 +40,23 @@ jobs:
   setup:
     runs-on: ubuntu-latest
     outputs:
-      prod_tag: "steps.set-prod-tag.outputs.tag"
-      POSTGRESQL_VERSION: "steps.set-output.outputs.postgresql_version"
+      img_prod_tag: ${{ steps.set-outputs.outputs.img_prod_tag }}
+      postgresql_version: ${{ steps.set-outputs.outputs.postgresql_version }}
     steps:
-      - uses: actions/checkout@v3
-      - name: Set output variables
-        id: set-output
+      - name: Set outputs
+        id: set-outputs
         run: |
           if [[ ${{ github.ref_type }} == "tag" ]]; then
-            echo "::set-output name=tag::${{github.ref_name}}"
+            echo "::set-output name=img_prod_tag::${{github.ref_name}}"
           else
-            echo "::set-output name=tag::latest"
-          fi;
+            echo "::set-output name=img_prod_tag::latest"
+          fi;          
+
           echo "::set-output name=postgresql_version::${POSTGRESQL_VERSION}"
-      - name: Show output variables
+      - name: Show outputs
         run: |
-          echo "PROD TAG: ${{steps.set-prod-tag.outputs.tag}}"
-          echo "POSTGRESQL_VERSION: ${{steps.set-output.outputs.POSTGRESQL_VERSION}}"
+          echo "IMG_PROD_TAG: ${{steps.set-outputs.outputs.img_prod_tag}}"
+          echo "POSTGRESQL_VERSION: ${{steps.set-outputs.outputs.postgresql_version}}"
 
   test_go:
     needs:
@@ -64,13 +64,12 @@ jobs:
     runs-on: ubuntu-latest
     services:
       postgresql:
-        image: bitnami/postgresql:${{needs.setup.outputs.POSTGRESQL_VERSION}}
+        image: bitnami/postgresql:${{needs.setup.outputs.postgresql_version}}
         options: >-
-          --health-cmd pg_isready
+          --health-cmd "pg_isready -U postgres"
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
-          --user root
         ports:
           - 5432:5432
         env:
