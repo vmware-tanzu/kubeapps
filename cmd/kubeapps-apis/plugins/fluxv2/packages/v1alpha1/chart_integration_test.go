@@ -582,6 +582,9 @@ func TestKindClusterAvailablePackageEndpointsForOCI(t *testing.T) {
 				"ghcr.io", ghUser, ghToken,
 			),
 		},
+		// TODO (gfichtenholt) add a negative test for 401 Unauthorized (no secret)
+		// TODO (gfichtenholt) add a negative test for 401 Unauthorized (bad username/secret)
+		// TODO (gfichtenholt) harbor plainHTTP (not HTTPS) repo with robot account
 		// TODO (gfichtenholt) TLS secret with CA
 		// TODO (gfichtenholt) TLS secret with CA, pub, priv
 
@@ -777,155 +780,94 @@ func TestKindClusterAvailablePackageEndpointsForOCI(t *testing.T) {
 
 // TAC => Tanzu Application Catalog
 func TestKindClusterAvailablePackageEndpointsForTAC(t *testing.T) {
-	fluxPluginClient, fluxPluginReposClient, err := checkEnv(t)
-	if err != nil {
-		t.Fatal(err)
-	}
+	/*
+		fluxPluginClient, fluxPluginReposClient, err := checkEnv(t)
+		if err != nil {
+			t.Fatal(err)
+		}
 
-	harborRobotName, harborRobotSecret, err := setupHarborRobotAccount(t)
-	if err != nil {
-		t.Fatal(err)
-	}
+		// these were given to me by agamez in a private slack channel on 8/31/22
+		// "I have gotten access to VAC for Tanzu Advanced. This is an OCI repo from
+		// which customers consume VAC content."
+		harborURL := "oci://registry.pivotal.io/tac-for-tanzu-advanced/containers"
+		harborRobotName := "robot$tac-for-tanzu-advanced+tac_u1me_0a9cbdeb"
+		harborRobotSecret := "TRxwo42806nZCAnLl521bqONFuD5Zwv1"
 
-	testCases := []struct {
-		testName    string
-		registryUrl string
-		secret      *apiv1.Secret
-	}{
-		{
-			testName:    "Testing [" + harbor_stefanprodan_podinfo_oci_registry_url + "] with basic auth secret (robot)",
-			registryUrl: harbor_stefanprodan_podinfo_oci_registry_url,
-			secret: newBasicAuthSecret(types.NamespacedName{
-				Name:      "oci-repo-secret-" + randSeq(4),
-				Namespace: "default"},
-				harborRobotName,
-				harborRobotSecret,
-			),
-		},
-	}
+		testCases := []struct {
+			testName    string
+			registryUrl string
+			secret      *apiv1.Secret
+		}{
+			{
+				testName:    "Testing [" + harborURL + "] with basic auth secret (robot)",
+				registryUrl: harborURL,
+				secret: newBasicAuthSecret(types.NamespacedName{
+					Name:      "oci-repo-secret-" + randSeq(4),
+					Namespace: "default"},
+					harborRobotName,
+					harborRobotSecret,
+				),
+			},
+		}
 
-	adminName := types.NamespacedName{
-		Name:      "test-admin-" + randSeq(4),
-		Namespace: "default",
-	}
-	grpcContext, err := newGrpcAdminContext(t, adminName)
-	if err != nil {
-		t.Fatal(err)
-	}
+		adminName := types.NamespacedName{
+			Name:      "test-admin-" + randSeq(4),
+			Namespace: "default",
+		}
+		grpcContext, err := newGrpcAdminContext(t, adminName)
+		if err != nil {
+			t.Fatal(err)
+		}
 
-	for _, tc := range testCases {
-		t.Run(tc.testName, func(t *testing.T) {
-			repoName := types.NamespacedName{
-				Name:      "my-podinfo-" + randSeq(4),
-				Namespace: "default",
-			}
+		for _, tc := range testCases {
+			t.Run(tc.testName, func(t *testing.T) {
+				repoName := types.NamespacedName{
+					Name:      "tac-" + randSeq(4),
+					Namespace: "default",
+				}
 
-			secretName := ""
-			if tc.secret != nil {
-				secretName = tc.secret.Name
+				secretName := ""
+				if tc.secret != nil {
+					secretName = tc.secret.Name
 
-				if err := kubeCreateSecretAndCleanup(t, tc.secret); err != nil {
+					if err := kubeCreateSecretAndCleanup(t, tc.secret); err != nil {
+						t.Fatal(err)
+					}
+				}
+
+				setUserManagedSecretsAndCleanup(t, fluxPluginReposClient, true)
+
+				if err := kubeAddHelmRepositoryAndCleanup(
+					t, repoName, "oci", tc.registryUrl, secretName, 0); err != nil {
 					t.Fatal(err)
 				}
-			}
+				// wait until this repo reaches 'Ready'
+				if err = kubeWaitUntilHelmRepositoryIsReady(t, repoName); err != nil {
+					t.Fatal(err)
+				}
 
-			setUserManagedSecretsAndCleanup(t, fluxPluginReposClient, true)
+				grpcContext, cancel := context.WithTimeout(grpcContext, defaultContextTimeout)
+				defer cancel()
 
-			if err := kubeAddHelmRepositoryAndCleanup(
-				t, repoName, "oci", tc.registryUrl, secretName, 0); err != nil {
-				t.Fatal(err)
-			}
-			// wait until this repo reaches 'Ready'
-			if err = kubeWaitUntilHelmRepositoryIsReady(t, repoName); err != nil {
-				t.Fatal(err)
-			}
+				resp, err := fluxPluginClient.GetAvailablePackageSummaries(
+					grpcContext,
+					&corev1.GetAvailablePackageSummariesRequest{})
+				if err != nil {
+					t.Fatalf("%v", err)
+				}
 
-			grpcContext, cancel := context.WithTimeout(grpcContext, defaultContextTimeout)
-			defer cancel()
-
-			resp, err := fluxPluginClient.GetAvailablePackageSummaries(
-				grpcContext,
-				&corev1.GetAvailablePackageSummariesRequest{})
-			if err != nil {
-				t.Fatalf("%v", err)
-			}
-
-			opt1 := cmpopts.IgnoreUnexported(
-				corev1.GetAvailablePackageSummariesResponse{},
-				corev1.AvailablePackageSummary{},
-				corev1.AvailablePackageReference{},
-				corev1.Context{},
-				plugins.Plugin{},
-				corev1.PackageAppVersion{})
-			opt2 := cmpopts.SortSlices(lessAvailablePackageFunc)
-			if got, want := resp, expected_oci_stefanprodan_podinfo_available_summaries(repoName.Name); !cmp.Equal(got, want, opt1, opt2) {
-				t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opt1, opt2))
-			}
-
-			grpcContext, cancel = context.WithTimeout(grpcContext, defaultContextTimeout)
-			defer cancel()
-			resp2, err := fluxPluginClient.GetAvailablePackageVersions(
-				grpcContext, &corev1.GetAvailablePackageVersionsRequest{
-					AvailablePackageRef: &corev1.AvailablePackageReference{
-						Context: &corev1.Context{
-							Namespace: "default",
-						},
-						Identifier: repoName.Name + "/podinfo",
-					},
-				})
-			if err != nil {
-				t.Fatal(err)
-			}
-			opts := cmpopts.IgnoreUnexported(
-				corev1.GetAvailablePackageVersionsResponse{},
-				corev1.PackageAppVersion{})
-			if got, want := resp2, expected_versions_stefanprodan_podinfo; !cmp.Equal(want, got, opts) {
-				t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opts))
-			}
-
-			grpcContext, cancel = context.WithTimeout(grpcContext, defaultContextTimeout)
-			defer cancel()
-			resp3, err := fluxPluginClient.GetAvailablePackageDetail(
-				grpcContext,
-				&corev1.GetAvailablePackageDetailRequest{
-					AvailablePackageRef: &corev1.AvailablePackageReference{
-						Context: &corev1.Context{
-							Namespace: "default",
-						},
-						Identifier: repoName.Name + "/podinfo",
-					},
-				})
-			if err != nil {
-				t.Fatal(err)
-			}
-
-			compareActualVsExpectedAvailablePackageDetail(
-				t,
-				resp3.AvailablePackageDetail,
-				expected_detail_oci_stefanprodan_podinfo(repoName.Name, tc.registryUrl).AvailablePackageDetail)
-
-			// try a few older versions
-			grpcContext, cancel = context.WithTimeout(grpcContext, defaultContextTimeout)
-			defer cancel()
-			resp4, err := fluxPluginClient.GetAvailablePackageDetail(
-				grpcContext,
-				&corev1.GetAvailablePackageDetailRequest{
-					AvailablePackageRef: &corev1.AvailablePackageReference{
-						Context: &corev1.Context{
-							Namespace: "default",
-						},
-						Identifier: repoName.Name + "/podinfo",
-					},
-					PkgVersion: "6.1.6",
-				})
-			if err != nil {
-				t.Fatal(err)
-			}
-
-			compareActualVsExpectedAvailablePackageDetail(
-				t,
-				resp4.AvailablePackageDetail,
-				expected_detail_oci_stefanprodan_podinfo_2(repoName.Name, tc.registryUrl).AvailablePackageDetail)
-		})
-	}
+				opt1 := cmpopts.IgnoreUnexported(
+					corev1.GetAvailablePackageSummariesResponse{},
+					corev1.AvailablePackageSummary{},
+					corev1.AvailablePackageReference{},
+					corev1.Context{},
+					plugins.Plugin{},
+					corev1.PackageAppVersion{})
+				opt2 := cmpopts.SortSlices(lessAvailablePackageFunc)
+				if got, want := resp, expected_oci_stefanprodan_podinfo_available_summaries(repoName.Name); !cmp.Equal(got, want, opt1, opt2) {
+					t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opt1, opt2))
+				}
+			})
+		}
+	*/
 }

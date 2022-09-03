@@ -10,13 +10,16 @@ import (
 	"io"
 	"io/ioutil"
 	"net/http"
+	"net/url"
 	"strings"
 	"unicode"
 
+	httpclient "github.com/vmware-tanzu/kubeapps/pkg/http-client"
+	"helm.sh/helm/v3/pkg/registry"
 	log "k8s.io/klog/v2"
 	"oras.land/oras-go/v2/errdef"
 	orasregistryv2 "oras.land/oras-go/v2/registry"
-	orasregistryremotev2 "oras.land/oras-go/v2/registry/remote"
+	orasregistryauthv2 "oras.land/oras-go/v2/registry/remote/auth"
 )
 
 // This flavor of OCI repsitory ister works with respect to to VMware Harbor
@@ -37,75 +40,73 @@ type harborRegistryApiV2RepositoryLister struct {
 
 func (l *harborRegistryApiV2RepositoryLister) IsApplicableFor(ociRepo *OCIChartRepository) (bool, error) {
 	log.Infof("+IsApplicableFor(%s)", ociRepo.url.String())
-	orasRegistry, err := newRemoteOrasRegistry(ociRepo)
+	ref := strings.TrimPrefix(ociRepo.url.String(), fmt.Sprintf("%s://", registry.OCIScheme))
+	parsedRef, err := orasregistryv2.ParseReference(ref)
 	if err != nil {
 		return false, err
-	} else {
-		pong, err := l.ping(orasRegistry)
-		if err != nil {
-			pong = fmt.Sprintf("%v", err)
-		}
-		log.Infof("Harbor v2 Registry [%s PlainHTTP=%t] Ping: %s",
-			ociRepo.url.String(), orasRegistry.PlainHTTP, pong)
-		if err != nil {
-			return false, err
-		}
-
-		projectName, err := l.projectName(ociRepo)
-		if err != nil {
-			return false, err
-		}
-
-		err = l.projectExists(projectName, orasRegistry)
-		return err == nil, err
 	}
+
+	ctx := context.Background()
+	cred, err := ociRepo.registryCredentialFn(ctx, parsedRef.Host())
+	if err != nil {
+		return false, err
+	}
+
+	pong, err := pingHarbor(ctx, parsedRef, cred)
+	if err != nil {
+		pong = fmt.Sprintf("%v", err)
+	}
+	log.Infof("Harbor v2 Registry [%s] Ping: %s", ociRepo.url.String(), pong)
+	if err != nil {
+		return false, err
+	}
+
+	projectName, err := harborProjectNameFromURL(ociRepo.url)
+	if err != nil {
+		return false, err
+	}
+
+	err = harborProjectExists(ctx, projectName, parsedRef, cred)
+	return err == nil, err
 }
 
 func (l *harborRegistryApiV2RepositoryLister) ListRepositoryNames(ociRepo *OCIChartRepository) ([]string, error) {
 	log.Infof("+ListRepositoryNames(%s)", ociRepo.url.String())
-	orasRegistry, err := newRemoteOrasRegistry(ociRepo)
+	ref := strings.TrimPrefix(ociRepo.url.String(), fmt.Sprintf("%s://", registry.OCIScheme))
+	parsedRef, err := orasregistryv2.ParseReference(ref)
 	if err != nil {
 		return nil, err
-	} else {
-		projectName, err := l.projectName(ociRepo)
+	}
+
+	projectName, err := harborProjectNameFromURL(ociRepo.url)
+	if err != nil {
+		return nil, err
+	}
+	repos := []string{}
+	ctx := context.Background()
+	cred, err := ociRepo.registryCredentialFn(ctx, parsedRef.Host())
+	if err != nil {
+		return nil, err
+	}
+	for page, pageSize, more := 1, 10, true; more; page++ {
+		onePage, err := listHarborProjectRepositories(
+			ctx, projectName, parsedRef, cred, page, pageSize)
 		if err != nil {
 			return nil, err
 		}
-		repos := []string{}
-		for page, pageSize, more := 1, 10, true; more; page++ {
-			onePage, err := l.listProjectRepositories(projectName, orasRegistry, page, pageSize)
-			if err != nil {
-				return nil, err
-			}
-			repos = append(repos, onePage...)
-			if len(onePage) < pageSize {
-				more = false
-			}
+		repos = append(repos, onePage...)
+		if len(onePage) < pageSize {
+			more = false
 		}
-		return repos, nil
 	}
-}
-
-func (l *harborRegistryApiV2RepositoryLister) projectName(ociRepo *OCIChartRepository) (string, error) {
-	path := strings.TrimPrefix(ociRepo.url.Path, "/")
-	segments := strings.SplitN(path, "/", 1)
-	if len(segments) > 0 {
-		return segments[0], nil
-	} else {
-		return "", fmt.Errorf("unexpected URL format: [%s]", ociRepo.url.String())
-	}
+	return repos, nil
 }
 
 // ref https://demo.goharbor.io/#/ping/getPing
-func (l *harborRegistryApiV2RepositoryLister) ping(r *orasregistryremotev2.Registry) (string, error) {
-	url := l.buildRegistryBaseURL(r.PlainHTTP, r.Reference) + "/ping"
-	ctx := context.Background()
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
-	if err != nil {
-		return "", err
-	}
-
-	resp, err := r.Client.Do(req)
+func pingHarbor(ctx context.Context, ref orasregistryv2.Reference, cred orasregistryauthv2.Credential) (string, error) {
+	log.Infof("+ping")
+	url := fmt.Sprintf("%s/ping", buildHarborRegistryBaseURL(false, ref))
+	resp, err := harborDoHttpRequest(ctx, http.MethodGet, cred, url)
 	if err != nil {
 		return "", err
 	}
@@ -128,20 +129,12 @@ func (l *harborRegistryApiV2RepositoryLister) ping(r *orasregistryremotev2.Regis
 	}
 }
 
-// ref https://demo.goharbor.io/#/project/getProject
-// There is a faster way
-//  ref https://demo.goharbor.io/#/project/headProject
-// but it seems to result in 401 Unauthorized. Bug in ORAS?
-func (l *harborRegistryApiV2RepositoryLister) projectExists(projectName string, r *orasregistryremotev2.Registry) error {
-	url := fmt.Sprintf("%s/projects/%s",
-		l.buildRegistryBaseURL(r.PlainHTTP, r.Reference), projectName)
-	ctx := context.Background()
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
-	if err != nil {
-		return err
-	}
-
-	resp, err := r.Client.Do(req)
+//  https://demo.goharbor.io/#/project/headProject
+func harborProjectExists(ctx context.Context, projectName string, ref orasregistryv2.Reference, cred orasregistryauthv2.Credential) error {
+	log.Infof("+projectExists(%s)", projectName)
+	url := fmt.Sprintf("%s/projects?project_name=%s",
+		buildHarborRegistryBaseURL(false, ref), projectName)
+	resp, err := harborDoHttpRequest(ctx, http.MethodHead, cred, url)
 	if err != nil {
 		return err
 	}
@@ -164,17 +157,11 @@ func (l *harborRegistryApiV2RepositoryLister) projectExists(projectName string, 
 }
 
 // https://demo.goharbor.io/#/repository/listRepositories
-func (l *harborRegistryApiV2RepositoryLister) listProjectRepositories(projectName string, r *orasregistryremotev2.Registry, page, pageSize int) ([]string, error) {
+func listHarborProjectRepositories(ctx context.Context, projectName string, ref orasregistryv2.Reference, cred orasregistryauthv2.Credential, page, pageSize int) ([]string, error) {
 	log.Infof("+listProjectRepositories(%s)", projectName)
 	url := fmt.Sprintf("%s/projects/%s/repositories?page=%d&page_size=%d",
-		l.buildRegistryBaseURL(r.PlainHTTP, r.Reference), projectName, page, pageSize)
-	ctx := context.Background()
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
-	if err != nil {
-		return nil, err
-	}
-
-	resp, err := r.Client.Do(req)
+		buildHarborRegistryBaseURL(false, ref), projectName, page, pageSize)
+	resp, err := harborDoHttpRequest(ctx, http.MethodGet, cred, url)
 	if err != nil {
 		return nil, err
 	}
@@ -193,17 +180,34 @@ func (l *harborRegistryApiV2RepositoryLister) listProjectRepositories(projectNam
 	}
 }
 
-// buildScheme returns HTTP scheme used to access the remote registry.
-func (l *harborRegistryApiV2RepositoryLister) buildScheme(plainHTTP bool) string {
+// buildHarborRegistryBaseURL builds the URL for accessing the base API.
+func buildHarborRegistryBaseURL(plainHTTP bool, ref orasregistryv2.Reference) string {
+	scheme := "https"
 	if plainHTTP {
-		return "http"
+		scheme = "http"
 	}
-	return "https"
+	return fmt.Sprintf("%s://%s/api/v2.0", scheme, ref.Host())
 }
 
-// buildRegistryBaseURL builds the URL for accessing the base API.
-func (l *harborRegistryApiV2RepositoryLister) buildRegistryBaseURL(plainHTTP bool, ref orasregistryv2.Reference) string {
-	return fmt.Sprintf("%s://%s/api/v2.0", l.buildScheme(plainHTTP), ref.Host())
+func harborProjectNameFromURL(url url.URL) (string, error) {
+	path := strings.TrimPrefix(url.Path, "/")
+	segments := strings.SplitN(path, "/", 2)
+	if len(segments) > 0 {
+		return segments[0], nil
+	} else {
+		return "", fmt.Errorf("unexpected URL format: [%s]", url.String())
+	}
+}
+
+func harborDoHttpRequest(ctx context.Context, method string, cred orasregistryauthv2.Credential, url string) (*http.Response, error) {
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
+	if err != nil {
+		return nil, err
+	}
+	if cred.Username != "" && cred.Password != "" {
+		req.SetBasicAuth(cred.Username, cred.Password)
+	}
+	return httpclient.New().Do(req)
 }
 
 // maxErrorBytes specifies the default limit on how many response bytes are
