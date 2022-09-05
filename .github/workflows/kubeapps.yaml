@@ -84,11 +84,39 @@ jobs:
       run: make test
     - run: make test-db
 
-#  test_dashboard:
-#    runs-on: ubuntu-latest
-#    container:
-#      image: bitnami/node:${{ env.NODE_VERSION }}
-#    steps:
-#      - uses: actions/checkout@v3
+  test_dashboard:
+    runs-on: ubuntu-latest
+    env:
+      # Note that the max old space setting is per worker, so running the tests
+      # with 4 workers on a 4Gb (free plan) needs 1Gb of max old space. Forcing
+      # garbage collection to start earlier with 512M per worker.
+      NODE_OPTIONS: "--max-old-space-size=512"
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+      - name: Install dashboard dependencies
+        run: yarn install --cwd=dashboard --frozen-lockfile
+      - name: Run dashboard linter
+        run: yarn --cwd=dashboard run lint
+      - name: Run dashboard unit tests
+        run: yarn --cwd=dashboard run test --maxWorkers=4 --coverage --logHeapUsage
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
