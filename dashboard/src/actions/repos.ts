@@ -14,7 +14,7 @@ import { uniqBy } from "lodash";
 import { ThunkAction } from "redux-thunk";
 import { PackageRepositoriesService } from "shared/PackageRepositoriesService";
 import PackagesService from "shared/PackagesService";
-import { IPkgRepoFormData, IStoreState, NotFoundError } from "shared/types";
+import { IPkgRepoFormData, IStoreState, NotFoundNetworkError } from "shared/types";
 import { ActionType, deprecated } from "typesafe-actions";
 import { handleErrorAction } from "./auth";
 
@@ -268,7 +268,7 @@ export const findPackageInRepo = (
         if (!getPackageRepositoryDetailResponse?.detail) {
           dispatch(
             errorRepos(
-              new NotFoundError(
+              new NotFoundNetworkError(
                 `Package ${app.availablePackageRef.identifier} not found in the repository ${repoNamespace}.`,
               ),
               "fetch",
@@ -283,7 +283,7 @@ export const findPackageInRepo = (
           handleErrorAction(
             e,
             errorRepos(
-              new NotFoundError(
+              new NotFoundNetworkError(
                 `Package ${app.availablePackageRef.identifier} not found in the repository ${repoNamespace}.`,
               ),
               "fetch",
@@ -295,7 +295,7 @@ export const findPackageInRepo = (
     } else {
       dispatch(
         errorRepos(
-          new NotFoundError(
+          new NotFoundNetworkError(
             `The installed application '${app?.name}' does not have any matching package in the repository '${repoName}'. Are you sure you installed this application from a repository?`,
           ),
           "fetch",

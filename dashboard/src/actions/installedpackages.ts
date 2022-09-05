@@ -21,7 +21,7 @@ import {
   FetchWarning,
   IStoreState,
   RollbackError,
-  UnprocessableEntity,
+  UnprocessableEntityError,
   UpgradeError,
 } from "shared/types";
 import { getPluginsSupportingRollback } from "shared/utils";
@@ -239,7 +239,7 @@ export function installPackage(
           const errorText =
             validation.errors &&
             validation.errors.map(e => `  - ${e.instancePath}: ${e.message}`).join("\n");
-          throw new UnprocessableEntity(
+          throw new UnprocessableEntityError(
             `The given values don't match the required format. The following errors were found:\n${errorText}`,
           );
         }
@@ -288,7 +288,7 @@ export function updateInstalledPackage(
           const errorText =
             validation.errors &&
             validation.errors.map(e => `  - ${e.instancePath}: ${e.message}`).join("\n");
-          throw new UnprocessableEntity(
+          throw new UnprocessableEntityError(
             `The given values don't match the required format. The following errors were found:\n${errorText}`,
           );
         }

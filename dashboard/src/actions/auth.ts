@@ -4,7 +4,7 @@
 import { ThunkAction } from "redux-thunk";
 import { Auth } from "shared/Auth";
 import * as Namespace from "shared/Namespace";
-import { IStoreState, UnauthorizedError } from "shared/types";
+import { IStoreState, UnauthorizedNetworkError } from "shared/types";
 import { ActionType, deprecated } from "typesafe-actions";
 import { clearClusters, NamespaceAction } from "./namespace";
 
@@ -85,7 +85,7 @@ export function logoutByAuthenticationError(): ThunkAction<
 }
 
 export function handleErrorAction(error: any, action?: ActionType<any>) {
-  if (error.constructor === UnauthorizedError) {
+  if (error.constructor === UnauthorizedNetworkError) {
     return logoutByAuthenticationError();
   } else if (action) {
     return action;
