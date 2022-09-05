@@ -61,12 +61,4 @@ export default class PackagesService {
         throw convertGrpcAuthError(e);
       });
   }
-
-  public static async getConfiguredPlugins(): Promise<GetConfiguredPluginsResponse> {
-    return await this.pluginsServiceClientImpl()
-      .GetConfiguredPlugins({})
-      .catch((e: any) => {
-        throw convertGrpcAuthError(e);
-      });
-  }
 }
