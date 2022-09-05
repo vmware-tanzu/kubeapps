@@ -33,6 +33,7 @@ header:
     - "**/node_modules/**"
     - "**/site/**"
     - "**/target/**"
+    - "**/.notempty"
 
 dependency:
   files:
