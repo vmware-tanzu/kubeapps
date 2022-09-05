@@ -9,7 +9,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
@@ -309,7 +309,7 @@ func TestAppRepositoryCreate(t *testing.T) {
 				clientset:         cs,
 			}
 
-			apprepo, err := handler.CreateAppRepository(ioutil.NopCloser(strings.NewReader(tc.requestData)), tc.requestNamespace)
+			apprepo, err := handler.CreateAppRepository(io.NopCloser(strings.NewReader(tc.requestData)), tc.requestNamespace)
 			checkErr(t, err, tc.expectedError)
 
 			if apprepo != nil {
@@ -469,7 +469,7 @@ func TestAppRepositoryUpdate(t *testing.T) {
 				clientset:         cs,
 			}
 
-			apprepo, err := handler.UpdateAppRepository(ioutil.NopCloser(strings.NewReader(tc.requestData)), tc.requestNamespace)
+			apprepo, err := handler.UpdateAppRepository(io.NopCloser(strings.NewReader(tc.requestData)), tc.requestNamespace)
 			checkErr(t, err, tc.expectedError)
 
 			if apprepo != nil {
@@ -994,18 +994,18 @@ func TestNonOCIValidate(t *testing.T) {
 		{
 			name:             "it returns 200 OK validation response if there is no error and the external response is 200",
 			httpValidator:    HelmNonOCIValidator{Req: validRequest},
-			fakeRepoResponse: &http.Response{StatusCode: 200, Body: ioutil.NopCloser(bytes.NewReader([]byte("OK")))},
+			fakeRepoResponse: &http.Response{StatusCode: 200, Body: io.NopCloser(bytes.NewReader([]byte("OK")))},
 			expectedResponse: &ValidationResponse{Code: 200, Message: "OK"},
 		},
 		{
 			name:             "it does not include the body of the upstream response when validation succeeds",
 			httpValidator:    HelmNonOCIValidator{Req: validRequest},
-			fakeRepoResponse: &http.Response{StatusCode: 200, Body: ioutil.NopCloser(bytes.NewReader([]byte("10 Mb of data")))},
+			fakeRepoResponse: &http.Response{StatusCode: 200, Body: io.NopCloser(bytes.NewReader([]byte("10 Mb of data")))},
 			expectedResponse: &ValidationResponse{Code: 200, Message: "OK"},
 		},
 		{
 			name:             "it returns an error from the response with the body text if validation fails",
-			fakeRepoResponse: &http.Response{StatusCode: 401, Body: ioutil.NopCloser(bytes.NewReader([]byte("It failed because of X and Y")))},
+			fakeRepoResponse: &http.Response{StatusCode: 401, Body: io.NopCloser(bytes.NewReader([]byte("It failed because of X and Y")))},
 			expectedResponse: &ValidationResponse{Code: 401, Message: "It failed because of X and Y"},
 			httpValidator:    HelmNonOCIValidator{Req: validRequest},
 		},
@@ -1406,7 +1406,7 @@ func TestValidateAppRepository(t *testing.T) {
 			}
 
 			handler := userHandler{kubeappsNamespace: kubeappsNamespace}
-			response, err := handler.ValidateAppRepository(ioutil.NopCloser(bytes.NewReader(appRepoJson)), tc.requestNamespace)
+			response, err := handler.ValidateAppRepository(io.NopCloser(bytes.NewReader(appRepoJson)), tc.requestNamespace)
 			if err != nil {
 				t.Fatalf("%+v", err)
 			}
@@ -1843,7 +1843,7 @@ func TestParseClusterConfig(t *testing.T) {
 
 			for clusterName, clusterConfig := range tc.expectedConfig.Clusters {
 				if clusterConfig.CertificateAuthorityDataDecoded != "" {
-					fileCAData, err := ioutil.ReadFile(config.Clusters[clusterName].CAFile)
+					fileCAData, err := os.ReadFile(config.Clusters[clusterName].CAFile)
 					if err != nil {
 						t.Fatalf("error opening %s: %+v", config.Clusters[clusterName].CAFile, err)
 					}
@@ -1857,7 +1857,7 @@ func TestParseClusterConfig(t *testing.T) {
 }
 
 func createConfigFile(t *testing.T, content string) string {
-	tmpfile, err := ioutil.TempFile("", "")
+	tmpfile, err := os.CreateTemp("", "")
 	if err != nil {
 		t.Fatalf("%+v", err)
 	}
