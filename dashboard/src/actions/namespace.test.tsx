@@ -71,9 +71,7 @@ actionTestCases.forEach(tc => {
 describe("fetchNamespaces", () => {
   it("dispatches the list of namespace names if no error", async () => {
     Namespace.list = jest.fn().mockImplementationOnce(() => {
-      return {
-        namespaceNames: ["overlook-hotel", "room-217"],
-      };
+      return ["overlook-hotel", "room-217"];
     });
     const expectedActions = [
       {
@@ -88,7 +86,7 @@ describe("fetchNamespaces", () => {
 
   it("dispatches errorNamespace if the request returns no 'namespaces'", async () => {
     Namespace.list = jest.fn().mockImplementationOnce(() => {
-      return {};
+      return [];
     });
     const err = new Error("The current account does not have access to any namespaces");
     const expectedActions = [
@@ -122,9 +120,7 @@ describe("createNamespace", () => {
   it("dispatches the new namespace and re-fetch namespaces", async () => {
     Namespace.create = jest.fn();
     Namespace.list = jest.fn().mockImplementationOnce(() => {
-      return {
-        namespaceNames: ["overlook-hotel", "room-217"],
-      };
+      return ["overlook-hotel", "room-217"];
     });
     const expectedActions = [
       {
