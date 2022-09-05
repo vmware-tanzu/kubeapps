@@ -5,7 +5,7 @@ package main
 
 import (
 	"context"
-	"io/ioutil"
+	"io"
 	"reflect"
 	"strings"
 	"testing"
@@ -190,9 +190,7 @@ func TestGetAvailablePackagesStatus(t *testing.T) {
 	}
 }
 
-//
 // utilities
-//
 type testSpecChartWithUrl struct {
 	chartID       string
 	chartRevision string
@@ -276,7 +274,7 @@ func newHelmActionConfig(t *testing.T, namespace string, rels []helmReleaseStub)
 
 	actionConfig := &action.Configuration{
 		Releases:     storage.Init(memDriver),
-		KubeClient:   &kubefake.FailingKubeClient{PrintingKubeClient: kubefake.PrintingKubeClient{Out: ioutil.Discard}},
+		KubeClient:   &kubefake.FailingKubeClient{PrintingKubeClient: kubefake.PrintingKubeClient{Out: io.Discard}},
 		Capabilities: chartutil.DefaultCapabilities,
 		Log: func(format string, v ...interface{}) {
 			t.Helper()

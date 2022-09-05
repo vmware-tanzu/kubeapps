@@ -5,9 +5,9 @@ package main
 
 import (
 	"context"
-	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"strings"
 	"testing"
 	"time"
@@ -1124,7 +1124,7 @@ func newChartsAndReleases(t *testing.T, existingK8sObjs []testSpecGetInstalledPa
 	releases = []helmv2.HelmRelease{}
 
 	for _, existing := range existingK8sObjs {
-		tarGzBytes, err := ioutil.ReadFile(existing.chartTarGz)
+		tarGzBytes, err := os.ReadFile(existing.chartTarGz)
 		if err != nil {
 			t.Fatalf("%+v", err)
 		}
