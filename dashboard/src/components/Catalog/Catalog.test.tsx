@@ -23,8 +23,12 @@ import { IConfigState } from "reducers/config";
 import { IOperatorsState } from "reducers/operators";
 import { IPackageRepositoryState } from "reducers/repos";
 import { getStore, initialState, mountWrapper } from "shared/specs/mountWrapper";
-import { PluginNames } from "shared/utils";
-import { IClusterServiceVersion, IPackageState, IStoreState } from "../../shared/types";
+import {
+  IClusterServiceVersion,
+  IPackageState,
+  IStoreState,
+  PluginNames,
+} from "../../shared/types";
 import SearchFilter from "../SearchFilter/SearchFilter";
 import Catalog, { filterNames } from "./Catalog";
 import CatalogItems from "./CatalogItems";
@@ -125,8 +129,12 @@ const populatedPackageState = {
 const populatedState = {
   ...defaultState,
   packages: populatedPackageState,
-  operators: { csvs: [csv] },
+  operators: {
+    ...defaultState.operators,
+    csvs: [csv],
+  },
   config: {
+    ...defaultState.config,
     configuredPlugins: [
       { name: PluginNames.PACKAGES_KAPP, version: "0.0.1" },
       { name: "my.plugin", version: "0.0.1" },
