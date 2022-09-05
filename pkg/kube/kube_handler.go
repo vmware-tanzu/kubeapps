@@ -157,11 +157,6 @@ func NewClusterConfig(inClusterConfig *rest.Config, userToken string, cluster st
 		config.TLSClientConfig.CAData = []byte(clusterConfig.CertificateAuthorityDataDecoded)
 		config.CAFile = clusterConfig.CAFile
 	}
-	// Service token for additional clusters
-	// Added from #5034 after deprecation of "kubeops"
-	if clusterConfig.ServiceToken != "" {
-		config.BearerToken = clusterConfig.ServiceToken
-	}
 	return config, nil
 }
 
