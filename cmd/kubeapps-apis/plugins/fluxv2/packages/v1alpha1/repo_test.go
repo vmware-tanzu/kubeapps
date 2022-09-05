@@ -6,9 +6,9 @@ package main
 import (
 	"context"
 	"fmt"
-	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"strings"
 	"testing"
 	"time"
@@ -569,12 +569,12 @@ func TestGetAvailablePackageSummariesWithPagination(t *testing.T) {
 
 func TestGetAvailablePackageSummaryAfterRepoIndexUpdate(t *testing.T) {
 	t.Run("test get available package summaries after repo index is updated", func(t *testing.T) {
-		indexYamlBeforeUpdateBytes, err := ioutil.ReadFile(testYaml("index-before-update.yaml"))
+		indexYamlBeforeUpdateBytes, err := os.ReadFile(testYaml("index-before-update.yaml"))
 		if err != nil {
 			t.Fatalf("%+v", err)
 		}
 
-		indexYamlAfterUpdateBytes, err := ioutil.ReadFile(testYaml("index-after-update.yaml"))
+		indexYamlAfterUpdateBytes, err := os.ReadFile(testYaml("index-after-update.yaml"))
 		if err != nil {
 			t.Fatalf("%+v", err)
 		}
@@ -711,7 +711,7 @@ func TestGetAvailablePackageSummaryAfterFluxHelmRepoDelete(t *testing.T) {
 		replaceUrls := make(map[string]string)
 		charts := []testSpecChartWithUrl{}
 		for _, s := range valid_index_charts_spec {
-			tarGzBytes, err := ioutil.ReadFile(s.tgzFile)
+			tarGzBytes, err := os.ReadFile(s.tgzFile)
 			if err != nil {
 				t.Fatalf("%+v", err)
 			}
@@ -1788,7 +1788,7 @@ func TestGetOciPackageRepositoryDetail(t *testing.T) {
 
 func TestGetPackageRepositorySummaries(t *testing.T) {
 	// some prep
-	indexYAMLBytes, err := ioutil.ReadFile(testYaml("valid-index.yaml"))
+	indexYAMLBytes, err := os.ReadFile(testYaml("valid-index.yaml"))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -2542,7 +2542,7 @@ func redisKeyForRepoNamespacedName(name types.NamespacedName) (string, error) {
 }
 
 func newHttpRepoAndServeIndex(repoIndex, repoName, repoNamespace string, replaceUrls map[string]string, secretRef string) (*httptest.Server, *sourcev1.HelmRepository, error) {
-	indexYAMLBytes, err := ioutil.ReadFile(repoIndex)
+	indexYAMLBytes, err := os.ReadFile(repoIndex)
 	if err != nil {
 		return nil, nil, err
 	}

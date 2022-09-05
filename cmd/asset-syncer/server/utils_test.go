@@ -10,7 +10,6 @@ import (
 	"fmt"
 	"image"
 	"image/color"
-	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -34,7 +33,7 @@ import (
 	log "k8s.io/klog/v2"
 )
 
-var validRepoIndexYAMLBytes, _ = ioutil.ReadFile("testdata/valid-index.yaml")
+var validRepoIndexYAMLBytes, _ = os.ReadFile("testdata/valid-index.yaml")
 var validRepoIndexYAML = string(validRepoIndexYAMLBytes)
 
 type badHTTPClient struct {
@@ -337,7 +336,7 @@ func Test_chartTarballURL(t *testing.T) {
 
 func Test_initNetClient(t *testing.T) {
 	// Test env
-	otherDir, err := ioutil.TempDir("", "ca-registry")
+	otherDir, err := os.MkdirTemp("", "ca-registry")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -363,7 +362,7 @@ b90fhqZZ3FqZD7W1qJGKvz/8geqi0noip+uq/dokK1jarRkOVEJP+EvXkHo0tIuc
 h251U/Daz6NiQBM9AxyAw6EHm8XAZBvCuebfzyrT
 -----END CERTIFICATE-----`
 	otherCA := path.Join(otherDir, "ca.crt")
-	err = ioutil.WriteFile(otherCA, []byte(caCert), 0644)
+	err = os.WriteFile(otherCA, []byte(caCert), 0644)
 	if err != nil {
 		t.Error(err)
 	}
@@ -1394,7 +1393,7 @@ func TestUnescapeChartsData(t *testing.T) {
 func TestHelmRepoAppliesUnescape(t *testing.T) {
 	repo := &models.RepoInternal{Name: "test", Namespace: "repo-namespace", URL: "http://testrepo.com"}
 	expectedRepo := &models.Repo{Name: repo.Name, Namespace: repo.Namespace, URL: repo.URL}
-	repoIndexYAMLBytes, _ := ioutil.ReadFile("testdata/helm-index-spaces.yaml")
+	repoIndexYAMLBytes, _ := os.ReadFile("testdata/helm-index-spaces.yaml")
 	repoIndexYAML := string(repoIndexYAMLBytes)
 	expectedCharts := []models.Chart{
 		{

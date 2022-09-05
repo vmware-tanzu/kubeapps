@@ -8,7 +8,6 @@ import (
 	"crypto/x509"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"net/url"
 	"os"
@@ -25,7 +24,7 @@ type Client interface {
 
 // ClientWithDefaults implements Client interface
 // and includes an override of the Do method which injects the following supported defaults:
-//  - headers: e.g. User-Agent and Authorization (when present)
+//   - headers: e.g. User-Agent and Authorization (when present)
 type ClientWithDefaults struct {
 	Client         Client
 	DefaultHeaders http.Header
@@ -43,8 +42,8 @@ func (c *ClientWithDefaults) Do(req *http.Request) (*http.Response, error) {
 }
 
 // creates a new instance of http Client, with following default configuration:
-//		- timeout
-//		- proxy from environment
+//   - timeout
+//   - proxy from environment
 func New() *http.Client {
 	return &http.Client{
 		Timeout: time.Second * defaultTimeoutSeconds,
@@ -60,7 +59,7 @@ func NewWithCertFile(certFile string, skipTLS bool) (*http.Client, error) {
 	// If additionalCA exists, load it
 	if _, err := os.Stat(certFile); !os.IsNotExist(err) {
 		// #nosec G304
-		certs, err := ioutil.ReadFile(certFile)
+		certs, err := os.ReadFile(certFile)
 		if err != nil {
 			return nil, fmt.Errorf("failed to append %s to RootCAs: %v", certFile, err)
 		}
@@ -175,7 +174,7 @@ func Get(url string, cli Client, headers map[string]string) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	return ioutil.ReadAll(reader)
+	return io.ReadAll(reader)
 }
 
 // performs an HTTP GET request using provided client, URL and request headers.
@@ -202,7 +201,7 @@ func GetStream(url string, cli Client, reqHeaders map[string]string) (io.ReadClo
 
 	if res.StatusCode != http.StatusOK {
 		errorMsg := fmt.Sprintf("GET request to [%s] failed due to status [%d]", url, res.StatusCode)
-		errPayload, err := ioutil.ReadAll(res.Body)
+		errPayload, err := io.ReadAll(res.Body)
 		if err == nil && len(errPayload) > 0 {
 			errorMsg += ": " + string(errPayload)
 		}
