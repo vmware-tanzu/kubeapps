@@ -28,7 +28,7 @@ The two main configuration areas are authentication and user interface.
 
 Key authentication parameters are:
 
-- `clusters` to define the list of clusters that Kubeapps can target and which of them will use Pinniped;
+- `clusters` to define the list of clusters that Kubeapps can target and which of them uses Pinniped;
 - `pinnipedProxy` to enable the _Pinniped Proxy_ component;
 - `authProxy`: to define the flags used by _OAuth2 Proxy_, the component for performing the actual OIDC login.
 
@@ -96,7 +96,7 @@ The first step is to configure the `clusters`, `pinnipedProxy` and `authProxy` p
    - Replace the `OIDC-REDEEM-URL` with the token redeem URL of the OIDC provider. For CSP it is `https://console.cloud.vmware.com/csp/gateway/am/api/auth/token`.
    - Replace the `OIDC-JWKS-URL` with the JSON Web Key Set URL of the OIDC provider. For CSP it is `https://console.cloud.vmware.com/csp/gateway/am/api/auth/token-public-key?format=jwks`.
 
-> **TIP**: Remember that any OIDC-compliant provider should expose a `.well-known/openid-configuration` ([CSP example](https://console.cloud.vmware.com/csp/gateway/am/api/.well-known/openid-configuration)) where you will able to find the required endpoints in this step.
+> **TIP**: Remember that any OIDC-compliant provider should expose a `.well-known/openid-configuration` ([CSP example](https://console.cloud.vmware.com/csp/gateway/am/api/.well-known/openid-configuration)) where you are able to find the required endpoints in this step.
 
 ```yaml
 authProxy:
@@ -113,7 +113,7 @@ authProxy:
     - --oidc-jwks-url=OIDC-JWKS-URL # In CSP: https://console.cloud.vmware.com/csp/gateway/am/api/auth/token-public-key?format=jwks
 ```
 
-> **TIP**: In some providers whose issuer URL does match the token URL, the flag `--skip-oidc-discovery=true` can be removed. Instead, just setting the `--oidc-issuer-url` flag will perform the automatic discovery of the rest of the endpoints. Further information at the [official OAuth2Proxy documentation](https://oauth2-proxy.github.io/oauth2-proxy/docs/configuration/overview/).
+> **TIP**: In some providers whose issuer URL does match the token URL, the flag `--skip-oidc-discovery=true` can be removed. Instead, just setting the `--oidc-issuer-url` flag performs the automatic discovery of the rest of the endpoints. Further information at the [official OAuth2Proxy documentation](https://oauth2-proxy.github.io/oauth2-proxy/docs/configuration/overview/).
 
 At this point, Kubeapps is configured to use Pinniped for authentication.
 
@@ -164,7 +164,7 @@ At this point, Kubeapps is configured to use a custom interface.
 
 With the configuration out of the way, it's time to install Kubeapps. Since Kubeapps is currently officially delivered as a [Helm chart packaged by Bitnami](https://github.com/bitnami/charts/tree/master/bitnami/kubeapps), the easiest way to install Kubeapps is to add the Bitnami repository to Helm and install it via Helm.
 
-In case Kubeapps is to be installed in an air-gapped environment, please follow the [offline installation instructions](https://github.com/vmware-tanzu/kubeapps/blob/main/site/content/docs/latest/howto/offline-installation.md) instead.
+To install Kubeapps in an air-gapped environment, please follow the [offline installation instructions](https://github.com/vmware-tanzu/kubeapps/blob/main/site/content/docs/latest/howto/offline-installation.md) instead.
 
 > **TIP**: Typically, the Kubeapps dashboard is set as externally accessible, either by setting the parameter `frontend.service.type=LoadBalancer` (as shown below) or by using an Ingress controller. Please refer to [the Kubeapps documentation covering external access](https://github.com/vmware-tanzu/kubeapps/blob/main/chart/kubeapps/README.md#exposing-externally) for additional information.
 >
@@ -191,7 +191,7 @@ Finally, remember to replace the placeholder _Redirect URIs_ you entered when [c
 
 For instance, assuming Kubeapps is accessible at `https://kubeapps.example.com` replace `https://localhost/oauth2/callback` with `https://kubeapps.example.com/oauth2/callback`.
 
-> **TIP**: If you are serving Kubeapps from a subpath, for instance, `https://example.com/kubeapps`, you will need to slightly modify the `authProxy` configuration. Please follow [these instructions](https://github.com/vmware-tanzu/kubeapps/blob/main/chart/kubeapps/README.md#serving-kubeapps-in-a-subpath) for further details.
+> **TIP**: If you are serving Kubeapps from a subpath, for instance, `https://example.com/kubeapps`, you need to slightly modify the `authProxy` configuration. Please follow [these instructions](https://github.com/vmware-tanzu/kubeapps/blob/main/chart/kubeapps/README.md#serving-kubeapps-in-a-subpath) for further details.
 
 ![Add name and description](../../img/kubeapps-on-tkg/csp-oauth-redirect.png)
 
@@ -227,7 +227,7 @@ Apply this configuration by running the following command:
 kubectl apply -f kubeapps-rbac.yaml
 ```
 
-At this point, the user having `EMAIL-ADDRESS` email account will have `cluster-admin` access and will be able to perform any desired action via the `kubectl` CLI or the Kubeapps dashboard.
+At this point, the user having `EMAIL-ADDRESS` email account has `cluster-admin` access and is able to perform any desired action via the `kubectl` CLI or the Kubeapps dashboard.
 
 ### Step 2.5: Log in to Kubeapps with OIDC
 
@@ -239,13 +239,13 @@ Once Kubeapps is installed and configured, the next step is to log in and access
    kubectl port-forward -n kubeapps svc/kubeapps 8080:80
    ```
 
-   This will start an HTTP proxy for secure access to the Kubeapps dashboard.
+   This starts an HTTP proxy for secure access to the Kubeapps dashboard.
 
 2. Browse to [http://127.0.0.1:8080](http://127.0.0.1:8080) (when forwarding the port) or to the public IP address of the serevice (when exposing the service externally). You see the Kubeapps login page, as shown below:
 
    ![OIDC login page](../../img/kubeapps-on-tkg/login-oidc-initial.png)
 
-3. Click the _Login_ button. You are redirected to the OIDC provider (in this example, the VMware Cloud Services Portal).
+3. Click the **Login** button. It redirects to the OIDC provider (in this example, the VMware Cloud Services Portal).
 
    ![OIDC login provider](../../img/kubeapps-on-tkg/login-oidc-provider.png)
 

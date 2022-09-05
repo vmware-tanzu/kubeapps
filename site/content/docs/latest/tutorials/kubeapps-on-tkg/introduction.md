@@ -6,11 +6,11 @@
 
 [Kubeapps](https://kubeapps.com/) provides a web-based dashboard to deploy, manage, and upgrade applications on a Kubernetes cluster. It is a one-time install that gives you a number of important benefits, including the ability to:
 
-- browse and deploy packaged applications from public or private chart repositories;
-- customize deployments through an intuitive, form-based user interface;
+- browse and deploy packaged applications from public or private repositories;
+- customize deployments through an intuitive user interface;
 - upgrade, manage and delete the applications that are deployed in your Kubernetes cluster;
 
-Kubeapps can be configured with public catalogs, such as the [VMware Marketplace™](https://marketplace.cloud.vmware.com/) catalog or the [Bitnami Application Catalog](https://bitnami.com/stacks/helm), or with private Helm repositories such as ChartMuseum or Harbor. It also integrates with [VMware Tanzu™ Application Catalog™ (TAC) for Tanzu™ Advanced](https://tanzu.vmware.com/application-catalog), which provides an enterprise-ready Helm chart catalog.
+Kubeapps can be configured with public catalogs, such as the [VMware Marketplace™](https://marketplace.cloud.vmware.com/) catalog or the [Bitnami Application Catalog](https://bitnami.com/stacks/helm), or with private repositories such as ChartMuseum or Harbor. It also integrates with [VMware Tanzu™ Application Catalog™ (TAC) for Tanzu™ Advanced](https://tanzu.vmware.com/application-catalog), which provides an enterprise-ready Helm chart catalog.
 
 This guide walks you through the process of configuring, deploying and using Kubeapps on a VMware Tanzu™ Kubernetes Grid™ cluster. It covers the following tasks:
 
@@ -27,8 +27,8 @@ This guide walks you through the process of configuring, deploying and using Kub
 
 This guide is intended for the following user roles:
 
-- System administrators who want to install Kubeapps on a VMware Tanzu™ Kubernetes Grid™ cluster and use it to deploy and manage applications from the VMware Marketplace™ and the VMware Tanzu™ Application Catalog™ for Tanzu™ Advanced.
-- Application administrators and developers who want to use Kubeapps to deploy and manage modern applications in a Kubernetes architecture.
+- **System administrators** who want to install Kubeapps on a VMware Tanzu™ Kubernetes Grid™ cluster and use it to deploy and manage applications from the VMware Marketplace™ and the VMware Tanzu™ Application Catalog™ for Tanzu™ Advanced.
+- **Application administrators** and **developers** who want to use Kubeapps to deploy and manage modern applications in a Kubernetes architecture.
 
 In-depth knowledge of Kubernetes is not required.
 
