@@ -175,7 +175,7 @@ spec:
             - --skip-auth-regex=^\/favicon.*\.ico$
             - --skip-auth-regex=^\/static\/
             - --skip-auth-regex=^\/apis/core/plugins/v1alpha1/configured-plugins$
-            - --skip-auth-regex=^\/apis/kubeappsapis.core.plugins.v1alpha1.PluginsService/GetConfiguredPlugin$
+            - --skip-auth-regex=^\/apis/kubeappsapis.core.plugins.v1alpha1.PluginsService/GetConfiguredPlugins$
             - --skip-auth-regex=^\/$
             - --scope={{ .Values.authProxy.scope }}
             - --cookie-refresh={{ .Values.authProxy.cookieRefresh }}
