@@ -179,6 +179,7 @@ describe("renders an error", () => {
       then: jest.fn((f: any) =>
         f({ serviceaccountNames: ["my-sa-1", "my-sa-2"] } as GetServiceAccountNamesResponse),
       ),
+      catch: jest.fn(f => f()),
     });
 
     const wrapper = mountWrapper(

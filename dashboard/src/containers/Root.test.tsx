@@ -24,7 +24,9 @@ describe("118n configuration", () => {
 
   it("loads the async i18n config from getCustomI18nConfig", async () => {
     const config: II18nConfig = { locale: "custom", messages: { messageId: "translation" } };
-    I18n.getCustomConfig = jest.fn().mockReturnValue({ then: jest.fn((f: any) => f(config)) });
+    I18n.getCustomConfig = jest
+      .fn()
+      .mockReturnValue({ then: jest.fn((f: any) => f(config)), catch: jest.fn(f => f()) });
     act(() => {
       const wrapper = shallow(<Root />);
       expect(wrapper.find(IntlProvider).prop("locale")).toBe("custom");

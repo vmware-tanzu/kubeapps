@@ -31,6 +31,7 @@ const defaultProps = {
   location: emptyLocation,
   checkCookieAuthentication: jest.fn().mockReturnValue({
     then: jest.fn(f => f()),
+    catch: jest.fn(f => f()),
   }),
   oauthLoginURI: "",
   appVersion: "devel",
@@ -215,6 +216,7 @@ describe("oauth login form", () => {
       ...props,
       checkCookieAuthentication: jest.fn().mockReturnValue({
         then: jest.fn(() => false),
+        catch: jest.fn(() => false),
       }),
     };
     const wrapper = mountWrapper(
