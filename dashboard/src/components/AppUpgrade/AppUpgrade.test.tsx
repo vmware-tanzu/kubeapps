@@ -30,9 +30,9 @@ import {
   IInstalledPackageState,
   IPackageState,
   IStoreState,
+  PluginNames,
   UpgradeError,
 } from "shared/types";
-import { PluginNames } from "shared/utils";
 import SelectRepoForm from "../SelectRepoForm/SelectRepoForm";
 import UpgradeForm from "../UpgradeForm/UpgradeForm";
 import AppUpgrade from "./AppUpgrade";

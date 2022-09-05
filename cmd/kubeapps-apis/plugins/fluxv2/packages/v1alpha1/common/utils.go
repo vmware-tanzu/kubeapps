@@ -10,7 +10,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"net/url"
 	"os"
@@ -87,9 +86,7 @@ func init() {
 	}
 }
 
-//
 // miscellaneous utility funcs
-//
 func NewDefaultPluginConfig() *FluxPluginConfig {
 	// If no config is provided, we default to the existing values for backwards
 	// compatibility.
@@ -281,7 +278,6 @@ func HelmGetterOptionsFromSecret(secret apiv1.Secret) ([]getter.Option, error) {
 	}
 }
 
-//
 // Secrets with no username AND password are ignored, if only one is defined it
 // returns an error.
 func basicAuthFromSecret(secret apiv1.Secret, options *HttpClientOptions) error {
@@ -454,7 +450,7 @@ func ParsePluginConfig(pluginConfigPath string) (*FluxPluginConfig, error) {
 	var config internalFluxPluginConfig
 
 	// #nosec G304
-	pluginConfig, err := ioutil.ReadFile(pluginConfigPath)
+	pluginConfig, err := os.ReadFile(pluginConfigPath)
 	if err != nil {
 		return nil, fmt.Errorf("unable to open plugin config at %q: %w", pluginConfigPath, err)
 	}

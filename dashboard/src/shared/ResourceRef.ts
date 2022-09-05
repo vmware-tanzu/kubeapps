@@ -1,9 +1,7 @@
 // Copyright 2019-2022 the Kubeapps contributors.
 // SPDX-License-Identifier: Apache-2.0
 
-import { filter, matches } from "lodash";
-import { Kube } from "./Kube";
-import { IClusterServiceVersionCRDResource, IK8sList, IKind, IResource } from "./types";
+import { IClusterServiceVersionCRDResource, IKind } from "./types";
 import { ResourceRef as APIResourceRef } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
 
 export function fromCRD(
@@ -58,35 +56,6 @@ class ResourceRef {
     this.namespace = namespaced ? apiRef.namespace || releaseNamespace || "" : "";
     this.namespaced = namespaced;
     return this;
-  }
-
-  // Gets a full resource URL for the referenced resource
-  public getResourceURL() {
-    return Kube.getResourceURL(
-      this.cluster,
-      this.apiVersion,
-      this.plural,
-      this.namespaced,
-      this.namespace,
-      this.name,
-    );
-  }
-
-  public async getResource() {
-    const resource = await Kube.getResource(
-      this.cluster,
-      this.apiVersion,
-      this.plural,
-      this.namespaced,
-      this.namespace,
-      this.name,
-    );
-    const resourceList = resource as IK8sList<IResource, {}>;
-    if (resourceList.items) {
-      resourceList.items = filter(resourceList.items, matches(this.filter));
-      return resourceList;
-    }
-    return resource;
   }
 }
 

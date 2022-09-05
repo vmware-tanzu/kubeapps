@@ -5,7 +5,7 @@ package main
 
 import (
 	"encoding/json"
-	"io/ioutil"
+	"os"
 	"time"
 
 	helmv2 "github.com/fluxcd/helm-controller/api/v2beta1"
@@ -3610,7 +3610,7 @@ var (
 	}
 
 	newFakeRemoteOciRegistryData_1 = func() (*fakeRemoteOciRegistryData, error) {
-		chartBytes, err := ioutil.ReadFile(testTgz("podinfo-6.1.5.tgz"))
+		chartBytes, err := os.ReadFile(testTgz("podinfo-6.1.5.tgz"))
 		if err != nil {
 			return nil, err
 		}
@@ -3721,15 +3721,15 @@ var (
 	}
 
 	newFakeRemoteOciRegistryData_2 = func() (*fakeRemoteOciRegistryData, error) {
-		chartBytes1, err := ioutil.ReadFile(testTgz("podinfo-6.1.5.tgz"))
+		chartBytes1, err := os.ReadFile(testTgz("podinfo-6.1.5.tgz"))
 		if err != nil {
 			return nil, err
 		}
-		chartBytes2, err := ioutil.ReadFile(testTgz("podinfo-6.0.0.tgz"))
+		chartBytes2, err := os.ReadFile(testTgz("podinfo-6.0.0.tgz"))
 		if err != nil {
 			return nil, err
 		}
-		chartBytes3, err := ioutil.ReadFile(testTgz("podinfo-6.0.3.tgz"))
+		chartBytes3, err := os.ReadFile(testTgz("podinfo-6.0.3.tgz"))
 		if err != nil {
 			return nil, err
 		}
@@ -3759,11 +3759,11 @@ var (
 	}
 
 	newFakeRemoteOciRegistryData_3 = func() (*fakeRemoteOciRegistryData, error) {
-		chartBytes1, err := ioutil.ReadFile(testTgz("podinfo-6.1.5.tgz"))
+		chartBytes1, err := os.ReadFile(testTgz("podinfo-6.1.5.tgz"))
 		if err != nil {
 			return nil, err
 		}
-		chartBytes2, err := ioutil.ReadFile(testTgz("airflow-6.7.1.tgz"))
+		chartBytes2, err := os.ReadFile(testTgz("airflow-6.7.1.tgz"))
 		if err != nil {
 			return nil, err
 		}

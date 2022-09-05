@@ -8,21 +8,16 @@ The following service account was set up for use by the integration tests using
 Google Cloud Console
 - GCP project: `vmware-kubeapps-ci`
 - GCP service account:
-    - Name and ID: `flux-plugin-test-sa-3`
+    - Name and ID: `flux-plugin-test-sa-4`
     - Description: `Service Account for integration testing of kubeapps flux plugin`
 
   Roles granted to this service account:
-    - Editor. Verified 8/24/22 11:39pm this works. 
-
-  **TODO** need to reduce permissions to smallest workable set. 
-  Probably some combination of these and others:
     - Artifact Registry Administrator
     - Artifact Registry Repository Administrator
-    - Artifact Registry Service Agent
+    - Viewer
 
-  Make sure you see a message "Policy Updated" at the bottom of the screen when you grant these roles.
-  If you see "Failed to add project roles" or some other error message,
-  create the service account with a different Name/ID
+  Make sure you see a message "Policy Updated" at the bottom of the screen when you grant these roles. If you see "Failed to add project roles" or some other error message,
+  repeat the process w.r.t. a service account with a different Name/ID and remember to clean up unused service accounts afterwards.
 - The service account key file can be downloaded with Google Cloud Console
      Under IAM & Admin -> Service Accounts
 
@@ -33,11 +28,10 @@ $ export GOOGLE_APPLICATION_CREDENTIALS=..../gcloud-kubeapps-flux-test-sa-key-fi
 
 $ export GCP_TOKEN=$(gcloud auth application-default print-access-token)
 ```
-FYI: GCP token expires an hour after it's issued
+FYI: GCP access token expires 1 hour after it's issued
 
 1. check PING is working 
   * with service account access token 
-
 ```
 $ curl -iL https://us-west1-docker.pkg.dev/v2/ -H "Authorization: Bearer $GCP_TOKEN"
 HTTP/2 200 
