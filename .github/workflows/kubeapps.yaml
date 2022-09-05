@@ -114,6 +114,8 @@ jobs:
     runs-on: ubuntu-latest
     container:
       image: cimg/rust:${{needs.setup.outputs.rust_version}}
+      options: >- 
+        --user root
     steps:
       - uses: actions/checkout@v3
       - name: Run rust unit tests
