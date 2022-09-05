@@ -895,7 +895,7 @@ func TestFilterMetadatas(t *testing.T) {
 			},
 		},
 		{
-			name: "does not match if metadata has an unkown repo",
+			name: "does not match if metadata has an unknown repo",
 			metadatas: []*datapackagingv1alpha1.PackageMetadata{
 				{
 					ObjectMeta: metav1.ObjectMeta{

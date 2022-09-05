@@ -7,7 +7,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"os"
 
 	"github.com/cppforlife/go-cli-ui/ui"
 	ctlapp "github.com/k14s/kapp/pkg/kapp/app"
@@ -68,7 +68,7 @@ func parsePluginConfig(pluginConfigPath string) (*kappControllerPluginParsedConf
 
 	// load the configuration file and unmarshall the values
 	// #nosec G304
-	pluginConfigFile, err := ioutil.ReadFile(pluginConfigPath)
+	pluginConfigFile, err := os.ReadFile(pluginConfigPath)
 	if err != nil {
 		return config, fmt.Errorf("unable to open plugin config at %q: %w", pluginConfigPath, err)
 	}

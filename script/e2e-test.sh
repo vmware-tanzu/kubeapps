@@ -195,6 +195,28 @@ installKappController() {
 }
 
 ########################
+# Creates a Yaml file with additional values for the Helm chart
+# Arguments: None
+# Returns: Path to the newly created file with additional values
+#########################
+generateAdditionalValuesFile() {
+  # Could be done better with $(cat <<EOF > ${ROOT_DIR}/additional_chart_values.yaml
+  # But it was breaking the formatting of the file
+  local valuesFile=${ROOT_DIR}/additional_chart_values.yaml;
+  echo "ingress:
+  enabled: true
+  hostname: localhost
+  tls: true
+  selfSigned: true
+  annotations:
+    kubernetes.io/ingress.class: nginx
+    nginx.ingress.kubernetes.io/proxy-buffer-size: \"8k\"
+    nginx.ingress.kubernetes.io/proxy-buffers: \"4.0\"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: \"600.0\"" > ${valuesFile}
+  echo ${valuesFile}
+}
+
+########################
 # Install Kubeapps or upgrades it if it's already installed
 # Arguments:
 #   $1: chart source
@@ -212,10 +234,8 @@ installOrUpgradeKubeapps() {
     "${@:2}"
     "${multiclusterFlags[@]+"${multiclusterFlags[@]}"}"
     --set frontend.replicaCount=1
-    --set kubeops.replicaCount=1
     --set dashboard.replicaCount=1
     --set kubeappsapis.replicaCount=2
-    --set kubeops.enabled=true
     --set postgresql.architecture=standalone
     --set postgresql.primary.persistence.enabled=false
     --set postgresql.auth.password=password
@@ -239,7 +259,6 @@ images=(
   "apprepository-controller"
   "asset-syncer"
   "dashboard"
-  "kubeops"
   "pinniped-proxy"
   "${kubeapps_apis_image}"
 )
@@ -252,20 +271,17 @@ img_flags=(
   "--set" "apprepository.syncImage.repository=${images[1]}"
   "--set" "dashboard.image.tag=${DEV_TAG}"
   "--set" "dashboard.image.repository=${images[2]}"
-  "--set" "kubeops.image.tag=${DEV_TAG}"
-  "--set" "kubeops.image.repository=${images[3]}"
   "--set" "pinnipedProxy.image.tag=${DEV_TAG}"
-  "--set" "pinnipedProxy.image.repository=${images[4]}"
+  "--set" "pinnipedProxy.image.repository=${images[3]}"
   "--set" "kubeappsapis.image.tag=${DEV_TAG}"
-  "--set" "kubeappsapis.image.repository=${images[5]}"
+  "--set" "kubeappsapis.image.repository=${images[4]}"
 )
+
+additional_flags_file=$(generateAdditionalValuesFile)
 
 if [ "$USE_MULTICLUSTER_OIDC_ENV" = true ]; then
   multiclusterFlags=(
-    "--set" "ingress.enabled=true"
-    "--set" "ingress.hostname=localhost"
-    "--set" "ingress.tls=true"
-    "--set" "ingress.selfSigned=true"
+    "--values" "${additional_flags_file}"
     "--set" "authProxy.enabled=true"
     "--set" "authProxy.provider=oidc"
     "--set" "authProxy.clientID=default"

@@ -7,14 +7,12 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	errors "errors"
-	"io/ioutil"
+	"io"
+	"github.com/google/go-cmp/cmp"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
-
 	"testing"
-
-	"github.com/google/go-cmp/cmp"
 )
 
 const pemCert = `
@@ -139,7 +137,7 @@ func TestSetClientTls(t *testing.T) {
 			t.Fatalf("expected OK, got: %d", resp.StatusCode)
 		}
 
-		payload, err := ioutil.ReadAll(resp.Body)
+		payload, err := io.ReadAll(resp.Body)
 		if err != nil {
 			t.Fatal(err)
 		} else if got, want := payload, expectedPayload; !cmp.Equal(got, want) {

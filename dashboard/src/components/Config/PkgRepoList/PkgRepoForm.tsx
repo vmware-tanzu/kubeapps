@@ -30,7 +30,13 @@ import { Action } from "redux";
 import { ThunkDispatch } from "redux-thunk";
 import { IConfig } from "shared/Config";
 import { toFilterRule, toParams } from "shared/jq";
-import { IPkgRepoFormData, IPkgRepositoryFilter, IStoreState } from "shared/types";
+import {
+  IPkgRepoFormData,
+  IPkgRepositoryFilter,
+  IStoreState,
+  PluginNames,
+  RepositoryStorageTypes,
+} from "shared/types";
 import {
   getGlobalNamespaceOrNamespace,
   getPluginByName,
@@ -38,7 +44,6 @@ import {
   getSupportedPackageRepositoryAuthTypes,
   isGlobalNamespace,
   k8sObjectNameRegex,
-  PluginNames,
 } from "shared/utils";
 import "./PkgRepoForm.css";
 
@@ -49,17 +54,6 @@ interface IPkgRepoFormProps {
   globalReposNamespace: string;
   carvelGlobalNamespace: string;
   packageRepoRef?: PackageRepositoryReference;
-}
-
-//  enum for the type of package repository storage
-export enum RepositoryStorageTypes {
-  PACKAGE_REPOSITORY_STORAGE_HELM = "helm",
-  PACKAGE_REPOSITORY_STORAGE_OCI = "oci",
-  PACKAGE_REPOSITORY_STORAGE_CARVEL_INLINE = "inline",
-  PACKAGE_REPOSITORY_STORAGE_CARVEL_IMAGE = "image",
-  PACKAGE_REPOSITORY_STORAGE_CARVEL_IMGPKGBUNDLE = "imgpkgBundle",
-  PACKAGE_REPOSITORY_STORAGE_CARVEL_HTTP = "http",
-  PACKAGE_REPOSITORY_STORAGE_CARVEL_GIT = "git",
 }
 
 export function PkgRepoForm(props: IPkgRepoFormProps) {
@@ -439,10 +433,27 @@ export function PkgRepoForm(props: IPkgRepoFormProps) {
     setHelmPsAuthMethod(PackageRepositoryAuth_PackageRepositoryAuthType[e.target.value]);
   };
   const handleTypeRadioButtonChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setType(e.target.value);
+    const newType = e.target.value;
+    setType(newType);
+
+    // if a unsupported auth method is selected, reset it to the default one
+    if (!getSupportedPackageRepositoryAuthTypes(plugin, newType).includes(authMethod)) {
+      setAuthMethod(
+        PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_UNSPECIFIED,
+      );
+    }
   };
   const handlePluginRadioButtonChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setPlugin(getPluginByName(e.target.value));
+    const newPlugin = getPluginByName(e.target.value);
+    setPlugin(newPlugin);
+
+    // if a unsupported auth method is selected, reset it to the default one
+    if (!getSupportedPackageRepositoryAuthTypes(newPlugin, type).includes(authMethod)) {
+      setAuthMethod(
+        PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_UNSPECIFIED,
+      );
+    }
+
     // set some default values based on the selected plugin
     switch (getPluginByName(e.target.value)?.name) {
       case PluginNames.PACKAGES_HELM: {
@@ -739,7 +750,7 @@ export function PkgRepoForm(props: IPkgRepoFormProps) {
                       {/* eslint-disable-next-line jsx-a11y/label-has-associated-control */}
                       <label>Scope:</label>
                       <CdsControlMessage>
-                        If the repository is global, its packages will be availabe in every
+                        If the repository is global, its packages will be available in every
                         namespace of the cluster. If it is namespaced-scoped, its packages will be
                         available only in the namespace where the repository has been installed.
                       </CdsControlMessage>
@@ -817,10 +828,9 @@ export function PkgRepoForm(props: IPkgRepoFormProps) {
                               }
                               disabled={!!repo?.type}
                               onChange={handleTypeRadioButtonChange}
-                              required={
-                                plugin?.name === (PluginNames.PACKAGES_HELM as string) ||
-                                plugin?.name === (PluginNames.PACKAGES_FLUX as string)
-                              }
+                              required={(
+                                [PluginNames.PACKAGES_HELM, PluginNames.PACKAGES_FLUX] as string[]
+                              ).includes(plugin?.name)}
                             />
                           </CdsRadio>
                           <CdsRadio>
@@ -835,10 +845,9 @@ export function PkgRepoForm(props: IPkgRepoFormProps) {
                                 type === RepositoryStorageTypes.PACKAGE_REPOSITORY_STORAGE_OCI
                               }
                               onChange={handleTypeRadioButtonChange}
-                              required={
-                                plugin?.name === (PluginNames.PACKAGES_HELM as string) ||
-                                plugin?.name === (PluginNames.PACKAGES_FLUX as string)
-                              }
+                              required={(
+                                [PluginNames.PACKAGES_HELM, PluginNames.PACKAGES_FLUX] as string[]
+                              ).includes(plugin?.name)}
                             />
                           </CdsRadio>
                         </>
@@ -870,7 +879,9 @@ export function PkgRepoForm(props: IPkgRepoFormProps) {
                               id="kubeapps-repo-type-inline"
                               type="radio"
                               name="type"
-                              disabled={!!repo?.type}
+                              // TODO(agamez): enable it back once the API supports it
+                              disabled={true}
+                              // disabled={!!repo?.type}
                               value={
                                 RepositoryStorageTypes.PACKAGE_REPOSITORY_STORAGE_CARVEL_INLINE ||
                                 ""
@@ -996,7 +1007,7 @@ export function PkgRepoForm(props: IPkgRepoFormProps) {
                         onChange={handleAuthRadioButtonChange}
                         disabled={
                           !!repo.auth?.type ||
-                          !getSupportedPackageRepositoryAuthTypes(plugin).includes(
+                          !getSupportedPackageRepositoryAuthTypes(plugin, type).includes(
                             PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_BASIC_AUTH,
                           )
                         }
@@ -1021,7 +1032,7 @@ export function PkgRepoForm(props: IPkgRepoFormProps) {
                         onChange={handleAuthRadioButtonChange}
                         disabled={
                           !!repo.auth?.type ||
-                          !getSupportedPackageRepositoryAuthTypes(plugin).includes(
+                          !getSupportedPackageRepositoryAuthTypes(plugin, type).includes(
                             PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_BEARER,
                           )
                         }
@@ -1048,7 +1059,7 @@ export function PkgRepoForm(props: IPkgRepoFormProps) {
                         onChange={handleAuthRadioButtonChange}
                         disabled={
                           !!repo.auth?.type ||
-                          !getSupportedPackageRepositoryAuthTypes(plugin).includes(
+                          !getSupportedPackageRepositoryAuthTypes(plugin, type).includes(
                             PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_DOCKER_CONFIG_JSON,
                           )
                         }
@@ -1075,7 +1086,7 @@ export function PkgRepoForm(props: IPkgRepoFormProps) {
                         onChange={handleAuthRadioButtonChange}
                         disabled={
                           !!repo.auth?.type ||
-                          !getSupportedPackageRepositoryAuthTypes(plugin).includes(
+                          !getSupportedPackageRepositoryAuthTypes(plugin, type).includes(
                             PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_AUTHORIZATION_HEADER,
                           )
                         }
@@ -1102,7 +1113,7 @@ export function PkgRepoForm(props: IPkgRepoFormProps) {
                         onChange={handleAuthRadioButtonChange}
                         disabled={
                           !!repo.auth?.type ||
-                          !getSupportedPackageRepositoryAuthTypes(plugin).includes(
+                          !getSupportedPackageRepositoryAuthTypes(plugin, type).includes(
                             PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_SSH,
                           )
                         }
@@ -1129,7 +1140,7 @@ export function PkgRepoForm(props: IPkgRepoFormProps) {
                         onChange={handleAuthRadioButtonChange}
                         disabled={
                           !!repo.auth?.type ||
-                          !getSupportedPackageRepositoryAuthTypes(plugin).includes(
+                          !getSupportedPackageRepositoryAuthTypes(plugin, type).includes(
                             PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_TLS,
                           )
                         }
@@ -1156,7 +1167,7 @@ export function PkgRepoForm(props: IPkgRepoFormProps) {
                         onChange={handleAuthRadioButtonChange}
                         disabled={
                           !!repo.auth?.type ||
-                          !getSupportedPackageRepositoryAuthTypes(plugin).includes(
+                          !getSupportedPackageRepositoryAuthTypes(plugin, type).includes(
                             PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_OPAQUE,
                           )
                         }
@@ -1826,7 +1837,7 @@ export function PkgRepoForm(props: IPkgRepoFormProps) {
                         onChange={handleFilterNamesChange}
                       />
                     </CdsTextarea>
-                    <CdsCheckbox className="ca-skip-tls">
+                    <CdsCheckbox className="reduced-margin-top">
                       <label htmlFor="kubeapps-repo-filter-exclude">Exclude Packages</label>
                       <CdsControlMessage>
                         Exclude packages matching the given filter
@@ -1838,7 +1849,7 @@ export function PkgRepoForm(props: IPkgRepoFormProps) {
                         checked={filterExclude}
                       />
                     </CdsCheckbox>
-                    <CdsCheckbox className="ca-skip-tls">
+                    <CdsCheckbox className="reduced-margin-top">
                       <label htmlFor="kubeapps-repo-filter-regex">Regular Expression</label>
                       <CdsControlMessage>
                         Mark this box to treat the filter as a regular expression
@@ -1859,7 +1870,9 @@ export function PkgRepoForm(props: IPkgRepoFormProps) {
             <CdsAccordionHeader onClick={() => toggleAccordion(3)}>Advanced</CdsAccordionHeader>
             <CdsAccordionContent>
               <CdsFormGroup layout="vertical">
-                {plugin?.name !== PluginNames.PACKAGES_HELM && (
+                {([PluginNames.PACKAGES_FLUX, PluginNames.PACKAGES_KAPP] as string[]).includes(
+                  plugin?.name,
+                ) && (
                   <CdsInput>
                     <label htmlFor="kubeapps-repo-interval">Synchronization Interval</label>
                     <input
@@ -1870,15 +1883,15 @@ export function PkgRepoForm(props: IPkgRepoFormProps) {
                       onChange={handleIntervalChange}
                     />
                     <CdsControlMessage>
-                      Time (expressed as a{" "}
+                      Time to wait between each synchronization of the repository. Expressed as a{" "}
                       <a
                         href={"https://pkg.go.dev/time#ParseDuration"}
                         target="_blank"
                         rel="noopener noreferrer"
                       >
                         Golang duration
-                      </a>
-                      ) to wait between synchronizing the repository.
+                      </a>{" "}
+                      according to the Kubernetes specification.
                     </CdsControlMessage>
                   </CdsInput>
                 )}
@@ -1898,97 +1911,118 @@ export function PkgRepoForm(props: IPkgRepoFormProps) {
                   </CdsCheckbox>
                 )}
 
-                <CdsToggleGroup>
-                  <CdsToggle>
-                    <label htmlFor="kubeapps-repo-usermanagedsecret">
-                      {isUserManagedCASecret ? userManagedSecretText : kubeappsManagedSecretText}
-                    </label>
-                    <input
-                      id="kubeapps-repo-usermanagedsecret"
-                      type="checkbox"
-                      onChange={handleIsUserManagedCASecretChange}
-                      checked={isUserManagedCASecret}
-                      disabled={skipTLS}
-                    />
-                  </CdsToggle>
-                </CdsToggleGroup>
-                {isUserManagedCASecret ? (
+                {([PluginNames.PACKAGES_HELM, PluginNames.PACKAGES_FLUX] as string[]).includes(
+                  plugin?.name,
+                ) && (
                   <>
-                    <CdsInput>
-                      <label htmlFor="kubeapps-repo-secret-ca">
-                        Custom CA Secret Name (optional)
-                      </label>
-                      <input
-                        id="kubeapps-repo-secret-ca"
-                        type="text"
-                        placeholder="my-ca-secret"
-                        pattern={k8sObjectNameRegex}
-                        title="Use lower case alphanumeric characters, '-' or '.'"
-                        value={secretTLSName || ""}
-                        disabled={skipTLS}
-                        onChange={handleSecretTLSNameChange}
-                      />
-                    </CdsInput>
-                    <br />
-                    <CdsControlMessage>
-                      Name of the{" "}
-                      <a
-                        href="https://kubernetes.io/docs/concepts/configuration/secret/"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                      >
-                        Kubernetes Secret
-                      </a>{" "}
-                      object holding the TLS Certificate Authority data.
-                    </CdsControlMessage>
-                  </>
-                ) : (
-                  <>
-                    <CdsTextarea layout="vertical">
-                      <label htmlFor="kubeapps-repo-custom-ca">
-                        Custom CA Certificate (optional)
-                      </label>
-                      <textarea
-                        id="kubeapps-repo-custom-ca"
-                        placeholder={"-----BEGIN CERTIFICATE-----\n...\n-----END CERTIFICATE-----"}
-                        className="cds-textarea-fix"
-                        value={customCA || ""}
-                        disabled={skipTLS}
-                        onChange={handleCustomCAChange}
-                      />
-                      <CdsControlMessage>
-                        Custom Certificate Authority (CA) to use when connecting to the repository.
-                      </CdsControlMessage>
-                    </CdsTextarea>
+                    <CdsToggleGroup>
+                      <CdsToggle>
+                        <label htmlFor="kubeapps-repo-usermanagedsecret">
+                          {isUserManagedCASecret
+                            ? userManagedSecretText
+                            : kubeappsManagedSecretText}
+                        </label>
+                        <input
+                          id="kubeapps-repo-usermanagedsecret"
+                          type="checkbox"
+                          onChange={handleIsUserManagedCASecretChange}
+                          checked={isUserManagedCASecret}
+                          disabled={skipTLS}
+                        />
+                      </CdsToggle>
+                    </CdsToggleGroup>
+                    {isUserManagedCASecret ? (
+                      <>
+                        <CdsInput>
+                          <label htmlFor="kubeapps-repo-secret-ca">
+                            Custom CA Secret Name (optional)
+                          </label>
+                          <input
+                            id="kubeapps-repo-secret-ca"
+                            type="text"
+                            placeholder="my-ca-secret"
+                            pattern={k8sObjectNameRegex}
+                            title="Use lower case alphanumeric characters, '-' or '.'"
+                            value={secretTLSName || ""}
+                            disabled={skipTLS}
+                            onChange={handleSecretTLSNameChange}
+                          />
+                        </CdsInput>
+                        <br />
+                        <CdsControlMessage>
+                          Name of the{" "}
+                          <a
+                            href="https://kubernetes.io/docs/concepts/configuration/secret/"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                          >
+                            Kubernetes Secret
+                          </a>{" "}
+                          object holding the TLS Certificate Authority data.
+                        </CdsControlMessage>
+                      </>
+                    ) : (
+                      <>
+                        <CdsTextarea layout="vertical">
+                          <label htmlFor="kubeapps-repo-custom-ca">
+                            Custom CA Certificate (optional)
+                          </label>
+                          <textarea
+                            id="kubeapps-repo-custom-ca"
+                            placeholder={
+                              "-----BEGIN CERTIFICATE-----\n...\n-----END CERTIFICATE-----"
+                            }
+                            className="cds-textarea-fix"
+                            value={customCA || ""}
+                            disabled={skipTLS}
+                            onChange={handleCustomCAChange}
+                          />
+                          <CdsControlMessage>
+                            Custom Certificate Authority (CA) to use when connecting to the
+                            repository.
+                          </CdsControlMessage>
+                        </CdsTextarea>
+                      </>
+                    )}
                   </>
                 )}
-                <CdsCheckbox className="ca-skip-tls">
-                  <label htmlFor="kubeapps-repo-skip-tls">Skip TLS Verification</label>
-                  <input
-                    id="kubeapps-repo-skip-tls"
-                    type="checkbox"
-                    checked={skipTLS}
-                    onChange={handleSkipTLSChange}
-                  />
-                  <CdsControlMessage>
-                    If enabled, the TLS certificate will not be verified (potentially insecure).
-                  </CdsControlMessage>
-                </CdsCheckbox>
-                <CdsCheckbox className="ca-skip-tls">
-                  <label htmlFor="kubeapps-repo-pass-credentials">
-                    Pass Credentials to 3rd party URLs
-                  </label>
-                  <input
-                    id="kubeapps-repo-pass-credentials"
-                    type="checkbox"
-                    checked={passCredentials}
-                    onChange={handlePassCredentialsChange}
-                  />
-                  <CdsControlMessage>
-                    If enabled, the same credentials will be sent to those URLs for fetching the
-                    icon and the tarball files (potentially insecure).
-                  </CdsControlMessage>
-                </CdsCheckbox>
+
+                {([PluginNames.PACKAGES_HELM, PluginNames.PACKAGES_FLUX] as string[]).includes(
+                  plugin?.name,
+                ) && (
+                  <CdsCheckbox className="reduced-margin-top">
+                    <label htmlFor="kubeapps-repo-skip-tls">Skip TLS Verification</label>
+                    <input
+                      id="kubeapps-repo-skip-tls"
+                      type="checkbox"
+                      checked={skipTLS}
+                      onChange={handleSkipTLSChange}
+                    />
+                    <CdsControlMessage>
+                      If enabled, the TLS certificate will not be verified (potentially insecure).
+                    </CdsControlMessage>
+                  </CdsCheckbox>
+                )}
+
+                {([PluginNames.PACKAGES_HELM, PluginNames.PACKAGES_FLUX] as string[]).includes(
+                  plugin?.name,
+                ) && (
+                  <CdsCheckbox className="reduced-margin-top">
+                    <label htmlFor="kubeapps-repo-pass-credentials">
+                      Pass Credentials to 3rd party URLs
+                    </label>
+                    <input
+                      id="kubeapps-repo-pass-credentials"
+                      type="checkbox"
+                      checked={passCredentials}
+                      onChange={handlePassCredentialsChange}
+                    />
+                    <CdsControlMessage>
+                      If enabled, the same credentials will be sent to those URLs for fetching the
+                      icon and the tarball files (potentially insecure).
+                    </CdsControlMessage>
+                  </CdsCheckbox>
+                )}
               </CdsFormGroup>
             </CdsAccordionContent>
           </CdsAccordionPanel>

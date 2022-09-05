@@ -6,9 +6,9 @@ package main
 import (
 	"context"
 	"fmt"
-	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"strings"
 	"testing"
 
@@ -797,7 +797,7 @@ func TestAddPackageRepository(t *testing.T) {
 
 func TestGetPackageRepositorySummaries(t *testing.T) {
 	// some prep
-	indexYAMLBytes, err := ioutil.ReadFile(testYaml("valid-index.yaml"))
+	indexYAMLBytes, err := os.ReadFile(testYaml("valid-index.yaml"))
 	if err != nil {
 		t.Fatal(err)
 	}
