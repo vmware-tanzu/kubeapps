@@ -42,6 +42,7 @@ jobs:
     outputs:
       img_prod_tag: ${{ steps.set-outputs.outputs.img_prod_tag }}
       postgresql_version: ${{ steps.set-outputs.outputs.postgresql_version }}
+      rust_version: ${{ steps.set-outputs.outputs.rust_version }}
     steps:
       - name: Set outputs
         id: set-outputs
@@ -53,10 +54,12 @@ jobs:
           fi;          
 
           echo "::set-output name=postgresql_version::${POSTGRESQL_VERSION}"
+          echo "::set-output name=rust_version::${RUST_VERSION}"
       - name: Show outputs
         run: |
           echo "IMG_PROD_TAG: ${{steps.set-outputs.outputs.img_prod_tag}}"
           echo "POSTGRESQL_VERSION: ${{steps.set-outputs.outputs.postgresql_version}}"
+          echo "RUST_VERSION: ${{steps.set-outputs.outputs.rust_version}}"
 
   test_go:
     needs:
@@ -86,6 +89,8 @@ jobs:
 
   test_dashboard:
     runs-on: ubuntu-latest
+    needs:
+      - setup
     env:
       # Note that the max old space setting is per worker, so running the tests
       # with 4 workers on a 4Gb (free plan) needs 1Gb of max old space. Forcing
@@ -102,6 +107,17 @@ jobs:
         run: yarn --cwd=dashboard run lint
       - name: Run dashboard unit tests
         run: yarn --cwd=dashboard run test --maxWorkers=4 --coverage --logHeapUsage
+
+  test_pinniped_proxy:
+    needs:
+      - setup
+    runs-on: ubuntu-latest
+    container:
+      image: cimg/rust:${{needs.setup.outputs.rust_version}}
+    steps:
+      - uses: actions/checkout@v3
+      - name: Run rust unit tests
+        run: cargo test --manifest-path ./cmd/pinniped-proxy/Cargo.toml
 
 
 
