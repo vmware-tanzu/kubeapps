@@ -118,6 +118,7 @@ jobs:
         --user root
     steps:
       - uses: actions/checkout@v3
+      - run: cargo --version
       - run: ls -l ./cmd/pinniped-proxy/Cargo.toml
       - name: Run rust unit tests
         run: cargo test --manifest-path ./cmd/pinniped-proxy/Cargo.toml
