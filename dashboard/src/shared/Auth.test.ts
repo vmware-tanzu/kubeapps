@@ -19,7 +19,7 @@ describe("Auth", () => {
       .fn()
       .mockImplementation(() => Promise.resolve({ exists: true } as CheckNamespaceExistsRequest));
     jest.spyOn(client, "CheckNamespaceExists").mockImplementation(mockClientCheckNamespaceExists);
-    jest.spyOn(Auth, "resourcesClient").mockImplementation(() => client);
+    jest.spyOn(Auth, "resourcesServiceClient").mockImplementation(() => client);
   });
   afterEach(() => {
     jest.resetAllMocks();

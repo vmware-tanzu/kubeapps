@@ -168,7 +168,7 @@ describe("App", () => {
         .fn()
         .mockImplementation(() => Promise.resolve({ allowed: true } as CanIResponse));
       jest.spyOn(client, "CanI").mockImplementation(mockClientCanI);
-      jest.spyOn(Kube, "resourcesClient").mockImplementation(() => client);
+      jest.spyOn(Kube, "resourcesServiceClient").mockImplementation(() => client);
 
       const allowed = await Kube.canI("cluster", "v1", "namespaces", "create", "");
       expect(allowed).toBe(true);
@@ -197,7 +197,7 @@ describe("App", () => {
           }),
       );
       jest.spyOn(client, "CanI").mockImplementation(mockClientCanI);
-      jest.spyOn(Kube, "resourcesClient").mockImplementation(() => client);
+      jest.spyOn(Kube, "resourcesServiceClient").mockImplementation(() => client);
 
       const allowed = await Kube.canI("cluster", "v1", "secrets", "list", "");
       expect(allowed).toBe(false);
