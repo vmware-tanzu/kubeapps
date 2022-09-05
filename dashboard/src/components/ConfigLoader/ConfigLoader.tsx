@@ -2,11 +2,9 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import Alert from "components/js/Alert";
+import LoadingWrapper, { ILoadingWrapperProps } from "components/LoadingWrapper/LoadingWrapper";
 import React from "react";
 import { useIntl } from "react-intl";
-import LoadingWrapper, {
-  ILoadingWrapperProps,
-} from "../../components/LoadingWrapper/LoadingWrapper";
 
 interface IConfigLoaderProps extends ILoadingWrapperProps {
   children?: JSX.Element;
@@ -16,24 +14,23 @@ interface IConfigLoaderProps extends ILoadingWrapperProps {
 
 function ConfigLoader({ getConfig, error, ...otherProps }: IConfigLoaderProps) {
   const intl = useIntl();
+  React.useEffect(() => getConfig(), [getConfig]);
+  const kubeappsTitle = intl.formatMessage({ id: "Kubeapps", defaultMessage: "Kubeapps" });
 
-  React.useEffect(() => {
-    getConfig();
-  }, [getConfig]);
-  if (error) {
-    return (
-      <Alert theme="danger">
-        Unable to load {intl.formatMessage({ id: "Kubeapps", defaultMessage: "Kubeapps" })}{" "}
-        configuration: {error.message}
-      </Alert>
-    );
-  }
   return (
-    <LoadingWrapper
-      className="margin-t-xxl"
-      loadingText={<h1>{intl.formatMessage({ id: "Kubeapps", defaultMessage: "Kubeapps" })}</h1>}
-      {...otherProps}
-    />
+    <>
+      {error ? (
+        <Alert theme="danger">
+          Unable to load {kubeappsTitle} configuration: {error?.message}
+        </Alert>
+      ) : (
+        <LoadingWrapper
+          className="margin-t-xxl"
+          loadingText={<h1>{kubeappsTitle}</h1>}
+          {...otherProps}
+        />
+      )}
+    </>
   );
 }
 
