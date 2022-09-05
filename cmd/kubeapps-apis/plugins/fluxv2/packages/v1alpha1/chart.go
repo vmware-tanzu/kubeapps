@@ -7,7 +7,7 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"reflect"
 	"strings"
 
@@ -343,7 +343,7 @@ func downloadHttpChartFn(options *common.HttpClientOptions) func(chartID, chartU
 			return nil, err
 		}
 
-		chartTgz, err := ioutil.ReadAll(reader)
+		chartTgz, err := io.ReadAll(reader)
 		if err != nil {
 			return nil, err
 		}
