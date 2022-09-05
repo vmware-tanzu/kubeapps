@@ -160,7 +160,7 @@ func newClientGetter(configGetter core.KubernetesConfigGetter, useServiceAccount
 		if err != nil {
 			return nil, nil, status.Errorf(codes.FailedPrecondition, "unable to get config : %v", err.Error())
 		}
-		if err = setupRestConfigForCluster(restConfig, cluster, useServiceAccount, clustersConfig); err != nil {
+		if err := setupRestConfigForCluster(restConfig, cluster, useServiceAccount, clustersConfig); err != nil {
 			return nil, nil, err
 		}
 		dynamicClient, err := dynamic.NewForConfig(restConfig)
