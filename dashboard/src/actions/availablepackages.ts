@@ -1,7 +1,6 @@
 // Copyright 2021-2022 the Kubeapps contributors.
 // SPDX-License-Identifier: Apache-2.0
 
-import actions from "actions";
 import {
   AvailablePackageDetail,
   AvailablePackageReference,
@@ -14,8 +13,8 @@ import {
   FetchError,
   IReceivePackagesActionPayload as IReceiveAvailablePackageSummariesActionPayload,
   IStoreState,
-  UnauthorizedError,
 } from "../shared/types";
+import { handleErrorAction } from "./auth";
 
 const { createAction } = deprecated;
 
@@ -128,11 +127,7 @@ export function fetchAvailablePackageSummaries(
       );
       dispatch(receiveAvailablePackageSummaries({ response, paginationToken }));
     } catch (e: any) {
-      if (e.constructor === UnauthorizedError) {
-        dispatch(actions.auth.logoutByAuthenticationError());
-      } else {
-        dispatch(createErrorPackage(new FetchError(e.message)));
-      }
+      dispatch(handleErrorAction(e, createErrorPackage(new FetchError(e.message))));
     }
   };
 }
@@ -146,11 +141,7 @@ export function fetchAvailablePackageVersions(
       const response = await PackagesService.getAvailablePackageVersions(availablePackageReference);
       dispatch(receiveSelectedAvailablePackageVersions(response));
     } catch (e: any) {
-      if (e.constructor === UnauthorizedError) {
-        dispatch(actions.auth.logoutByAuthenticationError());
-      } else {
-        dispatch(createErrorPackage(new FetchError(e.message)));
-      }
+      dispatch(handleErrorAction(e, createErrorPackage(new FetchError(e.message))));
     }
   };
 }
@@ -172,11 +163,7 @@ export function fetchAndSelectAvailablePackageDetail(
         dispatch(createErrorPackage(new FetchError("could not find package version")));
       }
     } catch (e: any) {
-      if (e.constructor === UnauthorizedError) {
-        dispatch(actions.auth.logoutByAuthenticationError());
-      } else {
-        dispatch(createErrorPackage(new FetchError(e.message)));
-      }
+      dispatch(handleErrorAction(e, createErrorPackage(new FetchError(e.message))));
     }
   };
 }

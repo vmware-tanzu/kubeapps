@@ -5,6 +5,7 @@ import { CdsControlMessage, CdsFormGroup } from "@cds/react/forms";
 import { CdsInput } from "@cds/react/input";
 import { CdsSelect } from "@cds/react/select";
 import actions from "actions";
+import { handleErrorAction } from "actions/auth";
 import AvailablePackageDetailExcerpt from "components/Catalog/AvailablePackageDetailExcerpt";
 import Alert from "components/js/Alert";
 import Column from "components/js/Column";
@@ -23,7 +24,7 @@ import "react-tabs/style/react-tabs.css";
 import { Action } from "redux";
 import { ThunkDispatch } from "redux-thunk";
 import { Kube } from "shared/Kube";
-import { FetchError, IStoreState, UnauthorizedError } from "shared/types";
+import { FetchError, IStoreState } from "shared/types";
 import * as url from "shared/url";
 import { getPluginsRequiringSA, k8sObjectNameRegex } from "shared/utils";
 import DeploymentFormBody from "../DeploymentFormBody/DeploymentFormBody";
@@ -102,10 +103,8 @@ export default function DeploymentForm() {
       // We assume the user has enough permissions to do that. Fallback to a simple input maybe?
       Kube.getServiceAccountNames(targetCluster, targetNamespace)
         .then(saList => setServiceAccountList(saList.serviceaccountNames))
-        .catch(e => {
-          if (e.constructor === UnauthorizedError) {
-            dispatch(actions.auth.logoutByAuthenticationError());
-          }
+        ?.catch(e => {
+          dispatch(handleErrorAction(e));
         });
     }
     return () => {};

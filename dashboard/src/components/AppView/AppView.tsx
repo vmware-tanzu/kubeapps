@@ -4,6 +4,7 @@
 import { CdsButton } from "@cds/react/button";
 import { grpc } from "@improbable-eng/grpc-web";
 import actions from "actions";
+import { handleErrorAction } from "actions/auth";
 import ErrorAlert from "components/ErrorAlert";
 import Alert from "components/js/Alert";
 import Column from "components/js/Column";
@@ -30,7 +31,6 @@ import {
   FetchError,
   FetchWarning,
   IStoreState,
-  UnauthorizedError,
 } from "shared/types";
 import { getPluginsSupportingRollback } from "shared/utils";
 import ApplicationStatus from "../../containers/ApplicationStatusContainer";
@@ -209,9 +209,8 @@ export default function AppView() {
           setResourceRefs(response.resourceRefs);
           return;
         } catch (e: any) {
-          if (e.constructor === UnauthorizedError) {
-            dispatch(actions.auth.logoutByAuthenticationError());
-          } else if (e.code !== grpc.Code.NotFound) {
+          dispatch(handleErrorAction(e));
+          if (e.code !== grpc.Code.NotFound) {
             // If we get any other error, we want the user to know about it.
             setFetchError(new FetchError("unable to fetch resource references", [e]));
             return;

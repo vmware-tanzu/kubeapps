@@ -1,12 +1,12 @@
 // Copyright 2018-2022 the Kubeapps contributors.
 // SPDX-License-Identifier: Apache-2.0
 
-import actions from "actions";
 import { ThunkAction } from "redux-thunk";
 import { Kube } from "shared/Kube";
 import Namespace, { setStoredNamespace } from "shared/Namespace";
-import { IStoreState, UnauthorizedError } from "shared/types";
+import { IStoreState } from "shared/types";
 import { ActionType, deprecated } from "typesafe-actions";
+import { handleErrorAction } from "./auth";
 
 const { createAction } = deprecated;
 
@@ -70,11 +70,7 @@ export function fetchNamespaces(
       dispatch(receiveNamespaces(cluster, namespaceList));
       return namespaceList;
     } catch (e: any) {
-      if (e.constructor === UnauthorizedError) {
-        dispatch(actions.auth.logoutByAuthenticationError());
-      } else {
-        dispatch(errorNamespaces(cluster, e, "list"));
-      }
+      dispatch(handleErrorAction(e, errorNamespaces(cluster, e, "list")));
       return [];
     }
   };
@@ -92,11 +88,7 @@ export function createNamespace(
       dispatch(fetchNamespaces(cluster));
       return true;
     } catch (e: any) {
-      if (e.constructor === UnauthorizedError) {
-        dispatch(actions.auth.logoutByAuthenticationError());
-      } else {
-        dispatch(errorNamespaces(cluster, e, "create"));
-      }
+      dispatch(handleErrorAction(e, errorNamespaces(cluster, e, "create")));
       return false;
     }
   };
@@ -115,11 +107,7 @@ export function checkNamespaceExists(
       }
       return exists;
     } catch (e: any) {
-      if (e.constructor === UnauthorizedError) {
-        dispatch(actions.auth.logoutByAuthenticationError());
-      } else {
-        dispatch(errorNamespaces(cluster, e, "get"));
-      }
+      dispatch(handleErrorAction(e, errorNamespaces(cluster, e, "get")));
       return false;
     }
   };

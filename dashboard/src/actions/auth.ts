@@ -4,7 +4,7 @@
 import { ThunkAction } from "redux-thunk";
 import { Auth } from "shared/Auth";
 import * as Namespace from "shared/Namespace";
-import { IStoreState } from "shared/types";
+import { IStoreState, UnauthorizedError } from "shared/types";
 import { ActionType, deprecated } from "typesafe-actions";
 import { clearClusters, NamespaceAction } from "./namespace";
 
@@ -82,6 +82,14 @@ export function logoutByAuthenticationError(): ThunkAction<
     dispatch(authenticationError("Unauthorized"));
     dispatch(expireSession());
   };
+}
+
+export function handleErrorAction(error: any, action?: ActionType<any>) {
+  if (error.constructor === UnauthorizedError) {
+    return logoutByAuthenticationError();
+  } else if (action) {
+    return action;
+  }
 }
 
 export function expireSession(): ThunkAction<Promise<void>, IStoreState, null, AuthAction> {
