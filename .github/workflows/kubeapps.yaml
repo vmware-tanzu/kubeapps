@@ -117,7 +117,29 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - name: Run rust unit tests
-        run: cargo test --manifest-path ./cmd/pinniped-proxy/Cargo.toml
+        run: cargo test --manifest-path cmd/pinniped-proxy/Cargo.toml
+
+  test_chart_render:
+    needs:
+      - setup
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-go@v3
+        with:
+          go-version: ${{ env.GOLANG_VERSION }}
+
+      - name: "Install helm (minimum and stable)"
+        run: |
+          wget https://get.helm.sh/helm-${HELM_VERSION_MIN}-linux-amd64.tar.gz
+          tar zxf helm-$HELM_VERSION_MIN-linux-amd64.tar.gz
+          sudo mv linux-amd64/helm /usr/local/bin/
+
+          wget https://get.helm.sh/helm-${HELM_VERSION_STABLE}-linux-amd64.tar.gz
+          tar zxf helm-$HELM_VERSION_STABLE-linux-amd64.tar.gz
+          sudo mv linux-amd64/helm /usr/local/bin/helm-stable
+      - name: Run chart template test
+        run: ./script/chart-template-test.sh
 
 
 
