@@ -8,13 +8,13 @@ TKG comes with Pinniped installed by default; you only need to configure an OIDC
 
 > **NOTE**: You need a recent version of Kubeapps (2.3.3 onwards), otherwise, you would need to install an additional Pinniped (version 0.6.0 onwards).
 
-> **NOTE**: If your cluster [is already attached to VMware Tanzu™ Mission Control™ (TMC)](https://docs.vmware.com/en/VMware-Tanzu-Mission-Control/services/tanzumc-getstart/GUID-F0162E40-8D47-45D7-9EA1-83B64B380F5C.html) an additional Pinniped version is automatically installed in another namespace. However, this guide always use the Pinniped version installed by TKG (not by TMC).
+> **NOTE**: If your cluster [is already attached to VMware Tanzu™ Mission Control™ (TMC)](https://docs.vmware.com/en/VMware-Tanzu-Mission-Control/services/tanzumc-getstart/GUID-F0162E40-8D47-45D7-9EA1-83B64B380F5C.html) an additional Pinniped version is automatically installed in another namespace. However, this guide always uses the Pinniped version installed by TKG (not by TMC).
 
 #### Create an OAuth2 Application
 
 Begin by creating an OAuth2 application to retrieve the information required by Pinniped and, later on, Kubeapps. Follow the steps below:
 
-> **NOTE**: You must have _Developer_ access in the organization to perform these steps. Also, note that if the organization is restricted, only users belonging to this organization will be able to log in.
+> **NOTE**: You must have _Developer_ access in the organization to perform these steps. Also, note that if the organization is restricted, only users belonging to this organization are able to log in.
 
 1. Navigate to the CSP Console at [https://console.cloud.vmware.com](https://console.cloud.vmware.com/).
 2. Click the drop-down menu in the top-right corner.
@@ -92,3 +92,10 @@ kubectl apply -f kubeapps-jwt-authenticator.yaml
 > **TIP**: When using more than one workload cluster, apply this _JWTAuthenticator_ resource in every cluster.
 
 At the end of this step, an identity management provider has been configured in the cluster. The next step is to [install Kubeapps](./step-2.md).
+
+## Tutorial index
+
+1. [Step 1: Configure an Identity Management Provider in the Cluster](./step-1.md)
+2. [Step 2: Configure and Install Kubeapps](./step-2.md)
+3. [Step 3: Add Application Repositories to Kubeapps](./step-3.md)
+4. [Step 4: Deploy and Manage Applications with Kubeapps](./step-4.md)

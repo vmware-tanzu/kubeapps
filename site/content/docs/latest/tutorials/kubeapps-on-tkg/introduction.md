@@ -41,11 +41,11 @@ This guide assumes that:
 - You have access to, at a minimum, the Tanzu™ Application Catalog™ for Tanzu™ Advanced Demo environment. If not, reach out to your [VMware sales representative](https://www.vmware.com/company/contact_sales.html).
 - You have the _kubectl_ CLI and the Helm v3.x package manager installed. Learn how to [install _kubectl_ and Helm v3.x](https://docs.bitnami.com/kubernetes/get-started-kubernetes/#step-3-install-kubectl-command-line).
 
-## Steps
+## Tutorial index
 
 1. [Step 1: Configure an Identity Management Provider in the Cluster](./step-1.md)
 2. [Step 2: Configure and Install Kubeapps](./step-2.md)
 3. [Step 3: Add Application Repositories to Kubeapps](./step-3.md)
 4. [Step 4: Deploy and Manage Applications with Kubeapps](./step-4.md)
 
-Begin by [configuring an identity management provider](./step-1.md).
+> Begin by [configuring an identity management provider](./step-1.md).

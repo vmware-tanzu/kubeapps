@@ -85,3 +85,10 @@ Running applications can be removed from the cluster by clicking the **Delete** 
 ![Deployment removal](../../img/kubeapps-on-tkg/kubeapps-chart-mariadb-delete.png)
 
 At the end of this step, you should be able to use Kubeapps for common application management and deployment tasks. Continue reading for a collection of [useful links and references to help you maximize your usage of Kubeapps](./conclusion.md).
+
+## Tutorial index
+
+1. [Step 1: Configure an Identity Management Provider in the Cluster](./step-1.md)
+2. [Step 2: Configure and Install Kubeapps](./step-2.md)
+3. [Step 3: Add Application Repositories to Kubeapps](./step-3.md)
+4. [Step 4: Deploy and Manage Applications with Kubeapps](./step-4.md)

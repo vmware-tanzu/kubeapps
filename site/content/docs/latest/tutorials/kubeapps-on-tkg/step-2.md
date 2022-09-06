@@ -239,7 +239,7 @@ Once Kubeapps is installed and configured, the next step is to log in and access
    kubectl port-forward -n kubeapps svc/kubeapps 8080:80
    ```
 
-   This starts an HTTP proxy for secure access to the Kubeapps dashboard.
+   This command spawns an HTTP proxy providing secure access to the Kubeapps dashboard.
 
 2. Browse to [http://127.0.0.1:8080](http://127.0.0.1:8080) (when forwarding the port) or to the public IP address of the serevice (when exposing the service externally). You see the Kubeapps login page, as shown below:
 
@@ -254,3 +254,10 @@ Once Kubeapps is installed and configured, the next step is to log in and access
    ![Kubeapps home](../../img/kubeapps-on-tkg/kubeapps-applications-empty.png)
 
 At the end of this step, the Kubeapps installation is configured, customized and running in the cluster. The next step is to [add application repositories to Kubeapps](./step-3.md).
+
+## Tutorial index
+
+1. [Step 1: Configure an Identity Management Provider in the Cluster](./step-1.md)
+2. [Step 2: Configure and Install Kubeapps](./step-2.md)
+3. [Step 3: Add Application Repositories to Kubeapps](./step-3.md)
+4. [Step 4: Deploy and Manage Applications with Kubeapps](./step-4.md)

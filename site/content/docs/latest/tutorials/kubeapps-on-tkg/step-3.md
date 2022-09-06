@@ -5,7 +5,7 @@ Once Kubeapps is up and running on the VMware Tanzu™ Kubernetes Grid™ cluste
 The general procedure to add any repository is described below:
 
 1. Log in to Kubeapps as described in the previous step.
-2. Click the **right menu\*** button in the top right corner (dotted square).
+2. Click the **right menu** button in the top right corner (dotted square).
 
    ![Kubeapps home](../../img/kubeapps-on-tkg/kubeapps-applications-empty.png)
 
@@ -28,26 +28,24 @@ The general procedure to add any repository is described below:
 
   ![Package repositories modal part 1](../../img/kubeapps-on-tkg/apprepository-detail-general.png)
 
-- `Repository Authorization` field if selected `Docker Registry` options, needs to specifies an `imagePullSecret` for images that are to be pulled from the private registry. It is possible to create a fresh secret or choose an existing one.
+- `Repository Authorization` field provides additional credentials for pulling the container images from a registry. When selecting the `Docker Registry` as the `Repository Authorization`, this field is required.
+Whereas this value usually is the same as the one used in the `Docker Registry, it is possible to create a fresh secret or choose an existing one.
 
   ![Package repositories modal part 3](../../img/kubeapps-on-tkg/apprepository-authentication.png)
 
-- For OCI registrie, it is necessary to also manually specify the list of artifacts to fetch in the **List of Repositories** field (as there is no index yet). Additionally, artifacts can be excluded using regular expressions if required.
+- For OCI registries, when using the Helm plugin, it is necessary to also manually specify the list of OCI artifacts to fetch in the **List of Repositories** field (as there is no standard index yet). 
+Additionally, artifacts can be excluded using regular expressions if required.
 
   ![Package repositories modal part 3](../../img/kubeapps-on-tkg/apprepository-filtering.png)
 
-- `Synchronization Interval` field specifies the synchronization template to use when periodically pulling the latest changes from the application repository (available for Helm via Flux and Carvel).
+- `Synchronization Interval` field specifies the synchronization template to use when periodically pulling the latest changes from the application repository.
 - `Custom CA Certificate` field specifies a CA certificate to use (with an option to skip the TLS verification if required).
 
   ![Package repositories modal part 3](../../img/kubeapps-on-tkg/apprepository-advanced.png)
 
 6. Click the **Install Repository** button to finish the process and add the repository to Kubeapps.
 
-Retrieving the catalog from the repository takes a few minutes. Once complete, the contents of the repository become available in Kubeapps. To check the progress of the synchronization task, use the following command, replacing `REPOSITORY-NAME` with the name configured above:
-
-```bash
-kubectl logs -n kubeapps -l apprepositories.kubeapps.com/repo-name=REPOSITORY-NAME
-```
+Retrieving the catalog from the repository takes a few minutes. Once complete, the contents of the repository become available in Kubeapps.
 
 The following sections demonstrate the process of filling the **Add a Package Repository** form for two specific examples: VMware Marketplace™ and VMware Tanzu™ Application Catalog™ for Tanzu™ Advanced.
 
@@ -105,6 +103,13 @@ Once complete, the private catalog is available in Kubeapps, as shown below:
 ![Catalog after adding the public repository](../../img/kubeapps-on-tkg/kubeapps-catalog-tac.png)
 
 At the end of this step, the Kubeapps installation is configured with one or more application repositories. The next step is to [start using Kubeapps](./step-4.md).
+
+## Tutorial index
+
+1. [Step 1: Configure an Identity Management Provider in the Cluster](./step-1.md)
+2. [Step 2: Configure and Install Kubeapps](./step-2.md)
+3. [Step 3: Add Application Repositories to Kubeapps](./step-3.md)
+4. [Step 4: Deploy and Manage Applications with Kubeapps](./step-4.md)
 
 ## Appendix: Role-Based Access Control (RBAC) in Application Repositories
 
