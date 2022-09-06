@@ -103,6 +103,43 @@ function deleteHarborProject()
     error_exit "Unexpected HTTP status checking if project [$PROJECT_NAME] exists: [$status_code]"
   fi
 }
+
+# special case: in VMware corp harbor a project is created via filing a request
+function setupVMwareHarborStefanProdanClone {
+  # sanity check
+  if [[ "$#" -lt 1 ]]; then
+    error_exit "Usage: setupVMwareHarborStefanProdanClone name [--quick]"
+  fi
+
+  local PROJECT_NAME=$1
+  if [ -z ${HARBOR_VMWARE_CORP_HOST+x} ]; then
+    error_exit "Environment variable [HARBOR_VMWARE_CORP_HOST] must be set"
+  fi
+  if [ -z ${HARBOR_VMWARE_CORP_ROBOT_USER+x} ]; then
+    error_exit "Environment variable [HARBOR_VMWARE_CORP_ROBOT_USER] must be set"
+  fi
+  if [ -z ${HARBOR_VMWARE_CORP_ROBOT_SECRET+x} ]; then
+    error_exit "Environment variable [HARBOR_VMWARE_CORP_ROBOT_SECRET] must be set"
+  fi
+
+  # for now only look at the project existence and if so assume all is well
+  # for now assume the robot account already exists
+  echo
+  echo -e Checking if harbor project [${L_YELLOW}$PROJECT_NAME${NC}] exists...
+  local status_code=$(curl -L --write-out %{http_code} \
+                      --silent --output /dev/null \
+                      --show-error \
+                      --head https://${HARBOR_VMWARE_CORP_HOST}/api/v2.0/projects?project_name=${PROJECT_NAME} \
+                      -u ${HARBOR_VMWARE_CORP_ROBOT_USER}:${HARBOR_VMWARE_CORP_ROBOT_SECRET})
+  if [[ "$status_code" -eq 200 ]] ; then
+    echo -e "Project [${L_YELLOW}$PROJECT_NAME${NC}] exists in harbor host [${L_YELLOW}${HARBOR_VMWARE_CORP_HOST}${NC}]"
+    # here we assume that since project exists, it contains all the charts
+    exit 0
+  else 
+    error_exit "Project [$PROJECT_NAME] does not exist in harbor [${HARBOR_VMWARE_CORP_HOST}]"
+  fi
+}
+
 function setupHarborStefanProdanCloneInProject {
   # sanity check
   if [[ "$#" -lt 2 ]]; then
@@ -155,12 +192,12 @@ function setupHarborStefanProdanCloneInProject {
   echo
 }
 
-
 function setupHarborStefanProdanClone {
   # this creates a clone of what was out on "oci://ghcr.io/stefanprodan/charts" as of Jul 28 2022
   # to oci://demo.goharbor.io/stefanprodan-podinfo-clone
   setupHarborStefanProdanCloneInProject stefanprodan-podinfo-clone true $*
   setupHarborStefanProdanCloneInProject stefanprodan-podinfo-clone-private false $*
+  setupVMwareHarborStefanProdanClone stefanprodan-podinfo-clone $*
 }
 
 function deleteHarborRobotAccount()
