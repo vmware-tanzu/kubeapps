@@ -187,20 +187,12 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
           push: true
+      - name: Upload artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: ${{matrix.image}}-image
+          path: /tmp/${{matrix.image}}-image.tar
 
-#      - name: Build and push CI images
-#        run: |
-#          mkdir -p images/
-#          if [[ "${GITHUB_REF_TYPE}" == "tag" ]]; then
-#            makeArgs="VERSION=${GITHUB_REF_NAME}"
-#          fi
-#
-#          make IMG_MODIFIER="$IMG_MODIFIER" IMAGE_TAG="${DEV_TAG}" $makeArgs kubeapps/${IMAGE}
-#          if [[ -n "${DOCKER_USERNAME}" && -n "${DOCKER_PASSWORD}" ]]; then
-#            docker login -u="${DOCKER_USERNAME}" -p="${DOCKER_PASSWORD}"
-#            docker push kubeapps/${IMAGE}${IMG_MODIFIER}:${DEV_TAG}
-#          fi
-#          docker save kubeapps/${IMAGE}${IMG_MODIFIER}:${DEV_TAG} > images/${IMAGE}${IMG_MODIFIER}:${DEV_TAG}
 
 
 
