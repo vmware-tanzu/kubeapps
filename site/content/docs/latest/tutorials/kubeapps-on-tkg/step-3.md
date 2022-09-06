@@ -59,7 +59,7 @@ The public content from the VMware Marketplace™ repository can be retrieved at
 - `URL`: Use the endpoint URL `https://charts.market.csp.vmware.com/bitnami`.
 - `Packaging format`: use `Helm Charts`.
 - `Repository Authorization`: leave by default as `None`.
-- Leave rest of fields as set by default.
+- Leave the rest of the fields as set by default.
 
 Once completed, the public catalog is available in Kubeapps, as shown below:
 
