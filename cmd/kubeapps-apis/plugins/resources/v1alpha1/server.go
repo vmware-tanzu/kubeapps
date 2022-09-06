@@ -71,6 +71,8 @@ type Server struct {
 	pluginConfig *common.ResourcesPluginConfig
 
 	clientQPS float32
+
+	kubeappsCluster string
 }
 
 // createRESTMapper returns a rest mapper configured with the APIs of the
@@ -146,8 +148,9 @@ func NewServer(configGetter core.KubernetesConfigGetter, clientQPS float32, clie
 			}
 			return mapping.Resource, mapping.Scope.Name(), nil
 		},
-		clientQPS:    clientQPS,
-		pluginConfig: pluginConfig,
+		clientQPS:       clientQPS,
+		pluginConfig:    pluginConfig,
+		kubeappsCluster: clustersConfig.KubeappsClusterName,
 	}, nil
 }
 

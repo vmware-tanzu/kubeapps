@@ -38,7 +38,8 @@ deploy-dev-kubeapps:
 	helm --kubeconfig=${CLUSTER_CONFIG} upgrade --install kubeapps ./chart/kubeapps --namespace kubeapps --create-namespace \
 		--values ./site/content/docs/latest/reference/manifests/kubeapps-local-dev-values.yaml \
 		--values ./site/content/docs/latest/reference/manifests/kubeapps-local-dev-auth-proxy-values.yaml \
-		--values ./site/content/docs/latest/reference/manifests/kubeapps-local-dev-additional-kind-cluster.yaml
+		--values ./site/content/docs/latest/reference/manifests/kubeapps-local-dev-additional-kind-cluster.yaml \
+		--set clusters[1].serviceToken=$(shell kubectl --kubeconfig=${ADDITIONAL_CLUSTER_CONFIG} get secret kubeapps-namespace-discovery -o go-template="{{.data.token | base64decode}}")
 
 deploy-dev: deploy-dependencies deploy-dev-kubeapps
 	@echo "\nYou can now simply open your browser at https://localhost/ to access Kubeapps!"
