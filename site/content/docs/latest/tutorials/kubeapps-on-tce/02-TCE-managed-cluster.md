@@ -15,7 +15,7 @@ TCE offers a UI for setting up all the different parameters needed.
 
 Before creating the cluster, it is necessary to set up a proper OIDC provider that Kubernetes use to authenticate requests.
 
-This tutorial configures _Google Identity Platform_ OIDC provider, but there are more options of [using an OAuth2/OIDC Provider with Kubeapps](https://github.com/vmware-tanzu/kubeapps/blob/main/site/content/docs/latest/tutorials/using-an-OIDC-provider.md).
+This tutorial addresses the configuration of the _Google Identity Platform_ OIDC provider, but there are more options of [using an OAuth2/OIDC Provider with Kubeapps](https://github.com/vmware-tanzu/kubeapps/blob/main/site/content/docs/latest/tutorials/using-an-OIDC-provider.md).
 
 ### Setting up the Google credentials client
 
