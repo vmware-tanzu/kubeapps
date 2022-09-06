@@ -1010,7 +1010,10 @@ func (s *Server) GetInstalledPackageResourceRefs(ctx context.Context, request *c
 }
 
 func (s *Server) AddPackageRepository(ctx context.Context, request *corev1.AddPackageRepositoryRequest) (*corev1.AddPackageRepositoryResponse, error) {
-	log.Infof("+helm AddPackageRepository '%s' pointing to '%s'", request.GetName(), request.GetUrl())
+	repoName := request.GetName()
+	repoUrl := request.GetUrl()
+	log.Infof("+helm AddPackageRepository '%s' pointing to '%s'", repoName, repoUrl)
+
 	if request == nil {
 		return nil, status.Errorf(codes.InvalidArgument, "no request provided")
 	}
