@@ -7,10 +7,14 @@ import {
   GetAvailablePackageSummariesResponse,
   GetAvailablePackageVersionsResponse,
 } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
+import { GetConfiguredPluginsResponse } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins";
 import { KubeappsGrpcClient } from "./KubeappsGrpcClient";
 
 export default class PackagesService {
-  public static client = () => new KubeappsGrpcClient().getPackagesServiceClientImpl();
+  public static packagesServiceClient = () =>
+    new KubeappsGrpcClient().getPackagesServiceClientImpl();
+  public static pluginsServiceClientImpl = () =>
+    new KubeappsGrpcClient().getPluginsServiceClientImpl();
 
   public static async getAvailablePackageSummaries(
     cluster: string,
@@ -20,7 +24,7 @@ export default class PackagesService {
     size: number,
     query?: string,
   ): Promise<GetAvailablePackageSummariesResponse> {
-    return await this.client().GetAvailablePackageSummaries({
+    return await this.packagesServiceClient().GetAvailablePackageSummaries({
       context: { cluster: cluster, namespace: namespace },
       filterOptions: {
         query: query,
@@ -33,7 +37,7 @@ export default class PackagesService {
   public static async getAvailablePackageVersions(
     availablePackageReference?: AvailablePackageReference,
   ): Promise<GetAvailablePackageVersionsResponse> {
-    return await this.client().GetAvailablePackageVersions({
+    return await this.packagesServiceClient().GetAvailablePackageVersions({
       availablePackageRef: availablePackageReference,
     });
   }
@@ -42,9 +46,13 @@ export default class PackagesService {
     availablePackageReference?: AvailablePackageReference,
     version?: string,
   ): Promise<GetAvailablePackageDetailResponse> {
-    return await this.client().GetAvailablePackageDetail({
+    return await this.packagesServiceClient().GetAvailablePackageDetail({
       pkgVersion: version,
       availablePackageRef: availablePackageReference,
     });
+  }
+
+  public static async getConfiguredPlugins(): Promise<GetConfiguredPluginsResponse> {
+    return await this.pluginsServiceClientImpl().GetConfiguredPlugins({});
   }
 }

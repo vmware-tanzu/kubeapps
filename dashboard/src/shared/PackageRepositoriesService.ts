@@ -19,6 +19,7 @@ import {
   UpdatePackageRepositoryRequest,
   UsernamePassword,
 } from "gen/kubeappsapis/core/packages/v1alpha1/repositories";
+import { GetConfiguredPluginsResponse } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins";
 import {
   HelmPackageRepositoryCustomDetail,
   protobufPackage as helmProtobufPackage,
@@ -33,6 +34,8 @@ import { IPkgRepoFormData, PluginNames } from "./types";
 export class PackageRepositoriesService {
   public static coreRepositoriesClient = () =>
     new KubeappsGrpcClient().getRepositoriesServiceClientImpl();
+  public static pluginsServiceClientImpl = () =>
+    new KubeappsGrpcClient().getPluginsServiceClientImpl();
 
   public static async getPackageRepositorySummaries(
     context: Context,
@@ -240,5 +243,9 @@ export class PackageRepositoriesService {
       default:
         return;
     }
+  }
+
+  public static async getConfiguredPlugins(): Promise<GetConfiguredPluginsResponse> {
+    return await this.pluginsServiceClientImpl().GetConfiguredPlugins({});
   }
 }

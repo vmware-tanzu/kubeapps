@@ -3,18 +3,37 @@
 
 import configureMockStore from "redux-mock-store";
 import thunk from "redux-thunk";
-import Config, { SupportedThemes } from "shared/Config";
+import Config, { IConfig, SupportedThemes } from "shared/Config";
 import { getType } from "typesafe-actions";
 import actions from ".";
 
 const mockStore = configureMockStore([thunk]);
 
 let store: any;
-const testConfig = "have you tried to turn it off and on again";
+const testConfig = {
+  loaded: false,
+  kubeappsCluster: "",
+  kubeappsNamespace: "",
+  globalReposNamespace: "",
+  carvelGlobalNamespace: "",
+  appVersion: "",
+  authProxyEnabled: false,
+  oauthLoginURI: "",
+  oauthLogoutURI: "",
+  authProxySkipLoginPage: false,
+  clusters: [],
+  featureFlags: { operators: false },
+  theme: SupportedThemes.light,
+  remoteComponentsUrl: "",
+  customAppViews: [],
+  skipAvailablePackageDetails: false,
+  createNamespaceLabels: {},
+  configuredPlugins: [],
+} as IConfig;
 
 beforeEach(() => {
   Config.getConfig = jest.fn().mockReturnValue(testConfig);
-
+  Config.getConfiguredPlugins = jest.fn().mockReturnValue([]);
   store = mockStore();
 });
 

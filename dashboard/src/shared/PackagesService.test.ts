@@ -123,7 +123,7 @@ describe("App", () => {
         jest
           .spyOn(mockClient, "GetAvailablePackageSummaries")
           .mockImplementation(mockClientGetAvailablePackageSummaries);
-        jest.spyOn(PackagesService, "client").mockImplementation(() => mockClient);
+        jest.spyOn(PackagesService, "packagesServiceClient").mockImplementation(() => mockClient);
         const availablePackageSummaries = await PackagesService.getAvailablePackageSummaries(
           t.args.cluster,
           t.args.namespace,
