@@ -13,6 +13,8 @@ import { convertGrpcAuthError } from "./utils";
 export default class PackagesService {
   public static packagesServiceClient = () =>
     new KubeappsGrpcClient().getPackagesServiceClientImpl();
+  public static pluginsServiceClientImpl = () =>
+    new KubeappsGrpcClient().getPluginsServiceClientImpl();
 
   public static async getAvailablePackageSummaries(
     cluster: string,

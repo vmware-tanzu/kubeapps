@@ -2,14 +2,14 @@
 
 This section contains technical reference and developer guides for Kubeapps.
 
-| Reference                                                         | Description |
-| ----------------------------------------------------------------- | ----------- |
-| [Proposals](./proposals/README.md)                                |             |
-| [Developer guides](./developer/README.md)                         |             |
-| [Testing environment setup](./testing/testing-environment.md)     |             |
-| [CI configuration](./testing/ci.md)                               |             |
-| [End-to-end testing configuration](./testing/end-to-end-tests.md) |             |
-| [Translations](./translations/translate-kubeapps.md)              |             |
+| Reference                                                         | Description                                                                                                                                     |
+| ----------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
+| [Proposals](./proposals/README.md)                                | Technical proposals for significant enhancements and changes to Kubeapps                                                                        |
+| [Developer guides](./developer/README.md)                         | Guides to configure development environment for the different components and guidelines for builds, releases, documentation, issue triage, etc. |
+| [Testing environment setup](./testing/testing-environment.md)     | Setup your environment to test Kubeapps integration with other services                                                                         |
+| [CI configuration](./testing/ci.md)                               | Technical reference for configuring Kubeapps CI environment                                                                                     |
+| [End-to-end testing configuration](./testing/end-to-end-tests.md) | Setup your development environment to run end-2-end tests                                                                                                   |
+| [Translations](./translations/translate-kubeapps.md)              | How to translate Kubeapps UI and messages                                                                                                              |
 
 Alternatively, our [Tutorials section](../tutorials/README.md) contains step-by-step tutorials to help outline what Kubeapps is capable of while helping you achieve specific aims, such as installing Kubeapps or using an OIDC provider.
 
