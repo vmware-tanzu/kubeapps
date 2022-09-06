@@ -12,7 +12,6 @@ import (
 	"fmt"
 	"image"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"net/url"
 	"path"
@@ -439,7 +438,7 @@ func extractFilesFromBuffer(buf *bytes.Buffer) (*artifactFiles, error) {
 			filename := strings.ToLower(path.Base(compressedFileName))
 			if importantFiles[filename] {
 				// Read content
-				data, err := ioutil.ReadAll(tarReader)
+				data, err := io.ReadAll(tarReader)
 				if err != nil {
 					return nil, err
 				}

@@ -36,10 +36,6 @@ info:
     name: Apache-2.0
     url: "http://www.apache.org/licenses/LICENSE-2.0.html"
 tags:
-  - name: kubeops
-    externalDocs:
-      url: "https://github.com/vmware-tanzu/kubeapps/tree/main/cmd/kubeops"
-    description: "The kubeops component is a micro-service that creates an API endpoint for accessing the Helm API and Kubernetes resources."
   - name: PluginsService
   - name: PackagesService
   - name: RepositoriesService
@@ -56,108 +52,11 @@ externalDocs:
 security:
   - bearerAuth: []
 paths:
-  # Endpoints defined at pkg/http-handler/http-handler.go
-  "/api/v1/clusters/{cluster}/can-i":
-    post:
-      tags:
-        - kubeops
-      summary: "CanI"
-      description: ""
-      operationId: "CanI"
-      parameters:
-        - name: cluster
-          in: path
-          required: true
-          schema:
-            type: string
-            default: default
-          description: Cluster name
-      requestBody:
-        description: ""
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/ResourceAttributes"
-      responses:
-        default:
-          description: Default code/message response
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
-        "200":
-          description: Successful response
-          content:
-            text/plain:
-              schema:
-                $ref: "#/components/schemas/AllowedResponse"
-        "401":
-          description: Unauthorized
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
-        "500":
-          description: Internal server error
-          content:
-            text/plain:
-              schema:
-                type: string
-  "/api/v1/clusters/{cluster}/namespaces":
+  "/apis/operators/namespaces/{namespace}/operator/{name}/logo":
     get:
-      tags:
-        - kubeops
-      summary: "GetNamespaces"
+      summary: "Get operator logo"
       description: ""
-      operationId: "GetNamespaces"
       parameters:
-        - name: cluster
-          in: path
-          required: true
-          schema:
-            type: string
-            default: default
-          description: Cluster name
-      responses:
-        default:
-          description: Default code/message response
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
-        "200":
-          description: Successful response
-          content:
-            text/plain:
-              schema:
-                type: object
-                properties:
-                  namespaces:
-                    type: array
-                    items:
-                      $ref: "#/components/schemas/Namespace"
-        "401":
-          description: Unauthorized
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
-  "/api/v1/clusters/{cluster}/namespaces/{namespace}/operator/{name}/logo":
-    get:
-      tags:
-        - kubeops
-      summary: "GetOperatorLogo"
-      description: ""
-      operationId: "GetOperatorLogo"
-      parameters:
-        - name: cluster
-          in: path
-          required: true
-          schema:
-            type: string
-            default: default
-          description: Cluster name
         - name: namespace
           in: path
           required: true
@@ -171,7 +70,7 @@ paths:
           schema:
             type: string
             default: default
-          description: Apprepository name
+          description: Operator name
       responses:
         default:
           description: Default code/message response

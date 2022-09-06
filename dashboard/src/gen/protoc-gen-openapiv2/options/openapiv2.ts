@@ -1,6 +1,6 @@
 /* eslint-disable */
 import Long from "long";
-import * as _m0 from "protobufjs/minimal";
+import _m0 from "protobufjs/minimal";
 import { Value } from "../../google/protobuf/struct";
 
 export const protobufPackage = "grpc.gateway.protoc_gen_openapiv2.options";
@@ -948,9 +948,7 @@ export interface SecurityRequirement {
    * then the value is a list of scope names required for the execution.
    * For other security scheme types, the array MUST be empty.
    */
-  securityRequirement: {
-    [key: string]: SecurityRequirement_SecurityRequirementValue;
-  };
+  securityRequirement: { [key: string]: SecurityRequirement_SecurityRequirementValue };
 }
 
 /**
@@ -1213,14 +1211,15 @@ export const Swagger = {
     message.schemes = object.schemes?.map(e => e) || [];
     message.consumes = object.consumes?.map(e => e) || [];
     message.produces = object.produces?.map(e => e) || [];
-    message.responses = Object.entries(object.responses ?? {}).reduce<{
-      [key: string]: Response;
-    }>((acc, [key, value]) => {
-      if (value !== undefined) {
-        acc[key] = Response.fromPartial(value);
-      }
-      return acc;
-    }, {});
+    message.responses = Object.entries(object.responses ?? {}).reduce<{ [key: string]: Response }>(
+      (acc, [key, value]) => {
+        if (value !== undefined) {
+          acc[key] = Response.fromPartial(value);
+        }
+        return acc;
+      },
+      {},
+    );
     message.securityDefinitions =
       object.securityDefinitions !== undefined && object.securityDefinitions !== null
         ? SecurityDefinitions.fromPartial(object.securityDefinitions)
@@ -1230,14 +1229,15 @@ export const Swagger = {
       object.externalDocs !== undefined && object.externalDocs !== null
         ? ExternalDocumentation.fromPartial(object.externalDocs)
         : undefined;
-    message.extensions = Object.entries(object.extensions ?? {}).reduce<{
-      [key: string]: any;
-    }>((acc, [key, value]) => {
-      if (value !== undefined) {
-        acc[key] = value;
-      }
-      return acc;
-    }, {});
+    message.extensions = Object.entries(object.extensions ?? {}).reduce<{ [key: string]: any }>(
+      (acc, [key, value]) => {
+        if (value !== undefined) {
+          acc[key] = value;
+        }
+        return acc;
+      },
+      {},
+    );
     return message;
   },
 };
@@ -1596,25 +1596,27 @@ export const Operation = {
     message.operationId = object.operationId ?? "";
     message.consumes = object.consumes?.map(e => e) || [];
     message.produces = object.produces?.map(e => e) || [];
-    message.responses = Object.entries(object.responses ?? {}).reduce<{
-      [key: string]: Response;
-    }>((acc, [key, value]) => {
-      if (value !== undefined) {
-        acc[key] = Response.fromPartial(value);
-      }
-      return acc;
-    }, {});
+    message.responses = Object.entries(object.responses ?? {}).reduce<{ [key: string]: Response }>(
+      (acc, [key, value]) => {
+        if (value !== undefined) {
+          acc[key] = Response.fromPartial(value);
+        }
+        return acc;
+      },
+      {},
+    );
     message.schemes = object.schemes?.map(e => e) || [];
     message.deprecated = object.deprecated ?? false;
     message.security = object.security?.map(e => SecurityRequirement.fromPartial(e)) || [];
-    message.extensions = Object.entries(object.extensions ?? {}).reduce<{
-      [key: string]: any;
-    }>((acc, [key, value]) => {
-      if (value !== undefined) {
-        acc[key] = value;
-      }
-      return acc;
-    }, {});
+    message.extensions = Object.entries(object.extensions ?? {}).reduce<{ [key: string]: any }>(
+      (acc, [key, value]) => {
+        if (value !== undefined) {
+          acc[key] = value;
+        }
+        return acc;
+      },
+      {},
+    );
     return message;
   },
 };
@@ -1829,13 +1831,7 @@ export const Header = {
 };
 
 function createBaseResponse(): Response {
-  return {
-    description: "",
-    schema: undefined,
-    headers: {},
-    examples: {},
-    extensions: {},
-  };
+  return { description: "", schema: undefined, headers: {}, examples: {}, extensions: {} };
 }
 
 export const Response = {
@@ -1960,30 +1956,33 @@ export const Response = {
       object.schema !== undefined && object.schema !== null
         ? Schema.fromPartial(object.schema)
         : undefined;
-    message.headers = Object.entries(object.headers ?? {}).reduce<{
-      [key: string]: Header;
-    }>((acc, [key, value]) => {
-      if (value !== undefined) {
-        acc[key] = Header.fromPartial(value);
-      }
-      return acc;
-    }, {});
-    message.examples = Object.entries(object.examples ?? {}).reduce<{
-      [key: string]: string;
-    }>((acc, [key, value]) => {
-      if (value !== undefined) {
-        acc[key] = String(value);
-      }
-      return acc;
-    }, {});
-    message.extensions = Object.entries(object.extensions ?? {}).reduce<{
-      [key: string]: any;
-    }>((acc, [key, value]) => {
-      if (value !== undefined) {
-        acc[key] = value;
-      }
-      return acc;
-    }, {});
+    message.headers = Object.entries(object.headers ?? {}).reduce<{ [key: string]: Header }>(
+      (acc, [key, value]) => {
+        if (value !== undefined) {
+          acc[key] = Header.fromPartial(value);
+        }
+        return acc;
+      },
+      {},
+    );
+    message.examples = Object.entries(object.examples ?? {}).reduce<{ [key: string]: string }>(
+      (acc, [key, value]) => {
+        if (value !== undefined) {
+          acc[key] = String(value);
+        }
+        return acc;
+      },
+      {},
+    );
+    message.extensions = Object.entries(object.extensions ?? {}).reduce<{ [key: string]: any }>(
+      (acc, [key, value]) => {
+        if (value !== undefined) {
+          acc[key] = value;
+        }
+        return acc;
+      },
+      {},
+    );
     return message;
   },
 };
@@ -2301,14 +2300,15 @@ export const Info = {
         ? License.fromPartial(object.license)
         : undefined;
     message.version = object.version ?? "";
-    message.extensions = Object.entries(object.extensions ?? {}).reduce<{
-      [key: string]: any;
-    }>((acc, [key, value]) => {
-      if (value !== undefined) {
-        acc[key] = value;
-      }
-      return acc;
-    }, {});
+    message.extensions = Object.entries(object.extensions ?? {}).reduce<{ [key: string]: any }>(
+      (acc, [key, value]) => {
+        if (value !== undefined) {
+          acc[key] = value;
+        }
+        return acc;
+      },
+      {},
+    );
     return message;
   },
 };
@@ -3016,14 +3016,15 @@ export const JSONSchema = {
       object.fieldConfiguration !== undefined && object.fieldConfiguration !== null
         ? JSONSchema_FieldConfiguration.fromPartial(object.fieldConfiguration)
         : undefined;
-    message.extensions = Object.entries(object.extensions ?? {}).reduce<{
-      [key: string]: any;
-    }>((acc, [key, value]) => {
-      if (value !== undefined) {
-        acc[key] = value;
-      }
-      return acc;
-    }, {});
+    message.extensions = Object.entries(object.extensions ?? {}).reduce<{ [key: string]: any }>(
+      (acc, [key, value]) => {
+        if (value !== undefined) {
+          acc[key] = value;
+        }
+        return acc;
+      },
+      {},
+    );
     return message;
   },
 };
@@ -3062,9 +3063,7 @@ export const JSONSchema_FieldConfiguration = {
   },
 
   fromJSON(object: any): JSONSchema_FieldConfiguration {
-    return {
-      pathParamName: isSet(object.pathParamName) ? String(object.pathParamName) : "",
-    };
+    return { pathParamName: isSet(object.pathParamName) ? String(object.pathParamName) : "" };
   },
 
   toJSON(message: JSONSchema_FieldConfiguration): unknown {
@@ -3250,12 +3249,13 @@ export const SecurityDefinitions = {
   fromJSON(object: any): SecurityDefinitions {
     return {
       security: isObject(object.security)
-        ? Object.entries(object.security).reduce<{
-            [key: string]: SecurityScheme;
-          }>((acc, [key, value]) => {
-            acc[key] = SecurityScheme.fromJSON(value);
-            return acc;
-          }, {})
+        ? Object.entries(object.security).reduce<{ [key: string]: SecurityScheme }>(
+            (acc, [key, value]) => {
+              acc[key] = SecurityScheme.fromJSON(value);
+              return acc;
+            },
+            {},
+          )
         : {},
     };
   },
@@ -3502,14 +3502,15 @@ export const SecurityScheme = {
       object.scopes !== undefined && object.scopes !== null
         ? Scopes.fromPartial(object.scopes)
         : undefined;
-    message.extensions = Object.entries(object.extensions ?? {}).reduce<{
-      [key: string]: any;
-    }>((acc, [key, value]) => {
-      if (value !== undefined) {
-        acc[key] = value;
-      }
-      return acc;
-    }, {});
+    message.extensions = Object.entries(object.extensions ?? {}).reduce<{ [key: string]: any }>(
+      (acc, [key, value]) => {
+        if (value !== undefined) {
+          acc[key] = value;
+        }
+        return acc;
+      },
+      {},
+    );
     return message;
   },
 };
@@ -3693,9 +3694,7 @@ export const SecurityRequirement_SecurityRequirementValue = {
   },
 
   fromJSON(object: any): SecurityRequirement_SecurityRequirementValue {
-    return {
-      scope: Array.isArray(object?.scope) ? object.scope.map((e: any) => String(e)) : [],
-    };
+    return { scope: Array.isArray(object?.scope) ? object.scope.map((e: any) => String(e)) : [] };
   },
 
   toJSON(message: SecurityRequirement_SecurityRequirementValue): unknown {
@@ -3854,14 +3853,15 @@ export const Scopes = {
 
   fromPartial<I extends Exact<DeepPartial<Scopes>, I>>(object: I): Scopes {
     const message = createBaseScopes();
-    message.scope = Object.entries(object.scope ?? {}).reduce<{
-      [key: string]: string;
-    }>((acc, [key, value]) => {
-      if (value !== undefined) {
-        acc[key] = String(value);
-      }
-      return acc;
-    }, {});
+    message.scope = Object.entries(object.scope ?? {}).reduce<{ [key: string]: string }>(
+      (acc, [key, value]) => {
+        if (value !== undefined) {
+          acc[key] = String(value);
+        }
+        return acc;
+      },
+      {},
+    );
     return message;
   },
 };
@@ -3928,10 +3928,18 @@ declare var self: any | undefined;
 declare var window: any | undefined;
 declare var global: any | undefined;
 var globalThis: any = (() => {
-  if (typeof globalThis !== "undefined") return globalThis;
-  if (typeof self !== "undefined") return self;
-  if (typeof window !== "undefined") return window;
-  if (typeof global !== "undefined") return global;
+  if (typeof globalThis !== "undefined") {
+    return globalThis;
+  }
+  if (typeof self !== "undefined") {
+    return self;
+  }
+  if (typeof window !== "undefined") {
+    return window;
+  }
+  if (typeof global !== "undefined") {
+    return global;
+  }
   throw "Unable to locate global object";
 })();
 
@@ -3950,7 +3958,7 @@ export type DeepPartial<T> = T extends Builtin
 type KeysOfUnion<T> = T extends T ? keyof T : never;
 export type Exact<P, I extends P> = P extends Builtin
   ? P
-  : P & { [K in keyof P]: Exact<P[K], I[K]> } & Record<Exclude<keyof I, KeysOfUnion<P>>, never>;
+  : P & { [K in keyof P]: Exact<P[K], I[K]> } & { [K in Exclude<keyof I, KeysOfUnion<P>>]: never };
 
 function longToNumber(long: Long): number {
   if (long.gt(Number.MAX_SAFE_INTEGER)) {

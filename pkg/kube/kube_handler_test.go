@@ -9,7 +9,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
@@ -24,8 +24,6 @@ import (
 	v1alpha1 "github.com/vmware-tanzu/kubeapps/cmd/apprepository-controller/pkg/apis/apprepository/v1alpha1"
 	fakeapprepoclientset "github.com/vmware-tanzu/kubeapps/cmd/apprepository-controller/pkg/client/clientset/versioned/fake"
 	httpclient "github.com/vmware-tanzu/kubeapps/pkg/http-client"
-	authorizationapi "k8s.io/api/authorization/v1"
-	authorizationv1 "k8s.io/api/authorization/v1"
 	corev1 "k8s.io/api/core/v1"
 	k8sErrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -34,7 +32,6 @@ import (
 	fakecoreclientset "k8s.io/client-go/kubernetes/fake"
 	"k8s.io/client-go/rest"
 	fakeRest "k8s.io/client-go/rest/fake"
-	k8stesting "k8s.io/client-go/testing"
 	log "k8s.io/klog/v2"
 )
 
@@ -312,7 +309,7 @@ func TestAppRepositoryCreate(t *testing.T) {
 				clientset:         cs,
 			}
 
-			apprepo, err := handler.CreateAppRepository(ioutil.NopCloser(strings.NewReader(tc.requestData)), tc.requestNamespace)
+			apprepo, err := handler.CreateAppRepository(io.NopCloser(strings.NewReader(tc.requestData)), tc.requestNamespace)
 			checkErr(t, err, tc.expectedError)
 
 			if apprepo != nil {
@@ -472,7 +469,7 @@ func TestAppRepositoryUpdate(t *testing.T) {
 				clientset:         cs,
 			}
 
-			apprepo, err := handler.UpdateAppRepository(ioutil.NopCloser(strings.NewReader(tc.requestData)), tc.requestNamespace)
+			apprepo, err := handler.UpdateAppRepository(io.NopCloser(strings.NewReader(tc.requestData)), tc.requestNamespace)
 			checkErr(t, err, tc.expectedError)
 
 			if apprepo != nil {
@@ -997,18 +994,18 @@ func TestNonOCIValidate(t *testing.T) {
 		{
 			name:             "it returns 200 OK validation response if there is no error and the external response is 200",
 			httpValidator:    HelmNonOCIValidator{Req: validRequest},
-			fakeRepoResponse: &http.Response{StatusCode: 200, Body: ioutil.NopCloser(bytes.NewReader([]byte("OK")))},
+			fakeRepoResponse: &http.Response{StatusCode: 200, Body: io.NopCloser(bytes.NewReader([]byte("OK")))},
 			expectedResponse: &ValidationResponse{Code: 200, Message: "OK"},
 		},
 		{
 			name:             "it does not include the body of the upstream response when validation succeeds",
 			httpValidator:    HelmNonOCIValidator{Req: validRequest},
-			fakeRepoResponse: &http.Response{StatusCode: 200, Body: ioutil.NopCloser(bytes.NewReader([]byte("10 Mb of data")))},
+			fakeRepoResponse: &http.Response{StatusCode: 200, Body: io.NopCloser(bytes.NewReader([]byte("10 Mb of data")))},
 			expectedResponse: &ValidationResponse{Code: 200, Message: "OK"},
 		},
 		{
 			name:             "it returns an error from the response with the body text if validation fails",
-			fakeRepoResponse: &http.Response{StatusCode: 401, Body: ioutil.NopCloser(bytes.NewReader([]byte("It failed because of X and Y")))},
+			fakeRepoResponse: &http.Response{StatusCode: 401, Body: io.NopCloser(bytes.NewReader([]byte("It failed because of X and Y")))},
 			expectedResponse: &ValidationResponse{Code: 401, Message: "It failed because of X and Y"},
 			httpValidator:    HelmNonOCIValidator{Req: validRequest},
 		},
@@ -1409,7 +1406,7 @@ func TestValidateAppRepository(t *testing.T) {
 			}
 
 			handler := userHandler{kubeappsNamespace: kubeappsNamespace}
-			response, err := handler.ValidateAppRepository(ioutil.NopCloser(bytes.NewReader(appRepoJson)), tc.requestNamespace)
+			response, err := handler.ValidateAppRepository(io.NopCloser(bytes.NewReader(appRepoJson)), tc.requestNamespace)
 			if err != nil {
 				t.Fatalf("%+v", err)
 			}
@@ -1658,110 +1655,6 @@ func TestNewClusterConfig(t *testing.T) {
 	}
 }
 
-func TestParseSelfSubjectAccessRequest(t *testing.T) {
-	testCases := []struct {
-		name          string
-		body          string
-		expected      *authorizationapi.ResourceAttributes
-		errorExpected bool
-	}{
-		{
-			name: "should parse a valid body",
-			body: `{"resource":"namespaces"}`,
-			expected: &authorizationapi.ResourceAttributes{
-				Resource: "namespaces",
-			},
-		},
-		{
-			name:          "should fail with the wrong input",
-			body:          "nope",
-			errorExpected: true,
-		},
-	}
-	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			input := ioutil.NopCloser(bytes.NewReader([]byte(tc.body)))
-			res, err := ParseSelfSubjectAccessRequest(input)
-			if got, want := err != nil, tc.errorExpected; got != want {
-				t.Fatalf("got: %t, want: %t. err: %+v", got, want, err)
-			}
-
-			if got, want := res, tc.expected; !cmp.Equal(want, got) {
-				t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got))
-			}
-		})
-	}
-}
-
-func TestCanI(t *testing.T) {
-	testCases := []struct {
-		name    string
-		allowed bool
-		err     error
-	}{
-		{
-			name:    "returns allowed",
-			allowed: true,
-		},
-		{
-			name:    "returns forbidden",
-			allowed: false,
-		},
-		{
-			name:    "returns an error",
-			allowed: false,
-			err:     fmt.Errorf("boom"),
-		},
-	}
-	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			userClientSet := fakeCombinedClientset{
-				fakeapprepoclientset.NewSimpleClientset(),
-				fakecoreclientset.NewSimpleClientset(),
-				&fakeRest.RESTClient{},
-			}
-
-			userClientSet.Clientset.Fake.PrependReactor(
-				"create",
-				"selfsubjectaccessreviews",
-				func(action k8stesting.Action) (handled bool, ret k8sruntime.Object, err error) {
-					mysar := &authorizationv1.SelfSubjectAccessReview{
-						Status: authorizationv1.SubjectAccessReviewStatus{
-							Allowed: tc.allowed,
-							Reason:  "I want to test it",
-						},
-					}
-					return true, mysar, tc.err
-				},
-			)
-
-			handler := kubeHandler{
-				clientsetForConfig: func(*rest.Config) (combinedClientsetInterface, error) { return userClientSet, nil },
-				kubeappsNamespace:  "kubeapps",
-				clustersConfig: ClustersConfig{
-					KubeappsClusterName: "default",
-					Clusters: map[string]ClusterConfig{
-						"default": {},
-					},
-				},
-			}
-
-			userHandler, err := handler.AsUser("token", "default")
-			if err != nil {
-				t.Errorf("Unexpected error %v", err)
-			}
-			allowed, err := userHandler.CanI(&authorizationv1.ResourceAttributes{})
-			if err != nil && err != tc.err {
-				t.Errorf("Unexpected error %v, wanted %v", err, tc.err)
-			}
-
-			if allowed != tc.allowed {
-				t.Errorf("Expecting %v, got %v", tc.allowed, allowed)
-			}
-		})
-	}
-}
-
 func TestParseClusterConfig(t *testing.T) {
 	defaultPinnipedURL := "http://kubeapps-internal-pinniped-proxy.kubeapps:3333"
 	testCases := []struct {
@@ -1950,7 +1843,7 @@ func TestParseClusterConfig(t *testing.T) {
 
 			for clusterName, clusterConfig := range tc.expectedConfig.Clusters {
 				if clusterConfig.CertificateAuthorityDataDecoded != "" {
-					fileCAData, err := ioutil.ReadFile(config.Clusters[clusterName].CAFile)
+					fileCAData, err := os.ReadFile(config.Clusters[clusterName].CAFile)
 					if err != nil {
 						t.Fatalf("error opening %s: %+v", config.Clusters[clusterName].CAFile, err)
 					}
@@ -1964,7 +1857,7 @@ func TestParseClusterConfig(t *testing.T) {
 }
 
 func createConfigFile(t *testing.T, content string) string {
-	tmpfile, err := ioutil.TempFile("", "")
+	tmpfile, err := os.CreateTemp("", "")
 	if err != nil {
 		t.Fatalf("%+v", err)
 	}

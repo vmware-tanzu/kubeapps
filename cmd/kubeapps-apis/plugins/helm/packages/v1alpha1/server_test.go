@@ -7,7 +7,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/url"
 	"os"
 	"regexp"
@@ -1998,7 +1998,7 @@ func newActionConfigFixture(t *testing.T, namespace string, rels []releaseStub, 
 	memDriver := driver.NewMemory()
 
 	if kubeClient == nil {
-		kubeClient = &kubefake.FailingKubeClient{PrintingKubeClient: kubefake.PrintingKubeClient{Out: ioutil.Discard}}
+		kubeClient = &kubefake.FailingKubeClient{PrintingKubeClient: kubefake.PrintingKubeClient{Out: io.Discard}}
 	}
 
 	actionConfig := &action.Configuration{

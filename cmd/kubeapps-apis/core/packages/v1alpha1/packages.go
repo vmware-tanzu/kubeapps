@@ -53,7 +53,7 @@ func NewPackagesServer(pkgingPlugins []pluginsv1alpha1.PluginWithServer) (*packa
 	}, nil
 }
 
-// GetAvailablePackages returns the packages based on the request.
+// GetAvailablePackageSummaries returns the packages based on the request.
 func (s packagesServer) GetAvailablePackageSummaries(ctx context.Context, request *packages.GetAvailablePackageSummariesRequest) (*packages.GetAvailablePackageSummariesResponse, error) {
 	log.InfoS("+core GetAvailablePackageSummaries", "cluster", request.GetContext().GetCluster(), "namespace", request.GetContext().GetNamespace())
 

@@ -8,13 +8,18 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"io"
+	"net/http"
+	"net/url"
+	"os"
+	"path"
+	"path/filepath"
+	"strings"
+
 	"github.com/vmware-tanzu/kubeapps/cmd/apprepository-controller/pkg/apis/apprepository/v1alpha1"
 	apprepoclientset "github.com/vmware-tanzu/kubeapps/cmd/apprepository-controller/pkg/client/clientset/versioned"
 	v1alpha1typed "github.com/vmware-tanzu/kubeapps/cmd/apprepository-controller/pkg/client/clientset/versioned/typed/apprepository/v1alpha1"
 	httpclient "github.com/vmware-tanzu/kubeapps/pkg/http-client"
-	"io"
-	"io/ioutil"
-	authorizationapi "k8s.io/api/authorization/v1"
 	corev1 "k8s.io/api/core/v1"
 	k8sErrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -25,12 +30,6 @@ import (
 	"k8s.io/client-go/tools/clientcmd"
 	clientcmdapi "k8s.io/client-go/tools/clientcmd/api"
 	log "k8s.io/klog/v2"
-	"net/http"
-	"net/url"
-	"os"
-	"path"
-	"path/filepath"
-	"strings"
 )
 
 const OCIImageManifestMediaType = "application/vnd.oci.image.manifest.v1+json"
@@ -162,7 +161,7 @@ func NewClusterConfig(inClusterConfig *rest.Config, userToken string, cluster st
 }
 
 func ParseClusterConfig(configPath, caFilesPrefix string, pinnipedProxyURL, PinnipedProxyCACert string) (ClustersConfig, func(), error) {
-	caFilesDir, err := ioutil.TempDir(caFilesPrefix, "")
+	caFilesDir, err := os.MkdirTemp(caFilesPrefix, "")
 	if err != nil {
 		return ClustersConfig{}, func() {}, err
 	}
@@ -171,7 +170,7 @@ func ParseClusterConfig(configPath, caFilesPrefix string, pinnipedProxyURL, Pinn
 	}
 
 	// #nosec G304
-	content, err := ioutil.ReadFile(configPath)
+	content, err := os.ReadFile(configPath)
 	if err != nil {
 		return ClustersConfig{}, deferFn, err
 	}
@@ -210,7 +209,7 @@ func ParseClusterConfig(configPath, caFilesPrefix string, pinnipedProxyURL, Pinn
 			c.CAFile = filepath.Join(caFilesDir, c.Name)
 			// #nosec G306
 			// TODO(agamez): check if we can set perms to 0600 instead of 0644.
-			err = ioutil.WriteFile(c.CAFile, decodedCAData, 0644)
+			err = os.WriteFile(c.CAFile, decodedCAData, 0644)
 			if err != nil {
 				return ClustersConfig{}, deferFn, err
 			}
@@ -310,8 +309,6 @@ type handler interface {
 	GetSecret(name, namespace string) (*corev1.Secret, error)
 	GetAppRepository(repoName, repoNamespace string) (*v1alpha1.AppRepository, error)
 	ValidateAppRepository(appRepoBody io.ReadCloser, requestNamespace string) (*ValidationResponse, error)
-	GetOperatorLogo(namespace, name string) ([]byte, error)
-	CanI(resourceAttributes *authorizationapi.ResourceAttributes) (bool, error)
 }
 
 // AuthHandler exposes Handler functionality as a user or the current serviceaccount
@@ -767,9 +764,9 @@ func getOCIAppRepositoryTag(cli httpclient.Client, repoURL string, repoName stri
 	var body []byte
 	var repoTagsData repoTagsList
 
-	body, err = ioutil.ReadAll(resp.Body)
+	body, err = io.ReadAll(resp.Body)
 	if err != nil {
-		log.Errorf("ioutil.ReadAll : unable to get: %v", err)
+		log.Errorf("io.ReadAll : unable to get: %v", err)
 		return "", err
 	}
 
@@ -821,7 +818,7 @@ func getOCIAppRepositoryMediaType(cli httpclient.Client, repoURL string, repoNam
 
 	var mediaData repoManifest
 
-	body, err := ioutil.ReadAll(resp.Body)
+	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return "", err
 	}
@@ -884,7 +881,7 @@ func (r HelmNonOCIValidator) Validate(cli httpclient.Client) (*ValidationRespons
 	}
 	response := &ValidationResponse{Code: res.StatusCode, Message: "OK"}
 	if response.Code != 200 {
-		body, err := ioutil.ReadAll(res.Body)
+		body, err := io.ReadAll(res.Body)
 		if err != nil {
 			return nil, fmt.Errorf("Unable to parse validation response. Got: %w", err)
 		}
@@ -1082,35 +1079,4 @@ func KubeappsSecretNameForRepo(repoName, namespace string) string {
 // GetSecret return the a secret from a namespace using a token if given
 func (a *userHandler) GetSecret(name, namespace string) (*corev1.Secret, error) {
 	return a.clientset.CoreV1().Secrets(namespace).Get(context.TODO(), name, metav1.GetOptions{})
-}
-
-// GetNamespaces return the list of namespaces that the user has permission to access
-func (a *userHandler) GetOperatorLogo(namespace, name string) ([]byte, error) {
-	return a.clientset.RestClient().Get().AbsPath(fmt.Sprintf("/apis/packages.operators.coreos.com/v1/namespaces/%s/packagemanifests/%s/icon", namespace, name)).Do(context.TODO()).Raw()
-}
-
-// ParseSelfSubjectAccessRequest parses a SelfSubjectAccessRequest
-func ParseSelfSubjectAccessRequest(selfSubjectAccessReviewBody io.ReadCloser) (*authorizationapi.ResourceAttributes, error) {
-	defer selfSubjectAccessReviewBody.Close()
-	var request authorizationapi.ResourceAttributes
-	err := json.NewDecoder(selfSubjectAccessReviewBody).Decode(&request)
-	if err != nil {
-		log.InfoS("unable to decode:", "err", err)
-		return nil, err
-	}
-	return &request, nil
-}
-
-// CanI returns if the user is allowed to do the given action
-func (a *userHandler) CanI(resourceAttributes *authorizationapi.ResourceAttributes) (bool, error) {
-	res, err := a.clientset.AuthorizationV1().SelfSubjectAccessReviews().Create(context.TODO(), &authorizationapi.SelfSubjectAccessReview{
-		Spec: authorizationapi.SelfSubjectAccessReviewSpec{
-			ResourceAttributes: resourceAttributes,
-		},
-	}, metav1.CreateOptions{})
-	if err != nil {
-		return false, err
-	}
-
-	return res.Status.Allowed, nil
 }

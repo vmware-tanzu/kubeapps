@@ -29,6 +29,7 @@ type ResourcesServiceClient interface {
 	CheckNamespaceExists(ctx context.Context, in *CheckNamespaceExistsRequest, opts ...grpc.CallOption) (*CheckNamespaceExistsResponse, error)
 	GetSecretNames(ctx context.Context, in *GetSecretNamesRequest, opts ...grpc.CallOption) (*GetSecretNamesResponse, error)
 	CreateSecret(ctx context.Context, in *CreateSecretRequest, opts ...grpc.CallOption) (*CreateSecretResponse, error)
+	CanI(ctx context.Context, in *CanIRequest, opts ...grpc.CallOption) (*CanIResponse, error)
 }
 
 type resourcesServiceClient struct {
@@ -125,6 +126,15 @@ func (c *resourcesServiceClient) CreateSecret(ctx context.Context, in *CreateSec
 	return out, nil
 }
 
+func (c *resourcesServiceClient) CanI(ctx context.Context, in *CanIRequest, opts ...grpc.CallOption) (*CanIResponse, error) {
+	out := new(CanIResponse)
+	err := c.cc.Invoke(ctx, "/kubeappsapis.plugins.resources.v1alpha1.ResourcesService/CanI", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // ResourcesServiceServer is the server API for ResourcesService service.
 // All implementations should embed UnimplementedResourcesServiceServer
 // for forward compatibility
@@ -136,6 +146,7 @@ type ResourcesServiceServer interface {
 	CheckNamespaceExists(context.Context, *CheckNamespaceExistsRequest) (*CheckNamespaceExistsResponse, error)
 	GetSecretNames(context.Context, *GetSecretNamesRequest) (*GetSecretNamesResponse, error)
 	CreateSecret(context.Context, *CreateSecretRequest) (*CreateSecretResponse, error)
+	CanI(context.Context, *CanIRequest) (*CanIResponse, error)
 }
 
 // UnimplementedResourcesServiceServer should be embedded to have forward compatible implementations.
@@ -162,6 +173,9 @@ func (UnimplementedResourcesServiceServer) GetSecretNames(context.Context, *GetS
 }
 func (UnimplementedResourcesServiceServer) CreateSecret(context.Context, *CreateSecretRequest) (*CreateSecretResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method CreateSecret not implemented")
+}
+func (UnimplementedResourcesServiceServer) CanI(context.Context, *CanIRequest) (*CanIResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method CanI not implemented")
 }
 
 // UnsafeResourcesServiceServer may be embedded to opt out of forward compatibility for this service.
@@ -304,6 +318,24 @@ func _ResourcesService_CreateSecret_Handler(srv interface{}, ctx context.Context
 	return interceptor(ctx, in, info, handler)
 }
 
+func _ResourcesService_CanI_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CanIRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ResourcesServiceServer).CanI(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/kubeappsapis.plugins.resources.v1alpha1.ResourcesService/CanI",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ResourcesServiceServer).CanI(ctx, req.(*CanIRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // ResourcesService_ServiceDesc is the grpc.ServiceDesc for ResourcesService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -334,6 +366,10 @@ var ResourcesService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "CreateSecret",
 			Handler:    _ResourcesService_CreateSecret_Handler,
+		},
+		{
+			MethodName: "CanI",
+			Handler:    _ResourcesService_CanI_Handler,
 		},
 	},
 	Streams: []grpc.StreamDesc{

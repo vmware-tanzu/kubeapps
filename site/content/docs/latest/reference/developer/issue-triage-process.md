@@ -46,7 +46,7 @@ The relevant component(s) for the issue. Components are high level areas of the 
 | `component/asset-syncer`     | An issue related to kubeapps asset-syncer (to be deprecated)                                      |
 | `component/authentication`   | An issue related to kubeapps authentication                                                       |
 | `component/ci`               | An issue related to kubeapps ci system                                                            |
-| `component/kubeops`          | An issue related to kubeops (to be deprecated)                                                    |
+| `component/kubeops`          | An issue related to kubeops (deprecated)                                                          |
 | `component/multi-cluster`    | An issue related to Kubeapps configuration for multi-cluster support                              |
 | `component/packages`         | An issue related to kubeapps packaging formats to be distributed (Helm chart and Carvel packages) |
 | `component/pinniped-proxy`   | An issue related to kubeapps integration with pinniped-proxy                                      |
