@@ -97,7 +97,9 @@ This information is used to both set up the Kubernetes cluster, and in a further
    tanzu package repository add tce-repo --url projects.registry.vmware.com/tce/main:0.12.0 --namespace tanzu-package-repo-global
    ```
 
-The outcome of the actions above is a management, managed TCE cluster running on your preferred infrastructure provider. Starting with that, _workload_ clusters could be created and be controlled from this _management_ cluster. For simplicity reasons, the tutorial continues by using only the management cluster, but it is not a recommended strategy for production setups.
+The outcome of the actions above is a _managed_ TCE cluster running on your preferred infrastructure provider. From this _management_ cluster, new _workload_ clusters can be spun up and attached to it.
+
+For the sake of simplicity, this tutorial only uses a single _management_ cluster with no attached _workload: clusters, but note that it is not a recommended strategy for production setups.
 
 For further information on how to create TCE workload clusters please check [the official documentation](https://tanzucommunityedition.io/docs/v0.12/getting-started/#deploy-a-workload-cluster).
 
