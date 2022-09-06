@@ -12,11 +12,12 @@ FLUX_TEST_HARBOR_ADMIN_PWD=Harbor12345
 function createHarborProject()
 {
   # sanity check
-  if [[ "$#" -lt 1 ]]; then
-    error_exit "Usage: createHarborProject name"
+  if [[ "$#" -lt 2 ]]; then
+    error_exit "Usage: createHarborProject name public"
   fi
 
   local PROJECT_NAME=$1
+  local PUBLIC=$2
   local status_code=$(curl -L --write-out %{http_code} \
                       --silent --output /dev/null \
                       --head ${FLUX_TEST_HARBOR_URL}/api/v2.0/projects?project_name=${PROJECT_NAME} \
@@ -24,8 +25,15 @@ function createHarborProject()
   if [[ "$status_code" -eq 200 ]] ; then
     echo -e "Project [${L_YELLOW}${PROJECT_NAME}${NC}] already exists in harbor..."
   elif [[ "$status_code" -eq 404 ]] ; then
-    echo -e "Creating public project [${L_YELLOW}$PROJECT_NAME${NC}] in harbor..."
+    if [[ $PUBLIC == "true" ]]; then 
+      echo -e "Creating public project [${L_YELLOW}$PROJECT_NAME${NC}] in harbor..."
+    elif [[ $PUBLIC == "false" ]]; then 
+      echo -e "Creating private project [${L_YELLOW}$PROJECT_NAME${NC}] in harbor..."
+    else 
+      error_exit "Unsupported value for public: $PUBLIC"
+    fi
     local payload=$(sed "s/\$NAME/${PROJECT_NAME}/g" $SCRIPTPATH/harbor-create-project.json)
+    payload=$(echo $payload | sed "s/\$PUBLIC/${PUBLIC}/g")
     local status_code=$(curl -L --write-out %{http_code} --silent \
                         --output /dev/null \
                         -X POST ${FLUX_TEST_HARBOR_URL}/api/v2.0/projects \
@@ -96,28 +104,71 @@ function deleteHarborProject()
   fi
 }
 
-function setupHarborStefanProdanClone {
-  # this creates a clone of what was out on "oci://ghcr.io/stefanprodan/charts" as of Jul 28 2022
-  # to oci://demo.goharbor.io/stefanprodan-podinfo-clone
-  local PROJECT_NAME=stefanprodan-podinfo-clone
+# special case: in VMware corp harbor a project is created via filing a request
+function setupVMwareHarborStefanProdanClone {
+  # sanity check
+  if [[ "$#" -lt 1 ]]; then
+    error_exit "Usage: setupVMwareHarborStefanProdanClone name [--quick]"
+  fi
 
-  if [[ "$1" == "--quick" ]]; then
-    # short to only look at the project existence and if so assume all is well
-    echo
-    echo -e Checking if harbor project [${L_YELLOW}$PROJECT_NAME${NC}] exists...
-    local status_code=$(curl -L --write-out %{http_code} \
-                        --silent --output /dev/null \
-                        --show-error \
-                        --head ${FLUX_TEST_HARBOR_URL}/api/v2.0/projects?project_name=${PROJECT_NAME} \
-                        -u $FLUX_TEST_HARBOR_ADMIN_USER:$FLUX_TEST_HARBOR_ADMIN_PWD)
-    if [[ "$status_code" -eq 200 ]] ; then
-      echo -e "Project [${L_YELLOW}$PROJECT_NAME${NC}] exists in harbor."
-      exit 0
+  local PROJECT_NAME=$1
+  if [ -z ${HARBOR_VMWARE_CORP_HOST+x} ]; then
+    error_exit "Environment variable [HARBOR_VMWARE_CORP_HOST] must be set"
+  fi
+  if [ -z ${HARBOR_VMWARE_CORP_ROBOT_USER+x} ]; then
+    error_exit "Environment variable [HARBOR_VMWARE_CORP_ROBOT_USER] must be set"
+  fi
+  if [ -z ${HARBOR_VMWARE_CORP_ROBOT_SECRET+x} ]; then
+    error_exit "Environment variable [HARBOR_VMWARE_CORP_ROBOT_SECRET] must be set"
+  fi
+
+  # for now only look at the project existence and if so assume all is well
+  # for now assume the robot account already exists
+  echo
+  echo -e Checking if harbor project [${L_YELLOW}$PROJECT_NAME${NC}] exists...
+  local status_code=$(curl -L --write-out %{http_code} \
+                      --silent --output /dev/null \
+                      --show-error \
+                      --head https://${HARBOR_VMWARE_CORP_HOST}/api/v2.0/projects?project_name=${PROJECT_NAME} \
+                      -u ${HARBOR_VMWARE_CORP_ROBOT_USER}:${HARBOR_VMWARE_CORP_ROBOT_SECRET})
+  if [[ "$status_code" -eq 200 ]] ; then
+    echo -e "Project [${L_YELLOW}$PROJECT_NAME${NC}] exists in harbor host [${L_YELLOW}${HARBOR_VMWARE_CORP_HOST}${NC}]"
+    # here we assume that since project exists, it contains all the charts
+    exit 0
+  else 
+    error_exit "Project [$PROJECT_NAME] does not exist in harbor [${HARBOR_VMWARE_CORP_HOST}]"
+  fi
+}
+
+function setupHarborStefanProdanCloneInProject {
+  # sanity check
+  if [[ "$#" -lt 2 ]]; then
+    error_exit "Usage: setupHarborStefanProdanCloneInProject name public [--quick]"
+  fi
+
+  local PROJECT_NAME=$1
+  local PUBLIC=$2
+
+  if [ "$#" -gt 2 ]; then
+    if [ "$3" == "--quick" ]; then
+      # shortcut to only look at the project existence and if so assume all is well
+      echo
+      echo -e Checking if harbor project [${L_YELLOW}$PROJECT_NAME${NC}] exists...
+      local status_code=$(curl -L --write-out %{http_code} \
+                          --silent --output /dev/null \
+                          --show-error \
+                          --head ${FLUX_TEST_HARBOR_URL}/api/v2.0/projects?project_name=${PROJECT_NAME} \
+                          -u $FLUX_TEST_HARBOR_ADMIN_USER:$FLUX_TEST_HARBOR_ADMIN_PWD)
+      if [[ "$status_code" -eq 200 ]] ; then
+        echo -e "Project [${L_YELLOW}$PROJECT_NAME${NC}] exists in harbor."
+        # here we assume that since project exists, it contains all the charts
+        exit 0
+      fi
     fi
   fi
 
   deleteHarborProject $PROJECT_NAME
-  createHarborProject $PROJECT_NAME
+  createHarborProject $PROJECT_NAME $PUBLIC
   
   helm registry login $FLUX_TEST_HARBOR_HOST -u $FLUX_TEST_HARBOR_ADMIN_USER -p $FLUX_TEST_HARBOR_ADMIN_PWD
   trap '{
@@ -141,6 +192,14 @@ function setupHarborStefanProdanClone {
   echo
 }
 
+function setupHarborStefanProdanClone {
+  # this creates a clone of what was out on "oci://ghcr.io/stefanprodan/charts" as of Jul 28 2022
+  # to oci://demo.goharbor.io/stefanprodan-podinfo-clone
+  setupHarborStefanProdanCloneInProject stefanprodan-podinfo-clone true $*
+  setupHarborStefanProdanCloneInProject stefanprodan-podinfo-clone-private false $*
+  setupVMwareHarborStefanProdanClone stefanprodan-podinfo-clone $*
+}
+
 function deleteHarborRobotAccount()
 {
   # sanity check
@@ -156,7 +215,7 @@ function deleteHarborRobotAccount()
   local RESP=$($CMD)
   local ID=$(echo "$RESP" | jq --arg NAME "robot\$$ACCOUNT_NAME" '.[] | select(.name == $NAME) | .id')
   if [[ "$ID" != "" ]] ; then
-    echo -e "Deleting robot account [${L_YELLOW}$ACCOUNT_NAME${NC}] in harbor..." 
+    echo -e "Deleting robot account [${L_YELLOW}$ACCOUNT_NAME${NC}] in harbor..."
     status_code=$(curl -L --write-out %{http_code} --silent \
           --show-error -X DELETE --output /dev/null \
           ${FLUX_TEST_HARBOR_URL}/api/v2.0/robots/$ID \
@@ -166,21 +225,23 @@ function deleteHarborRobotAccount()
     else
         error_exit "Failed to delete robot account [$ACCOUNT_NAME] due to HTTP status: [$status_code]"
     fi
-  fi 
+  fi
 }
 
 function createHarborRobotAccount()
 {
   # sanity check
-  if [[ "$#" -lt 2 ]]; then
-    error_exit "Usage: createHarborRobotAccount name project_name"
+  if [[ "$#" -lt 3 ]]; then
+    error_exit "Usage: createHarborRobotAccount name project_name_1 project_name_2"
   fi
   local ACCOUNT_NAME=$1
-  local PROJECT_NAME=$2
+  local PROJECT_NAME_1=$2
+  local PROJECT_NAME_2=$3
 
   echo -e "Creating robot account [${L_YELLOW}$ACCOUNT_NAME${NC}] in harbor..."
   local payload=$(sed "s/\$NAME/${ACCOUNT_NAME}/g" $SCRIPTPATH/harbor-create-robot-account.json)
-  payload=$(echo $payload | sed "s/\$PROJECT_NAME/${PROJECT_NAME}/g")
+  payload=$(echo $payload | sed "s/\$PROJECT_NAME_1/${PROJECT_NAME_1}/g")
+  payload=$(echo $payload | sed "s/\$PROJECT_NAME_2/${PROJECT_NAME_2}/g")
   local RESP=$(curl -L --silent --show-error \
                 -X POST \
                 -H 'Content-Type: application/json' \
@@ -198,8 +259,9 @@ function createHarborRobotAccount()
 function setupHarborRobotAccount()
 {
   local ACCOUNT_NAME=kubeapps-flux-plugin
-  local PROJECT_NAME=stefanprodan-podinfo-clone
+  local PROJECT_NAME_1=stefanprodan-podinfo-clone
+  local PROJECT_NAME_2=stefanprodan-podinfo-clone-private
 
   deleteHarborRobotAccount $ACCOUNT_NAME
-  createHarborRobotAccount $ACCOUNT_NAME $PROJECT_NAME
+  createHarborRobotAccount $ACCOUNT_NAME $PROJECT_NAME_1 $PROJECT_NAME_2
 }

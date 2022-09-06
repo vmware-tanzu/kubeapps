@@ -3569,6 +3569,10 @@ var (
 		}
 	}
 
+	no_available_summaries = func(name string) *corev1.GetAvailablePackageSummariesResponse {
+		return &corev1.GetAvailablePackageSummariesResponse{}
+	}
+
 	expected_detail_oci_stefanprodan_podinfo = func(name, url string) *corev1.GetAvailablePackageDetailResponse {
 		return &corev1.GetAvailablePackageDetailResponse{
 			AvailablePackageDetail: &corev1.AvailablePackageDetail{

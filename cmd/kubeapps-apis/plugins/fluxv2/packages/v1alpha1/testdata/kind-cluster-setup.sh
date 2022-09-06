@@ -147,8 +147,10 @@ function deploy {
     sleep 1
   done
 
-  # can't quite get local registry to work yet. Want to move on. I will come back to 
-  # this as time allows
+  # can't quite get local registry to work yet. See comment in 
+  # TestKindClusterAvailablePackageEndpointsForOCI.
+  # Want to move on. I will come back to this as time allows
+
   # portForwardToLocalRegistry
   # pushChartToLocalRegistryUsingHelmCLI
 
@@ -226,7 +228,7 @@ deleteChartVersionFromMyGitHub) deleteChartVersionFromMyGitHubRegistry $2
     ;;
 setupGithubStefanProdanClone) setupGithubStefanProdanClone
     ;;
-setupHarborStefanProdanClone) setupHarborStefanProdanClone $2
+setupHarborStefanProdanClone) setupHarborStefanProdanClone ${2: }
     ;;
 setupHarborRobotAccount) setupHarborRobotAccount
     ;;

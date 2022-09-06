@@ -123,7 +123,8 @@ var (
 	// can register new repository listers
 	builtInRepoListers = []OCIChartRepositoryLister{
 		NewDockerRegistryApiV2RepositoryLister(),
-		// TODO (gfichtenholt) other container registry providers, like Harbor, GCR, AWS, Azure CR, etc
+		NewHarborRegistryApiV2RepositoryLister(),
+		// TODO (gfichtenholt) other container registry providers, like AWS, Azure, etc
 	}
 
 	// the reason for so many arguments to this func, as opposed to an OCIChartRepository instance is
@@ -227,13 +228,17 @@ func (r *OCIChartRepository) listRepositoryNames() ([]string, error) {
 				r.repositoryLister = lister
 				break
 			} else {
-				log.Infof("Lister [%v] not applicable for registry for URL: [%s] [%v]", reflect.TypeOf(lister), r.url.String(), err)
+				log.Infof("Lister [%v] not applicable for registry with URL [%s] due to: [%v]",
+					reflect.TypeOf(lister), r.url.String(), err)
 			}
 		}
 	}
 
 	if r.repositoryLister == nil {
-		return nil, status.Errorf(codes.Internal, "No repository lister found for OCI registry with url: [%s]", &r.url)
+		return nil, status.Errorf(
+			codes.Internal,
+			"No repository lister found for OCI registry with URL: [%s]",
+			r.url.String())
 	}
 
 	return r.repositoryLister.ListRepositoryNames(r)
