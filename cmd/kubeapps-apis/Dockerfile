@@ -3,13 +3,13 @@
 
 # syntax = docker/dockerfile:1
 
-FROM bitnami/golang:1.18.4 as builder
+FROM bitnami/golang:1.19.0 as builder
 WORKDIR /go/src/github.com/vmware-tanzu/kubeapps
 COPY go.mod go.sum ./
 ARG VERSION="devel"
 
-ARG BUF_VERSION="1.6.0"
-ARG GOLANGCILINT_VERSION="1.47.2"
+ARG BUF_VERSION="1.7.0"
+ARG GOLANGCILINT_VERSION="1.49.0"
 
 # Install lint tools
 RUN curl -sSL "https://github.com/bufbuild/buf/releases/download/v$BUF_VERSION/buf-Linux-x86_64" -o "/tmp/buf" && chmod +x "/tmp/buf"
