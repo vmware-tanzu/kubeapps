@@ -28,6 +28,7 @@ env:
   # Apart from using a dev tag we use a different image ID to avoid polluting the tag
   # history of the production tag
   IMG_MODIFIER: "ci"
+  IMG_PLATFORMS: "linux/amd64, linux/arm64"
   K8S_KIND_VERSION: "v1.22.9@sha256:8135260b959dfe320206eb36b3aeda9cffcb262f4b44cda6b33f7bb73f453105"
   KIND_VERSION: "v0.14.0"
   KUBECTL_VERSION: "v1.22.12"
@@ -191,7 +192,7 @@ jobs:
         uses: docker/build-push-action@v2
         with:
           file: ${{matrix.path}}/${{matrix.image}}/Dockerfile
-          platforms: linux/amd64, linux/arm64
+          platforms: ${{ env.IMG_PLATFORMS }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
