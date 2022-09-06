@@ -299,7 +299,7 @@ if [ "$USE_MULTICLUSTER_OIDC_ENV" = true ]; then
     "--set" "clusters[1].name=second-cluster"
     "--set" "clusters[1].apiServiceURL=https://${ADDITIONAL_CLUSTER_IP}:6443"
     "--set" "clusters[1].insecure=true"
-    "--set" "clusters[1].serviceToken=${kubectl --context=kind-kubeapps-ci-additional --kubeconfig=${HOME}/.kube/kind-config-kubeapps-ci-additional apply get secret kubeapps-namespace-discovery -o go-template="{{.data.token | base64decode}}"}"
+    "--set" "clusters[1].serviceToken=$(kubectl --context=kind-kubeapps-ci-additional --kubeconfig=${HOME}/.kube/kind-config-kubeapps-ci-additional get secret kubeapps-namespace-discovery -o go-template='{{.data.token | base64decode}}')"
   )
 fi
 
