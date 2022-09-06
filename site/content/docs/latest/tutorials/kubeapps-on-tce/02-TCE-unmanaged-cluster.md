@@ -1,6 +1,6 @@
 # Step 2A: Deploy a VMware Tanzu™ Community Edition unmanaged cluster
 
-In this step of the tutorial, the outcome is to install an [unmanaged TCE cluster](https://tanzucommunityedition.io/docs/v0.12/planning/#unmanaged-cluster).
+In this step, the goal is to install an [unmanaged TCE cluster](https://tanzucommunityedition.io/docs/v0.12/planning/#unmanaged-cluster).
 
 By default, unmanaged clusters run locally via kind (default) or minikube with Tanzu components installed atop.
 
