@@ -9,7 +9,6 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/Masterminds/semver/v3"
 	_ "github.com/lib/pq"
 	"github.com/vmware-tanzu/kubeapps/pkg/chart/models"
 	"github.com/vmware-tanzu/kubeapps/pkg/dbutils"
@@ -208,13 +207,11 @@ func (m *PostgresAssetManager) GenerateWhereClause(cq ChartQuery) (string, []int
 		))
 	}
 	if cq.Version != "" && cq.AppVersion != "" {
-		_, err := semver.NewVersion(cq.Version)
-		if err != nil {
-			return "", nil, err
+		if !containsOnlyAllowedChars(cq.Version) {
+			return "", nil, errors.New("invalid version")
 		}
-		_, err = semver.NewVersion(cq.AppVersion)
-		if err != nil {
-			return "", nil, err
+		if !containsOnlyAllowedChars(cq.AppVersion) {
+			return "", nil, errors.New("invalid app version")
 		}
 		parametrizedJsonbLiteral := fmt.Sprintf(`[{"version":"%s","app_version":"%s"}]`, cq.Version, cq.AppVersion)
 		whereQueryParams = append(whereQueryParams, parametrizedJsonbLiteral)
@@ -262,4 +259,15 @@ func (m *PostgresAssetManager) GenerateWhereClause(cq ChartQuery) (string, []int
 	}
 
 	return whereQuery, whereQueryParams, nil
+}
+
+// See https://semver.org/#backusnaur-form-grammar-for-valid-semver-versions
+const allowed string = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789+-."
+
+// Using the same "semver" validation logic for parsing version
+// see https://github.com/Masterminds/semver/blob/v3.1.1/version.go
+func containsOnlyAllowedChars(s string) bool {
+	return strings.IndexFunc(s, func(r rune) bool {
+		return !strings.ContainsRune(allowed, r)
+	}) == -1
 }
