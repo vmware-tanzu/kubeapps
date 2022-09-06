@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { CdsButton } from "@cds/react/button";
-import { grpc } from "@improbable-eng/grpc-web";
 import actions from "actions";
 import { handleErrorAction } from "actions/auth";
 import ErrorAlert from "components/ErrorAlert";
@@ -31,6 +30,7 @@ import {
   FetchError,
   FetchWarning,
   IStoreState,
+  NotFoundNetworkError,
 } from "shared/types";
 import { getPluginsSupportingRollback } from "shared/utils";
 import ApplicationStatus from "../../containers/ApplicationStatusContainer";
@@ -209,9 +209,9 @@ export default function AppView() {
           setResourceRefs(response.resourceRefs);
           return;
         } catch (e: any) {
-          dispatch(handleErrorAction(e));
-          if (e.code !== grpc.Code.NotFound) {
+          if (e.constructor !== NotFoundNetworkError) {
             // If we get any other error, we want the user to know about it.
+            dispatch(handleErrorAction(e));
             setFetchError(new FetchError("unable to fetch resource references", [e]));
             return;
           }
