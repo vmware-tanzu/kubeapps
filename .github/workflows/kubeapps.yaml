@@ -15,6 +15,8 @@ on:
 env:
   DOCKER_VERSION: "20.10.14"
   DOCKER_REGISTRY_VERSION: "2.8.1"
+  DOCKERHUB_NAMESPACE: "kubeapps"
+  DOCKERHUB_PERSONAL_NAMESPACE: "beni0888"
   GOLANG_VERSION: "1.18.4"
   HELM_VERSION_MIN: "v3.2.0"
   HELM_VERSION_STABLE: "v3.9.2"
@@ -40,6 +42,7 @@ jobs:
   setup:
     runs-on: ubuntu-latest
     outputs:
+      dockerhub_namespace: ${{ steps.set-outputs.outputs.dockerhub_namespace }}
       img_prod_tag: ${{ steps.set-outputs.outputs.img_prod_tag }}
       postgresql_version: ${{ steps.set-outputs.outputs.postgresql_version }}
       rust_version: ${{ steps.set-outputs.outputs.rust_version }}
@@ -47,8 +50,15 @@ jobs:
       - name: Set outputs
         id: set-outputs
         run: |
-          if [[ ${{ github.ref_type }} == "tag" ]]; then
-            echo "::set-output name=img_prod_tag::${{github.ref_name}}"
+          if [[ ${GITHUB_REPOSITORY} == "vmware-tanzu/kubeapps" ]]; then
+            echo "::set-output name=dockerhub_namespace::${DOCKERHUB_NAMESPACE}"
+          else
+            # When running from forks, we push the images to a personal namespace (if configured)
+            echo "::set-output name=dockerhub_namespace::${DOCKERHUB_PERSONAL_NAMESPACE}"
+          fi;
+          
+          if [[ ${GITHUB_REF_TYPE} == "tag" ]]; then
+            echo "::set-output name=img_prod_tag::${GITHUB_REF_NAME}"
           else
             echo "::set-output name=img_prod_tag::latest"
           fi;          
@@ -57,6 +67,7 @@ jobs:
           echo "::set-output name=rust_version::${RUST_VERSION}"
       - name: Show outputs
         run: |
+          echo "DOCKERHUB_NAMESPACE: ${{steps.set-outputs.outputs.dockerhub_namespace}}"
           echo "IMG_PROD_TAG: ${{steps.set-outputs.outputs.img_prod_tag}}"
           echo "POSTGRESQL_VERSION: ${{steps.set-outputs.outputs.postgresql_version}}"
           echo "RUST_VERSION: ${{steps.set-outputs.outputs.rust_version}}"
@@ -155,8 +166,7 @@ jobs:
       - uses: docker/metadata-action@v4
         id: meta
         with:
-#          images: kubeapps/${{matrix.image}}
-          images: ${{secrets.DOCKER_USERNAME}}/kubeapps-${{matrix.image}}
+          images: ${{needs.setup.outputs.dockerhub_namespace}}/${{matrix.image}}
           tags: |
             type=ref,event=branch
             type=semver,pattern={{version}}
@@ -168,13 +178,13 @@ jobs:
         with:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
-#      - name: Cache Docker layers
-#        uses: actions/cache@v3
-#        with:
-#          path: /tmp/.buildx-cache
-#          key: ${{ runner.os }}-buildx-${{ github.sha }}
-#          restore-keys: |
-#            ${{ runner.os }}-buildx-client-
+      - name: Cache Docker layers
+        uses: actions/cache@v3
+        with:
+          path: /tmp/.buildx-cache
+          key: ${{ runner.os }}-buildx-${{ github.sha }}
+          restore-keys: |
+            ${{ runner.os }}-buildx-client-
       - name: Build and push container image
         uses: docker/build-push-action@v2
         with:
