@@ -16,7 +16,7 @@ The main components are:
 
   Offer a single node, local workstation cluster suitable for a development/test environment. You can read more about [unmanaged clusters in the official Tanzu Community Edition documentation](https://tanzucommunityedition.io/docs/v0.12/planning/#unmanaged-cluster).
 
-In this step of the tutorial, the outcome is to prepare the installation of the TCE cluster.
+In this step, the goal is to prepare the installation of the TCE cluster.
 
 ## Step 1.1: Install Tanzu CLI
 
