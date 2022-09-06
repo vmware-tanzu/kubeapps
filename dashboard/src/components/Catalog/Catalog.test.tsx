@@ -471,7 +471,7 @@ describe("filters by application type", () => {
     };
     const wrapper = mountWrapper(
       getStore({ ...populatedState, packages: packages } as IStoreState),
-      <MemoryRouter initialEntries={[routePathParam + "?Plugin=Carvel%20Package"]}>
+      <MemoryRouter initialEntries={[routePathParam + "?Plugin=Carvel%20Packages"]}>
         <Route path={routePath}>
           <Catalog />
         </Route>
