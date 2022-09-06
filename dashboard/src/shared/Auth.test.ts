@@ -243,6 +243,7 @@ describe("Auth", () => {
         customAppViews: [],
         skipAvailablePackageDetails: false,
         createNamespaceLabels: {},
+        configuredPlugins: [],
       });
 
       expect(mockedAssign).toBeCalledWith(oauthLogoutURI);
@@ -267,6 +268,7 @@ describe("Auth", () => {
         customAppViews: [],
         skipAvailablePackageDetails: false,
         createNamespaceLabels: {},
+        configuredPlugins: [],
       });
 
       expect(mockedAssign).toBeCalledWith("/oauth2/sign_out");
@@ -279,7 +281,7 @@ describe("is403FromAuthProxy", () => {
     expect(
       Auth.is403FromAuthProxy({
         status: 403,
-        data: 'namespaces is forbidden: User "system:serviceaccount:kubeapps:kubeapps-internal-kubeops" cannot list resource "namespaces" in API group "" at the cluster scope',
+        data: 'namespaces is forbidden: User "system:serviceaccount:kubeapps:kubeapps-internal-kubeappsapis" cannot list resource "namespaces" in API group "" at the cluster scope',
       } as AxiosResponse<any>),
     ).toBe(false);
   });
@@ -309,7 +311,7 @@ describe("isAnonymous", () => {
     expect(
       Auth.isAnonymous({
         status: 403,
-        data: 'namespaces is forbidden: User "system:serviceaccount:kubeapps:kubeapps-internal-kubeops" cannot list resource "namespaces" in API group "" at the cluster scope',
+        data: 'namespaces is forbidden: User "system:serviceaccount:kubeapps:kubeapps-internal-kubeappsapis" cannot list resource "namespaces" in API group "" at the cluster scope',
       } as AxiosResponse<any>),
     ).toBe(false);
   });
@@ -319,7 +321,7 @@ describe("isAnonymous", () => {
         status: 403,
         data: {
           message:
-            'namespaces is forbidden: User "system:serviceaccount:kubeapps:kubeapps-internal-kubeops" cannot list resource "namespaces" in API group "" at the cluster scope',
+            'namespaces is forbidden: User "system:serviceaccount:kubeapps:kubeapps-internal-kubeappsapis" cannot list resource "namespaces" in API group "" at the cluster scope',
         },
       } as AxiosResponse<any>),
     ).toBe(false);

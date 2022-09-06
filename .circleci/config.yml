@@ -65,7 +65,7 @@ parameters:
     default: "ubuntu-2204:2022.04.1"
   IMAGES_TO_PUSH:
     type: "string"
-    default: "kubeapps/apprepository-controller kubeapps/dashboard kubeapps/asset-syncer kubeapps/kubeops kubeapps/pinniped-proxy kubeapps/kubeapps-apis"
+    default: "kubeapps/apprepository-controller kubeapps/dashboard kubeapps/asset-syncer kubeapps/pinniped-proxy kubeapps/kubeapps-apis"
   CI_BOT_USERNAME:
     type: "string"
     default: "kubeapps-bot"
@@ -161,6 +161,8 @@ workflows:
           <<: *build_always
       - build_pinniped_proxy:
           <<: *build_always
+      - build_e2e_runner:
+          <<: *build_always
       - local_e2e_tests:
           <<: *build_always
           matrix:
@@ -176,6 +178,7 @@ workflows:
             - build_go_images
             - build_dashboard
             - build_pinniped_proxy
+            - build_e2e_runner
             - sync_chart_from_bitnami
       - sync_chart_from_bitnami:
           <<: *build_on_main
@@ -189,6 +192,7 @@ workflows:
             - build_go_images
             - build_dashboard
             - build_pinniped_proxy
+            - build_e2e_runner
             - sync_chart_from_bitnami
       - GKE_REGULAR_VERSION_LATEST_RELEASE:
           <<: *build_on_tag_or_prerelease
@@ -200,6 +204,7 @@ workflows:
             - build_go_images
             - build_dashboard
             - build_pinniped_proxy
+            - build_e2e_runner
             - sync_chart_from_bitnami
       - GKE_STABLE_VERSION_MAIN:
           <<: *build_on_tag_or_prerelease
@@ -211,6 +216,7 @@ workflows:
             - build_go_images
             - build_dashboard
             - build_pinniped_proxy
+            - build_e2e_runner
             - sync_chart_from_bitnami
       - GKE_STABLE_VERSION_LATEST_RELEASE:
           <<: *build_on_tag_or_prerelease
@@ -222,6 +228,7 @@ workflows:
             - build_go_images
             - build_dashboard
             - build_pinniped_proxy
+            - build_e2e_runner
             - sync_chart_from_bitnami
       - push_images:
           <<: *build_on_main
@@ -340,7 +347,7 @@ install_cluster: &install_cluster
         kind create cluster --image kindest/node:${K8S_KIND_VERSION} --name kubeapps-ci --config=./site/content/docs/latest/reference/manifests/kubeapps-local-dev-apiserver-config.yaml --kubeconfig=${HOME}/.kube/kind-config-kubeapps-ci --retain --wait 120s &&
         kubectl --context kind-kubeapps-ci --kubeconfig ${HOME}/.kube/kind-config-kubeapps-ci apply -f ./site/content/docs/latest/reference/manifests/kubeapps-local-dev-users-rbac.yaml &&
 
-        kubectl --context kind-kubeapps-ci --kubeconfig ${HOME}/.kube/kind-config-kubeapps-ci apply -f ./site/content/docs/latest/reference/manifests/ingress-nginx-kind-with-large-proxy-buffers.yaml &&
+        kubectl --context kind-kubeapps-ci --kubeconfig ${HOME}/.kube/kind-config-kubeapps-ci apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/main/deploy/static/provider/kind/deploy.yaml &&
         sleep 5 &&
         kubectl --context kind-kubeapps-ci --kubeconfig ${HOME}/.kube/kind-config-kubeapps-ci wait --namespace ingress-nginx --for=condition=ready pod --selector=app.kubernetes.io/component=controller --timeout=120s &&
 
@@ -352,7 +359,7 @@ install_cluster: &install_cluster
         kind delete clusters kubeapps-ci || true
         kind create cluster --image kindest/node:${K8S_KIND_VERSION} --name kubeapps-ci --config=./site/content/docs/latest/reference/manifests/kubeapps-local-dev-apiserver-config.yaml --kubeconfig=${HOME}/.kube/kind-config-kubeapps-ci --retain --wait 120s || true &&
         kubectl --context kind-kubeapps-ci --kubeconfig ${HOME}/.kube/kind-config-kubeapps-ci apply -f ./site/content/docs/latest/reference/manifests/kubeapps-local-dev-users-rbac.yaml &&
-        kubectl --context kind-kubeapps-ci --kubeconfig ${HOME}/.kube/kind-config-kubeapps-ci apply -f ./site/content/docs/latest/reference/manifests/ingress-nginx-kind-with-large-proxy-buffers.yaml &&
+        kubectl --context kind-kubeapps-ci --kubeconfig ${HOME}/.kube/kind-config-kubeapps-ci apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/main/deploy/static/provider/kind/deploy.yaml &&
         sleep 5 &&
         kubectl wait --namespace ingress-nginx --for=condition=ready pod --selector=app.kubernetes.io/component=controller --timeout=120s &&
 
@@ -712,7 +719,7 @@ jobs:
     working_directory: /home/circleci/go/src/github.com/vmware-tanzu/kubeapps
     environment:
       GOPATH: ${HOME}/.go_workspace
-      IMAGES: "kubeops apprepository-controller asset-syncer kubeapps-apis"
+      IMAGES: "apprepository-controller asset-syncer kubeapps-apis"
     <<: *build_images
   build_dashboard:
     docker:
@@ -733,6 +740,40 @@ jobs:
     environment:
       IMAGES: "pinniped-proxy"
     <<: *build_images
+  build_e2e_runner:
+    docker:
+      - image: cimg/go:<< pipeline.parameters.GOLANG_VERSION >>
+        auth:
+          username: $DOCKER_USERNAME
+          password: $DOCKER_PASSWORD
+    environment:
+      <<: *common_envars
+      IMAGE: "integration-tests"
+    steps:
+      - setup_remote_docker:
+          version: << pipeline.parameters.DOCKER_VERSION >>
+      - checkout
+      - <<: *exports
+      # TODO(agamez): build only if dependencies change
+      # See https://github.com/vmware-tanzu/kubeapps/pull/5083
+      - run:
+          name: Build and push CI image
+          command: |
+            mkdir -p images/
+            if [[ -n "${CIRCLE_TAG}" ]]; then
+              makeArgs="VERSION=${CIRCLE_TAG}"
+            fi
+            cd integration
+            make IMG_MODIFIER="$IMG_MODIFIER" IMAGE_TAG="${DEV_TAG}" $makeArgs kubeapps/${IMAGE}
+            if [[ -n "${DOCKER_USERNAME}" && -n "${DOCKER_PASSWORD}" ]]; then
+              docker login -u="${DOCKER_USERNAME}" -p="${DOCKER_PASSWORD}"
+              docker push kubeapps/${IMAGE}${IMG_MODIFIER}:${DEV_TAG}
+            fi
+            docker save kubeapps/${IMAGE}${IMG_MODIFIER}:${DEV_TAG} > ../images/${IMAGE}${IMG_MODIFIER}:${DEV_TAG}
+      - persist_to_workspace:
+          root: images
+          paths:
+            - "*"
   release:
     environment:
       <<: *common_envars

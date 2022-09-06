@@ -5,7 +5,7 @@ package main
 
 import (
 	"encoding/json"
-	"io/ioutil"
+	"os"
 	"time"
 
 	helmv2 "github.com/fluxcd/helm-controller/api/v2beta1"
@@ -349,6 +349,17 @@ var (
 
 	expected_resource_refs_oci = podinfo_installed_refs("my-podinfo-17")
 
+	expected_detail_installed_package_oci_2 = &corev1.InstalledPackageDetail{
+		PkgVersionReference: &corev1.VersionReference{
+			Version: "*",
+		},
+		CurrentVersion:        pkgAppVersion("6.1.8"),
+		Status:                status_installed,
+		PostInstallationNotes: podinfo_notes("my-podinfo-19"),
+	}
+
+	expected_resource_refs_oci_2 = podinfo_installed_refs("my-podinfo-19")
+
 	update_request_1 = &corev1.UpdateInstalledPackageRequest{
 		// InstalledPackageRef will be filled in by the code below after a call to create(...) completes
 		PkgVersionReference: &corev1.VersionReference{
@@ -557,6 +568,12 @@ var (
 			Plugin:     fluxPlugin,
 		},
 		PostInstallationNotes: podinfo_notes("my-podinfo-18"),
+	}
+
+	create_installed_package_request_oci_2 = &corev1.CreateInstalledPackageRequest{
+		AvailablePackageRef: availableRef("podinfo-19/podinfo", "default"),
+		Name:                "my-podinfo-19",
+		TargetContext:       targetContext("test-19"),
 	}
 
 	expected_detail_test_release_rbac = &corev1.InstalledPackageDetail{
@@ -3593,7 +3610,7 @@ var (
 	}
 
 	newFakeRemoteOciRegistryData_1 = func() (*fakeRemoteOciRegistryData, error) {
-		chartBytes, err := ioutil.ReadFile(testTgz("podinfo-6.1.5.tgz"))
+		chartBytes, err := os.ReadFile(testTgz("podinfo-6.1.5.tgz"))
 		if err != nil {
 			return nil, err
 		}
@@ -3704,15 +3721,15 @@ var (
 	}
 
 	newFakeRemoteOciRegistryData_2 = func() (*fakeRemoteOciRegistryData, error) {
-		chartBytes1, err := ioutil.ReadFile(testTgz("podinfo-6.1.5.tgz"))
+		chartBytes1, err := os.ReadFile(testTgz("podinfo-6.1.5.tgz"))
 		if err != nil {
 			return nil, err
 		}
-		chartBytes2, err := ioutil.ReadFile(testTgz("podinfo-6.0.0.tgz"))
+		chartBytes2, err := os.ReadFile(testTgz("podinfo-6.0.0.tgz"))
 		if err != nil {
 			return nil, err
 		}
-		chartBytes3, err := ioutil.ReadFile(testTgz("podinfo-6.0.3.tgz"))
+		chartBytes3, err := os.ReadFile(testTgz("podinfo-6.0.3.tgz"))
 		if err != nil {
 			return nil, err
 		}
@@ -3742,11 +3759,11 @@ var (
 	}
 
 	newFakeRemoteOciRegistryData_3 = func() (*fakeRemoteOciRegistryData, error) {
-		chartBytes1, err := ioutil.ReadFile(testTgz("podinfo-6.1.5.tgz"))
+		chartBytes1, err := os.ReadFile(testTgz("podinfo-6.1.5.tgz"))
 		if err != nil {
 			return nil, err
 		}
-		chartBytes2, err := ioutil.ReadFile(testTgz("airflow-6.7.1.tgz"))
+		chartBytes2, err := os.ReadFile(testTgz("airflow-6.7.1.tgz"))
 		if err != nil {
 			return nil, err
 		}

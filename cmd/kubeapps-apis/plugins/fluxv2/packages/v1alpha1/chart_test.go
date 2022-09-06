@@ -6,7 +6,6 @@ package main
 import (
 	"context"
 	"fmt"
-	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -120,7 +119,7 @@ func TestGetAvailablePackageDetail(t *testing.T) {
 			}
 
 			for _, s := range redis_charts_spec {
-				tarGzBytes, err := ioutil.ReadFile(s.tgzFile)
+				tarGzBytes, err := os.ReadFile(s.tgzFile)
 				if err != nil {
 					t.Fatalf("%+v", err)
 				}
@@ -251,7 +250,7 @@ func TestTransientHttpFailuresAreRetriedForChartCache(t *testing.T) {
 		charts := []testSpecChartWithUrl{}
 
 		for _, s := range redis_charts_spec {
-			tarGzBytes, err := ioutil.ReadFile(s.tgzFile)
+			tarGzBytes, err := os.ReadFile(s.tgzFile)
 			if err != nil {
 				t.Fatalf("%+v", err)
 			}
@@ -442,7 +441,7 @@ func TestNonExistingRepoOrInvalidPkgVersionGetAvailablePackageDetail(t *testing.
 			replaceUrls := make(map[string]string)
 			charts := []testSpecChartWithUrl{}
 			for _, s := range redis_charts_spec {
-				tarGzBytes, err := ioutil.ReadFile(s.tgzFile)
+				tarGzBytes, err := os.ReadFile(s.tgzFile)
 				if err != nil {
 					t.Fatalf("%+v", err)
 				}
@@ -629,7 +628,7 @@ func TestGetAvailablePackageVersions(t *testing.T) {
 			replaceUrls := make(map[string]string)
 			charts := []testSpecChartWithUrl{}
 			for _, s := range redis_charts_spec {
-				tarGzBytes, err := ioutil.ReadFile(s.tgzFile)
+				tarGzBytes, err := os.ReadFile(s.tgzFile)
 				if err != nil {
 					t.Fatalf("%+v", err)
 				}
@@ -804,7 +803,7 @@ func TestChartCacheResyncNotIdle(t *testing.T) {
 		}
 
 		// what I need is a single repo with a whole bunch of unique charts (packages)
-		tarGzBytes, err := ioutil.ReadFile(testTgz("redis-14.4.0.tgz"))
+		tarGzBytes, err := os.ReadFile(testTgz("redis-14.4.0.tgz"))
 		if err != nil {
 			t.Fatalf("%+v", err)
 		}
@@ -821,13 +820,13 @@ func TestChartCacheResyncNotIdle(t *testing.T) {
 
 		const NUM_CHARTS = 20
 		// create a YAML index file that contains this many unique packages
-		tmpFile, err := ioutil.TempFile(os.TempDir(), "*.yaml")
+		tmpFile, err := os.CreateTemp(os.TempDir(), "*.yaml")
 		if err != nil {
 			t.Fatalf("%+v", err)
 		}
 		defer os.Remove(tmpFile.Name())
 
-		templateYAMLBytes, err := ioutil.ReadFile(testYaml("single-package-template.yaml"))
+		templateYAMLBytes, err := os.ReadFile(testYaml("single-package-template.yaml"))
 		if err != nil {
 			t.Fatalf("%+v", err)
 		}
@@ -972,12 +971,12 @@ func TestChartWithRelativeURL(t *testing.T) {
 	repoName := "testRepo"
 	repoNamespace := "default"
 
-	tarGzBytes, err := ioutil.ReadFile(testTgz("airflow-1.0.0.tgz"))
+	tarGzBytes, err := os.ReadFile(testTgz("airflow-1.0.0.tgz"))
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	indexYAMLBytes, err := ioutil.ReadFile(testYaml("chart-with-relative-url.yaml"))
+	indexYAMLBytes, err := os.ReadFile(testYaml("chart-with-relative-url.yaml"))
 	if err != nil {
 		t.Fatal(err)
 	}

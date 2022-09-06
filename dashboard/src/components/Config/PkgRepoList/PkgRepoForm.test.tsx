@@ -17,9 +17,8 @@ import { act } from "react-dom/test-utils";
 import * as ReactRedux from "react-redux";
 import { IPackageRepositoryState } from "reducers/repos";
 import { defaultStore, getStore, mountWrapper } from "shared/specs/mountWrapper";
-import { IPkgRepoFormData, IStoreState } from "shared/types";
-import { PluginNames } from "shared/utils";
-import { PkgRepoForm, RepositoryStorageTypes } from "./PkgRepoForm";
+import { IPkgRepoFormData, IStoreState, PluginNames, RepositoryStorageTypes } from "shared/types";
+import { PkgRepoForm } from "./PkgRepoForm";
 
 const defaultProps = {
   onSubmit: jest.fn(),
@@ -84,6 +83,8 @@ const pkgRepoFormData = {
     cert: "",
     key: "",
   },
+  namespace: "default",
+  isNamespaceScoped: true,
 } as IPkgRepoFormData;
 
 let spyOnUseDispatch: jest.SpyInstance;
@@ -159,6 +160,7 @@ it("shows an error creating a repo", async () => {
       <PkgRepoForm {...defaultProps} />,
     );
   });
+  wrapper.update();
   expect(wrapper.find(Alert)).toIncludeText("boom!");
 });
 
@@ -174,6 +176,7 @@ it("shows an error deleting a repo", async () => {
       <PkgRepoForm {...defaultProps} />,
     );
   });
+  wrapper.update();
   expect(wrapper.find(Alert)).toIncludeText("boom!");
 });
 
@@ -189,6 +192,7 @@ it("shows an error fetching a repo", async () => {
       <PkgRepoForm {...defaultProps} />,
     );
   });
+  wrapper.update();
   expect(wrapper.find(Alert)).toIncludeText("boom!");
 });
 
@@ -204,7 +208,25 @@ it("shows an error updating a repo", async () => {
       <PkgRepoForm {...defaultProps} />,
     );
   });
+  wrapper.update();
   expect(wrapper.find(Alert)).toIncludeText("boom!");
+});
+
+it("disables unavailable plugins", async () => {
+  let wrapper: any;
+  await act(async () => {
+    wrapper = mountWrapper(
+      getStore({
+        config: {
+          configuredPlugins: [{ name: PluginNames.PACKAGES_HELM, version: "v1alpha1" }],
+        },
+      } as Partial<IStoreState>),
+      <PkgRepoForm {...defaultProps} />,
+    );
+  });
+  expect(wrapper.find("#kubeapps-plugin-helm").prop("disabled")).toBe(false);
+  expect(wrapper.find("#kubeapps-plugin-fluxv2").prop("disabled")).toBe(true);
+  expect(wrapper.find("#kubeapps-plugin-kappcontroller").prop("disabled")).toBe(true);
 });
 
 it("should call the install method", async () => {
@@ -523,6 +545,7 @@ it("should not show the list of OCI repositories if using a Helm repo (default)"
   wrapper.find("#kubeapps-repo-name").simulate("change", { target: { value: "helm-repo" } });
   wrapper.find("#kubeapps-repo-url").simulate("change", { target: { value: "helm.repo" } });
   wrapper.find("#kubeapps-repo-type-helm").simulate("change");
+  wrapper.update();
   expect(wrapper.find("#kubeapps-oci-repositories")).not.toExist();
 });
 
@@ -683,6 +706,7 @@ describe("when the repository info is already populated", () => {
         <PkgRepoForm {...defaultProps} packageRepoRef={packageRepoRef} />,
       );
     });
+    wrapper.update();
     expect(wrapper.find("#kubeapps-repo-skip-tls")).toBeChecked();
   });
 
@@ -701,6 +725,7 @@ describe("when the repository info is already populated", () => {
         <PkgRepoForm {...defaultProps} packageRepoRef={packageRepoRef} />,
       );
     });
+    wrapper.update();
     expect(wrapper.find("#kubeapps-repo-pass-credentials")).toBeChecked();
   });
 

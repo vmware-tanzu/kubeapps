@@ -31,16 +31,6 @@ beforeEach(() => {
   store = makeStore(false);
 });
 
-const getResourceOrig = Kube.getResource;
-let getResourceMock: jest.Mock;
-beforeEach(() => {
-  getResourceMock = jest.fn(() => []);
-  Kube.getResource = getResourceMock;
-});
-afterEach(() => {
-  Kube.getResource = getResourceOrig;
-});
-
 describe("getResourceKinds", () => {
   beforeEach(() => {
     Kube.getAPIGroups = jest.fn().mockResolvedValue([]);

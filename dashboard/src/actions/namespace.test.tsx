@@ -72,7 +72,7 @@ describe("fetchNamespaces", () => {
   it("dispatches the list of namespace names if no error", async () => {
     Namespace.list = jest.fn().mockImplementationOnce(() => {
       return {
-        namespaces: [{ metadata: { name: "overlook-hotel" } }, { metadata: { name: "room-217" } }],
+        namespaceNames: ["overlook-hotel", "room-217"],
       };
     });
     const expectedActions = [
@@ -123,7 +123,7 @@ describe("createNamespace", () => {
     Namespace.create = jest.fn();
     Namespace.list = jest.fn().mockImplementationOnce(() => {
       return {
-        namespaces: [{ metadata: { name: "overlook-hotel" } }, { metadata: { name: "room-217" } }],
+        namespaceNames: ["overlook-hotel", "room-217"],
       };
     });
     const expectedActions = [

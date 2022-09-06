@@ -10,8 +10,8 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"net/http"
+	"os"
 	"reflect"
 	"testing"
 
@@ -159,11 +159,11 @@ func compareJSONStrings(t *testing.T, expectedJSONString, actualJSONString strin
 // generate-cert.sh script in testdata directory is used to generate these files
 func getCertsForTesting(t *testing.T) (ca, pub, priv []byte) {
 	var err error
-	if ca, err = ioutil.ReadFile(testCert("ca.pem")); err != nil {
+	if ca, err = os.ReadFile(testCert("ca.pem")); err != nil {
 		t.Fatalf("%+v", err)
-	} else if pub, err = ioutil.ReadFile(testCert("server.pem")); err != nil {
+	} else if pub, err = os.ReadFile(testCert("server.pem")); err != nil {
 		t.Fatalf("%+v", err)
-	} else if priv, err = ioutil.ReadFile(testCert("server-key.pem")); err != nil {
+	} else if priv, err = os.ReadFile(testCert("server-key.pem")); err != nil {
 		t.Fatalf("%+v", err)
 	}
 	return ca, pub, priv

@@ -10,7 +10,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"net/url"
 	"os"
@@ -87,9 +86,7 @@ func init() {
 	}
 }
 
-//
 // miscellaneous utility funcs
-//
 func NewDefaultPluginConfig() *FluxPluginConfig {
 	// If no config is provided, we default to the existing values for backwards
 	// compatibility.
@@ -281,7 +278,6 @@ func HelmGetterOptionsFromSecret(secret apiv1.Secret) ([]getter.Option, error) {
 	}
 }
 
-//
 // Secrets with no username AND password are ignored, if only one is defined it
 // returns an error.
 func basicAuthFromSecret(secret apiv1.Secret, options *HttpClientOptions) error {
@@ -318,8 +314,7 @@ func tlsClientConfigFromSecret(secret apiv1.Secret, options *HttpClientOptions) 
 // OCIChartRepositoryCredentialFromSecret derives authentication data from a Secret to login to an OCI registry.
 // This Secret may either hold "username" and "password" fields or be of the
 // apiv1.SecretTypeDockerConfigJson type and hold a apiv1.DockerConfigJsonKey field with a
-// complete Docker configuration. If both, "username" and "password" are
-// empty, a nil LoginOption and a nil error will be returned.
+// complete Docker configuration. If both, "username" and "password" are empty, a nil error will be returned.
 // ref https://github.com/fluxcd/source-controller/blob/main/internal/helm/registry/auth.go
 func OCIChartRepositoryCredentialFromSecret(registryURL string, secret apiv1.Secret) (*orasregistryauthv2.Credential, error) {
 	var username, password string
@@ -356,11 +351,12 @@ func OCIChartRepositoryCredentialFromSecret(registryURL string, secret apiv1.Sec
 	case username == "" || password == "":
 		return nil, fmt.Errorf("invalid '%s' secret data: required fields 'username' and 'password'", secret.Name)
 	}
+
 	pwdRedacted := password
 	if len(pwdRedacted) > 4 {
 		pwdRedacted = pwdRedacted[0:3] + "..."
 	}
-	log.Infof("-OCIRegOCIChartRepositoryCredentialFromSecret: username: [%s], password: [%s]", username, pwdRedacted)
+	log.Infof("-OCIChartRepositoryCredentialFromSecret: username: [%s], password: [%s]", username, pwdRedacted)
 	return &orasregistryauthv2.Credential{
 		Username: username,
 		Password: password,
@@ -454,7 +450,7 @@ func ParsePluginConfig(pluginConfigPath string) (*FluxPluginConfig, error) {
 	var config internalFluxPluginConfig
 
 	// #nosec G304
-	pluginConfig, err := ioutil.ReadFile(pluginConfigPath)
+	pluginConfig, err := os.ReadFile(pluginConfigPath)
 	if err != nil {
 		return nil, fmt.Errorf("unable to open plugin config at %q: %w", pluginConfigPath, err)
 	}

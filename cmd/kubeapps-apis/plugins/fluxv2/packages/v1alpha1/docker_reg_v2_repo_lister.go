@@ -77,7 +77,13 @@ func (l *dockerRegistryApiV2RepositoryLister) ListRepositoryNames(ociRepo *OCICh
 			log.Infof("orasRegistry.Repositories fn: %s", repos)
 			lastRepoMatch := false
 			for _, r := range repos {
-				if lastRepoMatch = strings.HasPrefix(r, startAt+"/"); lastRepoMatch {
+				// Examples:
+				// GitHub and Harbor: stefanprodan-podinfo-clone/podinfo
+				// GCP Artifact Repository: vmware-kubeapps-ci/stefanprodan-podinfo-clone/podinfo
+				lastRepoMatch =
+					strings.HasPrefix(r, startAt+"/") ||
+						strings.Contains(r, "/"+startAt+"/")
+				if lastRepoMatch {
 					repositoryList = append(repositoryList, r)
 				}
 			}
@@ -102,6 +108,7 @@ func (l *dockerRegistryApiV2RepositoryLister) ListRepositoryNames(ociRepo *OCICh
 }
 
 func newRemoteOrasRegistry(ociRepo *OCIChartRepository) (*orasregistryremotev2.Registry, error) {
+
 	ref := strings.TrimPrefix(ociRepo.url.String(), fmt.Sprintf("%s://", registry.OCIScheme))
 	parsedRef, err := orasregistryv2.ParseReference(ref)
 	if err != nil {
@@ -116,5 +123,6 @@ func newRemoteOrasRegistry(ociRepo *OCIChartRepository) (*orasregistryremotev2.R
 		Cache:      orasregistryauthv2.DefaultCache,
 		Credential: ociRepo.registryCredentialFn,
 	}
+
 	return orasRegistry, nil
 }

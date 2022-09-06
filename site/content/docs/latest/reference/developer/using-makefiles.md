@@ -19,7 +19,7 @@ Find below a list of the most used commands:
 make # will make all the kubeapps images
 make kubeapps/dashboard
 make kubeapps/apprepository-controller
-make kubeapps/kubeops
+make kubeapps/kubeapps-apis
 make kubeapps/asset-syncer
 ```
 
