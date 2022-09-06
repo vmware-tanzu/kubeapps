@@ -209,6 +209,7 @@ jobs:
       - setup
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v3
       - uses: docker/metadata-action@v4
         id: meta
         with:
