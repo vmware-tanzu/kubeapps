@@ -441,7 +441,7 @@ func (s *Server) hasAccessToNamespace(ctx context.Context, cluster, namespace st
 	}
 	if !res.Status.Allowed {
 		// If the user has not access, return a unauthenticated response, otherwise, continue
-		return status.Errorf(codes.Unauthenticated, "The current user has no access to the namespace %q", namespace)
+		return status.Errorf(codes.PermissionDenied, "The current user has no access to the namespace %q", namespace)
 	}
 	return nil
 }
@@ -690,7 +690,7 @@ func (s *Server) CreateInstalledPackage(ctx context.Context, request *corev1.Cre
 	}
 	ch, registrySecrets, err := s.fetchChartWithRegistrySecrets(ctx, chartDetails, typedClient)
 	if err != nil {
-		return nil, status.Errorf(codes.Unauthenticated, "Missing permissions %v", err)
+		return nil, status.Errorf(codes.PermissionDenied, "Missing permissions %v", err)
 	}
 
 	// Create an action config for the target namespace.
@@ -761,7 +761,7 @@ func (s *Server) UpdateInstalledPackage(ctx context.Context, request *corev1.Upd
 	}
 	ch, registrySecrets, err := s.fetchChartWithRegistrySecrets(ctx, chartDetails, typedClient)
 	if err != nil {
-		return nil, status.Errorf(codes.Unauthenticated, "Missing permissions %v", err)
+		return nil, status.Errorf(codes.PermissionDenied, "Missing permissions %v", err)
 	}
 
 	// Create an action config for the installed pkg context.
