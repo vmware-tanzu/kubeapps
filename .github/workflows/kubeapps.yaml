@@ -155,7 +155,8 @@ jobs:
       - uses: docker/metadata-action@v4
         id: meta
         with:
-          images: kubeapps/${{matrix.image}}
+#          images: kubeapps/${{matrix.image}}
+          images: ${{secrets.DOCKER_USERNAME}}/kubeapps-${{matrix.image}}
           tags: |
             type=ref,event=branch
             type=semver,pattern={{version}}
