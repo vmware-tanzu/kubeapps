@@ -1,6 +1,6 @@
 # Step 2B: Deploy a VMware Tanzu™ Community Edition managed cluster
 
-In this step of the tutorial, the outcome is to install a [managed TCE cluster](https://tanzucommunityedition.io/docs/v0.12/planning/#managed-cluster).
+In this step, the goal is to install a [managed TCE cluster](https://tanzucommunityedition.io/docs/v0.12/planning/#managed-cluster).
 
 VMware Tanzu™ Community Edition supports the following infrastructure providers for managed clusters:
 
