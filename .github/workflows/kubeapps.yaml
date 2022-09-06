@@ -167,9 +167,9 @@ jobs:
           - pinniped-proxy
         # path contains the relative path of the folder containing the app/module folder
         path: [ cmd ]
-        include:
-          - image: dashboard
-            path: .
+#        include:
+#          - image: dashboard
+#            path: .
     steps:
       - uses: docker/metadata-action@v4
         id: meta
@@ -203,8 +203,38 @@ jobs:
 #          name: ${{matrix.image}}-image
 #          path: /tmp/${{matrix.image}}-image.tar
 
-
-
+  build_dashboard_image:
+    name: "Build dashboard image"
+    needs:
+      - setup
+    runs-on: ubuntu-latest
+    steps:
+      - uses: docker/metadata-action@v4
+        id: meta
+        with:
+          images: ${{needs.setup.outputs.dockerhub_namespace}}/dashboard
+          tags: |
+            type=ref,event=branch
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=sha
+      - uses: docker/setup-qemu-action@v2
+      - uses: docker/setup-buildx-action@v2
+      - name: Login to Docker Hub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+      - name: Build and push container image
+        uses: docker/build-push-action@v2
+        with:
+          file: dashboard/Dockerfile
+          platforms: linux/amd64
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          push: true
 
 
 
