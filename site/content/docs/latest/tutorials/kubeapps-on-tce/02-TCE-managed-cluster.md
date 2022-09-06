@@ -20,7 +20,7 @@ This tutorial addresses the configuration of the _Google Identity Platform_ OIDC
 ### Setting up the Google credentials client
 
 You can use an OAuth 2.0 client.
-Create a new "Web Application" client following [this steps](https://support.google.com/cloud/answer/6158849?hl=en).
+Create a new "Web Application" client following [these steps](https://support.google.com/cloud/answer/6158849?hl=en).
 
 At the end of this section, you should have:
 
