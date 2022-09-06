@@ -1,6 +1,6 @@
 # Step 2B: Deploy a VMware Tanzu™ Community Edition managed cluster
 
-In this step of the tutorial, we will install a [managed TCE cluster](https://tanzucommunityedition.io/docs/v0.12/planning/#managed-cluster).
+In this step of the tutorial, you will install a [managed TCE cluster](https://tanzucommunityedition.io/docs/v0.12/planning/#managed-cluster).
 
 VMware Tanzu™ Community Edition supports the following infrastructure providers for managed clusters:
 
@@ -13,25 +13,25 @@ TCE offers a UI for setting up all the different parameters needed.
 
 ## Preparing the OpenID Connect (OIDC) authentication
 
-Before creating the cluster, we will need to set up a proper OIDC provider that Kubernetes will use to authenticate requests.
+Before creating the cluster, it is necessary to set up a proper OIDC provider that Kubernetes use to authenticate requests.
 
-For this tutorial we will use _Google Identity Platform_ OIDC provider, but there are more options of [using an OAuth2/OIDC Provider with Kubeapps](https://github.com/vmware-tanzu/kubeapps/blob/main/site/content/docs/latest/tutorials/using-an-OIDC-provider.md).
+This tutorial configures _Google Identity Platform_ OIDC provider, but there are more options of [using an OAuth2/OIDC Provider with Kubeapps](https://github.com/vmware-tanzu/kubeapps/blob/main/site/content/docs/latest/tutorials/using-an-OIDC-provider.md).
 
 ### Setting up the Google credentials client
 
-In the case of Google, we can use an OAuth 2.0 client.
+In the case of Google, you can use an OAuth 2.0 client.
 Create a new "Web Application" client following [this steps](https://support.google.com/cloud/answer/6158849?hl=en).
 
-At the end of this section, we should have:
+At the end of this section, you should have:
 
-- _Issuer URL_: The IP or DNS address of the OIDC server. In our case, this might be `https://accounts.google.com`.
+- _Issuer URL_: The IP or DNS address of the OIDC server. In this case, it might be `https://accounts.google.com`.
 - _Client ID_: The client_id value that you obtain from your OIDC provider.
 - _Client Secret_: The secret value that you obtain from your OIDC provider.
 - _Scopes_: A comma-separated list of additional scopes to request in the token response.
 - _Username Claim_: The name of your username claim. This is used to set a user’s username in the JSON Web Token (JWT) claim.
 - _Groups Claim_: The name of your group's claim. This is used to set a user’s group in the JWT claim.
 
-This information will be used to both set up the Kubernetes cluster, and in a further step, configure Kubeapps so that both use Google as an identity provider.
+This information is used to both set up the Kubernetes cluster, and in a further step, configure Kubeapps so that both use Google as an identity provider.
 
 ## Deploying the cluster
 
@@ -51,7 +51,7 @@ This information will be used to both set up the Kubernetes cluster, and in a fu
    tanzu management-cluster get
    ```
 
-   The output will look similar to the following:
+   The output should looks similar to the following:
 
    ```bash
    NAME          NAMESPACE   STATUS   CONTROLPLANE  WORKERS  KUBERNETES        ROLES       PLAN
@@ -97,8 +97,16 @@ This information will be used to both set up the Kubernetes cluster, and in a fu
    tanzu package repository add tce-repo --url projects.registry.vmware.com/tce/main:0.12.0 --namespace tanzu-package-repo-global
    ```
 
-The outcome of the actions above will be a management, managed TCE cluster running on your preferred infrastructure provider. Starting with that, _workload_ clusters could be created and be controlled from this _management_ cluster. For simplicity reasons, we will continue the tutorial using only the management cluster, but it is not a recommended strategy for production setups.
+The outcome of the actions above is a management, managed TCE cluster running on your preferred infrastructure provider. Starting with that, _workload_ clusters could be created and be controlled from this _management_ cluster. For simplicity reasons, the tutorial continues by using only the management cluster, but it is not a recommended strategy for production setups.
 
 For further information on how to create TCE workload clusters please check [the official documentation](https://tanzucommunityedition.io/docs/v0.12/getting-started/#deploy-a-workload-cluster).
 
 > Continue the tutorial by [preparing the Kubeapps deployment](./03-preparing-kubeapps-deployment.md).
+
+## Tutorial index
+
+1. [TCE cluster deployment preparation](./01-TCE-cluster-preparation.md)
+2. [Deploying a managed cluster](./02-TCE-managed-cluster.md) or [Deploy an unmanaged cluster](./02-TCE-unmanaged-cluster.md)
+3. [Preparing the Kubeapps deployment](./03-preparing-kubeapps-deployment.md)
+4. [Deploying Kubeapps](./04-deploying-kubeapps.md)
+5. [Further documentation for managing applications in Kubeapps](./05-managing-applications.md)

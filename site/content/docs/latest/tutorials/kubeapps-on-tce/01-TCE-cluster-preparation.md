@@ -16,7 +16,7 @@ The main components are:
 
   Offer a single node, local workstation cluster suitable for a development/test environment. You can read more about [unmanaged clusters in the official Tanzu Community Edition documentation](https://tanzucommunityedition.io/docs/v0.12/planning/#unmanaged-cluster).
 
-In this step of the tutorial, we will prepare the installation of the TCE cluster.
+In this step of the tutorial, you will prepare the installation of the TCE cluster.
 
 ## Step 1.1: Install Tanzu CLI
 
@@ -51,3 +51,11 @@ or
 - Do you want a full-featured, scalable Kubernetes implementation suitable for a development or production environment? If so, continue the tutorial by deploying an [managed cluster](./02-TCE-managed-cluster.md).
 
 If you want to know more about planning your deployment check out [the official TCE documentation](https://tanzucommunityedition.io/docs/v0.12/planning/).
+
+## Tutorial index
+
+1. [TCE cluster deployment preparation](./01-TCE-cluster-preparation.md)
+2. [Deploying a managed cluster](./02-TCE-managed-cluster.md) or [Deploy an unmanaged cluster](./02-TCE-unmanaged-cluster.md)
+3. [Preparing the Kubeapps deployment](./03-preparing-kubeapps-deployment.md)
+4. [Deploying Kubeapps](./04-deploying-kubeapps.md)
+5. [Further documentation for managing applications in Kubeapps](./05-managing-applications.md)

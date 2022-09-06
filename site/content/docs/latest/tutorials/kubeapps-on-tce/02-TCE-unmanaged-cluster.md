@@ -1,6 +1,6 @@
 # Step 2A: Deploy a VMware Tanzu™ Community Edition unmanaged cluster
 
-In this step of the tutorial, we will install an [unmanaged TCE cluster](https://tanzucommunityedition.io/docs/v0.12/planning/#unmanaged-cluster).
+In this step of the tutorial, you will install an [unmanaged TCE cluster](https://tanzucommunityedition.io/docs/v0.12/planning/#unmanaged-cluster).
 
 By default, unmanaged clusters run locally via kind (default) or minikube with Tanzu components installed atop.
 
@@ -89,14 +89,14 @@ By default, unmanaged clusters run locally via kind (default) or minikube with T
 
 ## Authentication for an unmanaged cluster
 
-Unmanaged clusters are meant for development/testing mainly, and for this tutorial we will use the **service account authentication**.
+Unmanaged clusters are meant for development/testing mainly, and this tutorial uses the **service account authentication**.
 
 Please remember that for any user-facing installation you should [configure an OAuth2/OIDC provider](https://github.com/vmware-tanzu/kubeapps/blob/main/site/content/docs/latest/tutorials/using-an-OIDC-provider.md) to enable secure user authentication with Kubeapps and the cluster.
 
 ### Credentials creation
 
 Let's continue by creating a demo credential with which to access Kubeapps and Kubernetes.
-Service account will be named `kubeapps-operator` and will have `cluster-admin` role.
+Service account named `kubeapps-operator` with a `cluster-admin` role.
 
 ```bash
 kubectl create --namespace default serviceaccount kubeapps-operator
@@ -119,7 +119,7 @@ EOF
 
 ### Credentials retrieval
 
-In order to access Kubeapps, a token will be required. Given that we are using plain service account authentication, it is straightforward to obtain a token.
+In order to access Kubeapps, a token is required. Given that you are using plain service account authentication, it is straightforward to obtain a token.
 Keep the obtained token for later steps of the tutorial.
 
 #### On Linux/macOS
@@ -137,3 +137,11 @@ Open a Powershell terminal and run:
 ```
 
 > Continue the tutorial by [preparing the Kubeapps deployment](./03-preparing-kubeapps-deployment.md).
+
+## Tutorial index
+
+1. [TCE cluster deployment preparation](./01-TCE-cluster-preparation.md)
+2. [Deploying a managed cluster](./02-TCE-managed-cluster.md) or [Deploy an unmanaged cluster](./02-TCE-unmanaged-cluster.md)
+3. [Preparing the Kubeapps deployment](./03-preparing-kubeapps-deployment.md)
+4. [Deploying Kubeapps](./04-deploying-kubeapps.md)
+5. [Further documentation for managing applications in Kubeapps](./05-managing-applications.md)
