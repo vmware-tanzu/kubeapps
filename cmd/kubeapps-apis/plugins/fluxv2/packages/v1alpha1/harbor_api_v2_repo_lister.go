@@ -104,18 +104,25 @@ func (l *harborRegistryApiV2RepositoryLister) ListRepositoryNames(ociRepo *OCICh
 
 // ref https://demo.goharbor.io/#/ping/getPing
 func pingHarbor(ctx context.Context, ref orasregistryv2.Reference, cred orasregistryauthv2.Credential) (string, error) {
-	log.Infof("+ping")
+	log.Infof("+pingHarbor")
 	url := fmt.Sprintf("%s/ping", buildHarborRegistryBaseURL(false, ref))
 	resp, err := harborDoHttpRequest(ctx, http.MethodGet, cred, url)
 	if err != nil {
 		return "", err
 	}
+	contentType := resp.Header.Get("Content-Type")
+	if !strings.HasPrefix(contentType, "text/plain") {
+		return "", fmt.Errorf("unexpected response content type: [%s]", contentType)
+	}
 	defer resp.Body.Close()
 
 	switch resp.StatusCode {
 	case http.StatusOK:
-		if pong, err := ioutil.ReadAll(resp.Body); err != nil {
+		lr := io.LimitReader(resp.Body, 100)
+		if pong, err := ioutil.ReadAll(lr); err != nil {
 			return "", err
+		} else if string(pong) != "Pong" {
+			return "", fmt.Errorf("unexpected response body: %s", string(pong))
 		} else {
 			return string(pong), nil
 		}

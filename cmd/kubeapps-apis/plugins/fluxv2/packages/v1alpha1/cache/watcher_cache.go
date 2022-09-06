@@ -977,6 +977,14 @@ func (c *NamespacedResourceWatcherCache) forceKey(key string) {
 
 func (c *NamespacedResourceWatcherCache) ForceAndFetch(key string) (interface{}, error) {
 	c.forceKey(key)
+	// TODO (gfichtenholt): if there was an error while processing the cache entry, such as
+	// E0903 09:07:17.660753       1 watcher_cache.go:595] Invocation of [onAdd] for object {
+	//  ...
+	// } failed due to: rpc error: code = Internal desc = No repository lister found for OCI registry with URL: [oci://...]
+	// it would be nice to surface that error here to the caller rather than
+	// have redis return Nil for the key, same as a regular cache miss.
+	// That requires saving more state in the cache
+
 	// yes, there is a small time window here between after we are done with WaitUntilForgotten()
 	// and the following fetch, where another concurrent goroutine may force the newly added
 	// cache entry out, but that is an edge case and I am willing to overlook it for now
