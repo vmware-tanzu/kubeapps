@@ -22,8 +22,8 @@ import (
 )
 
 // This flavor of OCI repository lister works with respect to an instance of
-// CNCF Harbor container registry. The Swagger for the API can be found on a
-// running server in the API explorer "About" link, e.g.
+// CNCF Harbor container registry. The OpenAPI Specification (Swagger) for the
+// API can be found on a running server in the API explorer "About" link, e.g.
 //   https://demo.goharbor.io/devcenter-api-2.0
 // Why is this needed? Or why doesn't dockerRegistryApiV2RepositoryLister just
 // take care of this? The answer is harbor robot accounts are not able to list
