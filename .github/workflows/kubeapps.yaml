@@ -152,14 +152,19 @@ jobs:
       - name: Run chart template test
         run: ./script/chart-template-test.sh
 
-  build_go_images:
+  build_docker_images:
     name: "Build ${{matrix.image}} image"
     needs:
       - setup
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        image: [ apprepository-controller, asset-syncer, kubeapps-apis ]
+        image:
+          - apprepository-controller
+          - asset-syncer
+          - kubeapps-apis
+          - dashboard
+          - pinniped-proxy
     steps:
       - uses: docker/metadata-action@v4
         id: meta
@@ -192,7 +197,6 @@ jobs:
         with:
           name: ${{matrix.image}}-image
           path: /tmp/${{matrix.image}}-image.tar
-
 
 
 
