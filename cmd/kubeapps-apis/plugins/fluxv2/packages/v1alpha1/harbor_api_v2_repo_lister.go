@@ -7,7 +7,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"net/url"
 	"strings"
@@ -118,7 +117,7 @@ func pingHarbor(ctx context.Context, ref orasregistryv2.Reference, cred orasregi
 	switch resp.StatusCode {
 	case http.StatusOK:
 		lr := io.LimitReader(resp.Body, 100)
-		if pong, err := ioutil.ReadAll(lr); err != nil {
+		if pong, err := io.ReadAll(lr); err != nil {
 			return "", err
 		} else if string(pong) != "Pong" {
 			return "", fmt.Errorf("unexpected response body: %s", string(pong))
