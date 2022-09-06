@@ -17,7 +17,7 @@ import * as ReactRouter from "react-router-dom";
 import { Link } from "react-router-dom";
 import { IClusterServiceVersion, IStoreState } from "shared/types";
 import { app } from "shared/url";
-import { escapeRegExp, getPluginName } from "shared/utils";
+import { escapeRegExp, getPluginPackageName } from "shared/utils";
 import LoadingWrapper from "../LoadingWrapper/LoadingWrapper";
 import PageHeader from "../PageHeader/PageHeader";
 import SearchFilter from "../SearchFilter/SearchFilter";
@@ -239,7 +239,9 @@ export default function Catalog() {
       .map(r => r.name),
   ).sort();
   const allPlugins = uniq(
-    configuredPlugins.filter(p => p.name.includes(".packages")).map(p => getPluginName(p) || ""),
+    configuredPlugins
+      .filter(p => p.name.includes(".packages"))
+      .map(p => getPluginPackageName(p, true) || ""),
   ).sort();
   const allProviders = uniq(csvs.map(c => c.spec.provider.name));
   const allCategories = uniq(
@@ -289,7 +291,7 @@ export default function Catalog() {
     .filter(
       c =>
         filters[filterNames.PKG_TYPE].length === 0 ||
-        filters[filterNames.PKG_TYPE].includes(getPluginName(c.availablePackageRef?.plugin)),
+        filters[filterNames.PKG_TYPE].includes(getPluginPackageName(c.availablePackageRef?.plugin)),
     )
     .filter(() => filters[filterNames.OPERATOR_PROVIDER].length === 0)
     .filter(
