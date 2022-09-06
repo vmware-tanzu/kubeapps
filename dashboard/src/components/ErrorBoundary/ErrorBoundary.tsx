@@ -1,7 +1,7 @@
 // Copyright 2018-2022 the Kubeapps contributors.
 // SPDX-License-Identifier: Apache-2.0
 
-import { CdsInlineButton } from "@cds/react/button";
+import { CdsButton } from "@cds/react/button";
 import Alert from "components/js/Alert";
 import React from "react";
 
@@ -33,10 +33,15 @@ class ErrorBoundary extends React.Component<IErrorBoundaryProps, IErrorBoundaryS
       return (
         <Alert theme="danger">
           An error occurred: {err.message}.{" "}
-          {propsError && <CdsInlineButton onClick={this.props.logout}>Logout</CdsInlineButton>}
+          {propsError && (
+            <CdsButton size="sm" action="flat" onClick={this.props.logout} type="button">
+              Log out
+            </CdsButton>
+          )}
         </Alert>
       );
     }
+
     return this.props.children;
   }
 
