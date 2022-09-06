@@ -5,7 +5,6 @@ package main
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -22,13 +21,13 @@ import (
 	orasregistryauthv2 "oras.land/oras-go/v2/registry/remote/auth"
 )
 
-// This flavor of OCI repsitory ister works with respect to to VMware Harbor
-// container registry. The Swagger for the API can be found on an running server
-// in the API explorer "About" link, e.g.
-// https://demo.goharbor.io/devcenter-api-2.0
+// This flavor of OCI repository lister works with respect to an instance of
+// CNCF Harbor container registry. The Swagger for the API can be found on a
+// running server in the API explorer "About" link, e.g.
+//   https://demo.goharbor.io/devcenter-api-2.0
 // Why is this needed? Or why doesn't dockerRegistryApiV2RepositoryLister just
 // take care of this? The answer is harbor robot accounts are not able to list
-// repositories using the generic API. But it works using harbor REST API
+// repositories using the generic API. But it works using harbor-specific REST API
 // ref https://github.com/vmware-tanzu/kubeapps/issues/5219
 
 func NewHarborRegistryApiV2RepositoryLister() OCIChartRepositoryLister {
@@ -153,9 +152,6 @@ func harborProjectExists(ctx context.Context, projectName string, ref orasregist
 
 	case http.StatusNotFound:
 		return errdef.ErrNotFound
-
-	case http.StatusForbidden:
-		return errors.New("forbidden")
 
 	default:
 		err = parseHarborErrorResponse(resp)
