@@ -51,7 +51,7 @@ This information is used to both set up the Kubernetes cluster, and in a further
    tanzu management-cluster get
    ```
 
-   The output should looks similar to the following:
+   The output should be similar to the following:
 
    ```bash
    NAME          NAMESPACE   STATUS   CONTROLPLANE  WORKERS  KUBERNETES        ROLES       PLAN
