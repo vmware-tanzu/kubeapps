@@ -158,13 +158,18 @@ jobs:
       - setup
     runs-on: ubuntu-latest
     strategy:
+      fail-fast: false
       matrix:
         image:
           - apprepository-controller
           - asset-syncer
           - kubeapps-apis
-          - dashboard
           - pinniped-proxy
+        # path contains the relative path of the folder containing the app/module folder
+        path: [ cmd ]
+        include:
+          - image: dashboard
+            path: .
     steps:
       - uses: docker/metadata-action@v4
         id: meta
@@ -185,18 +190,18 @@ jobs:
       - name: Build and push container image
         uses: docker/build-push-action@v2
         with:
-          file: cmd/${{matrix.image}}/Dockerfile
+          file: ${{matrix.path}}/${{matrix.image}}/Dockerfile
           platforms: linux/amd64, linux/arm64
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
           push: true
-      - name: Upload artifact
-        uses: actions/upload-artifact@v3
-        with:
-          name: ${{matrix.image}}-image
-          path: /tmp/${{matrix.image}}-image.tar
+#      - name: Upload artifact
+#        uses: actions/upload-artifact@v3
+#        with:
+#          name: ${{matrix.image}}-image
+#          path: /tmp/${{matrix.image}}-image.tar
 
 
 
