@@ -153,6 +153,7 @@ jobs:
         run: ./script/chart-template-test.sh
 
   build_go_images:
+    name: "Build ${{matrix.image}} image"
     needs:
       - setup
     runs-on: ubuntu-latest
