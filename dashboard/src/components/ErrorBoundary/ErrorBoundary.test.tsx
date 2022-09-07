@@ -1,7 +1,7 @@
 // Copyright 2018-2022 the Kubeapps contributors.
 // SPDX-License-Identifier: Apache-2.0
 
-import { CdsInlineButton } from "@cds/react/button";
+import { CdsButton } from "@cds/react/button";
 import Alert from "components/js/Alert";
 import { mount } from "enzyme";
 import React from "react";
@@ -93,7 +93,7 @@ it("logs out when clicking on the link", () => {
       <></>
     </ErrorBoundary>,
   );
-  const link = wrapper.find(Alert).find(CdsInlineButton);
+  const link = wrapper.find(Alert).find(CdsButton);
   expect(link).toExist();
   (link.prop("onClick") as any)();
   expect(logout).toHaveBeenCalled();
@@ -104,5 +104,5 @@ it("should not show the logout button if the error is catched from other compone
   wrapper.setState({ error: new Error("Boom!") });
   const alert = wrapper.find(Alert);
   expect(alert).toExist();
-  expect(alert.find(CdsInlineButton)).not.toExist();
+  expect(alert.find(CdsButton)).not.toExist();
 });

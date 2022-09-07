@@ -15,8 +15,7 @@ import { HelmPackageRepositoryCustomDetail } from "gen/kubeappsapis/plugins/helm
 import { KappControllerPackageRepositoryCustomDetail } from "gen/kubeappsapis/plugins/kapp_controller/packages/v1alpha1/kapp_controller";
 import KubeappsGrpcClient from "./KubeappsGrpcClient";
 import { PackageRepositoriesService } from "./PackageRepositoriesService";
-import { IPkgRepoFormData, RepositoryStorageTypes } from "./types";
-import { PluginNames } from "./utils";
+import { IPkgRepoFormData, PluginNames, RepositoryStorageTypes } from "./types";
 
 const cluster = "cluster";
 const namespace = "namespace";
@@ -91,6 +90,8 @@ const pkgRepoFormData = {
     cert: "",
     key: "",
   },
+  namespace,
+  isNamespaceScoped: true,
 } as IPkgRepoFormData;
 
 const packageRepoRef = {
@@ -161,9 +162,7 @@ describe("RepositoriesService", () => {
 
     const addPackageRepositoryResponse = await PackageRepositoriesService.addPackageRepository(
       cluster,
-      namespace,
-      pkgRepoFormData,
-      false,
+      { ...pkgRepoFormData, namespace, isNamespaceScoped: false },
     );
     expect(addPackageRepositoryResponse).toStrictEqual({
       packageRepoRef: {
@@ -197,7 +196,7 @@ describe("RepositoriesService", () => {
     setMockCoreClient("UpdatePackageRepository", mockUpdatePackageRepository);
 
     const updatePackageRepositoryResponse =
-      await PackageRepositoriesService.updatePackageRepository(cluster, namespace, pkgRepoFormData);
+      await PackageRepositoriesService.updatePackageRepository(cluster, pkgRepoFormData);
     expect(updatePackageRepositoryResponse).toStrictEqual({
       packageRepoRef: {
         identifier: pkgRepoFormData.name,

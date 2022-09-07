@@ -2,7 +2,9 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import axios from "axios";
+import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins";
 import * as url from "shared/url";
+import { PackageRepositoriesService } from "./PackageRepositoriesService";
 
 export enum SupportedThemes {
   dark = "dark",
@@ -35,6 +37,7 @@ export interface IConfig {
   customAppViews: ICustomAppViewIdentifier[];
   skipAvailablePackageDetails: boolean;
   createNamespaceLabels: { [key: string]: string };
+  configuredPlugins: Plugin[];
 }
 
 export interface IFeatureFlags {
@@ -45,6 +48,11 @@ export default class Config {
   public static async getConfig() {
     const { data } = await axios.get<IConfig>(url.api.config);
     return data;
+  }
+
+  public static async getConfiguredPlugins() {
+    const { plugins } = await PackageRepositoriesService.getConfiguredPlugins();
+    return plugins;
   }
 
   // getTheme retrieves the different theme preferences and calculates which one is chosen
@@ -82,7 +90,7 @@ export default class Config {
   // setUserTheme changes the current theme and also stores the user's preference in the localStorage
   // it's a separate function for testing
   public static setUserTheme(theme: SupportedThemes) {
-    this.setTheme(theme);
+    Config.setTheme(theme);
     localStorage.setItem("user-theme", theme);
   }
 }

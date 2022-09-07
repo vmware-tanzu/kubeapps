@@ -28,6 +28,7 @@ export const initialState: IConfigState = {
   customAppViews: [],
   skipAvailablePackageDetails: false,
   createNamespaceLabels: {},
+  configuredPlugins: [],
 };
 
 const configReducer = (state: IConfigState = initialState, action: ConfigAction): IConfigState => {

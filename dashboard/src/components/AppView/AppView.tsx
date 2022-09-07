@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { CdsButton } from "@cds/react/button";
-import { grpc } from "@improbable-eng/grpc-web";
 import actions from "actions";
+import { handleErrorAction } from "actions/auth";
 import ErrorAlert from "components/ErrorAlert";
 import Alert from "components/js/Alert";
 import Column from "components/js/Column";
@@ -15,6 +15,7 @@ import {
   ResourceRef,
 } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
 import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins";
+import placeholder from "icons/placeholder.svg";
 import * as yaml from "js-yaml";
 import { useEffect, useMemo, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
@@ -29,10 +30,10 @@ import {
   FetchError,
   FetchWarning,
   IStoreState,
+  NotFoundNetworkError,
 } from "shared/types";
 import { getPluginsSupportingRollback } from "shared/utils";
 import ApplicationStatus from "../../containers/ApplicationStatusContainer";
-import placeholder from "icons/placeholder.svg";
 import * as url from "../../shared/url";
 import LoadingWrapper from "../LoadingWrapper/LoadingWrapper";
 import AccessURLTable from "./AccessURLTable/AccessURLTable";
@@ -208,8 +209,9 @@ export default function AppView() {
           setResourceRefs(response.resourceRefs);
           return;
         } catch (e: any) {
-          if (e.code !== grpc.Code.NotFound) {
+          if (e.constructor !== NotFoundNetworkError) {
             // If we get any other error, we want the user to know about it.
+            dispatch(handleErrorAction(e));
             setFetchError(new FetchError("unable to fetch resource references", [e]));
             return;
           }
@@ -223,7 +225,7 @@ export default function AppView() {
     return () => {
       abort = true;
     };
-  }, [installedPkgRef]);
+  }, [dispatch, installedPkgRef]);
 
   useEffect(() => {
     if (resourceRefs.length === 0) {

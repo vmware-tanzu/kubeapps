@@ -7,7 +7,6 @@ import (
 	"context"
 	"fmt"
 	"io/fs"
-	"io/ioutil"
 	"os"
 	"path"
 	"path/filepath"
@@ -57,7 +56,7 @@ type PluginWithServer struct {
 	Server interface{}
 }
 
-// coreServer implements the API defined in cmd/kubeapps-api-service/core/core.proto
+// PluginsServer implements the API defined in "plugins.proto"
 type PluginsServer struct {
 	plugins.UnimplementedPluginsServiceServer
 
@@ -287,7 +286,7 @@ func createConfigGetter(serveOpts core.ServeOptions, clustersConfig kube.Cluster
 		// if using the local kubeconfig, read it from the KUBECONFIG path and
 		// create the restConfig
 		log.Warningf("Using the local kubeconfig configuration (in KUBECONFIG='%s' envar) since you passed --unsafe-local-dev-kubeconfig=true", os.Getenv("KUBECONFIG"))
-		kubeconfigBytes, err := ioutil.ReadFile(os.Getenv("KUBECONFIG"))
+		kubeconfigBytes, err := os.ReadFile(os.Getenv("KUBECONFIG"))
 		if err != nil {
 			return nil, fmt.Errorf("unable to read the file in KUBECONFIG envar: %w", err)
 		}

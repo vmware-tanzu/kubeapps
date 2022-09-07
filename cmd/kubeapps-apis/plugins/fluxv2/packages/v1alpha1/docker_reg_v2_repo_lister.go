@@ -15,17 +15,20 @@ import (
 	// ORAS => OCI Registry AS Storage
 	// project home page: https://oras.land/
 	// releases: https://github.com/oras-project/oras-go/releases
+
 	orasregistryv2 "oras.land/oras-go/v2/registry"
 	orasregistryremotev2 "oras.land/oras-go/v2/registry/remote"
 	orasregistryauthv2 "oras.land/oras-go/v2/registry/remote/auth"
 )
 
-// This flavor of OCI lister Works with respect to those OCI registry vendors that implement
-// Docker Registry API V2 or OCI Distribution Specification. For example,
-// GitHub (ghcr.io) and harbor CR
+// This flavor of OCI repsitory lister works with respect to those OCI registry vendors
+// that implement Docker Registry HTTP API V2 or OCI Distribution Specification.
+// For example, GitHub (ghcr.io), harbor and GCP Artifact Repositories are
+// known to suport this API, with some caveats:
+// - harbor does support Docker Registry HTTP API V2 when robot accounts are used
 // References:
-// - https://docs.docker.com/registry/spec/api/#base
-// - https://github.com/opencontainers/distribution-spec/blob/main/spec.md#api
+// - https://github.com/distribution/distribution/blob/main/docs/spec/api.md
+
 func NewDockerRegistryApiV2RepositoryLister() OCIChartRepositoryLister {
 	return &dockerRegistryApiV2RepositoryLister{}
 }
@@ -33,7 +36,7 @@ func NewDockerRegistryApiV2RepositoryLister() OCIChartRepositoryLister {
 type dockerRegistryApiV2RepositoryLister struct {
 }
 
-// ref https://github.com/distribution/distribution/blob/main/docs/spec/api.md#api-version-check
+// ref https://github.com/distribution/distribution/blob/main/docs/spec/api.md#listing-repositories
 // also https://github.com/oras-project/oras-go/blob/14422086e418/registry/remote/registry.go
 func (l *dockerRegistryApiV2RepositoryLister) IsApplicableFor(ociRepo *OCIChartRepository) (bool, error) {
 	log.Infof("+IsApplicableFor(%s)", ociRepo.url.String())
@@ -49,7 +52,24 @@ func (l *dockerRegistryApiV2RepositoryLister) IsApplicableFor(ociRepo *OCIChartR
 		}
 		log.Infof("ORAS v2 Registry [%s PlainHTTP=%t] PING: %s",
 			ociRepo.url.String(), orasRegistry.PlainHTTP, ping)
-		return err == nil, err
+		if err != nil {
+			return false, err
+		}
+		done := errors.New("(done) backstop")
+		fn := func(repos []string) error { return done }
+		// basic sanity check that we CAN call Repositories in general
+		// and avoid things like this later:
+		// GET "https://demo.goharbor.io/v2/_catalog?last=stefanprodan-podinfo-clone":
+		// unexpected status code 401: unauthorized: unauthorized to list catalog:
+		// unauthorized to list catalog
+		err = orasRegistry.Repositories(context.Background(), "", fn)
+		if err == done {
+			// everything looks kosher
+			return true, nil
+		} else {
+			log.Infof("This lister is not applicable due to: %v", err)
+			return false, err
+		}
 	}
 }
 
@@ -77,7 +97,13 @@ func (l *dockerRegistryApiV2RepositoryLister) ListRepositoryNames(ociRepo *OCICh
 			log.Infof("orasRegistry.Repositories fn: %s", repos)
 			lastRepoMatch := false
 			for _, r := range repos {
-				if lastRepoMatch = strings.HasPrefix(r, startAt+"/"); lastRepoMatch {
+				// Examples:
+				// GitHub and Harbor: stefanprodan-podinfo-clone/podinfo
+				// GCP Artifact Repository: vmware-kubeapps-ci/stefanprodan-podinfo-clone/podinfo
+				lastRepoMatch =
+					strings.HasPrefix(r, startAt+"/") ||
+						strings.Contains(r, "/"+startAt+"/")
+				if lastRepoMatch {
 					repositoryList = append(repositoryList, r)
 				}
 			}
@@ -112,8 +138,12 @@ func newRemoteOrasRegistry(ociRepo *OCIChartRepository) (*orasregistryremotev2.R
 		return nil, err
 	}
 	orasRegistry.Client = &orasregistryauthv2.Client{
-		Header:     orasregistryauthv2.DefaultClient.Header.Clone(),
-		Cache:      orasregistryauthv2.DefaultCache,
+		Header: orasregistryauthv2.DefaultClient.Header.Clone(),
+		// not using the cache for now to avoid things like
+		// https://github.com/vmware-tanzu/kubeapps/issues/5219#issuecomment-1233738309
+		// also orasRegistry today is a short lived object, so caching tokens is a waste
+		// per ORAS code: If nil, no cache is used
+		Cache:      nil,
 		Credential: ociRepo.registryCredentialFn,
 	}
 	return orasRegistry, nil

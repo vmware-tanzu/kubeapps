@@ -24,8 +24,13 @@ import thunk from "redux-thunk";
 import { PackageRepositoriesService } from "shared/PackageRepositoriesService";
 import PackagesService from "shared/PackagesService";
 import { initialState } from "shared/specs/mountWrapper";
-import { IPkgRepoFormData, IStoreState, NotFoundError, RepositoryStorageTypes } from "shared/types";
-import { PluginNames } from "shared/utils";
+import {
+  IPkgRepoFormData,
+  IStoreState,
+  NotFoundNetworkError,
+  PluginNames,
+  RepositoryStorageTypes,
+} from "shared/types";
 import { getType } from "typesafe-actions";
 import actions from ".";
 import { convertPkgRepoDetailToSummary } from "./repos";
@@ -172,6 +177,8 @@ const pkgRepoFormData = {
     cert: "",
     key: "",
   },
+  namespace: "my-namespace",
+  isNamespaceScoped: true,
 } as IPkgRepoFormData;
 
 const actionTestCases: ITestCase[] = [
@@ -416,30 +423,25 @@ describe("fetchRepoSummaries", () => {
 });
 
 describe("addRepo", () => {
-  const addRepoCMD = repoActions.addRepo("my-namespace", pkgRepoFormData);
+  const addRepoCMD = repoActions.addRepo(pkgRepoFormData);
 
   context("when authHeader provided", () => {
-    const addRepoCMDAuth = repoActions.addRepo("my-namespace", {
+    const addRepoCMDAuth = repoActions.addRepo({
       ...pkgRepoFormData,
       authHeader: "Bearer: abc",
     });
 
     it("calls PackageRepositoriesService create including a auth struct (authHeader)", async () => {
       await store.dispatch(addRepoCMDAuth);
-      expect(PackageRepositoriesService.addPackageRepository).toHaveBeenCalledWith(
-        "default",
-        "my-namespace",
-        {
-          ...pkgRepoFormData,
-          authHeader: "Bearer: abc",
-        },
-        true,
-      );
+      expect(PackageRepositoriesService.addPackageRepository).toHaveBeenCalledWith("default", {
+        ...pkgRepoFormData,
+        authHeader: "Bearer: abc",
+      });
     });
 
     it("calls PackageRepositoriesService create including ociRepositories", async () => {
       await store.dispatch(
-        repoActions.addRepo("my-namespace", {
+        repoActions.addRepo({
           ...pkgRepoFormData,
           type: RepositoryStorageTypes.PACKAGE_REPOSITORY_STORAGE_OCI,
           customDetail: {
@@ -448,34 +450,23 @@ describe("addRepo", () => {
           },
         }),
       );
-      expect(PackageRepositoriesService.addPackageRepository).toHaveBeenCalledWith(
-        "default",
-        "my-namespace",
-        {
-          ...pkgRepoFormData,
-          type: RepositoryStorageTypes.PACKAGE_REPOSITORY_STORAGE_OCI,
-          customDetail: {
-            ...pkgRepoFormData.customDetail,
-            ociRepositories: ["apache", "jenkins"],
-          },
+      expect(PackageRepositoriesService.addPackageRepository).toHaveBeenCalledWith("default", {
+        ...pkgRepoFormData,
+
+        type: RepositoryStorageTypes.PACKAGE_REPOSITORY_STORAGE_OCI,
+        customDetail: {
+          ...pkgRepoFormData.customDetail,
+          ociRepositories: ["apache", "jenkins"],
         },
-        true,
-      );
+      });
     });
 
     it("calls PackageRepositoriesService create skipping TLS verification", async () => {
-      await store.dispatch(
-        repoActions.addRepo("my-namespace", { ...pkgRepoFormData, skipTLS: true }),
-      );
-      expect(PackageRepositoriesService.addPackageRepository).toHaveBeenCalledWith(
-        "default",
-        "my-namespace",
-        {
-          ...pkgRepoFormData,
-          skipTLS: true,
-        },
-        true,
-      );
+      await store.dispatch(repoActions.addRepo({ ...pkgRepoFormData, skipTLS: true }));
+      expect(PackageRepositoriesService.addPackageRepository).toHaveBeenCalledWith("default", {
+        ...pkgRepoFormData,
+        skipTLS: true,
+      });
     });
 
     it("returns true", async () => {
@@ -485,22 +476,17 @@ describe("addRepo", () => {
   });
 
   context("when a customCA is provided", () => {
-    const addRepoCMDAuth = repoActions.addRepo("my-namespace", {
+    const addRepoCMDAuth = repoActions.addRepo({
       ...pkgRepoFormData,
       customCA: "This is a cert!",
     });
 
     it("calls PackageRepositoriesService create including a auth struct (custom CA)", async () => {
       await store.dispatch(addRepoCMDAuth);
-      expect(PackageRepositoriesService.addPackageRepository).toHaveBeenCalledWith(
-        "default",
-        "my-namespace",
-        {
-          ...pkgRepoFormData,
-          customCA: "This is a cert!",
-        },
-        true,
-      );
+      expect(PackageRepositoriesService.addPackageRepository).toHaveBeenCalledWith("default", {
+        ...pkgRepoFormData,
+        customCA: "This is a cert!",
+      });
     });
 
     it("returns true (addRepoCMDAuth)", async () => {
@@ -510,38 +496,36 @@ describe("addRepo", () => {
 
     it("sets flux repos as global", async () => {
       await store.dispatch(
-        repoActions.addRepo("my-namespace", {
+        repoActions.addRepo({
           ...pkgRepoFormData,
+          namespace: "my-namespace",
+          isNamespaceScoped: false,
           plugin: fluxPlugin as Plugin,
         }),
       );
-      expect(PackageRepositoriesService.addPackageRepository).toHaveBeenCalledWith(
-        "default",
-        "my-namespace",
-        {
-          ...pkgRepoFormData,
-          plugin: fluxPlugin,
-        },
-        false,
-      );
+      expect(PackageRepositoriesService.addPackageRepository).toHaveBeenCalledWith("default", {
+        ...pkgRepoFormData,
+        namespace: "my-namespace",
+        isNamespaceScoped: false,
+        plugin: fluxPlugin,
+      });
     });
 
     it("sets carvel repos as global if using the carvelGlobalNamespace", async () => {
       await store.dispatch(
-        repoActions.addRepo(carvelGlobalNamespace, {
+        repoActions.addRepo({
           ...pkgRepoFormData,
+          namespace: carvelGlobalNamespace,
+          isNamespaceScoped: false,
           plugin: carvelPlugin as Plugin,
         }),
       );
-      expect(PackageRepositoriesService.addPackageRepository).toHaveBeenCalledWith(
-        "default",
-        carvelGlobalNamespace,
-        {
-          ...pkgRepoFormData,
-          plugin: carvelPlugin,
-        },
-        false,
-      );
+      expect(PackageRepositoriesService.addPackageRepository).toHaveBeenCalledWith("default", {
+        ...pkgRepoFormData,
+        namespace: carvelGlobalNamespace,
+        isNamespaceScoped: false,
+        plugin: carvelPlugin,
+      });
     });
   });
 
@@ -550,9 +534,7 @@ describe("addRepo", () => {
       await store.dispatch(addRepoCMD);
       expect(PackageRepositoriesService.addPackageRepository).toHaveBeenCalledWith(
         "default",
-        "my-namespace",
         pkgRepoFormData,
-        true,
       );
     });
 
@@ -607,7 +589,7 @@ describe("addRepo", () => {
 
   it("includes registry secrets if given", async () => {
     await store.dispatch(
-      repoActions.addRepo("my-namespace", {
+      repoActions.addRepo({
         ...pkgRepoFormData,
         customDetail: {
           ...pkgRepoFormData.customDetail,
@@ -619,39 +601,29 @@ describe("addRepo", () => {
       }),
     );
 
-    expect(PackageRepositoriesService.addPackageRepository).toHaveBeenCalledWith(
-      "default",
-      "my-namespace",
-      {
-        ...pkgRepoFormData,
-        customDetail: {
-          ...pkgRepoFormData.customDetail,
-          imagesPullSecret: {
-            secretRef: "repo-1",
-            credentials: { server: "", username: "", password: "", email: "" },
-          },
+    expect(PackageRepositoriesService.addPackageRepository).toHaveBeenCalledWith("default", {
+      ...pkgRepoFormData,
+      customDetail: {
+        ...pkgRepoFormData.customDetail,
+        imagesPullSecret: {
+          secretRef: "repo-1",
+          credentials: { server: "", username: "", password: "", email: "" },
         },
       },
-      true,
-    );
+    });
   });
 
   it("calls PackageRepositoriesService create with description", async () => {
     await store.dispatch(
-      repoActions.addRepo("my-namespace", {
+      repoActions.addRepo({
         ...pkgRepoFormData,
         description: "This is a weird description 123!@#$%^&&*()_+-=<>?/.,;:'\"",
       }),
     );
-    expect(PackageRepositoriesService.addPackageRepository).toHaveBeenCalledWith(
-      "default",
-      "my-namespace",
-      {
-        ...pkgRepoFormData,
-        description: "This is a weird description 123!@#$%^&&*()_+-=<>?/.,;:'\"",
-      },
-      true,
-    );
+    expect(PackageRepositoriesService.addPackageRepository).toHaveBeenCalledWith("default", {
+      ...pkgRepoFormData,
+      description: "This is a weird description 123!@#$%^&&*()_+-=<>?/.,;:'\"",
+    });
   });
 });
 
@@ -681,21 +653,17 @@ describe("updateRepo", () => {
     ];
 
     await store.dispatch(
-      repoActions.updateRepo("my-namespace", {
+      repoActions.updateRepo({
         ...pkgRepoFormData,
         authHeader: "foo",
       }),
     );
 
     expect(store.getActions()).toEqual(expectedActions);
-    expect(PackageRepositoriesService.updatePackageRepository).toHaveBeenCalledWith(
-      "default",
-      "my-namespace",
-      {
-        ...pkgRepoFormData,
-        authHeader: "foo",
-      },
-    );
+    expect(PackageRepositoriesService.updatePackageRepository).toHaveBeenCalledWith("default", {
+      ...pkgRepoFormData,
+      authHeader: "foo",
+    });
   });
 
   it("updates a repo with an customCA", async () => {
@@ -724,17 +692,16 @@ describe("updateRepo", () => {
     ];
 
     await store.dispatch(
-      repoActions.updateRepo("my-namespace", { ...pkgRepoFormData, customCA: "This is a cert!" }),
-    );
-    expect(store.getActions()).toEqual(expectedActions);
-    expect(PackageRepositoriesService.updatePackageRepository).toHaveBeenCalledWith(
-      "default",
-      "my-namespace",
-      {
+      repoActions.updateRepo({
         ...pkgRepoFormData,
         customCA: "This is a cert!",
-      },
+      }),
     );
+    expect(store.getActions()).toEqual(expectedActions);
+    expect(PackageRepositoriesService.updatePackageRepository).toHaveBeenCalledWith("default", {
+      ...pkgRepoFormData,
+      customCA: "This is a cert!",
+    });
   });
 
   it("returns an error if failed", async () => {
@@ -751,7 +718,7 @@ describe("updateRepo", () => {
       },
     ];
 
-    await store.dispatch(repoActions.updateRepo("my-namespace", pkgRepoFormData));
+    await store.dispatch(repoActions.updateRepo(pkgRepoFormData));
     expect(store.getActions()).toEqual(expectedActions);
   });
 
@@ -760,21 +727,17 @@ describe("updateRepo", () => {
       packageRepoRef: packageRepositoryDetail.packageRepoRef,
     } as UpdatePackageRepositoryResponse);
     await store.dispatch(
-      repoActions.updateRepo("my-namespace", {
+      repoActions.updateRepo({
         ...pkgRepoFormData,
         type: RepositoryStorageTypes.PACKAGE_REPOSITORY_STORAGE_OCI,
         customDetail: { ...pkgRepoFormData.customDetail, ociRepositories: ["apache", "jenkins"] },
       }),
     );
-    expect(PackageRepositoriesService.updatePackageRepository).toHaveBeenCalledWith(
-      "default",
-      "my-namespace",
-      {
-        ...pkgRepoFormData,
-        type: RepositoryStorageTypes.PACKAGE_REPOSITORY_STORAGE_OCI,
-        customDetail: { ...pkgRepoFormData.customDetail, ociRepositories: ["apache", "jenkins"] },
-      },
-    );
+    expect(PackageRepositoriesService.updatePackageRepository).toHaveBeenCalledWith("default", {
+      ...pkgRepoFormData,
+      type: RepositoryStorageTypes.PACKAGE_REPOSITORY_STORAGE_OCI,
+      customDetail: { ...pkgRepoFormData.customDetail, ociRepositories: ["apache", "jenkins"] },
+    });
   });
 
   it("updates a repo with description", async () => {
@@ -782,19 +745,15 @@ describe("updateRepo", () => {
       packageRepoRef: packageRepositoryDetail.packageRepoRef,
     } as UpdatePackageRepositoryResponse);
     await store.dispatch(
-      repoActions.updateRepo("my-namespace", {
+      repoActions.updateRepo({
         ...pkgRepoFormData,
         description: "updated description",
       }),
     );
-    expect(PackageRepositoriesService.updatePackageRepository).toHaveBeenCalledWith(
-      "default",
-      "my-namespace",
-      {
-        ...pkgRepoFormData,
-        description: "updated description",
-      },
-    );
+    expect(PackageRepositoriesService.updatePackageRepository).toHaveBeenCalledWith("default", {
+      ...pkgRepoFormData,
+      description: "updated description",
+    });
   });
 });
 
@@ -845,7 +804,7 @@ describe("findPackageInRepo", () => {
       {
         type: getType(repoActions.errorRepos),
         payload: {
-          err: new NotFoundError(
+          err: new NotFoundNetworkError(
             "Package my-repo/my-package not found in the repository other-namespace.",
           ),
           op: "fetch",

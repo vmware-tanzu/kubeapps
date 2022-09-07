@@ -26,6 +26,7 @@ import (
 	"net/url"
 	"os"
 	"path"
+	"path/filepath"
 	"reflect"
 	"sort"
 	"strings"
@@ -107,7 +108,7 @@ type OCIChartRepositoryOption func(*OCIChartRepository) error
 type OCIChartRepositoryCredentialFn func(ctx context.Context, reg string) (orasregistryauthv2.Credential, error)
 
 var (
-	helmGetters = getter.Providers{
+	helmProviders = getter.Providers{
 		getter.Provider{
 			Schemes: []string{"http", "https"},
 			New:     getter.NewHTTPGetter,
@@ -122,7 +123,8 @@ var (
 	// can register new repository listers
 	builtInRepoListers = []OCIChartRepositoryLister{
 		NewDockerRegistryApiV2RepositoryLister(),
-		// TODO (gfichtenholt) other container registry providers, like Harbor, GCR, AWS, Azure CR, etc
+		NewHarborRegistryApiV2RepositoryLister(),
+		// TODO (gfichtenholt) other container registry providers, like AWS, Azure, etc
 	}
 
 	// the reason for so many arguments to this func, as opposed to an OCIChartRepository instance is
@@ -226,13 +228,17 @@ func (r *OCIChartRepository) listRepositoryNames() ([]string, error) {
 				r.repositoryLister = lister
 				break
 			} else {
-				log.Infof("Lister [%v] not applicable for registry for URL: [%s] [%v]", reflect.TypeOf(lister), r.url.String(), err)
+				log.Infof("Lister [%v] not applicable for registry with URL [%s] due to: [%v]",
+					reflect.TypeOf(lister), r.url.String(), err)
 			}
 		}
 	}
 
 	if r.repositoryLister == nil {
-		return nil, status.Errorf(codes.Internal, "No repository lister found for OCI registry with url: [%s]", &r.url)
+		return nil, status.Errorf(
+			codes.Internal,
+			"No repository lister found for OCI registry with URL: [%s]",
+			r.url.String())
 	}
 
 	return r.repositoryLister.ListRepositoryNames(r)
@@ -373,6 +379,7 @@ func newRegistryClient(isLogin bool, tlsConfig *tls.Config, getterOpts []getter.
 	}
 
 	chartDownloader := func(chartVersion *repo.ChartVersion) (*bytes.Buffer, error) {
+		getterOpts = append(getterOpts, getter.WithRegistryClient(rClient))
 		return downloadChartWithHelmGetter(tlsConfig, getterOpts, helmGetter, chartVersion)
 	}
 
@@ -588,7 +595,7 @@ func (s *repoEventSink) newOCIChartRepositoryAndLoginWithOptions(registryURL str
 	if err != nil {
 		return nil, err
 	}
-	helmGetter, err := helmGetters.ByScheme(u.Scheme)
+	helmProvider, err := helmProviders.ByScheme(u.Scheme)
 	if err != nil {
 		return nil, err
 	}
@@ -596,7 +603,7 @@ func (s *repoEventSink) newOCIChartRepositoryAndLoginWithOptions(registryURL str
 	var tlsConfig *tls.Config
 
 	// Create new registry client and login if needed.
-	registryClient, file, err := registryClientBuilderFn(loginOpts != nil, tlsConfig, getterOpts, helmGetter)
+	registryClient, file, err := registryClientBuilderFn(loginOpts != nil, tlsConfig, getterOpts, helmProvider)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to create registry client due to: %v", err)
 	}
@@ -605,14 +612,18 @@ func (s *repoEventSink) newOCIChartRepositoryAndLoginWithOptions(registryURL str
 	}
 	if file != "" {
 		defer func() {
+			if byteArray, err := os.ReadFile(filepath.Clean(file)); err == nil {
+				log.Infof("Temporary credentials file [%s] contents:\n%s", file, byteArray)
+			}
 			if err := os.Remove(file); err != nil {
 				log.Infof("Failed to delete temporary credentials file: %v", err)
 			}
-			log.Infof("Removed temporary credentials file: [%s]", file)
+			log.Infof("Successfully removed temporary credentials file: [%s]", file)
 		}()
 	}
 
 	registryCredentialFn := func(ctx context.Context, reg string) (orasregistryauthv2.Credential, error) {
+		log.Infof("+ORAS registryCredentialFn(%s)", reg)
 		if cred != nil {
 			return *cred, nil
 		} else {
@@ -625,7 +636,7 @@ func (s *repoEventSink) newOCIChartRepositoryAndLoginWithOptions(registryURL str
 	// oci://demo.goharbor.io/test-oci-1, which may contain repositories "repo-1", "repo2", etc
 	ociRepo, err := newOCIChartRepository(
 		registryURL,
-		withHelmGetter(helmGetters),
+		withHelmGetter(helmProviders),
 		withHelmGetterOptions(getterOpts),
 		withRegistryClient(registryClient),
 		withRegistryCredentialFn(registryCredentialFn),

@@ -19,6 +19,7 @@ import {
   UpdatePackageRepositoryRequest,
   UsernamePassword,
 } from "gen/kubeappsapis/core/packages/v1alpha1/repositories";
+import { GetConfiguredPluginsResponse } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins";
 import {
   HelmPackageRepositoryCustomDetail,
   protobufPackage as helmProtobufPackage,
@@ -28,83 +29,88 @@ import {
   protobufPackage as kappControllerProtobufPackage,
 } from "gen/kubeappsapis/plugins/kapp_controller/packages/v1alpha1/kapp_controller";
 import KubeappsGrpcClient from "./KubeappsGrpcClient";
-import { IPkgRepoFormData } from "./types";
-import { PluginNames } from "./utils";
+import { IPkgRepoFormData, PluginNames } from "./types";
+import { convertGrpcAuthError } from "./utils";
 
 export class PackageRepositoriesService {
   public static coreRepositoriesClient = () =>
     new KubeappsGrpcClient().getRepositoriesServiceClientImpl();
+  public static pluginsServiceClientImpl = () =>
+    new KubeappsGrpcClient().getPluginsServiceClientImpl();
 
   public static async getPackageRepositorySummaries(
     context: Context,
   ): Promise<GetPackageRepositorySummariesResponse> {
-    return await this.coreRepositoriesClient().GetPackageRepositorySummaries({ context });
+    return await this.coreRepositoriesClient()
+      .GetPackageRepositorySummaries({ context })
+      .catch((e: any) => {
+        throw convertGrpcAuthError(e);
+      });
   }
 
   public static async getPackageRepositoryDetail(
     packageRepoRef: PackageRepositoryReference,
   ): Promise<GetPackageRepositoryDetailResponse> {
-    return await this.coreRepositoriesClient().GetPackageRepositoryDetail({ packageRepoRef });
+    return await this.coreRepositoriesClient()
+      .GetPackageRepositoryDetail({ packageRepoRef })
+      .catch((e: any) => {
+        throw convertGrpcAuthError(e);
+      });
   }
 
-  public static async addPackageRepository(
-    cluster: string,
-    namespace: string,
-    request: IPkgRepoFormData,
-    namespaceScoped: boolean,
-  ) {
+  public static async addPackageRepository(cluster: string, request: IPkgRepoFormData) {
     const addPackageRepositoryRequest = PackageRepositoriesService.buildAddOrUpdateRequest(
       false,
       cluster,
-      namespace,
       request,
-      namespaceScoped,
       PackageRepositoriesService.buildEncodedCustomDetail(request),
     );
 
-    return await this.coreRepositoriesClient().AddPackageRepository(addPackageRepositoryRequest);
+    return await this.coreRepositoriesClient()
+      .AddPackageRepository(addPackageRepositoryRequest)
+      .catch((e: any) => {
+        throw convertGrpcAuthError(e);
+      });
   }
 
-  public static async updatePackageRepository(
-    cluster: string,
-    namespace: string,
-    request: IPkgRepoFormData,
-  ) {
+  public static async updatePackageRepository(cluster: string, request: IPkgRepoFormData) {
     const updatePackageRepositoryRequest = PackageRepositoriesService.buildAddOrUpdateRequest(
       true,
       cluster,
-      namespace,
       request,
-      undefined,
       PackageRepositoriesService.buildEncodedCustomDetail(request),
     );
 
-    return await this.coreRepositoriesClient().UpdatePackageRepository(
-      updatePackageRepositoryRequest,
-    );
+    return await this.coreRepositoriesClient()
+      .UpdatePackageRepository(updatePackageRepositoryRequest)
+      .catch((e: any) => {
+        throw convertGrpcAuthError(e);
+      });
   }
 
   public static async deletePackageRepository(
     packageRepoRef: PackageRepositoryReference,
   ): Promise<DeletePackageRepositoryResponse> {
-    return await this.coreRepositoriesClient().DeletePackageRepository({
-      packageRepoRef,
-    });
+    return await this.coreRepositoriesClient()
+      .DeletePackageRepository({
+        packageRepoRef,
+      })
+      .catch((e: any) => {
+        throw convertGrpcAuthError(e);
+      });
   }
 
   private static buildAddOrUpdateRequest(
     isUpdate: boolean,
     cluster: string,
-    namespace: string,
     request: IPkgRepoFormData,
-    namespaceScoped?: boolean,
     pluginCustomDetail?: any,
   ) {
     const addPackageRepositoryRequest = {
-      context: { cluster, namespace },
+      context: { cluster, namespace: request.namespace },
       name: request.name,
       description: request.description,
-      namespaceScoped: namespaceScoped,
+      namespaceScoped: request.isNamespaceScoped,
       type: request.type,
       url: request.url,
       interval: request.interval,
@@ -256,5 +262,13 @@ export class PackageRepositoriesService {
       default:
         return;
     }
+  }
+
+  public static async getConfiguredPlugins(): Promise<GetConfiguredPluginsResponse> {
+    return await this.pluginsServiceClientImpl()
+      .GetConfiguredPlugins({})
+      .catch((e: any) => {
+        throw convertGrpcAuthError(e);
+      });
   }
 }

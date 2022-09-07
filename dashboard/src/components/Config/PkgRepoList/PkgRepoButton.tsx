@@ -44,9 +44,9 @@ export function PkgRepoAddButton({
   const onSubmit = (request: IPkgRepoFormData) => {
     // decide whether to create or update the repository
     if (packageRepoRef) {
-      return dispatch(actions.repos.updateRepo(namespace, request));
+      return dispatch(actions.repos.updateRepo(request));
     } else {
-      return dispatch(actions.repos.addRepo(namespace, request));
+      return dispatch(actions.repos.addRepo(request));
     }
   };
 

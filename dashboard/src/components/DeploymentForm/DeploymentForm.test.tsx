@@ -21,8 +21,7 @@ import * as ReactRouter from "react-router";
 import { MemoryRouter, Route, Router } from "react-router-dom";
 import { Kube } from "shared/Kube";
 import { getStore, mountWrapper } from "shared/specs/mountWrapper";
-import { FetchError, IStoreState } from "shared/types";
-import { PluginNames } from "shared/utils";
+import { FetchError, IStoreState, PluginNames } from "shared/types";
 import DeploymentFormBody from "../DeploymentFormBody/DeploymentFormBody";
 import DeploymentForm from "./DeploymentForm";
 
@@ -180,6 +179,7 @@ describe("renders an error", () => {
       then: jest.fn((f: any) =>
         f({ serviceaccountNames: ["my-sa-1", "my-sa-2"] } as GetServiceAccountNamesResponse),
       ),
+      catch: jest.fn(f => f()),
     });
 
     const wrapper = mountWrapper(

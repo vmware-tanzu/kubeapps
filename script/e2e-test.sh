@@ -195,6 +195,28 @@ installKappController() {
 }
 
 ########################
+# Creates a Yaml file with additional values for the Helm chart
+# Arguments: None
+# Returns: Path to the newly created file with additional values
+#########################
+generateAdditionalValuesFile() {
+  # Could be done better with $(cat <<EOF > ${ROOT_DIR}/additional_chart_values.yaml
+  # But it was breaking the formatting of the file
+  local valuesFile=${ROOT_DIR}/additional_chart_values.yaml;
+  echo "ingress:
+  enabled: true
+  hostname: localhost
+  tls: true
+  selfSigned: true
+  annotations:
+    kubernetes.io/ingress.class: nginx
+    nginx.ingress.kubernetes.io/proxy-buffer-size: \"8k\"
+    nginx.ingress.kubernetes.io/proxy-buffers: \"4.0\"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: \"600.0\"" > ${valuesFile}
+  echo ${valuesFile}
+}
+
+########################
 # Install Kubeapps or upgrades it if it's already installed
 # Arguments:
 #   $1: chart source
@@ -212,10 +234,8 @@ installOrUpgradeKubeapps() {
     "${@:2}"
     "${multiclusterFlags[@]+"${multiclusterFlags[@]}"}"
     --set frontend.replicaCount=1
-    --set kubeops.replicaCount=1
     --set dashboard.replicaCount=1
     --set kubeappsapis.replicaCount=2
-    --set kubeops.enabled=true
     --set postgresql.architecture=standalone
     --set postgresql.primary.persistence.enabled=false
     --set postgresql.auth.password=password
@@ -239,7 +259,6 @@ images=(
   "apprepository-controller"
   "asset-syncer"
   "dashboard"
-  "kubeops"
   "pinniped-proxy"
   "${kubeapps_apis_image}"
 )
@@ -252,20 +271,17 @@ img_flags=(
   "--set" "apprepository.syncImage.repository=${images[1]}"
   "--set" "dashboard.image.tag=${DEV_TAG}"
   "--set" "dashboard.image.repository=${images[2]}"
-  "--set" "kubeops.image.tag=${DEV_TAG}"
-  "--set" "kubeops.image.repository=${images[3]}"
   "--set" "pinnipedProxy.image.tag=${DEV_TAG}"
-  "--set" "pinnipedProxy.image.repository=${images[4]}"
+  "--set" "pinnipedProxy.image.repository=${images[3]}"
   "--set" "kubeappsapis.image.tag=${DEV_TAG}"
-  "--set" "kubeappsapis.image.repository=${images[5]}"
+  "--set" "kubeappsapis.image.repository=${images[4]}"
 )
+
+additional_flags_file=$(generateAdditionalValuesFile)
 
 if [ "$USE_MULTICLUSTER_OIDC_ENV" = true ]; then
   multiclusterFlags=(
-    "--set" "ingress.enabled=true"
-    "--set" "ingress.hostname=localhost"
-    "--set" "ingress.tls=true"
-    "--set" "ingress.selfSigned=true"
+    "--values" "${additional_flags_file}"
     "--set" "authProxy.enabled=true"
     "--set" "authProxy.provider=oidc"
     "--set" "authProxy.clientID=default"
@@ -283,7 +299,7 @@ if [ "$USE_MULTICLUSTER_OIDC_ENV" = true ]; then
     "--set" "clusters[1].name=second-cluster"
     "--set" "clusters[1].apiServiceURL=https://${ADDITIONAL_CLUSTER_IP}:6443"
     "--set" "clusters[1].insecure=true"
-    "--set" "clusters[1].serviceToken=ZXlKaGJHY2lPaUpTVXpJMU5pSXNJbXRwWkNJNklsbHpiSEp5TlZwM1QwaG9WSE5PYkhVdE5GQkRablY2TW0wd05rUmtMVmxFWVV4MlZEazNaeTEyUmxFaWZRLmV5SnBjM01pT2lKcmRXSmxjbTVsZEdWekwzTmxjblpwWTJWaFkyTnZkVzUwSWl3aWEzVmlaWEp1WlhSbGN5NXBieTl6WlhKMmFXTmxZV05qYjNWdWRDOXVZVzFsYzNCaFkyVWlPaUprWldaaGRXeDBJaXdpYTNWaVpYSnVaWFJsY3k1cGJ5OXpaWEoyYVdObFlXTmpiM1Z1ZEM5elpXTnlaWFF1Ym1GdFpTSTZJbXQxWW1WaGNIQnpMVzVoYldWemNHRmpaUzFrYVhOamIzWmxjbmt0ZEc5clpXNHRjV295Ym1naUxDSnJkV0psY201bGRHVnpMbWx2TDNObGNuWnBZMlZoWTJOdmRXNTBMM05sY25acFkyVXRZV05qYjNWdWRDNXVZVzFsSWpvaWEzVmlaV0Z3Y0hNdGJtRnRaWE53WVdObExXUnBjMk52ZG1WeWVTSXNJbXQxWW1WeWJtVjBaWE11YVc4dmMyVnlkbWxqWldGalkyOTFiblF2YzJWeWRtbGpaUzFoWTJOdmRXNTBMblZwWkNJNkltVXhaakE1WmpSakxUTTRNemt0TkRJME15MWhZbUptTFRKaU5HWm1OREZrWW1RMllTSXNJbk4xWWlJNkluTjVjM1JsYlRwelpYSjJhV05sWVdOamIzVnVkRHBrWldaaGRXeDBPbXQxWW1WaGNIQnpMVzVoYldWemNHRmpaUzFrYVhOamIzWmxjbmtpZlEuTnh6V2dsUGlrVWpROVQ1NkpWM2xJN1VWTUVSR3J2bklPSHJENkh4dUVwR0luLWFUUzV5Q0pDa3Z0cTF6S3Z3b05sc2MyX0YxaTdFOUxWRGFwbC1UQlhleUN5Rl92S1B1TDF4dTdqZFBMZ1dKT1pQX3JMcXppaDV4ZlkxalFoOHNhdTRZclFJLUtqb3U1UkRRZ0tOQS1BaS1lRlFOZVh2bmlUNlBKYWVkc184V0t3dHRMMC1wdHpYRnBnOFl5dkx6N0U1UWdTR2tjNWpDVXlsS0RvZVRUaVRSOEc2RHFHYkFQQUYwREt0b3MybU9Geno4SlJYNHhoQmdvaUcxVTVmR1g4Z3hnTU1SV0VHRE9kaGMyeXRvcFdRUkRpYmhvaldNS3VDZlNua09zMDRGYTBkYmEwQ0NTbld2a29LZ3Z4QVR5aVVrWm9wV3VpZ1JJNFd5dDkzbXhR"
+    "--set" "clusters[1].serviceToken=$(kubectl --context=kind-kubeapps-ci-additional --kubeconfig=${HOME}/.kube/kind-config-kubeapps-ci-additional get secret kubeapps-namespace-discovery -o go-template='{{.data.token | base64decode}}')"
   )
 fi
 
@@ -302,12 +318,15 @@ if [[ -n "${TEST_UPGRADE:-}" ]]; then
   k8s_wait_for_deployment kubeapps kubeapps-ci
 fi
 
-installOrUpgradeKubeapps "${ROOT_DIR}/chart/kubeapps"
-info "Waiting for Kubeapps components to be ready (local chart)..."
-k8s_wait_for_deployment kubeapps kubeapps-ci
+# Install ChartMuseum
 installChartMuseum "${CHARTMUSEUM_VERSION}"
 pushChart apache 8.6.2 admin password
 pushChart apache 8.6.3 admin password
+
+# Install Kubeapps
+installOrUpgradeKubeapps "${ROOT_DIR}/chart/kubeapps"
+info "Waiting for Kubeapps components to be ready (local chart)..."
+k8s_wait_for_deployment kubeapps kubeapps-ci
 
 # Setting up local Docker registry if not in GKE
 if [[ -z "${GKE_BRANCH-}" ]]; then
@@ -359,9 +378,9 @@ done
 
 # Browser tests
 cd "${ROOT_DIR}/integration"
-kubectl apply -f manifests/e2e-runner.yaml
+kubectl create deployment e2e-runner --image kubeapps/integration-tests${IMG_MODIFIER}:${DEV_TAG}
 k8s_wait_for_deployment default e2e-runner
-pod=$(kubectl get po -l run=e2e-runner -o jsonpath="{.items[0].metadata.name}")
+pod=$(kubectl get po -l app=e2e-runner -o custom-columns=:metadata.name --no-headers)
 ## Copy config and latest tests
 for f in *.js; do
   kubectl cp "./${f}" "${pod}:/app/"

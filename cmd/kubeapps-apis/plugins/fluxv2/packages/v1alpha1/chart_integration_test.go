@@ -530,21 +530,59 @@ func TestKindClusterAvailablePackageEndpointsForOCI(t *testing.T) {
 		t.Fatalf("Environment variables GITHUB_USER and GITHUB_TOKEN need to be set to run this test")
 	}
 
+	if err := setupHarborStefanProdanClone(t); err != nil {
+		t.Fatal(err)
+	}
+
+	harborRobotName, harborRobotSecret, err := setupHarborRobotAccount(t)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// ref: https://cloud.google.com/artifact-registry/docs/helm/authentication#token
+	gcpUser := "oauth2accesstoken"
+	gcpPasswd, err := gcloudPrintAccessToken(t)
+	if err != nil {
+		t.Fatal(err)
+	}
+	// ref https://cloud.google.com/artifact-registry/docs/helm/authentication#json-key
+	gcpKeyFile := os.Getenv("GOOGLE_APPLICATION_CREDENTIALS")
+	if gcpKeyFile == "" {
+		t.Fatalf("Environment variable [GOOGLE_APPLICATION_CREDENTIALS] needs to be set to run this test")
+	}
+
+	gcpUser2 := "_json_key"
+	gcpServer2 := "us-west1-docker.pkg.dev"
+	gcpPasswd2, err := os.ReadFile(gcpKeyFile)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// per agamez request (slack thread 8/31/22)
+	harborCorpVMwareHost := os.Getenv("HARBOR_VMWARE_CORP_HOST")
+	if harborCorpVMwareHost == "" {
+		t.Fatal("Environment variable [HARBOR_VMWARE_CORP_HOST] needs to be set to run this test")
+	}
+	harborCorpVMwareRepoUrl := "oci://" + harborCorpVMwareHost + "/stefanprodan-podinfo-clone"
+	harborCorpVMwareRepoRobotUser := os.Getenv("HARBOR_VMWARE_CORP_ROBOT_USER")
+	if harborCorpVMwareRepoRobotUser == "" {
+		t.Fatal("Environment variable [HARBOR_VMWARE_CORP_ROBOT_USER] needs to be set to run this test")
+	}
+	harborCorpVMwareRepoRobotSecret := os.Getenv("HARBOR_VMWARE_CORP_ROBOT_SECRET")
+	if harborCorpVMwareRepoRobotSecret == "" {
+		t.Fatal("Environment variable [HARBOR_VMWARE_CORP_ROBOT_SECRET] needs to be set to run this test")
+	}
+
 	testCases := []struct {
-		testName    string
-		registryUrl string
-		secret      *apiv1.Secret
+		testName        string
+		registryUrl     string
+		secret          *apiv1.Secret
+		unauthenticated bool
+		unauthorized    bool
 	}{
 		{
 			testName:    "Testing [" + github_stefanprodan_podinfo_oci_registry_url + "] with basic auth secret",
 			registryUrl: github_stefanprodan_podinfo_oci_registry_url,
-			// this is a secret for authentication with GitHub (ghcr.io)
-			//    personal access token ghp_... can be seen on https://github.com/settings/tokens
-			// and has scopes:
-			// "admin:org, admin:repo_hook, delete:packages, delete_repo, repo, workflow, write:packages"
-			// one should be able to login successfully like this:
-			//   docker login ghcr.io -u $GITHUB_USER -p $GITHUB_TOKEN AND/OR
-			//   helm registry login ghcr.io -u $GITHUB_USER -p $GITHUB_TOKEN
 			secret: newBasicAuthSecret(types.NamespacedName{
 				Name:      "oci-repo-secret-" + randSeq(4),
 				Namespace: "default"},
@@ -555,18 +593,14 @@ func TestKindClusterAvailablePackageEndpointsForOCI(t *testing.T) {
 		{
 			testName:    "Testing [" + github_stefanprodan_podinfo_oci_registry_url + "] with dockerconfigjson secret",
 			registryUrl: github_stefanprodan_podinfo_oci_registry_url,
-			// this is a secret for authentication with GitHub (ghcr.io)
-			//    personal access token ghp_... can be seen on https://github.com/settings/tokens
-			// and has "admin:repo_hook, delete_repo, repo" scopes
-			// one should be able to login successfully like this:
-			//   docker login ghcr.io -u $GITHUB_USER -p $GITHUB_TOKEN AND/OR
-			//   helm registry login ghcr.io -u $GITHUB_USER -p $GITHUB_TOKEN
 			secret: newDockerConfigJsonSecret(types.NamespacedName{
 				Name:      "oci-repo-secret-" + randSeq(4),
 				Namespace: "default"},
 				"ghcr.io", ghUser, ghToken,
 			),
 		},
+		// TODO (gfichtenholt) harbor plainHTTP (not HTTPS) repo with robot account
+		//   this may or may not work see https://github.com/fluxcd/source-controller/issues/807
 		// TODO (gfichtenholt) TLS secret with CA
 		// TODO (gfichtenholt) TLS secret with CA, pub, priv
 
@@ -592,42 +626,114 @@ func TestKindClusterAvailablePackageEndpointsForOCI(t *testing.T) {
 			},
 		*/
 		{
-			testName:    "Testing [" + harbor_stefanprodan_podinfo_oci_registry_url + "] with basic auth secret",
+			testName:    "Testing [" + harbor_stefanprodan_podinfo_oci_registry_url + "] with basic auth secret (admin)",
 			registryUrl: harbor_stefanprodan_podinfo_oci_registry_url,
 			secret: newBasicAuthSecret(types.NamespacedName{
 				Name:      "oci-repo-secret-" + randSeq(4),
 				Namespace: "default"},
-				harbor_user,
-				harbor_pwd,
+				harbor_admin_user,
+				harbor_admin_pwd,
 			),
 		},
+		{
+			testName:    "Testing [" + harbor_stefanprodan_podinfo_oci_registry_url + "] with basic auth secret (robot)",
+			registryUrl: harbor_stefanprodan_podinfo_oci_registry_url,
+			secret: newBasicAuthSecret(types.NamespacedName{
+				Name:      "oci-repo-secret-" + randSeq(4),
+				Namespace: "default"},
+				harborRobotName,
+				harborRobotSecret,
+			),
+		},
+		{
+			testName:    "Testing [" + gcp_stefanprodan_podinfo_oci_registry_url + "] with service access token",
+			registryUrl: gcp_stefanprodan_podinfo_oci_registry_url,
+			secret: newBasicAuthSecret(types.NamespacedName{
+				Name:      "oci-repo-secret-" + randSeq(4),
+				Namespace: "default"},
+				gcpUser,
+				string(gcpPasswd),
+			),
+		},
+		{
+			testName:    "Testing [" + gcp_stefanprodan_podinfo_oci_registry_url + "] with JSON key",
+			registryUrl: gcp_stefanprodan_podinfo_oci_registry_url,
+			secret: newDockerConfigJsonSecret(types.NamespacedName{
+				Name:      "oci-repo-secret-" + randSeq(4),
+				Namespace: "default"},
+				gcpServer2,
+				gcpUser2,
+				string(gcpPasswd2),
+			),
+		},
+		// negative test for no secret
+		{
+			testName:        "Testing [" + gcp_stefanprodan_podinfo_oci_registry_url + "] without a secret",
+			registryUrl:     gcp_stefanprodan_podinfo_oci_registry_url,
+			unauthenticated: true,
+		},
+		// negative test for bad username/secret
+		{
+			testName:    "Testing [" + gcp_stefanprodan_podinfo_oci_registry_url + "] bad username/secret",
+			registryUrl: gcp_stefanprodan_podinfo_oci_registry_url,
+			secret: newDockerConfigJsonSecret(types.NamespacedName{
+				Name:      "oci-repo-secret-" + randSeq(4),
+				Namespace: "default"},
+				gcpServer2,
+				"kaka",
+				"kaka",
+			),
+			unauthorized: true,
+		},
+		// harbor private repo (admin)
+		{
+			testName:    "Testing [" + harbor_stefanprodan_podinfo_private_oci_registry_url + "] with basic auth secret (admin)",
+			registryUrl: harbor_stefanprodan_podinfo_private_oci_registry_url,
+			secret: newBasicAuthSecret(types.NamespacedName{
+				Name:      "oci-repo-secret-" + randSeq(4),
+				Namespace: "default"},
+				harbor_admin_user,
+				harbor_admin_pwd,
+			),
+		},
+		// harbor private repo (robot)
+		{
+			testName:    "Testing [" + harbor_stefanprodan_podinfo_private_oci_registry_url + "] with basic auth secret (robot)",
+			registryUrl: harbor_stefanprodan_podinfo_private_oci_registry_url,
+			secret: newBasicAuthSecret(types.NamespacedName{
+				Name:      "oci-repo-secret-" + randSeq(4),
+				Namespace: "default"},
+				harborRobotName,
+				harborRobotSecret,
+			),
+		},
+		// harbor private repo (negative test for no secret)
+		{
+			testName:        "Testing [" + harbor_stefanprodan_podinfo_private_oci_registry_url + "] without secret",
+			registryUrl:     harbor_stefanprodan_podinfo_private_oci_registry_url,
+			unauthenticated: true,
+		},
+		// harbor private repo (negative test bad username/secret)
+		{
+			testName:    "Testing [" + harbor_stefanprodan_podinfo_private_oci_registry_url + "] bad username/secret",
+			registryUrl: harbor_stefanprodan_podinfo_private_oci_registry_url,
+			secret: newBasicAuthSecret(types.NamespacedName{
+				Name:      "oci-repo-secret-" + randSeq(4),
+				Namespace: "default"},
+				"kaka",
+				"kaka"),
+			unauthorized: true,
+		},
+		{
+			testName:    "Testing [" + harborCorpVMwareRepoUrl + "]",
+			registryUrl: harborCorpVMwareRepoUrl,
+			secret: newBasicAuthSecret(types.NamespacedName{
+				Name:      "oci-repo-secret-" + randSeq(4),
+				Namespace: "default"},
+				harborCorpVMwareRepoRobotUser,
+				harborCorpVMwareRepoRobotSecret),
+		},
 	}
-
-	/*
-		gcp_user := "oauth2accesstoken"
-		// token is very short lived
-		gcp_pwd, err := gcloudPrintAccessToken(t)
-		if err != nil {
-			t.Fatal(err)
-		}
-
-		testCases := []struct {
-			testName    string
-			registryUrl string
-			secret      *apiv1.Secret
-		}{
-			{
-				testName:    "Testing [" + gcp_stefanprodan_podinfo_oci_registry_url + "] with basic auth secret",
-				registryUrl: gcp_stefanprodan_podinfo_oci_registry_url,
-				secret: newBasicAuthSecret(types.NamespacedName{
-					Name:      "oci-repo-secret-" + randSeq(4),
-					Namespace: "default"},
-					gcp_user,
-					gcp_pwd,
-				),
-			},
-		}
-	*/
 
 	adminName := types.NamespacedName{
 		Name:      "test-admin-" + randSeq(4),
@@ -661,8 +767,21 @@ func TestKindClusterAvailablePackageEndpointsForOCI(t *testing.T) {
 				t.Fatal(err)
 			}
 			// wait until this repo reaches 'Ready'
-			if err = kubeWaitUntilHelmRepositoryIsReady(t, repoName); err != nil {
-				t.Fatal(err)
+			err = kubeWaitUntilHelmRepositoryIsReady(t, repoName)
+			if !tc.unauthorized {
+				if err != nil {
+					t.Fatal(err)
+				}
+			} else {
+				if err != nil {
+					if strings.Contains(err.Error(), "AuthenticationFailed: failed to login to registry") {
+						return // nothing more to check
+					} else {
+						t.Fatal(err)
+					}
+				} else {
+					t.Fatal("expected error, got nil")
+				}
 			}
 
 			grpcContext, cancel := context.WithTimeout(grpcContext, defaultContextTimeout)
@@ -672,7 +791,7 @@ func TestKindClusterAvailablePackageEndpointsForOCI(t *testing.T) {
 				grpcContext,
 				&corev1.GetAvailablePackageSummariesRequest{})
 			if err != nil {
-				t.Fatalf("%v", err)
+				t.Fatal(err)
 			}
 
 			opt1 := cmpopts.IgnoreUnexported(
@@ -683,8 +802,15 @@ func TestKindClusterAvailablePackageEndpointsForOCI(t *testing.T) {
 				plugins.Plugin{},
 				corev1.PackageAppVersion{})
 			opt2 := cmpopts.SortSlices(lessAvailablePackageFunc)
-			if got, want := resp, expected_oci_stefanprodan_podinfo_available_summaries(repoName.Name); !cmp.Equal(got, want, opt1, opt2) {
-				t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opt1, opt2))
+			if !tc.unauthenticated {
+				if got, want := resp, expected_oci_stefanprodan_podinfo_available_summaries(repoName.Name); !cmp.Equal(got, want, opt1, opt2) {
+					t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opt1, opt2))
+				}
+			} else {
+				if got, want := resp, no_available_summaries(repoName.Name); !cmp.Equal(got, want, opt1, opt2) {
+					t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opt1, opt2))
+				}
+				return // nothing more to check
 			}
 
 			grpcContext, cancel = context.WithTimeout(grpcContext, defaultContextTimeout)

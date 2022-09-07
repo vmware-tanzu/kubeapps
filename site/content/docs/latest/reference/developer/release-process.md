@@ -17,8 +17,7 @@ For building the [development container images](https://hub.docker.com/u/kubeapp
 - Those services written in Golang use the same [bitnami/golang](https://hub.docker.com/r/bitnami/golang) image for building the binary, but then a [scratch](https://hub.docker.com/_/scratch) image is used for actually running it. These Dockerfiles are:
   - [apprepository-controller/Dockerfile](https://github.com/vmware-tanzu/kubeapps/blob/main/cmd/apprepository-controller/Dockerfile).
   - [asset-syncer/Dockerfile](https://github.com/vmware-tanzu/kubeapps/blob/main/cmd/asset-syncer/Dockerfile).
-  - [kubeops/Dockerfile](https://github.com/vmware-tanzu/kubeapps/blob/main/cmd/kubeops/Dockerfile).
-- The [pinniped-proxy/Dockerfile](https://github.com/vmware-tanzu/kubeapps/blob/main/cmd/pinniped-proxy/Dockerfile) uses:
+  - The [pinniped-proxy/Dockerfile](https://github.com/vmware-tanzu/kubeapps/blob/main/cmd/pinniped-proxy/Dockerfile) uses:
   - [\_/rust](https://hub.docker.com/_/rust) for building the binary.
   - [bitnami/minideb](https://hub.docker.com/r/bitnami/minideb) for running it.
 
@@ -37,7 +36,7 @@ Find further information in the [CI configuration](../testing/ci.md) and the [e2
 In the [CircleCI configuration](https://github.com/vmware-tanzu/kubeapps/blob/main/.circleci/config.yml) we have an initial declaration of the variables used along with the file.
 The versions used there _must_ match the ones used for building the container images. Consequently, these variables _must_ be changed accordingly:
 
-- `GOLANG_VERSION` _must_ match the versions used by our services written in Golang, for instance, [kubeops](https://github.com/vmware-tanzu/kubeapps/blob/main/cmd/kubeops/Dockerfile).
+- `GOLANG_VERSION` _must_ match the versions used by our services written in Golang, for instance, [kubeapps-apis](https://github.com/vmware-tanzu/kubeapps/blob/main/cmd/kubeapps-apis/Dockerfile).
 - `NODE_VERSION` _must_ match the **major** version used by the [dashboard](https://github.com/vmware-tanzu/kubeapps/blob/main/dashboard/Dockerfile).
 - `RUST_VERSION` _must_ match the version used by the [pinniped-proxy](https://github.com/vmware-tanzu/kubeapps/blob/main/dashboard/Dockerfile).
 - `DOCKER_VERSION` can be updated to the [latest version provided by CircleCI](https://circleci.com/docs/2.0/building-docker-images/#docker-version).
@@ -55,6 +54,7 @@ The versions used there _must_ match the ones used for building the container im
 - `K8S_KIND_VERSION` _must_ match the Kubernetes minor version used in `GKE_REGULAR_VERSION_XX` and should be updated with one of the available image tags for a given [Kind release](https://github.com/kubernetes-sigs/kind/releases).
 - `POSTGRESQL_VERSION` _must_ match the version used by the [Bitnami PostgreSQL chart](https://github.com/bitnami/charts/blob/master/bitnami/postgresql/values.yaml).
 - `DEFAULT_MACHINE_IMG` _should_ be up to date according to the [list of available machines in CircleCI](https://circleci.com/docs/2.0/configuration-reference/#available-linux-machine-images).
+- `SRP_VERSION` _should_ be up to date according to the [latest stable version from the SRP CLI builds](https://vmwaresaas.jfrog.io/ui/native/srp-tools/srpcli).
 
 Besides, the `GKE_STABLE_VERSION_XX` and the `GKE_REGULAR_VERSION_XX` might have to be updated if the _Stable_ and _Regular_ Kubernetes versions in GKE have changed. Check this information on [this GKE release notes website](https://cloud.google.com/kubernetes-engine/docs/release-notes).
 

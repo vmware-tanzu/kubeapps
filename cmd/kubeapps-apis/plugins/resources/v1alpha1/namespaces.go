@@ -5,6 +5,9 @@ package main
 
 import (
 	"context"
+	authorizationapi "k8s.io/api/authorization/v1"
+	"k8s.io/client-go/kubernetes"
+	"strings"
 
 	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/plugins/resources/v1alpha1"
 	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/pkg/statuserror"
@@ -72,32 +75,72 @@ func (s *Server) CreateNamespace(ctx context.Context, r *v1alpha1.CreateNamespac
 	return &v1alpha1.CreateNamespaceResponse{}, nil
 }
 
-// GetNamespaceNames returns the list of namespace names for a cluster if the
-// user has the required RBAC.
-//
-// Note that we can't yet use this from the dashboard to replace the similar endpoint
-// in kubeops until we update to ensure a configured service account can also be
-// passed in (resources plugin config) and used if the user does not have RBAC.
+// GetNamespaceNames returns the list of namespace names from either the cluster or the incoming trusted namespaces.
+// In any case, only if the user has the required RBAC.
 func (s *Server) GetNamespaceNames(ctx context.Context, r *v1alpha1.GetNamespaceNamesRequest) (*v1alpha1.GetNamespaceNamesResponse, error) {
 	cluster := r.GetCluster()
 	log.InfoS("+resources GetNamespaceNames ", "cluster", cluster)
 
-	typedClient, _, err := s.clientGetter(ctx, cluster)
+	// Check if there are trusted namespaces in the request
+	trustedNamespaces, err := getTrustedNamespacesFromHeader(ctx, s.pluginConfig.TrustedNamespaces.HeaderName, s.pluginConfig.TrustedNamespaces.HeaderPattern)
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "unable to get the k8s client: '%v'", err)
+		return nil, statuserror.FromK8sError("get", "Namespaces", "", err)
 	}
 
-	namespaceList, err := typedClient.CoreV1().Namespaces().List(ctx, metav1.ListOptions{})
+	namespaceList, err := s.GetAccessibleNamespaces(ctx, cluster, trustedNamespaces)
 	if err != nil {
 		return nil, statuserror.FromK8sError("list", "Namespaces", "", err)
 	}
 
-	namespaces := make([]string, len(namespaceList.Items))
-	for i, ns := range namespaceList.Items {
+	namespaces := make([]string, len(namespaceList))
+	for i, ns := range namespaceList {
 		namespaces[i] = ns.Name
 	}
 
 	return &v1alpha1.GetNamespaceNamesResponse{
 		NamespaceNames: namespaces,
+	}, nil
+}
+
+// CanI Checks if the operation can be performed according to incoming auth rbac
+func (s *Server) CanI(ctx context.Context, r *v1alpha1.CanIRequest) (*v1alpha1.CanIResponse, error) {
+	if r.GetContext() == nil {
+		return nil, status.Errorf(codes.InvalidArgument, "context parameter is required")
+	}
+	namespace := r.GetContext().GetNamespace()
+	cluster := r.GetContext().GetCluster()
+	if cluster == "" {
+		return nil, status.Errorf(codes.InvalidArgument, "cluster parameter is required")
+	}
+	log.InfoS("+resources CanI", "cluster", cluster, "namespace", namespace, "group", r.GetGroup(), "resource", r.GetResource(), "verb", r.GetVerb())
+
+	var typedClient kubernetes.Interface
+	var err error
+	if s.kubeappsCluster != cluster && strings.ToLower(r.GetVerb()) == "list" && strings.ToLower(r.GetResource()) == "namespaces" {
+		// Listing namespaces in additional clusters might involve using the provided service account token
+		typedClient, _, err = s.clusterServiceAccountClientGetter(ctx, cluster)
+	} else {
+		typedClient, _, err = s.clientGetter(ctx, cluster)
+	}
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "unable to get the k8s client: '%v'", err)
+	}
+
+	reviewResult, err := typedClient.AuthorizationV1().SelfSubjectAccessReviews().Create(ctx, &authorizationapi.SelfSubjectAccessReview{
+		Spec: authorizationapi.SelfSubjectAccessReviewSpec{
+			ResourceAttributes: &authorizationapi.ResourceAttributes{
+				Group:     r.Group,
+				Resource:  r.Resource,
+				Verb:      r.Verb,
+				Namespace: namespace,
+			},
+		},
+	}, metav1.CreateOptions{})
+	if err != nil {
+		return nil, err
+	}
+
+	return &v1alpha1.CanIResponse{
+		Allowed: reviewResult.Status.Allowed,
 	}, nil
 }

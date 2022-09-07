@@ -11,11 +11,11 @@ import {
   UpdateInstalledPackageResponse,
   VersionReference,
 } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
-import { KubeappsGrpcClient } from "./KubeappsGrpcClient";
 import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins";
 import { RollbackInstalledPackageResponse } from "gen/kubeappsapis/plugins/helm/packages/v1alpha1/helm";
 import { InstalledPackage } from "./InstalledPackage";
-import { PluginNames } from "./utils";
+import { KubeappsGrpcClient } from "./KubeappsGrpcClient";
+import { PluginNames } from "./types";
 
 describe("InstalledPackage", () => {
   describe("createInstalledPackage", () => {
@@ -205,7 +205,7 @@ function setMockCoreClient(fnToMock: any, mockFn: jest.Mock<any, any>) {
   // packages service implementation.
   const mockClient = new KubeappsGrpcClient().getPackagesServiceClientImpl();
   jest.spyOn(mockClient, fnToMock).mockImplementation(mockFn);
-  jest.spyOn(InstalledPackage, "coreClient").mockImplementation(() => mockClient);
+  jest.spyOn(InstalledPackage, "packagesServiceClient").mockImplementation(() => mockClient);
 }
 
 function setMockHelmClient(fnToMock: any, mockFn: jest.Mock<any, any>) {
@@ -213,5 +213,5 @@ function setMockHelmClient(fnToMock: any, mockFn: jest.Mock<any, any>) {
   // helm packages service implementation.
   const mockClient = new KubeappsGrpcClient().getHelmPackagesServiceClientImpl();
   jest.spyOn(mockClient, fnToMock).mockImplementation(mockFn);
-  jest.spyOn(InstalledPackage, "helmPluginClient").mockImplementation(() => mockClient);
+  jest.spyOn(InstalledPackage, "helmPackagesServiceClient").mockImplementation(() => mockClient);
 }

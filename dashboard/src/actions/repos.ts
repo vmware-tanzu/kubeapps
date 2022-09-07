@@ -14,9 +14,9 @@ import { uniqBy } from "lodash";
 import { ThunkAction } from "redux-thunk";
 import { PackageRepositoriesService } from "shared/PackageRepositoriesService";
 import PackagesService from "shared/PackagesService";
-import { IPkgRepoFormData, IStoreState, NotFoundError } from "shared/types";
-import { isGlobalNamespace } from "shared/utils";
+import { IPkgRepoFormData, IStoreState, NotFoundNetworkError } from "shared/types";
 import { ActionType, deprecated } from "typesafe-actions";
+import { handleErrorAction } from "./auth";
 
 const { createAction } = deprecated;
 
@@ -97,7 +97,7 @@ export const fetchRepoSummaries = (
         dispatch(receiveRepoSummaries(totalRepos));
       }
     } catch (e: any) {
-      dispatch(errorRepos(e, "fetch"));
+      dispatch(handleErrorAction(e, errorRepos(e, "fetch")));
     }
   };
 };
@@ -124,29 +124,24 @@ export const fetchRepoDetail = (
       dispatch(receiveRepoDetail(getPackageRepositoryDetailResponse.detail));
       return true;
     } catch (e: any) {
-      dispatch(errorRepos(e, "fetch"));
+      dispatch(handleErrorAction(e, errorRepos(e, "fetch")));
       return false;
     }
   };
 };
 
 export const addRepo = (
-  namespace: string,
   request: IPkgRepoFormData,
 ): ThunkAction<Promise<boolean>, IStoreState, null, PkgReposAction> => {
   return async (dispatch, getState) => {
     const {
       clusters: { currentCluster },
-      config,
     } = getState();
     try {
       dispatch(addOrUpdateRepo());
-      const namespaceScoped = !isGlobalNamespace(namespace, request.plugin?.name, config);
       const addPackageRepositoryResponse = await PackageRepositoriesService.addPackageRepository(
         currentCluster,
-        namespace,
         request,
-        namespaceScoped,
       );
       // Ensure the repo have been created
       if (!addPackageRepositoryResponse?.packageRepoRef) {
@@ -179,14 +174,13 @@ export const addRepo = (
       dispatch(addedRepo(repoSummary));
       return true;
     } catch (e: any) {
-      dispatch(errorRepos(e, "create"));
+      dispatch(handleErrorAction(e, errorRepos(e, "create")));
       return false;
     }
   };
 };
 
 export const updateRepo = (
-  namespace: string,
   request: IPkgRepoFormData,
 ): ThunkAction<Promise<boolean>, IStoreState, null, PkgReposAction> => {
   return async (dispatch, getState) => {
@@ -196,11 +190,7 @@ export const updateRepo = (
     try {
       dispatch(addOrUpdateRepo());
       const updatePackageRepositoryResponse =
-        await PackageRepositoriesService.updatePackageRepository(
-          currentCluster,
-          namespace,
-          request,
-        );
+        await PackageRepositoriesService.updatePackageRepository(currentCluster, request);
 
       // Ensure the repo have been updated
       if (!updatePackageRepositoryResponse?.packageRepoRef) {
@@ -233,7 +223,7 @@ export const updateRepo = (
       dispatch(repoUpdated(repoSummary));
       return true;
     } catch (e: any) {
-      dispatch(errorRepos(e, "update"));
+      dispatch(handleErrorAction(e, errorRepos(e, "update")));
       return false;
     }
   };
@@ -247,7 +237,7 @@ export const deleteRepo = (
       await PackageRepositoriesService.deletePackageRepository(packageRepoRef);
       return true;
     } catch (e: any) {
-      dispatch(errorRepos(e, "delete"));
+      dispatch(handleErrorAction(e, errorRepos(e, "delete")));
       return false;
     }
   };
@@ -278,7 +268,7 @@ export const findPackageInRepo = (
         if (!getPackageRepositoryDetailResponse?.detail) {
           dispatch(
             errorRepos(
-              new NotFoundError(
+              new NotFoundNetworkError(
                 `Package ${app.availablePackageRef.identifier} not found in the repository ${repoNamespace}.`,
               ),
               "fetch",
@@ -290,11 +280,14 @@ export const findPackageInRepo = (
         return true;
       } catch (e: any) {
         dispatch(
-          errorRepos(
-            new NotFoundError(
-              `Package ${app.availablePackageRef.identifier} not found in the repository ${repoNamespace}.`,
+          handleErrorAction(
+            e,
+            errorRepos(
+              new NotFoundNetworkError(
+                `Package ${app.availablePackageRef.identifier} not found in the repository ${repoNamespace}.`,
+              ),
+              "fetch",
             ),
-            "fetch",
           ),
         );
         return false;
@@ -302,7 +295,7 @@ export const findPackageInRepo = (
     } else {
       dispatch(
         errorRepos(
-          new NotFoundError(
+          new NotFoundNetworkError(
             `The installed application '${app?.name}' does not have any matching package in the repository '${repoName}'. Are you sure you installed this application from a repository?`,
           ),
           "fetch",

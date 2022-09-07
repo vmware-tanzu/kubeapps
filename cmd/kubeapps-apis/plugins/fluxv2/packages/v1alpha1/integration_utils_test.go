@@ -85,9 +85,10 @@ const (
 	// an OCI registry with a single chart (podinfo)
 	// a clone of "oci://ghcr.io/stefanprodan/charts"
 	// gets setup by kind-cluster-setup.sh
-	github_stefanprodan_podinfo_oci_registry_url = "oci://ghcr.io/gfichtenholt/stefanprodan-podinfo-clone"
-	harbor_stefanprodan_podinfo_oci_registry_url = "oci://demo.goharbor.io/stefanprodan-podinfo-clone"
-	gcp_stefanprodan_podinfo_oci_registry_url    = "oci://us-west1-docker.pkg.dev/vmware-kubeapps-ci/stefanprodan-podinfo-clone/podinfo"
+	github_stefanprodan_podinfo_oci_registry_url         = "oci://ghcr.io/gfichtenholt/stefanprodan-podinfo-clone"
+	harbor_stefanprodan_podinfo_oci_registry_url         = "oci://demo.goharbor.io/stefanprodan-podinfo-clone"
+	harbor_stefanprodan_podinfo_private_oci_registry_url = "oci://demo.goharbor.io/stefanprodan-podinfo-clone-private"
+	gcp_stefanprodan_podinfo_oci_registry_url            = "oci://us-west1-docker.pkg.dev/vmware-kubeapps-ci/stefanprodan-podinfo-clone"
 
 	// the URL of local in cluster helm registry. Gets deployed via ./kind-cluster-setup.sh
 	// in_cluster_oci_registry_url = "oci://registry-app-svc.default.svc.cluster.local:5000/helm-charts"
@@ -95,9 +96,9 @@ const (
 	github_gfichtenholt_podinfo_oci_registry_url = "oci://ghcr.io/gfichtenholt/helm-charts"
 
 	// admin/Harbor12345 is a well known default login for harbor registries
-	harbor_host = "demo.goharbor.io"
-	harbor_user = "admin"
-	harbor_pwd  = "Harbor12345"
+	harbor_host       = "demo.goharbor.io"
+	harbor_admin_user = "admin"
+	harbor_admin_pwd  = "Harbor12345"
 )
 
 func checkEnv(t *testing.T) (fluxplugin.FluxV2PackagesServiceClient, fluxplugin.FluxV2RepositoriesServiceClient, error) {
@@ -364,7 +365,7 @@ func kubeWaitUntilHelmRepositoryIsReady(t *testing.T, name types.NamespacedName)
 							if complete && success {
 								return nil
 							} else if complete && !success {
-								return errors.New(reason)
+								return fmt.Errorf("%v", reason)
 							}
 						}
 					}
@@ -1367,6 +1368,64 @@ func deleteChartFromMyGithubRegistry(t *testing.T, version string) error {
 	// use the CLI for now
 	_, err := execCommand(t, "./testdata", "./kind-cluster-setup.sh", args)
 	return err
+}
+
+func setupHarborStefanProdanClone(t *testing.T) error {
+	t.Logf("+setupHarborStefanProdanClone()")
+	defer t.Logf("-setupHarborStefanProdanClone()")
+
+	args := []string{
+		"setupHarborStefanProdanClone",
+		"--quick",
+	}
+
+	// use the CLI for now
+	_, err := execCommand(t, "./testdata", "./kind-cluster-setup.sh", args)
+	return err
+}
+
+func setupHarborRobotAccount(t *testing.T) (string, string, error) {
+	t.Logf("+setupHarborRobotAccount()")
+	defer t.Logf("-setupHarborRobotAccount()")
+
+	args := []string{
+		"setupHarborRobotAccount",
+	}
+
+	// use the CLI for now
+	out, err := execCommand(t, "./testdata", "./kind-cluster-setup.sh", args)
+	if err != nil {
+		return "", "", err
+	} else {
+		i := strings.Index(out, "Robot account successfully created: [")
+		if i >= 0 {
+			out2 := out[i+37:]
+			j := strings.Index(out2, "]")
+			if j >= 0 {
+				out3 := out2[:j]
+				strs := strings.SplitN(out3, " ", 2)
+				if len(strs) == 2 {
+					return strs[0], strs[1], nil
+				}
+			}
+		}
+		return "", "", fmt.Errorf("unexpected response: %s", out)
+	}
+}
+
+// ref https://cloud.google.com/artifact-registry/docs/helm/store-helm-charts#auth-token
+// this token lasts 60 mins
+func gcloudPrintAccessToken(t *testing.T) (string, error) {
+	credFile := os.Getenv("GOOGLE_APPLICATION_CREDENTIALS")
+	if credFile == "" {
+		t.Fatalf("Environment variable [GOOGLE_APPLICATION_CREDENTIALS] needs to be set to run this test")
+	}
+	args := []string{
+		"auth",
+		"application-default",
+		"print-access-token",
+	}
+	return execCommand(t, ".", "gcloud", args)
 }
 
 func execCommand(t *testing.T, dir, name string, args []string) (string, error) {

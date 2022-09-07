@@ -164,8 +164,6 @@ func (s *Server) getChartsForRepos(ctx context.Context, match []string) (map[str
 		return nil, err
 	}
 
-	log.Infof("=======> getChartsForRepos chartsUntyped: %v", chartsUntyped)
-
 	chartsTyped := make(map[string][]models.Chart)
 	for key, value := range chartsUntyped {
 		if value == nil {

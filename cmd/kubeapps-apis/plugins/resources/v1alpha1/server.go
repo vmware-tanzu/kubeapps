@@ -7,6 +7,9 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/pkg/clientgetter"
+	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/resources/v1alpha1/common"
+	"github.com/vmware-tanzu/kubeapps/pkg/kube"
 	"os"
 	"sync"
 
@@ -44,6 +47,13 @@ type Server struct {
 	// non-test implementation.
 	clientGetter clientGetter
 
+	// clusterServiceAccountClientGetter gets a client getter with service account for additional clusters
+	clusterServiceAccountClientGetter clientGetter
+
+	// for interactions with k8s API server in the context of
+	// kubeapps-internal-kubeappsapis service account
+	localServiceAccountClientGetter clientgetter.BackgroundClientGetterFunc
+
 	// corePackagesClientGetter holds a function to obtain the core.packages.v1alpha1
 	// client. It is similarly initialised in NewServer() below.
 	corePackagesClientGetter func() (pkgsGRPCv1alpha1.PackagesServiceClient, error)
@@ -56,6 +66,13 @@ type Server struct {
 	// stub version using the unsafe helpers while the real implementation
 	// queries the k8s API for a REST mapper.
 	kindToResource func(meta.RESTMapper, schema.GroupVersionKind) (schema.GroupVersionResource, meta.RESTScopeName, error)
+
+	// pluginConfig Resources plugin configuration values
+	pluginConfig *common.ResourcesPluginConfig
+
+	clientQPS float32
+
+	kubeappsCluster string
 }
 
 // createRESTMapper returns a rest mapper configured with the APIs of the
@@ -90,30 +107,31 @@ func createRESTMapper(clientQPS float32, clientBurst int) (meta.RESTMapper, erro
 	return restmapper.NewDiscoveryRESTMapper(groupResources), nil
 }
 
-func NewServer(configGetter core.KubernetesConfigGetter, clientQPS float32, clientBurst int) (*Server, error) {
+func NewServer(configGetter core.KubernetesConfigGetter, clientQPS float32, clientBurst int, pluginConfigPath string, clustersConfig kube.ClustersConfig) (*Server, error) {
 	mapper, err := createRESTMapper(clientQPS, clientBurst)
 	if err != nil {
 		return nil, err
 	}
+
+	// If no config is provided, we default to the existing values for backwards compatibility.
+	pluginConfig := common.NewDefaultPluginConfig()
+	if pluginConfigPath != "" {
+		pluginConfig, err = common.ParsePluginConfig(pluginConfigPath)
+		if err != nil {
+			log.Fatalf("%s", err)
+		}
+		log.Infof("+resources using custom config: [%v]", *pluginConfig)
+	} else {
+		log.Info("+resources using default config since pluginConfigPath is empty")
+	}
+
 	return &Server{
-		clientGetter: func(ctx context.Context, cluster string) (kubernetes.Interface, dynamic.Interface, error) {
-			if configGetter == nil {
-				return nil, nil, status.Errorf(codes.Internal, "configGetter arg required")
-			}
-			config, err := configGetter(ctx, cluster)
-			if err != nil {
-				return nil, nil, status.Errorf(codes.FailedPrecondition, "unable to get config : %v", err.Error())
-			}
-			dynamicClient, err := dynamic.NewForConfig(config)
-			if err != nil {
-				return nil, nil, status.Errorf(codes.FailedPrecondition, "unable to get dynamic client : %s", err.Error())
-			}
-			typedClient, err := kubernetes.NewForConfig(config)
-			if err != nil {
-				return nil, nil, status.Errorf(codes.FailedPrecondition, "unable to get typed client: %s", err.Error())
-			}
-			return typedClient, dynamicClient, nil
-		},
+		// Get the client getter with context auth
+		clientGetter: newClientGetter(configGetter, false, clustersConfig),
+		// Get the additional cluster client getter with service account
+		clusterServiceAccountClientGetter: newClientGetter(configGetter, true, clustersConfig),
+		// Get the "in-cluster" client getter
+		localServiceAccountClientGetter: clientgetter.NewBackgroundClientGetter(configGetter, clientgetter.Options{}),
 		corePackagesClientGetter: func() (pkgsGRPCv1alpha1.PackagesServiceClient, error) {
 			port := os.Getenv("PORT")
 			conn, err := grpc.Dial("localhost:"+port, grpc.WithTransportCredentials(insecure.NewCredentials()))
@@ -130,7 +148,49 @@ func NewServer(configGetter core.KubernetesConfigGetter, clientQPS float32, clie
 			}
 			return mapping.Resource, mapping.Scope.Name(), nil
 		},
+		clientQPS:       clientQPS,
+		pluginConfig:    pluginConfig,
+		kubeappsCluster: clustersConfig.KubeappsClusterName,
 	}, nil
+}
+
+func newClientGetter(configGetter core.KubernetesConfigGetter, useServiceAccount bool, clustersConfig kube.ClustersConfig) clientGetter {
+	return func(ctx context.Context, cluster string) (kubernetes.Interface, dynamic.Interface, error) {
+		if configGetter == nil {
+			return nil, nil, status.Errorf(codes.Internal, "configGetter arg required")
+		}
+		restConfig, err := configGetter(ctx, cluster)
+		if err != nil {
+			return nil, nil, status.Errorf(codes.FailedPrecondition, "unable to get config : %v", err.Error())
+		}
+		if err := setupRestConfigForCluster(restConfig, cluster, useServiceAccount, clustersConfig); err != nil {
+			return nil, nil, err
+		}
+		dynamicClient, err := dynamic.NewForConfig(restConfig)
+		if err != nil {
+			return nil, nil, status.Errorf(codes.FailedPrecondition, "unable to get dynamic client : %s", err.Error())
+		}
+		typedClient, err := kubernetes.NewForConfig(restConfig)
+		if err != nil {
+			return nil, nil, status.Errorf(codes.FailedPrecondition, "unable to get typed client: %s", err.Error())
+		}
+		return typedClient, dynamicClient, nil
+	}
+}
+
+func setupRestConfigForCluster(restConfig *rest.Config, cluster string, useServiceAccount bool, clustersConfig kube.ClustersConfig) error {
+	// Override client config with the service token for additional cluster
+	// Added from #5034 after deprecation of "kubeops"
+	if cluster != clustersConfig.KubeappsClusterName && useServiceAccount {
+		additionalCluster, ok := clustersConfig.Clusters[cluster]
+		if !ok {
+			return status.Errorf(codes.Internal, "cluster %q has no configuration", cluster)
+		}
+		if additionalCluster.ServiceToken != "" {
+			restConfig.BearerToken = additionalCluster.ServiceToken
+		}
+	}
+	return nil
 }
 
 // GetResources returns the resources for an installed package.

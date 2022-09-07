@@ -1,14 +1,14 @@
 /* eslint-disable */
 import { grpc } from "@improbable-eng/grpc-web";
+import { BrowserHeaders } from "browser-headers";
+import _m0 from "protobufjs/minimal";
+import { Observable } from "rxjs";
+import { share } from "rxjs/operators";
 import {
+  Context,
   InstalledPackageReference,
   ResourceRef,
-  Context,
 } from "../../../core/packages/v1alpha1/packages";
-import { BrowserHeaders } from "browser-headers";
-import { share } from "rxjs/operators";
-import { Observable } from "rxjs";
-import * as _m0 from "protobufjs/minimal";
 
 export const protobufPackage = "kubeappsapis.plugins.resources.v1alpha1";
 
@@ -331,6 +331,48 @@ export interface GetSecretNamesResponse_SecretNamesEntry {
   value: SecretType;
 }
 
+/**
+ * CanIRequest
+ *
+ * Request for CanI operation
+ */
+export interface CanIRequest {
+  /**
+   * The context (cluster/namespace) for the can-i request
+   * "" (empty) namespace means "all"
+   */
+  context?: Context;
+  /**
+   * Group API Group of the Resource.  "*" means all.
+   * +optional
+   */
+  group: string;
+  /**
+   * Resource is one of the existing resource types.  "*" means all.
+   * +optional
+   */
+  resource: string;
+  /**
+   * Verb is a kubernetes resource API verb, like: get, list, watch, create, update, delete, proxy.  "*" means all.
+   * +optional
+   */
+  verb: string;
+}
+
+/**
+ * CanIResponse
+ *
+ * Response for CanI operation
+ */
+export interface CanIResponse {
+  /**
+   * allowed
+   *
+   * True if operation is allowed
+   */
+  allowed: boolean;
+}
+
 function createBaseGetResourcesRequest(): GetResourcesRequest {
   return { installedPackageRef: undefined, resourceRefs: [], watch: false };
 }
@@ -515,9 +557,7 @@ export const GetServiceAccountNamesRequest = {
   },
 
   fromJSON(object: any): GetServiceAccountNamesRequest {
-    return {
-      context: isSet(object.context) ? Context.fromJSON(object.context) : undefined,
-    };
+    return { context: isSet(object.context) ? Context.fromJSON(object.context) : undefined };
   },
 
   toJSON(message: GetServiceAccountNamesRequest): unknown {
@@ -630,9 +670,7 @@ export const GetNamespaceNamesRequest = {
   },
 
   fromJSON(object: any): GetNamespaceNamesRequest {
-    return {
-      cluster: isSet(object.cluster) ? String(object.cluster) : "",
-    };
+    return { cluster: isSet(object.cluster) ? String(object.cluster) : "" };
   },
 
   toJSON(message: GetNamespaceNamesRequest): unknown {
@@ -782,14 +820,15 @@ export const CreateNamespaceRequest = {
       object.context !== undefined && object.context !== null
         ? Context.fromPartial(object.context)
         : undefined;
-    message.labels = Object.entries(object.labels ?? {}).reduce<{
-      [key: string]: string;
-    }>((acc, [key, value]) => {
-      if (value !== undefined) {
-        acc[key] = String(value);
-      }
-      return acc;
-    }, {});
+    message.labels = Object.entries(object.labels ?? {}).reduce<{ [key: string]: string }>(
+      (acc, [key, value]) => {
+        if (value !== undefined) {
+          acc[key] = String(value);
+        }
+        return acc;
+      },
+      {},
+    );
     return message;
   },
 };
@@ -932,9 +971,7 @@ export const CheckNamespaceExistsRequest = {
   },
 
   fromJSON(object: any): CheckNamespaceExistsRequest {
-    return {
-      context: isSet(object.context) ? Context.fromJSON(object.context) : undefined,
-    };
+    return { context: isSet(object.context) ? Context.fromJSON(object.context) : undefined };
   },
 
   toJSON(message: CheckNamespaceExistsRequest): unknown {
@@ -990,9 +1027,7 @@ export const CheckNamespaceExistsResponse = {
   },
 
   fromJSON(object: any): CheckNamespaceExistsResponse {
-    return {
-      exists: isSet(object.exists) ? Boolean(object.exists) : false,
-    };
+    return { exists: isSet(object.exists) ? Boolean(object.exists) : false };
   },
 
   toJSON(message: CheckNamespaceExistsResponse): unknown {
@@ -1106,14 +1141,15 @@ export const CreateSecretRequest = {
         : undefined;
     message.type = object.type ?? 0;
     message.name = object.name ?? "";
-    message.stringData = Object.entries(object.stringData ?? {}).reduce<{
-      [key: string]: string;
-    }>((acc, [key, value]) => {
-      if (value !== undefined) {
-        acc[key] = String(value);
-      }
-      return acc;
-    }, {});
+    message.stringData = Object.entries(object.stringData ?? {}).reduce<{ [key: string]: string }>(
+      (acc, [key, value]) => {
+        if (value !== undefined) {
+          acc[key] = String(value);
+        }
+        return acc;
+      },
+      {},
+    );
     return message;
   },
 };
@@ -1251,9 +1287,7 @@ export const GetSecretNamesRequest = {
   },
 
   fromJSON(object: any): GetSecretNamesRequest {
-    return {
-      context: isSet(object.context) ? Context.fromJSON(object.context) : undefined,
-    };
+    return { context: isSet(object.context) ? Context.fromJSON(object.context) : undefined };
   },
 
   toJSON(message: GetSecretNamesRequest): unknown {
@@ -1314,12 +1348,13 @@ export const GetSecretNamesResponse = {
   fromJSON(object: any): GetSecretNamesResponse {
     return {
       secretNames: isObject(object.secretNames)
-        ? Object.entries(object.secretNames).reduce<{
-            [key: string]: SecretType;
-          }>((acc, [key, value]) => {
-            acc[key] = secretTypeFromJSON(value);
-            return acc;
-          }, {})
+        ? Object.entries(object.secretNames).reduce<{ [key: string]: SecretType }>(
+            (acc, [key, value]) => {
+              acc[key] = secretTypeFromJSON(value);
+              return acc;
+            },
+            {},
+          )
         : {},
     };
   },
@@ -1414,6 +1449,133 @@ export const GetSecretNamesResponse_SecretNamesEntry = {
   },
 };
 
+function createBaseCanIRequest(): CanIRequest {
+  return { context: undefined, group: "", resource: "", verb: "" };
+}
+
+export const CanIRequest = {
+  encode(message: CanIRequest, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
+    if (message.context !== undefined) {
+      Context.encode(message.context, writer.uint32(10).fork()).ldelim();
+    }
+    if (message.group !== "") {
+      writer.uint32(18).string(message.group);
+    }
+    if (message.resource !== "") {
+      writer.uint32(26).string(message.resource);
+    }
+    if (message.verb !== "") {
+      writer.uint32(34).string(message.verb);
+    }
+    return writer;
+  },
+
+  decode(input: _m0.Reader | Uint8Array, length?: number): CanIRequest {
+    const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseCanIRequest();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1:
+          message.context = Context.decode(reader, reader.uint32());
+          break;
+        case 2:
+          message.group = reader.string();
+          break;
+        case 3:
+          message.resource = reader.string();
+          break;
+        case 4:
+          message.verb = reader.string();
+          break;
+        default:
+          reader.skipType(tag & 7);
+          break;
+      }
+    }
+    return message;
+  },
+
+  fromJSON(object: any): CanIRequest {
+    return {
+      context: isSet(object.context) ? Context.fromJSON(object.context) : undefined,
+      group: isSet(object.group) ? String(object.group) : "",
+      resource: isSet(object.resource) ? String(object.resource) : "",
+      verb: isSet(object.verb) ? String(object.verb) : "",
+    };
+  },
+
+  toJSON(message: CanIRequest): unknown {
+    const obj: any = {};
+    message.context !== undefined &&
+      (obj.context = message.context ? Context.toJSON(message.context) : undefined);
+    message.group !== undefined && (obj.group = message.group);
+    message.resource !== undefined && (obj.resource = message.resource);
+    message.verb !== undefined && (obj.verb = message.verb);
+    return obj;
+  },
+
+  fromPartial<I extends Exact<DeepPartial<CanIRequest>, I>>(object: I): CanIRequest {
+    const message = createBaseCanIRequest();
+    message.context =
+      object.context !== undefined && object.context !== null
+        ? Context.fromPartial(object.context)
+        : undefined;
+    message.group = object.group ?? "";
+    message.resource = object.resource ?? "";
+    message.verb = object.verb ?? "";
+    return message;
+  },
+};
+
+function createBaseCanIResponse(): CanIResponse {
+  return { allowed: false };
+}
+
+export const CanIResponse = {
+  encode(message: CanIResponse, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
+    if (message.allowed === true) {
+      writer.uint32(8).bool(message.allowed);
+    }
+    return writer;
+  },
+
+  decode(input: _m0.Reader | Uint8Array, length?: number): CanIResponse {
+    const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseCanIResponse();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1:
+          message.allowed = reader.bool();
+          break;
+        default:
+          reader.skipType(tag & 7);
+          break;
+      }
+    }
+    return message;
+  },
+
+  fromJSON(object: any): CanIResponse {
+    return { allowed: isSet(object.allowed) ? Boolean(object.allowed) : false };
+  },
+
+  toJSON(message: CanIResponse): unknown {
+    const obj: any = {};
+    message.allowed !== undefined && (obj.allowed = message.allowed);
+    return obj;
+  },
+
+  fromPartial<I extends Exact<DeepPartial<CanIResponse>, I>>(object: I): CanIResponse {
+    const message = createBaseCanIResponse();
+    message.allowed = object.allowed ?? false;
+    return message;
+  },
+};
+
 /**
  * ResourcesService
  *
@@ -1449,6 +1611,7 @@ export interface ResourcesService {
     request: DeepPartial<CreateSecretRequest>,
     metadata?: grpc.Metadata,
   ): Promise<CreateSecretResponse>;
+  CanI(request: DeepPartial<CanIRequest>, metadata?: grpc.Metadata): Promise<CanIResponse>;
 }
 
 export class ResourcesServiceClientImpl implements ResourcesService {
@@ -1463,6 +1626,7 @@ export class ResourcesServiceClientImpl implements ResourcesService {
     this.CheckNamespaceExists = this.CheckNamespaceExists.bind(this);
     this.GetSecretNames = this.GetSecretNames.bind(this);
     this.CreateSecret = this.CreateSecret.bind(this);
+    this.CanI = this.CanI.bind(this);
   }
 
   GetResources(
@@ -1540,6 +1704,10 @@ export class ResourcesServiceClientImpl implements ResourcesService {
       CreateSecretRequest.fromPartial(request),
       metadata,
     );
+  }
+
+  CanI(request: DeepPartial<CanIRequest>, metadata?: grpc.Metadata): Promise<CanIResponse> {
+    return this.rpc.unary(ResourcesServiceCanIDesc, CanIRequest.fromPartial(request), metadata);
   }
 }
 
@@ -1701,6 +1869,28 @@ export const ResourcesServiceCreateSecretDesc: UnaryMethodDefinitionish = {
   } as any,
 };
 
+export const ResourcesServiceCanIDesc: UnaryMethodDefinitionish = {
+  methodName: "CanI",
+  service: ResourcesServiceDesc,
+  requestStream: false,
+  responseStream: false,
+  requestType: {
+    serializeBinary() {
+      return CanIRequest.encode(this).finish();
+    },
+  } as any,
+  responseType: {
+    deserializeBinary(data: Uint8Array) {
+      return {
+        ...CanIResponse.decode(data),
+        toObject() {
+          return this;
+        },
+      };
+    },
+  } as any,
+};
+
 interface UnaryMethodDefinitionishR extends grpc.UnaryMethodDefinition<any, any> {
   requestStream: any;
   responseStream: any;
@@ -1728,6 +1918,7 @@ export class GrpcWebImpl {
     streamingTransport?: grpc.TransportFactory;
     debug?: boolean;
     metadata?: grpc.Metadata;
+    upStreamRetryCodes?: number[];
   };
 
   constructor(
@@ -1737,6 +1928,7 @@ export class GrpcWebImpl {
       streamingTransport?: grpc.TransportFactory;
       debug?: boolean;
       metadata?: grpc.Metadata;
+      upStreamRetryCodes?: number[];
     },
   ) {
     this.host = host;
@@ -1751,10 +1943,7 @@ export class GrpcWebImpl {
     const request = { ..._request, ...methodDesc.requestType };
     const maybeCombinedMetadata =
       metadata && this.options.metadata
-        ? new BrowserHeaders({
-            ...this.options?.metadata.headersMap,
-            ...metadata?.headersMap,
-          })
+        ? new BrowserHeaders({ ...this.options?.metadata.headersMap, ...metadata?.headersMap })
         : metadata || this.options.metadata;
     return new Promise((resolve, reject) => {
       grpc.unary(methodDesc, {
@@ -1767,9 +1956,11 @@ export class GrpcWebImpl {
           if (response.status === grpc.Code.OK) {
             resolve(response.message);
           } else {
-            const err = new Error(response.statusMessage) as any;
-            err.code = response.status;
-            err.metadata = response.trailers;
+            const err = new GrpcWebError(
+              response.statusMessage,
+              response.status,
+              response.trailers,
+            );
             reject(err);
           }
         },
@@ -1782,16 +1973,12 @@ export class GrpcWebImpl {
     _request: any,
     metadata: grpc.Metadata | undefined,
   ): Observable<any> {
-    // Status Response Codes (https://developers.google.com/maps-booking/reference/grpc-api/status_codes)
-    const upStreamCodes = [2, 4, 8, 9, 10, 13, 14, 15];
+    const upStreamCodes = this.options.upStreamRetryCodes || [];
     const DEFAULT_TIMEOUT_TIME: number = 3_000;
     const request = { ..._request, ...methodDesc.requestType };
     const maybeCombinedMetadata =
       metadata && this.options.metadata
-        ? new BrowserHeaders({
-            ...this.options?.metadata.headersMap,
-            ...metadata?.headersMap,
-          })
+        ? new BrowserHeaders({ ...this.options?.metadata.headersMap, ...metadata?.headersMap })
         : metadata || this.options.metadata;
     return new Observable(observer => {
       const upStream = () => {
@@ -1802,13 +1989,16 @@ export class GrpcWebImpl {
           metadata: maybeCombinedMetadata,
           debug: this.options.debug,
           onMessage: next => observer.next(next),
-          onEnd: (code: grpc.Code, message: string) => {
+          onEnd: (code: grpc.Code, message: string, trailers: grpc.Metadata) => {
             if (code === 0) {
               observer.complete();
             } else if (upStreamCodes.includes(code)) {
               setTimeout(upStream, DEFAULT_TIMEOUT_TIME);
             } else {
-              observer.error(new Error(`Error ${code} ${message}`));
+              const err = new Error(message) as any;
+              err.code = code;
+              err.metadata = trailers;
+              observer.error(err);
             }
           },
         });
@@ -1834,7 +2024,7 @@ export type DeepPartial<T> = T extends Builtin
 type KeysOfUnion<T> = T extends T ? keyof T : never;
 export type Exact<P, I extends P> = P extends Builtin
   ? P
-  : P & { [K in keyof P]: Exact<P[K], I[K]> } & Record<Exclude<keyof I, KeysOfUnion<P>>, never>;
+  : P & { [K in keyof P]: Exact<P[K], I[K]> } & { [K in Exclude<keyof I, KeysOfUnion<P>>]: never };
 
 function isObject(value: any): boolean {
   return typeof value === "object" && value !== null;
@@ -1842,4 +2032,10 @@ function isObject(value: any): boolean {
 
 function isSet(value: any): boolean {
   return value !== null && value !== undefined;
+}
+
+export class GrpcWebError extends Error {
+  constructor(message: string, public code: grpc.Code, public metadata: grpc.Metadata) {
+    super(message);
+  }
 }

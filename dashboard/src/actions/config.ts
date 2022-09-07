@@ -27,7 +27,8 @@ export function getConfig(): ThunkAction<Promise<void>, IStoreState, null, Confi
     dispatch(requestConfig());
     try {
       const config = await Config.getConfig();
-      dispatch(receiveConfig(config));
+      const configuredPlugins = await Config.getConfiguredPlugins();
+      dispatch(receiveConfig({ ...config, configuredPlugins }));
     } catch (e: any) {
       dispatch(errorConfig(e));
     }

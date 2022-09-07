@@ -3,23 +3,20 @@
 
 import { get } from "lodash";
 import { Auth } from "./Auth";
-import { axiosWithAuth } from "./AxiosInstance";
-import { ForbiddenError, IResource, NotFoundError } from "./types";
-import * as url from "./url";
 import { KubeappsGrpcClient } from "./KubeappsGrpcClient";
+import { convertGrpcAuthError } from "./utils";
 
 export default class Namespace {
-  private static resourcesClient = () => new KubeappsGrpcClient().getResourcesServiceClientImpl();
+  private static resourcesServiceClient = () =>
+    new KubeappsGrpcClient().getResourcesServiceClientImpl();
 
-  // TODO(agamez): Migrate API call, see #4785
   public static async list(cluster: string) {
-    // This call is hitting an actual backend endpoint (see cmd\kubeops\internal\http-handler)
-    // while the other two calls (create, get) have been updated to use the
-    // resources client rather than the k8s API server.
-    const { data } = await axiosWithAuth.get<{ namespaces: IResource[] }>(
-      url.backend.namespaces.list(cluster),
-    );
-    return data;
+    const { namespaceNames } = await this.resourcesServiceClient()
+      .GetNamespaceNames({ cluster: cluster })
+      .catch((e: any) => {
+        throw convertGrpcAuthError(e);
+      });
+    return namespaceNames;
   }
 
   public static async create(
@@ -27,37 +24,31 @@ export default class Namespace {
     namespace: string,
     labels: { [key: string]: string },
   ) {
-    await this.resourcesClient().CreateNamespace({
-      context: {
-        cluster,
-        namespace,
-      },
-      labels: labels,
-    });
-  }
-
-  public static async exists(cluster: string, namespace: string) {
-    try {
-      const { exists } = await this.resourcesClient().CheckNamespaceExists({
+    await this.resourcesServiceClient()
+      .CreateNamespace({
         context: {
           cluster,
           namespace,
         },
+        labels: labels,
+      })
+      .catch((e: any) => {
+        throw convertGrpcAuthError(e);
       });
+  }
 
-      return exists;
-    } catch (e: any) {
-      switch (e.constructor) {
-        case ForbiddenError:
-          throw new ForbiddenError(
-            `You don't have sufficient permissions to use the namespace ${namespace}`,
-          );
-        case NotFoundError:
-          throw new NotFoundError(`Namespace ${namespace} not found. Create it before using it.`);
-        default:
-          throw e;
-      }
-    }
+  public static async exists(cluster: string, namespace: string) {
+    const { exists } = await this.resourcesServiceClient()
+      .CheckNamespaceExists({
+        context: {
+          cluster,
+          namespace,
+        },
+      })
+      .catch((e: any) => {
+        throw convertGrpcAuthError(e);
+      });
+    return exists;
   }
 }
 
