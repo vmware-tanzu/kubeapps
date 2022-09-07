@@ -7,13 +7,63 @@
     "permissions": [
       {
         "kind": "project",
-        "namespace": "$PROJECT_NAME",
+        "namespace": "$PROJECT_NAME_1",
         "access": [
           {
             "resource": "repository",
             "action": "list"
+          },
+          {
+            "resource": "repository",
+            "action": "pull"
+          },
+          {
+            "resource": "artifact",
+            "action": "read"
+          },
+          {
+            "resource": "artifact",
+            "action": "list"
+          },
+          {
+            "resource": "tag",
+            "action": "list"
+          },
+          {
+            "resource": "helm-chart",
+            "action": "read"
+          }
+        ]
+      },
+      {
+        "kind": "project",
+        "namespace": "$PROJECT_NAME_2",
+        "access": [
+          {
+            "resource": "repository",
+            "action": "list"
+          },
+          {
+            "resource": "repository",
+            "action": "pull"
+          },
+          {
+            "resource": "artifact",
+            "action": "read"
+          },
+          {
+            "resource": "artifact",
+            "action": "list"
+          },
+          {
+            "resource": "tag",
+            "action": "list"
+          },
+          {
+            "resource": "helm-chart",
+            "action": "read"
           }
         ]
       }
     ]
-  }
+}

@@ -85,9 +85,10 @@ const (
 	// an OCI registry with a single chart (podinfo)
 	// a clone of "oci://ghcr.io/stefanprodan/charts"
 	// gets setup by kind-cluster-setup.sh
-	github_stefanprodan_podinfo_oci_registry_url = "oci://ghcr.io/gfichtenholt/stefanprodan-podinfo-clone"
-	harbor_stefanprodan_podinfo_oci_registry_url = "oci://demo.goharbor.io/stefanprodan-podinfo-clone"
-	gcp_stefanprodan_podinfo_oci_registry_url    = "oci://us-west1-docker.pkg.dev/vmware-kubeapps-ci/stefanprodan-podinfo-clone"
+	github_stefanprodan_podinfo_oci_registry_url         = "oci://ghcr.io/gfichtenholt/stefanprodan-podinfo-clone"
+	harbor_stefanprodan_podinfo_oci_registry_url         = "oci://demo.goharbor.io/stefanprodan-podinfo-clone"
+	harbor_stefanprodan_podinfo_private_oci_registry_url = "oci://demo.goharbor.io/stefanprodan-podinfo-clone-private"
+	gcp_stefanprodan_podinfo_oci_registry_url            = "oci://us-west1-docker.pkg.dev/vmware-kubeapps-ci/stefanprodan-podinfo-clone"
 
 	// the URL of local in cluster helm registry. Gets deployed via ./kind-cluster-setup.sh
 	// in_cluster_oci_registry_url = "oci://registry-app-svc.default.svc.cluster.local:5000/helm-charts"
@@ -364,7 +365,7 @@ func kubeWaitUntilHelmRepositoryIsReady(t *testing.T, name types.NamespacedName)
 							if complete && success {
 								return nil
 							} else if complete && !success {
-								return errors.New(reason)
+								return fmt.Errorf("%v", reason)
 							}
 						}
 					}

@@ -54,18 +54,37 @@ export class CustomError extends Error {
   }
 }
 
-export class ForbiddenError extends CustomError {}
+// For 4XX HTTP-alike errors
+export class ClientNetworkError extends CustomError {}
+// 400
+export class BadRequestNetworkError extends ClientNetworkError {}
+// 401
+export class UnauthorizedNetworkError extends ClientNetworkError {}
+// 403
+export class ForbiddenNetworkError extends ClientNetworkError {}
+// 404
+export class NotFoundNetworkError extends ClientNetworkError {}
+// 408
+export class RequestTimeoutNetworkError extends ClientNetworkError {}
+// 409
+export class ConflictNetworkError extends ClientNetworkError {}
+// 422
+export class UnprocessableEntityError extends ClientNetworkError {}
+// 429
+export class TooManyRequestsNetworkError extends ClientNetworkError {}
 
-export class UnauthorizedError extends CustomError {}
+// For 5XX HTTP-alike errors
+export class ServerNetworkError extends CustomError {}
+// 500
+export class InternalServerNetworkError extends ServerNetworkError {}
+// 501
+export class NotImplementedNetworkError extends ServerNetworkError {}
+// 503
+export class ServerUnavailableNetworkError extends ServerNetworkError {}
+// 504
+export class GatewayTimeoutNetworkError extends ServerNetworkError {}
 
-export class NotFoundError extends CustomError {}
-
-export class ConflictError extends CustomError {}
-
-export class UnprocessableEntity extends CustomError {}
-
-export class InternalServerError extends CustomError {}
-
+// Application-level errors
 export class FetchError extends CustomError {}
 
 export class FetchWarning extends CustomError {}

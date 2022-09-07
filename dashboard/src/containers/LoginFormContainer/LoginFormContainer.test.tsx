@@ -48,6 +48,7 @@ const makeStore = (
     customAppViews: [],
     skipAvailablePackageDetails: false,
     createNamespaceLabels: {},
+    configuredPlugins: [],
   };
   const clusters: IClustersState = {
     currentCluster: "default",

@@ -1,14 +1,14 @@
 /* eslint-disable */
 import { grpc } from "@improbable-eng/grpc-web";
+import { BrowserHeaders } from "browser-headers";
+import _m0 from "protobufjs/minimal";
+import { Observable } from "rxjs";
+import { share } from "rxjs/operators";
 import {
+  Context,
   InstalledPackageReference,
   ResourceRef,
-  Context,
 } from "../../../core/packages/v1alpha1/packages";
-import { BrowserHeaders } from "browser-headers";
-import { share } from "rxjs/operators";
-import { Observable } from "rxjs";
-import * as _m0 from "protobufjs/minimal";
 
 export const protobufPackage = "kubeappsapis.plugins.resources.v1alpha1";
 
@@ -557,9 +557,7 @@ export const GetServiceAccountNamesRequest = {
   },
 
   fromJSON(object: any): GetServiceAccountNamesRequest {
-    return {
-      context: isSet(object.context) ? Context.fromJSON(object.context) : undefined,
-    };
+    return { context: isSet(object.context) ? Context.fromJSON(object.context) : undefined };
   },
 
   toJSON(message: GetServiceAccountNamesRequest): unknown {
@@ -672,9 +670,7 @@ export const GetNamespaceNamesRequest = {
   },
 
   fromJSON(object: any): GetNamespaceNamesRequest {
-    return {
-      cluster: isSet(object.cluster) ? String(object.cluster) : "",
-    };
+    return { cluster: isSet(object.cluster) ? String(object.cluster) : "" };
   },
 
   toJSON(message: GetNamespaceNamesRequest): unknown {
@@ -824,14 +820,15 @@ export const CreateNamespaceRequest = {
       object.context !== undefined && object.context !== null
         ? Context.fromPartial(object.context)
         : undefined;
-    message.labels = Object.entries(object.labels ?? {}).reduce<{
-      [key: string]: string;
-    }>((acc, [key, value]) => {
-      if (value !== undefined) {
-        acc[key] = String(value);
-      }
-      return acc;
-    }, {});
+    message.labels = Object.entries(object.labels ?? {}).reduce<{ [key: string]: string }>(
+      (acc, [key, value]) => {
+        if (value !== undefined) {
+          acc[key] = String(value);
+        }
+        return acc;
+      },
+      {},
+    );
     return message;
   },
 };
@@ -974,9 +971,7 @@ export const CheckNamespaceExistsRequest = {
   },
 
   fromJSON(object: any): CheckNamespaceExistsRequest {
-    return {
-      context: isSet(object.context) ? Context.fromJSON(object.context) : undefined,
-    };
+    return { context: isSet(object.context) ? Context.fromJSON(object.context) : undefined };
   },
 
   toJSON(message: CheckNamespaceExistsRequest): unknown {
@@ -1032,9 +1027,7 @@ export const CheckNamespaceExistsResponse = {
   },
 
   fromJSON(object: any): CheckNamespaceExistsResponse {
-    return {
-      exists: isSet(object.exists) ? Boolean(object.exists) : false,
-    };
+    return { exists: isSet(object.exists) ? Boolean(object.exists) : false };
   },
 
   toJSON(message: CheckNamespaceExistsResponse): unknown {
@@ -1148,14 +1141,15 @@ export const CreateSecretRequest = {
         : undefined;
     message.type = object.type ?? 0;
     message.name = object.name ?? "";
-    message.stringData = Object.entries(object.stringData ?? {}).reduce<{
-      [key: string]: string;
-    }>((acc, [key, value]) => {
-      if (value !== undefined) {
-        acc[key] = String(value);
-      }
-      return acc;
-    }, {});
+    message.stringData = Object.entries(object.stringData ?? {}).reduce<{ [key: string]: string }>(
+      (acc, [key, value]) => {
+        if (value !== undefined) {
+          acc[key] = String(value);
+        }
+        return acc;
+      },
+      {},
+    );
     return message;
   },
 };
@@ -1293,9 +1287,7 @@ export const GetSecretNamesRequest = {
   },
 
   fromJSON(object: any): GetSecretNamesRequest {
-    return {
-      context: isSet(object.context) ? Context.fromJSON(object.context) : undefined,
-    };
+    return { context: isSet(object.context) ? Context.fromJSON(object.context) : undefined };
   },
 
   toJSON(message: GetSecretNamesRequest): unknown {
@@ -1356,12 +1348,13 @@ export const GetSecretNamesResponse = {
   fromJSON(object: any): GetSecretNamesResponse {
     return {
       secretNames: isObject(object.secretNames)
-        ? Object.entries(object.secretNames).reduce<{
-            [key: string]: SecretType;
-          }>((acc, [key, value]) => {
-            acc[key] = secretTypeFromJSON(value);
-            return acc;
-          }, {})
+        ? Object.entries(object.secretNames).reduce<{ [key: string]: SecretType }>(
+            (acc, [key, value]) => {
+              acc[key] = secretTypeFromJSON(value);
+              return acc;
+            },
+            {},
+          )
         : {},
     };
   },
@@ -1567,9 +1560,7 @@ export const CanIResponse = {
   },
 
   fromJSON(object: any): CanIResponse {
-    return {
-      allowed: isSet(object.allowed) ? Boolean(object.allowed) : false,
-    };
+    return { allowed: isSet(object.allowed) ? Boolean(object.allowed) : false };
   },
 
   toJSON(message: CanIResponse): unknown {
@@ -1724,7 +1715,7 @@ export const ResourcesServiceDesc = {
   serviceName: "kubeappsapis.plugins.resources.v1alpha1.ResourcesService",
 };
 
-export const ResourcesServiceGetResourcesDesc: MethodDefinitionish = {
+export const ResourcesServiceGetResourcesDesc: UnaryMethodDefinitionish = {
   methodName: "GetResources",
   service: ResourcesServiceDesc,
   requestStream: false,
@@ -1907,13 +1898,6 @@ interface UnaryMethodDefinitionishR extends grpc.UnaryMethodDefinition<any, any>
 
 type UnaryMethodDefinitionish = UnaryMethodDefinitionishR;
 
-interface MethodDefinitionishR extends grpc.MethodDefinition<any, any> {
-  requestStream: any;
-  responseStream: any;
-}
-
-type MethodDefinitionish = MethodDefinitionishR;
-
 interface Rpc {
   unary<T extends UnaryMethodDefinitionish>(
     methodDesc: T,
@@ -1924,12 +1908,6 @@ interface Rpc {
     methodDesc: T,
     request: any,
     metadata: grpc.Metadata | undefined,
-  ): Observable<any>;
-  stream<T extends MethodDefinitionish>(
-    methodDesc: T,
-    request: Observable<any>,
-    metadata: grpc.Metadata | undefined,
-    rpcOptions: grpc.RpcOptions | undefined,
   ): Observable<any>;
 }
 
@@ -1965,10 +1943,7 @@ export class GrpcWebImpl {
     const request = { ..._request, ...methodDesc.requestType };
     const maybeCombinedMetadata =
       metadata && this.options.metadata
-        ? new BrowserHeaders({
-            ...this.options?.metadata.headersMap,
-            ...metadata?.headersMap,
-          })
+        ? new BrowserHeaders({ ...this.options?.metadata.headersMap, ...metadata?.headersMap })
         : metadata || this.options.metadata;
     return new Promise((resolve, reject) => {
       grpc.unary(methodDesc, {
@@ -1981,9 +1956,11 @@ export class GrpcWebImpl {
           if (response.status === grpc.Code.OK) {
             resolve(response.message);
           } else {
-            const err = new Error(response.statusMessage) as any;
-            err.code = response.status;
-            err.metadata = response.trailers;
+            const err = new GrpcWebError(
+              response.statusMessage,
+              response.status,
+              response.trailers,
+            );
             reject(err);
           }
         },
@@ -2001,10 +1978,7 @@ export class GrpcWebImpl {
     const request = { ..._request, ...methodDesc.requestType };
     const maybeCombinedMetadata =
       metadata && this.options.metadata
-        ? new BrowserHeaders({
-            ...this.options?.metadata.headersMap,
-            ...metadata?.headersMap,
-          })
+        ? new BrowserHeaders({ ...this.options?.metadata.headersMap, ...metadata?.headersMap })
         : metadata || this.options.metadata;
     return new Observable(observer => {
       const upStream = () => {
@@ -2033,50 +2007,6 @@ export class GrpcWebImpl {
       upStream();
     }).pipe(share());
   }
-
-  stream<T extends MethodDefinitionish>(
-    methodDesc: T,
-    _request: Observable<any>,
-    metadata: grpc.Metadata | undefined,
-    rpcOptions: grpc.RpcOptions | undefined,
-  ): Observable<any> {
-    const defaultOptions = {
-      host: this.host,
-      debug: rpcOptions?.debug || this.options.debug,
-      transport: rpcOptions?.transport || this.options.streamingTransport || this.options.transport,
-    };
-
-    let started = false;
-    const client = grpc.client(methodDesc, defaultOptions);
-
-    const subscription = _request.subscribe((_req: any) => {
-      const request = { ..._req, ...methodDesc.requestType };
-      if (!started) {
-        client.start(metadata);
-        started = true;
-      }
-      client.send(request);
-    });
-
-    subscription.add(() => {
-      client.finishSend();
-    });
-
-    return new Observable(observer => {
-      client.onEnd((code: grpc.Code, message: string, _trailers: grpc.Metadata) => {
-        subscription.unsubscribe();
-        if (code === 0) {
-          observer.complete();
-        } else {
-          observer.error(new Error(`Error ${code} ${message}`));
-        }
-      });
-      client.onMessage((res: any) => {
-        observer.next(res);
-      });
-      observer.add(() => client.close());
-    }).pipe(share());
-  }
 }
 
 type Builtin = Date | Function | Uint8Array | string | number | boolean | undefined;
@@ -2094,7 +2024,7 @@ export type DeepPartial<T> = T extends Builtin
 type KeysOfUnion<T> = T extends T ? keyof T : never;
 export type Exact<P, I extends P> = P extends Builtin
   ? P
-  : P & { [K in keyof P]: Exact<P[K], I[K]> } & Record<Exclude<keyof I, KeysOfUnion<P>>, never>;
+  : P & { [K in keyof P]: Exact<P[K], I[K]> } & { [K in Exclude<keyof I, KeysOfUnion<P>>]: never };
 
 function isObject(value: any): boolean {
   return typeof value === "object" && value !== null;
@@ -2102,4 +2032,10 @@ function isObject(value: any): boolean {
 
 function isSet(value: any): boolean {
   return value !== null && value !== undefined;
+}
+
+export class GrpcWebError extends Error {
+  constructor(message: string, public code: grpc.Code, public metadata: grpc.Metadata) {
+    super(message);
+  }
 }

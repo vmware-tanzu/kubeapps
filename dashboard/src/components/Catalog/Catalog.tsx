@@ -17,7 +17,7 @@ import * as ReactRouter from "react-router-dom";
 import { Link } from "react-router-dom";
 import { IClusterServiceVersion, IStoreState } from "shared/types";
 import { app } from "shared/url";
-import { escapeRegExp } from "shared/utils";
+import { escapeRegExp, getPluginPackageName } from "shared/utils";
 import LoadingWrapper from "../LoadingWrapper/LoadingWrapper";
 import PageHeader from "../PageHeader/PageHeader";
 import SearchFilter from "../SearchFilter/SearchFilter";
@@ -40,6 +40,7 @@ export const filterNames = {
   REPO: "Repository",
   CATEGORY: "Category",
   OPERATOR_PROVIDER: "Provider",
+  PKG_TYPE: "Plugin",
 };
 
 export function initialFilterState() {
@@ -94,6 +95,7 @@ export default function Catalog() {
       globalReposNamespace,
       carvelGlobalNamespace,
       featureFlags,
+      configuredPlugins,
     },
   } = useSelector((state: IStoreState) => state);
   const { cluster, namespace } = ReactRouter.useParams() as IRouteParams;
@@ -235,7 +237,12 @@ export default function Catalog() {
     repos
       .filter(r => !r.namespaceScoped || r.packageRepoRef?.context?.namespace === namespace)
       .map(r => r.name),
-  );
+  ).sort();
+  const allPlugins = uniq(
+    configuredPlugins
+      .filter(p => p.name.includes(".packages"))
+      .map(p => getPluginPackageName(p, true) || ""),
+  ).sort();
   const allProviders = uniq(csvs.map(c => c.spec.provider.name));
   const allCategories = uniq(
     categories
@@ -280,6 +287,13 @@ export default function Catalog() {
     .filter(
       () =>
         filters[filterNames.TYPE].length === 0 || filters[filterNames.TYPE].includes("Packages"),
+    )
+    .filter(
+      c =>
+        filters[filterNames.PKG_TYPE].length === 0 ||
+        filters[filterNames.PKG_TYPE].includes(
+          getPluginPackageName(c.availablePackageRef?.plugin, true),
+        ),
     )
     .filter(() => filters[filterNames.OPERATOR_PROVIDER].length === 0)
     .filter(
@@ -477,6 +491,19 @@ export default function Catalog() {
                     name={filterNames.REPO}
                     options={allRepos}
                     currentFilters={filters[filterNames.REPO]}
+                    onAddFilter={addFilter}
+                    onRemoveFilter={removeFilter}
+                    disabled={isFetching}
+                  />
+                </div>
+              )}
+              {allPlugins.length > 0 && (
+                <div className="filter-section">
+                  <label className="filter-label">Package Type</label>
+                  <FilterGroup
+                    name={filterNames.PKG_TYPE}
+                    options={allPlugins}
+                    currentFilters={filters[filterNames.PKG_TYPE]}
                     onAddFilter={addFilter}
                     onRemoveFilter={removeFilter}
                     disabled={isFetching}

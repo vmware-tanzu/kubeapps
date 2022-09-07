@@ -6,17 +6,24 @@ import {
   SecretType,
 } from "gen/kubeappsapis/plugins/resources/v1alpha1/resources";
 import { KubeappsGrpcClient } from "./KubeappsGrpcClient";
+import { convertGrpcAuthError } from "./utils";
 
 export default class Secret {
-  public static resourcesClient = () => new KubeappsGrpcClient().getResourcesServiceClientImpl();
+  public static resourcesServiceClient = () =>
+    new KubeappsGrpcClient().getResourcesServiceClientImpl();
 
+  // TODO(agamez): unused method, remove?
   public static async getDockerConfigSecretNames(cluster: string, namespace: string) {
-    const result = await this.resourcesClient().GetSecretNames({
-      context: {
-        cluster,
-        namespace,
-      },
-    });
+    const result = await this.resourcesServiceClient()
+      .GetSecretNames({
+        context: {
+          cluster,
+          namespace,
+        },
+      })
+      .catch((e: any) => {
+        throw convertGrpcAuthError(e);
+      });
 
     const secretNames = [];
     for (const [name, type] of Object.entries(result.secretNames)) {
@@ -27,6 +34,7 @@ export default class Secret {
     return secretNames;
   }
 
+  // TODO(agamez): unused method, remove?
   public static async createPullSecret(
     cluster: string,
     name: string,
@@ -46,16 +54,20 @@ export default class Secret {
         },
       },
     };
-    await this.resourcesClient().CreateSecret({
-      context: {
-        cluster,
-        namespace,
-      },
-      name,
-      type: SecretType.SECRET_TYPE_DOCKER_CONFIG_JSON,
-      stringData: {
-        ".dockerconfigjson": JSON.stringify(dockercfg),
-      },
-    } as CreateSecretRequest);
+    await this.resourcesServiceClient()
+      .CreateSecret({
+        context: {
+          cluster,
+          namespace,
+        },
+        name,
+        type: SecretType.SECRET_TYPE_DOCKER_CONFIG_JSON,
+        stringData: {
+          ".dockerconfigjson": JSON.stringify(dockercfg),
+        },
+      } as CreateSecretRequest)
+      .catch((e: any) => {
+        throw convertGrpcAuthError(e);
+      });
   }
 }
