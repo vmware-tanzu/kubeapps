@@ -6,7 +6,9 @@ package main
 import (
 	"context"
 	"errors"
+	"github.com/vmware-tanzu/kubeapps/pkg/kube"
 	"io"
+	"k8s.io/client-go/rest"
 	"net"
 	"reflect"
 	"testing"
@@ -525,6 +527,105 @@ func TestGetServiceAccountNames(t *testing.T) {
 						t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, nil))
 					}
 				}
+			}
+		})
+	}
+}
+
+func TestSetupConfigForCluster(t *testing.T) {
+	testCases := []struct {
+		name               string
+		restConfig         *rest.Config
+		cluster            string
+		useServiceAccount  bool
+		clustersConfig     kube.ClustersConfig
+		expectedRestConfig *rest.Config
+		expectedErrorCode  codes.Code
+	}{
+		{
+			name:    "config is not modified for kubeapps cluster",
+			cluster: "default",
+			clustersConfig: kube.ClustersConfig{
+				KubeappsClusterName: "default",
+				Clusters: map[string]kube.ClusterConfig{
+					"default": {},
+				},
+			},
+			restConfig:         &rest.Config{},
+			expectedRestConfig: &rest.Config{},
+		},
+		{
+			name:    "config is not modified for additional clusters and no service account",
+			cluster: "additional-1",
+			clustersConfig: kube.ClustersConfig{
+				KubeappsClusterName: "default",
+				Clusters: map[string]kube.ClusterConfig{
+					"default":      {},
+					"additional-1": {},
+				},
+			},
+			restConfig:         &rest.Config{},
+			expectedRestConfig: &rest.Config{},
+		},
+		{
+			name:              "config setup fails for additional clusters with no cluster config data",
+			cluster:           "additional-1",
+			useServiceAccount: true,
+			clustersConfig: kube.ClustersConfig{
+				KubeappsClusterName: "default",
+				Clusters: map[string]kube.ClusterConfig{
+					"default": {},
+				},
+			},
+			restConfig:         &rest.Config{},
+			expectedRestConfig: &rest.Config{},
+			expectedErrorCode:  codes.Internal,
+		},
+		{
+			name:              "config is not modified for additional clusters with no configured service token",
+			cluster:           "additional-1",
+			useServiceAccount: true,
+			clustersConfig: kube.ClustersConfig{
+				KubeappsClusterName: "default",
+				Clusters: map[string]kube.ClusterConfig{
+					"default":      {},
+					"additional-1": {},
+				},
+			},
+			restConfig:         &rest.Config{},
+			expectedRestConfig: &rest.Config{},
+		},
+		{
+			name:              "config is modified for additional clusters when configured service token",
+			cluster:           "additional-1",
+			useServiceAccount: true,
+			clustersConfig: kube.ClustersConfig{
+				KubeappsClusterName: "default",
+				Clusters: map[string]kube.ClusterConfig{
+					"default": {},
+					"additional-1": {
+						ServiceToken: "service-token-1",
+					},
+				},
+			},
+			restConfig: &rest.Config{},
+			expectedRestConfig: &rest.Config{
+				BearerToken: "service-token-1",
+			},
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+
+			err := setupRestConfigForCluster(tc.restConfig, tc.cluster, tc.useServiceAccount, tc.clustersConfig)
+
+			if got, want := status.Code(err), tc.expectedErrorCode; !cmp.Equal(got, want, nil) {
+				t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, nil))
+			}
+
+			if got, want := tc.restConfig, tc.expectedRestConfig; !cmp.Equal(got, want, nil) {
+				t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, nil))
 			}
 		})
 	}

@@ -30,7 +30,7 @@ func init() {
 //
 //nolint:deadcode
 func RegisterWithGRPCServer(opts pluginsv1alpha1.GRPCPluginRegistrationOptions) (interface{}, error) {
-	svr, err := NewServer(opts.ConfigGetter, opts.ClientQPS, opts.ClientBurst, opts.PluginConfigPath)
+	svr, err := NewServer(opts.ConfigGetter, opts.ClientQPS, opts.ClientBurst, opts.PluginConfigPath, opts.ClustersConfig)
 	if err != nil {
 		return nil, err
 	}

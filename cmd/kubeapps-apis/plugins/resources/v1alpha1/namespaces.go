@@ -6,6 +6,8 @@ package main
 import (
 	"context"
 	authorizationapi "k8s.io/api/authorization/v1"
+	"k8s.io/client-go/kubernetes"
+	"strings"
 
 	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/plugins/resources/v1alpha1"
 	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/pkg/statuserror"
@@ -112,7 +114,14 @@ func (s *Server) CanI(ctx context.Context, r *v1alpha1.CanIRequest) (*v1alpha1.C
 	}
 	log.InfoS("+resources CanI", "cluster", cluster, "namespace", namespace, "group", r.GetGroup(), "resource", r.GetResource(), "verb", r.GetVerb())
 
-	typedClient, _, err := s.clientGetter(ctx, cluster)
+	var typedClient kubernetes.Interface
+	var err error
+	if s.kubeappsCluster != cluster && strings.ToLower(r.GetVerb()) == "list" && strings.ToLower(r.GetResource()) == "namespaces" {
+		// Listing namespaces in additional clusters might involve using the provided service account token
+		typedClient, _, err = s.clusterServiceAccountClientGetter(ctx, cluster)
+	} else {
+		typedClient, _, err = s.clientGetter(ctx, cluster)
+	}
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "unable to get the k8s client: '%v'", err)
 	}
