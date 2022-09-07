@@ -599,37 +599,6 @@ gke_test: &gke_test
         name: Cleanup GKE Cluster
         command: gcloud container clusters delete --async --zone $GKE_ZONE $ESCAPED_GKE_CLUSTER
         when: always
-local_e2e_steps: &local_e2e_steps
-  steps:
-    - checkout
-    - <<: *exports
-    - <<: *install_kind
-    - <<: *install_kubectl
-    - <<: *install_cluster
-    - <<: *copy_apiserver_certificates
-    # Create the "kubeapps-ci-additional" cluster
-    - <<: *install_additional_cluster
-    # Export variables and kubeconfig
-    - <<: *export_cluster_variables
-    - <<: *install_mkcert
-    - <<: *install_helm_cli
-    - <<: *load_kind_images
-    # Load images from other jobs
-    - attach_workspace:
-        at: /tmp/images
-    - run:
-        name: Load CI images in the cluster
-        command: for image in /tmp/images/*; do kind load image-archive "$image" --name kubeapps-ci; done
-    - <<: *install_multicluster_deps
-    - <<: *run_e2e_tests
-    - run:
-        name: Print k8s KubeappsAPIs logs if the tests fail
-        command: |
-          kubectl --context kind-kubeapps-ci --kubeconfig ${HOME}/.kube/kind-config-kubeapps-ci logs -n kubeapps-ci deploy/kubeapps-internal-kubeappsapis --previous=true
-        when: on_fail
-    - store_artifacts:
-        path: integration/reports
-    - run: exit $TEST_RESULT
 ###
 
 jobs:
@@ -816,7 +785,36 @@ jobs:
     parameters:
       number:
         type: string
-    <<: *local_e2e_steps
+    steps:
+      - checkout
+      - <<: *exports
+      - <<: *install_kind
+      - <<: *install_kubectl
+      - <<: *install_cluster
+      - <<: *copy_apiserver_certificates
+      # Create the "kubeapps-ci-additional" cluster
+      - <<: *install_additional_cluster
+      # Export variables and kubeconfig
+      - <<: *export_cluster_variables
+      - <<: *install_mkcert
+      - <<: *install_helm_cli
+      - <<: *load_kind_images
+      # Load images from other jobs
+      - attach_workspace:
+          at: /tmp/images
+      - run:
+          name: Load CI images in the cluster
+          command: for image in /tmp/images/*; do kind load image-archive "$image" --name kubeapps-ci; done
+      - <<: *install_multicluster_deps
+      - <<: *run_e2e_tests
+      - run:
+          name: Print k8s KubeappsAPIs logs if the tests fail
+          command: |
+            kubectl --context kind-kubeapps-ci --kubeconfig ${HOME}/.kube/kind-config-kubeapps-ci logs -n kubeapps-ci deploy/kubeapps-internal-kubeappsapis --previous=true
+          when: on_fail
+      - store_artifacts:
+          path: integration/reports
+      - run: exit $TEST_RESULT
   GKE_REGULAR_VERSION_MAIN:
     <<: *gke_test
     environment:
