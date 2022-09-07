@@ -46,7 +46,7 @@ func (w *withWatchWrapper) Create(ctx context.Context, obj client.Object, opts .
 	return w.delegate.Create(ctx, obj, opts...)
 }
 
-func (w *withWatchWrapper) Get(ctx context.Context, key client.ObjectKey, obj client.Object) error {
+func (w *withWatchWrapper) Get(ctx context.Context, key client.ObjectKey, obj client.Object, opts ...client.GetOption) error {
 	return w.delegate.Get(ctx, key, obj)
 }
 
