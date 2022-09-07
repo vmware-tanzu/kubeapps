@@ -1,14 +1,14 @@
 # Step 3: Preparing Kubeapps deployment
 
-Before Kubeapps is deployed to the TCE cluster, there are some decisions that need to be taken. This will shape the installation structure and functioning of the application.
+Before Kubeapps is deployed to the TCE cluster, there are some decisions to take in order to shape the installation structure and functioning of the application.
 
-Some relevant topics like routing traffic into Kubeapps, TLS, or which plugins need to be enabled, will be set up in a _configuration values file_.
-A configuration values file is a Yaml file that allows you to customize the deployment of Kubeapps. TCE makes use of [Carvel](https://carvel.dev/) for installing applications, and in the case of the Kubeapps package, the configuration file uses exactly the same parameters specified in the [Bitnami Kubeapps Helm chart.](https://github.com/bitnami/charts/tree/master/bitnami/kubeapps#parameters) It is highly recommended that you take a look at the possible parameters and get familiar with them.
+Some relevant topics like routing traffic into Kubeapps, TLS, or which plugins need to be enabled, are set up in a _configuration values file_.
+A configuration values file is a Yaml file that allows you to customize the deployment of Kubeapps. TCE makes use of [Carvel](https://carvel.dev/) for installing applications, and in the case of the Kubeapps package, the configuration file uses exactly the same parameters specified in the [Bitnami Kubeapps Helm chart](https://github.com/bitnami/charts/tree/master/bitnami/kubeapps#parameters). It is highly recommended that you take a look at the possible parameters and get familiar with them.
 
-The outcome of this tutorial step will be:
+The outcome of this step is:
 
-- A configuration values file that matches your desired setup for Kubeapps
-- Required packages ready to make the configuration work (for example, installing the actual Ingress provider)
+- A configuration values file that matches your desired setup for Kubeapps.
+- Required packages ready to make the configuration work (for example, installing the actual Ingress provider).
 
 ## Option A: Getting traffic into Kubeapps using a LoadBalancer
 
@@ -26,7 +26,7 @@ Using an [ingress](https://kubernetes.io/docs/concepts/services-networking/ingre
 
 In order to do so, you need to define a _fully qualified domain name_ (FQDN), and preferably a TLS certificate available so that clients, like browsers, can safely navigate the UI.
 
-In this tutorial we will use the FQDN `kubeapps.foo.com` to access Kubeapps as an example.
+This tutorial uses the FQDN `kubeapps.foo.com` to access Kubeapps as an example.
 
 Add a TLS certificate with the following command:
 
@@ -139,7 +139,7 @@ kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/main
 
 ## Configuring OIDC
 
-In case you selected OIDC as your authentication method, you will need to set some parameters in the configuration values file. This is needed so that the OAuth proxy used in Kubeapps can contact the OIDC provider and exchange the tokens.
+In case you selected OIDC as your authentication method, you need to set some parameters in the configuration values file. This is needed so that the OAuth proxy used in Kubeapps can contact the OIDC provider and exchange the tokens.
 
 Please retrieve the values obtained in the [Setting up Google credentials client](./02-TCE-managed-cluster.md#setting-up-the-google-credentials-client) section and set them in your configuration values:
 
@@ -161,7 +161,7 @@ authProxy:
 
 ## Configuring selected plugins
 
-Kubeapps offers three plugins for managing packages and repositories: [Helm](https://helm.sh/docs/topics/chart_repository/), [Carvel](https://carvel.dev/kapp-controller/docs/develop/packaging/#package-repository) and [Flux](https://fluxcd.io/docs/components/source/helmrepositories/).
+Kubeapps offers three plugins for managing packages and repositories: [Helm](https://helm.sh/docs/topics/chart_repository/), [Carvel](https://carvel.dev/kapp-controller/docs/develop/packaging/#package-repository) and [Helm via Flux](https://fluxcd.io/docs/components/source/helmrepositories/).
 You need to define in the configuration values which plugins you want have installed, for example:
 
 ```yaml
@@ -177,3 +177,11 @@ packaging:
 At this point, you should have a proper Yaml file with configuration values.
 
 > Continue the tutorial by [deploying Kubeapps](./04-deploying-kubeapps.md).
+
+## Tutorial index
+
+1. [TCE cluster deployment preparation](./01-TCE-cluster-preparation.md)
+2. [Deploying a managed cluster](./02-TCE-managed-cluster.md) or [Deploy an unmanaged cluster](./02-TCE-unmanaged-cluster.md)
+3. [Preparing the Kubeapps deployment](./03-preparing-kubeapps-deployment.md)
+4. [Deploying Kubeapps](./04-deploying-kubeapps.md)
+5. [Further documentation for managing applications in Kubeapps](./05-managing-applications.md)
