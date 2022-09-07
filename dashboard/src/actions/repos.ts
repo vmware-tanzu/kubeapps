@@ -14,8 +14,9 @@ import { uniqBy } from "lodash";
 import { ThunkAction } from "redux-thunk";
 import { PackageRepositoriesService } from "shared/PackageRepositoriesService";
 import PackagesService from "shared/PackagesService";
-import { IPkgRepoFormData, IStoreState, NotFoundError } from "shared/types";
+import { IPkgRepoFormData, IStoreState, NotFoundNetworkError } from "shared/types";
 import { ActionType, deprecated } from "typesafe-actions";
+import { handleErrorAction } from "./auth";
 
 const { createAction } = deprecated;
 
@@ -96,7 +97,7 @@ export const fetchRepoSummaries = (
         dispatch(receiveRepoSummaries(totalRepos));
       }
     } catch (e: any) {
-      dispatch(errorRepos(e, "fetch"));
+      dispatch(handleErrorAction(e, errorRepos(e, "fetch")));
     }
   };
 };
@@ -123,7 +124,7 @@ export const fetchRepoDetail = (
       dispatch(receiveRepoDetail(getPackageRepositoryDetailResponse.detail));
       return true;
     } catch (e: any) {
-      dispatch(errorRepos(e, "fetch"));
+      dispatch(handleErrorAction(e, errorRepos(e, "fetch")));
       return false;
     }
   };
@@ -173,7 +174,7 @@ export const addRepo = (
       dispatch(addedRepo(repoSummary));
       return true;
     } catch (e: any) {
-      dispatch(errorRepos(e, "create"));
+      dispatch(handleErrorAction(e, errorRepos(e, "create")));
       return false;
     }
   };
@@ -222,7 +223,7 @@ export const updateRepo = (
       dispatch(repoUpdated(repoSummary));
       return true;
     } catch (e: any) {
-      dispatch(errorRepos(e, "update"));
+      dispatch(handleErrorAction(e, errorRepos(e, "update")));
       return false;
     }
   };
@@ -236,7 +237,7 @@ export const deleteRepo = (
       await PackageRepositoriesService.deletePackageRepository(packageRepoRef);
       return true;
     } catch (e: any) {
-      dispatch(errorRepos(e, "delete"));
+      dispatch(handleErrorAction(e, errorRepos(e, "delete")));
       return false;
     }
   };
@@ -267,7 +268,7 @@ export const findPackageInRepo = (
         if (!getPackageRepositoryDetailResponse?.detail) {
           dispatch(
             errorRepos(
-              new NotFoundError(
+              new NotFoundNetworkError(
                 `Package ${app.availablePackageRef.identifier} not found in the repository ${repoNamespace}.`,
               ),
               "fetch",
@@ -279,11 +280,14 @@ export const findPackageInRepo = (
         return true;
       } catch (e: any) {
         dispatch(
-          errorRepos(
-            new NotFoundError(
-              `Package ${app.availablePackageRef.identifier} not found in the repository ${repoNamespace}.`,
+          handleErrorAction(
+            e,
+            errorRepos(
+              new NotFoundNetworkError(
+                `Package ${app.availablePackageRef.identifier} not found in the repository ${repoNamespace}.`,
+              ),
+              "fetch",
             ),
-            "fetch",
           ),
         );
         return false;
@@ -291,7 +295,7 @@ export const findPackageInRepo = (
     } else {
       dispatch(
         errorRepos(
-          new NotFoundError(
+          new NotFoundNetworkError(
             `The installed application '${app?.name}' does not have any matching package in the repository '${repoName}'. Are you sure you installed this application from a repository?`,
           ),
           "fetch",

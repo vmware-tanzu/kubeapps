@@ -21,13 +21,14 @@ import {
   FetchWarning,
   IStoreState,
   RollbackError,
-  UnprocessableEntity,
+  UnprocessableEntityError,
   UpgradeError,
 } from "shared/types";
 import { getPluginsSupportingRollback } from "shared/utils";
 import { ActionType, deprecated } from "typesafe-actions";
 import { InstalledPackage } from "../shared/InstalledPackage";
 import { validate } from "../shared/schema";
+import { handleErrorAction } from "./auth";
 
 const { createAction } = deprecated;
 
@@ -129,16 +130,24 @@ export function getInstalledPackage(
         availablePackageDetail = resp.availablePackageDetail;
       } catch (e: any) {
         dispatch(
-          errorInstalledPackage(
-            new FetchWarning(
-              "this package has missing information, some actions might not be available.",
+          handleErrorAction(
+            e,
+            errorInstalledPackage(
+              new FetchWarning(
+                "this package has missing information, some actions might not be available.",
+              ),
             ),
           ),
         );
       }
       dispatch(selectInstalledPackage(installedPackageDetail!, availablePackageDetail));
     } catch (e: any) {
-      dispatch(errorInstalledPackage(new FetchError("Unable to get installed package", [e])));
+      dispatch(
+        handleErrorAction(
+          e,
+          errorInstalledPackage(new FetchError("Unable to get installed package", [e])),
+        ),
+      );
     }
   };
 }
@@ -162,7 +171,12 @@ export function getInstalledPkgStatus(
         );
         dispatch(receiveInstalledPackageStatus(installedPackageDetail!.status!));
       } catch (e: any) {
-        dispatch(errorInstalledPackage(new FetchError("Unable to refresh installed package", [e])));
+        dispatch(
+          handleErrorAction(
+            e,
+            errorInstalledPackage(new FetchError("Unable to refresh installed package", [e])),
+          ),
+        );
       }
     }
   };
@@ -178,7 +192,7 @@ export function deleteInstalledPackage(
       dispatch(receiveDeleteInstalledPackage());
       return true;
     } catch (e: any) {
-      dispatch(errorInstalledPackage(new DeleteError(e.message)));
+      dispatch(handleErrorAction(e, errorInstalledPackage(new DeleteError(e.message))));
       return false;
     }
   };
@@ -199,7 +213,9 @@ export function fetchInstalledPackages(
       dispatch(receiveInstalledPackageList(installedPackageSummaries));
       return installedPackageSummaries;
     } catch (e: any) {
-      dispatch(errorInstalledPackage(new FetchError("Unable to list apps", [e])));
+      dispatch(
+        handleErrorAction(e, errorInstalledPackage(new FetchError("Unable to list apps", [e]))),
+      );
       return [];
     }
   };
@@ -223,7 +239,7 @@ export function installPackage(
           const errorText =
             validation.errors &&
             validation.errors.map(e => `  - ${e.instancePath}: ${e.message}`).join("\n");
-          throw new UnprocessableEntity(
+          throw new UnprocessableEntityError(
             `The given values don't match the required format. The following errors were found:\n${errorText}`,
           );
         }
@@ -251,7 +267,7 @@ export function installPackage(
         return false;
       }
     } catch (e: any) {
-      dispatch(errorInstalledPackage(new CreateError(e.message)));
+      dispatch(handleErrorAction(e, errorInstalledPackage(new CreateError(e.message))));
       return false;
     }
   };
@@ -272,7 +288,7 @@ export function updateInstalledPackage(
           const errorText =
             validation.errors &&
             validation.errors.map(e => `  - ${e.instancePath}: ${e.message}`).join("\n");
-          throw new UnprocessableEntity(
+          throw new UnprocessableEntityError(
             `The given values don't match the required format. The following errors were found:\n${errorText}`,
           );
         }
@@ -294,7 +310,7 @@ export function updateInstalledPackage(
         return false;
       }
     } catch (e: any) {
-      dispatch(errorInstalledPackage(new UpgradeError(e.message)));
+      dispatch(handleErrorAction(e, errorInstalledPackage(new UpgradeError(e.message))));
       return false;
     }
   };
@@ -317,7 +333,7 @@ export function rollbackInstalledPackage(
         dispatch(getInstalledPackage(installedPackageRef));
         return true;
       } catch (e: any) {
-        dispatch(errorInstalledPackage(new RollbackError(e.message)));
+        dispatch(handleErrorAction(e, errorInstalledPackage(new RollbackError(e.message))));
         return false;
       }
     } else {

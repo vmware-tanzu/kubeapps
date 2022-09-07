@@ -15,7 +15,7 @@ import {
 import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins";
 import { InstalledPackage } from "shared/InstalledPackage";
 import { getStore, initialState } from "shared/specs/mountWrapper";
-import { IStoreState, PluginNames, UnprocessableEntity, UpgradeError } from "shared/types";
+import { IStoreState, PluginNames, UnprocessableEntityError, UpgradeError } from "shared/types";
 import { getType } from "typesafe-actions";
 import actions from ".";
 
@@ -234,7 +234,7 @@ describe("deploy package", () => {
       { type: getType(actions.installedpackages.requestInstallPackage) },
       {
         type: getType(actions.installedpackages.errorInstalledPackage),
-        payload: new UnprocessableEntity(
+        payload: new UnprocessableEntityError(
           "The given values don't match the required format. The following errors were found:\n  - /foo: must be string",
         ),
       },
@@ -313,7 +313,7 @@ describe("updateInstalledPackage", () => {
       { type: getType(actions.installedpackages.requestUpdateInstalledPackage) },
       {
         type: getType(actions.installedpackages.errorInstalledPackage),
-        payload: new UnprocessableEntity(
+        payload: new UnprocessableEntityError(
           "The given values don't match the required format. The following errors were found:\n  - /foo: must be string",
         ),
       },
