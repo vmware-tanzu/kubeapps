@@ -13,12 +13,14 @@ import * as url from "shared/url";
 import { axiosWithAuth } from "./AxiosInstance";
 import { KubeappsGrpcClient } from "./KubeappsGrpcClient";
 import { IKubeState } from "./types";
+import { convertGrpcAuthError } from "./utils";
 
 // Kube is a lower-level class for interacting with the Kubernetes API. Use
 // ResourceRef to interact with a single API resource rather than using Kube
 // directly.
 export class Kube {
-  public static resourcesClient = () => new KubeappsGrpcClient().getResourcesServiceClientImpl();
+  public static resourcesServiceClient = () =>
+    new KubeappsGrpcClient().getResourcesServiceClientImpl();
 
   // getResources returns a subscription to an observable for resources from the server.
   public static getResources(
@@ -26,7 +28,7 @@ export class Kube {
     refs: ResourceRef[],
     watch: boolean,
   ) {
-    return this.resourcesClient().GetResources({
+    return this.resourcesServiceClient().GetResources({
       installedPackageRef: pkgRef,
       resourceRefs: refs,
       watch,
@@ -80,7 +82,7 @@ export class Kube {
         return false;
       }
       // TODO(rcastelblanq) Migrate the CanI endpoint to a proper RBAC/Auth plugin
-      const response = await this.resourcesClient().CanI({
+      const response = await this.resourcesServiceClient().CanI({
         context: { cluster, namespace },
         group: group,
         resource: resource,
@@ -96,8 +98,12 @@ export class Kube {
     cluster: string,
     namespace: string,
   ): Promise<GetServiceAccountNamesResponse> {
-    return await this.resourcesClient().GetServiceAccountNames({
-      context: { cluster, namespace },
-    } as GetServiceAccountNamesRequest);
+    return await this.resourcesServiceClient()
+      .GetServiceAccountNames({
+        context: { cluster, namespace },
+      } as GetServiceAccountNamesRequest)
+      .catch((e: any) => {
+        throw convertGrpcAuthError(e);
+      });
   }
 }
