@@ -96,7 +96,7 @@ The first step is to configure the `clusters`, `pinnipedProxy` and `authProxy` p
    - Replace the `OIDC-REDEEM-URL` with the token redeem URL of the OIDC provider. For CSP it is `https://console.cloud.vmware.com/csp/gateway/am/api/auth/token`.
    - Replace the `OIDC-JWKS-URL` with the JSON Web Key Set URL of the OIDC provider. For CSP it is `https://console.cloud.vmware.com/csp/gateway/am/api/auth/token-public-key?format=jwks`.
 
-> **TIP**: Remember that any OIDC-compliant provider should expose a `.well-known/openid-configuration` ([CSP example](https://console.cloud.vmware.com/csp/gateway/am/api/.well-known/openid-configuration)) where you are able to find the required endpoints in this step.
+> **TIP**: Remember that any OIDC-compliant provider should expose a `.well-known/openid-configuration` ([CSP example](https://console.cloud.vmware.com/csp/gateway/am/api/.well-known/openid-configuration)) where you can find the required endpoints in this step.
 
 ```yaml
 authProxy:
