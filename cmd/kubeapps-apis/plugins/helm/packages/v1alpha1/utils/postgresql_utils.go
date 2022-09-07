@@ -35,7 +35,10 @@ func NewPGManager(config dbutils.Config, globalReposNamespace string) (AssetMana
 }
 
 func (m *PostgresAssetManager) GetAllChartCategories(cq ChartQuery) ([]*models.ChartCategory, error) {
-	whereQuery, whereQueryParams := m.GenerateWhereClause(cq)
+	whereQuery, whereQueryParams, err := m.GenerateWhereClause(cq)
+	if err != nil {
+		return nil, err
+	}
 	dbQuery := fmt.Sprintf("SELECT (info ->> 'category') AS name, COUNT( (info ->> 'category')) AS count FROM %s %s GROUP BY (info ->> 'category') ORDER BY (info ->> 'category') ASC", dbutils.ChartTable, whereQuery)
 
 	chartsCategories, err := m.QueryAllChartCategories(dbQuery, whereQueryParams...)
@@ -175,7 +178,10 @@ func (m *PostgresAssetManager) GetChartFilesWithFallback(namespace, filesID stri
 }
 
 func (m *PostgresAssetManager) GetPaginatedChartListWithFilters(cq ChartQuery, startItemNumber, pageSize int) ([]*models.Chart, error) {
-	whereQuery, whereQueryParams := m.GenerateWhereClause(cq)
+	whereQuery, whereQueryParams, err := m.GenerateWhereClause(cq)
+	if err != nil {
+		return nil, err
+	}
 	charts, err := m.GetPaginatedChartList(whereQuery, whereQueryParams, startItemNumber, pageSize)
 	if err != nil {
 		return nil, err
@@ -183,7 +189,7 @@ func (m *PostgresAssetManager) GetPaginatedChartListWithFilters(cq ChartQuery, s
 	return charts, nil
 }
 
-func (m *PostgresAssetManager) GenerateWhereClause(cq ChartQuery) (string, []interface{}) {
+func (m *PostgresAssetManager) GenerateWhereClause(cq ChartQuery) (string, []interface{}, error) {
 	whereClauses := []string{}
 	whereQueryParams := []interface{}{}
 	whereQuery := ""
@@ -201,6 +207,12 @@ func (m *PostgresAssetManager) GenerateWhereClause(cq ChartQuery) (string, []int
 		))
 	}
 	if cq.Version != "" && cq.AppVersion != "" {
+		if !containsOnlyAllowedChars(cq.Version) {
+			return "", nil, errors.New("invalid version")
+		}
+		if !containsOnlyAllowedChars(cq.AppVersion) {
+			return "", nil, errors.New("invalid app version")
+		}
 		parametrizedJsonbLiteral := fmt.Sprintf(`[{"version":"%s","app_version":"%s"}]`, cq.Version, cq.AppVersion)
 		whereQueryParams = append(whereQueryParams, parametrizedJsonbLiteral)
 		whereClauses = append(whereClauses, fmt.Sprintf("(info->'chartVersions' @> $%d::jsonb)", len(whereQueryParams)))
@@ -246,5 +258,16 @@ func (m *PostgresAssetManager) GenerateWhereClause(cq ChartQuery) (string, []int
 		whereQuery = "WHERE " + strings.Join(whereClauses, " AND ")
 	}
 
-	return whereQuery, whereQueryParams
+	return whereQuery, whereQueryParams, nil
+}
+
+// See https://semver.org/#backusnaur-form-grammar-for-valid-semver-versions
+const allowed string = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789+-."
+
+// Using the same "semver" validation logic for parsing version
+// see https://github.com/Masterminds/semver/blob/v3.1.1/version.go
+func containsOnlyAllowedChars(s string) bool {
+	return strings.IndexFunc(s, func(r rune) bool {
+		return !strings.ContainsRune(allowed, r)
+	}) == -1
 }
