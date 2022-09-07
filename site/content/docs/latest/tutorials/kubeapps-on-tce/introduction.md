@@ -6,8 +6,8 @@
 
 [Kubeapps](https://kubeapps.com/) provides a cloud native dashboard to deploy, manage, and upgrade applications on a Kubernetes cluster. It is a one-time install that gives you a number of important benefits, including the ability to:
 
-- browse and deploy packaged applications from public or private chart repositories
-- customize deployments through an intuitive, form-based user interface
+- browse and deploy packaged applications from public or private repositories
+- customize deployments through an intuitive user interface
 - upgrade, manage and delete the applications that are deployed in your Kubernetes cluster
 - expose an API to manage your package repositories and your applications
 
@@ -25,13 +25,13 @@ This guide walks you through the process of configuring, deploying and using Kub
 
 This guide is intended for the following user roles:
 
-- System administrators who want to install Kubeapps on a VMware Tanzu™ Community Edition cluster and use it to deploy and manage applications from any package repository.
-- Application administrators and developers who want to use Kubeapps to deploy and manage modern applications in a Kubernetes environment.
+- **System administrators** who want to install Kubeapps on a VMware Tanzu™ Community Edition cluster and use it to deploy and manage applications from any package repository.
+- **Application administrators** and **developers** who want to use Kubeapps to deploy and manage modern applications in a Kubernetes environment.
 - Any user willing to play around with Kubeapps and TCE
 
 In-depth knowledge of Kubernetes is not required.
 
-## Tutorial structure
+## Tutorial index
 
 The tutorial is organized in the following sections:
 

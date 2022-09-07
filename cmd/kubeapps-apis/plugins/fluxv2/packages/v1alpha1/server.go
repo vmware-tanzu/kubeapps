@@ -504,14 +504,18 @@ func (s *Server) GetInstalledPackageResourceRefs(ctx context.Context, request *c
 }
 
 func (s *Server) AddPackageRepository(ctx context.Context, request *corev1.AddPackageRepositoryRequest) (*corev1.AddPackageRepositoryResponse, error) {
-	log.Infof("+fluxv2 AddPackageRepository [%v]", request)
 	if request == nil {
 		return nil, status.Errorf(codes.InvalidArgument, "no request provided")
 	}
 	if request.Context == nil || request.Context.Namespace == "" {
 		return nil, status.Errorf(codes.InvalidArgument, "no request Context namespace provided")
 	}
+
 	cluster := request.GetContext().GetCluster()
+	namespace := request.GetContext().GetNamespace()
+	repoName := request.GetName()
+	log.InfoS("+fluxv2 AddPackageRepository", "cluster", cluster, "namespace", namespace, "name", repoName)
+
 	if cluster != "" && cluster != s.kubeappsCluster {
 		return nil, status.Errorf(
 			codes.Unimplemented,

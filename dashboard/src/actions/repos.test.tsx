@@ -27,7 +27,7 @@ import { initialState } from "shared/specs/mountWrapper";
 import {
   IPkgRepoFormData,
   IStoreState,
-  NotFoundError,
+  NotFoundNetworkError,
   PluginNames,
   RepositoryStorageTypes,
 } from "shared/types";
@@ -804,7 +804,7 @@ describe("findPackageInRepo", () => {
       {
         type: getType(repoActions.errorRepos),
         payload: {
-          err: new NotFoundError(
+          err: new NotFoundNetworkError(
             "Package my-repo/my-package not found in the repository other-namespace.",
           ),
           op: "fetch",

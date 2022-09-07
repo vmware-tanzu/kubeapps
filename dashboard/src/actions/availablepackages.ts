@@ -14,6 +14,7 @@ import {
   IReceivePackagesActionPayload as IReceiveAvailablePackageSummariesActionPayload,
   IStoreState,
 } from "../shared/types";
+import { handleErrorAction } from "./auth";
 
 const { createAction } = deprecated;
 
@@ -126,7 +127,7 @@ export function fetchAvailablePackageSummaries(
       );
       dispatch(receiveAvailablePackageSummaries({ response, paginationToken }));
     } catch (e: any) {
-      dispatch(createErrorPackage(new FetchError(e.message)));
+      dispatch(handleErrorAction(e, createErrorPackage(new FetchError(e.message))));
     }
   };
 }
@@ -140,7 +141,7 @@ export function fetchAvailablePackageVersions(
       const response = await PackagesService.getAvailablePackageVersions(availablePackageReference);
       dispatch(receiveSelectedAvailablePackageVersions(response));
     } catch (e: any) {
-      dispatch(createErrorPackage(new FetchError(e.message)));
+      dispatch(handleErrorAction(e, createErrorPackage(new FetchError(e.message))));
     }
   };
 }
@@ -162,7 +163,7 @@ export function fetchAndSelectAvailablePackageDetail(
         dispatch(createErrorPackage(new FetchError("could not find package version")));
       }
     } catch (e: any) {
-      dispatch(createErrorPackage(new FetchError(e.message)));
+      dispatch(handleErrorAction(e, createErrorPackage(new FetchError(e.message))));
     }
   };
 }

@@ -291,7 +291,9 @@ export default function Catalog() {
     .filter(
       c =>
         filters[filterNames.PKG_TYPE].length === 0 ||
-        filters[filterNames.PKG_TYPE].includes(getPluginPackageName(c.availablePackageRef?.plugin)),
+        filters[filterNames.PKG_TYPE].includes(
+          getPluginPackageName(c.availablePackageRef?.plugin, true),
+        ),
     )
     .filter(() => filters[filterNames.OPERATOR_PROVIDER].length === 0)
     .filter(

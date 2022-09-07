@@ -1,7 +1,6 @@
 // Copyright 2020-2022 the Kubeapps contributors.
 // SPDX-License-Identifier: Apache-2.0
 
-import Secret from "./Secret";
 import {
   CreateSecretRequest,
   CreateSecretResponse,
@@ -9,6 +8,7 @@ import {
   SecretType,
 } from "gen/kubeappsapis/plugins/resources/v1alpha1/resources";
 import { KubeappsGrpcClient } from "./KubeappsGrpcClient";
+import Secret from "./Secret";
 
 describe("getSecretNames", () => {
   const expectedSecretNames = {
@@ -27,7 +27,7 @@ describe("getSecretNames", () => {
     );
 
     jest.spyOn(client, "GetSecretNames").mockImplementation(mockClientGetSecretNames);
-    jest.spyOn(Secret, "resourcesClient").mockImplementation(() => client);
+    jest.spyOn(Secret, "resourcesServiceClient").mockImplementation(() => client);
   });
   afterEach(() => {
     jest.restoreAllMocks();
@@ -50,7 +50,7 @@ describe("createSecret", () => {
       .mockImplementation(() => Promise.resolve({} as CreateSecretResponse));
 
     jest.spyOn(client, "CreateSecret").mockImplementation(mockClientCreateSecret);
-    jest.spyOn(Secret, "resourcesClient").mockImplementation(() => client);
+    jest.spyOn(Secret, "resourcesServiceClient").mockImplementation(() => client);
   });
   afterEach(() => {
     jest.restoreAllMocks();

@@ -30,6 +30,7 @@ import {
 } from "gen/kubeappsapis/plugins/kapp_controller/packages/v1alpha1/kapp_controller";
 import KubeappsGrpcClient from "./KubeappsGrpcClient";
 import { IPkgRepoFormData, PluginNames } from "./types";
+import { convertGrpcAuthError } from "./utils";
 
 export class PackageRepositoriesService {
   public static coreRepositoriesClient = () =>
@@ -40,13 +41,21 @@ export class PackageRepositoriesService {
   public static async getPackageRepositorySummaries(
     context: Context,
   ): Promise<GetPackageRepositorySummariesResponse> {
-    return await this.coreRepositoriesClient().GetPackageRepositorySummaries({ context });
+    return await this.coreRepositoriesClient()
+      .GetPackageRepositorySummaries({ context })
+      .catch((e: any) => {
+        throw convertGrpcAuthError(e);
+      });
   }
 
   public static async getPackageRepositoryDetail(
     packageRepoRef: PackageRepositoryReference,
   ): Promise<GetPackageRepositoryDetailResponse> {
-    return await this.coreRepositoriesClient().GetPackageRepositoryDetail({ packageRepoRef });
+    return await this.coreRepositoriesClient()
+      .GetPackageRepositoryDetail({ packageRepoRef })
+      .catch((e: any) => {
+        throw convertGrpcAuthError(e);
+      });
   }
 
   public static async addPackageRepository(cluster: string, request: IPkgRepoFormData) {
@@ -57,7 +66,11 @@ export class PackageRepositoriesService {
       PackageRepositoriesService.buildEncodedCustomDetail(request),
     );
 
-    return await this.coreRepositoriesClient().AddPackageRepository(addPackageRepositoryRequest);
+    return await this.coreRepositoriesClient()
+      .AddPackageRepository(addPackageRepositoryRequest)
+      .catch((e: any) => {
+        throw convertGrpcAuthError(e);
+      });
   }
 
   public static async updatePackageRepository(cluster: string, request: IPkgRepoFormData) {
@@ -68,17 +81,23 @@ export class PackageRepositoriesService {
       PackageRepositoriesService.buildEncodedCustomDetail(request),
     );
 
-    return await this.coreRepositoriesClient().UpdatePackageRepository(
-      updatePackageRepositoryRequest,
-    );
+    return await this.coreRepositoriesClient()
+      .UpdatePackageRepository(updatePackageRepositoryRequest)
+      .catch((e: any) => {
+        throw convertGrpcAuthError(e);
+      });
   }
 
   public static async deletePackageRepository(
     packageRepoRef: PackageRepositoryReference,
   ): Promise<DeletePackageRepositoryResponse> {
-    return await this.coreRepositoriesClient().DeletePackageRepository({
-      packageRepoRef,
-    });
+    return await this.coreRepositoriesClient()
+      .DeletePackageRepository({
+        packageRepoRef,
+      })
+      .catch((e: any) => {
+        throw convertGrpcAuthError(e);
+      });
   }
 
   private static buildAddOrUpdateRequest(
@@ -246,6 +265,10 @@ export class PackageRepositoriesService {
   }
 
   public static async getConfiguredPlugins(): Promise<GetConfiguredPluginsResponse> {
-    return await this.pluginsServiceClientImpl().GetConfiguredPlugins({});
+    return await this.pluginsServiceClientImpl()
+      .GetConfiguredPlugins({})
+      .catch((e: any) => {
+        throw convertGrpcAuthError(e);
+      });
   }
 }
