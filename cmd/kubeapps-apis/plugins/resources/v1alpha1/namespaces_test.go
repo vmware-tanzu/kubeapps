@@ -611,9 +611,12 @@ func TestGetNamespaceNames(t *testing.T) {
 				clientGetter: func(context.Context, string) (kubernetes.Interface, dynamic.Interface, error) {
 					return fakeClient, nil, nil
 				},
-				serviceAccountClientGetter: backgroundClientGetter,
-				clientQPS:                  5,
-				pluginConfig:               pluginConfig,
+				clusterServiceAccountClientGetter: func(context.Context, string) (kubernetes.Interface, dynamic.Interface, error) {
+					return fakeClient, nil, nil
+				},
+				localServiceAccountClientGetter: backgroundClientGetter,
+				clientQPS:                       5,
+				pluginConfig:                    pluginConfig,
 			}
 
 			ctx := context.Background()
@@ -714,8 +717,8 @@ func TestCanI(t *testing.T) {
 				clientGetter: func(context.Context, string) (kubernetes.Interface, dynamic.Interface, error) {
 					return fakeClient, nil, nil
 				},
-				serviceAccountClientGetter: backgroundClientGetter,
-				clientQPS:                  5,
+				localServiceAccountClientGetter: backgroundClientGetter,
+				clientQPS:                       5,
 			}
 
 			response, err := s.CanI(context.Background(), tc.request)

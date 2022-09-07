@@ -41,22 +41,22 @@ func (s *Server) GetAccessibleNamespaces(ctx context.Context, cluster string, tr
 		namespaceList = append(namespaceList, trustedNamespaces...)
 	} else {
 
-		typedClient, _, err := s.clientGetter(ctx, cluster)
+		typedClient, _, err := s.clusterServiceAccountClientGetter(ctx, cluster)
 		if err != nil {
 			return nil, status.Errorf(codes.Internal, "unable to get the k8s client: '%v'", err)
 		}
 
 		// Try to list namespaces with the user token, for backward compatibility
-		namespaces, err := typedClient.CoreV1().Namespaces().List(context.TODO(), metav1.ListOptions{})
+		backgroundCtx := context.Background()
+		namespaces, err := typedClient.CoreV1().Namespaces().List(backgroundCtx, metav1.ListOptions{})
 		if err != nil {
 			if k8sErrors.IsForbidden(err) {
-				backgroundCtx := context.Background()
 				// The user doesn't have permissions to list namespaces, use the current pod's service account
-				userClient, err := s.serviceAccountClientGetter.Typed(backgroundCtx)
+				userClient, err := s.localServiceAccountClientGetter.Typed(backgroundCtx)
 				if err != nil {
 					return nil, err
 				}
-				namespaces, err = userClient.CoreV1().Namespaces().List(context.TODO(), metav1.ListOptions{})
+				namespaces, err = userClient.CoreV1().Namespaces().List(backgroundCtx, metav1.ListOptions{})
 				if err != nil && k8sErrors.IsForbidden(err) {
 					// Not even the configured kubeapps-apis service account has permission
 					return nil, err
