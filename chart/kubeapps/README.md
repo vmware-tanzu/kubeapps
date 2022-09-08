@@ -422,18 +422,12 @@ Once you have installed Kubeapps follow the [Getting Started Guide](https://gith
 
 ### Other Parameters
 
-| Name                      | Description                                                                                           | Value                  |
-| ------------------------- | ----------------------------------------------------------------------------------------------------- | ---------------------- |
-| `allowNamespaceDiscovery` | Allow users to discover available namespaces (only the ones they have access)                         | `true`                 |
-| `clusters`                | List of clusters that Kubeapps can target for deployments                                             | `[]`                   |
-| `featureFlags.operators`  | Enable ingress record generation for Kubeapps                                                         | `false`                |
-| `rbac.create`             | Specifies whether RBAC resources should be created                                                    | `true`                 |
-| `testImage.registry`      | NGINX image registry                                                                                  | `docker.io`            |
-| `testImage.repository`    | NGINX image repository                                                                                | `bitnami/nginx`        |
-| `testImage.tag`           | NGINX image tag (immutable tags are recommended)                                                      | `1.23.1-debian-11-r15` |
-| `testImage.digest`        | NGINX image digest in the way sha256:aa.... Please note this parameter, if set, will override the tag | `""`                   |
-| `testImage.pullPolicy`    | NGINX image pull policy                                                                               | `IfNotPresent`         |
-| `testImage.pullSecrets`   | NGINX image pull secrets                                                                              | `[]`                   |
+| Name                      | Description                                                                   | Value   |
+| ------------------------- | ----------------------------------------------------------------------------- | ------- |
+| `allowNamespaceDiscovery` | Allow users to discover available namespaces (only the ones they have access) | `true`  |
+| `clusters`                | List of clusters that Kubeapps can target for deployments                     | `[]`    |
+| `featureFlags.operators`  | Enable ingress record generation for Kubeapps                                 | `false` |
+| `rbac.create`             | Specifies whether RBAC resources should be created                            | `true`  |
 
 
 ### Database Parameters

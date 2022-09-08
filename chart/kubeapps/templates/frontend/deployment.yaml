@@ -173,6 +173,7 @@ spec:
             - --skip-auth-regex=^\/custom_locale\.json$
             - --skip-auth-regex=^\/favicon.*\.png$
             - --skip-auth-regex=^\/favicon.*\.ico$
+            - --skip-auth-regex=^\/android-chrome-.*\.png$
             - --skip-auth-regex=^\/static\/
             - --skip-auth-regex=^\/apis/core/plugins/v1alpha1/configured-plugins$
             - --skip-auth-regex=^\/apis/kubeappsapis.core.plugins.v1alpha1.PluginsService/GetConfiguredPlugins$
