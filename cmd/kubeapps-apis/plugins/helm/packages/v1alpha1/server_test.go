@@ -554,7 +554,7 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 			statusCode:             codes.Internal,
 		},
 		{
-			name:       "it returns an unauthenticated status if the user doesn't have permissions",
+			name:       "it returns a permissionDenied status if the user doesn't have permissions",
 			authorized: false,
 			request: &corev1.GetAvailablePackageSummariesRequest{
 				Context: &corev1.Context{
@@ -562,7 +562,7 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 				},
 			},
 			charts:     []*models.Chart{{Name: "foo"}},
-			statusCode: codes.Unauthenticated,
+			statusCode: codes.PermissionDenied,
 		},
 		{
 			name:       "it returns only the requested page of results and includes the next page token",
@@ -1005,7 +1005,7 @@ func TestGetAvailablePackageDetail(t *testing.T) {
 			statusCode:      codes.Internal,
 		},
 		{
-			name:       "it returns an unauthenticated status if the user doesn't have permissions",
+			name:       "it returns a permissionDenied status if the user doesn't have permissions",
 			authorized: false,
 			request: &corev1.GetAvailablePackageDetailRequest{
 				AvailablePackageRef: &corev1.AvailablePackageReference{
@@ -1015,7 +1015,7 @@ func TestGetAvailablePackageDetail(t *testing.T) {
 			},
 			charts:          []*models.Chart{{Name: "foo"}},
 			expectedPackage: &corev1.AvailablePackageDetail{},
-			statusCode:      codes.Unauthenticated,
+			statusCode:      codes.PermissionDenied,
 		},
 	}
 

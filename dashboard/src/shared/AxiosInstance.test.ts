@@ -9,13 +9,13 @@ import { addAuthHeaders, addErrorHandling, axios } from "shared/AxiosInstance";
 import { Auth } from "./Auth";
 import { initialState } from "./specs/mountWrapper";
 import {
-  ConflictError,
-  ForbiddenError,
-  InternalServerError,
+  ConflictNetworkError,
+  ForbiddenNetworkError,
+  InternalServerNetworkError,
   IStoreState,
-  NotFoundError,
-  UnauthorizedError,
-  UnprocessableEntity,
+  NotFoundNetworkError,
+  UnauthorizedNetworkError,
+  UnprocessableEntityError,
 } from "./types";
 
 describe("createAxiosInterceptorWithAuth", () => {
@@ -71,12 +71,12 @@ describe("createAxiosInterceptorWithAuth", () => {
   });
 
   const testCases = [
-    { code: 401, errorClass: UnauthorizedError },
-    { code: 403, errorClass: ForbiddenError },
-    { code: 404, errorClass: NotFoundError },
-    { code: 409, errorClass: ConflictError },
-    { code: 422, errorClass: UnprocessableEntity },
-    { code: 500, errorClass: InternalServerError },
+    { code: 401, errorClass: UnauthorizedNetworkError },
+    { code: 403, errorClass: ForbiddenNetworkError },
+    { code: 404, errorClass: NotFoundNetworkError },
+    { code: 409, errorClass: ConflictNetworkError },
+    { code: 422, errorClass: UnprocessableEntityError },
+    { code: 500, errorClass: InternalServerNetworkError },
   ];
 
   testCases.forEach(t => {

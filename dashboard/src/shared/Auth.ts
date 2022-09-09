@@ -1,17 +1,22 @@
 // Copyright 2018-2022 the Kubeapps contributors.
 // SPDX-License-Identifier: Apache-2.0
 
+import { grpc } from "@improbable-eng/grpc-web";
 import { AxiosResponse } from "axios";
 import * as jwt from "jsonwebtoken";
 import { get } from "lodash";
 import { IConfig } from "./Config";
 import { KubeappsGrpcClient } from "./KubeappsGrpcClient";
-import { grpc } from "@improbable-eng/grpc-web";
+import {
+  InternalServerNetworkError,
+  NotFoundNetworkError,
+  UnauthorizedNetworkError,
+} from "./types";
 const AuthTokenKey = "kubeapps_auth_token";
 const AuthTokenOIDCKey = "kubeapps_auth_token_oidc";
 
 export class Auth {
-  public static resourcesClient = (token?: string) =>
+  public static resourcesServiceClient = (token?: string) =>
     new KubeappsGrpcClient().getResourcesServiceClientImpl(token);
 
   public static getAuthToken() {
@@ -68,12 +73,12 @@ export class Auth {
   // Throws an error if the token is invalid
   public static async validateToken(cluster: string, token: string) {
     try {
-      await this.resourcesClient(token).CheckNamespaceExists({
+      await this.resourcesServiceClient(token).CheckNamespaceExists({
         context: { cluster, namespace: "default" },
       });
     } catch (e: any) {
       if (e.code === grpc.Code.Unauthenticated) {
-        throw new Error("invalid token");
+        throw new UnauthorizedNetworkError("invalid token");
       }
       // https://kubernetes.io/docs/reference/access-authn-authz/authentication/#anonymous-requests
       // Since we are always passing a token here, A 403 authorization error
@@ -83,12 +88,12 @@ export class Auth {
       // are attempted (though we may want to revisit this in the future).
       if (e.code !== grpc.Code.PermissionDenied) {
         if (e.code === grpc.Code.NotFound) {
-          throw new Error("not found");
+          throw new NotFoundNetworkError("not found");
         }
         if (e.code === grpc.Code.Internal) {
-          throw new Error("internal error");
+          throw new InternalServerNetworkError("internal error");
         }
-        throw new Error(`${e.code}: ${e.message}`);
+        throw new InternalServerNetworkError(`${e.code}: ${e.message}`);
       }
     }
   }
@@ -146,7 +151,7 @@ export class Auth {
   // it could potentially return a false positive.
   public static async isAuthenticatedWithCookie(cluster: string): Promise<boolean> {
     try {
-      await this.resourcesClient().CheckNamespaceExists({
+      await this.resourcesServiceClient().CheckNamespaceExists({
         context: { cluster, namespace: "default" },
       });
     } catch (e: any) {

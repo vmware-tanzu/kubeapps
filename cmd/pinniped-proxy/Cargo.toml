@@ -33,7 +33,7 @@ structopt = "0.3"
 thiserror = "1.0"
 tokio = { version = "1", features = ["full"] }
 tokio-native-tls = "0.3"
-url = "2.2"
+url = "2.3"
 http = "0.2.8"
 
 [features]

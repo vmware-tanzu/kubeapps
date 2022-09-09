@@ -29,4 +29,4 @@
         {{ end }}
     {{ end -}}
 {{- end -}}
-<a href="{{ $link | safeURL }}"{{ with .Title}} title="{{ . }}"{{ end }}{{ if $isRemote }} target="_blank"{{ end }}>{{ .Text | safeHTML }}</a>
+<a href="{{ $link | safeURL }}"{{ with .Title}} title="{{ . }}"{{ end }}{{ if $isRemote }} rel="noopener" target="_blank"{{ end }}>{{ .Text | safeHTML }}</a>

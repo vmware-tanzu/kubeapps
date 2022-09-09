@@ -5,6 +5,7 @@ import { CdsControlMessage, CdsFormGroup } from "@cds/react/forms";
 import { CdsInput } from "@cds/react/input";
 import { CdsSelect } from "@cds/react/select";
 import actions from "actions";
+import { handleErrorAction } from "actions/auth";
 import AvailablePackageDetailExcerpt from "components/Catalog/AvailablePackageDetailExcerpt";
 import Alert from "components/js/Alert";
 import Column from "components/js/Column";
@@ -100,9 +101,11 @@ export default function DeploymentForm() {
     // Populate the service account list if the plugin requires it
     if (getPluginsRequiringSA().includes(pluginObj.name)) {
       // We assume the user has enough permissions to do that. Fallback to a simple input maybe?
-      Kube.getServiceAccountNames(targetCluster, targetNamespace).then(saList =>
-        setServiceAccountList(saList.serviceaccountNames),
-      );
+      Kube.getServiceAccountNames(targetCluster, targetNamespace)
+        .then(saList => setServiceAccountList(saList.serviceaccountNames))
+        ?.catch(e => {
+          dispatch(handleErrorAction(e));
+        });
     }
     return () => {};
   }, [dispatch, targetCluster, targetNamespace, pluginObj.name]);

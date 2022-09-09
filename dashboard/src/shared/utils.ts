@@ -1,6 +1,7 @@
 // Copyright 2018-2022 the Kubeapps contributors.
 // SPDX-License-Identifier: Apache-2.0
 
+import { grpc } from "@improbable-eng/grpc-web";
 import {
   InstalledPackageStatus_StatusReason,
   installedPackageStatus_StatusReasonToJSON,
@@ -13,7 +14,22 @@ import helmIcon from "icons/helm.svg";
 import olmIcon from "icons/olm-icon.svg";
 import placeholder from "icons/placeholder.svg";
 import { IConfig } from "./Config";
-import { PluginNames, RepositoryStorageTypes } from "./types";
+import {
+  BadRequestNetworkError,
+  ConflictNetworkError,
+  CustomError,
+  ForbiddenNetworkError,
+  GatewayTimeoutNetworkError,
+  InternalServerNetworkError,
+  NotFoundNetworkError,
+  NotImplementedNetworkError,
+  PluginNames,
+  RepositoryStorageTypes,
+  RequestTimeoutNetworkError,
+  ServerUnavailableNetworkError,
+  TooManyRequestsNetworkError,
+  UnauthorizedNetworkError,
+} from "./types";
 
 export const k8sObjectNameRegex = "[a-z0-9]([-a-z0-9]*[a-z0-9])?(.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*";
 
@@ -274,5 +290,63 @@ export function getGlobalNamespaceOrNamespace(
       return namespace;
     default:
       return "unknown";
+  }
+}
+
+// Using the mapping from GRPC and grpc-gateway
+// See https://github.com/googleapis/googleapis/blob/master/google/rpc/code.proto
+// See https://github.com/grpc-ecosystem/grpc-gateway/blob/master/runtime/errors.go
+export function convertGrpcAuthError(e: any): CustomError | any {
+  const msg = e?.metadata?.headersMap?.["grpc-message"].toString();
+  switch (e?.code) {
+    case grpc.Code.Unauthenticated:
+      return new UnauthorizedNetworkError(msg);
+    case grpc.Code.FailedPrecondition:
+      // Use `FAILED_PRECONDITION` if the client should not retry until the system state has been explicitly fixed.
+      //TODO(agamez): this code shouldn't be returned by the API, but it is
+      if (["credentials", "unauthorized"].some(p => msg?.toLowerCase()?.includes(p))) {
+        return new UnauthorizedNetworkError(msg);
+      } else {
+        return new BadRequestNetworkError(msg);
+      }
+    case grpc.Code.Internal:
+      //TODO(agamez): this code shouldn't be returned by the API, but it is
+      if (["credentials", "unauthorized"].some(p => msg?.toLowerCase()?.includes(p))) {
+        return new UnauthorizedNetworkError(msg);
+      } else {
+        return new InternalServerNetworkError(msg);
+      }
+    case grpc.Code.PermissionDenied:
+      return new ForbiddenNetworkError(msg);
+    case grpc.Code.NotFound:
+      return new NotFoundNetworkError(msg);
+    case grpc.Code.AlreadyExists:
+      return new ConflictNetworkError(msg);
+    case grpc.Code.InvalidArgument:
+      return new BadRequestNetworkError(msg);
+    case grpc.Code.DeadlineExceeded:
+      return new GatewayTimeoutNetworkError(msg);
+    case grpc.Code.ResourceExhausted:
+      return new TooManyRequestsNetworkError(msg);
+    case grpc.Code.Aborted:
+      //  Use `ABORTED` if the client should retry at a higher level
+      return new ConflictNetworkError(msg);
+    case grpc.Code.Unimplemented:
+      return new NotImplementedNetworkError(msg);
+    case grpc.Code.OutOfRange:
+      return new BadRequestNetworkError(msg);
+    case grpc.Code.Unavailable:
+      // Use `UNAVAILABLE` if the client can retry just the failing call.
+      return new ServerUnavailableNetworkError(msg);
+    case grpc.Code.DataLoss:
+      return new InternalServerNetworkError(msg);
+    case grpc.Code.Unknown:
+      return new InternalServerNetworkError(msg);
+    case grpc.Code.Canceled:
+      return new RequestTimeoutNetworkError(msg);
+    case grpc.Code.OK:
+      return undefined;
+    default:
+      return e;
   }
 }

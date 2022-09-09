@@ -501,6 +501,18 @@ func Test_GenerateWhereClause(t *testing.T) {
 			expectedParams: []interface{}{string(""), string("kubeapps"), string(`[{"version":"1.0.0","app_version":"0.1.0"}]`)},
 		},
 		{
+			name:           "returns where clause - single param - version AND appVersion malformed with quotes",
+			namespace:      "",
+			chartName:      "",
+			version:        "'\"1.0.0'",
+			appVersion:     "'\"0.1.0'",
+			repos:          []string{""},
+			categories:     []string{""},
+			query:          "",
+			expectedClause: ``,
+			expectedParams: nil,
+		},
+		{
 			name:           "returns where clause - no params",
 			namespace:      "",
 			chartName:      "",
@@ -635,7 +647,7 @@ func Test_GenerateWhereClause(t *testing.T) {
 				Repos:       tt.repos,
 				Categories:  tt.categories,
 			}
-			whereQuery, whereQueryParams := pgManager.GenerateWhereClause(cq)
+			whereQuery, whereQueryParams, _ := pgManager.GenerateWhereClause(cq)
 
 			if tt.expectedClause != whereQuery {
 				t.Errorf("Expecting query:\n'%s'\nreceived query:\n'%s'\nin '%s'", tt.expectedClause, whereQuery, tt.name)
