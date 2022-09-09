@@ -48,7 +48,7 @@ require (
 	github.com/fluxcd/helm-controller/api v0.23.1
 	github.com/fluxcd/pkg/apis/meta v0.15.0
 	github.com/fluxcd/pkg/version v0.2.0
-	github.com/fluxcd/source-controller/api v0.28.0
+	github.com/fluxcd/source-controller/api v0.29.0
 	github.com/go-redis/redis/v8 v8.11.5
 	github.com/go-redis/redismock/v8 v8.0.6
 	github.com/google/go-cmp v0.5.9
@@ -84,7 +84,7 @@ require (
 	k8s.io/apiserver v0.24.4
 	k8s.io/cli-runtime v0.24.4
 	k8s.io/client-go v0.25.0
-	k8s.io/klog/v2 v2.80.0
+	k8s.io/klog/v2 v2.80.1
 	k8s.io/kubectl v0.24.4
 	k8s.io/kubernetes v1.24.4
 	k8s.io/utils v0.0.0-20220823124924-e9cbc92d1a73
