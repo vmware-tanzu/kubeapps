@@ -18,6 +18,17 @@ Google Cloud Console
 
   Make sure you see a message "Policy Updated" at the bottom of the screen when you grant these roles. If you see "Failed to add project roles" or some other error message,
   repeat the process w.r.t. a service account with a different Name/ID and remember to clean up unused service accounts afterwards.
+  Also, you can see the permissions/roles for the given service account and project here:
+  https://console.cloud.google.com/iam-admin/iam?project=vmware-kubeapps-ci. 
+  You should see something like
+  Principal:
+    flux-plugin-test-sa-4@vmware-kubeapps-ci.iam.gserviceaccount.com 
+  Name:
+  	flux-plugin-test-sa-4
+  Role: 
+    Artifact Registry Administrator
+    Artifact Registry Repository Administrator
+    Viewer 
 - The service account key file can be downloaded with Google Cloud Console
      Under IAM & Admin -> Service Accounts
 
@@ -117,8 +128,8 @@ $ flux create source helm podinfo-7 \
 ✔ HelmRepository source reconciliation completed
 
 $ flux create hr podinfo-7 \
->      --source=HelmRepository/podinfo-7.default \
->      --chart=podinfo
+       --source=HelmRepository/podinfo-7.default \
+       --chart=podinfo
 ✚ generating HelmRelease
 ► applying HelmRelease
 ✔ HelmRelease updated
@@ -127,19 +138,23 @@ $ flux create hr podinfo-7 \
 ✔ applied revision 6.1.8
 ```
 
-## Notes
-1. After a cold start (several hours of not running the tests), running the test always first at first
-```
-$ go test -v -timeout 9999s -run TestKindClusterAvailablePackageEndpointsForOCI 
-...
---- PASS: TestKindClusterAvailablePackageEndpointsForOCI/Testing_[oci://ghcr.io/gfichtenholt/stefanprodan-podinfo-clone]_with_basic_auth_secret (18.25s)
---- PASS: TestKindClusterAvailablePackageEndpointsForOCI/Testing_[oci://ghcr.io/gfichtenholt/stefanprodan-podinfo-clone]_with_dockerconfigjson_secret (16.72s)
---- PASS: TestKindClusterAvailablePackageEndpointsForOCI/Testing_[oci://demo.goharbor.io/stefanprodan-podinfo-clone]_with_basic_auth_secret (17.51s)
---- FAIL: TestKindClusterAvailablePackageEndpointsForOCI/Testing_[oci://us-west1-docker.pkg.dev/vmware-kubeapps-ci/stefanprodan-podinfo-clone]_with_service_access_token (5.51s)
-```
+## Environment setup for GCP auto-login scenario
+Motivation: https://github.com/vmware-tanzu/kubeapps/issues/5007#issuecomment-1233691352
+This feature is for something flux authors call "auto-login" or
+"contextual login" and that basically means using a "secured" HelmRepository without
+a secretRef
 
-due to this error on server:
-```
-I0825 06:01:17.145356       1 docker_reg_v2_repo_lister.go:50] ORAS v2 Registry [oci://us-west1-docker.pkg.dev/vmware-kubeapps-ci/stefanprodan-podinfo-clone PlainHTTP=false] PING: GET "https://us-west1-docker.pkg.dev/v2/": unexpected status code 401: unauthorized: No valid credential was supplied.
-```
-**TODO** The workaround is to re-start kubeapps-internal-kubeappsapis pod. So there appears to be some stale state left on a pod. I need to find what it is and how to properly fix it
+per https://cloud.google.com/kubernetes-engine/docs/how-to/workload-identity:
+
+Setup instructions:
+- Login to GCP console
+- Enable the Google Kubernetes Engine API. 
+- Ensure that you have enabled the IAM Service Account Credentials API
+- Ensure that you have the following IAM roles:
+  * roles/container.admin
+  * roles/iam.serviceAccountAdmin
+  FWIW, having the role 'Owner' will satisfy this
+- Create a new GKE cluster with Workload Identity enabled
+  per https://cloud.google.com/kubernetes-engine/docs/how-to/workload-identity#enable_on_cluster
+  * Name: cluster-flux-plugin-auto-login-test
+  * Zone: us-west1-c  

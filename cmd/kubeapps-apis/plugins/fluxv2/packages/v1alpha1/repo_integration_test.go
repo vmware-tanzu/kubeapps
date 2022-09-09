@@ -1546,6 +1546,17 @@ func compareActualVsExpectedPackageRepositoryDetail(t *testing.T, actualDetail *
 	}
 }
 
+func setUserManagedSecrets(t *testing.T, fluxPluginReposClient v1alpha1.FluxV2RepositoriesServiceClient, value bool) {
+	ctx, cancel := context.WithTimeout(context.Background(), defaultContextTimeout)
+	defer cancel()
+
+	_, err := fluxPluginReposClient.SetUserManagedSecrets(
+		ctx, &v1alpha1.SetUserManagedSecretsRequest{Value: value})
+	if err != nil {
+		t.Fatal(err)
+	}
+}
+
 func setUserManagedSecretsAndCleanup(t *testing.T, fluxPluginReposClient v1alpha1.FluxV2RepositoriesServiceClient, value bool) {
 	ctx, cancel := context.WithTimeout(context.Background(), defaultContextTimeout)
 	defer cancel()

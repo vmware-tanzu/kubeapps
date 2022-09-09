@@ -219,7 +219,7 @@ func newOCIChartRepository(registryURL string, registryOpts ...OCIChartRepositor
 }
 
 func (r *OCIChartRepository) listRepositoryNames() ([]string, error) {
-	log.Infof("+listRepositoryNames(stack:\n%s)", common.GetStackTrace())
+	log.Infof("+listRepositoryNames")
 
 	// this needs to be done after a call to login()
 	if r.repositoryLister == nil {
@@ -447,7 +447,7 @@ func (s *repoEventSink) onAddOciRepo(repo sourcev1.HelmRepository) ([]byte, bool
 }
 
 func (s *repoEventSink) onModifyOciRepo(key string, oldValue interface{}, repo sourcev1.HelmRepository) ([]byte, bool, error) {
-	log.Infof("+onModifyOciRepo(stack:\n%s,\nrepo:%s)", common.GetStackTrace(), common.PrettyPrint(repo))
+	log.Infof("+onModifyOciRepo(repo:%s)", common.PrettyPrint(repo))
 	defer log.Info("-onModifyOciRepo")
 
 	// We should to compare checksums on what's stored in the cache
