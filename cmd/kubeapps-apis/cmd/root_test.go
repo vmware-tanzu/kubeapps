@@ -41,7 +41,7 @@ func TestParseFlagsCorrect(t *testing.T) {
 				PinnipedProxyURL:         "foo03",
 				PinnipedProxyCACert:      "foo06",
 				UnsafeLocalDevKubeconfig: true,
-				GlobalReposNamespace:     "kubeapps-global",
+				GlobalHelmReposNamespace: "kubeapps-global",
 				PluginConfigPath:         "foo05",
 				QPS:                      1.0,
 				Burst:                    1,

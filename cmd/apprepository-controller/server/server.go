@@ -23,7 +23,7 @@ type Config struct {
 	ImagePullSecretsRefs     []corev1.LocalObjectReference
 	RepoSyncCommand          string
 	KubeappsNamespace        string
-	GlobalReposNamespace     string
+	GlobalPackagingNamespace string
 	DBURL                    string
 	DBUser                   string
 	DBName                   string

@@ -129,7 +129,7 @@ func setRootFlags(c *cobra.Command) {
 	c.PersistentFlags().BoolVar(&serveOpts.TlsInsecureSkipVerify, "tls-insecure-skip-verify", false, "Skip TLS verification")
 	c.PersistentFlags().StringVar(&serveOpts.FilterRules, "filter-rules", "", "JSON blob with the rules to filter assets")
 	c.PersistentFlags().BoolVar(&serveOpts.PassCredentials, "pass-credentials", false, "pass credentials to all domains")
-	c.PersistentFlags().StringVar(&serveOpts.GlobalReposNamespace, "global-repos-namespace", "kubeapps", "Namespace for global repos")
+	c.PersistentFlags().StringVar(&serveOpts.GlobalPackagingNamespace, "global-repos-namespace", "kubeapps", "Namespace for global repos")
 }
 
 func setSyncFlags(c *cobra.Command) {
