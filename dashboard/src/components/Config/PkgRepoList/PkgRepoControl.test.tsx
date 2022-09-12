@@ -9,7 +9,7 @@ import { act } from "react-dom/test-utils";
 import * as ReactRedux from "react-redux";
 import { defaultStore, mountWrapper } from "shared/specs/mountWrapper";
 import { PkgRepoAddButton } from "./PkgRepoButton";
-import { PkgRepoControl } from "./PkgRepoControl";
+import { IPkgRepoListItemProps, PkgRepoControl } from "./PkgRepoControl";
 
 let spyOnUseDispatch: jest.SpyInstance;
 const kubeaActions = { ...actions.kube };
@@ -28,14 +28,14 @@ afterEach(() => {
 });
 
 const defaultProps = {
-  globalReposNamespace: "kubeapps",
+  helmGlobalNamespace: "kubeapps",
   carvelGlobalNamespace: "carvel-global",
   repo: {
     name: "bitnami",
     packageRepoRef: { context: { namespace: "kubeapps" } },
   } as PackageRepositorySummary,
   refetchRepos: jest.fn(),
-};
+} as IPkgRepoListItemProps;
 
 it("deletes the repo and refreshes list", async () => {
   const deleteRepo = jest.fn();

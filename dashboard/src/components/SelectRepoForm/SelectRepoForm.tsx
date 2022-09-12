@@ -31,7 +31,7 @@ function SelectRepoForm({ cluster, namespace, app }: ISelectRepoFormProps) {
     packages: {
       selected: { error: packageError },
     },
-    config: { kubeappsNamespace, kubeappsCluster, globalReposNamespace, carvelGlobalNamespace },
+    config: { kubeappsNamespace, kubeappsCluster, helmGlobalNamespace, carvelGlobalNamespace },
   } = useSelector((state: IStoreState) => state);
 
   const [userRepoName, setUserRepoName] = useState(repo?.name ?? "");
@@ -44,7 +44,7 @@ function SelectRepoForm({ cluster, namespace, app }: ISelectRepoFormProps) {
     if (
       !namespace ||
       !supportedCluster ||
-      [globalReposNamespace, carvelGlobalNamespace].includes(namespace)
+      [helmGlobalNamespace, carvelGlobalNamespace].includes(namespace)
     ) {
       // All Namespaces. Global namespace or other cluster, show global repos only
       dispatch(actions.repos.fetchRepoSummaries(""));
@@ -57,7 +57,7 @@ function SelectRepoForm({ cluster, namespace, app }: ISelectRepoFormProps) {
     dispatch,
     namespace,
     kubeappsNamespace,
-    globalReposNamespace,
+    helmGlobalNamespace,
     carvelGlobalNamespace,
     supportedCluster,
   ]);

@@ -92,7 +92,7 @@ export default function Catalog() {
     config: {
       appVersion,
       kubeappsCluster,
-      globalReposNamespace,
+      helmGlobalNamespace,
       carvelGlobalNamespace,
       featureFlags,
       configuredPlugins,
@@ -256,7 +256,7 @@ export default function Catalog() {
     if (
       !namespace ||
       !supportedCluster ||
-      [globalReposNamespace, carvelGlobalNamespace].includes(namespace)
+      [helmGlobalNamespace, carvelGlobalNamespace].includes(namespace)
     ) {
       // All Namespaces. Global namespace or other cluster, show global repos only
       dispatch(actions.repos.fetchRepoSummaries(""));
@@ -265,7 +265,7 @@ export default function Catalog() {
     // In other case, fetch global and namespace repos
     dispatch(actions.repos.fetchRepoSummaries(namespace, true));
     return () => {};
-  }, [dispatch, supportedCluster, namespace, globalReposNamespace, carvelGlobalNamespace]);
+  }, [dispatch, supportedCluster, namespace, helmGlobalNamespace, carvelGlobalNamespace]);
 
   useEffect(() => {
     // Ignore operators if specified

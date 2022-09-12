@@ -20,7 +20,7 @@ import PkgRepoList from "./PkgRepoList";
 
 const {
   clusters: { currentCluster, clusters },
-  config: { globalReposNamespace },
+  config: { helmGlobalNamespace },
 } = initialState;
 const namespace = clusters[currentCluster].currentNamespace;
 
@@ -49,7 +49,7 @@ it("fetches repos and imagePullSecrets", () => {
   expect(actions.repos.fetchRepoSummaries).toHaveBeenCalledWith(namespace, true);
 });
 
-it("fetches repos only from the globalReposNamespace", () => {
+it("fetches repos only from the helmGlobalNamespace", () => {
   mountWrapper(
     getStore({
       clusters: {
@@ -57,7 +57,7 @@ it("fetches repos only from the globalReposNamespace", () => {
         clusters: {
           [currentCluster]: {
             ...initialState.clusters.clusters[currentCluster],
-            currentNamespace: globalReposNamespace,
+            currentNamespace: helmGlobalNamespace,
           },
         },
       },
@@ -130,7 +130,7 @@ it("shows an error deleting a repo", () => {
 describe("global and namespaced repositories", () => {
   const globalRepo = {
     name: "bitnami",
-    packageRepoRef: { context: { cluster: "default-cluster", namespace: globalReposNamespace } },
+    packageRepoRef: { context: { cluster: "default-cluster", namespace: helmGlobalNamespace } },
   } as PackageRepositorySummary;
 
   const namespacedRepo = {
@@ -193,7 +193,7 @@ describe("global and namespaced repositories", () => {
           clusters: {
             [currentCluster]: {
               ...initialState.clusters.clusters[currentCluster],
-              currentNamespace: globalReposNamespace,
+              currentNamespace: helmGlobalNamespace,
             },
           },
         },

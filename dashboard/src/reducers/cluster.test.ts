@@ -438,7 +438,7 @@ describe("clusterReducer", () => {
     const config = {
       kubeappsCluster: "",
       kubeappsNamespace: "kubeapps",
-      globalReposNamespace: "kubeapps-global",
+      helmGlobalNamespace: "kubeapps-global",
       carvelGlobalNamespace: "kapp-controller-packaging-global",
       appVersion: "dev",
       authProxyEnabled: false,

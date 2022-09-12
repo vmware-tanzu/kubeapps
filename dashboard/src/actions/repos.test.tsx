@@ -73,7 +73,7 @@ const packageRepositoryDetail = {
 } as PackageRepositoryDetail;
 
 const kubeappsNamespace = "kubeapps-namespace";
-const globalReposNamespace = "kubeapps-repos-global";
+const helmGlobalNamespace = "kubeapps-repos-global";
 const carvelGlobalNamespace = "carvel-repos-global";
 
 beforeEach(() => {
@@ -81,7 +81,7 @@ beforeEach(() => {
     config: {
       ...initialState.config,
       kubeappsNamespace,
-      globalReposNamespace,
+      helmGlobalNamespace,
       carvelGlobalNamespace,
     },
     clusters: {
@@ -409,7 +409,7 @@ describe("fetchRepoSummaries", () => {
     const expectedActions = [
       {
         type: getType(repoActions.requestRepoSummaries),
-        payload: globalReposNamespace,
+        payload: helmGlobalNamespace,
       },
       {
         type: getType(repoActions.receiveRepoSummaries),
@@ -417,7 +417,7 @@ describe("fetchRepoSummaries", () => {
       },
     ];
 
-    await store.dispatch(repoActions.fetchRepoSummaries(globalReposNamespace, true));
+    await store.dispatch(repoActions.fetchRepoSummaries(helmGlobalNamespace, true));
     expect(store.getActions()).toEqual(expectedActions);
   });
 });

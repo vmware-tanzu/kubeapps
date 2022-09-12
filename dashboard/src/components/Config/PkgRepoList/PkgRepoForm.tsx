@@ -47,11 +47,11 @@ import {
 } from "shared/utils";
 import "./PkgRepoForm.css";
 
-interface IPkgRepoFormProps {
+export interface IPkgRepoFormProps {
   onSubmit: (data: IPkgRepoFormData) => Promise<boolean>;
   onAfterInstall?: () => void;
   namespace: string;
-  globalReposNamespace: string;
+  helmGlobalNamespace: string;
   carvelGlobalNamespace: string;
   packageRepoRef?: PackageRepositoryReference;
 }
@@ -61,7 +61,7 @@ export function PkgRepoForm(props: IPkgRepoFormProps) {
     onSubmit,
     onAfterInstall,
     namespace,
-    globalReposNamespace,
+    helmGlobalNamespace,
     carvelGlobalNamespace,
     packageRepoRef: selectedPkgRepo,
   } = props;
@@ -79,7 +79,7 @@ export function PkgRepoForm(props: IPkgRepoFormProps) {
   } = useSelector((state: IStoreState) => state);
 
   const currentNsConfig = {
-    globalReposNamespace: globalReposNamespace,
+    helmGlobalNamespace: helmGlobalNamespace,
     carvelGlobalNamespace: carvelGlobalNamespace,
   } as IConfig;
 

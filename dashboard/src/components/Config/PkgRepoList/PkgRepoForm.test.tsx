@@ -18,16 +18,16 @@ import * as ReactRedux from "react-redux";
 import { IPackageRepositoryState } from "reducers/repos";
 import { defaultStore, getStore, mountWrapper } from "shared/specs/mountWrapper";
 import { IPkgRepoFormData, IStoreState, PluginNames, RepositoryStorageTypes } from "shared/types";
-import { PkgRepoForm } from "./PkgRepoForm";
+import { IPkgRepoFormProps, PkgRepoForm } from "./PkgRepoForm";
 
 const defaultProps = {
   onSubmit: jest.fn(),
   namespace: "default",
   cluster: "default",
   kubeappsNamespace: "kubeapps",
-  globalReposNamespace: "kubeapps",
+  helmGlobalNamespace: "kubeapps",
   carvelGlobalNamespace: "carvel-global",
-};
+} as IPkgRepoFormProps;
 
 const defaultState = {
   repos: {
