@@ -10,6 +10,7 @@ CHARTMUSEUM_PWD=${CHARTMUSEUM_PWD:-"password"}
 CHARTMUSEUM_NS=${CHARTMUSEUM_NS:-"chart-museum"}
 CHARTMUSEUM_VERSION=${CHARTMUSEUM_VERSION:-"3.9.0"}
 CHARTMUSEUM_HOSTNAME=${CHARTMUSEUM_HOSTNAME:-"chart-museum"}
+CHARTMUSEUM_IP=${DEX_IP}
 
 # Pull a Bitnami chart to a local TGZ file
 # Arguments:
@@ -59,20 +60,21 @@ pushChartToChartMuseum() {
   local CHART_VERSION=$2
   local CHART_FILE=$3
 
-  echo ">> Pushing chart '${CHART_FILE}' (${CHART_NAME} v${CHART_VERSION}) to chart museum at ${CHARTMUSEUM_HOSTNAME}"
-  CHART_EXISTS=$(curl -Lk -u "${CHARTMUSEUM_USER}:${CHARTMUSEUM_PWD}" -X GET http://${CHARTMUSEUM_HOSTNAME}/api/charts/${CHART_NAME}/${CHART_VERSION} | jq -r 'any([ .error] ; . > 0)')
+  echo ">> Pushing chart '${CHART_FILE}' (${CHART_NAME} v${CHART_VERSION}) to chart museum at ${CHARTMUSEUM_HOSTNAME} and IP ${CHARTMUSEUM_IP}"
+  CHART_EXISTS=$(curl -Lk -u "${CHARTMUSEUM_USER}:${CHARTMUSEUM_PWD}" -H "Host: ${CHARTMUSEUM_HOSTNAME}" -X GET http://${CHARTMUSEUM_IP}/api/charts/${CHART_NAME}/${CHART_VERSION} | jq -r 'any([ .error] ; . > 0)')
   if [ "$CHART_EXISTS" == "true" ]; then
     echo ">> Chart ${CHART_NAME} v${CHART_VERSION} already exists: deleting"
-    curl -Lk -u "${CHARTMUSEUM_USER}:${CHARTMUSEUM_PWD}" -X DELETE http://${CHARTMUSEUM_HOSTNAME}/api/charts/${CHART_NAME}/${CHART_VERSION}
+    curl -Lk -u "${CHARTMUSEUM_USER}:${CHARTMUSEUM_PWD}" -H "Host: ${CHARTMUSEUM_HOSTNAME}" -X DELETE http://${CHARTMUSEUM_IP}/api/charts/${CHART_NAME}/${CHART_VERSION}
   fi
   
   echo ">> Uploading chart from file ${CHART_FILE}"
-  curl -Lk -u "${CHARTMUSEUM_USER}:${CHARTMUSEUM_PWD}" --data-binary "@${CHART_FILE}" http://${CHARTMUSEUM_HOSTNAME}/api/charts  
+  curl -Lk -u "${CHARTMUSEUM_USER}:${CHARTMUSEUM_PWD}" -H "Host: ${CHARTMUSEUM_HOSTNAME}" --data-binary "@${CHART_FILE}" http://${CHARTMUSEUM_IP}/api/charts  
 }
 
 # Install ChartsMuseum
 installChartMuseum() {
   echo "Installing ChartMuseum ${CHARTMUSEUM_VERSION}..."
+  echo "https://github.com/chartmuseum/charts/releases/download/chartmuseum-${CHARTMUSEUM_VERSION}/chartmuseum-${CHARTMUSEUM_VERSION}.tgz"
   helm install chartmuseum --namespace ${CHARTMUSEUM_NS} --create-namespace "https://github.com/chartmuseum/charts/releases/download/chartmuseum-${CHARTMUSEUM_VERSION}/chartmuseum-${CHARTMUSEUM_VERSION}.tgz" \
     --set env.open.DISABLE_API=false \
     --set persistence.enabled=true \
@@ -106,9 +108,6 @@ spec:
         path: /
         pathType: ImplementationSpecific
 EOF
-
-  # Add Ingress IP to hosts file
-  sudo echo "${DEX_IP}  ${CHARTMUSEUM_HOSTNAME}" >> /etc/hosts
 
   echo "Chart museum v${CHARTMUSEUM_VERSION} installed in namespace ${CHARTMUSEUM_NS}"
   echo "Credentials: ${CHARTMUSEUM_USER} / ${CHARTMUSEUM_PWD}"
