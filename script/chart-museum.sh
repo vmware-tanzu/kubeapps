@@ -3,11 +3,13 @@
 # Copyright 2022 the Kubeapps contributors.
 # SPDX-License-Identifier: Apache-2.0
 
+ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." >/dev/null && pwd)"
+CONTROL_PLANE_CONTAINER=${CONTROL_PLANE_CONTAINER:-"kubeapps-ci-control-plane"}
 CHARTMUSEUM_USER=${CHARTMUSEUM_USER:-"admin"}
 CHARTMUSEUM_PWD=${CHARTMUSEUM_PWD:-"password"}
 CHARTMUSEUM_NS=${CHARTMUSEUM_NS:-"chart-museum"}
 CHARTMUSEUM_VERSION=${CHARTMUSEUM_VERSION:-"3.9.0"}
-CHARTMUSEUM_HOSTNAME=${CHARTMUSEUM_HOSTNAME:-"localhost"}
+CHARTMUSEUM_HOSTNAME=${CHARTMUSEUM_HOSTNAME:-"chart-museum"}
 
 # Pull a Bitnami chart to a local TGZ file
 # Arguments:
@@ -57,16 +59,15 @@ pushChartToChartMuseum() {
   local CHART_VERSION=$2
   local CHART_FILE=$3
 
-  echo "Pushing chart ${CHART_NAME} v${CHART_VERSION} to chart museum"
-  CHART_EXISTS=$(curl -k -u "${CHARTMUSEUM_USER}:${CHARTMUSEUM_PWD}" -X GET http://${CHARTMUSEUM_HOSTNAME}/chart-museum/api/charts/${CHART_NAME}/${CHART_VERSION} | jq -r 'any([ .error] ; . > 0)')
-  echo "Chart exists? $CHART_EXISTS"
+  echo ">> Pushing chart '${CHART_FILE}' (${CHART_NAME} v${CHART_VERSION}) to chart museum at ${CHARTMUSEUM_HOSTNAME}"
+  CHART_EXISTS=$(curl -Lk -u "${CHARTMUSEUM_USER}:${CHARTMUSEUM_PWD}" -X GET http://${CHARTMUSEUM_HOSTNAME}/api/charts/${CHART_NAME}/${CHART_VERSION} | jq -r 'any([ .error] ; . > 0)')
   if [ "$CHART_EXISTS" == "true" ]; then
-    echo ">> CHART EXISTS: deleting"
-    curl -k -u "${CHARTMUSEUM_USER}:${CHARTMUSEUM_PWD}" -X DELETE http://${CHARTMUSEUM_HOSTNAME}/chart-museum/api/charts/${CHART_NAME}/${CHART_VERSION}
+    echo ">> Chart ${CHART_NAME} v${CHART_VERSION} already exists: deleting"
+    curl -Lk -u "${CHARTMUSEUM_USER}:${CHARTMUSEUM_PWD}" -X DELETE http://${CHARTMUSEUM_HOSTNAME}/api/charts/${CHART_NAME}/${CHART_VERSION}
   fi
   
   echo ">> Uploading chart from file ${CHART_FILE}"
-  curl -k -u "${CHARTMUSEUM_USER}:${CHARTMUSEUM_PWD}" --data-binary "@${CHART_FILE}" http://${CHARTMUSEUM_HOSTNAME}/chart-museum/api/charts  
+  curl -Lk -u "${CHARTMUSEUM_USER}:${CHARTMUSEUM_PWD}" --data-binary "@${CHART_FILE}" http://${CHARTMUSEUM_HOSTNAME}/api/charts  
 }
 
 # Install ChartsMuseum
@@ -88,7 +89,8 @@ metadata:
   annotations:
     nginx.ingress.kubernetes.io/connection-proxy-header: keep-alive
     nginx.ingress.kubernetes.io/proxy-read-timeout: "600"
-    nginx.ingress.kubernetes.io/rewrite-target: /\$2
+    nginx.ingress.kubernetes.io/proxy-buffer-size: "8k"
+    nginx.ingress.kubernetes.io/proxy-buffers: "4.0"
   name: chartmuseum
 spec:
   ingressClassName: nginx
@@ -101,16 +103,19 @@ spec:
             name: chartmuseum
             port:
               number: 8080
-        path: /chart-museum(/|\$)(.*)
-        pathType: Prefix
+        path: /
+        pathType: ImplementationSpecific
 EOF
+
+  # Add Ingress IP to hosts file
+  sudo echo "${DEX_IP}  ${CHARTMUSEUM_HOSTNAME}" >> /etc/hosts
 
   echo "Chart museum v${CHARTMUSEUM_VERSION} installed in namespace ${CHARTMUSEUM_NS}"
   echo "Credentials: ${CHARTMUSEUM_USER} / ${CHARTMUSEUM_PWD}"
   echo "Cluster internal URL: "
   echo "    http://chartmuseum.${CHARTMUSEUM_NS}.svc.cluster.local:8080/"
   echo "URL through ingress: "
-  echo "    http://${CHARTMUSEUM_HOSTNAME}/chart-museum"
+  echo "    http://${CHARTMUSEUM_HOSTNAME}/"
 }
 
 # Uninstall ChartsMuseum
