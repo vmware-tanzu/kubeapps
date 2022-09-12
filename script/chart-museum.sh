@@ -89,7 +89,7 @@ metadata:
   annotations:
     nginx.ingress.kubernetes.io/connection-proxy-header: keep-alive
     nginx.ingress.kubernetes.io/proxy-read-timeout: "600"
-    nginx.ingress.kubernetes.io/rewrite-target: /$2
+    nginx.ingress.kubernetes.io/rewrite-target: /\$2
   name: chartmuseum
 spec:
   rules:
@@ -101,7 +101,7 @@ spec:
             name: chartmuseum
             port:
               number: 8080
-        path: /chart-museum(/|$)(.*)
+        path: /chart-museum(/|\$)(.*)
         pathType: Prefix
 EOF
 
