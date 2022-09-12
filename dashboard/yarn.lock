@@ -2411,10 +2411,10 @@
   dependencies:
     "@types/node" "*"
 
-"@types/lodash@^4.14.184":
-  version "4.14.184"
-  resolved "https://registry.yarnpkg.com/@types/lodash/-/lodash-4.14.184.tgz#23f96cd2a21a28e106dc24d825d4aa966de7a9fe"
-  integrity sha512-RoZphVtHbxPZizt4IcILciSWiC6dcn+eZ8oX9IWEYfDMcocdd42f7NPI6fQj+6zI8y4E0L7gu2pcZKLGTRaV9Q==
+"@types/lodash@^4.14.185":
+  version "4.14.185"
+  resolved "https://registry.yarnpkg.com/@types/lodash/-/lodash-4.14.185.tgz#c9843f5a40703a8f5edfd53358a58ae729816908"
+  integrity sha512-evMDG1bC4rgQg4ku9tKpuMh5iBNEwNa3tf9zRHdP1qlv+1WUg44xat4IxCE14gIpZRGUUWAx2VhItCZc25NfMA==
 
 "@types/long@^4.0.1":
   version "4.0.2"
@@ -10879,10 +10879,10 @@ protobufjs@^6.11.3, protobufjs@^6.8.8:
     "@types/node" ">=13.7.0"
     long "^4.0.0"
 
-protobufjs@^7.1.0:
-  version "7.1.0"
-  resolved "https://registry.yarnpkg.com/protobufjs/-/protobufjs-7.1.0.tgz#5174b5f96fad4f7dea7dd4abd594042ac360e665"
-  integrity sha512-rCuxKlh0UQKSMjrpIcTLbR5TtGQ52cgs1a5nUoPBAKOccdPblN67BJtjrbtudUJK6HmBvUdsmymyYOzO7lxZEA==
+protobufjs@^7.1.1:
+  version "7.1.1"
+  resolved "https://registry.yarnpkg.com/protobufjs/-/protobufjs-7.1.1.tgz#0117befb4b0f5a49d028e93f2ca62c3c1f5e7c65"
+  integrity sha512-d0nMQqS/aT3lfV8bKi9Gbg73vPd2LcDdTDOu6RE/M+h9DY8g1EmDzk3ADPccthEWfTBjkR2oxNdx9Gs8YubT+g==
   dependencies:
     "@protobufjs/aspromise" "^1.1.2"
     "@protobufjs/base64" "^1.1.2"
