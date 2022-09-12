@@ -23,7 +23,7 @@ import (
 
 // ValidateRepository Checks that successful connection can be made to repository
 func (s *Server) ValidateRepository(appRepo *apprepov1alpha1.AppRepository, secret *corev1.Secret) error {
-	if len(appRepo.Spec.DockerRegistrySecrets) > 0 && appRepo.Namespace == s.globalPackagingNamespace {
+	if len(appRepo.Spec.DockerRegistrySecrets) > 0 && appRepo.Namespace == s.GetGlobalPackagingNamespace() {
 		// TODO(mnelson): we may also want to validate that any docker registry secrets listed
 		// already exist in the namespace.
 		return status.Errorf(codes.FailedPrecondition, "docker registry secrets cannot be set for app repositories available in all namespaces")
