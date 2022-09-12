@@ -57,15 +57,15 @@ pushChartToChartMuseum() {
   local CHART_FILE=$3
 
   echo "Pushing chart ${CHART_NAME} v${CHART_VERSION} to chart museum"
-  CHART_EXISTS=$(curl -L -u "${CHARTMUSEUM_USER}:${CHARTMUSEUM_PWD}" -X GET http://localhost/chart-museum/api/charts/${CHART_NAME}/${CHART_VERSION} | jq -r 'any([ .error] ; . > 0)')
+  CHART_EXISTS=$(curl -k -u "${CHARTMUSEUM_USER}:${CHARTMUSEUM_PWD}" -X GET http://localhost/chart-museum/api/charts/${CHART_NAME}/${CHART_VERSION} | jq -r 'any([ .error] ; . > 0)')
   echo "Chart exists? $CHART_EXISTS"
   if [ "$CHART_EXISTS" == "true" ]; then
     echo ">> CHART EXISTS: deleting"
-    curl -L -u "${CHARTMUSEUM_USER}:${CHARTMUSEUM_PWD}" -X DELETE http://localhost/chart-museum/api/charts/${CHART_NAME}/${CHART_VERSION}
+    curl -k -u "${CHARTMUSEUM_USER}:${CHARTMUSEUM_PWD}" -X DELETE http://localhost/chart-museum/api/charts/${CHART_NAME}/${CHART_VERSION}
   fi
   
   echo ">> Uploading chart from file ${CHART_FILE}"
-  curl -L -u "${CHARTMUSEUM_USER}:${CHARTMUSEUM_PWD}" --data-binary "@${CHART_FILE}" http://localhost/chart-museum/api/charts  
+  curl -k -u "${CHARTMUSEUM_USER}:${CHARTMUSEUM_PWD}" --data-binary "@${CHART_FILE}" http://localhost/chart-museum/api/charts  
   
   rm ${CHART_FILE}
 }
