@@ -1,4 +1,4 @@
-{{- if .Values.apprepository.globalReposNamespaceSuffix }}
+{{- if or .Values.apprepository.globalReposNamespaceSuffix .Values.kubeappsapis.pluginConfig.helm.packages.v1alpha1.globalPackagingNamespace }}
 apiVersion: v1
 kind: Namespace
 metadata:
