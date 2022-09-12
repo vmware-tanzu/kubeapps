@@ -6,7 +6,7 @@ package cmd
 import (
 	"flag"
 
-	"github.com/mitchellh/go-homedir"
+	
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/core"
@@ -82,13 +82,7 @@ func initConfig() {
 		// Use config file from the flag.
 		viper.SetConfigFile(cfgFile)
 	} else {
-		// Find home directory.
-		home, err := homedir.Dir()
-		cobra.CheckErr(err)
 
-		// Search config in home directory with name ".kubeapps-apis" (without extension).
-		viper.AddConfigPath(home)
-		viper.SetConfigName(".kubeapps-apis")
 	}
 
 	viper.AutomaticEnv() // read in environment variables that match

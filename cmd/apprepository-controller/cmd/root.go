@@ -7,7 +7,7 @@ import (
 	"flag"
 	"strings"
 
-	"github.com/mitchellh/go-homedir"
+	
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
@@ -101,14 +101,7 @@ func initConfig() {
 		// Use config file from the flag.
 		viper.SetConfigFile(cfgFile)
 	} else {
-		// Find home directory.
-		home, err := homedir.Dir()
-		cobra.CheckErr(err)
-
-		// Search config in home directory with name ".kubeops" (without extension).
-		viper.AddConfigPath(home)
-		viper.SetConfigType("yaml")
-		viper.SetConfigName(".kubeops")
+		
 	}
 
 	viper.AutomaticEnv() // read in environment variables that match
