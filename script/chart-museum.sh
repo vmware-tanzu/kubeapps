@@ -7,6 +7,7 @@ CHARTMUSEUM_USER=${CHARTMUSEUM_USER:-"admin"}
 CHARTMUSEUM_PWD=${CHARTMUSEUM_PWD:-"password"}
 CHARTMUSEUM_NS=${CHARTMUSEUM_NS:-"chart-museum"}
 CHARTMUSEUM_VERSION=${CHARTMUSEUM_VERSION:-"3.9.0"}
+CHARTMUSEUM_HOSTNAME=${CHARTMUSEUM_HOSTNAME:-"localhost"}
 
 # Pull a Bitnami chart to a local TGZ file
 # Arguments:
@@ -57,17 +58,15 @@ pushChartToChartMuseum() {
   local CHART_FILE=$3
 
   echo "Pushing chart ${CHART_NAME} v${CHART_VERSION} to chart museum"
-  CHART_EXISTS=$(curl -k -u "${CHARTMUSEUM_USER}:${CHARTMUSEUM_PWD}" -X GET http://localhost/chart-museum/api/charts/${CHART_NAME}/${CHART_VERSION} | jq -r 'any([ .error] ; . > 0)')
+  CHART_EXISTS=$(curl -k -u "${CHARTMUSEUM_USER}:${CHARTMUSEUM_PWD}" -X GET http://${CHARTMUSEUM_HOSTNAME}/chart-museum/api/charts/${CHART_NAME}/${CHART_VERSION} | jq -r 'any([ .error] ; . > 0)')
   echo "Chart exists? $CHART_EXISTS"
   if [ "$CHART_EXISTS" == "true" ]; then
     echo ">> CHART EXISTS: deleting"
-    curl -k -u "${CHARTMUSEUM_USER}:${CHARTMUSEUM_PWD}" -X DELETE http://localhost/chart-museum/api/charts/${CHART_NAME}/${CHART_VERSION}
+    curl -k -u "${CHARTMUSEUM_USER}:${CHARTMUSEUM_PWD}" -X DELETE http://${CHARTMUSEUM_HOSTNAME}/chart-museum/api/charts/${CHART_NAME}/${CHART_VERSION}
   fi
   
   echo ">> Uploading chart from file ${CHART_FILE}"
-  curl -k -u "${CHARTMUSEUM_USER}:${CHARTMUSEUM_PWD}" --data-binary "@${CHART_FILE}" http://localhost/chart-museum/api/charts  
-  
-  rm ${CHART_FILE}
+  curl -k -u "${CHARTMUSEUM_USER}:${CHARTMUSEUM_PWD}" --data-binary "@${CHART_FILE}" http://${CHARTMUSEUM_HOSTNAME}/chart-museum/api/charts  
 }
 
 # Install ChartsMuseum
@@ -81,7 +80,7 @@ installChartMuseum() {
   info "Waiting for ChartMuseum to be ready..."
   kubectl rollout status -w deployment/chartmuseum --namespace=${CHARTMUSEUM_NS}
   
-  echo "Installing Ingress for ChartMuseum"
+  echo "Installing Ingress for ChartMuseum with access through host ${CHARTMUSEUM_HOSTNAME}"
   kubectl create -n $CHARTMUSEUM_NS -f - -o yaml << EOF
 apiVersion: networking.k8s.io/v1
 kind: Ingress
@@ -92,8 +91,9 @@ metadata:
     nginx.ingress.kubernetes.io/rewrite-target: /\$2
   name: chartmuseum
 spec:
+  ingressClassName: nginx
   rules:
-  - host: localhost
+  - host: ${CHARTMUSEUM_HOSTNAME}
     http:
       paths:
       - backend:
@@ -110,13 +110,14 @@ EOF
   echo "Cluster internal URL: "
   echo "    http://chartmuseum.${CHARTMUSEUM_NS}.svc.cluster.local:8080/"
   echo "URL through ingress: "
-  echo "    http://localhost/chart-museum"
+  echo "    http://${CHARTMUSEUM_HOSTNAME}/chart-museum"
 }
 
 # Uninstall ChartsMuseum
 uninstallChartMuseum() {
   echo "Uninstalling ChartMuseum..."
   helm uninstall chartmuseum --namespace ${CHARTMUSEUM_NS}
+  kubectl delete ingress chartmuseum --namespace ${CHARTMUSEUM_NS}
 }
 
 case $1 in
