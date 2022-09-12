@@ -3,7 +3,6 @@
 # Copyright 2022 the Kubeapps contributors.
 # SPDX-License-Identifier: Apache-2.0
 
-CHARTMUSEUM_PORT=${CHARTMUSEUM_PORT:-8090}
 CHARTMUSEUM_USER=${CHARTMUSEUM_USER:-"admin"}
 CHARTMUSEUM_PWD=${CHARTMUSEUM_PWD:-"password"}
 CHARTMUSEUM_NS=${CHARTMUSEUM_NS:-"chart-museum"}
@@ -58,23 +57,16 @@ pushChartToChartMuseum() {
   local CHART_FILE=$3
 
   echo "Pushing chart ${CHART_NAME} v${CHART_VERSION} to chart museum"
-
-  local CHARTMUSEUM_POD_NAME=$(kubectl get pods --namespace ${CHARTMUSEUM_NS} -l "app.kubernetes.io/name=chartmuseum" -o jsonpath="{.items[0].metadata.name}")
-  /bin/sh -c "kubectl port-forward $CHARTMUSEUM_POD_NAME ${CHARTMUSEUM_PORT}:8080 --namespace ${CHARTMUSEUM_NS} &"
-  sleep 2
-
-  CHART_EXISTS=$(curl -u "${CHARTMUSEUM_USER}:${CHARTMUSEUM_PWD}" -X GET http://localhost:${CHARTMUSEUM_PORT}/api/charts/${CHART_NAME}/${CHART_VERSION} | jq -r 'any([ .error] ; . > 0)')
+  CHART_EXISTS=$(curl -L -u "${CHARTMUSEUM_USER}:${CHARTMUSEUM_PWD}" -X GET http://localhost/chart-museum/api/charts/${CHART_NAME}/${CHART_VERSION} | jq -r 'any([ .error] ; . > 0)')
+  echo "Chart exists? $CHART_EXISTS"
   if [ "$CHART_EXISTS" == "true" ]; then
     echo ">> CHART EXISTS: deleting"
-    curl -u "${CHARTMUSEUM_USER}:${CHARTMUSEUM_PWD}" -X DELETE http://localhost:${CHARTMUSEUM_PORT}/api/charts/${CHART_NAME}/${CHART_VERSION}
+    curl -L -u "${CHARTMUSEUM_USER}:${CHARTMUSEUM_PWD}" -X DELETE http://localhost/chart-museum/api/charts/${CHART_NAME}/${CHART_VERSION}
   fi
   
   echo ">> Uploading chart from file ${CHART_FILE}"
-  curl -u "${CHARTMUSEUM_USER}:${CHARTMUSEUM_PWD}" --data-binary "@${CHART_FILE}" http://localhost:${CHARTMUSEUM_PORT}/api/charts  
+  curl -L -u "${CHARTMUSEUM_USER}:${CHARTMUSEUM_PWD}" --data-binary "@${CHART_FILE}" http://localhost/chart-museum/api/charts  
   
-  # End port forward
-  pkill -f "kubectl port-forward $CHARTMUSEUM_POD_NAME ${CHARTMUSEUM_PORT}:8080 --namespace ${CHARTMUSEUM_NS}"
-
   rm ${CHART_FILE}
 }
 
@@ -88,11 +80,37 @@ installChartMuseum() {
     --set env.secret.BASIC_AUTH_PASS=$CHARTMUSEUM_PWD
   info "Waiting for ChartMuseum to be ready..."
   kubectl rollout status -w deployment/chartmuseum --namespace=${CHARTMUSEUM_NS}
+  
+  echo "Installing Ingress for ChartMuseum"
+  kubectl create -n $CHARTMUSEUM_NS -f - -o yaml << EOF
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  annotations:
+    nginx.ingress.kubernetes.io/connection-proxy-header: keep-alive
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "600"
+    nginx.ingress.kubernetes.io/rewrite-target: /$2
+  name: chartmuseum
+spec:
+  rules:
+  - host: localhost
+    http:
+      paths:
+      - backend:
+          service:
+            name: chartmuseum
+            port:
+              number: 8080
+        path: /chart-museum(/|$)(.*)
+        pathType: Prefix
+EOF
 
   echo "Chart museum v${CHARTMUSEUM_VERSION} installed in namespace ${CHARTMUSEUM_NS}"
   echo "Credentials: ${CHARTMUSEUM_USER} / ${CHARTMUSEUM_PWD}"
   echo "Cluster internal URL: "
   echo "    http://chartmuseum.${CHARTMUSEUM_NS}.svc.cluster.local:8080/"
+  echo "URL through ingress: "
+  echo "    http://localhost/chart-museum"
 }
 
 # Uninstall ChartsMuseum
