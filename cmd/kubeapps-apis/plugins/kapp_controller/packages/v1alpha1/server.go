@@ -31,10 +31,10 @@ import (
 type kappClientsGetter func(ctx context.Context, cluster, namespace string) (ctlapp.Apps, ctlres.IdentifiedResources, *kappcmdapp.FailingAPIServicesPolicy, ctlres.ResourceFilter, error)
 
 const (
-	globalPackagingNamespace                              = "kapp-controller-packaging-global"
-	fallbackDefaultUpgradePolicy   pkgutils.UpgradePolicy = pkgutils.UpgradePolicyNone
-	fallbackDefaultAllowDowngrades                        = false
-	fallbackTimeoutSeconds                                = 300
+	fallbackGlobalPackagingNamespace                        = "kapp-controller-packaging-global"
+	fallbackDefaultUpgradePolicy     pkgutils.UpgradePolicy = pkgutils.UpgradePolicyNone
+	fallbackDefaultAllowDowngrades                          = false
+	fallbackTimeoutSeconds                                  = 300
 )
 
 func fallbackDefaultPrereleasesVersionSelection() []string {
@@ -51,9 +51,8 @@ type Server struct {
 	// clientGetter is a field so that it can be switched in tests for
 	// a fake client. NewServer() below sets this automatically with the
 	// non-test implementation.
-	clientGetter             clientgetter.ClientGetterFunc
-	globalPackagingNamespace string
-	globalPackagingCluster   string
+	clientGetter           clientgetter.ClientGetterFunc
+	globalPackagingCluster string
 	// TODO (gfichtenholt) it should now be possible to add this into clientgetter pkg,
 	// and thus just have a single clientGetter field. Only *if* it makes sense to do so
 	// (i.e. code is re-usable by multiple components)
@@ -88,6 +87,7 @@ func parsePluginConfig(pluginConfigPath string) (*kappControllerPluginParsedConf
 	config.defaultUpgradePolicy = defaultUpgradePolicy
 	config.defaultPrereleasesVersionSelection = pluginConfig.KappController.Packages.V1alpha1.DefaultPrereleasesVersionSelection
 	config.defaultAllowDowngrades = pluginConfig.KappController.Packages.V1alpha1.DefaultAllowDowngrades
+	config.globalPackagingNamespace = pluginConfig.KappController.Packages.V1alpha1.GlobalPackagingNamespace
 
 	return config, nil
 }
@@ -107,10 +107,9 @@ func NewServer(configGetter core.KubernetesConfigGetter, globalPackagingCluster,
 		log.Info("+kapp-controller using default config since pluginConfigPath is empty")
 	}
 	return &Server{
-		clientGetter:             clientgetter.NewClientGetter(configGetter, clientgetter.Options{}),
-		globalPackagingNamespace: globalPackagingNamespace,
-		globalPackagingCluster:   globalPackagingCluster,
-		pluginConfig:             pluginConfig,
+		clientGetter:           clientgetter.NewClientGetter(configGetter, clientgetter.Options{}),
+		globalPackagingCluster: globalPackagingCluster,
+		pluginConfig:           pluginConfig,
 		kappClientsGetter: func(ctx context.Context, cluster, namespace string) (ctlapp.Apps, ctlres.IdentifiedResources, *kappcmdapp.FailingAPIServicesPolicy, ctlres.ResourceFilter, error) {
 			if configGetter == nil {
 				return ctlapp.Apps{}, ctlres.IdentifiedResources{}, nil, ctlres.ResourceFilter{}, status.Errorf(codes.Internal, "configGetter arg required")

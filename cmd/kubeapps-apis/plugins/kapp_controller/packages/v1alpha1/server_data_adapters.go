@@ -436,7 +436,7 @@ func (s *Server) buildPackageRepositorySummary(pkgRepository *packagingv1alpha1.
 			Identifier: pkgRepository.Name,
 		},
 		Name:            pkgRepository.Name,
-		NamespaceScoped: s.globalPackagingNamespace != pkgRepository.Namespace,
+		NamespaceScoped: s.pluginConfig.globalPackagingNamespace != pkgRepository.Namespace,
 		RequiresAuth:    repositorySecretRef(pkgRepository) != nil,
 	}
 
@@ -487,7 +487,7 @@ func (s *Server) buildPackageRepository(pkgRepository *packagingv1alpha1.Package
 			Identifier: pkgRepository.Name,
 		},
 		Name:            pkgRepository.Name,
-		NamespaceScoped: s.globalPackagingNamespace != pkgRepository.Namespace,
+		NamespaceScoped: s.pluginConfig.globalPackagingNamespace != pkgRepository.Namespace,
 	}
 
 	// synchronization
@@ -623,7 +623,7 @@ func (s *Server) buildPkgRepositoryCreate(request *corev1.AddPackageRepositoryRe
 	// identifier
 	namespace := request.GetContext().GetNamespace()
 	if namespace == "" {
-		namespace = s.globalPackagingNamespace
+		namespace = s.pluginConfig.globalPackagingNamespace
 	}
 	name := request.Name
 
@@ -755,7 +755,7 @@ func (s *Server) buildPkgRepositorySpec(rptype string, interval string, url stri
 func (s *Server) validatePackageRepositoryCreate(ctx context.Context, cluster string, request *corev1.AddPackageRepositoryRequest) error {
 	namespace := request.GetContext().GetNamespace()
 	if namespace == "" {
-		namespace = s.globalPackagingNamespace
+		namespace = s.pluginConfig.globalPackagingNamespace
 	}
 
 	if request.Description != "" {
@@ -768,7 +768,7 @@ func (s *Server) validatePackageRepositoryCreate(ctx context.Context, cluster st
 	if request.Name == "" {
 		return status.Errorf(codes.InvalidArgument, "no request Name provided")
 	}
-	if request.NamespaceScoped != (namespace != s.globalPackagingNamespace) {
+	if request.NamespaceScoped != (namespace != s.pluginConfig.globalPackagingNamespace) {
 		return status.Errorf(codes.InvalidArgument, "Namespace Scope is inconsistent with the provided Namespace")
 	}
 
