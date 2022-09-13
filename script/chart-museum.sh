@@ -74,7 +74,6 @@ pushChartToChartMuseum() {
 # Install ChartsMuseum
 installChartMuseum() {
   echo "Installing ChartMuseum ${CHARTMUSEUM_VERSION}..."
-  echo "https://github.com/chartmuseum/charts/releases/download/chartmuseum-${CHARTMUSEUM_VERSION}/chartmuseum-${CHARTMUSEUM_VERSION}.tgz"
   helm install chartmuseum --namespace ${CHARTMUSEUM_NS} --create-namespace "https://github.com/chartmuseum/charts/releases/download/chartmuseum-${CHARTMUSEUM_VERSION}/chartmuseum-${CHARTMUSEUM_VERSION}.tgz" \
     --set env.open.DISABLE_API=false \
     --set persistence.enabled=true \
