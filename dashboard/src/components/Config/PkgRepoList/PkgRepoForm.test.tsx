@@ -23,10 +23,10 @@ import { IPkgRepoFormProps, PkgRepoForm } from "./PkgRepoForm";
 const defaultProps = {
   onSubmit: jest.fn(),
   namespace: "default",
-  cluster: "default",
   kubeappsNamespace: "kubeapps",
   helmGlobalNamespace: "kubeapps",
   carvelGlobalNamespace: "carvel-global",
+  packageRepoRef: { identifier: "test", cluster: "default", namespace: "default" },
 } as IPkgRepoFormProps;
 
 const defaultState = {
