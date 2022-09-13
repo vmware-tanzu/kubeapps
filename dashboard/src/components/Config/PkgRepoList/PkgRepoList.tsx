@@ -32,7 +32,7 @@ function PkgRepoList() {
   const {
     repos: { errors, isFetching, reposSummaries: repos },
     clusters: { clusters, currentCluster },
-    config: { kubeappsCluster, kubeappsNamespace, globalReposNamespace, carvelGlobalNamespace },
+    config: { kubeappsCluster, kubeappsNamespace, helmGlobalNamespace, carvelGlobalNamespace },
   } = useSelector((state: IStoreState) => state);
   const cluster = currentCluster;
   const { currentNamespace } = clusters[cluster];
@@ -52,7 +52,7 @@ function PkgRepoList() {
     if (
       !namespace ||
       !supportedCluster ||
-      [globalReposNamespace, carvelGlobalNamespace].includes(namespace)
+      [helmGlobalNamespace, carvelGlobalNamespace].includes(namespace)
     ) {
       // All Namespaces. Global namespace or other cluster, show global repos only
       dispatch(actions.repos.fetchRepoSummaries(""));
@@ -61,7 +61,7 @@ function PkgRepoList() {
     // In other case, fetch global and namespace repos
     dispatch(actions.repos.fetchRepoSummaries(namespace, true));
     return () => {};
-  }, [dispatch, supportedCluster, namespace, globalReposNamespace, carvelGlobalNamespace]);
+  }, [dispatch, supportedCluster, namespace, helmGlobalNamespace, carvelGlobalNamespace]);
 
   useEffect(() => {
     refetchRepos();
@@ -90,10 +90,10 @@ function PkgRepoList() {
     Kube.canI(cluster, "kubeapps.com", "apprepositories", "list", "")
       .then(allowed => setCanSetAllNS(allowed))
       ?.catch(() => setCanSetAllNS(false));
-    Kube.canI(kubeappsCluster, "kubeapps.com", "apprepositories", "update", globalReposNamespace)
+    Kube.canI(kubeappsCluster, "kubeapps.com", "apprepositories", "update", helmGlobalNamespace)
       .then(allowed => setCanEditGlobalRepos(allowed))
       ?.catch(() => setCanEditGlobalRepos(false));
-  }, [cluster, kubeappsCluster, kubeappsNamespace, globalReposNamespace]);
+  }, [cluster, kubeappsCluster, kubeappsNamespace, helmGlobalNamespace]);
 
   const globalRepos: PackageRepositorySummary[] = [];
   const namespacedRepos: PackageRepositorySummary[] = [];
@@ -152,7 +152,7 @@ function PkgRepoList() {
           <PkgRepoControl
             repo={repo}
             refetchRepos={refetchRepos}
-            globalReposNamespace={globalReposNamespace}
+            helmGlobalNamespace={helmGlobalNamespace}
             carvelGlobalNamespace={carvelGlobalNamespace}
           />
         ),
@@ -170,7 +170,7 @@ function PkgRepoList() {
             title="Add a Package Repository"
             key="add-repo-button"
             namespace={currentNamespace}
-            globalReposNamespace={globalReposNamespace}
+            helmGlobalNamespace={helmGlobalNamespace}
             carvelGlobalNamespace={carvelGlobalNamespace}
           />,
         ]}
@@ -236,7 +236,7 @@ function PkgRepoList() {
                       Repository" button to create one.
                     </p>
                   )}
-                  {![globalReposNamespace, carvelGlobalNamespace].includes(namespace) && (
+                  {![helmGlobalNamespace, carvelGlobalNamespace].includes(namespace) && (
                     <>
                       <h3>Namespaced Repositories: {namespace}</h3>
                       <p>

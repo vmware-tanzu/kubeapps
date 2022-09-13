@@ -16,7 +16,7 @@ func InvalidateCache(serveOpts Config, args []string) error {
 	}
 
 	dbConfig := dbutils.Config{URL: serveOpts.DatabaseURL, Database: serveOpts.DatabaseName, Username: serveOpts.DatabaseUser, Password: serveOpts.DatabasePassword}
-	manager, err := newManager(dbConfig, serveOpts.GlobalReposNamespace)
+	manager, err := newManager(dbConfig, serveOpts.GlobalPackagingNamespace)
 	if err != nil {
 		return fmt.Errorf("Error: %v", err)
 	}

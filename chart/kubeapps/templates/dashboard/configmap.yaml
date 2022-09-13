@@ -69,7 +69,7 @@ data:
     {
       "kubeappsCluster": {{ include "kubeapps.kubeappsCluster" . | quote }},
       "kubeappsNamespace": {{ .Release.Namespace | quote }},
-      "globalReposNamespace": {{ include "kubeapps.globalReposNamespace" . | quote }},
+      "helmGlobalNamespace": {{ include "kubeapps.helmGlobalPackagingNamespace" . | quote }},
       "carvelGlobalNamespace": {{ .Values.kubeappsapis.pluginConfig.kappController.packages.v1alpha1.globalPackagingNamespace | quote }},
       "appVersion": {{ printf "v%s" .Chart.AppVersion | quote }},
       "authProxyEnabled": {{ .Values.authProxy.enabled }},

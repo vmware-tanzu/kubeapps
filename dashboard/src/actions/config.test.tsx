@@ -14,7 +14,7 @@ const testConfig = {
   loaded: false,
   kubeappsCluster: "",
   kubeappsNamespace: "",
-  globalReposNamespace: "",
+  helmGlobalNamespace: "",
   carvelGlobalNamespace: "",
   appVersion: "",
   authProxyEnabled: false,

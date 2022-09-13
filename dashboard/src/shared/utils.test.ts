@@ -318,7 +318,7 @@ it("getSupportedPackageRepositoryAuthTypes", () => {
 
 it("isGlobalNamespace", () => {
   const kubeappsConfig = {
-    globalReposNamespace: "helm-global",
+    helmGlobalNamespace: "helm-global",
     carvelGlobalNamespace: "carvel-global",
   } as IConfig;
   expect(isGlobalNamespace("helm-global", PluginNames.PACKAGES_HELM, kubeappsConfig)).toBe(true);

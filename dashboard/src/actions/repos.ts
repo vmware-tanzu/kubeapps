@@ -69,7 +69,7 @@ export const fetchRepoSummaries = (
   return async (dispatch, getState) => {
     const {
       clusters: { currentCluster },
-      config: { globalReposNamespace, carvelGlobalNamespace },
+      config: { helmGlobalNamespace, carvelGlobalNamespace },
     } = getState();
     try {
       dispatch(requestRepoSummaries(namespace));
@@ -77,7 +77,7 @@ export const fetchRepoSummaries = (
         cluster: currentCluster,
         namespace: namespace,
       });
-      if (!listGlobal || [globalReposNamespace, carvelGlobalNamespace].includes(namespace)) {
+      if (!listGlobal || [helmGlobalNamespace, carvelGlobalNamespace].includes(namespace)) {
         dispatch(receiveRepoSummaries(repos.packageRepositorySummaries));
       } else {
         // Global repos need to be added

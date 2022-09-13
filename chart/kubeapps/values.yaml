@@ -870,7 +870,7 @@ apprepository:
     ##   - myRegistryKeySecretName
     ##
     pullSecrets: []
-  ## @param apprepository.globalReposNamespaceSuffix Suffix for the namespace of global repos. Defaults to empty for backwards compatibility.
+  ## @param apprepository.globalReposNamespaceSuffix Suffix for the namespace of global repos in the Helm plugin. Defaults to empty for backwards compatibility. Ignored if kubeappsapis.pluginConfig.helm.packages.v1alpha1.globalPackagingNamespace is set.
   ##
   globalReposNamespaceSuffix: ""
   ## @param apprepository.initialRepos [array] Initial chart repositories to configure
@@ -1492,6 +1492,13 @@ kubeappsapis:
             patch: 3
           ## @param kubeappsapis.pluginConfig.core.packages.v1alpha1.timeoutSeconds Value to wait for Kubernetes commands to complete
           timeoutSeconds: 300
+    helm:
+      packages:
+        v1alpha1:
+          ## @param kubeappsapis.pluginConfig.helm.packages.v1alpha1.globalPackagingNamespace Custom global packaging namespace. Using this value will override the current "kubeapps release namespace + suffix" pattern and will create a new namespace if not exists.
+          globalPackagingNamespace: ""
+          ## @param kubeappsapis.pluginConfig.helm.packages.v1alpha1.userManagedSecrets Default policy for handling repository secrets, either managed by the user or by kubeapps-apis
+          userManagedSecrets: false
     kappController:
       packages:
         v1alpha1:

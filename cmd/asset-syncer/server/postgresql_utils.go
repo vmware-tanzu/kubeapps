@@ -22,8 +22,8 @@ type postgresAssetManager struct {
 	*dbutils.PostgresAssetManager
 }
 
-func newPGManager(config dbutils.Config, globalReposNamespace string) (assetManager, error) {
-	m, err := dbutils.NewPGManager(config, globalReposNamespace)
+func newPGManager(config dbutils.Config, globalPackagingNamespace string) (assetManager, error) {
+	m, err := dbutils.NewPGManager(config, globalPackagingNamespace)
 	if err != nil {
 		return nil, err
 	}

@@ -16,16 +16,16 @@ import ConfirmDialog from "../../ConfirmDialog/ConfirmDialog";
 import { PkgRepoAddButton } from "./PkgRepoButton";
 import "./PkgRepoControl.css";
 
-interface IPkgRepoListItemProps {
+export interface IPkgRepoListItemProps {
   repo: PackageRepositorySummary;
-  globalReposNamespace: string;
+  helmGlobalNamespace: string;
   carvelGlobalNamespace: string;
   refetchRepos: () => void;
 }
 
 export function PkgRepoControl({
   repo,
-  globalReposNamespace,
+  helmGlobalNamespace,
   carvelGlobalNamespace,
   refetchRepos,
 }: IPkgRepoListItemProps) {
@@ -56,7 +56,7 @@ export function PkgRepoControl({
       <PkgRepoAddButton
         title={`Edit the '${repo.name}' Package Repository`}
         namespace={repo.packageRepoRef?.context?.namespace || ""}
-        globalReposNamespace={globalReposNamespace}
+        helmGlobalNamespace={helmGlobalNamespace}
         carvelGlobalNamespace={carvelGlobalNamespace}
         text="Edit"
         packageRepoRef={repo.packageRepoRef}
