@@ -33,7 +33,7 @@ pullBitnamiChart() {
 
   CHART_FILE="${CHART_NAME}-${CHART_VERSION}.tgz"
   CHART_URL="https://charts.bitnami.com/bitnami/${CHART_FILE}"
-  echo ">> Adding ${CHART_NAME}-${CHART_VERSION} to ChartMuseum from URL $CHART_URL"
+  echo ">> Storing locally ${CHART_NAME}-${CHART_VERSION} chart from URL $CHART_URL"
   curl -LO "${CHART_URL}"
 }
 
@@ -61,7 +61,8 @@ pushChartToChartMuseum() {
   local CHART_FILE=$3
 
   echo ">> Pushing chart '${CHART_FILE}' (${CHART_NAME} v${CHART_VERSION}) to chart museum at ${CHARTMUSEUM_HOSTNAME} and IP ${CHARTMUSEUM_IP}"
-  CHART_EXISTS=$(curl -Lk -u "${CHARTMUSEUM_USER}:${CHARTMUSEUM_PWD}" -H "Host: ${CHARTMUSEUM_HOSTNAME}" -X GET http://${CHARTMUSEUM_IP}/api/charts/${CHART_NAME}/${CHART_VERSION} | jq -r 'any([ .error] ; . > 0)')
+  echo "$(curl -Lk -u "${CHARTMUSEUM_USER}:${CHARTMUSEUM_PWD}" -H "Host: ${CHARTMUSEUM_HOSTNAME}" http://${CHARTMUSEUM_IP}/api/charts/${CHART_NAME}/${CHART_VERSION} | jq)"
+  CHART_EXISTS=$(curl -Lk -u "${CHARTMUSEUM_USER}:${CHARTMUSEUM_PWD}" -H "Host: ${CHARTMUSEUM_HOSTNAME}" http://${CHARTMUSEUM_IP}/api/charts/${CHART_NAME}/${CHART_VERSION} | jq -r 'any([ .error] ; . > 0)')
   if [ "$CHART_EXISTS" == "true" ]; then
     echo ">> Chart ${CHART_NAME} v${CHART_VERSION} already exists: deleting"
     curl -Lk -u "${CHARTMUSEUM_USER}:${CHARTMUSEUM_PWD}" -H "Host: ${CHARTMUSEUM_HOSTNAME}" -X DELETE http://${CHARTMUSEUM_IP}/api/charts/${CHART_NAME}/${CHART_VERSION}
@@ -108,6 +109,7 @@ spec:
         path: /
         pathType: ImplementationSpecific
 EOF
+  sleep 20
 
   echo "Chart museum v${CHARTMUSEUM_VERSION} installed in namespace ${CHARTMUSEUM_NS}"
   echo "Credentials: ${CHARTMUSEUM_USER} / ${CHARTMUSEUM_PWD}"

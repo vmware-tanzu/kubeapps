@@ -137,15 +137,11 @@ installOLM() {
 # Arguments:
 #   $1: chart
 #   $2: version
-#   $3: chartmuseum username
-#   $4: chartmuseum password
 # Returns: None
 #########################
 pushChart() {
   local chart=$1
   local version=$2
-  local user=$3
-  local password=$4
   prefix="kubeapps-"
   description="foo ${chart} chart for CI"
 
@@ -164,6 +160,7 @@ pushChart() {
   sed -i "0,/^\([[:space:]]*description: *\).*/s//\1${description}/" ./${chart}-${version}/${chart}/Chart.yaml
   helm package ./${chart}-${version}/${chart} -d .
 
+  sleep 10
   pushChartToChartMuseum "${chart}" "${version}" "${prefix}${chart}-${version}.tgz"
 }
 
@@ -320,8 +317,8 @@ fi
 
 # Install ChartMuseum
 installChartMuseum "${CHARTMUSEUM_VERSION}"
-pushChart apache 8.6.2 admin password
-pushChart apache 8.6.3 admin password
+pushChart apache 8.6.2
+pushChart apache 8.6.3
 
 # Install Kubeapps
 installOrUpgradeKubeapps "${ROOT_DIR}/chart/kubeapps"
