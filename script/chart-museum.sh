@@ -3,8 +3,6 @@
 # Copyright 2022 the Kubeapps contributors.
 # SPDX-License-Identifier: Apache-2.0
 
-ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." >/dev/null && pwd)"
-CONTROL_PLANE_CONTAINER=${CONTROL_PLANE_CONTAINER:-"kubeapps-ci-control-plane"}
 CHARTMUSEUM_USER=${CHARTMUSEUM_USER:-"admin"}
 CHARTMUSEUM_PWD=${CHARTMUSEUM_PWD:-"password"}
 CHARTMUSEUM_NS=${CHARTMUSEUM_NS:-"chart-museum"}
