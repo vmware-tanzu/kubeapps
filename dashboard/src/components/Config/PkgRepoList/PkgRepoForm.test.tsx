@@ -26,7 +26,7 @@ const defaultProps = {
   kubeappsNamespace: "kubeapps",
   helmGlobalNamespace: "kubeapps",
   carvelGlobalNamespace: "carvel-global",
-  packageRepoRef: { identifier: "test", cluster: "default", namespace: "default" },
+  packageRepoRef: { identifier: "test", context: { cluster: "default", namespace: "default" } },
 } as IPkgRepoFormProps;
 
 const defaultState = {
@@ -552,7 +552,7 @@ it("should not show the list of OCI repositories if using a Helm repo (default)"
 describe("when the repository info is already populated", () => {
   const packageRepoRef = {
     identifier: "helm-repo",
-    context: { cluster: defaultProps.cluster, namespace: defaultProps.namespace },
+    context: defaultProps.packageRepoRef?.context,
     plugin: { name: PluginNames.PACKAGES_HELM, version: "v1alpha1" },
   } as PackageRepositoryReference;
   const repo = {
