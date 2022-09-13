@@ -61,7 +61,6 @@ pushChartToChartMuseum() {
   local CHART_FILE=$3
 
   echo ">> Pushing chart '${CHART_FILE}' (${CHART_NAME} v${CHART_VERSION}) to chart museum at ${CHARTMUSEUM_HOSTNAME} and IP ${CHARTMUSEUM_IP}"
-  echo "$(curl -Lk -u "${CHARTMUSEUM_USER}:${CHARTMUSEUM_PWD}" -H "Host: ${CHARTMUSEUM_HOSTNAME}" http://${CHARTMUSEUM_IP}/api/charts/${CHART_NAME}/${CHART_VERSION} | jq)"
   CHART_EXISTS=$(curl -Lk -u "${CHARTMUSEUM_USER}:${CHARTMUSEUM_PWD}" -H "Host: ${CHARTMUSEUM_HOSTNAME}" http://${CHARTMUSEUM_IP}/api/charts/${CHART_NAME}/${CHART_VERSION} | jq -r 'any([ .error] ; . > 0)')
   if [ "$CHART_EXISTS" == "true" ]; then
     echo ">> Chart ${CHART_NAME} v${CHART_VERSION} already exists: deleting"

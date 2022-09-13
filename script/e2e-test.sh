@@ -160,7 +160,6 @@ pushChart() {
   sed -i "0,/^\([[:space:]]*description: *\).*/s//\1${description}/" ./${chart}-${version}/${chart}/Chart.yaml
   helm package ./${chart}-${version}/${chart} -d .
 
-  sleep 10
   pushChartToChartMuseum "${chart}" "${version}" "${prefix}${chart}-${version}.tgz"
 }
 
