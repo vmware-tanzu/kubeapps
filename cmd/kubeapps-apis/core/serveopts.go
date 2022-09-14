@@ -19,7 +19,7 @@ type ServeOptions struct {
 	PluginConfigPath         string
 	PinnipedProxyURL         string
 	PinnipedProxyCACert      string
-	GlobalReposNamespace     string
+	GlobalHelmReposNamespace string
 	UnsafeLocalDevKubeconfig bool
 	QPS                      float32
 	Burst                    int

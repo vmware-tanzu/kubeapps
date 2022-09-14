@@ -95,8 +95,10 @@ var ignoreUnexported = cmpopts.IgnoreUnexported(
 	pluginv1.Plugin{},
 )
 
+const demoGlobalPackagingNamespace = "kapp-controller-packaging-global"
+
 var defaultContext = &corev1.Context{Cluster: "default", Namespace: "default"}
-var defaultGlobalContext = &corev1.Context{Cluster: defaultContext.Cluster, Namespace: globalPackagingNamespace}
+var defaultGlobalContext = &corev1.Context{Cluster: defaultContext.Cluster, Namespace: demoGlobalPackagingNamespace}
 
 var defaultTypeMeta = metav1.TypeMeta{
 	Kind:       pkgRepositoryResource,
@@ -2041,7 +2043,7 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 						APIVersion: datapackagingAPIVersion,
 					},
 					ObjectMeta: metav1.ObjectMeta{
-						Namespace: globalPackagingNamespace,
+						Namespace: demoGlobalPackagingNamespace,
 						Name:      "tetris.foo.example.com",
 					},
 					Spec: datapackagingv1alpha1.PackageMetadataSpec{
@@ -2061,7 +2063,7 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 						APIVersion: datapackagingAPIVersion,
 					},
 					ObjectMeta: metav1.ObjectMeta{
-						Namespace: globalPackagingNamespace,
+						Namespace: demoGlobalPackagingNamespace,
 						Name:      "tetris.foo.example.com.1.2.3",
 					},
 					Spec: datapackagingv1alpha1.PackageSpec{
@@ -2165,7 +2167,7 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 						APIVersion: datapackagingAPIVersion,
 					},
 					ObjectMeta: metav1.ObjectMeta{
-						Namespace: globalPackagingNamespace,
+						Namespace: demoGlobalPackagingNamespace,
 						Name:      "tetris.foo.example.com.1.2.3",
 					},
 					Spec: datapackagingv1alpha1.PackageSpec{
@@ -2875,7 +2877,6 @@ func TestGetInstalledPackageSummaries(t *testing.T) {
 							unstructuredObjects...,
 						)).Build(), nil
 				},
-				globalPackagingNamespace: globalPackagingNamespace,
 			}
 
 			response, err := s.GetInstalledPackageSummaries(context.Background(), tc.request)
@@ -6605,7 +6606,7 @@ func TestAddPackageRepository(t *testing.T) {
 	defaultRepository := func() *packagingv1alpha1.PackageRepository {
 		return &packagingv1alpha1.PackageRepository{
 			TypeMeta:   defaultTypeMeta,
-			ObjectMeta: metav1.ObjectMeta{Name: "globalrepo", Namespace: globalPackagingNamespace},
+			ObjectMeta: metav1.ObjectMeta{Name: "globalrepo", Namespace: demoGlobalPackagingNamespace},
 			Spec: packagingv1alpha1.PackageRepositorySpec{
 				SyncPeriod: &metav1.Duration{Duration: time.Duration(24) * time.Hour},
 				Fetch: &packagingv1alpha1.PackageRepositoryFetch{
@@ -6632,7 +6633,7 @@ func TestAddPackageRepository(t *testing.T) {
 		{
 			name: "validate cluster",
 			requestCustomizer: func(request *corev1.AddPackageRepositoryRequest) *corev1.AddPackageRepositoryRequest {
-				request.Context = &corev1.Context{Cluster: "other", Namespace: globalPackagingNamespace}
+				request.Context = &corev1.Context{Cluster: "other", Namespace: demoGlobalPackagingNamespace}
 				return request
 			},
 			expectedStatusCode: codes.InvalidArgument,
@@ -6683,7 +6684,7 @@ func TestAddPackageRepository(t *testing.T) {
 			existingObjects: []k8sruntime.Object{
 				&packagingv1alpha1.PackageRepository{
 					TypeMeta:   defaultTypeMeta,
-					ObjectMeta: metav1.ObjectMeta{Name: "globalrepo", Namespace: globalPackagingNamespace},
+					ObjectMeta: metav1.ObjectMeta{Name: "globalrepo", Namespace: demoGlobalPackagingNamespace},
 					Spec: packagingv1alpha1.PackageRepositorySpec{
 						Fetch: &packagingv1alpha1.PackageRepositoryFetch{
 							ImgpkgBundle: &kappctrlv1alpha1.AppFetchImgpkgBundle{
@@ -7128,7 +7129,7 @@ func TestAddPackageRepository(t *testing.T) {
 			expectedStatusCode: codes.OK,
 			expectedRef:        defaultRef,
 			customChecks: func(t *testing.T, s *Server) {
-				secret, err := s.getSecret(context.Background(), defaultGlobalContext.Cluster, globalPackagingNamespace, "")
+				secret, err := s.getSecret(context.Background(), defaultGlobalContext.Cluster, demoGlobalPackagingNamespace, "")
 				if err != nil {
 					t.Fatalf("error fetching newly created secret:%+v", err)
 				}
@@ -7158,7 +7159,7 @@ func TestAddPackageRepository(t *testing.T) {
 			expectedStatusCode: codes.OK,
 			expectedRef:        defaultRef,
 			customChecks: func(t *testing.T, s *Server) {
-				secret, err := s.getSecret(context.Background(), defaultGlobalContext.Cluster, globalPackagingNamespace, "")
+				secret, err := s.getSecret(context.Background(), defaultGlobalContext.Cluster, demoGlobalPackagingNamespace, "")
 				if err != nil {
 					t.Fatalf("error fetching newly created secret:%+v", err)
 				}
@@ -7188,7 +7189,7 @@ func TestAddPackageRepository(t *testing.T) {
 			expectedStatusCode: codes.OK,
 			expectedRef:        defaultRef,
 			customChecks: func(t *testing.T, s *Server) {
-				secret, err := s.getSecret(context.Background(), defaultGlobalContext.Cluster, globalPackagingNamespace, "")
+				secret, err := s.getSecret(context.Background(), defaultGlobalContext.Cluster, demoGlobalPackagingNamespace, "")
 				if err != nil {
 					t.Fatalf("error fetching newly created secret:%+v", err)
 				}
@@ -7223,7 +7224,7 @@ func TestAddPackageRepository(t *testing.T) {
 			expectedStatusCode: codes.OK,
 			expectedRef:        defaultRef,
 			customChecks: func(t *testing.T, s *Server) {
-				secret, err := s.getSecret(context.Background(), defaultGlobalContext.Cluster, globalPackagingNamespace, "")
+				secret, err := s.getSecret(context.Background(), defaultGlobalContext.Cluster, demoGlobalPackagingNamespace, "")
 				if err != nil {
 					t.Fatalf("error fetching newly created secret:%+v", err)
 				}
@@ -7259,8 +7260,7 @@ func TestAddPackageRepository(t *testing.T) {
 				clientGetter: func(ctx context.Context, cluster string) (clientgetter.ClientInterfaces, error) {
 					return clientgetter.NewBuilder().WithTyped(typedClient).WithDynamic(dynamicClient).Build(), nil
 				},
-				globalPackagingCluster:   defaultGlobalContext.Cluster,
-				globalPackagingNamespace: defaultGlobalContext.Namespace,
+				globalPackagingCluster: defaultGlobalContext.Cluster,
 			}
 
 			request := tc.requestCustomizer(defaultRequest())
@@ -7368,7 +7368,7 @@ func TestUpdatePackageRepository(t *testing.T) {
 		{
 			name: "validate cluster",
 			requestCustomizer: func(request *corev1.UpdatePackageRepositoryRequest) *corev1.UpdatePackageRepositoryRequest {
-				request.PackageRepoRef.Context = &corev1.Context{Cluster: "other", Namespace: globalPackagingNamespace}
+				request.PackageRepoRef.Context = &corev1.Context{Cluster: "other", Namespace: demoGlobalPackagingNamespace}
 				return request
 			},
 			expectedStatusCode: codes.InvalidArgument,
@@ -7924,7 +7924,7 @@ func TestUpdatePackageRepository(t *testing.T) {
 			expectedStatusCode: codes.OK,
 			expectedRef:        defaultRef,
 			customChecks: func(t *testing.T, s *Server) {
-				secret, err := s.getSecret(context.Background(), defaultGlobalContext.Cluster, globalPackagingNamespace, "")
+				secret, err := s.getSecret(context.Background(), defaultGlobalContext.Cluster, demoGlobalPackagingNamespace, "")
 				if err != nil {
 					t.Fatalf("error fetching newly created secret:%+v", err)
 				}
@@ -7954,7 +7954,7 @@ func TestUpdatePackageRepository(t *testing.T) {
 			expectedStatusCode: codes.OK,
 			expectedRef:        defaultRef,
 			customChecks: func(t *testing.T, s *Server) {
-				secret, err := s.getSecret(context.Background(), defaultGlobalContext.Cluster, globalPackagingNamespace, "")
+				secret, err := s.getSecret(context.Background(), defaultGlobalContext.Cluster, demoGlobalPackagingNamespace, "")
 				if err != nil {
 					t.Fatalf("error fetching newly created secret:%+v", err)
 				}
@@ -7984,7 +7984,7 @@ func TestUpdatePackageRepository(t *testing.T) {
 			expectedStatusCode: codes.OK,
 			expectedRef:        defaultRef,
 			customChecks: func(t *testing.T, s *Server) {
-				secret, err := s.getSecret(context.Background(), defaultGlobalContext.Cluster, globalPackagingNamespace, "")
+				secret, err := s.getSecret(context.Background(), defaultGlobalContext.Cluster, demoGlobalPackagingNamespace, "")
 				if err != nil {
 					t.Fatalf("error fetching newly created secret:%+v", err)
 				}
@@ -8045,7 +8045,7 @@ func TestUpdatePackageRepository(t *testing.T) {
 			expectedStatusCode: codes.OK,
 			expectedRef:        defaultRef,
 			customChecks: func(t *testing.T, s *Server) {
-				secret, err := s.getSecret(context.Background(), defaultGlobalContext.Cluster, globalPackagingNamespace, "my-secret")
+				secret, err := s.getSecret(context.Background(), defaultGlobalContext.Cluster, demoGlobalPackagingNamespace, "my-secret")
 				if err != nil {
 					t.Fatalf("error fetching secret:%+v", err)
 				}
@@ -8088,7 +8088,7 @@ func TestUpdatePackageRepository(t *testing.T) {
 			expectedStatusCode: codes.OK,
 			expectedRef:        defaultRef,
 			customChecks: func(t *testing.T, s *Server) {
-				secret, err := s.getSecret(context.Background(), defaultGlobalContext.Cluster, globalPackagingNamespace, "my-secret")
+				secret, err := s.getSecret(context.Background(), defaultGlobalContext.Cluster, demoGlobalPackagingNamespace, "my-secret")
 				if err != nil {
 					t.Fatalf("error fetching secret:%+v", err)
 				}
@@ -8126,8 +8126,7 @@ func TestUpdatePackageRepository(t *testing.T) {
 				clientGetter: func(ctx context.Context, cluster string) (clientgetter.ClientInterfaces, error) {
 					return clientgetter.NewBuilder().WithTyped(typedClient).WithDynamic(dynamicClient).Build(), nil
 				},
-				globalPackagingCluster:   defaultGlobalContext.Cluster,
-				globalPackagingNamespace: defaultGlobalContext.Namespace,
+				globalPackagingCluster: defaultGlobalContext.Cluster,
 			}
 
 			// prepare request
@@ -8180,7 +8179,7 @@ func TestDeletePackageRepository(t *testing.T) {
 	defaultRepository := func() *packagingv1alpha1.PackageRepository {
 		return &packagingv1alpha1.PackageRepository{
 			TypeMeta:   defaultTypeMeta,
-			ObjectMeta: metav1.ObjectMeta{Name: "globalrepo", Namespace: globalPackagingNamespace},
+			ObjectMeta: metav1.ObjectMeta{Name: "globalrepo", Namespace: demoGlobalPackagingNamespace},
 			Spec: packagingv1alpha1.PackageRepositorySpec{
 				Fetch: &packagingv1alpha1.PackageRepositoryFetch{
 					ImgpkgBundle: &kappctrlv1alpha1.AppFetchImgpkgBundle{
@@ -8292,8 +8291,7 @@ func TestDeletePackageRepository(t *testing.T) {
 					return clientgetter.NewBuilder().
 						WithDynamic(dynamicClient).Build(), nil
 				},
-				globalPackagingCluster:   defaultGlobalContext.Cluster,
-				globalPackagingNamespace: defaultGlobalContext.Namespace,
+				globalPackagingCluster: defaultGlobalContext.Cluster,
 			}
 
 			_, err := s.DeletePackageRepository(context.Background(), tc.request)
@@ -8842,8 +8840,7 @@ func TestGetPackageRepositoryDetail(t *testing.T) {
 				clientGetter: func(ctx context.Context, cluster string) (clientgetter.ClientInterfaces, error) {
 					return clientgetter.NewBuilder().WithTyped(typedClient).WithDynamic(dynamicClient).Build(), nil
 				},
-				globalPackagingCluster:   defaultGlobalContext.Cluster,
-				globalPackagingNamespace: defaultGlobalContext.Namespace,
+				globalPackagingCluster: defaultGlobalContext.Cluster,
 			}
 
 			// invocation
@@ -8917,7 +8914,7 @@ func TestGetPackageRepositorySummaries(t *testing.T) {
 			existingObjects: []k8sruntime.Object{
 				&packagingv1alpha1.PackageRepository{
 					TypeMeta:   defaultTypeMeta,
-					ObjectMeta: metav1.ObjectMeta{Name: "globalrepo", Namespace: globalPackagingNamespace},
+					ObjectMeta: metav1.ObjectMeta{Name: "globalrepo", Namespace: demoGlobalPackagingNamespace},
 					Spec: packagingv1alpha1.PackageRepositorySpec{
 						Fetch: &packagingv1alpha1.PackageRepositoryFetch{
 							ImgpkgBundle: &kappctrlv1alpha1.AppFetchImgpkgBundle{
@@ -8946,7 +8943,7 @@ func TestGetPackageRepositorySummaries(t *testing.T) {
 			existingObjects: []k8sruntime.Object{
 				&packagingv1alpha1.PackageRepository{
 					TypeMeta:   defaultTypeMeta,
-					ObjectMeta: metav1.ObjectMeta{Name: "globalrepo", Namespace: globalPackagingNamespace},
+					ObjectMeta: metav1.ObjectMeta{Name: "globalrepo", Namespace: demoGlobalPackagingNamespace},
 					Spec: packagingv1alpha1.PackageRepositorySpec{
 						Fetch: &packagingv1alpha1.PackageRepositoryFetch{
 							ImgpkgBundle: &kappctrlv1alpha1.AppFetchImgpkgBundle{
@@ -8974,7 +8971,7 @@ func TestGetPackageRepositorySummaries(t *testing.T) {
 			existingObjects: []k8sruntime.Object{
 				&packagingv1alpha1.PackageRepository{
 					TypeMeta:   defaultTypeMeta,
-					ObjectMeta: metav1.ObjectMeta{Name: "globalrepo", Namespace: globalPackagingNamespace},
+					ObjectMeta: metav1.ObjectMeta{Name: "globalrepo", Namespace: demoGlobalPackagingNamespace},
 					Spec: packagingv1alpha1.PackageRepositorySpec{
 						Fetch: &packagingv1alpha1.PackageRepositoryFetch{
 							Image: &kappctrlv1alpha1.AppFetchImage{
@@ -9002,7 +8999,7 @@ func TestGetPackageRepositorySummaries(t *testing.T) {
 			existingObjects: []k8sruntime.Object{
 				&packagingv1alpha1.PackageRepository{
 					TypeMeta:   defaultTypeMeta,
-					ObjectMeta: metav1.ObjectMeta{Name: "globalrepo", Namespace: globalPackagingNamespace},
+					ObjectMeta: metav1.ObjectMeta{Name: "globalrepo", Namespace: demoGlobalPackagingNamespace},
 					Spec: packagingv1alpha1.PackageRepositorySpec{
 						Fetch: &packagingv1alpha1.PackageRepositoryFetch{
 							Git: &kappctrlv1alpha1.AppFetchGit{
@@ -9030,7 +9027,7 @@ func TestGetPackageRepositorySummaries(t *testing.T) {
 			existingObjects: []k8sruntime.Object{
 				&packagingv1alpha1.PackageRepository{
 					TypeMeta:   defaultTypeMeta,
-					ObjectMeta: metav1.ObjectMeta{Name: "globalrepo", Namespace: globalPackagingNamespace},
+					ObjectMeta: metav1.ObjectMeta{Name: "globalrepo", Namespace: demoGlobalPackagingNamespace},
 					Spec: packagingv1alpha1.PackageRepositorySpec{
 						Fetch: &packagingv1alpha1.PackageRepositoryFetch{
 							HTTP: &kappctrlv1alpha1.AppFetchHTTP{
@@ -9058,7 +9055,7 @@ func TestGetPackageRepositorySummaries(t *testing.T) {
 			existingObjects: []k8sruntime.Object{
 				&packagingv1alpha1.PackageRepository{
 					TypeMeta:   defaultTypeMeta,
-					ObjectMeta: metav1.ObjectMeta{Name: "globalrepo", Namespace: globalPackagingNamespace},
+					ObjectMeta: metav1.ObjectMeta{Name: "globalrepo", Namespace: demoGlobalPackagingNamespace},
 					Spec: packagingv1alpha1.PackageRepositorySpec{
 						Fetch: &packagingv1alpha1.PackageRepositoryFetch{
 							Inline: &kappctrlv1alpha1.AppFetchInline{},
@@ -9083,7 +9080,7 @@ func TestGetPackageRepositorySummaries(t *testing.T) {
 			existingObjects: []k8sruntime.Object{
 				&packagingv1alpha1.PackageRepository{
 					TypeMeta:   defaultTypeMeta,
-					ObjectMeta: metav1.ObjectMeta{Name: "globalrepo", Namespace: globalPackagingNamespace},
+					ObjectMeta: metav1.ObjectMeta{Name: "globalrepo", Namespace: demoGlobalPackagingNamespace},
 					Spec: packagingv1alpha1.PackageRepositorySpec{
 						Fetch: &packagingv1alpha1.PackageRepositoryFetch{
 							ImgpkgBundle: &kappctrlv1alpha1.AppFetchImgpkgBundle{
@@ -9119,7 +9116,7 @@ func TestGetPackageRepositorySummaries(t *testing.T) {
 			existingObjects: []k8sruntime.Object{
 				&packagingv1alpha1.PackageRepository{
 					TypeMeta:   defaultTypeMeta,
-					ObjectMeta: metav1.ObjectMeta{Name: "globalrepo", Namespace: globalPackagingNamespace},
+					ObjectMeta: metav1.ObjectMeta{Name: "globalrepo", Namespace: demoGlobalPackagingNamespace},
 					Spec: packagingv1alpha1.PackageRepositorySpec{
 						Fetch: &packagingv1alpha1.PackageRepositoryFetch{
 							ImgpkgBundle: &kappctrlv1alpha1.AppFetchImgpkgBundle{
@@ -9167,8 +9164,7 @@ func TestGetPackageRepositorySummaries(t *testing.T) {
 							unstructuredObjects...,
 						)).Build(), nil
 				},
-				globalPackagingCluster:   defaultGlobalContext.Cluster,
-				globalPackagingNamespace: defaultGlobalContext.Namespace,
+				globalPackagingCluster: defaultGlobalContext.Cluster,
 			}
 
 			// query repositories
@@ -9194,7 +9190,7 @@ func TestGetPackageRepositorySummariesFiltering(t *testing.T) {
 	repositories := []k8sruntime.Object{
 		&packagingv1alpha1.PackageRepository{
 			TypeMeta:   defaultTypeMeta,
-			ObjectMeta: metav1.ObjectMeta{Name: "globalrepo", Namespace: globalPackagingNamespace},
+			ObjectMeta: metav1.ObjectMeta{Name: "globalrepo", Namespace: demoGlobalPackagingNamespace},
 			Spec: packagingv1alpha1.PackageRepositorySpec{
 				Fetch: &packagingv1alpha1.PackageRepositoryFetch{
 					ImgpkgBundle: &kappctrlv1alpha1.AppFetchImgpkgBundle{
@@ -9245,11 +9241,11 @@ func TestGetPackageRepositorySummariesFiltering(t *testing.T) {
 		{
 			name: "returns repositories from global namespace",
 			request: &corev1.GetPackageRepositorySummariesRequest{
-				Context: &corev1.Context{Namespace: globalPackagingNamespace},
+				Context: &corev1.Context{Namespace: demoGlobalPackagingNamespace},
 			},
 			existingObjects: repositories,
 			expectedResponse: []metav1.ObjectMeta{
-				{Name: "globalrepo", Namespace: globalPackagingNamespace},
+				{Name: "globalrepo", Namespace: demoGlobalPackagingNamespace},
 			},
 		},
 		{
@@ -9259,7 +9255,7 @@ func TestGetPackageRepositorySummariesFiltering(t *testing.T) {
 			},
 			existingObjects: repositories,
 			expectedResponse: []metav1.ObjectMeta{
-				{Name: "globalrepo", Namespace: globalPackagingNamespace},
+				{Name: "globalrepo", Namespace: demoGlobalPackagingNamespace},
 				{Name: "nsrepo", Namespace: "privatens"},
 			},
 		},
@@ -9285,7 +9281,6 @@ func TestGetPackageRepositorySummariesFiltering(t *testing.T) {
 							unstructuredObjects...,
 						)).Build(), nil
 				},
-				globalPackagingNamespace: globalPackagingNamespace,
 			}
 
 			// should not happen
@@ -9500,8 +9495,7 @@ func TestGetPackageRepositoryStatus(t *testing.T) {
 							unstructuredObjects...,
 						)).Build(), nil
 				},
-				globalPackagingCluster:   defaultGlobalContext.Cluster,
-				globalPackagingNamespace: defaultGlobalContext.Namespace,
+				globalPackagingCluster: defaultGlobalContext.Cluster,
 			}
 
 			// should not happen

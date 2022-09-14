@@ -13,9 +13,9 @@ import { ThunkDispatch } from "redux-thunk";
 import { IPkgRepoFormData, IStoreState } from "shared/types";
 import { PkgRepoForm } from "./PkgRepoForm";
 
-interface IPkgRepoAddButtonProps {
+export interface IPkgRepoAddButtonProps {
   namespace: string;
-  globalReposNamespace: string;
+  helmGlobalNamespace: string;
   carvelGlobalNamespace: string;
   text?: string;
   primary?: boolean;
@@ -27,7 +27,7 @@ interface IPkgRepoAddButtonProps {
 export function PkgRepoAddButton({
   text,
   namespace,
-  globalReposNamespace,
+  helmGlobalNamespace,
   carvelGlobalNamespace,
   packageRepoRef,
   primary = true,
@@ -69,7 +69,7 @@ export function PkgRepoAddButton({
               onAfterInstall={closeModal}
               packageRepoRef={packageRepoRef}
               namespace={namespace}
-              globalReposNamespace={globalReposNamespace}
+              helmGlobalNamespace={helmGlobalNamespace}
               carvelGlobalNamespace={carvelGlobalNamespace}
             />
           </CdsModalContent>

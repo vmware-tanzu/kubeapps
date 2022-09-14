@@ -22,7 +22,7 @@ func getMockManager(t *testing.T) (*PostgresAssetManager, sqlmock.Sqlmock, func(
 		t.Fatalf("%+v", err)
 	}
 
-	pgManager := &PostgresAssetManager{&dbutils.PostgresAssetManager{DB: db, GlobalReposNamespace: "kubeapps"}}
+	pgManager := &PostgresAssetManager{&dbutils.PostgresAssetManager{DB: db, GlobalPackagingNamespace: "kubeapps"}}
 
 	return pgManager, mock, func() { db.Close() }
 }

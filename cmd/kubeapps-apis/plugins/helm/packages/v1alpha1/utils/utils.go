@@ -33,8 +33,8 @@ type ChartQuery struct {
 	Categories  []string
 }
 
-func NewManager(databaseType string, config dbutils.Config, globalReposNamespace string) (AssetManager, error) {
-	return NewPGManager(config, globalReposNamespace)
+func NewManager(databaseType string, config dbutils.Config, globalPackagingNamespace string) (AssetManager, error) {
+	return NewPGManager(config, globalPackagingNamespace)
 }
 
 // GetChart retrieves a chart

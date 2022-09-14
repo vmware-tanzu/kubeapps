@@ -215,6 +215,7 @@ type (
 					DefaultUpgradePolicy               string   `json:"defaultUpgradePolicy"`
 					DefaultPrereleasesVersionSelection []string `json:"defaultPrereleasesVersionSelection"`
 					DefaultAllowDowngrades             bool     `json:"defaultAllowDowngrades"`
+					GlobalPackagingNamespace           string   `json:"globalPackagingNamespace"`
 				} `json:"v1alpha1"`
 			} `json:"packages"`
 		} `json:"kappController"`
@@ -225,6 +226,7 @@ type (
 		defaultUpgradePolicy               pkgutils.UpgradePolicy
 		defaultPrereleasesVersionSelection []string
 		defaultAllowDowngrades             bool
+		globalPackagingNamespace           string
 	}
 )
 
@@ -234,6 +236,7 @@ var defaultPluginConfig = &kappControllerPluginParsedConfig{
 	defaultUpgradePolicy:               fallbackDefaultUpgradePolicy,
 	defaultPrereleasesVersionSelection: fallbackDefaultPrereleasesVersionSelection(),
 	defaultAllowDowngrades:             fallbackDefaultAllowDowngrades,
+	globalPackagingNamespace:           fallbackGlobalPackagingNamespace,
 }
 
 // prereleasesVersionSelection returns the proper value to the prereleases used in kappctrl from the selection

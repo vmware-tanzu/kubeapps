@@ -89,11 +89,11 @@ type PinnipedConciergeConfig struct {
 
 // ClustersConfig is an alias for a map of additional cluster configs.
 type ClustersConfig struct {
-	KubeappsClusterName  string
-	GlobalReposNamespace string
-	PinnipedProxyURL     string
-	PinnipedProxyCACert  string
-	Clusters             map[string]ClusterConfig
+	KubeappsClusterName      string
+	GlobalPackagingNamespace string
+	PinnipedProxyURL         string
+	PinnipedProxyCACert      string
+	Clusters                 map[string]ClusterConfig
 }
 
 // NewClusterConfig returns a copy of an in-cluster config with a user token (leave blank for

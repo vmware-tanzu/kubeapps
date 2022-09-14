@@ -74,7 +74,7 @@ func setMockManager(t *testing.T) (sqlmock.Sqlmock, func(), utils.AssetManager) 
 	if err != nil {
 		t.Fatalf("%+v", err)
 	}
-	manager = &utils.PostgresAssetManager{PostgresAssetManagerIface: &dbutils.PostgresAssetManager{DB: db, GlobalReposNamespace: globalPackagingNamespace}}
+	manager = &utils.PostgresAssetManager{PostgresAssetManagerIface: &dbutils.PostgresAssetManager{DB: db, GlobalPackagingNamespace: globalPackagingNamespace}}
 	return mock, func() { db.Close() }, manager
 }
 
