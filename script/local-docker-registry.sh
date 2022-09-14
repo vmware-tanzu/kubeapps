@@ -107,6 +107,22 @@ waitForPort() {
   timeout 10 sh -c 'until nc -z $0 $1; do sleep 1; done' "$HOST_NAME" "$PORT"
 }
 
+uninstallLocalRegistry() {
+  if [ -z "$DOCKER_REGISTRY_VERSION" ]; then
+    echo "No Docker registry version supplied"
+    exit 1
+  fi
+  if [ -z "$1" ]; then
+    echo "No project path supplied"
+    exit 1
+  fi
+  local PROJECT_PATH=$1
+  
+  envsubst < "${PROJECT_PATH}/integration/registry/local-registry.yaml" | kubectl delete -f -
+  kubectl -n ${REGISTRY_NS} delete ingress docker-registry
+  kubectl -n ${REGISTRY_NS} delete secret registry-tls
+}
+
 case $1 in
 
   install)
@@ -115,6 +131,10 @@ case $1 in
 
   pushNginx)
     pushContainerToLocalRegistry
+    ;;
+
+  uninstall)
+    uninstallLocalRegistry $2
     ;;
 
 esac

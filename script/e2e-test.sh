@@ -34,7 +34,7 @@ fi
 . "${ROOT_DIR}/script/lib/libutil.sh"
 
 # Functions for local Docker registry mgmt
-. "${ROOT_DIR}/script/install-local-registry.sh"
+. "${ROOT_DIR}/script/local-docker-registry.sh"
 
 # Functions for handling Chart Museum
 . "${ROOT_DIR}/script/chart-museum.sh"
