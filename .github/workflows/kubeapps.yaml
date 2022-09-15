@@ -19,7 +19,7 @@ env:
   HELM_VERSION_MIN: "v3.2.0"
   HELM_VERSION_STABLE: "v3.9.2"
   GITHUB_VERSION: "2.14.2"
-  IMAGES_TO_PUSH: "kubeapps/apprepository-controller kubeapps/dashboard kubeapps/asset-syncer kubeapps/pinniped-proxy kubeapps/kubeapps-apis"
+  IMAGES_TO_PUSH: "apprepository-controller dashboard asset-syncer pinniped-proxy kubeapps-apis"
   # IMG_DEV_TAG is the tags used for the Kubeapps docker images. Ideally there should be an IMG_PROD_TAG
   # but its value is dynamic and GitHub actions doesn't support it in the `env` block, so it is generated
   # as an output of the `setup` job.
@@ -28,6 +28,7 @@ env:
   # history of the production tag
   IMG_MODIFIER: "-ci"
   IMG_PREFIX: "kubeapps/"
+  # We use IMG_PREFIX_FOR_FORKS for development purposes, it's used when the workflow is run from a fork of the kubeapps repo
   IMG_PREFIX_FOR_FORKS: "beni0888/"
 #  IMG_PLATFORMS: "linux/amd64, linux/arm64"
   IMG_PLATFORMS: "linux/amd64"
@@ -51,13 +52,16 @@ jobs:
       img_prod_tag: ${{ steps.set-outputs.outputs.img_prod_tag }}
       postgresql_version: ${{ steps.set-outputs.outputs.postgresql_version }}
       rust_version: ${{ steps.set-outputs.outputs.rust_version }}
+      triggered_from_fork: ${{ steps.set-outputs.outputs.triggered_from_fork }}
     steps:
       - name: Set outputs
         id: set-outputs
         run: |
           if [[ ${GITHUB_REPOSITORY} == "vmware-tanzu/kubeapps" ]]; then
+            echo "::set-output name=triggered_from_fork::false"
             echo "::set-output name=img_prefix::${IMG_PREFIX}"
           else
+            echo "::set-output name=triggered_from_fork::true"
             # When running from forks, we push the images to a personal namespace (if configured)
             echo "::set-output name=img_prefix::${IMG_PREFIX_FOR_FORKS}"
           fi;
@@ -80,6 +84,7 @@ jobs:
           echo "IMG_PROD_TAG: ${{steps.set-outputs.outputs.img_prod_tag}}"
           echo "POSTGRESQL_VERSION: ${{steps.set-outputs.outputs.postgresql_version}}"
           echo "RUST_VERSION: ${{steps.set-outputs.outputs.rust_version}}"
+          echo "TRIGGERED_FROM_FORK: ${{steps.set-outputs.outputs.triggered_from_fork}}"
 
   test_go:
     needs:
@@ -495,7 +500,46 @@ jobs:
           name: integration_reports
           path: integration/reports
 
+  push_images:
+    runs-on: ubuntu-latest
+    needs:
+      - setup
+      - local_e2e_tests
+    env:
+      IMG_PROD_TAG: ${{ needs.setup.outputs.img_prod_tag }}
+    steps:
+      - name: Login to Docker Hub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+      - uses: actions/download-artifact@v3
+      - run: |
+          for path in ./*; do
+            artifact=$(basename "$path")
+          
+            if [[ "${artifact}" != *"-image" ]]; then
+              echo "::notice ::Skipping artifact ${artifact}, it's not a docker image"          
+              continue
+            fi
+            
+            image=${artifact/-image/}
+            if [[ "${IMAGES_TO_PUSH}" != *"${image}"* ]]; then
+              echo "::notice ::Skipping image ${image}, it's not an image to push"
+              continue
+            fi
 
+            echo "::notice ::Loading image ${image}"
+            docker load --input "${image}-image.tar"
+
+            dev_image=${{needs.setup.outputs.img_prefix}}${image}${IMG_MODIFIER}:${IMG_DEV_TAG}
+            prod_image=${{needs.setup.outputs.img_prefix}}${image}:${IMG_PROD_TAG}
+            docker tag ${dev_image} ${prod_image}
+
+            echo "::notice ::Pushing image ${prod_image}"
+            docker push $prod_image
+          done
+  
 
 
 
