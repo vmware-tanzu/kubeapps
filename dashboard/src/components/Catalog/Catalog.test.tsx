@@ -824,7 +824,7 @@ describe("filters by package repository", () => {
     });
   });
 
-  it("does not additionally fetch global repos when the global repo is selected", () => {
+  it("does not additionally fetch global repos when the global repo (helm plugin) is selected", () => {
     mountWrapper(
       getStore({
         ...populatedState,
@@ -832,7 +832,7 @@ describe("filters by package repository", () => {
       } as Partial<IStoreState>),
       <MemoryRouter
         initialEntries={[
-          `/c/${defaultProps.cluster}/ns/${initialState.config.globalReposNamespace}/catalog`,
+          `/c/${defaultProps.cluster}/ns/${initialState.config.helmGlobalNamespace}/catalog`,
         ]}
       >
         <Route path={routePath}>

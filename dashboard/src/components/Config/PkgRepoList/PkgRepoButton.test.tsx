@@ -9,7 +9,7 @@ import { PackageRepositoryReference } from "gen/kubeappsapis/core/packages/v1alp
 import { act } from "react-dom/test-utils";
 import * as ReactRedux from "react-redux";
 import { defaultStore, mountWrapper } from "shared/specs/mountWrapper";
-import { PkgRepoAddButton } from "./PkgRepoButton";
+import { IPkgRepoAddButtonProps, PkgRepoAddButton } from "./PkgRepoButton";
 import { PkgRepoForm } from "./PkgRepoForm";
 
 // Mocking PkgRepoForm to easily test this component standalone
@@ -38,9 +38,9 @@ afterEach(() => {
 
 const defaultProps = {
   namespace: "default",
-  globalReposNamespace: "kubeapps",
+  helmGlobalNamespace: "kubeapps",
   carvelGlobalNamespace: "carvel-global",
-};
+} as IPkgRepoAddButtonProps;
 
 it("should open a modal with the repository form", () => {
   const wrapper = mountWrapper(defaultStore, <PkgRepoAddButton {...defaultProps} />);

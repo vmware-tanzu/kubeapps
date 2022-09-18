@@ -36,7 +36,7 @@ const makeStore = (
     loaded: true,
     kubeappsCluster: "",
     kubeappsNamespace: "",
-    globalReposNamespace: "",
+    helmGlobalNamespace: "",
     carvelGlobalNamespace: "",
     appVersion: "",
     oauthLogoutURI: "",

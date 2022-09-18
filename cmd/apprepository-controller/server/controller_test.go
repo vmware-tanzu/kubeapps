@@ -1891,7 +1891,7 @@ func makeDefaultConfig() Config {
 		RepoSyncImagePullSecrets: []string{},
 		RepoSyncCommand:          "/chart-repo",
 		KubeappsNamespace:        "kubeapps",
-		GlobalReposNamespace:     "kubeapps-global",
+		GlobalPackagingNamespace: "kubeapps-global",
 		ReposPerNamespace:        true,
 		DBURL:                    "postgresql.kubeapps",
 		DBUser:                   "admin",

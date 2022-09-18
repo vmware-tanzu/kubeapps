@@ -21,7 +21,7 @@ export interface ICustomAppViewIdentifier {
 export interface IConfig {
   kubeappsCluster: string;
   kubeappsNamespace: string;
-  globalReposNamespace: string;
+  helmGlobalNamespace: string;
   // TODO(castelblanque) Global namespaces should be well organized by plugin, or come from plugins API
   carvelGlobalNamespace: string;
   appVersion: string;

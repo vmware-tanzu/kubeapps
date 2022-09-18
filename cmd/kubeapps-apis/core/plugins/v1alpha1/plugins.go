@@ -388,7 +388,7 @@ func getClustersConfigFromServeOpts(serveOpts core.ServeOptions) (kube.ClustersC
 	if err != nil {
 		return kube.ClustersConfig{}, fmt.Errorf("unable to parse additional clusters config: %+v", err)
 	}
-	config.GlobalReposNamespace = serveOpts.GlobalReposNamespace
+	config.GlobalPackagingNamespace = serveOpts.GlobalHelmReposNamespace
 	defer cleanupCAFiles()
 	return config, nil
 }

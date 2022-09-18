@@ -1,7 +1,7 @@
 {
   "kubeappsCluster": "default",
   "kubeappsNamespace": "kubeapps",
-  "globalReposNamespace": "kubeapps",
+  "helmGlobalNamespace": "kubeapps",
   "carvelGlobalNamespace": "kapp-controller-packaging-global",
   "appVersion": "DEVEL",
   "authProxyEnabled": false,

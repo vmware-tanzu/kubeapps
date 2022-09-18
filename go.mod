@@ -44,11 +44,11 @@ require (
 	github.com/cppforlife/go-cli-ui v0.0.0-20220622150351-995494831c6c
 	github.com/disintegration/imaging v1.6.2
 	github.com/distribution/distribution v2.8.1+incompatible
-	github.com/docker/cli v20.10.17+incompatible
-	github.com/fluxcd/helm-controller/api v0.23.1
+	github.com/docker/cli v20.10.18+incompatible
+	github.com/fluxcd/helm-controller/api v0.24.0
 	github.com/fluxcd/pkg/apis/meta v0.15.0
 	github.com/fluxcd/pkg/version v0.2.0
-	github.com/fluxcd/source-controller/api v0.28.0
+	github.com/fluxcd/source-controller/api v0.29.0
 	github.com/go-redis/redis/v8 v8.11.5
 	github.com/go-redis/redismock/v8 v8.0.6
 	github.com/google/go-cmp v0.5.9
@@ -59,7 +59,7 @@ require (
 	github.com/k14s/kapp v0.52.0
 	github.com/lib/pq v1.10.7
 	github.com/mitchellh/go-homedir v1.1.0
-	github.com/opencontainers/image-spec v1.0.3-0.20211202183452-c5a74bcca799
+	github.com/opencontainers/image-spec v1.0.3-0.20220114050600-8b9d41f48198
 	github.com/soheilhy/cmux v0.1.5
 	github.com/spf13/cobra v1.5.0
 	github.com/spf13/cobra-cli v1.3.0
@@ -69,8 +69,8 @@ require (
 	github.com/srwiley/rasterx v0.0.0-20220730225603-2ab79fcdd4ef
 	github.com/stretchr/testify v1.8.0
 	github.com/vmware-tanzu/carvel-kapp-controller v0.40.0
-	github.com/vmware-tanzu/carvel-vendir v0.30.0
-	golang.org/x/net v0.0.0-20220826154423-83b083e8dc8b
+	github.com/vmware-tanzu/carvel-vendir v0.31.0
+	golang.org/x/net v0.0.0-20220906165146-f3363e06e74c
 	golang.org/x/sync v0.0.0-20220819030929-7fc1605a5dde
 	google.golang.org/genproto v0.0.0-20220829175752-36a9c930ecbf
 	google.golang.org/grpc v1.49.0

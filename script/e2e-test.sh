@@ -34,7 +34,7 @@ fi
 . "${ROOT_DIR}/script/lib/libutil.sh"
 
 # Functions for local Docker registry mgmt
-. "${ROOT_DIR}/script/install-local-registry.sh"
+. "${ROOT_DIR}/script/local-docker-registry.sh"
 
 # Functions for handling Chart Museum
 . "${ROOT_DIR}/script/chart-museum.sh"
@@ -137,15 +137,11 @@ installOLM() {
 # Arguments:
 #   $1: chart
 #   $2: version
-#   $3: chartmuseum username
-#   $4: chartmuseum password
 # Returns: None
 #########################
 pushChart() {
   local chart=$1
   local version=$2
-  local user=$3
-  local password=$4
   prefix="kubeapps-"
   description="foo ${chart} chart for CI"
 
@@ -320,8 +316,8 @@ fi
 
 # Install ChartMuseum
 installChartMuseum "${CHARTMUSEUM_VERSION}"
-pushChart apache 8.6.2 admin password
-pushChart apache 8.6.3 admin password
+pushChart apache 8.6.2
+pushChart apache 8.6.3
 
 # Install Kubeapps
 installOrUpgradeKubeapps "${ROOT_DIR}/chart/kubeapps"

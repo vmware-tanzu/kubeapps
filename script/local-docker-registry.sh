@@ -50,25 +50,52 @@ installLocalRegistry() {
     # following https://github.com/kubernetes/kubernetes/issues/8735#issuecomment-148800699
     REGISTRY_IP=$(kubectl -n $REGISTRY_NS get service/docker-registry -o jsonpath='{.spec.clusterIP}')
     docker exec --user root $CONTROL_PLANE_CONTAINER sh -c "echo '$REGISTRY_IP  $DOCKER_REGISTRY_HOST' >> /etc/hosts"
+
+    echo "Installing Ingress for Docker registry with access through host ${DOCKER_REGISTRY_HOST}"
+    kubectl apply -f - -o yaml << EOF
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  annotations:
+    nginx.ingress.kubernetes.io/proxy-body-size: "0"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "600"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "600"
+    nginx.ingress.kubernetes.io/backend-protocol: "HTTPS"
+  name: docker-registry
+  namespace: ${REGISTRY_NS}
+spec:
+  ingressClassName: nginx
+  tls:
+  - hosts:
+    - ${DOCKER_REGISTRY_HOST}
+    secretName: registry-tls
+  rules:
+  - host: ${DOCKER_REGISTRY_HOST}
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: docker-registry
+            port:
+              number: 5600
+EOF
+  sleep 10
 }
 
 pushContainerToLocalRegistry() {
-    DOCKER_REGISTRY="$DOCKER_REGISTRY_HOST:$DOCKER_REGISTRY_PORT"
+    # Access through Ingress TLS
+    DOCKER_REGISTRY="$DOCKER_REGISTRY_HOST:443"
 
     echo "127.0.0.1  $DOCKER_REGISTRY_HOST" | sudo tee -a /etc/hosts
 
     docker pull nginx
     docker tag nginx $DOCKER_REGISTRY/nginx
 
-    /bin/sh -c "kubectl -n ${REGISTRY_NS} port-forward service/docker-registry 5600:5600 &"
-    waitForPort localhost 5600
-
     docker login $DOCKER_REGISTRY -u=testuser -p=testpassword
     docker push $DOCKER_REGISTRY/nginx
     docker logout $DOCKER_REGISTRY
-
-    # End port forward
-    pkill -f "kubectl -n ${REGISTRY_NS} port-forward service/docker-registry 5600:5600"
 }
 
 # Scans for opened port during max. 10 seconds
@@ -80,6 +107,22 @@ waitForPort() {
   timeout 10 sh -c 'until nc -z $0 $1; do sleep 1; done' "$HOST_NAME" "$PORT"
 }
 
+uninstallLocalRegistry() {
+  if [ -z "$DOCKER_REGISTRY_VERSION" ]; then
+    echo "No Docker registry version supplied"
+    exit 1
+  fi
+  if [ -z "$1" ]; then
+    echo "No project path supplied"
+    exit 1
+  fi
+  local PROJECT_PATH=$1
+  
+  envsubst < "${PROJECT_PATH}/integration/registry/local-registry.yaml" | kubectl delete -f -
+  kubectl -n ${REGISTRY_NS} delete ingress docker-registry
+  kubectl -n ${REGISTRY_NS} delete secret registry-tls
+}
+
 case $1 in
 
   install)
@@ -88,6 +131,10 @@ case $1 in
 
   pushNginx)
     pushContainerToLocalRegistry
+    ;;
+
+  uninstall)
+    uninstallLocalRegistry $2
     ;;
 
 esac

@@ -26,8 +26,8 @@ type PostgresAssetManager struct {
 	dbutils.PostgresAssetManagerIface
 }
 
-func NewPGManager(config dbutils.Config, globalReposNamespace string) (AssetManager, error) {
-	m, err := dbutils.NewPGManager(config, globalReposNamespace)
+func NewPGManager(config dbutils.Config, globalPackagingNamespace string) (AssetManager, error) {
+	m, err := dbutils.NewPGManager(config, globalPackagingNamespace)
 	if err != nil {
 		return nil, err
 	}
@@ -195,7 +195,7 @@ func (m *PostgresAssetManager) GenerateWhereClause(cq ChartQuery) (string, []int
 	whereQuery := ""
 
 	if cq.Namespace != AllNamespaces {
-		whereQueryParams = append(whereQueryParams, cq.Namespace, m.GetGlobalReposNamespace())
+		whereQueryParams = append(whereQueryParams, cq.Namespace, m.GetGlobalPackagingNamespace())
 		whereClauses = append(whereClauses, fmt.Sprintf(
 			"(repo_namespace = $%d OR repo_namespace = $%d)", len(whereQueryParams)-1, len(whereQueryParams),
 		))

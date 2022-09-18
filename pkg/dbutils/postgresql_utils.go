@@ -43,18 +43,18 @@ type PostgresAssetManagerIface interface {
 	InvalidateCache() error
 	EnsureRepoExists(repoNamespace, repoName string) (int, error)
 	GetDB() PostgresDB
-	GetGlobalReposNamespace() string
+	GetGlobalPackagingNamespace() string
 }
 
 // PostgresAssetManager asset manager for postgres
 type PostgresAssetManager struct {
-	connStr              string
-	DB                   PostgresDB
-	GlobalReposNamespace string
+	connStr                  string
+	DB                       PostgresDB
+	GlobalPackagingNamespace string
 }
 
 // NewPGManager creates an asset manager for PG
-func NewPGManager(config Config, globalReposNamespace string) (*PostgresAssetManager, error) {
+func NewPGManager(config Config, globalPackagingNamespace string) (*PostgresAssetManager, error) {
 	url := strings.Split(config.URL, ":")
 	if len(url) != 2 {
 		return nil, fmt.Errorf("Can't parse database URL: %s", config.URL)
@@ -63,7 +63,7 @@ func NewPGManager(config Config, globalReposNamespace string) (*PostgresAssetMan
 		"host=%s port=%s user=%s password=%s dbname=%s sslmode=disable",
 		url[0], url[1], config.Username, config.Password, config.Database,
 	)
-	return &PostgresAssetManager{connStr, nil, globalReposNamespace}, nil
+	return &PostgresAssetManager{connStr, nil, globalPackagingNamespace}, nil
 }
 
 // Init connects to PG
@@ -240,6 +240,6 @@ func (m *PostgresAssetManager) GetDB() PostgresDB {
 	return m.DB
 }
 
-func (m *PostgresAssetManager) GetGlobalReposNamespace() string {
-	return m.GlobalReposNamespace
+func (m *PostgresAssetManager) GetGlobalPackagingNamespace() string {
+	return m.GlobalPackagingNamespace
 }

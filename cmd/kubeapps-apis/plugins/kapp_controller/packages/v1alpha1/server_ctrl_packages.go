@@ -345,7 +345,7 @@ func (s *Server) GetInstalledPackageSummaries(ctx context.Context, request *core
 			}
 			// As each package install could potentially be from a pkg in the same
 			// namespace or a package in the global namespace, we track both.
-			for _, ns := range []string{pkgInstall.Namespace, s.globalPackagingNamespace} {
+			for _, ns := range []string{pkgInstall.Namespace, s.pluginConfig.globalPackagingNamespace} {
 				pkgData, ok := pkgDataForNamespaces[ns]
 				if !ok {
 					pkgData = &pkgMetaAndVersionsData{
@@ -426,7 +426,7 @@ func (s *Server) GetInstalledPackageSummaries(ctx context.Context, request *core
 			pkgData := pkgDataForNamespaces[pkgi.Namespace]
 			var ok bool
 			if pkgData.meta == nil {
-				pkgData, ok = pkgDataForNamespaces[s.globalPackagingNamespace]
+				pkgData, ok = pkgDataForNamespaces[s.pluginConfig.globalPackagingNamespace]
 				// Ignore packages which do not have associated metadata
 				// available. See https://github.com/vmware-tanzu/kubeapps/issues/4901
 				if !ok || pkgData.meta == nil {

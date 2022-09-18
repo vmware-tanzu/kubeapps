@@ -12,7 +12,8 @@ import (
 )
 
 const (
-	DefaultTimeoutSeconds int32 = 300
+	DefaultTimeoutSeconds           int32 = 300
+	DefaultGlobalPackagingNamespace       = ""
 )
 
 type HelmPluginConfig struct {
@@ -21,16 +22,18 @@ type HelmPluginConfig struct {
 	// Whether secrets are fully managed by user or Kubeapps
 	// see comments in design spec under AddPackageRepository.
 	// false (i.e. Kubeapps manages secrets) by default
-	UserManagedSecrets bool
+	UserManagedSecrets       bool
+	GlobalPackagingNamespace string
 }
 
 func NewDefaultPluginConfig() *HelmPluginConfig {
 	// If no config is provided, we default to the existing values for backwards
 	// compatibility.
 	return &HelmPluginConfig{
-		VersionsInSummary:  pkgutils.GetDefaultVersionsInSummary(),
-		TimeoutSeconds:     DefaultTimeoutSeconds,
-		UserManagedSecrets: false,
+		VersionsInSummary:        pkgutils.GetDefaultVersionsInSummary(),
+		TimeoutSeconds:           DefaultTimeoutSeconds,
+		UserManagedSecrets:       false,
+		GlobalPackagingNamespace: DefaultGlobalPackagingNamespace,
 	}
 }
 
@@ -42,17 +45,28 @@ func ParsePluginConfig(pluginConfigPath string) (*HelmPluginConfig, error) {
 
 	// In the helm plugin, for example, we are interested in config for the
 	// core.packages.v1alpha1 only. So the plugin defines the following struct and parses the config.
-	type helmConfig struct {
-		Core struct {
-			Packages struct {
-				V1alpha1 struct {
-					VersionsInSummary pkgutils.VersionsInSummary
-					TimeoutSeconds    int32 `json:"timeoutSeconds"`
-				} `json:"v1alpha1"`
-			} `json:"packages"`
-		} `json:"core"`
-	}
-	var config helmConfig
+	type (
+		helmPluginConfig struct {
+			Core struct {
+				Packages struct {
+					V1alpha1 struct {
+						VersionsInSummary pkgutils.VersionsInSummary
+						TimeoutSeconds    int32 `json:"timeoutSeconds"`
+					} `json:"v1alpha1"`
+				} `json:"packages"`
+			} `json:"core"`
+
+			Helm struct {
+				Packages struct {
+					V1alpha1 struct {
+						GlobalPackagingNamespace string `json:"globalPackagingNamespace"`
+						UserManagedSecrets       bool   `json:"userManagedSecrets"`
+					} `json:"v1alpha1"`
+				} `json:"packages"`
+			} `json:"helm"`
+		}
+	)
+	var config helmPluginConfig
 
 	// #nosec G304
 	pluginConfig, err := os.ReadFile(pluginConfigPath)
@@ -66,8 +80,9 @@ func ParsePluginConfig(pluginConfigPath string) (*HelmPluginConfig, error) {
 
 	// return configured value
 	return &HelmPluginConfig{
-		VersionsInSummary:  config.Core.Packages.V1alpha1.VersionsInSummary,
-		TimeoutSeconds:     config.Core.Packages.V1alpha1.TimeoutSeconds,
-		UserManagedSecrets: false,
+		VersionsInSummary:        config.Core.Packages.V1alpha1.VersionsInSummary,
+		TimeoutSeconds:           config.Core.Packages.V1alpha1.TimeoutSeconds,
+		UserManagedSecrets:       config.Helm.Packages.V1alpha1.UserManagedSecrets,
+		GlobalPackagingNamespace: config.Helm.Packages.V1alpha1.GlobalPackagingNamespace,
 	}, nil
 }

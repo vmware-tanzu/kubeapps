@@ -80,7 +80,7 @@ type Server struct {
 
 // NewServer returns a Server automatically configured with a function to obtain
 // the k8s client config.
-func NewServer(configGetter core.KubernetesConfigGetter, globalPackagingCluster string, globalReposNamespace string, pluginConfigPath string) *Server {
+func NewServer(configGetter core.KubernetesConfigGetter, globalPackagingCluster string, globalPackagingNamespace string, pluginConfigPath string) *Server {
 	var ASSET_SYNCER_DB_URL = os.Getenv("ASSET_SYNCER_DB_URL")
 	var ASSET_SYNCER_DB_NAME = os.Getenv("ASSET_SYNCER_DB_NAME")
 	var ASSET_SYNCER_DB_USERNAME = os.Getenv("ASSET_SYNCER_DB_USERNAME")
@@ -94,29 +94,38 @@ func NewServer(configGetter core.KubernetesConfigGetter, globalPackagingCluster 
 
 	var dbConfig = dbutils.Config{URL: ASSET_SYNCER_DB_URL, Database: ASSET_SYNCER_DB_NAME, Username: ASSET_SYNCER_DB_USERNAME, Password: ASSET_SYNCER_DB_USERPASSWORD}
 
-	log.Infof("+helm NewServer(globalPackagingCluster: [%v], globalReposNamespace: [%v], pluginConfigPath: [%s]",
-		globalPackagingCluster, globalReposNamespace, pluginConfigPath)
-
-	manager, err := utils.NewPGManager(dbConfig, globalReposNamespace)
-	if err != nil {
-		log.Fatalf("%s", err)
-	}
-	err = manager.Init()
-	if err != nil {
-		log.Fatalf("%s", err)
-	}
+	log.Infof("+helm NewServer(globalPackagingCluster: [%v], globalPackagingNamespace: [%v], pluginConfigPath: [%s]",
+		globalPackagingCluster, globalPackagingNamespace, pluginConfigPath)
 
 	// If no config is provided, we default to the existing values for backwards
 	// compatibility.
 	pluginConfig := common.NewDefaultPluginConfig()
 	if pluginConfigPath != "" {
-		pluginConfig, err = common.ParsePluginConfig(pluginConfigPath)
+		pluginConfig, err := common.ParsePluginConfig(pluginConfigPath)
 		if err != nil {
 			log.Fatalf("%s", err)
 		}
 		log.Infof("+helm using custom config: [%v]", *pluginConfig)
 	} else {
 		log.Info("+helm using default config since pluginConfigPath is empty")
+	}
+
+	// TODO(agamez): currently, globalPackagingNamespace and pluginConfig.GlobalPackagingNamespace always match, but we might stop passing the config via CLI args in the future
+	// and we will want to use the one from the pluginConfig
+	effectiveGlobalPackagingNamespace := globalPackagingNamespace
+	if pluginConfig.GlobalPackagingNamespace != "" {
+		effectiveGlobalPackagingNamespace = pluginConfig.GlobalPackagingNamespace
+	}
+
+	log.Infof("+helm NewServer effective globalPackagingNamespace: [%v]", effectiveGlobalPackagingNamespace)
+
+	manager, err := utils.NewPGManager(dbConfig, effectiveGlobalPackagingNamespace)
+	if err != nil {
+		log.Fatalf("%s", err)
+	}
+	err = manager.Init()
+	if err != nil {
+		log.Fatalf("%s", err)
 	}
 
 	// Register custom scheme
@@ -140,7 +149,7 @@ func NewServer(configGetter core.KubernetesConfigGetter, globalPackagingCluster 
 		},
 		manager:                  manager,
 		kubeappsNamespace:        kubeappsNamespace,
-		globalPackagingNamespace: globalReposNamespace,
+		globalPackagingNamespace: globalPackagingNamespace,
 		globalPackagingCluster:   globalPackagingCluster,
 		chartClientFactory:       &chartutils.ChartClientFactory{},
 		pluginConfig:             pluginConfig,
@@ -180,6 +189,16 @@ func (s *Server) GetManager() (utils.AssetManager, error) {
 	return manager, nil
 }
 
+// GetGlobalPackagingNamespace returns the configured global packaging namespace in in the plugin config if any,
+// otherwise it uses the one passed as a cmd argument to the kubeapps-apis server for backwards compatibilty.
+func (s *Server) GetGlobalPackagingNamespace() string {
+	if s.pluginConfig.GlobalPackagingNamespace != "" {
+		return s.pluginConfig.GlobalPackagingNamespace
+	} else {
+		return s.globalPackagingNamespace
+	}
+}
+
 // GetAvailablePackageSummaries returns the available packages based on the request.
 func (s *Server) GetAvailablePackageSummaries(ctx context.Context, request *corev1.GetAvailablePackageSummariesRequest) (*corev1.GetAvailablePackageSummariesResponse, error) {
 	log.InfoS("+helm GetAvailablePackageSummaries", "cluster", request.GetContext().GetCluster(), "namespace", request.GetContext().GetNamespace())
@@ -201,7 +220,7 @@ func (s *Server) GetAvailablePackageSummaries(ctx context.Context, request *core
 	// If the request is for available packages on another cluster, we only
 	// return the global packages (ie. kubeapps namespace)
 	if cluster != "" && cluster != s.globalPackagingCluster {
-		namespace = s.globalPackagingNamespace
+		namespace = s.GetGlobalPackagingNamespace()
 	}
 
 	// Create the initial chart query with the namespace
@@ -418,7 +437,7 @@ func AvailablePackageDetailFromChart(chart *models.Chart, chartFiles *models.Cha
 // hasAccessToNamespace returns an error if the client does not have read access to a given namespace
 func (s *Server) hasAccessToNamespace(ctx context.Context, cluster, namespace string) error {
 	// If checking the global namespace, allow access always
-	if namespace == s.globalPackagingNamespace {
+	if namespace == s.GetGlobalPackagingNamespace() {
 		return nil
 	}
 	client, _, err := s.GetClients(ctx, cluster)
@@ -1030,9 +1049,9 @@ func (s *Server) AddPackageRepository(ctx context.Context, request *corev1.AddPa
 	}
 	namespace := request.GetContext().GetNamespace()
 	if namespace == "" {
-		namespace = s.globalPackagingNamespace
+		namespace = s.GetGlobalPackagingNamespace()
 	}
-	if request.GetNamespaceScoped() != (namespace != s.globalPackagingNamespace) {
+	if request.GetNamespaceScoped() != (namespace != s.GetGlobalPackagingNamespace()) {
 		return nil, status.Errorf(codes.InvalidArgument, "Namespace Scope is inconsistent with the provided Namespace")
 	}
 	name := types.NamespacedName{

@@ -22,8 +22,8 @@ func Sync(serveOpts Config, version string, args []string) error {
 	}
 
 	dbConfig := dbutils.Config{URL: serveOpts.DatabaseURL, Database: serveOpts.DatabaseName, Username: serveOpts.DatabaseUser, Password: serveOpts.DatabasePassword}
-	globalReposNamespace := serveOpts.GlobalReposNamespace
-	manager, err := newManager(dbConfig, globalReposNamespace)
+	globalPackagingNamespace := serveOpts.GlobalPackagingNamespace
+	manager, err := newManager(dbConfig, globalPackagingNamespace)
 	if err != nil {
 		return fmt.Errorf("Error: %v", err)
 	}
