@@ -17,6 +17,7 @@ import (
 	fluxmeta "github.com/fluxcd/pkg/apis/meta"
 	sourcev1 "github.com/fluxcd/source-controller/api/v1beta2"
 	corev1 "github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
+	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/plugins/fluxv2/packages/v1alpha1"
 	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/fluxv2/packages/v1alpha1/cache"
 	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/fluxv2/packages/v1alpha1/common"
 	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/pkg/clientgetter"
@@ -252,7 +253,19 @@ func (s *Server) newRepo(ctx context.Context, request *corev1.AddPackageReposito
 	passCredentials := auth != nil && auth.PassCredentials
 	interval := request.GetInterval()
 
-	if fluxRepo, err := newFluxHelmRepo(name, typ, url, interval, secret, passCredentials); err != nil {
+	// Get Flux-specific values
+	provider := ""
+	var customDetail *v1alpha1.FluxPackageRepositoryCustomDetail
+	if request.CustomDetail != nil {
+		customDetail = &v1alpha1.FluxPackageRepositoryCustomDetail{}
+		if err := request.CustomDetail.UnmarshalTo(customDetail); err != nil {
+			return nil, status.Errorf(codes.InvalidArgument, "customDetail could not be parsed due to: %v", err)
+		}
+		log.Infof("fluxv2 customDetail: [%v]", customDetail)
+		provider = customDetail.Provider
+	}
+
+	if fluxRepo, err := newFluxHelmRepo(name, typ, url, interval, secret, passCredentials, provider); err != nil {
 		return nil, err
 	} else if client, err := s.getClient(ctx, name.Namespace); err != nil {
 		return nil, err
@@ -318,7 +331,16 @@ func (s *Server) repoDetail(ctx context.Context, repoRef *corev1.PackageReposito
 	if typ == "" {
 		typ = "helm"
 	}
-	return &corev1.PackageRepositoryDetail{
+
+	// Get Fluxv2-specific values
+	var customDetail *v1alpha1.FluxPackageRepositoryCustomDetail
+	if repo.Spec.Provider != "" {
+		customDetail = &v1alpha1.FluxPackageRepositoryCustomDetail{
+			Provider: repo.Spec.Provider,
+		}
+	}
+
+	detail := &corev1.PackageRepositoryDetail{
 		PackageRepoRef: &corev1.PackageRepositoryReference{
 			Context: &corev1.Context{
 				Namespace: repo.Namespace,
@@ -336,9 +358,14 @@ func (s *Server) repoDetail(ctx context.Context, repoRef *corev1.PackageReposito
 		Interval:        pkgutils.FromDuration(&repo.Spec.Interval),
 		TlsConfig:       tlsConfig,
 		Auth:            auth,
-		CustomDetail:    nil,
 		Status:          repoStatus(*repo),
-	}, nil
+	}
+	if customDetail != nil {
+		if err := detail.CustomDetail.MarshalFrom(customDetail); err != nil {
+			return nil, status.Errorf(codes.Internal, "customDetail could not be marshalled due to: %v", err)
+		}
+	}
+	return detail, nil
 }
 
 func (s *Server) repoSummaries(ctx context.Context, namespace string) ([]*corev1.PackageRepositorySummary, error) {
@@ -610,7 +637,10 @@ func (s *Server) updateRepo(ctx context.Context, repoRef *corev1.PackageReposito
 	}
 	repo.Spec.URL = url
 
-	// flux does not grok description yet
+	// flux does not grok repository description yet
+	// the only field in customdetail is "provider" and I don't see the need to
+	// have the user update that. Its not like one repository is going to move from
+	// GCP to AWS.
 
 	if interval != "" {
 		if duration, err := pkgutils.ToDuration(interval); err != nil {
@@ -1075,7 +1105,8 @@ func newFluxHelmRepo(
 	url string,
 	interval string,
 	secret *apiv1.Secret,
-	passCredentials bool) (*sourcev1.HelmRepository, error) {
+	passCredentials bool,
+	provider string) (*sourcev1.HelmRepository, error) {
 	pollInterval := defaultPollInterval
 	if interval != "" {
 		if duration, err := pkgutils.ToDuration(interval); err != nil {
@@ -1104,6 +1135,9 @@ func newFluxHelmRepo(
 	}
 	if passCredentials {
 		fluxRepo.Spec.PassCredentials = true
+	}
+	if provider != "" {
+		fluxRepo.Spec.Provider = provider
 	}
 	return fluxRepo, nil
 }

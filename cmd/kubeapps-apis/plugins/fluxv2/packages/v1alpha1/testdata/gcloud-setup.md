@@ -284,8 +284,7 @@ $ flux create hr podinfo-8 --source=HelmRepository/podinfo-8.default --chart=pod
 ◎ waiting for HelmRelease reconciliation
 ✔ HelmRelease podinfo-8 is ready
 ✔ applied revision 6.1.8
-
-SUCCESS!!!
+```
 
 TODO: install kubeapps and verify with kubeapps
 
@@ -302,4 +301,3 @@ To delete GKE cluster:
 ```
 $ gcloud container clusters delete gke_vmware-kubeapps-ci_us-west1-c_cluster-flux-plugin-auto-login-test
 ```
-
