@@ -8,10 +8,14 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	apiext "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset"
+	"k8s.io/client-go/dynamic"
+	"k8s.io/client-go/kubernetes"
 	"net/url"
 	"os"
 	"regexp"
 	"runtime"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sort"
 	"strings"
 	"testing"
@@ -84,21 +88,23 @@ func TestGetClient(t *testing.T) {
 	if err != nil {
 		log.Fatalf("%s", err)
 	}
-	testClientGetter := func(ctx context.Context, cluster string) (clientgetter.ClientInterfaces, error) {
-		return clientgetter.NewBuilder().
-			WithTyped(typfake.NewSimpleClientset()).
-			WithDynamic(dynfake.NewSimpleDynamicClientWithCustomListKinds(
+
+	clientGetter := clientgetter.NewFixedClientProvider(&clientgetter.ClientGetter{
+		Typed: func() (kubernetes.Interface, error) { return typfake.NewSimpleClientset(), nil },
+		Dynamic: func() (dynamic.Interface, error) {
+			return dynfake.NewSimpleDynamicClientWithCustomListKinds(
 				k8sruntime.NewScheme(),
 				map[schema.GroupVersionResource]string{
 					{Group: "foo", Version: "bar", Resource: "baz"}: "PackageList",
 				},
-			)).Build(), nil
-	}
+			), nil
+		},
+	})
 
 	testCases := []struct {
 		name              string
 		manager           utils.AssetManager
-		clientGetter      clientgetter.ClientGetterFunc
+		clientGetter      clientgetter.ClientProviderInterface
 		statusCodeClient  codes.Code
 		statusCodeManager codes.Code
 	}{
@@ -112,7 +118,7 @@ func TestGetClient(t *testing.T) {
 		{
 			name:              "it returns internal error status when no manager configured",
 			manager:           nil,
-			clientGetter:      testClientGetter,
+			clientGetter:      clientGetter,
 			statusCodeClient:  codes.OK,
 			statusCodeManager: codes.Internal,
 		},
@@ -124,18 +130,25 @@ func TestGetClient(t *testing.T) {
 			statusCodeManager: codes.Internal,
 		},
 		{
-			name:    "it returns failed-precondition when configGetter itself errors",
+			name:    "it returns failed-precondition when clients getter function itself errors",
 			manager: manager,
-			clientGetter: func(ctx context.Context, cluster string) (clientgetter.ClientInterfaces, error) {
+			clientGetter: &clientgetter.ClientProvider{ClientsFunc: func(ctx context.Context, cluster string) (*clientgetter.ClientGetter, error) {
 				return nil, fmt.Errorf("Bang!")
-			},
+			}},
+			statusCodeClient:  codes.FailedPrecondition,
+			statusCodeManager: codes.OK,
+		},
+		{
+			name:              "it returns failed-precondition when clients getter function is not set",
+			manager:           manager,
+			clientGetter:      &clientgetter.ClientProvider{ClientsFunc: nil},
 			statusCodeClient:  codes.FailedPrecondition,
 			statusCodeManager: codes.OK,
 		},
 		{
 			name:         "it returns client without error when configured correctly",
 			manager:      manager,
-			clientGetter: testClientGetter,
+			clientGetter: clientGetter,
 		},
 	}
 
@@ -253,12 +266,11 @@ func makeServer(t *testing.T, authorized bool, actionConfig *action.Configuratio
 			Status: authorizationv1.SubjectAccessReviewStatus{Allowed: authorized},
 		}, nil
 	})
-	clientGetter := func(ctx context.Context, cluster string) (clientgetter.ClientInterfaces, error) {
-		return clientgetter.NewBuilder().
-			WithTyped(clientSet).
-			WithDynamic(dynamicClient).
-			Build(), nil
-	}
+
+	clientGetter := clientgetter.NewFixedClientProvider(&clientgetter.ClientGetter{
+		Typed:   func() (kubernetes.Interface, error) { return clientSet, nil },
+		Dynamic: func() (dynamic.Interface, error) { return dynamicClient, nil },
+	})
 
 	// Creating the SQL mock manager
 	mock, cleanup, manager := setMockManager(t)
@@ -311,25 +323,24 @@ func newServerWithSecretsAndRepos(t *testing.T, secrets []k8sruntime.Object, uns
 		log.Fatalf("%s", err)
 	}
 
-	clientGetter := func(context.Context, string) (clientgetter.ClientInterfaces, error) {
-		return clientgetter.
-			NewBuilder().
-			WithTyped(typedClient).
-			WithApiExt(apiExtIfc).
-			WithControllerRuntime(ctrlClient).
-			WithDynamic(dynfake.NewSimpleDynamicClientWithCustomListKinds(
-				scheme,
-				map[schema.GroupVersionResource]string{
-					{
-						Group:    v1alpha1.SchemeGroupVersion.Group,
-						Version:  v1alpha1.SchemeGroupVersion.Version,
-						Resource: AppRepositoryResource,
-					}: AppRepositoryResource + "List",
-				},
-				unstructuredObjs...,
-			)).
-			Build(), nil
-	}
+	dynClient := dynfake.NewSimpleDynamicClientWithCustomListKinds(
+		scheme,
+		map[schema.GroupVersionResource]string{
+			{
+				Group:    v1alpha1.SchemeGroupVersion.Group,
+				Version:  v1alpha1.SchemeGroupVersion.Version,
+				Resource: AppRepositoryResource,
+			}: AppRepositoryResource + "List",
+		},
+		unstructuredObjs...,
+	)
+
+	clientGetter := clientgetter.NewFixedClientProvider(&clientgetter.ClientGetter{
+		Typed:             func() (kubernetes.Interface, error) { return typedClient, nil },
+		Dynamic:           func() (dynamic.Interface, error) { return dynClient, nil },
+		ControllerRuntime: func() (client.WithWatch, error) { return ctrlClient, nil },
+		ApiExt:            func() (apiext.Interface, error) { return apiExtIfc, nil },
+	})
 
 	return &Server{
 		clientGetter:             clientGetter,
