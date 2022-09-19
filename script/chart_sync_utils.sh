@@ -8,6 +8,7 @@ set -o nounset
 set -o pipefail
 
 PROJECT_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")/.." >/dev/null && pwd)
+source "${PROJECT_DIR}/script/lib/liblog.sh"
 
 # Path of the Kubeapps chart in the charts repo.
 # For instance, given "https://github.com/bitnami/charts/tree/master/bitnami/kubeapps" it should be "bitnami/kubeapps"
@@ -25,9 +26,12 @@ RELEASE_NOTES_TEMPLATE_FILE="${PROJECT_DIR}/script/tpl/release_notes.md"
 # Returns the tag for the latest release
 latestReleaseTag() {
     local TARGET_REPO=${1:?}
+    info "getting latest release from ${TARGET_REPO}"
 
     git -C "${TARGET_REPO}/.git" fetch --tags
+    info "tags fetched"
     git -C "${TARGET_REPO}/.git" describe --tags "$(git rev-list --tags --max-count=1)"
+    info "tags described"
 }
 
 configUser() {
@@ -126,20 +130,32 @@ updateRepoWithLocalChanges() {
     fi
     # Fetch latest upstream changes, and commit&push them to the forked charts repo
     git -C "${TARGET_REPO}" remote add upstream "https://github.com/${CHARTS_REPO_ORIGINAL}.git"
+    info "Added upstream: https://github.com/${CHARTS_REPO_ORIGINAL}.git"
     git -C "${TARGET_REPO}" pull upstream "${BRANCH_CHARTS_REPO_ORIGINAL}"
+    info "Pulled branch: ${BRANCH_CHARTS_REPO_ORIGINAL}"
     git -C "${TARGET_REPO}" push origin "${BRANCH_CHARTS_REPO_FORKED}"
+    info "Pushed repo to forked repo: ${BRANCH_CHARTS_REPO_FORKED}"
     rm -rf "${targetChartPath}"
+    info "Removed targetChartPath: ${targetChartPath}"
     cp -R "${KUBEAPPS_CHART_DIR}" "${targetChartPath}"
+    info "Copied ${KUBEAPPS_CHART_DIR} to ${targetChartPath}"
     # Update Chart.yaml with new version
     sed -i.bk 's/appVersion: DEVEL/appVersion: '"${targetTagWithoutV}"'/g' "${chartYaml}"
+    info "sed command applied"
     rm "${targetChartPath}/Chart.yaml.bk"
+    info "removed sed backup"
     # Replace images for the latest available
     # TODO: use the IMAGES_TO_PUSH var already set in the CI config
     replaceImage_latestToProduction dashboard "${targetChartPath}/values.yaml"
+    info "replaced image latest to production for service: dashboard"
     replaceImage_latestToProduction apprepository-controller "${targetChartPath}/values.yaml"
+    info "replaced image latest to production for service: apprepository-controller"
     replaceImage_latestToProduction asset-syncer "${targetChartPath}/values.yaml"
+    info "replaced image latest to production for service: asset-syncer"
     replaceImage_latestToProduction pinniped-proxy "${targetChartPath}/values.yaml"
+    info "replaced image latest to production for service: pinniped-proxy"
     replaceImage_latestToProduction kubeapps-apis "${targetChartPath}/values.yaml"
+    info "replaced image latest to production for service: kubeapps-apis"
 }
 
 updateRepoWithRemoteChanges() {
