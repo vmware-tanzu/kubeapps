@@ -68,7 +68,7 @@ require (
 	github.com/srwiley/oksvg v0.0.0-20220731023508-a61f04f16b76
 	github.com/srwiley/rasterx v0.0.0-20220730225603-2ab79fcdd4ef
 	github.com/stretchr/testify v1.8.0
-	github.com/vmware-tanzu/carvel-kapp-controller v0.40.0
+	github.com/vmware-tanzu/carvel-kapp-controller v0.41.1
 	github.com/vmware-tanzu/carvel-vendir v0.31.0
 	golang.org/x/net v0.0.0-20220906165146-f3363e06e74c
 	golang.org/x/sync v0.0.0-20220819030929-7fc1605a5dde
@@ -78,12 +78,12 @@ require (
 	google.golang.org/protobuf v1.28.1
 	gopkg.in/yaml.v3 v3.0.1
 	helm.sh/helm/v3 v3.9.4
-	k8s.io/api v0.25.0
+	k8s.io/api v0.25.1
 	k8s.io/apiextensions-apiserver v0.25.0
-	k8s.io/apimachinery v0.25.0
-	k8s.io/apiserver v0.24.4
+	k8s.io/apimachinery v0.25.1
+	k8s.io/apiserver v0.25.0
 	k8s.io/cli-runtime v0.24.4
-	k8s.io/client-go v0.25.0
+	k8s.io/client-go v0.25.1
 	k8s.io/klog/v2 v2.80.1
 	k8s.io/kubectl v0.24.4
 	k8s.io/kubernetes v1.24.4
@@ -225,7 +225,7 @@ require (
 	gopkg.in/inf.v0 v0.9.1 // indirect
 	gopkg.in/ini.v1 v1.67.0 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
-	k8s.io/component-base v0.25.0 // indirect
+	k8s.io/component-base v0.25.1 // indirect
 	k8s.io/kube-openapi v0.0.0-20220803164354-a70c9af30aea // indirect
 	nhooyr.io/websocket v1.8.7 // indirect
 	sigs.k8s.io/json v0.0.0-20220713155537-f223a00ba0e2 // indirect
