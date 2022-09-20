@@ -56,7 +56,6 @@ require (
 	github.com/improbable-eng/grpc-web v0.15.0
 	github.com/itchyny/gojq v0.12.9
 	github.com/jinzhu/copier v0.3.5
-	github.com/k14s/kapp v0.52.0
 	github.com/lib/pq v1.10.7
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/opencontainers/image-spec v1.0.3-0.20220114050600-8b9d41f48198
@@ -68,6 +67,7 @@ require (
 	github.com/srwiley/oksvg v0.0.0-20220731023508-a61f04f16b76
 	github.com/srwiley/rasterx v0.0.0-20220730225603-2ab79fcdd4ef
 	github.com/stretchr/testify v1.8.0
+	github.com/vmware-tanzu/carvel-kapp v0.53.0
 	github.com/vmware-tanzu/carvel-kapp-controller v0.41.1
 	github.com/vmware-tanzu/carvel-vendir v0.31.0
 	golang.org/x/net v0.0.0-20220906165146-f3363e06e74c
@@ -106,7 +106,7 @@ require (
 	github.com/cenkalti/backoff/v4 v4.1.3 // indirect
 	github.com/cespare/xxhash/v2 v2.1.2 // indirect
 	github.com/chai2010/gettext-go v0.1.0 // indirect
-	github.com/cppforlife/cobrautil v0.0.0-20220411122935-c28a9f274a4e // indirect
+	github.com/cppforlife/cobrautil v0.0.0-20220907150944-da5ee3a6ab1f // indirect
 	github.com/cppforlife/color v1.9.1-0.20200716202919-6706ac40b835 // indirect
 	github.com/cppforlife/go-patch v0.2.0 // indirect
 	github.com/cyphar/filepath-securejoin v0.2.3 // indirect
