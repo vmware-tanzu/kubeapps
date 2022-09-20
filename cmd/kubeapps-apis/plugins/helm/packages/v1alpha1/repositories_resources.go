@@ -18,7 +18,7 @@ import (
 )
 
 func (s *Server) getPkgRepositoryResource(ctx context.Context, cluster, namespace string) (dynamic.ResourceInterface, error) {
-	_, dynClient, err := s.GetClients(ctx, cluster)
+	dynClient, err := s.clientGetter.Dynamic(ctx, cluster)
 	if err != nil {
 		return nil, err
 	}
@@ -48,7 +48,7 @@ func (s *Server) getPkgRepository(ctx context.Context, cluster, namespace, ident
 	}
 
 	// Auth and TLS
-	typedClient, _, err := s.GetClients(ctx, cluster)
+	typedClient, err := s.clientGetter.Typed(ctx, cluster)
 	if err != nil {
 		return nil, nil, nil, err
 	}
