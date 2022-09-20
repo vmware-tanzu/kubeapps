@@ -12,6 +12,8 @@ import (
 	fluxmeta "github.com/fluxcd/pkg/apis/meta"
 	sourcev1 "github.com/fluxcd/source-controller/api/v1beta2"
 	corev1 "github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
+	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/plugins/fluxv2/packages/v1alpha1"
+	"google.golang.org/protobuf/types/known/anypb"
 	"helm.sh/helm/v3/pkg/release"
 	v1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -963,6 +965,24 @@ var (
 		},
 	}
 
+	add_repo_7 = sourcev1.HelmRepository{
+		TypeMeta: metav1.TypeMeta{
+			Kind:       sourcev1.HelmRepositoryKind,
+			APIVersion: sourcev1.GroupVersion.String(),
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:            "bar",
+			Namespace:       "foo",
+			ResourceVersion: "1",
+		},
+		Spec: sourcev1.HelmRepositorySpec{
+			URL:      github_stefanprodan_podinfo_oci_registry_url,
+			Interval: metav1.Duration{Duration: 10 * time.Minute},
+			Type:     "oci",
+			Provider: "gcp",
+		},
+	}
+
 	add_repo_req_1 = &corev1.AddPackageRepositoryRequest{
 		Name:            "bar",
 		Context:         &corev1.Context{Namespace: "foo"},
@@ -1300,6 +1320,20 @@ var (
 					},
 				},
 			},
+		}
+	}
+
+	add_repo_req_29 = func() *corev1.AddPackageRepositoryRequest {
+		customDetail, _ := anypb.New(&v1alpha1.FluxPackageRepositoryCustomDetail{
+			Provider: "gcp",
+		})
+
+		return &corev1.AddPackageRepositoryRequest{
+			Name:         "bar",
+			Context:      &corev1.Context{Namespace: "foo"},
+			Type:         "oci",
+			Url:          github_stefanprodan_podinfo_oci_registry_url,
+			CustomDetail: customDetail,
 		}
 	}
 

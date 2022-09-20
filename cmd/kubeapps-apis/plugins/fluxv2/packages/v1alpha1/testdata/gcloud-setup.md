@@ -253,7 +253,7 @@ bindings:
 etag: BwXo6q3zo1Q=
 version: 1
 ```
-- Update your flux source-controller pod spec to schedule the workloads on nodes that use Workload Identity and to use the annotated Kubernetes service account. The recommended wat to do this is to use flux CLI to bootstrap the flux source-controller running in GKE cluster using a Kustomize-er in a new Git repo. See https://fluxcd.io/flux/components/source/helmrepositories/#gcp and https://github.com/fluxcd/flux2-kustomize-helm-example. This is too much work :-). For the purposes of testing out just a single scenario in a cluster created for that purpose only, I am going to workaround by doing
+- Update your flux source-controller pod spec to schedule the workloads on nodes that use Workload Identity and to use the annotated Kubernetes service account. The recommended way to do this is to use flux CLI to bootstrap the flux source-controller running in GKE cluster using a Kustomize-er in a new Git repo created for the purpose of having a Kustomizer. See https://fluxcd.io/flux/components/source/helmrepositories/#gcp and https://github.com/fluxcd/flux2-kustomize-helm-example. I did test this way successfully, but I here I am skipping it because it would overly complicate an already complicated scenario.  For the purposes of testing out just a single scenario in a cluster created for that purpose only, I am going to workaround by doing:
 ```
   $ kubectl annotate serviceaccount source-controller --namespace flux-system iam.gke.io/gcp-service-account=flux-plugin-test-wi-sa@vmware-kubeapps-ci.iam.gserviceaccount.com
   serviceaccount/source-controller annotated
@@ -261,32 +261,130 @@ version: 1
 - Now test with flux. flux CLI currently does not support spec.provider option so we use kubectl apply to work-around:
 apply the following YAML
 ```
----
+$ kubectl create -f - <<EOF
 apiVersion: source.toolkit.fluxcd.io/v1beta2
 kind: HelmRepository
 metadata:
-  name: podinfo-8
+  name: podinfo-1
   namespace: default
 spec:
   type: "oci"
   provider: "gcp"
-  interval: 1m0s
+  interval: 45s
   url: oci://us-west1-docker.pkg.dev/vmware-kubeapps-ci/stefanprodan-podinfo-clone
+EOF
 
 $ kubectl get helmrepositories
 NAME        URL                                                                           AGE   READY   STATUS
-podinfo-8   oci://us-west1-docker.pkg.dev/vmware-kubeapps-ci/stefanprodan-podinfo-clone   7s    True    Helm repository is ready
+podinfo-1   oci://us-west1-docker.pkg.dev/vmware-kubeapps-ci/stefanprodan-podinfo-clone   7s    True    Helm repository is ready
 
-$ flux create hr podinfo-8 --source=HelmRepository/podinfo-8.default --chart=podinfo
+$ flux create hr podinfo-1 --source=HelmRepository/podinfo-1.default --chart=podinfo
 ✚ generating HelmRelease
 ► applying HelmRelease
 ✔ HelmRelease created
 ◎ waiting for HelmRelease reconciliation
-✔ HelmRelease podinfo-8 is ready
+✔ HelmRelease podinfo-1 is ready
 ✔ applied revision 6.1.8
 ```
+- install kubeapps and verify scenario with kubeapps:
+```
+$ helm upgrade kubeapps bitnami/kubeapps --install --namespace kubeapps --create-namespace \
+  --set "packaging.helm.enabled=false" \
+  --set "packaging.flux.enabled=true" \
+  --kube-context gke_vmware-kubeapps-ci_us-west1-c_cluster-flux-plugin-auto-login-test \
+  --version 10.3.3 \
+  --wait
 
-TODO: install kubeapps and verify with kubeapps
+  NAME: kubeapps
+  LAST DEPLOYED: Mon Sep 19 18:14:56 2022
+  NAMESPACE: kubeapps
+  STATUS: deployed
+  REVISION: 1
+  TEST SUITE: None
+  NOTES:
+  CHART NAME: kubeapps
+  CHART VERSION: 10.3.3
+  APP VERSION: 2.5.1** Please be patient while the chart is being deployed **
+
+$ kubectl get pods -n kubeapps 
+  NAME                                             READY   STATUS    RESTARTS        AGE
+  kubeapps-5d59d586d4-8jbwk                        1/1     Running   0               8m49s
+  kubeapps-5d59d586d4-9dtjz                        1/1     Running   0               8m50s
+  kubeapps-internal-dashboard-f8b6f4865-zmn5n      1/1     Running   0               8m50s
+  kubeapps-internal-dashboard-f8b6f4865-zt66l      1/1     Running   0               8m50s
+  kubeapps-internal-kubeappsapis-ff5fc986f-krj9d   1/1     Running   1 (8m13s ago)   8m50s
+  kubeapps-internal-kubeappsapis-ff5fc986f-vxzvx   1/1     Running   2 (8m2s ago)    8m50s
+  kubeapps-internal-kubeops-5bbbf9c6bd-ms6k6       1/1     Running   0               8m50s
+  kubeapps-internal-kubeops-5bbbf9c6bd-r7hrv       1/1     Running   0               8m50s
+  kubeapps-redis-master-0                          1/1     Running   0               8m49s
+  kubeapps-redis-replicas-0                        1/1     Running   0               8m49s
+```
+
+- Optional: to make a little easier to collect logs from kubeappsapis pod
+```
+$ kubectl scale --replicas=1 deployment/kubeapps-internal-kubeappsapis -n kubeapps
+```
+
+- Optional: to get the latest kubeapps-apis bits on GKE, I pushed the locally built image to ghcr.io: 
+```
+$ docker login ghcr.io -u $GITHUB_USER -p $GITHUB_TOKEN 
+$ docker tag kubeapps/kubeapps-apis:dev303 ghcr.io/gfichtenholt/kubeapps/kubeapps-apis:dev303
+$ docker push ghcr.io/gfichtenholt/kubeapps/kubeapps-apis:dev303
+$ docker logout ghcr.io
+# Then change visibility of package repository 'kubeapps/kubeapps-apis'
+# from private to public using github portal
+
+$ kubectl set image deployment/kubeapps-internal-kubeappsapis -n kubeapps kubeappsapis=kubeapps/kubeapps-apis:$TAG --record
+```
+
+- The following is needed in order to obtain an auth token for grpc calls:
+```
+$ kubectl create -f - <<EOF
+apiVersion: v1
+kind: Secret
+type: kubernetes.io/service-account-token
+metadata:
+  name: kubeapps-operator-token-bz7x5
+  annotations:
+    kubernetes.io/service-account.name: "kubeapps-operator"
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: kubeapps-operator
+  namespace: default
+secrets:
+  - name: kubeapps-operator-token-bz7x5
+EOF
+
+$ kubectl create clusterrolebinding kubeapps-operator \
+    --clusterrole=cluster-admin \
+    --serviceaccount=default:kubeapps-operator
+clusterrolebinding.rbac.authorization.k8s.io/kubeapps-operator created
+
+$ export token=$(kubectl get -n default secret $(kubectl get -n default serviceaccount kubeapps-operator -o jsonpath='{.secrets[].name}') -o go-template='{{.data.token | base64decode}}')
+
+# assuming local port 8080 is already used by something unrelated
+$ kubectl -n kubeapps port-forward svc/kubeapps-internal-kubeappsapis 8081:8080
+
+# sanity check 1
+$ grpcurl -plaintext localhost:8081 kubeappsapis.core.plugins.v1alpha1.PluginsService.GetConfiguredPlugins
+{
+  "plugins": [
+    {
+      "name": "fluxv2.packages",
+      "version": "v1alpha1"
+    },
+    {
+      "name": "resources",
+      "version": "v1alpha1"
+    }
+  ]
+}
+
+# sanity check 2
+$ grpcurl -plaintext -d '{"context": {"cluster": "default", "namespace": "default"}}' -H "Authorization: Bearer $token" localhost:8080 kubeappsapis.core.packages.v1alpha1.PackagesService.GetAvailablePackageSummaries
+```
 
 ## Misc
 To "pause" GKE cluster, so that it does not incur charges:

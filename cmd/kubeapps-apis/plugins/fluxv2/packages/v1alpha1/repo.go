@@ -28,6 +28,7 @@ import (
 	httpclient "github.com/vmware-tanzu/kubeapps/pkg/http-client"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/types/known/anypb"
 	apiv1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -206,7 +207,7 @@ func (s *Server) httpClientOptionsForRepo(ctx context.Context, repoName types.Na
 		return nil, err
 	}
 	sink := s.newRepoEventSink()
-	return sink.httpClientOptionsForRepo(ctx, *repo)
+	return sink.clientOptionsForHttpRepo(ctx, *repo)
 }
 
 func (s *Server) newRepo(ctx context.Context, request *corev1.AddPackageRepositoryRequest) (*corev1.PackageRepositoryReference, error) {
@@ -333,14 +334,22 @@ func (s *Server) repoDetail(ctx context.Context, repoRef *corev1.PackageReposito
 	}
 
 	// Get Fluxv2-specific values
-	var customDetail *v1alpha1.FluxPackageRepositoryCustomDetail
-	if repo.Spec.Provider != "" {
-		customDetail = &v1alpha1.FluxPackageRepositoryCustomDetail{
+	var customDetail *anypb.Any
+	// For now: this is somewhat my subjective call to filter out "generic" (default) ones
+	// because otherwise any repo created with an unset provider will come back from flux
+	// as "generic" and therefore the PackageRepositoryDetail instance returned by this func
+	// will have a FluxPackageRepositoryCustomDetail in it. Flux spec already clearly states
+	// If you do not specify .spec.provider, it defaults to generic.
+	// https://fluxcd.io/flux/components/source/helmrepositories/#provider
+	if repo.Spec.Provider != "" && repo.Spec.Provider != sourcev1.GenericOCIProvider {
+		if customDetail, err = anypb.New(&v1alpha1.FluxPackageRepositoryCustomDetail{
 			Provider: repo.Spec.Provider,
+		}); err != nil {
+			return nil, status.Errorf(codes.Internal, "custom detail could not be marshalled due to: %v", err)
 		}
 	}
 
-	detail := &corev1.PackageRepositoryDetail{
+	return &corev1.PackageRepositoryDetail{
 		PackageRepoRef: &corev1.PackageRepositoryReference{
 			Context: &corev1.Context{
 				Namespace: repo.Namespace,
@@ -359,13 +368,8 @@ func (s *Server) repoDetail(ctx context.Context, repoRef *corev1.PackageReposito
 		TlsConfig:       tlsConfig,
 		Auth:            auth,
 		Status:          repoStatus(*repo),
-	}
-	if customDetail != nil {
-		if err := detail.CustomDetail.MarshalFrom(customDetail); err != nil {
-			return nil, status.Errorf(codes.Internal, "customDetail could not be marshalled due to: %v", err)
-		}
-	}
-	return detail, nil
+		CustomDetail:    customDetail,
+	}, nil
 }
 
 func (s *Server) repoSummaries(ctx context.Context, namespace string) ([]*corev1.PackageRepositorySummary, error) {
@@ -807,7 +811,7 @@ func (s *repoEventSink) indexAndEncode(checksum string, repo sourcev1.HelmReposi
 	}
 
 	if s.chartCache != nil {
-		if opts, err := s.httpClientOptionsForRepo(context.Background(), repo); err != nil {
+		if opts, err := s.clientOptionsForHttpRepo(context.Background(), repo); err != nil {
 			// ref: https://github.com/vmware-tanzu/kubeapps/pull/3899#issuecomment-990446931
 			// I don't want this func to fail onAdd/onModify() if we can't read
 			// the corresponding secret due to something like default RBAC settings:
@@ -1018,7 +1022,7 @@ func (s *repoEventSink) getRepoSecret(ctx context.Context, repo sourcev1.HelmRep
 
 // The reason I do this here is to set up auth that may be needed to fetch chart tarballs by
 // ChartCache
-func (s *repoEventSink) httpClientOptionsForRepo(ctx context.Context, repo sourcev1.HelmRepository) (*common.HttpClientOptions, error) {
+func (s *repoEventSink) clientOptionsForHttpRepo(ctx context.Context, repo sourcev1.HelmRepository) (*common.HttpClientOptions, error) {
 	if secret, err := s.getRepoSecret(ctx, repo); err == nil && secret != nil {
 		return common.HttpClientOptionsFromSecret(*secret)
 	} else {
