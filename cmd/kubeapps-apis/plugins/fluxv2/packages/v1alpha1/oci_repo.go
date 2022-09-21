@@ -26,7 +26,6 @@ import (
 	"net/url"
 	"os"
 	"path"
-	"path/filepath"
 	"reflect"
 	"sort"
 	"strings"
@@ -614,9 +613,6 @@ func (s *repoEventSink) newOCIChartRepositoryAndLoginWithOptions(registryURL str
 	}
 	if file != "" {
 		defer func() {
-			if byteArray, err := os.ReadFile(filepath.Clean(file)); err == nil {
-				log.Infof("Temporary credentials file [%s] contents:\n%s", file, byteArray)
-			}
 			if err := os.Remove(file); err != nil {
 				log.Infof("Failed to delete temporary credentials file: %v", err)
 			}
@@ -696,7 +692,7 @@ func (s *repoEventSink) clientOptionsForOciRepo(ctx context.Context, repo source
 		ctxTimeout, cancel := context.WithTimeout(ctx, repo.Spec.Timeout.Duration)
 		defer cancel()
 
-		cred, err := oidcAuth(ctxTimeout, repo)
+		cred, err = oidcAuth(ctxTimeout, repo)
 		if err != nil {
 			return nil, nil, nil, err
 		}

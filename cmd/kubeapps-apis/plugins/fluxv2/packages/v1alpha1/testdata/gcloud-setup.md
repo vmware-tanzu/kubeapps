@@ -25,7 +25,7 @@ Google Cloud Console
     flux-plugin-test-sa-4@vmware-kubeapps-ci.iam.gserviceaccount.com 
   Name:
   	flux-plugin-test-sa-4
-  Role: 
+  Roles: 
     Artifact Registry Administrator
     Artifact Registry Repository Administrator
     Viewer 
@@ -203,7 +203,7 @@ Setup instructions:
       kind-kubeapps kind-kubeapps kind-kubeapps
 
   $ gcloud iam service-accounts create flux-plugin-test-wi-sa --project=vmware-kubeapps-ci
-Created service account [flux-plugin-test-wi-sa].
+  Created service account [flux-plugin-test-wi-sa].
 
   $ gcloud projects add-iam-policy-binding vmware-kubeapps-ci \
     --member "serviceAccount:flux-plugin-test-wi-sa@vmware-kubeapps-ci.iam.gserviceaccount.com" \
@@ -213,6 +213,10 @@ Created service account [flux-plugin-test-wi-sa].
   - members:
     - serviceAccount:flux-plugin-test-wi-sa@vmware-kubeapps-ci.iam.gserviceaccount.com
     role: roles/artifactregistry.reader
+
+  Also need roles:
+    - Artifact Registry Repository Administrator
+    - Viewer
 ```
 - install flux on GKE cluster
 ```
@@ -227,6 +231,15 @@ image-reflector-controller-76c455d887-kn4n8    1/1     Running   0          2m12
 kustomize-controller-85b8994c7d-d7wj9          1/1     Running   0          2m11s
 notification-controller-78bb45df6c-ptskm       1/1     Running   0          2m10s
 source-controller-54c7c7c777-7qhx8             1/1     Running   0          2m9s
+
+$ flux version --context=gke_vmware-kubeapps-ci_us-west1-c_cluster-flux-plugin-auto-login-test
+flux: v0.34.0
+helm-controller: v0.24.0
+image-automation-controller: v0.25.0
+image-reflector-controller: v0.21.0
+kustomize-controller: v0.28.0
+notification-controller: v0.26.0
+source-controller: v0.29.0
 ```
 
 - Allow the Kubernetes service account to impersonate the IAM service account by adding an IAM policy binding 
@@ -244,24 +257,24 @@ bindings:
 etag: BwXo6qTIstw=
 version: 1
 
-$ gcloud iam service-accounts add-iam-policy-binding flux-plugin-test-wi-sa@vmware-kubeapps-ci.iam.gserviceaccount.com --role roles/iam.workloadIdentityUser --member "serviceAccount:vmware-kubeapps-ci.svc.id.goog[flux-system/source-controller]"
-Updated IAM policy for serviceAccount [flux-plugin-test-wi-sa@vmware-kubeapps-ci.iam.gserviceaccount.com].
-bindings:
-- members:
-  - serviceAccount:vmware-kubeapps-ci.svc.id.goog[flux-system/source-controller]
-  role: roles/iam.workloadIdentityUser
-etag: BwXo6q3zo1Q=
-version: 1
 ```
 - Update your flux source-controller pod spec to schedule the workloads on nodes that use Workload Identity and to use the annotated Kubernetes service account. The recommended way to do this is to use flux CLI to bootstrap the flux source-controller running in GKE cluster using a Kustomize-er in a new Git repo created for the purpose of having a Kustomizer. See https://fluxcd.io/flux/components/source/helmrepositories/#gcp and https://github.com/fluxcd/flux2-kustomize-helm-example. I did test this way successfully, but I here I am skipping it because it would overly complicate an already complicated scenario.  For the purposes of testing out just a single scenario in a cluster created for that purpose only, I am going to workaround by doing:
 ```
-  $ kubectl annotate serviceaccount source-controller --namespace flux-system iam.gke.io/gcp-service-account=flux-plugin-test-wi-sa@vmware-kubeapps-ci.iam.gserviceaccount.com
+  $ kubectl annotate serviceaccount source-controller --namespace flux-system --context=gke_vmware-kubeapps-ci_us-west1-c_cluster-flux-plugin-auto-login-test iam.gke.io/gcp-service-account=flux-plugin-test-wi-sa@vmware-kubeapps-ci.iam.gserviceaccount.com
   serviceaccount/source-controller annotated
+
+  $ kubectl get serviceaccount/source-controller --namespace flux-system --context=gke_vmware-kubeapps-ci_us-west1-c_cluster-flux-plugin-auto-login-test -o yaml
+  apiVersion: v1
+  kind: ServiceAccount
+  metadata:
+    annotations:
+      iam.gke.io/gcp-service-account: flux-plugin-test-wi-sa@vmware-kubeapps-ci.iam.gserviceaccount.com
+  ...
 ```
 - Now test with flux. flux CLI currently does not support spec.provider option so we use kubectl apply to work-around:
 apply the following YAML
 ```
-$ kubectl create -f - <<EOF
+$ kubectl create --context=gke_vmware-kubeapps-ci_us-west1-c_cluster-flux-plugin-auto-login-test -f - <<EOF
 apiVersion: source.toolkit.fluxcd.io/v1beta2
 kind: HelmRepository
 metadata:
@@ -274,7 +287,7 @@ spec:
   url: oci://us-west1-docker.pkg.dev/vmware-kubeapps-ci/stefanprodan-podinfo-clone
 EOF
 
-$ kubectl get helmrepositories
+$ kubectl get helmrepositories --context=gke_vmware-kubeapps-ci_us-west1-c_cluster-flux-plugin-auto-login-test
 NAME        URL                                                                           AGE   READY   STATUS
 podinfo-1   oci://us-west1-docker.pkg.dev/vmware-kubeapps-ci/stefanprodan-podinfo-clone   7s    True    Helm repository is ready
 
@@ -319,6 +332,31 @@ $ kubectl get pods -n kubeapps
   kubeapps-redis-master-0                          1/1     Running   0               8m49s
   kubeapps-redis-replicas-0                        1/1     Running   0               8m49s
 ```
+- Update your flux source-controller pod spec to schedule the workloads on nodes that use Workload Identity and to use the annotated Kubernetes service account. Same way we did it for flux.
+```
+$ gcloud iam service-accounts add-iam-policy-binding flux-plugin-test-wi-sa@vmware-kubeapps-ci.iam.gserviceaccount.com \
+  --role roles/iam.workloadIdentityUser \
+  --member "serviceAccount:vmware-kubeapps-ci.svc.id.goog[kubeapps/kubeapps-internal-kubeappsapis]"
+  Updated IAM policy for serviceAccount [flux-plugin-test-wi-sa@vmware-kubeapps-ci.iam.gserviceaccount.com].
+  bindings:
+  - members:
+    - serviceAccount:vmware-kubeapps-ci.svc.id.goog[flux-system/source-controller]
+    - serviceAccount:vmware-kubeapps-ci.svc.id.goog[kubeapps/kubeapps-internal-kubeappsapis]
+    role: roles/iam.workloadIdentityUser
+  etag: BwXpLQ8cSyY=
+  version: 1
+
+$ kubectl annotate serviceaccount kubeapps-internal-kubeappsapis --namespace kubeapps --context=gke_vmware-kubeapps-ci_us-west1-c_cluster-flux-plugin-auto-login-test iam.gke.io/gcp-service-account=flux-plugin-test-wi-sa@vmware-kubeapps-ci.iam.gserviceaccount.com 
+
+$ kubectl get serviceaccount/kubeapps-internal-kubeappsapis --namespace kubeapps --context=gke_vmware-kubeapps-ci_us-west1-c_cluster-flux-plugin-auto-login-test -o yaml
+apiVersion: v1
+automountServiceAccountToken: true
+kind: ServiceAccount
+metadata:
+  annotations:
+    iam.gke.io/gcp-service-account: flux-plugin-test-wi-sa@vmware-kubeapps-ci.iam.gserviceaccount.com
+...
+```
 
 - Optional: to make a little easier to collect logs from kubeappsapis pod
 ```
@@ -328,13 +366,17 @@ $ kubectl scale --replicas=1 deployment/kubeapps-internal-kubeappsapis -n kubeap
 - Optional: to get the latest kubeapps-apis bits on GKE, I pushed the locally built image to ghcr.io: 
 ```
 $ docker login ghcr.io -u $GITHUB_USER -p $GITHUB_TOKEN 
-$ docker tag kubeapps/kubeapps-apis:dev303 ghcr.io/gfichtenholt/kubeapps/kubeapps-apis:dev303
-$ docker push ghcr.io/gfichtenholt/kubeapps/kubeapps-apis:dev303
+$ export TAG=dev308
+$ docker tag kubeapps/kubeapps-apis:$TAG ghcr.io/gfichtenholt/kubeapps/kubeapps-apis:$TAG
+$ docker push ghcr.io/gfichtenholt/kubeapps/kubeapps-apis:$TAG
 $ docker logout ghcr.io
 # Then change visibility of package repository 'kubeapps/kubeapps-apis'
 # from private to public using github portal
 
-$ kubectl set image deployment/kubeapps-internal-kubeappsapis -n kubeapps kubeappsapis=kubeapps/kubeapps-apis:$TAG --record
+$ kubectl set image deployment/kubeapps-internal-kubeappsapis -n kubeapps kubeappsapis=ghcr.io/gfichtenholt/kubeapps/kubeapps-apis:$TAG --record --context=gke_vmware-kubeapps-ci_us-west1-c_cluster-flux-plugin-auto-login-test
+
+# to verify:
+$ kubectl get pods -n kubeapps --context gke_vmware-kubeapps-ci_us-west1-c_cluster-flux-plugin-auto-login-test
 ```
 
 - The following is needed in order to obtain an auth token for grpc calls:
@@ -365,7 +407,7 @@ clusterrolebinding.rbac.authorization.k8s.io/kubeapps-operator created
 $ export token=$(kubectl get -n default secret $(kubectl get -n default serviceaccount kubeapps-operator -o jsonpath='{.secrets[].name}') -o go-template='{{.data.token | base64decode}}')
 
 # assuming local port 8080 is already used by something unrelated
-$ kubectl -n kubeapps port-forward svc/kubeapps-internal-kubeappsapis 8081:8080
+$ kubectl -n kubeapps --context=gke_vmware-kubeapps-ci_us-west1-c_cluster-flux-plugin-auto-login-test port-forward svc/kubeapps-internal-kubeappsapis 8081:8080
 
 # sanity check 1
 $ grpcurl -plaintext localhost:8081 kubeappsapis.core.plugins.v1alpha1.PluginsService.GetConfiguredPlugins
@@ -382,20 +424,138 @@ $ grpcurl -plaintext localhost:8081 kubeappsapis.core.plugins.v1alpha1.PluginsSe
   ]
 }
 
-# sanity check 2
-$ grpcurl -plaintext -d '{"context": {"cluster": "default", "namespace": "default"}}' -H "Authorization: Bearer $token" localhost:8080 kubeappsapis.core.packages.v1alpha1.PackagesService.GetAvailablePackageSummaries
+$ grpcurl -plaintext -d '{"context": {"cluster": "default", "namespace": "default"}}' -H "Authorization: Bearer $token" localhost:8081 kubeappsapis.core.packages.v1alpha1.PackagesService.GetAvailablePackageSummaries
+  {
+    "availablePackageSummaries": [
+      {
+        "availablePackageRef": {
+          "context": {
+            "cluster": "default",
+            "namespace": "default"
+          },
+          "identifier": "podinfo-1/podinfo",
+          "plugin": {
+            "name": "fluxv2.packages",
+            "version": "v1alpha1"
+          }
+        },
+        "name": "podinfo",
+        "latestVersion": {
+          "pkgVersion": "6.1.8"
+        },
+        "displayName": "podinfo",
+        "shortDescription": "Podinfo Helm chart for Kubernetes",
+        "categories": [
+          ""
+        ]
+      }
+    ]
+  }
+
+$ grpcurl -plaintext -d '{"available_package_ref": {"context": {"cluster": "default", "namespace": "default"}, "plugin": {"name": "fluxv2.packages", "version": "v1alpha1"}, "identifier": "podinfo-1/podinfo"}, "target_context": {"cluster": "default", "namespace": "default"}, "name": "podinfo-1"}' -H "Authorization: Bearer $token" localhost:8081 kubeappsapis.core.packages.v1alpha1.PackagesService.CreateInstalledPackage
+{
+  "installedPackageRef": {
+    "context": {
+      "cluster": "default",
+      "namespace": "default"
+    },
+    "identifier": "podinfo-1",
+    "plugin": {
+      "name": "fluxv2.packages",
+      "version": "v1alpha1"
+    }
+  }
+}
+
+$ $ grpcurl -plaintext -d '{"installed_package_ref": {"context": {"cluster": "default", "namespace": "default"}, "plugin": {"name": "fluxv2.packages", "version": "v1alpha1"}, "identifier": "podinfo-1"}}' -H "Authorization: Bearer $token" localhost:8081 kubeappsapis.core.packages.v1alpha1.PackagesService.GetInstalledPackageDetail
+{
+  "installedPackageDetail": {
+    "installedPackageRef": {
+      "context": {
+        "cluster": "default",
+        "namespace": "default"
+      },
+      "identifier": "podinfo-1",
+      "plugin": {
+        "name": "fluxv2.packages",
+        "version": "v1alpha1"
+      }
+    },
+    "pkgVersionReference": {
+      "version": "*"
+    },
+    "name": "podinfo-1",
+    "currentVersion": {
+      "pkgVersion": "6.1.8",
+      "appVersion": "6.1.8"
+    },
+    "reconciliationOptions": {
+      "interval": "1m"
+    },
+    "status": {
+      "ready": true,
+      "reason": "STATUS_REASON_INSTALLED",
+      "userReason": "ReconciliationSucceeded: Release reconciliation succeeded"
+    },
+    "postInstallationNotes": "1. Get the application URL by running these commands:\n  echo \"Visit http://127.0.0.1:8080 to use your application\"\n  kubectl -n default port-forward deploy/podinfo-1 8080:9898\n",
+    "availablePackageRef": {
+      "context": {
+        "cluster": "default",
+        "namespace": "default"
+      },
+      "identifier": "podinfo-1/podinfo",
+      "plugin": {
+        "name": "fluxv2.packages",
+        "version": "v1alpha1"
+      }
+    }
+  }
+}
 ```
 
-## Misc
-To "pause" GKE cluster, so that it does not incur charges:
+## Misc Hacks
+- To debug curl commands in a pod running in GKE cluster with Workload Identity enabled:
+```
+$ kubectl create --context=gke_vmware-kubeapps-ci_us-west1-c_cluster-flux-plugin-auto-login-test -f - <<EOF
+apiVersion: v1
+kind: Pod
+metadata:
+  name: workload-identity-test
+  namespace: flux-system
+spec:
+  containers:
+  - image: google/cloud-sdk:slim
+    name: workload-identity-test
+    command: ["sleep","infinity"]
+  serviceAccountName: source-controller
+  nodeSelector:
+    iam.gke.io/gke-metadata-server-enabled: "true"
+EOF
+
+$ kubectl get pods -n flux-system --context=gke_vmware-kubeapps-ci_us-west1-c_cluster-flux-plugin-auto-login-test
+workload-identity-test                         1/1     Running   0          41s
+
+$ kubectl exec -it workload-identity-test --context=gke_vmware-kubeapps-ci_us-west1-c_cluster-flux-plugin-auto-login-test --namespace flux-system -- /bin/bash
+
+root@workload-identity-test:/# curl -H "Metadata-Flavor: Google" http://metadata.google.internal/computeMetadata/v1/instance/service-accounts/default/email
+flux-plugin-test-wi-sa@vmware-kubeapps-ci.iam.gserviceaccount.comroot@workload-identity-test:/# 
+
+root@workload-identity-test:/# curl -H "Metadata-Flavor: Google" http://metadata.google.internal/computeMetadata/v1/instance/service-accounts/default/token
+{"access_token":"ya29...."expires_in":3599,"token_type":"Bearer"}
+
+
+```
+- To "pause" GKE cluster, so that it does not incur billing charges:
 ```
 $ gcloud container clusters resize cluster-flux-plugin-auto-login-test --num-nodes=0 --zone us-west1-c
 ```
-To "resume" GKE cluster:
+- To "resume" GKE cluster:
 ```
 $ gcloud container clusters resize cluster-flux-plugin-auto-login-test --num-nodes=3 --zone us-west1-c
 ```
-To delete GKE cluster:
+- To delete GKE cluster:
 ```
 $ gcloud container clusters delete gke_vmware-kubeapps-ci_us-west1-c_cluster-flux-plugin-auto-login-test
 ```
+- To Join Google Cloud Slack open https://cloud.google.com/developers. You can click the slack icon toward the bottom of the page.
+ref https://github.com/jenkinsci/google-compute-engine-plugin/issues/139#issuecomment-941327025

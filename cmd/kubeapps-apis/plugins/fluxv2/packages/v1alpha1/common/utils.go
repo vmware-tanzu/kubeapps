@@ -369,6 +369,7 @@ func OCIChartRepositoryCredentialFromSecret(registryURL string, secret apiv1.Sec
 // cloud providers.
 // Ref: https://github.com/google/go-containerregistry/tree/main/pkg/authn
 func OIDCAdaptHelper(authenticator authn.Authenticator) (*orasregistryauthv2.Credential, error) {
+
 	authConfig, err := authenticator.Authorization()
 	if err != nil {
 		return nil, fmt.Errorf("unable to get authentication data from OIDC: %w", err)
@@ -383,6 +384,11 @@ func OIDCAdaptHelper(authenticator authn.Authenticator) (*orasregistryauthv2.Cre
 	case username == "" || password == "":
 		return nil, fmt.Errorf("invalid auth data: required fields 'username' and 'password'")
 	}
+	pwdRedacted := password
+	if len(pwdRedacted) > 4 {
+		pwdRedacted = pwdRedacted[0:3] + "..."
+	}
+	log.Infof("-OIDCAdaptHelper: username: [%s], password: [%s]", username, pwdRedacted)
 	return &orasregistryauthv2.Credential{
 		Username: username,
 		Password: password,
