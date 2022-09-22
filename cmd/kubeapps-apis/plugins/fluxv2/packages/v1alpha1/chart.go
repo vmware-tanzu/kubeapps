@@ -71,11 +71,9 @@ func (s *Server) availableChartDetail(ctx context.Context, packageRef *corev1.Av
 		}
 	}
 
-	log.Infof("checkpoint 3")
 	if byteArray == nil {
 		// no specific chart version was provided or a cache miss, need to do a bit of work
 		chartModel, err := s.getChartModel(ctx, repoName, chartName)
-		log.Infof("checkpoint 3a")
 		if err != nil {
 			return nil, err
 		} else if chartModel == nil {
@@ -90,7 +88,6 @@ func (s *Server) availableChartDetail(ctx context.Context, packageRef *corev1.Av
 		if key, err = s.chartCache.KeyFor(repoName.Namespace, chartID, chartVersion); err != nil {
 			return nil, err
 		}
-		log.Infof("checkpoint 3b")
 
 		var fn cache.DownloadChartFn
 		if chartModel.Repo.Type == "oci" {
@@ -106,17 +103,14 @@ func (s *Server) availableChartDetail(ctx context.Context, packageRef *corev1.Av
 				fn = downloadHttpChartFn(opts)
 			}
 		}
-		log.Infof("checkpoint 3c")
 		if byteArray, err = s.chartCache.Get(key, chartModel, fn); err != nil {
 			return nil, err
 		}
-		log.Infof("checkpoint 3d")
 
 		if byteArray == nil {
 			return nil, status.Errorf(codes.Internal, "failed to load details for chart [%s]", chartModel.ID)
 		}
 	}
-	log.Infof("checkpoint 4")
 
 	chartDetail, err := tarutil.FetchChartDetailFromTarball(bytes.NewReader(byteArray), chartID)
 	if err != nil {
