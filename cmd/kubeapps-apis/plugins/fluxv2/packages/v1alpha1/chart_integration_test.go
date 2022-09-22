@@ -527,62 +527,13 @@ type testCaseKindClusterAvailablePackageEndpointsForOCISpec struct {
 	unauthorized    bool
 }
 
-func TestKindClusterAvailablePackageEndpointsForOCI(t *testing.T) {
-	fluxPluginClient, fluxPluginReposClient, err := checkEnv(t)
-	if err != nil {
-		t.Fatal(err)
-	}
-
+func testCaseKindClusterAvailablePackageEndpointsForGitHub(t *testing.T) []testCaseKindClusterAvailablePackageEndpointsForOCISpec {
 	ghUser := os.Getenv("GITHUB_USER")
 	ghToken := os.Getenv("GITHUB_TOKEN")
 	if ghUser == "" || ghToken == "" {
 		t.Fatalf("Environment variables GITHUB_USER and GITHUB_TOKEN need to be set to run this test")
 	}
-
-	if err := setupHarborStefanProdanClone(t); err != nil {
-		t.Fatal(err)
-	}
-
-	harborRobotName, harborRobotSecret, err := setupHarborRobotAccount(t)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	// ref: https://cloud.google.com/artifact-registry/docs/helm/authentication#token
-	gcpUser := "oauth2accesstoken"
-	gcpPasswd, err := gcloudPrintAccessToken(t)
-	if err != nil {
-		t.Fatal(err)
-	}
-	// ref https://cloud.google.com/artifact-registry/docs/helm/authentication#json-key
-	gcpKeyFile := os.Getenv("GOOGLE_APPLICATION_CREDENTIALS")
-	if gcpKeyFile == "" {
-		t.Fatalf("Environment variable [GOOGLE_APPLICATION_CREDENTIALS] needs to be set to run this test")
-	}
-
-	gcpUser2 := "_json_key"
-	gcpServer2 := "us-west1-docker.pkg.dev"
-	gcpPasswd2, err := os.ReadFile(gcpKeyFile)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	// per agamez request (slack thread 8/31/22)
-	harborCorpVMwareHost := os.Getenv("HARBOR_VMWARE_CORP_HOST")
-	if harborCorpVMwareHost == "" {
-		t.Fatal("Environment variable [HARBOR_VMWARE_CORP_HOST] needs to be set to run this test")
-	}
-	harborCorpVMwareRepoUrl := "oci://" + harborCorpVMwareHost + "/kubeapps_flux_integration"
-	harborCorpVMwareRepoRobotUser := os.Getenv("HARBOR_VMWARE_CORP_ROBOT_USER")
-	if harborCorpVMwareRepoRobotUser == "" {
-		t.Fatal("Environment variable [HARBOR_VMWARE_CORP_ROBOT_USER] needs to be set to run this test")
-	}
-	harborCorpVMwareRepoRobotSecret := os.Getenv("HARBOR_VMWARE_CORP_ROBOT_SECRET")
-	if harborCorpVMwareRepoRobotSecret == "" {
-		t.Fatal("Environment variable [HARBOR_VMWARE_CORP_ROBOT_SECRET] needs to be set to run this test")
-	}
-
-	testCases := []testCaseKindClusterAvailablePackageEndpointsForOCISpec{
+	return []testCaseKindClusterAvailablePackageEndpointsForOCISpec{
 		{
 			testName:    "Testing [" + github_stefanprodan_podinfo_oci_registry_url + "] with basic auth secret",
 			registryUrl: github_stefanprodan_podinfo_oci_registry_url,
@@ -602,32 +553,35 @@ func TestKindClusterAvailablePackageEndpointsForOCI(t *testing.T) {
 				"ghcr.io", ghUser, ghToken,
 			),
 		},
-		// TODO (gfichtenholt) harbor plainHTTP (not HTTPS) repo with robot account
-		//   this may or may not work see https://github.com/fluxcd/source-controller/issues/807
-		// TODO (gfichtenholt) TLS secret with CA
-		// TODO (gfichtenholt) TLS secret with CA, pub, priv assuming Flux supports it
+	}
+}
 
-		/*
-			{
-				// this gets set up in ./testdata/integ-test-env.sh
-				// currently fails with AuthenticationFailed: failed to log into registry
-				//  'oci://registry-app-svc.default.svc.cluster.local:5000/helm-charts':
-				// Get "https://registry-app-svc.default.svc.cluster.local:5000/v2/":
-				// http: server gave HTTP response to HTTPS client
-				// the error comes from flux source-controller
-				// opened a new issue per souleb's request:
-				// https://github.com/fluxcd/source-controller/issues/805
+func testCaseKindClusterAvailablePackageEndpointsForHarbor(t *testing.T) []testCaseKindClusterAvailablePackageEndpointsForOCISpec {
+	if err := setupHarborStefanProdanClone(t); err != nil {
+		t.Fatal(err)
+	}
 
-				testName:    "Testing [" + in_cluster_oci_registry_url + "]",
-				registryUrl: in_cluster_oci_registry_url,
-				secret: newBasicAuthSecret(types.NamespacedName{
-					Name:      "oci-repo-secret-" + randSeq(4),
-					Namespace: "default"},
-					"foo",
-					"bar",
-				),
-			},
-		*/
+	harborRobotName, harborRobotSecret, err := setupHarborRobotAccount(t)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// per agamez request (slack thread 8/31/22)
+	harborCorpVMwareHost := os.Getenv("HARBOR_VMWARE_CORP_HOST")
+	if harborCorpVMwareHost == "" {
+		t.Fatal("Environment variable [HARBOR_VMWARE_CORP_HOST] needs to be set to run this test")
+	}
+	harborCorpVMwareRepoUrl := "oci://" + harborCorpVMwareHost + "/kubeapps_flux_integration"
+	harborCorpVMwareRepoRobotUser := os.Getenv("HARBOR_VMWARE_CORP_ROBOT_USER")
+	if harborCorpVMwareRepoRobotUser == "" {
+		t.Fatal("Environment variable [HARBOR_VMWARE_CORP_ROBOT_USER] needs to be set to run this test")
+	}
+	harborCorpVMwareRepoRobotSecret := os.Getenv("HARBOR_VMWARE_CORP_ROBOT_SECRET")
+	if harborCorpVMwareRepoRobotSecret == "" {
+		t.Fatal("Environment variable [HARBOR_VMWARE_CORP_ROBOT_SECRET] needs to be set to run this test")
+	}
+
+	return []testCaseKindClusterAvailablePackageEndpointsForOCISpec{
 		{
 			testName:    "Testing [" + harbor_stefanprodan_podinfo_oci_registry_url + "] with basic auth secret (admin)",
 			registryUrl: harbor_stefanprodan_podinfo_oci_registry_url,
@@ -647,46 +601,6 @@ func TestKindClusterAvailablePackageEndpointsForOCI(t *testing.T) {
 				harborRobotName,
 				harborRobotSecret,
 			),
-		},
-		{
-			testName:    "Testing [" + gcp_stefanprodan_podinfo_oci_registry_url + "] with service access token",
-			registryUrl: gcp_stefanprodan_podinfo_oci_registry_url,
-			secret: newBasicAuthSecret(types.NamespacedName{
-				Name:      "oci-repo-secret-" + randSeq(4),
-				Namespace: "default"},
-				gcpUser,
-				string(gcpPasswd),
-			),
-		},
-		{
-			testName:    "Testing [" + gcp_stefanprodan_podinfo_oci_registry_url + "] with JSON key",
-			registryUrl: gcp_stefanprodan_podinfo_oci_registry_url,
-			secret: newDockerConfigJsonSecret(types.NamespacedName{
-				Name:      "oci-repo-secret-" + randSeq(4),
-				Namespace: "default"},
-				gcpServer2,
-				gcpUser2,
-				string(gcpPasswd2),
-			),
-		},
-		// negative test for no secret
-		{
-			testName:        "Testing [" + gcp_stefanprodan_podinfo_oci_registry_url + "] without a secret",
-			registryUrl:     gcp_stefanprodan_podinfo_oci_registry_url,
-			unauthenticated: true,
-		},
-		// negative test for bad username/secret
-		{
-			testName:    "Testing [" + gcp_stefanprodan_podinfo_oci_registry_url + "] bad username/secret",
-			registryUrl: gcp_stefanprodan_podinfo_oci_registry_url,
-			secret: newDockerConfigJsonSecret(types.NamespacedName{
-				Name:      "oci-repo-secret-" + randSeq(4),
-				Namespace: "default"},
-				gcpServer2,
-				"kaka",
-				"kaka",
-			),
-			unauthorized: true,
 		},
 		// harbor private repo (admin)
 		{
@@ -737,158 +651,263 @@ func TestKindClusterAvailablePackageEndpointsForOCI(t *testing.T) {
 				harborCorpVMwareRepoRobotSecret),
 		},
 	}
+}
 
-	for _, tc := range testCases {
-		testKindClusterAvailablePackageEndpointsForOCIHelper(t, tc, fluxPluginClient, fluxPluginReposClient)
+func testCaseKindClusterAvailablePackageEndpointsForGcp(t *testing.T) []testCaseKindClusterAvailablePackageEndpointsForOCISpec {
+	// ref: https://cloud.google.com/artifact-registry/docs/helm/authentication#token
+	gcpUser := "oauth2accesstoken"
+	gcpPasswd, err := gcloudPrintAccessToken(t)
+	if err != nil {
+		t.Fatal(err)
 	}
+	// ref https://cloud.google.com/artifact-registry/docs/helm/authentication#json-key
+	gcpKeyFile := os.Getenv("GOOGLE_APPLICATION_CREDENTIALS")
+	if gcpKeyFile == "" {
+		t.Fatalf("Environment variable [GOOGLE_APPLICATION_CREDENTIALS] needs to be set to run this test")
+	}
+
+	gcpUser2 := "_json_key"
+	gcpServer2 := "us-west1-docker.pkg.dev"
+	gcpPasswd2, err := os.ReadFile(gcpKeyFile)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	return []testCaseKindClusterAvailablePackageEndpointsForOCISpec{
+		{
+			testName:    "Testing [" + gcp_stefanprodan_podinfo_oci_registry_url + "] with service access token",
+			registryUrl: gcp_stefanprodan_podinfo_oci_registry_url,
+			secret: newBasicAuthSecret(types.NamespacedName{
+				Name:      "oci-repo-secret-" + randSeq(4),
+				Namespace: "default"},
+				gcpUser,
+				string(gcpPasswd),
+			),
+		},
+		{
+			testName:    "Testing [" + gcp_stefanprodan_podinfo_oci_registry_url + "] with JSON key",
+			registryUrl: gcp_stefanprodan_podinfo_oci_registry_url,
+			secret: newDockerConfigJsonSecret(types.NamespacedName{
+				Name:      "oci-repo-secret-" + randSeq(4),
+				Namespace: "default"},
+				gcpServer2,
+				gcpUser2,
+				string(gcpPasswd2),
+			),
+		},
+		// negative test for no secret
+		{
+			testName:        "Testing [" + gcp_stefanprodan_podinfo_oci_registry_url + "] without a secret",
+			registryUrl:     gcp_stefanprodan_podinfo_oci_registry_url,
+			unauthenticated: true,
+		},
+		// negative test for bad username/secret
+		{
+			testName:    "Testing [" + gcp_stefanprodan_podinfo_oci_registry_url + "] bad username/secret",
+			registryUrl: gcp_stefanprodan_podinfo_oci_registry_url,
+			secret: newDockerConfigJsonSecret(types.NamespacedName{
+				Name:      "oci-repo-secret-" + randSeq(4),
+				Namespace: "default"},
+				gcpServer2,
+				"kaka",
+				"kaka",
+			),
+			unauthorized: true,
+		},
+	}
+}
+
+func TestKindClusterAvailablePackageEndpointsForOCI(t *testing.T) {
+	fluxPluginClient, fluxPluginReposClient, err := checkEnv(t)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// this is written this way so its relatively easy to comment out and run just a subset
+	// of the test cases when debugging failures
+	testCases := []testCaseKindClusterAvailablePackageEndpointsForOCISpec{}
+	testCases = append(testCases, testCaseKindClusterAvailablePackageEndpointsForGitHub(t)...)
+	testCases = append(testCases, testCaseKindClusterAvailablePackageEndpointsForHarbor(t)...)
+	testCases = append(testCases, testCaseKindClusterAvailablePackageEndpointsForGcp(t)...)
+
+	// TODO (gfichtenholt) harbor plainHTTP (not HTTPS) repo with robot account
+	//   this may or may not work see https://github.com/fluxcd/source-controller/issues/807
+	// TODO (gfichtenholt) TLS secret with CA
+	// TODO (gfichtenholt) TLS secret with CA, pub, priv assuming Flux supports it
+
+	/*
+		{
+			// this gets set up in ./testdata/integ-test-env.sh
+			// currently fails with AuthenticationFailed: failed to log into registry
+			//  'oci://registry-app-svc.default.svc.cluster.local:5000/helm-charts':
+			// Get "https://registry-app-svc.default.svc.cluster.local:5000/v2/":
+			// http: server gave HTTP response to HTTPS client
+			// the error comes from flux source-controller
+			// opened a new issue per souleb's request:
+			// https://github.com/fluxcd/source-controller/issues/805
+
+			testName:    "Testing [" + in_cluster_oci_registry_url + "]",
+			registryUrl: in_cluster_oci_registry_url,
+			secret: newBasicAuthSecret(types.NamespacedName{
+				Name:      "oci-repo-secret-" + randSeq(4),
+				Namespace: "default"},
+				"foo",
+				"bar",
+			),
+		},
+	*/
+
+	testKindClusterAvailablePackageEndpointsForOCIHelper(t, testCases, fluxPluginClient, fluxPluginReposClient)
 }
 
 func testKindClusterAvailablePackageEndpointsForOCIHelper(
 	t *testing.T,
-	tc testCaseKindClusterAvailablePackageEndpointsForOCISpec,
+	testCases []testCaseKindClusterAvailablePackageEndpointsForOCISpec,
 	fluxPluginClient fluxplugin.FluxV2PackagesServiceClient,
 	fluxPluginReposClient fluxplugin.FluxV2RepositoriesServiceClient) {
 
-	t.Run(tc.testName, func(t *testing.T) {
-		repoName := types.NamespacedName{
-			Name:      "my-podinfo-" + randSeq(4),
-			Namespace: "default",
-		}
+	for _, tc := range testCases {
+		t.Run(tc.testName, func(t *testing.T) {
+			repoName := types.NamespacedName{
+				Name:      "my-podinfo-" + randSeq(4),
+				Namespace: "default",
+			}
 
-		secretName := ""
-		if tc.secret != nil {
-			secretName = tc.secret.Name
+			secretName := ""
+			if tc.secret != nil {
+				secretName = tc.secret.Name
 
-			if err := kubeCreateSecretAndCleanup(t, tc.secret); err != nil {
+				if err := kubeCreateSecretAndCleanup(t, tc.secret); err != nil {
+					t.Fatal(err)
+				}
+			}
+
+			setUserManagedSecretsAndCleanup(t, fluxPluginReposClient, true)
+
+			if err := kubeAddHelmRepositoryAndCleanup(
+				t, repoName, "oci", tc.registryUrl, secretName, 0); err != nil {
 				t.Fatal(err)
 			}
-		}
-
-		setUserManagedSecretsAndCleanup(t, fluxPluginReposClient, true)
-
-		if err := kubeAddHelmRepositoryAndCleanup(
-			t, repoName, "oci", tc.registryUrl, secretName, 0); err != nil {
-			t.Fatal(err)
-		}
-		// wait until this repo reaches 'Ready'
-		err := kubeWaitUntilHelmRepositoryIsReady(t, repoName)
-		if !tc.unauthorized {
-			if err != nil {
-				t.Fatal(err)
-			}
-		} else {
-			if err != nil {
-				if strings.Contains(err.Error(), "AuthenticationFailed: failed to login to registry") {
-					return // nothing more to check
-				} else {
+			// wait until this repo reaches 'Ready'
+			err := kubeWaitUntilHelmRepositoryIsReady(t, repoName)
+			if !tc.unauthorized {
+				if err != nil {
 					t.Fatal(err)
 				}
 			} else {
-				t.Fatal("expected error, got nil")
+				if err != nil {
+					if strings.Contains(err.Error(), "AuthenticationFailed: failed to login to registry") {
+						return // nothing more to check
+					} else {
+						t.Fatal(err)
+					}
+				} else {
+					t.Fatal("expected error, got nil")
+				}
 			}
-		}
 
-		adminName := types.NamespacedName{
-			Name:      "test-admin-" + randSeq(4),
-			Namespace: "default",
-		}
-		grpcContext, err := newGrpcAdminContext(t, adminName)
-		if err != nil {
-			t.Fatal(err)
-		}
-
-		grpcContext, cancel := context.WithTimeout(grpcContext, defaultContextTimeout)
-		defer cancel()
-
-		resp, err := fluxPluginClient.GetAvailablePackageSummaries(
-			grpcContext,
-			&corev1.GetAvailablePackageSummariesRequest{})
-		if err != nil {
-			t.Fatal(err)
-		}
-
-		opt1 := cmpopts.IgnoreUnexported(
-			corev1.GetAvailablePackageSummariesResponse{},
-			corev1.AvailablePackageSummary{},
-			corev1.AvailablePackageReference{},
-			corev1.Context{},
-			plugins.Plugin{},
-			corev1.PackageAppVersion{})
-		opt2 := cmpopts.SortSlices(lessAvailablePackageFunc)
-		if !tc.unauthenticated {
-			if got, want := resp, expected_oci_stefanprodan_podinfo_available_summaries(repoName.Name); !cmp.Equal(got, want, opt1, opt2) {
-				t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opt1, opt2))
+			adminName := types.NamespacedName{
+				Name:      "test-admin-" + randSeq(4),
+				Namespace: "default",
 			}
-		} else {
-			if got, want := resp, no_available_summaries(repoName.Name); !cmp.Equal(got, want, opt1, opt2) {
-				t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opt1, opt2))
+			grpcContext, err := newGrpcAdminContext(t, adminName)
+			if err != nil {
+				t.Fatal(err)
 			}
-			return // nothing more to check
-		}
 
-		grpcContext, cancel = context.WithTimeout(grpcContext, defaultContextTimeout)
-		defer cancel()
-		resp2, err := fluxPluginClient.GetAvailablePackageVersions(
-			grpcContext, &corev1.GetAvailablePackageVersionsRequest{
-				AvailablePackageRef: &corev1.AvailablePackageReference{
-					Context: &corev1.Context{
-						Namespace: "default",
+			grpcContext, cancel := context.WithTimeout(grpcContext, defaultContextTimeout)
+			defer cancel()
+
+			resp, err := fluxPluginClient.GetAvailablePackageSummaries(
+				grpcContext,
+				&corev1.GetAvailablePackageSummariesRequest{})
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			opt1 := cmpopts.IgnoreUnexported(
+				corev1.GetAvailablePackageSummariesResponse{},
+				corev1.AvailablePackageSummary{},
+				corev1.AvailablePackageReference{},
+				corev1.Context{},
+				plugins.Plugin{},
+				corev1.PackageAppVersion{})
+			opt2 := cmpopts.SortSlices(lessAvailablePackageFunc)
+			if !tc.unauthenticated {
+				if got, want := resp, expected_oci_stefanprodan_podinfo_available_summaries(repoName.Name); !cmp.Equal(got, want, opt1, opt2) {
+					t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opt1, opt2))
+				}
+			} else {
+				if got, want := resp, no_available_summaries(repoName.Name); !cmp.Equal(got, want, opt1, opt2) {
+					t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opt1, opt2))
+				}
+				return // nothing more to check
+			}
+
+			grpcContext, cancel = context.WithTimeout(grpcContext, defaultContextTimeout)
+			defer cancel()
+			resp2, err := fluxPluginClient.GetAvailablePackageVersions(
+				grpcContext, &corev1.GetAvailablePackageVersionsRequest{
+					AvailablePackageRef: &corev1.AvailablePackageReference{
+						Context: &corev1.Context{
+							Namespace: "default",
+						},
+						Identifier: repoName.Name + "/podinfo",
 					},
-					Identifier: repoName.Name + "/podinfo",
-				},
-			})
-		if err != nil {
-			t.Fatal(err)
-		}
-		opts := cmpopts.IgnoreUnexported(
-			corev1.GetAvailablePackageVersionsResponse{},
-			corev1.PackageAppVersion{})
-		if got, want := resp2, expected_versions_stefanprodan_podinfo; !cmp.Equal(want, got, opts) {
-			t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opts))
-		}
+				})
+			if err != nil {
+				t.Fatal(err)
+			}
+			opts := cmpopts.IgnoreUnexported(
+				corev1.GetAvailablePackageVersionsResponse{},
+				corev1.PackageAppVersion{})
+			if got, want := resp2, expected_versions_stefanprodan_podinfo; !cmp.Equal(want, got, opts) {
+				t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opts))
+			}
 
-		grpcContext, cancel = context.WithTimeout(grpcContext, defaultContextTimeout)
-		defer cancel()
-		resp3, err := fluxPluginClient.GetAvailablePackageDetail(
-			grpcContext,
-			&corev1.GetAvailablePackageDetailRequest{
-				AvailablePackageRef: &corev1.AvailablePackageReference{
-					Context: &corev1.Context{
-						Namespace: "default",
+			grpcContext, cancel = context.WithTimeout(grpcContext, defaultContextTimeout)
+			defer cancel()
+			resp3, err := fluxPluginClient.GetAvailablePackageDetail(
+				grpcContext,
+				&corev1.GetAvailablePackageDetailRequest{
+					AvailablePackageRef: &corev1.AvailablePackageReference{
+						Context: &corev1.Context{
+							Namespace: "default",
+						},
+						Identifier: repoName.Name + "/podinfo",
 					},
-					Identifier: repoName.Name + "/podinfo",
-				},
-			})
-		if err != nil {
-			t.Fatal(err)
-		}
+				})
+			if err != nil {
+				t.Fatal(err)
+			}
 
-		compareActualVsExpectedAvailablePackageDetail(
-			t,
-			resp3.AvailablePackageDetail,
-			expected_detail_oci_stefanprodan_podinfo(repoName.Name, tc.registryUrl).AvailablePackageDetail)
+			compareActualVsExpectedAvailablePackageDetail(
+				t,
+				resp3.AvailablePackageDetail,
+				expected_detail_oci_stefanprodan_podinfo(repoName.Name, tc.registryUrl).AvailablePackageDetail)
 
-		// try a few older versions
-		grpcContext, cancel = context.WithTimeout(grpcContext, defaultContextTimeout)
-		defer cancel()
-		resp4, err := fluxPluginClient.GetAvailablePackageDetail(
-			grpcContext,
-			&corev1.GetAvailablePackageDetailRequest{
-				AvailablePackageRef: &corev1.AvailablePackageReference{
-					Context: &corev1.Context{
-						Namespace: "default",
+			// try a few older versions
+			grpcContext, cancel = context.WithTimeout(grpcContext, defaultContextTimeout)
+			defer cancel()
+			resp4, err := fluxPluginClient.GetAvailablePackageDetail(
+				grpcContext,
+				&corev1.GetAvailablePackageDetailRequest{
+					AvailablePackageRef: &corev1.AvailablePackageReference{
+						Context: &corev1.Context{
+							Namespace: "default",
+						},
+						Identifier: repoName.Name + "/podinfo",
 					},
-					Identifier: repoName.Name + "/podinfo",
-				},
-				PkgVersion: "6.1.6",
-			})
-		if err != nil {
-			t.Fatal(err)
-		}
+					PkgVersion: "6.1.6",
+				})
+			if err != nil {
+				t.Fatal(err)
+			}
 
-		compareActualVsExpectedAvailablePackageDetail(
-			t,
-			resp4.AvailablePackageDetail,
-			expected_detail_oci_stefanprodan_podinfo_2(repoName.Name, tc.registryUrl).AvailablePackageDetail)
-	})
+			compareActualVsExpectedAvailablePackageDetail(
+				t,
+				resp4.AvailablePackageDetail,
+				expected_detail_oci_stefanprodan_podinfo_2(repoName.Name, tc.registryUrl).AvailablePackageDetail)
+		})
+	}
 }
