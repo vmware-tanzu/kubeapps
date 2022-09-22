@@ -655,9 +655,6 @@ func (s *repoEventSink) newOCIChartRepositoryAndLoginWithOptions(registryURL str
 }
 
 func (s *repoEventSink) clientOptionsForOciRepo(ctx context.Context, repo sourcev1.HelmRepository) ([]registry.LoginOption, []getter.Option, *orasregistryauthv2.Credential, error) {
-	log.Infof("+clientOptionsForOciRepo(%s)", common.PrettyPrint(repo))
-	log.Info("-clientOptionsForOciRepo")
-
 	var loginOpts []registry.LoginOption
 	var cred *orasregistryauthv2.Credential
 	getterOpts := []getter.Option{

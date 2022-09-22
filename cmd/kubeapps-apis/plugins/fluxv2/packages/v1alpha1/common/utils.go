@@ -107,6 +107,18 @@ func PrettyPrint(o interface{}) string {
 	return string(prettyBytes)
 }
 
+func PreferObjectName(o interface{}) string {
+	if o == nil {
+		return "<nil>"
+	} else if obj, ok := o.(ctrlclient.Object); ok {
+		name := obj.GetName()
+		namespace := obj.GetNamespace()
+		return fmt.Sprintf("%s/%s", namespace, name)
+	} else {
+		return PrettyPrint(o)
+	}
+}
+
 func NamespacedName(obj ctrlclient.Object) (*types.NamespacedName, error) {
 	name := obj.GetName()
 	namespace := obj.GetNamespace()

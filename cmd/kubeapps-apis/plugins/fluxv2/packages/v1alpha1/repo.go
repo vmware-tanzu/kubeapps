@@ -171,34 +171,49 @@ func (s *Server) getChartsForRepos(ctx context.Context, match []string) (map[str
 		if value == nil {
 			chartsTyped[key] = nil
 		} else {
-			typedValue, ok := value.(repoCacheEntryValue)
+			typedValue, err := s.repoCacheEntryFromUntyped(key, value)
+			if err != nil {
+				return nil, err
+			} else if typedValue == nil {
+				chartsTyped[key] = nil
+			} else {
+				chartsTyped[key] = typedValue.Charts
+			}
+		}
+	}
+	return chartsTyped, nil
+}
+
+func (s *Server) repoCacheEntryFromUntyped(key string, value interface{}) (*repoCacheEntryValue, error) {
+	if value == nil {
+		return nil, nil
+	}
+	typedValue, ok := value.(repoCacheEntryValue)
+	if !ok {
+		return nil, status.Errorf(
+			codes.Internal,
+			"unexpected value fetched from cache: type: [%s], value: [%v]",
+			reflect.TypeOf(value), value)
+	}
+	if typedValue.Type == "oci" {
+		// ref https://github.com/vmware-tanzu/kubeapps/issues/5007#issuecomment-1217293240
+		// helm OCI chart repos are not automatically updated when the
+		// state on remote changes. So we will force new checksum
+		// computation and update local cache if needed
+		value, err := s.repoCache.ForceAndFetch(key)
+		if err != nil {
+			return nil, err
+		} else if value != nil {
+			typedValue, ok = value.(repoCacheEntryValue)
 			if !ok {
 				return nil, status.Errorf(
 					codes.Internal,
 					"unexpected value fetched from cache: type: [%s], value: [%v]",
 					reflect.TypeOf(value), value)
 			}
-			if typedValue.Type == "oci" {
-				// ref https://github.com/vmware-tanzu/kubeapps/issues/5007#issuecomment-1217293240
-				// helm OCI chart repos are not automatically updated when the
-				// state on remote changes. So we will force new checksum
-				// computation and update local cache if needed
-				value, err = s.repoCache.ForceAndFetch(key)
-				if err != nil {
-					return nil, err
-				}
-				typedValue, ok = value.(repoCacheEntryValue)
-				if !ok {
-					return nil, status.Errorf(
-						codes.Internal,
-						"unexpected value fetched from cache: type: [%s], value: [%v]",
-						reflect.TypeOf(value), value)
-				}
-			}
-			chartsTyped[key] = typedValue.Charts
 		}
 	}
-	return chartsTyped, nil
+	return &typedValue, nil
 }
 
 func (s *Server) httpClientOptionsForRepo(ctx context.Context, repoName types.NamespacedName) (*common.HttpClientOptions, error) {
