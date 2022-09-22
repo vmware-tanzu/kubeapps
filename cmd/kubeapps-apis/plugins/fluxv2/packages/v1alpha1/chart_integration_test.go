@@ -16,6 +16,7 @@ import (
 	"github.com/google/go-cmp/cmp/cmpopts"
 	corev1 "github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
 	plugins "github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/core/plugins/v1alpha1"
+	fluxplugin "github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/plugins/fluxv2/packages/v1alpha1"
 	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/fluxv2/packages/v1alpha1/common"
 	"golang.org/x/sync/semaphore"
 	"google.golang.org/grpc/codes"
@@ -518,6 +519,14 @@ func TestKindClusterRepoAndChartRBAC(t *testing.T) {
 	}
 }
 
+type testCaseKindClusterAvailablePackageEndpointsForOCISpec struct {
+	testName        string
+	registryUrl     string
+	secret          *apiv1.Secret
+	unauthenticated bool
+	unauthorized    bool
+}
+
 func TestKindClusterAvailablePackageEndpointsForOCI(t *testing.T) {
 	fluxPluginClient, fluxPluginReposClient, err := checkEnv(t)
 	if err != nil {
@@ -573,13 +582,7 @@ func TestKindClusterAvailablePackageEndpointsForOCI(t *testing.T) {
 		t.Fatal("Environment variable [HARBOR_VMWARE_CORP_ROBOT_SECRET] needs to be set to run this test")
 	}
 
-	testCases := []struct {
-		testName        string
-		registryUrl     string
-		secret          *apiv1.Secret
-		unauthenticated bool
-		unauthorized    bool
-	}{
+	testCases := []testCaseKindClusterAvailablePackageEndpointsForOCISpec{
 		{
 			testName:    "Testing [" + github_stefanprodan_podinfo_oci_registry_url + "] with basic auth secret",
 			registryUrl: github_stefanprodan_podinfo_oci_registry_url,
@@ -735,148 +738,157 @@ func TestKindClusterAvailablePackageEndpointsForOCI(t *testing.T) {
 		},
 	}
 
-	adminName := types.NamespacedName{
-		Name:      "test-admin-" + randSeq(4),
-		Namespace: "default",
-	}
-	grpcContext, err := newGrpcAdminContext(t, adminName)
-	if err != nil {
-		t.Fatal(err)
-	}
-
 	for _, tc := range testCases {
-		t.Run(tc.testName, func(t *testing.T) {
-			repoName := types.NamespacedName{
-				Name:      "my-podinfo-" + randSeq(4),
-				Namespace: "default",
-			}
-
-			secretName := ""
-			if tc.secret != nil {
-				secretName = tc.secret.Name
-
-				if err := kubeCreateSecretAndCleanup(t, tc.secret); err != nil {
-					t.Fatal(err)
-				}
-			}
-
-			setUserManagedSecretsAndCleanup(t, fluxPluginReposClient, true)
-
-			if err := kubeAddHelmRepositoryAndCleanup(
-				t, repoName, "oci", tc.registryUrl, secretName, 0); err != nil {
-				t.Fatal(err)
-			}
-			// wait until this repo reaches 'Ready'
-			err = kubeWaitUntilHelmRepositoryIsReady(t, repoName)
-			if !tc.unauthorized {
-				if err != nil {
-					t.Fatal(err)
-				}
-			} else {
-				if err != nil {
-					if strings.Contains(err.Error(), "AuthenticationFailed: failed to login to registry") {
-						return // nothing more to check
-					} else {
-						t.Fatal(err)
-					}
-				} else {
-					t.Fatal("expected error, got nil")
-				}
-			}
-
-			grpcContext, cancel := context.WithTimeout(grpcContext, defaultContextTimeout)
-			defer cancel()
-
-			resp, err := fluxPluginClient.GetAvailablePackageSummaries(
-				grpcContext,
-				&corev1.GetAvailablePackageSummariesRequest{})
-			if err != nil {
-				t.Fatal(err)
-			}
-
-			opt1 := cmpopts.IgnoreUnexported(
-				corev1.GetAvailablePackageSummariesResponse{},
-				corev1.AvailablePackageSummary{},
-				corev1.AvailablePackageReference{},
-				corev1.Context{},
-				plugins.Plugin{},
-				corev1.PackageAppVersion{})
-			opt2 := cmpopts.SortSlices(lessAvailablePackageFunc)
-			if !tc.unauthenticated {
-				if got, want := resp, expected_oci_stefanprodan_podinfo_available_summaries(repoName.Name); !cmp.Equal(got, want, opt1, opt2) {
-					t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opt1, opt2))
-				}
-			} else {
-				if got, want := resp, no_available_summaries(repoName.Name); !cmp.Equal(got, want, opt1, opt2) {
-					t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opt1, opt2))
-				}
-				return // nothing more to check
-			}
-
-			grpcContext, cancel = context.WithTimeout(grpcContext, defaultContextTimeout)
-			defer cancel()
-			resp2, err := fluxPluginClient.GetAvailablePackageVersions(
-				grpcContext, &corev1.GetAvailablePackageVersionsRequest{
-					AvailablePackageRef: &corev1.AvailablePackageReference{
-						Context: &corev1.Context{
-							Namespace: "default",
-						},
-						Identifier: repoName.Name + "/podinfo",
-					},
-				})
-			if err != nil {
-				t.Fatal(err)
-			}
-			opts := cmpopts.IgnoreUnexported(
-				corev1.GetAvailablePackageVersionsResponse{},
-				corev1.PackageAppVersion{})
-			if got, want := resp2, expected_versions_stefanprodan_podinfo; !cmp.Equal(want, got, opts) {
-				t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opts))
-			}
-
-			grpcContext, cancel = context.WithTimeout(grpcContext, defaultContextTimeout)
-			defer cancel()
-			resp3, err := fluxPluginClient.GetAvailablePackageDetail(
-				grpcContext,
-				&corev1.GetAvailablePackageDetailRequest{
-					AvailablePackageRef: &corev1.AvailablePackageReference{
-						Context: &corev1.Context{
-							Namespace: "default",
-						},
-						Identifier: repoName.Name + "/podinfo",
-					},
-				})
-			if err != nil {
-				t.Fatal(err)
-			}
-
-			compareActualVsExpectedAvailablePackageDetail(
-				t,
-				resp3.AvailablePackageDetail,
-				expected_detail_oci_stefanprodan_podinfo(repoName.Name, tc.registryUrl).AvailablePackageDetail)
-
-			// try a few older versions
-			grpcContext, cancel = context.WithTimeout(grpcContext, defaultContextTimeout)
-			defer cancel()
-			resp4, err := fluxPluginClient.GetAvailablePackageDetail(
-				grpcContext,
-				&corev1.GetAvailablePackageDetailRequest{
-					AvailablePackageRef: &corev1.AvailablePackageReference{
-						Context: &corev1.Context{
-							Namespace: "default",
-						},
-						Identifier: repoName.Name + "/podinfo",
-					},
-					PkgVersion: "6.1.6",
-				})
-			if err != nil {
-				t.Fatal(err)
-			}
-
-			compareActualVsExpectedAvailablePackageDetail(
-				t,
-				resp4.AvailablePackageDetail,
-				expected_detail_oci_stefanprodan_podinfo_2(repoName.Name, tc.registryUrl).AvailablePackageDetail)
-		})
+		testKindClusterAvailablePackageEndpointsForOCIHelper(t, tc, fluxPluginClient, fluxPluginReposClient)
 	}
+}
+
+func testKindClusterAvailablePackageEndpointsForOCIHelper(
+	t *testing.T,
+	tc testCaseKindClusterAvailablePackageEndpointsForOCISpec,
+	fluxPluginClient fluxplugin.FluxV2PackagesServiceClient,
+	fluxPluginReposClient fluxplugin.FluxV2RepositoriesServiceClient) {
+
+	t.Run(tc.testName, func(t *testing.T) {
+		repoName := types.NamespacedName{
+			Name:      "my-podinfo-" + randSeq(4),
+			Namespace: "default",
+		}
+
+		secretName := ""
+		if tc.secret != nil {
+			secretName = tc.secret.Name
+
+			if err := kubeCreateSecretAndCleanup(t, tc.secret); err != nil {
+				t.Fatal(err)
+			}
+		}
+
+		setUserManagedSecretsAndCleanup(t, fluxPluginReposClient, true)
+
+		if err := kubeAddHelmRepositoryAndCleanup(
+			t, repoName, "oci", tc.registryUrl, secretName, 0); err != nil {
+			t.Fatal(err)
+		}
+		// wait until this repo reaches 'Ready'
+		err := kubeWaitUntilHelmRepositoryIsReady(t, repoName)
+		if !tc.unauthorized {
+			if err != nil {
+				t.Fatal(err)
+			}
+		} else {
+			if err != nil {
+				if strings.Contains(err.Error(), "AuthenticationFailed: failed to login to registry") {
+					return // nothing more to check
+				} else {
+					t.Fatal(err)
+				}
+			} else {
+				t.Fatal("expected error, got nil")
+			}
+		}
+
+		adminName := types.NamespacedName{
+			Name:      "test-admin-" + randSeq(4),
+			Namespace: "default",
+		}
+		grpcContext, err := newGrpcAdminContext(t, adminName)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		grpcContext, cancel := context.WithTimeout(grpcContext, defaultContextTimeout)
+		defer cancel()
+
+		resp, err := fluxPluginClient.GetAvailablePackageSummaries(
+			grpcContext,
+			&corev1.GetAvailablePackageSummariesRequest{})
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		opt1 := cmpopts.IgnoreUnexported(
+			corev1.GetAvailablePackageSummariesResponse{},
+			corev1.AvailablePackageSummary{},
+			corev1.AvailablePackageReference{},
+			corev1.Context{},
+			plugins.Plugin{},
+			corev1.PackageAppVersion{})
+		opt2 := cmpopts.SortSlices(lessAvailablePackageFunc)
+		if !tc.unauthenticated {
+			if got, want := resp, expected_oci_stefanprodan_podinfo_available_summaries(repoName.Name); !cmp.Equal(got, want, opt1, opt2) {
+				t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opt1, opt2))
+			}
+		} else {
+			if got, want := resp, no_available_summaries(repoName.Name); !cmp.Equal(got, want, opt1, opt2) {
+				t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opt1, opt2))
+			}
+			return // nothing more to check
+		}
+
+		grpcContext, cancel = context.WithTimeout(grpcContext, defaultContextTimeout)
+		defer cancel()
+		resp2, err := fluxPluginClient.GetAvailablePackageVersions(
+			grpcContext, &corev1.GetAvailablePackageVersionsRequest{
+				AvailablePackageRef: &corev1.AvailablePackageReference{
+					Context: &corev1.Context{
+						Namespace: "default",
+					},
+					Identifier: repoName.Name + "/podinfo",
+				},
+			})
+		if err != nil {
+			t.Fatal(err)
+		}
+		opts := cmpopts.IgnoreUnexported(
+			corev1.GetAvailablePackageVersionsResponse{},
+			corev1.PackageAppVersion{})
+		if got, want := resp2, expected_versions_stefanprodan_podinfo; !cmp.Equal(want, got, opts) {
+			t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opts))
+		}
+
+		grpcContext, cancel = context.WithTimeout(grpcContext, defaultContextTimeout)
+		defer cancel()
+		resp3, err := fluxPluginClient.GetAvailablePackageDetail(
+			grpcContext,
+			&corev1.GetAvailablePackageDetailRequest{
+				AvailablePackageRef: &corev1.AvailablePackageReference{
+					Context: &corev1.Context{
+						Namespace: "default",
+					},
+					Identifier: repoName.Name + "/podinfo",
+				},
+			})
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		compareActualVsExpectedAvailablePackageDetail(
+			t,
+			resp3.AvailablePackageDetail,
+			expected_detail_oci_stefanprodan_podinfo(repoName.Name, tc.registryUrl).AvailablePackageDetail)
+
+		// try a few older versions
+		grpcContext, cancel = context.WithTimeout(grpcContext, defaultContextTimeout)
+		defer cancel()
+		resp4, err := fluxPluginClient.GetAvailablePackageDetail(
+			grpcContext,
+			&corev1.GetAvailablePackageDetailRequest{
+				AvailablePackageRef: &corev1.AvailablePackageReference{
+					Context: &corev1.Context{
+						Namespace: "default",
+					},
+					Identifier: repoName.Name + "/podinfo",
+				},
+				PkgVersion: "6.1.6",
+			})
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		compareActualVsExpectedAvailablePackageDetail(
+			t,
+			resp4.AvailablePackageDetail,
+			expected_detail_oci_stefanprodan_podinfo_2(repoName.Name, tc.registryUrl).AvailablePackageDetail)
+	})
 }

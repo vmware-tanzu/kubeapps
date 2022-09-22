@@ -7,7 +7,7 @@ go 1.19
 
 replace (
 	// k8s.io/kubernetes is not intended to be used as a module, so versions are not being properly resolved.
-	// This replacement is required, see https://github.com/kubernetes/kubernetes/issues/79384
+	// This replacement is requiredƒ, see https://github.com/kubernetes/kubernetes/issues/79384
 	// As we support new k8s versions, this replacements should be also updated accordingly.
 	k8s.io/api => k8s.io/api v0.24.4
 	k8s.io/apiextensions-apiserver => k8s.io/apiextensions-apiserver v0.24.4
