@@ -224,7 +224,7 @@ func NewFixedClientProvider(clientsGetter *ClientGetter) ClientProviderInterface
 // Although we've already ensured that if the flux plugin is selected, that the service account
 // will be granted additional read privileges, we also need to ensure that the plugin can get a
 // config based on the service account rather than the request context
-func NewBackgroundClientProvider(options Options) FixedClusterClientProviderInterface {
+func NewBackgroundClientProvider(options Options, clientQPS float32, clientBurst int) FixedClusterClientProviderInterface {
 	return &FixedClusterClientProvider{ClientsFunc: func(ctx context.Context) (*ClientGetter, error) {
 		// Some plugins currently support interactions with the default (kubeapps) cluster only
 		if config, err := rest.InClusterConfig(); err != nil {
@@ -235,6 +235,8 @@ func NewBackgroundClientProvider(options Options) FixedClusterClientProviderInte
 			}
 			return nil, status.Errorf(code, "unable to get in cluster config due to: %v", err)
 		} else {
+			config.QPS = clientQPS
+			config.Burst = clientBurst
 			return buildClientGetter(config, options)
 		}
 	}}

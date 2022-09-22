@@ -16,6 +16,7 @@ import (
 
 // RegisterWithGRPCServer enables a plugin to register with a gRPC server
 // returning the server implementation.
+//
 //nolint:deadcode
 func RegisterWithGRPCServer(opts pluginsv1alpha1.GRPCPluginRegistrationOptions) (interface{}, error) {
 	log.Info("+fluxv2 RegisterWithGRPCServer")
@@ -25,7 +26,7 @@ func RegisterWithGRPCServer(opts pluginsv1alpha1.GRPCPluginRegistrationOptions) 
 	// 'Shutdown' hook
 	stopCh := make(chan struct{})
 
-	svr, err := NewServer(opts.ConfigGetter, opts.ClustersConfig.KubeappsClusterName, stopCh, opts.PluginConfigPath)
+	svr, err := NewServer(opts.ConfigGetter, opts.ClustersConfig.KubeappsClusterName, stopCh, opts.PluginConfigPath, opts.ClientQPS, opts.ClientBurst)
 	if err != nil {
 		return nil, err
 	}
@@ -36,6 +37,7 @@ func RegisterWithGRPCServer(opts pluginsv1alpha1.GRPCPluginRegistrationOptions) 
 
 // RegisterHTTPHandlerFromEndpoint enables a plugin to register an http
 // handler to translate to the gRPC request.
+//
 //nolint:deadcode
 func RegisterHTTPHandlerFromEndpoint(ctx context.Context, mux *runtime.ServeMux, endpoint string, opts []grpc.DialOption) error {
 	log.Info("+fluxv2 RegisterHTTPHandlerFromEndpoint")

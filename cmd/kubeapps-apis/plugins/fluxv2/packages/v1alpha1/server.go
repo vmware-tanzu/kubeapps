@@ -63,7 +63,7 @@ type Server struct {
 
 // NewServer returns a Server automatically configured with a function to obtain
 // the k8s client config.
-func NewServer(configGetter core.KubernetesConfigGetter, kubeappsCluster string, stopCh <-chan struct{}, pluginConfigPath string) (*Server, error) {
+func NewServer(configGetter core.KubernetesConfigGetter, kubeappsCluster string, stopCh <-chan struct{}, pluginConfigPath string, clientQPS float32, clientBurst int) (*Server, error) {
 	log.Infof("+fluxv2 NewServer(kubeappsCluster: [%v], pluginConfigPath: [%s]",
 		kubeappsCluster, pluginConfigPath)
 
@@ -94,7 +94,7 @@ func NewServer(configGetter core.KubernetesConfigGetter, kubeappsCluster string,
 			log.Fatalf("%s", err)
 		}
 
-		backgroundClientGetter := clientgetter.NewBackgroundClientProvider(clientgetter.Options{Scheme: scheme})
+		backgroundClientGetter := clientgetter.NewBackgroundClientProvider(clientgetter.Options{Scheme: scheme}, clientQPS, clientBurst)
 
 		s := repoEventSink{
 			clientGetter: backgroundClientGetter,
