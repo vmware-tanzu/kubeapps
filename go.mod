@@ -56,7 +56,6 @@ require (
 	github.com/improbable-eng/grpc-web v0.15.0
 	github.com/itchyny/gojq v0.12.9
 	github.com/jinzhu/copier v0.3.5
-	github.com/k14s/kapp v0.52.0
 	github.com/lib/pq v1.10.7
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/opencontainers/image-spec v1.0.3-0.20220729202839-6ad7100eb087
@@ -68,7 +67,8 @@ require (
 	github.com/srwiley/oksvg v0.0.0-20220731023508-a61f04f16b76
 	github.com/srwiley/rasterx v0.0.0-20220730225603-2ab79fcdd4ef
 	github.com/stretchr/testify v1.8.0
-	github.com/vmware-tanzu/carvel-kapp-controller v0.40.0
+	github.com/vmware-tanzu/carvel-kapp v0.53.0
+	github.com/vmware-tanzu/carvel-kapp-controller v0.41.2
 	github.com/vmware-tanzu/carvel-vendir v0.31.0
 	golang.org/x/net v0.0.0-20220906165146-f3363e06e74c
 	golang.org/x/sync v0.0.0-20220819030929-7fc1605a5dde
@@ -78,12 +78,12 @@ require (
 	google.golang.org/protobuf v1.28.1
 	gopkg.in/yaml.v3 v3.0.1
 	helm.sh/helm/v3 v3.9.4
-	k8s.io/api v0.25.0
+	k8s.io/api v0.25.1
 	k8s.io/apiextensions-apiserver v0.25.0
-	k8s.io/apimachinery v0.25.0
-	k8s.io/apiserver v0.24.4
+	k8s.io/apimachinery v0.25.1
+	k8s.io/apiserver v0.25.0
 	k8s.io/cli-runtime v0.24.4
-	k8s.io/client-go v0.25.0
+	k8s.io/client-go v0.25.1
 	k8s.io/klog/v2 v2.80.1
 	k8s.io/kubectl v0.24.4
 	k8s.io/kubernetes v1.24.4
@@ -111,7 +111,7 @@ require (
 	github.com/cenkalti/backoff/v4 v4.1.3 // indirect
 	github.com/cespare/xxhash/v2 v2.1.2 // indirect
 	github.com/chai2010/gettext-go v0.1.0 // indirect
-	github.com/cppforlife/cobrautil v0.0.0-20220411122935-c28a9f274a4e // indirect
+	github.com/cppforlife/cobrautil v0.0.0-20220907150944-da5ee3a6ab1f // indirect
 	github.com/cppforlife/color v1.9.1-0.20200716202919-6706ac40b835 // indirect
 	github.com/cppforlife/go-patch v0.2.0 // indirect
 	github.com/cyphar/filepath-securejoin v0.2.3 // indirect
@@ -237,7 +237,7 @@ require (
 	gopkg.in/inf.v0 v0.9.1 // indirect
 	gopkg.in/ini.v1 v1.67.0 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
-	k8s.io/component-base v0.25.0 // indirect
+	k8s.io/component-base v0.25.1 // indirect
 	k8s.io/kube-openapi v0.0.0-20220803164354-a70c9af30aea // indirect
 	nhooyr.io/websocket v1.8.7 // indirect
 	sigs.k8s.io/json v0.0.0-20220713155537-f223a00ba0e2 // indirect

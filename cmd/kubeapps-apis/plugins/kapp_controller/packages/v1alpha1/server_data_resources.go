@@ -8,8 +8,8 @@ import (
 	"fmt"
 	"strings"
 
-	ctlapp "github.com/k14s/kapp/pkg/kapp/app"
-	ctlres "github.com/k14s/kapp/pkg/kapp/resources"
+	ctlapp "github.com/vmware-tanzu/carvel-kapp/pkg/kapp/app"
+	ctlres "github.com/vmware-tanzu/carvel-kapp/pkg/kapp/resources"
 	kappctrlv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
 	packagingv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/packaging/v1alpha1"
 	datapackagingv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/apis/datapackaging/v1alpha1"

@@ -267,8 +267,8 @@ github.com/coreos/go-systemd/v22 v22.1.0/go.mod h1:xO0FLkIi5MaZafQlIrOotqXZ90ih+
 github.com/coreos/go-systemd/v22 v22.3.2/go.mod h1:Y58oyj3AT4RCenI/lSvhwexgC+NSVTIJ3seZv2GcEnc=
 github.com/coreos/pkg v0.0.0-20160727233714-3ac0863d7acf/go.mod h1:E3G3o1h8I7cfcXa63jLwjI0eiQQMgzzUDFVpN/nH/eA=
 github.com/coreos/pkg v0.0.0-20180928190104-399ea9e2e55f/go.mod h1:E3G3o1h8I7cfcXa63jLwjI0eiQQMgzzUDFVpN/nH/eA=
-github.com/cppforlife/cobrautil v0.0.0-20220411122935-c28a9f274a4e h1:4AxO89dwbgA957M8DX5AV/KsOmxDyAB1BES0INY+A/0=
-github.com/cppforlife/cobrautil v0.0.0-20220411122935-c28a9f274a4e/go.mod h1:2w+qxVu2KSGW78Ex/XaIqfh/OvBgjEsmN53S4T8vEyA=
+github.com/cppforlife/cobrautil v0.0.0-20220907150944-da5ee3a6ab1f h1:KkqeYFcNT2SHYUR5cGJ0YZoIZW12yFf36OBWFStufvk=
+github.com/cppforlife/cobrautil v0.0.0-20220907150944-da5ee3a6ab1f/go.mod h1:2w+qxVu2KSGW78Ex/XaIqfh/OvBgjEsmN53S4T8vEyA=
 github.com/cppforlife/color v1.9.1-0.20200716202919-6706ac40b835 h1:mYQweUIBD+TBRjIeQnJmXr0GSVMpI6O0takyb/aaOgo=
 github.com/cppforlife/color v1.9.1-0.20200716202919-6706ac40b835/go.mod h1:dYeVsKp1vvK8XjdTPR1gF+uk+9doxKeO3hqQTOCr7T4=
 github.com/cppforlife/go-cli-ui v0.0.0-20220622150351-995494831c6c h1:Au0iPWQ6E8TMil9HiGW/DI4CBttUpBOZWkzgqwq+PLg=
@@ -809,8 +809,6 @@ github.com/jung-kurt/gofpdf v1.0.3-0.20190309125859-24315acbbda5/go.mod h1:7Id9E
 github.com/k0kubun/colorstring v0.0.0-20150214042306-9440f1994b88/go.mod h1:3w7q1U84EfirKl04SVQ/s7nPm1ZPhiXd34z40TNz36k=
 github.com/k14s/difflib v0.0.0-20201117154628-0c031775bf57 h1:CwBRArr+BWBopnUJhDjJw86rPL/jGbEjfHWKzTasSqE=
 github.com/k14s/difflib v0.0.0-20201117154628-0c031775bf57/go.mod h1:B0xN2MiNBGWOWi9CcfAo9LBI8IU4J1utlbOIJCsmKr4=
-github.com/k14s/kapp v0.52.0 h1:4Q4OpFdnU09SqwPvl86opVtz6AuM9SUkbAY4fNIR2No=
-github.com/k14s/kapp v0.52.0/go.mod h1:kqb3aLxZFaRk6J3kPWnV58frxS1E1eshXIr5mBuH2zE=
 github.com/k14s/semver/v4 v4.0.1-0.20210701191048-266d47ac6115 h1:wKSifC/VbCaQMqXYn6/gSFqle82OX4bE3KYALDU9FlU=
 github.com/k14s/semver/v4 v4.0.1-0.20210701191048-266d47ac6115/go.mod h1:mGrnmO5qnhJIaSiwMo05cvRL6Ww9ccYbTgNFcm6RHZQ=
 github.com/k14s/starlark-go v0.0.0-20200720175618-3a5c849cc368 h1:4bcRTTSx+LKSxMWibIwzHnDNmaN1x52oEpvnjCy+8vk=
@@ -1350,8 +1348,10 @@ github.com/vishvananda/netns v0.0.0-20191106174202-0a2b9b5464df/go.mod h1:JP3t17
 github.com/vishvananda/netns v0.0.0-20200728191858-db3c7e526aae/go.mod h1:DD4vA1DwXk04H54A1oHXtwZmA0grkVMdPxx/VGLCah0=
 github.com/vito/go-interact v1.0.1 h1:O8xi8c93bRUv2Tb/v6HdiuGc+WnWt+AQzF74MOOdlBs=
 github.com/vito/go-interact v1.0.1/go.mod h1:HrdHSJXD2yn1MhlTwSIMeFgQ5WftiIorszVGd3S/DAA=
-github.com/vmware-tanzu/carvel-kapp-controller v0.40.0 h1:uW59TAbvH3iGaDv0Lh7h3vyZSky9Dw7lR7vS8a3KsCw=
-github.com/vmware-tanzu/carvel-kapp-controller v0.40.0/go.mod h1:F+9MyAvdn8iI4ry2wo5BeWyMoyc+jjVC8pZzNTCyJN8=
+github.com/vmware-tanzu/carvel-kapp v0.53.0 h1:7FG7adc7K+nDMva9vFk9FzOVIhXgVlQJJ39CMN3wYec=
+github.com/vmware-tanzu/carvel-kapp v0.53.0/go.mod h1:U2xQB7Bi7pLupnw8/gCH3xUnTQ0fhbjCLSd8GJ1WupY=
+github.com/vmware-tanzu/carvel-kapp-controller v0.41.2 h1:wBpWsrrZLEJgOoSwoBr+SlA0Cfyo1sxNgyIMozT1cAQ=
+github.com/vmware-tanzu/carvel-kapp-controller v0.41.2/go.mod h1:4RY30AmKTquKKcaOFkNHPEUIohywouFHueLyqs+6T6E=
 github.com/vmware-tanzu/carvel-vendir v0.31.0 h1:ThjSBXbwh1DqUlDbgkMBkEwSlXgM9Y+XPTMkJ24ffOs=
 github.com/vmware-tanzu/carvel-vendir v0.31.0/go.mod h1:XvFCOvgpj7+f9FUwKs9JWuaFpvTejP2wqF+sHKvYggs=
 github.com/vmware/govmomi v0.20.3/go.mod h1:URlwyTFZX72RmxtxuaFL2Uj3fD1JTvZdx59bHWk6aFU=

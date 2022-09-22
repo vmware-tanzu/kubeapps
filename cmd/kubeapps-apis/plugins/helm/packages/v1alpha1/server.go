@@ -65,7 +65,7 @@ type Server struct {
 	// clientGetter is a field so that it can be switched in tests for
 	// a fake client. NewServer() below sets this automatically with the
 	// non-test implementation.
-	clientGetter             clientgetter.ClientGetterFunc
+	clientGetter             clientgetter.ClientProviderInterface
 	globalPackagingNamespace string
 	globalPackagingCluster   string
 	manager                  utils.AssetManager
@@ -135,8 +135,13 @@ func NewServer(configGetter core.KubernetesConfigGetter, globalPackagingCluster 
 		log.Fatalf("%s", err)
 	}
 
+	clientProvider, err := clientgetter.NewClientProvider(configGetter, clientgetter.Options{Scheme: scheme})
+	if err != nil {
+		log.Fatalf("%s", err)
+	}
+
 	return &Server{
-		clientGetter: clientgetter.NewClientGetter(configGetter, clientgetter.Options{Scheme: scheme}),
+		clientGetter: clientProvider,
 		actionConfigGetter: func(ctx context.Context, pkgContext *corev1.Context) (*action.Configuration, error) {
 			cluster := pkgContext.GetCluster()
 			// Don't force clients to send a cluster unless we are sure all use-cases
@@ -163,17 +168,19 @@ func (s *Server) GetClients(ctx context.Context, cluster string) (kubernetes.Int
 	if s.clientGetter == nil {
 		return nil, nil, status.Errorf(codes.Internal, "server not configured with configGetter")
 	}
-	// TODO (gfichtenholt) Today this function returns 2 different
-	// clients (typed and dynamic). Now if one looks at the callers, it is clear that
-	// only one client is actually needed for a given scenario.
-	// So for now, in order not to make too many changes, I am going to do more work than
-	// is actually needed by getting *all* clients and returning them.
-	// But we should think about refactoring the callers to ask for only what's needed
-	dynamicClient, err := s.clientGetter.Dynamic(ctx, cluster)
+
+	// Usually only one of the clients is used for a given scenario,
+	// but with this we keep backwards compatibility
+	clients, err := s.clientGetter.GetClients(ctx, cluster)
+	if err != nil {
+		return nil, nil, status.Errorf(codes.FailedPrecondition, fmt.Sprintf("unable to get clients : %v", err))
+	}
+
+	dynamicClient, err := clients.Dynamic()
 	if err != nil {
 		return nil, nil, status.Errorf(codes.FailedPrecondition, fmt.Sprintf("unable to get client : %v", err))
 	}
-	typedClient, err := s.clientGetter.Typed(ctx, cluster)
+	typedClient, err := clients.Typed()
 	if err != nil {
 		return nil, nil, status.Errorf(codes.FailedPrecondition, fmt.Sprintf("unable to get client : %v", err))
 	}
@@ -440,7 +447,7 @@ func (s *Server) hasAccessToNamespace(ctx context.Context, cluster, namespace st
 	if namespace == s.GetGlobalPackagingNamespace() {
 		return nil
 	}
-	client, _, err := s.GetClients(ctx, cluster)
+	client, err := s.clientGetter.Typed(ctx, cluster)
 	if err != nil {
 		return err
 	}
@@ -691,7 +698,7 @@ func installedPkgDetailFromRelease(r *release.Release, ref *corev1.InstalledPack
 func (s *Server) CreateInstalledPackage(ctx context.Context, request *corev1.CreateInstalledPackageRequest) (*corev1.CreateInstalledPackageResponse, error) {
 	log.InfoS("+helm CreateInstalledPackage", "cluster", request.GetTargetContext().GetCluster(), "namespace", request.GetTargetContext().GetNamespace())
 
-	typedClient, _, err := s.GetClients(ctx, s.globalPackagingCluster)
+	typedClient, err := s.clientGetter.Typed(ctx, s.globalPackagingCluster)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "Unable to create kubernetes clientset: %v", err)
 	}
@@ -763,7 +770,7 @@ func (s *Server) UpdateInstalledPackage(ctx context.Context, request *corev1.Upd
 		return nil, status.Errorf(codes.FailedPrecondition, "Unable to find the available package used to deploy %q in the namespace %q.", releaseName, installedRef.GetContext().GetNamespace())
 	}
 
-	typedClient, _, err := s.GetClients(ctx, s.globalPackagingCluster)
+	typedClient, err := s.clientGetter.Typed(ctx, s.globalPackagingCluster)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "Unable to create kubernetes clientset: %v", err)
 	}
