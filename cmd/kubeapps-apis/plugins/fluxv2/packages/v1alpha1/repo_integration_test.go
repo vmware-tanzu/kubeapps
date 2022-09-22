@@ -1546,18 +1546,7 @@ func compareActualVsExpectedPackageRepositoryDetail(t *testing.T, actualDetail *
 	}
 }
 
-func setUserManagedSecrets(t *testing.T, fluxPluginReposClient v1alpha1.FluxV2RepositoriesServiceClient, value bool) {
-	ctx, cancel := context.WithTimeout(context.Background(), defaultContextTimeout)
-	defer cancel()
-
-	_, err := fluxPluginReposClient.SetUserManagedSecrets(
-		ctx, &v1alpha1.SetUserManagedSecretsRequest{Value: value})
-	if err != nil {
-		t.Fatal(err)
-	}
-}
-
-func setUserManagedSecretsAndCleanup(t *testing.T, fluxPluginReposClient v1alpha1.FluxV2RepositoriesServiceClient, value bool) {
+func setUserManagedSecrets(t *testing.T, fluxPluginReposClient v1alpha1.FluxV2RepositoriesServiceClient, value bool) bool {
 	ctx, cancel := context.WithTimeout(context.Background(), defaultContextTimeout)
 	defer cancel()
 
@@ -1566,15 +1555,23 @@ func setUserManagedSecretsAndCleanup(t *testing.T, fluxPluginReposClient v1alpha
 	if err != nil {
 		t.Fatal(err)
 	}
+	return oldValue.Value
+}
+
+func setUserManagedSecretsAndCleanup(t *testing.T, fluxPluginReposClient v1alpha1.FluxV2RepositoriesServiceClient, value bool) {
+	ctx, cancel := context.WithTimeout(context.Background(), defaultContextTimeout)
+	defer cancel()
+
+	oldValue := setUserManagedSecrets(t, fluxPluginReposClient, value)
 
 	t.Cleanup(func() {
 		ctx, cancel = context.WithTimeout(context.Background(), defaultContextTimeout)
 		defer cancel()
 
-		_, err = fluxPluginReposClient.SetUserManagedSecrets(
-			ctx, &v1alpha1.SetUserManagedSecretsRequest{Value: oldValue.Value})
+		_, err := fluxPluginReposClient.SetUserManagedSecrets(
+			ctx, &v1alpha1.SetUserManagedSecretsRequest{Value: oldValue})
 		if err != nil {
-			t.Fatalf("Failed to reset user managed secrets flag back to [%t] due to: %+v", oldValue.Value, err)
+			t.Fatalf("Failed to reset user managed secrets flag back to [%t] due to: %+v", oldValue, err)
 		}
 	})
 }
