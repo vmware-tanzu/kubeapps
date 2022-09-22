@@ -15,6 +15,9 @@ jobs:
   analyze:
     name: Analyze
     runs-on: ubuntu-latest
+    # Known issue for go 1.18 support in codeql-go
+    # ref https://bytemeta.vip/repo/github/codeql-action/issues/1059?page=2
+    continue-on-error: true
     permissions:
       actions: read
       contents: read
