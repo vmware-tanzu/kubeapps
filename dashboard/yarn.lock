@@ -12049,10 +12049,10 @@ sass-loader@^12.3.0:
     klona "^2.0.4"
     neo-async "^2.6.2"
 
-sass@^1.54.9:
-  version "1.54.9"
-  resolved "https://registry.yarnpkg.com/sass/-/sass-1.54.9.tgz#b05f14ed572869218d1a76961de60cd647221762"
-  integrity sha512-xb1hjASzEH+0L0WI9oFjqhRi51t/gagWnxLiwUNMltA0Ab6jIDkAacgKiGYKM9Jhy109osM7woEEai6SXeJo5Q==
+sass@^1.55.0:
+  version "1.55.0"
+  resolved "https://registry.yarnpkg.com/sass/-/sass-1.55.0.tgz#0c4d3c293cfe8f8a2e8d3b666e1cf1bff8065d1c"
+  integrity sha512-Pk+PMy7OGLs9WaxZGJMn7S96dvlyVBwwtToX895WmCpAOr5YiJYEUJfiJidMuKb613z2xNWcXCHEuOvjZbqC6A==
   dependencies:
     chokidar ">=3.0.0 <4.0.0"
     immutable "^4.0.0"
@@ -13351,10 +13351,10 @@ ts-proto-descriptors@1.7.1:
     long "^4.0.0"
     protobufjs "^6.8.8"
 
-ts-proto@^1.126.0:
-  version "1.126.0"
-  resolved "https://registry.yarnpkg.com/ts-proto/-/ts-proto-1.126.0.tgz#ef795794264d464012dc486d2bae5f6b60ea3eec"
-  integrity sha512-f2dKsGTJm4L48fFNTaEiScqrCDsqp5FqTK8TvoPaxr7mCrvZyG3YTEYPtEaDeUaxbiTZEjUa4QJTBAiMAbpHHA==
+ts-proto@^1.126.1:
+  version "1.126.1"
+  resolved "https://registry.yarnpkg.com/ts-proto/-/ts-proto-1.126.1.tgz#ad016943709a23d755bb18b8bed6154e1b412348"
+  integrity sha512-PKrcgd0mCQJDY7tp+th349uYhnjs2Tz7wSqm9+DBcodl3YCKPt1pFtFmApOZdQ8WlghhgKAuJDIRQJBd6jD5YA==
   dependencies:
     "@types/object-hash" "^1.3.0"
     dataloader "^1.4.0"
