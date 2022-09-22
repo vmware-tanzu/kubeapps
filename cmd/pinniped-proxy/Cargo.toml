@@ -17,7 +17,7 @@ cached = "0.39"
 chrono = "0.4"
 hyper = { version = "0.14", features = ["server"] }
 hyper-tls = "0.5"
-kube = { version = "0.74.0" }
+kube = { version = "0.75.0" }
 kube-derive = { version = "0.74.0"}
 kube-runtime = "0.74.0"
 k8s-openapi = { version = "0.15.0", default-features = false}
