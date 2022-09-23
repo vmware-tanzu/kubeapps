@@ -64,6 +64,8 @@ jobs:
       img_prod_tag: ${{ steps.set-outputs.outputs.img_prod_tag }}
       postgresql_version: ${{ steps.set-outputs.outputs.postgresql_version }}
       rust_version: ${{ steps.set-outputs.outputs.rust_version }}
+      running_on_main: ${{ steps.set-outputs.outputs.running_on_main }}
+      running_on_tag: ${{ steps.set-outputs.outputs.running_on_tag }}
       triggered_from_fork: ${{ steps.set-outputs.outputs.triggered_from_fork }}
     steps:
       - name: Set outputs
@@ -82,7 +84,19 @@ jobs:
             echo "::set-output name=img_prod_tag::${GITHUB_REF_NAME}"
           else
             echo "::set-output name=img_prod_tag::latest"
-          fi;          
+          fi;
+          
+          if [[ ${GITHUB_REF_NAME} == ${BRANCH_KUBEAPPS_REPO} ]]; then
+            echo "::set-output name=running_on_main::true"
+          else
+            echo "::set-output name=running_on_main::false"
+          fi
+          
+          if [[ ${GITHUB_REF_TYPE} == "tag" && ${GITHUB_REF_NAME} =~ ^v[0-9]+ ]]; then
+            echo "::set-output name=running_on_tag::true"
+          else
+            echo "::set-output name=running_on_tag::false"
+          fi
 
           echo "::set-output name=ssh_key_kubeapps_deploy_filename::${SSH_KEY_KUBEAPPS_DEPLOY_FILENAME}"
           echo "::set-output name=ssh_key_forked_charts_deploy_filename::${SSH_KEY_FORKED_CHARTS_DEPLOY_FILENAME}"
@@ -100,6 +114,8 @@ jobs:
           echo "IMG_PROD_TAG: ${{steps.set-outputs.outputs.img_prod_tag}}"
           echo "POSTGRESQL_VERSION: ${{steps.set-outputs.outputs.postgresql_version}}"
           echo "RUST_VERSION: ${{steps.set-outputs.outputs.rust_version}}"
+          echo "RUNNING_ON_MAIN: ${{steps.set-outputs.outputs.running_on_main}}"
+          echo "RUNNING_ON_TAG: ${{steps.set-outputs.outputs.running_on_tag}}"
           echo "TRIGGERED_FROM_FORK: ${{steps.set-outputs.outputs.triggered_from_fork}}"
 
   test_go:
@@ -326,6 +342,7 @@ jobs:
   sync_chart_from_bitnami:
     needs:
       - setup
+    if: needs.setup.outputs.running_on_main == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -414,6 +431,7 @@ jobs:
   sync_chart_to_bitnami:
     needs:
       - setup
+    if: needs.setup.outputs.running_on_tag == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
