@@ -18,6 +18,7 @@ CHARTS_REPO_ORIGINAL=${4:?Missing base chart repository}
 BRANCH_CHARTS_REPO_ORIGINAL=${5:?Missing base chart repository branch}
 CHARTS_REPO_FORKED=${6:?Missing forked chart repository}
 BRANCH_CHARTS_REPO_FORKED=${7:?Missing forked chart repository branch}
+DEV_MODE=${8:-false}
 
 info "USERNAME: ${USERNAME}"
 info "EMAIL: ${EMAIL}"
@@ -26,6 +27,7 @@ info "CHARTS_REPO_ORIGINAL: ${CHARTS_REPO_ORIGINAL}"
 info "BRANCH_CHARTS_REPO_ORIGINAL: ${BRANCH_CHARTS_REPO_ORIGINAL}"
 info "CHARTS_REPO_FORKED: ${CHARTS_REPO_FORKED}"
 info "BRANCH_CHARTS_REPO_FORKED: ${BRANCH_CHARTS_REPO_FORKED}"
+info "DEV_MODE: ${DEV_MODE}"
 
 currentVersion=$(grep -oP '(?<=^version: ).*' <"${KUBEAPPS_CHART_DIR}/Chart.yaml")
 externalVersion=$(curl -s "https://raw.githubusercontent.com/${CHARTS_REPO_ORIGINAL}/${BRANCH_CHARTS_REPO_ORIGINAL}/${CHART_REPO_PATH}/Chart.yaml" | grep -oP '(?<=^version: ).*')
@@ -48,13 +50,10 @@ if [[ ${semverCompare} -gt 0 ]]; then
     info "Repos configured"
 
     latestVersion=$(latestReleaseTag "${PROJECT_DIR}")
-    info "Got latest version: ${latestVersion}"
     prBranchName="kubeapps-bump-${currentVersion}"
 
     updateRepoWithLocalChanges "${CHARTS_FORK_LOCAL_PATH}" "${latestVersion}" "${CHARTS_REPO_ORIGINAL}" "${BRANCH_CHARTS_REPO_ORIGINAL}" "${BRANCH_CHARTS_REPO_FORKED}"
-    info "Repo updated with local changes"
-    commitAndSendExternalPR "${CHARTS_FORK_LOCAL_PATH}" "${prBranchName}" "${currentVersion}" "${CHARTS_REPO_ORIGINAL}" "${BRANCH_CHARTS_REPO_ORIGINAL}"
-    info "Commit created and external PR filed"
+    commitAndSendExternalPR "${CHARTS_FORK_LOCAL_PATH}" "${prBranchName}" "${currentVersion}" "${CHARTS_REPO_ORIGINAL}" "${BRANCH_CHARTS_REPO_ORIGINAL}" "${DEV_MODE}"
 elif [[ ${semverCompare} -lt 0 ]]; then
     echo "Skipping Chart sync. WARNING Current chart version (${currentVersion}) is less than the chart external version (${externalVersion})"
 else

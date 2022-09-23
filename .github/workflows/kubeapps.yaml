@@ -6,29 +6,22 @@ name: Kubeapps general pipeline
 on:
   push:
     branches:
-      - main
-      - migrate-ci
   pull_request:
     branches:
       - main
 
 env:
-#  CHARTS_REPO_ORIGINAL: "bitnami/charts"
-  CHARTS_REPO_ORIGINAL: "beni0888/bitnami-charts-original"
+  CHARTS_REPO_ORIGINAL: "bitnami/charts"
   BRANCH_CHARTS_REPO_ORIGINAL: "master"
-#  CHARTS_REPO_FORKED: "kubeapps-bot/charts"
-  CHARTS_REPO_FORKED: "beni0888-dev/bitnami-charts-original"
+  CHARTS_REPO_FORKED: "kubeapps-bot/charts"
   BRANCH_CHARTS_REPO_FORKED: "master"
-#  CI_BOT_USERNAME: "kubeapps-bot"
-#  CI_BOT_EMAIL: "tanzu-kubeapps-team@vmware.com"
-#  CI_BOT_GPG: "80B6EB16B1328FB18DFF2A073EBA68F3347E319D"
-  CI_BOT_USERNAME: "beni0888-dev"
-  CI_BOT_EMAIL: "jesus.benito.c+dev@gmail.com"
-  CI_BOT_GPG: "6E170080789437AEC1A631ADD1A3271D2C2B0A6F"
+  CI_BOT_USERNAME: "kubeapps-bot"
+  CI_BOT_EMAIL: "tanzu-kubeapps-team@vmware.com"
+  CI_BOT_GPG: "80B6EB16B1328FB18DFF2A073EBA68F3347E319D"
+  DEV_MODE: "true"
   SSH_KEY_KUBEAPPS_DEPLOY_FILENAME: "id_rsa_kubeapps_deploy_key"
   SSH_KEY_FORKED_CHARTS_DEPLOY_FILENAME: "id_rsa_forked_charts_deploy_key"
-#  KUBEAPPS_REPO: "vmware-tanzu/kubeapps"
-  KUBEAPPS_REPO: "beni0888/kubeapps"
+  KUBEAPPS_REPO: "vmware-tanzu/kubeapps"
   BRANCH_KUBEAPPS_REPO: "main"
   README_GENERATOR_REPO: "bitnami-labs/readme-generator-for-helm"
   DOCKER_VERSION: "20.10.14"
@@ -415,7 +408,8 @@ jobs:
               ${BRANCH_CHARTS_REPO_FORKED} \
               ${KUBEAPPS_REPO} \
               ${BRANCH_KUBEAPPS_REPO} \
-              ${README_GENERATOR_REPO}
+              ${README_GENERATOR_REPO} \
+              ${DEV_MODE}
 
   sync_chart_to_bitnami:
     needs:
@@ -485,7 +479,8 @@ jobs:
               ${CHARTS_REPO_ORIGINAL} \
               ${BRANCH_CHARTS_REPO_ORIGINAL} \
               ${CHARTS_REPO_FORKED} \
-              ${BRANCH_CHARTS_REPO_FORKED}
+              ${BRANCH_CHARTS_REPO_FORKED} \
+              ${DEV_MODE}
 
   local_e2e_tests:
     needs:
