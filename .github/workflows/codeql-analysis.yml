@@ -15,6 +15,9 @@ jobs:
   analyze:
     name: Analyze
     runs-on: ubuntu-latest
+    # Known issue for go 1.18 support in codeql-go
+    # ref https://bytemeta.vip/repo/github/codeql-action/issues/1059?page=2
+    continue-on-error: true
     permissions:
       actions: read
       contents: read
@@ -31,6 +34,12 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v3
 
+      - name: Set up Go
+        uses: actions/setup-go@v2
+        with:
+          go-version: 1.18
+        if: ${{ matrix.language == 'go' }}
+      
       # Initializes the CodeQL tools for scanning.
       - name: Initialize CodeQL
         uses: github/codeql-action/init@v2
