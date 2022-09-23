@@ -10891,10 +10891,10 @@ protobufjs@^6.11.3, protobufjs@^6.8.8:
     "@types/node" ">=13.7.0"
     long "^4.0.0"
 
-protobufjs@^7.1.1:
-  version "7.1.1"
-  resolved "https://registry.yarnpkg.com/protobufjs/-/protobufjs-7.1.1.tgz#0117befb4b0f5a49d028e93f2ca62c3c1f5e7c65"
-  integrity sha512-d0nMQqS/aT3lfV8bKi9Gbg73vPd2LcDdTDOu6RE/M+h9DY8g1EmDzk3ADPccthEWfTBjkR2oxNdx9Gs8YubT+g==
+protobufjs@^7.1.2:
+  version "7.1.2"
+  resolved "https://registry.yarnpkg.com/protobufjs/-/protobufjs-7.1.2.tgz#a0cf6aeaf82f5625bffcf5a38b7cd2a7de05890c"
+  integrity sha512-4ZPTPkXCdel3+L81yw3dG6+Kq3umdWKh7Dc7GW/CpNk4SX3hK58iPCWeCyhVTDrbkNeKrYNZ7EojM5WDaEWTLQ==
   dependencies:
     "@protobufjs/aspromise" "^1.1.2"
     "@protobufjs/base64" "^1.1.2"
