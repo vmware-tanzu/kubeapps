@@ -26,7 +26,6 @@ import (
 	"net/url"
 	"os"
 	"path"
-	"reflect"
 	"sort"
 	"strings"
 
@@ -229,8 +228,8 @@ func (r *OCIChartRepository) listRepositoryNames() ([]string, error) {
 				r.repositoryLister = lister
 				break
 			} else {
-				log.Infof("Lister [%v] not applicable for registry with URL [%s] due to: [%v]",
-					reflect.TypeOf(lister), r.url.String(), err)
+				log.Infof("Lister [%T] not applicable for registry with URL [%s] due to: [%v]",
+					lister, r.url.String(), err)
 			}
 		}
 	}
@@ -289,6 +288,7 @@ func (r *OCIChartRepository) getTags(ref string) ([]string, error) {
 
 // TODO (gfichtenholt) Call this at some point :)
 // logout attempts to logout from the OCI registry.
+//
 //nolint:unused
 func (r *OCIChartRepository) logout() error {
 	log.Info("+logout")
@@ -646,9 +646,9 @@ func (s *repoEventSink) newOCIChartRepositoryAndLoginWithOptions(registryURL str
 	// Attempt to login to the registry if credentials are provided.
 	if loginOpts != nil {
 		err := ociRepo.registryClient.Login(ociRepo.url.Host, loginOpts...)
-		log.Infof("login(%s): %v", ociRepo.url.Host, err)
+		log.Infof("login(%s): err code: [%d], %v", ociRepo.url.Host, status.Code(err), err)
 		if err != nil {
-			return nil, err
+			return nil, status.Errorf(codes.Internal, "failed to login to registry '%s' due to %v", registryURL, err)
 		}
 	}
 	return ociRepo, nil

@@ -9,7 +9,6 @@ import (
 	"encoding/base64"
 	"encoding/gob"
 	"fmt"
-	"reflect"
 	"regexp"
 	"strings"
 	"time"
@@ -147,9 +146,9 @@ func (s *Server) filterReadyReposByName(repoList []sourcev1.HelmRepository, matc
 }
 
 // Notes:
-// 1. with flux, an available package may be from a repo in any namespace accessible to the caller
-// 2. can't rely on cache as a real source of truth for key names
-//    because redis may evict cache entries due to memory pressure to make room for new ones
+//  1. with flux, an available package may be from a repo in any namespace accessible to the caller
+//  2. can't rely on cache as a real source of truth for key names
+//     because redis may evict cache entries due to memory pressure to make room for new ones
 func (s *Server) getChartsForRepos(ctx context.Context, match []string) (map[string][]models.Chart, error) {
 	repoList, err := s.listReposInAllNamespaces(ctx)
 	if err != nil {
@@ -192,8 +191,8 @@ func (s *Server) repoCacheEntryFromUntyped(key string, value interface{}) (*repo
 	if !ok {
 		return nil, status.Errorf(
 			codes.Internal,
-			"unexpected value fetched from cache: type: [%s], value: [%v]",
-			reflect.TypeOf(value), value)
+			"unexpected value fetched from cache: type: [%T], value: [%v]",
+			value, value)
 	}
 	if typedValue.Type == "oci" {
 		// ref https://github.com/vmware-tanzu/kubeapps/issues/5007#issuecomment-1217293240
@@ -208,8 +207,8 @@ func (s *Server) repoCacheEntryFromUntyped(key string, value interface{}) (*repo
 			if !ok {
 				return nil, status.Errorf(
 					codes.Internal,
-					"unexpected value fetched from cache: type: [%s], value: [%v]",
-					reflect.TypeOf(value), value)
+					"unexpected value fetched from cache: type: [%T], value: [%v]",
+					value, value)
 			}
 		}
 	}
@@ -551,7 +550,9 @@ func (s *Server) createKubeappsManagedRepoSecret(
 // using owner references on the secret so that it can be
 // (1) cleaned up automatically and/or
 // (2) enable some control (ie. if I add a secret manually
-//   via kubectl before running kubeapps, it won't get deleted just
+//
+//	via kubectl before running kubeapps, it won't get deleted just
+//
 // because Kubeapps is deleting it)?
 // see https://github.com/vmware-tanzu/kubeapps/pull/4630#discussion_r861446394 for details
 func (s *Server) setOwnerReferencesForRepoSecret(
@@ -753,9 +754,7 @@ func (s *Server) deleteRepo(ctx context.Context, repoRef *corev1.PackageReposito
 	}
 }
 
-//
 // implements plug-in specific cache-related functionality
-//
 type repoEventSink struct {
 	clientGetter clientgetter.BackgroundClientGetterFunc
 	chartCache   *cache.ChartCache // chartCache maybe nil only in unit tests
@@ -775,7 +774,7 @@ func (s *repoEventSink) onAddRepo(key string, obj ctrlclient.Object) (interface{
 	defer log.V(4).Info("-onAddRepo()")
 
 	if repo, ok := obj.(*sourcev1.HelmRepository); !ok {
-		return nil, false, fmt.Errorf("expected an instance of *sourcev1.HelmRepository, got: %s", reflect.TypeOf(obj))
+		return nil, false, fmt.Errorf("expected an instance of *sourcev1.HelmRepository, got: %T", obj)
 	} else if isRepoReady(*repo) {
 		if repo.Spec.Type == sourcev1.HelmRepositoryTypeOCI {
 			return s.onAddOciRepo(*repo)
@@ -909,7 +908,7 @@ func (s *repoEventSink) indexOneRepo(repo sourcev1.HelmRepository) ([]models.Cha
 // onModifyRepo essentially tells the cache whether or not to and what to store for a given key
 func (s *repoEventSink) onModifyRepo(key string, obj ctrlclient.Object, oldValue interface{}) (interface{}, bool, error) {
 	if repo, ok := obj.(*sourcev1.HelmRepository); !ok {
-		return nil, false, fmt.Errorf("expected an instance of *sourcev1.HelmRepository, got: %s", reflect.TypeOf(obj))
+		return nil, false, fmt.Errorf("expected an instance of *sourcev1.HelmRepository, got: %T", obj)
 	} else if isRepoReady(*repo) {
 		// first check the repo is ready
 
@@ -1282,7 +1281,7 @@ func getRepoTlsConfigAndAuthWithUserManagedSecrets(secret *apiv1.Secret) (*corev
 
 // TODO (gfichtenolt) Per slack discussion
 // In fact, keeping the existing API might mean we could return exactly what it already does today
-//(i.e. all secrets) if called with an extra explicit option (includeSecrets=true in the request
+// (i.e. all secrets) if called with an extra explicit option (includeSecrets=true in the request
 // message, not sure, similar to kubectl  config view --raw) and by default the secrets are REDACTED
 // as you mention? This would mean clients will by default see only REDACTED secrets,
 // but can request the full sensitive data when necessary?

@@ -5,7 +5,6 @@ package cache
 
 import (
 	"fmt"
-	"reflect"
 	"strings"
 	"sync"
 	"time"
@@ -58,8 +57,7 @@ func (q *rateLimitingType) AddRateLimited(item interface{}) {
 	}
 	if itemstr, ok := item.(string); !ok {
 		// workqueue.Interface does not allow returning errors, so
-		runtime.HandleError(fmt.Errorf("invalid argument: expected string, found: [%s]",
-			reflect.TypeOf(item)))
+		runtime.HandleError(fmt.Errorf("invalid argument: expected string, found: [%T]", item))
 	} else {
 		q.DelayingInterface.AddAfter(itemstr, duration)
 	}
@@ -167,8 +165,7 @@ func (q *Type) Add(item interface{}) {
 	}
 	if itemstr, ok := item.(string); !ok {
 		// workqueue.Interface does not allow returning errors, so
-		runtime.HandleError(fmt.Errorf("invalid argument: expected string, found: [%s]",
-			reflect.TypeOf(item)))
+		runtime.HandleError(fmt.Errorf("invalid argument: expected string, found: [%T]", item))
 	} else {
 		q.expected.Delete(itemstr)
 		if q.dirty.Has(itemstr) {
@@ -237,8 +234,7 @@ func (q *Type) Done(item interface{}) {
 
 	if itemstr, ok := item.(string); !ok {
 		// workqueue.Interface does not allow returning errors, so
-		runtime.HandleError(fmt.Errorf("invalid argument: expected string, found: [%s]",
-			reflect.TypeOf(item)))
+		runtime.HandleError(fmt.Errorf("invalid argument: expected string, found: [%T]", item))
 	} else {
 		q.processing.Delete(itemstr)
 		if q.dirty.Has(itemstr) {

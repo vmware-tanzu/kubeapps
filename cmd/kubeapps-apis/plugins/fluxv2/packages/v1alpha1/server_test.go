@@ -6,7 +6,6 @@ package main
 import (
 	"context"
 	"io"
-	"reflect"
 	"strings"
 	"testing"
 	"time"
@@ -368,7 +367,7 @@ func newServer(t *testing.T,
 		NewListFunc:  func() ctrlclient.ObjectList { return &sourcev1.HelmRepositoryList{} },
 		ListItemsFunc: func(ol ctrlclient.ObjectList) []ctrlclient.Object {
 			if hl, ok := ol.(*sourcev1.HelmRepositoryList); !ok {
-				t.Fatalf("Expected: *sourcev1.HelmRepositoryList, got: %s", reflect.TypeOf(ol))
+				t.Fatalf("Expected: *sourcev1.HelmRepositoryList, got: %T", ol)
 				return nil
 			} else {
 				ret := make([]ctrlclient.Object, len(hl.Items))

@@ -9,7 +9,6 @@ import (
 	"fmt"
 	"net/url"
 	"os"
-	"reflect"
 	"strings"
 	"sync"
 	"time"
@@ -75,8 +74,9 @@ type DownloadChartFn func(chartID, chartUrl, chartVersion string) ([]byte, error
 
 // chartCacheStoreEntry is what we'll be storing in the processing store
 // note that url and delete fields are mutually exclusive, you must either:
-//  - set url to non-empty string or
-//  - deleted flag to true
+//   - set url to non-empty string or
+//   - deleted flag to true
+//
 // setting both for a given entry does not make sense
 type chartCacheStoreEntry struct {
 	namespace  string
@@ -377,7 +377,7 @@ func (c *ChartCache) syncHandler(workerName, key string) error {
 
 	chart, ok := entry.(chartCacheStoreEntry)
 	if !ok {
-		return fmt.Errorf("unexpected object in cache store: [%s]", reflect.TypeOf(entry))
+		return fmt.Errorf("unexpected object in cache store: [%T]", entry)
 	}
 
 	if chart.deleted {
@@ -453,18 +453,18 @@ func (c *ChartCache) Fetch(key string) ([]byte, error) {
 }
 
 /*
- Get() is like Fetch() but if there is a cache miss, it will then get chart data based on
- the corresponding repo object, process it and then add it to the cache and return the
- result.
- This func should:
+Get() is like Fetch() but if there is a cache miss, it will then get chart data based on
+the corresponding repo object, process it and then add it to the cache and return the
+result.
+This func should:
 
- • return an error if the entry could not be computed due to not being able to read
- repos secretRef.
+• return an error if the entry could not be computed due to not being able to read
+repos secretRef.
 
- • return nil for any invalid chart name.
+• return nil for any invalid chart name.
 
- • otherwise return the bytes stored in the
- chart cache for the given entry
+• otherwise return the bytes stored in the
+chart cache for the given entry
 */
 func (c *ChartCache) Get(key string, chart *models.Chart, downloadFn DownloadChartFn) ([]byte, error) {
 	// TODO (gfichtenholt) it'd be nice to get rid of all arguments except for the key, similar to that of
@@ -583,7 +583,7 @@ func (c *ChartCache) WaitUntilResyncComplete() {
 
 func chartCacheKeyFunc(obj interface{}) (string, error) {
 	if entry, ok := obj.(chartCacheStoreEntry); !ok {
-		return "", fmt.Errorf("unexpected object in chartCacheKeyFunc: [%s]", reflect.TypeOf(obj))
+		return "", fmt.Errorf("unexpected object in chartCacheKeyFunc: [%T]", obj)
 	} else {
 		return chartCacheKeyFor(entry.namespace, entry.id, entry.version)
 	}

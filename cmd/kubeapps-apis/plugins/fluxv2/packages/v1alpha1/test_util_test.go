@@ -94,9 +94,7 @@ func (w *withWatchWrapper) Watch(ctx context.Context, list client.ObjectList, op
 	if err != nil {
 		return wi, err
 	} else if watcher, ok := wi.(*watch.RaceFreeFakeWatcher); !ok {
-		return wi, fmt.Errorf(
-			"Unexpected type for watcher, expected *watch.RaceFreeFakeWatcher, got: %s",
-			reflect.TypeOf(wi))
+		return wi, fmt.Errorf("Unexpected type for watcher, expected *watch.RaceFreeFakeWatcher, got: %T", wi)
 	} else {
 		w.watcher = watcher
 		return wi, err
@@ -374,7 +372,7 @@ func ctrlClientAndWatcher(t *testing.T, s *Server) (client.WithWatch, *watch.Rac
 	if ctrlClient, err := s.clientGetter.ControllerRuntime(ctx, s.kubeappsCluster); err != nil {
 		return nil, nil, err
 	} else if ww, ok := ctrlClient.(*withWatchWrapper); !ok {
-		return nil, nil, fmt.Errorf("Could not cast %s to: *withWatchWrapper", reflect.TypeOf(ctrlClient))
+		return nil, nil, fmt.Errorf("Could not cast %T to: *withWatchWrapper", ctrlClient)
 	} else if watcher := ww.watcher; watcher == nil {
 		return nil, nil, fmt.Errorf("Unexpected condition watcher is nil")
 	} else {
