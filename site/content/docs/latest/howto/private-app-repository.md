@@ -195,7 +195,7 @@ curl --data-binary "@my-chart-1.0.0.tgz" http://localhost:8080/api/charts
 
 It is possible to configure ChartMuseum to use authentication with two different mechanisms:
 
-- Using HTTP [basic authentication](https://chartmuseum.com/docs/#basic-auth) (user/password). To use this feature, it's needed to:
+- Using HTTP [basic authentication](https://chartmuseum.com/docs/#basic-auth) (user/password). To use this feature, it is needed to:
   - Specify the parameters `secret.AUTH_USER` and `secret.AUTH_PASS` when deploying the ChartMuseum.
   - Select `Basic Auth` when adding the repository to Kubeapps specifying that user and password.
 - Using a [JWT token](https://github.com/chartmuseum/auth-server-example). Once you obtain a valid token you can select `Bearer Token` in the form and add the token in the dedicated field.
