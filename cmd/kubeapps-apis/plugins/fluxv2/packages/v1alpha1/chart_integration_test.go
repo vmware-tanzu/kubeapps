@@ -560,7 +560,7 @@ func testCaseKindClusterAvailablePackageEndpointsForGitHub(t *testing.T) []testC
 }
 
 func testCaseKindClusterAvailablePackageEndpointsForHarbor(t *testing.T) []testCaseKindClusterAvailablePackageEndpointsForOCISpec {
-	if err := setupHarborStefanProdanClone(t); err != nil {
+	if err := setupHarborForIntegrationTest(t); err != nil {
 		t.Fatal(err)
 	}
 
@@ -940,6 +940,103 @@ func testKindClusterAvailablePackageEndpointsForOCIHelper(
 				t,
 				resp4.AvailablePackageDetail,
 				expected_detail_oci_stefanprodan_podinfo_2(repoName.Name, tc.registryUrl).AvailablePackageDetail)
+		})
+	}
+}
+
+func TestKindClusterAvailablePackageEndpointsOCIRepo2Charts(t *testing.T) {
+	fluxPluginClient, fluxPluginReposClient, err := checkEnv(t)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := setupHarborForIntegrationTest(t); err != nil {
+		t.Fatal(err)
+	}
+
+	testCases := []struct {
+		testName    string
+		registryUrl string
+		secret      *apiv1.Secret
+	}{
+		{
+			testName:    "Testing [" + harbor_repo_with_2_charts_oci_registry_url + "] with basic auth secret (admin)",
+			registryUrl: harbor_repo_with_2_charts_oci_registry_url,
+			secret: newBasicAuthSecret(types.NamespacedName{
+				Name:      "oci-repo-secret-" + randSeq(4),
+				Namespace: "default"},
+				harbor_admin_user,
+				harbor_admin_pwd,
+			),
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.testName, func(t *testing.T) {
+			repoName := types.NamespacedName{
+				Name:      "my-podinfo-" + randSeq(4),
+				Namespace: "default",
+			}
+
+			secretName := ""
+			if tc.secret != nil {
+				secretName = tc.secret.Name
+
+				if err := kubeCreateSecretAndCleanup(t, tc.secret); err != nil {
+					t.Fatal(err)
+				}
+			}
+
+			setUserManagedSecretsAndCleanup(t, fluxPluginReposClient, true)
+
+			if err := kubeAddHelmRepositoryAndCleanup(
+				t, repoName, "oci", tc.registryUrl, secretName, 0); err != nil {
+				t.Fatal(err)
+			}
+			// wait until this repo reaches 'Ready'
+			err := kubeWaitUntilHelmRepositoryIsReady(t, repoName)
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			adminName := types.NamespacedName{
+				Name:      "test-admin-" + randSeq(4),
+				Namespace: "default",
+			}
+
+			grpcContext, err := newGrpcAdminContext(t, adminName)
+			if err != nil {
+				t.Fatal(err)
+			}
+			timeout := 5 * time.Minute
+			maxTries := 2
+			retryOptions := []grpc.CallOption{
+				grpc_retry.WithPerRetryTimeout(timeout),
+				grpc_retry.WithMax(uint(maxTries)),
+				grpc_retry.WithCodes(codes.Internal),
+			}
+
+			hour, minute, second := time.Now().Clock()
+			t.Logf("[%d:%d:%d] Calling GetAvailablePackageSummaries() blocking for up to [%s]...",
+				hour, minute, second, time.Duration(int64(timeout)*int64(maxTries)))
+			resp, err := fluxPluginClient.GetAvailablePackageSummaries(
+				grpcContext,
+				&corev1.GetAvailablePackageSummariesRequest{},
+				retryOptions...)
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			opt1 := cmpopts.IgnoreUnexported(
+				corev1.GetAvailablePackageSummariesResponse{},
+				corev1.AvailablePackageSummary{},
+				corev1.AvailablePackageReference{},
+				corev1.Context{},
+				plugins.Plugin{},
+				corev1.PackageAppVersion{})
+			opt2 := cmpopts.SortSlices(lessAvailablePackageFunc)
+			if got, want := resp, expected_oci_repo_with_2_charts_available_summaries(repoName.Name); !cmp.Equal(got, want, opt1, opt2) {
+				t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opt1, opt2))
+			}
 		})
 	}
 }

@@ -203,7 +203,7 @@ function logs {
 
 if [ $# -lt 1 ]
 then
-  echo "Usage : $0 deploy|undeploy|redeploy|shell|logs|pushChartToMyGithub|deleteChartVersionFromMyGitHub|setupGithubStefanProdanClone|setupHarborStefanProdanClone|setupGcrStefanProdanClone"
+  echo "Usage : $0 deploy|undeploy|redeploy|shell|logs|pushChartToMyGithub|deleteChartVersionFromMyGitHub|setupGithubStefanProdanClone|setupHarbor|setupGcrStefanProdanClone"
   exit
 fi
 
@@ -228,7 +228,7 @@ deleteChartVersionFromMyGitHub) deleteChartVersionFromMyGitHubRegistry $2
     ;;
 setupGithubStefanProdanClone) setupGithubStefanProdanClone
     ;;
-setupHarborStefanProdanClone) setupHarborStefanProdanClone ${2: }
+setupHarbor) setupHarbor ${2: }
     ;;
 setupHarborRobotAccount) setupHarborRobotAccount
     ;;
