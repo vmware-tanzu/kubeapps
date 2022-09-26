@@ -150,7 +150,7 @@ This guide covers the installation of ChartMuseum in the cluster, the addition o
 
 ### ChartMuseum: Installation
 
-> **NOTE**: This section can safely be skipped if you already have ChartMuseum installed and accesible from your cluster.
+> **NOTE**: This section can safely be skipped if you already have ChartMuseum installed and accessible from your cluster.
 
 To use ChartMuseum with Kubeapps:
 
