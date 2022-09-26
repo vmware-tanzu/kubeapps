@@ -152,9 +152,9 @@
   pre {
     overflow: auto;
     padding: 0.6rem;
+    border-radius: 5px;
     margin: 0.625em 0;
     background-color: var(--cds-global-typography-color-400, #333);
-    border-radius: 5px;
     color: var(--cds-global-typography-color-100, #fff);
   }
 
@@ -172,9 +172,9 @@
     max-width: 100%;
     padding: 0.1em 1em;
     border: 1px solid var(--cds-global-typography-color-200, #e8e8e8);
+    border-radius: 5px;
     margin: 1em 0;
     background-color: var(--cds-global-typography-color-100, #fff);
-    border-radius: 5px;
 
     p:first-child {
       margin-top: 0.6rem;

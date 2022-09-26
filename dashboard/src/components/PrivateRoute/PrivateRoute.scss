@@ -10,9 +10,9 @@
   overflow: auto;
   padding: 20px;
   border: 1px solid var(--cds-alias-object-border-color, #ccc);
+  border-radius: 4px;
   margin-right: -50%;
   background-color: var(--cds-alias-object-interaction-background), #fff;
-  border-radius: 4px;
   outline: none;
   transform: translate(-50%, -50%);
 }
