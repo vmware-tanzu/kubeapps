@@ -169,7 +169,7 @@ To use ChartMuseum with Kubeapps:
 
 ### ChartMuseum: Upload a chart
 
-> **NOTE**: This section can safely be skipped if you already have a ChartMuseum instance accesible from your cluster with charts stored.
+> **NOTE**: This section can safely be skipped if you already have a ChartMuseum instance accessible from your cluster with charts stored.
 
 Once ChartMuseum is deployed you will be able to upload a chart.
 
