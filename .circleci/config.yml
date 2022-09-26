@@ -722,6 +722,7 @@ jobs:
       IMAGES: "apprepository-controller asset-syncer kubeapps-apis"
     <<: *build_images
   build_dashboard:
+    resource_class: large
     docker:
       - image: cimg/go:<< pipeline.parameters.GOLANG_VERSION >>
         auth:
@@ -729,7 +730,6 @@ jobs:
           password: $DOCKER_PASSWORD
     environment:
       IMAGES: "dashboard"
-      NODE_OPTIONS: "--max-old-space-size=3072"
     <<: *build_images
   build_pinniped_proxy:
     docker:
