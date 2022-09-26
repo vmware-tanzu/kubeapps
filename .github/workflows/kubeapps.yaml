@@ -239,7 +239,8 @@ jobs:
         with:
           name: ${{matrix.image}}-image
           path: /tmp/${{matrix.image}}-image.tar
-      - name: Push image
+      - if: needs.setup.outputs.running_on_main == 'true' || needs.setup.outputs.running_on_tag == 'true'
+        name: Push image
         uses: docker/build-push-action@v2
         with:
           file: cmd/${{matrix.image}}/Dockerfile
@@ -249,7 +250,6 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
           push: true
-          #TODO Conditionally push??
 
   build_dashboard_image:
     name: "Build dashboard image"
@@ -285,7 +285,9 @@ jobs:
         with:
           name: dashboard-image
           path: /tmp/dashboard-image.tar
-      - name: Push image
+
+      - if: needs.setup.outputs.running_on_main == 'true' || needs.setup.outputs.running_on_tag == 'true'
+        name: Push image
         uses: docker/build-push-action@v2
         with:
           context: dashboard
@@ -327,9 +329,10 @@ jobs:
       - name: Upload image
         uses: actions/upload-artifact@v3
         with:
-          name: dashboard-image
+          name: e2e-runner-image
           path: /tmp/e2e-runner-image.tar
-      - name: Push image
+      - if: needs.setup.outputs.running_on_main == 'true' || needs.setup.outputs.running_on_tag == 'true'
+        name: Push image
         uses: docker/build-push-action@v2
         with:
           context: integration
@@ -476,8 +479,10 @@ jobs:
           path: /tmp/images
       - name: "Load CI images in the cluster"
         run: |
+          source ./script/lib/liblog.sh
           for path in /tmp/images/*; do 
             image=$(basename "$path")
+            info "Loading image ${image}"
             kind load image-archive "${path}/${image}.tar" --name kubeapps-ci; 
           done
       - name: "Install multicluster deps"
@@ -498,6 +503,8 @@ jobs:
           kubectl -n dex create secret tls dex-web-server-tls --key ./devel/dex.key --cert ./devel/dex.crt
           mkcert -key-file ./devel/localhost-key.pem -cert-file ./devel/localhost-cert.pem localhost kubeapps-ci.kubeapps $DEFAULT_DEX_IP
       - name: "Run e2e tests script"
+        env:
+          DEBUG_MODE: true
         run: |
           # If we want to test the latest version instead we override the image to be used
           if [[ -n "${TEST_LATEST_RELEASE:-}" ]]; then
@@ -523,11 +530,11 @@ jobs:
           path: integration/reports
 
   push_images:
+    if: needs.setup.outputs.running_on_main == 'true'
     runs-on: ubuntu-latest
     needs:
       - setup
       - local_e2e_tests
-    if: needs.setup.outputs.running_on_main == 'true'
     env:
       IMG_PROD_TAG: ${{ needs.setup.outputs.img_prod_tag }}
     steps:

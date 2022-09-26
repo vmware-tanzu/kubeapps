@@ -250,6 +250,11 @@ installOrUpgradeKubeapps() {
   "${cmd[@]}"
 }
 
+if [[ "${DEBUG_MODE:-false}" == "true" ]]; then
+  info "Docker images loaded in the cluster:"
+  crictl images
+fi
+
 # Use dev images or Bitnami if testing the latest release
 kubeapps_apis_image="kubeapps-apis"
 [[ -n "${TEST_LATEST_RELEASE:-}" ]] && IMG_PREFIX="bitnami/kubeapps-" && kubeapps_apis_image="apis"
