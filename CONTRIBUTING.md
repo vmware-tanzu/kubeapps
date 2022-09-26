@@ -30,6 +30,10 @@ This is a rough outline of what a contributor's workflow looks like:
 - Create a topic branch in your fork from where you want to base your work
 - Make commits of logical units
 - Make sure your commit messages are with the proper format, quality and descriptiveness (see below)
+- All commits must be:
+  - Signed using GPG (see [Signing commits in GitHub](https://docs.github.com/en/authentication/managing-commit-signature-verification/signing-commits))
+  - Signed off with the line `Signed-off-by: <Your-Name> <Your-email>`. See [related GitHub blogpost about signing off](https://github.blog/changelog/2022-06-08-admins-can-require-sign-off-on-web-based-commits/).
+    > Note: Signing off on a commit is different than signing a commit, such as with a GPG key.
 - Push your changes to the topic branch in your fork
 - Create a pull request containing that commit
 
@@ -42,7 +46,8 @@ Before submitting your pull request use the following checklist:
 1. Check if your code changes will pass both code linting checks and unit tests.
 2. Ensure your commit messages are descriptive. Kubeapps follow the conventions on [How to Write a Git Commit Message](http://chris.beams.io/posts/git-commit/). Be sure to include any related GitHub issue references in the commit message. See [GFM syntax](https://guides.github.com/features/mastering-markdown/#GitHub-flavored-markdown) for referencing issues and commits.
 3. Check the commits and commits messages and ensure they are free from typos.
-4. Any pull request which adds a new feature or changes the behavior of any feature which was previously documented should include updates to the documentation. All documentation lives in this repository.
+4. Make sure all the commits have been properly signed with GPG and contain the signoff.
+5. Any pull request which adds a new feature or changes the behavior of any feature which was previously documented should include updates to the documentation. All documentation lives in this repository.
 
 ## Reporting Bugs and Creating Issues
 

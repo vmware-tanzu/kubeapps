@@ -1351,6 +1351,13 @@ func TestAddPackageRepository(t *testing.T) {
 			expectedRepo:     &add_repo_6,
 			statusCode:       codes.OK,
 		},
+		{
+			name:             "add OCI package repository with gcp provider",
+			request:          add_repo_req_29(),
+			expectedResponse: add_repo_expected_resp,
+			expectedRepo:     &add_repo_7,
+			statusCode:       codes.OK,
+		},
 	}
 
 	for _, tc := range testCases {

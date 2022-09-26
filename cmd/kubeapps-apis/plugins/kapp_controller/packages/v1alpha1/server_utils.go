@@ -18,7 +18,7 @@ import (
 	"k8s.io/client-go/rest"
 
 	"github.com/Masterminds/semver/v3"
-	kappcmdcore "github.com/k14s/kapp/pkg/kapp/cmd/core"
+	kappcmdcore "github.com/vmware-tanzu/carvel-kapp/pkg/kapp/cmd/core"
 	kappctrlv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
 	packagingv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/packaging/v1alpha1"
 	datapackagingv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/apis/datapackaging/v1alpha1"
