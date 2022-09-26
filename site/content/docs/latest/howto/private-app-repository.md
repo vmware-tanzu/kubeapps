@@ -14,7 +14,7 @@ It is possible to use a **private repository** to store your own packages and de
 
 This guide explains in detail the process to install and configure a private package repository with Kubeapps by using different registries like **Harbor**, any **OCI registry**, **ChartMuseum** or **Artifactory**.
 
-> For detailed information working with package repositories in Kubeapps, please review the following tutorial: [Managing Packaging Repositories with Kubeapps](../tutorials/managing-package-repositories.md).
+> For detailed information on working with package repositories in Kubeapps, please review the following tutorial: [Managing Packaging Repositories with Kubeapps](../tutorials/managing-package-repositories.md).
 
 ## Harbor
 
