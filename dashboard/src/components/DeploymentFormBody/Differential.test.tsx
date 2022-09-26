@@ -7,12 +7,55 @@ import { defaultStore, getStore, mountWrapper } from "shared/specs/mountWrapper"
 import { IStoreState } from "shared/types";
 import Differential from "./Differential";
 
+beforeEach(() => {
+  // mock the window.matchMedia for selecting the theme
+  Object.defineProperty(window, "matchMedia", {
+    writable: true,
+    configurable: true,
+    value: jest.fn().mockImplementation(query => ({
+      matches: false,
+      media: query,
+      onchange: null,
+      addListener: jest.fn(),
+      removeListener: jest.fn(),
+      addEventListener: jest.fn(),
+      removeEventListener: jest.fn(),
+      dispatchEvent: jest.fn(),
+    })),
+  });
+
+  // mock the window.ResizeObserver, required by the MonacoEditor for the layout
+  Object.defineProperty(window, "ResizeObserver", {
+    writable: true,
+    configurable: true,
+    value: jest.fn().mockImplementation(() => ({
+      observe: jest.fn(),
+      unobserve: jest.fn(),
+      disconnect: jest.fn(),
+    })),
+  });
+
+  // mock the window.HTMLCanvasElement.getContext(), required by the MonacoEditor for the layout
+  Object.defineProperty(HTMLCanvasElement.prototype, "getContext", {
+    writable: true,
+    configurable: true,
+    value: jest.fn().mockImplementation(() => ({
+      clearRect: jest.fn(),
+    })),
+  });
+});
+
+afterEach(() => {
+  jest.restoreAllMocks();
+});
+
 it("should render a diff between two strings", () => {
   const wrapper = mountWrapper(
     defaultStore,
     <Differential oldValues="foo" newValues="bar" emptyDiffElement={<span>empty</span>} />,
   );
-  expect(wrapper.find(MonacoDiffEditor).props()).toMatchObject({ oldValue: "foo", newValue: "bar" });
+  expect(wrapper.find(MonacoDiffEditor).prop("value")).toBe("bar");
+  expect(wrapper.find(MonacoDiffEditor).prop("original")).toBe("foo");
 });
 
 it("should print the emptyDiffText if there are no changes", () => {
@@ -33,7 +76,7 @@ it("sets light theme by default", () => {
     defaultStore,
     <Differential oldValues="foo" newValues="bar" emptyDiffElement={<span>empty</span>} />,
   );
-  expect(wrapper.find(MonacoDiffEditor).prop("useDarkTheme")).toBe(false);
+  expect(wrapper.find(MonacoDiffEditor).prop("theme")).toBe("light");
 });
 
 it("changes theme", () => {
@@ -41,5 +84,5 @@ it("changes theme", () => {
     getStore({ config: { theme: SupportedThemes.dark } } as Partial<IStoreState>),
     <Differential oldValues="foo" newValues="bar" emptyDiffElement={<span>empty</span>} />,
   );
-  expect(wrapper.find(MonacoDiffEditor).prop("useDarkTheme")).toBe(true);
+  expect(wrapper.find(MonacoDiffEditor).prop("theme")).toBe("vs-dark");
 });
