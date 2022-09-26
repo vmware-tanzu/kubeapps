@@ -236,7 +236,7 @@ This guide covers the installation of Artifactiory in the cluster, the addition 
 
 ### Artifactory: Installation
 
-> **NOTE**: This section can safely be skipped if you already have an Artifactory registry accesible from your cluster.
+> **NOTE**: This section can safely be skipped if you already have an Artifactory registry accessible from your cluster.
 
 To install Artifactory by using Kubeapps first add the JFrog public repository to Kubeapps. Go to **Configuration > Package Repositories** and add their repository:
 
