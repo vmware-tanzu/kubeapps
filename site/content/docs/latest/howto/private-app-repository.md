@@ -28,7 +28,7 @@ This guide covers the installation of Harbor in the cluster, the addition of pac
 
 ### Harbor: Installation
 
-> **NOTE**: This section can safely be skipped if you already have a Harbor registry accesible from your cluster.
+> **NOTE**: This section can safely be skipped if you already have a Harbor registry accessible from your cluster.
 
 To install a Harbor registry in the cluster:
 
