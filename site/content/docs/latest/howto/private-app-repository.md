@@ -296,7 +296,7 @@ To add Artifactory as a private chart repository in Kubeapps:
 
 For private repositories, the Authentication method must be provided. In this case select:
 
-- `Bearer Token` (for `Repository Authorization` field under `Authorization` tab) and specify the token previously created.
+- `Bearer Token` (for `Repository Authorization` field under the `Authorization` tab) and specify the token previously created.
 
 ![JFrog custom repository](../img/jfrog-custom-repo.png)
 
