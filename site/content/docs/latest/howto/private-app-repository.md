@@ -85,7 +85,7 @@ Successfully packaged chart and saved it to: /path/to/my/chart/my-chart-1.0.0.tg
 
 ![Harbor list charts](../img/harbor-list-charts.png)
 
-5.Click **Upload** button to upload the Helm chart you previously created. You can also use helm command to upload the chart too.
+5. Click **Upload** button to upload the Helm chart you previously created. You can also use the `helm` command to upload the chart too.
 
 ![Harbor upload chart](../img/harbor-upload-chart.png)
 
