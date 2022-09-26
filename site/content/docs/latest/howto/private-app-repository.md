@@ -110,7 +110,7 @@ To add Harbor as a private chart repository in Kubeapps:
 
 For private repositories, the Authentication method must be provided. In this case select:
 
-- `Basic Auth` (for `Repository Authorization` field under `Authorization` tab) and specify the username and password for Harbor.
+- `Basic Auth` (for `Repository Authorization` field under the `Authorization` tab) and specify the username and password for Harbor.
 
 ![Harbor private registry](../img/harbor-private-registry.png)
 
