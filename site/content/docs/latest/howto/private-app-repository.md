@@ -34,7 +34,7 @@ To install a Harbor registry in the cluster:
 
 1. Deploy the [Bitnami Harbor Helm chart](https://github.com/bitnami/charts/tree/master/bitnami/harbor) from the `bitnami` repository by using Kubeapps.
 
-   Alternatively you can deploy Harbor using [Harbor offline installer](https://goharbor.io/docs/2.6.0/install-config/download-installer/).
+   Alternatively, you can deploy Harbor using [Harbor offline installer](https://goharbor.io/docs/2.6.0/install-config/download-installer/).
 
    ![Harbor chart](../img/harbor-chart.png)
 
