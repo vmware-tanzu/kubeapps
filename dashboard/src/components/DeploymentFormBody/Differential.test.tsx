@@ -1,7 +1,7 @@
 // Copyright 2019-2022 the Kubeapps contributors.
 // SPDX-License-Identifier: Apache-2.0
 
-import ReactDiffViewer from "react-diff-viewer";
+import { MonacoDiffEditor } from "react-monaco-editor";
 import { SupportedThemes } from "shared/Config";
 import { defaultStore, getStore, mountWrapper } from "shared/specs/mountWrapper";
 import { IStoreState } from "shared/types";
@@ -12,7 +12,7 @@ it("should render a diff between two strings", () => {
     defaultStore,
     <Differential oldValues="foo" newValues="bar" emptyDiffElement={<span>empty</span>} />,
   );
-  expect(wrapper.find(ReactDiffViewer).props()).toMatchObject({ oldValue: "foo", newValue: "bar" });
+  expect(wrapper.find(MonacoDiffEditor).props()).toMatchObject({ oldValue: "foo", newValue: "bar" });
 });
 
 it("should print the emptyDiffText if there are no changes", () => {
@@ -33,7 +33,7 @@ it("sets light theme by default", () => {
     defaultStore,
     <Differential oldValues="foo" newValues="bar" emptyDiffElement={<span>empty</span>} />,
   );
-  expect(wrapper.find(ReactDiffViewer).prop("useDarkTheme")).toBe(false);
+  expect(wrapper.find(MonacoDiffEditor).prop("useDarkTheme")).toBe(false);
 });
 
 it("changes theme", () => {
@@ -41,5 +41,5 @@ it("changes theme", () => {
     getStore({ config: { theme: SupportedThemes.dark } } as Partial<IStoreState>),
     <Differential oldValues="foo" newValues="bar" emptyDiffElement={<span>empty</span>} />,
   );
-  expect(wrapper.find(ReactDiffViewer).prop("useDarkTheme")).toBe(true);
+  expect(wrapper.find(MonacoDiffEditor).prop("useDarkTheme")).toBe(true);
 });
