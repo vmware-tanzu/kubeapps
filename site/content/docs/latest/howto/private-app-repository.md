@@ -52,7 +52,7 @@ To install a Harbor registry in the cluster:
 
 ### Harbor: Add a package (Helm chart)
 
-> **NOTE**: This section can safely be skipped if you already have a Harbor registry accesible from your cluster with packages stored.
+> **NOTE**: This section can safely be skipped if you already have a Harbor registry accessible from your cluster with packages stored.
 
 1. First create a Helm chart package:
 
