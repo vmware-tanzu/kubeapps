@@ -225,7 +225,7 @@ Once configured, you will be able to browse and deploy your own applications fro
 
 JFrog Artifactory is a Repository Manager supporting all major packaging formats, build tools and CI servers.
 
-> **Note**: In order to use the Helm repository feature, it's necessary to use an Artifactory Pro account.
+> **Note**: In order to use the Helm repository feature, it is necessary to use an Artifactory Pro account.
 
 This guide covers the installation of Artifactiory in the cluster, the addition of packages to the registry and the configuration as a private repository in Kubeapps.
 
