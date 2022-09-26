@@ -126,7 +126,7 @@ You can add an OCI registry like any other repository. For example, for a [Harbo
 
 ![OCI registry](../img/oci-registry.png)
 
-**NOTE:** There is one caveat though. It's necessary to specify the list of applications (repositories) that the registry contains. This is because the OCI specification doesn't have an endpoint to discover artifacts (unlike the index.yaml file of a Helm repository).
+**NOTE:** There is one caveat though. It is necessary to specify the list of applications (repositories) that the registry contains. This is because the OCI specification doesn't have an endpoint to discover artifacts (unlike the index.yaml file of a Helm repository).
 
 In any case, it's possible to use the registry provider API to retrieve this list. For example, for Harbor, it's possible to query its API to retrieve the list:
 
