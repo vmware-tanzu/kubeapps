@@ -252,7 +252,7 @@ By default, Artifactory creates a chart repository called `helm`. That is the on
 
 ### Artifactory: Upload a chart
 
-> **NOTE**: This section can safely be skipped if you already have an Artifactory registry accesible from your cluster with available packages.
+> **NOTE**: This section can safely be skipped if you already have an Artifactory registry accessible from your cluster with available packages.
 
 First, you will need to obtain the user and password of the Helm repository. To do so, click on the **helm** repository and in the **Set Me Up** menu enter your password. After that you will be able to see the repository user and password.
 
