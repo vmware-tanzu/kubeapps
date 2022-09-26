@@ -61,7 +61,7 @@ $ helm package /path/to/my/chart
 Successfully packaged chart and saved it to: /path/to/my/chart/my-chart-1.0.0.tgz
 ```
 
-2. Second login into Harbor admin portal following the instructions in the chart notes:
+2. Second, login into Harbor admin portal following the instructions in the chart notes:
 
 ```console
 1. Get the Harbor URL:
