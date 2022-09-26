@@ -338,167 +338,6 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}
           push: true
 
-  sync_chart_from_bitnami:
-    needs:
-      - setup
-    if: needs.setup.outputs.running_on_main == 'true'
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-      - # Assuming there is a personal access token created in GitHub granted with the scopes
-        # "repo:status", "public_repo" and "read:org"
-        # This token is passed as a GITHUB_TOKEN env var via CircleCI
-        name: "Install GitHub CLI"
-        run: | # TODO: Move this to a script 
-          cd /tmp
-          wget https://github.com/cli/cli/releases/download/v${GITHUB_VERSION}/gh_${GITHUB_VERSION}_linux_amd64.tar.gz
-          tar zxf gh_${GITHUB_VERSION}_linux_amd64.tar.gz
-          rm gh_${GITHUB_VERSION}_linux_amd64.tar.gz
-          sudo mv gh_${GITHUB_VERSION}_linux_amd64/bin/gh /usr/local/bin/
-      - name: "Install semver bash tool"
-        run: | # TODO: Move to a script
-          cd /tmp
-          wget https://github.com/fsaintjacques/semver-tool/archive/refs/tags/${SEMVER_VERSION}.tar.gz
-          tar zxf ${SEMVER_VERSION}.tar.gz
-          rm ${SEMVER_VERSION}.tar.gz
-          cd semver-tool-${SEMVER_VERSION}
-          sudo make install
-      - name: "Install the GPG key"
-        run: | # TODO: Move to a script
-          # Creating the files from the GPG_KEY_PUBLIC and GPG_KEY_PRIVATE env vars
-          echo -e "${{secrets.GPG_KEY_PUBLIC}}" > /tmp/public.key
-          echo -e "${{secrets.GPG_KEY_PRIVATE}}" > /tmp/private.key
-
-          # Importing the GPG keys
-          gpg --import /tmp/public.key
-          gpg --import --no-tty --batch --yes /tmp/private.key
-
-          # Trusting the imported GPG private key
-          (echo 5; echo y; echo save) |  gpg --command-fd 0 --no-tty --no-greeting -q --edit-key "${CI_BOT_GPG}" trust
-
-          # Listing the key to verify the import process succeeded
-          gpg --list-secret-keys ${CI_BOT_EMAIL}
-      - name: "Install SSH key: Kubeapps Deploy Key"
-        uses: shimataro/ssh-key-action@v2
-        with:
-          key: ${{ secrets.SSH_KEY_KUBEAPPS_DEPLOY }}
-          name: ${{ needs.setup.outputs.ssh_key_kubeapps_deploy_filename }}
-          known_hosts: |
-            |1|2YkQ4jjACcc/1rgSBszyeEuKxW4=|hO4GB0XMwQj1gYQDmaS304aU8Tc= ssh-rsa AAAAB3NzaC1yc2EAAAABIwAAAQEAq2A7hRGmdnm9tUDbO9IDSwBK6TbQa+PXYPCPy6rbTrTtw7PHkccKrpp0yVhp5HdEIcKr6pLlVDBfOLX9QUsyCOV0wzfjIJNlGEYsdlLJizHhbn2mUjvSAHQqZETYP81eFzLQNnPHt4EVVUh7VfDESU84KezmD5QlWpXLmvU31/yMf+Se8xhHTvKSCZIFImWwoG6mbUoWf9nzpIoaSjB+weqqUUmpaaasXVal72J+UX2B+2RPW3RcT0eOzQgqlJL3RKrTJvdsjE3JEAvGq3lGHSZXy28G3skua2SmVi/w4yCE6gbODqnTWlg7+wC604ydGXA8VJiS5ap43JXiUFFAaQ==
-          if_key_exists: ignore
-
-      - name: "Install SSH key: Forked Charts Deploy Key"
-        uses: shimataro/ssh-key-action@v2
-        with:
-          key: ${{ secrets.SSH_KEY_FORKED_CHARTS_DEPLOY }}
-          name: ${{ needs.setup.outputs.ssh_key_forked_charts_deploy_filename }}
-          known_hosts: |
-            |1|2YkQ4jjACcc/1rgSBszyeEuKxW4=|hO4GB0XMwQj1gYQDmaS304aU8Tc= ssh-rsa AAAAB3NzaC1yc2EAAAABIwAAAQEAq2A7hRGmdnm9tUDbO9IDSwBK6TbQa+PXYPCPy6rbTrTtw7PHkccKrpp0yVhp5HdEIcKr6pLlVDBfOLX9QUsyCOV0wzfjIJNlGEYsdlLJizHhbn2mUjvSAHQqZETYP81eFzLQNnPHt4EVVUh7VfDESU84KezmD5QlWpXLmvU31/yMf+Se8xhHTvKSCZIFImWwoG6mbUoWf9nzpIoaSjB+weqqUUmpaaasXVal72J+UX2B+2RPW3RcT0eOzQgqlJL3RKrTJvdsjE3JEAvGq3lGHSZXy28G3skua2SmVi/w4yCE6gbODqnTWlg7+wC604ydGXA8VJiS5ap43JXiUFFAaQ==
-          if_key_exists: ignore
-      -
-        # This is a key pair: https://circleci.com/docs/2.0/gh-bb-integration/
-        # public key uploaded to GitHub as a deploy key with write permissions
-        # private key uploaded to CircleCI with hostname "github.com"
-        name: Start ssh-agent and configure the key
-        run: |
-          eval "$(ssh-agent -s)"
-          # the name is always "id_rsa_"+fingerprint without ":""
-          # Deployment key uploaded to the kubeapps/kubeapps repository
-          ssh-add ~/.ssh/${SSH_KEY_KUBEAPPS_DEPLOY_FILENAME}
-          # Deployment key uploaded to the kubeapps-bot/charts repository
-          ssh-add ~/.ssh/${SSH_KEY_FORKED_CHARTS_DEPLOY_FILENAME}
-      -
-        # Assuming there is a personal access token created in GitHub granted with the scopes
-        # "repo:status", "public_repo" and "read:org"
-        # This token is passed as a GITHUB_TOKEN env var via CircleCI
-        name: Run the check_upstream_chart script
-        run: |
-          ./script/chart_upstream_checker.sh \
-              ${CI_BOT_USERNAME} \
-              ${CI_BOT_EMAIL} \
-              ${CI_BOT_GPG} \
-              ${SSH_KEY_FORKED_CHARTS_DEPLOY_FILENAME} \
-              ${CHARTS_REPO_ORIGINAL} \
-              ${BRANCH_CHARTS_REPO_ORIGINAL} \
-              ${CHARTS_REPO_FORKED} \
-              ${BRANCH_CHARTS_REPO_FORKED} \
-              ${KUBEAPPS_REPO} \
-              ${BRANCH_KUBEAPPS_REPO} \
-              ${README_GENERATOR_REPO} \
-              ${DEV_MODE}
-
-  sync_chart_to_bitnami:
-    needs:
-      - setup
-    if: needs.setup.outputs.running_on_tag == 'true'
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-      - # Assuming there is a personal access token created in GitHub granted with the scopes
-        # "repo:status", "public_repo" and "read:org"
-        # This token is passed as a GITHUB_TOKEN env var via CircleCI
-        name: "Install GitHub CLI"
-        run: | # TODO: Move this to a script 
-          cd /tmp
-          wget https://github.com/cli/cli/releases/download/v${GITHUB_VERSION}/gh_${GITHUB_VERSION}_linux_amd64.tar.gz
-          tar zxf gh_${GITHUB_VERSION}_linux_amd64.tar.gz
-          rm gh_${GITHUB_VERSION}_linux_amd64.tar.gz
-          sudo mv gh_${GITHUB_VERSION}_linux_amd64/bin/gh /usr/local/bin/
-      - name: "Install semver bash tool"
-        run: | # TODO: Move to a script
-          cd /tmp
-          wget https://github.com/fsaintjacques/semver-tool/archive/refs/tags/${SEMVER_VERSION}.tar.gz
-          tar zxf ${SEMVER_VERSION}.tar.gz
-          rm ${SEMVER_VERSION}.tar.gz
-          cd semver-tool-${SEMVER_VERSION}
-          sudo make install
-      - name: "Install the GPG key"
-        run: | # TODO: Move to a script
-          # Creating the files from the GPG_KEY_PUBLIC and GPG_KEY_PRIVATE env vars
-          echo -e "${{secrets.GPG_KEY_PUBLIC}}" > /tmp/public.key
-          echo -e "${{secrets.GPG_KEY_PRIVATE}}" > /tmp/private.key
-
-          # Importing the GPG keys
-          gpg --import /tmp/public.key
-          gpg --import --no-tty --batch --yes /tmp/private.key
-
-          # Trusting the imported GPG private key
-          (echo 5; echo y; echo save) |  gpg --command-fd 0 --no-tty --no-greeting -q --edit-key "${CI_BOT_GPG}" trust
-
-          # Listing the key to verify the import process succeeded
-          gpg --list-secret-keys ${CI_BOT_EMAIL}
-      - name: "Install SSH key: Forked Charts Deploy Key"
-        uses: shimataro/ssh-key-action@v2
-        with:
-          key: ${{ secrets.SSH_KEY_FORKED_CHARTS_DEPLOY }}
-          name: ${{ needs.setup.outputs.ssh_key_forked_charts_deploy_filename }}
-          known_hosts: |
-            |1|2YkQ4jjACcc/1rgSBszyeEuKxW4=|hO4GB0XMwQj1gYQDmaS304aU8Tc= ssh-rsa AAAAB3NzaC1yc2EAAAABIwAAAQEAq2A7hRGmdnm9tUDbO9IDSwBK6TbQa+PXYPCPy6rbTrTtw7PHkccKrpp0yVhp5HdEIcKr6pLlVDBfOLX9QUsyCOV0wzfjIJNlGEYsdlLJizHhbn2mUjvSAHQqZETYP81eFzLQNnPHt4EVVUh7VfDESU84KezmD5QlWpXLmvU31/yMf+Se8xhHTvKSCZIFImWwoG6mbUoWf9nzpIoaSjB+weqqUUmpaaasXVal72J+UX2B+2RPW3RcT0eOzQgqlJL3RKrTJvdsjE3JEAvGq3lGHSZXy28G3skua2SmVi/w4yCE6gbODqnTWlg7+wC604ydGXA8VJiS5ap43JXiUFFAaQ==
-          if_key_exists: ignore
-      -
-        # This is a key pair: https://circleci.com/docs/2.0/gh-bb-integration/
-        # public key uploaded to GitHub as a deploy key with write permissions
-        # private key uploaded to CircleCI with hostname "github.com"
-        name: Start ssh-agent and configure the key
-        run: |
-          eval "$(ssh-agent -s)"
-          # Deployment key uploaded to the kubeapps-bot/charts repository
-          ssh-add ~/.ssh/${SSH_KEY_FORKED_CHARTS_DEPLOY_FILENAME}
-      - # Assuming there is a personal access token created in GitHub granted with the scopes
-        # "repo:status", "public_repo" and "read:org"
-        # This token is passed as a GITHUB_TOKEN env var via CircleCI
-        name: Run the chart_sync script
-        run: |
-          ./script/chart_sync.sh \
-              ${CI_BOT_USERNAME} \
-              ${CI_BOT_EMAIL} \
-              ${CI_BOT_GPG} \
-              ${CHARTS_REPO_ORIGINAL} \
-              ${BRANCH_CHARTS_REPO_ORIGINAL} \
-              ${CHARTS_REPO_FORKED} \
-              ${BRANCH_CHARTS_REPO_FORKED} \
-              ${DEV_MODE}
-
   local_e2e_tests:
     needs:
       - setup
@@ -509,7 +348,6 @@ jobs:
       - build_docker_images
       - build_dashboard_image
       - build_e2e_runner_image
-      - sync_chart_from_bitnami
     runs-on: ubuntu-latest
     env:
       DEFAULT_DEX_IP: "172.18.0.2"
@@ -724,3 +562,164 @@ jobs:
             echo "::notice ::Pushing image ${prod_image}"
             docker push $prod_image
           done
+
+  sync_chart_from_bitnami:
+    needs:
+      - setup
+    if: needs.setup.outputs.running_on_main == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - # Assuming there is a personal access token created in GitHub granted with the scopes
+        # "repo:status", "public_repo" and "read:org"
+        # This token is passed as a GITHUB_TOKEN env var via CircleCI
+        name: "Install GitHub CLI"
+        run: | # TODO: Move this to a script 
+          cd /tmp
+          wget https://github.com/cli/cli/releases/download/v${GITHUB_VERSION}/gh_${GITHUB_VERSION}_linux_amd64.tar.gz
+          tar zxf gh_${GITHUB_VERSION}_linux_amd64.tar.gz
+          rm gh_${GITHUB_VERSION}_linux_amd64.tar.gz
+          sudo mv gh_${GITHUB_VERSION}_linux_amd64/bin/gh /usr/local/bin/
+      - name: "Install semver bash tool"
+        run: | # TODO: Move to a script
+          cd /tmp
+          wget https://github.com/fsaintjacques/semver-tool/archive/refs/tags/${SEMVER_VERSION}.tar.gz
+          tar zxf ${SEMVER_VERSION}.tar.gz
+          rm ${SEMVER_VERSION}.tar.gz
+          cd semver-tool-${SEMVER_VERSION}
+          sudo make install
+      - name: "Install the GPG key"
+        run: | # TODO: Move to a script
+          # Creating the files from the GPG_KEY_PUBLIC and GPG_KEY_PRIVATE env vars
+          echo -e "${{secrets.GPG_KEY_PUBLIC}}" > /tmp/public.key
+          echo -e "${{secrets.GPG_KEY_PRIVATE}}" > /tmp/private.key
+
+          # Importing the GPG keys
+          gpg --import /tmp/public.key
+          gpg --import --no-tty --batch --yes /tmp/private.key
+
+          # Trusting the imported GPG private key
+          (echo 5; echo y; echo save) |  gpg --command-fd 0 --no-tty --no-greeting -q --edit-key "${CI_BOT_GPG}" trust
+
+          # Listing the key to verify the import process succeeded
+          gpg --list-secret-keys ${CI_BOT_EMAIL}
+      - name: "Install SSH key: Kubeapps Deploy Key"
+        uses: shimataro/ssh-key-action@v2
+        with:
+          key: ${{ secrets.SSH_KEY_KUBEAPPS_DEPLOY }}
+          name: ${{ needs.setup.outputs.ssh_key_kubeapps_deploy_filename }}
+          known_hosts: |
+            |1|2YkQ4jjACcc/1rgSBszyeEuKxW4=|hO4GB0XMwQj1gYQDmaS304aU8Tc= ssh-rsa AAAAB3NzaC1yc2EAAAABIwAAAQEAq2A7hRGmdnm9tUDbO9IDSwBK6TbQa+PXYPCPy6rbTrTtw7PHkccKrpp0yVhp5HdEIcKr6pLlVDBfOLX9QUsyCOV0wzfjIJNlGEYsdlLJizHhbn2mUjvSAHQqZETYP81eFzLQNnPHt4EVVUh7VfDESU84KezmD5QlWpXLmvU31/yMf+Se8xhHTvKSCZIFImWwoG6mbUoWf9nzpIoaSjB+weqqUUmpaaasXVal72J+UX2B+2RPW3RcT0eOzQgqlJL3RKrTJvdsjE3JEAvGq3lGHSZXy28G3skua2SmVi/w4yCE6gbODqnTWlg7+wC604ydGXA8VJiS5ap43JXiUFFAaQ==
+          if_key_exists: ignore
+
+      - name: "Install SSH key: Forked Charts Deploy Key"
+        uses: shimataro/ssh-key-action@v2
+        with:
+          key: ${{ secrets.SSH_KEY_FORKED_CHARTS_DEPLOY }}
+          name: ${{ needs.setup.outputs.ssh_key_forked_charts_deploy_filename }}
+          known_hosts: |
+            |1|2YkQ4jjACcc/1rgSBszyeEuKxW4=|hO4GB0XMwQj1gYQDmaS304aU8Tc= ssh-rsa AAAAB3NzaC1yc2EAAAABIwAAAQEAq2A7hRGmdnm9tUDbO9IDSwBK6TbQa+PXYPCPy6rbTrTtw7PHkccKrpp0yVhp5HdEIcKr6pLlVDBfOLX9QUsyCOV0wzfjIJNlGEYsdlLJizHhbn2mUjvSAHQqZETYP81eFzLQNnPHt4EVVUh7VfDESU84KezmD5QlWpXLmvU31/yMf+Se8xhHTvKSCZIFImWwoG6mbUoWf9nzpIoaSjB+weqqUUmpaaasXVal72J+UX2B+2RPW3RcT0eOzQgqlJL3RKrTJvdsjE3JEAvGq3lGHSZXy28G3skua2SmVi/w4yCE6gbODqnTWlg7+wC604ydGXA8VJiS5ap43JXiUFFAaQ==
+          if_key_exists: ignore
+      -
+        # This is a key pair: https://circleci.com/docs/2.0/gh-bb-integration/
+        # public key uploaded to GitHub as a deploy key with write permissions
+        # private key uploaded to CircleCI with hostname "github.com"
+        name: Start ssh-agent and configure the key
+        run: |
+          eval "$(ssh-agent -s)"
+          # the name is always "id_rsa_"+fingerprint without ":""
+          # Deployment key uploaded to the kubeapps/kubeapps repository
+          ssh-add ~/.ssh/${SSH_KEY_KUBEAPPS_DEPLOY_FILENAME}
+          # Deployment key uploaded to the kubeapps-bot/charts repository
+          ssh-add ~/.ssh/${SSH_KEY_FORKED_CHARTS_DEPLOY_FILENAME}
+      -
+        # Assuming there is a personal access token created in GitHub granted with the scopes
+        # "repo:status", "public_repo" and "read:org"
+        # This token is passed as a GITHUB_TOKEN env var via CircleCI
+        name: Run the check_upstream_chart script
+        run: |
+          ./script/chart_upstream_checker.sh \
+              ${CI_BOT_USERNAME} \
+              ${CI_BOT_EMAIL} \
+              ${CI_BOT_GPG} \
+              ${SSH_KEY_FORKED_CHARTS_DEPLOY_FILENAME} \
+              ${CHARTS_REPO_ORIGINAL} \
+              ${BRANCH_CHARTS_REPO_ORIGINAL} \
+              ${CHARTS_REPO_FORKED} \
+              ${BRANCH_CHARTS_REPO_FORKED} \
+              ${KUBEAPPS_REPO} \
+              ${BRANCH_KUBEAPPS_REPO} \
+              ${README_GENERATOR_REPO} \
+              ${DEV_MODE}
+
+  sync_chart_to_bitnami:
+    needs:
+      - setup
+    if: needs.setup.outputs.running_on_tag == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - # Assuming there is a personal access token created in GitHub granted with the scopes
+        # "repo:status", "public_repo" and "read:org"
+        # This token is passed as a GITHUB_TOKEN env var via CircleCI
+        name: "Install GitHub CLI"
+        run: | # TODO: Move this to a script 
+          cd /tmp
+          wget https://github.com/cli/cli/releases/download/v${GITHUB_VERSION}/gh_${GITHUB_VERSION}_linux_amd64.tar.gz
+          tar zxf gh_${GITHUB_VERSION}_linux_amd64.tar.gz
+          rm gh_${GITHUB_VERSION}_linux_amd64.tar.gz
+          sudo mv gh_${GITHUB_VERSION}_linux_amd64/bin/gh /usr/local/bin/
+      - name: "Install semver bash tool"
+        run: | # TODO: Move to a script
+          cd /tmp
+          wget https://github.com/fsaintjacques/semver-tool/archive/refs/tags/${SEMVER_VERSION}.tar.gz
+          tar zxf ${SEMVER_VERSION}.tar.gz
+          rm ${SEMVER_VERSION}.tar.gz
+          cd semver-tool-${SEMVER_VERSION}
+          sudo make install
+      - name: "Install the GPG key"
+        run: | # TODO: Move to a script
+          # Creating the files from the GPG_KEY_PUBLIC and GPG_KEY_PRIVATE env vars
+          echo -e "${{secrets.GPG_KEY_PUBLIC}}" > /tmp/public.key
+          echo -e "${{secrets.GPG_KEY_PRIVATE}}" > /tmp/private.key
+
+          # Importing the GPG keys
+          gpg --import /tmp/public.key
+          gpg --import --no-tty --batch --yes /tmp/private.key
+
+          # Trusting the imported GPG private key
+          (echo 5; echo y; echo save) |  gpg --command-fd 0 --no-tty --no-greeting -q --edit-key "${CI_BOT_GPG}" trust
+
+          # Listing the key to verify the import process succeeded
+          gpg --list-secret-keys ${CI_BOT_EMAIL}
+      - name: "Install SSH key: Forked Charts Deploy Key"
+        uses: shimataro/ssh-key-action@v2
+        with:
+          key: ${{ secrets.SSH_KEY_FORKED_CHARTS_DEPLOY }}
+          name: ${{ needs.setup.outputs.ssh_key_forked_charts_deploy_filename }}
+          known_hosts: |
+            |1|2YkQ4jjACcc/1rgSBszyeEuKxW4=|hO4GB0XMwQj1gYQDmaS304aU8Tc= ssh-rsa AAAAB3NzaC1yc2EAAAABIwAAAQEAq2A7hRGmdnm9tUDbO9IDSwBK6TbQa+PXYPCPy6rbTrTtw7PHkccKrpp0yVhp5HdEIcKr6pLlVDBfOLX9QUsyCOV0wzfjIJNlGEYsdlLJizHhbn2mUjvSAHQqZETYP81eFzLQNnPHt4EVVUh7VfDESU84KezmD5QlWpXLmvU31/yMf+Se8xhHTvKSCZIFImWwoG6mbUoWf9nzpIoaSjB+weqqUUmpaaasXVal72J+UX2B+2RPW3RcT0eOzQgqlJL3RKrTJvdsjE3JEAvGq3lGHSZXy28G3skua2SmVi/w4yCE6gbODqnTWlg7+wC604ydGXA8VJiS5ap43JXiUFFAaQ==
+          if_key_exists: ignore
+      -
+        # This is a key pair: https://circleci.com/docs/2.0/gh-bb-integration/
+        # public key uploaded to GitHub as a deploy key with write permissions
+        # private key uploaded to CircleCI with hostname "github.com"
+        name: Start ssh-agent and configure the key
+        run: |
+          eval "$(ssh-agent -s)"
+          # Deployment key uploaded to the kubeapps-bot/charts repository
+          ssh-add ~/.ssh/${SSH_KEY_FORKED_CHARTS_DEPLOY_FILENAME}
+      - # Assuming there is a personal access token created in GitHub granted with the scopes
+        # "repo:status", "public_repo" and "read:org"
+        # This token is passed as a GITHUB_TOKEN env var via CircleCI
+        name: Run the chart_sync script
+        run: |
+          ./script/chart_sync.sh \
+              ${CI_BOT_USERNAME} \
+              ${CI_BOT_EMAIL} \
+              ${CI_BOT_GPG} \
+              ${CHARTS_REPO_ORIGINAL} \
+              ${BRANCH_CHARTS_REPO_ORIGINAL} \
+              ${CHARTS_REPO_FORKED} \
+              ${BRANCH_CHARTS_REPO_FORKED} \
+              ${DEV_MODE}
