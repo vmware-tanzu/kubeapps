@@ -722,7 +722,7 @@ jobs:
       IMAGES: "apprepository-controller asset-syncer kubeapps-apis"
     <<: *build_images
   build_dashboard:
-    resource_class: large
+    resource_class: xlarge
     docker:
       - image: cimg/go:<< pipeline.parameters.GOLANG_VERSION >>
         auth:
