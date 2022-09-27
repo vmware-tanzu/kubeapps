@@ -50,7 +50,7 @@ parameters:
     default: "v0.16.0"
   K8S_KIND_VERSION:
     type: "string"
-    default: "v1.24.6@sha256:97e8d00bc37a7598a0b32d1fabd155a96355c49fa0d4d4790aab0f161bf31be1"
+    default: "v1.22.15@sha256:bfd5eaae36849bfb3c1e3b9442f3da17d730718248939d9d547e86bbac5da586"
   POSTGRESQL_VERSION:
     type: "string"
     default: "14.5.0-debian-11-r14"
