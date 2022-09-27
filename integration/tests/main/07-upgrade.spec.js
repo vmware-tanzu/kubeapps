@@ -36,9 +36,7 @@ test("Upgrades an application", async ({ page }) => {
   // Set replicas
   await page.locator("input[type='number']").fill("2");
   await page.click('li:has-text("Changes")');
-  await expect(page.locator("section#deployment-form-body-tabs-panel2")).toContainText(
-    "replicaCount: 2",
-  );
+  await expect(page.locator(".editor.modified")).toContainText("replicaCount: 2");
 
   // Set release name
   const releaseNameLocator = page.locator("#releaseName");

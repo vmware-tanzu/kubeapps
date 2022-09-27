@@ -100,9 +100,7 @@ test("Create a new private package repository successfully", async ({ page }) =>
   const newPackageVersionValue = await page.inputValue('select[name="package-versions"]');
   expect(newPackageVersionValue).toEqual("8.6.3");
   await page.click('li:has-text("Changes")');
-  await expect(page.locator("section#deployment-form-body-tabs-panel2")).toContainText(
-    "tag: 2.4.48-debian-10-r75",
-  );
+  await expect(page.locator(".editor.modified")).toContainText("tag: 2.4.48-debian-10-r75");
 
   // Deploy upgrade
   await page.click('cds-button:has-text("Deploy")');

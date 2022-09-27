@@ -57,9 +57,7 @@ test("Rolls back an application", async ({ page }) => {
   // Increase replicas
   await page.locator("input[type='number']").fill("2");
   await page.click('li:has-text("Changes")');
-  await expect(page.locator("section#deployment-form-body-tabs-panel2")).toContainText(
-    "replicaCount: 2",
-  );
+  await expect(page.locator(".editor.modified")).toContainText("replicaCount: 2");
   await page.locator('cds-button:has-text("Deploy")').click();
 
   // Check upgrade result
