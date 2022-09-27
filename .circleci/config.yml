@@ -730,7 +730,8 @@ jobs:
           password: $DOCKER_PASSWORD
     environment:
       IMAGES: "dashboard"
-      NODE_OPTIONS: "--max-old-space-size=3500"
+      NODE_OPTIONS: "--max-old-space-size=4096"
+      GENERATE_SOURCEMAP: "false"
     <<: *build_images
   build_pinniped_proxy:
     docker:
