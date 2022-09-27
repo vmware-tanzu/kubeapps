@@ -47,7 +47,7 @@ require (
 	github.com/docker/cli v20.10.18+incompatible
 	github.com/fluxcd/helm-controller/api v0.24.0
 	github.com/fluxcd/pkg/apis/meta v0.15.0
-	github.com/fluxcd/pkg/oci v0.9.0
+	github.com/fluxcd/pkg/oci v0.10.0
 	github.com/fluxcd/pkg/version v0.2.0
 	github.com/fluxcd/source-controller/api v0.29.0
 	github.com/go-redis/redis/v8 v8.11.5
@@ -97,7 +97,7 @@ require (
 )
 
 require (
-	github.com/Azure/azure-sdk-for-go/sdk/azcore v1.1.2 // indirect
+	github.com/Azure/azure-sdk-for-go/sdk/azcore v1.1.3 // indirect
 	github.com/Azure/azure-sdk-for-go/sdk/azidentity v1.1.0 // indirect
 	github.com/Azure/azure-sdk-for-go/sdk/internal v1.0.0 // indirect
 	github.com/Azure/go-ansiterm v0.0.0-20210617225240-d185dfc1b5a1 // indirect
@@ -108,7 +108,7 @@ require (
 	github.com/Masterminds/sprig/v3 v3.2.2 // indirect
 	github.com/Masterminds/squirrel v1.5.3 // indirect
 	github.com/asaskevich/govalidator v0.0.0-20210307081110-f21760c49a8d // indirect
-	github.com/aws/aws-sdk-go v1.44.84 // indirect
+	github.com/aws/aws-sdk-go v1.44.105 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/bshuster-repo/logrus-logstash-hook v1.0.2 // indirect
 	github.com/bugsnag/bugsnag-go v2.1.2+incompatible // indirect
