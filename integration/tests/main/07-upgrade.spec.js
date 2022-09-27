@@ -45,7 +45,8 @@ test("Upgrades an application", async ({ page }) => {
   await page.locator('[aria-label="Type to narrow down results\\."]').fill(">find");
   await page.locator('label:has-text("FindCtrl+F")').click();
   await page.locator('[aria-label="Find"]').fill("replicaCount: ");
-  await expect(page.locator(".editor.modified")).toContainText("replicaCount: 2");
+  // Note the U+200C , which is a zero-width non-joiner, character instead of a space
+  await expect(page.locator(".editor.modified")).toContainText("replicaCount:·‌2");
 
   // Set release name
   const releaseNameLocator = page.locator("#releaseName");
