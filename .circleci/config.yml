@@ -728,9 +728,13 @@ jobs:
         auth:
           username: $DOCKER_USERNAME
           password: $DOCKER_PASSWORD
+    # Note that the max old space setting is per worker.
+    # Webpack uses "terser-webpack-plugin", which uses #CPUs-1 workers by default.
+    # We are using 3 workers, so we need to set the max old space to < 4GB/3, so
+    # setting it to 1GB.
     environment:
+      NODE_OPTIONS: "--max-old-space-size=1024"
       IMAGES: "dashboard"
-      GENERATE_SOURCEMAP: "false"
     <<: *build_images
   build_pinniped_proxy:
     docker:
