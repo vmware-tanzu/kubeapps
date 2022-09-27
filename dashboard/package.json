@@ -32,6 +32,8 @@
     "@clr/ui": "^13.8.3",
     "@improbable-eng/grpc-web": "^0.15.0",
     "@paciolan/remote-component": "^2.12.1",
+    "@tanstack/match-sorter-utils": "^8.1.1",
+    "@tanstack/react-table": "^8.5.13",
     "ajv": "^8.11.0",
     "axios": "^0.27.2",
     "connected-react-router": "^6.9.3",
@@ -43,6 +45,7 @@
     "lodash": "^4.17.21",
     "lodash-es": "^4.17.21",
     "modern-normalize": "^1.1.0",
+    "monaco-editor": "^0.34.0",
     "prop-types": "^15.8.1",
     "protobufjs": "^7.1.2",
     "qs": "^6.11.0",
@@ -56,6 +59,7 @@
     "react-intl": "^6.1.1",
     "react-markdown": "^8.0.3",
     "react-minimal-pie-chart": "^8.3.0",
+    "react-monaco-editor": "^0.50.1",
     "react-redux": "^7.2.9",
     "react-router-dom": "^5.3.0",
     "react-router-hash-link": "^2.4.3",
@@ -104,6 +108,7 @@
     "jest-enzyme": "^7.1.2",
     "jest-plugin-context": "^2.9.0",
     "mock-socket": "^9.1.5",
+    "monaco-editor-webpack-plugin": "^7.0.1",
     "moxios": "^0.4.0",
     "node-polyfill-webpack-plugin": "^2.0.1",
     "npm-run-all": "^4.1.5",
@@ -134,7 +139,7 @@
       "!src/**/*.d.ts"
     ],
     "transformIgnorePatterns": [
-      "node_modules/(?!@cds|@clr|@lit|bail|ccount|cds|character-entities|comma-separated-tokens|decode-named-character-reference|escape-string-regexp|hast-util-whitespace|is-plain-obj|lit|lodash-es|markdown-table|mdast-util-definitions|mdast-util-find-and-replace|mdast-util-from-markdown|mdast-util-gfm-autolink-literal|mdast-util-gfm|mdast-util-to-hast|mdast-util-to-markdown|mdast-util-to-string|micromark-core-commonmark|micromark|parse-entities|property-information|ramda|react-markdown|react-syntax-highlighter|remark-breaks|remark-gfm|remark-parse|remark-rehype|space-separated-tokens|swagger-client|swagger-ui-react|trim-lines|trough|unified|unist-builder|unist-util-generated|unist-util-is|unist-util-position|unist-util-stringify-position|unist-util-visit-parents|unist-util-visit|util-find-and-replace|vfile-message|vfile|.*css)"
+      "node_modules/(?!@cds|@clr|@lit|bail|ccount|cds|character-entities|comma-separated-tokens|decode-named-character-reference|escape-string-regexp|hast-util-whitespace|is-plain-obj|lit|lodash-es|markdown-table|mdast-util-definitions|mdast-util-find-and-replace|mdast-util-from-markdown|mdast-util-gfm-autolink-literal|mdast-util-gfm|mdast-util-to-hast|mdast-util-to-markdown|mdast-util-to-string|micromark-core-commonmark|monaco-editor|react-monaco-editor|micromark|parse-entities|property-information|ramda|react-markdown|react-syntax-highlighter|remark-breaks|remark-gfm|remark-parse|remark-rehype|space-separated-tokens|swagger-client|swagger-ui-react|trim-lines|trough|unified|unist-builder|unist-util-generated|unist-util-is|unist-util-position|unist-util-stringify-position|unist-util-visit-parents|unist-util-visit|util-find-and-replace|vfile-message|vfile|.*css)"
     ]
   },
   "browserslist": {
