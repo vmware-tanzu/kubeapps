@@ -252,7 +252,7 @@ installOrUpgradeKubeapps() {
 
 if [[ "${DEBUG_MODE:-false}" == "true" ]]; then
   info "Docker images loaded in the cluster:"
-  crictl images
+  docker exec kubeapps-ci-control-plane crictl images
 fi
 
 # Use dev images or Bitnami if testing the latest release

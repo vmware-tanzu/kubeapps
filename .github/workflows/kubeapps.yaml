@@ -70,14 +70,20 @@ jobs:
       - name: Set outputs
         id: set-outputs
         run: |
-          if [[ ${GITHUB_REPOSITORY} == "vmware-tanzu/kubeapps" ]]; then
-            echo "::set-output name=triggered_from_fork::false"
+          if [[ "${GITHUB_REPOSITORY}" == "${KUBEAPPS_REPO}" ]]; then
             echo "::set-output name=img_prefix::${IMG_PREFIX}"
           else
-            echo "::set-output name=triggered_from_fork::true"
-            # When running from forks, we push the images to a personal namespace (if configured)
+            # When running in forks (NOT triggered due to a PR from an external fork, but running the workflow in the 
+            # external repo), we push the images to a personal namespace (if configured)
             echo "::set-output name=img_prefix::${IMG_PREFIX_FOR_FORKS}"
           fi;
+          
+          # Check if the workflow is triggered due to a PR from an external fork
+          if [[ "${{ github.event.pull_request.head.repo.full_name }}" == "${GITHUB_REPOSITORY}" ]]; then
+            echo "::set-output name=triggered_from_fork::false"
+          else
+            echo "::set-output name=triggered_from_fork::true"            
+          fi
           
           if [[ ${GITHUB_REF_TYPE} == "tag" ]]; then
             echo "::set-output name=img_prod_tag::${GITHUB_REF_NAME}"
@@ -211,19 +217,18 @@ jobs:
           - kubeapps-apis
           - pinniped-proxy
     steps:
+      - id: setup
+        run: |
+          echo "::set-output name=img_name::${{matrix.image}}"
+          echo "::set-output name=img_file::/tmp/${{matrix.image}}-image.tar"
       - uses: docker/metadata-action@v4
         id: meta
         with:
-          images: ${{needs.setup.outputs.img_prefix}}${{matrix.image}}${{needs.setup.outputs.img_modifier}}
+          images: ${{needs.setup.outputs.img_prefix}}${{steps.setup.outputs.img_name}}${{needs.setup.outputs.img_modifier}}
           flavor: latest=true
           tags: ${{needs.setup.outputs.img_dev_tag}}
       - uses: docker/setup-qemu-action@v2
       - uses: docker/setup-buildx-action@v2
-      - name: Login to Docker Hub
-        uses: docker/login-action@v2
-        with:
-          username: ${{ secrets.DOCKER_USERNAME }}
-          password: ${{ secrets.DOCKER_PASSWORD }}
       - name: Build image
         uses: docker/build-push-action@v2
         with:
@@ -233,43 +238,34 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
-          outputs: type=docker,dest=/tmp/${{matrix.image}}-image.tar
+          outputs: type=docker,dest=${{ steps.setup.outputs.img_file }}
       - name: Upload image
         uses: actions/upload-artifact@v3
         with:
           name: ${{matrix.image}}-image
-          path: /tmp/${{matrix.image}}-image.tar
-      - if: needs.setup.outputs.running_on_main == 'true' || needs.setup.outputs.running_on_tag == 'true'
-        name: Push image
-        uses: docker/build-push-action@v2
-        with:
-          file: cmd/${{matrix.image}}/Dockerfile
-          platforms: ${{ env.IMG_PLATFORMS }}
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-          push: true
+          path: ${{ steps.setup.outputs.img_file }}
 
   build_dashboard_image:
     name: "Build dashboard image"
     needs:
       - setup
     runs-on: ubuntu-latest
+    env:
+      IMG_NAME: dashboard
     steps:
+      - id: setup
+        run: |
+          echo "::set-output name=img_name::${IMG_NAME}"
+          echo "::set-output name=img_file::/tmp/${IMG_NAME}-image.tar"
       - uses: actions/checkout@v3
       - uses: docker/metadata-action@v4
         id: meta
         with:
-          images: ${{needs.setup.outputs.img_prefix}}dashboard${{needs.setup.outputs.img_modifier}}
+          images: ${{needs.setup.outputs.img_prefix}}${{steps.setup.outputs.img_name}}${{needs.setup.outputs.img_modifier}}
+          flavor: latest=true
           tags: ${{needs.setup.outputs.img_dev_tag}}
       - uses: docker/setup-qemu-action@v2
       - uses: docker/setup-buildx-action@v2
-      - name: Login to Docker Hub
-        uses: docker/login-action@v2
-        with:
-          username: ${{ secrets.DOCKER_USERNAME }}
-          password: ${{ secrets.DOCKER_PASSWORD }}
       - name: Build image
         uses: docker/build-push-action@v2
         with:
@@ -279,44 +275,33 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
-          outputs: type=docker,dest=/tmp/dashboard-image.tar
+          outputs: type=docker,dest=${{ steps.setup.outputs.img_file }}
       - name: Upload image
         uses: actions/upload-artifact@v3
         with:
-          name: dashboard-image
-          path: /tmp/dashboard-image.tar
-
-      - if: needs.setup.outputs.running_on_main == 'true' || needs.setup.outputs.running_on_tag == 'true'
-        name: Push image
-        uses: docker/build-push-action@v2
-        with:
-          context: dashboard
-          platforms: ${{ env.IMG_PLATFORMS }}
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-          push: true
-          #TODO Conditionally push??
+          name: ${{ steps.setup.outputs.img_name }}-image
+          path: ${{ steps.setup.outputs.img_file }}
 
   build_e2e_runner_image:
     name: "Build E2E runner image"
     needs:
       - setup
     runs-on: ubuntu-latest
+    env:
+      IMG_NAME: integration-tests
     steps:
+      - id: setup
+        run: |
+          echo "::set-output name=img_name::${IMG_NAME}"
+          echo "::set-output name=img_file::/tmp/${IMG_NAME}-image.tar"
       - uses: actions/checkout@v3
       - uses: docker/metadata-action@v4
         id: meta
         with:
-          images: ${{needs.setup.outputs.img_prefix}}integration-tests${{needs.setup.outputs.img_modifier}}
+          images: ${{needs.setup.outputs.img_prefix}}${{steps.setup.outputs.img_name}}${{needs.setup.outputs.img_modifier}}
+          flavor: latest=true
           tags: ${{needs.setup.outputs.img_dev_tag}}
       - uses: docker/setup-buildx-action@v2
-      - name: Login to Docker Hub
-        uses: docker/login-action@v2
-        with:
-          username: ${{ secrets.DOCKER_USERNAME }}
-          password: ${{ secrets.DOCKER_PASSWORD }}
       - name: Build image
         uses: docker/build-push-action@v2
         with:
@@ -325,21 +310,55 @@ jobs:
           platforms: linux/amd64
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-          outputs: type=docker,dest=/tmp/e2e-runner-image.tar
+          outputs: type=docker,dest=${{ steps.setup.outputs.img_file }}
       - name: Upload image
         uses: actions/upload-artifact@v3
         with:
-          name: e2e-runner-image
-          path: /tmp/e2e-runner-image.tar
-      - if: needs.setup.outputs.running_on_main == 'true' || needs.setup.outputs.running_on_tag == 'true'
-        name: Push image
-        uses: docker/build-push-action@v2
+          name: ${{steps.setup.outputs.img_name}}-image
+          path: ${{ steps.setup.outputs.img_file }}
+
+  # Push images to docker.io/kubeapps/[image]-ci:[dev-tag]
+  push_dev_images:
+    # If the workflow is triggered from a PR from an external fork, secrets won't be available, so we cannot login into dockerhub
+    if: needs.setup.outputs.triggered_from_fork == 'false'
+    runs-on: ubuntu-latest
+    needs:
+      - setup
+      - build_docker_images
+      - build_dashboard_image
+      - build_e2e_runner_image
+    env:
+      IMAGES_TO_PUSH: ${IMAGES_TO_PUSH} integration-tests
+      IMG_PREFIX: ${{ needs.setup.outputs.img_prefix }}
+    steps:
+      - name: Login to Docker Hub
+        uses: docker/login-action@v2
         with:
-          context: integration
-          platforms: linux/amd64
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
-          push: true
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+      - uses: actions/download-artifact@v3
+      - run: |
+          for path in ./*; do
+            artifact=$(basename "$path")
+          
+            if [[ "${artifact}" != *"-image" ]]; then
+              echo "::notice ::Skipping artifact ${artifact}, it's not a docker image"          
+              continue
+            fi
+          
+            image=${artifact/-image/}
+            if [[ "${IMAGES_TO_PUSH}" != *"${image}"* ]]; then
+              echo "::notice ::Skipping image ${image}, it's not an image to push"
+              continue
+            fi
+
+            echo "::notice ::Loading image ${image}"
+            docker load --input "${image}-image.tar"
+
+            dev_image=${IMG_PREFIX}${image}${IMG_MODIFIER}:${IMG_DEV_TAG}
+            echo "::notice ::Pushing image ${dev_image}"
+            docker push $dev_image
+          done
 
   local_e2e_tests:
     needs:
@@ -530,13 +549,14 @@ jobs:
           path: integration/reports
 
   push_images:
-    if: needs.setup.outputs.running_on_main == 'true'
+    if: needs.setup.outputs.running_on_main == 'true' || needs.setup.outputs.running_on_tag == 'true'
     runs-on: ubuntu-latest
     needs:
       - setup
       - local_e2e_tests
     env:
       IMG_PROD_TAG: ${{ needs.setup.outputs.img_prod_tag }}
+      IMG_PREFIX: ${{ needs.setup.outputs.img_prefix }}
     steps:
       - name: Login to Docker Hub
         uses: docker/login-action@v2
@@ -562,8 +582,8 @@ jobs:
             echo "::notice ::Loading image ${image}"
             docker load --input "${image}-image.tar"
 
-            dev_image=${{needs.setup.outputs.img_prefix}}${image}${IMG_MODIFIER}:${IMG_DEV_TAG}
-            prod_image=${{needs.setup.outputs.img_prefix}}${image}:${IMG_PROD_TAG}
+            dev_image=${IMG_PREFIX}${image}${IMG_MODIFIER}:${IMG_DEV_TAG}
+            prod_image=${IMG_PREFIX}${image}:${IMG_PROD_TAG}
             docker tag ${dev_image} ${prod_image}
 
             echo "::notice ::Pushing image ${prod_image}"
