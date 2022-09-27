@@ -87,8 +87,10 @@ jobs:
           
           if [[ ${GITHUB_REF_TYPE} == "tag" ]]; then
             echo "::set-output name=img_prod_tag::${GITHUB_REF_NAME}"
+            echo "::set-output name=version::${GITHUB_REF_NAME}"
           else
             echo "::set-output name=img_prod_tag::latest"
+            echo "::set-output name=version::"
           fi;
           
           if [[ ${GITHUB_REF_NAME} == ${BRANCH_KUBEAPPS_REPO} ]]; then
@@ -122,6 +124,7 @@ jobs:
           echo "RUNNING_ON_MAIN: ${{steps.set-outputs.outputs.running_on_main}}"
           echo "RUNNING_ON_TAG: ${{steps.set-outputs.outputs.running_on_tag}}"
           echo "TRIGGERED_FROM_FORK: ${{steps.set-outputs.outputs.triggered_from_fork}}"
+          echo "VERSION: ${{steps.set-outputs.outputs.version}}"
 
   test_go:
     needs:
@@ -235,7 +238,7 @@ jobs:
           file: cmd/${{matrix.image}}/Dockerfile
           platforms: ${{ env.IMG_PLATFORMS }}
           tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
+          build-args: ${{ needs.setup.outputs.version }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
           outputs: type=docker,dest=${{ steps.setup.outputs.img_file }}
@@ -272,7 +275,7 @@ jobs:
           context: dashboard
           platforms: ${{ env.IMG_PLATFORMS }}
           tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
+          build-args: ${{ needs.setup.outputs.version }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
           outputs: type=docker,dest=${{ steps.setup.outputs.img_file }}
@@ -309,7 +312,7 @@ jobs:
           # It doesn't make sense investing CI time in making a multiplatform image here
           platforms: linux/amd64
           tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
+          build-args: ${{ needs.setup.outputs.version }}
           outputs: type=docker,dest=${{ steps.setup.outputs.img_file }}
       - name: Upload image
         uses: actions/upload-artifact@v3
