@@ -1,7 +1,7 @@
 # Copyright 2018-2022 the Kubeapps contributors.
 # SPDX-License-Identifier: Apache-2.0
 
-FROM bitnami/node:16.17.0 AS build
+FROM bitnami/node:16.17.1 AS build
 WORKDIR /app
 
 COPY package.json yarn.lock /app/
