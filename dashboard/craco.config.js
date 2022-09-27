@@ -18,7 +18,10 @@ module.exports = {
           process: "process/browser.js",
           Buffer: ["buffer", "Buffer"],
         }),
-        new MonacoWebpackPlugin(),
+        new MonacoWebpackPlugin({
+          // see https://github.com/microsoft/monaco-editor/tree/main/webpack-plugin
+          languages: ["yaml"],
+        }),
       ],
       ignoreWarnings: [/Failed to parse source map/], // ignore source map warnings
     },
