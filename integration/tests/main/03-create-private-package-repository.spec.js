@@ -100,6 +100,15 @@ test("Create a new private package repository successfully", async ({ page }) =>
   const newPackageVersionValue = await page.inputValue('select[name="package-versions"]');
   expect(newPackageVersionValue).toEqual("8.6.3");
   await page.click('li:has-text("Changes")');
+
+  // Use the built-in search function in monaco to find the text we are looking for
+  // so that it get loaded in the DOM when using the toContainText assert
+  await page.locator(".editor.modified").click({ button: "right" });
+  await page.locator("text=Command Palette").click();
+  await page.locator('[aria-label="Type to narrow down results\\."]').click();
+  await page.locator('[aria-label="Type to narrow down results\\."]').fill(">find");
+  await page.locator('label:has-text("FindCtrl+F")').click();
+  await page.locator('[aria-label="Find"]').fill("tag: 2.4.48");
   await expect(page.locator(".editor.modified")).toContainText("tag: 2.4.48-debian-10-r75");
 
   // Deploy upgrade
