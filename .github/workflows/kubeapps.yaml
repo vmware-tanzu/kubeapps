@@ -4,6 +4,9 @@
 name: Kubeapps general pipeline
 
 on:
+  push:
+    branches:
+      - migrate-ci
   pull_request:
     branches:
       - main
