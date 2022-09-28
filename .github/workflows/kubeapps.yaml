@@ -528,6 +528,8 @@ jobs:
           # Create certs
           kubectl -n dex create secret tls dex-web-server-tls --key ./devel/dex.key --cert ./devel/dex.crt
           mkcert -key-file ./devel/localhost-key.pem -cert-file ./devel/localhost-cert.pem localhost kubeapps-ci.kubeapps $DEFAULT_DEX_IP
+      - name: Setup upterm session
+        uses: lhotari/action-upterm@v1
       - name: "Run e2e tests script"
         env:
           DEBUG_MODE: true
@@ -546,8 +548,6 @@ jobs:
             echo "TEST_RESULT=1" >> $GITHUB_ENV
             exit 1
           fi
-      - name: Setup upterm session
-        uses: lhotari/action-upterm@v1
       - name: "Print k8s KubeappsAPIs logs if the tests fail"
         run: kubectl --context kind-kubeapps-ci --kubeconfig ${HOME}/.kube/kind-config-kubeapps-ci logs -n kubeapps deploy/kubeapps-internal-kubeappsapis --previous=true
         if: failure() && env.TEST_RESULT == 1
