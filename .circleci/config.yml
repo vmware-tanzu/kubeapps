@@ -101,7 +101,7 @@ parameters:
     default: "master"
   KUBEAPPS_REPO:
     type: "string"
-    default: "kubeapps/kubeapps"
+    default: "vmware-tanzu/kubeapps"
   BRANCH_KUBEAPPS_REPO:
     type: "string"
     default: "main"
