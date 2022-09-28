@@ -6,8 +6,6 @@ package main
 import (
 	"context"
 	"io"
-	apiext "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset"
-	"k8s.io/client-go/kubernetes"
 	"reflect"
 	"strings"
 	"testing"
