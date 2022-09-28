@@ -722,12 +722,18 @@ jobs:
       IMAGES: "apprepository-controller asset-syncer kubeapps-apis"
     <<: *build_images
   build_dashboard:
+    resource_class: large
     docker:
       - image: cimg/go:<< pipeline.parameters.GOLANG_VERSION >>
         auth:
           username: $DOCKER_USERNAME
           password: $DOCKER_PASSWORD
+    # Note that the max old space setting is per worker.
+    # Webpack uses "terser-webpack-plugin", which uses #CPUs-1 workers by default.
+    # We are using 3 workers, so we need to set the max old space to < 4GB/3, so
+    # setting it to 1GB.
     environment:
+      NODE_OPTIONS: "--max-old-space-size=1024"
       IMAGES: "dashboard"
     <<: *build_images
   build_pinniped_proxy:

@@ -36,9 +36,17 @@ test("Upgrades an application", async ({ page }) => {
   // Set replicas
   await page.locator("input[type='number']").fill("2");
   await page.click('li:has-text("Changes")');
-  await expect(page.locator("section#deployment-form-body-tabs-panel2")).toContainText(
-    "replicaCount: 2",
-  );
+
+  // Use the built-in search function in monaco to find the text we are looking for
+  // so that it get loaded in the DOM when using the toContainText assert
+  await page.locator(".editor.modified").click({ button: "right" });
+  await page.locator("text=Command Palette").click();
+  await page.locator('[aria-label="Type to narrow down results\\."]').click();
+  await page.locator('[aria-label="Type to narrow down results\\."]').fill(">find");
+  await page.locator('label:has-text("FindCtrl+F")').click();
+  await page.locator('[aria-label="Find"]').fill("replicaCount: ");
+  // Note the U+200C , which is a zero-width non-joiner, character instead of a space
+  await expect(page.locator(".editor.modified")).toContainText("replicaCount:·‌2");
 
   // Set release name
   const releaseNameLocator = page.locator("#releaseName");
