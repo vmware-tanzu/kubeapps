@@ -36,6 +36,10 @@ test("Deploys package with default values in main cluster", async ({ page }) => 
   await page.locator('cds-button:has-text("Deploy")').click();
   console.log(`Creating release "${releaseName}"`);
 
+  // FIXME: hack to try to fix the issue in GHA workflow and OS X: https://vmware.slack.com/archives/C032Y8QL77C/p1664350684954239?thread_ts=1664301278.315819&cid=C032Y8QL77C
+  await page.waitForTimeout(10000);
+  await page.reload();
+
   // Assertions
   await page.waitForSelector("css=.application-status-pie-chart-number >> text=3", {
     timeout: utils.getDeploymentTimeout(),
