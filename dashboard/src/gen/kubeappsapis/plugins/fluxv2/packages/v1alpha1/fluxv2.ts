@@ -45,6 +45,26 @@ export interface SetUserManagedSecretsResponse {
   value: boolean;
 }
 
+/**
+ * Flux PackageRepositoryCustomDetail
+ *
+ * Custom details for a Flux Package repository
+ */
+export interface FluxPackageRepositoryCustomDetail {
+  /**
+   * optional field that allows specifying an OIDC provider used for authentication purposes
+   * Supported options are:
+   *  - generic
+   *  - aws
+   *  - azure
+   *  - gcp
+   * The provider field is supported only for Helm OCI repositories. The repository type must
+   * be set to "oci"
+   * ref https://fluxcd.io/flux/components/source/helmrepositories/#provider
+   */
+  provider: string;
+}
+
 function createBaseSetUserManagedSecretsRequest(): SetUserManagedSecretsRequest {
   return { value: false };
 }
@@ -145,6 +165,58 @@ export const SetUserManagedSecretsResponse = {
   ): SetUserManagedSecretsResponse {
     const message = createBaseSetUserManagedSecretsResponse();
     message.value = object.value ?? false;
+    return message;
+  },
+};
+
+function createBaseFluxPackageRepositoryCustomDetail(): FluxPackageRepositoryCustomDetail {
+  return { provider: "" };
+}
+
+export const FluxPackageRepositoryCustomDetail = {
+  encode(
+    message: FluxPackageRepositoryCustomDetail,
+    writer: _m0.Writer = _m0.Writer.create(),
+  ): _m0.Writer {
+    if (message.provider !== "") {
+      writer.uint32(10).string(message.provider);
+    }
+    return writer;
+  },
+
+  decode(input: _m0.Reader | Uint8Array, length?: number): FluxPackageRepositoryCustomDetail {
+    const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseFluxPackageRepositoryCustomDetail();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1:
+          message.provider = reader.string();
+          break;
+        default:
+          reader.skipType(tag & 7);
+          break;
+      }
+    }
+    return message;
+  },
+
+  fromJSON(object: any): FluxPackageRepositoryCustomDetail {
+    return { provider: isSet(object.provider) ? String(object.provider) : "" };
+  },
+
+  toJSON(message: FluxPackageRepositoryCustomDetail): unknown {
+    const obj: any = {};
+    message.provider !== undefined && (obj.provider = message.provider);
+    return obj;
+  },
+
+  fromPartial<I extends Exact<DeepPartial<FluxPackageRepositoryCustomDetail>, I>>(
+    object: I,
+  ): FluxPackageRepositoryCustomDetail {
+    const message = createBaseFluxPackageRepositoryCustomDetail();
+    message.provider = object.provider ?? "";
     return message;
   },
 };

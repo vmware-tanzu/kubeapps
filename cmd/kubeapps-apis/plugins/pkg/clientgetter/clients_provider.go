@@ -308,3 +308,29 @@ func (b *Builder) BuildFixedCluster() FixedClusterClientProviderInterface {
 		return &b.ClientGetter, nil
 	}}
 }
+
+// NewBackgroundClientProvider returns an "out-of-band" or "in-cluster" client getter that returns various client interfaces
+// with the context of the current cluster it is executing on and the service account
+// configured for "kubeapps-apis" deployment
+// https://github.com/vmware-tanzu/kubeapps/issues/3560
+// flux plug-in runs out-of-request interactions with the Kubernetes API server.
+// Although we've already ensured that if the flux plugin is selected, that the service account
+// will be granted additional read privileges, we also need to ensure that the plugin can get a
+// config based on the service account rather than the request context
+func NewBackgroundClientProvider(options Options, clientQPS float32, clientBurst int) FixedClusterClientProviderInterface {
+	return &FixedClusterClientProvider{ClientsFunc: func(ctx context.Context) (*ClientGetter, error) {
+		// Some plugins currently support interactions with the default (kubeapps) cluster only
+		if config, err := rest.InClusterConfig(); err != nil {
+			code := codes.FailedPrecondition
+			if status.Code(err) == codes.Unauthenticated {
+				// want to make sure we return same status in this case
+				code = codes.Unauthenticated
+			}
+			return nil, status.Errorf(code, "unable to get in cluster config due to: %v", err)
+		} else {
+			config.QPS = clientQPS
+			config.Burst = clientBurst
+			return buildClientGetter(config, options)
+		}
+	}}
+}
