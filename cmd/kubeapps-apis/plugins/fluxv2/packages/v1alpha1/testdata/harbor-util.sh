@@ -12,23 +12,27 @@ FLUX_TEST_HARBOR_ADMIN_PWD=Harbor12345
 function createHarborProject()
 {
   # sanity check
-  if [[ "$#" -lt 2 ]]; then
-    error_exit "Usage: createHarborProject name public"
+  if [[ "$#" -lt 5 ]]; then
+    error_exit "Usage: createHarborProject host user password project_name is_public"
   fi
 
-  local PROJECT_NAME=$1
-  local PUBLIC=$2
+  local HOST=$1
+  local USER=$2
+  local PWD=$3
+  local PROJECT_NAME=$4
+  local PUBLIC=$5
+  local URL=https://${HOST}
   local status_code=$(curl -L --write-out %{http_code} \
                       --silent --output /dev/null \
-                      --head ${FLUX_TEST_HARBOR_URL}/api/v2.0/projects?project_name=${PROJECT_NAME} \
-                      -u $FLUX_TEST_HARBOR_ADMIN_USER:$FLUX_TEST_HARBOR_ADMIN_PWD)
+                      --head ${URL}/api/v2.0/projects?project_name=${PROJECT_NAME} \
+                      -u $USER:$PWD)
   if [[ "$status_code" -eq 200 ]] ; then
-    echo -e "Project [${L_YELLOW}${PROJECT_NAME}${NC}] already exists in harbor..."
+    echo -e "Project [${L_YELLOW}${PROJECT_NAME}${NC}] already exists on [${L_YELLOW}${HOST}${NC}] ..."
   elif [[ "$status_code" -eq 404 ]] ; then
     if [[ $PUBLIC == "true" ]]; then 
-      echo -e "Creating public project [${L_YELLOW}$PROJECT_NAME${NC}] in harbor..."
+      echo -e "Creating public project [${L_YELLOW}$PROJECT_NAME${NC}] on [${L_YELLOW}${HOST}${NC}] ..."
     elif [[ $PUBLIC == "false" ]]; then 
-      echo -e "Creating private project [${L_YELLOW}$PROJECT_NAME${NC}] in harbor..."
+      echo -e "Creating private project [${L_YELLOW}$PROJECT_NAME${NC}] on [${L_YELLOW}${HOST}${NC}] ..."
     else 
       error_exit "Unsupported value for public: $PUBLIC"
     fi
@@ -36,10 +40,10 @@ function createHarborProject()
     payload=$(echo $payload | sed "s/\$PUBLIC/${PUBLIC}/g")
     local status_code=$(curl -L --write-out %{http_code} --silent \
                         --output /dev/null \
-                        -X POST ${FLUX_TEST_HARBOR_URL}/api/v2.0/projects \
+                        -X POST ${URL}/api/v2.0/projects \
                         -H 'Content-Type: application/json' \
                         --data "${payload}" \
-                        -u $FLUX_TEST_HARBOR_ADMIN_USER:$FLUX_TEST_HARBOR_ADMIN_PWD)
+                        -u $USER:$PWD)
     if [[ "$status_code" -eq 201 ]] ; then
       echo -e "Project [${L_YELLOW}${PROJECT_NAME}${NC}] successfully created..."
       #
@@ -48,59 +52,142 @@ function createHarborProject()
       error_exit "Unexpected HTTP status creating project [$PROJECT_NAME]: [$status_code]"
     fi
   else
-    error_exit "Unexpected HTTP status checking if project [$PROJECT_NAME] exists: [$status_code]"
+    error_exit "Unexpected HTTP status checking whether project [$PROJECT_NAME] exists: [$status_code]"
+  fi
+}
+
+function deleteHarborProjectRepositories()
+{
+  if [[ "$#" -lt 4 ]]; then
+    error_exit "Usage: deleteHarborProjectRepositories host user password project_name"
+  fi
+  local HOST=$1
+  local USER=$2
+  local PWD=$3
+  local PROJECT_NAME=$4
+  local URL=https://${HOST}
+
+  RESP=$(curl -L --silent --show-error \
+        ${URL}/api/v2.0/projects/$PROJECT_NAME/repositories \
+        -u $USER:$PWD)
+  RESP=$(echo "$RESP" | jq -r .[].name | tr -d '"')
+  IFS=$'\n' RESP=($RESP)
+  if [[ ! -z "$RESP" ]] ; then
+    for (( i=0; i<${#RESP[@]}; i++ ))
+    do
+      IFS='/' read -ra SEGMENTS <<< "${RESP[$i]}"
+      local n=
+      for (( j=1; j<${#SEGMENTS[@]}; j++ ))
+      do
+        if [[ $j > 1 ]] ; then 
+          n=$n/
+        fi
+        n=$n${SEGMENTS[j]}
+      done
+      n=$(echo $n | sed 's|/|%252F|g')
+      echo -e Deleting repository [${L_YELLOW}$n${NC}] on [${L_YELLOW}$HOST${NC}]...
+      status_code=$(curl -L --write-out %{http_code} --silent \
+                  --show-error -X DELETE --output /dev/null \
+                  ${URL}/api/v2.0/projects/$PROJECT_NAME/repositories/$n \
+                  -u $USER:$PWD)
+      if [[ "$status_code" -eq 200 ]] ; then
+          echo -e Repository [${L_YELLOW}$n${NC}] deleted
+      else
+          error_exit "Failed to delete repository [$n] due to HTTP status: [$status_code]"
+      fi
+    done
   fi
 }
 
 function deleteHarborProject()
 {
   # sanity check
-  if [[ "$#" -lt 1 ]]; then
-    error_exit "Usage: deleteHarborProject name"
+  if [[ "$#" -lt 4 ]]; then
+    error_exit "Usage: deleteHarborProject host user password project_name"
   fi
-  local PROJECT_NAME=$1
+  local HOST=$1
+  local USER=$2
+  local PWD=$3
+  local PROJECT_NAME=$4
+  local URL=https://${HOST}
   echo
-  echo -e Checking if harbor project [${L_YELLOW}$PROJECT_NAME${NC}] exists...
+  echo -e Checking whether project [${L_YELLOW}$PROJECT_NAME${NC}] exists on [${L_YELLOW}$HOST${NC}] ...
   local status_code=$(curl -L --write-out %{http_code} \
                       --silent --output /dev/null \
                       --show-error \
-                      --head ${FLUX_TEST_HARBOR_URL}/api/v2.0/projects?project_name=${PROJECT_NAME} \
-                      -u $FLUX_TEST_HARBOR_ADMIN_USER:$FLUX_TEST_HARBOR_ADMIN_PWD)
+                      --head ${URL}/api/v2.0/projects?project_name=${PROJECT_NAME} \
+                      -u $USER:$PWD)
   if [[ "$status_code" -eq 200 ]] ; then
-    echo -e "Project [${L_YELLOW}$PROJECT_NAME${NC}] exists in harbor. This script will now delete it..."
-    CMD="curl -L --silent --show-error \
-           ${FLUX_TEST_HARBOR_URL}/api/v2.0/projects/$PROJECT_NAME/repositories \
-           -u $FLUX_TEST_HARBOR_ADMIN_USER:$FLUX_TEST_HARBOR_ADMIN_PWD"
-    RESP=$($CMD)
-    RESP=$(echo "$RESP" | jq .[].name | tr -d '"')
-    if [[ ! -z "$RESP" ]] ; then
-      IFS='/' read -ra SEGMENTS <<< "$RESP"
-      for n in "${SEGMENTS[1]}"
-      do
-        echo -e Deleting repository [${L_YELLOW}$n${NC}]...
-        status_code=$(curl -L --write-out %{http_code} --silent \
-              --show-error -X DELETE --output /dev/null \
-              ${FLUX_TEST_HARBOR_URL}/api/v2.0/projects/$PROJECT_NAME/repositories/$n \
-              -u $FLUX_TEST_HARBOR_ADMIN_USER:$FLUX_TEST_HARBOR_ADMIN_PWD)
-        if [[ "$status_code" -eq 200 ]] ; then
-            echo -e Repository [${L_YELLOW}$n${NC}] deleted
-        else
-            error_exit "Failed to delete repository [$n] due to HTTP status: [$status_code]"
-        fi
-      done
-    fi
+    echo -e "Project [${L_YELLOW}$PROJECT_NAME${NC}] exists on [${L_YELLOW}$HOST${NC}]. This script will now delete it..."
+    deleteHarborProjectRepositories $*
     status_code=$(curl -L --write-out %{http_code} --silent \
           --show-error -X DELETE \
           --output /dev/null \
-           ${FLUX_TEST_HARBOR_URL}/api/v2.0/projects/${PROJECT_NAME} \
-           -u $FLUX_TEST_HARBOR_ADMIN_USER:$FLUX_TEST_HARBOR_ADMIN_PWD)
+           ${URL}/api/v2.0/projects/${PROJECT_NAME} \
+           -u $USER:$PWD)
     if [[ "$status_code" -eq 200 ]] ; then
         echo -e Project [${L_YELLOW}${PROJECT_NAME}${NC}] deleted
     else
         error_exit "Failed to delete project [$PROJECT_NAME] due to HTTP status: [$status_code]"
     fi
   elif [[ "$status_code" -ne 404 ]] ; then
-    error_exit "Unexpected HTTP status checking if project [$PROJECT_NAME] exists: [$status_code]"
+    error_exit "Unexpected HTTP status checking whether project [$PROJECT_NAME] exists: [$status_code]"
+  fi
+}
+
+function pushChartsToHarborProject() 
+{
+  if [[ "$#" -lt 4 ]]; then
+    error_exit "Usage: pushChartsToHarbor host user password project_name"
+  fi
+  local HOST=$1
+  local USER=$2
+  local PWD=$3
+  local PROJECT_NAME=$4
+  local URL=https://${HOST}
+
+  helm registry login $HOST -u $USER -p $PWD
+  trap '{
+    helm registry logout $HOST 
+  }' EXIT  
+
+  pushd $SCRIPTPATH/charts
+  trap '{
+    popd
+  }' EXIT  
+
+  ALL_VERSIONS=("6.1.0" "6.1.1" "6.1.2" "6.1.3" "6.1.4" "6.1.5" "6.1.6" "6.1.7" "6.1.8")
+  DEST_URL=oci://$HOST/$PROJECT_NAME
+  for v in ${ALL_VERSIONS[@]}; do
+    helm push podinfo-$v.tgz $DEST_URL
+  done
+}
+
+# shortcut to only look at the project existence and if so assume all is well
+function quickCheckProjectExists()
+{
+  if [[ "$#" -lt 5 ]]; then
+    error_exit "Usage: quickCheckProjectExist host user password project_name result_var"
+  fi
+  local HOST=$1
+  local USER=$2
+  local PWD=$3
+  local PROJECT_NAME=$4
+  local  __resultvar=$5
+  local URL=https://${HOST}
+  echo
+  echo -e Checking whether harbor project [${L_YELLOW}$PROJECT_NAME${NC}] exists on [${L_YELLOW}$HOST${NC}]...
+  local status_code=$(curl -L --write-out %{http_code} \
+                      --silent --output /dev/null \
+                      --show-error \
+                      --head ${URL}/api/v2.0/projects?project_name=${PROJECT_NAME} \
+                      -u $USER:$PWD)
+  if [[ "$status_code" -eq 200 ]] ; then
+    echo -e "Project [${L_YELLOW}$PROJECT_NAME${NC}] exists on [${L_YELLOW}$HOST${NC}]"
+    # here we assume that since project exists, it contains all the charts
+    eval $__resultvar="true"
+  else 
+    eval $__resultvar="false"
   fi
 }
 
@@ -108,7 +195,7 @@ function deleteHarborProject()
 function setupVMwareHarborStefanProdanClone {
   # sanity check
   if [[ "$#" -lt 1 ]]; then
-    error_exit "Usage: setupVMwareHarborStefanProdanClone name [--quick]"
+    error_exit "Usage: setupVMwareHarborStefanProdanClone project_name [--quick]"
   fi
 
   local PROJECT_NAME=$1
@@ -121,70 +208,53 @@ function setupVMwareHarborStefanProdanClone {
   if [ -z ${HARBOR_VMWARE_CORP_ROBOT_SECRET+x} ]; then
     error_exit "Environment variable [HARBOR_VMWARE_CORP_ROBOT_SECRET] must be set"
   fi
+  local HOST=$HARBOR_VMWARE_CORP_HOST
+  local USER=$HARBOR_VMWARE_CORP_ROBOT_USER
+  local PWD=$HARBOR_VMWARE_CORP_ROBOT_SECRET
+  local URL=https://${HOST}
 
-  # for now only look at the project existence and if so assume all is well
-  # for now assume the robot account already exists
-  echo
-  echo -e Checking if harbor project [${L_YELLOW}$PROJECT_NAME${NC}] exists...
-  local status_code=$(curl -L --write-out %{http_code} \
-                      --silent --output /dev/null \
-                      --show-error \
-                      --head https://${HARBOR_VMWARE_CORP_HOST}/api/v2.0/projects?project_name=${PROJECT_NAME} \
-                      -u ${HARBOR_VMWARE_CORP_ROBOT_USER}:${HARBOR_VMWARE_CORP_ROBOT_SECRET})
-  if [[ "$status_code" -eq 200 ]] ; then
-    echo -e "Project [${L_YELLOW}$PROJECT_NAME${NC}] exists in harbor host [${L_YELLOW}${HARBOR_VMWARE_CORP_HOST}${NC}]"
-    # here we assume that since project exists, it contains all the charts
-    exit 0
-  else 
-    error_exit "Project [$PROJECT_NAME] does not exist in harbor [${HARBOR_VMWARE_CORP_HOST}]"
-  fi
-}
-
-function setupHarborStefanProdanCloneInProject {
-  # sanity check
-  if [[ "$#" -lt 2 ]]; then
-    error_exit "Usage: setupHarborStefanProdanCloneInProject name public [--quick]"
-  fi
-
-  local PROJECT_NAME=$1
-  local PUBLIC=$2
-
-  if [ "$#" -gt 2 ]; then
-    if [ "$3" == "--quick" ]; then
+  # unfortunately cannot re-use setupHarborStefanProdanCloneInProject because the 
+  # remote is configured so that createProject fails with a 403
+  if [ "$#" -gt 1 ]; then
+    if [ "$2" == "--quick" ]; then
       # shortcut to only look at the project existence and if so assume all is well
-      echo
-      echo -e Checking if harbor project [${L_YELLOW}$PROJECT_NAME${NC}] exists...
-      local status_code=$(curl -L --write-out %{http_code} \
-                          --silent --output /dev/null \
-                          --show-error \
-                          --head ${FLUX_TEST_HARBOR_URL}/api/v2.0/projects?project_name=${PROJECT_NAME} \
-                          -u $FLUX_TEST_HARBOR_ADMIN_USER:$FLUX_TEST_HARBOR_ADMIN_PWD)
-      if [[ "$status_code" -eq 200 ]] ; then
-        echo -e "Project [${L_YELLOW}$PROJECT_NAME${NC}] exists in harbor."
-        # here we assume that since project exists, it contains all the charts
-        exit 0
+      quickCheckProjectExists $HOST $USER $PWD $PROJECT_NAME EXISTS
+      if [[ "$EXISTS" == "true" ]]; then
+        return
       fi
     fi
   fi
 
-  deleteHarborProject $PROJECT_NAME
-  createHarborProject $PROJECT_NAME $PUBLIC
-  
-  helm registry login $FLUX_TEST_HARBOR_HOST -u $FLUX_TEST_HARBOR_ADMIN_USER -p $FLUX_TEST_HARBOR_ADMIN_PWD
-  trap '{
-    helm registry logout $FLUX_TEST_HARBOR_HOST 
-  }' EXIT  
+  deleteHarborProjectRepositories $HOST $USER $PWD $PROJECT_NAME
+  pushChartsToHarborProject $HOST $USER $PWD $PROJECT_NAME
+}
 
-  pushd $SCRIPTPATH/charts
-  trap '{
-    popd
-  }' EXIT  
+function setupHarborStefanProdanCloneInProject {
+  # sanity check
+  if [[ "$#" -lt 5 ]]; then
+    echo "args=$*"
+    error_exit "Usage: setupHarborStefanProdanCloneInProject host user password project_name is_public [--quick]"
+  fi
 
-  ALL_VERSIONS=("6.1.0" "6.1.1" "6.1.2" "6.1.3" "6.1.4" "6.1.5" "6.1.6" "6.1.7" "6.1.8")
-  DEST_URL=oci://demo.goharbor.io/$PROJECT_NAME
-  for v in ${ALL_VERSIONS[@]}; do
-    helm push podinfo-$v.tgz $DEST_URL
-  done
+  local HOST=$1
+  local USER=$2
+  local PWD=$3
+  local PROJECT_NAME=$4
+  local PUBLIC=$5
+  local URL=https://${HOST}
+
+  if [ "$#" -gt 5 ]; then
+    if [ "$6" == "--quick" ]; then
+      quickCheckProjectExists $HOST $USER $PWD $PROJECT_NAME EXISTS
+      if [[ "$EXISTS" == "true" ]]; then
+        return
+      fi
+    fi
+  fi
+
+  deleteHarborProject $HOST $USER $PWD $PROJECT_NAME
+  createHarborProject $HOST $USER $PWD $PROJECT_NAME $PUBLIC
+  pushChartsToHarborProject $HOST $USER $PWD $PROJECT_NAME
   
   echo
   echo Running sanity checks...
@@ -195,9 +265,19 @@ function setupHarborStefanProdanCloneInProject {
 function setupHarborStefanProdanClone {
   # this creates a clone of what was out on "oci://ghcr.io/stefanprodan/charts" as of Jul 28 2022
   # to oci://demo.goharbor.io/stefanprodan-podinfo-clone
-  setupHarborStefanProdanCloneInProject stefanprodan-podinfo-clone true $*
-  setupHarborStefanProdanCloneInProject stefanprodan-podinfo-clone-private false $*
-  setupVMwareHarborStefanProdanClone stefanprodan-podinfo-clone $*
+  setupHarborStefanProdanCloneInProject \
+     $FLUX_TEST_HARBOR_HOST \
+     $FLUX_TEST_HARBOR_ADMIN_USER \
+     $FLUX_TEST_HARBOR_ADMIN_PWD \
+    stefanprodan-podinfo-clone true $*
+  
+  setupHarborStefanProdanCloneInProject \
+     $FLUX_TEST_HARBOR_HOST \
+     $FLUX_TEST_HARBOR_ADMIN_USER \
+     $FLUX_TEST_HARBOR_ADMIN_PWD \
+     stefanprodan-podinfo-clone-private false $*
+
+  setupVMwareHarborStefanProdanClone kubeapps_flux_integration $*
 }
 
 function deleteHarborRobotAccount()
@@ -208,7 +288,7 @@ function deleteHarborRobotAccount()
   fi
   local ACCOUNT_NAME=$1
   echo
-  echo -e Checking if harbor robot account [${L_YELLOW}$ACCOUNT_NAME${NC}] exists...
+  echo -e Checking whether harbor robot account [${L_YELLOW}$ACCOUNT_NAME${NC}] exists...
   local CMD="curl -L --silent --show-error \
           ${FLUX_TEST_HARBOR_URL}/api/v2.0/robots \
           -u $FLUX_TEST_HARBOR_ADMIN_USER:$FLUX_TEST_HARBOR_ADMIN_PWD"

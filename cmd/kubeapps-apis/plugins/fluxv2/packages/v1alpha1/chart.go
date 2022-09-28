@@ -8,7 +8,6 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"reflect"
 	"strings"
 
 	sourcev1 "github.com/fluxcd/source-controller/api/v1beta2"
@@ -117,11 +116,13 @@ func (s *Server) availableChartDetail(ctx context.Context, packageRef *corev1.Av
 	if err != nil {
 		return nil, err
 	}
+	log.Infof("checkpoint 5")
 
 	pkgDetail, err := availablePackageDetailFromChartDetail(chartID, chartDetail)
 	if err != nil {
 		return nil, err
 	}
+	log.Infof("checkpoint 6")
 
 	// fix up a couple of fields that don't come from the chart tarball
 	repoUrl := repo.Spec.URL
@@ -149,30 +150,13 @@ func (s *Server) getChartModel(ctx context.Context, repoName types.NamespacedNam
 	value, err := s.repoCache.Get(key)
 	if err != nil {
 		return nil, err
-	} else if value != nil {
-		if typedValue, ok := value.(repoCacheEntryValue); !ok {
-			return nil, status.Errorf(
-				codes.Internal,
-				"unexpected value fetched from cache: type: [%s], value: [%v]",
-				reflect.TypeOf(value), value)
+	} else {
+		typedValue, err := s.repoCacheEntryFromUntyped(key, value)
+		if err != nil {
+			return nil, err
+		} else if typedValue == nil {
+			return nil, nil
 		} else {
-			if typedValue.Type == "oci" {
-				// ref https://github.com/vmware-tanzu/kubeapps/issues/5007#issuecomment-1217293240
-				// helm OCI chart repos are not automatically updated when the
-				// state on remote changes. So we will force new checksum
-				// computation and update local cache if needed
-				value, err := s.repoCache.ForceAndFetch(key)
-				if err != nil {
-					return nil, err
-				}
-				typedValue, ok = value.(repoCacheEntryValue)
-				if !ok {
-					return nil, status.Errorf(
-						codes.Internal,
-						"unexpected value fetched from cache: type: [%s], value: [%v]",
-						reflect.TypeOf(value), value)
-				}
-			}
 			for _, chart := range typedValue.Charts {
 				if chart.Name == chartName {
 					return &chart, nil // found it

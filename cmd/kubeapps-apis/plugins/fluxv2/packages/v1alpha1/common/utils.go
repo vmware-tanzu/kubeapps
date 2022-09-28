@@ -25,6 +25,7 @@ import (
 	helmv2 "github.com/fluxcd/helm-controller/api/v2beta1"
 	sourcev1 "github.com/fluxcd/source-controller/api/v1beta2"
 	"github.com/go-redis/redis/v8"
+	"github.com/google/go-containerregistry/pkg/authn"
 	plugins "github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/core/plugins/v1alpha1"
 	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/pkg/pkgutils"
 	httpclient "github.com/vmware-tanzu/kubeapps/pkg/http-client"
@@ -104,6 +105,18 @@ func PrettyPrint(o interface{}) string {
 		return fmt.Sprintf("%v", o)
 	}
 	return string(prettyBytes)
+}
+
+func PreferObjectName(o interface{}) string {
+	if o == nil {
+		return "<nil>"
+	} else if obj, ok := o.(ctrlclient.Object); ok {
+		name := obj.GetName()
+		namespace := obj.GetNamespace()
+		return fmt.Sprintf("%s/%s", namespace, name)
+	} else {
+		return PrettyPrint(o)
+	}
 }
 
 func NamespacedName(obj ctrlclient.Object) (*types.NamespacedName, error) {
@@ -357,6 +370,37 @@ func OCIChartRepositoryCredentialFromSecret(registryURL string, secret apiv1.Sec
 		pwdRedacted = pwdRedacted[0:3] + "..."
 	}
 	log.Infof("-OCIChartRepositoryCredentialFromSecret: username: [%s], password: [%s]", username, pwdRedacted)
+	return &orasregistryauthv2.Credential{
+		Username: username,
+		Password: password,
+	}, nil
+}
+
+// OIDCAdaptHelper returns an ORAS credentials callback configured with the authorization data
+// from the given authn authenticator. This allows for example to make use of credential helpers from
+// cloud providers.
+// Ref: https://github.com/google/go-containerregistry/tree/main/pkg/authn
+func OIDCAdaptHelper(authenticator authn.Authenticator) (*orasregistryauthv2.Credential, error) {
+
+	authConfig, err := authenticator.Authorization()
+	if err != nil {
+		return nil, fmt.Errorf("unable to get authentication data from OIDC: %w", err)
+	}
+
+	username := authConfig.Username
+	password := authConfig.Password
+
+	switch {
+	case username == "" && password == "":
+		return nil, nil
+	case username == "" || password == "":
+		return nil, fmt.Errorf("invalid auth data: required fields 'username' and 'password'")
+	}
+	pwdRedacted := password
+	if len(pwdRedacted) > 4 {
+		pwdRedacted = pwdRedacted[0:3] + "..."
+	}
+	log.Infof("-OIDCAdaptHelper: username: [%s], password: [%s]", username, pwdRedacted)
 	return &orasregistryauthv2.Credential{
 		Username: username,
 		Password: password,

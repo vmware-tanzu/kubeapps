@@ -72,7 +72,7 @@ Next, replace `172.18.0.2` with the previous IP (and `172.18.0.3` with the next 
 - Run `make add-pinniped-jwt-authenticator` and additionally `make add-pinniped-jwt-authenticator-additional` for multi-cluster.
 - Open <https://localhost/> and login with `kubeapps-operator@example.com`/`password`
 
-> Note: make sure you are really copying `certificate-authority-data` and not the `client-certificate-data` or `client-certificate-data`. Otherwise, the setup will not work.
+> Note: make sure you are really copying `certificate-authority-data` and not the `client-certificate-data` or `client-key-data`. Otherwise, the setup will not work.
 
 ### Update the pinniped-proxy image in your cluster
 
