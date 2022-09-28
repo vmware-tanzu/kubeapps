@@ -545,9 +545,11 @@ jobs:
             exit 1
           fi
       - name: "Print k8s KubeappsAPIs logs if the tests fail"
-        run: kubectl --context kind-kubeapps-ci --kubeconfig ${HOME}/.kube/kind-config-kubeapps-ci logs -n kubeapps-ci deploy/kubeapps-internal-kubeappsapis --previous=true
+        run: kubectl --context kind-kubeapps-ci --kubeconfig ${HOME}/.kube/kind-config-kubeapps-ci logs -n kubeapps deploy/kubeapps-internal-kubeappsapis --previous=true
         if: failure() && env.TEST_RESULT == 1
+        continue-on-error: true
       - name: 'Upload Artifacts'
+        if: failure()
         uses: actions/upload-artifact@v3
         with:
           name: integration_reports
