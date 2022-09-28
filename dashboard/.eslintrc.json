@@ -96,6 +96,7 @@
         "forbid": [">", "}"] // avoid warnings with single/double quotes
       }
     ],
+    "react/no-unknown-property": ["error", { "ignore": ["cds-layout"] }], // allow 'cds-layout' attribute
     "react/jsx-uses-react": "off", // allow removing unused react imports (react >17)
     "react/react-in-jsx-scope": "off", // allow removing unused react imports (react >17)
     "no-use-before-define": "off" // superseed with @typescript-eslint/no-use-before-define
