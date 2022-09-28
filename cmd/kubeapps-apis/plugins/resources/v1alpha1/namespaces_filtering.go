@@ -41,7 +41,7 @@ func (s *Server) GetAccessibleNamespaces(ctx context.Context, cluster string, tr
 		namespaceList = append(namespaceList, trustedNamespaces...)
 	} else {
 
-		typedClient, _, err := s.clusterServiceAccountClientGetter(ctx, cluster)
+		typedClient, err := s.clusterServiceAccountClientGetter.Typed(ctx, cluster)
 		if err != nil {
 			return nil, status.Errorf(codes.Internal, "unable to get the k8s client: '%v'", err)
 		}

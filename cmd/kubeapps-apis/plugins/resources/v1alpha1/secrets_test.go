@@ -6,6 +6,7 @@ package main
 import (
 	"context"
 	"errors"
+	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/pkg/clientgetter"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
@@ -20,8 +21,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
-	"k8s.io/client-go/dynamic"
-	"k8s.io/client-go/kubernetes"
 	typfake "k8s.io/client-go/kubernetes/fake"
 	fakecorev1 "k8s.io/client-go/kubernetes/typed/core/v1/fake"
 	clientGoTesting "k8s.io/client-go/testing"
@@ -106,9 +105,9 @@ func TestCreateSecret(t *testing.T) {
 				})
 			}
 			s := Server{
-				clientGetter: func(context.Context, string) (kubernetes.Interface, dynamic.Interface, error) {
-					return fakeClient, nil, nil
-				},
+				clientGetter: clientgetter.NewBuilder().
+					WithTyped(fakeClient).
+					Build(),
 			}
 
 			response, err := s.CreateSecret(context.Background(), tc.request)
@@ -239,9 +238,9 @@ func TestGetSecretNames(t *testing.T) {
 				})
 			}
 			s := Server{
-				clientGetter: func(context.Context, string) (kubernetes.Interface, dynamic.Interface, error) {
-					return fakeClient, nil, nil
-				},
+				clientGetter: clientgetter.NewBuilder().
+					WithTyped(fakeClient).
+					Build(),
 			}
 
 			response, err := s.GetSecretNames(context.Background(), tc.request)

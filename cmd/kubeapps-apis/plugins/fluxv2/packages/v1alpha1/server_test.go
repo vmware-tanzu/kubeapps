@@ -6,8 +6,6 @@ package main
 import (
 	"context"
 	"io"
-	apiext "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset"
-	"k8s.io/client-go/kubernetes"
 	"reflect"
 	"strings"
 	"testing"
@@ -233,13 +231,13 @@ func newServerWithRepos(t *testing.T, repos []sourcev1.HelmRepository, charts []
 		}, nil
 	})
 
-	apiextIfc := apiextfake.NewSimpleClientset(fluxHelmRepositoryCRD)
+	apiExtClient := apiextfake.NewSimpleClientset(fluxHelmRepositoryCRD)
 	ctrlClient := newCtrlClient(repos, nil, nil)
-	clientGetter := clientgetter.NewFixedClientProvider(&clientgetter.ClientGetter{
-		ApiExt:            func() (apiext.Interface, error) { return apiextIfc, nil },
-		Typed:             func() (kubernetes.Interface, error) { return typedClient, nil },
-		ControllerRuntime: func() (ctrlclient.WithWatch, error) { return &ctrlClient, nil },
-	})
+	clientGetter := clientgetter.NewBuilder().
+		WithApiExt(apiExtClient).
+		WithTyped(typedClient).
+		WithControllerRuntime(&ctrlClient).
+		Build()
 	return newServer(t, clientGetter, nil, repos, charts)
 }
 
@@ -252,13 +250,13 @@ func newServerWithChartsAndReleases(t *testing.T, actionConfig *action.Configura
 		}, nil
 	})
 
-	apiextIfc := apiextfake.NewSimpleClientset(fluxHelmRepositoryCRD)
+	apiExtClient := apiextfake.NewSimpleClientset(fluxHelmRepositoryCRD)
 	ctrlClient := newCtrlClient(nil, charts, releases)
-	clientGetter := clientgetter.NewFixedClientProvider(&clientgetter.ClientGetter{
-		ApiExt:            func() (apiext.Interface, error) { return apiextIfc, nil },
-		Typed:             func() (kubernetes.Interface, error) { return typedClient, nil },
-		ControllerRuntime: func() (ctrlclient.WithWatch, error) { return &ctrlClient, nil },
-	})
+	clientGetter := clientgetter.NewBuilder().
+		WithApiExt(apiExtClient).
+		WithTyped(typedClient).
+		WithControllerRuntime(&ctrlClient).
+		Build()
 	return newServer(t, clientGetter, actionConfig, nil, nil)
 }
 

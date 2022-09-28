@@ -9,6 +9,8 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	apiext "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset"
+	"k8s.io/apimachinery/pkg/api/meta"
+	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
@@ -34,10 +36,29 @@ type ClientGetter struct {
 // GetClientsFunc is a function that provides a ClientGetter per cluster
 type GetClientsFunc func(ctx context.Context, cluster string) (*ClientGetter, error)
 
+// Options are creation options for a Client.
+type Options struct {
+	// Scheme, if provided, will be used to map go structs to GroupVersionKinds
+	Scheme *runtime.Scheme
+
+	// Mapper, if provided, will be used to map GroupVersionKinds to Resources
+	Mapper meta.RESTMapper
+}
+
 type ClientProviderInterface interface {
+	// Typed returns "typed" API client for k8s that works with strongly-typed objects
 	Typed(ctx context.Context, cluster string) (kubernetes.Interface, error)
+
+	// Dynamic returns "untyped" API client for k8s that works with
+	// k8s.io/apimachinery/pkg/apis/meta/v1/unstructured objects
 	Dynamic(ctx context.Context, cluster string) (dynamic.Interface, error)
+
+	// ControllerRuntime returns an instance of https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.11.0/pkg/client#Client
+	// that also supports Watch operations
 	ControllerRuntime(ctx context.Context, cluster string) (client.WithWatch, error)
+
+	// ApiExt returns k8s API Extensions client interface, that can be used to query the
+	// status of particular CRD in a cluster
 	ApiExt(ctx context.Context, cluster string) (apiext.Interface, error)
 	GetClients(ctx context.Context, cluster string) (*ClientGetter, error)
 }
@@ -210,12 +231,6 @@ func NewClientProvider(configGetter core.KubernetesConfigGetter, options Options
 	return &ClientProvider{ClientsFunc: clientsGetFunc}, nil
 }
 
-func NewFixedClientProvider(clientsGetter *ClientGetter) ClientProviderInterface {
-	return &ClientProvider{ClientsFunc: func(ctx context.Context, cluster string) (*ClientGetter, error) {
-		return clientsGetter, nil
-	}}
-}
-
 // NewBackgroundClientProvider returns an "out-of-band" or "in-cluster" client getter that returns various client interfaces
 // with the context of the current cluster it is executing on and the service account
 // configured for "kubeapps-apis" deployment
@@ -239,5 +254,57 @@ func NewBackgroundClientProvider(options Options, clientQPS float32, clientBurst
 			config.Burst = clientBurst
 			return buildClientGetter(config, options)
 		}
+	}}
+}
+
+// Builder builds a ClientProviderInterface or FixedClusterClientProviderInterface instance.
+// convenience functions exported only for unit tests in plugins
+type Builder struct {
+	ClientGetter
+}
+
+// NewBuilder returns a new builder
+func NewBuilder() *Builder {
+	return &Builder{}
+}
+
+func (b *Builder) WithDynamic(i dynamic.Interface) *Builder {
+	b.Dynamic = func() (dynamic.Interface, error) {
+		return i, nil
+	}
+	return b
+}
+
+func (b *Builder) WithTyped(i kubernetes.Interface) *Builder {
+	b.Typed = func() (kubernetes.Interface, error) {
+		return i, nil
+	}
+	return b
+}
+
+func (b *Builder) WithApiExt(a apiext.Interface) *Builder {
+	b.ApiExt = func() (apiext.Interface, error) {
+		return a, nil
+	}
+	return b
+}
+
+func (b *Builder) WithControllerRuntime(c client.WithWatch) *Builder {
+	b.ControllerRuntime = func() (client.WithWatch, error) {
+		return c, nil
+	}
+	return b
+}
+
+// Build builds and returns a new instance of ClientProviderInterface.
+func (b *Builder) Build() ClientProviderInterface {
+	return &ClientProvider{ClientsFunc: func(ctx context.Context, cluster string) (*ClientGetter, error) {
+		return &b.ClientGetter, nil
+	}}
+}
+
+func (b *Builder) BuildFixedCluster() FixedClusterClientProviderInterface {
+	return &FixedClusterClientProvider{ClientsFunc: func(ctx context.Context) (*ClientGetter, error) {
+		return &b.ClientGetter, nil
 	}}
 }

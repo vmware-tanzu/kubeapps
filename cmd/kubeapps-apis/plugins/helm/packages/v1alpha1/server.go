@@ -41,7 +41,6 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
-	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/kubernetes"
 	log "k8s.io/klog/v2"
 	ctrlclient "sigs.k8s.io/controller-runtime/pkg/client"
@@ -161,30 +160,6 @@ func NewServer(configGetter core.KubernetesConfigGetter, globalPackagingCluster 
 		createReleaseFunc:        agent.CreateRelease,
 		repoClientGetter:         newRepositoryClient,
 	}
-}
-
-// GetClients ensures a client getter is available and uses it to return both a typed and dynamic k8s client.
-func (s *Server) GetClients(ctx context.Context, cluster string) (kubernetes.Interface, dynamic.Interface, error) {
-	if s.clientGetter == nil {
-		return nil, nil, status.Errorf(codes.Internal, "server not configured with configGetter")
-	}
-
-	// Usually only one of the clients is used for a given scenario,
-	// but with this we keep backwards compatibility
-	clients, err := s.clientGetter.GetClients(ctx, cluster)
-	if err != nil {
-		return nil, nil, status.Errorf(codes.FailedPrecondition, fmt.Sprintf("unable to get clients : %v", err))
-	}
-
-	dynamicClient, err := clients.Dynamic()
-	if err != nil {
-		return nil, nil, status.Errorf(codes.FailedPrecondition, fmt.Sprintf("unable to get client : %v", err))
-	}
-	typedClient, err := clients.Typed()
-	if err != nil {
-		return nil, nil, status.Errorf(codes.FailedPrecondition, fmt.Sprintf("unable to get client : %v", err))
-	}
-	return typedClient, dynamicClient, nil
 }
 
 // GetManager ensures a manager is available and returns it.
@@ -822,7 +797,12 @@ func (s *Server) UpdateInstalledPackage(ctx context.Context, request *corev1.Upd
 func (s *Server) getAppRepoAndRelatedSecrets(ctx context.Context, cluster, appRepoName, appRepoNamespace string) (*appRepov1.AppRepository, *corek8sv1.Secret, *corek8sv1.Secret, *corek8sv1.Secret, error) {
 
 	// We currently get app repositories on the kubeapps cluster only.
-	typedClient, dynClient, err := s.GetClients(ctx, cluster)
+	typedClient, err := s.clientGetter.Typed(ctx, cluster)
+	if err != nil {
+		return nil, nil, nil, nil, err
+	}
+
+	dynClient, err := s.clientGetter.Dynamic(ctx, cluster)
 	if err != nil {
 		return nil, nil, nil, nil, err
 	}

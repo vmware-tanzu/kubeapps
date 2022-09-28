@@ -67,7 +67,6 @@ func TestGetClientProvider(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			// If there is no error, the client should be a dynamic.Interface implementation.
 			if tc.statusCode == codes.OK {
 				dynamicClient, err := tc.clientGetter.Dynamic(context.Background(), "")
 				if err != nil {
