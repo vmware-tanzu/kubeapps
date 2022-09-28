@@ -528,8 +528,6 @@ jobs:
           # Create certs
           kubectl -n dex create secret tls dex-web-server-tls --key ./devel/dex.key --cert ./devel/dex.crt
           mkcert -key-file ./devel/localhost-key.pem -cert-file ./devel/localhost-cert.pem localhost kubeapps-ci.kubeapps $DEFAULT_DEX_IP
-      - name: Setup upterm session
-        uses: lhotari/action-upterm@v1
       - name: "Run e2e tests script"
         env:
           DEBUG_MODE: true
@@ -558,6 +556,9 @@ jobs:
         with:
           name: integration_reports
           path: integration/reports
+#      - name: Setup upterm session
+#        uses: lhotari/action-upterm@v1
+#        if: failure()
 
   push_images:
     if: needs.setup.outputs.running_on_main == 'true' || needs.setup.outputs.running_on_tag == 'true'
