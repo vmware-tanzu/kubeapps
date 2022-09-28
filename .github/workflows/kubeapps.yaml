@@ -4,7 +4,6 @@
 name: Kubeapps general pipeline
 
 on:
-  push:
   pull_request:
     branches:
       - main
