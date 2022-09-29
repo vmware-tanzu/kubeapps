@@ -160,7 +160,7 @@ function deploy {
   myGithubRegistrySanityCheck
   
   setupGithubStefanProdanClone
-  setupHarborStefanProdanClone
+  setupHarbor
   setupGcrStefanProdanClone
 }
 
