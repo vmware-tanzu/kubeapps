@@ -13,7 +13,7 @@ import fluxIcon from "icons/flux.svg";
 import helmIcon from "icons/helm.svg";
 import olmIcon from "icons/olm-icon.svg";
 import placeholder from "icons/placeholder.svg";
-import _ from "lodash";
+import { toNumber } from "lodash";
 import { IConfig } from "./Config";
 import {
   BadRequestNetworkError,
@@ -49,7 +49,7 @@ export function getValueFromEvent(
     case "number":
     case "range":
       // value is a number
-      return _.toNumber(value);
+      return toNumber(value);
     default:
       return value;
   }
