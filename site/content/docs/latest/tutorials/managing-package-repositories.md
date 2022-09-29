@@ -13,7 +13,7 @@
    6. [Advanced options](#advanced-options)
 4. [Install, Update and Delete](#install-update-and-delete)
 5. [Conclusions](#conclusions)
-6. [Annex](#annex)
+6. [Appendix](#appendix)
    1. [Modifying the synchronization job](#modifying-the-synchronization-job)
    2. [Running the synchronization jobs behind a proxy](#running-the-synchronization-jobs-behind-a-proxy)
 
@@ -33,7 +33,7 @@ This guide walks you through the process of configuring the [Bitnami Application
 ## Pre-requisites
 
 - Kubeapps up and running (see [Get Started with Kubeapps](./getting-started.md))
-- Repository accessible from Kubeapps installation (the [Bitnami Application Catalog](https://bitnami.com/application-catalog))
+- Repository accessible from Kubeapps installation (the [Bitnami Application Catalog](https://bitnami.com/application-catalog) is used for this tutorial)
 - Repository including packaging formats compatible with Kubeapps (Helm or Carvel)
 
 ## Add a package repository
@@ -72,14 +72,14 @@ To configure the Bitnami Application Catalog, select **Helm Charts**.
 
 ### Scope: Namespace/Global
 
-Kubeapps allows creating Package Repositories that are available:
+According to the visibility of the packages being fetched from a Package Repository, in Kubeapps there exist two different scopes:
 
 - **Namespaced**: in specific namespaces, aligned with the Kubernetes RBAC model where an account can have roles in specific namespaces.
 - **Global**: available cluster-wide to all Kubeapps users.
 
 To configure the Bitnami Application Catalog as a cluster-wide repository, select **Global**.
 
-A Kubeapps Package Repository can be created by anyone with the required RBAC for that namespace. If you have cluster-wide RBAC for creating Package Repositories, you can still create an Package Repository whose packages are available to users in all namespaces by selecting `Global` when creating the repository.
+A Kubeapps Package Repository can be created by anyone with the required RBAC for that namespace. If you have cluster-wide RBAC for creating Package Repositories, you can still create a Package Repository whose packages are available to users in all namespaces by selecting `Global` when creating the repository.
 
 To give a specific user `USERNAME` the ability to create Package Repositories in a specific namespace named `custom-namespace`, grant them both read and write RBAC for `AppRepositories` in that namespace:
 
@@ -92,11 +92,11 @@ or to allow other users the ability to deploy packages from Package Repositories
 
 ### Storage type
 
-Once selected the packaging format and scope, it is time to set the **storage type** of the repo. Storages available differs for the different packaging formats:
+Once selected the packaging format and scope, it is time to set the **storage type** of the repo. The available storage types may vary depending on the packaging format:
 
 - For **Helm Charts** (both directly with Helm, or via Flux):
   - `Helm Repository`: a Helm chart repository is an HTTP server that houses an `index.yaml` file and optionally some packaged charts.
-  - `OCI Registry`: The [Open Container Initiative](https://opencontainers.org/) (OCI) defines the specifications and standards for container technologies. This includes the API for working with container registries, known formally as the [OCI Distribution Specification](https://github.com/opencontainers/distribution-spec/blob/main/spec.md). Beginning in Helm 3, you can use container registries with OCI support to store and share Helm chart packages. From Helm v3.8.0, OCI support is enabled by default.
+  - `OCI Registry`: The [Open Container Initiative](https://opencontainers.org/) (OCI) defines the specifications and standards for container technologies. This includes the API for working with container registries, known formally as the [OCI Distribution Specification](https://github.com/opencontainers/distribution-spec/blob/main/spec.md). Beginning in Helm 3, you can use container registries with OCI support to store and share Helm chart packages.
 - For **Carvel**: `imgpkg` packages your files into OCI images per OCI image specification, allowing the image to be pushed to any registry. Carvel supports multiple source for fetching configuration and OCI images to give developers flexibility.
   - `Imgpkg Bundle`: download [imgpkg bundle](https://carvel.dev/imgpkg/docs/latest/resources/#bundle) from registry.
   - `Image`: download Docker image from registry.
@@ -143,7 +143,7 @@ It is possible to limit the number of packages that Kubeapps exposes to the user
 
 #### Advanced filtering
 
-> **NOTE**: This is not supported by the Kubeapps Dashboard.
+> **NOTE**: This advanced filtering is only available for Helm (not for Helm via Flux or Carvel), and it is not supported by the Kubeapps Dashboard.
 
 In case you want to add a custom filter, based on a metadata field different than the name, it's possible to specify a [jq](https://stedolan.github.io/jq/) query to filter applications. This is only available when manually creating the AppRepository manifest. This example filters applications that contain "Bitnami" as one of the maintainers:
 
@@ -188,9 +188,9 @@ In the **Advanced** tab, there are a set of configurations options depending on 
 
 - **Carvel**:
 
-  - `Syncronization Interval`: set the time to wait between each synchronization of the repository.
+  - `Synchronization Interval`: set the time to wait between each synchronization of the repository.
 
-  > For Carvel it is not implemented the validation to ensure that a connection can be established with the repository before adding it. In the same line, for Carvel it is not implemented the usage of CA certificate, Skip TLS Verification or Pass Credentials to 3rd party URLs.
+  > In the Carvel plugin, some features are not available yet; namely: the validation to ensure that a connection can be established with the repository before adding it; the usage of CA certificate, Skip TLS Verification and Pass Credentials to 3rd party URLs.
 
 ![Package Repository advanced tab Carvel](../img/package-repository/package-repository-advanced-carvel.png)
 
@@ -207,7 +207,7 @@ Once the repository is installed Kubeapps provides the following actions:
 
 ## Conclusions
 
-Kubeapps provides an easy way to configure a Package repository in Kubeapps directly from the user interface. In this tutorial a public Helm chart repository like the Bitnami Application Catalog has been installed as a global repository in the cluster.
+Kubeapps provides an easy way to configure a Package repository in Kubeapps directly from the user interface. In this tutorial, a public Helm chart repository like the Bitnami Application Catalog has been installed as a global repository in the cluster.
 
 Some additional resources and references include:
 
@@ -215,13 +215,13 @@ Some additional resources and references include:
 - [Managing Carvel Packages with Kubeapps](./managing-carvel-packages.md)
 - [Using a Private Repository with Kubeapps](../howto/private-app-repository.md)
 
-## Annex
+## Appendix
 
 > **NOTE**: this configuration is only available for the Helm repositories (managed by Helm plugin).
 
 ### Modifying the synchronization job
 
-Kubeapps runs a periodic job (CronJob) to populate and synchronize the charts existing in each repository. Since Kubeapps v1.4.0, it's possible to modify the spec of this job. This is useful if you need to run the Pod in a certain Kubernetes node, or set some environment variables. To do so you can edit (or create) an AppRepository and specify the `syncJobPodTemplate` field. For example:
+When the Helm plugin is enabled, Kubeapps runs a periodic job (CronJob) to populate and synchronize the charts existing in each repository defined in the `AppRepository` CRD. This CronJob can be modified from the `syncJobPodTemplate` to suit your needs; for instance, this is useful if you need to run the Pod in a certain Kubernetes node, or set some environment variables. To do so you can edit (or create) an AppRepository and specify the `syncJobPodTemplate` field. For example:
 
 ```yaml
 apiVersion: kubeapps.com/v1alpha1
@@ -258,5 +258,3 @@ apprepository:
 ```
 
 Please mind the `noProxy` section, otherwise, you might not be able to access the charts.
-
-> **NOTE**: this configuration is only available for the Helm repositories.
