@@ -29,8 +29,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
-	"k8s.io/client-go/dynamic"
-	"k8s.io/client-go/kubernetes"
 	typfake "k8s.io/client-go/kubernetes/fake"
 	fakecorev1 "k8s.io/client-go/kubernetes/typed/core/v1/fake"
 	clientGoTesting "k8s.io/client-go/testing"
@@ -122,9 +120,9 @@ func TestCheckNamespaceExists(t *testing.T) {
 				})
 			}
 			s := Server{
-				clientGetter: func(context.Context, string) (kubernetes.Interface, dynamic.Interface, error) {
-					return fakeClient, nil, nil
-				},
+				clientGetter: clientgetter.NewBuilder().
+					WithTyped(fakeClient).
+					Build(),
 			}
 
 			response, err := s.CheckNamespaceExists(context.Background(), tc.request)
@@ -247,9 +245,9 @@ func TestCreateNamespace(t *testing.T) {
 				fakeClient.PrependReactor("create", "namespaces", tc.validator)
 			}
 			s := Server{
-				clientGetter: func(context.Context, string) (kubernetes.Interface, dynamic.Interface, error) {
-					return fakeClient, nil, nil
-				},
+				clientGetter: clientgetter.NewBuilder().
+					WithTyped(fakeClient).
+					Build(),
 			}
 
 			response, err := s.CreateNamespace(context.Background(), tc.request)
@@ -595,12 +593,10 @@ func TestGetNamespaceNames(t *testing.T) {
 				})
 			}
 
-			backgroundClientGetter := func(ctx context.Context) (clientgetter.ClientInterfaces, error) {
-				return clientgetter.
-					NewBuilder().
-					WithTyped(fakeClient).
-					Build(), nil
-			}
+			backgroundClientGetter := clientgetter.
+				NewBuilder().
+				WithTyped(fakeClient).
+				BuildFixedCluster()
 
 			pluginConfig := &common.ResourcesPluginConfig{}
 			if (tc.trustedNamespacesConfig != common.TrustedNamespaces{}) {
@@ -608,12 +604,12 @@ func TestGetNamespaceNames(t *testing.T) {
 			}
 
 			s := Server{
-				clientGetter: func(context.Context, string) (kubernetes.Interface, dynamic.Interface, error) {
-					return fakeClient, nil, nil
-				},
-				clusterServiceAccountClientGetter: func(context.Context, string) (kubernetes.Interface, dynamic.Interface, error) {
-					return fakeClient, nil, nil
-				},
+				clientGetter: clientgetter.NewBuilder().
+					WithTyped(fakeClient).
+					Build(),
+				clusterServiceAccountClientGetter: clientgetter.NewBuilder().
+					WithTyped(fakeClient).
+					Build(),
 				localServiceAccountClientGetter: backgroundClientGetter,
 				clientQPS:                       5,
 				pluginConfig:                    pluginConfig,
@@ -706,17 +702,15 @@ func TestCanI(t *testing.T) {
 				}, nil
 			})
 
-			backgroundClientGetter := func(ctx context.Context) (clientgetter.ClientInterfaces, error) {
-				return clientgetter.
-					NewBuilder().
-					WithTyped(fakeClient).
-					Build(), nil
-			}
+			backgroundClientGetter := clientgetter.
+				NewBuilder().
+				WithTyped(fakeClient).
+				BuildFixedCluster()
 
 			s := Server{
-				clientGetter: func(context.Context, string) (kubernetes.Interface, dynamic.Interface, error) {
-					return fakeClient, nil, nil
-				},
+				clientGetter: clientgetter.NewBuilder().
+					WithTyped(fakeClient).
+					Build(),
 				localServiceAccountClientGetter: backgroundClientGetter,
 				clientQPS:                       5,
 			}

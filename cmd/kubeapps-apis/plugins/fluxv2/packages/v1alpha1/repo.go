@@ -147,9 +147,9 @@ func (s *Server) filterReadyReposByName(repoList []sourcev1.HelmRepository, matc
 }
 
 // Notes:
-// 1. with flux, an available package may be from a repo in any namespace accessible to the caller
-// 2. can't rely on cache as a real source of truth for key names
-//    because redis may evict cache entries due to memory pressure to make room for new ones
+//  1. with flux, an available package may be from a repo in any namespace accessible to the caller
+//  2. can't rely on cache as a real source of truth for key names
+//     because redis may evict cache entries due to memory pressure to make room for new ones
 func (s *Server) getChartsForRepos(ctx context.Context, match []string) (map[string][]models.Chart, error) {
 	repoList, err := s.listReposInAllNamespaces(ctx)
 	if err != nil {
@@ -551,7 +551,9 @@ func (s *Server) createKubeappsManagedRepoSecret(
 // using owner references on the secret so that it can be
 // (1) cleaned up automatically and/or
 // (2) enable some control (ie. if I add a secret manually
-//   via kubectl before running kubeapps, it won't get deleted just
+//
+//	via kubectl before running kubeapps, it won't get deleted just
+//
 // because Kubeapps is deleting it)?
 // see https://github.com/vmware-tanzu/kubeapps/pull/4630#discussion_r861446394 for details
 func (s *Server) setOwnerReferencesForRepoSecret(
@@ -753,11 +755,9 @@ func (s *Server) deleteRepo(ctx context.Context, repoRef *corev1.PackageReposito
 	}
 }
 
-//
 // implements plug-in specific cache-related functionality
-//
 type repoEventSink struct {
-	clientGetter clientgetter.BackgroundClientGetterFunc
+	clientGetter clientgetter.FixedClusterClientProviderInterface
 	chartCache   *cache.ChartCache // chartCache maybe nil only in unit tests
 }
 
@@ -1282,7 +1282,7 @@ func getRepoTlsConfigAndAuthWithUserManagedSecrets(secret *apiv1.Secret) (*corev
 
 // TODO (gfichtenolt) Per slack discussion
 // In fact, keeping the existing API might mean we could return exactly what it already does today
-//(i.e. all secrets) if called with an extra explicit option (includeSecrets=true in the request
+// (i.e. all secrets) if called with an extra explicit option (includeSecrets=true in the request
 // message, not sure, similar to kubectl  config view --raw) and by default the secrets are REDACTED
 // as you mention? This would mean clients will by default see only REDACTED secrets,
 // but can request the full sensitive data when necessary?

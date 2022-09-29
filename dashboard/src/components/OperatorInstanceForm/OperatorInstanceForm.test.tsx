@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import actions from "actions";
-import AdvancedDeploymentForm from "components/DeploymentFormBody/AdvancedDeploymentForm";
 import Alert from "components/js/Alert";
 import OperatorInstanceFormBody from "components/OperatorInstanceFormBody/OperatorInstanceFormBody";
 import OperatorHeader from "components/OperatorView/OperatorHeader";
@@ -11,6 +10,7 @@ import * as ReactRedux from "react-redux";
 import { defaultStore, getStore, initialState, mountWrapper } from "shared/specs/mountWrapper";
 import { FetchError, IClusterServiceVersion, IStoreState } from "shared/types";
 import OperatorInstanceForm, { IOperatorInstanceFormProps } from "./OperatorInstanceForm";
+import OperatorAdvancedDeploymentForm from "../OperatorInstanceFormBody/OperatorAdvancedDeploymentForm/OperatorAdvancedDeploymentForm";
 
 const defaultProps: IOperatorInstanceFormProps = {
   csvName: "foo",
@@ -41,6 +41,42 @@ const defaultCSV = {
 let spyOnUseDispatch: jest.SpyInstance;
 const kubeaActions = { ...actions.operators };
 beforeEach(() => {
+  // mock the window.matchMedia for selecting the theme
+  Object.defineProperty(window, "matchMedia", {
+    writable: true,
+    configurable: true,
+    value: jest.fn().mockImplementation(query => ({
+      matches: false,
+      media: query,
+      onchange: null,
+      addListener: jest.fn(),
+      removeListener: jest.fn(),
+      addEventListener: jest.fn(),
+      removeEventListener: jest.fn(),
+      dispatchEvent: jest.fn(),
+    })),
+  });
+
+  // mock the window.ResizeObserver, required by the MonacoDiffEditor for the layout
+  Object.defineProperty(window, "ResizeObserver", {
+    writable: true,
+    configurable: true,
+    value: jest.fn().mockImplementation(() => ({
+      observe: jest.fn(),
+      unobserve: jest.fn(),
+      disconnect: jest.fn(),
+    })),
+  });
+
+  // mock the window.HTMLCanvasElement.getContext(), required by the MonacoDiffEditor for the layout
+  Object.defineProperty(HTMLCanvasElement.prototype, "getContext", {
+    writable: true,
+    configurable: true,
+    value: jest.fn().mockImplementation(() => ({
+      clearRect: jest.fn(),
+    })),
+  });
+
   actions.operators = {
     ...actions.operators,
     getCSV: jest.fn(),
@@ -52,6 +88,7 @@ beforeEach(() => {
 afterEach(() => {
   actions.operators = { ...kubeaActions };
   spyOnUseDispatch.mockRestore();
+  jest.restoreAllMocks();
 });
 
 it("renders a fetch error", () => {
@@ -131,7 +168,7 @@ it("should submit the form", () => {
   );
 
   act(() => {
-    (wrapper.find(AdvancedDeploymentForm).prop("handleValuesChange") as any)(
+    (wrapper.find(OperatorAdvancedDeploymentForm).prop("handleValuesChange") as any)(
       "apiVersion: v1\nmetadata:\n  name: foo",
     );
   });

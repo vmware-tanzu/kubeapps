@@ -6,7 +6,7 @@ import * as jsonpatch from "fast-json-patch";
 import * as yaml from "js-yaml";
 import { isEmpty, set } from "lodash";
 // TODO(agamez): check if we can replace this package by js-yaml or vice-versa
-import YAML, { ToStringOptions, Scalar } from "yaml";
+import YAML, { Scalar, ToStringOptions } from "yaml";
 import { IBasicFormParam } from "./types";
 
 const ajv = new Ajv({ strict: false });
@@ -27,8 +27,8 @@ export function retrieveBasicFormParams(
 ): IBasicFormParam[] {
   let params: IBasicFormParam[] = [];
 
-  if (schema && schema.properties) {
-    const properties = schema.properties!;
+  if (schema?.properties && !isEmpty(schema.properties)) {
+    const properties = schema.properties;
     Object.keys(properties).forEach(propertyKey => {
       // The param path is its parent path + the object key
       const itemPath = `${parentPath || ""}${propertyKey}`;

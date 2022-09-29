@@ -1,13 +1,9 @@
 // Copyright 2019-2022 the Kubeapps contributors.
 // SPDX-License-Identifier: Apache-2.0
 
-// Import ace first
-import AceEditor from "react-ace";
-import "ace-builds/src-noconflict/ext-searchbox";
-import "ace-builds/src-noconflict/mode-yaml";
-import "ace-builds/src-noconflict/theme-solarized_dark";
-import "ace-builds/src-noconflict/theme-xcode";
+import MonacoEditor from "react-monaco-editor";
 import { useSelector } from "react-redux";
+import { SupportedThemes } from "shared/Config";
 import { IStoreState } from "shared/types";
 
 export interface IAdvancedDeploymentForm {
@@ -29,16 +25,16 @@ function AdvancedDeploymentForm(props: IAdvancedDeploymentForm) {
 
   return (
     <div className="deployment-form-tabs-data">
-      <AceEditor
-        mode="yaml"
-        theme={theme === "dark" ? "solarized_dark" : "xcode"}
-        width="100%"
+      <MonacoEditor
+        language="yaml"
+        theme={theme === SupportedThemes.dark ? "vs-dark" : "light"}
+        height="90vh"
         onChange={onChange}
-        setOptions={{ showPrintMargin: false }}
-        editorProps={{ $blockScrolling: Infinity }}
         value={props.appValues}
         className="editor"
-        fontSize="15px"
+        options={{
+          automaticLayout: true,
+        }}
       />
       {props.children}
     </div>

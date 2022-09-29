@@ -24,8 +24,6 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/serializer"
 	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/client-go/discovery"
-	"k8s.io/client-go/dynamic"
-	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/restmapper"
 	log "k8s.io/klog/v2"
@@ -37,22 +35,19 @@ import (
 	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/pkg/statuserror"
 )
 
-type clientGetter func(context.Context, string) (kubernetes.Interface, dynamic.Interface, error)
-
-// Currently just a stub unimplemented server. More to come in following PRs.
 type Server struct {
 	v1alpha1.UnimplementedResourcesServiceServer
 	// clientGetter is a field so that it can be switched in tests for
 	// a fake client. NewServer() below sets this automatically with the
 	// non-test implementation.
-	clientGetter clientGetter
+	clientGetter clientgetter.ClientProviderInterface
 
 	// clusterServiceAccountClientGetter gets a client getter with service account for additional clusters
-	clusterServiceAccountClientGetter clientGetter
+	clusterServiceAccountClientGetter clientgetter.ClientProviderInterface
 
 	// for interactions with k8s API server in the context of
 	// kubeapps-internal-kubeappsapis service account
-	localServiceAccountClientGetter clientgetter.BackgroundClientGetterFunc
+	localServiceAccountClientGetter clientgetter.FixedClusterClientProviderInterface
 
 	// corePackagesClientGetter holds a function to obtain the core.packages.v1alpha1
 	// client. It is similarly initialised in NewServer() below.
@@ -125,13 +120,23 @@ func NewServer(configGetter core.KubernetesConfigGetter, clientQPS float32, clie
 		log.Info("+resources using default config since pluginConfigPath is empty")
 	}
 
+	clientGetter, err := newClientGetter(configGetter, false, clustersConfig)
+	if err != nil {
+		log.Fatalf("%s", err)
+	}
+
+	clusterServiceAccountClientGetter, err := newClientGetter(configGetter, true, clustersConfig)
+	if err != nil {
+		log.Fatalf("%s", err)
+	}
+
 	return &Server{
 		// Get the client getter with context auth
-		clientGetter: newClientGetter(configGetter, false, clustersConfig),
+		clientGetter: clientGetter,
 		// Get the additional cluster client getter with service account
-		clusterServiceAccountClientGetter: newClientGetter(configGetter, true, clustersConfig),
+		clusterServiceAccountClientGetter: clusterServiceAccountClientGetter,
 		// Get the "in-cluster" client getter
-		localServiceAccountClientGetter: clientgetter.NewBackgroundClientGetter(configGetter, clientgetter.Options{}),
+		localServiceAccountClientGetter: clientgetter.NewBackgroundClientProvider(clientgetter.Options{}, clientQPS, clientBurst),
 		corePackagesClientGetter: func() (pkgsGRPCv1alpha1.PackagesServiceClient, error) {
 			port := os.Getenv("PORT")
 			conn, err := grpc.Dial("localhost:"+port, grpc.WithTransportCredentials(insecure.NewCredentials()))
@@ -154,28 +159,24 @@ func NewServer(configGetter core.KubernetesConfigGetter, clientQPS float32, clie
 	}, nil
 }
 
-func newClientGetter(configGetter core.KubernetesConfigGetter, useServiceAccount bool, clustersConfig kube.ClustersConfig) clientGetter {
-	return func(ctx context.Context, cluster string) (kubernetes.Interface, dynamic.Interface, error) {
-		if configGetter == nil {
-			return nil, nil, status.Errorf(codes.Internal, "configGetter arg required")
-		}
+func newClientGetter(configGetter core.KubernetesConfigGetter, useServiceAccount bool, clustersConfig kube.ClustersConfig) (clientgetter.ClientProviderInterface, error) {
+
+	customConfigGetter := func(ctx context.Context, cluster string) (*rest.Config, error) {
 		restConfig, err := configGetter(ctx, cluster)
 		if err != nil {
-			return nil, nil, status.Errorf(codes.FailedPrecondition, "unable to get config : %v", err.Error())
+			return nil, status.Errorf(codes.FailedPrecondition, "unable to get config : %v", err.Error())
 		}
 		if err := setupRestConfigForCluster(restConfig, cluster, useServiceAccount, clustersConfig); err != nil {
-			return nil, nil, err
+			return nil, err
 		}
-		dynamicClient, err := dynamic.NewForConfig(restConfig)
-		if err != nil {
-			return nil, nil, status.Errorf(codes.FailedPrecondition, "unable to get dynamic client : %s", err.Error())
-		}
-		typedClient, err := kubernetes.NewForConfig(restConfig)
-		if err != nil {
-			return nil, nil, status.Errorf(codes.FailedPrecondition, "unable to get typed client: %s", err.Error())
-		}
-		return typedClient, dynamicClient, nil
+		return restConfig, nil
 	}
+
+	clientProvider, err := clientgetter.NewClientProvider(customConfigGetter, clientgetter.Options{})
+	if err != nil {
+		return nil, err
+	}
+	return clientProvider, nil
 }
 
 func setupRestConfigForCluster(restConfig *rest.Config, cluster string, useServiceAccount bool, clustersConfig kube.ClustersConfig) error {
@@ -241,7 +242,7 @@ func (s *Server) GetResources(r *v1alpha1.GetResourcesRequest, stream v1alpha1.R
 	}
 
 	// Then look up each referenced resource and send it down the stream.
-	_, dynamicClient, err := s.clientGetter(stream.Context(), cluster)
+	dynamicClient, err := s.clientGetter.Dynamic(stream.Context(), cluster)
 	if err != nil {
 		return err
 	}
@@ -321,7 +322,7 @@ func (s *Server) GetServiceAccountNames(ctx context.Context, r *v1alpha1.GetServ
 	cluster := r.GetContext().GetCluster()
 	log.InfoS("+resources GetServiceAccountNames ", "cluster", cluster, "namespace", namespace)
 
-	typedClient, _, err := s.clientGetter(ctx, cluster)
+	typedClient, err := s.clientGetter.Typed(ctx, cluster)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "unable to get the k8s client: '%v'", err)
 	}

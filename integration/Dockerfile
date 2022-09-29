@@ -1,8 +1,8 @@
 # Copyright 2019-2022 the Kubeapps contributors.
 # SPDX-License-Identifier: Apache-2.0
 
-FROM mcr.microsoft.com/playwright:v1.25.1-jammy
-WORKDIR  /app/
+FROM mcr.microsoft.com/playwright:v1.26.0-jammy
+WORKDIR /app/
 
 # Copy and install deps
 COPY package.json yarn.lock /app/

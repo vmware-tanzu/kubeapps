@@ -1804,10 +1804,7 @@ export function PkgRepoForm(props: IPkgRepoFormProps) {
           <CdsAccordionPanel
             id="panel-filtering"
             expanded={accordion[2]}
-            hidden={
-              type !== RepositoryStorageTypes.PACKAGE_REPOSITORY_STORAGE_OCI ||
-              plugin?.name !== PluginNames.PACKAGES_HELM
-            }
+            hidden={plugin?.name !== PluginNames.PACKAGES_HELM}
           >
             <CdsAccordionHeader onClick={() => toggleAccordion(2)}>Filtering</CdsAccordionHeader>
             <CdsAccordionContent>

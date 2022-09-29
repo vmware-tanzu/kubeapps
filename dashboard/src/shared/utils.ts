@@ -13,6 +13,7 @@ import fluxIcon from "icons/flux.svg";
 import helmIcon from "icons/helm.svg";
 import olmIcon from "icons/olm-icon.svg";
 import placeholder from "icons/placeholder.svg";
+import { toNumber } from "lodash";
 import { IConfig } from "./Config";
 import {
   BadRequestNetworkError,
@@ -40,18 +41,18 @@ export function escapeRegExp(str: string) {
 export function getValueFromEvent(
   e: React.FormEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>,
 ) {
-  let value: any = e.currentTarget.value;
+  const value: any = e.currentTarget.value;
   switch (e.currentTarget.type) {
     case "checkbox":
       // value is a boolean
-      value = value === "true";
-      break;
+      return value === "true";
     case "number":
+    case "range":
       // value is a number
-      value = parseInt(value, 10);
-      break;
+      return toNumber(value);
+    default:
+      return value;
   }
-  return value;
 }
 
 // 3 lines description max

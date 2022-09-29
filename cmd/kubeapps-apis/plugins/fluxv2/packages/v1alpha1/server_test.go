@@ -231,16 +231,13 @@ func newServerWithRepos(t *testing.T, repos []sourcev1.HelmRepository, charts []
 		}, nil
 	})
 
-	apiextIfc := apiextfake.NewSimpleClientset(fluxHelmRepositoryCRD)
+	apiExtClient := apiextfake.NewSimpleClientset(fluxHelmRepositoryCRD)
 	ctrlClient := newCtrlClient(repos, nil, nil)
-	clientGetter := func(context.Context, string) (clientgetter.ClientInterfaces, error) {
-		return clientgetter.
-			NewBuilder().
-			WithTyped(typedClient).
-			WithApiExt(apiextIfc).
-			WithControllerRuntime(&ctrlClient).
-			Build(), nil
-	}
+	clientGetter := clientgetter.NewBuilder().
+		WithApiExt(apiExtClient).
+		WithTyped(typedClient).
+		WithControllerRuntime(&ctrlClient).
+		Build()
 	return newServer(t, clientGetter, nil, repos, charts)
 }
 
@@ -253,16 +250,13 @@ func newServerWithChartsAndReleases(t *testing.T, actionConfig *action.Configura
 		}, nil
 	})
 
-	apiextIfc := apiextfake.NewSimpleClientset(fluxHelmRepositoryCRD)
+	apiExtClient := apiextfake.NewSimpleClientset(fluxHelmRepositoryCRD)
 	ctrlClient := newCtrlClient(nil, charts, releases)
-	clientGetter := func(context.Context, string) (clientgetter.ClientInterfaces, error) {
-		return clientgetter.
-			NewBuilder().
-			WithApiExt(apiextIfc).
-			WithTyped(typedClient).
-			WithControllerRuntime(&ctrlClient).
-			Build(), nil
-	}
+	clientGetter := clientgetter.NewBuilder().
+		WithApiExt(apiExtClient).
+		WithTyped(typedClient).
+		WithControllerRuntime(&ctrlClient).
+		Build()
 	return newServer(t, clientGetter, actionConfig, nil, nil)
 }
 
@@ -318,7 +312,7 @@ func newHelmActionConfig(t *testing.T, namespace string, rels []helmReleaseStub)
 // (unlike charts or releases) is that repos are treated special because
 // a new instance of a Server object is only returned once the cache has been synced with indexed repos
 func newServer(t *testing.T,
-	clientGetter clientgetter.ClientGetterFunc,
+	clientGetter clientgetter.ClientProviderInterface,
 	actionConfig *action.Configuration,
 	repos []sourcev1.HelmRepository,
 	charts []testSpecChartWithUrl) (*Server, redismock.ClientMock, error) {
@@ -332,14 +326,14 @@ func newServer(t *testing.T,
 	if clientGetter != nil {
 		// if client getter returns an error, FLUSHDB call does not take place, because
 		// newCacheWithRedisClient() raises an error before redisCli.FlushDB() call
-		if _, err := clientGetter(context.TODO(), ""); err == nil {
+		if _, err := clientGetter.GetClients(context.TODO(), ""); err == nil {
 			mock.ExpectFlushDB().SetVal("OK")
 		}
 	}
 
-	backgroundClientGetter := func(ctx context.Context) (clientgetter.ClientInterfaces, error) {
-		return clientGetter(ctx, KubeappsCluster)
-	}
+	backgroundClientGetter := &clientgetter.FixedClusterClientProvider{ClientsFunc: func(ctx context.Context) (*clientgetter.ClientGetter, error) {
+		return clientGetter.GetClients(ctx, KubeappsCluster)
+	}}
 
 	sink := repoEventSink{
 		clientGetter: backgroundClientGetter,
