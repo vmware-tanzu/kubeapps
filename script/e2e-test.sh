@@ -440,27 +440,27 @@ admin_token="$(kubectl get -n kubeapps secret "$(kubectl get -n kubeapps service
 view_token="$(kubectl get -n kubeapps secret "$(kubectl get -n kubeapps serviceaccount kubeapps-view -o jsonpath='{.secrets[].name}')" -o go-template='{{.data.token | base64decode}}' && echo)"
 edit_token="$(kubectl get -n kubeapps secret "$(kubectl get -n kubeapps serviceaccount kubeapps-edit -o jsonpath='{.secrets[].name}')" -o go-template='{{.data.token | base64decode}}' && echo)"
 
-info "Running main Integration tests without k8s API access..."
-read -r -d '' test_command <<EOF
-CI_TIMEOUT_MINUTES=40 \
-DOCKER_USERNAME=${DOCKER_USERNAME} \
-DOCKER_PASSWORD=${DOCKER_PASSWORD} \
-DOCKER_REGISTRY_URL=${DOCKER_REGISTRY_URL} \
-TEST_TIMEOUT_MINUTES=${TEST_TIMEOUT_MINUTES} \
-INTEGRATION_ENTRYPOINT=http://kubeapps-ci.kubeapps \
-USE_MULTICLUSTER_OIDC_ENV=${USE_MULTICLUSTER_OIDC_ENV} \
-ADMIN_TOKEN=${admin_token} \
-VIEW_TOKEN=${view_token} \
-EDIT_TOKEN=${edit_token} \
-yarn test ${testsArgs}
-EOF
-if ! kubectl exec -it "$pod" -- /bin/sh -c "${test_command}"; then
-  ## Integration tests failed, get report screenshot
-  warn "PODS status on failure"
-  kubectl cp "${pod}:/app/reports" ./reports
-  exit 1
-fi
-info "Main integration tests succeeded!!"
+#info "Running main Integration tests without k8s API access..."
+#read -r -d '' test_command <<EOF
+#CI_TIMEOUT_MINUTES=40 \
+#DOCKER_USERNAME=${DOCKER_USERNAME} \
+#DOCKER_PASSWORD=${DOCKER_PASSWORD} \
+#DOCKER_REGISTRY_URL=${DOCKER_REGISTRY_URL} \
+#TEST_TIMEOUT_MINUTES=${TEST_TIMEOUT_MINUTES} \
+#INTEGRATION_ENTRYPOINT=http://kubeapps-ci.kubeapps \
+#USE_MULTICLUSTER_OIDC_ENV=${USE_MULTICLUSTER_OIDC_ENV} \
+#ADMIN_TOKEN=${admin_token} \
+#VIEW_TOKEN=${view_token} \
+#EDIT_TOKEN=${edit_token} \
+#yarn test ${testsArgs}
+#EOF
+#if ! kubectl exec -it "$pod" -- /bin/sh -c "${test_command}"; then
+#  ## Integration tests failed, get report screenshot
+#  warn "PODS status on failure"
+#  kubectl cp "${pod}:/app/reports" ./reports
+#  exit 1
+#fi
+#info "Main integration tests succeeded!!"
 
 
 ## Upgrade and run Carvel test
