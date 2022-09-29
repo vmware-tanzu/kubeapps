@@ -539,7 +539,19 @@ jobs:
             IMG_DEV_TAG=${latest/v/}
             IMG_MODIFIER=""
           fi
-          if IMG_PREFIX=${IMG_PREFIX} ./script/e2e-test.sh $USE_MULTICLUSTER_OIDC_ENV $OLM_VERSION $IMG_DEV_TAG $IMG_MODIFIER $TEST_TIMEOUT_MINUTES $DEFAULT_DEX_IP $ADDITIONAL_CLUSTER_IP $KAPP_CONTROLLER_VERSION $CHARTMUSEUM_VERSION; then
+          
+          test_command="./script/e2e-test.sh \
+          ${USE_MULTICLUSTER_OIDC_ENV} \
+          ${OLM_VERSION} \
+          ${IMG_DEV_TAG} \
+          ${IMG_MODIFIER} \
+          ${TEST_TIMEOUT_MINUTES} \
+          ${DEFAULT_DEX_IP} \
+          ${ADDITIONAL_CLUSTER_IP} \
+          ${KAPP_CONTROLLER_VERSION} \
+          ${CHARTMUSEUM_VERSION}"          
+          
+          if IMG_PREFIX=${IMG_PREFIX} ${test_command}; then
             echo "TEST_RESULT=0" >> $GITHUB_ENV
             exit 0
           else
@@ -554,11 +566,11 @@ jobs:
         if: failure()
         uses: actions/upload-artifact@v3
         with:
-          name: integration_reports
+          name: e2e_tests_reports
           path: integration/reports
-#      - name: Setup upterm session
-#        uses: lhotari/action-upterm@v1
-#        if: failure()
+      - name: Setup upterm session
+        uses: lhotari/action-upterm@v1
+        if: failure()
 
   push_images:
     if: needs.setup.outputs.running_on_main == 'true' || needs.setup.outputs.running_on_tag == 'true'
