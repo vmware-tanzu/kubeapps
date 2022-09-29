@@ -4,9 +4,9 @@
 import Ajv, { ErrorObject, JSONSchemaType } from "ajv";
 import * as jsonpatch from "fast-json-patch";
 import * as yaml from "js-yaml";
-import { isEmpty, set } from "lodash";
+import _ from "lodash";
 // TODO(agamez): check if we can replace this package by js-yaml or vice-versa
-import YAML, { ToStringOptions, Scalar } from "yaml";
+import YAML, { Scalar, ToStringOptions } from "yaml";
 import { IBasicFormParam } from "./types";
 
 const ajv = new Ajv({ strict: false });
@@ -27,8 +27,8 @@ export function retrieveBasicFormParams(
 ): IBasicFormParam[] {
   let params: IBasicFormParam[] = [];
 
-  if (schema && schema.properties) {
-    const properties = schema.properties!;
+  if (schema?.properties && !_.isEmpty(schema.properties)) {
+    const properties = schema.properties;
     Object.keys(properties).forEach(propertyKey => {
       // The param path is its parent path + the object key
       const itemPath = `${parentPath || ""}${propertyKey}`;
@@ -102,9 +102,9 @@ function parsePath(path: string): string[] {
 }
 
 function parsePathAndValue(doc: YAML.Document, path: string, value?: any) {
-  if (isEmpty(doc.contents)) {
+  if (_.isEmpty(doc.contents)) {
     // If the doc is empty we have an special case
-    return { value: set({}, path.replace(/^\//, ""), value), splittedPath: [] };
+    return { value: _.set({}, path.replace(/^\//, ""), value), splittedPath: [] };
   }
   let splittedPath = splitPath(path);
   // If the path is not defined (the parent nodes are undefined)
@@ -118,7 +118,7 @@ function parsePathAndValue(doc: YAML.Document, path: string, value?: any) {
   if (parentNode === undefined) {
     const definedPath = getDefinedPath(allElementsButTheLast, doc);
     const remainingPath = splittedPath.slice(definedPath.length + 1);
-    value = set({}, remainingPath.join("."), value);
+    value = _.set({}, remainingPath.join("."), value);
     splittedPath = splittedPath.slice(0, definedPath.length + 1);
   }
   return { splittedPath: unescapePath(splittedPath), value };
@@ -145,7 +145,7 @@ export function deleteValue(values: string, path: string) {
   (doc as any).deleteIn(splittedPath);
   // If the document is empty after the deletion instead of returning {}
   // we return an empty line "\n"
-  return doc.contents && !isEmpty((doc.contents as any).items)
+  return doc.contents && !_.isEmpty((doc.contents as any).items)
     ? doc.toString(toStringOptions)
     : "\n";
 }
