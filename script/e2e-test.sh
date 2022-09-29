@@ -477,7 +477,7 @@ k8s_wait_for_deployment kubeapps kubeapps-ci
 info "Running carvel integration test..."
 test_command="
   CI_TIMEOUT_MINUTES=20 \
-  TEST_TIMEOUT_MINUTES=$((TEST_TIMEOUT_MINUTES * 2)) \
+  TEST_TIMEOUT_MINUTES=${TEST_TIMEOUT_MINUTES} \
   INTEGRATION_ENTRYPOINT=http://kubeapps-ci.kubeapps \
   USE_MULTICLUSTER_OIDC_ENV=${USE_MULTICLUSTER_OIDC_ENV} \
   ADMIN_TOKEN=${admin_token} \
