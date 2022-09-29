@@ -756,7 +756,7 @@ func (s *Server) deleteRepo(ctx context.Context, repoRef *corev1.PackageReposito
 
 // implements plug-in specific cache-related functionality
 type repoEventSink struct {
-	clientGetter clientgetter.BackgroundClientGetterFunc
+	clientGetter clientgetter.FixedClusterClientProviderInterface
 	chartCache   *cache.ChartCache // chartCache maybe nil only in unit tests
 }
 

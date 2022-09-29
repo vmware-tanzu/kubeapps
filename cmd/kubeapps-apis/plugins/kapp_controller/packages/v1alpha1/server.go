@@ -23,8 +23,6 @@ import (
 	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/pkg/pkgutils"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
-	"k8s.io/client-go/dynamic"
-	"k8s.io/client-go/kubernetes"
 	log "k8s.io/klog/v2"
 )
 
@@ -51,7 +49,7 @@ type Server struct {
 	// clientGetter is a field so that it can be switched in tests for
 	// a fake client. NewServer() below sets this automatically with the
 	// non-test implementation.
-	clientGetter           clientgetter.ClientGetterFunc
+	clientGetter           clientgetter.ClientProviderInterface
 	globalPackagingCluster string
 	// TODO (gfichtenholt) it should now be possible to add this into clientgetter pkg,
 	// and thus just have a single clientGetter field. Only *if* it makes sense to do so
@@ -106,8 +104,14 @@ func NewServer(configGetter core.KubernetesConfigGetter, globalPackagingCluster,
 	} else {
 		log.Info("+kapp-controller using default config since pluginConfigPath is empty")
 	}
+
+	clientProvider, err := clientgetter.NewClientProvider(configGetter, clientgetter.Options{})
+	if err != nil {
+		log.Fatalf("%s", err)
+	}
+
 	return &Server{
-		clientGetter:           clientgetter.NewClientGetter(configGetter, clientgetter.Options{}),
+		clientGetter:           clientProvider,
 		globalPackagingCluster: globalPackagingCluster,
 		pluginConfig:           pluginConfig,
 		kappClientsGetter: func(ctx context.Context, cluster, namespace string) (ctlapp.Apps, ctlres.IdentifiedResources, *kappcmdapp.FailingAPIServicesPolicy, ctlres.ResourceFilter, error) {
@@ -155,28 +159,6 @@ func NewServer(configGetter core.KubernetesConfigGetter, globalPackagingCluster,
 			return supportingNsObjs.Apps, supportingObjs.IdentifiedResources, failingAPIServicesPolicy, resourceFilter, nil
 		},
 	}
-}
-
-// GetClients ensures a client getter is available and uses it to return both a typed and dynamic k8s client.
-func (s *Server) GetClients(ctx context.Context, cluster string) (kubernetes.Interface, dynamic.Interface, error) {
-	if s.clientGetter == nil {
-		return nil, nil, status.Errorf(codes.Internal, "server not configured with configGetter")
-	}
-	// TODO (gfichtenholt) Today this function returns 2 different
-	// clients (typed and dynamic). Now if one looks at the callers, it is clear that
-	// only one client is actually needed for a given scenario.
-	// So for now, in order not to make too many changes, I am going to do more work than
-	// is actually needed by getting *all* clients and returning them.
-	// But we should think about refactoring the callers to ask for only what's needed
-	dynamicClient, err := s.clientGetter.Dynamic(ctx, cluster)
-	if err != nil {
-		return nil, nil, status.Errorf(codes.FailedPrecondition, fmt.Sprintf("unable to get client : %v", err))
-	}
-	typedClient, err := s.clientGetter.Typed(ctx, cluster)
-	if err != nil {
-		return nil, nil, status.Errorf(codes.FailedPrecondition, fmt.Sprintf("unable to get client : %v", err))
-	}
-	return typedClient, dynamicClient, nil
 }
 
 // GetKappClients ensures a client getter is available and uses it to return a Kapp Factory.

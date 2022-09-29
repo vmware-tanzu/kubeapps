@@ -103,7 +103,7 @@ type NamespacedResourceWatcherCacheConfig struct {
 	Gvr schema.GroupVersionResource
 	// this ClientGetter is for running out-of-request interactions with the Kubernetes API server,
 	// such as watching for resource changes
-	ClientGetter clientgetter.BackgroundClientGetterFunc
+	ClientGetter clientgetter.FixedClusterClientProviderInterface
 	// 'OnAddFunc' hook is called when an object comes about and the cache does not have a
 	// corresponding entry. Note this maybe happen as a result of a newly created k8s object
 	// or a modified object for which there was no entry in the cache

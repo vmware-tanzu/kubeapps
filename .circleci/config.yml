@@ -5,16 +5,16 @@ version: 2.1
 parameters:
   GOLANG_VERSION:
     type: string
-    default: "1.19.0"
+    default: "1.19.1"
   NODE_VERSION:
     type: string
-    default: "16.17.0"
+    default: "16.17.1"
   RUST_VERSION:
     type: string
-    default: "1.63.0"
+    default: "1.64.0"
   DOCKER_VERSION:
     type: string
-    default: "20.10.14"
+    default: "20.10.17"
   DOCKER_REGISTRY_VERSION:
     type: string
     default: "2.8.1"
@@ -23,7 +23,7 @@ parameters:
     default: "v3.2.0"
   HELM_VERSION_STABLE:
     type: "string"
-    default: "v3.9.4"
+    default: "v3.10.0"
   OLM_VERSION:
     type: "string"
     default: "v0.22.0"
@@ -32,31 +32,31 @@ parameters:
     default: "3.9.0"
   KAPP_CONTROLLER_VERSION:
     type: "string"
-    default: "v0.40.0"
+    default: "v0.41.2"
   MKCERT_VERSION:
     type: "string"
     default: "v1.4.4"
   KUBECTL_VERSION:
     type: "string"
-    default: "v1.24.3"
+    default: "v1.24.6"
   GITHUB_VERSION:
     type: "string"
-    default: "2.14.7"
+    default: "2.16.1"
   SEMVER_VERSION:
     type: "string"
     default: "3.3.0"
   KIND_VERSION:
     type: "string"
-    default: "v0.15.0"
+    default: "v0.16.0"
   K8S_KIND_VERSION:
     type: "string"
-    default: "v1.22.13@sha256:4904eda4d6e64b402169797805b8ec01f50133960ad6c19af45173a27eadf959"
+    default: "v1.22.15@sha256:bfd5eaae36849bfb3c1e3b9442f3da17d730718248939d9d547e86bbac5da586"
   POSTGRESQL_VERSION:
     type: "string"
-    default: "14.5.0-debian-11-r6"
+    default: "14.5.0-debian-11-r14"
   GKE_STABLE_VERSION:
     type: "string"
-    default: "1.21"
+    default: "1.22"
   GKE_REGULAR_VERSION:
     type: "string"
     default: "1.22"
@@ -722,12 +722,18 @@ jobs:
       IMAGES: "apprepository-controller asset-syncer kubeapps-apis"
     <<: *build_images
   build_dashboard:
+    resource_class: large
     docker:
       - image: cimg/go:<< pipeline.parameters.GOLANG_VERSION >>
         auth:
           username: $DOCKER_USERNAME
           password: $DOCKER_PASSWORD
+    # Note that the max old space setting is per worker.
+    # Webpack uses "terser-webpack-plugin", which uses #CPUs-1 workers by default.
+    # We are using 3 workers, so we need to set the max old space to < 4GB/3, so
+    # setting it to 1GB.
     environment:
+      NODE_OPTIONS: "--max-old-space-size=1024"
       IMAGES: "dashboard"
     <<: *build_images
   build_pinniped_proxy:
