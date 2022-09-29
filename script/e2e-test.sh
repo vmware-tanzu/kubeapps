@@ -442,18 +442,18 @@ edit_token="$(kubectl get -n kubeapps secret "$(kubectl get -n kubeapps servicea
 
 info "Running main Integration tests without k8s API access..."
 test_command="
-CI_TIMEOUT_MINUTES=40 \
-DOCKER_USERNAME=${DOCKER_USERNAME} \
-DOCKER_PASSWORD=${DOCKER_PASSWORD} \
-DOCKER_REGISTRY_URL=${DOCKER_REGISTRY_URL} \
-TEST_TIMEOUT_MINUTES=${TEST_TIMEOUT_MINUTES} \
-INTEGRATION_ENTRYPOINT=http://kubeapps-ci.kubeapps \
-USE_MULTICLUSTER_OIDC_ENV=${USE_MULTICLUSTER_OIDC_ENV} \
-ADMIN_TOKEN=${admin_token} \
-VIEW_TOKEN=${view_token} \
-EDIT_TOKEN=${edit_token} \
-yarn test ${testsArgs}
-"
+  CI_TIMEOUT_MINUTES=40 \
+  DOCKER_USERNAME=${DOCKER_USERNAME} \
+  DOCKER_PASSWORD=${DOCKER_PASSWORD} \
+  DOCKER_REGISTRY_URL=${DOCKER_REGISTRY_URL} \
+  TEST_TIMEOUT_MINUTES=${TEST_TIMEOUT_MINUTES} \
+  INTEGRATION_ENTRYPOINT=http://kubeapps-ci.kubeapps \
+  USE_MULTICLUSTER_OIDC_ENV=${USE_MULTICLUSTER_OIDC_ENV} \
+  ADMIN_TOKEN=${admin_token} \
+  VIEW_TOKEN=${view_token} \
+  EDIT_TOKEN=${edit_token} \
+  yarn test ${testsArgs}
+  "
 info "${test_command}"
 if ! kubectl exec -it "$pod" -- /bin/sh -c "${test_command}"; then
   ## Integration tests failed, get report screenshot
@@ -476,15 +476,15 @@ k8s_wait_for_deployment kubeapps kubeapps-ci
 
 info "Running carvel integration test..."
 test_command="
-CI_TIMEOUT_MINUTES=20 \
-TEST_TIMEOUT_MINUTES=$((TEST_TIMEOUT_MINUTES * 2)) \
-INTEGRATION_ENTRYPOINT=http://kubeapps-ci.kubeapps \
-USE_MULTICLUSTER_OIDC_ENV=${USE_MULTICLUSTER_OIDC_ENV} \
-ADMIN_TOKEN=${admin_token} \
-VIEW_TOKEN=${view_token} \
-EDIT_TOKEN=${edit_token} \
-yarn test \"tests/carvel/\"
-"
+  CI_TIMEOUT_MINUTES=20 \
+  TEST_TIMEOUT_MINUTES=$((TEST_TIMEOUT_MINUTES * 2)) \
+  INTEGRATION_ENTRYPOINT=http://kubeapps-ci.kubeapps \
+  USE_MULTICLUSTER_OIDC_ENV=${USE_MULTICLUSTER_OIDC_ENV} \
+  ADMIN_TOKEN=${admin_token} \
+  VIEW_TOKEN=${view_token} \
+  EDIT_TOKEN=${edit_token} \
+  yarn test \"tests/carvel/\"
+  "
 info "${test_command}"
 if ! kubectl exec -it "$pod" -- /bin/sh -c "${test_command}"; then
   ## Integration tests failed, get report screenshot
@@ -517,17 +517,15 @@ if [[ -z "${GKE_BRANCH-}" ]] && [[ -n "${TEST_OPERATORS-}" ]]; then
 
   info "Running operator integration test with k8s API access..."
   test_command="
-CI_TIMEOUT_MINUTES=20 \
-TEST_TIMEOUT_MINUTES=${TEST_TIMEOUT_MINUTES} \
-INTEGRATION_ENTRYPOINT=http://kubeapps-ci.kubeapps \
-USE_MULTICLUSTER_OIDC_ENV=${USE_MULTICLUSTER_OIDC_ENV} \
-ADMIN_TOKEN=${admin_token} \
-VIEW_TOKEN=${view_token} \
-EDIT_TOKEN=${edit_token} \
-yarn test \"tests/operators/\"
-"
-
-EOF
+    CI_TIMEOUT_MINUTES=20 \
+    TEST_TIMEOUT_MINUTES=${TEST_TIMEOUT_MINUTES} \
+    INTEGRATION_ENTRYPOINT=http://kubeapps-ci.kubeapps \
+    USE_MULTICLUSTER_OIDC_ENV=${USE_MULTICLUSTER_OIDC_ENV} \
+    ADMIN_TOKEN=${admin_token} \
+    VIEW_TOKEN=${view_token} \
+    EDIT_TOKEN=${edit_token} \
+    yarn test \"tests/operators/\"
+    "
   if ! kubectl exec -it "$pod" -- /bin/sh -c "${test_command}"; then
     ## Integration tests failed, get report screenshot
     warn "PODS status on failure"
