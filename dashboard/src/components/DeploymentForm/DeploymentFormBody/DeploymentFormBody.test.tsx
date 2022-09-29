@@ -7,11 +7,11 @@ import {
   PackageAppVersion,
 } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
 import { act } from "react-dom/test-utils";
+import { MonacoDiffEditor } from "react-monaco-editor";
 import { defaultStore, mountWrapper } from "shared/specs/mountWrapper";
 import { IPackageState } from "shared/types";
 import BasicDeploymentForm from "./BasicDeploymentForm";
-import DeploymenetFormBody, { IDeploymentFormBodyProps } from "./DeploymentFormBody";
-import DifferentialSelector from "./DifferentialSelector";
+import DeploymentFormBody, { IDeploymentFormBodyProps } from "./DeploymentFormBody";
 
 beforeEach(() => {
   // mock the window.matchMedia for selecting the theme
@@ -30,7 +30,7 @@ beforeEach(() => {
     })),
   });
 
-  // mock the window.ResizeObserver, required by the MonacoEditor for the layout
+  // mock the window.ResizeObserver, required by the MonacoDiffEditor for the layout
   Object.defineProperty(window, "ResizeObserver", {
     writable: true,
     configurable: true,
@@ -41,7 +41,49 @@ beforeEach(() => {
     })),
   });
 
-  // mock the window.HTMLCanvasElement.getContext(), required by the MonacoEditor for the layout
+  // mock the window.HTMLCanvasElement.getContext(), required by the MonacoDiffEditor for the layout
+  Object.defineProperty(HTMLCanvasElement.prototype, "getContext", {
+    writable: true,
+    configurable: true,
+    value: jest.fn().mockImplementation(() => ({
+      clearRect: jest.fn(),
+    })),
+  });
+});
+
+afterEach(() => {
+  jest.restoreAllMocks();
+});
+
+beforeEach(() => {
+  // mock the window.matchMedia for selecting the theme
+  Object.defineProperty(window, "matchMedia", {
+    writable: true,
+    configurable: true,
+    value: jest.fn().mockImplementation(query => ({
+      matches: false,
+      media: query,
+      onchange: null,
+      addListener: jest.fn(),
+      removeListener: jest.fn(),
+      addEventListener: jest.fn(),
+      removeEventListener: jest.fn(),
+      dispatchEvent: jest.fn(),
+    })),
+  });
+
+  // mock the window.ResizeObserver, required by the MonacoDiffEditor for the layout
+  Object.defineProperty(window, "ResizeObserver", {
+    writable: true,
+    configurable: true,
+    value: jest.fn().mockImplementation(() => ({
+      observe: jest.fn(),
+      unobserve: jest.fn(),
+      disconnect: jest.fn(),
+    })),
+  });
+
+  // mock the window.HTMLCanvasElement.getContext(), required by the MonacoDiffEditor for the layout
   Object.defineProperty(HTMLCanvasElement.prototype, "getContext", {
     writable: true,
     configurable: true,
@@ -64,6 +106,7 @@ const defaultProps: IDeploymentFormBodyProps = {
   appValues: "foo: bar\n",
   setValues: jest.fn(),
   setValuesModified: jest.fn(),
+  formRef: { current: null },
 };
 
 jest.useFakeTimers();
@@ -92,22 +135,26 @@ c: d
 
   const wrapper = mountWrapper(
     defaultStore,
-    <DeploymenetFormBody {...defaultProps} selected={selected} />,
+    <DeploymentFormBody {...defaultProps} selected={selected} />,
   );
-  expect(wrapper.find(DifferentialSelector).prop("defaultValues")).toBe(oldValues);
+  expect(wrapper.find(MonacoDiffEditor).prop("original")).toBe(oldValues);
 
   // Trigger a change in the basic form and a YAML parse
-  const input = wrapper.find(BasicDeploymentForm).find("input");
+  const input = wrapper
+    .find(BasicDeploymentForm)
+    .find("input")
+    .filterWhere(i => i.prop("id") === "a"); // the input for the property "a"
+
   act(() => {
     input.simulate("change", { currentTarget: "e" });
     jest.advanceTimersByTime(500);
   });
   wrapper.update();
 
-  // The original double empty line gets deleted
   const expectedValues = `a: b
+
 
 c: d
 `;
-  expect(wrapper.find(DifferentialSelector).prop("defaultValues")).toBe(expectedValues);
+  expect(wrapper.find(MonacoDiffEditor).prop("original")).toBe(expectedValues);
 });
