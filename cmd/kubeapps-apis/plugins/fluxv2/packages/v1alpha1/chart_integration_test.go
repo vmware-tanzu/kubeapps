@@ -827,7 +827,7 @@ func testKindClusterAvailablePackageEndpointsForOCIHelper(
 			//  i.e. an RPC call that takes > 4 minutes.
 			// DeadlineExceeded errors should not be retried because it means the server hasn't
 			// quite finished the original request even though the client is proceeding. The way the
-			// cache works is that a 2nd request is just going not going to get past rate limiting
+			// cache works is that a 2nd request is just not going to get past the rate limiting queue
 			// and in the end both will fail. There is no way for the client to know when the server finishes
 			// processing the 1st request, so for now, let's just allow a really long timeout
 			// I also ocassionally see
