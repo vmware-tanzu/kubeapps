@@ -3,8 +3,9 @@
 
 import React, { useMemo } from "react";
 import { useSelector } from "react-redux";
+import { CustomComponent } from "RemoteComponent";
 import { IBasicFormParam, IStoreState } from "shared/types";
-import { CustomComponent } from "../../../RemoteComponent";
+
 export interface ICustomParamProps {
   param: IBasicFormParam;
   handleBasicFormParamChange: (
@@ -16,12 +17,11 @@ export default function CustomFormComponentLoader({
   param,
   handleBasicFormParamChange,
 }: ICustomParamProps) {
-  // Fetches the custom-component bundle served by the dashboard nginx
-
   const {
     config: { remoteComponentsUrl },
   } = useSelector((state: IStoreState) => state);
 
+  // Fetches the custom-component bundle served by the dashboard nginx
   const url = remoteComponentsUrl
     ? remoteComponentsUrl
     : `${window.location.origin}/custom_components.js`;
