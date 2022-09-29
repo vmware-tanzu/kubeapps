@@ -27,7 +27,7 @@ import {
 import { getPluginsSupportingRollback } from "shared/utils";
 import { ActionType, deprecated } from "typesafe-actions";
 import { InstalledPackage } from "../shared/InstalledPackage";
-import { validate } from "../shared/schema";
+import { validateValuesSchema } from "../shared/schema";
 import { handleErrorAction } from "./auth";
 
 const { createAction } = deprecated;
@@ -234,7 +234,7 @@ export function installPackage(
     dispatch(requestInstallPackage());
     try {
       if (values && schema) {
-        const validation = validate(values, schema);
+        const validation = validateValuesSchema(values, schema);
         if (!validation.valid) {
           const errorText =
             validation.errors &&
@@ -283,7 +283,7 @@ export function updateInstalledPackage(
     dispatch(requestUpdateInstalledPackage());
     try {
       if (values && schema) {
-        const validation = validate(values, schema);
+        const validation = validateValuesSchema(values, schema);
         if (!validation.valid) {
           const errorText =
             validation.errors &&

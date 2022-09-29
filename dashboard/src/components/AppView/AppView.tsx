@@ -404,6 +404,7 @@ export default function AppView() {
                 <div className="appview-separator">
                   <AppValues
                     values={
+                      //TODO(agamez): check if using this yaml.dump/load is really needed
                       selectedInstalledPkg?.valuesApplied
                         ? yaml.dump(yaml.load(selectedInstalledPkg.valuesApplied))
                         : ""
