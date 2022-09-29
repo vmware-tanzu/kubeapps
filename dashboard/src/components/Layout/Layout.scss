@@ -33,6 +33,18 @@
   justify-content: center;
 }
 
+.self-center {
+  align-self: center;
+}
+
+.bolder {
+  font-weight: bolder;
+}
+
+.left-align {
+  text-align: left;
+}
+
 .flex-h-center {
   display: flex;
   width: 100%;
@@ -42,6 +54,14 @@
 .flex-v-center {
   display: flex;
   align-items: center;
+}
+
+.italics {
+  font-style: italic;
+}
+
+.hidden {
+  visibility: hidden;
 }
 
 .notification-icon {
@@ -76,13 +96,13 @@
   }
 }
 
-.layout > main {
+.layout>main {
   flex: 1;
 }
 
 .deployment-form {
   &-tabs {
-    margin-bottom: 0.6rem;
+    margin-bottom: 1rem;
 
     &-data {
       margin-top: 0.6rem;

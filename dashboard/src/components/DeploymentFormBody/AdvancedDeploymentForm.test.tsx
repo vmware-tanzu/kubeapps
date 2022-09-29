@@ -1,11 +1,10 @@
 // Copyright 2021-2022 the Kubeapps contributors.
 // SPDX-License-Identifier: Apache-2.0
 
-import MonacoEditor from "react-monaco-editor";
+import AdvancedDeploymentForm from "components/DeploymentForm/DeploymentFormBody/AdvancedDeploymentForm";
 import { SupportedThemes } from "shared/Config";
 import { defaultStore, getStore, mountWrapper } from "shared/specs/mountWrapper";
 import { IStoreState } from "shared/types";
-import AdvancedDeploymentForm from "./AdvancedDeploymentForm";
 
 beforeEach(() => {
   // mock the window.matchMedia for selecting the theme
@@ -24,7 +23,7 @@ beforeEach(() => {
     })),
   });
 
-  // mock the window.ResizeObserver, required by the MonacoEditor for the layout
+  // mock the window.ResizeObserver, required by the MonacoDiffEditor for the layout
   Object.defineProperty(window, "ResizeObserver", {
     writable: true,
     configurable: true,
@@ -35,7 +34,7 @@ beforeEach(() => {
     })),
   });
 
-  // mock the window.HTMLCanvasElement.getContext(), required by the MonacoEditor for the layout
+  // mock the window.HTMLCanvasElement.getContext(), required by the MonacoDiffEditor for the layout
   Object.defineProperty(HTMLCanvasElement.prototype, "getContext", {
     writable: true,
     configurable: true,
@@ -51,19 +50,24 @@ afterEach(() => {
 
 const defaultProps = {
   handleValuesChange: jest.fn(),
+  valuesFromTheDeployedPackage: "",
+  valuesFromTheAvailablePackage: "",
+  deploymentEvent: "",
+  valuesFromTheParentContainer: "",
 };
 
+// eslint-disable-next-line jest/no-focused-tests
 it("includes values", () => {
   const wrapper = mountWrapper(
     defaultStore,
-    <AdvancedDeploymentForm {...defaultProps} appValues="foo: bar" />,
+    <AdvancedDeploymentForm {...defaultProps} valuesFromTheParentContainer="foo: bar" />,
   );
-  expect(wrapper.find(MonacoEditor).prop("value")).toBe("foo: bar");
+  expect(wrapper.find("MonacoDiffEditor").prop("value")).toBe("foo: bar");
 });
 
 it("sets light theme by default", () => {
   const wrapper = mountWrapper(defaultStore, <AdvancedDeploymentForm {...defaultProps} />);
-  expect(wrapper.find(MonacoEditor).prop("theme")).toBe("light");
+  expect(wrapper.find("MonacoDiffEditor").prop("theme")).toBe("light");
 });
 
 it("changes theme", () => {
@@ -71,5 +75,5 @@ it("changes theme", () => {
     getStore({ config: { theme: SupportedThemes.dark } } as Partial<IStoreState>),
     <AdvancedDeploymentForm {...defaultProps} />,
   );
-  expect(wrapper.find(MonacoEditor).prop("theme")).toBe("vs-dark");
+  expect(wrapper.find("MonacoDiffEditor").prop("theme")).toBe("vs-dark");
 });

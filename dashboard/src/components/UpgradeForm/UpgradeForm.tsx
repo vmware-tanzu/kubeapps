@@ -4,28 +4,29 @@
 import { CdsFormGroup } from "@cds/react/forms";
 import actions from "actions";
 import AvailablePackageDetailExcerpt from "components/Catalog/AvailablePackageDetailExcerpt";
+import DeploymentFormBody from "components/DeploymentForm/DeploymentFormBody";
 import Alert from "components/js/Alert";
 import Column from "components/js/Column";
 import Row from "components/js/Row";
+import LoadingWrapper from "components/LoadingWrapper";
 import PackageHeader from "components/PackageHeader/PackageHeader";
 import PackageVersionSelector from "components/PackageHeader/PackageVersionSelector";
 import { push } from "connected-react-router";
 import * as jsonpatch from "fast-json-patch";
 import * as yaml from "js-yaml";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { Action } from "redux";
 import { ThunkDispatch } from "redux-thunk";
-import { deleteValue, setValue } from "../../shared/schema";
-import { IStoreState } from "../../shared/types";
-import * as url from "../../shared/url";
-import DeploymentFormBody from "../DeploymentFormBody/DeploymentFormBody";
-import LoadingWrapper from "../LoadingWrapper/LoadingWrapper";
+import { IStoreState } from "shared/types";
+import { deleteValue, setValue } from "shared/yamlUtils";
+import * as url from "shared/url";
 
 export interface IUpgradeFormProps {
   version?: string;
 }
 
+// TODO(agamez): Use the YAML-node based functions to avoid re-parse the yaml again and again
 function applyModifications(mods: jsonpatch.Operation[], values: string) {
   // And we add any possible change made to the original version
   if (mods.length) {
@@ -65,6 +66,7 @@ function UpgradeForm(props: IUpgradeFormProps) {
   const [deployedValues, setDeployedValues] = useState("");
   const [isDeploying, setIsDeploying] = useState(false);
   const [valuesModified, setValuesModified] = useState(false);
+  const formRef = useRef<HTMLFormElement>(null);
 
   useEffect(() => {
     // This block just will be run once, given that populating
@@ -105,6 +107,7 @@ function UpgradeForm(props: IUpgradeFormProps) {
   useEffect(() => {
     if (installedAppAvailablePackageDetail?.defaultValues && !modifications) {
       // Calculate modifications from the default values
+      //TODO(agamez): stop using this yaml.dump/load
       const defaultValuesObj = yaml.load(installedAppAvailablePackageDetail?.defaultValues) || {};
       const deployedValuesObj =
         yaml.load(installedAppInstalledPackageDetail?.valuesApplied || "") || {};
@@ -223,7 +226,7 @@ function UpgradeForm(props: IUpgradeFormProps) {
                       <AvailablePackageDetailExcerpt pkg={availablePackageDetail} />
                     </Column>
                     <Column span={9}>
-                      <form onSubmit={handleDeploy}>
+                      <form onSubmit={handleDeploy} ref={formRef}>
                         <CdsFormGroup
                           className="deployment-form"
                           layout="vertical"
@@ -254,6 +257,7 @@ function UpgradeForm(props: IUpgradeFormProps) {
                           setValues={handleValuesChange}
                           appValues={appValues}
                           setValuesModified={setValuesModifiedTrue}
+                          formRef={formRef}
                         />
                       </form>
                     </Column>
