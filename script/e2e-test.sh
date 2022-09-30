@@ -440,28 +440,28 @@ admin_token="$(kubectl get -n kubeapps secret "$(kubectl get -n kubeapps service
 view_token="$(kubectl get -n kubeapps secret "$(kubectl get -n kubeapps serviceaccount kubeapps-view -o jsonpath='{.secrets[].name}')" -o go-template='{{.data.token | base64decode}}')"
 edit_token="$(kubectl get -n kubeapps secret "$(kubectl get -n kubeapps serviceaccount kubeapps-edit -o jsonpath='{.secrets[].name}')" -o go-template='{{.data.token | base64decode}}')"
 
-#info "Running main Integration tests without k8s API access..."
-#test_command="
-#  CI_TIMEOUT_MINUTES=40 \
-#  DOCKER_USERNAME=${DOCKER_USERNAME} \
-#  DOCKER_PASSWORD=${DOCKER_PASSWORD} \
-#  DOCKER_REGISTRY_URL=${DOCKER_REGISTRY_URL} \
-#  TEST_TIMEOUT_MINUTES=${TEST_TIMEOUT_MINUTES} \
-#  INTEGRATION_ENTRYPOINT=http://kubeapps-ci.kubeapps \
-#  USE_MULTICLUSTER_OIDC_ENV=${USE_MULTICLUSTER_OIDC_ENV} \
-#  ADMIN_TOKEN=${admin_token} \
-#  VIEW_TOKEN=${view_token} \
-#  EDIT_TOKEN=${edit_token} \
-#  yarn test ${testsArgs}
-#  "
-#info "${test_command}"
-#if ! kubectl exec -it "$pod" -- /bin/sh -c "${test_command}"; then
-#  ## Integration tests failed, get report screenshot
-#  warn "PODS status on failure"
-#  kubectl cp "${pod}:/app/reports" ./reports
-#  exit 1
-#fi
-#info "Main integration tests succeeded!!"
+info "Running main Integration tests without k8s API access..."
+test_command="
+  CI_TIMEOUT_MINUTES=40 \
+  DOCKER_USERNAME=${DOCKER_USERNAME} \
+  DOCKER_PASSWORD=${DOCKER_PASSWORD} \
+  DOCKER_REGISTRY_URL=${DOCKER_REGISTRY_URL} \
+  TEST_TIMEOUT_MINUTES=${TEST_TIMEOUT_MINUTES} \
+  INTEGRATION_ENTRYPOINT=http://kubeapps-ci.kubeapps \
+  USE_MULTICLUSTER_OIDC_ENV=${USE_MULTICLUSTER_OIDC_ENV} \
+  ADMIN_TOKEN=${admin_token} \
+  VIEW_TOKEN=${view_token} \
+  EDIT_TOKEN=${edit_token} \
+  yarn test ${testsArgs}
+  "
+info "${test_command}"
+if ! kubectl exec -it "$pod" -- /bin/sh -c "${test_command}"; then
+  ## Integration tests failed, get report screenshot
+  warn "PODS status on failure"
+  kubectl cp "${pod}:/app/reports" ./reports
+  exit 1
+fi
+info "Main integration tests succeeded!!"
 
 
 ## Upgrade and run Carvel test
@@ -494,44 +494,44 @@ if ! kubectl exec -it "$pod" -- /bin/sh -c "${test_command}"; then
 fi
 info "Carvel integration tests succeeded!!"
 
-### Upgrade and run operator test
-## Operators are not supported in GKE 1.14 and flaky in 1.15, skipping test
-#if [[ -z "${GKE_BRANCH-}" ]] && [[ -n "${TEST_OPERATORS-}" ]]; then
-#  installOLM "${OLM_VERSION}"
-#
-#  # Update Kubeapps settings to enable operators and hence proxying
-#  # to k8s API server. Don't change the packaging setting to avoid
-#  # re-installing postgres.
-#  info "Installing latest Kubeapps chart available"
-#  installOrUpgradeKubeapps "${ROOT_DIR}/chart/kubeapps" \
-#    "--set" "packaging.helm.enabled=false" \
-#    "--set" "packaging.carvel.enabled=true" \
-#    "--set" "featureFlags.operators=true"
-#
-#  info "Waiting for Kubeapps components to be ready (bitnami chart)..."
-#  k8s_wait_for_deployment kubeapps kubeapps-ci
-#
-#  ## Wait for the Operator catalog to be populated
-#  info "Waiting for the OperatorHub Catalog to be ready ..."
-#  retry_while isOperatorHubCatalogRunning 24
-#
-#  info "Running operator integration test with k8s API access..."
-#  test_command="
-#    CI_TIMEOUT_MINUTES=20 \
-#    TEST_TIMEOUT_MINUTES=${TEST_TIMEOUT_MINUTES} \
-#    INTEGRATION_ENTRYPOINT=http://kubeapps-ci.kubeapps \
-#    USE_MULTICLUSTER_OIDC_ENV=${USE_MULTICLUSTER_OIDC_ENV} \
-#    ADMIN_TOKEN=${admin_token} \
-#    VIEW_TOKEN=${view_token} \
-#    EDIT_TOKEN=${edit_token} \
-#    yarn test \"tests/operators/\"
-#    "
-#  if ! kubectl exec -it "$pod" -- /bin/sh -c "${test_command}"; then
-#    ## Integration tests failed, get report screenshot
-#    warn "PODS status on failure"
-#    kubectl cp "${pod}:/app/reports" ./reports
-#    exit 1
-#  fi
-#  info "Operator integration tests (with k8s API access) succeeded!!"
-#fi
+## Upgrade and run operator test
+# Operators are not supported in GKE 1.14 and flaky in 1.15, skipping test
+if [[ -z "${GKE_BRANCH-}" ]] && [[ -n "${TEST_OPERATORS-}" ]]; then
+  installOLM "${OLM_VERSION}"
+
+  # Update Kubeapps settings to enable operators and hence proxying
+  # to k8s API server. Don't change the packaging setting to avoid
+  # re-installing postgres.
+  info "Installing latest Kubeapps chart available"
+  installOrUpgradeKubeapps "${ROOT_DIR}/chart/kubeapps" \
+    "--set" "packaging.helm.enabled=false" \
+    "--set" "packaging.carvel.enabled=true" \
+    "--set" "featureFlags.operators=true"
+
+  info "Waiting for Kubeapps components to be ready (bitnami chart)..."
+  k8s_wait_for_deployment kubeapps kubeapps-ci
+
+  ## Wait for the Operator catalog to be populated
+  info "Waiting for the OperatorHub Catalog to be ready ..."
+  retry_while isOperatorHubCatalogRunning 24
+
+  info "Running operator integration test with k8s API access..."
+  test_command="
+    CI_TIMEOUT_MINUTES=20 \
+    TEST_TIMEOUT_MINUTES=${TEST_TIMEOUT_MINUTES} \
+    INTEGRATION_ENTRYPOINT=http://kubeapps-ci.kubeapps \
+    USE_MULTICLUSTER_OIDC_ENV=${USE_MULTICLUSTER_OIDC_ENV} \
+    ADMIN_TOKEN=${admin_token} \
+    VIEW_TOKEN=${view_token} \
+    EDIT_TOKEN=${edit_token} \
+    yarn test \"tests/operators/\"
+    "
+  if ! kubectl exec -it "$pod" -- /bin/sh -c "${test_command}"; then
+    ## Integration tests failed, get report screenshot
+    warn "PODS status on failure"
+    kubectl cp "${pod}:/app/reports" ./reports
+    exit 1
+  fi
+  info "Operator integration tests (with k8s API access) succeeded!!"
+fi
 info "Integration tests succeeded!"

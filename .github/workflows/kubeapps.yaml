@@ -20,6 +20,10 @@ env:
   CI_BOT_USERNAME: "kubeapps-bot"
   CI_BOT_EMAIL: "tanzu-kubeapps-team@vmware.com"
   CI_BOT_GPG: "80B6EB16B1328FB18DFF2A073EBA68F3347E319D"
+  # DEBUG_MODE allows to activate some SSH debugging steps, and modify the verbosity level of some scripts (eg. e2e-tests.sh)
+  DEBUG_MODE: "false"
+  # FIXME: DEV_MODE is used to enable dev mode, used in sync chart from/to bitnami jobs to file shadow PRs while we maintain
+  # CircleCI and GHA pipelines running in parallel. This should be removed once the CircleCI pipeline is decommissioned.
   DEV_MODE: "true"
   SSH_KEY_KUBEAPPS_DEPLOY_FILENAME: "id_rsa_kubeapps_deploy_key"
   SSH_KEY_FORKED_CHARTS_DEPLOY_FILENAME: "id_rsa_forked_charts_deploy_key"
@@ -529,8 +533,6 @@ jobs:
           kubectl -n dex create secret tls dex-web-server-tls --key ./devel/dex.key --cert ./devel/dex.crt
           mkcert -key-file ./devel/localhost-key.pem -cert-file ./devel/localhost-cert.pem localhost kubeapps-ci.kubeapps $DEFAULT_DEX_IP
       - name: "Run e2e tests script"
-        env:
-          DEBUG_MODE: true
         run: |
           # If we want to test the latest version instead we override the image to be used
           if [[ -n "${TEST_LATEST_RELEASE:-}" ]]; then
@@ -563,7 +565,7 @@ jobs:
         if: failure() && env.TEST_RESULT == 1
         continue-on-error: true
       - name: 'Upload Artifacts'
-        if: failure()
+        if: failure() && env.DEBUG_MODE == 'true'
         uses: actions/upload-artifact@v3
         with:
           name: e2e_tests_reports

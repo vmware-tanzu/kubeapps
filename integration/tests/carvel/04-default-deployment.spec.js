@@ -45,6 +45,6 @@ test("Deploys package with default values in main cluster", async ({ page }) => 
   });
 
   // Clean up
-  // await page.locator('cds-button:has-text("Delete")').click();
-  // await page.locator('cds-modal-actions button:has-text("Delete")').click();
+  await page.locator('cds-button:has-text("Delete")').click();
+  await page.locator('cds-modal-actions button:has-text("Delete")').click();
 });

@@ -528,12 +528,6 @@ run_e2e_tests: &run_e2e_tests
         DEV_TAG=${latest/v/}
         IMG_MODIFIER=""
       fi
-      
-      echo "=========================="
-      echo "KAPP_CONTROLLER_VERSION: $KAPP_CONTROLLER_VERSION"
-      echo "=========================="
-      
-      
       if ./script/e2e-test.sh $USE_MULTICLUSTER_OIDC_ENV $OLM_VERSION $DEV_TAG $IMG_MODIFIER $TEST_TIMEOUT_MINUTES $DEFAULT_DEX_IP $ADDITIONAL_CLUSTER_IP $KAPP_CONTROLLER_VERSION $CHARTMUSEUM_VERSION; then
         # Test success
         echo "export TEST_RESULT=$?" >> $BASH_ENV
