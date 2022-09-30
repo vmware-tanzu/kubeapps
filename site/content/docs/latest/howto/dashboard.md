@@ -1,47 +1,128 @@
-# Using the Dashboard
+# Managing application lifecycle with Kubeapps
 
-Once you have [installed Kubeapps in your cluster](https://github.com/vmware-tanzu/kubeapps/tree/main/chart/kubeapps) you can use the Dashboard to start managing and deploying applications in your cluster. Checkout the [Getting Started](../tutorials/getting-started.md) guide to learn how to access the Dashboard and deploy your first application.
+## Table of Contents
 
-The following sections walk you through some common tasks with the Kubeapps Dashboard.
+1. [Introduction](#introduction)
+2. [Pre-requisites](#pre-requisites)
+3. [Browse applications in the configured repositories](#browse-applications-in-the-configured-repositories)
+4. [Application details](#application-details)
+5. [Deploy an application](#deploy-an-application)
+6. [Update an application](#update-an-application)
+7. [Delete an application](#delete-an-application)
+8. [Browse applications installed in the cluster](#browse-applications-installed-in-the-cluster)
 
-## Work with Charts
+## Introduction
 
-### Deploy new applications using the Dashboard
+[Kubeapps](https://kubeapps.dev/) provides a cloud native solution to browse, deploy and manage the lifecycle of applications on a Kubernetes cluster. It is a one-time install that gives you a number of important benefits, including the ability to:
 
-- Start with the Dashboard welcome page:
+- browse and deploy packaged applications from public or private repositories
+- customize deployments through an intuitive user interface
+- upgrade, manage and delete the applications that are deployed in your Kubernetes cluster
+- expose an API to manage your package repositories and your applications
 
-  ![Dashboard main page](../img/dashboard-home.png)
+This guide explains in detail how to **manage the lifecycle** of your applications in Kubernetes with Kubeapps.
 
-- Use the "Catalog" menu to select an application from the list of applications available. This example assumes you want to deploy MariaDB.
+## Pre-requisites
 
-  ![MariaDB chart](../img/mariadb-chart.png)
+- Kubeapps up and running (see [Get Started with Kubeapps](../tutorials/getting-started.md))
+- A Package Repository configured in Kubeapps (see [Managing Package Repositories with Kubeapps](../tutorials/managing-package-repositories.md))
 
-- Click the "Deploy" button. You will be prompted for the release name, cluster namespace and values for your application deployment.
+## Browse applications in the configured repositories
 
-  ![MariaDB installation](../img/mariadb-installation.png)
+To explore the list of applications available in the existing repositories configured in Kubeapps:
 
-- Click the "Submit" button. The application will be deployed. You will be able to track the new Kubernetes deployment directly from the browser. The "Notes" section of the deployment page contains important information to help you use the application.
+1. Click **Catalog** in the main menu.
+2. Kubeapps displays in the center of the page a list with the applications available in the configured repositories.
 
-  ![MariaDB deployment](../img/mariadb-deployment.png)
+![Browse catalog](../img/dashboard/browse-catalog.png)
 
-### List all the applications running in your cluster
+**Search** and **filtering options** are available to improve the experience to explore and find applications.
 
-The "Applications" page displays a list of the application deployments in your cluster.
+## Application details
 
-![Deployment list](../img/dashboard-deployments.png)
+Kubeapps provides a complete overview of applications, metadata and parameters to have all necessary information before deploying into your cluster.
 
-### Remove existing application deployments
+- Click on any app from the **Catalog view**, for example **Wordpress**.
+- Kubeapps navigates to the detail page including:
 
-You can remove any of the applications from your cluster by clicking the "Delete" button on the application's status page:
+  - **Application data** (on the left side): name, package format, app version, package version, categories, home url, maintainers, related urls
+  - **README.md**: Kubeapps render the information available in the package README.md file (including all configuration parameters to install the package).
 
-![Deployment removal](../img/dashboard-delete-deployment.png)
+![Browse Application](../img/dashboard/browse-application.png)
+![Browse Application parameters](../img/dashboard/browse-application-parameters.png)
 
-### Add more chart repositories
+From the top-right corner, you can select the **package version** to deploy the application into your cluster.
 
-By default, Kubeapps comes with the Bitnami repository enabled. You can see the list of enabled chart repositories in the "Package Repositories" page under the menu:
+## Deploy an application
 
-![Repositories List](../img/dashboard-repos.png)
+Click the **Deploy** button from the detail page. Kubeapps displays a new view for the deployment, including:
 
-Add new repositories (for example, your organization's chart repository) by clicking the "Add Package Repository" button. Fill the "Add Repository" form using the repository info. For a detailed guide of how to add package repositories, check [this guide](./private-app-repository.md).
+- `Application data`: same information displayed previously in the detail view.
+- `Name`: a descriptive name for the application.
+- `Deployment values`: set application values for deployment. Kubeapps provides two alternatives to edit parameters:
+  - **Visual editor**: table view component to search, paginate and update values for the different parameters.
+  - **YAML editor**: to directly edit the YAML file (including the capability to enable a diff view to show changes from default).
 
-![Adding repository](../img/dashboard-add-repo.png)
+![Deploy application visual editor](../img/dashboard/deploy-application-visual-editor.png)
+![Deploy application visual editor with parameters](../img/dashboard/deploy-application-visual-editor-parameters.png)
+![Deploy application visual editor](../img/dashboard/deploy-application-yaml-editor.png)
+
+Set values for configuration parameters and click the **Deploy** button to launch the deployment.
+
+> There is another button to help you restoring parameters to the default values in the package.
+
+You can track the deployment directly from Kubeapps. The "Notes" section in the deployment page contains important information to help you use the application.
+
+![Deploy application progress not ready](../img/dashboard/deploy-application-progress-0.png)
+![Deploy application progress 1 pod](../img/dashboard/deploy-application-progress-1.png)
+![Deploy application progress ready](../img/dashboard/deploy-application-progress-ready.png)
+
+## Update an application
+
+Kubeapps provides an easy way to identify applications with an updated version available in the repository.
+
+- In the list of applications installed in your cluster, with an **arrow**:
+
+![Update application arrow](../img/dashboard/update-application-list.png)
+
+- In the detail view with an **info message** in the left side:
+
+![Update application message](../img/dashboard/update-application-message.png)
+
+Once you have selected the application to update, click either the **Update** button or the **Update Now** link in the message. Kubeapps displays the deployment view.
+
+For the update case, the Visual Editor table displays the following columns:
+
+- `Defalut value`: including the default value for each parameter in the package.
+- `Deployed value`: including the value deployed in the cluster for each parameter.
+- `Current value`: to set the value for each parameter in the upgrade process.
+
+![Update application visual editor](../img/dashboard/update-application-visual-editor.png)
+
+The YAML Editor includes options to enable a diff to compare:
+
+- `Package values`: comparing new values in the YAML file with default values in the package.
+- `Deployed values`: comparing new values in the YAML file with deployed values in the cluster.
+
+![Update application YAML editor](../img/dashboard/update-application-yaml-editor.png)
+
+### Delete an application
+
+You can remove any of the applications from your cluster by clicking the **Delete** button on the application's status page:
+
+![Deployment removal](../img/dashboard/delete-application.png)
+
+## Browse applications installed in the cluster
+
+To explore the list of applications installed in the cluster directly from Kubeapps:
+
+1. Click **Application** in the main menu.
+2. Kubeapps displays in the center of the page a list with the applications installed in the selected context (cluster / namespace):
+
+![Deployment list](../img/dashboard/update-application-list.png)
+
+Kubeapps also provides the ability for listing applications in all namespaces for the selected cluster. Activate the toogle option **Show apps in all namespaces**:
+
+![Deployment list all namespaces](../img/dashboard/list-available-applications.png)
+
+> **NOTE**: An additional benefit for Kubeapps is that it reflects the status of applications in the cluster (even if not managed directly by using Kubeapps). So any change performed by using the Helm, Flux or Carvel directly from the CLI, is visible from Kubeapps when listing the installed applications in the cluster.
