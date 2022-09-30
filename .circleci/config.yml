@@ -258,11 +258,13 @@ workflows:
 
 ## Definitions
 common_envars: &common_envars
+  CHARTMUSEUM_VERSION: << pipeline.parameters.CHARTMUSEUM_VERSION >>
   DOCKER_VERSION: << pipeline.parameters.DOCKER_VERSION >>
   DOCKER_REGISTRY_VERSION: << pipeline.parameters.DOCKER_REGISTRY_VERSION >>
   GOLANG_VERSION: << pipeline.parameters.GOLANG_VERSION >>
   HELM_VERSION_MIN: << pipeline.parameters.HELM_VERSION_MIN >>
   HELM_VERSION_STABLE: << pipeline.parameters.HELM_VERSION_STABLE >>
+  KAPP_CONTROLLER_VERSION: << pipeline.parameters.KAPP_CONTROLLER_VERSION >>
   K8S_KIND_VERSION: << pipeline.parameters.K8S_KIND_VERSION >>
   KIND_VERSION: << pipeline.parameters.KIND_VERSION >>
   KUBECTL_VERSION: << pipeline.parameters.KUBECTL_VERSION >>
