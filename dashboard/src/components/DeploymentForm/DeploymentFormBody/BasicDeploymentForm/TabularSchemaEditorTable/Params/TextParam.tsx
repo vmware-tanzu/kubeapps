@@ -15,7 +15,7 @@ import { basicFormsDebounceTime } from "shared/utils";
 export interface ITextParamProps {
   id: string;
   label: string;
-  inputType?: string;
+  inputType?: "text" | "textarea" | string;
   param: IBasicFormParam;
   handleBasicFormParamChange: (
     param: IBasicFormParam,
@@ -89,7 +89,7 @@ export default function TextParam(props: ITextParamProps) {
           aria-label={label}
           id={id}
           type={inputType ?? "text"}
-          value={currentValue}
+          value={currentValue ?? ""}
           onChange={onChange}
         />
         {/* TODO(agamez): validate the value */}
@@ -105,7 +105,7 @@ export default function TextParam(props: ITextParamProps) {
   if (inputType === "textarea") {
     input = (
       <CdsTextarea className={isModified ? "bolder" : ""}>
-        <textarea aria-label={label} id={id} value={currentValue} onChange={onChange} />
+        <textarea aria-label={label} id={id} value={currentValue ?? ""} onChange={onChange} />
         {/* TODO(agamez): validate the value */}
         {/* {!validated?.valid && (
           <CdsControlMessage status="error">

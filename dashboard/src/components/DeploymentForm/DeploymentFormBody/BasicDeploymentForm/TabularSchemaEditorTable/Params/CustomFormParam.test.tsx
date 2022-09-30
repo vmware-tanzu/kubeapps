@@ -4,7 +4,7 @@
 import { CustomComponent } from "RemoteComponent";
 import { getStore, mountWrapper } from "shared/specs/mountWrapper";
 import { IBasicFormParam, IStoreState } from "shared/types";
-import CustomFormComponentLoader from "./CustomFormParam";
+import CustomFormComponentLoader, { ICustomParamProps } from "./CustomFormParam";
 
 const param: IBasicFormParam = {
   type: "boolean",
@@ -25,7 +25,7 @@ const param: IBasicFormParam = {
 const defaultProps = {
   param,
   handleBasicFormParamChange: jest.fn(),
-};
+} as ICustomParamProps;
 
 const defaultState = {
   config: { remoteComponentsUrl: "" },
