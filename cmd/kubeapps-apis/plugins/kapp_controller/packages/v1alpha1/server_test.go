@@ -6267,7 +6267,7 @@ func TestGetInstalledPackageResourceRefs(t *testing.T) {
 					},
 					ObjectMeta: metav1.ObjectMeta{
 						Namespace: "default",
-						Name:      "my-installation.apps.k14s.io",
+						Name:      "my-installation.app",
 					},
 					Data: map[string]string{
 						"spec": "{\"labelKey\":\"kapp.k14s.io/app\",\"labelValue\":\"my-id\"}",

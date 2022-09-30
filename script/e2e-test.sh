@@ -16,7 +16,7 @@ IMG_MODIFIER=${4:-""}
 TEST_TIMEOUT_MINUTES=${5:-"4"}
 DEX_IP=${6:-"172.18.0.2"}
 ADDITIONAL_CLUSTER_IP=${7:-"172.18.0.3"}
-KAPP_CONTROLLER_VERSION=${8:-"v0.32.0"}
+KAPP_CONTROLLER_VERSION=${8:-"v0.41.2"}
 CHARTMUSEUM_VERSION=${9:-"3.9.0"}
 
 # TODO(andresmgot): While we work with beta releases, the Bitnami pipeline
@@ -48,6 +48,7 @@ info "Image repo suffix: ${IMG_MODIFIER}"
 info "Dex IP: ${DEX_IP}"
 info "Additional cluster IP : ${ADDITIONAL_CLUSTER_IP}"
 info "Test timeout minutes: ${TEST_TIMEOUT_MINUTES}"
+info "Kapp Controller version: ${KAPP_CONTROLLER_VERSION}"
 info "Cluster Version: $(kubectl version -o json | jq -r '.serverVersion.gitVersion')"
 info "Kubectl Version: $(kubectl version -o json | jq -r '.clientVersion.gitVersion')"
 echo ""
