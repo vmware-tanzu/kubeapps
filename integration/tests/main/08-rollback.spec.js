@@ -56,7 +56,7 @@ test("Rolls back an application", async ({ page }) => {
 
   // Increase replicas
   await page.locator("input[type='number']").fill("2");
-  await page.click('li:has-text("Changes")');
+  await page.click('li:has-text("YAML editor")');
 
   // Use the built-in search function in monaco to find the text we are looking for
   // so that it get loaded in the DOM when using the toContainText assert

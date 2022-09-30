@@ -99,7 +99,7 @@ test("Create a new private package repository successfully", async ({ page }) =>
   await page.waitForSelector('select[name="package-versions"]');
   const newPackageVersionValue = await page.inputValue('select[name="package-versions"]');
   expect(newPackageVersionValue).toEqual("8.6.3");
-  await page.click('li:has-text("Changes")');
+  await page.click('li:has-text("YAML editor")');
 
   // Use the built-in search function in monaco to find the text we are looking for
   // so that it get loaded in the DOM when using the toContainText assert
