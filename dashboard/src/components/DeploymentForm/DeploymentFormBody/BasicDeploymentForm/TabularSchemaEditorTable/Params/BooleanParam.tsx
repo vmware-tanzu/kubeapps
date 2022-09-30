@@ -27,12 +27,12 @@ export default function BooleanParam(props: IBooleanParamProps) {
     const event = {
       currentTarget: {
         //convert the boolean "checked" prop to a normal "value" string one
-        value: e.currentTarget.checked.toString(),
+        value: e.currentTarget?.checked?.toString(),
         type: "checkbox",
       },
     } as React.FormEvent<HTMLInputElement>;
-    setCurrentValue(e.currentTarget.checked);
-    setIsValueModified(e.currentTarget.checked !== param.currentValue);
+    setCurrentValue(e.currentTarget?.checked);
+    setIsValueModified(e.currentTarget?.checked !== param.currentValue);
     handleBasicFormParamChange(param)(event);
   };
 
