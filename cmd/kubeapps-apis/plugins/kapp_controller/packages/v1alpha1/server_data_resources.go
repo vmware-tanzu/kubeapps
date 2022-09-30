@@ -506,7 +506,7 @@ func (s *Server) updatePkgInstall(ctx context.Context, cluster, namespace string
 // getAppUsedGVs returns the list of GVs used by the given app, falling back to pre 0.47 Kapp version behavior with regards to suffixes
 func getAppUsedGVs(appsClient ctlapp.Apps, packageId string, namespace string, useNewCtrlAppSuffix bool) ([]schema.GroupVersion, ctlapp.App, error) {
 	// We first try to fetch the app using the suffixed name (kapp >= 0.47)
-	appName := fmt.Sprintf("%s%s", packageId, ctlapp.AppSuffix)
+	appName := fmt.Sprintf("%s%s", packageId, ".app")
 
 	// Workaround to also support pre-0.47 kapp versions, whose ConfigMap were suffixed with "-ctrl" instead of ".apps.k14s.io"
 	if !useNewCtrlAppSuffix {
