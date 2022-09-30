@@ -66,8 +66,8 @@ export default function TextParam(props: ITextParamProps) {
     // The reference to target get lost, so we need to keep a copy
     const targetCopy = {
       currentTarget: {
-        value: getValueFromString(param, e.currentTarget.value),
-        type: e.currentTarget.type,
+        value: getValueFromString(param, e.currentTarget?.value),
+        type: e.currentTarget?.type,
       },
     } as React.FormEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>;
     setThisTimeout(setTimeout(() => func(targetCopy), basicFormsDebounceTime));

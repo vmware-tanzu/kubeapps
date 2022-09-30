@@ -11,13 +11,11 @@ import { useState } from "react";
 import { IBasicFormParam } from "shared/types";
 import { basicFormsDebounceTime } from "shared/utils";
 
-interface ISliderParamProps {
+export interface ISliderParamProps {
   id: string;
   label: string;
   param: IBasicFormParam;
   unit: string;
-  min: number;
-  max: number;
   step: number;
   handleBasicFormParamChange: (
     p: IBasicFormParam,
@@ -25,9 +23,9 @@ interface ISliderParamProps {
 }
 
 export default function SliderParam(props: ISliderParamProps) {
-  const { handleBasicFormParamChange, id, label, max, min, param, step } = props;
+  const { handleBasicFormParamChange, id, label, param, step } = props;
 
-  const [currentValue, setCurrentValue] = useState(toNumber(param.currentValue) || min);
+  const [currentValue, setCurrentValue] = useState(toNumber(param.currentValue) || param.minimum);
   const [isValueModified, setIsValueModified] = useState(false);
   const [timeout, setThisTimeout] = useState({} as NodeJS.Timeout);
 
@@ -40,8 +38,8 @@ export default function SliderParam(props: ISliderParamProps) {
     // The reference to target get lost, so we need to keep a copy
     const targetCopy = {
       currentTarget: {
-        value: e.currentTarget.value,
-        type: e.currentTarget.type,
+        value: e.currentTarget?.value,
+        type: e.currentTarget?.type,
       },
     } as React.FormEvent<HTMLInputElement>;
     setThisTimeout(setTimeout(() => func(targetCopy), basicFormsDebounceTime));
@@ -56,9 +54,10 @@ export default function SliderParam(props: ISliderParamProps) {
     <CdsRange>
       <input
         aria-label={label}
+        id={id + "_range"}
         type="range"
-        min={Math.min(min, currentValue)}
-        max={Math.max(max, currentValue)}
+        min={Math.min(param.minimum || 0, currentValue)}
+        max={Math.max(param.maximum || 1000, currentValue)}
         step={step}
         onChange={onChange}
         value={currentValue}

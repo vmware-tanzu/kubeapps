@@ -179,8 +179,6 @@ export function renderConfigCurrentValuePro(
           label={param.title || param.path}
           param={param}
           handleBasicFormParamChange={handleBasicFormParamChange}
-          min={param.minimum || 1}
-          max={param.maximum || 1000}
           step={param.type === "integer" ? 1 : 0.1}
           unit={""}
         />
