@@ -72,7 +72,7 @@ export default function TabularSchemaEditorTable(props: TabularSchemaEditorTable
 
   const paginationButtons = (
     <>
-      <div>
+      <div className="pagination-buttons">
         <CdsButton
           title="First page"
           style={{ marginRight: "0.5em" }}

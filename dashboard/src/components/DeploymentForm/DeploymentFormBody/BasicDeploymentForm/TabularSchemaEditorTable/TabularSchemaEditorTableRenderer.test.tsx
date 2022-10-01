@@ -1,19 +1,11 @@
-// Copyright 2019-2022 the Kubeapps contributors.
+// Copyright 2022 the Kubeapps contributors.
 // SPDX-License-Identifier: Apache-2.0
 
-import { mount } from "enzyme";
-import { DeploymentEvent, IBasicFormParam } from "shared/types";
-import BasicDeploymentForm, { IBasicDeploymentFormProps } from "./BasicDeploymentForm";
+import { defaultStore, mountWrapper } from "shared/specs/mountWrapper";
+import { IBasicFormParam } from "shared/types";
+import { renderConfigCurrentValuePro } from "./TabularSchemaEditorTableRenderer";
 
 jest.useFakeTimers();
-
-const defaultProps = {
-  deploymentEvent: "install" as DeploymentEvent,
-  handleBasicFormParamChange: jest.fn(() => jest.fn()),
-  saveAllChanges: jest.fn(),
-  isLoading: false,
-  paramsFromComponentState: [],
-} as IBasicDeploymentFormProps;
 
 [
   {
@@ -325,15 +317,13 @@ const defaultProps = {
   it(t.description, () => {
     const onChange = jest.fn();
     const handleBasicFormParamChange = jest.fn(() => onChange);
-    const wrapper = mount(
-      <BasicDeploymentForm
-        {...defaultProps}
-        paramsFromComponentState={t.params}
-        handleBasicFormParamChange={handleBasicFormParamChange}
-      />,
-    );
 
     t.params.forEach((param, i) => {
+      // eslint-disable-next-line testing-library/render-result-naming-convention
+      const wrapper = mountWrapper(
+        defaultStore,
+        renderConfigCurrentValuePro(param, handleBasicFormParamChange),
+      );
       const input = wrapper.find(`input#${param.key}`);
       const inputNumText = wrapper.find(`input#${param.key}_text`);
       const inputNumRange = wrapper.find(`input#${param.key}_range`);

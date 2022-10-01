@@ -156,7 +156,9 @@ export function renderConfigCurrentValuePro(
           id={param.key}
           label={param.title || param.path}
           param={param}
-          inputType={param.title.includes("password") ? "password" : "string"}
+          inputType={
+            [param.title, param.key].some(s => s.match(/password/i)) ? "password" : "string"
+          }
           handleBasicFormParamChange={handleBasicFormParamChange}
         />
       );

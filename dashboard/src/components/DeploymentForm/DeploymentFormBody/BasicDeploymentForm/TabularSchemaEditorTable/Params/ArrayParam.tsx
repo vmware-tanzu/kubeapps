@@ -55,33 +55,34 @@ export default function ArrayParam(props: IArrayParamProps) {
       case "integer":
         return (
           <>
-            <CdsInput className="self-center" key={id + "-" + index + "input"}>
+            <CdsInput className="self-center" key={`${id}-${index}_text`}>
               <input
                 aria-label={label}
-                id={id + "-" + index}
+                id={`${id}-${index}_text`}
                 type="number"
                 onChange={e => onChangeArrayItem(index, Number(e.currentTarget.value))}
                 value={Number(currentArrayItems[index])}
                 step={param.schema?.type === "integer" ? 1 : 0.1}
               />
             </CdsInput>
-            <CdsRange key={id + "-" + index + "range"}>
+            <CdsRange key={`${id}-${index}_range`}>
               <input
                 aria-label={label}
-                id={id + "-" + index}
+                id={`${id}-${index}_range`}
                 type="range"
                 onChange={e => onChangeArrayItem(index, Number(e.currentTarget.value))}
                 value={Number(currentArrayItems[index])}
+                step={param.schema?.type === "integer" ? 1 : 0.1}
               />
             </CdsRange>
           </>
         );
       case "boolean":
         return (
-          <CdsToggle key={id + "-" + index + "toggle"}>
+          <CdsToggle key={`${id}-${index}`}>
             <input
               aria-label={label}
-              id={id + "-" + index}
+              id={`${id}-${index}`}
               type="checkbox"
               onChange={e => onChangeArrayItem(index, e.currentTarget.checked)}
               checked={!!currentArrayItems[index]}
@@ -89,13 +90,13 @@ export default function ArrayParam(props: IArrayParamProps) {
           </CdsToggle>
         );
 
-      // TODO(agamez): handle enums in arrays
+      // TODO(agamez): handle enums and objects in arrays
       default:
         return (
-          <CdsInput key={id + "-" + index + "input"}>
+          <CdsInput key={`${id}-${index}`}>
             <input
               aria-label={label}
-              id={id + "-" + index}
+              id={`${id}-${index}`}
               value={currentArrayItems[index] as string}
               onChange={e => onChangeArrayItem(index, e.currentTarget.value)}
             />
@@ -104,7 +105,7 @@ export default function ArrayParam(props: IArrayParamProps) {
     }
   };
 
-  const addArrayItem = () => {
+  const onAddArrayItem = () => {
     switch (type) {
       case "number":
       case "integer":
@@ -121,7 +122,7 @@ export default function ArrayParam(props: IArrayParamProps) {
     setArrayChangesInParam();
   };
 
-  const deleteArrayItem = (index: number) => {
+  const onDeleteArrayItem = (index: number) => {
     currentArrayItems.splice(index, 1);
     setCurrentArrayItems([...currentArrayItems]);
   };
@@ -129,9 +130,10 @@ export default function ArrayParam(props: IArrayParamProps) {
   return (
     <>
       <CdsButton
+        key={`${id}-add`}
         title={"Add a new value"}
         type="button"
-        onClick={addArrayItem}
+        onClick={onAddArrayItem}
         action="flat"
         status="primary"
         size="sm"
@@ -145,10 +147,10 @@ export default function ArrayParam(props: IArrayParamProps) {
             <Column span={9}>{renderInput(type, index)}</Column>
             <Column span={1}>
               <CdsButton
-                key={id + "-" + index + "delete"}
+                key={`${id}-${index}-delete`}
                 title={"Delete"}
                 type="button"
-                onClick={() => deleteArrayItem(index)}
+                onClick={() => onDeleteArrayItem(index)}
                 action="flat"
                 status="primary"
                 size="sm"
