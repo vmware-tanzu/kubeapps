@@ -56,6 +56,8 @@ test("Rolls back an application", async ({ page }) => {
 
   // Increase replicas
   await page.locator("input[type='number']").fill("2");
+  // Manual save to avoid test flakiness
+  await page.locator("#table-manual-save").click();
   await page.click('li:has-text("YAML editor")');
 
   // Use the built-in search function in monaco to find the text we are looking for

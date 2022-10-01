@@ -294,6 +294,7 @@ function DeploymentFormBody({
           The unsaved changes will automatically be applied before deploying or when visualizing the
           diff view. You can also{" "}
           <a
+            id="table-manual-save"
             href="#"
             role="button"
             tabIndex={0}
