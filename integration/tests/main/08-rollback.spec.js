@@ -56,9 +56,11 @@ test("Rolls back an application", async ({ page }) => {
 
   // Increase replicas
   await page.locator("input[type='number']").fill("2");
-  // Manual save to avoid test flakiness
-  await page.locator("#table-manual-save").click();
-  await page.click('li:has-text("YAML editor")');
+
+  // Wait until changes are applied (due to the debounce in the input)
+  await page.waitForTimeout(1000);
+  await page.locator('li:has-text("YAML editor")').click();
+  await page.waitForTimeout(1000);
 
   // Use the built-in search function in monaco to find the text we are looking for
   // so that it get loaded in the DOM when using the toContainText assert
@@ -68,7 +70,7 @@ test("Rolls back an application", async ({ page }) => {
   await page.locator('[aria-label="Type to narrow down results\\."]').fill(">find");
   await page.locator('label:has-text("FindCtrl+F")').click();
   await page.locator('[aria-label="Find"]').fill("replicaCount: ");
-  // Note the U+200C , which is a zero-width non-joiner, character instead of a space
+  // Note the U+200C, which is a zero-width non-joiner, character instead of a space
   await expect(page.locator(".editor.modified")).toContainText("replicaCount:·‌2");
 
   await page.locator('cds-button:has-text("Deploy")').click();
