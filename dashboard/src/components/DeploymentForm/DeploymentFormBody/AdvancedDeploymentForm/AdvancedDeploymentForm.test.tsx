@@ -1,10 +1,10 @@
 // Copyright 2021-2022 the Kubeapps contributors.
 // SPDX-License-Identifier: Apache-2.0
 
-import AdvancedDeploymentForm from "components/DeploymentForm/DeploymentFormBody/AdvancedDeploymentForm";
 import { SupportedThemes } from "shared/Config";
 import { defaultStore, getStore, mountWrapper } from "shared/specs/mountWrapper";
 import { IStoreState } from "shared/types";
+import AdvancedDeploymentForm from "./AdvancedDeploymentForm";
 
 beforeEach(() => {
   // mock the window.matchMedia for selecting the theme
