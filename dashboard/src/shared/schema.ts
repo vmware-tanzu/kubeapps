@@ -127,3 +127,8 @@ export function validateValuesSchema(
   const valid = ajv.validate(schema, yaml.load(values));
   return { valid: !!valid, errors: ajv.errors } as IAjvValidateResult;
 }
+
+export function validateSchema(schema: JSONSchemaType<any>): IAjvValidateResult {
+  const valid = ajv.validateSchema(schema);
+  return { valid: valid, errors: ajv.errors } as IAjvValidateResult;
+}
