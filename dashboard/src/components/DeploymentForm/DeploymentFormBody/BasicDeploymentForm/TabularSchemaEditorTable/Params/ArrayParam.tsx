@@ -55,7 +55,7 @@ export default function ArrayParam(props: IArrayParamProps) {
       case "integer":
         return (
           <>
-            <CdsInput className="self-center" key={`${id}-${index}_text`}>
+            <CdsInput className="self-center">
               <input
                 required={param.required}
                 aria-label={label}
@@ -68,7 +68,7 @@ export default function ArrayParam(props: IArrayParamProps) {
                 min={param.minimum}
               />
             </CdsInput>
-            <CdsRange key={`${id}-${index}_range`}>
+            <CdsRange>
               <input
                 aria-label={label}
                 id={`${id}-${index}_range`}
@@ -82,11 +82,11 @@ export default function ArrayParam(props: IArrayParamProps) {
         );
       case "boolean":
         return (
-          <CdsToggle key={`${id}-${index}`}>
+          <CdsToggle>
             <input
               required={param.required}
               aria-label={label}
-              id={`${id}-${index}`}
+              id={`${id}-${index}_toggle`}
               type="checkbox"
               onChange={e => onChangeArrayItem(index, e.currentTarget.checked)}
               checked={!!currentArrayItems[index]}
@@ -97,11 +97,10 @@ export default function ArrayParam(props: IArrayParamProps) {
       // TODO(agamez): handle enums and objects in arrays
       default:
         return (
-          <CdsInput key={`${id}-${index}`}>
+          <CdsInput>
             <input
               required={param.required}
               aria-label={label}
-              id={`${id}-${index}`}
               value={currentArrayItems[index] as string}
               onChange={e => onChangeArrayItem(index, e.currentTarget.value)}
             />
@@ -135,7 +134,6 @@ export default function ArrayParam(props: IArrayParamProps) {
   return (
     <>
       <CdsButton
-        key={`${id}-add`}
         title={"Add a new value"}
         type="button"
         onClick={onAddArrayItem}
@@ -147,24 +145,21 @@ export default function ArrayParam(props: IArrayParamProps) {
         <span>Add</span>
       </CdsButton>
       {currentArrayItems?.map((_, index) => (
-        <>
-          <Row>
-            <Column span={9}>{renderInput(type, index)}</Column>
-            <Column span={1}>
-              <CdsButton
-                key={`${id}-${index}-delete`}
-                title={"Delete"}
-                type="button"
-                onClick={() => onDeleteArrayItem(index)}
-                action="flat"
-                status="primary"
-                size="sm"
-              >
-                <CdsIcon shape="minus" size="sm" solid={true} />
-              </CdsButton>
-            </Column>
-          </Row>
-        </>
+        <Row key={`${id}-${index}`}>
+          <Column span={9}>{renderInput(type, index)}</Column>
+          <Column span={1}>
+            <CdsButton
+              title={"Delete"}
+              type="button"
+              onClick={() => onDeleteArrayItem(index)}
+              action="flat"
+              status="primary"
+              size="sm"
+            >
+              <CdsIcon shape="minus" size="sm" solid={true} />
+            </CdsButton>
+          </Column>
+        </Row>
       ))}
     </>
   );
