@@ -9,7 +9,8 @@ import Column from "components/js/Column";
 import Row from "components/js/Row";
 import { isEmpty } from "lodash";
 import { useState } from "react";
-import { IBasicFormParam } from "shared/types";
+import { validateValuesSchema } from "shared/schema";
+import { IAjvValidateResult, IBasicFormParam } from "shared/types";
 import { basicFormsDebounceTime } from "shared/utils";
 
 export interface ITextParamProps {
@@ -48,7 +49,7 @@ function toStringValue(value: any) {
 export default function TextParam(props: ITextParamProps) {
   const { id, label, inputType, param, handleBasicFormParamChange } = props;
 
-  // const [validated, setValidated] = useState<IAjvValidateResult>();
+  const [validated, setValidated] = useState<IAjvValidateResult>();
   const [currentValue, setCurrentValue] = useState(getStringValue(param));
   const [isValueModified, setIsValueModified] = useState(false);
   const [timeout, setThisTimeout] = useState({} as NodeJS.Timeout);
@@ -56,8 +57,7 @@ export default function TextParam(props: ITextParamProps) {
   const onChange = (
     e: React.FormEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>,
   ) => {
-    // TODO(agamez): validate the value
-    // setValidated(validateValuesSchema(e.currentTarget.value, param.schema));
+    setValidated(validateValuesSchema(e.currentTarget.value, param.schema));
     setCurrentValue(e.currentTarget.value);
     setIsValueModified(toStringValue(e.currentTarget.value) !== toStringValue(param.currentValue));
     // Gather changes before submitting
@@ -82,55 +82,64 @@ export default function TextParam(props: ITextParamProps) {
     isValueModified ||
     (isDiffCurrentVsDefault && (!param.deployedValue || isDiffCurrentVsDeployed));
 
+  const renderControlMsg = () =>
+    !validated?.valid && !isEmpty(validated?.errors) ? (
+      <>
+        <CdsControlMessage status="error">
+          {unsavedMessage}
+          <br />
+          {validated?.errors?.map(e => e.message).join(", ")}
+        </CdsControlMessage>
+        <br />
+      </>
+    ) : (
+      <CdsControlMessage>{unsavedMessage}</CdsControlMessage>
+    );
+
   let input = (
     <>
       <CdsInput className={isModified ? "bolder" : ""}>
         <input
+          required={param.required}
           aria-label={label}
           id={id}
           type={inputType ?? "text"}
           value={currentValue ?? ""}
           onChange={onChange}
         />
-        {/* TODO(agamez): validate the value */}
-        {/* {!validated?.valid && !isEmpty(validated?.errors) && (
-          <CdsControlMessage status="error">
-            {validated?.errors?.map(e => e.message).join(", ")}
-          </CdsControlMessage>
-        )} */}
-        <CdsControlMessage>{unsavedMessage}</CdsControlMessage>
+        {renderControlMsg()}
       </CdsInput>
     </>
   );
   if (inputType === "textarea") {
     input = (
       <CdsTextarea className={isModified ? "bolder" : ""}>
-        <textarea aria-label={label} id={id} value={currentValue ?? ""} onChange={onChange} />
-        {/* TODO(agamez): validate the value */}
-        {/* {!validated?.valid && (
-          <CdsControlMessage status="error">
-            {validated?.errors?.map(e => e.message).join(", ")}
-          </CdsControlMessage>
-        )} */}
-        <CdsControlMessage>{unsavedMessage}</CdsControlMessage>
+        <textarea
+          required={param.required}
+          aria-label={label}
+          id={id}
+          value={currentValue ?? ""}
+          onChange={onChange}
+        />
+        {renderControlMsg()}
       </CdsTextarea>
     );
   } else if (!isEmpty(param.enum)) {
     input = (
       <>
         <CdsSelect layout="horizontal" className={isModified ? "bolder" : ""}>
-          <select aria-label={label} id={id} onChange={onChange} value={currentValue}>
+          <select
+            required={param.required}
+            aria-label={label}
+            id={id}
+            onChange={onChange}
+            value={currentValue}
+          >
             {param?.enum?.map((enumValue: any) => (
               <option key={enumValue}>{enumValue}</option>
             ))}
           </select>
-          {/* TODO(agamez): validate the value */}
-          {/* {!validated?.valid && (
-            <CdsControlMessage status="error">
-              {validated?.errors?.map(e => e.message).join(", ")}
-            </CdsControlMessage>
-          )} */}
-          <CdsControlMessage>{unsavedMessage}</CdsControlMessage>
+          {renderControlMsg()}
         </CdsSelect>
       </>
     );

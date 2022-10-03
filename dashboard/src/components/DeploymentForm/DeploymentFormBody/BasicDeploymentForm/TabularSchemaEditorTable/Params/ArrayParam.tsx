@@ -57,12 +57,15 @@ export default function ArrayParam(props: IArrayParamProps) {
           <>
             <CdsInput className="self-center" key={`${id}-${index}_text`}>
               <input
+                required={param.required}
                 aria-label={label}
                 id={`${id}-${index}_text`}
                 type="number"
                 onChange={e => onChangeArrayItem(index, Number(e.currentTarget.value))}
                 value={Number(currentArrayItems[index])}
                 step={param.schema?.type === "integer" ? 1 : 0.1}
+                max={param.maximum}
+                min={param.minimum}
               />
             </CdsInput>
             <CdsRange key={`${id}-${index}_range`}>
@@ -81,6 +84,7 @@ export default function ArrayParam(props: IArrayParamProps) {
         return (
           <CdsToggle key={`${id}-${index}`}>
             <input
+              required={param.required}
               aria-label={label}
               id={`${id}-${index}`}
               type="checkbox"
@@ -95,6 +99,7 @@ export default function ArrayParam(props: IArrayParamProps) {
         return (
           <CdsInput key={`${id}-${index}`}>
             <input
+              required={param.required}
               aria-label={label}
               id={`${id}-${index}`}
               value={currentArrayItems[index] as string}

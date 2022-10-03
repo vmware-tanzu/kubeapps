@@ -53,6 +53,7 @@ export default function SliderParam(props: ISliderParamProps) {
   const input = (
     <CdsRange>
       <input
+        required={param.required}
         aria-label={label}
         id={id + "_range"}
         type="range"
@@ -70,12 +71,15 @@ export default function SliderParam(props: ISliderParamProps) {
     <div className="self-center">
       <CdsInput className={isModified ? "bolder" : ""}>
         <input
+          required={param.required}
           aria-label={label}
           id={id + "_text"}
           type="number"
           step={step}
           onChange={onChange}
           value={currentValue}
+          min={param.minimum || currentValue}
+          max={param.maximum || currentValue}
         />
       </CdsInput>
     </div>

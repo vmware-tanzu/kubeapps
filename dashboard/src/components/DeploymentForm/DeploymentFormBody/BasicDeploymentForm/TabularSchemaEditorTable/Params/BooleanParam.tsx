@@ -47,6 +47,7 @@ export default function BooleanParam(props: IBooleanParamProps) {
       <label htmlFor={id + "_group"}>{""}</label>
       <CdsToggle>
         <input
+          required={param.required}
           aria-label={label}
           id={id}
           type="checkbox"
