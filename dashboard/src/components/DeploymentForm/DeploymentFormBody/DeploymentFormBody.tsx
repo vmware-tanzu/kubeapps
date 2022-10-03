@@ -67,7 +67,6 @@ function DeploymentFormBody({
   const [isLoaded, setIsloaded] = useState(false);
   const [isLoading, setIsloading] = useState(true);
   const [unsavedChangesMap] = useState(new Map<string, any>());
-  const [shouldForceSubmit, setShouldForceSubmit] = useState(false);
 
   // setBasicFormParameters when basicFormParameters changes
   useEffect(() => {
@@ -122,14 +121,6 @@ function DeploymentFormBody({
     formRef?.current?.requestSubmit();
   }, [formRef]);
 
-  // if this flag is set, force the submit of the form
-  useEffect(() => {
-    if (shouldForceSubmit) {
-      forceSubmit();
-      setShouldForceSubmit(false);
-    }
-  }, [forceSubmit, shouldForceSubmit]);
-
   const saveAllChanges = () => {
     let newValuesFromTheParentContainer, newParamsFromComponentState;
     unsavedChangesMap.forEach((value, key) => {
@@ -151,7 +142,7 @@ function DeploymentFormBody({
   // save the pending changes and fire the submit event (via useEffect, to actually get the saved changes)
   const handleDeployClick = () => {
     saveAllChanges();
-    setShouldForceSubmit(true);
+    forceSubmit();
   };
 
   // re-build the table based on the new YAML
