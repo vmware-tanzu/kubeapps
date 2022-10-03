@@ -45,7 +45,7 @@ export default function BooleanParam(props: IBooleanParamProps) {
   const input = (
     <CdsToggleGroup id={id + "_group"}>
       <label htmlFor={id + "_group"}>{""}</label>
-      <CdsToggle className={isModified ? "cosa" : ""}>
+      <CdsToggle>
         <input
           aria-label={label}
           id={id}
