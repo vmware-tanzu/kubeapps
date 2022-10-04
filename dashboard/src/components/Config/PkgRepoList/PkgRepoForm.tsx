@@ -25,7 +25,7 @@ import {
 } from "gen/kubeappsapis/core/packages/v1alpha1/repositories";
 import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins";
 import { HelmPackageRepositoryCustomDetail } from "gen/kubeappsapis/plugins/helm/packages/v1alpha1/helm";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { Action } from "redux";
 import { ThunkDispatch } from "redux-thunk";
@@ -271,6 +271,16 @@ export function PkgRepoForm(props: IPkgRepoFormProps) {
     }
   }, [repo, namespace, currentCluster, dispatch]);
 
+  const hasAuthProvider = useCallback(() => authProvider !== "", [authProvider]);
+
+  const handleFluxAuthProviderAuthChange = useCallback(() => {
+    setAuthMethod(PackageRepositoryAuth_PackageRepositoryAuthType.UNRECOGNIZED);
+    setShowAuthProviderDetails(true);
+    if (!hasAuthProvider()) {
+      setAuthProvider("generic");
+    }
+  }, [setAuthMethod, setShowAuthProviderDetails, hasAuthProvider, setAuthProvider]);
+
   useEffect(() => {
     // Reset auth provider state as soon as there is an auth type selected
     if (
@@ -284,7 +294,7 @@ export function PkgRepoForm(props: IPkgRepoFormProps) {
     } else {
       clearAuthProvider();
     }
-  }, [authMethod, authProvider]);
+  }, [authMethod, authProvider, handleFluxAuthProviderAuthChange, hasAuthProvider]);
 
   const clearAuthProvider = () => {
     setShowAuthProviderDetails(false);
@@ -424,8 +434,6 @@ export function PkgRepoForm(props: IPkgRepoFormProps) {
     }
     isInstallingRef.current = false;
   };
-
-  const hasAuthProvider = () => authProvider !== "";
 
   const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setName(e.target.value);
@@ -637,13 +645,6 @@ export function PkgRepoForm(props: IPkgRepoFormProps) {
   };
   const handleFluxAuthProviderChange = (e: React.FormEvent<HTMLSelectElement>) => {
     setAuthProvider(e.currentTarget.value);
-  };
-  const handleFluxAuthProviderAuthChange = () => {
-    setAuthMethod(PackageRepositoryAuth_PackageRepositoryAuthType.UNRECOGNIZED);
-    setShowAuthProviderDetails(true);
-    if (!hasAuthProvider()) {
-      setAuthProvider("generic");
-    }
   };
 
   const userManagedSecretText = "Use an existing secret";
