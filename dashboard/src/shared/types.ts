@@ -21,6 +21,7 @@ import {
   UsernamePassword,
 } from "gen/kubeappsapis/core/packages/v1alpha1/repositories";
 import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins";
+import { FluxPackageRepositoryCustomDetail } from "gen/kubeappsapis/plugins/fluxv2/packages/v1alpha1/fluxv2";
 import { HelmPackageRepositoryCustomDetail } from "gen/kubeappsapis/plugins/helm/packages/v1alpha1/helm";
 import { KappControllerPackageRepositoryCustomDetail } from "gen/kubeappsapis/plugins/kapp_controller/packages/v1alpha1/kapp_controller";
 import { IOperatorsState } from "reducers/operators";
@@ -476,7 +477,9 @@ export interface IPkgRepoFormData {
   url: string;
   // add more types if necessary
   customDetail?: Partial<
-    HelmPackageRepositoryCustomDetail | KappControllerPackageRepositoryCustomDetail
+    | HelmPackageRepositoryCustomDetail
+    | KappControllerPackageRepositoryCustomDetail
+    | FluxPackageRepositoryCustomDetail
   >;
   namespace: string;
   isNamespaceScoped: boolean;
