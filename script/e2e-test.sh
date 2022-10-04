@@ -25,6 +25,13 @@ if [[ -n "${TEST_LATEST_RELEASE:-}" ]]; then
   DEV_TAG=${DEV_TAG/-beta.*/}
 fi
 
+# Get the load balancer IP
+if [[ -z "${GKE_BRANCH-}" ]]; then
+  LOAD_BALANCER_IP=$DEX_IP
+else
+  LOAD_BALANCER_IP=$(kubectl -n nginx-ingress get service nginx-ingress-ingress-nginx-controller -o jsonpath="{.status.loadBalancer.ingress[].ip}")
+fi
+
 # Load Generic Libraries
 # shellcheck disable=SC1090
 . "${ROOT_DIR}/script/lib/libtest.sh"
@@ -47,6 +54,7 @@ info "Image tag: ${DEV_TAG}"
 info "Image repo suffix: ${IMG_MODIFIER}"
 info "Dex IP: ${DEX_IP}"
 info "Additional cluster IP : ${ADDITIONAL_CLUSTER_IP}"
+info "Load balancer IP : ${LOAD_BALANCER_IP}"
 info "Test timeout minutes: ${TEST_TIMEOUT_MINUTES}"
 info "Kapp Controller version: ${KAPP_CONTROLLER_VERSION}"
 info "Cluster Version: $(kubectl version -o json | jq -r '.serverVersion.gitVersion')"

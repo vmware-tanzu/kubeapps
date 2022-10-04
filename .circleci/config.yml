@@ -141,7 +141,7 @@ build_on_tag_or_prerelease: &build_on_tag_or_prerelease
     tags:
       only: /^v.*/
     branches:
-      only: prerelease
+      only: prerelease-check
 
 workflows:
   version: 2
@@ -591,6 +591,7 @@ gke_test: &gke_test
         name: Apply customizations to GKE cluster
         command: |
           kubectl create namespace kubeapps-user-namespace
+          ./script/install-nginx.sh
     - <<: *run_e2e_tests
     - store_artifacts:
         path: integration/reports
