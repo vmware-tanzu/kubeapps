@@ -983,8 +983,8 @@ describe("auth provider selector for Flux repositories", () => {
     await waitFor(() => {
       wrapper.update();
       expect(wrapper.find("#kubeapps-repo-auth-method-provider").first()).not.toBeDisabled();
-      expect(wrapper.find("#kubeapps-flux-auth-provider")).not.toExist();
     });
+    expect(wrapper.find("#kubeapps-flux-auth-provider")).not.toExist();
   });
 
   it("auth provider dropdown should not appear for other repo types", async () => {
@@ -1055,9 +1055,9 @@ describe("auth provider selector for Flux repositories", () => {
     await waitFor(() => {
       wrapper.update();
       expect(wrapper.find("#kubeapps-repo-auth-method-provider")).not.toBeDisabled();
-      expect(wrapper.find("#kubeapps-flux-auth-provider")).toExist();
-      expect(wrapper.find("#kubeapps-flux-auth-provider")).not.toBeDisabled();
-      expect(wrapper.find("#kubeapps-flux-auth-provider select").props().value).toEqual("aws");
     });
+    expect(wrapper.find("#kubeapps-flux-auth-provider")).toExist();
+    expect(wrapper.find("#kubeapps-flux-auth-provider")).not.toBeDisabled();
+    expect(wrapper.find("#kubeapps-flux-auth-provider select").props().value).toEqual("aws");
   });
 });
