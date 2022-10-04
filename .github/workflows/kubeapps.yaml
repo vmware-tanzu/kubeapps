@@ -485,14 +485,14 @@ jobs:
         if: failure() && env.TEST_RESULT == 1
         continue-on-error: true
       - name: 'Upload Artifacts'
-        if: failure() && env.DEBUG_MODE == 'true'
+        if: failure()
         uses: actions/upload-artifact@v3
         with:
           name: e2e_tests_reports
           path: integration/reports
       - name: Setup upterm session
         uses: lhotari/action-upterm@v1
-        if: failure()
+        if: failure() && env.DEBUG_MODE == 'true'
 
   push_images:
     if: needs.setup.outputs.running_on_main == 'true' || needs.setup.outputs.running_on_tag == 'true'
