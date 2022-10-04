@@ -78,8 +78,6 @@ export default function SliderParam(props: ISliderParamProps) {
           step={step}
           onChange={onChange}
           value={currentValue}
-          min={param.minimum || currentValue}
-          max={param.maximum || currentValue}
         />
       </CdsInput>
     </div>

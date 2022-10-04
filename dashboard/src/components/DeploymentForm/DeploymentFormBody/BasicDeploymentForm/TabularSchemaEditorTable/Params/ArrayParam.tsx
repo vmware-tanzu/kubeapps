@@ -64,8 +64,6 @@ export default function ArrayParam(props: IArrayParamProps) {
                 onChange={e => onChangeArrayItem(index, Number(e.currentTarget.value))}
                 value={Number(currentArrayItems[index])}
                 step={param.schema?.type === "integer" ? 1 : 0.1}
-                max={param.maximum}
-                min={param.minimum}
               />
             </CdsInput>
             <CdsRange>
