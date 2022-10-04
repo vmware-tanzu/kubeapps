@@ -25,13 +25,6 @@ if [[ -n "${TEST_LATEST_RELEASE:-}" ]]; then
   DEV_TAG=${DEV_TAG/-beta.*/}
 fi
 
-# Get the load balancer IP
-if [[ -z "${GKE_BRANCH-}" ]]; then
-  LOAD_BALANCER_IP=$DEX_IP
-else
-  LOAD_BALANCER_IP=$(kubectl -n nginx-ingress get service nginx-ingress-ingress-nginx-controller -o jsonpath="{.status.loadBalancer.ingress[].ip}")
-fi
-
 # Load Generic Libraries
 # shellcheck disable=SC1090
 . "${ROOT_DIR}/script/lib/libtest.sh"
@@ -39,6 +32,13 @@ fi
 . "${ROOT_DIR}/script/lib/liblog.sh"
 # shellcheck disable=SC1090
 . "${ROOT_DIR}/script/lib/libutil.sh"
+
+# Get the load balancer IP
+if [[ -z "${GKE_BRANCH-}" ]]; then
+  LOAD_BALANCER_IP=$DEX_IP
+else
+  LOAD_BALANCER_IP=$(kubectl -n nginx-ingress get service nginx-ingress-ingress-nginx-controller -o jsonpath="{.status.loadBalancer.ingress[].ip}")
+fi
 
 # Functions for local Docker registry mgmt
 . "${ROOT_DIR}/script/local-docker-registry.sh"
