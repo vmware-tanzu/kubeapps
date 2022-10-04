@@ -21,7 +21,7 @@ function installGithubCLI() {
   GITHUB_VERSION=${1:?GitHub version not provided}
 
   info "Installing GitHub CLI $GITHUB_VERSION"
-  pusd /tmp
+  pushd /tmp
     wget "https://github.com/cli/cli/releases/download/v${GITHUB_VERSION}/gh_${GITHUB_VERSION}_linux_amd64.tar.gz"
     tar zxf "gh_${GITHUB_VERSION}_linux_amd64.tar.gz"
     rm "gh_${GITHUB_VERSION}_linux_amd64.tar.gz"
@@ -155,7 +155,7 @@ function installHelm() {
   HELM_BINARY_NAME=${2:-helm}
 
   info "Installing Helm ${HELM_VERSION} as ${HELM_BINARY_NAME}"
-  pusd /tmp
+  pushd /tmp
     wget "https://get.helm.sh/helm-${HELM_VERSION}-linux-amd64.tar.gz"
     tar zxf "helm-$HELM_VERSION-linux-amd64.tar.gz"
     sudo mv linux-amd64/helm "/usr/local/bin/${HELM_BINARY_NAME}"
