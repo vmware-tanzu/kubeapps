@@ -3,7 +3,7 @@
 # Copyright 2022 the Kubeapps contributors.
 # SPDX-License-Identifier: Apache-2.0
 
-set -euo pipefile
+set -euo pipefail
 IFS=$'\t\n'
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." >/dev/null && pwd)"
