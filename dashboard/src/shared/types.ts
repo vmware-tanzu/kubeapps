@@ -413,11 +413,15 @@ export type IBasicFormParam = JSONSchemaType<any> & {
   isCustomComponent?: boolean;
 };
 
+// this type is encapsulating the result of a schema validation,
+// including the errors returned by the library
 export interface IAjvValidateResult {
   valid: boolean;
   errors: ErrorObject[] | null | undefined;
 }
 
+// type for handling Helm installed packages, which includes the revision,
+// a field not present in other packages
 export interface CustomInstalledPackageDetail extends InstalledPackageDetail {
   revision: number;
 }
@@ -433,12 +437,14 @@ export enum RepositoryStorageTypes {
   PACKAGE_REPOSITORY_STORAGE_CARVEL_GIT = "git",
 }
 
+// enum for the current plugin names
 export enum PluginNames {
   PACKAGES_HELM = "helm.packages",
   PACKAGES_FLUX = "fluxv2.packages",
   PACKAGES_KAPP = "kapp_controller.packages",
 }
 
+// type holding the data used in the package repository form
 export interface IPkgRepoFormData {
   authMethod: PackageRepositoryAuth_PackageRepositoryAuthType;
   // kubeapps-managed secrets
