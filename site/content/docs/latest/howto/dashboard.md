@@ -121,7 +121,7 @@ To explore the list of applications installed in the cluster directly from Kubea
 
 ![Deployment list](../img/dashboard/update-application-list.png)
 
-Kubeapps also provides the ability for listing applications in all namespaces for the selected cluster. Activate the toogle option **Show apps in all namespaces**:
+Kubeapps also provides the ability for listing applications in all namespaces for the selected cluster. Activate the toggle option **Show apps in all namespaces**:
 
 ![Deployment list all namespaces](../img/dashboard/list-available-applications.png)
 
