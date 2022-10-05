@@ -58,6 +58,11 @@ pushChartToChartMuseum() {
   local CHART_VERSION=$2
   local CHART_FILE=$3
 
+  if [[ -z "${CHARTMUSEUM_IP}" ]]; then
+    echo "ChartMuseum ingress IP has not been defined in variable CHARTMUSEUM_IP"
+    exit 1
+  fi
+
   echo ">> Pushing chart '${CHART_FILE}' (${CHART_NAME} v${CHART_VERSION}) to chart museum at ${CHARTMUSEUM_HOSTNAME} and IP ${CHARTMUSEUM_IP}"
   CHART_EXISTS=$(curl -Lk -u "${CHARTMUSEUM_USER}:${CHARTMUSEUM_PWD}" -H "Host: ${CHARTMUSEUM_HOSTNAME}" http://${CHARTMUSEUM_IP}/api/charts/${CHART_NAME}/${CHART_VERSION} | jq -r 'any([ .error] ; . > 0)')
   if [ "$CHART_EXISTS" == "true" ]; then
