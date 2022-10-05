@@ -271,9 +271,7 @@ describe("renders an error", () => {
     spyOnUseHistory = jest.spyOn(ReactRouter, "useHistory").mockReturnValue({ push } as any);
 
     const appValues = "foo: bar";
-    const schema = {
-      properties: { foo: { type: "string", form: true } },
-    } as unknown as JSONSchemaType<any>;
+    const schema = { properties: { foo: { type: "string" } } } as unknown as JSONSchemaType<any>;
     const selected = { ...defaultSelectedPkg, values: appValues, schema: schema };
 
     const wrapper = mountWrapper(

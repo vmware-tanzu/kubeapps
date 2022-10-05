@@ -124,7 +124,7 @@ it("should modify the original values of the differential component if parsed as
 c: d
 `;
   const schema = {
-    properties: { a: { type: "string", form: true } },
+    properties: { a: { type: "string" } },
   } as unknown as JSONSchemaType<any>;
   const selected = {
     values: oldValues,
