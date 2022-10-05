@@ -69,7 +69,7 @@ Click the **Deploy** button from the detail page. Kubeapps displays a new view f
 
 Set values for configuration parameters and click the **Deploy** button to launch the deployment.
 
-> There is another button to help you restoring parameters to the default values in the package.
+> There is another button to help you restore parameters to the default values in the package.
 
 You can track the deployment directly from Kubeapps. The "Notes" section in the deployment page contains important information to help you use the application.
 
