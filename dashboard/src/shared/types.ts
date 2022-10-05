@@ -1,7 +1,7 @@
 // Copyright 2018-2022 the Kubeapps contributors.
 // SPDX-License-Identifier: Apache-2.0
 
-import { JSONSchemaType } from "ajv";
+import { JSONSchemaType, ErrorObject } from "ajv";
 import { RouterState } from "connected-react-router";
 import {
   AvailablePackageDetail,
@@ -398,39 +398,30 @@ export interface IKubeState {
   kindsError?: Error;
 }
 
-export interface IBasicFormParam {
-  path: string;
-  type?: "string" | "number" | "integer" | "boolean" | "object" | "array" | "null" | "any";
-  value?: any;
-  title?: string;
-  minimum?: number;
-  maximum?: number;
-  render?: string;
-  description?: string;
-  customComponent?: object;
+// We extend the JSONSchema properties to include the default/deployed values as well as
+// other useful information for rendering each param in the UI
+export type IBasicFormParam = JSONSchemaType<any> & {
+  key: string;
+  title: string;
+  hasProperties: boolean;
+  params?: IBasicFormParam[];
   enum?: string[];
-  hidden?:
-    | {
-        event: DeploymentEvent;
-        path: string;
-        value: string;
-        conditions: Array<{
-          event: DeploymentEvent;
-          path: string;
-          value: string;
-        }>;
-        operator: string;
-      }
-    | string;
-  children?: IBasicFormParam[];
-}
-export interface IBasicFormSliderParam extends IBasicFormParam {
-  sliderMin?: number;
-  sliderMax?: number;
-  sliderStep?: number;
-  sliderUnit?: string;
+  defaultValue: any;
+  deployedValue: any;
+  currentValue: any;
+  schema: JSONSchemaType<any>;
+  isCustomComponent?: boolean;
+};
+
+// this type is encapsulating the result of a schema validation,
+// including the errors returned by the library
+export interface IAjvValidateResult {
+  valid: boolean;
+  errors: ErrorObject[] | null | undefined;
 }
 
+// type for handling Helm installed packages, which includes the revision,
+// a field not present in other packages
 export interface CustomInstalledPackageDetail extends InstalledPackageDetail {
   revision: number;
 }
@@ -446,12 +437,14 @@ export enum RepositoryStorageTypes {
   PACKAGE_REPOSITORY_STORAGE_CARVEL_GIT = "git",
 }
 
+// enum for the current plugin names
 export enum PluginNames {
   PACKAGES_HELM = "helm.packages",
   PACKAGES_FLUX = "fluxv2.packages",
   PACKAGES_KAPP = "kapp_controller.packages",
 }
 
+// type holding the data used in the package repository form
 export interface IPkgRepoFormData {
   authMethod: PackageRepositoryAuth_PackageRepositoryAuthType;
   // kubeapps-managed secrets
