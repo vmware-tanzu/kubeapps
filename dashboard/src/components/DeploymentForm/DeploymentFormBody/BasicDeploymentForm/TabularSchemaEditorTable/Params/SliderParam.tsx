@@ -25,7 +25,9 @@ export interface ISliderParamProps {
 export default function SliderParam(props: ISliderParamProps) {
   const { handleBasicFormParamChange, id, label, param, step } = props;
 
-  const [currentValue, setCurrentValue] = useState(toNumber(param.currentValue) || param.minimum);
+  const [currentValue, setCurrentValue] = useState(
+    toNumber(param.currentValue) || toNumber(param.minimum) || 0,
+  );
   const [isValueModified, setIsValueModified] = useState(false);
   const [timeout, setThisTimeout] = useState({} as NodeJS.Timeout);
 
@@ -45,6 +47,9 @@ export default function SliderParam(props: ISliderParamProps) {
     setThisTimeout(setTimeout(() => func(targetCopy), basicFormsDebounceTime));
   };
 
+  const defaultMin = 0;
+  const defaultMax = 1000;
+
   const unsavedMessage = isValueModified ? "Unsaved" : "";
   const isModified =
     isValueModified ||
@@ -57,8 +62,8 @@ export default function SliderParam(props: ISliderParamProps) {
         aria-label={label}
         id={id + "_range"}
         type="range"
-        min={Math.min(param.minimum || 0, currentValue)}
-        max={Math.max(param.maximum || 1000, currentValue)}
+        min={Math.min(param.minimum || defaultMin, currentValue)}
+        max={Math.max(param.maximum || defaultMax, currentValue)}
         step={step}
         onChange={onChange}
         value={currentValue}

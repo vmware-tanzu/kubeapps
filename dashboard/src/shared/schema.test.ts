@@ -10,15 +10,14 @@ describe("retrieveBasicFormParams", () => {
       description: "should retrieve a param",
       values: "user: andres",
       schema: {
-        properties: { user: { type: "string", form: true } },
+        properties: { user: { type: "string" } },
       } as any,
       result: [
         {
           type: "string",
-          form: true,
           title: "user",
           key: "user",
-          schema: { type: "string", form: true },
+          schema: { type: "string" },
           hasProperties: false,
           deployedValue: "",
           currentValue: "andres",
@@ -29,15 +28,15 @@ describe("retrieveBasicFormParams", () => {
       description: "should retrieve a param without default value",
       values: "user:",
       schema: {
-        properties: { user: { type: "string", form: true } },
+        properties: { user: { type: "string" } },
       } as any,
       result: [
         {
           type: "string",
-          form: true,
+
           title: "user",
           key: "user",
-          schema: { type: "string", form: true },
+          schema: { type: "string" },
           hasProperties: false,
           deployedValue: "",
         },
@@ -47,16 +46,16 @@ describe("retrieveBasicFormParams", () => {
       description: "should retrieve a param with default value in the schema",
       values: "user:",
       schema: {
-        properties: { user: { type: "string", form: true, default: "michael" } },
+        properties: { user: { type: "string", default: "michael" } },
       } as any,
       result: [
         {
           type: "string",
-          form: true,
+
           default: "michael",
           title: "user",
           key: "user",
-          schema: { type: "string", form: true, default: "michael" },
+          schema: { type: "string", default: "michael" },
           hasProperties: false,
           deployedValue: "",
           defaultValue: "michael",
@@ -68,16 +67,16 @@ describe("retrieveBasicFormParams", () => {
       description: "values prevail over default values",
       values: "user: foo",
       schema: {
-        properties: { user: { type: "string", form: true, default: "bar" } },
+        properties: { user: { type: "string", default: "bar" } },
       } as any,
       result: [
         {
           type: "string",
-          form: true,
+
           default: "bar",
           title: "user",
           key: "user",
-          schema: { type: "string", form: true, default: "bar" },
+          schema: { type: "string", default: "bar" },
           hasProperties: false,
           deployedValue: "",
           defaultValue: "bar",
@@ -89,16 +88,16 @@ describe("retrieveBasicFormParams", () => {
       description: "it should return params even if the values don't include it",
       values: "foo: bar",
       schema: {
-        properties: { user: { type: "string", form: true, default: "andres" } },
+        properties: { user: { type: "string", default: "andres" } },
       } as any,
       result: [
         {
           type: "string",
-          form: true,
+
           default: "andres",
           title: "user",
           key: "user",
-          schema: { type: "string", form: true, default: "andres" },
+          schema: { type: "string", default: "andres" },
           hasProperties: false,
           deployedValue: "",
           defaultValue: "andres",
@@ -113,25 +112,25 @@ describe("retrieveBasicFormParams", () => {
         properties: {
           credentials: {
             type: "object",
-            properties: { user: { type: "string", form: true } },
+            properties: { user: { type: "string" } },
           },
         },
       } as any,
       result: [
         {
           type: "object",
-          properties: { user: { type: "string", form: true } },
+          properties: { user: { type: "string" } },
           title: "credentials",
           key: "credentials",
-          schema: { type: "object", properties: { user: { type: "string", form: true } } },
+          schema: { type: "object", properties: { user: { type: "string" } } },
           hasProperties: true,
           params: [
             {
               type: "string",
-              form: true,
+
               title: "user",
               key: "credentials/user",
-              schema: { type: "string", form: true },
+              schema: { type: "string" },
               hasProperties: false,
               deployedValue: "",
               currentValue: "andres",
@@ -166,13 +165,13 @@ service: ClusterIP
               admin: {
                 type: "object",
                 properties: {
-                  user: { type: "string", form: true },
-                  pass: { type: "string", form: true },
+                  user: { type: "string" },
+                  pass: { type: "string" },
                 },
               },
             },
           },
-          replicas: { type: "number", form: true },
+          replicas: { type: "number" },
           service: { type: "string" },
         },
       } as any,
@@ -183,8 +182,8 @@ service: ClusterIP
             admin: {
               type: "object",
               properties: {
-                user: { type: "string", form: true },
-                pass: { type: "string", form: true },
+                user: { type: "string" },
+                pass: { type: "string" },
               },
             },
           },
@@ -196,8 +195,8 @@ service: ClusterIP
               admin: {
                 type: "object",
                 properties: {
-                  user: { type: "string", form: true },
-                  pass: { type: "string", form: true },
+                  user: { type: "string" },
+                  pass: { type: "string" },
                 },
               },
             },
@@ -207,36 +206,36 @@ service: ClusterIP
             {
               type: "object",
               properties: {
-                user: { type: "string", form: true },
-                pass: { type: "string", form: true },
+                user: { type: "string" },
+                pass: { type: "string" },
               },
               title: "admin",
               key: "credentials/admin",
               schema: {
                 type: "object",
                 properties: {
-                  user: { type: "string", form: true },
-                  pass: { type: "string", form: true },
+                  user: { type: "string" },
+                  pass: { type: "string" },
                 },
               },
               hasProperties: true,
               params: [
                 {
                   type: "string",
-                  form: true,
+
                   title: "user",
                   key: "credentials/admin/user",
-                  schema: { type: "string", form: true },
+                  schema: { type: "string" },
                   hasProperties: false,
                   deployedValue: "",
                   currentValue: "andres",
                 },
                 {
                   type: "string",
-                  form: true,
+
                   title: "pass",
                   key: "credentials/admin/pass",
-                  schema: { type: "string", form: true },
+                  schema: { type: "string" },
                   hasProperties: false,
                   deployedValue: "",
                   currentValue: "myPassword",
@@ -253,10 +252,10 @@ service: ClusterIP
         },
         {
           type: "number",
-          form: true,
+
           title: "replicas",
           key: "replicas",
-          schema: { type: "number", form: true },
+          schema: { type: "number" },
           hasProperties: false,
           deployedValue: "",
           currentValue: 1,
@@ -279,7 +278,7 @@ service: ClusterIP
         properties: {
           blogName: {
             type: "string",
-            form: true,
+
             title: "Blog Name",
             description: "Title of the blog",
           },
@@ -288,13 +287,13 @@ service: ClusterIP
       result: [
         {
           type: "string",
-          form: true,
+
           title: "Blog Name",
           description: "Title of the blog",
           key: "blogName",
           schema: {
             type: "string",
-            form: true,
+
             title: "Blog Name",
             description: "Title of the blog",
           },
@@ -315,10 +314,10 @@ externalDatabase:
         properties: {
           externalDatabase: {
             type: "object",
-            form: true,
+
             properties: {
-              name: { type: "string", form: true },
-              port: { type: "integer", form: true },
+              name: { type: "string" },
+              port: { type: "integer" },
             },
           },
         },
@@ -326,39 +325,39 @@ externalDatabase:
       result: [
         {
           type: "object",
-          form: true,
+
           properties: {
-            name: { type: "string", form: true },
-            port: { type: "integer", form: true },
+            name: { type: "string" },
+            port: { type: "integer" },
           },
           title: "externalDatabase",
           key: "externalDatabase",
           schema: {
             type: "object",
-            form: true,
+
             properties: {
-              name: { type: "string", form: true },
-              port: { type: "integer", form: true },
+              name: { type: "string" },
+              port: { type: "integer" },
             },
           },
           hasProperties: true,
           params: [
             {
               type: "string",
-              form: true,
+
               title: "name",
               key: "externalDatabase/name",
-              schema: { type: "string", form: true },
+              schema: { type: "string" },
               hasProperties: false,
               deployedValue: "",
               currentValue: "foo",
             },
             {
               type: "integer",
-              form: true,
+
               title: "port",
               key: "externalDatabase/port",
-              schema: { type: "integer", form: true },
+              schema: { type: "integer" },
               hasProperties: false,
               deployedValue: "",
               currentValue: 3306,
@@ -375,16 +374,16 @@ externalDatabase:
       values: "foo: false",
       schema: {
         properties: {
-          foo: { type: "boolean", form: true },
+          foo: { type: "boolean" },
         },
       } as any,
       result: [
         {
           type: "boolean",
-          form: true,
+
           title: "foo",
           key: "foo",
-          schema: { type: "boolean", form: true },
+          schema: { type: "boolean" },
           hasProperties: false,
           deployedValue: "",
           currentValue: false,
@@ -398,7 +397,7 @@ externalDatabase:
         properties: {
           databaseType: {
             type: "string",
-            form: true,
+
             enum: ["mariadb", "postgresql"],
           },
         },
@@ -406,11 +405,11 @@ externalDatabase:
       result: [
         {
           type: "string",
-          form: true,
+
           enum: ["mariadb", "postgresql"],
           title: "databaseType",
           key: "databaseType",
-          schema: { type: "string", form: true, enum: ["mariadb", "postgresql"] },
+          schema: { type: "string", enum: ["mariadb", "postgresql"] },
           hasProperties: false,
           deployedValue: "",
           currentValue: "postgresql",
