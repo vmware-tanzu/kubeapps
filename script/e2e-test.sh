@@ -11,18 +11,19 @@ set -o pipefail
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." >/dev/null && pwd)"
 USE_MULTICLUSTER_OIDC_ENV=${1:-false}
 OLM_VERSION=${2:-"v0.18.2"}
-DEV_TAG=${3:?missing dev tag}
+IMG_DEV_TAG=${3:?missing dev tag}
 IMG_MODIFIER=${4:-""}
 TEST_TIMEOUT_MINUTES=${5:-"4"}
 DEX_IP=${6:-"172.18.0.2"}
 ADDITIONAL_CLUSTER_IP=${7:-"172.18.0.3"}
 KAPP_CONTROLLER_VERSION=${8:-"v0.41.2"}
 CHARTMUSEUM_VERSION=${9:-"3.9.0"}
+IMG_PREFIX=${IMG_PREFIX:-"kubeapps/"}
 
 # TODO(andresmgot): While we work with beta releases, the Bitnami pipeline
 # removes the pre-release part of the tag
 if [[ -n "${TEST_LATEST_RELEASE:-}" ]]; then
-  DEV_TAG=${DEV_TAG/-beta.*/}
+  IMG_DEV_TAG=${IMG_DEV_TAG/-beta.*/}
 fi
 
 # Load Generic Libraries
@@ -50,8 +51,9 @@ info "Root dir: ${ROOT_DIR}"
 info "Use multicluster+OIDC: ${USE_MULTICLUSTER_OIDC_ENV}"
 info "OLM version: ${OLM_VERSION}"
 info "ChartMuseum version: ${CHARTMUSEUM_VERSION}"
-info "Image tag: ${DEV_TAG}"
-info "Image repo suffix: ${IMG_MODIFIER}"
+info "Image tag: ${IMG_DEV_TAG}"
+info "Image modifier: ${IMG_MODIFIER}"
+info "Image prefix: ${IMG_PREFIX}"
 info "Dex IP: ${DEX_IP}"
 info "Additional cluster IP : ${ADDITIONAL_CLUSTER_IP}"
 info "Load balancer IP : ${LOAD_BALANCER_IP}"
@@ -256,10 +258,14 @@ installOrUpgradeKubeapps() {
   "${cmd[@]}"
 }
 
+if [[ "${DEBUG_MODE:-false}" == "true" ]]; then
+  info "Docker images loaded in the cluster:"
+  docker exec kubeapps-ci-control-plane crictl images
+fi
+
 # Use dev images or Bitnami if testing the latest release
-image_prefix="kubeapps/"
 kubeapps_apis_image="kubeapps-apis"
-[[ -n "${TEST_LATEST_RELEASE:-}" ]] && image_prefix="bitnami/kubeapps-" && kubeapps_apis_image="apis"
+[[ -n "${TEST_LATEST_RELEASE:-}" ]] && IMG_PREFIX="bitnami/kubeapps-" && kubeapps_apis_image="apis"
 images=(
   "apprepository-controller"
   "asset-syncer"
@@ -267,18 +273,18 @@ images=(
   "pinniped-proxy"
   "${kubeapps_apis_image}"
 )
-images=("${images[@]/#/${image_prefix}}")
+images=("${images[@]/#/${IMG_PREFIX}}")
 images=("${images[@]/%/${IMG_MODIFIER}}")
 img_flags=(
-  "--set" "apprepository.image.tag=${DEV_TAG}"
+  "--set" "apprepository.image.tag=${IMG_DEV_TAG}"
   "--set" "apprepository.image.repository=${images[0]}"
-  "--set" "apprepository.syncImage.tag=${DEV_TAG}"
+  "--set" "apprepository.syncImage.tag=${IMG_DEV_TAG}"
   "--set" "apprepository.syncImage.repository=${images[1]}"
-  "--set" "dashboard.image.tag=${DEV_TAG}"
+  "--set" "dashboard.image.tag=${IMG_DEV_TAG}"
   "--set" "dashboard.image.repository=${images[2]}"
-  "--set" "pinnipedProxy.image.tag=${DEV_TAG}"
+  "--set" "pinnipedProxy.image.tag=${IMG_DEV_TAG}"
   "--set" "pinnipedProxy.image.repository=${images[3]}"
-  "--set" "kubeappsapis.image.tag=${DEV_TAG}"
+  "--set" "kubeappsapis.image.tag=${IMG_DEV_TAG}"
   "--set" "kubeappsapis.image.repository=${images[4]}"
 )
 
@@ -341,9 +347,9 @@ fi
 
 # Ensure that we are testing the correct image
 info ""
-k8s_ensure_image kubeapps kubeapps-ci-internal-apprepository-controller "$DEV_TAG"
-k8s_ensure_image kubeapps kubeapps-ci-internal-dashboard "$DEV_TAG"
-k8s_ensure_image kubeapps kubeapps-ci-internal-kubeappsapis "$DEV_TAG"
+k8s_ensure_image kubeapps kubeapps-ci-internal-apprepository-controller "$IMG_DEV_TAG"
+k8s_ensure_image kubeapps kubeapps-ci-internal-dashboard "$IMG_DEV_TAG"
+k8s_ensure_image kubeapps kubeapps-ci-internal-kubeappsapis "$IMG_DEV_TAG"
 
 # Wait for Kubeapps Pods
 info "Waiting for Kubeapps components to be ready..."
@@ -383,7 +389,7 @@ done
 
 # Browser tests
 cd "${ROOT_DIR}/integration"
-kubectl create deployment e2e-runner --image kubeapps/integration-tests${IMG_MODIFIER}:${DEV_TAG}
+kubectl create deployment e2e-runner --image ${IMG_PREFIX}integration-tests${IMG_MODIFIER}:${IMG_DEV_TAG}
 k8s_wait_for_deployment default e2e-runner
 pod=$(kubectl get po -l app=e2e-runner -o custom-columns=:metadata.name --no-headers)
 ## Copy config and latest tests
@@ -438,12 +444,26 @@ retry_while "kubectl get -n kubeapps serviceaccount kubeapps-operator -o name" "
 retry_while "kubectl get -n kubeapps serviceaccount kubeapps-view -o name" "5" "1"
 retry_while "kubectl get -n kubeapps serviceaccount kubeapps-edit -o name" "5" "1"
 ## Retrieve tokens
-admin_token="$(kubectl get -n kubeapps secret "$(kubectl get -n kubeapps serviceaccount kubeapps-operator -o jsonpath='{.secrets[].name}')" -o go-template='{{.data.token | base64decode}}' && echo)"
-view_token="$(kubectl get -n kubeapps secret "$(kubectl get -n kubeapps serviceaccount kubeapps-view -o jsonpath='{.secrets[].name}')" -o go-template='{{.data.token | base64decode}}' && echo)"
-edit_token="$(kubectl get -n kubeapps secret "$(kubectl get -n kubeapps serviceaccount kubeapps-edit -o jsonpath='{.secrets[].name}')" -o go-template='{{.data.token | base64decode}}' && echo)"
+admin_token="$(kubectl get -n kubeapps secret "$(kubectl get -n kubeapps serviceaccount kubeapps-operator -o jsonpath='{.secrets[].name}')" -o go-template='{{.data.token | base64decode}}')"
+view_token="$(kubectl get -n kubeapps secret "$(kubectl get -n kubeapps serviceaccount kubeapps-view -o jsonpath='{.secrets[].name}')" -o go-template='{{.data.token | base64decode}}')"
+edit_token="$(kubectl get -n kubeapps secret "$(kubectl get -n kubeapps serviceaccount kubeapps-edit -o jsonpath='{.secrets[].name}')" -o go-template='{{.data.token | base64decode}}')"
 
 info "Running main Integration tests without k8s API access..."
-if ! kubectl exec -it "$pod" -- /bin/sh -c "CI_TIMEOUT_MINUTES=40 DOCKER_USERNAME=${DOCKER_USERNAME} DOCKER_PASSWORD=${DOCKER_PASSWORD} DOCKER_REGISTRY_URL=${DOCKER_REGISTRY_URL} TEST_TIMEOUT_MINUTES=${TEST_TIMEOUT_MINUTES} INTEGRATION_ENTRYPOINT=http://kubeapps-ci.kubeapps USE_MULTICLUSTER_OIDC_ENV=${USE_MULTICLUSTER_OIDC_ENV} ADMIN_TOKEN=${admin_token} VIEW_TOKEN=${view_token} EDIT_TOKEN=${edit_token} yarn test ${testsArgs}"; then
+test_command="
+  CI_TIMEOUT_MINUTES=40 \
+  DOCKER_USERNAME=${DOCKER_USERNAME} \
+  DOCKER_PASSWORD=${DOCKER_PASSWORD} \
+  DOCKER_REGISTRY_URL=${DOCKER_REGISTRY_URL} \
+  TEST_TIMEOUT_MINUTES=${TEST_TIMEOUT_MINUTES} \
+  INTEGRATION_ENTRYPOINT=http://kubeapps-ci.kubeapps \
+  USE_MULTICLUSTER_OIDC_ENV=${USE_MULTICLUSTER_OIDC_ENV} \
+  ADMIN_TOKEN=${admin_token} \
+  VIEW_TOKEN=${view_token} \
+  EDIT_TOKEN=${edit_token} \
+  yarn test ${testsArgs}
+  "
+info "${test_command}"
+if ! kubectl exec -it "$pod" -- /bin/sh -c "${test_command}"; then
   ## Integration tests failed, get report screenshot
   warn "PODS status on failure"
   kubectl cp "${pod}:/app/reports" ./reports
@@ -463,7 +483,18 @@ info "Waiting for updated Kubeapps components to be ready..."
 k8s_wait_for_deployment kubeapps kubeapps-ci
 
 info "Running carvel integration test..."
-if ! kubectl exec -it "$pod" -- /bin/sh -c "CI_TIMEOUT_MINUTES=20 TEST_TIMEOUT_MINUTES=${TEST_TIMEOUT_MINUTES} INTEGRATION_ENTRYPOINT=http://kubeapps-ci.kubeapps USE_MULTICLUSTER_OIDC_ENV=${USE_MULTICLUSTER_OIDC_ENV} ADMIN_TOKEN=${admin_token} VIEW_TOKEN=${view_token} EDIT_TOKEN=${edit_token} yarn test \"tests/carvel/\""; then
+test_command="
+  CI_TIMEOUT_MINUTES=20 \
+  TEST_TIMEOUT_MINUTES=${TEST_TIMEOUT_MINUTES} \
+  INTEGRATION_ENTRYPOINT=http://kubeapps-ci.kubeapps \
+  USE_MULTICLUSTER_OIDC_ENV=${USE_MULTICLUSTER_OIDC_ENV} \
+  ADMIN_TOKEN=${admin_token} \
+  VIEW_TOKEN=${view_token} \
+  EDIT_TOKEN=${edit_token} \
+  yarn test \"tests/carvel/\"
+  "
+info "${test_command}"
+if ! kubectl exec -it "$pod" -- /bin/sh -c "${test_command}"; then
   ## Integration tests failed, get report screenshot
   warn "PODS status on failure"
   kubectl cp "${pod}:/app/reports" ./reports
@@ -493,7 +524,17 @@ if [[ -z "${GKE_BRANCH-}" ]] && [[ -n "${TEST_OPERATORS-}" ]]; then
   retry_while isOperatorHubCatalogRunning 24
 
   info "Running operator integration test with k8s API access..."
-  if ! kubectl exec -it "$pod" -- /bin/sh -c "CI_TIMEOUT_MINUTES=20 TEST_TIMEOUT_MINUTES=${TEST_TIMEOUT_MINUTES} INTEGRATION_ENTRYPOINT=http://kubeapps-ci.kubeapps USE_MULTICLUSTER_OIDC_ENV=${USE_MULTICLUSTER_OIDC_ENV} ADMIN_TOKEN=${admin_token} VIEW_TOKEN=${view_token} EDIT_TOKEN=${edit_token} yarn test \"tests/operators/\""; then
+  test_command="
+    CI_TIMEOUT_MINUTES=20 \
+    TEST_TIMEOUT_MINUTES=${TEST_TIMEOUT_MINUTES} \
+    INTEGRATION_ENTRYPOINT=http://kubeapps-ci.kubeapps \
+    USE_MULTICLUSTER_OIDC_ENV=${USE_MULTICLUSTER_OIDC_ENV} \
+    ADMIN_TOKEN=${admin_token} \
+    VIEW_TOKEN=${view_token} \
+    EDIT_TOKEN=${edit_token} \
+    yarn test \"tests/operators/\"
+    "
+  if ! kubectl exec -it "$pod" -- /bin/sh -c "${test_command}"; then
     ## Integration tests failed, get report screenshot
     warn "PODS status on failure"
     kubectl cp "${pod}:/app/reports" ./reports
