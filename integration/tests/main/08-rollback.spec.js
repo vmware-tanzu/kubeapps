@@ -55,7 +55,7 @@ test("Rolls back an application", async ({ page }) => {
   await page.locator('cds-button:has-text("Upgrade")').click();
 
   // Increase replicas
-  await page.locator("input[type='number']").fill("2");
+  await page.locator('input[id^="replicaCount_text"]').fill("2");
 
   // Wait until changes are applied (due to the debounce in the input)
   await page.waitForTimeout(1000);

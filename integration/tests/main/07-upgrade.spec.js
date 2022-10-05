@@ -34,7 +34,7 @@ test("Upgrades an application", async ({ page }) => {
   await page.click('cds-button:has-text("Deploy") >> nth=0');
 
   // Increase replicas
-  await page.locator("input[type='number']").fill("2");
+  await page.locator('input[id^="replicaCount_text"]').fill("2");
 
   // Wait until changes are applied (due to the debounce in the input)
   await page.waitForTimeout(1000);
