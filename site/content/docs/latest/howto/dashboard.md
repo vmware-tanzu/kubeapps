@@ -71,7 +71,7 @@ Set values for configuration parameters and click the **Deploy** button to launc
 
 > There is another button to help you restore parameters to the default values in the package.
 
-You can track the deployment directly from Kubeapps. The "Notes" section in the deployment page contains important information to help you use the application.
+You can track the deployment directly from Kubeapps. The "Notes" section on the deployment page contains important information to help you use the application.
 
 ![Deploy application progress not ready](../img/dashboard/deploy-application-progress-0.png)
 ![Deploy application progress 1 pod](../img/dashboard/deploy-application-progress-1.png)
