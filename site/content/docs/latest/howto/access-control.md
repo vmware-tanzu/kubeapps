@@ -1,30 +1,52 @@
 # Access Control in Kubeapps
 
-Before you configure the Kubernetes Role-Based-Access-Control for your authenticated users to access Kubeapps you will first need to establish how users will authenticate with the Kubernetes clusters on which Kubeapps operates.
+## Table of Contents
+
+1. [Introduction](#introduction)
+2. [User Authentication in Kubeapps](#user-authentication-in-kubeapps)
+   1. [OpenID Connect authentication](#openid-connect-authentication)
+   2. [Service Account authentication](#service-account-authentication)
+3. [Assigning Kubeapps User Roles](#assigning-kubeapps-user-roles)
+   1. [Applications](#applications)
+      1. [Read access to Applications within a namespace](#read-access-to-applications-within-a-namespace) 2.[Write access to Applications within a namespace](#write-access-to-applications-within-a-namespace)
+   2. [Package Repositories](#package-repositories)
+   3. [Assigning roles across multiple namespaces](#assigning-roles-across-multiple-namespaces)
+   4. [Using a cluster-admin user (not recommended)](#using-a-cluster-admin-user-not-recommended)
+
+## Introduction
+
+[Kubeapps](https://kubeapps.dev/) provides a cloud native solution to browse, deploy and manage the lifecycle of applications on a Kubernetes cluster. It is a one-time install that gives you a number of important benefits, including the ability to:
+
+- browse and deploy packaged applications from public or private repositories
+- customize deployments through an intuitive user interface
+- upgrade, manage and delete the applications that are deployed in your Kubernetes cluster
+- expose an API to manage your package repositories and your applications
+
+This guide explains in detail how to **configure the Kubernetes Role-Based-Access-Control (RBAC) for your authenticated users to access Kubeapps**. Before configuring the RBAC, you need to establish how users authenticate with the Kubernetes clusters on which Kubeapps operates.
 
 ## User Authentication in Kubeapps
 
 By design, Kubeapps does not include a separate authentication layer but rather relies on the [supported mechanisms provided with Kubernetes itself](https://kubernetes.io/docs/reference/access-authn-authz/authentication/).
 
-Each request to Kubeapps requires a token trusted by the Kubernetes API token in order to make
-requests to the Kubernetes API server as the user. This ensures that a certain
+Each request to Kubeapps requires a token trusted by the Kubernetes API token in order to make requests to the Kubernetes API server as the user. This ensures that a certain
 user of Kubeapps is only permitted to view and manage applications to which they
 have access (for example, within a specific namespace). If a user does not
-have access to a particular resource, Kubeapps will display an error describing
+have access to a particular resource, Kubeapps displays an error describing
 the required roles to access the resource.
 
 Two of the most common authentication strategies for providing a token identifying the user with Kubeapps are described below.
 
 ### OpenID Connect authentication
 
-The most common and secure authentication for users to authenticate with the cluster (and therefore Kubeapps) is to use the built-in Kubernetes support for OpenID Connect. In this setup your clusters trust an OAuth2 provider such as Azure Active Directory, Google OpenID Connect or your own installation of the Dex auth provider. You can read more about [using an OIDC provider with Kubeapps](../tutorials/using-an-OIDC-provider.md).
+The most common and secure authentication for users to authenticate with the cluster (and therefore Kubeapps) is to use the built-in Kubernetes support for OpenID Connect. In this setup your clusters trust an OAuth2 provider such as Azure Active Directory, Google OpenID Connect or your own installation of the Dex auth provider.
+
+> Read more about [using an OIDC provider with Kubeapps](../tutorials/using-an-OIDC-provider.md).
 
 ### Service Account authentication
 
-Alternatively, you can create Service Accounts for
-Kubeapps users. This is not recommended for production use as Kubernetes service accounts are not designed to be used by users. That said, it is often a quick way to test or demo a Kubeapps installation without needing to configure OpenID Connect.
+Alternatively, you can create Service Accounts for Kubeapps users. This is not recommended for production use as Kubernetes service accounts are not designed to be used by users. That said, it is often a quick way to test or demo a Kubeapps installation without needing to configure OpenID Connect.
 
-To create a Service Account for a user "example" in the "default" namespace, run the following:
+To create a Service Account for a user `example` in the `default` namespace, run the following:
 
 ```bash
 kubectl create -n default serviceaccount example
@@ -50,7 +72,7 @@ Kubeapps.
 
 #### Read access to Applications within a namespace
 
-In order to list and view Applications in a namespace, we will use the [default ClusterRole for viewing resources](https://kubernetes.io/docs/reference/access-authn-authz/rbac/#user-facing-roles). Then we will bind that cluster role to our service account.
+In order to **list** and **view** Applications in a namespace, use the [default ClusterRole for viewing resources](https://kubernetes.io/docs/reference/access-authn-authz/rbac/#user-facing-roles). Then you bind that cluster role to the service account.
 
 ```bash
 kubectl create -n default rolebinding example-view \
@@ -62,7 +84,7 @@ This role should be enough to explore and discover the applications running in y
 
 #### Write access to Applications within a namespace
 
-In order to create, update and delete Applications in a namespace, apply the`edit` ClusterRole in the desired namespace. The `edit` ClusterRole should be available in most Kubernetes distributions, you can find more information about that role [here](https://kubernetes.io/docs/reference/access-authn-authz/rbac/#user-facing-roles).
+In order to **create**, **update** and **delete** Applications in a namespace, apply the `edit` ClusterRole in the desired namespace. The `edit` ClusterRole should be available in most Kubernetes distributions, you can find more information about that role [here](https://kubernetes.io/docs/reference/access-authn-authz/rbac/#user-facing-roles).
 
 ```bash
 kubectl create -n default rolebinding example-edit \
@@ -70,7 +92,7 @@ kubectl create -n default rolebinding example-edit \
   --serviceaccount default:example
 ```
 
-With the `edit` role, a user will be able to deploy and manage most of the applications available but it will still not be able to create new application repositories.
+With the `edit` role, a user can deploy and manage most of the applications available but it is still not able to create new application repositories.
 
 ### Package Repositories
 
@@ -85,7 +107,7 @@ kubectl create -n ${KUBEAPPS_NAMESPACE} rolebinding example-kubeapps-repositorie
 
 > Note: There is also a cluster-role for just allowing people to read package repositories: `kubeapps:${KUBEAPPS_NAMESPACE}:apprepositories-read`.
 
-The above command allows people to create package repositories in the Kubeapps namespace, these are called "Global Repositories" since they will be available in any namespace Kubeapps is available. On the other hand, it's also possible to create "Namespaced Repositories" that will be available just in a single namespace. For doing so, users need to have permissions to create package repositories in those namespaces. Read the next section to know how to create those roles.
+The above command allows people to create package repositories in the Kubeapps namespace, these are called "Global Repositories" since they are available in any namespace Kubeapps is available. On the other hand, it's also possible to create "Namespaced Repositories" that are available just in a single namespace. For doing so, users need to have permissions to create package repositories in those namespaces. Read the next section to know how to create those roles.
 
 ### Assigning roles across multiple namespaces
 
@@ -98,7 +120,7 @@ kubectl create -n example rolebinding example-kubeapps-applications-write \
   --serviceaccount default:example
 ```
 
-If you want to give access for every namespace, simply create a ClusterRoleBinding instead of a RoleBinding. For example, we can give the "example" user permissions to manage Applications in _any_ namespace. Again, be careful applying this ClusterRole because it also allows to read and write Secrets:
+If you want to give access for every namespace, simply create a ClusterRoleBinding instead of a RoleBinding. For example, you can give the "example" user permissions to manage Applications in _any_ namespace. Again, be careful applying this ClusterRole because it also allows to read and write Secrets:
 
 ```bash
 export KUBEAPPS_NAMESPACE=kubeapps
@@ -109,8 +131,7 @@ kubectl create clusterrolebinding example-kubeapps-applications-write \
 
 ## Using a cluster-admin user (not recommended)
 
-A simpler way to configure access for Kubeapps would be to give the user cluster-admin access (effectively disabling RBAC). This is not recommended, but
-useful for quick demonstrations or evaluations.
+A simpler way to configure access for Kubeapps would be to give the user `cluster-admin` access (effectively disabling RBAC). This is not recommended, but useful for quick demonstrations or evaluations.
 
 ```bash
 kubectl create serviceaccount kubeapps-operator
