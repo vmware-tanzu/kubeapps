@@ -8,7 +8,7 @@ CHARTMUSEUM_PWD=${CHARTMUSEUM_PWD:-"password"}
 CHARTMUSEUM_NS=${CHARTMUSEUM_NS:-"chart-museum"}
 CHARTMUSEUM_VERSION=${CHARTMUSEUM_VERSION:-"3.9.0"}
 CHARTMUSEUM_HOSTNAME=${CHARTMUSEUM_HOSTNAME:-"chart-museum"}
-CHARTMUSEUM_IP=${DEX_IP}
+CHARTMUSEUM_IP=${LOAD_BALANCER_IP}
 
 # Pull a Bitnami chart to a local TGZ file
 # Arguments:
@@ -57,6 +57,11 @@ pushChartToChartMuseum() {
   local CHART_NAME=$1
   local CHART_VERSION=$2
   local CHART_FILE=$3
+
+  if [[ -z "${CHARTMUSEUM_IP}" ]]; then
+    echo "ChartMuseum ingress IP has not been defined in variable CHARTMUSEUM_IP"
+    exit 1
+  fi
 
   echo ">> Pushing chart '${CHART_FILE}' (${CHART_NAME} v${CHART_VERSION}) to chart museum at ${CHARTMUSEUM_HOSTNAME} and IP ${CHARTMUSEUM_IP}"
   CHART_EXISTS=$(curl -Lk -u "${CHARTMUSEUM_USER}:${CHARTMUSEUM_PWD}" -H "Host: ${CHARTMUSEUM_HOSTNAME}" http://${CHARTMUSEUM_IP}/api/charts/${CHART_NAME}/${CHART_VERSION} | jq -r 'any([ .error] ; . > 0)')

@@ -34,6 +34,13 @@ fi
 # shellcheck disable=SC1090
 . "${ROOT_DIR}/script/lib/libutil.sh"
 
+# Get the load balancer IP
+if [[ -z "${GKE_BRANCH-}" ]]; then
+  LOAD_BALANCER_IP=$DEX_IP
+else
+  LOAD_BALANCER_IP=$(kubectl -n nginx-ingress get service nginx-ingress-ingress-nginx-controller -o jsonpath="{.status.loadBalancer.ingress[].ip}")
+fi
+
 # Functions for local Docker registry mgmt
 . "${ROOT_DIR}/script/local-docker-registry.sh"
 
@@ -49,6 +56,7 @@ info "Image modifier: ${IMG_MODIFIER}"
 info "Image prefix: ${IMG_PREFIX}"
 info "Dex IP: ${DEX_IP}"
 info "Additional cluster IP : ${ADDITIONAL_CLUSTER_IP}"
+info "Load balancer IP : ${LOAD_BALANCER_IP}"
 info "Test timeout minutes: ${TEST_TIMEOUT_MINUTES}"
 info "Kapp Controller version: ${KAPP_CONTROLLER_VERSION}"
 info "Cluster Version: $(kubectl version -o json | jq -r '.serverVersion.gitVersion')"
