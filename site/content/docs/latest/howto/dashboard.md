@@ -85,7 +85,7 @@ Kubeapps provides an easy way to identify applications with an updated version a
 
 ![Update application arrow](../img/dashboard/update-application-list.png)
 
-- In the detail view with an **info message** in the left side:
+- In the detail view with an **info message** on the left side:
 
 ![Update application message](../img/dashboard/update-application-message.png)
 
