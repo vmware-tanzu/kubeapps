@@ -42,7 +42,7 @@ env:
   # as an output of the `setup` job.
   IMG_DEV_TAG: "build-${{ github.sha }}"
   # Apart from using a dev tag we use a different image ID to avoid polluting the tag history of the production tag
-  IMG_MODIFIER: "-ci"
+  IMG_MODIFIER: "-ci-gha"
   IMG_PREFIX: "kubeapps/"
   # We use IMG_PREFIX_FOR_FORKS for development purposes, it's used when the workflow is run from a fork of the kubeapps repo
   IMG_PREFIX_FOR_FORKS: "beni0888/"
