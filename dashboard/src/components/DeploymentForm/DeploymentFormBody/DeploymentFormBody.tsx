@@ -64,11 +64,13 @@ function DeploymentFormBody({
     {} as YAML.Document.Parsed<YAML.ParsedNode>,
   );
   const [restoreModalIsOpen, setRestoreModalOpen] = useState(false);
-  const [isLoaded, setIsloaded] = useState(false);
-  const [isLoading, setIsloading] = useState(true);
+  const [isLoaded, setIsLoaded] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [unsavedChangesMap] = useState(new Map<string, any>());
+  const [shouldSubmitForm, setShouldSubmitForm] = useState(false);
 
-  // setBasicFormParameters when basicFormParameters changes
+  // whenever the parsed values change (for instance, when a new pkg version is selected),
+  // we need to force a new extraction of the params from the schema
   useEffect(() => {
     if (!isLoaded && schemaFromTheAvailablePackage && !isEmpty(valuesFromTheParentContainerNodes)) {
       const initialParamsFromContainer = retrieveBasicFormParams(
@@ -79,8 +81,8 @@ function DeploymentFormBody({
         valuesFromTheDeployedPackageNodes,
       );
       setParamsFromComponentState(initialParamsFromContainer);
-      setIsloaded(true);
-      setIsloading(false);
+      setIsLoaded(true);
+      setIsLoading(false);
     }
   }, [
     deploymentEvent,
@@ -92,42 +94,48 @@ function DeploymentFormBody({
     valuesFromTheParentContainerNodes,
   ]);
 
-  // setDefaultValues when defaultValues changes
+  // parse and store in the component state the values from the available package
   useEffect(() => {
     if (valuesFromTheAvailablePackage) {
       setValuesFromTheAvailablePackageNodes(parseToYamlNode(valuesFromTheAvailablePackage));
     }
   }, [isLoaded, valuesFromTheAvailablePackage]);
 
+  // parse and store in the component state the current values (which come from the parent container)
   useEffect(() => {
     if (valuesFromTheParentContainer) {
       setValuesFromTheParentContainerNodes(parseToYamlNode(valuesFromTheParentContainer));
     }
   }, [isLoaded, valuesFromTheParentContainer]);
 
+  // parse and store in the component state the values from the deployed package
   useEffect(() => {
     if (valuesFromTheDeployedPackage) {
       setValuesFromTheDeployedPackageNodes(parseToYamlNode(valuesFromTheDeployedPackage));
     }
   }, [isLoaded, valuesFromTheDeployedPackage, valuesFromTheParentContainer]);
 
-  const handleYAMLEditorChange = (value: string) => {
-    setValuesFromTheParentContainer(value);
-    setValuesModified();
-  };
+  // when the shouldSubmitForm flag is enabled, the form will be submitted, but using a native
+  // form submit event (to trigger the browser validations) instead of just calling its handler function
+  useEffect(() => {
+    if (shouldSubmitForm) {
+      // the requestSubmit API was added recently,
+      // but should replace the manual dispatch of a submit event with "bubbles:true" (react>=17)
+      formRef?.current?.requestSubmit();
+      setShouldSubmitForm(false);
+    }
+  }, [formRef, shouldSubmitForm]);
 
-  const forceSubmit = useCallback(() => {
-    // the API was added recently, but should replace the manual dispatch of a submit event with bubbles:true (react>=17)
-    formRef?.current?.requestSubmit();
-  }, [formRef]);
-
+  // for each unsaved change in the component state, we need to update the values,
+  // so that both the table and the yaml editor get the updated values
   const saveAllChanges = () => {
     let newValuesFromTheParentContainer, newParamsFromComponentState;
     unsavedChangesMap.forEach((value, key) => {
-      setIsloading(true);
+      setIsLoading(true);
       setValuesModified();
-      const aa = updateCurrentConfigByKey(paramsFromComponentState, key, value);
-      newParamsFromComponentState = [...aa];
+      newParamsFromComponentState = [
+        ...updateCurrentConfigByKey(paramsFromComponentState, key, value),
+      ];
       setParamsFromComponentState(newParamsFromComponentState);
 
       newValuesFromTheParentContainer = toStringYamlNode(
@@ -136,13 +144,19 @@ function DeploymentFormBody({
       setValuesFromTheParentContainer(newValuesFromTheParentContainer);
     });
     unsavedChangesMap.clear();
-    setIsloading(false);
+    setIsLoading(false);
   };
 
-  // save the pending changes and fire the submit event (via useEffect, to actually get the saved changes)
+  // save the pending changes and fire the submit event
+  // via an useEffect, to actually get the most recent saved changes
   const handleDeployClick = () => {
     saveAllChanges();
-    forceSubmit();
+    setShouldSubmitForm(true);
+  };
+
+  const handleYAMLEditorChange = (value: string) => {
+    setValuesFromTheParentContainer(value);
+    setValuesModified();
   };
 
   // re-build the table based on the new YAML
