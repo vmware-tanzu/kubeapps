@@ -141,7 +141,7 @@ build_on_tag_or_prerelease: &build_on_tag_or_prerelease
     tags:
       only: /^v.*/
     branches:
-      only: prerelease-check
+      only: prerelease
 
 workflows:
   version: 2
