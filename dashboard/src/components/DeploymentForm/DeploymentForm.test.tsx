@@ -271,6 +271,7 @@ describe("renders an error", () => {
     spyOnUseHistory = jest.spyOn(ReactRouter, "useHistory").mockReturnValue({ push } as any);
 
     const appValues = "foo: bar";
+    const newAppValues = "foo: modified";
     const schema = { properties: { foo: { type: "string" } } } as unknown as JSONSchemaType<any>;
     const selected = { ...defaultSelectedPkg, values: appValues, schema: schema };
 
@@ -287,8 +288,9 @@ describe("renders an error", () => {
     const handleValuesChange: (v: string) => void = wrapper
       .find(DeploymentFormBody)
       .prop("setValues");
+
     act(() => {
-      handleValuesChange("foo: bar");
+      handleValuesChange(newAppValues);
     });
 
     wrapper
@@ -297,7 +299,7 @@ describe("renders an error", () => {
 
     wrapper.update();
 
-    expect(wrapper.find(DeploymentFormBody).prop("appValues")).toBe("foo: bar");
+    expect(wrapper.find(DeploymentFormBody).prop("appValues")).toBe(newAppValues);
     expect(wrapper.find(DeploymentForm).find("#releaseName").prop("value")).toBe(
       defaultProps.releaseName,
     );
@@ -314,7 +316,7 @@ describe("renders an error", () => {
       defaultProps.namespace,
       defaultSelectedPkg.availablePackageDetail,
       defaultProps.releaseName,
-      appValues,
+      newAppValues,
       schema,
       {} as ReconciliationOptions,
     );
