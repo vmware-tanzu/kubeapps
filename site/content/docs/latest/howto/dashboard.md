@@ -42,7 +42,7 @@ To explore the list of applications available in the existing repositories confi
 
 Kubeapps provides a complete overview of applications, metadata and parameters to have all necessary information before deploying into your cluster.
 
-- Click on any app from the **Catalog view**, for example **Wordpress**.
+- Click on any app from the **Catalog view**, for example, **Wordpress**.
 - Kubeapps navigates to the detail page including:
 
   - **Application data** (on the left side): name, package format, app version, package version, categories, home url, maintainers, related urls
