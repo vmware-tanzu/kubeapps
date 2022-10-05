@@ -6,7 +6,7 @@ name: Kubeapps general pipeline
 on:
   push:
     branches:
-      - migrate-ci
+      - main
   pull_request:
     branches:
       - main
@@ -339,9 +339,10 @@ jobs:
       - build_dashboard_image
       - build_e2e_runner_image
     env:
-      IMAGES_TO_PUSH: ${IMAGES_TO_PUSH} integration-tests
+      ADDITIONAL_IMAGES_TO_PUSH: integration-tests
       IMG_PREFIX: ${{ needs.setup.outputs.img_prefix }}
     steps:
+      - run: echo "IMAGES_TO_PUSH=\"${IMAGES_TO_PUSH} ${ADDITIONAL_IMAGES_TO_PUSH}\"" >> $GITHUB_ENV
       - name: Login to Docker Hub
         uses: docker/login-action@v2
         with:
@@ -349,8 +350,8 @@ jobs:
           password: ${{ secrets.DOCKER_PASSWORD }}
       - uses: actions/download-artifact@v3
       - run: |
-          for path in ./*; do
-            artifact=$(basename "$path")
+          for artifact in *; do
+            echo "::debug::Processing artifact '${artifact}'"
           
             if [[ "${artifact}" != *"-image" ]]; then
               echo "::notice ::Skipping artifact ${artifact}, it's not a docker image"          
@@ -364,7 +365,7 @@ jobs:
             fi
 
             echo "::notice ::Loading image ${image}"
-            docker load --input "${image}-image.tar"
+            docker load --input "${artifact}/${artifact}.tar"
 
             dev_image=${IMG_PREFIX}${image}${IMG_MODIFIER}:${IMG_DEV_TAG}
             echo "::notice ::Pushing image ${dev_image}"
