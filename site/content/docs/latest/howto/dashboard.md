@@ -45,7 +45,7 @@ Kubeapps provides a complete overview of applications, metadata and parameters t
 - Click on any app from the **Catalog view**, for example, **Wordpress**.
 - Kubeapps navigates to the detail page including:
 
-  - **Application data** (on the left side): name, package format, app version, package version, categories, home url, maintainers, related urls
+  - **Application data** (on the left side): name, package format, app version, package version, categories, home URL, maintainers, related URLs
   - **README.md**: Kubeapps render the information available in the package README.md file (including all configuration parameters to install the package).
 
 ![Browse Application](../img/dashboard/browse-application.png)
