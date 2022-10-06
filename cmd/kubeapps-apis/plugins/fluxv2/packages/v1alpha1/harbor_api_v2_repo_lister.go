@@ -291,7 +291,7 @@ func parseHarborErrorResponse(resp *http.Response) error {
 	}
 
 	// https://codeql.github.com/codeql-query-help/go/go-log-injection/
-	escapedUrl := strings.Replace(fmt.Sprintf("%s", resp.Request.URL), "\n", "", -1)
+	escapedUrl := strings.Replace(resp.Request.URL.String(), "\n", "", -1)
 	escapedUrl = strings.Replace(escapedUrl, "\r", "", -1)
 	return fmt.Errorf("%s %q: unexpected status code %d: %s", resp.Request.Method, escapedUrl, resp.StatusCode, errmsg)
 }
