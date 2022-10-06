@@ -8,7 +8,8 @@
    2. [Service Account authentication](#service-account-authentication)
 3. [Assigning Kubeapps User Roles](#assigning-kubeapps-user-roles)
    1. [Applications](#applications)
-      1. [Read access to Applications within a namespace](#read-access-to-applications-within-a-namespace) 2.[Write access to Applications within a namespace](#write-access-to-applications-within-a-namespace)
+      1. [Read access to Applications within a namespace](#read-access-to-applications-within-a-namespace)
+      2. [Write access to Applications within a namespace](#write-access-to-applications-within-a-namespace)
    2. [Package Repositories](#package-repositories)
    3. [Assigning roles across multiple namespaces](#assigning-roles-across-multiple-namespaces)
    4. [Using a cluster-admin user (not recommended)](#using-a-cluster-admin-user-not-recommended)
@@ -28,17 +29,13 @@ This guide explains in detail how to **configure the Kubernetes Role-Based-Acces
 
 By design, Kubeapps does not include a separate authentication layer but rather relies on the [supported mechanisms provided with Kubernetes itself](https://kubernetes.io/docs/reference/access-authn-authz/authentication/).
 
-Each request to Kubeapps requires a token trusted by the Kubernetes API token in order to make requests to the Kubernetes API server as the user. This ensures that a certain
-user of Kubeapps is only permitted to view and manage applications to which they
-have access (for example, within a specific namespace). If a user does not
-have access to a particular resource, Kubeapps displays an error describing
-the required roles to access the resource.
+Each request to Kubeapps requires a token trusted by the Kubernetes API token in order to make requests to the Kubernetes API server as the user. This ensures that a certain user of Kubeapps is only permitted to view and manage applications to which they have access (for example, within a specific namespace). If a user does not have access to a particular resource, Kubeapps displays an error describing the required roles to access the resource.
 
 Two of the most common authentication strategies for providing a token identifying the user with Kubeapps are described below.
 
 ### OpenID Connect authentication
 
-The most common and secure authentication for users to authenticate with the cluster (and therefore Kubeapps) is to use the built-in Kubernetes support for OpenID Connect. In this setup your clusters trust an OAuth2 provider such as Azure Active Directory, Google OpenID Connect or your own installation of the Dex auth provider.
+The most common and secure method for users to authenticate with the cluster (and therefore Kubeapps) is to use the built-in Kubernetes support for OpenID Connect. In this setup your clusters trust an OAuth2 provider such as Azure Active Directory, Google OpenID Connect or your own installation of the Dex auth provider.
 
 > Read more about [using an OIDC provider with Kubeapps](../tutorials/using-an-OIDC-provider.md).
 
@@ -62,11 +59,18 @@ kubectl get -n default secret $(kubectl get -n default serviceaccount example -o
 
 The examples below demonstrate creating RBAC for a service account as it is easy to reproduce, but normally you would use the `--user` or `--group` arg rather than `--serviceaccount` when creating the role bindings for users.
 
-You can install a set of preset Roles and ClusterRoles in your cluster
-that you can bind to user or Service Accounts. Each Role and ClusterRole
-pertains to a certain operation within Kubeapps. This documentation describes
-the roles that should be applied to a user in order to perform operations within
-Kubeapps.
+You can install a set of preset Roles and ClusterRoles in your cluster that you can bind to user or Service Accounts. Each Role and ClusterRole pertains to a certain operation within Kubeapps.
+
+This documentation describes the roles that should be applied to a user in order to perform operations within Kubeapps configured with `Helm` plugin.
+
+> More info for Kubeapps configured with Flux and Carvel plugins:
+> - [Managing Flux packages in Kubeapps](../tutorials/managing-flux-packages.md#creating-a-service-account)
+> - [Managing Carvel packages in Kubeapps](../tutorials/managing-carvel-packages.md#creating-a-service-account)
+>
+> Additional info for Carvel Security Model: 
+> - [kapp-controller Security Model](https://carvel.dev/kapp-controller/docs/v0.32.0/security-model/)
+
+
 
 ### Applications
 
