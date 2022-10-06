@@ -134,7 +134,7 @@ func pingHarbor(ctx context.Context, ref orasregistryv2.Reference, cred orasregi
 	}
 }
 
-//  https://demo.goharbor.io/#/project/headProject
+// https://demo.goharbor.io/#/project/headProject
 func harborProjectExists(ctx context.Context, projectName string, ref orasregistryv2.Reference, cred orasregistryauthv2.Credential) error {
 	log.Infof("+projectExists(%s)", projectName)
 	url := fmt.Sprintf("%s/projects?project_name=%s",
