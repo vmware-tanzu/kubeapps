@@ -7,7 +7,6 @@ import (
 	"flag"
 	"strings"
 
-	"github.com/mitchellh/go-homedir"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
@@ -17,7 +16,6 @@ import (
 )
 
 var (
-	cfgFile   string
 	serveOpts server.Config
 	// This Version var is updated during the build
 	// see the -ldflags option in the cmd/apprepository-controller/Dockerfile
@@ -78,7 +76,7 @@ func setFlags(c *cobra.Command) {
 	c.Flags().StringSliceVar(&serveOpts.RepoSyncImagePullSecrets, "repo-sync-image-pullsecrets", nil, "optional reference to secrets in the same namespace to use for pulling the image used by this pod")
 	c.Flags().StringVar(&serveOpts.RepoSyncCommand, "repo-sync-cmd", "/chart-repo", "command used to sync/delete repos for repo-sync-image")
 	c.Flags().StringVar(&serveOpts.KubeappsNamespace, "namespace", "kubeapps", "Namespace to discover AppRepository resources")
-	c.Flags().StringVar(&serveOpts.GlobalReposNamespace, "global-repos-namespace", "kubeapps", "Namespace for global repos")
+	c.Flags().StringVar(&serveOpts.GlobalPackagingNamespace, "global-repos-namespace", "kubeapps", "Namespace for global repos")
 	c.Flags().BoolVar(&serveOpts.ReposPerNamespace, "repos-per-namespace", true, "Defaults to watch for repos in all namespaces. Switch to false to watch only the configured namespace.")
 	c.Flags().StringVar(&serveOpts.DBURL, "database-url", "localhost", "Database URL")
 	c.Flags().StringVar(&serveOpts.DBUser, "database-user", "root", "Database user")
@@ -97,20 +95,6 @@ func setFlags(c *cobra.Command) {
 
 // initConfig reads in config file and ENV variables if set.
 func initConfig() {
-	if cfgFile != "" {
-		// Use config file from the flag.
-		viper.SetConfigFile(cfgFile)
-	} else {
-		// Find home directory.
-		home, err := homedir.Dir()
-		cobra.CheckErr(err)
-
-		// Search config in home directory with name ".kubeops" (without extension).
-		viper.AddConfigPath(home)
-		viper.SetConfigType("yaml")
-		viper.SetConfigName(".kubeops")
-	}
-
 	viper.AutomaticEnv() // read in environment variables that match
 
 	// If a config file is found, read it in.

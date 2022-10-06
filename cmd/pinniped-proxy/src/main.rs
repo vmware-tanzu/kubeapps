@@ -1,6 +1,8 @@
 // Copyright 2020-2022 the Kubeapps contributors.
 // SPDX-License-Identifier: Apache-2.0
 
+use std::io::Write;
+use chrono::Local;
 use std::convert::Infallible;
 use std::fs;
 
@@ -10,7 +12,7 @@ use hyper::{
     service::{make_service_fn, service_fn},
     Server,
 };
-use log::info;
+use log::{info, LevelFilter};
 use structopt::StructOpt;
 use tls_listener::TlsListener;
 
@@ -24,7 +26,17 @@ mod tls_config;
 
 #[tokio::main]
 async fn main() -> Result<()> {
-    pretty_env_logger::init();
+    pretty_env_logger::formatted_timed_builder()
+    .format(|buf, record| {
+        writeln!(buf,
+            "{} [{}] - {}",
+            Local::now().format("%Y-%m-%dT%H:%M:%S%.6f"),
+            record.level(),
+            record.args()
+        )
+    })
+    .filter(None, LevelFilter::Info)
+    .init();
     let opt = cli::Options::from_args();
 
     // Load the default certificate authority data on startup once.

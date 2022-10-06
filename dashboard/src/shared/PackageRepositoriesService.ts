@@ -28,6 +28,10 @@ import {
   KappControllerPackageRepositoryCustomDetail,
   protobufPackage as kappControllerProtobufPackage,
 } from "gen/kubeappsapis/plugins/kapp_controller/packages/v1alpha1/kapp_controller";
+import {
+  FluxPackageRepositoryCustomDetail,
+  protobufPackage as fluxv2ProtobufPackage,
+} from "gen/kubeappsapis/plugins/fluxv2/packages/v1alpha1/fluxv2";
 import KubeappsGrpcClient from "./KubeappsGrpcClient";
 import { IPkgRepoFormData, PluginNames } from "./types";
 import { convertGrpcAuthError } from "./utils";
@@ -257,6 +261,13 @@ export class PackageRepositoriesService {
           typeUrl: `${kappControllerProtobufPackage}.KappControllerPackageRepositoryCustomDetail`,
           value: KappControllerPackageRepositoryCustomDetail.encode(
             request.customDetail as KappControllerPackageRepositoryCustomDetail,
+          ).finish(),
+        } as Any;
+      case PluginNames.PACKAGES_FLUX:
+        return {
+          typeUrl: `${fluxv2ProtobufPackage}.FluxPackageRepositoryCustomDetail`,
+          value: FluxPackageRepositoryCustomDetail.encode(
+            request.customDetail as FluxPackageRepositoryCustomDetail,
           ).finish(),
         } as Any;
       default:

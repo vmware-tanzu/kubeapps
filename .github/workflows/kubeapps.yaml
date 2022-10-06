@@ -1,0 +1,644 @@
+# Copyright 2022 VMware, Inc.
+# SPDX-License-Identifier: Apache-2.0
+
+name: Kubeapps general pipeline
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+env:
+  CHARTMUSEUM_VERSION: "3.9.0"
+  CHARTS_REPO_ORIGINAL: "bitnami/charts"
+  BRANCH_CHARTS_REPO_ORIGINAL: "master"
+  CHARTS_REPO_FORKED: "kubeapps-bot/charts"
+  BRANCH_CHARTS_REPO_FORKED: "master"
+  CI_BOT_USERNAME: "kubeapps-bot"
+  CI_BOT_EMAIL: "tanzu-kubeapps-team@vmware.com"
+  CI_BOT_GPG: "80B6EB16B1328FB18DFF2A073EBA68F3347E319D"
+  # DEBUG_MODE allows to activate some SSH debugging steps, and modify the verbosity level of some scripts (eg. e2e-tests.sh)
+  DEBUG_MODE: "false"
+  # FIXME: DEV_MODE is used to enable dev mode, used in sync chart from/to bitnami jobs to file shadow PRs while we maintain
+  # CircleCI and GHA pipelines running in parallel. This should be removed once the CircleCI pipeline is decommissioned.
+  DEV_MODE: "true"
+  SSH_KEY_KUBEAPPS_DEPLOY_FILENAME: "id_rsa_kubeapps_deploy_key"
+  SSH_KEY_FORKED_CHARTS_DEPLOY_FILENAME: "id_rsa_forked_charts_deploy_key"
+  KUBEAPPS_REPO: "vmware-tanzu/kubeapps"
+  BRANCH_KUBEAPPS_REPO: "main"
+  README_GENERATOR_REPO: "bitnami-labs/readme-generator-for-helm"
+  DOCKER_VERSION: "20.10.17"
+  DOCKER_REGISTRY_VERSION: "2.8.1"
+  GOLANG_VERSION: "1.19.1"
+  HELM_VERSION_MIN: "v3.2.0"
+  HELM_VERSION_STABLE: "v3.10.0"
+  GITHUB_VERSION: "2.16.1"
+  IMAGES_TO_PUSH: "apprepository-controller dashboard asset-syncer pinniped-proxy kubeapps-apis"
+  # IMG_DEV_TAG is the tags used for the Kubeapps docker images. Ideally there should be an IMG_PROD_TAG
+  # but its value is dynamic and GitHub actions doesn't support it in the `env` block, so it is generated
+  # as an output of the `setup` job.
+  IMG_DEV_TAG: "build-${{ github.sha }}"
+  # Apart from using a dev tag we use a different image ID to avoid polluting the tag history of the production tag
+  IMG_MODIFIER: "-ci-gha"
+  IMG_PREFIX: "kubeapps/"
+  # We use IMG_PREFIX_FOR_FORKS for development purposes, it's used when the workflow is run from a fork of the kubeapps repo
+  IMG_PREFIX_FOR_FORKS: "beni0888/"
+#  IMG_PLATFORMS: "linux/amd64, linux/arm64"
+  IMG_PLATFORMS: "linux/amd64"
+  KAPP_CONTROLLER_VERSION: "v0.41.2"
+  K8S_KIND_VERSION: "v1.22.15@sha256:bfd5eaae36849bfb3c1e3b9442f3da17d730718248939d9d547e86bbac5da586"
+  KIND_VERSION: "v0.16.0"
+  KUBECTL_VERSION: "v1.24.6"
+  MKCERT_VERSION: "v1.4.4"
+  NODE_VERSION: "16.17.1"
+  OLM_VERSION: "v0.22.0"
+  POSTGRESQL_VERSION: "14.5.0-debian-11-r14"
+  RUST_VERSION: "1.64.0"
+  SEMVER_VERSION: "3.3.0"
+
+jobs:
+  setup:
+    runs-on: ubuntu-latest
+    outputs:
+      ssh_key_kubeapps_deploy_filename: ${{ steps.set-outputs.outputs.ssh_key_kubeapps_deploy_filename }}
+      ssh_key_forked_charts_deploy_filename: ${{ steps.set-outputs.outputs.ssh_key_forked_charts_deploy_filename }}
+      img_modifier: ${{ steps.set-outputs.outputs.img_modifier }}
+      img_prefix: ${{ steps.set-outputs.outputs.img_prefix }}
+      img_dev_tag: ${{ steps.set-outputs.outputs.img_dev_tag }}
+      img_prod_tag: ${{ steps.set-outputs.outputs.img_prod_tag }}
+      postgresql_version: ${{ steps.set-outputs.outputs.postgresql_version }}
+      rust_version: ${{ steps.set-outputs.outputs.rust_version }}
+      running_on_main: ${{ steps.set-outputs.outputs.running_on_main }}
+      running_on_tag: ${{ steps.set-outputs.outputs.running_on_tag }}
+      triggered_from_fork: ${{ steps.set-outputs.outputs.triggered_from_fork }}
+    steps:
+      - name: Set outputs
+        id: set-outputs
+        run: |
+          if [[ "${GITHUB_REPOSITORY}" == "${KUBEAPPS_REPO}" ]]; then
+            echo "::set-output name=img_prefix::${IMG_PREFIX}"
+          else
+            # When running in forks (NOT triggered due to a PR from an external fork, but running the workflow in the 
+            # external repo), we push the images to a personal namespace (if configured)
+            echo "::set-output name=img_prefix::${IMG_PREFIX_FOR_FORKS}"
+          fi;
+          
+          # Check if the workflow is triggered due to a PR from an external fork
+          if [[ "${{ github.event.pull_request.head.repo.full_name }}" == "${GITHUB_REPOSITORY}" ]]; then
+            echo "::set-output name=triggered_from_fork::false"
+          else
+            echo "::set-output name=triggered_from_fork::true"            
+          fi
+          
+          if [[ ${GITHUB_REF_TYPE} == "tag" ]]; then
+            echo "::set-output name=img_prod_tag::${GITHUB_REF_NAME}"
+            echo "::set-output name=version::${GITHUB_REF_NAME}"
+          else
+            echo "::set-output name=img_prod_tag::latest"
+            echo "::set-output name=version::"
+          fi;
+          
+          if [[ ${GITHUB_REF_NAME} == ${BRANCH_KUBEAPPS_REPO} ]]; then
+            echo "::set-output name=running_on_main::true"
+          else
+            echo "::set-output name=running_on_main::false"
+          fi
+          
+          if [[ ${GITHUB_REF_TYPE} == "tag" && ${GITHUB_REF_NAME} =~ ^v[0-9]+ ]]; then
+            echo "::set-output name=running_on_tag::true"
+          else
+            echo "::set-output name=running_on_tag::false"
+          fi
+
+          echo "::set-output name=ssh_key_kubeapps_deploy_filename::${SSH_KEY_KUBEAPPS_DEPLOY_FILENAME}"
+          echo "::set-output name=ssh_key_forked_charts_deploy_filename::${SSH_KEY_FORKED_CHARTS_DEPLOY_FILENAME}"
+          echo "::set-output name=img_modifier::${IMG_MODIFIER}"
+          echo "::set-output name=img_dev_tag::${IMG_DEV_TAG}"
+          echo "::set-output name=postgresql_version::${POSTGRESQL_VERSION}"
+          echo "::set-output name=rust_version::${RUST_VERSION}"
+      - name: Show outputs
+        run: |
+          echo "SSH_KEY_KUBEAPPS_DEPLOY_FILENAME: ${{steps.set-outputs.outputs.ssh_key_kubeapps_deploy_filename}}"
+          echo "SSH_KEY_FORKED_CHARTS_DEPLOY_FILENAME: ${{steps.set-outputs.outputs.ssh_key_forked_charts_deploy_filename}}"
+          echo "IMG_MODIFIER: ${{steps.set-outputs.outputs.img_modifier}}"
+          echo "IMG_PREFIX: ${{steps.set-outputs.outputs.img_prefix}}"
+          echo "IMG_DEV_TAG: ${{steps.set-outputs.outputs.img_dev_tag}}"
+          echo "IMG_PROD_TAG: ${{steps.set-outputs.outputs.img_prod_tag}}"
+          echo "POSTGRESQL_VERSION: ${{steps.set-outputs.outputs.postgresql_version}}"
+          echo "RUST_VERSION: ${{steps.set-outputs.outputs.rust_version}}"
+          echo "RUNNING_ON_MAIN: ${{steps.set-outputs.outputs.running_on_main}}"
+          echo "RUNNING_ON_TAG: ${{steps.set-outputs.outputs.running_on_tag}}"
+          echo "TRIGGERED_FROM_FORK: ${{steps.set-outputs.outputs.triggered_from_fork}}"
+          echo "VERSION: ${{steps.set-outputs.outputs.version}}"
+
+  test_go:
+    needs:
+      - setup
+    runs-on: ubuntu-latest
+    services:
+      postgresql:
+        image: bitnami/postgresql:${{needs.setup.outputs.postgresql_version}}
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+        env:
+          ALLOW_EMPTY_PASSWORD: "yes"
+    steps:
+    - uses: actions/checkout@v3
+    - name: Set up Go
+      uses: actions/setup-go@v3
+      with:
+        go-version: ${{ env.GOLANG_VERSION }}
+    - name: Run go unit tests
+      run: make test
+    - run: make test-db
+
+  test_dashboard:
+    runs-on: ubuntu-latest
+    needs:
+      - setup
+    env:
+      # Note that the max old space setting is per worker, so running the tests
+      # with 4 workers on a 4Gb (free plan) needs 1Gb of max old space. Forcing
+      # garbage collection to start earlier with 512M per worker.
+      NODE_OPTIONS: "--max-old-space-size=512"
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+      - name: Install dashboard dependencies
+        run: yarn install --cwd=dashboard --frozen-lockfile
+      - name: Run dashboard linter
+        run: yarn --cwd=dashboard run lint
+      - name: Run dashboard unit tests
+        run: yarn --cwd=dashboard run test --maxWorkers=4 --coverage --logHeapUsage
+
+  test_pinniped_proxy:
+    needs:
+      - setup
+    runs-on: ubuntu-latest
+    container:
+      image: rust:${{needs.setup.outputs.rust_version}}
+    steps:
+      - uses: actions/checkout@v3
+      - name: Run rust unit tests
+        run: cargo test --manifest-path cmd/pinniped-proxy/Cargo.toml
+
+  test_chart_render:
+    needs:
+      - setup
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-go@v3
+        with:
+          go-version: ${{ env.GOLANG_VERSION }}
+
+      - name: "Install helm (minimum and stable)"
+        run: |
+          wget https://get.helm.sh/helm-${HELM_VERSION_MIN}-linux-amd64.tar.gz
+          tar zxf helm-$HELM_VERSION_MIN-linux-amd64.tar.gz
+          sudo mv linux-amd64/helm /usr/local/bin/
+
+          wget https://get.helm.sh/helm-${HELM_VERSION_STABLE}-linux-amd64.tar.gz
+          tar zxf helm-$HELM_VERSION_STABLE-linux-amd64.tar.gz
+          sudo mv linux-amd64/helm /usr/local/bin/helm-stable
+      - name: Run chart template test
+        run: ./script/chart-template-test.sh
+
+  build_docker_images:
+    name: "Build ${{matrix.image}} image"
+    needs:
+      - setup
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        image:
+          - apprepository-controller
+          - asset-syncer
+          - kubeapps-apis
+          - pinniped-proxy
+    steps:
+      - id: setup
+        run: |
+          echo "::set-output name=img_name::${{matrix.image}}"
+          echo "::set-output name=img_file::/tmp/${{matrix.image}}-image.tar"
+      - uses: docker/metadata-action@v4
+        id: meta
+        with:
+          images: ${{needs.setup.outputs.img_prefix}}${{steps.setup.outputs.img_name}}${{needs.setup.outputs.img_modifier}}
+          flavor: latest=true
+          tags: ${{needs.setup.outputs.img_dev_tag}}
+      - uses: docker/setup-qemu-action@v2
+      - uses: docker/setup-buildx-action@v2
+      - name: Build image
+        uses: docker/build-push-action@v2
+        with:
+          file: cmd/${{matrix.image}}/Dockerfile
+          platforms: ${{ env.IMG_PLATFORMS }}
+          tags: ${{ steps.meta.outputs.tags }}
+          build-args: ${{ needs.setup.outputs.version }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          outputs: type=docker,dest=${{ steps.setup.outputs.img_file }}
+      - name: Upload image
+        uses: actions/upload-artifact@v3
+        with:
+          name: ${{matrix.image}}-image
+          path: ${{ steps.setup.outputs.img_file }}
+
+  build_dashboard_image:
+    name: "Build dashboard image"
+    needs:
+      - setup
+    runs-on: ubuntu-latest
+    env:
+      IMG_NAME: dashboard
+    steps:
+      - id: setup
+        run: |
+          echo "::set-output name=img_name::${IMG_NAME}"
+          echo "::set-output name=img_file::/tmp/${IMG_NAME}-image.tar"
+      - uses: actions/checkout@v3
+      - uses: docker/metadata-action@v4
+        id: meta
+        with:
+          images: ${{needs.setup.outputs.img_prefix}}${{steps.setup.outputs.img_name}}${{needs.setup.outputs.img_modifier}}
+          flavor: latest=true
+          tags: ${{needs.setup.outputs.img_dev_tag}}
+      - uses: docker/setup-qemu-action@v2
+      - uses: docker/setup-buildx-action@v2
+      - name: Build image
+        uses: docker/build-push-action@v2
+        with:
+          context: dashboard
+          platforms: ${{ env.IMG_PLATFORMS }}
+          tags: ${{ steps.meta.outputs.tags }}
+          build-args: ${{ needs.setup.outputs.version }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          outputs: type=docker,dest=${{ steps.setup.outputs.img_file }}
+      - name: Upload image
+        uses: actions/upload-artifact@v3
+        with:
+          name: ${{ steps.setup.outputs.img_name }}-image
+          path: ${{ steps.setup.outputs.img_file }}
+
+  build_e2e_runner_image:
+    name: "Build E2E runner image"
+    needs:
+      - setup
+    runs-on: ubuntu-latest
+    env:
+      IMG_NAME: integration-tests
+    steps:
+      - id: setup
+        run: |
+          echo "::set-output name=img_name::${IMG_NAME}"
+          echo "::set-output name=img_file::/tmp/${IMG_NAME}-image.tar"
+      - uses: actions/checkout@v3
+      - uses: docker/metadata-action@v4
+        id: meta
+        with:
+          images: ${{needs.setup.outputs.img_prefix}}${{steps.setup.outputs.img_name}}${{needs.setup.outputs.img_modifier}}
+          flavor: latest=true
+          tags: ${{needs.setup.outputs.img_dev_tag}}
+      - uses: docker/setup-buildx-action@v2
+      - name: Build image
+        uses: docker/build-push-action@v2
+        with:
+          context: integration
+          # It doesn't make sense investing CI time in making a multiplatform image here
+          platforms: linux/amd64
+          tags: ${{ steps.meta.outputs.tags }}
+          build-args: ${{ needs.setup.outputs.version }}
+          outputs: type=docker,dest=${{ steps.setup.outputs.img_file }}
+      - name: Upload image
+        uses: actions/upload-artifact@v3
+        with:
+          name: ${{steps.setup.outputs.img_name}}-image
+          path: ${{ steps.setup.outputs.img_file }}
+
+  # Push images to docker.io/kubeapps/[image]-ci:[dev-tag]
+  push_dev_images:
+    # If the workflow is triggered from a PR from an external fork, secrets won't be available, so we cannot login into dockerhub
+    if: needs.setup.outputs.triggered_from_fork == 'false'
+    runs-on: ubuntu-latest
+    needs:
+      - setup
+      - build_docker_images
+      - build_dashboard_image
+      - build_e2e_runner_image
+    env:
+      ADDITIONAL_IMAGES_TO_PUSH: integration-tests
+      IMG_PREFIX: ${{ needs.setup.outputs.img_prefix }}
+    steps:
+      - run: echo "IMAGES_TO_PUSH=\"${IMAGES_TO_PUSH} ${ADDITIONAL_IMAGES_TO_PUSH}\"" >> $GITHUB_ENV
+      - name: Login to Docker Hub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+      - uses: actions/download-artifact@v3
+      - run: |
+          for artifact in *; do
+            echo "::debug::Processing artifact '${artifact}'"
+          
+            if [[ "${artifact}" != *"-image" ]]; then
+              echo "::notice ::Skipping artifact ${artifact}, it's not a docker image"          
+              continue
+            fi
+          
+            image=${artifact/-image/}
+            if [[ "${IMAGES_TO_PUSH}" != *"${image}"* ]]; then
+              echo "::notice ::Skipping image ${image}, it's not an image to push"
+              continue
+            fi
+
+            echo "::notice ::Loading image ${image}"
+            docker load --input "${artifact}/${artifact}.tar"
+
+            dev_image=${IMG_PREFIX}${image}${IMG_MODIFIER}:${IMG_DEV_TAG}
+            echo "::notice ::Pushing image ${dev_image}"
+            docker push $dev_image
+          done
+
+  local_e2e_tests:
+    needs:
+      - setup
+      - test_go
+      - test_dashboard
+      - test_pinniped_proxy
+      - test_chart_render
+      - build_docker_images
+      - build_dashboard_image
+      - build_e2e_runner_image
+    runs-on: ubuntu-latest
+    env:
+      DEFAULT_DEX_IP: "172.18.0.2"
+      IMG_PREFIX: ${{ needs.setup.outputs.img_prefix }}
+      TEST_UPGRADE: "1"
+      USE_MULTICLUSTER_OIDC_ENV: "true"
+      TEST_OPERATORS: "1"
+      TEST_TIMEOUT_MINUTES: 4 # Timeout minutes for each test
+    steps:
+      - uses: actions/checkout@v3
+      - name: "Install required CLI tools"
+        run: |
+          source ./script/lib/libcitools.sh
+          
+          installKind ${KIND_VERSION}
+          installKubectl ${KUBECTL_VERSION}
+          installMkcert ${MKCERT_VERSION}
+          installHelm ${HELM_VERSION_MIN}          
+          installHelm ${HELM_VERSION_STABLE} helm-stable
+      - name: "Spin up Kind cluster"
+        run: |
+          DEFAULT_DEX_IP=${DEFAULT_DEX_IP} K8S_KIND_VERSION=${K8S_KIND_VERSION} ./script/create-kind-cluster.sh
+      - name: "Copy apiserver certificates"
+        run: |
+          # dex will be running on the same node as the API server in the dev environment, so we can reuse the key and cert from the apiserver
+          docker cp kubeapps-ci-control-plane:/etc/kubernetes/pki/apiserver.crt ./devel/dex.crt
+          docker cp kubeapps-ci-control-plane:/etc/kubernetes/pki/apiserver.key ./devel/dex.key
+          sudo chown $(whoami) ./devel/dex.key
+          sudo chown $(whoami) ./devel/dex.crt
+      - name: "Install additional cluster"
+        run: |
+          DEFAULT_DEX_IP=${DEFAULT_DEX_IP} K8S_KIND_VERSION=${K8S_KIND_VERSION} ./script/create-additional-kind-cluster.sh
+      - name: "Export cluster variables"
+        run: |
+          DEX_IP=`docker network inspect kind | jq '.[0].IPAM.Config[0].Gateway' | sed  's/"//g' | awk -F. '{ print $1"."$2"."$3"."$4+1 }'`
+          ADDITIONAL_CLUSTER_IP=`docker network inspect kind | jq '.[0].IPAM.Config[0].Gateway' | sed  's/"//g' | awk -F. '{ print $1"."$2"."$3"."$4+2 }'`
+
+          echo DEFAULT_DEX_IP=$DEFAULT_DEX_IP
+          echo DEX_IP=$DEX_IP
+          echo ADDITIONAL_CLUSTER_IP=$ADDITIONAL_CLUSTER_IP
+
+          # If running kubectl without args, use the default "kubeapps-ci" cluster
+          cp ${HOME}/.kube/kind-config-kubeapps-ci ${HOME}/.kube/config
+          kubectl config set-context kind-kubeapps-ci
+
+          # If the default IP is not the proper one, the multicluster setup will fail
+          if [ "$DEFAULT_DEX_IP" != "$DEX_IP" ]; then echo "Default IP does not match with current IP used in Kind"; exit 1; fi
+
+          echo "DEFAULT_DEX_IP=${DEFAULT_DEX_IP}" >> $GITHUB_ENV
+          echo "DEX_IP=${DEX_IP}" >> $GITHUB_ENV
+          echo "ADDITIONAL_CLUSTER_IP=${ADDITIONAL_CLUSTER_IP}" >> $GITHUB_ENV
+      - name: "Load needed images into Kind"
+        run: |
+          ./script/load-kind-image.sh docker.io/bitnami/apache:2.4.48-debian-10-r74 kubeapps-ci kubeapps-ci-additional &&
+          ./script/load-kind-image.sh docker.io/bitnami/apache:2.4.48-debian-10-r75 kubeapps-ci kubeapps-ci-additional &&
+          ./script/load-kind-image.sh registry:$DOCKER_REGISTRY_VERSION kubeapps-ci kubeapps-ci-additional
+      - name: "Download docker images"
+        uses: actions/download-artifact@v3
+        with:
+          path: /tmp/images
+      - name: "Load CI images in the cluster"
+        run: |
+          source ./script/lib/liblog.sh
+          for path in /tmp/images/*; do 
+            image=$(basename "$path")
+            info "Loading image ${image}"
+            kind load image-archive "${path}/${image}.tar" --name kubeapps-ci; 
+          done
+      - name: "Install multicluster deps"
+        run: |
+          ./script/install-multicluster-deps.sh
+      - name: "Run e2e tests script"
+        run: |
+          # If we want to test the latest version instead we override the image to be used
+          if [[ -n "${TEST_LATEST_RELEASE:-}" ]]; then
+            source ./script/chart_sync_utils.sh
+            latest="$(latestReleaseTag)"
+            IMG_DEV_TAG=${latest/v/}
+            IMG_MODIFIER=""
+          fi
+          
+          test_command="./script/e2e-test.sh \
+          ${USE_MULTICLUSTER_OIDC_ENV} \
+          ${OLM_VERSION} \
+          ${IMG_DEV_TAG} \
+          ${IMG_MODIFIER} \
+          ${TEST_TIMEOUT_MINUTES} \
+          ${DEFAULT_DEX_IP} \
+          ${ADDITIONAL_CLUSTER_IP} \
+          ${KAPP_CONTROLLER_VERSION} \
+          ${CHARTMUSEUM_VERSION}"          
+          
+          if IMG_PREFIX=${IMG_PREFIX} ${test_command}; then
+            echo "TEST_RESULT=0" >> $GITHUB_ENV
+            exit 0
+          else
+            echo "TEST_RESULT=1" >> $GITHUB_ENV
+            exit 1
+          fi
+      - name: "Print k8s KubeappsAPIs logs if the tests fail"
+        run: kubectl --context kind-kubeapps-ci --kubeconfig ${HOME}/.kube/kind-config-kubeapps-ci logs -n kubeapps deploy/kubeapps-internal-kubeappsapis
+        if: failure() && env.TEST_RESULT == 1
+        continue-on-error: true
+      - name: 'Upload Artifacts'
+        if: failure()
+        uses: actions/upload-artifact@v3
+        with:
+          name: e2e_tests_reports
+          path: integration/reports
+      - name: Setup upterm session
+        uses: lhotari/action-upterm@v1
+        if: failure() && env.DEBUG_MODE == 'true'
+
+  push_images:
+    if: needs.setup.outputs.running_on_main == 'true' || needs.setup.outputs.running_on_tag == 'true'
+    runs-on: ubuntu-latest
+    needs:
+      - setup
+      - local_e2e_tests
+    env:
+      IMG_PROD_TAG: ${{ needs.setup.outputs.img_prod_tag }}
+      IMG_PREFIX: ${{ needs.setup.outputs.img_prefix }}
+    steps:
+      - name: Login to Docker Hub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+      - uses: actions/download-artifact@v3
+      - run: |
+          for path in ./*; do
+            artifact=$(basename "$path")
+          
+            if [[ "${artifact}" != *"-image" ]]; then
+              echo "::notice ::Skipping artifact ${artifact}, it's not a docker image"          
+              continue
+            fi
+            
+            image=${artifact/-image/}
+            if [[ "${IMAGES_TO_PUSH}" != *"${image}"* ]]; then
+              echo "::notice ::Skipping image ${image}, it's not an image to push"
+              continue
+            fi
+
+            echo "::notice ::Loading image ${image}"
+            docker load --input "${image}-image.tar"
+
+            dev_image=${IMG_PREFIX}${image}${IMG_MODIFIER}:${IMG_DEV_TAG}
+            prod_image=${IMG_PREFIX}${image}:${IMG_PROD_TAG}
+            docker tag ${dev_image} ${prod_image}
+
+            echo "::notice ::Pushing image ${prod_image}"
+            docker push $prod_image
+          done
+
+  sync_chart_from_bitnami:
+    needs:
+      - setup
+    if: needs.setup.outputs.running_on_main == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: "Install CLI tools"
+        run: |
+          source ./script/lib/libcitools.sh
+          
+          installGithubCLI ${GITHUB_VERSION}
+          installSemver {SEMVER_VERSION}
+          installGPGKey ${{secrets.GPG_KEY_PUBLIC}} ${{secrets.GPG_KEY_PRIVATE}} ${CI_BOT_GPG} ${CI_BOT_EMAIL}
+      - name: "Install SSH key: Kubeapps Deploy Key"
+        uses: shimataro/ssh-key-action@v2
+        with:
+          key: ${{ secrets.SSH_KEY_KUBEAPPS_DEPLOY }}
+          name: ${{ needs.setup.outputs.ssh_key_kubeapps_deploy_filename }}
+          known_hosts: |
+            |1|2YkQ4jjACcc/1rgSBszyeEuKxW4=|hO4GB0XMwQj1gYQDmaS304aU8Tc= ssh-rsa AAAAB3NzaC1yc2EAAAABIwAAAQEAq2A7hRGmdnm9tUDbO9IDSwBK6TbQa+PXYPCPy6rbTrTtw7PHkccKrpp0yVhp5HdEIcKr6pLlVDBfOLX9QUsyCOV0wzfjIJNlGEYsdlLJizHhbn2mUjvSAHQqZETYP81eFzLQNnPHt4EVVUh7VfDESU84KezmD5QlWpXLmvU31/yMf+Se8xhHTvKSCZIFImWwoG6mbUoWf9nzpIoaSjB+weqqUUmpaaasXVal72J+UX2B+2RPW3RcT0eOzQgqlJL3RKrTJvdsjE3JEAvGq3lGHSZXy28G3skua2SmVi/w4yCE6gbODqnTWlg7+wC604ydGXA8VJiS5ap43JXiUFFAaQ==
+          if_key_exists: ignore
+
+      - name: "Install SSH key: Forked Charts Deploy Key"
+        uses: shimataro/ssh-key-action@v2
+        with:
+          key: ${{ secrets.SSH_KEY_FORKED_CHARTS_DEPLOY }}
+          name: ${{ needs.setup.outputs.ssh_key_forked_charts_deploy_filename }}
+          known_hosts: |
+            |1|2YkQ4jjACcc/1rgSBszyeEuKxW4=|hO4GB0XMwQj1gYQDmaS304aU8Tc= ssh-rsa AAAAB3NzaC1yc2EAAAABIwAAAQEAq2A7hRGmdnm9tUDbO9IDSwBK6TbQa+PXYPCPy6rbTrTtw7PHkccKrpp0yVhp5HdEIcKr6pLlVDBfOLX9QUsyCOV0wzfjIJNlGEYsdlLJizHhbn2mUjvSAHQqZETYP81eFzLQNnPHt4EVVUh7VfDESU84KezmD5QlWpXLmvU31/yMf+Se8xhHTvKSCZIFImWwoG6mbUoWf9nzpIoaSjB+weqqUUmpaaasXVal72J+UX2B+2RPW3RcT0eOzQgqlJL3RKrTJvdsjE3JEAvGq3lGHSZXy28G3skua2SmVi/w4yCE6gbODqnTWlg7+wC604ydGXA8VJiS5ap43JXiUFFAaQ==
+          if_key_exists: ignore
+      - # This is a key pair
+        # public key uploaded to GitHub as a deploy key with write permissions,
+        # private key stored as a secret.
+        name: Start ssh-agent and configure the key
+        run: |
+          eval "$(ssh-agent -s)"
+          # Deployment key uploaded to the vmware-tanzu/kubeapps repository
+          ssh-add ~/.ssh/${SSH_KEY_KUBEAPPS_DEPLOY_FILENAME}
+          # Deployment key uploaded to the kubeapps-bot/charts repository
+          ssh-add ~/.ssh/${SSH_KEY_FORKED_CHARTS_DEPLOY_FILENAME}
+      -
+        # Assuming there is a personal access token created in GitHub granted with the scopes
+        # "repo:status", "public_repo" and "read:org"
+        # This token is passed as a GITHUB_TOKEN from CI
+        name: Run the check_upstream_chart script
+        run: |
+          ./script/chart_upstream_checker.sh \
+              ${CI_BOT_USERNAME} \
+              ${CI_BOT_EMAIL} \
+              ${CI_BOT_GPG} \
+              ${SSH_KEY_FORKED_CHARTS_DEPLOY_FILENAME} \
+              ${CHARTS_REPO_ORIGINAL} \
+              ${BRANCH_CHARTS_REPO_ORIGINAL} \
+              ${CHARTS_REPO_FORKED} \
+              ${BRANCH_CHARTS_REPO_FORKED} \
+              ${KUBEAPPS_REPO} \
+              ${BRANCH_KUBEAPPS_REPO} \
+              ${README_GENERATOR_REPO} \
+              ${DEV_MODE}
+
+  sync_chart_to_bitnami:
+    needs:
+      - setup
+    if: needs.setup.outputs.running_on_tag == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: "Install CLI tools"
+        run: |
+          source ./script/lib/libcitools.sh
+
+          installGithubCLI ${GITHUB_VERSION}
+          installSemver {SEMVER_VERSION}
+          installGPGKey ${{secrets.GPG_KEY_PUBLIC}} ${{secrets.GPG_KEY_PRIVATE}} ${CI_BOT_GPG} ${CI_BOT_EMAIL}
+      - name: "Install SSH key: Forked Charts Deploy Key"
+        uses: shimataro/ssh-key-action@v2
+        with:
+          key: ${{ secrets.SSH_KEY_FORKED_CHARTS_DEPLOY }}
+          name: ${{ needs.setup.outputs.ssh_key_forked_charts_deploy_filename }}
+          known_hosts: |
+            |1|2YkQ4jjACcc/1rgSBszyeEuKxW4=|hO4GB0XMwQj1gYQDmaS304aU8Tc= ssh-rsa AAAAB3NzaC1yc2EAAAABIwAAAQEAq2A7hRGmdnm9tUDbO9IDSwBK6TbQa+PXYPCPy6rbTrTtw7PHkccKrpp0yVhp5HdEIcKr6pLlVDBfOLX9QUsyCOV0wzfjIJNlGEYsdlLJizHhbn2mUjvSAHQqZETYP81eFzLQNnPHt4EVVUh7VfDESU84KezmD5QlWpXLmvU31/yMf+Se8xhHTvKSCZIFImWwoG6mbUoWf9nzpIoaSjB+weqqUUmpaaasXVal72J+UX2B+2RPW3RcT0eOzQgqlJL3RKrTJvdsjE3JEAvGq3lGHSZXy28G3skua2SmVi/w4yCE6gbODqnTWlg7+wC604ydGXA8VJiS5ap43JXiUFFAaQ==
+          if_key_exists: ignore
+      - # This is a key pair
+        # public key uploaded to GitHub as a deploy key with write permissions,
+        # private key stored as a secret.
+        name: Start ssh-agent and configure the key
+        run: |
+          eval "$(ssh-agent -s)"
+          # Deployment key uploaded to the kubeapps-bot/charts repository
+          ssh-add ~/.ssh/${SSH_KEY_FORKED_CHARTS_DEPLOY_FILENAME}
+      - # Assuming there is a personal access token created in GitHub granted with the scopes
+        # "repo:status", "public_repo" and "read:org"
+        # This token is passed as a GITHUB_TOKEN from CI
+        name: Run the chart_sync script
+        run: |
+          ./script/chart_sync.sh \
+              ${CI_BOT_USERNAME} \
+              ${CI_BOT_EMAIL} \
+              ${CI_BOT_GPG} \
+              ${CHARTS_REPO_ORIGINAL} \
+              ${BRANCH_CHARTS_REPO_ORIGINAL} \
+              ${CHARTS_REPO_FORKED} \
+              ${BRANCH_CHARTS_REPO_FORKED} \
+              ${DEV_MODE}

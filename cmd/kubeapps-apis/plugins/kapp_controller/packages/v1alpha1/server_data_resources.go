@@ -8,11 +8,11 @@ import (
 	"fmt"
 	"strings"
 
-	ctlapp "github.com/k14s/kapp/pkg/kapp/app"
-	ctlres "github.com/k14s/kapp/pkg/kapp/resources"
 	kappctrlv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
 	packagingv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/packaging/v1alpha1"
 	datapackagingv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/apis/datapackaging/v1alpha1"
+	ctlapp "github.com/vmware-tanzu/carvel-kapp/pkg/kapp/app"
+	ctlres "github.com/vmware-tanzu/carvel-kapp/pkg/kapp/resources"
 	corev1 "github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -41,7 +41,7 @@ const (
 
 // See https://carvel.dev/kapp-controller/docs/latest/packaging/#package-cr
 func (s *Server) getPkgResource(ctx context.Context, cluster, namespace string) (dynamic.ResourceInterface, error) {
-	_, dynClient, err := s.GetClients(ctx, cluster)
+	dynClient, err := s.clientGetter.Dynamic(ctx, cluster)
 	if err != nil {
 		return nil, err
 	}
@@ -55,7 +55,7 @@ func (s *Server) getPkgResource(ctx context.Context, cluster, namespace string) 
 
 // See https://carvel.dev/kapp-controller/docs/latest/packaging/#package-metadata
 func (s *Server) getPkgMetadataResource(ctx context.Context, cluster, namespace string) (dynamic.ResourceInterface, error) {
-	_, dynClient, err := s.GetClients(ctx, cluster)
+	dynClient, err := s.clientGetter.Dynamic(ctx, cluster)
 	if err != nil {
 		return nil, err
 	}
@@ -69,7 +69,7 @@ func (s *Server) getPkgMetadataResource(ctx context.Context, cluster, namespace 
 
 // See https://carvel.dev/kapp-controller/docs/latest/packaging/#package-install
 func (s *Server) getPkgInstallResource(ctx context.Context, cluster, namespace string) (dynamic.ResourceInterface, error) {
-	_, dynClient, err := s.GetClients(ctx, cluster)
+	dynClient, err := s.clientGetter.Dynamic(ctx, cluster)
 	if err != nil {
 		return nil, err
 	}
@@ -83,7 +83,7 @@ func (s *Server) getPkgInstallResource(ctx context.Context, cluster, namespace s
 
 // See https://carvel.dev/kapp-controller/docs/latest/packaging/#packagerepository-cr
 func (s *Server) getPkgRepositoryResource(ctx context.Context, cluster, namespace string) (dynamic.ResourceInterface, error) {
-	_, dynClient, err := s.GetClients(ctx, cluster)
+	dynClient, err := s.clientGetter.Dynamic(ctx, cluster)
 	if err != nil {
 		return nil, err
 	}
@@ -97,7 +97,7 @@ func (s *Server) getPkgRepositoryResource(ctx context.Context, cluster, namespac
 
 // See https://carvel.dev/kapp-controller/docs/latest/app-spec/
 func (s *Server) getAppResource(ctx context.Context, cluster, namespace string) (dynamic.ResourceInterface, error) {
-	_, dynClient, err := s.GetClients(ctx, cluster)
+	dynClient, err := s.clientGetter.Dynamic(ctx, cluster)
 	if err != nil {
 		return nil, err
 	}
@@ -112,6 +112,7 @@ func (s *Server) getAppResource(ctx context.Context, cluster, namespace string) 
 //  Single resource getters
 
 // getPkg returns the package for the given cluster, namespace and identifier
+//
 //nolint:unused
 func (s *Server) getPkg(ctx context.Context, cluster, namespace, identifier string) (*datapackagingv1alpha1.Package, error) {
 	var pkg datapackagingv1alpha1.Package
@@ -204,11 +205,11 @@ func (s *Server) getApp(ctx context.Context, cluster, namespace, identifier stri
 
 // get Secret
 func (s *Server) getSecret(ctx context.Context, cluster, namespace, name string) (*k8scorev1.Secret, error) {
-	client, _, err := s.GetClients(ctx, cluster)
+	typedClient, err := s.clientGetter.Typed(ctx, cluster)
 	if err != nil {
 		return nil, err
 	}
-	secret, err := client.CoreV1().Secrets(namespace).Get(ctx, name, metav1.GetOptions{})
+	secret, err := typedClient.CoreV1().Secrets(namespace).Get(ctx, name, metav1.GetOptions{})
 	if err != nil {
 		return nil, err
 	}
@@ -340,6 +341,7 @@ func (s *Server) getPkgRepositories(ctx context.Context, cluster, namespace stri
 }
 
 // getApps returns the list of apps for the given cluster and namespace
+//
 //nolint:unused
 func (s *Server) getApps(ctx context.Context, cluster, namespace, identifier string) ([]*kappctrlv1alpha1.App, error) {
 	resource, err := s.getAppResource(ctx, cluster, namespace)
@@ -420,11 +422,11 @@ func (s *Server) createPkgRepository(ctx context.Context, cluster, namespace str
 
 // create Secret
 func (s *Server) createSecret(ctx context.Context, cluster string, secret *k8scorev1.Secret) (*k8scorev1.Secret, error) {
-	client, _, err := s.GetClients(ctx, cluster)
+	typedClient, err := s.clientGetter.Typed(ctx, cluster)
 	if err != nil {
 		return nil, err
 	}
-	secret, err = client.CoreV1().Secrets(secret.GetNamespace()).Create(ctx, secret, metav1.CreateOptions{})
+	secret, err = typedClient.CoreV1().Secrets(secret.GetNamespace()).Create(ctx, secret, metav1.CreateOptions{})
 	if err != nil {
 		return nil, err
 	}
@@ -461,11 +463,11 @@ func (s *Server) deletePkgRepository(ctx context.Context, cluster, namespace, id
 
 // create Secret
 func (s *Server) deleteSecret(ctx context.Context, cluster, namespace, name string) error {
-	client, _, err := s.GetClients(ctx, cluster)
+	typedClient, err := s.clientGetter.Typed(ctx, cluster)
 	if err != nil {
 		return err
 	}
-	err = client.CoreV1().Secrets(namespace).Delete(ctx, name, metav1.DeleteOptions{})
+	err = typedClient.CoreV1().Secrets(namespace).Delete(ctx, name, metav1.DeleteOptions{})
 	if err != nil {
 		return err
 	}
@@ -504,7 +506,7 @@ func (s *Server) updatePkgInstall(ctx context.Context, cluster, namespace string
 // getAppUsedGVs returns the list of GVs used by the given app, falling back to pre 0.47 Kapp version behavior with regards to suffixes
 func getAppUsedGVs(appsClient ctlapp.Apps, packageId string, namespace string, useNewCtrlAppSuffix bool) ([]schema.GroupVersion, ctlapp.App, error) {
 	// We first try to fetch the app using the suffixed name (kapp >= 0.47)
-	appName := fmt.Sprintf("%s%s", packageId, ctlapp.AppSuffix)
+	appName := fmt.Sprintf("%s%s", packageId, ".app")
 
 	// Workaround to also support pre-0.47 kapp versions, whose ConfigMap were suffixed with "-ctrl" instead of ".apps.k14s.io"
 	if !useNewCtrlAppSuffix {
@@ -617,11 +619,11 @@ func (s *Server) updatePkgRepository(ctx context.Context, cluster, namespace str
 
 // create Secret
 func (s *Server) updateSecret(ctx context.Context, cluster string, secret *k8scorev1.Secret) (*k8scorev1.Secret, error) {
-	client, _, err := s.GetClients(ctx, cluster)
+	typedClient, err := s.clientGetter.Typed(ctx, cluster)
 	if err != nil {
 		return nil, err
 	}
-	secret, err = client.CoreV1().Secrets(secret.GetNamespace()).Update(ctx, secret, metav1.UpdateOptions{})
+	secret, err = typedClient.CoreV1().Secrets(secret.GetNamespace()).Update(ctx, secret, metav1.UpdateOptions{})
 	if err != nil {
 		return nil, err
 	}

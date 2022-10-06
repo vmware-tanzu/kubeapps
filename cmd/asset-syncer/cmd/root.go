@@ -7,7 +7,6 @@ import (
 	"flag"
 	"os"
 
-	"github.com/mitchellh/go-homedir"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
@@ -16,7 +15,6 @@ import (
 )
 
 var (
-	cfgFile   string
 	serveOpts server.Config
 	// This Version var is updated during the build
 	// see the -ldflags option in the cmd/asset-syncer/Dockerfile
@@ -129,7 +127,7 @@ func setRootFlags(c *cobra.Command) {
 	c.PersistentFlags().BoolVar(&serveOpts.TlsInsecureSkipVerify, "tls-insecure-skip-verify", false, "Skip TLS verification")
 	c.PersistentFlags().StringVar(&serveOpts.FilterRules, "filter-rules", "", "JSON blob with the rules to filter assets")
 	c.PersistentFlags().BoolVar(&serveOpts.PassCredentials, "pass-credentials", false, "pass credentials to all domains")
-	c.PersistentFlags().StringVar(&serveOpts.GlobalReposNamespace, "global-repos-namespace", "kubeapps", "Namespace for global repos")
+	c.PersistentFlags().StringVar(&serveOpts.GlobalPackagingNamespace, "global-repos-namespace", "kubeapps", "Namespace for global repos")
 }
 
 func setSyncFlags(c *cobra.Command) {
@@ -138,20 +136,6 @@ func setSyncFlags(c *cobra.Command) {
 
 // initConfig reads in config file and ENV variables if set.
 func initConfig() {
-	if cfgFile != "" {
-		// Use config file from the flag.
-		viper.SetConfigFile(cfgFile)
-	} else {
-		// Find home directory.
-		home, err := homedir.Dir()
-		cobra.CheckErr(err)
-
-		// Search config in home directory with name ".kubeops" (without extension).
-		viper.AddConfigPath(home)
-		viper.SetConfigType("yaml")
-		viper.SetConfigName(".kubeops")
-	}
-
 	viper.AutomaticEnv() // read in environment variables that match
 
 	// If a config file is found, read it in.

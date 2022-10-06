@@ -16,6 +16,7 @@ import (
 	"github.com/google/go-cmp/cmp/cmpopts"
 	corev1 "github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
 	plugins "github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/core/plugins/v1alpha1"
+	fluxplugin "github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/plugins/fluxv2/packages/v1alpha1"
 	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/fluxv2/packages/v1alpha1/common"
 	"golang.org/x/sync/semaphore"
 	"google.golang.org/grpc/codes"
@@ -32,7 +33,7 @@ import (
 // 1) kind cluster with flux deployed
 // 2) kubeapps apis apiserver service running with fluxv2 plug-in enabled, port forwarded to 8080, e.g.
 //      kubectl -n kubeapps port-forward svc/kubeapps-internal-kubeappsapis 8080:8080
-// 3) run './kind-cluster-setup.sh deploy' once prior to these tests
+// 3) run './integ-test-env.sh deploy' once prior to these tests
 
 // this integration test is meant to test a scenario when the redis cache is confiured with maxmemory
 // too small to be able to fit all the repos needed to satisfy the request for GetAvailablePackageSummaries
@@ -518,68 +519,21 @@ func TestKindClusterRepoAndChartRBAC(t *testing.T) {
 	}
 }
 
-func TestKindClusterAvailablePackageEndpointsForOCI(t *testing.T) {
-	fluxPluginClient, fluxPluginReposClient, err := checkEnv(t)
-	if err != nil {
-		t.Fatal(err)
-	}
+type testCaseKindClusterAvailablePackageEndpointsForOCISpec struct {
+	testName        string
+	registryUrl     string
+	secret          *apiv1.Secret
+	unauthenticated bool
+	unauthorized    bool
+}
 
+func testCaseKindClusterAvailablePackageEndpointsForGitHub(t *testing.T) []testCaseKindClusterAvailablePackageEndpointsForOCISpec {
 	ghUser := os.Getenv("GITHUB_USER")
 	ghToken := os.Getenv("GITHUB_TOKEN")
 	if ghUser == "" || ghToken == "" {
 		t.Fatalf("Environment variables GITHUB_USER and GITHUB_TOKEN need to be set to run this test")
 	}
-
-	if err := setupHarborStefanProdanClone(t); err != nil {
-		t.Fatal(err)
-	}
-
-	harborRobotName, harborRobotSecret, err := setupHarborRobotAccount(t)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	// ref: https://cloud.google.com/artifact-registry/docs/helm/authentication#token
-	gcpUser := "oauth2accesstoken"
-	gcpPasswd, err := gcloudPrintAccessToken(t)
-	if err != nil {
-		t.Fatal(err)
-	}
-	// ref https://cloud.google.com/artifact-registry/docs/helm/authentication#json-key
-	gcpKeyFile := os.Getenv("GOOGLE_APPLICATION_CREDENTIALS")
-	if gcpKeyFile == "" {
-		t.Fatalf("Environment variable [GOOGLE_APPLICATION_CREDENTIALS] needs to be set to run this test")
-	}
-
-	gcpUser2 := "_json_key"
-	gcpServer2 := "us-west1-docker.pkg.dev"
-	gcpPasswd2, err := os.ReadFile(gcpKeyFile)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	// per agamez request (slack thread 8/31/22)
-	harborCorpVMwareHost := os.Getenv("HARBOR_VMWARE_CORP_HOST")
-	if harborCorpVMwareHost == "" {
-		t.Fatal("Environment variable [HARBOR_VMWARE_CORP_HOST] needs to be set to run this test")
-	}
-	harborCorpVMwareRepoUrl := "oci://" + harborCorpVMwareHost + "/stefanprodan-podinfo-clone"
-	harborCorpVMwareRepoRobotUser := os.Getenv("HARBOR_VMWARE_CORP_ROBOT_USER")
-	if harborCorpVMwareRepoRobotUser == "" {
-		t.Fatal("Environment variable [HARBOR_VMWARE_CORP_ROBOT_USER] needs to be set to run this test")
-	}
-	harborCorpVMwareRepoRobotSecret := os.Getenv("HARBOR_VMWARE_CORP_ROBOT_SECRET")
-	if harborCorpVMwareRepoRobotSecret == "" {
-		t.Fatal("Environment variable [HARBOR_VMWARE_CORP_ROBOT_SECRET] needs to be set to run this test")
-	}
-
-	testCases := []struct {
-		testName        string
-		registryUrl     string
-		secret          *apiv1.Secret
-		unauthenticated bool
-		unauthorized    bool
-	}{
+	return []testCaseKindClusterAvailablePackageEndpointsForOCISpec{
 		{
 			testName:    "Testing [" + github_stefanprodan_podinfo_oci_registry_url + "] with basic auth secret",
 			registryUrl: github_stefanprodan_podinfo_oci_registry_url,
@@ -599,32 +553,35 @@ func TestKindClusterAvailablePackageEndpointsForOCI(t *testing.T) {
 				"ghcr.io", ghUser, ghToken,
 			),
 		},
-		// TODO (gfichtenholt) harbor plainHTTP (not HTTPS) repo with robot account
-		//   this may or may not work see https://github.com/fluxcd/source-controller/issues/807
-		// TODO (gfichtenholt) TLS secret with CA
-		// TODO (gfichtenholt) TLS secret with CA, pub, priv
+	}
+}
 
-		/*
-			{
-				// this gets set up in ./testdata/kind-cluster-setup.sh
-				// currently fails with AuthenticationFailed: failed to log into registry
-				//  'oci://registry-app-svc.default.svc.cluster.local:5000/helm-charts':
-				// Get "https://registry-app-svc.default.svc.cluster.local:5000/v2/":
-				// http: server gave HTTP response to HTTPS client
-				// the error comes from flux source-controller
-				// opened a new issue per souleb's request:
-				// https://github.com/fluxcd/source-controller/issues/805
+func testCaseKindClusterAvailablePackageEndpointsForHarbor(t *testing.T) []testCaseKindClusterAvailablePackageEndpointsForOCISpec {
+	if err := setupHarborStefanProdanClone(t); err != nil {
+		t.Fatal(err)
+	}
 
-				testName:    "Testing [" + in_cluster_oci_registry_url + "]",
-				registryUrl: in_cluster_oci_registry_url,
-				secret: newBasicAuthSecret(types.NamespacedName{
-					Name:      "oci-repo-secret-" + randSeq(4),
-					Namespace: "default"},
-					"foo",
-					"bar",
-				),
-			},
-		*/
+	harborRobotName, harborRobotSecret, err := setupHarborRobotAccount(t)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// per agamez request (slack thread 8/31/22)
+	harborCorpVMwareHost := os.Getenv("HARBOR_VMWARE_CORP_HOST")
+	if harborCorpVMwareHost == "" {
+		t.Fatal("Environment variable [HARBOR_VMWARE_CORP_HOST] needs to be set to run this test")
+	}
+	harborCorpVMwareRepoUrl := "oci://" + harborCorpVMwareHost + "/kubeapps_flux_integration"
+	harborCorpVMwareRepoRobotUser := os.Getenv("HARBOR_VMWARE_CORP_ROBOT_USER")
+	if harborCorpVMwareRepoRobotUser == "" {
+		t.Fatal("Environment variable [HARBOR_VMWARE_CORP_ROBOT_USER] needs to be set to run this test")
+	}
+	harborCorpVMwareRepoRobotSecret := os.Getenv("HARBOR_VMWARE_CORP_ROBOT_SECRET")
+	if harborCorpVMwareRepoRobotSecret == "" {
+		t.Fatal("Environment variable [HARBOR_VMWARE_CORP_ROBOT_SECRET] needs to be set to run this test")
+	}
+
+	return []testCaseKindClusterAvailablePackageEndpointsForOCISpec{
 		{
 			testName:    "Testing [" + harbor_stefanprodan_podinfo_oci_registry_url + "] with basic auth secret (admin)",
 			registryUrl: harbor_stefanprodan_podinfo_oci_registry_url,
@@ -644,46 +601,6 @@ func TestKindClusterAvailablePackageEndpointsForOCI(t *testing.T) {
 				harborRobotName,
 				harborRobotSecret,
 			),
-		},
-		{
-			testName:    "Testing [" + gcp_stefanprodan_podinfo_oci_registry_url + "] with service access token",
-			registryUrl: gcp_stefanprodan_podinfo_oci_registry_url,
-			secret: newBasicAuthSecret(types.NamespacedName{
-				Name:      "oci-repo-secret-" + randSeq(4),
-				Namespace: "default"},
-				gcpUser,
-				string(gcpPasswd),
-			),
-		},
-		{
-			testName:    "Testing [" + gcp_stefanprodan_podinfo_oci_registry_url + "] with JSON key",
-			registryUrl: gcp_stefanprodan_podinfo_oci_registry_url,
-			secret: newDockerConfigJsonSecret(types.NamespacedName{
-				Name:      "oci-repo-secret-" + randSeq(4),
-				Namespace: "default"},
-				gcpServer2,
-				gcpUser2,
-				string(gcpPasswd2),
-			),
-		},
-		// negative test for no secret
-		{
-			testName:        "Testing [" + gcp_stefanprodan_podinfo_oci_registry_url + "] without a secret",
-			registryUrl:     gcp_stefanprodan_podinfo_oci_registry_url,
-			unauthenticated: true,
-		},
-		// negative test for bad username/secret
-		{
-			testName:    "Testing [" + gcp_stefanprodan_podinfo_oci_registry_url + "] bad username/secret",
-			registryUrl: gcp_stefanprodan_podinfo_oci_registry_url,
-			secret: newDockerConfigJsonSecret(types.NamespacedName{
-				Name:      "oci-repo-secret-" + randSeq(4),
-				Namespace: "default"},
-				gcpServer2,
-				"kaka",
-				"kaka",
-			),
-			unauthorized: true,
 		},
 		// harbor private repo (admin)
 		{
@@ -734,15 +651,120 @@ func TestKindClusterAvailablePackageEndpointsForOCI(t *testing.T) {
 				harborCorpVMwareRepoRobotSecret),
 		},
 	}
+}
 
-	adminName := types.NamespacedName{
-		Name:      "test-admin-" + randSeq(4),
-		Namespace: "default",
-	}
-	grpcContext, err := newGrpcAdminContext(t, adminName)
+func testCaseKindClusterAvailablePackageEndpointsForGcp(t *testing.T) []testCaseKindClusterAvailablePackageEndpointsForOCISpec {
+	// ref: https://cloud.google.com/artifact-registry/docs/helm/authentication#token
+	gcpUser := "oauth2accesstoken"
+	gcpPasswd, err := gcloudPrintAccessToken(t)
 	if err != nil {
 		t.Fatal(err)
 	}
+	// ref https://cloud.google.com/artifact-registry/docs/helm/authentication#json-key
+	gcpKeyFile := os.Getenv("GOOGLE_APPLICATION_CREDENTIALS")
+	if gcpKeyFile == "" {
+		t.Fatalf("Environment variable [GOOGLE_APPLICATION_CREDENTIALS] needs to be set to run this test")
+	}
+
+	gcpUser2 := "_json_key"
+	gcpServer2 := "us-west1-docker.pkg.dev"
+	gcpPasswd2, err := os.ReadFile(gcpKeyFile)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	return []testCaseKindClusterAvailablePackageEndpointsForOCISpec{
+		{
+			testName:    "Testing [" + gcp_stefanprodan_podinfo_oci_registry_url + "] with service access token",
+			registryUrl: gcp_stefanprodan_podinfo_oci_registry_url,
+			secret: newBasicAuthSecret(types.NamespacedName{
+				Name:      "oci-repo-secret-" + randSeq(4),
+				Namespace: "default"},
+				gcpUser,
+				string(gcpPasswd),
+			),
+		},
+		{
+			testName:    "Testing [" + gcp_stefanprodan_podinfo_oci_registry_url + "] with JSON key",
+			registryUrl: gcp_stefanprodan_podinfo_oci_registry_url,
+			secret: newDockerConfigJsonSecret(types.NamespacedName{
+				Name:      "oci-repo-secret-" + randSeq(4),
+				Namespace: "default"},
+				gcpServer2,
+				gcpUser2,
+				string(gcpPasswd2),
+			),
+		},
+		// negative test for no secret
+		{
+			testName:        "Testing [" + gcp_stefanprodan_podinfo_oci_registry_url + "] without a secret",
+			registryUrl:     gcp_stefanprodan_podinfo_oci_registry_url,
+			unauthenticated: true,
+		},
+		// negative test for bad username/secret
+		{
+			testName:    "Testing [" + gcp_stefanprodan_podinfo_oci_registry_url + "] bad username/secret",
+			registryUrl: gcp_stefanprodan_podinfo_oci_registry_url,
+			secret: newDockerConfigJsonSecret(types.NamespacedName{
+				Name:      "oci-repo-secret-" + randSeq(4),
+				Namespace: "default"},
+				gcpServer2,
+				"kaka",
+				"kaka",
+			),
+			unauthorized: true,
+		},
+	}
+}
+
+func TestKindClusterAvailablePackageEndpointsForOCI(t *testing.T) {
+	fluxPluginClient, fluxPluginReposClient, err := checkEnv(t)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// this is written this way so its relatively easy to comment out and run just a subset
+	// of the test cases when debugging failures
+	testCases := []testCaseKindClusterAvailablePackageEndpointsForOCISpec{}
+	testCases = append(testCases, testCaseKindClusterAvailablePackageEndpointsForGitHub(t)...)
+	testCases = append(testCases, testCaseKindClusterAvailablePackageEndpointsForHarbor(t)...)
+	testCases = append(testCases, testCaseKindClusterAvailablePackageEndpointsForGcp(t)...)
+
+	// TODO (gfichtenholt) harbor plainHTTP (not HTTPS) repo with robot account
+	//   this may or may not work see https://github.com/fluxcd/source-controller/issues/807
+	// TODO (gfichtenholt) TLS secret with CA
+	// TODO (gfichtenholt) TLS secret with CA, pub, priv assuming Flux supports it
+
+	/*
+		{
+			// this gets set up in ./testdata/integ-test-env.sh
+			// currently fails with AuthenticationFailed: failed to log into registry
+			//  'oci://registry-app-svc.default.svc.cluster.local:5000/helm-charts':
+			// Get "https://registry-app-svc.default.svc.cluster.local:5000/v2/":
+			// http: server gave HTTP response to HTTPS client
+			// the error comes from flux source-controller
+			// opened a new issue per souleb's request:
+			// https://github.com/fluxcd/source-controller/issues/805
+
+			testName:    "Testing [" + in_cluster_oci_registry_url + "]",
+			registryUrl: in_cluster_oci_registry_url,
+			secret: newBasicAuthSecret(types.NamespacedName{
+				Name:      "oci-repo-secret-" + randSeq(4),
+				Namespace: "default"},
+				"foo",
+				"bar",
+			),
+		},
+	*/
+
+	testKindClusterAvailablePackageEndpointsForOCIHelper(t, testCases, fluxPluginClient, fluxPluginReposClient)
+}
+
+func testKindClusterAvailablePackageEndpointsForOCIHelper(
+	t *testing.T,
+	testCases []testCaseKindClusterAvailablePackageEndpointsForOCISpec,
+	fluxPluginClient fluxplugin.FluxV2PackagesServiceClient,
+	fluxPluginReposClient fluxplugin.FluxV2RepositoriesServiceClient) {
 
 	for _, tc := range testCases {
 		t.Run(tc.testName, func(t *testing.T) {
@@ -767,7 +789,7 @@ func TestKindClusterAvailablePackageEndpointsForOCI(t *testing.T) {
 				t.Fatal(err)
 			}
 			// wait until this repo reaches 'Ready'
-			err = kubeWaitUntilHelmRepositoryIsReady(t, repoName)
+			err := kubeWaitUntilHelmRepositoryIsReady(t, repoName)
 			if !tc.unauthorized {
 				if err != nil {
 					t.Fatal(err)
@@ -782,6 +804,15 @@ func TestKindClusterAvailablePackageEndpointsForOCI(t *testing.T) {
 				} else {
 					t.Fatal("expected error, got nil")
 				}
+			}
+
+			adminName := types.NamespacedName{
+				Name:      "test-admin-" + randSeq(4),
+				Namespace: "default",
+			}
+			grpcContext, err := newGrpcAdminContext(t, adminName)
+			if err != nil {
+				t.Fatal(err)
 			}
 
 			grpcContext, cancel := context.WithTimeout(grpcContext, defaultContextTimeout)

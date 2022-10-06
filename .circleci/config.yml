@@ -5,16 +5,16 @@ version: 2.1
 parameters:
   GOLANG_VERSION:
     type: string
-    default: "1.19.0"
+    default: "1.19.1"
   NODE_VERSION:
     type: string
-    default: "16.17.0"
+    default: "16.17.1"
   RUST_VERSION:
     type: string
-    default: "1.63.0"
+    default: "1.64.0"
   DOCKER_VERSION:
     type: string
-    default: "20.10.14"
+    default: "20.10.17"
   DOCKER_REGISTRY_VERSION:
     type: string
     default: "2.8.1"
@@ -23,7 +23,7 @@ parameters:
     default: "v3.2.0"
   HELM_VERSION_STABLE:
     type: "string"
-    default: "v3.9.4"
+    default: "v3.10.0"
   OLM_VERSION:
     type: "string"
     default: "v0.22.0"
@@ -32,31 +32,31 @@ parameters:
     default: "3.9.0"
   KAPP_CONTROLLER_VERSION:
     type: "string"
-    default: "v0.40.0"
+    default: "v0.41.2"
   MKCERT_VERSION:
     type: "string"
     default: "v1.4.4"
   KUBECTL_VERSION:
     type: "string"
-    default: "v1.24.3"
+    default: "v1.24.6"
   GITHUB_VERSION:
     type: "string"
-    default: "2.14.7"
+    default: "2.16.1"
   SEMVER_VERSION:
     type: "string"
     default: "3.3.0"
   KIND_VERSION:
     type: "string"
-    default: "v0.15.0"
+    default: "v0.16.0"
   K8S_KIND_VERSION:
     type: "string"
-    default: "v1.22.13@sha256:4904eda4d6e64b402169797805b8ec01f50133960ad6c19af45173a27eadf959"
+    default: "v1.22.15@sha256:bfd5eaae36849bfb3c1e3b9442f3da17d730718248939d9d547e86bbac5da586"
   POSTGRESQL_VERSION:
     type: "string"
-    default: "14.5.0-debian-11-r6"
+    default: "14.5.0-debian-11-r14"
   GKE_STABLE_VERSION:
     type: "string"
-    default: "1.21"
+    default: "1.22"
   GKE_REGULAR_VERSION:
     type: "string"
     default: "1.22"
@@ -101,7 +101,7 @@ parameters:
     default: "master"
   KUBEAPPS_REPO:
     type: "string"
-    default: "kubeapps/kubeapps"
+    default: "vmware-tanzu/kubeapps"
   BRANCH_KUBEAPPS_REPO:
     type: "string"
     default: "main"
@@ -258,11 +258,13 @@ workflows:
 
 ## Definitions
 common_envars: &common_envars
+  CHARTMUSEUM_VERSION: << pipeline.parameters.CHARTMUSEUM_VERSION >>
   DOCKER_VERSION: << pipeline.parameters.DOCKER_VERSION >>
   DOCKER_REGISTRY_VERSION: << pipeline.parameters.DOCKER_REGISTRY_VERSION >>
   GOLANG_VERSION: << pipeline.parameters.GOLANG_VERSION >>
   HELM_VERSION_MIN: << pipeline.parameters.HELM_VERSION_MIN >>
   HELM_VERSION_STABLE: << pipeline.parameters.HELM_VERSION_STABLE >>
+  KAPP_CONTROLLER_VERSION: << pipeline.parameters.KAPP_CONTROLLER_VERSION >>
   K8S_KIND_VERSION: << pipeline.parameters.K8S_KIND_VERSION >>
   KIND_VERSION: << pipeline.parameters.KIND_VERSION >>
   KUBECTL_VERSION: << pipeline.parameters.KUBECTL_VERSION >>
@@ -589,6 +591,7 @@ gke_test: &gke_test
         name: Apply customizations to GKE cluster
         command: |
           kubectl create namespace kubeapps-user-namespace
+          ./script/install-nginx.sh
     - <<: *run_e2e_tests
     - store_artifacts:
         path: integration/reports
@@ -597,37 +600,6 @@ gke_test: &gke_test
         name: Cleanup GKE Cluster
         command: gcloud container clusters delete --async --zone $GKE_ZONE $ESCAPED_GKE_CLUSTER
         when: always
-local_e2e_steps: &local_e2e_steps
-  steps:
-    - checkout
-    - <<: *exports
-    - <<: *install_kind
-    - <<: *install_kubectl
-    - <<: *install_cluster
-    - <<: *copy_apiserver_certificates
-    # Create the "kubeapps-ci-additional" cluster
-    - <<: *install_additional_cluster
-    # Export variables and kubeconfig
-    - <<: *export_cluster_variables
-    - <<: *install_mkcert
-    - <<: *install_helm_cli
-    - <<: *load_kind_images
-    # Load images from other jobs
-    - attach_workspace:
-        at: /tmp/images
-    - run:
-        name: Load CI images in the cluster
-        command: for image in /tmp/images/*; do kind load image-archive "$image" --name kubeapps-ci; done
-    - <<: *install_multicluster_deps
-    - <<: *run_e2e_tests
-    - run:
-        name: Print k8s KubeappsAPIs logs if the tests fail
-        command: |
-          kubectl --context kind-kubeapps-ci --kubeconfig ${HOME}/.kube/kind-config-kubeapps-ci logs -n kubeapps-ci deploy/kubeapps-internal-kubeappsapis --previous=true
-        when: on_fail
-    - store_artifacts:
-        path: integration/reports
-    - run: exit $TEST_RESULT
 ###
 
 jobs:
@@ -722,12 +694,18 @@ jobs:
       IMAGES: "apprepository-controller asset-syncer kubeapps-apis"
     <<: *build_images
   build_dashboard:
+    resource_class: large
     docker:
       - image: cimg/go:<< pipeline.parameters.GOLANG_VERSION >>
         auth:
           username: $DOCKER_USERNAME
           password: $DOCKER_PASSWORD
+    # Note that the max old space setting is per worker.
+    # Webpack uses "terser-webpack-plugin", which uses #CPUs-1 workers by default.
+    # We are using 3 workers, so we need to set the max old space to < 4GB/3, so
+    # setting it to 1GB.
     environment:
+      NODE_OPTIONS: "--max-old-space-size=1024"
       IMAGES: "dashboard"
     <<: *build_images
   build_pinniped_proxy:
@@ -808,7 +786,36 @@ jobs:
     parameters:
       number:
         type: string
-    <<: *local_e2e_steps
+    steps:
+      - checkout
+      - <<: *exports
+      - <<: *install_kind
+      - <<: *install_kubectl
+      - <<: *install_cluster
+      - <<: *copy_apiserver_certificates
+      # Create the "kubeapps-ci-additional" cluster
+      - <<: *install_additional_cluster
+      # Export variables and kubeconfig
+      - <<: *export_cluster_variables
+      - <<: *install_mkcert
+      - <<: *install_helm_cli
+      - <<: *load_kind_images
+      # Load images from other jobs
+      - attach_workspace:
+          at: /tmp/images
+      - run:
+          name: Load CI images in the cluster
+          command: for image in /tmp/images/*; do kind load image-archive "$image" --name kubeapps-ci; done
+      - <<: *install_multicluster_deps
+      - <<: *run_e2e_tests
+      - run:
+          name: Print k8s KubeappsAPIs logs if the tests fail
+          command: |
+            kubectl --context kind-kubeapps-ci --kubeconfig ${HOME}/.kube/kind-config-kubeapps-ci logs -n kubeapps-ci deploy/kubeapps-internal-kubeappsapis --previous=true
+          when: on_fail
+      - store_artifacts:
+          path: integration/reports
+      - run: exit $TEST_RESULT
   GKE_REGULAR_VERSION_MAIN:
     <<: *gke_test
     environment:

@@ -6,7 +6,6 @@ package cmd
 import (
 	"flag"
 
-	"github.com/mitchellh/go-homedir"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/core"
@@ -63,14 +62,14 @@ func init() {
 }
 
 func setFlags(c *cobra.Command) {
-	c.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.kubeapps-apis.yaml)")
+	c.PersistentFlags().StringVar(&cfgFile, "config", "", "config file")
 	c.Flags().IntVar(&serveOpts.Port, "port", 50051, "The port on which to run this api server. Both gRPC and HTTP requests will be served on this port.")
 	c.Flags().StringSliceVar(&serveOpts.PluginDirs, "plugin-dir", []string{"."}, "A directory to be scanned for .so plugins. May be specified multiple times.")
 	c.Flags().StringVar(&serveOpts.ClustersConfigPath, "clusters-config-path", "", "Configuration for clusters")
 	c.Flags().StringVar(&serveOpts.PluginConfigPath, "plugin-config-path", "", "Configuration for plugins")
 	c.Flags().StringVar(&serveOpts.PinnipedProxyURL, "pinniped-proxy-url", "http://kubeapps-internal-pinniped-proxy.kubeapps:3333", "internal url to be used for requests to clusters configured for credential proxying via pinniped")
 	c.Flags().StringVar(&serveOpts.PinnipedProxyCACert, "pinniped-proxy-ca-cert", "", "Path to certificate authority to use with requests to pinniped-proxy service")
-	c.Flags().StringVar(&serveOpts.GlobalReposNamespace, "global-repos-namespace", "kubeapps", "Namespace of global repositories")
+	c.Flags().StringVar(&serveOpts.GlobalHelmReposNamespace, "global-repos-namespace", "kubeapps", "Namespace of global repositories for the helm plugin")
 	c.Flags().BoolVar(&serveOpts.UnsafeLocalDevKubeconfig, "unsafe-local-dev-kubeconfig", false, "if true, it will use the local kubeconfig at the KUBECONFIG env var instead of using the inCluster configuration.")
 	c.Flags().Float32Var(&serveOpts.QPS, "kube-api-qps", 10.0, "set Kubernetes API client QPS limit")
 	c.Flags().IntVar(&serveOpts.Burst, "kube-api-burst", 15, "set Kubernetes API client Burst limit")
@@ -81,14 +80,6 @@ func initConfig() {
 	if cfgFile != "" {
 		// Use config file from the flag.
 		viper.SetConfigFile(cfgFile)
-	} else {
-		// Find home directory.
-		home, err := homedir.Dir()
-		cobra.CheckErr(err)
-
-		// Search config in home directory with name ".kubeapps-apis" (without extension).
-		viper.AddConfigPath(home)
-		viper.SetConfigName(".kubeapps-apis")
 	}
 
 	viper.AutomaticEnv() // read in environment variables that match

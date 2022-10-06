@@ -74,7 +74,7 @@ func setMockManager(t *testing.T) (sqlmock.Sqlmock, func(), utils.AssetManager) 
 	if err != nil {
 		t.Fatalf("%+v", err)
 	}
-	manager = &utils.PostgresAssetManager{PostgresAssetManagerIface: &dbutils.PostgresAssetManager{DB: db, GlobalReposNamespace: globalPackagingNamespace}}
+	manager = &utils.PostgresAssetManager{PostgresAssetManagerIface: &dbutils.PostgresAssetManager{DB: db, GlobalPackagingNamespace: globalPackagingNamespace}}
 	return mock, func() { db.Close() }, manager
 }
 
@@ -84,58 +84,50 @@ func TestGetClient(t *testing.T) {
 	if err != nil {
 		log.Fatalf("%s", err)
 	}
-	testClientGetter := func(ctx context.Context, cluster string) (clientgetter.ClientInterfaces, error) {
-		return clientgetter.NewBuilder().
-			WithTyped(typfake.NewSimpleClientset()).
-			WithDynamic(dynfake.NewSimpleDynamicClientWithCustomListKinds(
-				k8sruntime.NewScheme(),
-				map[schema.GroupVersionResource]string{
-					{Group: "foo", Version: "bar", Resource: "baz"}: "PackageList",
-				},
-			)).Build(), nil
-	}
+
+	clientGetter := clientgetter.NewBuilder().
+		WithTyped(typfake.NewSimpleClientset()).
+		WithDynamic(dynfake.NewSimpleDynamicClientWithCustomListKinds(
+			k8sruntime.NewScheme(),
+			map[schema.GroupVersionResource]string{
+				{Group: "foo", Version: "bar", Resource: "baz"}: "PackageList",
+			},
+		)).Build()
 
 	testCases := []struct {
 		name              string
 		manager           utils.AssetManager
-		clientGetter      clientgetter.ClientGetterFunc
+		clientGetter      clientgetter.ClientProviderInterface
 		statusCodeClient  codes.Code
 		statusCodeManager codes.Code
 	}{
 		{
-			name:              "it returns internal error status when no clientGetter configured",
-			manager:           manager,
-			clientGetter:      nil,
-			statusCodeClient:  codes.Internal,
-			statusCodeManager: codes.OK,
-		},
-		{
 			name:              "it returns internal error status when no manager configured",
 			manager:           nil,
-			clientGetter:      testClientGetter,
+			clientGetter:      clientGetter,
 			statusCodeClient:  codes.OK,
 			statusCodeManager: codes.Internal,
 		},
 		{
-			name:              "it returns internal error status when no clientGetter/manager configured",
-			manager:           nil,
-			clientGetter:      nil,
-			statusCodeClient:  codes.Internal,
-			statusCodeManager: codes.Internal,
+			name:    "it returns whatever error the clients getter function returns",
+			manager: manager,
+			clientGetter: &clientgetter.ClientProvider{ClientsFunc: func(ctx context.Context, cluster string) (*clientgetter.ClientGetter, error) {
+				return nil, status.Errorf(codes.FailedPrecondition, "Bang!")
+			}},
+			statusCodeClient:  codes.FailedPrecondition,
+			statusCodeManager: codes.OK,
 		},
 		{
-			name:    "it returns failed-precondition when configGetter itself errors",
-			manager: manager,
-			clientGetter: func(ctx context.Context, cluster string) (clientgetter.ClientInterfaces, error) {
-				return nil, fmt.Errorf("Bang!")
-			},
+			name:              "it returns failed-precondition when clients getter function is not set",
+			manager:           manager,
+			clientGetter:      &clientgetter.ClientProvider{ClientsFunc: nil},
 			statusCodeClient:  codes.FailedPrecondition,
 			statusCodeManager: codes.OK,
 		},
 		{
 			name:         "it returns client without error when configured correctly",
 			manager:      manager,
-			clientGetter: testClientGetter,
+			clientGetter: clientGetter,
 		},
 	}
 
@@ -143,8 +135,7 @@ func TestGetClient(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			s := Server{clientGetter: tc.clientGetter, manager: tc.manager}
 
-			typedClient, dynamicClient, errClient := s.GetClients(context.Background(), "")
-
+			clientsProvider, errClient := s.clientGetter.GetClients(context.Background(), "")
 			if got, want := status.Code(errClient), tc.statusCodeClient; got != want {
 				t.Errorf("got: %+v, want: %+v", got, want)
 			}
@@ -157,11 +148,13 @@ func TestGetClient(t *testing.T) {
 
 			// If there is no error, the client should be a dynamic.Interface implementation.
 			if tc.statusCodeClient == codes.OK {
-				if dynamicClient == nil {
-					t.Errorf("got: nil, want: dynamic.Interface")
+				_, err := clientsProvider.Dynamic()
+				if err != nil {
+					t.Errorf("got: nil, want: dynamic.Interface. error %v", err)
 				}
-				if typedClient == nil {
-					t.Errorf("got: nil, want: kubernetes.Interface")
+				_, err = clientsProvider.Typed()
+				if err != nil {
+					t.Errorf("got: nil, want: kubernetes.Interface. error %v", err)
 				}
 			}
 		})
@@ -169,10 +162,10 @@ func TestGetClient(t *testing.T) {
 }
 
 // makeChart makes a chart with specific input used in the test and default constants for other relevant data.
-func makeChart(chart_name, repo_name, repo_url, namespace string, chart_versions []string, category string) *models.Chart {
+func makeChart(chartName, repoName, repoUrl, namespace string, chartVersions []string, category string) *models.Chart {
 	ch := &models.Chart{
-		Name:        chart_name,
-		ID:          fmt.Sprintf("%s/%s", repo_name, chart_name),
+		Name:        chartName,
+		ID:          fmt.Sprintf("%s/%s", repoName, chartName),
 		Category:    category,
 		Description: DefaultChartDescription,
 		Home:        DefaultChartHomeURL,
@@ -180,13 +173,13 @@ func makeChart(chart_name, repo_name, repo_url, namespace string, chart_versions
 		Maintainers: []chart.Maintainer{{Name: "me", Email: "me@me.me"}},
 		Sources:     []string{"http://source-1"},
 		Repo: &models.Repo{
-			Name:      repo_name,
+			Name:      repoName,
 			Namespace: namespace,
-			URL:       repo_url,
+			URL:       repoUrl,
 		},
 	}
-	versions := []models.ChartVersion{}
-	for _, v := range chart_versions {
+	var versions []models.ChartVersion
+	for _, v := range chartVersions {
 		versions = append(versions, models.ChartVersion{
 			Version:    v,
 			AppVersion: DefaultAppVersion,
@@ -202,7 +195,7 @@ func makeChart(chart_name, repo_name, repo_url, namespace string, chart_versions
 // makeChartRowsJSON returns a slice of paginated JSON chart info data.
 func makeChartRowsJSON(t *testing.T, charts []*models.Chart, pageToken string, pageSize int) []string {
 	// Simulate the pagination by reducing the rows of JSON based on the offset and limit.
-	rowsJSON := []string{}
+	var rowsJSON []string
 	for _, chart := range charts {
 		chartJSON, err := json.Marshal(chart)
 		if err != nil {
@@ -253,18 +246,15 @@ func makeServer(t *testing.T, authorized bool, actionConfig *action.Configuratio
 			Status: authorizationv1.SubjectAccessReviewStatus{Allowed: authorized},
 		}, nil
 	})
-	clientGetter := func(ctx context.Context, cluster string) (clientgetter.ClientInterfaces, error) {
-		return clientgetter.NewBuilder().
-			WithTyped(clientSet).
-			WithDynamic(dynamicClient).
-			Build(), nil
-	}
 
 	// Creating the SQL mock manager
 	mock, cleanup, manager := setMockManager(t)
 
 	return &Server{
-		clientGetter:             clientGetter,
+		clientGetter: clientgetter.NewBuilder().
+			WithTyped(clientSet).
+			WithDynamic(dynamicClient).
+			Build(),
 		manager:                  manager,
 		kubeappsNamespace:        kubeappsNamespace,
 		globalPackagingNamespace: globalPackagingNamespace,
@@ -311,28 +301,25 @@ func newServerWithSecretsAndRepos(t *testing.T, secrets []k8sruntime.Object, uns
 		log.Fatalf("%s", err)
 	}
 
-	clientGetter := func(context.Context, string) (clientgetter.ClientInterfaces, error) {
-		return clientgetter.
-			NewBuilder().
-			WithTyped(typedClient).
-			WithApiExt(apiExtIfc).
-			WithControllerRuntime(ctrlClient).
-			WithDynamic(dynfake.NewSimpleDynamicClientWithCustomListKinds(
-				scheme,
-				map[schema.GroupVersionResource]string{
-					{
-						Group:    v1alpha1.SchemeGroupVersion.Group,
-						Version:  v1alpha1.SchemeGroupVersion.Version,
-						Resource: AppRepositoryResource,
-					}: AppRepositoryResource + "List",
-				},
-				unstructuredObjs...,
-			)).
-			Build(), nil
-	}
+	dynClient := dynfake.NewSimpleDynamicClientWithCustomListKinds(
+		scheme,
+		map[schema.GroupVersionResource]string{
+			{
+				Group:    v1alpha1.SchemeGroupVersion.Group,
+				Version:  v1alpha1.SchemeGroupVersion.Version,
+				Resource: AppRepositoryResource,
+			}: AppRepositoryResource + "List",
+		},
+		unstructuredObjs...,
+	)
 
 	return &Server{
-		clientGetter:             clientGetter,
+		clientGetter: clientgetter.NewBuilder().
+			WithControllerRuntime(ctrlClient).
+			WithTyped(typedClient).
+			WithApiExt(apiExtIfc).
+			WithDynamic(dynClient).
+			Build(),
 		kubeappsNamespace:        kubeappsNamespace,
 		globalPackagingNamespace: globalPackagingNamespace,
 		globalPackagingCluster:   globalPackagingCluster,

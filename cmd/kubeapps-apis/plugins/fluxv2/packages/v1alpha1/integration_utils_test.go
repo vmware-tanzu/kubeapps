@@ -61,7 +61,7 @@ const (
 	// on "https://stefanprodan.github.io/podinfo/index.yaml" as of Sept 10 2021 with the chart
 	// urls modified to link to .tgz files also within the local cluster.
 	// If we want other repos, we'll have add directories and tinker with ./Dockerfile and NGINX conf.
-	// This relies on fluxv2plugin-testdata-svc service stood up by testdata/kind-cluster-setup.sh
+	// This relies on fluxv2plugin-testdata-svc service stood up by testdata/integ-test-env.sh
 	podinfo_repo_url = "http://fluxv2plugin-testdata-svc.default.svc.cluster.local:80/podinfo"
 
 	// same as above but requires HTTP basic authentication: user: foo, password: bar
@@ -84,13 +84,13 @@ const (
 
 	// an OCI registry with a single chart (podinfo)
 	// a clone of "oci://ghcr.io/stefanprodan/charts"
-	// gets setup by kind-cluster-setup.sh
+	// gets setup by integ-test-env.sh
 	github_stefanprodan_podinfo_oci_registry_url         = "oci://ghcr.io/gfichtenholt/stefanprodan-podinfo-clone"
 	harbor_stefanprodan_podinfo_oci_registry_url         = "oci://demo.goharbor.io/stefanprodan-podinfo-clone"
 	harbor_stefanprodan_podinfo_private_oci_registry_url = "oci://demo.goharbor.io/stefanprodan-podinfo-clone-private"
 	gcp_stefanprodan_podinfo_oci_registry_url            = "oci://us-west1-docker.pkg.dev/vmware-kubeapps-ci/stefanprodan-podinfo-clone"
 
-	// the URL of local in cluster helm registry. Gets deployed via ./kind-cluster-setup.sh
+	// the URL of local in cluster helm registry. Gets deployed via ./integ-test-env.sh
 	// in_cluster_oci_registry_url = "oci://registry-app-svc.default.svc.cluster.local:5000/helm-charts"
 
 	github_gfichtenholt_podinfo_oci_registry_url = "oci://ghcr.io/gfichtenholt/helm-charts"
@@ -1352,7 +1352,7 @@ func helmPushChartToMyGithubRegistry(t *testing.T, version string) error {
 	}
 
 	// use the CLI for now
-	_, err := execCommand(t, "./testdata", "./kind-cluster-setup.sh", args)
+	_, err := execCommand(t, "./testdata", "./integ-test-env.sh", args)
 	return err
 }
 
@@ -1366,7 +1366,7 @@ func deleteChartFromMyGithubRegistry(t *testing.T, version string) error {
 	}
 
 	// use the CLI for now
-	_, err := execCommand(t, "./testdata", "./kind-cluster-setup.sh", args)
+	_, err := execCommand(t, "./testdata", "./integ-test-env.sh", args)
 	return err
 }
 
@@ -1380,7 +1380,7 @@ func setupHarborStefanProdanClone(t *testing.T) error {
 	}
 
 	// use the CLI for now
-	_, err := execCommand(t, "./testdata", "./kind-cluster-setup.sh", args)
+	_, err := execCommand(t, "./testdata", "./integ-test-env.sh", args)
 	return err
 }
 
@@ -1393,7 +1393,7 @@ func setupHarborRobotAccount(t *testing.T) (string, string, error) {
 	}
 
 	// use the CLI for now
-	out, err := execCommand(t, "./testdata", "./kind-cluster-setup.sh", args)
+	out, err := execCommand(t, "./testdata", "./integ-test-env.sh", args)
 	if err != nil {
 		return "", "", err
 	} else {

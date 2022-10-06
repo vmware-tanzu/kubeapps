@@ -17,6 +17,7 @@ import (
 	fluxmeta "github.com/fluxcd/pkg/apis/meta"
 	sourcev1 "github.com/fluxcd/source-controller/api/v1beta2"
 	corev1 "github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
+	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/plugins/fluxv2/packages/v1alpha1"
 	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/fluxv2/packages/v1alpha1/cache"
 	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/fluxv2/packages/v1alpha1/common"
 	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/pkg/clientgetter"
@@ -27,6 +28,7 @@ import (
 	httpclient "github.com/vmware-tanzu/kubeapps/pkg/http-client"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/types/known/anypb"
 	apiv1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -145,9 +147,9 @@ func (s *Server) filterReadyReposByName(repoList []sourcev1.HelmRepository, matc
 }
 
 // Notes:
-// 1. with flux, an available package may be from a repo in any namespace accessible to the caller
-// 2. can't rely on cache as a real source of truth for key names
-//    because redis may evict cache entries due to memory pressure to make room for new ones
+//  1. with flux, an available package may be from a repo in any namespace accessible to the caller
+//  2. can't rely on cache as a real source of truth for key names
+//     because redis may evict cache entries due to memory pressure to make room for new ones
 func (s *Server) getChartsForRepos(ctx context.Context, match []string) (map[string][]models.Chart, error) {
 	repoList, err := s.listReposInAllNamespaces(ctx)
 	if err != nil {
@@ -169,34 +171,49 @@ func (s *Server) getChartsForRepos(ctx context.Context, match []string) (map[str
 		if value == nil {
 			chartsTyped[key] = nil
 		} else {
-			typedValue, ok := value.(repoCacheEntryValue)
+			typedValue, err := s.repoCacheEntryFromUntyped(key, value)
+			if err != nil {
+				return nil, err
+			} else if typedValue == nil {
+				chartsTyped[key] = nil
+			} else {
+				chartsTyped[key] = typedValue.Charts
+			}
+		}
+	}
+	return chartsTyped, nil
+}
+
+func (s *Server) repoCacheEntryFromUntyped(key string, value interface{}) (*repoCacheEntryValue, error) {
+	if value == nil {
+		return nil, nil
+	}
+	typedValue, ok := value.(repoCacheEntryValue)
+	if !ok {
+		return nil, status.Errorf(
+			codes.Internal,
+			"unexpected value fetched from cache: type: [%s], value: [%v]",
+			reflect.TypeOf(value), value)
+	}
+	if typedValue.Type == "oci" {
+		// ref https://github.com/vmware-tanzu/kubeapps/issues/5007#issuecomment-1217293240
+		// helm OCI chart repos are not automatically updated when the
+		// state on remote changes. So we will force new checksum
+		// computation and update local cache if needed
+		value, err := s.repoCache.ForceAndFetch(key)
+		if err != nil {
+			return nil, err
+		} else if value != nil {
+			typedValue, ok = value.(repoCacheEntryValue)
 			if !ok {
 				return nil, status.Errorf(
 					codes.Internal,
 					"unexpected value fetched from cache: type: [%s], value: [%v]",
 					reflect.TypeOf(value), value)
 			}
-			if typedValue.Type == "oci" {
-				// ref https://github.com/vmware-tanzu/kubeapps/issues/5007#issuecomment-1217293240
-				// helm OCI chart repos are not automatically updated when the
-				// state on remote changes. So we will force new checksum
-				// computation and update local cache if needed
-				value, err = s.repoCache.ForceAndFetch(key)
-				if err != nil {
-					return nil, err
-				}
-				typedValue, ok = value.(repoCacheEntryValue)
-				if !ok {
-					return nil, status.Errorf(
-						codes.Internal,
-						"unexpected value fetched from cache: type: [%s], value: [%v]",
-						reflect.TypeOf(value), value)
-				}
-			}
-			chartsTyped[key] = typedValue.Charts
 		}
 	}
-	return chartsTyped, nil
+	return &typedValue, nil
 }
 
 func (s *Server) httpClientOptionsForRepo(ctx context.Context, repoName types.NamespacedName) (*common.HttpClientOptions, error) {
@@ -205,7 +222,7 @@ func (s *Server) httpClientOptionsForRepo(ctx context.Context, repoName types.Na
 		return nil, err
 	}
 	sink := s.newRepoEventSink()
-	return sink.httpClientOptionsForRepo(ctx, *repo)
+	return sink.clientOptionsForHttpRepo(ctx, *repo)
 }
 
 func (s *Server) newRepo(ctx context.Context, request *corev1.AddPackageRepositoryRequest) (*corev1.PackageRepositoryReference, error) {
@@ -252,7 +269,19 @@ func (s *Server) newRepo(ctx context.Context, request *corev1.AddPackageReposito
 	passCredentials := auth != nil && auth.PassCredentials
 	interval := request.GetInterval()
 
-	if fluxRepo, err := newFluxHelmRepo(name, typ, url, interval, secret, passCredentials); err != nil {
+	// Get Flux-specific values
+	provider := ""
+	var customDetail *v1alpha1.FluxPackageRepositoryCustomDetail
+	if request.CustomDetail != nil {
+		customDetail = &v1alpha1.FluxPackageRepositoryCustomDetail{}
+		if err := request.CustomDetail.UnmarshalTo(customDetail); err != nil {
+			return nil, status.Errorf(codes.InvalidArgument, "customDetail could not be parsed due to: %v", err)
+		}
+		log.Infof("fluxv2 customDetail: [%v]", customDetail)
+		provider = customDetail.Provider
+	}
+
+	if fluxRepo, err := newFluxHelmRepo(name, typ, url, interval, secret, passCredentials, provider); err != nil {
 		return nil, err
 	} else if client, err := s.getClient(ctx, name.Namespace); err != nil {
 		return nil, err
@@ -318,6 +347,23 @@ func (s *Server) repoDetail(ctx context.Context, repoRef *corev1.PackageReposito
 	if typ == "" {
 		typ = "helm"
 	}
+
+	// Get Fluxv2-specific values
+	var customDetail *anypb.Any
+	// For now: this is somewhat my subjective call to filter out "generic" (default) ones
+	// because otherwise any repo created with an unset provider will come back from flux
+	// as "generic" and therefore the PackageRepositoryDetail instance returned by this func
+	// will have a FluxPackageRepositoryCustomDetail in it. Flux spec already clearly states
+	// If you do not specify .spec.provider, it defaults to generic.
+	// https://fluxcd.io/flux/components/source/helmrepositories/#provider
+	if repo.Spec.Provider != "" && repo.Spec.Provider != sourcev1.GenericOCIProvider {
+		if customDetail, err = anypb.New(&v1alpha1.FluxPackageRepositoryCustomDetail{
+			Provider: repo.Spec.Provider,
+		}); err != nil {
+			return nil, status.Errorf(codes.Internal, "custom detail could not be marshalled due to: %v", err)
+		}
+	}
+
 	return &corev1.PackageRepositoryDetail{
 		PackageRepoRef: &corev1.PackageRepositoryReference{
 			Context: &corev1.Context{
@@ -336,8 +382,8 @@ func (s *Server) repoDetail(ctx context.Context, repoRef *corev1.PackageReposito
 		Interval:        pkgutils.FromDuration(&repo.Spec.Interval),
 		TlsConfig:       tlsConfig,
 		Auth:            auth,
-		CustomDetail:    nil,
 		Status:          repoStatus(*repo),
+		CustomDetail:    customDetail,
 	}, nil
 }
 
@@ -505,7 +551,9 @@ func (s *Server) createKubeappsManagedRepoSecret(
 // using owner references on the secret so that it can be
 // (1) cleaned up automatically and/or
 // (2) enable some control (ie. if I add a secret manually
-//   via kubectl before running kubeapps, it won't get deleted just
+//
+//	via kubectl before running kubeapps, it won't get deleted just
+//
 // because Kubeapps is deleting it)?
 // see https://github.com/vmware-tanzu/kubeapps/pull/4630#discussion_r861446394 for details
 func (s *Server) setOwnerReferencesForRepoSecret(
@@ -610,7 +658,10 @@ func (s *Server) updateRepo(ctx context.Context, repoRef *corev1.PackageReposito
 	}
 	repo.Spec.URL = url
 
-	// flux does not grok description yet
+	// flux does not grok repository description yet
+	// the only field in customdetail is "provider" and I don't see the need to
+	// have the user update that. Its not like one repository is going to move from
+	// GCP to AWS.
 
 	if interval != "" {
 		if duration, err := pkgutils.ToDuration(interval); err != nil {
@@ -704,11 +755,9 @@ func (s *Server) deleteRepo(ctx context.Context, repoRef *corev1.PackageReposito
 	}
 }
 
-//
 // implements plug-in specific cache-related functionality
-//
 type repoEventSink struct {
-	clientGetter clientgetter.BackgroundClientGetterFunc
+	clientGetter clientgetter.FixedClusterClientProviderInterface
 	chartCache   *cache.ChartCache // chartCache maybe nil only in unit tests
 }
 
@@ -777,7 +826,7 @@ func (s *repoEventSink) indexAndEncode(checksum string, repo sourcev1.HelmReposi
 	}
 
 	if s.chartCache != nil {
-		if opts, err := s.httpClientOptionsForRepo(context.Background(), repo); err != nil {
+		if opts, err := s.clientOptionsForHttpRepo(context.Background(), repo); err != nil {
 			// ref: https://github.com/vmware-tanzu/kubeapps/pull/3899#issuecomment-990446931
 			// I don't want this func to fail onAdd/onModify() if we can't read
 			// the corresponding secret due to something like default RBAC settings:
@@ -988,7 +1037,7 @@ func (s *repoEventSink) getRepoSecret(ctx context.Context, repo sourcev1.HelmRep
 
 // The reason I do this here is to set up auth that may be needed to fetch chart tarballs by
 // ChartCache
-func (s *repoEventSink) httpClientOptionsForRepo(ctx context.Context, repo sourcev1.HelmRepository) (*common.HttpClientOptions, error) {
+func (s *repoEventSink) clientOptionsForHttpRepo(ctx context.Context, repo sourcev1.HelmRepository) (*common.HttpClientOptions, error) {
 	if secret, err := s.getRepoSecret(ctx, repo); err == nil && secret != nil {
 		return common.HttpClientOptionsFromSecret(*secret)
 	} else {
@@ -1075,7 +1124,8 @@ func newFluxHelmRepo(
 	url string,
 	interval string,
 	secret *apiv1.Secret,
-	passCredentials bool) (*sourcev1.HelmRepository, error) {
+	passCredentials bool,
+	provider string) (*sourcev1.HelmRepository, error) {
 	pollInterval := defaultPollInterval
 	if interval != "" {
 		if duration, err := pkgutils.ToDuration(interval); err != nil {
@@ -1104,6 +1154,9 @@ func newFluxHelmRepo(
 	}
 	if passCredentials {
 		fluxRepo.Spec.PassCredentials = true
+	}
+	if provider != "" {
+		fluxRepo.Spec.Provider = provider
 	}
 	return fluxRepo, nil
 }
@@ -1229,7 +1282,7 @@ func getRepoTlsConfigAndAuthWithUserManagedSecrets(secret *apiv1.Secret) (*corev
 
 // TODO (gfichtenolt) Per slack discussion
 // In fact, keeping the existing API might mean we could return exactly what it already does today
-//(i.e. all secrets) if called with an extra explicit option (includeSecrets=true in the request
+// (i.e. all secrets) if called with an extra explicit option (includeSecrets=true in the request
 // message, not sure, similar to kubectl  config view --raw) and by default the secrets are REDACTED
 // as you mention? This would mean clients will by default see only REDACTED secrets,
 // but can request the full sensitive data when necessary?

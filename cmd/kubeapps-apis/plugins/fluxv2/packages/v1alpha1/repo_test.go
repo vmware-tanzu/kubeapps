@@ -1351,6 +1351,13 @@ func TestAddPackageRepository(t *testing.T) {
 			expectedRepo:     &add_repo_6,
 			statusCode:       codes.OK,
 		},
+		{
+			name:             "add OCI package repository with gcp provider",
+			request:          add_repo_req_29(),
+			expectedResponse: add_repo_expected_resp,
+			expectedRepo:     &add_repo_7,
+			statusCode:       codes.OK,
+		},
 	}
 
 	for _, tc := range testCases {
@@ -2459,9 +2466,9 @@ func (s *Server) redisMockExpectGetFromRepoCache(mock redismock.ClientMock, filt
 }
 
 func (s *Server) redisMockSetValueForRepo(mock redismock.ClientMock, repo sourcev1.HelmRepository, oldValue []byte) (key string, bytes []byte, err error) {
-	backgroundClientGetter := func(ctx context.Context) (clientgetter.ClientInterfaces, error) {
-		return s.clientGetter(ctx, s.kubeappsCluster)
-	}
+	backgroundClientGetter := &clientgetter.FixedClusterClientProvider{ClientsFunc: func(ctx context.Context) (*clientgetter.ClientGetter, error) {
+		return s.clientGetter.GetClients(ctx, s.kubeappsCluster)
+	}}
 	sink := repoEventSink{
 		clientGetter: backgroundClientGetter,
 		chartCache:   nil,
@@ -2495,9 +2502,9 @@ func redisMockSetValueForRepo(mock redismock.ClientMock, key string, newValue, o
 }
 
 func (s *Server) redisKeyValueForRepo(r sourcev1.HelmRepository) (key string, byteArray []byte, err error) {
-	cg := func(ctx context.Context) (clientgetter.ClientInterfaces, error) {
-		return s.clientGetter(ctx, s.kubeappsCluster)
-	}
+	cg := &clientgetter.FixedClusterClientProvider{ClientsFunc: func(ctx context.Context) (*clientgetter.ClientGetter, error) {
+		return s.clientGetter.GetClients(ctx, s.kubeappsCluster)
+	}}
 	sinkNoChartCache := repoEventSink{clientGetter: cg}
 	return sinkNoChartCache.redisKeyValueForRepo(r)
 }

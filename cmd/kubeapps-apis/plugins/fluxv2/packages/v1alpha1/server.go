@@ -48,10 +48,10 @@ type Server struct {
 	// non-test implementation.
 	// It is meant for in-band interactions (i.e. in the context of a caller)
 	// with k8s API server
-	clientGetter clientgetter.ClientGetterFunc
+	clientGetter clientgetter.ClientProviderInterface
 	// for interactions with k8s API server in the context of
 	// kubeapps-internal-kubeappsapis service account
-	serviceAccountClientGetter clientgetter.BackgroundClientGetterFunc
+	serviceAccountClientGetter clientgetter.FixedClusterClientProviderInterface
 
 	actionConfigGetter clientgetter.HelmActionConfigGetterFunc
 
@@ -63,7 +63,7 @@ type Server struct {
 
 // NewServer returns a Server automatically configured with a function to obtain
 // the k8s client config.
-func NewServer(configGetter core.KubernetesConfigGetter, kubeappsCluster string, stopCh <-chan struct{}, pluginConfigPath string) (*Server, error) {
+func NewServer(configGetter core.KubernetesConfigGetter, kubeappsCluster string, stopCh <-chan struct{}, pluginConfigPath string, clientQPS float32, clientBurst int) (*Server, error) {
 	log.Infof("+fluxv2 NewServer(kubeappsCluster: [%v], pluginConfigPath: [%s]",
 		kubeappsCluster, pluginConfigPath)
 
@@ -94,8 +94,7 @@ func NewServer(configGetter core.KubernetesConfigGetter, kubeappsCluster string,
 			log.Fatalf("%s", err)
 		}
 
-		backgroundClientGetter := clientgetter.NewBackgroundClientGetter(
-			configGetter, clientgetter.Options{Scheme: scheme})
+		backgroundClientGetter := clientgetter.NewBackgroundClientProvider(clientgetter.Options{Scheme: scheme}, clientQPS, clientBurst)
 
 		s := repoEventSink{
 			clientGetter: backgroundClientGetter,
@@ -128,9 +127,12 @@ func NewServer(configGetter core.KubernetesConfigGetter, kubeappsCluster string,
 			"repoCache", repoCacheConfig, redisCli, stopCh, false); err != nil {
 			return nil, err
 		} else {
+			clientProvider, err := clientgetter.NewClientProvider(configGetter, clientgetter.Options{Scheme: scheme})
+			if err != nil {
+				log.Fatalf("%s", err)
+			}
 			return &Server{
-				clientGetter: clientgetter.NewClientGetter(
-					configGetter, clientgetter.Options{Scheme: scheme}),
+				clientGetter:               clientProvider,
 				serviceAccountClientGetter: backgroundClientGetter,
 				actionConfigGetter: clientgetter.NewHelmActionConfigGetter(
 					configGetter, kubeappsCluster),
@@ -644,12 +646,13 @@ func (s *Server) SetUserManagedSecrets(ctx context.Context, request *v1alpha1.Se
 // aka an "out-of-band" interaction and use cases when the user wants something
 // done explicitly, aka "in-band" interaction
 func (s *Server) newRepoEventSink() repoEventSink {
-	cg := func(ctx context.Context) (clientgetter.ClientInterfaces, error) {
-		return s.clientGetter(ctx, s.kubeappsCluster)
-	}
 
-	// notice a bit of inconsistency here, we are using s.clientGetter
-	// (i.e. the context of the incoming request) to read the secret
+	cg := &clientgetter.FixedClusterClientProvider{ClientsFunc: func(ctx context.Context) (*clientgetter.ClientGetter, error) {
+		return s.clientGetter.GetClients(ctx, s.kubeappsCluster)
+	}}
+
+	// notice a bit of inconsistency here, we are using the context
+	// of the incoming request to read the secret
 	// as opposed to s.repoCache.clientGetter (which uses the context of
 	//	User "system:serviceaccount:kubeapps:kubeapps-internal-kubeappsapis")
 	// which is what is used when the repo is being processed/indexed.

@@ -12,22 +12,23 @@ import {
   PackageRepositorySummary,
 } from "gen/kubeappsapis/core/packages/v1alpha1/repositories";
 import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins";
+import { FluxPackageRepositoryCustomDetail } from "gen/kubeappsapis/plugins/fluxv2/packages/v1alpha1/fluxv2";
 import { HelmPackageRepositoryCustomDetail } from "gen/kubeappsapis/plugins/helm/packages/v1alpha1/helm";
 import { act } from "react-dom/test-utils";
 import * as ReactRedux from "react-redux";
 import { IPackageRepositoryState } from "reducers/repos";
 import { defaultStore, getStore, mountWrapper } from "shared/specs/mountWrapper";
 import { IPkgRepoFormData, IStoreState, PluginNames, RepositoryStorageTypes } from "shared/types";
-import { PkgRepoForm } from "./PkgRepoForm";
+import { IPkgRepoFormProps, PkgRepoForm } from "./PkgRepoForm";
 
 const defaultProps = {
   onSubmit: jest.fn(),
   namespace: "default",
-  cluster: "default",
   kubeappsNamespace: "kubeapps",
-  globalReposNamespace: "kubeapps",
+  helmGlobalNamespace: "kubeapps",
   carvelGlobalNamespace: "carvel-global",
-};
+  packageRepoRef: { identifier: "test", context: { cluster: "default", namespace: "default" } },
+} as IPkgRepoFormProps;
 
 const defaultState = {
   repos: {
@@ -552,7 +553,7 @@ it("should not show the list of OCI repositories if using a Helm repo (default)"
 describe("when the repository info is already populated", () => {
   const packageRepoRef = {
     identifier: "helm-repo",
-    context: { cluster: defaultProps.cluster, namespace: defaultProps.namespace },
+    context: defaultProps.packageRepoRef?.context,
     plugin: { name: PluginNames.PACKAGES_HELM, version: "v1alpha1" },
   } as PackageRepositoryReference;
   const repo = {
@@ -942,5 +943,121 @@ describe("when the repository info is already populated", () => {
       expect(wrapper.find("#kubeapps-repo-tls-cert").prop("value")).toBe("foo");
       expect(wrapper.find("#kubeapps-repo-tls-key").prop("value")).toBe("bar");
     });
+  });
+});
+
+describe("auth provider selector for Flux repositories", () => {
+  const packageRepoRef = {
+    identifier: "flux-repo",
+    context: defaultProps.packageRepoRef?.context,
+    plugin: { name: PluginNames.PACKAGES_FLUX, version: "v1alpha1" },
+  } as PackageRepositoryReference;
+  const repo = {
+    name: "",
+    description: "",
+    interval: "",
+    packageRepoRef: packageRepoRef,
+    namespaceScoped: false,
+    type: "",
+    url: "",
+  } as PackageRepositoryDetail;
+
+  it("repository auth provider should appear as a valid option for Flux and OCI", async () => {
+    const testRepo = {
+      ...repo,
+      type: "oci",
+      customDetail: {
+        provider: "",
+      } as Partial<FluxPackageRepositoryCustomDetail>,
+    } as PackageRepositoryDetail;
+    let wrapper: any;
+    await act(async () => {
+      wrapper = mountWrapper(
+        getStore({
+          ...defaultState,
+          repos: { ...defaultState.repos, repoDetail: testRepo } as IPackageRepositoryState,
+        } as Partial<IStoreState>),
+        <PkgRepoForm {...defaultProps} packageRepoRef={packageRepoRef} />,
+      );
+    });
+    await waitFor(() => {
+      wrapper.update();
+      expect(wrapper.find("#kubeapps-repo-auth-method-provider").first()).not.toBeDisabled();
+    });
+    expect(wrapper.find("#kubeapps-flux-auth-provider")).not.toExist();
+  });
+
+  it("auth provider dropdown should not appear for other repo types", async () => {
+    const testRepo = {
+      ...repo,
+      type: "helm",
+    } as PackageRepositoryDetail;
+    let wrapper: any;
+    await act(async () => {
+      wrapper = mountWrapper(
+        getStore({
+          ...defaultState,
+          repos: { ...defaultState.repos, repoDetail: testRepo } as IPackageRepositoryState,
+        } as Partial<IStoreState>),
+        <PkgRepoForm {...defaultProps} packageRepoRef={packageRepoRef} />,
+      );
+    });
+    await waitFor(() => {
+      wrapper.update();
+      expect(wrapper.find("#kubeapps-repo-auth-method-provider")).toBeDisabled();
+    });
+  });
+
+  it("auth provider dropdown should not appear for other plugins", async () => {
+    const testRepo = {
+      ...repo,
+      type: "oci",
+      packageRepoRef: {
+        identifier: "helm-repo",
+        context: defaultProps.packageRepoRef?.context,
+        plugin: { name: PluginNames.PACKAGES_HELM, version: "v1alpha1" },
+      } as PackageRepositoryReference,
+    } as PackageRepositoryDetail;
+    let wrapper: any;
+    await act(async () => {
+      wrapper = mountWrapper(
+        getStore({
+          ...defaultState,
+          repos: { ...defaultState.repos, repoDetail: testRepo } as IPackageRepositoryState,
+        } as Partial<IStoreState>),
+        <PkgRepoForm {...defaultProps} packageRepoRef={packageRepoRef} />,
+      );
+    });
+    await waitFor(() => {
+      wrapper.update();
+      expect(wrapper.find("#kubeapps-repo-auth-method-provider")).toBeDisabled();
+    });
+  });
+
+  it("repository auth provider selected should show the subsequent options dropdown", async () => {
+    const testRepo = {
+      ...repo,
+      type: "oci",
+      customDetail: {
+        provider: "aws",
+      } as Partial<FluxPackageRepositoryCustomDetail>,
+    } as PackageRepositoryDetail;
+    let wrapper: any;
+    await act(async () => {
+      wrapper = mountWrapper(
+        getStore({
+          ...defaultState,
+          repos: { ...defaultState.repos, repoDetail: testRepo } as IPackageRepositoryState,
+        } as Partial<IStoreState>),
+        <PkgRepoForm {...defaultProps} packageRepoRef={packageRepoRef} />,
+      );
+    });
+    await waitFor(() => {
+      wrapper.update();
+      expect(wrapper.find("#kubeapps-repo-auth-method-provider")).not.toBeDisabled();
+    });
+    expect(wrapper.find("#kubeapps-flux-auth-provider")).toExist();
+    expect(wrapper.find("#kubeapps-flux-auth-provider")).not.toBeDisabled();
+    expect(wrapper.find("#kubeapps-flux-auth-provider select").props().value).toEqual("aws");
   });
 });

@@ -1,13 +1,56 @@
 // Copyright 2020-2022 the Kubeapps contributors.
 // SPDX-License-Identifier: Apache-2.0
 
+import { CdsButton } from "@cds/react/button";
 import ConfirmDialog from "components/ConfirmDialog/ConfirmDialog";
-import AdvancedDeploymentForm from "components/DeploymentFormBody/AdvancedDeploymentForm";
 import Alert from "components/js/Alert";
 import LoadingWrapper from "components/LoadingWrapper";
 import { act } from "react-dom/test-utils";
 import { defaultStore, mountWrapper } from "shared/specs/mountWrapper";
+import OperatorAdvancedDeploymentForm from "./OperatorAdvancedDeploymentForm/OperatorAdvancedDeploymentForm";
 import OperatorInstanceFormBody, { IOperatorInstanceFormProps } from "./OperatorInstanceFormBody";
+
+beforeEach(() => {
+  // mock the window.matchMedia for selecting the theme
+  Object.defineProperty(window, "matchMedia", {
+    writable: true,
+    configurable: true,
+    value: jest.fn().mockImplementation(query => ({
+      matches: false,
+      media: query,
+      onchange: null,
+      addListener: jest.fn(),
+      removeListener: jest.fn(),
+      addEventListener: jest.fn(),
+      removeEventListener: jest.fn(),
+      dispatchEvent: jest.fn(),
+    })),
+  });
+
+  // mock the window.ResizeObserver, required by the MonacoDiffEditor for the layout
+  Object.defineProperty(window, "ResizeObserver", {
+    writable: true,
+    configurable: true,
+    value: jest.fn().mockImplementation(() => ({
+      observe: jest.fn(),
+      unobserve: jest.fn(),
+      disconnect: jest.fn(),
+    })),
+  });
+
+  // mock the window.HTMLCanvasElement.getContext(), required by the MonacoDiffEditor for the layout
+  Object.defineProperty(HTMLCanvasElement.prototype, "getContext", {
+    writable: true,
+    configurable: true,
+    value: jest.fn().mockImplementation(() => ({
+      clearRect: jest.fn(),
+    })),
+  });
+});
+
+afterEach(() => {
+  jest.restoreAllMocks();
+});
 
 const defaultProps: IOperatorInstanceFormProps = {
   isFetching: false,
@@ -28,7 +71,7 @@ it("set default values", () => {
     defaultStore,
     <OperatorInstanceFormBody {...defaultProps} defaultValues="foo" />,
   );
-  expect(wrapper.find(AdvancedDeploymentForm).prop("appValues")).toBe("foo");
+  expect(wrapper.find(OperatorAdvancedDeploymentForm).prop("appValues")).toBe("foo");
 });
 
 it("restores the default values", async () => {
@@ -38,13 +81,13 @@ it("restores the default values", async () => {
   );
 
   act(() => {
-    (wrapper.find(AdvancedDeploymentForm).prop("handleValuesChange") as any)("not-foo");
+    (wrapper.find(OperatorAdvancedDeploymentForm).prop("handleValuesChange") as any)("not-foo");
   });
   wrapper.update();
-  expect(wrapper.find(AdvancedDeploymentForm).prop("appValues")).toBe("not-foo");
+  expect(wrapper.find(OperatorAdvancedDeploymentForm).prop("appValues")).toBe("not-foo");
 
   const restoreButton = wrapper
-    .find("button")
+    .find(CdsButton)
     .filterWhere(b => b.text().includes("Restore Defaults"));
   act(() => {
     restoreButton.simulate("click");
@@ -54,7 +97,7 @@ it("restores the default values", async () => {
   });
   wrapper.update();
 
-  expect(wrapper.find(AdvancedDeploymentForm).prop("appValues")).toBe("foo");
+  expect(wrapper.find(OperatorAdvancedDeploymentForm).prop("appValues")).toBe("foo");
 });
 
 it("should submit the form", () => {
@@ -66,7 +109,7 @@ it("should submit the form", () => {
 
   const values = "apiVersion: v1\nmetadata:\n  name: foo";
   act(() => {
-    (wrapper.find(AdvancedDeploymentForm).prop("handleValuesChange") as any)(values);
+    (wrapper.find(OperatorAdvancedDeploymentForm).prop("handleValuesChange") as any)(values);
   });
   const form = wrapper.find("form");
   form.simulate("submit", { preventDefault: jest.fn() });
@@ -89,7 +132,7 @@ it("should catch a syntax error in the form", () => {
 
   const values = "metadata: invalid!\n  name: foo";
   act(() => {
-    (wrapper.find(AdvancedDeploymentForm).prop("handleValuesChange") as any)(values);
+    (wrapper.find(OperatorAdvancedDeploymentForm).prop("handleValuesChange") as any)(values);
   });
   const form = wrapper.find("form");
   form.simulate("submit", { preventDefault: jest.fn() });
@@ -107,7 +150,7 @@ it("should throw an eror if the element doesn't contain an apiVersion", () => {
 
   const values = "metadata:\nname: foo";
   act(() => {
-    (wrapper.find(AdvancedDeploymentForm).prop("handleValuesChange") as any)(values);
+    (wrapper.find(OperatorAdvancedDeploymentForm).prop("handleValuesChange") as any)(values);
   });
   const form = wrapper.find("form");
   form.simulate("submit", { preventDefault: jest.fn() });

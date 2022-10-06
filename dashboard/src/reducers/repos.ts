@@ -6,6 +6,7 @@ import {
   PackageRepositoryDetail,
   PackageRepositorySummary,
 } from "gen/kubeappsapis/core/packages/v1alpha1/repositories";
+import { FluxPackageRepositoryCustomDetail } from "gen/kubeappsapis/plugins/fluxv2/packages/v1alpha1/fluxv2";
 import { HelmPackageRepositoryCustomDetail } from "gen/kubeappsapis/plugins/helm/packages/v1alpha1/helm";
 import {
   KappControllerPackageRepositoryCustomDetail,
@@ -47,6 +48,10 @@ const kappPackageRepositoryCustomDetail = {
   fetch: {} as PackageRepositoryFetch,
 } as KappControllerPackageRepositoryCustomDetail;
 
+const fluxPackageRepositoryCustomDetail = {
+  provider: "",
+} as FluxPackageRepositoryCustomDetail;
+
 const reposReducer = (
   state: IPackageRepositoryState = initialState,
   action: PkgReposAction | LocationChangeAction,
@@ -81,6 +86,17 @@ const reposReducer = (
             customDetail = kappPackageRepositoryCustomDetail;
             try {
               customDetail = KappControllerPackageRepositoryCustomDetail.decode(
+                action.payload.customDetail.value,
+              );
+              repoWithCustomDetail = { ...action.payload, customDetail };
+            } catch (error) {
+              repoWithCustomDetail = { ...action.payload };
+            }
+            break;
+          case PluginNames.PACKAGES_FLUX:
+            customDetail = fluxPackageRepositoryCustomDetail;
+            try {
+              customDetail = FluxPackageRepositoryCustomDetail.decode(
                 action.payload.customDetail.value,
               );
               repoWithCustomDetail = { ...action.payload, customDetail };

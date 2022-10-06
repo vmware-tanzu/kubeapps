@@ -345,7 +345,7 @@ func (s *Server) GetInstalledPackageSummaries(ctx context.Context, request *core
 			}
 			// As each package install could potentially be from a pkg in the same
 			// namespace or a package in the global namespace, we track both.
-			for _, ns := range []string{pkgInstall.Namespace, s.globalPackagingNamespace} {
+			for _, ns := range []string{pkgInstall.Namespace, s.pluginConfig.globalPackagingNamespace} {
 				pkgData, ok := pkgDataForNamespaces[ns]
 				if !ok {
 					pkgData = &pkgMetaAndVersionsData{
@@ -426,7 +426,7 @@ func (s *Server) GetInstalledPackageSummaries(ctx context.Context, request *core
 			pkgData := pkgDataForNamespaces[pkgi.Namespace]
 			var ok bool
 			if pkgData.meta == nil {
-				pkgData, ok = pkgDataForNamespaces[s.globalPackagingNamespace]
+				pkgData, ok = pkgDataForNamespaces[s.pluginConfig.globalPackagingNamespace]
 				// Ignore packages which do not have associated metadata
 				// available. See https://github.com/vmware-tanzu/kubeapps/issues/4901
 				if !ok || pkgData.meta == nil {
@@ -470,7 +470,7 @@ func (s *Server) GetInstalledPackageDetail(ctx context.Context, request *corev1.
 		cluster = s.globalPackagingCluster
 	}
 
-	typedClient, _, err := s.GetClients(ctx, cluster)
+	typedClient, err := s.clientGetter.Typed(ctx, cluster)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "unable to get the k8s client: '%v'", err)
 	}
@@ -589,7 +589,7 @@ func (s *Server) CreateInstalledPackage(ctx context.Context, request *corev1.Cre
 		return nil, status.Errorf(codes.InvalidArgument, "installing packages in other clusters in not supported yet")
 	}
 
-	typedClient, _, err := s.GetClients(ctx, targetCluster)
+	typedClient, err := s.clientGetter.Typed(ctx, targetCluster)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "unable to get the k8s client: '%v'", err)
 	}
@@ -695,7 +695,7 @@ func (s *Server) UpdateInstalledPackage(ctx context.Context, request *corev1.Upd
 		packageCluster = s.globalPackagingCluster
 	}
 
-	typedClient, _, err := s.GetClients(ctx, packageCluster)
+	typedClient, err := s.clientGetter.Typed(ctx, packageCluster)
 	if err != nil {
 		return nil, err
 	}
@@ -824,7 +824,7 @@ func (s *Server) DeleteInstalledPackage(ctx context.Context, request *corev1.Del
 		cluster = s.globalPackagingCluster
 	}
 
-	typedClient, _, err := s.GetClients(ctx, cluster)
+	typedClient, err := s.clientGetter.Typed(ctx, cluster)
 	if err != nil {
 		return nil, err
 	}

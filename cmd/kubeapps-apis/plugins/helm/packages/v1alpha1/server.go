@@ -41,7 +41,6 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
-	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/kubernetes"
 	log "k8s.io/klog/v2"
 	ctrlclient "sigs.k8s.io/controller-runtime/pkg/client"
@@ -65,7 +64,7 @@ type Server struct {
 	// clientGetter is a field so that it can be switched in tests for
 	// a fake client. NewServer() below sets this automatically with the
 	// non-test implementation.
-	clientGetter             clientgetter.ClientGetterFunc
+	clientGetter             clientgetter.ClientProviderInterface
 	globalPackagingNamespace string
 	globalPackagingCluster   string
 	manager                  utils.AssetManager
@@ -80,7 +79,7 @@ type Server struct {
 
 // NewServer returns a Server automatically configured with a function to obtain
 // the k8s client config.
-func NewServer(configGetter core.KubernetesConfigGetter, globalPackagingCluster string, globalReposNamespace string, pluginConfigPath string) *Server {
+func NewServer(configGetter core.KubernetesConfigGetter, globalPackagingCluster string, globalPackagingNamespace string, pluginConfigPath string) *Server {
 	var ASSET_SYNCER_DB_URL = os.Getenv("ASSET_SYNCER_DB_URL")
 	var ASSET_SYNCER_DB_NAME = os.Getenv("ASSET_SYNCER_DB_NAME")
 	var ASSET_SYNCER_DB_USERNAME = os.Getenv("ASSET_SYNCER_DB_USERNAME")
@@ -94,29 +93,38 @@ func NewServer(configGetter core.KubernetesConfigGetter, globalPackagingCluster 
 
 	var dbConfig = dbutils.Config{URL: ASSET_SYNCER_DB_URL, Database: ASSET_SYNCER_DB_NAME, Username: ASSET_SYNCER_DB_USERNAME, Password: ASSET_SYNCER_DB_USERPASSWORD}
 
-	log.Infof("+helm NewServer(globalPackagingCluster: [%v], globalReposNamespace: [%v], pluginConfigPath: [%s]",
-		globalPackagingCluster, globalReposNamespace, pluginConfigPath)
-
-	manager, err := utils.NewPGManager(dbConfig, globalReposNamespace)
-	if err != nil {
-		log.Fatalf("%s", err)
-	}
-	err = manager.Init()
-	if err != nil {
-		log.Fatalf("%s", err)
-	}
+	log.Infof("+helm NewServer(globalPackagingCluster: [%v], globalPackagingNamespace: [%v], pluginConfigPath: [%s]",
+		globalPackagingCluster, globalPackagingNamespace, pluginConfigPath)
 
 	// If no config is provided, we default to the existing values for backwards
 	// compatibility.
 	pluginConfig := common.NewDefaultPluginConfig()
 	if pluginConfigPath != "" {
-		pluginConfig, err = common.ParsePluginConfig(pluginConfigPath)
+		pluginConfig, err := common.ParsePluginConfig(pluginConfigPath)
 		if err != nil {
 			log.Fatalf("%s", err)
 		}
 		log.Infof("+helm using custom config: [%v]", *pluginConfig)
 	} else {
 		log.Info("+helm using default config since pluginConfigPath is empty")
+	}
+
+	// TODO(agamez): currently, globalPackagingNamespace and pluginConfig.GlobalPackagingNamespace always match, but we might stop passing the config via CLI args in the future
+	// and we will want to use the one from the pluginConfig
+	effectiveGlobalPackagingNamespace := globalPackagingNamespace
+	if pluginConfig.GlobalPackagingNamespace != "" {
+		effectiveGlobalPackagingNamespace = pluginConfig.GlobalPackagingNamespace
+	}
+
+	log.Infof("+helm NewServer effective globalPackagingNamespace: [%v]", effectiveGlobalPackagingNamespace)
+
+	manager, err := utils.NewPGManager(dbConfig, effectiveGlobalPackagingNamespace)
+	if err != nil {
+		log.Fatalf("%s", err)
+	}
+	err = manager.Init()
+	if err != nil {
+		log.Fatalf("%s", err)
 	}
 
 	// Register custom scheme
@@ -126,8 +134,13 @@ func NewServer(configGetter core.KubernetesConfigGetter, globalPackagingCluster 
 		log.Fatalf("%s", err)
 	}
 
+	clientProvider, err := clientgetter.NewClientProvider(configGetter, clientgetter.Options{Scheme: scheme})
+	if err != nil {
+		log.Fatalf("%s", err)
+	}
+
 	return &Server{
-		clientGetter: clientgetter.NewClientGetter(configGetter, clientgetter.Options{Scheme: scheme}),
+		clientGetter: clientProvider,
 		actionConfigGetter: func(ctx context.Context, pkgContext *corev1.Context) (*action.Configuration, error) {
 			cluster := pkgContext.GetCluster()
 			fn := clientgetter.NewHelmActionConfigGetter(configGetter, cluster)
@@ -135,35 +148,13 @@ func NewServer(configGetter core.KubernetesConfigGetter, globalPackagingCluster 
 		},
 		manager:                  manager,
 		kubeappsNamespace:        kubeappsNamespace,
-		globalPackagingNamespace: globalReposNamespace,
+		globalPackagingNamespace: globalPackagingNamespace,
 		globalPackagingCluster:   globalPackagingCluster,
 		chartClientFactory:       &chartutils.ChartClientFactory{},
 		pluginConfig:             pluginConfig,
 		createReleaseFunc:        agent.CreateRelease,
 		repoClientGetter:         newRepositoryClient,
 	}
-}
-
-// GetClients ensures a client getter is available and uses it to return both a typed and dynamic k8s client.
-func (s *Server) GetClients(ctx context.Context, cluster string) (kubernetes.Interface, dynamic.Interface, error) {
-	if s.clientGetter == nil {
-		return nil, nil, status.Errorf(codes.Internal, "server not configured with configGetter")
-	}
-	// TODO (gfichtenholt) Today this function returns 2 different
-	// clients (typed and dynamic). Now if one looks at the callers, it is clear that
-	// only one client is actually needed for a given scenario.
-	// So for now, in order not to make too many changes, I am going to do more work than
-	// is actually needed by getting *all* clients and returning them.
-	// But we should think about refactoring the callers to ask for only what's needed
-	dynamicClient, err := s.clientGetter.Dynamic(ctx, cluster)
-	if err != nil {
-		return nil, nil, status.Errorf(codes.FailedPrecondition, fmt.Sprintf("unable to get client : %v", err))
-	}
-	typedClient, err := s.clientGetter.Typed(ctx, cluster)
-	if err != nil {
-		return nil, nil, status.Errorf(codes.FailedPrecondition, fmt.Sprintf("unable to get client : %v", err))
-	}
-	return typedClient, dynamicClient, nil
 }
 
 // GetManager ensures a manager is available and returns it.
@@ -173,6 +164,16 @@ func (s *Server) GetManager() (utils.AssetManager, error) {
 	}
 	manager := s.manager
 	return manager, nil
+}
+
+// GetGlobalPackagingNamespace returns the configured global packaging namespace in in the plugin config if any,
+// otherwise it uses the one passed as a cmd argument to the kubeapps-apis server for backwards compatibilty.
+func (s *Server) GetGlobalPackagingNamespace() string {
+	if s.pluginConfig.GlobalPackagingNamespace != "" {
+		return s.pluginConfig.GlobalPackagingNamespace
+	} else {
+		return s.globalPackagingNamespace
+	}
 }
 
 // GetAvailablePackageSummaries returns the available packages based on the request.
@@ -196,7 +197,7 @@ func (s *Server) GetAvailablePackageSummaries(ctx context.Context, request *core
 	// If the request is for available packages on another cluster, we only
 	// return the global packages (ie. kubeapps namespace)
 	if cluster != "" && cluster != s.globalPackagingCluster {
-		namespace = s.globalPackagingNamespace
+		namespace = s.GetGlobalPackagingNamespace()
 	}
 
 	// Create the initial chart query with the namespace
@@ -413,10 +414,10 @@ func AvailablePackageDetailFromChart(chart *models.Chart, chartFiles *models.Cha
 // hasAccessToNamespace returns an error if the client does not have read access to a given namespace
 func (s *Server) hasAccessToNamespace(ctx context.Context, cluster, namespace string) error {
 	// If checking the global namespace, allow access always
-	if namespace == s.globalPackagingNamespace {
+	if namespace == s.GetGlobalPackagingNamespace() {
 		return nil
 	}
-	client, _, err := s.GetClients(ctx, cluster)
+	client, err := s.clientGetter.Typed(ctx, cluster)
 	if err != nil {
 		return err
 	}
@@ -667,7 +668,7 @@ func installedPkgDetailFromRelease(r *release.Release, ref *corev1.InstalledPack
 func (s *Server) CreateInstalledPackage(ctx context.Context, request *corev1.CreateInstalledPackageRequest) (*corev1.CreateInstalledPackageResponse, error) {
 	log.InfoS("+helm CreateInstalledPackage", "cluster", request.GetTargetContext().GetCluster(), "namespace", request.GetTargetContext().GetNamespace())
 
-	typedClient, _, err := s.GetClients(ctx, s.globalPackagingCluster)
+	typedClient, err := s.clientGetter.Typed(ctx, s.globalPackagingCluster)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "Unable to create kubernetes clientset: %v", err)
 	}
@@ -739,7 +740,7 @@ func (s *Server) UpdateInstalledPackage(ctx context.Context, request *corev1.Upd
 		return nil, status.Errorf(codes.FailedPrecondition, "Unable to find the available package used to deploy %q in the namespace %q.", releaseName, installedRef.GetContext().GetNamespace())
 	}
 
-	typedClient, _, err := s.GetClients(ctx, s.globalPackagingCluster)
+	typedClient, err := s.clientGetter.Typed(ctx, s.globalPackagingCluster)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "Unable to create kubernetes clientset: %v", err)
 	}
@@ -791,7 +792,12 @@ func (s *Server) UpdateInstalledPackage(ctx context.Context, request *corev1.Upd
 func (s *Server) getAppRepoAndRelatedSecrets(ctx context.Context, cluster, appRepoName, appRepoNamespace string) (*appRepov1.AppRepository, *corek8sv1.Secret, *corek8sv1.Secret, *corek8sv1.Secret, error) {
 
 	// We currently get app repositories on the kubeapps cluster only.
-	typedClient, dynClient, err := s.GetClients(ctx, cluster)
+	typedClient, err := s.clientGetter.Typed(ctx, cluster)
+	if err != nil {
+		return nil, nil, nil, nil, err
+	}
+
+	dynClient, err := s.clientGetter.Dynamic(ctx, cluster)
 	if err != nil {
 		return nil, nil, nil, nil, err
 	}
@@ -1025,9 +1031,9 @@ func (s *Server) AddPackageRepository(ctx context.Context, request *corev1.AddPa
 	}
 	namespace := request.GetContext().GetNamespace()
 	if namespace == "" {
-		namespace = s.globalPackagingNamespace
+		namespace = s.GetGlobalPackagingNamespace()
 	}
-	if request.GetNamespaceScoped() != (namespace != s.globalPackagingNamespace) {
+	if request.GetNamespaceScoped() != (namespace != s.GetGlobalPackagingNamespace()) {
 		return nil, status.Errorf(codes.InvalidArgument, "Namespace Scope is inconsistent with the provided Namespace")
 	}
 	name := types.NamespacedName{

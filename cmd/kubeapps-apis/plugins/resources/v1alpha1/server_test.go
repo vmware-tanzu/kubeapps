@@ -6,6 +6,7 @@ package main
 import (
 	"context"
 	"errors"
+	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/pkg/clientgetter"
 	"github.com/vmware-tanzu/kubeapps/pkg/kube"
 	"io"
 	"k8s.io/client-go/rest"
@@ -29,9 +30,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
-	"k8s.io/client-go/dynamic"
 	dynfake "k8s.io/client-go/dynamic/fake"
-	"k8s.io/client-go/kubernetes"
 	typfake "k8s.io/client-go/kubernetes/fake"
 
 	pkgsGRPCv1alpha1 "github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
@@ -96,9 +95,9 @@ func getResourcesClient(t *testing.T, objects ...runtime.Object) (v1alpha1.Resou
 	v1alpha1.RegisterResourcesServiceServer(s, &Server{
 		// Use a client getter that returns a dynamic client prepped with the
 		// specified objects.
-		clientGetter: func(context.Context, string) (kubernetes.Interface, dynamic.Interface, error) {
-			return nil, fakeDynamicClient, nil
-		},
+		clientGetter: clientgetter.NewBuilder().
+			WithDynamic(fakeDynamicClient).
+			Build(),
 		// Use a corePackagesClientGetter that returns a client connected to our
 		// running test service.
 		corePackagesClientGetter: func() (pkgsGRPCv1alpha1.PackagesServiceClient, error) {
@@ -507,9 +506,9 @@ func TestGetServiceAccountNames(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 
 			s := Server{
-				clientGetter: func(context.Context, string) (kubernetes.Interface, dynamic.Interface, error) {
-					return typfake.NewSimpleClientset(tc.existingObjects...), nil, nil
-				},
+				clientGetter: clientgetter.NewBuilder().
+					WithTyped(typfake.NewSimpleClientset(tc.existingObjects...)).
+					Build(),
 			}
 
 			GetServiceAccountNamesResponse, err := s.GetServiceAccountNames(context.Background(), tc.request)

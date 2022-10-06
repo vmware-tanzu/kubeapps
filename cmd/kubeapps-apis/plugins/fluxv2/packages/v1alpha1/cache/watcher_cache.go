@@ -104,7 +104,7 @@ type NamespacedResourceWatcherCacheConfig struct {
 	Gvr schema.GroupVersionResource
 	// this ClientGetter is for running out-of-request interactions with the Kubernetes API server,
 	// such as watching for resource changes
-	ClientGetter clientgetter.BackgroundClientGetterFunc
+	ClientGetter clientgetter.FixedClusterClientProviderInterface
 	// 'OnAddFunc' hook is called when an object comes about and the cache does not have a
 	// corresponding entry. Note this maybe happen as a result of a newly created k8s object
 	// or a modified object for which there was no entry in the cache
@@ -505,7 +505,19 @@ func (c *NamespacedResourceWatcherCache) processOneEvent(event watch.Event) {
 		// not quite sure why this happens (the docs don't say), but it seems to happen quite often
 		return
 	}
-	log.Infof("Got event: type: [%v], object:\n[%s]", event.Type, common.PrettyPrint(event.Object))
+	var sb strings.Builder
+	sb.WriteString(fmt.Sprintf("Got event: type: [%v], object: ", event.Type))
+	if event.Object == nil {
+		sb.WriteString("<nil>")
+	} else if event.Type == watch.Deleted {
+		// when the object is deleted, we rarely care to look at all of its state,
+		// so save some log space
+		sb.WriteString(fmt.Sprintf("[%s]", common.PreferObjectName(event.Object)))
+	} else {
+		sb.WriteString(fmt.Sprintf("\n[%s]", common.PrettyPrint(event.Object)))
+	}
+	log.Infof(sb.String())
+
 	switch event.Type {
 	case watch.Added, watch.Modified, watch.Deleted:
 		if obj, ok := event.Object.(ctrlclient.Object); !ok {

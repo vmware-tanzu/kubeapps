@@ -23,7 +23,7 @@ func (s *Server) AddPackageRepository(ctx context.Context, request *corev1.AddPa
 	}
 	namespace := request.GetContext().GetNamespace()
 	if namespace == "" {
-		namespace = s.globalPackagingNamespace
+		namespace = s.pluginConfig.globalPackagingNamespace
 	}
 
 	// trace logging
@@ -96,7 +96,7 @@ func (s *Server) GetPackageRepositoryDetail(ctx context.Context, request *corev1
 	}
 	namespace := request.GetPackageRepoRef().GetContext().GetNamespace()
 	if namespace == "" {
-		namespace = s.globalPackagingNamespace
+		namespace = s.pluginConfig.globalPackagingNamespace
 	}
 	name := request.GetPackageRepoRef().GetIdentifier()
 
@@ -180,7 +180,7 @@ func (s *Server) UpdatePackageRepository(ctx context.Context, request *corev1.Up
 	}
 	namespace := request.GetPackageRepoRef().GetContext().GetNamespace()
 	if namespace == "" {
-		namespace = s.globalPackagingNamespace
+		namespace = s.pluginConfig.globalPackagingNamespace
 	}
 	name := request.GetPackageRepoRef().GetIdentifier()
 
@@ -291,7 +291,7 @@ func (s *Server) DeletePackageRepository(ctx context.Context, request *corev1.De
 	}
 	namespace := request.GetPackageRepoRef().GetContext().GetNamespace()
 	if namespace == "" {
-		namespace = s.globalPackagingNamespace
+		namespace = s.pluginConfig.globalPackagingNamespace
 	}
 	name := request.GetPackageRepoRef().GetIdentifier()
 

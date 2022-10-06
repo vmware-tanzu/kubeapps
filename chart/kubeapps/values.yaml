@@ -870,7 +870,7 @@ apprepository:
     ##   - myRegistryKeySecretName
     ##
     pullSecrets: []
-  ## @param apprepository.globalReposNamespaceSuffix Suffix for the namespace of global repos. Defaults to empty for backwards compatibility.
+  ## @param apprepository.globalReposNamespaceSuffix Suffix for the namespace of global repos in the Helm plugin. Defaults to empty for backwards compatibility. Ignored if kubeappsapis.pluginConfig.helm.packages.v1alpha1.globalPackagingNamespace is set.
   ##
   globalReposNamespaceSuffix: ""
   ## @param apprepository.initialRepos [array] Initial chart repositories to configure
@@ -1427,34 +1427,6 @@ rbac:
   ## @param rbac.create Specifies whether RBAC resources should be created
   ##
   create: true
-## Image used for the tests
-## Bitnami NGINX image
-## ref: https://hub.docker.com/r/bitnami/nginx/tags/
-## @param testImage.registry NGINX image registry
-## @param testImage.repository NGINX image repository
-## @param testImage.tag NGINX image tag (immutable tags are recommended)
-## @param testImage.digest NGINX image digest in the way sha256:aa.... Please note this parameter, if set, will override the tag
-## @param testImage.pullPolicy NGINX image pull policy
-## @param testImage.pullSecrets NGINX image pull secrets
-##
-testImage:
-  registry: docker.io
-  repository: bitnami/nginx
-  tag: 1.23.1-debian-11-r15
-  digest: ""
-  ## Specify a imagePullPolicy
-  ## Defaults to 'Always' if image tag is 'latest', else set to 'IfNotPresent'
-  ## ref: https://kubernetes.io/docs/user-guide/images/#pre-pulling-images
-  ##
-  pullPolicy: IfNotPresent
-  ## Optionally specify an array of imagePullSecrets.
-  ## Secrets must be manually created in the namespace.
-  ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/
-  ## e.g:
-  ## pullSecrets:
-  ##   - myRegistryKeySecretName
-  ##
-  pullSecrets: []
 
 ## @section Database Parameters
 
@@ -1520,6 +1492,13 @@ kubeappsapis:
             patch: 3
           ## @param kubeappsapis.pluginConfig.core.packages.v1alpha1.timeoutSeconds Value to wait for Kubernetes commands to complete
           timeoutSeconds: 300
+    helm:
+      packages:
+        v1alpha1:
+          ## @param kubeappsapis.pluginConfig.helm.packages.v1alpha1.globalPackagingNamespace Custom global packaging namespace. Using this value will override the current "kubeapps release namespace + suffix" pattern and will create a new namespace if not exists.
+          globalPackagingNamespace: ""
+          ## @param kubeappsapis.pluginConfig.helm.packages.v1alpha1.userManagedSecrets Default policy for handling repository secrets, either managed by the user or by kubeapps-apis
+          userManagedSecrets: false
     kappController:
       packages:
         v1alpha1:
@@ -1535,6 +1514,9 @@ kubeappsapis:
           ## @param kubeappsapis.pluginConfig.kappController.packages.v1alpha1.defaultAllowDowngrades Default policy for allowing applications to be downgraded to previous versions
           ## ref: https://carvel.dev/kapp-controller/docs/latest/package-consumer-concepts/#downgrading
           defaultAllowDowngrades: false
+          ## @param kubeappsapis.pluginConfig.kappController.packages.v1alpha1.globalPackagingNamespace Default global packaging namespace
+          ## ref: https://carvel.dev/kapp-controller/docs/latest/package-consumer-concepts/#namespacing
+          globalPackagingNamespace: kapp-controller-packaging-global
     flux:
       packages:
         v1alpha1:

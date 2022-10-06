@@ -26,7 +26,6 @@ import (
 	"net/url"
 	"os"
 	"path"
-	"path/filepath"
 	"reflect"
 	"sort"
 	"strings"
@@ -40,6 +39,7 @@ import (
 	"sigs.k8s.io/yaml"
 
 	"github.com/Masterminds/semver/v3"
+	"github.com/google/go-containerregistry/pkg/name"
 	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/fluxv2/packages/v1alpha1/common"
 	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/fluxv2/packages/v1alpha1/common/transport"
 	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/pkg/pkgutils"
@@ -48,6 +48,7 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	log "k8s.io/klog/v2"
 
+	"github.com/fluxcd/pkg/oci/auth/login"
 	"github.com/fluxcd/pkg/version"
 	sourcev1 "github.com/fluxcd/source-controller/api/v1beta2"
 
@@ -119,7 +120,7 @@ var (
 		},
 	}
 
-	// TODO (gfichtenholt) make this thing extensible so code coming from other plugs/modules
+	// TODO (gfichtenholt) make this extensible so code coming from other plugs/modules
 	// can register new repository listers
 	builtInRepoListers = []OCIChartRepositoryLister{
 		NewDockerRegistryApiV2RepositoryLister(),
@@ -219,7 +220,7 @@ func newOCIChartRepository(registryURL string, registryOpts ...OCIChartRepositor
 }
 
 func (r *OCIChartRepository) listRepositoryNames() ([]string, error) {
-	log.Infof("+listRepositoryNames(stack:\n%s)", common.GetStackTrace())
+	log.Infof("+listRepositoryNames")
 
 	// this needs to be done after a call to login()
 	if r.repositoryLister == nil {
@@ -447,7 +448,7 @@ func (s *repoEventSink) onAddOciRepo(repo sourcev1.HelmRepository) ([]byte, bool
 }
 
 func (s *repoEventSink) onModifyOciRepo(key string, oldValue interface{}, repo sourcev1.HelmRepository) ([]byte, bool, error) {
-	log.Infof("+onModifyOciRepo(stack:\n%s,\nrepo:%s)", common.GetStackTrace(), common.PrettyPrint(repo))
+	log.Infof("+onModifyOciRepo(repo:%s)", common.PrettyPrint(repo))
 	defer log.Info("-onModifyOciRepo")
 
 	// We should to compare checksums on what's stored in the cache
@@ -583,7 +584,7 @@ func (s *Server) newOCIChartRepositoryAndLogin(ctx context.Context, repoName typ
 }
 
 func (s *repoEventSink) newOCIChartRepositoryAndLogin(ctx context.Context, repo sourcev1.HelmRepository) (*OCIChartRepository, error) {
-	if loginOpts, getterOpts, cred, err := s.ociClientOptionsForRepo(ctx, repo); err != nil {
+	if loginOpts, getterOpts, cred, err := s.clientOptionsForOciRepo(ctx, repo); err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to create registry client: %v", err)
 	} else {
 		return s.newOCIChartRepositoryAndLoginWithOptions(repo.Spec.URL, loginOpts, getterOpts, cred)
@@ -612,9 +613,6 @@ func (s *repoEventSink) newOCIChartRepositoryAndLoginWithOptions(registryURL str
 	}
 	if file != "" {
 		defer func() {
-			if byteArray, err := os.ReadFile(filepath.Clean(file)); err == nil {
-				log.Infof("Temporary credentials file [%s] contents:\n%s", file, byteArray)
-			}
 			if err := os.Remove(file); err != nil {
 				log.Infof("Failed to delete temporary credentials file: %v", err)
 			}
@@ -656,10 +654,7 @@ func (s *repoEventSink) newOCIChartRepositoryAndLoginWithOptions(registryURL str
 	return ociRepo, nil
 }
 
-func (s *repoEventSink) ociClientOptionsForRepo(ctx context.Context, repo sourcev1.HelmRepository) ([]registry.LoginOption, []getter.Option, *orasregistryauthv2.Credential, error) {
-	log.Infof("+ociClientOptionsForRepo(%s)", common.PrettyPrint(repo))
-	log.Info("-ociClientOptionsForRepo")
-
+func (s *repoEventSink) clientOptionsForOciRepo(ctx context.Context, repo sourcev1.HelmRepository) ([]registry.LoginOption, []getter.Option, *orasregistryauthv2.Credential, error) {
 	var loginOpts []registry.LoginOption
 	var cred *orasregistryauthv2.Credential
 	getterOpts := []getter.Option{
@@ -689,6 +684,23 @@ func (s *repoEventSink) ociClientOptionsForRepo(ctx context.Context, repo source
 			}
 		}
 	}
+
+	if repo.Spec.Provider != "" && repo.Spec.Provider != sourcev1.GenericOCIProvider {
+		ctxTimeout, cancel := context.WithTimeout(ctx, repo.Spec.Timeout.Duration)
+		defer cancel()
+
+		cred, err = oidcAuth(ctxTimeout, repo)
+		if err != nil {
+			return nil, nil, nil, err
+		}
+		if cred != nil {
+			loginOpt := registry.LoginOptBasicAuth(cred.Username, cred.Password)
+			if loginOpt != nil {
+				loginOpts = append(loginOpts, loginOpt)
+			}
+		}
+	}
+
 	return loginOpts, getterOpts, cred, nil
 }
 
@@ -879,4 +891,43 @@ func downloadOCIChartFn(ociRepo *OCIChartRepository) func(chartID, chartUrl, cha
 		}
 		return getOCIChartTarball(ociRepo, chartID, cv)
 	}
+}
+
+// oidcAuth generates the OIDC credential authenticator based on the specified cloud provider.
+func oidcAuth(ctx context.Context, repo sourcev1.HelmRepository) (*orasregistryauthv2.Credential, error) {
+	url := strings.TrimPrefix(repo.Spec.URL, sourcev1.OCIRepositoryPrefix)
+	ref, err := name.ParseReference(url)
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse URL '%s': %w", repo.Spec.URL, err)
+	}
+
+	cred, err := loginWithManager(ctx, repo.Spec.Provider, url, ref)
+	if err != nil {
+		return nil, fmt.Errorf("failed to login to registry '%s': %w", repo.Spec.URL, err)
+	}
+
+	return cred, nil
+}
+
+func loginWithManager(ctx context.Context, provider, url string, ref name.Reference) (*orasregistryauthv2.Credential, error) {
+	opts := login.ProviderOptions{}
+	switch provider {
+	case sourcev1.AmazonOCIProvider:
+		opts.AwsAutoLogin = true
+	case sourcev1.AzureOCIProvider:
+		opts.AzureAutoLogin = true
+	case sourcev1.GoogleOCIProvider:
+		opts.GcpAutoLogin = true
+	}
+
+	auth, err := login.NewManager().Login(ctx, url, ref, opts)
+	if err != nil {
+		return nil, err
+	}
+
+	if auth == nil {
+		return nil, nil
+	}
+
+	return common.OIDCAdaptHelper(auth)
 }

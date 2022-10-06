@@ -29,7 +29,7 @@ import (
 // 1) kind cluster with flux deployed
 // 2) kubeapps apis apiserver service running with fluxv2 plug-in enabled, port forwarded to 8080, e.g.
 //      kubectl -n kubeapps port-forward svc/kubeapps-internal-kubeappsapis 8080:8080
-// 3) run './kind-cluster-setup.sh deploy' from testdata dir once prior to these tests
+// 3) run './integ-test-env.sh deploy' from testdata dir once prior to these tests
 
 // this test is testing a scenario when a repo that takes a long time to index is added
 // and while the indexing is in progress this repo is deleted by another request.
@@ -1546,7 +1546,7 @@ func compareActualVsExpectedPackageRepositoryDetail(t *testing.T, actualDetail *
 	}
 }
 
-func setUserManagedSecretsAndCleanup(t *testing.T, fluxPluginReposClient v1alpha1.FluxV2RepositoriesServiceClient, value bool) {
+func setUserManagedSecrets(t *testing.T, fluxPluginReposClient v1alpha1.FluxV2RepositoriesServiceClient, value bool) bool {
 	ctx, cancel := context.WithTimeout(context.Background(), defaultContextTimeout)
 	defer cancel()
 
@@ -1555,15 +1555,23 @@ func setUserManagedSecretsAndCleanup(t *testing.T, fluxPluginReposClient v1alpha
 	if err != nil {
 		t.Fatal(err)
 	}
+	return oldValue.Value
+}
+
+func setUserManagedSecretsAndCleanup(t *testing.T, fluxPluginReposClient v1alpha1.FluxV2RepositoriesServiceClient, value bool) {
+	ctx, cancel := context.WithTimeout(context.Background(), defaultContextTimeout)
+	defer cancel()
+
+	oldValue := setUserManagedSecrets(t, fluxPluginReposClient, value)
 
 	t.Cleanup(func() {
 		ctx, cancel = context.WithTimeout(context.Background(), defaultContextTimeout)
 		defer cancel()
 
-		_, err = fluxPluginReposClient.SetUserManagedSecrets(
-			ctx, &v1alpha1.SetUserManagedSecretsRequest{Value: oldValue.Value})
+		_, err := fluxPluginReposClient.SetUserManagedSecrets(
+			ctx, &v1alpha1.SetUserManagedSecretsRequest{Value: oldValue})
 		if err != nil {
-			t.Fatalf("Failed to reset user managed secrets flag back to [%t] due to: %+v", oldValue.Value, err)
+			t.Fatalf("Failed to reset user managed secrets flag back to [%t] due to: %+v", oldValue, err)
 		}
 	})
 }

@@ -13,6 +13,7 @@ import fluxIcon from "icons/flux.svg";
 import helmIcon from "icons/helm.svg";
 import olmIcon from "icons/olm-icon.svg";
 import placeholder from "icons/placeholder.svg";
+import { toNumber } from "lodash";
 import { IConfig } from "./Config";
 import {
   BadRequestNetworkError,
@@ -32,6 +33,7 @@ import {
 } from "./types";
 
 export const k8sObjectNameRegex = "[a-z0-9]([-a-z0-9]*[a-z0-9])?(.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*";
+export const basicFormsDebounceTime = 500;
 
 export function escapeRegExp(str: string) {
   return str.replace(/[-[\]/{}()*+?.\\^$|]/g, "\\$&");
@@ -40,18 +42,18 @@ export function escapeRegExp(str: string) {
 export function getValueFromEvent(
   e: React.FormEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>,
 ) {
-  let value: any = e.currentTarget.value;
+  const value: any = e.currentTarget.value;
   switch (e.currentTarget.type) {
     case "checkbox":
       // value is a boolean
-      value = value === "true";
-      break;
+      return value === "true";
     case "number":
+    case "range":
       // value is a number
-      value = parseInt(value, 10);
-      break;
+      return toNumber(value);
+    default:
+      return value;
   }
-  return value;
 }
 
 // 3 lines description max
@@ -264,7 +266,7 @@ export function getSupportedPackageRepositoryAuthTypes(
 export function isGlobalNamespace(namespace: string, pluginName: string, kubeappsConfig: IConfig) {
   switch (pluginName) {
     case PluginNames.PACKAGES_HELM:
-      return namespace === kubeappsConfig.globalReposNamespace;
+      return namespace === kubeappsConfig.helmGlobalNamespace;
     case PluginNames.PACKAGES_KAPP:
       return namespace === kubeappsConfig.carvelGlobalNamespace;
     // Currently, Flux doesn't namespaced repos, so it will always be global
@@ -282,7 +284,7 @@ export function getGlobalNamespaceOrNamespace(
 ) {
   switch (pluginName) {
     case PluginNames.PACKAGES_HELM:
-      return kubeappsConfig.globalReposNamespace;
+      return kubeappsConfig.helmGlobalNamespace;
     case PluginNames.PACKAGES_KAPP:
       return kubeappsConfig.carvelGlobalNamespace;
     // Currently, Flux doesn't namespaced repos, so the given ns will be indeed global

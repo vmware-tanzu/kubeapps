@@ -44,22 +44,22 @@ const (
 )
 
 type Config struct {
-	DatabaseURL           string
-	DatabaseName          string
-	DatabaseUser          string
-	DatabasePassword      string
-	Debug                 bool
-	Namespace             string
-	OciRepositories       []string
-	TlsInsecureSkipVerify bool
-	FilterRules           string
-	PassCredentials       bool
-	UserAgent             string
-	UserAgentComment      string
-	GlobalReposNamespace  string
-	KubeappsNamespace     string
-	AuthorizationHeader   string
-	DockerConfigJson      string
+	DatabaseURL              string
+	DatabaseName             string
+	DatabaseUser             string
+	DatabasePassword         string
+	Debug                    bool
+	Namespace                string
+	OciRepositories          []string
+	TlsInsecureSkipVerify    bool
+	FilterRules              string
+	PassCredentials          bool
+	UserAgent                string
+	UserAgentComment         string
+	GlobalPackagingNamespace string
+	KubeappsNamespace        string
+	AuthorizationHeader      string
+	DockerConfigJson         string
 }
 
 type importChartFilesJob struct {
@@ -107,8 +107,8 @@ type assetManager interface {
 	insertFiles(chartID string, files models.ChartFiles) error
 }
 
-func newManager(config dbutils.Config, globalReposNamespace string) (assetManager, error) {
-	return newPGManager(config, globalReposNamespace)
+func newManager(config dbutils.Config, globalPackagingNamespace string) (assetManager, error) {
+	return newPGManager(config, globalPackagingNamespace)
 }
 
 func getSha256(src []byte) (string, error) {
