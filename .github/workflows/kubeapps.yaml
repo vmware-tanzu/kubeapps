@@ -527,7 +527,9 @@ jobs:
   sync_chart_from_bitnami:
     needs:
       - setup
-    if: needs.setup.outputs.running_on_main == 'true'
+    # FIXME: To test the job, we're gonna run it on every push (not just on pushes to main)
+    if: needs.setup.outputs.triggered_from_fork == 'false'
+#    if: needs.setup.outputs.running_on_main == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -536,7 +538,7 @@ jobs:
           source ./script/lib/libcitools.sh
           
           installGithubCLI ${GITHUB_VERSION}
-          installSemver {SEMVER_VERSION}
+          installSemver ${SEMVER_VERSION}
           installGPGKey ${{secrets.GPG_KEY_PUBLIC}} ${{secrets.GPG_KEY_PRIVATE}} ${CI_BOT_GPG} ${CI_BOT_EMAIL}
       - name: "Install SSH key: Kubeapps Deploy Key"
         uses: shimataro/ssh-key-action@v2
@@ -588,7 +590,9 @@ jobs:
   sync_chart_to_bitnami:
     needs:
       - setup
-    if: needs.setup.outputs.running_on_tag == 'true'
+    # FIXME: To test the job, we're gonna run it on every push (not just on pushes to main)
+    if: needs.setup.outputs.triggered_from_fork == 'false'
+#    if: needs.setup.outputs.running_on_tag == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -597,7 +601,7 @@ jobs:
           source ./script/lib/libcitools.sh
 
           installGithubCLI ${GITHUB_VERSION}
-          installSemver {SEMVER_VERSION}
+          installSemver ${SEMVER_VERSION}
           installGPGKey ${{secrets.GPG_KEY_PUBLIC}} ${{secrets.GPG_KEY_PRIVATE}} ${CI_BOT_GPG} ${CI_BOT_EMAIL}
       - name: "Install SSH key: Forked Charts Deploy Key"
         uses: shimataro/ssh-key-action@v2
