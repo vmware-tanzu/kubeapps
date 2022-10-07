@@ -162,7 +162,7 @@ func (c *OCIRepoClient) Init(appRepo *appRepov1.AppRepository, caCertSecret *cor
 	headers := http.Header{
 		"User-Agent": []string{c.userAgent},
 	}
-	netClient, err := httpclient.InitHTTPClient(appRepo, caCertSecret)
+	netClient, err := helm.InitHTTPClient(appRepo, caCertSecret)
 	if err != nil {
 		return err
 	}
