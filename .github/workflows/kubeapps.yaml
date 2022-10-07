@@ -512,9 +512,9 @@ jobs:
           password: ${{ secrets.DOCKER_PASSWORD }}
       - uses: actions/download-artifact@v3
       - run: |
-          for path in ./*; do
-            artifact=$(basename "$path")
-          
+          for artifact in *; do
+            echo "::debug::Processing artifact '${artifact}'"
+            
             if [[ "${artifact}" != *"-image" ]]; then
               echo "::notice ::Skipping artifact ${artifact}, it's not a docker image"          
               continue
@@ -527,7 +527,7 @@ jobs:
             fi
 
             echo "::notice ::Loading image ${image}"
-            docker load --input "${image}-image.tar"
+            docker load --input "${artifact}/${artifact}.tar"
 
             dev_image=${IMG_PREFIX}${image}${IMG_MODIFIER}:${IMG_DEV_TAG}
             prod_image=${IMG_PREFIX}${image}:${IMG_PROD_TAG}
