@@ -85,15 +85,18 @@ func TestGetChartHttp(t *testing.T) {
 			name:         "gets the chart without a user agent",
 			chartVersion: "5.1.1-apiVersionV1",
 			userAgent:    "",
+			tarballURL:   "http://example.com/nginx-5.1.1-apiVersionV1.tgz",
 		},
 		{
 			name:         "gets the chart with a user agent",
 			chartVersion: "5.1.1-apiVersionV1",
 			userAgent:    "kubeapps-apis/devel",
+			tarballURL:   "http://example.com/nginx-5.1.1-apiVersionV1.tgz",
 		},
 		{
 			name:         "gets a v2 chart without error when v1 support not required",
 			chartVersion: "5.1.1-apiVersionV2",
+			tarballURL:   "http://example.com/nginx-5.1.1-apiVersionV2.tgz",
 		},
 	}
 
