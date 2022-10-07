@@ -37,6 +37,10 @@ info "BRANCH_KUBEAPPS_REPO: ${BRANCH_KUBEAPPS_REPO}"
 info "README_GENERATOR_REPO: ${README_GENERATOR_REPO}"
 info "DEV_MODE: ${DEV_MODE}"
 
+if [[ "${DEV_MODE}" == "true" ]]; then
+  set -x
+fi
+
 currentVersion=$(grep -oP '(?<=^version: ).*' <"${KUBEAPPS_CHART_DIR}/Chart.yaml")
 externalVersion=$(curl -s "https://raw.githubusercontent.com/${CHARTS_REPO_ORIGINAL}/${BRANCH_CHARTS_REPO_ORIGINAL}/${CHART_REPO_PATH}/Chart.yaml" | grep -oP '(?<=^version: ).*')
 semverCompare=$(semver compare "${currentVersion}" "${externalVersion}")
