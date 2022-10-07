@@ -7,6 +7,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/vmware-tanzu/kubeapps/pkg/helm"
 	"hash/adler32"
 	"strconv"
 	"strings"
@@ -17,7 +18,6 @@ import (
 	appreposcheme "github.com/vmware-tanzu/kubeapps/cmd/apprepository-controller/pkg/client/clientset/versioned/scheme"
 	informers "github.com/vmware-tanzu/kubeapps/cmd/apprepository-controller/pkg/client/informers/externalversions"
 	listers "github.com/vmware-tanzu/kubeapps/cmd/apprepository-controller/pkg/client/listers/apprepository/v1alpha1"
-	"github.com/vmware-tanzu/kubeapps/pkg/kube"
 	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -720,7 +720,7 @@ func secretKeyRefForRepo(keyRef corev1.SecretKeySelector, apprepo *apprepov1alph
 	if apprepo.ObjectMeta.Namespace == config.KubeappsNamespace {
 		return &keyRef
 	}
-	keyRef.LocalObjectReference.Name = kube.KubeappsSecretNameForRepo(apprepo.ObjectMeta.Name, apprepo.ObjectMeta.Namespace)
+	keyRef.LocalObjectReference.Name = helm.SecretNameForNamespacedRepo(apprepo.ObjectMeta.Name, apprepo.ObjectMeta.Namespace)
 	return &keyRef
 }
 

@@ -8,6 +8,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"github.com/vmware-tanzu/kubeapps/pkg/helm"
 	"strings"
 
 	apprepov1alpha1 "github.com/vmware-tanzu/kubeapps/cmd/apprepository-controller/pkg/apis/apprepository/v1alpha1"
@@ -32,19 +33,10 @@ const (
 	DockerConfigJsonKey = ".dockerconfigjson"
 )
 
-func secretNameForRepo(repoName string) string {
-	return fmt.Sprintf("apprepo-%s", repoName)
-}
-
-// Generate a suitable name for per-namespace repository secret
-func namespacedSecretNameForRepo(repoName, namespace string) string {
-	return fmt.Sprintf("%s-%s", namespace, secretNameForRepo(repoName))
-}
-
 func newLocalOpaqueSecret(ownerRepo types.NamespacedName) *k8scorev1.Secret {
 	return &k8scorev1.Secret{
 		ObjectMeta: metav1.ObjectMeta{
-			Name: secretNameForRepo(ownerRepo.Name),
+			Name: helm.SecretNameForRepo(ownerRepo.Name),
 		},
 		Type: k8scorev1.SecretTypeOpaque,
 		Data: map[string][]byte{},
@@ -299,7 +291,7 @@ func deleteSecret(ctx context.Context, secretsInterface v1.SecretInterface, secr
 func (s *Server) copyRepositorySecretToNamespace(typedClient kubernetes.Interface, targetNamespace string, secret *k8scorev1.Secret, repoName types.NamespacedName) (copiedSecret *k8scorev1.Secret, err error) {
 	newSecret := &k8scorev1.Secret{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      namespacedSecretNameForRepo(repoName.Name, repoName.Namespace),
+			Name:      helm.SecretNameForNamespacedRepo(repoName.Name, repoName.Namespace),
 			Namespace: targetNamespace,
 		},
 		Type: secret.Type,

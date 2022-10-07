@@ -7,7 +7,11 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"fmt"
+	"github.com/vmware-tanzu/kubeapps/cmd/apprepository-controller/pkg/apis/apprepository/v1alpha1"
+	"github.com/vmware-tanzu/kubeapps/pkg/kube"
+	"golang.org/x/net/http/httpproxy"
 	"io"
+	corev1 "k8s.io/api/core/v1"
 	"net/http"
 	"net/url"
 	"os"
@@ -30,7 +34,7 @@ type ClientWithDefaults struct {
 	DefaultHeaders http.Header
 }
 
-// ClientWithDefaults Do HTTP request
+// Do (in ClientWithDefaults) HTTP request
 func (c *ClientWithDefaults) Do(req *http.Request) (*http.Response, error) {
 	for k, v := range c.DefaultHeaders {
 		// Only add the default header if it's not already set in the request.
@@ -41,7 +45,7 @@ func (c *ClientWithDefaults) Do(req *http.Request) (*http.Response, error) {
 	return c.Client.Do(req)
 }
 
-// creates a new instance of http Client, with following default configuration:
+// New creates a new instance of http Client, with following default configuration:
 //   - timeout
 //   - proxy from environment
 func New() *http.Client {
@@ -53,7 +57,7 @@ func New() *http.Client {
 	}
 }
 
-// creates a new instance of Client, given a path to additional certificates
+// NewWithCertFile creates a new instance of Client, given a path to additional certificates
 // certFile may be empty string, which means no additional certs will be used
 func NewWithCertFile(certFile string, skipTLS bool) (*http.Client, error) {
 	// If additionalCA exists, load it
@@ -79,7 +83,7 @@ func NewWithCertFile(certFile string, skipTLS bool) (*http.Client, error) {
 	return client, nil
 }
 
-// creates a new instance of Client, given bytes for additional certificates
+// NewWithCertBytes creates a new instance of Client, given bytes for additional certificates
 func NewWithCertBytes(certs []byte, skipTLS bool) (*http.Client, error) {
 	// create cert pool
 	caCertPool, err := GetCertPool(certs)
@@ -101,7 +105,7 @@ func NewWithCertBytes(certs []byte, skipTLS bool) (*http.Client, error) {
 	return client, nil
 }
 
-// get or create a cert pool, with the given (optional) certs
+// GetCertPool get or create a cert pool, with the given (optional) certs
 func GetCertPool(certs []byte) (*x509.CertPool, error) {
 	// Require the SystemCertPool unless the env var is explicitly set.
 	caCertPool, err := x509.SystemCertPool()
@@ -119,7 +123,7 @@ func GetCertPool(certs []byte) (*x509.CertPool, error) {
 	return caCertPool, nil
 }
 
-// configure the given proxy on the given client
+// SetClientProxy configure the given proxy on the given client
 func SetClientProxy(client *http.Client, proxy func(*http.Request) (*url.URL, error)) error {
 	transport, ok := client.Transport.(*http.Transport)
 	if !ok {
@@ -129,7 +133,7 @@ func SetClientProxy(client *http.Client, proxy func(*http.Request) (*url.URL, er
 	return nil
 }
 
-// configure the given tls on the given client
+// SetClientTLS configure the given tls on the given client
 func SetClientTLS(client *http.Client, config *tls.Config) error {
 	transport, ok := client.Transport.(*http.Transport)
 	if !ok {
@@ -163,7 +167,7 @@ func NewClientTLS(certBytes, keyBytes, caBytes []byte) (*tls.Config, error) {
 	return &config, nil
 }
 
-// performs an HTTP GET request using provided client, URL and request headers.
+// Get performs an HTTP GET request using provided client, URL and request headers.
 // returns response body, as bytes on successful status, or error body,
 // if applicable on error status
 func Get(url string, cli Client, headers map[string]string) ([]byte, error) {
@@ -177,7 +181,7 @@ func Get(url string, cli Client, headers map[string]string) ([]byte, error) {
 	return io.ReadAll(reader)
 }
 
-// performs an HTTP GET request using provided client, URL and request headers.
+// GetStream performs an HTTP GET request using provided client, URL and request headers.
 // returns response body, as bytes on successful status, or error body,
 // if applicable on error status
 // returns response as a stream, as well as response content type
@@ -209,4 +213,99 @@ func GetStream(url string, cli Client, reqHeaders map[string]string) (io.ReadClo
 	}
 
 	return res.Body, respContentType, nil
+}
+
+// InitHTTPClient returns an HTTP client using the configuration from the apprepo and CA secret given.
+func InitHTTPClient(appRepo *v1alpha1.AppRepository, caCertSecret *corev1.Secret) (*http.Client, error) {
+	// create cert pool
+	var certsData []byte = nil
+	if caCertSecret != nil && appRepo.Spec.Auth.CustomCA != nil {
+		// Fetch cert data
+		key := appRepo.Spec.Auth.CustomCA.SecretKeyRef.Key
+		customData, ok := caCertSecret.Data[key]
+		if !ok {
+			customDataString, ok := caCertSecret.StringData[key]
+			if !ok {
+				return nil, fmt.Errorf("secret %q did not contain key %q", appRepo.Spec.Auth.CustomCA.SecretKeyRef.Name, key)
+			}
+			customData = []byte(customDataString)
+		}
+		certsData = customData
+	}
+	caCertPool, err := GetCertPool(certsData)
+	if err != nil {
+		return nil, err
+	}
+
+	// proxy config
+	proxyConfig := getProxyConfig(appRepo)
+	proxyFunc := func(r *http.Request) (*url.URL, error) { return proxyConfig.ProxyFunc()(r.URL) }
+
+	// create client
+	client := New()
+	// #nosec G402
+	tlsConfig := &tls.Config{
+		RootCAs:            caCertPool,
+		InsecureSkipVerify: appRepo.Spec.TLSInsecureSkipVerify,
+	}
+	if err := SetClientTLS(client, tlsConfig); err != nil {
+		return nil, err
+	}
+	if err := SetClientProxy(client, proxyFunc); err != nil {
+		return nil, err
+	}
+
+	return client, nil
+}
+
+// InitNetClient returns an HTTP client based on the chart details loading a
+// custom CA if provided (as a secret)
+func InitNetClient(appRepo *v1alpha1.AppRepository, caCertSecret, authSecret *corev1.Secret, defaultHeaders http.Header) (Client, error) {
+	netClient, err := InitHTTPClient(appRepo, caCertSecret)
+	if err != nil {
+		return nil, err
+	}
+
+	if defaultHeaders == nil {
+		defaultHeaders = http.Header{}
+	}
+	if authSecret != nil && appRepo.Spec.Auth.Header != nil {
+		auth, err := kube.GetDataFromSecret(appRepo.Spec.Auth.Header.SecretKeyRef.Key, authSecret)
+		if err != nil {
+			return nil, err
+		}
+		defaultHeaders.Set("Authorization", auth)
+	}
+
+	return &ClientWithDefaults{
+		Client:         netClient,
+		DefaultHeaders: defaultHeaders,
+	}, nil
+}
+
+func getProxyConfig(appRepo *v1alpha1.AppRepository) *httpproxy.Config {
+	template := appRepo.Spec.SyncJobPodTemplate
+	proxyConfig := httpproxy.Config{}
+	defaultToEnv := true
+	if len(template.Spec.Containers) > 0 {
+		for _, e := range template.Spec.Containers[0].Env {
+			switch e.Name {
+			case "http_proxy":
+				proxyConfig.HTTPProxy = e.Value
+				defaultToEnv = false
+			case "https_proxy":
+				proxyConfig.HTTPSProxy = e.Value
+				defaultToEnv = false
+			case "no_proxy":
+				proxyConfig.NoProxy = e.Value
+				defaultToEnv = false
+			}
+		}
+	}
+
+	if defaultToEnv {
+		return httpproxy.FromEnvironment()
+	}
+
+	return &proxyConfig
 }

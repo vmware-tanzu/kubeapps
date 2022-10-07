@@ -5,6 +5,7 @@ package main
 
 import (
 	"context"
+	"github.com/vmware-tanzu/kubeapps/pkg/helm"
 
 	apprepov1alpha1 "github.com/vmware-tanzu/kubeapps/cmd/apprepository-controller/pkg/apis/apprepository/v1alpha1"
 	corev1 "github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
@@ -545,7 +546,7 @@ func (s *Server) deleteRepo(ctx context.Context, cluster string, repoRef *corev1
 		if err != nil {
 			return err
 		}
-		namespacedSecretName := namespacedSecretNameForRepo(repoRef.Identifier, repoRef.Context.Namespace)
+		namespacedSecretName := helm.SecretNameForNamespacedRepo(repoRef.Identifier, repoRef.Context.Namespace)
 		if deleteErr := s.deleteRepositorySecretFromNamespace(typedClient, s.kubeappsNamespace, namespacedSecretName); deleteErr != nil {
 			return statuserror.FromK8sError("delete", "Secret", namespacedSecretName, deleteErr)
 		}

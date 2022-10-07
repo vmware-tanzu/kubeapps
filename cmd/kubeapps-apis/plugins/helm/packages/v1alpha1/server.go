@@ -8,6 +8,8 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/pkg/helm"
+	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/pkg/helm/agent"
 	"net/url"
 	"os"
 	"path"
@@ -19,12 +21,10 @@ import (
 	helmv1 "github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/plugins/helm/packages/v1alpha1"
 	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/helm/packages/v1alpha1/common"
 	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/helm/packages/v1alpha1/utils"
-	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/pkg/agent"
 	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/pkg/clientgetter"
 	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/pkg/paginate"
 	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/pkg/pkgutils"
 	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/pkg/resourcerefs"
-	chartutils "github.com/vmware-tanzu/kubeapps/pkg/chart"
 	"github.com/vmware-tanzu/kubeapps/pkg/chart/models"
 	"github.com/vmware-tanzu/kubeapps/pkg/dbutils"
 	httpclient "github.com/vmware-tanzu/kubeapps/pkg/http-client"
@@ -69,7 +69,7 @@ type Server struct {
 	globalPackagingCluster   string
 	manager                  utils.AssetManager
 	actionConfigGetter       helmActionConfigGetter
-	chartClientFactory       chartutils.ChartClientFactoryInterface
+	chartClientFactory       utils.ChartClientFactoryInterface
 	createReleaseFunc        createRelease
 	kubeappsCluster          string // Specifies the cluster on which Kubeapps is installed.
 	kubeappsNamespace        string // Namespace in which Kubeapps is installed
@@ -148,14 +148,14 @@ func NewServer(configGetter core.KubernetesConfigGetter, globalPackagingCluster 
 			if cluster == "" {
 				cluster = globalPackagingCluster
 			}
-			fn := clientgetter.NewHelmActionConfigGetter(configGetter, cluster)
+			fn := helm.NewHelmActionConfigGetter(configGetter, cluster)
 			return fn(ctx, pkgContext.GetNamespace())
 		},
 		manager:                  manager,
 		kubeappsNamespace:        kubeappsNamespace,
 		globalPackagingNamespace: globalPackagingNamespace,
 		globalPackagingCluster:   globalPackagingCluster,
-		chartClientFactory:       &chartutils.ChartClientFactory{},
+		chartClientFactory:       &utils.ChartClientFactory{},
 		pluginConfig:             pluginConfig,
 		createReleaseFunc:        agent.CreateRelease,
 		repoClientGetter:         newRepositoryClient,
@@ -683,7 +683,7 @@ func (s *Server) CreateInstalledPackage(ctx context.Context, request *corev1.Cre
 	if err != nil {
 		return nil, err
 	}
-	chartDetails := &chartutils.Details{
+	chartDetails := &utils.ChartDetails{
 		AppRepositoryResourceName:      repoName,
 		AppRepositoryResourceNamespace: repoNamespace,
 		ChartName:                      chartName,
@@ -754,7 +754,7 @@ func (s *Server) UpdateInstalledPackage(ctx context.Context, request *corev1.Upd
 	if err != nil {
 		return nil, err
 	}
-	chartDetails := &chartutils.Details{
+	chartDetails := &utils.ChartDetails{
 		AppRepositoryResourceName:      repoName,
 		AppRepositoryResourceNamespace: availablePkgRef.GetContext().GetNamespace(),
 		ChartName:                      chartName,
@@ -860,7 +860,7 @@ func (s *Server) getAppRepoAndRelatedSecrets(ctx context.Context, cluster, appRe
 // fetchChartWithRegistrySecrets returns the chart and related registry secrets.
 //
 // Mainly to DRY up similar code in the create and update methods.
-func (s *Server) fetchChartWithRegistrySecrets(ctx context.Context, chartDetails *chartutils.Details, client kubernetes.Interface) (*chart.Chart, map[string]string, error) {
+func (s *Server) fetchChartWithRegistrySecrets(ctx context.Context, chartDetails *utils.ChartDetails, client kubernetes.Interface) (*chart.Chart, map[string]string, error) {
 	// Most of the existing code that we want to reuse is based on having a typed AppRepository.
 	appRepo, caCertSecret, authSecret, _, err := s.getAppRepoAndRelatedSecrets(ctx, s.globalPackagingCluster, chartDetails.AppRepositoryResourceName, chartDetails.AppRepositoryResourceNamespace)
 	if err != nil {
@@ -888,7 +888,7 @@ func (s *Server) fetchChartWithRegistrySecrets(ctx context.Context, chartDetails
 
 	// Grab the chart itself
 	ch, err := utils.GetChart(
-		&chartutils.Details{
+		&utils.ChartDetails{
 			AppRepositoryResourceName:      appRepo.Name,
 			AppRepositoryResourceNamespace: appRepo.Namespace,
 			ChartName:                      chartDetails.ChartName,
@@ -903,7 +903,7 @@ func (s *Server) fetchChartWithRegistrySecrets(ctx context.Context, chartDetails
 		return nil, nil, status.Errorf(codes.Internal, "Unable to fetch the chart %s from the namespace %q: %v", chartDetails.ChartName, appRepo.Namespace, err)
 	}
 
-	registrySecrets, err := chartutils.RegistrySecretsPerDomain(ctx, appRepo.Spec.DockerRegistrySecrets, appRepo.Namespace, client)
+	registrySecrets, err := utils.RegistrySecretsPerDomain(ctx, appRepo.Spec.DockerRegistrySecrets, appRepo.Namespace, client)
 	if err != nil {
 		return nil, nil, status.Errorf(codes.Internal, "Unable to fetch registry secrets from the namespace %q: %v", appRepo.Namespace, err)
 	}
