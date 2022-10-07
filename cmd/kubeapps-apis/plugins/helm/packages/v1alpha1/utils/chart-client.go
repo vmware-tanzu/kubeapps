@@ -80,7 +80,7 @@ func NewOCIClient(userAgent string) ChartClient {
 // custom CA if provided (as a secret)
 func (c *HelmRepoClient) Init(appRepo *appRepov1.AppRepository, caCertSecret *corev1.Secret, authSecret *corev1.Secret) error {
 	var err error
-	c.netClient, err = httpclient.InitNetClient(appRepo, caCertSecret, authSecret, http.Header{"User-Agent": []string{c.userAgent}})
+	c.netClient, err = helm.InitNetClient(appRepo, caCertSecret, authSecret, http.Header{"User-Agent": []string{c.userAgent}})
 	return err
 }
 

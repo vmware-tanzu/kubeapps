@@ -6,6 +6,7 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/vmware-tanzu/kubeapps/pkg/helm"
 	"io"
 	log "k8s.io/klog/v2"
 	"net/http"
@@ -80,7 +81,7 @@ func getValidator(appRepo *apprepov1alpha1.AppRepository) (HttpValidator, error)
 }
 
 func newRepositoryClient(appRepo *apprepov1alpha1.AppRepository, secret *corev1.Secret) (httpclient.Client, error) {
-	if cli, err := httpclient.InitNetClient(appRepo, secret, secret, nil); err != nil {
+	if cli, err := helm.InitNetClient(appRepo, secret, secret, nil); err != nil {
 		return nil, status.Errorf(codes.FailedPrecondition, "Unable to create HTTP client for repository: %v", err)
 	} else {
 		return cli, nil
