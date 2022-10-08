@@ -21,10 +21,10 @@ import Column from "components/js/Column";
 import Row from "components/js/Row";
 import LoadingWrapper from "components/LoadingWrapper";
 import { useState } from "react";
-import DebouncedInput from "./DebouncedInput";
-import { fuzzyFilter } from "./TabularSchemaEditorTableHelpers";
-import "./TabularSchemaEditorTable.css";
 import { IBasicFormParam } from "shared/types";
+import DebouncedInput from "./DebouncedInput";
+import "./TabularSchemaEditorTable.css";
+import { fuzzyFilter } from "./TabularSchemaEditorTableHelpers";
 
 export interface TabularSchemaEditorTableProps {
   columns: any;
@@ -45,9 +45,6 @@ export default function TabularSchemaEditorTable(props: TabularSchemaEditorTable
   const table = useReactTable({
     data,
     columns,
-    filterFns: {
-      fuzzy: fuzzyFilter,
-    },
     state: {
       columnFilters,
       globalFilter,
@@ -64,6 +61,7 @@ export default function TabularSchemaEditorTable(props: TabularSchemaEditorTable
     getSortedRowModel: getSortedRowModel(),
     getSubRows: (row: IBasicFormParam) => row.params,
     globalFilterFn: fuzzyFilter,
+    filterFromLeafRows: true,
     onColumnFiltersChange: setColumnFilters,
     onExpandedChange: setGlobalExpanded,
     onGlobalFilterChange: setGlobalFilter,
