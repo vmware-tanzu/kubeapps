@@ -43,3 +43,14 @@ pub struct Options {
     )]
     pub proxy_tls_cert_key: String,
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_cli() {
+        use clap::CommandFactory;
+        Options::command().debug_assert();
+    }
+}
