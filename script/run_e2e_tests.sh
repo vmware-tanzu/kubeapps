@@ -24,7 +24,7 @@ test_command="./script/e2e-test.sh \
   ${KAPP_CONTROLLER_VERSION} \
   ${CHARTMUSEUM_VERSION}"
 
-if IMG_PREFIX=${IMG_PREFIX} TESTS_GROUPS=${TESTS_GROUPS} ${test_command}; then
+if IMG_PREFIX=${IMG_PREFIX} TESTS_GROUP=${TESTS_GROUP} ${test_command}; then
   echo "TEST_RESULT=0" >> "${GITHUB_ENV}"
   exit 0
 fi
