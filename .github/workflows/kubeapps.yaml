@@ -474,7 +474,7 @@ jobs:
             IMG_MODIFIER=""
           fi
           
-          test_command="IMG_PREFIX=\"${IMG_PREFIX}\" TESTS_GROUP=\"${TESTS_GROUP}\" ./script/e2e-test.sh \
+          test_command="./script/e2e-test.sh \
             ${USE_MULTICLUSTER_OIDC_ENV} \
             ${OLM_VERSION} \
             ${IMG_DEV_TAG} \
@@ -483,9 +483,9 @@ jobs:
             ${DEFAULT_DEX_IP} \
             ${ADDITIONAL_CLUSTER_IP} \
             ${KAPP_CONTROLLER_VERSION} \
-            ${CHARTMUSEUM_VERSION}"
+            ${CHARTMUSEUM_VERSION}"          
           
-          if ${test_command}; then
+          if IMG_PREFIX=${IMG_PREFIX} TESTS_GROUPS=${TESTS_GROUPS} ${test_command}; then
             echo "TEST_RESULT=0" >> $GITHUB_ENV
             exit 0
           fi
