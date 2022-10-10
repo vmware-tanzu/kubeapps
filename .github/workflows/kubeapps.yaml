@@ -474,7 +474,7 @@ jobs:
             IMG_MODIFIER=""
           fi
           
-          test_command="IMG_PREFIX=${IMG_PREFIX} TESTS_GROUP=${TESTS_GROUP} ./script/e2e-test.sh \
+          test_command="IMG_PREFIX=\"${IMG_PREFIX}\" TESTS_GROUP=\"${TESTS_GROUP}\" ./script/e2e-test.sh \
             ${USE_MULTICLUSTER_OIDC_ENV} \
             ${OLM_VERSION} \
             ${IMG_DEV_TAG} \
