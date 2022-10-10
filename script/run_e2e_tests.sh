@@ -13,7 +13,7 @@ if [[ -n "${TEST_LATEST_RELEASE:-}" ]]; then
   IMG_MODIFIER=""
 fi
 
-test_command="./script/e2e-test.sh \
+test_command="${ROOT_DIR}/script/e2e-test.sh \
   ${USE_MULTICLUSTER_OIDC_ENV} \
   ${OLM_VERSION} \
   ${IMG_DEV_TAG} \
