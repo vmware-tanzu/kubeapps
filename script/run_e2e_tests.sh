@@ -31,7 +31,16 @@ info "TESTS_GROUP: $TESTS_GROUP"
 info "CMD: $test_command"
 
 #if IMG_PREFIX=${IMG_PREFIX} TESTS_GROUP=${TESTS_GROUP} ${test_command}; then
-if ${test_command}; then
+if ${ROOT_DIR}/script/e2e-test.sh \
+     ${USE_MULTICLUSTER_OIDC_ENV} \
+     ${OLM_VERSION} \
+     ${IMG_DEV_TAG} \
+     ${IMG_MODIFIER} \
+     ${TEST_TIMEOUT_MINUTES} \
+     ${DEFAULT_DEX_IP} \
+     ${ADDITIONAL_CLUSTER_IP} \
+     ${KAPP_CONTROLLER_VERSION} \
+     ${CHARTMUSEUM_VERSION}; then
   echo "TEST_RESULT=0" >> "${GITHUB_ENV}"
   exit 0
 fi
