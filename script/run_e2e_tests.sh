@@ -30,6 +30,8 @@ info "IMG_PREFIX: $IMG_PREFIX"
 info "TESTS_GROUP: $TESTS_GROUP"
 info "CMD: $test_command"
 
+ls -l /home/runner/work/kubeapps/kubeapps/script/e2e-test.sh
+
 #if IMG_PREFIX=${IMG_PREFIX} TESTS_GROUP=${TESTS_GROUP} ${test_command}; then
 if IMG_PREFIX=${IMG_PREFIX} ${test_command}; then
   echo "TEST_RESULT=0" >> "${GITHUB_ENV}"
