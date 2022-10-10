@@ -1,3 +1,6 @@
+// Copyright 2022 the Kubeapps contributors.
+// SPDX-License-Identifier: Apache-2.0
+
 ```console
 $ pinniped-proxy --help
 A proxy server which converts k8s API server requests with bearer tokens to requests with short-lived X509 certs exchanged by pinniped.
