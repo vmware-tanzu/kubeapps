@@ -7,8 +7,16 @@ set -o errexit
 set -o nounset
 set -o pipefail
 
+startTime=$(date +%s)
+
 # Constants
+ALL_TESTS="all"
+MAIN_TESTS="main"
+CARVEL_TESTS="carvel"
+OPERATOR_TESTS="operator"
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." >/dev/null && pwd)"
+
+# Params
 USE_MULTICLUSTER_OIDC_ENV=${1:-false}
 OLM_VERSION=${2:-"v0.18.2"}
 IMG_DEV_TAG=${3:?missing dev tag}
@@ -19,6 +27,7 @@ ADDITIONAL_CLUSTER_IP=${7:-"172.18.0.3"}
 KAPP_CONTROLLER_VERSION=${8:-"v0.41.2"}
 CHARTMUSEUM_VERSION=${9:-"3.9.0"}
 IMG_PREFIX=${IMG_PREFIX:-"kubeapps/"}
+TESTS_GROUP=${TESTS_GROUP:-"${ALL_TESTS}"}
 
 # TODO(andresmgot): While we work with beta releases, the Bitnami pipeline
 # removes the pre-release part of the tag
@@ -47,6 +56,7 @@ fi
 # Functions for handling Chart Museum
 . "${ROOT_DIR}/script/chart-museum.sh"
 
+info "TESTS GROUP: ${TESTS_GROUP}"
 info "Root dir: ${ROOT_DIR}"
 info "Use multicluster+OIDC: ${USE_MULTICLUSTER_OIDC_ENV}"
 info "OLM version: ${OLM_VERSION}"
@@ -448,82 +458,49 @@ admin_token="$(kubectl get -n kubeapps secret "$(kubectl get -n kubeapps service
 view_token="$(kubectl get -n kubeapps secret "$(kubectl get -n kubeapps serviceaccount kubeapps-view -o jsonpath='{.secrets[].name}')" -o go-template='{{.data.token | base64decode}}')"
 edit_token="$(kubectl get -n kubeapps secret "$(kubectl get -n kubeapps serviceaccount kubeapps-edit -o jsonpath='{.secrets[].name}')" -o go-template='{{.data.token | base64decode}}')"
 
-info "Running main Integration tests without k8s API access..."
-test_command="
-  CI_TIMEOUT_MINUTES=40 \
-  DOCKER_USERNAME=${DOCKER_USERNAME} \
-  DOCKER_PASSWORD=${DOCKER_PASSWORD} \
-  DOCKER_REGISTRY_URL=${DOCKER_REGISTRY_URL} \
-  TEST_TIMEOUT_MINUTES=${TEST_TIMEOUT_MINUTES} \
-  INTEGRATION_ENTRYPOINT=http://kubeapps-ci.kubeapps \
-  USE_MULTICLUSTER_OIDC_ENV=${USE_MULTICLUSTER_OIDC_ENV} \
-  ADMIN_TOKEN=${admin_token} \
-  VIEW_TOKEN=${view_token} \
-  EDIT_TOKEN=${edit_token} \
-  yarn test ${testsArgs}
-  "
-info "${test_command}"
-if ! kubectl exec -it "$pod" -- /bin/sh -c "${test_command}"; then
-  ## Integration tests failed, get report screenshot
-  warn "PODS status on failure"
-  kubectl cp "${pod}:/app/reports" ./reports
-  exit 1
+bootstrapTime=$(date +%s)
+info "Bootstrap time: $((bootstrapTime-startTime))"
+
+if [[ "${TESTS_GROUP}" == "${ALL_TESTS}" || "${TESTS_GROUP}" == "${MAIN_TESTS}" ]]; then
+  info "Running main Integration tests without k8s API access..."
+  test_command="
+    CI_TIMEOUT_MINUTES=40 \
+    DOCKER_USERNAME=${DOCKER_USERNAME} \
+    DOCKER_PASSWORD=${DOCKER_PASSWORD} \
+    DOCKER_REGISTRY_URL=${DOCKER_REGISTRY_URL} \
+    TEST_TIMEOUT_MINUTES=${TEST_TIMEOUT_MINUTES} \
+    INTEGRATION_ENTRYPOINT=http://kubeapps-ci.kubeapps \
+    USE_MULTICLUSTER_OIDC_ENV=${USE_MULTICLUSTER_OIDC_ENV} \
+    ADMIN_TOKEN=${admin_token} \
+    VIEW_TOKEN=${view_token} \
+    EDIT_TOKEN=${edit_token} \
+    yarn test ${testsArgs}
+    "
+  info "${test_command}"
+  if ! kubectl exec -it "$pod" -- /bin/sh -c "${test_command}"; then
+    ## Integration tests failed, get report screenshot
+    warn "PODS status on failure"
+    kubectl cp "${pod}:/app/reports" ./reports
+    exit 1
+  fi
+  info "Main integration tests succeeded!!"
+
+  mainTestsTime=$(date +%s)
+  info "Main tests execution time: $((mainTestsTime-bootstrapTime))"
 fi
-info "Main integration tests succeeded!!"
 
-
-## Upgrade and run Carvel test
-installKappController "${KAPP_CONTROLLER_VERSION}"
-info "Updating Kubeapps with carvel support"
-installOrUpgradeKubeapps "${ROOT_DIR}/chart/kubeapps" \
-  "--set" "packaging.helm.enabled=false" \
-  "--set" "packaging.carvel.enabled=true"
-
-info "Waiting for updated Kubeapps components to be ready..."
-k8s_wait_for_deployment kubeapps kubeapps-ci
-
-info "Running carvel integration test..."
-test_command="
-  CI_TIMEOUT_MINUTES=20 \
-  TEST_TIMEOUT_MINUTES=${TEST_TIMEOUT_MINUTES} \
-  INTEGRATION_ENTRYPOINT=http://kubeapps-ci.kubeapps \
-  USE_MULTICLUSTER_OIDC_ENV=${USE_MULTICLUSTER_OIDC_ENV} \
-  ADMIN_TOKEN=${admin_token} \
-  VIEW_TOKEN=${view_token} \
-  EDIT_TOKEN=${edit_token} \
-  yarn test \"tests/carvel/\"
-  "
-info "${test_command}"
-if ! kubectl exec -it "$pod" -- /bin/sh -c "${test_command}"; then
-  ## Integration tests failed, get report screenshot
-  warn "PODS status on failure"
-  kubectl cp "${pod}:/app/reports" ./reports
-  exit 1
-fi
-info "Carvel integration tests succeeded!!"
-
-## Upgrade and run operator test
-# Operators are not supported in GKE 1.14 and flaky in 1.15, skipping test
-if [[ -z "${GKE_BRANCH-}" ]] && [[ -n "${TEST_OPERATORS-}" ]]; then
-  installOLM "${OLM_VERSION}"
-
-  # Update Kubeapps settings to enable operators and hence proxying
-  # to k8s API server. Don't change the packaging setting to avoid
-  # re-installing postgres.
-  info "Installing latest Kubeapps chart available"
+if [[ "${TESTS_GROUP}" == "${ALL_TESTS}" || "${TESTS_GROUP}" == "${CARVEL_TESTS}" ]]; then
+  ## Upgrade and run Carvel test
+  installKappController "${KAPP_CONTROLLER_VERSION}"
+  info "Updating Kubeapps with carvel support"
   installOrUpgradeKubeapps "${ROOT_DIR}/chart/kubeapps" \
     "--set" "packaging.helm.enabled=false" \
-    "--set" "packaging.carvel.enabled=true" \
-    "--set" "featureFlags.operators=true"
+    "--set" "packaging.carvel.enabled=true"
 
-  info "Waiting for Kubeapps components to be ready (bitnami chart)..."
+  info "Waiting for updated Kubeapps components to be ready..."
   k8s_wait_for_deployment kubeapps kubeapps-ci
 
-  ## Wait for the Operator catalog to be populated
-  info "Waiting for the OperatorHub Catalog to be ready ..."
-  retry_while isOperatorHubCatalogRunning 24
-
-  info "Running operator integration test with k8s API access..."
+  info "Running carvel integration test..."
   test_command="
     CI_TIMEOUT_MINUTES=20 \
     TEST_TIMEOUT_MINUTES=${TEST_TIMEOUT_MINUTES} \
@@ -532,14 +509,68 @@ if [[ -z "${GKE_BRANCH-}" ]] && [[ -n "${TEST_OPERATORS-}" ]]; then
     ADMIN_TOKEN=${admin_token} \
     VIEW_TOKEN=${view_token} \
     EDIT_TOKEN=${edit_token} \
-    yarn test \"tests/operators/\"
+    yarn test \"tests/carvel/\"
     "
+  info "${test_command}"
   if ! kubectl exec -it "$pod" -- /bin/sh -c "${test_command}"; then
     ## Integration tests failed, get report screenshot
     warn "PODS status on failure"
     kubectl cp "${pod}:/app/reports" ./reports
     exit 1
   fi
-  info "Operator integration tests (with k8s API access) succeeded!!"
+  info "Carvel integration tests succeeded!!"
+
+  carvelTestsTime=$(date +%s)
+  info "Carvel tests execution time: $((carvelTestsTime-bootstrapTime))"
 fi
+
+if [[ "${TESTS_GROUP}" == "${ALL_TESTS}" || "${TESTS_GROUP}" == "${OPERATOR_TESTS}" ]]; then
+  ## Upgrade and run operator test
+  # Operators are not supported in GKE 1.14 and flaky in 1.15, skipping test
+  if [[ -z "${GKE_BRANCH-}" ]] && [[ -n "${TEST_OPERATORS-}" ]]; then
+    installOLM "${OLM_VERSION}"
+
+    # Update Kubeapps settings to enable operators and hence proxying
+    # to k8s API server. Don't change the packaging setting to avoid
+    # re-installing postgres.
+    info "Installing latest Kubeapps chart available"
+    installOrUpgradeKubeapps "${ROOT_DIR}/chart/kubeapps" \
+      "--set" "packaging.helm.enabled=false" \
+      "--set" "packaging.carvel.enabled=true" \
+      "--set" "featureFlags.operators=true"
+
+    info "Waiting for Kubeapps components to be ready (bitnami chart)..."
+    k8s_wait_for_deployment kubeapps kubeapps-ci
+
+    ## Wait for the Operator catalog to be populated
+    info "Waiting for the OperatorHub Catalog to be ready ..."
+    retry_while isOperatorHubCatalogRunning 24
+
+    info "Running operator integration test with k8s API access..."
+    test_command="
+      CI_TIMEOUT_MINUTES=20 \
+      TEST_TIMEOUT_MINUTES=${TEST_TIMEOUT_MINUTES} \
+      INTEGRATION_ENTRYPOINT=http://kubeapps-ci.kubeapps \
+      USE_MULTICLUSTER_OIDC_ENV=${USE_MULTICLUSTER_OIDC_ENV} \
+      ADMIN_TOKEN=${admin_token} \
+      VIEW_TOKEN=${view_token} \
+      EDIT_TOKEN=${edit_token} \
+      yarn test \"tests/operators/\"
+      "
+    if ! kubectl exec -it "$pod" -- /bin/sh -c "${test_command}"; then
+      ## Integration tests failed, get report screenshot
+      warn "PODS status on failure"
+      kubectl cp "${pod}:/app/reports" ./reports
+      exit 1
+    fi
+    info "Operator integration tests (with k8s API access) succeeded!!"
+
+    operatorTestsTime=$(date +%s)
+    info "Operator tests execution time: $((operatorTestsTime-carvelTestsTime))"
+  fi
+fi
+
 info "Integration tests succeeded!"
+
+totalTime=$(date +%s)
+info "Total execution time: $((totalTime-startTime))"
