@@ -31,7 +31,7 @@ info "TESTS_GROUP: $TESTS_GROUP"
 info "CMD: $test_command"
 
 #if IMG_PREFIX=${IMG_PREFIX} TESTS_GROUP=${TESTS_GROUP} ${test_command}; then
-if ${ROOT_DIR}/script/e2e-test.sh \
+if "${ROOT_DIR}/script/e2e-test.sh" \
      ${USE_MULTICLUSTER_OIDC_ENV} \
      ${OLM_VERSION} \
      ${IMG_DEV_TAG} \
