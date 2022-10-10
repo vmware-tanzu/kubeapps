@@ -625,3 +625,31 @@ jobs:
               ${CHARTS_REPO_FORKED} \
               ${BRANCH_CHARTS_REPO_FORKED} \
               ${DEV_MODE}
+
+
+  debug_local_e2e_tests:
+    needs:
+      - setup
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        tests_group:
+          - main
+    env:
+      DEFAULT_DEX_IP: "172.18.0.2"
+      IMG_PREFIX: ${{ needs.setup.outputs.img_prefix }}
+      TESTS_GROUP: ${{ matrix.tests_group }}
+      TEST_OPERATORS: "1"
+      TEST_UPGRADE: "1"
+      TEST_TIMEOUT_MINUTES: 4 # Timeout minutes for each test
+      USE_MULTICLUSTER_OIDC_ENV: "true"
+    steps:
+      - uses: actions/checkout@v3
+      - name: "Export cluster variables"
+        run: |
+          echo "DEFAULT_DEX_IP=FOO" >> $GITHUB_ENV
+          echo "DEX_IP=BAR" >> $GITHUB_ENV
+          echo "ADDITIONAL_CLUSTER_IP=BUZZ" >> $GITHUB_ENV
+      - name: "Run e2e tests script"
+        run: ./script/run_e2e_tests.sh
