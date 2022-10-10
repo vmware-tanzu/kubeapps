@@ -141,7 +141,7 @@ build_on_tag_or_prerelease: &build_on_tag_or_prerelease
     tags:
       only: /^v.*/
     branches:
-      only: 5427-gcloud-auth-plugin
+      only: prerelease
 
 workflows:
   version: 2
