@@ -7,6 +7,7 @@ on:
   push:
     branches:
       - main
+      - optimize-ci-pipeline
   pull_request:
     branches:
       - main
