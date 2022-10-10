@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-#set -euo pipefail
+set -euo pipefail
 IFS=$'\n\t'
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." >/dev/null && pwd)"
@@ -30,7 +30,8 @@ info "IMG_PREFIX: $IMG_PREFIX"
 info "TESTS_GROUP: $TESTS_GROUP"
 info "CMD: $test_command"
 
-if IMG_PREFIX=${IMG_PREFIX} TESTS_GROUP=${TESTS_GROUP} ${test_command}; then
+#if IMG_PREFIX=${IMG_PREFIX} TESTS_GROUP=${TESTS_GROUP} ${test_command}; then
+if IMG_PREFIX=${IMG_PREFIX} ${test_command}; then
   echo "TEST_RESULT=0" >> "${GITHUB_ENV}"
   exit 0
 fi
