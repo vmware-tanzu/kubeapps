@@ -90,7 +90,7 @@ jobs:
           if [[ "${{ github.event.pull_request.head.repo.full_name }}" == "${GITHUB_REPOSITORY}" ]]; then
             echo "::set-output name=triggered_from_fork::false"
           else
-            echo "::set-output name=triggered_from_fork::true"            
+            echo "::set-output name=triggered_from_fork::true"
           fi
           
           if [[ ${GITHUB_REF_TYPE} == "tag" ]]; then
@@ -383,13 +383,21 @@ jobs:
       - build_dashboard_image
       - build_e2e_runner_image
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        tests_group:
+          - main
+          - carvel
+          - operator
     env:
       DEFAULT_DEX_IP: "172.18.0.2"
       IMG_PREFIX: ${{ needs.setup.outputs.img_prefix }}
-      TEST_UPGRADE: "1"
-      USE_MULTICLUSTER_OIDC_ENV: "true"
+      TESTS_GROUP: ${{ matrix.tests_group }}
       TEST_OPERATORS: "1"
+      TEST_UPGRADE: "1"
       TEST_TIMEOUT_MINUTES: 4 # Timeout minutes for each test
+      USE_MULTICLUSTER_OIDC_ENV: "true"
     steps:
       - uses: actions/checkout@v3
       - name: "Install required CLI tools"
@@ -455,6 +463,8 @@ jobs:
           ./script/install-multicluster-deps.sh
       - name: "Run e2e tests script"
         run: |
+          set -u
+          
           # If we want to test the latest version instead we override the image to be used
           if [[ -n "${TEST_LATEST_RELEASE:-}" ]]; then
             source ./script/chart_sync_utils.sh
@@ -463,24 +473,24 @@ jobs:
             IMG_MODIFIER=""
           fi
           
-          test_command="./script/e2e-test.sh \
-          ${USE_MULTICLUSTER_OIDC_ENV} \
-          ${OLM_VERSION} \
-          ${IMG_DEV_TAG} \
-          ${IMG_MODIFIER} \
-          ${TEST_TIMEOUT_MINUTES} \
-          ${DEFAULT_DEX_IP} \
-          ${ADDITIONAL_CLUSTER_IP} \
-          ${KAPP_CONTROLLER_VERSION} \
-          ${CHARTMUSEUM_VERSION}"          
+          test_command="IMG_PREFIX=${IMG_PREFIX} TESTS_GROUP=${TESTS_GROUP} ./script/e2e-test.sh \
+            ${USE_MULTICLUSTER_OIDC_ENV} \
+            ${OLM_VERSION} \
+            ${IMG_DEV_TAG} \
+            ${IMG_MODIFIER} \
+            ${TEST_TIMEOUT_MINUTES} \
+            ${DEFAULT_DEX_IP} \
+            ${ADDITIONAL_CLUSTER_IP} \
+            ${KAPP_CONTROLLER_VERSION} \
+            ${CHARTMUSEUM_VERSION}"
           
-          if IMG_PREFIX=${IMG_PREFIX} ${test_command}; then
+          if ${test_command}; then
             echo "TEST_RESULT=0" >> $GITHUB_ENV
             exit 0
-          else
-            echo "TEST_RESULT=1" >> $GITHUB_ENV
-            exit 1
           fi
+          
+          echo "TEST_RESULT=1" >> $GITHUB_ENV
+          exit 1
       - name: "Print k8s KubeappsAPIs logs if the tests fail"
         run: kubectl --context kind-kubeapps-ci --kubeconfig ${HOME}/.kube/kind-config-kubeapps-ci logs -n kubeapps deploy/kubeapps-internal-kubeappsapis
         if: failure() && env.TEST_RESULT == 1
@@ -489,7 +499,7 @@ jobs:
         if: failure()
         uses: actions/upload-artifact@v3
         with:
-          name: e2e_tests_reports
+          name: e2e_tests_${{ matrix.tests_group }}_reports
           path: integration/reports
       - name: Setup upterm session
         uses: lhotari/action-upterm@v1
