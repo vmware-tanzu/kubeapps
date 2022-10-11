@@ -268,6 +268,20 @@ installOrUpgradeKubeapps() {
   "${cmd[@]}"
 }
 
+########################
+# Formats the provided time in seconds.
+# Arguments:
+#   $1: time in seconds
+# Returns: Time formatted as Xm Ys
+#########################
+formattedElapsedTime() {
+  time=$1
+
+  mins=$((time/60))
+  secs=$((time%60))
+  echo "${mins}m ${secs}s"
+}
+
 if [[ "${DEBUG_MODE:-false}" == "true" ]]; then
   info "Docker images loaded in the cluster:"
   docker exec kubeapps-ci-control-plane crictl images
@@ -458,10 +472,11 @@ admin_token="$(kubectl get -n kubeapps secret "$(kubectl get -n kubeapps service
 view_token="$(kubectl get -n kubeapps secret "$(kubectl get -n kubeapps serviceaccount kubeapps-view -o jsonpath='{.secrets[].name}')" -o go-template='{{.data.token | base64decode}}')"
 edit_token="$(kubectl get -n kubeapps secret "$(kubectl get -n kubeapps serviceaccount kubeapps-edit -o jsonpath='{.secrets[].name}')" -o go-template='{{.data.token | base64decode}}')"
 
-bootstrapTime=$(date +%s)
-info "Bootstrap time: $((bootstrapTime-startTime))"
+endTime=$(date +%s)
+info "Bootstrap time: $(formattedElapsedTime endTime-startTime)"
 
 if [[ "${TESTS_GROUP}" == "${ALL_TESTS}" || "${TESTS_GROUP}" == "${MAIN_TESTS}" ]]; then
+  sectionStartTime=$(date +%s)
   info "Running main Integration tests without k8s API access..."
   test_command="
     CI_TIMEOUT_MINUTES=40 \
@@ -485,11 +500,12 @@ if [[ "${TESTS_GROUP}" == "${ALL_TESTS}" || "${TESTS_GROUP}" == "${MAIN_TESTS}" 
   fi
   info "Main integration tests succeeded!!"
 
-  mainTestsTime=$(date +%s)
-  info "Main tests execution time: $((mainTestsTime-bootstrapTime))"
+  sectionEndTime=$(date +%s)
+  info "Main tests execution time: $(formattedElapsedTime sectionEndTime-sectionStartTime)"
 fi
 
 if [[ "${TESTS_GROUP}" == "${ALL_TESTS}" || "${TESTS_GROUP}" == "${CARVEL_TESTS}" ]]; then
+  sectionStartTime=$(date +%s)
   ## Upgrade and run Carvel test
   installKappController "${KAPP_CONTROLLER_VERSION}"
   info "Updating Kubeapps with carvel support"
@@ -520,11 +536,12 @@ if [[ "${TESTS_GROUP}" == "${ALL_TESTS}" || "${TESTS_GROUP}" == "${CARVEL_TESTS}
   fi
   info "Carvel integration tests succeeded!!"
 
-  carvelTestsTime=$(date +%s)
-  info "Carvel tests execution time: $((carvelTestsTime-bootstrapTime))"
+  sectionEndTime=$(date +%s)
+  info "Carvel tests execution time: $(formattedElapsedTime sectionEndTime-sectionStartTime)"
 fi
 
 if [[ "${TESTS_GROUP}" == "${ALL_TESTS}" || "${TESTS_GROUP}" == "${OPERATOR_TESTS}" ]]; then
+  sectionStartTime=$(date +%s)
   ## Upgrade and run operator test
   # Operators are not supported in GKE 1.14 and flaky in 1.15, skipping test
   if [[ -z "${GKE_BRANCH-}" ]] && [[ -n "${TEST_OPERATORS-}" ]]; then
@@ -565,12 +582,12 @@ if [[ "${TESTS_GROUP}" == "${ALL_TESTS}" || "${TESTS_GROUP}" == "${OPERATOR_TEST
     fi
     info "Operator integration tests (with k8s API access) succeeded!!"
 
-    operatorTestsTime=$(date +%s)
-    info "Operator tests execution time: $((operatorTestsTime-carvelTestsTime))"
+    sectionEndTime=$(date +%s)
+    info "Operator tests execution time: $(formattedElapsedTime sectionEndTime-sectionStartTime)"
   fi
 fi
 
 info "Integration tests succeeded!"
 
 totalTime=$(date +%s)
-info "Total execution time: $((totalTime-startTime))"
+info "Total execution time: $(formattedElapsedTime totalTime-startTime)"
