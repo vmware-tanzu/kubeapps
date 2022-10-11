@@ -83,8 +83,9 @@
 </head>
 <body>
 	{{ partial "base-header" . }}
-	{{ block "main" . }}{{ end }}
+	{{ block "main" . }}
 	{{ partial "base-getting-started" . }}
+  {{ end }}
 	{{ partial "base-footer" . }}
     {{ if .Site.Params.docs_search }}
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@algolia/algoliasearch-netlify-frontend@1/dist/algoliasearchNetlify.css" />

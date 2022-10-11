@@ -88,7 +88,7 @@ p {
 a {
   font-size: 16px;
   text-decoration: none;
-  color: $blue;
+  color: $indigo;
   font-family: $metropolis-medium;
 }
 button {
@@ -96,7 +96,7 @@ button {
   border: none;
 }
 .button {
-  color: $blue;
+  color: $indigo;
   font-size: 12px;
   font-weight: 600;
   background-color: $white;
@@ -106,11 +106,11 @@ button {
   text-transform: uppercase;
   border: 1px solid $white;
   &.secondary {
-    background-color: $mainblue;
+    background-color: $indigo;
     color: $white;
   }
   &.tertiary {
-    border: 1px solid $blue;
+    border: 1px solid $indigo;
   }
 }
 .buttons {

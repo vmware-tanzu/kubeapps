@@ -29,7 +29,7 @@
   </div>
   {{ end -}}
 
-<br>
+  <br>
 
   <div class="grid two">
     <div class="col image">
@@ -39,13 +39,13 @@
       <p class="strong">Step 1: Install Kubeapps (for demo purposes)</p>
       <div class="home-snippet">
             {{ highlight `
-    helm repo add bitnami https://charts.bitnami.com/bitnami
+  helm repo add bitnami https://charts.bitnami.com/bitnami
     ` "" "" }}
 
             {{ highlight `
-    helm install -n kubeapps --create-namespace kubeapps bitnami/kubeapps
+  helm install -n kubeapps --create-namespace kubeapps bitnami/kubeapps
     ` "" "" }}
-        </div>
+      </div>
     </div>
   </div>
   <div class="grid two image-right">
@@ -54,55 +54,59 @@
         Step 2: Create a demo credential with which to access Kubeapps and
         Kubernetes
       </p>
+
       <div class="home-snippet">
         {{ highlight `
-    kubectl create --namespace default serviceaccount kubeapps-operator
-    ` "" "" }}
+  kubectl create --namespace default serviceaccount kubeapps-operator
+    ` "bash" "" }}
       </div>
 
       <div class="home-snippet">
         {{ highlight `
-    kubectl create clusterrolebinding kubeapps-operator --clusterrole=cluster-admin --serviceaccount=default:kubeapps-operator
-    ` "" "" }}
+  kubectl create clusterrolebinding kubeapps-operator --clusterrole=cluster-admin --serviceaccount=default:kubeapps-operator
+    ` "bash" "" }}
       </div>
 
       <div class="home-snippet">
         {{ highlight `
-    cat <<EOF | kubectl apply -f -
-    apiVersion: v1
-    kind: Secret
-    metadata:
-      name: kubeapps-operator-token
-      namespace: default
-      annotations:
-        kubernetes.io/service-account.name: kubeapps-operator
-    type: kubernetes.io/service-account-token
-    EOF
-    ` "" "" }}
+  cat <<EOF | kubectl apply -f -
+  apiVersion: v1
+  kind: Secret
+  metadata:
+    name: kubeapps-operator-token
+    namespace: default
+    annotations:
+      kubernetes.io/service-account.name: kubeapps-operator
+  type: kubernetes.io/service-account-token
+  EOF
+    ` "bash" "" }}
       </div>
 
       <div class="home-snippet">
         {{ highlight `
-    kubectl get --namespace default secret kubeapps-operator-token -o go-template='{{.data.token | base64decode}}'
+  kubectl get --namespace default secret kubeapps-operator-token -o go-template='{{.data.token | base64decode}}'
+        ` "bash" "" }}
+      </div>
+
+    </div>
+      <div class="col image">
+        <img alt="Business card" src="/img/authentication.svg" />
+      </div>
+    </div>
+    <div class="grid two">
+      <div class="col image">
+        <img alt="Icon user inside a shield" src="/img/security.svg" />
+      </div>
+      <div class="col text">
+        <p class="strong">Step 3: Start the Kubeapps Dashboard</p>
+      <div class="home-snippet">
+        {{ highlight `
+  kubectl port-forward -n kubeapps svc/kubeapps 8080:80
         ` "" "" }}
       </div>
-    </div>
-    <div class="col image">
-      <img alt="Business card" src="/img/authentication.svg" />
-    </div>
-  </div>
-  <div class="grid two">
-    <div class="col image">
-      <img alt="Icon user inside a shield" src="/img/security.svg" />
-    </div>
-    <div class="col text">
-      <p class="strong">Step 3: Start the Kubeapps Dashboard</p>
-      <div class="home-snippet">
-        {{ highlight `
-    kubectl port-forward -n kubeapps svc/kubeapps 8080:80
-        ` "" "" }}
+        <p><a target="_blank" rel="noopener" href="http://localhost:8080" class="button tertiary">
+          Go to localhost:8080
+        </a></p>
       </div>
-      <p><a target="_blank" rel="noopener" href="http://localhost:8080" class="button tertiary">Go to localhost:8080</a></p>
     </div>
   </div>
-</div>

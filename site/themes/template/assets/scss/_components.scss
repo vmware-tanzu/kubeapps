@@ -3,7 +3,7 @@
 
 /* Homepage Hero */
 .hero {
-  background-color: $mainblue;
+  background-color: $ocean;
   color: $white;
 
   .text-block {
@@ -106,7 +106,7 @@
     grid-template-areas: "image text";
 
     .image {
-      background-color: $mainblue;
+      background-color: $ocean;
       text-align: center;
       display: flex;
       align-items: center;
@@ -120,7 +120,7 @@
 
     .text {
       border: 1px solid $lightgrey;
-      padding: 30px;
+      padding: 1em;
       grid-area: text;
 
       a.button {
@@ -164,7 +164,7 @@
 }
 
 .team {
-  background-color: $navyblue;
+  background-color: $indigo;
 
   h2,
   h3,
@@ -247,7 +247,7 @@
   }
 
   .icon {
-    background-color: $mainblue;
+    background-color: $ocean;
     padding: 25px;
     min-height: 95px;
     display: flex;
@@ -324,7 +324,7 @@
     padding: 30px 90px 30px 30px;
 
     .author {
-      color: $blue;
+      color: $indigo;
       margin: 0px;
     }
 
@@ -378,7 +378,7 @@
     }
 
     code {
-      border: 2px solid #efefef;
+      border: 2px solid $lightgrey;
       color: $darkgrey;
       padding: 2px 8px;
     }
@@ -386,7 +386,7 @@
     pre {
       code {
         display: block;
-        border: 15px solid #efefef;
+        border: 15px solid $lightgrey;
         padding: 15px;
         margin-bottom: 30px;
         overflow-x: auto;
@@ -437,7 +437,7 @@
 
   .button {
     margin-top: 50px;
-    border: 1px solid $blue;
+    border: 1px solid $indigo;
   }
 
   @include breakpoint(small) {
@@ -568,7 +568,7 @@
           font-size: 14px;
 
           &.active {
-            color: $blue;
+            color: $indigo;
           }
         }
 
@@ -591,7 +591,7 @@
         border-radius: 5px;
         display: inline;
         padding: 10px 30px 10px 10px;
-        border: 1px solid $blue;
+        border: 1px solid $indigo;
         color: $black;
         cursor: pointer;
         font-size: 14px;
@@ -675,8 +675,8 @@
       }
 
       .algolia-docsearch-suggestion--highlight {
-        background-color: rgba($blue, 0.1);
-        color: $navyblue;
+        background-color: rgba($ocean, 0.1);
+        color: $indigo;
       }
 
       .algolia-docsearch-suggestion--title {
@@ -709,6 +709,7 @@
       width: 22%;
     }
 
+    //
     @include breakpoint(large) {
       width: 22%;
     }
@@ -760,8 +761,8 @@
     }
 
     code {
-      border: 2px solid #efefef;
-      color: $grey;
+      border: 2px solid $lightgrey;
+      color: $darkgrey;
       padding: 2px 8px;
     }
 
@@ -770,7 +771,7 @@
 
       code {
         display: block;
-        border: 15px solid #efefef;
+        border: 15px solid $lightgrey;
         padding: 15px;
         margin-bottom: 30px;
         overflow-x: auto;
@@ -798,7 +799,7 @@
     margin: -30px -30px 0px 0px;
 
     .right-nav-content {
-      background-color: #efefef;
+      background-color: $lightgrey;
       padding: 30px 30px 30px 20px;
       margin-right: -20px;
       position: sticky;
@@ -877,8 +878,19 @@
 
 .home-snippet {
   span {
-    max-width: 50vw;
-    overflow: auto;
+    // max-width: 50vw;
+    // overflow: auto;
+  }
+
+  pre {
+    white-space: pre-wrap;
+
+    code {
+      display: block;
+      border: 7px solid $lightgrey;
+      padding-left: 1em;
+      padding-right: 1em;
+    }
   }
 }
 
@@ -888,4 +900,8 @@
 
 #search {
   width: 80%;
+
+  input::placeholder {
+    color: $darkgrey;
+  }
 }
