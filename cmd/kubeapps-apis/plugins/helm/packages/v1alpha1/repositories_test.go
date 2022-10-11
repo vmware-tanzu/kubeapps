@@ -5,7 +5,10 @@ package main
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	authorizationv1 "k8s.io/api/authorization/v1"
+	k8stesting "k8s.io/client-go/testing"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -823,8 +826,10 @@ func TestGetPackageRepositorySummaries(t *testing.T) {
 		name               string
 		request            *corev1.GetPackageRepositorySummariesRequest
 		existingRepos      []k8sruntime.Object
+		existingNamespaces []*apiv1.Namespace
 		expectedStatusCode codes.Code
 		expectedResponse   *corev1.GetPackageRepositorySummariesResponse
+		reactors           []*ClientReaction
 	}{
 		{
 			name: "returns all package summaries when namespace not specified",
@@ -840,6 +845,83 @@ func TestGetPackageRepositorySummaries(t *testing.T) {
 				PackageRepositorySummaries: []*corev1.PackageRepositorySummary{
 					repo1Summary,
 					repo2Summary,
+				},
+			},
+		},
+		{
+			name: "returns actual accessible package summaries when namespace not specified and no cluster level access",
+			request: &corev1.GetPackageRepositorySummariesRequest{
+				Context: &corev1.Context{Cluster: KubeappsCluster},
+			},
+			existingNamespaces: []*apiv1.Namespace{
+				{
+					ObjectMeta: metav1.ObjectMeta{
+						Name: "ns-accessible",
+					},
+					Status: apiv1.NamespaceStatus{
+						Phase: apiv1.NamespaceActive,
+					},
+				},
+				{
+					ObjectMeta: metav1.ObjectMeta{
+						Name: "ns-inaccessible",
+					},
+					Status: apiv1.NamespaceStatus{
+						Phase: apiv1.NamespaceActive,
+					},
+				},
+			},
+			reactors: []*ClientReaction{
+				{
+					verb:     "list",
+					resource: "apprepositories",
+					reaction: func(action k8stesting.Action) (handled bool, ret k8sruntime.Object, err error) {
+						switch action.GetNamespace() {
+						// Forbidden cluster-wide listing and a specific namespace
+						case "":
+							return true, nil, k8sErrors.NewForbidden(authorizationv1.Resource("AppRepository"), "", errors.New("bang"))
+						case "ns-inaccessible":
+							return true, nil, k8sErrors.NewForbidden(authorizationv1.Resource("AppRepository"), "", errors.New("bang"))
+						case "ns-accessible":
+							return true, &appRepov1alpha1.AppRepositoryList{
+								Items: []appRepov1alpha1.AppRepository{
+									{
+										TypeMeta: metav1.TypeMeta{
+											APIVersion: appReposAPIVersion,
+											Kind:       AppRepositoryKind,
+										},
+										ObjectMeta: metav1.ObjectMeta{
+											Name:            "repo-accessible-1",
+											Namespace:       "ns-accessible",
+											ResourceVersion: "1",
+										},
+										Spec: appRepov1alpha1.AppRepositorySpec{
+											URL:         "https://test-repo",
+											Type:        "helm",
+											Description: "description 1",
+										},
+									},
+								},
+							}, nil
+						default:
+							return true, &appRepov1alpha1.AppRepositoryList{}, nil
+						}
+					},
+				},
+			},
+			expectedStatusCode: codes.OK,
+			expectedResponse: &corev1.GetPackageRepositorySummariesResponse{
+				PackageRepositorySummaries: []*corev1.PackageRepositorySummary{
+					{
+						PackageRepoRef:  repoRef("repo-accessible-1", KubeappsCluster, "ns-accessible"),
+						Name:            "repo-accessible-1",
+						Description:     "description 1",
+						NamespaceScoped: true,
+						Type:            "helm",
+						Url:             "https://test-repo",
+						RequiresAuth:    false,
+						Status:          &corev1.PackageRepositoryStatus{Ready: true},
+					},
 				},
 			},
 		},
@@ -885,7 +967,15 @@ func TestGetPackageRepositorySummaries(t *testing.T) {
 					unstructuredObjects = append(unstructuredObjects, &unstructured.Unstructured{Object: unstructuredContent})
 				}
 			}
-			s := newServerWithSecretsAndRepos(t, nil, unstructuredObjects, nil)
+
+			var typedObjects []k8sruntime.Object
+			if tc.existingNamespaces != nil {
+				for _, ns := range tc.existingNamespaces {
+					typedObjects = append(typedObjects, ns)
+				}
+			}
+
+			s := newServerWithReactors(unstructuredObjects, nil, typedObjects, nil, tc.reactors)
 
 			response, err := s.GetPackageRepositorySummaries(context.Background(), tc.request)
 

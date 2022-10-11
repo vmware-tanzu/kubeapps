@@ -4,30 +4,15 @@ package main
 
 import (
 	"context"
-	"google.golang.org/grpc/codes"
+	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/pkg/resources"
 	"google.golang.org/grpc/metadata"
-	"google.golang.org/grpc/status"
-	authorizationapi "k8s.io/api/authorization/v1"
 	corev1 "k8s.io/api/core/v1"
-	k8sErrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 	log "k8s.io/klog/v2"
-	"math"
 	"regexp"
 	"strings"
-	"sync"
 )
-
-type checkNSJob struct {
-	ns corev1.Namespace
-}
-
-type checkNSResult struct {
-	checkNSJob
-	allowed bool
-	Error   error
-}
 
 func (s *Server) MaxWorkers() int {
 	return int(s.clientQPS)
@@ -40,44 +25,22 @@ func (s *Server) GetAccessibleNamespaces(ctx context.Context, cluster string, tr
 	if len(trustedNamespaces) > 0 {
 		namespaceList = append(namespaceList, trustedNamespaces...)
 	} else {
-
-		typedClient, err := s.clusterServiceAccountClientGetter.Typed(ctx, cluster)
-		if err != nil {
-			return nil, status.Errorf(codes.Internal, "unable to get the k8s client: '%v'", err)
+		clusterTypedClientFunc := func() (kubernetes.Interface, error) {
+			return s.clusterServiceAccountClientGetter.Typed(ctx, cluster)
+		}
+		inClusterTypedClientFunc := func() (kubernetes.Interface, error) {
+			return s.localServiceAccountClientGetter.Typed(context.Background())
 		}
 
-		// Try to list namespaces with the user token, for backward compatibility
-		backgroundCtx := context.Background()
-		namespaces, err := typedClient.CoreV1().Namespaces().List(backgroundCtx, metav1.ListOptions{})
+		var err error
+		namespaceList, err = resources.FindAccessibleNamespaces(clusterTypedClientFunc, inClusterTypedClientFunc, s.MaxWorkers())
 		if err != nil {
-			if k8sErrors.IsForbidden(err) {
-				// The user doesn't have permissions to list namespaces, use the current pod's service account
-				userClient, err := s.localServiceAccountClientGetter.Typed(backgroundCtx)
-				if err != nil {
-					return nil, err
-				}
-				namespaces, err = userClient.CoreV1().Namespaces().List(backgroundCtx, metav1.ListOptions{})
-				if err != nil && k8sErrors.IsForbidden(err) {
-					// Not even the configured kubeapps-apis service account has permission
-					return nil, err
-				}
-			} else {
-				return nil, err
-			}
-
-			// Filter namespaces in which the user has permissions to write (secrets) only
-			namespaceList, err = filterAllowedNamespaces(typedClient, s.MaxWorkers(), namespaces.Items)
-			if err != nil {
-				return nil, err
-			}
-		} else {
-			// If the user can list namespaces, do not filter them
-			namespaceList = namespaces.Items
+			return nil, err
 		}
 	}
 
 	// Filter out namespaces in terminating state
-	return filterActiveNamespaces(namespaceList), nil
+	return resources.FilterActiveNamespaces(namespaceList), nil
 }
 
 // getTrustedNamespacesFromHeader returns a list of namespaces from the header request
@@ -114,71 +77,4 @@ func getTrustedNamespacesFromHeader(ctx context.Context, headerName, headerPatte
 		}
 	}
 	return namespaces, nil
-}
-
-func nsCheckerWorker(client kubernetes.Interface, nsJobs <-chan checkNSJob, resultChan chan checkNSResult) {
-	for j := range nsJobs {
-		res, err := client.AuthorizationV1().SelfSubjectAccessReviews().Create(context.TODO(), &authorizationapi.SelfSubjectAccessReview{
-			Spec: authorizationapi.SelfSubjectAccessReviewSpec{
-				ResourceAttributes: &authorizationapi.ResourceAttributes{
-					Group:     "",
-					Resource:  "secrets",
-					Verb:      "get",
-					Namespace: j.ns.Name,
-				},
-			},
-		}, metav1.CreateOptions{})
-		resultChan <- checkNSResult{j, res.Status.Allowed, err}
-	}
-}
-
-func filterAllowedNamespaces(userClient kubernetes.Interface, maxWorkers int, namespaces []corev1.Namespace) ([]corev1.Namespace, error) {
-	var allowedNamespaces []corev1.Namespace
-
-	var wg sync.WaitGroup
-	workers := int(math.Min(float64(len(namespaces)), float64(maxWorkers)))
-	checkNSJobs := make(chan checkNSJob, workers)
-	nsCheckRes := make(chan checkNSResult, workers)
-
-	// Process maxReq ns at a time
-	for i := 0; i < workers; i++ {
-		wg.Add(1)
-		go func() {
-			nsCheckerWorker(userClient, checkNSJobs, nsCheckRes)
-			wg.Done()
-		}()
-	}
-	go func() {
-		wg.Wait()
-		close(nsCheckRes)
-	}()
-
-	go func() {
-		for _, ns := range namespaces {
-			checkNSJobs <- checkNSJob{ns}
-		}
-		close(checkNSJobs)
-	}()
-
-	// Start receiving results
-	for res := range nsCheckRes {
-		if res.Error == nil {
-			if res.allowed {
-				allowedNamespaces = append(allowedNamespaces, res.ns)
-			}
-		} else {
-			log.Errorf("failed to check namespace permissions. Got %v", res.Error)
-		}
-	}
-	return allowedNamespaces, nil
-}
-
-func filterActiveNamespaces(namespaces []corev1.Namespace) []corev1.Namespace {
-	var readyNamespaces []corev1.Namespace
-	for _, namespace := range namespaces {
-		if namespace.Status.Phase == corev1.NamespaceActive {
-			readyNamespaces = append(readyNamespaces, namespace)
-		}
-	}
-	return readyNamespaces
 }

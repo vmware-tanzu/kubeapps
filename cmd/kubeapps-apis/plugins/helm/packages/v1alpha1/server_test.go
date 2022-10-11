@@ -330,6 +330,64 @@ func newServerWithSecretsAndRepos(t *testing.T, secrets []k8sruntime.Object, uns
 	}
 }
 
+type ClientReaction struct {
+	verb     string
+	resource string
+	reaction k8stesting.ReactionFunc
+}
+
+func newServerWithReactors(unstructuredObjs []k8sruntime.Object, repos []*v1alpha1.AppRepository, typedObjects []k8sruntime.Object, typedClientReactions []*ClientReaction, dynClientReactions []*ClientReaction) *Server {
+	typedClient := typfake.NewSimpleClientset(typedObjects...)
+
+	for _, reaction := range typedClientReactions {
+		typedClient.PrependReactor(reaction.verb, reaction.resource, reaction.reaction)
+	}
+
+	apiExtIfc := apiextfake.NewSimpleClientset(helmAppRepositoryCRD)
+	ctrlClient := newCtrlClient(repos)
+	scheme := k8sruntime.NewScheme()
+	err := v1alpha1.AddToScheme(scheme)
+	if err != nil {
+		log.Fatalf("%s", err)
+	}
+	authorizationv1.AddToScheme(scheme)
+	if err != nil {
+		log.Fatalf("%s", err)
+	}
+
+	dynClient := dynfake.NewSimpleDynamicClientWithCustomListKinds(
+		scheme,
+		map[schema.GroupVersionResource]string{
+			{
+				Group:    v1alpha1.SchemeGroupVersion.Group,
+				Version:  v1alpha1.SchemeGroupVersion.Version,
+				Resource: AppRepositoryResource,
+			}: AppRepositoryResource + "List",
+		},
+		unstructuredObjs...,
+	)
+
+	for _, reaction := range dynClientReactions {
+		dynClient.PrependReactor(reaction.verb, reaction.resource, reaction.reaction)
+	}
+
+	return &Server{
+		clientGetter: clientgetter.NewBuilder().
+			WithControllerRuntime(ctrlClient).
+			WithTyped(typedClient).
+			WithApiExt(apiExtIfc).
+			WithDynamic(dynClient).
+			Build(),
+		kubeappsNamespace:        kubeappsNamespace,
+		globalPackagingNamespace: globalPackagingNamespace,
+		globalPackagingCluster:   globalPackagingCluster,
+		chartClientFactory:       &fake.ChartClientFactory{},
+		createReleaseFunc:        agent.CreateRelease,
+		kubeappsCluster:          KubeappsCluster,
+		pluginConfig:             common.NewDefaultPluginConfig(),
+	}
+}
+
 func TestGetAvailablePackageSummaries(t *testing.T) {
 	testCases := []struct {
 		name                   string

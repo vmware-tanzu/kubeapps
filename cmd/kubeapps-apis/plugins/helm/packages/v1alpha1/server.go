@@ -64,22 +64,26 @@ type Server struct {
 	// clientGetter is a field so that it can be switched in tests for
 	// a fake client. NewServer() below sets this automatically with the
 	// non-test implementation.
-	clientGetter             clientgetter.ClientProviderInterface
-	globalPackagingNamespace string
-	globalPackagingCluster   string
-	manager                  utils.AssetManager
-	actionConfigGetter       helmActionConfigGetter
-	chartClientFactory       chartutils.ChartClientFactoryInterface
-	createReleaseFunc        createRelease
-	kubeappsCluster          string // Specifies the cluster on which Kubeapps is installed.
-	kubeappsNamespace        string // Namespace in which Kubeapps is installed
-	pluginConfig             *common.HelmPluginConfig
-	repoClientGetter         newRepoClient
+	clientGetter clientgetter.ClientProviderInterface
+	// for interactions with k8s API server in the context of
+	// kubeapps-internal-kubeappsapis service account
+	localServiceAccountClientGetter clientgetter.FixedClusterClientProviderInterface
+	globalPackagingNamespace        string
+	globalPackagingCluster          string
+	manager                         utils.AssetManager
+	actionConfigGetter              helmActionConfigGetter
+	chartClientFactory              chartutils.ChartClientFactoryInterface
+	createReleaseFunc               createRelease
+	kubeappsCluster                 string // Specifies the cluster on which Kubeapps is installed.
+	kubeappsNamespace               string // Namespace in which Kubeapps is installed
+	pluginConfig                    *common.HelmPluginConfig
+	repoClientGetter                newRepoClient
+	clientQPS                       float32
 }
 
 // NewServer returns a Server automatically configured with a function to obtain
 // the k8s client config.
-func NewServer(configGetter core.KubernetesConfigGetter, globalPackagingCluster string, globalPackagingNamespace string, pluginConfigPath string) *Server {
+func NewServer(configGetter core.KubernetesConfigGetter, globalPackagingCluster string, globalPackagingNamespace string, clientQPS float32, clientBurst int, pluginConfigPath string) *Server {
 	var ASSET_SYNCER_DB_URL = os.Getenv("ASSET_SYNCER_DB_URL")
 	var ASSET_SYNCER_DB_NAME = os.Getenv("ASSET_SYNCER_DB_NAME")
 	var ASSET_SYNCER_DB_USERNAME = os.Getenv("ASSET_SYNCER_DB_USERNAME")
@@ -141,6 +145,8 @@ func NewServer(configGetter core.KubernetesConfigGetter, globalPackagingCluster 
 
 	return &Server{
 		clientGetter: clientProvider,
+		// Get the "in-cluster" client getter
+		localServiceAccountClientGetter: clientgetter.NewBackgroundClientProvider(clientgetter.Options{}, clientQPS, clientBurst),
 		actionConfigGetter: func(ctx context.Context, pkgContext *corev1.Context) (*action.Configuration, error) {
 			cluster := pkgContext.GetCluster()
 			// Don't force clients to send a cluster unless we are sure all use-cases
@@ -159,6 +165,7 @@ func NewServer(configGetter core.KubernetesConfigGetter, globalPackagingCluster 
 		pluginConfig:             pluginConfig,
 		createReleaseFunc:        agent.CreateRelease,
 		repoClientGetter:         newRepositoryClient,
+		clientQPS:                clientQPS,
 	}
 }
 
