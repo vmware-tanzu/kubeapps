@@ -73,18 +73,14 @@ jobs:
       running_on_tag: ${{ steps.set-outputs.outputs.running_on_tag }}
       triggered_from_fork: ${{ steps.set-outputs.outputs.triggered_from_fork }}
     steps:
-      - name: debug
+      - name: Show GitHub event
         env:
           EVENT_CONTEXT: ${{ toJSON(github.event) }}
-        run: |
-          echo "REPO_FULL_NAME: ${{ github.event.pull_request.head.repo.full_name }}"
-          echo "GITHUB_REPOSITORY: ${GITHUB_REPOSITORY}"
-          echo "Event:"
-          echo $EVENT_CONTEXT
+        run: echo $EVENT_CONTEXT
       - name: Set outputs
         id: set-outputs
         env:
-          PR_CONTEXT: ${{ toJSON(github.event.pull_request) }}
+          PR_CONTEXT: ${{ github.event.pull_request }}
           PR_SOURCE_REPO_NAME: ${{ github.event.pull_request.head.repo.full_name }}
         run: |
           if [[ "${GITHUB_REPOSITORY}" == "${KUBEAPPS_REPO}" ]]; then
