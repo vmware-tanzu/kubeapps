@@ -642,6 +642,11 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - name: Setup upterm session
+        env:
+          GPG_KEY_PUBLIC: ${{secrets.GPG_KEY_PUBLIC}}
+          GPG_KEY_PRIVATE: ${{secrets.GPG_KEY_PRIVATE}}
+          SSH_KEY_KUBEAPPS_DEPLOY: ${{ secrets.SSH_KEY_KUBEAPPS_DEPLOY }}
+          SSH_KEY_FORKED_CHARTS_DEPLOY: ${{ secrets.SSH_KEY_FORKED_CHARTS_DEPLOY }}
         uses: lhotari/action-upterm@v1
       - name: "Install CLI tools"
         run: |
@@ -649,7 +654,7 @@ jobs:
           
           installGithubCLI ${GITHUB_VERSION}
           installSemver ${SEMVER_VERSION}
-          installGPGKey ${{secrets.GPG_KEY_PUBLIC}} ${{secrets.GPG_KEY_PRIVATE}} ${CI_BOT_GPG} ${CI_BOT_EMAIL}
+          installGPGKey ${{secrets.GPG_KEY_PUBLIC} ${{secrets.GPG_KEY_PRIVATE}} ${CI_BOT_GPG} ${CI_BOT_EMAIL}
       - name: "Install SSH key: Kubeapps Deploy Key"
         uses: shimataro/ssh-key-action@v2
         with:
