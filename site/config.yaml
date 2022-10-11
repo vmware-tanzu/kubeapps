@@ -37,7 +37,6 @@ params:
   docs_versioning: true
   github_base_url: "https://github.com/vmware-tanzu/kubeapps"
   github_url: "https://github.com/vmware-tanzu/kubeapps/"
-  googleSiteVerification: xxxx
   gtmId: GTM-PGL7FMT
   oneTrustId: b9039ff0-42be-4f63-bc78-e2ecbbed5f06
   sitename: Kubeapps
