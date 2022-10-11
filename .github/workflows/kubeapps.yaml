@@ -76,7 +76,7 @@ jobs:
       - name: Show GitHub event
         env:
           EVENT_CONTEXT: ${{ toJSON(github.event) }}
-        run: echo $EVENT_CONTEXT
+        run: echo $EVENT_CONTEXT | jq
       - name: Set outputs
         id: set-outputs
         env:
