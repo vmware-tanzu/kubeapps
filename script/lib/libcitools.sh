@@ -84,18 +84,6 @@ function installGPGKey() {
   info "Done"
 }
 
-function debug_installGPGKey() {
-  GPG_KEY_PUBLIC=${1:?GPG public key not provided}
-  GPG_KEY_PRIVATE=${2:?GPG private key not provided}
-  CI_BOT_GPG=${3:?CI BOT GPG key not provided}
-  CI_BOT_EMAIL=${4:?CI BOT EMAIL not provided}
-
-  info "Installing the GPG KEY"
-  # Creating the files from the GPG_KEY_PUBLIC and GPG_KEY_PRIVATE env vars
-  echo -e "${GPG_KEY_PUBLIC}" > /tmp/public.key
-  echo -e "${GPG_KEY_PRIVATE}" > /tmp/private.key
-}
-
 ########################
 # Install Kind
 # Globals: None
