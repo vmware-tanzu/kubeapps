@@ -4,8 +4,8 @@
 
 footer {
   .top-links {
-    min-height: 52px;
     display: flex;
+    min-height: 52px;
     align-items: center;
     justify-content: space-between;
   }
@@ -15,19 +15,19 @@ footer {
   }
 
   .left-links {
-    padding: 0px;
+    padding: 0;
 
     li {
       img {
-        vertical-align: bottom;
         margin-right: 10px;
+        vertical-align: bottom;
       }
 
       a {
         color: $darkgrey;
-        font-weight: 300;
-        font-size: 12px;
         font-family: $metropolis-light;
+        font-size: 12px;
+        font-weight: 300;
       }
     }
 
@@ -38,34 +38,33 @@ footer {
 
   .right-links {
     p {
-      margin: 0px;
+      margin: 0;
     }
 
     .copywrite {
-      font-size: 12px;
       padding-right: 10px;
+      font-size: 12px;
 
       a {
-        font-size: 12px;
         color: $darkgrey;
         font-family: $metropolis-light;
+        font-size: 12px;
       }
     }
 
     a {
       vertical-align: middle;
     }
-
   }
 
   .bottom-links {
-    margin: 10px 0px 30px 0px;
+    margin: 10px 0 30px;
 
     p {
-      font-size: 12px;
       display: flex;
-      justify-content: space-between;
       flex-wrap: wrap;
+      justify-content: space-between;
+      font-size: 12px;
 
       .ot-sdk-show-settings {
         cursor: pointer;
@@ -73,14 +72,14 @@ footer {
     }
 
     a {
-      font-size: 12px;
       font-family: $metropolis-light;
+      font-size: 12px;
     }
 
     img {
       max-width: 75px;
-      vertical-align: middle;
       margin-left: 30px;
+      vertical-align: middle;
     }
   }
 
@@ -93,8 +92,8 @@ footer {
       }
 
       .left-links {
+        margin: 10px 0;
         float: none;
-        margin: 10px 0px;
 
         .desktop {
           display: none;
@@ -112,13 +111,13 @@ footer {
     }
 
     .bottom-links {
-      margin: 10px 0px 20px 0px;
+      margin: 10px 0 20px;
       float: none;
 
       img {
-        margin-left: 0px;
         display: block;
         margin-top: 10px;
+        margin-left: 0;
       }
     }
   }

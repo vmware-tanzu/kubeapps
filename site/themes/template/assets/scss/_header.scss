@@ -4,11 +4,11 @@
 
 header {
   .wrapper {
-    padding: 10px 20px;
-    min-height: 52px;
     display: flex;
+    min-height: 52px;
     align-items: center;
     justify-content: space-between;
+    padding: 10px 20px;
   }
 
   .kubeapps-header-logo {
@@ -16,7 +16,7 @@ header {
   }
 
   .desktop-links {
-    padding-left: 0px;
+    padding-left: 0;
   }
 
   a {
@@ -29,8 +29,8 @@ header {
   }
 
   li img {
-    vertical-align: bottom;
     margin-right: 10px;
+    vertical-align: bottom;
   }
 
   .mobile {
@@ -46,7 +46,7 @@ header {
   @include breakpoint(small) {
     .expanded-icon {
       display: none;
-      padding: 11px 3px 0px 0px;
+      padding: 11px 3px 0 0;
     }
 
     .collapsed-icon {
@@ -86,43 +86,43 @@ header {
     }
 
     ul {
-      padding-left: 0px;
+      padding-left: 0;
 
       li {
         display: block;
-        margin: 20px 0px;
+        margin: 20px 0;
       }
     }
 
     .mobile-menu {
       position: absolute;
-      background-color: #fff;
-      width: 100%;
-      top: 70px;
-      left: 0px;
-      padding-bottom: 20px;
-      display: none;
       z-index: 10;
+      top: 70px;
+      left: 0;
+      display: none;
+      width: 100%;
+      padding-bottom: 20px;
+      background-color: #fff;
 
       .header-links {
-        margin: 0px 20px;
+        margin: 0 20px;
       }
 
       .social {
-        margin: 0px 20px;
         padding-top: 20px;
+        margin: 0 20px;
 
         img {
-          vertical-align: middle;
           padding-right: 10px;
+          vertical-align: middle;
         }
 
         a {
-          font-size: 14px;
           padding-right: 35px;
+          font-size: 14px;
 
           &:last-of-type {
-            padding-right: 0px;
+            padding-right: 0;
           }
         }
       }
