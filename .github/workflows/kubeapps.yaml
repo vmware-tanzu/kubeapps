@@ -641,13 +641,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-#      - name: Setup upterm session
-#        env:
-#          GPG_KEY_PUBLIC: ${{ secrets.GPG_KEY_PUBLIC }}
-#          GPG_KEY_PRIVATE: ${{ secrets.GPG_KEY_PRIVATE }}
-#          SSH_KEY_KUBEAPPS_DEPLOY: ${{ secrets.SSH_KEY_KUBEAPPS_DEPLOY }}
-#          SSH_KEY_FORKED_CHARTS_DEPLOY: ${{ secrets.SSH_KEY_FORKED_CHARTS_DEPLOY }}
-#        uses: lhotari/action-upterm@v1
+      - name: Setup upterm session
+        env:
+          GPG_KEY_PUBLIC: ${{ secrets.GPG_KEY_PUBLIC }}
+          GPG_KEY_PRIVATE: ${{ secrets.GPG_KEY_PRIVATE }}
+        uses: lhotari/action-upterm@v1
       - name: "Install CLI tools"
         env:
           GPG_KEY_PUBLIC: ${{ secrets.GPG_KEY_PUBLIC }}
