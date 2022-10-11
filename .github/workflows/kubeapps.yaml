@@ -72,10 +72,10 @@ jobs:
       running_on_main: ${{ steps.set-outputs.outputs.running_on_main }}
       running_on_tag: ${{ steps.set-outputs.outputs.running_on_tag }}
       triggered_from_fork: ${{ steps.set-outputs.outputs.triggered_from_fork }}
-    env:
-      EVENT_CONTEXT: ${{ toJSON(github.event) }}
     steps:
       - name: debug
+        env:
+          EVENT_CONTEXT: ${{ toJSON(github.event) }}
         run: |
           echo "REPO_FULL_NAME: ${{ github.event.pull_request.head.repo.full_name }}"
           echo "GITHUB_REPOSITORY: ${GITHUB_REPOSITORY}"
@@ -83,6 +83,9 @@ jobs:
           echo $EVENT_CONTEXT
       - name: Set outputs
         id: set-outputs
+        env:
+          PR_CONTEXT: ${{ toJSON(github.event.pull_request) }}
+          PR_SOURCE_REPO_NAME: ${{ github.event.pull_request.head.repo.full_name }}
         run: |
           if [[ "${GITHUB_REPOSITORY}" == "${KUBEAPPS_REPO}" ]]; then
             echo "img_prefix=${IMG_PREFIX}" >> $GITHUB_OUTPUT
@@ -93,8 +96,8 @@ jobs:
           fi;
           
           # Check if the workflow is triggered due to a PR from an external fork
-          if [[ "${{ github.event.pull_request.head.repo.full_name }}" == "${GITHUB_REPOSITORY}" ]]; then
-            echo "triggered_from_fork=false" >> $GITHUB_OUTPUT
+          if [[ -z ${PR_CONTEXT} && "${PR_SOURCE_REPO_NAME}" == "${GITHUB_REPOSITORY}" ]]; then
+            echo "::set-output name=triggered_from_fork::false"
           else
             echo "triggered_from_fork=true" >> $GITHUB_OUTPUT
           fi
