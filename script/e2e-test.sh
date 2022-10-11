@@ -10,11 +10,13 @@ set -o pipefail
 startTime=$(date +%s)
 
 # Constants
+ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." >/dev/null && pwd)"
 ALL_TESTS="all"
 MAIN_TESTS="main"
+MULTICLUSTER_TESTS="multicluster"
 CARVEL_TESTS="carvel"
 OPERATOR_TESTS="operator"
-ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." >/dev/null && pwd)"
+SUPPORTED_TESTS_GROUPS=(ALL_TESTS MAIN_TESTS MULTICLUSTER_TESTS CARVEL_TESTS OPERATOR_TESTS)
 
 # Params
 USE_MULTICLUSTER_OIDC_ENV=${1:-false}
@@ -28,6 +30,22 @@ KAPP_CONTROLLER_VERSION=${8:-"v0.41.2"}
 CHARTMUSEUM_VERSION=${9:-"3.9.0"}
 IMG_PREFIX=${IMG_PREFIX:-"kubeapps/"}
 TESTS_GROUP=${TESTS_GROUP:-"${ALL_TESTS}"}
+
+group_is_supported=false
+for group in "${SUPPORTED_TESTS_GROUPS[@]}"; do
+  if [[ "${TESTS_GROUP}" == "${group}" ]]; then
+    group_is_supported=true
+    break
+  fi
+done
+
+if [[ "${group_is_supported}" == false ]]; then
+  echo "The provided TEST_GROUP [${TESTS_GROUP}] is not supported. Supported groups are: "
+  for group in "${SUPPORTED_TESTS_GROUPS[@]}"; do
+    echo "- ${group}"
+  done
+  exit 1
+fi
 
 # TODO(andresmgot): While we work with beta releases, the Bitnami pipeline
 # removes the pre-release part of the tag
@@ -421,17 +439,9 @@ for f in *.js; do
   kubectl cp "./${f}" "${pod}:/app/"
 done
 
-# Set tests to be run
-# Playwright does not allow to ignore tests on command line, only in config file
-testsToRun=("tests/main/")
-# Skip the multicluster scenario for GKE
-if [[ -z "${GKE_BRANCH-}" ]]; then
-  testsToRun+=("tests/multicluster/")
-fi
-testsArgs="$(printf "%s " "${testsToRun[@]}")"
-
 kubectl cp ./tests "${pod}:/app/"
 info "Copied tests to e2e-runner pod ${pod}"
+
 ## Create admin user
 kubectl create serviceaccount kubeapps-operator -n kubeapps
 kubectl create clusterrolebinding kubeapps-operator-admin --clusterrole=cluster-admin --serviceaccount kubeapps:kubeapps-operator
@@ -475,6 +485,9 @@ edit_token="$(kubectl get -n kubeapps secret "$(kubectl get -n kubeapps servicea
 endTime=$(date +%s)
 info "Bootstrap time: $(formattedElapsedTime endTime-startTime)"
 
+##################################
+######## Main tests group ########
+##################################
 if [[ "${TESTS_GROUP}" == "${ALL_TESTS}" || "${TESTS_GROUP}" == "${MAIN_TESTS}" ]]; then
   sectionStartTime=$(date +%s)
   info "Running main Integration tests without k8s API access..."
@@ -489,7 +502,7 @@ if [[ "${TESTS_GROUP}" == "${ALL_TESTS}" || "${TESTS_GROUP}" == "${MAIN_TESTS}" 
     ADMIN_TOKEN=${admin_token} \
     VIEW_TOKEN=${view_token} \
     EDIT_TOKEN=${edit_token} \
-    yarn test ${testsArgs}
+    yarn test \"tests/main/\"
     "
   info "${test_command}"
   if ! kubectl exec -it "$pod" -- /bin/sh -c "${test_command}"; then
@@ -504,8 +517,44 @@ if [[ "${TESTS_GROUP}" == "${ALL_TESTS}" || "${TESTS_GROUP}" == "${MAIN_TESTS}" 
   info "Main tests execution time: $(formattedElapsedTime sectionEndTime-sectionStartTime)"
 fi
 
+###########################################
+######## Multi-cluster tests group ########
+###########################################
+if [[ -z "${GKE_BRANCH-}" && ("${TESTS_GROUP}" == "${ALL_TESTS}" || "${TESTS_GROUP}" == "${MULTICLUSTER_TESTS}") ]]; then
+  sectionStartTime=$(date +%s)
+  info "Running multi-cluster integration tests..."
+  test_command="
+    CI_TIMEOUT_MINUTES=40 \
+    DOCKER_USERNAME=${DOCKER_USERNAME} \
+    DOCKER_PASSWORD=${DOCKER_PASSWORD} \
+    DOCKER_REGISTRY_URL=${DOCKER_REGISTRY_URL} \
+    TEST_TIMEOUT_MINUTES=${TEST_TIMEOUT_MINUTES} \
+    INTEGRATION_ENTRYPOINT=http://kubeapps-ci.kubeapps \
+    USE_MULTICLUSTER_OIDC_ENV=${USE_MULTICLUSTER_OIDC_ENV} \
+    ADMIN_TOKEN=${admin_token} \
+    VIEW_TOKEN=${view_token} \
+    EDIT_TOKEN=${edit_token} \
+    yarn test \"tests/multicluster/\"
+    "
+  info "${test_command}"
+  if ! kubectl exec -it "$pod" -- /bin/sh -c "${test_command}"; then
+    ## Integration tests failed, get report screenshot
+    warn "PODS status on failure"
+    kubectl cp "${pod}:/app/reports" ./reports
+    exit 1
+  fi
+  info "Multi-cluster integration tests succeeded!!"
+
+  sectionEndTime=$(date +%s)
+  info "Multi-cluster tests execution time: $(formattedElapsedTime sectionEndTime-sectionStartTime)"
+fi
+
+####################################
+######## Carvel tests group ########
+####################################
 if [[ "${TESTS_GROUP}" == "${ALL_TESTS}" || "${TESTS_GROUP}" == "${CARVEL_TESTS}" ]]; then
   sectionStartTime=$(date +%s)
+
   ## Upgrade and run Carvel test
   installKappController "${KAPP_CONTROLLER_VERSION}"
   info "Updating Kubeapps with carvel support"
@@ -540,6 +589,9 @@ if [[ "${TESTS_GROUP}" == "${ALL_TESTS}" || "${TESTS_GROUP}" == "${CARVEL_TESTS}
   info "Carvel tests execution time: $(formattedElapsedTime sectionEndTime-sectionStartTime)"
 fi
 
+#######################################
+######## Operators tests group ########
+#######################################
 if [[ "${TESTS_GROUP}" == "${ALL_TESTS}" || "${TESTS_GROUP}" == "${OPERATOR_TESTS}" ]]; then
   sectionStartTime=$(date +%s)
   ## Upgrade and run operator test
