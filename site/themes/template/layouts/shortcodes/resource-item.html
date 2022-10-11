@@ -2,9 +2,8 @@
     <div class="content">
         <p class="resource-title">{{ ( .Get "title") }}</p>
         <p class="resource-date">{{ ( .Get "date") }}</p>
-        </div>
+    </div>
     {{- if eq (.Get "type") "video" -}}
-    <!-- <div class="embed-responsive"> -->
     <div>
         {{- $pc := .Page.Site.Config.Privacy.YouTube | default true -}}
         {{- if not $pc.Disable -}}
@@ -20,7 +19,7 @@
     </div>
     {{ else }}
     <div class="icon">
-        <a target="_blank" rel="noopener" href="{{ (.Get "url") }}"> <img class="resource-icon" src="/img/{{ (.Get "icon") }}" /></a>
+        <img class="resource-icon" src="/img/{{ (.Get "icon") }}" />
     </div>
     {{ end }}
     <div class="content">
@@ -28,8 +27,7 @@
         {{- $pc := .Page.Site.Config.Privacy.YouTube | default true -}}
         {{- $ytHost := cond $pc.PrivacyEnhanced "www.youtube-nocookie.com" "www.youtube.com" -}}
         {{- $id := .Get "videoID" | default (.Get 0) -}}
-        <p><a target="_blank" rel="noopener" href="https://www.youtube.com/watch?v={{ $id }} {{ (.Get "url") }}">{{ (.Get "text")
-                }}</a>.
+        <p><a target="_blank" rel="noopener" href="https://www.youtube.com/watch?v={{ $id }} {{ (.Get "url") }}">{{ (.Get "text")}}</a>.
             {{ else }}
         <p><a target="_blank" rel="noopener" href="{{ (.Get "url") }}">{{ (.Get "text") }}</a>.
             {{ end }}
