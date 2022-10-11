@@ -641,6 +641,14 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
+      - name: "DEBUG"
+        env:
+          GPG_KEY_PUBLIC: ${{ secrets.GPG_KEY_PUBLIC }}
+          GPG_KEY_PRIVATE: ${{ secrets.GPG_KEY_PRIVATE }}
+        run: |
+          source ./script/lib/libcitools.sh
+
+          debug_installGPGKey ${GPG_KEY_PUBLIC} ${GPG_KEY_PRIVATE} ${CI_BOT_GPG} ${CI_BOT_EMAIL}
       - name: Setup upterm session
         env:
           GPG_KEY_PUBLIC: ${{ secrets.GPG_KEY_PUBLIC }}
