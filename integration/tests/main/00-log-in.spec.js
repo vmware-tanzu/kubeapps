@@ -12,6 +12,6 @@ test.describe("Log in", () => {
     // like `process.env.VIEW_USER` and `process.env.VIEW_PASSWORD` or similar
     await k.doLogin("kubeapps-user@example.com", "password", process.env.VIEW_TOKEN);
 
-    await page.waitForSelector('css=h1 >> text="ApplicationsFoo"');
+    await page.waitForSelector('css=h1 >> text="Applications"');
   });
 });

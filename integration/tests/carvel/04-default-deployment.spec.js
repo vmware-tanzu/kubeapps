@@ -40,7 +40,7 @@ test("Deploys package with default values in main cluster", async ({ page }) => 
   await page.waitForSelector("css=.application-status-pie-chart-number >> text=3", {
     timeout: utils.getDeploymentTimeout(),
   });
-  await page.waitForSelector("css=.application-status-pie-chart-title >> text=ReadyFoo", {
+  await page.waitForSelector("css=.application-status-pie-chart-title >> text=Ready", {
     timeout: utils.getDeploymentTimeout(),
   });
 

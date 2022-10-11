@@ -14,7 +14,7 @@ test("Deploys an Operator", async ({ page }) => {
 
   // Go to operators page
   await page.goto(utils.getUrl("/#/c/default/ns/kubeapps/operators"));
-  await page.waitForSelector('h1:has-text("OperatorsFoo")');
+  await page.waitForSelector('h1:has-text("Operators")');
   await page.waitForFunction('document.querySelector("cds-progress-circle") === null');
 
   // Select operator to deploy
