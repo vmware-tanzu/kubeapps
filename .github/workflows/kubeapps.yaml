@@ -73,6 +73,12 @@ jobs:
       running_on_tag: ${{ steps.set-outputs.outputs.running_on_tag }}
       triggered_from_fork: ${{ steps.set-outputs.outputs.triggered_from_fork }}
     steps:
+      - name: debug
+        run: |
+          echo "REPO_FULL_NAME: ${{ github.event.pull_request.head.repo.full_name }}"
+          echo "GITHUB_REPOSITORY: ${GITHUB_REPOSITORY}"
+          echo "Event:"
+          echo ${{ toJSON(github.event) }}
       - name: Set outputs
         id: set-outputs
         run: |
@@ -86,9 +92,6 @@ jobs:
           
           # Check if the workflow is triggered due to a PR from an external fork
           if [[ "${{ github.event.pull_request.head.repo.full_name }}" == "${GITHUB_REPOSITORY}" ]]; then
-            echo "REPO_FULL_NAME: ${{ github.event.pull_request.head.repo.full_name }}"
-            echo "GITHUB_REPOSITORY: ${GITHUB_REPOSITORY}"
-  
             echo "triggered_from_fork=false" >> $GITHUB_OUTPUT
           else
             echo "triggered_from_fork=true" >> $GITHUB_OUTPUT
@@ -528,9 +531,7 @@ jobs:
   sync_chart_from_bitnami:
     needs:
       - setup
-    # FIXME: To test the job, we're gonna run it on every push (not just on pushes to main)
-    if: needs.setup.outputs.triggered_from_fork == 'false'
-#    if: needs.setup.outputs.running_on_main == 'true'
+    if: needs.setup.outputs.running_on_main == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -591,9 +592,7 @@ jobs:
   sync_chart_to_bitnami:
     needs:
       - setup
-    # FIXME: To test the job, we're gonna run it on every push (not just on pushes to main)
-    if: needs.setup.outputs.triggered_from_fork == 'false'
-#    if: needs.setup.outputs.running_on_tag == 'true'
+    if: needs.setup.outputs.running_on_tag == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
