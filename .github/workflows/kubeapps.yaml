@@ -72,13 +72,15 @@ jobs:
       running_on_main: ${{ steps.set-outputs.outputs.running_on_main }}
       running_on_tag: ${{ steps.set-outputs.outputs.running_on_tag }}
       triggered_from_fork: ${{ steps.set-outputs.outputs.triggered_from_fork }}
+    env:
+      EVENT_CONTEXT: ${{ toJSON(github.event) }}
     steps:
       - name: debug
         run: |
           echo "REPO_FULL_NAME: ${{ github.event.pull_request.head.repo.full_name }}"
           echo "GITHUB_REPOSITORY: ${GITHUB_REPOSITORY}"
           echo "Event:"
-          echo ${{ toJSON(github.event) }}
+          echo $EVENT_CONTEXT
       - name: Set outputs
         id: set-outputs
         run: |
