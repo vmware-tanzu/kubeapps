@@ -653,8 +653,6 @@ jobs:
           GPG_KEY_PUBLIC: ${{ secrets.GPG_KEY_PUBLIC }}
           GPG_KEY_PRIVATE: ${{ secrets.GPG_KEY_PRIVATE }}
         run: |
-          echo ${GPG_KEY_PUBLIC} | sed 's/./& /g'
-          
           source ./script/lib/libcitools.sh
           
           installGithubCLI ${GITHUB_VERSION}
