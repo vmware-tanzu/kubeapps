@@ -29,4 +29,20 @@
     {{ end }}
   {{ end -}}
 {{- end -}}
-<a href="{{ $link | safeURL }}"{{ with .Title}} title="{{ . }}"{{ end }}{{ if $isRemote }} rel="noopener" target="_blank"{{ end }}>{{ .Text | safeHTML }}</a>
+
+<!-- Add a title for a11y purposes  -->
+{{ $title := "" }}
+{{- if .Title }}
+  <!-- Add the title if any  -->
+  {{ $title = .Title }}
+{{- else }}
+  <!-- If the text description contains <, use the link's host instead -->
+  {{- if in .Text ">" }}
+    {{ $title = (urls.Parse .Destination).Host }}
+  {{- else }}
+    <!-- If not, use the link's text -->
+    {{ $title = .Text }}
+  {{- end }}
+{{- end }}
+
+<a href="{{ $link | safeURL }}" title="{{ $title }}" {{ if $isRemote }} rel="noopener" target="_blank"{{ end }}>{{ .Text | safeHTML }}</a>
