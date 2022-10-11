@@ -649,12 +649,15 @@ jobs:
           SSH_KEY_FORKED_CHARTS_DEPLOY: ${{ secrets.SSH_KEY_FORKED_CHARTS_DEPLOY }}
         uses: lhotari/action-upterm@v1
       - name: "Install CLI tools"
+        env:
+          GPG_KEY_PUBLIC: ${{ secrets.GPG_KEY_PUBLIC }}
+          GPG_KEY_PRIVATE: ${{ secrets.GPG_KEY_PRIVATE }}
         run: |
           source ./script/lib/libcitools.sh
           
           installGithubCLI ${GITHUB_VERSION}
           installSemver ${SEMVER_VERSION}
-          installGPGKey ${{secrets.GPG_KEY_PUBLIC}} ${{secrets.GPG_KEY_PRIVATE}} ${CI_BOT_GPG} ${CI_BOT_EMAIL}
+          installGPGKey ${GPG_KEY_PUBLIC} ${GPG_KEY_PRIVATE} ${CI_BOT_GPG} ${CI_BOT_EMAIL}
       - name: "Install SSH key: Kubeapps Deploy Key"
         uses: shimataro/ssh-key-action@v2
         with:
