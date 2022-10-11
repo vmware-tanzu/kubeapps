@@ -5,9 +5,6 @@ name: Kubeapps general pipeline
 
 on:
   push:
-    branches:
-      - main
-      - fix-sync-from-bitnami-gha
   pull_request:
     branches:
       - main
