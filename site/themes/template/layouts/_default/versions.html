@@ -1,4 +1,4 @@
-{{ if .Site.Params.Use_advanced_docs }}
+{{ if and .Site.Params.display_version_selector .Site.Params.use_advanced_docs }}
 <div class="dropdown">
   {{ if .Site.Params.docs_versioning }}
   <button class="btn btn-primary dropdown-toggle" type="button" id="dropdownMenuButton" data-toggle="dropdown"

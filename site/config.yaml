@@ -44,6 +44,7 @@ params:
   twitter: vmwmarketplace
   twitter_url: "https://twitter.com/vmwmarketplace"
   use_advanced_docs: true
+  display_version_selector: false
   docs_versions:
     - latest
 privacy:
