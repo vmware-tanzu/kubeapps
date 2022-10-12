@@ -1,6 +1,17 @@
 @import "variables";
 @import "mixins";
 
+
+// Add a chevron (>) after the link text for a11y
+main a:after {
+  content: " \203A";
+}
+
+// Hide chevron in buttons
+main a.button:after, a.section-link:after {
+  content: "";
+}
+
 /* Homepage Hero */
 .hero {
   background-color: $ocean;
@@ -166,7 +177,7 @@
   a {
     color: $white;
     font-weight: 300;
-    text-decoration: underline;
+    // text-decoration: underline;
   }
 
   .grid.three {
