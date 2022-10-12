@@ -45,4 +45,7 @@
   {{- end }}
 {{- end }}
 
+<!-- Skip rendering the badges -->
+{{- if not (or (in $link "netlify.com") (in $link "circleci") )}}
 <a href="{{ $link | safeURL }}" title="{{ $title }}" {{ if $isRemote }} rel="noopener" target="_blank"{{ end }}>{{ .Text | safeHTML }}</a>
+{{- end }}
