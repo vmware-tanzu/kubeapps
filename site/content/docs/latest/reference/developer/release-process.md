@@ -116,7 +116,7 @@ Note: If there are certain dependencies which cannot be updated currently, `yarn
 
 #### Golang dependencies
 
-Check the outdated [golang dependencies](https://github.com/vmware-tanzu/kubeapps/blob/maingo.mod) by running the following (from [How to upgrade and downgrade dependencies](https://github.com/golang/go/wiki/Modules#how-to-upgrade-and-downgrade-dependencies)):
+Check the outdated [golang dependencies](https://github.com/vmware-tanzu/kubeapps/blob/main/go.mod) by running the following (from [How to upgrade and downgrade dependencies](https://github.com/golang/go/wiki/Modules#how-to-upgrade-and-downgrade-dependencies)):
 
 ```bash
 go mod tidy
@@ -149,6 +149,13 @@ Finally, look at the [pull requests](https://github.com/vmware-tanzu/kubeapps/pu
 #### Send a PR with the upgrades
 
 Now create a Pull Request containing all these changes (only if no major versions have been bumped up) and wait until for another Kubeapps maintainer to review and accept so you can merge it.
+
+### 0.5 - Update the website engine
+
+The Kubeapps website is built using [Hugo](https://gohugo.io/). Hugo is a static site generator written in Go. It is used to generate the Kubeapps website from Markdown files and HTML templates.
+The Kubeapps website is hosted on [Netlify](https://www.netlify.com/). Netlify is a cloud-based platform that automatically builds and deploys websites when new code is pushed to a Git repository.
+
+To update the website engine, you need to Update the `HUGO_VERSION` variable in the [netlify.toml](https://github.com/vmware-tanzu/kubeapps/blob/main/site/netlify.toml) to the latest [Hugo release](https://github.com/gohugoio/hugo/releases/).
 
 ## 1 - Select the commit to be tagged and perform some tests
 
