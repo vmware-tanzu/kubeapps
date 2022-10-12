@@ -10,7 +10,8 @@
         </div>
         <div class="info">
           <p class="name">
-            <a target="_blank" rel="noopener" href="https://github.com/{{ .Params.github_handle }}">
+            <a target="_blank" rel="noopener" title="This link will open in a new tab"
+              href="https://github.com/{{ .Params.github_handle }}">
               {{ .Params.full_name }}</a>
           </p>
           <p class="position">{{ .Params.role }}</p>
@@ -22,7 +23,8 @@
     <p>
       Kubeapps is released as open-source software and provides community support through our GitHub project page. If
       you encounter an issue or have a question, feel free to reach out on the
-      <a target="_blank" rel="noopener" href="{{$.Site.Params.github_base_url}}/issues/new">
+      <a target="_blank" rel="noopener" title="This link will open in a new tab"
+        href="{{$.Site.Params.github_base_url}}/issues/new">
         GitHub issues page for Kubeapps</a>.
     </p>
     <p>

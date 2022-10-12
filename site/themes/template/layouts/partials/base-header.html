@@ -10,8 +10,8 @@
       <li><a href="/community/" {{ if (eq .RelPermalink "/community/")  }} class="active" {{ end }}>Community</a></li>
       <li><a href="/resources/" {{ if (eq .RelPermalink "/resources/")  }} class="active" {{ end }}>Resources</a></li>
       <li><a href="/docs/{{ $latest }}" {{ if (eq .Page.Section "docs") }} class="active" {{ end }}>Documentation</a></li>
-      <li><a target="_blank" rel="noopener" href="{{ .Site.Params.slack_url }}" title="Slack"><img alt="Slack logo" src="/img/slack.png" />Slack</a></li>
-      <li><a target="_blank" rel="noopener" href="{{ .Site.Params.github_url }}" title="GitHub"><img alt="GitHub logo" src="/img/github.svg" />GitHub</a></li>
+      <li><a target="_blank" rel="noopener" href="{{ .Site.Params.slack_url }}" title="Slack. This link will open in a new tab"><img alt="Slack logo" src="/img/slack.png" />Slack</a></li>
+      <li><a target="_blank" rel="noopener" href="{{ .Site.Params.github_url }}" title="GitHub. This link will open in a new tab"><img alt="GitHub logo" src="/img/github.svg" />GitHub</a></li>
     </ul>
     <button type="button" class="mobile" onclick="mobileNavToggle()">
       <img class="collapsed-icon" src="/img/hamburger.svg" alt="Mobile nav icon">
@@ -25,9 +25,9 @@
         <li><a href="/docs/{{ $latest }}" {{ if (eq .Page.Section "docs" ) }} class="active" {{ end }}>Documentation</a></li>
       </ul>
       <div class="social">
-        <a target="_blank" rel="noopener" href="{{ .Site.Params.twitter_url }}" title="Twitter"><img alt="Twitter logo" src="/img/twitter.png" />Twitter</a>
-        <a target="_blank" rel="noopener" href="{{ .Site.Params.github_url }}" title="GitHub"><img alt="GitHub logo" src="/img/github.svg" />GitHub</a>
-        <a target="_blank" rel="noopener" href="{{ .Site.Params.slack_url }}" title="Slack"><img alt="Slack logo" src="/img/slack.png" />Slack</a>
+        <a target="_blank" rel="noopener" href="{{ .Site.Params.twitter_url }}" title="Twitter. This link will open in a new tab"><img alt="Twitter logo" src="/img/twitter.png" />Twitter</a>
+        <a target="_blank" rel="noopener" href="{{ .Site.Params.github_url }}" title="GitHub. This link will open in a new tab"><img alt="GitHub logo" src="/img/github.svg" />GitHub</a>
+        <a target="_blank" rel="noopener" href="{{ .Site.Params.slack_url }}" title="Slack. This link will open in a new tab"><img alt="Slack logo" src="/img/slack.png" />Slack</a>
       </div>
     </div>
   </div>
