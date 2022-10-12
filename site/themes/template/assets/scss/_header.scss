@@ -2,6 +2,35 @@
 @import "mixins";
 @import "base";
 
+
+
+a.skip-link {
+  left: -999px;
+  position: absolute;
+  top: auto;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  z-index: -999;
+}
+
+a.skip-link:focus,
+a.skip-link:active {
+  color: #fff;
+  background-color: $ocean;
+  left: auto;
+  top: auto;
+  width: 25%;
+  height: auto;
+  overflow: auto;
+  margin: 10px 25%;
+  padding: 5px;
+  border-radius: 10px;
+  text-align: center;
+  font-size: 1.2em;
+  z-index: 999;
+}
+
 header {
   .wrapper {
     display: flex;

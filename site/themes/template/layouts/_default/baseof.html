@@ -89,7 +89,7 @@
 <body>
   {{ partial "base-header" . }}
   {{ block "main" . }}
-  {{ partial "base-getting-started" . }}
+    {{ partial "base-getting-started" . }}
   {{ end }}
   {{ partial "base-footer" . }}
   {{ if .Site.Params.docs_search }}
