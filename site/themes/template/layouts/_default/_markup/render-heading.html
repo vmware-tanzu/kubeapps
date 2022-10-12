@@ -1,5 +1,9 @@
-<h{{ .Level }} id="{{ .Anchor | safeURL }}">{{ .Text | safeHTML }}
+{{ $level := .Level }}
+{{- if not (eq .Level 6) }}
+  {{ $level = add $level 1 }}
+{{- end }}
+<h{{ $level }} id="{{ .Anchor | safeURL }}">{{ .Text | safeHTML }}
   <a href="#{{ .Anchor | safeURL }}" title="{{ .Text | safeHTML }}" class="section-link">
     ¶
   </a>
-</h{{ .Level }}>
+</h{{ $level }}>
