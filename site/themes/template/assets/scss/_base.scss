@@ -179,6 +179,10 @@ button {
   border-radius: 50% !important;
 }
 
+table > caption {
+  margin-bottom: 1em;
+}
+
 noscript {
   display: block;
   padding: 10px;

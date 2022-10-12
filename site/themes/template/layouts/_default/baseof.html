@@ -102,6 +102,15 @@
       selector: 'div#search',
     });
   </script>
+  <script>
+    // Auto-caption tables until a custom table hook is implemented
+    // see https://github.com/gohugoio/hugo/issues/9316
+    document.querySelectorAll("table").forEach(function (table, index) {
+      var caption = document.createElement("caption");
+      caption.innerHTML = `Table ${index + 1}`;
+      table.appendChild(caption);
+    });
+  </script>
   {{ end }}
 </body>
 
