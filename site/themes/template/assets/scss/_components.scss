@@ -8,7 +8,8 @@ main a:after {
 }
 
 // Hide chevron in buttons
-main a.button:after, a.section-link:after {
+main a.button:after,
+a.section-link:after {
   content: "";
 }
 
@@ -896,4 +897,15 @@ main a.button:after, a.section-link:after {
   input::placeholder {
     color: $darkgrey;
   }
+
+  @include breakpoint(small) {
+    .aa-DetachedSearchButtonPlaceholder {
+      display: none;
+    }
+  }
+
+  .aa-Form, .aa-DetachedSearchButton {
+    border-color: $ocean;
+  }
+
 }
