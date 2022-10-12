@@ -1,4 +1,4 @@
-<div class="side-nav">
+<nav class="side-nav">
   {{ if .Site.Params.use_advanced_docs }}
     <noscript>Please enable javascript to use dropdown navigation</noscript>
     {{ $version := .CurrentSection.Params.version }}
@@ -11,15 +11,21 @@
       {{ end }}
       {{ $toc := (index $.Site.Data "docs" $tocTemplateName).toc }}
       {{ range $toc }}
-        <h4>{{ .title }}</h4>
-        <ul>
-          {{ range .subfolderitems }}
-          <li>
-            {{ $url :=  (index (print "/docs/" $version .url "/"))  }}
-            <a href="{{ $url }}" {{ if (eq  $.Page.RelPermalink $url)  }}class="active"{{ end }}>{{ .page }}</a>
-          </li>
-          {{ end }}
-        </ul>
+      <ul>
+        <li>
+          <p class="heading">{{ .title }}</p>
+        </li>
+        <li>
+          <ul>
+            {{ range .subfolderitems }}
+            <li>
+              {{ $url := (index (print "/docs/" $version .url "/")) }}
+              <a href="{{ $url }}" {{ if (eq $.Page.RelPermalink $url) }}class="active" {{ end }}>{{ .page }}</a>
+            </li>
+            {{ end }}
+          </ul>
+        </li>
+      </ul>
       {{ end }}
     {{ end }}
   {{ else }}
@@ -30,4 +36,4 @@
       {{ end }}
     </ul>
   {{ end }}
-</div>
+  </nav>

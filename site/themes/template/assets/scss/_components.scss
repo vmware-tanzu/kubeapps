@@ -542,6 +542,10 @@
     width: 25%;
     float: left;
 
+    .heading {
+      font-size: 18px;
+    }
+
     ul {
       padding-left: 0;
       margin-bottom: 35px;
@@ -801,11 +805,6 @@
         padding: 8px 0;
         margin-bottom: 0;
 
-        &:first-of-type {
-          padding-right: 5px;
-          border-right: 1px solid #ddd;
-        }
-
         a {
           font-size: 14px;
           text-transform: uppercase;
@@ -864,11 +863,6 @@
 }
 
 .home-snippet {
-  span {
-    // max-width: 50vw;
-    // overflow: auto;
-  }
-
   pre {
     white-space: pre-wrap;
 
