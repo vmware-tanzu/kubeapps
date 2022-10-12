@@ -847,7 +847,7 @@
       top: 0;
     }
 
-    @include breakpoint(small-medium) {
+    @include breakpoint(small) {
       display: none;
     }
   }
