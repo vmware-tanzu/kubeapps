@@ -39,6 +39,10 @@ const defaultProps = {
 
 it("deletes the repo and refreshes list", async () => {
   const deleteRepo = jest.fn();
+  // Mock the response for delete repo action
+  const mockDispatch = jest.fn();
+  mockDispatch.mockReturnValue(true);
+  spyOnUseDispatch = jest.spyOn(ReactRedux, "useDispatch").mockReturnValue(mockDispatch);
   const refetchRepos = jest.fn();
   actions.repos = {
     ...actions.repos,
@@ -65,6 +69,45 @@ it("deletes the repo and refreshes list", async () => {
   });
   expect(deleteRepo).toHaveBeenCalled();
   expect(refetchRepos).toHaveBeenCalled();
+});
+
+it("show error message when package repository deletion fails ", async () => {
+  const deleteRepo = jest.fn();
+  // Mock the response for delete repo action
+  const mockDispatch = jest.fn();
+  mockDispatch.mockReturnValue(false);
+  spyOnUseDispatch = jest.spyOn(ReactRedux, "useDispatch").mockReturnValue(mockDispatch);
+  const refetchRepos = jest.fn();
+  actions.repos = {
+    ...actions.repos,
+    deleteRepo,
+  };
+  const wrapper = mountWrapper(
+    defaultStore,
+    <PkgRepoControl {...defaultProps} refetchRepos={refetchRepos} />,
+  );
+  const deleteButton = wrapper.find(CdsButton).filterWhere(b => b.text() === "Delete");
+  act(() => {
+    (deleteButton.prop("onClick") as any)();
+  });
+  wrapper.update();
+  expect(wrapper.find(ConfirmDialog)).toIncludeText(
+    "Are you sure you want to delete the repository",
+  );
+  const confirmButton = wrapper
+    .find(ConfirmDialog)
+    .find(".btn")
+    .filterWhere(b => b.text() === "Delete");
+  await act(async () => {
+    await (confirmButton.prop("onClick") as any)();
+  });
+  expect(deleteRepo).toHaveBeenCalled();
+  expect(refetchRepos).not.toHaveBeenCalled();
+  expect(
+    wrapper
+      .find("div")
+      .filterWhere(div => div.text().includes("An error occurred while deleting the repository:")),
+  );
 });
 
 it("renders the button to edit the repo", () => {
