@@ -350,7 +350,7 @@ func newServerWithReactors(unstructuredObjs []k8sruntime.Object, repos []*v1alph
 	if err != nil {
 		log.Fatalf("%s", err)
 	}
-	authorizationv1.AddToScheme(scheme)
+	err = authorizationv1.AddToScheme(scheme)
 	if err != nil {
 		log.Fatalf("%s", err)
 	}
