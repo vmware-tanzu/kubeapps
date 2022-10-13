@@ -47,10 +47,6 @@ type HelmRepository struct {
 
 var ValidRepoTypes = []string{HelmRepoType, OCIRepoType}
 
-func (s *Server) MaxWorkers() int {
-	return int(s.clientQPS)
-}
-
 func (s *Server) newRepo(ctx context.Context, repo *HelmRepository) (*corev1.PackageRepositoryReference, error) {
 	if repo.url == "" {
 		return nil, status.Errorf(codes.InvalidArgument, "repository url may not be empty")
