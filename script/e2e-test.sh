@@ -31,19 +31,10 @@ CHARTMUSEUM_VERSION=${9:-"3.9.0"}
 IMG_PREFIX=${IMG_PREFIX:-"kubeapps/"}
 TESTS_GROUP=${TESTS_GROUP:-"${ALL_TESTS}"}
 
-group_is_supported=false
-for group in "${SUPPORTED_TESTS_GROUPS[@]}"; do
-  if [[ "${TESTS_GROUP}" == "${group}" ]]; then
-    group_is_supported=true
-    break
-  fi
-done
-
-if [[ "${group_is_supported}" == false ]]; then
-  echo "The provided TEST_GROUP [${TESTS_GROUP}] is not supported. Supported groups are: "
-  for group in "${SUPPORTED_TESTS_GROUPS[@]}"; do
-    echo "- ${group}"
-  done
+# shellcheck disable=SC2076
+if [[ ! " ${SUPPORTED_TESTS_GROUPS[*]} " =~ " ${TESTS_GROUP} " ]]; then
+  # shellcheck disable=SC2046
+  echo $(IFS=','; echo "The provided TEST_GROUP [${TESTS_GROUP}] is not supported. Supported groups are: ${SUPPORTED_TESTS_GROUPS[*]}")
   exit 1
 fi
 
