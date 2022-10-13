@@ -684,6 +684,7 @@ jobs:
           ssh-add ~/.ssh/${SSH_KEY_KUBEAPPS_DEPLOY_FILENAME}
           # Deployment key uploaded to the kubeapps-bot/charts repository
           ssh-add ~/.ssh/${SSH_KEY_FORKED_CHARTS_DEPLOY_FILENAME}
+      - run: cat ${HOME}/.ssh/known_hosts
       - name: Setup upterm session
         uses: lhotari/action-upterm@v1
       - # Assuming there is a personal access token created in GitHub granted with the scopes
