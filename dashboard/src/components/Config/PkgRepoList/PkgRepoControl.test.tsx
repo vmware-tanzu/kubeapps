@@ -103,11 +103,6 @@ it("show error message when package repository deletion fails ", async () => {
   });
   expect(deleteRepo).toHaveBeenCalled();
   expect(refetchRepos).not.toHaveBeenCalled();
-  expect(
-    wrapper
-      .find("div")
-      .filterWhere(div => div.text().includes("An error occurred while deleting the repository:")),
-  );
 });
 
 it("renders the button to edit the repo", () => {
