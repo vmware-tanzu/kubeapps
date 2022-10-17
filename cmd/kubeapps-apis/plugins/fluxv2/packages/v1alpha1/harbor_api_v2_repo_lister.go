@@ -134,7 +134,7 @@ func pingHarbor(ctx context.Context, ref orasregistryv2.Reference, cred orasregi
 	}
 }
 
-//  https://demo.goharbor.io/#/project/headProject
+// https://demo.goharbor.io/#/project/headProject
 func harborProjectExists(ctx context.Context, projectName string, ref orasregistryv2.Reference, cred orasregistryauthv2.Credential) error {
 	log.Infof("+projectExists(%s)", projectName)
 	url := fmt.Sprintf("%s/projects?project_name=%s",
@@ -289,5 +289,9 @@ func parseHarborErrorResponse(resp *http.Response) error {
 	} else {
 		errmsg = http.StatusText(resp.StatusCode)
 	}
-	return fmt.Errorf("%s %q: unexpected status code %d: %s", resp.Request.Method, resp.Request.URL, resp.StatusCode, errmsg)
+
+	// https://codeql.github.com/codeql-query-help/go/go-log-injection/
+	escapedUrl := strings.Replace(resp.Request.URL.String(), "\n", "", -1)
+	escapedUrl = strings.Replace(escapedUrl, "\r", "", -1)
+	return fmt.Errorf("%s %q: unexpected status code %d: %s", resp.Request.Method, escapedUrl, resp.StatusCode, errmsg)
 }

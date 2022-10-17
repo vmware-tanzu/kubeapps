@@ -69,12 +69,12 @@ export const fetchRepoSummaries = (
   return async (dispatch, getState) => {
     const {
       clusters: { currentCluster },
-      config: { helmGlobalNamespace, carvelGlobalNamespace },
+      config: { kubeappsCluster, helmGlobalNamespace, carvelGlobalNamespace },
     } = getState();
     try {
       dispatch(requestRepoSummaries(namespace));
       const repos = await PackageRepositoriesService.getPackageRepositorySummaries({
-        cluster: currentCluster,
+        cluster: namespace ? currentCluster : kubeappsCluster,
         namespace: namespace,
       });
       if (!listGlobal || [helmGlobalNamespace, carvelGlobalNamespace].includes(namespace)) {
@@ -85,8 +85,9 @@ export const fetchRepoSummaries = (
         // however, this can cause issues when using unprivileged users, see #5215
         let totalRepos = repos.packageRepositorySummaries;
         dispatch(requestRepoSummaries(""));
+        // Global repos are only related to the Kubeapps cluster
         const globalRepos = await PackageRepositoriesService.getPackageRepositorySummaries({
-          cluster: currentCluster,
+          cluster: kubeappsCluster,
           namespace: "",
         });
         // Avoid adding duplicated repos: if two repos have the same uid, filter out
