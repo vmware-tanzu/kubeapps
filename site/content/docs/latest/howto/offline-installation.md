@@ -44,7 +44,7 @@ helm dep update ./kubeapps
 
 ## Step 2. Mirror Kubeapps images
 
-To be able to install Kubeapps, it's necessary to either have a copy of all the images that Kubeapps requires in each node of the cluster or push these images to an internal Docker registry that Kubernetes can access. You can obtain the list of images by checking the `values.yaml` of the chart. For example:
+To be able to install Kubeapps, it's necessary to either have a copy of all the images that Kubeapps requires in each node of the cluster or push these images to an internal Docker registry that Kubernetes can access. You can obtain the list of images by checking the [`values.yaml` file](https://github.com/bitnami/charts/blob/master/bitnami/kubeapps/values.yaml) of the chart. For example:
 
 ```yaml
 registry: docker.io
