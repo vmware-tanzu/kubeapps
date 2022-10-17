@@ -7,6 +7,15 @@ import { FilterFn, SortingFn, sortingFns } from "@tanstack/react-table";
 export const fuzzyFilter: FilterFn<any> = (row, columnId, value, addMeta) => {
   // Rank the item
   const itemRank = rankItem(row.getValue(columnId), value);
+
+  // The search in nested rows should be supported by the library, but it's not yet
+  // We will mark a parent row as a match if any of its children match
+  // https://github.com/vmware-tanzu/kubeapps/issues/5437
+  row.subRows?.forEach((subRow: any) => {
+    const subRowRank = rankItem(subRow.getValue(columnId), value);
+    itemRank.passed = subRowRank.passed || itemRank.passed;
+  });
+
   // Store the itemRank info
   addMeta({ itemRank });
   // Return if the item should be filtered in/out

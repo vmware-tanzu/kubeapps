@@ -574,6 +574,8 @@ gke_test: &gke_test
           if [ -a $GOOGLE_APPLICATION_CREDENTIALS ]; then
             gcloud -q auth activate-service-account --key-file $GOOGLE_APPLICATION_CREDENTIALS;
           fi
+          gcloud components install gke-gcloud-auth-plugin
+          export USE_GKE_GCLOUD_AUTH_PLUGIN=True
     - <<: *install_kubectl
     # A GKE cluster name cannot contain non-alphanumeric characters (nor uppercase letters)
     - run:
