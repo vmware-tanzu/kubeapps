@@ -36,8 +36,10 @@ export function PkgRepoControl({
 
   const handleDeleteClick = (packageRepoRef: PackageRepositoryReference) => {
     return async () => {
-      await dispatch(actions.repos.deleteRepo(packageRepoRef));
-      refetchRepos();
+      const deleted = await dispatch(actions.repos.deleteRepo(packageRepoRef));
+      if (deleted) {
+        refetchRepos();
+      }
       closeModal();
     };
   };
