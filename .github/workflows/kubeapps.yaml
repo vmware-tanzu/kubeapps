@@ -456,6 +456,10 @@ jobs:
           source ./script/lib/liblog.sh
           for path in /tmp/images/*; do 
             image=$(basename "$path")
+            if [[ "${image}" != *"-image" ]]; then
+              echo "::notice ::Skipping artifact ${image}, it's not a docker image"          
+              continue
+            fi
             info "Loading image ${image}"
             kind load image-archive "${path}/${image}.tar" --name kubeapps-ci; 
           done
