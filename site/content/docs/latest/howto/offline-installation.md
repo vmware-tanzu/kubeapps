@@ -70,7 +70,7 @@ docker pull bitnami/nginx:1.19.2-debian-10-r32
 kind load docker-image bitnami/nginx:1.19.2-debian-10-r32
 ```
 
-> **Note**: tags must be updated according to the images version in the `values.yaml` file
+> **Note**: tags must be updated according to the version of the images in the [`values.yaml` file](https://github.com/bitnami/charts/blob/master/bitnami/kubeapps/values.yaml)
 
 In case you are using a private Docker registry, you need to re-tag the images and push them:
 
