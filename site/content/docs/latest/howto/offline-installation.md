@@ -63,7 +63,7 @@ tag: 1.19.2-debian-10-r32
 > - `bitnami/kubeapps-apis`
 > - `bitnami/postgresql`
 
-For simplicity, in this guide, use a single-node cluster created with [Kubernetes in Docker (`kind`)](https://github.com/kubernetes-sigs/kind) with a namespace called "kubeapps". In this environment, the images have to be preloaded: - first, pull the images (`docker pull`), - next load them into the cluster (`kind load docker-image`).
+For simplicity, in this guide, use a single-node cluster created with [Kubernetes in Docker (`kind`)](https://github.com/kubernetes-sigs/kind), using a namespace called "kubeapps". In this environment, the images have to be pre-loaded: - first, pull the images (`docker pull`), - next load them into the cluster (`kind load docker-image`).
 
 ```bash
 docker pull bitnami/nginx:1.19.2-debian-10-r32
