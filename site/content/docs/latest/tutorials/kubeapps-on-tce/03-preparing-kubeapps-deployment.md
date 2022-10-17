@@ -3,7 +3,7 @@
 Before Kubeapps is deployed to the TCE cluster, there are some decisions to take in order to shape the installation structure and functioning of the application.
 
 Some relevant topics like routing traffic into Kubeapps, TLS, or which plugins need to be enabled, are set up in a _configuration values file_.
-A configuration values file is a Yaml file that allows you to customize the deployment of Kubeapps. TCE makes use of [Carvel](https://carvel.dev/) for installing applications, and in the case of the Kubeapps package, the configuration file uses exactly the same parameters specified in the [Bitnami Kubeapps Helm chart](https://github.com/bitnami/charts/tree/master/bitnami/kubeapps#parameters). It is highly recommended that you take a look at the possible parameters and get familiar with them.
+A configuration values file is a Yaml file that allows you to customize the deployment of Kubeapps. TCE makes use of [Carvel](https://carvel.dev/) for installing applications, and in the case of the Kubeapps package, the configuration file uses exactly the same parameters specified in the [Bitnami Kubeapps Helm chart](https://github.com/bitnami/charts/tree/main/bitnami/kubeapps#parameters). It is highly recommended that you take a look at the possible parameters and get familiar with them.
 
 The outcome of this step is:
 

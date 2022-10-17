@@ -59,7 +59,7 @@ Need an idea for a project to get started contributing? Take a look at the [open
 
 When contributing to Kubeapps, please first discuss the change you wish to make via an issue with this repository before making a change.
 
-> Kubeapps distribution is delegated to the official [Bitnami Kubeapps chart](https://github.com/bitnami/charts/tree/master/bitnami/kubeapps) from the separate Bitnami charts repository. PRs and issues related to the official chart should be created in the Bitnami charts repository.
+> Kubeapps distribution is delegated to the official [Bitnami Kubeapps chart](https://github.com/bitnami/charts/tree/main/bitnami/kubeapps) from the separate Bitnami charts repository. PRs and issues related to the official chart should be created in the Bitnami charts repository.
 
 ### Bugs
 

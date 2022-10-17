@@ -249,7 +249,7 @@ The `event` condition can be combined into a array of conditions in the same way
 
 ## Example
 
-This is a [working example for the WordPress chart](https://github.com/helm/charts/blob/master/stable/wordpress/values.schema.json)
+This is a [working example for the WordPress chart](https://github.com/bitnami/charts/blob/main/bitnami/wordpress/values.schema.json)
 
 And the resulting form:
 
