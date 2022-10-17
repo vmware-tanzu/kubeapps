@@ -258,7 +258,8 @@ func TestOCIClient(t *testing.T) {
 		ch, err := cli.GetChart(&ChartDetails{ChartName: "nginx", Version: "5.1.1"}, "http://foo/bar")
 		if ch == nil {
 			t.Errorf("Unexpected error: %s", err)
-		} else if ch.Name() != "nginx" || ch.Metadata.Version != "5.1.1" {
+		} 
+		if ch.Name() != "nginx" || ch.Metadata.Version != "5.1.1" {
 			t.Errorf("Unexpected chart %s:%s", ch.Name(), ch.Metadata.Version)
 		}
 	})
