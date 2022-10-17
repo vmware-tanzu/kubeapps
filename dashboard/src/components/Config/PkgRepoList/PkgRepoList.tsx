@@ -16,8 +16,11 @@ import qs from "qs";
 import { useCallback, useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { Link, useLocation } from "react-router-dom";
+import { IConfig } from "shared/Config";
 import { Kube } from "shared/Kube";
-import { IStoreState } from "shared/types";
+import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins";
+import { PackageRepositoriesService } from "shared/PackageRepositoriesService";
+import { IPackageRepositoryPermission, IStoreState } from "shared/types";
 import { app } from "shared/url";
 import { getPluginName } from "shared/utils";
 import LoadingWrapper from "../../LoadingWrapper/LoadingWrapper";
@@ -32,7 +35,13 @@ function PkgRepoList() {
   const {
     repos: { errors, isFetching, reposSummaries: repos },
     clusters: { clusters, currentCluster },
-    config: { kubeappsCluster, kubeappsNamespace, helmGlobalNamespace, carvelGlobalNamespace },
+    config: {
+      kubeappsCluster,
+      kubeappsNamespace,
+      helmGlobalNamespace,
+      carvelGlobalNamespace,
+      configuredPlugins,
+    },
   } = useSelector((state: IStoreState) => state);
   const cluster = currentCluster;
   const { currentNamespace } = clusters[cluster];
@@ -40,7 +49,7 @@ function PkgRepoList() {
     qs.parse(location.search, { ignoreQueryPrefix: true }).allns === "yes" ? true : false;
   const [allNS, setAllNS] = useState(allNSQuery);
   const [canSetAllNS, setCanSetAllNS] = useState(false);
-  const [canEditGlobalRepos, setCanEditGlobalRepos] = useState(false);
+  const [reposRBAC, setReposRBAC] = useState(new Map<Plugin, IPackageRepositoryPermission>());
   const [namespace, setNamespace] = useState(allNSQuery ? "" : currentNamespace);
 
   // We do not currently support package repositories on additional clusters.
@@ -87,13 +96,52 @@ function PkgRepoList() {
   }, [allNS, currentNamespace]);
 
   useEffect(() => {
+    const pluginsConfig = {
+      helmGlobalNamespace: helmGlobalNamespace,
+      carvelGlobalNamespace: carvelGlobalNamespace,
+      kubeappsCluster: kubeappsCluster,
+    } as IConfig;
+
+    Promise.all(
+      configuredPlugins
+        .map(plugin =>
+          PackageRepositoriesService.getRepositoriesPermissions(
+            currentNamespace,
+            pluginsConfig,
+            plugin,
+          ),
+        )
+        .filter(i => i !== undefined),
+    ).then(results => {
+      const rbac = new Map<Plugin, IPackageRepositoryPermission>();
+      results.forEach(r => {
+        if (r !== undefined) {
+          rbac.set(r.plugin, r);
+        }
+      });
+      setReposRBAC(rbac);
+    });
+
+    // Cluster-wide check
     Kube.canI(cluster, "kubeapps.com", "apprepositories", "list", "")
       .then(allowed => setCanSetAllNS(allowed))
       ?.catch(() => setCanSetAllNS(false));
-    Kube.canI(kubeappsCluster, "kubeapps.com", "apprepositories", "update", helmGlobalNamespace)
-      .then(allowed => setCanEditGlobalRepos(allowed))
-      ?.catch(() => setCanEditGlobalRepos(false));
-  }, [cluster, kubeappsCluster, kubeappsNamespace, helmGlobalNamespace]);
+  }, [
+    cluster,
+    kubeappsCluster,
+    kubeappsNamespace,
+    helmGlobalNamespace,
+    carvelGlobalNamespace,
+    currentNamespace,
+    configuredPlugins,
+  ]);
+
+  const canEditGlobalRepos = (plugin?: Plugin): boolean => {
+    if (plugin) {
+      return reposRBAC.get(plugin)?.global?.update || false;
+    }
+    return false;
+  };
 
   const globalRepos: PackageRepositorySummary[] = [];
   const namespacedRepos: PackageRepositorySummary[] = [];
@@ -146,16 +194,17 @@ function PkgRepoList() {
             )}
           </>
         ),
-        actions: disableControls ? (
-          <PkgRepoDisabledControl />
-        ) : (
-          <PkgRepoControl
-            repo={repo}
-            refetchRepos={refetchRepos}
-            helmGlobalNamespace={helmGlobalNamespace}
-            carvelGlobalNamespace={carvelGlobalNamespace}
-          />
-        ),
+        actions:
+          disableControls || !canEditGlobalRepos(repo.packageRepoRef?.plugin) ? (
+            <PkgRepoDisabledControl />
+          ) : (
+            <PkgRepoControl
+              repo={repo}
+              refetchRepos={refetchRepos}
+              helmGlobalNamespace={helmGlobalNamespace}
+              carvelGlobalNamespace={carvelGlobalNamespace}
+            />
+          ),
       };
     });
   };
