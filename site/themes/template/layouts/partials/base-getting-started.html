@@ -1,6 +1,5 @@
-{{ $latest := (cond (.Site.Params.docs_versioning) .Site.Params.docs_latest "")
-}}
-<div class="getting-started">
+{{ $latest := (cond (.Site.Params.docs_versioning) .Site.Params.docs_latest "")}}
+<aside class="getting-started">
   <div class="wrapper clearfix">
     <div class="left-side">
       <h2>Getting started</h2>
@@ -13,4 +12,4 @@
       <a href="/docs/{{ $latest }}" class="button">Read the docs</a>
     </div>
   </div>
-</div>
+</aside>
