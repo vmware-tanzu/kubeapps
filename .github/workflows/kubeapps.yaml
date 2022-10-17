@@ -79,46 +79,46 @@ jobs:
         id: set-outputs
         run: |
           if [[ "${GITHUB_REPOSITORY}" == "${KUBEAPPS_REPO}" ]]; then
-            echo "::set-output name=img_prefix::${IMG_PREFIX}"
+            echo "img_prefix=${IMG_PREFIX}" >> $GITHUB_OUTPUT
           else
             # When running in forks (NOT triggered due to a PR from an external fork, but running the workflow in the 
             # external repo), we push the images to a personal namespace (if configured)
-            echo "::set-output name=img_prefix::${IMG_PREFIX_FOR_FORKS}"
+            echo "img_prefix=${IMG_PREFIX_FOR_FORKS}" >> $GITHUB_OUTPUT
           fi;
           
           # Check if the workflow is triggered due to a PR from an external fork
           if [[ "${{ github.event.pull_request.head.repo.full_name }}" == "${GITHUB_REPOSITORY}" ]]; then
-            echo "::set-output name=triggered_from_fork::false"
+            echo "triggered_from_fork=false" >> $GITHUB_OUTPUT
           else
-            echo "::set-output name=triggered_from_fork::true"
+            echo "triggered_from_fork=true" >> $GITHUB_OUTPUT
           fi
           
           if [[ ${GITHUB_REF_TYPE} == "tag" ]]; then
-            echo "::set-output name=img_prod_tag::${GITHUB_REF_NAME}"
-            echo "::set-output name=version::${GITHUB_REF_NAME}"
+            echo "img_prod_tag=${GITHUB_REF_NAME}" >> $GITHUB_OUTPUT
+            echo "version=${GITHUB_REF_NAME}" >> $GITHUB_OUTPUT
           else
-            echo "::set-output name=img_prod_tag::latest"
-            echo "::set-output name=version::"
+            echo "img_prod_tag=latest" >> $GITHUB_OUTPUT
+            echo "version=" >> $GITHUB_OUTPUT
           fi;
           
           if [[ ${GITHUB_REF_NAME} == ${BRANCH_KUBEAPPS_REPO} ]]; then
-            echo "::set-output name=running_on_main::true"
+            echo "running_on_main=true" >> $GITHUB_OUTPUT
           else
-            echo "::set-output name=running_on_main::false"
+            echo "running_on_main=false" >> $GITHUB_OUTPUT
           fi
           
           if [[ ${GITHUB_REF_TYPE} == "tag" && ${GITHUB_REF_NAME} =~ ^v[0-9]+ ]]; then
-            echo "::set-output name=running_on_tag::true"
+            echo "running_on_tag=true" >> $GITHUB_OUTPUT
           else
-            echo "::set-output name=running_on_tag::false"
+            echo "running_on_tag=false" >> $GITHUB_OUTPUT
           fi
 
-          echo "::set-output name=ssh_key_kubeapps_deploy_filename::${SSH_KEY_KUBEAPPS_DEPLOY_FILENAME}"
-          echo "::set-output name=ssh_key_forked_charts_deploy_filename::${SSH_KEY_FORKED_CHARTS_DEPLOY_FILENAME}"
-          echo "::set-output name=img_modifier::${IMG_MODIFIER}"
-          echo "::set-output name=img_dev_tag::${IMG_DEV_TAG}"
-          echo "::set-output name=postgresql_version::${POSTGRESQL_VERSION}"
-          echo "::set-output name=rust_version::${RUST_VERSION}"
+          echo "ssh_key_kubeapps_deploy_filename=${SSH_KEY_KUBEAPPS_DEPLOY_FILENAME}" >> $GITHUB_OUTPUT
+          echo "ssh_key_forked_charts_deploy_filename=${SSH_KEY_FORKED_CHARTS_DEPLOY_FILENAME}" >> $GITHUB_OUTPUT
+          echo "img_modifier=${IMG_MODIFIER}" >> $GITHUB_OUTPUT
+          echo "img_dev_tag=${IMG_DEV_TAG}" >> $GITHUB_OUTPUT
+          echo "postgresql_version=${POSTGRESQL_VERSION}" >> $GITHUB_OUTPUT
+          echo "rust_version=${RUST_VERSION}" >> $GITHUB_OUTPUT
       - name: Show outputs
         run: |
           echo "SSH_KEY_KUBEAPPS_DEPLOY_FILENAME: ${{steps.set-outputs.outputs.ssh_key_kubeapps_deploy_filename}}"
@@ -230,8 +230,8 @@ jobs:
     steps:
       - id: setup
         run: |
-          echo "::set-output name=img_name::${{matrix.image}}"
-          echo "::set-output name=img_file::/tmp/${{matrix.image}}-image.tar"
+          echo "img_name=${{matrix.image}}" >> $GITHUB_OUTPUT
+          echo "img_file=/tmp/${{matrix.image}}-image.tar" >> $GITHUB_OUTPUT
       - uses: docker/metadata-action@v4
         id: meta
         with:
@@ -266,8 +266,8 @@ jobs:
     steps:
       - id: setup
         run: |
-          echo "::set-output name=img_name::${IMG_NAME}"
-          echo "::set-output name=img_file::/tmp/${IMG_NAME}-image.tar"
+          echo "img_name=${IMG_NAME}" >> $GITHUB_OUTPUT
+          echo "img_file=/tmp/${IMG_NAME}-image.tar" >> $GITHUB_OUTPUT
       - uses: actions/checkout@v3
       - uses: docker/metadata-action@v4
         id: meta
@@ -303,8 +303,8 @@ jobs:
     steps:
       - id: setup
         run: |
-          echo "::set-output name=img_name::${IMG_NAME}"
-          echo "::set-output name=img_file::/tmp/${IMG_NAME}-image.tar"
+          echo "img_name=${IMG_NAME}" >> $GITHUB_OUTPUT
+          echo "img_file=/tmp/${IMG_NAME}-image.tar" >> $GITHUB_OUTPUT
       - uses: actions/checkout@v3
       - uses: docker/metadata-action@v4
         id: meta
