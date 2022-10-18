@@ -52,9 +52,8 @@ func FindAccessibleNamespaces(clusterTypedClientGetter clientgetter.TypedClientF
 				// Not even the configured kubeapps-apis service account has permission
 				return nil, err
 			}
-		} else {
-			return nil, err
 		}
+		return nil, err
 
 		// Filter namespaces in which the user has permissions to write (secrets) only
 		if namespaceList, err := filterAllowedNamespaces(typedClient, maxWorkers, namespaces.Items); err != nil {
