@@ -181,7 +181,7 @@ workflows:
             - build_e2e_runner
             - sync_chart_from_bitnami
       - sync_chart_from_bitnami:
-          <<: *build_on_main
+          <<: *build_always
       - GKE_REGULAR_VERSION_MAIN:
           <<: *build_on_tag_or_prerelease
           requires:
@@ -912,7 +912,7 @@ jobs:
           # This token is passed as a GITHUB_TOKEN env var via CircleCI
           name: Run the check_upstream_chart script
           command: |
-            ./script/chart_upstream_checker.sh << pipeline.parameters.CI_BOT_USERNAME >> << pipeline.parameters.CI_BOT_EMAIL >> << pipeline.parameters.CI_BOT_GPG >> << pipeline.parameters.CI_BOT_FORKED_CHARTS_DEPLOYKEY_FILENAME >> << pipeline.parameters.CHARTS_REPO_ORIGINAL >> << pipeline.parameters.BRANCH_CHARTS_REPO_ORIGINAL >> << pipeline.parameters.CHARTS_REPO_FORKED >> << pipeline.parameters.BRANCH_CHARTS_REPO_FORKED >> << pipeline.parameters.KUBEAPPS_REPO >> << pipeline.parameters.BRANCH_KUBEAPPS_REPO >> << pipeline.parameters.README_GENERATOR_REPO >>
+            ./script/chart_upstream_checker.sh << pipeline.parameters.CI_BOT_USERNAME >> << pipeline.parameters.CI_BOT_EMAIL >> << pipeline.parameters.CI_BOT_GPG >> << pipeline.parameters.CI_BOT_FORKED_CHARTS_DEPLOYKEY_FILENAME >> << pipeline.parameters.CHARTS_REPO_ORIGINAL >> << pipeline.parameters.BRANCH_CHARTS_REPO_ORIGINAL >> << pipeline.parameters.CHARTS_REPO_FORKED >> << pipeline.parameters.BRANCH_CHARTS_REPO_FORKED >> << pipeline.parameters.KUBEAPPS_REPO >> << pipeline.parameters.BRANCH_KUBEAPPS_REPO >> << pipeline.parameters.README_GENERATOR_REPO >> true
   report_srp:
     environment:
       <<: *common_envars
