@@ -1,13 +1,9 @@
-<!--- app-name: Kubeapps -->
-
 # Kubeapps packaged by Bitnami
 
 Kubeapps is a web-based UI for launching and managing applications on Kubernetes. It allows users to deploy trusted applications and operators to control users access to the cluster.
 
 [Overview of Kubeapps](https://github.com/vmware-tanzu/kubeapps)
 
-
-                           
 ## TL;DR
 
 ```bash
@@ -558,6 +554,7 @@ Once you have installed Kubeapps follow the [Getting Started Guide](https://gith
 | `redis.replica.disableCommands`     | Array with commands to deactivate on Redis&reg;                  | `[]`                                                     |
 | `redis.replica.persistence.enabled` | Enable Redis&reg; replica data persistence using PVC             | `false`                                                  |
 
+Specify each parameter using the `--set key=value[,key=value]` argument to `helm install`. For example,
 
 ```bash
 helm install kubeapps --namespace kubeapps \
@@ -726,6 +723,16 @@ helm install kubeapps my-repo/kubeapps \
   --set ingress.enabled=true \
   --set ingress.hostname=example.com \
   --set ingress.annotations."kubernetes\.io/ingress\.class"=nginx # or your preferred ingress controller
+```
+
+If you are using LDAP via Dex with OIDC or you are getting an error message like `upstream sent too big header while reading response header from upstream` it means the cookie size is too big and can't be processed by the Ingress Controller.
+You can work around this problem by setting the following Nginx ingress annotations (look for similar annotations in your preferred Ingress Controller):
+
+```bash
+  # rest of the helm install ... command
+  --set ingress.annotations."nginx\.ingress\.kubernetes\.io/proxy-read-timeout"=600
+  --set ingress.annotations."nginx\.ingress\.kubernetes\.io/proxy-buffer-size"=8k
+  --set ingress.annotations."nginx\.ingress\.kubernetes\.io/proxy-buffers"=4
 ```
 
 #### Serving Kubeapps in a subpath
