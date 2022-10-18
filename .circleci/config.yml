@@ -92,13 +92,13 @@ parameters:
     default: "bitnami/charts"
   BRANCH_CHARTS_REPO_ORIGINAL:
     type: "string"
-    default: "master"
+    default: "main"
   CHARTS_REPO_FORKED:
     type: "string"
     default: "kubeapps-bot/charts"
   BRANCH_CHARTS_REPO_FORKED:
     type: "string"
-    default: "master"
+    default: "main"
   KUBEAPPS_REPO:
     type: "string"
     default: "vmware-tanzu/kubeapps"
@@ -275,6 +275,18 @@ common_envars: &common_envars
   OLM_VERSION: << pipeline.parameters.OLM_VERSION >>
   POSTGRESQL_VERSION: << pipeline.parameters.POSTGRESQL_VERSION >>
   RUST_VERSION: << pipeline.parameters.RUST_VERSION >>
+  CI_BOT_USERNAME: << pipeline.parameters.CI_BOT_USERNAME >>
+  CI_BOT_EMAIL: << pipeline.parameters.CI_BOT_EMAIL >>
+  CI_BOT_GPG: << pipeline.parameters.CI_BOT_GPG >>
+  CI_BOT_FORKED_CHARTS_DEPLOYKEY_FILENAME: << pipeline.parameters.CI_BOT_FORKED_CHARTS_DEPLOYKEY_FILENAME >>
+  CHARTS_REPO_ORIGINAL: << pipeline.parameters.CHARTS_REPO_ORIGINAL >>
+  BRANCH_CHARTS_REPO_ORIGINAL: << pipeline.parameters.BRANCH_CHARTS_REPO_ORIGINAL >>
+  CHARTS_REPO_FORKED: << pipeline.parameters.CHARTS_REPO_FORKED >>
+  BRANCH_CHARTS_REPO_FORKED: << pipeline.parameters.BRANCH_CHARTS_REPO_FORKED >>
+  KUBEAPPS_REPO: << pipeline.parameters.KUBEAPPS_REPO >>
+  BRANCH_KUBEAPPS_REPO: << pipeline.parameters.BRANCH_KUBEAPPS_REPO >>
+  README_GENERATOR_REPO: << pipeline.parameters.README_GENERATOR_REPO >>
+  DEV_MODE: true
 
 common_gke_envars: &common_gke_envars
   USE_MULTICLUSTER_OIDC_ENV: "false"
@@ -912,7 +924,7 @@ jobs:
           # This token is passed as a GITHUB_TOKEN env var via CircleCI
           name: Run the check_upstream_chart script
           command: |
-            ./script/chart_upstream_checker.sh << pipeline.parameters.CI_BOT_USERNAME >> << pipeline.parameters.CI_BOT_EMAIL >> << pipeline.parameters.CI_BOT_GPG >> << pipeline.parameters.CI_BOT_FORKED_CHARTS_DEPLOYKEY_FILENAME >> << pipeline.parameters.CHARTS_REPO_ORIGINAL >> << pipeline.parameters.BRANCH_CHARTS_REPO_ORIGINAL >> << pipeline.parameters.CHARTS_REPO_FORKED >> << pipeline.parameters.BRANCH_CHARTS_REPO_FORKED >> << pipeline.parameters.KUBEAPPS_REPO >> << pipeline.parameters.BRANCH_KUBEAPPS_REPO >> << pipeline.parameters.README_GENERATOR_REPO >> true
+            ./script/chart_upstream_checker.sh $CI_BOT_USERNAME $CI_BOT_EMAIL $CI_BOT_GPG $CI_BOT_FORKED_CHARTS_DEPLOYKEY_FILENAME $CHARTS_REPO_ORIGINAL $BRANCH_CHARTS_REPO_ORIGINAL $CHARTS_REPO_FORKED $BRANCH_CHARTS_REPO_FORKED $KUBEAPPS_REPO $BRANCH_KUBEAPPS_REPO $README_GENERATOR_REPO $DEV_MODE
   report_srp:
     environment:
       <<: *common_envars
