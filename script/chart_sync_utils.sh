@@ -11,7 +11,7 @@ PROJECT_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")/.." >/dev/null && pwd)
 source "${PROJECT_DIR}/script/lib/liblog.sh"
 
 # Path of the Kubeapps chart in the charts repo.
-# For instance, given "https://github.com/bitnami/charts/tree/master/bitnami/kubeapps" it should be "bitnami/kubeapps"
+# For instance, given "https://github.com/bitnami/charts/tree/main/bitnami/kubeapps" it should be "bitnami/kubeapps"
 CHART_REPO_PATH="bitnami/kubeapps"
 
 # Path of the Kubeapps chart in the Kubeapps repo.

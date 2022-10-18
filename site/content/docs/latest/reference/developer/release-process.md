@@ -52,7 +52,7 @@ The versions used there _must_ match the ones used for building the container im
 - `SEMVER_VERSION` should be updated with the [latest stable version from the semver releases](https://github.com/fsaintjacques/semver-tool/releases/).
 - `KIND_VERSION` should be updated with the [latest stable version from the kind releases](https://github.com/kubernetes-sigs/kind/releases).
 - `K8S_KIND_VERSION` _must_ match the Kubernetes minor version used in `GKE_REGULAR_VERSION_XX` and should be updated with one of the available image tags for a given [Kind release](https://github.com/kubernetes-sigs/kind/releases).
-- `POSTGRESQL_VERSION` _must_ match the version used by the [Bitnami PostgreSQL chart](https://github.com/bitnami/charts/blob/master/bitnami/postgresql/values.yaml).
+- `POSTGRESQL_VERSION` _must_ match the version used by the [Bitnami PostgreSQL chart](https://github.com/bitnami/charts/blob/main/bitnami/postgresql/values.yaml).
 - `DEFAULT_MACHINE_IMG` _should_ be up to date according to the [list of available machines in CircleCI](https://circleci.com/docs/2.0/configuration-reference/#available-linux-machine-images).
 - `SRP_VERSION` _should_ be up to date according to the [latest stable version from the SRP CLI builds](https://vmwaresaas.jfrog.io/ui/native/srp-tools/srpcli).
 
@@ -116,7 +116,7 @@ Note: If there are certain dependencies which cannot be updated currently, `yarn
 
 #### Golang dependencies
 
-Check the outdated [golang dependencies](https://github.com/vmware-tanzu/kubeapps/blob/maingo.mod) by running the following (from [How to upgrade and downgrade dependencies](https://github.com/golang/go/wiki/Modules#how-to-upgrade-and-downgrade-dependencies)):
+Check the outdated [golang dependencies](https://github.com/vmware-tanzu/kubeapps/blob/main/go.mod) by running the following (from [How to upgrade and downgrade dependencies](https://github.com/golang/go/wiki/Modules#how-to-upgrade-and-downgrade-dependencies)):
 
 ```bash
 go mod tidy
@@ -149,6 +149,13 @@ Finally, look at the [pull requests](https://github.com/vmware-tanzu/kubeapps/pu
 #### Send a PR with the upgrades
 
 Now create a Pull Request containing all these changes (only if no major versions have been bumped up) and wait until for another Kubeapps maintainer to review and accept so you can merge it.
+
+### 0.5 - Update the website engine
+
+The Kubeapps website is built using [Hugo](https://gohugo.io/). Hugo is a static site generator written in Go. It is used to generate the Kubeapps website from Markdown files and HTML templates.
+The Kubeapps website is hosted on [Netlify](https://www.netlify.com/). Netlify is a cloud-based platform that automatically builds and deploys websites when new code is pushed to a Git repository.
+
+To update the website engine, you need to Update the `HUGO_VERSION` variable in the [netlify.toml](https://github.com/vmware-tanzu/kubeapps/blob/main/site/netlify.toml) to the latest [Hugo release](https://github.com/gohugoio/hugo/releases/).
 
 ## 1 - Select the commit to be tagged and perform some tests
 
@@ -218,7 +225,7 @@ Then, save the draft and **do not publish it yet** and get these notes reviewed 
 
 ## 4 - Manually review the PR created in the bitnami/charts repository
 
-Since the chart that we host in the Kubeapps repository is only intended for development purposes, we need to synchronize it with the official one in the [bitnami/charts repository](https://github.com/bitnami/charts/tree/master/bitnami/kubeapps).
+Since the chart that we host in the Kubeapps repository is only intended for development purposes, we need to synchronize it with the official one in the [bitnami/charts repository](https://github.com/bitnami/charts/tree/main/bitnami/kubeapps).
 
 To this end, our CI system will automatically (in the `sync_chart_to_bitnami` workflow, as described in the [CI documentation](../testing/ci.md).) send a PR with the current development changes to [their repository](https://github.com/bitnami/charts/pulls) whenever a new release is triggered.
 Once the PR has been created, have a look at it (eg. remove any development changes that should not be released) and wait for someone from the Bitnami team to review and accept it.
@@ -242,7 +249,7 @@ helm repo update && helm search repo kubeapps
 
 ## 7 - Publish the GitHub release
 
-Once the new version of the [Kubeapps official chart](https://github.com/bitnami/charts/tree/master/bitnami/kubeapps) has been published and the release notes reviewed, you are ready to publish the release by clicking on the _publish_ button in the [GitHub releases page](https://github.com/vmware-tanzu/kubeapps/releases).
+Once the new version of the [Kubeapps official chart](https://github.com/bitnami/charts/tree/main/bitnami/kubeapps) has been published and the release notes reviewed, you are ready to publish the release by clicking on the _publish_ button in the [GitHub releases page](https://github.com/vmware-tanzu/kubeapps/releases).
 
 > Take into account that the chart version will be eventually published as part of the usual Bitnami release cycle. So expect this step to take a certain amount of time.
 

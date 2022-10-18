@@ -408,8 +408,6 @@ func OIDCAdaptHelper(authenticator authn.Authenticator) (*orasregistryauthv2.Cre
 }
 
 func NewHttpClientAndHeaders(clientOptions *HttpClientOptions) (*http.Client, map[string]string, error) {
-	// I wish I could reuse the code in pkg/chart/chart.go and pkg/kube_utils/kube_utils.go
-	// InitHTTPClient(), etc. but alas, it's all built around AppRepository CRD, which I don't have.
 	headers := make(map[string]string)
 	headers["User-Agent"] = UserAgentString()
 	if clientOptions != nil {

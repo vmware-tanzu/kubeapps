@@ -3,7 +3,7 @@
 This document explains how to configure Keycloak as an IDP + OIDC provider (check general information and pre-requisites for [using an OAuth2/OIDC Provider with Kubeapps](../../tutorials/using-an-OIDC-provider.md)).
 It covers the installation and documentation for Kubeapps interacting with two Kubernetes clusters.
 
-The installation used the [bitnami chart for Keycloak](https://github.com/bitnami/charts/tree/master/bitnami/keycloak) (version 12.0.4/2.4.8) and [bitnami chart for Kubeapps](https://github.com/bitnami/charts/tree/master/bitnami/kubeapps) (version 7.0.0/2.3.2)
+The installation used the [bitnami chart for Keycloak](https://github.com/bitnami/charts/tree/main/bitnami/keycloak) (version 12.0.4/2.4.8) and [bitnami chart for Kubeapps](https://github.com/bitnami/charts/tree/main/bitnami/kubeapps) (version 7.0.0/2.3.2)
 
 # Keycloak Installation
 

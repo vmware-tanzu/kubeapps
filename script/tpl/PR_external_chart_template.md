@@ -6,7 +6,7 @@ This is an automatic PR for synchronizing the changes performed externally at th
 
 **Benefits**
 
-The Kubeapps [bitnami/kubeapps chart](https://github.com/bitnami/charts/tree/master/bitnami/kubeapps) will get the newest changes, including image version updates and other updates.
+The Kubeapps [bitnami/kubeapps chart](https://github.com/bitnami/charts/tree/main/bitnami/kubeapps) will get the newest changes, including image version updates and other updates.
 
 **Possible drawbacks**
 

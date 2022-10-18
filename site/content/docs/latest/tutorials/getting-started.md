@@ -34,7 +34,7 @@ This guide walks you through the process of deploying Kubeapps for your cluster 
 
 ## Step 1: Install Kubeapps
 
-Use the official [Bitnami Kubeapps chart](https://github.com/bitnami/charts/tree/master/bitnami/kubeapps) to install the latest version of Kubeapps:
+Use the official [Bitnami Kubeapps chart](https://github.com/bitnami/charts/tree/main/bitnami/kubeapps) to install the latest version of Kubeapps:
 
 ```bash
 helm repo add bitnami https://charts.bitnami.com/bitnami

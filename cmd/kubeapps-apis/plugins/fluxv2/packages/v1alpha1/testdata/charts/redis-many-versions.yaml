@@ -20,7 +20,7 @@ entries:
         a data structure server since keys can contain strings, hashes, lists, sets
         and sorted sets.
       digest: 43374837646a67539eb2999cd8973dc54e8fcdc14896761e594b9d616734edf2
-      home: https://github.com/bitnami/charts/tree/master/bitnami/redis
+      home: https://github.com/bitnami/charts/tree/main/bitnami/redis
       icon: https://bitnami.com/assets/stacks/redis/img/redis-stack-220x234.png
       keywords:
         - redis
@@ -55,7 +55,7 @@ entries:
         a data structure server since keys can contain strings, hashes, lists, sets
         and sorted sets.
       digest: 4fa6f92f3fb7c9b1a4207d5f7293712708bed95ca3a44b84dff74decb6ce3c90
-      home: https://github.com/bitnami/charts/tree/master/bitnami/redis
+      home: https://github.com/bitnami/charts/tree/main/bitnami/redis
       icon: https://bitnami.com/assets/stacks/redis/img/redis-stack-220x234.png
       keywords:
         - redis
@@ -89,7 +89,7 @@ entries:
         a data structure server since keys can contain strings, hashes, lists, sets
         and sorted sets.
       digest: db7651690f215c82d8a918f9896d7edf283387300c75958112be316b75e642e4
-      home: https://github.com/bitnami/charts/tree/master/bitnami/redis
+      home: https://github.com/bitnami/charts/tree/main/bitnami/redis
       icon: https://bitnami.com/assets/stacks/redis/img/redis-stack-220x234.png
       keywords:
         - redis
@@ -123,7 +123,7 @@ entries:
         a data structure server since keys can contain strings, hashes, lists, sets
         and sorted sets.
       digest: 6687c5b2b2ebd3579462c9ed2bcd2a7f799d1580689bb0c6a561624128975d61
-      home: https://github.com/bitnami/charts/tree/master/bitnami/redis
+      home: https://github.com/bitnami/charts/tree/main/bitnami/redis
       icon: https://bitnami.com/assets/stacks/redis/img/redis-stack-220x234.png
       keywords:
         - redis
@@ -157,7 +157,7 @@ entries:
         a data structure server since keys can contain strings, hashes, lists, sets
         and sorted sets.
       digest: 69e84a3728f961fa7f63f8fb678d826fe0b3bcf0a01c2455934afe450ae44d89
-      home: https://github.com/bitnami/charts/tree/master/bitnami/redis
+      home: https://github.com/bitnami/charts/tree/main/bitnami/redis
       icon: https://bitnami.com/assets/stacks/redis/img/redis-stack-220x234.png
       keywords:
         - redis
@@ -191,7 +191,7 @@ entries:
         a data structure server since keys can contain strings, hashes, lists, sets
         and sorted sets.
       digest: ae497f9ab10f39e1886d84c5c98a6fb07dcea5b2187a128c66447750e89c4f7a
-      home: https://github.com/bitnami/charts/tree/master/bitnami/redis
+      home: https://github.com/bitnami/charts/tree/main/bitnami/redis
       icon: https://bitnami.com/assets/stacks/redis/img/redis-stack-220x234.png
       keywords:
         - redis
@@ -225,7 +225,7 @@ entries:
         a data structure server since keys can contain strings, hashes, lists, sets
         and sorted sets.
       digest: d85e614272cd1eb92ae7d39e034c555d5fa5b78bdad9043c7c8c034af8e751d0
-      home: https://github.com/bitnami/charts/tree/master/bitnami/redis
+      home: https://github.com/bitnami/charts/tree/main/bitnami/redis
       icon: https://bitnami.com/assets/stacks/redis/img/redis-stack-220x234.png
       keywords:
         - redis
@@ -259,7 +259,7 @@ entries:
         a data structure server since keys can contain strings, hashes, lists, sets
         and sorted sets.
       digest: 422ea66e6003e5247734c5d08cf50476d0c6619b1020199f638d94b2523364bc
-      home: https://github.com/bitnami/charts/tree/master/bitnami/redis
+      home: https://github.com/bitnami/charts/tree/main/bitnami/redis
       icon: https://bitnami.com/assets/stacks/redis/img/redis-stack-220x234.png
       keywords:
         - redis
@@ -293,7 +293,7 @@ entries:
         a data structure server since keys can contain strings, hashes, lists, sets
         and sorted sets.
       digest: 7487e3377777280833626891de76260df956b37f36dcee65b335f632e4401a9e
-      home: https://github.com/bitnami/charts/tree/master/bitnami/redis
+      home: https://github.com/bitnami/charts/tree/main/bitnami/redis
       icon: https://bitnami.com/assets/stacks/redis/img/redis-stack-220x234.png
       keywords:
         - redis
@@ -327,7 +327,7 @@ entries:
         a data structure server since keys can contain strings, hashes, lists, sets
         and sorted sets.
       digest: a7ebe676ee58f85d376e0eda452a30e5548129f84a645d9cf72c63445c718148
-      home: https://github.com/bitnami/charts/tree/master/bitnami/redis
+      home: https://github.com/bitnami/charts/tree/main/bitnami/redis
       icon: https://bitnami.com/assets/stacks/redis/img/redis-stack-220x234.png
       keywords:
         - redis
@@ -361,7 +361,7 @@ entries:
         a data structure server since keys can contain strings, hashes, lists, sets
         and sorted sets.
       digest: 3c00f053b2a2dfb15fd561c6a2c13728ac967b8a6e05888c8b63d93a281f2ea2
-      home: https://github.com/bitnami/charts/tree/master/bitnami/redis
+      home: https://github.com/bitnami/charts/tree/main/bitnami/redis
       icon: https://bitnami.com/assets/stacks/redis/img/redis-stack-220x234.png
       keywords:
         - redis
@@ -395,7 +395,7 @@ entries:
         a data structure server since keys can contain strings, hashes, lists, sets
         and sorted sets.
       digest: 5f2f0d5f4014202f558bff248aa3a5d5cae9bf726405fefda49c7e471d3898d9
-      home: https://github.com/bitnami/charts/tree/master/bitnami/redis
+      home: https://github.com/bitnami/charts/tree/main/bitnami/redis
       icon: https://bitnami.com/assets/stacks/redis/img/redis-stack-220x234.png
       keywords:
         - redis
@@ -429,7 +429,7 @@ entries:
         a data structure server since keys can contain strings, hashes, lists, sets
         and sorted sets.
       digest: 8955e1923627cdc7ad60544e13e637aee228539e8dc1c397aa17961a9b9eb274
-      home: https://github.com/bitnami/charts/tree/master/bitnami/redis
+      home: https://github.com/bitnami/charts/tree/main/bitnami/redis
       icon: https://bitnami.com/assets/stacks/redis/img/redis-stack-220x234.png
       keywords:
         - redis
@@ -463,7 +463,7 @@ entries:
         a data structure server since keys can contain strings, hashes, lists, sets
         and sorted sets.
       digest: 17f16586d5d324fcd00faa55342aadc75dd4ee595522111c2527bcae11ad6f0c
-      home: https://github.com/bitnami/charts/tree/master/bitnami/redis
+      home: https://github.com/bitnami/charts/tree/main/bitnami/redis
       icon: https://bitnami.com/assets/stacks/redis/img/redis-stack-220x234.png
       keywords:
         - redis
@@ -497,7 +497,7 @@ entries:
         a data structure server since keys can contain strings, hashes, lists, sets
         and sorted sets.
       digest: 8cf470e3a068fc06ac9a4d7f0b54a0725ca5ac462d4877e19375acfcaafa83ef
-      home: https://github.com/bitnami/charts/tree/master/bitnami/redis
+      home: https://github.com/bitnami/charts/tree/main/bitnami/redis
       icon: https://bitnami.com/assets/stacks/redis/img/redis-stack-220x234.png
       keywords:
         - redis
@@ -531,7 +531,7 @@ entries:
         a data structure server since keys can contain strings, hashes, lists, sets
         and sorted sets.
       digest: d8c59250f26748ac1595d1a5e2de7df191192493de88b8a5799122c086622e30
-      home: https://github.com/bitnami/charts/tree/master/bitnami/redis
+      home: https://github.com/bitnami/charts/tree/main/bitnami/redis
       icon: https://bitnami.com/assets/stacks/redis/img/redis-stack-220x234.png
       keywords:
         - redis
@@ -565,7 +565,7 @@ entries:
         a data structure server since keys can contain strings, hashes, lists, sets
         and sorted sets.
       digest: 7fd4d742fa67397a290970b41e13caf0c4bd24314035c0fad2d0438a191c1533
-      home: https://github.com/bitnami/charts/tree/master/bitnami/redis
+      home: https://github.com/bitnami/charts/tree/main/bitnami/redis
       icon: https://bitnami.com/assets/stacks/redis/img/redis-stack-220x234.png
       keywords:
         - redis
@@ -599,7 +599,7 @@ entries:
         a data structure server since keys can contain strings, hashes, lists, sets
         and sorted sets.
       digest: 77483d7f59f1690d3f00bd675281ef463f6155f07017f13a738b4e7879710ff9
-      home: https://github.com/bitnami/charts/tree/master/bitnami/redis
+      home: https://github.com/bitnami/charts/tree/main/bitnami/redis
       icon: https://bitnami.com/assets/stacks/redis/img/redis-stack-220x234.png
       keywords:
         - redis
@@ -633,7 +633,7 @@ entries:
         a data structure server since keys can contain strings, hashes, lists, sets
         and sorted sets.
       digest: ae2ce1b860371ce85213033bfcee8cfb535772d0f544e63b22f516bc130b8fb7
-      home: https://github.com/bitnami/charts/tree/master/bitnami/redis
+      home: https://github.com/bitnami/charts/tree/main/bitnami/redis
       icon: https://bitnami.com/assets/stacks/redis/img/redis-stack-220x234.png
       keywords:
         - redis
@@ -667,7 +667,7 @@ entries:
         a data structure server since keys can contain strings, hashes, lists, sets
         and sorted sets.
       digest: e0e6a32f5dfb2b4ad4d4cbef7915103b4b4ec8c0c244ebbd563da4390d11ac08
-      home: https://github.com/bitnami/charts/tree/master/bitnami/redis
+      home: https://github.com/bitnami/charts/tree/main/bitnami/redis
       icon: https://bitnami.com/assets/stacks/redis/img/redis-stack-220x234.png
       keywords:
         - redis
@@ -701,7 +701,7 @@ entries:
         a data structure server since keys can contain strings, hashes, lists, sets
         and sorted sets.
       digest: 26979e8664425fb2d036de92ce0523017aec21b787ddbd7fc2867c90a6488634
-      home: https://github.com/bitnami/charts/tree/master/bitnami/redis
+      home: https://github.com/bitnami/charts/tree/main/bitnami/redis
       icon: https://bitnami.com/assets/stacks/redis/img/redis-stack-220x234.png
       keywords:
         - redis
@@ -735,7 +735,7 @@ entries:
         a data structure server since keys can contain strings, hashes, lists, sets
         and sorted sets.
       digest: 51d76aea8c9a8f2a4c1ec829f23fb07a07d28d2375217522573a6f877b8ba7e9
-      home: https://github.com/bitnami/charts/tree/master/bitnami/redis
+      home: https://github.com/bitnami/charts/tree/main/bitnami/redis
       icon: https://bitnami.com/assets/stacks/redis/img/redis-stack-220x234.png
       keywords:
         - redis
@@ -769,7 +769,7 @@ entries:
         a data structure server since keys can contain strings, hashes, lists, sets
         and sorted sets.
       digest: ba0074e079bba43b1b594c181ac3af1c5290b77034912543f8f227bbae79b6ae
-      home: https://github.com/bitnami/charts/tree/master/bitnami/redis
+      home: https://github.com/bitnami/charts/tree/main/bitnami/redis
       icon: https://bitnami.com/assets/stacks/redis/img/redis-stack-220x234.png
       keywords:
         - redis
@@ -803,7 +803,7 @@ entries:
         a data structure server since keys can contain strings, hashes, lists, sets
         and sorted sets.
       digest: ccef42be7176ea858b2c8788e5031e23d21fde714ca4f6fa5b3a7b28b8217281
-      home: https://github.com/bitnami/charts/tree/master/bitnami/redis
+      home: https://github.com/bitnami/charts/tree/main/bitnami/redis
       icon: https://bitnami.com/assets/stacks/redis/img/redis-stack-220x234.png
       keywords:
         - redis
@@ -837,7 +837,7 @@ entries:
         a data structure server since keys can contain strings, hashes, lists, sets
         and sorted sets.
       digest: 2d70861d16fc410ed6d6c818b97f7b0d519031147e5c7b42c5691d4c38742c44
-      home: https://github.com/bitnami/charts/tree/master/bitnami/redis
+      home: https://github.com/bitnami/charts/tree/main/bitnami/redis
       icon: https://bitnami.com/assets/stacks/redis/img/redis-stack-220x234.png
       keywords:
         - redis
@@ -871,7 +871,7 @@ entries:
         a data structure server since keys can contain strings, hashes, lists, sets
         and sorted sets.
       digest: a003b94d1fe41178849c6f59c56bc9157d0fad5361155c2e185cefdab565104e
-      home: https://github.com/bitnami/charts/tree/master/bitnami/redis
+      home: https://github.com/bitnami/charts/tree/main/bitnami/redis
       icon: https://bitnami.com/assets/stacks/redis/img/redis-stack-220x234.png
       keywords:
         - redis
@@ -905,7 +905,7 @@ entries:
         a data structure server since keys can contain strings, hashes, lists, sets
         and sorted sets.
       digest: 190452bd9b3123fe216b9aafba3e868cdfff9657e41833733cd6d6cac177d880
-      home: https://github.com/bitnami/charts/tree/master/bitnami/redis
+      home: https://github.com/bitnami/charts/tree/main/bitnami/redis
       icon: https://bitnami.com/assets/stacks/redis/img/redis-stack-220x234.png
       keywords:
         - redis
@@ -939,7 +939,7 @@ entries:
         a data structure server since keys can contain strings, hashes, lists, sets
         and sorted sets.
       digest: 410bd14ec7efd3fe503a67153363c76be629192a6be15c531feedfbf86c649f1
-      home: https://github.com/bitnami/charts/tree/master/bitnami/redis
+      home: https://github.com/bitnami/charts/tree/main/bitnami/redis
       icon: https://bitnami.com/assets/stacks/redis/img/redis-stack-220x234.png
       keywords:
         - redis
@@ -973,7 +973,7 @@ entries:
         a data structure server since keys can contain strings, hashes, lists, sets
         and sorted sets.
       digest: 2b83cac9e265f3a6e441f65a6d15e824d90ef66707b484c5c138d6ad6cbd446a
-      home: https://github.com/bitnami/charts/tree/master/bitnami/redis
+      home: https://github.com/bitnami/charts/tree/main/bitnami/redis
       icon: https://bitnami.com/assets/stacks/redis/img/redis-stack-220x234.png
       keywords:
         - redis
@@ -1007,7 +1007,7 @@ entries:
         a data structure server since keys can contain strings, hashes, lists, sets
         and sorted sets.
       digest: 67e0296aeb84634a1afeae9e09f3799ab3c760f85443c95087c362f41deeb33c
-      home: https://github.com/bitnami/charts/tree/master/bitnami/redis
+      home: https://github.com/bitnami/charts/tree/main/bitnami/redis
       icon: https://bitnami.com/assets/stacks/redis/img/redis-stack-220x234.png
       keywords:
         - redis
@@ -1041,7 +1041,7 @@ entries:
         a data structure server since keys can contain strings, hashes, lists, sets
         and sorted sets.
       digest: a19cc64b52f8f96fae5485c51a1c7593cf81643a430e4ac08ac7bfc234429b4b
-      home: https://github.com/bitnami/charts/tree/master/bitnami/redis
+      home: https://github.com/bitnami/charts/tree/main/bitnami/redis
       icon: https://bitnami.com/assets/stacks/redis/img/redis-stack-220x234.png
       keywords:
         - redis
@@ -1075,7 +1075,7 @@ entries:
         a data structure server since keys can contain strings, hashes, lists, sets
         and sorted sets.
       digest: c4467b783214770f731cff87213317cbd99b86b7ee447f7a47a4ae4d7b8c9ced
-      home: https://github.com/bitnami/charts/tree/master/bitnami/redis
+      home: https://github.com/bitnami/charts/tree/main/bitnami/redis
       icon: https://bitnami.com/assets/stacks/redis/img/redis-stack-220x234.png
       keywords:
         - redis
@@ -1109,7 +1109,7 @@ entries:
         a data structure server since keys can contain strings, hashes, lists, sets
         and sorted sets.
       digest: 919ee947da36f4d352fb8f4231c7733df457b4708f95636afe53491e3c07c5da
-      home: https://github.com/bitnami/charts/tree/master/bitnami/redis
+      home: https://github.com/bitnami/charts/tree/main/bitnami/redis
       icon: https://bitnami.com/assets/stacks/redis/img/redis-stack-220x234.png
       keywords:
         - redis
@@ -1143,7 +1143,7 @@ entries:
         a data structure server since keys can contain strings, hashes, lists, sets
         and sorted sets.
       digest: 8be773c3847a2fd0b4e15d167c27c15effb410aae4169a765b8566c51005506d
-      home: https://github.com/bitnami/charts/tree/master/bitnami/redis
+      home: https://github.com/bitnami/charts/tree/main/bitnami/redis
       icon: https://bitnami.com/assets/stacks/redis/img/redis-stack-220x234.png
       keywords:
         - redis
@@ -1177,7 +1177,7 @@ entries:
         a data structure server since keys can contain strings, hashes, lists, sets
         and sorted sets.
       digest: 4208a6eae05c9486dbecc55db3bc6e04960708e0b389adfa1f7e309d3937a451
-      home: https://github.com/bitnami/charts/tree/master/bitnami/redis
+      home: https://github.com/bitnami/charts/tree/main/bitnami/redis
       icon: https://bitnami.com/assets/stacks/redis/img/redis-stack-220x234.png
       keywords:
         - redis
@@ -1211,7 +1211,7 @@ entries:
         a data structure server since keys can contain strings, hashes, lists, sets
         and sorted sets.
       digest: 70f6ee1f8dea9542c8188e522cc09a7c51c07168b6c518417693699714541db3
-      home: https://github.com/bitnami/charts/tree/master/bitnami/redis
+      home: https://github.com/bitnami/charts/tree/main/bitnami/redis
       icon: https://bitnami.com/assets/stacks/redis/img/redis-stack-220x234.png
       keywords:
         - redis
@@ -1245,7 +1245,7 @@ entries:
         a data structure server since keys can contain strings, hashes, lists, sets
         and sorted sets.
       digest: 7ab253f4cafa9c46b37f470498b473793dc31b9b9a78d0bc4c8bfcc27f6e1c26
-      home: https://github.com/bitnami/charts/tree/master/bitnami/redis
+      home: https://github.com/bitnami/charts/tree/main/bitnami/redis
       icon: https://bitnami.com/assets/stacks/redis/img/redis-stack-220x234.png
       keywords:
         - redis
@@ -1279,7 +1279,7 @@ entries:
         a data structure server since keys can contain strings, hashes, lists, sets
         and sorted sets.
       digest: 8e9161b1185dc9a049d4033d67cab704284af6150913fa07151a4ed02dc55070
-      home: https://github.com/bitnami/charts/tree/master/bitnami/redis
+      home: https://github.com/bitnami/charts/tree/main/bitnami/redis
       icon: https://bitnami.com/assets/stacks/redis/img/redis-stack-220x234.png
       keywords:
         - redis
@@ -1313,7 +1313,7 @@ entries:
         a data structure server since keys can contain strings, hashes, lists, sets
         and sorted sets.
       digest: 2b2ccdc1737af4e3d090183ea38308dd5d6e81e726a41ee3f34c4a91579d5c97
-      home: https://github.com/bitnami/charts/tree/master/bitnami/redis
+      home: https://github.com/bitnami/charts/tree/main/bitnami/redis
       icon: https://bitnami.com/assets/stacks/redis/img/redis-stack-220x234.png
       keywords:
         - redis
@@ -1347,7 +1347,7 @@ entries:
         a data structure server since keys can contain strings, hashes, lists, sets
         and sorted sets.
       digest: 9b3ffffc23eacf9c3711cc9907c2d19f51fe1f8970eac821426da2d290975b7f
-      home: https://github.com/bitnami/charts/tree/master/bitnami/redis
+      home: https://github.com/bitnami/charts/tree/main/bitnami/redis
       icon: https://bitnami.com/assets/stacks/redis/img/redis-stack-220x234.png
       keywords:
         - redis
@@ -1375,7 +1375,7 @@ entries:
         a data structure server since keys can contain strings, hashes, lists, sets
         and sorted sets.
       digest: 28c53783e6473512cf72278cab0a50ac89b01deab7d1d47b906632c8c5e0d9ef
-      home: https://github.com/bitnami/charts/tree/master/bitnami/redis
+      home: https://github.com/bitnami/charts/tree/main/bitnami/redis
       icon: https://bitnami.com/assets/stacks/redis/img/redis-stack-220x234.png
       keywords:
         - redis
@@ -1403,7 +1403,7 @@ entries:
         a data structure server since keys can contain strings, hashes, lists, sets
         and sorted sets.
       digest: 86cc2031623f34a0819ac06772b6dbe2eaa622c15b5721d7622dcaadfa083414
-      home: https://github.com/bitnami/charts/tree/master/bitnami/redis
+      home: https://github.com/bitnami/charts/tree/main/bitnami/redis
       icon: https://bitnami.com/assets/stacks/redis/img/redis-stack-220x234.png
       keywords:
         - redis
@@ -1431,7 +1431,7 @@ entries:
         a data structure server since keys can contain strings, hashes, lists, sets
         and sorted sets.
       digest: c5f6ac432ff06a5a75f52e3c84e98104809a54ce9fd70d44ca2ad5871c09d688
-      home: https://github.com/bitnami/charts/tree/master/bitnami/redis
+      home: https://github.com/bitnami/charts/tree/main/bitnami/redis
       icon: https://bitnami.com/assets/stacks/redis/img/redis-stack-220x234.png
       keywords:
         - redis
@@ -1459,7 +1459,7 @@ entries:
         a data structure server since keys can contain strings, hashes, lists, sets
         and sorted sets.
       digest: e6aa92279c396754505095ee6cbec480e51b60cf39385004b8b41d31096cdcf0
-      home: https://github.com/bitnami/charts/tree/master/bitnami/redis
+      home: https://github.com/bitnami/charts/tree/main/bitnami/redis
       icon: https://bitnami.com/assets/stacks/redis/img/redis-stack-220x234.png
       keywords:
         - redis
@@ -1487,7 +1487,7 @@ entries:
         a data structure server since keys can contain strings, hashes, lists, sets
         and sorted sets.
       digest: 7479c8f64af51aa9684b2bbbd9132ca313d9ad1a7761e01dc9ab4afee447db23
-      home: https://github.com/bitnami/charts/tree/master/bitnami/redis
+      home: https://github.com/bitnami/charts/tree/main/bitnami/redis
       icon: https://bitnami.com/assets/stacks/redis/img/redis-stack-220x234.png
       keywords:
         - redis
@@ -1515,7 +1515,7 @@ entries:
         a data structure server since keys can contain strings, hashes, lists, sets
         and sorted sets.
       digest: 3e6fee53d181e935db27b987db470191091c5eefdd415de99926863548c0f961
-      home: https://github.com/bitnami/charts/tree/master/bitnami/redis
+      home: https://github.com/bitnami/charts/tree/main/bitnami/redis
       icon: https://bitnami.com/assets/stacks/redis/img/redis-stack-220x234.png
       keywords:
         - redis
@@ -1543,7 +1543,7 @@ entries:
         a data structure server since keys can contain strings, hashes, lists, sets
         and sorted sets.
       digest: de153e87c80efbca0eb2aed25727c7e27a71ca36709b78fc9144fc184403571b
-      home: https://github.com/bitnami/charts/tree/master/bitnami/redis
+      home: https://github.com/bitnami/charts/tree/main/bitnami/redis
       icon: https://bitnami.com/assets/stacks/redis/img/redis-stack-220x234.png
       keywords:
         - redis
@@ -1571,7 +1571,7 @@ entries:
         a data structure server since keys can contain strings, hashes, lists, sets
         and sorted sets.
       digest: f3e8935ed4d8e5dfe9700fe4459af2d4399b74076cd74334716af88f75bd2a73
-      home: https://github.com/bitnami/charts/tree/master/bitnami/redis
+      home: https://github.com/bitnami/charts/tree/main/bitnami/redis
       icon: https://bitnami.com/assets/stacks/redis/img/redis-stack-220x234.png
       keywords:
         - redis
@@ -1599,7 +1599,7 @@ entries:
         a data structure server since keys can contain strings, hashes, lists, sets
         and sorted sets.
       digest: c34b9208eb18b71e4da862dc7849ce8dd6c779fee4ed358d8bc5f0dbf371635d
-      home: https://github.com/bitnami/charts/tree/master/bitnami/redis
+      home: https://github.com/bitnami/charts/tree/main/bitnami/redis
       icon: https://bitnami.com/assets/stacks/redis/img/redis-stack-220x234.png
       keywords:
         - redis
@@ -1627,7 +1627,7 @@ entries:
         a data structure server since keys can contain strings, hashes, lists, sets
         and sorted sets.
       digest: 6d2ff050b6b8c7b76aff70f91bdf4fa4f11da83506d149e1c14aa98ee93b3935
-      home: https://github.com/bitnami/charts/tree/master/bitnami/redis
+      home: https://github.com/bitnami/charts/tree/main/bitnami/redis
       icon: https://bitnami.com/assets/stacks/redis/img/redis-stack-220x234.png
       keywords:
         - redis
@@ -1655,7 +1655,7 @@ entries:
         a data structure server since keys can contain strings, hashes, lists, sets
         and sorted sets.
       digest: 5dacc9fda005ba5d348198dd2145f7cadb8700d5e8f0af13cdea64c761465e98
-      home: https://github.com/bitnami/charts/tree/master/bitnami/redis
+      home: https://github.com/bitnami/charts/tree/main/bitnami/redis
       icon: https://bitnami.com/assets/stacks/redis/img/redis-stack-220x234.png
       keywords:
         - redis
@@ -1683,7 +1683,7 @@ entries:
         a data structure server since keys can contain strings, hashes, lists, sets
         and sorted sets.
       digest: 21bd9d21c9b75dcd334f3fcf8b0c881e0dc3f5b05210654e3478c4b4eeb53b06
-      home: https://github.com/bitnami/charts/tree/master/bitnami/redis
+      home: https://github.com/bitnami/charts/tree/main/bitnami/redis
       icon: https://bitnami.com/assets/stacks/redis/img/redis-stack-220x234.png
       keywords:
         - redis
@@ -1711,7 +1711,7 @@ entries:
         a data structure server since keys can contain strings, hashes, lists, sets
         and sorted sets.
       digest: 308ce1260072158eee2dfd3347e2d1dd07397063e5d549e53f490e30fe1e275b
-      home: https://github.com/bitnami/charts/tree/master/bitnami/redis
+      home: https://github.com/bitnami/charts/tree/main/bitnami/redis
       icon: https://bitnami.com/assets/stacks/redis/img/redis-stack-220x234.png
       keywords:
         - redis
@@ -1739,7 +1739,7 @@ entries:
         a data structure server since keys can contain strings, hashes, lists, sets
         and sorted sets.
       digest: 4c2110bbba24811eeb737fa95f5b8b46d0b7c22ca58b8b07c8546ec9dc5be9b5
-      home: https://github.com/bitnami/charts/tree/master/bitnami/redis
+      home: https://github.com/bitnami/charts/tree/main/bitnami/redis
       icon: https://bitnami.com/assets/stacks/redis/img/redis-stack-220x234.png
       keywords:
         - redis
@@ -1767,7 +1767,7 @@ entries:
         a data structure server since keys can contain strings, hashes, lists, sets
         and sorted sets.
       digest: 1f034c7bf03edf8069eb973f516a7c7f4aacf60b031c23eb762d6095996fb0e2
-      home: https://github.com/bitnami/charts/tree/master/bitnami/redis
+      home: https://github.com/bitnami/charts/tree/main/bitnami/redis
       icon: https://bitnami.com/assets/stacks/redis/img/redis-stack-220x234.png
       keywords:
         - redis
@@ -1795,7 +1795,7 @@ entries:
         a data structure server since keys can contain strings, hashes, lists, sets
         and sorted sets.
       digest: 8778c3bd3a3c2037ffe4c8ba71bdb87409100f28a238c7a73023a4216f0dfe8c
-      home: https://github.com/bitnami/charts/tree/master/bitnami/redis
+      home: https://github.com/bitnami/charts/tree/main/bitnami/redis
       icon: https://bitnami.com/assets/stacks/redis/img/redis-stack-220x234.png
       keywords:
         - redis
@@ -1823,7 +1823,7 @@ entries:
         a data structure server since keys can contain strings, hashes, lists, sets
         and sorted sets.
       digest: 562ffc93183401b9fb3c8d994fee4096a34e9c2cc45e8d3d85311dd1b7efbe80
-      home: https://github.com/bitnami/charts/tree/master/bitnami/redis
+      home: https://github.com/bitnami/charts/tree/main/bitnami/redis
       icon: https://bitnami.com/assets/stacks/redis/img/redis-stack-220x234.png
       keywords:
         - redis
@@ -1851,7 +1851,7 @@ entries:
         a data structure server since keys can contain strings, hashes, lists, sets
         and sorted sets.
       digest: 16f7b4bca060bb0b18624688f19eeec56554c9462d55e92b82ce4ff6e3471afc
-      home: https://github.com/bitnami/charts/tree/master/bitnami/redis
+      home: https://github.com/bitnami/charts/tree/main/bitnami/redis
       icon: https://bitnami.com/assets/stacks/redis/img/redis-stack-220x234.png
       keywords:
         - redis
@@ -1879,7 +1879,7 @@ entries:
         a data structure server since keys can contain strings, hashes, lists, sets
         and sorted sets.
       digest: 02d2ccd30a3628092cf57af45b85e1005d50ce86417a160070ca0f4b2d952d05
-      home: https://github.com/bitnami/charts/tree/master/bitnami/redis
+      home: https://github.com/bitnami/charts/tree/main/bitnami/redis
       icon: https://bitnami.com/assets/stacks/redis/img/redis-stack-220x234.png
       keywords:
         - redis
@@ -1907,7 +1907,7 @@ entries:
         a data structure server since keys can contain strings, hashes, lists, sets
         and sorted sets.
       digest: 9549a31a2562fadaa4082ec29a3e4c2940fedd55e4a6303af3fd8d08d309d08b
-      home: https://github.com/bitnami/charts/tree/master/bitnami/redis
+      home: https://github.com/bitnami/charts/tree/main/bitnami/redis
       icon: https://bitnami.com/assets/stacks/redis/img/redis-stack-220x234.png
       keywords:
         - redis
@@ -1935,7 +1935,7 @@ entries:
         a data structure server since keys can contain strings, hashes, lists, sets
         and sorted sets.
       digest: 3b697921f03bfe43aed12ad7c0a2d520c4fb3cb691ea4e53e681dccb3037e257
-      home: https://github.com/bitnami/charts/tree/master/bitnami/redis
+      home: https://github.com/bitnami/charts/tree/main/bitnami/redis
       icon: https://bitnami.com/assets/stacks/redis/img/redis-stack-220x234.png
       keywords:
         - redis
@@ -1963,7 +1963,7 @@ entries:
         a data structure server since keys can contain strings, hashes, lists, sets
         and sorted sets.
       digest: f73dd5308a70cde96e515f4204a5d5246f5748e1653fa987c5ca58a8f1d8c3cd
-      home: https://github.com/bitnami/charts/tree/master/bitnami/redis
+      home: https://github.com/bitnami/charts/tree/main/bitnami/redis
       icon: https://bitnami.com/assets/stacks/redis/img/redis-stack-220x234.png
       keywords:
         - redis
@@ -1991,7 +1991,7 @@ entries:
         a data structure server since keys can contain strings, hashes, lists, sets
         and sorted sets.
       digest: 8b930fc802c337caf7ca37f3704bc43e2452593a9daecb0a307123458bb77914
-      home: https://github.com/bitnami/charts/tree/master/bitnami/redis
+      home: https://github.com/bitnami/charts/tree/main/bitnami/redis
       icon: https://bitnami.com/assets/stacks/redis/img/redis-stack-220x234.png
       keywords:
         - redis
@@ -2019,7 +2019,7 @@ entries:
         a data structure server since keys can contain strings, hashes, lists, sets
         and sorted sets.
       digest: 59671a99837f9d43fc5ce53ff18d05867cfcfded387b815b5853c62da0e29ad1
-      home: https://github.com/bitnami/charts/tree/master/bitnami/redis
+      home: https://github.com/bitnami/charts/tree/main/bitnami/redis
       icon: https://bitnami.com/assets/stacks/redis/img/redis-stack-220x234.png
       keywords:
         - redis
@@ -2047,7 +2047,7 @@ entries:
         a data structure server since keys can contain strings, hashes, lists, sets
         and sorted sets.
       digest: 6ae28c0e4f8f26c2da9f3ceb4b3a139b68c11ddbe7b8f894097f7d6e32a8eb46
-      home: https://github.com/bitnami/charts/tree/master/bitnami/redis
+      home: https://github.com/bitnami/charts/tree/main/bitnami/redis
       icon: https://bitnami.com/assets/stacks/redis/img/redis-stack-220x234.png
       keywords:
         - redis
@@ -2075,7 +2075,7 @@ entries:
         a data structure server since keys can contain strings, hashes, lists, sets
         and sorted sets.
       digest: 0ab5191b1f55f5a0845ef8ebf6d0375b799c50a223ab0bf57aea4bb27f7551d4
-      home: https://github.com/bitnami/charts/tree/master/bitnami/redis
+      home: https://github.com/bitnami/charts/tree/main/bitnami/redis
       icon: https://bitnami.com/assets/stacks/redis/img/redis-stack-220x234.png
       keywords:
         - redis
@@ -2103,7 +2103,7 @@ entries:
         a data structure server since keys can contain strings, hashes, lists, sets
         and sorted sets.
       digest: f4caa2f90c646e8fe63422ee690f75039a37daf1cb37bcc19216379f31c02dca
-      home: https://github.com/bitnami/charts/tree/master/bitnami/redis
+      home: https://github.com/bitnami/charts/tree/main/bitnami/redis
       icon: https://bitnami.com/assets/stacks/redis/img/redis-stack-220x234.png
       keywords:
         - redis
@@ -2131,7 +2131,7 @@ entries:
         a data structure server since keys can contain strings, hashes, lists, sets
         and sorted sets.
       digest: 0f8efaddbfa673b2abba2c6dfe4c48f8793defc04f0f89345f15d2bd7eb0a3ac
-      home: https://github.com/bitnami/charts/tree/master/bitnami/redis
+      home: https://github.com/bitnami/charts/tree/main/bitnami/redis
       icon: https://bitnami.com/assets/stacks/redis/img/redis-stack-220x234.png
       keywords:
         - redis
@@ -2159,7 +2159,7 @@ entries:
         a data structure server since keys can contain strings, hashes, lists, sets
         and sorted sets.
       digest: b1c1e6cb1e9dd776ec800a09c8b40469586805a11ac43bb74834bb2625725a00
-      home: https://github.com/bitnami/charts/tree/master/bitnami/redis
+      home: https://github.com/bitnami/charts/tree/main/bitnami/redis
       icon: https://bitnami.com/assets/stacks/redis/img/redis-stack-220x234.png
       keywords:
         - redis
@@ -2187,7 +2187,7 @@ entries:
         a data structure server since keys can contain strings, hashes, lists, sets
         and sorted sets.
       digest: 33fc78be52d7b47c5d1796bbc50d99056ae614eec718f5d9c4f7712693b168cc
-      home: https://github.com/bitnami/charts/tree/master/bitnami/redis
+      home: https://github.com/bitnami/charts/tree/main/bitnami/redis
       icon: https://bitnami.com/assets/stacks/redis/img/redis-stack-220x234.png
       keywords:
         - redis
@@ -2215,7 +2215,7 @@ entries:
         a data structure server since keys can contain strings, hashes, lists, sets
         and sorted sets.
       digest: 0505c389d618a1647f9c340e8267a490073a7c5dc053e6aaa2c3e5b1c1cd4283
-      home: https://github.com/bitnami/charts/tree/master/bitnami/redis
+      home: https://github.com/bitnami/charts/tree/main/bitnami/redis
       icon: https://bitnami.com/assets/stacks/redis/img/redis-stack-220x234.png
       keywords:
         - redis
@@ -2243,7 +2243,7 @@ entries:
         a data structure server since keys can contain strings, hashes, lists, sets
         and sorted sets.
       digest: c901fab6eea56b8541dbe99613fd1dbd5a02cc49e8e0cf6d9a9d889fcdbb2c5c
-      home: https://github.com/bitnami/charts/tree/master/bitnami/redis
+      home: https://github.com/bitnami/charts/tree/main/bitnami/redis
       icon: https://bitnami.com/assets/stacks/redis/img/redis-stack-220x234.png
       keywords:
         - redis
@@ -2271,7 +2271,7 @@ entries:
         a data structure server since keys can contain strings, hashes, lists, sets
         and sorted sets.
       digest: a25da00192ca52429cb710bdc0603503db7cd085952ca65cccca4c1fe806b6da
-      home: https://github.com/bitnami/charts/tree/master/bitnami/redis
+      home: https://github.com/bitnami/charts/tree/main/bitnami/redis
       icon: https://bitnami.com/assets/stacks/redis/img/redis-stack-220x234.png
       keywords:
         - redis
@@ -2299,7 +2299,7 @@ entries:
         a data structure server since keys can contain strings, hashes, lists, sets
         and sorted sets.
       digest: de8188121dd3a0540f006da75abeaf4d0966e06b81d3babd0a31976168a0f427
-      home: https://github.com/bitnami/charts/tree/master/bitnami/redis
+      home: https://github.com/bitnami/charts/tree/main/bitnami/redis
       icon: https://bitnami.com/assets/stacks/redis/img/redis-stack-220x234.png
       keywords:
         - redis
@@ -2327,7 +2327,7 @@ entries:
         a data structure server since keys can contain strings, hashes, lists, sets
         and sorted sets.
       digest: 2f6f48f464f635268e403b22b89215e69381ad62461c2249cfad706d740dcc76
-      home: https://github.com/bitnami/charts/tree/master/bitnami/redis
+      home: https://github.com/bitnami/charts/tree/main/bitnami/redis
       icon: https://bitnami.com/assets/stacks/redis/img/redis-stack-220x234.png
       keywords:
         - redis
@@ -2355,7 +2355,7 @@ entries:
         a data structure server since keys can contain strings, hashes, lists, sets
         and sorted sets.
       digest: a2a6d7b06bc8aba16bac89d9a31c6cc7b5d2bbb9660a3b31dc2e6328580289a5
-      home: https://github.com/bitnami/charts/tree/master/bitnami/redis
+      home: https://github.com/bitnami/charts/tree/main/bitnami/redis
       icon: https://bitnami.com/assets/stacks/redis/img/redis-stack-220x234.png
       keywords:
         - redis
@@ -2383,7 +2383,7 @@ entries:
         a data structure server since keys can contain strings, hashes, lists, sets
         and sorted sets.
       digest: b5cd7396f961fbb78b3f019923614a95fe3d0da622d315965733b46d9840a338
-      home: https://github.com/bitnami/charts/tree/master/bitnami/redis
+      home: https://github.com/bitnami/charts/tree/main/bitnami/redis
       icon: https://bitnami.com/assets/stacks/redis/img/redis-stack-220x234.png
       keywords:
         - redis

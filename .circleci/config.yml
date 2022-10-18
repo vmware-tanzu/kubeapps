@@ -92,13 +92,13 @@ parameters:
     default: "bitnami/charts"
   BRANCH_CHARTS_REPO_ORIGINAL:
     type: "string"
-    default: "master"
+    default: "main"
   CHARTS_REPO_FORKED:
     type: "string"
     default: "kubeapps-bot/charts"
   BRANCH_CHARTS_REPO_FORKED:
     type: "string"
-    default: "master"
+    default: "main"
   KUBEAPPS_REPO:
     type: "string"
     default: "vmware-tanzu/kubeapps"
