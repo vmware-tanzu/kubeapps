@@ -1,6 +1,6 @@
 # Understanding the CircleCI configuration
 
-Kubeapps leverages CircleCI for running the tests (both unit and integration tests), pushing the images and syncing the chart with the official [Bitnami chart](https://github.com/bitnami/charts/tree/master/bitnami/kubeapps). The following image depicts how a successful workflow looks like after pushing a commit to the main branch.
+Kubeapps leverages CircleCI for running the tests (both unit and integration tests), pushing the images and syncing the chart with the official [Bitnami chart](https://github.com/bitnami/charts/tree/main/bitnami/kubeapps). The following image depicts how a successful workflow looks like after pushing a commit to the main branch.
 
 ![CircleCI workflow after pushing to the main branch](../../img/ci-workflow-main.png "CircleCI workflow after pushing to the main branch")
 
@@ -20,10 +20,10 @@ The main configuration is located at this [CircleCI config file](https://github.
     - Spin up two Kind clusters.
     - Load the CI images into the cluster.
     - Run the integration tests.
-  - `sync_chart_from_bitnami` (on main): each time a new commit is pushed to the main branch, it brings the current changes in the upstream [bitnami/charts repository](https://github.com/bitnami/charts/tree/master/bitnami/kubeapps) and merges the changes. This step involves:
+  - `sync_chart_from_bitnami` (on main): each time a new commit is pushed to the main branch, it brings the current changes in the upstream [bitnami/charts repository](https://github.com/bitnami/charts/tree/main/bitnami/kubeapps) and merges the changes. This step involves:
     - Checking if the Bitnami chart version is greater than the Kubeapps development chart version. If not, stop.
     - Deleting the local `chart/kubeapps` folder (note that the changes are already committed in git).
-    - Cloning the fork [kubeapps-bot/charts repository](https://github.com/kubeapps-bot/charts/tree/master/bitnami/kubeapps), pulling the latest upstream changes and pushing them back to the fork.
+    - Cloning the fork [kubeapps-bot/charts repository](https://github.com/kubeapps-bot/charts/tree/main/bitnami/kubeapps), pulling the latest upstream changes and pushing them back to the fork.
     - Retrieving the latest version of the chart provided by Bitnami.
     - Renaming the production images (`bitnami/kubeapps-xxx`) by the development ones (`kubeapps/xxx`) with the `latest` tag.
     - Using `DEVEL` as the `appVersion`.
@@ -31,10 +31,10 @@ The main configuration is located at this [CircleCI config file](https://github.
   - `push_images` (on main): the CI images (which have already been built) get re-tagged and pushed to the `kubeapps` account.
   - `GKE_STABLE_VERSION_MAIN` and `GKE_STABLE_VERSION_LATEST_RELEASE` (on tag or prerelease): there is a job for each [Kubernetes version (stable and regular) supported by Google Kubernetes Engine](https://cloud.google.com/kubernetes-engine/docs/release-notes) (GKE). It will run the e2e tests in a GKE cluster (version X.XX) using either the code in `prerelease` or in the latest released version. If a change affecting the UI is pushed to the main branch, the e2e test might fail here. Use a try/catch block to temporarily work around this.
   - `GKE_REGULAR_VERSION_MAIN` and `GKE_REGULAR_VERSION_LATEST_RELEASE` (on tag or prerelease): the same as above, but using the Kubernetes regular version in GKE.
-  - `sync_chart_to_bitnami` (on tag): when releasing, it will synchronize our development chart with the [bitnami/charts repository](https://github.com/bitnami/charts/tree/master/bitnami/kubeapps) and merge the changes. This step involves:
+  - `sync_chart_to_bitnami` (on tag): when releasing, it will synchronize our development chart with the [bitnami/charts repository](https://github.com/bitnami/charts/tree/main/bitnami/kubeapps) and merge the changes. This step involves:
     - Checking if the Kubeapps development chart version is greater than the Bitnami chart version. If not, stop.
     - Deleting the local `bitnami/kubeapps` folder (note that the changes are already committed in git).
-    - Cloning the fork [kubeapps-bot/charts repository](https://github.com/kubeapps-bot/charts/tree/master/bitnami/kubeapps), pulling the latest upstream changes and pushing them back to the fork.
+    - Cloning the fork [kubeapps-bot/charts repository](https://github.com/kubeapps-bot/charts/tree/main/bitnami/kubeapps), pulling the latest upstream changes and pushing them back to the fork.
     - Retrieving the latest version of the chart provided by Kubeapps.
     - Renaming the development images (`kubeapps/xxx`) by the production ones (`bitnami/kubeapps-xxx`) with the `vX.X.X` tag.
     - Using `vX.X.X` as the `appVersion`.
@@ -43,7 +43,7 @@ The main configuration is located at this [CircleCI config file](https://github.
 
 Note that this process is independent of the release of the official Bitnami images and chart. These Bitnami images will be created according to their internal process (so the Golang, Node or Rust versions we define here are not used by them. Manual coordination is expected here if a major version bump happens to occur).
 
-Also, note it is the Kubeapps team that is responsible for sending a PR to the [chart repository](https://github.com/bitnami/charts/tree/master/bitnami/kubeapps) each time a new chart version is to be released. Even this process is automatic (using the `sync_chart_to_bitnami` workflow), Kubeapps maintainers must manually review the draft PR and convert it into a normal one once it is ready for review.
+Also, note it is the Kubeapps team that is responsible for sending a PR to the [chart repository](https://github.com/bitnami/charts/tree/main/bitnami/kubeapps) each time a new chart version is to be released. Even this process is automatic (using the `sync_chart_to_bitnami` workflow), Kubeapps maintainers must manually review the draft PR and convert it into a normal one once it is ready for review.
 
 # Credentials
 

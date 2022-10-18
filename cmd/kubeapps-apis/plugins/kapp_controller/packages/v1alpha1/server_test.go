@@ -5,7 +5,11 @@ package main
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	authorizationv1 "k8s.io/api/authorization/v1"
+	k8sErrors "k8s.io/apimachinery/pkg/api/errors"
+	k8stesting "k8s.io/client-go/testing"
 	"log"
 	"os"
 	"runtime"
@@ -81,6 +85,7 @@ var ignoreUnexported = cmpopts.IgnoreUnexported(
 	corev1.PackageRepositoryDetail{},
 	corev1.PackageRepositoryReference{},
 	corev1.PackageRepositoryStatus{},
+	corev1.GetPackageRepositorySummariesResponse{},
 	corev1.PackageRepositorySummary{},
 	corev1.ReconciliationOptions{},
 	corev1.ResourceRef{},
@@ -6267,7 +6272,7 @@ func TestGetInstalledPackageResourceRefs(t *testing.T) {
 					},
 					ObjectMeta: metav1.ObjectMeta{
 						Namespace: "default",
-						Name:      "my-installation.apps.k14s.io",
+						Name:      "my-installation.app",
 					},
 					Data: map[string]string{
 						"spec": "{\"labelKey\":\"kapp.k14s.io/app\",\"labelValue\":\"my-id\"}",
@@ -9101,6 +9106,163 @@ func TestGetPackageRepositorySummaries(t *testing.T) {
 				t.Fatalf("mistmatch on number of summaries received, expected 1 but got %d", len(response.PackageRepositorySummaries))
 			}
 			if got, want := response.PackageRepositorySummaries[0], tc.expectedResponse; !cmp.Equal(got, want, ignoreUnexported) {
+				t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, ignoreUnexported))
+			}
+		})
+	}
+}
+
+type ClientReaction struct {
+	verb     string
+	resource string
+	reaction k8stesting.ReactionFunc
+}
+
+func TestGetPackageRepositorySummariesNamespaces(t *testing.T) {
+	testCases := []struct {
+		name               string
+		request            *corev1.GetPackageRepositorySummariesRequest
+		existingRepos      []k8sruntime.Object
+		existingNamespaces []*k8scorev1.Namespace
+		expectedStatusCode codes.Code
+		expectedResponse   *corev1.GetPackageRepositorySummariesResponse
+		reactors           []*ClientReaction
+	}{
+		{
+			name: "returns actual accessible package summaries when namespace not specified and no cluster level access",
+			request: &corev1.GetPackageRepositorySummariesRequest{
+				Context: &corev1.Context{Cluster: "default"},
+			},
+			existingNamespaces: []*k8scorev1.Namespace{
+				{
+					ObjectMeta: metav1.ObjectMeta{
+						Name: "ns-accessible",
+					},
+					Status: k8scorev1.NamespaceStatus{
+						Phase: k8scorev1.NamespaceActive,
+					},
+				},
+				{
+					ObjectMeta: metav1.ObjectMeta{
+						Name: "ns-inaccessible",
+					},
+					Status: k8scorev1.NamespaceStatus{
+						Phase: k8scorev1.NamespaceActive,
+					},
+				},
+			},
+			reactors: []*ClientReaction{
+				{
+					verb:     "list",
+					resource: "packagerepositories",
+					reaction: func(action k8stesting.Action) (handled bool, ret k8sruntime.Object, err error) {
+						switch action.GetNamespace() {
+						// Forbidden cluster-wide listing and a specific namespace
+						case "":
+							return true, nil, k8sErrors.NewForbidden(authorizationv1.Resource("PackageRepository"), "", errors.New("bang"))
+						case "ns-inaccessible":
+							return true, nil, k8sErrors.NewForbidden(authorizationv1.Resource("PackageRepository"), "", errors.New("bang"))
+						case "ns-accessible":
+							return true, &packagingv1alpha1.PackageRepositoryList{
+								Items: []packagingv1alpha1.PackageRepository{
+									{
+										TypeMeta:   defaultTypeMeta,
+										ObjectMeta: metav1.ObjectMeta{Name: "repo-accessible-1", Namespace: "ns-accessible"},
+										Spec: packagingv1alpha1.PackageRepositorySpec{
+											Fetch: &packagingv1alpha1.PackageRepositoryFetch{
+												ImgpkgBundle: &kappctrlv1alpha1.AppFetchImgpkgBundle{
+													Image: "projects.registry.example.com/repo-1/main@sha256:abcd",
+												},
+											},
+										},
+										Status: packagingv1alpha1.PackageRepositoryStatus{},
+									},
+								},
+							}, nil
+						default:
+							return true, &packagingv1alpha1.PackageRepositoryList{}, nil
+						}
+					},
+				},
+			},
+			expectedStatusCode: codes.OK,
+			expectedResponse: &corev1.GetPackageRepositorySummariesResponse{
+				PackageRepositorySummaries: []*corev1.PackageRepositorySummary{
+					{
+						PackageRepoRef: &corev1.PackageRepositoryReference{
+							Context:    &corev1.Context{Cluster: defaultContext.Cluster, Namespace: "ns-accessible"},
+							Plugin:     &pluginDetail,
+							Identifier: "repo-accessible-1",
+						},
+						Name:            "repo-accessible-1",
+						NamespaceScoped: true,
+						Type:            "imgpkgBundle",
+						Url:             "projects.registry.example.com/repo-1/main@sha256:abcd",
+					},
+				},
+			},
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			var unstructuredObjects []k8sruntime.Object
+			if tc.existingRepos != nil {
+				for _, repo := range tc.existingRepos {
+					unstructuredContent, _ := k8sruntime.DefaultUnstructuredConverter.ToUnstructured(repo)
+					unstructuredObjects = append(unstructuredObjects, &unstructured.Unstructured{Object: unstructuredContent})
+				}
+			}
+
+			var typedObjects []k8sruntime.Object
+			if tc.existingNamespaces != nil {
+				for _, ns := range tc.existingNamespaces {
+					typedObjects = append(typedObjects, ns)
+				}
+			}
+
+			scheme := k8sruntime.NewScheme()
+			err := packagingv1alpha1.AddToScheme(scheme)
+			if err != nil {
+				log.Fatalf("%s", err)
+			}
+			err = authorizationv1.AddToScheme(scheme)
+			if err != nil {
+				log.Fatalf("%s", err)
+			}
+
+			dynClient := dynfake.NewSimpleDynamicClientWithCustomListKinds(
+				scheme,
+				map[schema.GroupVersionResource]string{
+					{Group: packagingv1alpha1.SchemeGroupVersion.Group, Version: packagingv1alpha1.SchemeGroupVersion.Version, Resource: pkgRepositoriesResource}: pkgRepositoryResource + "List",
+				},
+				unstructuredObjects...,
+			)
+			for _, reaction := range tc.reactors {
+				dynClient.PrependReactor(reaction.verb, reaction.resource, reaction.reaction)
+			}
+
+			s := Server{
+				pluginConfig: defaultPluginConfig,
+				clientGetter: clientgetter.NewBuilder().
+					WithTyped(typfake.NewSimpleClientset(typedObjects...)).
+					WithDynamic(dynClient).
+					Build(),
+				globalPackagingCluster: defaultGlobalContext.Cluster,
+			}
+
+			response, err := s.GetPackageRepositorySummaries(context.Background(), tc.request)
+
+			if got, want := status.Code(err), tc.expectedStatusCode; got != want {
+				t.Fatalf("got: %+v, want: %+v, err: %+v", got, want, err)
+			}
+
+			// We don't need to check anything else for non-OK codes.
+			if tc.expectedStatusCode != codes.OK {
+				return
+			}
+
+			if got, want := response, tc.expectedResponse; !cmp.Equal(want, got, ignoreUnexported) {
 				t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, ignoreUnexported))
 			}
 		})

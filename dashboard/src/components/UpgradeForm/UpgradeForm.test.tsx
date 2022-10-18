@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import actions from "actions";
-import DeploymentFormBody from "components/DeploymentFormBody/DeploymentFormBody";
+import DeploymentFormBody from "components/DeploymentForm/DeploymentFormBody";
 import Alert from "components/js/Alert";
 import LoadingWrapper from "components/LoadingWrapper/LoadingWrapper";
 import PackageHeader from "components/PackageHeader/PackageHeader";
@@ -133,7 +133,7 @@ beforeEach(() => {
     })),
   });
 
-  // mock the window.ResizeObserver, required by the MonacoEditor for the layout
+  // mock the window.ResizeObserver, required by the MonacoDiffEditor for the layout
   Object.defineProperty(window, "ResizeObserver", {
     writable: true,
     configurable: true,
@@ -144,7 +144,7 @@ beforeEach(() => {
     })),
   });
 
-  // mock the window.HTMLCanvasElement.getContext(), required by the MonacoEditor for the layout
+  // mock the window.HTMLCanvasElement.getContext(), required by the MonacoDiffEditor for the layout
   Object.defineProperty(HTMLCanvasElement.prototype, "getContext", {
     writable: true,
     configurable: true,

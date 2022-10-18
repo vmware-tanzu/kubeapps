@@ -13,6 +13,7 @@ import { CdsControlMessage, CdsFormGroup } from "@cds/react/forms";
 import { CdsInput } from "@cds/react/input";
 import { CdsRadio, CdsRadioGroup } from "@cds/react/radio";
 import { CdsTextarea } from "@cds/react/textarea";
+import { CdsSelect } from "@cds/react/select";
 import { CdsToggle, CdsToggleGroup } from "@cds/react/toggle";
 import actions from "actions";
 import Alert from "components/js/Alert";
@@ -24,7 +25,7 @@ import {
 } from "gen/kubeappsapis/core/packages/v1alpha1/repositories";
 import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins";
 import { HelmPackageRepositoryCustomDetail } from "gen/kubeappsapis/plugins/helm/packages/v1alpha1/helm";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { Action } from "redux";
 import { ThunkDispatch } from "redux-thunk";
@@ -46,6 +47,7 @@ import {
   k8sObjectNameRegex,
 } from "shared/utils";
 import "./PkgRepoForm.css";
+import { FluxPackageRepositoryCustomDetail } from "gen/kubeappsapis/plugins/fluxv2/packages/v1alpha1/fluxv2";
 
 export interface IPkgRepoFormProps {
   onSubmit: (data: IPkgRepoFormData) => Promise<boolean>;
@@ -88,6 +90,11 @@ export function PkgRepoForm(props: IPkgRepoFormProps) {
   const initialInterval = "10m";
 
   // -- Auth-related variables --
+
+  // Auth provider is only used by Flux plugin
+  const [authProvider, setAuthProvider] = useState("");
+
+  const [showAuthProviderDetails, setShowAuthProviderDetails] = useState(false);
 
   // Auth type of the package repository
   const [authMethod, setAuthMethod] = useState(
@@ -254,8 +261,45 @@ export function PkgRepoForm(props: IPkgRepoFormProps) {
           );
         }
       }
+
+      // setting custom details for the Flux plugin
+      if (repo.packageRepoRef?.plugin?.name === PluginNames.PACKAGES_FLUX && repo.customDetail) {
+        const fluxPackageRepositoryCustomDetail =
+          repo.customDetail as Partial<FluxPackageRepositoryCustomDetail>;
+        setAuthProvider(fluxPackageRepositoryCustomDetail?.provider || "");
+      }
     }
   }, [repo, namespace, currentCluster, dispatch]);
+
+  const hasAuthProvider = useCallback(() => authProvider !== "", [authProvider]);
+
+  const handleFluxAuthProviderAuthChange = useCallback(() => {
+    setAuthMethod(PackageRepositoryAuth_PackageRepositoryAuthType.UNRECOGNIZED);
+    setShowAuthProviderDetails(true);
+    if (!hasAuthProvider()) {
+      setAuthProvider("generic");
+    }
+  }, [setAuthMethod, setShowAuthProviderDetails, hasAuthProvider, setAuthProvider]);
+
+  useEffect(() => {
+    // Reset auth provider state as soon as there is an auth type selected
+    if (
+      authMethod === PackageRepositoryAuth_PackageRepositoryAuthType.UNRECOGNIZED ||
+      authMethod ===
+        PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_UNSPECIFIED
+    ) {
+      if (hasAuthProvider()) {
+        handleFluxAuthProviderAuthChange();
+      }
+    } else {
+      clearAuthProvider();
+    }
+  }, [authMethod, authProvider, handleFluxAuthProviderAuthChange, hasAuthProvider]);
+
+  const clearAuthProvider = () => {
+    setShowAuthProviderDetails(false);
+    setAuthProvider("");
+  };
 
   const handleInstallClick = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -297,28 +341,6 @@ export function PkgRepoForm(props: IPkgRepoFormProps) {
     if (type === RepositoryStorageTypes.PACKAGE_REPOSITORY_STORAGE_HELM && filterNames !== "") {
       filter = toFilterRule(filterNames, filterRegex, filterExclude);
     }
-
-    // build the custom details object based for each plugin
-    const helmCustomDetail = {
-      ociRepositories: ociRepoList,
-      performValidation,
-      filterRule: filter,
-      imagesPullSecret: {
-        // if using the same credentials toggle is set, use the repo auth's creds instead
-        secretRef: isUserManagedPSSecret ? (useSameAuthCreds ? secretAuthName : secretPSName) : "",
-        credentials: !isUserManagedPSSecret
-          ? {
-              email: useSameAuthCreds ? secretEmail : pullSecretEmail,
-              username: useSameAuthCreds ? secretUser : pullSecretUser,
-              password: useSameAuthCreds ? secretPassword : pullSecretPassword,
-              server: useSameAuthCreds ? secretServer : pullSecretServer,
-            }
-          : undefined,
-      },
-    } as HelmPackageRepositoryCustomDetail;
-
-    //TODO(agamez): add support for kapp's custom details
-    // const kappCustomDetail = undefined as unknown as KappControllerPackageRepositoryCustomDetail;
 
     // build request object for the install call
     const request = {
@@ -365,12 +387,43 @@ export function PkgRepoForm(props: IPkgRepoFormProps) {
     // enrich the request object with the corresponding plugin's custom details
     switch (plugin?.name) {
       case PluginNames.PACKAGES_HELM:
-        request.customDetail = helmCustomDetail;
+        request.customDetail = {
+          ociRepositories: ociRepoList,
+          performValidation,
+          filterRule: filter,
+          imagesPullSecret: {
+            // if using the same credentials toggle is set, use the repo auth's creds instead
+            secretRef: isUserManagedPSSecret
+              ? useSameAuthCreds
+                ? secretAuthName
+                : secretPSName
+              : "",
+            credentials: !isUserManagedPSSecret
+              ? {
+                  email: useSameAuthCreds ? secretEmail : pullSecretEmail,
+                  username: useSameAuthCreds ? secretUser : pullSecretUser,
+                  password: useSameAuthCreds ? secretPassword : pullSecretPassword,
+                  server: useSameAuthCreds ? secretServer : pullSecretServer,
+                }
+              : undefined,
+          },
+        } as HelmPackageRepositoryCustomDetail;
         break;
       //TODO(agamez): add it once other PRs get merged
       // case PluginNames.PACKAGES_KAPP:
       //   request.customDetail = kappCustomDetail;
       //   break;
+      case PluginNames.PACKAGES_FLUX:
+        if (hasAuthProvider()) {
+          request.customDetail = {
+            provider: authProvider,
+          } as FluxPackageRepositoryCustomDetail;
+
+          // Backend won't accept UNRECOGNIZED
+          request.authMethod =
+            PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_UNSPECIFIED;
+        }
+        break;
       default:
         break;
     }
@@ -408,6 +461,7 @@ export function PkgRepoForm(props: IPkgRepoFormProps) {
   };
   const handleAuthRadioButtonChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setAuthMethod(PackageRepositoryAuth_PackageRepositoryAuthType[e.target.value]);
+    clearAuthProvider();
 
     // reset the pull secret copy from auth
     setUseSameAuthCreds(false);
@@ -589,6 +643,9 @@ export function PkgRepoForm(props: IPkgRepoFormProps) {
   const handelUseSameAuthCredsChange = (_e: React.ChangeEvent<HTMLInputElement>) => {
     setUseSameAuthCreds(!useSameAuthCreds);
   };
+  const handleFluxAuthProviderChange = (e: React.FormEvent<HTMLSelectElement>) => {
+    setAuthProvider(e.currentTarget.value);
+  };
 
   const userManagedSecretText = "Use an existing secret";
   const kubeappsManagedSecretText = "Provide the secret values";
@@ -647,10 +704,12 @@ export function PkgRepoForm(props: IPkgRepoFormProps) {
     </>
   );
 
+  /* eslint-disable jsx-a11y/label-has-associated-control */
   return (
     <>
       <form onSubmit={handleInstallClick}>
         <CdsAccordion>
+          {/* Begin Basic panel */}
           <CdsAccordionPanel id="panel-basic" expanded={accordion[0]}>
             <CdsAccordionHeader onClick={() => toggleAccordion(0)}>
               Basic information
@@ -968,7 +1027,9 @@ export function PkgRepoForm(props: IPkgRepoFormProps) {
               </CdsFormGroup>
             </CdsAccordionContent>
           </CdsAccordionPanel>
+          {/* End Basic panel */}
 
+          {/* Begin Authentication panel */}
           <CdsAccordionPanel id="panel-auth" expanded={accordion[1]}>
             <CdsAccordionHeader onClick={() => toggleAccordion(1)}>
               Authentication
@@ -998,6 +1059,28 @@ export function PkgRepoForm(props: IPkgRepoFormProps) {
                         }
                         onChange={handleAuthRadioButtonChange}
                         disabled={!!repo.auth?.type}
+                      />
+                    </CdsRadio>
+                    <CdsRadio>
+                      <label htmlFor="kubeapps-repo-auth-method-provider">Auth provider</label>
+                      <input
+                        id="kubeapps-repo-auth-method-provider"
+                        type="radio"
+                        name="flux-auth-provider"
+                        value="flux-auth-provider"
+                        checked={
+                          authMethod ===
+                            PackageRepositoryAuth_PackageRepositoryAuthType.UNRECOGNIZED &&
+                          showAuthProviderDetails
+                        }
+                        onChange={handleFluxAuthProviderAuthChange}
+                        disabled={
+                          !(
+                            plugin?.name === PluginNames.PACKAGES_FLUX &&
+                            type === "oci" &&
+                            !repo.name
+                          )
+                        }
                       />
                     </CdsRadio>
                     <CdsRadio>
@@ -1239,7 +1322,6 @@ export function PkgRepoForm(props: IPkgRepoFormProps) {
                       )}
                     </div>
                     {/* End basic authentication */}
-
                     {/* Begin http bearer authentication */}
                     <div
                       id="kubeapps-repo-auth-details-bearer"
@@ -1273,7 +1355,6 @@ export function PkgRepoForm(props: IPkgRepoFormProps) {
                       )}
                     </div>
                     {/* End http bearer authentication */}
-
                     {/* Begin docker creds authentication */}
                     <div
                       id="kubeapps-repo-auth-details-docker"
@@ -1348,7 +1429,6 @@ export function PkgRepoForm(props: IPkgRepoFormProps) {
                       )}
                     </div>
                     {/* End docker creds authentication */}
-
                     {/* Begin HTTP custom authentication */}
                     <div
                       id="kubeapps-repo-auth-details-custom"
@@ -1384,7 +1464,6 @@ export function PkgRepoForm(props: IPkgRepoFormProps) {
                       )}
                     </div>
                     {/* End HTTP custom authentication */}
-
                     {/* Begin SSH authentication */}
                     <div
                       id="kubeapps-repo-auth-details-ssh"
@@ -1440,7 +1519,6 @@ export function PkgRepoForm(props: IPkgRepoFormProps) {
                       )}
                     </div>
                     {/* End SSH authentication */}
-
                     {/* Begin TLS authentication */}
                     <div
                       id="kubeapps-repo-auth-details-tls"
@@ -1494,7 +1572,6 @@ export function PkgRepoForm(props: IPkgRepoFormProps) {
                       )}
                     </div>
                     {/* End TLS authentication */}
-
                     {/* Begin opaque authentication */}
                     <div
                       id="kubeapps-repo-auth-details-opaque"
@@ -1530,6 +1607,45 @@ export function PkgRepoForm(props: IPkgRepoFormProps) {
                       )}
                     </div>
                     {/* End opaque authentication */}
+                    {/* Begin Flux Auth provider details */}
+                    {showAuthProviderDetails && (
+                      <div cds-layout="col@xs:8">
+                        <CdsSelect cds-layout="col@xs:6" id="kubeapps-flux-auth-provider">
+                          <label>Provider</label>
+                          <select
+                            value={authProvider}
+                            onChange={handleFluxAuthProviderChange}
+                            required={true}
+                            disabled={selectedPkgRepo !== undefined}
+                          >
+                            <option key="generic" value="generic">
+                              Generic
+                            </option>
+                            <option key="aws" value="aws">
+                              Amazon Web Services (AWS)
+                            </option>
+                            <option key="azure" value="azure">
+                              Azure
+                            </option>
+                            <option key="gcp" value="gcp">
+                              Google Cloud Platform (GCP)
+                            </option>
+                          </select>
+                          <CdsControlMessage error="valueMissing">
+                            The{" "}
+                            <a
+                              href="https://fluxcd.io/flux/components/source/helmrepositories/#provider"
+                              target="_blank"
+                              rel="noopener noreferrer"
+                            >
+                              OIDC provider
+                            </a>{" "}
+                            that Flux will use for authentication
+                          </CdsControlMessage>
+                        </CdsSelect>
+                      </div>
+                    )}
+                    {/* End Flux Auth provider details */}
                   </div>
                   {/* End authentication details */}
                 </div>
@@ -1800,7 +1916,9 @@ export function PkgRepoForm(props: IPkgRepoFormProps) {
               </CdsFormGroup>
             </CdsAccordionContent>
           </CdsAccordionPanel>
+          {/* End Filtering panel */}
 
+          {/* Begin Filtering panel */}
           <CdsAccordionPanel
             id="panel-filtering"
             expanded={accordion[2]}
@@ -1875,6 +1993,9 @@ export function PkgRepoForm(props: IPkgRepoFormProps) {
               </CdsFormGroup>
             </CdsAccordionContent>
           </CdsAccordionPanel>
+          {/* End Filtering panel */}
+
+          {/* Begin Advanced panel */}
           <CdsAccordionPanel id="panel-advanced" expanded={accordion[3]}>
             <CdsAccordionHeader onClick={() => toggleAccordion(3)}>Advanced</CdsAccordionHeader>
             <CdsAccordionContent>
@@ -2035,6 +2156,7 @@ export function PkgRepoForm(props: IPkgRepoFormProps) {
               </CdsFormGroup>
             </CdsAccordionContent>
           </CdsAccordionPanel>
+          {/* End Advanced panel */}
         </CdsAccordion>
 
         {repo &&

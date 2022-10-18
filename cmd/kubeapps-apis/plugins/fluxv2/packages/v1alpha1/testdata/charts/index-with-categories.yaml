@@ -21,7 +21,7 @@ entries:
           version: 8.x.x
       description: A highly scalable open-source full-text search and analytics engine
       digest: 9912c085b1eed02397f2cd1f45b3fe82dfbc36ba7599eb1486957a550084078d
-      home: https://github.com/bitnami/charts/tree/master/bitnami/elasticsearch
+      home: https://github.com/bitnami/charts/tree/main/bitnami/elasticsearch
       icon: https://bitnami.com/assets/stacks/elasticsearch/img/elasticsearch-stack-220x234.png
       keywords:
         - elasticsearch
@@ -57,7 +57,7 @@ entries:
         A simple, powerful publishing platform that allows you to share your
         stories with the world
       digest: 2e8c1a08e90745ec076f40bd5b55d028a74ec0111854dc09d35e59e1be088847
-      home: https://github.com/bitnami/charts/tree/master/bitnami/ghost
+      home: https://github.com/bitnami/charts/tree/main/bitnami/ghost
       icon: https://bitnami.com/assets/stacks/ghost/img/ghost-stack-220x234.png
       keywords:
         - ghost

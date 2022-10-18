@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import actions from "actions";
-import AdvancedDeploymentForm from "components/DeploymentFormBody/AdvancedDeploymentForm";
 import Alert from "components/js/Alert";
 import OperatorInstanceFormBody from "components/OperatorInstanceFormBody/OperatorInstanceFormBody";
 import OperatorHeader from "components/OperatorView/OperatorHeader";
@@ -11,6 +10,7 @@ import * as ReactRedux from "react-redux";
 import { defaultStore, getStore, initialState, mountWrapper } from "shared/specs/mountWrapper";
 import { FetchError, IClusterServiceVersion, IStoreState } from "shared/types";
 import OperatorInstanceForm, { IOperatorInstanceFormProps } from "./OperatorInstanceForm";
+import OperatorAdvancedDeploymentForm from "../OperatorInstanceFormBody/OperatorAdvancedDeploymentForm/OperatorAdvancedDeploymentForm";
 
 const defaultProps: IOperatorInstanceFormProps = {
   csvName: "foo",
@@ -57,7 +57,7 @@ beforeEach(() => {
     })),
   });
 
-  // mock the window.ResizeObserver, required by the MonacoEditor for the layout
+  // mock the window.ResizeObserver, required by the MonacoDiffEditor for the layout
   Object.defineProperty(window, "ResizeObserver", {
     writable: true,
     configurable: true,
@@ -68,7 +68,7 @@ beforeEach(() => {
     })),
   });
 
-  // mock the window.HTMLCanvasElement.getContext(), required by the MonacoEditor for the layout
+  // mock the window.HTMLCanvasElement.getContext(), required by the MonacoDiffEditor for the layout
   Object.defineProperty(HTMLCanvasElement.prototype, "getContext", {
     writable: true,
     configurable: true,
@@ -168,7 +168,7 @@ it("should submit the form", () => {
   );
 
   act(() => {
-    (wrapper.find(AdvancedDeploymentForm).prop("handleValuesChange") as any)(
+    (wrapper.find(OperatorAdvancedDeploymentForm).prop("handleValuesChange") as any)(
       "apiVersion: v1\nmetadata:\n  name: foo",
     );
   });

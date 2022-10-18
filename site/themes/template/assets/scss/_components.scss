@@ -1,19 +1,35 @@
 @import "variables";
 @import "mixins";
 
+
+// Add a chevron (>) after the link text for a11y
+main a:after {
+  content: " \203A";
+}
+
+// Hide chevron in buttons
+main a.button:after,
+a.section-link:after {
+  content: "";
+}
+
 /* Homepage Hero */
 .hero {
-  background-color: $mainblue;
+  background-color: $ocean;
   color: $white;
 
   .text-block {
-    max-width: 550px;
-    padding: 0px 0px 10px 0px;
+    max-width: 65%;
+    padding: 0 0 0.5em;
 
     p {
-      margin-bottom: 20px;
-      font-size: 18px;
       color: $white;
+      font-size: 19px;
+      font-weight: bold;
+    }
+
+    h1 {
+      font-size: 36px;
     }
 
     h2 {
@@ -22,21 +38,17 @@
   }
 
   &.homepage {
-    //background-image: url(/img/hero-image.png);
+    padding-bottom: 5em; // same as .grid-container margin-top
     background-position: center center;
     background-repeat: no-repeat;
     background-size: cover;
-    padding-bottom: 80px;
 
-    h1 {
-      font-size: 36px;
-    }
   }
 
   @include breakpoint(small) {
     .text-block {
       max-width: unset;
-      margin-right: 0px;
+      margin-right: 0;
     }
 
     .button {
@@ -51,17 +63,17 @@
 }
 
 .grid-container {
-  margin-top: -80px;
+  margin-top: -5em;
 
   .grid.three {
-    padding-bottom: 20px;
+    padding-bottom: 1em;
 
     .card {
       position: relative;
-      padding: 30px 20px;
+      padding: 1.5em 1em;
       background-color: $white;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
       text-align: center;
-      box-shadow: 0px 2px 10px rgba(0, 0, 0, 0.2);
 
       h3 {
         color: $darkgrey;
@@ -77,11 +89,10 @@
 
 .introduction {
   .grid.two {
-    column-gap: 140px;
-    padding: 35px 20px;
+    padding: 2em;
 
     p {
-      margin: 0px;
+      margin: 0;
       font-size: 16px;
 
       &.strong {
@@ -91,65 +102,53 @@
   }
 
   @include breakpoint(small) {
-    padding: 0px 20px;
-
-    .col:first-of-type {
-      padding-bottom: 50px;
-    }
+    padding: 0 1em;
   }
 }
 
 .use-cases {
   .grid {
-    grid-template-columns: 220px 1fr;
-    margin-bottom: 30px;
+    margin-bottom: 1em;
     grid-template-areas: "image text";
+    grid-template-columns: 20% 1fr;
 
     .image {
-      background-color: $mainblue;
-      text-align: center;
       display: flex;
       align-items: center;
       justify-content: center;
+      background-color: $ocean;
       grid-area: image;
+      text-align: center;
 
       img {
         justify-self: center;
       }
     }
 
-    .text {
-      border: 1px solid $lightgrey;
-      padding: 30px;
-      grid-area: text;
-
-      a.button {
-        display: block;
-        max-width: 138px;
-        text-align: center;
-        padding: 5px 10px;
-        min-width: unset;
-      }
-    }
-
     &.image-right {
-      grid-template-columns: 1fr 220px;
       grid-template-areas: "text image";
+      grid-template-columns: 1fr 20%;
 
       @include breakpoint(small) {
-        grid-template-columns: 1fr;
         grid-template-areas:
           "image"
           "text";
+        grid-template-columns: 1fr;
       }
     }
 
+    .text {
+      padding: 1em;
+      border: 1px solid $lightgrey;
+      grid-area: text;
+    }
+
     @include breakpoint(small) {
-      grid-template-columns: 1fr;
-      grid-template-rows: minmax(160px, 1fr);
       grid-template-areas:
         "image"
         "text";
+      grid-template-columns: 1fr;
+      grid-template-rows: minmax(160px, 1fr);
     }
   }
 
@@ -158,13 +157,13 @@
   }
 
   p.strong {
-    color: #1b3951;
+    color: $darkgrey;
     font-size: 16px;
   }
 }
 
 .team {
-  background-color: $navyblue;
+  background-color: $indigo;
 
   h2,
   h3,
@@ -179,33 +178,33 @@
   a {
     color: $white;
     font-weight: 300;
-    text-decoration: underline;
+    // text-decoration: underline;
   }
 
   .grid.three {
-    row-gap: 40px;
-    margin: 40px 0px;
+    margin: 1em 0;
+    row-gap: 1.5em;
   }
 
   .bio {
     display: grid;
-    grid-template-columns: 120px 1fr;
-    column-gap: 20px;
+    column-gap: 1em;
+    grid-template-columns: 7em 1fr;
 
     .image img {
-      height: 120px;
-      width: 120px;
+      width: 7em;
+      height: 7em;
     }
 
     .info {
       align-self: center;
 
       p {
-        margin: 0px;
+        margin: 0;
 
         &.name {
-          font-size: 16px;
           font-family: $metropolis-medium;
+          font-size: 16px;
         }
 
         &.position {
@@ -217,11 +216,11 @@
 }
 
 .hero.subpage-hero {
+  padding-bottom: 90px;
   // background-image: url(/img/blog-hero-image.png);
   background-position: center center;
   background-repeat: no-repeat;
   background-size: cover;
-  padding-bottom: 90px;
 
   h1 {
     font-size: 46px;
@@ -243,16 +242,16 @@
 
 .experimental {
   .grid.three .col {
-    padding: 0px;
+    padding: 0;
   }
 
   .icon {
-    background-color: $mainblue;
-    padding: 25px;
-    min-height: 95px;
     display: flex;
+    min-height: 95px;
     align-items: center;
     justify-content: center;
+    padding: 25px;
+    background-color: $ocean;
   }
 
   .content {
@@ -275,34 +274,34 @@
     }
 
     .content {
-      padding: 0px 20px;
+      padding: 0 20px;
     }
   }
 
   &.landing {
-    background-color: #fff;
     margin-top: -90px;
+    background-color: #fff;
 
     h3 a {
       font-size: 16px;
     }
 
     .pagination {
-      margin: 30px auto 50px auto;
+      margin: 30px auto 50px;
 
       ul {
-        padding: 0px;
+        padding: 0;
         text-align: center;
 
         li {
-          padding: 0px;
+          padding: 0;
 
           a {
             padding: 5px 10px;
 
             &.active {
-              background-color: $lightgrey;
               border-radius: 50%;
+              background-color: $lightgrey;
             }
           }
 
@@ -319,18 +318,18 @@
   }
 
   .blog-post {
-    background-color: #fff;
-    margin: -110px 0px 0px -30px;
     padding: 30px 90px 30px 30px;
+    margin: -110px 0 0 -30px;
+    background-color: #fff;
 
     .author {
-      color: $blue;
-      margin: 0px;
+      margin: 0;
+      color: $indigo;
     }
 
     .date {
+      margin: 0;
       color: $black;
-      margin: 0px;
       font-weight: 600;
     }
 
@@ -345,17 +344,17 @@
     }
 
     ul {
-      list-style-type: disc;
       padding-left: 20px;
+      list-style-type: disc;
 
       li {
-        list-style-type: unset;
         display: list-item;
         margin-bottom: 10px;
-        font-size: 14px;
         color: $darkgrey;
+        font-size: 14px;
         line-height: 1.6em;
         list-style-image: url(/img/arrow.svg);
+        list-style-type: unset;
 
         &:first-child {
           margin-top: 10px;
@@ -365,11 +364,11 @@
 
     ol {
       li {
-        list-style-type: decimal;
         display: list-item;
         margin-bottom: 10px;
-        font-size: 16px;
         color: $darkgrey;
+        font-size: 16px;
+        list-style-type: decimal;
 
         &:first-child {
           margin-top: 10px;
@@ -378,16 +377,16 @@
     }
 
     code {
-      border: 2px solid #efefef;
-      color: $darkgrey;
       padding: 2px 8px;
+      border: 2px solid $lightgrey;
+      color: $darkgrey;
     }
 
     pre {
       code {
         display: block;
-        border: 15px solid #efefef;
         padding: 15px;
+        border: 15px solid $lightgrey;
         margin-bottom: 30px;
         overflow-x: auto;
       }
@@ -423,21 +422,21 @@
   }
 
   h2 {
+    margin-bottom: 0;
     font-size: 30px;
-    margin-bottom: 0px;
   }
 
   a {
     display: block;
-    max-width: 138px;
-    text-align: center;
-    padding: 10px;
     min-width: unset;
+    max-width: 138px;
+    padding: 10px;
+    text-align: center;
   }
 
   .button {
+    border: 1px solid $indigo;
     margin-top: 50px;
-    border: 1px solid $blue;
   }
 
   @include breakpoint(small) {
@@ -457,30 +456,30 @@
 
     .button {
       display: block;
-      text-align: center;
       max-width: unset;
       margin-top: 20px;
+      text-align: center;
     }
   }
 }
 
 .subpage {
-  background-color: #fff;
+  padding: 30px 30px 50px;
   margin-top: -90px;
-  padding: 30px 30px 50px 30px;
+  background-color: #fff;
 
   .section-header {
     margin-top: 3rem;
-    font-weight: 600;
     font-size: 20px;
+    font-weight: 600;
   }
 
   .embed-responsive {
     position: relative;
 
-    &:before {
-      padding-top: 56.25%;
+    &::before {
       display: block;
+      padding-top: 56.25%;
       content: "";
     }
 
@@ -503,25 +502,25 @@
 
       .icon {
         display: flex;
+        min-height: 140px;
         align-items: center;
         justify-content: center;
-        min-height: 140px;
       }
 
       .content {
-        padding: 0px 20px 20px 20px;
+        padding: 0 20px 20px;
 
         &.plugins {
           padding-top: 20px;
 
           img {
             display: block;
-            margin: 0px auto 5px auto;
+            margin: 0 auto 5px;
           }
         }
 
         h3 {
-          margin-top: 0px;
+          margin-top: 0;
           text-align: center;
 
           a {
@@ -545,18 +544,22 @@
 }
 
 .docs {
-  background-color: #fff;
-  margin-top: -90px;
-  padding: 30px 30px 50px 30px;
   display: flex;
+  padding: 30px 30px 50px;
+  margin-top: -90px;
+  background-color: #fff;
 
   .side-nav {
+    position: relative;
     width: 25%;
     float: left;
-    position: relative;
+
+    .heading {
+      font-size: 18px;
+    }
 
     ul {
-      padding-left: 0px;
+      padding-left: 0;
       margin-bottom: 35px;
 
       li {
@@ -568,7 +571,7 @@
           font-size: 14px;
 
           &.active {
-            color: $blue;
+            color: $indigo;
           }
         }
 
@@ -580,23 +583,23 @@
     }
 
     .dropdown {
-      font-size: 14px;
-      font-family: $metropolis-medium;
       margin-bottom: 10px;
+      font-family: $metropolis-medium;
+      font-size: 14px;
 
       button {
-        background-image: url(/img/down-arrow.svg);
-        background-repeat: no-repeat;
-        background-position: 90% center;
-        border-radius: 5px;
         display: inline;
         padding: 10px 30px 10px 10px;
-        border: 1px solid $blue;
+        border: 1px solid $indigo;
+        border-radius: 5px;
+        margin-bottom: 10px;
+        background-image: url(/img/down-arrow.svg);
+        background-position: 90% center;
+        background-repeat: no-repeat;
         color: $black;
         cursor: pointer;
-        font-size: 14px;
         font-family: $metropolis-medium;
-        margin-bottom: 10px;
+        font-size: 14px;
 
         &:focus {
           background-color: $lightgrey;
@@ -606,14 +609,14 @@
 
     .dropdown-menu {
       position: absolute;
+      top: 35px;
+      left: 0;
+      display: none;
+      min-width: 100px;
+      padding: 10px 0;
       border: 1px solid $grey;
       border-radius: 5px;
-      top: 35px;
-      left: 0px;
       background-color: $white;
-      padding: 10px 0;
-      min-width: 100px;
-      display: none;
 
       a {
         display: block;
@@ -625,8 +628,8 @@
       }
 
       &.dropdown-menu-visible {
-        display: block;
         z-index: 1;
+        display: block;
       }
     }
 
@@ -635,22 +638,22 @@
       width: 100%;
       height: 40px;
       padding: 0.375rem 0.75rem;
+      border: 1px solid #cecece;
+      border-radius: 5px;
+      background-color: #fff;
+      background-image: url(/img/search-icon.svg);
+      background-position: 95% center;
+      background-repeat: no-repeat;
+      color: $darkgrey;
       font-size: 1.125rem;
       line-height: 1.5;
-      color: $darkgrey;
-      background-color: #fff;
-      border: 1px solid #cecece;
-      background-image: url(/img/search-icon.svg);
-      background-repeat: no-repeat;
-      background-position: 95% center;
-      border-radius: 5px;
 
       &:focus {
         outline: none;
       }
 
       &::-webkit-search-cancel-button {
-        -webkit-appearance: none;
+        appearance: none;
       }
     }
 
@@ -658,10 +661,10 @@
       padding: 15px 15px 0;
 
       a {
-        color: $darkgrey;
         display: inline-block;
-        font-family: $metropolis-light;
         margin-bottom: 10px;
+        color: $darkgrey;
+        font-family: $metropolis-light;
 
         div {
           display: inline;
@@ -675,8 +678,8 @@
       }
 
       .algolia-docsearch-suggestion--highlight {
-        background-color: rgba($blue, 0.1);
-        color: $navyblue;
+        background-color: rgba($ocean, 0.1);
+        color: $indigo;
       }
 
       .algolia-docsearch-suggestion--title {
@@ -699,16 +702,17 @@
     }
 
     .ds-dropdown-menu {
-      background-color: #fff;
+      width: 130%;
       border: 1px solid #cecece;
       border-radius: 5px;
-      width: 130%;
+      background-color: #fff;
     }
 
     @include breakpoint(extra-large) {
       width: 22%;
     }
 
+    //
     @include breakpoint(large) {
       width: 22%;
     }
@@ -727,17 +731,17 @@
     }
 
     ul {
-      list-style-type: disc;
       padding-left: 20px;
+      list-style-type: disc;
 
       li {
-        list-style-type: unset;
         display: list-item;
         margin-bottom: 10px;
-        font-size: 16px;
         color: $darkgrey;
+        font-size: 16px;
         line-height: 1.6em;
         list-style-image: url(/img/arrow.svg);
+        list-style-type: unset;
 
         &:first-child {
           margin-top: 10px;
@@ -747,11 +751,11 @@
 
     ol {
       li {
-        list-style-type: decimal;
         display: list-item;
         margin-bottom: 10px;
-        font-size: 16px;
         color: $darkgrey;
+        font-size: 16px;
+        list-style-type: decimal;
 
         &:first-child {
           margin-top: 10px;
@@ -760,9 +764,9 @@
     }
 
     code {
-      border: 2px solid #efefef;
-      color: $grey;
       padding: 2px 8px;
+      border: 2px solid $lightgrey;
+      color: $darkgrey;
     }
 
     pre {
@@ -770,8 +774,8 @@
 
       code {
         display: block;
-        border: 15px solid #efefef;
         padding: 15px;
+        border: 15px solid $lightgrey;
         margin-bottom: 30px;
         overflow-x: auto;
       }
@@ -794,37 +798,32 @@
 
   .right-nav {
     width: 20%;
+    margin: -30px -30px 0 0;
     float: right;
-    margin: -30px -30px 0px 0px;
 
     .right-nav-content {
-      background-color: #efefef;
-      padding: 30px 30px 30px 20px;
-      margin-right: -20px;
       position: sticky;
       top: 0;
+      padding: 30px 30px 30px 20px;
+      margin-right: -20px;
+      background-color: $lightgrey;
     }
 
     .buttons {
-      margin-top: 0px;
+      margin-top: 0;
 
       li {
-        margin-bottom: 0px;
-        padding: 8px 0px;
         display: inline-block;
-
-        &:first-of-type {
-          border-right: 1px solid #ddd;
-          padding-right: 5px;
-        }
+        padding: 8px 0;
+        margin-bottom: 0;
 
         a {
-          text-transform: uppercase;
           font-size: 14px;
+          text-transform: uppercase;
 
           img {
-            vertical-align: middle;
             width: 22px;
+            vertical-align: middle;
           }
         }
       }
@@ -835,12 +834,12 @@
     }
 
     ul {
-      padding-left: 0px;
-      margin-bottom: 0px;
+      padding-left: 0;
+      margin-bottom: 0;
 
       li {
         display: block;
-        padding-right: 0px;
+        padding-right: 0;
         margin-bottom: 7px;
 
         a {
@@ -860,7 +859,7 @@
       top: 0;
     }
 
-    @include breakpoint(small-medium) {
+    @include breakpoint(small) {
       display: none;
     }
   }
@@ -876,9 +875,15 @@
 }
 
 .home-snippet {
-  span {
-    max-width: 50vw;
-    overflow: auto;
+  pre {
+    white-space: pre-wrap;
+
+    code {
+      display: block;
+      padding-right: 1em;
+      padding-left: 1em;
+      border: 7px solid $lightgrey;
+    }
   }
 }
 
@@ -888,4 +893,19 @@
 
 #search {
   width: 80%;
+
+  input::placeholder {
+    color: $darkgrey;
+  }
+
+  @include breakpoint(small) {
+    .aa-DetachedSearchButtonPlaceholder {
+      display: none;
+    }
+  }
+
+  .aa-Form, .aa-DetachedSearchButton {
+    border-color: $ocean;
+  }
+
 }

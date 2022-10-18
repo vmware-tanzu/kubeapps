@@ -6,7 +6,6 @@ package cmd
 import (
 	"flag"
 
-	"github.com/mitchellh/go-homedir"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/core"
@@ -63,7 +62,7 @@ func init() {
 }
 
 func setFlags(c *cobra.Command) {
-	c.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.kubeapps-apis.yaml)")
+	c.PersistentFlags().StringVar(&cfgFile, "config", "", "config file")
 	c.Flags().IntVar(&serveOpts.Port, "port", 50051, "The port on which to run this api server. Both gRPC and HTTP requests will be served on this port.")
 	c.Flags().StringSliceVar(&serveOpts.PluginDirs, "plugin-dir", []string{"."}, "A directory to be scanned for .so plugins. May be specified multiple times.")
 	c.Flags().StringVar(&serveOpts.ClustersConfigPath, "clusters-config-path", "", "Configuration for clusters")
@@ -81,14 +80,6 @@ func initConfig() {
 	if cfgFile != "" {
 		// Use config file from the flag.
 		viper.SetConfigFile(cfgFile)
-	} else {
-		// Find home directory.
-		home, err := homedir.Dir()
-		cobra.CheckErr(err)
-
-		// Search config in home directory with name ".kubeapps-apis" (without extension).
-		viper.AddConfigPath(home)
-		viper.SetConfigName(".kubeapps-apis")
 	}
 
 	viper.AutomaticEnv() // read in environment variables that match

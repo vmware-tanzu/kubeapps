@@ -7,6 +7,8 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/pkg/helm"
+
 	helmv2 "github.com/fluxcd/helm-controller/api/v2beta1"
 	sourcev1 "github.com/fluxcd/source-controller/api/v1beta2"
 	authorizationv1 "k8s.io/api/authorization/v1"
@@ -52,7 +54,7 @@ type Server struct {
 	// kubeapps-internal-kubeappsapis service account
 	serviceAccountClientGetter clientgetter.FixedClusterClientProviderInterface
 
-	actionConfigGetter clientgetter.HelmActionConfigGetterFunc
+	actionConfigGetter helm.HelmActionConfigGetterFunc
 
 	repoCache  *cache.NamespacedResourceWatcherCache
 	chartCache *cache.ChartCache
@@ -133,7 +135,7 @@ func NewServer(configGetter core.KubernetesConfigGetter, kubeappsCluster string,
 			return &Server{
 				clientGetter:               clientProvider,
 				serviceAccountClientGetter: backgroundClientGetter,
-				actionConfigGetter: clientgetter.NewHelmActionConfigGetter(
+				actionConfigGetter: helm.NewHelmActionConfigGetter(
 					configGetter, kubeappsCluster),
 				repoCache:       repoCache,
 				chartCache:      chartCache,

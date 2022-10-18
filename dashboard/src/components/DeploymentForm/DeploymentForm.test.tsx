@@ -22,8 +22,8 @@ import { MemoryRouter, Route, Router } from "react-router-dom";
 import { Kube } from "shared/Kube";
 import { getStore, mountWrapper } from "shared/specs/mountWrapper";
 import { FetchError, IStoreState, PluginNames } from "shared/types";
-import DeploymentFormBody from "../DeploymentFormBody/DeploymentFormBody";
 import DeploymentForm from "./DeploymentForm";
+import DeploymentFormBody from "./DeploymentFormBody";
 
 const defaultProps = {
   pkgName: "foo",
@@ -79,7 +79,7 @@ beforeEach(() => {
     })),
   });
 
-  // mock the window.ResizeObserver, required by the MonacoEditor for the layout
+  // mock the window.ResizeObserver, required by the MonacoDiffEditor for the layout
   Object.defineProperty(window, "ResizeObserver", {
     writable: true,
     configurable: true,
@@ -90,7 +90,7 @@ beforeEach(() => {
     })),
   });
 
-  // mock the window.HTMLCanvasElement.getContext(), required by the MonacoEditor for the layout
+  // mock the window.HTMLCanvasElement.getContext(), required by the MonacoDiffEditor for the layout
   Object.defineProperty(HTMLCanvasElement.prototype, "getContext", {
     writable: true,
     configurable: true,
@@ -271,9 +271,8 @@ describe("renders an error", () => {
     spyOnUseHistory = jest.spyOn(ReactRouter, "useHistory").mockReturnValue({ push } as any);
 
     const appValues = "foo: bar";
-    const schema = {
-      properties: { foo: { type: "string", form: true } },
-    } as unknown as JSONSchemaType<any>;
+    const newAppValues = "foo: modified";
+    const schema = { properties: { foo: { type: "string" } } } as unknown as JSONSchemaType<any>;
     const selected = { ...defaultSelectedPkg, values: appValues, schema: schema };
 
     const wrapper = mountWrapper(
@@ -289,8 +288,9 @@ describe("renders an error", () => {
     const handleValuesChange: (v: string) => void = wrapper
       .find(DeploymentFormBody)
       .prop("setValues");
+
     act(() => {
-      handleValuesChange("foo: bar");
+      handleValuesChange(newAppValues);
     });
 
     wrapper
@@ -299,7 +299,7 @@ describe("renders an error", () => {
 
     wrapper.update();
 
-    expect(wrapper.find(DeploymentFormBody).prop("appValues")).toBe("foo: bar");
+    expect(wrapper.find(DeploymentFormBody).prop("appValues")).toBe(newAppValues);
     expect(wrapper.find(DeploymentForm).find("#releaseName").prop("value")).toBe(
       defaultProps.releaseName,
     );
@@ -316,7 +316,7 @@ describe("renders an error", () => {
       defaultProps.namespace,
       defaultSelectedPkg.availablePackageDetail,
       defaultProps.releaseName,
-      appValues,
+      newAppValues,
       schema,
       {} as ReconciliationOptions,
     );

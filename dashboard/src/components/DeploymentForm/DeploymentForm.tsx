@@ -10,6 +10,7 @@ import AvailablePackageDetailExcerpt from "components/Catalog/AvailablePackageDe
 import Alert from "components/js/Alert";
 import Column from "components/js/Column";
 import Row from "components/js/Row";
+import LoadingWrapper from "components/LoadingWrapper";
 import PackageHeader from "components/PackageHeader/PackageHeader";
 import { push } from "connected-react-router";
 import {
@@ -17,18 +18,16 @@ import {
   ReconciliationOptions,
 } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
 import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import * as ReactRouter from "react-router-dom";
-import "react-tabs/style/react-tabs.css";
 import { Action } from "redux";
 import { ThunkDispatch } from "redux-thunk";
 import { Kube } from "shared/Kube";
 import { FetchError, IStoreState } from "shared/types";
 import * as url from "shared/url";
 import { getPluginsRequiringSA, k8sObjectNameRegex } from "shared/utils";
-import DeploymentFormBody from "../DeploymentFormBody/DeploymentFormBody";
-import LoadingWrapper from "../LoadingWrapper/LoadingWrapper";
+import DeploymentFormBody from "./DeploymentFormBody";
 interface IRouteParams {
   cluster: string;
   namespace: string;
@@ -63,6 +62,7 @@ export default function DeploymentForm() {
   const [valuesModified, setValuesModified] = useState(false);
   const [serviceAccountList, setServiceAccountList] = useState([] as string[]);
   const [reconciliationOptions, setReconciliationOptions] = useState({} as ReconciliationOptions);
+  const formRef = useRef<HTMLFormElement>(null);
 
   const error = apps.error || selectedPackage.error;
 
@@ -209,7 +209,7 @@ export default function DeploymentForm() {
           </Column>
           <Column span={9}>
             {error && <Alert theme="danger">An error occurred: {error.message}</Alert>}
-            <form onSubmit={handleDeploy}>
+            <form onSubmit={handleDeploy} ref={formRef}>
               <CdsFormGroup
                 validate={true}
                 className="deployment-form"
@@ -267,6 +267,7 @@ export default function DeploymentForm() {
                 setValues={handleValuesChange}
                 appValues={appValues}
                 setValuesModified={setValuesModifiedTrue}
+                formRef={formRef}
               />
             </form>
           </Column>

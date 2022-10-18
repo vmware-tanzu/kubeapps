@@ -1,8 +1,28 @@
 # Get Started with Kubeapps
 
+## Table of Contents
+
+1. [Introduction](#introduction)
+2. [Pre-requisites](#pre-requisites)
+3. [Step 1: Install Kubeapps](#step-1-install-kubeapps)
+4. [Step 2: Create a demo credential with which to access Kubeapps and Kubernetes](#step-2-create-a-demo-credential-with-which-to-access-kubeapps-and-kubernetes)
+5. [Step 3: Start the Kubeapps Dashboard](#step-3-start-the-kubeapps-dashboard)
+6. [Step 4: Deploy applications: WordPress](#step-4-deploy-applications-wordpress)
+7. [Step 5: Uninstall/Delete WordPress](#optional-step-5-uninstalldelete-wordpress)
+8. [Next steps](#next-steps)
+
+## Introduction
+
+[Kubeapps](https://kubeapps.dev/) provides a cloud native solution to browse, deploy and manage the lifecycle of applications on a Kubernetes cluster. It is a one-time install that gives you a number of important benefits, including the ability to:
+
+- browse and deploy packaged applications from public or private repositories
+- customize deployments through an intuitive user interface
+- upgrade, manage and delete the applications that are deployed in your Kubernetes cluster
+- expose an API to manage your package repositories and your applications
+
 This guide walks you through the process of deploying Kubeapps for your cluster and installing an example application.
 
-## Prerequisites
+## Pre-requisites
 
 - Kubeapps assumes a working Kubernetes cluster (v1.21+), as well as the [`helm`](https://helm.sh/docs/intro/install/) (v3.2.0+) and [`kubectl`](https://kubernetes.io/docs/tasks/tools/install-kubectl/) command-line interfaces installed and configured to talk to your Kubernetes cluster.
 
@@ -14,7 +34,7 @@ This guide walks you through the process of deploying Kubeapps for your cluster 
 
 ## Step 1: Install Kubeapps
 
-Use the official [Bitnami Kubeapps chart](https://github.com/bitnami/charts/tree/master/bitnami/kubeapps) to install the latest version of Kubeapps:
+Use the official [Bitnami Kubeapps chart](https://github.com/bitnami/charts/tree/main/bitnami/kubeapps) to install the latest version of Kubeapps:
 
 ```bash
 helm repo add bitnami https://charts.bitnami.com/bitnami

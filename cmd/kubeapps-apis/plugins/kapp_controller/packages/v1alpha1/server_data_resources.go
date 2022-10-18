@@ -6,6 +6,8 @@ package main
 import (
 	"context"
 	"fmt"
+	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/pkg/resources"
+	"k8s.io/client-go/kubernetes"
 	"strings"
 
 	kappctrlv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
@@ -22,6 +24,8 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/dynamic"
+
+	log "k8s.io/klog/v2"
 )
 
 const (
@@ -340,6 +344,32 @@ func (s *Server) getPkgRepositories(ctx context.Context, cluster, namespace stri
 	return pkgRepositories, nil
 }
 
+// getAccessiblePackageRepositories gather list of repositories to which the user has access per namespace
+func (s *Server) getAccessiblePackageRepositories(ctx context.Context, cluster string) ([]*packagingv1alpha1.PackageRepository, error) {
+	clusterTypedClientFunc := func() (kubernetes.Interface, error) {
+		return s.clientGetter.Typed(ctx, cluster)
+	}
+	inClusterTypedClientFunc := func() (kubernetes.Interface, error) {
+		return s.localServiceAccountClientGetter.Typed(context.Background())
+	}
+
+	namespaceList, err := resources.FindAccessibleNamespaces(clusterTypedClientFunc, inClusterTypedClientFunc, s.MaxWorkers())
+	if err != nil {
+		return nil, err
+	}
+	namespaceList = resources.FilterActiveNamespaces(namespaceList)
+	var accessibleRepos []*packagingv1alpha1.PackageRepository
+	for _, ns := range namespaceList {
+		nsRepos, err := s.getPkgRepositories(ctx, cluster, ns.Name)
+		if err != nil {
+			log.Warningf("++kapp-controller could not list PackageRepository in namespace %s", ns.Name)
+			// Continue. Error in a single namespace should not block the whole list
+		}
+		accessibleRepos = append(accessibleRepos, nsRepos...)
+	}
+	return accessibleRepos, nil
+}
+
 // getApps returns the list of apps for the given cluster and namespace
 //
 //nolint:unused
@@ -506,7 +536,7 @@ func (s *Server) updatePkgInstall(ctx context.Context, cluster, namespace string
 // getAppUsedGVs returns the list of GVs used by the given app, falling back to pre 0.47 Kapp version behavior with regards to suffixes
 func getAppUsedGVs(appsClient ctlapp.Apps, packageId string, namespace string, useNewCtrlAppSuffix bool) ([]schema.GroupVersion, ctlapp.App, error) {
 	// We first try to fetch the app using the suffixed name (kapp >= 0.47)
-	appName := fmt.Sprintf("%s%s", packageId, ctlapp.AppSuffix)
+	appName := fmt.Sprintf("%s%s", packageId, ".app")
 
 	// Workaround to also support pre-0.47 kapp versions, whose ConfigMap were suffixed with "-ctrl" instead of ".apps.k14s.io"
 	if !useNewCtrlAppSuffix {

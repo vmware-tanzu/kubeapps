@@ -8,9 +8,10 @@ set -o nounset
 set -o pipefail
 
 PROJECT_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")/.." >/dev/null && pwd)
+source "${PROJECT_DIR}/script/lib/liblog.sh"
 
 # Path of the Kubeapps chart in the charts repo.
-# For instance, given "https://github.com/bitnami/charts/tree/master/bitnami/kubeapps" it should be "bitnami/kubeapps"
+# For instance, given "https://github.com/bitnami/charts/tree/main/bitnami/kubeapps" it should be "bitnami/kubeapps"
 CHART_REPO_PATH="bitnami/kubeapps"
 
 # Path of the Kubeapps chart in the Kubeapps repo.
@@ -25,6 +26,7 @@ RELEASE_NOTES_TEMPLATE_FILE="${PROJECT_DIR}/script/tpl/release_notes.md"
 # Returns the tag for the latest release
 latestReleaseTag() {
     local TARGET_REPO=${1:?}
+    info "getting latest release from ${TARGET_REPO}"
 
     git -C "${TARGET_REPO}/.git" fetch --tags
     git -C "${TARGET_REPO}/.git" describe --tags "$(git rev-list --tags --max-count=1)"
@@ -126,13 +128,19 @@ updateRepoWithLocalChanges() {
     fi
     # Fetch latest upstream changes, and commit&push them to the forked charts repo
     git -C "${TARGET_REPO}" remote add upstream "https://github.com/${CHARTS_REPO_ORIGINAL}.git"
+    info "Added upstream: https://github.com/${CHARTS_REPO_ORIGINAL}.git"
     git -C "${TARGET_REPO}" pull upstream "${BRANCH_CHARTS_REPO_ORIGINAL}"
+    info "Pulled branch: ${BRANCH_CHARTS_REPO_ORIGINAL}"
     git -C "${TARGET_REPO}" push origin "${BRANCH_CHARTS_REPO_FORKED}"
+    info "Pushed repo to forked repo: ${BRANCH_CHARTS_REPO_FORKED}"
     rm -rf "${targetChartPath}"
     cp -R "${KUBEAPPS_CHART_DIR}" "${targetChartPath}"
+
     # Update Chart.yaml with new version
     sed -i.bk 's/appVersion: DEVEL/appVersion: '"${targetTagWithoutV}"'/g' "${chartYaml}"
     rm "${targetChartPath}/Chart.yaml.bk"
+    info "New version ${targetTagWithoutV} applied to file ${chartYaml}"
+
     # Replace images for the latest available
     # TODO: use the IMAGES_TO_PUSH var already set in the CI config
     replaceImage_latestToProduction dashboard "${targetChartPath}/values.yaml"
@@ -201,6 +209,7 @@ commitAndSendExternalPR() {
     local CHART_VERSION=${3:?}
     local CHARTS_REPO_ORIGINAL=${4:?}
     local BRANCH_CHARTS_REPO_ORIGINAL=${5:?}
+    local DEV_MODE=${6-false}
 
     local targetChartPath="${TARGET_REPO}/${CHART_REPO_PATH}"
     local chartYaml="${targetChartPath}/Chart.yaml"
@@ -215,6 +224,16 @@ commitAndSendExternalPR() {
         cd -
         return 1
     fi
+
+    PR_TITLE="[bitnami/kubeapps] Bump chart version to ${CHART_VERSION}"
+
+    if [[ "${DEV_MODE}" == "true" ]]; then
+      TARGET_BRANCH="${TARGET_BRANCH}-DEV"
+      PR_TITLE="DEV - ${PR_TITLE}"
+      tmpfile=$(mktemp)
+      echo "# THIS IS A DEVELOPMENT PR, DO NOT MERGE!"|cat - "${PR_EXTERNAL_TEMPLATE_FILE}" > "$tmpfile" && mv "$tmpfile" "${PR_EXTERNAL_TEMPLATE_FILE}"
+    fi
+
     sed -i.bk -e "s/<USER>/$(git config user.name)/g" "${PR_EXTERNAL_TEMPLATE_FILE}"
     sed -i.bk -e "s/<EMAIL>/$(git config user.email)/g" "${PR_EXTERNAL_TEMPLATE_FILE}"
     git checkout -b "${TARGET_BRANCH}"
@@ -223,7 +242,7 @@ commitAndSendExternalPR() {
     # NOTE: This expects to have a loaded SSH key
     if [[ $(git ls-remote origin "${TARGET_BRANCH}" | wc -l) -eq 0 ]]; then
         git push -u origin "${TARGET_BRANCH}"
-        gh pr create -d -B "${BRANCH_CHARTS_REPO_ORIGINAL}" -R "${CHARTS_REPO_ORIGINAL}" -F "${PR_EXTERNAL_TEMPLATE_FILE}" --title "[bitnami/kubeapps] Bump chart version to ${CHART_VERSION}"
+        gh pr create -d -B "${BRANCH_CHARTS_REPO_ORIGINAL}" -R "${CHARTS_REPO_ORIGINAL}" -F "${PR_EXTERNAL_TEMPLATE_FILE}" --title "${PR_TITLE}"
     else
         echo "The remote branch '${TARGET_BRANCH}' already exists, please check if there is already an open PR at the repository '${CHARTS_REPO_ORIGINAL}'"
     fi
@@ -236,6 +255,7 @@ commitAndSendInternalPR() {
     local CHART_VERSION=${3:?}
     local KUBEAPPS_REPO=${4:?}
     local BRANCH_KUBEAPPS_REPO=${5:?}
+    local DEV_MODE=${6:-false}
 
     local targetChartPath="${KUBEAPPS_CHART_DIR}/Chart.yaml"
     local localChartYaml="${KUBEAPPS_CHART_DIR}/Chart.yaml"
@@ -244,19 +264,30 @@ commitAndSendInternalPR() {
         echo "Wrong repo path. You should provide the root of the repository" >/dev/stderr
         return 1
     fi
+
     cd "${TARGET_REPO}"
     if [[ ! $(git diff-index HEAD) ]]; then
         echo "Not found any change to commit" >/dev/stderr
         cd -
         return 1
     fi
+
+    PR_TITLE="Sync chart with bitnami/kubeapps chart (version ${CHART_VERSION})"
+
+    if [[ "${DEV_MODE}" == "true" ]]; then
+        TARGET_BRANCH="${TARGET_BRANCH}-DEV"
+        PR_TITLE="DEV - ${PR_TITLE}"
+        tmpfile=$(mktemp)
+        echo "# THIS IS A DEVELOPMENT PR, DO NOT MERGE!"|cat - "${PR_INTERNAL_TEMPLATE_FILE}" > "$tmpfile" && mv "$tmpfile" "${PR_INTERNAL_TEMPLATE_FILE}"
+    fi
+
     git checkout -b "${TARGET_BRANCH}"
     git add --all .
     git commit --signoff -m "bump chart version to ${CHART_VERSION}"
     # NOTE: This expects to have a loaded SSH key
     if [[ $(git ls-remote origin "${TARGET_BRANCH}" | wc -l) -eq 0 ]]; then
         git push -u origin "${TARGET_BRANCH}"
-        gh pr create -d -B "${BRANCH_KUBEAPPS_REPO}" -R "${KUBEAPPS_REPO}" -F "${PR_INTERNAL_TEMPLATE_FILE}" --title "Sync chart with bitnami/kubeapps chart (version ${CHART_VERSION})"
+        gh pr create -d -B "${BRANCH_KUBEAPPS_REPO}" -R "${KUBEAPPS_REPO}" -F "${PR_INTERNAL_TEMPLATE_FILE}" --title "${PR_TITLE}"
     else
         echo "The remote branch '${TARGET_BRANCH}' already exists, please check if there is already an open PR at the repository '${KUBEAPPS_REPO}'"
     fi

@@ -6,7 +6,7 @@ In addition to our [custom form component support](https://github.com/vmware-tan
 
 1. First you will need a react component to render instead of the default Kubeapps Application View. You're React components must be compiled into a JS file so that they can be interpreted by the browser since they cannot natively parse `.jsx` or `.tsx` files. You can compile `jsx` or `tsx` into js with tools like webpack, create-react-app, babel, etc. If you just want to try this feature out and you don't have a component yet we provide some test files you can try (Do not try to load the `jsx` file since browsers cannot parse it! We simply include it so that you can see the pre-compiled version of the `.js` files).
 
-1. Next you will need to define which applications you would like to render the custom view for. To do this we simply set `.Values.dashboard.customAppViews` to any application of your choice. For example, if you wanted to load a custom view for the [bitnami apache helm chart](https://github.com/bitnami/charts/tree/master/bitnami/apache) you can set the value as such:
+1. Next you will need to define which applications you would like to render the custom view for. To do this we simply set `.Values.dashboard.customAppViews` to any application of your choice. For example, if you wanted to load a custom view for the [bitnami apache helm chart](https://github.com/bitnami/charts/tree/main/bitnami/apache) you can set the value as such:
 
    ```yaml
    customAppViews:

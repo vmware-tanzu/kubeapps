@@ -199,7 +199,7 @@ func (c *ChartCache) runWorker(workerName string) {
 // attempt to process it, by calling the syncHandler.
 
 // ref: https://engineering.bitnami.com/articles/kubewatch-an-example-of-kubernetes-custom-controller.html
-// ref: https://github.com/bitnami-labs/kubewatch/blob/master/pkg/controller/controller.go
+// ref:https://github.com/vmware-archive/kubewatch/blob/master/pkg/controller/controller.go
 func (c *ChartCache) processNextWorkItem(workerName string) bool {
 	log.Infof("+processNextWorkItem(%s)", workerName)
 	defer log.Infof("-processNextWorkItem(%s)", workerName)

@@ -4,12 +4,19 @@
 package utils
 
 import (
-	appRepov1 "github.com/vmware-tanzu/kubeapps/cmd/apprepository-controller/pkg/apis/apprepository/v1alpha1"
-	chartUtils "github.com/vmware-tanzu/kubeapps/pkg/chart"
+	"context"
+	"encoding/json"
+	"fmt"
 	"github.com/vmware-tanzu/kubeapps/pkg/chart/models"
 	"github.com/vmware-tanzu/kubeapps/pkg/dbutils"
-	"helm.sh/helm/v3/pkg/chart"
-	k8scorev1 "k8s.io/api/core/v1"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/client-go/kubernetes"
+	"k8s.io/kubernetes/pkg/credentialprovider"
+)
+
+const (
+	dockerConfigJSONType = "kubernetes.io/dockerconfigjson"
+	dockerConfigJSONKey  = ".dockerconfigjson"
 )
 
 type AssetManager interface {
@@ -37,15 +44,35 @@ func NewManager(databaseType string, config dbutils.Config, globalPackagingNames
 	return NewPGManager(config, globalPackagingNamespace)
 }
 
-// GetChart retrieves a chart
-func GetChart(chartDetails *chartUtils.Details, appRepo *appRepov1.AppRepository, caCertSecret *k8scorev1.Secret, authSecret *k8scorev1.Secret, chartClient chartUtils.ChartClient) (*chart.Chart, error) {
-	err := chartClient.Init(appRepo, caCertSecret, authSecret)
-	if err != nil {
-		return nil, err
+// RegistrySecretsPerDomain checks the app repo and available secrets
+// to return the secret names per registry domain.
+func RegistrySecretsPerDomain(ctx context.Context, appRepoSecrets []string, namespace string, client kubernetes.Interface) (map[string]string, error) {
+	secretsPerDomain := map[string]string{}
+
+	for _, secretName := range appRepoSecrets {
+		secret, err := client.CoreV1().Secrets(namespace).Get(ctx, secretName, v1.GetOptions{})
+		if err != nil {
+			return nil, err
+		}
+
+		if secret.Type != dockerConfigJSONType {
+			return nil, fmt.Errorf("AppRepository secret must be of type %q. Secret %q had type %q", dockerConfigJSONType, secretName, secret.Type)
+		}
+
+		dockerConfigJSONBytes, ok := secret.Data[dockerConfigJSONKey]
+		if !ok {
+			return nil, fmt.Errorf("AppRepository secret must have a data map with a key %q. Secret %q did not", dockerConfigJSONKey, secretName)
+		}
+
+		dockerConfigJSON := credentialprovider.DockerConfigJSON{}
+		if err := json.Unmarshal(dockerConfigJSONBytes, &dockerConfigJSON); err != nil {
+			return nil, err
+		}
+
+		for key := range dockerConfigJSON.Auths {
+			secretsPerDomain[key] = secretName
+		}
+
 	}
-	ch, err := chartClient.GetChart(chartDetails, appRepo.Spec.URL)
-	if err != nil {
-		return nil, err
-	}
-	return ch, nil
+	return secretsPerDomain, nil
 }
