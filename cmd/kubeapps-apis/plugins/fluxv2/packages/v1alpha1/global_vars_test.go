@@ -3603,6 +3603,35 @@ var (
 		}
 	}
 
+	expected_oci_repo_with_2_charts_available_summaries = func(name string) *corev1.GetAvailablePackageSummariesResponse {
+		return &corev1.GetAvailablePackageSummariesResponse{
+			AvailablePackageSummaries: []*corev1.AvailablePackageSummary{
+				{
+					Name:                "airflow",
+					AvailablePackageRef: availableRef(name+"/airflow", "default"),
+					LatestVersion: &corev1.PackageAppVersion{
+						PkgVersion: "6.7.1",
+					},
+					IconUrl:          "https://bitnami.com/assets/stacks/airflow/img/airflow-stack-110x117.png",
+					DisplayName:      "airflow",
+					ShortDescription: "Apache Airflow is a platform to programmatically author, schedule and monitor workflows.",
+					Categories:       []string{"WorkFlow"},
+				},
+				{
+					Name:                "redis",
+					AvailablePackageRef: availableRef(name+"/redis", "default"),
+					LatestVersion: &corev1.PackageAppVersion{
+						PkgVersion: "14.4.0",
+					},
+					IconUrl:          "https://bitnami.com/assets/stacks/redis/img/redis-stack-220x234.png",
+					DisplayName:      "redis",
+					ShortDescription: "Open source, advanced key-value store. It is often referred to as a data structure server since keys can contain strings, hashes, lists, sets and sorted sets.",
+					Categories:       []string{"Database"},
+				},
+			},
+		}
+	}
+
 	no_available_summaries = func(name string) *corev1.GetAvailablePackageSummariesResponse {
 		return &corev1.GetAvailablePackageSummariesResponse{}
 	}

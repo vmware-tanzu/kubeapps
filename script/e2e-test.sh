@@ -15,8 +15,9 @@ ALL_TESTS="all"
 MAIN_TESTS="main"
 MULTICLUSTER_TESTS="multicluster"
 CARVEL_TESTS="carvel"
+FLUX_TESTS="flux"
 OPERATOR_TESTS="operator"
-SUPPORTED_TESTS_GROUPS=("${ALL_TESTS}" "${MAIN_TESTS}" "${MULTICLUSTER_TESTS}" "${CARVEL_TESTS}" "${OPERATOR_TESTS}")
+SUPPORTED_TESTS_GROUPS=("${ALL_TESTS}" "${MAIN_TESTS}" "${MULTICLUSTER_TESTS}" "${CARVEL_TESTS}" "${FLUX_TESTS}" "${OPERATOR_TESTS}")
 
 # Params
 USE_MULTICLUSTER_OIDC_ENV=${1:-false}
@@ -28,6 +29,8 @@ DEX_IP=${6:-"172.18.0.2"}
 ADDITIONAL_CLUSTER_IP=${7:-"172.18.0.3"}
 KAPP_CONTROLLER_VERSION=${8:-"v0.41.2"}
 CHARTMUSEUM_VERSION=${9:-"3.9.0"}
+# check latest flux releases at https://github.com/fluxcd/flux2/releases
+FLUX_VERSION=${10:-"v0.35.0"}
 IMG_PREFIX=${IMG_PREFIX:-"kubeapps/"}
 TESTS_GROUP=${TESTS_GROUP:-"${ALL_TESTS}"}
 
@@ -186,6 +189,8 @@ pushChart() {
   # This workaround should mitigate https://github.com/vmware-tanzu/kubeapps/issues/3339
   mkdir ./${chart}-${version}
   tar zxf ${chart}-${version}.tgz -C ./${chart}-${version}
+  # this relies on GNU sed, which is not the default on MacOS
+  # ref https://gist.github.com/andre3k1/e3a1a7133fded5de5a9ee99c87c6fa0d
   sed -i "s/name: ${chart}/name: ${prefix}${chart}/" ./${chart}-${version}/${chart}/Chart.yaml
   sed -i "0,/^\([[:space:]]*description: *\).*/s//\1${description}/" ./${chart}-${version}/${chart}/Chart.yaml
   helm package ./${chart}-${version}/${chart} -d .
@@ -218,6 +223,34 @@ installKappController() {
   # cluster-admin.
   kubectl create serviceaccount carvel-reconciler -n kubeapps-user-namespace
   kubectl create clusterrolebinding carvel-reconciler --clusterrole=cluster-admin --serviceaccount kubeapps-user-namespace:carvel-reconciler
+}
+
+########################
+# Install flux
+# Globals: None
+# Arguments:
+#   $1: Version of flux
+# Returns: None
+#########################
+installFlux() {
+  local release=$1
+  info "Installing flux ${release} ..."
+  url=https://github.com/fluxcd/flux2/releases/download/${release}/install.yaml
+  namespace=flux-system
+
+  kubectl apply -f "${url}"
+
+  # wait for deployment to be ready
+  kubectl rollout status -w deployment/helm-controller --namespace="${namespace}"
+  kubectl rollout status -w deployment/source-controller --namespace="${namespace}"
+
+  # Add test repository.
+  kubectl apply -f https://raw.githubusercontent.com/fluxcd/source-controller/main/config/samples/source_v1beta2_helmrepository.yaml
+
+  # Add a flux-reconciler service account to the kubeapps-user-namespace with
+  # cluster-admin.
+  kubectl create serviceaccount flux-reconciler -n kubeapps-user-namespace
+  kubectl create clusterrolebinding flux-reconciler --clusterrole=cluster-admin --serviceaccount kubeapps-user-namespace:flux-reconciler
 }
 
 ########################
@@ -578,6 +611,48 @@ if [[ "${TESTS_GROUP}" == "${ALL_TESTS}" || "${TESTS_GROUP}" == "${CARVEL_TESTS}
 
   sectionEndTime=$(date +%s)
   info "Carvel tests execution time: $(formattedElapsedTime sectionEndTime-sectionStartTime)"
+fi
+
+####################################
+######## Flux tests group ########
+####################################
+if [[ "${TESTS_GROUP}" == "${ALL_TESTS}" || "${TESTS_GROUP}" == "${FLUX_TESTS}" ]]; then
+  sectionStartTime=$(date +%s)
+
+  ## Upgrade and run Flux test
+  installFlux "${FLUX_VERSION}"
+  info "Updating Kubeapps with flux support"
+  installOrUpgradeKubeapps "${ROOT_DIR}/chart/kubeapps" \
+    "--set" "packaging.flux.enabled=true" \
+    "--set" "packaging.helm.enabled=false" \
+    "--set" "packaging.carvel.enabled=false"
+
+  info "Waiting for updated Kubeapps components to be ready..."
+  k8s_wait_for_deployment kubeapps kubeapps-ci
+
+  info "Running flux integration test..."
+  test_command="
+    CI_TIMEOUT_MINUTES=20 \
+    TEST_TIMEOUT_MINUTES=${TEST_TIMEOUT_MINUTES} \
+    INTEGRATION_ENTRYPOINT=http://kubeapps-ci.kubeapps \
+    USE_MULTICLUSTER_OIDC_ENV=${USE_MULTICLUSTER_OIDC_ENV} \
+    ADMIN_TOKEN=${admin_token} \
+    VIEW_TOKEN=${view_token} \
+    EDIT_TOKEN=${edit_token} \
+    yarn test \"tests/flux/\"
+    "
+  info "${test_command}"
+  
+  if ! kubectl exec -it "$pod" -- /bin/sh -c "${test_command}"; then
+    ## Integration tests failed, get report screenshot
+    warn "PODS status on failure"
+    kubectl cp "${pod}:/app/reports" ./reports
+    exit 1
+  fi
+  info "Flux integration tests succeeded!"
+
+  sectionEndTime=$(date +%s)
+  info "Flux tests execution time: $(formattedElapsedTime sectionEndTime-sectionStartTime)"
 fi
 
 #######################################

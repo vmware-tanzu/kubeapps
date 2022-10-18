@@ -135,10 +135,10 @@ function deleteHarborProject()
   fi
 }
 
-function pushChartsToHarborProject() 
+function pushPodInfoChartsToHarborProject() 
 {
   if [[ "$#" -lt 4 ]]; then
-    error_exit "Usage: pushChartsToHarbor host user password project_name"
+    error_exit "Usage: pushPodInfoChartsToHarborProject host user password project_name"
   fi
   local HOST=$1
   local USER=$2
@@ -226,13 +226,12 @@ function setupVMwareHarborStefanProdanClone {
   fi
 
   deleteHarborProjectRepositories $HOST $USER $PWD $PROJECT_NAME
-  pushChartsToHarborProject $HOST $USER $PWD $PROJECT_NAME
+  pushPodInfoChartsToHarborProject $HOST $USER $PWD $PROJECT_NAME
 }
 
 function setupHarborStefanProdanCloneInProject {
   # sanity check
   if [[ "$#" -lt 5 ]]; then
-    echo "args=$*"
     error_exit "Usage: setupHarborStefanProdanCloneInProject host user password project_name is_public [--quick]"
   fi
 
@@ -254,7 +253,7 @@ function setupHarborStefanProdanCloneInProject {
 
   deleteHarborProject $HOST $USER $PWD $PROJECT_NAME
   createHarborProject $HOST $USER $PWD $PROJECT_NAME $PUBLIC
-  pushChartsToHarborProject $HOST $USER $PWD $PROJECT_NAME
+  pushPodInfoChartsToHarborProject $HOST $USER $PWD $PROJECT_NAME
   
   echo
   echo Running sanity checks...
@@ -262,7 +261,52 @@ function setupHarborStefanProdanCloneInProject {
   echo
 }
 
-function setupHarborStefanProdanClone {
+function setupHarborRepoWith2ChartsInProject {
+  # sanity check
+  if [[ "$#" -lt 5 ]]; then
+    error_exit "Usage: setupHarborRepoWith2ChartsInProject host user password project_name is_public [--quick]"
+  fi
+
+  local HOST=$1
+  local USER=$2
+  local PWD=$3
+  local PROJECT_NAME=$4
+  local PUBLIC=$5
+  local URL=https://${HOST}
+
+  if [ "$#" -gt 5 ]; then
+    if [ "$6" == "--quick" ]; then
+      quickCheckProjectExists $HOST $USER $PWD $PROJECT_NAME EXISTS
+      if [[ "$EXISTS" == "true" ]]; then
+        return
+      fi
+    fi
+  fi
+
+  deleteHarborProject $HOST $USER $PWD $PROJECT_NAME
+  createHarborProject $HOST $USER $PWD $PROJECT_NAME $PUBLIC
+  
+  helm registry login $HOST -u $USER -p $PWD
+  trap '{
+    helm registry logout $HOST 
+  }' EXIT  
+
+  pushd $SCRIPTPATH/charts
+  trap '{
+    popd
+  }' EXIT  
+
+  DEST_URL=oci://$HOST/$PROJECT_NAME
+  helm push airflow-6.7.1.tgz $DEST_URL
+  helm push redis-14.4.0.tgz $DEST_URL
+
+  echo
+  echo Running sanity checks...
+  echo TODO 
+  echo
+}
+
+function setupHarbor {
   # this creates a clone of what was out on "oci://ghcr.io/stefanprodan/charts" as of Jul 28 2022
   # to oci://demo.goharbor.io/stefanprodan-podinfo-clone
   setupHarborStefanProdanCloneInProject \
@@ -278,6 +322,12 @@ function setupHarborStefanProdanClone {
      stefanprodan-podinfo-clone-private false $*
 
   setupVMwareHarborStefanProdanClone kubeapps_flux_integration $*
+
+  setupHarborRepoWith2ChartsInProject \
+      $FLUX_TEST_HARBOR_HOST \
+      $FLUX_TEST_HARBOR_ADMIN_USER \
+      $FLUX_TEST_HARBOR_ADMIN_PWD \
+      repo-with-2-charts true $*
 }
 
 function deleteHarborRobotAccount()

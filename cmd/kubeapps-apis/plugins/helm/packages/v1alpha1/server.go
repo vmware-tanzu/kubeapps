@@ -8,13 +8,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/pkg/helm"
-	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/pkg/helm/agent"
-	"net/url"
-	"os"
-	"path"
-	"strings"
-
 	appRepov1 "github.com/vmware-tanzu/kubeapps/cmd/apprepository-controller/pkg/apis/apprepository/v1alpha1"
 	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/core"
 	corev1 "github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
@@ -22,6 +15,8 @@ import (
 	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/helm/packages/v1alpha1/common"
 	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/helm/packages/v1alpha1/utils"
 	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/pkg/clientgetter"
+	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/pkg/helm"
+	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/pkg/helm/agent"
 	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/pkg/paginate"
 	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/pkg/pkgutils"
 	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/pkg/resourcerefs"
@@ -43,7 +38,11 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/kubernetes"
 	log "k8s.io/klog/v2"
+	"net/url"
+	"os"
+	"path"
 	ctrlclient "sigs.k8s.io/controller-runtime/pkg/client"
+	"strings"
 )
 
 type helmActionConfigGetter func(ctx context.Context, pkgContext *corev1.Context) (*action.Configuration, error)
@@ -64,22 +63,26 @@ type Server struct {
 	// clientGetter is a field so that it can be switched in tests for
 	// a fake client. NewServer() below sets this automatically with the
 	// non-test implementation.
-	clientGetter             clientgetter.ClientProviderInterface
-	globalPackagingNamespace string
-	globalPackagingCluster   string
-	manager                  utils.AssetManager
-	actionConfigGetter       helmActionConfigGetter
-	chartClientFactory       utils.ChartClientFactoryInterface
-	createReleaseFunc        createRelease
-	kubeappsCluster          string // Specifies the cluster on which Kubeapps is installed.
-	kubeappsNamespace        string // Namespace in which Kubeapps is installed
-	pluginConfig             *common.HelmPluginConfig
-	repoClientGetter         newRepoClient
+	clientGetter clientgetter.ClientProviderInterface
+	// for interactions with k8s API server in the context of
+	// kubeapps-internal-kubeappsapis service account
+	localServiceAccountClientGetter clientgetter.FixedClusterClientProviderInterface
+	globalPackagingNamespace        string
+	globalPackagingCluster          string
+	manager                         utils.AssetManager
+	actionConfigGetter              helmActionConfigGetter
+	chartClientFactory              utils.ChartClientFactoryInterface
+	createReleaseFunc               createRelease
+	kubeappsCluster                 string // Specifies the cluster on which Kubeapps is installed.
+	kubeappsNamespace               string // Namespace in which Kubeapps is installed
+	pluginConfig                    *common.HelmPluginConfig
+	repoClientGetter                newRepoClient
+	clientQPS                       float32
 }
 
 // NewServer returns a Server automatically configured with a function to obtain
 // the k8s client config.
-func NewServer(configGetter core.KubernetesConfigGetter, globalPackagingCluster string, globalPackagingNamespace string, pluginConfigPath string) *Server {
+func NewServer(configGetter core.KubernetesConfigGetter, globalPackagingCluster string, globalPackagingNamespace string, clientQPS float32, clientBurst int, pluginConfigPath string) *Server {
 	var ASSET_SYNCER_DB_URL = os.Getenv("ASSET_SYNCER_DB_URL")
 	var ASSET_SYNCER_DB_NAME = os.Getenv("ASSET_SYNCER_DB_NAME")
 	var ASSET_SYNCER_DB_USERNAME = os.Getenv("ASSET_SYNCER_DB_USERNAME")
@@ -141,6 +144,8 @@ func NewServer(configGetter core.KubernetesConfigGetter, globalPackagingCluster 
 
 	return &Server{
 		clientGetter: clientProvider,
+		// Get the "in-cluster" client getter
+		localServiceAccountClientGetter: clientgetter.NewBackgroundClientProvider(clientgetter.Options{}, clientQPS, clientBurst),
 		actionConfigGetter: func(ctx context.Context, pkgContext *corev1.Context) (*action.Configuration, error) {
 			cluster := pkgContext.GetCluster()
 			// Don't force clients to send a cluster unless we are sure all use-cases
@@ -159,7 +164,12 @@ func NewServer(configGetter core.KubernetesConfigGetter, globalPackagingCluster 
 		pluginConfig:             pluginConfig,
 		createReleaseFunc:        agent.CreateRelease,
 		repoClientGetter:         newRepositoryClient,
+		clientQPS:                clientQPS,
 	}
+}
+
+func (s *Server) MaxWorkers() int {
+	return int(s.clientQPS)
 }
 
 // GetManager ensures a manager is available and returns it.

@@ -5,6 +5,7 @@ package clientgetter
 
 import (
 	"context"
+
 	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/core"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -71,7 +72,12 @@ type ClientProvider struct {
 func (cp ClientProvider) Typed(ctx context.Context, cluster string) (kubernetes.Interface, error) {
 	clientGetter, err := cp.GetClients(ctx, cluster)
 	if err != nil {
-		return nil, status.Errorf(codes.FailedPrecondition, "unable to build clients due to: %v", err)
+		code := codes.FailedPrecondition
+		if status.Code(err) == codes.Unauthenticated {
+			// want to make sure we return same status in this case
+			code = codes.Unauthenticated
+		}
+		return nil, status.Errorf(code, "unable to build clients due to: %v", err)
 	}
 	return clientGetter.Typed()
 }
@@ -79,7 +85,12 @@ func (cp ClientProvider) Typed(ctx context.Context, cluster string) (kubernetes.
 func (cp ClientProvider) Dynamic(ctx context.Context, cluster string) (dynamic.Interface, error) {
 	clientGetter, err := cp.GetClients(ctx, cluster)
 	if err != nil {
-		return nil, status.Errorf(codes.FailedPrecondition, "unable to build clients due to: %v", err)
+		code := codes.FailedPrecondition
+		if status.Code(err) == codes.Unauthenticated {
+			// want to make sure we return same status in this case
+			code = codes.Unauthenticated
+		}
+		return nil, status.Errorf(code, "unable to build clients due to: %v", err)
 	}
 	return clientGetter.Dynamic()
 }
@@ -87,7 +98,12 @@ func (cp ClientProvider) Dynamic(ctx context.Context, cluster string) (dynamic.I
 func (cp ClientProvider) ControllerRuntime(ctx context.Context, cluster string) (client.WithWatch, error) {
 	clientGetter, err := cp.GetClients(ctx, cluster)
 	if err != nil {
-		return nil, status.Errorf(codes.FailedPrecondition, "unable to build clients due to: %v", err)
+		code := codes.FailedPrecondition
+		if status.Code(err) == codes.Unauthenticated {
+			// want to make sure we return same status in this case
+			code = codes.Unauthenticated
+		}
+		return nil, status.Errorf(code, "unable to build clients due to: %v", err)
 	}
 	return clientGetter.ControllerRuntime()
 }
@@ -95,7 +111,12 @@ func (cp ClientProvider) ControllerRuntime(ctx context.Context, cluster string) 
 func (cp ClientProvider) ApiExt(ctx context.Context, cluster string) (apiext.Interface, error) {
 	clientGetter, err := cp.GetClients(ctx, cluster)
 	if err != nil {
-		return nil, status.Errorf(codes.FailedPrecondition, "unable to build clients due to: %v", err)
+		code := codes.FailedPrecondition
+		if status.Code(err) == codes.Unauthenticated {
+			// want to make sure we return same status in this case
+			code = codes.Unauthenticated
+		}
+		return nil, status.Errorf(code, "unable to build clients due to: %v", err)
 	}
 	return clientGetter.ApiExt()
 }

@@ -14,11 +14,13 @@ import (
 	sourcev1 "github.com/fluxcd/source-controller/api/v1beta2"
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
+	grpc_retry "github.com/grpc-ecosystem/go-grpc-middleware/retry"
 	corev1 "github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
 	plugins "github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/core/plugins/v1alpha1"
 	fluxplugin "github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/plugins/fluxv2/packages/v1alpha1"
 	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/fluxv2/packages/v1alpha1/common"
 	"golang.org/x/sync/semaphore"
+	grpc "google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	apiv1 "k8s.io/api/core/v1"
@@ -251,24 +253,25 @@ func TestKindClusterGetAvailablePackageSummariesForLargeReposAndTinyRedis(t *tes
 }
 
 // scenario:
-// 1) create two namespaces
-// 2) create two helm repositories, each containing a single package: one in each of the namespaces from (1)
-// 3) create 3 service-accounts in default namespace:
-//   a) - "...-admin", with cluster-wide access
-//   b) - "...-loser", without cluster-wide access or any access to any of the namespaces
-//   c) - "...-limited", without cluster-wide access, but with read access to one namespace
-// 4) execute GetAvailablePackageSummaries():
-//   a) with 3a) => should return 2 packages
-//   b) with 3b) => should return 0 packages
-//   c) with 3c) => should return 1 package
-// 5) execute GetAvailablePackageDetail():
-//   a) with 3a) => should work 2 times
-//   b) with 3b) => should fail 2 times with PermissionDenied error
-//   c) with 3c) => should fail once and work once
-// 6) execute GetAvailablePackageVersions():
-//   a) with 3a) => should work 2 times
-//   b) with 3b) => should fail 2 times with PermissionDenied error
-//   c) with 3c) => should fail once and work once
+//  1. create two namespaces
+//  2. create two helm repositories, each containing a single package: one in each of the namespaces from (1)
+//  3. create 3 service-accounts in default namespace:
+//     a) - "...-admin", with cluster-wide access
+//     b) - "...-loser", without cluster-wide access or any access to any of the namespaces
+//     c) - "...-limited", without cluster-wide access, but with read access to one namespace
+//  4. execute GetAvailablePackageSummaries():
+//     a) with 3a) => should return 2 packages
+//     b) with 3b) => should return 0 packages
+//     c) with 3c) => should return 1 package
+//  5. execute GetAvailablePackageDetail():
+//     a) with 3a) => should work 2 times
+//     b) with 3b) => should fail 2 times with PermissionDenied error
+//     c) with 3c) => should fail once and work once
+//  6. execute GetAvailablePackageVersions():
+//     a) with 3a) => should work 2 times
+//     b) with 3b) => should fail 2 times with PermissionDenied error
+//     c) with 3c) => should fail once and work once
+//
 // ref https://github.com/vmware-tanzu/kubeapps/issues/4390
 func TestKindClusterRepoAndChartRBAC(t *testing.T) {
 	fluxPluginClient, _, err := checkEnv(t)
@@ -557,7 +560,7 @@ func testCaseKindClusterAvailablePackageEndpointsForGitHub(t *testing.T) []testC
 }
 
 func testCaseKindClusterAvailablePackageEndpointsForHarbor(t *testing.T) []testCaseKindClusterAvailablePackageEndpointsForOCISpec {
-	if err := setupHarborStefanProdanClone(t); err != nil {
+	if err := setupHarborForIntegrationTest(t); err != nil {
 		t.Fatal(err)
 	}
 
@@ -815,12 +818,38 @@ func testKindClusterAvailablePackageEndpointsForOCIHelper(
 				t.Fatal(err)
 			}
 
-			grpcContext, cancel := context.WithTimeout(grpcContext, defaultContextTimeout)
-			defer cancel()
+			// ocassionally, on the server-side, I see a request that takes a really long time:
+			// I0923 03:26:42.829561       1 oci_repo.go:739] about to call helmGetter.Get(us-west1-docker.pkg.dev/vmware-kubeapps-ci/stefanprodan-podinfo-clone/podinfo:6.1.6)
+			// I0923 03:27:10.036728       1 oci_repo.go:742] helmGetter.Get(us-west1-docker.pkg.dev/vmware-kubeapps-ci/stefanprodan-podinfo-clone/podinfo:6.1.6) returned buffer size: [13544] error: <nil>
+			// so we'll use a longer timeout for these calls. Even so, every once in a while I get
+			// I0923 04:18:29.278764       1 oci_repo.go:739] about to call helmGetter.Get(us-west1-docker.pkg.dev/vmware-kubeapps-ci/stefanprodan-podinfo-clone/podinfo:6.1.6)
+			// I0923 04:23:30.391277       1 oci_repo.go:742] helmGetter.Get(us-west1-docker.pkg.dev/vmware-kubeapps-ci/stefanprodan-podinfo-clone/podinfo:6.1.6) returned buffer size: [13544] error: <nil>
+			//  i.e. an RPC call that takes > 4 minutes.
+			// DeadlineExceeded errors should not be retried because it means the server hasn't
+			// quite finished the original request even though the client is proceeding. The way the
+			// cache works is that a 2nd request is just not going to get past the rate limiting queue
+			// and in the end both will fail. There is no way for the client to know when the server finishes
+			// processing the 1st request, so for now, let's just allow a really long timeout
+			// I also ocassionally see
+			// I0923 08:03:07.519347       1 oci_repo.go:649] login(us-west1-docker.pkg.dev): Get "https://us-west1-docker.pkg.dev/v2/": net/http: request canceled while waiting for connection (Client.Timeout exceeded while awaiting headers)
+			// and
+			// I0923 17:35:12.800491       1 oci_repo.go:649] login(us-west1-docker.pkg.dev): Get "https://us-west1-docker.pkg.dev/v2/": Get "https://us-west1-docker.pkg.dev/v2/token?account=_json_key&client_id=docker&offline_token=true": dial tcp 142.251.2.82:443: i/o timeout (Client.Timeout exceeded while awaiting headers)
+			// These errors I would like retried
+			timeout := 5 * time.Minute
+			maxTries := 2
+			retryOptions := []grpc.CallOption{
+				grpc_retry.WithPerRetryTimeout(timeout),
+				grpc_retry.WithMax(uint(maxTries)),
+				grpc_retry.WithCodes(codes.Internal),
+			}
 
+			hour, minute, second := time.Now().Clock()
+			t.Logf("[%d:%d:%d] Calling GetAvailablePackageSummaries() blocking for up to [%s]...",
+				hour, minute, second, time.Duration(int64(timeout)*int64(maxTries)))
 			resp, err := fluxPluginClient.GetAvailablePackageSummaries(
 				grpcContext,
-				&corev1.GetAvailablePackageSummariesRequest{})
+				&corev1.GetAvailablePackageSummariesRequest{},
+				retryOptions...)
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -844,8 +873,9 @@ func testKindClusterAvailablePackageEndpointsForOCIHelper(
 				return // nothing more to check
 			}
 
-			grpcContext, cancel = context.WithTimeout(grpcContext, defaultContextTimeout)
-			defer cancel()
+			hour, minute, second = time.Now().Clock()
+			t.Logf("[%d:%d:%d] Calling GetAvailablePackageVersions() blocking for up to [%s]...",
+				hour, minute, second, time.Duration(int64(timeout)*int64(maxTries)))
 			resp2, err := fluxPluginClient.GetAvailablePackageVersions(
 				grpcContext, &corev1.GetAvailablePackageVersionsRequest{
 					AvailablePackageRef: &corev1.AvailablePackageReference{
@@ -854,7 +884,8 @@ func testKindClusterAvailablePackageEndpointsForOCIHelper(
 						},
 						Identifier: repoName.Name + "/podinfo",
 					},
-				})
+				},
+				retryOptions...)
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -865,8 +896,9 @@ func testKindClusterAvailablePackageEndpointsForOCIHelper(
 				t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opts))
 			}
 
-			grpcContext, cancel = context.WithTimeout(grpcContext, defaultContextTimeout)
-			defer cancel()
+			hour, minute, second = time.Now().Clock()
+			t.Logf("[%d:%d:%d] Calling GetAvailablePackageDetail(latest version) blocking for up to [%s]...",
+				hour, minute, second, time.Duration(int64(timeout)*int64(maxTries)))
 			resp3, err := fluxPluginClient.GetAvailablePackageDetail(
 				grpcContext,
 				&corev1.GetAvailablePackageDetailRequest{
@@ -876,7 +908,8 @@ func testKindClusterAvailablePackageEndpointsForOCIHelper(
 						},
 						Identifier: repoName.Name + "/podinfo",
 					},
-				})
+				},
+				retryOptions...)
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -886,11 +919,10 @@ func testKindClusterAvailablePackageEndpointsForOCIHelper(
 				resp3.AvailablePackageDetail,
 				expected_detail_oci_stefanprodan_podinfo(repoName.Name, tc.registryUrl).AvailablePackageDetail)
 
-			// try a few older versions
-			grpcContext, cancel = context.WithTimeout(grpcContext, defaultContextTimeout)
-			defer cancel()
-			resp4, err := fluxPluginClient.GetAvailablePackageDetail(
-				grpcContext,
+			// try an older version
+			t.Logf("[%d:%d:%d] Calling GetAvailablePackageDetail(specific version) blocking for up to [%s]...",
+				hour, minute, second, time.Duration(int64(timeout)*int64(maxTries)))
+			resp4, err := fluxPluginClient.GetAvailablePackageDetail(grpcContext,
 				&corev1.GetAvailablePackageDetailRequest{
 					AvailablePackageRef: &corev1.AvailablePackageReference{
 						Context: &corev1.Context{
@@ -899,7 +931,7 @@ func testKindClusterAvailablePackageEndpointsForOCIHelper(
 						Identifier: repoName.Name + "/podinfo",
 					},
 					PkgVersion: "6.1.6",
-				})
+				}, retryOptions...)
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -908,6 +940,103 @@ func testKindClusterAvailablePackageEndpointsForOCIHelper(
 				t,
 				resp4.AvailablePackageDetail,
 				expected_detail_oci_stefanprodan_podinfo_2(repoName.Name, tc.registryUrl).AvailablePackageDetail)
+		})
+	}
+}
+
+func TestKindClusterAvailablePackageEndpointsOCIRepo2Charts(t *testing.T) {
+	fluxPluginClient, fluxPluginReposClient, err := checkEnv(t)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := setupHarborForIntegrationTest(t); err != nil {
+		t.Fatal(err)
+	}
+
+	testCases := []struct {
+		testName    string
+		registryUrl string
+		secret      *apiv1.Secret
+	}{
+		{
+			testName:    "Testing [" + harbor_repo_with_2_charts_oci_registry_url + "] with basic auth secret (admin)",
+			registryUrl: harbor_repo_with_2_charts_oci_registry_url,
+			secret: newBasicAuthSecret(types.NamespacedName{
+				Name:      "oci-repo-secret-" + randSeq(4),
+				Namespace: "default"},
+				harbor_admin_user,
+				harbor_admin_pwd,
+			),
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.testName, func(t *testing.T) {
+			repoName := types.NamespacedName{
+				Name:      "my-podinfo-" + randSeq(4),
+				Namespace: "default",
+			}
+
+			secretName := ""
+			if tc.secret != nil {
+				secretName = tc.secret.Name
+
+				if err := kubeCreateSecretAndCleanup(t, tc.secret); err != nil {
+					t.Fatal(err)
+				}
+			}
+
+			setUserManagedSecretsAndCleanup(t, fluxPluginReposClient, true)
+
+			if err := kubeAddHelmRepositoryAndCleanup(
+				t, repoName, "oci", tc.registryUrl, secretName, 0); err != nil {
+				t.Fatal(err)
+			}
+			// wait until this repo reaches 'Ready'
+			err := kubeWaitUntilHelmRepositoryIsReady(t, repoName)
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			adminName := types.NamespacedName{
+				Name:      "test-admin-" + randSeq(4),
+				Namespace: "default",
+			}
+
+			grpcContext, err := newGrpcAdminContext(t, adminName)
+			if err != nil {
+				t.Fatal(err)
+			}
+			timeout := 5 * time.Minute
+			maxTries := 2
+			retryOptions := []grpc.CallOption{
+				grpc_retry.WithPerRetryTimeout(timeout),
+				grpc_retry.WithMax(uint(maxTries)),
+				grpc_retry.WithCodes(codes.Internal),
+			}
+
+			hour, minute, second := time.Now().Clock()
+			t.Logf("[%d:%d:%d] Calling GetAvailablePackageSummaries() blocking for up to [%s]...",
+				hour, minute, second, time.Duration(int64(timeout)*int64(maxTries)))
+			resp, err := fluxPluginClient.GetAvailablePackageSummaries(
+				grpcContext,
+				&corev1.GetAvailablePackageSummariesRequest{},
+				retryOptions...)
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			opt1 := cmpopts.IgnoreUnexported(
+				corev1.GetAvailablePackageSummariesResponse{},
+				corev1.AvailablePackageSummary{},
+				corev1.AvailablePackageReference{},
+				corev1.Context{},
+				plugins.Plugin{},
+				corev1.PackageAppVersion{})
+			opt2 := cmpopts.SortSlices(lessAvailablePackageFunc)
+			if got, want := resp, expected_oci_repo_with_2_charts_available_summaries(repoName.Name); !cmp.Equal(got, want, opt1, opt2) {
+				t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opt1, opt2))
+			}
 		})
 	}
 }

@@ -6,8 +6,8 @@ package main
 import (
 	"context"
 	"fmt"
+
 	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/pkg/helm"
-	"reflect"
 
 	helmv2 "github.com/fluxcd/helm-controller/api/v2beta1"
 	sourcev1 "github.com/fluxcd/source-controller/api/v1beta2"
@@ -113,7 +113,7 @@ func NewServer(configGetter core.KubernetesConfigGetter, kubeappsCluster string,
 			NewListFunc:  func() ctrlclient.ObjectList { return &sourcev1.HelmRepositoryList{} },
 			ListItemsFunc: func(ol ctrlclient.ObjectList) []ctrlclient.Object {
 				if hl, ok := ol.(*sourcev1.HelmRepositoryList); !ok {
-					log.Errorf("Expected: *sourcev1.HelmRepositoryList, got: %s", reflect.TypeOf(ol))
+					log.Errorf("Expected: *sourcev1.HelmRepositoryList, got: %T", ol)
 					return nil
 				} else {
 					ret := make([]ctrlclient.Object, len(hl.Items))
