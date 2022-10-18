@@ -8,7 +8,6 @@ import (
 	"fmt"
 	"math"
 	"os"
-	"reflect"
 	"strings"
 	"sync"
 	"time"
@@ -521,7 +520,7 @@ func (c *NamespacedResourceWatcherCache) processOneEvent(event watch.Event) {
 	switch event.Type {
 	case watch.Added, watch.Modified, watch.Deleted:
 		if obj, ok := event.Object.(ctrlclient.Object); !ok {
-			runtime.HandleError(fmt.Errorf("could not cast %s to *ctrlclient.Object", reflect.TypeOf(event.Object)))
+			runtime.HandleError(fmt.Errorf("could not cast %T to *ctrlclient.Object", event.Object))
 		} else if key, err := c.keyFor(obj); err != nil {
 			runtime.HandleError(err)
 		} else {

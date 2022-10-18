@@ -88,6 +88,7 @@ pushContainerToLocalRegistry() {
     # Access through Ingress TLS
     DOCKER_REGISTRY="$DOCKER_REGISTRY_HOST:443"
 
+    echo You may be prompted for sudo Password in order to append to /etc/hosts
     echo "127.0.0.1  $DOCKER_REGISTRY_HOST" | sudo tee -a /etc/hosts
 
     docker pull nginx

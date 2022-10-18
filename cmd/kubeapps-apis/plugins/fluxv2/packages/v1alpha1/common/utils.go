@@ -365,11 +365,6 @@ func OCIChartRepositoryCredentialFromSecret(registryURL string, secret apiv1.Sec
 		return nil, fmt.Errorf("invalid '%s' secret data: required fields 'username' and 'password'", secret.Name)
 	}
 
-	pwdRedacted := password
-	if len(pwdRedacted) > 4 {
-		pwdRedacted = pwdRedacted[0:3] + "..."
-	}
-	log.Infof("-OCIChartRepositoryCredentialFromSecret: username: [%s], password: [%s]", username, pwdRedacted)
 	return &orasregistryauthv2.Credential{
 		Username: username,
 		Password: password,
@@ -396,11 +391,7 @@ func OIDCAdaptHelper(authenticator authn.Authenticator) (*orasregistryauthv2.Cre
 	case username == "" || password == "":
 		return nil, fmt.Errorf("invalid auth data: required fields 'username' and 'password'")
 	}
-	pwdRedacted := password
-	if len(pwdRedacted) > 4 {
-		pwdRedacted = pwdRedacted[0:3] + "..."
-	}
-	log.Infof("-OIDCAdaptHelper: username: [%s], password: [%s]", username, pwdRedacted)
+
 	return &orasregistryauthv2.Credential{
 		Username: username,
 		Password: password,

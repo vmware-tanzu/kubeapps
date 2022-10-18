@@ -9,7 +9,6 @@ import (
 	"fmt"
 	"net/url"
 	"os"
-	"reflect"
 	"strings"
 	"sync"
 	"time"
@@ -378,7 +377,7 @@ func (c *ChartCache) syncHandler(workerName, key string) error {
 
 	chart, ok := entry.(chartCacheStoreEntry)
 	if !ok {
-		return fmt.Errorf("unexpected object in cache store: [%s]", reflect.TypeOf(entry))
+		return fmt.Errorf("unexpected object in cache store: [%T]", entry)
 	}
 
 	if chart.deleted {
@@ -584,7 +583,7 @@ func (c *ChartCache) WaitUntilResyncComplete() {
 
 func chartCacheKeyFunc(obj interface{}) (string, error) {
 	if entry, ok := obj.(chartCacheStoreEntry); !ok {
-		return "", fmt.Errorf("unexpected object in chartCacheKeyFunc: [%s]", reflect.TypeOf(obj))
+		return "", fmt.Errorf("unexpected object in chartCacheKeyFunc: [%T]", obj)
 	} else {
 		return chartCacheKeyFor(entry.namespace, entry.id, entry.version)
 	}
