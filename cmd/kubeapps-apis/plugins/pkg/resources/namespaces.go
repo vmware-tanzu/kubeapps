@@ -62,10 +62,9 @@ func FindAccessibleNamespaces(clusterTypedClientGetter clientgetter.TypedClientF
 		} else {
 			return namespaceList, nil
 		}
-	} else {
-		// If the user can list namespaces, do not filter them
-		return namespaces.Items, nil
 	}
+	// If the user can list namespaces, do not filter them
+	return namespaces.Items, nil
 }
 
 func nsCheckerWorker(client kubernetes.Interface, nsJobs <-chan checkNSJob, resultChan chan checkNSResult) {
