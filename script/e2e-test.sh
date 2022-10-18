@@ -15,8 +15,9 @@ ALL_TESTS="all"
 MAIN_TESTS="main"
 MULTICLUSTER_TESTS="multicluster"
 CARVEL_TESTS="carvel"
+CARVEL_TESTS="flux"
 OPERATOR_TESTS="operator"
-SUPPORTED_TESTS_GROUPS=("${ALL_TESTS}" "${MAIN_TESTS}" "${MULTICLUSTER_TESTS}" "${CARVEL_TESTS}" "${OPERATOR_TESTS}")
+SUPPORTED_TESTS_GROUPS=("${ALL_TESTS}" "${MAIN_TESTS}" "${MULTICLUSTER_TESTS}" "${CARVEL_TESTS}" "${FLUX_TESTS}" "${OPERATOR_TESTS}")
 
 # Params
 USE_MULTICLUSTER_OIDC_ENV=${1:-false}
@@ -572,30 +573,11 @@ if [[ -z "${GKE_BRANCH-}" && ("${TESTS_GROUP}" == "${ALL_TESTS}" || "${TESTS_GRO
   info "Multi-cluster tests execution time: $(formattedElapsedTime sectionEndTime-sectionStartTime)"
 fi
 
-## Upgrade and run Flux test
-installFlux "${FLUX_VERSION}"
-info "Updating Kubeapps with flux support"
-installOrUpgradeKubeapps "${ROOT_DIR}/chart/kubeapps" \
-  "--set" "packaging.flux.enabled=true" \
-  "--set" "packaging.helm.enabled=false" \
-  "--set" "packaging.carvel.enabled=false"
-
-info "Waiting for updated Kubeapps components to be ready..."
-k8s_wait_for_deployment kubeapps kubeapps-ci
-
-info "Running flux integration test..."
-if ! kubectl exec -it "$pod" -- /bin/sh -c "CI_TIMEOUT_MINUTES=20 TEST_TIMEOUT_MINUTES=${TEST_TIMEOUT_MINUTES} INTEGRATION_ENTRYPOINT=http://kubeapps-ci.kubeapps USE_MULTICLUSTER_OIDC_ENV=${USE_MULTICLUSTER_OIDC_ENV} ADMIN_TOKEN=${admin_token} VIEW_TOKEN=${view_token} EDIT_TOKEN=${edit_token} yarn test \"tests/flux/\""; then
-  ## Integration tests failed, get report screenshot
-  warn "PODS status on failure"
-  kubectl cp "${pod}:/app/reports" ./reports
-  exit 1
-fi
-info "Flux integration tests succeeded!"
-
-## Upgrade and run operator test
-# Operators are not supported in GKE 1.14 and flaky in 1.15, skipping test
-if [[ -z "${GKE_BRANCH-}" ]] && [[ -n "${TEST_OPERATORS-}" ]]; then
-  installOLM "${OLM_VERSION}"
+####################################
+######## Carvel tests group ########
+####################################
+if [[ "${TESTS_GROUP}" == "${ALL_TESTS}" || "${TESTS_GROUP}" == "${CARVEL_TESTS}" ]]; then
+  sectionStartTime=$(date +%s)
 
   ## Upgrade and run Carvel test
   installKappController "${KAPP_CONTROLLER_VERSION}"
@@ -629,6 +611,48 @@ if [[ -z "${GKE_BRANCH-}" ]] && [[ -n "${TEST_OPERATORS-}" ]]; then
 
   sectionEndTime=$(date +%s)
   info "Carvel tests execution time: $(formattedElapsedTime sectionEndTime-sectionStartTime)"
+fi
+
+####################################
+######## Flux tests group ########
+####################################
+if [[ "${TESTS_GROUP}" == "${ALL_TESTS}" || "${TESTS_GROUP}" == "${FLUX_TESTS}" ]]; then
+  sectionStartTime=$(date +%s)
+
+  ## Upgrade and run Flux test
+  installFlux "${FLUX_VERSION}"
+  info "Updating Kubeapps with flux support"
+  installOrUpgradeKubeapps "${ROOT_DIR}/chart/kubeapps" \
+    "--set" "packaging.flux.enabled=true" \
+    "--set" "packaging.helm.enabled=false" \
+    "--set" "packaging.carvel.enabled=false"
+
+  info "Waiting for updated Kubeapps components to be ready..."
+  k8s_wait_for_deployment kubeapps kubeapps-ci
+
+  info "Running flux integration test..."
+  test_command="
+    CI_TIMEOUT_MINUTES=20 \
+    TEST_TIMEOUT_MINUTES=${TEST_TIMEOUT_MINUTES} \
+    INTEGRATION_ENTRYPOINT=http://kubeapps-ci.kubeapps \
+    USE_MULTICLUSTER_OIDC_ENV=${USE_MULTICLUSTER_OIDC_ENV} \
+    ADMIN_TOKEN=${admin_token} \
+    VIEW_TOKEN=${view_token} \
+    EDIT_TOKEN=${edit_token} \
+    yarn test \"tests/flux/\"
+    "
+  info "${test_command}"
+  
+  if ! kubectl exec -it "$pod" -- /bin/sh -c "${test_command}"; then
+    ## Integration tests failed, get report screenshot
+    warn "PODS status on failure"
+    kubectl cp "${pod}:/app/reports" ./reports
+    exit 1
+  fi
+  info "Flux integration tests succeeded!"
+
+  sectionEndTime=$(date +%s)
+  info "Flux tests execution time: $(formattedElapsedTime sectionEndTime-sectionStartTime)"
 fi
 
 #######################################
