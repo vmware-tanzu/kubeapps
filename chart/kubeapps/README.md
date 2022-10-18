@@ -116,7 +116,7 @@ Once you have installed Kubeapps follow the [Getting Started Guide](https://gith
 | ------------------------------------------------ | ----------------------------------------------------------------------------------------------------- | ---------------------- |
 | `frontend.image.registry`                        | NGINX image registry                                                                                  | `docker.io`            |
 | `frontend.image.repository`                      | NGINX image repository                                                                                | `bitnami/nginx`        |
-| `frontend.image.tag`                             | NGINX image tag (immutable tags are recommended)                                                      | `1.23.1-debian-11-r27` |
+| `frontend.image.tag`                             | NGINX image tag (immutable tags are recommended)                                                      | `1.23.1-debian-11-r35` |
 | `frontend.image.digest`                          | NGINX image digest in the way sha256:aa.... Please note this parameter, if set, will override the tag | `""`                   |
 | `frontend.image.pullPolicy`                      | NGINX image pull policy                                                                               | `IfNotPresent`         |
 | `frontend.image.pullSecrets`                     | NGINX image pull secrets                                                                              | `[]`                   |
@@ -349,7 +349,7 @@ Once you have installed Kubeapps follow the [Getting Started Guide](https://gith
 | `authProxy.enabled`                               | Specifies whether Kubeapps should configure OAuth login/logout                                               | `false`                |
 | `authProxy.image.registry`                        | OAuth2 Proxy image registry                                                                                  | `docker.io`            |
 | `authProxy.image.repository`                      | OAuth2 Proxy image repository                                                                                | `bitnami/oauth2-proxy` |
-| `authProxy.image.tag`                             | OAuth2 Proxy image tag (immutable tags are recommended)                                                      | `7.3.0-debian-11-r40`  |
+| `authProxy.image.tag`                             | OAuth2 Proxy image tag (immutable tags are recommended)                                                      | `7.3.0-debian-11-r46`  |
 | `authProxy.image.digest`                          | OAuth2 Proxy image digest in the way sha256:aa.... Please note this parameter, if set, will override the tag | `""`                   |
 | `authProxy.image.pullPolicy`                      | OAuth2 Proxy image pull policy                                                                               | `IfNotPresent`         |
 | `authProxy.image.pullSecrets`                     | OAuth2 Proxy image pull secrets                                                                              | `[]`                   |
@@ -553,7 +553,6 @@ Once you have installed Kubeapps follow the [Getting Started Guide](https://gith
 | `redis.replica.extraFlags`          | Array with additional command line flags for Redis&reg; replicas | `["--maxmemory 200mb","--maxmemory-policy allkeys-lru"]` |
 | `redis.replica.disableCommands`     | Array with commands to deactivate on Redis&reg;                  | `[]`                                                     |
 | `redis.replica.persistence.enabled` | Enable Redis&reg; replica data persistence using PVC             | `false`                                                  |
-
 
 Specify each parameter using the `--set key=value[,key=value]` argument to `helm install`. For example,
 
