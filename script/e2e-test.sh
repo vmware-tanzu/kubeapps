@@ -28,10 +28,8 @@ DEX_IP=${6:-"172.18.0.2"}
 ADDITIONAL_CLUSTER_IP=${7:-"172.18.0.3"}
 KAPP_CONTROLLER_VERSION=${8:-"v0.41.2"}
 CHARTMUSEUM_VERSION=${9:-"3.9.0"}
-<<<<<<< HEAD
 # check latest flux releases at https://github.com/fluxcd/flux2/releases
-FLUX_VERSION=${10:-"v0.34.0"}
-=======
+FLUX_VERSION=${10:-"v0.35.0"}
 IMG_PREFIX=${IMG_PREFIX:-"kubeapps/"}
 TESTS_GROUP=${TESTS_GROUP:-"${ALL_TESTS}"}
 
@@ -41,7 +39,6 @@ if [[ ! " ${SUPPORTED_TESTS_GROUPS[*]} " =~ " ${TESTS_GROUP} " ]]; then
   echo $(IFS=','; echo "The provided TEST_GROUP [${TESTS_GROUP}] is not supported. Supported groups are: ${SUPPORTED_TESTS_GROUPS[*]}")
   exit 1
 fi
->>>>>>> main
 
 # TODO(andresmgot): While we work with beta releases, the Bitnami pipeline
 # removes the pre-release part of the tag
