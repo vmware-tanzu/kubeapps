@@ -59,9 +59,8 @@ func FindAccessibleNamespaces(clusterTypedClientGetter clientgetter.TypedClientF
 		// Filter namespaces in which the user has permissions to write (secrets) only
 		if namespaceList, err := filterAllowedNamespaces(typedClient, maxWorkers, namespaces.Items); err != nil {
 			return nil, err
-		} else {
-			return namespaceList, nil
 		}
+		return namespaceList, nil
 	}
 	// If the user can list namespaces, do not filter them
 	return namespaces.Items, nil
