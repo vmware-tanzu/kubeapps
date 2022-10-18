@@ -309,80 +309,6 @@ installOrUpgradeKubeapps() {
   "${cmd[@]}"
 }
 
-<<<<<<< HEAD
-createServiceAccountsAndRBAC() {
-  ## Create admin user
-  # using YAML to workaround https://github.com/vmware-tanzu/kubeapps/pull/4772
-  kubectl create --namespace kubeapps serviceaccount kubeapps-operator
-  kubectl create -f - <<EOF
-apiVersion: v1
-kind: Secret
-type: kubernetes.io/service-account-token
-metadata:
-  name: kubeapps-operator-token
-  namespace: kubeapps
-  annotations:
-    kubernetes.io/service-account.name: "kubeapps-operator"
-EOF
-  kubectl patch serviceaccount -n kubeapps kubeapps-operator -p '{"secrets": [{"name": "kubeapps-operator-token"}]}'
-  kubectl create clusterrolebinding kubeapps-operator-admin --clusterrole=cluster-admin --serviceaccount kubeapps:kubeapps-operator
-  kubectl create clusterrolebinding kubeapps-repositories-write --clusterrole kubeapps:kubeapps:apprepositories-write --serviceaccount kubeapps:kubeapps-operator
-  kubectl create rolebinding kubeapps-sa-operator-apprepositories-write -n kubeapps-user-namespace --clusterrole=kubeapps:kubeapps:apprepositories-write --serviceaccount kubeapps:kubeapps-operator
-  ## Create view user
-  kubectl create serviceaccount kubeapps-view -n kubeapps
-  kubectl create -f - <<EOF
-apiVersion: v1
-kind: Secret
-type: kubernetes.io/service-account-token
-metadata:
-  name: kubeapps-view-token
-  namespace: kubeapps
-  annotations:
-    kubernetes.io/service-account.name: "kubeapps-view"
-EOF
-  kubectl patch serviceaccount -n kubeapps kubeapps-view -p '{"secrets": [{"name": "kubeapps-view-token"}]}'
-  kubectl create role view-secrets --verb=get,list,watch --resource=secrets
-  kubectl create rolebinding kubeapps-view-secret --role view-secrets --serviceaccount kubeapps:kubeapps-view
-  kubectl create clusterrolebinding kubeapps-view --clusterrole=view --serviceaccount kubeapps:kubeapps-view
-  kubectl create rolebinding kubeapps-view-user-apprepo-read -n kubeapps-user-namespace --clusterrole=kubeapps:kubeapps:apprepositories-read --serviceaccount kubeapps:kubeapps-view
-  kubectl create rolebinding kubeapps-view-user -n kubeapps-user-namespace --clusterrole=edit --serviceaccount kubeapps:kubeapps-view
-  ## Create edit user
-  kubectl create serviceaccount kubeapps-edit -n kubeapps
-  kubectl create -f - <<EOF
-apiVersion: v1
-kind: Secret
-type: kubernetes.io/service-account-token
-metadata:
-  name: kubeapps-edit-token
-  namespace: kubeapps
-  annotations:
-    kubernetes.io/service-account.name: "kubeapps-edit"
-EOF
-  kubectl patch serviceaccount -n kubeapps kubeapps-edit -p '{"secrets": [{"name": "kubeapps-edit-token"}]}'
-  # TODO(minelson): Many of these roles/bindings need to be cleaned up. Some are
-  # unnecessary (with chart changes), some should not be created (such as edit
-  # here having the edit cluster role in the kubeapps namespace - should just be
-  # default). See https://github.com/vmware-tanzu/kubeapps/issues/4435
-  kubectl create rolebinding kubeapps-edit -n kubeapps --clusterrole=edit --serviceaccount kubeapps:kubeapps-edit
-  kubectl create rolebinding kubeapps-edit -n default --clusterrole=edit --serviceaccount kubeapps:kubeapps-edit
-  kubectl create clusterrolebinding kubeapps-repositories-read --clusterrole kubeapps:kubeapps:apprepositories-read --serviceaccount kubeapps:kubeapps-edit
-  # TODO(minelson): Similar to the `global-repos-read` rolebinding that the chart
-  # adds to the `kubeapps-repos-global` namespace for all authenticated users, we
-  # should eventually consider adding a similar rolebinding for secrets in the
-  # `kubeapps-repos-global` namespace also (but not if the global repos namespace
-  # is configured to be the kubeapps namespace, of course.) For now, explicit
-  # creation because CI tests with a repo with creds in the global repos ns.
-  # See https://github.com/vmware-tanzu/kubeapps/issues/4435
-  kubectl create role view-secrets -n ${GLOBAL_REPOS_NS} --verb=get,list,watch --resource=secrets
-  kubectl create rolebinding global-repos-secrets-read -n ${GLOBAL_REPOS_NS} --role=view-secrets --serviceaccount kubeapps:kubeapps-edit
-
-  ## Give the cluster some time to avoid timeout issues
-  retry_while "kubectl get -n kubeapps serviceaccount kubeapps-operator -o name" "5" "1"
-  retry_while "kubectl get -n kubeapps serviceaccount kubeapps-view -o name" "5" "1"
-  retry_while "kubectl get -n kubeapps serviceaccount kubeapps-edit -o name" "5" "1"
-}
-
-=======
 ########################
 # Formats the provided time in seconds.
 # Arguments:
@@ -402,7 +328,6 @@ if [[ "${DEBUG_MODE:-false}" == "true" ]]; then
   docker exec kubeapps-ci-control-plane crictl images
 fi
 
->>>>>>> main
 # Use dev images or Bitnami if testing the latest release
 kubeapps_apis_image="kubeapps-apis"
 [[ -n "${TEST_LATEST_RELEASE:-}" ]] && IMG_PREFIX="bitnami/kubeapps-" && kubeapps_apis_image="apis"
@@ -540,30 +465,6 @@ done
 kubectl cp ./tests "${pod}:/app/"
 info "Copied tests to e2e-runner pod ${pod}"
 
-<<<<<<< HEAD
-createServiceAccountsAndRBAC
-
-## Retrieve tokens
-admin_token="$(kubectl get -n kubeapps secret "$(kubectl get -n kubeapps serviceaccount kubeapps-operator -o jsonpath='{.secrets[].name}')" -o go-template='{{.data.token | base64decode}}' && echo)"
-view_token="$(kubectl get -n kubeapps secret "$(kubectl get -n kubeapps serviceaccount kubeapps-view -o jsonpath='{.secrets[].name}')" -o go-template='{{.data.token | base64decode}}' && echo)"
-edit_token="$(kubectl get -n kubeapps secret "$(kubectl get -n kubeapps serviceaccount kubeapps-edit -o jsonpath='{.secrets[].name}')" -o go-template='{{.data.token | base64decode}}' && echo)"
-
-info "Running main Integration tests without k8s API access..."
-if ! kubectl exec -it "$pod" -- /bin/sh -c "CI_TIMEOUT_MINUTES=40 DOCKER_USERNAME=${DOCKER_USERNAME} DOCKER_PASSWORD=${DOCKER_PASSWORD} DOCKER_REGISTRY_URL=${DOCKER_REGISTRY_URL} TEST_TIMEOUT_MINUTES=${TEST_TIMEOUT_MINUTES} INTEGRATION_ENTRYPOINT=http://kubeapps-ci.kubeapps USE_MULTICLUSTER_OIDC_ENV=${USE_MULTICLUSTER_OIDC_ENV} ADMIN_TOKEN=${admin_token} VIEW_TOKEN=${view_token} EDIT_TOKEN=${edit_token} yarn test ${testsArgs}"; then
-  ## Integration tests failed, get report screenshot
-  warn "PODS status on failure"
-  kubectl cp "${pod}:/app/reports" ./reports
-  exit 1
-fi
-info "Main integration tests succeeded!!"
-
-## Upgrade and run Carvel test
-installKappController "${KAPP_CONTROLLER_VERSION}"
-info "Updating Kubeapps with carvel support"
-installOrUpgradeKubeapps "${ROOT_DIR}/chart/kubeapps" \
-  "--set" "packaging.helm.enabled=false" \
-  "--set" "packaging.carvel.enabled=true"
-=======
 ## Create admin user
 kubectl create serviceaccount kubeapps-operator -n kubeapps
 kubectl create clusterrolebinding kubeapps-operator-admin --clusterrole=cluster-admin --serviceaccount kubeapps:kubeapps-operator
@@ -638,7 +539,6 @@ if [[ "${TESTS_GROUP}" == "${ALL_TESTS}" || "${TESTS_GROUP}" == "${MAIN_TESTS}" 
   sectionEndTime=$(date +%s)
   info "Main tests execution time: $(formattedElapsedTime sectionEndTime-sectionStartTime)"
 fi
->>>>>>> main
 
 ###########################################
 ######## Multi-cluster tests group ########
@@ -672,7 +572,6 @@ if [[ -z "${GKE_BRANCH-}" && ("${TESTS_GROUP}" == "${ALL_TESTS}" || "${TESTS_GRO
   info "Multi-cluster tests execution time: $(formattedElapsedTime sectionEndTime-sectionStartTime)"
 fi
 
-<<<<<<< HEAD
 ## Upgrade and run Flux test
 installFlux "${FLUX_VERSION}"
 info "Updating Kubeapps with flux support"
@@ -697,13 +596,6 @@ info "Flux integration tests succeeded!"
 # Operators are not supported in GKE 1.14 and flaky in 1.15, skipping test
 if [[ -z "${GKE_BRANCH-}" ]] && [[ -n "${TEST_OPERATORS-}" ]]; then
   installOLM "${OLM_VERSION}"
-=======
-####################################
-######## Carvel tests group ########
-####################################
-if [[ "${TESTS_GROUP}" == "${ALL_TESTS}" || "${TESTS_GROUP}" == "${CARVEL_TESTS}" ]]; then
-  sectionStartTime=$(date +%s)
->>>>>>> main
 
   ## Upgrade and run Carvel test
   installKappController "${KAPP_CONTROLLER_VERSION}"
