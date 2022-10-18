@@ -336,7 +336,7 @@ type ClientReaction struct {
 	reaction k8stesting.ReactionFunc
 }
 
-func newServerWithReactors(unstructuredObjs []k8sruntime.Object, repos []*v1alpha1.AppRepository, typedObjects []k8sruntime.Object, typedClientReactions []*ClientReaction, dynClientReactions []*ClientReaction) *Server {
+func newServerWithAppRepoReactors(unstructuredObjs []k8sruntime.Object, repos []*v1alpha1.AppRepository, typedObjects []k8sruntime.Object, typedClientReactions []*ClientReaction, dynClientReactions []*ClientReaction) *Server {
 	typedClient := typfake.NewSimpleClientset(typedObjects...)
 
 	for _, reaction := range typedClientReactions {

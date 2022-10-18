@@ -975,7 +975,7 @@ func TestGetPackageRepositorySummaries(t *testing.T) {
 				}
 			}
 
-			s := newServerWithReactors(unstructuredObjects, nil, typedObjects, nil, tc.reactors)
+			s := newServerWithAppRepoReactors(unstructuredObjects, nil, typedObjects, nil, tc.reactors)
 
 			response, err := s.GetPackageRepositorySummaries(context.Background(), tc.request)
 
