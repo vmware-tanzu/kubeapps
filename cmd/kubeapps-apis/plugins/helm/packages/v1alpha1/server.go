@@ -8,23 +8,18 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"net/url"
-	"os"
-	"path"
-	"strings"
-
 	appRepov1 "github.com/vmware-tanzu/kubeapps/cmd/apprepository-controller/pkg/apis/apprepository/v1alpha1"
 	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/core"
 	corev1 "github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
 	helmv1 "github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/plugins/helm/packages/v1alpha1"
 	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/helm/packages/v1alpha1/common"
 	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/helm/packages/v1alpha1/utils"
-	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/pkg/agent"
 	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/pkg/clientgetter"
+	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/pkg/helm"
+	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/pkg/helm/agent"
 	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/pkg/paginate"
 	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/pkg/pkgutils"
 	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/pkg/resourcerefs"
-	chartutils "github.com/vmware-tanzu/kubeapps/pkg/chart"
 	"github.com/vmware-tanzu/kubeapps/pkg/chart/models"
 	"github.com/vmware-tanzu/kubeapps/pkg/dbutils"
 	httpclient "github.com/vmware-tanzu/kubeapps/pkg/http-client"
@@ -43,7 +38,11 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/kubernetes"
 	log "k8s.io/klog/v2"
+	"net/url"
+	"os"
+	"path"
 	ctrlclient "sigs.k8s.io/controller-runtime/pkg/client"
+	"strings"
 )
 
 type helmActionConfigGetter func(ctx context.Context, pkgContext *corev1.Context) (*action.Configuration, error)
@@ -64,22 +63,26 @@ type Server struct {
 	// clientGetter is a field so that it can be switched in tests for
 	// a fake client. NewServer() below sets this automatically with the
 	// non-test implementation.
-	clientGetter             clientgetter.ClientProviderInterface
-	globalPackagingNamespace string
-	globalPackagingCluster   string
-	manager                  utils.AssetManager
-	actionConfigGetter       helmActionConfigGetter
-	chartClientFactory       chartutils.ChartClientFactoryInterface
-	createReleaseFunc        createRelease
-	kubeappsCluster          string // Specifies the cluster on which Kubeapps is installed.
-	kubeappsNamespace        string // Namespace in which Kubeapps is installed
-	pluginConfig             *common.HelmPluginConfig
-	repoClientGetter         newRepoClient
+	clientGetter clientgetter.ClientProviderInterface
+	// for interactions with k8s API server in the context of
+	// kubeapps-internal-kubeappsapis service account
+	localServiceAccountClientGetter clientgetter.FixedClusterClientProviderInterface
+	globalPackagingNamespace        string
+	globalPackagingCluster          string
+	manager                         utils.AssetManager
+	actionConfigGetter              helmActionConfigGetter
+	chartClientFactory              utils.ChartClientFactoryInterface
+	createReleaseFunc               createRelease
+	kubeappsCluster                 string // Specifies the cluster on which Kubeapps is installed.
+	kubeappsNamespace               string // Namespace in which Kubeapps is installed
+	pluginConfig                    *common.HelmPluginConfig
+	repoClientGetter                newRepoClient
+	clientQPS                       float32
 }
 
 // NewServer returns a Server automatically configured with a function to obtain
 // the k8s client config.
-func NewServer(configGetter core.KubernetesConfigGetter, globalPackagingCluster string, globalPackagingNamespace string, pluginConfigPath string) *Server {
+func NewServer(configGetter core.KubernetesConfigGetter, globalPackagingCluster string, globalPackagingNamespace string, clientQPS float32, clientBurst int, pluginConfigPath string) *Server {
 	var ASSET_SYNCER_DB_URL = os.Getenv("ASSET_SYNCER_DB_URL")
 	var ASSET_SYNCER_DB_NAME = os.Getenv("ASSET_SYNCER_DB_NAME")
 	var ASSET_SYNCER_DB_USERNAME = os.Getenv("ASSET_SYNCER_DB_USERNAME")
@@ -141,6 +144,8 @@ func NewServer(configGetter core.KubernetesConfigGetter, globalPackagingCluster 
 
 	return &Server{
 		clientGetter: clientProvider,
+		// Get the "in-cluster" client getter
+		localServiceAccountClientGetter: clientgetter.NewBackgroundClientProvider(clientgetter.Options{}, clientQPS, clientBurst),
 		actionConfigGetter: func(ctx context.Context, pkgContext *corev1.Context) (*action.Configuration, error) {
 			cluster := pkgContext.GetCluster()
 			// Don't force clients to send a cluster unless we are sure all use-cases
@@ -148,17 +153,18 @@ func NewServer(configGetter core.KubernetesConfigGetter, globalPackagingCluster 
 			if cluster == "" {
 				cluster = globalPackagingCluster
 			}
-			fn := clientgetter.NewHelmActionConfigGetter(configGetter, cluster)
+			fn := helm.NewHelmActionConfigGetter(configGetter, cluster)
 			return fn(ctx, pkgContext.GetNamespace())
 		},
 		manager:                  manager,
 		kubeappsNamespace:        kubeappsNamespace,
 		globalPackagingNamespace: globalPackagingNamespace,
 		globalPackagingCluster:   globalPackagingCluster,
-		chartClientFactory:       &chartutils.ChartClientFactory{},
+		chartClientFactory:       &utils.ChartClientFactory{},
 		pluginConfig:             pluginConfig,
 		createReleaseFunc:        agent.CreateRelease,
 		repoClientGetter:         newRepositoryClient,
+		clientQPS:                clientQPS,
 	}
 }
 
@@ -683,7 +689,7 @@ func (s *Server) CreateInstalledPackage(ctx context.Context, request *corev1.Cre
 	if err != nil {
 		return nil, err
 	}
-	chartDetails := &chartutils.Details{
+	chartDetails := &utils.ChartDetails{
 		AppRepositoryResourceName:      repoName,
 		AppRepositoryResourceNamespace: repoNamespace,
 		ChartName:                      chartName,
@@ -754,7 +760,7 @@ func (s *Server) UpdateInstalledPackage(ctx context.Context, request *corev1.Upd
 	if err != nil {
 		return nil, err
 	}
-	chartDetails := &chartutils.Details{
+	chartDetails := &utils.ChartDetails{
 		AppRepositoryResourceName:      repoName,
 		AppRepositoryResourceNamespace: availablePkgRef.GetContext().GetNamespace(),
 		ChartName:                      chartName,
@@ -860,7 +866,7 @@ func (s *Server) getAppRepoAndRelatedSecrets(ctx context.Context, cluster, appRe
 // fetchChartWithRegistrySecrets returns the chart and related registry secrets.
 //
 // Mainly to DRY up similar code in the create and update methods.
-func (s *Server) fetchChartWithRegistrySecrets(ctx context.Context, chartDetails *chartutils.Details, client kubernetes.Interface) (*chart.Chart, map[string]string, error) {
+func (s *Server) fetchChartWithRegistrySecrets(ctx context.Context, chartDetails *utils.ChartDetails, client kubernetes.Interface) (*chart.Chart, map[string]string, error) {
 	// Most of the existing code that we want to reuse is based on having a typed AppRepository.
 	appRepo, caCertSecret, authSecret, _, err := s.getAppRepoAndRelatedSecrets(ctx, s.globalPackagingCluster, chartDetails.AppRepositoryResourceName, chartDetails.AppRepositoryResourceNamespace)
 	if err != nil {
@@ -888,7 +894,7 @@ func (s *Server) fetchChartWithRegistrySecrets(ctx context.Context, chartDetails
 
 	// Grab the chart itself
 	ch, err := utils.GetChart(
-		&chartutils.Details{
+		&utils.ChartDetails{
 			AppRepositoryResourceName:      appRepo.Name,
 			AppRepositoryResourceNamespace: appRepo.Namespace,
 			ChartName:                      chartDetails.ChartName,
@@ -903,7 +909,7 @@ func (s *Server) fetchChartWithRegistrySecrets(ctx context.Context, chartDetails
 		return nil, nil, status.Errorf(codes.Internal, "Unable to fetch the chart %s from the namespace %q: %v", chartDetails.ChartName, appRepo.Namespace, err)
 	}
 
-	registrySecrets, err := chartutils.RegistrySecretsPerDomain(ctx, appRepo.Spec.DockerRegistrySecrets, appRepo.Namespace, client)
+	registrySecrets, err := utils.RegistrySecretsPerDomain(ctx, appRepo.Spec.DockerRegistrySecrets, appRepo.Namespace, client)
 	if err != nil {
 		return nil, nil, status.Errorf(codes.Internal, "Unable to fetch registry secrets from the namespace %q: %v", appRepo.Namespace, err)
 	}

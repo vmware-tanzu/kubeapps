@@ -75,8 +75,9 @@ type DownloadChartFn func(chartID, chartUrl, chartVersion string) ([]byte, error
 
 // chartCacheStoreEntry is what we'll be storing in the processing store
 // note that url and delete fields are mutually exclusive, you must either:
-//  - set url to non-empty string or
-//  - deleted flag to true
+//   - set url to non-empty string or
+//   - deleted flag to true
+//
 // setting both for a given entry does not make sense
 type chartCacheStoreEntry struct {
 	namespace  string
@@ -199,7 +200,7 @@ func (c *ChartCache) runWorker(workerName string) {
 // attempt to process it, by calling the syncHandler.
 
 // ref: https://engineering.bitnami.com/articles/kubewatch-an-example-of-kubernetes-custom-controller.html
-// ref: https://github.com/bitnami-labs/kubewatch/blob/master/pkg/controller/controller.go
+// ref:https://github.com/vmware-archive/kubewatch/blob/master/pkg/controller/controller.go
 func (c *ChartCache) processNextWorkItem(workerName string) bool {
 	log.Infof("+processNextWorkItem(%s)", workerName)
 	defer log.Infof("-processNextWorkItem(%s)", workerName)
@@ -453,18 +454,18 @@ func (c *ChartCache) Fetch(key string) ([]byte, error) {
 }
 
 /*
- Get() is like Fetch() but if there is a cache miss, it will then get chart data based on
- the corresponding repo object, process it and then add it to the cache and return the
- result.
- This func should:
+Get() is like Fetch() but if there is a cache miss, it will then get chart data based on
+the corresponding repo object, process it and then add it to the cache and return the
+result.
+This func should:
 
- • return an error if the entry could not be computed due to not being able to read
- repos secretRef.
+• return an error if the entry could not be computed due to not being able to read
+repos secretRef.
 
- • return nil for any invalid chart name.
+• return nil for any invalid chart name.
 
- • otherwise return the bytes stored in the
- chart cache for the given entry
+• otherwise return the bytes stored in the
+chart cache for the given entry
 */
 func (c *ChartCache) Get(key string, chart *models.Chart, downloadFn DownloadChartFn) ([]byte, error) {
 	// TODO (gfichtenholt) it'd be nice to get rid of all arguments except for the key, similar to that of

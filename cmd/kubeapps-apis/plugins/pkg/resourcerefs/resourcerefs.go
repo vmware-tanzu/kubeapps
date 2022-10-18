@@ -6,11 +6,11 @@ package resourcerefs
 import (
 	"context"
 	goerrs "errors"
+	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/pkg/helm"
 	"io"
 	"strings"
 
 	corev1 "github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
-	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/pkg/clientgetter"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"helm.sh/helm/v3/pkg/action"
@@ -90,7 +90,7 @@ func ResourceRefsFromManifest(m, pkgNamespace string) ([]*corev1.ResourceRef, er
 func GetInstalledPackageResourceRefs(
 	ctx context.Context,
 	helmReleaseName types.NamespacedName,
-	actionConfigGetter clientgetter.HelmActionConfigGetterFunc) ([]*corev1.ResourceRef, error) {
+	actionConfigGetter helm.HelmActionConfigGetterFunc) ([]*corev1.ResourceRef, error) {
 	namespace := helmReleaseName.Namespace
 
 	actionConfig, err := actionConfigGetter(ctx, namespace)

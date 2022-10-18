@@ -330,7 +330,7 @@ $ grpcurl -plaintext -d '{"available_package_ref": {"context": {"cluster": "defa
       "appVersion": "2.4.52"
     },
     "repoUrl": "https://charts.bitnami.com/bitnami",
-    "homeUrl": "https://github.com/bitnami/charts/tree/master/bitnami/apache",
+    "homeUrl": "https://github.com/bitnami/charts/tree/main/bitnami/apache",
     "iconUrl": "https://bitnami.com/assets/stacks/apache/img/apache-stack-220x234.png",
     "displayName": "apache",
     "shortDescription": "Apache HTTP Server is an open-source HTTP server. The goal of this project is to provide a secure, efficient and extensible server that provides HTTP services in sync with the current HTTP standards.",

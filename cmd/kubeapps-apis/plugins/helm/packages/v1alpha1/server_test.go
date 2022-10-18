@@ -7,6 +7,8 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/helm/packages/v1alpha1/utils/fake"
+	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/pkg/helm/agent"
 	"io"
 	"net/url"
 	"os"
@@ -25,11 +27,9 @@ import (
 	helmv1 "github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/plugins/helm/packages/v1alpha1"
 	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/helm/packages/v1alpha1/common"
 	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/helm/packages/v1alpha1/utils"
-	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/pkg/agent"
 	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/pkg/clientgetter"
 	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/pkg/paginate"
 	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/pkg/pkgutils"
-	"github.com/vmware-tanzu/kubeapps/pkg/chart/fake"
 	"github.com/vmware-tanzu/kubeapps/pkg/chart/models"
 	"github.com/vmware-tanzu/kubeapps/pkg/dbutils"
 	"google.golang.org/grpc/codes"
@@ -312,6 +312,64 @@ func newServerWithSecretsAndRepos(t *testing.T, secrets []k8sruntime.Object, uns
 		},
 		unstructuredObjs...,
 	)
+
+	return &Server{
+		clientGetter: clientgetter.NewBuilder().
+			WithControllerRuntime(ctrlClient).
+			WithTyped(typedClient).
+			WithApiExt(apiExtIfc).
+			WithDynamic(dynClient).
+			Build(),
+		kubeappsNamespace:        kubeappsNamespace,
+		globalPackagingNamespace: globalPackagingNamespace,
+		globalPackagingCluster:   globalPackagingCluster,
+		chartClientFactory:       &fake.ChartClientFactory{},
+		createReleaseFunc:        agent.CreateRelease,
+		kubeappsCluster:          KubeappsCluster,
+		pluginConfig:             common.NewDefaultPluginConfig(),
+	}
+}
+
+type ClientReaction struct {
+	verb     string
+	resource string
+	reaction k8stesting.ReactionFunc
+}
+
+func newServerWithAppRepoReactors(unstructuredObjs []k8sruntime.Object, repos []*v1alpha1.AppRepository, typedObjects []k8sruntime.Object, typedClientReactions []*ClientReaction, dynClientReactions []*ClientReaction) *Server {
+	typedClient := typfake.NewSimpleClientset(typedObjects...)
+
+	for _, reaction := range typedClientReactions {
+		typedClient.PrependReactor(reaction.verb, reaction.resource, reaction.reaction)
+	}
+
+	apiExtIfc := apiextfake.NewSimpleClientset(helmAppRepositoryCRD)
+	ctrlClient := newCtrlClient(repos)
+	scheme := k8sruntime.NewScheme()
+	err := v1alpha1.AddToScheme(scheme)
+	if err != nil {
+		log.Fatalf("%s", err)
+	}
+	err = authorizationv1.AddToScheme(scheme)
+	if err != nil {
+		log.Fatalf("%s", err)
+	}
+
+	dynClient := dynfake.NewSimpleDynamicClientWithCustomListKinds(
+		scheme,
+		map[schema.GroupVersionResource]string{
+			{
+				Group:    v1alpha1.SchemeGroupVersion.Group,
+				Version:  v1alpha1.SchemeGroupVersion.Version,
+				Resource: AppRepositoryResource,
+			}: AppRepositoryResource + "List",
+		},
+		unstructuredObjs...,
+	)
+
+	for _, reaction := range dynClientReactions {
+		dynClient.PrependReactor(reaction.verb, reaction.resource, reaction.reaction)
+	}
 
 	return &Server{
 		clientGetter: clientgetter.NewBuilder().

@@ -5,15 +5,17 @@ package main
 
 import (
 	"context"
-
 	apprepov1alpha1 "github.com/vmware-tanzu/kubeapps/cmd/apprepository-controller/pkg/apis/apprepository/v1alpha1"
 	corev1 "github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
 	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/plugins/helm/packages/v1alpha1"
+	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/pkg/resources"
 	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/pkg/statuserror"
+	"github.com/vmware-tanzu/kubeapps/pkg/helm"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/anypb"
 	k8scorev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -44,6 +46,10 @@ type HelmRepository struct {
 }
 
 var ValidRepoTypes = []string{HelmRepoType, OCIRepoType}
+
+func (s *Server) MaxWorkers() int {
+	return int(s.clientQPS)
+}
 
 func (s *Server) newRepo(ctx context.Context, repo *HelmRepository) (*corev1.PackageRepositoryReference, error) {
 	if repo.url == "" {
@@ -466,7 +472,16 @@ func (s *Server) repoSummaries(ctx context.Context, cluster string, namespace st
 
 	repos, err := s.GetPkgRepositories(ctx, cluster, namespace)
 	if err != nil {
-		return nil, statuserror.FromK8sError("get", "AppRepository", "", err)
+		// Catch forbidden errors in cluster-wide listings
+		if errors.IsForbidden(err) && namespace == "" {
+			log.Warningf("+helm unable to list package repositories at the cluster scope in '%s' due to [%v]", cluster, err)
+			repos, err = s.getAccessiblePackageRepositories(ctx, cluster)
+			if err != nil {
+				return nil, err
+			}
+		} else {
+			return nil, statuserror.FromK8sError("get", "AppRepository", "", err)
+		}
 	}
 
 	for _, repo := range repos {
@@ -502,7 +517,7 @@ func (s *Server) GetPkgRepositories(ctx context.Context, cluster, namespace stri
 	if err != nil {
 		return nil, err
 	}
-	// TODO(agamez): handle permission denied scenario when listing w/o namespace, which would need a ClusterRole
+
 	unstructured, err := resource.List(ctx, metav1.ListOptions{})
 	if err != nil {
 		return nil, err
@@ -517,6 +532,32 @@ func (s *Server) GetPkgRepositories(ctx context.Context, cluster, namespace stri
 		pkgRepositories = append(pkgRepositories, pkgRepository)
 	}
 	return pkgRepositories, nil
+}
+
+// getAccessiblePackageRepositories gather list of repositories to which the user has access per namespace
+func (s *Server) getAccessiblePackageRepositories(ctx context.Context, cluster string) ([]*apprepov1alpha1.AppRepository, error) {
+	clusterTypedClientFunc := func() (kubernetes.Interface, error) {
+		return s.clientGetter.Typed(ctx, cluster)
+	}
+	inClusterTypedClientFunc := func() (kubernetes.Interface, error) {
+		return s.localServiceAccountClientGetter.Typed(context.Background())
+	}
+
+	namespaceList, err := resources.FindAccessibleNamespaces(clusterTypedClientFunc, inClusterTypedClientFunc, s.MaxWorkers())
+	if err != nil {
+		return nil, err
+	}
+	namespaceList = resources.FilterActiveNamespaces(namespaceList)
+	var accessibleRepos []*apprepov1alpha1.AppRepository
+	for _, ns := range namespaceList {
+		nsRepos, err := s.GetPkgRepositories(ctx, cluster, ns.Name)
+		if err != nil {
+			log.Warningf("+helm could not list AppRepository in namespace %s", ns.Name)
+			// Continue. Error in a single namespace should not block the whole list
+		}
+		accessibleRepos = append(accessibleRepos, nsRepos...)
+	}
+	return accessibleRepos, nil
 }
 
 func (s *Server) deleteRepo(ctx context.Context, cluster string, repoRef *corev1.PackageRepositoryReference) error {
@@ -545,7 +586,7 @@ func (s *Server) deleteRepo(ctx context.Context, cluster string, repoRef *corev1
 		if err != nil {
 			return err
 		}
-		namespacedSecretName := namespacedSecretNameForRepo(repoRef.Identifier, repoRef.Context.Namespace)
+		namespacedSecretName := helm.SecretNameForNamespacedRepo(repoRef.Identifier, repoRef.Context.Namespace)
 		if deleteErr := s.deleteRepositorySecretFromNamespace(typedClient, s.kubeappsNamespace, namespacedSecretName); deleteErr != nil {
 			return statuserror.FromK8sError("delete", "Secret", namespacedSecretName, deleteErr)
 		}
