@@ -168,6 +168,10 @@ func NewServer(configGetter core.KubernetesConfigGetter, globalPackagingCluster 
 	}
 }
 
+func (s *Server) MaxWorkers() int {
+	return int(s.clientQPS)
+}
+
 // GetManager ensures a manager is available and returns it.
 func (s *Server) GetManager() (utils.AssetManager, error) {
 	if s.manager == nil {

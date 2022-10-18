@@ -5,6 +5,7 @@ package main
 
 import (
 	"context"
+	"k8s.io/apimachinery/pkg/api/errors"
 
 	corev1 "github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
 	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/pkg/statuserror"
@@ -148,11 +149,19 @@ func (s *Server) GetPackageRepositorySummaries(ctx context.Context, request *cor
 	// retrieve the list of installed packages
 	pkgRepositories, err := s.getPkgRepositories(ctx, cluster, namespace)
 	if err != nil {
-		return nil, statuserror.FromK8sError("get", "PackageRepository", "", err)
+		if errors.IsForbidden(err) && namespace == "" {
+			log.Warningf("+kapp-controller unable to list package repositories at the cluster scope in '%s' due to [%v]", cluster, err)
+			pkgRepositories, err = s.getAccessiblePackageRepositories(ctx, cluster)
+			if err != nil {
+				return nil, err
+			}
+		} else {
+			return nil, statuserror.FromK8sError("get", "PackageRepository", "", err)
+		}
 	}
 
 	// convert the Carvel PackageRepository to our API PackageRepository struct
-	repositories := []*corev1.PackageRepositorySummary{}
+	var repositories []*corev1.PackageRepositorySummary
 	for _, repo := range pkgRepositories {
 		repo, err := s.buildPackageRepositorySummary(repo, cluster)
 		if err != nil {
