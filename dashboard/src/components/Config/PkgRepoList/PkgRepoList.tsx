@@ -11,7 +11,10 @@ import Table from "components/js/Table";
 import Tooltip from "components/js/Tooltip";
 import PageHeader from "components/PageHeader/PageHeader";
 import { push } from "connected-react-router";
-import { PackageRepositorySummary } from "gen/kubeappsapis/core/packages/v1alpha1/repositories";
+import {
+  PackageRepositoryReference,
+  PackageRepositorySummary,
+} from "gen/kubeappsapis/core/packages/v1alpha1/repositories";
 import qs from "qs";
 import { useCallback, useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
@@ -137,10 +140,11 @@ function PkgRepoList() {
   ]);
 
   const canEditGlobalRepos = (plugin?: Plugin): boolean => {
-    if (plugin) {
-      return reposRBAC.get(JSON.stringify(plugin))?.global?.update || false;
-    }
-    return false;
+    return plugin ? reposRBAC.get(JSON.stringify(plugin))?.global?.update || false : false;
+  };
+
+  const canEditNamespacedRepos = (plugin?: Plugin): boolean => {
+    return plugin ? reposRBAC.get(JSON.stringify(plugin))?.namespaced.update || false : false;
   };
 
   const globalRepos: PackageRepositorySummary[] = [];
@@ -163,7 +167,10 @@ function PkgRepoList() {
     { accessor: "status", Header: "Status" },
     { accessor: "actions", Header: "Actions" },
   ];
-  const getTableData = (targetRepos: PackageRepositorySummary[], disableControls: boolean) => {
+  const getTableData = (
+    targetRepos: PackageRepositorySummary[],
+    disableControls: (repoRef?: PackageRepositoryReference) => boolean,
+  ) => {
     return targetRepos.map(repo => {
       return {
         name: getRepoNameLinkAndTooltip(cluster, repo),
@@ -194,17 +201,16 @@ function PkgRepoList() {
             )}
           </>
         ),
-        actions:
-          disableControls || !canEditGlobalRepos(repo.packageRepoRef?.plugin) ? (
-            <PkgRepoDisabledControl />
-          ) : (
-            <PkgRepoControl
-              repo={repo}
-              refetchRepos={refetchRepos}
-              helmGlobalNamespace={helmGlobalNamespace}
-              carvelGlobalNamespace={carvelGlobalNamespace}
-            />
-          ),
+        actions: disableControls(repo.packageRepoRef) ? (
+          <PkgRepoDisabledControl />
+        ) : (
+          <PkgRepoControl
+            repo={repo}
+            refetchRepos={refetchRepos}
+            helmGlobalNamespace={helmGlobalNamespace}
+            carvelGlobalNamespace={carvelGlobalNamespace}
+          />
+        ),
       };
     });
   };
@@ -221,7 +227,10 @@ function PkgRepoList() {
           <Table
             valign="center"
             columns={tableColumns}
-            data={getTableData(globalRepos, disableControls)}
+            data={getTableData(
+              globalRepos,
+              repoRef => disableControls || !canEditGlobalRepos(repoRef?.plugin),
+            )}
           />
         ) : (
           <p>
@@ -312,7 +321,10 @@ function PkgRepoList() {
                         <Table
                           valign="center"
                           columns={tableColumns}
-                          data={getTableData(namespacedRepos, false)}
+                          data={getTableData(
+                            namespacedRepos,
+                            repoRef => !canEditNamespacedRepos(repoRef?.plugin),
+                          )}
                         />
                       ) : (
                         <p>
