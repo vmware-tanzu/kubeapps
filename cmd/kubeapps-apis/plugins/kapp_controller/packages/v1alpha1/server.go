@@ -49,13 +49,17 @@ type Server struct {
 	// clientGetter is a field so that it can be switched in tests for
 	// a fake client. NewServer() below sets this automatically with the
 	// non-test implementation.
-	clientGetter           clientgetter.ClientProviderInterface
-	globalPackagingCluster string
+	clientGetter clientgetter.ClientProviderInterface
+	// for interactions with k8s API server in the context of
+	// kubeapps-internal-kubeappsapis service account
+	localServiceAccountClientGetter clientgetter.FixedClusterClientProviderInterface
+	globalPackagingCluster          string
 	// TODO (gfichtenholt) it should now be possible to add this into clientgetter pkg,
 	// and thus just have a single clientGetter field. Only *if* it makes sense to do so
 	// (i.e. code is re-usable by multiple components)
 	kappClientsGetter kappClientsGetter
 	pluginConfig      *kappControllerPluginParsedConfig
+	clientQPS         float32
 }
 
 // parsePluginConfig parses the input plugin configuration json file and return the configuration options.
@@ -92,7 +96,7 @@ func parsePluginConfig(pluginConfigPath string) (*kappControllerPluginParsedConf
 
 // NewServer returns a Server automatically configured with a function to obtain
 // the k8s client config.
-func NewServer(configGetter core.KubernetesConfigGetter, globalPackagingCluster, pluginConfigPath string) *Server {
+func NewServer(configGetter core.KubernetesConfigGetter, clientQPS float32, clientBurst int, globalPackagingCluster, pluginConfigPath string) *Server {
 	var err error
 	pluginConfig := defaultPluginConfig
 	if pluginConfigPath != "" {
@@ -111,9 +115,12 @@ func NewServer(configGetter core.KubernetesConfigGetter, globalPackagingCluster,
 	}
 
 	return &Server{
-		clientGetter:           clientProvider,
-		globalPackagingCluster: globalPackagingCluster,
-		pluginConfig:           pluginConfig,
+		clientGetter: clientProvider,
+		// Get the "in-cluster" client getter
+		localServiceAccountClientGetter: clientgetter.NewBackgroundClientProvider(clientgetter.Options{}, clientQPS, clientBurst),
+		clientQPS:                       clientQPS,
+		globalPackagingCluster:          globalPackagingCluster,
+		pluginConfig:                    pluginConfig,
 		kappClientsGetter: func(ctx context.Context, cluster, namespace string) (ctlapp.Apps, ctlres.IdentifiedResources, *kappcmdapp.FailingAPIServicesPolicy, ctlres.ResourceFilter, error) {
 			if configGetter == nil {
 				return ctlapp.Apps{}, ctlres.IdentifiedResources{}, nil, ctlres.ResourceFilter{}, status.Errorf(codes.Internal, "configGetter arg required")
@@ -159,6 +166,10 @@ func NewServer(configGetter core.KubernetesConfigGetter, globalPackagingCluster,
 			return supportingNsObjs.Apps, supportingObjs.IdentifiedResources, failingAPIServicesPolicy, resourceFilter, nil
 		},
 	}
+}
+
+func (s *Server) MaxWorkers() int {
+	return int(s.clientQPS)
 }
 
 // GetKappClients ensures a client getter is available and uses it to return a Kapp Factory.
