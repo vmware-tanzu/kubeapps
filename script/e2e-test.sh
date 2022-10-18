@@ -15,7 +15,7 @@ ALL_TESTS="all"
 MAIN_TESTS="main"
 MULTICLUSTER_TESTS="multicluster"
 CARVEL_TESTS="carvel"
-CARVEL_TESTS="flux"
+FLUX_TESTS="flux"
 OPERATOR_TESTS="operator"
 SUPPORTED_TESTS_GROUPS=("${ALL_TESTS}" "${MAIN_TESTS}" "${MULTICLUSTER_TESTS}" "${CARVEL_TESTS}" "${FLUX_TESTS}" "${OPERATOR_TESTS}")
 
@@ -245,7 +245,7 @@ installFlux() {
   kubectl rollout status -w deployment/source-controller --namespace="${namespace}"
 
   # Add test repository.
-	kubectl apply -f https://raw.githubusercontent.com/fluxcd/source-controller/main/config/samples/source_v1beta2_helmrepository.yaml
+  kubectl apply -f https://raw.githubusercontent.com/fluxcd/source-controller/main/config/samples/source_v1beta2_helmrepository.yaml
 
   # Add a flux-reconciler service account to the kubeapps-user-namespace with
   # cluster-admin.
