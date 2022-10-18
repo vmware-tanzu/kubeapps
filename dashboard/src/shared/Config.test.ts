@@ -2,24 +2,25 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import axios from "axios";
-import * as moxios from "moxios";
+import MockAdapter from "axios-mock-adapter";
 import Config, { IConfig, SupportedThemes } from "./Config";
 
 describe("Config", () => {
   let defaultJSON: IConfig;
   let initialEnv: any;
+  let axiosMock: MockAdapter;
 
   beforeEach(() => {
     initialEnv = { ...process.env };
-    // Import as "any" to avoid typescript syntax error
-    moxios.install(axios as any);
+    axiosMock = new MockAdapter(axios);
+
     defaultJSON = require("../../public/config.json");
-    moxios.stubRequest("config.json", { status: 200, response: { ...defaultJSON } });
+    axiosMock.onGet("config.json").reply(200, { ...defaultJSON });
   });
 
   afterEach(() => {
     process.env = initialEnv;
-    moxios.uninstall(axios as any);
+    axiosMock.restore();
     jest.restoreAllMocks();
   });
 
@@ -31,19 +32,19 @@ describe("Config", () => {
 describe("Themes", () => {
   let defaultJSON: IConfig;
   let initialEnv: any;
+  let axiosMock: MockAdapter;
 
   const matchMedia = window.matchMedia;
   beforeEach(() => {
     initialEnv = { ...process.env };
-    // Import as "any" to avoid typescript syntax error
-    moxios.install(axios as any);
+    axiosMock = new MockAdapter(axios);
     defaultJSON = require("../../public/config.json");
-    moxios.stubRequest("config.json", { status: 200, response: { ...defaultJSON } });
+    axiosMock.onGet("config.json").reply(200, { ...defaultJSON });
   });
 
   afterEach(() => {
     process.env = initialEnv;
-    moxios.uninstall(axios as any);
+    axiosMock.restore();
     window.matchMedia = matchMedia;
     jest.restoreAllMocks();
   });
