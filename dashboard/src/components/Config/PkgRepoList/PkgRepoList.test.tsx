@@ -12,11 +12,14 @@ import * as ReactRedux from "react-redux";
 import { Link } from "react-router-dom";
 import { IPackageRepositoryState } from "reducers/repos";
 import { Kube } from "shared/Kube";
+import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins";
+import { PackageRepositoriesService } from "shared/PackageRepositoriesService";
 import { defaultStore, getStore, initialState, mountWrapper } from "shared/specs/mountWrapper";
-import { IStoreState } from "shared/types";
+import { IPackageRepositoryPermission, IStoreState, PluginNames } from "shared/types";
 import { PkgRepoControl } from "./PkgRepoControl";
 import { PkgRepoDisabledControl } from "./PkgRepoDisabledControl";
 import PkgRepoList from "./PkgRepoList";
+import { ReactWrapper } from "enzyme";
 
 const {
   clusters: { currentCluster, clusters },
@@ -128,14 +131,22 @@ it("shows an error deleting a repo", () => {
 
 // TODO(andresmgot): Re-enable when the repo list is refactored
 describe("global and namespaced repositories", () => {
+  const plugin = { name: PluginNames.PACKAGES_HELM, version: "0.0.1" } as Plugin;
+
   const globalRepo = {
     name: "bitnami",
-    packageRepoRef: { context: { cluster: "default-cluster", namespace: helmGlobalNamespace } },
+    packageRepoRef: {
+      context: { cluster: "default-cluster", namespace: helmGlobalNamespace },
+      plugin: plugin,
+    },
   } as PackageRepositorySummary;
 
   const namespacedRepo = {
     name: "my-repo",
-    packageRepoRef: { context: { cluster: "default-cluster", namespace: namespace } },
+    packageRepoRef: {
+      context: { cluster: "default-cluster", namespace: namespace },
+      plugin: plugin,
+    },
     description: "my description 1 2 3 4",
   } as PackageRepositorySummary;
 
@@ -185,25 +196,51 @@ describe("global and namespaced repositories", () => {
     ).toExist();
   });
 
-  it("shows the global repositories with the buttons enabled", () => {
-    const wrapper = mountWrapper(
-      getStore({
-        clusters: {
-          ...initialState.clusters,
+  it("shows the global repositories with the buttons enabled", async () => {
+    PackageRepositoriesService.getRepositoriesPermissions = jest.fn().mockReturnValue({
+      global: {
+        create: true,
+        delete: true,
+        list: true,
+        namespace: "",
+        update: true,
+      },
+      namespaced: {
+        create: true,
+        delete: true,
+        list: true,
+        namespace: "",
+        update: true,
+      },
+      plugin: plugin,
+    } as IPackageRepositoryPermission);
+
+    let wrapper: any;
+    await act(async () => {
+      wrapper = mountWrapper(
+        getStore({
           clusters: {
-            [currentCluster]: {
-              ...initialState.clusters.clusters[currentCluster],
-              currentNamespace: helmGlobalNamespace,
+            ...initialState.clusters,
+            clusters: {
+              [currentCluster]: {
+                ...initialState.clusters.clusters[currentCluster],
+                currentNamespace: helmGlobalNamespace,
+              },
             },
           },
-        },
-        repos: {
-          reposSummaries: [globalRepo],
-        } as IPackageRepositoryState,
-      } as Partial<IStoreState>),
-      <PkgRepoList />,
-    );
+          repos: {
+            reposSummaries: [globalRepo],
+          } as IPackageRepositoryState,
+          config: {
+            ...initialState.config,
+            configuredPlugins: [plugin],
+          },
+        } as Partial<IStoreState>),
+        <PkgRepoList />,
+      );
+    });
 
+    (wrapper as ReactWrapper).update();
     // A link to manage the repos should not exist since we are already there
     expect(wrapper.find("p").find(Link)).not.toExist();
     expect(wrapper.find(Table)).toHaveLength(1);
@@ -212,10 +249,11 @@ describe("global and namespaced repositories", () => {
     expect(wrapper.find(PkgRepoControl)).toExist();
     // The content related to namespaced repositories should be hidden
     expect(
-      wrapper.find("h3").filterWhere(h => h.text().includes("Namespace Repositories")),
+      wrapper.find("h3").filterWhere((h: any) => h.text().includes("Namespace Repositories")),
     ).not.toExist();
     // no tooltip for the global repo as it does not have a description.
     expect(wrapper.find(Tooltip)).not.toExist();
+    expect(PackageRepositoriesService.getRepositoriesPermissions).toHaveBeenCalled();
   });
 
   it("shows global and namespaced repositories", () => {

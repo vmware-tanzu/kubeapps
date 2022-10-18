@@ -49,7 +49,7 @@ function PkgRepoList() {
     qs.parse(location.search, { ignoreQueryPrefix: true }).allns === "yes" ? true : false;
   const [allNS, setAllNS] = useState(allNSQuery);
   const [canSetAllNS, setCanSetAllNS] = useState(false);
-  const [reposRBAC, setReposRBAC] = useState(new Map<Plugin, IPackageRepositoryPermission>());
+  const [reposRBAC, setReposRBAC] = useState(new Map<string, IPackageRepositoryPermission>());
   const [namespace, setNamespace] = useState(allNSQuery ? "" : currentNamespace);
 
   // We do not currently support package repositories on additional clusters.
@@ -113,10 +113,10 @@ function PkgRepoList() {
         )
         .filter(i => i !== undefined),
     ).then(results => {
-      const rbac = new Map<Plugin, IPackageRepositoryPermission>();
+      const rbac = new Map<string, IPackageRepositoryPermission>();
       results.forEach(r => {
         if (r !== undefined) {
-          rbac.set(r.plugin, r);
+          rbac.set(JSON.stringify(r.plugin), r);
         }
       });
       setReposRBAC(rbac);
@@ -138,7 +138,7 @@ function PkgRepoList() {
 
   const canEditGlobalRepos = (plugin?: Plugin): boolean => {
     if (plugin) {
-      return reposRBAC.get(plugin)?.global?.update || false;
+      return reposRBAC.get(JSON.stringify(plugin))?.global?.update || false;
     }
     return false;
   };
