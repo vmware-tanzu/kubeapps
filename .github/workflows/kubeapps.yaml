@@ -93,7 +93,7 @@ jobs:
           
           # Check if the workflow is triggered due to a PR from an external fork
           if [[ "${PR_CONTEXT}" != "" && "${PR_SOURCE_REPO_NAME}" != "${GITHUB_REPOSITORY}" ]]; then
-            echo "::set-output name=triggered_from_fork::true"            
+            echo "triggered_from_fork=true" >> $GITHUB_OUTPUT
           else
             echo "triggered_from_fork=false" >> $GITHUB_OUTPUT
           fi
