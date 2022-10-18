@@ -147,6 +147,12 @@ function PkgRepoList() {
     return plugin ? reposRBAC.get(JSON.stringify(plugin))?.namespaced.update || false : false;
   };
 
+  const canAddRepos = () => {
+    console.log("check");
+    console.log([...reposRBAC.values()]);
+    return [...reposRBAC.values()].some(r => r.global?.create || r.namespaced.create);
+  };
+
   const globalRepos: PackageRepositorySummary[] = [];
   const namespacedRepos: PackageRepositorySummary[] = [];
   repos.forEach(repo => {
@@ -254,7 +260,7 @@ function PkgRepoList() {
             namespace={currentNamespace}
             helmGlobalNamespace={helmGlobalNamespace}
             carvelGlobalNamespace={carvelGlobalNamespace}
-            disabled={!supportedCluster}
+            disabled={!supportedCluster || !canAddRepos()}
           />,
         ]}
         filter={

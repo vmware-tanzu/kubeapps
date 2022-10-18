@@ -11,9 +11,6 @@ export function PkgRepoDisabledControl() {
         Edit
       </CdsButton>
       <CdsButton disabled={true} action="outline">
-        Refresh
-      </CdsButton>
-      <CdsButton disabled={true} action="outline">
         Delete
       </CdsButton>
     </div>
