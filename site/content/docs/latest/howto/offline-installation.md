@@ -40,11 +40,11 @@ helm pull --untar https://charts.bitnami.com/bitnami/kubeapps-x.y.z.tgz
 helm dep update ./kubeapps
 ```
 
-> Notice `x.y.z` must be replaced by the latest version of the Kubeapps chart available at the [Bitnami Chart Repository](https://github.com/bitnami/charts/blob/master/bitnami/kubeapps/Chart.yaml#L3)
+> Notice `x.y.z` must be replaced by the latest version of the Kubeapps chart available at the [Bitnami Chart Repository](https://github.com/bitnami/charts/blob/main/bitnami/kubeapps/Chart.yaml#L3)
 
 ## Step 2. Mirror Kubeapps images
 
-To be able to install Kubeapps, it's necessary to either have a copy of all the images that Kubeapps requires in each node of the cluster or push these images to an internal Docker registry that Kubernetes can access. You can obtain the list of images by checking the [`values.yaml` file](https://github.com/bitnami/charts/blob/master/bitnami/kubeapps/values.yaml) of the chart. For example:
+To be able to install Kubeapps, it's necessary to either have a copy of all the images that Kubeapps requires in each node of the cluster or push these images to an internal Docker registry that Kubernetes can access. You can obtain the list of images by checking the [`values.yaml` file](https://github.com/bitnami/charts/blob/main/bitnami/kubeapps/values.yaml) of the chart. For example:
 
 ```yaml
 registry: docker.io
@@ -70,7 +70,7 @@ docker pull bitnami/nginx:1.19.2-debian-10-r32
 kind load docker-image bitnami/nginx:1.19.2-debian-10-r32
 ```
 
-> **Note**: tags must be updated according to the version of the images in the [`values.yaml` file](https://github.com/bitnami/charts/blob/master/bitnami/kubeapps/values.yaml)
+> **Note**: tags must be updated according to the version of the images in the [`values.yaml` file](https://github.com/bitnami/charts/blob/main/bitnami/kubeapps/values.yaml)
 
 In case you are using a private Docker registry, you need to re-tag the images and push them:
 

@@ -32,7 +32,7 @@ This guide covers the installation of Harbor in the cluster, the addition of pac
 
 To install a Harbor registry in the cluster:
 
-1. Deploy the [Bitnami Harbor Helm chart](https://github.com/bitnami/charts/tree/master/bitnami/harbor) from the `bitnami` repository by using Kubeapps.
+1. Deploy the [Bitnami Harbor Helm chart](https://github.com/bitnami/charts/tree/main/bitnami/harbor) from the `bitnami` repository by using Kubeapps.
 
    Alternatively, you can deploy Harbor using [Harbor offline installer](https://goharbor.io/docs/2.6.0/install-config/download-installer/).
 
@@ -40,7 +40,7 @@ To install a Harbor registry in the cluster:
 
 2. Update the following parameter in the deployment values:
 
-- `service.tls.enabled`: Set to `false` to deactivate the TLS settings. Alternatively, you can provide a valid TSL certificate (check [Bitnami Harbor Helm chart documentation](https://github.com/bitnami/charts/tree/master/bitnami/harbor#parameters) for more information).
+- `service.tls.enabled`: Set to `false` to deactivate the TLS settings. Alternatively, you can provide a valid TSL certificate (check [Bitnami Harbor Helm chart documentation](https://github.com/bitnami/charts/tree/main/bitnami/harbor#parameters) for more information).
 
   ![Harbor Deploy Form](../img/harbor-deploy-form.png)
 

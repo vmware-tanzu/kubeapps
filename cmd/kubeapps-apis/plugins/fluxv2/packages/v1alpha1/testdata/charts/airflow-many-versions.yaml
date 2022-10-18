@@ -27,7 +27,7 @@ entries:
         Apache Airflow is a platform to programmatically author, schedule
         and monitor workflows.
       digest: 907a2c94c1e8c3cf387295ecb184892cf10620d0c95a6ed0c3fe7c2efdfae5c4
-      home: https://github.com/bitnami/charts/tree/master/bitnami/airflow
+      home: https://github.com/bitnami/charts/tree/main/bitnami/airflow
       icon: https://bitnami.com/assets/stacks/airflow/img/airflow-stack-220x234.png
       keywords:
         - apache
@@ -67,7 +67,7 @@ entries:
         Apache Airflow is a platform to programmatically author, schedule
         and monitor workflows.
       digest: 63dd9ab6843549cc825acb6ce98d9b058134f6ef362e4501023d5954ce2690af
-      home: https://github.com/bitnami/charts/tree/master/bitnami/airflow
+      home: https://github.com/bitnami/charts/tree/main/bitnami/airflow
       icon: https://bitnami.com/assets/stacks/airflow/img/airflow-stack-220x234.png
       keywords:
         - apache
@@ -107,7 +107,7 @@ entries:
         Apache Airflow is a platform to programmatically author, schedule
         and monitor workflows.
       digest: 3ed4f2f213a81d58fb637be7e5229e05dcd066b5f4fadc3acf74cf80b6211534
-      home: https://github.com/bitnami/charts/tree/master/bitnami/airflow
+      home: https://github.com/bitnami/charts/tree/main/bitnami/airflow
       icon: https://bitnami.com/assets/stacks/airflow/img/airflow-stack-220x234.png
       keywords:
         - apache
@@ -147,7 +147,7 @@ entries:
         Apache Airflow is a platform to programmatically author, schedule
         and monitor workflows.
       digest: 50100936645e238a4e816a314eb1231ca4085b6647174173fb80b8ea9df977b6
-      home: https://github.com/bitnami/charts/tree/master/bitnami/airflow
+      home: https://github.com/bitnami/charts/tree/main/bitnami/airflow
       icon: https://bitnami.com/assets/stacks/airflow/img/airflow-stack-220x234.png
       keywords:
         - apache
@@ -187,7 +187,7 @@ entries:
         Apache Airflow is a platform to programmatically author, schedule
         and monitor workflows.
       digest: 1444ec7a88d50da86e52734175cc8080ecf4d7b27f584f0e193a7eade310cb7e
-      home: https://github.com/bitnami/charts/tree/master/bitnami/airflow
+      home: https://github.com/bitnami/charts/tree/main/bitnami/airflow
       icon: https://bitnami.com/assets/stacks/airflow/img/airflow-stack-220x234.png
       keywords:
         - apache
@@ -227,7 +227,7 @@ entries:
         Apache Airflow is a platform to programmatically author, schedule
         and monitor workflows.
       digest: a05cb405d06f44081002479fcbaa2bafb6934a1664d82551737e386775c6a1f3
-      home: https://github.com/bitnami/charts/tree/master/bitnami/airflow
+      home: https://github.com/bitnami/charts/tree/main/bitnami/airflow
       icon: https://bitnami.com/assets/stacks/airflow/img/airflow-stack-220x234.png
       keywords:
         - apache
@@ -267,7 +267,7 @@ entries:
         Apache Airflow is a platform to programmatically author, schedule
         and monitor workflows.
       digest: 56e202cd666c577125541c1f6601bcb692819844e464f0166baaf85108cdd56a
-      home: https://github.com/bitnami/charts/tree/master/bitnami/airflow
+      home: https://github.com/bitnami/charts/tree/main/bitnami/airflow
       icon: https://bitnami.com/assets/stacks/airflow/img/airflow-stack-220x234.png
       keywords:
         - apache
@@ -307,7 +307,7 @@ entries:
         Apache Airflow is a platform to programmatically author, schedule
         and monitor workflows.
       digest: 1a71f705b22f367b85e69f2e5495a287859e96f4c22d9f04c202c52c12846acd
-      home: https://github.com/bitnami/charts/tree/master/bitnami/airflow
+      home: https://github.com/bitnami/charts/tree/main/bitnami/airflow
       icon: https://bitnami.com/assets/stacks/airflow/img/airflow-stack-220x234.png
       keywords:
         - apache
@@ -347,7 +347,7 @@ entries:
         Apache Airflow is a platform to programmatically author, schedule
         and monitor workflows.
       digest: 1adab1ad23ed703c0895b6a937b7b8778db11575da43e3b114e56b98d9ca04d6
-      home: https://github.com/bitnami/charts/tree/master/bitnami/airflow
+      home: https://github.com/bitnami/charts/tree/main/bitnami/airflow
       icon: https://bitnami.com/assets/stacks/airflow/img/airflow-stack-220x234.png
       keywords:
         - apache
@@ -387,7 +387,7 @@ entries:
         Apache Airflow is a platform to programmatically author, schedule
         and monitor workflows.
       digest: 0aa2a5c5bab6bf6a8e7697b0a074a02069d07324f40f7d2a950dbd2e8971cccf
-      home: https://github.com/bitnami/charts/tree/master/bitnami/airflow
+      home: https://github.com/bitnami/charts/tree/main/bitnami/airflow
       icon: https://bitnami.com/assets/stacks/airflow/img/airflow-stack-220x234.png
       keywords:
         - apache
@@ -427,7 +427,7 @@ entries:
         Apache Airflow is a platform to programmatically author, schedule
         and monitor workflows.
       digest: 2c959860166a242ec7339e09f177e9ae55fd81b0ee1f5f76561eb9187c8419bc
-      home: https://github.com/bitnami/charts/tree/master/bitnami/airflow
+      home: https://github.com/bitnami/charts/tree/main/bitnami/airflow
       icon: https://bitnami.com/assets/stacks/airflow/img/airflow-stack-220x234.png
       keywords:
         - apache
@@ -467,7 +467,7 @@ entries:
         Apache Airflow is a platform to programmatically author, schedule
         and monitor workflows.
       digest: 29c879662443905bc5496b2c47170cd86976f327fdacb0ab02461bedf4a38b49
-      home: https://github.com/bitnami/charts/tree/master/bitnami/airflow
+      home: https://github.com/bitnami/charts/tree/main/bitnami/airflow
       icon: https://bitnami.com/assets/stacks/airflow/img/airflow-stack-220x234.png
       keywords:
         - apache
@@ -507,7 +507,7 @@ entries:
         Apache Airflow is a platform to programmatically author, schedule
         and monitor workflows.
       digest: 9f353902656ed6e55ad84f7142a20c837fcf3f5e1af6f3a71bb867b5360518d8
-      home: https://github.com/bitnami/charts/tree/master/bitnami/airflow
+      home: https://github.com/bitnami/charts/tree/main/bitnami/airflow
       icon: https://bitnami.com/assets/stacks/airflow/img/airflow-stack-220x234.png
       keywords:
         - apache
@@ -547,7 +547,7 @@ entries:
         Apache Airflow is a platform to programmatically author, schedule
         and monitor workflows.
       digest: b25c9b2213ee22e98feae52fc21d66e39dcec4210969de5d862ecdb3afac9d0e
-      home: https://github.com/bitnami/charts/tree/master/bitnami/airflow
+      home: https://github.com/bitnami/charts/tree/main/bitnami/airflow
       icon: https://bitnami.com/assets/stacks/airflow/img/airflow-stack-220x234.png
       keywords:
         - apache
@@ -587,7 +587,7 @@ entries:
         Apache Airflow is a platform to programmatically author, schedule
         and monitor workflows.
       digest: e362468265a4ccf745f42e696b34629bdb75b89d7e1358bb2b9678682601013a
-      home: https://github.com/bitnami/charts/tree/master/bitnami/airflow
+      home: https://github.com/bitnami/charts/tree/main/bitnami/airflow
       icon: https://bitnami.com/assets/stacks/airflow/img/airflow-stack-220x234.png
       keywords:
         - apache
@@ -627,7 +627,7 @@ entries:
         Apache Airflow is a platform to programmatically author, schedule
         and monitor workflows.
       digest: b5516fc02a5615d22a6bc555bb555a32f8215c996b30ac5b4ed7ae6c5880661c
-      home: https://github.com/bitnami/charts/tree/master/bitnami/airflow
+      home: https://github.com/bitnami/charts/tree/main/bitnami/airflow
       icon: https://bitnami.com/assets/stacks/airflow/img/airflow-stack-220x234.png
       keywords:
         - apache
@@ -667,7 +667,7 @@ entries:
         Apache Airflow is a platform to programmatically author, schedule
         and monitor workflows.
       digest: 3b09968931e817d79935b19e6c518acfc00c0c8948fac384414e46c03a3d1ff5
-      home: https://github.com/bitnami/charts/tree/master/bitnami/airflow
+      home: https://github.com/bitnami/charts/tree/main/bitnami/airflow
       icon: https://bitnami.com/assets/stacks/airflow/img/airflow-stack-220x234.png
       keywords:
         - apache
@@ -707,7 +707,7 @@ entries:
         Apache Airflow is a platform to programmatically author, schedule
         and monitor workflows.
       digest: 3a71a33634edc99bdade8a8f2545900cc6bdcdd0be62d9981ec4cf0840ba6866
-      home: https://github.com/bitnami/charts/tree/master/bitnami/airflow
+      home: https://github.com/bitnami/charts/tree/main/bitnami/airflow
       icon: https://bitnami.com/assets/stacks/airflow/img/airflow-stack-220x234.png
       keywords:
         - apache
@@ -747,7 +747,7 @@ entries:
         Apache Airflow is a platform to programmatically author, schedule
         and monitor workflows.
       digest: c1b86e04d0477be9cf00c9fb622db0988dc759ccf6f2283467372130ab25e09d
-      home: https://github.com/bitnami/charts/tree/master/bitnami/airflow
+      home: https://github.com/bitnami/charts/tree/main/bitnami/airflow
       icon: https://bitnami.com/assets/stacks/airflow/img/airflow-stack-220x234.png
       keywords:
         - apache
@@ -787,7 +787,7 @@ entries:
         Apache Airflow is a platform to programmatically author, schedule
         and monitor workflows.
       digest: c39fa6f861d877eaee35581b25e58f971914f751324c2f685e872294f8889edc
-      home: https://github.com/bitnami/charts/tree/master/bitnami/airflow
+      home: https://github.com/bitnami/charts/tree/main/bitnami/airflow
       icon: https://bitnami.com/assets/stacks/airflow/img/airflow-stack-220x234.png
       keywords:
         - apache
@@ -827,7 +827,7 @@ entries:
         Apache Airflow is a platform to programmatically author, schedule
         and monitor workflows.
       digest: b4e9f8de8839ba65dfe52de1f502c49aea155a4d28b0b71e152c5a47957d69e1
-      home: https://github.com/bitnami/charts/tree/master/bitnami/airflow
+      home: https://github.com/bitnami/charts/tree/main/bitnami/airflow
       icon: https://bitnami.com/assets/stacks/airflow/img/airflow-stack-220x234.png
       keywords:
         - apache
@@ -867,7 +867,7 @@ entries:
         Apache Airflow is a platform to programmatically author, schedule
         and monitor workflows.
       digest: 14ad2026b01b4cadd610fc63e3fcec4c255201aa19144e7fdbbb709c6099e656
-      home: https://github.com/bitnami/charts/tree/master/bitnami/airflow
+      home: https://github.com/bitnami/charts/tree/main/bitnami/airflow
       icon: https://bitnami.com/assets/stacks/airflow/img/airflow-stack-220x234.png
       keywords:
         - apache
@@ -907,7 +907,7 @@ entries:
         Apache Airflow is a platform to programmatically author, schedule
         and monitor workflows.
       digest: 1813341cd1ad7fd1aa39d0921fd5c22edfd3cb5a383fffcb4b237753398aff69
-      home: https://github.com/bitnami/charts/tree/master/bitnami/airflow
+      home: https://github.com/bitnami/charts/tree/main/bitnami/airflow
       icon: https://bitnami.com/assets/stacks/airflow/img/airflow-stack-220x234.png
       keywords:
         - apache
@@ -947,7 +947,7 @@ entries:
         Apache Airflow is a platform to programmatically author, schedule
         and monitor workflows.
       digest: ba92bd67819ead454c182314292822a66bd544467a8b7e664e9e103382e0e8e1
-      home: https://github.com/bitnami/charts/tree/master/bitnami/airflow
+      home: https://github.com/bitnami/charts/tree/main/bitnami/airflow
       icon: https://bitnami.com/assets/stacks/airflow/img/airflow-stack-220x234.png
       keywords:
         - apache
@@ -987,7 +987,7 @@ entries:
         Apache Airflow is a platform to programmatically author, schedule
         and monitor workflows.
       digest: 6d1f3f29add189a6d6b4cd6298662793b8ce39f165cced0394bf5e9c49f5f5aa
-      home: https://github.com/bitnami/charts/tree/master/bitnami/airflow
+      home: https://github.com/bitnami/charts/tree/main/bitnami/airflow
       icon: https://bitnami.com/assets/stacks/airflow/img/airflow-stack-220x234.png
       keywords:
         - apache
@@ -1027,7 +1027,7 @@ entries:
         Apache Airflow is a platform to programmatically author, schedule
         and monitor workflows.
       digest: b352ccbf111d780756a40aecab0bf507494bad1cc80519c6422f8a6afbd43733
-      home: https://github.com/bitnami/charts/tree/master/bitnami/airflow
+      home: https://github.com/bitnami/charts/tree/main/bitnami/airflow
       icon: https://bitnami.com/assets/stacks/airflow/img/airflow-stack-220x234.png
       keywords:
         - apache
@@ -1067,7 +1067,7 @@ entries:
         Apache Airflow is a platform to programmatically author, schedule
         and monitor workflows.
       digest: 314a1d44e0f6d4558d1d443aefeb500bcb9d547d37e70334eeb82a8b23f2a061
-      home: https://github.com/bitnami/charts/tree/master/bitnami/airflow
+      home: https://github.com/bitnami/charts/tree/main/bitnami/airflow
       icon: https://bitnami.com/assets/stacks/airflow/img/airflow-stack-220x234.png
       keywords:
         - apache
@@ -1107,7 +1107,7 @@ entries:
         Apache Airflow is a platform to programmatically author, schedule
         and monitor workflows.
       digest: 58fd57b216437cae7684e01a87b5b21981f4eddf5c54858a1237933f97c8ff1b
-      home: https://github.com/bitnami/charts/tree/master/bitnami/airflow
+      home: https://github.com/bitnami/charts/tree/main/bitnami/airflow
       icon: https://bitnami.com/assets/stacks/airflow/img/airflow-stack-220x234.png
       keywords:
         - apache
@@ -1147,7 +1147,7 @@ entries:
         Apache Airflow is a platform to programmatically author, schedule
         and monitor workflows.
       digest: c5695710221ec42d83f88d1d22517f88ccef9394d7dba7caf3d477168a760523
-      home: https://github.com/bitnami/charts/tree/master/bitnami/airflow
+      home: https://github.com/bitnami/charts/tree/main/bitnami/airflow
       icon: https://bitnami.com/assets/stacks/airflow/img/airflow-stack-220x234.png
       keywords:
         - apache
@@ -1187,7 +1187,7 @@ entries:
         Apache Airflow is a platform to programmatically author, schedule
         and monitor workflows.
       digest: 3906425fb50b51b2dfa53aa20c6ec39e152a22127ed437a87aae52c3b7a14598
-      home: https://github.com/bitnami/charts/tree/master/bitnami/airflow
+      home: https://github.com/bitnami/charts/tree/main/bitnami/airflow
       icon: https://bitnami.com/assets/stacks/airflow/img/airflow-stack-220x234.png
       keywords:
         - apache
@@ -1227,7 +1227,7 @@ entries:
         Apache Airflow is a platform to programmatically author, schedule
         and monitor workflows.
       digest: c19d4c63f15d25608a0f00b5a168209db8e6fc652e35f89c4a741d0851f7c450
-      home: https://github.com/bitnami/charts/tree/master/bitnami/airflow
+      home: https://github.com/bitnami/charts/tree/main/bitnami/airflow
       icon: https://bitnami.com/assets/stacks/airflow/img/airflow-stack-220x234.png
       keywords:
         - apache
@@ -1267,7 +1267,7 @@ entries:
         Apache Airflow is a platform to programmatically author, schedule
         and monitor workflows.
       digest: 878a2c94f839850caee45b0dd2b2b5925581f4996e17cc80af46d7bd3dc277bc
-      home: https://github.com/bitnami/charts/tree/master/bitnami/airflow
+      home: https://github.com/bitnami/charts/tree/main/bitnami/airflow
       icon: https://bitnami.com/assets/stacks/airflow/img/airflow-stack-220x234.png
       keywords:
         - apache
@@ -1307,7 +1307,7 @@ entries:
         Apache Airflow is a platform to programmatically author, schedule
         and monitor workflows.
       digest: d838235d30903fc97eb10fddb329397ce18f75d7c22276cdc107d7ee9828ebf2
-      home: https://github.com/bitnami/charts/tree/master/bitnami/airflow
+      home: https://github.com/bitnami/charts/tree/main/bitnami/airflow
       icon: https://bitnami.com/assets/stacks/airflow/img/airflow-stack-220x234.png
       keywords:
         - apache
@@ -1347,7 +1347,7 @@ entries:
         Apache Airflow is a platform to programmatically author, schedule
         and monitor workflows.
       digest: af7003a5761323b14c58f465e5b1f17a56da5a56f29adc2c8792a7d2cf0c974e
-      home: https://github.com/bitnami/charts/tree/master/bitnami/airflow
+      home: https://github.com/bitnami/charts/tree/main/bitnami/airflow
       icon: https://bitnami.com/assets/stacks/airflow/img/airflow-stack-220x234.png
       keywords:
         - apache
@@ -1387,7 +1387,7 @@ entries:
         Apache Airflow is a platform to programmatically author, schedule
         and monitor workflows.
       digest: 12a00109d088adb3a78bbf8306565947ac909b1b6ffa7886c25c9d1df48a78c8
-      home: https://github.com/bitnami/charts/tree/master/bitnami/airflow
+      home: https://github.com/bitnami/charts/tree/main/bitnami/airflow
       icon: https://bitnami.com/assets/stacks/airflow/img/airflow-stack-220x234.png
       keywords:
         - apache
@@ -1427,7 +1427,7 @@ entries:
         Apache Airflow is a platform to programmatically author, schedule
         and monitor workflows.
       digest: 10c2bb1549ce513077e058bdbeb3f0a96755b7c250d9cf13bbe1a83243b13903
-      home: https://github.com/bitnami/charts/tree/master/bitnami/airflow
+      home: https://github.com/bitnami/charts/tree/main/bitnami/airflow
       icon: https://bitnami.com/assets/stacks/airflow/img/airflow-stack-220x234.png
       keywords:
         - apache
@@ -1467,7 +1467,7 @@ entries:
         Apache Airflow is a platform to programmatically author, schedule
         and monitor workflows.
       digest: 40718566fbb5d21baeea67cf079aec905d8b964cf36ad9299dcb917329c57b32
-      home: https://github.com/bitnami/charts/tree/master/bitnami/airflow
+      home: https://github.com/bitnami/charts/tree/main/bitnami/airflow
       icon: https://bitnami.com/assets/stacks/airflow/img/airflow-stack-220x234.png
       keywords:
         - apache
@@ -1507,7 +1507,7 @@ entries:
         Apache Airflow is a platform to programmatically author, schedule
         and monitor workflows.
       digest: 3c219e95f6a8abbb3fa7b578ff46c206416e6eae5acc69235cbf272a10d40d56
-      home: https://github.com/bitnami/charts/tree/master/bitnami/airflow
+      home: https://github.com/bitnami/charts/tree/main/bitnami/airflow
       icon: https://bitnami.com/assets/stacks/airflow/img/airflow-stack-220x234.png
       keywords:
         - apache
@@ -1547,7 +1547,7 @@ entries:
         Apache Airflow is a platform to programmatically author, schedule
         and monitor workflows.
       digest: 2825b8ac51eee05b1f84e63ae784fcb2f3ec4eecadba84e54394424ca89a1dc8
-      home: https://github.com/bitnami/charts/tree/master/bitnami/airflow
+      home: https://github.com/bitnami/charts/tree/main/bitnami/airflow
       icon: https://bitnami.com/assets/stacks/airflow/img/airflow-stack-110x117.png
       keywords:
         - apache
@@ -1587,7 +1587,7 @@ entries:
         Apache Airflow is a platform to programmatically author, schedule
         and monitor workflows.
       digest: 406dd2d31cb835ce6a203414fd6b18014e757609bac9eb7573a4f946e23c1ec4
-      home: https://github.com/bitnami/charts/tree/master/bitnami/airflow
+      home: https://github.com/bitnami/charts/tree/main/bitnami/airflow
       icon: https://bitnami.com/assets/stacks/airflow/img/airflow-stack-110x117.png
       keywords:
         - apache
@@ -1627,7 +1627,7 @@ entries:
         Apache Airflow is a platform to programmatically author, schedule
         and monitor workflows.
       digest: 3ca9e6b3e09cbd8ef15903fcea10d12aee8f3f94f13f629345d36ac94ee0388b
-      home: https://github.com/bitnami/charts/tree/master/bitnami/airflow
+      home: https://github.com/bitnami/charts/tree/main/bitnami/airflow
       icon: https://bitnami.com/assets/stacks/airflow/img/airflow-stack-110x117.png
       keywords:
         - apache
@@ -1667,7 +1667,7 @@ entries:
         Apache Airflow is a platform to programmatically author, schedule
         and monitor workflows.
       digest: 23ec51c1eb551f7f5838dcbb7b4f1147428dbbf5d4efc07ab02b20e9a0c25ffd
-      home: https://github.com/bitnami/charts/tree/master/bitnami/airflow
+      home: https://github.com/bitnami/charts/tree/main/bitnami/airflow
       icon: https://bitnami.com/assets/stacks/airflow/img/airflow-stack-110x117.png
       keywords:
         - apache
@@ -1707,7 +1707,7 @@ entries:
         Apache Airflow is a platform to programmatically author, schedule
         and monitor workflows.
       digest: 4217e3afee665af73893c90bbb0caa39ad954a47f5c5bf654e9dd1deae6d5e9e
-      home: https://github.com/bitnami/charts/tree/master/bitnami/airflow
+      home: https://github.com/bitnami/charts/tree/main/bitnami/airflow
       icon: https://bitnami.com/assets/stacks/airflow/img/airflow-stack-110x117.png
       keywords:
         - apache
@@ -1747,7 +1747,7 @@ entries:
         Apache Airflow is a platform to programmatically author, schedule
         and monitor workflows.
       digest: bba7440e28f8649ed6b8d5536817e7cf4ac27e7ea40ed911662d239c8bde6cd4
-      home: https://github.com/bitnami/charts/tree/master/bitnami/airflow
+      home: https://github.com/bitnami/charts/tree/main/bitnami/airflow
       icon: https://bitnami.com/assets/stacks/airflow/img/airflow-stack-110x117.png
       keywords:
         - apache
@@ -1773,7 +1773,7 @@ entries:
         Apache Airflow is a platform to programmatically author, schedule
         and monitor workflows.
       digest: 3a1b47be2c591c4201eff6a2b96e6c7a3a05aedaa9d4833b342f9e2d78e06ba7
-      home: https://github.com/bitnami/charts/tree/master/bitnami/airflow
+      home: https://github.com/bitnami/charts/tree/main/bitnami/airflow
       icon: https://bitnami.com/assets/stacks/airflow/img/airflow-stack-110x117.png
       keywords:
         - apache
@@ -1799,7 +1799,7 @@ entries:
         Apache Airflow is a platform to programmatically author, schedule
         and monitor workflows.
       digest: 22ef0328264143118e3ebe85b53badd595a6a3c77600f95ab0f6d1f2731bedc9
-      home: https://github.com/bitnami/charts/tree/master/bitnami/airflow
+      home: https://github.com/bitnami/charts/tree/main/bitnami/airflow
       icon: https://bitnami.com/assets/stacks/airflow/img/airflow-stack-110x117.png
       keywords:
         - apache
@@ -1825,7 +1825,7 @@ entries:
         Apache Airflow is a platform to programmatically author, schedule
         and monitor workflows.
       digest: 54fd3490b1ed4e12f9aaa9f2b967025824d0b541bf4f25b5825bcb70bf08a9ca
-      home: https://github.com/bitnami/charts/tree/master/bitnami/airflow
+      home: https://github.com/bitnami/charts/tree/main/bitnami/airflow
       icon: https://bitnami.com/assets/stacks/airflow/img/airflow-stack-110x117.png
       keywords:
         - apache
@@ -1851,7 +1851,7 @@ entries:
         Apache Airflow is a platform to programmatically author, schedule
         and monitor workflows.
       digest: ab41fbd28703237435a290e5b5619cafcac16126a35e674afcb99839987b06a5
-      home: https://github.com/bitnami/charts/tree/master/bitnami/airflow
+      home: https://github.com/bitnami/charts/tree/main/bitnami/airflow
       icon: https://bitnami.com/assets/stacks/airflow/img/airflow-stack-110x117.png
       keywords:
         - apache
@@ -1877,7 +1877,7 @@ entries:
         Apache Airflow is a platform to programmatically author, schedule
         and monitor workflows.
       digest: 3ef7b945907cd80c088aed2a6537e7d80fb6390b5616a338e92fa4c3b96a56cb
-      home: https://github.com/bitnami/charts/tree/master/bitnami/airflow
+      home: https://github.com/bitnami/charts/tree/main/bitnami/airflow
       icon: https://bitnami.com/assets/stacks/airflow/img/airflow-stack-110x117.png
       keywords:
         - apache
@@ -1903,7 +1903,7 @@ entries:
         Apache Airflow is a platform to programmatically author, schedule
         and monitor workflows.
       digest: 11450cf642d9994858acdf2ed3d06c8e2477eeefab7dae6da04bfe2424d0d12c
-      home: https://github.com/bitnami/charts/tree/master/bitnami/airflow
+      home: https://github.com/bitnami/charts/tree/main/bitnami/airflow
       icon: https://bitnami.com/assets/stacks/airflow/img/airflow-stack-110x117.png
       keywords:
         - apache
@@ -1929,7 +1929,7 @@ entries:
         Apache Airflow is a platform to programmatically author, schedule
         and monitor workflows.
       digest: 4ed6aa68c0fe9127a5b71a667e48736bc817e534ee7bc63b59bf1bf2485f2c3b
-      home: https://github.com/bitnami/charts/tree/master/bitnami/airflow
+      home: https://github.com/bitnami/charts/tree/main/bitnami/airflow
       icon: https://bitnami.com/assets/stacks/airflow/img/airflow-stack-110x117.png
       keywords:
         - apache

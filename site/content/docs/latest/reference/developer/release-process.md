@@ -52,7 +52,7 @@ The versions used there _must_ match the ones used for building the container im
 - `SEMVER_VERSION` should be updated with the [latest stable version from the semver releases](https://github.com/fsaintjacques/semver-tool/releases/).
 - `KIND_VERSION` should be updated with the [latest stable version from the kind releases](https://github.com/kubernetes-sigs/kind/releases).
 - `K8S_KIND_VERSION` _must_ match the Kubernetes minor version used in `GKE_REGULAR_VERSION_XX` and should be updated with one of the available image tags for a given [Kind release](https://github.com/kubernetes-sigs/kind/releases).
-- `POSTGRESQL_VERSION` _must_ match the version used by the [Bitnami PostgreSQL chart](https://github.com/bitnami/charts/blob/master/bitnami/postgresql/values.yaml).
+- `POSTGRESQL_VERSION` _must_ match the version used by the [Bitnami PostgreSQL chart](https://github.com/bitnami/charts/blob/main/bitnami/postgresql/values.yaml).
 - `DEFAULT_MACHINE_IMG` _should_ be up to date according to the [list of available machines in CircleCI](https://circleci.com/docs/2.0/configuration-reference/#available-linux-machine-images).
 - `SRP_VERSION` _should_ be up to date according to the [latest stable version from the SRP CLI builds](https://vmwaresaas.jfrog.io/ui/native/srp-tools/srpcli).
 
@@ -225,7 +225,7 @@ Then, save the draft and **do not publish it yet** and get these notes reviewed 
 
 ## 4 - Manually review the PR created in the bitnami/charts repository
 
-Since the chart that we host in the Kubeapps repository is only intended for development purposes, we need to synchronize it with the official one in the [bitnami/charts repository](https://github.com/bitnami/charts/tree/master/bitnami/kubeapps).
+Since the chart that we host in the Kubeapps repository is only intended for development purposes, we need to synchronize it with the official one in the [bitnami/charts repository](https://github.com/bitnami/charts/tree/main/bitnami/kubeapps).
 
 To this end, our CI system will automatically (in the `sync_chart_to_bitnami` workflow, as described in the [CI documentation](../testing/ci.md).) send a PR with the current development changes to [their repository](https://github.com/bitnami/charts/pulls) whenever a new release is triggered.
 Once the PR has been created, have a look at it (eg. remove any development changes that should not be released) and wait for someone from the Bitnami team to review and accept it.
@@ -249,7 +249,7 @@ helm repo update && helm search repo kubeapps
 
 ## 7 - Publish the GitHub release
 
-Once the new version of the [Kubeapps official chart](https://github.com/bitnami/charts/tree/master/bitnami/kubeapps) has been published and the release notes reviewed, you are ready to publish the release by clicking on the _publish_ button in the [GitHub releases page](https://github.com/vmware-tanzu/kubeapps/releases).
+Once the new version of the [Kubeapps official chart](https://github.com/bitnami/charts/tree/main/bitnami/kubeapps) has been published and the release notes reviewed, you are ready to publish the release by clicking on the _publish_ button in the [GitHub releases page](https://github.com/vmware-tanzu/kubeapps/releases).
 
 > Take into account that the chart version will be eventually published as part of the usual Bitnami release cycle. So expect this step to take a certain amount of time.
 

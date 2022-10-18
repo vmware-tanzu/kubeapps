@@ -14,9 +14,9 @@ on:
 env:
   CHARTMUSEUM_VERSION: "3.9.0"
   CHARTS_REPO_ORIGINAL: "bitnami/charts"
-  BRANCH_CHARTS_REPO_ORIGINAL: "master"
+  BRANCH_CHARTS_REPO_ORIGINAL: "main"
   CHARTS_REPO_FORKED: "kubeapps-bot/charts"
-  BRANCH_CHARTS_REPO_FORKED: "master"
+  BRANCH_CHARTS_REPO_FORKED: "main"
   CI_BOT_USERNAME: "kubeapps-bot"
   CI_BOT_EMAIL: "tanzu-kubeapps-team@vmware.com"
   CI_BOT_GPG: "80B6EB16B1328FB18DFF2A073EBA68F3347E319D"
@@ -81,18 +81,18 @@ jobs:
           if [[ "${GITHUB_REPOSITORY}" == "${KUBEAPPS_REPO}" ]]; then
             echo "img_prefix=${IMG_PREFIX}" >> $GITHUB_OUTPUT
           else
-            # When running in forks (NOT triggered due to a PR from an external fork, but running the workflow in the 
+            # When running in forks (NOT triggered due to a PR from an external fork, but running the workflow in the
             # external repo), we push the images to a personal namespace (if configured)
             echo "img_prefix=${IMG_PREFIX_FOR_FORKS}" >> $GITHUB_OUTPUT
           fi;
-          
+
           # Check if the workflow is triggered due to a PR from an external fork
           if [[ "${{ github.event.pull_request.head.repo.full_name }}" == "${GITHUB_REPOSITORY}" ]]; then
             echo "triggered_from_fork=false" >> $GITHUB_OUTPUT
           else
             echo "triggered_from_fork=true" >> $GITHUB_OUTPUT
           fi
-          
+
           if [[ ${GITHUB_REF_TYPE} == "tag" ]]; then
             echo "img_prod_tag=${GITHUB_REF_NAME}" >> $GITHUB_OUTPUT
             echo "version=${GITHUB_REF_NAME}" >> $GITHUB_OUTPUT
@@ -100,13 +100,13 @@ jobs:
             echo "img_prod_tag=latest" >> $GITHUB_OUTPUT
             echo "version=" >> $GITHUB_OUTPUT
           fi;
-          
+
           if [[ ${GITHUB_REF_NAME} == ${BRANCH_KUBEAPPS_REPO} ]]; then
             echo "running_on_main=true" >> $GITHUB_OUTPUT
           else
             echo "running_on_main=false" >> $GITHUB_OUTPUT
           fi
-          
+
           if [[ ${GITHUB_REF_TYPE} == "tag" && ${GITHUB_REF_NAME} =~ ^v[0-9]+ ]]; then
             echo "running_on_tag=true" >> $GITHUB_OUTPUT
           else
@@ -352,12 +352,12 @@ jobs:
       - run: |
           for artifact in *; do
             echo "::debug::Processing artifact '${artifact}'"
-          
+
             if [[ "${artifact}" != *"-image" ]]; then
-              echo "::notice ::Skipping artifact ${artifact}, it's not a docker image"          
+              echo "::notice ::Skipping artifact ${artifact}, it's not a docker image"
               continue
             fi
-          
+
             image=${artifact/-image/}
             if [[ "${IMAGES_TO_PUSH}" != *"${image}"* ]]; then
               echo "::notice ::Skipping image ${image}, it's not an image to push"
@@ -404,7 +404,7 @@ jobs:
       - name: "Install required CLI tools"
         run: |
           source ./script/lib/libcitools.sh
-          
+
           installKind ${KIND_VERSION}
           installKubectl ${KUBECTL_VERSION}
           installMkcert ${MKCERT_VERSION}
@@ -454,14 +454,14 @@ jobs:
       - name: "Load CI images in the cluster"
         run: |
           source ./script/lib/liblog.sh
-          for path in /tmp/images/*; do 
+          for path in /tmp/images/*; do
             image=$(basename "$path")
             if [[ "${image}" != *"-image" ]]; then
-              echo "::notice ::Skipping artifact ${image}, it's not a docker image"          
+              echo "::notice ::Skipping artifact ${image}, it's not a docker image"
               continue
             fi
             info "Loading image ${image}"
-            kind load image-archive "${path}/${image}.tar" --name kubeapps-ci; 
+            kind load image-archive "${path}/${image}.tar" --name kubeapps-ci;
           done
       - name: "Install multicluster deps"
         run: |
@@ -501,12 +501,12 @@ jobs:
       - run: |
           for artifact in *; do
             echo "::debug::Processing artifact '${artifact}'"
-            
+
             if [[ "${artifact}" != *"-image" ]]; then
-              echo "::notice ::Skipping artifact ${artifact}, it's not a docker image"          
+              echo "::notice ::Skipping artifact ${artifact}, it's not a docker image"
               continue
             fi
-            
+
             image=${artifact/-image/}
             if [[ "${IMAGES_TO_PUSH}" != *"${image}"* ]]; then
               echo "::notice ::Skipping image ${image}, it's not an image to push"
@@ -534,7 +534,7 @@ jobs:
       - name: "Install CLI tools"
         run: |
           source ./script/lib/libcitools.sh
-          
+
           installGithubCLI ${GITHUB_VERSION}
           installSemver {SEMVER_VERSION}
           installGPGKey ${{secrets.GPG_KEY_PUBLIC}} ${{secrets.GPG_KEY_PRIVATE}} ${CI_BOT_GPG} ${CI_BOT_EMAIL}
