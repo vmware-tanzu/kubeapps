@@ -1,3 +1,4 @@
+# THIS IS A DEVELOPMENT PR, DO NOT MERGE!
 ### Description of the change
 
 This is an automatic PR for synchronizing the changes performed externally at the [bitnami/kubeapps official chart](https://github.com/bitnami/charts/tree/master/bitnami/kubeapps) to the Kubeapps development version.
