@@ -148,8 +148,6 @@ function PkgRepoList() {
   };
 
   const canAddRepos = () => {
-    console.log("check");
-    console.log([...reposRBAC.values()]);
     return [...reposRBAC.values()].some(r => r.global?.create || r.namespaced.create);
   };
 
