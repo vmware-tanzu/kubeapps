@@ -70,7 +70,7 @@ func FindAccessibleNamespaces(clusterTypedClientGetter clientgetter.TypedClientF
 
 func nsCheckerWorker(client kubernetes.Interface, nsJobs <-chan checkNSJob, resultChan chan checkNSResult) {
 	for j := range nsJobs {
-		res, err := client.AuthorizationV1().SelfSubjectAccessReviews().Create(context.TODO(), &authorizationapi.SelfSubjectAccessReview{
+		res, err := client.AuthorizationV1().SelfSubjectAccessReviews().Create(context.Background(), &authorizationapi.SelfSubjectAccessReview{
 			Spec: authorizationapi.SelfSubjectAccessReviewSpec{
 				ResourceAttributes: &authorizationapi.ResourceAttributes{
 					Group:     "",

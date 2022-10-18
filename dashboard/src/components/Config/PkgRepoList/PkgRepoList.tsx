@@ -160,6 +160,30 @@ function PkgRepoList() {
     });
   };
 
+  const getGlobalReposTable = (
+    globalRepos: PackageRepositorySummary[],
+    disableControls: boolean,
+  ) => {
+    return (
+      <>
+        <h3>Global Repositories:</h3>
+        <p>Global Package Repositories are available for all Kubeapps users.</p>
+        {globalRepos.length ? (
+          <Table
+            valign="center"
+            columns={tableColumns}
+            data={getTableData(globalRepos, disableControls)}
+          />
+        ) : (
+          <p>
+            There are no <i>global</i> Package Repositories yet. Click on the "Add Package
+            Repository" button to create one.
+          </p>
+        )}
+      </>
+    );
+  };
+
   /* eslint-disable jsx-a11y/label-has-associated-control */
   return (
     <>
@@ -172,6 +196,7 @@ function PkgRepoList() {
             namespace={currentNamespace}
             helmGlobalNamespace={helmGlobalNamespace}
             carvelGlobalNamespace={carvelGlobalNamespace}
+            disabled={!supportedCluster}
           />,
         ]}
         filter={
@@ -189,20 +214,23 @@ function PkgRepoList() {
       />
       <div className="catalog-container">
         {!supportedCluster ? (
-          <Alert theme="warning">
-            <h5>Package Repositories can't be managed from this cluster.</h5>
-            <p>
-              Currently, the Package Repositories must be managed from the default cluster (the one
-              on which Kubeapps has been installed).
-            </p>
-            <p>
-              Any <i>global</i> Package Repository defined in the default cluster can be later used
-              across any target cluster.
-              <br />
-              However, <i>namespaced</i> Package Repositories can only be used on the default
-              cluster.
-            </p>
-          </Alert>
+          <div className="page-content">
+            <Alert theme="warning">
+              <h5>Package Repositories can't be managed from this cluster.</h5>
+              <p>
+                Currently, the Package Repositories must be managed from the default cluster (the
+                one on which Kubeapps has been installed).
+              </p>
+              <p>
+                Any <i>global</i> Package Repository defined in the default cluster can be later
+                used across any target cluster.
+                <br />
+                However, <i>namespaced</i> Package Repositories can only be used on the default
+                cluster.
+              </p>
+            </Alert>
+            {getGlobalReposTable(globalRepos, true)}
+          </div>
         ) : (
           <div className="page-content">
             {errors.fetch && (
@@ -222,20 +250,7 @@ function PkgRepoList() {
                   loadingText="Fetching Package Repositories..."
                   loaded={!isFetching}
                 >
-                  <h3>Global Repositories:</h3>
-                  <p>Global Package Repositories are available for all Kubeapps users.</p>
-                  {globalRepos.length ? (
-                    <Table
-                      valign="center"
-                      columns={tableColumns}
-                      data={getTableData(globalRepos, !canEditGlobalRepos)}
-                    />
-                  ) : (
-                    <p>
-                      There are no <i>global</i> Package Repositories yet. Click on the "Add Package
-                      Repository" button to create one.
-                    </p>
-                  )}
+                  {getGlobalReposTable(globalRepos, !canEditGlobalRepos)}
                   {![helmGlobalNamespace, carvelGlobalNamespace].includes(namespace) && (
                     <>
                       <h3>Namespaced Repositories: {namespace}</h3>

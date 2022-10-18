@@ -6,6 +6,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/pkg/helm"
 	"reflect"
 
 	helmv2 "github.com/fluxcd/helm-controller/api/v2beta1"
@@ -53,7 +54,7 @@ type Server struct {
 	// kubeapps-internal-kubeappsapis service account
 	serviceAccountClientGetter clientgetter.FixedClusterClientProviderInterface
 
-	actionConfigGetter clientgetter.HelmActionConfigGetterFunc
+	actionConfigGetter helm.HelmActionConfigGetterFunc
 
 	repoCache  *cache.NamespacedResourceWatcherCache
 	chartCache *cache.ChartCache
@@ -134,7 +135,7 @@ func NewServer(configGetter core.KubernetesConfigGetter, kubeappsCluster string,
 			return &Server{
 				clientGetter:               clientProvider,
 				serviceAccountClientGetter: backgroundClientGetter,
-				actionConfigGetter: clientgetter.NewHelmActionConfigGetter(
+				actionConfigGetter: helm.NewHelmActionConfigGetter(
 					configGetter, kubeappsCluster),
 				repoCache:       repoCache,
 				chartCache:      chartCache,

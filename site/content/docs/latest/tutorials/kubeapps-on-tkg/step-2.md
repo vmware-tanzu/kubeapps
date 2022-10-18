@@ -2,7 +2,7 @@
 
 Once the VMware Tanzu™ Kubernetes Grid™ cluster has been configured to work with Pinniped and the OIDC provider, the next step is to configure Kubeapps. This involves a number of tasks, including making Kubeapps proxy requests to Pinniped, enabling the OIDC login and, optionally, configuring the look and feel of the Kubeapps user interface.
 
-Kubeapps is currently officially delivered as a Helm chart packaged by Bitnami. This Helm Chart offers a large number of configuration options in its [`values.yaml`](https://github.com/bitnami/charts/blob/master/bitnami/kubeapps/values.yaml) file. A general overview of the key configuration parameters for a TKG cluster is shown below:
+Kubeapps is currently officially delivered as a Helm chart packaged by Bitnami. This Helm Chart offers a large number of configuration options in its [`values.yaml`](https://github.com/bitnami/charts/blob/main/bitnami/kubeapps/values.yaml) file. A general overview of the key configuration parameters for a TKG cluster is shown below:
 
 ```yaml
 ## Values likely to be modified
@@ -22,7 +22,7 @@ apprepository: # Apprepository controller configuration
   initialRepos: # Initial repositories to fetch
 ```
 
-> **TIP**: Refer to the [Bitnami Kubeapps Helm chart documentation](https://github.com/bitnami/charts/blob/master/bitnami/kubeapps/README.md) for more information.
+> **TIP**: Refer to the [Bitnami Kubeapps Helm chart documentation](https://github.com/bitnami/charts/blob/main/bitnami/kubeapps/README.md) for more information.
 
 The two main configuration areas are authentication and user interface.
 
@@ -77,7 +77,7 @@ The first step is to configure the `clusters`, `pinnipedProxy` and `authProxy` p
 
    > **TIP**: The `defaultAuthenticatorName` must match the _JWTAuthenticator_ resource name created in [Step 1](./step-1.md).
 
-   > **NOTE**: Just if you are using the Pinniped version provided by TMC (instead of the one already provided by TKG), you also need to point to its namespace and API group suffix as follows. You can read more about it in the [chart documentation](https://github.com/bitnami/charts/blob/master/bitnami/kubeapps/README.md#pinniped-proxy-parameters).
+   > **NOTE**: Just if you are using the Pinniped version provided by TMC (instead of the one already provided by TKG), you also need to point to its namespace and API group suffix as follows. You can read more about it in the [chart documentation](https://github.com/bitnami/charts/blob/main/bitnami/kubeapps/README.md#pinniped-proxy-parameters).
    >
    > ```yaml
    > pinnipedProxy:
@@ -162,7 +162,7 @@ At this point, Kubeapps is configured to use a custom interface.
 
 ### Step 2.3: Install Kubeapps
 
-With the configuration out of the way, it's time to install Kubeapps. Since Kubeapps is currently officially delivered as a [Helm chart packaged by Bitnami](https://github.com/bitnami/charts/tree/master/bitnami/kubeapps), the easiest way to install Kubeapps is to add the Bitnami repository to Helm and install it via Helm.
+With the configuration out of the way, it's time to install Kubeapps. Since Kubeapps is currently officially delivered as a [Helm chart packaged by Bitnami](https://github.com/bitnami/charts/tree/main/bitnami/kubeapps), the easiest way to install Kubeapps is to add the Bitnami repository to Helm and install it via Helm.
 
 To install Kubeapps in an air-gapped environment, please follow the [offline installation instructions](https://github.com/vmware-tanzu/kubeapps/blob/main/site/content/docs/latest/howto/offline-installation.md) instead.
 

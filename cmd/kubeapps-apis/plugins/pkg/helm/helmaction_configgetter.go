@@ -1,12 +1,12 @@
 // Copyright 2022 the Kubeapps contributors.
 // SPDX-License-Identifier: Apache-2.0
 
-package clientgetter
+package helm
 
 import (
 	"context"
 	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/core"
-	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/pkg/agent"
+	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/pkg/helm/agent"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"helm.sh/helm/v3/pkg/action"

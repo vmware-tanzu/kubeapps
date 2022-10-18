@@ -5,17 +5,17 @@ package main
 
 import (
 	"context"
-	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/pkg/resources"
-	"k8s.io/apimachinery/pkg/api/errors"
-
 	apprepov1alpha1 "github.com/vmware-tanzu/kubeapps/cmd/apprepository-controller/pkg/apis/apprepository/v1alpha1"
 	corev1 "github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
 	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/plugins/helm/packages/v1alpha1"
+	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/pkg/resources"
 	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/pkg/statuserror"
+	"github.com/vmware-tanzu/kubeapps/pkg/helm"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/anypb"
 	k8scorev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -582,7 +582,7 @@ func (s *Server) deleteRepo(ctx context.Context, cluster string, repoRef *corev1
 		if err != nil {
 			return err
 		}
-		namespacedSecretName := namespacedSecretNameForRepo(repoRef.Identifier, repoRef.Context.Namespace)
+		namespacedSecretName := helm.SecretNameForNamespacedRepo(repoRef.Identifier, repoRef.Context.Namespace)
 		if deleteErr := s.deleteRepositorySecretFromNamespace(typedClient, s.kubeappsNamespace, namespacedSecretName); deleteErr != nil {
 			return statuserror.FromK8sError("delete", "Secret", namespacedSecretName, deleteErr)
 		}

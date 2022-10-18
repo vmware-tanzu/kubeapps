@@ -17,7 +17,7 @@ markup:
     lineNos: false
     lineNumbersInTable: true
     noClasses: true
-    style: friendly
+    style: vs
     tabWidth: 4
 ## Only used if use_advanced_docs=false
 # menu:
@@ -37,7 +37,6 @@ params:
   docs_versioning: true
   github_base_url: "https://github.com/vmware-tanzu/kubeapps"
   github_url: "https://github.com/vmware-tanzu/kubeapps/"
-  googleSiteVerification: xxxx
   gtmId: GTM-PGL7FMT
   oneTrustId: b9039ff0-42be-4f63-bc78-e2ecbbed5f06
   sitename: Kubeapps
@@ -45,6 +44,7 @@ params:
   twitter: vmwmarketplace
   twitter_url: "https://twitter.com/vmwmarketplace"
   use_advanced_docs: true
+  display_version_selector: false
   docs_versions:
     - latest
 privacy:

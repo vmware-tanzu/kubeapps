@@ -4,12 +4,12 @@
 package agent
 
 import (
+	chartFake "github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/helm/packages/v1alpha1/utils/fake"
 	"io"
 	"testing"
 	"time"
 
-	kubechart "github.com/vmware-tanzu/kubeapps/pkg/chart"
-	chartFake "github.com/vmware-tanzu/kubeapps/pkg/chart/fake"
+	kubechart "github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/helm/packages/v1alpha1/utils"
 	"helm.sh/helm/v3/pkg/action"
 	"helm.sh/helm/v3/pkg/chart"
 	"helm.sh/helm/v3/pkg/chartutil"
@@ -126,7 +126,7 @@ func TestCreateReleases(t *testing.T) {
 			actionConfig := newActionConfigFixture(t)
 			makeReleases(t, actionConfig, tc.existingReleases)
 			fakechart := chartFake.ChartClient{}
-			ch, _ := fakechart.GetChart(&kubechart.Details{
+			ch, _ := fakechart.GetChart(&kubechart.ChartDetails{
 				ChartName: tc.chartName,
 			}, "")
 			// Perform test
@@ -321,7 +321,7 @@ func TestUpgradeRelease(t *testing.T) {
 			cfg := newActionConfigFixture(t)
 			makeReleases(t, cfg, tc.releases)
 			fakechart := chartFake.ChartClient{}
-			ch, _ := fakechart.GetChart(&kubechart.Details{
+			ch, _ := fakechart.GetChart(&kubechart.ChartDetails{
 				ChartName: tc.chartName,
 			}, "")
 			newRelease, err := UpgradeRelease(cfg, tc.release, tc.valuesYaml, ch, nil, 0)

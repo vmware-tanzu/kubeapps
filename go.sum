@@ -271,8 +271,8 @@ github.com/distribution/distribution v2.8.1+incompatible/go.mod h1:EgLm2NgWtdKgz
 github.com/distribution/distribution/v3 v3.0.0-20220907155224-78b9c98c5c31 h1:AqcwAyaSEkILnr/bLybFnM2i/+EW67JJIRs/4dWmzxo=
 github.com/dnaeon/go-vcr v1.0.1/go.mod h1:aBB1+wY4s93YsC3HHjMBMrwTj2R9FHDzUr9KyGc8n1E=
 github.com/dnaeon/go-vcr v1.1.0 h1:ReYa/UBrRyQdant9B4fNHGoCNKw6qh6P0fsdGmZpR7c=
-github.com/docker/cli v20.10.18+incompatible h1:f/GQLsVpo10VvToRay2IraVA1wHz9KktZyjev3SIVDU=
-github.com/docker/cli v20.10.18+incompatible/go.mod h1:JLrzqnKDaYBop7H2jaqPtU4hHvMKP+vjCwu2uszcLI8=
+github.com/docker/cli v20.10.19+incompatible h1:VKVBUb0KY/bx0FUCrCiNCL8wqgy8VxQli1dtNTn38AE=
+github.com/docker/cli v20.10.19+incompatible/go.mod h1:JLrzqnKDaYBop7H2jaqPtU4hHvMKP+vjCwu2uszcLI8=
 github.com/docker/distribution v2.8.0+incompatible/go.mod h1:J2gT2udsDAN96Uj4KfcMRqY0/ypR+oyYUYmja8H+y+w=
 github.com/docker/distribution v2.8.1+incompatible h1:Q50tZOPR6T/hjNsyc9g8/syEs6bk8XXApsHjKukMl68=
 github.com/docker/distribution v2.8.1+incompatible/go.mod h1:J2gT2udsDAN96Uj4KfcMRqY0/ypR+oyYUYmja8H+y+w=
@@ -346,12 +346,12 @@ github.com/fluxcd/pkg/apis/kustomize v0.5.0 h1:4Rvr4zWQV2KyHkSQzq8IFPo10b0UVAGEg
 github.com/fluxcd/pkg/apis/kustomize v0.5.0/go.mod h1:N3Rtc5wDm/omHH0YHUbILyUpRNmWvZGejb5/8Uyk6II=
 github.com/fluxcd/pkg/apis/meta v0.16.0 h1:6Mj9rB0TtvCeTe3IlQDc1i2DH75Oosea9yUqS7XafVg=
 github.com/fluxcd/pkg/apis/meta v0.16.0/go.mod h1:GrOVzWXiu22XjLNgLLe2EBYhQPqZetes5SIADb4bmHE=
-github.com/fluxcd/pkg/oci v0.10.0 h1:Ay8Btd5rG8hkzK9sQIvOp15cJ3EhzR8w2kVIUynKhbo=
-github.com/fluxcd/pkg/oci v0.10.0/go.mod h1:gsRwVj0gTwk9xF3PuPJQ4R+rv8UtT26Gi7r1XfyBw8A=
+github.com/fluxcd/pkg/oci v0.13.0 h1:447gUqqh+QnvLt+JCuqu1CjDpsbJhmyB1eibbiH7gTQ=
+github.com/fluxcd/pkg/oci v0.13.0/go.mod h1:gsRwVj0gTwk9xF3PuPJQ4R+rv8UtT26Gi7r1XfyBw8A=
 github.com/fluxcd/pkg/version v0.2.0 h1:jG22c59Bsv6vL51N7Bqn8tjHArYOXrjbIkGArlIrv5w=
 github.com/fluxcd/pkg/version v0.2.0/go.mod h1:umN1VAOV0sB1JDVwb8eXZzuuqIAEku+y+vcCVBBUIf0=
-github.com/fluxcd/source-controller/api v0.29.0 h1:RyuHUCW7NtnHu61RbZUYhNWS+Nl0Z0rWS6a4aGGZZqE=
-github.com/fluxcd/source-controller/api v0.29.0/go.mod h1:pqWB3brXYkacesoKGY96dTJRrafThY1VwDQy6md1W/4=
+github.com/fluxcd/source-controller/api v0.30.1 h1:ykRiMBGcoEy3hIJY5YwL1Mhzmmab1rN+goDgFRLFuxk=
+github.com/fluxcd/source-controller/api v0.30.1/go.mod h1:UkjAqQ6QAXNNesNQDTArTeiTp+UuhOUIA+JyFhGP/+Q=
 github.com/flynn/go-shlex v0.0.0-20150515145356-3f9db97f8568/go.mod h1:xEzjJPgXI435gkrCt3MPfRiAkVrwSbHsst4LCFVfpJc=
 github.com/fogleman/gg v1.2.1-0.20190220221249-0403632d5b90/go.mod h1:R/bRT+9gY/C5z7JzPU0zXsXHKM4/ayA+zqcVNZzPa1k=
 github.com/form3tech-oss/jwt-go v3.2.2+incompatible/go.mod h1:pbq4aXjuKjdthFRnoDwaVPLA+WlJuPGy+QneDUgJi2k=

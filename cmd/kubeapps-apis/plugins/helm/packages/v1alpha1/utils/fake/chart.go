@@ -1,11 +1,11 @@
-// Copyright 2018-2022 the Kubeapps contributors.
+// Copyright 2022 the Kubeapps contributors.
 // SPDX-License-Identifier: Apache-2.0
 
 package fake
 
 import (
 	appRepov1 "github.com/vmware-tanzu/kubeapps/cmd/apprepository-controller/pkg/apis/apprepository/v1alpha1"
-	chartUtils "github.com/vmware-tanzu/kubeapps/pkg/chart"
+	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/helm/packages/v1alpha1/utils"
 	"helm.sh/helm/v3/pkg/chart"
 	corev1 "k8s.io/api/core/v1"
 	"sigs.k8s.io/yaml"
@@ -15,7 +15,7 @@ import (
 type ChartClient struct{}
 
 // GetChart fake
-func (f *ChartClient) GetChart(details *chartUtils.Details, repoURL string) (*chart.Chart, error) {
+func (f *ChartClient) GetChart(details *utils.ChartDetails, repoURL string) (*chart.Chart, error) {
 	vals, err := getValues([]byte(details.Values))
 	if err != nil {
 		return nil, err
@@ -47,6 +47,6 @@ func (f *ChartClient) Init(appRepo *appRepov1.AppRepository, caCertSecret *corev
 type ChartClientFactory struct{}
 
 // New returns a fake ChartClient
-func (c *ChartClientFactory) New(repoType, userAgent string) chartUtils.ChartClient {
+func (c *ChartClientFactory) New(repoType, userAgent string) utils.ChartClient {
 	return &ChartClient{}
 }
