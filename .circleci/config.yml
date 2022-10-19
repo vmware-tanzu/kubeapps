@@ -181,7 +181,7 @@ workflows:
             - build_e2e_runner
             - sync_chart_from_bitnami
       - sync_chart_from_bitnami:
-          <<: *build_always
+          <<: *build_on_main
       - GKE_REGULAR_VERSION_MAIN:
           <<: *build_on_tag_or_prerelease
           requires:
@@ -286,7 +286,7 @@ common_envars: &common_envars
   KUBEAPPS_REPO: << pipeline.parameters.KUBEAPPS_REPO >>
   BRANCH_KUBEAPPS_REPO: << pipeline.parameters.BRANCH_KUBEAPPS_REPO >>
   README_GENERATOR_REPO: << pipeline.parameters.README_GENERATOR_REPO >>
-  DEV_MODE: true
+  DEV_MODE: false
 
 common_gke_envars: &common_gke_envars
   USE_MULTICLUSTER_OIDC_ENV: "false"
@@ -886,7 +886,7 @@ jobs:
           # This token is passed as a GITHUB_TOKEN env var via CircleCI
           name: Run the chart_sync script
           command: |
-            ./script/chart_sync.sh << pipeline.parameters.CI_BOT_USERNAME >> << pipeline.parameters.CI_BOT_EMAIL >> << pipeline.parameters.CI_BOT_GPG >> << pipeline.parameters.CHARTS_REPO_ORIGINAL >> << pipeline.parameters.BRANCH_CHARTS_REPO_ORIGINAL >> << pipeline.parameters.CHARTS_REPO_FORKED >> << pipeline.parameters.BRANCH_CHARTS_REPO_FORKED >>
+            ./script/chart_sync.sh $CI_BOT_USERNAME $CI_BOT_EMAIL $CI_BOT_GPG $CHARTS_REPO_ORIGINAL $BRANCH_CHARTS_REPO_ORIGINAL $CHARTS_REPO_FORKED $BRANCH_CHARTS_REPO_FORKED $DEV_MODE
   sync_chart_from_bitnami:
     environment:
       <<: *common_envars
