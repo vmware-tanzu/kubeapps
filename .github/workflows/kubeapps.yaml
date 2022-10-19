@@ -576,6 +576,8 @@ jobs:
         # "repo:status", "public_repo" and "read:org"
         # This token is passed as a GITHUB_TOKEN from CI
         name: Run the check_upstream_chart script
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           ./script/chart_upstream_checker.sh \
               ${CI_BOT_USERNAME} \
