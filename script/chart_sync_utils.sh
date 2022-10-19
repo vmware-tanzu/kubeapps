@@ -168,6 +168,9 @@ updateRepoWithRemoteChanges() {
     git -C "${TARGET_REPO}" remote add upstream "git@github.com:${CHARTS_REPO_ORIGINAL}.git"
     git -C "${TARGET_REPO}" pull upstream "${BRANCH_CHARTS_REPO_ORIGINAL}"
 
+    info "Listing remotes for Git repo ${TARGET_REPO}"
+    git -C "${TARGET_REPO}" remote -v
+
     # https://superuser.com/questions/232373/how-to-tell-git-which-private-key-to-use
     GIT_SSH_COMMAND="ssh -i ~/.ssh/${FORKED_SSH_KEY_FILENAME}" git -C "${TARGET_REPO}" push origin "${BRANCH_CHARTS_REPO_FORKED}"
 
