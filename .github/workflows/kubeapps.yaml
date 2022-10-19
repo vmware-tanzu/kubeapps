@@ -657,7 +657,6 @@ jobs:
           installGithubCLI ${GITHUB_VERSION}
           installSemver ${SEMVER_VERSION}
           installGPGKey ${GPG_KEY_PUBLIC} ${GPG_KEY_PRIVATE} ${CI_BOT_GPG} ${CI_BOT_EMAIL}
-          configGit
       - name: "Install SSH key: Kubeapps Deploy Key"
         uses: shimataro/ssh-key-action@v2
         with:

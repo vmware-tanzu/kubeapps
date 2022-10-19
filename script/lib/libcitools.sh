@@ -162,17 +162,3 @@ function installHelm() {
   popd
   info "Done"
 }
-
-########################
-# Config Git with the required config
-# Globals: None
-# Arguments: None
-# Returns: None
-#########################
-function configGit() {
-  info "Configuring Git"
-  git config --global url."ssh://git@github.com:".insteadOf "https://github.com/"
-  info "Current ~/.gitconfig"
-  cat ~/.gitconfig
-  info "Done"
-}

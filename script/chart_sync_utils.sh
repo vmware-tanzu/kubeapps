@@ -127,12 +127,9 @@ updateRepoWithLocalChanges() {
         return 1
     fi
     # Fetch latest upstream changes, and commit&push them to the forked charts repo
-    git -C "${TARGET_REPO}" remote add upstream "https://github.com/${CHARTS_REPO_ORIGINAL}.git"
-    info "Added upstream: https://github.com/${CHARTS_REPO_ORIGINAL}.git"
+    git -C "${TARGET_REPO}" remote add upstream "ssh://git@github.com:${CHARTS_REPO_ORIGINAL}.git"
     git -C "${TARGET_REPO}" pull upstream "${BRANCH_CHARTS_REPO_ORIGINAL}"
-    info "Pulled branch: ${BRANCH_CHARTS_REPO_ORIGINAL}"
     git -C "${TARGET_REPO}" push origin "${BRANCH_CHARTS_REPO_FORKED}"
-    info "Pushed repo to forked repo: ${BRANCH_CHARTS_REPO_FORKED}"
     rm -rf "${targetChartPath}"
     cp -R "${KUBEAPPS_CHART_DIR}" "${targetChartPath}"
 
@@ -168,7 +165,7 @@ updateRepoWithRemoteChanges() {
         return 1
     fi
     # Fetch latest upstream changes, and commit&push them to the forked charts repo
-    git -C "${TARGET_REPO}" remote add upstream "https://github.com/${CHARTS_REPO_ORIGINAL}.git"
+    git -C "${TARGET_REPO}" remote add upstream "ssh://git@github.com:${CHARTS_REPO_ORIGINAL}.git"
     git -C "${TARGET_REPO}" pull upstream "${BRANCH_CHARTS_REPO_ORIGINAL}"
 
     # https://superuser.com/questions/232373/how-to-tell-git-which-private-key-to-use
@@ -179,6 +176,8 @@ updateRepoWithRemoteChanges() {
     # Update Chart.yaml with new version
     sed -i.bk "s/appVersion: "${targetTagWithoutV}"/appVersion: DEVEL/g" "${localChartYaml}"
     rm "${KUBEAPPS_CHART_DIR}/Chart.yaml.bk"
+    info "New version ${targetTagWithoutV} applied to file ${chartYaml}"
+
     # Replace images for the latest available
     # TODO: use the IMAGES_TO_PUSH var already set in the CI config
     replaceImage_productionToLatest dashboard "${KUBEAPPS_CHART_DIR}/values.yaml"
