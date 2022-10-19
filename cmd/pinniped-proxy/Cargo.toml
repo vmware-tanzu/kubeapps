@@ -15,6 +15,7 @@ anyhow = "1.0"
 base64 = "0.13"
 cached = "0.39"
 chrono = "0.4"
+env_logger = "0.9"
 hyper = { version = "0.14", features = ["server"] }
 hyper-tls = "0.5"
 kube = { version = "0.75.0" }
@@ -24,7 +25,6 @@ k8s-openapi = { version = "0.16.0", default-features = false}
 log = "0.4"
 native-tls = "0.2"
 openssl = "0.10"
-pretty_env_logger = "0.4"
 reqwest = "0.11"
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
