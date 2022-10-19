@@ -57,7 +57,7 @@ if [[ ${semverCompare} -lt 0 ]]; then
     TMP_DIR=$(mktemp -u)/charts
     mkdir -p "${TMP_DIR}"
 
-    git clone "https://github.com/${CHARTS_REPO_FORKED}" "${TMP_DIR}" --depth 1 --no-single-branch
+    git clone "git@github.com:${CHARTS_REPO_FORKED}" "${TMP_DIR}" --depth 1 --no-single-branch
     configUser "${TMP_DIR}" "${USERNAME}" "${EMAIL}" "${GPG_KEY}"
     configUser "${PROJECT_DIR}" "${USERNAME}" "${EMAIL}" "${GPG_KEY}"
 
