@@ -111,16 +111,33 @@ replaceImage_productionToLatest() {
     rm "${FILE}.bk"
 }
 
+########################################################################################################################
+# Updates the fork of the charts repo, both locally and in the origin remote, applying the new version for the Helm
+# chart passed through the TARGET_TAG param.
+# Globals:
+#   KUBEAPPS_CHART_DIR: Path of the Kubeapps chart in the Kubeapps repo.
+#   CHART_REPO_PATH: Path of the Kubeapps chart in the charts repo.
+# Arguments:
+#   $1 - CHARTS_REPO_FORK_LOCAL_PATH: Path to the clone of the bitnami/charts repo in the local machine.
+#   $2 - TARGET_TAG: Tag from which to take the new version for the Helm chart.
+#   $3 - CHARTS_FORK_SSH_KEY_FILENAME: Filename of the SSH key to connect with the remote charts repo fork.
+#   $4 - CHARTS_REPO_UPSTREAM: Name of the upstream version of the bitnami/charts repo without the GitHub part (eg. bitnami/charts).
+#   $5 - CHARTS_REPO_UPSTREAM_BRANCH: Name of the main branch in the upstream of the charts repo.
+#   $6 - CHARTS_REPO_FORK_BRANCH: Name of the main branch in the origin remove of the fork of charts repo.
+# Returns:
+#   0 - Success
+#   1 - Failure
+########################################################################################################################
 updateRepoWithLocalChanges() {
-    local TARGET_REPO=${1:?}
+    local CHARTS_REPO_FORK_LOCAL_PATH=${1:?}
     local TARGET_TAG=${2:?}
-    local FORKED_SSH_KEY_FILENAME=${3:?}
-    local CHARTS_REPO_ORIGINAL=${4:?}
-    local BRANCH_CHARTS_REPO_ORIGINAL=${5:?}
-    local BRANCH_CHARTS_REPO_FORKED=${6:?}
+    local CHARTS_FORK_SSH_KEY_FILENAME=${3:?}
+    local CHARTS_REPO_UPSTREAM=${4:?}
+    local CHARTS_REPO_UPSTREAM_BRANCH=${5:?}
+    local CHARTS_REPO_FORK_BRANCH=${6:?}
 
     local targetTagWithoutV=${TARGET_TAG#v}
-    local targetChartPath="${TARGET_REPO}/${CHART_REPO_PATH}"
+    local targetChartPath="${CHARTS_REPO_FORK_LOCAL_PATH}/${CHART_REPO_PATH}"
     local chartYaml="${targetChartPath}/Chart.yaml"
 
     if [ ! -f "${chartYaml}" ]; then
@@ -128,10 +145,10 @@ updateRepoWithLocalChanges() {
         return 1
     fi
     # Fetch latest upstream changes, and commit&push them to the forked charts repo
-    git -C "${TARGET_REPO}" remote add upstream "https://github.com/${CHARTS_REPO_ORIGINAL}.git"
-    git -C "${TARGET_REPO}" pull upstream "${BRANCH_CHARTS_REPO_ORIGINAL}"
+    git -C "${CHARTS_REPO_FORK_LOCAL_PATH}" remote add upstream "https://github.com/${CHARTS_REPO_UPSTREAM}.git"
+    git -C "${CHARTS_REPO_FORK_LOCAL_PATH}" pull upstream "${CHARTS_REPO_UPSTREAM_BRANCH}"
     # https://superuser.com/questions/232373/how-to-tell-git-which-private-key-to-use
-    GIT_SSH_COMMAND="ssh -i ~/.ssh/${FORKED_SSH_KEY_FILENAME}" git -C "${TARGET_REPO}" push origin "${BRANCH_CHARTS_REPO_FORKED}"
+    GIT_SSH_COMMAND="ssh -i ~/.ssh/${CHARTS_FORK_SSH_KEY_FILENAME}" git -C "${CHARTS_REPO_FORK_LOCAL_PATH}" push origin "${CHARTS_REPO_FORK_BRANCH}"
     rm -rf "${targetChartPath}"
     cp -R "${KUBEAPPS_CHART_DIR}" "${targetChartPath}"
 
@@ -203,23 +220,41 @@ generateReadme() {
     node bin/index.js -r "${chartReadmePath}" -v "${chartValuesPath}"
 }
 
+########################################################################################################################
+# Files a PR to update the Helm chart in the bitnami/charts repository to a new version.
+# Globals:
+#   KUBEAPPS_CHART_DIR: Path of the Kubeapps chart in the Kubeapps repo.
+#   CHART_REPO_PATH: Path of the Kubeapps chart in the charts repo.
+# Arguments:
+#   $1 - LOCAL_CHARTS_REPO_PATH: Path to the clone of the bitnami/charts repo in the local machine.
+#   $2 - TARGET_BRANCH: Name of the branch to create for the PR.
+#   $3 - CHART_VERSION: New version for the chart.
+#   $4 - CHARTS_REPO_UPSTREAM: Name of the upstream version of the bitnami/charts repo without the GitHub part (eg. bitnami/charts).
+#   $5 - CHARTS_REPO_UPSTREAM_BRANCH: Name of the main branch in the upstream of the charts repo.
+#   $6 - CHARTS_FORK_SSH_KEY_FILENAME: Name of the file with the SSH private key to connect with the upstream of the charts fork.
+#   $7 - DEV_MODE: Indicates if it should be run in development mode, in this case we add a disclaimer to the PR description
+#         alerting that it's a development PR and shouldn't be taken into account, between other customizations (branch name, etc).
+# Returns:
+#   0 - Success
+#   1 - Failure
+########################################################################################################################
 commitAndSendExternalPR() {
-    local LOCAL_CHARTS_FORK_PATH=${1:?}
+    local LOCAL_CHARTS_REPO_PATH=${1:?}
     local TARGET_BRANCH=${2:?}
     local CHART_VERSION=${3:?}
-    local CHARTS_REPO_ORIGINAL=${4:?}
-    local BRANCH_CHARTS_REPO_ORIGINAL=${5:?}
+    local CHARTS_REPO_UPSTREAM=${4:?}
+    local CHARTS_REPO_UPSTREAM_BRANCH=${5:?}
     local CHARTS_FORK_SSH_KEY_FILENAME=${6:?}
     local DEV_MODE=${7-false}
 
-    local targetChartPath="${LOCAL_CHARTS_FORK_PATH}/${CHART_REPO_PATH}"
+    local targetChartPath="${LOCAL_CHARTS_REPO_PATH}/${CHART_REPO_PATH}"
     local chartYaml="${targetChartPath}/Chart.yaml"
 
     if [ ! -f "${chartYaml}" ]; then
         echo "Wrong repo path. You should provide the root of the repository" >/dev/stderr
         return 1
     fi
-    cd "${LOCAL_CHARTS_FORK_PATH}"
+    cd "${LOCAL_CHARTS_REPO_PATH}"
     if [[ ! $(git diff-index HEAD) ]]; then
         echo "Not found any change to commit" >/dev/stderr
         cd -
@@ -245,16 +280,16 @@ commitAndSendExternalPR() {
     if [[ $(GIT_SSH_COMMAND="ssh -i ~/.ssh/${CHARTS_FORK_SSH_KEY_FILENAME}" git ls-remote origin "${TARGET_BRANCH}" | wc -l) -eq 0 ]]; then
         GIT_SSH_COMMAND="ssh -i ~/.ssh/${CHARTS_FORK_SSH_KEY_FILENAME}" git push -u origin "${TARGET_BRANCH}"
         if [[ "${DEV_MODE}" != "true" ]]; then
-          gh pr create -d -B "${BRANCH_CHARTS_REPO_ORIGINAL}" -R "${CHARTS_REPO_ORIGINAL}" -F "${PR_EXTERNAL_TEMPLATE_FILE}" --title "${PR_TITLE}"
+          gh pr create -d -B "${CHARTS_REPO_UPSTREAM_BRANCH}" -R "${CHARTS_REPO_UPSTREAM}" -F "${PR_EXTERNAL_TEMPLATE_FILE}" --title "${PR_TITLE}"
         fi
     else
-        echo "The remote branch '${TARGET_BRANCH}' already exists, please check if there is already an open PR at the repository '${CHARTS_REPO_ORIGINAL}'"
+        echo "The remote branch '${TARGET_BRANCH}' already exists, please check if there is already an open PR at the repository '${CHARTS_REPO_UPSTREAM}'"
         return 1
     fi
     cd -
 }
 
-#########################
+########################################################################################################################
 # Updates the local Helm chart to a new version and files a PR against the upstream Kubeapps repo.
 # Globals:
 #   KUBEAPPS_CHART_DIR: Path of the Kubeapps chart in the Kubeapps repo.
@@ -269,7 +304,7 @@ commitAndSendExternalPR() {
 # Returns:
 #   0 - Success
 #   1 - Failure
-#########################
+########################################################################################################################
 commitAndSendInternalPR() {
     local LOCAL_REPO_PATH=${1:?}
     local TARGET_BRANCH=${2:?}
