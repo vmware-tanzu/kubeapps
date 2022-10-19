@@ -299,6 +299,8 @@ commitAndSendExternalPR() {
         GIT_SSH_COMMAND="ssh -i ~/.ssh/${CHARTS_FORK_SSH_KEY_FILENAME}" git push -u origin "${TARGET_BRANCH}"
         if [[ "${DEV_MODE}" != "true" ]]; then
           gh pr create -d -B "${CHARTS_REPO_UPSTREAM_BRANCH}" -R "${CHARTS_REPO_UPSTREAM}" -F "${PR_EXTERNAL_TEMPLATE_FILE}" --title "${PR_TITLE}"
+        else
+          echo "Skipping external PR because we are running in DEV_MODE"
         fi
     else
         echo "The remote branch '${TARGET_BRANCH}' already exists, please check if there is already an open PR at the repository '${CHARTS_REPO_UPSTREAM}'"
