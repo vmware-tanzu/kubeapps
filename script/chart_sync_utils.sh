@@ -259,6 +259,8 @@ commitAndSendInternalPR() {
     local BRANCH_KUBEAPPS_REPO=${5:?}
     local DEV_MODE=${6:-false}
 
+    info "DEV_MODE: ${DEV_MODE}"
+
     local targetChartPath="${KUBEAPPS_CHART_DIR}/Chart.yaml"
     local localChartYaml="${KUBEAPPS_CHART_DIR}/Chart.yaml"
 
@@ -289,9 +291,10 @@ commitAndSendInternalPR() {
     # NOTE: This expects to have a loaded SSH key
     if [[ $(git ls-remote origin "${TARGET_BRANCH}" | wc -l) -eq 0 ]]; then
         git push -u origin "${TARGET_BRANCH}"
-        if [[ "${DEV_MODE}" == "false" ]]; then
+        if [[ "${DEV_MODE}" != "true" ]]; then
+          info "Creating PR in Bitnami/charts"
           # Skip PR when DEV_MODE to avoid disturbing our Bitnami colleagues
-          gh pr create -d -B "${BRANCH_KUBEAPPS_REPO}" -R "${KUBEAPPS_REPO}" -F "${PR_INTERNAL_TEMPLATE_FILE}" --title "${PR_TITLE}"
+#          gh pr create -d -B "${BRANCH_KUBEAPPS_REPO}" -R "${KUBEAPPS_REPO}" -F "${PR_INTERNAL_TEMPLATE_FILE}" --title "${PR_TITLE}"
         fi
     else
         echo "The remote branch '${TARGET_BRANCH}' already exists, please check if there is already an open PR at the repository '${KUBEAPPS_REPO}'"
