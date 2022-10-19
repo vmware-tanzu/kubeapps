@@ -254,12 +254,28 @@ commitAndSendExternalPR() {
     cd -
 }
 
+#########################
+# Updates the local Helm chart to a new version and files a PR against the upstream Kubeapps repo.
+# Globals:
+#   KUBEAPPS_CHART_DIR: Path of the Kubeapps chart in the Kubeapps repo.
+# Arguments:
+#   $1 - LOCAL_REPO_PATH: Path to the clone of the Kubeapps repo in the local machine.
+#   $2 - TARGET_BRANCH: Name of the branch to create for the PR.
+#   $3 - CHART_VERSION: New version for the chart.
+#   $4 - UPSTREAM_REPO: Name of the upstream version of the kubeapps repo without the GitHub part (eg. vmware-tanzu/kubeapps).
+#   $5 - UPSTREAM_MAIN_BRANCH: Name of the main branch in the upstream repo.
+#   $6 - DEV_MODE: Indicates if it should be run in development mode, in this case we add a disclaimer to the PR description
+#         alerting that it's a development PR and shouldn't be taken into account, between other customizations (branch name, etc).
+# Returns:
+#   0 - Success
+#   1 - Failure
+#########################
 commitAndSendInternalPR() {
-    local LOCAL_KUBEAPPS_REPO_PATH=${1:?}
+    local LOCAL_REPO_PATH=${1:?}
     local TARGET_BRANCH=${2:?}
     local CHART_VERSION=${3:?}
-    local KUBEAPPS_REPO=${4:?}
-    local BRANCH_KUBEAPPS_REPO=${5:?}
+    local UPSTREAM_REPO=${4:?}
+    local UPSTREAM_MAIN_BRANCH=${5:?}
     local DEV_MODE=${6:-false}
 
     local targetChartPath="${KUBEAPPS_CHART_DIR}/Chart.yaml"
@@ -270,7 +286,7 @@ commitAndSendInternalPR() {
         return 1
     fi
 
-    cd "${LOCAL_KUBEAPPS_REPO_PATH}"
+    cd "${LOCAL_REPO_PATH}"
     if [[ ! $(git diff-index HEAD) ]]; then
         echo "Not found any change to commit" >/dev/stderr
         cd -
@@ -293,9 +309,9 @@ commitAndSendInternalPR() {
     # NOTE: This expects to have a loaded SSH key
     if [[ $(git ls-remote origin "${TARGET_BRANCH}" | wc -l) -eq 0 ]]; then
         git push -u origin "${TARGET_BRANCH}"
-        gh pr create -d -B "${BRANCH_KUBEAPPS_REPO}" -R "${KUBEAPPS_REPO}" -F "${PR_INTERNAL_TEMPLATE_FILE}" --title "${PR_TITLE}"
+        gh pr create -d -B "${UPSTREAM_MAIN_BRANCH}" -R "${UPSTREAM_REPO}" -F "${PR_INTERNAL_TEMPLATE_FILE}" --title "${PR_TITLE}"
     else
-        echo "The remote branch '${TARGET_BRANCH}' already exists, please check if there is already an open PR at the repository '${KUBEAPPS_REPO}'"
+        echo "The remote branch '${TARGET_BRANCH}' already exists, please check if there is already an open PR at the repository '${UPSTREAM_REPO}'"
         return 1
     fi
     cd -
