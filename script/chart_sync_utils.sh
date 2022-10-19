@@ -231,7 +231,7 @@ commitAndSendExternalPR() {
     if [[ "${DEV_MODE}" == "true" ]]; then
       timestamp=$(date +%s)
       TARGET_BRANCH="${TARGET_BRANCH}-DEV-${timestamp}"
-      PR_TITLE="DEV - ${PR_TITLE}"
+      PR_TITLE="DEV - ${PR_TITLE} - ${timestamp}"
       tmpfile=$(mktemp)
       echo "# THIS IS A DEVELOPMENT PR, DO NOT MERGE!"|cat - "${PR_EXTERNAL_TEMPLATE_FILE}" > "$tmpfile" && mv "$tmpfile" "${PR_EXTERNAL_TEMPLATE_FILE}"
     fi
@@ -244,7 +244,9 @@ commitAndSendExternalPR() {
     # NOTE: This expects to have a loaded SSH key
     if [[ $(GIT_SSH_COMMAND="ssh -i ~/.ssh/${CHARTS_FORK_SSH_KEY_FILENAME}" git ls-remote origin "${TARGET_BRANCH}" | wc -l) -eq 0 ]]; then
         GIT_SSH_COMMAND="ssh -i ~/.ssh/${CHARTS_FORK_SSH_KEY_FILENAME}" git push -u origin "${TARGET_BRANCH}"
-        gh pr create -d -B "${BRANCH_CHARTS_REPO_ORIGINAL}" -R "${CHARTS_REPO_ORIGINAL}" -F "${PR_EXTERNAL_TEMPLATE_FILE}" --title "${PR_TITLE}"
+        if [[ "${DEV_MODE}" != "true" ]]; then
+          gh pr create -d -B "${BRANCH_CHARTS_REPO_ORIGINAL}" -R "${CHARTS_REPO_ORIGINAL}" -F "${PR_EXTERNAL_TEMPLATE_FILE}" --title "${PR_TITLE}"
+        fi
     else
         echo "The remote branch '${TARGET_BRANCH}' already exists, please check if there is already an open PR at the repository '${CHARTS_REPO_ORIGINAL}'"
     fi
@@ -258,8 +260,6 @@ commitAndSendInternalPR() {
     local KUBEAPPS_REPO=${4:?}
     local BRANCH_KUBEAPPS_REPO=${5:?}
     local DEV_MODE=${6:-false}
-
-    info "DEV_MODE: ${DEV_MODE}"
 
     local targetChartPath="${KUBEAPPS_CHART_DIR}/Chart.yaml"
     local localChartYaml="${KUBEAPPS_CHART_DIR}/Chart.yaml"
@@ -279,8 +279,9 @@ commitAndSendInternalPR() {
     PR_TITLE="Sync chart with bitnami/kubeapps chart (version ${CHART_VERSION})"
 
     if [[ "${DEV_MODE}" == "true" ]]; then
-        TARGET_BRANCH="${TARGET_BRANCH}-DEV"
-        PR_TITLE="DEV - ${PR_TITLE}"
+        timestamp=$(date +%s)
+        TARGET_BRANCH="${TARGET_BRANCH}-DEV-${timestamp}"
+        PR_TITLE="DEV - ${PR_TITLE} - ${timestamp}"
         tmpfile=$(mktemp)
         echo "# THIS IS A DEVELOPMENT PR, DO NOT MERGE!"|cat - "${PR_INTERNAL_TEMPLATE_FILE}" > "$tmpfile" && mv "$tmpfile" "${PR_INTERNAL_TEMPLATE_FILE}"
     fi
@@ -291,11 +292,7 @@ commitAndSendInternalPR() {
     # NOTE: This expects to have a loaded SSH key
     if [[ $(git ls-remote origin "${TARGET_BRANCH}" | wc -l) -eq 0 ]]; then
         git push -u origin "${TARGET_BRANCH}"
-        if [[ "${DEV_MODE}" != "true" ]]; then
-          info "Creating PR in Bitnami/charts"
-          # Skip PR when DEV_MODE to avoid disturbing our Bitnami colleagues
-#          gh pr create -d -B "${BRANCH_KUBEAPPS_REPO}" -R "${KUBEAPPS_REPO}" -F "${PR_INTERNAL_TEMPLATE_FILE}" --title "${PR_TITLE}"
-        fi
+        gh pr create -d -B "${BRANCH_KUBEAPPS_REPO}" -R "${KUBEAPPS_REPO}" -F "${PR_INTERNAL_TEMPLATE_FILE}" --title "${PR_TITLE}"
     else
         echo "The remote branch '${TARGET_BRANCH}' already exists, please check if there is already an open PR at the repository '${KUBEAPPS_REPO}'"
     fi
