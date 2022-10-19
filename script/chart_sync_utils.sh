@@ -229,7 +229,8 @@ commitAndSendExternalPR() {
     PR_TITLE="[bitnami/kubeapps] Bump chart version to ${CHART_VERSION}"
 
     if [[ "${DEV_MODE}" == "true" ]]; then
-      TARGET_BRANCH="${TARGET_BRANCH}-DEV"
+      timestamp=$(date +%s)
+      TARGET_BRANCH="${TARGET_BRANCH}-DEV-${timestamp}"
       PR_TITLE="DEV - ${PR_TITLE}"
       tmpfile=$(mktemp)
       echo "# THIS IS A DEVELOPMENT PR, DO NOT MERGE!"|cat - "${PR_EXTERNAL_TEMPLATE_FILE}" > "$tmpfile" && mv "$tmpfile" "${PR_EXTERNAL_TEMPLATE_FILE}"
@@ -241,11 +242,7 @@ commitAndSendExternalPR() {
     git add --all .
     git commit --signoff -m "kubeapps: bump chart version to ${CHART_VERSION}"
     # NOTE: This expects to have a loaded SSH key
-    if [[ $(git ls-remote origin "${TARGET_BRANCH}" | wc -l) -eq 0 ]]; then
-        info "DEGUB: list remotes"
-        git remote -v
-        info "DEBUG: end"
-
+    if [[ $(GIT_SSH_COMMAND="ssh -i ~/.ssh/${CHARTS_FORK_SSH_KEY_FILENAME}" git ls-remote origin "${TARGET_BRANCH}" | wc -l) -eq 0 ]]; then
         GIT_SSH_COMMAND="ssh -i ~/.ssh/${CHARTS_FORK_SSH_KEY_FILENAME}" git push -u origin "${TARGET_BRANCH}"
         gh pr create -d -B "${BRANCH_CHARTS_REPO_ORIGINAL}" -R "${CHARTS_REPO_ORIGINAL}" -F "${PR_EXTERNAL_TEMPLATE_FILE}" --title "${PR_TITLE}"
     else
