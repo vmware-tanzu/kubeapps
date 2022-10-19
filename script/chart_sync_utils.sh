@@ -23,7 +23,16 @@ PR_INTERNAL_TEMPLATE_FILE="${PROJECT_DIR}/script/tpl/PR_internal_chart_template.
 PR_EXTERNAL_TEMPLATE_FILE="${PROJECT_DIR}/script/tpl/PR_external_chart_template.md"
 RELEASE_NOTES_TEMPLATE_FILE="${PROJECT_DIR}/script/tpl/release_notes.md"
 
-# Returns the tag for the latest release
+
+########################################################################################################################
+# Returns the tag for the latest release of the given repo.
+# Globals:
+#   None
+# Arguments:
+#   $1 - TARGET_REPO: Path to the git repo from which to extract the tag.
+# Returns:
+#   Name of the latest tag found in the given repo.
+########################################################################################################################
 latestReleaseTag() {
     local TARGET_REPO=${1:?}
     info "getting latest release from ${TARGET_REPO}"
@@ -32,6 +41,18 @@ latestReleaseTag() {
     git -C "${TARGET_REPO}/.git" describe --tags "$(git rev-list --tags --max-count=1)"
 }
 
+########################################################################################################################
+# Configs Git for a given repository with the given params.
+# Globals:
+#   None
+# Arguments:
+#   $1 - TARGET_REPO: Path to the git repo to configure.
+#   $2 - USERNAME: Username for git commits.
+#   $3 - EMAIL: Email for git commits.
+#   $4 - GPG_KEY: GPG key to sign off the commits.
+# Returns:
+#   None
+########################################################################################################################
 configUser() {
     local TARGET_REPO=${1:?}
     local USERNAME=${2:?}
