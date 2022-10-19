@@ -18,7 +18,7 @@ _OpenID Connect (OIDC)_ is a simple identity layer on top of the OAuth 2.0 proto
 
 In Kubernetes, one of the authentication strategies for incoming requests to the API server is using [OpenID Connect tokens](https://kubernetes.io/docs/reference/access-authn-authz/authentication/#openid-connect-tokens). The cluster can be configured to trust an external OIDC provider so that authenticated requests can be matched with defined RBAC. Additionally, some managed Kubernetes environments enable authenticating via plain OAuth2.
 
-However, for Kubernetes to be able to use OIDC-based authentication it is required to [enable certain flags in the API server](https://kubernetes.io/docs/reference/access-authn-authz/authentication/#configuring-the-api-server), which is not always possible on certain environments (such as managed Kubernetes distributions by a cloud provider). To work around this limitation, we recommend having a look at the [Pinniped project](https://pinniped.dev/).
+However, for Kubernetes to be able to use OIDC-based authentication it is required to [enable certain flags in the API server](https://kubernetes.io/docs/reference/access-authn-authz/authentication/#configuring-the-api-server), which is not always possible on certain environments (such as managed Kubernetes distributions by a cloud provider). To work around this limitation, it is recommended having a look at the [Pinniped project](https://pinniped.dev/).
 
 This tutorial describes how to use an existing OAuth2 provider, including OIDC, to authenticate users within Kubeapps.
 
@@ -65,11 +65,11 @@ The following sections dive deep into each validated identity provider and descr
 
 ### Configure redirection
 
-When configuring the identity provider, you will need to ensure that the redirect URL for your Kubeapps installation is configured, which is your Kubeapps URL with the absolute path `/oauth2/callback`. For example, if you are deploying Kubeapps with TLS on the domain `my-kubeapps.example.com`, then the redirect URL will be `https://my-kubeapps.example.com/oauth2/callback`.
+When configuring the identity provider, you need to ensure that the redirect URL for your Kubeapps installation is configured, which is your Kubeapps URL with the absolute path `/oauth2/callback`. For example, if you are deploying Kubeapps with TLS on the domain `my-kubeapps.example.com`, then the redirect URL is `https://my-kubeapps.example.com/oauth2/callback`.
 
 ## Deploying an auth proxy to access Kubeapps
 
-The main difference in the authentication is that instead of accessing the Kubeapps service, you will be accessing an oauth2 proxy service that is in charge of authenticating users with the identity provider and injecting the required credentials in the requests to Kubeapps.
+The main difference in the authentication is that instead of accessing the Kubeapps service, you are accessing an oauth2 proxy service that is in charge of authenticating users with the identity provider and injecting the required credentials in the requests to Kubeapps.
 
 > Read the [OAuth2 Proxy Auth configuration page](https://oauth2-proxy.github.io/oauth2-proxy/docs/configuration/overview) for detailed information.
 
@@ -85,6 +85,6 @@ Once the proxy is accessible, you will be redirected to the identity provider to
 
 ## Troubleshooting
 
-If you find after configuring your OIDC/OAuth2 setup following the above instructions, that although you can successfully authenticate with your provider you are nonetheless unable to login to Kubeapps but instead see a 403 or 401 request in the browser's debugger, then you will need to investigate _why_ the Kubernetes cluster is not accepting your credential.
+If you find after configuring your OIDC/OAuth2 setup following the above instructions, that although you can successfully authenticate with your provider you are nonetheless unable to login to Kubeapps but instead see a 403 or 401 request in the browser's debugger, then you need to investigate _why_ the Kubernetes cluster is not accepting your credential.
 
 Visit the [debugging auth failures when using OIDC](../howto/OIDC/OAuth2OIDC-debugging.md) page for more information.
