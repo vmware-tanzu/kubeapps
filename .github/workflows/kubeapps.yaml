@@ -751,6 +751,8 @@ jobs:
         # "repo:status", "public_repo" and "read:org"
         # This token is passed as a GITHUB_TOKEN from CI
         name: Run the chart_sync script
+        env:
+          GITHUB_TOKEN: ${{ secrets.KUBEAPPS_BOT_GITHUB_TOKEN }}
         run: |
           ./script/chart_sync.sh \
               ${CI_BOT_USERNAME} \
