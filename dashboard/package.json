@@ -33,7 +33,7 @@
     "@improbable-eng/grpc-web": "^0.15.0",
     "@paciolan/remote-component": "^2.12.1",
     "@tanstack/match-sorter-utils": "^8.5.14",
-    "@tanstack/react-table": "^8.5.13",
+    "@tanstack/react-table": "^8.5.15",
     "ajv": "^8.11.0",
     "axios": "^0.27.2",
     "connected-react-router": "^6.9.3",
