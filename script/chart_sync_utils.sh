@@ -233,7 +233,7 @@ commitAndSendExternalPR() {
       TARGET_BRANCH="${TARGET_BRANCH}-DEV-${timestamp}"
       PR_TITLE="DEV - ${PR_TITLE} - ${timestamp}"
       tmpfile=$(mktemp)
-      echo "# THIS IS A DEVELOPMENT PR, DO NOT MERGE!"|cat - "${PR_EXTERNAL_TEMPLATE_FILE}" > "$tmpfile" && mv "$tmpfile" "${PR_EXTERNAL_TEMPLATE_FILE}"
+      echo "# :warning: THIS IS A DEVELOPMENT PR, DO NOT MERGE!"|cat - "${PR_EXTERNAL_TEMPLATE_FILE}" > "$tmpfile" && mv "$tmpfile" "${PR_EXTERNAL_TEMPLATE_FILE}"
     fi
 
     sed -i.bk -e "s/<USER>/$(git config user.name)/g" "${PR_EXTERNAL_TEMPLATE_FILE}"
@@ -249,6 +249,7 @@ commitAndSendExternalPR() {
         fi
     else
         echo "The remote branch '${TARGET_BRANCH}' already exists, please check if there is already an open PR at the repository '${CHARTS_REPO_ORIGINAL}'"
+        return 1
     fi
     cd -
 }
@@ -283,7 +284,7 @@ commitAndSendInternalPR() {
         TARGET_BRANCH="${TARGET_BRANCH}-DEV-${timestamp}"
         PR_TITLE="DEV - ${PR_TITLE} - ${timestamp}"
         tmpfile=$(mktemp)
-        echo "# THIS IS A DEVELOPMENT PR, DO NOT MERGE!"|cat - "${PR_INTERNAL_TEMPLATE_FILE}" > "$tmpfile" && mv "$tmpfile" "${PR_INTERNAL_TEMPLATE_FILE}"
+        echo "# :warning: THIS IS A DEVELOPMENT PR, DO NOT MERGE!"|cat - "${PR_INTERNAL_TEMPLATE_FILE}" > "$tmpfile" && mv "$tmpfile" "${PR_INTERNAL_TEMPLATE_FILE}"
     fi
 
     git checkout -b "${TARGET_BRANCH}"
@@ -295,6 +296,7 @@ commitAndSendInternalPR() {
         gh pr create -d -B "${BRANCH_KUBEAPPS_REPO}" -R "${KUBEAPPS_REPO}" -F "${PR_INTERNAL_TEMPLATE_FILE}" --title "${PR_TITLE}"
     else
         echo "The remote branch '${TARGET_BRANCH}' already exists, please check if there is already an open PR at the repository '${KUBEAPPS_REPO}'"
+        return 1
     fi
     cd -
 }
