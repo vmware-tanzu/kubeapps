@@ -14,15 +14,17 @@ source "$ROOT_DIR/script/chart_sync_utils.sh"
 USERNAME=${1:?Missing git username}
 EMAIL=${2:?Missing git email}
 GPG_KEY=${3:?Missing git gpg key}
-CHARTS_REPO_ORIGINAL=${4:?Missing base chart repository}
-BRANCH_CHARTS_REPO_ORIGINAL=${5:?Missing base chart repository branch}
-CHARTS_REPO_FORKED=${6:?Missing forked chart repository}
-BRANCH_CHARTS_REPO_FORKED=${7:?Missing forked chart repository branch}
-DEV_MODE=${8:-false}
+FORKED_SSH_KEY_FILENAME=${4:?Missing forked ssh key filename}
+CHARTS_REPO_ORIGINAL=${5:?Missing base chart repository}
+BRANCH_CHARTS_REPO_ORIGINAL=${6:?Missing base chart repository}
+CHARTS_REPO_FORKED=${7:?Missing forked chart repository}
+BRANCH_CHARTS_REPO_FORKED=${8:?Missing forked chart repository}
+DEV_MODE=${9:-false}
 
 info "USERNAME: ${USERNAME}"
 info "EMAIL: ${EMAIL}"
 info "GPG_KEY: ${GPG_KEY}"
+info "FORKED_SSH_KEY_FILENAME: ${FORKED_SSH_KEY_FILENAME}"
 info "CHARTS_REPO_ORIGINAL: ${CHARTS_REPO_ORIGINAL}"
 info "BRANCH_CHARTS_REPO_ORIGINAL: ${BRANCH_CHARTS_REPO_ORIGINAL}"
 info "CHARTS_REPO_FORKED: ${CHARTS_REPO_FORKED}"
@@ -47,11 +49,10 @@ if [[ ${semverCompare} -gt 0 ]]; then
     CHARTS_FORK_LOCAL_PATH=$(mktemp -u)/charts
     mkdir -p "${CHARTS_FORK_LOCAL_PATH}"
 
-    git clone "https://github.com/${CHARTS_REPO_FORKED}" "${CHARTS_FORK_LOCAL_PATH}" --depth 1 --no-single-branch
-    info "Repo cloned: https://github.com/${CHARTS_REPO_FORKED}"
+#    git clone "https://github.com/${CHARTS_REPO_FORKED}" "${CHARTS_FORK_LOCAL_PATH}" --depth 1 --no-single-branch
+    GIT_SSH_COMMAND="ssh -i ~/.ssh/${FORKED_SSH_KEY_FILENAME}" git clone "git@github.com:${CHARTS_REPO_FORKED}" "${CHARTS_FORK_LOCAL_PATH}" --depth 1 --no-single-branch
     configUser "${CHARTS_FORK_LOCAL_PATH}" "${USERNAME}" "${EMAIL}" "${GPG_KEY}"
     configUser "${PROJECT_DIR}" "${USERNAME}" "${EMAIL}" "${GPG_KEY}"
-    info "Repos configured"
 
     latestVersion=$(latestReleaseTag "${PROJECT_DIR}")
     prBranchName="kubeapps-bump-${currentVersion}"
