@@ -594,6 +594,7 @@ jobs:
   sync_chart_to_bitnami:
     needs:
       - setup
+      - local_e2e_tests
     if: needs.setup.outputs.running_on_tag == 'true'
     runs-on: ubuntu-latest
     steps:
