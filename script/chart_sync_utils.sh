@@ -204,21 +204,22 @@ generateReadme() {
 }
 
 commitAndSendExternalPR() {
-    local TARGET_REPO=${1:?}
+    local LOCAL_CHARTS_FORK_PATH=${1:?}
     local TARGET_BRANCH=${2:?}
     local CHART_VERSION=${3:?}
     local CHARTS_REPO_ORIGINAL=${4:?}
     local BRANCH_CHARTS_REPO_ORIGINAL=${5:?}
-    local DEV_MODE=${6-false}
+    local CHARTS_FORK_SSH_KEY_FILENAME=${6:?}
+    local DEV_MODE=${7-false}
 
-    local targetChartPath="${TARGET_REPO}/${CHART_REPO_PATH}"
+    local targetChartPath="${LOCAL_CHARTS_FORK_PATH}/${CHART_REPO_PATH}"
     local chartYaml="${targetChartPath}/Chart.yaml"
 
     if [ ! -f "${chartYaml}" ]; then
         echo "Wrong repo path. You should provide the root of the repository" >/dev/stderr
         return 1
     fi
-    cd "${TARGET_REPO}"
+    cd "${LOCAL_CHARTS_FORK_PATH}"
     if [[ ! $(git diff-index HEAD) ]]; then
         echo "Not found any change to commit" >/dev/stderr
         cd -
@@ -245,7 +246,7 @@ commitAndSendExternalPR() {
         git remote -v
         info "DEBUG: end"
 
-        git push -u origin "${TARGET_BRANCH}"
+        GIT_SSH_COMMAND="ssh -i ~/.ssh/${CHARTS_FORK_SSH_KEY_FILENAME}" git push -u origin "${TARGET_BRANCH}"
         gh pr create -d -B "${BRANCH_CHARTS_REPO_ORIGINAL}" -R "${CHARTS_REPO_ORIGINAL}" -F "${PR_EXTERNAL_TEMPLATE_FILE}" --title "${PR_TITLE}"
     else
         echo "The remote branch '${TARGET_BRANCH}' already exists, please check if there is already an open PR at the repository '${CHARTS_REPO_ORIGINAL}'"
@@ -254,7 +255,7 @@ commitAndSendExternalPR() {
 }
 
 commitAndSendInternalPR() {
-    local TARGET_REPO=${1:?}
+    local LOCAL_KUBEAPPS_REPO_PATH=${1:?}
     local TARGET_BRANCH=${2:?}
     local CHART_VERSION=${3:?}
     local KUBEAPPS_REPO=${4:?}
@@ -269,7 +270,7 @@ commitAndSendInternalPR() {
         return 1
     fi
 
-    cd "${TARGET_REPO}"
+    cd "${LOCAL_KUBEAPPS_REPO_PATH}"
     if [[ ! $(git diff-index HEAD) ]]; then
         echo "Not found any change to commit" >/dev/stderr
         cd -

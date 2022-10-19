@@ -49,7 +49,6 @@ if [[ ${semverCompare} -gt 0 ]]; then
     CHARTS_FORK_LOCAL_PATH=$(mktemp -u)/charts
     mkdir -p "${CHARTS_FORK_LOCAL_PATH}"
 
-#    git clone "https://github.com/${CHARTS_REPO_FORKED}" "${CHARTS_FORK_LOCAL_PATH}" --depth 1 --no-single-branch
     GIT_SSH_COMMAND="ssh -i ~/.ssh/${FORKED_SSH_KEY_FILENAME}" git clone "git@github.com:${CHARTS_REPO_FORKED}" "${CHARTS_FORK_LOCAL_PATH}" --depth 1 --no-single-branch
     configUser "${CHARTS_FORK_LOCAL_PATH}" "${USERNAME}" "${EMAIL}" "${GPG_KEY}"
     configUser "${PROJECT_DIR}" "${USERNAME}" "${EMAIL}" "${GPG_KEY}"
@@ -58,7 +57,7 @@ if [[ ${semverCompare} -gt 0 ]]; then
     prBranchName="kubeapps-bump-${currentVersion}"
 
     updateRepoWithLocalChanges "${CHARTS_FORK_LOCAL_PATH}" "${latestVersion}" "${FORKED_SSH_KEY_FILENAME}" "${CHARTS_REPO_ORIGINAL}" "${BRANCH_CHARTS_REPO_ORIGINAL}" "${BRANCH_CHARTS_REPO_FORKED}"
-    commitAndSendExternalPR "${CHARTS_FORK_LOCAL_PATH}" "${prBranchName}" "${currentVersion}" "${CHARTS_REPO_ORIGINAL}" "${BRANCH_CHARTS_REPO_ORIGINAL}" "${DEV_MODE}"
+    commitAndSendExternalPR "${CHARTS_FORK_LOCAL_PATH}" "${prBranchName}" "${currentVersion}" "${CHARTS_REPO_ORIGINAL}" "${BRANCH_CHARTS_REPO_ORIGINAL}" "${FORKED_SSH_KEY_FILENAME}" "${DEV_MODE}"
 elif [[ ${semverCompare} -lt 0 ]]; then
     echo "Skipping Chart sync. WARNING Current chart version (${currentVersion}) is less than the chart external version (${externalVersion})"
 else
