@@ -179,7 +179,7 @@ updateRepoWithRemoteChanges() {
     # Update Chart.yaml with new version
     sed -i.bk "s/appVersion: "${targetTagWithoutV}"/appVersion: DEVEL/g" "${localChartYaml}"
     rm "${KUBEAPPS_CHART_DIR}/Chart.yaml.bk"
-    info "New version ${targetTagWithoutV} applied to file ${chartYaml}"
+    info "New version ${targetTagWithoutV} applied to file ${localChartYaml}"
 
     # Replace images for the latest available
     # TODO: use the IMAGES_TO_PUSH var already set in the CI config
