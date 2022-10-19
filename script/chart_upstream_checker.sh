@@ -39,9 +39,6 @@ info "DEV_MODE: ${DEV_MODE}"
 
 if [[ "${DEV_MODE}" == "true" ]]; then
   set -x
-else
-  echo "Not running in DEV_MODE"
-  exit 1
 fi
 
 currentVersion=$(grep -oP '(?<=^version: ).*' <"${KUBEAPPS_CHART_DIR}/Chart.yaml")
