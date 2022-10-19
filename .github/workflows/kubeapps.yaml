@@ -611,6 +611,14 @@ jobs:
           installGithubCLI ${GITHUB_VERSION}
           installSemver ${SEMVER_VERSION}
           installGPGKey ${GPG_KEY_PUBLIC} ${GPG_KEY_PRIVATE} ${CI_BOT_GPG} ${CI_BOT_EMAIL}
+      - name: "Install SSH key: Kubeapps Deploy Key"
+        uses: shimataro/ssh-key-action@v2
+        with:
+          key: ${{ secrets.SSH_KEY_KUBEAPPS_DEPLOY }}
+          name: ${{ needs.setup.outputs.ssh_key_kubeapps_deploy_filename }}
+          known_hosts: |
+            |1|2YkQ4jjACcc/1rgSBszyeEuKxW4=|hO4GB0XMwQj1gYQDmaS304aU8Tc= ssh-rsa AAAAB3NzaC1yc2EAAAABIwAAAQEAq2A7hRGmdnm9tUDbO9IDSwBK6TbQa+PXYPCPy6rbTrTtw7PHkccKrpp0yVhp5HdEIcKr6pLlVDBfOLX9QUsyCOV0wzfjIJNlGEYsdlLJizHhbn2mUjvSAHQqZETYP81eFzLQNnPHt4EVVUh7VfDESU84KezmD5QlWpXLmvU31/yMf+Se8xhHTvKSCZIFImWwoG6mbUoWf9nzpIoaSjB+weqqUUmpaaasXVal72J+UX2B+2RPW3RcT0eOzQgqlJL3RKrTJvdsjE3JEAvGq3lGHSZXy28G3skua2SmVi/w4yCE6gbODqnTWlg7+wC604ydGXA8VJiS5ap43JXiUFFAaQ==
+          if_key_exists: ignore
       - name: "Install SSH key: Forked Charts Deploy Key"
         uses: shimataro/ssh-key-action@v2
         with:
@@ -625,17 +633,22 @@ jobs:
         name: Start ssh-agent and configure the key
         run: |
           eval "$(ssh-agent -s)"
+          # Deployment key uploaded to the vmware-tanzu/kubeapps repository
+          ssh-add ~/.ssh/${SSH_KEY_KUBEAPPS_DEPLOY_FILENAME}
           # Deployment key uploaded to the kubeapps-bot/charts repository
           ssh-add ~/.ssh/${SSH_KEY_FORKED_CHARTS_DEPLOY_FILENAME}
-      - # Assuming there is a personal access token created in GitHub granted with the scopes
-        # "repo:status", "public_repo" and "read:org"
-        # This token is passed as a GITHUB_TOKEN from CI
-        name: Run the chart_sync script
+      - name: Run the chart_sync script
+        env:
+          # Assuming there is a personal access token created in GitHub granted with the scopes
+          # "repo:status", "public_repo" and "read:org"
+          # This token is passed as a GITHUB_TOKEN from CI
+          GITHUB_TOKEN: ${{ secrets.KUBEAPPS_BOT_GITHUB_TOKEN }}
         run: |
           ./script/chart_sync.sh \
               ${CI_BOT_USERNAME} \
               ${CI_BOT_EMAIL} \
               ${CI_BOT_GPG} \
+              ${SSH_KEY_FORKED_CHARTS_DEPLOY_FILENAME} \
               ${CHARTS_REPO_ORIGINAL} \
               ${BRANCH_CHARTS_REPO_ORIGINAL} \
               ${CHARTS_REPO_FORKED} \
