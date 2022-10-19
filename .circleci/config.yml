@@ -239,7 +239,7 @@ workflows:
           requires:
             - push_images
       - sync_chart_to_bitnami:
-          <<: *build_on_tag
+          <<: *build_always
           requires:
             - local_e2e_tests
             - GKE_REGULAR_VERSION_MAIN
@@ -286,7 +286,7 @@ common_envars: &common_envars
   KUBEAPPS_REPO: << pipeline.parameters.KUBEAPPS_REPO >>
   BRANCH_KUBEAPPS_REPO: << pipeline.parameters.BRANCH_KUBEAPPS_REPO >>
   README_GENERATOR_REPO: << pipeline.parameters.README_GENERATOR_REPO >>
-  DEV_MODE: false
+  DEV_MODE: true
 
 common_gke_envars: &common_gke_envars
   USE_MULTICLUSTER_OIDC_ENV: "false"
@@ -867,9 +867,10 @@ jobs:
       - <<: *setup_gpg
       - add_ssh_keys:
           fingerprints:
+            # Deployment key uploaded to the kubeapps/kubeapps repository
+            - << pipeline.parameters.CI_BOT_KUBEAPPS_KUBEAPPS_DEPLOYKEY_FINGERPRINT >>
             # Deployment key uploaded to the kubeapps-bot/charts repository
             - << pipeline.parameters.CI_BOT_FORKED_CHARTS_DEPLOYKEY_FINGERPRINT >>
-
       - run:
           # This is a key pair: https://circleci.com/docs/2.0/gh-bb-integration/
           # public key uploaded to GitHub as a deploy key with write permissions in both kubeapps and kubeapps-bot/charts
@@ -878,6 +879,8 @@ jobs:
           command: |
             eval "$(ssh-agent -s)"
             # the name is always "id_rsa_"+fingerprint without ":""
+            # Deployment key uploaded to the kubeapps/kubeapps repository
+            ssh-add ~/.ssh/<< pipeline.parameters.CI_BOT_KUBEAPPS_KUBEAPPS_DEPLOYKEY_FILENAME >>
             # Deployment key uploaded to the kubeapps-bot/charts repository
             ssh-add ~/.ssh/<< pipeline.parameters.CI_BOT_FORKED_CHARTS_DEPLOYKEY_FILENAME >>
       - run:
@@ -886,7 +889,7 @@ jobs:
           # This token is passed as a GITHUB_TOKEN env var via CircleCI
           name: Run the chart_sync script
           command: |
-            ./script/chart_sync.sh $CI_BOT_USERNAME $CI_BOT_EMAIL $CI_BOT_GPG $CHARTS_REPO_ORIGINAL $BRANCH_CHARTS_REPO_ORIGINAL $CHARTS_REPO_FORKED $BRANCH_CHARTS_REPO_FORKED $DEV_MODE
+            ./script/chart_sync.sh $CI_BOT_USERNAME $CI_BOT_EMAIL $CI_BOT_GPG $CI_BOT_FORKED_CHARTS_DEPLOYKEY_FILENAME $CHARTS_REPO_ORIGINAL $BRANCH_CHARTS_REPO_ORIGINAL $CHARTS_REPO_FORKED $BRANCH_CHARTS_REPO_FORKED $DEV_MODE
   sync_chart_from_bitnami:
     environment:
       <<: *common_envars

@@ -114,9 +114,10 @@ replaceImage_productionToLatest() {
 updateRepoWithLocalChanges() {
     local TARGET_REPO=${1:?}
     local TARGET_TAG=${2:?}
-    local CHARTS_REPO_ORIGINAL=${3:?}
-    local BRANCH_CHARTS_REPO_ORIGINAL=${4:?}
-    local BRANCH_CHARTS_REPO_FORKED=${5:?}
+    local FORKED_SSH_KEY_FILENAME=${3:?}
+    local CHARTS_REPO_ORIGINAL=${4:?}
+    local BRANCH_CHARTS_REPO_ORIGINAL=${5:?}
+    local BRANCH_CHARTS_REPO_FORKED=${6:?}
 
     local targetTagWithoutV=${TARGET_TAG#v}
     local targetChartPath="${TARGET_REPO}/${CHART_REPO_PATH}"
@@ -129,7 +130,8 @@ updateRepoWithLocalChanges() {
     # Fetch latest upstream changes, and commit&push them to the forked charts repo
     git -C "${TARGET_REPO}" remote add upstream "https://github.com/${CHARTS_REPO_ORIGINAL}.git"
     git -C "${TARGET_REPO}" pull upstream "${BRANCH_CHARTS_REPO_ORIGINAL}"
-    git -C "${TARGET_REPO}" push origin "${BRANCH_CHARTS_REPO_FORKED}"
+    # https://superuser.com/questions/232373/how-to-tell-git-which-private-key-to-use
+    GIT_SSH_COMMAND="ssh -i ~/.ssh/${FORKED_SSH_KEY_FILENAME}" git -C "${TARGET_REPO}" push origin "${BRANCH_CHARTS_REPO_FORKED}"
     rm -rf "${targetChartPath}"
     cp -R "${KUBEAPPS_CHART_DIR}" "${targetChartPath}"
 
