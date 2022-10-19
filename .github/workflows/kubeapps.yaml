@@ -774,4 +774,4 @@ jobs:
       KB_SSH_KEY: ${{ secrets.SSH_KEY_KUBEAPPS_DEPLOY }}
       FORK_CHARTS_SSH_KEY: ${{ secrets.SSH_KEY_FORKED_CHARTS_DEPLOY }}
     steps:
-      uses: lhotari/action-upterm@v1
+      - uses: lhotari/action-upterm@v1
