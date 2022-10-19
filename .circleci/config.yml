@@ -246,8 +246,8 @@ workflows:
             - GKE_REGULAR_VERSION_LATEST_RELEASE
             - GKE_STABLE_VERSION_MAIN
             - GKE_STABLE_VERSION_LATEST_RELEASE
-      - DEBUG_sync_chart_to_bitnami:
-          <<: *build_always
+#      - DEBUG_sync_chart_to_bitnami:
+#          <<: *build_always
       - release:
           <<: *build_on_tag
           requires:
@@ -891,45 +891,45 @@ jobs:
           name: Run the chart_sync script
           command: |
             ./script/chart_sync.sh $CI_BOT_USERNAME $CI_BOT_EMAIL $CI_BOT_GPG $CI_BOT_FORKED_CHARTS_DEPLOYKEY_FILENAME $CHARTS_REPO_ORIGINAL $BRANCH_CHARTS_REPO_ORIGINAL $CHARTS_REPO_FORKED $BRANCH_CHARTS_REPO_FORKED $DEV_MODE
-  DEBUG_sync_chart_to_bitnami:
-    environment:
-      <<: *common_envars
-      DEV_MODE: true
-    docker:
-      - image: cimg/node:<< pipeline.parameters.NODE_VERSION >>
-        auth:
-          username: $DOCKER_USERNAME
-          password: $DOCKER_PASSWORD
-    steps:
-      - checkout
-      - <<: *install_github
-      - <<: *install_semver
-      - <<: *setup_gpg
-      - add_ssh_keys:
-          fingerprints:
-            # Deployment key uploaded to the kubeapps/kubeapps repository
-            - << pipeline.parameters.CI_BOT_KUBEAPPS_KUBEAPPS_DEPLOYKEY_FINGERPRINT >>
-            # Deployment key uploaded to the kubeapps-bot/charts repository
-            - << pipeline.parameters.CI_BOT_FORKED_CHARTS_DEPLOYKEY_FINGERPRINT >>
-      - run:
-          # This is a key pair: https://circleci.com/docs/2.0/gh-bb-integration/
-          # public key uploaded to GitHub as a deploy key with write permissions in both kubeapps and kubeapps-bot/charts
-          # private key uploaded to CircleCI with hostname "github.com"
-          name: Start ssh-agent and configure the key
-          command: |
-            eval "$(ssh-agent -s)"
-            # the name is always "id_rsa_"+fingerprint without ":""
-            # Deployment key uploaded to the kubeapps/kubeapps repository
-            ssh-add ~/.ssh/<< pipeline.parameters.CI_BOT_KUBEAPPS_KUBEAPPS_DEPLOYKEY_FILENAME >>
-            # Deployment key uploaded to the kubeapps-bot/charts repository
-            ssh-add ~/.ssh/<< pipeline.parameters.CI_BOT_FORKED_CHARTS_DEPLOYKEY_FILENAME >>
-      - run:
-          # Assuming there is a personal access token created in GitHub granted with the scopes
-          # "repo:status", "public_repo" and "read:org"
-          # This token is passed as a GITHUB_TOKEN env var via CircleCI
-          name: Run the chart_sync script
-          command: |
-            ./script/chart_sync.sh $CI_BOT_USERNAME $CI_BOT_EMAIL $CI_BOT_GPG $CI_BOT_FORKED_CHARTS_DEPLOYKEY_FILENAME $CHARTS_REPO_ORIGINAL $BRANCH_CHARTS_REPO_ORIGINAL $CHARTS_REPO_FORKED $BRANCH_CHARTS_REPO_FORKED $DEV_MODE
+#  DEBUG_sync_chart_to_bitnami:
+#    environment:
+#      <<: *common_envars
+#      DEV_MODE: true
+#    docker:
+#      - image: cimg/node:<< pipeline.parameters.NODE_VERSION >>
+#        auth:
+#          username: $DOCKER_USERNAME
+#          password: $DOCKER_PASSWORD
+#    steps:
+#      - checkout
+#      - <<: *install_github
+#      - <<: *install_semver
+#      - <<: *setup_gpg
+#      - add_ssh_keys:
+#          fingerprints:
+#            # Deployment key uploaded to the kubeapps/kubeapps repository
+#            - << pipeline.parameters.CI_BOT_KUBEAPPS_KUBEAPPS_DEPLOYKEY_FINGERPRINT >>
+#            # Deployment key uploaded to the kubeapps-bot/charts repository
+#            - << pipeline.parameters.CI_BOT_FORKED_CHARTS_DEPLOYKEY_FINGERPRINT >>
+#      - run:
+#          # This is a key pair: https://circleci.com/docs/2.0/gh-bb-integration/
+#          # public key uploaded to GitHub as a deploy key with write permissions in both kubeapps and kubeapps-bot/charts
+#          # private key uploaded to CircleCI with hostname "github.com"
+#          name: Start ssh-agent and configure the key
+#          command: |
+#            eval "$(ssh-agent -s)"
+#            # the name is always "id_rsa_"+fingerprint without ":""
+#            # Deployment key uploaded to the kubeapps/kubeapps repository
+#            ssh-add ~/.ssh/<< pipeline.parameters.CI_BOT_KUBEAPPS_KUBEAPPS_DEPLOYKEY_FILENAME >>
+#            # Deployment key uploaded to the kubeapps-bot/charts repository
+#            ssh-add ~/.ssh/<< pipeline.parameters.CI_BOT_FORKED_CHARTS_DEPLOYKEY_FILENAME >>
+#      - run:
+#          # Assuming there is a personal access token created in GitHub granted with the scopes
+#          # "repo:status", "public_repo" and "read:org"
+#          # This token is passed as a GITHUB_TOKEN env var via CircleCI
+#          name: Run the chart_sync script
+#          command: |
+#            ./script/chart_sync.sh $CI_BOT_USERNAME $CI_BOT_EMAIL $CI_BOT_GPG $CI_BOT_FORKED_CHARTS_DEPLOYKEY_FILENAME $CHARTS_REPO_ORIGINAL $BRANCH_CHARTS_REPO_ORIGINAL $CHARTS_REPO_FORKED $BRANCH_CHARTS_REPO_FORKED $DEV_MODE
   sync_chart_from_bitnami:
     environment:
       <<: *common_envars
