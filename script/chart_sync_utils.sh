@@ -241,6 +241,10 @@ commitAndSendExternalPR() {
     git commit --signoff -m "kubeapps: bump chart version to ${CHART_VERSION}"
     # NOTE: This expects to have a loaded SSH key
     if [[ $(git ls-remote origin "${TARGET_BRANCH}" | wc -l) -eq 0 ]]; then
+        info "DEGUB: list remotes"
+        git remote -v
+        info "DEBUG: end"
+
         git push -u origin "${TARGET_BRANCH}"
         gh pr create -d -B "${BRANCH_CHARTS_REPO_ORIGINAL}" -R "${CHARTS_REPO_ORIGINAL}" -F "${PR_EXTERNAL_TEMPLATE_FILE}" --title "${PR_TITLE}"
     else
