@@ -18,7 +18,7 @@ FORKED_SSH_KEY_FILENAME=${4:?Missing forked ssh key filename}
 CHARTS_REPO_UPSTREAM=${5:?Missing base chart repository}
 CHARTS_REPO_UPSTREAM_BRANCH=${6:?Missing base chart repository}
 CHARTS_REPO_FORK=${7:?Missing forked chart repository}
-BRANCH_CHARTS_REPO_FORK_BRANCH=${8:?Missing forked chart repository}
+CHARTS_REPO_FORK_BRANCH=${8:?Missing forked chart repository}
 KUBEAPPS_REPO_UPSTREAM=${9:?Missing kubeapps repository}
 KUBEAPPS_REPO_UPSTREAM_BRANCH=${10:?Missing kubeapps repository branch}
 README_GENERATOR_REPO=${11:?Missing readme generator repository}
@@ -33,7 +33,7 @@ info "FORKED_SSH_KEY_FILENAME: ${FORKED_SSH_KEY_FILENAME}"
 info "CHARTS_REPO_UPSTREAM: ${CHARTS_REPO_UPSTREAM}"
 info "CHARTS_REPO_UPSTREAM_BRANCH: ${CHARTS_REPO_UPSTREAM_BRANCH}"
 info "CHARTS_REPO_FORK: ${CHARTS_REPO_FORK}"
-info "BRANCH_CHARTS_REPO_FORK_BRANCH: ${BRANCH_CHARTS_REPO_FORK_BRANCH}"
+info "CHARTS_REPO_FORK_BRANCH: ${CHARTS_REPO_FORK_BRANCH}"
 info "KUBEAPPS_REPO_UPSTREAM: ${KUBEAPPS_REPO_UPSTREAM}"
 info "KUBEAPPS_REPO_UPSTREAM_BRANCH: ${KUBEAPPS_REPO_UPSTREAM_BRANCH}"
 info "README_GENERATOR_REPO: ${README_GENERATOR_REPO}"
@@ -67,7 +67,7 @@ if [[ ${semverCompare} -lt 0 ]]; then
       prBranchName="${prBranchName}-DEV"
     fi
 
-    updateRepoWithRemoteChanges "${LOCAL_CHARTS_REPO_FORK}" "${latestVersion}" "${FORKED_SSH_KEY_FILENAME}" "${CHARTS_REPO_UPSTREAM}" "${CHARTS_REPO_UPSTREAM_BRANCH}" "${BRANCH_CHARTS_REPO_FORK_BRANCH}"
+    updateRepoWithRemoteChanges "${LOCAL_CHARTS_REPO_FORK}" "${latestVersion}" "${FORKED_SSH_KEY_FILENAME}" "${CHARTS_REPO_UPSTREAM}" "${CHARTS_REPO_UPSTREAM_BRANCH}" "${CHARTS_REPO_FORK_BRANCH}"
     generateReadme "${README_GENERATOR_REPO}" "${KUBEAPPS_CHART_DIR}"
     commitAndSendInternalPR "${LOCAL_KUBEAPPS_REPO_PATH}" "${prBranchName}" "${externalVersion}" "${KUBEAPPS_REPO_UPSTREAM}" "${KUBEAPPS_REPO_UPSTREAM_BRANCH}" "${DEV_MODE}"
 elif [[ ${semverCompare} -gt 0 ]]; then
