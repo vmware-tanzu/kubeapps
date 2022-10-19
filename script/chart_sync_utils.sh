@@ -127,7 +127,7 @@ updateRepoWithLocalChanges() {
         return 1
     fi
     # Fetch latest upstream changes, and commit&push them to the forked charts repo
-    git -C "${TARGET_REPO}" remote add upstream "git@github.com:${CHARTS_REPO_ORIGINAL}.git"
+    git -C "${TARGET_REPO}" remote add upstream "https://github.com/${CHARTS_REPO_ORIGINAL}.git"
     git -C "${TARGET_REPO}" pull upstream "${BRANCH_CHARTS_REPO_ORIGINAL}"
     git -C "${TARGET_REPO}" push origin "${BRANCH_CHARTS_REPO_FORKED}"
     rm -rf "${targetChartPath}"
@@ -165,17 +165,13 @@ updateRepoWithRemoteChanges() {
         return 1
     fi
     # Fetch latest upstream changes, and commit&push them to the forked charts repo
-    git -C "${TARGET_REPO}" remote add upstream "git@github.com:${CHARTS_REPO_ORIGINAL}.git"
+    git -C "${TARGET_REPO}" remote add upstream "https://github.com/${CHARTS_REPO_ORIGINAL}.git"
     git -C "${TARGET_REPO}" pull upstream "${BRANCH_CHARTS_REPO_ORIGINAL}"
-
-    info "Listing remotes for Git repo ${TARGET_REPO}"
-    git -C "${TARGET_REPO}" remote -v
-
     # https://superuser.com/questions/232373/how-to-tell-git-which-private-key-to-use
     GIT_SSH_COMMAND="ssh -i ~/.ssh/${FORKED_SSH_KEY_FILENAME}" git -C "${TARGET_REPO}" push origin "${BRANCH_CHARTS_REPO_FORKED}"
-
     rm -rf "${KUBEAPPS_CHART_DIR}"
     cp -R "${targetChartPath}" "${KUBEAPPS_CHART_DIR}"
+
     # Update Chart.yaml with new version
     sed -i.bk "s/appVersion: "${targetTagWithoutV}"/appVersion: DEVEL/g" "${localChartYaml}"
     rm "${KUBEAPPS_CHART_DIR}/Chart.yaml.bk"
