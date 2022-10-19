@@ -127,7 +127,7 @@ updateRepoWithLocalChanges() {
         return 1
     fi
     # Fetch latest upstream changes, and commit&push them to the forked charts repo
-    git -C "${TARGET_REPO}" remote add upstream "ssh://git@github.com:${CHARTS_REPO_ORIGINAL}.git"
+    git -C "${TARGET_REPO}" remote add upstream "git@github.com:${CHARTS_REPO_ORIGINAL}.git"
     git -C "${TARGET_REPO}" pull upstream "${BRANCH_CHARTS_REPO_ORIGINAL}"
     git -C "${TARGET_REPO}" push origin "${BRANCH_CHARTS_REPO_FORKED}"
     rm -rf "${targetChartPath}"
@@ -165,7 +165,7 @@ updateRepoWithRemoteChanges() {
         return 1
     fi
     # Fetch latest upstream changes, and commit&push them to the forked charts repo
-    git -C "${TARGET_REPO}" remote add upstream "ssh://git@github.com:${CHARTS_REPO_ORIGINAL}.git"
+    git -C "${TARGET_REPO}" remote add upstream "git@github.com:${CHARTS_REPO_ORIGINAL}.git"
     git -C "${TARGET_REPO}" pull upstream "${BRANCH_CHARTS_REPO_ORIGINAL}"
 
     # https://superuser.com/questions/232373/how-to-tell-git-which-private-key-to-use
