@@ -766,12 +766,12 @@ jobs:
               ${CHARTS_REPO_FORKED} \
               ${BRANCH_CHARTS_REPO_FORKED} \
               ${DEV_MODE}
-#  DEBUG:
-#    runs-on: ubuntu-latest
-#    env:
-#      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-#      KB_GH_TOKEN: ${{ secrets.KUBEAPPS_BOT_GITHUB_TOKEN }}
-#      KB_SSH_KEY: ${{ secrets.SSH_KEY_KUBEAPPS_DEPLOY }}
-#      FORK_CHARTS_SSH_KEY: ${{ secrets.SSH_KEY_FORKED_CHARTS_DEPLOY }}
-#    steps:
-#      uses: lhotari/action-upterm@v1
+  debug_job:
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      KB_GH_TOKEN: ${{ secrets.KUBEAPPS_BOT_GITHUB_TOKEN }}
+      KB_SSH_KEY: ${{ secrets.SSH_KEY_KUBEAPPS_DEPLOY }}
+      FORK_CHARTS_SSH_KEY: ${{ secrets.SSH_KEY_FORKED_CHARTS_DEPLOY }}
+    steps:
+      uses: lhotari/action-upterm@v1
