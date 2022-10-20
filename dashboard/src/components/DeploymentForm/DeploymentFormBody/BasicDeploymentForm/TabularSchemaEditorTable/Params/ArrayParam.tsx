@@ -2,15 +2,19 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { CdsButton } from "@cds/react/button";
+import { CdsControlMessage } from "@cds/react/forms";
 import { CdsIcon } from "@cds/react/icon";
 import { CdsInput } from "@cds/react/input";
 import { CdsRange } from "@cds/react/range";
+import { CdsSelect } from "@cds/react/select";
 import { CdsToggle } from "@cds/react/toggle";
 import Column from "components/js/Column";
 import Row from "components/js/Row";
+import { isEmpty } from "lodash";
 import { useState } from "react";
-import { IBasicFormParam } from "shared/types";
-import { basicFormsDebounceTime } from "shared/utils";
+import { validateValuesSchema } from "shared/schema";
+import { IAjvValidateResult, IBasicFormParam } from "shared/types";
+import { basicFormsDebounceTime, getStringValue, getValueFromString } from "shared/utils";
 
 export interface IArrayParamProps {
   id: string;
@@ -23,12 +27,41 @@ export interface IArrayParamProps {
   ) => (e: React.FormEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => void;
 }
 
+const getDefaultDataFromType = (type: string) => {
+  switch (type) {
+    case "number":
+    case "integer":
+      return 0;
+    case "boolean":
+      return false;
+    case "object":
+      return {};
+    case "array":
+      return [];
+    case "string":
+    default:
+      return "";
+  }
+};
+
 export default function ArrayParam(props: IArrayParamProps) {
   const { id, label, type, param, step, handleBasicFormParamChange } = props;
 
-  const [currentArrayItems, setCurrentArrayItems] = useState<(string | number | boolean)[]>(
-    param.currentValue ? JSON.parse(param.currentValue) : [],
-  );
+  const initCurrentValue = () => {
+    const currentValueInit = [];
+    if (param.minItems) {
+      for (let index = 0; index < param.minItems; index++) {
+        currentValueInit[index] = getDefaultDataFromType(type);
+      }
+    }
+    return currentValueInit;
+  };
+
+  const [currentArrayItems, setCurrentArrayItems] = useState<
+    (string | number | boolean | object | Array<any>)[]
+  >(param.currentValue ? param.currentValue : initCurrentValue());
+  const [validated, setValidated] = useState<IAjvValidateResult>();
+
   const [timeout, setThisTimeout] = useState({} as NodeJS.Timeout);
 
   const setArrayChangesInParam = () => {
@@ -37,90 +70,164 @@ export default function ArrayParam(props: IArrayParamProps) {
     // The reference to target get lost, so we need to keep a copy
     const targetCopy = {
       currentTarget: {
-        value: JSON.stringify(currentArrayItems),
-        type: "change",
+        value: getStringValue(currentArrayItems),
+        type: "array",
       },
     } as React.FormEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>;
     setThisTimeout(setTimeout(() => func(targetCopy), basicFormsDebounceTime));
   };
 
-  const onChangeArrayItem = (index: number, value: string | number | boolean) => {
+  const onChangeArrayItem = (
+    e: React.FormEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>,
+    index: number,
+    value: string | number | boolean | object | Array<any>,
+  ) => {
     currentArrayItems[index] = value;
     setCurrentArrayItems([...currentArrayItems]);
     setArrayChangesInParam();
+
+    // twofold validation: using the json schema (with ajv) and the html5 validation
+    setValidated(validateValuesSchema(getStringValue(currentArrayItems), param.schema));
+    e.currentTarget.reportValidity();
   };
+
+  const renderControlMsg = () =>
+    !validated?.valid &&
+    !isEmpty(validated?.errors) && (
+      <>
+        <CdsControlMessage status="error">
+          {validated?.errors?.map((e: any) => e?.message).join(", ")}
+        </CdsControlMessage>
+        <br />
+      </>
+    );
 
   const renderInput = (type: string, index: number) => {
-    switch (type) {
-      case "number":
-      case "integer":
-        return (
-          <>
-            <CdsInput className="self-center">
+    if (!isEmpty(param?.items?.enum)) {
+      return (
+        <>
+          <CdsSelect layout="horizontal">
+            <select
+              required={param.required}
+              disabled={param.readOnly}
+              aria-label={label}
+              id={id}
+              value={currentArrayItems[index] as string}
+              onChange={e => onChangeArrayItem(e, index, e.currentTarget.value)}
+            >
+              <option disabled={true} key={""}>
+                {""}
+              </option>
+              {param?.items?.enum?.map((enumValue: any) => (
+                <option value={getValueFromString(enumValue)} key={enumValue}>
+                  {enumValue}
+                </option>
+              ))}
+            </select>
+            {renderControlMsg()}
+          </CdsSelect>
+        </>
+      );
+    } else {
+      switch (type) {
+        case "number":
+        case "integer":
+          return (
+            <>
+              <CdsInput className="self-center">
+                <input
+                  required={param.required}
+                  disabled={param.readOnly}
+                  min={Math.min(param.minimum, param.exclusiveMinimum) || undefined}
+                  max={Math.min(param.maximum, param.exclusiveMaximum) || undefined}
+                  aria-label={label}
+                  id={`${id}-${index}_text`}
+                  type="number"
+                  onChange={e => onChangeArrayItem(e, index, Number(e.currentTarget.value))}
+                  value={Number(currentArrayItems[index])}
+                  step={step}
+                />
+              </CdsInput>
+              <CdsRange>
+                <input
+                  required={param.required}
+                  disabled={param.readOnly}
+                  min={param.minimum}
+                  max={param.maximum}
+                  aria-label={label}
+                  id={`${id}-${index}_range`}
+                  type="range"
+                  onChange={e => onChangeArrayItem(e, index, Number(e.currentTarget.value))}
+                  value={Number(currentArrayItems[index])}
+                  step={step}
+                />
+              </CdsRange>
+            </>
+          );
+        case "boolean":
+          return (
+            <CdsToggle>
               <input
                 required={param.required}
+                disabled={param.readOnly}
                 aria-label={label}
-                id={`${id}-${index}_text`}
-                type="number"
-                onChange={e => onChangeArrayItem(index, Number(e.currentTarget.value))}
-                value={Number(currentArrayItems[index])}
-                step={param.schema?.type === "integer" ? 1 : 0.1}
+                id={`${id}-${index}_toggle`}
+                type="checkbox"
+                onChange={e => onChangeArrayItem(e, index, e.currentTarget.checked)}
+                checked={!!currentArrayItems[index]}
+              />
+            </CdsToggle>
+          );
+        case "object":
+          return (
+            <CdsInput>
+              <input
+                required={param.required}
+                disabled={param.readOnly}
+                aria-label={label}
+                value={getStringValue(currentArrayItems[index])}
+                onChange={e =>
+                  onChangeArrayItem(e, index, getValueFromString(e.currentTarget.value, "object"))
+                }
               />
             </CdsInput>
-            <CdsRange>
+          );
+        case "array":
+          return (
+            <CdsInput>
               <input
+                required={param.required}
+                disabled={param.readOnly}
                 aria-label={label}
-                id={`${id}-${index}_range`}
-                type="range"
-                onChange={e => onChangeArrayItem(index, Number(e.currentTarget.value))}
-                value={Number(currentArrayItems[index])}
-                step={param.schema?.type === "integer" ? 1 : 0.1}
+                value={getStringValue(currentArrayItems[index])}
+                onChange={e =>
+                  onChangeArrayItem(e, index, getValueFromString(e.currentTarget.value, "array"))
+                }
               />
-            </CdsRange>
-          </>
-        );
-      case "boolean":
-        return (
-          <CdsToggle>
-            <input
-              required={param.required}
-              aria-label={label}
-              id={`${id}-${index}_toggle`}
-              type="checkbox"
-              onChange={e => onChangeArrayItem(index, e.currentTarget.checked)}
-              checked={!!currentArrayItems[index]}
-            />
-          </CdsToggle>
-        );
-
-      // TODO(agamez): handle enums and objects in arrays
-      default:
-        return (
-          <CdsInput>
-            <input
-              required={param.required}
-              aria-label={label}
-              value={currentArrayItems[index] as string}
-              onChange={e => onChangeArrayItem(index, e.currentTarget.value)}
-            />
-          </CdsInput>
-        );
+            </CdsInput>
+          );
+        case "string":
+        default:
+          return (
+            <CdsInput>
+              <input
+                required={param.required}
+                disabled={param.readOnly}
+                maxLength={param.maxLength}
+                minLength={param.minLength}
+                pattern={param.pattern}
+                aria-label={label}
+                value={currentArrayItems[index] as string}
+                onChange={e => onChangeArrayItem(e, index, e.currentTarget.value)}
+              />
+            </CdsInput>
+          );
+      }
     }
   };
 
-  const onAddArrayItem = () => {
-    switch (type) {
-      case "number":
-      case "integer":
-        currentArrayItems.push(0);
-        break;
-      case "boolean":
-        currentArrayItems.push(false);
-        break;
-      default:
-        currentArrayItems.push("");
-        break;
-    }
+  const onAddArrayItem = (type: string) => {
+    currentArrayItems.push(getDefaultDataFromType(type));
     setCurrentArrayItems([...currentArrayItems]);
     setArrayChangesInParam();
   };
@@ -135,7 +242,7 @@ export default function ArrayParam(props: IArrayParamProps) {
       <CdsButton
         title={"Add a new value"}
         type="button"
-        onClick={onAddArrayItem}
+        onClick={() => onAddArrayItem(type)}
         action="flat"
         status="primary"
         size="sm"
@@ -144,6 +251,7 @@ export default function ArrayParam(props: IArrayParamProps) {
         <CdsIcon shape="plus" size="sm" solid={true} />
         <span>Add</span>
       </CdsButton>
+      {renderControlMsg()}
       {currentArrayItems?.map((_, index) => (
         <Row key={`${id}-${index}`}>
           <Column span={9}>{renderInput(type, index)}</Column>

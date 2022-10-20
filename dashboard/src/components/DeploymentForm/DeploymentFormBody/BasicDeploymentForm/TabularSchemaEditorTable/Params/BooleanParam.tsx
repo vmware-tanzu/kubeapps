@@ -7,6 +7,7 @@ import Column from "components/js/Column";
 import Row from "components/js/Row";
 import { useState } from "react";
 import { IBasicFormParam } from "shared/types";
+import { getStringValue } from "shared/utils";
 
 export interface IBooleanParamProps {
   id: string;
@@ -19,7 +20,7 @@ export interface IBooleanParamProps {
 export default function BooleanParam(props: IBooleanParamProps) {
   const { id, label, param, handleBasicFormParamChange } = props;
 
-  const [currentValue, setCurrentValue] = useState(param.currentValue);
+  const [currentValue, setCurrentValue] = useState(param.currentValue || false);
   const [isValueModified, setIsValueModified] = useState(false);
 
   const onChange = (e: React.FormEvent<HTMLInputElement>) => {
@@ -27,7 +28,7 @@ export default function BooleanParam(props: IBooleanParamProps) {
     const event = {
       currentTarget: {
         //convert the boolean "checked" prop to a normal "value" string one
-        value: e.currentTarget?.checked?.toString(),
+        value: getStringValue(e.currentTarget?.checked),
         type: "checkbox",
       },
     } as React.FormEvent<HTMLInputElement>;
