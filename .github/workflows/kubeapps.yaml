@@ -335,7 +335,7 @@ jobs:
 
   # Push images to docker.io/kubeapps/[image]-ci:[dev-tag]
   push_dev_images:
-    # If the workflow is triggered from a PR from an external fork, secrets won't be available, so we cannot login into dockerhub
+    # If the workflow is triggered from a PR from an external fork, secrets won't be available, so we cannot log into dockerhub
     if: needs.setup.outputs.triggered_from_fork == 'false'
     runs-on: ubuntu-latest
     needs:
