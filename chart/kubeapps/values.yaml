@@ -508,6 +508,9 @@ frontend:
 ## Dashboard parameters
 ##
 dashboard:
+  ## @param dashboard.enabled Specifies whether Kubeapps Dashboard should be deployed or not
+  ##
+  enabled: true
   ## Bitnami Kubeapps Dashboard image
   ## ref: https://hub.docker.com/r/bitnami/kubeapps-dashboard/
   ## @param dashboard.image.registry Dashboard image registry

@@ -13135,10 +13135,10 @@ tryer@^1.0.1:
   resolved "https://registry.yarnpkg.com/tryer/-/tryer-1.0.1.tgz#f2c85406800b9b0f74c9f7465b81eaad241252f8"
   integrity sha512-c3zayb8/kWWpycWYg87P71E1S1ZL6b6IJxfb5fvsUgsf0S2MVGaDhDXXjDMpdCpfWXqptc+4mXwmiy1ypXqRAA==
 
-ts-jest@^29.0.2:
-  version "29.0.2"
-  resolved "https://registry.yarnpkg.com/ts-jest/-/ts-jest-29.0.2.tgz#0c45a1ac45d14f8b3bf89bca9048a2840c7bd5ad"
-  integrity sha512-P03IUItnAjG6RkJXtjjD5pu0TryQFOwcb1YKmW63rO19V0UFqL3wiXZrmR5D7qYjI98btzIOAcYafLZ0GHAcQg==
+ts-jest@^29.0.3:
+  version "29.0.3"
+  resolved "https://registry.yarnpkg.com/ts-jest/-/ts-jest-29.0.3.tgz#63ea93c5401ab73595440733cefdba31fcf9cb77"
+  integrity sha512-Ibygvmuyq1qp/z3yTh9QTwVVAbFdDy/+4BtIQR2sp6baF2SJU/8CKK/hhnGIDY2L90Az2jIqTwZPnN2p+BweiQ==
   dependencies:
     bs-logger "0.x"
     fast-json-stable-stringify "2.x"
@@ -13183,10 +13183,10 @@ ts-proto-descriptors@1.7.1:
     long "^4.0.0"
     protobufjs "^6.8.8"
 
-ts-proto@^1.126.1:
-  version "1.126.1"
-  resolved "https://registry.yarnpkg.com/ts-proto/-/ts-proto-1.126.1.tgz#ad016943709a23d755bb18b8bed6154e1b412348"
-  integrity sha512-PKrcgd0mCQJDY7tp+th349uYhnjs2Tz7wSqm9+DBcodl3YCKPt1pFtFmApOZdQ8WlghhgKAuJDIRQJBd6jD5YA==
+ts-proto@^1.129.0:
+  version "1.129.0"
+  resolved "https://registry.yarnpkg.com/ts-proto/-/ts-proto-1.129.0.tgz#8b5b89207d51931615d7aad0f6f8312001d0c2de"
+  integrity sha512-BpEaceKO1dblM4TpaeIUcmHcm0F78zTXO3Ys1qtIr4Jcsk5KPZJAUo14arDYzwI6FiLWJ6K4vsy/KpxU5+OvAg==
   dependencies:
     "@types/object-hash" "^1.3.0"
     dataloader "^1.4.0"

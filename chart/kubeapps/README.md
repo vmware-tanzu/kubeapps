@@ -198,6 +198,7 @@ Once you have installed Kubeapps follow the [Getting Started Guide](https://gith
 
 | Name                                              | Description                                                                                               | Value                |
 | ------------------------------------------------- | --------------------------------------------------------------------------------------------------------- | -------------------- |
+| `dashboard.enabled`                               | Specifies whether Kubeapps Dashboard should be deployed or not                                            | `true`               |
 | `dashboard.image.registry`                        | Dashboard image registry                                                                                  | `docker.io`          |
 | `dashboard.image.repository`                      | Dashboard image repository                                                                                | `kubeapps/dashboard` |
 | `dashboard.image.tag`                             | Dashboard image tag (immutable tags are recommended)                                                      | `latest`             |
