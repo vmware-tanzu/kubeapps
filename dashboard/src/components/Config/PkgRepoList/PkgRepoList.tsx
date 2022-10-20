@@ -11,13 +11,19 @@ import Table from "components/js/Table";
 import Tooltip from "components/js/Tooltip";
 import PageHeader from "components/PageHeader/PageHeader";
 import { push } from "connected-react-router";
-import { PackageRepositorySummary } from "gen/kubeappsapis/core/packages/v1alpha1/repositories";
+import {
+  PackageRepositoryReference,
+  PackageRepositorySummary,
+} from "gen/kubeappsapis/core/packages/v1alpha1/repositories";
 import qs from "qs";
 import { useCallback, useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { Link, useLocation } from "react-router-dom";
+import { IConfig } from "shared/Config";
 import { Kube } from "shared/Kube";
-import { IStoreState } from "shared/types";
+import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins";
+import { PackageRepositoriesService } from "shared/PackageRepositoriesService";
+import { IPackageRepositoryPermission, IStoreState } from "shared/types";
 import { app } from "shared/url";
 import { getPluginName } from "shared/utils";
 import LoadingWrapper from "../../LoadingWrapper/LoadingWrapper";
@@ -32,7 +38,13 @@ function PkgRepoList() {
   const {
     repos: { errors, isFetching, reposSummaries: repos },
     clusters: { clusters, currentCluster },
-    config: { kubeappsCluster, kubeappsNamespace, helmGlobalNamespace, carvelGlobalNamespace },
+    config: {
+      kubeappsCluster,
+      kubeappsNamespace,
+      helmGlobalNamespace,
+      carvelGlobalNamespace,
+      configuredPlugins,
+    },
   } = useSelector((state: IStoreState) => state);
   const cluster = currentCluster;
   const { currentNamespace } = clusters[cluster];
@@ -40,7 +52,7 @@ function PkgRepoList() {
     qs.parse(location.search, { ignoreQueryPrefix: true }).allns === "yes" ? true : false;
   const [allNS, setAllNS] = useState(allNSQuery);
   const [canSetAllNS, setCanSetAllNS] = useState(false);
-  const [canEditGlobalRepos, setCanEditGlobalRepos] = useState(false);
+  const [reposRBAC, setReposRBAC] = useState(new Map<string, IPackageRepositoryPermission>());
   const [namespace, setNamespace] = useState(allNSQuery ? "" : currentNamespace);
 
   // We do not currently support package repositories on additional clusters.
@@ -87,13 +99,57 @@ function PkgRepoList() {
   }, [allNS, currentNamespace]);
 
   useEffect(() => {
+    const pluginsConfig = {
+      helmGlobalNamespace: helmGlobalNamespace,
+      carvelGlobalNamespace: carvelGlobalNamespace,
+      kubeappsCluster: kubeappsCluster,
+    } as IConfig;
+
+    Promise.all(
+      configuredPlugins
+        .map(plugin =>
+          PackageRepositoriesService.getRepositoriesPermissions(
+            currentNamespace,
+            pluginsConfig,
+            plugin,
+          ),
+        )
+        .filter(i => i !== undefined),
+    ).then(results => {
+      const rbac = new Map<string, IPackageRepositoryPermission>();
+      results.forEach(r => {
+        if (r !== undefined) {
+          rbac.set(JSON.stringify(r.plugin), r);
+        }
+      });
+      setReposRBAC(rbac);
+    });
+
+    // Cluster-wide check
     Kube.canI(cluster, "kubeapps.com", "apprepositories", "list", "")
       .then(allowed => setCanSetAllNS(allowed))
       ?.catch(() => setCanSetAllNS(false));
-    Kube.canI(kubeappsCluster, "kubeapps.com", "apprepositories", "update", helmGlobalNamespace)
-      .then(allowed => setCanEditGlobalRepos(allowed))
-      ?.catch(() => setCanEditGlobalRepos(false));
-  }, [cluster, kubeappsCluster, kubeappsNamespace, helmGlobalNamespace]);
+  }, [
+    cluster,
+    kubeappsCluster,
+    kubeappsNamespace,
+    helmGlobalNamespace,
+    carvelGlobalNamespace,
+    currentNamespace,
+    configuredPlugins,
+  ]);
+
+  const canEditGlobalRepos = (plugin?: Plugin): boolean => {
+    return plugin ? reposRBAC.get(JSON.stringify(plugin))?.global?.update || false : false;
+  };
+
+  const canEditNamespacedRepos = (plugin?: Plugin): boolean => {
+    return plugin ? reposRBAC.get(JSON.stringify(plugin))?.namespaced.update || false : false;
+  };
+
+  const canAddRepos = () => {
+    return [...reposRBAC.values()].some(r => r.global?.create || r.namespaced.create);
+  };
 
   const globalRepos: PackageRepositorySummary[] = [];
   const namespacedRepos: PackageRepositorySummary[] = [];
@@ -115,7 +171,10 @@ function PkgRepoList() {
     { accessor: "status", Header: "Status" },
     { accessor: "actions", Header: "Actions" },
   ];
-  const getTableData = (targetRepos: PackageRepositorySummary[], disableControls: boolean) => {
+  const getTableData = (
+    targetRepos: PackageRepositorySummary[],
+    disableControls: (repoRef?: PackageRepositoryReference) => boolean,
+  ) => {
     return targetRepos.map(repo => {
       return {
         name: getRepoNameLinkAndTooltip(cluster, repo),
@@ -146,7 +205,7 @@ function PkgRepoList() {
             )}
           </>
         ),
-        actions: disableControls ? (
+        actions: disableControls(repo.packageRepoRef) ? (
           <PkgRepoDisabledControl />
         ) : (
           <PkgRepoControl
@@ -172,7 +231,10 @@ function PkgRepoList() {
           <Table
             valign="center"
             columns={tableColumns}
-            data={getTableData(globalRepos, disableControls)}
+            data={getTableData(
+              globalRepos,
+              repoRef => disableControls || !canEditGlobalRepos(repoRef?.plugin),
+            )}
           />
         ) : (
           <p>
@@ -196,7 +258,7 @@ function PkgRepoList() {
             namespace={currentNamespace}
             helmGlobalNamespace={helmGlobalNamespace}
             carvelGlobalNamespace={carvelGlobalNamespace}
-            disabled={!supportedCluster}
+            disabled={!supportedCluster || !canAddRepos()}
           />,
         ]}
         filter={
@@ -263,7 +325,10 @@ function PkgRepoList() {
                         <Table
                           valign="center"
                           columns={tableColumns}
-                          data={getTableData(namespacedRepos, false)}
+                          data={getTableData(
+                            namespacedRepos,
+                            repoRef => !canEditNamespacedRepos(repoRef?.plugin),
+                          )}
                         />
                       ) : (
                         <p>
