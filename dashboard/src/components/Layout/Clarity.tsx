@@ -37,6 +37,7 @@ import {
   timesIcon,
   trashIcon,
   uploadCloudIcon,
+  uploadIcon,
 } from "@cds/core/icon";
 import "@cds/core/accordion/register.js";
 import "@cds/core/badge/register.js";
@@ -80,7 +81,7 @@ Icons.addIcons(
   timesIcon,
   trashIcon,
   uploadCloudIcon,
-  uploadCloudIcon,
+  uploadIcon,
 );
 const CSSSelector: React.FC = () => null;
 
