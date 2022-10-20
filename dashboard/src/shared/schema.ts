@@ -25,6 +25,8 @@ export function retrieveBasicFormParams(
   let params: IBasicFormParam[] = [];
   if (schema?.properties && !isEmpty(schema.properties)) {
     const properties = schema.properties;
+    const requiredProperties = schema.required;
+    const schemaExamples = schema.examples;
     Object.keys(properties).forEach(propertyKey => {
       const schemaProperty = properties[propertyKey] as JSONSchemaType<any>;
       // The param path is its parent path + the object key
@@ -49,6 +51,9 @@ export function retrieveBasicFormParams(
             )
           : undefined,
         enum: schemaProperty?.enum?.map((item: { toString: () => any }) => item?.toString() ?? ""),
+        // check if the "required" array contains the current property
+        required: requiredProperties?.includes(propertyKey),
+        examples: examples,
         // If exists, the value that is currently deployed
         deployedValue: isLeaf
           ? isUpgrading
@@ -117,6 +122,26 @@ export function updateCurrentConfigByKey(
     currentValue: value,
   });
   return paramsList;
+}
+
+export function schemaToString(schema: JSONSchemaType<any> | undefined): string {
+  let schemaString;
+  try {
+    schemaString = JSON.stringify(schema, null, 2);
+  } catch (e) {
+    schemaString = "{}";
+  }
+  return schemaString;
+}
+
+export function schemaToObject(schema?: string): JSONSchemaType<any> {
+  let schemaObject;
+  try {
+    schemaObject = JSON.parse(schema || "{}");
+  } catch (e) {
+    schemaObject = {};
+  }
+  return schemaObject as JSONSchemaType<any>;
 }
 
 // TODO(agamez): stop loading the yaml values with the yaml.load function.
