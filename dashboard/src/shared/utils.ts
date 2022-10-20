@@ -39,6 +39,35 @@ export function escapeRegExp(str: string) {
   return str.replace(/[-[\]/{}()*+?.\\^$|]/g, "\\$&");
 }
 
+export function getStringValue(value: any, type?: string) {
+  const usedType = type || typeof value;
+  let result = value?.toString();
+  if (["array", "object"].includes(usedType)) {
+    try {
+      result = JSON.stringify(value);
+    } catch (e) {
+      result = value?.toString();
+    }
+  }
+  return result || "";
+}
+
+export function getValueFromString(value: string, type?: string) {
+  const usedType = type || typeof value;
+  let result = value?.toString();
+  if (["array", "object"].includes(usedType)) {
+    try {
+      result = JSON.parse(value);
+      if (usedType === "object" && typeof result !== "object") {
+        result = value?.toString();
+      }
+    } catch (e) {
+      result = value?.toString();
+    }
+  }
+  return result;
+}
+
 export function getValueFromEvent(
   e: React.FormEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>,
 ) {
