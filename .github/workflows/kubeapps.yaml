@@ -508,6 +508,10 @@ jobs:
           password: ${{ secrets.DOCKER_PASSWORD }}
       - uses: actions/download-artifact@v3
       - run: |
+          if [[ "${DEV_MODE}" == true && "IMG_PROD_TAG" == latest ]]; then
+            IMG_PROD_TAG="${IMG_PROD_TAG}-gha"
+          fi
+          
           for artifact in *; do
             echo "::debug::Processing artifact '${artifact}'"
 
