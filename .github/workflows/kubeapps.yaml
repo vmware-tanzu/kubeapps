@@ -87,10 +87,6 @@ jobs:
           PR_CONTEXT: ${{ toJSON(github.event.pull_request) }}
           PR_SOURCE_REPO_NAME: ${{ github.event.pull_request.head.repo.full_name }}
         run: |
-          # some debug
-          echo "PR_CONTEXT == null ??"
-          if [[ "${PR_CONTEXT}" == null ]]; then echo YES; else echo NO; fi 
-          
           if [[ "${GITHUB_REPOSITORY}" == "${KUBEAPPS_REPO}" ]]; then
             echo "img_prefix=${IMG_PREFIX}" >> $GITHUB_OUTPUT
           else
