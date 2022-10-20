@@ -59,6 +59,7 @@ export default function SliderParam(props: ISliderParamProps) {
     <CdsRange>
       <input
         required={param.required}
+        disabled={param.readOnly}
         aria-label={label}
         id={id + "_range"}
         type="range"
@@ -77,6 +78,7 @@ export default function SliderParam(props: ISliderParamProps) {
       <CdsInput className={isModified ? "bolder" : ""}>
         <input
           required={param.required}
+          disabled={param.readOnly}
           aria-label={label}
           id={id + "_text"}
           type="number"

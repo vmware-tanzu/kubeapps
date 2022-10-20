@@ -17,13 +17,14 @@ export interface IArrayParamProps {
   label: string;
   type: string;
   param: IBasicFormParam;
+  step: number;
   handleBasicFormParamChange: (
     param: IBasicFormParam,
   ) => (e: React.FormEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => void;
 }
 
 export default function ArrayParam(props: IArrayParamProps) {
-  const { id, label, type, param, handleBasicFormParamChange } = props;
+  const { id, label, type, param, step, handleBasicFormParamChange } = props;
 
   const [currentArrayItems, setCurrentArrayItems] = useState<(string | number | boolean)[]>(
     param.currentValue ? JSON.parse(param.currentValue) : [],
@@ -138,6 +139,7 @@ export default function ArrayParam(props: IArrayParamProps) {
         action="flat"
         status="primary"
         size="sm"
+        disabled={currentArrayItems.length >= param?.maxItems}
       >
         <CdsIcon shape="plus" size="sm" solid={true} />
         <span>Add</span>
