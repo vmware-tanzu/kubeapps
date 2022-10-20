@@ -4,19 +4,26 @@
 import { CdsButton } from "@cds/react/button";
 import { CdsControlMessage } from "@cds/react/forms";
 import { CdsIcon } from "@cds/react/icon";
+import { JSONSchemaType } from "ajv";
 import ConfirmDialog from "components/ConfirmDialog";
 import Alert from "components/js/Alert";
 import LoadingWrapper from "components/LoadingWrapper";
 import Tabs from "components/Tabs";
 import { isEmpty } from "lodash";
 import { FormEvent, RefObject, useCallback, useEffect, useState } from "react";
-import { retrieveBasicFormParams, updateCurrentConfigByKey } from "shared/schema";
+import {
+  retrieveBasicFormParams,
+  schemaToObject,
+  schemaToString,
+  updateCurrentConfigByKey,
+} from "shared/schema";
 import { DeploymentEvent, IBasicFormParam, IPackageState } from "shared/types";
 import { getValueFromEvent } from "shared/utils";
 import { parseToYamlNode, setPathValueInYamlNode, toStringYamlNode } from "shared/yamlUtils";
 import YAML from "yaml";
 import AdvancedDeploymentForm from "./AdvancedDeploymentForm";
 import BasicDeploymentForm from "./BasicDeploymentForm/BasicDeploymentForm";
+import SchemaEditorForm from "./SchemaEditorForm";
 
 export interface IDeploymentFormBodyProps {
   deploymentEvent: DeploymentEvent;
@@ -63,6 +70,14 @@ function DeploymentFormBody({
   const [valuesFromTheParentContainerNodes, setValuesFromTheParentContainerNodes] = useState(
     {} as YAML.Document.Parsed<YAML.ParsedNode>,
   );
+
+  const [schemaFromTheAvailablePackageString, setSchemaFromTheAvailablePackageString] =
+    useState("");
+  const [schemaFromTheParentContainerString, setSchemaFromTheParentContainerString] = useState("");
+  const [schemaFromTheParentContainerParsed, setSchemaFromTheParentContainerParsed] = useState(
+    {} as JSONSchemaType<any>,
+  );
+
   const [restoreModalIsOpen, setRestoreModalOpen] = useState(false);
   const [isLoaded, setIsLoaded] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
@@ -72,11 +87,15 @@ function DeploymentFormBody({
   // whenever the parsed values change (for instance, when a new pkg version is selected),
   // we need to force a new extraction of the params from the schema
   useEffect(() => {
-    if (!isLoaded && schemaFromTheAvailablePackage && !isEmpty(valuesFromTheParentContainerNodes)) {
+    if (
+      !isLoaded &&
+      shouldRenderBasicForm(schemaFromTheParentContainerParsed) &&
+      !isEmpty(valuesFromTheParentContainerNodes)
+    ) {
       const initialParamsFromContainer = retrieveBasicFormParams(
         valuesFromTheParentContainerNodes,
         valuesFromTheAvailablePackageNodes,
-        schemaFromTheAvailablePackage,
+        schemaFromTheParentContainerParsed,
         deploymentEvent,
         valuesFromTheDeployedPackageNodes,
       );
@@ -87,8 +106,7 @@ function DeploymentFormBody({
   }, [
     deploymentEvent,
     isLoaded,
-    paramsFromComponentState,
-    schemaFromTheAvailablePackage,
+    schemaFromTheParentContainerParsed,
     valuesFromTheAvailablePackageNodes,
     valuesFromTheDeployedPackageNodes,
     valuesFromTheParentContainerNodes,
@@ -99,21 +117,40 @@ function DeploymentFormBody({
     if (valuesFromTheAvailablePackage) {
       setValuesFromTheAvailablePackageNodes(parseToYamlNode(valuesFromTheAvailablePackage));
     }
-  }, [isLoaded, valuesFromTheAvailablePackage]);
+  }, [valuesFromTheAvailablePackage]);
 
   // parse and store in the component state the current values (which come from the parent container)
   useEffect(() => {
     if (valuesFromTheParentContainer) {
       setValuesFromTheParentContainerNodes(parseToYamlNode(valuesFromTheParentContainer));
     }
-  }, [isLoaded, valuesFromTheParentContainer]);
+  }, [valuesFromTheParentContainer]);
 
   // parse and store in the component state the values from the deployed package
   useEffect(() => {
     if (valuesFromTheDeployedPackage) {
       setValuesFromTheDeployedPackageNodes(parseToYamlNode(valuesFromTheDeployedPackage));
     }
-  }, [isLoaded, valuesFromTheDeployedPackage, valuesFromTheParentContainer]);
+  }, [valuesFromTheDeployedPackage]);
+
+  // initialize the schema string in component state with the package's schema
+  useEffect(() => {
+    setIsLoading(true);
+    const schemaString = schemaToString(schemaFromTheAvailablePackage);
+    setSchemaFromTheAvailablePackageString(schemaString);
+    setSchemaFromTheParentContainerString(schemaString);
+    setSchemaFromTheParentContainerParsed(schemaFromTheAvailablePackage as JSONSchemaType<any>);
+    setIsLoading(false);
+  }, [schemaFromTheAvailablePackage]);
+
+  // parse and store in the component state the current schema
+  useEffect(() => {
+    setIsLoading(true);
+    const schemaObject = schemaToObject(schemaFromTheParentContainerString);
+    setSchemaFromTheParentContainerParsed(schemaObject);
+    setIsLoading(false);
+    setIsLoaded(false);
+  }, [schemaFromTheParentContainerString]);
 
   // when the shouldSubmitForm flag is enabled, the form will be submitted, but using a native
   // form submit event (to trigger the browser validations) instead of just calling its handler function
@@ -159,14 +196,19 @@ function DeploymentFormBody({
     setValuesModified();
   };
 
+  const handleSchemaEditorChange = (value: string) => {
+    setSchemaFromTheParentContainerString(value);
+    setValuesModified();
+  };
+
   // re-build the table based on the new YAML
   const refreshBasicParameters = () => {
-    if (schemaFromTheAvailablePackage && shouldRenderBasicForm(schemaFromTheAvailablePackage)) {
+    if (shouldRenderBasicForm(schemaFromTheParentContainerParsed)) {
       setParamsFromComponentState(
         retrieveBasicFormParams(
           valuesFromTheParentContainerNodes,
           valuesFromTheAvailablePackageNodes,
-          schemaFromTheAvailablePackage,
+          schemaFromTheParentContainerParsed,
           deploymentEvent,
           valuesFromTheDeployedPackageNodes,
         ),
@@ -200,12 +242,14 @@ function DeploymentFormBody({
 
   const restoreDefaultValues = () => {
     setValuesFromTheParentContainer(valuesFromTheAvailablePackage || "");
-    if (schemaFromTheAvailablePackage) {
+    setSchemaFromTheParentContainerParsed(schemaFromTheAvailablePackage as JSONSchemaType<any>);
+    setSchemaFromTheParentContainerString(schemaToString(schemaFromTheAvailablePackage));
+    if (shouldRenderBasicForm(schemaFromTheParentContainerParsed)) {
       setParamsFromComponentState(
         retrieveBasicFormParams(
           valuesFromTheAvailablePackageNodes,
           valuesFromTheAvailablePackageNodes,
-          schemaFromTheAvailablePackage,
+          schemaFromTheParentContainerParsed,
           deploymentEvent,
           valuesFromTheDeployedPackageNodes,
         ),
@@ -228,7 +272,7 @@ function DeploymentFormBody({
     packagesIsFetching ||
     !availablePackageDetail ||
     (!versions.length &&
-      shouldRenderBasicForm(schemaFromTheAvailablePackage) &&
+      shouldRenderBasicForm(schemaFromTheParentContainerParsed) &&
       !isEmpty(paramsFromComponentState) &&
       !isEmpty(valuesFromTheAvailablePackageNodes))
   ) {
@@ -245,7 +289,7 @@ function DeploymentFormBody({
   const tabData: JSX.Element[] = [];
 
   // Basic form creation
-  if (shouldRenderBasicForm(schemaFromTheAvailablePackage)) {
+  if (shouldRenderBasicForm(schemaFromTheParentContainerParsed)) {
     tabColumns.push(
       <div role="presentation" onClick={refreshBasicParameters}>
         <span>Visual editor</span>
@@ -279,6 +323,21 @@ function DeploymentFormBody({
       handleValuesChange={handleYAMLEditorChange}
       key="advanced-deployment-form"
     ></AdvancedDeploymentForm>,
+  );
+
+  // Text editor creation
+  tabColumns.push(
+    <div role="presentation" onClick={saveAllChanges}>
+      <span>Schema editor (advanced)</span>
+    </div>,
+  );
+  tabData.push(
+    <SchemaEditorForm
+      schemaFromTheParentContainer={schemaFromTheParentContainerString}
+      schemaFromTheAvailablePackage={schemaFromTheAvailablePackageString}
+      handleValuesChange={handleSchemaEditorChange}
+      key="schema-editor-form"
+    ></SchemaEditorForm>,
   );
 
   return (

@@ -55,8 +55,8 @@ export function retrieveBasicFormParams(
             ? getPathValueInYamlNode(deployedValues, itemPath)
             : ""
           : "",
-        // The default is the value comming from the package values or the one defined in the schema,
-        // or vice-verse, which one shoulf take precedence?
+        // The default is the value coming from the package values or the one defined in the schema,
+        // or vice-verse, which one should take precedence?
         defaultValue: isLeaf
           ? getPathValueInYamlNodeWithDefault(packageValues, itemPath, schemaProperty.default)
           : "",
