@@ -1591,6 +1591,10 @@ kubeappsapis:
   ## @param kubeappsapis.burst KubeappsAPIs Kubernetes API client Burst limit
   ##
   burst: "100"
+  ## @param kubeappsapis.proxyMode.enabled Enable KubeappsAPIs proxy mode for incoming requests
+  ##
+  proxyMode:
+    enabled: false
   ## @param kubeappsapis.terminationGracePeriodSeconds The grace time period for sig term
   ## ref: https://kubernetes.io/docs/concepts/containers/container-lifecycle-hooks/#hook-handler-execution
   ##

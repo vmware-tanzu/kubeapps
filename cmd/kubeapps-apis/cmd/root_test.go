@@ -33,6 +33,7 @@ func TestParseFlagsCorrect(t *testing.T) {
 				"--plugin-config-path", "foo05",
 				"--kube-api-qps", "1.0",
 				"--kube-api-burst", "1",
+				"--proxy-mode", "true",
 			},
 			core.ServeOptions{
 				Port:                     901,
@@ -45,6 +46,7 @@ func TestParseFlagsCorrect(t *testing.T) {
 				PluginConfigPath:         "foo05",
 				QPS:                      1.0,
 				Burst:                    1,
+				ProxyMode:                true,
 			},
 			true,
 		},

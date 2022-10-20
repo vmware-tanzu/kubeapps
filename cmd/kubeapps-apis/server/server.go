@@ -6,6 +6,7 @@ package server
 import (
 	"context"
 	"fmt"
+	"github.com/mwitkow/grpc-proxy/proxy"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 	"net"
@@ -115,6 +116,22 @@ func Serve(serveOpts core.ServeOptions) error {
 	// on the simpler cmux.HTTP2HeaderField("content-type", "application/grpc"). More details
 	// at https://github.com/soheilhy/cmux/issues/64
 	mux := cmux.New(lis)
+
+	// Proxy mode will send requests to the specified cluster in the header
+	if serveOpts.ProxyMode {
+		proxyGrpcServer := grpc.NewServer(
+			grpc.UnknownServiceHandler(proxy.TransparentHandler(getProxyHandler(pluginsServer.ClustersConfig))))
+		reflection.Register(proxyGrpcServer)
+		proxyGrpcListener := mux.MatchWithWriters(cmux.HTTP2MatchHeaderFieldPrefixSendSettings(ProxyRequestHeader, ""))
+		klogv2.Info("+proxy mode enabled")
+		go func() {
+			err := proxyGrpcServer.Serve(proxyGrpcListener)
+			if err != nil {
+				klogv2.Fatalf("failed to serve proxy: %v", err)
+			}
+		}()
+	}
+
 	grpcListener := mux.MatchWithWriters(cmux.HTTP2MatchHeaderFieldSendSettings("content-type", "application/grpc"))
 	grpcWebListener := mux.MatchWithWriters(cmux.HTTP2MatchHeaderFieldSendSettings("content-type", "application/grpc-web"))
 	httpListener := mux.Match(cmux.Any())

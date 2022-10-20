@@ -23,6 +23,7 @@ type ServeOptions struct {
 	UnsafeLocalDevKubeconfig bool
 	QPS                      float32
 	Burst                    int
+	ProxyMode                bool
 }
 
 // GatewayHandlerArgs is a helper struct just encapsulating all the args

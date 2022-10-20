@@ -64,7 +64,7 @@ type PluginsServer struct {
 	pluginsWithServers []PluginWithServer
 
 	// The parsed config for clusters in a multi-cluster setup.
-	clustersConfig kube.ClustersConfig
+	ClustersConfig kube.ClustersConfig
 }
 
 func NewPluginsServer(serveOpts core.ServeOptions, registrar grpc.ServiceRegistrar, gwArgs core.GatewayHandlerArgs) (*PluginsServer, error) {
@@ -83,7 +83,7 @@ func NewPluginsServer(serveOpts core.ServeOptions, registrar grpc.ServiceRegistr
 	if err != nil {
 		return nil, err
 	}
-	ps.clustersConfig = clustersConfig
+	ps.ClustersConfig = clustersConfig
 
 	err = ps.registerPlugins(pluginPaths, registrar, gwArgs, serveOpts)
 	if err != nil {
@@ -118,7 +118,7 @@ func (s *PluginsServer) GetConfiguredPlugins(ctx context.Context, in *plugins.Ge
 func (s *PluginsServer) registerPlugins(pluginPaths []string, grpcReg grpc.ServiceRegistrar, gwArgs core.GatewayHandlerArgs, serveOpts core.ServeOptions) error {
 	pluginsWithServers := []PluginWithServer{}
 
-	configGetter, err := createConfigGetter(serveOpts, s.clustersConfig)
+	configGetter, err := createConfigGetter(serveOpts, s.ClustersConfig)
 	if err != nil {
 		return fmt.Errorf("unable to create a ClientGetter: %w", err)
 	}
@@ -177,7 +177,7 @@ func (s *PluginsServer) registerGRPC(p *plugin.Plugin, pluginDetail *plugins.Plu
 	server, err := grpcFn(GRPCPluginRegistrationOptions{
 		Registrar:        registrar,
 		ConfigGetter:     configGetter,
-		ClustersConfig:   s.clustersConfig,
+		ClustersConfig:   s.ClustersConfig,
 		PluginConfigPath: serveOpts.PluginConfigPath,
 		ClientQPS:        serveOpts.QPS,
 		ClientBurst:      serveOpts.Burst,

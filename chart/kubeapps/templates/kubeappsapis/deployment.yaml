@@ -115,6 +115,9 @@ spec:
             {{- if .Values.kubeappsapis.burst }}
             - --kube-api-burst={{ .Values.kubeappsapis.burst }}
             {{- end }}
+            {{- if .Values.kubeappsapis.proxyMode.enabled }}
+            - --proxy-mode=true
+            {{- end }}
             {{- range .Values.kubeappsapis.extraFlags }}
             - {{ . }}
             {{- end }}

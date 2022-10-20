@@ -61,6 +61,7 @@ require (
 	github.com/jinzhu/copier v0.3.5
 	github.com/lib/pq v1.10.7
 	github.com/mitchellh/go-homedir v1.1.0
+	github.com/mwitkow/grpc-proxy v0.0.0-20220126150247-db34e7bfee32
 	github.com/opencontainers/image-spec v1.0.3-0.20220729202839-6ad7100eb087
 	github.com/soheilhy/cmux v0.1.5
 	github.com/spf13/cobra v1.6.0

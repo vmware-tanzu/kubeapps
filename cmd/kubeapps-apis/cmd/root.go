@@ -70,6 +70,7 @@ func setFlags(c *cobra.Command) {
 	c.Flags().StringVar(&serveOpts.PinnipedProxyURL, "pinniped-proxy-url", "http://kubeapps-internal-pinniped-proxy.kubeapps:3333", "internal url to be used for requests to clusters configured for credential proxying via pinniped")
 	c.Flags().StringVar(&serveOpts.PinnipedProxyCACert, "pinniped-proxy-ca-cert", "", "Path to certificate authority to use with requests to pinniped-proxy service")
 	c.Flags().StringVar(&serveOpts.GlobalHelmReposNamespace, "global-repos-namespace", "kubeapps", "Namespace of global repositories for the helm plugin")
+	c.Flags().BoolVar(&serveOpts.ProxyMode, "proxy-mode", false, "Enable or disable the proxy mode for incoming requests")
 	c.Flags().BoolVar(&serveOpts.UnsafeLocalDevKubeconfig, "unsafe-local-dev-kubeconfig", false, "if true, it will use the local kubeconfig at the KUBECONFIG env var instead of using the inCluster configuration.")
 	c.Flags().Float32Var(&serveOpts.QPS, "kube-api-qps", 10.0, "set Kubernetes API client QPS limit")
 	c.Flags().IntVar(&serveOpts.Burst, "kube-api-burst", 15, "set Kubernetes API client Burst limit")
