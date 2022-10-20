@@ -508,7 +508,7 @@ jobs:
           password: ${{ secrets.DOCKER_PASSWORD }}
       - uses: actions/download-artifact@v3
       - run: |
-          if [[ "${DEV_MODE}" == true && "IMG_PROD_TAG" == latest ]]; then
+          if [[ "${DEV_MODE}" == true ]]; then
             IMG_PROD_TAG="${IMG_PROD_TAG}-gha"
           fi
           
