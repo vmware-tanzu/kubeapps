@@ -116,13 +116,11 @@ func (s *Server) availableChartDetail(ctx context.Context, packageRef *corev1.Av
 	if err != nil {
 		return nil, err
 	}
-	log.Infof("checkpoint 5")
 
 	pkgDetail, err := availablePackageDetailFromChartDetail(chartID, chartDetail)
 	if err != nil {
 		return nil, err
 	}
-	log.Infof("checkpoint 6")
 
 	// fix up a couple of fields that don't come from the chart tarball
 	repoUrl := repo.Spec.URL
