@@ -73,14 +73,10 @@ jobs:
       running_on_tag: ${{ steps.set-outputs.outputs.running_on_tag }}
       triggered_from_fork: ${{ steps.set-outputs.outputs.triggered_from_fork }}
     steps:
-      - name: Show GitHub event
-        env:
-          EVENT_CONTEXT: ${{ toJSON(github.event) }}
-        run: echo $EVENT_CONTEXT | jq
-      - name: Show PR context
-        env:
-          PR_CONTEXT: ${{ toJSON(github.event.pull_request) }}
-        run: echo $EVENT_CONTEXT | jq
+      - name: Show GitHub Event
+        run: echo ${{ toJSON(github.event) }} | jq
+      - name: Show PR Context
+        run: echo ${{ toJSON(github.event.pull_request) }} | jq
       - name: Set outputs
         id: set-outputs
         env:
