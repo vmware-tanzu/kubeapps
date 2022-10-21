@@ -40,6 +40,9 @@ func getProxyHandler(clustersConfig kube.ClustersConfig) proxy.StreamDirector {
 		if !ok {
 			return nil, nil, status.Errorf(codes.Internal, "cluster %q has no configuration", targetCluster)
 		}
+		if targetClusterConf.Ingress.Endpoint == "" {
+			return nil, nil, status.Errorf(codes.Internal, "cluster %q has no ingress endpoint defined", targetCluster)
+		}
 
 		outgoingCtx, err := createOutgoingContext(ctx)
 		if err != nil {

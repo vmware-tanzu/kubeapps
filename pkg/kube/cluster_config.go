@@ -49,6 +49,10 @@ type ClusterConfig struct {
 	// if every cluster defines an APIServiceURL, we can no longer infer the cluster
 	// on which Kubeapps is installed.
 	IsKubeappsCluster bool `json:"isKubeappsCluster,omitempty"`
+
+	// Ingress is an optional per-cluster configuration holding
+	// data about the cluster ingress through which Kubeapps is exposed
+	Ingress IngressConfig `json:"ingress,omitempty"`
 }
 
 // PinnipedConciergeConfig enables each cluster configuration to specify the
@@ -73,6 +77,16 @@ type ClustersConfig struct {
 	PinnipedProxyURL         string
 	PinnipedProxyCACert      string
 	Clusters                 map[string]ClusterConfig
+}
+
+type IngressConfig struct {
+	// Ingress endpoint
+	Endpoint string `json:"endpoint"`
+	// CA data for the ingress endpoint (if needed)
+	CertificateAuthorityData string `json:"certificateAuthorityData,omitempty"`
+	// When parsing config we decode the cert auth data to ensure it is valid
+	// and store it since it's required when using the data.
+	CertificateAuthorityDataDecoded string
 }
 
 // NewClusterConfig returns a copy of an in-cluster config with a user token (leave blank for
@@ -193,6 +207,16 @@ func ParseClusterConfig(configPath, caFilesPrefix string, pinnipedProxyURL, Pinn
 				return ClustersConfig{}, deferFn, err
 			}
 		}
+
+		// Decode CA data for ingress endpoint
+		if c.Ingress.CertificateAuthorityData != "" {
+			decodedIngressCAData, err := base64.StdEncoding.DecodeString(c.Ingress.CertificateAuthorityData)
+			if err != nil {
+				return ClustersConfig{}, deferFn, err
+			}
+			c.Ingress.CertificateAuthorityDataDecoded = string(decodedIngressCAData)
+		}
+
 		configs.Clusters[c.Name] = c
 	}
 	return configs, deferFn, nil

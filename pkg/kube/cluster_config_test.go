@@ -412,6 +412,24 @@ func TestParseClusterConfig(t *testing.T) {
 		]`,
 			expectedErr: true,
 		},
+		{
+			name:       "parses a cluster with ingress information",
+			configJSON: `[{"name": "cluster-2", "apiServiceURL": "https://example.com", "ingress": {"endpoint": "https://my-cluster.com", "certificateAuthorityData": "aW5ncmVzcy1jYS1kYXRhCg=="}}]`,
+			expectedConfig: ClustersConfig{
+				Clusters: map[string]ClusterConfig{
+					"cluster-2": {
+						Name:          "cluster-2",
+						APIServiceURL: "https://example.com",
+						Ingress: IngressConfig{
+							Endpoint:                        "https://my-cluster.com",
+							CertificateAuthorityData:        "aW5ncmVzcy1jYS1kYXRhCg==",
+							CertificateAuthorityDataDecoded: "ingress-ca-data\n",
+						},
+					},
+				},
+				PinnipedProxyURL: "http://kubeapps-internal-pinniped-proxy.kubeapps:3333",
+			},
+		},
 	}
 
 	ignoreCAFile := cmpopts.IgnoreFields(ClusterConfig{}, "CAFile")
