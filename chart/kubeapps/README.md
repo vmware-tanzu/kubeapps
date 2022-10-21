@@ -86,7 +86,7 @@ Once you have installed Kubeapps follow the [Getting Started Guide](https://gith
 | Name                               | Description                                                                                                                      | Value                    |
 | ---------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- | ------------------------ |
 | `ingress.enabled`                  | Enable ingress record generation for Kubeapps                                                                                    | `false`                  |
-| `ingress.apiOnly.enabled`          | Enable ingress for API operations only. GRPC-web access will not be possible, so Dashboard will be unusable.                     | `false`                  |
+| `ingress.apiOnly.enabled`          | Enable ingress for API operations only. Access to "/" will not be possible, so Dashboard will be unusable.                       | `false`                  |
 | `ingress.apiOnly.grpc.annotations` | Specific annotations for the GRPC API ingress                                                                                    | `{}`                     |
 | `ingress.apiVersion`               | Force Ingress API version (automatically detected if not set)                                                                    | `""`                     |
 | `ingress.hostname`                 | Default host for the ingress record                                                                                              | `kubeapps.local`         |
