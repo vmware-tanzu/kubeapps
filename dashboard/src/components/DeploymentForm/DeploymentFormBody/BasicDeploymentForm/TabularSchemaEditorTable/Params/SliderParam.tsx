@@ -46,7 +46,7 @@ export default function SliderParam(props: ISliderParamProps) {
 
     // twofold validation: using the json schema (with ajv) and the html5 validation
     setValidated(validateValuesSchema(e.currentTarget.value, param.schema));
-    // e.currentTarget?.reportValidity();
+    e.currentTarget?.reportValidity();
 
     // Gather changes before submitting
     clearTimeout(timeout);

@@ -227,7 +227,9 @@ describe("when changing the slide", () => {
           .prop("value"),
       ).toBe(10);
 
-      const event = { currentTarget: { value: "20" } } as React.FormEvent<HTMLInputElement>;
+      const event = {
+        currentTarget: { value: "20", reportValidity: jest.fn() },
+      } as unknown as React.FormEvent<HTMLInputElement>;
       act(() => {
         (
           wrapper.find("input#disk_range").prop("onChange") as (
@@ -253,7 +255,10 @@ describe("when changing the slide", () => {
       ).toBe(20);
 
       expect(handleBasicFormParamChange).toHaveBeenCalledWith(param);
-      expect(valueChange).toHaveBeenCalledWith(event);
+      expect(valueChange).toHaveBeenCalledWith({
+        ...event,
+        currentTarget: { ...event.currentTarget, reportValidity: undefined },
+      });
     });
   });
 });
@@ -276,7 +281,9 @@ describe("when changing the value in the input", () => {
       const input = wrapper.find("input").filterWhere(i => i.prop("type") === "number");
       expect(input.prop("value")).toBe(10);
 
-      const event = { currentTarget: { value: "20" } } as React.FormEvent<HTMLInputElement>;
+      const event = {
+        currentTarget: { value: "20", reportValidity: jest.fn() },
+      } as unknown as React.FormEvent<HTMLInputElement>;
       act(() => {
         (
           wrapper.find("input#disk_text").prop("onChange") as (
@@ -294,7 +301,10 @@ describe("when changing the value in the input", () => {
       expect(inputChanged.prop("value")).toBe(20);
 
       expect(handleBasicFormParamChange).toHaveBeenCalledWith(param);
-      expect(valueChange).toHaveBeenCalledWith(event);
+      expect(valueChange).toHaveBeenCalledWith({
+        ...event,
+        currentTarget: { ...event.currentTarget, reportValidity: undefined },
+      });
     });
   });
 
@@ -315,7 +325,9 @@ describe("when changing the value in the input", () => {
       const input = wrapper.find("input").filterWhere(i => i.prop("type") === "number");
       expect(input.prop("value")).toBe(10);
 
-      const event = { currentTarget: { value: "foo20*#@$" } } as React.FormEvent<HTMLInputElement>;
+      const event = {
+        currentTarget: { value: "foo20*#@$", reportValidity: jest.fn() },
+      } as unknown as React.FormEvent<HTMLInputElement>;
       act(() => {
         (
           wrapper.find("input#disk_text").prop("onChange") as (
@@ -333,7 +345,10 @@ describe("when changing the value in the input", () => {
       expect(inputChanged.prop("value")).toBe(NaN);
 
       expect(handleBasicFormParamChange).toHaveBeenCalledWith(param);
-      expect(valueChange).toHaveBeenCalledWith(event);
+      expect(valueChange).toHaveBeenCalledWith({
+        ...event,
+        currentTarget: { ...event.currentTarget, reportValidity: undefined },
+      });
     });
   });
 
@@ -354,7 +369,9 @@ describe("when changing the value in the input", () => {
       const input = wrapper.find("input").filterWhere(i => i.prop("type") === "number");
       expect(input.prop("value")).toBe(10);
 
-      const event = { currentTarget: { value: "20.5" } } as React.FormEvent<HTMLInputElement>;
+      const event = {
+        currentTarget: { value: "20.5", reportValidity: jest.fn() },
+      } as unknown as React.FormEvent<HTMLInputElement>;
       act(() => {
         (
           wrapper.find("input#disk_text").prop("onChange") as (
@@ -372,7 +389,10 @@ describe("when changing the value in the input", () => {
       expect(inputChanged.prop("value")).toBe(20.5);
 
       expect(handleBasicFormParamChange).toHaveBeenCalledWith(param);
-      expect(valueChange).toHaveBeenCalledWith(event);
+      expect(valueChange).toHaveBeenCalledWith({
+        ...event,
+        currentTarget: { ...event.currentTarget, reportValidity: undefined },
+      });
     });
   });
 
@@ -393,7 +413,9 @@ describe("when changing the value in the input", () => {
       const input = wrapper.find("input").filterWhere(i => i.prop("type") === "number");
       expect(input.prop("value")).toBe(10);
 
-      const event = { currentTarget: { value: "2000" } } as React.FormEvent<HTMLInputElement>;
+      const event = {
+        currentTarget: { value: "2000", reportValidity: jest.fn() },
+      } as unknown as React.FormEvent<HTMLInputElement>;
       act(() => {
         (
           wrapper.find("input#disk_text").prop("onChange") as (
