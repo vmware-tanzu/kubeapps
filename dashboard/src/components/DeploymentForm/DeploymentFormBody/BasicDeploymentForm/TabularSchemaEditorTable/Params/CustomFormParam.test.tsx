@@ -15,6 +15,7 @@ const param: IBasicFormParam = {
   defaultValue: true,
   deployedValue: true,
   hasProperties: false,
+  isRequired: false,
   key: "enableMetrics",
   schema: {
     type: "boolean",

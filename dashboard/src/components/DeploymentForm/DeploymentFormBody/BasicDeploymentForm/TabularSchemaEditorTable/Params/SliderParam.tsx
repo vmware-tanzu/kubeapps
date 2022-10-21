@@ -10,21 +10,20 @@ import { isEmpty, toNumber } from "lodash";
 import { useState } from "react";
 import { validateValuesSchema } from "shared/schema";
 import { IAjvValidateResult, IBasicFormParam } from "shared/types";
-import { basicFormsDebounceTime, getStringValue } from "shared/utils";
+import { basicFormsDebounceTime, getOptionalMin, getStringValue } from "shared/utils";
 
 export interface ISliderParamProps {
   id: string;
   label: string;
   param: IBasicFormParam;
   unit: string;
-  step: number;
   handleBasicFormParamChange: (
     p: IBasicFormParam,
   ) => (e: React.FormEvent<HTMLInputElement>) => void;
 }
 
 export default function SliderParam(props: ISliderParamProps) {
-  const { handleBasicFormParamChange, id, label, param, step } = props;
+  const { handleBasicFormParamChange, id, label, param } = props;
 
   const initCurrentValue = () =>
     toNumber(param.currentValue) ||
@@ -38,13 +37,16 @@ export default function SliderParam(props: ISliderParamProps) {
   const [isValueModified, setIsValueModified] = useState(false);
   const [timeout, setThisTimeout] = useState({} as NodeJS.Timeout);
 
+  const step =
+    param?.multipleOf || (param.schema?.type === "number" || param?.type === "number" ? 0.5 : 1);
+
   const onChange = (e: React.FormEvent<HTMLInputElement>) => {
     setCurrentValue(toNumber(e.currentTarget.value));
     setIsValueModified(toNumber(e.currentTarget.value) !== toNumber(param.currentValue));
 
     // twofold validation: using the json schema (with ajv) and the html5 validation
     setValidated(validateValuesSchema(e.currentTarget.value, param.schema));
-    e.currentTarget.reportValidity();
+    e.currentTarget?.reportValidity();
 
     // Gather changes before submitting
     clearTimeout(timeout);
@@ -81,10 +83,10 @@ export default function SliderParam(props: ISliderParamProps) {
   const input = (
     <CdsRange>
       <input
-        required={param.required}
+        required={param.isRequired}
         disabled={param.readOnly}
-        min={Math.min(param.minimum, param.exclusiveMinimum) || undefined}
-        max={Math.min(param.maximum, param.exclusiveMaximum) || undefined}
+        min={getOptionalMin(param.exclusiveMinimum, param.minimum)}
+        max={getOptionalMin(param.exclusiveMaximum, param.maximum)}
         aria-label={label}
         id={id + "_range"}
         type="range"
@@ -100,10 +102,10 @@ export default function SliderParam(props: ISliderParamProps) {
     <div className="self-center">
       <CdsInput className={isModified ? "bolder" : ""}>
         <input
-          required={param.required}
+          required={param.isRequired}
           disabled={param.readOnly}
-          min={Math.min(param.minimum, param.exclusiveMinimum) || undefined}
-          max={Math.min(param.maximum, param.exclusiveMaximum) || undefined}
+          min={getOptionalMin(param.exclusiveMinimum, param.minimum)}
+          max={getOptionalMin(param.exclusiveMaximum, param.maximum)}
           aria-label={label}
           id={id + "_text"}
           type="number"

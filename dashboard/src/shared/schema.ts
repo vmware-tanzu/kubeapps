@@ -63,7 +63,7 @@ export function retrieveBasicFormParams(
         // get the string values of the enum array
         enum: schemaProperty?.enum?.map((item: { toString: () => any }) => item?.toString() ?? ""),
         // check if the "required" array contains the current property
-        required: requiredProperties?.includes(propertyKey),
+        isRequired: requiredProperties?.includes(propertyKey),
         examples: examples,
         // If exists, the value that is currently deployed
         deployedValue: isLeaf

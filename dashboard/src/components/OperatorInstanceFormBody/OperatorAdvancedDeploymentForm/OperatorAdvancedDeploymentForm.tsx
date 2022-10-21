@@ -29,7 +29,7 @@ function OperatorAdvancedDeploymentForm(props: IOperatorAdvancedDeploymentFormPr
       <MonacoDiffEditor
         value={props.appValues}
         original={props.oldAppValues}
-        className="editor"
+        className="editor operator-editor"
         height="90vh"
         language="yaml"
         onChange={onChange}

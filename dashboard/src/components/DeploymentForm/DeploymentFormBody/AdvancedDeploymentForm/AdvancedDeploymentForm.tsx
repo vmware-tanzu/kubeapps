@@ -220,7 +220,7 @@ export default function AdvancedDeploymentForm(props: IAdvancedDeploymentForm) {
       <MonacoDiffEditor
         value={valuesFromTheParentContainer}
         original={diffValues}
-        className="editor"
+        className="editor values-editor"
         height="90vh"
         language="yaml"
         theme={theme === "dark" ? "vs-dark" : "light"}
