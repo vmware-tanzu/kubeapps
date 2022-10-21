@@ -710,7 +710,7 @@ jobs:
 
       - name: Interactive SSH debugging session
         uses: lhotari/action-upterm@v1
-        if: always()
+        if: failure()
 
       - # TODO(castelblanque) Unify shared resources with kubeapps-local-dev-users-rbac.yaml that only applies to Kind clusters
         name: Apply customizations to GKE cluster
