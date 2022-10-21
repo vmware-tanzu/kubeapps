@@ -80,7 +80,7 @@ jobs:
       - name: Show PR context
         env:
           PR_CONTEXT: ${{ toJSON(github.event.pull_request) }}
-        run: echo $EVENT_CONTEXT | jq
+        run: echo $PR_CONTEXT | jq
       - name: Set outputs
         id: set-outputs
         env:
@@ -508,6 +508,10 @@ jobs:
           password: ${{ secrets.DOCKER_PASSWORD }}
       - uses: actions/download-artifact@v3
       - run: |
+          if [[ "${DEV_MODE}" == true ]]; then
+            IMG_PROD_TAG="${IMG_PROD_TAG}-gha"
+          fi
+          
           for artifact in *; do
             echo "::debug::Processing artifact '${artifact}'"
 
