@@ -221,6 +221,7 @@ function configureGCloud() {
 #   $2: GKE_BRANCH
 #   $3: GITHUB_REF_NAME
 #   $4: TEST_LATEST_RELEASE
+#   $5: DEV_MODE Optional, default "false"
 # Returns: None
 ########################################################################################################################
 function exportEscapedGKEClusterName() {
@@ -228,9 +229,13 @@ function exportEscapedGKEClusterName() {
   GKE_BRANCH=${2:?GKE_BRANCH not provided}
   GITHUB_REF_NAME=${3:?GITHUB_REF_NAME not provided}
   TEST_LATEST_RELEASE=${4:?TEST_LATEST_RELEASE not provided}
+  DEV_MODE=${5:-false}
 
   info "Exporting scaped GKE cluster name"
   ESCAPED_GKE_CLUSTER=$(echo "${GKE_CLUSTER}-${GITHUB_REF_NAME}-${TEST_LATEST_RELEASE}-${GKE_BRANCH}-ci | sed 's/[^a-z0-9-]//g'")
+  if [[ "${DEV_MODE}" == "false" ]]; then
+    ESCAPED_GKE_CLUSTER="${ESCAPED_GKE_CLUSTER}-gha"
+  fi
   export ESCAPED_GKE_CLUSTER
   # Just exporting the env var won't make it available for the next steps in the GHA's job, so we need the line below
   echo "ESCAPED_GKE_CLUSTER=${ESCAPED_GKE_CLUSTER}" >> "${GITHUB_ENV}"

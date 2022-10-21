@@ -20,8 +20,13 @@ env:
   CI_BOT_GPG: "80B6EB16B1328FB18DFF2A073EBA68F3347E319D"
   # DEBUG_MODE allows to activate some SSH debugging steps, and modify the verbosity level of some scripts (eg. e2e-tests.sh)
   DEBUG_MODE: "false"
-  # FIXME: DEV_MODE is used to enable dev mode, used in sync chart from/to bitnami jobs to file shadow PRs while we maintain
-  # CircleCI and GHA pipelines running in parallel. This should be removed once the CircleCI pipeline is decommissioned.
+  # FIXME: DEV_MODE is used to enable dev mode, used to activate several hacks along the code:
+  # - In sync_chart_from/to_bitnami jobs to file shadow PRs while we maintain
+  # - To add a suffix to the tag of the generated docker images, to prevent collision and overwriting with those generated from CircleCI
+  # - To add a suffix to the name of the generated GKE clusters to prevent collision with those generated and used from CircleCI
+  # - Probably some other things I don't remember right now :)
+  #
+  # CircleCI and GHA pipelines are running in parallel. This should be removed once the CircleCI pipeline is decommissioned.
   DEV_MODE: "true"
   SSH_KEY_KUBEAPPS_DEPLOY_FILENAME: "id_rsa_kubeapps_deploy_key"
   SSH_KEY_FORKED_CHARTS_DEPLOY_FILENAME: "id_rsa_forked_charts_deploy_key"
@@ -696,7 +701,7 @@ jobs:
           installKubectl ${KUBECTL_VERSION}
           installHelm ${HELM_VERSION_MIN}
           installHelm ${HELM_VERSION_STABLE} helm-stable
-          exportEscapedGKEClusterName "${GKE_CLUSTER}" "${GKE_BRANCH}" "${GITHUB_REF_NAME}" "${TEST_LATEST_RELEASE}"
+          exportEscapedGKEClusterName "${GKE_CLUSTER}" "${GKE_BRANCH}" "${GITHUB_REF_NAME}" "${TEST_LATEST_RELEASE}" "${DEV_MODE}"
       - name: Start GKE environment
         run: |
           set -euo pipefail
