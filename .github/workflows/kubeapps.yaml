@@ -662,8 +662,12 @@ jobs:
       TEST_TIMEOUT_MINUTES: 6
       GKE_ADMIN: ${{ secrets.GKE_ADMIN }}
       GCLOUD_KEY: $${{ secrets.GCLOUD_KEY }}
-      GKE_BRANCH: ${{ env.GKE_REGULAR_VERSION }}
     steps:
+      - # We need this step because we can not set a env var taking the value from another existing env var via the job.<id>.env section
+        name: Set GKE_BRANCH
+        run: | 
+          set -eu
+          echo "GKE_BRANCH=${GKE_REGULAR_VERSION}" >> ${GITHUB_ENV}
       - uses: actions/checkout@v3
 #      - name: Check conditions
 #        run: |
