@@ -160,19 +160,6 @@ export function renderConfigCurrentValuePro(
 
   // if it isn't a custom component or an with more properties, render an input
   switch (param.type) {
-    case "string":
-      return (
-        <TextParam
-          id={param.key}
-          label={param.title || param.path}
-          param={param}
-          inputType={
-            [param.title, param.key].some(s => s.match(/password/i)) ? "password" : "string"
-          }
-          handleBasicFormParamChange={handleBasicFormParamChange}
-        />
-      );
-
     case "boolean":
       return (
         <BooleanParam
@@ -196,35 +183,33 @@ export function renderConfigCurrentValuePro(
         />
       );
     case "array":
-      if (param?.schema?.items?.type !== "object") {
-        return (
-          <ArrayParam
-            id={param.key}
-            label={param.title || param.path}
-            param={param}
-            handleBasicFormParamChange={handleBasicFormParamChange}
-            type={param?.schema?.items?.type ?? "string"}
-          />
-        );
-      } else {
-        // TODO(agamez): render the object properties
-        return (
-          <TextParam
-            id={param.key}
-            label={param.title || param.path}
-            param={param}
-            inputType={"textarea"}
-            handleBasicFormParamChange={handleBasicFormParamChange}
-          />
-        );
-      }
+      return (
+        <ArrayParam
+          id={param.key}
+          label={param.title || param.path}
+          param={param}
+          handleBasicFormParamChange={handleBasicFormParamChange}
+          type={param?.schema?.items?.type ?? "string"}
+          step={param?.multipleOf || (param.schema?.type === "number" ? 0.5 : 1)}
+        />
+      );
+    case "string":
+      return (
+        <TextParam
+          id={param.key}
+          label={param.title || param.path}
+          param={param}
+          inputType={[param.title, param.key].some(s => s.match(/password/i)) ? "password" : "text"}
+          handleBasicFormParamChange={handleBasicFormParamChange}
+        />
+      );
+    case "object":
     default:
       return (
         <TextParam
           id={param.key}
           label={param.title || param.path}
           param={param}
-          inputType={"textarea"}
           handleBasicFormParamChange={handleBasicFormParamChange}
         />
       );
