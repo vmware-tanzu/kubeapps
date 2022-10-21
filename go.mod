@@ -53,7 +53,7 @@ require (
 	github.com/go-redis/redis/v8 v8.11.5
 	github.com/go-redis/redismock/v8 v8.0.6
 	github.com/google/go-cmp v0.5.9
-	github.com/google/go-containerregistry v0.11.0
+	github.com/google/go-containerregistry v0.12.0
 	github.com/grpc-ecosystem/go-grpc-middleware v1.3.0
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.12.0
 	github.com/improbable-eng/grpc-web v0.15.0
@@ -62,7 +62,7 @@ require (
 	github.com/lib/pq v1.10.7
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/mwitkow/grpc-proxy v0.0.0-20220126150247-db34e7bfee32
-	github.com/opencontainers/image-spec v1.0.3-0.20220729202839-6ad7100eb087
+	github.com/opencontainers/image-spec v1.1.0-rc2
 	github.com/soheilhy/cmux v0.1.5
 	github.com/spf13/cobra v1.6.0
 	github.com/spf13/cobra-cli v1.3.0
@@ -72,22 +72,22 @@ require (
 	github.com/srwiley/rasterx v0.0.0-20220730225603-2ab79fcdd4ef
 	github.com/stretchr/testify v1.8.0
 	github.com/vmware-tanzu/carvel-kapp v0.53.0
-	github.com/vmware-tanzu/carvel-kapp-controller v0.41.2
+	github.com/vmware-tanzu/carvel-kapp-controller v0.42.0
 	github.com/vmware-tanzu/carvel-vendir v0.32.0
-	golang.org/x/net v0.0.0-20220926192436-02166a98028e
-	golang.org/x/sync v0.0.0-20220923202941-7f9b1623fab7
+	golang.org/x/net v0.1.0
+	golang.org/x/sync v0.1.0
 	google.golang.org/genproto v0.0.0-20221014213838-99cd37c6964a
 	google.golang.org/grpc v1.50.1
 	google.golang.org/grpc/cmd/protoc-gen-go-grpc v1.2.0
 	google.golang.org/protobuf v1.28.1
 	gopkg.in/yaml.v3 v3.0.1
 	helm.sh/helm/v3 v3.9.4
-	k8s.io/api v0.25.1
+	k8s.io/api v0.25.3
 	k8s.io/apiextensions-apiserver v0.25.2
-	k8s.io/apimachinery v0.25.2
+	k8s.io/apimachinery v0.25.3
 	k8s.io/apiserver v0.25.0
 	k8s.io/cli-runtime v0.24.4
-	k8s.io/client-go v0.25.1
+	k8s.io/client-go v0.25.3
 	k8s.io/klog/v2 v2.80.1
 	k8s.io/kubectl v0.24.4
 	k8s.io/kubernetes v1.24.4
@@ -126,7 +126,7 @@ require (
 	github.com/desertbit/timer v0.0.0-20180107155436-c41aec40b27f // indirect
 	github.com/dgryski/go-rendezvous v0.0.0-20200823014737-9f7001d12a5f // indirect
 	github.com/docker/distribution v2.8.1+incompatible // indirect
-	github.com/docker/docker v20.10.18+incompatible // indirect
+	github.com/docker/docker v20.10.20+incompatible // indirect
 	github.com/docker/docker-credential-helpers v0.7.0 // indirect
 	github.com/docker/go-connections v0.4.0 // indirect
 	github.com/docker/go-metrics v0.0.1 // indirect
@@ -241,17 +241,17 @@ require (
 	go.uber.org/zap v1.23.0 // indirect
 	golang.org/x/crypto v0.0.0-20220926161630-eccd6366d1be // indirect
 	golang.org/x/image v0.0.0-20220902085622-e7cb96979f69 // indirect
-	golang.org/x/oauth2 v0.0.0-20221014153046-6fdb5e3db783 // indirect
-	golang.org/x/sys v0.0.0-20220926163933-8cfa568d3c25 // indirect
-	golang.org/x/term v0.0.0-20220919170432-7a66f970e087 // indirect
-	golang.org/x/text v0.3.8 // indirect
+	golang.org/x/oauth2 v0.1.0 // indirect
+	golang.org/x/sys v0.1.0 // indirect
+	golang.org/x/term v0.1.0 // indirect
+	golang.org/x/text v0.4.0 // indirect
 	golang.org/x/time v0.0.0-20220922220347-f3bd1da661af // indirect
 	gomodules.xyz/jsonpatch/v2 v2.2.0 // indirect
 	google.golang.org/appengine v1.6.7 // indirect
 	gopkg.in/inf.v0 v0.9.1 // indirect
 	gopkg.in/ini.v1 v1.67.0 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
-	k8s.io/component-base v0.25.1 // indirect
+	k8s.io/component-base v0.25.3 // indirect
 	k8s.io/kube-openapi v0.0.0-20220803164354-a70c9af30aea // indirect
 	nhooyr.io/websocket v1.8.7 // indirect
 	sigs.k8s.io/json v0.0.0-20220713155537-f223a00ba0e2 // indirect
