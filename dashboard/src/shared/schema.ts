@@ -34,6 +34,16 @@ export function retrieveBasicFormParams(
       const isUpgrading = deploymentEvent === "upgrade" && deployedValues;
       const isLeaf = !schemaProperty?.properties;
 
+      // get the values for the current property in the examples array
+      // for objects, we need to get the value of the property in the example array,
+      // for the rest, we can just get the value of the example array
+      let examples = schemaProperty.examples;
+      if (schemaExamples?.length > 0) {
+        examples = schemaExamples?.map((item: any) =>
+          typeof item === "object" ? item?.[propertyKey]?.toString() ?? "" : item?.toString() ?? "",
+        );
+      }
+
       const param: IBasicFormParam = {
         ...schemaProperty,
         title: schemaProperty.title || propertyKey,
@@ -50,6 +60,7 @@ export function retrieveBasicFormParams(
               `${itemPath}/`,
             )
           : undefined,
+        // get the string values of the enum array
         enum: schemaProperty?.enum?.map((item: { toString: () => any }) => item?.toString() ?? ""),
         // check if the "required" array contains the current property
         required: requiredProperties?.includes(propertyKey),

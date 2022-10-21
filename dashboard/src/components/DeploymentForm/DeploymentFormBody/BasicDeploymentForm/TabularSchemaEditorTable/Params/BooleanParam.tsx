@@ -48,6 +48,7 @@ export default function BooleanParam(props: IBooleanParamProps) {
       <CdsToggle>
         <input
           required={param.required}
+          disabled={param.readOnly}
           aria-label={label}
           id={id}
           type="checkbox"
