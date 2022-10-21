@@ -26,7 +26,6 @@ export interface IArrayParamProps {
   label: string;
   type: string;
   param: IBasicFormParam;
-  step: number;
   handleBasicFormParamChange: (
     param: IBasicFormParam,
   ) => (e: React.FormEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => void;
@@ -52,22 +51,7 @@ const getDefaultDataFromType = (type: string) => {
 type supportedTypes = string | number | boolean | object | Array<any>;
 
 export default function ArrayParam(props: IArrayParamProps) {
-  const { id, label, type, param, step, handleBasicFormParamChange } = props;
-
-  const initCurrentValue = () => {
-    const currentValueInit = [];
-    if (param.minItems) {
-      for (let index = 0; index < param.minItems; index++) {
-        currentValueInit[index] = getDefaultDataFromType(type);
-      }
-    }
-    return currentValueInit;
-  };
-
-  const [currentArrayItems, setCurrentArrayItems] = useState<
-    (string | number | boolean | object | Array<any>)[]
-  >(param.currentValue ? param.currentValue : initCurrentValue());
-  const [validated, setValidated] = useState<IAjvValidateResult>();
+  const { id, label, type, param, handleBasicFormParamChange } = props;
 
   const initCurrentValue = () => {
     const currentValueInit = [];
@@ -265,7 +249,7 @@ export default function ArrayParam(props: IArrayParamProps) {
       <CdsButton
         title={"Add a new value"}
         type="button"
-        onClick={() => onAddArrayItem(type)}
+        onClick={onAddArrayItem}
         action="flat"
         status="primary"
         size="sm"
