@@ -14,7 +14,12 @@ import { isEmpty } from "lodash";
 import { useState } from "react";
 import { validateValuesSchema } from "shared/schema";
 import { IAjvValidateResult, IBasicFormParam } from "shared/types";
-import { basicFormsDebounceTime, getStringValue, getValueFromString } from "shared/utils";
+import {
+  basicFormsDebounceTime,
+  getOptionalMin,
+  getStringValue,
+  getValueFromString,
+} from "shared/utils";
 
 export interface IArrayParamProps {
   id: string;
@@ -88,7 +93,7 @@ export default function ArrayParam(props: IArrayParamProps) {
 
     // twofold validation: using the json schema (with ajv) and the html5 validation
     setValidated(validateValuesSchema(getStringValue(currentArrayItems), param.schema));
-    e.currentTarget.reportValidity();
+    e.currentTarget?.reportValidity();
   };
 
   const renderControlMsg = () =>
@@ -108,7 +113,7 @@ export default function ArrayParam(props: IArrayParamProps) {
         <>
           <CdsSelect layout="horizontal">
             <select
-              required={param.required}
+              required={param.isRequired}
               disabled={param.readOnly}
               aria-label={label}
               id={id}
@@ -136,10 +141,10 @@ export default function ArrayParam(props: IArrayParamProps) {
             <>
               <CdsInput className="self-center">
                 <input
-                  required={param.required}
+                  required={param.isRequired}
                   disabled={param.readOnly}
-                  min={Math.min(param.minimum, param.exclusiveMinimum) || undefined}
-                  max={Math.min(param.maximum, param.exclusiveMaximum) || undefined}
+                  min={getOptionalMin(param.exclusiveMinimum, param.minimum)}
+                  max={getOptionalMin(param.exclusiveMaximum, param.maximum)}
                   aria-label={label}
                   id={`${id}-${index}_text`}
                   type="number"
@@ -150,10 +155,10 @@ export default function ArrayParam(props: IArrayParamProps) {
               </CdsInput>
               <CdsRange>
                 <input
-                  required={param.required}
+                  required={param.isRequired}
                   disabled={param.readOnly}
-                  min={param.minimum}
-                  max={param.maximum}
+                  min={getOptionalMin(param.exclusiveMinimum, param.minimum)}
+                  max={getOptionalMin(param.exclusiveMaximum, param.maximum)}
                   aria-label={label}
                   id={`${id}-${index}_range`}
                   type="range"
@@ -168,7 +173,7 @@ export default function ArrayParam(props: IArrayParamProps) {
           return (
             <CdsToggle>
               <input
-                required={param.required}
+                required={param.isRequired}
                 disabled={param.readOnly}
                 aria-label={label}
                 id={`${id}-${index}_toggle`}
@@ -182,7 +187,7 @@ export default function ArrayParam(props: IArrayParamProps) {
           return (
             <CdsInput>
               <input
-                required={param.required}
+                required={param.isRequired}
                 disabled={param.readOnly}
                 aria-label={label}
                 value={getStringValue(currentArrayItems[index])}
@@ -196,7 +201,7 @@ export default function ArrayParam(props: IArrayParamProps) {
           return (
             <CdsInput>
               <input
-                required={param.required}
+                required={param.isRequired}
                 disabled={param.readOnly}
                 aria-label={label}
                 value={getStringValue(currentArrayItems[index])}
@@ -211,7 +216,7 @@ export default function ArrayParam(props: IArrayParamProps) {
           return (
             <CdsInput>
               <input
-                required={param.required}
+                required={param.isRequired}
                 disabled={param.readOnly}
                 maxLength={param.maxLength}
                 minLength={param.minLength}

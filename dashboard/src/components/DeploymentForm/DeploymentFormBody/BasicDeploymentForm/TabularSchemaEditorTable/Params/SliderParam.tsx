@@ -10,7 +10,7 @@ import { isEmpty, toNumber } from "lodash";
 import { useState } from "react";
 import { validateValuesSchema } from "shared/schema";
 import { IAjvValidateResult, IBasicFormParam } from "shared/types";
-import { basicFormsDebounceTime, getStringValue } from "shared/utils";
+import { basicFormsDebounceTime, getOptionalMin, getStringValue } from "shared/utils";
 
 export interface ISliderParamProps {
   id: string;
@@ -44,7 +44,7 @@ export default function SliderParam(props: ISliderParamProps) {
 
     // twofold validation: using the json schema (with ajv) and the html5 validation
     setValidated(validateValuesSchema(e.currentTarget.value, param.schema));
-    e.currentTarget.reportValidity();
+    // e.currentTarget?.reportValidity();
 
     // Gather changes before submitting
     clearTimeout(timeout);
@@ -81,10 +81,10 @@ export default function SliderParam(props: ISliderParamProps) {
   const input = (
     <CdsRange>
       <input
-        required={param.required}
+        required={param.isRequired}
         disabled={param.readOnly}
-        min={Math.min(param.minimum, param.exclusiveMinimum) || undefined}
-        max={Math.min(param.maximum, param.exclusiveMaximum) || undefined}
+        min={getOptionalMin(param.exclusiveMinimum, param.minimum)}
+        max={getOptionalMin(param.exclusiveMaximum, param.maximum)}
         aria-label={label}
         id={id + "_range"}
         type="range"
@@ -100,10 +100,10 @@ export default function SliderParam(props: ISliderParamProps) {
     <div className="self-center">
       <CdsInput className={isModified ? "bolder" : ""}>
         <input
-          required={param.required}
+          required={param.isRequired}
           disabled={param.readOnly}
-          min={Math.min(param.minimum, param.exclusiveMinimum) || undefined}
-          max={Math.min(param.maximum, param.exclusiveMaximum) || undefined}
+          min={getOptionalMin(param.exclusiveMinimum, param.minimum)}
+          max={getOptionalMin(param.exclusiveMaximum, param.maximum)}
           aria-label={label}
           id={id + "_text"}
           type="number"

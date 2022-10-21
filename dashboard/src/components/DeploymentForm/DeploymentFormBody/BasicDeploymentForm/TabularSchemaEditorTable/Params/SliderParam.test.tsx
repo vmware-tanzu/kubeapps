@@ -22,6 +22,7 @@ const params = [
     type: "integer",
     title: "Disk Size",
     hasProperties: false,
+    isRequired: false,
     currentValue: 10,
     defaultValue: 10,
     deployedValue: 10,
@@ -35,6 +36,7 @@ const params = [
     type: "number",
     title: "Disk Size",
     hasProperties: false,
+    isRequired: false,
     currentValue: 10.0,
     defaultValue: 10.0,
     deployedValue: 10.0,
@@ -49,18 +51,11 @@ jest.useFakeTimers();
 it("renders a disk size param with a default value", () => {
   params.forEach(param => {
     const wrapper = shallow(<SliderParam {...defaultProps} param={param} />);
-    expect(
-      wrapper
-        .find("input")
-        .filterWhere(i => i.prop("type") === "number")
-        .prop("value"),
-    ).toBe(10);
-    expect(
-      wrapper
-        .find("input")
-        .filterWhere(i => i.prop("type") === "range")
-        .prop("value"),
-    ).toBe(10);
+    const slider = wrapper.find("input").filterWhere(i => i.prop("type") === "range");
+    expect(slider.prop("value")).toBe(10);
+
+    const input = wrapper.find("input").filterWhere(i => i.prop("type") === "number");
+    expect(input.prop("value")).toBe(10);
   });
 });
 
@@ -74,27 +69,88 @@ it("uses the param minimum and maximum if defined", () => {
     );
 
     const slider = wrapper.find("input").filterWhere(i => i.prop("type") === "range");
+    expect(slider.prop("value")).toBe(5);
     expect(slider.prop("min")).toBe(5);
     expect(slider.prop("max")).toBe(50);
+
+    const input = wrapper.find("input").filterWhere(i => i.prop("type") === "number");
+    expect(input.prop("value")).toBe(5);
+    expect(input.prop("min")).toBe(5);
+    expect(input.prop("max")).toBe(50);
   });
 });
 
-it("sets the param minimum to current value if less than min", () => {
+it("uses the param exclusiveMinimum and exclusiveMaximum if defined", () => {
   params.forEach(param => {
     const wrapper = shallow(
       <SliderParam
         {...defaultProps}
-        param={{ ...param, currentValue: 1, minimum: 100, maximum: 100 }}
+        param={{ ...param, currentValue: 5, exclusiveMinimum: 5, exclusiveMaximum: 50 }}
       />,
     );
 
     const slider = wrapper.find("input").filterWhere(i => i.prop("type") === "range");
-    expect(slider.prop("min")).toBe(1);
-    expect(slider.prop("max")).toBe(100);
+    expect(slider.prop("value")).toBe(5);
+    expect(slider.prop("min")).toBe(5);
+    expect(slider.prop("max")).toBe(50);
+
+    const input = wrapper.find("input").filterWhere(i => i.prop("type") === "number");
+    expect(input.prop("value")).toBe(5);
+    expect(input.prop("min")).toBe(5);
+    expect(input.prop("max")).toBe(50);
   });
 });
 
-it("sets the param maximum to current value if greater than", () => {
+it("uses the param the lowest minimum/exclusiveMinimum and maximum/exclusiveMaximum if defined", () => {
+  params.forEach(param => {
+    const wrapper = shallow(
+      <SliderParam
+        {...defaultProps}
+        param={{
+          ...param,
+          currentValue: 5,
+          minimum: 7,
+          exclusiveMinimum: 5,
+          maximum: 55,
+          exclusiveMaximum: 50,
+        }}
+      />,
+    );
+
+    const slider = wrapper.find("input").filterWhere(i => i.prop("type") === "range");
+    expect(slider.prop("value")).toBe(5);
+    expect(slider.prop("min")).toBe(5);
+    expect(slider.prop("max")).toBe(50);
+
+    const input = wrapper.find("input").filterWhere(i => i.prop("type") === "number");
+    expect(input.prop("value")).toBe(5);
+    expect(input.prop("min")).toBe(5);
+    expect(input.prop("max")).toBe(50);
+  });
+});
+
+it("does not set the param minimum to current value if less than min", () => {
+  params.forEach(param => {
+    const wrapper = shallow(
+      <SliderParam
+        {...defaultProps}
+        param={{ ...param, currentValue: 1, exclusiveMinimum: 100, maximum: 100 }}
+      />,
+    );
+
+    const slider = wrapper.find("input").filterWhere(i => i.prop("type") === "range");
+    expect(slider.prop("value")).toBe(1);
+    expect(slider.prop("min")).toBe(100);
+    expect(slider.prop("max")).toBe(100);
+
+    const input = wrapper.find("input").filterWhere(i => i.prop("type") === "number");
+    expect(input.prop("value")).toBe(1);
+    expect(input.prop("min")).toBe(100);
+    expect(input.prop("max")).toBe(100);
+  });
+});
+
+it("does not set the param maximum to current value if greater than", () => {
   params.forEach(param => {
     const wrapper = shallow(
       <SliderParam
@@ -104,8 +160,14 @@ it("sets the param maximum to current value if greater than", () => {
     );
 
     const slider = wrapper.find("input").filterWhere(i => i.prop("type") === "range");
+    expect(slider.prop("value")).toBe(2000);
     expect(slider.prop("min")).toBe(100);
-    expect(slider.prop("max")).toBe(2000);
+    expect(slider.prop("max")).toBe(100);
+
+    const input = wrapper.find("input").filterWhere(i => i.prop("type") === "number");
+    expect(input.prop("value")).toBe(2000);
+    expect(input.prop("min")).toBe(100);
+    expect(input.prop("max")).toBe(100);
   });
 });
 
@@ -114,12 +176,35 @@ it("defaults to the min if the value is undefined", () => {
     const wrapper = shallow(
       <SliderParam {...defaultProps} param={{ ...param, currentValue: undefined, minimum: 5 }} />,
     );
-    expect(
-      wrapper
-        .find("input")
-        .filterWhere(i => i.prop("type") === "range")
-        .prop("value"),
-    ).toBe(5);
+    const slider = wrapper.find("input").filterWhere(i => i.prop("type") === "range");
+    expect(slider.prop("value")).toBe(5);
+
+    const input = wrapper.find("input").filterWhere(i => i.prop("type") === "number");
+    expect(input.prop("value")).toBe(5);
+  });
+});
+
+it("add required property if the param is required", () => {
+  params.forEach(param => {
+    const wrapper = shallow(
+      <SliderParam {...defaultProps} param={{ ...param, isRequired: true }} />,
+    );
+    const slider = wrapper.find("input").filterWhere(i => i.prop("type") === "range");
+    expect(slider.prop("required")).toBe(true);
+
+    const input = wrapper.find("input").filterWhere(i => i.prop("type") === "number");
+    expect(input.prop("required")).toBe(true);
+  });
+});
+
+it("add disabled property if the param is readOnly", () => {
+  params.forEach(param => {
+    const wrapper = shallow(<SliderParam {...defaultProps} param={{ ...param, readOnly: true }} />);
+    const slider = wrapper.find("input").filterWhere(i => i.prop("type") === "range");
+    expect(slider.prop("disabled")).toBe(true);
+
+    const input = wrapper.find("input").filterWhere(i => i.prop("type") === "number");
+    expect(input.prop("disabled")).toBe(true);
   });
 });
 
@@ -185,12 +270,11 @@ describe("when changing the value in the input", () => {
           handleBasicFormParamChange={handleBasicFormParamChange}
         />,
       );
-      expect(
-        wrapper
-          .find("input")
-          .filterWhere(i => i.prop("type") === "range")
-          .prop("value"),
-      ).toBe(10);
+      const slider = wrapper.find("input").filterWhere(i => i.prop("type") === "range");
+      expect(slider.prop("value")).toBe(10);
+
+      const input = wrapper.find("input").filterWhere(i => i.prop("type") === "number");
+      expect(input.prop("value")).toBe(10);
 
       const event = { currentTarget: { value: "20" } } as React.FormEvent<HTMLInputElement>;
       act(() => {
@@ -203,19 +287,11 @@ describe("when changing the value in the input", () => {
       wrapper.update();
       jest.runAllTimers();
 
-      expect(
-        wrapper
-          .find("input")
-          .filterWhere(i => i.prop("type") === "number")
-          .prop("value"),
-      ).toBe(20);
+      const sliderChanged = wrapper.find("input").filterWhere(i => i.prop("type") === "range");
+      expect(sliderChanged.prop("value")).toBe(20);
 
-      expect(
-        wrapper
-          .find("input")
-          .filterWhere(i => i.prop("type") === "range")
-          .prop("value"),
-      ).toBe(20);
+      const inputChanged = wrapper.find("input").filterWhere(i => i.prop("type") === "number");
+      expect(inputChanged.prop("value")).toBe(20);
 
       expect(handleBasicFormParamChange).toHaveBeenCalledWith(param);
       expect(valueChange).toHaveBeenCalledWith(event);
@@ -233,12 +309,11 @@ describe("when changing the value in the input", () => {
           handleBasicFormParamChange={handleBasicFormParamChange}
         />,
       );
-      expect(
-        wrapper
-          .find("input")
-          .filterWhere(i => i.prop("type") === "range")
-          .prop("value"),
-      ).toBe(10);
+      const slider = wrapper.find("input").filterWhere(i => i.prop("type") === "range");
+      expect(slider.prop("value")).toBe(10);
+
+      const input = wrapper.find("input").filterWhere(i => i.prop("type") === "number");
+      expect(input.prop("value")).toBe(10);
 
       const event = { currentTarget: { value: "foo20*#@$" } } as React.FormEvent<HTMLInputElement>;
       act(() => {
@@ -251,19 +326,11 @@ describe("when changing the value in the input", () => {
       wrapper.update();
       jest.runAllTimers();
 
-      expect(
-        wrapper
-          .find("input")
-          .filterWhere(i => i.prop("type") === "number")
-          .prop("value"),
-      ).toBe(NaN);
+      const sliderChanged = wrapper.find("input").filterWhere(i => i.prop("type") === "range");
+      expect(sliderChanged.prop("value")).toBe(NaN);
 
-      expect(
-        wrapper
-          .find("input")
-          .filterWhere(i => i.prop("type") === "range")
-          .prop("value"),
-      ).toBe(NaN);
+      const inputChanged = wrapper.find("input").filterWhere(i => i.prop("type") === "number");
+      expect(inputChanged.prop("value")).toBe(NaN);
 
       expect(handleBasicFormParamChange).toHaveBeenCalledWith(param);
       expect(valueChange).toHaveBeenCalledWith(event);
@@ -281,12 +348,11 @@ describe("when changing the value in the input", () => {
           handleBasicFormParamChange={handleBasicFormParamChange}
         />,
       );
-      expect(
-        wrapper
-          .find("input")
-          .filterWhere(i => i.prop("type") === "range")
-          .prop("value"),
-      ).toBe(10);
+      const slider = wrapper.find("input").filterWhere(i => i.prop("type") === "range");
+      expect(slider.prop("value")).toBe(10);
+
+      const input = wrapper.find("input").filterWhere(i => i.prop("type") === "number");
+      expect(input.prop("value")).toBe(10);
 
       const event = { currentTarget: { value: "20.5" } } as React.FormEvent<HTMLInputElement>;
       act(() => {
@@ -299,26 +365,18 @@ describe("when changing the value in the input", () => {
       wrapper.update();
       jest.runAllTimers();
 
-      expect(
-        wrapper
-          .find("input")
-          .filterWhere(i => i.prop("type") === "number")
-          .prop("value"),
-      ).toBe(20.5);
+      const sliderChanged = wrapper.find("input").filterWhere(i => i.prop("type") === "range");
+      expect(sliderChanged.prop("value")).toBe(20.5);
 
-      expect(
-        wrapper
-          .find("input")
-          .filterWhere(i => i.prop("type") === "range")
-          .prop("value"),
-      ).toBe(20.5);
+      const inputChanged = wrapper.find("input").filterWhere(i => i.prop("type") === "number");
+      expect(inputChanged.prop("value")).toBe(20.5);
 
       expect(handleBasicFormParamChange).toHaveBeenCalledWith(param);
       expect(valueChange).toHaveBeenCalledWith(event);
     });
   });
 
-  it("modifies the max value of the slider if the input is greater than 100", () => {
+  it("does not modify the max value of the slider if the input is greater than min", () => {
     params.forEach(param => {
       const valueChange = jest.fn();
       const handleBasicFormParamChange = jest.fn(() => valueChange);
@@ -329,12 +387,11 @@ describe("when changing the value in the input", () => {
           handleBasicFormParamChange={handleBasicFormParamChange}
         />,
       );
-      expect(
-        wrapper
-          .find("input")
-          .filterWhere(i => i.prop("type") === "range")
-          .prop("value"),
-      ).toBe(10);
+      const slider = wrapper.find("input").filterWhere(i => i.prop("type") === "range");
+      expect(slider.prop("value")).toBe(10);
+
+      const input = wrapper.find("input").filterWhere(i => i.prop("type") === "number");
+      expect(input.prop("value")).toBe(10);
 
       const event = { currentTarget: { value: "2000" } } as React.FormEvent<HTMLInputElement>;
       act(() => {
@@ -347,14 +404,13 @@ describe("when changing the value in the input", () => {
       wrapper.update();
       jest.runAllTimers();
 
-      expect(
-        wrapper
-          .find("input")
-          .filterWhere(i => i.prop("type") === "range")
-          .prop("value"),
-      ).toBe(2000);
-      const slider = wrapper.find("input").filterWhere(i => i.prop("type") === "range");
-      expect(slider.prop("max")).toBe(2000);
+      const sliderChanged = wrapper.find("input").filterWhere(i => i.prop("type") === "range");
+      expect(sliderChanged.prop("value")).toBe(2000);
+      expect(sliderChanged.prop("max")).toBe(undefined);
+
+      const inputChanged = wrapper.find("input").filterWhere(i => i.prop("type") === "number");
+      expect(inputChanged.prop("value")).toBe(2000);
+      expect(inputChanged.prop("max")).toBe(undefined);
     });
   });
 });

@@ -42,7 +42,7 @@ export default function TextParam(props: ITextParamProps) {
 
     // twofold validation: using the json schema (with ajv) and the html5 validation
     setValidated(validateValuesSchema(e.currentTarget.value, param.schema));
-    e.currentTarget.reportValidity();
+    e.currentTarget?.reportValidity();
 
     // Gather changes before submitting
     clearTimeout(timeout);
@@ -88,7 +88,7 @@ export default function TextParam(props: ITextParamProps) {
         <>
           <CdsSelect layout="horizontal">
             <select
-              required={param.required}
+              required={param.isRequired}
               disabled={param.readOnly}
               aria-label={label}
               id={id}
@@ -115,7 +115,7 @@ export default function TextParam(props: ITextParamProps) {
           return (
             <CdsTextarea className={isModified ? "bolder" : ""}>
               <textarea
-                required={param.required}
+                required={param.isRequired}
                 disabled={param.readOnly}
                 maxLength={param.maxLength}
                 minLength={param.minLength}
@@ -139,7 +139,7 @@ export default function TextParam(props: ITextParamProps) {
               </datalist>
               <CdsInput className={isModified ? "bolder" : ""}>
                 <input
-                  required={param.required}
+                  required={param.isRequired}
                   disabled={param.readOnly}
                   maxLength={param.maxLength}
                   minLength={param.minLength}
@@ -162,7 +162,7 @@ export default function TextParam(props: ITextParamProps) {
         <>
           <CdsTextarea className={isModified ? "bolder" : ""}>
             <textarea
-              required={param.required}
+              required={param.isRequired}
               disabled={param.readOnly}
               maxLength={param.maxLength}
               minLength={param.minLength}
