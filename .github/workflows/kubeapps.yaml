@@ -709,8 +709,8 @@ jobs:
           ./script/start-gke-env.sh $ESCAPED_GKE_CLUSTER $GKE_ZONE $GKE_BRANCH $GKE_ADMIN > /dev/null
 
       - name: Interactive SSH debugging session
-        if: always()
         uses: lhotari/action-upterm@v1
+        if: always()
 
       - # TODO(castelblanque) Unify shared resources with kubeapps-local-dev-users-rbac.yaml that only applies to Kind clusters
         name: Apply customizations to GKE cluster
