@@ -10,13 +10,13 @@ ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." >/dev/null && pwd)"
 
 . "${ROOT_DIR}/script/lib/liblog.sh"
 
-########################
+########################################################################################################################
 # Install GitHub CLI
 # Globals: None
 # Arguments:
 #   $1: Version of GitHub
 # Returns: None
-#########################
+########################################################################################################################
 function installGithubCLI() {
   GITHUB_VERSION=${1:?GitHub version not provided}
 
@@ -30,13 +30,13 @@ function installGithubCLI() {
   info "Done"
 }
 
-########################
+########################################################################################################################
 # Install Semver
 # Globals: None
 # Arguments:
 #   $1: Version of Semver
 # Returns: None
-#########################
+########################################################################################################################
 function installSemver() {
   SEMVER_VERSION=${1:?Semver version not provided}
 
@@ -51,7 +51,7 @@ function installSemver() {
   info "Done"
 }
 
-########################
+########################################################################################################################
 # Install GPG key
 # Globals: None
 # Arguments:
@@ -60,7 +60,7 @@ function installSemver() {
 #   $1: CI BOT GPG
 #   $1: CI BOT EMAIL
 # Returns: None
-#########################
+########################################################################################################################
 function installGPGKey() {
   GPG_KEY_PUBLIC=${1:?GPG public key not provided}
   GPG_KEY_PRIVATE=${2:?GPG private key not provided}
@@ -84,13 +84,13 @@ function installGPGKey() {
   info "Done"
 }
 
-########################
+########################################################################################################################
 # Install Kind
 # Globals: None
 # Arguments:
 #   $1: Version of Kind
 # Returns: None
-#########################
+########################################################################################################################
 function installKind() {
   KIND_VERSION=${1:?Kind version not provided}
 
@@ -103,13 +103,13 @@ function installKind() {
   info "Done"
 }
 
-########################
+########################################################################################################################
 # Install Kubectl
 # Globals: None
 # Arguments:
 #   $1: Version of kubectl
 # Returns: None
-#########################
+########################################################################################################################
 function installKubectl() {
   KUBECTL_VERSION=${1:?kubectl version not provided}
 
@@ -122,13 +122,13 @@ function installKubectl() {
   info "Done"
 }
 
-########################
+########################################################################################################################
 # Install Mkcert
 # Globals: None
 # Arguments:
 #   $1: Version of mkcert
 # Returns: None
-#########################
+########################################################################################################################
 function installMkcert() {
   MKCERT_VERSION=${1:?Mkcert version not provided}
 
@@ -142,14 +142,14 @@ function installMkcert() {
   info "Done"
 }
 
-########################
+########################################################################################################################
 # Install Helm
 # Globals: None
 # Arguments:
 #   $1: Version of Helm
 #   $2: Helm binary name (OPTIONAL, allows to install different versions of Helm)
 # Returns: None
-#########################
+########################################################################################################################
 function installHelm() {
   HELM_VERSION=${1:?Helm version not provided}
   HELM_BINARY_NAME=${2:-helm}
@@ -160,5 +160,27 @@ function installHelm() {
     tar zxf "helm-$HELM_VERSION-linux-amd64.tar.gz"
     sudo mv linux-amd64/helm "/usr/local/bin/${HELM_BINARY_NAME}"
   popd
+  info "Done"
+}
+
+########################################################################################################################
+# Install GCloud SDK
+# Globals:
+#   GITHUB_ENV: An environment variable available in GitHub Actions' runners that allow setting environment variables
+#               that will be available for the next steps of the job.
+#   HOME: The HOME env var for the current user.
+#   PATH: The system path for the current user.
+# Arguments: None
+# Returns: None
+########################################################################################################################
+function installGCloudSDK() {
+  info "Installing GCloud SDK"
+  GCLOUD_PATH="${HOME}/google-cloud-sdk"
+  echo "PATH=${PATH}:${GCLOUD_PATH}/bin" >> "${GITHUB_ENV}"
+  echo "CLOUDSDK_CORE_DISABLE_PROMPTS=1" >> "${GITHUB_ENV}"
+  if [ ! -d "${GCLOUD_PATH}/bin" ]; then
+    rm -rf "${GCLOUD_PATH}"
+    curl https://sdk.cloud.google.com | bash;
+  fi
   info "Done"
 }
