@@ -36,25 +36,25 @@ func getProxyHandler(clustersConfig kube.ClustersConfig) proxy.StreamDirector {
 			return nil, nil, status.Errorf(codes.InvalidArgument, "%v", err)
 		}
 
-		targetClusterConf, ok := clustersConfig.Clusters[targetCluster]
-		if !ok {
-			return nil, nil, status.Errorf(codes.Internal, "cluster %q has no configuration", targetCluster)
-		}
-		if targetClusterConf.Ingress.Endpoint == "" {
-			return nil, nil, status.Errorf(codes.Internal, "cluster %q has no ingress endpoint defined", targetCluster)
+		// Check cluster's configuration
+		targetClusterConf, err := getClusterConfiguration(clustersConfig, targetCluster)
+		if err != nil {
+			return nil, nil, status.Errorf(codes.Internal, "unable to get cluster configuration when proxying. [%v]", err)
 		}
 
+		// Prepare outgoing context for the proxied request
 		outgoingCtx, err := createOutgoingContext(ctx)
 		if err != nil {
 			return nil, nil, status.Errorf(codes.Internal, "%v", err)
 		}
 
-		grpcEndpoint, err := parseGrpcEndpoint(targetClusterConf.APIServiceURL)
+		grpcEndpoint, err := parseGrpcEndpoint(targetClusterConf.Ingress.Endpoint)
 		if err != nil {
 			return nil, nil, status.Errorf(codes.Internal, "unable to parse target cluster URL. [%v]", err)
 		}
 
-		conn, err := createProxyConnection(outgoingCtx, grpcEndpoint, targetClusterConf.CertificateAuthorityDataDecoded)
+		// Create the connection to the target GRPC endpoint
+		conn, err := createProxyConnection(outgoingCtx, grpcEndpoint, targetClusterConf.Ingress.CertificateAuthorityDataDecoded)
 		if err != nil {
 			return nil, nil, status.Errorf(codes.Internal, "error creating proxy connection [%v]", err)
 		}
@@ -77,6 +77,17 @@ func getTargetClusterName(ctx context.Context) (string, error) {
 		return clusterName, nil
 	}
 	return "", fmt.Errorf("no header [%s] is provided for proxying", ProxyRequestHeader)
+}
+
+func getClusterConfiguration(clustersConfig kube.ClustersConfig, clusterName string) (*kube.ClusterConfig, error) {
+	targetClusterConf, ok := clustersConfig.Clusters[clusterName]
+	if !ok {
+		return nil, fmt.Errorf("cluster %q has no configuration", clusterName)
+	}
+	if targetClusterConf.Ingress.Endpoint == "" {
+		return nil, fmt.Errorf("cluster %q has no ingress endpoint defined", clusterName)
+	}
+	return &targetClusterConf, nil
 }
 
 func createOutgoingContext(ctx context.Context) (context.Context, error) {
