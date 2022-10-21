@@ -17,14 +17,13 @@ export interface ISliderParamProps {
   label: string;
   param: IBasicFormParam;
   unit: string;
-  step: number;
   handleBasicFormParamChange: (
     p: IBasicFormParam,
   ) => (e: React.FormEvent<HTMLInputElement>) => void;
 }
 
 export default function SliderParam(props: ISliderParamProps) {
-  const { handleBasicFormParamChange, id, label, param, step } = props;
+  const { handleBasicFormParamChange, id, label, param } = props;
 
   const initCurrentValue = () =>
     toNumber(param.currentValue) ||
@@ -37,6 +36,9 @@ export default function SliderParam(props: ISliderParamProps) {
 
   const [isValueModified, setIsValueModified] = useState(false);
   const [timeout, setThisTimeout] = useState({} as NodeJS.Timeout);
+
+  const step =
+    param?.multipleOf || (param.schema?.type === "number" || param?.type === "number" ? 0.5 : 1);
 
   const onChange = (e: React.FormEvent<HTMLInputElement>) => {
     setCurrentValue(toNumber(e.currentTarget.value));
