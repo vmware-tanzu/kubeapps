@@ -80,8 +80,12 @@ export function getValueFromEvent(
     case "range":
       // value is a number
       return toNumber(value);
+    case "array":
+      return getValueFromString(value, "array");
+    case "object":
+      return getValueFromString(value, "object");
     default:
-      return value;
+      return getValueFromString(value);
   }
 }
 
