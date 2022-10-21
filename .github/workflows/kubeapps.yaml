@@ -697,7 +697,7 @@ jobs:
           source ./script/lib/libcitools.sh
           
           installGCloudSDK
-          configureGCloud
+          configureGCloud ${GKE_PROJECT} ${GCLOUD_KEY}
           installKubectl ${KUBECTL_VERSION}
           installHelm ${HELM_VERSION_MIN}
           installHelm ${HELM_VERSION_STABLE} helm-stable
