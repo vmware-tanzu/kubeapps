@@ -148,7 +148,7 @@ export default function SchemaEditorForm(props: ISchemaEditorForm) {
       <MonacoDiffEditor
         value={currentSchema}
         original={diffValues}
-        className="editor"
+        className="editor schema-editor"
         height="90vh"
         language="json"
         theme={theme === "dark" ? "vs-dark" : "light"}

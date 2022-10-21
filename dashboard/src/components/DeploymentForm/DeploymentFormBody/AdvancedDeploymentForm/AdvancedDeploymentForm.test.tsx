@@ -56,7 +56,6 @@ const defaultProps: IAdvancedDeploymentForm = {
   valuesFromTheParentContainer: "",
 };
 
-// eslint-disable-next-line jest/no-focused-tests
 it("includes values", () => {
   const wrapper = mountWrapper(
     defaultStore,

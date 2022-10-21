@@ -54,13 +54,12 @@ const defaultProps: ISchemaEditorForm = {
   schemaFromTheParentContainer: "{}",
 };
 
-// eslint-disable-next-line jest/no-focused-tests
 it("includes values", () => {
   const wrapper = mountWrapper(
     defaultStore,
-    <SchemaEditorForm {...defaultProps} schemaFromTheParentContainer="foo: bar" />,
+    <SchemaEditorForm {...defaultProps} schemaFromTheParentContainer='{ "type": "string" }' />,
   );
-  expect(wrapper.find("MonacoDiffEditor").prop("value")).toBe("foo: bar");
+  expect(wrapper.find("MonacoDiffEditor").prop("value")).toBe('{ "type": "string" }');
 });
 
 it("sets light theme by default", () => {
