@@ -722,7 +722,8 @@ jobs:
         with:
           name: gke_regular_version_e2e_tests_reports
           path: integration/reports
-      - if: always()
+      - name: "Delete GKE cluster"
+        if: always()
         run: |
           set -euo pipefail
           deleteGKECluster $GKE_ZONE $ESCAPED_GKE_CLUSTER
