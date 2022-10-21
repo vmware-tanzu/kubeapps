@@ -184,3 +184,72 @@ function installGCloudSDK() {
   fi
   info "Done"
 }
+
+########################################################################################################################
+# Configure GCloud
+# Globals:
+#   GITHUB_ENV: An environment variable available in GitHub Actions' runners that allow setting environment variables
+#               that will be available for the next steps of the job.
+# Arguments:
+#   $1: GKE_PROJECT
+#   $2: GCLOUD_KEY
+# Returns: None
+########################################################################################################################
+function configureGCloud() {
+  GKE_PROJECT=${1:?GKE_PROJECT not provided}
+  GCLOUD_KEY=${2:=GCLOUD_KEY not provided}
+
+  info "Configuring GCloud"
+  gcloud -q config set project "${GKE_PROJECT}"
+  export GOOGLE_APPLICATION_CREDENTIALS=/tmp/client_secrets.json
+  # Just exporting the env var won't make it available for the next steps in the GHA's job, so we need the line below
+  echo "GOOGLE_APPLICATION_CREDENTIALS=${GOOGLE_APPLICATION_CREDENTIALS}" >> "${GITHUB_ENV}"
+  echo "${GCLOUD_KEY}" > "${GOOGLE_APPLICATION_CREDENTIALS}"
+  gcloud -q auth activate-service-account --key-file "${GOOGLE_APPLICATION_CREDENTIALS}";
+  gcloud components install gke-gcloud-auth-plugin
+  echo "USE_GKE_GCLOUD_AUTH_PLUGIN=True" >> "${GITHUB_ENV}"
+  info "Done"
+}
+
+########################################################################################################################
+# Escape and export as an environment variable the name of the GKE cluster
+# Globals:
+#   GITHUB_ENV: An environment variable available in GitHub Actions' runners that allow setting environment variables
+#               that will be available for the next steps of the job.
+# Arguments:
+#   $1: GKE_CLUSTER
+#   $2: GKE_BRANCH
+#   $3: GITHUB_REF_NAME
+#   $4: TEST_LATEST_RELEASE
+# Returns: None
+########################################################################################################################
+function exportEscapedGKEClusterName() {
+  GKE_CLUSTER=${1:?GKE_CLUSTER not provided}
+  GKE_BRANCH=${2:?GKE_BRANCH not provided}
+  GITHUB_REF_NAME=${3:?GITHUB_REF_NAME not provided}
+  TEST_LATEST_RELEASE=${4:?TEST_LATEST_RELEASE not provided}
+
+  info "Exporting scaped GKE cluster name"
+  ESCAPED_GKE_CLUSTER=$(echo "${GKE_CLUSTER}-${GITHUB_REF_NAME}-${TEST_LATEST_RELEASE}-${GKE_BRANCH}-ci | sed 's/[^a-z0-9-]//g'")
+  export ESCAPED_GKE_CLUSTER
+  # Just exporting the env var won't make it available for the next steps in the GHA's job, so we need the line below
+  echo "ESCAPED_GKE_CLUSTER=${ESCAPED_GKE_CLUSTER}" >> "${GITHUB_ENV}"
+  info "Done"
+}
+
+########################################################################################################################
+# Delete a GKE cluster
+# Globals: None
+# Arguments:
+#   $1: GKE_ZONE
+#   $2: The escaped GKE cluster's name.
+# Returns: None
+########################################################################################################################
+function deleteGKECluster() {
+  GKE_ZONE=${1:?GKE_ZONE not provided}
+  CLUSTER_NAME=${2:?CLUSTER_NAME not provided}
+
+  info "Deleting GKE cluster: ${CLUSTER_NAME}"
+  gcloud container clusters delete --async --zone "${GKE_ZONE}" "${CLUSTER_NAME}"
+  info "Done"
+}

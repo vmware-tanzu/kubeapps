@@ -31,8 +31,10 @@ KAPP_CONTROLLER_VERSION=${8:-"v0.41.2"}
 CHARTMUSEUM_VERSION=${9:-"3.9.0"}
 # check latest flux releases at https://github.com/fluxcd/flux2/releases
 FLUX_VERSION=${10:-"v0.35.0"}
+GKE_BRANCH=${GKE_BRANCH:-}
 IMG_PREFIX=${IMG_PREFIX:-"kubeapps/"}
 TESTS_GROUP=${TESTS_GROUP:-"${ALL_TESTS}"}
+DEBUG_MODE=${DEBUG_MODE:-false}
 
 # shellcheck disable=SC2076
 if [[ ! " ${SUPPORTED_TESTS_GROUPS[*]} " =~ " ${TESTS_GROUP} " ]]; then
@@ -68,7 +70,9 @@ fi
 # Functions for handling Chart Museum
 . "${ROOT_DIR}/script/chart-museum.sh"
 
+info "DEBUG MODE: ${DEBUG_MODE}"
 info "TESTS GROUP: ${TESTS_GROUP}"
+info "GKE BRANCH: ${GKE_BRANCH}"
 info "Root dir: ${ROOT_DIR}"
 info "Use multicluster+OIDC: ${USE_MULTICLUSTER_OIDC_ENV}"
 info "OLM version: ${OLM_VERSION}"
@@ -85,14 +89,14 @@ info "Cluster Version: $(kubectl version -o json | jq -r '.serverVersion.gitVers
 info "Kubectl Version: $(kubectl version -o json | jq -r '.clientVersion.gitVersion')"
 echo ""
 
-# Auxiliar functions
+# Auxiliary functions
 
 #
 # Install an authenticated Docker registry inside the cluster
 #
 setupLocalDockerRegistry() {
     info "Installing local Docker registry with authentication"
-    installLocalRegistry $ROOT_DIR
+    installLocalRegistry "${ROOT_DIR}"
 
     info "Pushing test container to local Docker registry"
     pushContainerToLocalRegistry
@@ -103,35 +107,35 @@ setupLocalDockerRegistry() {
 #
 pushLocalChart() {
     info "Packaging local test chart"
-    helm package $ROOT_DIR/integration/charts/simplechart
+    helm package "${ROOT_DIR}/integration/charts/simplechart"
 
     info "Pushing local test chart to ChartMuseum"
     pushChartToChartMuseum "simplechart" "0.1.0" "simplechart-0.1.0.tgz"
 }
 
-########################
+########################################################################################################################
 # Check if the pod that populates de OperatorHub catalog is running
 # Globals: None
 # Arguments: None
 # Returns: None
-#########################
+########################################################################################################################
 isOperatorHubCatalogRunning() {
   kubectl get pod -n olm -l olm.catalogSource=operatorhubio-catalog -o jsonpath='{.items[0].status.phase}' | grep Running
   # Wait also for the catalog to be populated
   kubectl get packagemanifests.packages.operators.coreos.com | grep prometheus
 }
 
-########################
+########################################################################################################################
 # Install OLM
 # Globals: None
 # Arguments:
 #   $1: Version of OLM
 # Returns: None
-#########################
+########################################################################################################################
 installOLM() {
   local release=$1
   info "Installing OLM ${release} ..."
-  url=https://github.com/operator-framework/operator-lifecycle-manager/releases/download/${release}
+  url="https://github.com/operator-framework/operator-lifecycle-manager/releases/download/${release}"
   namespace=olm
 
   kubectl create -f "${url}/crds.yaml"
@@ -147,7 +151,7 @@ installOLM() {
     new_csv_phase=$(kubectl get csv -n "${namespace}" packageserver -o jsonpath='{.status.phase}' 2>/dev/null || echo "Waiting for CSV to appear")
     if [[ $new_csv_phase != "${csv_phase:-}" ]]; then
       csv_phase=$new_csv_phase
-      echo "CSV \"packageserver\" phase: $csv_phase"
+      echo "CSV \"packageserver\" phase: ${csv_phase}"
     fi
     if [[ "$new_csv_phase" == "Succeeded" ]]; then
       break
@@ -164,14 +168,14 @@ installOLM() {
   kubectl rollout status -w deployment/packageserver --namespace="${namespace}"
 }
 
-########################
+########################################################################################################################
 # Push a chart to chartmusem
 # Globals: None
 # Arguments:
 #   $1: chart
 #   $2: version
 # Returns: None
-#########################
+########################################################################################################################
 pushChart() {
   local chart=$1
   local version=$2
@@ -193,22 +197,22 @@ pushChart() {
   # ref https://gist.github.com/andre3k1/e3a1a7133fded5de5a9ee99c87c6fa0d
   sed -i "s/name: ${chart}/name: ${prefix}${chart}/" ./${chart}-${version}/${chart}/Chart.yaml
   sed -i "0,/^\([[:space:]]*description: *\).*/s//\1${description}/" ./${chart}-${version}/${chart}/Chart.yaml
-  helm package ./${chart}-${version}/${chart} -d .
+  helm package "./${chart}-${version}/${chart}" -d .
 
   pushChartToChartMuseum "${chart}" "${version}" "${prefix}${chart}-${version}.tgz"
 }
 
-########################
+########################################################################################################################
 # Install kapp-controller
 # Globals: None
 # Arguments:
 #   $1: Version of kapp-controller
 # Returns: None
-#########################
+########################################################################################################################
 installKappController() {
   local release=$1
   info "Installing kapp-controller ${release} ..."
-  url=https://github.com/vmware-tanzu/carvel-kapp-controller/releases/download/${release}/release.yml
+  url="https://github.com/vmware-tanzu/carvel-kapp-controller/releases/download/${release}/release.yml"
   namespace=kapp-controller
 
   kubectl apply -f "${url}"
@@ -225,17 +229,17 @@ installKappController() {
   kubectl create clusterrolebinding carvel-reconciler --clusterrole=cluster-admin --serviceaccount kubeapps-user-namespace:carvel-reconciler
 }
 
-########################
+########################################################################################################################
 # Install flux
 # Globals: None
 # Arguments:
 #   $1: Version of flux
 # Returns: None
-#########################
+########################################################################################################################
 installFlux() {
   local release=$1
   info "Installing flux ${release} ..."
-  url=https://github.com/fluxcd/flux2/releases/download/${release}/install.yaml
+  url="https://github.com/fluxcd/flux2/releases/download/${release}/install.yaml"
   namespace=flux-system
 
   kubectl apply -f "${url}"
@@ -253,15 +257,15 @@ installFlux() {
   kubectl create clusterrolebinding flux-reconciler --clusterrole=cluster-admin --serviceaccount kubeapps-user-namespace:flux-reconciler
 }
 
-########################
+########################################################################################################################
 # Creates a Yaml file with additional values for the Helm chart
 # Arguments: None
 # Returns: Path to the newly created file with additional values
-#########################
+########################################################################################################################
 generateAdditionalValuesFile() {
   # Could be done better with $(cat <<EOF > ${ROOT_DIR}/additional_chart_values.yaml
   # But it was breaking the formatting of the file
-  local valuesFile=${ROOT_DIR}/additional_chart_values.yaml;
+  local valuesFile="${ROOT_DIR}/additional_chart_values.yaml"
   echo "ingress:
   enabled: true
   hostname: localhost
@@ -275,12 +279,12 @@ generateAdditionalValuesFile() {
   echo ${valuesFile}
 }
 
-########################
+########################################################################################################################
 # Install Kubeapps or upgrades it if it's already installed
 # Arguments:
 #   $1: chart source
 # Returns: None
-#########################
+########################################################################################################################
 installOrUpgradeKubeapps() {
   local chartSource=$1
   # Install Kubeapps
@@ -310,12 +314,12 @@ installOrUpgradeKubeapps() {
   "${cmd[@]}"
 }
 
-########################
+########################################################################################################################
 # Formats the provided time in seconds.
 # Arguments:
 #   $1: time in seconds
 # Returns: Time formatted as Xm Ys
-#########################
+########################################################################################################################
 formattedElapsedTime() {
   time=$1
 
@@ -324,7 +328,7 @@ formattedElapsedTime() {
   echo "${mins}m ${secs}s"
 }
 
-if [[ "${DEBUG_MODE:-false}" == "true" ]]; then
+if [[ "${DEBUG_MODE}" == "true" && -z ${GKE_BRANCH} ]]; then
   info "Docker images loaded in the cluster:"
   docker exec kubeapps-ci-control-plane crictl images
 fi
