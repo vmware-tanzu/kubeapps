@@ -91,7 +91,7 @@ func (s *Server) availableChartDetail(ctx context.Context, packageRef *corev1.Av
 
 		var fn cache.DownloadChartFn
 		if chartModel.Repo.Type == "oci" {
-			if ociRepo, err := s.newOCIChartRepositoryAndLogin(ctx, repoName); err != nil {
+			if ociRepo, err := s.newOCIChartRepositoryAndLogin(ctx, *repo); err != nil {
 				return nil, err
 			} else {
 				fn = downloadOCIChartFn(ociRepo)

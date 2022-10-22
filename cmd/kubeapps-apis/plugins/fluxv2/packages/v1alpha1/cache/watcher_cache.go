@@ -975,8 +975,15 @@ func (c *NamespacedResourceWatcherCache) Get(key string) (interface{}, error) {
 	return value, nil
 }
 
+// force a particular key to be processed
 func (c *NamespacedResourceWatcherCache) forceKey(key string) {
-	c.queue.Add(key)
+	// TODO (gfichtenholtz) to do this properly, the IsProcessing() check
+	// and the subsequent .Add() should be atomic, which requires changes at the
+	// rate_limiting_queue level. Just testing this approach out for now and will
+	// make the necessary changes if it works out
+	if !c.queue.IsProcessing(key) {
+		c.queue.Add(key)
+	}
 	// now need to wait until this item has been processed by runWorker().
 	// a little bit in-efficient: syncHandler() will eventually call config.onAdd()
 	// which encode the data as []byte before storing it in the cache. That part is fine.

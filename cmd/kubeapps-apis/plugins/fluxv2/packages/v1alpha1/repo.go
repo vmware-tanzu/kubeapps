@@ -763,9 +763,10 @@ type repoEventSink struct {
 // this is what we store in the cache for each cached repo
 // all struct fields are capitalized so they're exported by gob encoding
 type repoCacheEntryValue struct {
-	Checksum string
-	Type     string // if missing, repo is assumed to be regular old HTTP
-	Charts   []models.Chart
+	Checksum      string // SHA256
+	Type          string // "http" or "oci". If not set, repo is assumed to be regular old HTTP
+	Charts        []models.Chart
+	OCIRepoLister string // only applicable for OCIRepos, "" otherwise
 }
 
 // onAddRepo essentially tells the cache whether to and what to store for a given key
