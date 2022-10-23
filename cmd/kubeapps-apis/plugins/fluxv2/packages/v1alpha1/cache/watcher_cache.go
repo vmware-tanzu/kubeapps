@@ -977,13 +977,15 @@ func (c *NamespacedResourceWatcherCache) Get(key string) (interface{}, error) {
 
 // force a particular key to be processed
 func (c *NamespacedResourceWatcherCache) forceKey(key string) {
-	// TODO (gfichtenholtz) to do this properly, the IsProcessing() check
-	// and the subsequent .Add() should be atomic, which requires changes at the
-	// rate_limiting_queue level. Just testing this approach out for now and will
-	// make the necessary changes if it works out
-	if !c.queue.IsProcessing(key) {
-		c.queue.Add(key)
-	}
+	// There is one use case when the client needs to be able to do an Add(), regardless of whether
+	// the item is being processed, e.g. when the corresponding value goes through several quick changes.
+	// Then there is a separate use case when the client doesn't want to do an Add
+	// if the item is currently being processed, such as a .Get() operation that leads to a lengthy
+	// .Add() following by another .Get() immediately. This is what the UX is currently doing
+	// when you select an OCI package to deploy: GetAvailablePackageVersions() and GetAvailablePackageDetail()
+	// are called concurrently. This is really a performance optimization
+	c.queue.AddIfNotProcessing(key)
+
 	// now need to wait until this item has been processed by runWorker().
 	// a little bit in-efficient: syncHandler() will eventually call config.onAdd()
 	// which encode the data as []byte before storing it in the cache. That part is fine.
