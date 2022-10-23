@@ -449,8 +449,8 @@ func (s *repoEventSink) onAddOciRepo(repo sourcev1.HelmRepository) ([]byte, bool
 }
 
 func (s *repoEventSink) onModifyOciRepo(key string, oldValue interface{}, repo sourcev1.HelmRepository) ([]byte, bool, error) {
-	log.V(4).Infof("+onModifyOciRepo(%s)", common.PrettyPrint(repo))
-	defer log.V(4).Info("-onModifyOciRepo")
+	log.Infof("+onModifyOciRepo(%s)", common.PrettyPrint(repo))
+	defer log.Info("-onModifyOciRepo")
 
 	// We should to compare checksums on what's stored in the cache
 	// vs the modified object to see if the contents has really changed before embarking on

@@ -2439,7 +2439,7 @@ func (s *Server) redisMockExpectGetFromRepoCache(mock redismock.ClientMock, filt
 		for k, v := range mapVals {
 			maxTries := 1
 			if ociRepoKeys.Has(k) {
-				// see comment in chart.go about caching helm OCI chart repos
+				// see comment in repo.go repoCacheEntryFromUntyped() func about caching helm OCI chart repos
 				maxTries = 3
 			}
 			for i := 0; i < maxTries; i++ {

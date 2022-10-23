@@ -327,7 +327,7 @@ func (q *Type) addIfNotProcessing(itemstr string) {
 	q.cond.L.Lock()
 	defer q.cond.L.Unlock()
 
-	if !q.shuttingDown {
+	if q.shuttingDown {
 		return
 	}
 

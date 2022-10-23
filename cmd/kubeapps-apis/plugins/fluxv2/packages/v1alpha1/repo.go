@@ -199,7 +199,7 @@ func (s *Server) repoCacheEntryFromUntyped(key string, value interface{}) (*repo
 		// helm OCI chart repos are not automatically updated when the
 		// state on remote changes. So we will force new checksum
 		// computation and update local cache if needed
-		value, err := s.repoCache.ForceAndFetch(key)
+		value, err := s.repoCache.ForceIfNotProcessingAndFetch(key)
 		if err != nil {
 			return nil, err
 		} else if value != nil {
