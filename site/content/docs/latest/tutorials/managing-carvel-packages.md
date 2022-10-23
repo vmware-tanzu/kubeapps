@@ -161,7 +161,7 @@ apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
 metadata:
   name: carvel-reconciler
-  namespace: default
+  namespace: kubeapps-user-namespace
 subjects:
 - kind: ServiceAccount
   name: carvel-reconciler

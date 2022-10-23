@@ -44,23 +44,24 @@ require (
 	github.com/cppforlife/go-cli-ui v0.0.0-20220622150351-995494831c6c
 	github.com/disintegration/imaging v1.6.2
 	github.com/distribution/distribution v2.8.1+incompatible
-	github.com/docker/cli v20.10.19+incompatible
-	github.com/fluxcd/helm-controller/api v0.24.0
-	github.com/fluxcd/pkg/apis/meta v0.16.0
+	github.com/docker/cli v20.10.20+incompatible
+	github.com/fluxcd/helm-controller/api v0.25.0
+	github.com/fluxcd/pkg/apis/meta v0.17.0
 	github.com/fluxcd/pkg/oci v0.13.0
 	github.com/fluxcd/pkg/version v0.2.0
 	github.com/fluxcd/source-controller/api v0.30.1
 	github.com/go-redis/redis/v8 v8.11.5
 	github.com/go-redis/redismock/v8 v8.0.6
 	github.com/google/go-cmp v0.5.9
-	github.com/google/go-containerregistry v0.11.0
-	github.com/grpc-ecosystem/grpc-gateway/v2 v2.11.3
+	github.com/google/go-containerregistry v0.12.0
+	github.com/grpc-ecosystem/go-grpc-middleware v1.3.0
+	github.com/grpc-ecosystem/grpc-gateway/v2 v2.12.0
 	github.com/improbable-eng/grpc-web v0.15.0
 	github.com/itchyny/gojq v0.12.9
 	github.com/jinzhu/copier v0.3.5
 	github.com/lib/pq v1.10.7
 	github.com/mitchellh/go-homedir v1.1.0
-	github.com/opencontainers/image-spec v1.0.3-0.20220729202839-6ad7100eb087
+	github.com/opencontainers/image-spec v1.1.0-rc2
 	github.com/soheilhy/cmux v0.1.5
 	github.com/spf13/cobra v1.6.0
 	github.com/spf13/cobra-cli v1.3.0
@@ -70,27 +71,27 @@ require (
 	github.com/srwiley/rasterx v0.0.0-20220730225603-2ab79fcdd4ef
 	github.com/stretchr/testify v1.8.0
 	github.com/vmware-tanzu/carvel-kapp v0.53.0
-	github.com/vmware-tanzu/carvel-kapp-controller v0.41.2
-	github.com/vmware-tanzu/carvel-vendir v0.31.0
-	golang.org/x/net v0.0.0-20220926192436-02166a98028e
-	golang.org/x/sync v0.0.0-20220923202941-7f9b1623fab7
-	google.golang.org/genproto v0.0.0-20220926220553-6981cbe3cfce
-	google.golang.org/grpc v1.49.0
+	github.com/vmware-tanzu/carvel-kapp-controller v0.42.0
+	github.com/vmware-tanzu/carvel-vendir v0.32.0
+	golang.org/x/net v0.1.0
+	golang.org/x/sync v0.1.0
+	google.golang.org/genproto v0.0.0-20221014213838-99cd37c6964a
+	google.golang.org/grpc v1.50.1
 	google.golang.org/grpc/cmd/protoc-gen-go-grpc v1.2.0
 	google.golang.org/protobuf v1.28.1
 	gopkg.in/yaml.v3 v3.0.1
 	helm.sh/helm/v3 v3.9.4
-	k8s.io/api v0.25.1
-	k8s.io/apiextensions-apiserver v0.25.0
-	k8s.io/apimachinery v0.25.2
+	k8s.io/api v0.25.3
+	k8s.io/apiextensions-apiserver v0.25.2
+	k8s.io/apimachinery v0.25.3
 	k8s.io/apiserver v0.25.0
 	k8s.io/cli-runtime v0.24.4
-	k8s.io/client-go v0.25.1
+	k8s.io/client-go v0.25.3
 	k8s.io/klog/v2 v2.80.1
 	k8s.io/kubectl v0.24.4
 	k8s.io/kubernetes v1.24.4
 	k8s.io/utils v0.0.0-20220823124924-e9cbc92d1a73
-	oras.land/oras-go v1.2.0
+	oras.land/oras-go v1.2.1
 	oras.land/oras-go/v2 v2.0.0-rc.3
 	sigs.k8s.io/controller-runtime v0.13.0
 	sigs.k8s.io/yaml v1.3.0
@@ -124,7 +125,7 @@ require (
 	github.com/desertbit/timer v0.0.0-20180107155436-c41aec40b27f // indirect
 	github.com/dgryski/go-rendezvous v0.0.0-20200823014737-9f7001d12a5f // indirect
 	github.com/docker/distribution v2.8.1+incompatible // indirect
-	github.com/docker/docker v20.10.18+incompatible // indirect
+	github.com/docker/docker v20.10.20+incompatible // indirect
 	github.com/docker/docker-credential-helpers v0.7.0 // indirect
 	github.com/docker/go-connections v0.4.0 // indirect
 	github.com/docker/go-metrics v0.0.1 // indirect
@@ -138,7 +139,7 @@ require (
 	github.com/fatih/camelcase v1.0.0 // indirect
 	github.com/fatih/color v1.13.0 // indirect
 	github.com/fluxcd/pkg/apis/acl v0.1.0 // indirect
-	github.com/fluxcd/pkg/apis/kustomize v0.5.0 // indirect
+	github.com/fluxcd/pkg/apis/kustomize v0.6.0 // indirect
 	github.com/fsnotify/fsnotify v1.5.4 // indirect
 	github.com/fvbommel/sortorder v1.0.2 // indirect
 	github.com/ghodss/yaml v1.0.0 // indirect
@@ -165,7 +166,6 @@ require (
 	github.com/gorilla/mux v1.8.0 // indirect
 	github.com/gosuri/uitable v0.0.4 // indirect
 	github.com/gregjones/httpcache v0.0.0-20190611155906-901d90724c79 // indirect
-	github.com/grpc-ecosystem/go-grpc-middleware v1.3.0 // indirect
 	github.com/hashicorp/go-version v1.6.0 // indirect
 	github.com/hashicorp/hcl v1.0.0 // indirect
 	github.com/huandu/xstrings v1.3.2 // indirect
@@ -240,17 +240,17 @@ require (
 	go.uber.org/zap v1.23.0 // indirect
 	golang.org/x/crypto v0.0.0-20220926161630-eccd6366d1be // indirect
 	golang.org/x/image v0.0.0-20220902085622-e7cb96979f69 // indirect
-	golang.org/x/oauth2 v0.0.0-20220909003341-f21342109be1 // indirect
-	golang.org/x/sys v0.0.0-20220926163933-8cfa568d3c25 // indirect
-	golang.org/x/term v0.0.0-20220919170432-7a66f970e087 // indirect
-	golang.org/x/text v0.3.7 // indirect
+	golang.org/x/oauth2 v0.1.0 // indirect
+	golang.org/x/sys v0.1.0 // indirect
+	golang.org/x/term v0.1.0 // indirect
+	golang.org/x/text v0.4.0 // indirect
 	golang.org/x/time v0.0.0-20220922220347-f3bd1da661af // indirect
 	gomodules.xyz/jsonpatch/v2 v2.2.0 // indirect
 	google.golang.org/appengine v1.6.7 // indirect
 	gopkg.in/inf.v0 v0.9.1 // indirect
 	gopkg.in/ini.v1 v1.67.0 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
-	k8s.io/component-base v0.25.1 // indirect
+	k8s.io/component-base v0.25.3 // indirect
 	k8s.io/kube-openapi v0.0.0-20220803164354-a70c9af30aea // indirect
 	nhooyr.io/websocket v1.8.7 // indirect
 	sigs.k8s.io/json v0.0.0-20220713155537-f223a00ba0e2 // indirect

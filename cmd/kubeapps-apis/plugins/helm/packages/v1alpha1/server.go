@@ -1097,7 +1097,7 @@ func (s *Server) GetPackageRepositoryDetail(ctx context.Context, request *corev1
 		return nil, status.Errorf(codes.InvalidArgument, "no request PackageRepoRef provided")
 	}
 	repoRef := request.GetPackageRepoRef()
-	if repoRef.GetContext() == nil || repoRef.GetContext().GetCluster() == "" || repoRef.GetContext().GetNamespace() == "" {
+	if repoRef.GetContext() == nil || repoRef.GetContext().GetNamespace() == "" {
 		return nil, status.Errorf(codes.InvalidArgument, "no valid context provided")
 	}
 	log.Infof("+helm GetPackageRepositoryDetail '%s' in context [%v]", repoRef.Identifier, repoRef.Context)
@@ -1130,9 +1130,6 @@ func (s *Server) GetPackageRepositoryDetail(ctx context.Context, request *corev1
 
 func (s *Server) GetPackageRepositorySummaries(ctx context.Context, request *corev1.GetPackageRepositorySummariesRequest) (*corev1.GetPackageRepositorySummariesResponse, error) {
 	log.Infof("+helm GetPackageRepositorySummaries [%v]", request)
-	if request.GetContext() == nil || request.GetContext().GetCluster() == "" {
-		return nil, status.Errorf(codes.InvalidArgument, "no valid context provided")
-	}
 
 	if summaries, err := s.repoSummaries(ctx, request.GetContext().GetCluster(), request.GetContext().GetNamespace()); err != nil {
 		return nil, err
@@ -1148,7 +1145,7 @@ func (s *Server) UpdatePackageRepository(ctx context.Context, request *corev1.Up
 		return nil, status.Errorf(codes.InvalidArgument, "no request PackageRepoRef provided")
 	}
 	repoRef := request.GetPackageRepoRef()
-	if repoRef.GetContext() == nil || repoRef.GetContext().GetCluster() == "" || repoRef.GetContext().GetNamespace() == "" {
+	if repoRef.GetContext() == nil || repoRef.GetContext().GetNamespace() == "" {
 		return nil, status.Errorf(codes.InvalidArgument, "no valid context provided")
 	}
 	log.Infof("+helm UpdatePackageRepository '%s' in context [%v]", repoRef.Identifier, repoRef.Context)
@@ -1192,7 +1189,7 @@ func (s *Server) DeletePackageRepository(ctx context.Context, request *corev1.De
 		return nil, status.Errorf(codes.InvalidArgument, "no request PackageRepoRef provided")
 	}
 	repoRef := request.GetPackageRepoRef()
-	if repoRef.GetContext() == nil || repoRef.GetContext().GetCluster() == "" || repoRef.GetContext().GetNamespace() == "" {
+	if repoRef.GetContext() == nil || repoRef.GetContext().GetNamespace() == "" {
 		return nil, status.Errorf(codes.InvalidArgument, "no valid context provided")
 	}
 	cluster := repoRef.GetContext().GetCluster()

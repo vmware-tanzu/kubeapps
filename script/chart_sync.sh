@@ -14,23 +14,31 @@ source "$ROOT_DIR/script/chart_sync_utils.sh"
 USERNAME=${1:?Missing git username}
 EMAIL=${2:?Missing git email}
 GPG_KEY=${3:?Missing git gpg key}
-CHARTS_REPO_ORIGINAL=${4:?Missing base chart repository}
-BRANCH_CHARTS_REPO_ORIGINAL=${5:?Missing base chart repository branch}
-CHARTS_REPO_FORKED=${6:?Missing forked chart repository}
-BRANCH_CHARTS_REPO_FORKED=${7:?Missing forked chart repository branch}
-DEV_MODE=${8:-false}
+CHARTS_FORK_SSH_KEY_FILENAME=${4:?Missing forked ssh key filename}
+CHARTS_REPO_UPSTREAM=${5:?Missing chart repository upstream (eg. bitnami/charts)}
+CHARTS_REPO_UPSTREAM_BRANCH=${6:?Missing chart repository upstream\'s  main branch name (eg. main)}
+CHARTS_REPO_FORK=${7:?Missing chart repository fork (eg. kubeapps-bot/charts)}
+CHARTS_REPO_FORK_BRANCH=${8:?Missing chart repository fork\'s main branch name (eg. main)}
+DEV_MODE=${9:-false}
+LOCAL_KUBEAPPS_REPO_PATH=${PROJECT_DIR:?PROJECT_DIR not defined}
 
+info "LOCAL_KUBEAPPS_REPO_PATH: ${LOCAL_KUBEAPPS_REPO_PATH}"
 info "USERNAME: ${USERNAME}"
 info "EMAIL: ${EMAIL}"
 info "GPG_KEY: ${GPG_KEY}"
-info "CHARTS_REPO_ORIGINAL: ${CHARTS_REPO_ORIGINAL}"
-info "BRANCH_CHARTS_REPO_ORIGINAL: ${BRANCH_CHARTS_REPO_ORIGINAL}"
-info "CHARTS_REPO_FORKED: ${CHARTS_REPO_FORKED}"
-info "BRANCH_CHARTS_REPO_FORKED: ${BRANCH_CHARTS_REPO_FORKED}"
+info "CHARTS_FORK_SSH_KEY_FILENAME: ${CHARTS_FORK_SSH_KEY_FILENAME}"
+info "CHARTS_REPO_UPSTREAM: ${CHARTS_REPO_UPSTREAM}"
+info "CHARTS_REPO_UPSTREAM_BRANCH: ${CHARTS_REPO_UPSTREAM_BRANCH}"
+info "CHARTS_REPO_FORK: ${CHARTS_REPO_FORK}"
+info "CHARTS_REPO_FORK_BRANCH: ${CHARTS_REPO_FORK_BRANCH}"
 info "DEV_MODE: ${DEV_MODE}"
 
+if [[ "${DEV_MODE}" == "true" ]]; then
+  set -x
+fi
+
 currentVersion=$(grep -oP '(?<=^version: ).*' <"${KUBEAPPS_CHART_DIR}/Chart.yaml")
-externalVersion=$(curl -s "https://raw.githubusercontent.com/${CHARTS_REPO_ORIGINAL}/${BRANCH_CHARTS_REPO_ORIGINAL}/${CHART_REPO_PATH}/Chart.yaml" | grep -oP '(?<=^version: ).*')
+externalVersion=$(curl -s "https://raw.githubusercontent.com/${CHARTS_REPO_UPSTREAM}/${CHARTS_REPO_UPSTREAM_BRANCH}/${CHART_REPO_PATH}/Chart.yaml" | grep -oP '(?<=^version: ).*')
 semverCompare=$(semver compare "${currentVersion}" "${externalVersion}")
 
 info "currentVersion: ${currentVersion}"
@@ -43,17 +51,15 @@ if [[ ${semverCompare} -gt 0 ]]; then
     CHARTS_FORK_LOCAL_PATH=$(mktemp -u)/charts
     mkdir -p "${CHARTS_FORK_LOCAL_PATH}"
 
-    git clone "https://github.com/${CHARTS_REPO_FORKED}" "${CHARTS_FORK_LOCAL_PATH}" --depth 1 --no-single-branch
-    info "Repo cloned: https://github.com/${CHARTS_REPO_FORKED}"
+    GIT_SSH_COMMAND="ssh -i ~/.ssh/${CHARTS_FORK_SSH_KEY_FILENAME}" git clone "git@github.com:${CHARTS_REPO_FORK}" "${CHARTS_FORK_LOCAL_PATH}" --depth 1 --no-single-branch
     configUser "${CHARTS_FORK_LOCAL_PATH}" "${USERNAME}" "${EMAIL}" "${GPG_KEY}"
-    configUser "${PROJECT_DIR}" "${USERNAME}" "${EMAIL}" "${GPG_KEY}"
-    info "Repos configured"
+    configUser "${LOCAL_KUBEAPPS_REPO_PATH}" "${USERNAME}" "${EMAIL}" "${GPG_KEY}"
 
-    latestVersion=$(latestReleaseTag "${PROJECT_DIR}")
+    latestVersion=$(latestReleaseTag "${LOCAL_KUBEAPPS_REPO_PATH}")
     prBranchName="kubeapps-bump-${currentVersion}"
 
-    updateRepoWithLocalChanges "${CHARTS_FORK_LOCAL_PATH}" "${latestVersion}" "${CHARTS_REPO_ORIGINAL}" "${BRANCH_CHARTS_REPO_ORIGINAL}" "${BRANCH_CHARTS_REPO_FORKED}"
-    commitAndSendExternalPR "${CHARTS_FORK_LOCAL_PATH}" "${prBranchName}" "${currentVersion}" "${CHARTS_REPO_ORIGINAL}" "${BRANCH_CHARTS_REPO_ORIGINAL}" "${DEV_MODE}"
+    updateRepoWithLocalChanges "${CHARTS_FORK_LOCAL_PATH}" "${latestVersion}" "${CHARTS_FORK_SSH_KEY_FILENAME}" "${CHARTS_REPO_UPSTREAM}" "${CHARTS_REPO_UPSTREAM_BRANCH}" "${CHARTS_REPO_FORK_BRANCH}"
+    commitAndSendExternalPR "${CHARTS_FORK_LOCAL_PATH}" "${prBranchName}" "${currentVersion}" "${CHARTS_REPO_UPSTREAM}" "${CHARTS_REPO_UPSTREAM_BRANCH}" "${CHARTS_FORK_SSH_KEY_FILENAME}" "${DEV_MODE}"
 elif [[ ${semverCompare} -lt 0 ]]; then
     echo "Skipping Chart sync. WARNING Current chart version (${currentVersion}) is less than the chart external version (${externalVersion})"
 else

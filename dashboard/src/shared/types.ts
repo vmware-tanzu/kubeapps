@@ -477,3 +477,18 @@ export interface IPkgRepoFormData {
   namespace: string;
   isNamespaceScoped: boolean;
 }
+
+// Holds data about the permissions on any resource
+export interface IResourcePermission {
+  list: boolean;
+  create: boolean;
+  update: boolean;
+  delete: boolean;
+  namespace: string;
+}
+
+export interface IPackageRepositoryPermission {
+  global?: IResourcePermission;
+  namespaced: IResourcePermission;
+  plugin: Plugin;
+}

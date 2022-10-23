@@ -29,12 +29,12 @@ reqwest = "0.11"
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 tls-listener = { version = "0.5", features = ["native-tls", "hyper-h1"] }
-structopt = "0.3"
 thiserror = "1.0"
 tokio = { version = "1", features = ["full"] }
 tokio-native-tls = "0.3"
 url = "2.3"
 http = "0.2.8"
+clap = { version = "4.0", features = ["derive", "env"] }
 
 [features]
 default = ["v1_24"]
@@ -49,3 +49,4 @@ v1_24 = ["k8s-openapi/v1_24"]
 [dev-dependencies]
 tokio-test = "0.4"
 serial_test = "0.9"
+trycmd = "0.14"

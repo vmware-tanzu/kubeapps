@@ -1,0 +1,43 @@
+// Copyright 2022 the Kubeapps contributors.
+// SPDX-License-Identifier: Apache-2.0
+
+```console
+$ pinniped-proxy --help
+A proxy server which converts k8s API server requests with bearer tokens to requests with short-lived X509 certs exchanged by pinniped.
+
+pinniped-proxy proxies incoming requests with an `Authorization: Bearer token` header, exchanging the token via the pinniped aggregate API for x509 short-lived client certificates, before forwarding the request onwards to the destination k8s API server.
+
+Usage: pinniped-proxy [OPTIONS]
+
+Options:
+  -p, --port <PORT>
+          Specify the port on which pinniped-proxy listens.
+          
+          [env: PINNIPED_PROXY_PORT=]
+          [default: 3333]
+
+      --default-ca-cert <DEFAULT_CA_CERT>
+          Specify the file path to the cert authority for the default api server https://kubernetes.default
+          
+          [env: PINNIPED_PROXY_DEFAULT_CA_CERT=]
+          [default: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt]
+
+      --proxy-tls-cert <PROXY_TLS_CERT>
+          Specify the file path to a PEM encoded TLS certificate. Providing the cert and key implies listening for TLS requests.
+          
+          [env: PINNIPED_PROXY_TLS_CERT=]
+          [default: ]
+
+      --proxy-tls-cert-key <PROXY_TLS_CERT_KEY>
+          Specify the file path to a PEM encoded TLS certificate key. Providing the cert and key implies listening for TLS requests.
+          
+          [env: PINNIPED_PROXY_TLS_CERT_KEY=]
+          [default: ]
+
+  -h, --help
+          Print help information (use `-h` for a summary)
+
+  -V, --version
+          Print version information
+
+```
