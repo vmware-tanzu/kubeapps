@@ -1020,11 +1020,12 @@ func (c *NamespacedResourceWatcherCache) ForceAndFetch(key string, skipIfProcess
 	return c.fetch(key)
 }
 
-// this func is used by unit tests only
-// The general pattern for this is in the unit test code we do
+// this func is used by unit tests only to make sure entries were processed by
+// cache as expected and without race conditions. The general pattern for this is
+// in the unit test code we do
 // - cache.ExpectAdd(key)
 // - perform some k8s flux HelmRepository CRD operation...
-// - cache.WaitUntilForgotten(repoKey)
+// - cache.WaitUntilForgotten(key)
 // - at this point we can guarantee the cache entry has been (asynchronously) processed...
 func (c *NamespacedResourceWatcherCache) ExpectAdd(key string) {
 	c.queue.ExpectAdd(key)
