@@ -533,9 +533,9 @@ mZu9A/ivt37pOQXm/HOX6tHB
         }
     }
 
-    // Disabling these hash tests as they occasionally fail with a specific
-    // other hash.
-    #[ignore]
+    // In the past, these tests have failed intermittently and so were
+    // disabled in #4900. As per #5296, I'm now unable to reproduce the
+    // failure, so am re-enabling them to see if we can retrigger.
     #[test]
     fn test_token_credential_request_hash_default() -> Result<()> {
         let cred_data = make_token_credential_request();
@@ -547,7 +547,6 @@ mZu9A/ivt37pOQXm/HOX6tHB
         Ok(())
     }
 
-    #[ignore]
     #[test]
     fn test_token_credential_request_hash_differs_with_token() -> Result<()> {
         let mut cred_data = make_token_credential_request();
@@ -560,7 +559,6 @@ mZu9A/ivt37pOQXm/HOX6tHB
         Ok(())
     }
 
-    #[ignore]
     #[test]
     fn test_token_credential_request_hash_differs_with_authenticator() -> Result<()> {
         let mut cred_data = make_token_credential_request();
@@ -573,7 +571,6 @@ mZu9A/ivt37pOQXm/HOX6tHB
         Ok(())
     }
 
-    #[ignore]
     #[test]
     fn test_token_credential_request_hash_identical_with_status_change() -> Result<()> {
         let mut cred_data = make_token_credential_request();
