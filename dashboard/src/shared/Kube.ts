@@ -64,7 +64,7 @@ export class Kube {
         const { data: resourceList } = await axiosWithAuth.get<any>(
           url.api.k8s.groupVersion(cluster, groupVersion),
         );
-        resourceList.resources?.forEach((r: any) => addResource(r, groupVersion));
+        resourceList?.resources?.forEach((r: any) => addResource(r, groupVersion));
       }),
     );
     return result;
