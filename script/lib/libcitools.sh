@@ -300,6 +300,6 @@ function deleteGKECluster() {
   CLUSTER_NAME=${2:?CLUSTER_NAME not provided}
 
   info "Deleting GKE cluster: ${CLUSTER_NAME}"
-  gcloud container clusters delete --async --zone "${GKE_ZONE}" "${CLUSTER_NAME}"
+  gcloud container clusters delete --quiet --async --zone "${GKE_ZONE}" "${CLUSTER_NAME}"
   info "Done"
 }
