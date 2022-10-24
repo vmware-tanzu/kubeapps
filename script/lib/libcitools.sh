@@ -186,6 +186,36 @@ function installGCloudSDK() {
 }
 
 ########################################################################################################################
+# Install GCloud DEB package source to be able to install GCloud SKD and its components through APT.
+# Globals: None
+# Arguments: None
+# Returns: None
+########################################################################################################################
+function installGCloudPackageSource() {
+  info "Installing GCloud package source"
+  cat /etc/apt/sources.list.d/google-cloud-sdk.list. &> /dev/null && info "Already installed" && exit 0;
+
+  echo "deb [signed-by=/usr/share/keyrings/cloud.google.gpg] https://packages.cloud.google.com/apt cloud-sdk main" | sudo tee -a /etc/apt/sources.list.d/google-cloud-sdk.list
+  curl https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo apt-key --keyring /usr/share/keyrings/cloud.google.gpg add -
+  sudo apt-get update
+  info "Done"
+}
+
+########################################################################################################################
+# Install gke-gcloud-auth-plugin
+# Globals: None
+# Arguments: None
+# Returns: None
+########################################################################################################################
+function installGKEAuthPlugin() {
+  info "Installing gke-gcloud-auth-plugin"
+  gke-gcloud-auth-plugin --version &> /dev/null && info "Already installed" && exit 0
+
+  gcloud components install gke-gcloud-auth-plugin
+  info "Done"
+}
+
+########################################################################################################################
 # Configure GCloud
 # Globals:
 #   GITHUB_ENV: An environment variable available in GitHub Actions' runners that allow setting environment variables
@@ -200,14 +230,16 @@ function configureGCloud() {
   GCLOUD_KEY=${2:=GCLOUD_KEY not provided}
 
   info "Configuring GCloud"
+  installGCloudPackageSource
   gcloud -q config set project "${GKE_PROJECT}"
   export GOOGLE_APPLICATION_CREDENTIALS=/tmp/client_secrets.json
   # Just exporting the env var won't make it available for the next steps in the GHA's job, so we need the line below
   echo "GOOGLE_APPLICATION_CREDENTIALS=${GOOGLE_APPLICATION_CREDENTIALS}" >> "${GITHUB_ENV}"
   echo "${GCLOUD_KEY}" > "${GOOGLE_APPLICATION_CREDENTIALS}"
   gcloud -q auth activate-service-account --key-file "${GOOGLE_APPLICATION_CREDENTIALS}";
-  gcloud components install gke-gcloud-auth-plugin
+  installGKEAuthPlugin
   echo "USE_GKE_GCLOUD_AUTH_PLUGIN=True" >> "${GITHUB_ENV}"
+
   info "Done"
 }
 

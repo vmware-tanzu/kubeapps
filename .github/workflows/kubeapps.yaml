@@ -648,8 +648,6 @@ jobs:
               ${DEV_MODE}
 
   gcloud_test:
-    needs:
-      - setup
     runs-on: ubuntu-latest
     steps:
 #      - id: 'auth'
@@ -658,10 +656,17 @@ jobs:
 #          credentials_json: '${{ secrets.GCLOUD_KEY }}'
 #      - name: 'Set up Cloud SDK'
 #        uses: 'google-github-actions/setup-gcloud@v0'
-      - name: 'Use gcloud CLI'
-        run: 'gcloud info'
-      - name: Interactive SSH debugging session
-        uses: lhotari/action-upterm@v1
+      - env:
+          GKE_ADMIN: ${{ secrets.GKE_ADMIN }}
+          GCLOUD_KEY: ${{ secrets.GCLOUD_KEY }}
+        run: |
+          set -euo pipefail
+          source ./script/lib/libcitools.sh
+
+          installGCloudSDK
+          configureGCloud ${GKE_PROJECT} ${GCLOUD_KEY}
+          exportEscapedGKEClusterName "${GKE_CLUSTER}" "${GKE_BRANCH}" "${GITHUB_REF_NAME}" "${TEST_LATEST_RELEASE}" "${DEV_MODE}"
+          echo "ESCAPED_GKE_CLUSTER: $ESCAPED_GKE_CLUSTER"
 
 #  GKE_REGULAR_VERSION_MAIN:
 ##    TODO:
