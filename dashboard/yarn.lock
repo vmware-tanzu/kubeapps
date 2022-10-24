@@ -11252,10 +11252,10 @@ react-test-renderer@^17.0.0, react-test-renderer@^17.0.2:
     react-shallow-renderer "^16.13.1"
     scheduler "^0.20.2"
 
-react-tooltip@^4.4.2:
-  version "4.4.2"
-  resolved "https://registry.yarnpkg.com/react-tooltip/-/react-tooltip-4.4.2.tgz#e81659b07bc9f08081b12366aecb389a9d8fc424"
-  integrity sha512-VncdQWS6wfTZK/J1xW9PLCfKwmeNcxDGZ6mC8ZE7V3UUyNRw/ZpzcqQZm84WWKptAiBwyKL0PgCRrKJk3N440Q==
+react-tooltip@^4.4.3:
+  version "4.4.3"
+  resolved "https://registry.yarnpkg.com/react-tooltip/-/react-tooltip-4.4.3.tgz#44cbb6c8bdb3281c2819d16c92e3c419ebd98582"
+  integrity sha512-l7/TDBwq3JtuLBtq6FvIs7wsqcHjvoHFT8AvNGpf0JhHwzh+ZhCDN25wM/+gxelj8i1ngw/ULFv53XRQ/wCMzQ==
   dependencies:
     prop-types "^15.8.1"
     uuid "^7.0.3"
