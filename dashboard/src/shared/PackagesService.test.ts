@@ -9,8 +9,6 @@ import {
   PackageAppVersion,
 } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
 import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins";
-import * as moxios from "moxios";
-import { axiosWithAuth } from "./AxiosInstance";
 import { KubeappsGrpcClient } from "./KubeappsGrpcClient";
 import PackagesService from "./PackagesService";
 
@@ -19,18 +17,6 @@ const namespace = "namespace-name";
 const defaultPageToken = "defaultPageToken";
 const defaultSize = 0;
 describe("App", () => {
-  beforeEach(() => {
-    // Import as "any" to avoid typescript syntax error
-    moxios.install(axiosWithAuth as any);
-    moxios.stubRequest(/.*/, {
-      response: { data: "ok" },
-      status: 200,
-    });
-  });
-  afterEach(() => {
-    moxios.uninstall(axiosWithAuth as any);
-    jest.restoreAllMocks();
-  });
   describe("getAvailablePackageSummaries", () => {
     [
       {
