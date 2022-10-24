@@ -31,6 +31,10 @@ type fakeDockerRegistryApiV2RepositoryLister struct {
 	repositories []fakeRepo
 }
 
+func (fake *fakeDockerRegistryApiV2RepositoryLister) Name() string {
+	return "docker"
+}
+
 // ref https://github.com/distribution/distribution/blob/main/docs/spec/api.md#api-version-check
 // also https://github.com/oras-project/oras-go/blob/14422086e418/registry/remote/registry.go
 func (fake *fakeDockerRegistryApiV2RepositoryLister) IsApplicableFor(ociRepo *OCIChartRepository) (bool, error) {
@@ -40,7 +44,9 @@ func (fake *fakeDockerRegistryApiV2RepositoryLister) IsApplicableFor(ociRepo *OC
 
 // given an OCIChartRepository instance, returns a list of repository names, e.g.
 // given an OCIChartRepository instance with url "oci://ghcr.io/stefanprodan/charts"
-//    may return ["stefanprodan/charts/podinfo", "stefanprodan/charts/podinfo-2"]
+//
+//	may return ["stefanprodan/charts/podinfo", "stefanprodan/charts/podinfo-2"]
+//
 // ref: https://github.com/distribution/distribution/blob/main/docs/spec/api.md#listing-repositories
 func (fake *fakeDockerRegistryApiV2RepositoryLister) ListRepositoryNames(ociRepo *OCIChartRepository) ([]string, error) {
 	fake.t.Logf("+ListRepositoryNames(%s)", ociRepo.url.String())

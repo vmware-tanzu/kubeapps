@@ -163,6 +163,9 @@ func NewServer(configGetter core.KubernetesConfigGetter, kubeappsCluster string,
 // state. For the fluxv2 plugin, the request context namespace (the target
 // namespace) is not relevant since charts from a repository in any namespace
 // accessible to the user are available to be installed in the target namespace.
+// TODO (gfichtenholt) if flux helm-controller flag "-no-cross-namespace-refs=true" is
+// enabled we might need to filter out all namespaces except for request target namespace
+// ref https://github.com/vmware-tanzu/kubeapps/issues/5541
 func (s *Server) GetAvailablePackageSummaries(ctx context.Context, request *corev1.GetAvailablePackageSummariesRequest) (*corev1.GetAvailablePackageSummariesResponse, error) {
 	log.Infof("+fluxv2 GetAvailablePackageSummaries(request: [%v])", request)
 	defer log.Info("-fluxv2 GetAvailablePackageSummaries")

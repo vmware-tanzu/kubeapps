@@ -1494,6 +1494,9 @@ func TestKindClusterAddTagsToOciRepository(t *testing.T) {
 			}
 		})
 
+		// there isn't really a whole lot of sense in waiting the way flux works today
+		// repo resync interval is kind of useless when it comes to refresh the contents based
+		// on changes on remote. Maybe in the future when they fix it.
 		t.Logf("Waiting 45 seconds...")
 		time.Sleep(45 * time.Second)
 

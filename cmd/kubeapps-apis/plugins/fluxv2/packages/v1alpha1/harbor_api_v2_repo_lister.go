@@ -36,6 +36,10 @@ func NewHarborRegistryApiV2RepositoryLister() OCIChartRepositoryLister {
 type harborRegistryApiV2RepositoryLister struct {
 }
 
+func (l *harborRegistryApiV2RepositoryLister) Name() string {
+	return "harbor"
+}
+
 func (l *harborRegistryApiV2RepositoryLister) IsApplicableFor(ociRepo *OCIChartRepository) (bool, error) {
 	log.Infof("+IsApplicableFor(%s)", ociRepo.url.String())
 	ref := strings.TrimPrefix(ociRepo.url.String(), fmt.Sprintf("%s://", registry.OCIScheme))
