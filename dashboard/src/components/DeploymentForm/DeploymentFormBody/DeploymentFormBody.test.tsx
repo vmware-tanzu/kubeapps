@@ -141,7 +141,7 @@ c: d
   expect(
     wrapper
       .find(MonacoDiffEditor)
-      .filterWhere(p => p.hasClass("values-editor"))
+      .filterWhere(p => p.prop("language") === "yaml")
       .prop("original"),
   ).toBe(oldValues);
 
@@ -165,7 +165,7 @@ c: d
   expect(
     wrapper
       .find(MonacoDiffEditor)
-      .filterWhere(p => p.hasClass("values-editor"))
+      .filterWhere(p => p.prop("language") === "yaml")
       .prop("original"),
   ).toBe(expectedValues);
 });
