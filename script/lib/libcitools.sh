@@ -211,7 +211,7 @@ function installGKEAuthPlugin() {
   info "Installing gke-gcloud-auth-plugin"
   gke-gcloud-auth-plugin --version &> /dev/null && info "Already installed" && exit 0
 
-  gcloud components install gke-gcloud-auth-plugin
+  sudo apt-get install google-cloud-sdk-gke-gcloud-auth-plugin
   info "Done"
 }
 
@@ -270,7 +270,7 @@ function exportEscapedGKEClusterName() {
   fi
   export ESCAPED_GKE_CLUSTER
   # Just exporting the env var won't make it available for the next steps in the GHA's job, so we need the line below
-  echo "ESCAPED_GKE_CLUSTER=${ESCAPED_GKE_CLUSTER}" >> "${GITHUB_ENV}"
+    echo "ESCAPED_GKE_CLUSTER=${ESCAPED_GKE_CLUSTER}" >> "${GITHUB_ENV}"
   info "Done"
 }
 
