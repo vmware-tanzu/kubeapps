@@ -648,6 +648,9 @@ jobs:
               ${DEV_MODE}
 
   gcloud_test:
+    needs:
+      - setup
+    runs-on: ubuntu-latest
     steps:
       - id: 'auth'
         uses: 'google-github-actions/auth@v0'
