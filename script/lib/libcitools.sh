@@ -175,6 +175,8 @@ function installHelm() {
 ########################################################################################################################
 function installGCloudSDK() {
   info "Installing GCloud SDK"
+  gcloud --version || info "Already installed" && exit 0;
+
   GCLOUD_PATH="${HOME}/google-cloud-sdk"
   echo "PATH=${PATH}:${GCLOUD_PATH}/bin" >> "${GITHUB_ENV}"
   echo "CLOUDSDK_CORE_DISABLE_PROMPTS=1" >> "${GITHUB_ENV}"
