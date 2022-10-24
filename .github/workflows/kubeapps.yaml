@@ -656,12 +656,12 @@ jobs:
         uses: 'google-github-actions/auth@v0'
         with:
           credentials_json: '${{ secrets.GCLOUD_KEY }}'
-
       - name: 'Set up Cloud SDK'
         uses: 'google-github-actions/setup-gcloud@v0'
-
       - name: 'Use gcloud CLI'
         run: 'gcloud info'
+      - name: Interactive SSH debugging session
+        uses: lhotari/action-upterm@v1
 
 #  GKE_REGULAR_VERSION_MAIN:
 ##    TODO:
