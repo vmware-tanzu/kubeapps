@@ -137,7 +137,13 @@ c: d
     defaultStore,
     <DeploymentFormBody {...defaultProps} selected={selected} />,
   );
-  expect(wrapper.find(MonacoDiffEditor).prop("original")).toBe(oldValues);
+
+  expect(
+    wrapper
+      .find(MonacoDiffEditor)
+      .filterWhere(p => p.hasClass("values-editor"))
+      .prop("original"),
+  ).toBe(oldValues);
 
   // Trigger a change in the basic form and a YAML parse
   const input = wrapper
@@ -156,5 +162,10 @@ c: d
 
 c: d
 `;
-  expect(wrapper.find(MonacoDiffEditor).prop("original")).toBe(expectedValues);
+  expect(
+    wrapper
+      .find(MonacoDiffEditor)
+      .filterWhere(p => p.hasClass("values-editor"))
+      .prop("original"),
+  ).toBe(expectedValues);
 });

@@ -89,6 +89,13 @@ export function getValueFromEvent(
   }
 }
 
+export function getOptionalMin(num1?: number, num2?: number) {
+  if (num1 && num2) {
+    return Math.min(num1, num2);
+  }
+  return num1 || num2 || undefined;
+}
+
 // 3 lines description max
 export const MAX_DESC_LENGTH = 90;
 

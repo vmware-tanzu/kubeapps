@@ -178,7 +178,6 @@ export function renderConfigCurrentValuePro(
           label={param.title || param.path}
           param={param}
           handleBasicFormParamChange={handleBasicFormParamChange}
-          step={param?.multipleOf || (param.schema?.type === "number" ? 0.5 : 1)}
           unit={""}
         />
       );
@@ -190,7 +189,6 @@ export function renderConfigCurrentValuePro(
           param={param}
           handleBasicFormParamChange={handleBasicFormParamChange}
           type={param?.schema?.items?.type ?? "string"}
-          step={param?.multipleOf || (param.schema?.type === "number" ? 0.5 : 1)}
         />
       );
     case "string":

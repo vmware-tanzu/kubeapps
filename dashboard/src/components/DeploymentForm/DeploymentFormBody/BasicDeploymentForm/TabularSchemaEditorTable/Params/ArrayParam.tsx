@@ -14,14 +14,18 @@ import { isEmpty } from "lodash";
 import { useState } from "react";
 import { validateValuesSchema } from "shared/schema";
 import { IAjvValidateResult, IBasicFormParam } from "shared/types";
-import { basicFormsDebounceTime, getStringValue, getValueFromString } from "shared/utils";
+import {
+  basicFormsDebounceTime,
+  getOptionalMin,
+  getStringValue,
+  getValueFromString,
+} from "shared/utils";
 
 export interface IArrayParamProps {
   id: string;
   label: string;
   type: string;
   param: IBasicFormParam;
-  step: number;
   handleBasicFormParamChange: (
     param: IBasicFormParam,
   ) => (e: React.FormEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => void;
@@ -44,8 +48,10 @@ const getDefaultDataFromType = (type: string) => {
   }
 };
 
+type supportedTypes = string | number | boolean | object | Array<any>;
+
 export default function ArrayParam(props: IArrayParamProps) {
-  const { id, label, type, param, step, handleBasicFormParamChange } = props;
+  const { id, label, type, param, handleBasicFormParamChange } = props;
 
   const initCurrentValue = () => {
     const currentValueInit = [];
@@ -57,11 +63,10 @@ export default function ArrayParam(props: IArrayParamProps) {
     return currentValueInit;
   };
 
-  const [currentArrayItems, setCurrentArrayItems] = useState<
-    (string | number | boolean | object | Array<any>)[]
-  >(param.currentValue ? param.currentValue : initCurrentValue());
+  const [currentArrayItems, setCurrentArrayItems] = useState<supportedTypes[]>(() => {
+    return initCurrentValue();
+  });
   const [validated, setValidated] = useState<IAjvValidateResult>();
-
   const [timeout, setThisTimeout] = useState({} as NodeJS.Timeout);
 
   const setArrayChangesInParam = () => {
@@ -80,7 +85,7 @@ export default function ArrayParam(props: IArrayParamProps) {
   const onChangeArrayItem = (
     e: React.FormEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>,
     index: number,
-    value: string | number | boolean | object | Array<any>,
+    value: supportedTypes,
   ) => {
     currentArrayItems[index] = value;
     setCurrentArrayItems([...currentArrayItems]);
@@ -88,7 +93,7 @@ export default function ArrayParam(props: IArrayParamProps) {
 
     // twofold validation: using the json schema (with ajv) and the html5 validation
     setValidated(validateValuesSchema(getStringValue(currentArrayItems), param.schema));
-    e.currentTarget.reportValidity();
+    e.currentTarget?.reportValidity();
   };
 
   const renderControlMsg = () =>
@@ -102,13 +107,15 @@ export default function ArrayParam(props: IArrayParamProps) {
       </>
     );
 
+  const step = param?.multipleOf || (type === "number" ? 0.5 : 1);
+
   const renderInput = (type: string, index: number) => {
     if (!isEmpty(param?.items?.enum)) {
       return (
         <>
           <CdsSelect layout="horizontal">
             <select
-              required={param.required}
+              required={param.isRequired}
               disabled={param.readOnly}
               aria-label={label}
               id={id}
@@ -136,10 +143,10 @@ export default function ArrayParam(props: IArrayParamProps) {
             <>
               <CdsInput className="self-center">
                 <input
-                  required={param.required}
+                  required={param.isRequired}
                   disabled={param.readOnly}
-                  min={Math.min(param.minimum, param.exclusiveMinimum) || undefined}
-                  max={Math.min(param.maximum, param.exclusiveMaximum) || undefined}
+                  min={getOptionalMin(param.exclusiveMinimum, param.minimum)}
+                  max={getOptionalMin(param.exclusiveMaximum, param.maximum)}
                   aria-label={label}
                   id={`${id}-${index}_text`}
                   type="number"
@@ -150,10 +157,10 @@ export default function ArrayParam(props: IArrayParamProps) {
               </CdsInput>
               <CdsRange>
                 <input
-                  required={param.required}
+                  required={param.isRequired}
                   disabled={param.readOnly}
-                  min={param.minimum}
-                  max={param.maximum}
+                  min={getOptionalMin(param.exclusiveMinimum, param.minimum)}
+                  max={getOptionalMin(param.exclusiveMaximum, param.maximum)}
                   aria-label={label}
                   id={`${id}-${index}_range`}
                   type="range"
@@ -168,7 +175,7 @@ export default function ArrayParam(props: IArrayParamProps) {
           return (
             <CdsToggle>
               <input
-                required={param.required}
+                required={param.isRequired}
                 disabled={param.readOnly}
                 aria-label={label}
                 id={`${id}-${index}_toggle`}
@@ -182,7 +189,7 @@ export default function ArrayParam(props: IArrayParamProps) {
           return (
             <CdsInput>
               <input
-                required={param.required}
+                required={param.isRequired}
                 disabled={param.readOnly}
                 aria-label={label}
                 value={getStringValue(currentArrayItems[index])}
@@ -196,7 +203,7 @@ export default function ArrayParam(props: IArrayParamProps) {
           return (
             <CdsInput>
               <input
-                required={param.required}
+                required={param.isRequired}
                 disabled={param.readOnly}
                 aria-label={label}
                 value={getStringValue(currentArrayItems[index])}
@@ -211,7 +218,7 @@ export default function ArrayParam(props: IArrayParamProps) {
           return (
             <CdsInput>
               <input
-                required={param.required}
+                required={param.isRequired}
                 disabled={param.readOnly}
                 maxLength={param.maxLength}
                 minLength={param.minLength}
@@ -226,7 +233,7 @@ export default function ArrayParam(props: IArrayParamProps) {
     }
   };
 
-  const onAddArrayItem = (type: string) => {
+  const onAddArrayItem = () => {
     currentArrayItems.push(getDefaultDataFromType(type));
     setCurrentArrayItems([...currentArrayItems]);
     setArrayChangesInParam();
@@ -242,7 +249,7 @@ export default function ArrayParam(props: IArrayParamProps) {
       <CdsButton
         title={"Add a new value"}
         type="button"
-        onClick={() => onAddArrayItem(type)}
+        onClick={onAddArrayItem}
         action="flat"
         status="primary"
         size="sm"
@@ -252,23 +259,24 @@ export default function ArrayParam(props: IArrayParamProps) {
         <span>Add</span>
       </CdsButton>
       {renderControlMsg()}
-      {currentArrayItems?.map((_, index) => (
-        <Row key={`${id}-${index}`}>
-          <Column span={9}>{renderInput(type, index)}</Column>
-          <Column span={1}>
-            <CdsButton
-              title={"Delete"}
-              type="button"
-              onClick={() => onDeleteArrayItem(index)}
-              action="flat"
-              status="primary"
-              size="sm"
-            >
-              <CdsIcon shape="minus" size="sm" solid={true} />
-            </CdsButton>
-          </Column>
-        </Row>
-      ))}
+      {typeof currentArrayItems["map"] === "function" &&
+        currentArrayItems?.map((_, index) => (
+          <Row key={`${id}-${index}`}>
+            <Column span={9}>{renderInput(type, index)}</Column>
+            <Column span={1}>
+              <CdsButton
+                title={"Delete"}
+                type="button"
+                onClick={() => onDeleteArrayItem(index)}
+                action="flat"
+                status="primary"
+                size="sm"
+              >
+                <CdsIcon shape="minus" size="sm" solid={true} />
+              </CdsButton>
+            </Column>
+          </Row>
+        ))}
     </>
   );
 }
