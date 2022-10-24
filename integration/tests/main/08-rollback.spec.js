@@ -64,14 +64,14 @@ test("Rolls back an application", async ({ page }) => {
 
   // Use the built-in search function in monaco to find the text we are looking for
   // so that it get loaded in the DOM when using the toContainText assert
-  await page.locator(".values-editor.modified").click({ button: "right" });
+  await page.locator(".values-editor div.modified").click({ button: "right" });
   await page.locator("text=Command Palette").click();
   await page.locator('[aria-label="Type to narrow down results\\."]').click();
   await page.locator('[aria-label="Type to narrow down results\\."]').fill(">find");
   await page.locator('label:has-text("FindCtrl+F")').click();
   await page.locator('[aria-label="Find"]').fill("replicaCount: ");
   // Note the U+200C, which is a zero-width non-joiner, character instead of a space
-  await expect(page.locator(".values-editor.modified")).toContainText("replicaCount:·‌2");
+  await expect(page.locator(".values-editor div.modified")).toContainText("replicaCount:·‌2");
 
   await page.locator('cds-button:has-text("Deploy")').click();
 

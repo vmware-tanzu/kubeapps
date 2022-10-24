@@ -103,14 +103,14 @@ test("Create a new private package repository successfully", async ({ page }) =>
 
   // Use the built-in search function in monaco to find the text we are looking for
   // so that it get loaded in the DOM when using the toContainText assert
-  await page.locator(".values-editor.modified").click({ button: "right" });
+  await page.locator(".values-editor div.modified").click({ button: "right" });
   await page.locator("text=Command Palette").click();
   await page.locator('[aria-label="Type to narrow down results\\."]').click();
   await page.locator('[aria-label="Type to narrow down results\\."]').fill(">find");
   await page.locator('label:has-text("FindCtrl+F")').click();
   await page.locator('[aria-label="Find"]').fill("tag: 2.4.48");
   // Note the U+200C, which is a zero-width non-joiner, character instead of a space
-  await expect(page.locator(".values-editor.modified")).toContainText("tag:·‌2.4.48-debian-10-r75");
+  await expect(page.locator(".values-editor div.modified")).toContainText("tag:·‌2.4.48-debian-10-r75");
 
   // Deploy upgrade
   await page.click('cds-button:has-text("Deploy")');

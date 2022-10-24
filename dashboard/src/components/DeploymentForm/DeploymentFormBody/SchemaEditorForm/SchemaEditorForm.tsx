@@ -88,7 +88,7 @@ export default function SchemaEditorForm(props: ISchemaEditorForm) {
 
   return (
     <div className="deployment-form-tabs-data">
-      <>
+      <div className="deployment-form-tabs-data-buttons">
         <Row>
           <Column span={3}>
             <CdsRadioGroup layout="vertical">
@@ -143,19 +143,20 @@ export default function SchemaEditorForm(props: ISchemaEditorForm) {
             )}
           </>
         </Row>
-      </>
+      </div>
       <br />
-      <MonacoDiffEditor
-        value={currentSchema}
-        original={diffValues}
-        className="editor schema-editor"
-        height="90vh"
-        language="json"
-        theme={theme === "dark" ? "vs-dark" : "light"}
-        options={diffEditorOptions}
-        onChange={onChange}
-        editorDidMount={editorDidMount}
-      />
+      <div className="deployment-form-tabs-data schema-editor">
+        <MonacoDiffEditor
+          value={currentSchema}
+          original={diffValues}
+          height="90vh"
+          language="json"
+          theme={theme === "dark" ? "vs-dark" : "light"}
+          options={diffEditorOptions}
+          onChange={onChange}
+          editorDidMount={editorDidMount}
+        />
+      </div>
     </div>
   );
 }

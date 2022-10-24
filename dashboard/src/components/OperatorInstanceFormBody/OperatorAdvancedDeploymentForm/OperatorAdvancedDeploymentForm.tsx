@@ -25,11 +25,10 @@ function OperatorAdvancedDeploymentForm(props: IOperatorAdvancedDeploymentFormPr
   } = useSelector((state: IStoreState) => state);
 
   return (
-    <div className="deployment-form-tabs-data">
+    <div className="deployment-form-tabs-data operator-editor">
       <MonacoDiffEditor
         value={props.appValues}
         original={props.oldAppValues}
-        className="editor operator-editor"
         height="90vh"
         language="yaml"
         onChange={onChange}
