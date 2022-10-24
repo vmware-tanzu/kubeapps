@@ -13,7 +13,7 @@ use hyper::{
     service::{make_service_fn, service_fn},
     Server,
 };
-use log::{info, LevelFilter};
+use log::info;
 use tls_listener::TlsListener;
 
 // Ensure the root crate is aware of the child modules.
@@ -26,18 +26,15 @@ mod tls_config;
 
 #[tokio::main]
 async fn main() -> Result<()> {
-    pretty_env_logger::formatted_timed_builder()
-        .format(|buf, record| {
-            writeln!(
-                buf,
-                "{} [{}] - {}",
-                Local::now().format("%Y-%m-%dT%H:%M:%S%.6f"),
-                record.level(),
-                record.args()
-            )
-        })
-        .filter(None, LevelFilter::Info)
-        .init();
+    env_logger::Builder::from_default_env().format(|buf, record| {
+        writeln!(
+            buf,
+            "{} [{}] - {}",
+            Local::now().format("%Y-%m-%dT%H:%M:%S%.6f"),
+            record.level(),
+            record.args()
+        )
+    });
     let opt = cli::Options::parse();
 
     // Load the default certificate authority data on startup once.
