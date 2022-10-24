@@ -266,7 +266,7 @@ function exportEscapedGKEClusterName() {
   DEV_MODE=${5:-false}
 
   info "Exporting scaped GKE cluster name"
-  ESCAPED_GKE_CLUSTER=$(echo "${GKE_CLUSTER}-${GITHUB_REF_NAME}-${TEST_LATEST_RELEASE}-${GKE_BRANCH}-ci | sed 's/[^a-z0-9-]//g'")
+  ESCAPED_GKE_CLUSTER=$(echo "${GKE_CLUSTER}-${GITHUB_REF_NAME}-${TEST_LATEST_RELEASE}-${GKE_BRANCH}-ci" | sed 's/[^a-z0-9-]//g')
   if [[ "${DEV_MODE}" == "false" ]]; then
     ESCAPED_GKE_CLUSTER="${ESCAPED_GKE_CLUSTER}-gha"
   fi
