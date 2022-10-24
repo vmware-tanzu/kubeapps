@@ -652,7 +652,6 @@ jobs:
     env:
       GKE_ADMIN: ${{ secrets.GKE_ADMIN }}
       GCLOUD_KEY: ${{ secrets.GCLOUD_KEY }}
-      TEST_LATEST_RELEASE: 0
     steps:
       - # We need this step because we can not set a env var taking the value from another existing env var via the job.<id>.env section
         name: Set GKE_BRANCH
@@ -669,7 +668,7 @@ jobs:
           installKubectl ${KUBECTL_VERSION}
           installHelm ${HELM_VERSION_MIN}
           installHelm ${HELM_VERSION_STABLE} helm-stable
-          exportEscapedGKEClusterName "${GKE_CLUSTER}" "${GKE_BRANCH}" "${GITHUB_REF_NAME}" "${TEST_LATEST_RELEASE}" "${DEV_MODE}"
+          exportEscapedGKEClusterName "${GKE_CLUSTER}" "${GKE_BRANCH}" "${GITHUB_REF_NAME}" "${TEST_LATEST_RELEASE:-0}" "${DEV_MODE}"
       - name: Start GKE environment
         run: |
           set -euo pipefail
@@ -707,7 +706,6 @@ jobs:
     runs-on: ubuntu-latest
     env:
       USE_MULTICLUSTER_OIDC_ENV: "false"
-      TEST_LATEST_RELEASE: 0
       TEST_TIMEOUT_MINUTES: 6
       GKE_ADMIN: ${{ secrets.GKE_ADMIN }}
       GCLOUD_KEY: ${{ secrets.GCLOUD_KEY }}
@@ -744,7 +742,7 @@ jobs:
           installKubectl ${KUBECTL_VERSION}
           installHelm ${HELM_VERSION_MIN}
           installHelm ${HELM_VERSION_STABLE} helm-stable
-          exportEscapedGKEClusterName "${GKE_CLUSTER}" "${GKE_BRANCH}" "${GITHUB_REF_NAME}" "${TEST_LATEST_RELEASE}" "${DEV_MODE}"
+          exportEscapedGKEClusterName "${GKE_CLUSTER}" "${GKE_BRANCH}" "${GITHUB_REF_NAME}" "${TEST_LATEST_RELEASE:-0}" "${DEV_MODE}"
       - name: Start GKE environment
         run: |
           set -euo pipefail
