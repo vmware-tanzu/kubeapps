@@ -13,7 +13,7 @@ build = "build.rs"
 [dependencies]
 anyhow = "1.0"
 base64 = "0.13"
-cached = "0.39"
+cached = "0.40"
 chrono = "0.4"
 hyper = { version = "0.14", features = ["server"] }
 hyper-tls = "0.5"
