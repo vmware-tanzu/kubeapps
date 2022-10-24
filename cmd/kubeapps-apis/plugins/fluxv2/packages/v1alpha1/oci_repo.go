@@ -389,7 +389,7 @@ func newRegistryClient(isLogin bool, tlsConfig *tls.Config, getterOpts []getter.
 	}, file, nil
 }
 
-// OCI Helm repository, xwhich defines a source, does not produce an Artifact
+// OCI Helm repository, which defines a source, does not produce an Artifact
 // ref https://fluxcd.io/docs/components/source/helmrepositories/#helm-oci-repository
 
 func (s *repoEventSink) onAddOciRepo(repo sourcev1.HelmRepository) ([]byte, bool, error) {

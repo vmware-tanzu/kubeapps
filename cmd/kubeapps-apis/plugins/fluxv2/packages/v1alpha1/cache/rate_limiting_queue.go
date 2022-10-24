@@ -143,6 +143,9 @@ type Type struct {
 	queue []string
 
 	// expected defines all of the items that are expected to be processed.
+	// the whole reason behind having it in the queue is to avoid a race condition
+	// in unit tests, where an item is added to the queue and then the test code
+	// needs to wait until its been processed before taking further action
 	// Used in unit tests only
 	expected sets.String
 

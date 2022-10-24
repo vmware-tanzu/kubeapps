@@ -848,7 +848,7 @@ func (c *NamespacedResourceWatcherCache) computeValuesForKeys(keys sets.String) 
 			// closed (and there are no more items)
 			for key := range requestChan {
 				// see Get() for explanation of what is happening below
-				c.forceKey(key)
+				c.forceKey(key, false)
 			}
 			wg.Done()
 		}()
@@ -888,7 +888,7 @@ func (c *NamespacedResourceWatcherCache) computeAndFetchValuesForKeys(keys sets.
 			// closed (and there are no more items)
 			for job := range requestChan {
 				// see Get() for explanation of what is happening below
-				value, err := c.ForceAndFetch(job.key)
+				value, err := c.ForceAndFetch(job.key, false)
 				responseChan <- computeValueJobResult{job, value, err}
 			}
 			wg.Done()
@@ -970,14 +970,28 @@ func (c *NamespacedResourceWatcherCache) Get(key string) (interface{}, error) {
 		return nil, err
 	} else if value == nil {
 		// cache miss
-		return c.ForceAndFetch(key)
+		return c.ForceAndFetch(key, false)
 	}
 	return value, nil
 }
 
 // force a particular key to be processed
-func (c *NamespacedResourceWatcherCache) forceKey(key string) {
-	c.queue.Add(key)
+func (c *NamespacedResourceWatcherCache) forceKey(key string, skipIfProcessing bool) {
+	if skipIfProcessing {
+		// There is one use case when the client needs to be able to do an Add(), regardless of whether
+		// the item is being processed, e.g. when the corresponding value goes through several quick changes.
+		// Then there is a separate use case when the client doesn't want to do an Add
+		// if the item is currently being processed, such as a .Get() operation that leads to a lengthy
+		// .Add() cuncurrently with another .Get() immediately. Executing two 2 .Add() operations does
+		// not solve any problems just slows the whole thing down.
+		// This is what the UX is currently doing when you select an OCI package to deploy:
+		//   both GetAvailablePackageVersions() and GetAvailablePackageDetail()
+		// are called concurrently. This is really a performance optimization to make sure that .Add() is only
+		// executed once
+		c.queue.AddIfNotProcessing(key)
+	} else {
+		c.queue.Add(key)
+	}
 
 	// now need to wait until this item has been processed by runWorker().
 	// a little bit in-efficient: syncHandler() will eventually call config.onAdd()
@@ -988,8 +1002,8 @@ func (c *NamespacedResourceWatcherCache) forceKey(key string) {
 	c.queue.WaitUntilForgotten(key)
 }
 
-func (c *NamespacedResourceWatcherCache) ForceAndFetch(key string) (interface{}, error) {
-	c.forceKey(key)
+func (c *NamespacedResourceWatcherCache) ForceAndFetch(key string, skipIfProcessing bool) (interface{}, error) {
+	c.forceKey(key, skipIfProcessing)
 	// TODO (gfichtenholt): if there was an error while processing the cache entry, such as
 	// E0903 09:07:17.660753       1 watcher_cache.go:595] Invocation of [onAdd] for object {
 	//  ...
@@ -1003,30 +1017,6 @@ func (c *NamespacedResourceWatcherCache) ForceAndFetch(key string) (interface{},
 	// cache entry out, but that is an edge case and I am willing to overlook it for now
 	// To fix it, would somehow require WaitUntilForgotten() returning a value from a cache, so
 	// the whole thing would be atomic. Don't know how to do this yet
-	return c.fetch(key)
-}
-
-// force a particular key to be processed
-func (c *NamespacedResourceWatcherCache) ForceIfNotProcessingAndFetch(key string) (interface{}, error) {
-	// There is one use case when the client needs to be able to do an Add(), regardless of whether
-	// the item is being processed, e.g. when the corresponding value goes through several quick changes.
-	// Then there is a separate use case when the client doesn't want to do an Add
-	// if the item is currently being processed, such as a .Get() operation that leads to a lengthy
-	// .Add() cuncurrently with another .Get() immediately. Executing two 2 .Add() operations does
-	// not solve any problems just slows the whole thing down.
-	// This is what the UX is currently doing when you select an OCI package to deploy:
-	//   both GetAvailablePackageVersions() and GetAvailablePackageDetail()
-	// are called concurrently. This is really a performance optimization to make sure that .Add() is only
-	// executed once
-	c.queue.AddIfNotProcessing(key)
-
-	// now need to wait until this item has been processed by runWorker().
-	// a little bit in-efficient: syncHandler() will eventually call config.onAdd()
-	// which encode the data as []byte before storing it in the cache. That part is fine.
-	// But to get back the original data we have to decode it via config.onGet().
-	// It'd nice if there was a shortcut and skip the cycles spent decoding data from
-	// []byte to repoCacheEntry
-	c.queue.WaitUntilForgotten(key)
 	return c.fetch(key)
 }
 
