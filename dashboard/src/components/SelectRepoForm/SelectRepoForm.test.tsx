@@ -27,7 +27,7 @@ const installedPackageDetail = {
 } as InstalledPackageDetail;
 
 let spyOnUseDispatch: jest.SpyInstance;
-const kubeaActions = { ...actions.operators };
+const kubeActions = { ...actions.operators };
 beforeEach(() => {
   actions.repos = {
     ...actions.repos,
@@ -38,7 +38,7 @@ beforeEach(() => {
 });
 
 afterEach(() => {
-  actions.operators = { ...kubeaActions };
+  actions.operators = { ...kubeActions };
   spyOnUseDispatch.mockRestore();
 });
 

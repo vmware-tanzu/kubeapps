@@ -21,7 +21,7 @@ jest.mock("./PkgRepoForm", () => {
 });
 
 let spyOnUseDispatch: jest.SpyInstance;
-const kubeaActions = { ...actions.kube };
+const kubeActions = { ...actions.kube };
 beforeEach(() => {
   actions.repos = {
     ...actions.repos,
@@ -32,7 +32,7 @@ beforeEach(() => {
 });
 
 afterEach(() => {
-  actions.kube = { ...kubeaActions };
+  actions.kube = { ...kubeActions };
   spyOnUseDispatch.mockRestore();
 });
 
