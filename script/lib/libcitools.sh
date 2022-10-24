@@ -175,7 +175,7 @@ function installHelm() {
 ########################################################################################################################
 function installGCloudSDK() {
   info "Installing GCloud SDK"
-  gcloud --version || info "Already installed" && exit 0;
+  gcloud --version && info "Already installed" && return 0;
 
   GCLOUD_PATH="${HOME}/google-cloud-sdk"
   echo "PATH=${PATH}:${GCLOUD_PATH}/bin" >> "${GITHUB_ENV}"
@@ -195,7 +195,7 @@ function installGCloudSDK() {
 ########################################################################################################################
 function installGCloudPackageSource() {
   info "Installing GCloud package source"
-  cat /etc/apt/sources.list.d/google-cloud-sdk.list. &> /dev/null && info "Already installed" && exit 0;
+  cat /etc/apt/sources.list.d/google-cloud-sdk.list. &> /dev/null && info "Already installed" && return 0;
 
   echo "deb [signed-by=/usr/share/keyrings/cloud.google.gpg] https://packages.cloud.google.com/apt cloud-sdk main" | sudo tee -a /etc/apt/sources.list.d/google-cloud-sdk.list
   curl https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo apt-key --keyring /usr/share/keyrings/cloud.google.gpg add -
@@ -211,7 +211,7 @@ function installGCloudPackageSource() {
 ########################################################################################################################
 function installGKEAuthPlugin() {
   info "Installing gke-gcloud-auth-plugin"
-  gke-gcloud-auth-plugin --version &> /dev/null && info "Already installed" && exit 0
+  gke-gcloud-auth-plugin --version &> /dev/null && info "Already installed" && return 0
 
   sudo apt-get install google-cloud-sdk-gke-gcloud-auth-plugin
   info "Done"
