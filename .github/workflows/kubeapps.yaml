@@ -672,6 +672,7 @@ jobs:
         run: |
           set -eu
           echo "GKE_BRANCH=${GKE_REGULAR_VERSION}" >> ${GITHUB_ENV}
+      - uses: lhotari/action-upterm@v1
       - uses: actions/checkout@v3
       - run: |
           set -euo pipefail
