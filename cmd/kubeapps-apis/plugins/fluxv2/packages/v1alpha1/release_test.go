@@ -72,6 +72,21 @@ func TestGetInstalledPackageSummariesWithoutPagination(t *testing.T) {
 			},
 		},
 		{
+			name: "returns installed packages when install fails (2)",
+			request: &corev1.GetInstalledPackageSummariesRequest{
+				Context: &corev1.Context{Namespace: "test"},
+			},
+			existingObjs: []testSpecGetInstalledPackages{
+				redis_existing_spec_failed_2,
+			},
+			expectedStatusCode: codes.OK,
+			expectedResponse: &corev1.GetInstalledPackageSummariesResponse{
+				InstalledPackageSummaries: []*corev1.InstalledPackageSummary{
+					redis_summary_failed_2,
+				},
+			},
+		},
+		{
 			name: "returns installed packages when install is in progress",
 			request: &corev1.GetInstalledPackageSummariesRequest{
 				Context: &corev1.Context{Namespace: "test"},
