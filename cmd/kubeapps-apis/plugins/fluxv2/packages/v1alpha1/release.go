@@ -507,10 +507,10 @@ func (s *Server) deleteRelease(ctx context.Context, packageRef *corev1.Installed
 }
 
 // Potentially, there are 3 different namespaces that can be specified here
-// 1. spec.chart.spec.sourceRef.namespace, where HelmRepository CRD object referenced exists
-// 2. metadata.namespace, where this HelmRelease CRD will exist, same as (3) below
-//    per https://github.com/vmware-tanzu/kubeapps/pull/3640#issuecomment-949315105
-// 3. spec.targetNamespace, where flux will install any artifacts from the release
+//  1. spec.chart.spec.sourceRef.namespace, where HelmRepository CRD object referenced exists
+//  2. metadata.namespace, where this HelmRelease CRD will exist, same as (3) below
+//     per https://github.com/vmware-tanzu/kubeapps/pull/3640#issuecomment-949315105
+//  3. spec.targetNamespace, where flux will install any artifacts from the release
 func (s *Server) newFluxHelmRelease(chart *models.Chart, targetName types.NamespacedName, versionExpr string, reconcile *corev1.ReconciliationOptions, values map[string]interface{}) (*helmv2.HelmRelease, error) {
 	fluxRelease := &helmv2.HelmRelease{
 		ObjectMeta: metav1.ObjectMeta{
@@ -578,14 +578,13 @@ func (s *Server) newFluxHelmRelease(chart *models.Chart, targetName types.Namesp
 // docs:
 // 1. https://fluxcd.io/docs/components/helm/helmreleases/#examples
 // 2. discussion on private slack channel. Summary:
-//    - "ready" field: - it's not indicating that the resource has completed (i.e. whether the task
-//      completed with install or failure), but rather just whether the resource is ready or not.
-//      So it can be false because of either a final state (failure) or a pending state
-//      (reconciliation in progress or whatever). That means the ready flag will only be set to true
-//       when install completes with success
-//    - "reason" field: failure only when flux returns "InstallFailed" reason
-//       otherwise pending or unspecified when there are no status conditions to go by
-//
+//   - "ready" field: - it's not indicating that the resource has completed (i.e. whether the task
+//     completed with install or failure), but rather just whether the resource is ready or not.
+//     So it can be false because of either a final state (failure) or a pending state
+//     (reconciliation in progress or whatever). That means the ready flag will only be set to true
+//     when install completes with success
+//   - "reason" field: failure only when flux returns "InstallFailed" reason
+//     otherwise pending or unspecified when there are no status conditions to go by
 func isHelmReleaseReady(rel helmv2.HelmRelease) (ready bool, status corev1.InstalledPackageStatus_StatusReason, userReason string) {
 	if !checkReleaseGeneration(rel) {
 		return false, corev1.InstalledPackageStatus_STATUS_REASON_UNSPECIFIED, ""
@@ -597,11 +596,12 @@ func isHelmReleaseReady(rel helmv2.HelmRelease) (ready bool, status corev1.Insta
 	if readyCond != nil {
 		if readyCond.Reason != "" {
 			// this could be something like
-			// "reason": "InstallFailed"
+			//   "reason": "InstallFailed"
 			// i.e. not super-useful
 			userReason = readyCond.Reason
 			if userReason == helmv2.InstallFailedReason ||
-				userReason == helmv2.UpgradeFailedReason {
+				userReason == helmv2.UpgradeFailedReason ||
+				userReason == helmv2.GetLastReleaseFailedReason {
 				isInstallFailed = true
 			}
 		}
