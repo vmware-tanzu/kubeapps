@@ -566,7 +566,18 @@ run_e2e_tests: &run_e2e_tests
       info "CHARTMUSEUM_VERSION: $CHARTMUSEUM_VERSION"
       info "###############################################################################################"
 
-      if ./script/e2e-test.sh $USE_MULTICLUSTER_OIDC_ENV $OLM_VERSION $DEV_TAG $IMG_MODIFIER $TEST_TIMEOUT_MINUTES $DEFAULT_DEX_IP $ADDITIONAL_CLUSTER_IP $KAPP_CONTROLLER_VERSION $CHARTMUSEUM_VERSION; then
+      if 
+        USE_MULTICLUSTER_OIDC_ENV="${USE_MULTICLUSTER_OIDC_ENV}" \
+        OLM_VERSION="${OLM_VERSION}" \
+        DEV_TAG="${DEV_TAG}" \
+        IMG_MODIFIER="${IMG_MODIFIER}" \
+        TEST_TIMEOUT_MINUTES="${TEST_TIMEOUT_MINUTES}" \
+        DEFAULT_DEX_IP="${DEFAULT_DEX_IP:-}" \
+        ADDITIONAL_CLUSTER_IP="${ADDITIONAL_CLUSTER_IP:-}" \
+        KAPP_CONTROLLER_VERSION="${KAPP_CONTROLLER_VERSION}" \
+        CHARTMUSEUM_VERSION="${CHARTMUSEUM_VERSION}" \
+        ./script/e2e-test.sh; 
+      then
         # Test success
         echo "export TEST_RESULT=$?" >> $BASH_ENV
       else

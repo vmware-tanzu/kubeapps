@@ -20,17 +20,17 @@ OPERATOR_TESTS="operator"
 SUPPORTED_TESTS_GROUPS=("${ALL_TESTS}" "${MAIN_TESTS}" "${MULTICLUSTER_TESTS}" "${CARVEL_TESTS}" "${FLUX_TESTS}" "${OPERATOR_TESTS}")
 
 # Params
-USE_MULTICLUSTER_OIDC_ENV=${1:-false}
-OLM_VERSION=${2:-"v0.18.2"}
-IMG_DEV_TAG=${3:?missing dev tag}
-IMG_MODIFIER=${4:-""}
-TEST_TIMEOUT_MINUTES=${5:-"4"}
-DEX_IP=${6:-"172.18.0.2"}
-ADDITIONAL_CLUSTER_IP=${7:-"172.18.0.3"}
-KAPP_CONTROLLER_VERSION=${8:-"v0.41.2"}
-CHARTMUSEUM_VERSION=${9:-"3.9.0"}
+USE_MULTICLUSTER_OIDC_ENV=${USE_MULTICLUSTER_OIDC_ENV:-"false"}
+OLM_VERSION=${OLM_VERSION:-"v0.18.2"}
+IMG_DEV_TAG=${IMG_DEV_TAG:?missing dev tag}
+IMG_MODIFIER=${IMG_MODIFIER:-""}
+TEST_TIMEOUT_MINUTES=${TEST_TIMEOUT_MINUTES:-"4"}
+DEX_IP=${DEX_IP:-"172.18.0.2"}
+ADDITIONAL_CLUSTER_IP=${ADDITIONAL_CLUSTER_IP:-"172.18.0.3"}
+KAPP_CONTROLLER_VERSION=${KAPP_CONTROLLER_VERSION:-"v0.41.2"}
+CHARTMUSEUM_VERSION=${CHARTMUSEUM_VERSION:-"3.9.0"}
 # check latest flux releases at https://github.com/fluxcd/flux2/releases
-FLUX_VERSION=${10:-"v0.35.0"}
+FLUX_VERSION=${FLUX_VERSION:-"v0.35.0"}
 GKE_BRANCH=${GKE_BRANCH:-}
 IMG_PREFIX=${IMG_PREFIX:-"kubeapps/"}
 TESTS_GROUP=${TESTS_GROUP:-"${ALL_TESTS}"}
@@ -70,6 +70,7 @@ fi
 # Functions for handling Chart Museum
 . "${ROOT_DIR}/script/chart-museum.sh"
 
+info "###############################################################################################"
 info "DEBUG MODE: ${DEBUG_MODE}"
 info "TESTS GROUP: ${TESTS_GROUP}"
 info "GKE BRANCH: ${GKE_BRANCH}"
@@ -87,7 +88,7 @@ info "Test timeout minutes: ${TEST_TIMEOUT_MINUTES}"
 info "Kapp Controller version: ${KAPP_CONTROLLER_VERSION}"
 info "Cluster Version: $(kubectl version -o json | jq -r '.serverVersion.gitVersion')"
 info "Kubectl Version: $(kubectl version -o json | jq -r '.clientVersion.gitVersion')"
-echo ""
+info "###############################################################################################"
 
 # Auxiliary functions
 
