@@ -183,6 +183,9 @@ workflows:
       - sync_chart_from_bitnami:
           <<: *build_on_main
 
+      - GKE_DEBUG_NO_WAIT:
+          <<: *build_always
+
       - GKE_DEBUG:
           <<: *build_always
           requires:
@@ -876,6 +879,11 @@ jobs:
       - store_artifacts:
           path: integration/reports
       - run: exit $TEST_RESULT
+  GKE_DEBUG_NO_WAIT:
+    <<: *gke_test
+    environment:
+      GKE_BRANCH: << pipeline.parameters.GKE_REGULAR_VERSION >>
+      <<: [*common_envars, *common_gke_envars]
   GKE_DEBUG:
     <<: *gke_test
     environment:

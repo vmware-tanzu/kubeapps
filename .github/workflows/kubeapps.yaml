@@ -679,6 +679,16 @@ jobs:
         run: |
           kubectl create namespace kubeapps-user-namespace
           ./script/install-nginx.sh
+      - name: "Run e2e tests script"
+        env:
+          TESTS_GROUP: "all"
+        run: ./script/run_e2e_tests.sh
+      - name: 'Upload Artifacts'
+        if: failure()
+        uses: actions/upload-artifact@v3
+        with:
+          name: gcloud_test
+          path: integration/reports
       - name: "Delete GKE cluster"
         if: always()
         run: |
