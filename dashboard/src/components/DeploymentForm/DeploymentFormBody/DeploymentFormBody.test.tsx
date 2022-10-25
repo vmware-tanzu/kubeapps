@@ -3,12 +3,10 @@
 
 import { CdsButton } from "@cds/react/button";
 import { JSONSchemaType } from "ajv";
-import { EnumDescriptorProto } from "gen/google/protobuf/descriptor";
 import {
   AvailablePackageDetail,
   PackageAppVersion,
 } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
-import { forEach } from "lodash";
 import { act } from "react-dom/test-utils";
 import { MonacoDiffEditor } from "react-monaco-editor";
 import { defaultStore, getStore, initialState, mountWrapper } from "shared/specs/mountWrapper";
