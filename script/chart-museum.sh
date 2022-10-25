@@ -4,7 +4,6 @@
 # SPDX-License-Identifier: Apache-2.0
 
 set -euo pipefail
-IFS=$'\t\n'
 
 CHARTMUSEUM_USER=${CHARTMUSEUM_USER:-"admin"}
 CHARTMUSEUM_PWD=${CHARTMUSEUM_PWD:-"password"}

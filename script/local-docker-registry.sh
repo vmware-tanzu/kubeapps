@@ -4,7 +4,6 @@
 # SPDX-License-Identifier: Apache-2.0
 
 set -euo pipefail
-IFS=$'\t\n'
 
 CONTROL_PLANE_CONTAINER=${CONTROL_PLANE_CONTAINER:-"kubeapps-ci-control-plane"}
 REGISTRY_NS=ci
