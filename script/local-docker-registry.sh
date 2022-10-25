@@ -32,16 +32,16 @@ installLocalRegistry() {
 
     # Add our CA to the node
     docker cp "$(mkcert -CAROOT)"/rootCA.pem "$CONTROL_PLANE_CONTAINER:/usr/share/ca-certificates/local-rootCA.pem"
-    docker exec --user root $CONTROL_PLANE_CONTAINER sh -c "echo 'local-rootCA.pem' >> /etc/ca-certificates.conf"
-    docker exec --user root $CONTROL_PLANE_CONTAINER update-ca-certificates -f
+    docker exec --user root "$CONTROL_PLANE_CONTAINER" sh -c "echo 'local-rootCA.pem' >> /etc/ca-certificates.conf"
+    docker exec --user root "$CONTROL_PLANE_CONTAINER" update-ca-certificates -f
 
     # Restart containerd to make the CA addition effective
-    docker exec --user root $CONTROL_PLANE_CONTAINER systemctl restart containerd
+    docker exec --user root "$CONTROL_PLANE_CONTAINER" systemctl restart containerd
 
     # Generate new certificate for registry
-    mkcert -key-file $PROJECT_PATH/devel/localhost-key.pem -cert-file $PROJECT_PATH/devel/docker-registry-cert.pem $DOCKER_REGISTRY_HOST "docker-registry.$REGISTRY_NS.svc.cluster.local"
+    mkcert -key-file "$PROJECT_PATH/devel/localhost-key.pem" -cert-file "$PROJECT_PATH/devel/docker-registry-cert.pem" $DOCKER_REGISTRY_HOST "docker-registry.$REGISTRY_NS.svc.cluster.local"
     kubectl -n $REGISTRY_NS delete secret registry-tls --ignore-not-found=true
-    kubectl -n $REGISTRY_NS create secret tls registry-tls --key $PROJECT_PATH/devel/localhost-key.pem --cert $PROJECT_PATH/devel/docker-registry-cert.pem
+    kubectl -n $REGISTRY_NS create secret tls registry-tls --key "$PROJECT_PATH/devel/localhost-key.pem" --cert "$PROJECT_PATH/devel/docker-registry-cert.pem"
 
     # Create registry resources
     envsubst < "${PROJECT_PATH}/integration/registry/local-registry.yaml" | kubectl apply -f -
@@ -53,7 +53,7 @@ installLocalRegistry() {
     # Haven't found a way to use the cluster DNS from the node, 
     # following https://github.com/kubernetes/kubernetes/issues/8735#issuecomment-148800699
     REGISTRY_IP=$(kubectl -n $REGISTRY_NS get service/docker-registry -o jsonpath='{.spec.clusterIP}')
-    docker exec --user root $CONTROL_PLANE_CONTAINER sh -c "echo '$REGISTRY_IP  $DOCKER_REGISTRY_HOST' >> /etc/hosts"
+    docker exec --user root "$CONTROL_PLANE_CONTAINER" sh -c "echo '$REGISTRY_IP  $DOCKER_REGISTRY_HOST' >> /etc/hosts"
 
     echo "Installing Ingress for Docker registry with access through host ${DOCKER_REGISTRY_HOST}"
     kubectl apply -f - -o yaml << EOF

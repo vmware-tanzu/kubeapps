@@ -27,12 +27,12 @@ if [[ $(gcloud container clusters list --filter="name:${CLUSTER}") ]]; then
         done
     else
         echo "GKE cluster already exits. Deleting it"
-        gcloud container clusters delete "${CLUSTER}" --zone "${ZONE}"
+        gcloud container clusters delete "${CLUSTER}" --zone "${ZONE}" --quiet
     fi
 fi
 
 echo "Creating cluster ${CLUSTER} in ${ZONE} (v$BRANCH)"
-gcloud container clusters create --cluster-version="${BRANCH}" --zone "${ZONE}" "${CLUSTER}" --num-nodes 2 --machine-type=n1-standard-2 --preemptible --labels=team=kubeapps
+gcloud container clusters create --cluster-version="${BRANCH}" --zone "${ZONE}" "${CLUSTER}" --num-nodes 2 --machine-type=n1-standard-2 --preemptible --labels=team=kubeapps --quiet
 echo "Waiting for the cluster to respond..."
 cnt=20
 until kubectl get pods >/dev/null 2>&1; do
@@ -45,4 +45,4 @@ until kubectl get pods >/dev/null 2>&1; do
 done
 
 # Set the current user as admin
-kubectl create clusterrolebinding kubeapps-cluster-admin --clusterrole=cluster-admin --user=$ADMIN
+kubectl create clusterrolebinding kubeapps-cluster-admin --clusterrole=cluster-admin --user="$ADMIN"

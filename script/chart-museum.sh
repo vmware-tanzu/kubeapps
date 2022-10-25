@@ -67,29 +67,29 @@ pushChartToChartMuseum() {
   fi
 
   echo ">> Pushing chart '${CHART_FILE}' (${CHART_NAME} v${CHART_VERSION}) to chart museum at ${CHARTMUSEUM_HOSTNAME} and IP ${CHARTMUSEUM_IP}"
-  CHART_EXISTS=$(curl -Lk -u "${CHARTMUSEUM_USER}:${CHARTMUSEUM_PWD}" -H "Host: ${CHARTMUSEUM_HOSTNAME}" http://${CHARTMUSEUM_IP}/api/charts/${CHART_NAME}/${CHART_VERSION} | jq -r 'any([ .error] ; . > 0)')
+  CHART_EXISTS=$(curl -Lk -u "${CHARTMUSEUM_USER}:${CHARTMUSEUM_PWD}" -H "Host: ${CHARTMUSEUM_HOSTNAME}" "http://${CHARTMUSEUM_IP}/api/charts/${CHART_NAME}/${CHART_VERSION}" | jq -r 'any([ .error] ; . > 0)')
   if [ "$CHART_EXISTS" == "true" ]; then
     echo ">> Chart ${CHART_NAME} v${CHART_VERSION} already exists: deleting"
-    curl -Lk -u "${CHARTMUSEUM_USER}:${CHARTMUSEUM_PWD}" -H "Host: ${CHARTMUSEUM_HOSTNAME}" -X DELETE http://${CHARTMUSEUM_IP}/api/charts/${CHART_NAME}/${CHART_VERSION}
+    curl -Lk -u "${CHARTMUSEUM_USER}:${CHARTMUSEUM_PWD}" -H "Host: ${CHARTMUSEUM_HOSTNAME}" -X DELETE "http://${CHARTMUSEUM_IP}/api/charts/${CHART_NAME}/${CHART_VERSION}"
   fi
   
   echo ">> Uploading chart from file ${CHART_FILE}"
-  curl -Lk -u "${CHARTMUSEUM_USER}:${CHARTMUSEUM_PWD}" -H "Host: ${CHARTMUSEUM_HOSTNAME}" --data-binary "@${CHART_FILE}" http://${CHARTMUSEUM_IP}/api/charts  
+  curl -Lk -u "${CHARTMUSEUM_USER}:${CHARTMUSEUM_PWD}" -H "Host: ${CHARTMUSEUM_HOSTNAME}" --data-binary "@${CHART_FILE}" "http://${CHARTMUSEUM_IP}/api/charts"
 }
 
 # Install ChartsMuseum
 installChartMuseum() {
   echo "Installing ChartMuseum ${CHARTMUSEUM_VERSION}..."
-  helm install chartmuseum --namespace ${CHARTMUSEUM_NS} --create-namespace "https://github.com/chartmuseum/charts/releases/download/chartmuseum-${CHARTMUSEUM_VERSION}/chartmuseum-${CHARTMUSEUM_VERSION}.tgz" \
+  helm install chartmuseum --namespace "${CHARTMUSEUM_NS}" --create-namespace "https://github.com/chartmuseum/charts/releases/download/chartmuseum-${CHARTMUSEUM_VERSION}/chartmuseum-${CHARTMUSEUM_VERSION}.tgz" \
     --set env.open.DISABLE_API=false \
     --set persistence.enabled=true \
     --set env.secret.BASIC_AUTH_USER=$CHARTMUSEUM_USER \
     --set env.secret.BASIC_AUTH_PASS=$CHARTMUSEUM_PWD
   info "Waiting for ChartMuseum to be ready..."
-  kubectl rollout status -w deployment/chartmuseum --namespace=${CHARTMUSEUM_NS}
+  kubectl rollout status -w deployment/chartmuseum --namespace="${CHARTMUSEUM_NS}"
   
   echo "Installing Ingress for ChartMuseum with access through host ${CHARTMUSEUM_HOSTNAME}"
-  kubectl create -n $CHARTMUSEUM_NS -f - -o yaml << EOF
+  kubectl create -n "$CHARTMUSEUM_NS" -f - -o yaml << EOF
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
@@ -126,8 +126,8 @@ EOF
 # Uninstall ChartsMuseum
 uninstallChartMuseum() {
   echo "Uninstalling ChartMuseum..."
-  helm uninstall chartmuseum --namespace ${CHARTMUSEUM_NS}
-  kubectl delete ingress chartmuseum --namespace ${CHARTMUSEUM_NS}
+  helm uninstall chartmuseum --namespace "${CHARTMUSEUM_NS}"
+  kubectl delete ingress chartmuseum --namespace "${CHARTMUSEUM_NS}"
 }
 
 if (($# > 0)); then
