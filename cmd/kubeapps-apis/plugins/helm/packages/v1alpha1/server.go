@@ -1035,9 +1035,9 @@ func (s *Server) AddPackageRepository(ctx context.Context, request *corev1.AddPa
 		return nil, status.Errorf(codes.InvalidArgument, "no package repository Name provided")
 	}
 
-	name := request.GetName()
-	url := request.GetUrl()
-	log.Infof("+helm AddPackageRepository '%s' pointing to '%s'", name, url)
+	repoName := request.GetName()
+	repoUrl := request.GetUrl()
+	log.Infof("+helm AddPackageRepository '%s' pointing to '%s'", repoName, repoUrl)
 
 	cluster := request.GetContext().GetCluster()
 	if cluster == "" {
@@ -1052,7 +1052,7 @@ func (s *Server) AddPackageRepository(ctx context.Context, request *corev1.AddPa
 		return nil, status.Errorf(codes.InvalidArgument, "Namespace Scope is inconsistent with the provided Namespace")
 	}
 	name := types.NamespacedName{
-		Name:      request.Name,
+		Name:      repoName,
 		Namespace: namespace,
 	}
 
