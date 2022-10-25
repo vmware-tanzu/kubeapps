@@ -27,8 +27,8 @@ IMG_MODIFIER=${4:-""}
 TEST_TIMEOUT_MINUTES=${5:-"4"}
 DEX_IP=${6:-"172.18.0.2"}
 ADDITIONAL_CLUSTER_IP=${7:-"172.18.0.3"}
-KAPP_CONTROLLER_VERSION=${8:-"v0.41.2"}
-CHARTMUSEUM_VERSION=${9:-"3.9.0"}
+KAPP_CONTROLLER_VERSION=${8:-"v0.42.0"}
+CHARTMUSEUM_VERSION=${9:-"3.9.1"}
 # check latest flux releases at https://github.com/fluxcd/flux2/releases
 FLUX_VERSION=${10:-"v0.35.0"}
 IMG_PREFIX=${IMG_PREFIX:-"kubeapps/"}
@@ -642,7 +642,7 @@ if [[ "${TESTS_GROUP}" == "${ALL_TESTS}" || "${TESTS_GROUP}" == "${FLUX_TESTS}" 
     yarn test \"tests/flux/\"
     "
   info "${test_command}"
-  
+
   if ! kubectl exec -it "$pod" -- /bin/sh -c "${test_command}"; then
     ## Integration tests failed, get report screenshot
     warn "PODS status on failure"
