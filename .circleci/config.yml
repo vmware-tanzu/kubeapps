@@ -569,7 +569,7 @@ run_e2e_tests: &run_e2e_tests
       if 
         USE_MULTICLUSTER_OIDC_ENV="${USE_MULTICLUSTER_OIDC_ENV}" \
         OLM_VERSION="${OLM_VERSION}" \
-        DEV_TAG="${DEV_TAG}" \
+        IMG_DEV_TAG="${DEV_TAG}" \
         IMG_MODIFIER="${IMG_MODIFIER}" \
         TEST_TIMEOUT_MINUTES="${TEST_TIMEOUT_MINUTES}" \
         DEFAULT_DEX_IP="${DEFAULT_DEX_IP:-}" \
