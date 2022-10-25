@@ -329,6 +329,8 @@ formattedElapsedTime() {
   echo "${mins}m ${secs}s"
 }
 
+[[ "${DEBUG_MODE}" == "true" ]] && set -x;
+
 if [[ "${DEBUG_MODE}" == "true" && -z ${GKE_BRANCH} ]]; then
   info "Docker images loaded in the cluster:"
   docker exec kubeapps-ci-control-plane crictl images
