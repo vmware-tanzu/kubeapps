@@ -182,6 +182,19 @@ workflows:
             - sync_chart_from_bitnami
       - sync_chart_from_bitnami:
           <<: *build_on_main
+
+      - GKE_DEBUG:
+          <<: *build_always
+          requires:
+            - test_go
+            - test_dashboard
+            - test_pinniped_proxy
+            - test_chart_render
+            - build_go_images
+            - build_dashboard
+            - build_pinniped_proxy
+            - build_e2e_runner
+
       - GKE_REGULAR_VERSION_MAIN:
           <<: *build_on_tag_or_prerelease
           requires:
@@ -539,6 +552,20 @@ run_e2e_tests: &run_e2e_tests
         DEV_TAG=${latest/v/}
         IMG_MODIFIER=""
       fi
+      
+      source ./script/lib/liblog.sh
+      info "###############################################################################################"
+      info "USE_MULTICLUSTER_OIDC_ENV: $USE_MULTICLUSTER_OIDC_ENV"
+      info "OLM_VERSION: $OLM_VERSION"
+      info "DEV_TAG: $DEV_TAG"
+      info "IMG_MODIFIER: $IMG_MODIFIER"
+      info "TEST_TIMEOUT_MINUTES: $TEST_TIMEOUT_MINUTES"
+      info "DEFAULT_DEX_IP: $DEFAULT_DEX_IP"
+      info "ADDITIONAL_CLUSTER_IP: $ADDITIONAL_CLUSTER_IP"
+      info "KAPP_CONTROLLER_VERSION: $KAPP_CONTROLLER_VERSION"
+      info "CHARTMUSEUM_VERSION: $CHARTMUSEUM_VERSION"
+      info "###############################################################################################"
+
       if ./script/e2e-test.sh $USE_MULTICLUSTER_OIDC_ENV $OLM_VERSION $DEV_TAG $IMG_MODIFIER $TEST_TIMEOUT_MINUTES $DEFAULT_DEX_IP $ADDITIONAL_CLUSTER_IP $KAPP_CONTROLLER_VERSION $CHARTMUSEUM_VERSION; then
         # Test success
         echo "export TEST_RESULT=$?" >> $BASH_ENV
@@ -829,6 +856,11 @@ jobs:
       - store_artifacts:
           path: integration/reports
       - run: exit $TEST_RESULT
+  GKE_DEBUG:
+    <<: *gke_test
+    environment:
+      GKE_BRANCH: << pipeline.parameters.GKE_REGULAR_VERSION >>
+      <<: [*common_envars, *common_gke_envars]
   GKE_REGULAR_VERSION_MAIN:
     <<: *gke_test
     environment:
