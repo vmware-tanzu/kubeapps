@@ -23,6 +23,7 @@ import (
 	"github.com/vmware-tanzu/kubeapps/pkg/chart/models"
 	"github.com/vmware-tanzu/kubeapps/pkg/dbutils"
 	httpclient "github.com/vmware-tanzu/kubeapps/pkg/http-client"
+	"github.com/vmware-tanzu/kubeapps/pkg/kube"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/anypb"
@@ -150,7 +151,7 @@ func NewServer(configGetter core.KubernetesConfigGetter, globalPackagingCluster 
 			cluster := pkgContext.GetCluster()
 			// Don't force clients to send a cluster unless we are sure all use-cases
 			// of kubeapps-api are multicluster.
-			if cluster == "" {
+			if kube.IsKubeappsClusterRef(cluster) {
 				cluster = globalPackagingCluster
 			}
 			fn := helm.NewHelmActionConfigGetter(configGetter, cluster)
@@ -1026,24 +1027,21 @@ func (s *Server) GetInstalledPackageResourceRefs(ctx context.Context, request *c
 }
 
 func (s *Server) AddPackageRepository(ctx context.Context, request *corev1.AddPackageRepositoryRequest) (*corev1.AddPackageRepositoryResponse, error) {
-	repoName := request.GetName()
-	repoUrl := request.GetUrl()
-	log.Infof("+helm AddPackageRepository '%s' pointing to '%s'", repoName, repoUrl)
 
 	if request == nil {
 		return nil, status.Errorf(codes.InvalidArgument, "no request provided")
 	}
-	if request.Context == nil {
-		return nil, status.Errorf(codes.InvalidArgument, "no request Context provided")
-	}
-	cluster := request.GetContext().GetCluster()
-	if cluster == "" {
-		return nil, status.Errorf(codes.InvalidArgument, "no cluster specified: request.Context.Cluster: [%v]", request.Context.Cluster)
-	}
-
 	if request.Name == "" {
 		return nil, status.Errorf(codes.InvalidArgument, "no package repository Name provided")
 	}
+
+	log.Infof("+helm AddPackageRepository '%s' pointing to '%s'", request.GetName(), request.GetUrl())
+
+	cluster := request.GetContext().GetCluster()
+	if cluster == "" {
+		cluster = s.globalPackagingCluster
+	}
+
 	namespace := request.GetContext().GetNamespace()
 	if namespace == "" {
 		namespace = s.GetGlobalPackagingNamespace()
