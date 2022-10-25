@@ -648,6 +648,7 @@ jobs:
               ${DEV_MODE}
 
   gcloud_test:
+    if: false
     runs-on: ubuntu-latest
     env:
       GKE_ADMIN: ${{ secrets.GKE_ADMIN }}

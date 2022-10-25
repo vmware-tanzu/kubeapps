@@ -12,6 +12,8 @@ ZONE=${2:?}
 BRANCH=${3:?}
 ADMIN=${4:?}
 
+[[ "${DEBUG_MODE}" == "true" ]] && set -x
+
 if ! gcloud container clusters list; then
     echo "Unable to access gcloud project"
     exit 1
