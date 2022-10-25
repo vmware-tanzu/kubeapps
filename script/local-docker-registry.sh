@@ -15,7 +15,7 @@ DOCKER_USERNAME=testuser
 DOCKER_PASSWORD=testpassword
 
 installLocalRegistry() {
-    local DOCKER_REGISTRY_VERSION="${$DOCKER_REGISTRY_VERSION:-}"
+    local DOCKER_REGISTRY_VERSION="${DOCKER_REGISTRY_VERSION:-}"
     if [ -z "$DOCKER_REGISTRY_VERSION" ]; then
       echo "No Docker registry version supplied"
       exit 1
