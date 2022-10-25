@@ -22,7 +22,7 @@ retry_while() {
 
     read -r -a command <<<"$cmd"
     for ((i = 1; i <= retries; i += 1)); do
-        "${command[@]}" && return_value=0 && break
+        IFS=$' ' "${command[@]}" && return_value=0 && break
         sleep "$sleep_time"
     done
     return $return_value
