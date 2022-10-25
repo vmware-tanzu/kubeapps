@@ -10,7 +10,8 @@
   "oauthLogoutURI": "/oauth2/sign_out",
   "clusters": ["default"],
   "featureFlags": {
-    "operators": false
+    "operators": false,
+    "schemaEditor": false
   },
   "theme": "light",
   "remoteComponentsUrl": "",
