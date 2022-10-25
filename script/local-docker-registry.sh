@@ -3,6 +3,9 @@
 # Copyright 2022 the Kubeapps contributors.
 # SPDX-License-Identifier: Apache-2.0
 
+set -euo pipefail
+IFS=$'\t\n'
+
 CONTROL_PLANE_CONTAINER=${CONTROL_PLANE_CONTAINER:-"kubeapps-ci-control-plane"}
 REGISTRY_NS=ci
 DOCKER_REGISTRY_HOST=local-docker-registry
@@ -12,6 +15,7 @@ DOCKER_USERNAME=testuser
 DOCKER_PASSWORD=testpassword
 
 installLocalRegistry() {
+    local DOCKER_REGISTRY_VERSION="${$DOCKER_REGISTRY_VERSION:-}"
     if [ -z "$DOCKER_REGISTRY_VERSION" ]; then
       echo "No Docker registry version supplied"
       exit 1
@@ -124,18 +128,20 @@ uninstallLocalRegistry() {
   kubectl -n ${REGISTRY_NS} delete secret registry-tls
 }
 
-case $1 in
+if (($# > 0)); then
+  case $1 in
 
-  install)
-    installLocalRegistry $2
-    ;;
+    install)
+      installLocalRegistry $2
+      ;;
 
-  pushNginx)
-    pushContainerToLocalRegistry
-    ;;
+    pushNginx)
+      pushContainerToLocalRegistry
+      ;;
 
-  uninstall)
-    uninstallLocalRegistry $2
-    ;;
+    uninstall)
+      uninstallLocalRegistry $2
+      ;;
 
-esac
+  esac
+fi

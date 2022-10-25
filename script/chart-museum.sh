@@ -3,6 +3,9 @@
 # Copyright 2022 the Kubeapps contributors.
 # SPDX-License-Identifier: Apache-2.0
 
+set -euo pipefail
+IFS=$'\t\n'
+
 CHARTMUSEUM_USER=${CHARTMUSEUM_USER:-"admin"}
 CHARTMUSEUM_PWD=${CHARTMUSEUM_PWD:-"password"}
 CHARTMUSEUM_NS=${CHARTMUSEUM_NS:-"chart-museum"}
@@ -127,24 +130,26 @@ uninstallChartMuseum() {
   kubectl delete ingress chartmuseum --namespace ${CHARTMUSEUM_NS}
 }
 
-case $1 in
+if (($# > 0)); then
+  case $1 in
 
-  install)
-    installChartMuseum
-    ;;
+    install)
+      installChartMuseum
+      ;;
 
-  uninstall)
-    uninstallChartMuseum
-    ;;
+    uninstall)
+      uninstallChartMuseum
+      ;;
 
-  pullBitnamiChart)
-    pullBitnamiChart $2 $3
-    ;;
+    pullBitnamiChart)
+      pullBitnamiChart $2 $3
+      ;;
 
-  pushChart)
-    pushChartToChartMuseum $2 $3 $4
-    ;;
+    pushChart)
+      pushChartToChartMuseum $2 $3 $4
+      ;;
 
-  *)
-    ;;
-esac
+    *)
+      ;;
+  esac
+fi
