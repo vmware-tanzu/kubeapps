@@ -1,4 +1,4 @@
-{{- if and .Values.ingress.enabled .Values.ingress.apiOnly.enabled -}}
+{{- if and .Values.ingress.enabled .Values.featureFlags.apiOnly.enabled -}}
 {{- if and .Values.dashboard.enabled -}}
   {{ fail "Dashboard is enabled but will NOT work with Ingress in API mode. Please set \"dashboard.enabled\" to false." }}
 {{- end -}}
@@ -79,8 +79,8 @@ metadata:
     {{- include "common.tplvalues.render" ( dict "value" .Values.commonLabels "context" . ) | nindent 4 }}
     {{- end }}
   annotations:
-    {{- if .Values.ingress.apiOnly.grpc.annotations }}
-    {{- include "common.tplvalues.render" (dict "value" .Values.ingress.apiOnly.grpc.annotations "context" . ) | nindent 4 }}
+    {{- if .Values.featureFlags.apiOnly.grpc.annotations }}
+    {{- include "common.tplvalues.render" (dict "value" .Values.featureFlags.apiOnly.grpc.annotations "context" . ) | nindent 4 }}
     {{- end }}
     {{- if .Values.ingress.annotations }}
     {{- include "common.tplvalues.render" (dict "value" .Values.ingress.annotations "context" . ) | nindent 4 }}

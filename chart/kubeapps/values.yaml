@@ -64,16 +64,6 @@ ingress:
   ## @param ingress.enabled Enable ingress record generation for Kubeapps
   ##
   enabled: false
-  ## @param ingress.apiOnly.enabled Enable ingress for API operations only. Access to "/" will not be possible, so Dashboard will be unusable.
-  ## @param ingress.apiOnly.grpc.annotations [object] Specific annotations for the GRPC API ingress
-  ## For a full list of possible ingress annotations, please see
-  ## ref: https://github.com/kubernetes/ingress-nginx/blob/main/docs/user-guide/nginx-configuration/annotations.md
-  ##
-  apiOnly:
-    enabled: false
-    grpc:
-      annotations:
-        nginx.ingress.kubernetes.io/backend-protocol: GRPC
   ## @param ingress.apiVersion Force Ingress API version (automatically detected if not set)
   ##
   apiVersion: ""
@@ -1433,7 +1423,16 @@ featureFlags:
   ## @param featureFlags.operators Enable ingress record generation for Kubeapps
   ##
   operators: false
-
+  ## @param featureFlags.apiOnly.enabled Enable ingress for API operations only. Access to "/" will not be possible, so Dashboard will be unusable.
+  ## @param featureFlags.apiOnly.grpc.annotations [object] Specific annotations for the GRPC ingress in API-only mode
+  ## For a full list of possible ingress annotations, please see
+  ## ref: https://github.com/kubernetes/ingress-nginx/blob/main/docs/user-guide/nginx-configuration/annotations.md
+  ##
+  apiOnly:
+    enabled: false
+    grpc:
+      annotations:
+        nginx.ingress.kubernetes.io/backend-protocol: GRPC
 ## RBAC configuration
 ##
 rbac:
