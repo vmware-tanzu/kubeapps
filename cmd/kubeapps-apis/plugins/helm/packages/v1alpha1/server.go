@@ -1035,7 +1035,9 @@ func (s *Server) AddPackageRepository(ctx context.Context, request *corev1.AddPa
 		return nil, status.Errorf(codes.InvalidArgument, "no package repository Name provided")
 	}
 
-	log.Infof("+helm AddPackageRepository '%s' pointing to '%s'", request.GetName(), request.GetUrl())
+	name := request.GetName()
+	url := request.GetUrl()
+	log.Infof("+helm AddPackageRepository '%s' pointing to '%s'", name, url)
 
 	cluster := request.GetContext().GetCluster()
 	if cluster == "" {
