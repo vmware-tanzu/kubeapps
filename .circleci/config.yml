@@ -883,11 +883,13 @@ jobs:
     <<: *gke_test
     environment:
       GKE_BRANCH: << pipeline.parameters.GKE_REGULAR_VERSION >>
+      DEBUG_MODE: true
       <<: [*common_envars, *common_gke_envars]
   GKE_DEBUG:
     <<: *gke_test
     environment:
       GKE_BRANCH: << pipeline.parameters.GKE_REGULAR_VERSION >>
+      DEBUG_MODE: true
       <<: [*common_envars, *common_gke_envars]
   GKE_REGULAR_VERSION_MAIN:
     <<: *gke_test
