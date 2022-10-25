@@ -11,6 +11,11 @@ nodes:
         containerPath: /etc/ssl/certs/dex.crt
     kubeadmConfigPatches:
       - |
+        kind: InitConfiguration
+        nodeRegistration:
+          kubeletExtraArgs:
+            node-labels: "ingress-ready=true"
+      - |
         kind: ClusterConfiguration
         apiServer:
           extraArgs:
