@@ -653,6 +653,8 @@ jobs:
       GKE_ADMIN: ${{ secrets.GKE_ADMIN }}
       GCLOUD_KEY: ${{ secrets.GCLOUD_KEY }}
       DEBUG_MODE: true
+      USE_MULTICLUSTER_OIDC_ENV: "false"
+      TEST_TIMEOUT_MINUTES: 1
     steps:
       - # We need this step because we can not set a env var taking the value from another existing env var via the job.<id>.env section
         name: Set GKE_BRANCH
