@@ -619,7 +619,16 @@ gke_test: &gke_test
     - run:
         name: Export escaped GKE cluster name
         command: |
-          echo "export ESCAPED_GKE_CLUSTER=$(echo ${GKE_CLUSTER}-${CIRCLE_BRANCH:-$CIRCLE_TAG}-${TEST_LATEST_RELEASE}-${GKE_BRANCH}-ci | sed 's/[^a-z0-9-]//g')" >> $BASH_ENV
+          ESCAPED_GKE_CLUSTER=$(echo ${GKE_CLUSTER}-${CIRCLE_BRANCH:-$CIRCLE_TAG}-${TEST_LATEST_RELEASE}-${GKE_BRANCH}-ci | sed 's/[^a-z0-9-]//g')
+          
+          # Trim the cluster name in case it exceeds the max length allowed by GKE (currently 40 chars)
+          local MAX_LENGTH=40 
+          local len=${#ESCAPED_GKE_CLUSTER}
+          if ((len > MAX_LENGTH)); then
+            ESCAPED_GKE_CLUSTER="${ESCAPED_GKE_CLUSTER:0:MAX_LENGTH}"
+          fi
+          
+          echo "export ESCAPED_GKE_CLUSTER=${ESCAPED_GKE_CLUSTER}" >> $BASH_ENV
     - run:
         name: Start GKE environment
         command: |

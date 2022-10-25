@@ -283,7 +283,7 @@ function exportEscapedGKEClusterName() {
 
   export ESCAPED_GKE_CLUSTER
   # Just exporting the env var won't make it available for the next steps in the GHA's job, so we need the line below
-    echo "ESCAPED_GKE_CLUSTER=${ESCAPED_GKE_CLUSTER}" >> "${GITHUB_ENV}"
+  echo "ESCAPED_GKE_CLUSTER=${ESCAPED_GKE_CLUSTER}" >> "${GITHUB_ENV}"
   info "Done"
 }
 
