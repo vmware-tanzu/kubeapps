@@ -192,12 +192,12 @@ pushChart() {
   #   description: foo apache chart for CI
   # consequently, the new packaged chart is "${prefix}${chart}-${version}.tgz"
   # This workaround should mitigate https://github.com/vmware-tanzu/kubeapps/issues/3339
-  mkdir ./${chart}-${version}
-  tar zxf ${chart}-${version}.tgz -C ./${chart}-${version}
+  mkdir "./${chart}-${version}"
+  tar zxf "${chart}-${version}.tgz" -C "./${chart}-${version}"
   # this relies on GNU sed, which is not the default on MacOS
   # ref https://gist.github.com/andre3k1/e3a1a7133fded5de5a9ee99c87c6fa0d
-  sed -i "s/name: ${chart}/name: ${prefix}${chart}/" ./${chart}-${version}/${chart}/Chart.yaml
-  sed -i "0,/^\([[:space:]]*description: *\).*/s//\1${description}/" ./${chart}-${version}/${chart}/Chart.yaml
+  sed -i "s/name: ${chart}/name: ${prefix}${chart}/" "./${chart}-${version}/${chart}/Chart.yaml"
+  sed -i "0,/^\([[:space:]]*description: *\).*/s//\1${description}/" "./${chart}-${version}/${chart}/Chart.yaml"
   helm package "./${chart}-${version}/${chart}" -d .
 
   pushChartToChartMuseum "${chart}" "${version}" "${prefix}${chart}-${version}.tgz"
@@ -276,8 +276,8 @@ generateAdditionalValuesFile() {
     kubernetes.io/ingress.class: nginx
     nginx.ingress.kubernetes.io/proxy-buffer-size: \"8k\"
     nginx.ingress.kubernetes.io/proxy-buffers: \"4.0\"
-    nginx.ingress.kubernetes.io/proxy-read-timeout: \"600.0\"" > ${valuesFile}
-  echo ${valuesFile}
+    nginx.ingress.kubernetes.io/proxy-read-timeout: \"600.0\"" > "${valuesFile}"
+  echo "${valuesFile}"
 }
 
 ########################################################################################################################
@@ -383,7 +383,7 @@ if [ "$USE_MULTICLUSTER_OIDC_ENV" = true ]; then
     "--set" "clusters[1].name=second-cluster"
     "--set" "clusters[1].apiServiceURL=https://${ADDITIONAL_CLUSTER_IP}:6443"
     "--set" "clusters[1].insecure=true"
-    "--set" "clusters[1].serviceToken=$(kubectl --context=kind-kubeapps-ci-additional --kubeconfig=${HOME}/.kube/kind-config-kubeapps-ci-additional get secret kubeapps-namespace-discovery -o go-template='{{.data.token | base64decode}}')"
+    "--set" "clusters[1].serviceToken=$(kubectl --context=kind-kubeapps-ci-additional --kubeconfig="${HOME}/.kube/kind-config-kubeapps-ci-additional" get secret kubeapps-namespace-discovery -o go-template='{{.data.token | base64decode}}')"
   )
 fi
 
@@ -462,7 +462,7 @@ done
 
 # Browser tests
 cd "${ROOT_DIR}/integration"
-kubectl create deployment e2e-runner --image ${IMG_PREFIX}integration-tests${IMG_MODIFIER}:${IMG_DEV_TAG}
+kubectl create deployment e2e-runner --image "${IMG_PREFIX}integration-tests${IMG_MODIFIER}:${IMG_DEV_TAG}"
 k8s_wait_for_deployment default e2e-runner
 pod=$(kubectl get po -l app=e2e-runner -o custom-columns=:metadata.name --no-headers)
 ## Copy config and latest tests
