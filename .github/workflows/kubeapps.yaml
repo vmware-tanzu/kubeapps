@@ -649,6 +649,23 @@ jobs:
               ${BRANCH_CHARTS_REPO_FORKED} \
               ${DEV_MODE}
 
+  DEBUG:
+    if: needs.setup.outputs.triggered_from_fork == 'false'
+    needs:
+      - setup
+    runs-on: ubuntu-latest
+    steps:
+      - run: |
+          echo "GKE_BRANCH: ${GKE_BRANCH}"
+          echo "GKE_CLUSTER: ${GKE_CLUSTER}"
+          echo "GKE_PROJECT: ${GKE_PROJECT}"
+          echo "GKE_ZONE: ${GKE_ZONE}"
+          echo "HELM_VERSION_MIN: ${HELM_VERSION_MIN}"
+          echo "HELM_VERSION_STABLE: ${HELM_VERSION_STABLE}"
+          echo "KUBECTL_VERSION: ${KUBECTL_VERSION}"
+          echo "DEBUG_MODE: true"
+          echo "DEV_MODE: ${{ needs.setup.outputs.dev_mode }}"
+
   gke_setup:
     if: needs.setup.outputs.triggered_from_fork == 'false'
     needs:
