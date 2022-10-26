@@ -253,8 +253,8 @@ Once you have installed Kubeapps follow the [Getting Started Guide](https://gith
 | `dashboard.lifecycleHooks`                        | Custom lifecycle hooks for Dashboard containers                                                           | `{}`                 |
 | `dashboard.command`                               | Override default container command (useful when using custom images)                                      | `[]`                 |
 | `dashboard.args`                                  | Override default container args (useful when using custom images)                                         | `[]`                 |
-| `dashboard.podLabels`                             | Extra labels for Dasbhoard pods                                                                           | `{}`                 |
-| `dashboard.podAnnotations`                        | Annotations for Dasbhoard pods                                                                            | `{}`                 |
+| `dashboard.podLabels`                             | Extra labels for Dashboard pods                                                                           | `{}`                 |
+| `dashboard.podAnnotations`                        | Annotations for Dashboard pods                                                                            | `{}`                 |
 | `dashboard.podAffinityPreset`                     | Pod affinity preset. Ignored if `affinity` is set. Allowed values: `soft` or `hard`                       | `""`                 |
 | `dashboard.podAntiAffinityPreset`                 | Pod anti-affinity preset. Ignored if `affinity` is set. Allowed values: `soft` or `hard`                  | `soft`               |
 | `dashboard.nodeAffinityPreset.type`               | Node affinity preset type. Ignored if `affinity` is set. Allowed values: `soft` or `hard`                 | `""`                 |
@@ -267,12 +267,12 @@ Once you have installed Kubeapps follow the [Getting Started Guide](https://gith
 | `dashboard.schedulerName`                         | Name of the k8s scheduler (other than default)                                                            | `""`                 |
 | `dashboard.topologySpreadConstraints`             | Topology Spread Constraints for pod assignment                                                            | `[]`                 |
 | `dashboard.hostAliases`                           | Custom host aliases for Dashboard pods                                                                    | `[]`                 |
-| `dashboard.extraVolumes`                          | Optionally specify extra list of additional volumes for Dasbhoard pods                                    | `[]`                 |
-| `dashboard.extraVolumeMounts`                     | Optionally specify extra list of additional volumeMounts for Dasbhoard container(s)                       | `[]`                 |
-| `dashboard.sidecars`                              | Add additional sidecar containers to the Dasbhoard pod                                                    | `[]`                 |
-| `dashboard.initContainers`                        | Add additional init containers to the Dasbhoard pods                                                      | `[]`                 |
-| `dashboard.service.ports.http`                    | Dasbhoard service HTTP port                                                                               | `8080`               |
-| `dashboard.service.annotations`                   | Additional custom annotations for Dasbhoard service                                                       | `{}`                 |
+| `dashboard.extraVolumes`                          | Optionally specify extra list of additional volumes for Dashboard pods                                    | `[]`                 |
+| `dashboard.extraVolumeMounts`                     | Optionally specify extra list of additional volumeMounts for Dashboard container(s)                       | `[]`                 |
+| `dashboard.sidecars`                              | Add additional sidecar containers to the Dashboard pod                                                    | `[]`                 |
+| `dashboard.initContainers`                        | Add additional init containers to the Dashboard pods                                                      | `[]`                 |
+| `dashboard.service.ports.http`                    | Dashboard service HTTP port                                                                               | `8080`               |
+| `dashboard.service.annotations`                   | Additional custom annotations for Dashboard service                                                       | `{}`                 |
 
 
 ### AppRepository Controller parameters
@@ -449,9 +449,9 @@ Once you have installed Kubeapps follow the [Getting Started Guide](https://gith
 | `postgresql.primary.persistence.enabled` | Enable PostgreSQL Primary data persistence using PVC                         | `false`      |
 | `postgresql.architecture`                | PostgreSQL architecture (`standalone` or `replication`)                      | `standalone` |
 | `postgresql.securityContext.enabled`     | Enabled PostgreSQL replicas pods' Security Context                           | `false`      |
-| `postgresql.resources.limits`            | The resources limits for the PostreSQL container                             | `{}`         |
-| `postgresql.resources.requests.cpu`      | The requested CPU for the PostreSQL container                                | `250m`       |
-| `postgresql.resources.requests.memory`   | The requested memory for the PostreSQL container                             | `256Mi`      |
+| `postgresql.resources.limits`            | The resources limits for the PostgreSQL container                            | `{}`         |
+| `postgresql.resources.requests.cpu`      | The requested CPU for the PostgreSQL container                               | `250m`       |
+| `postgresql.resources.requests.memory`   | The requested memory for the PostgreSQL container                            | `256Mi`      |
 
 
 ### kubeappsapis parameters
