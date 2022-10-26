@@ -4,10 +4,10 @@
 name: Kubeapps general pipeline
 
 on:
-#  push:
-#  pull_request:
-#    branches:
-#      - main
+  push:
+  pull_request:
+    branches:
+      - main
 
 env:
   CHARTMUSEUM_VERSION: "3.9.0"
@@ -653,13 +653,13 @@ jobs:
     if: needs.setup.outputs.triggered_from_fork == 'false'
     needs:
       - setup
-      - test_go
-      - test_dashboard
-      - test_pinniped_proxy
-      - test_chart_render
-      - build_docker_images
-      - build_dashboard_image
-      - build_e2e_runner_image
+#      - test_go
+#      - test_dashboard
+#      - test_pinniped_proxy
+#      - test_chart_render
+#      - build_docker_images
+#      - build_dashboard_image
+#      - build_e2e_runner_image
       # FIXME: sync_chart_from_bitnami disabled for development as it only runs in main branch, uncomment before merging
 #      - sync_chart_from_bitnami
     runs-on: ubuntu-latest
@@ -672,7 +672,7 @@ jobs:
       HELM_VERSION_STABLE: ${HELM_VERSION_STABLE}
       KUBECTL_VERSION: ${KUBECTL_VERSION}
       DEBUG_MODE: true
-      DEV_MODE: ${{ needs.setup.outputs.dev_mode == 'true' }}
+      DEV_MODE: ${{ needs.setup.outputs.dev_mode }}
     steps:
       - run: echo "Just producing outputs because env vars cannot be used in 'jobs.<id>.with' (GHA limitation)"
 
@@ -691,8 +691,8 @@ jobs:
       HELM_VERSION_MIN: ${{ needs.gke_setup.outputs.HELM_VERSION_MIN }}
       HELM_VERSION_STABLE: ${{ needs.gke_setup.outputs.HELM_VERSION_STABLE }}
       KUBECTL_VERSION: ${{ needs.gke_setup.outputs.KUBECTL_VERSION }}
-      DEBUG_MODE: ${{ needs.gke_setup.outputs.DEBUG_MODE }}
-      DEV_MODE: ${{ needs.gke_setup.outputs.DEV_MODE }}
+      DEBUG_MODE: ${{ needs.gke_setup.outputs.DEBUG_MODE == 'true' }}
+      DEV_MODE: ${{ needs.gke_setup.outputs.DEV_MODE == 'true' }}
     secrets:
       GKE_ADMIN: ${{ secrets.GKE_ADMIN }}
       GCLOUD_KEY: ${{ secrets.GCLOUD_KEY }}
