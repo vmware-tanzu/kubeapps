@@ -499,9 +499,8 @@ jobs:
         with:
           name: e2e_tests_${{ matrix.tests_group }}_reports
           path: integration/reports
-      - name: Setup upterm session
-        uses: lhotari/action-upterm@v1
-        if: failure() && env.DEBUG_MODE == 'true'
+      - uses: lhotari/action-upterm@v1
+        if: never()
 
   push_images:
     if: needs.setup.outputs.running_on_main == 'true' || needs.setup.outputs.running_on_tag == 'true'
