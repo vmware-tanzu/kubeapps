@@ -61,6 +61,7 @@ env:
   POSTGRESQL_VERSION: "14.5.0-debian-11-r14"
   RUST_VERSION: "1.64.0"
   SEMVER_VERSION: "3.3.0"
+  GKE_STABLE_VERSION: "1.22"
   GKE_REGULAR_VERSION: "1.22"
   GKE_ZONE: "us-east1-c"
   GKE_PROJECT: "vmware-kubeapps-ci"
@@ -649,23 +650,6 @@ jobs:
               ${BRANCH_CHARTS_REPO_FORKED} \
               ${DEV_MODE}
 
-  DEBUG:
-    if: needs.setup.outputs.triggered_from_fork == 'false'
-    needs:
-      - setup
-    runs-on: ubuntu-latest
-    steps:
-      - run: |
-          echo "GKE_BRANCH: ${GKE_BRANCH}"
-          echo "GKE_CLUSTER: ${GKE_CLUSTER}"
-          echo "GKE_PROJECT: ${GKE_PROJECT}"
-          echo "GKE_ZONE: ${GKE_ZONE}"
-          echo "HELM_VERSION_MIN: ${HELM_VERSION_MIN}"
-          echo "HELM_VERSION_STABLE: ${HELM_VERSION_STABLE}"
-          echo "KUBECTL_VERSION: ${KUBECTL_VERSION}"
-          echo "DEBUG_MODE: true"
-          echo "DEV_MODE: ${{ needs.setup.outputs.dev_mode }}"
-
   gke_setup:
     if: needs.setup.outputs.triggered_from_fork == 'false'
     needs:
@@ -681,7 +665,8 @@ jobs:
 #      - sync_chart_from_bitnami
     runs-on: ubuntu-latest
     outputs:
-      GKE_BRANCH: ${GKE_BRANCH}
+      GKE_STABLE_VERSION: ${GKE_STABLE_VERSION}
+      GKE_REGULAR_VERSION: ${GKE_REGULAR_VERSION}
       GKE_CLUSTER: ${GKE_CLUSTER}
       GKE_PROJECT: ${GKE_PROJECT}
       GKE_ZONE: ${GKE_ZONE}
@@ -692,6 +677,22 @@ jobs:
       DEV_MODE: ${{ needs.setup.outputs.dev_mode }}
     steps:
       - run: echo "Just producing outputs because env vars cannot be used in 'jobs.<id>.with' (GHA limitation)"
+
+  DEBUG:
+    needs:
+      - gke_setup
+    runs-on: ubuntu-latest
+    steps:
+      - run: |
+          echo "GKE_STABLE_VERSION: ${{ needs.gke_setup.outputs.GKE_STABLE_VERSION }}"
+          echo "GKE_REGULAR_VERSION: ${{ needs.gke_setup.outputs.GKE_REGULAR_VERSION }}"
+          echo "GKE_CLUSTER: ${{ needs.gke_setup.outputs.GKE_CLUSTER }}"
+          echo "GKE_PROJECT: ${{ needs.gke_setup.outputs.GKE_PROJECT }}"
+          echo "GKE_ZONE: ${{ needs.gke_setup.outputs.GKE_ZONE }}"
+          echo "HELM_VERSION_MIN: ${{ needs.gke_setup.outputs.HELM_VERSION_MIN }}"
+          echo "HELM_VERSION_STABLE: ${{ needs.gke_setup.outputs.HELM_VERSION_STABLE }}"
+          echo "KUBECTL_VERSION: ${{ needs.gke_setup.outputs.KUBECTL_VERSION }}"
+          echo "DEBUG_MODE: ${{ needs.gke_setup.outputs.DEBUG_MODE }}"        
 
   GKE_REGULAR_VERSION_MAIN:
     #    TODO:
