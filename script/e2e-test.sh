@@ -294,6 +294,7 @@ installOrUpgradeKubeapps() {
   cmd=(helm upgrade --install kubeapps-ci --namespace kubeapps "${chartSource}"
     "${img_flags[@]}"
     "${multiclusterFlags[@]+"${multiclusterFlags[@]}"}"
+    "${@:2}"
     --set frontend.replicaCount=1
     --set dashboard.replicaCount=1
     --set kubeappsapis.replicaCount=2
@@ -306,7 +307,6 @@ installOrUpgradeKubeapps() {
     --set apprepository.initialRepos[0].basicAuth.user=admin
     --set apprepository.initialRepos[0].basicAuth.password=password
     --set apprepository.globalReposNamespaceSuffix=-repos-global
-    "${@:2}"
     --wait)
 
   echo "${cmd[@]}"
