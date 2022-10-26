@@ -500,7 +500,7 @@ jobs:
           name: e2e_tests_${{ matrix.tests_group }}_reports
           path: integration/reports
       - uses: lhotari/action-upterm@v1
-        if: never()
+        if: false
 
   push_images:
     if: needs.setup.outputs.running_on_main == 'true' || needs.setup.outputs.running_on_tag == 'true'
