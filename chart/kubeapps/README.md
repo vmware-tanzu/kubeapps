@@ -421,12 +421,14 @@ Once you have installed Kubeapps follow the [Getting Started Guide](https://gith
 
 ### Other Parameters
 
-| Name                      | Description                                                                   | Value   |
-| ------------------------- | ----------------------------------------------------------------------------- | ------- |
-| `allowNamespaceDiscovery` | Allow users to discover available namespaces (only the ones they have access) | `true`  |
-| `clusters`                | List of clusters that Kubeapps can target for deployments                     | `[]`    |
-| `featureFlags.operators`  | Enable ingress record generation for Kubeapps                                 | `false` |
-| `rbac.create`             | Specifies whether RBAC resources should be created                            | `true`  |
+| Name                                    | Description                                                                                                | Value   |
+| --------------------------------------- | ---------------------------------------------------------------------------------------------------------- | ------- |
+| `allowNamespaceDiscovery`               | Allow users to discover available namespaces (only the ones they have access)                              | `true`  |
+| `clusters`                              | List of clusters that Kubeapps can target for deployments                                                  | `[]`    |
+| `featureFlags.operators`                | Enable ingress record generation for Kubeapps                                                              | `false` |
+| `featureFlags.apiOnly.enabled`          | Enable ingress for API operations only. Access to "/" will not be possible, so Dashboard will be unusable. | `false` |
+| `featureFlags.apiOnly.grpc.annotations` | Specific annotations for the GRPC ingress in API-only mode                                                 | `{}`    |
+| `rbac.create`                           | Specifies whether RBAC resources should be created                                                         | `true`  |
 
 
 ### Database Parameters
