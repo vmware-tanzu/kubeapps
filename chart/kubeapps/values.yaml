@@ -1429,6 +1429,17 @@ rbac:
 ## Opt-in features intended for development and advanced use cases.
 ## They might be removed in future releases without prior notice.
 featureFlags:
+  ## For a full list of possible ingress annotations, please see
+  apiOnly:
+    ## @param featureFlags.apiOnly.enabled Enable ingress for API operations only. Access to "/" will not be possible, so Dashboard will be unusable.
+    ##
+    enabled: false
+    grpc:
+      ## @param featureFlags.apiOnly.grpc.annotations [object] Specific annotations for the GRPC ingress in API-only mode
+      ## ref: https://github.com/kubernetes/ingress-nginx/blob/main/docs/user-guide/nginx-configuration/annotations.md
+      ##
+      annotations:
+        nginx.ingress.kubernetes.io/backend-protocol: GRPC
   ## @param featureFlags.operators Enable support for Operators in Kubeapps
   ##
   operators: false

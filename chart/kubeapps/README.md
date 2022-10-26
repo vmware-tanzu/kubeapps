@@ -430,10 +430,12 @@ Once you have installed Kubeapps follow the [Getting Started Guide](https://gith
 
 ### Feature flags
 
-| Name                                | Description                                                | Value   |
-| ----------------------------------- | ---------------------------------------------------------- | ------- |
-| `featureFlags.operators`            | Enable support for Operators in Kubeapps                   | `false` |
-| `featureFlags.schemaEditor.enabled` | Enable a visual editor for customizing the package schemas | `false` |
+| Name                                    | Description                                                                                                | Value   |
+| --------------------------------------- | ---------------------------------------------------------------------------------------------------------- | ------- |
+| `featureFlags.apiOnly.enabled`          | Enable ingress for API operations only. Access to "/" will not be possible, so Dashboard will be unusable. | `false` |
+| `featureFlags.apiOnly.grpc.annotations` | Specific annotations for the GRPC ingress in API-only mode                                                 | `{}`    |
+| `featureFlags.operators`                | Enable support for Operators in Kubeapps                                                                   | `false` |
+| `featureFlags.schemaEditor.enabled`     | Enable a visual editor for customizing the package schemas                                                 | `false` |
 
 
 ### Database Parameters
