@@ -42,7 +42,7 @@ export interface IConfig {
 
 export interface IFeatureFlags {
   operators: boolean;
-  schemaEditor: boolean;
+  schemaEditor: { enabled: boolean };
 }
 
 export default class Config {

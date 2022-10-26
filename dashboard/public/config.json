@@ -11,7 +11,9 @@
   "clusters": ["default"],
   "featureFlags": {
     "operators": false,
-    "schemaEditor": false
+    "schemaEditor": {
+      "enabled": false
+    }
   },
   "theme": "light",
   "remoteComponentsUrl": "",

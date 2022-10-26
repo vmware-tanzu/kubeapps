@@ -430,10 +430,10 @@ Once you have installed Kubeapps follow the [Getting Started Guide](https://gith
 
 ### Feature flags
 
-| Name                        | Description                                                | Value   |
-| --------------------------- | ---------------------------------------------------------- | ------- |
-| `featureFlags.operators`    | Enable support for Operators in Kubeapps                   | `false` |
-| `featureFlags.schemaEditor` | Enable a visual editor for customizing the package schemas | `false` |
+| Name                                | Description                                                | Value   |
+| ----------------------------------- | ---------------------------------------------------------- | ------- |
+| `featureFlags.operators`            | Enable support for Operators in Kubeapps                   | `false` |
+| `featureFlags.schemaEditor.enabled` | Enable a visual editor for customizing the package schemas | `false` |
 
 
 ### Database Parameters
@@ -562,7 +562,7 @@ Once you have installed Kubeapps follow the [Getting Started Guide](https://gith
 | `redis.replica.disableCommands`     | Array with commands to deactivate on Redis&reg;                  | `[]`                                                     |
 | `redis.replica.persistence.enabled` | Enable Redis&reg; replica data persistence using PVC             | `false`                                                  |
 
-Specify each parameter using the `--set key=value[,key=value]` argument to `helm install`. For example,
+
 
 ```bash
 helm install kubeapps --namespace kubeapps \

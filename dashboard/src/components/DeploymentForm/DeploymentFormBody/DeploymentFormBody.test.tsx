@@ -177,7 +177,7 @@ it("should not render a schema editor if the feature flag is disabled", () => {
     ...initialState,
     config: {
       ...initialState.config,
-      featureFlags: { ...initialState.config.featureFlags, schemaEditor: false },
+      featureFlags: { ...initialState.config.featureFlags, schemaEditor: { enabled: false } },
     },
   };
   const wrapper = mountWrapper(
@@ -195,7 +195,7 @@ it("should render a schema editor if the feature flag is enabled", () => {
     ...initialState,
     config: {
       ...initialState.config,
-      featureFlags: { ...initialState.config.featureFlags, schemaEditor: true },
+      featureFlags: { ...initialState.config.featureFlags, schemaEditor: { enabled: true } },
     },
   };
   const wrapper = mountWrapper(

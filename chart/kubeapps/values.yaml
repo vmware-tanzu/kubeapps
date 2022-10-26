@@ -1425,15 +1425,17 @@ rbac:
   create: true
 
 ## @section Feature flags
-
-## Used enable some opt-in development features
 ##
+## Opt-in features intended for development and advanced use cases.
+## They might be removed in future releases without prior notice.
 featureFlags:
   ## @param featureFlags.operators Enable support for Operators in Kubeapps
-  operators: false
-  ## @param featureFlags.schemaEditor Enable a visual editor for customizing the package schemas
   ##
-  schemaEditor: false
+  operators: false
+  schemaEditor:
+    ## @param featureFlags.schemaEditor.enabled Enable a visual editor for customizing the package schemas
+    ##
+    enabled: false
 
 ## @section Database Parameters
 
