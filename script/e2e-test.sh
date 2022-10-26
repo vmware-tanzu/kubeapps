@@ -555,6 +555,10 @@ if [[ -z "${GKE_BRANCH-}" && ("${TESTS_GROUP}" == "${ALL_TESTS}" || "${TESTS_GRO
   echo "${cmd[@]}"
   "${cmd[@]}"
 
+  info "Waiting for updated Kubeapps components to be ready..."
+  k8s_wait_for_deployment kubeapps kubeapps-ci
+  k8s_wait_for_deployment kubeapps kubeapps-ci-internal-kubeappsapis
+
   test_command="
     CI_TIMEOUT_MINUTES=40 \
     DOCKER_USERNAME=${DOCKER_USERNAME} \
