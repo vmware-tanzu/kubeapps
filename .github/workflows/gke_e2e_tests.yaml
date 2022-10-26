@@ -55,14 +55,45 @@ on:
         required: true
 
 jobs:
+  show_input:
+    runs-on: ubuntu-latest
+    env:
+      DEV_MODE: ${{ inputs.DEV_MODE }}
+      DEBUG_MODE: ${{ inputs.DEBUG_MODE }}
+      HELM_VERSION_MIN: ${{ inputs.HELM_VERSION_MIN }}
+      HELM_VERSION_STABLE: ${{ inputs.HELM_VERSION_STABLE }}
+      KUBECTL_VERSION: ${{ inputs.KUBECTL_VERSION }}
+      GCLOUD_KEY: ${{ secrets.GCLOUD_KEY }}
+      GKE_ADMIN: ${{ secrets.GKE_ADMIN }}
+      GKE_BRANCH: ${{ inputs.GKE_BRANCH }}
+      GKE_PROJECT: ${{ inputs.GKE_PROJECT }}
+      GKE_ZONE: ${{ inputs.GKE_ZONE }}
+      TEST_LATEST_RELEASE: ${{ inputs.TEST_LATEST_RELEASE }}
+      TEST_TIMEOUT_MINUTES: ${{ inputs.TEST_TIMEOUT_MINUTES }}
+      USE_MULTICLUSTER_OIDC_ENV: ${{ inputs.USE_MULTICLUSTER_OIDC_ENV }}
+    steps:
+      - run: |
+          echo "DEV_MODE: ${DEV_MODE}"
+          echo "DEBUG_MODE: ${DEBUG_MODE}"
+          echo "HELM_VERSION_MIN: ${HELM_VERSION_MIN}"
+          echo "HELM_VERSION_STABLE: ${HELM_VERSION_STABLE}"
+          echo "KUBECTL_VERSION: ${KUBECTL_VERSION}"
+          echo "GCLOUD_KEY: ${GCLOUD_KEY}"
+          echo "GKE_ADMIN: ${GKE_ADMIN}"
+          echo "GKE_BRANCH: ${GKE_BRANCH}"
+          echo "GKE_PROJECT: ${GKE_PROJECT}"
+          echo "GKE_ZONE: ${GKE_ZONE}"
+          echo "TEST_LATEST_RELEASE: ${TEST_LATEST_RELEASE}"
+          echo "TEST_TIMEOUT_MINUTES: ${TEST_TIMEOUT_MINUTES}"
+          echo "USE_MULTICLUSTER_OIDC_ENV: ${USE_MULTICLUSTER_OIDC_ENV}"
   e2e_tests:
     runs-on: ubuntu-latest
     env:
       DEV_MODE: ${{ inputs.DEV_MODE }}
       DEBUG_MODE: ${{ inputs.DEBUG_MODE }}
-      HELM_VERSION_MIN: ${{ secrets.HELM_VERSION_MIN }}
-      HELM_VERSION_STABLE: ${{ secrets.HELM_VERSION_STABLE }}
-      KUBECTL_VERSION: ${{ secrets.KUBECTL_VERSION }}
+      HELM_VERSION_MIN: ${{ inputs.HELM_VERSION_MIN }}
+      HELM_VERSION_STABLE: ${{ inputs.HELM_VERSION_STABLE }}
+      KUBECTL_VERSION: ${{ inputs.KUBECTL_VERSION }}
       GCLOUD_KEY: ${{ secrets.GCLOUD_KEY }}
       GKE_ADMIN: ${{ secrets.GKE_ADMIN }}
       GKE_BRANCH: ${{ inputs.GKE_BRANCH }}
