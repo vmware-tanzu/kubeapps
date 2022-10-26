@@ -417,6 +417,21 @@ var (
 		Values: "{\"replicaCount\": 1 }",
 	}
 
+	update_request_8 = &corev1.UpdateInstalledPackageRequest{
+		// InstalledPackageRef will be filled in by the code below after a call to create(...) completes
+		Values: "{\"ui\": { \"message\": \"El Marginal\" } }",
+	}
+
+	expected_detail_installed_package_podinfo_6_1_5 = &corev1.InstalledPackageDetail{
+		PkgVersionReference: &corev1.VersionReference{
+			Version: "*",
+		},
+		CurrentVersion:        pkgAppVersion("6.1.5"),
+		Status:                status_installed,
+		PostInstallationNotes: podinfo_notes("my-podinfo-17"),
+		ValuesApplied:         "{\"ui\":{\"message\":\"El Marginal\"}}",
+	}
+
 	create_installed_package_request_podinfo_for_delete_1 = &corev1.CreateInstalledPackageRequest{
 		AvailablePackageRef: availableRef("podinfo-12/podinfo", "default"),
 		Name:                "my-podinfo-12",

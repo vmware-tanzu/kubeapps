@@ -194,6 +194,12 @@ func TestKindClusterUpdateInstalledPackage(t *testing.T) {
 		t.Fatal(err)
 	}
 
+	ghUser := os.Getenv("GITHUB_USER")
+	ghToken := os.Getenv("GITHUB_TOKEN")
+	if ghUser == "" || ghToken == "" {
+		t.Fatalf("Environment variables GITHUB_USER and GITHUB_TOKEN need to be set to run this test")
+	}
+
 	testCases := []struct {
 		integrationTestCreatePackageSpec
 		request *corev1.UpdateInstalledPackageRequest
@@ -291,7 +297,27 @@ func TestKindClusterUpdateInstalledPackage(t *testing.T) {
 			expectedDetailAfterUpdate: expected_detail_installed_package_podinfo_9,
 			expectedRefsAfterUpdate:   expected_resource_refs_podinfo_9,
 		},
-		// TODO (gfichtenholt) update OCI helmrelease
+		{
+			integrationTestCreatePackageSpec: integrationTestCreatePackageSpec{
+				testName: "update OCI helm release from [" + github_gfichtenholt_podinfo_oci_registry_url + "]",
+				repoType: "oci",
+				repoUrl:  github_gfichtenholt_podinfo_oci_registry_url,
+				repoSecret: newBasicAuthSecret(types.NamespacedName{
+					Name:      "oci-repo-secret-" + randSeq(4),
+					Namespace: "default"},
+					ghUser,
+					ghToken,
+				),
+				request:              create_installed_package_request_oci,
+				expectedDetail:       expected_detail_installed_package_oci,
+				expectedPodPrefix:    "my-podinfo-17",
+				expectedStatusCode:   codes.OK,
+				expectedResourceRefs: expected_resource_refs_oci,
+			},
+			request:                   update_request_8,
+			expectedDetailAfterUpdate: expected_detail_installed_package_podinfo_6_1_5,
+			expectedRefsAfterUpdate:   expected_resource_refs_oci,
+		},
 	}
 
 	name := types.NamespacedName{
@@ -682,29 +708,30 @@ func TestKindClusterDeleteInstalledPackage(t *testing.T) {
 }
 
 // scenario:
-// 1) create new namespace ns1
-// 2) add podinfo repo in ns1
-// 3) create new namespace ns2
-// 4) create these service-accounts in default namespace:
-//   a) - "...-admin", with cluster-wide access to everything
-//   b) - "...-loser", without cluster-wide access or any access to any of the namespaces
-//   c) - "...-helmreleases", with only permissions to 'get' HelmReleases in ns2
-//   d) - "...-helmreleases-and-charts", with only permissions to 'get' HelmCharts in ns1, HelmReleases in ns2
-// 5) as user 4a) install package podinfo in ns2
-// 6) verify GetInstalledPackageSummaries:
-//    a) as 4a) returns 1 result
-//    b) as 4b) raises PermissionDenied error
-//    c) as 4c) returns 1 result but without the corresponding chart details
-//    d) as 4d) returns 1 result with details from corresponding chart
-// 7) verify GetInstalledPackageDetail:
-//    a) as 4a) returns full detail
-//    b) as 4b) returns PermissionDenied error
-//    c) as 4c) returns full detail
-//    d) as 4d) returns full detail
-// 8) verify GetInstalledPackageResourceRefs:
-//    a) as 4a) returns all refs
-//    b) as 4b) returns PermissionDenied error
-//    c) as 4c) returns all refs
+//  1. create new namespace ns1
+//  2. add podinfo repo in ns1
+//  3. create new namespace ns2
+//  4. create these service-accounts in default namespace:
+//     a) - "...-admin", with cluster-wide access to everything
+//     b) - "...-loser", without cluster-wide access or any access to any of the namespaces
+//     c) - "...-helmreleases", with only permissions to 'get' HelmReleases in ns2
+//     d) - "...-helmreleases-and-charts", with only permissions to 'get' HelmCharts in ns1, HelmReleases in ns2
+//  5. as user 4a) install package podinfo in ns2
+//  6. verify GetInstalledPackageSummaries:
+//     a) as 4a) returns 1 result
+//     b) as 4b) raises PermissionDenied error
+//     c) as 4c) returns 1 result but without the corresponding chart details
+//     d) as 4d) returns 1 result with details from corresponding chart
+//  7. verify GetInstalledPackageDetail:
+//     a) as 4a) returns full detail
+//     b) as 4b) returns PermissionDenied error
+//     c) as 4c) returns full detail
+//     d) as 4d) returns full detail
+//  8. verify GetInstalledPackageResourceRefs:
+//     a) as 4a) returns all refs
+//     b) as 4b) returns PermissionDenied error
+//     c) as 4c) returns all refs
+//
 // ref https://github.com/vmware-tanzu/kubeapps/issues/4390
 func TestKindClusterRBAC_ReadRelease(t *testing.T) {
 	fluxPluginPackagesClient, fluxPluginReposClient, err := checkEnv(t)
