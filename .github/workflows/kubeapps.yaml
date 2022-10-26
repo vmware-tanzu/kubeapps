@@ -4,10 +4,10 @@
 name: Kubeapps general pipeline
 
 on:
-  push:
-  pull_request:
-    branches:
-      - main
+#  push:
+#  pull_request:
+#    branches:
+#      - main
 
 env:
   CHARTMUSEUM_VERSION: "3.9.0"

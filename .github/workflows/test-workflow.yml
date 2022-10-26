@@ -1,0 +1,195 @@
+# Copyright 2022 VMware, Inc.
+# SPDX-License-Identifier: Apache-2.0
+
+name: Test
+
+on:
+  push:
+  pull_request:
+    branches:
+      - main
+
+env:
+  CHARTMUSEUM_VERSION: "3.9.0"
+  CHARTS_REPO_ORIGINAL: "bitnami/charts"
+  BRANCH_CHARTS_REPO_ORIGINAL: "main"
+  CHARTS_REPO_FORKED: "kubeapps-bot/charts"
+  BRANCH_CHARTS_REPO_FORKED: "main"
+  CI_BOT_USERNAME: "kubeapps-bot"
+  CI_BOT_EMAIL: "tanzu-kubeapps-team@vmware.com"
+  CI_BOT_GPG: "80B6EB16B1328FB18DFF2A073EBA68F3347E319D"
+  # DEBUG_MODE allows to activate some SSH debugging steps, and modify the verbosity level of some scripts (eg. e2e-tests.sh)
+  DEBUG_MODE: "false"
+  # FIXME: DEV_MODE is used to enable dev mode, used to activate several hacks along the code:
+  # - In sync_chart_from/to_bitnami jobs to file shadow PRs while we maintain
+  # - To add a suffix to the tag of the generated docker images, to prevent collision and overwriting with those generated from CircleCI
+  # - To add a suffix to the name of the generated GKE clusters to prevent collision with those generated and used from CircleCI
+  # - Probably some other things I don't remember right now :)
+  #
+  # CircleCI and GHA pipelines are running in parallel. This should be removed once the CircleCI pipeline is decommissioned.
+  DEV_MODE: true
+  SSH_KEY_KUBEAPPS_DEPLOY_FILENAME: "id_rsa_kubeapps_deploy_key"
+  SSH_KEY_FORKED_CHARTS_DEPLOY_FILENAME: "id_rsa_forked_charts_deploy_key"
+  KUBEAPPS_REPO: "vmware-tanzu/kubeapps"
+  BRANCH_KUBEAPPS_REPO: "main"
+  README_GENERATOR_REPO: "bitnami-labs/readme-generator-for-helm"
+  DOCKER_VERSION: "20.10.17"
+  DOCKER_REGISTRY_VERSION: "2.8.1"
+  GOLANG_VERSION: "1.19.1"
+  HELM_VERSION_MIN: "v3.2.0"
+  HELM_VERSION_STABLE: "v3.10.0"
+  GITHUB_VERSION: "2.16.1"
+  IMAGES_TO_PUSH: "apprepository-controller dashboard asset-syncer pinniped-proxy kubeapps-apis"
+  # IMG_DEV_TAG is the tags used for the Kubeapps docker images. Ideally there should be an IMG_PROD_TAG
+  # but its value is dynamic and GitHub actions doesn't support it in the `env` block, so it is generated
+  # as an output of the `setup` job.
+  IMG_DEV_TAG: "build-${{ github.sha }}"
+  # Apart from using a dev tag we use a different image ID to avoid polluting the tag history of the production tag
+  IMG_MODIFIER: "-ci-gha"
+  IMG_PREFIX: "kubeapps/"
+  # We use IMG_PREFIX_FOR_FORKS for development purposes, it's used when the workflow is run from a fork of the kubeapps repo
+  IMG_PREFIX_FOR_FORKS: "beni0888/"
+  #  IMG_PLATFORMS: "linux/amd64, linux/arm64"
+  IMG_PLATFORMS: "linux/amd64"
+  KAPP_CONTROLLER_VERSION: "v0.41.2"
+  K8S_KIND_VERSION: "v1.22.15@sha256:bfd5eaae36849bfb3c1e3b9442f3da17d730718248939d9d547e86bbac5da586"
+  KIND_VERSION: "v0.16.0"
+  KUBECTL_VERSION: "v1.24.6"
+  MKCERT_VERSION: "v1.4.4"
+  NODE_VERSION: "16.17.1"
+  OLM_VERSION: "v0.22.0"
+  POSTGRESQL_VERSION: "14.5.0-debian-11-r14"
+  RUST_VERSION: "1.64.0"
+  SEMVER_VERSION: "3.3.0"
+  GKE_REGULAR_VERSION: "1.22"
+  GKE_ZONE: "us-east1-c"
+  GKE_PROJECT: "vmware-kubeapps-ci"
+  GKE_CLUSTER: "kubeapps-test"
+
+jobs:
+  setup:
+    runs-on: ubuntu-latest
+    outputs:
+      dev_mode: ${{ steps.set-outputs.outputs.dev_mode }}
+      img_modifier: ${{ steps.set-outputs.outputs.img_modifier }}
+      img_prefix: ${{ steps.set-outputs.outputs.img_prefix }}
+      img_dev_tag: ${{ steps.set-outputs.outputs.img_dev_tag }}
+      img_prod_tag: ${{ steps.set-outputs.outputs.img_prod_tag }}
+      postgresql_version: ${{ steps.set-outputs.outputs.postgresql_version }}
+      rust_version: ${{ steps.set-outputs.outputs.rust_version }}
+      running_on_main: ${{ steps.set-outputs.outputs.running_on_main }}
+      running_on_tag: ${{ steps.set-outputs.outputs.running_on_tag }}
+      ssh_key_kubeapps_deploy_filename: ${{ steps.set-outputs.outputs.ssh_key_kubeapps_deploy_filename }}
+      ssh_key_forked_charts_deploy_filename: ${{ steps.set-outputs.outputs.ssh_key_forked_charts_deploy_filename }}
+      triggered_from_fork: ${{ steps.set-outputs.outputs.triggered_from_fork }}
+    steps:
+      - name: Show GitHub event
+        env:
+          EVENT_CONTEXT: ${{ toJSON(github.event) }}
+        run: echo $EVENT_CONTEXT | jq
+      - name: Show PR context
+        env:
+          PR_CONTEXT: ${{ toJSON(github.event.pull_request) }}
+        run: echo $EVENT_CONTEXT | jq
+      - name: Set outputs
+        id: set-outputs
+        env:
+          PR_CONTEXT: ${{ toJSON(github.event.pull_request) }}
+          PR_SOURCE_REPO_NAME: ${{ github.event.pull_request.head.repo.full_name }}
+        run: |
+          if [[ "${GITHUB_REPOSITORY}" == "${KUBEAPPS_REPO}" ]]; then
+            echo "img_prefix=${IMG_PREFIX}" >> $GITHUB_OUTPUT
+          else
+            # When running in forks (NOT triggered due to a PR from an external fork, but running the workflow in the
+            # external repo), we push the images to a personal namespace (if configured)
+            echo "img_prefix=${IMG_PREFIX_FOR_FORKS}" >> $GITHUB_OUTPUT
+          fi;
+
+          # Check if the workflow is triggered due to a PR from an external fork
+          if [[ ("${PR_CONTEXT}" != "" && "${PR_CONTEXT}" != null) && "${PR_SOURCE_REPO_NAME}" != "${GITHUB_REPOSITORY}" ]]; then
+            echo "triggered_from_fork=true" >> $GITHUB_OUTPUT
+          else
+            echo "triggered_from_fork=false" >> $GITHUB_OUTPUT
+          fi
+
+          if [[ ${GITHUB_REF_TYPE} == "tag" ]]; then
+            echo "img_prod_tag=${GITHUB_REF_NAME}" >> $GITHUB_OUTPUT
+            echo "version=${GITHUB_REF_NAME}" >> $GITHUB_OUTPUT
+          else
+            echo "img_prod_tag=latest" >> $GITHUB_OUTPUT
+            echo "version=" >> $GITHUB_OUTPUT
+          fi;
+
+          if [[ ${GITHUB_REF_NAME} == ${BRANCH_KUBEAPPS_REPO} ]]; then
+            echo "running_on_main=true" >> $GITHUB_OUTPUT
+          else
+            echo "running_on_main=false" >> $GITHUB_OUTPUT
+          fi
+
+          if [[ ${GITHUB_REF_TYPE} == "tag" && ${GITHUB_REF_NAME} =~ ^v[0-9]+ ]]; then
+            echo "running_on_tag=true" >> $GITHUB_OUTPUT
+          else
+            echo "running_on_tag=false" >> $GITHUB_OUTPUT
+          fi
+
+          echo "dev_mode=${DEV_MODE}" >> $GITHUB_OUTPUT
+          echo "ssh_key_kubeapps_deploy_filename=${SSH_KEY_KUBEAPPS_DEPLOY_FILENAME}" >> $GITHUB_OUTPUT
+          echo "ssh_key_forked_charts_deploy_filename=${SSH_KEY_FORKED_CHARTS_DEPLOY_FILENAME}" >> $GITHUB_OUTPUT
+          echo "img_modifier=${IMG_MODIFIER}" >> $GITHUB_OUTPUT
+          echo "img_dev_tag=${IMG_DEV_TAG}" >> $GITHUB_OUTPUT
+          echo "postgresql_version=${POSTGRESQL_VERSION}" >> $GITHUB_OUTPUT
+          echo "rust_version=${RUST_VERSION}" >> $GITHUB_OUTPUT
+      - name: Show outputs
+        run: |
+          echo "DEV_MODE: ${{steps.set-outputs.outputs.dev_mode}}"
+          echo "IMG_MODIFIER: ${{steps.set-outputs.outputs.img_modifier}}"
+          echo "IMG_PREFIX: ${{steps.set-outputs.outputs.img_prefix}}"
+          echo "IMG_DEV_TAG: ${{steps.set-outputs.outputs.img_dev_tag}}"
+          echo "IMG_PROD_TAG: ${{steps.set-outputs.outputs.img_prod_tag}}"
+          echo "POSTGRESQL_VERSION: ${{steps.set-outputs.outputs.postgresql_version}}"
+          echo "RUST_VERSION: ${{steps.set-outputs.outputs.rust_version}}"
+          echo "RUNNING_ON_MAIN: ${{steps.set-outputs.outputs.running_on_main}}"
+          echo "RUNNING_ON_TAG: ${{steps.set-outputs.outputs.running_on_tag}}"
+          echo "SSH_KEY_KUBEAPPS_DEPLOY_FILENAME: ${{steps.set-outputs.outputs.ssh_key_kubeapps_deploy_filename}}"
+          echo "SSH_KEY_FORKED_CHARTS_DEPLOY_FILENAME: ${{steps.set-outputs.outputs.ssh_key_forked_charts_deploy_filename}}"
+          echo "TRIGGERED_FROM_FORK: ${{steps.set-outputs.outputs.triggered_from_fork}}"
+          echo "VERSION: ${{steps.set-outputs.outputs.version}}"
+
+  gke_setup:
+    if: needs.setup.outputs.triggered_from_fork == 'false'
+    needs:
+      - setup
+    runs-on: ubuntu-latest
+    outputs:
+      GKE_BRANCH: ${GKE_BRANCH}
+      GKE_CLUSTER: ${GKE_CLUSTER}
+      GKE_PROJECT: ${GKE_PROJECT}
+      GKE_ZONE: ${GKE_ZONE}
+      HELM_VERSION_MIN: ${HELM_VERSION_MIN}
+      HELM_VERSION_STABLE: ${HELM_VERSION_STABLE}
+      KUBECTL_VERSION: ${KUBECTL_VERSION}
+      DEBUG_MODE: true
+      DEV_MODE: ${{ needs.setup.outputs.dev_mode == 'true' }}
+    steps:
+      - run: echo "Just producing outputs because env vars cannot be used in 'jobs.<id>.with' (GHA limitation)"
+
+  GKE_REGULAR_VERSION_MAIN:
+    #    TODO:
+    #    <<: *build_on_tag_or_prerelease
+    needs:
+      - gke_setup
+    uses: ./.github/workflows/gke_e2e_tests.yaml
+    with:
+      ID: "regular_version_main"
+      GKE_BRANCH: ${{ needs.gke_setup.outputs.GKE_BRANCH }}
+      GKE_CLUSTER: ${{ needs.gke_setup.outputs.GKE_CLUSTER }}
+      GKE_PROJECT: ${{ needs.gke_setup.outputs.GKE_PROJECT }}
+      GKE_ZONE: ${{ needs.gke_setup.outputs.GKE_ZONE }}
+      HELM_VERSION_MIN: ${{ needs.gke_setup.outputs.HELM_VERSION_MIN }}
+      HELM_VERSION_STABLE: ${{ needs.gke_setup.outputs.HELM_VERSION_STABLE }}
+      KUBECTL_VERSION: ${{ needs.gke_setup.outputs.KUBECTL_VERSION }}
+      DEBUG_MODE: ${{ needs.gke_setup.outputs.DEBUG_MODE }}
+      DEV_MODE: ${{ needs.gke_setup.outputs.DEV_MODE }}
+    secrets:
+      GKE_ADMIN: ${{ secrets.GKE_ADMIN }}
+      GCLOUD_KEY: ${{ secrets.GCLOUD_KEY }}
