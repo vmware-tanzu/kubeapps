@@ -70,8 +70,7 @@ jobs:
   setup:
     runs-on: ubuntu-latest
     outputs:
-      ssh_key_kubeapps_deploy_filename: ${{ steps.set-outputs.outputs.ssh_key_kubeapps_deploy_filename }}
-      ssh_key_forked_charts_deploy_filename: ${{ steps.set-outputs.outputs.ssh_key_forked_charts_deploy_filename }}
+      dev_mode: ${{ steps.set-outputs.outputs.dev_mode }}
       img_modifier: ${{ steps.set-outputs.outputs.img_modifier }}
       img_prefix: ${{ steps.set-outputs.outputs.img_prefix }}
       img_dev_tag: ${{ steps.set-outputs.outputs.img_dev_tag }}
@@ -80,6 +79,8 @@ jobs:
       rust_version: ${{ steps.set-outputs.outputs.rust_version }}
       running_on_main: ${{ steps.set-outputs.outputs.running_on_main }}
       running_on_tag: ${{ steps.set-outputs.outputs.running_on_tag }}
+      ssh_key_kubeapps_deploy_filename: ${{ steps.set-outputs.outputs.ssh_key_kubeapps_deploy_filename }}
+      ssh_key_forked_charts_deploy_filename: ${{ steps.set-outputs.outputs.ssh_key_forked_charts_deploy_filename }}
       triggered_from_fork: ${{ steps.set-outputs.outputs.triggered_from_fork }}
     steps:
       - name: Show GitHub event
@@ -131,6 +132,7 @@ jobs:
             echo "running_on_tag=false" >> $GITHUB_OUTPUT
           fi
 
+          echo "dev_mode=${DEV_MODE}" >> $GITHUB_OUTPUT
           echo "ssh_key_kubeapps_deploy_filename=${SSH_KEY_KUBEAPPS_DEPLOY_FILENAME}" >> $GITHUB_OUTPUT
           echo "ssh_key_forked_charts_deploy_filename=${SSH_KEY_FORKED_CHARTS_DEPLOY_FILENAME}" >> $GITHUB_OUTPUT
           echo "img_modifier=${IMG_MODIFIER}" >> $GITHUB_OUTPUT
@@ -139,8 +141,7 @@ jobs:
           echo "rust_version=${RUST_VERSION}" >> $GITHUB_OUTPUT
       - name: Show outputs
         run: |
-          echo "SSH_KEY_KUBEAPPS_DEPLOY_FILENAME: ${{steps.set-outputs.outputs.ssh_key_kubeapps_deploy_filename}}"
-          echo "SSH_KEY_FORKED_CHARTS_DEPLOY_FILENAME: ${{steps.set-outputs.outputs.ssh_key_forked_charts_deploy_filename}}"
+          echo "DEV_MODE: ${{steps.set-outputs.outputs.dev_mode}}"
           echo "IMG_MODIFIER: ${{steps.set-outputs.outputs.img_modifier}}"
           echo "IMG_PREFIX: ${{steps.set-outputs.outputs.img_prefix}}"
           echo "IMG_DEV_TAG: ${{steps.set-outputs.outputs.img_dev_tag}}"
@@ -149,6 +150,8 @@ jobs:
           echo "RUST_VERSION: ${{steps.set-outputs.outputs.rust_version}}"
           echo "RUNNING_ON_MAIN: ${{steps.set-outputs.outputs.running_on_main}}"
           echo "RUNNING_ON_TAG: ${{steps.set-outputs.outputs.running_on_tag}}"
+          echo "SSH_KEY_KUBEAPPS_DEPLOY_FILENAME: ${{steps.set-outputs.outputs.ssh_key_kubeapps_deploy_filename}}"
+          echo "SSH_KEY_FORKED_CHARTS_DEPLOY_FILENAME: ${{steps.set-outputs.outputs.ssh_key_forked_charts_deploy_filename}}"
           echo "TRIGGERED_FROM_FORK: ${{steps.set-outputs.outputs.triggered_from_fork}}"
           echo "VERSION: ${{steps.set-outputs.outputs.version}}"
 
@@ -673,7 +676,7 @@ jobs:
       HELM_VERSION_STABLE: ${HELM_VERSION_STABLE}
       KUBECTL_VERSION: ${KUBECTL_VERSION}
       DEBUG_MODE: true
-      DEV_MODE: ${{env.DEV_MODE}}
+      DEV_MODE: ${{ needs.setup.outputs.dev_mode == "true" }}
     secrets:
       GKE_ADMIN: ${{ secrets.GKE_ADMIN }}
       GCLOUD_KEY: ${{ secrets.GCLOUD_KEY }}
