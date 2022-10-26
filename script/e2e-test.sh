@@ -569,8 +569,8 @@ if [[ -z "${GKE_BRANCH-}" && ("${TESTS_GROUP}" == "${ALL_TESTS}" || "${TESTS_GRO
     yarn test \"tests/multicluster-nokubeapps/\"
     "
   info "${test_command}"
-  #if ! kubectl exec -it "$pod" -- /bin/sh -c "${test_command}"; then
-  if ! /bin/sh -c "${test_command}"; then
+
+  if ! kubectl exec -it "$pod" -- /bin/sh -c "${test_command}"; then
     ## Integration tests failed, get report screenshot
     warn "PODS status on failure"
     kubectl cp "${pod}:/app/reports" ./reports
