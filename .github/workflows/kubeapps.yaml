@@ -665,18 +665,30 @@ jobs:
 #      - sync_chart_from_bitnami
     runs-on: ubuntu-latest
     outputs:
-      GKE_STABLE_VERSION: ${GKE_STABLE_VERSION}
-      GKE_REGULAR_VERSION: ${GKE_REGULAR_VERSION}
-      GKE_CLUSTER: ${GKE_CLUSTER}
-      GKE_PROJECT: ${GKE_PROJECT}
-      GKE_ZONE: ${GKE_ZONE}
-      HELM_VERSION_MIN: ${HELM_VERSION_MIN}
-      HELM_VERSION_STABLE: ${HELM_VERSION_STABLE}
-      KUBECTL_VERSION: ${KUBECTL_VERSION}
-      DEBUG_MODE: true
-      DEV_MODE: ${{ needs.setup.outputs.dev_mode }}
+      GKE_STABLE_VERSION: ${{ steps.set-outputs.outputs.GKE_STABLE_VERSION }}
+      GKE_REGULAR_VERSION: ${{ steps.set-outputs.outputs.GKE_REGULAR_VERSION }}
+      GKE_CLUSTER: ${{ steps.set-outputs.outputs.GKE_CLUSTER }}
+      GKE_PROJECT: ${{ steps.set-outputs.outputs.GKE_PROJECT }}
+      GKE_ZONE: ${{ steps.set-outputs.outputs.GKE_ZONE }}
+      HELM_VERSION_MIN: ${{ steps.set-outputs.outputs.HELM_VERSION_MIN }}
+      HELM_VERSION_STABLE: ${{ steps.set-outputs.outputs.HELM_VERSION_STABLE }}
+      KUBECTL_VERSION: ${{ steps.set-outputs.outputs.KUBECTL_VERSION }}
+      DEBUG_MODE: ${{ steps.set-outputs.outputs.DEBUG_MODE }}
+      DEV_MODE: ${{ steps.set-outputs.outputs.DEV_MODE }}
     steps:
-      - run: echo "Just producing outputs because env vars cannot be used in 'jobs.<id>.with' (GHA limitation)"
+      - id: set-outputs
+        run: |
+          echo "img_prefix=${IMG_PREFIX}" >> $GITHUB_OUTPUT
+          echo "GKE_STABLE_VERSION=${GKE_STABLE_VERSION}" >> $GITHUB_OUTPUT
+          echo "GKE_REGULAR_VERSION=${GKE_REGULAR_VERSION}" >> $GITHUB_OUTPUT
+          echo "GKE_CLUSTER=${GKE_CLUSTER}" >> $GITHUB_OUTPUT
+          echo "GKE_PROJECT=${GKE_PROJECT}" >> $GITHUB_OUTPUT
+          echo "GKE_ZONE=${GKE_ZONE}" >> $GITHUB_OUTPUT
+          echo "HELM_VERSION_MIN=${HELM_VERSION_MIN}" >> $GITHUB_OUTPUT
+          echo "HELM_VERSION_STABLE=${HELM_VERSION_STABLE}" >> $GITHUB_OUTPUT
+          echo "KUBECTL_VERSION=${KUBECTL_VERSION}" >> $GITHUB_OUTPUT
+          echo "DEBUG_MODE=${DEBUG_MODE}" >> $GITHUB_OUTPUT
+          echo "DEV_MODE=${DEV_MODE}" >> $GITHUB_OUTPUT
 
   DEBUG:
     needs:
@@ -702,7 +714,7 @@ jobs:
     uses: ./.github/workflows/gke_e2e_tests.yaml
     with:
       ID: "regular_version_main"
-      GKE_BRANCH: ${{ needs.gke_setup.outputs.GKE_BRANCH }}
+      GKE_BRANCH: ${{ needs.gke_setup.outputs.GKE_REGULAR_VERSION }}
       GKE_CLUSTER: ${{ needs.gke_setup.outputs.GKE_CLUSTER }}
       GKE_PROJECT: ${{ needs.gke_setup.outputs.GKE_PROJECT }}
       GKE_ZONE: ${{ needs.gke_setup.outputs.GKE_ZONE }}
