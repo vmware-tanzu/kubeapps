@@ -27,7 +27,7 @@ env:
   # - Probably some other things I don't remember right now :)
   #
   # CircleCI and GHA pipelines are running in parallel. This should be removed once the CircleCI pipeline is decommissioned.
-  DEV_MODE: "true"
+  DEV_MODE: true
   SSH_KEY_KUBEAPPS_DEPLOY_FILENAME: "id_rsa_kubeapps_deploy_key"
   SSH_KEY_FORKED_CHARTS_DEPLOY_FILENAME: "id_rsa_forked_charts_deploy_key"
   KUBEAPPS_REPO: "vmware-tanzu/kubeapps"
@@ -673,7 +673,7 @@ jobs:
       HELM_VERSION_STABLE: ${HELM_VERSION_STABLE}
       KUBECTL_VERSION: ${KUBECTL_VERSION}
       DEBUG_MODE: true
-      DEV_MODE: ${{ DEV_MODE == "true" }}
+      DEV_MODE: ${DEV_MODE}
     secrets:
       GKE_ADMIN: ${{ secrets.GKE_ADMIN }}
       GCLOUD_KEY: ${{ secrets.GCLOUD_KEY }}
