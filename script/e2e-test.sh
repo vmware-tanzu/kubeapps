@@ -14,10 +14,13 @@ ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." >/dev/null && pwd)"
 ALL_TESTS="all"
 MAIN_TESTS="main"
 MULTICLUSTER_TESTS="multicluster"
+MULTICLUSTER_NOKUBEAPPS_TESTS="multicluster-nokubeapps"
 CARVEL_TESTS="carvel"
 FLUX_TESTS="flux"
 OPERATOR_TESTS="operator"
-SUPPORTED_TESTS_GROUPS=("${ALL_TESTS}" "${MAIN_TESTS}" "${MULTICLUSTER_TESTS}" "${CARVEL_TESTS}" "${FLUX_TESTS}" "${OPERATOR_TESTS}")
+SUPPORTED_TESTS_GROUPS=("${ALL_TESTS}" "${MAIN_TESTS}" "${MULTICLUSTER_TESTS}" "${CARVEL_TESTS}" "${FLUX_TESTS}" "${OPERATOR_TESTS}" "${MULTICLUSTER_NOKUBEAPPS_TESTS}")
+INTEGRATION_HOST=kubeapps-ci.kubeapps
+INTEGRATION_ENTRYPOINT="http://${INTEGRATION_HOST}"
 
 # Params
 USE_MULTICLUSTER_OIDC_ENV=${1:-false}
@@ -290,7 +293,6 @@ installOrUpgradeKubeapps() {
   # See https://stackoverflow.com/a/36296000 for "${arr[@]+"${arr[@]}"}" notation.
   cmd=(helm upgrade --install kubeapps-ci --namespace kubeapps "${chartSource}"
     "${img_flags[@]}"
-    "${@:2}"
     "${multiclusterFlags[@]+"${multiclusterFlags[@]}"}"
     --set frontend.replicaCount=1
     --set dashboard.replicaCount=1
@@ -304,6 +306,7 @@ installOrUpgradeKubeapps() {
     --set apprepository.initialRepos[0].basicAuth.user=admin
     --set apprepository.initialRepos[0].basicAuth.password=password
     --set apprepository.globalReposNamespaceSuffix=-repos-global
+    "${@:2}"
     --wait)
 
   echo "${cmd[@]}"
@@ -367,10 +370,10 @@ if [ "$USE_MULTICLUSTER_OIDC_ENV" = true ]; then
     "--set" "authProxy.extraFlags[0]=\"--oidc-issuer-url=https://${DEX_IP}:32000\""
     "--set" "authProxy.extraFlags[1]=\"--scope=openid email groups audience:server:client_id:second-cluster audience:server:client_id:third-cluster\""
     "--set" "authProxy.extraFlags[2]=\"--ssl-insecure-skip-verify=true\""
-    "--set" "authProxy.extraFlags[3]=\"--redirect-url=http://kubeapps-ci.kubeapps/oauth2/callback\""
+    "--set" "authProxy.extraFlags[3]=\"--redirect-url=${INTEGRATION_ENTRYPOINT}/oauth2/callback\""
     "--set" "authProxy.extraFlags[4]=\"--cookie-secure=false\""
-    "--set" "authProxy.extraFlags[5]=\"--cookie-domain=kubeapps-ci.kubeapps\""
-    "--set" "authProxy.extraFlags[6]=\"--whitelist-domain=kubeapps-ci.kubeapps\""
+    "--set" "authProxy.extraFlags[5]=\"--cookie-domain=${INTEGRATION_HOST}\""
+    "--set" "authProxy.extraFlags[6]=\"--whitelist-domain=${INTEGRATION_HOST}\""
     "--set" "authProxy.extraFlags[7]=\"--set-authorization-header=true\""
     "--set" "clusters[0].name=default"
     "--set" "clusters[1].name=second-cluster"
@@ -455,16 +458,17 @@ done
 
 # Browser tests
 cd "${ROOT_DIR}/integration"
+info "Using E2E runner image '${IMG_PREFIX}integration-tests${IMG_MODIFIER}:${IMG_DEV_TAG}'"
 kubectl create deployment e2e-runner --image ${IMG_PREFIX}integration-tests${IMG_MODIFIER}:${IMG_DEV_TAG}
 k8s_wait_for_deployment default e2e-runner
 pod=$(kubectl get po -l app=e2e-runner -o custom-columns=:metadata.name --no-headers)
 ## Copy config and latest tests
 for f in *.js; do
-  kubectl cp "./${f}" "${pod}:/app/"
+  kubectl cp "./${f}" "default/${pod}:/app/"
 done
 
-kubectl cp ./tests "${pod}:/app/"
-info "Copied tests to e2e-runner pod ${pod}"
+kubectl cp ./tests "default/${pod}:/app/"
+info "Copied tests to e2e-runner pod default/${pod}"
 
 ## Create admin user
 kubectl create serviceaccount kubeapps-operator -n kubeapps
@@ -509,6 +513,48 @@ edit_token="$(kubectl get -n kubeapps secret "$(kubectl get -n kubeapps servicea
 endTime=$(date +%s)
 info "Bootstrap time: $(formattedElapsedTime endTime-startTime)"
 
+############################################################
+######## Multi-cluster without Kubeapps tests group ########
+############################################################
+if [[ -z "${GKE_BRANCH-}" && ("${TESTS_GROUP}" == "${ALL_TESTS}" || "${TESTS_GROUP}" == "${MULTICLUSTER_NOKUBEAPPS_TESTS}") ]]; then
+  sectionStartTime=$(date +%s)
+  info "Running multi-cluster (without Kubeapps cluster) integration tests..."
+
+  info "Updating Kubeapps to exclude Kubeapps cluster from the list of clusters"
+  installOrUpgradeKubeapps "${ROOT_DIR}/chart/kubeapps" \
+    "--set" "clusters[0].name=second-cluster"
+    "--set" "clusters[0].apiServiceURL=https://${ADDITIONAL_CLUSTER_IP}:6443"
+    "--set" "clusters[0].insecure=true"
+    "--set" "clusters[0].serviceToken=$(kubectl --context=kind-kubeapps-ci-additional --kubeconfig=${HOME}/.kube/kind-config-kubeapps-ci-additional get secret kubeapps-namespace-discovery -o go-template='{{.data.token | base64decode}}')"
+    "--set" "clusters[1]=null"
+
+  test_command="
+    CI_TIMEOUT_MINUTES=40 \
+    DOCKER_USERNAME=${DOCKER_USERNAME} \
+    DOCKER_PASSWORD=${DOCKER_PASSWORD} \
+    DOCKER_REGISTRY_URL=${DOCKER_REGISTRY_URL} \
+    TEST_TIMEOUT_MINUTES=${TEST_TIMEOUT_MINUTES} \
+    INTEGRATION_ENTRYPOINT=${INTEGRATION_ENTRYPOINT} \
+    USE_MULTICLUSTER_OIDC_ENV=${USE_MULTICLUSTER_OIDC_ENV} \
+    ADMIN_TOKEN=${admin_token} \
+    VIEW_TOKEN=${view_token} \
+    EDIT_TOKEN=${edit_token} \
+    yarn test \"tests/multicluster-nokubeapps/\"
+    "
+  info "${test_command}"
+  #if ! kubectl exec -it "$pod" -- /bin/sh -c "${test_command}"; then
+  if ! /bin/sh -c "${test_command}"; then
+    ## Integration tests failed, get report screenshot
+    warn "PODS status on failure"
+    kubectl cp "${pod}:/app/reports" ./reports
+    exit 1
+  fi
+  info "Multi-cluster integration tests succeeded!!"
+
+  sectionEndTime=$(date +%s)
+  info "Multi-cluster tests execution time: $(formattedElapsedTime sectionEndTime-sectionStartTime)"
+fi
+
 ##################################
 ######## Main tests group ########
 ##################################
@@ -521,7 +567,7 @@ if [[ "${TESTS_GROUP}" == "${ALL_TESTS}" || "${TESTS_GROUP}" == "${MAIN_TESTS}" 
     DOCKER_PASSWORD=${DOCKER_PASSWORD} \
     DOCKER_REGISTRY_URL=${DOCKER_REGISTRY_URL} \
     TEST_TIMEOUT_MINUTES=${TEST_TIMEOUT_MINUTES} \
-    INTEGRATION_ENTRYPOINT=http://kubeapps-ci.kubeapps \
+    INTEGRATION_ENTRYPOINT=${INTEGRATION_ENTRYPOINT} \
     USE_MULTICLUSTER_OIDC_ENV=${USE_MULTICLUSTER_OIDC_ENV} \
     ADMIN_TOKEN=${admin_token} \
     VIEW_TOKEN=${view_token} \
@@ -553,7 +599,7 @@ if [[ -z "${GKE_BRANCH-}" && ("${TESTS_GROUP}" == "${ALL_TESTS}" || "${TESTS_GRO
     DOCKER_PASSWORD=${DOCKER_PASSWORD} \
     DOCKER_REGISTRY_URL=${DOCKER_REGISTRY_URL} \
     TEST_TIMEOUT_MINUTES=${TEST_TIMEOUT_MINUTES} \
-    INTEGRATION_ENTRYPOINT=http://kubeapps-ci.kubeapps \
+    INTEGRATION_ENTRYPOINT=${INTEGRATION_ENTRYPOINT} \
     USE_MULTICLUSTER_OIDC_ENV=${USE_MULTICLUSTER_OIDC_ENV} \
     ADMIN_TOKEN=${admin_token} \
     VIEW_TOKEN=${view_token} \
@@ -593,7 +639,7 @@ if [[ "${TESTS_GROUP}" == "${ALL_TESTS}" || "${TESTS_GROUP}" == "${CARVEL_TESTS}
   test_command="
     CI_TIMEOUT_MINUTES=20 \
     TEST_TIMEOUT_MINUTES=${TEST_TIMEOUT_MINUTES} \
-    INTEGRATION_ENTRYPOINT=http://kubeapps-ci.kubeapps \
+    INTEGRATION_ENTRYPOINT=${INTEGRATION_ENTRYPOINT} \
     USE_MULTICLUSTER_OIDC_ENV=${USE_MULTICLUSTER_OIDC_ENV} \
     ADMIN_TOKEN=${admin_token} \
     VIEW_TOKEN=${view_token} \
@@ -634,7 +680,7 @@ if [[ "${TESTS_GROUP}" == "${ALL_TESTS}" || "${TESTS_GROUP}" == "${FLUX_TESTS}" 
   test_command="
     CI_TIMEOUT_MINUTES=20 \
     TEST_TIMEOUT_MINUTES=${TEST_TIMEOUT_MINUTES} \
-    INTEGRATION_ENTRYPOINT=http://kubeapps-ci.kubeapps \
+    INTEGRATION_ENTRYPOINT=${INTEGRATION_ENTRYPOINT} \
     USE_MULTICLUSTER_OIDC_ENV=${USE_MULTICLUSTER_OIDC_ENV} \
     ADMIN_TOKEN=${admin_token} \
     VIEW_TOKEN=${view_token} \
@@ -685,7 +731,7 @@ if [[ "${TESTS_GROUP}" == "${ALL_TESTS}" || "${TESTS_GROUP}" == "${OPERATOR_TEST
     test_command="
       CI_TIMEOUT_MINUTES=20 \
       TEST_TIMEOUT_MINUTES=${TEST_TIMEOUT_MINUTES} \
-      INTEGRATION_ENTRYPOINT=http://kubeapps-ci.kubeapps \
+      INTEGRATION_ENTRYPOINT=${INTEGRATION_ENTRYPOINT} \
       USE_MULTICLUSTER_OIDC_ENV=${USE_MULTICLUSTER_OIDC_ENV} \
       ADMIN_TOKEN=${admin_token} \
       VIEW_TOKEN=${view_token} \
