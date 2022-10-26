@@ -39,6 +39,35 @@ export function escapeRegExp(str: string) {
   return str.replace(/[-[\]/{}()*+?.\\^$|]/g, "\\$&");
 }
 
+export function getStringValue(value: any, type?: string) {
+  const usedType = type || typeof value;
+  let result = value?.toString();
+  if (["array", "object"].includes(usedType)) {
+    try {
+      result = JSON.stringify(value);
+    } catch (e) {
+      result = value?.toString();
+    }
+  }
+  return result || "";
+}
+
+export function getValueFromString(value: string, type?: string) {
+  const usedType = type || typeof value;
+  let result = value?.toString();
+  if (["array", "object"].includes(usedType)) {
+    try {
+      result = JSON.parse(value);
+      if (usedType === "object" && typeof result !== "object") {
+        result = value?.toString();
+      }
+    } catch (e) {
+      result = value?.toString();
+    }
+  }
+  return result;
+}
+
 export function getValueFromEvent(
   e: React.FormEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>,
 ) {
@@ -51,9 +80,20 @@ export function getValueFromEvent(
     case "range":
       // value is a number
       return toNumber(value);
+    case "array":
+      return getValueFromString(value, "array");
+    case "object":
+      return getValueFromString(value, "object");
     default:
-      return value;
+      return getValueFromString(value);
   }
+}
+
+export function getOptionalMin(num1?: number, num2?: number) {
+  if (num1 && num2) {
+    return Math.min(num1, num2);
+  }
+  return num1 || num2 || undefined;
 }
 
 // 3 lines description max

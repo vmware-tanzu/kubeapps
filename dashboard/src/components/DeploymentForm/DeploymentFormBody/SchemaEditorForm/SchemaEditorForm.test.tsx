@@ -4,7 +4,7 @@
 import { SupportedThemes } from "shared/Config";
 import { defaultStore, getStore, mountWrapper } from "shared/specs/mountWrapper";
 import { IStoreState } from "shared/types";
-import AdvancedDeploymentForm, { IAdvancedDeploymentForm } from "./AdvancedDeploymentForm";
+import SchemaEditorForm, { ISchemaEditorForm } from "./SchemaEditorForm";
 
 beforeEach(() => {
   // mock the window.matchMedia for selecting the theme
@@ -48,31 +48,29 @@ afterEach(() => {
   jest.restoreAllMocks();
 });
 
-const defaultProps: IAdvancedDeploymentForm = {
+const defaultProps: ISchemaEditorForm = {
   handleValuesChange: jest.fn(),
-  valuesFromTheDeployedPackage: "",
-  valuesFromTheAvailablePackage: "",
-  deploymentEvent: "",
-  valuesFromTheParentContainer: "",
+  schemaFromTheAvailablePackage: "{}",
+  schemaFromTheParentContainer: "{}",
 };
 
 it("includes values", () => {
   const wrapper = mountWrapper(
     defaultStore,
-    <AdvancedDeploymentForm {...defaultProps} valuesFromTheParentContainer="foo: bar" />,
+    <SchemaEditorForm {...defaultProps} schemaFromTheParentContainer='{ "type": "string" }' />,
   );
-  expect(wrapper.find("MonacoDiffEditor").prop("value")).toBe("foo: bar");
+  expect(wrapper.find("MonacoDiffEditor").prop("value")).toBe('{ "type": "string" }');
 });
 
 it("sets light theme by default", () => {
-  const wrapper = mountWrapper(defaultStore, <AdvancedDeploymentForm {...defaultProps} />);
+  const wrapper = mountWrapper(defaultStore, <SchemaEditorForm {...defaultProps} />);
   expect(wrapper.find("MonacoDiffEditor").prop("theme")).toBe("light");
 });
 
 it("changes theme", () => {
   const wrapper = mountWrapper(
     getStore({ config: { theme: SupportedThemes.dark } } as Partial<IStoreState>),
-    <AdvancedDeploymentForm {...defaultProps} />,
+    <SchemaEditorForm {...defaultProps} />,
   );
   expect(wrapper.find("MonacoDiffEditor").prop("theme")).toBe("vs-dark");
 });

@@ -27,7 +27,7 @@ const defaultProps = {
 };
 
 let spyOnUseDispatch: jest.SpyInstance;
-const kubeaActions = { ...actions.kube };
+const kubeActions = { ...actions.kube };
 beforeEach(() => {
   actions.installedpackages = {
     ...actions.installedpackages,
@@ -38,7 +38,7 @@ beforeEach(() => {
 });
 
 afterEach(() => {
-  actions.kube = { ...kubeaActions };
+  actions.kube = { ...kubeActions };
   spyOnUseDispatch.mockRestore();
 });
 
