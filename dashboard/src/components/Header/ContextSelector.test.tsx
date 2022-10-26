@@ -18,7 +18,7 @@ import ContextSelector from "./ContextSelector";
 
 let spyOnUseDispatch: jest.SpyInstance;
 let spyOnUseHistory: jest.SpyInstance;
-const kubeaActions = { ...actions.operators };
+const kubeActions = { ...actions.operators };
 beforeEach(() => {
   actions.namespace = {
     ...actions.namespace,
@@ -35,7 +35,7 @@ beforeEach(() => {
 });
 
 afterEach(() => {
-  actions.operators = { ...kubeaActions };
+  actions.operators = { ...kubeActions };
   spyOnUseDispatch.mockRestore();
   spyOnUseHistory.mockRestore();
 });

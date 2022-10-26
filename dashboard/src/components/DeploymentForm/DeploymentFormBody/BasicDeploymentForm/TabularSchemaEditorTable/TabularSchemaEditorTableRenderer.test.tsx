@@ -30,9 +30,9 @@ jest.useFakeTimers();
     params: [
       {
         key: "wordpressPassword",
-        currentValue: "sserpdrow",
-        defaultValue: "sserpdrow",
-        deployedValue: "sserpdrow",
+        currentValue: "password",
+        defaultValue: "password",
+        deployedValue: "password",
         hasProperties: false,
         title: "Password",
         schema: {
@@ -163,9 +163,9 @@ jest.useFakeTimers();
       } as IBasicFormParam,
       {
         key: "wordpressPassword",
-        currentValue: "sserpdrow",
-        defaultValue: "sserpdrow",
-        deployedValue: "sserpdrow",
+        currentValue: "password",
+        defaultValue: "password",
+        deployedValue: "password",
         hasProperties: false,
         title: "Password",
         schema: {
@@ -243,6 +243,7 @@ jest.useFakeTimers();
         deployedValue: "[element1]",
         hasProperties: false,
         title: "string[]",
+        minItems: 1,
         schema: {
           type: "array",
           items: {
@@ -263,6 +264,7 @@ jest.useFakeTimers();
         deployedValue: "[1]",
         hasProperties: false,
         title: "number[]",
+        minItems: 1,
         schema: {
           type: "array",
           items: {
@@ -283,6 +285,7 @@ jest.useFakeTimers();
         deployedValue: "[true]",
         hasProperties: false,
         title: "boolean[]",
+        minItems: 1,
         schema: {
           type: "array",
           items: {
@@ -303,6 +306,7 @@ jest.useFakeTimers();
         deployedValue: "[{}]",
         hasProperties: false,
         title: "object[]",
+        minItems: 1,
         schema: {
           type: "array",
           items: {
@@ -333,16 +337,16 @@ jest.useFakeTimers();
             expect(input.prop("type")).toBe("password");
             break;
           }
-          expect(input.prop("type")).toBe("string");
+          expect(input.prop("type")).toBe("text");
           break;
         case "boolean":
           expect(input.prop("type")).toBe("checkbox");
           break;
         case "number":
           expect(inputNumText.prop("type")).toBe("number");
-          expect(inputNumText.prop("step")).toBe(0.1);
+          expect(inputNumText.prop("step")).toBe(0.5);
           expect(inputNumRange.prop("type")).toBe("range");
-          expect(inputNumRange.prop("step")).toBe(0.1);
+          expect(inputNumRange.prop("step")).toBe(0.5);
           break;
         case "integer":
           expect(inputNumText.prop("type")).toBe("number");
@@ -351,11 +355,7 @@ jest.useFakeTimers();
           expect(inputNumRange.prop("step")).toBe(1);
           break;
         case "array":
-          if (param.schema.items.type !== "object") {
-            expect(wrapper.find("ArrayParam input").first()).toExist();
-          } else {
-            expect(wrapper.find("textarea")).toExist();
-          }
+          expect(wrapper.find("ArrayParam input").first()).toExist();
           break;
         case "object":
           expect(wrapper.find(`textarea#${param.key}`)).toExist();
@@ -366,14 +366,10 @@ jest.useFakeTimers();
       if (["integer", "number"].includes(param.type)) {
         inputNumText.simulate("change", { target: { value: "" } });
       } else if (param.type === "array") {
-        if (param.schema.items.type !== "object") {
-          wrapper
-            .find("ArrayParam input")
-            .first()
-            .simulate("change", { target: { value: "" } });
-        } else {
-          wrapper.find("textarea").simulate("change", { target: { value: "" } });
-        }
+        wrapper
+          .find("ArrayParam input")
+          .first()
+          .simulate("change", { target: { value: "" } });
       } else if (param.type === "object") {
         wrapper.find(`textarea#${param.key}`).simulate("change", { target: { value: "" } });
       } else {

@@ -253,8 +253,8 @@ Once you have installed Kubeapps follow the [Getting Started Guide](https://gith
 | `dashboard.lifecycleHooks`                        | Custom lifecycle hooks for Dashboard containers                                                           | `{}`                 |
 | `dashboard.command`                               | Override default container command (useful when using custom images)                                      | `[]`                 |
 | `dashboard.args`                                  | Override default container args (useful when using custom images)                                         | `[]`                 |
-| `dashboard.podLabels`                             | Extra labels for Dasbhoard pods                                                                           | `{}`                 |
-| `dashboard.podAnnotations`                        | Annotations for Dasbhoard pods                                                                            | `{}`                 |
+| `dashboard.podLabels`                             | Extra labels for Dashboard pods                                                                           | `{}`                 |
+| `dashboard.podAnnotations`                        | Annotations for Dashboard pods                                                                            | `{}`                 |
 | `dashboard.podAffinityPreset`                     | Pod affinity preset. Ignored if `affinity` is set. Allowed values: `soft` or `hard`                       | `""`                 |
 | `dashboard.podAntiAffinityPreset`                 | Pod anti-affinity preset. Ignored if `affinity` is set. Allowed values: `soft` or `hard`                  | `soft`               |
 | `dashboard.nodeAffinityPreset.type`               | Node affinity preset type. Ignored if `affinity` is set. Allowed values: `soft` or `hard`                 | `""`                 |
@@ -267,12 +267,12 @@ Once you have installed Kubeapps follow the [Getting Started Guide](https://gith
 | `dashboard.schedulerName`                         | Name of the k8s scheduler (other than default)                                                            | `""`                 |
 | `dashboard.topologySpreadConstraints`             | Topology Spread Constraints for pod assignment                                                            | `[]`                 |
 | `dashboard.hostAliases`                           | Custom host aliases for Dashboard pods                                                                    | `[]`                 |
-| `dashboard.extraVolumes`                          | Optionally specify extra list of additional volumes for Dasbhoard pods                                    | `[]`                 |
-| `dashboard.extraVolumeMounts`                     | Optionally specify extra list of additional volumeMounts for Dasbhoard container(s)                       | `[]`                 |
-| `dashboard.sidecars`                              | Add additional sidecar containers to the Dasbhoard pod                                                    | `[]`                 |
-| `dashboard.initContainers`                        | Add additional init containers to the Dasbhoard pods                                                      | `[]`                 |
-| `dashboard.service.ports.http`                    | Dasbhoard service HTTP port                                                                               | `8080`               |
-| `dashboard.service.annotations`                   | Additional custom annotations for Dasbhoard service                                                       | `{}`                 |
+| `dashboard.extraVolumes`                          | Optionally specify extra list of additional volumes for Dashboard pods                                    | `[]`                 |
+| `dashboard.extraVolumeMounts`                     | Optionally specify extra list of additional volumeMounts for Dashboard container(s)                       | `[]`                 |
+| `dashboard.sidecars`                              | Add additional sidecar containers to the Dashboard pod                                                    | `[]`                 |
+| `dashboard.initContainers`                        | Add additional init containers to the Dashboard pods                                                      | `[]`                 |
+| `dashboard.service.ports.http`                    | Dashboard service HTTP port                                                                               | `8080`               |
+| `dashboard.service.annotations`                   | Additional custom annotations for Dashboard service                                                       | `{}`                 |
 
 
 ### AppRepository Controller parameters
@@ -421,12 +421,21 @@ Once you have installed Kubeapps follow the [Getting Started Guide](https://gith
 
 ### Other Parameters
 
-| Name                      | Description                                                                   | Value   |
-| ------------------------- | ----------------------------------------------------------------------------- | ------- |
-| `allowNamespaceDiscovery` | Allow users to discover available namespaces (only the ones they have access) | `true`  |
-| `clusters`                | List of clusters that Kubeapps can target for deployments                     | `[]`    |
-| `featureFlags.operators`  | Enable ingress record generation for Kubeapps                                 | `false` |
-| `rbac.create`             | Specifies whether RBAC resources should be created                            | `true`  |
+| Name                      | Description                                                                   | Value  |
+| ------------------------- | ----------------------------------------------------------------------------- | ------ |
+| `allowNamespaceDiscovery` | Allow users to discover available namespaces (only the ones they have access) | `true` |
+| `clusters`                | List of clusters that Kubeapps can target for deployments                     | `[]`   |
+| `rbac.create`             | Specifies whether RBAC resources should be created                            | `true` |
+
+
+### Feature flags
+
+| Name                                    | Description                                                                                                | Value   |
+| --------------------------------------- | ---------------------------------------------------------------------------------------------------------- | ------- |
+| `featureFlags.apiOnly.enabled`          | Enable ingress for API operations only. Access to "/" will not be possible, so Dashboard will be unusable. | `false` |
+| `featureFlags.apiOnly.grpc.annotations` | Specific annotations for the GRPC ingress in API-only mode                                                 | `{}`    |
+| `featureFlags.operators`                | Enable support for Operators in Kubeapps                                                                   | `false` |
+| `featureFlags.schemaEditor.enabled`     | Enable a visual editor for customizing the package schemas                                                 | `false` |
 
 
 ### Database Parameters
@@ -440,9 +449,9 @@ Once you have installed Kubeapps follow the [Getting Started Guide](https://gith
 | `postgresql.primary.persistence.enabled` | Enable PostgreSQL Primary data persistence using PVC                         | `false`      |
 | `postgresql.architecture`                | PostgreSQL architecture (`standalone` or `replication`)                      | `standalone` |
 | `postgresql.securityContext.enabled`     | Enabled PostgreSQL replicas pods' Security Context                           | `false`      |
-| `postgresql.resources.limits`            | The resources limits for the PostreSQL container                             | `{}`         |
-| `postgresql.resources.requests.cpu`      | The requested CPU for the PostreSQL container                                | `250m`       |
-| `postgresql.resources.requests.memory`   | The requested memory for the PostreSQL container                             | `256Mi`      |
+| `postgresql.resources.limits`            | The resources limits for the PostgreSQL container                            | `{}`         |
+| `postgresql.resources.requests.cpu`      | The requested CPU for the PostgreSQL container                               | `250m`       |
+| `postgresql.resources.requests.memory`   | The requested memory for the PostgreSQL container                            | `256Mi`      |
 
 
 ### kubeappsapis parameters
@@ -555,7 +564,7 @@ Once you have installed Kubeapps follow the [Getting Started Guide](https://gith
 | `redis.replica.disableCommands`     | Array with commands to deactivate on Redis&reg;                  | `[]`                                                     |
 | `redis.replica.persistence.enabled` | Enable Redis&reg; replica data persistence using PVC             | `false`                                                  |
 
-Specify each parameter using the `--set key=value[,key=value]` argument to `helm install`. For example,
+
 
 ```bash
 helm install kubeapps --namespace kubeapps \

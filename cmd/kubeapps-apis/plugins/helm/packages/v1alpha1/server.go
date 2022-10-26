@@ -8,6 +8,11 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"net/url"
+	"os"
+	"path"
+	"strings"
+
 	appRepov1 "github.com/vmware-tanzu/kubeapps/cmd/apprepository-controller/pkg/apis/apprepository/v1alpha1"
 	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/core"
 	corev1 "github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
@@ -39,11 +44,7 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/kubernetes"
 	log "k8s.io/klog/v2"
-	"net/url"
-	"os"
-	"path"
 	ctrlclient "sigs.k8s.io/controller-runtime/pkg/client"
-	"strings"
 )
 
 type helmActionConfigGetter func(ctx context.Context, pkgContext *corev1.Context) (*action.Configuration, error)
@@ -1035,7 +1036,8 @@ func (s *Server) AddPackageRepository(ctx context.Context, request *corev1.AddPa
 		return nil, status.Errorf(codes.InvalidArgument, "no package repository Name provided")
 	}
 
-	log.Infof("+helm AddPackageRepository '%s' pointing to '%s'", request.GetName(), request.GetUrl())
+	repoName := request.Name
+	log.Infof("+helm AddPackageRepository '%s'", repoName)
 
 	cluster := request.GetContext().GetCluster()
 	if cluster == "" {
@@ -1050,7 +1052,7 @@ func (s *Server) AddPackageRepository(ctx context.Context, request *corev1.AddPa
 		return nil, status.Errorf(codes.InvalidArgument, "Namespace Scope is inconsistent with the provided Namespace")
 	}
 	name := types.NamespacedName{
-		Name:      request.Name,
+		Name:      repoName,
 		Namespace: namespace,
 	}
 
