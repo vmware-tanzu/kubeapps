@@ -673,7 +673,7 @@ jobs:
       HELM_VERSION_STABLE: ${HELM_VERSION_STABLE}
       KUBECTL_VERSION: ${KUBECTL_VERSION}
       DEBUG_MODE: true
-      DEV_MODE: ${{ $DEV_MODE == "true" }}
+      DEV_MODE: ${{ DEV_MODE == "true" }}
     secrets:
       GKE_ADMIN: ${{ secrets.GKE_ADMIN }}
       GCLOUD_KEY: ${{ secrets.GCLOUD_KEY }}
