@@ -169,7 +169,7 @@ jobs:
       HELM_VERSION_STABLE: ${HELM_VERSION_STABLE}
       KUBECTL_VERSION: ${KUBECTL_VERSION}
       DEBUG_MODE: true
-      DEV_MODE: ${{ needs.setup.outputs.dev_mode == 'true' }}
+      DEV_MODE: ${{ needs.setup.outputs.dev_mode }}
     steps:
       - run: echo "Just producing outputs because env vars cannot be used in 'jobs.<id>.with' (GHA limitation)"
 
@@ -188,8 +188,8 @@ jobs:
       HELM_VERSION_MIN: ${{ needs.gke_setup.outputs.HELM_VERSION_MIN }}
       HELM_VERSION_STABLE: ${{ needs.gke_setup.outputs.HELM_VERSION_STABLE }}
       KUBECTL_VERSION: ${{ needs.gke_setup.outputs.KUBECTL_VERSION }}
-      DEBUG_MODE: ${{ needs.gke_setup.outputs.DEBUG_MODE }}
-      DEV_MODE: ${{ needs.gke_setup.outputs.DEV_MODE }}
+      DEBUG_MODE: ${{ needs.gke_setup.outputs.DEBUG_MODE == 'true' }}
+      DEV_MODE: ${{ needs.gke_setup.outputs.DEV_MODE == 'true' }}
     secrets:
       GKE_ADMIN: ${{ secrets.GKE_ADMIN }}
       GCLOUD_KEY: ${{ secrets.GCLOUD_KEY }}
