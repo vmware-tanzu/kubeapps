@@ -119,7 +119,7 @@
     "stylelint-config-standard-scss": "^6.0.0",
     "stylelint-scss": "^4.3.0",
     "ts-jest": "^29.0.3",
-    "ts-proto": "^1.130.0",
+    "ts-proto": "^1.131.0",
     "typescript": "^4.8.4"
   },
   "resolutions": {
