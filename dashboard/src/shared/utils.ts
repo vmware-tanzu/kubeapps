@@ -183,6 +183,7 @@ export function getPluginsAllowingSA(): string[] {
   return [PluginNames.PACKAGES_FLUX, PluginNames.PACKAGES_KAPP];
 }
 
+// getPluginsRequiringSA should return a subset of getPluginsAllowingSA
 export function getPluginsRequiringSA(): string[] {
   return [PluginNames.PACKAGES_KAPP];
 }

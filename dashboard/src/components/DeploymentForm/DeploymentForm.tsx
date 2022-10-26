@@ -99,7 +99,7 @@ export default function DeploymentForm() {
 
   useEffect(() => {
     // Populate the service account list if the plugin requires it
-    if (getPluginsRequiringSA().includes(pluginObj.name)) {
+    if (getPluginsAllowingSA().includes(pluginObj.name)) {
       // We assume the user has enough permissions to do that. Fallback to a simple input maybe?
       Kube.getServiceAccountNames(targetCluster, targetNamespace)
         .then(saList => setServiceAccountList(saList.serviceaccountNames))
