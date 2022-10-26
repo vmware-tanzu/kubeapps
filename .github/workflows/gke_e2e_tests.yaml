@@ -1,0 +1,111 @@
+name: "GKE e2e Tests"
+on:
+  workflow_call:
+    inputs:
+      ID:
+        type: string
+        required: true
+        description: "An alphanumeric ID to clearly identify the workflow and avoid outputs collision"
+      GKE_BRANCH:
+        type: string
+        required: true
+        description: "The branch of the GKE environment in which we want to test."
+      GKE_CLUSTER:
+        type: string
+        required: true
+      GKE_PROJECT:
+        type: string
+        required: true
+      GKE_ZONE:
+        type: string
+        required: true
+      HELM_VERSION_MIN:
+        type: string
+        required: true
+      HELM_VERSION_STABLE:
+        type: string
+        required: true
+      KUBECTL_VERSION:
+        type: string
+        required: true
+      TEST_TIMEOUT_MINUTES:
+        type: number
+        required: false
+        default: 6
+      TEST_LATEST_RELEASE:
+        type: boolean
+        required: false
+        default: false
+      USE_MULTICLUSTER_OIDC_ENV:
+        type: boolean
+        required: false
+        default: false
+      DEBUG_MODE:
+        type: boolean
+        required: false
+        default: false
+      DEV_MODE:
+        type: boolean
+        required: false
+        default: false
+    secrets:
+      GKE_ADMIN:
+        required: true
+      GCLOUD_KEY:
+        required: true
+
+jobs:
+  e2e_tests:
+    runs-on: ubuntu-latest
+    env:
+      DEV_MODE: ${{ inputs.DEV_MODE }}
+      DEBUG_MODE: ${{ inputs.DEBUG_MODE }}
+      HELM_VERSION_MIN: ${{ secrets.HELM_VERSION_MIN }}
+      HELM_VERSION_STABLE: ${{ secrets.HELM_VERSION_STABLE }}
+      KUBECTL_VERSION: ${{ secrets.KUBECTL_VERSION }}
+      GCLOUD_KEY: ${{ secrets.GCLOUD_KEY }}
+      GKE_ADMIN: ${{ secrets.GKE_ADMIN }}
+      GKE_BRANCH: ${{ inputs.GKE_BRANCH }}
+      GKE_PROJECT: ${{ inputs.GKE_PROJECT }}
+      GKE_ZONE: ${{ inputs.GKE_ZONE }}
+      TEST_LATEST_RELEASE: ${{ inputs.TEST_LATEST_RELEASE }}
+      TEST_TIMEOUT_MINUTES: ${{ inputs.TEST_TIMEOUT_MINUTES }}
+      USE_MULTICLUSTER_OIDC_ENV: ${{ inputs.USE_MULTICLUSTER_OIDC_ENV }}
+    steps:
+      - uses: actions/checkout@v3
+      - run: |
+          set -euo pipefail
+          source ./script/lib/libcitools.sh
+          
+          installGCloudSDK
+          configureGCloud "${GKE_PROJECT}" "${GCLOUD_KEY}"
+          installKubectl "${KUBECTL_VERSION}"
+          installHelm "${HELM_VERSION_MIN}"
+          installHelm "${HELM_VERSION_STABLE}" helm-stable
+          exportEscapedGKEClusterName "${GKE_CLUSTER}" "${GKE_BRANCH}" "${GITHUB_REF_NAME}" "${TEST_LATEST_RELEASE:-0}" "${DEV_MODE}"
+      - name: Start GKE environment
+        run: |
+          set -euo pipefail
+          ./script/start-gke-env.sh "${ESCAPED_GKE_CLUSTER}" "${GKE_ZONE}" "${GKE_BRANCH}" "${GKE_ADMIN}" > /dev/null
+      - # TODO(castelblanque) Unify shared resources with kubeapps-local-dev-users-rbac.yaml that only applies to Kind clusters
+        name: Apply customizations to GKE cluster
+        run: |
+          kubectl create namespace kubeapps-user-namespace
+          ./script/install-nginx.sh
+      - name: "Run e2e tests script"
+        env:
+          TESTS_GROUP: "all"
+        run: ./script/run_e2e_tests.sh
+      - name: 'Upload Artifacts'
+        if: failure()
+        uses: actions/upload-artifact@v3
+        with:
+          name: gke_e2e_tests_reports-${{ inputs.ID }}
+          path: integration/reports
+      - name: "Delete GKE cluster"
+        if: always()
+        run: |
+          set -euo pipefail
+          source ./script/lib/libcitools.sh
+          
+          deleteGKECluster "${GKE_ZONE}" "${ESCAPED_GKE_CLUSTER}"
