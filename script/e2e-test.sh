@@ -322,11 +322,25 @@ installOrUpgradeKubeapps() {
 # Returns: Time formatted as Xm Ys
 ########################################################################################################################
 formattedElapsedTime() {
-  time=$1
+  local time=$1
 
   mins=$((time/60))
   secs=$((time%60))
   echo "${mins}m ${secs}s"
+}
+
+########################################################################################################################
+# Returns the elapsed time since the given starting point.
+# Arguments:
+#   $1: Starting point in seconds (eg. `date +%s`)
+# Returns: The elapsed time formatted as Xm Ys
+########################################################################################################################
+elapsedTimeSince() {
+  local start=${1?:Start time not provided}
+  local end
+
+  end=$(date +%s)
+  formattedElapsedTime $((end-start))
 }
 
 [[ "${DEBUG_MODE}" == "true" ]] && set -x;
@@ -513,8 +527,7 @@ admin_token="$(kubectl get -n kubeapps secret "$(kubectl get -n kubeapps service
 view_token="$(kubectl get -n kubeapps secret "$(kubectl get -n kubeapps serviceaccount kubeapps-view -o jsonpath='{.secrets[].name}')" -o go-template='{{.data.token | base64decode}}')"
 edit_token="$(kubectl get -n kubeapps secret "$(kubectl get -n kubeapps serviceaccount kubeapps-edit -o jsonpath='{.secrets[].name}')" -o go-template='{{.data.token | base64decode}}')"
 
-endTime=$(date +%s)
-info "Bootstrap time: $(formattedElapsedTime endTime-startTime)"
+info "Bootstrap time: $(elapsedTimeSince "$startTime")"
 
 ##################################
 ######## Main tests group ########
@@ -544,8 +557,7 @@ if [[ "${TESTS_GROUP}" == "${ALL_TESTS}" || "${TESTS_GROUP}" == "${MAIN_TESTS}" 
   fi
   info "Main integration tests succeeded!!"
 
-  sectionEndTime=$(date +%s)
-  info "Main tests execution time: $(formattedElapsedTime sectionEndTime-sectionStartTime)"
+  info "Main tests execution time: $(elapsedTimeSince "$sectionStartTime")"
 fi
 
 ###########################################
@@ -575,9 +587,7 @@ if [[ -z "${GKE_BRANCH-}" && ("${TESTS_GROUP}" == "${ALL_TESTS}" || "${TESTS_GRO
     exit 1
   fi
   info "Multi-cluster integration tests succeeded!!"
-
-  sectionEndTime=$(date +%s)
-  info "Multi-cluster tests execution time: $(formattedElapsedTime sectionEndTime-sectionStartTime)"
+  info "Multi-cluster tests execution time: $(elapsedTimeSince "$sectionStartTime")"
 fi
 
 ####################################
@@ -615,9 +625,7 @@ if [[ "${TESTS_GROUP}" == "${ALL_TESTS}" || "${TESTS_GROUP}" == "${CARVEL_TESTS}
     exit 1
   fi
   info "Carvel integration tests succeeded!!"
-
-  sectionEndTime=$(date +%s)
-  info "Carvel tests execution time: $(formattedElapsedTime sectionEndTime-sectionStartTime)"
+  info "Carvel tests execution time: $(elapsedTimeSince "$sectionStartTime")"
 fi
 
 ####################################
@@ -657,9 +665,7 @@ if [[ "${TESTS_GROUP}" == "${ALL_TESTS}" || "${TESTS_GROUP}" == "${FLUX_TESTS}" 
     exit 1
   fi
   info "Flux integration tests succeeded!"
-
-  sectionEndTime=$(date +%s)
-  info "Flux tests execution time: $(formattedElapsedTime sectionEndTime-sectionStartTime)"
+  info "Flux tests execution time: $(elapsedTimeSince "$sectionStartTime")"
 fi
 
 #######################################
@@ -706,13 +712,9 @@ if [[ "${TESTS_GROUP}" == "${ALL_TESTS}" || "${TESTS_GROUP}" == "${OPERATOR_TEST
       exit 1
     fi
     info "Operator integration tests (with k8s API access) succeeded!!"
-
-    sectionEndTime=$(date +%s)
-    info "Operator tests execution time: $(formattedElapsedTime sectionEndTime-sectionStartTime)"
+    info "Operator tests execution time: $(elapsedTimeSince "$sectionStartTime")"
   fi
 fi
 
 info "Integration tests succeeded!"
-
-totalTime=$(date +%s)
-info "Total execution time: $(formattedElapsedTime totalTime-startTime)"
+info "Total execution time: $(elapsedTimeSince "$startTime")"
