@@ -360,7 +360,7 @@ img_flags=(
 additional_flags_file=$(generateAdditionalValuesFile)
 
 if [ "$USE_MULTICLUSTER_OIDC_ENV" = true ]; then
-  multiclusterFlags=(
+  basicAuthFlags=(
     "--values" "${additional_flags_file}"
     "--set" "authProxy.enabled=true"
     "--set" "authProxy.provider=oidc"
@@ -375,12 +375,15 @@ if [ "$USE_MULTICLUSTER_OIDC_ENV" = true ]; then
     "--set" "authProxy.extraFlags[5]=\"--cookie-domain=${INTEGRATION_HOST}\""
     "--set" "authProxy.extraFlags[6]=\"--whitelist-domain=${INTEGRATION_HOST}\""
     "--set" "authProxy.extraFlags[7]=\"--set-authorization-header=true\""
+  )
+  multiclusterFlags=(
     "--set" "clusters[0].name=default"
     "--set" "clusters[1].name=second-cluster"
     "--set" "clusters[1].apiServiceURL=https://${ADDITIONAL_CLUSTER_IP}:6443"
     "--set" "clusters[1].insecure=true"
     "--set" "clusters[1].serviceToken=$(kubectl --context=kind-kubeapps-ci-additional --kubeconfig=${HOME}/.kube/kind-config-kubeapps-ci-additional get secret kubeapps-namespace-discovery -o go-template='{{.data.token | base64decode}}')"
   )
+  multiclusterFlags+=("${basicAuthFlags[@]+"${basicAuthFlags[@]}"}")
 fi
 
 helm repo add bitnami https://charts.bitnami.com/bitnami
@@ -521,12 +524,36 @@ if [[ -z "${GKE_BRANCH-}" && ("${TESTS_GROUP}" == "${ALL_TESTS}" || "${TESTS_GRO
   info "Running multi-cluster (without Kubeapps cluster) integration tests..."
 
   info "Updating Kubeapps to exclude Kubeapps cluster from the list of clusters"
-  installOrUpgradeKubeapps "${ROOT_DIR}/chart/kubeapps" \
-    "--set" "clusters[0].name=second-cluster" \
-    "--set" "clusters[0].apiServiceURL=https://${ADDITIONAL_CLUSTER_IP}:6443" \
-    "--set" "clusters[0].insecure=true" \
-    "--set" "clusters[0].serviceToken=$(kubectl --context=kind-kubeapps-ci-additional --kubeconfig=${HOME}/.kube/kind-config-kubeapps-ci-additional get secret kubeapps-namespace-discovery -o go-template='{{.data.token | base64decode}}')" \
-    "--set" "clusters[1]={}"
+
+  # Update Kubeapps
+  kubeappsChartPath="${ROOT_DIR}/chart/kubeapps"
+  info "Installing Kubeapps from ${kubeappsChartPath}..."
+  kubectl -n kubeapps delete secret localhost-tls || true
+
+  # See https://stackoverflow.com/a/36296000 for "${arr[@]+"${arr[@]}"}" notation.
+  cmd=(helm upgrade --install kubeapps-ci --namespace kubeapps "${kubeappsChartPath}"
+    "${img_flags[@]}"
+    "${basicAuthFlags[@]+"${basicAuthFlags[@]}"}"
+    --set clusters[0].name=second-cluster
+    --set clusters[0].apiServiceURL=https://${ADDITIONAL_CLUSTER_IP}:6443
+    --set clusters[0].insecure=true
+    --set clusters[0].serviceToken=$(kubectl --context=kind-kubeapps-ci-additional --kubeconfig=${HOME}/.kube/kind-config-kubeapps-ci-additional get secret kubeapps-namespace-discovery -o go-template='{{.data.token | base64decode}}')
+    --set frontend.replicaCount=1
+    --set dashboard.replicaCount=1
+    --set kubeappsapis.replicaCount=2
+    --set postgresql.architecture=standalone
+    --set postgresql.primary.persistence.enabled=false
+    --set postgresql.auth.password=password
+    --set redis.auth.password=password
+    --set apprepository.initialRepos[0].name=bitnami
+    --set apprepository.initialRepos[0].url=http://chartmuseum.chart-museum.svc.cluster.local:8080
+    --set apprepository.initialRepos[0].basicAuth.user=admin
+    --set apprepository.initialRepos[0].basicAuth.password=password
+    --set apprepository.globalReposNamespaceSuffix=-repos-global
+    --wait)
+
+  echo "${cmd[@]}"
+  "${cmd[@]}"
 
   test_command="
     CI_TIMEOUT_MINUTES=40 \
