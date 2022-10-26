@@ -1417,19 +1417,23 @@ clusters:
   - name: default
     domain: cluster.local
 
-## @skip featureFlags Feature flags (used to switch on development features)
-##
-featureFlags:
-  ## @param featureFlags.operators Enable ingress record generation for Kubeapps
-  ##
-  operators: false
-
 ## RBAC configuration
 ##
 rbac:
   ## @param rbac.create Specifies whether RBAC resources should be created
   ##
   create: true
+
+## @section Feature flags
+
+## Used enable some opt-in development features
+##
+featureFlags:
+  ## @param featureFlags.operators Enable support for Operators in Kubeapps
+  operators: false
+  ## @param featureFlags.schemaEditor Enable a visual editor for customizing the package schemas
+  ##
+  schemaEditor: false
 
 ## @section Database Parameters
 

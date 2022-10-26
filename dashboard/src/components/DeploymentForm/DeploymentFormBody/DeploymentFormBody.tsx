@@ -11,13 +11,14 @@ import LoadingWrapper from "components/LoadingWrapper";
 import Tabs from "components/Tabs";
 import { isEmpty } from "lodash";
 import { FormEvent, RefObject, useCallback, useEffect, useState } from "react";
+import { useSelector } from "react-redux";
 import {
   retrieveBasicFormParams,
   schemaToObject,
   schemaToString,
   updateCurrentConfigByKey,
 } from "shared/schema";
-import { DeploymentEvent, IBasicFormParam, IPackageState } from "shared/types";
+import { DeploymentEvent, IBasicFormParam, IPackageState, IStoreState } from "shared/types";
 import { getValueFromEvent } from "shared/utils";
 import { parseToYamlNode, setPathValueInYamlNode, toStringYamlNode } from "shared/yamlUtils";
 import YAML from "yaml";
@@ -58,6 +59,9 @@ function DeploymentFormBody({
     pkgVersion,
     error,
   } = selected;
+  const {
+    config: { featureFlags },
+  } = useSelector((state: IStoreState) => state);
 
   // Component state
   const [paramsFromComponentState, setParamsFromComponentState] = useState([] as IBasicFormParam[]);
@@ -325,20 +329,22 @@ function DeploymentFormBody({
     ></AdvancedDeploymentForm>,
   );
 
-  // Text editor creation
-  tabColumns.push(
-    <div role="presentation" onClick={saveAllChanges}>
-      <span>Schema editor (advanced)</span>
-    </div>,
-  );
-  tabData.push(
-    <SchemaEditorForm
-      schemaFromTheParentContainer={schemaFromTheParentContainerString}
-      schemaFromTheAvailablePackage={schemaFromTheAvailablePackageString}
-      handleValuesChange={handleSchemaEditorChange}
-      key="schema-editor-form"
-    ></SchemaEditorForm>,
-  );
+  if (featureFlags.schemaEditor) {
+    // Schema editor creation, if the feature flag is enabled
+    tabColumns.push(
+      <div role="presentation" onClick={saveAllChanges}>
+        <span>Schema editor (advanced)</span>
+      </div>,
+    );
+    tabData.push(
+      <SchemaEditorForm
+        schemaFromTheParentContainer={schemaFromTheParentContainerString}
+        schemaFromTheAvailablePackage={schemaFromTheAvailablePackageString}
+        handleValuesChange={handleSchemaEditorChange}
+        key="schema-editor-form"
+      ></SchemaEditorForm>,
+    );
+  }
 
   return (
     <div>

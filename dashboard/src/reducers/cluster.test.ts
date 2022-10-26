@@ -446,7 +446,7 @@ describe("clusterReducer", () => {
       oauthLogoutURI: "",
       featureFlags: {
         operators: false,
-        ui: "hex",
+        schemaEditor: false,
       },
       clusters: ["additionalCluster1", "additionalCluster2"],
       authProxySkipLoginPage: false,

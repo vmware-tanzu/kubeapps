@@ -33,6 +33,7 @@ const emptyRouteComponentProps: RouteComponentProps<{}> = {
 
 const defaultFeatureFlags: IFeatureFlags = {
   operators: false,
+  schemaEditor: false,
 };
 
 it("invalid path should show a 404 error", () => {

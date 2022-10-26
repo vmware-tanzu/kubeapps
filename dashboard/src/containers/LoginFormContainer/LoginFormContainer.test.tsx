@@ -9,6 +9,7 @@ import { IConfigState } from "reducers/config";
 import configureMockStore from "redux-mock-store";
 import thunk from "redux-thunk";
 import { SupportedThemes } from "shared/Config";
+import { initialState } from "shared/specs/mountWrapper";
 import { IStoreState } from "shared/types";
 import LoginForm from "./LoginFormContainer";
 
@@ -40,7 +41,7 @@ const makeStore = (
     carvelGlobalNamespace: "",
     appVersion: "",
     oauthLogoutURI: "",
-    featureFlags: { operators: false },
+    featureFlags: { ...initialState.config.featureFlags },
     clusters: [],
     authProxySkipLoginPage: false,
     theme: SupportedThemes.light,

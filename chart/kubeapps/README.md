@@ -421,12 +421,19 @@ Once you have installed Kubeapps follow the [Getting Started Guide](https://gith
 
 ### Other Parameters
 
-| Name                      | Description                                                                   | Value   |
-| ------------------------- | ----------------------------------------------------------------------------- | ------- |
-| `allowNamespaceDiscovery` | Allow users to discover available namespaces (only the ones they have access) | `true`  |
-| `clusters`                | List of clusters that Kubeapps can target for deployments                     | `[]`    |
-| `featureFlags.operators`  | Enable ingress record generation for Kubeapps                                 | `false` |
-| `rbac.create`             | Specifies whether RBAC resources should be created                            | `true`  |
+| Name                      | Description                                                                   | Value  |
+| ------------------------- | ----------------------------------------------------------------------------- | ------ |
+| `allowNamespaceDiscovery` | Allow users to discover available namespaces (only the ones they have access) | `true` |
+| `clusters`                | List of clusters that Kubeapps can target for deployments                     | `[]`   |
+| `rbac.create`             | Specifies whether RBAC resources should be created                            | `true` |
+
+
+### Feature flags
+
+| Name                        | Description                                                | Value   |
+| --------------------------- | ---------------------------------------------------------- | ------- |
+| `featureFlags.operators`    | Enable support for Operators in Kubeapps                   | `false` |
+| `featureFlags.schemaEditor` | Enable a visual editor for customizing the package schemas | `false` |
 
 
 ### Database Parameters

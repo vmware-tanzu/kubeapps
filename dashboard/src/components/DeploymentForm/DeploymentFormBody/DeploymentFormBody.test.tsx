@@ -1,6 +1,7 @@
 // Copyright 2019-2022 the Kubeapps contributors.
 // SPDX-License-Identifier: Apache-2.0
 
+import { CdsButton } from "@cds/react/button";
 import { JSONSchemaType } from "ajv";
 import {
   AvailablePackageDetail,
@@ -8,7 +9,7 @@ import {
 } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
 import { act } from "react-dom/test-utils";
 import { MonacoDiffEditor } from "react-monaco-editor";
-import { defaultStore, mountWrapper } from "shared/specs/mountWrapper";
+import { defaultStore, getStore, initialState, mountWrapper } from "shared/specs/mountWrapper";
 import { IPackageState } from "shared/types";
 import BasicDeploymentForm from "./BasicDeploymentForm";
 import DeploymentFormBody, { IDeploymentFormBodyProps } from "./DeploymentFormBody";
@@ -111,31 +112,32 @@ const defaultProps: IDeploymentFormBodyProps = {
 
 jest.useFakeTimers();
 
+const defaultSchema = {
+  properties: { a: { type: "string" } },
+} as unknown as JSONSchemaType<any>;
+
+const defaultValues = `a: b
+
+
+c: d
+`;
+
 const versions = [{ appVersion: "10.0.0", pkgVersion: "1.2.3" }] as PackageAppVersion[];
+const selected = {
+  values: defaultValues,
+  schema: defaultSchema,
+  versions: [versions[0], { ...versions[0], pkgVersion: "1.2.4" } as PackageAppVersion],
+  availablePackageDetail: { name: "my-version" } as AvailablePackageDetail,
+} as IPackageState["selected"];
 
 // Note that most of the tests that cover DeploymentFormBody component are in
 // in the DeploymentForm and UpgradeForm parent components
 
 // Context at https://github.com/vmware-tanzu/kubeapps/issues/1293
 it("should modify the original values of the differential component if parsed as YAML object", () => {
-  const oldValues = `a: b
-
-
-c: d
-`;
-  const schema = {
-    properties: { a: { type: "string" } },
-  } as unknown as JSONSchemaType<any>;
-  const selected = {
-    values: oldValues,
-    schema,
-    versions: [versions[0], { ...versions[0], pkgVersion: "1.2.4" } as PackageAppVersion],
-    availablePackageDetail: { name: "my-version" } as AvailablePackageDetail,
-  } as IPackageState["selected"];
-
   const wrapper = mountWrapper(
     defaultStore,
-    <DeploymentFormBody {...defaultProps} selected={selected} />,
+    <DeploymentFormBody {...defaultProps} selected={{ ...selected, values: defaultValues }} />,
   );
 
   expect(
@@ -143,7 +145,7 @@ c: d
       .find(MonacoDiffEditor)
       .filterWhere(p => p.prop("language") === "yaml")
       .prop("original"),
-  ).toBe(oldValues);
+  ).toBe(defaultValues);
 
   // Trigger a change in the basic form and a YAML parse
   const input = wrapper
@@ -168,4 +170,109 @@ c: d
       .filterWhere(p => p.prop("language") === "yaml")
       .prop("original"),
   ).toBe(expectedValues);
+});
+
+it("should not render a schema editor if the feature flag is disabled", () => {
+  const state = {
+    ...initialState,
+    config: {
+      ...initialState.config,
+      featureFlags: { ...initialState.config.featureFlags, schemaEditor: false },
+    },
+  };
+  const wrapper = mountWrapper(
+    getStore(state),
+    <DeploymentFormBody {...defaultProps} selected={{ ...selected, schema: defaultSchema }} />,
+  );
+
+  expect(
+    wrapper.find(MonacoDiffEditor).filterWhere(p => p.prop("language") === "json"),
+  ).not.toExist();
+});
+
+it("should render a schema editor if the feature flag is enabled", () => {
+  const state = {
+    ...initialState,
+    config: {
+      ...initialState.config,
+      featureFlags: { ...initialState.config.featureFlags, schemaEditor: true },
+    },
+  };
+  const wrapper = mountWrapper(
+    getStore(state),
+    <DeploymentFormBody {...defaultProps} selected={{ ...selected, schema: defaultSchema }} />,
+  );
+
+  const expectedSchema = `{
+  "properties": {
+    "a": {
+      "type": "string"
+    }
+  }
+}`;
+
+  // find the schema editor
+  expect(
+    wrapper
+      .find(MonacoDiffEditor)
+      .filterWhere(p => p.prop("language") === "json")
+      .prop("original"),
+  ).toBe(expectedSchema);
+
+  // ensure the schema is being rendered as a basic form
+  expect(
+    wrapper
+      .find(BasicDeploymentForm)
+      .find("input")
+      .filterWhere(i => i.prop("id") === "a"), // the input for the property "a"
+  ).toExist();
+
+  // ensure there is no button to update the schema if not modified
+  expect(
+    wrapper.find(CdsButton).filterWhere(b => b.text().includes("Update schema")),
+  ).not.toExist();
+
+  const newSchema = `{
+    "properties": {
+      "changedPropertyName": {
+        "type": "string"
+      }
+    }
+  }`;
+
+  // update the schema
+  act(() => {
+    (
+      wrapper
+        .find(MonacoDiffEditor)
+        .filterWhere(p => p.prop("language") === "json")
+        .prop("onChange") as any
+    )(newSchema);
+  });
+  wrapper.update();
+
+  // ensure the new schema is in the editor
+  expect(
+    wrapper
+      .find(MonacoDiffEditor)
+      .filterWhere(p => p.prop("language") === "json")
+      .prop("original"),
+  ).toBe(newSchema);
+
+  // click on the button to update the basic form
+  act(() => {
+    wrapper
+      .find(CdsButton)
+      .filterWhere(b => b.text().includes("Update schema"))
+      .simulate("click");
+  });
+  wrapper.update();
+
+  // ensure the basic form has been updated
+  expect(
+    wrapper
+      .find(BasicDeploymentForm)
+      .find("input")
+      .filterWhere(i => i.prop("id") === "changedPropertyName"),
+  ).toExist();
 });

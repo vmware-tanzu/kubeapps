@@ -22,7 +22,7 @@ const testConfig = {
   oauthLogoutURI: "",
   authProxySkipLoginPage: false,
   clusters: [],
-  featureFlags: { operators: false },
+  featureFlags: { operators: false, schemaEditor: false },
   theme: SupportedThemes.light,
   remoteComponentsUrl: "",
   customAppViews: [],

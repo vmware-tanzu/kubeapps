@@ -93,7 +93,7 @@ const defaultState = {
 } as IStoreState;
 
 let spyOnUseDispatch: jest.SpyInstance;
-const kubeaActions = { ...actions.kube };
+const kubeActions = { ...actions.kube };
 
 beforeEach(() => {
   actions.availablepackages = {
@@ -107,7 +107,7 @@ beforeEach(() => {
 });
 
 afterEach(() => {
-  actions.kube = { ...kubeaActions };
+  actions.kube = { ...kubeActions };
   spyOnUseDispatch.mockRestore();
 });
 
