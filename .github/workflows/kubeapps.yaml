@@ -650,9 +650,7 @@ jobs:
               ${BRANCH_CHARTS_REPO_FORKED} \
               ${DEV_MODE}
 
-  GKE_REGULAR_VERSION_MAIN:
-    #    TODO:
-    #    <<: *build_on_tag_or_prerelease
+  gke_setup:
     if: needs.setup.outputs.triggered_from_fork == 'false'
     needs:
       - setup
@@ -665,9 +663,8 @@ jobs:
       - build_e2e_runner_image
       # FIXME: sync_chart_from_bitnami disabled for development as it only runs in main branch, uncomment before merging
 #      - sync_chart_from_bitnami
-    uses: ./.github/workflows/gke_e2e_tests.yaml
-    with:
-      ID: "regular_version_main"
+    runs-on: ubuntu-latest
+    outputs:
       GKE_BRANCH: ${GKE_BRANCH}
       GKE_CLUSTER: ${GKE_CLUSTER}
       GKE_PROJECT: ${GKE_PROJECT}
@@ -677,6 +674,26 @@ jobs:
       KUBECTL_VERSION: ${KUBECTL_VERSION}
       DEBUG_MODE: true
       DEV_MODE: ${{ needs.setup.outputs.dev_mode == 'true' }}
+    steps:
+      - run: echo "Just producing outputs because env vars cannot be used in 'jobs.<id>.with' (GHA limitation)"
+
+  GKE_REGULAR_VERSION_MAIN:
+    #    TODO:
+    #    <<: *build_on_tag_or_prerelease
+    needs:
+      - gke_setup
+    uses: ./.github/workflows/gke_e2e_tests.yaml
+    with:
+      ID: "regular_version_main"
+      GKE_BRANCH: ${{ needs.gke_setup.outputs.GKE_BRANCH }}
+      GKE_CLUSTER: ${{ needs.gke_setup.outputs.GKE_CLUSTER }}
+      GKE_PROJECT: ${{ needs.gke_setup.outputs.GKE_PROJECT }}
+      GKE_ZONE: ${{ needs.gke_setup.outputs.GKE_ZONE }}
+      HELM_VERSION_MIN: ${{ needs.gke_setup.outputs.HELM_VERSION_MIN }}
+      HELM_VERSION_STABLE: ${{ needs.gke_setup.outputs.HELM_VERSION_STABLE }}
+      KUBECTL_VERSION: ${{ needs.gke_setup.outputs.KUBECTL_VERSION }}
+      DEBUG_MODE: ${{ needs.gke_setup.outputs.DEBUG_MODE }}
+      DEV_MODE: ${{ needs.gke_setup.outputs.DEV_MODE }}
     secrets:
       GKE_ADMIN: ${{ secrets.GKE_ADMIN }}
       GCLOUD_KEY: ${{ secrets.GCLOUD_KEY }}
