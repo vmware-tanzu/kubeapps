@@ -13,6 +13,16 @@ import (
 	"path/filepath"
 )
 
+const (
+	// KUBEAPPS_GLOBAL_PACKAGING_CLUSTER_TOKEN
+	// Kubeapps can be configured such that users cannot target the cluster
+	// on which Kubeapps is itself installed (ie. it's not listed in the
+	// clusters config). In this specific case, there is no way to refer
+	// to a configured name for the global packaging cluster, so we define
+	// one to be used that does not clash with user-configurable names.
+	KUBEAPPS_GLOBAL_PACKAGING_CLUSTER_TOKEN = "-"
+)
+
 // ClusterConfig contains required info to talk to additional clusters.
 type ClusterConfig struct {
 	Name                     string `json:"name"`
@@ -96,10 +106,11 @@ func NewClusterConfig(inClusterConfig *rest.Config, userToken string, cluster st
 	config.BearerToken = userToken
 	config.BearerTokenFile = ""
 
-	// If the cluster is empty, we assume the rest of the inClusterConfig is correct. This can be the case when
-	// the cluster on which Kubeapps is installed is not one presented in the UI as a target (hence not in the
-	// `clusters` configuration).
-	if cluster == "" {
+	// If the cluster name is the Kubeapps global packaging cluster then the
+	// inClusterConfig is already correct. This can be the case when the cluster
+	// on which Kubeapps is installed is not one presented in the UI as a target
+	// (hence not in the `clusters` configuration).
+	if IsKubeappsClusterRef(cluster) {
 		return config, nil
 	}
 
@@ -219,5 +230,16 @@ func ParseClusterConfig(configPath, caFilesPrefix string, pinnipedProxyURL, Pinn
 
 		configs.Clusters[c.Name] = c
 	}
+	// If the cluster on which Kubeapps is installed was not present in
+	// the clusters config, we explicitly use a token to identify this
+	// cluster when needed (such as for global available packages).
+	if configs.KubeappsClusterName == "" {
+		configs.KubeappsClusterName = KUBEAPPS_GLOBAL_PACKAGING_CLUSTER_TOKEN
+	}
 	return configs, deferFn, nil
+}
+
+// IsKubeappsClusterRef checks if the provided cluster name references the global packaging Kubeapps cluster
+func IsKubeappsClusterRef(cluster string) bool {
+	return cluster == "" || cluster == KUBEAPPS_GLOBAL_PACKAGING_CLUSTER_TOKEN
 }

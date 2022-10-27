@@ -25,12 +25,24 @@ export function retrieveBasicFormParams(
   let params: IBasicFormParam[] = [];
   if (schema?.properties && !isEmpty(schema.properties)) {
     const properties = schema.properties;
+    const requiredProperties = schema.required;
+    const schemaExamples = schema.examples;
     Object.keys(properties).forEach(propertyKey => {
       const schemaProperty = properties[propertyKey] as JSONSchemaType<any>;
       // The param path is its parent path + the object key
       const itemPath = `${parentPath || ""}${propertyKey}`;
       const isUpgrading = deploymentEvent === "upgrade" && deployedValues;
       const isLeaf = !schemaProperty?.properties;
+
+      // get the values for the current property in the examples array
+      // for objects, we need to get the value of the property in the example array,
+      // for the rest, we can just get the value of the example array
+      let examples = schemaProperty.examples;
+      if (schemaExamples?.length > 0) {
+        examples = schemaExamples?.map((item: any) =>
+          typeof item === "object" ? item?.[propertyKey]?.toString() ?? "" : item?.toString() ?? "",
+        );
+      }
 
       const param: IBasicFormParam = {
         ...schemaProperty,
@@ -48,15 +60,19 @@ export function retrieveBasicFormParams(
               `${itemPath}/`,
             )
           : undefined,
+        // get the string values of the enum array
         enum: schemaProperty?.enum?.map((item: { toString: () => any }) => item?.toString() ?? ""),
+        // check if the "required" array contains the current property
+        isRequired: requiredProperties?.includes(propertyKey),
+        examples: examples,
         // If exists, the value that is currently deployed
         deployedValue: isLeaf
           ? isUpgrading
             ? getPathValueInYamlNode(deployedValues, itemPath)
             : ""
           : "",
-        // The default is the value comming from the package values or the one defined in the schema,
-        // or vice-verse, which one shoulf take precedence?
+        // The default is the value coming from the package values or the one defined in the schema,
+        // or vice-verse, which one should take precedence?
         defaultValue: isLeaf
           ? getPathValueInYamlNodeWithDefault(packageValues, itemPath, schemaProperty.default)
           : "",
@@ -117,6 +133,26 @@ export function updateCurrentConfigByKey(
     currentValue: value,
   });
   return paramsList;
+}
+
+export function schemaToString(schema: JSONSchemaType<any> | undefined): string {
+  let schemaString;
+  try {
+    schemaString = JSON.stringify(schema, null, 2);
+  } catch (e) {
+    schemaString = "{}";
+  }
+  return schemaString;
+}
+
+export function schemaToObject(schema?: string): JSONSchemaType<any> {
+  let schemaObject;
+  try {
+    schemaObject = JSON.parse(schema || "{}");
+  } catch (e) {
+    schemaObject = {};
+  }
+  return schemaObject as JSONSchemaType<any>;
 }
 
 // TODO(agamez): stop loading the yaml values with the yaml.load function.

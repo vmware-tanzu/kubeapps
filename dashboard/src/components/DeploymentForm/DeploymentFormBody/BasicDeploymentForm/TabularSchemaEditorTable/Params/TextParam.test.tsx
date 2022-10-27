@@ -43,7 +43,9 @@ describe("param rendered as a input type text", () => {
     );
     const input = wrapper.find("input");
 
-    const event = { currentTarget: { value: "" } } as React.FormEvent<HTMLInputElement>;
+    const event = {
+      currentTarget: { value: "", reportValidity: jest.fn() },
+    } as unknown as React.FormEvent<HTMLInputElement>;
     act(() => {
       (input.prop("onChange") as any)(event);
     });
@@ -51,7 +53,10 @@ describe("param rendered as a input type text", () => {
     jest.runAllTimers();
 
     expect(handleBasicFormParamChange).toHaveBeenCalledWith(stringProps.param);
-    expect(handler).toHaveBeenCalledWith(event);
+    expect(handler).toHaveBeenCalledWith({
+      ...event,
+      currentTarget: { ...event.currentTarget, reportValidity: undefined },
+    });
   });
 
   it("should set the input value as empty if a string parameter value is not defined", () => {
@@ -71,54 +76,14 @@ describe("param rendered as a input type text", () => {
     const input = wrapper.find("input");
     expect(input.prop("value")).toBe("");
 
-    const event = { currentTarget: { value: "foo" } } as React.FormEvent<HTMLInputElement>;
+    const event = {
+      currentTarget: { value: "foo", reportValidity: jest.fn() },
+    } as unknown as React.FormEvent<HTMLInputElement>;
     act(() => {
       (input.prop("onChange") as any)(event);
     });
     wrapper.update();
     expect(wrapper.find("input").prop("value")).toBe("foo");
-  });
-});
-
-// Note that, for numbers, SliderParam component is preferred
-describe("param rendered as a input type number", () => {
-  const numberParam = {
-    type: "integer",
-    schema: {
-      type: "integer",
-    },
-    key: "replicas",
-    title: "Replicas",
-    currentValue: 0,
-    defaultValue: 0,
-    deployedValue: 0,
-    hasProperties: false,
-  } as IBasicFormParam;
-  const numberProps = {
-    id: "foo-number",
-    label: "Replicas",
-    inputType: "number",
-    param: numberParam,
-    handleBasicFormParamChange: jest.fn().mockReturnValue(jest.fn()),
-  } as ITextParamProps;
-
-  it("should set the input type as number", () => {
-    const wrapper = mount(<TextParam {...numberProps} />);
-    const input = wrapper.find("input");
-    expect(input.prop("type")).toBe("number");
-  });
-
-  it("a change in a number param property should update the current value", () => {
-    const wrapper = mount(<TextParam {...numberProps} />);
-    const input = wrapper.find("input");
-    expect(input.prop("value")).toBe("0");
-
-    const event = { currentTarget: { value: "1" } } as React.FormEvent<HTMLInputElement>;
-    act(() => {
-      (input.prop("onChange") as any)(event);
-    });
-    wrapper.update();
-    expect(wrapper.find("input").prop("value")).toBe("1");
   });
 });
 
@@ -157,7 +122,9 @@ describe("param rendered as a input type textarea", () => {
     );
     const input = wrapper.find("textarea");
 
-    const event = { currentTarget: { value: "" } } as React.FormEvent<HTMLInputElement>;
+    const event = {
+      currentTarget: { value: "", reportValidity: jest.fn() },
+    } as unknown as React.FormEvent<HTMLInputElement>;
     act(() => {
       (input.prop("onChange") as any)(event);
     });
@@ -165,7 +132,10 @@ describe("param rendered as a input type textarea", () => {
     jest.runAllTimers();
 
     expect(handleBasicFormParamChange).toHaveBeenCalledWith(textAreaParam);
-    expect(handler).toHaveBeenCalledWith(event);
+    expect(handler).toHaveBeenCalledWith({
+      ...event,
+      currentTarget: { ...event.currentTarget, reportValidity: undefined },
+    });
   });
 
   it("should set the input value as empty if a textArea param value is not defined", () => {
@@ -193,6 +163,7 @@ describe("param rendered as a select", () => {
     defaultValue: "postgresql",
     deployedValue: "postgresql",
     hasProperties: false,
+    isRequired: false,
   } as IBasicFormParam;
   const enumProps = {
     id: "foo-enum",
@@ -209,11 +180,12 @@ describe("param rendered as a select", () => {
     expect(wrapper.find("select").prop("value")).toBe(enumParam.currentValue);
     if (enumParam.enum != null) {
       const options = input.find("option");
-      expect(options.length).toBe(enumParam.enum.length);
+      expect(options.length).toBe(enumParam.enum.length + 1); //empty default option
 
-      for (let i = 0; i < enumParam.enum.length; i++) {
+      expect(options.at(0).text()).toBe("");
+      for (let i = 1; i < enumParam.enum.length; i++) {
         const option = options.at(i);
-        expect(option.text()).toBe(enumParam.enum[i]);
+        expect(option.text()).toBe(enumParam.enum[i - 1]);
       }
     }
   });
@@ -226,7 +198,9 @@ describe("param rendered as a select", () => {
     );
     expect(wrapper.find("select").prop("value")).toBe(enumParam.currentValue);
 
-    const event = { currentTarget: { value: "mariadb" } } as React.FormEvent<HTMLSelectElement>;
+    const event = {
+      currentTarget: { value: "mariadb", type: undefined, reportValidity: jest.fn() },
+    } as unknown as React.FormEvent<HTMLSelectElement>;
     act(() => {
       (wrapper.find("select").prop("onChange") as any)(event);
     });
@@ -235,6 +209,9 @@ describe("param rendered as a select", () => {
 
     expect(wrapper.find("select").prop("value")).toBe(event.currentTarget.value);
     expect(handleBasicFormParamChange).toHaveBeenCalledWith(enumProps.param);
-    expect(handler).toHaveBeenCalledWith(event);
+    expect(handler).toHaveBeenCalledWith({
+      ...event,
+      currentTarget: { ...event.currentTarget, reportValidity: undefined },
+    });
   });
 });

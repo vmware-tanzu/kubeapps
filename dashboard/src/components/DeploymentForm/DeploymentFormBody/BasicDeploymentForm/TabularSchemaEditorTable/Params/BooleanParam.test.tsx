@@ -16,6 +16,7 @@ const defaultProps = {
     defaultValue: false,
     deployedValue: false,
     hasProperties: false,
+    isRequired: false,
     key: "enableMetrics",
     schema: {
       type: "boolean",
@@ -36,11 +37,17 @@ it("should send a checkbox event to handleBasicFormParamChange", () => {
     <BooleanParam {...defaultProps} handleBasicFormParamChange={handleBasicFormParamChange} />,
   );
   const s = wrapper.find("input").findWhere(i => i.prop("type") === "checkbox");
-  const event = { currentTarget: { checked: true } } as React.FormEvent<HTMLInputElement>;
+  const event = {
+    currentTarget: { value: "checked", type: "checkbox", reportValidity: jest.fn() },
+  } as unknown as React.FormEvent<HTMLInputElement>;
   act(() => {
     (s.prop("onChange") as any)(event);
   });
   s.update();
   expect(handleBasicFormParamChange).toHaveBeenCalledWith(defaultProps.param);
-  expect(handler).toHaveBeenCalledWith({ currentTarget: { type: "checkbox", value: "true" } });
+
+  expect(handler).toHaveBeenCalledWith({
+    ...event,
+    currentTarget: { type: "checkbox", value: "" },
+  });
 });

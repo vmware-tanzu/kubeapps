@@ -8,6 +8,7 @@ import * as jwt from "jsonwebtoken";
 import { Auth } from "./Auth";
 import { SupportedThemes } from "./Config";
 import { KubeappsGrpcClient } from "./KubeappsGrpcClient";
+import { initialState } from "./specs/mountWrapper";
 
 describe("Auth", () => {
   // Create a real client, but we'll stub out the function we're interested in.
@@ -236,7 +237,7 @@ describe("Auth", () => {
         carvelGlobalNamespace: "kapp-controller-packaging-global",
         appVersion: "2",
         clusters: [],
-        featureFlags: { operators: false },
+        featureFlags: { ...initialState.config.featureFlags },
         authProxySkipLoginPage: false,
         theme: SupportedThemes.light,
         remoteComponentsUrl: "",
@@ -261,7 +262,7 @@ describe("Auth", () => {
         carvelGlobalNamespace: "kapp-controller-packaging-global",
         appVersion: "2",
         clusters: [],
-        featureFlags: { operators: false },
+        featureFlags: { ...initialState.config.featureFlags },
         authProxySkipLoginPage: false,
         theme: SupportedThemes.light,
         remoteComponentsUrl: "",

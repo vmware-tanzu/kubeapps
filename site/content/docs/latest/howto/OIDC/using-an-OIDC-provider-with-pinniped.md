@@ -2,7 +2,7 @@
 
 The [Pinniped project](https://pinniped.dev/) exists to "Simplify user authentication for any Kubernetes cluster" and enables OIDC providers to be configured dynamically, rather than when a cluster is created. Kubeapps can be configured so that users must authenticate with the same OIDC provider and then authenticated requests from Kubeapps to the API server will be proxied via Pinniped, with the signed OIDC `id_token` being verified by Pinniped and exchanged for a client certificate accepted trusted by the API server.
 
-## Installing Pinniped
+## Installing Pinniped Concierge
 
 Install Pinniped on your cluster with:
 
@@ -12,7 +12,7 @@ kubectl apply -f https://github.com/vmware-tanzu/pinniped/releases/download/v0.1
 kubectl apply -f  https://github.com/vmware-tanzu/pinniped/releases/download/v0.18.0/install-pinniped-concierge.yaml
 ```
 
-## Configure Pinniped to trust your OIDC identity provider
+## Configure Pinniped Concierge to trust your OIDC identity provider
 
 Once Pinniped is running, you can add a `JWTAuthenticator` custom resource so that Pinniped knows to trust your OIDC identity provider.
 

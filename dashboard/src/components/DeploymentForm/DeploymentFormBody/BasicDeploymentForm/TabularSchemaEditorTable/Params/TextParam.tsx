@@ -11,63 +11,47 @@ import { isEmpty } from "lodash";
 import { useState } from "react";
 import { validateValuesSchema } from "shared/schema";
 import { IAjvValidateResult, IBasicFormParam } from "shared/types";
-import { basicFormsDebounceTime } from "shared/utils";
+import { basicFormsDebounceTime, getStringValue, getValueFromString } from "shared/utils";
 
 export interface ITextParamProps {
   id: string;
   label: string;
-  inputType?: "text" | "textarea" | string;
+  inputType?: "text" | "textarea" | "password" | string;
   param: IBasicFormParam;
   handleBasicFormParamChange: (
     param: IBasicFormParam,
   ) => (e: React.FormEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => void;
 }
 
-function getStringValue(param: IBasicFormParam, value?: any) {
-  if (["array", "object"].includes(param?.type)) {
-    return JSON.stringify(value || param?.currentValue);
-  } else {
-    return value?.toString() || param?.currentValue?.toString();
-  }
-}
-function getValueFromString(param: IBasicFormParam, value: any) {
-  if (["array", "object"].includes(param?.type)) {
-    try {
-      return JSON.parse(value);
-    } catch (e) {
-      return value?.toString();
-    }
-  } else {
-    return value?.toString();
-  }
-}
-
-function toStringValue(value: any) {
-  return JSON.stringify(value?.toString() || "");
-}
-
 export default function TextParam(props: ITextParamProps) {
   const { id, label, inputType, param, handleBasicFormParamChange } = props;
 
   const [validated, setValidated] = useState<IAjvValidateResult>();
-  const [currentValue, setCurrentValue] = useState(getStringValue(param));
+  const [currentValue, setCurrentValue] = useState(getStringValue(param.currentValue));
   const [isValueModified, setIsValueModified] = useState(false);
   const [timeout, setThisTimeout] = useState({} as NodeJS.Timeout);
 
   const onChange = (
     e: React.FormEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>,
   ) => {
-    setValidated(validateValuesSchema(e.currentTarget.value, param.schema));
+    // update the current value
     setCurrentValue(e.currentTarget.value);
-    setIsValueModified(toStringValue(e.currentTarget.value) !== toStringValue(param.currentValue));
+    setIsValueModified(
+      getStringValue(e.currentTarget.value) !== getStringValue(param.currentValue),
+    );
+
+    // twofold validation: using the json schema (with ajv) and the html5 validation
+    setValidated(validateValuesSchema(e.currentTarget.value, param.schema));
+    e.currentTarget?.reportValidity();
+
     // Gather changes before submitting
     clearTimeout(timeout);
     const func = handleBasicFormParamChange(param);
     // The reference to target get lost, so we need to keep a copy
     const targetCopy = {
       currentTarget: {
-        value: getValueFromString(param, e.currentTarget?.value),
-        type: e.currentTarget?.type,
+        value: getStringValue(e.currentTarget?.value),
+        type: param.type === "object" ? param.type : e.currentTarget?.type,
       },
     } as React.FormEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>;
     setThisTimeout(setTimeout(() => func(targetCopy), basicFormsDebounceTime));
@@ -75,9 +59,11 @@ export default function TextParam(props: ITextParamProps) {
 
   const unsavedMessage = isValueModified ? "Unsaved" : "";
   const isDiffCurrentVsDefault =
-    toStringValue(param.currentValue) !== toStringValue(param.defaultValue);
+    getStringValue(param.currentValue, param.type) !==
+    getStringValue(param.defaultValue, param.type);
   const isDiffCurrentVsDeployed =
-    toStringValue(param.currentValue) !== toStringValue(param.defaultValue);
+    getStringValue(param.currentValue, param.type) !==
+    getStringValue(param.defaultValue, param.type);
   const isModified =
     isValueModified ||
     (isDiffCurrentVsDefault && (!param.deployedValue || isDiffCurrentVsDeployed));
@@ -96,58 +82,105 @@ export default function TextParam(props: ITextParamProps) {
       <CdsControlMessage>{unsavedMessage}</CdsControlMessage>
     );
 
-  let input = (
-    <>
-      <CdsInput className={isModified ? "bolder" : ""}>
-        <input
-          required={param.required}
-          aria-label={label}
-          id={id}
-          type={inputType ?? "text"}
-          value={currentValue ?? ""}
-          onChange={onChange}
-        />
-        {renderControlMsg()}
-      </CdsInput>
-    </>
-  );
-  if (inputType === "textarea") {
-    input = (
-      <CdsTextarea className={isModified ? "bolder" : ""}>
-        <textarea
-          required={param.required}
-          aria-label={label}
-          id={id}
-          value={currentValue ?? ""}
-          onChange={onChange}
-        />
-        {renderControlMsg()}
-      </CdsTextarea>
-    );
-  } else if (!isEmpty(param.enum)) {
-    input = (
-      <>
-        <CdsSelect layout="horizontal" className={isModified ? "bolder" : ""}>
-          <select
-            required={param.required}
-            aria-label={label}
-            id={id}
-            onChange={onChange}
-            value={currentValue}
-          >
-            {param?.enum?.map((enumValue: any) => (
-              <option key={enumValue}>{enumValue}</option>
-            ))}
-          </select>
-          {renderControlMsg()}
-        </CdsSelect>
-      </>
-    );
-  }
+  const renderInput = () => {
+    if (!isEmpty(param.enum)) {
+      return (
+        <>
+          <CdsSelect layout="horizontal">
+            <select
+              required={param.isRequired}
+              disabled={param.readOnly}
+              aria-label={label}
+              id={id}
+              value={getStringValue(currentValue, param.type)}
+              onChange={onChange}
+            >
+              <option disabled={true} key={""}>
+                {""}
+              </option>
+              {param?.enum?.map((enumValue: any) => (
+                <option value={getValueFromString(enumValue)} key={enumValue}>
+                  {enumValue}
+                </option>
+              ))}
+            </select>
+            {renderControlMsg()}
+          </CdsSelect>
+        </>
+      );
+    } else if (param.type === "string") {
+      switch (inputType) {
+        case undefined:
+        case "textarea":
+          return (
+            <CdsTextarea className={isModified ? "bolder" : ""}>
+              <textarea
+                required={param.isRequired}
+                disabled={param.readOnly}
+                maxLength={param.maxLength}
+                minLength={param.minLength}
+                aria-label={label}
+                id={id}
+                value={getStringValue(currentValue, param.type)}
+                onChange={onChange}
+              />
+              {renderControlMsg()}
+            </CdsTextarea>
+          );
+        default:
+          return (
+            <>
+              <datalist id={`${id}-examples`}>
+                {param?.examples?.map((example: any) => (
+                  <option value={getValueFromString(example)} key={example}>
+                    {example}
+                  </option>
+                ))}
+              </datalist>
+              <CdsInput className={isModified ? "bolder" : ""}>
+                <input
+                  required={param.isRequired}
+                  disabled={param.readOnly}
+                  maxLength={param.maxLength}
+                  minLength={param.minLength}
+                  pattern={param.pattern}
+                  aria-label={label}
+                  id={id}
+                  list={param.examples ? `${id}-examples` : ""}
+                  type={inputType}
+                  value={getStringValue(currentValue, param.type)}
+                  onChange={onChange}
+                />
+                {renderControlMsg()}
+              </CdsInput>
+            </>
+          );
+      }
+      // is an object
+    } else {
+      return (
+        <>
+          <CdsTextarea className={isModified ? "bolder" : ""}>
+            <textarea
+              required={param.isRequired}
+              disabled={param.readOnly}
+              maxLength={param.maxLength}
+              minLength={param.minLength}
+              aria-label={label}
+              id={id}
+              value={getStringValue(currentValue)}
+              onChange={onChange}
+            />
+            {renderControlMsg()}
+          </CdsTextarea>
+        </>
+      );
+    }
+  };
 
   return (
     <Row>
-      <Column span={10}>{input}</Column>
+      <Column span={10}>{renderInput()}</Column>
     </Row>
   );
 }

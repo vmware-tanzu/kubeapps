@@ -10,7 +10,7 @@ on:
       - main
 
 env:
-  CHARTMUSEUM_VERSION: "3.9.0"
+  CHARTMUSEUM_VERSION: "3.9.1"
   CHARTS_REPO_ORIGINAL: "bitnami/charts"
   BRANCH_CHARTS_REPO_ORIGINAL: "main"
   CHARTS_REPO_FORKED: "kubeapps-bot/charts"
@@ -28,12 +28,12 @@ env:
   KUBEAPPS_REPO: "vmware-tanzu/kubeapps"
   BRANCH_KUBEAPPS_REPO: "main"
   README_GENERATOR_REPO: "bitnami-labs/readme-generator-for-helm"
-  DOCKER_VERSION: "20.10.17"
+  DOCKER_VERSION: "20.10.18"
   DOCKER_REGISTRY_VERSION: "2.8.1"
-  GOLANG_VERSION: "1.19.1"
+  GOLANG_VERSION: "1.19.2"
   HELM_VERSION_MIN: "v3.2.0"
-  HELM_VERSION_STABLE: "v3.10.0"
-  GITHUB_VERSION: "2.16.1"
+  HELM_VERSION_STABLE: "v3.10.1"
+  GITHUB_VERSION: "2.18.1"
   IMAGES_TO_PUSH: "apprepository-controller dashboard asset-syncer pinniped-proxy kubeapps-apis"
   # IMG_DEV_TAG is the tags used for the Kubeapps docker images. Ideally there should be an IMG_PROD_TAG
   # but its value is dynamic and GitHub actions doesn't support it in the `env` block, so it is generated
@@ -46,14 +46,14 @@ env:
   IMG_PREFIX_FOR_FORKS: "beni0888/"
 #  IMG_PLATFORMS: "linux/amd64, linux/arm64"
   IMG_PLATFORMS: "linux/amd64"
-  KAPP_CONTROLLER_VERSION: "v0.41.2"
+  KAPP_CONTROLLER_VERSION: "v0.42.0"
   K8S_KIND_VERSION: "v1.22.15@sha256:bfd5eaae36849bfb3c1e3b9442f3da17d730718248939d9d547e86bbac5da586"
   KIND_VERSION: "v0.16.0"
-  KUBECTL_VERSION: "v1.24.6"
+  KUBECTL_VERSION: "v1.24.7"
   MKCERT_VERSION: "v1.4.4"
-  NODE_VERSION: "16.17.1"
+  NODE_VERSION: "16.18.0"
   OLM_VERSION: "v0.22.0"
-  POSTGRESQL_VERSION: "14.5.0-debian-11-r14"
+  POSTGRESQL_VERSION: "14.5.0-debian-11-r31"
   RUST_VERSION: "1.64.0"
   SEMVER_VERSION: "3.3.0"
 
@@ -511,7 +511,7 @@ jobs:
           if [[ "${DEV_MODE}" == true ]]; then
             IMG_PROD_TAG="${IMG_PROD_TAG}-gha"
           fi
-          
+
           for artifact in *; do
             echo "::debug::Processing artifact '${artifact}'"
 
@@ -550,7 +550,7 @@ jobs:
           GPG_KEY_PRIVATE: ${{ secrets.GPG_KEY_PRIVATE }}
         run: |
           source ./script/lib/libcitools.sh
-          
+
           installGithubCLI ${GITHUB_VERSION}
           installSemver ${SEMVER_VERSION}
           installGPGKey ${GPG_KEY_PUBLIC} ${GPG_KEY_PRIVATE} ${CI_BOT_GPG} ${CI_BOT_EMAIL}
@@ -604,7 +604,7 @@ jobs:
           GPG_KEY_PRIVATE: ${{ secrets.GPG_KEY_PRIVATE }}
         run: |
           source ./script/lib/libcitools.sh
-          
+
           installGithubCLI ${GITHUB_VERSION}
           installSemver ${SEMVER_VERSION}
           installGPGKey ${GPG_KEY_PUBLIC} ${GPG_KEY_PRIVATE} ${CI_BOT_GPG} ${CI_BOT_EMAIL}

@@ -1,7 +1,7 @@
 // Copyright 2018-2022 the Kubeapps contributors.
 // SPDX-License-Identifier: Apache-2.0
 
-import * as moxios from "moxios";
+import MockAdapter from "axios-mock-adapter";
 import { IAuthState } from "reducers/auth";
 import configureMockStore from "redux-mock-store";
 import thunk from "redux-thunk";
@@ -24,6 +24,7 @@ describe("createAxiosInterceptorWithAuth", () => {
   const authToken = "search-google-in-google";
 
   let store: any;
+  let axiosMock: MockAdapter;
 
   beforeAll(() => {
     const state: IAuthState = {
@@ -53,21 +54,20 @@ describe("createAxiosInterceptorWithAuth", () => {
   });
 
   beforeEach(() => {
-    // Import as "any" to avoid typescript syntax error
-    moxios.install(axios as any);
+    axiosMock = new MockAdapter(axios);
   });
 
   afterEach(() => {
-    moxios.uninstall(axios as any);
+    axiosMock.restore();
     store.clearActions();
   });
 
   it("includes the auth token if provided", async () => {
-    moxios.stubRequest(testPath, {});
+    axiosMock.onGet(testPath).reply(200, {});
 
     await axios.get(testPath);
-    const request = moxios.requests.mostRecent();
-    expect(request.headers.Authorization).toBe(`Bearer ${authToken}`);
+    const request = axiosMock.history.get[0];
+    expect(request?.headers?.Authorization).toBe(`Bearer ${authToken}`);
   });
 
   const testCases = [
@@ -81,35 +81,23 @@ describe("createAxiosInterceptorWithAuth", () => {
 
   testCases.forEach(t => {
     it(`returns a custom message if ${t.code} returned`, async () => {
-      moxios.stubRequest(testPath, {
-        response: { message: `Will raise ${t.errorClass.name}` },
-        status: t.code,
-      });
+      axiosMock.onGet(testPath).reply(t.code, { message: `Will raise ${t.errorClass.name}` });
       await expect(axios.get(testPath)).rejects.toThrow(`Will raise ${t.errorClass.name}`);
     });
 
     it(`returns the custom error ${t.errorClass.name} if ${t.code} returned`, async () => {
-      moxios.stubRequest(testPath, {
-        response: {},
-        status: t.code,
-      });
+      axiosMock.onGet(testPath).reply(t.code, {});
       await expect(axios.get(testPath)).rejects.toThrowError(t.errorClass);
     });
   });
 
   it("returns the generic error message otherwise", async () => {
-    moxios.stubRequest(testPath, {
-      response: {},
-      status: 555,
-    });
+    axiosMock.onGet(testPath).reply(555, {});
     await expect(axios.get(testPath)).rejects.toThrow("Request failed with status code 555");
   });
 
   it("returns the response message", async () => {
-    moxios.stubRequest(testPath, {
-      response: { message: "this is an error!" },
-      status: 555,
-    });
+    axiosMock.onGet(testPath).reply(555, { message: "this is an error!" });
     await expect(axios.get(testPath)).rejects.toThrow("this is an error!");
   });
 
@@ -126,11 +114,7 @@ describe("createAxiosInterceptorWithAuth", () => {
         type: "SET_AUTHENTICATION_SESSION_EXPIRED",
       },
     ];
-
-    moxios.stubRequest(testPath, {
-      response: { message: "Boom!" },
-      status: 401,
-    });
+    axiosMock.onGet(testPath).reply(401, { message: "Boom!" });
     await expect(axios.get(testPath)).rejects.toThrow("Boom!");
     expect(store.getActions()).toEqual(expectedActions);
     expect(Auth.unsetAuthCookie).toHaveBeenCalled();
@@ -141,7 +125,7 @@ describe("createAxiosInterceptorWithAuth", () => {
     Auth.unsetAuthCookie = jest.fn();
     const expectedActions = [
       {
-        payload: "not ajson paylod",
+        payload: "not a json payload",
         type: "AUTHENTICATION_ERROR",
       },
       {
@@ -150,11 +134,8 @@ describe("createAxiosInterceptorWithAuth", () => {
       },
     ];
 
-    moxios.stubRequest(testPath, {
-      responseText: "not ajson paylod",
-      status: 401,
-    });
-    await expect(axios.get(testPath)).rejects.toThrow("not ajson paylod");
+    axiosMock.onGet(testPath).reply(401, { message: "not a json payload" });
+    await expect(axios.get(testPath)).rejects.toThrow("not a json payload");
     expect(store.getActions()).toEqual(expectedActions);
     expect(Auth.unsetAuthCookie).toHaveBeenCalled();
   });
@@ -179,13 +160,9 @@ describe("createAxiosInterceptorWithAuth", () => {
         type: "CLEAR_CLUSTERS",
       },
     ];
-
-    moxios.stubRequest(testPath, {
-      response: {
-        message:
-          '{"metadata":{},"status":"Failure","message":"selfsubjectaccessreviews.authorization.k8s.io is forbidden: User "system:anonymous" cannot create resource "selfsubjectaccessreviews" in API group "authorization.k8s.io" at the cluster scope","reason":"Forbidden","details":{"group":"authorization.k8s.io","kind":"selfsubjectaccessreviews"},"code":403} {"namespaces":null}',
-      },
-      status: 403,
+    axiosMock.onGet(testPath).reply(403, {
+      message:
+        '{"metadata":{},"status":"Failure","message":"selfsubjectaccessreviews.authorization.k8s.io is forbidden: User "system:anonymous" cannot create resource "selfsubjectaccessreviews" in API group "authorization.k8s.io" at the cluster scope","reason":"Forbidden","details":{"group":"authorization.k8s.io","kind":"selfsubjectaccessreviews"},"code":403} {"namespaces":null}',
     });
     await expect(axios.get(testPath)).rejects.toThrow(
       '{"metadata":{},"status":"Failure","message":"selfsubjectaccessreviews.authorization.k8s.io is forbidden: User "system:anonymous" cannot create resource "selfsubjectaccessreviews" in API group "authorization.k8s.io" at the cluster scope","reason":"Forbidden","details":{"group":"authorization.k8s.io","kind":"selfsubjectaccessreviews"},"code":403} {"namespaces":null}',
@@ -195,12 +172,9 @@ describe("createAxiosInterceptorWithAuth", () => {
   });
 
   it("parses a forbidden response", async () => {
-    moxios.stubRequest(testPath, {
-      response: {
-        message:
-          '[{"apiGroup": "v1", "resource": "secrets", "namespace": "default", "verbs": ["list", "get"]}]',
-      },
-      status: 403,
+    axiosMock.onGet(testPath).reply(403, {
+      message:
+        '[{"apiGroup": "v1", "resource": "secrets", "namespace": "default", "verbs": ["list", "get"]}]',
     });
     await expect(axios.get(testPath)).rejects.toThrow(
       'Forbidden error, missing permissions: apiGroup: "v1", resource: "secrets", action: "list, get", namespace: default',

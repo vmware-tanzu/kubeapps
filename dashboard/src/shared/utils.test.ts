@@ -17,6 +17,7 @@ import {
   getPluginIcon,
   getPluginName,
   getPluginPackageName,
+  getPluginsAllowingSA,
   getPluginsRequiringSA,
   getPluginsSupportingRollback,
   getSupportedPackageRepositoryAuthTypes,
@@ -145,7 +146,11 @@ it("getPluginByName", () => {
 });
 
 it("getPluginsRequiringSA", () => {
-  expect(getPluginsRequiringSA()).toStrictEqual([
+  expect(getPluginsRequiringSA()).toStrictEqual([PluginNames.PACKAGES_KAPP]);
+});
+
+it("getPluginsAllowingSA", () => {
+  expect(getPluginsAllowingSA()).toStrictEqual([
     PluginNames.PACKAGES_FLUX,
     PluginNames.PACKAGES_KAPP,
   ]);

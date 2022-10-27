@@ -1115,10 +1115,7 @@ func TestGetOciAvailablePackageDetail(t *testing.T) {
 				t.Fatalf("%+v", err)
 			}
 
-			namespacedRepoName := types.NamespacedName{
-				Name:      repoName,
-				Namespace: repoNamespace}
-			ociChartRepo, err := s.newOCIChartRepositoryAndLogin(context.Background(), namespacedRepoName)
+			ociChartRepo, err := s.newOCIChartRepositoryAndLogin(context.Background(), *repo)
 			if err != nil {
 				t.Fatal(err)
 			}

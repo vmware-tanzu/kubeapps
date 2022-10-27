@@ -53,6 +53,15 @@ ${ADDITIONAL_CLUSTER_CONFIG}: devel/dex.crt
 
 additional-cluster-kind: ${ADDITIONAL_CLUSTER_CONFIG}
 
+devel/additional-nginx:
+	kubectl apply --kubeconfig=${ADDITIONAL_CLUSTER_CONFIG} -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/main/deploy/static/provider/kind/deploy.yaml
+	# TODO: need to add wait for condition=exists or similar - https://github.com/kubernetes/kubernetes/issues/83242
+	sleep 5
+	kubectl wait --kubeconfig=${ADDITIONAL_CLUSTER_CONFIG} --namespace ingress-nginx \
+		--for=condition=ready pod \
+		--selector=app.kubernetes.io/component=controller \
+		--timeout=120s
+
 multi-cluster-kind: cluster-kind additional-cluster-kind
 
 delete-cluster-kind:
@@ -62,4 +71,4 @@ delete-cluster-kind:
 	rm ${ADDITIONAL_CLUSTER_CONFIG} || true
 	rm devel/dex.* || true
 
-.PHONY: additional-cluster-kind cluster-kind cluster-kind-delete multi-cluster-kind pause
+.PHONY: additional-cluster-kind cluster-kind cluster-kind-delete multi-cluster-kind pause devel/additional-nginx
