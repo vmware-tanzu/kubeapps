@@ -551,8 +551,10 @@ a.section-link:after {
 
   .side-nav {
     position: relative;
-    width: 25%;
+    width: 20%;
     float: left;
+    overflow: overlay;
+    overflow-wrap: break-word;
 
     .heading {
       font-size: 18px;
@@ -707,15 +709,6 @@ a.section-link:after {
       border-radius: 5px;
       background-color: #fff;
     }
-
-    @include breakpoint(extra-large) {
-      width: 22%;
-    }
-
-    //
-    @include breakpoint(large) {
-      width: 22%;
-    }
   }
 
   .docs-content {
@@ -797,7 +790,7 @@ a.section-link:after {
   }
 
   .right-nav {
-    width: 20%;
+    width: 15%;
     margin: -30px -30px 0 0;
     float: right;
 
@@ -805,7 +798,6 @@ a.section-link:after {
       position: sticky;
       top: 0;
       padding: 30px 30px 30px 20px;
-      margin-right: -20px;
       background-color: $lightgrey;
     }
 
@@ -865,6 +857,86 @@ a.section-link:after {
   }
 }
 
+.right-nav-small {
+
+  .right-nav-content {
+    margin-top: 2.5em;
+    padding: 0.5em;
+    background-color: white;
+    width: fit-content;
+  }
+
+  .buttons {
+    margin-top: 0;
+
+    li {
+      display: inline-block;
+      padding: 8px 0;
+      margin-bottom: 0;
+
+      &:hover {
+        background-color: $lightgrey;
+      }
+
+      a {
+        font-size: 14px;
+        text-transform: uppercase;
+
+        img {
+          width: 22px;
+          vertical-align: middle;
+        }
+      }
+    }
+  }
+
+  h4 {
+    font-size: 16px;
+  }
+
+  ul {
+    padding-left: 0;
+    margin-bottom: 0;
+
+    li {
+      display: block;
+      padding-right: 0;
+      margin-bottom: 7px;
+
+      &:hover {
+        background-color: $lightgrey;
+      }
+
+      a {
+        font-family: $metropolis-light;
+        font-size: 14px;
+      }
+
+      ul {
+        margin-top: 7px;
+        padding-inline-start: 14px;
+      }
+    }
+  }
+
+  .sticky {
+    position: fixed;
+    top: 0;
+  }
+
+  @include breakpoint(medium) {
+    display: none;
+  }
+
+  @include breakpoint(large) {
+    display: none;
+  }
+
+  @include breakpoint(extra-large) {
+    display: none;
+  }
+}
+
 .avatar {
   filter: grayscale(100%);
   transition: filter 0.6s ease-in-out;
@@ -904,7 +976,8 @@ a.section-link:after {
     }
   }
 
-  .aa-Form, .aa-DetachedSearchButton {
+  .aa-Form,
+  .aa-DetachedSearchButton {
     border-color: $indigo;
   }
 
