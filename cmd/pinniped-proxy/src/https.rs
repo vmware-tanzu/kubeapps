@@ -8,14 +8,15 @@ use log::debug;
 use native_tls::{Certificate, TlsConnectorBuilder};
 use url::Url;
 
-use crate::pinniped;
+use crate::{pinniped, pinniped::CredentialCache};
 
 pub const DEFAULT_K8S_API_SERVER_URL: &str = "https://kubernetes.default";
 const HEADER_K8S_API_SERVER_URL: &str = "PINNIPED_PROXY_API_SERVER_URL";
 pub const HEADER_K8S_API_SERVER_CA_CERT: &str = "PINNIPED_PROXY_API_SERVER_CERT";
 const INVALID_SCHEME_ERROR: &'static str = "invalid scheme, https required";
 
-/// validate_url returns a result containing the validated url or an error if it is invalid.
+/// validate_url returns a result containing the validated url or an error if it
+/// is invalid.
 fn validate_url(u: String) -> Result<String> {
     let result = Url::parse(&u);
     match result {
@@ -33,21 +34,24 @@ fn validate_url(u: String) -> Result<String> {
     }
 }
 
-/// include_client_cert updates a tls connection to be built with a client cert for authentication.
+/// include_client_cert updates a tls connection to be built with a client cert
+/// for authentication.
 ///
-/// The client cert is obtained by exchanging the authorization token for a client identity via
-/// pinniped.
+/// The client cert is obtained by exchanging the authorization token for a
+/// client identity via pinniped.
 pub async fn include_client_identity_for_headers<'a>(
     mut tls_builder: &'a mut TlsConnectorBuilder,
     request_headers: HeaderMap<HeaderValue>,
     k8s_api_server_url: &str,
     k8s_api_ca_cert_data: &[u8],
+    credential_cache: CredentialCache,
 ) -> Result<&'a mut TlsConnectorBuilder> {
     if request_headers.contains_key("Authorization") {
         match pinniped::exchange_token_for_identity(
             request_headers["Authorization"].to_str()?,
             k8s_api_server_url,
             k8s_api_ca_cert_data,
+            credential_cache,
         )
         .await
         {
@@ -82,7 +86,8 @@ pub fn get_api_server_url(request_headers: &HeaderMap<HeaderValue>) -> Result<St
     }
 }
 
-/// get_api_server_cert_auth_data returns a byte vector result containing the base64 decoded value.
+/// get_api_server_cert_auth_data returns a byte vector result containing the
+/// base64 decoded value.
 pub fn get_api_server_cert_auth_data(cacert_header: &HeaderValue) -> Result<Vec<u8>> {
     match base64::decode(cacert_header.as_bytes()) {
         Ok(data) => Ok(data),
