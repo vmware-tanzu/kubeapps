@@ -421,10 +421,10 @@ Once you have installed Kubeapps follow the [Getting Started Guide](https://gith
 
 ### Other Parameters
 
-| Name                      | Description                                                                   | Value  |
-| ------------------------- | ----------------------------------------------------------------------------- | ------ |
-| `clusters`                | List of clusters that Kubeapps can target for deployments                     | `[]`   |
-| `rbac.create`             | Specifies whether RBAC resources should be created                            | `true` |
+| Name          | Description                                               | Value  |
+| ------------- | --------------------------------------------------------- | ------ |
+| `clusters`    | List of clusters that Kubeapps can target for deployments | `[]`   |
+| `rbac.create` | Specifies whether RBAC resources should be created        | `true` |
 
 
 ### Feature flags
