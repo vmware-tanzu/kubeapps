@@ -246,15 +246,15 @@ workflows:
             - GKE_REGULAR_VERSION_LATEST_RELEASE
             - GKE_STABLE_VERSION_MAIN
             - GKE_STABLE_VERSION_LATEST_RELEASE
-      - release:
-          <<: *build_on_tag
-          requires:
-            - sync_chart_to_bitnami
-            - local_e2e_tests
-            - GKE_REGULAR_VERSION_MAIN
-            - GKE_REGULAR_VERSION_LATEST_RELEASE
-            - GKE_STABLE_VERSION_MAIN
-            - GKE_STABLE_VERSION_LATEST_RELEASE
+#      - release:
+#          <<: *build_on_tag
+#          requires:
+#            - sync_chart_to_bitnami
+#            - local_e2e_tests
+#            - GKE_REGULAR_VERSION_MAIN
+#            - GKE_REGULAR_VERSION_LATEST_RELEASE
+#            - GKE_STABLE_VERSION_MAIN
+#            - GKE_STABLE_VERSION_LATEST_RELEASE
 
 ## Definitions
 common_envars: &common_envars
