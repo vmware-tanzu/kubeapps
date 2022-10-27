@@ -183,9 +183,6 @@ workflows:
       - sync_chart_from_bitnami:
           <<: *build_on_main
 
-      - GKE_DEBUG_NO_WAIT:
-          <<: *build_always
-
       - GKE_DEBUG:
           <<: *build_always
           requires:
