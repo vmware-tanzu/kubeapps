@@ -182,54 +182,64 @@ workflows:
             - sync_chart_from_bitnami
       - sync_chart_from_bitnami:
           <<: *build_on_main
+
+      - DEBUG_GKE_REGULAR_VERSION_MAIN:
+          <<: *build_always
+      - DEBUG_GKE_REGULAR_VERSION_LATEST_RELEASE:
+          <<: *build_always
+      - DEBUG_GKE_STABLE_VERSION_MAIN:
+          <<: *build_always
+      - DEBUG_GKE_STABLE_VERSION_LATEST_RELEASE:
+          <<: *build_always
+
       - GKE_REGULAR_VERSION_MAIN:
           <<: *build_on_tag_or_prerelease
           requires:
-#            - test_go
-#            - test_dashboard
-#            - test_pinniped_proxy
-#            - test_chart_render
-#            - build_go_images
-#            - build_dashboard
-#            - build_pinniped_proxy
-#            - build_e2e_runner
-#            - sync_chart_from_bitnami
+            - test_go
+            - test_dashboard
+            - test_pinniped_proxy
+            - test_chart_render
+            - build_go_images
+            - build_dashboard
+            - build_pinniped_proxy
+            - build_e2e_runner
+            - sync_chart_from_bitnami
       - GKE_REGULAR_VERSION_LATEST_RELEASE:
           <<: *build_on_tag_or_prerelease
           requires:
-#            - test_go
-#            - test_dashboard
-#            - test_pinniped_proxy
-#            - test_chart_render
-#            - build_go_images
-#            - build_dashboard
-#            - build_pinniped_proxy
-#            - build_e2e_runner
-#            - sync_chart_from_bitnami
+            - test_go
+            - test_dashboard
+            - test_pinniped_proxy
+            - test_chart_render
+            - build_go_images
+            - build_dashboard
+            - build_pinniped_proxy
+            - build_e2e_runner
+            - sync_chart_from_bitnami
       - GKE_STABLE_VERSION_MAIN:
           <<: *build_on_tag_or_prerelease
           requires:
-#            - test_go
-#            - test_dashboard
-#            - test_pinniped_proxy
-#            - test_chart_render
-#            - build_go_images
-#            - build_dashboard
-#            - build_pinniped_proxy
-#            - build_e2e_runner
-#            - sync_chart_from_bitnami
+            - test_go
+            - test_dashboard
+            - test_pinniped_proxy
+            - test_chart_render
+            - build_go_images
+            - build_dashboard
+            - build_pinniped_proxy
+            - build_e2e_runner
+            - sync_chart_from_bitnami
       - GKE_STABLE_VERSION_LATEST_RELEASE:
           <<: *build_on_tag_or_prerelease
           requires:
-#            - test_go
-#            - test_dashboard
-#            - test_pinniped_proxy
-#            - test_chart_render
-#            - build_go_images
-#            - build_dashboard
-#            - build_pinniped_proxy
-#            - build_e2e_runner
-#            - sync_chart_from_bitnami
+            - test_go
+            - test_dashboard
+            - test_pinniped_proxy
+            - test_chart_render
+            - build_go_images
+            - build_dashboard
+            - build_pinniped_proxy
+            - build_e2e_runner
+            - sync_chart_from_bitnami
       - push_images:
           <<: *build_on_main
           requires:
@@ -246,15 +256,15 @@ workflows:
             - GKE_REGULAR_VERSION_LATEST_RELEASE
             - GKE_STABLE_VERSION_MAIN
             - GKE_STABLE_VERSION_LATEST_RELEASE
-#      - release:
-#          <<: *build_on_tag
-#          requires:
-#            - sync_chart_to_bitnami
-#            - local_e2e_tests
-#            - GKE_REGULAR_VERSION_MAIN
-#            - GKE_REGULAR_VERSION_LATEST_RELEASE
-#            - GKE_STABLE_VERSION_MAIN
-#            - GKE_STABLE_VERSION_LATEST_RELEASE
+      - release:
+          <<: *build_on_tag
+          requires:
+            - sync_chart_to_bitnami
+            - local_e2e_tests
+            - GKE_REGULAR_VERSION_MAIN
+            - GKE_REGULAR_VERSION_LATEST_RELEASE
+            - GKE_STABLE_VERSION_MAIN
+            - GKE_STABLE_VERSION_LATEST_RELEASE
 
 ## Definitions
 common_envars: &common_envars
@@ -867,6 +877,30 @@ jobs:
       - store_artifacts:
           path: integration/reports
       - run: exit $TEST_RESULT
+
+  DEBUG_GKE_REGULAR_VERSION_MAIN:
+    <<: *gke_test
+    environment:
+      GKE_BRANCH: << pipeline.parameters.GKE_REGULAR_VERSION >>
+      <<: [ *common_envars, *common_gke_envars ]
+  DEBUG_GKE_REGULAR_VERSION_LATEST_RELEASE:
+    <<: *gke_test
+    environment:
+      GKE_BRANCH: << pipeline.parameters.GKE_REGULAR_VERSION >>
+      TEST_LATEST_RELEASE: 1
+      <<: [ *common_envars, *common_gke_envars ]
+  DEBUG_GKE_STABLE_VERSION_MAIN:
+    <<: *gke_test
+    environment:
+      GKE_BRANCH: << pipeline.parameters.GKE_STABLE_VERSION >>
+      <<: [ *common_envars, *common_gke_envars ]
+  DEBUG_GKE_STABLE_VERSION_LATEST_RELEASE:
+    <<: *gke_test
+    environment:
+      GKE_BRANCH: << pipeline.parameters.GKE_STABLE_VERSION >>
+      TEST_LATEST_RELEASE: 1
+      <<: [ *common_envars, *common_gke_envars ]
+
   GKE_REGULAR_VERSION_MAIN:
     <<: *gke_test
     environment:
