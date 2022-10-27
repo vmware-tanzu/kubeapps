@@ -182,67 +182,54 @@ workflows:
             - sync_chart_from_bitnami
       - sync_chart_from_bitnami:
           <<: *build_on_main
-
-      - GKE_DEBUG:
-          <<: *build_always
-          requires:
-            - test_go
-            - test_dashboard
-            - test_pinniped_proxy
-            - test_chart_render
-            - build_go_images
-            - build_dashboard
-            - build_pinniped_proxy
-            - build_e2e_runner
-
       - GKE_REGULAR_VERSION_MAIN:
           <<: *build_on_tag_or_prerelease
           requires:
-            - test_go
-            - test_dashboard
-            - test_pinniped_proxy
-            - test_chart_render
-            - build_go_images
-            - build_dashboard
-            - build_pinniped_proxy
-            - build_e2e_runner
-            - sync_chart_from_bitnami
+#            - test_go
+#            - test_dashboard
+#            - test_pinniped_proxy
+#            - test_chart_render
+#            - build_go_images
+#            - build_dashboard
+#            - build_pinniped_proxy
+#            - build_e2e_runner
+#            - sync_chart_from_bitnami
       - GKE_REGULAR_VERSION_LATEST_RELEASE:
           <<: *build_on_tag_or_prerelease
           requires:
-            - test_go
-            - test_dashboard
-            - test_pinniped_proxy
-            - test_chart_render
-            - build_go_images
-            - build_dashboard
-            - build_pinniped_proxy
-            - build_e2e_runner
-            - sync_chart_from_bitnami
+#            - test_go
+#            - test_dashboard
+#            - test_pinniped_proxy
+#            - test_chart_render
+#            - build_go_images
+#            - build_dashboard
+#            - build_pinniped_proxy
+#            - build_e2e_runner
+#            - sync_chart_from_bitnami
       - GKE_STABLE_VERSION_MAIN:
           <<: *build_on_tag_or_prerelease
           requires:
-            - test_go
-            - test_dashboard
-            - test_pinniped_proxy
-            - test_chart_render
-            - build_go_images
-            - build_dashboard
-            - build_pinniped_proxy
-            - build_e2e_runner
-            - sync_chart_from_bitnami
+#            - test_go
+#            - test_dashboard
+#            - test_pinniped_proxy
+#            - test_chart_render
+#            - build_go_images
+#            - build_dashboard
+#            - build_pinniped_proxy
+#            - build_e2e_runner
+#            - sync_chart_from_bitnami
       - GKE_STABLE_VERSION_LATEST_RELEASE:
           <<: *build_on_tag_or_prerelease
           requires:
-            - test_go
-            - test_dashboard
-            - test_pinniped_proxy
-            - test_chart_render
-            - build_go_images
-            - build_dashboard
-            - build_pinniped_proxy
-            - build_e2e_runner
-            - sync_chart_from_bitnami
+#            - test_go
+#            - test_dashboard
+#            - test_pinniped_proxy
+#            - test_chart_render
+#            - build_go_images
+#            - build_dashboard
+#            - build_pinniped_proxy
+#            - build_e2e_runner
+#            - sync_chart_from_bitnami
       - push_images:
           <<: *build_on_main
           requires:
@@ -595,6 +582,8 @@ gke_test: &gke_test
     - run:
         name: Check conditions
         command: |
+#          FIXME
+          set -x
           source ./script/chart_sync_utils.sh
 
           # In the case of GKE we will only want to build if it is
@@ -640,6 +629,8 @@ gke_test: &gke_test
           fi
           
           echo "export ESCAPED_GKE_CLUSTER=${ESCAPED_GKE_CLUSTER}" >> $BASH_ENV
+          # FIXME
+          echo "ESCAPED_GKE_CLUSTER: ${ESCAPED_GKE_CLUSTER}"
     - run:
         name: Start GKE environment
         command: |
@@ -876,18 +867,6 @@ jobs:
       - store_artifacts:
           path: integration/reports
       - run: exit $TEST_RESULT
-  GKE_DEBUG_NO_WAIT:
-    <<: *gke_test
-    environment:
-      GKE_BRANCH: << pipeline.parameters.GKE_REGULAR_VERSION >>
-      DEBUG_MODE: true
-      <<: [*common_envars, *common_gke_envars]
-  GKE_DEBUG:
-    <<: *gke_test
-    environment:
-      GKE_BRANCH: << pipeline.parameters.GKE_REGULAR_VERSION >>
-      DEBUG_MODE: true
-      <<: [*common_envars, *common_gke_envars]
   GKE_REGULAR_VERSION_MAIN:
     <<: *gke_test
     environment:
