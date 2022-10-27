@@ -11,6 +11,7 @@ CLUSTER=${1:?}
 ZONE=${2:?}
 BRANCH=${3:?}
 ADMIN=${4:?}
+DEBUG_MODE=${DEBUG_MODE:-"false"}
 
 [[ "${DEBUG_MODE}" == "true" ]] && set -x
 
