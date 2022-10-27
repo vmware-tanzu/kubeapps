@@ -252,7 +252,7 @@ function configureGCloud() {
 #               that will be available for the next steps of the job.
 # Arguments:
 #   $1: GKE_CLUSTER
-#   $2: GKE_BRANCH
+#   $2: GKE_RELEASE_CHANNEL
 #   $3: GITHUB_REF_NAME
 #   $4: TEST_LATEST_RELEASE
 #   $5: DEV_MODE Optional, default "false"
@@ -260,7 +260,7 @@ function configureGCloud() {
 ########################################################################################################################
 function exportEscapedGKEClusterName() {
   GKE_CLUSTER=${1:?GKE_CLUSTER not provided}
-  GKE_BRANCH=${2:?GKE_BRANCH not provided}
+  GKE_RELEASE_CHANNEL=${2:?GKE_RELEASE_CHANNEL not provided}
   GITHUB_REF_NAME=${3:?GITHUB_REF_NAME not provided}
   TEST_LATEST_RELEASE=${4:?TEST_LATEST_RELEASE not provided}
   DEV_MODE=${5:-false}
@@ -269,7 +269,7 @@ function exportEscapedGKEClusterName() {
 
   info "Exporting scaped GKE cluster name"
   [[ "${TEST_LATEST_RELEASE}" == "true" ]] && LATEST_RELEASE=1
-  ESCAPED_GKE_CLUSTER=$(echo "${GKE_CLUSTER}-${GITHUB_REF_NAME}-${LATEST_RELEASE}-${GKE_BRANCH}-ci" | sed 's/[^a-z0-9-]//g')
+  ESCAPED_GKE_CLUSTER=$(echo "${GKE_CLUSTER}-${GITHUB_REF_NAME}-${LATEST_RELEASE}-${GKE_RELEASE_CHANNEL}-ci" | sed 's/[^a-z0-9-]//g')
   [[ "${DEV_MODE}" == "true" ]] && ESCAPED_GKE_CLUSTER="${ESCAPED_GKE_CLUSTER}-gha"
 
   # In case the name exceeds the max length allowed, we take a substring of MAX_LENGTH chars from the beginning to avoid

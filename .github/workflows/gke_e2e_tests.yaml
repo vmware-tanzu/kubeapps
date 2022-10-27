@@ -2,9 +2,6 @@ name: "GKE e2e Tests"
 on:
   workflow_call:
     inputs:
-      ID:
-        type: string
-        description: "An alphanumeric ID to clearly identify the workflow and avoid outputs collision"
       CHARTMUSEUM_VERSION:
         type: string
       DEBUG_MODE:
@@ -15,12 +12,15 @@ on:
         type: boolean
         required: false
         default: false
+      #TODO: right now it contains just the version number (eg. 1.22), rename to GKE_VERSION once CircleCI is decommissioned
       GKE_BRANCH:
         type: string
         description: "The branch of the GKE environment in which we want to test."
       GKE_CLUSTER:
         type: string
       GKE_PROJECT:
+        type: string
+      GKE_RELEASE_CHANNEL:
         type: string
       GKE_ZONE:
         type: string
@@ -93,7 +93,7 @@ jobs:
           installKubectl "${KUBECTL_VERSION}"
           installHelm "${HELM_VERSION_MIN}"
           installHelm "${HELM_VERSION_STABLE}" helm-stable
-          exportEscapedGKEClusterName "${GKE_CLUSTER}" "${GKE_BRANCH}" "${GITHUB_REF_NAME}" "${TEST_LATEST_RELEASE}" "${DEV_MODE}"
+          exportEscapedGKEClusterName "${GKE_CLUSTER}" "${GKE_RELEASE_CHANNEL}" "${GITHUB_REF_NAME}" "${TEST_LATEST_RELEASE}" "${DEV_MODE}"
       - name: Start GKE environment
         run: |
           set -euo pipefail
@@ -111,7 +111,7 @@ jobs:
         if: failure()
         uses: actions/upload-artifact@v3
         with:
-          name: gke_e2e_tests_reports-${{ inputs.ID }}
+          name: gke_${{ inputs.GKE_RELEASE_CHANNEL }}_e2e_tests_reports
           path: integration/reports
       - name: "Delete GKE cluster"
         if: always()
