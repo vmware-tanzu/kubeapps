@@ -256,9 +256,6 @@ async fn prepare_and_call_pinniped_exchange(
     // We convert the arguments so that we're only using the cred_data as the key.
     convert = r#"{ cred_data.clone() }"#,
     result = true,
-    // If two requests with the same key arrive, only one is sent through on a miss
-    // with the others returning once the result is cached.
-    sync_writes = true,
 )]
 async fn call_pinniped(
     pinniped_namespace: String,

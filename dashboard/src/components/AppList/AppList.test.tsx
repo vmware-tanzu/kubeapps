@@ -58,7 +58,7 @@ afterEach(() => {
 context("when changing props", () => {
   it("should fetch apps in the new namespace", async () => {
     const state = deepClone(initialState) as IStoreState;
-    state.config.featureFlags = { operators: true };
+    state.config.featureFlags = { ...initialState.config.featureFlags, operators: true };
     const store = getStore(state);
     const fetchInstalledPackages = jest.fn();
     const getCustomResources = jest.fn();
@@ -71,7 +71,7 @@ context("when changing props", () => {
 
   it("should not fetch resources in the new namespace when operators is deactivated", async () => {
     const state = deepClone(initialState) as IStoreState;
-    state.config.featureFlags = { operators: false };
+    state.config.featureFlags = { ...initialState.config.featureFlags, operators: false };
     const store = getStore(state);
     const fetchInstalledPackages = jest.fn();
     const getCustomResources = jest.fn();
@@ -110,7 +110,7 @@ context("when changing props", () => {
 
   it("should fetch apps in all namespaces", async () => {
     const state = deepClone(initialState) as IStoreState;
-    state.config.featureFlags = { operators: true };
+    state.config.featureFlags = { ...initialState.config.featureFlags, operators: true };
     const store = getStore(state);
     const fetchInstalledPackages = jest.fn();
     const getCustomResources = jest.fn();

@@ -24,7 +24,14 @@ function renderCellWithTooltip(
   const stringValue = ["string", "number"].includes(typeof value?.[property])
     ? value?.[property] || ""
     : JSON.stringify(value?.[property]);
-
+  return renderCellWithTooltipBase(stringValue, className, trimFromBeginning, maxLength);
+}
+function renderCellWithTooltipBase(
+  stringValue: string,
+  className = "",
+  trimFromBeginning = false,
+  maxLength = MAX_LENGTH,
+) {
   if (stringValue?.length > maxLength) {
     const trimmedString = trimFromBeginning
       ? "..." + stringValue.substring(stringValue.length - maxLength, stringValue.length)
@@ -73,6 +80,7 @@ export function renderConfigKeyHeader(table: any, _saveAllChanges: any) {
 }
 
 export function renderConfigKey(value: IBasicFormParam, row: any, _saveAllChanges: any) {
+  const stringKey = value?.deprecated ? `${value?.key} (deprecated)` : value?.key;
   return (
     <div
       className="left-align self-center"
@@ -102,7 +110,7 @@ export function renderConfigKey(value: IBasicFormParam, row: any, _saveAllChange
               <></>
             )}
           </CdsButton>
-          {renderCellWithTooltip(value, "key", "breakable self-center", true, MAX_LENGTH / 1.5)}
+          {renderCellWithTooltipBase(stringKey, "breakable self-center", true, MAX_LENGTH / 1.5)}
         </div>
       </>
     </div>
@@ -110,7 +118,9 @@ export function renderConfigKey(value: IBasicFormParam, row: any, _saveAllChange
 }
 
 export function renderConfigType(value: IBasicFormParam) {
-  return renderCellWithTooltip(value, "type", "italics");
+  const stringType =
+    value?.type === "array" ? `${value?.type}<${value?.items?.type}>` : value?.type;
+  return renderCellWithTooltipBase(stringType, "italics");
 }
 
 export function renderConfigDescription(value: IBasicFormParam) {
@@ -150,19 +160,6 @@ export function renderConfigCurrentValuePro(
 
   // if it isn't a custom component or an with more properties, render an input
   switch (param.type) {
-    case "string":
-      return (
-        <TextParam
-          id={param.key}
-          label={param.title || param.path}
-          param={param}
-          inputType={
-            [param.title, param.key].some(s => s.match(/password/i)) ? "password" : "string"
-          }
-          handleBasicFormParamChange={handleBasicFormParamChange}
-        />
-      );
-
     case "boolean":
       return (
         <BooleanParam
@@ -181,40 +178,36 @@ export function renderConfigCurrentValuePro(
           label={param.title || param.path}
           param={param}
           handleBasicFormParamChange={handleBasicFormParamChange}
-          step={param.type === "integer" ? 1 : 0.1}
           unit={""}
         />
       );
     case "array":
-      if (param?.schema?.items?.type !== "object") {
-        return (
-          <ArrayParam
-            id={param.key}
-            label={param.title || param.path}
-            param={param}
-            handleBasicFormParamChange={handleBasicFormParamChange}
-            type={param?.schema?.items?.type ?? "string"}
-          />
-        );
-      } else {
-        // TODO(agamez): render the object properties
-        return (
-          <TextParam
-            id={param.key}
-            label={param.title || param.path}
-            param={param}
-            inputType={"textarea"}
-            handleBasicFormParamChange={handleBasicFormParamChange}
-          />
-        );
-      }
+      return (
+        <ArrayParam
+          id={param.key}
+          label={param.title || param.path}
+          param={param}
+          handleBasicFormParamChange={handleBasicFormParamChange}
+          type={param?.schema?.items?.type ?? "string"}
+        />
+      );
+    case "string":
+      return (
+        <TextParam
+          id={param.key}
+          label={param.title || param.path}
+          param={param}
+          inputType={[param.title, param.key].some(s => s.match(/password/i)) ? "password" : "text"}
+          handleBasicFormParamChange={handleBasicFormParamChange}
+        />
+      );
+    case "object":
     default:
       return (
         <TextParam
           id={param.key}
           label={param.title || param.path}
           param={param}
-          inputType={"textarea"}
           handleBasicFormParamChange={handleBasicFormParamChange}
         />
       );

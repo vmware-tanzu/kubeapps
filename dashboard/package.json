@@ -27,15 +27,15 @@
   },
   "dependencies": {
     "@cds/city": "^1.1.0",
-    "@cds/core": "^6.1.3",
-    "@cds/react": "^6.1.3",
+    "@cds/core": "^6.2.0",
+    "@cds/react": "^6.2.0",
     "@clr/ui": "^13.9.0",
     "@improbable-eng/grpc-web": "^0.15.0",
     "@paciolan/remote-component": "^2.12.1",
     "@tanstack/match-sorter-utils": "^8.5.14",
     "@tanstack/react-table": "^8.5.15",
     "ajv": "^8.11.0",
-    "axios": "^0.27.2",
+    "axios": "^1.1.3",
     "connected-react-router": "^6.9.3",
     "fast-json-patch": "^3.1.1",
     "google-protobuf": "^3.21.2",
@@ -59,7 +59,7 @@
     "react-redux": "^7.2.9",
     "react-router-dom": "^5.3.0",
     "react-router-hash-link": "^2.4.3",
-    "react-tooltip": "^4.4.2",
+    "react-tooltip": "^4.4.3",
     "react-transition-group": "^4.4.5",
     "redux": "^4.2.0",
     "redux-devtools-extension": "^2.13.9",
@@ -67,7 +67,7 @@
     "remark-breaks": "^3.0.2",
     "remark-gfm": "^3.0.1",
     "rxjs": "^7.5.7",
-    "swagger-ui-react": "^4.15.0",
+    "swagger-ui-react": "^4.15.1",
     "typesafe-actions": "^5.1.0",
     "yaml": "^2.1.3"
   },
@@ -81,10 +81,9 @@
     "@types/js-yaml": "^4.0.5",
     "@types/jsonwebtoken": "^8.5.9",
     "@types/lodash": "^4.14.186",
-    "@types/moxios": "^0.4.15",
     "@types/qs": "^6.9.7",
     "@types/react-copy-to-clipboard": "^5.0.4",
-    "@types/react-dom": "^18.0.6",
+    "@types/react-dom": "^18.0.7",
     "@types/react-helmet": "^6.1.5",
     "@types/react-router-dom": "^5.3.3",
     "@types/react-router-hash-link": "^2.4.5",
@@ -92,6 +91,7 @@
     "@types/redux-mock-store": "^1.0.3",
     "@types/swagger-ui-react": "^4.11.0",
     "@wojtekmaj/enzyme-adapter-react-17": "^0.6.7",
+    "axios-mock-adapter": "^1.21.2",
     "cross-env": "^7.0.3",
     "enzyme": "^3.11.0",
     "eslint-config-prettier": "^8.5.0",
@@ -102,10 +102,9 @@
     "jest-plugin-context": "^2.9.0",
     "mock-socket": "^9.1.5",
     "monaco-editor-webpack-plugin": "^7.0.1",
-    "moxios": "^0.4.0",
     "node-polyfill-webpack-plugin": "^2.0.1",
     "npm-run-all": "^4.1.5",
-    "postcss": "^8.4.16",
+    "postcss": "^8.4.18",
     "postcss-scss": "^4.0.5",
     "prettier": "^2.7.1",
     "react-dom": "^17.0.2",
@@ -117,10 +116,10 @@
     "stylelint": "^14.14.0",
     "stylelint-config-idiomatic-order": "^9.0.0",
     "stylelint-config-prettier": "^9.0.3",
-    "stylelint-config-standard-scss": "^5.0.0",
+    "stylelint-config-standard-scss": "^6.0.0",
     "stylelint-scss": "^4.3.0",
     "ts-jest": "^29.0.3",
-    "ts-proto": "^1.129.0",
+    "ts-proto": "^1.131.0",
     "typescript": "^4.8.4"
   },
   "resolutions": {
@@ -134,7 +133,7 @@
       "!src/**/*.d.ts"
     ],
     "transformIgnorePatterns": [
-      "node_modules/(?!@cds|@clr|@lit|bail|ccount|cds|character-entities|comma-separated-tokens|decode-named-character-reference|escape-string-regexp|hast-util-whitespace|is-plain-obj|lit|lodash-es|markdown-table|mdast-util-definitions|mdast-util-find-and-replace|mdast-util-from-markdown|mdast-util-gfm-autolink-literal|mdast-util-gfm|mdast-util-to-hast|mdast-util-to-markdown|mdast-util-to-string|micromark-core-commonmark|monaco-editor|react-monaco-editor|micromark|parse-entities|property-information|ramda|react-markdown|react-syntax-highlighter|remark-breaks|remark-gfm|remark-parse|remark-rehype|space-separated-tokens|swagger-client|swagger-ui-react|trim-lines|trough|unified|unist-builder|unist-util-generated|unist-util-is|unist-util-position|unist-util-stringify-position|unist-util-visit-parents|unist-util-visit|util-find-and-replace|vfile-message|vfile|.*css)"
+      "node_modules/(?!@cds|@clr|@lit|axios|bail|ccount|cds|character-entities|comma-separated-tokens|decode-named-character-reference|escape-string-regexp|hast-util-whitespace|is-plain-obj|lit|lodash-es|markdown-table|mdast-util-definitions|mdast-util-find-and-replace|mdast-util-from-markdown|mdast-util-gfm-autolink-literal|mdast-util-gfm|mdast-util-to-hast|mdast-util-to-markdown|mdast-util-to-string|micromark-core-commonmark|monaco-editor|react-monaco-editor|micromark|parse-entities|property-information|ramda|react-markdown|react-syntax-highlighter|remark-breaks|remark-gfm|remark-parse|remark-rehype|space-separated-tokens|swagger-client|swagger-ui-react|trim-lines|trough|unified|unist-builder|unist-util-generated|unist-util-is|unist-util-position|unist-util-stringify-position|unist-util-visit-parents|unist-util-visit|util-find-and-replace|vfile-message|vfile|.*css)"
     ]
   },
   "browserslist": {

@@ -48,7 +48,7 @@ const defaultCSV = {
 } as any;
 
 let spyOnUseDispatch: jest.SpyInstance;
-const kubeaActions = { ...actions.operators };
+const kubeActions = { ...actions.operators };
 beforeEach(() => {
   actions.operators = {
     ...actions.operators,
@@ -95,7 +95,7 @@ beforeEach(() => {
 });
 
 afterEach(() => {
-  actions.operators = { ...kubeaActions };
+  actions.operators = { ...kubeActions };
   spyOnUseDispatch.mockRestore();
   jest.restoreAllMocks();
 });

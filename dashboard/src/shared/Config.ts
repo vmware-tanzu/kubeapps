@@ -42,6 +42,7 @@ export interface IConfig {
 
 export interface IFeatureFlags {
   operators: boolean;
+  schemaEditor: { enabled: boolean };
 }
 
 export default class Config {
@@ -57,7 +58,7 @@ export default class Config {
 
   // getTheme retrieves the different theme preferences and calculates which one is chosen
   public static getTheme(config: IConfig): SupportedThemes {
-    // Define a ballback theme in case of errors
+    // Define a fallback theme in case of errors
     const fallbackTheme = SupportedThemes.light;
 
     // Retrieve the system theme preference (configurable via Values.dashboard.defaultTheme)

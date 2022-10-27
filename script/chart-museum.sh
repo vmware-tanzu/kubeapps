@@ -6,7 +6,7 @@
 CHARTMUSEUM_USER=${CHARTMUSEUM_USER:-"admin"}
 CHARTMUSEUM_PWD=${CHARTMUSEUM_PWD:-"password"}
 CHARTMUSEUM_NS=${CHARTMUSEUM_NS:-"chart-museum"}
-CHARTMUSEUM_VERSION=${CHARTMUSEUM_VERSION:-"3.9.0"}
+CHARTMUSEUM_VERSION=${CHARTMUSEUM_VERSION:-"3.9.1"}
 CHARTMUSEUM_HOSTNAME=${CHARTMUSEUM_HOSTNAME:-"chart-museum"}
 CHARTMUSEUM_IP=${LOAD_BALANCER_IP}
 
@@ -69,9 +69,9 @@ pushChartToChartMuseum() {
     echo ">> Chart ${CHART_NAME} v${CHART_VERSION} already exists: deleting"
     curl -Lk -u "${CHARTMUSEUM_USER}:${CHARTMUSEUM_PWD}" -H "Host: ${CHARTMUSEUM_HOSTNAME}" -X DELETE http://${CHARTMUSEUM_IP}/api/charts/${CHART_NAME}/${CHART_VERSION}
   fi
-  
+
   echo ">> Uploading chart from file ${CHART_FILE}"
-  curl -Lk -u "${CHARTMUSEUM_USER}:${CHARTMUSEUM_PWD}" -H "Host: ${CHARTMUSEUM_HOSTNAME}" --data-binary "@${CHART_FILE}" http://${CHARTMUSEUM_IP}/api/charts  
+  curl -Lk -u "${CHARTMUSEUM_USER}:${CHARTMUSEUM_PWD}" -H "Host: ${CHARTMUSEUM_HOSTNAME}" --data-binary "@${CHART_FILE}" http://${CHARTMUSEUM_IP}/api/charts
 }
 
 # Install ChartsMuseum
@@ -84,7 +84,7 @@ installChartMuseum() {
     --set env.secret.BASIC_AUTH_PASS=$CHARTMUSEUM_PWD
   info "Waiting for ChartMuseum to be ready..."
   kubectl rollout status -w deployment/chartmuseum --namespace=${CHARTMUSEUM_NS}
-  
+
   echo "Installing Ingress for ChartMuseum with access through host ${CHARTMUSEUM_HOSTNAME}"
   kubectl create -n $CHARTMUSEUM_NS -f - -o yaml << EOF
 apiVersion: networking.k8s.io/v1

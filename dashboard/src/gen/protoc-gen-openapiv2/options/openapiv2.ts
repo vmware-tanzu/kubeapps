@@ -150,8 +150,18 @@ export interface Swagger {
    * Individual operations can override this definition.
    */
   security: SecurityRequirement[];
+  /**
+   * A list of tags for API documentation control. Tags can be used for logical
+   * grouping of operations by resources or any other qualifier.
+   */
+  tags: Tag[];
   /** Additional external documentation. */
   externalDocs?: ExternalDocumentation;
+  /**
+   * Custom properties that start with "x-" such as "x-foo" used to describe
+   * extra functionality that is not covered by the standard OpenAPI Specification.
+   * See: https://swagger.io/docs/specification/2-0/swagger-extensions/
+   */
   extensions: { [key: string]: any };
 }
 
@@ -253,6 +263,11 @@ export interface Operation {
    * security declaration, an empty array can be used.
    */
   security: SecurityRequirement[];
+  /**
+   * Custom properties that start with "x-" such as "x-foo" used to describe
+   * extra functionality that is not covered by the standard OpenAPI Specification.
+   * See: https://swagger.io/docs/specification/2-0/swagger-extensions/
+   */
   extensions: { [key: string]: any };
 }
 
@@ -315,6 +330,11 @@ export interface Response {
    * See: https://github.com/OAI/OpenAPI-Specification/blob/3.0.0/versions/2.0.md#example-object
    */
   examples: { [key: string]: string };
+  /**
+   * Custom properties that start with "x-" such as "x-foo" used to describe
+   * extra functionality that is not covered by the standard OpenAPI Specification.
+   * See: https://swagger.io/docs/specification/2-0/swagger-extensions/
+   */
   extensions: { [key: string]: any };
 }
 
@@ -377,6 +397,11 @@ export interface Info {
    * with the specification version).
    */
   version: string;
+  /**
+   * Custom properties that start with "x-" such as "x-foo" used to describe
+   * extra functionality that is not covered by the standard OpenAPI Specification.
+   * See: https://swagger.io/docs/specification/2-0/swagger-extensions/
+   */
   extensions: { [key: string]: any };
 }
 
@@ -590,6 +615,11 @@ export interface JSONSchema {
   enum: string[];
   /** Additional field level properties used when generating the OpenAPI v2 file. */
   fieldConfiguration?: JSONSchema_FieldConfiguration;
+  /**
+   * Custom properties that start with "x-" such as "x-foo" used to describe
+   * extra functionality that is not covered by the standard OpenAPI Specification.
+   * See: https://swagger.io/docs/specification/2-0/swagger-extensions/
+   */
   extensions: { [key: string]: any };
 }
 
@@ -692,12 +722,29 @@ export interface JSONSchema_ExtensionsEntry {
  */
 export interface Tag {
   /**
+   * The name of the tag. Use it to allow override of the name of a
+   * global Tag object, then use that name to reference the tag throughout the
+   * OpenAPI file.
+   */
+  name: string;
+  /**
    * A short description for the tag. GFM syntax can be used for rich text
    * representation.
    */
   description: string;
   /** Additional external documentation for this tag. */
   externalDocs?: ExternalDocumentation;
+  /**
+   * Custom properties that start with "x-" such as "x-foo" used to describe
+   * extra functionality that is not covered by the standard OpenAPI Specification.
+   * See: https://swagger.io/docs/specification/2-0/swagger-extensions/
+   */
+  extensions: { [key: string]: any };
+}
+
+export interface Tag_ExtensionsEntry {
+  key: string;
+  value?: any;
 }
 
 /**
@@ -776,6 +823,11 @@ export interface SecurityScheme {
    * Valid for oauth2.
    */
   scopes?: Scopes;
+  /**
+   * Custom properties that start with "x-" such as "x-foo" used to describe
+   * extra functionality that is not covered by the standard OpenAPI Specification.
+   * See: https://swagger.io/docs/specification/2-0/swagger-extensions/
+   */
   extensions: { [key: string]: any };
 }
 
@@ -997,6 +1049,7 @@ function createBaseSwagger(): Swagger {
     responses: {},
     securityDefinitions: undefined,
     security: [],
+    tags: [],
     externalDocs: undefined,
     extensions: {},
   };
@@ -1035,6 +1088,9 @@ export const Swagger = {
     }
     for (const v of message.security) {
       SecurityRequirement.encode(v!, writer.uint32(98).fork()).ldelim();
+    }
+    for (const v of message.tags) {
+      Tag.encode(v!, writer.uint32(106).fork()).ldelim();
     }
     if (message.externalDocs !== undefined) {
       ExternalDocumentation.encode(message.externalDocs, writer.uint32(114).fork()).ldelim();
@@ -1097,6 +1153,9 @@ export const Swagger = {
         case 12:
           message.security.push(SecurityRequirement.decode(reader, reader.uint32()));
           break;
+        case 13:
+          message.tags.push(Tag.decode(reader, reader.uint32()));
+          break;
         case 14:
           message.externalDocs = ExternalDocumentation.decode(reader, reader.uint32());
           break;
@@ -1140,6 +1199,7 @@ export const Swagger = {
       security: Array.isArray(object?.security)
         ? object.security.map((e: any) => SecurityRequirement.fromJSON(e))
         : [],
+      tags: Array.isArray(object?.tags) ? object.tags.map((e: any) => Tag.fromJSON(e)) : [],
       externalDocs: isSet(object.externalDocs)
         ? ExternalDocumentation.fromJSON(object.externalDocs)
         : undefined,
@@ -1188,6 +1248,11 @@ export const Swagger = {
     } else {
       obj.security = [];
     }
+    if (message.tags) {
+      obj.tags = message.tags.map(e => (e ? Tag.toJSON(e) : undefined));
+    } else {
+      obj.tags = [];
+    }
     message.externalDocs !== undefined &&
       (obj.externalDocs = message.externalDocs
         ? ExternalDocumentation.toJSON(message.externalDocs)
@@ -1225,6 +1290,7 @@ export const Swagger = {
         ? SecurityDefinitions.fromPartial(object.securityDefinitions)
         : undefined;
     message.security = object.security?.map(e => SecurityRequirement.fromPartial(e)) || [];
+    message.tags = object.tags?.map(e => Tag.fromPartial(e)) || [];
     message.externalDocs =
       object.externalDocs !== undefined && object.externalDocs !== null
         ? ExternalDocumentation.fromPartial(object.externalDocs)
@@ -3145,17 +3211,25 @@ export const JSONSchema_ExtensionsEntry = {
 };
 
 function createBaseTag(): Tag {
-  return { description: "", externalDocs: undefined };
+  return { name: "", description: "", externalDocs: undefined, extensions: {} };
 }
 
 export const Tag = {
   encode(message: Tag, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
+    if (message.name !== "") {
+      writer.uint32(10).string(message.name);
+    }
     if (message.description !== "") {
       writer.uint32(18).string(message.description);
     }
     if (message.externalDocs !== undefined) {
       ExternalDocumentation.encode(message.externalDocs, writer.uint32(26).fork()).ldelim();
     }
+    Object.entries(message.extensions).forEach(([key, value]) => {
+      if (value !== undefined) {
+        Tag_ExtensionsEntry.encode({ key: key as any, value }, writer.uint32(34).fork()).ldelim();
+      }
+    });
     return writer;
   },
 
@@ -3166,11 +3240,20 @@ export const Tag = {
     while (reader.pos < end) {
       const tag = reader.uint32();
       switch (tag >>> 3) {
+        case 1:
+          message.name = reader.string();
+          break;
         case 2:
           message.description = reader.string();
           break;
         case 3:
           message.externalDocs = ExternalDocumentation.decode(reader, reader.uint32());
+          break;
+        case 4:
+          const entry4 = Tag_ExtensionsEntry.decode(reader, reader.uint32());
+          if (entry4.value !== undefined) {
+            message.extensions[entry4.key] = entry4.value;
+          }
           break;
         default:
           reader.skipType(tag & 7);
@@ -3182,30 +3265,114 @@ export const Tag = {
 
   fromJSON(object: any): Tag {
     return {
+      name: isSet(object.name) ? String(object.name) : "",
       description: isSet(object.description) ? String(object.description) : "",
       externalDocs: isSet(object.externalDocs)
         ? ExternalDocumentation.fromJSON(object.externalDocs)
         : undefined,
+      extensions: isObject(object.extensions)
+        ? Object.entries(object.extensions).reduce<{ [key: string]: any }>((acc, [key, value]) => {
+            acc[key] = value as any;
+            return acc;
+          }, {})
+        : {},
     };
   },
 
   toJSON(message: Tag): unknown {
     const obj: any = {};
+    message.name !== undefined && (obj.name = message.name);
     message.description !== undefined && (obj.description = message.description);
     message.externalDocs !== undefined &&
       (obj.externalDocs = message.externalDocs
         ? ExternalDocumentation.toJSON(message.externalDocs)
         : undefined);
+    obj.extensions = {};
+    if (message.extensions) {
+      Object.entries(message.extensions).forEach(([k, v]) => {
+        obj.extensions[k] = v;
+      });
+    }
     return obj;
   },
 
   fromPartial<I extends Exact<DeepPartial<Tag>, I>>(object: I): Tag {
     const message = createBaseTag();
+    message.name = object.name ?? "";
     message.description = object.description ?? "";
     message.externalDocs =
       object.externalDocs !== undefined && object.externalDocs !== null
         ? ExternalDocumentation.fromPartial(object.externalDocs)
         : undefined;
+    message.extensions = Object.entries(object.extensions ?? {}).reduce<{ [key: string]: any }>(
+      (acc, [key, value]) => {
+        if (value !== undefined) {
+          acc[key] = value;
+        }
+        return acc;
+      },
+      {},
+    );
+    return message;
+  },
+};
+
+function createBaseTag_ExtensionsEntry(): Tag_ExtensionsEntry {
+  return { key: "", value: undefined };
+}
+
+export const Tag_ExtensionsEntry = {
+  encode(message: Tag_ExtensionsEntry, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
+    if (message.key !== "") {
+      writer.uint32(10).string(message.key);
+    }
+    if (message.value !== undefined) {
+      Value.encode(Value.wrap(message.value), writer.uint32(18).fork()).ldelim();
+    }
+    return writer;
+  },
+
+  decode(input: _m0.Reader | Uint8Array, length?: number): Tag_ExtensionsEntry {
+    const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseTag_ExtensionsEntry();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1:
+          message.key = reader.string();
+          break;
+        case 2:
+          message.value = Value.unwrap(Value.decode(reader, reader.uint32()));
+          break;
+        default:
+          reader.skipType(tag & 7);
+          break;
+      }
+    }
+    return message;
+  },
+
+  fromJSON(object: any): Tag_ExtensionsEntry {
+    return {
+      key: isSet(object.key) ? String(object.key) : "",
+      value: isSet(object?.value) ? object.value : undefined,
+    };
+  },
+
+  toJSON(message: Tag_ExtensionsEntry): unknown {
+    const obj: any = {};
+    message.key !== undefined && (obj.key = message.key);
+    message.value !== undefined && (obj.value = message.value);
+    return obj;
+  },
+
+  fromPartial<I extends Exact<DeepPartial<Tag_ExtensionsEntry>, I>>(
+    object: I,
+  ): Tag_ExtensionsEntry {
+    const message = createBaseTag_ExtensionsEntry();
+    message.key = object.key ?? "";
+    message.value = object.value ?? undefined;
     return message;
   },
 };

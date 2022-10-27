@@ -8,6 +8,7 @@ import { push } from "connected-react-router";
 import {
   InstalledPackageReference,
   InstalledPackageStatus,
+  InstalledPackageStatus_StatusReason,
 } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
 import { useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
@@ -61,6 +62,7 @@ export default function DeleteButton({
         releaseStatus={releaseStatus}
         id="delete-button"
         disabled={disabled}
+        statusesToDeactivate={[InstalledPackageStatus_StatusReason.STATUS_REASON_UNINSTALLED]}
       >
         <CdsIcon shape="trash" /> Delete
       </StatusAwareButton>

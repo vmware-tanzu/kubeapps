@@ -85,7 +85,15 @@ export function getPathValueInYamlNode(
   path: string,
 ) {
   const splittedPath = parsePath(path);
-  const value = values?.getIn(splittedPath);
+  let value = values?.getIn(splittedPath);
+
+  // if the value from getIn is an object, it means
+  // it is a YamlSeq or YamlMap, so we need to convert it
+  // back to a plain JS object
+  if (typeof value === "object") {
+    value = (value as any)?.toJSON();
+  }
+
   return value;
 }
 

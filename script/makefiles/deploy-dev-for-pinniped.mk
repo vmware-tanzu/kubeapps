@@ -9,7 +9,7 @@
 
 # Have a look at /docs/reference/developer/pinniped-proxy.md for instructions on how to run this makefile
 
-PINNIPED_VERSION ?= v0.18.0
+PINNIPED_VERSION ?= v0.20.0
 
 deploy-dex-for-pinniped: devel/dex.crt-for-pinniped devel/dex.key-for-pinniped
 	kubectl --kubeconfig=${CLUSTER_CONFIG_FOR_PINNIPED} create namespace dex

@@ -27,7 +27,7 @@ const defaultProps = {
 };
 
 let spyOnUseDispatch: jest.SpyInstance;
-const kubeaActions = { ...actions.kube };
+const kubeActions = { ...actions.kube };
 beforeEach(() => {
   actions.installedpackages = {
     ...actions.installedpackages,
@@ -38,7 +38,7 @@ beforeEach(() => {
 });
 
 afterEach(() => {
-  actions.kube = { ...kubeaActions };
+  actions.kube = { ...kubeActions };
   spyOnUseDispatch.mockRestore();
 });
 
@@ -76,7 +76,7 @@ it("renders an error", async () => {
   expect(wrapper.find(Alert)).toIncludeText("Boom!");
 });
 
-it("should render a deactivated button if when passing an in-progress status", async () => {
+it("should render an enabled button and tooltip if when passing a pending status", async () => {
   const disabledProps = {
     ...defaultProps,
     releaseStatus: {
@@ -87,6 +87,21 @@ it("should render a deactivated button if when passing an in-progress status", a
   };
   const wrapper = mountWrapper(defaultStore, <DeleteButton {...disabledProps} />);
 
+  expect(wrapper.find(CdsButton)).not.toBeDisabled();
+  expect(wrapper.find(ReactTooltip)).toIncludeText("The application is pending installation.");
+});
+
+it("should render a deactivated button if when passing a uninstalled status", async () => {
+  const disabledProps = {
+    ...defaultProps,
+    releaseStatus: {
+      ready: false,
+      reason: InstalledPackageStatus_StatusReason.STATUS_REASON_UNINSTALLED,
+      userReason: "Uninstalling",
+    } as InstalledPackageStatus,
+  };
+  const wrapper = mountWrapper(defaultStore, <DeleteButton {...disabledProps} />);
+
   expect(wrapper.find(CdsButton)).toBeDisabled();
-  expect(wrapper.find(ReactTooltip)).toExist();
+  expect(wrapper.find(ReactTooltip)).toIncludeText("The application is being deleted.");
 });

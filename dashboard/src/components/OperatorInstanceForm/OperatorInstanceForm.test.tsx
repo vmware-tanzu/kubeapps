@@ -39,7 +39,7 @@ const defaultCSV = {
 } as any;
 
 let spyOnUseDispatch: jest.SpyInstance;
-const kubeaActions = { ...actions.operators };
+const kubeActions = { ...actions.operators };
 beforeEach(() => {
   // mock the window.matchMedia for selecting the theme
   Object.defineProperty(window, "matchMedia", {
@@ -86,7 +86,7 @@ beforeEach(() => {
 });
 
 afterEach(() => {
-  actions.operators = { ...kubeaActions };
+  actions.operators = { ...kubeActions };
   spyOnUseDispatch.mockRestore();
   jest.restoreAllMocks();
 });
