@@ -70,6 +70,7 @@ jobs:
       GKE_BRANCH: ${{ inputs.GKE_BRANCH }}
       GKE_CLUSTER: ${{ inputs.GKE_CLUSTER }}
       GKE_PROJECT: ${{ inputs.GKE_PROJECT }}
+      GKE_RELEASE_CHANNEL: ${{ inputs.GKE_RELEASE_CHANNEL }}
       GKE_ZONE: ${{ inputs.GKE_ZONE }}
       HELM_VERSION_MIN: ${{ inputs.HELM_VERSION_MIN }}
       HELM_VERSION_STABLE: ${{ inputs.HELM_VERSION_STABLE }}
