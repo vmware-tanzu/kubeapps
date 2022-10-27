@@ -582,7 +582,7 @@ gke_test: &gke_test
     - run:
         name: Check conditions
         command: |
-#          FIXME
+          # FIXME
           set -x
           source ./script/chart_sync_utils.sh
 
