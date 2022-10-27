@@ -656,13 +656,13 @@ jobs:
     if: needs.setup.outputs.triggered_from_fork == 'false'
     needs:
       - setup
-#      - test_go
-#      - test_dashboard
-#      - test_pinniped_proxy
-#      - test_chart_render
-#      - build_docker_images
-#      - build_dashboard_image
-#      - build_e2e_runner_image
+      - test_go
+      - test_dashboard
+      - test_pinniped_proxy
+      - test_chart_render
+      - build_docker_images
+      - build_dashboard_image
+      - build_e2e_runner_image
       # FIXME: sync_chart_from_bitnami disabled for development as it only runs in main branch, uncomment before merging
 #      - sync_chart_from_bitnami
     runs-on: ubuntu-latest
