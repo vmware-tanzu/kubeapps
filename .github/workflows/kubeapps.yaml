@@ -651,16 +651,18 @@ jobs:
               ${DEV_MODE}
 
   gke_setup:
+#    TODO:
+#    <<: *build_on_tag_or_prerelease
     if: needs.setup.outputs.triggered_from_fork == 'false'
     needs:
       - setup
-#      - test_go
-#      - test_dashboard
-#      - test_pinniped_proxy
-#      - test_chart_render
-#      - build_docker_images
-#      - build_dashboard_image
-#      - build_e2e_runner_image
+      - test_go
+      - test_dashboard
+      - test_pinniped_proxy
+      - test_chart_render
+      - build_docker_images
+      - build_dashboard_image
+      - build_e2e_runner_image
       # FIXME: sync_chart_from_bitnami disabled for development as it only runs in main branch, uncomment before merging
 #      - sync_chart_from_bitnami
     runs-on: ubuntu-latest
@@ -691,8 +693,6 @@ jobs:
           echo "DEV_MODE=${DEV_MODE}" >> $GITHUB_OUTPUT
 
   GKE_REGULAR_VERSION_MAIN:
-    #    TODO:
-    #    <<: *build_on_tag_or_prerelease
     needs:
       - gke_setup
     uses: ./.github/workflows/gke_e2e_tests.yaml
