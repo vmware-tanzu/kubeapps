@@ -265,13 +265,12 @@ function exportEscapedGKEClusterName() {
   TEST_LATEST_RELEASE=${4:?TEST_LATEST_RELEASE not provided}
   DEV_MODE=${5:-false}
   # Max len for a GKE cluster is 40 characters at the time of this writing
-  local MAX_LENGTH=40 len offset
+  local MAX_LENGTH=40 LATEST_RELEASE=0 len offset
 
   info "Exporting scaped GKE cluster name"
-  ESCAPED_GKE_CLUSTER=$(echo "${GKE_CLUSTER}-${GITHUB_REF_NAME}-${TEST_LATEST_RELEASE}-${GKE_BRANCH}-ci" | sed 's/[^a-z0-9-]//g')
-  if [[ "${DEV_MODE}" == "true" ]]; then
-    ESCAPED_GKE_CLUSTER="${ESCAPED_GKE_CLUSTER}-gha"
-  fi
+  [[ "${TEST_LATEST_RELEASE}" == "true" ]] && LATEST_RELEASE=1
+  ESCAPED_GKE_CLUSTER=$(echo "${GKE_CLUSTER}-${GITHUB_REF_NAME}-${LATEST_RELEASE}-${GKE_BRANCH}-ci" | sed 's/[^a-z0-9-]//g')
+  [[ "${DEV_MODE}" == "true" ]] && ESCAPED_GKE_CLUSTER="${ESCAPED_GKE_CLUSTER}-gha"
 
   # In case the name exceeds the max length allowed, we take a substring of MAX_LENGTH chars from the beginning to avoid
   # the "-gha" suffix

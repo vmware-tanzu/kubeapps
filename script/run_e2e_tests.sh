@@ -8,8 +8,10 @@ IFS=$'\n\t'
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." >/dev/null && pwd)"
 
+TEST_LATEST_RELEASE=${TEST_LATEST_RELEASE:-false}
+
 # If we want to test the latest version instead we override the image to be used
-if [[ -n "${TEST_LATEST_RELEASE:-}" ]]; then
+if [[ "${TEST_LATEST_RELEASE}" == "true" ]]; then
   source "${ROOT_DIR}/script/chart_sync_utils.sh"
   latest="$(latestReleaseTag)"
   IMG_DEV_TAG=${latest/v/}

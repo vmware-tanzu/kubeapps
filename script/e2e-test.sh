@@ -35,6 +35,7 @@ GKE_BRANCH=${GKE_BRANCH:-}
 IMG_PREFIX=${IMG_PREFIX:-"kubeapps/"}
 TESTS_GROUP=${TESTS_GROUP:-"${ALL_TESTS}"}
 DEBUG_MODE=${DEBUG_MODE:-false}
+TEST_LATEST_RELEASE=${TEST_LATEST_RELEASE:-false}
 
 # shellcheck disable=SC2076
 if [[ ! " ${SUPPORTED_TESTS_GROUPS[*]} " =~ " ${TESTS_GROUP} " ]]; then
@@ -45,7 +46,7 @@ fi
 
 # TODO(andresmgot): While we work with beta releases, the Bitnami pipeline
 # removes the pre-release part of the tag
-if [[ -n "${TEST_LATEST_RELEASE:-}" ]]; then
+if [[ -n "${TEST_LATEST_RELEASE}" && "${TEST_LATEST_RELEASE}" != "false" ]]; then
   IMG_DEV_TAG=${IMG_DEV_TAG/-beta.*/}
 fi
 
@@ -352,7 +353,7 @@ fi
 
 # Use dev images or Bitnami if testing the latest release
 kubeapps_apis_image="kubeapps-apis"
-[[ -n "${TEST_LATEST_RELEASE:-}" ]] && IMG_PREFIX="bitnami/kubeapps-" && kubeapps_apis_image="apis"
+[[ -n "${TEST_LATEST_RELEASE}" && "${TEST_LATEST_RELEASE}" != "false" ]] && IMG_PREFIX="bitnami/kubeapps-" && kubeapps_apis_image="apis"
 images=(
   "apprepository-controller"
   "asset-syncer"

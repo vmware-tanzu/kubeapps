@@ -83,7 +83,7 @@ jobs:
           installKubectl "${KUBECTL_VERSION}"
           installHelm "${HELM_VERSION_MIN}"
           installHelm "${HELM_VERSION_STABLE}" helm-stable
-          exportEscapedGKEClusterName "${GKE_CLUSTER}" "${GKE_BRANCH}" "${GITHUB_REF_NAME}" "${TEST_LATEST_RELEASE:-0}" "${DEV_MODE}"
+          exportEscapedGKEClusterName "${GKE_CLUSTER}" "${GKE_BRANCH}" "${GITHUB_REF_NAME}" "${TEST_LATEST_RELEASE}" "${DEV_MODE}"
       - name: Start GKE environment
         run: |
           set -euo pipefail
