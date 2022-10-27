@@ -27,6 +27,14 @@ document.querySelectorAll("table").forEach(function (table, index) {
   table.appendChild(caption);
 });
 
+// Remove the keyboard focus on non interactive elements
+// in this case, the code blocks
+// due to https://github.com/gohugoio/hugo/pull/8568,
+// if adding scrollable code blocks, this can be removed/tuned-up
+document.querySelectorAll("pre").forEach(function (codeBlock) {
+  codeBlock.setAttribute("tabindex", "-1");
+});
+
 // Since the Algolia script is loaded asynchronously, we need to wait for it to be loaded before we can use it.
 document.addEventListener("DOMContentLoaded", function () {
   algoliasearchNetlify({
