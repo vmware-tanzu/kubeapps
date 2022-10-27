@@ -12,8 +12,37 @@
     function OptanonWrapper() { { window.dataLayer.push({ event: 'OneTrustGroupsUpdated' }); } }
   </script>
   <script defer>
-    function setGTM(w,d,s,l,i){ w[l]=w[l]||[]; w[l].push({'gtm.start':new Date().getTime(),event:'gtm.js'}); var f=d.getElementsByTagName(s)[0],j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:''; j.async=true; j.src='https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f); }
-    if (document.cookie.indexOf('OptanonConsent') > -1 && document.cookie.indexOf('groups=') > -1) { setGTM(window,document,'script','dataLayer','{{ .Site.Params.gtmId }}'); } else{ waitForOnetrustActiveGroups(); } var timer; function waitForOnetrustActiveGroups() { if (document.cookie.indexOf('OptanonConsent') > -1 && document.cookie.indexOf('groups=') > -1) { clearTimeout(timer); setGTM(window,document,'script','dataLayer','{{ .Site.Params.gtmId }}'); } else{ timer=setTimeout(waitForOnetrustActiveGroups, 250); } }
+    function setGTM(w, d, s, l, i) {
+      w[l] = w[l] || [];
+      w[l].push({ "gtm.start": new Date().getTime(), event: "gtm.js" });
+      var f = d.getElementsByTagName(s)[0],
+        j = d.createElement(s),
+        dl = l != "dataLayer" ? "&l=" + l : "";
+      j.async = true;
+      j.src = "https://www.googletagmanager.com/gtm.js?id=" + i + dl;
+      f.parentNode.insertBefore(j, f);
+    }
+
+    if (
+      document.cookie.indexOf("OptanonConsent") > -1 &&
+      document.cookie.indexOf("groups=") > -1
+    ) {
+      setGTM(window, document, "script", "dataLayer", "{{ .Site.Params.gtmId }}");
+    } else {
+      waitForOnetrustActiveGroups();
+    }
+    var timer;
+    function waitForOnetrustActiveGroups() {
+      if (
+        document.cookie.indexOf("OptanonConsent") > -1 &&
+        document.cookie.indexOf("groups=") > -1
+      ) {
+        clearTimeout(timer);
+        setGTM(window, document, "script", "dataLayer", "{{ .Site.Params.gtmId }}");
+      } else {
+        timer = setTimeout(waitForOnetrustActiveGroups, 250);
+      }
+    }
   </script>
   <!-- OneTrust Cookies Consent Notice and Google Tag Manager end -->
 
@@ -113,9 +142,6 @@
   {{ with .OutputFormats.Get "RSS" -}}
     {{ printf `<link rel="%s" type="%s" href="%s" title="%s">` .Rel .MediaType.Type .RelPermalink $.Site.Title | safeHTML }}
   {{- end }}
-
-  <!-- Bundled script lazy loading -->
-  <script defer src="{{ "js/main.js" | relURL }}" type="text/javascript"></script>
 </head>
 
 <body>
@@ -127,16 +153,9 @@
     <link rel="preload" href="https://cdn.jsdelivr.net/npm/@algolia/algoliasearch-netlify-frontend@1/dist/algoliasearchNetlify.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
     <noscript><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@algolia/algoliasearch-netlify-frontend@1/dist/algoliasearchNetlify.css" media="screen"></noscript>
     <script defer type="text/javascript" src="https://cdn.jsdelivr.net/npm/@algolia/algoliasearch-netlify-frontend@1/dist/algoliasearchNetlify.js"></script>
-    <script>
-      // Auto-caption tables until a custom table hook is implemented
-      // see https://github.com/gohugoio/hugo/issues/9316
-      document.querySelectorAll("table").forEach(function (table, index) {
-        var caption = document.createElement("caption");
-        caption.innerHTML = `Table ${index + 1}`;
-        table.appendChild(caption);
-      });
-    </script>
   {{ end }}
+  <!-- Bundled script lazy loading -->
+  <script defer src="{{ "js/main.js" | relURL }}" type="text/javascript"></script>
 </body>
 
 </html>
