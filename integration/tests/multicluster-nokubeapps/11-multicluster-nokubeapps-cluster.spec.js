@@ -12,13 +12,12 @@ test("Deploys package in the only additional cluster while Kubeapps cluster is n
   const k = new KubeappsLogin(page);
   await k.doLogin("kubeapps-operator@example.com", "password", process.env.ADMIN_TOKEN);
 
+  // Check and select cluster using ui
+  await page.click(".kubeapps-dropdown .kubeapps-nav-link");
+  await page.selectOption('select[name="clusters"]', "second-cluster");
   // Check that there is only one cluster
   const clustersLength = await page.locator('select[name="clusters"] option').count()
   expect(clustersLength).toEqual(1)
-
-  // Change cluster using ui
-  await page.click(".kubeapps-dropdown .kubeapps-nav-link");
-  await page.selectOption('select[name="clusters"]', "second-cluster");
   await page.click('cds-button:has-text("Change Context")');
 
   // Select package to deploy
