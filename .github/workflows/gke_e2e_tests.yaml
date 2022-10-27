@@ -55,23 +55,6 @@ on:
         required: true
 
 jobs:
-  show_input:
-    runs-on: ubuntu-latest
-    steps:
-      - run: |
-          echo "DEV_MODE: ${{ inputs.DEV_MODE }}"
-          echo "DEBUG_MODE: ${{ inputs.DEBUG_MODE }}"
-          echo "HELM_VERSION_MIN: ${{ inputs.HELM_VERSION_MIN }}"
-          echo "HELM_VERSION_STABLE: ${{ inputs.HELM_VERSION_STABLE }}"
-          echo "KUBECTL_VERSION: ${{ inputs.KUBECTL_VERSION }}"
-          echo "GCLOUD_KEY: ${{ secrets.GCLOUD_KEY }}"
-          echo "GKE_ADMIN: ${{ secrets.GKE_ADMIN }}"
-          echo "GKE_BRANCH: ${{ inputs.GKE_BRANCH }}"
-          echo "GKE_PROJECT: ${{ inputs.GKE_PROJECT }}"
-          echo "GKE_ZONE: ${{ inputs.GKE_ZONE }}"
-          echo "TEST_LATEST_RELEASE: ${{ inputs.TEST_LATEST_RELEASE }}"
-          echo "TEST_TIMEOUT_MINUTES: ${{ inputs.TEST_TIMEOUT_MINUTES }}"
-          echo "USE_MULTICLUSTER_OIDC_ENV: ${{ inputs.USE_MULTICLUSTER_OIDC_ENV }}"
   e2e_tests:
     runs-on: ubuntu-latest
     env:
@@ -83,6 +66,7 @@ jobs:
       GCLOUD_KEY: ${{ secrets.GCLOUD_KEY }}
       GKE_ADMIN: ${{ secrets.GKE_ADMIN }}
       GKE_BRANCH: ${{ inputs.GKE_BRANCH }}
+      GKE_CLUSTER: ${{ inputs.GKE_CLUSTER }}
       GKE_PROJECT: ${{ inputs.GKE_PROJECT }}
       GKE_ZONE: ${{ inputs.GKE_ZONE }}
       TEST_LATEST_RELEASE: ${{ inputs.TEST_LATEST_RELEASE }}

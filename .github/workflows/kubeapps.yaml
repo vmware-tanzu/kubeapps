@@ -19,7 +19,7 @@ env:
   CI_BOT_EMAIL: "tanzu-kubeapps-team@vmware.com"
   CI_BOT_GPG: "80B6EB16B1328FB18DFF2A073EBA68F3347E319D"
   # DEBUG_MODE allows to activate some SSH debugging steps, and modify the verbosity level of some scripts (eg. e2e-tests.sh)
-  DEBUG_MODE: "false"
+  DEBUG_MODE: "true"
   # FIXME: DEV_MODE is used to enable dev mode, used to activate several hacks along the code:
   # - In sync_chart_from/to_bitnami jobs to file shadow PRs while we maintain
   # - To add a suffix to the tag of the generated docker images, to prevent collision and overwriting with those generated from CircleCI
@@ -689,22 +689,6 @@ jobs:
           echo "KUBECTL_VERSION=${KUBECTL_VERSION}" >> $GITHUB_OUTPUT
           echo "DEBUG_MODE=${DEBUG_MODE}" >> $GITHUB_OUTPUT
           echo "DEV_MODE=${DEV_MODE}" >> $GITHUB_OUTPUT
-
-  DEBUG:
-    needs:
-      - gke_setup
-    runs-on: ubuntu-latest
-    steps:
-      - run: |
-          echo "GKE_STABLE_VERSION: ${{ needs.gke_setup.outputs.GKE_STABLE_VERSION }}"
-          echo "GKE_REGULAR_VERSION: ${{ needs.gke_setup.outputs.GKE_REGULAR_VERSION }}"
-          echo "GKE_CLUSTER: ${{ needs.gke_setup.outputs.GKE_CLUSTER }}"
-          echo "GKE_PROJECT: ${{ needs.gke_setup.outputs.GKE_PROJECT }}"
-          echo "GKE_ZONE: ${{ needs.gke_setup.outputs.GKE_ZONE }}"
-          echo "HELM_VERSION_MIN: ${{ needs.gke_setup.outputs.HELM_VERSION_MIN }}"
-          echo "HELM_VERSION_STABLE: ${{ needs.gke_setup.outputs.HELM_VERSION_STABLE }}"
-          echo "KUBECTL_VERSION: ${{ needs.gke_setup.outputs.KUBECTL_VERSION }}"
-          echo "DEBUG_MODE: ${{ needs.gke_setup.outputs.DEBUG_MODE }}"        
 
   GKE_REGULAR_VERSION_MAIN:
     #    TODO:
