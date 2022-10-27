@@ -416,6 +416,7 @@ func TestParseClusterConfig(t *testing.T) {
 			name:       "parses a cluster with ingress information",
 			configJSON: `[{"name": "cluster-2", "apiServiceURL": "https://example.com", "ingress": {"endpoint": "https://my-cluster.com", "certificateAuthorityData": "aW5ncmVzcy1jYS1kYXRhCg=="}}]`,
 			expectedConfig: ClustersConfig{
+				KubeappsClusterName: KUBEAPPS_GLOBAL_PACKAGING_CLUSTER_TOKEN,
 				Clusters: map[string]ClusterConfig{
 					"cluster-2": {
 						Name:          "cluster-2",
