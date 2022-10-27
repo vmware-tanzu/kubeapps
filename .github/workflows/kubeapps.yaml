@@ -667,6 +667,9 @@ jobs:
 #      - sync_chart_from_bitnami
     runs-on: ubuntu-latest
     outputs:
+      CHARTMUSEUM_VERSION: ${{ steps.set-outputs.outputs.CHARTMUSEUM_VERSION }}
+      DEBUG_MODE: ${{ steps.set-outputs.outputs.DEBUG_MODE }}
+      DEV_MODE: ${{ steps.set-outputs.outputs.DEV_MODE }}
       GKE_STABLE_VERSION: ${{ steps.set-outputs.outputs.GKE_STABLE_VERSION }}
       GKE_REGULAR_VERSION: ${{ steps.set-outputs.outputs.GKE_REGULAR_VERSION }}
       GKE_CLUSTER: ${{ steps.set-outputs.outputs.GKE_CLUSTER }}
@@ -674,13 +677,18 @@ jobs:
       GKE_ZONE: ${{ steps.set-outputs.outputs.GKE_ZONE }}
       HELM_VERSION_MIN: ${{ steps.set-outputs.outputs.HELM_VERSION_MIN }}
       HELM_VERSION_STABLE: ${{ steps.set-outputs.outputs.HELM_VERSION_STABLE }}
+      IMG_DEV_TAG: ${{ steps.set-outputs.outputs.IMG_DEV_TAG }}
+      IMG_MODIFIER: ${{ steps.set-outputs.outputs.IMG_MODIFIER }}
+      IMG_PREFIX: ${{ steps.set-outputs.outputs.IMG_PREFIX }}
+      KAPP_CONTROLLER_VERSION: ${{ steps.set-outputs.outputs.KAPP_CONTROLLER_VERSION }}
       KUBECTL_VERSION: ${{ steps.set-outputs.outputs.KUBECTL_VERSION }}
-      DEBUG_MODE: ${{ steps.set-outputs.outputs.DEBUG_MODE }}
-      DEV_MODE: ${{ steps.set-outputs.outputs.DEV_MODE }}
+      OLM_VERSION: ${{ steps.set-outputs.outputs.OLM_VERSION }}
     steps:
       - id: set-outputs
         run: |
-          echo "img_prefix=${IMG_PREFIX}" >> $GITHUB_OUTPUT
+          echo "CHARTMUSEUM_VERSION=${CHARTMUSEUM_VERSION}" >> $GITHUB_OUTPUT
+          echo "DEBUG_MODE=${DEBUG_MODE}" >> $GITHUB_OUTPUT
+          echo "DEV_MODE=${DEV_MODE}" >> $GITHUB_OUTPUT
           echo "GKE_STABLE_VERSION=${GKE_STABLE_VERSION}" >> $GITHUB_OUTPUT
           echo "GKE_REGULAR_VERSION=${GKE_REGULAR_VERSION}" >> $GITHUB_OUTPUT
           echo "GKE_CLUSTER=${GKE_CLUSTER}" >> $GITHUB_OUTPUT
@@ -688,9 +696,12 @@ jobs:
           echo "GKE_ZONE=${GKE_ZONE}" >> $GITHUB_OUTPUT
           echo "HELM_VERSION_MIN=${HELM_VERSION_MIN}" >> $GITHUB_OUTPUT
           echo "HELM_VERSION_STABLE=${HELM_VERSION_STABLE}" >> $GITHUB_OUTPUT
+          echo "IMG_DEV_TAG=${{ needs.setup.outputs.img_dev_tag }}" >> $GITHUB_OUTPUT
+          echo "IMG_MODIFIER=${{ needs.setup.outputs.img_modifier }}" >> $GITHUB_OUTPUT
+          echo "IMG_PREFIX=${{ needs.setup.outputs.img_prefix }}" >> $GITHUB_OUTPUT
+          echo "KAPP_CONTROLLER_VERSION=${KAPP_CONTROLLER_VERSION}" >> $GITHUB_OUTPUT
           echo "KUBECTL_VERSION=${KUBECTL_VERSION}" >> $GITHUB_OUTPUT
-          echo "DEBUG_MODE=${DEBUG_MODE}" >> $GITHUB_OUTPUT
-          echo "DEV_MODE=${DEV_MODE}" >> $GITHUB_OUTPUT
+          echo "OLM_VERSION=${OLM_VERSION}" >> $GITHUB_OUTPUT
 
   GKE_REGULAR_VERSION_MAIN:
     needs:
@@ -699,14 +710,22 @@ jobs:
     with:
       ID: "regular_version_main"
       GKE_BRANCH: ${{ needs.gke_setup.outputs.GKE_REGULAR_VERSION }}
+      DEBUG_MODE: ${{ needs.gke_setup.outputs.DEBUG_MODE == 'true' }}
+      DEV_MODE: ${{ needs.gke_setup.outputs.DEV_MODE == 'true' }}
+      CHARTMUSEUM_VERSION: ${{ needs.gke_setup.outputs.CHARTMUSEUM_VERSION }}
+      GKE_STABLE_VERSION: ${{ needs.gke_setup.outputs.GKE_STABLE_VERSION }}
+      GKE_REGULAR_VERSION: ${{ needs.gke_setup.outputs.GKE_REGULAR_VERSION }}
       GKE_CLUSTER: ${{ needs.gke_setup.outputs.GKE_CLUSTER }}
       GKE_PROJECT: ${{ needs.gke_setup.outputs.GKE_PROJECT }}
       GKE_ZONE: ${{ needs.gke_setup.outputs.GKE_ZONE }}
       HELM_VERSION_MIN: ${{ needs.gke_setup.outputs.HELM_VERSION_MIN }}
       HELM_VERSION_STABLE: ${{ needs.gke_setup.outputs.HELM_VERSION_STABLE }}
+      IMG_DEV_TAG: ${{ needs.gke_setup.outputs.IMG_DEV_TAG }}
+      IMG_MODIFIER: ${{ needs.gke_setup.outputs.IMG_MODIFIER }}
+      IMG_PREFIX: ${{ needs.gke_setup.outputs.IMG_PREFIX }}
+      KAPP_CONTROLLER_VERSION: ${{ needs.gke_setup.outputs.KAPP_CONTROLLER_VERSION }}
       KUBECTL_VERSION: ${{ needs.gke_setup.outputs.KUBECTL_VERSION }}
-      DEBUG_MODE: ${{ needs.gke_setup.outputs.DEBUG_MODE == 'true' }}
-      DEV_MODE: ${{ needs.gke_setup.outputs.DEV_MODE == 'true' }}
+      OLM_VERSION: ${{ needs.gke_setup.outputs.OLM_VERSION }}
     secrets:
       GKE_ADMIN: ${{ secrets.GKE_ADMIN }}
       GCLOUD_KEY: ${{ secrets.GCLOUD_KEY }}
