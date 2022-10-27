@@ -358,7 +358,7 @@ func TestKindClusterUpdateInstalledPackage(t *testing.T) {
 					if strings.Contains(err.Error(), " the object has been modified; please apply your changes to the latest version and try again") {
 						waitTime := int64(math.Pow(2, float64(i)))
 						t.Logf("Retrying update in [%d] sec due to %s...", waitTime, err.Error())
-						time.Sleep(time.Duration(waitTime) * time.Second)
+						SleepWithCountdown(t, int(waitTime))
 					} else {
 						t.Fatalf("%+v", err)
 					}
@@ -470,8 +470,7 @@ func TestKindClusterAutoUpdateInstalledPackageFromHttpRepo(t *testing.T) {
 			t.Logf("Error reverting to previous podinfo index: %v", err)
 		}
 	})
-	t.Logf("Waiting 45 seconds...")
-	time.Sleep(45 * time.Second)
+	SleepWithCountdown(t, 45)
 
 	resp, err := fluxPluginPackagesClient.GetInstalledPackageDetail(
 		grpcContext, &corev1.GetInstalledPackageDetailRequest{
@@ -551,8 +550,7 @@ func TestKindClusterAutoUpdateInstalledPackageFromOciRepo(t *testing.T) {
 		}
 	})
 
-	t.Logf("Waiting 45 seconds...")
-	time.Sleep(45 * time.Second)
+	SleepWithCountdown(t, 45)
 
 	resp, err := fluxPluginPackagesClient.GetInstalledPackageDetail(
 		grpcContext, &corev1.GetInstalledPackageDetailRequest{
@@ -577,6 +575,12 @@ func TestKindClusterDeleteInstalledPackage(t *testing.T) {
 	fluxPluginPackagesClient, fluxPluginReposClient, err := checkEnv(t)
 	if err != nil {
 		t.Fatal(err)
+	}
+
+	ghUser := os.Getenv("GITHUB_USER")
+	ghToken := os.Getenv("GITHUB_TOKEN")
+	if ghUser == "" || ghToken == "" {
+		t.Fatalf("Environment variables GITHUB_USER and GITHUB_TOKEN need to be set to run this test")
 	}
 
 	testCases := []struct {
@@ -606,7 +610,24 @@ func TestKindClusterDeleteInstalledPackage(t *testing.T) {
 			},
 			unauthorized: true,
 		},
-		// TODO (gifchtenholt) delete OCI helmrelease
+		{
+			integrationTestCreatePackageSpec: integrationTestCreatePackageSpec{
+				testName: "delete OCI helm release",
+				repoType: "oci",
+				repoUrl:  github_gfichtenholt_podinfo_oci_registry_url,
+				repoSecret: newBasicAuthSecret(types.NamespacedName{
+					Name:      "oci-repo-secret-" + randSeq(4),
+					Namespace: "default"},
+					ghUser,
+					ghToken,
+				),
+				request:              create_installed_package_request_oci,
+				expectedDetail:       expected_detail_installed_package_oci,
+				expectedPodPrefix:    "my-podinfo-17-",
+				expectedStatusCode:   codes.OK,
+				expectedResourceRefs: expected_resource_refs_oci,
+			},
+		},
 	}
 
 	name := types.NamespacedName{
