@@ -4,30 +4,42 @@ on:
     inputs:
       ID:
         type: string
-        required: true
         description: "An alphanumeric ID to clearly identify the workflow and avoid outputs collision"
+      CHARTMUSEUM_VERSION:
+        type: string
+      DEBUG_MODE:
+        type: boolean
+        required: false
+        default: false
+      DEV_MODE:
+        type: boolean
+        required: false
+        default: false
       GKE_BRANCH:
         type: string
-        required: true
         description: "The branch of the GKE environment in which we want to test."
       GKE_CLUSTER:
         type: string
-        required: true
       GKE_PROJECT:
         type: string
-        required: true
       GKE_ZONE:
         type: string
-        required: true
       HELM_VERSION_MIN:
         type: string
-        required: true
       HELM_VERSION_STABLE:
         type: string
-        required: true
+      IMG_DEV_TAG:
+        type: string
+      IMG_MODIFIER:
+        type: string
+      IMG_PREFIX:
+        type: string
+      KAPP_CONTROLLER_VERSION:
+        type: string
       KUBECTL_VERSION:
         type: string
-        required: true
+      OLM_VERSION:
+        type: string
       TEST_TIMEOUT_MINUTES:
         type: number
         required: false
@@ -37,14 +49,6 @@ on:
         required: false
         default: false
       USE_MULTICLUSTER_OIDC_ENV:
-        type: boolean
-        required: false
-        default: false
-      DEBUG_MODE:
-        type: boolean
-        required: false
-        default: false
-      DEV_MODE:
         type: boolean
         required: false
         default: false
