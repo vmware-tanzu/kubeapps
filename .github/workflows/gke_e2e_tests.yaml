@@ -62,17 +62,23 @@ jobs:
   e2e_tests:
     runs-on: ubuntu-latest
     env:
+      CHARTMUSEUM_VERSION: ${{ inputs.CHARTMUSEUM_VERSION }}
       DEV_MODE: ${{ inputs.DEV_MODE }}
       DEBUG_MODE: ${{ inputs.DEBUG_MODE }}
-      HELM_VERSION_MIN: ${{ inputs.HELM_VERSION_MIN }}
-      HELM_VERSION_STABLE: ${{ inputs.HELM_VERSION_STABLE }}
-      KUBECTL_VERSION: ${{ inputs.KUBECTL_VERSION }}
       GCLOUD_KEY: ${{ secrets.GCLOUD_KEY }}
       GKE_ADMIN: ${{ secrets.GKE_ADMIN }}
       GKE_BRANCH: ${{ inputs.GKE_BRANCH }}
       GKE_CLUSTER: ${{ inputs.GKE_CLUSTER }}
       GKE_PROJECT: ${{ inputs.GKE_PROJECT }}
       GKE_ZONE: ${{ inputs.GKE_ZONE }}
+      HELM_VERSION_MIN: ${{ inputs.HELM_VERSION_MIN }}
+      HELM_VERSION_STABLE: ${{ inputs.HELM_VERSION_STABLE }}
+      IMG_DEV_TAG: ${{ inputs.IMG_DEV_TAG }}
+      IMG_MODIFIER: ${{ inputs.IMG_MODIFIER }}
+      IMG_PREFIX: ${{ inputs.IMG_PREFIX }}
+      KAPP_CONTROLLER_VERSION: ${{ inputs.KAPP_CONTROLLER_VERSION }}
+      KUBECTL_VERSION: ${{ inputs.KUBECTL_VERSION }}
+      OLM_VERSION: ${{ inputs.OLM_VERSION }}
       TEST_LATEST_RELEASE: ${{ inputs.TEST_LATEST_RELEASE }}
       TEST_TIMEOUT_MINUTES: ${{ inputs.TEST_TIMEOUT_MINUTES }}
       USE_MULTICLUSTER_OIDC_ENV: ${{ inputs.USE_MULTICLUSTER_OIDC_ENV }}
