@@ -30,7 +30,7 @@ ADDITIONAL_CLUSTER_IP=${7:-"172.18.0.3"}
 KAPP_CONTROLLER_VERSION=${8:-"v0.42.0"}
 CHARTMUSEUM_VERSION=${9:-"3.9.1"}
 # check latest flux releases at https://github.com/fluxcd/flux2/releases
-FLUX_VERSION=${10:-"v0.35.0"}
+FLUX_VERSION=${10:-"v0.36.0"}
 IMG_PREFIX=${IMG_PREFIX:-"kubeapps/"}
 TESTS_GROUP=${TESTS_GROUP:-"${ALL_TESTS}"}
 
