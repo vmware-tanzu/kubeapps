@@ -182,16 +182,6 @@ workflows:
             - sync_chart_from_bitnami
       - sync_chart_from_bitnami:
           <<: *build_on_main
-
-      - DEBUG_GKE_REGULAR_VERSION_MAIN:
-          <<: *build_always
-      - DEBUG_GKE_REGULAR_VERSION_LATEST_RELEASE:
-          <<: *build_always
-      - DEBUG_GKE_STABLE_VERSION_MAIN:
-          <<: *build_always
-      - DEBUG_GKE_STABLE_VERSION_LATEST_RELEASE:
-          <<: *build_always
-
       - GKE_REGULAR_VERSION_MAIN:
           <<: *build_on_tag_or_prerelease
           requires:
@@ -592,8 +582,6 @@ gke_test: &gke_test
     - run:
         name: Check conditions
         command: |
-          # FIXME
-          set -x
           source ./script/chart_sync_utils.sh
 
           # In the case of GKE we will only want to build if it is
@@ -639,7 +627,6 @@ gke_test: &gke_test
           fi
           
           echo "export ESCAPED_GKE_CLUSTER=${ESCAPED_GKE_CLUSTER}" >> $BASH_ENV
-          # FIXME
           echo "ESCAPED_GKE_CLUSTER: ${ESCAPED_GKE_CLUSTER}"
     - run:
         name: Start GKE environment
@@ -877,30 +864,6 @@ jobs:
       - store_artifacts:
           path: integration/reports
       - run: exit $TEST_RESULT
-
-  DEBUG_GKE_REGULAR_VERSION_MAIN:
-    <<: *gke_test
-    environment:
-      GKE_BRANCH: << pipeline.parameters.GKE_REGULAR_VERSION >>
-      <<: [ *common_envars, *common_gke_envars ]
-  DEBUG_GKE_REGULAR_VERSION_LATEST_RELEASE:
-    <<: *gke_test
-    environment:
-      GKE_BRANCH: << pipeline.parameters.GKE_REGULAR_VERSION >>
-      TEST_LATEST_RELEASE: 1
-      <<: [ *common_envars, *common_gke_envars ]
-  DEBUG_GKE_STABLE_VERSION_MAIN:
-    <<: *gke_test
-    environment:
-      GKE_BRANCH: << pipeline.parameters.GKE_STABLE_VERSION >>
-      <<: [ *common_envars, *common_gke_envars ]
-  DEBUG_GKE_STABLE_VERSION_LATEST_RELEASE:
-    <<: *gke_test
-    environment:
-      GKE_BRANCH: << pipeline.parameters.GKE_STABLE_VERSION >>
-      TEST_LATEST_RELEASE: 1
-      <<: [ *common_envars, *common_gke_envars ]
-
   GKE_REGULAR_VERSION_MAIN:
     <<: *gke_test
     environment:
