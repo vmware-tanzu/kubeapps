@@ -713,8 +713,6 @@ jobs:
       DEBUG_MODE: ${{ needs.gke_setup.outputs.DEBUG_MODE == 'true' }}
       DEV_MODE: ${{ needs.gke_setup.outputs.DEV_MODE == 'true' }}
       CHARTMUSEUM_VERSION: ${{ needs.gke_setup.outputs.CHARTMUSEUM_VERSION }}
-      GKE_STABLE_VERSION: ${{ needs.gke_setup.outputs.GKE_STABLE_VERSION }}
-      GKE_REGULAR_VERSION: ${{ needs.gke_setup.outputs.GKE_REGULAR_VERSION }}
       GKE_CLUSTER: ${{ needs.gke_setup.outputs.GKE_CLUSTER }}
       GKE_PROJECT: ${{ needs.gke_setup.outputs.GKE_PROJECT }}
       GKE_ZONE: ${{ needs.gke_setup.outputs.GKE_ZONE }}
