@@ -68,7 +68,7 @@ func Test_newCronJob(t *testing.T) {
 				},
 				Spec: batchv1.CronJobSpec{
 					Schedule:          "*/10 * * * *",
-					ConcurrencyPolicy: "Replace",
+					ConcurrencyPolicy: batchv1.ReplaceConcurrent,
 					JobTemplate: batchv1.JobTemplateSpec{
 						Spec: batchv1.JobSpec{
 							TTLSecondsAfterFinished: &defaultTTL,
@@ -150,7 +150,7 @@ func Test_newCronJob(t *testing.T) {
 				},
 				Spec: batchv1.CronJobSpec{
 					Schedule:          "*/10 * * * *",
-					ConcurrencyPolicy: "Replace",
+					ConcurrencyPolicy: batchv1.ReplaceConcurrent,
 					JobTemplate: batchv1.JobTemplateSpec{
 						Spec: batchv1.JobSpec{
 							TTLSecondsAfterFinished: &defaultTTL,
@@ -245,7 +245,7 @@ func Test_newCronJob(t *testing.T) {
 				},
 				Spec: batchv1.CronJobSpec{
 					Schedule:          "*/20 * * * *",
-					ConcurrencyPolicy: "Replace",
+					ConcurrencyPolicy: batchv1.ReplaceConcurrent,
 					JobTemplate: batchv1.JobTemplateSpec{
 						Spec: batchv1.JobSpec{
 							TTLSecondsAfterFinished: &defaultTTL,
@@ -337,7 +337,7 @@ func Test_newCronJob(t *testing.T) {
 				},
 				Spec: batchv1.CronJobSpec{
 					Schedule:          "*/20 * * * *",
-					ConcurrencyPolicy: "Replace",
+					ConcurrencyPolicy: batchv1.ReplaceConcurrent,
 					JobTemplate: batchv1.JobTemplateSpec{
 						Spec: batchv1.JobSpec{
 							TTLSecondsAfterFinished: &defaultTTL,

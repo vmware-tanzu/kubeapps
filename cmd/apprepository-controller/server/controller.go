@@ -433,7 +433,7 @@ func newCronJob(apprepo *apprepov1alpha1.AppRepository, config Config) *batchv1.
 			// Set to replace as short-circuit in k8s <1.12
 			// TODO re-evaluate ConcurrentPolicy when 1.12+ is mainstream (i.e 1.14)
 			// https://github.com/kubernetes/kubernetes/issues/54870
-			ConcurrencyPolicy: "Replace",
+			ConcurrencyPolicy: batchv1.ReplaceConcurrent,
 			JobTemplate: batchv1.JobTemplateSpec{
 				Spec: syncJobSpec(apprepo, config),
 			},
