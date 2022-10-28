@@ -656,9 +656,7 @@ jobs:
               ${DEV_MODE}
 
   gke_setup:
-#    TODO:
-#    <<: *build_on_tag_or_prerelease
-    if: needs.setup.outputs.triggered_from_fork == 'false'
+    if: needs.setup.outputs.running_on_tag == 'true'
     needs:
       - setup
       - test_go
@@ -668,8 +666,7 @@ jobs:
       - build_docker_images
       - build_dashboard_image
       - build_e2e_runner_image
-      # FIXME: sync_chart_from_bitnami disabled for development as it only runs in main branch, uncomment before merging
-#      - sync_chart_from_bitnami
+      - sync_chart_from_bitnami
     runs-on: ubuntu-latest
     outputs:
       CHARTMUSEUM_VERSION: ${{ steps.set-outputs.outputs.CHARTMUSEUM_VERSION }}
