@@ -1,15 +1,14 @@
 @import "variables";
 @import "mixins";
 
-
 // Add a chevron (>) after the link text for a11y
-main a:after {
+main a::after {
   content: " \203A";
 }
 
 // Hide chevron in buttons
-main a.button:after,
-a.section-link:after {
+main a.button::after,
+a.section-link::after {
   content: "";
 }
 
@@ -42,7 +41,6 @@ a.section-link:after {
     background-position: center center;
     background-repeat: no-repeat;
     background-size: cover;
-
   }
 
   @include breakpoint(small) {
@@ -178,7 +176,6 @@ a.section-link:after {
   a {
     color: $white;
     font-weight: 300;
-    // text-decoration: underline;
   }
 
   .grid.three {
@@ -217,7 +214,6 @@ a.section-link:after {
 
 .hero.subpage-hero {
   padding-bottom: 90px;
-  // background-image: url(/img/blog-hero-image.png);
   background-position: center center;
   background-repeat: no-repeat;
   background-size: cover;
@@ -551,9 +547,9 @@ a.section-link:after {
 
   .side-nav {
     position: relative;
+    overflow: overlay;
     width: 20%;
     float: left;
-    overflow: overlay;
     overflow-wrap: break-word;
 
     .heading {
@@ -858,12 +854,11 @@ a.section-link:after {
 }
 
 .right-nav-small {
-
   .right-nav-content {
-    margin-top: 2.5em;
-    padding: 0.5em;
-    background-color: white;
     width: fit-content;
+    padding: 0.5em;
+    margin-top: 2.5em;
+    background-color: white;
   }
 
   .buttons {
