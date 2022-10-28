@@ -62,7 +62,7 @@ env:
   RUST_VERSION: "1.64.0"
   SEMVER_VERSION: "3.3.0"
   GKE_STABLE_VERSION: "1.22"
-  GKE_REGULAR_VERSION: "1.22"
+  GKE_REGULAR_VERSION: "1.23"
   GKE_ZONE: "us-east1-c"
   GKE_PROJECT: "vmware-kubeapps-ci"
   GKE_CLUSTER: "kubeapps-test"
