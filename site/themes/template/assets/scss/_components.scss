@@ -975,5 +975,18 @@ a.section-link::after {
   .aa-DetachedSearchButton {
     border-color: $indigo;
   }
+}
 
+.logo {
+  height: 1.5em;
+  filter: grayscale(100%);
+  transition: filter 0.6s ease-in-out;
+
+  &:hover {
+    filter: grayscale(0%);
+  }
+}
+
+.logo-big {
+  height: 4em;
 }
