@@ -77,8 +77,8 @@ pub async fn proxy(
     tls_builder = match https::include_client_identity_for_headers(
         tls_builder,
         req.headers().clone(),
-        k8s_api_server_url,
-        cert_auth_data,
+        &k8s_api_server_url,
+        &cert_auth_data,
         credential_cache,
     )
     .await

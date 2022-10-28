@@ -148,8 +148,8 @@ pub struct ClusterCredential {
 /// kubernetes api server.
 pub async fn exchange_token_for_identity(
     authorization: &str,
-    k8s_api_server_url: String,
-    k8s_api_ca_cert_data: Vec<u8>,
+    k8s_api_server_url: &str,
+    k8s_api_ca_cert_data: &[u8],
     credential_cache: CredentialCache,
 ) -> Result<Identity> {
     let credential_request = prepare_and_call_pinniped_exchange(
@@ -206,8 +206,8 @@ fn identity_for_exchange(cred: &ClusterCredential) -> Result<Identity> {
 // which leads to 3-5s of CPU just in this call. So we ensure this
 // is only called if we need it (ie. the token is not cached).
 fn get_client_config(
-    k8s_api_server_url: String,
-    k8s_api_ca_cert_data: Vec<u8>,
+    k8s_api_server_url: &str,
+    k8s_api_ca_cert_data: &[u8],
     pinniped_namespace: String,
 ) -> Result<kube::Client> {
     let mut config = Config::new(
@@ -229,8 +229,8 @@ fn get_client_config(
 /// exchange.
 async fn prepare_and_call_pinniped_exchange(
     authorization: &str,
-    k8s_api_server_url: String,
-    k8s_api_ca_cert_data: Vec<u8>,
+    k8s_api_server_url: &str,
+    k8s_api_ca_cert_data: &[u8],
     credential_cache: CredentialCache,
 ) -> Result<TokenCredentialRequest> {
     // context data
@@ -357,8 +357,8 @@ mod tests {
             None::<String>,
             || match tokio_test::block_on(prepare_and_call_pinniped_exchange(
                 "authorization",
-                "https://example.com".into(),
-                VALID_CERT_BASE64.into(),
+                "https://example.com",
+                VALID_CERT_BASE64.as_bytes(),
                 new_credential_cache(),
             )) {
                 Ok(_) => anyhow::bail!("expected error"),
@@ -391,8 +391,8 @@ mod tests {
             ],
             || match tokio_test::block_on(prepare_and_call_pinniped_exchange(
                 "authorization",
-                "not a url".into(),
-                VALID_CERT_BASE64.into(),
+                "not a url",
+                VALID_CERT_BASE64.as_bytes(),
                 new_credential_cache(),
             )) {
                 Ok(_) => anyhow::bail!("expected error"),
@@ -425,8 +425,8 @@ mod tests {
             ],
             || match tokio_test::block_on(prepare_and_call_pinniped_exchange(
                 "authorization",
-                "https://example.com".into(),
-                "not a cert".into(),
+                "https://example.com",
+                "not a cert".as_bytes(),
                 new_credential_cache(),
             )) {
                 Ok(_) => anyhow::bail!("expected error"),

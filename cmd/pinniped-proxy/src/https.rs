@@ -42,8 +42,8 @@ fn validate_url(u: String) -> Result<String> {
 pub async fn include_client_identity_for_headers<'a>(
     mut tls_builder: &'a mut TlsConnectorBuilder,
     request_headers: HeaderMap<HeaderValue>,
-    k8s_api_server_url: String,
-    k8s_api_ca_cert_data: Vec<u8>,
+    k8s_api_server_url: &str,
+    k8s_api_ca_cert_data: &[u8],
     credential_cache: CredentialCache,
 ) -> Result<&'a mut TlsConnectorBuilder> {
     if request_headers.contains_key("Authorization") {
