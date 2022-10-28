@@ -7,8 +7,8 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/vmware-tanzu/kubeapps/pkg/helm"
 	"hash/adler32"
+	"math"
 	"strconv"
 	"strings"
 	"time"
@@ -18,6 +18,7 @@ import (
 	appreposcheme "github.com/vmware-tanzu/kubeapps/cmd/apprepository-controller/pkg/client/clientset/versioned/scheme"
 	informers "github.com/vmware-tanzu/kubeapps/cmd/apprepository-controller/pkg/client/informers/externalversions"
 	listers "github.com/vmware-tanzu/kubeapps/cmd/apprepository-controller/pkg/client/listers/apprepository/v1alpha1"
+	"github.com/vmware-tanzu/kubeapps/pkg/helm"
 	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -417,10 +418,35 @@ func ownerReferencesForAppRepo(apprepo *apprepov1alpha1.AppRepository, childName
 	return nil
 }
 
+// intervalToCron transforms string durations like "1m" or "1h" to cron expressions
+// Even if valid time units are "ns", "us", "ms", "s", "m", "h",
+// the result will get rounded up to seconds.
+func intervalToCron(duration string) string {
+	if duration == "" {
+		return ""
+	} else {
+		if d, err := time.ParseDuration(duration); err != nil {
+			return ""
+		} else {
+			cronSecs := math.Ceil(d.Seconds())             // round up to nearest second
+			return fmt.Sprintf("*/%v * * * * *", cronSecs) // every cronSecs seconds
+		}
+	}
+}
+
 // newCronJob creates a new CronJob for a AppRepository resource. It also sets
 // the appropriate OwnerReferences on the resource so handleObject can discover
 // the AppRepository resource that 'owns' it.
 func newCronJob(apprepo *apprepov1alpha1.AppRepository, config Config) *batchv1.CronJob {
+	// If the apprepo has its own Interval, use that instead of the default global crontab.
+	cronTime := ""
+	if apprepo.Spec.Interval != "" {
+		cronTime = intervalToCron(apprepo.Spec.Interval)
+	}
+	if cronTime == "" {
+		cronTime = config.Crontab
+	}
+
 	return &batchv1.CronJob{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:            cronJobName(apprepo.Namespace, apprepo.Name, false),
@@ -429,7 +455,7 @@ func newCronJob(apprepo *apprepov1alpha1.AppRepository, config Config) *batchv1.
 			Annotations:     config.ParsedCustomAnnotations,
 		},
 		Spec: batchv1.CronJobSpec{
-			Schedule: config.Crontab,
+			Schedule: cronTime,
 			// Set to replace as short-circuit in k8s <1.12
 			// TODO re-evaluate ConcurrentPolicy when 1.12+ is mainstream (i.e 1.14)
 			// https://github.com/kubernetes/kubernetes/issues/54870

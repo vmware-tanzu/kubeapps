@@ -1883,6 +1883,59 @@ func TestGenerateJobName(t *testing.T) {
 	}
 }
 
+func TestIntervalToCron(t *testing.T) {
+	testCases := []struct {
+		name         string
+		interval     string
+		expectedCron string
+	}{
+		{
+			name:         "good interval, every 2 nanoseconds",
+			interval:     "2ns",
+			expectedCron: "*/1 * * * * *",
+		},
+		{
+			name:         "good interval, every 2 microseconds",
+			interval:     "2us",
+			expectedCron: "*/1 * * * * *",
+		},
+		{
+			name:         "good interval, every 2 milliseconds",
+			interval:     "2ms",
+			expectedCron: "*/1 * * * * *",
+		},
+		{
+			name:         "good interval, every 2 seconds",
+			interval:     "2s",
+			expectedCron: "*/2 * * * * *",
+		},
+		{
+			name:         "good interval, every two minutes",
+			interval:     "2m",
+			expectedCron: "*/120 * * * * *",
+		},
+		{
+			name:         "good interval, every two hours",
+			interval:     "2h",
+			expectedCron: "*/7200 * * * * *",
+		},
+		{
+			name:         "bad interval, unsupported every two days",
+			interval:     "1d",
+			expectedCron: "",
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			cron := intervalToCron(tc.interval)
+			if got, want := cron, tc.expectedCron; got != want {
+				t.Errorf("got: %s, want: %s", got, want)
+			}
+		})
+	}
+}
+
 func makeDefaultConfig() Config {
 	return Config{
 		Kubeconfig:               "",
