@@ -407,6 +407,7 @@ export type IBasicFormParam = JSONSchemaType<any> & {
   hasProperties: boolean;
   params?: IBasicFormParam[];
   enum?: string[];
+  isRequired: boolean;
   defaultValue: any;
   deployedValue: any;
   currentValue: any;

@@ -43,7 +43,7 @@ afterEach(() => {
 
 it("opens the dropdown full menu", () => {
   const state = deepClone(initialState) as IStoreState;
-  state.config.featureFlags = { operators: true };
+  state.config.featureFlags = { ...initialState.config.featureFlags, operators: true };
   const store = getStore(state);
   const wrapper = mountWrapper(store, <Menu {...defaultProps} />);
   expect(wrapper.find(".dropdown")).not.toHaveClassName("open");
@@ -61,7 +61,7 @@ it("opens the dropdown full menu", () => {
 
 it("opens the dropdown menu without operators item", () => {
   const state = deepClone(initialState) as IStoreState;
-  state.config.featureFlags = { operators: false };
+  state.config.featureFlags = { ...initialState.config.featureFlags, operators: false };
   const store = getStore(state);
   const wrapper = mountWrapper(store, <Menu {...defaultProps} />);
   expect(wrapper.find(".dropdown")).not.toHaveClassName("open");

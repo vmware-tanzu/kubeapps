@@ -146,37 +146,39 @@ export default function AdvancedDeploymentForm(props: IAdvancedDeploymentForm) {
 
   return (
     <div className="deployment-form-tabs-data">
-      <>
+      <div className="deployment-form-tabs-data-buttons">
         <Row>
           <Column span={3}>
-            <CdsRadioGroup layout="vertical">
-              {/* eslint-disable-next-line jsx-a11y/label-has-associated-control */}
-              <label>Enable diff editor:</label>
-              <CdsRadio>
-                <label htmlFor="diff-compare-enable-true">Yes</label>
-                <input
-                  id="diff-compare-enable-true"
-                  type="radio"
-                  name="true"
-                  checked={useDiffEditor}
-                  onChange={e => {
-                    setUseDiffEditor(e.target.checked);
-                  }}
-                />
-              </CdsRadio>
-              <CdsRadio>
-                <label htmlFor="diff-compare-enable-false">No</label>
-                <input
-                  id="diff-compare-enable-false"
-                  type="radio"
-                  name="deployed"
-                  checked={!useDiffEditor}
-                  onChange={e => {
-                    setUseDiffEditor(!e.target.checked);
-                  }}
-                />
-              </CdsRadio>
-            </CdsRadioGroup>
+            <div className="deployment-form-tabs-buttons">
+              <CdsRadioGroup layout="vertical">
+                {/* eslint-disable-next-line jsx-a11y/label-has-associated-control */}
+                <label>Enable diff editor:</label>
+                <CdsRadio>
+                  <label htmlFor="diff-compare-enable-true">Yes</label>
+                  <input
+                    id="diff-compare-enable-true"
+                    type="radio"
+                    name="true"
+                    checked={useDiffEditor}
+                    onChange={e => {
+                      setUseDiffEditor(e.target.checked);
+                    }}
+                  />
+                </CdsRadio>
+                <CdsRadio>
+                  <label htmlFor="diff-compare-enable-false">No</label>
+                  <input
+                    id="diff-compare-enable-false"
+                    type="radio"
+                    name="deployed"
+                    checked={!useDiffEditor}
+                    onChange={e => {
+                      setUseDiffEditor(!e.target.checked);
+                    }}
+                  />
+                </CdsRadio>
+              </CdsRadioGroup>
+            </div>
           </Column>
           {deploymentEvent === "upgrade" ? (
             <>
@@ -215,19 +217,20 @@ export default function AdvancedDeploymentForm(props: IAdvancedDeploymentForm) {
             <></>
           )}
         </Row>
-      </>
+      </div>
       <br />
-      <MonacoDiffEditor
-        value={valuesFromTheParentContainer}
-        original={diffValues}
-        className="editor"
-        height="90vh"
-        language="yaml"
-        theme={theme === "dark" ? "vs-dark" : "light"}
-        options={diffEditorOptions}
-        onChange={onChange}
-        editorDidMount={editorDidMount}
-      />
+      <div className="deployment-form-tabs-data values-editor">
+        <MonacoDiffEditor
+          value={valuesFromTheParentContainer}
+          original={diffValues}
+          height="90vh"
+          language="yaml"
+          theme={theme === "dark" ? "vs-dark" : "light"}
+          options={diffEditorOptions}
+          onChange={onChange}
+          editorDidMount={editorDidMount}
+        />
+      </div>
     </div>
   );
 }

@@ -44,7 +44,6 @@ import (
 	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/pkg/pkgutils"
 	"github.com/vmware-tanzu/kubeapps/pkg/chart/models"
 	"github.com/vmware-tanzu/kubeapps/pkg/tarutil"
-	"k8s.io/apimachinery/pkg/types"
 	log "k8s.io/klog/v2"
 
 	"github.com/fluxcd/pkg/oci/auth/login"
@@ -71,6 +70,7 @@ type RegistryClient interface {
 // an interface flux plugin uses to determine what kind of vendor-specific
 // registry repository name lister applies, and then executes specific logic
 type OCIChartRepositoryLister interface {
+	Name() string
 	IsApplicableFor(*OCIChartRepository) (bool, error)
 	ListRepositoryNames(OCIChartRepository *OCIChartRepository) ([]string, error)
 }
@@ -98,6 +98,8 @@ type OCIChartRepository struct {
 	//  including repositoryAuthorizer are internal, so this is a workaround
 	registryCredentialFn OCIChartRepositoryCredentialFn
 
+	orasCache orasregistryauthv2.Cache
+
 	repositoryLister OCIChartRepositoryLister
 }
 
@@ -119,8 +121,9 @@ var (
 		},
 	}
 
-	// TODO (gfichtenholt) make this extensible so code coming from other plugs/modules
-	// can register new repository listers
+	// TODO (gfichtenholt) possibly make this extensible so code coming from other
+	// plugins/modules can register new repository listers?
+	// The order in which these are listed in the array is the order in which they will be tried at runtime
 	builtInRepoListers = []OCIChartRepositoryLister{
 		NewDockerRegistryApiV2RepositoryLister(),
 		NewHarborRegistryApiV2RepositoryLister(),
@@ -210,6 +213,7 @@ func newOCIChartRepository(registryURL string, registryOpts ...OCIChartRepositor
 
 	r := &OCIChartRepository{}
 	r.url = *u
+	r.orasCache = orasregistryauthv2.NewCache()
 	for _, opt := range registryOpts {
 		if err := opt(r); err != nil {
 			return nil, err
@@ -422,9 +426,10 @@ func (s *repoEventSink) onAddOciRepo(repo sourcev1.HelmRepository) ([]byte, bool
 	}
 
 	cacheEntryValue := repoCacheEntryValue{
-		Checksum: checksum,
-		Charts:   charts,
-		Type:     "oci",
+		Checksum:      checksum,
+		Charts:        charts,
+		Type:          "oci",
+		OCIRepoLister: ociChartRepo.repositoryLister.Name(),
 	}
 
 	// use gob encoding instead of json, it peforms much better
@@ -444,8 +449,8 @@ func (s *repoEventSink) onAddOciRepo(repo sourcev1.HelmRepository) ([]byte, bool
 }
 
 func (s *repoEventSink) onModifyOciRepo(key string, oldValue interface{}, repo sourcev1.HelmRepository) ([]byte, bool, error) {
-	log.V(4).Infof("+onModifyOciRepo(repo:%s)", common.PrettyPrint(repo))
-	defer log.V(4).Info("-onModifyOciRepo")
+	log.Infof("+onModifyOciRepo(%s)", common.PrettyPrint(repo))
+	defer log.Info("-onModifyOciRepo")
 
 	// We should to compare checksums on what's stored in the cache
 	// vs the modified object to see if the contents has really changed before embarking on
@@ -466,6 +471,17 @@ func (s *repoEventSink) onModifyOciRepo(key string, oldValue interface{}, repo s
 	ociChartRepo, err := s.newOCIChartRepositoryAndLogin(context.Background(), repo)
 	if err != nil {
 		return nil, false, err
+	}
+
+	// https://github.com/vmware-tanzu/kubeapps/issues/5523
+	// Optimize OCI repository lister lookups in flux plugin
+	if cacheEntry.OCIRepoLister != "" {
+		for _, lister := range builtInRepoListers {
+			if cacheEntry.OCIRepoLister == lister.Name() {
+				ociChartRepo.repositoryLister = lister
+				break
+			}
+		}
 	}
 
 	appNames, err := ociChartRepo.listRepositoryNames()
@@ -490,9 +506,10 @@ func (s *repoEventSink) onModifyOciRepo(key string, oldValue interface{}, repo s
 		}
 
 		cacheEntryValue := repoCacheEntryValue{
-			Checksum: newChecksum,
-			Charts:   charts,
-			Type:     "oci",
+			Checksum:      newChecksum,
+			Charts:        charts,
+			Type:          "oci",
+			OCIRepoLister: ociChartRepo.repositoryLister.Name(),
 		}
 
 		// use gob encoding instead of json, it peforms much better
@@ -566,14 +583,9 @@ func (r *OCIChartRepository) shortRepoName(fullRepoName string) (string, error) 
 	}
 }
 
-func (s *Server) newOCIChartRepositoryAndLogin(ctx context.Context, repoName types.NamespacedName) (*OCIChartRepository, error) {
-	repo, err := s.getRepoInCluster(ctx, repoName)
-	if err != nil {
-		return nil, err
-	} else {
-		sink := s.newRepoEventSink()
-		return sink.newOCIChartRepositoryAndLogin(ctx, *repo)
-	}
+func (s *Server) newOCIChartRepositoryAndLogin(ctx context.Context, repo sourcev1.HelmRepository) (*OCIChartRepository, error) {
+	sink := s.newRepoEventSink()
+	return sink.newOCIChartRepositoryAndLogin(ctx, repo)
 }
 
 func (s *repoEventSink) newOCIChartRepositoryAndLogin(ctx context.Context, repo sourcev1.HelmRepository) (*OCIChartRepository, error) {

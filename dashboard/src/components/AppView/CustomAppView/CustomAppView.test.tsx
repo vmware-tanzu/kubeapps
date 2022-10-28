@@ -14,7 +14,7 @@ import { IAppViewResourceRefs } from "../AppView";
 
 const defaultState = {
   config: { remoteComponentsUrl: "" },
-};
+} as IStoreState;
 
 const defaultProps = {
   app: {
