@@ -9,6 +9,10 @@ on:
     branches:
       - main
 
+concurrency:
+  group: ${{ github.head_ref || github.ref_name }}
+  cancel-in-progress: true
+
 env:
   CHARTMUSEUM_VERSION: "3.9.1"
   CHARTS_REPO_ORIGINAL: "bitnami/charts"
