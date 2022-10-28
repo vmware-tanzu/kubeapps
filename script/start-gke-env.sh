@@ -36,7 +36,7 @@ fi
 
 echo "Creating cluster ${CLUSTER} in ${ZONE} (v$BRANCH)"
 
-# FIXME Removing the use of --labels=team=kubeapps due to a bug in gcloud cli: https://issuetracker.google.com/issues/255708239
+# TODO(bjesus) Removing the use of --labels=team=kubeapps due to a bug in gcloud cli: https://issuetracker.google.com/issues/255708239
 #gcloud container clusters create --cluster-version="${BRANCH}" --zone "${ZONE}" "${CLUSTER}" --num-nodes 2 --machine-type=n1-standard-2 --preemptible --labels=team=kubeapps --quiet
 gcloud container clusters create --cluster-version="${BRANCH}" --zone "${ZONE}" "${CLUSTER}" --num-nodes 2 --machine-type=n1-standard-2 --preemptible --quiet
 echo "Waiting for the cluster to respond..."
