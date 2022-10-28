@@ -216,12 +216,11 @@ fn get_client_config(
             .context("Failed parsing url for exchange")?,
     );
     config.default_namespace = pinniped_namespace.clone();
-    let x509 = X509::from_pem(&k8s_api_ca_cert_data).context("error creating x509 from pem")?;
+    let x509 = X509::from_pem(k8s_api_ca_cert_data).context("error creating x509 from pem")?;
     let der = x509.to_der().context("error creating der from x509")?;
     config.root_cert = Some(vec![der]);
 
-    let client = Client::try_from(config)?;
-    Ok(client)
+    Ok(Client::try_from(config)?)
 }
 
 /// prepare_and_call_pinniped_exchange returns the resulting
