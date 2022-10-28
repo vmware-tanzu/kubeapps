@@ -1,13 +1,17 @@
-# Copyright 2022 VMware, Inc.
+# Copyright 2022 the Kubeapps contributors
 # SPDX-License-Identifier: Apache-2.0
 
-name: Kubeapps general pipeline
+name: Main Pipeline
 
 on:
   push:
   pull_request:
     branches:
       - main
+
+concurrency:
+  group: ${{ github.head_ref || github.ref_name }}
+  cancel-in-progress: true
 
 env:
   CHARTMUSEUM_VERSION: "3.9.1"
@@ -19,10 +23,15 @@ env:
   CI_BOT_EMAIL: "tanzu-kubeapps-team@vmware.com"
   CI_BOT_GPG: "80B6EB16B1328FB18DFF2A073EBA68F3347E319D"
   # DEBUG_MODE allows to activate some SSH debugging steps, and modify the verbosity level of some scripts (eg. e2e-tests.sh)
-  DEBUG_MODE: "false"
-  # FIXME: DEV_MODE is used to enable dev mode, used in sync chart from/to bitnami jobs to file shadow PRs while we maintain
-  # CircleCI and GHA pipelines running in parallel. This should be removed once the CircleCI pipeline is decommissioned.
-  DEV_MODE: "true"
+  DEBUG_MODE: "true"
+  # FIXME: DEV_MODE is used to enable dev mode, used to activate several hacks along the code:
+  # - In sync_chart_from/to_bitnami jobs to file shadow PRs while we maintain
+  # - To add a suffix to the tag of the generated docker images, to prevent collision and overwriting with those generated from CircleCI
+  # - To add a suffix to the name of the generated GKE clusters to prevent collision with those generated and used from CircleCI
+  # - Probably some other things I don't remember right now :)
+  #
+  # CircleCI and GHA pipelines are running in parallel. This should be removed once the CircleCI pipeline is decommissioned.
+  DEV_MODE: true
   SSH_KEY_KUBEAPPS_DEPLOY_FILENAME: "id_rsa_kubeapps_deploy_key"
   SSH_KEY_FORKED_CHARTS_DEPLOY_FILENAME: "id_rsa_forked_charts_deploy_key"
   KUBEAPPS_REPO: "vmware-tanzu/kubeapps"
@@ -56,13 +65,17 @@ env:
   POSTGRESQL_VERSION: "14.5.0-debian-11-r31"
   RUST_VERSION: "1.64.0"
   SEMVER_VERSION: "3.3.0"
+  GKE_STABLE_VERSION: "1.22"
+  GKE_REGULAR_VERSION: "1.23"
+  GKE_ZONE: "us-east1-c"
+  GKE_PROJECT: "vmware-kubeapps-ci"
+  GKE_CLUSTER: "kubeapps-test"
 
 jobs:
   setup:
     runs-on: ubuntu-latest
     outputs:
-      ssh_key_kubeapps_deploy_filename: ${{ steps.set-outputs.outputs.ssh_key_kubeapps_deploy_filename }}
-      ssh_key_forked_charts_deploy_filename: ${{ steps.set-outputs.outputs.ssh_key_forked_charts_deploy_filename }}
+      dev_mode: ${{ steps.set-outputs.outputs.dev_mode }}
       img_modifier: ${{ steps.set-outputs.outputs.img_modifier }}
       img_prefix: ${{ steps.set-outputs.outputs.img_prefix }}
       img_dev_tag: ${{ steps.set-outputs.outputs.img_dev_tag }}
@@ -71,6 +84,8 @@ jobs:
       rust_version: ${{ steps.set-outputs.outputs.rust_version }}
       running_on_main: ${{ steps.set-outputs.outputs.running_on_main }}
       running_on_tag: ${{ steps.set-outputs.outputs.running_on_tag }}
+      ssh_key_kubeapps_deploy_filename: ${{ steps.set-outputs.outputs.ssh_key_kubeapps_deploy_filename }}
+      ssh_key_forked_charts_deploy_filename: ${{ steps.set-outputs.outputs.ssh_key_forked_charts_deploy_filename }}
       triggered_from_fork: ${{ steps.set-outputs.outputs.triggered_from_fork }}
     steps:
       - name: Show GitHub event
@@ -122,6 +137,7 @@ jobs:
             echo "running_on_tag=false" >> $GITHUB_OUTPUT
           fi
 
+          echo "dev_mode=${DEV_MODE}" >> $GITHUB_OUTPUT
           echo "ssh_key_kubeapps_deploy_filename=${SSH_KEY_KUBEAPPS_DEPLOY_FILENAME}" >> $GITHUB_OUTPUT
           echo "ssh_key_forked_charts_deploy_filename=${SSH_KEY_FORKED_CHARTS_DEPLOY_FILENAME}" >> $GITHUB_OUTPUT
           echo "img_modifier=${IMG_MODIFIER}" >> $GITHUB_OUTPUT
@@ -130,8 +146,7 @@ jobs:
           echo "rust_version=${RUST_VERSION}" >> $GITHUB_OUTPUT
       - name: Show outputs
         run: |
-          echo "SSH_KEY_KUBEAPPS_DEPLOY_FILENAME: ${{steps.set-outputs.outputs.ssh_key_kubeapps_deploy_filename}}"
-          echo "SSH_KEY_FORKED_CHARTS_DEPLOY_FILENAME: ${{steps.set-outputs.outputs.ssh_key_forked_charts_deploy_filename}}"
+          echo "DEV_MODE: ${{steps.set-outputs.outputs.dev_mode}}"
           echo "IMG_MODIFIER: ${{steps.set-outputs.outputs.img_modifier}}"
           echo "IMG_PREFIX: ${{steps.set-outputs.outputs.img_prefix}}"
           echo "IMG_DEV_TAG: ${{steps.set-outputs.outputs.img_dev_tag}}"
@@ -140,6 +155,8 @@ jobs:
           echo "RUST_VERSION: ${{steps.set-outputs.outputs.rust_version}}"
           echo "RUNNING_ON_MAIN: ${{steps.set-outputs.outputs.running_on_main}}"
           echo "RUNNING_ON_TAG: ${{steps.set-outputs.outputs.running_on_tag}}"
+          echo "SSH_KEY_KUBEAPPS_DEPLOY_FILENAME: ${{steps.set-outputs.outputs.ssh_key_kubeapps_deploy_filename}}"
+          echo "SSH_KEY_FORKED_CHARTS_DEPLOY_FILENAME: ${{steps.set-outputs.outputs.ssh_key_forked_charts_deploy_filename}}"
           echo "TRIGGERED_FROM_FORK: ${{steps.set-outputs.outputs.triggered_from_fork}}"
           echo "VERSION: ${{steps.set-outputs.outputs.version}}"
 
@@ -487,9 +504,6 @@ jobs:
         with:
           name: e2e_tests_${{ matrix.tests_group }}_reports
           path: integration/reports
-      - name: Setup upterm session
-        uses: lhotari/action-upterm@v1
-        if: failure() && env.DEBUG_MODE == 'true'
 
   push_images:
     if: needs.setup.outputs.running_on_main == 'true' || needs.setup.outputs.running_on_tag == 'true'
@@ -594,6 +608,8 @@ jobs:
     needs:
       - setup
       - local_e2e_tests
+      - GKE_REGULAR_VERSION
+      - GKE_STABLE_VERSION
     if: needs.setup.outputs.running_on_tag == 'true'
     runs-on: ubuntu-latest
     steps:
@@ -640,3 +656,103 @@ jobs:
               ${CHARTS_REPO_FORKED} \
               ${BRANCH_CHARTS_REPO_FORKED} \
               ${DEV_MODE}
+
+  gke_setup:
+    if: needs.setup.outputs.running_on_tag == 'true'
+    needs:
+      - setup
+      - test_go
+      - test_dashboard
+      - test_pinniped_proxy
+      - test_chart_render
+      - build_docker_images
+      - build_dashboard_image
+      - build_e2e_runner_image
+      - sync_chart_from_bitnami
+    runs-on: ubuntu-latest
+    outputs:
+      CHARTMUSEUM_VERSION: ${{ steps.set-outputs.outputs.CHARTMUSEUM_VERSION }}
+      DEBUG_MODE: ${{ steps.set-outputs.outputs.DEBUG_MODE }}
+      DEV_MODE: ${{ steps.set-outputs.outputs.DEV_MODE }}
+      GKE_STABLE_VERSION: ${{ steps.set-outputs.outputs.GKE_STABLE_VERSION }}
+      GKE_REGULAR_VERSION: ${{ steps.set-outputs.outputs.GKE_REGULAR_VERSION }}
+      GKE_CLUSTER: ${{ steps.set-outputs.outputs.GKE_CLUSTER }}
+      GKE_PROJECT: ${{ steps.set-outputs.outputs.GKE_PROJECT }}
+      GKE_ZONE: ${{ steps.set-outputs.outputs.GKE_ZONE }}
+      HELM_VERSION_MIN: ${{ steps.set-outputs.outputs.HELM_VERSION_MIN }}
+      HELM_VERSION_STABLE: ${{ steps.set-outputs.outputs.HELM_VERSION_STABLE }}
+      IMG_DEV_TAG: ${{ steps.set-outputs.outputs.IMG_DEV_TAG }}
+      IMG_MODIFIER: ${{ steps.set-outputs.outputs.IMG_MODIFIER }}
+      IMG_PREFIX: ${{ steps.set-outputs.outputs.IMG_PREFIX }}
+      KAPP_CONTROLLER_VERSION: ${{ steps.set-outputs.outputs.KAPP_CONTROLLER_VERSION }}
+      KUBECTL_VERSION: ${{ steps.set-outputs.outputs.KUBECTL_VERSION }}
+      OLM_VERSION: ${{ steps.set-outputs.outputs.OLM_VERSION }}
+    steps:
+      - id: set-outputs
+        run: |
+          echo "CHARTMUSEUM_VERSION=${CHARTMUSEUM_VERSION}" >> $GITHUB_OUTPUT
+          echo "DEBUG_MODE=${DEBUG_MODE}" >> $GITHUB_OUTPUT
+          echo "DEV_MODE=${DEV_MODE}" >> $GITHUB_OUTPUT
+          echo "GKE_STABLE_VERSION=${GKE_STABLE_VERSION}" >> $GITHUB_OUTPUT
+          echo "GKE_REGULAR_VERSION=${GKE_REGULAR_VERSION}" >> $GITHUB_OUTPUT
+          echo "GKE_CLUSTER=${GKE_CLUSTER}" >> $GITHUB_OUTPUT
+          echo "GKE_PROJECT=${GKE_PROJECT}" >> $GITHUB_OUTPUT
+          echo "GKE_ZONE=${GKE_ZONE}" >> $GITHUB_OUTPUT
+          echo "HELM_VERSION_MIN=${HELM_VERSION_MIN}" >> $GITHUB_OUTPUT
+          echo "HELM_VERSION_STABLE=${HELM_VERSION_STABLE}" >> $GITHUB_OUTPUT
+          echo "IMG_DEV_TAG=${{ needs.setup.outputs.img_dev_tag }}" >> $GITHUB_OUTPUT
+          echo "IMG_MODIFIER=${{ needs.setup.outputs.img_modifier }}" >> $GITHUB_OUTPUT
+          echo "IMG_PREFIX=${{ needs.setup.outputs.img_prefix }}" >> $GITHUB_OUTPUT
+          echo "KAPP_CONTROLLER_VERSION=${KAPP_CONTROLLER_VERSION}" >> $GITHUB_OUTPUT
+          echo "KUBECTL_VERSION=${KUBECTL_VERSION}" >> $GITHUB_OUTPUT
+          echo "OLM_VERSION=${OLM_VERSION}" >> $GITHUB_OUTPUT
+
+  GKE_REGULAR_VERSION:
+    needs:
+      - gke_setup
+    uses: ./.github/workflows/gke_e2e_tests.yaml
+    with:
+      GKE_BRANCH: ${{ needs.gke_setup.outputs.GKE_REGULAR_VERSION }}
+      DEBUG_MODE: ${{ needs.gke_setup.outputs.DEBUG_MODE == 'true' }}
+      DEV_MODE: ${{ needs.gke_setup.outputs.DEV_MODE == 'true' }}
+      CHARTMUSEUM_VERSION: ${{ needs.gke_setup.outputs.CHARTMUSEUM_VERSION }}
+      GKE_CLUSTER: ${{ needs.gke_setup.outputs.GKE_CLUSTER }}
+      GKE_PROJECT: ${{ needs.gke_setup.outputs.GKE_PROJECT }}
+      GKE_RELEASE_CHANNEL: "regular"
+      GKE_ZONE: ${{ needs.gke_setup.outputs.GKE_ZONE }}
+      HELM_VERSION_MIN: ${{ needs.gke_setup.outputs.HELM_VERSION_MIN }}
+      HELM_VERSION_STABLE: ${{ needs.gke_setup.outputs.HELM_VERSION_STABLE }}
+      IMG_DEV_TAG: ${{ needs.gke_setup.outputs.IMG_DEV_TAG }}
+      IMG_MODIFIER: ${{ needs.gke_setup.outputs.IMG_MODIFIER }}
+      IMG_PREFIX: ${{ needs.gke_setup.outputs.IMG_PREFIX }}
+      KAPP_CONTROLLER_VERSION: ${{ needs.gke_setup.outputs.KAPP_CONTROLLER_VERSION }}
+      KUBECTL_VERSION: ${{ needs.gke_setup.outputs.KUBECTL_VERSION }}
+      OLM_VERSION: ${{ needs.gke_setup.outputs.OLM_VERSION }}
+    secrets:
+      GKE_ADMIN: ${{ secrets.GKE_ADMIN }}
+      GCLOUD_KEY: ${{ secrets.GCLOUD_KEY }}
+
+  GKE_STABLE_VERSION:
+    needs:
+      - gke_setup
+    uses: ./.github/workflows/gke_e2e_tests.yaml
+    with:
+      GKE_BRANCH: ${{ needs.gke_setup.outputs.GKE_STABLE_VERSION }}
+      DEBUG_MODE: ${{ needs.gke_setup.outputs.DEBUG_MODE == 'true' }}
+      DEV_MODE: ${{ needs.gke_setup.outputs.DEV_MODE == 'true' }}
+      CHARTMUSEUM_VERSION: ${{ needs.gke_setup.outputs.CHARTMUSEUM_VERSION }}
+      GKE_CLUSTER: ${{ needs.gke_setup.outputs.GKE_CLUSTER }}
+      GKE_PROJECT: ${{ needs.gke_setup.outputs.GKE_PROJECT }}
+      GKE_RELEASE_CHANNEL: "stable"
+      GKE_ZONE: ${{ needs.gke_setup.outputs.GKE_ZONE }}
+      HELM_VERSION_MIN: ${{ needs.gke_setup.outputs.HELM_VERSION_MIN }}
+      HELM_VERSION_STABLE: ${{ needs.gke_setup.outputs.HELM_VERSION_STABLE }}
+      IMG_DEV_TAG: ${{ needs.gke_setup.outputs.IMG_DEV_TAG }}
+      IMG_MODIFIER: ${{ needs.gke_setup.outputs.IMG_MODIFIER }}
+      IMG_PREFIX: ${{ needs.gke_setup.outputs.IMG_PREFIX }}
+      KAPP_CONTROLLER_VERSION: ${{ needs.gke_setup.outputs.KAPP_CONTROLLER_VERSION }}
+      KUBECTL_VERSION: ${{ needs.gke_setup.outputs.KUBECTL_VERSION }}
+      OLM_VERSION: ${{ needs.gke_setup.outputs.OLM_VERSION }}
+    secrets:
+      GKE_ADMIN: ${{ secrets.GKE_ADMIN }}
+      GCLOUD_KEY: ${{ secrets.GCLOUD_KEY }}
