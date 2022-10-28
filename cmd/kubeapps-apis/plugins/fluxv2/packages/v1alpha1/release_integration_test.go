@@ -52,6 +52,7 @@ type integrationTestCreatePackageSpec struct {
 	expectInstallFailure bool
 	dontCreateNs         bool
 	noCleanup            bool
+	dontCreateReleaseSA  bool
 	expectedStatusCode   codes.Code
 	expectedResourceRefs []*corev1.ResourceRef
 }
@@ -308,15 +309,15 @@ func TestKindClusterUpdateInstalledPackage(t *testing.T) {
 					ghUser,
 					ghToken,
 				),
-				request:              create_installed_package_request_oci,
-				expectedDetail:       expected_detail_installed_package_oci,
-				expectedPodPrefix:    "my-podinfo-17",
+				request:              create_installed_package_request_for_update_oci,
+				expectedDetail:       expected_detail_installed_package_for_update_oci,
+				expectedPodPrefix:    "my-podinfo-21",
 				expectedStatusCode:   codes.OK,
-				expectedResourceRefs: expected_resource_refs_oci,
+				expectedResourceRefs: expected_resource_refs_for_update_oci,
 			},
 			request:                   update_request_8,
-			expectedDetailAfterUpdate: expected_detail_installed_package_podinfo_6_1_5,
-			expectedRefsAfterUpdate:   expected_resource_refs_oci,
+			expectedDetailAfterUpdate: expected_detail_installed_package_podinfo_6_1_5_for_update,
+			expectedRefsAfterUpdate:   expected_resource_refs_for_update_oci,
 		},
 	}
 
@@ -621,13 +622,30 @@ func TestKindClusterDeleteInstalledPackage(t *testing.T) {
 					ghUser,
 					ghToken,
 				),
-				request:              create_installed_package_request_oci,
-				expectedDetail:       expected_detail_installed_package_oci,
-				expectedPodPrefix:    "my-podinfo-17-",
+				request:              create_installed_package_request_for_delete_oci,
+				expectedDetail:       expected_detail_installed_package_for_delete_oci,
+				expectedPodPrefix:    "my-podinfo-22-",
 				expectedStatusCode:   codes.OK,
-				expectedResourceRefs: expected_resource_refs_oci,
+				expectedResourceRefs: expected_resource_refs_for_delete_oci,
+				noCleanup:            true,
 			},
 		},
+		// this is the scenario from https://github.com/vmware-tanzu/kubeapps/issues/5577
+		// currently fails due to https://github.com/fluxcd/helm-controller/issues/554
+		// TODO (gfichtenholt) uncomment this if/when issue is resolved by flux
+		/*
+			{
+				integrationTestCreatePackageSpec: integrationTestCreatePackageSpec{
+					testName:             "delete after install fails",
+					repoUrl:              podinfo_repo_url,
+					request:              create_installed_package_request_podinfo_for_delete_3,
+					expectedDetail:       expected_detail_installed_package_podinfo_for_delete_3,
+					expectInstallFailure: true,
+					noCleanup:            true,
+					dontCreateReleaseSA:  true,
+				},
+			},
+		*/
 	}
 
 	name := types.NamespacedName{
@@ -684,14 +702,14 @@ func TestKindClusterDeleteInstalledPackage(t *testing.T) {
 					}
 				}
 				if i == maxWait {
-					t.Fatalf("Timed out waiting for delete of installed package [%s], last error: [%v]", installedRef, err)
+					t.Fatalf("Timed out waiting for deletion of installed package [%s], last error: [%v]", installedRef, err)
 				} else {
 					t.Logf("Waiting 1s for package [%s] to be deleted, attempt [%d/%d]...", installedRef, i+1, maxWait)
 					time.Sleep(1 * time.Second)
 				}
 			}
 
-			// confidence test
+			// sanity check
 			name := types.NamespacedName{
 				Name:      installedRef.Identifier,
 				Namespace: installedRef.Context.Namespace,
@@ -1566,7 +1584,9 @@ func createAndWaitForHelmRelease(
 		}
 	}
 
-	if tc.request.ReconciliationOptions != nil && tc.request.ReconciliationOptions.ServiceAccountName != "" {
+	if tc.request.ReconciliationOptions != nil &&
+		tc.request.ReconciliationOptions.ServiceAccountName != "" &&
+		!tc.dontCreateReleaseSA {
 		svcAcctName := types.NamespacedName{
 			Name:      tc.request.ReconciliationOptions.ServiceAccountName,
 			Namespace: tc.request.TargetContext.Namespace,
