@@ -1433,6 +1433,30 @@ var (
 		},
 	}
 
+	redis_summary_failed_2 = &corev1.InstalledPackageSummary{
+		InstalledPackageRef: my_redis_ref,
+		Name:                "my-redis",
+		IconUrl:             "https://bitnami.com/assets/stacks/redis/img/redis-stack-220x234.png",
+		PkgVersionReference: &corev1.VersionReference{
+			Version: "14.4.0",
+		},
+		CurrentVersion: &corev1.PackageAppVersion{
+			PkgVersion: "14.4.0",
+			AppVersion: "6.2.4",
+		},
+		PkgDisplayName:   "redis",
+		ShortDescription: "Open source, advanced key-value store. It is often referred to as a data structure server since keys can contain strings, hashes, lists, sets and sorted sets.",
+		Status: &corev1.InstalledPackageStatus{
+			Ready:      false,
+			Reason:     corev1.InstalledPackageStatus_STATUS_REASON_FAILED,
+			UserReason: "GetLastReleaseFailed: failed to get last release revision",
+		},
+		LatestVersion: &corev1.PackageAppVersion{
+			PkgVersion: "14.4.0",
+			AppVersion: "6.2.4",
+		},
+	}
+
 	redis_summary_pending = &corev1.InstalledPackageSummary{
 		InstalledPackageRef: my_redis_ref,
 		Name:                "my-redis",
@@ -1653,6 +1677,33 @@ var (
 					Status:             metav1.ConditionFalse,
 					Reason:             helmv2.InstallFailedReason,
 					Message:            "Helm install failed: unable to build kubernetes objects from release manifest: error validating \"\": error validating data: ValidationError(Deployment.spec.replicas): invalid type for io.k8s.api.apps.v1.DeploymentSpec.replicas: got \"string\", expected \"integer\"",
+				},
+			},
+			HelmChart:             "default/redis",
+			Failures:              14,
+			InstallFailures:       1,
+			LastAttemptedRevision: "14.4.0",
+		},
+	}
+
+	redis_existing_spec_failed_2 = testSpecGetInstalledPackages{
+		repoName:             "bitnami-1",
+		repoNamespace:        "default",
+		repoIndex:            testYaml("redis-many-versions.yaml"),
+		chartName:            "redis",
+		chartTarGz:           testTgz("redis-14.4.0.tgz"),
+		chartSpecVersion:     "14.4.0",
+		chartArtifactVersion: "14.4.0",
+		releaseName:          "my-redis",
+		releaseNamespace:     "test",
+		releaseStatus: helmv2.HelmReleaseStatus{
+			Conditions: []metav1.Condition{
+				{
+					LastTransitionTime: metav1.Time{Time: lastTransitionTime},
+					Type:               fluxmeta.ReadyCondition,
+					Status:             metav1.ConditionFalse,
+					Reason:             helmv2.GetLastReleaseFailedReason,
+					Message:            "failed to get last release revision",
 				},
 			},
 			HelmChart:             "default/redis",
@@ -3598,6 +3649,35 @@ var (
 					DisplayName:      "podinfo",
 					ShortDescription: "Podinfo Helm chart for Kubernetes",
 					Categories:       []string{""},
+				},
+			},
+		}
+	}
+
+	expected_oci_repo_with_2_charts_available_summaries = func(name string) *corev1.GetAvailablePackageSummariesResponse {
+		return &corev1.GetAvailablePackageSummariesResponse{
+			AvailablePackageSummaries: []*corev1.AvailablePackageSummary{
+				{
+					Name:                "airflow",
+					AvailablePackageRef: availableRef(name+"/airflow", "default"),
+					LatestVersion: &corev1.PackageAppVersion{
+						PkgVersion: "6.7.1",
+					},
+					IconUrl:          "https://bitnami.com/assets/stacks/airflow/img/airflow-stack-110x117.png",
+					DisplayName:      "airflow",
+					ShortDescription: "Apache Airflow is a platform to programmatically author, schedule and monitor workflows.",
+					Categories:       []string{"WorkFlow"},
+				},
+				{
+					Name:                "redis",
+					AvailablePackageRef: availableRef(name+"/redis", "default"),
+					LatestVersion: &corev1.PackageAppVersion{
+						PkgVersion: "14.4.0",
+					},
+					IconUrl:          "https://bitnami.com/assets/stacks/redis/img/redis-stack-220x234.png",
+					DisplayName:      "redis",
+					ShortDescription: "Open source, advanced key-value store. It is often referred to as a data structure server since keys can contain strings, hashes, lists, sets and sorted sets.",
+					Categories:       []string{"Database"},
 				},
 			},
 		}

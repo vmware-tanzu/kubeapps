@@ -8,7 +8,6 @@ import (
 	"fmt"
 	"math"
 	"os"
-	"reflect"
 	"strings"
 	"sync"
 	"time"
@@ -521,7 +520,7 @@ func (c *NamespacedResourceWatcherCache) processOneEvent(event watch.Event) {
 	switch event.Type {
 	case watch.Added, watch.Modified, watch.Deleted:
 		if obj, ok := event.Object.(ctrlclient.Object); !ok {
-			runtime.HandleError(fmt.Errorf("could not cast %s to *ctrlclient.Object", reflect.TypeOf(event.Object)))
+			runtime.HandleError(fmt.Errorf("could not cast %T to *ctrlclient.Object", event.Object))
 		} else if key, err := c.keyFor(obj); err != nil {
 			runtime.HandleError(err)
 		} else {
@@ -849,7 +848,7 @@ func (c *NamespacedResourceWatcherCache) computeValuesForKeys(keys sets.String) 
 			// closed (and there are no more items)
 			for key := range requestChan {
 				// see Get() for explanation of what is happening below
-				c.forceKey(key)
+				c.forceKey(key, false)
 			}
 			wg.Done()
 		}()
@@ -889,7 +888,7 @@ func (c *NamespacedResourceWatcherCache) computeAndFetchValuesForKeys(keys sets.
 			// closed (and there are no more items)
 			for job := range requestChan {
 				// see Get() for explanation of what is happening below
-				value, err := c.ForceAndFetch(job.key)
+				value, err := c.ForceAndFetch(job.key, false)
 				responseChan <- computeValueJobResult{job, value, err}
 			}
 			wg.Done()
@@ -971,13 +970,29 @@ func (c *NamespacedResourceWatcherCache) Get(key string) (interface{}, error) {
 		return nil, err
 	} else if value == nil {
 		// cache miss
-		return c.ForceAndFetch(key)
+		return c.ForceAndFetch(key, false)
 	}
 	return value, nil
 }
 
-func (c *NamespacedResourceWatcherCache) forceKey(key string) {
-	c.queue.Add(key)
+// force a particular key to be processed
+func (c *NamespacedResourceWatcherCache) forceKey(key string, skipIfProcessing bool) {
+	if skipIfProcessing {
+		// There is one use case when the client needs to be able to do an Add(), regardless of whether
+		// the item is being processed, e.g. when the corresponding value goes through several quick changes.
+		// Then there is a separate use case when the client doesn't want to do an Add
+		// if the item is currently being processed, such as a .Get() operation that leads to a lengthy
+		// .Add() cuncurrently with another .Get() immediately. Executing two 2 .Add() operations does
+		// not solve any problems just slows the whole thing down.
+		// This is what the UX is currently doing when you select an OCI package to deploy:
+		//   both GetAvailablePackageVersions() and GetAvailablePackageDetail()
+		// are called concurrently. This is really a performance optimization to make sure that .Add() is only
+		// executed once
+		c.queue.AddIfNotProcessing(key)
+	} else {
+		c.queue.Add(key)
+	}
+
 	// now need to wait until this item has been processed by runWorker().
 	// a little bit in-efficient: syncHandler() will eventually call config.onAdd()
 	// which encode the data as []byte before storing it in the cache. That part is fine.
@@ -987,8 +1002,8 @@ func (c *NamespacedResourceWatcherCache) forceKey(key string) {
 	c.queue.WaitUntilForgotten(key)
 }
 
-func (c *NamespacedResourceWatcherCache) ForceAndFetch(key string) (interface{}, error) {
-	c.forceKey(key)
+func (c *NamespacedResourceWatcherCache) ForceAndFetch(key string, skipIfProcessing bool) (interface{}, error) {
+	c.forceKey(key, skipIfProcessing)
 	// TODO (gfichtenholt): if there was an error while processing the cache entry, such as
 	// E0903 09:07:17.660753       1 watcher_cache.go:595] Invocation of [onAdd] for object {
 	//  ...
@@ -1005,7 +1020,13 @@ func (c *NamespacedResourceWatcherCache) ForceAndFetch(key string) (interface{},
 	return c.fetch(key)
 }
 
-// this func is used by unit tests only
+// this func is used by unit tests only to make sure entries were processed by
+// cache as expected and without race conditions. The general pattern for this is
+// in the unit test code we do
+// - cache.ExpectAdd(key)
+// - perform some k8s flux HelmRepository CRD operation...
+// - cache.WaitUntilForgotten(key)
+// - at this point we can guarantee the cache entry has been (asynchronously) processed...
 func (c *NamespacedResourceWatcherCache) ExpectAdd(key string) {
 	c.queue.ExpectAdd(key)
 }

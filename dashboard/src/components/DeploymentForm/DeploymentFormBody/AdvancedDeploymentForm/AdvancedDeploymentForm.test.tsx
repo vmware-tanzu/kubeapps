@@ -4,7 +4,7 @@
 import { SupportedThemes } from "shared/Config";
 import { defaultStore, getStore, mountWrapper } from "shared/specs/mountWrapper";
 import { IStoreState } from "shared/types";
-import AdvancedDeploymentForm from "./AdvancedDeploymentForm";
+import AdvancedDeploymentForm, { IAdvancedDeploymentForm } from "./AdvancedDeploymentForm";
 
 beforeEach(() => {
   // mock the window.matchMedia for selecting the theme
@@ -48,7 +48,7 @@ afterEach(() => {
   jest.restoreAllMocks();
 });
 
-const defaultProps = {
+const defaultProps: IAdvancedDeploymentForm = {
   handleValuesChange: jest.fn(),
   valuesFromTheDeployedPackage: "",
   valuesFromTheAvailablePackage: "",
@@ -56,7 +56,6 @@ const defaultProps = {
   valuesFromTheParentContainer: "",
 };
 
-// eslint-disable-next-line jest/no-focused-tests
 it("includes values", () => {
   const wrapper = mountWrapper(
     defaultStore,

@@ -5,7 +5,6 @@ package cache
 
 import (
 	"fmt"
-	"reflect"
 	"strings"
 	"sync"
 	"time"
@@ -27,6 +26,7 @@ type RateLimitingInterface interface {
 	Name() string
 	ExpectAdd(item string)
 	IsProcessing(item string) bool
+	AddIfNotProcessing(item string)
 	WaitUntilForgotten(item string)
 	Reset()
 }
@@ -58,8 +58,7 @@ func (q *rateLimitingType) AddRateLimited(item interface{}) {
 	}
 	if itemstr, ok := item.(string); !ok {
 		// workqueue.Interface does not allow returning errors, so
-		runtime.HandleError(fmt.Errorf("invalid argument: expected string, found: [%s]",
-			reflect.TypeOf(item)))
+		runtime.HandleError(fmt.Errorf("invalid argument: expected string, found: [%T]", item))
 	} else {
 		q.DelayingInterface.AddAfter(itemstr, duration)
 	}
@@ -79,6 +78,10 @@ func (q *rateLimitingType) Forget(item interface{}) {
 
 func (q *rateLimitingType) IsProcessing(item string) bool {
 	return q.queue.isProcessing(item)
+}
+
+func (q *rateLimitingType) AddIfNotProcessing(item string) {
+	q.queue.addIfNotProcessing(item)
 }
 
 func (q *rateLimitingType) Reset() {
@@ -140,6 +143,9 @@ type Type struct {
 	queue []string
 
 	// expected defines all of the items that are expected to be processed.
+	// the whole reason behind having it in the queue is to avoid a race condition
+	// in unit tests, where an item is added to the queue and then the test code
+	// needs to wait until its been processed before taking further action
 	// Used in unit tests only
 	expected sets.String
 
@@ -167,8 +173,7 @@ func (q *Type) Add(item interface{}) {
 	}
 	if itemstr, ok := item.(string); !ok {
 		// workqueue.Interface does not allow returning errors, so
-		runtime.HandleError(fmt.Errorf("invalid argument: expected string, found: [%s]",
-			reflect.TypeOf(item)))
+		runtime.HandleError(fmt.Errorf("invalid argument: expected string, found: [%T]", item))
 	} else {
 		q.expected.Delete(itemstr)
 		if q.dirty.Has(itemstr) {
@@ -237,8 +242,7 @@ func (q *Type) Done(item interface{}) {
 
 	if itemstr, ok := item.(string); !ok {
 		// workqueue.Interface does not allow returning errors, so
-		runtime.HandleError(fmt.Errorf("invalid argument: expected string, found: [%s]",
-			reflect.TypeOf(item)))
+		runtime.HandleError(fmt.Errorf("invalid argument: expected string, found: [%T]", item))
 	} else {
 		q.processing.Delete(itemstr)
 		if q.dirty.Has(itemstr) {
@@ -321,6 +325,30 @@ func (q *Type) isProcessing(item string) bool {
 	return q.processing.Has(item)
 }
 
+// Atomic check if not already processing then Add.
+func (q *Type) addIfNotProcessing(itemstr string) {
+	q.cond.L.Lock()
+	defer q.cond.L.Unlock()
+
+	if q.shuttingDown {
+		return
+	}
+
+	if !q.processing.Has(itemstr) {
+		q.expected.Delete(itemstr)
+		if q.dirty.Has(itemstr) {
+			return
+		}
+
+		q.dirty.Insert(itemstr)
+		q.queue = append(q.queue, itemstr)
+		if q.verbose {
+			log.Infof("[%s]: addIfNotProcessing(%s)%s", q.name, itemstr, q.prettyPrintAll())
+		}
+		q.cond.Broadcast()
+	}
+}
+
 // this func is the added feature that was missing in k8s workqueue
 func (q *Type) waitUntilDone(item string) {
 	if q.verbose {
@@ -371,11 +399,11 @@ func printOneItemPerLine(strs []string) string {
 		return "[]"
 	} else {
 		var sb strings.Builder
-		sb.WriteString(fmt.Sprintf("[%d] [\n", len(strs)))
+		sb.WriteString(fmt.Sprintf("[%d] {\n", len(strs)))
 		for _, s := range strs {
 			sb.WriteString("\t\t" + s + "\n")
 		}
-		sb.WriteString("\t]")
+		sb.WriteString("\t}")
 		return sb.String()
 	}
 }

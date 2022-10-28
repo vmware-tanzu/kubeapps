@@ -13,7 +13,7 @@ const defaultProps = {
   readme: "",
 };
 
-const kubeaActions = { ...actions.kube };
+const kubeActions = { ...actions.kube };
 beforeEach(() => {
   actions.availablepackages = {
     ...actions.availablepackages,
@@ -21,7 +21,7 @@ beforeEach(() => {
 });
 
 afterEach(() => {
-  actions.kube = { ...kubeaActions };
+  actions.kube = { ...kubeActions };
 });
 
 it("behaves as a loading component", () => {

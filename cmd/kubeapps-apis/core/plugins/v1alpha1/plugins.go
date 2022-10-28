@@ -323,9 +323,8 @@ func createConfigGetterWithParams(inClusterConfig *rest.Config, serveOpts core.S
 		var config *rest.Config
 
 		// Enable existing plugins to pass an empty cluster name to get the
-		// kubeapps cluster for now, until we support (or otherwise decide)
-		// multicluster configuration of all plugins.
-		if cluster == "" {
+		// kubeapps cluster
+		if kube.IsKubeappsClusterRef(cluster) {
 			cluster = clustersConfig.KubeappsClusterName
 		}
 

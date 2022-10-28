@@ -91,7 +91,7 @@ func (s *Server) availableChartDetail(ctx context.Context, packageRef *corev1.Av
 
 		var fn cache.DownloadChartFn
 		if chartModel.Repo.Type == "oci" {
-			if ociRepo, err := s.newOCIChartRepositoryAndLogin(ctx, repoName); err != nil {
+			if ociRepo, err := s.newOCIChartRepositoryAndLogin(ctx, *repo); err != nil {
 				return nil, err
 			} else {
 				fn = downloadOCIChartFn(ociRepo)
@@ -116,13 +116,11 @@ func (s *Server) availableChartDetail(ctx context.Context, packageRef *corev1.Av
 	if err != nil {
 		return nil, err
 	}
-	log.Infof("checkpoint 5")
 
 	pkgDetail, err := availablePackageDetailFromChartDetail(chartID, chartDetail)
 	if err != nil {
 		return nil, err
 	}
-	log.Infof("checkpoint 6")
 
 	// fix up a couple of fields that don't come from the chart tarball
 	repoUrl := repo.Spec.URL

@@ -89,6 +89,7 @@ const (
 	harbor_stefanprodan_podinfo_oci_registry_url         = "oci://demo.goharbor.io/stefanprodan-podinfo-clone"
 	harbor_stefanprodan_podinfo_private_oci_registry_url = "oci://demo.goharbor.io/stefanprodan-podinfo-clone-private"
 	gcp_stefanprodan_podinfo_oci_registry_url            = "oci://us-west1-docker.pkg.dev/vmware-kubeapps-ci/stefanprodan-podinfo-clone"
+	harbor_repo_with_2_charts_oci_registry_url           = "oci://demo.goharbor.io/repo-with-2-charts"
 
 	// the URL of local in cluster helm registry. Gets deployed via ./integ-test-env.sh
 	// in_cluster_oci_registry_url = "oci://registry-app-svc.default.svc.cluster.local:5000/helm-charts"
@@ -1370,12 +1371,12 @@ func deleteChartFromMyGithubRegistry(t *testing.T, version string) error {
 	return err
 }
 
-func setupHarborStefanProdanClone(t *testing.T) error {
-	t.Logf("+setupHarborStefanProdanClone()")
-	defer t.Logf("-setupHarborStefanProdanClone()")
+func setupHarborForIntegrationTest(t *testing.T) error {
+	t.Logf("+setupHarborForIntegrationTest()")
+	defer t.Logf("-setupHarborForIntegrationTest()")
 
 	args := []string{
-		"setupHarborStefanProdanClone",
+		"setupHarbor",
 		"--quick",
 	}
 

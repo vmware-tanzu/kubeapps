@@ -11,6 +11,9 @@ CLUSTER=${1:?}
 ZONE=${2:?}
 BRANCH=${3:?}
 ADMIN=${4:?}
+DEBUG_MODE=${DEBUG_MODE:-"false"}
+
+[[ "${DEBUG_MODE}" == "true" ]] && set -x
 
 if ! gcloud container clusters list; then
     echo "Unable to access gcloud project"
@@ -27,12 +30,15 @@ if [[ $(gcloud container clusters list --filter="name:${CLUSTER}") ]]; then
         done
     else
         echo "GKE cluster already exits. Deleting it"
-        gcloud container clusters delete "${CLUSTER}" --zone "${ZONE}"
+        gcloud container clusters delete "${CLUSTER}" --zone "${ZONE}" --quiet
     fi
 fi
 
 echo "Creating cluster ${CLUSTER} in ${ZONE} (v$BRANCH)"
-gcloud container clusters create --cluster-version="${BRANCH}" --zone "${ZONE}" "${CLUSTER}" --num-nodes 2 --machine-type=n1-standard-2 --preemptible --labels=team=kubeapps
+
+# TODO(bjesus) Removing the use of --labels=team=kubeapps due to a bug in gcloud cli: https://issuetracker.google.com/issues/255708239
+#gcloud container clusters create --cluster-version="${BRANCH}" --zone "${ZONE}" "${CLUSTER}" --num-nodes 2 --machine-type=n1-standard-2 --preemptible --labels=team=kubeapps --quiet
+gcloud container clusters create --cluster-version="${BRANCH}" --zone "${ZONE}" "${CLUSTER}" --num-nodes 2 --machine-type=n1-standard-2 --preemptible --quiet
 echo "Waiting for the cluster to respond..."
 cnt=20
 until kubectl get pods >/dev/null 2>&1; do
@@ -45,4 +51,4 @@ until kubectl get pods >/dev/null 2>&1; do
 done
 
 # Set the current user as admin
-kubectl create clusterrolebinding kubeapps-cluster-admin --clusterrole=cluster-admin --user=$ADMIN
+kubectl create clusterrolebinding kubeapps-cluster-admin --clusterrole=cluster-admin --user="$ADMIN"

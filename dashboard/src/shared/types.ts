@@ -407,6 +407,7 @@ export type IBasicFormParam = JSONSchemaType<any> & {
   hasProperties: boolean;
   params?: IBasicFormParam[];
   enum?: string[];
+  isRequired: boolean;
   defaultValue: any;
   deployedValue: any;
   currentValue: any;
@@ -476,4 +477,19 @@ export interface IPkgRepoFormData {
   >;
   namespace: string;
   isNamespaceScoped: boolean;
+}
+
+// Holds data about the permissions on any resource
+export interface IResourcePermission {
+  list: boolean;
+  create: boolean;
+  update: boolean;
+  delete: boolean;
+  namespace: string;
+}
+
+export interface IPackageRepositoryPermission {
+  global?: IResourcePermission;
+  namespaced: IResourcePermission;
+  plugin: Plugin;
 }

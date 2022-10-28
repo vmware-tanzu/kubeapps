@@ -514,7 +514,7 @@ $ grpcurl -plaintext -d '{"available_package_ref": {"context": {"cluster": "defa
   }
 }
 
-$ $ grpcurl -plaintext -d '{"installed_package_ref": {"context": {"cluster": "default", "namespace": "default"}, "plugin": {"name": "fluxv2.packages", "version": "v1alpha1"}, "identifier": "podinfo-1"}}' -H "Authorization: Bearer $token" localhost:8081 kubeappsapis.core.packages.v1alpha1.PackagesService.GetInstalledPackageDetail
+$ grpcurl -plaintext -d '{"installed_package_ref": {"context": {"cluster": "default", "namespace": "default"}, "plugin": {"name": "fluxv2.packages", "version": "v1alpha1"}, "identifier": "podinfo-1"}}' -H "Authorization: Bearer $token" localhost:8081 kubeappsapis.core.packages.v1alpha1.PackagesService.GetInstalledPackageDetail
 {
   "installedPackageDetail": {
     "installedPackageRef": {

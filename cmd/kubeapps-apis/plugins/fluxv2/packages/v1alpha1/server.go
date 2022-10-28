@@ -6,8 +6,8 @@ package main
 import (
 	"context"
 	"fmt"
+
 	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/pkg/helm"
-	"reflect"
 
 	helmv2 "github.com/fluxcd/helm-controller/api/v2beta1"
 	sourcev1 "github.com/fluxcd/source-controller/api/v1beta2"
@@ -113,7 +113,7 @@ func NewServer(configGetter core.KubernetesConfigGetter, kubeappsCluster string,
 			NewListFunc:  func() ctrlclient.ObjectList { return &sourcev1.HelmRepositoryList{} },
 			ListItemsFunc: func(ol ctrlclient.ObjectList) []ctrlclient.Object {
 				if hl, ok := ol.(*sourcev1.HelmRepositoryList); !ok {
-					log.Errorf("Expected: *sourcev1.HelmRepositoryList, got: %s", reflect.TypeOf(ol))
+					log.Errorf("Expected: *sourcev1.HelmRepositoryList, got: %T", ol)
 					return nil
 				} else {
 					ret := make([]ctrlclient.Object, len(hl.Items))
@@ -163,6 +163,9 @@ func NewServer(configGetter core.KubernetesConfigGetter, kubeappsCluster string,
 // state. For the fluxv2 plugin, the request context namespace (the target
 // namespace) is not relevant since charts from a repository in any namespace
 // accessible to the user are available to be installed in the target namespace.
+// TODO (gfichtenholt) if flux helm-controller flag "-no-cross-namespace-refs=true" is
+// enabled we might need to filter out all namespaces except for request target namespace
+// ref https://github.com/vmware-tanzu/kubeapps/issues/5541
 func (s *Server) GetAvailablePackageSummaries(ctx context.Context, request *corev1.GetAvailablePackageSummariesRequest) (*corev1.GetAvailablePackageSummariesResponse, error) {
 	log.Infof("+fluxv2 GetAvailablePackageSummaries(request: [%v])", request)
 	defer log.Info("-fluxv2 GetAvailablePackageSummaries")

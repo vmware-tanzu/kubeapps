@@ -9,7 +9,6 @@ import (
 	"encoding/base64"
 	"encoding/gob"
 	"fmt"
-	"reflect"
 	"regexp"
 	"strings"
 	"time"
@@ -192,15 +191,15 @@ func (s *Server) repoCacheEntryFromUntyped(key string, value interface{}) (*repo
 	if !ok {
 		return nil, status.Errorf(
 			codes.Internal,
-			"unexpected value fetched from cache: type: [%s], value: [%v]",
-			reflect.TypeOf(value), value)
+			"unexpected value fetched from cache: type: [%T], value: [%v]",
+			value, value)
 	}
 	if typedValue.Type == "oci" {
 		// ref https://github.com/vmware-tanzu/kubeapps/issues/5007#issuecomment-1217293240
 		// helm OCI chart repos are not automatically updated when the
 		// state on remote changes. So we will force new checksum
 		// computation and update local cache if needed
-		value, err := s.repoCache.ForceAndFetch(key)
+		value, err := s.repoCache.ForceAndFetch(key, true)
 		if err != nil {
 			return nil, err
 		} else if value != nil {
@@ -208,8 +207,8 @@ func (s *Server) repoCacheEntryFromUntyped(key string, value interface{}) (*repo
 			if !ok {
 				return nil, status.Errorf(
 					codes.Internal,
-					"unexpected value fetched from cache: type: [%s], value: [%v]",
-					reflect.TypeOf(value), value)
+					"unexpected value fetched from cache: type: [%T], value: [%v]",
+					value, value)
 			}
 		}
 	}
@@ -764,9 +763,10 @@ type repoEventSink struct {
 // this is what we store in the cache for each cached repo
 // all struct fields are capitalized so they're exported by gob encoding
 type repoCacheEntryValue struct {
-	Checksum string
-	Type     string // if missing, repo is assumed to be regular old HTTP
-	Charts   []models.Chart
+	Checksum      string // SHA256
+	Type          string // "http" or "oci". If not set, repo is assumed to be regular old HTTP
+	Charts        []models.Chart
+	OCIRepoLister string // only applicable for OCIRepos, "" otherwise
 }
 
 // onAddRepo essentially tells the cache whether to and what to store for a given key
@@ -775,7 +775,7 @@ func (s *repoEventSink) onAddRepo(key string, obj ctrlclient.Object) (interface{
 	defer log.V(4).Info("-onAddRepo()")
 
 	if repo, ok := obj.(*sourcev1.HelmRepository); !ok {
-		return nil, false, fmt.Errorf("expected an instance of *sourcev1.HelmRepository, got: %s", reflect.TypeOf(obj))
+		return nil, false, fmt.Errorf("expected an instance of *sourcev1.HelmRepository, got: %T", obj)
 	} else if isRepoReady(*repo) {
 		if repo.Spec.Type == sourcev1.HelmRepositoryTypeOCI {
 			return s.onAddOciRepo(*repo)
@@ -909,7 +909,7 @@ func (s *repoEventSink) indexOneRepo(repo sourcev1.HelmRepository) ([]models.Cha
 // onModifyRepo essentially tells the cache whether or not to and what to store for a given key
 func (s *repoEventSink) onModifyRepo(key string, obj ctrlclient.Object, oldValue interface{}) (interface{}, bool, error) {
 	if repo, ok := obj.(*sourcev1.HelmRepository); !ok {
-		return nil, false, fmt.Errorf("expected an instance of *sourcev1.HelmRepository, got: %s", reflect.TypeOf(obj))
+		return nil, false, fmt.Errorf("expected an instance of *sourcev1.HelmRepository, got: %T", obj)
 	} else if isRepoReady(*repo) {
 		// first check the repo is ready
 

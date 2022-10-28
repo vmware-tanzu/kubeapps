@@ -15,6 +15,7 @@ const param: IBasicFormParam = {
   defaultValue: true,
   deployedValue: true,
   hasProperties: false,
+  isRequired: false,
   key: "enableMetrics",
   schema: {
     type: "boolean",
@@ -29,7 +30,7 @@ const defaultProps = {
 
 const defaultState = {
   config: { remoteComponentsUrl: "" },
-};
+} as IStoreState;
 
 // Ensure remote-component doesn't trigger external requests during this test.
 const mockOpen = jest.fn();

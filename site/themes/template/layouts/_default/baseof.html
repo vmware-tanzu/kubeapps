@@ -12,65 +12,128 @@
     function OptanonWrapper() { { window.dataLayer.push({ event: 'OneTrustGroupsUpdated' }); } }
   </script>
   <script defer>
-    function setGTM(w,d,s,l,i){ w[l]=w[l]||[]; w[l].push({'gtm.start':new Date().getTime(),event:'gtm.js'}); var f=d.getElementsByTagName(s)[0],j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:''; j.async=true; j.src='https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f); }
-    if (document.cookie.indexOf('OptanonConsent') > -1 && document.cookie.indexOf('groups=') > -1) { setGTM(window,document,'script','dataLayer','{{ .Site.Params.gtmId }}'); } else{ waitForOnetrustActiveGroups(); } var timer; function waitForOnetrustActiveGroups() { if (document.cookie.indexOf('OptanonConsent') > -1 && document.cookie.indexOf('groups=') > -1) { clearTimeout(timer); setGTM(window,document,'script','dataLayer','{{ .Site.Params.gtmId }}'); } else{ timer=setTimeout(waitForOnetrustActiveGroups, 250); } }
+    function setGTM(w, d, s, l, i) {
+      w[l] = w[l] || [];
+      w[l].push({ "gtm.start": new Date().getTime(), event: "gtm.js" });
+      var f = d.getElementsByTagName(s)[0],
+        j = d.createElement(s),
+        dl = l != "dataLayer" ? "&l=" + l : "";
+      j.async = true;
+      j.src = "https://www.googletagmanager.com/gtm.js?id=" + i + dl;
+      f.parentNode.insertBefore(j, f);
+    }
+
+    if (
+      document.cookie.indexOf("OptanonConsent") > -1 &&
+      document.cookie.indexOf("groups=") > -1
+    ) {
+      setGTM(window, document, "script", "dataLayer", "{{ .Site.Params.gtmId }}");
+    } else {
+      waitForOnetrustActiveGroups();
+    }
+    var timer;
+    function waitForOnetrustActiveGroups() {
+      if (
+        document.cookie.indexOf("OptanonConsent") > -1 &&
+        document.cookie.indexOf("groups=") > -1
+      ) {
+        clearTimeout(timer);
+        setGTM(window, document, "script", "dataLayer", "{{ .Site.Params.gtmId }}");
+      } else {
+        timer = setTimeout(waitForOnetrustActiveGroups, 250);
+      }
+    }
   </script>
   <!-- OneTrust Cookies Consent Notice and Google Tag Manager end -->
 
-  <title>
-    {{ if .Title }}
-      {{ .Title }}
+  {{ $title := ""}}
+  {{ $permalinkAsTitle := ""}}
+  {{ $description := ""}}
+
+  {{ if .Page.RelPermalink }}
+    {{ $permalinkAsTitle = (replace (index (last 1 (split (delimit (split .Page.RelPermalink "/") "," "") ",")) 0) "-" " ") | title }}
+  {{ end }}
+
+  {{ if .IsSection }}
+    {{ if in $permalinkAsTitle "Latest" }}
+      {{ $title = "Documentation" }}
+      {{ $description = "Kubeapps Documentation" }}
     {{ else }}
-      Documentation
+        {{ $title = $permalinkAsTitle }}
+        {{ if in $permalinkAsTitle "Kubeapps" }}
+          {{ $description = $permalinkAsTitle }}
+        {{ else }}
+          {{ $description = printf "%s %s" "Kubeapps" $permalinkAsTitle }}
+        {{ end }}
     {{ end }}
-  </title>
-  {{ with .Site.Params.description }}
+  {{ else if .Title }}
+    {{ $title = .Title }}
+    {{ if in .Title "Kubeapps" }}
+      {{ $title = "Home" }}
+      {{ $description = .Site.Params.description }}
+    {{ end }}
+  {{ else }}
+    {{ $title = $permalinkAsTitle }}
+    {{ $description = printf "%s %s" "Kubeapps Documentation -" $permalinkAsTitle }}
+  {{ end }}
+
+  <title>{{ .Site.Title }} | {{ $title }}</title>
 
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
-  <meta name="description" content="{{ . }}">{{ end }}
-  {{ with .Site.Params.author }}
-  <meta name="author" content="{{ . }}">{{ end }}
+
   <!-- begin extra meta tags -->
   <!-- -- lightly modified from https://www.skcript.com/svr/perfect-seo-meta-tags-with-hugo/ -->
-  <meta property="og:title" content="{{ .Title }} - {{ .Site.Title }}" />
-  <meta name="twitter:title" content="{{ .Title }} - {{ .Site.Title }}" />
-  <meta itemprop="name" content="{{ .Title }} - {{ .Site.Title }}" />
-  <meta name="application-name" content="{{ .Title }} - {{ .Site.Title }}" />
+  <meta property="og:title" content="{{ $title }}" />
+  <meta name="twitter:title" content="{{ $title }}" />
+  <meta name="apple-mobile-web-app-title" content="{{ $title }}" />
+
+  <meta itemprop="name" content="{{ .Site.Params.sitename }}" />
+  <meta name="application-name" content="{{ .Site.Params.sitename }}" />
   <meta property="og:site_name" content="{{ .Site.Params.sitename }}" />
-  <meta name="description" content="{{ .Site.Params.description }}" />
-  <meta itemprop="description" content="{{ .Site.Params.description }}" />
-  <meta property="og:description" content="{{ .Site.Params.description }}" />
-  <meta name="twitter:description" content="{{ .Site.Params.description }}" />
+
+  <meta name="description" content="{{ $description }}" />
+  <meta itemprop="description" content="{{ $description }}" />
+  <meta property="og:description" content="{{ $description }}" />
+  <meta name="twitter:description" content="{{ $description }}" />
+
   <base href="{{ .Permalink }}" />
   <link rel="canonical" href="{{ .Permalink }}" itemprop="url" />
   <meta name="url" content="{{ .Permalink }}" />
   <meta name="twitter:url" content="{{ .Permalink }}" />
   <meta property="og:url" content="{{ .Permalink }}" />
+
   <meta property="og:locale" content="{{ .Language.Lang }}" />
   <meta name="language" content="{{ .Language.LanguageName }}" />
+
   <meta property="og:updated_time" content={{ .Lastmod.Format "2006-01-02T15:04:05Z0700" | safeHTML }} />
+
   <meta name="robots" content="index,follow" />
   <meta name="googlebot" content="index,follow" />
+
   <meta name="twitter:site" content="{{ .Site.Params.twitter }}" />
   <meta name="twitter:creator" content="{{ .Site.Params.twitter }}" />
-  <meta name="keywords" content="" />
+
+  <meta property="og:type" content="website" />
   <meta name="imagemode" content="force" />
   <meta name="coverage" content="Worldwide" />
   <meta name="distribution" content="Global" />
   <meta name="HandheldFriendly" content="True" />
   <meta name="msapplication-tap-highlight" content="no" />
-  <meta name="apple-mobile-web-app-title" content="{{ .Site.Params.sitename }}" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-touch-fullscreen" content="yes" />
   <!-- end extra meta tags -->
+
+  <!-- Bundled style lazy loading -->
   {{ $options := (dict "targetPath" "css/style.css" "outputStyle" "compressed" "enableSourceMap" true "includePaths" (slice "node_modules/myscss")) }}
   {{ $style := resources.Get "scss/site.scss" | resources.ToCSS $options }}
-  <!-- <link rel="stylesheet" href="{{ $style.Permalink }}" integrity="{{ $style.Data.Integrity }}" media="screen"> -->
   <link rel="preload" href="{{ $style.Permalink }}" as="style" onload="this.onload=null;this.rel='stylesheet';this.media='screen';this.integrity='{{ $style.Data.Integrity }}'">
   <noscript><link rel="stylesheet" href="{{ $style.Permalink }}" integrity="{{ $style.Data.Integrity }}" media="screen"></noscript>
+
+  <!-- Favicons -->
+  <meta property="og:image" content="/img/favicons/favicon-32x32.png" />
   <link rel="apple-touch-icon" sizes="180x180" href="/img/favicons/apple-touch-icon.png" />
   <link rel="icon" type="image/png" sizes="32x32" href="/img/favicons/favicon-32x32.png" />
   <link rel="icon" type="image/png" sizes="16x16" href="/img/favicons/favicon-16x16.png" />
@@ -80,10 +143,12 @@
   <meta name="msapplication-TileColor" content="#0091da" />
   <meta name="msapplication-config" content="/img/favicons/browserconfig.xml" />
   <meta name="theme-color" content="#ffffff" />
-  <script defer src="{{ "js/main.js" | relURL }}" type="text/javascript"></script>
   {{ with .OutputFormats.Get "RSS" -}}
     {{ printf `<link rel="%s" type="%s" href="%s" title="%s">` .Rel .MediaType.Type .RelPermalink $.Site.Title | safeHTML }}
   {{- end }}
+
+  <!-- Bundled script lazy loading -->
+  <script defer src="{{ "js/main.js" | relURL }}" type="text/javascript"></script>
 </head>
 
 <body>
@@ -95,16 +160,9 @@
     <link rel="preload" href="https://cdn.jsdelivr.net/npm/@algolia/algoliasearch-netlify-frontend@1/dist/algoliasearchNetlify.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
     <noscript><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@algolia/algoliasearch-netlify-frontend@1/dist/algoliasearchNetlify.css" media="screen"></noscript>
     <script defer type="text/javascript" src="https://cdn.jsdelivr.net/npm/@algolia/algoliasearch-netlify-frontend@1/dist/algoliasearchNetlify.js"></script>
-    <script>
-      // Auto-caption tables until a custom table hook is implemented
-      // see https://github.com/gohugoio/hugo/issues/9316
-      document.querySelectorAll("table").forEach(function (table, index) {
-        var caption = document.createElement("caption");
-        caption.innerHTML = `Table ${index + 1}`;
-        table.appendChild(caption);
-      });
-    </script>
   {{ end }}
+  <!-- Bundled script lazy loading -->
+  <script defer src="{{ "js/main.js" | relURL }}" type="text/javascript"></script>
 </body>
 
 </html>

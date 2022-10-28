@@ -167,7 +167,7 @@ it("retrieves csvs in the namespace if operators enabled", () => {
   const getCSVs = jest.fn();
   actions.operators.getCSVs = getCSVs;
   const state = deepClone(populatedState) as IStoreState;
-  state.config.featureFlags = { operators: true };
+  state.config.featureFlags = { ...initialState.config.featureFlags, operators: true };
 
   mountWrapper(
     getStore(state),
@@ -185,7 +185,7 @@ it("not retrieveing csvs in the namespace if operators deactivated", () => {
   const getCSVs = jest.fn();
   actions.operators.getCSVs = getCSVs;
   const state = deepClone(populatedState) as IStoreState;
-  state.config.featureFlags = { operators: false };
+  state.config.featureFlags = { ...initialState.config.featureFlags, operators: false };
 
   mountWrapper(
     getStore(state),

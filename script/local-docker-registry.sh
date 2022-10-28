@@ -3,6 +3,8 @@
 # Copyright 2022 the Kubeapps contributors.
 # SPDX-License-Identifier: Apache-2.0
 
+set -euo pipefail
+
 CONTROL_PLANE_CONTAINER=${CONTROL_PLANE_CONTAINER:-"kubeapps-ci-control-plane"}
 REGISTRY_NS=ci
 DOCKER_REGISTRY_HOST=local-docker-registry
@@ -12,6 +14,7 @@ DOCKER_USERNAME=testuser
 DOCKER_PASSWORD=testpassword
 
 installLocalRegistry() {
+    local DOCKER_REGISTRY_VERSION="${DOCKER_REGISTRY_VERSION:-}"
     if [ -z "$DOCKER_REGISTRY_VERSION" ]; then
       echo "No Docker registry version supplied"
       exit 1
@@ -28,16 +31,16 @@ installLocalRegistry() {
 
     # Add our CA to the node
     docker cp "$(mkcert -CAROOT)"/rootCA.pem "$CONTROL_PLANE_CONTAINER:/usr/share/ca-certificates/local-rootCA.pem"
-    docker exec --user root $CONTROL_PLANE_CONTAINER sh -c "echo 'local-rootCA.pem' >> /etc/ca-certificates.conf"
-    docker exec --user root $CONTROL_PLANE_CONTAINER update-ca-certificates -f
+    docker exec --user root "$CONTROL_PLANE_CONTAINER" sh -c "echo 'local-rootCA.pem' >> /etc/ca-certificates.conf"
+    docker exec --user root "$CONTROL_PLANE_CONTAINER" update-ca-certificates -f
 
     # Restart containerd to make the CA addition effective
-    docker exec --user root $CONTROL_PLANE_CONTAINER systemctl restart containerd
+    docker exec --user root "$CONTROL_PLANE_CONTAINER" systemctl restart containerd
 
     # Generate new certificate for registry
-    mkcert -key-file $PROJECT_PATH/devel/localhost-key.pem -cert-file $PROJECT_PATH/devel/docker-registry-cert.pem $DOCKER_REGISTRY_HOST "docker-registry.$REGISTRY_NS.svc.cluster.local"
+    mkcert -key-file "$PROJECT_PATH/devel/localhost-key.pem" -cert-file "$PROJECT_PATH/devel/docker-registry-cert.pem" $DOCKER_REGISTRY_HOST "docker-registry.$REGISTRY_NS.svc.cluster.local"
     kubectl -n $REGISTRY_NS delete secret registry-tls --ignore-not-found=true
-    kubectl -n $REGISTRY_NS create secret tls registry-tls --key $PROJECT_PATH/devel/localhost-key.pem --cert $PROJECT_PATH/devel/docker-registry-cert.pem
+    kubectl -n $REGISTRY_NS create secret tls registry-tls --key "$PROJECT_PATH/devel/localhost-key.pem" --cert "$PROJECT_PATH/devel/docker-registry-cert.pem"
 
     # Create registry resources
     envsubst < "${PROJECT_PATH}/integration/registry/local-registry.yaml" | kubectl apply -f -
@@ -49,7 +52,7 @@ installLocalRegistry() {
     # Haven't found a way to use the cluster DNS from the node, 
     # following https://github.com/kubernetes/kubernetes/issues/8735#issuecomment-148800699
     REGISTRY_IP=$(kubectl -n $REGISTRY_NS get service/docker-registry -o jsonpath='{.spec.clusterIP}')
-    docker exec --user root $CONTROL_PLANE_CONTAINER sh -c "echo '$REGISTRY_IP  $DOCKER_REGISTRY_HOST' >> /etc/hosts"
+    docker exec --user root "$CONTROL_PLANE_CONTAINER" sh -c "echo '$REGISTRY_IP  $DOCKER_REGISTRY_HOST' >> /etc/hosts"
 
     echo "Installing Ingress for Docker registry with access through host ${DOCKER_REGISTRY_HOST}"
     kubectl apply -f - -o yaml << EOF
@@ -88,6 +91,7 @@ pushContainerToLocalRegistry() {
     # Access through Ingress TLS
     DOCKER_REGISTRY="$DOCKER_REGISTRY_HOST:443"
 
+    echo You may be prompted for sudo Password in order to append to /etc/hosts
     echo "127.0.0.1  $DOCKER_REGISTRY_HOST" | sudo tee -a /etc/hosts
 
     docker pull nginx
@@ -123,18 +127,20 @@ uninstallLocalRegistry() {
   kubectl -n ${REGISTRY_NS} delete secret registry-tls
 }
 
-case $1 in
+if (($# > 0)); then
+  case $1 in
 
-  install)
-    installLocalRegistry $2
-    ;;
+    install)
+      installLocalRegistry $2
+      ;;
 
-  pushNginx)
-    pushContainerToLocalRegistry
-    ;;
+    pushNginx)
+      pushContainerToLocalRegistry
+      ;;
 
-  uninstall)
-    uninstallLocalRegistry $2
-    ;;
+    uninstall)
+      uninstallLocalRegistry $2
+      ;;
 
-esac
+  esac
+fi
