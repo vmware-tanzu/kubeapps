@@ -7,6 +7,7 @@ use std::sync::Arc;
 
 use crate::cache::PruningCache;
 use anyhow::{Context, Result};
+use cached::proc_macro::cached;
 use chrono::Utc;
 use http::Uri;
 use k8s_openapi::api::core::v1 as corev1;
@@ -16,7 +17,6 @@ use kube::{
     core::GroupVersionKind,
     Client, Config,
 };
-use log::debug;
 use native_tls::Identity;
 use openssl::x509::X509;
 use serde::{Deserialize, Serialize};
@@ -149,8 +149,8 @@ pub struct ClusterCredential {
 /// kubernetes api server.
 pub async fn exchange_token_for_identity(
     authorization: &str,
-    k8s_api_server_url: &str,
-    k8s_api_ca_cert_data: &[u8],
+    k8s_api_server_url: String,
+    k8s_api_ca_cert_data: Vec<u8>,
     credential_cache: CredentialCache,
 ) -> Result<Identity> {
     let credential_request = prepare_and_call_pinniped_exchange(
@@ -201,9 +201,17 @@ fn identity_for_exchange(cred: &ClusterCredential) -> Result<Identity> {
     Ok(identity)
 }
 
+// Profiling shows that the call to Client::try_from below can take
+// anywhere from 4ms to 100ms every time for every connection. When
+// a go-lang rest mapper initialises, it requests ~50 different APIs
+// which leads to 3-5s of CPU just in this call. Given that the client
+// is specific to the api server, there will only ever be one value per
+// cluster targeted by Kubeapps, so caching this result is cheap and
+// effective, removing the 3-5s of CPU for the 50 requests.
+#[cached(size = 10, result = true)]
 fn get_client_config(
-    k8s_api_server_url: &str,
-    k8s_api_ca_cert_data: &[u8],
+    k8s_api_server_url: String,
+    k8s_api_ca_cert_data: Vec<u8>,
     pinniped_namespace: String,
 ) -> Result<kube::Client> {
     let mut config = Config::new(
@@ -212,11 +220,12 @@ fn get_client_config(
             .context("Failed parsing url for exchange")?,
     );
     config.default_namespace = pinniped_namespace.clone();
-    let x509 = X509::from_pem(k8s_api_ca_cert_data).context("error creating x509 from pem")?;
+    let x509 = X509::from_pem(&k8s_api_ca_cert_data).context("error creating x509 from pem")?;
     let der = x509.to_der().context("error creating der from x509")?;
     config.root_cert = Some(vec![der]);
 
-    Ok(Client::try_from(config)?)
+    let client = Client::try_from(config)?;
+    Ok(client)
 }
 
 /// prepare_and_call_pinniped_exchange returns the resulting
@@ -224,12 +233,11 @@ fn get_client_config(
 /// exchange.
 async fn prepare_and_call_pinniped_exchange(
     authorization: &str,
-    k8s_api_server_url: &str,
-    k8s_api_ca_cert_data: &[u8],
+    k8s_api_server_url: String,
+    k8s_api_ca_cert_data: Vec<u8>,
     credential_cache: CredentialCache,
 ) -> Result<TokenCredentialRequest> {
     // context data
-    let start = std::time::Instant::now();
     let pinniped_namespace: String = env::var(DEFAULT_PINNIPED_NAMESPACE)?;
     let pinniped_auth_type: String = env::var(DEFAULT_PINNIPED_AUTHENTICATOR_TYPE)?;
     let pinniped_auth_name: String = env::var(DEFAULT_PINNIPED_AUTHENTICATOR_NAME)?;
@@ -262,26 +270,14 @@ async fn prepare_and_call_pinniped_exchange(
 
     // If the credential already exists in the cache (the cache handles expired
     // creds), then return that.
-    let mut used_cache = false;
-    let res = match credential_cache.get(&cred_data) {
-        Some(cached_cred) => {
-            used_cache = true;
-            Ok(cached_cred)
-        }
+    match credential_cache.get(&cred_data) {
+        Some(cached_cred) => Ok(cached_cred),
         None => {
             let cred = call_pinniped(pinniped_namespace, client, cred_data.clone()).await?;
             credential_cache.insert(cred_data, cred.clone());
             Ok(cred)
         }
-    };
-
-    let finished = std::time::Instant::now();
-    debug!(
-        "prepare_and_call_pinniped_exchange took {}ms. Used cache?: {}",
-        finished.duration_since(start).as_millis(),
-        used_cache
-    );
-    res
+    }
 }
 
 async fn call_pinniped(
