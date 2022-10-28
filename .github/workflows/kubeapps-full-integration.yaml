@@ -1,0 +1,17 @@
+# Copyright 2022 the Kubeapps contributors
+# SPDX-License-Identifier: Apache-2.0
+
+name: Full Integration Flow
+
+on:
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.head_ref || github.ref_name }}_full
+  cancel-in-progress: true
+
+jobs:
+  CI_CD:
+    uses: ./.github/workflows/kubeapps-main-reusable.yaml
+    with:
+      run_gke_tests: true
