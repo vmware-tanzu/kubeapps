@@ -1548,7 +1548,7 @@ var (
 		},
 	}
 
-	redis_summary_failed_3 = &corev1.InstalledPackageSummary{
+	redis_summary_transient = &corev1.InstalledPackageSummary{
 		InstalledPackageRef: my_redis_ref,
 		Name:                "my-redis",
 		IconUrl:             "https://bitnami.com/assets/stacks/redis/img/redis-stack-220x234.png",
@@ -1562,8 +1562,9 @@ var (
 		PkgDisplayName:   "redis",
 		ShortDescription: "Open source, advanced key-value store. It is often referred to as a data structure server since keys can contain strings, hashes, lists, sets and sorted sets.",
 		Status: &corev1.InstalledPackageStatus{
-			Ready:  false,
-			Reason: corev1.InstalledPackageStatus_STATUS_REASON_UNSPECIFIED,
+			Ready:      false,
+			Reason:     corev1.InstalledPackageStatus_STATUS_REASON_UNSPECIFIED,
+			UserReason: "Flux HelmRelease resource is in a transient state",
 		},
 		LatestVersion: &corev1.PackageAppVersion{
 			PkgVersion: "14.4.0",
@@ -1841,7 +1842,7 @@ var (
 		},
 	}
 
-	redis_existing_spec_failed_3 = testSpecGetInstalledPackages{
+	redis_existing_spec_transient = testSpecGetInstalledPackages{
 		repoName:             "bitnami-1",
 		repoNamespace:        "default",
 		repoIndex:            testYaml("redis-many-versions.yaml"),

@@ -586,7 +586,9 @@ func isHelmReleaseReady(rel helmv2.HelmRelease) (ready bool, status corev1.Insta
 		// observedGeneration represents the .metadata.generation that the condition was set based upon.
 		// For instance, if .metadata.generation is currently 12, but the .status.conditions[x].observedGeneration is 9, the condition is out of date
 		// with respect to the current state of the instance.
-		return false, corev1.InstalledPackageStatus_STATUS_REASON_UNSPECIFIED, ""
+		return false,
+			corev1.InstalledPackageStatus_STATUS_REASON_UNSPECIFIED,
+			"Flux HelmRelease resource is in a transient state"
 	}
 
 	isInstallFailed := false

@@ -93,12 +93,12 @@ func TestGetInstalledPackageSummariesWithoutPagination(t *testing.T) {
 				Context: &corev1.Context{Namespace: "test"},
 			},
 			existingObjs: []testSpecGetInstalledPackages{
-				redis_existing_spec_failed_3,
+				redis_existing_spec_transient,
 			},
 			expectedStatusCode: codes.OK,
 			expectedResponse: &corev1.GetInstalledPackageSummariesResponse{
 				InstalledPackageSummaries: []*corev1.InstalledPackageSummary{
-					redis_summary_failed_3,
+					redis_summary_transient,
 				},
 			},
 		},
