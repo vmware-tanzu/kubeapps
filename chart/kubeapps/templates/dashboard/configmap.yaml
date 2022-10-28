@@ -1,4 +1,3 @@
-{{- if .Values.dashboard.enabled -}}
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -85,4 +84,3 @@ data:
       "skipAvailablePackageDetails": {{ .Values.dashboard.skipAvailablePackageDetails }},
       "createNamespaceLabels": {{ .Values.dashboard.createNamespaceLabels | toJson }}
     }
-{{- end -}}
