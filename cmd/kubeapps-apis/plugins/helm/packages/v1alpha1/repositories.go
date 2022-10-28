@@ -5,6 +5,8 @@ package main
 
 import (
 	"context"
+	"fmt"
+	"github.com/vmware-tanzu/kubeapps/cmd/apprepository-controller/pkg/apis/apprepository"
 	apprepov1alpha1 "github.com/vmware-tanzu/kubeapps/cmd/apprepository-controller/pkg/apis/apprepository/v1alpha1"
 	corev1 "github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
 	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/plugins/helm/packages/v1alpha1"
@@ -14,6 +16,7 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/anypb"
+	authorizationapi "k8s.io/api/authorization/v1"
 	k8scorev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -23,6 +26,7 @@ import (
 	"k8s.io/client-go/kubernetes"
 	log "k8s.io/klog/v2"
 	"k8s.io/utils/strings/slices"
+	"sync"
 )
 
 const (
@@ -32,6 +36,14 @@ const (
 	AppRepositoryResource = "apprepositories"
 	AppRepositoryKind     = "AppRepository"
 )
+
+var AccessVerbs = []string{
+	"create",
+	"update",
+	"delete",
+	"get",
+	"list",
+}
 
 type HelmRepository struct {
 	cluster      string
@@ -588,4 +600,79 @@ func (s *Server) deleteRepo(ctx context.Context, cluster string, repoRef *corev1
 		}
 		return nil
 	}
+}
+
+func (s *Server) GetPackageRepositoryPermissions(ctx context.Context, request *corev1.GetPackageRepositoryPermissionsRequest) (*corev1.GetPackageRepositoryPermissionsResponse, error) {
+	log.Infof("+helm GetPackageRepositoryPermissions [%v]", request)
+
+	cluster := request.GetContext().GetCluster()
+	typedClient, err := s.clientGetter.Typed(ctx, cluster)
+	if err != nil {
+		return nil, err
+	}
+
+	permissions := &corev1.PackageRepositoriesPermissions{
+		Plugin: GetPluginDetail(),
+	}
+
+	// Global permissions
+	globalPermissions, err := packageRepositoryPermissions(ctx, typedClient, "")
+	if err != nil {
+		return nil, err
+	}
+	permissions.Global = globalPermissions
+
+	// Namespace permissions
+	if request.GetContext().GetNamespace() != "" {
+		namespacePermissions, err := packageRepositoryPermissions(ctx, typedClient, "")
+		if err != nil {
+			return nil, err
+		}
+		permissions.Namespace = namespacePermissions
+	}
+
+	return &corev1.GetPackageRepositoryPermissionsResponse{
+		Permissions: []*corev1.PackageRepositoriesPermissions{permissions},
+	}, nil
+}
+
+func packageRepositoryPermissions(ctx context.Context, client kubernetes.Interface, namespace string) (map[string]bool, error) {
+	var wg sync.WaitGroup
+	var permission = sync.Map{}
+	for _, verb := range AccessVerbs {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+
+			response, err := packageRepositoryAccessReview(ctx, client, verb, namespace)
+			if err != nil {
+				log.Errorf("+helm error finding AppRepository permissions for verb %s in global namespace", verb, err)
+				return
+			}
+			permission.Store(verb, response.Status.Allowed)
+		}()
+	}
+	wg.Wait()
+
+	// Convert to regular map
+	m := make(map[string]bool)
+	permission.Range(func(key, value interface{}) bool {
+		m[fmt.Sprint(key)] = value.(bool)
+		return true
+	})
+
+	return m, nil
+}
+
+func packageRepositoryAccessReview(ctx context.Context, client kubernetes.Interface, verb, namespace string) (*authorizationapi.SelfSubjectAccessReview, error) {
+	return client.AuthorizationV1().SelfSubjectAccessReviews().Create(ctx, &authorizationapi.SelfSubjectAccessReview{
+		Spec: authorizationapi.SelfSubjectAccessReviewSpec{
+			ResourceAttributes: &authorizationapi.ResourceAttributes{
+				Group:     apprepository.GroupName,
+				Resource:  AppRepositoryKind,
+				Verb:      verb,
+				Namespace: namespace,
+			},
+		},
+	}, metav1.CreateOptions{})
 }

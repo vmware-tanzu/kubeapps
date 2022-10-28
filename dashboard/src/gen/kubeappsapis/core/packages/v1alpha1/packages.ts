@@ -309,7 +309,8 @@ export interface UpdateInstalledPackageResponse {
  *
  * Response for DeleteInstalledPackage
  */
-export interface DeleteInstalledPackageResponse {}
+export interface DeleteInstalledPackageResponse {
+}
 
 /**
  * GetInstalledPackageResourceRefsResponse
@@ -870,9 +871,7 @@ export enum InstalledPackageStatus_StatusReason {
   UNRECOGNIZED = -1,
 }
 
-export function installedPackageStatus_StatusReasonFromJSON(
-  object: any,
-): InstalledPackageStatus_StatusReason {
+export function installedPackageStatus_StatusReasonFromJSON(object: any): InstalledPackageStatus_StatusReason {
   switch (object) {
     case 0:
     case "STATUS_REASON_UNSPECIFIED":
@@ -896,9 +895,7 @@ export function installedPackageStatus_StatusReasonFromJSON(
   }
 }
 
-export function installedPackageStatus_StatusReasonToJSON(
-  object: InstalledPackageStatus_StatusReason,
-): string {
+export function installedPackageStatus_StatusReasonToJSON(object: InstalledPackageStatus_StatusReason): string {
   switch (object) {
     case InstalledPackageStatus_StatusReason.STATUS_REASON_UNSPECIFIED:
       return "STATUS_REASON_UNSPECIFIED";
@@ -1002,10 +999,7 @@ function createBaseGetAvailablePackageSummariesRequest(): GetAvailablePackageSum
 }
 
 export const GetAvailablePackageSummariesRequest = {
-  encode(
-    message: GetAvailablePackageSummariesRequest,
-    writer: _m0.Writer = _m0.Writer.create(),
-  ): _m0.Writer {
+  encode(message: GetAvailablePackageSummariesRequest, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
     if (message.context !== undefined) {
       Context.encode(message.context, writer.uint32(10).fork()).ldelim();
     }
@@ -1045,9 +1039,7 @@ export const GetAvailablePackageSummariesRequest = {
   fromJSON(object: any): GetAvailablePackageSummariesRequest {
     return {
       context: isSet(object.context) ? Context.fromJSON(object.context) : undefined,
-      filterOptions: isSet(object.filterOptions)
-        ? FilterOptions.fromJSON(object.filterOptions)
-        : undefined,
+      filterOptions: isSet(object.filterOptions) ? FilterOptions.fromJSON(object.filterOptions) : undefined,
       paginationOptions: isSet(object.paginationOptions)
         ? PaginationOptions.fromJSON(object.paginationOptions)
         : undefined,
@@ -1056,16 +1048,12 @@ export const GetAvailablePackageSummariesRequest = {
 
   toJSON(message: GetAvailablePackageSummariesRequest): unknown {
     const obj: any = {};
-    message.context !== undefined &&
-      (obj.context = message.context ? Context.toJSON(message.context) : undefined);
+    message.context !== undefined && (obj.context = message.context ? Context.toJSON(message.context) : undefined);
     message.filterOptions !== undefined &&
-      (obj.filterOptions = message.filterOptions
-        ? FilterOptions.toJSON(message.filterOptions)
-        : undefined);
-    message.paginationOptions !== undefined &&
-      (obj.paginationOptions = message.paginationOptions
-        ? PaginationOptions.toJSON(message.paginationOptions)
-        : undefined);
+      (obj.filterOptions = message.filterOptions ? FilterOptions.toJSON(message.filterOptions) : undefined);
+    message.paginationOptions !== undefined && (obj.paginationOptions = message.paginationOptions
+      ? PaginationOptions.toJSON(message.paginationOptions)
+      : undefined);
     return obj;
   },
 
@@ -1073,18 +1061,15 @@ export const GetAvailablePackageSummariesRequest = {
     object: I,
   ): GetAvailablePackageSummariesRequest {
     const message = createBaseGetAvailablePackageSummariesRequest();
-    message.context =
-      object.context !== undefined && object.context !== null
-        ? Context.fromPartial(object.context)
-        : undefined;
-    message.filterOptions =
-      object.filterOptions !== undefined && object.filterOptions !== null
-        ? FilterOptions.fromPartial(object.filterOptions)
-        : undefined;
-    message.paginationOptions =
-      object.paginationOptions !== undefined && object.paginationOptions !== null
-        ? PaginationOptions.fromPartial(object.paginationOptions)
-        : undefined;
+    message.context = (object.context !== undefined && object.context !== null)
+      ? Context.fromPartial(object.context)
+      : undefined;
+    message.filterOptions = (object.filterOptions !== undefined && object.filterOptions !== null)
+      ? FilterOptions.fromPartial(object.filterOptions)
+      : undefined;
+    message.paginationOptions = (object.paginationOptions !== undefined && object.paginationOptions !== null)
+      ? PaginationOptions.fromPartial(object.paginationOptions)
+      : undefined;
     return message;
   },
 };
@@ -1094,15 +1079,9 @@ function createBaseGetAvailablePackageDetailRequest(): GetAvailablePackageDetail
 }
 
 export const GetAvailablePackageDetailRequest = {
-  encode(
-    message: GetAvailablePackageDetailRequest,
-    writer: _m0.Writer = _m0.Writer.create(),
-  ): _m0.Writer {
+  encode(message: GetAvailablePackageDetailRequest, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
     if (message.availablePackageRef !== undefined) {
-      AvailablePackageReference.encode(
-        message.availablePackageRef,
-        writer.uint32(10).fork(),
-      ).ldelim();
+      AvailablePackageReference.encode(message.availablePackageRef, writer.uint32(10).fork()).ldelim();
     }
     if (message.pkgVersion !== "") {
       writer.uint32(18).string(message.pkgVersion);
@@ -1142,10 +1121,9 @@ export const GetAvailablePackageDetailRequest = {
 
   toJSON(message: GetAvailablePackageDetailRequest): unknown {
     const obj: any = {};
-    message.availablePackageRef !== undefined &&
-      (obj.availablePackageRef = message.availablePackageRef
-        ? AvailablePackageReference.toJSON(message.availablePackageRef)
-        : undefined);
+    message.availablePackageRef !== undefined && (obj.availablePackageRef = message.availablePackageRef
+      ? AvailablePackageReference.toJSON(message.availablePackageRef)
+      : undefined);
     message.pkgVersion !== undefined && (obj.pkgVersion = message.pkgVersion);
     return obj;
   },
@@ -1154,10 +1132,9 @@ export const GetAvailablePackageDetailRequest = {
     object: I,
   ): GetAvailablePackageDetailRequest {
     const message = createBaseGetAvailablePackageDetailRequest();
-    message.availablePackageRef =
-      object.availablePackageRef !== undefined && object.availablePackageRef !== null
-        ? AvailablePackageReference.fromPartial(object.availablePackageRef)
-        : undefined;
+    message.availablePackageRef = (object.availablePackageRef !== undefined && object.availablePackageRef !== null)
+      ? AvailablePackageReference.fromPartial(object.availablePackageRef)
+      : undefined;
     message.pkgVersion = object.pkgVersion ?? "";
     return message;
   },
@@ -1168,15 +1145,9 @@ function createBaseGetAvailablePackageVersionsRequest(): GetAvailablePackageVers
 }
 
 export const GetAvailablePackageVersionsRequest = {
-  encode(
-    message: GetAvailablePackageVersionsRequest,
-    writer: _m0.Writer = _m0.Writer.create(),
-  ): _m0.Writer {
+  encode(message: GetAvailablePackageVersionsRequest, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
     if (message.availablePackageRef !== undefined) {
-      AvailablePackageReference.encode(
-        message.availablePackageRef,
-        writer.uint32(10).fork(),
-      ).ldelim();
+      AvailablePackageReference.encode(message.availablePackageRef, writer.uint32(10).fork()).ldelim();
     }
     if (message.pkgVersion !== "") {
       writer.uint32(18).string(message.pkgVersion);
@@ -1216,10 +1187,9 @@ export const GetAvailablePackageVersionsRequest = {
 
   toJSON(message: GetAvailablePackageVersionsRequest): unknown {
     const obj: any = {};
-    message.availablePackageRef !== undefined &&
-      (obj.availablePackageRef = message.availablePackageRef
-        ? AvailablePackageReference.toJSON(message.availablePackageRef)
-        : undefined);
+    message.availablePackageRef !== undefined && (obj.availablePackageRef = message.availablePackageRef
+      ? AvailablePackageReference.toJSON(message.availablePackageRef)
+      : undefined);
     message.pkgVersion !== undefined && (obj.pkgVersion = message.pkgVersion);
     return obj;
   },
@@ -1228,10 +1198,9 @@ export const GetAvailablePackageVersionsRequest = {
     object: I,
   ): GetAvailablePackageVersionsRequest {
     const message = createBaseGetAvailablePackageVersionsRequest();
-    message.availablePackageRef =
-      object.availablePackageRef !== undefined && object.availablePackageRef !== null
-        ? AvailablePackageReference.fromPartial(object.availablePackageRef)
-        : undefined;
+    message.availablePackageRef = (object.availablePackageRef !== undefined && object.availablePackageRef !== null)
+      ? AvailablePackageReference.fromPartial(object.availablePackageRef)
+      : undefined;
     message.pkgVersion = object.pkgVersion ?? "";
     return message;
   },
@@ -1242,10 +1211,7 @@ function createBaseGetInstalledPackageSummariesRequest(): GetInstalledPackageSum
 }
 
 export const GetInstalledPackageSummariesRequest = {
-  encode(
-    message: GetInstalledPackageSummariesRequest,
-    writer: _m0.Writer = _m0.Writer.create(),
-  ): _m0.Writer {
+  encode(message: GetInstalledPackageSummariesRequest, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
     if (message.context !== undefined) {
       Context.encode(message.context, writer.uint32(10).fork()).ldelim();
     }
@@ -1287,12 +1253,10 @@ export const GetInstalledPackageSummariesRequest = {
 
   toJSON(message: GetInstalledPackageSummariesRequest): unknown {
     const obj: any = {};
-    message.context !== undefined &&
-      (obj.context = message.context ? Context.toJSON(message.context) : undefined);
-    message.paginationOptions !== undefined &&
-      (obj.paginationOptions = message.paginationOptions
-        ? PaginationOptions.toJSON(message.paginationOptions)
-        : undefined);
+    message.context !== undefined && (obj.context = message.context ? Context.toJSON(message.context) : undefined);
+    message.paginationOptions !== undefined && (obj.paginationOptions = message.paginationOptions
+      ? PaginationOptions.toJSON(message.paginationOptions)
+      : undefined);
     return obj;
   },
 
@@ -1300,14 +1264,12 @@ export const GetInstalledPackageSummariesRequest = {
     object: I,
   ): GetInstalledPackageSummariesRequest {
     const message = createBaseGetInstalledPackageSummariesRequest();
-    message.context =
-      object.context !== undefined && object.context !== null
-        ? Context.fromPartial(object.context)
-        : undefined;
-    message.paginationOptions =
-      object.paginationOptions !== undefined && object.paginationOptions !== null
-        ? PaginationOptions.fromPartial(object.paginationOptions)
-        : undefined;
+    message.context = (object.context !== undefined && object.context !== null)
+      ? Context.fromPartial(object.context)
+      : undefined;
+    message.paginationOptions = (object.paginationOptions !== undefined && object.paginationOptions !== null)
+      ? PaginationOptions.fromPartial(object.paginationOptions)
+      : undefined;
     return message;
   },
 };
@@ -1317,15 +1279,9 @@ function createBaseGetInstalledPackageDetailRequest(): GetInstalledPackageDetail
 }
 
 export const GetInstalledPackageDetailRequest = {
-  encode(
-    message: GetInstalledPackageDetailRequest,
-    writer: _m0.Writer = _m0.Writer.create(),
-  ): _m0.Writer {
+  encode(message: GetInstalledPackageDetailRequest, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
     if (message.installedPackageRef !== undefined) {
-      InstalledPackageReference.encode(
-        message.installedPackageRef,
-        writer.uint32(10).fork(),
-      ).ldelim();
+      InstalledPackageReference.encode(message.installedPackageRef, writer.uint32(10).fork()).ldelim();
     }
     return writer;
   },
@@ -1358,10 +1314,9 @@ export const GetInstalledPackageDetailRequest = {
 
   toJSON(message: GetInstalledPackageDetailRequest): unknown {
     const obj: any = {};
-    message.installedPackageRef !== undefined &&
-      (obj.installedPackageRef = message.installedPackageRef
-        ? InstalledPackageReference.toJSON(message.installedPackageRef)
-        : undefined);
+    message.installedPackageRef !== undefined && (obj.installedPackageRef = message.installedPackageRef
+      ? InstalledPackageReference.toJSON(message.installedPackageRef)
+      : undefined);
     return obj;
   },
 
@@ -1369,10 +1324,9 @@ export const GetInstalledPackageDetailRequest = {
     object: I,
   ): GetInstalledPackageDetailRequest {
     const message = createBaseGetInstalledPackageDetailRequest();
-    message.installedPackageRef =
-      object.installedPackageRef !== undefined && object.installedPackageRef !== null
-        ? InstalledPackageReference.fromPartial(object.installedPackageRef)
-        : undefined;
+    message.installedPackageRef = (object.installedPackageRef !== undefined && object.installedPackageRef !== null)
+      ? InstalledPackageReference.fromPartial(object.installedPackageRef)
+      : undefined;
     return message;
   },
 };
@@ -1389,15 +1343,9 @@ function createBaseCreateInstalledPackageRequest(): CreateInstalledPackageReques
 }
 
 export const CreateInstalledPackageRequest = {
-  encode(
-    message: CreateInstalledPackageRequest,
-    writer: _m0.Writer = _m0.Writer.create(),
-  ): _m0.Writer {
+  encode(message: CreateInstalledPackageRequest, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
     if (message.availablePackageRef !== undefined) {
-      AvailablePackageReference.encode(
-        message.availablePackageRef,
-        writer.uint32(10).fork(),
-      ).ldelim();
+      AvailablePackageReference.encode(message.availablePackageRef, writer.uint32(10).fork()).ldelim();
     }
     if (message.targetContext !== undefined) {
       Context.encode(message.targetContext, writer.uint32(18).fork()).ldelim();
@@ -1412,10 +1360,7 @@ export const CreateInstalledPackageRequest = {
       writer.uint32(42).string(message.values);
     }
     if (message.reconciliationOptions !== undefined) {
-      ReconciliationOptions.encode(
-        message.reconciliationOptions,
-        writer.uint32(50).fork(),
-      ).ldelim();
+      ReconciliationOptions.encode(message.reconciliationOptions, writer.uint32(50).fork()).ldelim();
     }
     return writer;
   },
@@ -1458,9 +1403,7 @@ export const CreateInstalledPackageRequest = {
       availablePackageRef: isSet(object.availablePackageRef)
         ? AvailablePackageReference.fromJSON(object.availablePackageRef)
         : undefined,
-      targetContext: isSet(object.targetContext)
-        ? Context.fromJSON(object.targetContext)
-        : undefined,
+      targetContext: isSet(object.targetContext) ? Context.fromJSON(object.targetContext) : undefined,
       name: isSet(object.name) ? String(object.name) : "",
       pkgVersionReference: isSet(object.pkgVersionReference)
         ? VersionReference.fromJSON(object.pkgVersionReference)
@@ -1474,24 +1417,19 @@ export const CreateInstalledPackageRequest = {
 
   toJSON(message: CreateInstalledPackageRequest): unknown {
     const obj: any = {};
-    message.availablePackageRef !== undefined &&
-      (obj.availablePackageRef = message.availablePackageRef
-        ? AvailablePackageReference.toJSON(message.availablePackageRef)
-        : undefined);
+    message.availablePackageRef !== undefined && (obj.availablePackageRef = message.availablePackageRef
+      ? AvailablePackageReference.toJSON(message.availablePackageRef)
+      : undefined);
     message.targetContext !== undefined &&
-      (obj.targetContext = message.targetContext
-        ? Context.toJSON(message.targetContext)
-        : undefined);
+      (obj.targetContext = message.targetContext ? Context.toJSON(message.targetContext) : undefined);
     message.name !== undefined && (obj.name = message.name);
-    message.pkgVersionReference !== undefined &&
-      (obj.pkgVersionReference = message.pkgVersionReference
-        ? VersionReference.toJSON(message.pkgVersionReference)
-        : undefined);
+    message.pkgVersionReference !== undefined && (obj.pkgVersionReference = message.pkgVersionReference
+      ? VersionReference.toJSON(message.pkgVersionReference)
+      : undefined);
     message.values !== undefined && (obj.values = message.values);
-    message.reconciliationOptions !== undefined &&
-      (obj.reconciliationOptions = message.reconciliationOptions
-        ? ReconciliationOptions.toJSON(message.reconciliationOptions)
-        : undefined);
+    message.reconciliationOptions !== undefined && (obj.reconciliationOptions = message.reconciliationOptions
+      ? ReconciliationOptions.toJSON(message.reconciliationOptions)
+      : undefined);
     return obj;
   },
 
@@ -1499,22 +1437,19 @@ export const CreateInstalledPackageRequest = {
     object: I,
   ): CreateInstalledPackageRequest {
     const message = createBaseCreateInstalledPackageRequest();
-    message.availablePackageRef =
-      object.availablePackageRef !== undefined && object.availablePackageRef !== null
-        ? AvailablePackageReference.fromPartial(object.availablePackageRef)
-        : undefined;
-    message.targetContext =
-      object.targetContext !== undefined && object.targetContext !== null
-        ? Context.fromPartial(object.targetContext)
-        : undefined;
+    message.availablePackageRef = (object.availablePackageRef !== undefined && object.availablePackageRef !== null)
+      ? AvailablePackageReference.fromPartial(object.availablePackageRef)
+      : undefined;
+    message.targetContext = (object.targetContext !== undefined && object.targetContext !== null)
+      ? Context.fromPartial(object.targetContext)
+      : undefined;
     message.name = object.name ?? "";
-    message.pkgVersionReference =
-      object.pkgVersionReference !== undefined && object.pkgVersionReference !== null
-        ? VersionReference.fromPartial(object.pkgVersionReference)
-        : undefined;
+    message.pkgVersionReference = (object.pkgVersionReference !== undefined && object.pkgVersionReference !== null)
+      ? VersionReference.fromPartial(object.pkgVersionReference)
+      : undefined;
     message.values = object.values ?? "";
     message.reconciliationOptions =
-      object.reconciliationOptions !== undefined && object.reconciliationOptions !== null
+      (object.reconciliationOptions !== undefined && object.reconciliationOptions !== null)
         ? ReconciliationOptions.fromPartial(object.reconciliationOptions)
         : undefined;
     return message;
@@ -1531,15 +1466,9 @@ function createBaseUpdateInstalledPackageRequest(): UpdateInstalledPackageReques
 }
 
 export const UpdateInstalledPackageRequest = {
-  encode(
-    message: UpdateInstalledPackageRequest,
-    writer: _m0.Writer = _m0.Writer.create(),
-  ): _m0.Writer {
+  encode(message: UpdateInstalledPackageRequest, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
     if (message.installedPackageRef !== undefined) {
-      InstalledPackageReference.encode(
-        message.installedPackageRef,
-        writer.uint32(10).fork(),
-      ).ldelim();
+      InstalledPackageReference.encode(message.installedPackageRef, writer.uint32(10).fork()).ldelim();
     }
     if (message.pkgVersionReference !== undefined) {
       VersionReference.encode(message.pkgVersionReference, writer.uint32(18).fork()).ldelim();
@@ -1548,10 +1477,7 @@ export const UpdateInstalledPackageRequest = {
       writer.uint32(26).string(message.values);
     }
     if (message.reconciliationOptions !== undefined) {
-      ReconciliationOptions.encode(
-        message.reconciliationOptions,
-        writer.uint32(34).fork(),
-      ).ldelim();
+      ReconciliationOptions.encode(message.reconciliationOptions, writer.uint32(34).fork()).ldelim();
     }
     return writer;
   },
@@ -1600,19 +1526,16 @@ export const UpdateInstalledPackageRequest = {
 
   toJSON(message: UpdateInstalledPackageRequest): unknown {
     const obj: any = {};
-    message.installedPackageRef !== undefined &&
-      (obj.installedPackageRef = message.installedPackageRef
-        ? InstalledPackageReference.toJSON(message.installedPackageRef)
-        : undefined);
-    message.pkgVersionReference !== undefined &&
-      (obj.pkgVersionReference = message.pkgVersionReference
-        ? VersionReference.toJSON(message.pkgVersionReference)
-        : undefined);
+    message.installedPackageRef !== undefined && (obj.installedPackageRef = message.installedPackageRef
+      ? InstalledPackageReference.toJSON(message.installedPackageRef)
+      : undefined);
+    message.pkgVersionReference !== undefined && (obj.pkgVersionReference = message.pkgVersionReference
+      ? VersionReference.toJSON(message.pkgVersionReference)
+      : undefined);
     message.values !== undefined && (obj.values = message.values);
-    message.reconciliationOptions !== undefined &&
-      (obj.reconciliationOptions = message.reconciliationOptions
-        ? ReconciliationOptions.toJSON(message.reconciliationOptions)
-        : undefined);
+    message.reconciliationOptions !== undefined && (obj.reconciliationOptions = message.reconciliationOptions
+      ? ReconciliationOptions.toJSON(message.reconciliationOptions)
+      : undefined);
     return obj;
   },
 
@@ -1620,17 +1543,15 @@ export const UpdateInstalledPackageRequest = {
     object: I,
   ): UpdateInstalledPackageRequest {
     const message = createBaseUpdateInstalledPackageRequest();
-    message.installedPackageRef =
-      object.installedPackageRef !== undefined && object.installedPackageRef !== null
-        ? InstalledPackageReference.fromPartial(object.installedPackageRef)
-        : undefined;
-    message.pkgVersionReference =
-      object.pkgVersionReference !== undefined && object.pkgVersionReference !== null
-        ? VersionReference.fromPartial(object.pkgVersionReference)
-        : undefined;
+    message.installedPackageRef = (object.installedPackageRef !== undefined && object.installedPackageRef !== null)
+      ? InstalledPackageReference.fromPartial(object.installedPackageRef)
+      : undefined;
+    message.pkgVersionReference = (object.pkgVersionReference !== undefined && object.pkgVersionReference !== null)
+      ? VersionReference.fromPartial(object.pkgVersionReference)
+      : undefined;
     message.values = object.values ?? "";
     message.reconciliationOptions =
-      object.reconciliationOptions !== undefined && object.reconciliationOptions !== null
+      (object.reconciliationOptions !== undefined && object.reconciliationOptions !== null)
         ? ReconciliationOptions.fromPartial(object.reconciliationOptions)
         : undefined;
     return message;
@@ -1642,15 +1563,9 @@ function createBaseDeleteInstalledPackageRequest(): DeleteInstalledPackageReques
 }
 
 export const DeleteInstalledPackageRequest = {
-  encode(
-    message: DeleteInstalledPackageRequest,
-    writer: _m0.Writer = _m0.Writer.create(),
-  ): _m0.Writer {
+  encode(message: DeleteInstalledPackageRequest, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
     if (message.installedPackageRef !== undefined) {
-      InstalledPackageReference.encode(
-        message.installedPackageRef,
-        writer.uint32(10).fork(),
-      ).ldelim();
+      InstalledPackageReference.encode(message.installedPackageRef, writer.uint32(10).fork()).ldelim();
     }
     return writer;
   },
@@ -1683,10 +1598,9 @@ export const DeleteInstalledPackageRequest = {
 
   toJSON(message: DeleteInstalledPackageRequest): unknown {
     const obj: any = {};
-    message.installedPackageRef !== undefined &&
-      (obj.installedPackageRef = message.installedPackageRef
-        ? InstalledPackageReference.toJSON(message.installedPackageRef)
-        : undefined);
+    message.installedPackageRef !== undefined && (obj.installedPackageRef = message.installedPackageRef
+      ? InstalledPackageReference.toJSON(message.installedPackageRef)
+      : undefined);
     return obj;
   },
 
@@ -1694,10 +1608,9 @@ export const DeleteInstalledPackageRequest = {
     object: I,
   ): DeleteInstalledPackageRequest {
     const message = createBaseDeleteInstalledPackageRequest();
-    message.installedPackageRef =
-      object.installedPackageRef !== undefined && object.installedPackageRef !== null
-        ? InstalledPackageReference.fromPartial(object.installedPackageRef)
-        : undefined;
+    message.installedPackageRef = (object.installedPackageRef !== undefined && object.installedPackageRef !== null)
+      ? InstalledPackageReference.fromPartial(object.installedPackageRef)
+      : undefined;
     return message;
   },
 };
@@ -1707,15 +1620,9 @@ function createBaseGetInstalledPackageResourceRefsRequest(): GetInstalledPackage
 }
 
 export const GetInstalledPackageResourceRefsRequest = {
-  encode(
-    message: GetInstalledPackageResourceRefsRequest,
-    writer: _m0.Writer = _m0.Writer.create(),
-  ): _m0.Writer {
+  encode(message: GetInstalledPackageResourceRefsRequest, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
     if (message.installedPackageRef !== undefined) {
-      InstalledPackageReference.encode(
-        message.installedPackageRef,
-        writer.uint32(10).fork(),
-      ).ldelim();
+      InstalledPackageReference.encode(message.installedPackageRef, writer.uint32(10).fork()).ldelim();
     }
     return writer;
   },
@@ -1748,10 +1655,9 @@ export const GetInstalledPackageResourceRefsRequest = {
 
   toJSON(message: GetInstalledPackageResourceRefsRequest): unknown {
     const obj: any = {};
-    message.installedPackageRef !== undefined &&
-      (obj.installedPackageRef = message.installedPackageRef
-        ? InstalledPackageReference.toJSON(message.installedPackageRef)
-        : undefined);
+    message.installedPackageRef !== undefined && (obj.installedPackageRef = message.installedPackageRef
+      ? InstalledPackageReference.toJSON(message.installedPackageRef)
+      : undefined);
     return obj;
   },
 
@@ -1759,10 +1665,9 @@ export const GetInstalledPackageResourceRefsRequest = {
     object: I,
   ): GetInstalledPackageResourceRefsRequest {
     const message = createBaseGetInstalledPackageResourceRefsRequest();
-    message.installedPackageRef =
-      object.installedPackageRef !== undefined && object.installedPackageRef !== null
-        ? InstalledPackageReference.fromPartial(object.installedPackageRef)
-        : undefined;
+    message.installedPackageRef = (object.installedPackageRef !== undefined && object.installedPackageRef !== null)
+      ? InstalledPackageReference.fromPartial(object.installedPackageRef)
+      : undefined;
     return message;
   },
 };
@@ -1772,10 +1677,7 @@ function createBaseGetAvailablePackageSummariesResponse(): GetAvailablePackageSu
 }
 
 export const GetAvailablePackageSummariesResponse = {
-  encode(
-    message: GetAvailablePackageSummariesResponse,
-    writer: _m0.Writer = _m0.Writer.create(),
-  ): _m0.Writer {
+  encode(message: GetAvailablePackageSummariesResponse, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
     for (const v of message.availablePackageSummaries) {
       AvailablePackageSummary.encode(v!, writer.uint32(10).fork()).ldelim();
     }
@@ -1796,9 +1698,7 @@ export const GetAvailablePackageSummariesResponse = {
       const tag = reader.uint32();
       switch (tag >>> 3) {
         case 1:
-          message.availablePackageSummaries.push(
-            AvailablePackageSummary.decode(reader, reader.uint32()),
-          );
+          message.availablePackageSummaries.push(AvailablePackageSummary.decode(reader, reader.uint32()));
           break;
         case 2:
           message.nextPageToken = reader.string();
@@ -1820,24 +1720,22 @@ export const GetAvailablePackageSummariesResponse = {
         ? object.availablePackageSummaries.map((e: any) => AvailablePackageSummary.fromJSON(e))
         : [],
       nextPageToken: isSet(object.nextPageToken) ? String(object.nextPageToken) : "",
-      categories: Array.isArray(object?.categories)
-        ? object.categories.map((e: any) => String(e))
-        : [],
+      categories: Array.isArray(object?.categories) ? object.categories.map((e: any) => String(e)) : [],
     };
   },
 
   toJSON(message: GetAvailablePackageSummariesResponse): unknown {
     const obj: any = {};
     if (message.availablePackageSummaries) {
-      obj.availablePackageSummaries = message.availablePackageSummaries.map(e =>
-        e ? AvailablePackageSummary.toJSON(e) : undefined,
+      obj.availablePackageSummaries = message.availablePackageSummaries.map((e) =>
+        e ? AvailablePackageSummary.toJSON(e) : undefined
       );
     } else {
       obj.availablePackageSummaries = [];
     }
     message.nextPageToken !== undefined && (obj.nextPageToken = message.nextPageToken);
     if (message.categories) {
-      obj.categories = message.categories.map(e => e);
+      obj.categories = message.categories.map((e) => e);
     } else {
       obj.categories = [];
     }
@@ -1849,9 +1747,9 @@ export const GetAvailablePackageSummariesResponse = {
   ): GetAvailablePackageSummariesResponse {
     const message = createBaseGetAvailablePackageSummariesResponse();
     message.availablePackageSummaries =
-      object.availablePackageSummaries?.map(e => AvailablePackageSummary.fromPartial(e)) || [];
+      object.availablePackageSummaries?.map((e) => AvailablePackageSummary.fromPartial(e)) || [];
     message.nextPageToken = object.nextPageToken ?? "";
-    message.categories = object.categories?.map(e => e) || [];
+    message.categories = object.categories?.map((e) => e) || [];
     return message;
   },
 };
@@ -1861,15 +1759,9 @@ function createBaseGetAvailablePackageDetailResponse(): GetAvailablePackageDetai
 }
 
 export const GetAvailablePackageDetailResponse = {
-  encode(
-    message: GetAvailablePackageDetailResponse,
-    writer: _m0.Writer = _m0.Writer.create(),
-  ): _m0.Writer {
+  encode(message: GetAvailablePackageDetailResponse, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
     if (message.availablePackageDetail !== undefined) {
-      AvailablePackageDetail.encode(
-        message.availablePackageDetail,
-        writer.uint32(10).fork(),
-      ).ldelim();
+      AvailablePackageDetail.encode(message.availablePackageDetail, writer.uint32(10).fork()).ldelim();
     }
     return writer;
   },
@@ -1902,10 +1794,9 @@ export const GetAvailablePackageDetailResponse = {
 
   toJSON(message: GetAvailablePackageDetailResponse): unknown {
     const obj: any = {};
-    message.availablePackageDetail !== undefined &&
-      (obj.availablePackageDetail = message.availablePackageDetail
-        ? AvailablePackageDetail.toJSON(message.availablePackageDetail)
-        : undefined);
+    message.availablePackageDetail !== undefined && (obj.availablePackageDetail = message.availablePackageDetail
+      ? AvailablePackageDetail.toJSON(message.availablePackageDetail)
+      : undefined);
     return obj;
   },
 
@@ -1914,7 +1805,7 @@ export const GetAvailablePackageDetailResponse = {
   ): GetAvailablePackageDetailResponse {
     const message = createBaseGetAvailablePackageDetailResponse();
     message.availablePackageDetail =
-      object.availablePackageDetail !== undefined && object.availablePackageDetail !== null
+      (object.availablePackageDetail !== undefined && object.availablePackageDetail !== null)
         ? AvailablePackageDetail.fromPartial(object.availablePackageDetail)
         : undefined;
     return message;
@@ -1926,10 +1817,7 @@ function createBaseGetAvailablePackageVersionsResponse(): GetAvailablePackageVer
 }
 
 export const GetAvailablePackageVersionsResponse = {
-  encode(
-    message: GetAvailablePackageVersionsResponse,
-    writer: _m0.Writer = _m0.Writer.create(),
-  ): _m0.Writer {
+  encode(message: GetAvailablePackageVersionsResponse, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
     for (const v of message.packageAppVersions) {
       PackageAppVersion.encode(v!, writer.uint32(10).fork()).ldelim();
     }
@@ -1965,9 +1853,7 @@ export const GetAvailablePackageVersionsResponse = {
   toJSON(message: GetAvailablePackageVersionsResponse): unknown {
     const obj: any = {};
     if (message.packageAppVersions) {
-      obj.packageAppVersions = message.packageAppVersions.map(e =>
-        e ? PackageAppVersion.toJSON(e) : undefined,
-      );
+      obj.packageAppVersions = message.packageAppVersions.map((e) => e ? PackageAppVersion.toJSON(e) : undefined);
     } else {
       obj.packageAppVersions = [];
     }
@@ -1978,8 +1864,7 @@ export const GetAvailablePackageVersionsResponse = {
     object: I,
   ): GetAvailablePackageVersionsResponse {
     const message = createBaseGetAvailablePackageVersionsResponse();
-    message.packageAppVersions =
-      object.packageAppVersions?.map(e => PackageAppVersion.fromPartial(e)) || [];
+    message.packageAppVersions = object.packageAppVersions?.map((e) => PackageAppVersion.fromPartial(e)) || [];
     return message;
   },
 };
@@ -1989,10 +1874,7 @@ function createBaseGetInstalledPackageSummariesResponse(): GetInstalledPackageSu
 }
 
 export const GetInstalledPackageSummariesResponse = {
-  encode(
-    message: GetInstalledPackageSummariesResponse,
-    writer: _m0.Writer = _m0.Writer.create(),
-  ): _m0.Writer {
+  encode(message: GetInstalledPackageSummariesResponse, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
     for (const v of message.installedPackageSummaries) {
       InstalledPackageSummary.encode(v!, writer.uint32(10).fork()).ldelim();
     }
@@ -2010,9 +1892,7 @@ export const GetInstalledPackageSummariesResponse = {
       const tag = reader.uint32();
       switch (tag >>> 3) {
         case 1:
-          message.installedPackageSummaries.push(
-            InstalledPackageSummary.decode(reader, reader.uint32()),
-          );
+          message.installedPackageSummaries.push(InstalledPackageSummary.decode(reader, reader.uint32()));
           break;
         case 2:
           message.nextPageToken = reader.string();
@@ -2037,8 +1917,8 @@ export const GetInstalledPackageSummariesResponse = {
   toJSON(message: GetInstalledPackageSummariesResponse): unknown {
     const obj: any = {};
     if (message.installedPackageSummaries) {
-      obj.installedPackageSummaries = message.installedPackageSummaries.map(e =>
-        e ? InstalledPackageSummary.toJSON(e) : undefined,
+      obj.installedPackageSummaries = message.installedPackageSummaries.map((e) =>
+        e ? InstalledPackageSummary.toJSON(e) : undefined
       );
     } else {
       obj.installedPackageSummaries = [];
@@ -2052,7 +1932,7 @@ export const GetInstalledPackageSummariesResponse = {
   ): GetInstalledPackageSummariesResponse {
     const message = createBaseGetInstalledPackageSummariesResponse();
     message.installedPackageSummaries =
-      object.installedPackageSummaries?.map(e => InstalledPackageSummary.fromPartial(e)) || [];
+      object.installedPackageSummaries?.map((e) => InstalledPackageSummary.fromPartial(e)) || [];
     message.nextPageToken = object.nextPageToken ?? "";
     return message;
   },
@@ -2063,15 +1943,9 @@ function createBaseGetInstalledPackageDetailResponse(): GetInstalledPackageDetai
 }
 
 export const GetInstalledPackageDetailResponse = {
-  encode(
-    message: GetInstalledPackageDetailResponse,
-    writer: _m0.Writer = _m0.Writer.create(),
-  ): _m0.Writer {
+  encode(message: GetInstalledPackageDetailResponse, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
     if (message.installedPackageDetail !== undefined) {
-      InstalledPackageDetail.encode(
-        message.installedPackageDetail,
-        writer.uint32(10).fork(),
-      ).ldelim();
+      InstalledPackageDetail.encode(message.installedPackageDetail, writer.uint32(10).fork()).ldelim();
     }
     return writer;
   },
@@ -2104,10 +1978,9 @@ export const GetInstalledPackageDetailResponse = {
 
   toJSON(message: GetInstalledPackageDetailResponse): unknown {
     const obj: any = {};
-    message.installedPackageDetail !== undefined &&
-      (obj.installedPackageDetail = message.installedPackageDetail
-        ? InstalledPackageDetail.toJSON(message.installedPackageDetail)
-        : undefined);
+    message.installedPackageDetail !== undefined && (obj.installedPackageDetail = message.installedPackageDetail
+      ? InstalledPackageDetail.toJSON(message.installedPackageDetail)
+      : undefined);
     return obj;
   },
 
@@ -2116,7 +1989,7 @@ export const GetInstalledPackageDetailResponse = {
   ): GetInstalledPackageDetailResponse {
     const message = createBaseGetInstalledPackageDetailResponse();
     message.installedPackageDetail =
-      object.installedPackageDetail !== undefined && object.installedPackageDetail !== null
+      (object.installedPackageDetail !== undefined && object.installedPackageDetail !== null)
         ? InstalledPackageDetail.fromPartial(object.installedPackageDetail)
         : undefined;
     return message;
@@ -2128,15 +2001,9 @@ function createBaseCreateInstalledPackageResponse(): CreateInstalledPackageRespo
 }
 
 export const CreateInstalledPackageResponse = {
-  encode(
-    message: CreateInstalledPackageResponse,
-    writer: _m0.Writer = _m0.Writer.create(),
-  ): _m0.Writer {
+  encode(message: CreateInstalledPackageResponse, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
     if (message.installedPackageRef !== undefined) {
-      InstalledPackageReference.encode(
-        message.installedPackageRef,
-        writer.uint32(10).fork(),
-      ).ldelim();
+      InstalledPackageReference.encode(message.installedPackageRef, writer.uint32(10).fork()).ldelim();
     }
     return writer;
   },
@@ -2169,10 +2036,9 @@ export const CreateInstalledPackageResponse = {
 
   toJSON(message: CreateInstalledPackageResponse): unknown {
     const obj: any = {};
-    message.installedPackageRef !== undefined &&
-      (obj.installedPackageRef = message.installedPackageRef
-        ? InstalledPackageReference.toJSON(message.installedPackageRef)
-        : undefined);
+    message.installedPackageRef !== undefined && (obj.installedPackageRef = message.installedPackageRef
+      ? InstalledPackageReference.toJSON(message.installedPackageRef)
+      : undefined);
     return obj;
   },
 
@@ -2180,10 +2046,9 @@ export const CreateInstalledPackageResponse = {
     object: I,
   ): CreateInstalledPackageResponse {
     const message = createBaseCreateInstalledPackageResponse();
-    message.installedPackageRef =
-      object.installedPackageRef !== undefined && object.installedPackageRef !== null
-        ? InstalledPackageReference.fromPartial(object.installedPackageRef)
-        : undefined;
+    message.installedPackageRef = (object.installedPackageRef !== undefined && object.installedPackageRef !== null)
+      ? InstalledPackageReference.fromPartial(object.installedPackageRef)
+      : undefined;
     return message;
   },
 };
@@ -2193,15 +2058,9 @@ function createBaseUpdateInstalledPackageResponse(): UpdateInstalledPackageRespo
 }
 
 export const UpdateInstalledPackageResponse = {
-  encode(
-    message: UpdateInstalledPackageResponse,
-    writer: _m0.Writer = _m0.Writer.create(),
-  ): _m0.Writer {
+  encode(message: UpdateInstalledPackageResponse, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
     if (message.installedPackageRef !== undefined) {
-      InstalledPackageReference.encode(
-        message.installedPackageRef,
-        writer.uint32(10).fork(),
-      ).ldelim();
+      InstalledPackageReference.encode(message.installedPackageRef, writer.uint32(10).fork()).ldelim();
     }
     return writer;
   },
@@ -2234,10 +2093,9 @@ export const UpdateInstalledPackageResponse = {
 
   toJSON(message: UpdateInstalledPackageResponse): unknown {
     const obj: any = {};
-    message.installedPackageRef !== undefined &&
-      (obj.installedPackageRef = message.installedPackageRef
-        ? InstalledPackageReference.toJSON(message.installedPackageRef)
-        : undefined);
+    message.installedPackageRef !== undefined && (obj.installedPackageRef = message.installedPackageRef
+      ? InstalledPackageReference.toJSON(message.installedPackageRef)
+      : undefined);
     return obj;
   },
 
@@ -2245,10 +2103,9 @@ export const UpdateInstalledPackageResponse = {
     object: I,
   ): UpdateInstalledPackageResponse {
     const message = createBaseUpdateInstalledPackageResponse();
-    message.installedPackageRef =
-      object.installedPackageRef !== undefined && object.installedPackageRef !== null
-        ? InstalledPackageReference.fromPartial(object.installedPackageRef)
-        : undefined;
+    message.installedPackageRef = (object.installedPackageRef !== undefined && object.installedPackageRef !== null)
+      ? InstalledPackageReference.fromPartial(object.installedPackageRef)
+      : undefined;
     return message;
   },
 };
@@ -2286,9 +2143,7 @@ export const DeleteInstalledPackageResponse = {
     return obj;
   },
 
-  fromPartial<I extends Exact<DeepPartial<DeleteInstalledPackageResponse>, I>>(
-    _: I,
-  ): DeleteInstalledPackageResponse {
+  fromPartial<I extends Exact<DeepPartial<DeleteInstalledPackageResponse>, I>>(_: I): DeleteInstalledPackageResponse {
     const message = createBaseDeleteInstalledPackageResponse();
     return message;
   },
@@ -2299,10 +2154,7 @@ function createBaseGetInstalledPackageResourceRefsResponse(): GetInstalledPackag
 }
 
 export const GetInstalledPackageResourceRefsResponse = {
-  encode(
-    message: GetInstalledPackageResourceRefsResponse,
-    writer: _m0.Writer = _m0.Writer.create(),
-  ): _m0.Writer {
+  encode(message: GetInstalledPackageResourceRefsResponse, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
     if (message.context !== undefined) {
       Context.encode(message.context, writer.uint32(10).fork()).ldelim();
     }
@@ -2344,10 +2196,9 @@ export const GetInstalledPackageResourceRefsResponse = {
 
   toJSON(message: GetInstalledPackageResourceRefsResponse): unknown {
     const obj: any = {};
-    message.context !== undefined &&
-      (obj.context = message.context ? Context.toJSON(message.context) : undefined);
+    message.context !== undefined && (obj.context = message.context ? Context.toJSON(message.context) : undefined);
     if (message.resourceRefs) {
-      obj.resourceRefs = message.resourceRefs.map(e => (e ? ResourceRef.toJSON(e) : undefined));
+      obj.resourceRefs = message.resourceRefs.map((e) => e ? ResourceRef.toJSON(e) : undefined);
     } else {
       obj.resourceRefs = [];
     }
@@ -2358,11 +2209,10 @@ export const GetInstalledPackageResourceRefsResponse = {
     object: I,
   ): GetInstalledPackageResourceRefsResponse {
     const message = createBaseGetInstalledPackageResourceRefsResponse();
-    message.context =
-      object.context !== undefined && object.context !== null
-        ? Context.fromPartial(object.context)
-        : undefined;
-    message.resourceRefs = object.resourceRefs?.map(e => ResourceRef.fromPartial(e)) || [];
+    message.context = (object.context !== undefined && object.context !== null)
+      ? Context.fromPartial(object.context)
+      : undefined;
+    message.resourceRefs = object.resourceRefs?.map((e) => ResourceRef.fromPartial(e)) || [];
     return message;
   },
 };
@@ -2382,10 +2232,7 @@ function createBaseAvailablePackageSummary(): AvailablePackageSummary {
 export const AvailablePackageSummary = {
   encode(message: AvailablePackageSummary, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
     if (message.availablePackageRef !== undefined) {
-      AvailablePackageReference.encode(
-        message.availablePackageRef,
-        writer.uint32(10).fork(),
-      ).ldelim();
+      AvailablePackageReference.encode(message.availablePackageRef, writer.uint32(10).fork()).ldelim();
     }
     if (message.name !== "") {
       writer.uint32(18).string(message.name);
@@ -2450,57 +2297,46 @@ export const AvailablePackageSummary = {
         ? AvailablePackageReference.fromJSON(object.availablePackageRef)
         : undefined,
       name: isSet(object.name) ? String(object.name) : "",
-      latestVersion: isSet(object.latestVersion)
-        ? PackageAppVersion.fromJSON(object.latestVersion)
-        : undefined,
+      latestVersion: isSet(object.latestVersion) ? PackageAppVersion.fromJSON(object.latestVersion) : undefined,
       iconUrl: isSet(object.iconUrl) ? String(object.iconUrl) : "",
       displayName: isSet(object.displayName) ? String(object.displayName) : "",
       shortDescription: isSet(object.shortDescription) ? String(object.shortDescription) : "",
-      categories: Array.isArray(object?.categories)
-        ? object.categories.map((e: any) => String(e))
-        : [],
+      categories: Array.isArray(object?.categories) ? object.categories.map((e: any) => String(e)) : [],
     };
   },
 
   toJSON(message: AvailablePackageSummary): unknown {
     const obj: any = {};
-    message.availablePackageRef !== undefined &&
-      (obj.availablePackageRef = message.availablePackageRef
-        ? AvailablePackageReference.toJSON(message.availablePackageRef)
-        : undefined);
+    message.availablePackageRef !== undefined && (obj.availablePackageRef = message.availablePackageRef
+      ? AvailablePackageReference.toJSON(message.availablePackageRef)
+      : undefined);
     message.name !== undefined && (obj.name = message.name);
     message.latestVersion !== undefined &&
-      (obj.latestVersion = message.latestVersion
-        ? PackageAppVersion.toJSON(message.latestVersion)
-        : undefined);
+      (obj.latestVersion = message.latestVersion ? PackageAppVersion.toJSON(message.latestVersion) : undefined);
     message.iconUrl !== undefined && (obj.iconUrl = message.iconUrl);
     message.displayName !== undefined && (obj.displayName = message.displayName);
     message.shortDescription !== undefined && (obj.shortDescription = message.shortDescription);
     if (message.categories) {
-      obj.categories = message.categories.map(e => e);
+      obj.categories = message.categories.map((e) => e);
     } else {
       obj.categories = [];
     }
     return obj;
   },
 
-  fromPartial<I extends Exact<DeepPartial<AvailablePackageSummary>, I>>(
-    object: I,
-  ): AvailablePackageSummary {
+  fromPartial<I extends Exact<DeepPartial<AvailablePackageSummary>, I>>(object: I): AvailablePackageSummary {
     const message = createBaseAvailablePackageSummary();
-    message.availablePackageRef =
-      object.availablePackageRef !== undefined && object.availablePackageRef !== null
-        ? AvailablePackageReference.fromPartial(object.availablePackageRef)
-        : undefined;
+    message.availablePackageRef = (object.availablePackageRef !== undefined && object.availablePackageRef !== null)
+      ? AvailablePackageReference.fromPartial(object.availablePackageRef)
+      : undefined;
     message.name = object.name ?? "";
-    message.latestVersion =
-      object.latestVersion !== undefined && object.latestVersion !== null
-        ? PackageAppVersion.fromPartial(object.latestVersion)
-        : undefined;
+    message.latestVersion = (object.latestVersion !== undefined && object.latestVersion !== null)
+      ? PackageAppVersion.fromPartial(object.latestVersion)
+      : undefined;
     message.iconUrl = object.iconUrl ?? "";
     message.displayName = object.displayName ?? "";
     message.shortDescription = object.shortDescription ?? "";
-    message.categories = object.categories?.map(e => e) || [];
+    message.categories = object.categories?.map((e) => e) || [];
     return message;
   },
 };
@@ -2529,10 +2365,7 @@ function createBaseAvailablePackageDetail(): AvailablePackageDetail {
 export const AvailablePackageDetail = {
   encode(message: AvailablePackageDetail, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
     if (message.availablePackageRef !== undefined) {
-      AvailablePackageReference.encode(
-        message.availablePackageRef,
-        writer.uint32(10).fork(),
-      ).ldelim();
+      AvailablePackageReference.encode(message.availablePackageRef, writer.uint32(10).fork()).ldelim();
     }
     if (message.name !== "") {
       writer.uint32(18).string(message.name);
@@ -2661,25 +2494,18 @@ export const AvailablePackageDetail = {
       readme: isSet(object.readme) ? String(object.readme) : "",
       defaultValues: isSet(object.defaultValues) ? String(object.defaultValues) : "",
       valuesSchema: isSet(object.valuesSchema) ? String(object.valuesSchema) : "",
-      sourceUrls: Array.isArray(object?.sourceUrls)
-        ? object.sourceUrls.map((e: any) => String(e))
-        : [],
-      maintainers: Array.isArray(object?.maintainers)
-        ? object.maintainers.map((e: any) => Maintainer.fromJSON(e))
-        : [],
-      categories: Array.isArray(object?.categories)
-        ? object.categories.map((e: any) => String(e))
-        : [],
+      sourceUrls: Array.isArray(object?.sourceUrls) ? object.sourceUrls.map((e: any) => String(e)) : [],
+      maintainers: Array.isArray(object?.maintainers) ? object.maintainers.map((e: any) => Maintainer.fromJSON(e)) : [],
+      categories: Array.isArray(object?.categories) ? object.categories.map((e: any) => String(e)) : [],
       customDetail: isSet(object.customDetail) ? Any.fromJSON(object.customDetail) : undefined,
     };
   },
 
   toJSON(message: AvailablePackageDetail): unknown {
     const obj: any = {};
-    message.availablePackageRef !== undefined &&
-      (obj.availablePackageRef = message.availablePackageRef
-        ? AvailablePackageReference.toJSON(message.availablePackageRef)
-        : undefined);
+    message.availablePackageRef !== undefined && (obj.availablePackageRef = message.availablePackageRef
+      ? AvailablePackageReference.toJSON(message.availablePackageRef)
+      : undefined);
     message.name !== undefined && (obj.name = message.name);
     message.version !== undefined &&
       (obj.version = message.version ? PackageAppVersion.toJSON(message.version) : undefined);
@@ -2693,17 +2519,17 @@ export const AvailablePackageDetail = {
     message.defaultValues !== undefined && (obj.defaultValues = message.defaultValues);
     message.valuesSchema !== undefined && (obj.valuesSchema = message.valuesSchema);
     if (message.sourceUrls) {
-      obj.sourceUrls = message.sourceUrls.map(e => e);
+      obj.sourceUrls = message.sourceUrls.map((e) => e);
     } else {
       obj.sourceUrls = [];
     }
     if (message.maintainers) {
-      obj.maintainers = message.maintainers.map(e => (e ? Maintainer.toJSON(e) : undefined));
+      obj.maintainers = message.maintainers.map((e) => e ? Maintainer.toJSON(e) : undefined);
     } else {
       obj.maintainers = [];
     }
     if (message.categories) {
-      obj.categories = message.categories.map(e => e);
+      obj.categories = message.categories.map((e) => e);
     } else {
       obj.categories = [];
     }
@@ -2712,19 +2538,15 @@ export const AvailablePackageDetail = {
     return obj;
   },
 
-  fromPartial<I extends Exact<DeepPartial<AvailablePackageDetail>, I>>(
-    object: I,
-  ): AvailablePackageDetail {
+  fromPartial<I extends Exact<DeepPartial<AvailablePackageDetail>, I>>(object: I): AvailablePackageDetail {
     const message = createBaseAvailablePackageDetail();
-    message.availablePackageRef =
-      object.availablePackageRef !== undefined && object.availablePackageRef !== null
-        ? AvailablePackageReference.fromPartial(object.availablePackageRef)
-        : undefined;
+    message.availablePackageRef = (object.availablePackageRef !== undefined && object.availablePackageRef !== null)
+      ? AvailablePackageReference.fromPartial(object.availablePackageRef)
+      : undefined;
     message.name = object.name ?? "";
-    message.version =
-      object.version !== undefined && object.version !== null
-        ? PackageAppVersion.fromPartial(object.version)
-        : undefined;
+    message.version = (object.version !== undefined && object.version !== null)
+      ? PackageAppVersion.fromPartial(object.version)
+      : undefined;
     message.repoUrl = object.repoUrl ?? "";
     message.homeUrl = object.homeUrl ?? "";
     message.iconUrl = object.iconUrl ?? "";
@@ -2734,13 +2556,12 @@ export const AvailablePackageDetail = {
     message.readme = object.readme ?? "";
     message.defaultValues = object.defaultValues ?? "";
     message.valuesSchema = object.valuesSchema ?? "";
-    message.sourceUrls = object.sourceUrls?.map(e => e) || [];
-    message.maintainers = object.maintainers?.map(e => Maintainer.fromPartial(e)) || [];
-    message.categories = object.categories?.map(e => e) || [];
-    message.customDetail =
-      object.customDetail !== undefined && object.customDetail !== null
-        ? Any.fromPartial(object.customDetail)
-        : undefined;
+    message.sourceUrls = object.sourceUrls?.map((e) => e) || [];
+    message.maintainers = object.maintainers?.map((e) => Maintainer.fromPartial(e)) || [];
+    message.categories = object.categories?.map((e) => e) || [];
+    message.customDetail = (object.customDetail !== undefined && object.customDetail !== null)
+      ? Any.fromPartial(object.customDetail)
+      : undefined;
     return message;
   },
 };
@@ -2763,10 +2584,7 @@ function createBaseInstalledPackageSummary(): InstalledPackageSummary {
 export const InstalledPackageSummary = {
   encode(message: InstalledPackageSummary, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
     if (message.installedPackageRef !== undefined) {
-      InstalledPackageReference.encode(
-        message.installedPackageRef,
-        writer.uint32(10).fork(),
-      ).ldelim();
+      InstalledPackageReference.encode(message.installedPackageRef, writer.uint32(10).fork()).ldelim();
     }
     if (message.name !== "") {
       writer.uint32(18).string(message.name);
@@ -2852,85 +2670,67 @@ export const InstalledPackageSummary = {
       pkgVersionReference: isSet(object.pkgVersionReference)
         ? VersionReference.fromJSON(object.pkgVersionReference)
         : undefined,
-      currentVersion: isSet(object.currentVersion)
-        ? PackageAppVersion.fromJSON(object.currentVersion)
-        : undefined,
+      currentVersion: isSet(object.currentVersion) ? PackageAppVersion.fromJSON(object.currentVersion) : undefined,
       iconUrl: isSet(object.iconUrl) ? String(object.iconUrl) : "",
       pkgDisplayName: isSet(object.pkgDisplayName) ? String(object.pkgDisplayName) : "",
       shortDescription: isSet(object.shortDescription) ? String(object.shortDescription) : "",
       latestMatchingVersion: isSet(object.latestMatchingVersion)
         ? PackageAppVersion.fromJSON(object.latestMatchingVersion)
         : undefined,
-      latestVersion: isSet(object.latestVersion)
-        ? PackageAppVersion.fromJSON(object.latestVersion)
-        : undefined,
+      latestVersion: isSet(object.latestVersion) ? PackageAppVersion.fromJSON(object.latestVersion) : undefined,
       status: isSet(object.status) ? InstalledPackageStatus.fromJSON(object.status) : undefined,
     };
   },
 
   toJSON(message: InstalledPackageSummary): unknown {
     const obj: any = {};
-    message.installedPackageRef !== undefined &&
-      (obj.installedPackageRef = message.installedPackageRef
-        ? InstalledPackageReference.toJSON(message.installedPackageRef)
-        : undefined);
+    message.installedPackageRef !== undefined && (obj.installedPackageRef = message.installedPackageRef
+      ? InstalledPackageReference.toJSON(message.installedPackageRef)
+      : undefined);
     message.name !== undefined && (obj.name = message.name);
-    message.pkgVersionReference !== undefined &&
-      (obj.pkgVersionReference = message.pkgVersionReference
-        ? VersionReference.toJSON(message.pkgVersionReference)
-        : undefined);
+    message.pkgVersionReference !== undefined && (obj.pkgVersionReference = message.pkgVersionReference
+      ? VersionReference.toJSON(message.pkgVersionReference)
+      : undefined);
     message.currentVersion !== undefined &&
-      (obj.currentVersion = message.currentVersion
-        ? PackageAppVersion.toJSON(message.currentVersion)
-        : undefined);
+      (obj.currentVersion = message.currentVersion ? PackageAppVersion.toJSON(message.currentVersion) : undefined);
     message.iconUrl !== undefined && (obj.iconUrl = message.iconUrl);
     message.pkgDisplayName !== undefined && (obj.pkgDisplayName = message.pkgDisplayName);
     message.shortDescription !== undefined && (obj.shortDescription = message.shortDescription);
-    message.latestMatchingVersion !== undefined &&
-      (obj.latestMatchingVersion = message.latestMatchingVersion
-        ? PackageAppVersion.toJSON(message.latestMatchingVersion)
-        : undefined);
+    message.latestMatchingVersion !== undefined && (obj.latestMatchingVersion = message.latestMatchingVersion
+      ? PackageAppVersion.toJSON(message.latestMatchingVersion)
+      : undefined);
     message.latestVersion !== undefined &&
-      (obj.latestVersion = message.latestVersion
-        ? PackageAppVersion.toJSON(message.latestVersion)
-        : undefined);
+      (obj.latestVersion = message.latestVersion ? PackageAppVersion.toJSON(message.latestVersion) : undefined);
     message.status !== undefined &&
       (obj.status = message.status ? InstalledPackageStatus.toJSON(message.status) : undefined);
     return obj;
   },
 
-  fromPartial<I extends Exact<DeepPartial<InstalledPackageSummary>, I>>(
-    object: I,
-  ): InstalledPackageSummary {
+  fromPartial<I extends Exact<DeepPartial<InstalledPackageSummary>, I>>(object: I): InstalledPackageSummary {
     const message = createBaseInstalledPackageSummary();
-    message.installedPackageRef =
-      object.installedPackageRef !== undefined && object.installedPackageRef !== null
-        ? InstalledPackageReference.fromPartial(object.installedPackageRef)
-        : undefined;
+    message.installedPackageRef = (object.installedPackageRef !== undefined && object.installedPackageRef !== null)
+      ? InstalledPackageReference.fromPartial(object.installedPackageRef)
+      : undefined;
     message.name = object.name ?? "";
-    message.pkgVersionReference =
-      object.pkgVersionReference !== undefined && object.pkgVersionReference !== null
-        ? VersionReference.fromPartial(object.pkgVersionReference)
-        : undefined;
-    message.currentVersion =
-      object.currentVersion !== undefined && object.currentVersion !== null
-        ? PackageAppVersion.fromPartial(object.currentVersion)
-        : undefined;
+    message.pkgVersionReference = (object.pkgVersionReference !== undefined && object.pkgVersionReference !== null)
+      ? VersionReference.fromPartial(object.pkgVersionReference)
+      : undefined;
+    message.currentVersion = (object.currentVersion !== undefined && object.currentVersion !== null)
+      ? PackageAppVersion.fromPartial(object.currentVersion)
+      : undefined;
     message.iconUrl = object.iconUrl ?? "";
     message.pkgDisplayName = object.pkgDisplayName ?? "";
     message.shortDescription = object.shortDescription ?? "";
     message.latestMatchingVersion =
-      object.latestMatchingVersion !== undefined && object.latestMatchingVersion !== null
+      (object.latestMatchingVersion !== undefined && object.latestMatchingVersion !== null)
         ? PackageAppVersion.fromPartial(object.latestMatchingVersion)
         : undefined;
-    message.latestVersion =
-      object.latestVersion !== undefined && object.latestVersion !== null
-        ? PackageAppVersion.fromPartial(object.latestVersion)
-        : undefined;
-    message.status =
-      object.status !== undefined && object.status !== null
-        ? InstalledPackageStatus.fromPartial(object.status)
-        : undefined;
+    message.latestVersion = (object.latestVersion !== undefined && object.latestVersion !== null)
+      ? PackageAppVersion.fromPartial(object.latestVersion)
+      : undefined;
+    message.status = (object.status !== undefined && object.status !== null)
+      ? InstalledPackageStatus.fromPartial(object.status)
+      : undefined;
     return message;
   },
 };
@@ -2955,10 +2755,7 @@ function createBaseInstalledPackageDetail(): InstalledPackageDetail {
 export const InstalledPackageDetail = {
   encode(message: InstalledPackageDetail, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
     if (message.installedPackageRef !== undefined) {
-      InstalledPackageReference.encode(
-        message.installedPackageRef,
-        writer.uint32(10).fork(),
-      ).ldelim();
+      InstalledPackageReference.encode(message.installedPackageRef, writer.uint32(10).fork()).ldelim();
     }
     if (message.pkgVersionReference !== undefined) {
       VersionReference.encode(message.pkgVersionReference, writer.uint32(18).fork()).ldelim();
@@ -2973,10 +2770,7 @@ export const InstalledPackageDetail = {
       writer.uint32(42).string(message.valuesApplied);
     }
     if (message.reconciliationOptions !== undefined) {
-      ReconciliationOptions.encode(
-        message.reconciliationOptions,
-        writer.uint32(50).fork(),
-      ).ldelim();
+      ReconciliationOptions.encode(message.reconciliationOptions, writer.uint32(50).fork()).ldelim();
     }
     if (message.status !== undefined) {
       InstalledPackageStatus.encode(message.status, writer.uint32(58).fork()).ldelim();
@@ -2985,10 +2779,7 @@ export const InstalledPackageDetail = {
       writer.uint32(66).string(message.postInstallationNotes);
     }
     if (message.availablePackageRef !== undefined) {
-      AvailablePackageReference.encode(
-        message.availablePackageRef,
-        writer.uint32(74).fork(),
-      ).ldelim();
+      AvailablePackageReference.encode(message.availablePackageRef, writer.uint32(74).fork()).ldelim();
     }
     if (message.latestMatchingVersion !== undefined) {
       PackageAppVersion.encode(message.latestMatchingVersion, writer.uint32(82).fork()).ldelim();
@@ -3062,114 +2853,89 @@ export const InstalledPackageDetail = {
         ? VersionReference.fromJSON(object.pkgVersionReference)
         : undefined,
       name: isSet(object.name) ? String(object.name) : "",
-      currentVersion: isSet(object.currentVersion)
-        ? PackageAppVersion.fromJSON(object.currentVersion)
-        : undefined,
+      currentVersion: isSet(object.currentVersion) ? PackageAppVersion.fromJSON(object.currentVersion) : undefined,
       valuesApplied: isSet(object.valuesApplied) ? String(object.valuesApplied) : "",
       reconciliationOptions: isSet(object.reconciliationOptions)
         ? ReconciliationOptions.fromJSON(object.reconciliationOptions)
         : undefined,
       status: isSet(object.status) ? InstalledPackageStatus.fromJSON(object.status) : undefined,
-      postInstallationNotes: isSet(object.postInstallationNotes)
-        ? String(object.postInstallationNotes)
-        : "",
+      postInstallationNotes: isSet(object.postInstallationNotes) ? String(object.postInstallationNotes) : "",
       availablePackageRef: isSet(object.availablePackageRef)
         ? AvailablePackageReference.fromJSON(object.availablePackageRef)
         : undefined,
       latestMatchingVersion: isSet(object.latestMatchingVersion)
         ? PackageAppVersion.fromJSON(object.latestMatchingVersion)
         : undefined,
-      latestVersion: isSet(object.latestVersion)
-        ? PackageAppVersion.fromJSON(object.latestVersion)
-        : undefined,
+      latestVersion: isSet(object.latestVersion) ? PackageAppVersion.fromJSON(object.latestVersion) : undefined,
       customDetail: isSet(object.customDetail) ? Any.fromJSON(object.customDetail) : undefined,
     };
   },
 
   toJSON(message: InstalledPackageDetail): unknown {
     const obj: any = {};
-    message.installedPackageRef !== undefined &&
-      (obj.installedPackageRef = message.installedPackageRef
-        ? InstalledPackageReference.toJSON(message.installedPackageRef)
-        : undefined);
-    message.pkgVersionReference !== undefined &&
-      (obj.pkgVersionReference = message.pkgVersionReference
-        ? VersionReference.toJSON(message.pkgVersionReference)
-        : undefined);
+    message.installedPackageRef !== undefined && (obj.installedPackageRef = message.installedPackageRef
+      ? InstalledPackageReference.toJSON(message.installedPackageRef)
+      : undefined);
+    message.pkgVersionReference !== undefined && (obj.pkgVersionReference = message.pkgVersionReference
+      ? VersionReference.toJSON(message.pkgVersionReference)
+      : undefined);
     message.name !== undefined && (obj.name = message.name);
     message.currentVersion !== undefined &&
-      (obj.currentVersion = message.currentVersion
-        ? PackageAppVersion.toJSON(message.currentVersion)
-        : undefined);
+      (obj.currentVersion = message.currentVersion ? PackageAppVersion.toJSON(message.currentVersion) : undefined);
     message.valuesApplied !== undefined && (obj.valuesApplied = message.valuesApplied);
-    message.reconciliationOptions !== undefined &&
-      (obj.reconciliationOptions = message.reconciliationOptions
-        ? ReconciliationOptions.toJSON(message.reconciliationOptions)
-        : undefined);
+    message.reconciliationOptions !== undefined && (obj.reconciliationOptions = message.reconciliationOptions
+      ? ReconciliationOptions.toJSON(message.reconciliationOptions)
+      : undefined);
     message.status !== undefined &&
       (obj.status = message.status ? InstalledPackageStatus.toJSON(message.status) : undefined);
-    message.postInstallationNotes !== undefined &&
-      (obj.postInstallationNotes = message.postInstallationNotes);
-    message.availablePackageRef !== undefined &&
-      (obj.availablePackageRef = message.availablePackageRef
-        ? AvailablePackageReference.toJSON(message.availablePackageRef)
-        : undefined);
-    message.latestMatchingVersion !== undefined &&
-      (obj.latestMatchingVersion = message.latestMatchingVersion
-        ? PackageAppVersion.toJSON(message.latestMatchingVersion)
-        : undefined);
+    message.postInstallationNotes !== undefined && (obj.postInstallationNotes = message.postInstallationNotes);
+    message.availablePackageRef !== undefined && (obj.availablePackageRef = message.availablePackageRef
+      ? AvailablePackageReference.toJSON(message.availablePackageRef)
+      : undefined);
+    message.latestMatchingVersion !== undefined && (obj.latestMatchingVersion = message.latestMatchingVersion
+      ? PackageAppVersion.toJSON(message.latestMatchingVersion)
+      : undefined);
     message.latestVersion !== undefined &&
-      (obj.latestVersion = message.latestVersion
-        ? PackageAppVersion.toJSON(message.latestVersion)
-        : undefined);
+      (obj.latestVersion = message.latestVersion ? PackageAppVersion.toJSON(message.latestVersion) : undefined);
     message.customDetail !== undefined &&
       (obj.customDetail = message.customDetail ? Any.toJSON(message.customDetail) : undefined);
     return obj;
   },
 
-  fromPartial<I extends Exact<DeepPartial<InstalledPackageDetail>, I>>(
-    object: I,
-  ): InstalledPackageDetail {
+  fromPartial<I extends Exact<DeepPartial<InstalledPackageDetail>, I>>(object: I): InstalledPackageDetail {
     const message = createBaseInstalledPackageDetail();
-    message.installedPackageRef =
-      object.installedPackageRef !== undefined && object.installedPackageRef !== null
-        ? InstalledPackageReference.fromPartial(object.installedPackageRef)
-        : undefined;
-    message.pkgVersionReference =
-      object.pkgVersionReference !== undefined && object.pkgVersionReference !== null
-        ? VersionReference.fromPartial(object.pkgVersionReference)
-        : undefined;
+    message.installedPackageRef = (object.installedPackageRef !== undefined && object.installedPackageRef !== null)
+      ? InstalledPackageReference.fromPartial(object.installedPackageRef)
+      : undefined;
+    message.pkgVersionReference = (object.pkgVersionReference !== undefined && object.pkgVersionReference !== null)
+      ? VersionReference.fromPartial(object.pkgVersionReference)
+      : undefined;
     message.name = object.name ?? "";
-    message.currentVersion =
-      object.currentVersion !== undefined && object.currentVersion !== null
-        ? PackageAppVersion.fromPartial(object.currentVersion)
-        : undefined;
+    message.currentVersion = (object.currentVersion !== undefined && object.currentVersion !== null)
+      ? PackageAppVersion.fromPartial(object.currentVersion)
+      : undefined;
     message.valuesApplied = object.valuesApplied ?? "";
     message.reconciliationOptions =
-      object.reconciliationOptions !== undefined && object.reconciliationOptions !== null
+      (object.reconciliationOptions !== undefined && object.reconciliationOptions !== null)
         ? ReconciliationOptions.fromPartial(object.reconciliationOptions)
         : undefined;
-    message.status =
-      object.status !== undefined && object.status !== null
-        ? InstalledPackageStatus.fromPartial(object.status)
-        : undefined;
+    message.status = (object.status !== undefined && object.status !== null)
+      ? InstalledPackageStatus.fromPartial(object.status)
+      : undefined;
     message.postInstallationNotes = object.postInstallationNotes ?? "";
-    message.availablePackageRef =
-      object.availablePackageRef !== undefined && object.availablePackageRef !== null
-        ? AvailablePackageReference.fromPartial(object.availablePackageRef)
-        : undefined;
+    message.availablePackageRef = (object.availablePackageRef !== undefined && object.availablePackageRef !== null)
+      ? AvailablePackageReference.fromPartial(object.availablePackageRef)
+      : undefined;
     message.latestMatchingVersion =
-      object.latestMatchingVersion !== undefined && object.latestMatchingVersion !== null
+      (object.latestMatchingVersion !== undefined && object.latestMatchingVersion !== null)
         ? PackageAppVersion.fromPartial(object.latestMatchingVersion)
         : undefined;
-    message.latestVersion =
-      object.latestVersion !== undefined && object.latestVersion !== null
-        ? PackageAppVersion.fromPartial(object.latestVersion)
-        : undefined;
-    message.customDetail =
-      object.customDetail !== undefined && object.customDetail !== null
-        ? Any.fromPartial(object.customDetail)
-        : undefined;
+    message.latestVersion = (object.latestVersion !== undefined && object.latestVersion !== null)
+      ? PackageAppVersion.fromPartial(object.latestVersion)
+      : undefined;
+    message.customDetail = (object.customDetail !== undefined && object.customDetail !== null)
+      ? Any.fromPartial(object.customDetail)
+      : undefined;
     return message;
   },
 };
@@ -3284,27 +3050,21 @@ export const AvailablePackageReference = {
 
   toJSON(message: AvailablePackageReference): unknown {
     const obj: any = {};
-    message.context !== undefined &&
-      (obj.context = message.context ? Context.toJSON(message.context) : undefined);
+    message.context !== undefined && (obj.context = message.context ? Context.toJSON(message.context) : undefined);
     message.identifier !== undefined && (obj.identifier = message.identifier);
-    message.plugin !== undefined &&
-      (obj.plugin = message.plugin ? Plugin.toJSON(message.plugin) : undefined);
+    message.plugin !== undefined && (obj.plugin = message.plugin ? Plugin.toJSON(message.plugin) : undefined);
     return obj;
   },
 
-  fromPartial<I extends Exact<DeepPartial<AvailablePackageReference>, I>>(
-    object: I,
-  ): AvailablePackageReference {
+  fromPartial<I extends Exact<DeepPartial<AvailablePackageReference>, I>>(object: I): AvailablePackageReference {
     const message = createBaseAvailablePackageReference();
-    message.context =
-      object.context !== undefined && object.context !== null
-        ? Context.fromPartial(object.context)
-        : undefined;
+    message.context = (object.context !== undefined && object.context !== null)
+      ? Context.fromPartial(object.context)
+      : undefined;
     message.identifier = object.identifier ?? "";
-    message.plugin =
-      object.plugin !== undefined && object.plugin !== null
-        ? Plugin.fromPartial(object.plugin)
-        : undefined;
+    message.plugin = (object.plugin !== undefined && object.plugin !== null)
+      ? Plugin.fromPartial(object.plugin)
+      : undefined;
     return message;
   },
 };
@@ -3424,12 +3184,8 @@ export const FilterOptions = {
   fromJSON(object: any): FilterOptions {
     return {
       query: isSet(object.query) ? String(object.query) : "",
-      categories: Array.isArray(object?.categories)
-        ? object.categories.map((e: any) => String(e))
-        : [],
-      repositories: Array.isArray(object?.repositories)
-        ? object.repositories.map((e: any) => String(e))
-        : [],
+      categories: Array.isArray(object?.categories) ? object.categories.map((e: any) => String(e)) : [],
+      repositories: Array.isArray(object?.repositories) ? object.repositories.map((e: any) => String(e)) : [],
       pkgVersion: isSet(object.pkgVersion) ? String(object.pkgVersion) : "",
       appVersion: isSet(object.appVersion) ? String(object.appVersion) : "",
     };
@@ -3439,12 +3195,12 @@ export const FilterOptions = {
     const obj: any = {};
     message.query !== undefined && (obj.query = message.query);
     if (message.categories) {
-      obj.categories = message.categories.map(e => e);
+      obj.categories = message.categories.map((e) => e);
     } else {
       obj.categories = [];
     }
     if (message.repositories) {
-      obj.repositories = message.repositories.map(e => e);
+      obj.repositories = message.repositories.map((e) => e);
     } else {
       obj.repositories = [];
     }
@@ -3456,8 +3212,8 @@ export const FilterOptions = {
   fromPartial<I extends Exact<DeepPartial<FilterOptions>, I>>(object: I): FilterOptions {
     const message = createBaseFilterOptions();
     message.query = object.query ?? "";
-    message.categories = object.categories?.map(e => e) || [];
-    message.repositories = object.repositories?.map(e => e) || [];
+    message.categories = object.categories?.map((e) => e) || [];
+    message.repositories = object.repositories?.map((e) => e) || [];
     message.pkgVersion = object.pkgVersion ?? "";
     message.appVersion = object.appVersion ?? "";
     return message;
@@ -3574,27 +3330,21 @@ export const InstalledPackageReference = {
 
   toJSON(message: InstalledPackageReference): unknown {
     const obj: any = {};
-    message.context !== undefined &&
-      (obj.context = message.context ? Context.toJSON(message.context) : undefined);
+    message.context !== undefined && (obj.context = message.context ? Context.toJSON(message.context) : undefined);
     message.identifier !== undefined && (obj.identifier = message.identifier);
-    message.plugin !== undefined &&
-      (obj.plugin = message.plugin ? Plugin.toJSON(message.plugin) : undefined);
+    message.plugin !== undefined && (obj.plugin = message.plugin ? Plugin.toJSON(message.plugin) : undefined);
     return obj;
   },
 
-  fromPartial<I extends Exact<DeepPartial<InstalledPackageReference>, I>>(
-    object: I,
-  ): InstalledPackageReference {
+  fromPartial<I extends Exact<DeepPartial<InstalledPackageReference>, I>>(object: I): InstalledPackageReference {
     const message = createBaseInstalledPackageReference();
-    message.context =
-      object.context !== undefined && object.context !== null
-        ? Context.fromPartial(object.context)
-        : undefined;
+    message.context = (object.context !== undefined && object.context !== null)
+      ? Context.fromPartial(object.context)
+      : undefined;
     message.identifier = object.identifier ?? "";
-    message.plugin =
-      object.plugin !== undefined && object.plugin !== null
-        ? Plugin.fromPartial(object.plugin)
-        : undefined;
+    message.plugin = (object.plugin !== undefined && object.plugin !== null)
+      ? Plugin.fromPartial(object.plugin)
+      : undefined;
     return message;
   },
 };
@@ -3699,15 +3449,12 @@ export const InstalledPackageStatus = {
   toJSON(message: InstalledPackageStatus): unknown {
     const obj: any = {};
     message.ready !== undefined && (obj.ready = message.ready);
-    message.reason !== undefined &&
-      (obj.reason = installedPackageStatus_StatusReasonToJSON(message.reason));
+    message.reason !== undefined && (obj.reason = installedPackageStatus_StatusReasonToJSON(message.reason));
     message.userReason !== undefined && (obj.userReason = message.userReason);
     return obj;
   },
 
-  fromPartial<I extends Exact<DeepPartial<InstalledPackageStatus>, I>>(
-    object: I,
-  ): InstalledPackageStatus {
+  fromPartial<I extends Exact<DeepPartial<InstalledPackageStatus>, I>>(object: I): InstalledPackageStatus {
     const message = createBaseInstalledPackageStatus();
     message.ready = object.ready ?? false;
     message.reason = object.reason ?? 0;
@@ -3770,14 +3517,11 @@ export const ReconciliationOptions = {
     const obj: any = {};
     message.interval !== undefined && (obj.interval = message.interval);
     message.suspend !== undefined && (obj.suspend = message.suspend);
-    message.serviceAccountName !== undefined &&
-      (obj.serviceAccountName = message.serviceAccountName);
+    message.serviceAccountName !== undefined && (obj.serviceAccountName = message.serviceAccountName);
     return obj;
   },
 
-  fromPartial<I extends Exact<DeepPartial<ReconciliationOptions>, I>>(
-    object: I,
-  ): ReconciliationOptions {
+  fromPartial<I extends Exact<DeepPartial<ReconciliationOptions>, I>>(object: I): ReconciliationOptions {
     const message = createBaseReconciliationOptions();
     message.interval = object.interval ?? "";
     message.suspend = object.suspend ?? false;
@@ -4076,9 +3820,7 @@ export class PackagesServiceClientImpl implements PackagesService {
   }
 }
 
-export const PackagesServiceDesc = {
-  serviceName: "kubeappsapis.core.packages.v1alpha1.PackagesService",
-};
+export const PackagesServiceDesc = { serviceName: "kubeappsapis.core.packages.v1alpha1.PackagesService" };
 
 export const PackagesServiceGetAvailablePackageSummariesDesc: UnaryMethodDefinitionish = {
   methodName: "GetAvailablePackageSummaries",
@@ -4323,10 +4065,9 @@ export class GrpcWebImpl {
     metadata: grpc.Metadata | undefined,
   ): Promise<any> {
     const request = { ..._request, ...methodDesc.requestType };
-    const maybeCombinedMetadata =
-      metadata && this.options.metadata
-        ? new BrowserHeaders({ ...this.options?.metadata.headersMap, ...metadata?.headersMap })
-        : metadata || this.options.metadata;
+    const maybeCombinedMetadata = metadata && this.options.metadata
+      ? new BrowserHeaders({ ...this.options?.metadata.headersMap, ...metadata?.headersMap })
+      : metadata || this.options.metadata;
     return new Promise((resolve, reject) => {
       grpc.unary(methodDesc, {
         request,
@@ -4338,11 +4079,7 @@ export class GrpcWebImpl {
           if (response.status === grpc.Code.OK) {
             resolve(response.message);
           } else {
-            const err = new GrpcWebError(
-              response.statusMessage,
-              response.status,
-              response.trailers,
-            );
+            const err = new GrpcWebError(response.statusMessage, response.status, response.trailers);
             reject(err);
           }
         },
@@ -4353,19 +4090,13 @@ export class GrpcWebImpl {
 
 type Builtin = Date | Function | Uint8Array | string | number | boolean | undefined;
 
-export type DeepPartial<T> = T extends Builtin
-  ? T
-  : T extends Array<infer U>
-  ? Array<DeepPartial<U>>
-  : T extends ReadonlyArray<infer U>
-  ? ReadonlyArray<DeepPartial<U>>
-  : T extends {}
-  ? { [K in keyof T]?: DeepPartial<T[K]> }
+export type DeepPartial<T> = T extends Builtin ? T
+  : T extends Array<infer U> ? Array<DeepPartial<U>> : T extends ReadonlyArray<infer U> ? ReadonlyArray<DeepPartial<U>>
+  : T extends {} ? { [K in keyof T]?: DeepPartial<T[K]> }
   : Partial<T>;
 
 type KeysOfUnion<T> = T extends T ? keyof T : never;
-export type Exact<P, I extends P> = P extends Builtin
-  ? P
+export type Exact<P, I extends P> = P extends Builtin ? P
   : P & { [K in keyof P]: Exact<P[K], I[K]> } & { [K in Exclude<keyof I, KeysOfUnion<P>>]: never };
 
 function isSet(value: any): boolean {

@@ -67,13 +67,21 @@ export interface Struct_FieldsEntry {
  */
 export interface Value {
   /** Represents a null value. */
-  nullValue: NullValue | undefined;
+  nullValue:
+    | NullValue
+    | undefined;
   /** Represents a double value. */
-  numberValue: number | undefined;
+  numberValue:
+    | number
+    | undefined;
   /** Represents a string value. */
-  stringValue: string | undefined;
+  stringValue:
+    | string
+    | undefined;
   /** Represents a boolean value. */
-  boolValue: boolean | undefined;
+  boolValue:
+    | boolean
+    | undefined;
   /** Represents a structured value. */
   structValue?: { [key: string]: any };
   /** Represents a repeated `Value`. */
@@ -129,9 +137,9 @@ export const Struct = {
     return {
       fields: isObject(object.fields)
         ? Object.entries(object.fields).reduce<{ [key: string]: any }>((acc, [key, value]) => {
-            acc[key] = value as any;
-            return acc;
-          }, {})
+          acc[key] = value as any;
+          return acc;
+        }, {})
         : {},
     };
   },
@@ -149,22 +157,19 @@ export const Struct = {
 
   fromPartial<I extends Exact<DeepPartial<Struct>, I>>(object: I): Struct {
     const message = createBaseStruct();
-    message.fields = Object.entries(object.fields ?? {}).reduce<{ [key: string]: any }>(
-      (acc, [key, value]) => {
-        if (value !== undefined) {
-          acc[key] = value;
-        }
-        return acc;
-      },
-      {},
-    );
+    message.fields = Object.entries(object.fields ?? {}).reduce<{ [key: string]: any }>((acc, [key, value]) => {
+      if (value !== undefined) {
+        acc[key] = value;
+      }
+      return acc;
+    }, {});
     return message;
   },
 
   wrap(object: { [key: string]: any } | undefined): Struct {
     const struct = createBaseStruct();
     if (object !== undefined) {
-      Object.keys(object).forEach(key => {
+      Object.keys(object).forEach((key) => {
         struct.fields[key] = object[key];
       });
     }
@@ -173,7 +178,7 @@ export const Struct = {
 
   unwrap(message: Struct): { [key: string]: any } {
     const object: { [key: string]: any } = {};
-    Object.keys(message.fields).forEach(key => {
+    Object.keys(message.fields).forEach((key) => {
       object[key] = message.fields[key];
     });
     return object;
@@ -217,10 +222,7 @@ export const Struct_FieldsEntry = {
   },
 
   fromJSON(object: any): Struct_FieldsEntry {
-    return {
-      key: isSet(object.key) ? String(object.key) : "",
-      value: isSet(object?.value) ? object.value : undefined,
-    };
+    return { key: isSet(object.key) ? String(object.key) : "", value: isSet(object?.value) ? object.value : undefined };
   },
 
   toJSON(message: Struct_FieldsEntry): unknown {
@@ -319,8 +321,7 @@ export const Value = {
   toJSON(message: Value): unknown {
     const obj: any = {};
     message.nullValue !== undefined &&
-      (obj.nullValue =
-        message.nullValue !== undefined ? nullValueToJSON(message.nullValue) : undefined);
+      (obj.nullValue = message.nullValue !== undefined ? nullValueToJSON(message.nullValue) : undefined);
     message.numberValue !== undefined && (obj.numberValue = message.numberValue);
     message.stringValue !== undefined && (obj.stringValue = message.stringValue);
     message.boolValue !== undefined && (obj.boolValue = message.boolValue);
@@ -417,7 +418,7 @@ export const ListValue = {
   toJSON(message: ListValue): unknown {
     const obj: any = {};
     if (message.values) {
-      obj.values = message.values.map(e => e);
+      obj.values = message.values.map((e) => e);
     } else {
       obj.values = [];
     }
@@ -426,7 +427,7 @@ export const ListValue = {
 
   fromPartial<I extends Exact<DeepPartial<ListValue>, I>>(object: I): ListValue {
     const message = createBaseListValue();
-    message.values = object.values?.map(e => e) || [];
+    message.values = object.values?.map((e) => e) || [];
     return message;
   },
 
@@ -445,19 +446,13 @@ export const ListValue = {
 
 type Builtin = Date | Function | Uint8Array | string | number | boolean | undefined;
 
-export type DeepPartial<T> = T extends Builtin
-  ? T
-  : T extends Array<infer U>
-  ? Array<DeepPartial<U>>
-  : T extends ReadonlyArray<infer U>
-  ? ReadonlyArray<DeepPartial<U>>
-  : T extends {}
-  ? { [K in keyof T]?: DeepPartial<T[K]> }
+export type DeepPartial<T> = T extends Builtin ? T
+  : T extends Array<infer U> ? Array<DeepPartial<U>> : T extends ReadonlyArray<infer U> ? ReadonlyArray<DeepPartial<U>>
+  : T extends {} ? { [K in keyof T]?: DeepPartial<T[K]> }
   : Partial<T>;
 
 type KeysOfUnion<T> = T extends T ? keyof T : never;
-export type Exact<P, I extends P> = P extends Builtin
-  ? P
+export type Exact<P, I extends P> = P extends Builtin ? P
   : P & { [K in keyof P]: Exact<P[K], I[K]> } & { [K in Exclude<keyof I, KeysOfUnion<P>>]: never };
 
 function isObject(value: any): boolean {

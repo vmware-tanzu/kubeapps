@@ -720,6 +720,48 @@
         ]
       }
     },
+    "/core/packages/v1alpha1/repositories/c/{context.cluster}/permissions": {
+      "get": {
+        "operationId": "RepositoriesService_GetPackageRepositoryPermissions",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1alpha1GetPackageRepositoryPermissionsResponse"
+            }
+          },
+          "401": {
+            "description": "Returned when the user does not have permission to access the resource.",
+            "schema": {}
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "context.cluster",
+            "description": "Cluster\n\nA cluster name can be provided to target a specific cluster if multiple\nclusters are configured, otherwise all clusters will be assumed.",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "context.namespace",
+            "description": "Namespace. A namespace must be provided if the context of the operation is for a resource\nor resources in a particular namespace.\nFor requests to list items, not including a namespace here implies that the context\nfor the request is everything the requesting user can read, though the result can\nbe filtered by any filtering options of the request. Plugins may choose to return\nUnimplemented for some queries for which we do not yet have a need.",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "RepositoriesService"
+        ]
+      }
+    },
     "/core/packages/v1alpha1/repositories/plugin/{packageRepoRef.plugin.name}/{packageRepoRef.plugin.version}/c/{packageRepoRef.context.cluster}/ns/{packageRepoRef.context.namespace}/{packageRepoRef.identifier}": {
       "get": {
         "operationId": "RepositoriesService_GetPackageRepositoryDetail",
@@ -2498,6 +2540,48 @@
             "schema": {
               "$ref": "#/definitions/v1alpha1AddPackageRepositoryRequest"
             }
+          }
+        ],
+        "tags": [
+          "HelmRepositoriesService"
+        ]
+      }
+    },
+    "/plugins/helm/packages/v1alpha1/repositories/c/{context.cluster}/permissions": {
+      "get": {
+        "operationId": "HelmRepositoriesService_GetPackageRepositoryPermissions",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1alpha1GetPackageRepositoryPermissionsResponse"
+            }
+          },
+          "401": {
+            "description": "Returned when the user does not have permission to access the resource.",
+            "schema": {}
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "context.cluster",
+            "description": "Cluster\n\nA cluster name can be provided to target a specific cluster if multiple\nclusters are configured, otherwise all clusters will be assumed.",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "context.namespace",
+            "description": "Namespace. A namespace must be provided if the context of the operation is for a resource\nor resources in a particular namespace.\nFor requests to list items, not including a namespace here implies that the context\nfor the request is everything the requesting user can read, though the result can\nbe filtered by any filtering options of the request. Plugins may choose to return\nUnimplemented for some queries for which we do not yet have a need.",
+            "in": "query",
+            "required": false,
+            "type": "string"
           }
         ],
         "tags": [
@@ -4535,6 +4619,17 @@
       "description": "Response for GetPackageRepositoryDetail",
       "title": "GetPackageRepositoryDetailResponse"
     },
+    "v1alpha1GetPackageRepositoryPermissionsResponse": {
+      "type": "object",
+      "properties": {
+        "permissions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/v1alpha1PackageRepositoriesPermissions"
+          }
+        }
+      }
+    },
     "v1alpha1GetPackageRepositorySummariesResponse": {
       "type": "object",
       "properties": {
@@ -4819,6 +4914,26 @@
       },
       "description": "PackageAppVersion conveys both the package version and the packaged app version.",
       "title": "Package AppVersion"
+    },
+    "v1alpha1PackageRepositoriesPermissions": {
+      "type": "object",
+      "properties": {
+        "plugin": {
+          "$ref": "#/definitions/v1alpha1Plugin"
+        },
+        "global": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "boolean"
+          }
+        },
+        "namespace": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "boolean"
+          }
+        }
+      }
     },
     "v1alpha1PackageRepositoryAuth": {
       "type": "object",

@@ -307,22 +307,34 @@ export interface HttpRule {
    * Maps to HTTP GET. Used for listing and getting information about
    * resources.
    */
-  get: string | undefined;
+  get:
+    | string
+    | undefined;
   /** Maps to HTTP PUT. Used for replacing a resource. */
-  put: string | undefined;
+  put:
+    | string
+    | undefined;
   /** Maps to HTTP POST. Used for creating a resource or performing an action. */
-  post: string | undefined;
+  post:
+    | string
+    | undefined;
   /** Maps to HTTP DELETE. Used for deleting a resource. */
-  delete: string | undefined;
+  delete:
+    | string
+    | undefined;
   /** Maps to HTTP PATCH. Used for updating a resource. */
-  patch: string | undefined;
+  patch:
+    | string
+    | undefined;
   /**
    * The custom pattern is used for specifying an HTTP method that is not
    * included in the `pattern` field, such as HEAD, or "*" to leave the
    * HTTP method unspecified for this rule. The wild-card rule is useful
    * for services that provide content to Web (HTML) clients.
    */
-  custom?: CustomHttpPattern | undefined;
+  custom?:
+    | CustomHttpPattern
+    | undefined;
   /**
    * The name of the request field whose value is mapped to the HTTP request
    * body, or `*` for mapping all request fields not captured by the path
@@ -405,7 +417,7 @@ export const Http = {
   toJSON(message: Http): unknown {
     const obj: any = {};
     if (message.rules) {
-      obj.rules = message.rules.map(e => (e ? HttpRule.toJSON(e) : undefined));
+      obj.rules = message.rules.map((e) => e ? HttpRule.toJSON(e) : undefined);
     } else {
       obj.rules = [];
     }
@@ -416,7 +428,7 @@ export const Http = {
 
   fromPartial<I extends Exact<DeepPartial<Http>, I>>(object: I): Http {
     const message = createBaseHttp();
-    message.rules = object.rules?.map(e => HttpRule.fromPartial(e)) || [];
+    message.rules = object.rules?.map((e) => HttpRule.fromPartial(e)) || [];
     message.fullyDecodeReservedExpansion = object.fullyDecodeReservedExpansion ?? false;
     return message;
   },
@@ -547,9 +559,7 @@ export const HttpRule = {
     message.body !== undefined && (obj.body = message.body);
     message.responseBody !== undefined && (obj.responseBody = message.responseBody);
     if (message.additionalBindings) {
-      obj.additionalBindings = message.additionalBindings.map(e =>
-        e ? HttpRule.toJSON(e) : undefined,
-      );
+      obj.additionalBindings = message.additionalBindings.map((e) => e ? HttpRule.toJSON(e) : undefined);
     } else {
       obj.additionalBindings = [];
     }
@@ -564,13 +574,12 @@ export const HttpRule = {
     message.post = object.post ?? undefined;
     message.delete = object.delete ?? undefined;
     message.patch = object.patch ?? undefined;
-    message.custom =
-      object.custom !== undefined && object.custom !== null
-        ? CustomHttpPattern.fromPartial(object.custom)
-        : undefined;
+    message.custom = (object.custom !== undefined && object.custom !== null)
+      ? CustomHttpPattern.fromPartial(object.custom)
+      : undefined;
     message.body = object.body ?? "";
     message.responseBody = object.responseBody ?? "";
-    message.additionalBindings = object.additionalBindings?.map(e => HttpRule.fromPartial(e)) || [];
+    message.additionalBindings = object.additionalBindings?.map((e) => HttpRule.fromPartial(e)) || [];
     return message;
   },
 };
@@ -612,10 +621,7 @@ export const CustomHttpPattern = {
   },
 
   fromJSON(object: any): CustomHttpPattern {
-    return {
-      kind: isSet(object.kind) ? String(object.kind) : "",
-      path: isSet(object.path) ? String(object.path) : "",
-    };
+    return { kind: isSet(object.kind) ? String(object.kind) : "", path: isSet(object.path) ? String(object.path) : "" };
   },
 
   toJSON(message: CustomHttpPattern): unknown {
@@ -635,19 +641,13 @@ export const CustomHttpPattern = {
 
 type Builtin = Date | Function | Uint8Array | string | number | boolean | undefined;
 
-export type DeepPartial<T> = T extends Builtin
-  ? T
-  : T extends Array<infer U>
-  ? Array<DeepPartial<U>>
-  : T extends ReadonlyArray<infer U>
-  ? ReadonlyArray<DeepPartial<U>>
-  : T extends {}
-  ? { [K in keyof T]?: DeepPartial<T[K]> }
+export type DeepPartial<T> = T extends Builtin ? T
+  : T extends Array<infer U> ? Array<DeepPartial<U>> : T extends ReadonlyArray<infer U> ? ReadonlyArray<DeepPartial<U>>
+  : T extends {} ? { [K in keyof T]?: DeepPartial<T[K]> }
   : Partial<T>;
 
 type KeysOfUnion<T> = T extends T ? keyof T : never;
-export type Exact<P, I extends P> = P extends Builtin
-  ? P
+export type Exact<P, I extends P> = P extends Builtin ? P
   : P & { [K in keyof P]: Exact<P[K], I[K]> } & { [K in Exclude<keyof I, KeysOfUnion<P>>]: never };
 
 function isSet(value: any): boolean {
