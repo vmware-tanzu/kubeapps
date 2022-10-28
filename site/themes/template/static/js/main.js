@@ -35,19 +35,6 @@ document.querySelectorAll("pre").forEach(function (codeBlock) {
   codeBlock.setAttribute("tabindex", "-1");
 });
 
-// Since the Algolia script is loaded asynchronously, we need to wait for it to be loaded before we can use it.
-document.addEventListener("DOMContentLoaded", function () {
-  algoliasearchNetlify({
-    appId: "{{ .Site.Params.docs_search_app_id }}",
-    apiKey: "{{ .Site.Params.docs_search_api_key }}",
-    siteId: "{{ .Site.Params.docs_search_site_id }}",
-    branch: "main",
-    selector: "div#search",
-  });
-  // Replace the "submit" title with a more descriptive one
-  document.querySelector(".aa-SubmitButton").setAttribute("title", "Search");
-});
-
 // Make the "cookie setting" link also clickable via keyboard for a11y purposes
 // snippet based on https://community.cookiepro.com/s/article/UUID-69162cb7-c4a2-ac70-39a1-ca69c9340046
 document.addEventListener("DOMContentLoaded", function () {
