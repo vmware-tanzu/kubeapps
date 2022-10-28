@@ -1,4 +1,4 @@
-# Copyright 2022 VMware, Inc.
+# Copyright 2022 the Kubeapps contributors
 # SPDX-License-Identifier: Apache-2.0
 
 name: "GKE e2e Tests"
