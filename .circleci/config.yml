@@ -623,7 +623,8 @@ gke_test: &gke_test
           MAX_LENGTH=40 
           len=${#ESCAPED_GKE_CLUSTER}
           if ((len > MAX_LENGTH)); then
-            ESCAPED_GKE_CLUSTER="${ESCAPED_GKE_CLUSTER:0:MAX_LENGTH}"
+            offset=$((len - MAX_LENGTH))
+            ESCAPED_GKE_CLUSTER="${ESCAPED_GKE_CLUSTER:offset:MAX_LENGTH}"
           fi
           
           echo "export ESCAPED_GKE_CLUSTER=${ESCAPED_GKE_CLUSTER}" >> $BASH_ENV
