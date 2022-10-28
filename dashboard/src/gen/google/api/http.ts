@@ -1,5 +1,6 @@
 /* eslint-disable */
-import _m0 from "protobufjs/minimal";
+import Long from "long";
+import * as _m0 from "protobufjs/minimal";
 
 export const protobufPackage = "google.api";
 
@@ -150,6 +151,7 @@ export interface Http {
  *       string message_id = 1;
  *       string text = 2;
  *     }
+ *
  *
  * The following HTTP JSON to RPC mapping is enabled:
  *
@@ -648,7 +650,12 @@ export type DeepPartial<T> = T extends Builtin
 type KeysOfUnion<T> = T extends T ? keyof T : never;
 export type Exact<P, I extends P> = P extends Builtin
   ? P
-  : P & { [K in keyof P]: Exact<P[K], I[K]> } & { [K in Exclude<keyof I, KeysOfUnion<P>>]: never };
+  : P & { [K in keyof P]: Exact<P[K], I[K]> } & Record<Exclude<keyof I, KeysOfUnion<P>>, never>;
+
+if (_m0.util.Long !== Long) {
+  _m0.util.Long = Long as any;
+  _m0.configure();
+}
 
 function isSet(value: any): boolean {
   return value !== null && value !== undefined;

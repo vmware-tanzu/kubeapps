@@ -1,39 +1,40 @@
 /* eslint-disable */
+import Long from "long";
 import { grpc } from "@improbable-eng/grpc-web";
-import { BrowserHeaders } from "browser-headers";
-import _m0 from "protobufjs/minimal";
+import * as _m0 from "protobufjs/minimal";
 import {
-  CreateInstalledPackageRequest,
-  CreateInstalledPackageResponse,
-  DeleteInstalledPackageRequest,
-  DeleteInstalledPackageResponse,
-  GetAvailablePackageDetailRequest,
-  GetAvailablePackageDetailResponse,
   GetAvailablePackageSummariesRequest,
-  GetAvailablePackageSummariesResponse,
+  GetAvailablePackageDetailRequest,
   GetAvailablePackageVersionsRequest,
-  GetAvailablePackageVersionsResponse,
-  GetInstalledPackageDetailRequest,
-  GetInstalledPackageDetailResponse,
-  GetInstalledPackageResourceRefsRequest,
-  GetInstalledPackageResourceRefsResponse,
   GetInstalledPackageSummariesRequest,
-  GetInstalledPackageSummariesResponse,
+  GetInstalledPackageDetailRequest,
+  CreateInstalledPackageRequest,
   UpdateInstalledPackageRequest,
+  DeleteInstalledPackageRequest,
+  GetInstalledPackageResourceRefsRequest,
+  GetAvailablePackageSummariesResponse,
+  GetAvailablePackageDetailResponse,
+  GetAvailablePackageVersionsResponse,
+  GetInstalledPackageSummariesResponse,
+  GetInstalledPackageDetailResponse,
+  CreateInstalledPackageResponse,
   UpdateInstalledPackageResponse,
-} from "../../../../core/packages/v1alpha1/packages";
+  DeleteInstalledPackageResponse,
+  GetInstalledPackageResourceRefsResponse,
+} from "../../../../../kubeappsapis/core/packages/v1alpha1/packages";
 import {
   AddPackageRepositoryRequest,
-  AddPackageRepositoryResponse,
-  DeletePackageRepositoryRequest,
-  DeletePackageRepositoryResponse,
   GetPackageRepositoryDetailRequest,
-  GetPackageRepositoryDetailResponse,
   GetPackageRepositorySummariesRequest,
-  GetPackageRepositorySummariesResponse,
   UpdatePackageRepositoryRequest,
+  DeletePackageRepositoryRequest,
+  AddPackageRepositoryResponse,
+  GetPackageRepositoryDetailResponse,
+  GetPackageRepositorySummariesResponse,
   UpdatePackageRepositoryResponse,
-} from "../../../../core/packages/v1alpha1/repositories";
+  DeletePackageRepositoryResponse,
+} from "../../../../../kubeappsapis/core/packages/v1alpha1/repositories";
+import { BrowserHeaders } from "browser-headers";
 
 export const protobufPackage = "kubeappsapis.plugins.kapp_controller.packages.v1alpha1";
 
@@ -416,7 +417,12 @@ export const PackageRepositoryImage = {
 };
 
 function createBasePackageRepositoryGit(): PackageRepositoryGit {
-  return { ref: "", refSelection: undefined, subPath: "", lfsSkipSmudge: false };
+  return {
+    ref: "",
+    refSelection: undefined,
+    subPath: "",
+    lfsSkipSmudge: false,
+  };
 }
 
 export const PackageRepositoryGit = {
@@ -639,15 +645,14 @@ export const PackageRepositoryInline = {
     object: I,
   ): PackageRepositoryInline {
     const message = createBasePackageRepositoryInline();
-    message.paths = Object.entries(object.paths ?? {}).reduce<{ [key: string]: string }>(
-      (acc, [key, value]) => {
-        if (value !== undefined) {
-          acc[key] = String(value);
-        }
-        return acc;
-      },
-      {},
-    );
+    message.paths = Object.entries(object.paths ?? {}).reduce<{
+      [key: string]: string;
+    }>((acc, [key, value]) => {
+      if (value !== undefined) {
+        acc[key] = String(value);
+      }
+      return acc;
+    }, {});
     message.pathsFrom =
       object.pathsFrom?.map(e => PackageRepositoryInline_Source.fromPartial(e)) || [];
     return message;
@@ -1660,7 +1665,6 @@ export class GrpcWebImpl {
 
     debug?: boolean;
     metadata?: grpc.Metadata;
-    upStreamRetryCodes?: number[];
   };
 
   constructor(
@@ -1670,7 +1674,6 @@ export class GrpcWebImpl {
 
       debug?: boolean;
       metadata?: grpc.Metadata;
-      upStreamRetryCodes?: number[];
     },
   ) {
     this.host = host;
@@ -1685,7 +1688,10 @@ export class GrpcWebImpl {
     const request = { ..._request, ...methodDesc.requestType };
     const maybeCombinedMetadata =
       metadata && this.options.metadata
-        ? new BrowserHeaders({ ...this.options?.metadata.headersMap, ...metadata?.headersMap })
+        ? new BrowserHeaders({
+            ...this.options?.metadata.headersMap,
+            ...metadata?.headersMap,
+          })
         : metadata || this.options.metadata;
     return new Promise((resolve, reject) => {
       grpc.unary(methodDesc, {
@@ -1698,11 +1704,9 @@ export class GrpcWebImpl {
           if (response.status === grpc.Code.OK) {
             resolve(response.message);
           } else {
-            const err = new GrpcWebError(
-              response.statusMessage,
-              response.status,
-              response.trailers,
-            );
+            const err = new Error(response.statusMessage) as any;
+            err.code = response.status;
+            err.metadata = response.trailers;
             reject(err);
           }
         },
@@ -1726,7 +1730,12 @@ export type DeepPartial<T> = T extends Builtin
 type KeysOfUnion<T> = T extends T ? keyof T : never;
 export type Exact<P, I extends P> = P extends Builtin
   ? P
-  : P & { [K in keyof P]: Exact<P[K], I[K]> } & { [K in Exclude<keyof I, KeysOfUnion<P>>]: never };
+  : P & { [K in keyof P]: Exact<P[K], I[K]> } & Record<Exclude<keyof I, KeysOfUnion<P>>, never>;
+
+if (_m0.util.Long !== Long) {
+  _m0.util.Long = Long as any;
+  _m0.configure();
+}
 
 function isObject(value: any): boolean {
   return typeof value === "object" && value !== null;
@@ -1734,10 +1743,4 @@ function isObject(value: any): boolean {
 
 function isSet(value: any): boolean {
   return value !== null && value !== undefined;
-}
-
-export class GrpcWebError extends Error {
-  constructor(message: string, public code: grpc.Code, public metadata: grpc.Metadata) {
-    super(message);
-  }
 }
