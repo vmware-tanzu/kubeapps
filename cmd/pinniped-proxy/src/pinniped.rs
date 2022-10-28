@@ -7,7 +7,6 @@ use std::sync::Arc;
 
 use crate::cache::PruningCache;
 use anyhow::{Context, Result};
-use cached::proc_macro::cached;
 use chrono::Utc;
 use http::Uri;
 use k8s_openapi::api::core::v1 as corev1;
@@ -204,11 +203,8 @@ fn identity_for_exchange(cred: &ClusterCredential) -> Result<Identity> {
 // Profiling shows that the call to Client::try_from below can take
 // anywhere from 4ms to 100ms every time for every connection. When
 // a go-lang rest mapper initialises, it requests ~50 different APIs
-// which leads to 3-5s of CPU just in this call. Given that the client
-// is specific to the api server, there will only ever be one value per
-// cluster targeted by Kubeapps, so caching this result is cheap and
-// effective, removing the 3-5s of CPU for the 50 requests.
-#[cached(size = 10, result = true)]
+// which leads to 3-5s of CPU just in this call. So we ensure this
+// is only called if we need it (ie. the token is not cached).
 fn get_client_config(
     k8s_api_server_url: String,
     k8s_api_ca_cert_data: Vec<u8>,
@@ -242,13 +238,6 @@ async fn prepare_and_call_pinniped_exchange(
     let pinniped_auth_type: String = env::var(DEFAULT_PINNIPED_AUTHENTICATOR_TYPE)?;
     let pinniped_auth_name: String = env::var(DEFAULT_PINNIPED_AUTHENTICATOR_NAME)?;
 
-    // kube client
-    let client = get_client_config(
-        k8s_api_server_url,
-        k8s_api_ca_cert_data,
-        pinniped_namespace.clone(),
-    )?;
-
     // extract token
     let auth_token = match authorization.to_string().strip_prefix("Bearer ") {
         Some(a) => a.to_string(),
@@ -273,6 +262,11 @@ async fn prepare_and_call_pinniped_exchange(
     match credential_cache.get(&cred_data) {
         Some(cached_cred) => Ok(cached_cred),
         None => {
+            let client = get_client_config(
+                k8s_api_server_url,
+                k8s_api_ca_cert_data,
+                pinniped_namespace.clone(),
+            )?;
             let cred = call_pinniped(pinniped_namespace, client, cred_data.clone()).await?;
             credential_cache.insert(cred_data, cred.clone());
             Ok(cred)
@@ -363,8 +357,8 @@ mod tests {
             None::<String>,
             || match tokio_test::block_on(prepare_and_call_pinniped_exchange(
                 "authorization",
-                "https://example.com",
-                VALID_CERT_BASE64.as_bytes(),
+                "https://example.com".into(),
+                VALID_CERT_BASE64.into(),
                 new_credential_cache(),
             )) {
                 Ok(_) => anyhow::bail!("expected error"),
@@ -397,8 +391,8 @@ mod tests {
             ],
             || match tokio_test::block_on(prepare_and_call_pinniped_exchange(
                 "authorization",
-                "not a url",
-                VALID_CERT_BASE64.as_bytes(),
+                "not a url".into(),
+                VALID_CERT_BASE64.into(),
                 new_credential_cache(),
             )) {
                 Ok(_) => anyhow::bail!("expected error"),
@@ -431,8 +425,8 @@ mod tests {
             ],
             || match tokio_test::block_on(prepare_and_call_pinniped_exchange(
                 "authorization",
-                "https://example.com",
-                "not a cert".as_bytes(),
+                "https://example.com".into(),
+                "not a cert".into(),
                 new_credential_cache(),
             )) {
                 Ok(_) => anyhow::bail!("expected error"),
