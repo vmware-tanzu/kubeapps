@@ -421,11 +421,10 @@ Once you have installed Kubeapps follow the [Getting Started Guide](https://gith
 
 ### Other Parameters
 
-| Name                      | Description                                                                   | Value  |
-| ------------------------- | ----------------------------------------------------------------------------- | ------ |
-| `allowNamespaceDiscovery` | Allow users to discover available namespaces (only the ones they have access) | `true` |
-| `clusters`                | List of clusters that Kubeapps can target for deployments                     | `[]`   |
-| `rbac.create`             | Specifies whether RBAC resources should be created                            | `true` |
+| Name          | Description                                               | Value  |
+| ------------- | --------------------------------------------------------- | ------ |
+| `clusters`    | List of clusters that Kubeapps can target for deployments | `[]`   |
+| `rbac.create` | Specifies whether RBAC resources should be created        | `true` |
 
 
 ### Feature flags
@@ -696,19 +695,19 @@ kubectl delete namespace kubeapps
 
 ## FAQ
 
-- [How to install Kubeapps for demo purposes?](#how-to-install-kubeapps-for-demo-purposes)
-- [How to install Kubeapps in production scenarios?](#how-to-install-kubeapps-in-production-scenarios)
-- [How to use Kubeapps?](#how-to-use-kubeapps)
-- [How to configure Kubeapps with Ingress](#how-to-configure-kubeapps-with-ingress)
-  - [Serving Kubeapps in a subpath](#serving-kubeapps-in-a-subpath)
-- [Can Kubeapps install apps into more than one cluster?](#can-kubeapps-install-apps-into-more-than-one-cluster)
-- [Can Kubeapps be installed without Internet connection?](#can-kubeapps-be-installed-without-internet-connection)
-- [Does Kubeapps support private repositories?](#does-kubeapps-support-private-repositories)
-- [Is there any API documentation?](#is-there-any-api-documentation)
-- [Why can't I configure global private repositories?](#why-cant-i-configure-global-private-repositories)
-- [Does Kubeapps support Operators?](#does-kubeapps-support-operators)
-- [Slow response when listing namespaces?](#slow-response-when-listing-namespaces)
-- [More questions?](#more-questions)
+    - [How to install Kubeapps for demo purposes?](#how-to-install-kubeapps-for-demo-purposes)
+    - [How to install Kubeapps in production scenarios?](#how-to-install-kubeapps-in-production-scenarios)
+    - [How to use Kubeapps?](#how-to-use-kubeapps)
+    - [How to configure Kubeapps with Ingress](#how-to-configure-kubeapps-with-ingress)
+      - [Serving Kubeapps in a subpath](#serving-kubeapps-in-a-subpath)
+    - [Can Kubeapps install apps into more than one cluster?](#can-kubeapps-install-apps-into-more-than-one-cluster)
+    - [Can Kubeapps be installed without Internet connection?](#can-kubeapps-be-installed-without-internet-connection)
+    - [Does Kubeapps support private repositories?](#does-kubeapps-support-private-repositories)
+    - [Is there any API documentation?](#is-there-any-api-documentation)
+    - [Why can't I configure global private repositories?](#why-cant-i-configure-global-private-repositories)
+    - [Does Kubeapps support Operators?](#does-kubeapps-support-operators)
+    - [Slow response when listing namespaces](#slow-response-when-listing-namespaces)
+    - [More questions?](#more-questions)
 
 ### How to install Kubeapps for demo purposes?
 
