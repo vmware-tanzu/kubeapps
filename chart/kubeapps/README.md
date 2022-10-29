@@ -672,6 +672,10 @@ helm upgrade $RELEASE_NAME my-repo/kubeapps
 
 If you find issues upgrading Kubeapps, check the [troubleshooting](#error-while-upgrading-the-chart) section.
 
+### To 12.0.0
+
+This major updates the PostgreSQL subchart to its newest major, 12.0.0. [Here](https://github.com/bitnami/charts/tree/master/bitnami/postgresql#to-1200) you can find more information about the changes introduced in that version.
+
 ## Uninstalling the Chart
 
 To uninstall/delete the `kubeapps` deployment:
@@ -695,19 +699,19 @@ kubectl delete namespace kubeapps
 
 ## FAQ
 
-    - [How to install Kubeapps for demo purposes?](#how-to-install-kubeapps-for-demo-purposes)
-    - [How to install Kubeapps in production scenarios?](#how-to-install-kubeapps-in-production-scenarios)
-    - [How to use Kubeapps?](#how-to-use-kubeapps)
-    - [How to configure Kubeapps with Ingress](#how-to-configure-kubeapps-with-ingress)
-      - [Serving Kubeapps in a subpath](#serving-kubeapps-in-a-subpath)
-    - [Can Kubeapps install apps into more than one cluster?](#can-kubeapps-install-apps-into-more-than-one-cluster)
-    - [Can Kubeapps be installed without Internet connection?](#can-kubeapps-be-installed-without-internet-connection)
-    - [Does Kubeapps support private repositories?](#does-kubeapps-support-private-repositories)
-    - [Is there any API documentation?](#is-there-any-api-documentation)
-    - [Why can't I configure global private repositories?](#why-cant-i-configure-global-private-repositories)
-    - [Does Kubeapps support Operators?](#does-kubeapps-support-operators)
-    - [Slow response when listing namespaces](#slow-response-when-listing-namespaces)
-    - [More questions?](#more-questions)
+- [How to install Kubeapps for demo purposes?](#how-to-install-kubeapps-for-demo-purposes)
+- [How to install Kubeapps in production scenarios?](#how-to-install-kubeapps-in-production-scenarios)
+- [How to use Kubeapps?](#how-to-use-kubeapps)
+- [How to configure Kubeapps with Ingress](#how-to-configure-kubeapps-with-ingress)
+  - [Serving Kubeapps in a subpath](#serving-kubeapps-in-a-subpath)
+- [Can Kubeapps install apps into more than one cluster?](#can-kubeapps-install-apps-into-more-than-one-cluster)
+- [Can Kubeapps be installed without Internet connection?](#can-kubeapps-be-installed-without-internet-connection)
+- [Does Kubeapps support private repositories?](#does-kubeapps-support-private-repositories)
+- [Is there any API documentation?](#is-there-any-api-documentation)
+- [Why can't I configure global private repositories?](#why-cant-i-configure-global-private-repositories)
+- [Does Kubeapps support Operators?](#does-kubeapps-support-operators)
+- [Slow response when listing namespaces?](#slow-response-when-listing-namespaces)
+- [More questions?](#more-questions)
 
 ### How to install Kubeapps for demo purposes?
 
