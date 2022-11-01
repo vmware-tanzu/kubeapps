@@ -553,57 +553,69 @@ mZu9A/ivt37pOQXm/HOX6tHB
 
     #[test]
     fn test_token_credential_request_hash_default() -> Result<()> {
-        let cred_data = make_token_credential_request();
+        temp_env::with_var(DEFAULT_PINNIPED_API_SUFFIX, None::<String>, || {
+            let cred_data = make_token_credential_request();
+            println!(
+                "api group is: {:#?}",
+                cred_data.spec.authenticator.api_group
+            );
 
-        let mut hasher = DefaultHasher::new();
-        cred_data.hash(&mut hasher);
+            let mut hasher = DefaultHasher::new();
+            cred_data.hash(&mut hasher);
 
-        assert_eq!(hasher.finish(), DEFAULT_TOKEN_CREDENTIAL_REQUEST_HASH);
-        Ok(())
+            assert_eq!(hasher.finish(), DEFAULT_TOKEN_CREDENTIAL_REQUEST_HASH);
+            Ok(())
+        })
     }
 
     #[test]
     fn test_token_credential_request_hash_differs_with_token() -> Result<()> {
-        let mut cred_data = make_token_credential_request();
-        cred_data.spec.token = Some(String::from("another-token"));
+        temp_env::with_var(DEFAULT_PINNIPED_API_SUFFIX, None::<String>, || {
+            let mut cred_data = make_token_credential_request();
+            cred_data.spec.token = Some(String::from("another-token"));
 
-        let mut hasher = DefaultHasher::new();
-        cred_data.hash(&mut hasher);
+            let mut hasher = DefaultHasher::new();
+            cred_data.hash(&mut hasher);
 
-        assert!(hasher.finish() != DEFAULT_TOKEN_CREDENTIAL_REQUEST_HASH);
-        Ok(())
+            assert!(hasher.finish() != DEFAULT_TOKEN_CREDENTIAL_REQUEST_HASH);
+            Ok(())
+        })
     }
 
     #[test]
     fn test_token_credential_request_hash_differs_with_authenticator() -> Result<()> {
-        let mut cred_data = make_token_credential_request();
-        cred_data.spec.authenticator.name = String::from("another-authenticator-name");
+        temp_env::with_var(DEFAULT_PINNIPED_API_SUFFIX, None::<String>, || {
+            let mut cred_data = make_token_credential_request();
+            cred_data.spec.authenticator.name = String::from("another-authenticator-name");
 
-        let mut hasher = DefaultHasher::new();
-        cred_data.hash(&mut hasher);
+            let mut hasher = DefaultHasher::new();
+            cred_data.hash(&mut hasher);
 
-        assert!(hasher.finish() != DEFAULT_TOKEN_CREDENTIAL_REQUEST_HASH);
-        Ok(())
+            assert!(hasher.finish() != DEFAULT_TOKEN_CREDENTIAL_REQUEST_HASH);
+            Ok(())
+        })
     }
 
     #[test]
     fn test_token_credential_request_hash_identical_with_status_change() -> Result<()> {
-        let mut cred_data = make_token_credential_request();
-        cred_data.status = Some(TokenCredentialRequestStatus {
-            credential: Some(ClusterCredential {
-                token: Some(String::from("returned token")),
-                client_certificate_data: String::from("cert-data"),
-                client_key_data: String::from("key-data"),
-                expiration_timestamp: metav1::Time(Utc.timestamp(0, 0)),
-            }),
-            message: Some(String::from("some status message")),
-        });
+        temp_env::with_var(DEFAULT_PINNIPED_API_SUFFIX, None::<String>, || {
+            let mut cred_data = make_token_credential_request();
+            cred_data.status = Some(TokenCredentialRequestStatus {
+                credential: Some(ClusterCredential {
+                    token: Some(String::from("returned token")),
+                    client_certificate_data: String::from("cert-data"),
+                    client_key_data: String::from("key-data"),
+                    expiration_timestamp: metav1::Time(Utc.timestamp(0, 0)),
+                }),
+                message: Some(String::from("some status message")),
+            });
 
-        let mut hasher = DefaultHasher::new();
-        cred_data.hash(&mut hasher);
+            let mut hasher = DefaultHasher::new();
+            cred_data.hash(&mut hasher);
 
-        assert_eq!(hasher.finish(), DEFAULT_TOKEN_CREDENTIAL_REQUEST_HASH);
-        Ok(())
+            assert_eq!(hasher.finish(), DEFAULT_TOKEN_CREDENTIAL_REQUEST_HASH);
+            Ok(())
+        })
     }
 
     #[test]
