@@ -76,19 +76,19 @@ authProxy:
     - --scope=openid email 6dae42f8-4368-4678-94ff-3960e28e3630/user.read # required for azure, exactly this string without modification
 ```
 
-> Subsitute `<MY-COOKIE-SECRET>`, `<MY-APPLICATION-ID>`,`<MY-SECRET>` and `<MY-TENANT-ID>` with your values.
+> Substitute `<MY-COOKIE-SECRET>`, `<MY-APPLICATION-ID>`,`<MY-SECRET>` and `<MY-TENANT-ID>` with your values.
 
 We highlight here:
 
 - The issuer is `https://login.microsoftonline.com/<MY-TENANT-ID>/v2.0` (replacing `<MY-TENANT-ID>` with your own `Directory (tenant) ID`), since we are using v2 tokens.
 - The scope is exactly `openid email 6dae42f8-4368-4678-94ff-3960e28e3630/user.read`.
-  - Besides using the `openid` and `email` scopes, we also need `6dae42f8-4368-4678-94ff-3960e28e3630/user.read`. This one corresponds to the Application ID of the global _Azure Kubernetes Service AAD Server_. This way, you will able to get the user's email to get access to the protected resource that is AKS.
+  - Besides using the `openid` and `email` scopes, we also need `6dae42f8-4368-4678-94ff-3960e28e3630/user.read`. This one corresponds to the Application ID of the global _Azure Kubernetes Service AAD Server_. This way, you will able to get the user's email to get access to the protected resource that is ASK.
 
 > In `v1` tokens, you had to pass this value as part of the `--resource=6dae42f8-4368-4678-94ff-3960e28e3630` flag, but in `v2` tokens, this claim is performed just using the scope.
 
 ### Troubleshooting
 
-If you are getting a 500 error with the following message: `could not get claim "groups": failed to fetch claims from profile URL`, it is probably due to a [issue in oauth2-proxy](https://github.com/oauth2-proxy/oauth2-proxy/issues/1680) in the `v7.3.0`. You can work arount it by using the former `v7.2.1` version as follows:
+If you are getting a 500 error with the following message: `could not get claim "groups": failed to fetch claims from profile URL`, it is probably due to a [issue in oauth2-proxy](https://github.com/oauth2-proxy/oauth2-proxy/issues/1680) in the `v7.3.0`. You can work around it by using the former `v7.2.1` version as follows:
 
 ```yaml
 authProxy:
