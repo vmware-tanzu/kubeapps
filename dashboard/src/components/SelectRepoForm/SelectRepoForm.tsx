@@ -35,7 +35,7 @@ function SelectRepoForm({ cluster, namespace, app }: ISelectRepoFormProps) {
   } = useSelector((state: IStoreState) => state);
 
   const [userRepoName, setUserRepoName] = useState(repo?.name ?? "");
-  const [userRepoNamespace, setUserRepoNamepace] = useState(
+  const [userRepoNamespace, setUserRepoNamespace] = useState(
     repo.packageRepoRef?.context?.namespace ?? "",
   );
   // We do not currently support package repositories on additional clusters.
@@ -66,7 +66,7 @@ function SelectRepoForm({ cluster, namespace, app }: ISelectRepoFormProps) {
     if (e.target.value) {
       const [ns, name] = e.target.value.split("/");
       setUserRepoName(name);
-      setUserRepoNamepace(ns);
+      setUserRepoNamespace(ns);
     }
   };
 

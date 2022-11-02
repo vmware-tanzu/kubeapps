@@ -885,7 +885,7 @@ paths:
 
                 object "Update" semantics rather than "Patch" semantics. The caller will provide the
 
-                values for the fields below, which will replace, or be overlayed onto, the
+                values for the fields below, which will replace, or be overlaid onto, the
 
                 corresponding fields in the existing resource. For example, with the
 
@@ -5494,7 +5494,7 @@ components:
 
               object "Update" semantics rather than "Patch" semantics. The caller will provide the
 
-              values for the fields below, which will replace, or be overlayed onto, the
+              values for the fields below, which will replace, or be overlaid onto, the
 
               corresponding fields in the existing resource. For example, with the
 

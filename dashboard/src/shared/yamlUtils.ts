@@ -24,32 +24,32 @@ export function setPathValueInYamlNode(
   path: string,
   newValue: any,
 ) {
-  const { splittedPath, value } = parsePathAndValue(valuesNode, path, newValue);
-  valuesNode.setIn(splittedPath, value);
+  const { splitPath, value } = parsePathAndValue(valuesNode, path, newValue);
+  valuesNode.setIn(splitPath, value);
   return valuesNode;
 }
 
 function parsePathAndValue(doc: YAML.Document, path: string, value?: any) {
   if (isEmpty(doc.contents)) {
     // If the doc is empty we have an special case
-    return { value: set({}, path.replace(/^\//, ""), value), splittedPath: [] };
+    return { value: set({}, path.replace(/^\//, ""), value), splitPath: [] };
   }
-  let splittedPath = splitPath(path);
+  let splitPath = splitPath(path);
   // If the path is not defined (the parent nodes are undefined)
   // We need to change the path and the value to set to avoid accessing
   // the undefined node. For example, if a.b is undefined:
   // path: a.b.c, value: 1 ==> path: a.b, value: {c: 1}
   // TODO(andresmgot): In the future, this may be implemented in the YAML library itself
   // https://github.com/eemeli/yaml/issues/131
-  const allElementsButTheLast = splittedPath.slice(0, splittedPath.length - 1);
+  const allElementsButTheLast = splitPath.slice(0, splitPath.length - 1);
   const parentNode = (doc as any).getIn(allElementsButTheLast);
   if (parentNode === undefined) {
     const definedPath = getDefinedPath(allElementsButTheLast, doc);
-    const remainingPath = splittedPath.slice(definedPath.length + 1);
+    const remainingPath = splitPath.slice(definedPath.length + 1);
     value = set({}, remainingPath.join("."), value);
-    splittedPath = splittedPath.slice(0, definedPath.length + 1);
+    splitPath = splitPath.slice(0, definedPath.length + 1);
   }
-  return { splittedPath: unescapePath(splittedPath), value };
+  return { splitPath: unescapePath(splitPath), value };
 }
 
 function getDefinedPath(allElementsButTheLast: string[], doc: YAML.Document) {
@@ -84,8 +84,8 @@ export function getPathValueInYamlNode(
   values: YAML.Document.Parsed<YAML.ParsedNode>,
   path: string,
 ) {
-  const splittedPath = parsePath(path);
-  let value = values?.getIn(splittedPath);
+  const splitPath = parsePath(path);
+  let value = values?.getIn(splitPath);
 
   // if the value from getIn is an object, it means
   // it is a YamlSeq or YamlMap, so we need to convert it
@@ -118,8 +118,8 @@ function splitPath(path: string): string[] {
 
 export function deleteValue(values: string, path: string) {
   const doc = YAML.parseDocument(values, { toStringDefaults: toStringOptions });
-  const { splittedPath } = parsePathAndValue(doc, path);
-  (doc as any).deleteIn(splittedPath);
+  const { splitPath } = parsePathAndValue(doc, path);
+  (doc as any).deleteIn(splitPath);
   // If the document is empty after the deletion instead of returning {}
   // we return an empty line "\n"
   return doc.contents && !isEmpty((doc.contents as any).items)
@@ -130,7 +130,7 @@ export function deleteValue(values: string, path: string) {
 // setValue modifies the current values (text) based on a path
 export function setValue(values: string, path: string, newValue: any) {
   const doc = YAML.parseDocument(values, { toStringDefaults: toStringOptions });
-  const { splittedPath, value } = parsePathAndValue(doc, path, newValue);
-  (doc as any).setIn(splittedPath, value);
+  const { splitPath, value } = parsePathAndValue(doc, path, newValue);
+  (doc as any).setIn(splitPath, value);
   return doc.toString(toStringOptions);
 }
