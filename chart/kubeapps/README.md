@@ -421,11 +421,10 @@ Once you have installed Kubeapps follow the [Getting Started Guide](https://gith
 
 ### Other Parameters
 
-| Name                      | Description                                                                   | Value  |
-| ------------------------- | ----------------------------------------------------------------------------- | ------ |
-| `allowNamespaceDiscovery` | Allow users to discover available namespaces (only the ones they have access) | `true` |
-| `clusters`                | List of clusters that Kubeapps can target for deployments                     | `[]`   |
-| `rbac.create`             | Specifies whether RBAC resources should be created                            | `true` |
+| Name          | Description                                               | Value  |
+| ------------- | --------------------------------------------------------- | ------ |
+| `clusters`    | List of clusters that Kubeapps can target for deployments | `[]`   |
+| `rbac.create` | Specifies whether RBAC resources should be created        | `true` |
 
 
 ### Feature flags
@@ -672,6 +671,10 @@ helm upgrade $RELEASE_NAME my-repo/kubeapps
 ```
 
 If you find issues upgrading Kubeapps, check the [troubleshooting](#error-while-upgrading-the-chart) section.
+
+### To 12.0.0
+
+This major updates the PostgreSQL subchart to its newest major, 12.0.0. [Here](https://github.com/bitnami/charts/tree/master/bitnami/postgresql#to-1200) you can find more information about the changes introduced in that version.
 
 ## Uninstalling the Chart
 
