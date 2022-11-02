@@ -16,3 +16,4 @@ concurrency:
 jobs:
   main:
     uses: ./.github/workflows/kubeapps-general.yaml
+    secrets: inherit

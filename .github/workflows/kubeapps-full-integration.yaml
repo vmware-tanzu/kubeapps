@@ -13,5 +13,6 @@ concurrency:
 jobs:
   main:
     uses: ./.github/workflows/kubeapps-general.yaml
+    secrets: inherit
     with:
       run_gke_tests: true
