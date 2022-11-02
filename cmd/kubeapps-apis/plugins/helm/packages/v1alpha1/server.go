@@ -183,7 +183,7 @@ func (s *Server) GetManager() (utils.AssetManager, error) {
 }
 
 // GetGlobalPackagingNamespace returns the configured global packaging namespace in in the plugin config if any,
-// otherwise it uses the one passed as a cmd argument to the kubeapps-apis server for backwards compatibilty.
+// otherwise it uses the one passed as a cmd argument to the kubeapps-apis server for backwards compatibility.
 func (s *Server) GetGlobalPackagingNamespace() string {
 	if s.pluginConfig.GlobalPackagingNamespace != "" {
 		return s.pluginConfig.GlobalPackagingNamespace

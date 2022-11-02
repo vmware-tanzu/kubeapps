@@ -341,7 +341,7 @@ func (c *NamespacedResourceWatcherCache) watchLoop(watcher *watchutil.RetryWatch
 	}
 }
 
-func (c *NamespacedResourceWatcherCache) resyncAndNewRetryWatcher(bootstrap bool) (watcher *watchutil.RetryWatcher, eror error) {
+func (c *NamespacedResourceWatcherCache) resyncAndNewRetryWatcher(bootstrap bool) (watcher *watchutil.RetryWatcher, error error) {
 	log.Info("+resyncAndNewRetryWatcher()")
 	c.resyncCond.L.Lock()
 	defer func() {

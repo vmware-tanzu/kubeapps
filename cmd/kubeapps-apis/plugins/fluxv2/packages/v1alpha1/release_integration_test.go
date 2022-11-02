@@ -325,7 +325,7 @@ func TestKindClusterUpdateInstalledPackage(t *testing.T) {
 				_, err := fluxPluginPackagesClient.UpdateInstalledPackage(ctx, tc.request)
 				if tc.unauthorized {
 					if status.Code(err) != codes.Unauthenticated {
-						t.Fatalf("Expected Unathenticated, got: %v", status.Code(err))
+						t.Fatalf("Expected Unauthenticated, got: %v", status.Code(err))
 					}
 					return // done, nothing more to check
 				} else if err != nil {
@@ -341,7 +341,7 @@ func TestKindClusterUpdateInstalledPackage(t *testing.T) {
 				}
 			}
 			if i == maxRetries {
-				t.Fatalf("Update retries exhaused for package [%s], last error: [%v]", installedRef, err)
+				t.Fatalf("Update retries exhausted for package [%s], last error: [%v]", installedRef, err)
 			}
 
 			actualRespAfterUpdate, actualRefsAfterUpdate :=
@@ -605,7 +605,7 @@ func TestKindClusterDeleteInstalledPackage(t *testing.T) {
 			})
 			if tc.unauthorized {
 				if status.Code(err) != codes.Unauthenticated {
-					t.Fatalf("Expected Unathenticated, got: %v", status.Code(err))
+					t.Fatalf("Expected Unauthenticated, got: %v", status.Code(err))
 				}
 				// still need to delete the release though
 				name := types.NamespacedName{
