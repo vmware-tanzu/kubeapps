@@ -439,12 +439,9 @@ func intervalToCron(duration string) string {
 // the AppRepository resource that 'owns' it.
 func newCronJob(apprepo *apprepov1alpha1.AppRepository, config Config) *batchv1.CronJob {
 	// If the apprepo has its own Interval, use that instead of the default global crontab.
-	cronTime := ""
+	cronTime := config.Crontab
 	if apprepo.Spec.Interval != "" {
 		cronTime = intervalToCron(apprepo.Spec.Interval)
-	}
-	if cronTime == "" {
-		cronTime = config.Crontab
 	}
 
 	return &batchv1.CronJob{
