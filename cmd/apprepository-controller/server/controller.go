@@ -420,7 +420,7 @@ func ownerReferencesForAppRepo(apprepo *apprepov1alpha1.AppRepository, childName
 
 // intervalToCron transforms string durations like "1m" or "1h" to cron expressions
 // Even if valid time units are "ns", "us", "ms", "s", "m", "h",
-// the result will get rounded up to seconds.
+// the result will get rounded up to minutes.
 func intervalToCron(duration string) (string, error) {
 	if duration == "" {
 		return "", fmt.Errorf("duration cannot be empty")
@@ -428,8 +428,9 @@ func intervalToCron(duration string) (string, error) {
 		if d, err := time.ParseDuration(duration); err != nil {
 			return "", err
 		} else {
-			cronSecs := math.Ceil(d.Seconds())                  // round up to nearest second
-			return fmt.Sprintf("*/%v * * * * *", cronSecs), nil // every cronSecs seconds
+			cronMins := math.Ceil(d.Minutes()) // round up to nearest minutes
+			// https://kubernetes.io/docs/concepts/workloads/controllers/cron-jobs/#cron-schedule-syntax
+			return fmt.Sprintf("*/%v * * * *", cronMins), nil // every cronMins minutes
 		}
 	}
 }

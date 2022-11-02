@@ -434,7 +434,7 @@ func Test_newCronJob(t *testing.T) {
 					Annotations: map[string]string{},
 				},
 				Spec: batchv1.CronJobSpec{
-					Schedule:          "*/3600 * * * *",
+					Schedule:          "*/60 * * * *",
 					ConcurrencyPolicy: batchv1.ReplaceConcurrent,
 					JobTemplate: batchv1.JobTemplateSpec{
 						Spec: batchv1.JobSpec{
@@ -1946,7 +1946,7 @@ func TestGenerateJobName(t *testing.T) {
 		expect    string
 	}{
 		{
-			name:      "good patern",
+			name:      "good pattern",
 			namespace: "foo",
 			jobName:   "bar",
 			pattern:   "name: %s, namespace %s",
@@ -1954,7 +1954,7 @@ func TestGenerateJobName(t *testing.T) {
 			expect:    "name: foo, namespace bar",
 		},
 		{
-			name:      "good patern (with dash)",
+			name:      "good pattern (with dash)",
 			namespace: "foo",
 			jobName:   "bar",
 			pattern:   "name: %s, namespace %s",
@@ -1984,32 +1984,32 @@ func TestIntervalToCron(t *testing.T) {
 		{
 			name:         "good interval, every 2 nanoseconds",
 			interval:     "2ns",
-			expectedCron: "*/1 * * * * *",
+			expectedCron: "*/1 * * * *",
 		},
 		{
 			name:         "good interval, every 2 microseconds",
 			interval:     "2us",
-			expectedCron: "*/1 * * * * *",
+			expectedCron: "*/1 * * * *",
 		},
 		{
 			name:         "good interval, every 2 milliseconds",
 			interval:     "2ms",
-			expectedCron: "*/1 * * * * *",
+			expectedCron: "*/1 * * * *",
 		},
 		{
 			name:         "good interval, every 2 seconds",
 			interval:     "2s",
-			expectedCron: "*/2 * * * * *",
+			expectedCron: "*/1 * * * *",
 		},
 		{
 			name:         "good interval, every two minutes",
 			interval:     "2m",
-			expectedCron: "*/120 * * * * *",
+			expectedCron: "*/2 * * * *",
 		},
 		{
 			name:         "good interval, every two hours",
 			interval:     "2h",
-			expectedCron: "*/7200 * * * * *",
+			expectedCron: "*/120 * * * *",
 		},
 		{
 			name:         "bad interval, unsupported every two days",
