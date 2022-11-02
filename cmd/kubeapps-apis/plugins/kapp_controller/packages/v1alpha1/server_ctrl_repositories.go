@@ -319,3 +319,7 @@ func (s *Server) DeletePackageRepository(ctx context.Context, request *corev1.De
 	log.InfoS("-kapp-controller DeletePackageRepository", "cluster", cluster, "namespace", namespace, "name", name)
 	return response, nil
 }
+
+func (s *Server) GetPackageRepositoryPermissions(context.Context, *corev1.GetPackageRepositoryPermissionsRequest) (*corev1.GetPackageRepositoryPermissionsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetPackageRepositoryPermissions not implemented")
+}

@@ -635,6 +635,10 @@ func (s *Server) DeletePackageRepository(ctx context.Context, request *corev1.De
 	}
 }
 
+func (s *Server) GetPackageRepositoryPermissions(context.Context, *corev1.GetPackageRepositoryPermissionsRequest) (*corev1.GetPackageRepositoryPermissionsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetPackageRepositoryPermissions not implemented")
+}
+
 // This endpoint exists only for integration unit tests
 func (s *Server) SetUserManagedSecrets(ctx context.Context, request *v1alpha1.SetUserManagedSecretsRequest) (*v1alpha1.SetUserManagedSecretsResponse, error) {
 	log.Infof("+fluxv2 SetUserManagedSecrets [%t]", request.Value)
