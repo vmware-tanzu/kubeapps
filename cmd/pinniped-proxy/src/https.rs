@@ -303,7 +303,7 @@ mod tests {
             Err(e) => {
                 assert!(
                     e.is::<base64::DecodeError>(),
-                    "got: {:#?}, want: base64::DecodeErro",
+                    "got: {:#?}, want: base64::DecodeError",
                     e
                 );
                 Ok(())
