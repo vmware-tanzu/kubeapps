@@ -6,6 +6,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/pkg/resources"
 
 	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/pkg/helm"
 
@@ -635,8 +636,41 @@ func (s *Server) DeletePackageRepository(ctx context.Context, request *corev1.De
 	}
 }
 
-func (s *Server) GetPackageRepositoryPermissions(context.Context, *corev1.GetPackageRepositoryPermissionsRequest) (*corev1.GetPackageRepositoryPermissionsResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetPackageRepositoryPermissions not implemented")
+func (s *Server) GetPackageRepositoryPermissions(ctx context.Context, request *corev1.GetPackageRepositoryPermissionsRequest) (*corev1.GetPackageRepositoryPermissionsResponse, error) {
+	log.Infof("+fluxv2 GetPackageRepositoryPermissions [%v]", request)
+
+	cluster := request.GetContext().GetCluster()
+	typedClient, err := s.clientGetter.Typed(ctx, cluster)
+	if err != nil {
+		return nil, err
+	}
+
+	resource := schema.GroupResource{
+		Group:    sourcev1.GroupVersion.Group,
+		Resource: fluxHelmRepositories,
+	}
+
+	permissions := &corev1.PackageRepositoriesPermissions{
+		Plugin: GetPluginDetail(),
+	}
+
+	// Global permissions
+	permissions.Global, err = resources.GetPermissionsOnResource(ctx, typedClient, resource, "")
+	if err != nil {
+		return nil, err
+	}
+
+	// Namespace permissions
+	if request.GetContext().GetNamespace() != "" {
+		permissions.Namespace, err = resources.GetPermissionsOnResource(ctx, typedClient, resource, request.GetContext().GetNamespace())
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return &corev1.GetPackageRepositoryPermissionsResponse{
+		Permissions: []*corev1.PackageRepositoriesPermissions{permissions},
+	}, nil
 }
 
 // This endpoint exists only for integration unit tests

@@ -5,7 +5,10 @@ package main
 
 import (
 	"context"
+	packagingv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/packaging/v1alpha1"
+	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/pkg/resources"
 	"k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	corev1 "github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
 	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/pkg/statuserror"
@@ -320,6 +323,39 @@ func (s *Server) DeletePackageRepository(ctx context.Context, request *corev1.De
 	return response, nil
 }
 
-func (s *Server) GetPackageRepositoryPermissions(context.Context, *corev1.GetPackageRepositoryPermissionsRequest) (*corev1.GetPackageRepositoryPermissionsResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetPackageRepositoryPermissions not implemented")
+func (s *Server) GetPackageRepositoryPermissions(ctx context.Context, request *corev1.GetPackageRepositoryPermissionsRequest) (*corev1.GetPackageRepositoryPermissionsResponse, error) {
+	log.Infof("+kapp-controller GetPackageRepositoryPermissions [%v]", request)
+
+	cluster := request.GetContext().GetCluster()
+	typedClient, err := s.clientGetter.Typed(ctx, cluster)
+	if err != nil {
+		return nil, err
+	}
+
+	resource := schema.GroupResource{
+		Group:    packagingv1alpha1.SchemeGroupVersion.Group,
+		Resource: pkgRepositoriesResource,
+	}
+
+	permissions := &corev1.PackageRepositoriesPermissions{
+		Plugin: GetPluginDetail(),
+	}
+
+	// Global permissions
+	permissions.Global, err = resources.GetPermissionsOnResource(ctx, typedClient, resource, "")
+	if err != nil {
+		return nil, err
+	}
+
+	// Namespace permissions
+	if request.GetContext().GetNamespace() != "" {
+		permissions.Namespace, err = resources.GetPermissionsOnResource(ctx, typedClient, resource, request.GetContext().GetNamespace())
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return &corev1.GetPackageRepositoryPermissionsResponse{
+		Permissions: []*corev1.PackageRepositoriesPermissions{permissions},
+	}, nil
 }
