@@ -516,75 +516,6 @@ edit_token="$(kubectl get -n kubeapps secret "$(kubectl get -n kubeapps servicea
 endTime=$(date +%s)
 info "Bootstrap time: $(formattedElapsedTime endTime-startTime)"
 
-############################################################
-######## Multi-cluster without Kubeapps tests group ########
-############################################################
-if [[ -z "${GKE_BRANCH-}" && ("${TESTS_GROUP}" == "${ALL_TESTS}" || "${TESTS_GROUP}" == "${MULTICLUSTER_NOKUBEAPPS_TESTS}") ]]; then
-  sectionStartTime=$(date +%s)
-  info "Running multi-cluster (without Kubeapps cluster) integration tests..."
-
-  info "Updating Kubeapps to exclude Kubeapps cluster from the list of clusters"
-
-  # Update Kubeapps
-  kubeappsChartPath="${ROOT_DIR}/chart/kubeapps"
-  info "Installing Kubeapps from ${kubeappsChartPath}..."
-  kubectl -n kubeapps delete secret localhost-tls || true
-
-  # See https://stackoverflow.com/a/36296000 for "${arr[@]+"${arr[@]}"}" notation.
-  cmd=(helm upgrade --install kubeapps-ci --namespace kubeapps "${kubeappsChartPath}"
-    "${img_flags[@]}"
-    "${basicAuthFlags[@]+"${basicAuthFlags[@]}"}"
-    --set clusters[0].name=second-cluster
-    --set clusters[0].apiServiceURL=https://${ADDITIONAL_CLUSTER_IP}:6443
-    --set clusters[0].insecure=true
-    --set clusters[0].serviceToken=$(kubectl --context=kind-kubeapps-ci-additional --kubeconfig=${HOME}/.kube/kind-config-kubeapps-ci-additional get secret kubeapps-namespace-discovery -o go-template='{{.data.token | base64decode}}')
-    --set frontend.replicaCount=1
-    --set dashboard.replicaCount=1
-    --set kubeappsapis.replicaCount=2
-    --set postgresql.architecture=standalone
-    --set postgresql.primary.persistence.enabled=false
-    --set postgresql.auth.password=password
-    --set redis.auth.password=password
-    --set apprepository.initialRepos[0].name=bitnami
-    --set apprepository.initialRepos[0].url=http://chartmuseum.chart-museum.svc.cluster.local:8080
-    --set apprepository.initialRepos[0].basicAuth.user=admin
-    --set apprepository.initialRepos[0].basicAuth.password=password
-    --set apprepository.globalReposNamespaceSuffix=-repos-global
-    --wait)
-
-  echo "${cmd[@]}"
-  "${cmd[@]}"
-
-  info "Waiting for updated Kubeapps components to be ready..."
-  k8s_wait_for_deployment kubeapps kubeapps-ci
-
-  test_command="
-    CI_TIMEOUT_MINUTES=40 \
-    DOCKER_USERNAME=${DOCKER_USERNAME} \
-    DOCKER_PASSWORD=${DOCKER_PASSWORD} \
-    DOCKER_REGISTRY_URL=${DOCKER_REGISTRY_URL} \
-    TEST_TIMEOUT_MINUTES=${TEST_TIMEOUT_MINUTES} \
-    INTEGRATION_ENTRYPOINT=${INTEGRATION_ENTRYPOINT} \
-    USE_MULTICLUSTER_OIDC_ENV=${USE_MULTICLUSTER_OIDC_ENV} \
-    ADMIN_TOKEN=${admin_token} \
-    VIEW_TOKEN=${view_token} \
-    EDIT_TOKEN=${edit_token} \
-    yarn test \"tests/multicluster-nokubeapps/\"
-    "
-  info "${test_command}"
-
-  if ! kubectl exec -it "$pod" -- /bin/sh -c "${test_command}"; then
-    ## Integration tests failed, get report screenshot
-    warn "PODS status on failure"
-    kubectl cp "${pod}:/app/reports" ./reports
-    exit 1
-  fi
-  info "Multi-cluster integration tests succeeded!!"
-
-  sectionEndTime=$(date +%s)
-  info "Multi-cluster tests execution time: $(formattedElapsedTime sectionEndTime-sectionStartTime)"
-fi
-
 ##################################
 ######## Main tests group ########
 ##################################
@@ -779,6 +710,75 @@ if [[ "${TESTS_GROUP}" == "${ALL_TESTS}" || "${TESTS_GROUP}" == "${OPERATOR_TEST
     sectionEndTime=$(date +%s)
     info "Operator tests execution time: $(formattedElapsedTime sectionEndTime-sectionStartTime)"
   fi
+fi
+
+############################################################
+######## Multi-cluster without Kubeapps tests group ########
+############################################################
+if [[ -z "${GKE_BRANCH-}" && ("${TESTS_GROUP}" == "${ALL_TESTS}" || "${TESTS_GROUP}" == "${MULTICLUSTER_NOKUBEAPPS_TESTS}") ]]; then
+  sectionStartTime=$(date +%s)
+  info "Running multi-cluster (without Kubeapps cluster) integration tests..."
+
+  info "Updating Kubeapps to exclude Kubeapps cluster from the list of clusters"
+
+  # Update Kubeapps
+  kubeappsChartPath="${ROOT_DIR}/chart/kubeapps"
+  info "Installing Kubeapps from ${kubeappsChartPath}..."
+  kubectl -n kubeapps delete secret localhost-tls || true
+
+  # See https://stackoverflow.com/a/36296000 for "${arr[@]+"${arr[@]}"}" notation.
+  cmd=(helm upgrade --install kubeapps-ci --namespace kubeapps "${kubeappsChartPath}"
+    "${img_flags[@]}"
+    "${basicAuthFlags[@]+"${basicAuthFlags[@]}"}"
+    --set clusters[0].name=second-cluster
+    --set clusters[0].apiServiceURL=https://${ADDITIONAL_CLUSTER_IP}:6443
+    --set clusters[0].insecure=true
+    --set clusters[0].serviceToken=$(kubectl --context=kind-kubeapps-ci-additional --kubeconfig=${HOME}/.kube/kind-config-kubeapps-ci-additional get secret kubeapps-namespace-discovery -o go-template='{{.data.token | base64decode}}')
+    --set frontend.replicaCount=1
+    --set dashboard.replicaCount=1
+    --set kubeappsapis.replicaCount=2
+    --set postgresql.architecture=standalone
+    --set postgresql.primary.persistence.enabled=false
+    --set postgresql.auth.password=password
+    --set redis.auth.password=password
+    --set apprepository.initialRepos[0].name=bitnami
+    --set apprepository.initialRepos[0].url=http://chartmuseum.chart-museum.svc.cluster.local:8080
+    --set apprepository.initialRepos[0].basicAuth.user=admin
+    --set apprepository.initialRepos[0].basicAuth.password=password
+    --set apprepository.globalReposNamespaceSuffix=-repos-global
+    --wait)
+
+  echo "${cmd[@]}"
+  "${cmd[@]}"
+
+  info "Waiting for updated Kubeapps components to be ready..."
+  k8s_wait_for_deployment kubeapps kubeapps-ci
+
+  test_command="
+    CI_TIMEOUT_MINUTES=40 \
+    DOCKER_USERNAME=${DOCKER_USERNAME} \
+    DOCKER_PASSWORD=${DOCKER_PASSWORD} \
+    DOCKER_REGISTRY_URL=${DOCKER_REGISTRY_URL} \
+    TEST_TIMEOUT_MINUTES=${TEST_TIMEOUT_MINUTES} \
+    INTEGRATION_ENTRYPOINT=${INTEGRATION_ENTRYPOINT} \
+    USE_MULTICLUSTER_OIDC_ENV=${USE_MULTICLUSTER_OIDC_ENV} \
+    ADMIN_TOKEN=${admin_token} \
+    VIEW_TOKEN=${view_token} \
+    EDIT_TOKEN=${edit_token} \
+    yarn test \"tests/multicluster-nokubeapps/\"
+    "
+  info "${test_command}"
+
+  if ! kubectl exec -it "$pod" -- /bin/sh -c "${test_command}"; then
+    ## Integration tests failed, get report screenshot
+    warn "PODS status on failure"
+    kubectl cp "${pod}:/app/reports" ./reports
+    exit 1
+  fi
+  info "Multi-cluster integration tests succeeded!!"
+
+  sectionEndTime=$(date +%s)
+  info "Multi-cluster tests execution time: $(formattedElapsedTime sectionEndTime-sectionStartTime)"
 fi
 
 info "Integration tests succeeded!"
