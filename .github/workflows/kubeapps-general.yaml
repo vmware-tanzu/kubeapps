@@ -20,7 +20,7 @@ env:
   CI_BOT_GPG: "80B6EB16B1328FB18DFF2A073EBA68F3347E319D"
   # DEBUG_MODE allows to activate some SSH debugging steps, and modify the verbosity level of some scripts (eg. e2e-tests.sh)
   DEBUG_MODE: "true"
-  # FIXME: DEV_MODE is used to enable dev mode, used to activate several hacks along the code:
+  # TODO(bjesus): DEV_MODE is used to enable dev mode, used to activate several hacks along the code:
   # - In sync_chart_from/to_bitnami jobs to file shadow PRs while we maintain
   # - To add a suffix to the tag of the generated docker images, to prevent collision and overwriting with those generated from CircleCI
   # - To add a suffix to the name of the generated GKE clusters to prevent collision with those generated and used from CircleCI
