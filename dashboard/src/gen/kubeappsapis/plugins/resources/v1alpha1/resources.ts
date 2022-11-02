@@ -4,7 +4,11 @@ import { BrowserHeaders } from "browser-headers";
 import _m0 from "protobufjs/minimal";
 import { Observable } from "rxjs";
 import { share } from "rxjs/operators";
-import { Context, InstalledPackageReference, ResourceRef } from "../../../core/packages/v1alpha1/packages";
+import {
+  Context,
+  InstalledPackageReference,
+  ResourceRef,
+} from "../../../core/packages/v1alpha1/packages";
 
 export const protobufPackage = "kubeappsapis.plugins.resources.v1alpha1";
 
@@ -223,8 +227,7 @@ export interface CreateNamespaceRequest_LabelsEntry {
  *
  * Response for CreateNamespace
  */
-export interface CreateNamespaceResponse {
-}
+export interface CreateNamespaceResponse {}
 
 /**
  * CheckNamespaceExistsRequest
@@ -293,8 +296,7 @@ export interface CreateSecretRequest_StringDataEntry {
  *
  * Response for CreateSecret
  */
-export interface CreateSecretResponse {
-}
+export interface CreateSecretResponse {}
 
 /**
  * GetSecretNamesRequest
@@ -378,7 +380,10 @@ function createBaseGetResourcesRequest(): GetResourcesRequest {
 export const GetResourcesRequest = {
   encode(message: GetResourcesRequest, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
     if (message.installedPackageRef !== undefined) {
-      InstalledPackageReference.encode(message.installedPackageRef, writer.uint32(10).fork()).ldelim();
+      InstalledPackageReference.encode(
+        message.installedPackageRef,
+        writer.uint32(10).fork(),
+      ).ldelim();
     }
     for (const v of message.resourceRefs) {
       ResourceRef.encode(v!, writer.uint32(18).fork()).ldelim();
@@ -427,11 +432,12 @@ export const GetResourcesRequest = {
 
   toJSON(message: GetResourcesRequest): unknown {
     const obj: any = {};
-    message.installedPackageRef !== undefined && (obj.installedPackageRef = message.installedPackageRef
-      ? InstalledPackageReference.toJSON(message.installedPackageRef)
-      : undefined);
+    message.installedPackageRef !== undefined &&
+      (obj.installedPackageRef = message.installedPackageRef
+        ? InstalledPackageReference.toJSON(message.installedPackageRef)
+        : undefined);
     if (message.resourceRefs) {
-      obj.resourceRefs = message.resourceRefs.map((e) => e ? ResourceRef.toJSON(e) : undefined);
+      obj.resourceRefs = message.resourceRefs.map(e => (e ? ResourceRef.toJSON(e) : undefined));
     } else {
       obj.resourceRefs = [];
     }
@@ -439,12 +445,15 @@ export const GetResourcesRequest = {
     return obj;
   },
 
-  fromPartial<I extends Exact<DeepPartial<GetResourcesRequest>, I>>(object: I): GetResourcesRequest {
+  fromPartial<I extends Exact<DeepPartial<GetResourcesRequest>, I>>(
+    object: I,
+  ): GetResourcesRequest {
     const message = createBaseGetResourcesRequest();
-    message.installedPackageRef = (object.installedPackageRef !== undefined && object.installedPackageRef !== null)
-      ? InstalledPackageReference.fromPartial(object.installedPackageRef)
-      : undefined;
-    message.resourceRefs = object.resourceRefs?.map((e) => ResourceRef.fromPartial(e)) || [];
+    message.installedPackageRef =
+      object.installedPackageRef !== undefined && object.installedPackageRef !== null
+        ? InstalledPackageReference.fromPartial(object.installedPackageRef)
+        : undefined;
+    message.resourceRefs = object.resourceRefs?.map(e => ResourceRef.fromPartial(e)) || [];
     message.watch = object.watch ?? false;
     return message;
   },
@@ -501,11 +510,14 @@ export const GetResourcesResponse = {
     return obj;
   },
 
-  fromPartial<I extends Exact<DeepPartial<GetResourcesResponse>, I>>(object: I): GetResourcesResponse {
+  fromPartial<I extends Exact<DeepPartial<GetResourcesResponse>, I>>(
+    object: I,
+  ): GetResourcesResponse {
     const message = createBaseGetResourcesResponse();
-    message.resourceRef = (object.resourceRef !== undefined && object.resourceRef !== null)
-      ? ResourceRef.fromPartial(object.resourceRef)
-      : undefined;
+    message.resourceRef =
+      object.resourceRef !== undefined && object.resourceRef !== null
+        ? ResourceRef.fromPartial(object.resourceRef)
+        : undefined;
     message.manifest = object.manifest ?? "";
     return message;
   },
@@ -516,7 +528,10 @@ function createBaseGetServiceAccountNamesRequest(): GetServiceAccountNamesReques
 }
 
 export const GetServiceAccountNamesRequest = {
-  encode(message: GetServiceAccountNamesRequest, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
+  encode(
+    message: GetServiceAccountNamesRequest,
+    writer: _m0.Writer = _m0.Writer.create(),
+  ): _m0.Writer {
     if (message.context !== undefined) {
       Context.encode(message.context, writer.uint32(10).fork()).ldelim();
     }
@@ -547,7 +562,8 @@ export const GetServiceAccountNamesRequest = {
 
   toJSON(message: GetServiceAccountNamesRequest): unknown {
     const obj: any = {};
-    message.context !== undefined && (obj.context = message.context ? Context.toJSON(message.context) : undefined);
+    message.context !== undefined &&
+      (obj.context = message.context ? Context.toJSON(message.context) : undefined);
     return obj;
   },
 
@@ -555,9 +571,10 @@ export const GetServiceAccountNamesRequest = {
     object: I,
   ): GetServiceAccountNamesRequest {
     const message = createBaseGetServiceAccountNamesRequest();
-    message.context = (object.context !== undefined && object.context !== null)
-      ? Context.fromPartial(object.context)
-      : undefined;
+    message.context =
+      object.context !== undefined && object.context !== null
+        ? Context.fromPartial(object.context)
+        : undefined;
     return message;
   },
 };
@@ -567,7 +584,10 @@ function createBaseGetServiceAccountNamesResponse(): GetServiceAccountNamesRespo
 }
 
 export const GetServiceAccountNamesResponse = {
-  encode(message: GetServiceAccountNamesResponse, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
+  encode(
+    message: GetServiceAccountNamesResponse,
+    writer: _m0.Writer = _m0.Writer.create(),
+  ): _m0.Writer {
     for (const v of message.serviceaccountNames) {
       writer.uint32(10).string(v!);
     }
@@ -603,7 +623,7 @@ export const GetServiceAccountNamesResponse = {
   toJSON(message: GetServiceAccountNamesResponse): unknown {
     const obj: any = {};
     if (message.serviceaccountNames) {
-      obj.serviceaccountNames = message.serviceaccountNames.map((e) => e);
+      obj.serviceaccountNames = message.serviceaccountNames.map(e => e);
     } else {
       obj.serviceaccountNames = [];
     }
@@ -614,7 +634,7 @@ export const GetServiceAccountNamesResponse = {
     object: I,
   ): GetServiceAccountNamesResponse {
     const message = createBaseGetServiceAccountNamesResponse();
-    message.serviceaccountNames = object.serviceaccountNames?.map((e) => e) || [];
+    message.serviceaccountNames = object.serviceaccountNames?.map(e => e) || [];
     return message;
   },
 };
@@ -659,7 +679,9 @@ export const GetNamespaceNamesRequest = {
     return obj;
   },
 
-  fromPartial<I extends Exact<DeepPartial<GetNamespaceNamesRequest>, I>>(object: I): GetNamespaceNamesRequest {
+  fromPartial<I extends Exact<DeepPartial<GetNamespaceNamesRequest>, I>>(
+    object: I,
+  ): GetNamespaceNamesRequest {
     const message = createBaseGetNamespaceNamesRequest();
     message.cluster = object.cluster ?? "";
     return message;
@@ -698,23 +720,27 @@ export const GetNamespaceNamesResponse = {
 
   fromJSON(object: any): GetNamespaceNamesResponse {
     return {
-      namespaceNames: Array.isArray(object?.namespaceNames) ? object.namespaceNames.map((e: any) => String(e)) : [],
+      namespaceNames: Array.isArray(object?.namespaceNames)
+        ? object.namespaceNames.map((e: any) => String(e))
+        : [],
     };
   },
 
   toJSON(message: GetNamespaceNamesResponse): unknown {
     const obj: any = {};
     if (message.namespaceNames) {
-      obj.namespaceNames = message.namespaceNames.map((e) => e);
+      obj.namespaceNames = message.namespaceNames.map(e => e);
     } else {
       obj.namespaceNames = [];
     }
     return obj;
   },
 
-  fromPartial<I extends Exact<DeepPartial<GetNamespaceNamesResponse>, I>>(object: I): GetNamespaceNamesResponse {
+  fromPartial<I extends Exact<DeepPartial<GetNamespaceNamesResponse>, I>>(
+    object: I,
+  ): GetNamespaceNamesResponse {
     const message = createBaseGetNamespaceNamesResponse();
-    message.namespaceNames = object.namespaceNames?.map((e) => e) || [];
+    message.namespaceNames = object.namespaceNames?.map(e => e) || [];
     return message;
   },
 };
@@ -729,7 +755,10 @@ export const CreateNamespaceRequest = {
       Context.encode(message.context, writer.uint32(10).fork()).ldelim();
     }
     Object.entries(message.labels).forEach(([key, value]) => {
-      CreateNamespaceRequest_LabelsEntry.encode({ key: key as any, value }, writer.uint32(18).fork()).ldelim();
+      CreateNamespaceRequest_LabelsEntry.encode(
+        { key: key as any, value },
+        writer.uint32(18).fork(),
+      ).ldelim();
     });
     return writer;
   },
@@ -763,16 +792,17 @@ export const CreateNamespaceRequest = {
       context: isSet(object.context) ? Context.fromJSON(object.context) : undefined,
       labels: isObject(object.labels)
         ? Object.entries(object.labels).reduce<{ [key: string]: string }>((acc, [key, value]) => {
-          acc[key] = String(value);
-          return acc;
-        }, {})
+            acc[key] = String(value);
+            return acc;
+          }, {})
         : {},
     };
   },
 
   toJSON(message: CreateNamespaceRequest): unknown {
     const obj: any = {};
-    message.context !== undefined && (obj.context = message.context ? Context.toJSON(message.context) : undefined);
+    message.context !== undefined &&
+      (obj.context = message.context ? Context.toJSON(message.context) : undefined);
     obj.labels = {};
     if (message.labels) {
       Object.entries(message.labels).forEach(([k, v]) => {
@@ -782,17 +812,23 @@ export const CreateNamespaceRequest = {
     return obj;
   },
 
-  fromPartial<I extends Exact<DeepPartial<CreateNamespaceRequest>, I>>(object: I): CreateNamespaceRequest {
+  fromPartial<I extends Exact<DeepPartial<CreateNamespaceRequest>, I>>(
+    object: I,
+  ): CreateNamespaceRequest {
     const message = createBaseCreateNamespaceRequest();
-    message.context = (object.context !== undefined && object.context !== null)
-      ? Context.fromPartial(object.context)
-      : undefined;
-    message.labels = Object.entries(object.labels ?? {}).reduce<{ [key: string]: string }>((acc, [key, value]) => {
-      if (value !== undefined) {
-        acc[key] = String(value);
-      }
-      return acc;
-    }, {});
+    message.context =
+      object.context !== undefined && object.context !== null
+        ? Context.fromPartial(object.context)
+        : undefined;
+    message.labels = Object.entries(object.labels ?? {}).reduce<{ [key: string]: string }>(
+      (acc, [key, value]) => {
+        if (value !== undefined) {
+          acc[key] = String(value);
+        }
+        return acc;
+      },
+      {},
+    );
     return message;
   },
 };
@@ -802,7 +838,10 @@ function createBaseCreateNamespaceRequest_LabelsEntry(): CreateNamespaceRequest_
 }
 
 export const CreateNamespaceRequest_LabelsEntry = {
-  encode(message: CreateNamespaceRequest_LabelsEntry, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
+  encode(
+    message: CreateNamespaceRequest_LabelsEntry,
+    writer: _m0.Writer = _m0.Writer.create(),
+  ): _m0.Writer {
     if (message.key !== "") {
       writer.uint32(10).string(message.key);
     }
@@ -834,7 +873,10 @@ export const CreateNamespaceRequest_LabelsEntry = {
   },
 
   fromJSON(object: any): CreateNamespaceRequest_LabelsEntry {
-    return { key: isSet(object.key) ? String(object.key) : "", value: isSet(object.value) ? String(object.value) : "" };
+    return {
+      key: isSet(object.key) ? String(object.key) : "",
+      value: isSet(object.value) ? String(object.value) : "",
+    };
   },
 
   toJSON(message: CreateNamespaceRequest_LabelsEntry): unknown {
@@ -887,7 +929,9 @@ export const CreateNamespaceResponse = {
     return obj;
   },
 
-  fromPartial<I extends Exact<DeepPartial<CreateNamespaceResponse>, I>>(_: I): CreateNamespaceResponse {
+  fromPartial<I extends Exact<DeepPartial<CreateNamespaceResponse>, I>>(
+    _: I,
+  ): CreateNamespaceResponse {
     const message = createBaseCreateNamespaceResponse();
     return message;
   },
@@ -898,7 +942,10 @@ function createBaseCheckNamespaceExistsRequest(): CheckNamespaceExistsRequest {
 }
 
 export const CheckNamespaceExistsRequest = {
-  encode(message: CheckNamespaceExistsRequest, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
+  encode(
+    message: CheckNamespaceExistsRequest,
+    writer: _m0.Writer = _m0.Writer.create(),
+  ): _m0.Writer {
     if (message.context !== undefined) {
       Context.encode(message.context, writer.uint32(10).fork()).ldelim();
     }
@@ -929,15 +976,19 @@ export const CheckNamespaceExistsRequest = {
 
   toJSON(message: CheckNamespaceExistsRequest): unknown {
     const obj: any = {};
-    message.context !== undefined && (obj.context = message.context ? Context.toJSON(message.context) : undefined);
+    message.context !== undefined &&
+      (obj.context = message.context ? Context.toJSON(message.context) : undefined);
     return obj;
   },
 
-  fromPartial<I extends Exact<DeepPartial<CheckNamespaceExistsRequest>, I>>(object: I): CheckNamespaceExistsRequest {
+  fromPartial<I extends Exact<DeepPartial<CheckNamespaceExistsRequest>, I>>(
+    object: I,
+  ): CheckNamespaceExistsRequest {
     const message = createBaseCheckNamespaceExistsRequest();
-    message.context = (object.context !== undefined && object.context !== null)
-      ? Context.fromPartial(object.context)
-      : undefined;
+    message.context =
+      object.context !== undefined && object.context !== null
+        ? Context.fromPartial(object.context)
+        : undefined;
     return message;
   },
 };
@@ -947,7 +998,10 @@ function createBaseCheckNamespaceExistsResponse(): CheckNamespaceExistsResponse 
 }
 
 export const CheckNamespaceExistsResponse = {
-  encode(message: CheckNamespaceExistsResponse, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
+  encode(
+    message: CheckNamespaceExistsResponse,
+    writer: _m0.Writer = _m0.Writer.create(),
+  ): _m0.Writer {
     if (message.exists === true) {
       writer.uint32(8).bool(message.exists);
     }
@@ -982,7 +1036,9 @@ export const CheckNamespaceExistsResponse = {
     return obj;
   },
 
-  fromPartial<I extends Exact<DeepPartial<CheckNamespaceExistsResponse>, I>>(object: I): CheckNamespaceExistsResponse {
+  fromPartial<I extends Exact<DeepPartial<CheckNamespaceExistsResponse>, I>>(
+    object: I,
+  ): CheckNamespaceExistsResponse {
     const message = createBaseCheckNamespaceExistsResponse();
     message.exists = object.exists ?? false;
     return message;
@@ -1005,7 +1061,10 @@ export const CreateSecretRequest = {
       writer.uint32(26).string(message.name);
     }
     Object.entries(message.stringData).forEach(([key, value]) => {
-      CreateSecretRequest_StringDataEntry.encode({ key: key as any, value }, writer.uint32(34).fork()).ldelim();
+      CreateSecretRequest_StringDataEntry.encode(
+        { key: key as any, value },
+        writer.uint32(34).fork(),
+      ).ldelim();
     });
     return writer;
   },
@@ -1046,17 +1105,21 @@ export const CreateSecretRequest = {
       type: isSet(object.type) ? secretTypeFromJSON(object.type) : 0,
       name: isSet(object.name) ? String(object.name) : "",
       stringData: isObject(object.stringData)
-        ? Object.entries(object.stringData).reduce<{ [key: string]: string }>((acc, [key, value]) => {
-          acc[key] = String(value);
-          return acc;
-        }, {})
+        ? Object.entries(object.stringData).reduce<{ [key: string]: string }>(
+            (acc, [key, value]) => {
+              acc[key] = String(value);
+              return acc;
+            },
+            {},
+          )
         : {},
     };
   },
 
   toJSON(message: CreateSecretRequest): unknown {
     const obj: any = {};
-    message.context !== undefined && (obj.context = message.context ? Context.toJSON(message.context) : undefined);
+    message.context !== undefined &&
+      (obj.context = message.context ? Context.toJSON(message.context) : undefined);
     message.type !== undefined && (obj.type = secretTypeToJSON(message.type));
     message.name !== undefined && (obj.name = message.name);
     obj.stringData = {};
@@ -1068,11 +1131,14 @@ export const CreateSecretRequest = {
     return obj;
   },
 
-  fromPartial<I extends Exact<DeepPartial<CreateSecretRequest>, I>>(object: I): CreateSecretRequest {
+  fromPartial<I extends Exact<DeepPartial<CreateSecretRequest>, I>>(
+    object: I,
+  ): CreateSecretRequest {
     const message = createBaseCreateSecretRequest();
-    message.context = (object.context !== undefined && object.context !== null)
-      ? Context.fromPartial(object.context)
-      : undefined;
+    message.context =
+      object.context !== undefined && object.context !== null
+        ? Context.fromPartial(object.context)
+        : undefined;
     message.type = object.type ?? 0;
     message.name = object.name ?? "";
     message.stringData = Object.entries(object.stringData ?? {}).reduce<{ [key: string]: string }>(
@@ -1093,7 +1159,10 @@ function createBaseCreateSecretRequest_StringDataEntry(): CreateSecretRequest_St
 }
 
 export const CreateSecretRequest_StringDataEntry = {
-  encode(message: CreateSecretRequest_StringDataEntry, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
+  encode(
+    message: CreateSecretRequest_StringDataEntry,
+    writer: _m0.Writer = _m0.Writer.create(),
+  ): _m0.Writer {
     if (message.key !== "") {
       writer.uint32(10).string(message.key);
     }
@@ -1125,7 +1194,10 @@ export const CreateSecretRequest_StringDataEntry = {
   },
 
   fromJSON(object: any): CreateSecretRequest_StringDataEntry {
-    return { key: isSet(object.key) ? String(object.key) : "", value: isSet(object.value) ? String(object.value) : "" };
+    return {
+      key: isSet(object.key) ? String(object.key) : "",
+      value: isSet(object.value) ? String(object.value) : "",
+    };
   },
 
   toJSON(message: CreateSecretRequest_StringDataEntry): unknown {
@@ -1220,15 +1292,19 @@ export const GetSecretNamesRequest = {
 
   toJSON(message: GetSecretNamesRequest): unknown {
     const obj: any = {};
-    message.context !== undefined && (obj.context = message.context ? Context.toJSON(message.context) : undefined);
+    message.context !== undefined &&
+      (obj.context = message.context ? Context.toJSON(message.context) : undefined);
     return obj;
   },
 
-  fromPartial<I extends Exact<DeepPartial<GetSecretNamesRequest>, I>>(object: I): GetSecretNamesRequest {
+  fromPartial<I extends Exact<DeepPartial<GetSecretNamesRequest>, I>>(
+    object: I,
+  ): GetSecretNamesRequest {
     const message = createBaseGetSecretNamesRequest();
-    message.context = (object.context !== undefined && object.context !== null)
-      ? Context.fromPartial(object.context)
-      : undefined;
+    message.context =
+      object.context !== undefined && object.context !== null
+        ? Context.fromPartial(object.context)
+        : undefined;
     return message;
   },
 };
@@ -1240,7 +1316,10 @@ function createBaseGetSecretNamesResponse(): GetSecretNamesResponse {
 export const GetSecretNamesResponse = {
   encode(message: GetSecretNamesResponse, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
     Object.entries(message.secretNames).forEach(([key, value]) => {
-      GetSecretNamesResponse_SecretNamesEntry.encode({ key: key as any, value }, writer.uint32(10).fork()).ldelim();
+      GetSecretNamesResponse_SecretNamesEntry.encode(
+        { key: key as any, value },
+        writer.uint32(10).fork(),
+      ).ldelim();
     });
     return writer;
   },
@@ -1269,10 +1348,13 @@ export const GetSecretNamesResponse = {
   fromJSON(object: any): GetSecretNamesResponse {
     return {
       secretNames: isObject(object.secretNames)
-        ? Object.entries(object.secretNames).reduce<{ [key: string]: SecretType }>((acc, [key, value]) => {
-          acc[key] = secretTypeFromJSON(value);
-          return acc;
-        }, {})
+        ? Object.entries(object.secretNames).reduce<{ [key: string]: SecretType }>(
+            (acc, [key, value]) => {
+              acc[key] = secretTypeFromJSON(value);
+              return acc;
+            },
+            {},
+          )
         : {},
     };
   },
@@ -1288,17 +1370,18 @@ export const GetSecretNamesResponse = {
     return obj;
   },
 
-  fromPartial<I extends Exact<DeepPartial<GetSecretNamesResponse>, I>>(object: I): GetSecretNamesResponse {
+  fromPartial<I extends Exact<DeepPartial<GetSecretNamesResponse>, I>>(
+    object: I,
+  ): GetSecretNamesResponse {
     const message = createBaseGetSecretNamesResponse();
-    message.secretNames = Object.entries(object.secretNames ?? {}).reduce<{ [key: string]: SecretType }>(
-      (acc, [key, value]) => {
-        if (value !== undefined) {
-          acc[key] = value as SecretType;
-        }
-        return acc;
-      },
-      {},
-    );
+    message.secretNames = Object.entries(object.secretNames ?? {}).reduce<{
+      [key: string]: SecretType;
+    }>((acc, [key, value]) => {
+      if (value !== undefined) {
+        acc[key] = value as SecretType;
+      }
+      return acc;
+    }, {});
     return message;
   },
 };
@@ -1308,7 +1391,10 @@ function createBaseGetSecretNamesResponse_SecretNamesEntry(): GetSecretNamesResp
 }
 
 export const GetSecretNamesResponse_SecretNamesEntry = {
-  encode(message: GetSecretNamesResponse_SecretNamesEntry, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
+  encode(
+    message: GetSecretNamesResponse_SecretNamesEntry,
+    writer: _m0.Writer = _m0.Writer.create(),
+  ): _m0.Writer {
     if (message.key !== "") {
       writer.uint32(10).string(message.key);
     }
@@ -1422,7 +1508,8 @@ export const CanIRequest = {
 
   toJSON(message: CanIRequest): unknown {
     const obj: any = {};
-    message.context !== undefined && (obj.context = message.context ? Context.toJSON(message.context) : undefined);
+    message.context !== undefined &&
+      (obj.context = message.context ? Context.toJSON(message.context) : undefined);
     message.group !== undefined && (obj.group = message.group);
     message.resource !== undefined && (obj.resource = message.resource);
     message.verb !== undefined && (obj.verb = message.verb);
@@ -1431,9 +1518,10 @@ export const CanIRequest = {
 
   fromPartial<I extends Exact<DeepPartial<CanIRequest>, I>>(object: I): CanIRequest {
     const message = createBaseCanIRequest();
-    message.context = (object.context !== undefined && object.context !== null)
-      ? Context.fromPartial(object.context)
-      : undefined;
+    message.context =
+      object.context !== undefined && object.context !== null
+        ? Context.fromPartial(object.context)
+        : undefined;
     message.group = object.group ?? "";
     message.resource = object.resource ?? "";
     message.verb = object.verb ?? "";
@@ -1495,7 +1583,10 @@ export const CanIResponse = {
  * resources on the cluster, using the user credentials sent with the request.
  */
 export interface ResourcesService {
-  GetResources(request: DeepPartial<GetResourcesRequest>, metadata?: grpc.Metadata): Observable<GetResourcesResponse>;
+  GetResources(
+    request: DeepPartial<GetResourcesRequest>,
+    metadata?: grpc.Metadata,
+  ): Observable<GetResourcesResponse>;
   GetServiceAccountNames(
     request: DeepPartial<GetServiceAccountNamesRequest>,
     metadata?: grpc.Metadata,
@@ -1516,7 +1607,10 @@ export interface ResourcesService {
     request: DeepPartial<GetSecretNamesRequest>,
     metadata?: grpc.Metadata,
   ): Promise<GetSecretNamesResponse>;
-  CreateSecret(request: DeepPartial<CreateSecretRequest>, metadata?: grpc.Metadata): Promise<CreateSecretResponse>;
+  CreateSecret(
+    request: DeepPartial<CreateSecretRequest>,
+    metadata?: grpc.Metadata,
+  ): Promise<CreateSecretResponse>;
   CanI(request: DeepPartial<CanIRequest>, metadata?: grpc.Metadata): Promise<CanIResponse>;
 }
 
@@ -1535,8 +1629,15 @@ export class ResourcesServiceClientImpl implements ResourcesService {
     this.CanI = this.CanI.bind(this);
   }
 
-  GetResources(request: DeepPartial<GetResourcesRequest>, metadata?: grpc.Metadata): Observable<GetResourcesResponse> {
-    return this.rpc.invoke(ResourcesServiceGetResourcesDesc, GetResourcesRequest.fromPartial(request), metadata);
+  GetResources(
+    request: DeepPartial<GetResourcesRequest>,
+    metadata?: grpc.Metadata,
+  ): Observable<GetResourcesResponse> {
+    return this.rpc.invoke(
+      ResourcesServiceGetResourcesDesc,
+      GetResourcesRequest.fromPartial(request),
+      metadata,
+    );
   }
 
   GetServiceAccountNames(
@@ -1565,7 +1666,11 @@ export class ResourcesServiceClientImpl implements ResourcesService {
     request: DeepPartial<CreateNamespaceRequest>,
     metadata?: grpc.Metadata,
   ): Promise<CreateNamespaceResponse> {
-    return this.rpc.unary(ResourcesServiceCreateNamespaceDesc, CreateNamespaceRequest.fromPartial(request), metadata);
+    return this.rpc.unary(
+      ResourcesServiceCreateNamespaceDesc,
+      CreateNamespaceRequest.fromPartial(request),
+      metadata,
+    );
   }
 
   CheckNamespaceExists(
@@ -1583,11 +1688,22 @@ export class ResourcesServiceClientImpl implements ResourcesService {
     request: DeepPartial<GetSecretNamesRequest>,
     metadata?: grpc.Metadata,
   ): Promise<GetSecretNamesResponse> {
-    return this.rpc.unary(ResourcesServiceGetSecretNamesDesc, GetSecretNamesRequest.fromPartial(request), metadata);
+    return this.rpc.unary(
+      ResourcesServiceGetSecretNamesDesc,
+      GetSecretNamesRequest.fromPartial(request),
+      metadata,
+    );
   }
 
-  CreateSecret(request: DeepPartial<CreateSecretRequest>, metadata?: grpc.Metadata): Promise<CreateSecretResponse> {
-    return this.rpc.unary(ResourcesServiceCreateSecretDesc, CreateSecretRequest.fromPartial(request), metadata);
+  CreateSecret(
+    request: DeepPartial<CreateSecretRequest>,
+    metadata?: grpc.Metadata,
+  ): Promise<CreateSecretResponse> {
+    return this.rpc.unary(
+      ResourcesServiceCreateSecretDesc,
+      CreateSecretRequest.fromPartial(request),
+      metadata,
+    );
   }
 
   CanI(request: DeepPartial<CanIRequest>, metadata?: grpc.Metadata): Promise<CanIResponse> {
@@ -1595,7 +1711,9 @@ export class ResourcesServiceClientImpl implements ResourcesService {
   }
 }
 
-export const ResourcesServiceDesc = { serviceName: "kubeappsapis.plugins.resources.v1alpha1.ResourcesService" };
+export const ResourcesServiceDesc = {
+  serviceName: "kubeappsapis.plugins.resources.v1alpha1.ResourcesService",
+};
 
 export const ResourcesServiceGetResourcesDesc: UnaryMethodDefinitionish = {
   methodName: "GetResources",
@@ -1823,9 +1941,10 @@ export class GrpcWebImpl {
     metadata: grpc.Metadata | undefined,
   ): Promise<any> {
     const request = { ..._request, ...methodDesc.requestType };
-    const maybeCombinedMetadata = metadata && this.options.metadata
-      ? new BrowserHeaders({ ...this.options?.metadata.headersMap, ...metadata?.headersMap })
-      : metadata || this.options.metadata;
+    const maybeCombinedMetadata =
+      metadata && this.options.metadata
+        ? new BrowserHeaders({ ...this.options?.metadata.headersMap, ...metadata?.headersMap })
+        : metadata || this.options.metadata;
     return new Promise((resolve, reject) => {
       grpc.unary(methodDesc, {
         request,
@@ -1837,7 +1956,11 @@ export class GrpcWebImpl {
           if (response.status === grpc.Code.OK) {
             resolve(response.message);
           } else {
-            const err = new GrpcWebError(response.statusMessage, response.status, response.trailers);
+            const err = new GrpcWebError(
+              response.statusMessage,
+              response.status,
+              response.trailers,
+            );
             reject(err);
           }
         },
@@ -1853,18 +1976,19 @@ export class GrpcWebImpl {
     const upStreamCodes = this.options.upStreamRetryCodes || [];
     const DEFAULT_TIMEOUT_TIME: number = 3_000;
     const request = { ..._request, ...methodDesc.requestType };
-    const maybeCombinedMetadata = metadata && this.options.metadata
-      ? new BrowserHeaders({ ...this.options?.metadata.headersMap, ...metadata?.headersMap })
-      : metadata || this.options.metadata;
-    return new Observable((observer) => {
-      const upStream = (() => {
+    const maybeCombinedMetadata =
+      metadata && this.options.metadata
+        ? new BrowserHeaders({ ...this.options?.metadata.headersMap, ...metadata?.headersMap })
+        : metadata || this.options.metadata;
+    return new Observable(observer => {
+      const upStream = () => {
         const client = grpc.invoke(methodDesc, {
           host: this.host,
           request,
           transport: this.options.streamingTransport || this.options.transport,
           metadata: maybeCombinedMetadata,
           debug: this.options.debug,
-          onMessage: (next) => observer.next(next),
+          onMessage: next => observer.next(next),
           onEnd: (code: grpc.Code, message: string, trailers: grpc.Metadata) => {
             if (code === 0) {
               observer.complete();
@@ -1879,7 +2003,7 @@ export class GrpcWebImpl {
           },
         });
         observer.add(() => client.close());
-      });
+      };
       upStream();
     }).pipe(share());
   }
@@ -1887,13 +2011,19 @@ export class GrpcWebImpl {
 
 type Builtin = Date | Function | Uint8Array | string | number | boolean | undefined;
 
-export type DeepPartial<T> = T extends Builtin ? T
-  : T extends Array<infer U> ? Array<DeepPartial<U>> : T extends ReadonlyArray<infer U> ? ReadonlyArray<DeepPartial<U>>
-  : T extends {} ? { [K in keyof T]?: DeepPartial<T[K]> }
+export type DeepPartial<T> = T extends Builtin
+  ? T
+  : T extends Array<infer U>
+  ? Array<DeepPartial<U>>
+  : T extends ReadonlyArray<infer U>
+  ? ReadonlyArray<DeepPartial<U>>
+  : T extends {}
+  ? { [K in keyof T]?: DeepPartial<T[K]> }
   : Partial<T>;
 
 type KeysOfUnion<T> = T extends T ? keyof T : never;
-export type Exact<P, I extends P> = P extends Builtin ? P
+export type Exact<P, I extends P> = P extends Builtin
+  ? P
   : P & { [K in keyof P]: Exact<P[K], I[K]> } & { [K in Exclude<keyof I, KeysOfUnion<P>>]: never };
 
 function isObject(value: any): boolean {

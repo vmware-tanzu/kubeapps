@@ -10,8 +10,7 @@ export const protobufPackage = "kubeappsapis.core.plugins.v1alpha1";
  *
  * Request for GetConfiguredPlugins
  */
-export interface GetConfiguredPluginsRequest {
-}
+export interface GetConfiguredPluginsRequest {}
 
 /**
  * GetConfiguredPluginsResponse
@@ -80,7 +79,9 @@ export const GetConfiguredPluginsRequest = {
     return obj;
   },
 
-  fromPartial<I extends Exact<DeepPartial<GetConfiguredPluginsRequest>, I>>(_: I): GetConfiguredPluginsRequest {
+  fromPartial<I extends Exact<DeepPartial<GetConfiguredPluginsRequest>, I>>(
+    _: I,
+  ): GetConfiguredPluginsRequest {
     const message = createBaseGetConfiguredPluginsRequest();
     return message;
   },
@@ -91,7 +92,10 @@ function createBaseGetConfiguredPluginsResponse(): GetConfiguredPluginsResponse 
 }
 
 export const GetConfiguredPluginsResponse = {
-  encode(message: GetConfiguredPluginsResponse, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
+  encode(
+    message: GetConfiguredPluginsResponse,
+    writer: _m0.Writer = _m0.Writer.create(),
+  ): _m0.Writer {
     for (const v of message.plugins) {
       Plugin.encode(v!, writer.uint32(10).fork()).ldelim();
     }
@@ -117,22 +121,28 @@ export const GetConfiguredPluginsResponse = {
   },
 
   fromJSON(object: any): GetConfiguredPluginsResponse {
-    return { plugins: Array.isArray(object?.plugins) ? object.plugins.map((e: any) => Plugin.fromJSON(e)) : [] };
+    return {
+      plugins: Array.isArray(object?.plugins)
+        ? object.plugins.map((e: any) => Plugin.fromJSON(e))
+        : [],
+    };
   },
 
   toJSON(message: GetConfiguredPluginsResponse): unknown {
     const obj: any = {};
     if (message.plugins) {
-      obj.plugins = message.plugins.map((e) => e ? Plugin.toJSON(e) : undefined);
+      obj.plugins = message.plugins.map(e => (e ? Plugin.toJSON(e) : undefined));
     } else {
       obj.plugins = [];
     }
     return obj;
   },
 
-  fromPartial<I extends Exact<DeepPartial<GetConfiguredPluginsResponse>, I>>(object: I): GetConfiguredPluginsResponse {
+  fromPartial<I extends Exact<DeepPartial<GetConfiguredPluginsResponse>, I>>(
+    object: I,
+  ): GetConfiguredPluginsResponse {
     const message = createBaseGetConfiguredPluginsResponse();
-    message.plugins = object.plugins?.map((e) => Plugin.fromPartial(e)) || [];
+    message.plugins = object.plugins?.map(e => Plugin.fromPartial(e)) || [];
     return message;
   },
 };
@@ -223,7 +233,9 @@ export class PluginsServiceClientImpl implements PluginsService {
   }
 }
 
-export const PluginsServiceDesc = { serviceName: "kubeappsapis.core.plugins.v1alpha1.PluginsService" };
+export const PluginsServiceDesc = {
+  serviceName: "kubeappsapis.core.plugins.v1alpha1.PluginsService",
+};
 
 export const PluginsServiceGetConfiguredPluginsDesc: UnaryMethodDefinitionish = {
   methodName: "GetConfiguredPlugins",
@@ -292,9 +304,10 @@ export class GrpcWebImpl {
     metadata: grpc.Metadata | undefined,
   ): Promise<any> {
     const request = { ..._request, ...methodDesc.requestType };
-    const maybeCombinedMetadata = metadata && this.options.metadata
-      ? new BrowserHeaders({ ...this.options?.metadata.headersMap, ...metadata?.headersMap })
-      : metadata || this.options.metadata;
+    const maybeCombinedMetadata =
+      metadata && this.options.metadata
+        ? new BrowserHeaders({ ...this.options?.metadata.headersMap, ...metadata?.headersMap })
+        : metadata || this.options.metadata;
     return new Promise((resolve, reject) => {
       grpc.unary(methodDesc, {
         request,
@@ -306,7 +319,11 @@ export class GrpcWebImpl {
           if (response.status === grpc.Code.OK) {
             resolve(response.message);
           } else {
-            const err = new GrpcWebError(response.statusMessage, response.status, response.trailers);
+            const err = new GrpcWebError(
+              response.statusMessage,
+              response.status,
+              response.trailers,
+            );
             reject(err);
           }
         },
@@ -317,13 +334,19 @@ export class GrpcWebImpl {
 
 type Builtin = Date | Function | Uint8Array | string | number | boolean | undefined;
 
-export type DeepPartial<T> = T extends Builtin ? T
-  : T extends Array<infer U> ? Array<DeepPartial<U>> : T extends ReadonlyArray<infer U> ? ReadonlyArray<DeepPartial<U>>
-  : T extends {} ? { [K in keyof T]?: DeepPartial<T[K]> }
+export type DeepPartial<T> = T extends Builtin
+  ? T
+  : T extends Array<infer U>
+  ? Array<DeepPartial<U>>
+  : T extends ReadonlyArray<infer U>
+  ? ReadonlyArray<DeepPartial<U>>
+  : T extends {}
+  ? { [K in keyof T]?: DeepPartial<T[K]> }
   : Partial<T>;
 
 type KeysOfUnion<T> = T extends T ? keyof T : never;
-export type Exact<P, I extends P> = P extends Builtin ? P
+export type Exact<P, I extends P> = P extends Builtin
+  ? P
   : P & { [K in keyof P]: Exact<P[K], I[K]> } & { [K in Exclude<keyof I, KeysOfUnion<P>>]: never };
 
 function isSet(value: any): boolean {

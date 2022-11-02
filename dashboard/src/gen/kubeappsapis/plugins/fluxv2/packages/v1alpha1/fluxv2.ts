@@ -70,7 +70,10 @@ function createBaseSetUserManagedSecretsRequest(): SetUserManagedSecretsRequest 
 }
 
 export const SetUserManagedSecretsRequest = {
-  encode(message: SetUserManagedSecretsRequest, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
+  encode(
+    message: SetUserManagedSecretsRequest,
+    writer: _m0.Writer = _m0.Writer.create(),
+  ): _m0.Writer {
     if (message.value === true) {
       writer.uint32(8).bool(message.value);
     }
@@ -105,7 +108,9 @@ export const SetUserManagedSecretsRequest = {
     return obj;
   },
 
-  fromPartial<I extends Exact<DeepPartial<SetUserManagedSecretsRequest>, I>>(object: I): SetUserManagedSecretsRequest {
+  fromPartial<I extends Exact<DeepPartial<SetUserManagedSecretsRequest>, I>>(
+    object: I,
+  ): SetUserManagedSecretsRequest {
     const message = createBaseSetUserManagedSecretsRequest();
     message.value = object.value ?? false;
     return message;
@@ -117,7 +122,10 @@ function createBaseSetUserManagedSecretsResponse(): SetUserManagedSecretsRespons
 }
 
 export const SetUserManagedSecretsResponse = {
-  encode(message: SetUserManagedSecretsResponse, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
+  encode(
+    message: SetUserManagedSecretsResponse,
+    writer: _m0.Writer = _m0.Writer.create(),
+  ): _m0.Writer {
     if (message.value === true) {
       writer.uint32(8).bool(message.value);
     }
@@ -166,7 +174,10 @@ function createBaseFluxPackageRepositoryCustomDetail(): FluxPackageRepositoryCus
 }
 
 export const FluxPackageRepositoryCustomDetail = {
-  encode(message: FluxPackageRepositoryCustomDetail, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
+  encode(
+    message: FluxPackageRepositoryCustomDetail,
+    writer: _m0.Writer = _m0.Writer.create(),
+  ): _m0.Writer {
     if (message.provider !== "") {
       writer.uint32(10).string(message.provider);
     }
@@ -739,27 +750,28 @@ export const FluxV2RepositoriesServiceGetPackageRepositoryDetailDesc: UnaryMetho
   } as any,
 };
 
-export const FluxV2RepositoriesServiceGetPackageRepositorySummariesDesc: UnaryMethodDefinitionish = {
-  methodName: "GetPackageRepositorySummaries",
-  service: FluxV2RepositoriesServiceDesc,
-  requestStream: false,
-  responseStream: false,
-  requestType: {
-    serializeBinary() {
-      return GetPackageRepositorySummariesRequest.encode(this).finish();
-    },
-  } as any,
-  responseType: {
-    deserializeBinary(data: Uint8Array) {
-      return {
-        ...GetPackageRepositorySummariesResponse.decode(data),
-        toObject() {
-          return this;
-        },
-      };
-    },
-  } as any,
-};
+export const FluxV2RepositoriesServiceGetPackageRepositorySummariesDesc: UnaryMethodDefinitionish =
+  {
+    methodName: "GetPackageRepositorySummaries",
+    service: FluxV2RepositoriesServiceDesc,
+    requestStream: false,
+    responseStream: false,
+    requestType: {
+      serializeBinary() {
+        return GetPackageRepositorySummariesRequest.encode(this).finish();
+      },
+    } as any,
+    responseType: {
+      deserializeBinary(data: Uint8Array) {
+        return {
+          ...GetPackageRepositorySummariesResponse.decode(data),
+          toObject() {
+            return this;
+          },
+        };
+      },
+    } as any,
+  };
 
 export const FluxV2RepositoriesServiceUpdatePackageRepositoryDesc: UnaryMethodDefinitionish = {
   methodName: "UpdatePackageRepository",
@@ -872,9 +884,10 @@ export class GrpcWebImpl {
     metadata: grpc.Metadata | undefined,
   ): Promise<any> {
     const request = { ..._request, ...methodDesc.requestType };
-    const maybeCombinedMetadata = metadata && this.options.metadata
-      ? new BrowserHeaders({ ...this.options?.metadata.headersMap, ...metadata?.headersMap })
-      : metadata || this.options.metadata;
+    const maybeCombinedMetadata =
+      metadata && this.options.metadata
+        ? new BrowserHeaders({ ...this.options?.metadata.headersMap, ...metadata?.headersMap })
+        : metadata || this.options.metadata;
     return new Promise((resolve, reject) => {
       grpc.unary(methodDesc, {
         request,
@@ -886,7 +899,11 @@ export class GrpcWebImpl {
           if (response.status === grpc.Code.OK) {
             resolve(response.message);
           } else {
-            const err = new GrpcWebError(response.statusMessage, response.status, response.trailers);
+            const err = new GrpcWebError(
+              response.statusMessage,
+              response.status,
+              response.trailers,
+            );
             reject(err);
           }
         },
@@ -897,13 +914,19 @@ export class GrpcWebImpl {
 
 type Builtin = Date | Function | Uint8Array | string | number | boolean | undefined;
 
-export type DeepPartial<T> = T extends Builtin ? T
-  : T extends Array<infer U> ? Array<DeepPartial<U>> : T extends ReadonlyArray<infer U> ? ReadonlyArray<DeepPartial<U>>
-  : T extends {} ? { [K in keyof T]?: DeepPartial<T[K]> }
+export type DeepPartial<T> = T extends Builtin
+  ? T
+  : T extends Array<infer U>
+  ? Array<DeepPartial<U>>
+  : T extends ReadonlyArray<infer U>
+  ? ReadonlyArray<DeepPartial<U>>
+  : T extends {}
+  ? { [K in keyof T]?: DeepPartial<T[K]> }
   : Partial<T>;
 
 type KeysOfUnion<T> = T extends T ? keyof T : never;
-export type Exact<P, I extends P> = P extends Builtin ? P
+export type Exact<P, I extends P> = P extends Builtin
+  ? P
   : P & { [K in keyof P]: Exact<P[K], I[K]> } & { [K in Exclude<keyof I, KeysOfUnion<P>>]: never };
 
 function isSet(value: any): boolean {

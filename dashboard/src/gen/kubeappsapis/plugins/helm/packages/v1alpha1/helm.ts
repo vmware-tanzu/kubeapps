@@ -96,9 +96,7 @@ export interface SetUserManagedSecretsResponse {
 
 export interface ImagesPullSecret {
   /** docker credentials secret reference */
-  secretRef:
-    | string
-    | undefined;
+  secretRef: string | undefined;
   /** docker credentials data */
   credentials?: DockerCredentials | undefined;
 }
@@ -141,7 +139,10 @@ function createBaseInstalledPackageDetailCustomDataHelm(): InstalledPackageDetai
 }
 
 export const InstalledPackageDetailCustomDataHelm = {
-  encode(message: InstalledPackageDetailCustomDataHelm, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
+  encode(
+    message: InstalledPackageDetailCustomDataHelm,
+    writer: _m0.Writer = _m0.Writer.create(),
+  ): _m0.Writer {
     if (message.releaseRevision !== 0) {
       writer.uint32(16).int32(message.releaseRevision);
     }
@@ -172,7 +173,8 @@ export const InstalledPackageDetailCustomDataHelm = {
 
   toJSON(message: InstalledPackageDetailCustomDataHelm): unknown {
     const obj: any = {};
-    message.releaseRevision !== undefined && (obj.releaseRevision = Math.round(message.releaseRevision));
+    message.releaseRevision !== undefined &&
+      (obj.releaseRevision = Math.round(message.releaseRevision));
     return obj;
   },
 
@@ -190,9 +192,15 @@ function createBaseRollbackInstalledPackageRequest(): RollbackInstalledPackageRe
 }
 
 export const RollbackInstalledPackageRequest = {
-  encode(message: RollbackInstalledPackageRequest, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
+  encode(
+    message: RollbackInstalledPackageRequest,
+    writer: _m0.Writer = _m0.Writer.create(),
+  ): _m0.Writer {
     if (message.installedPackageRef !== undefined) {
-      InstalledPackageReference.encode(message.installedPackageRef, writer.uint32(10).fork()).ldelim();
+      InstalledPackageReference.encode(
+        message.installedPackageRef,
+        writer.uint32(10).fork(),
+      ).ldelim();
     }
     if (message.releaseRevision !== 0) {
       writer.uint32(16).int32(message.releaseRevision);
@@ -232,10 +240,12 @@ export const RollbackInstalledPackageRequest = {
 
   toJSON(message: RollbackInstalledPackageRequest): unknown {
     const obj: any = {};
-    message.installedPackageRef !== undefined && (obj.installedPackageRef = message.installedPackageRef
-      ? InstalledPackageReference.toJSON(message.installedPackageRef)
-      : undefined);
-    message.releaseRevision !== undefined && (obj.releaseRevision = Math.round(message.releaseRevision));
+    message.installedPackageRef !== undefined &&
+      (obj.installedPackageRef = message.installedPackageRef
+        ? InstalledPackageReference.toJSON(message.installedPackageRef)
+        : undefined);
+    message.releaseRevision !== undefined &&
+      (obj.releaseRevision = Math.round(message.releaseRevision));
     return obj;
   },
 
@@ -243,9 +253,10 @@ export const RollbackInstalledPackageRequest = {
     object: I,
   ): RollbackInstalledPackageRequest {
     const message = createBaseRollbackInstalledPackageRequest();
-    message.installedPackageRef = (object.installedPackageRef !== undefined && object.installedPackageRef !== null)
-      ? InstalledPackageReference.fromPartial(object.installedPackageRef)
-      : undefined;
+    message.installedPackageRef =
+      object.installedPackageRef !== undefined && object.installedPackageRef !== null
+        ? InstalledPackageReference.fromPartial(object.installedPackageRef)
+        : undefined;
     message.releaseRevision = object.releaseRevision ?? 0;
     return message;
   },
@@ -256,9 +267,15 @@ function createBaseRollbackInstalledPackageResponse(): RollbackInstalledPackageR
 }
 
 export const RollbackInstalledPackageResponse = {
-  encode(message: RollbackInstalledPackageResponse, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
+  encode(
+    message: RollbackInstalledPackageResponse,
+    writer: _m0.Writer = _m0.Writer.create(),
+  ): _m0.Writer {
     if (message.installedPackageRef !== undefined) {
-      InstalledPackageReference.encode(message.installedPackageRef, writer.uint32(10).fork()).ldelim();
+      InstalledPackageReference.encode(
+        message.installedPackageRef,
+        writer.uint32(10).fork(),
+      ).ldelim();
     }
     return writer;
   },
@@ -291,9 +308,10 @@ export const RollbackInstalledPackageResponse = {
 
   toJSON(message: RollbackInstalledPackageResponse): unknown {
     const obj: any = {};
-    message.installedPackageRef !== undefined && (obj.installedPackageRef = message.installedPackageRef
-      ? InstalledPackageReference.toJSON(message.installedPackageRef)
-      : undefined);
+    message.installedPackageRef !== undefined &&
+      (obj.installedPackageRef = message.installedPackageRef
+        ? InstalledPackageReference.toJSON(message.installedPackageRef)
+        : undefined);
     return obj;
   },
 
@@ -301,9 +319,10 @@ export const RollbackInstalledPackageResponse = {
     object: I,
   ): RollbackInstalledPackageResponse {
     const message = createBaseRollbackInstalledPackageResponse();
-    message.installedPackageRef = (object.installedPackageRef !== undefined && object.installedPackageRef !== null)
-      ? InstalledPackageReference.fromPartial(object.installedPackageRef)
-      : undefined;
+    message.installedPackageRef =
+      object.installedPackageRef !== undefined && object.installedPackageRef !== null
+        ? InstalledPackageReference.fromPartial(object.installedPackageRef)
+        : undefined;
     return message;
   },
 };
@@ -313,7 +332,10 @@ function createBaseSetUserManagedSecretsRequest(): SetUserManagedSecretsRequest 
 }
 
 export const SetUserManagedSecretsRequest = {
-  encode(message: SetUserManagedSecretsRequest, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
+  encode(
+    message: SetUserManagedSecretsRequest,
+    writer: _m0.Writer = _m0.Writer.create(),
+  ): _m0.Writer {
     if (message.value === true) {
       writer.uint32(8).bool(message.value);
     }
@@ -348,7 +370,9 @@ export const SetUserManagedSecretsRequest = {
     return obj;
   },
 
-  fromPartial<I extends Exact<DeepPartial<SetUserManagedSecretsRequest>, I>>(object: I): SetUserManagedSecretsRequest {
+  fromPartial<I extends Exact<DeepPartial<SetUserManagedSecretsRequest>, I>>(
+    object: I,
+  ): SetUserManagedSecretsRequest {
     const message = createBaseSetUserManagedSecretsRequest();
     message.value = object.value ?? false;
     return message;
@@ -360,7 +384,10 @@ function createBaseSetUserManagedSecretsResponse(): SetUserManagedSecretsRespons
 }
 
 export const SetUserManagedSecretsResponse = {
-  encode(message: SetUserManagedSecretsResponse, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
+  encode(
+    message: SetUserManagedSecretsResponse,
+    writer: _m0.Writer = _m0.Writer.create(),
+  ): _m0.Writer {
     if (message.value === true) {
       writer.uint32(8).bool(message.value);
     }
@@ -443,7 +470,9 @@ export const ImagesPullSecret = {
   fromJSON(object: any): ImagesPullSecret {
     return {
       secretRef: isSet(object.secretRef) ? String(object.secretRef) : undefined,
-      credentials: isSet(object.credentials) ? DockerCredentials.fromJSON(object.credentials) : undefined,
+      credentials: isSet(object.credentials)
+        ? DockerCredentials.fromJSON(object.credentials)
+        : undefined,
     };
   },
 
@@ -451,26 +480,37 @@ export const ImagesPullSecret = {
     const obj: any = {};
     message.secretRef !== undefined && (obj.secretRef = message.secretRef);
     message.credentials !== undefined &&
-      (obj.credentials = message.credentials ? DockerCredentials.toJSON(message.credentials) : undefined);
+      (obj.credentials = message.credentials
+        ? DockerCredentials.toJSON(message.credentials)
+        : undefined);
     return obj;
   },
 
   fromPartial<I extends Exact<DeepPartial<ImagesPullSecret>, I>>(object: I): ImagesPullSecret {
     const message = createBaseImagesPullSecret();
     message.secretRef = object.secretRef ?? undefined;
-    message.credentials = (object.credentials !== undefined && object.credentials !== null)
-      ? DockerCredentials.fromPartial(object.credentials)
-      : undefined;
+    message.credentials =
+      object.credentials !== undefined && object.credentials !== null
+        ? DockerCredentials.fromPartial(object.credentials)
+        : undefined;
     return message;
   },
 };
 
 function createBaseHelmPackageRepositoryCustomDetail(): HelmPackageRepositoryCustomDetail {
-  return { imagesPullSecret: undefined, ociRepositories: [], filterRule: undefined, performValidation: false };
+  return {
+    imagesPullSecret: undefined,
+    ociRepositories: [],
+    filterRule: undefined,
+    performValidation: false,
+  };
 }
 
 export const HelmPackageRepositoryCustomDetail = {
-  encode(message: HelmPackageRepositoryCustomDetail, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
+  encode(
+    message: HelmPackageRepositoryCustomDetail,
+    writer: _m0.Writer = _m0.Writer.create(),
+  ): _m0.Writer {
     if (message.imagesPullSecret !== undefined) {
       ImagesPullSecret.encode(message.imagesPullSecret, writer.uint32(10).fork()).ldelim();
     }
@@ -515,24 +555,36 @@ export const HelmPackageRepositoryCustomDetail = {
 
   fromJSON(object: any): HelmPackageRepositoryCustomDetail {
     return {
-      imagesPullSecret: isSet(object.imagesPullSecret) ? ImagesPullSecret.fromJSON(object.imagesPullSecret) : undefined,
-      ociRepositories: Array.isArray(object?.ociRepositories) ? object.ociRepositories.map((e: any) => String(e)) : [],
-      filterRule: isSet(object.filterRule) ? RepositoryFilterRule.fromJSON(object.filterRule) : undefined,
-      performValidation: isSet(object.performValidation) ? Boolean(object.performValidation) : false,
+      imagesPullSecret: isSet(object.imagesPullSecret)
+        ? ImagesPullSecret.fromJSON(object.imagesPullSecret)
+        : undefined,
+      ociRepositories: Array.isArray(object?.ociRepositories)
+        ? object.ociRepositories.map((e: any) => String(e))
+        : [],
+      filterRule: isSet(object.filterRule)
+        ? RepositoryFilterRule.fromJSON(object.filterRule)
+        : undefined,
+      performValidation: isSet(object.performValidation)
+        ? Boolean(object.performValidation)
+        : false,
     };
   },
 
   toJSON(message: HelmPackageRepositoryCustomDetail): unknown {
     const obj: any = {};
     message.imagesPullSecret !== undefined &&
-      (obj.imagesPullSecret = message.imagesPullSecret ? ImagesPullSecret.toJSON(message.imagesPullSecret) : undefined);
+      (obj.imagesPullSecret = message.imagesPullSecret
+        ? ImagesPullSecret.toJSON(message.imagesPullSecret)
+        : undefined);
     if (message.ociRepositories) {
-      obj.ociRepositories = message.ociRepositories.map((e) => e);
+      obj.ociRepositories = message.ociRepositories.map(e => e);
     } else {
       obj.ociRepositories = [];
     }
     message.filterRule !== undefined &&
-      (obj.filterRule = message.filterRule ? RepositoryFilterRule.toJSON(message.filterRule) : undefined);
+      (obj.filterRule = message.filterRule
+        ? RepositoryFilterRule.toJSON(message.filterRule)
+        : undefined);
     message.performValidation !== undefined && (obj.performValidation = message.performValidation);
     return obj;
   },
@@ -541,13 +593,15 @@ export const HelmPackageRepositoryCustomDetail = {
     object: I,
   ): HelmPackageRepositoryCustomDetail {
     const message = createBaseHelmPackageRepositoryCustomDetail();
-    message.imagesPullSecret = (object.imagesPullSecret !== undefined && object.imagesPullSecret !== null)
-      ? ImagesPullSecret.fromPartial(object.imagesPullSecret)
-      : undefined;
-    message.ociRepositories = object.ociRepositories?.map((e) => e) || [];
-    message.filterRule = (object.filterRule !== undefined && object.filterRule !== null)
-      ? RepositoryFilterRule.fromPartial(object.filterRule)
-      : undefined;
+    message.imagesPullSecret =
+      object.imagesPullSecret !== undefined && object.imagesPullSecret !== null
+        ? ImagesPullSecret.fromPartial(object.imagesPullSecret)
+        : undefined;
+    message.ociRepositories = object.ociRepositories?.map(e => e) || [];
+    message.filterRule =
+      object.filterRule !== undefined && object.filterRule !== null
+        ? RepositoryFilterRule.fromPartial(object.filterRule)
+        : undefined;
     message.performValidation = object.performValidation ?? false;
     return message;
   },
@@ -563,7 +617,10 @@ export const RepositoryFilterRule = {
       writer.uint32(10).string(message.jq);
     }
     Object.entries(message.variables).forEach(([key, value]) => {
-      RepositoryFilterRule_VariablesEntry.encode({ key: key as any, value }, writer.uint32(34).fork()).ldelim();
+      RepositoryFilterRule_VariablesEntry.encode(
+        { key: key as any, value },
+        writer.uint32(34).fork(),
+      ).ldelim();
     });
     return writer;
   },
@@ -596,10 +653,13 @@ export const RepositoryFilterRule = {
     return {
       jq: isSet(object.jq) ? String(object.jq) : "",
       variables: isObject(object.variables)
-        ? Object.entries(object.variables).reduce<{ [key: string]: string }>((acc, [key, value]) => {
-          acc[key] = String(value);
-          return acc;
-        }, {})
+        ? Object.entries(object.variables).reduce<{ [key: string]: string }>(
+            (acc, [key, value]) => {
+              acc[key] = String(value);
+              return acc;
+            },
+            {},
+          )
         : {},
     };
   },
@@ -616,7 +676,9 @@ export const RepositoryFilterRule = {
     return obj;
   },
 
-  fromPartial<I extends Exact<DeepPartial<RepositoryFilterRule>, I>>(object: I): RepositoryFilterRule {
+  fromPartial<I extends Exact<DeepPartial<RepositoryFilterRule>, I>>(
+    object: I,
+  ): RepositoryFilterRule {
     const message = createBaseRepositoryFilterRule();
     message.jq = object.jq ?? "";
     message.variables = Object.entries(object.variables ?? {}).reduce<{ [key: string]: string }>(
@@ -637,7 +699,10 @@ function createBaseRepositoryFilterRule_VariablesEntry(): RepositoryFilterRule_V
 }
 
 export const RepositoryFilterRule_VariablesEntry = {
-  encode(message: RepositoryFilterRule_VariablesEntry, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
+  encode(
+    message: RepositoryFilterRule_VariablesEntry,
+    writer: _m0.Writer = _m0.Writer.create(),
+  ): _m0.Writer {
     if (message.key !== "") {
       writer.uint32(10).string(message.key);
     }
@@ -669,7 +734,10 @@ export const RepositoryFilterRule_VariablesEntry = {
   },
 
   fromJSON(object: any): RepositoryFilterRule_VariablesEntry {
-    return { key: isSet(object.key) ? String(object.key) : "", value: isSet(object.value) ? String(object.value) : "" };
+    return {
+      key: isSet(object.key) ? String(object.key) : "",
+      value: isSet(object.value) ? String(object.value) : "",
+    };
   },
 
   toJSON(message: RepositoryFilterRule_VariablesEntry): unknown {
@@ -1358,27 +1426,28 @@ export const HelmRepositoriesServiceSetUserManagedSecretsDesc: UnaryMethodDefini
   } as any,
 };
 
-export const HelmRepositoriesServiceGetPackageRepositoryPermissionsDesc: UnaryMethodDefinitionish = {
-  methodName: "GetPackageRepositoryPermissions",
-  service: HelmRepositoriesServiceDesc,
-  requestStream: false,
-  responseStream: false,
-  requestType: {
-    serializeBinary() {
-      return GetPackageRepositoryPermissionsRequest.encode(this).finish();
-    },
-  } as any,
-  responseType: {
-    deserializeBinary(data: Uint8Array) {
-      return {
-        ...GetPackageRepositoryPermissionsResponse.decode(data),
-        toObject() {
-          return this;
-        },
-      };
-    },
-  } as any,
-};
+export const HelmRepositoriesServiceGetPackageRepositoryPermissionsDesc: UnaryMethodDefinitionish =
+  {
+    methodName: "GetPackageRepositoryPermissions",
+    service: HelmRepositoriesServiceDesc,
+    requestStream: false,
+    responseStream: false,
+    requestType: {
+      serializeBinary() {
+        return GetPackageRepositoryPermissionsRequest.encode(this).finish();
+      },
+    } as any,
+    responseType: {
+      deserializeBinary(data: Uint8Array) {
+        return {
+          ...GetPackageRepositoryPermissionsResponse.decode(data),
+          toObject() {
+            return this;
+          },
+        };
+      },
+    } as any,
+  };
 
 interface UnaryMethodDefinitionishR extends grpc.UnaryMethodDefinition<any, any> {
   requestStream: any;
@@ -1425,9 +1494,10 @@ export class GrpcWebImpl {
     metadata: grpc.Metadata | undefined,
   ): Promise<any> {
     const request = { ..._request, ...methodDesc.requestType };
-    const maybeCombinedMetadata = metadata && this.options.metadata
-      ? new BrowserHeaders({ ...this.options?.metadata.headersMap, ...metadata?.headersMap })
-      : metadata || this.options.metadata;
+    const maybeCombinedMetadata =
+      metadata && this.options.metadata
+        ? new BrowserHeaders({ ...this.options?.metadata.headersMap, ...metadata?.headersMap })
+        : metadata || this.options.metadata;
     return new Promise((resolve, reject) => {
       grpc.unary(methodDesc, {
         request,
@@ -1439,7 +1509,11 @@ export class GrpcWebImpl {
           if (response.status === grpc.Code.OK) {
             resolve(response.message);
           } else {
-            const err = new GrpcWebError(response.statusMessage, response.status, response.trailers);
+            const err = new GrpcWebError(
+              response.statusMessage,
+              response.status,
+              response.trailers,
+            );
             reject(err);
           }
         },
@@ -1450,13 +1524,19 @@ export class GrpcWebImpl {
 
 type Builtin = Date | Function | Uint8Array | string | number | boolean | undefined;
 
-export type DeepPartial<T> = T extends Builtin ? T
-  : T extends Array<infer U> ? Array<DeepPartial<U>> : T extends ReadonlyArray<infer U> ? ReadonlyArray<DeepPartial<U>>
-  : T extends {} ? { [K in keyof T]?: DeepPartial<T[K]> }
+export type DeepPartial<T> = T extends Builtin
+  ? T
+  : T extends Array<infer U>
+  ? Array<DeepPartial<U>>
+  : T extends ReadonlyArray<infer U>
+  ? ReadonlyArray<DeepPartial<U>>
+  : T extends {}
+  ? { [K in keyof T]?: DeepPartial<T[K]> }
   : Partial<T>;
 
 type KeysOfUnion<T> = T extends T ? keyof T : never;
-export type Exact<P, I extends P> = P extends Builtin ? P
+export type Exact<P, I extends P> = P extends Builtin
+  ? P
   : P & { [K in keyof P]: Exact<P[K], I[K]> } & { [K in Exclude<keyof I, KeysOfUnion<P>>]: never };
 
 function isObject(value: any): boolean {

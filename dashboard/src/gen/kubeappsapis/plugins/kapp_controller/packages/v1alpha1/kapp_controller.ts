@@ -115,14 +115,20 @@ function createBaseKappControllerPackageRepositoryCustomDetail(): KappController
 }
 
 export const KappControllerPackageRepositoryCustomDetail = {
-  encode(message: KappControllerPackageRepositoryCustomDetail, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
+  encode(
+    message: KappControllerPackageRepositoryCustomDetail,
+    writer: _m0.Writer = _m0.Writer.create(),
+  ): _m0.Writer {
     if (message.fetch !== undefined) {
       PackageRepositoryFetch.encode(message.fetch, writer.uint32(10).fork()).ldelim();
     }
     return writer;
   },
 
-  decode(input: _m0.Reader | Uint8Array, length?: number): KappControllerPackageRepositoryCustomDetail {
+  decode(
+    input: _m0.Reader | Uint8Array,
+    length?: number,
+  ): KappControllerPackageRepositoryCustomDetail {
     const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
     let end = length === undefined ? reader.len : reader.pos + length;
     const message = createBaseKappControllerPackageRepositoryCustomDetail();
@@ -141,7 +147,9 @@ export const KappControllerPackageRepositoryCustomDetail = {
   },
 
   fromJSON(object: any): KappControllerPackageRepositoryCustomDetail {
-    return { fetch: isSet(object.fetch) ? PackageRepositoryFetch.fromJSON(object.fetch) : undefined };
+    return {
+      fetch: isSet(object.fetch) ? PackageRepositoryFetch.fromJSON(object.fetch) : undefined,
+    };
   },
 
   toJSON(message: KappControllerPackageRepositoryCustomDetail): unknown {
@@ -155,15 +163,22 @@ export const KappControllerPackageRepositoryCustomDetail = {
     object: I,
   ): KappControllerPackageRepositoryCustomDetail {
     const message = createBaseKappControllerPackageRepositoryCustomDetail();
-    message.fetch = (object.fetch !== undefined && object.fetch !== null)
-      ? PackageRepositoryFetch.fromPartial(object.fetch)
-      : undefined;
+    message.fetch =
+      object.fetch !== undefined && object.fetch !== null
+        ? PackageRepositoryFetch.fromPartial(object.fetch)
+        : undefined;
     return message;
   },
 };
 
 function createBasePackageRepositoryFetch(): PackageRepositoryFetch {
-  return { imgpkgBundle: undefined, image: undefined, git: undefined, http: undefined, inline: undefined };
+  return {
+    imgpkgBundle: undefined,
+    image: undefined,
+    git: undefined,
+    http: undefined,
+    inline: undefined,
+  };
 }
 
 export const PackageRepositoryFetch = {
@@ -218,7 +233,9 @@ export const PackageRepositoryFetch = {
 
   fromJSON(object: any): PackageRepositoryFetch {
     return {
-      imgpkgBundle: isSet(object.imgpkgBundle) ? PackageRepositoryImgpkg.fromJSON(object.imgpkgBundle) : undefined,
+      imgpkgBundle: isSet(object.imgpkgBundle)
+        ? PackageRepositoryImgpkg.fromJSON(object.imgpkgBundle)
+        : undefined,
       image: isSet(object.image) ? PackageRepositoryImage.fromJSON(object.image) : undefined,
       git: isSet(object.git) ? PackageRepositoryGit.fromJSON(object.git) : undefined,
       http: isSet(object.http) ? PackageRepositoryHttp.fromJSON(object.http) : undefined,
@@ -229,33 +246,44 @@ export const PackageRepositoryFetch = {
   toJSON(message: PackageRepositoryFetch): unknown {
     const obj: any = {};
     message.imgpkgBundle !== undefined &&
-      (obj.imgpkgBundle = message.imgpkgBundle ? PackageRepositoryImgpkg.toJSON(message.imgpkgBundle) : undefined);
+      (obj.imgpkgBundle = message.imgpkgBundle
+        ? PackageRepositoryImgpkg.toJSON(message.imgpkgBundle)
+        : undefined);
     message.image !== undefined &&
       (obj.image = message.image ? PackageRepositoryImage.toJSON(message.image) : undefined);
-    message.git !== undefined && (obj.git = message.git ? PackageRepositoryGit.toJSON(message.git) : undefined);
-    message.http !== undefined && (obj.http = message.http ? PackageRepositoryHttp.toJSON(message.http) : undefined);
+    message.git !== undefined &&
+      (obj.git = message.git ? PackageRepositoryGit.toJSON(message.git) : undefined);
+    message.http !== undefined &&
+      (obj.http = message.http ? PackageRepositoryHttp.toJSON(message.http) : undefined);
     message.inline !== undefined &&
       (obj.inline = message.inline ? PackageRepositoryInline.toJSON(message.inline) : undefined);
     return obj;
   },
 
-  fromPartial<I extends Exact<DeepPartial<PackageRepositoryFetch>, I>>(object: I): PackageRepositoryFetch {
+  fromPartial<I extends Exact<DeepPartial<PackageRepositoryFetch>, I>>(
+    object: I,
+  ): PackageRepositoryFetch {
     const message = createBasePackageRepositoryFetch();
-    message.imgpkgBundle = (object.imgpkgBundle !== undefined && object.imgpkgBundle !== null)
-      ? PackageRepositoryImgpkg.fromPartial(object.imgpkgBundle)
-      : undefined;
-    message.image = (object.image !== undefined && object.image !== null)
-      ? PackageRepositoryImage.fromPartial(object.image)
-      : undefined;
-    message.git = (object.git !== undefined && object.git !== null)
-      ? PackageRepositoryGit.fromPartial(object.git)
-      : undefined;
-    message.http = (object.http !== undefined && object.http !== null)
-      ? PackageRepositoryHttp.fromPartial(object.http)
-      : undefined;
-    message.inline = (object.inline !== undefined && object.inline !== null)
-      ? PackageRepositoryInline.fromPartial(object.inline)
-      : undefined;
+    message.imgpkgBundle =
+      object.imgpkgBundle !== undefined && object.imgpkgBundle !== null
+        ? PackageRepositoryImgpkg.fromPartial(object.imgpkgBundle)
+        : undefined;
+    message.image =
+      object.image !== undefined && object.image !== null
+        ? PackageRepositoryImage.fromPartial(object.image)
+        : undefined;
+    message.git =
+      object.git !== undefined && object.git !== null
+        ? PackageRepositoryGit.fromPartial(object.git)
+        : undefined;
+    message.http =
+      object.http !== undefined && object.http !== null
+        ? PackageRepositoryHttp.fromPartial(object.http)
+        : undefined;
+    message.inline =
+      object.inline !== undefined && object.inline !== null
+        ? PackageRepositoryInline.fromPartial(object.inline)
+        : undefined;
     return message;
   },
 };
@@ -291,21 +319,30 @@ export const PackageRepositoryImgpkg = {
   },
 
   fromJSON(object: any): PackageRepositoryImgpkg {
-    return { tagSelection: isSet(object.tagSelection) ? VersionSelection.fromJSON(object.tagSelection) : undefined };
+    return {
+      tagSelection: isSet(object.tagSelection)
+        ? VersionSelection.fromJSON(object.tagSelection)
+        : undefined,
+    };
   },
 
   toJSON(message: PackageRepositoryImgpkg): unknown {
     const obj: any = {};
     message.tagSelection !== undefined &&
-      (obj.tagSelection = message.tagSelection ? VersionSelection.toJSON(message.tagSelection) : undefined);
+      (obj.tagSelection = message.tagSelection
+        ? VersionSelection.toJSON(message.tagSelection)
+        : undefined);
     return obj;
   },
 
-  fromPartial<I extends Exact<DeepPartial<PackageRepositoryImgpkg>, I>>(object: I): PackageRepositoryImgpkg {
+  fromPartial<I extends Exact<DeepPartial<PackageRepositoryImgpkg>, I>>(
+    object: I,
+  ): PackageRepositoryImgpkg {
     const message = createBasePackageRepositoryImgpkg();
-    message.tagSelection = (object.tagSelection !== undefined && object.tagSelection !== null)
-      ? VersionSelection.fromPartial(object.tagSelection)
-      : undefined;
+    message.tagSelection =
+      object.tagSelection !== undefined && object.tagSelection !== null
+        ? VersionSelection.fromPartial(object.tagSelection)
+        : undefined;
     return message;
   },
 };
@@ -348,7 +385,9 @@ export const PackageRepositoryImage = {
 
   fromJSON(object: any): PackageRepositoryImage {
     return {
-      tagSelection: isSet(object.tagSelection) ? VersionSelection.fromJSON(object.tagSelection) : undefined,
+      tagSelection: isSet(object.tagSelection)
+        ? VersionSelection.fromJSON(object.tagSelection)
+        : undefined,
       subPath: isSet(object.subPath) ? String(object.subPath) : "",
     };
   },
@@ -356,16 +395,21 @@ export const PackageRepositoryImage = {
   toJSON(message: PackageRepositoryImage): unknown {
     const obj: any = {};
     message.tagSelection !== undefined &&
-      (obj.tagSelection = message.tagSelection ? VersionSelection.toJSON(message.tagSelection) : undefined);
+      (obj.tagSelection = message.tagSelection
+        ? VersionSelection.toJSON(message.tagSelection)
+        : undefined);
     message.subPath !== undefined && (obj.subPath = message.subPath);
     return obj;
   },
 
-  fromPartial<I extends Exact<DeepPartial<PackageRepositoryImage>, I>>(object: I): PackageRepositoryImage {
+  fromPartial<I extends Exact<DeepPartial<PackageRepositoryImage>, I>>(
+    object: I,
+  ): PackageRepositoryImage {
     const message = createBasePackageRepositoryImage();
-    message.tagSelection = (object.tagSelection !== undefined && object.tagSelection !== null)
-      ? VersionSelection.fromPartial(object.tagSelection)
-      : undefined;
+    message.tagSelection =
+      object.tagSelection !== undefined && object.tagSelection !== null
+        ? VersionSelection.fromPartial(object.tagSelection)
+        : undefined;
     message.subPath = object.subPath ?? "";
     return message;
   },
@@ -422,7 +466,9 @@ export const PackageRepositoryGit = {
   fromJSON(object: any): PackageRepositoryGit {
     return {
       ref: isSet(object.ref) ? String(object.ref) : "",
-      refSelection: isSet(object.refSelection) ? VersionSelection.fromJSON(object.refSelection) : undefined,
+      refSelection: isSet(object.refSelection)
+        ? VersionSelection.fromJSON(object.refSelection)
+        : undefined,
       subPath: isSet(object.subPath) ? String(object.subPath) : "",
       lfsSkipSmudge: isSet(object.lfsSkipSmudge) ? Boolean(object.lfsSkipSmudge) : false,
     };
@@ -432,18 +478,23 @@ export const PackageRepositoryGit = {
     const obj: any = {};
     message.ref !== undefined && (obj.ref = message.ref);
     message.refSelection !== undefined &&
-      (obj.refSelection = message.refSelection ? VersionSelection.toJSON(message.refSelection) : undefined);
+      (obj.refSelection = message.refSelection
+        ? VersionSelection.toJSON(message.refSelection)
+        : undefined);
     message.subPath !== undefined && (obj.subPath = message.subPath);
     message.lfsSkipSmudge !== undefined && (obj.lfsSkipSmudge = message.lfsSkipSmudge);
     return obj;
   },
 
-  fromPartial<I extends Exact<DeepPartial<PackageRepositoryGit>, I>>(object: I): PackageRepositoryGit {
+  fromPartial<I extends Exact<DeepPartial<PackageRepositoryGit>, I>>(
+    object: I,
+  ): PackageRepositoryGit {
     const message = createBasePackageRepositoryGit();
     message.ref = object.ref ?? "";
-    message.refSelection = (object.refSelection !== undefined && object.refSelection !== null)
-      ? VersionSelection.fromPartial(object.refSelection)
-      : undefined;
+    message.refSelection =
+      object.refSelection !== undefined && object.refSelection !== null
+        ? VersionSelection.fromPartial(object.refSelection)
+        : undefined;
     message.subPath = object.subPath ?? "";
     message.lfsSkipSmudge = object.lfsSkipSmudge ?? false;
     return message;
@@ -500,7 +551,9 @@ export const PackageRepositoryHttp = {
     return obj;
   },
 
-  fromPartial<I extends Exact<DeepPartial<PackageRepositoryHttp>, I>>(object: I): PackageRepositoryHttp {
+  fromPartial<I extends Exact<DeepPartial<PackageRepositoryHttp>, I>>(
+    object: I,
+  ): PackageRepositoryHttp {
     const message = createBasePackageRepositoryHttp();
     message.subPath = object.subPath ?? "";
     message.sha256 = object.sha256 ?? "";
@@ -515,7 +568,10 @@ function createBasePackageRepositoryInline(): PackageRepositoryInline {
 export const PackageRepositoryInline = {
   encode(message: PackageRepositoryInline, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
     Object.entries(message.paths).forEach(([key, value]) => {
-      PackageRepositoryInline_PathsEntry.encode({ key: key as any, value }, writer.uint32(10).fork()).ldelim();
+      PackageRepositoryInline_PathsEntry.encode(
+        { key: key as any, value },
+        writer.uint32(10).fork(),
+      ).ldelim();
     });
     for (const v of message.pathsFrom) {
       PackageRepositoryInline_Source.encode(v!, writer.uint32(18).fork()).ldelim();
@@ -551,9 +607,9 @@ export const PackageRepositoryInline = {
     return {
       paths: isObject(object.paths)
         ? Object.entries(object.paths).reduce<{ [key: string]: string }>((acc, [key, value]) => {
-          acc[key] = String(value);
-          return acc;
-        }, {})
+            acc[key] = String(value);
+            return acc;
+          }, {})
         : {},
       pathsFrom: Array.isArray(object?.pathsFrom)
         ? object.pathsFrom.map((e: any) => PackageRepositoryInline_Source.fromJSON(e))
@@ -570,22 +626,30 @@ export const PackageRepositoryInline = {
       });
     }
     if (message.pathsFrom) {
-      obj.pathsFrom = message.pathsFrom.map((e) => e ? PackageRepositoryInline_Source.toJSON(e) : undefined);
+      obj.pathsFrom = message.pathsFrom.map(e =>
+        e ? PackageRepositoryInline_Source.toJSON(e) : undefined,
+      );
     } else {
       obj.pathsFrom = [];
     }
     return obj;
   },
 
-  fromPartial<I extends Exact<DeepPartial<PackageRepositoryInline>, I>>(object: I): PackageRepositoryInline {
+  fromPartial<I extends Exact<DeepPartial<PackageRepositoryInline>, I>>(
+    object: I,
+  ): PackageRepositoryInline {
     const message = createBasePackageRepositoryInline();
-    message.paths = Object.entries(object.paths ?? {}).reduce<{ [key: string]: string }>((acc, [key, value]) => {
-      if (value !== undefined) {
-        acc[key] = String(value);
-      }
-      return acc;
-    }, {});
-    message.pathsFrom = object.pathsFrom?.map((e) => PackageRepositoryInline_Source.fromPartial(e)) || [];
+    message.paths = Object.entries(object.paths ?? {}).reduce<{ [key: string]: string }>(
+      (acc, [key, value]) => {
+        if (value !== undefined) {
+          acc[key] = String(value);
+        }
+        return acc;
+      },
+      {},
+    );
+    message.pathsFrom =
+      object.pathsFrom?.map(e => PackageRepositoryInline_Source.fromPartial(e)) || [];
     return message;
   },
 };
@@ -595,7 +659,10 @@ function createBasePackageRepositoryInline_SourceRef(): PackageRepositoryInline_
 }
 
 export const PackageRepositoryInline_SourceRef = {
-  encode(message: PackageRepositoryInline_SourceRef, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
+  encode(
+    message: PackageRepositoryInline_SourceRef,
+    writer: _m0.Writer = _m0.Writer.create(),
+  ): _m0.Writer {
     if (message.name !== "") {
       writer.uint32(10).string(message.name);
     }
@@ -655,12 +722,21 @@ function createBasePackageRepositoryInline_Source(): PackageRepositoryInline_Sou
 }
 
 export const PackageRepositoryInline_Source = {
-  encode(message: PackageRepositoryInline_Source, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
+  encode(
+    message: PackageRepositoryInline_Source,
+    writer: _m0.Writer = _m0.Writer.create(),
+  ): _m0.Writer {
     if (message.secretRef !== undefined) {
-      PackageRepositoryInline_SourceRef.encode(message.secretRef, writer.uint32(10).fork()).ldelim();
+      PackageRepositoryInline_SourceRef.encode(
+        message.secretRef,
+        writer.uint32(10).fork(),
+      ).ldelim();
     }
     if (message.configMapRef !== undefined) {
-      PackageRepositoryInline_SourceRef.encode(message.configMapRef, writer.uint32(18).fork()).ldelim();
+      PackageRepositoryInline_SourceRef.encode(
+        message.configMapRef,
+        writer.uint32(18).fork(),
+      ).ldelim();
     }
     return writer;
   },
@@ -688,7 +764,9 @@ export const PackageRepositoryInline_Source = {
 
   fromJSON(object: any): PackageRepositoryInline_Source {
     return {
-      secretRef: isSet(object.secretRef) ? PackageRepositoryInline_SourceRef.fromJSON(object.secretRef) : undefined,
+      secretRef: isSet(object.secretRef)
+        ? PackageRepositoryInline_SourceRef.fromJSON(object.secretRef)
+        : undefined,
       configMapRef: isSet(object.configMapRef)
         ? PackageRepositoryInline_SourceRef.fromJSON(object.configMapRef)
         : undefined,
@@ -698,10 +776,13 @@ export const PackageRepositoryInline_Source = {
   toJSON(message: PackageRepositoryInline_Source): unknown {
     const obj: any = {};
     message.secretRef !== undefined &&
-      (obj.secretRef = message.secretRef ? PackageRepositoryInline_SourceRef.toJSON(message.secretRef) : undefined);
-    message.configMapRef !== undefined && (obj.configMapRef = message.configMapRef
-      ? PackageRepositoryInline_SourceRef.toJSON(message.configMapRef)
-      : undefined);
+      (obj.secretRef = message.secretRef
+        ? PackageRepositoryInline_SourceRef.toJSON(message.secretRef)
+        : undefined);
+    message.configMapRef !== undefined &&
+      (obj.configMapRef = message.configMapRef
+        ? PackageRepositoryInline_SourceRef.toJSON(message.configMapRef)
+        : undefined);
     return obj;
   },
 
@@ -709,12 +790,14 @@ export const PackageRepositoryInline_Source = {
     object: I,
   ): PackageRepositoryInline_Source {
     const message = createBasePackageRepositoryInline_Source();
-    message.secretRef = (object.secretRef !== undefined && object.secretRef !== null)
-      ? PackageRepositoryInline_SourceRef.fromPartial(object.secretRef)
-      : undefined;
-    message.configMapRef = (object.configMapRef !== undefined && object.configMapRef !== null)
-      ? PackageRepositoryInline_SourceRef.fromPartial(object.configMapRef)
-      : undefined;
+    message.secretRef =
+      object.secretRef !== undefined && object.secretRef !== null
+        ? PackageRepositoryInline_SourceRef.fromPartial(object.secretRef)
+        : undefined;
+    message.configMapRef =
+      object.configMapRef !== undefined && object.configMapRef !== null
+        ? PackageRepositoryInline_SourceRef.fromPartial(object.configMapRef)
+        : undefined;
     return message;
   },
 };
@@ -724,7 +807,10 @@ function createBasePackageRepositoryInline_PathsEntry(): PackageRepositoryInline
 }
 
 export const PackageRepositoryInline_PathsEntry = {
-  encode(message: PackageRepositoryInline_PathsEntry, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
+  encode(
+    message: PackageRepositoryInline_PathsEntry,
+    writer: _m0.Writer = _m0.Writer.create(),
+  ): _m0.Writer {
     if (message.key !== "") {
       writer.uint32(10).string(message.key);
     }
@@ -756,7 +842,10 @@ export const PackageRepositoryInline_PathsEntry = {
   },
 
   fromJSON(object: any): PackageRepositoryInline_PathsEntry {
-    return { key: isSet(object.key) ? String(object.key) : "", value: isSet(object.value) ? String(object.value) : "" };
+    return {
+      key: isSet(object.key) ? String(object.key) : "",
+      value: isSet(object.value) ? String(object.value) : "",
+    };
   },
 
   toJSON(message: PackageRepositoryInline_PathsEntry): unknown {
@@ -807,7 +896,9 @@ export const VersionSelection = {
   },
 
   fromJSON(object: any): VersionSelection {
-    return { semver: isSet(object.semver) ? VersionSelectionSemver.fromJSON(object.semver) : undefined };
+    return {
+      semver: isSet(object.semver) ? VersionSelectionSemver.fromJSON(object.semver) : undefined,
+    };
   },
 
   toJSON(message: VersionSelection): unknown {
@@ -819,9 +910,10 @@ export const VersionSelection = {
 
   fromPartial<I extends Exact<DeepPartial<VersionSelection>, I>>(object: I): VersionSelection {
     const message = createBaseVersionSelection();
-    message.semver = (object.semver !== undefined && object.semver !== null)
-      ? VersionSelectionSemver.fromPartial(object.semver)
-      : undefined;
+    message.semver =
+      object.semver !== undefined && object.semver !== null
+        ? VersionSelectionSemver.fromPartial(object.semver)
+        : undefined;
     return message;
   },
 };
@@ -836,7 +928,10 @@ export const VersionSelectionSemver = {
       writer.uint32(10).string(message.constraints);
     }
     if (message.prereleases !== undefined) {
-      VersionSelectionSemverPrereleases.encode(message.prereleases, writer.uint32(18).fork()).ldelim();
+      VersionSelectionSemverPrereleases.encode(
+        message.prereleases,
+        writer.uint32(18).fork(),
+      ).ldelim();
     }
     return writer;
   },
@@ -881,12 +976,15 @@ export const VersionSelectionSemver = {
     return obj;
   },
 
-  fromPartial<I extends Exact<DeepPartial<VersionSelectionSemver>, I>>(object: I): VersionSelectionSemver {
+  fromPartial<I extends Exact<DeepPartial<VersionSelectionSemver>, I>>(
+    object: I,
+  ): VersionSelectionSemver {
     const message = createBaseVersionSelectionSemver();
     message.constraints = object.constraints ?? "";
-    message.prereleases = (object.prereleases !== undefined && object.prereleases !== null)
-      ? VersionSelectionSemverPrereleases.fromPartial(object.prereleases)
-      : undefined;
+    message.prereleases =
+      object.prereleases !== undefined && object.prereleases !== null
+        ? VersionSelectionSemverPrereleases.fromPartial(object.prereleases)
+        : undefined;
     return message;
   },
 };
@@ -896,7 +994,10 @@ function createBaseVersionSelectionSemverPrereleases(): VersionSelectionSemverPr
 }
 
 export const VersionSelectionSemverPrereleases = {
-  encode(message: VersionSelectionSemverPrereleases, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
+  encode(
+    message: VersionSelectionSemverPrereleases,
+    writer: _m0.Writer = _m0.Writer.create(),
+  ): _m0.Writer {
     for (const v of message.identifiers) {
       writer.uint32(10).string(v!);
     }
@@ -922,13 +1023,17 @@ export const VersionSelectionSemverPrereleases = {
   },
 
   fromJSON(object: any): VersionSelectionSemverPrereleases {
-    return { identifiers: Array.isArray(object?.identifiers) ? object.identifiers.map((e: any) => String(e)) : [] };
+    return {
+      identifiers: Array.isArray(object?.identifiers)
+        ? object.identifiers.map((e: any) => String(e))
+        : [],
+    };
   },
 
   toJSON(message: VersionSelectionSemverPrereleases): unknown {
     const obj: any = {};
     if (message.identifiers) {
-      obj.identifiers = message.identifiers.map((e) => e);
+      obj.identifiers = message.identifiers.map(e => e);
     } else {
       obj.identifiers = [];
     }
@@ -939,7 +1044,7 @@ export const VersionSelectionSemverPrereleases = {
     object: I,
   ): VersionSelectionSemverPrereleases {
     const message = createBaseVersionSelectionSemverPrereleases();
-    message.identifiers = object.identifiers?.map((e) => e) || [];
+    message.identifiers = object.identifiers?.map(e => e) || [];
     return message;
   },
 };
@@ -1112,118 +1217,124 @@ export class KappControllerPackagesServiceClientImpl implements KappControllerPa
 }
 
 export const KappControllerPackagesServiceDesc = {
-  serviceName: "kubeappsapis.plugins.kapp_controller.packages.v1alpha1.KappControllerPackagesService",
+  serviceName:
+    "kubeappsapis.plugins.kapp_controller.packages.v1alpha1.KappControllerPackagesService",
 };
 
-export const KappControllerPackagesServiceGetAvailablePackageSummariesDesc: UnaryMethodDefinitionish = {
-  methodName: "GetAvailablePackageSummaries",
-  service: KappControllerPackagesServiceDesc,
-  requestStream: false,
-  responseStream: false,
-  requestType: {
-    serializeBinary() {
-      return GetAvailablePackageSummariesRequest.encode(this).finish();
-    },
-  } as any,
-  responseType: {
-    deserializeBinary(data: Uint8Array) {
-      return {
-        ...GetAvailablePackageSummariesResponse.decode(data),
-        toObject() {
-          return this;
-        },
-      };
-    },
-  } as any,
-};
+export const KappControllerPackagesServiceGetAvailablePackageSummariesDesc: UnaryMethodDefinitionish =
+  {
+    methodName: "GetAvailablePackageSummaries",
+    service: KappControllerPackagesServiceDesc,
+    requestStream: false,
+    responseStream: false,
+    requestType: {
+      serializeBinary() {
+        return GetAvailablePackageSummariesRequest.encode(this).finish();
+      },
+    } as any,
+    responseType: {
+      deserializeBinary(data: Uint8Array) {
+        return {
+          ...GetAvailablePackageSummariesResponse.decode(data),
+          toObject() {
+            return this;
+          },
+        };
+      },
+    } as any,
+  };
 
-export const KappControllerPackagesServiceGetAvailablePackageDetailDesc: UnaryMethodDefinitionish = {
-  methodName: "GetAvailablePackageDetail",
-  service: KappControllerPackagesServiceDesc,
-  requestStream: false,
-  responseStream: false,
-  requestType: {
-    serializeBinary() {
-      return GetAvailablePackageDetailRequest.encode(this).finish();
-    },
-  } as any,
-  responseType: {
-    deserializeBinary(data: Uint8Array) {
-      return {
-        ...GetAvailablePackageDetailResponse.decode(data),
-        toObject() {
-          return this;
-        },
-      };
-    },
-  } as any,
-};
+export const KappControllerPackagesServiceGetAvailablePackageDetailDesc: UnaryMethodDefinitionish =
+  {
+    methodName: "GetAvailablePackageDetail",
+    service: KappControllerPackagesServiceDesc,
+    requestStream: false,
+    responseStream: false,
+    requestType: {
+      serializeBinary() {
+        return GetAvailablePackageDetailRequest.encode(this).finish();
+      },
+    } as any,
+    responseType: {
+      deserializeBinary(data: Uint8Array) {
+        return {
+          ...GetAvailablePackageDetailResponse.decode(data),
+          toObject() {
+            return this;
+          },
+        };
+      },
+    } as any,
+  };
 
-export const KappControllerPackagesServiceGetAvailablePackageVersionsDesc: UnaryMethodDefinitionish = {
-  methodName: "GetAvailablePackageVersions",
-  service: KappControllerPackagesServiceDesc,
-  requestStream: false,
-  responseStream: false,
-  requestType: {
-    serializeBinary() {
-      return GetAvailablePackageVersionsRequest.encode(this).finish();
-    },
-  } as any,
-  responseType: {
-    deserializeBinary(data: Uint8Array) {
-      return {
-        ...GetAvailablePackageVersionsResponse.decode(data),
-        toObject() {
-          return this;
-        },
-      };
-    },
-  } as any,
-};
+export const KappControllerPackagesServiceGetAvailablePackageVersionsDesc: UnaryMethodDefinitionish =
+  {
+    methodName: "GetAvailablePackageVersions",
+    service: KappControllerPackagesServiceDesc,
+    requestStream: false,
+    responseStream: false,
+    requestType: {
+      serializeBinary() {
+        return GetAvailablePackageVersionsRequest.encode(this).finish();
+      },
+    } as any,
+    responseType: {
+      deserializeBinary(data: Uint8Array) {
+        return {
+          ...GetAvailablePackageVersionsResponse.decode(data),
+          toObject() {
+            return this;
+          },
+        };
+      },
+    } as any,
+  };
 
-export const KappControllerPackagesServiceGetInstalledPackageSummariesDesc: UnaryMethodDefinitionish = {
-  methodName: "GetInstalledPackageSummaries",
-  service: KappControllerPackagesServiceDesc,
-  requestStream: false,
-  responseStream: false,
-  requestType: {
-    serializeBinary() {
-      return GetInstalledPackageSummariesRequest.encode(this).finish();
-    },
-  } as any,
-  responseType: {
-    deserializeBinary(data: Uint8Array) {
-      return {
-        ...GetInstalledPackageSummariesResponse.decode(data),
-        toObject() {
-          return this;
-        },
-      };
-    },
-  } as any,
-};
+export const KappControllerPackagesServiceGetInstalledPackageSummariesDesc: UnaryMethodDefinitionish =
+  {
+    methodName: "GetInstalledPackageSummaries",
+    service: KappControllerPackagesServiceDesc,
+    requestStream: false,
+    responseStream: false,
+    requestType: {
+      serializeBinary() {
+        return GetInstalledPackageSummariesRequest.encode(this).finish();
+      },
+    } as any,
+    responseType: {
+      deserializeBinary(data: Uint8Array) {
+        return {
+          ...GetInstalledPackageSummariesResponse.decode(data),
+          toObject() {
+            return this;
+          },
+        };
+      },
+    } as any,
+  };
 
-export const KappControllerPackagesServiceGetInstalledPackageDetailDesc: UnaryMethodDefinitionish = {
-  methodName: "GetInstalledPackageDetail",
-  service: KappControllerPackagesServiceDesc,
-  requestStream: false,
-  responseStream: false,
-  requestType: {
-    serializeBinary() {
-      return GetInstalledPackageDetailRequest.encode(this).finish();
-    },
-  } as any,
-  responseType: {
-    deserializeBinary(data: Uint8Array) {
-      return {
-        ...GetInstalledPackageDetailResponse.decode(data),
-        toObject() {
-          return this;
-        },
-      };
-    },
-  } as any,
-};
+export const KappControllerPackagesServiceGetInstalledPackageDetailDesc: UnaryMethodDefinitionish =
+  {
+    methodName: "GetInstalledPackageDetail",
+    service: KappControllerPackagesServiceDesc,
+    requestStream: false,
+    responseStream: false,
+    requestType: {
+      serializeBinary() {
+        return GetInstalledPackageDetailRequest.encode(this).finish();
+      },
+    } as any,
+    responseType: {
+      deserializeBinary(data: Uint8Array) {
+        return {
+          ...GetInstalledPackageDetailResponse.decode(data),
+          toObject() {
+            return this;
+          },
+        };
+      },
+    } as any,
+  };
 
 export const KappControllerPackagesServiceCreateInstalledPackageDesc: UnaryMethodDefinitionish = {
   methodName: "CreateInstalledPackage",
@@ -1291,27 +1402,28 @@ export const KappControllerPackagesServiceDeleteInstalledPackageDesc: UnaryMetho
   } as any,
 };
 
-export const KappControllerPackagesServiceGetInstalledPackageResourceRefsDesc: UnaryMethodDefinitionish = {
-  methodName: "GetInstalledPackageResourceRefs",
-  service: KappControllerPackagesServiceDesc,
-  requestStream: false,
-  responseStream: false,
-  requestType: {
-    serializeBinary() {
-      return GetInstalledPackageResourceRefsRequest.encode(this).finish();
-    },
-  } as any,
-  responseType: {
-    deserializeBinary(data: Uint8Array) {
-      return {
-        ...GetInstalledPackageResourceRefsResponse.decode(data),
-        toObject() {
-          return this;
-        },
-      };
-    },
-  } as any,
-};
+export const KappControllerPackagesServiceGetInstalledPackageResourceRefsDesc: UnaryMethodDefinitionish =
+  {
+    methodName: "GetInstalledPackageResourceRefs",
+    service: KappControllerPackagesServiceDesc,
+    requestStream: false,
+    responseStream: false,
+    requestType: {
+      serializeBinary() {
+        return GetInstalledPackageResourceRefsRequest.encode(this).finish();
+      },
+    } as any,
+    responseType: {
+      deserializeBinary(data: Uint8Array) {
+        return {
+          ...GetInstalledPackageResourceRefsResponse.decode(data),
+          toObject() {
+            return this;
+          },
+        };
+      },
+    } as any,
+  };
 
 export interface KappControllerRepositoriesService {
   /** AddPackageRepository add an existing package repository to the set of ones already managed by the 'kapp_controller' plugin */
@@ -1337,7 +1449,9 @@ export interface KappControllerRepositoriesService {
   ): Promise<DeletePackageRepositoryResponse>;
 }
 
-export class KappControllerRepositoriesServiceClientImpl implements KappControllerRepositoriesService {
+export class KappControllerRepositoriesServiceClientImpl
+  implements KappControllerRepositoriesService
+{
   private readonly rpc: Rpc;
 
   constructor(rpc: Rpc) {
@@ -1406,7 +1520,8 @@ export class KappControllerRepositoriesServiceClientImpl implements KappControll
 }
 
 export const KappControllerRepositoriesServiceDesc = {
-  serviceName: "kubeappsapis.plugins.kapp_controller.packages.v1alpha1.KappControllerRepositoriesService",
+  serviceName:
+    "kubeappsapis.plugins.kapp_controller.packages.v1alpha1.KappControllerRepositoriesService",
 };
 
 export const KappControllerRepositoriesServiceAddPackageRepositoryDesc: UnaryMethodDefinitionish = {
@@ -1431,93 +1546,97 @@ export const KappControllerRepositoriesServiceAddPackageRepositoryDesc: UnaryMet
   } as any,
 };
 
-export const KappControllerRepositoriesServiceGetPackageRepositoryDetailDesc: UnaryMethodDefinitionish = {
-  methodName: "GetPackageRepositoryDetail",
-  service: KappControllerRepositoriesServiceDesc,
-  requestStream: false,
-  responseStream: false,
-  requestType: {
-    serializeBinary() {
-      return GetPackageRepositoryDetailRequest.encode(this).finish();
-    },
-  } as any,
-  responseType: {
-    deserializeBinary(data: Uint8Array) {
-      return {
-        ...GetPackageRepositoryDetailResponse.decode(data),
-        toObject() {
-          return this;
-        },
-      };
-    },
-  } as any,
-};
+export const KappControllerRepositoriesServiceGetPackageRepositoryDetailDesc: UnaryMethodDefinitionish =
+  {
+    methodName: "GetPackageRepositoryDetail",
+    service: KappControllerRepositoriesServiceDesc,
+    requestStream: false,
+    responseStream: false,
+    requestType: {
+      serializeBinary() {
+        return GetPackageRepositoryDetailRequest.encode(this).finish();
+      },
+    } as any,
+    responseType: {
+      deserializeBinary(data: Uint8Array) {
+        return {
+          ...GetPackageRepositoryDetailResponse.decode(data),
+          toObject() {
+            return this;
+          },
+        };
+      },
+    } as any,
+  };
 
-export const KappControllerRepositoriesServiceGetPackageRepositorySummariesDesc: UnaryMethodDefinitionish = {
-  methodName: "GetPackageRepositorySummaries",
-  service: KappControllerRepositoriesServiceDesc,
-  requestStream: false,
-  responseStream: false,
-  requestType: {
-    serializeBinary() {
-      return GetPackageRepositorySummariesRequest.encode(this).finish();
-    },
-  } as any,
-  responseType: {
-    deserializeBinary(data: Uint8Array) {
-      return {
-        ...GetPackageRepositorySummariesResponse.decode(data),
-        toObject() {
-          return this;
-        },
-      };
-    },
-  } as any,
-};
+export const KappControllerRepositoriesServiceGetPackageRepositorySummariesDesc: UnaryMethodDefinitionish =
+  {
+    methodName: "GetPackageRepositorySummaries",
+    service: KappControllerRepositoriesServiceDesc,
+    requestStream: false,
+    responseStream: false,
+    requestType: {
+      serializeBinary() {
+        return GetPackageRepositorySummariesRequest.encode(this).finish();
+      },
+    } as any,
+    responseType: {
+      deserializeBinary(data: Uint8Array) {
+        return {
+          ...GetPackageRepositorySummariesResponse.decode(data),
+          toObject() {
+            return this;
+          },
+        };
+      },
+    } as any,
+  };
 
-export const KappControllerRepositoriesServiceUpdatePackageRepositoryDesc: UnaryMethodDefinitionish = {
-  methodName: "UpdatePackageRepository",
-  service: KappControllerRepositoriesServiceDesc,
-  requestStream: false,
-  responseStream: false,
-  requestType: {
-    serializeBinary() {
-      return UpdatePackageRepositoryRequest.encode(this).finish();
-    },
-  } as any,
-  responseType: {
-    deserializeBinary(data: Uint8Array) {
-      return {
-        ...UpdatePackageRepositoryResponse.decode(data),
-        toObject() {
-          return this;
-        },
-      };
-    },
-  } as any,
-};
+export const KappControllerRepositoriesServiceUpdatePackageRepositoryDesc: UnaryMethodDefinitionish =
+  {
+    methodName: "UpdatePackageRepository",
+    service: KappControllerRepositoriesServiceDesc,
+    requestStream: false,
+    responseStream: false,
+    requestType: {
+      serializeBinary() {
+        return UpdatePackageRepositoryRequest.encode(this).finish();
+      },
+    } as any,
+    responseType: {
+      deserializeBinary(data: Uint8Array) {
+        return {
+          ...UpdatePackageRepositoryResponse.decode(data),
+          toObject() {
+            return this;
+          },
+        };
+      },
+    } as any,
+  };
 
-export const KappControllerRepositoriesServiceDeletePackageRepositoryDesc: UnaryMethodDefinitionish = {
-  methodName: "DeletePackageRepository",
-  service: KappControllerRepositoriesServiceDesc,
-  requestStream: false,
-  responseStream: false,
-  requestType: {
-    serializeBinary() {
-      return DeletePackageRepositoryRequest.encode(this).finish();
-    },
-  } as any,
-  responseType: {
-    deserializeBinary(data: Uint8Array) {
-      return {
-        ...DeletePackageRepositoryResponse.decode(data),
-        toObject() {
-          return this;
-        },
-      };
-    },
-  } as any,
-};
+export const KappControllerRepositoriesServiceDeletePackageRepositoryDesc: UnaryMethodDefinitionish =
+  {
+    methodName: "DeletePackageRepository",
+    service: KappControllerRepositoriesServiceDesc,
+    requestStream: false,
+    responseStream: false,
+    requestType: {
+      serializeBinary() {
+        return DeletePackageRepositoryRequest.encode(this).finish();
+      },
+    } as any,
+    responseType: {
+      deserializeBinary(data: Uint8Array) {
+        return {
+          ...DeletePackageRepositoryResponse.decode(data),
+          toObject() {
+            return this;
+          },
+        };
+      },
+    } as any,
+  };
 
 interface UnaryMethodDefinitionishR extends grpc.UnaryMethodDefinition<any, any> {
   requestStream: any;
@@ -1564,9 +1683,10 @@ export class GrpcWebImpl {
     metadata: grpc.Metadata | undefined,
   ): Promise<any> {
     const request = { ..._request, ...methodDesc.requestType };
-    const maybeCombinedMetadata = metadata && this.options.metadata
-      ? new BrowserHeaders({ ...this.options?.metadata.headersMap, ...metadata?.headersMap })
-      : metadata || this.options.metadata;
+    const maybeCombinedMetadata =
+      metadata && this.options.metadata
+        ? new BrowserHeaders({ ...this.options?.metadata.headersMap, ...metadata?.headersMap })
+        : metadata || this.options.metadata;
     return new Promise((resolve, reject) => {
       grpc.unary(methodDesc, {
         request,
@@ -1578,7 +1698,11 @@ export class GrpcWebImpl {
           if (response.status === grpc.Code.OK) {
             resolve(response.message);
           } else {
-            const err = new GrpcWebError(response.statusMessage, response.status, response.trailers);
+            const err = new GrpcWebError(
+              response.statusMessage,
+              response.status,
+              response.trailers,
+            );
             reject(err);
           }
         },
@@ -1589,13 +1713,19 @@ export class GrpcWebImpl {
 
 type Builtin = Date | Function | Uint8Array | string | number | boolean | undefined;
 
-export type DeepPartial<T> = T extends Builtin ? T
-  : T extends Array<infer U> ? Array<DeepPartial<U>> : T extends ReadonlyArray<infer U> ? ReadonlyArray<DeepPartial<U>>
-  : T extends {} ? { [K in keyof T]?: DeepPartial<T[K]> }
+export type DeepPartial<T> = T extends Builtin
+  ? T
+  : T extends Array<infer U>
+  ? Array<DeepPartial<U>>
+  : T extends ReadonlyArray<infer U>
+  ? ReadonlyArray<DeepPartial<U>>
+  : T extends {}
+  ? { [K in keyof T]?: DeepPartial<T[K]> }
   : Partial<T>;
 
 type KeysOfUnion<T> = T extends T ? keyof T : never;
-export type Exact<P, I extends P> = P extends Builtin ? P
+export type Exact<P, I extends P> = P extends Builtin
+  ? P
   : P & { [K in keyof P]: Exact<P[K], I[K]> } & { [K in Exclude<keyof I, KeysOfUnion<P>>]: never };
 
 function isObject(value: any): boolean {
