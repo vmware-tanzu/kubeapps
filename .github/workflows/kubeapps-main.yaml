@@ -15,4 +15,4 @@ concurrency:
 
 jobs:
   main:
-    uses: ./.github/workflows/kubeapps-main-reusable.yaml
+    uses: ./.github/workflows/kubeapps-general.yaml

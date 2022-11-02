@@ -1,13 +1,15 @@
 # Copyright 2022 the Kubeapps contributors
 # SPDX-License-Identifier: Apache-2.0
 
-name: Full Integration Pipeline
+name: Release Pipeline
 
 on:
-  workflow_dispatch:
+  push:
+    tags:
+      - 'v[0-9]+.[0-9]+.[0-9]+'
 
 concurrency:
-  group: ${{ github.head_ref || github.ref_name }}_full
+  group: ${{ github.head_ref || github.ref_name }}
   cancel-in-progress: true
 
 jobs:
