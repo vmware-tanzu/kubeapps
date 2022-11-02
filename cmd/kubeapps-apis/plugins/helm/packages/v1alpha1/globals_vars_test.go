@@ -46,6 +46,23 @@ var (
 		},
 	}
 
+	addRepoWithInterval = v1alpha1.AppRepository{
+		TypeMeta: metav1.TypeMeta{
+			Kind:       AppRepositoryKind,
+			APIVersion: AppRepositoryApi,
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:            "bar",
+			Namespace:       "foo",
+			ResourceVersion: "1",
+		},
+		Spec: v1alpha1.AppRepositorySpec{
+			Type:     "helm",
+			URL:      "http://example.com",
+			Interval: "99m",
+		},
+	}
+
 	addRepoWithTLSCA = v1alpha1.AppRepository{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       AppRepositoryKind,
@@ -483,6 +500,15 @@ var (
 		CustomDetail: toProtoBufAny(&helmv1.RepositoryFilterRule{
 			Jq: "wrong-struct",
 		}),
+	}
+
+	addRepoReqWithInterval = &corev1.AddPackageRepositoryRequest{
+		Name:            "bar",
+		Context:         &corev1.Context{Namespace: "foo", Cluster: KubeappsCluster},
+		Type:            "helm",
+		Url:             "http://example.com",
+		NamespaceScoped: true,
+		Interval:        "99m",
 	}
 
 	toProtoBufAny = func(src proto.Message) *anypb.Any {

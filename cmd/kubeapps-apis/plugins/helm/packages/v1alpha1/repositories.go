@@ -5,6 +5,7 @@ package main
 
 import (
 	"context"
+
 	apprepov1alpha1 "github.com/vmware-tanzu/kubeapps/cmd/apprepository-controller/pkg/apis/apprepository/v1alpha1"
 	corev1 "github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
 	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/plugins/helm/packages/v1alpha1"
@@ -53,10 +54,6 @@ func (s *Server) newRepo(ctx context.Context, repo *HelmRepository) (*corev1.Pac
 	}
 	if repo.repoType == "" || !slices.Contains(ValidRepoTypes, repo.repoType) {
 		return nil, status.Errorf(codes.InvalidArgument, "repository type [%s] not supported", repo.repoType)
-	}
-	// Helm repositories do not support intervals for reconciliation by now
-	if repo.interval != "" {
-		return nil, status.Errorf(codes.InvalidArgument, "interval is not supported for Helm repositories")
 	}
 	typedClient, err := s.clientGetter.Typed(ctx, repo.cluster)
 	if err != nil {
@@ -151,6 +148,7 @@ func newHelmRepoCrd(repo *HelmRepository, secret *k8scorev1.Secret, imagePullSec
 			TLSInsecureSkipVerify: repo.tlsConfig != nil && repo.tlsConfig.InsecureSkipVerify,
 			Description:           repo.description,
 			PassCredentials:       repo.auth != nil && repo.auth.PassCredentials,
+			Interval:              repo.interval,
 		},
 	}
 	if repo.auth != nil || repo.tlsConfig != nil {
@@ -293,10 +291,6 @@ func (s *Server) updateRepo(ctx context.Context, repo *HelmRepository) (*corev1.
 	if repo.name.Name == "" {
 		return nil, status.Errorf(codes.InvalidArgument, "repository name may not be empty")
 	}
-	// Helm repositories do not support intervals for reconciliation by now
-	if repo.interval != "" {
-		return nil, status.Errorf(codes.InvalidArgument, "interval is not supported for Helm repositories")
-	}
 	typedClient, err := s.clientGetter.Typed(ctx, repo.cluster)
 	if err != nil {
 		return nil, err
@@ -362,6 +356,8 @@ func (s *Server) updateRepo(ctx context.Context, repo *HelmRepository) (*corev1.
 	}
 
 	appRepo.Spec.PassCredentials = repo.auth != nil && repo.auth.PassCredentials
+
+	appRepo.Spec.Interval = repo.interval
 
 	if imagePullSecret != nil || (imagePullSecret != nil && !updateImgPullSecret) {
 		appRepo.Spec.DockerRegistrySecrets = []string{imagePullSecret.Name}
