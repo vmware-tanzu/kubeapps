@@ -5,7 +5,7 @@
 
 set -euo pipefail
 
-echo "Instaling Nginx"
+echo "Installing Nginx"
 helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx
 helm repo update
 helm install -n nginx-ingress --create-namespace nginx-ingress ingress-nginx/ingress-nginx
