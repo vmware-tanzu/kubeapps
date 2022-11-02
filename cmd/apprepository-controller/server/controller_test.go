@@ -2020,7 +2020,7 @@ func TestIntervalToCron(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			cron := intervalToCron(tc.interval)
+			cron, _ := intervalToCron(tc.interval)
 			if got, want := cron, tc.expectedCron; got != want {
 				t.Errorf("got: %s, want: %s", got, want)
 			}

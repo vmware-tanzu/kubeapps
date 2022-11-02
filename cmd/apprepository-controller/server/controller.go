@@ -421,15 +421,15 @@ func ownerReferencesForAppRepo(apprepo *apprepov1alpha1.AppRepository, childName
 // intervalToCron transforms string durations like "1m" or "1h" to cron expressions
 // Even if valid time units are "ns", "us", "ms", "s", "m", "h",
 // the result will get rounded up to seconds.
-func intervalToCron(duration string) string {
+func intervalToCron(duration string) (string, error) {
 	if duration == "" {
-		return ""
+		return "", fmt.Errorf("duration cannot be empty")
 	} else {
 		if d, err := time.ParseDuration(duration); err != nil {
-			return ""
+			return "", err
 		} else {
-			cronSecs := math.Ceil(d.Seconds())             // round up to nearest second
-			return fmt.Sprintf("*/%v * * * * *", cronSecs) // every cronSecs seconds
+			cronSecs := math.Ceil(d.Seconds())                  // round up to nearest second
+			return fmt.Sprintf("*/%v * * * * *", cronSecs), nil // every cronSecs seconds
 		}
 	}
 }
@@ -438,10 +438,18 @@ func intervalToCron(duration string) string {
 // the appropriate OwnerReferences on the resource so handleObject can discover
 // the AppRepository resource that 'owns' it.
 func newCronJob(apprepo *apprepov1alpha1.AppRepository, config Config) *batchv1.CronJob {
-	// If the apprepo has its own Interval, use that instead of the default global crontab.
+	var err error
+
 	cronTime := config.Crontab
+
+	// If the apprepo has its own interval,
+	// use that instead of the default global crontab.
 	if apprepo.Spec.Interval != "" {
-		cronTime = intervalToCron(apprepo.Spec.Interval)
+		cronTime, err = intervalToCron(apprepo.Spec.Interval)
+	}
+	// If the interval is invalid, use the default global crontab
+	if err != nil {
+		cronTime = config.Crontab
 	}
 
 	return &batchv1.CronJob{
