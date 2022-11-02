@@ -14,5 +14,5 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  CI_CD:
+  main:
     uses: ./.github/workflows/kubeapps-main-reusable.yaml
