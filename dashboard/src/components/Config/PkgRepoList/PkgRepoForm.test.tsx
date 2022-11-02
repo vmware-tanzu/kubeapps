@@ -58,7 +58,7 @@ const pkgRepoFormData = {
     performValidation: true,
     filterRules: undefined,
   },
-  description: undefined,
+  description: "",
   dockerRegCreds: {
     password: "",
     username: "",
@@ -393,6 +393,7 @@ it("should call the install using the interval", async () => {
     name: "helm-repo",
     type: "helm",
     url: "https://helm.repo",
+    description: undefined,
     plugin: { name: PluginNames.PACKAGES_HELM, version: "v1alpha1" },
     interval: "99m",
   } as unknown as IPkgRepoFormData);
