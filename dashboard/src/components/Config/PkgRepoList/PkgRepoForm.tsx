@@ -504,6 +504,9 @@ export function PkgRepoForm(props: IPkgRepoFormProps) {
     const newPlugin = getPluginByName(e.target.value);
     setPlugin(newPlugin);
 
+    // set the sync interval to the user's value or default value
+    setSyncInterval(syncInterval || initialInterval);
+
     // if a unsupported auth method is selected, reset it to the default one
     if (!getSupportedPackageRepositoryAuthTypes(newPlugin, type).includes(authMethod)) {
       setAuthMethod(
@@ -517,8 +520,6 @@ export function PkgRepoForm(props: IPkgRepoFormProps) {
         if (!type) {
           setType(RepositoryStorageTypes.PACKAGE_REPOSITORY_STORAGE_HELM);
         }
-        // helm plugin doesn't allow setting sync interval
-        setSyncInterval("");
 
         // update the isNampespaced field based on the plugin
         setIsNamespaceScoped(
@@ -530,8 +531,6 @@ export function PkgRepoForm(props: IPkgRepoFormProps) {
         if (!type) {
           setType(RepositoryStorageTypes.PACKAGE_REPOSITORY_STORAGE_HELM);
         }
-        // set the sync interval to the user's value or default value
-        setSyncInterval(syncInterval || initialInterval);
 
         // update the isNampespaced field based on the plugin
         setIsNamespaceScoped(
@@ -543,8 +542,6 @@ export function PkgRepoForm(props: IPkgRepoFormProps) {
         if (!type) {
           setType(RepositoryStorageTypes.PACKAGE_REPOSITORY_STORAGE_CARVEL_IMGPKGBUNDLE);
         }
-        // set the sync interval to the user's value or default value
-        setSyncInterval(syncInterval || initialInterval);
 
         // carvel plugin doesn't allow description
         setDescription("");
@@ -2000,31 +1997,27 @@ export function PkgRepoForm(props: IPkgRepoFormProps) {
             <CdsAccordionHeader onClick={() => toggleAccordion(3)}>Advanced</CdsAccordionHeader>
             <CdsAccordionContent>
               <CdsFormGroup layout="vertical">
-                {([PluginNames.PACKAGES_FLUX, PluginNames.PACKAGES_KAPP] as string[]).includes(
-                  plugin?.name,
-                ) && (
-                  <CdsInput>
-                    <label htmlFor="kubeapps-repo-interval">Synchronization Interval</label>
-                    <input
-                      id="kubeapps-repo-interval"
-                      type="text"
-                      placeholder={initialInterval}
-                      value={syncInterval || ""}
-                      onChange={handleIntervalChange}
-                    />
-                    <CdsControlMessage>
-                      Time to wait between each synchronization of the repository. Expressed as a{" "}
-                      <a
-                        href={"https://pkg.go.dev/time#ParseDuration"}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                      >
-                        Golang duration
-                      </a>{" "}
-                      according to the Kubernetes specification.
-                    </CdsControlMessage>
-                  </CdsInput>
-                )}
+                <CdsInput>
+                  <label htmlFor="kubeapps-repo-interval">Synchronization Interval</label>
+                  <input
+                    id="kubeapps-repo-interval"
+                    type="text"
+                    placeholder={initialInterval}
+                    value={syncInterval || ""}
+                    onChange={handleIntervalChange}
+                  />
+                  <CdsControlMessage>
+                    Time to wait between each synchronization of the repository. Expressed as a{" "}
+                    <a
+                      href={"https://pkg.go.dev/time#ParseDuration"}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      Golang duration
+                    </a>{" "}
+                    according to the Kubernetes specification.
+                  </CdsControlMessage>
+                </CdsInput>
                 {plugin?.name === PluginNames.PACKAGES_HELM && (
                   <CdsCheckbox>
                     <label htmlFor="kubeapps-repo-performvalidation">Perform Validation</label>
