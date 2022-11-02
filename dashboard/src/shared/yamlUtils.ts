@@ -24,8 +24,8 @@ export function setPathValueInYamlNode(
   path: string,
   newValue: any,
 ) {
-  const { splitPath, value } = parsePathAndValue(valuesNode, path, newValue);
-  valuesNode.setIn(splitPath, value);
+  const { splitPath: split, value } = parsePathAndValue(valuesNode, path, newValue);
+  valuesNode.setIn(split, value);
   return valuesNode;
 }
 
@@ -34,7 +34,7 @@ function parsePathAndValue(doc: YAML.Document, path: string, value?: any) {
     // If the doc is empty we have an special case
     return { value: set({}, path.replace(/^\//, ""), value), splitPath: [] };
   }
-  let splitPath = splitPath(path);
+  let splitPath = splitPathBySlash(path);
   // If the path is not defined (the parent nodes are undefined)
   // We need to change the path and the value to set to avoid accessing
   // the undefined node. For example, if a.b is undefined:
@@ -98,7 +98,7 @@ export function getPathValueInYamlNode(
 }
 
 function parsePath(path: string): string[] {
-  return unescapePath(splitPath(path));
+  return unescapePath(splitPathBySlash(path));
 }
 
 function unescapePath(path: string[]): string[] {
@@ -106,7 +106,7 @@ function unescapePath(path: string[]): string[] {
   return path.map(p => unescapePathComponent(p));
 }
 
-function splitPath(path: string): string[] {
+function splitPathBySlash(path: string): string[] {
   return (
     (path ?? "")
       // ignore the first slash, if exists
