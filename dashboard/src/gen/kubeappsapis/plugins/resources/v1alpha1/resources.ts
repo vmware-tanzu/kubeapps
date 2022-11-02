@@ -1,15 +1,14 @@
 /* eslint-disable */
-import Long from "long";
 import { grpc } from "@improbable-eng/grpc-web";
-import * as _m0 from "protobufjs/minimal";
+import { BrowserHeaders } from "browser-headers";
+import _m0 from "protobufjs/minimal";
+import { Observable } from "rxjs";
+import { share } from "rxjs/operators";
 import {
+  Context,
   InstalledPackageReference,
   ResourceRef,
-  Context,
-} from "../../../../kubeappsapis/core/packages/v1alpha1/packages";
-import { Observable } from "rxjs";
-import { BrowserHeaders } from "browser-headers";
-import { share } from "rxjs/operators";
+} from "../../../core/packages/v1alpha1/packages";
 
 export const protobufPackage = "kubeappsapis.plugins.resources.v1alpha1";
 
@@ -558,9 +557,7 @@ export const GetServiceAccountNamesRequest = {
   },
 
   fromJSON(object: any): GetServiceAccountNamesRequest {
-    return {
-      context: isSet(object.context) ? Context.fromJSON(object.context) : undefined,
-    };
+    return { context: isSet(object.context) ? Context.fromJSON(object.context) : undefined };
   },
 
   toJSON(message: GetServiceAccountNamesRequest): unknown {
@@ -673,9 +670,7 @@ export const GetNamespaceNamesRequest = {
   },
 
   fromJSON(object: any): GetNamespaceNamesRequest {
-    return {
-      cluster: isSet(object.cluster) ? String(object.cluster) : "",
-    };
+    return { cluster: isSet(object.cluster) ? String(object.cluster) : "" };
   },
 
   toJSON(message: GetNamespaceNamesRequest): unknown {
@@ -825,14 +820,15 @@ export const CreateNamespaceRequest = {
       object.context !== undefined && object.context !== null
         ? Context.fromPartial(object.context)
         : undefined;
-    message.labels = Object.entries(object.labels ?? {}).reduce<{
-      [key: string]: string;
-    }>((acc, [key, value]) => {
-      if (value !== undefined) {
-        acc[key] = String(value);
-      }
-      return acc;
-    }, {});
+    message.labels = Object.entries(object.labels ?? {}).reduce<{ [key: string]: string }>(
+      (acc, [key, value]) => {
+        if (value !== undefined) {
+          acc[key] = String(value);
+        }
+        return acc;
+      },
+      {},
+    );
     return message;
   },
 };
@@ -975,9 +971,7 @@ export const CheckNamespaceExistsRequest = {
   },
 
   fromJSON(object: any): CheckNamespaceExistsRequest {
-    return {
-      context: isSet(object.context) ? Context.fromJSON(object.context) : undefined,
-    };
+    return { context: isSet(object.context) ? Context.fromJSON(object.context) : undefined };
   },
 
   toJSON(message: CheckNamespaceExistsRequest): unknown {
@@ -1033,9 +1027,7 @@ export const CheckNamespaceExistsResponse = {
   },
 
   fromJSON(object: any): CheckNamespaceExistsResponse {
-    return {
-      exists: isSet(object.exists) ? Boolean(object.exists) : false,
-    };
+    return { exists: isSet(object.exists) ? Boolean(object.exists) : false };
   },
 
   toJSON(message: CheckNamespaceExistsResponse): unknown {
@@ -1149,14 +1141,15 @@ export const CreateSecretRequest = {
         : undefined;
     message.type = object.type ?? 0;
     message.name = object.name ?? "";
-    message.stringData = Object.entries(object.stringData ?? {}).reduce<{
-      [key: string]: string;
-    }>((acc, [key, value]) => {
-      if (value !== undefined) {
-        acc[key] = String(value);
-      }
-      return acc;
-    }, {});
+    message.stringData = Object.entries(object.stringData ?? {}).reduce<{ [key: string]: string }>(
+      (acc, [key, value]) => {
+        if (value !== undefined) {
+          acc[key] = String(value);
+        }
+        return acc;
+      },
+      {},
+    );
     return message;
   },
 };
@@ -1294,9 +1287,7 @@ export const GetSecretNamesRequest = {
   },
 
   fromJSON(object: any): GetSecretNamesRequest {
-    return {
-      context: isSet(object.context) ? Context.fromJSON(object.context) : undefined,
-    };
+    return { context: isSet(object.context) ? Context.fromJSON(object.context) : undefined };
   },
 
   toJSON(message: GetSecretNamesRequest): unknown {
@@ -1357,12 +1348,13 @@ export const GetSecretNamesResponse = {
   fromJSON(object: any): GetSecretNamesResponse {
     return {
       secretNames: isObject(object.secretNames)
-        ? Object.entries(object.secretNames).reduce<{
-            [key: string]: SecretType;
-          }>((acc, [key, value]) => {
-            acc[key] = secretTypeFromJSON(value);
-            return acc;
-          }, {})
+        ? Object.entries(object.secretNames).reduce<{ [key: string]: SecretType }>(
+            (acc, [key, value]) => {
+              acc[key] = secretTypeFromJSON(value);
+              return acc;
+            },
+            {},
+          )
         : {},
     };
   },
@@ -1568,9 +1560,7 @@ export const CanIResponse = {
   },
 
   fromJSON(object: any): CanIResponse {
-    return {
-      allowed: isSet(object.allowed) ? Boolean(object.allowed) : false,
-    };
+    return { allowed: isSet(object.allowed) ? Boolean(object.allowed) : false };
   },
 
   toJSON(message: CanIResponse): unknown {
@@ -1928,6 +1918,7 @@ export class GrpcWebImpl {
     streamingTransport?: grpc.TransportFactory;
     debug?: boolean;
     metadata?: grpc.Metadata;
+    upStreamRetryCodes?: number[];
   };
 
   constructor(
@@ -1937,6 +1928,7 @@ export class GrpcWebImpl {
       streamingTransport?: grpc.TransportFactory;
       debug?: boolean;
       metadata?: grpc.Metadata;
+      upStreamRetryCodes?: number[];
     },
   ) {
     this.host = host;
@@ -1951,10 +1943,7 @@ export class GrpcWebImpl {
     const request = { ..._request, ...methodDesc.requestType };
     const maybeCombinedMetadata =
       metadata && this.options.metadata
-        ? new BrowserHeaders({
-            ...this.options?.metadata.headersMap,
-            ...metadata?.headersMap,
-          })
+        ? new BrowserHeaders({ ...this.options?.metadata.headersMap, ...metadata?.headersMap })
         : metadata || this.options.metadata;
     return new Promise((resolve, reject) => {
       grpc.unary(methodDesc, {
@@ -1967,9 +1956,11 @@ export class GrpcWebImpl {
           if (response.status === grpc.Code.OK) {
             resolve(response.message);
           } else {
-            const err = new Error(response.statusMessage) as any;
-            err.code = response.status;
-            err.metadata = response.trailers;
+            const err = new GrpcWebError(
+              response.statusMessage,
+              response.status,
+              response.trailers,
+            );
             reject(err);
           }
         },
@@ -1982,16 +1973,12 @@ export class GrpcWebImpl {
     _request: any,
     metadata: grpc.Metadata | undefined,
   ): Observable<any> {
-    // Status Response Codes (https://developers.google.com/maps-booking/reference/grpc-api/status_codes)
-    const upStreamCodes = [2, 4, 8, 9, 10, 13, 14, 15];
+    const upStreamCodes = this.options.upStreamRetryCodes || [];
     const DEFAULT_TIMEOUT_TIME: number = 3_000;
     const request = { ..._request, ...methodDesc.requestType };
     const maybeCombinedMetadata =
       metadata && this.options.metadata
-        ? new BrowserHeaders({
-            ...this.options?.metadata.headersMap,
-            ...metadata?.headersMap,
-          })
+        ? new BrowserHeaders({ ...this.options?.metadata.headersMap, ...metadata?.headersMap })
         : metadata || this.options.metadata;
     return new Observable(observer => {
       const upStream = () => {
@@ -2002,13 +1989,16 @@ export class GrpcWebImpl {
           metadata: maybeCombinedMetadata,
           debug: this.options.debug,
           onMessage: next => observer.next(next),
-          onEnd: (code: grpc.Code, message: string) => {
+          onEnd: (code: grpc.Code, message: string, trailers: grpc.Metadata) => {
             if (code === 0) {
               observer.complete();
             } else if (upStreamCodes.includes(code)) {
               setTimeout(upStream, DEFAULT_TIMEOUT_TIME);
             } else {
-              observer.error(new Error(`Error ${code} ${message}`));
+              const err = new Error(message) as any;
+              err.code = code;
+              err.metadata = trailers;
+              observer.error(err);
             }
           },
         });
@@ -2034,12 +2024,7 @@ export type DeepPartial<T> = T extends Builtin
 type KeysOfUnion<T> = T extends T ? keyof T : never;
 export type Exact<P, I extends P> = P extends Builtin
   ? P
-  : P & { [K in keyof P]: Exact<P[K], I[K]> } & Record<Exclude<keyof I, KeysOfUnion<P>>, never>;
-
-if (_m0.util.Long !== Long) {
-  _m0.util.Long = Long as any;
-  _m0.configure();
-}
+  : P & { [K in keyof P]: Exact<P[K], I[K]> } & { [K in Exclude<keyof I, KeysOfUnion<P>>]: never };
 
 function isObject(value: any): boolean {
   return typeof value === "object" && value !== null;
@@ -2047,4 +2032,10 @@ function isObject(value: any): boolean {
 
 function isSet(value: any): boolean {
   return value !== null && value !== undefined;
+}
+
+export class GrpcWebError extends Error {
+  constructor(message: string, public code: grpc.Code, public metadata: grpc.Metadata) {
+    super(message);
+  }
 }

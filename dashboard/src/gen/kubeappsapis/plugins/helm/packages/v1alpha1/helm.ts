@@ -1,42 +1,41 @@
 /* eslint-disable */
-import Long from "long";
 import { grpc } from "@improbable-eng/grpc-web";
-import * as _m0 from "protobufjs/minimal";
+import { BrowserHeaders } from "browser-headers";
+import _m0 from "protobufjs/minimal";
 import {
-  InstalledPackageReference,
-  GetAvailablePackageSummariesRequest,
-  GetAvailablePackageDetailRequest,
-  GetAvailablePackageVersionsRequest,
-  GetInstalledPackageSummariesRequest,
-  GetInstalledPackageDetailRequest,
   CreateInstalledPackageRequest,
-  UpdateInstalledPackageRequest,
-  DeleteInstalledPackageRequest,
-  GetInstalledPackageResourceRefsRequest,
-  GetAvailablePackageSummariesResponse,
-  GetAvailablePackageDetailResponse,
-  GetAvailablePackageVersionsResponse,
-  GetInstalledPackageSummariesResponse,
-  GetInstalledPackageDetailResponse,
   CreateInstalledPackageResponse,
-  UpdateInstalledPackageResponse,
+  DeleteInstalledPackageRequest,
   DeleteInstalledPackageResponse,
+  GetAvailablePackageDetailRequest,
+  GetAvailablePackageDetailResponse,
+  GetAvailablePackageSummariesRequest,
+  GetAvailablePackageSummariesResponse,
+  GetAvailablePackageVersionsRequest,
+  GetAvailablePackageVersionsResponse,
+  GetInstalledPackageDetailRequest,
+  GetInstalledPackageDetailResponse,
+  GetInstalledPackageResourceRefsRequest,
   GetInstalledPackageResourceRefsResponse,
-} from "../../../../../kubeappsapis/core/packages/v1alpha1/packages";
+  GetInstalledPackageSummariesRequest,
+  GetInstalledPackageSummariesResponse,
+  InstalledPackageReference,
+  UpdateInstalledPackageRequest,
+  UpdateInstalledPackageResponse,
+} from "../../../../core/packages/v1alpha1/packages";
 import {
   AddPackageRepositoryRequest,
-  GetPackageRepositoryDetailRequest,
-  GetPackageRepositorySummariesRequest,
-  UpdatePackageRepositoryRequest,
-  DeletePackageRepositoryRequest,
   AddPackageRepositoryResponse,
-  GetPackageRepositoryDetailResponse,
-  GetPackageRepositorySummariesResponse,
-  UpdatePackageRepositoryResponse,
+  DeletePackageRepositoryRequest,
   DeletePackageRepositoryResponse,
   DockerCredentials,
-} from "../../../../../kubeappsapis/core/packages/v1alpha1/repositories";
-import { BrowserHeaders } from "browser-headers";
+  GetPackageRepositoryDetailRequest,
+  GetPackageRepositoryDetailResponse,
+  GetPackageRepositorySummariesRequest,
+  GetPackageRepositorySummariesResponse,
+  UpdatePackageRepositoryRequest,
+  UpdatePackageRepositoryResponse,
+} from "../../../../core/packages/v1alpha1/repositories";
 
 export const protobufPackage = "kubeappsapis.plugins.helm.packages.v1alpha1";
 
@@ -159,9 +158,7 @@ export const InstalledPackageDetailCustomDataHelm = {
   },
 
   fromJSON(object: any): InstalledPackageDetailCustomDataHelm {
-    return {
-      releaseRevision: isSet(object.releaseRevision) ? Number(object.releaseRevision) : 0,
-    };
+    return { releaseRevision: isSet(object.releaseRevision) ? Number(object.releaseRevision) : 0 };
   },
 
   toJSON(message: InstalledPackageDetailCustomDataHelm): unknown {
@@ -570,14 +567,15 @@ export const RepositoryFilterRule = {
   ): RepositoryFilterRule {
     const message = createBaseRepositoryFilterRule();
     message.jq = object.jq ?? "";
-    message.variables = Object.entries(object.variables ?? {}).reduce<{
-      [key: string]: string;
-    }>((acc, [key, value]) => {
-      if (value !== undefined) {
-        acc[key] = String(value);
-      }
-      return acc;
-    }, {});
+    message.variables = Object.entries(object.variables ?? {}).reduce<{ [key: string]: string }>(
+      (acc, [key, value]) => {
+        if (value !== undefined) {
+          acc[key] = String(value);
+        }
+        return acc;
+      },
+      {},
+    );
     return message;
   },
 };
@@ -1281,6 +1279,7 @@ export class GrpcWebImpl {
 
     debug?: boolean;
     metadata?: grpc.Metadata;
+    upStreamRetryCodes?: number[];
   };
 
   constructor(
@@ -1290,6 +1289,7 @@ export class GrpcWebImpl {
 
       debug?: boolean;
       metadata?: grpc.Metadata;
+      upStreamRetryCodes?: number[];
     },
   ) {
     this.host = host;
@@ -1304,10 +1304,7 @@ export class GrpcWebImpl {
     const request = { ..._request, ...methodDesc.requestType };
     const maybeCombinedMetadata =
       metadata && this.options.metadata
-        ? new BrowserHeaders({
-            ...this.options?.metadata.headersMap,
-            ...metadata?.headersMap,
-          })
+        ? new BrowserHeaders({ ...this.options?.metadata.headersMap, ...metadata?.headersMap })
         : metadata || this.options.metadata;
     return new Promise((resolve, reject) => {
       grpc.unary(methodDesc, {
@@ -1320,9 +1317,11 @@ export class GrpcWebImpl {
           if (response.status === grpc.Code.OK) {
             resolve(response.message);
           } else {
-            const err = new Error(response.statusMessage) as any;
-            err.code = response.status;
-            err.metadata = response.trailers;
+            const err = new GrpcWebError(
+              response.statusMessage,
+              response.status,
+              response.trailers,
+            );
             reject(err);
           }
         },
@@ -1346,12 +1345,7 @@ export type DeepPartial<T> = T extends Builtin
 type KeysOfUnion<T> = T extends T ? keyof T : never;
 export type Exact<P, I extends P> = P extends Builtin
   ? P
-  : P & { [K in keyof P]: Exact<P[K], I[K]> } & Record<Exclude<keyof I, KeysOfUnion<P>>, never>;
-
-if (_m0.util.Long !== Long) {
-  _m0.util.Long = Long as any;
-  _m0.configure();
-}
+  : P & { [K in keyof P]: Exact<P[K], I[K]> } & { [K in Exclude<keyof I, KeysOfUnion<P>>]: never };
 
 function isObject(value: any): boolean {
   return typeof value === "object" && value !== null;
@@ -1359,4 +1353,10 @@ function isObject(value: any): boolean {
 
 function isSet(value: any): boolean {
   return value !== null && value !== undefined;
+}
+
+export class GrpcWebError extends Error {
+  constructor(message: string, public code: grpc.Code, public metadata: grpc.Metadata) {
+    super(message);
+  }
 }

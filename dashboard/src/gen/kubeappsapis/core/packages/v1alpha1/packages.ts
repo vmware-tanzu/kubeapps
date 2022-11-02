@@ -1,10 +1,9 @@
 /* eslint-disable */
-import Long from "long";
 import { grpc } from "@improbable-eng/grpc-web";
-import * as _m0 from "protobufjs/minimal";
-import { Any } from "../../../../google/protobuf/any";
-import { Plugin } from "../../../../kubeappsapis/core/plugins/v1alpha1/plugins";
 import { BrowserHeaders } from "browser-headers";
+import _m0 from "protobufjs/minimal";
+import { Any } from "../../../../google/protobuf/any";
+import { Plugin } from "../../plugins/v1alpha1/plugins";
 
 export const protobufPackage = "kubeappsapis.core.packages.v1alpha1";
 
@@ -999,11 +998,7 @@ export interface ResourceRef {
 }
 
 function createBaseGetAvailablePackageSummariesRequest(): GetAvailablePackageSummariesRequest {
-  return {
-    context: undefined,
-    filterOptions: undefined,
-    paginationOptions: undefined,
-  };
+  return { context: undefined, filterOptions: undefined, paginationOptions: undefined };
 }
 
 export const GetAvailablePackageSummariesRequest = {
@@ -3373,13 +3368,7 @@ export const Maintainer = {
 };
 
 function createBaseFilterOptions(): FilterOptions {
-  return {
-    query: "",
-    categories: [],
-    repositories: [],
-    pkgVersion: "",
-    appVersion: "",
-  };
+  return { query: "", categories: [], repositories: [], pkgVersion: "", appVersion: "" };
 }
 
 export const FilterOptions = {
@@ -3641,9 +3630,7 @@ export const VersionReference = {
   },
 
   fromJSON(object: any): VersionReference {
-    return {
-      version: isSet(object.version) ? String(object.version) : "",
-    };
+    return { version: isSet(object.version) ? String(object.version) : "" };
   },
 
   toJSON(message: VersionReference): unknown {
@@ -4313,6 +4300,7 @@ export class GrpcWebImpl {
 
     debug?: boolean;
     metadata?: grpc.Metadata;
+    upStreamRetryCodes?: number[];
   };
 
   constructor(
@@ -4322,6 +4310,7 @@ export class GrpcWebImpl {
 
       debug?: boolean;
       metadata?: grpc.Metadata;
+      upStreamRetryCodes?: number[];
     },
   ) {
     this.host = host;
@@ -4336,10 +4325,7 @@ export class GrpcWebImpl {
     const request = { ..._request, ...methodDesc.requestType };
     const maybeCombinedMetadata =
       metadata && this.options.metadata
-        ? new BrowserHeaders({
-            ...this.options?.metadata.headersMap,
-            ...metadata?.headersMap,
-          })
+        ? new BrowserHeaders({ ...this.options?.metadata.headersMap, ...metadata?.headersMap })
         : metadata || this.options.metadata;
     return new Promise((resolve, reject) => {
       grpc.unary(methodDesc, {
@@ -4352,9 +4338,11 @@ export class GrpcWebImpl {
           if (response.status === grpc.Code.OK) {
             resolve(response.message);
           } else {
-            const err = new Error(response.statusMessage) as any;
-            err.code = response.status;
-            err.metadata = response.trailers;
+            const err = new GrpcWebError(
+              response.statusMessage,
+              response.status,
+              response.trailers,
+            );
             reject(err);
           }
         },
@@ -4378,13 +4366,14 @@ export type DeepPartial<T> = T extends Builtin
 type KeysOfUnion<T> = T extends T ? keyof T : never;
 export type Exact<P, I extends P> = P extends Builtin
   ? P
-  : P & { [K in keyof P]: Exact<P[K], I[K]> } & Record<Exclude<keyof I, KeysOfUnion<P>>, never>;
-
-if (_m0.util.Long !== Long) {
-  _m0.util.Long = Long as any;
-  _m0.configure();
-}
+  : P & { [K in keyof P]: Exact<P[K], I[K]> } & { [K in Exclude<keyof I, KeysOfUnion<P>>]: never };
 
 function isSet(value: any): boolean {
   return value !== null && value !== undefined;
+}
+
+export class GrpcWebError extends Error {
+  constructor(message: string, public code: grpc.Code, public metadata: grpc.Metadata) {
+    super(message);
+  }
 }
