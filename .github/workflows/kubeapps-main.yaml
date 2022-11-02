@@ -1,18 +1,19 @@
 # Copyright 2022 the Kubeapps contributors
 # SPDX-License-Identifier: Apache-2.0
 
-name: Full Integration Pipeline
+name: Main Pipeline
 
 on:
-  workflow_dispatch:
+  push:
+  pull_request:
+    branches:
+      - main
 
 concurrency:
-  group: ${{ github.head_ref || github.ref_name }}_full
+  group: ${{ github.head_ref || github.ref_name }}
   cancel-in-progress: true
 
 jobs:
   main:
     uses: ./.github/workflows/kubeapps-general.yaml
     secrets: inherit
-    with:
-      run_gke_tests: true

@@ -20,7 +20,7 @@ env:
   CI_BOT_GPG: "80B6EB16B1328FB18DFF2A073EBA68F3347E319D"
   # DEBUG_MODE allows to activate some SSH debugging steps, and modify the verbosity level of some scripts (eg. e2e-tests.sh)
   DEBUG_MODE: "true"
-  # FIXME: DEV_MODE is used to enable dev mode, used to activate several hacks along the code:
+  # TODO(bjesus): DEV_MODE is used to enable dev mode, used to activate several hacks along the code:
   # - In sync_chart_from/to_bitnami jobs to file shadow PRs while we maintain
   # - To add a suffix to the tag of the generated docker images, to prevent collision and overwriting with those generated from CircleCI
   # - To add a suffix to the name of the generated GKE clusters to prevent collision with those generated and used from CircleCI
@@ -652,6 +652,28 @@ jobs:
               ${CHARTS_REPO_FORKED} \
               ${BRANCH_CHARTS_REPO_FORKED} \
               ${DEV_MODE}
+
+  release:
+    if: needs.setup.outputs.running_on_tag == 'true'
+    needs:
+      - setup
+      - sync_chart_to_bitnami
+      - local_e2e_tests
+      - GKE_REGULAR_VERSION
+      - GKE_STABLE_VERSION
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - run: |
+          set -eu
+          source ./script/lib/libcitools.sh
+          installGithubCLI ${GITHUB_VERSION}
+      - # Assuming there is a personal access token created in GitHub granted with the scopes
+        # "repo:status", "public_repo" and "read:org"
+        name: Run the create_release script
+        run: |
+          set -eu
+          ./script/create_release.sh "${GITHUB_REF_NAME}" "${KUBEAPPS_REPO}"
 
   gke_setup:
     if: needs.setup.outputs.running_on_tag == 'true' || inputs.run_gke_tests

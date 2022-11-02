@@ -1,13 +1,12 @@
 # Copyright 2022 the Kubeapps contributors
 # SPDX-License-Identifier: Apache-2.0
 
-name: Main Pipeline
+name: Release Pipeline
 
 on:
   push:
-  pull_request:
-    branches:
-      - main
+    tags:
+      - 'v[0-9]+.[0-9]+.[0-9]+'
 
 concurrency:
   group: ${{ github.head_ref || github.ref_name }}
@@ -15,4 +14,7 @@ concurrency:
 
 jobs:
   main:
-    uses: ./.github/workflows/kubeapps-main-reusable.yaml
+    uses: ./.github/workflows/kubeapps-general.yaml
+    secrets: inherit
+    with:
+      run_gke_tests: true
