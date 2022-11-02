@@ -1379,10 +1379,6 @@ pinnipedProxy:
     annotations: {}
 ## @section Other Parameters
 
-## @param allowNamespaceDiscovery Allow users to discover available namespaces (only the ones they have access)
-## NOTE: When set to true, Kubeapps creates a ClusterRole to be able to list namespaces.
-##
-allowNamespaceDiscovery: true
 ## @param clusters [array] List of clusters that Kubeapps can target for deployments
 ## When populated with a single cluster (as it is by default), Kubeapps will not allow users to
 ## change the target cluster. When populated with multiple clusters, Kubeapps will present the clusters to
