@@ -666,12 +666,12 @@ func getRepoTlsConfigAndAuth(
 	return tlsConfig, auth, nil
 }
 
-// note: for now, checking based on name pattern, for backward compatibility
+// note: for now, checking based on name pattern for backward compatibility
 func isAuthSecretKubeappsManaged(repoName string, secret *k8scorev1.Secret) bool {
 	return secret.GetName() == helm.SecretNameForRepo(repoName)
 }
 
-// note: for now, checking based on name pattern, for backward compatibility
+// note: for now, checking based on name pattern for backward compatibility
 func isImagesPullSecretKubeappsManaged(repoName string, secret *k8scorev1.Secret) bool {
 	return secret.GetName() == imagesPullSecretName(repoName)
 }
