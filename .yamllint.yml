@@ -4,8 +4,10 @@
 ---
 extends: default
 ignore: |
-  */chart/kubeapps/templates/
-  */integration/charts/simplechart/templates/
+  **/chart/kubeapps/templates/
+  **/charts/simplechart/templates/
 rules:
   line-length: disable
   comments: disable
+  trailing-spaces:
+    level: warning
