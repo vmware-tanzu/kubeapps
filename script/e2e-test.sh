@@ -20,19 +20,22 @@ OPERATOR_TESTS="operator"
 SUPPORTED_TESTS_GROUPS=("${ALL_TESTS}" "${MAIN_TESTS}" "${MULTICLUSTER_TESTS}" "${CARVEL_TESTS}" "${FLUX_TESTS}" "${OPERATOR_TESTS}")
 
 # Params
-USE_MULTICLUSTER_OIDC_ENV=${1:-false}
-OLM_VERSION=${2:-"v0.18.2"}
-IMG_DEV_TAG=${3:?missing dev tag}
-IMG_MODIFIER=${4:-""}
-TEST_TIMEOUT_MINUTES=${5:-"4"}
-DEX_IP=${6:-"172.18.0.2"}
-ADDITIONAL_CLUSTER_IP=${7:-"172.18.0.3"}
-KAPP_CONTROLLER_VERSION=${8:-"v0.42.0"}
-CHARTMUSEUM_VERSION=${9:-"3.9.1"}
+USE_MULTICLUSTER_OIDC_ENV=${USE_MULTICLUSTER_OIDC_ENV:-"false"}
+OLM_VERSION=${OLM_VERSION:-"v0.18.2"}
+IMG_DEV_TAG=${IMG_DEV_TAG:?missing dev tag}
+IMG_MODIFIER=${IMG_MODIFIER:-""}
+TEST_TIMEOUT_MINUTES=${TEST_TIMEOUT_MINUTES:-"4"}
+DEX_IP=${DEX_IP:-"172.18.0.2"}
+ADDITIONAL_CLUSTER_IP=${ADDITIONAL_CLUSTER_IP:-"172.18.0.3"}
+KAPP_CONTROLLER_VERSION=${KAPP_CONTROLLER_VERSION:-"v0.42.0"}
+CHARTMUSEUM_VERSION=${CHARTMUSEUM_VERSION:-"3.9.1"}
 # check latest flux releases at https://github.com/fluxcd/flux2/releases
-FLUX_VERSION=${10:-"v0.35.0"}
+FLUX_VERSION=${FLUX_VERSION:-"v0.35.0"}
+GKE_BRANCH=${GKE_BRANCH:-}
 IMG_PREFIX=${IMG_PREFIX:-"kubeapps/"}
 TESTS_GROUP=${TESTS_GROUP:-"${ALL_TESTS}"}
+DEBUG_MODE=${DEBUG_MODE:-false}
+TEST_LATEST_RELEASE=${TEST_LATEST_RELEASE:-false}
 
 # shellcheck disable=SC2076
 if [[ ! " ${SUPPORTED_TESTS_GROUPS[*]} " =~ " ${TESTS_GROUP} " ]]; then
@@ -43,7 +46,7 @@ fi
 
 # TODO(andresmgot): While we work with beta releases, the Bitnami pipeline
 # removes the pre-release part of the tag
-if [[ -n "${TEST_LATEST_RELEASE:-}" ]]; then
+if [[ -n "${TEST_LATEST_RELEASE}" && "${TEST_LATEST_RELEASE}" != "false" ]]; then
   IMG_DEV_TAG=${IMG_DEV_TAG/-beta.*/}
 fi
 
@@ -68,31 +71,34 @@ fi
 # Functions for handling Chart Museum
 . "${ROOT_DIR}/script/chart-museum.sh"
 
-info "TESTS GROUP: ${TESTS_GROUP}"
-info "Root dir: ${ROOT_DIR}"
-info "Use multicluster+OIDC: ${USE_MULTICLUSTER_OIDC_ENV}"
-info "OLM version: ${OLM_VERSION}"
-info "ChartMuseum version: ${CHARTMUSEUM_VERSION}"
-info "Image tag: ${IMG_DEV_TAG}"
-info "Image modifier: ${IMG_MODIFIER}"
-info "Image prefix: ${IMG_PREFIX}"
-info "Dex IP: ${DEX_IP}"
-info "Additional cluster IP : ${ADDITIONAL_CLUSTER_IP}"
-info "Load balancer IP : ${LOAD_BALANCER_IP}"
-info "Test timeout minutes: ${TEST_TIMEOUT_MINUTES}"
-info "Kapp Controller version: ${KAPP_CONTROLLER_VERSION}"
-info "Cluster Version: $(kubectl version -o json | jq -r '.serverVersion.gitVersion')"
-info "Kubectl Version: $(kubectl version -o json | jq -r '.clientVersion.gitVersion')"
-echo ""
+info "###############################################################################################"
+info "DEBUG_MODE: ${DEBUG_MODE}"
+info "TESTS_GROUP: ${TESTS_GROUP}"
+info "GKE_BRANCH: ${GKE_BRANCH}"
+info "ROOT_DIR: ${ROOT_DIR}"
+info "USE_MULTICLUSTER_OIDC_ENV: ${USE_MULTICLUSTER_OIDC_ENV}"
+info "OLM_VERSION: ${OLM_VERSION}"
+info "CHARTMUSEUM_VERSION: ${CHARTMUSEUM_VERSION}"
+info "IMG_DEV_TAG: ${IMG_DEV_TAG}"
+info "IMG_MODIFIER: ${IMG_MODIFIER}"
+info "IMG_PREFIX: ${IMG_PREFIX}"
+info "DEX_IP: ${DEX_IP}"
+info "ADDITIONAL_CLUSTER_IP: ${ADDITIONAL_CLUSTER_IP}"
+info "LOAD_BALANCER_IP: ${LOAD_BALANCER_IP}"
+info "TEST_TIMEOUT_MINUTES: ${TEST_TIMEOUT_MINUTES}"
+info "KAPP_CONTROLLER_VERSION: ${KAPP_CONTROLLER_VERSION}"
+info "K8S SERVER VERSION: $(kubectl version -o json | jq -r '.serverVersion.gitVersion')"
+info "KUBECTL VERSION: $(kubectl version -o json | jq -r '.clientVersion.gitVersion')"
+info "###############################################################################################"
 
-# Auxiliar functions
+# Auxiliary functions
 
 #
 # Install an authenticated Docker registry inside the cluster
 #
 setupLocalDockerRegistry() {
     info "Installing local Docker registry with authentication"
-    installLocalRegistry $ROOT_DIR
+    installLocalRegistry "${ROOT_DIR}"
 
     info "Pushing test container to local Docker registry"
     pushContainerToLocalRegistry
@@ -103,35 +109,35 @@ setupLocalDockerRegistry() {
 #
 pushLocalChart() {
     info "Packaging local test chart"
-    helm package $ROOT_DIR/integration/charts/simplechart
+    helm package "${ROOT_DIR}/integration/charts/simplechart"
 
     info "Pushing local test chart to ChartMuseum"
     pushChartToChartMuseum "simplechart" "0.1.0" "simplechart-0.1.0.tgz"
 }
 
-########################
+########################################################################################################################
 # Check if the pod that populates de OperatorHub catalog is running
 # Globals: None
 # Arguments: None
 # Returns: None
-#########################
+########################################################################################################################
 isOperatorHubCatalogRunning() {
   kubectl get pod -n olm -l olm.catalogSource=operatorhubio-catalog -o jsonpath='{.items[0].status.phase}' | grep Running
   # Wait also for the catalog to be populated
   kubectl get packagemanifests.packages.operators.coreos.com | grep prometheus
 }
 
-########################
+########################################################################################################################
 # Install OLM
 # Globals: None
 # Arguments:
 #   $1: Version of OLM
 # Returns: None
-#########################
+########################################################################################################################
 installOLM() {
   local release=$1
   info "Installing OLM ${release} ..."
-  url=https://github.com/operator-framework/operator-lifecycle-manager/releases/download/${release}
+  url="https://github.com/operator-framework/operator-lifecycle-manager/releases/download/${release}"
   namespace=olm
 
   kubectl create -f "${url}/crds.yaml"
@@ -147,7 +153,7 @@ installOLM() {
     new_csv_phase=$(kubectl get csv -n "${namespace}" packageserver -o jsonpath='{.status.phase}' 2>/dev/null || echo "Waiting for CSV to appear")
     if [[ $new_csv_phase != "${csv_phase:-}" ]]; then
       csv_phase=$new_csv_phase
-      echo "CSV \"packageserver\" phase: $csv_phase"
+      echo "CSV \"packageserver\" phase: ${csv_phase}"
     fi
     if [[ "$new_csv_phase" == "Succeeded" ]]; then
       break
@@ -164,14 +170,14 @@ installOLM() {
   kubectl rollout status -w deployment/packageserver --namespace="${namespace}"
 }
 
-########################
+########################################################################################################################
 # Push a chart to chartmusem
 # Globals: None
 # Arguments:
 #   $1: chart
 #   $2: version
 # Returns: None
-#########################
+########################################################################################################################
 pushChart() {
   local chart=$1
   local version=$2
@@ -187,28 +193,28 @@ pushChart() {
   #   description: foo apache chart for CI
   # consequently, the new packaged chart is "${prefix}${chart}-${version}.tgz"
   # This workaround should mitigate https://github.com/vmware-tanzu/kubeapps/issues/3339
-  mkdir ./${chart}-${version}
-  tar zxf ${chart}-${version}.tgz -C ./${chart}-${version}
+  mkdir "./${chart}-${version}"
+  tar zxf "${chart}-${version}.tgz" -C "./${chart}-${version}"
   # this relies on GNU sed, which is not the default on MacOS
   # ref https://gist.github.com/andre3k1/e3a1a7133fded5de5a9ee99c87c6fa0d
-  sed -i "s/name: ${chart}/name: ${prefix}${chart}/" ./${chart}-${version}/${chart}/Chart.yaml
-  sed -i "0,/^\([[:space:]]*description: *\).*/s//\1${description}/" ./${chart}-${version}/${chart}/Chart.yaml
-  helm package ./${chart}-${version}/${chart} -d .
+  sed -i "s/name: ${chart}/name: ${prefix}${chart}/" "./${chart}-${version}/${chart}/Chart.yaml"
+  sed -i "0,/^\([[:space:]]*description: *\).*/s//\1${description}/" "./${chart}-${version}/${chart}/Chart.yaml"
+  helm package "./${chart}-${version}/${chart}" -d .
 
   pushChartToChartMuseum "${chart}" "${version}" "${prefix}${chart}-${version}.tgz"
 }
 
-########################
+########################################################################################################################
 # Install kapp-controller
 # Globals: None
 # Arguments:
 #   $1: Version of kapp-controller
 # Returns: None
-#########################
+########################################################################################################################
 installKappController() {
   local release=$1
   info "Installing kapp-controller ${release} ..."
-  url=https://github.com/vmware-tanzu/carvel-kapp-controller/releases/download/${release}/release.yml
+  url="https://github.com/vmware-tanzu/carvel-kapp-controller/releases/download/${release}/release.yml"
   namespace=kapp-controller
 
   kubectl apply -f "${url}"
@@ -225,17 +231,17 @@ installKappController() {
   kubectl create clusterrolebinding carvel-reconciler --clusterrole=cluster-admin --serviceaccount kubeapps-user-namespace:carvel-reconciler
 }
 
-########################
+########################################################################################################################
 # Install flux
 # Globals: None
 # Arguments:
 #   $1: Version of flux
 # Returns: None
-#########################
+########################################################################################################################
 installFlux() {
   local release=$1
   info "Installing flux ${release} ..."
-  url=https://github.com/fluxcd/flux2/releases/download/${release}/install.yaml
+  url="https://github.com/fluxcd/flux2/releases/download/${release}/install.yaml"
   namespace=flux-system
 
   kubectl apply -f "${url}"
@@ -253,15 +259,15 @@ installFlux() {
   kubectl create clusterrolebinding flux-reconciler --clusterrole=cluster-admin --serviceaccount kubeapps-user-namespace:flux-reconciler
 }
 
-########################
+########################################################################################################################
 # Creates a Yaml file with additional values for the Helm chart
 # Arguments: None
 # Returns: Path to the newly created file with additional values
-#########################
+########################################################################################################################
 generateAdditionalValuesFile() {
   # Could be done better with $(cat <<EOF > ${ROOT_DIR}/additional_chart_values.yaml
   # But it was breaking the formatting of the file
-  local valuesFile=${ROOT_DIR}/additional_chart_values.yaml;
+  local valuesFile="${ROOT_DIR}/additional_chart_values.yaml"
   echo "ingress:
   enabled: true
   hostname: localhost
@@ -271,16 +277,16 @@ generateAdditionalValuesFile() {
     kubernetes.io/ingress.class: nginx
     nginx.ingress.kubernetes.io/proxy-buffer-size: \"8k\"
     nginx.ingress.kubernetes.io/proxy-buffers: \"4.0\"
-    nginx.ingress.kubernetes.io/proxy-read-timeout: \"600.0\"" > ${valuesFile}
-  echo ${valuesFile}
+    nginx.ingress.kubernetes.io/proxy-read-timeout: \"600.0\"" > "${valuesFile}"
+  echo "${valuesFile}"
 }
 
-########################
+########################################################################################################################
 # Install Kubeapps or upgrades it if it's already installed
 # Arguments:
 #   $1: chart source
 # Returns: None
-#########################
+########################################################################################################################
 installOrUpgradeKubeapps() {
   local chartSource=$1
   # Install Kubeapps
@@ -310,28 +316,44 @@ installOrUpgradeKubeapps() {
   "${cmd[@]}"
 }
 
-########################
+########################################################################################################################
 # Formats the provided time in seconds.
 # Arguments:
 #   $1: time in seconds
 # Returns: Time formatted as Xm Ys
-#########################
+########################################################################################################################
 formattedElapsedTime() {
-  time=$1
+  local time=$1
 
   mins=$((time/60))
   secs=$((time%60))
   echo "${mins}m ${secs}s"
 }
 
-if [[ "${DEBUG_MODE:-false}" == "true" ]]; then
+########################################################################################################################
+# Returns the elapsed time since the given starting point.
+# Arguments:
+#   $1: Starting point in seconds (eg. `date +%s`)
+# Returns: The elapsed time formatted as Xm Ys
+########################################################################################################################
+elapsedTimeSince() {
+  local start=${1?:Start time not provided}
+  local end
+
+  end=$(date +%s)
+  formattedElapsedTime $((end-start))
+}
+
+[[ "${DEBUG_MODE}" == "true" ]] && set -x;
+
+if [[ "${DEBUG_MODE}" == "true" && -z ${GKE_BRANCH} ]]; then
   info "Docker images loaded in the cluster:"
   docker exec kubeapps-ci-control-plane crictl images
 fi
 
 # Use dev images or Bitnami if testing the latest release
 kubeapps_apis_image="kubeapps-apis"
-[[ -n "${TEST_LATEST_RELEASE:-}" ]] && IMG_PREFIX="bitnami/kubeapps-" && kubeapps_apis_image="apis"
+[[ -n "${TEST_LATEST_RELEASE}" && "${TEST_LATEST_RELEASE}" != "false" ]] && IMG_PREFIX="bitnami/kubeapps-" && kubeapps_apis_image="apis"
 images=(
   "apprepository-controller"
   "asset-syncer"
@@ -376,7 +398,7 @@ if [ "$USE_MULTICLUSTER_OIDC_ENV" = true ]; then
     "--set" "clusters[1].name=second-cluster"
     "--set" "clusters[1].apiServiceURL=https://${ADDITIONAL_CLUSTER_IP}:6443"
     "--set" "clusters[1].insecure=true"
-    "--set" "clusters[1].serviceToken=$(kubectl --context=kind-kubeapps-ci-additional --kubeconfig=${HOME}/.kube/kind-config-kubeapps-ci-additional get secret kubeapps-namespace-discovery -o go-template='{{.data.token | base64decode}}')"
+    "--set" "clusters[1].serviceToken=$(kubectl --context=kind-kubeapps-ci-additional --kubeconfig="${HOME}/.kube/kind-config-kubeapps-ci-additional" get secret kubeapps-namespace-discovery -o go-template='{{.data.token | base64decode}}')"
   )
 fi
 
@@ -455,7 +477,7 @@ done
 
 # Browser tests
 cd "${ROOT_DIR}/integration"
-kubectl create deployment e2e-runner --image ${IMG_PREFIX}integration-tests${IMG_MODIFIER}:${IMG_DEV_TAG}
+kubectl create deployment e2e-runner --image "${IMG_PREFIX}integration-tests${IMG_MODIFIER}:${IMG_DEV_TAG}"
 k8s_wait_for_deployment default e2e-runner
 pod=$(kubectl get po -l app=e2e-runner -o custom-columns=:metadata.name --no-headers)
 ## Copy config and latest tests
@@ -506,8 +528,7 @@ admin_token="$(kubectl get -n kubeapps secret "$(kubectl get -n kubeapps service
 view_token="$(kubectl get -n kubeapps secret "$(kubectl get -n kubeapps serviceaccount kubeapps-view -o jsonpath='{.secrets[].name}')" -o go-template='{{.data.token | base64decode}}')"
 edit_token="$(kubectl get -n kubeapps secret "$(kubectl get -n kubeapps serviceaccount kubeapps-edit -o jsonpath='{.secrets[].name}')" -o go-template='{{.data.token | base64decode}}')"
 
-endTime=$(date +%s)
-info "Bootstrap time: $(formattedElapsedTime endTime-startTime)"
+info "Bootstrap time: $(elapsedTimeSince "$startTime")"
 
 ##################################
 ######## Main tests group ########
@@ -537,8 +558,7 @@ if [[ "${TESTS_GROUP}" == "${ALL_TESTS}" || "${TESTS_GROUP}" == "${MAIN_TESTS}" 
   fi
   info "Main integration tests succeeded!!"
 
-  sectionEndTime=$(date +%s)
-  info "Main tests execution time: $(formattedElapsedTime sectionEndTime-sectionStartTime)"
+  info "Main tests execution time: $(elapsedTimeSince "$sectionStartTime")"
 fi
 
 ###########################################
@@ -568,9 +588,7 @@ if [[ -z "${GKE_BRANCH-}" && ("${TESTS_GROUP}" == "${ALL_TESTS}" || "${TESTS_GRO
     exit 1
   fi
   info "Multi-cluster integration tests succeeded!!"
-
-  sectionEndTime=$(date +%s)
-  info "Multi-cluster tests execution time: $(formattedElapsedTime sectionEndTime-sectionStartTime)"
+  info "Multi-cluster tests execution time: $(elapsedTimeSince "$sectionStartTime")"
 fi
 
 ####################################
@@ -608,9 +626,7 @@ if [[ "${TESTS_GROUP}" == "${ALL_TESTS}" || "${TESTS_GROUP}" == "${CARVEL_TESTS}
     exit 1
   fi
   info "Carvel integration tests succeeded!!"
-
-  sectionEndTime=$(date +%s)
-  info "Carvel tests execution time: $(formattedElapsedTime sectionEndTime-sectionStartTime)"
+  info "Carvel tests execution time: $(elapsedTimeSince "$sectionStartTime")"
 fi
 
 ####################################
@@ -650,9 +666,7 @@ if [[ "${TESTS_GROUP}" == "${ALL_TESTS}" || "${TESTS_GROUP}" == "${FLUX_TESTS}" 
     exit 1
   fi
   info "Flux integration tests succeeded!"
-
-  sectionEndTime=$(date +%s)
-  info "Flux tests execution time: $(formattedElapsedTime sectionEndTime-sectionStartTime)"
+  info "Flux tests execution time: $(elapsedTimeSince "$sectionStartTime")"
 fi
 
 #######################################
@@ -699,13 +713,9 @@ if [[ "${TESTS_GROUP}" == "${ALL_TESTS}" || "${TESTS_GROUP}" == "${OPERATOR_TEST
       exit 1
     fi
     info "Operator integration tests (with k8s API access) succeeded!!"
-
-    sectionEndTime=$(date +%s)
-    info "Operator tests execution time: $(formattedElapsedTime sectionEndTime-sectionStartTime)"
+    info "Operator tests execution time: $(elapsedTimeSince "$sectionStartTime")"
   fi
 fi
 
 info "Integration tests succeeded!"
-
-totalTime=$(date +%s)
-info "Total execution time: $(formattedElapsedTime totalTime-startTime)"
+info "Total execution time: $(elapsedTimeSince "$startTime")"
