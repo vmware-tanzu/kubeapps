@@ -114,7 +114,6 @@ function PkgRepoList() {
     if (!plugin) {
       return false;
     }
-    console.log(reposRBAC.get(JSON.stringify(plugin)));
     return reposRBAC.get(JSON.stringify(plugin))?.global["update"] || false;
   };
 
