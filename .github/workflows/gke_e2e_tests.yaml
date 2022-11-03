@@ -92,7 +92,6 @@ jobs:
       - run: |
           set -euo pipefail
           source ./script/lib/libcitools.sh
-          
           installGCloudSDK
           configureGCloud "${GKE_PROJECT}" "${GCLOUD_KEY}"
           installKubectl "${KUBECTL_VERSION}"
@@ -123,5 +122,4 @@ jobs:
         run: |
           set -euo pipefail
           source ./script/lib/libcitools.sh
-          
           deleteGKECluster "${GKE_ZONE}" "${ESCAPED_GKE_CLUSTER}"
