@@ -1,6 +1,7 @@
 # Copyright 2022 the Kubeapps contributors
 # SPDX-License-Identifier: Apache-2.0
 
+---
 name: "GKE e2e Tests"
 on:
   workflow_call:
@@ -15,7 +16,7 @@ on:
         type: boolean
         required: false
         default: false
-      #TODO: right now it contains just the version number (eg. 1.22), rename to GKE_VERSION once CircleCI is decommissioned
+      # TODO(bjesus): right now it contains just the version number (eg. 1.22), rename to GKE_VERSION once CircleCI is decommissioned
       GKE_BRANCH:
         type: string
         description: "The branch of the GKE environment in which we want to test."

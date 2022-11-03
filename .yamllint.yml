@@ -4,3 +4,4 @@ ignore: |
   */chart/kubeapps/templates/
 rules:
   line-length: disable
+  comments: disable

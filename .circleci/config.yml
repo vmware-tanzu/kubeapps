@@ -1,6 +1,6 @@
 # Copyright 2018-2022 the Kubeapps contributors.
 # SPDX-License-Identifier: Apache-2.0
-
+---
 version: 2.1
 parameters:
   GOLANG_VERSION:
@@ -289,7 +289,7 @@ common_envars: &common_envars
 
 common_gke_envars: &common_gke_envars
   USE_MULTICLUSTER_OIDC_ENV: "false"
-  TEST_TIMEOUT_MINUTES: 6 # Timeout minutes for each test
+  TEST_TIMEOUT_MINUTES: 6  # Timeout minutes for each test
 
 install_gcloud_sdk: &install_gcloud_sdk
   run:
@@ -830,7 +830,7 @@ jobs:
       TEST_UPGRADE: "1"
       USE_MULTICLUSTER_OIDC_ENV: "true"
       TEST_OPERATORS: "1"
-      TEST_TIMEOUT_MINUTES: 4 # Timeout minutes for each test
+      TEST_TIMEOUT_MINUTES: 4  # Timeout minutes for each test
       <<: *common_envars
     parameters:
       number:

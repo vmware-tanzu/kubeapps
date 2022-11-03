@@ -1,6 +1,7 @@
 # Copyright 2021-2022 the Kubeapps contributors.
 # SPDX-License-Identifier: Apache-2.0
 
+---
 openapi: 3.0.3
 servers:
   - url: "{schema}://{url}:{port}"
@@ -5946,7 +5947,6 @@ components:
         in the type URL, for example "foo.bar.com/x/y.z" will yield type
 
         name "y.z".
-
 
 
         JSON

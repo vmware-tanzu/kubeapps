@@ -1,6 +1,7 @@
 # Copyright 2022 the Kubeapps contributors
 # SPDX-License-Identifier: Apache-2.0
 
+---
 on:
   workflow_call:
     inputs:
@@ -53,7 +54,7 @@ env:
   IMG_PREFIX: "kubeapps/"
   # We use IMG_PREFIX_FOR_FORKS for development purposes, it's used when the workflow is run from a fork of the kubeapps repo
   IMG_PREFIX_FOR_FORKS: "beni0888/"
-#  IMG_PLATFORMS: "linux/amd64, linux/arm64"
+  # IMG_PLATFORMS: "linux/amd64, linux/arm64"
   IMG_PLATFORMS: "linux/amd64"
   KAPP_CONTROLLER_VERSION: "v0.42.0"
   K8S_KIND_VERSION: "v1.22.15@sha256:bfd5eaae36849bfb3c1e3b9442f3da17d730718248939d9d547e86bbac5da586"
@@ -434,7 +435,7 @@ jobs:
       TESTS_GROUP: ${{ matrix.tests_group }}
       TEST_OPERATORS: "1"
       TEST_UPGRADE: "1"
-      TEST_TIMEOUT_MINUTES: 4 # Timeout minutes for each test
+      TEST_TIMEOUT_MINUTES: 4  # Timeout minutes for each test
       USE_MULTICLUSTER_OIDC_ENV: "true"
     steps:
       - uses: actions/checkout@v3
