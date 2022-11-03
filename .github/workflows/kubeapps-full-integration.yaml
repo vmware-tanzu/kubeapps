@@ -16,3 +16,4 @@ jobs:
     secrets: inherit
     with:
       run_gke_tests: true
+      run_linters: false

@@ -8,6 +8,10 @@ on:
         type: boolean
         required: false
         default: false
+      run_linters:
+        type: boolean
+        required: false
+        default: true
 
 env:
   CHARTMUSEUM_VERSION: "3.9.1"
@@ -68,6 +72,30 @@ env:
   GKE_CLUSTER: "kubeapps-test"
 
 jobs:
+  golang-linter:
+    if: inputs.run_linters
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/setup-go@v3
+        with:
+          go-version: ${{ env.GOLANG_VERSION }}
+      - uses: actions/checkout@v3
+      - uses: golangci/golangci-lint-action@v3
+        with:
+          version: latest
+          args: --timeout=10m
+
+  license-headers-linter:
+    if: inputs.run_linters
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/setup-go@v3
+        with:
+          go-version: ${{ env.GOLANG_VERSION }}
+      - uses: actions/checkout@v3
+      - name: Check license Headers
+        uses: apache/skywalking-eyes/header@v0.4.0
+
   setup:
     runs-on: ubuntu-latest
     outputs:
