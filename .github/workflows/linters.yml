@@ -10,6 +10,19 @@ on:
         default: "1.19"
 
 jobs:
+  yaml-linter:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - id: yaml-lint
+        uses: ibiqlik/action-yamllint@v3
+      - run: echo ${{ steps.yaml-lint.outputs.logfile }}
+      - uses: actions/upload-artifact@v3
+        if: failure()
+        with:
+          name: yamllint-logfile
+          path: ${{ steps.yaml-lint.outputs.logfile }}
+
   golang-linter:
     runs-on: ubuntu-latest
     steps:
