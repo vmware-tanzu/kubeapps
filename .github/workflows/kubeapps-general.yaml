@@ -411,6 +411,7 @@ jobs:
         tests_group:
           - main
           - multicluster
+          - multicluster-nokubeapps
           - carvel
           - operator
     env:
