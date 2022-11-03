@@ -1,5 +1,4 @@
 {{ if .Site.Params.docs_right_sidebar }}
-<nav class="right-nav" id="right-nav">
   <div class="right-nav-content">
     <ul class="buttons">
       {{ if (or .IsNode .IsPage) }}
@@ -16,5 +15,4 @@
       {{ .TableOfContents }}
     {{ end }}
   </div>
-</nav>
 {{ end }}

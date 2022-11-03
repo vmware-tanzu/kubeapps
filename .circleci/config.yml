@@ -5,16 +5,16 @@ version: 2.1
 parameters:
   GOLANG_VERSION:
     type: string
-    default: "1.19.1"
+    default: "1.19.2"
   NODE_VERSION:
     type: string
-    default: "16.17.1"
+    default: "16.18.0"
   RUST_VERSION:
     type: string
     default: "1.64.0"
   DOCKER_VERSION:
     type: string
-    default: "20.10.17"
+    default: "20.10.18"
   DOCKER_REGISTRY_VERSION:
     type: string
     default: "2.8.1"
@@ -23,25 +23,25 @@ parameters:
     default: "v3.2.0"
   HELM_VERSION_STABLE:
     type: "string"
-    default: "v3.10.0"
+    default: "v3.10.1"
   OLM_VERSION:
     type: "string"
     default: "v0.22.0"
   CHARTMUSEUM_VERSION:
     type: "string"
-    default: "3.9.0"
+    default: "3.9.1"
   KAPP_CONTROLLER_VERSION:
     type: "string"
-    default: "v0.41.2"
+    default: "v0.42.0"
   MKCERT_VERSION:
     type: "string"
     default: "v1.4.4"
   KUBECTL_VERSION:
     type: "string"
-    default: "v1.24.6"
+    default: "v1.24.7"
   GITHUB_VERSION:
     type: "string"
-    default: "2.16.1"
+    default: "2.18.1"
   SEMVER_VERSION:
     type: "string"
     default: "3.3.0"
@@ -53,16 +53,16 @@ parameters:
     default: "v1.22.15@sha256:bfd5eaae36849bfb3c1e3b9442f3da17d730718248939d9d547e86bbac5da586"
   POSTGRESQL_VERSION:
     type: "string"
-    default: "14.5.0-debian-11-r14"
+    default: "14.5.0-debian-11-r31"
   GKE_STABLE_VERSION:
     type: "string"
     default: "1.22"
   GKE_REGULAR_VERSION:
     type: "string"
-    default: "1.22"
+    default: "1.23"
   DEFAULT_MACHINE_IMG:
     type: "string"
-    default: "ubuntu-2204:2022.07.1"
+    default: "ubuntu-2204:2022.10.1"
   IMAGES_TO_PUSH:
     type: "string"
     default: "kubeapps/apprepository-controller kubeapps/dashboard kubeapps/asset-syncer kubeapps/pinniped-proxy kubeapps/kubeapps-apis"
@@ -539,7 +539,32 @@ run_e2e_tests: &run_e2e_tests
         DEV_TAG=${latest/v/}
         IMG_MODIFIER=""
       fi
-      if ./script/e2e-test.sh $USE_MULTICLUSTER_OIDC_ENV $OLM_VERSION $DEV_TAG $IMG_MODIFIER $TEST_TIMEOUT_MINUTES $DEFAULT_DEX_IP $ADDITIONAL_CLUSTER_IP $KAPP_CONTROLLER_VERSION $CHARTMUSEUM_VERSION; then
+      
+      source ./script/lib/liblog.sh
+      info "###############################################################################################"
+      info "USE_MULTICLUSTER_OIDC_ENV: $USE_MULTICLUSTER_OIDC_ENV"
+      info "OLM_VERSION: $OLM_VERSION"
+      info "DEV_TAG: $DEV_TAG"
+      info "IMG_MODIFIER: $IMG_MODIFIER"
+      info "TEST_TIMEOUT_MINUTES: $TEST_TIMEOUT_MINUTES"
+      info "DEFAULT_DEX_IP: $DEFAULT_DEX_IP"
+      info "ADDITIONAL_CLUSTER_IP: $ADDITIONAL_CLUSTER_IP"
+      info "KAPP_CONTROLLER_VERSION: $KAPP_CONTROLLER_VERSION"
+      info "CHARTMUSEUM_VERSION: $CHARTMUSEUM_VERSION"
+      info "###############################################################################################"
+
+      if 
+        USE_MULTICLUSTER_OIDC_ENV="${USE_MULTICLUSTER_OIDC_ENV}" \
+        OLM_VERSION="${OLM_VERSION}" \
+        IMG_DEV_TAG="${DEV_TAG}" \
+        IMG_MODIFIER="${IMG_MODIFIER}" \
+        TEST_TIMEOUT_MINUTES="${TEST_TIMEOUT_MINUTES}" \
+        DEFAULT_DEX_IP="${DEFAULT_DEX_IP:-}" \
+        ADDITIONAL_CLUSTER_IP="${ADDITIONAL_CLUSTER_IP:-}" \
+        KAPP_CONTROLLER_VERSION="${KAPP_CONTROLLER_VERSION}" \
+        CHARTMUSEUM_VERSION="${CHARTMUSEUM_VERSION}" \
+        ./script/e2e-test.sh; 
+      then
         # Test success
         echo "export TEST_RESULT=$?" >> $BASH_ENV
       else
@@ -592,7 +617,18 @@ gke_test: &gke_test
     - run:
         name: Export escaped GKE cluster name
         command: |
-          echo "export ESCAPED_GKE_CLUSTER=$(echo ${GKE_CLUSTER}-${CIRCLE_BRANCH:-$CIRCLE_TAG}-${TEST_LATEST_RELEASE}-${GKE_BRANCH}-ci | sed 's/[^a-z0-9-]//g')" >> $BASH_ENV
+          ESCAPED_GKE_CLUSTER=$(echo ${GKE_CLUSTER}-${CIRCLE_BRANCH:-$CIRCLE_TAG}-${TEST_LATEST_RELEASE}-${GKE_BRANCH}-ci | sed 's/[^a-z0-9-]//g')
+          
+          # Trim the cluster name in case it exceeds the max length allowed by GKE (currently 40 chars)
+          MAX_LENGTH=40 
+          len=${#ESCAPED_GKE_CLUSTER}
+          if ((len > MAX_LENGTH)); then
+            offset=$((len - MAX_LENGTH))
+            ESCAPED_GKE_CLUSTER="${ESCAPED_GKE_CLUSTER:offset:MAX_LENGTH}"
+          fi
+          
+          echo "export ESCAPED_GKE_CLUSTER=${ESCAPED_GKE_CLUSTER}" >> $BASH_ENV
+          echo "ESCAPED_GKE_CLUSTER: ${ESCAPED_GKE_CLUSTER}"
     - run:
         name: Start GKE environment
         command: |

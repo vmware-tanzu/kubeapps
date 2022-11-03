@@ -27,8 +27,8 @@
   },
   "dependencies": {
     "@cds/city": "^1.1.0",
-    "@cds/core": "^6.1.3",
-    "@cds/react": "^6.1.3",
+    "@cds/core": "^6.2.0",
+    "@cds/react": "^6.2.0",
     "@clr/ui": "^13.9.0",
     "@improbable-eng/grpc-web": "^0.15.0",
     "@paciolan/remote-component": "^2.12.1",
@@ -67,7 +67,7 @@
     "remark-breaks": "^3.0.2",
     "remark-gfm": "^3.0.1",
     "rxjs": "^7.5.7",
-    "swagger-ui-react": "^4.15.0",
+    "swagger-ui-react": "^4.15.2",
     "typesafe-actions": "^5.1.0",
     "yaml": "^2.1.3"
   },
@@ -83,7 +83,7 @@
     "@types/lodash": "^4.14.186",
     "@types/qs": "^6.9.7",
     "@types/react-copy-to-clipboard": "^5.0.4",
-    "@types/react-dom": "^18.0.6",
+    "@types/react-dom": "^18.0.7",
     "@types/react-helmet": "^6.1.5",
     "@types/react-router-dom": "^5.3.3",
     "@types/react-router-hash-link": "^2.4.5",
@@ -104,7 +104,7 @@
     "monaco-editor-webpack-plugin": "^7.0.1",
     "node-polyfill-webpack-plugin": "^2.0.1",
     "npm-run-all": "^4.1.5",
-    "postcss": "^8.4.16",
+    "postcss": "^8.4.18",
     "postcss-scss": "^4.0.5",
     "prettier": "^2.7.1",
     "react-dom": "^17.0.2",
@@ -119,7 +119,7 @@
     "stylelint-config-standard-scss": "^6.0.0",
     "stylelint-scss": "^4.3.0",
     "ts-jest": "^29.0.3",
-    "ts-proto": "^1.130.0",
+    "ts-proto": "^1.131.0",
     "typescript": "^4.8.4"
   },
   "resolutions": {
