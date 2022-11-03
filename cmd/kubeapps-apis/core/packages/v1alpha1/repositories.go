@@ -219,13 +219,11 @@ func (s repositoriesServer) GetPackageRepositoryPermissions(ctx context.Context,
 				log.Errorf("+core error finding repository permissions in plugin %s: [%v]", repoPlugin.plugin.Name, err)
 				return
 			}
-			log.Infof("DEBUG: response plugin %s [%v]", repoPlugin.plugin.Name, response)
 			resultsChannel <- response
 		}(p)
 	}
 	go func() {
 		wg.Wait()
-		log.Info("DEBUG: closing channel in core")
 		close(resultsChannel)
 	}()
 
