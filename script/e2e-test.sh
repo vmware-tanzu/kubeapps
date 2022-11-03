@@ -746,18 +746,6 @@ if [[ -z "${GKE_BRANCH-}" && ("${TESTS_GROUP}" == "${ALL_TESTS}" || "${TESTS_GRO
     --set clusters[0].apiServiceURL=https://${ADDITIONAL_CLUSTER_IP}:6443
     --set clusters[0].insecure=true
     --set clusters[0].serviceToken=$(kubectl --context=kind-kubeapps-ci-additional --kubeconfig=${HOME}/.kube/kind-config-kubeapps-ci-additional get secret kubeapps-namespace-discovery -o go-template='{{.data.token | base64decode}}')
-    --set frontend.replicaCount=1
-    --set dashboard.replicaCount=1
-    --set kubeappsapis.replicaCount=2
-    --set postgresql.architecture=standalone
-    --set postgresql.primary.persistence.enabled=false
-    --set postgresql.auth.password=password
-    --set redis.auth.password=password
-    --set apprepository.initialRepos[0].name=bitnami
-    --set apprepository.initialRepos[0].url=http://chartmuseum.chart-museum.svc.cluster.local:8080
-    --set apprepository.initialRepos[0].basicAuth.user=admin
-    --set apprepository.initialRepos[0].basicAuth.password=password
-    --set apprepository.globalReposNamespaceSuffix=-repos-global
     --wait)
 
   echo "${cmd[@]}"
