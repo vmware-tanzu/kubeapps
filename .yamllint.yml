@@ -2,6 +2,7 @@
 extends: default
 ignore: |
   */chart/kubeapps/templates/
+  */integration/charts/simplechart/templates/
 rules:
   line-length: disable
   comments: disable
