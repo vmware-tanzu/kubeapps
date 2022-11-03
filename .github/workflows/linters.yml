@@ -1,0 +1,33 @@
+# Copyright 2022 the Kubeapps contributors
+# SPDX-License-Identifier: Apache-2.0
+
+on:
+  workflow_call:
+    inputs:
+      golang_version:
+        type: string
+        required: false
+        default: "1.19"
+
+jobs:
+  golang-linter:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/setup-go@v3
+        with:
+          go-version: ${{ inputs.golang_version }}
+      - uses: actions/checkout@v3
+      - uses: golangci/golangci-lint-action@v3
+        with:
+          version: latest
+          args: --timeout=10m
+
+  license-headers-linter:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/setup-go@v3
+        with:
+          go-version: ${{ inputs.golang_version }}
+      - uses: actions/checkout@v3
+      - name: Check license Headers
+        uses: apache/skywalking-eyes/header@v0.4.0
