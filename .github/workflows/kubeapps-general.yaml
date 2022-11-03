@@ -189,14 +189,14 @@ jobs:
         env:
           ALLOW_EMPTY_PASSWORD: "yes"
     steps:
-    - uses: actions/checkout@v3
-    - name: Set up Go
-      uses: actions/setup-go@v3
-      with:
-        go-version: ${{ env.GOLANG_VERSION }}
-    - name: Run go unit tests
-      run: make test
-    - run: make test-db
+      - uses: actions/checkout@v3
+      - name: Set up Go
+        uses: actions/setup-go@v3
+        with:
+          go-version: ${{ env.GOLANG_VERSION }}
+      - name: Run go unit tests
+        run: make test
+      - run: make test-db
 
   test_dashboard:
     runs-on: ubuntu-latest
