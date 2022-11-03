@@ -72,16 +72,11 @@ env:
   GKE_CLUSTER: "kubeapps-test"
 
 jobs:
-  linters:
-    if: inputs.run_linters
-    uses: ./.github/workflows/linters.yml
-    with:
-      golang_version: ${{ env.GOLANG_VERSION }}
-
   setup:
     runs-on: ubuntu-latest
     outputs:
       dev_mode: ${{ steps.set-outputs.outputs.dev_mode }}
+      golang_version: ${{ steps.set-outputs.outputs.golang_version }}
       img_modifier: ${{ steps.set-outputs.outputs.img_modifier }}
       img_prefix: ${{ steps.set-outputs.outputs.img_prefix }}
       img_dev_tag: ${{ steps.set-outputs.outputs.img_dev_tag }}
@@ -144,6 +139,7 @@ jobs:
           fi
 
           echo "dev_mode=${DEV_MODE}" >> $GITHUB_OUTPUT
+          echo "golang_version=${GOLANG_VERSION}" >> $GITHUB_OUTPUT
           echo "ssh_key_kubeapps_deploy_filename=${SSH_KEY_KUBEAPPS_DEPLOY_FILENAME}" >> $GITHUB_OUTPUT
           echo "ssh_key_forked_charts_deploy_filename=${SSH_KEY_FORKED_CHARTS_DEPLOY_FILENAME}" >> $GITHUB_OUTPUT
           echo "img_modifier=${IMG_MODIFIER}" >> $GITHUB_OUTPUT
@@ -153,6 +149,7 @@ jobs:
       - name: Show outputs
         run: |
           echo "DEV_MODE: ${{steps.set-outputs.outputs.dev_mode}}"
+          echo "GOLANG_VERSION: ${{steps.set-outputs.outputs.golang_version}}"
           echo "IMG_MODIFIER: ${{steps.set-outputs.outputs.img_modifier}}"
           echo "IMG_PREFIX: ${{steps.set-outputs.outputs.img_prefix}}"
           echo "IMG_DEV_TAG: ${{steps.set-outputs.outputs.img_dev_tag}}"
@@ -165,6 +162,14 @@ jobs:
           echo "SSH_KEY_FORKED_CHARTS_DEPLOY_FILENAME: ${{steps.set-outputs.outputs.ssh_key_forked_charts_deploy_filename}}"
           echo "TRIGGERED_FROM_FORK: ${{steps.set-outputs.outputs.triggered_from_fork}}"
           echo "VERSION: ${{steps.set-outputs.outputs.version}}"
+
+  linters:
+    if: inputs.run_linters
+    needs:
+      - setup
+    uses: ./.github/workflows/linters.yml
+    with:
+      golang_version: ${{ needs.setup.outputs.golang_version }}
 
   test_go:
     needs:
