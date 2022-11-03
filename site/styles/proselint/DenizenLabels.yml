@@ -1,3 +1,4 @@
+---
 extends: substitution
 message: Did you mean '%s'?
 ignorecase: false

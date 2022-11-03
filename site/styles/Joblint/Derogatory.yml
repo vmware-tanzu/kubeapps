@@ -1,3 +1,4 @@
+---
 extends: existence
 message: "Avoid using '%s'"
 description: "When you use '%s,' you're being discriminatory."

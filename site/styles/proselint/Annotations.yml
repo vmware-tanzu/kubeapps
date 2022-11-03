@@ -1,3 +1,4 @@
+---
 extends: existence
 message: "'%s' left in text."
 ignorecase: false
