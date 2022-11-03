@@ -746,6 +746,7 @@ if [[ -z "${GKE_BRANCH-}" && ("${TESTS_GROUP}" == "${ALL_TESTS}" || "${TESTS_GRO
     --set clusters[0].apiServiceURL=https://${ADDITIONAL_CLUSTER_IP}:6443
     --set clusters[0].insecure=true
     --set clusters[0].serviceToken=$(kubectl --context=kind-kubeapps-ci-additional --kubeconfig=${HOME}/.kube/kind-config-kubeapps-ci-additional get secret kubeapps-namespace-discovery -o go-template='{{.data.token | base64decode}}')
+    --set global.postgresql.auth.postgresPassword=password
     --wait)
 
   echo "${cmd[@]}"
