@@ -1,4 +1,4 @@
-# Copyright 2022 VMware, Inc.
+# Copyright 2022 the Kubeapps contributors
 # SPDX-License-Identifier: Apache-2.0
 
 name: license-headers
@@ -16,4 +16,4 @@ jobs:
           go-version: 1.18
       - uses: actions/checkout@v3
       - name: Check license Headers
-        uses: apache/skywalking-eyes/header@main
+        uses: apache/skywalking-eyes/header@v0.4.0
