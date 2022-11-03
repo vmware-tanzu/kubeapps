@@ -640,6 +640,10 @@ func (s *Server) GetPackageRepositoryPermissions(ctx context.Context, request *c
 	log.Infof("+fluxv2 GetPackageRepositoryPermissions [%v]", request)
 
 	cluster := request.GetContext().GetCluster()
+	namespace := request.GetContext().GetNamespace()
+	if cluster == "" && namespace != "" {
+		return nil, status.Errorf(codes.InvalidArgument, "cluster must be specified when namespace is present: %s", namespace)
+	}
 	typedClient, err := s.clientGetter.Typed(ctx, cluster)
 	if err != nil {
 		return nil, err
@@ -661,7 +665,7 @@ func (s *Server) GetPackageRepositoryPermissions(ctx context.Context, request *c
 	}
 
 	// Namespace permissions
-	if request.GetContext().GetNamespace() != "" {
+	if namespace != "" {
 		permissions.Namespace, err = resources.GetPermissionsOnResource(ctx, typedClient, resource, request.GetContext().GetNamespace())
 		if err != nil {
 			return nil, err

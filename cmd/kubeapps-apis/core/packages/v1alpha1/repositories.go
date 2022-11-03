@@ -7,6 +7,7 @@ import (
 	"context"
 	"fmt"
 	. "github.com/ahmetb/go-linq/v3"
+	"sort"
 	"sync"
 
 	pluginsv1alpha1 "github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/core/plugins/v1alpha1"
@@ -232,6 +233,9 @@ func (s repositoriesServer) GetPackageRepositoryPermissions(ctx context.Context,
 	for pluginResult := range resultsChannel {
 		permissions = append(permissions, pluginResult.Permissions...)
 	}
+	sort.Slice(permissions, func(i, j int) bool {
+		return pluginsv1alpha1.ComparePlugin(permissions[i].Plugin, permissions[j].Plugin)
+	})
 
 	return &packages.GetPackageRepositoryPermissionsResponse{
 		Permissions: permissions,

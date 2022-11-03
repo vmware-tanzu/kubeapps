@@ -95,9 +95,11 @@ func NewPluginsServer(serveOpts core.ServeOptions, registrar grpc.ServiceRegistr
 
 // sortPlugins returns a consistently ordered slice.
 func sortPlugins(p []PluginWithServer) {
-	sort.Slice(p, func(i, j int) bool {
-		return p[i].Plugin.Name < p[j].Plugin.Name || (p[i].Plugin.Name == p[j].Plugin.Name && p[i].Plugin.Version < p[j].Plugin.Version)
-	})
+	sort.Slice(p, func(i, j int) bool { return ComparePlugin(p[i].Plugin, p[j].Plugin) })
+}
+
+func ComparePlugin(pluginA *plugins.Plugin, pluginB *plugins.Plugin) bool {
+	return pluginA.Name < pluginB.Name || (pluginA.Name == pluginB.Name && pluginA.Version < pluginB.Version)
 }
 
 // GetConfiguredPlugins returns details for each configured plugin.
