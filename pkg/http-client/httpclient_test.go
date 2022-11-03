@@ -192,7 +192,7 @@ func TestGetCertPool(t *testing.T) {
 			// no creation case
 			if tc.expectError {
 				if err == nil {
-					t.Fatalf("pool creation was expcted to fail")
+					t.Fatalf("pool creation was expected to fail")
 				}
 				return
 			}

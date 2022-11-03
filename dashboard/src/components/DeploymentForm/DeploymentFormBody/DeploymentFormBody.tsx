@@ -83,7 +83,6 @@ function DeploymentFormBody({
   );
 
   const [restoreModalIsOpen, setRestoreModalOpen] = useState(false);
-  const [isLoaded, setIsLoaded] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [unsavedChangesMap] = useState(new Map<string, any>());
   const [shouldSubmitForm, setShouldSubmitForm] = useState(false);
@@ -92,9 +91,9 @@ function DeploymentFormBody({
   // we need to force a new extraction of the params from the schema
   useEffect(() => {
     if (
-      !isLoaded &&
-      shouldRenderBasicForm(schemaFromTheParentContainerParsed) &&
-      !isEmpty(valuesFromTheParentContainerNodes)
+      !isLoading &&
+      !isEmpty(valuesFromTheParentContainerNodes) &&
+      shouldRenderBasicForm(schemaFromTheParentContainerParsed)
     ) {
       const initialParamsFromContainer = retrieveBasicFormParams(
         valuesFromTheParentContainerNodes,
@@ -104,12 +103,11 @@ function DeploymentFormBody({
         valuesFromTheDeployedPackageNodes,
       );
       setParamsFromComponentState(initialParamsFromContainer);
-      setIsLoaded(true);
       setIsLoading(false);
     }
   }, [
     deploymentEvent,
-    isLoaded,
+    isLoading,
     schemaFromTheParentContainerParsed,
     valuesFromTheAvailablePackageNodes,
     valuesFromTheDeployedPackageNodes,
@@ -119,21 +117,27 @@ function DeploymentFormBody({
   // parse and store in the component state the values from the available package
   useEffect(() => {
     if (valuesFromTheAvailablePackage) {
+      setIsLoading(true);
       setValuesFromTheAvailablePackageNodes(parseToYamlNode(valuesFromTheAvailablePackage));
+      setIsLoading(false);
     }
   }, [valuesFromTheAvailablePackage]);
 
   // parse and store in the component state the current values (which come from the parent container)
   useEffect(() => {
     if (valuesFromTheParentContainer) {
+      setIsLoading(true);
       setValuesFromTheParentContainerNodes(parseToYamlNode(valuesFromTheParentContainer));
+      setIsLoading(false);
     }
   }, [valuesFromTheParentContainer]);
 
   // parse and store in the component state the values from the deployed package
   useEffect(() => {
     if (valuesFromTheDeployedPackage) {
+      setIsLoading(true);
       setValuesFromTheDeployedPackageNodes(parseToYamlNode(valuesFromTheDeployedPackage));
+      setIsLoading(false);
     }
   }, [valuesFromTheDeployedPackage]);
 
@@ -153,7 +157,6 @@ function DeploymentFormBody({
     const schemaObject = schemaToObject(schemaFromTheParentContainerString);
     setSchemaFromTheParentContainerParsed(schemaObject);
     setIsLoading(false);
-    setIsLoaded(false);
   }, [schemaFromTheParentContainerString]);
 
   // when the shouldSubmitForm flag is enabled, the form will be submitted, but using a native
@@ -208,6 +211,7 @@ function DeploymentFormBody({
   // re-build the table based on the new YAML
   const refreshBasicParameters = () => {
     if (shouldRenderBasicForm(schemaFromTheParentContainerParsed)) {
+      setIsLoading(true);
       setParamsFromComponentState(
         retrieveBasicFormParams(
           valuesFromTheParentContainerNodes,
@@ -217,6 +221,7 @@ function DeploymentFormBody({
           valuesFromTheDeployedPackageNodes,
         ),
       );
+      setIsLoading(false);
     }
   };
 
@@ -245,6 +250,7 @@ function DeploymentFormBody({
   };
 
   const restoreDefaultValues = () => {
+    setIsLoading(true);
     setValuesFromTheParentContainer(valuesFromTheAvailablePackage || "");
     setSchemaFromTheParentContainerParsed(schemaFromTheAvailablePackage as JSONSchemaType<any>);
     setSchemaFromTheParentContainerString(schemaToString(schemaFromTheAvailablePackage));
@@ -260,6 +266,7 @@ function DeploymentFormBody({
       );
     }
     setRestoreModalOpen(false);
+    setIsLoading(false);
   };
 
   // early return if error
@@ -273,6 +280,7 @@ function DeploymentFormBody({
 
   // early return if loading
   if (
+    isLoading ||
     packagesIsFetching ||
     !availablePackageDetail ||
     (!versions.length &&

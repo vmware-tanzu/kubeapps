@@ -258,7 +258,7 @@ func (s *Server) installedPackageDetail(ctx context.Context, key types.Namespace
 	// err maybe NotFound if this object has just been created and flux hasn't had time
 	// to invoke helm layer yet
 	if err == nil && rel != nil {
-		// a couple of fields currrently only available via helm API
+		// a couple of fields currently only available via helm API
 		if rel2.Chart != nil {
 			appVersion = rel2.Chart.AppVersion()
 		}

@@ -1047,7 +1047,7 @@ func TestKindClusterUpdatePackageRepository(t *testing.T) {
 				}
 			}
 			if i == maxRetries {
-				t.Fatalf("Update retries exhaused for repository [%s], last error: [%v]", tc.repoName, err)
+				t.Fatalf("Update retries exhausted for repository [%s], last error: [%v]", tc.repoName, err)
 			}
 			if got, want := status.Code(err), tc.expectedStatusCode; got != want {
 				t.Fatalf("got: %v, want: %v", err, want)
@@ -1365,7 +1365,7 @@ func TestKindClusterUpdatePackageRepoSecretUnchanged(t *testing.T) {
 		}
 	}
 	if i == maxRetries {
-		t.Fatalf("Update retries exhaused for repository [%s], last error: [%v]", repoName, err)
+		t.Fatalf("Update retries exhausted for repository [%s], last error: [%v]", repoName, err)
 	} else if got, want := status.Code(err), expectedStatusCode; got != want {
 		t.Fatalf("got: %v, want: %v", err, want)
 	}

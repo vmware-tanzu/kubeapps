@@ -23,7 +23,7 @@ featureFlags:
 
 Since Kubeapps 2.0, Operators are available by default. Once you access to the dashboard, if you click on the menu icon and select "Operators", you will see a message alerting that the OLM is not installed:
 
-![OLM Not Intalled](../img/OLM-not-installed.png)
+![OLM Not Installed](../img/OLM-not-installed.png)
 
 Follow the instructions to install the latest OLM version. For example:
 

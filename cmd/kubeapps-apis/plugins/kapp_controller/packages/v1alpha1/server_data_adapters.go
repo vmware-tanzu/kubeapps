@@ -362,8 +362,8 @@ func (s *Server) buildPkgInstall(installedPackageName, targetCluster, targetName
 	}
 
 	// Ensure the selected version can be, actually installed to let the user know before installing
-	elegibleVersion, err := versions.HighestConstrainedVersion([]string{pkgVersion}, vendirversions.VersionSelection{Semver: versionSelection})
-	if elegibleVersion == "" || err != nil {
+	eligibleVersion, err := versions.HighestConstrainedVersion([]string{pkgVersion}, vendirversions.VersionSelection{Semver: versionSelection})
+	if eligibleVersion == "" || err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, "The selected version %q is not eligible to be installed: %v", pkgVersion, err)
 	}
 

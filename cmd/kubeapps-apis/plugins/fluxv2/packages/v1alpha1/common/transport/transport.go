@@ -46,7 +46,7 @@ import (
 // http.Transport objects may contain sensitive material and also have
 // settings that may impact the security of HTTP operations using
 // them (i.e. InsecureSkipVerify). Therefore, ensure that they are
-// used in a thread-safe way, and also by reseting TLS specific state
+// used in a thread-safe way, and also by resetting TLS specific state
 // after each use.
 //
 // Calling the Release(t) function will reset TLS specific state whilst

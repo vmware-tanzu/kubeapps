@@ -19,11 +19,11 @@ func Delete(serveOpts Config, args []string) error {
 	dbConfig := dbutils.Config{URL: serveOpts.DatabaseURL, Database: serveOpts.DatabaseName, Username: serveOpts.DatabaseUser, Password: serveOpts.DatabasePassword}
 	manager, err := newManager(dbConfig, serveOpts.GlobalPackagingNamespace)
 	if err != nil {
-		return fmt.Errorf("Error file creating a mananger: %v", err)
+		return fmt.Errorf("Error file creating a manager: %v", err)
 	}
 	err = manager.Init()
 	if err != nil {
-		return fmt.Errorf("Error file initializing the mananger: %v", err)
+		return fmt.Errorf("Error file initializing the manager: %v", err)
 	}
 	defer manager.Close()
 

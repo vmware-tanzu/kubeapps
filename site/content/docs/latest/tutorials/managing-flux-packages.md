@@ -89,13 +89,13 @@ First, you need to find a Helm Chart Repository already published. This tutorial
 
   > A Kubeapps Package Repository can be installed by anyone with the required RBAC for that namespace.
 
-- Click the **Add Package Repository** button that displays a pop-up (structured in collapsable sections) to configure the parameters for the new Package Repository.
+- Click the **Add Package Repository** button that displays a pop-up (structured in collapsible sections) to configure the parameters for the new Package Repository.
 
   ![Add Package repository pop-up](../img/package-repository/package-repository-pop-up-flux.png)
 
   > The image above shows the parameters to configure the `Bitnami Application Catalog` Helm Chart package repository to be managed declaratively with Flux as a Global repository in Kubeapps.
 
-- Aditionally, there are two sections to provide authorization and advanced data to configure the Package Repository. Default values in these sections are enough to install the `Bitnami Application Catalog` repository.
+- Additionally, there are two sections to provide authorization and advanced data to configure the Package Repository. Default values in these sections are enough to install the `Bitnami Application Catalog` repository.
 
   ![Package repository pop-up advanced tabs](../img/package-repository/package-repository-pop-up-advanced.png)
 

@@ -500,7 +500,7 @@ func (x *CreateInstalledPackageRequest) GetReconciliationOptions() *Reconciliati
 // Request for UpdateInstalledPackage. The intent is to reach the desired state specified
 // by the fields in the request, while leaving other fields intact. This is a whole
 // object "Update" semantics rather than "Patch" semantics. The caller will provide the
-// values for the fields below, which will replace, or be overlayed onto, the
+// values for the fields below, which will replace, or be overlaid onto, the
 // corresponding fields in the existing resource. For example, with the
 // UpdateInstalledPackageRequest, it is not possible to change just the 'package version
 // reference' without also specifying 'values' field. As a side effect, not specifying the

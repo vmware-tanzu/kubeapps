@@ -298,7 +298,7 @@ describe("IsURL", () => {
   describe("Should return false for invalid URLs", () => {
     const invalidURLs: ITest[] = [
       {
-        description: "it should return false to a 'rfc-ilegal' url with a regex",
+        description: "it should return false to a 'rfc-illegal' url with a regex",
         fullURL: "http://wordpress.local/example-bad(/|$)(.*)",
       },
       {
@@ -307,7 +307,7 @@ describe("IsURL", () => {
       },
 
       {
-        description: "it should return false to a 'rfc-ilegal' url with a regex (https)",
+        description: "it should return false to a 'rfc-illegal' url with a regex (https)",
         fullURL: "https://wordpress.local/example-bad(/|$)(.*)",
       },
       {
@@ -316,7 +316,7 @@ describe("IsURL", () => {
       },
 
       {
-        description: "it should return false to a 'rfc-ilegal' url with a regex (host is ip)",
+        description: "it should return false to a 'rfc-illegal' url with a regex (host is ip)",
         fullURL: "http://1.1.1.1/example-bad(/|$)(.*)",
       },
       {

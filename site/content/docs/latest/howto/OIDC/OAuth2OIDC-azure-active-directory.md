@@ -76,7 +76,7 @@ authProxy:
     - --scope=openid email 6dae42f8-4368-4678-94ff-3960e28e3630/user.read # required for azure, exactly this string without modification
 ```
 
-> Subsitute `<MY-COOKIE-SECRET>`, `<MY-APPLICATION-ID>`,`<MY-SECRET>` and `<MY-TENANT-ID>` with your values.
+> Substitute `<MY-COOKIE-SECRET>`, `<MY-APPLICATION-ID>`,`<MY-SECRET>` and `<MY-TENANT-ID>` with your values.
 
 We highlight here:
 
@@ -88,7 +88,7 @@ We highlight here:
 
 ### Troubleshooting
 
-If you are getting a 500 error with the following message: `could not get claim "groups": failed to fetch claims from profile URL`, it is probably due to a [issue in oauth2-proxy](https://github.com/oauth2-proxy/oauth2-proxy/issues/1680) in the `v7.3.0`. You can work arount it by using the former `v7.2.1` version as follows:
+If you are getting a 500 error with the following message: `could not get claim "groups": failed to fetch claims from profile URL`, it is probably due to a [issue in oauth2-proxy](https://github.com/oauth2-proxy/oauth2-proxy/issues/1680) in the `v7.3.0`. You can work around it by using the former `v7.2.1` version as follows:
 
 ```yaml
 authProxy:
@@ -101,7 +101,7 @@ authProxy:
 
 ## Azure Active Directory integration (legacy)
 
-For setting up an Azure Kubernetes cluster (aks) with Azure Active Directory (legacy) you can follow [this guide](https://docs.microsoft.com/en-us/azure/aks/azure-ad-integration-cli). At the end of the tutorial you should have an Active Directory Application (Server). That's the Application from which we will get the needed parameters.
+For setting up an Azure Kubernetes cluster (AKS) with Azure Active Directory (legacy) you can follow [this guide](https://docs.microsoft.com/en-us/azure/aks/azure-ad-integration-cli). At the end of the tutorial you should have an Active Directory Application (Server). That's the Application from which we will get the needed parameters.
 
 - Client-ID: Azure Active Directory server Application ID.
 - Client-secret: A "Password" Key of the server Application.

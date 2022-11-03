@@ -58,7 +58,7 @@ toc:
       - url: /howto/basic-form-support/
         page: Basic Form Support
       - url: /howto/custom-app-view-support/
-        page: Custon App View Support
+        page: Custom App View Support
       - url: /howto/custom-form-component-support/
         page: Custom Form Component Support
       - url: /howto/deploying-to-multiple-clusters/
