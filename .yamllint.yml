@@ -1,0 +1,7 @@
+---
+extends: default
+ignore: |
+  */chart/kubeapps/templates/
+rules:
+  line-length:
+    level: warning
