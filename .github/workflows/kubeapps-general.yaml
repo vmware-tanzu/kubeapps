@@ -74,7 +74,7 @@ env:
 jobs:
   linters:
     if: inputs.run_linters
-    uses: .github/workflows/linters.yml
+    uses: ./.github/workflows/linters.yml
     with:
       golang_version: ${{ env.GOLANG_VERSION }}
 
