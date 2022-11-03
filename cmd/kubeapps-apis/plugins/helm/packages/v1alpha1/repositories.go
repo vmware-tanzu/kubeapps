@@ -211,6 +211,7 @@ func (s *Server) mapToPackageRepositoryDetail(source *apprepov1alpha1.AppReposit
 		Type:            source.Spec.Type,
 		Url:             source.Spec.URL,
 		Auth:            auth,
+		Interval:        source.Spec.Interval,
 		TlsConfig:       tlsConfig,
 		// TODO(agamez): check if we can get the status from the repo somehow
 		// https://github.com/vmware-tanzu/kubeapps/issues/153
