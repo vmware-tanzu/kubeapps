@@ -818,7 +818,7 @@ func testKindClusterAvailablePackageEndpointsForOCIHelper(
 				t.Fatal(err)
 			}
 
-			// ocassionally, on the server-side, I see a request that takes a really long time:
+			// occasionally, on the server-side, I see a request that takes a really long time:
 			// I0923 03:26:42.829561       1 oci_repo.go:739] about to call helmGetter.Get(us-west1-docker.pkg.dev/vmware-kubeapps-ci/stefanprodan-podinfo-clone/podinfo:6.1.6)
 			// I0923 03:27:10.036728       1 oci_repo.go:742] helmGetter.Get(us-west1-docker.pkg.dev/vmware-kubeapps-ci/stefanprodan-podinfo-clone/podinfo:6.1.6) returned buffer size: [13544] error: <nil>
 			// so we'll use a longer timeout for these calls. Even so, every once in a while I get
@@ -830,7 +830,7 @@ func testKindClusterAvailablePackageEndpointsForOCIHelper(
 			// cache works is that a 2nd request is just not going to get past the rate limiting queue
 			// and in the end both will fail. There is no way for the client to know when the server finishes
 			// processing the 1st request, so for now, let's just allow a really long timeout
-			// I also ocassionally see
+			// I also occasionally see
 			// I0923 08:03:07.519347       1 oci_repo.go:649] login(us-west1-docker.pkg.dev): Get "https://us-west1-docker.pkg.dev/v2/": net/http: request canceled while waiting for connection (Client.Timeout exceeded while awaiting headers)
 			// and
 			// I0923 17:35:12.800491       1 oci_repo.go:649] login(us-west1-docker.pkg.dev): Get "https://us-west1-docker.pkg.dev/v2/": Get "https://us-west1-docker.pkg.dev/v2/token?account=_json_key&client_id=docker&offline_token=true": dial tcp 142.251.2.82:443: i/o timeout (Client.Timeout exceeded while awaiting headers)

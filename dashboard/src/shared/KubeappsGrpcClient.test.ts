@@ -6,15 +6,15 @@ import { FakeTransportBuilder } from "@improbable-eng/grpc-web-fake-transport";
 import { KubeappsGrpcClient } from "./KubeappsGrpcClient";
 
 describe("kubeapps grpc client creation", () => {
-  const fakeEmpyTransport = new FakeTransportBuilder().withMessages([]).build();
+  const fakeEmptyTransport = new FakeTransportBuilder().withMessages([]).build();
 
   it("should create a kubeapps grpc client", async () => {
-    const kubeappsGrpcClient = new KubeappsGrpcClient(fakeEmpyTransport);
+    const kubeappsGrpcClient = new KubeappsGrpcClient(fakeEmptyTransport);
     expect(kubeappsGrpcClient).not.toBeNull();
   });
 
   it("should create the clients for each core service", async () => {
-    const kubeappsGrpcClient = new KubeappsGrpcClient(fakeEmpyTransport);
+    const kubeappsGrpcClient = new KubeappsGrpcClient(fakeEmptyTransport);
     const serviceClients = [
       kubeappsGrpcClient.getPluginsServiceClientImpl(),
       kubeappsGrpcClient.getPackagesServiceClientImpl(),
@@ -25,7 +25,7 @@ describe("kubeapps grpc client creation", () => {
   });
 
   it("should create the clients for each plugin service", async () => {
-    const kubeappsGrpcClient = new KubeappsGrpcClient(fakeEmpyTransport);
+    const kubeappsGrpcClient = new KubeappsGrpcClient(fakeEmptyTransport);
     const packagesServiceClients = [
       kubeappsGrpcClient.getHelmPackagesServiceClientImpl(),
       kubeappsGrpcClient.getKappControllerPackagesServiceClientImpl(),
@@ -46,7 +46,7 @@ describe("kubeapps grpc core plugin service", () => {
     jest.restoreAllMocks();
   });
 
-  const fakeEmpyTransport = new FakeTransportBuilder().withMessages([]).build();
+  const fakeEmptyTransport = new FakeTransportBuilder().withMessages([]).build();
   const fakeErrorransport = new FakeTransportBuilder()
     .withPreTrailersError(grpc.Code.Internal, "boom")
     .build();
@@ -72,7 +72,7 @@ describe("kubeapps grpc core plugin service", () => {
   });
 
   it("it returns null when the server sends no messages", async () => {
-    const kubeappsGrpcClient = new KubeappsGrpcClient(fakeEmpyTransport);
+    const kubeappsGrpcClient = new KubeappsGrpcClient(fakeEmptyTransport);
     const getPluginsServiceClientImpl = kubeappsGrpcClient.getPluginsServiceClientImpl();
     const res = await getPluginsServiceClientImpl.GetConfiguredPlugins({});
     expect(res).toBeNull();

@@ -11,7 +11,7 @@ import (
 	"sigs.k8s.io/yaml"
 )
 
-// ChartClient implements Resolver inteface
+// ChartClient implements Resolver interface
 type ChartClient struct{}
 
 // GetChart fake

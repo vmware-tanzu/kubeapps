@@ -119,4 +119,4 @@ From the options listed above, the option that seems to fit our use case best wi
 - Add the database choice in the chart.
 - Update documentation.
 
-To avoid breaking changes, we should default to use MongoDB. Once we release a new major version, we can swith the default to PostgreSQL. To avoid maintaining the two approaches we may decide to remove support for MongoDB at that point.
+To avoid breaking changes, we should default to use MongoDB. Once we release a new major version, we can switch the default to PostgreSQL. To avoid maintaining the two approaches we may decide to remove support for MongoDB at that point.

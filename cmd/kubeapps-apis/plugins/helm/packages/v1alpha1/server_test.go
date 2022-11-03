@@ -797,7 +797,7 @@ func TestGetAvailablePackageSummaries(t *testing.T) {
 			}
 
 			if tc.expectDBQueryNamespace != "" {
-				// Checking if the WHERE condtion is properly applied
+				// Checking if the WHERE condition is properly applied
 
 				// Check returned categories
 				catrows := sqlmock.NewRows([]string{"name", "count"})
