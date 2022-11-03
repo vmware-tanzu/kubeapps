@@ -12,6 +12,7 @@ import Tooltip from "components/js/Tooltip";
 import PageHeader from "components/PageHeader/PageHeader";
 import { push } from "connected-react-router";
 import {
+  PackageRepositoriesPermissions,
   PackageRepositoryReference,
   PackageRepositorySummary,
 } from "gen/kubeappsapis/core/packages/v1alpha1/repositories";
@@ -19,11 +20,8 @@ import qs from "qs";
 import { useCallback, useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { Link, useLocation } from "react-router-dom";
-import { IConfig } from "shared/Config";
-import { Kube } from "shared/Kube";
 import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins";
-import { PackageRepositoriesService } from "shared/PackageRepositoriesService";
-import { IPackageRepositoryPermission, IStoreState } from "shared/types";
+import { IStoreState } from "shared/types";
 import { app } from "shared/url";
 import { getPluginName } from "shared/utils";
 import LoadingWrapper from "../../LoadingWrapper/LoadingWrapper";
@@ -36,15 +34,9 @@ function PkgRepoList() {
   const dispatch = useDispatch();
   const location = useLocation();
   const {
-    repos: { errors, isFetching, reposSummaries: repos },
+    repos: { errors, isFetching, reposSummaries: repos, reposPermissions },
     clusters: { clusters, currentCluster },
-    config: {
-      kubeappsCluster,
-      kubeappsNamespace,
-      helmGlobalNamespace,
-      carvelGlobalNamespace,
-      configuredPlugins,
-    },
+    config: { kubeappsCluster, helmGlobalNamespace, carvelGlobalNamespace },
   } = useSelector((state: IStoreState) => state);
   const cluster = currentCluster;
   const { currentNamespace } = clusters[cluster];
@@ -52,7 +44,7 @@ function PkgRepoList() {
     qs.parse(location.search, { ignoreQueryPrefix: true }).allns === "yes" ? true : false;
   const [allNS, setAllNS] = useState(allNSQuery);
   const [canSetAllNS, setCanSetAllNS] = useState(false);
-  const [reposRBAC, setReposRBAC] = useState(new Map<string, IPackageRepositoryPermission>());
+  const [reposRBAC, setReposRBAC] = useState(new Map<string, PackageRepositoriesPermissions>());
   const [namespace, setNamespace] = useState(allNSQuery ? "" : currentNamespace);
 
   // We do not currently support package repositories on additional clusters.
@@ -79,6 +71,17 @@ function PkgRepoList() {
     refetchRepos();
   }, [refetchRepos]);
 
+  const fecthPermissions: () => void = useCallback(() => {
+    if (supportedCluster) {
+      dispatch(actions.repos.fetchReposPermissions(kubeappsCluster, namespace));
+    }
+    return () => {};
+  }, [dispatch, supportedCluster, kubeappsCluster, namespace]);
+
+  useEffect(() => {
+    fecthPermissions();
+  }, [fecthPermissions]);
+
   const submitFilters = (allns: boolean) => {
     if (allns) {
       dispatch(push("?allns=yes"));
@@ -99,56 +102,31 @@ function PkgRepoList() {
   }, [allNS, currentNamespace]);
 
   useEffect(() => {
-    const pluginsConfig = {
-      helmGlobalNamespace: helmGlobalNamespace,
-      carvelGlobalNamespace: carvelGlobalNamespace,
-      kubeappsCluster: kubeappsCluster,
-    } as IConfig;
-
-    Promise.all(
-      configuredPlugins
-        .map(plugin =>
-          PackageRepositoriesService.getRepositoriesPermissions(
-            currentNamespace,
-            pluginsConfig,
-            plugin,
-          ),
-        )
-        .filter(i => i !== undefined),
-    ).then(results => {
-      const rbac = new Map<string, IPackageRepositoryPermission>();
-      results.forEach(r => {
-        if (r !== undefined) {
-          rbac.set(JSON.stringify(r.plugin), r);
-        }
-      });
-      setReposRBAC(rbac);
-    });
+    const rbac = new Map<string, PackageRepositoriesPermissions>();
+    reposPermissions.forEach(p => rbac.set(JSON.stringify(p.plugin), p));
+    setReposRBAC(rbac);
 
     // Cluster-wide check
-    Kube.canI(cluster, "kubeapps.com", "apprepositories", "list", "")
-      .then(allowed => setCanSetAllNS(allowed))
-      ?.catch(() => setCanSetAllNS(false));
-  }, [
-    cluster,
-    kubeappsCluster,
-    kubeappsNamespace,
-    helmGlobalNamespace,
-    carvelGlobalNamespace,
-    currentNamespace,
-    configuredPlugins,
-  ]);
+    setCanSetAllNS([...rbac.values()].some(r => r.global["list"]));
+  }, [cluster, reposPermissions]);
 
   const canEditGlobalRepos = (plugin?: Plugin): boolean => {
-    return plugin ? reposRBAC.get(JSON.stringify(plugin))?.global?.update || false : false;
+    if (!plugin) {
+      return false;
+    }
+    console.log(reposRBAC.get(JSON.stringify(plugin)));
+    return reposRBAC.get(JSON.stringify(plugin))?.global["update"] || false;
   };
 
   const canEditNamespacedRepos = (plugin?: Plugin): boolean => {
-    return plugin ? reposRBAC.get(JSON.stringify(plugin))?.namespaced.update || false : false;
+    if (!plugin) {
+      return false;
+    }
+    return reposRBAC.get(JSON.stringify(plugin))?.namespace["update"] || false;
   };
 
   const canAddRepos = () => {
-    return [...reposRBAC.values()].some(r => r.global?.create || r.namespaced.create);
+    return [...reposRBAC.values()].some(r => r.global["create"] || r.namespace["create"]);
   };
 
   const globalRepos: PackageRepositorySummary[] = [];
