@@ -1,15 +1,13 @@
 # Copyright 2022 the Kubeapps contributors
 # SPDX-License-Identifier: Apache-2.0
 
-name: "CodeQL"
-
 on:
-  push:
-    branches: ["main"]
-  pull_request:
-    branches: ["main"]
-  schedule:
-    - cron: "0 5 * * *"
+  workflow_call:
+    inputs:
+      golang_version:
+        type: string
+        required: false
+        default: "1.19"
 
 jobs:
   analyze:
@@ -37,9 +35,9 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v3
         with:
-          go-version: 1.18
+          go-version: ${{ inputs.golang_version }}
         if: ${{ matrix.language == 'go' }}
-      
+
       # Initializes the CodeQL tools for scanning.
       - name: Initialize CodeQL
         uses: github/codeql-action/init@v2
