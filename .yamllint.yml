@@ -4,8 +4,13 @@
 ---
 extends: default
 ignore: |
-  **/chart/kubeapps/templates/
-  **/charts/simplechart/templates/
+  #  Ignore folders
+  chart/kubeapps/templates/
+  integration/charts/simplechart/templates/
+  dashboard/node_modules/
+  devel/
+  #  Ignore files
+  cmd/kubeapps-apis/plugins/fluxv2/packages/v1alpha1/testdata/charts/single-package-template.yaml
 rules:
   line-length: disable
   comments: disable
