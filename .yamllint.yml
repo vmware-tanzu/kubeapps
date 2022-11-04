@@ -6,7 +6,7 @@ extends: default
 ignore: |
   **/chart/kubeapps/templates/
   **/charts/simplechart/templates/
-  **/plugins/fluxv2/**/testdata/chats/single-package-template.yaml
+  **/plugins/fluxv2/packages/v1alpha1/testdata/charts/single-package-template.yaml
 rules:
   line-length: disable
   comments: disable
