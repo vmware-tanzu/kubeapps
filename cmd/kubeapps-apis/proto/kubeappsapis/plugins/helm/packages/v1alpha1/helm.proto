@@ -156,18 +156,6 @@ service HelmRepositoriesService {
       delete: "/plugins/helm/packages/v1alpha1/repositories/c/{package_repo_ref.context.cluster}/ns/{package_repo_ref.context.namespace}/{package_repo_ref.identifier=**}"
     };
   }
-
-  // this endpoint only exists for the purpose of integration tests
-  rpc SetUserManagedSecrets(SetUserManagedSecretsRequest) returns (SetUserManagedSecretsResponse) {
-  }
-}
-
-message SetUserManagedSecretsRequest {
-  bool value = 1;
-}
-
-message SetUserManagedSecretsResponse {
-  bool value = 1;
 }
 
 message ImagesPullSecret {
