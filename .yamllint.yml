@@ -9,7 +9,5 @@ ignore: |
 rules:
   line-length: disable
   comments: disable
-  trailing-spaces:
-    level: warning
   truthy:
     check-keys: false
