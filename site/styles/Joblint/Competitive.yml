@@ -1,3 +1,4 @@
+---
 extends: existence
 message: "Avoid using '%s'"
 description: "Competition can be healthy, but for a lot of people a heavily competitive environment can be a strain."

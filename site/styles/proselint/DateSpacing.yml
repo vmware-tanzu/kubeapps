@@ -1,3 +1,4 @@
+---
 extends: existence
 message: "It's standard to put a space before '%s'"
 ignorecase: true

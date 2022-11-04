@@ -1,3 +1,4 @@
+---
 extends: substitution
 message: Consider using the '%s' symbol instead of '%s'.
 level: error
