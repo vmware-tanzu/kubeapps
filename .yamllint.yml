@@ -5,8 +5,8 @@
 extends: default
 ignore: |
   #  Ignore folders
-  chart/kubeapps/templates/
-  integration/charts/simplechart/templates/
+  chart/kubeapps/
+  integration/charts/simplechart/
   dashboard/node_modules/
   devel/
   #  Ignore files
