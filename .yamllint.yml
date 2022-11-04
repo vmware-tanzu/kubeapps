@@ -12,3 +12,5 @@ rules:
   comments: disable
   trailing-spaces:
     level: warning
+  truthy:
+    check-keys: false
