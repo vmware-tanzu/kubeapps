@@ -4,6 +4,7 @@
 # Basic dependabot.yml file
 # https://docs.github.com/en/github/administering-a-repository/configuration-options-for-dependency-updates#package-ecosystem
 
+---
 version: 2
 updates:
   - package-ecosystem: "npm"

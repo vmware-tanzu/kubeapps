@@ -1,3 +1,4 @@
+---
 extends: existence
 message: "'%s' is corporate speak."
 ignorecase: true

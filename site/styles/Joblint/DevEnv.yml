@@ -1,3 +1,4 @@
+---
 extends: existence
 message: "Don't specify a development environment unless absolutely necessary."
 ignorecase: true

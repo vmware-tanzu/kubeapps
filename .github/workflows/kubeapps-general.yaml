@@ -1,6 +1,7 @@
 # Copyright 2022 the Kubeapps contributors
 # SPDX-License-Identifier: Apache-2.0
 
+---
 on:
   workflow_call:
     inputs:
@@ -8,6 +9,10 @@ on:
         type: boolean
         required: false
         default: false
+      run_linters:
+        type: boolean
+        required: false
+        default: true
 
 env:
   CHARTMUSEUM_VERSION: "3.9.1"
@@ -49,7 +54,7 @@ env:
   IMG_PREFIX: "kubeapps/"
   # We use IMG_PREFIX_FOR_FORKS for development purposes, it's used when the workflow is run from a fork of the kubeapps repo
   IMG_PREFIX_FOR_FORKS: "beni0888/"
-#  IMG_PLATFORMS: "linux/amd64, linux/arm64"
+  # IMG_PLATFORMS: "linux/amd64, linux/arm64"
   IMG_PLATFORMS: "linux/amd64"
   KAPP_CONTROLLER_VERSION: "v0.42.0"
   K8S_KIND_VERSION: "v1.22.15@sha256:bfd5eaae36849bfb3c1e3b9442f3da17d730718248939d9d547e86bbac5da586"
@@ -72,6 +77,7 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       dev_mode: ${{ steps.set-outputs.outputs.dev_mode }}
+      golang_version: ${{ steps.set-outputs.outputs.golang_version }}
       img_modifier: ${{ steps.set-outputs.outputs.img_modifier }}
       img_prefix: ${{ steps.set-outputs.outputs.img_prefix }}
       img_dev_tag: ${{ steps.set-outputs.outputs.img_dev_tag }}
@@ -134,6 +140,7 @@ jobs:
           fi
 
           echo "dev_mode=${DEV_MODE}" >> $GITHUB_OUTPUT
+          echo "golang_version=${GOLANG_VERSION}" >> $GITHUB_OUTPUT
           echo "ssh_key_kubeapps_deploy_filename=${SSH_KEY_KUBEAPPS_DEPLOY_FILENAME}" >> $GITHUB_OUTPUT
           echo "ssh_key_forked_charts_deploy_filename=${SSH_KEY_FORKED_CHARTS_DEPLOY_FILENAME}" >> $GITHUB_OUTPUT
           echo "img_modifier=${IMG_MODIFIER}" >> $GITHUB_OUTPUT
@@ -143,6 +150,7 @@ jobs:
       - name: Show outputs
         run: |
           echo "DEV_MODE: ${{steps.set-outputs.outputs.dev_mode}}"
+          echo "GOLANG_VERSION: ${{steps.set-outputs.outputs.golang_version}}"
           echo "IMG_MODIFIER: ${{steps.set-outputs.outputs.img_modifier}}"
           echo "IMG_PREFIX: ${{steps.set-outputs.outputs.img_prefix}}"
           echo "IMG_DEV_TAG: ${{steps.set-outputs.outputs.img_dev_tag}}"
@@ -155,6 +163,14 @@ jobs:
           echo "SSH_KEY_FORKED_CHARTS_DEPLOY_FILENAME: ${{steps.set-outputs.outputs.ssh_key_forked_charts_deploy_filename}}"
           echo "TRIGGERED_FROM_FORK: ${{steps.set-outputs.outputs.triggered_from_fork}}"
           echo "VERSION: ${{steps.set-outputs.outputs.version}}"
+
+  linters:
+    if: inputs.run_linters
+    needs:
+      - setup
+    uses: ./.github/workflows/linters.yml
+    with:
+      golang_version: ${{ needs.setup.outputs.golang_version }}
 
   test_go:
     needs:
@@ -173,14 +189,14 @@ jobs:
         env:
           ALLOW_EMPTY_PASSWORD: "yes"
     steps:
-    - uses: actions/checkout@v3
-    - name: Set up Go
-      uses: actions/setup-go@v3
-      with:
-        go-version: ${{ env.GOLANG_VERSION }}
-    - name: Run go unit tests
-      run: make test
-    - run: make test-db
+      - uses: actions/checkout@v3
+      - name: Set up Go
+        uses: actions/setup-go@v3
+        with:
+          go-version: ${{ env.GOLANG_VERSION }}
+      - name: Run go unit tests
+        run: make test
+      - run: make test-db
 
   test_dashboard:
     runs-on: ubuntu-latest
@@ -420,7 +436,7 @@ jobs:
       TESTS_GROUP: ${{ matrix.tests_group }}
       TEST_OPERATORS: "1"
       TEST_UPGRADE: "1"
-      TEST_TIMEOUT_MINUTES: 4 # Timeout minutes for each test
+      TEST_TIMEOUT_MINUTES: 4  # Timeout minutes for each test
       USE_MULTICLUSTER_OIDC_ENV: "true"
     steps:
       - uses: actions/checkout@v3

@@ -1539,7 +1539,7 @@ kubeappsapis:
           ## @param kubeappsapis.pluginConfig.flux.packages.v1alpha1.defaultUpgradePolicy Default upgrade policy generating version constraints
           ## enum: [ "major", "minor", "patch", "none" ]
           defaultUpgradePolicy: none
-            ## @param kubeappsapis.pluginConfig.flux.packages.v1alpha1.userManagedSecrets Default policy for handling repository secrets, either managed by the user or by kubeapps-apis
+          ## @param kubeappsapis.pluginConfig.flux.packages.v1alpha1.userManagedSecrets Default policy for handling repository secrets, either managed by the user or by kubeapps-apis
           userManagedSecrets: false
     resources:
       packages:

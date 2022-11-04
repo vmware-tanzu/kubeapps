@@ -1,6 +1,7 @@
 # Copyright 2021-2022 the Kubeapps contributors.
 # SPDX-License-Identifier: Apache-2.0
 
+---
 # This is local copy of the first few entries
 # on "https://stefanprodan.github.io/podinfo/index.yaml" as of Sept 10 2021 with the chart
 # urls modified to link to .tgz files also within the local cluster
