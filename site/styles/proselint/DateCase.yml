@@ -1,3 +1,4 @@
+---
 extends: existence
 message: With lowercase letters, the periods are standard.
 ignorecase: true

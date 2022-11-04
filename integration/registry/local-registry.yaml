@@ -31,36 +31,36 @@ spec:
         app: private-registry
     spec:
       volumes:
-      - name: auth-vol
-        secret:
-          secretName: registry-auth
-      - name: certs-vol
-        secret:
-          secretName: registry-tls
+        - name: auth-vol
+          secret:
+            secretName: registry-auth
+        - name: certs-vol
+          secret:
+            secretName: registry-tls
       containers:
         - image: registry:$DOCKER_REGISTRY_VERSION
           name: private-registry
           imagePullPolicy: Always
           env:
-          - name: REGISTRY_AUTH_HTPASSWD_REALM
-            value: "CI Registry Realm"
-          - name: REGISTRY_AUTH
-            value: "htpasswd"
-          - name: REGISTRY_AUTH_HTPASSWD_PATH
-            value: "/auth/htpasswd"
-          - name: REGISTRY_HTTP_TLS_CERTIFICATE
-            value: "/certs/tls.crt"
-          - name: REGISTRY_HTTP_TLS_KEY
-            value: "/certs/tls.key"
+            - name: REGISTRY_AUTH_HTPASSWD_REALM
+              value: "CI Registry Realm"
+            - name: REGISTRY_AUTH
+              value: "htpasswd"
+            - name: REGISTRY_AUTH_HTPASSWD_PATH
+              value: "/auth/htpasswd"
+            - name: REGISTRY_HTTP_TLS_CERTIFICATE
+              value: "/certs/tls.crt"
+            - name: REGISTRY_HTTP_TLS_KEY
+              value: "/certs/tls.key"
           ports:
             - containerPort: 5000
           volumeMounts:
-          - name: auth-vol
-            mountPath: "/auth"
-            readOnly: true          
-          - name: certs-vol
-            mountPath: "/certs"
-            readOnly: true
+            - name: auth-vol
+              mountPath: "/auth"
+              readOnly: true
+            - name: certs-vol
+              mountPath: "/certs"
+              readOnly: true
 ---
 apiVersion: v1
 kind: Service
@@ -71,5 +71,5 @@ spec:
   selector:
     app: private-registry
   ports:
-  - port: 5600
-    targetPort: 5000
+    - port: 5600
+      targetPort: 5000

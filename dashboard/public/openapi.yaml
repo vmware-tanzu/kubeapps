@@ -1,6 +1,7 @@
 # Copyright 2021-2022 the Kubeapps contributors.
 # SPDX-License-Identifier: Apache-2.0
 
+---
 openapi: 3.0.3
 servers:
   - url: "{schema}://{url}:{port}"
@@ -885,7 +886,7 @@ paths:
 
                 object "Update" semantics rather than "Patch" semantics. The caller will provide the
 
-                values for the fields below, which will replace, or be overlayed onto, the
+                values for the fields below, which will replace, or be overlaid onto, the
 
                 corresponding fields in the existing resource. For example, with the
 
@@ -5494,7 +5495,7 @@ components:
 
               object "Update" semantics rather than "Patch" semantics. The caller will provide the
 
-              values for the fields below, which will replace, or be overlayed onto, the
+              values for the fields below, which will replace, or be overlaid onto, the
 
               corresponding fields in the existing resource. For example, with the
 
@@ -5946,7 +5947,6 @@ components:
         in the type URL, for example "foo.bar.com/x/y.z" will yield type
 
         name "y.z".
-
 
 
         JSON

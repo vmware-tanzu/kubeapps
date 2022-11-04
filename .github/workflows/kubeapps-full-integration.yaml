@@ -1,6 +1,7 @@
 # Copyright 2022 the Kubeapps contributors
 # SPDX-License-Identifier: Apache-2.0
 
+---
 name: Full Integration Pipeline
 
 on:
@@ -16,3 +17,4 @@ jobs:
     secrets: inherit
     with:
       run_gke_tests: true
+      run_linters: false

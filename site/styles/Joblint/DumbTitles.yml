@@ -1,3 +1,4 @@
+---
 extends: existence
 message: "Avoid using '%s'"
 description: "Referring to tech people as '%s' devalues the work that they do and shows a lack of respect and professionalism."

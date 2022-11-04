@@ -1,3 +1,4 @@
+---
 extends: existence
 message: "Avoid using '%s'"
 description: "Terms like '%s' are often used if the person writing a post doesn't know what they are talking about."

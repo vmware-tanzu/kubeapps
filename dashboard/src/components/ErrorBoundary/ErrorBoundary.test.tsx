@@ -99,7 +99,7 @@ it("logs out when clicking on the link", () => {
   expect(logout).toHaveBeenCalled();
 });
 
-it("should not show the logout button if the error is catched from other component", () => {
+it("should not show the logout button if the error is caught from other component", () => {
   const wrapper = mount(<ErrorBoundary {...defaultProps} />);
   wrapper.setState({ error: new Error("Boom!") });
   const alert = wrapper.find(Alert);

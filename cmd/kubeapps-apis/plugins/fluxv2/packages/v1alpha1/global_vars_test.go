@@ -2503,7 +2503,7 @@ var (
 		PackageRepoRef: &corev1.PackageRepositoryReference{
 			Context: &corev1.Context{
 				Namespace: "namespace-1",
-				Cluster:   "this-is-not-the-cluster-youre-looking-for",
+				Cluster:   "this-is-not-the-cluster-your-are-looking-for",
 			},
 			Identifier: "repo-1",
 		},

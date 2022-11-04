@@ -1007,7 +1007,7 @@ func TestGetAvailablePackageSummariesAfterCacheResyncQueueNotIdle(t *testing.T) 
 			} else {
 				mock.ExpectFlushDB().SetVal("OK")
 				// *SOME* of the repos have already been cached into redis at this point
-				// via the repo cache backround worker triggered by the Add event in the
+				// via the repo cache background worker triggered by the Add event in the
 				// main goroutine. Those SET calls will need to be repeated due to
 				// populateWith() which will re-populate the cache from scratch based on
 				// the current state in k8s (all MAX_REPOS repos).
@@ -1263,7 +1263,7 @@ func TestAddPackageRepository(t *testing.T) {
 			userManagedSecrets: true,
 		},
 		{
-			name:               "failes when package repository links to non-existing secret",
+			name:               "fails when package repository links to non-existing secret",
 			request:            add_repo_req_7,
 			statusCode:         codes.NotFound,
 			userManagedSecrets: true,
@@ -1785,7 +1785,7 @@ func TestGetOciPackageRepositoryDetail(t *testing.T) {
 				}
 			}
 
-			// FWIW GetPackageRepositoryDetail curently does not use the redis cache
+			// FWIW GetPackageRepositoryDetail currently does not use the redis cache
 			if err = mock.ExpectationsWereMet(); err != nil {
 				t.Fatalf("%v", err)
 			}
@@ -2420,7 +2420,7 @@ func newRepo(name string, namespace string, spec *sourcev1.HelmRepositorySpec, s
 	return helmRepository
 }
 
-// these functiosn should affect only unit test, not production code
+// these functions should affect only unit test, not production code
 // does a series of mock.ExpectGet(...)
 func (s *Server) redisMockExpectGetFromRepoCache(mock redismock.ClientMock, filterOptions *corev1.FilterOptions, repos ...sourcev1.HelmRepository) error {
 	mapVals := make(map[string][]byte)

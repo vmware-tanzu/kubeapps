@@ -1,3 +1,4 @@
+---
 extends: existence
 message: "'a.m.' is always morning; 'p.m.' is always night."
 ignorecase: true

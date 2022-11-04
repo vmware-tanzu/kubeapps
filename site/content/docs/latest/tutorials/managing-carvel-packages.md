@@ -129,13 +129,13 @@ This tutorial uses the `Tanzu Community Edition` package repository.
 
   > A Kubeapps Package Repository can be installed by anyone with the required RBAC for that namespace.
 
-- Click the **Add Package Repository** button that displays a pop-up (structured in collapsable sections) to configure the parameters for the new Package Repository.
+- Click the **Add Package Repository** button that displays a pop-up (structured in collapsible sections) to configure the parameters for the new Package Repository.
 
   ![Add Package repository pop-up](../img/package-repository/package-repository-pop-up-carvel.png)
 
   > The image above shows the parameters to configure the `Tanzu Community Edition` Carvel package repository as a Global repository in Kubeapps.
 
-- Aditionally, there are two sections to provide authorization and advanced data to configure the Package Repository. Default values in these sections are enough to install the `Tanzu Community Edition` package repository.
+- Additionally, there are two sections to provide authorization and advanced data to configure the Package Repository. Default values in these sections are enough to install the `Tanzu Community Edition` package repository.
 
   ![Package repository pop-up advanced tabs](../img/package-repository/package-repository-pop-up-advanced.png)
 

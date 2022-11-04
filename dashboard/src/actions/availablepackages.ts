@@ -75,7 +75,7 @@ export const receiveSelectedAvailablePackageVersions = createAction(
 // No reset action
 
 // ** Error actions **
-// for handling the erros thrown by the rest of the actions
+// for handling the errors thrown by the rest of the actions
 
 // Create action
 export const createErrorPackage = createAction("CREATE_ERROR_PACKAGE", resolve => {

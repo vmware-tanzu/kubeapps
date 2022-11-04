@@ -34,13 +34,13 @@ import (
 func getLogLevelOfEndpoint(endpoint string) klogv2.Level {
 
 	// Add all endpoint function names which you want to suppress in interceptor logging
-	supressLoggingOfEndpoints := []string{"GetConfiguredPlugins"}
+	suppressLoggingOfEndpoints := []string{"GetConfiguredPlugins"}
 	var level klogv2.Level
 
 	// level=3 is default logging level
 	level = 3
-	for i := 0; i < len(supressLoggingOfEndpoints); i++ {
-		if strings.Contains(endpoint, supressLoggingOfEndpoints[i]) {
+	for i := 0; i < len(suppressLoggingOfEndpoints); i++ {
+		if strings.Contains(endpoint, suppressLoggingOfEndpoints[i]) {
 			level = 4
 			break
 		}
@@ -229,7 +229,7 @@ func gatewayMux() (*runtime.ServeMux, error) {
 	)
 
 	// TODO(agamez): remove these '/openapi.json' and '/docs' paths. They are serving a
-	// static 'swagger-ui' dashboard with hardcoded values just intended for develoment purposes.
+	// static 'swagger-ui' dashboard with hardcoded values just intended for development purposes.
 	// This docs will eventually converge into the docs already (properly) served by the dashboard
 	err := gwmux.HandlePath(http.MethodGet, "/openapi.json", runtime.HandlerFunc(func(w http.ResponseWriter, r *http.Request, pathParams map[string]string) {
 		http.ServeFile(w, r, "docs/kubeapps-apis.swagger.json")

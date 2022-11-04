@@ -769,7 +769,7 @@ func getOciChartModel(appName string, tags TagList, ociChartRepo *OCIChartReposi
 	chartID := path.Join(repo.Name, encodedAppName)
 
 	// to be consistent with how we support helm http repos
-	// the chart fields like Desciption, home, sources come from the
+	// the chart fields like Description, home, sources come from the
 	// most recent chart version
 	// ref https://github.com/vmware-tanzu/kubeapps/blob/11c87926d6cd798af72875d01437d15ae8d85b9a/pkg/helm/index.go#L30
 	latestChartVersion, err := ociChartRepo.pickChartVersionFrom(appName, "", tags.Tags)

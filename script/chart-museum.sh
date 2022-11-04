@@ -37,6 +37,26 @@ pullBitnamiChart() {
   curl -LO "${CHART_URL}"
 }
 
+# Delete chart from ChartsMuseum
+# Arguments:
+#   $1: Chart name
+#   $2: Chart version
+deleteChart() {
+  if [ -z "$1" ]; then
+    echo "No chart name supplied"
+    exit 1
+  fi
+  if [ -z "$2" ]; then
+    echo "No chart version supplied"
+    exit 1
+  fi
+
+  local CHART_NAME=$1
+  local CHART_VERSION=$2
+
+  curl -Lk -u "${CHARTMUSEUM_USER}:${CHARTMUSEUM_PWD}" -H "Host: ${CHARTMUSEUM_HOSTNAME}" -X DELETE http://${CHARTMUSEUM_IP}/api/charts/${CHART_NAME}/${CHART_VERSION}
+}
+
 # Push a local chart to ChartsMuseum
 # Arguments:
 #   $1: Chart name
@@ -69,7 +89,7 @@ pushChartToChartMuseum() {
   CHART_EXISTS=$(curl -Lk -u "${CHARTMUSEUM_USER}:${CHARTMUSEUM_PWD}" -H "Host: ${CHARTMUSEUM_HOSTNAME}" "http://${CHARTMUSEUM_IP}/api/charts/${CHART_NAME}/${CHART_VERSION}" | jq -r 'any([ .error] ; . > 0)')
   if [ "$CHART_EXISTS" == "true" ]; then
     echo ">> Chart ${CHART_NAME} v${CHART_VERSION} already exists: deleting"
-    curl -Lk -u "${CHARTMUSEUM_USER}:${CHARTMUSEUM_PWD}" -H "Host: ${CHARTMUSEUM_HOSTNAME}" -X DELETE "http://${CHARTMUSEUM_IP}/api/charts/${CHART_NAME}/${CHART_VERSION}"
+    deleteChart ${CHART_NAME} ${CHART_VERSION}
   fi
 
   echo ">> Uploading chart from file ${CHART_FILE}"
@@ -146,6 +166,11 @@ if (($# > 0)); then
 
     pushChart)
       pushChartToChartMuseum $2 $3 $4
+      ;;
+
+
+    deleteChart)
+      deleteChart $2 $3
       ;;
 
     *)
