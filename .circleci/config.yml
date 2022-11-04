@@ -1,5 +1,7 @@
 # Copyright 2018-2022 the Kubeapps contributors.
 # SPDX-License-Identifier: Apache-2.0
+
+# yamllint disable rule:trailing-spaces
 ---
 version: 2.1
 parameters:
