@@ -1541,6 +1541,8 @@ kubeappsapis:
           defaultUpgradePolicy: none
             ## @param kubeappsapis.pluginConfig.flux.packages.v1alpha1.userManagedSecrets Default policy for handling repository secrets, either managed by the user or by kubeapps-apis
           userManagedSecrets: false
+            ## @param kubeappsapis.pluginConfig.flux.packages.v1alpha1.noCrossNamespaceRefs Enable this flag to disallow cross-namespace references, useful when running Flux on multi-tenant clusters
+          noCrossNamespaceRefs: false
     resources:
       packages:
         v1alpha1:
