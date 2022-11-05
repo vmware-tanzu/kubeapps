@@ -107,11 +107,6 @@ func (s *Server) paginatedInstalledPkgSummaries(ctx context.Context, namespace s
 }
 
 func (s *Server) installedPkgSummaryFromRelease(ctx context.Context, rel helmv2.HelmRelease) (*corev1.InstalledPackageSummary, error) {
-	// first check if release CR is ready or is in "flux"
-	if !checkReleaseGeneration(rel) {
-		return nil, nil
-	}
-
 	name, err := common.NamespacedName(&rel)
 	if err != nil {
 		return nil, err
@@ -578,7 +573,7 @@ func (s *Server) newFluxHelmRelease(chart *models.Chart, targetName types.Namesp
 // docs:
 // 1. https://fluxcd.io/docs/components/helm/helmreleases/#examples
 // 2. discussion on private slack channel. Summary:
-//   - "ready" field: - it's not indicating that the resource has completed (i.e. whether the task
+//   - "ready" field: it's not indicating that the resource has completed (i.e. whether the task
 //     completed with install or failure), but rather just whether the resource is ready or not.
 //     So it can be false because of either a final state (failure) or a pending state
 //     (reconciliation in progress or whatever). That means the ready flag will only be set to true
@@ -587,7 +582,13 @@ func (s *Server) newFluxHelmRelease(chart *models.Chart, targetName types.Namesp
 //     otherwise pending or unspecified when there are no status conditions to go by
 func isHelmReleaseReady(rel helmv2.HelmRelease) (ready bool, status corev1.InstalledPackageStatus_StatusReason, userReason string) {
 	if !checkReleaseGeneration(rel) {
-		return false, corev1.InstalledPackageStatus_STATUS_REASON_UNSPECIFIED, ""
+		// according to https://github.com/kubernetes/community/blob/master/contributors/devel/sig-architecture/api-conventions.md#typical-status-properties
+		// observedGeneration represents the .metadata.generation that the condition was set based upon.
+		// For instance, if .metadata.generation is currently 12, but the .status.conditions[x].observedGeneration is 9, the condition is out of date
+		// with respect to the current state of the instance.
+		return false,
+			corev1.InstalledPackageStatus_STATUS_REASON_UNSPECIFIED,
+			"Flux HelmRelease resource is in a transient state"
 	}
 
 	isInstallFailed := false
@@ -597,7 +598,7 @@ func isHelmReleaseReady(rel helmv2.HelmRelease) (ready bool, status corev1.Insta
 		if readyCond.Reason != "" {
 			// this could be something like
 			//   "reason": "InstallFailed"
-			// i.e. not super-useful
+			// i.e. not super useful
 			userReason = readyCond.Reason
 			if userReason == helmv2.InstallFailedReason ||
 				userReason == helmv2.UpgradeFailedReason ||

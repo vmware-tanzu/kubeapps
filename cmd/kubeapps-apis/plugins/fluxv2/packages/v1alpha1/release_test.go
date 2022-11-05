@@ -38,8 +38,7 @@ type testSpecGetInstalledPackages struct {
 	chartTarGz                string
 	chartSpecVersion          string // could be semver constraint, e.g. "<=6.7.1"
 	chartArtifactVersion      string // must be specific, e.g. "6.7.1"
-	releaseName               string
-	releaseNamespace          string
+	releaseMeta               metav1.ObjectMeta
 	releaseValues             *v1.JSON
 	releaseSuspend            bool
 	releaseServiceAccountName string
@@ -83,6 +82,23 @@ func TestGetInstalledPackageSummariesWithoutPagination(t *testing.T) {
 			expectedResponse: &corev1.GetInstalledPackageSummariesResponse{
 				InstalledPackageSummaries: []*corev1.InstalledPackageSummary{
 					redis_summary_failed_2,
+				},
+			},
+		},
+		{
+			// when metadata.generation != status.observedGeneration
+			// https://github.com/vmware-tanzu/kubeapps/issues/5577
+			name: "returns installed packages when install fails (3)",
+			request: &corev1.GetInstalledPackageSummariesRequest{
+				Context: &corev1.Context{Namespace: "test"},
+			},
+			existingObjs: []testSpecGetInstalledPackages{
+				redis_existing_spec_transient,
+			},
+			expectedStatusCode: codes.OK,
+			expectedResponse: &corev1.GetInstalledPackageSummariesResponse{
+				InstalledPackageSummaries: []*corev1.InstalledPackageSummary{
+					redis_summary_transient,
 				},
 			},
 		},
@@ -466,7 +482,7 @@ func TestGetInstalledPackageDetail(t *testing.T) {
 			helmReleaseNamespace := tc.existingK8sObjs.targetNamespace
 			if helmReleaseNamespace == "" {
 				// this would be most cases now
-				helmReleaseNamespace = tc.existingK8sObjs.releaseNamespace
+				helmReleaseNamespace = tc.existingK8sObjs.releaseMeta.Namespace
 			}
 			actionConfig := newHelmActionConfig(
 				t, helmReleaseNamespace, []helmReleaseStub{tc.existingHelmStub})
@@ -1014,8 +1030,8 @@ func TestGetInstalledPackageResourceRefs(t *testing.T) {
 	// Using the redis_existing_stub_completed data with
 	// different manifests for each test.
 	var (
-		flux_obj_namespace = redis_existing_spec_completed.releaseNamespace
-		flux_obj_name      = redis_existing_spec_completed.releaseName
+		flux_obj_namespace = redis_existing_spec_completed.releaseMeta.Namespace
+		flux_obj_name      = redis_existing_spec_completed.releaseMeta.Name
 	)
 
 	// newTestCase is a function to take an existing test-case
@@ -1210,7 +1226,7 @@ func newChartsAndReleases(t *testing.T, existingK8sObjs []testSpecGetInstalledPa
 			releaseSpec.ServiceAccountName = existing.releaseServiceAccountName
 		}
 
-		release := newRelease(existing.releaseName, existing.releaseNamespace, releaseSpec, &existing.releaseStatus)
+		release := newRelease(existing.releaseMeta, releaseSpec, &existing.releaseStatus)
 		releases = append(releases, release)
 	}
 	return charts, releases, cleanup
@@ -1241,15 +1257,9 @@ func compareActualVsExpectedGetInstalledPackageDetailResponse(t *testing.T, actu
 	compareJSONStrings(t, expectedResp.InstalledPackageDetail.ValuesApplied, actualResp.InstalledPackageDetail.ValuesApplied)
 }
 
-func newRelease(name string, namespace string, spec *helmv2.HelmReleaseSpec, status *helmv2.HelmReleaseStatus) helmv2.HelmRelease {
+func newRelease(meta metav1.ObjectMeta, spec *helmv2.HelmReleaseSpec, status *helmv2.HelmReleaseStatus) helmv2.HelmRelease {
 	helmRelease := helmv2.HelmRelease{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:       name,
-			Generation: int64(1),
-		},
-	}
-	if namespace != "" {
-		helmRelease.ObjectMeta.Namespace = namespace
+		ObjectMeta: meta,
 	}
 
 	if spec != nil {
@@ -1258,7 +1268,6 @@ func newRelease(name string, namespace string, spec *helmv2.HelmReleaseSpec, sta
 
 	if status != nil {
 		helmRelease.Status = *status.DeepCopy()
-		helmRelease.Status.ObservedGeneration = int64(1)
 	}
 	return helmRelease
 }

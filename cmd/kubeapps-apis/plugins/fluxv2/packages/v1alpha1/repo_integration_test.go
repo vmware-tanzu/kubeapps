@@ -67,8 +67,7 @@ func TestKindClusterAddThenDeleteRepo(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	t.Logf("Waiting up to 30 seconds...")
-	time.Sleep(30 * time.Second)
+	SleepWithCountdown(t, 30)
 
 	if keys, err := redisCli.Keys(redisCli.Context(), "*").Result(); err != nil {
 		t.Fatal(err)
@@ -1041,7 +1040,7 @@ func TestKindClusterUpdatePackageRepository(t *testing.T) {
 				if err != nil && strings.Contains(err.Error(), " the object has been modified; please apply your changes to the latest version and try again") {
 					waitTime := int64(math.Pow(2, float64(i)))
 					t.Logf("Retrying update in [%d] sec due to %s...", waitTime, err.Error())
-					time.Sleep(time.Duration(waitTime) * time.Second)
+					SleepWithCountdown(t, int(waitTime))
 				} else {
 					break
 				}
@@ -1359,7 +1358,7 @@ func TestKindClusterUpdatePackageRepoSecretUnchanged(t *testing.T) {
 		if err != nil && strings.Contains(err.Error(), " the object has been modified; please apply your changes to the latest version and try again") {
 			waitTime := int64(math.Pow(2, float64(i)))
 			t.Logf("Retrying update in [%d] sec due to %s...", waitTime, err.Error())
-			time.Sleep(time.Duration(waitTime) * time.Second)
+			SleepWithCountdown(t, int(waitTime))
 		} else {
 			break
 		}
@@ -1497,8 +1496,7 @@ func TestKindClusterAddTagsToOciRepository(t *testing.T) {
 		// there isn't really a whole lot of sense in waiting the way flux works today
 		// repo resync interval is kind of useless when it comes to refresh the contents based
 		// on changes on remote. Maybe in the future when they fix it.
-		t.Logf("Waiting 45 seconds...")
-		time.Sleep(45 * time.Second)
+		SleepWithCountdown(t, 45)
 
 		grpcContext3, cancel := context.WithTimeout(grpcContext, defaultContextTimeout)
 		defer cancel()
