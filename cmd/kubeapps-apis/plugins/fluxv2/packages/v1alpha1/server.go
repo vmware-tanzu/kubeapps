@@ -658,11 +658,7 @@ func (s *Server) GetPackageRepositoryPermissions(ctx context.Context, request *c
 		Plugin: GetPluginDetail(),
 	}
 
-	// Global permissions
-	permissions.Global, err = resources.GetPermissionsOnResource(ctx, typedClient, resource, "")
-	if err != nil {
-		return nil, err
-	}
+	// Flux does not really have a notion of global repositories
 
 	// Namespace permissions
 	if namespace != "" {

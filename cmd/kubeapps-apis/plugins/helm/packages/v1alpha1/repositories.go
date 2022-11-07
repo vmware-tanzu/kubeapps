@@ -614,7 +614,7 @@ func (s *Server) GetPackageRepositoryPermissions(ctx context.Context, request *c
 	}
 
 	// Global permissions
-	permissions.Global, err = resources.GetPermissionsOnResource(ctx, typedClient, resource, "")
+	permissions.Global, err = resources.GetPermissionsOnResource(ctx, typedClient, resource, s.globalPackagingNamespace)
 	if err != nil {
 		return nil, err
 	}
