@@ -9912,7 +9912,7 @@ func TestGetPackageRepositoryPermissions(t *testing.T) {
 					reaction: func(action k8stesting.Action) (handled bool, ret k8sruntime.Object, err error) {
 						createAction := action.(k8stesting.CreateActionImpl)
 						accessReview := createAction.Object.(*authorizationv1.SelfSubjectAccessReview)
-						if accessReview.Spec.ResourceAttributes.Namespace != "" {
+						if accessReview.Spec.ResourceAttributes.Namespace != fallbackGlobalPackagingNamespace {
 							return true, &authorizationv1.SelfSubjectAccessReview{Status: authorizationv1.SubjectAccessReviewStatus{Allowed: false}}, nil
 						}
 						switch accessReview.Spec.ResourceAttributes.Verb {
@@ -9991,7 +9991,7 @@ func TestGetPackageRepositoryPermissions(t *testing.T) {
 					reaction: func(action k8stesting.Action) (handled bool, ret k8sruntime.Object, err error) {
 						createAction := action.(k8stesting.CreateActionImpl)
 						accessReview := createAction.Object.(*authorizationv1.SelfSubjectAccessReview)
-						if accessReview.Spec.ResourceAttributes.Namespace == "" {
+						if accessReview.Spec.ResourceAttributes.Namespace == fallbackGlobalPackagingNamespace {
 							return true, &authorizationv1.SelfSubjectAccessReview{Status: authorizationv1.SubjectAccessReviewStatus{Allowed: true}}, nil
 						}
 						switch accessReview.Spec.ResourceAttributes.Verb {

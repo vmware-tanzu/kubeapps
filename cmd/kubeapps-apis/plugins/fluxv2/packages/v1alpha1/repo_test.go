@@ -2698,15 +2698,8 @@ func TestGetPackageRepositoryPermissions(t *testing.T) {
 			expectedResponse: &corev1.GetPackageRepositoryPermissionsResponse{
 				Permissions: []*corev1.PackageRepositoriesPermissions{
 					{
-						Plugin: GetPluginDetail(),
-						Global: map[string]bool{
-							"create": true,
-							"delete": true,
-							"get":    true,
-							"list":   true,
-							"update": true,
-							"watch":  true,
-						},
+						Plugin:    GetPluginDetail(),
+						Global:    nil,
 						Namespace: nil,
 					},
 				},
@@ -2748,14 +2741,6 @@ func TestGetPackageRepositoryPermissions(t *testing.T) {
 				Permissions: []*corev1.PackageRepositoriesPermissions{
 					{
 						Plugin: GetPluginDetail(),
-						Global: map[string]bool{
-							"create": true,
-							"delete": true,
-							"get":    true,
-							"list":   true,
-							"update": true,
-							"watch":  true,
-						},
 						Namespace: map[string]bool{
 							"create": false,
 							"delete": true,
