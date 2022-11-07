@@ -6,6 +6,8 @@ name: Main Pipeline
 
 on:
   push:
+    tags-ignore:
+      - '*'
   pull_request:
     branches:
       - main
