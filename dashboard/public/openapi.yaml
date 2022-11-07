@@ -5352,7 +5352,6 @@ components:
         name "y.z".
 
 
-
         JSON
 
 
@@ -5371,7 +5370,7 @@ components:
             {
               "@type": "type.googleapis.com/google.profile.Person",
               "firstName": ,
-              "lastName": 
+              "lastName":
             }
 
         If the embedded message type is well-known and has a custom JSON
