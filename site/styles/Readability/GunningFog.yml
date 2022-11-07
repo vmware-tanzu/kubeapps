@@ -1,3 +1,4 @@
+---
 extends: metric
 message: "Try to keep the Gunning-Fog index (%s) below 15 (College junior)."
 link: https://en.wikipedia.org/wiki/Gunning_fog_index

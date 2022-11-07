@@ -1,3 +1,4 @@
+---
 extends: repetition
 message: "'%s' is repeated!"
 level: warning

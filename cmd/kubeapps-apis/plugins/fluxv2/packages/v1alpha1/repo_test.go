@@ -40,11 +40,12 @@ type testSpecGetAvailablePackageSummaries struct {
 
 func TestGetAvailablePackageSummariesWithoutPagination(t *testing.T) {
 	testCases := []struct {
-		name              string
-		request           *corev1.GetAvailablePackageSummariesRequest
-		repos             []testSpecGetAvailablePackageSummaries
-		expectedResponse  *corev1.GetAvailablePackageSummariesResponse
-		expectedErrorCode codes.Code
+		name                 string
+		request              *corev1.GetAvailablePackageSummariesRequest
+		repos                []testSpecGetAvailablePackageSummaries
+		expectedResponse     *corev1.GetAvailablePackageSummariesResponse
+		expectedErrorCode    codes.Code
+		noCrossNamespaceRefs bool
 	}{
 		{
 			name: "it returns a couple of fluxv2 packages from the cluster (no request ns specified)",
@@ -386,6 +387,30 @@ func TestGetAvailablePackageSummariesWithoutPagination(t *testing.T) {
 			}},
 			expectedErrorCode: codes.Unimplemented,
 		},
+		{
+			name: "it returns expected fluxv2 packages when noCrossNamespaceRefs flag is set",
+			repos: []testSpecGetAvailablePackageSummaries{
+				{
+					name:      "bitnami-1",
+					namespace: "default",
+					url:       "https://example.repo.com/charts",
+					index:     testYaml("valid-index.yaml"),
+				},
+				{
+					name:      "jetstack-1",
+					namespace: "ns1",
+					url:       "https://charts.jetstack.io",
+					index:     testYaml("jetstack-index.yaml"),
+				},
+			},
+			request: &corev1.GetAvailablePackageSummariesRequest{Context: &corev1.Context{Namespace: "ns1"}},
+			expectedResponse: &corev1.GetAvailablePackageSummariesResponse{
+				AvailablePackageSummaries: []*corev1.AvailablePackageSummary{
+					cert_manager_summary,
+				},
+			},
+			noCrossNamespaceRefs: true,
+		},
 	}
 
 	for _, tc := range testCases {
@@ -408,8 +433,19 @@ func TestGetAvailablePackageSummariesWithoutPagination(t *testing.T) {
 				t.Fatalf("error instantiating the server: %v", err)
 			}
 
-			if err = s.redisMockExpectGetFromRepoCache(mock, tc.request.FilterOptions, repos...); err != nil {
-				t.Fatalf("%v", err)
+			if tc.noCrossNamespaceRefs {
+				s.pluginConfig.NoCrossNamespaceRefs = true
+				for _, r := range repos {
+					if r.Namespace == tc.request.Context.Namespace {
+						if err = s.redisMockExpectGetFromRepoCache(mock, nil, r); err != nil {
+							t.Fatalf("%v", err)
+						}
+					}
+				}
+			} else {
+				if err = s.redisMockExpectGetFromRepoCache(mock, tc.request.FilterOptions, repos...); err != nil {
+					t.Fatalf("%v", err)
+				}
 			}
 
 			response, err := s.GetAvailablePackageSummaries(context.Background(), tc.request)
@@ -1007,7 +1043,7 @@ func TestGetAvailablePackageSummariesAfterCacheResyncQueueNotIdle(t *testing.T) 
 			} else {
 				mock.ExpectFlushDB().SetVal("OK")
 				// *SOME* of the repos have already been cached into redis at this point
-				// via the repo cache backround worker triggered by the Add event in the
+				// via the repo cache background worker triggered by the Add event in the
 				// main goroutine. Those SET calls will need to be repeated due to
 				// populateWith() which will re-populate the cache from scratch based on
 				// the current state in k8s (all MAX_REPOS repos).
@@ -1263,7 +1299,7 @@ func TestAddPackageRepository(t *testing.T) {
 			userManagedSecrets: true,
 		},
 		{
-			name:               "failes when package repository links to non-existing secret",
+			name:               "fails when package repository links to non-existing secret",
 			request:            add_repo_req_7,
 			statusCode:         codes.NotFound,
 			userManagedSecrets: true,
@@ -1785,7 +1821,7 @@ func TestGetOciPackageRepositoryDetail(t *testing.T) {
 				}
 			}
 
-			// FWIW GetPackageRepositoryDetail curently does not use the redis cache
+			// FWIW GetPackageRepositoryDetail currently does not use the redis cache
 			if err = mock.ExpectationsWereMet(); err != nil {
 				t.Fatalf("%v", err)
 			}
@@ -2420,7 +2456,7 @@ func newRepo(name string, namespace string, spec *sourcev1.HelmRepositorySpec, s
 	return helmRepository
 }
 
-// these functiosn should affect only unit test, not production code
+// these functions should affect only unit test, not production code
 // does a series of mock.ExpectGet(...)
 func (s *Server) redisMockExpectGetFromRepoCache(mock redismock.ClientMock, filterOptions *corev1.FilterOptions, repos ...sourcev1.HelmRepository) error {
 	mapVals := make(map[string][]byte)

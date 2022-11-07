@@ -50,9 +50,10 @@ var (
 	defaultPollInterval = metav1.Duration{Duration: 10 * time.Minute}
 )
 
-// returns a list of HelmRepositories from all namespaces (cluster-wide), excluding
+// returns a list of HelmRepositories from specified namespace.
+// ns can be "", in which case all namespaces (cluster-wide), excluding
 // the ones that the caller has no read access to
-func (s *Server) listReposInAllNamespaces(ctx context.Context) ([]sourcev1.HelmRepository, error) {
+func (s *Server) listReposInNamespace(ctx context.Context, ns string) ([]sourcev1.HelmRepository, error) {
 	// the actual List(...) call will be executed in the context of
 	// kubeapps-internal-kubeappsapis service account
 	// ref https://github.com/vmware-tanzu/kubeapps/issues/4390 for explanation
@@ -63,7 +64,10 @@ func (s *Server) listReposInAllNamespaces(ctx context.Context) ([]sourcev1.HelmR
 	}
 
 	var repoList sourcev1.HelmRepositoryList
-	if err := client.List(backgroundCtx, &repoList); err != nil {
+	listOptions := ctrlclient.ListOptions{
+		Namespace: ns,
+	}
+	if err := client.List(backgroundCtx, &repoList, &listOptions); err != nil {
 		return nil, statuserror.FromK8sError("list", "HelmRepository", "", err)
 	} else {
 		// filter out those repos the caller has no access to
@@ -146,11 +150,10 @@ func (s *Server) filterReadyReposByName(repoList []sourcev1.HelmRepository, matc
 }
 
 // Notes:
-//  1. with flux, an available package may be from a repo in any namespace accessible to the caller
-//  2. can't rely on cache as a real source of truth for key names
+//  1. can't rely on cache as a real source of truth for key names
 //     because redis may evict cache entries due to memory pressure to make room for new ones
-func (s *Server) getChartsForRepos(ctx context.Context, match []string) (map[string][]models.Chart, error) {
-	repoList, err := s.listReposInAllNamespaces(ctx)
+func (s *Server) getChartsForRepos(ctx context.Context, ns string, match []string) (map[string][]models.Chart, error) {
+	repoList, err := s.listReposInNamespace(ctx, ns)
 	if err != nil {
 		return nil, err
 	}
@@ -386,12 +389,12 @@ func (s *Server) repoDetail(ctx context.Context, repoRef *corev1.PackageReposito
 	}, nil
 }
 
-func (s *Server) repoSummaries(ctx context.Context, namespace string) ([]*corev1.PackageRepositorySummary, error) {
+func (s *Server) repoSummaries(ctx context.Context, ns string) ([]*corev1.PackageRepositorySummary, error) {
 	summaries := []*corev1.PackageRepositorySummary{}
 	var repos []sourcev1.HelmRepository
 	var err error
-	if namespace == apiv1.NamespaceAll {
-		if repos, err = s.listReposInAllNamespaces(ctx); err != nil {
+	if ns == apiv1.NamespaceAll {
+		if repos, err = s.listReposInNamespace(ctx, ns); err != nil {
 			return nil, err
 		}
 	} else {
@@ -401,7 +404,7 @@ func (s *Server) repoSummaries(ctx context.Context, namespace string) ([]*corev1
 		// error should be raised, as opposed to returning an empty list with no error
 		var repoList sourcev1.HelmRepositoryList
 		var client ctrlclient.Client
-		if client, err = s.getClient(ctx, namespace); err != nil {
+		if client, err = s.getClient(ctx, ns); err != nil {
 			return nil, err
 		} else if err = client.List(ctx, &repoList); err != nil {
 			return nil, statuserror.FromK8sError("list", "HelmRepository", "", err)

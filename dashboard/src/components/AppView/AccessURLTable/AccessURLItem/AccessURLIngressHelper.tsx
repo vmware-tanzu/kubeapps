@@ -71,6 +71,6 @@ export function ShouldGenerateLink(url: string): boolean {
   // even if it won't catch every possible case, we avoid having an O(x^n) regex
   const regex = /^[^:/?#[\]@!$&'*+,;=]*$/;
 
-  // If it is an URL but it includes some "ilegal" characters, then return false
+  // If it is an URL but it includes some "illegal" characters, then return false
   return !builtURL.pathname.split("/")?.some(p => !regex.test(p));
 }

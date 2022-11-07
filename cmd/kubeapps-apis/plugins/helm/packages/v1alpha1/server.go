@@ -8,6 +8,11 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"net/url"
+	"os"
+	"path"
+	"strings"
+
 	appRepov1 "github.com/vmware-tanzu/kubeapps/cmd/apprepository-controller/pkg/apis/apprepository/v1alpha1"
 	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/core"
 	corev1 "github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
@@ -39,11 +44,7 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/kubernetes"
 	log "k8s.io/klog/v2"
-	"net/url"
-	"os"
-	"path"
 	ctrlclient "sigs.k8s.io/controller-runtime/pkg/client"
-	"strings"
 )
 
 type helmActionConfigGetter func(ctx context.Context, pkgContext *corev1.Context) (*action.Configuration, error)
@@ -183,7 +184,7 @@ func (s *Server) GetManager() (utils.AssetManager, error) {
 }
 
 // GetGlobalPackagingNamespace returns the configured global packaging namespace in in the plugin config if any,
-// otherwise it uses the one passed as a cmd argument to the kubeapps-apis server for backwards compatibilty.
+// otherwise it uses the one passed as a cmd argument to the kubeapps-apis server for backwards compatibility.
 func (s *Server) GetGlobalPackagingNamespace() string {
 	if s.pluginConfig.GlobalPackagingNamespace != "" {
 		return s.pluginConfig.GlobalPackagingNamespace

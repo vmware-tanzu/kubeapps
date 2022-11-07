@@ -1,6 +1,6 @@
 # Update the Kubeapps API documentation
 
-The Kubeapps API docs are defined using the [OpenAPI Specification](https://www.openapis.org). The latest develoment file is located at [/dashboard/public/openapi.yaml](https://github.com/vmware-tanzu/kubeapps/blob/main/dashboard/public/openapi.yaml).
+The Kubeapps API docs are defined using the [OpenAPI Specification](https://www.openapis.org). The latest development file is located at [/dashboard/public/openapi.yaml](https://github.com/vmware-tanzu/kubeapps/blob/main/dashboard/public/openapi.yaml).
 However, to make them more accessible to the users, they are hosted in [SwaggerHub](https://swagger.io/tools/swaggerhub) as well as integrated into the Kubeapps dashboard once installed.
 
 If you are interested in the Kubeapps API, please [reach out to us](https://kubernetes.slack.com/messages/kubeapps) for further information.
@@ -26,7 +26,7 @@ Once you finish editing, the changes can be saved and synced.
 
 ### Syncing changes
 
-In order to send your changes to the official Kubeapps repo, you need to commit the current API docs changes in your Kubeapps fork in GitHub. Whereas it is possible just to copy from SwaggerHub and paste the YAML in your repo, you can [confiugre Swagger to automatically push the saved changes in GitHub](https://support.smartbear.com/swaggerhub/docs/integrations/github-sync.html).
+In order to send your changes to the official Kubeapps repo, you need to commit the current API docs changes in your Kubeapps fork in GitHub. Whereas it is possible just to copy from SwaggerHub and paste the YAML in your repo, you can [configure Swagger to automatically push the saved changes in GitHub](https://support.smartbear.com/swaggerhub/docs/integrations/github-sync.html).
 
 ![image](../img/swaggerhub-push-to-source-control.gif)
 

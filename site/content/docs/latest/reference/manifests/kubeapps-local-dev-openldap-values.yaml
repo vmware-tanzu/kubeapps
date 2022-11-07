@@ -1,6 +1,7 @@
 # Copyright 2019-2022 the Kubeapps contributors.
 # SPDX-License-Identifier: Apache-2.0
 
+---
 adminPassword: password
 customLdifFiles:
   01-kubeapps-dev.ldif: |-

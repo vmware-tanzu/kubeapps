@@ -1,3 +1,4 @@
+---
 extends: metric
 message: "Try to keep the Flesch reading ease score (%s) above 40 (college)."
 link: https://en.wikipedia.org/wiki/Flesch%E2%80%93Kincaid_readability_tests

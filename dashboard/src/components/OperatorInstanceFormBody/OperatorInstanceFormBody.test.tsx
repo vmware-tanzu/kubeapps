@@ -141,7 +141,7 @@ it("should catch a syntax error in the form", () => {
   expect(handleDeploy).not.toHaveBeenCalled();
 });
 
-it("should throw an eror if the element doesn't contain an apiVersion", () => {
+it("should throw an error if the element doesn't contain an apiVersion", () => {
   const handleDeploy = jest.fn();
   const wrapper = mountWrapper(
     defaultStore,
