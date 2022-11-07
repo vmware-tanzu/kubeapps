@@ -513,9 +513,9 @@ message DeletePackageRepositoryResponse {
 
  message PackageRepositoriesPermissions {
    kubeappsapis.core.plugins.v1alpha1.Plugin plugin = 1;
-
+   // Permissions at the global namespace (if any)
    map<string, bool> global = 2;
-
+   // Permissions for the namespace
    map<string, bool> namespace = 3;
  }
 

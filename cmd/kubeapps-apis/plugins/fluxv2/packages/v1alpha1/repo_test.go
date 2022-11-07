@@ -2669,14 +2669,8 @@ func TestGetPackageRepositoryPermissions(t *testing.T) {
 				Permissions: []*corev1.PackageRepositoriesPermissions{
 					{
 						Plugin: GetPluginDetail(),
-						Global: map[string]bool{
-							"create": false,
-							"delete": true,
-							"get":    false,
-							"list":   true,
-							"update": false,
-							"watch":  false,
-						},
+						// Flux does not have the concept of "global"
+						Global:    nil,
 						Namespace: nil,
 					},
 				},
