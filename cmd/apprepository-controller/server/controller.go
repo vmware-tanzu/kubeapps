@@ -13,6 +13,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/adhocore/gronx"
 	apprepov1alpha1 "github.com/vmware-tanzu/kubeapps/cmd/apprepository-controller/pkg/apis/apprepository/v1alpha1"
 	clientset "github.com/vmware-tanzu/kubeapps/cmd/apprepository-controller/pkg/client/clientset/versioned"
 	appreposcheme "github.com/vmware-tanzu/kubeapps/cmd/apprepository-controller/pkg/client/clientset/versioned/scheme"
@@ -421,18 +422,41 @@ func ownerReferencesForAppRepo(apprepo *apprepov1alpha1.AppRepository, childName
 // intervalToCron transforms string durations like "1m" or "1h" to cron expressions
 // Even if valid time units are "ns", "us", "ms", "s", "m", "h",
 // the result will get rounded up to minutes.
+// for durations over 24h only durations below 1 year are supported
 func intervalToCron(duration string) (string, error) {
 	if duration == "" {
 		return "", fmt.Errorf("duration cannot be empty")
-	} else {
-		if d, err := time.ParseDuration(duration); err != nil {
-			return "", err
-		} else {
-			cronMins := math.Ceil(d.Minutes()) // round up to nearest minutes
-			// https://kubernetes.io/docs/concepts/workloads/controllers/cron-jobs/#cron-schedule-syntax
-			return fmt.Sprintf("*/%v * * * *", cronMins), nil // every cronMins minutes
-		}
 	}
+
+	d, err := time.ParseDuration(duration)
+	if err != nil {
+		return "", fmt.Errorf("error while parsing the duration: %s", err)
+	}
+	cronMins := math.Ceil(d.Minutes()) // round up to nearest minute
+
+	if cronMins < 60 {
+		// https://kubernetes.io/docs/concepts/workloads/controllers/cron-jobs/#cron-schedule-syntax
+		// minute(0-59) hour(0-23) dayOfMonth(1-31) month(1-12) dayOfWeek(0-6)
+		return fmt.Sprintf("*/%v * * * *", cronMins), nil // every cronMins minutes
+	}
+
+	cronHours := math.Ceil(d.Hours()) // round up to nearest hour
+	if cronHours < 24 {
+		return fmt.Sprintf("0 */%v * * *", cronHours), nil // every cronHours hours
+	}
+
+	cronDays := math.Ceil(cronHours / 24) // get the days
+	if cronDays < 32 {
+		return fmt.Sprintf("0 0 */%v * *", cronDays), nil // every cronHoursDays days
+	}
+
+	cronMonths := math.Ceil(cronDays / 31) // get the months
+	if cronMonths < 13 {
+		return fmt.Sprintf("0 0 1 */%v *", cronMonths), nil // every cronHoursMonths months
+	}
+
+	return "", fmt.Errorf("not supported duration: %s", duration)
+
 }
 
 // newCronJob creates a new CronJob for a AppRepository resource. It also sets
@@ -440,16 +464,29 @@ func intervalToCron(duration string) (string, error) {
 // the AppRepository resource that 'owns' it.
 func newCronJob(apprepo *apprepov1alpha1.AppRepository, config Config) *batchv1.CronJob {
 	var err error
-
+	gron := gronx.New()
 	cronTime := config.Crontab
+
+	defaultValid := gron.IsValid(cronTime)
+	if !defaultValid {
+		// TODO(agamez): handle this situation
+		log.Errorf("Invalid crontab for apprepo %q: %s", apprepo.Name, cronTime)
+	}
 
 	// If the apprepo has its own interval,
 	// use that instead of the default global crontab.
 	if apprepo.Spec.Interval != "" {
-		cronTime, err = intervalToCron(apprepo.Spec.Interval)
+		// if the passed interval is indeed a cron expression, use it straight
+		if gron.IsValid(apprepo.Spec.Interval) {
+			cronTime = apprepo.Spec.Interval
+		} else {
+			// otherwise, convert it
+			cronTime, err = intervalToCron(apprepo.Spec.Interval)
+		}
 	}
 	// If the interval is invalid, use the default global crontab
 	if err != nil {
+		log.Errorf("Invalid interval for apprepo %q: %v", apprepo.Name, err)
 		cronTime = config.Crontab
 	}
 
