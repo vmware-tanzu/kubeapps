@@ -1,6 +1,7 @@
 # Copyright 2021-2022 the Kubeapps contributors.
 # SPDX-License-Identifier: Apache-2.0
 
+---
 # Turns out we don't actually need the .tgz files for the unit tests that use this file.
 # If/when we do, you should be able to get them from
 # https://raw.githubusercontent.com/BurdenBear/kube-charts-mirror/master/docs/

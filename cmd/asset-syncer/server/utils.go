@@ -120,7 +120,7 @@ func getSha256(src []byte) (string, error) {
 	return fmt.Sprintf("%x", h.Sum(nil)), nil
 }
 
-// Repo defines the methods to retrive information from the given repository
+// Repo defines the methods to retrieve information from the given repository
 type Repo interface {
 	Checksum() (string, error)
 	Repo() *models.RepoInternal

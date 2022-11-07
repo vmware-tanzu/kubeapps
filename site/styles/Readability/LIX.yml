@@ -1,3 +1,4 @@
+---
 extends: metric
 message: "Try to keep the LIX score (%s) below 50."
 

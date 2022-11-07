@@ -1,12 +1,13 @@
+---
 extends: existence
 message: "'%s' is redundant."
 level: error
 action:
   name: edit
   params:
-   - split
-   - ' '
-   - '0'
+    - split
+    - ' '
+    - '0'
 tokens:
   - ABM missile
   - ACT test

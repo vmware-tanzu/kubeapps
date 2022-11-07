@@ -304,13 +304,13 @@ func createConfigGetter(serveOpts core.ServeOptions, clustersConfig kube.Cluster
 		}
 	}
 
-	// return the closure fuction that takes the context, but preserving the required scope,
+	// return the closure function that takes the context, but preserving the required scope,
 	// 'inClusterConfig' and 'config'
 	return createConfigGetterWithParams(restConfig, serveOpts, clustersConfig)
 }
 
-// createClientGetter takes the required params and returns the closure fuction.
-// it's splitted for testing this fn separately
+// createClientGetter takes the required params and returns the closure function.
+// it's split for testing this fn separately
 func createConfigGetterWithParams(inClusterConfig *rest.Config, serveOpts core.ServeOptions, clustersConfig kube.ClustersConfig) (core.KubernetesConfigGetter, error) {
 	// return the closure function that takes the context, but preserving the required scope,
 	// 'inClusterConfig' and 'config'

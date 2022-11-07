@@ -13,7 +13,7 @@ it("renders the root component", () => {
 });
 
 describe("118n configuration", () => {
-  it("loads the initial i18n config from getDefaulI18nConfig", async () => {
+  it("loads the initial i18n config from getDefaultI18nConfig", async () => {
     const config: II18nConfig = { locale: "custom", messages: { messageId: "translation" } };
     const getDefaultConfig = jest.spyOn(I18n, "getDefaultConfig").mockReturnValue(config);
     act(() => {

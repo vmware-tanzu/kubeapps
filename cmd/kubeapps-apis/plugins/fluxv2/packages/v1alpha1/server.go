@@ -161,12 +161,13 @@ func NewServer(configGetter core.KubernetesConfigGetter, kubeappsCluster string,
 
 // GetAvailablePackageSummaries returns the available packages based on the request.
 // Note that currently packages are returned only from repos that are in a 'Ready'
-// state. For the fluxv2 plugin, the request context namespace (the target
-// namespace) is not relevant since charts from a repository in any namespace
-// accessible to the user are available to be installed in the target namespace.
-// TODO (gfichtenholt) if flux helm-controller flag "-no-cross-namespace-refs=true" is
-// enabled we might need to filter out all namespaces except for request target namespace
-// ref https://github.com/vmware-tanzu/kubeapps/issues/5541
+// state. For the fluxv2 plugin:
+//   - if flux helm-controller flag "-no-cross-namespace-refs=true" is
+//     enabled only the request target namespace is relevant
+//     ref https://github.com/vmware-tanzu/kubeapps/issues/5541
+//   - otherwise the request context namespace (the target
+//     namespace) is not relevant since charts from a repository in any namespace
+//     accessible to the user are available to be installed in the target namespace.
 func (s *Server) GetAvailablePackageSummaries(ctx context.Context, request *corev1.GetAvailablePackageSummariesRequest) (*corev1.GetAvailablePackageSummariesResponse, error) {
 	log.Infof("+fluxv2 GetAvailablePackageSummaries(request: [%v])", request)
 	defer log.Info("-fluxv2 GetAvailablePackageSummaries")
@@ -186,7 +187,12 @@ func (s *Server) GetAvailablePackageSummaries(ctx context.Context, request *core
 		return nil, err
 	}
 
-	charts, err := s.getChartsForRepos(ctx, request.GetFilterOptions().GetRepositories())
+	ns := metav1.NamespaceAll
+	if s.pluginConfig.NoCrossNamespaceRefs {
+		ns = request.Context.Namespace
+	}
+
+	charts, err := s.getChartsForRepos(ctx, ns, request.GetFilterOptions().GetRepositories())
 	if err != nil {
 		return nil, err
 	}

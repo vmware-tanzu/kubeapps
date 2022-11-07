@@ -113,7 +113,7 @@ function stefanProdanCloneRegistrySanityCheck() {
 }
 
 function myGithubRegistrySanityCheck() {
-  # 1. check the version we pushed exists on the remote and is the only version avaialble
+  # 1. check the version we pushed exists on the remote and is the only version available
   # ref https://docs.github.com/en/rest/packages#get-all-package-versions-for-a-package-owned-by-the-authenticated-user
   ALL_VERSIONS=$(gh api \
   -H "Accept: application/vnd.github+json" \
@@ -128,7 +128,7 @@ function myGithubRegistrySanityCheck() {
   fi
 
   # 2. By default the new OCI registry is private. 
-  # In order for the intergration test to work the OCI registry needs 'public' visibility
+  # In order for the integration test to work the OCI registry needs 'public' visibility
   # https://docs.github.com/en/packages/learn-github-packages/configuring-a-packages-access-control-and-visibility
   # API ref https://docs.github.com/en/rest/packages#get-a-package-for-the-authenticated-user
   # GitHub web portal: https://github.com/users/gfichtenholt/packages/container/helm-charts%2Fpodinfo/settings 

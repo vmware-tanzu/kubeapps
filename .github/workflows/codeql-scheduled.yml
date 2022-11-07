@@ -1,0 +1,14 @@
+# Copyright 2022 the Kubeapps contributors
+# SPDX-License-Identifier: Apache-2.0
+
+---
+name: "CodeQL"
+
+on:
+  schedule:
+    - cron: "0 5 * * *"
+  workflow_dispatch:
+
+jobs:
+  CodeQL:
+    uses: ./.github/workflows/codeql-reusable.yml

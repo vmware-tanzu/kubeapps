@@ -1,3 +1,4 @@
+---
 extends: existence
 message: "'%s' is a cliche."
 level: error

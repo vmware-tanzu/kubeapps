@@ -4265,7 +4265,7 @@ func TestCreateInstalledPackage(t *testing.T) {
 			},
 		},
 		{
-			name: "create installed package (non elegible version)",
+			name: "create installed package (non eligible version)",
 			request: &corev1.CreateInstalledPackageRequest{
 				AvailablePackageRef: &corev1.AvailablePackageReference{
 					Context: &corev1.Context{
@@ -5719,7 +5719,7 @@ func TestUpdateInstalledPackage(t *testing.T) {
 			},
 		},
 		{
-			name: "update installed package (non elegible version)",
+			name: "update installed package (non eligible version)",
 			request: &corev1.UpdateInstalledPackageRequest{
 				InstalledPackageRef: &corev1.InstalledPackageReference{
 					Context: &corev1.Context{
