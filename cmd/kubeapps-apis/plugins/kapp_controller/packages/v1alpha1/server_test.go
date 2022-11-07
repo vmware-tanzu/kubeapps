@@ -10038,7 +10038,9 @@ func TestGetPackageRepositoryPermissions(t *testing.T) {
 			}
 
 			s := Server{
-				pluginConfig: defaultPluginConfig,
+				pluginConfig: &kappControllerPluginParsedConfig{
+					globalPackagingNamespace: fallbackGlobalPackagingNamespace,
+				},
 				clientGetter: clientgetter.NewBuilder().
 					WithTyped(typedClient).
 					Build(),
