@@ -1967,9 +1967,11 @@ type PackageRepositoriesPermissions struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Plugin    *v1alpha1.Plugin `protobuf:"bytes,1,opt,name=plugin,proto3" json:"plugin,omitempty"`
-	Global    map[string]bool  `protobuf:"bytes,2,rep,name=global,proto3" json:"global,omitempty" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"varint,2,opt,name=value,proto3"`
-	Namespace map[string]bool  `protobuf:"bytes,3,rep,name=namespace,proto3" json:"namespace,omitempty" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"varint,2,opt,name=value,proto3"`
+	Plugin *v1alpha1.Plugin `protobuf:"bytes,1,opt,name=plugin,proto3" json:"plugin,omitempty"`
+	// Permissions at the global namespace (if any)
+	Global map[string]bool `protobuf:"bytes,2,rep,name=global,proto3" json:"global,omitempty" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"varint,2,opt,name=value,proto3"`
+	// Permissions for the namespace
+	Namespace map[string]bool `protobuf:"bytes,3,rep,name=namespace,proto3" json:"namespace,omitempty" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"varint,2,opt,name=value,proto3"`
 }
 
 func (x *PackageRepositoriesPermissions) Reset() {

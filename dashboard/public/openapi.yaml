@@ -2083,6 +2083,61 @@ paths:
         $ref: "#/components/requestBodies/v1alpha1AddPackageRepositoryRequest"
       tags:
         - FluxV2RepositoriesService
+  "/apis/plugins/fluxv2/packages/v1alpha1/repositories/c/{context.cluster}/permissions":
+    get:
+      operationId: FluxV2RepositoriesService_GetPackageRepositoryPermissions
+      responses:
+        "200":
+          description: A successful response.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/v1alpha1GetPackageRepositoryPermissionsResponse"
+        "401":
+          description: Returned when the user does not have permission to access the
+            resource.
+          content:
+            application/json:
+              schema: {}
+        default:
+          description: An unexpected error response.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/rpcStatus"
+      parameters:
+        - name: context.cluster
+          description: >-
+            Cluster
+
+
+            A cluster name can be provided to target a specific cluster if multiple
+
+            clusters are configured, otherwise all clusters will be assumed.
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: context.namespace
+          description: >-
+            Namespace. A namespace must be provided if the context of the
+            operation is for a resource
+
+            or resources in a particular namespace.
+
+            For requests to list items, not including a namespace here implies that the context
+
+            for the request is everything the requesting user can read, though the result can
+
+            be filtered by any filtering options of the request. Plugins may choose to return
+
+            Unimplemented for some queries for which we do not yet have a need.
+          in: query
+          required: false
+          schema:
+            type: string
+      tags:
+        - FluxV2RepositoriesService
   "/apis/plugins/fluxv2/packages/v1alpha1/repositories/c/{packageRepoRef.context.cluster}/ns/{packageRepoRef.context.namespace}/{packageRepoRef.identifier}":
     get:
       operationId: FluxV2RepositoriesService_GetPackageRepositoryDetail
@@ -4321,6 +4376,61 @@ paths:
         $ref: "#/components/requestBodies/v1alpha1AddPackageRepositoryRequest"
       tags:
         - KappControllerRepositoriesService
+  "/apis/plugins/kapp_controller/packages/v1alpha1/repositories/c/{context.cluster}/permissions":
+    get:
+      operationId: KappControllerRepositoriesService_GetPackageRepositoryPermissions
+      responses:
+        "200":
+          description: A successful response.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/v1alpha1GetPackageRepositoryPermissionsResponse"
+        "401":
+          description: Returned when the user does not have permission to access the
+            resource.
+          content:
+            application/json:
+              schema: {}
+        default:
+          description: An unexpected error response.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/rpcStatus"
+      parameters:
+        - name: context.cluster
+          description: >-
+            Cluster
+
+
+            A cluster name can be provided to target a specific cluster if multiple
+
+            clusters are configured, otherwise all clusters will be assumed.
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: context.namespace
+          description: >-
+            Namespace. A namespace must be provided if the context of the
+            operation is for a resource
+
+            or resources in a particular namespace.
+
+            For requests to list items, not including a namespace here implies that the context
+
+            for the request is everything the requesting user can read, though the result can
+
+            be filtered by any filtering options of the request. Plugins may choose to return
+
+            Unimplemented for some queries for which we do not yet have a need.
+          in: query
+          required: false
+          schema:
+            type: string
+      tags:
+        - KappControllerRepositoriesService
   "/apis/plugins/kapp_controller/packages/v1alpha1/repositories/c/{packageRepoRef.context.cluster}/ns/{packageRepoRef.context.namespace}/{packageRepoRef.identifier}":
     get:
       operationId: KappControllerRepositoriesService_GetPackageRepositoryDetail
@@ -5073,14 +5183,6 @@ paths:
             type: boolean
       tags:
         - ResourcesService
-security:
-  - ApiKeyAuth: []
-externalDocs:
-  description: Kubeapps GitHub repository
-  url: https://github.com/vmware-tanzu/kubeapps
-servers:
-  - url: http://127.0.0.1:8080/apis
-  - url: https://127.0.0.1:8080/apis
 components:
   requestBodies:
     v1alpha1AddPackageRepositoryRequest:
@@ -6011,10 +6113,12 @@ components:
           type: object
           additionalProperties:
             type: boolean
+          title: Permissions at the global namespace (if any)
         namespace:
           type: object
           additionalProperties:
             type: boolean
+          title: Permissions for the namespace
     v1alpha1PackageRepositoryAuth:
       type: object
       properties:
