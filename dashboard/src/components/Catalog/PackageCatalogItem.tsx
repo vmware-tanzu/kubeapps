@@ -11,7 +11,7 @@ export default function PackageCatalogItem(props: IPackageCatalogItem) {
   const { cluster, namespace, availablePackageSummary } = props;
 
   // Use the current cluster/namespace in the URL (passed as props here),
-  // but, if it is global a "global" segement will be included in the generated URL.
+  // but, if it is global a "global" segment will be included in the generated URL.
   const packageViewLink = url.app.packages.get(
     cluster,
     namespace,

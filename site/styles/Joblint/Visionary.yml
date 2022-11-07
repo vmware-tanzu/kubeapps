@@ -1,3 +1,4 @@
+---
 extends: existence
 message: "Avoid using '%s'"
 description: "Terms like '%s' often indicate that a non technical person (perhaps a CEO or stakeholder) has been involved in writing the post."

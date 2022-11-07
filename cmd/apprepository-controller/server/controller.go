@@ -271,7 +271,7 @@ func (c *Controller) syncHandler(key string) error {
 		// processing.
 		if errors.IsNotFound(err) {
 			log.Infof("AppRepository '%s' no longer exists so performing cleanup of charts from the DB", key)
-			// Trigger a Job to perfrom the cleanup of the charts in the DB corresponding to deleted AppRepository
+			// Trigger a Job to perform the cleanup of the charts in the DB corresponding to deleted AppRepository
 			_, err = c.kubeclientset.BatchV1().Jobs(c.conf.KubeappsNamespace).Create(context.TODO(), newCleanupJob(c.conf.KubeappsNamespace, namespace, name, c.conf), metav1.CreateOptions{})
 			if err != nil {
 				log.Errorf("Unable to create cleanup job: %v", err)
@@ -612,8 +612,8 @@ func generateJobName(namespace, name, pattern string, addDash bool) string {
 	patternLen := len(strings.ReplaceAll(pattern, "%s", ""))
 
 	// for example: the "apprepo--cleanup--" string has 18 chars, which leaves us 52-18=34 chars for the final name
-	maxNamesapceLength, rem := (MAX_CRONJOB_CHARS-patternLen)/2, (MAX_CRONJOB_CHARS-patternLen)%2
-	maxNameLength := maxNamesapceLength
+	maxNamespaceLength, rem := (MAX_CRONJOB_CHARS-patternLen)/2, (MAX_CRONJOB_CHARS-patternLen)%2
+	maxNameLength := maxNamespaceLength
 	if rem > 0 && !addDash {
 		maxNameLength++
 	}
@@ -622,7 +622,7 @@ func generateJobName(namespace, name, pattern string, addDash bool) string {
 		pattern = fmt.Sprintf("%s-", pattern)
 	}
 
-	truncatedName := fmt.Sprintf(pattern, truncateAndHashString(namespace, maxNamesapceLength), truncateAndHashString(name, maxNameLength))
+	truncatedName := fmt.Sprintf(pattern, truncateAndHashString(namespace, maxNamespaceLength), truncateAndHashString(name, maxNameLength))
 
 	return truncatedName
 }

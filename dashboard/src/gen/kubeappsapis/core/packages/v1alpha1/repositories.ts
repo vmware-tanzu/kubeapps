@@ -588,7 +588,9 @@ export interface GetPackageRepositoryPermissionsRequest {
 
 export interface PackageRepositoriesPermissions {
   plugin?: Plugin;
+  /** Permissions at the global namespace (if any) */
   global: { [key: string]: boolean };
+  /** Permissions for the namespace */
   namespace: { [key: string]: boolean };
 }
 

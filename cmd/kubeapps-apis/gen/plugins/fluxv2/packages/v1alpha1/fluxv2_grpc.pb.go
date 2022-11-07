@@ -424,6 +424,7 @@ type FluxV2RepositoriesServiceClient interface {
 	DeletePackageRepository(ctx context.Context, in *v1alpha1.DeletePackageRepositoryRequest, opts ...grpc.CallOption) (*v1alpha1.DeletePackageRepositoryResponse, error)
 	// this endpoint only exists for the purpose of integration tests
 	SetUserManagedSecrets(ctx context.Context, in *SetUserManagedSecretsRequest, opts ...grpc.CallOption) (*SetUserManagedSecretsResponse, error)
+	GetPackageRepositoryPermissions(ctx context.Context, in *v1alpha1.GetPackageRepositoryPermissionsRequest, opts ...grpc.CallOption) (*v1alpha1.GetPackageRepositoryPermissionsResponse, error)
 }
 
 type fluxV2RepositoriesServiceClient struct {
@@ -488,6 +489,15 @@ func (c *fluxV2RepositoriesServiceClient) SetUserManagedSecrets(ctx context.Cont
 	return out, nil
 }
 
+func (c *fluxV2RepositoriesServiceClient) GetPackageRepositoryPermissions(ctx context.Context, in *v1alpha1.GetPackageRepositoryPermissionsRequest, opts ...grpc.CallOption) (*v1alpha1.GetPackageRepositoryPermissionsResponse, error) {
+	out := new(v1alpha1.GetPackageRepositoryPermissionsResponse)
+	err := c.cc.Invoke(ctx, "/kubeappsapis.plugins.fluxv2.packages.v1alpha1.FluxV2RepositoriesService/GetPackageRepositoryPermissions", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // FluxV2RepositoriesServiceServer is the server API for FluxV2RepositoriesService service.
 // All implementations should embed UnimplementedFluxV2RepositoriesServiceServer
 // for forward compatibility
@@ -501,6 +511,7 @@ type FluxV2RepositoriesServiceServer interface {
 	DeletePackageRepository(context.Context, *v1alpha1.DeletePackageRepositoryRequest) (*v1alpha1.DeletePackageRepositoryResponse, error)
 	// this endpoint only exists for the purpose of integration tests
 	SetUserManagedSecrets(context.Context, *SetUserManagedSecretsRequest) (*SetUserManagedSecretsResponse, error)
+	GetPackageRepositoryPermissions(context.Context, *v1alpha1.GetPackageRepositoryPermissionsRequest) (*v1alpha1.GetPackageRepositoryPermissionsResponse, error)
 }
 
 // UnimplementedFluxV2RepositoriesServiceServer should be embedded to have forward compatible implementations.
@@ -524,6 +535,9 @@ func (UnimplementedFluxV2RepositoriesServiceServer) DeletePackageRepository(cont
 }
 func (UnimplementedFluxV2RepositoriesServiceServer) SetUserManagedSecrets(context.Context, *SetUserManagedSecretsRequest) (*SetUserManagedSecretsResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method SetUserManagedSecrets not implemented")
+}
+func (UnimplementedFluxV2RepositoriesServiceServer) GetPackageRepositoryPermissions(context.Context, *v1alpha1.GetPackageRepositoryPermissionsRequest) (*v1alpha1.GetPackageRepositoryPermissionsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetPackageRepositoryPermissions not implemented")
 }
 
 // UnsafeFluxV2RepositoriesServiceServer may be embedded to opt out of forward compatibility for this service.
@@ -645,6 +659,24 @@ func _FluxV2RepositoriesService_SetUserManagedSecrets_Handler(srv interface{}, c
 	return interceptor(ctx, in, info, handler)
 }
 
+func _FluxV2RepositoriesService_GetPackageRepositoryPermissions_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(v1alpha1.GetPackageRepositoryPermissionsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(FluxV2RepositoriesServiceServer).GetPackageRepositoryPermissions(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/kubeappsapis.plugins.fluxv2.packages.v1alpha1.FluxV2RepositoriesService/GetPackageRepositoryPermissions",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(FluxV2RepositoriesServiceServer).GetPackageRepositoryPermissions(ctx, req.(*v1alpha1.GetPackageRepositoryPermissionsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // FluxV2RepositoriesService_ServiceDesc is the grpc.ServiceDesc for FluxV2RepositoriesService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -675,6 +707,10 @@ var FluxV2RepositoriesService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "SetUserManagedSecrets",
 			Handler:    _FluxV2RepositoriesService_SetUserManagedSecrets_Handler,
+		},
+		{
+			MethodName: "GetPackageRepositoryPermissions",
+			Handler:    _FluxV2RepositoriesService_GetPackageRepositoryPermissions_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

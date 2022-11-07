@@ -46,7 +46,7 @@ Kubeapps navigates to the **Package Repositories** page displaying a list of ins
 
 ![Package repository page](../img/package-repository/package-repository-page-empty.png)
 
-Click the **Add Package Repository** button that displays a pop-up (structured in collapsable sections) to configure the parameters for the new Package Repository.
+Click the **Add Package Repository** button that displays a pop-up (structured in collapsible sections) to configure the parameters for the new Package Repository.
 
 Introduce the following data to add basic information about the repository:
 
@@ -177,7 +177,7 @@ In the **Advanced** tab, there are a set of configurations options depending on 
 ![Package Repository advanced tab Helm](../img/package-repository/package-repository-advanced-helm.png)
 
 - **Helm via Flux**:
-  - `Syncronization Interval`: set the time to wait between each synchronization of the repository.
+  - `Synchronization Interval`: set the time to wait between each synchronization of the repository.
   - `Custom CA certificate`: Custom CA certificate to use when connecting to the repository.
   - `Skip TLS Verification`: If enabled, the TLS certificate will not be verified.
   - `Pass Credentials to 3rd party URLs`: If enabled, the same credentials will be sent to those URLs for fetching the icon and the tarball files.

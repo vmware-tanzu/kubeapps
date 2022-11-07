@@ -1,3 +1,4 @@
+---
 extends: existence
 message: "'%s' is a bit of a skunked term — impossible to use without issue."
 ignorecase: true

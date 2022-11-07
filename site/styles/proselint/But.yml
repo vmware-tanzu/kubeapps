@@ -1,3 +1,4 @@
+---
 extends: existence
 message: "Do not start a paragraph with a 'but'."
 level: error

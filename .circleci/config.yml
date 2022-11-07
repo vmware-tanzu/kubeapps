@@ -1,6 +1,8 @@
 # Copyright 2018-2022 the Kubeapps contributors.
 # SPDX-License-Identifier: Apache-2.0
 
+# yamllint disable rule:trailing-spaces
+---
 version: 2.1
 parameters:
   GOLANG_VERSION:
@@ -289,7 +291,7 @@ common_envars: &common_envars
 
 common_gke_envars: &common_gke_envars
   USE_MULTICLUSTER_OIDC_ENV: "false"
-  TEST_TIMEOUT_MINUTES: 6 # Timeout minutes for each test
+  TEST_TIMEOUT_MINUTES: 6  # Timeout minutes for each test
 
 install_gcloud_sdk: &install_gcloud_sdk
   run:
@@ -539,7 +541,7 @@ run_e2e_tests: &run_e2e_tests
         DEV_TAG=${latest/v/}
         IMG_MODIFIER=""
       fi
-      
+
       source ./script/lib/liblog.sh
       info "###############################################################################################"
       info "USE_MULTICLUSTER_OIDC_ENV: $USE_MULTICLUSTER_OIDC_ENV"
@@ -553,7 +555,7 @@ run_e2e_tests: &run_e2e_tests
       info "CHARTMUSEUM_VERSION: $CHARTMUSEUM_VERSION"
       info "###############################################################################################"
 
-      if 
+      if
         USE_MULTICLUSTER_OIDC_ENV="${USE_MULTICLUSTER_OIDC_ENV}" \
         OLM_VERSION="${OLM_VERSION}" \
         IMG_DEV_TAG="${DEV_TAG}" \
@@ -563,7 +565,7 @@ run_e2e_tests: &run_e2e_tests
         ADDITIONAL_CLUSTER_IP="${ADDITIONAL_CLUSTER_IP:-}" \
         KAPP_CONTROLLER_VERSION="${KAPP_CONTROLLER_VERSION}" \
         CHARTMUSEUM_VERSION="${CHARTMUSEUM_VERSION}" \
-        ./script/e2e-test.sh; 
+        ./script/e2e-test.sh;
       then
         # Test success
         echo "export TEST_RESULT=$?" >> $BASH_ENV
@@ -620,7 +622,7 @@ gke_test: &gke_test
           ESCAPED_GKE_CLUSTER=$(echo ${GKE_CLUSTER}-${CIRCLE_BRANCH:-$CIRCLE_TAG}-${TEST_LATEST_RELEASE}-${GKE_BRANCH}-ci | sed 's/[^a-z0-9-]//g')
           
           # Trim the cluster name in case it exceeds the max length allowed by GKE (currently 40 chars)
-          MAX_LENGTH=40 
+          MAX_LENGTH=40
           len=${#ESCAPED_GKE_CLUSTER}
           if ((len > MAX_LENGTH)); then
             offset=$((len - MAX_LENGTH))
@@ -830,7 +832,7 @@ jobs:
       TEST_UPGRADE: "1"
       USE_MULTICLUSTER_OIDC_ENV: "true"
       TEST_OPERATORS: "1"
-      TEST_TIMEOUT_MINUTES: 4 # Timeout minutes for each test
+      TEST_TIMEOUT_MINUTES: 4  # Timeout minutes for each test
       <<: *common_envars
     parameters:
       number:

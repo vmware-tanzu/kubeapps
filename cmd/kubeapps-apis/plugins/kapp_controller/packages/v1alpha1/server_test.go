@@ -4265,7 +4265,7 @@ func TestCreateInstalledPackage(t *testing.T) {
 			},
 		},
 		{
-			name: "create installed package (non elegible version)",
+			name: "create installed package (non eligible version)",
 			request: &corev1.CreateInstalledPackageRequest{
 				AvailablePackageRef: &corev1.AvailablePackageReference{
 					Context: &corev1.Context{
@@ -5719,7 +5719,7 @@ func TestUpdateInstalledPackage(t *testing.T) {
 			},
 		},
 		{
-			name: "update installed package (non elegible version)",
+			name: "update installed package (non eligible version)",
 			request: &corev1.UpdateInstalledPackageRequest{
 				InstalledPackageRef: &corev1.InstalledPackageReference{
 					Context: &corev1.Context{
@@ -9912,7 +9912,7 @@ func TestGetPackageRepositoryPermissions(t *testing.T) {
 					reaction: func(action k8stesting.Action) (handled bool, ret k8sruntime.Object, err error) {
 						createAction := action.(k8stesting.CreateActionImpl)
 						accessReview := createAction.Object.(*authorizationv1.SelfSubjectAccessReview)
-						if accessReview.Spec.ResourceAttributes.Namespace != "" {
+						if accessReview.Spec.ResourceAttributes.Namespace != fallbackGlobalPackagingNamespace {
 							return true, &authorizationv1.SelfSubjectAccessReview{Status: authorizationv1.SubjectAccessReviewStatus{Allowed: false}}, nil
 						}
 						switch accessReview.Spec.ResourceAttributes.Verb {
@@ -9991,7 +9991,7 @@ func TestGetPackageRepositoryPermissions(t *testing.T) {
 					reaction: func(action k8stesting.Action) (handled bool, ret k8sruntime.Object, err error) {
 						createAction := action.(k8stesting.CreateActionImpl)
 						accessReview := createAction.Object.(*authorizationv1.SelfSubjectAccessReview)
-						if accessReview.Spec.ResourceAttributes.Namespace == "" {
+						if accessReview.Spec.ResourceAttributes.Namespace == fallbackGlobalPackagingNamespace {
 							return true, &authorizationv1.SelfSubjectAccessReview{Status: authorizationv1.SubjectAccessReviewStatus{Allowed: true}}, nil
 						}
 						switch accessReview.Spec.ResourceAttributes.Verb {
@@ -10038,7 +10038,9 @@ func TestGetPackageRepositoryPermissions(t *testing.T) {
 			}
 
 			s := Server{
-				pluginConfig: defaultPluginConfig,
+				pluginConfig: &kappControllerPluginParsedConfig{
+					globalPackagingNamespace: fallbackGlobalPackagingNamespace,
+				},
 				clientGetter: clientgetter.NewBuilder().
 					WithTyped(typedClient).
 					Build(),

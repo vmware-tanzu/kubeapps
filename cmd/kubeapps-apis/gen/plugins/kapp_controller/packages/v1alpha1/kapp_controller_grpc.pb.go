@@ -421,6 +421,7 @@ type KappControllerRepositoriesServiceClient interface {
 	GetPackageRepositorySummaries(ctx context.Context, in *v1alpha1.GetPackageRepositorySummariesRequest, opts ...grpc.CallOption) (*v1alpha1.GetPackageRepositorySummariesResponse, error)
 	UpdatePackageRepository(ctx context.Context, in *v1alpha1.UpdatePackageRepositoryRequest, opts ...grpc.CallOption) (*v1alpha1.UpdatePackageRepositoryResponse, error)
 	DeletePackageRepository(ctx context.Context, in *v1alpha1.DeletePackageRepositoryRequest, opts ...grpc.CallOption) (*v1alpha1.DeletePackageRepositoryResponse, error)
+	GetPackageRepositoryPermissions(ctx context.Context, in *v1alpha1.GetPackageRepositoryPermissionsRequest, opts ...grpc.CallOption) (*v1alpha1.GetPackageRepositoryPermissionsResponse, error)
 }
 
 type kappControllerRepositoriesServiceClient struct {
@@ -476,6 +477,15 @@ func (c *kappControllerRepositoriesServiceClient) DeletePackageRepository(ctx co
 	return out, nil
 }
 
+func (c *kappControllerRepositoriesServiceClient) GetPackageRepositoryPermissions(ctx context.Context, in *v1alpha1.GetPackageRepositoryPermissionsRequest, opts ...grpc.CallOption) (*v1alpha1.GetPackageRepositoryPermissionsResponse, error) {
+	out := new(v1alpha1.GetPackageRepositoryPermissionsResponse)
+	err := c.cc.Invoke(ctx, "/kubeappsapis.plugins.kapp_controller.packages.v1alpha1.KappControllerRepositoriesService/GetPackageRepositoryPermissions", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // KappControllerRepositoriesServiceServer is the server API for KappControllerRepositoriesService service.
 // All implementations should embed UnimplementedKappControllerRepositoriesServiceServer
 // for forward compatibility
@@ -486,6 +496,7 @@ type KappControllerRepositoriesServiceServer interface {
 	GetPackageRepositorySummaries(context.Context, *v1alpha1.GetPackageRepositorySummariesRequest) (*v1alpha1.GetPackageRepositorySummariesResponse, error)
 	UpdatePackageRepository(context.Context, *v1alpha1.UpdatePackageRepositoryRequest) (*v1alpha1.UpdatePackageRepositoryResponse, error)
 	DeletePackageRepository(context.Context, *v1alpha1.DeletePackageRepositoryRequest) (*v1alpha1.DeletePackageRepositoryResponse, error)
+	GetPackageRepositoryPermissions(context.Context, *v1alpha1.GetPackageRepositoryPermissionsRequest) (*v1alpha1.GetPackageRepositoryPermissionsResponse, error)
 }
 
 // UnimplementedKappControllerRepositoriesServiceServer should be embedded to have forward compatible implementations.
@@ -506,6 +517,9 @@ func (UnimplementedKappControllerRepositoriesServiceServer) UpdatePackageReposit
 }
 func (UnimplementedKappControllerRepositoriesServiceServer) DeletePackageRepository(context.Context, *v1alpha1.DeletePackageRepositoryRequest) (*v1alpha1.DeletePackageRepositoryResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method DeletePackageRepository not implemented")
+}
+func (UnimplementedKappControllerRepositoriesServiceServer) GetPackageRepositoryPermissions(context.Context, *v1alpha1.GetPackageRepositoryPermissionsRequest) (*v1alpha1.GetPackageRepositoryPermissionsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetPackageRepositoryPermissions not implemented")
 }
 
 // UnsafeKappControllerRepositoriesServiceServer may be embedded to opt out of forward compatibility for this service.
@@ -609,6 +623,24 @@ func _KappControllerRepositoriesService_DeletePackageRepository_Handler(srv inte
 	return interceptor(ctx, in, info, handler)
 }
 
+func _KappControllerRepositoriesService_GetPackageRepositoryPermissions_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(v1alpha1.GetPackageRepositoryPermissionsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(KappControllerRepositoriesServiceServer).GetPackageRepositoryPermissions(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/kubeappsapis.plugins.kapp_controller.packages.v1alpha1.KappControllerRepositoriesService/GetPackageRepositoryPermissions",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(KappControllerRepositoriesServiceServer).GetPackageRepositoryPermissions(ctx, req.(*v1alpha1.GetPackageRepositoryPermissionsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // KappControllerRepositoriesService_ServiceDesc is the grpc.ServiceDesc for KappControllerRepositoriesService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -635,6 +667,10 @@ var KappControllerRepositoriesService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "DeletePackageRepository",
 			Handler:    _KappControllerRepositoriesService_DeletePackageRepository_Handler,
+		},
+		{
+			MethodName: "GetPackageRepositoryPermissions",
+			Handler:    _KappControllerRepositoriesService_GetPackageRepositoryPermissions_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

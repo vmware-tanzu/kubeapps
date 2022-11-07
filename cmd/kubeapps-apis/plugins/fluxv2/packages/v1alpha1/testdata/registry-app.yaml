@@ -9,7 +9,7 @@ metadata:
   name: registry-auth
 data:
   # Local credential for the instantiated Docker registry.
-  # User "foo" and password "bar". The vakue of htpasswd was computed as follows:
+  # User "foo" and password "bar". The value of htpasswd was computed as follows:
   # 1. docker run --entrypoint htpasswd httpd:2 -Bbn foo bar
   # 2. base64 encode the result of (1)
   htpasswd: Zm9vOiQyeSQwNSRJM3pyTE14YmZRcnlQOXBVdzdFYXV1WG1OSlZnQk81T2E0SnFBOE9QUjdRcVo4SEh1RDVtNg==

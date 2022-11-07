@@ -25,7 +25,7 @@ import (
 // This flavor of OCI repsitory lister works with respect to those OCI registry vendors
 // that implement Docker Registry HTTP API V2 or OCI Distribution Specification.
 // For example, GitHub (ghcr.io), harbor and GCP Artifact Repositories are
-// known to suport this API, with some caveats:
+// known to support this API, with some caveats:
 // - harbor does support Docker Registry HTTP API V2 when robot accounts are used
 // References:
 // - https://github.com/distribution/distribution/blob/main/docs/spec/api.md
