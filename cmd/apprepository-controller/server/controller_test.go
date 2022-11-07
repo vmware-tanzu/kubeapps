@@ -82,12 +82,12 @@ func Test_newCronJob(t *testing.T) {
 									Annotations: map[string]string{},
 								},
 								Spec: corev1.PodSpec{
-									RestartPolicy: "OnFailure",
+									RestartPolicy: corev1.RestartPolicyOnFailure,
 									Containers: []corev1.Container{
 										{
 											Name:            "sync",
 											Image:           repoSyncImage,
-											ImagePullPolicy: "IfNotPresent",
+											ImagePullPolicy: corev1.PullIfNotPresent,
 											Command:         []string{"/chart-repo"},
 											Args: []string{
 												"sync",
@@ -164,12 +164,12 @@ func Test_newCronJob(t *testing.T) {
 									Annotations: map[string]string{},
 								},
 								Spec: corev1.PodSpec{
-									RestartPolicy: "OnFailure",
+									RestartPolicy: corev1.RestartPolicyOnFailure,
 									Containers: []corev1.Container{
 										{
 											Name:            "sync",
 											Image:           repoSyncImage,
-											ImagePullPolicy: "IfNotPresent",
+											ImagePullPolicy: corev1.PullIfNotPresent,
 											Command:         []string{"/chart-repo"},
 											Args: []string{
 												"sync",
@@ -259,12 +259,12 @@ func Test_newCronJob(t *testing.T) {
 									Annotations: map[string]string{},
 								},
 								Spec: corev1.PodSpec{
-									RestartPolicy: "OnFailure",
+									RestartPolicy: corev1.RestartPolicyOnFailure,
 									Containers: []corev1.Container{
 										{
 											Name:            "sync",
 											Image:           repoSyncImage,
-											ImagePullPolicy: "IfNotPresent",
+											ImagePullPolicy: corev1.PullIfNotPresent,
 											Command:         []string{"/chart-repo"},
 											Args: []string{
 												"sync",
@@ -351,12 +351,12 @@ func Test_newCronJob(t *testing.T) {
 									Annotations: map[string]string{},
 								},
 								Spec: corev1.PodSpec{
-									RestartPolicy: "OnFailure",
+									RestartPolicy: corev1.RestartPolicyOnFailure,
 									Containers: []corev1.Container{
 										{
 											Name:            "sync",
 											Image:           repoSyncImage,
-											ImagePullPolicy: "IfNotPresent",
+											ImagePullPolicy: corev1.PullIfNotPresent,
 											Command:         []string{"/chart-repo"},
 											Args: []string{
 												"sync",
@@ -449,12 +449,12 @@ func Test_newCronJob(t *testing.T) {
 									Annotations: map[string]string{},
 								},
 								Spec: corev1.PodSpec{
-									RestartPolicy: "OnFailure",
+									RestartPolicy: corev1.RestartPolicyOnFailure,
 									Containers: []corev1.Container{
 										{
 											Name:            "sync",
 											Image:           repoSyncImage,
-											ImagePullPolicy: "IfNotPresent",
+											ImagePullPolicy: corev1.PullIfNotPresent,
 											Command:         []string{"/chart-repo"},
 											Args: []string{
 												"sync",
@@ -541,12 +541,12 @@ func Test_newCronJob(t *testing.T) {
 									Annotations: map[string]string{},
 								},
 								Spec: corev1.PodSpec{
-									RestartPolicy: "OnFailure",
+									RestartPolicy: corev1.RestartPolicyOnFailure,
 									Containers: []corev1.Container{
 										{
 											Name:            "sync",
 											Image:           repoSyncImage,
-											ImagePullPolicy: "IfNotPresent",
+											ImagePullPolicy: corev1.PullIfNotPresent,
 											Command:         []string{"/chart-repo"},
 											Args: []string{
 												"sync",
@@ -648,12 +648,12 @@ func Test_newSyncJob(t *testing.T) {
 							Annotations: map[string]string{},
 						},
 						Spec: corev1.PodSpec{
-							RestartPolicy: "OnFailure",
+							RestartPolicy: corev1.RestartPolicyOnFailure,
 							Containers: []corev1.Container{
 								{
 									Name:            "sync",
 									Image:           repoSyncImage,
-									ImagePullPolicy: "IfNotPresent",
+									ImagePullPolicy: corev1.PullIfNotPresent,
 									Command:         []string{"/chart-repo"},
 									Args: []string{
 										"sync",
@@ -720,12 +720,12 @@ func Test_newSyncJob(t *testing.T) {
 							Annotations: map[string]string{},
 						},
 						Spec: corev1.PodSpec{
-							RestartPolicy: "OnFailure",
+							RestartPolicy: corev1.RestartPolicyOnFailure,
 							Containers: []corev1.Container{
 								{
 									Name:            "sync",
 									Image:           repoSyncImage,
-									ImagePullPolicy: "IfNotPresent",
+									ImagePullPolicy: corev1.PullIfNotPresent,
 									Command:         []string{"/chart-repo"},
 									Args: []string{
 										"sync",
@@ -792,12 +792,12 @@ func Test_newSyncJob(t *testing.T) {
 							Annotations: map[string]string{},
 						},
 						Spec: corev1.PodSpec{
-							RestartPolicy: "OnFailure",
+							RestartPolicy: corev1.RestartPolicyOnFailure,
 							Containers: []corev1.Container{
 								{
 									Name:            "sync",
 									Image:           repoSyncImage,
-									ImagePullPolicy: "IfNotPresent",
+									ImagePullPolicy: corev1.PullIfNotPresent,
 									Command:         []string{"/chart-repo"},
 									Args: []string{
 										"sync",
@@ -878,12 +878,12 @@ func Test_newSyncJob(t *testing.T) {
 							Annotations: map[string]string{},
 						},
 						Spec: corev1.PodSpec{
-							RestartPolicy: "OnFailure",
+							RestartPolicy: corev1.RestartPolicyOnFailure,
 							Containers: []corev1.Container{
 								{
 									Name:            "sync",
 									Image:           repoSyncImage,
-									ImagePullPolicy: "IfNotPresent",
+									ImagePullPolicy: corev1.PullIfNotPresent,
 									Command:         []string{"/chart-repo"},
 									Args: []string{
 										"sync",
@@ -971,12 +971,12 @@ func Test_newSyncJob(t *testing.T) {
 							Annotations: map[string]string{},
 						},
 						Spec: corev1.PodSpec{
-							RestartPolicy: "OnFailure",
+							RestartPolicy: corev1.RestartPolicyOnFailure,
 							Containers: []corev1.Container{
 								{
 									Name:            "sync",
 									Image:           repoSyncImage,
-									ImagePullPolicy: "IfNotPresent",
+									ImagePullPolicy: corev1.PullIfNotPresent,
 									Command:         []string{"/chart-repo"},
 									Args: []string{
 										"sync",
@@ -1075,12 +1075,12 @@ func Test_newSyncJob(t *testing.T) {
 							Annotations: map[string]string{},
 						},
 						Spec: corev1.PodSpec{
-							RestartPolicy: "OnFailure",
+							RestartPolicy: corev1.RestartPolicyOnFailure,
 							Containers: []corev1.Container{
 								{
 									Name:            "sync",
 									Image:           repoSyncImage,
-									ImagePullPolicy: "IfNotPresent",
+									ImagePullPolicy: corev1.PullIfNotPresent,
 									Command:         []string{"/chart-repo"},
 									Args: []string{
 										"sync",
@@ -1181,12 +1181,12 @@ func Test_newSyncJob(t *testing.T) {
 							Annotations: map[string]string{},
 						},
 						Spec: corev1.PodSpec{
-							RestartPolicy: "OnFailure",
+							RestartPolicy: corev1.RestartPolicyOnFailure,
 							Containers: []corev1.Container{
 								{
 									Name:            "sync",
 									Image:           repoSyncImage,
-									ImagePullPolicy: "IfNotPresent",
+									ImagePullPolicy: corev1.PullIfNotPresent,
 									Command:         []string{"/chart-repo"},
 									Args: []string{
 										"sync",
@@ -1288,12 +1288,12 @@ func Test_newSyncJob(t *testing.T) {
 						},
 						Spec: corev1.PodSpec{
 							Affinity:      &corev1.Affinity{NodeAffinity: &corev1.NodeAffinity{RequiredDuringSchedulingIgnoredDuringExecution: &corev1.NodeSelector{}}},
-							RestartPolicy: "OnFailure",
+							RestartPolicy: corev1.RestartPolicyOnFailure,
 							Containers: []corev1.Container{
 								{
 									Name:            "sync",
 									Image:           repoSyncImage,
-									ImagePullPolicy: "IfNotPresent",
+									ImagePullPolicy: corev1.PullIfNotPresent,
 									Command:         []string{"/chart-repo"},
 									Args: []string{
 										"sync",
@@ -1372,12 +1372,12 @@ func Test_newSyncJob(t *testing.T) {
 							Annotations: map[string]string{},
 						},
 						Spec: corev1.PodSpec{
-							RestartPolicy: "OnFailure",
+							RestartPolicy: corev1.RestartPolicyOnFailure,
 							Containers: []corev1.Container{
 								{
 									Name:            "sync",
 									Image:           repoSyncImage,
-									ImagePullPolicy: "IfNotPresent",
+									ImagePullPolicy: corev1.PullIfNotPresent,
 									Command:         []string{"/chart-repo"},
 									Args: []string{
 										"sync",
@@ -1458,12 +1458,12 @@ func Test_newSyncJob(t *testing.T) {
 							Annotations: map[string]string{},
 						},
 						Spec: corev1.PodSpec{
-							RestartPolicy: "OnFailure",
+							RestartPolicy: corev1.RestartPolicyOnFailure,
 							Containers: []corev1.Container{
 								{
 									Name:            "sync",
 									Image:           repoSyncImage,
-									ImagePullPolicy: "IfNotPresent",
+									ImagePullPolicy: corev1.PullIfNotPresent,
 									Command:         []string{"/chart-repo"},
 									Args: []string{
 										"sync",
@@ -1545,12 +1545,12 @@ func Test_newSyncJob(t *testing.T) {
 							Annotations: map[string]string{},
 						},
 						Spec: corev1.PodSpec{
-							RestartPolicy: "OnFailure",
+							RestartPolicy: corev1.RestartPolicyOnFailure,
 							Containers: []corev1.Container{
 								{
 									Name:            "sync",
 									Image:           repoSyncImage,
-									ImagePullPolicy: "IfNotPresent",
+									ImagePullPolicy: corev1.PullIfNotPresent,
 									Command:         []string{"/chart-repo"},
 									Args: []string{
 										"sync",
@@ -1633,12 +1633,12 @@ func Test_newSyncJob(t *testing.T) {
 							Annotations: map[string]string{},
 						},
 						Spec: corev1.PodSpec{
-							RestartPolicy: "OnFailure",
+							RestartPolicy: corev1.RestartPolicyOnFailure,
 							Containers: []corev1.Container{
 								{
 									Name:            "sync",
 									Image:           repoSyncImage,
-									ImagePullPolicy: "IfNotPresent",
+									ImagePullPolicy: corev1.PullIfNotPresent,
 									Command:         []string{"/chart-repo"},
 									Args: []string{
 										"sync",
@@ -1708,12 +1708,12 @@ func Test_newCleanupJob(t *testing.T) {
 					TTLSecondsAfterFinished: &defaultTTL,
 					Template: corev1.PodTemplateSpec{
 						Spec: corev1.PodSpec{
-							RestartPolicy: "Never",
+							RestartPolicy: corev1.RestartPolicyNever,
 							Containers: []corev1.Container{
 								{
 									Name:            "delete",
 									Image:           repoSyncImage,
-									ImagePullPolicy: "IfNotPresent",
+									ImagePullPolicy: corev1.PullIfNotPresent,
 									Command:         []string{"/chart-repo"},
 									Args: []string{
 										"delete",
@@ -1753,12 +1753,12 @@ func Test_newCleanupJob(t *testing.T) {
 					TTLSecondsAfterFinished: &defaultTTL,
 					Template: corev1.PodTemplateSpec{
 						Spec: corev1.PodSpec{
-							RestartPolicy: "Never",
+							RestartPolicy: corev1.RestartPolicyNever,
 							Containers: []corev1.Container{
 								{
 									Name:            "delete",
 									Image:           repoSyncImage,
-									ImagePullPolicy: "IfNotPresent",
+									ImagePullPolicy: corev1.PullIfNotPresent,
 									Command:         []string{"/chart-repo"},
 									Args: []string{
 										"delete",

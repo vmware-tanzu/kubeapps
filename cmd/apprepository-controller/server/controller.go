@@ -559,7 +559,7 @@ func syncJobSpec(apprepo *apprepov1alpha1.AppRepository, config Config) batchv1.
 	// If there's an issue, will restart pod until successful or replaced
 	// by another instance of the job scheduled by the cronjob
 	// see: cronJobSpec.concurrencyPolicy
-	podTemplateSpec.Spec.RestartPolicy = "OnFailure"
+	podTemplateSpec.Spec.RestartPolicy = corev1.RestartPolicyOnFailure
 	// Populate container spec
 	if len(podTemplateSpec.Spec.Containers) == 0 {
 		podTemplateSpec.Spec.Containers = []corev1.Container{{}}
@@ -569,7 +569,7 @@ func syncJobSpec(apprepo *apprepov1alpha1.AppRepository, config Config) batchv1.
 
 	podTemplateSpec.Spec.Containers[0].Name = "sync"
 	podTemplateSpec.Spec.Containers[0].Image = config.RepoSyncImage
-	podTemplateSpec.Spec.Containers[0].ImagePullPolicy = "IfNotPresent"
+	podTemplateSpec.Spec.Containers[0].ImagePullPolicy = corev1.PullIfNotPresent
 	podTemplateSpec.Spec.Containers[0].Command = []string{config.RepoSyncCommand}
 	podTemplateSpec.Spec.Containers[0].Args = apprepoSyncJobArgs(apprepo, config)
 	podTemplateSpec.Spec.Containers[0].Env = append(podTemplateSpec.Spec.Containers[0].Env, apprepoSyncJobEnvVars(apprepo, config)...)
@@ -604,13 +604,13 @@ func cleanupJobSpec(namespace, name string, config Config) batchv1.JobSpec {
 		Template: corev1.PodTemplateSpec{
 			Spec: corev1.PodSpec{
 				// If there's an issue, delay till the next cron
-				RestartPolicy:    "Never",
+				RestartPolicy:    corev1.RestartPolicyNever,
 				ImagePullSecrets: config.ImagePullSecretsRefs,
 				Containers: []corev1.Container{
 					{
 						Name:            "delete",
 						Image:           config.RepoSyncImage,
-						ImagePullPolicy: "IfNotPresent",
+						ImagePullPolicy: corev1.PullIfNotPresent,
 						Command:         []string{config.RepoSyncCommand},
 						Args:            apprepoCleanupJobArgs(namespace, name, config),
 						Env: []corev1.EnvVar{
