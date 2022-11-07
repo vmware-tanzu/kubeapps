@@ -59,7 +59,7 @@ var (
 		Spec: v1alpha1.AppRepositorySpec{
 			Type:     "helm",
 			URL:      "http://example.com",
-			Interval: "99m",
+			Interval: "15m",
 		},
 	}
 
@@ -508,7 +508,7 @@ var (
 		Type:            "helm",
 		Url:             "http://example.com",
 		NamespaceScoped: true,
-		Interval:        "99m",
+		Interval:        "15m",
 	}
 
 	toProtoBufAny = func(src proto.Message) *anypb.Any {

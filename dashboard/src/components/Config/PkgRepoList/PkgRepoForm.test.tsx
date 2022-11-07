@@ -382,7 +382,7 @@ it("should call the install using the interval", async () => {
   wrapper.find("#kubeapps-repo-name").simulate("change", { target: { value: "helm-repo" } });
   wrapper.find("#kubeapps-repo-url").simulate("change", { target: { value: "helm.repo" } });
   wrapper.find("#kubeapps-repo-type-helm").simulate("change");
-  wrapper.find("#kubeapps-repo-interval").simulate("change", { target: { value: "99m" } });
+  wrapper.find("#kubeapps-repo-interval").simulate("change", { target: { value: "15m" } });
   const form = wrapper.find("form");
   await act(async () => {
     await (form.prop("onSubmit") as (e: any) => Promise<any>)({ preventDefault: jest.fn() });
@@ -395,7 +395,7 @@ it("should call the install using the interval", async () => {
     url: "https://helm.repo",
     description: undefined,
     plugin: { name: PluginNames.PACKAGES_HELM, version: "v1alpha1" },
-    interval: "99m",
+    interval: "15m",
   } as unknown as IPkgRepoFormData);
 });
 

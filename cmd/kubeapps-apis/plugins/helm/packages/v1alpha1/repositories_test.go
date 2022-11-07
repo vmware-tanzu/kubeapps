@@ -1243,11 +1243,11 @@ func TestUpdatePackageRepository(t *testing.T) {
 		{
 			name: "check that interval is used",
 			requestCustomizer: func(request *corev1.UpdatePackageRepositoryRequest) *corev1.UpdatePackageRepositoryRequest {
-				request.Interval = "99m"
+				request.Interval = "15m"
 				return request
 			},
 			expectedRepoCustomizer: func(repository appRepov1alpha1.AppRepository) *appRepov1alpha1.AppRepository {
-				repository.Spec.Interval = "99m"
+				repository.Spec.Interval = "15m"
 				// other changes inherent to how the customizer works
 				repository.ResourceVersion = "2"
 				repository.Spec.Description = ""
