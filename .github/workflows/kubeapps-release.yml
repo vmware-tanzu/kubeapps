@@ -14,8 +14,8 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  main:
-    uses: ./.github/workflows/kubeapps-general.yaml
+  CI:
+    uses: ./.github/workflows/reusable/kubeapps-general.yaml
     secrets: inherit
     with:
       run_gke_tests: true

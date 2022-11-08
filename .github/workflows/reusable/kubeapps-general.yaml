@@ -168,7 +168,7 @@ jobs:
     if: inputs.run_linters
     needs:
       - setup
-    uses: ./.github/workflows/linters.yml
+    uses: ./.github/workflows/reusable/linters.yml
     with:
       golang_version: ${{ needs.setup.outputs.golang_version }}
 
@@ -745,7 +745,7 @@ jobs:
   GKE_REGULAR_VERSION:
     needs:
       - gke_setup
-    uses: ./.github/workflows/gke_e2e_tests.yaml
+    uses: ./.github/workflows/reusable/gke_e2e_tests.yaml
     with:
       GKE_BRANCH: ${{ needs.gke_setup.outputs.GKE_REGULAR_VERSION }}
       DEBUG_MODE: ${{ needs.gke_setup.outputs.DEBUG_MODE == 'true' }}
@@ -770,7 +770,7 @@ jobs:
   GKE_STABLE_VERSION:
     needs:
       - gke_setup
-    uses: ./.github/workflows/gke_e2e_tests.yaml
+    uses: ./.github/workflows/reusable/gke_e2e_tests.yaml
     with:
       GKE_BRANCH: ${{ needs.gke_setup.outputs.GKE_STABLE_VERSION }}
       DEBUG_MODE: ${{ needs.gke_setup.outputs.DEBUG_MODE == 'true' }}

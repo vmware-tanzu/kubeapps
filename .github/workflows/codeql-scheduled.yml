@@ -11,4 +11,4 @@ on:
 
 jobs:
   CodeQL:
-    uses: ./.github/workflows/codeql-reusable.yml
+    uses: ./.github/workflows/reusable/codeql.yml
