@@ -149,6 +149,13 @@ func newHelmRepoCrd(repo *HelmRepository, secret *k8scorev1.Secret, imagePullSec
 			Description:           repo.description,
 			PassCredentials:       repo.auth != nil && repo.auth.PassCredentials,
 			Interval:              repo.interval,
+			// TODO(agamez): are more fields here if they're requested
+			// https://github.com/vmware-tanzu/kubeapps/issues/5128
+			SyncJobPodTemplate: k8scorev1.PodTemplateSpec{
+				Spec: k8scorev1.PodSpec{
+					Containers: []k8scorev1.Container{{Env: []k8scorev1.EnvVar{}}},
+				},
+			},
 		},
 	}
 	if repo.auth != nil || repo.tlsConfig != nil {
@@ -172,6 +179,51 @@ func newHelmRepoCrd(repo *HelmRepository, secret *k8scorev1.Secret, imagePullSec
 		}
 		if repo.customDetail.OciRepositories != nil {
 			appRepoCrd.Spec.OCIRepositories = repo.customDetail.OciRepositories
+		}
+		if repo.customDetail.NodeSelector != nil {
+			appRepoCrd.Spec.SyncJobPodTemplate.Spec.NodeSelector = repo.customDetail.NodeSelector
+		}
+		if repo.customDetail.Tolerations != nil {
+			appRepoCrd.Spec.SyncJobPodTemplate.Spec.Tolerations = make([]k8scorev1.Toleration, len(repo.customDetail.Tolerations))
+			for i, t := range repo.customDetail.Tolerations {
+				appRepoCrd.Spec.SyncJobPodTemplate.Spec.Tolerations[i] = k8scorev1.Toleration{
+					Key:               *t.Key,
+					Operator:          k8scorev1.TolerationOperator(*t.Operator),
+					Value:             *t.Value,
+					Effect:            k8scorev1.TaintEffect(*t.Effect),
+					TolerationSeconds: t.TolerationSeconds,
+				}
+			}
+		}
+		if repo.customDetail.SecurityContext != nil {
+			appRepoCrd.Spec.SyncJobPodTemplate.Spec.SecurityContext = &k8scorev1.PodSecurityContext{
+				RunAsUser:          repo.customDetail.SecurityContext.RunAsUser,
+				RunAsGroup:         repo.customDetail.SecurityContext.RunAsGroup,
+				RunAsNonRoot:       repo.customDetail.SecurityContext.RunAsNonRoot,
+				SupplementalGroups: repo.customDetail.SecurityContext.SupplementalGroups,
+				FSGroup:            repo.customDetail.SecurityContext.FSGroup,
+			}
+		}
+
+		if repo.customDetail.ProxyOptions != nil && repo.customDetail.ProxyOptions.Enabled {
+			if repo.customDetail.ProxyOptions.HttpProxy != "" {
+				appRepoCrd.Spec.SyncJobPodTemplate.Spec.Containers[0].Env = append(appRepoCrd.Spec.SyncJobPodTemplate.Spec.Containers[0].Env, k8scorev1.EnvVar{
+					Name:  "http_proxy",
+					Value: repo.customDetail.ProxyOptions.HttpProxy,
+				})
+			}
+			if repo.customDetail.ProxyOptions.HttpsProxy != "" {
+				appRepoCrd.Spec.SyncJobPodTemplate.Spec.Containers[0].Env = append(appRepoCrd.Spec.SyncJobPodTemplate.Spec.Containers[0].Env, k8scorev1.EnvVar{
+					Name:  "https_proxy",
+					Value: repo.customDetail.ProxyOptions.HttpsProxy,
+				})
+			}
+			if repo.customDetail.ProxyOptions.NoProxy != "" {
+				appRepoCrd.Spec.SyncJobPodTemplate.Spec.Containers[0].Env = append(appRepoCrd.Spec.SyncJobPodTemplate.Spec.Containers[0].Env, k8scorev1.EnvVar{
+					Name:  "no_proxy",
+					Value: repo.customDetail.ProxyOptions.NoProxy,
+				})
+			}
 		}
 	}
 	return appRepoCrd, nil
