@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"hash/adler32"
 	"math"
+	"reflect"
 	"strconv"
 	"strings"
 	"time"
@@ -138,7 +139,7 @@ func NewController(
 		UpdateFunc: func(oldObj, newObj interface{}) {
 			oldApp := oldObj.(*apprepov1alpha1.AppRepository)
 			newApp := newObj.(*apprepov1alpha1.AppRepository)
-			if oldApp.Spec.URL != newApp.Spec.URL || oldApp.Spec.ResyncRequests != newApp.Spec.ResyncRequests {
+			if !reflect.DeepEqual(oldApp.Spec, newApp.Spec) {
 				controller.enqueueAppRepo(newApp)
 			}
 		},

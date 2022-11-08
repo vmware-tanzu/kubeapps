@@ -2004,8 +2004,6 @@ export function PkgRepoForm(props: IPkgRepoFormProps) {
                     type="text"
                     placeholder={initialInterval}
                     value={syncInterval || ""}
-                    // Helm plugin does not support changing the sync interval once the repo is created
-                    disabled={!!repo.name && plugin?.name === PluginNames.PACKAGES_HELM}
                     onChange={handleIntervalChange}
                   />
                   <CdsControlMessage>
