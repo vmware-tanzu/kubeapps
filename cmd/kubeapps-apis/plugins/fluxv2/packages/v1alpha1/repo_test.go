@@ -40,11 +40,12 @@ type testSpecGetAvailablePackageSummaries struct {
 
 func TestGetAvailablePackageSummariesWithoutPagination(t *testing.T) {
 	testCases := []struct {
-		name              string
-		request           *corev1.GetAvailablePackageSummariesRequest
-		repos             []testSpecGetAvailablePackageSummaries
-		expectedResponse  *corev1.GetAvailablePackageSummariesResponse
-		expectedErrorCode codes.Code
+		name                 string
+		request              *corev1.GetAvailablePackageSummariesRequest
+		repos                []testSpecGetAvailablePackageSummaries
+		expectedResponse     *corev1.GetAvailablePackageSummariesResponse
+		expectedErrorCode    codes.Code
+		noCrossNamespaceRefs bool
 	}{
 		{
 			name: "it returns a couple of fluxv2 packages from the cluster (no request ns specified)",
@@ -386,6 +387,30 @@ func TestGetAvailablePackageSummariesWithoutPagination(t *testing.T) {
 			}},
 			expectedErrorCode: codes.Unimplemented,
 		},
+		{
+			name: "it returns expected fluxv2 packages when noCrossNamespaceRefs flag is set",
+			repos: []testSpecGetAvailablePackageSummaries{
+				{
+					name:      "bitnami-1",
+					namespace: "default",
+					url:       "https://example.repo.com/charts",
+					index:     testYaml("valid-index.yaml"),
+				},
+				{
+					name:      "jetstack-1",
+					namespace: "ns1",
+					url:       "https://charts.jetstack.io",
+					index:     testYaml("jetstack-index.yaml"),
+				},
+			},
+			request: &corev1.GetAvailablePackageSummariesRequest{Context: &corev1.Context{Namespace: "ns1"}},
+			expectedResponse: &corev1.GetAvailablePackageSummariesResponse{
+				AvailablePackageSummaries: []*corev1.AvailablePackageSummary{
+					cert_manager_summary,
+				},
+			},
+			noCrossNamespaceRefs: true,
+		},
 	}
 
 	for _, tc := range testCases {
@@ -408,8 +433,19 @@ func TestGetAvailablePackageSummariesWithoutPagination(t *testing.T) {
 				t.Fatalf("error instantiating the server: %v", err)
 			}
 
-			if err = s.redisMockExpectGetFromRepoCache(mock, tc.request.FilterOptions, repos...); err != nil {
-				t.Fatalf("%v", err)
+			if tc.noCrossNamespaceRefs {
+				s.pluginConfig.NoCrossNamespaceRefs = true
+				for _, r := range repos {
+					if r.Namespace == tc.request.Context.Namespace {
+						if err = s.redisMockExpectGetFromRepoCache(mock, nil, r); err != nil {
+							t.Fatalf("%v", err)
+						}
+					}
+				}
+			} else {
+				if err = s.redisMockExpectGetFromRepoCache(mock, tc.request.FilterOptions, repos...); err != nil {
+					t.Fatalf("%v", err)
+				}
 			}
 
 			response, err := s.GetAvailablePackageSummaries(context.Background(), tc.request)

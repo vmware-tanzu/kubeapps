@@ -1442,6 +1442,15 @@ func execCommand(t *testing.T, dir, name string, args []string) (string, error) 
 	return out, err
 }
 
+func SleepWithCountdown(t *testing.T, secs int) {
+	for i := secs; i > 0; i-- {
+		if i <= 10 || i%5 == 0 {
+			t.Logf("Waiting, %ds left...", i)
+		}
+		time.Sleep(1 * time.Second)
+	}
+}
+
 // global vars
 var (
 	typedClient kubernetes.Interface
