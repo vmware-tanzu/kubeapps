@@ -435,6 +435,9 @@ jobs:
         include: # Override the default timeout for the operators group, to avoid flaky tests
           - tests_group: operator
             timeout_minutes: 6
+        exclude:
+          - tests_group: operator
+            timeout_minutes: 4
     env:
       DEFAULT_DEX_IP: "172.18.0.2"
       IMG_PREFIX: ${{ needs.setup.outputs.img_prefix }}
