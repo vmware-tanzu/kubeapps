@@ -15,6 +15,6 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  main:
+  CI:
     uses: ./.github/workflows/kubeapps-general.yaml
     secrets: inherit
