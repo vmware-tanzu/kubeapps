@@ -12,8 +12,8 @@ import { CdsCheckbox } from "@cds/react/checkbox";
 import { CdsControlMessage, CdsFormGroup } from "@cds/react/forms";
 import { CdsInput } from "@cds/react/input";
 import { CdsRadio, CdsRadioGroup } from "@cds/react/radio";
-import { CdsTextarea } from "@cds/react/textarea";
 import { CdsSelect } from "@cds/react/select";
+import { CdsTextarea } from "@cds/react/textarea";
 import { CdsToggle, CdsToggleGroup } from "@cds/react/toggle";
 import actions from "actions";
 import Alert from "components/js/Alert";
@@ -24,6 +24,7 @@ import {
   UsernamePassword,
 } from "gen/kubeappsapis/core/packages/v1alpha1/repositories";
 import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins";
+import { FluxPackageRepositoryCustomDetail } from "gen/kubeappsapis/plugins/fluxv2/packages/v1alpha1/fluxv2";
 import { HelmPackageRepositoryCustomDetail } from "gen/kubeappsapis/plugins/helm/packages/v1alpha1/helm";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
@@ -47,7 +48,6 @@ import {
   k8sObjectNameRegex,
 } from "shared/utils";
 import "./PkgRepoForm.css";
-import { FluxPackageRepositoryCustomDetail } from "gen/kubeappsapis/plugins/fluxv2/packages/v1alpha1/fluxv2";
 
 export interface IPkgRepoFormProps {
   onSubmit: (data: IPkgRepoFormData) => Promise<boolean>;
@@ -168,6 +168,10 @@ export function PkgRepoForm(props: IPkgRepoFormProps) {
   const [customCA, setCustomCA] = useState("");
   const [skipTLS, setSkipTLS] = useState(!!repo?.tlsConfig?.insecureSkipVerify);
   const [passCredentials, setPassCredentials] = useState(!!repo?.auth?.passCredentials);
+  const [proxyOptionsEnabled, setProxyOptionsEnabled] = useState(false);
+  const [proxyOptionsHttpProxy, setProxyOptionsHttpProxy] = useState("false");
+  const [proxyOptionsHttpsProxy, setProxyOptionsHttpsProxy] = useState("false");
+  const [proxyOptionsNoProxy, setProxyOptionsNoProxy] = useState("");
 
   // -- Kubeapps/User-managed secrets  variables --
   const [isUserManagedSecret, setIsUserManagedSecret] = useState(false);
@@ -234,6 +238,12 @@ export function PkgRepoForm(props: IPkgRepoFormProps) {
           setFilterRegex(regex);
           setFilterExclude(exclude);
           setFilterNames(names);
+        }
+        if (helmPackageRepositoryCustomDetail?.proxyOptions?.enabled) {
+          setProxyOptionsEnabled(helmPackageRepositoryCustomDetail.proxyOptions.enabled);
+          setProxyOptionsHttpProxy(helmPackageRepositoryCustomDetail.proxyOptions.httpProxy);
+          setProxyOptionsHttpsProxy(helmPackageRepositoryCustomDetail.proxyOptions.httpsProxy);
+          setProxyOptionsNoProxy(helmPackageRepositoryCustomDetail.proxyOptions.noProxy);
         }
         if (
           helmPackageRepositoryCustomDetail?.imagesPullSecret?.secretRef ||
@@ -579,6 +589,18 @@ export function PkgRepoForm(props: IPkgRepoFormProps) {
   };
   const handleFilterExcludeChange = (_e: React.ChangeEvent<HTMLInputElement>) => {
     setFilterExclude(!filterExclude);
+  };
+  const handleProxyOptionsEnabled = (_e: React.ChangeEvent<HTMLInputElement>) => {
+    setProxyOptionsEnabled(!proxyOptionsEnabled);
+  };
+  const handleProxyOptionsHttpProxy = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setProxyOptionsHttpProxy(e.target.value);
+  };
+  const handleProxyOptionsHttpsProxy = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setProxyOptionsHttpsProxy(e.target.value);
+  };
+  const handleProxyOptionsNoProxy = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setProxyOptionsNoProxy(e.target.value);
   };
   const handleAuthSecretUserChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSecretUser(e.target.value);
@@ -2145,6 +2167,64 @@ export function PkgRepoForm(props: IPkgRepoFormProps) {
                       icon and the tarball files (potentially insecure).
                     </CdsControlMessage>
                   </CdsCheckbox>
+                )}
+
+                {plugin?.name === PluginNames.PACKAGES_HELM && (
+                  <>
+                    <CdsToggleGroup className="flex-v-center">
+                      <CdsToggle>
+                        <label htmlFor="kubeapps-repo-proxy-enabled">Proxy Options</label>
+                        <input
+                          id="kubeapps-repo-proxy-enabled"
+                          type="checkbox"
+                          checked={proxyOptionsEnabled}
+                          onChange={handleProxyOptionsEnabled}
+                          disabled={!!repo.name}
+                        />
+                      </CdsToggle>
+                      <CdsControlMessage>
+                        If enabled, the Proxy Options will be used to connect to the repository
+                      </CdsControlMessage>
+                    </CdsToggleGroup>
+
+                    {proxyOptionsEnabled && (
+                      <>
+                        <CdsInput className="margin-t-sm">
+                          <label htmlFor="kubeapps-repo-proxy-http">HTTP Proxy</label>
+                          <input
+                            id="kubeapps-repo-proxy-http"
+                            type="text"
+                            value={proxyOptionsHttpProxy || ""}
+                            onChange={handleProxyOptionsHttpProxy}
+                            required={proxyOptionsEnabled}
+                            disabled={!!repo.name}
+                          />
+                        </CdsInput>
+                        <CdsInput className="margin-t-sm">
+                          <label htmlFor="kubeapps-repo-proxy-https">HTTPS Proxy</label>
+                          <input
+                            id="kubeapps-repo-proxy-https"
+                            type="text"
+                            value={proxyOptionsHttpsProxy || ""}
+                            onChange={handleProxyOptionsHttpsProxy}
+                            required={proxyOptionsEnabled}
+                            disabled={!!repo.name}
+                          />
+                        </CdsInput>
+                        <CdsInput className="margin-t-sm">
+                          <label htmlFor="kubeapps-repo-proxy-noproxy">No Proxy</label>
+                          <input
+                            id="kubeapps-repo-proxy-noproxy"
+                            type="text"
+                            value={proxyOptionsNoProxy || ""}
+                            onChange={handleProxyOptionsNoProxy}
+                            required={proxyOptionsEnabled}
+                            disabled={!!repo.name}
+                          />
+                        </CdsInput>
+                      </>
+                    )}
+                  </>
                 )}
               </CdsFormGroup>
             </CdsAccordionContent>

@@ -42,6 +42,17 @@ const helmPackageRepositoryCustomDetail = {
   },
   ociRepositories: [],
   performValidation: false,
+  tolerations: [],
+  nodeSelector: {},
+  securityContext: {
+    supplementalGroups: [],
+  },
+  proxyOptions: {
+    enabled: false,
+    httpProxy: "",
+    httpsProxy: "",
+    noProxy: "",
+  },
 } as HelmPackageRepositoryCustomDetail;
 
 const kappPackageRepositoryCustomDetail = {

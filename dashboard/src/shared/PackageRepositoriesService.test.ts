@@ -32,6 +32,21 @@ const helmCustomDetail: HelmPackageRepositoryCustomDetail = {
     jq: ".name == $var0 or .name == $var1",
     variables: { $var0: "nginx", $var1: "wordpress" },
   },
+  tolerations: [{ key: "key", operator: "Equal", value: "value", effect: "NoSchedule" }],
+  nodeSelector: { "kubernetes.io/os": "linux" },
+  securityContext: {
+    runAsUser: 1000,
+    runAsGroup: 3000,
+    supplementalGroups: [2000],
+    fSGroup: 2000,
+    runAsNonRoot: true,
+  },
+  proxyOptions: {
+    enabled: true,
+    httpProxy: "http://proxy",
+    httpsProxy: "https://proxy",
+    noProxy: "localhost",
+  },
 };
 
 const kappCustomDetail: KappControllerPackageRepositoryCustomDetail = {
