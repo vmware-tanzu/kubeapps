@@ -165,7 +165,7 @@ export function validateValuesSchema(
   let valuesToCheck = yaml.load(values);
   if (defaultValues) {
     const defaultYAML = yaml.load(defaultValues);
-    let patches = jsonpatch.compare(defaultYAML, valuesToCheck);
+    let patches = jsonpatch.compare(defaultYAML as Object, valuesToCheck as Object);
     patches = patches.filter(function (d) {
       return ["add", "replace"].includes(d.op);
     });
