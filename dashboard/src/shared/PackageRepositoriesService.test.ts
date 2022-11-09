@@ -32,20 +32,21 @@ const helmCustomDetail: HelmPackageRepositoryCustomDetail = {
     jq: ".name == $var0 or .name == $var1",
     variables: { $var0: "nginx", $var1: "wordpress" },
   },
-  tolerations: [{ key: "key", operator: "Equal", value: "value", effect: "NoSchedule" }],
-  nodeSelector: { "kubernetes.io/os": "linux" },
-  securityContext: {
-    runAsUser: 1000,
-    runAsGroup: 3000,
-    supplementalGroups: [2000],
-    fSGroup: 2000,
-    runAsNonRoot: true,
-  },
   proxyOptions: {
     enabled: true,
     httpProxy: "http://proxy",
     httpsProxy: "https://proxy",
     noProxy: "localhost",
+  },
+  // these options are not used by the UI
+  tolerations: [],
+  nodeSelector: {},
+  securityContext: {
+    supplementalGroups: [],
+    fSGroup: undefined,
+    runAsGroup: undefined,
+    runAsNonRoot: undefined,
+    runAsUser: undefined,
   },
 };
 
@@ -306,7 +307,7 @@ describe("buildEncodedCustomDetail encoding", () => {
     expect(encodedCustomDetail?.typeUrl).toBe(
       "kubeappsapis.plugins.helm.packages.v1alpha1.HelmPackageRepositoryCustomDetail",
     );
-    expect(encodedCustomDetail?.value.byteLength).toBe(101);
+    expect(encodedCustomDetail?.value.byteLength).toBe(149);
     expect(
       HelmPackageRepositoryCustomDetail.decode(encodedCustomDetail?.value as any),
     ).toStrictEqual(helmCustomDetail);
