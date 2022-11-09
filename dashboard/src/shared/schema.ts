@@ -53,13 +53,13 @@ export function retrieveBasicFormParams(
         hasProperties: Boolean(schemaProperty?.properties),
         params: schemaProperty?.properties
           ? retrieveBasicFormParams(
-              currentValues,
-              packageValues,
-              schemaProperty,
-              deploymentEvent,
-              deployedValues,
-              `${itemPath}/`,
-            )
+            currentValues,
+            packageValues,
+            schemaProperty,
+            deploymentEvent,
+            deployedValues,
+            `${itemPath}/`,
+          )
           : undefined,
         // get the string values of the enum array
         enum: schemaProperty?.enum?.map((item: { toString: () => any }) => item?.toString() ?? ""),
@@ -165,7 +165,7 @@ export function validateValuesSchema(
   let valuesToCheck = yaml.load(values);
   if (defaultValues) {
     const defaultYAML = yaml.load(defaultValues);
-    let patches = jsonpatch.compare(defaultYAML as Object, valuesToCheck as Object);
+    let patches = jsonpatch.compare(defaultYAML as any, valuesToCheck as any);
     patches = patches.filter(function (d) {
       return ["add", "replace"].includes(d.op);
     });
