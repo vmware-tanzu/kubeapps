@@ -1,6 +1,9 @@
 # <img src="site/content/docs/latest/img/logo.svg" width="40" align="left"/> Kubeapps
 
 [![CircleCI](https://circleci.com/gh/vmware-tanzu/kubeapps/tree/main.svg?style=svg)](https://circleci.com/gh/vmware-tanzu/kubeapps/tree/main)
+[![Main Pipeline](https://github.com/vmware-tanzu/kubeapps/actions/workflows/kubeapps-main.yaml/badge.svg)](https://github.com/vmware-tanzu/kubeapps/actions/workflows/kubeapps-main.yaml)
+[![Full Integration Pipeline](https://github.com/vmware-tanzu/kubeapps/actions/workflows/kubeapps-full-integration.yaml/badge.svg)](https://github.com/vmware-tanzu/kubeapps/actions/workflows/kubeapps-full-integration.yaml)
+[![CodeQL](https://github.com/vmware-tanzu/kubeapps/actions/workflows/codeql-scheduled.yml/badge.svg)](https://github.com/vmware-tanzu/kubeapps/actions/workflows/codeql-scheduled.yml)
 [![Netlify Status](https://api.netlify.com/api/v1/badges/7e0e2833-1d75-43f6-b006-632d359bb83b/deploy-status)](https://app.netlify.com/sites/kubeapps-dev/deploys)
 
 ## Overview
