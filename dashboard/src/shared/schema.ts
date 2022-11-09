@@ -9,6 +9,7 @@ import { DeploymentEvent, IAjvValidateResult, IBasicFormParam } from "shared/typ
 // TODO(agamez): check if we can replace this package by js-yaml or vice-versa
 import YAML from "yaml";
 import { getPathValueInYamlNode, getPathValueInYamlNodeWithDefault } from "./yamlUtils";
+import * as jsonpatch from "fast-json-patch";
 
 const ajv = new Ajv({ strict: false });
 
@@ -159,8 +160,18 @@ export function schemaToObject(schema?: string): JSONSchemaType<any> {
 export function validateValuesSchema(
   values: string,
   schema: JSONSchemaType<any> | any,
+  defaultValues?: string,
 ): { valid: boolean; errors: ErrorObject[] | null | undefined } {
-  const valid = ajv.validate(schema, yaml.load(values));
+  let valuesToCheck = yaml.load(values);
+  if (defaultValues) {
+    const defaultYAML = yaml.load(defaultValues);
+    let patches = jsonpatch.compare(defaultYAML, valuesToCheck);
+    patches = patches.filter(function (d) {
+      return ["add", "replace"].includes(d.op);
+    });
+    valuesToCheck = jsonpatch.applyPatch(defaultYAML, patches).newDocument;
+  }
+  const valid = ajv.validate(schema, valuesToCheck);
   return { valid: !!valid, errors: ajv.errors } as IAjvValidateResult;
 }
 
