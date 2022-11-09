@@ -423,7 +423,7 @@ func ownerReferencesForAppRepo(apprepo *apprepov1alpha1.AppRepository, childName
 // intervalToCron transforms string durations like "1m" or "1h" to cron expressions
 // Even if valid time units are "ns", "us", "ms", "s", "m", "h",
 // the result will get rounded up to minutes.
-// for durations over 24h only durations below 1 year are supported
+// for durations over 24h, only durations below 1 year are supported
 func intervalToCron(duration string) (string, error) {
 	if duration == "" {
 		return "", fmt.Errorf("duration cannot be empty")
@@ -446,14 +446,14 @@ func intervalToCron(duration string) (string, error) {
 		return fmt.Sprintf("0 */%v * * *", cronHours), nil // every cronHours hours
 	}
 
-	cronDays := math.Ceil(cronHours / 24) // get the days
+	cronDays := math.Ceil(cronHours / 24) // get the days in cronHours, round up to nearest day
 	if cronDays < 32 {
-		return fmt.Sprintf("0 0 */%v * *", cronDays), nil // every cronHoursDays days
+		return fmt.Sprintf("0 0 */%v * *", cronDays), nil // every cronDays days
 	}
 
-	cronMonths := math.Ceil(cronDays / 31) // get the months
+	cronMonths := math.Ceil(cronDays / 31) // get the months in cronDays, round up to nearest month
 	if cronMonths < 13 {
-		return fmt.Sprintf("0 0 1 */%v *", cronMonths), nil // every cronHoursMonths months
+		return fmt.Sprintf("0 0 1 */%v *", cronMonths), nil // every cronMonths months
 	}
 
 	return "", fmt.Errorf("not supported duration: %s", duration)
