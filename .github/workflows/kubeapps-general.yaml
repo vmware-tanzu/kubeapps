@@ -138,8 +138,15 @@ jobs:
           else
             echo "running_on_tag=false" >> $GITHUB_OUTPUT
           fi
-
-          echo "dev_mode=${DEV_MODE}" >> $GITHUB_OUTPUT
+          
+          # TODO(bjesus) Once we've properly tested the release job, we can/should remove this hack, just leave the content from the else branch
+          if [[ ${GITHUB_REF_TYPE} == "tag" &&  ${GITHUB_REF_NAME} == 'test-'* ]]; then
+            echo "DEV_MODE=true" >> $GITHUB_ENV
+            echo "dev_mode=true" >> $GITHUB_OUTPUT
+          else
+            echo "dev_mode=${DEV_MODE}" >> $GITHUB_OUTPUT
+          fi
+          
           echo "golang_version=${GOLANG_VERSION}" >> $GITHUB_OUTPUT
           echo "ssh_key_kubeapps_deploy_filename=${SSH_KEY_KUBEAPPS_DEPLOY_FILENAME}" >> $GITHUB_OUTPUT
           echo "ssh_key_forked_charts_deploy_filename=${SSH_KEY_FORKED_CHARTS_DEPLOY_FILENAME}" >> $GITHUB_OUTPUT
