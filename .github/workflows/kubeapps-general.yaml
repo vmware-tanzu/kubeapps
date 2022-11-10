@@ -526,6 +526,20 @@ jobs:
           name: e2e_tests_${{ matrix.tests_group }}_reports
           path: integration/reports
 
+  # We need this job to aggregate the result of the local_e2e_tests matrix and summarize it. We don't need it because of
+  # GHA itself, but because in GH branch protection rules, we cannot check the status for a job matrix, and would have
+  # require the status for each job in the matrix (eg. local_e2e_tests(carvel)).
+  # See https://github.com/orgs/community/discussions/26822
+  local_e2e_tests_status_check:
+    needs:
+      - local_e2e_tests
+    runs-on: ubuntu-latest
+    if: always()
+    steps:
+      - name: "Check local_e2e_tests matrix status"
+        if: needs.local_e2e_tests.result != 'success'
+        run: exit 1
+
   push_images:
     if: needs.setup.outputs.running_on_main == 'true' || needs.setup.outputs.running_on_tag == 'true'
     runs-on: ubuntu-latest
