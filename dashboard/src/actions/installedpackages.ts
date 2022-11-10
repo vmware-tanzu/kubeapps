@@ -305,7 +305,11 @@ export function updateInstalledPackage(
             `The schema for this package is not valid. Please contact the package author. The following errors were found:\n${errorText}`,
           );
         }
-        const validation = validateValuesSchema(values, schema);
+        const validation = validateValuesSchema(
+          values,
+          schema,
+          availablePackageDetail.defaultValues,
+        );
         if (!validation.valid) {
           const errorText = validation?.errors
             ?.map(e => `  - ${e.instancePath}: ${e.message}`)

@@ -26,7 +26,6 @@ export function retrieveBasicFormParams(
   let params: IBasicFormParam[] = [];
   if (schema?.properties && !isEmpty(schema.properties)) {
     const properties = schema.properties;
-    const requiredProperties = schema.required;
     const schemaExamples = schema.examples;
     Object.keys(properties).forEach(propertyKey => {
       const schemaProperty = properties[propertyKey] as JSONSchemaType<any>;
@@ -53,18 +52,19 @@ export function retrieveBasicFormParams(
         hasProperties: Boolean(schemaProperty?.properties),
         params: schemaProperty?.properties
           ? retrieveBasicFormParams(
-            currentValues,
-            packageValues,
-            schemaProperty,
-            deploymentEvent,
-            deployedValues,
-            `${itemPath}/`,
-          )
+              currentValues,
+              packageValues,
+              schemaProperty,
+              deploymentEvent,
+              deployedValues,
+              `${itemPath}/`,
+            )
           : undefined,
         // get the string values of the enum array
         enum: schemaProperty?.enum?.map((item: { toString: () => any }) => item?.toString() ?? ""),
-        // check if the "required" array contains the current property
-        isRequired: requiredProperties?.includes(propertyKey),
+        // We leave the validation of user values to the Helm backend, since it will take
+        // into account default values (on install) and previously set values (on upgrade).
+        isRequired: false,
         examples: examples,
         // If exists, the value that is currently deployed
         deployedValue: isLeaf
