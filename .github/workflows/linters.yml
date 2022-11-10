@@ -11,7 +11,7 @@ on:
         default: "1.19"
 
 jobs:
-  yaml-linter:
+  yaml:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -26,7 +26,7 @@ jobs:
           name: yamllint-logfile
           path: ${{ steps.yaml-lint.outputs.logfile }}
 
-  golang-linter:
+  golang:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/setup-go@v3
@@ -38,7 +38,7 @@ jobs:
           version: latest
           args: --timeout=10m
 
-  license-headers-linter:
+  license-headers:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/setup-go@v3
@@ -48,7 +48,22 @@ jobs:
       - name: Check license Headers
         uses: apache/skywalking-eyes/header@v0.4.0
 
-  CodeQL:
+  codeql:
     uses: ./.github/workflows/codeql-reusable.yml
     with:
       golang_version: ${{ inputs.golang_version }}
+
+  # We use this job to aggregate the result of all the linters and being able to rely on just one status check in
+  # GH branch protections
+  status_check:
+    needs:
+      - yaml
+      - golang
+      - license-headers
+      - codeql
+    runs-on: ubuntu-latest
+    if: always()
+    steps:
+      - name: "Check all linters status"
+        if: needs.yaml.status != 'success' && needs.golang.status != 'success' && needs.license-headers.status != 'success' && needs.codeql.status != 'success'
+        run: exit 1
