@@ -172,6 +172,15 @@ jobs:
     with:
       golang_version: ${{ needs.setup.outputs.golang_version }}
 
+  linters-result:
+    if: inputs.run_linters
+    needs: linters
+    runs-on: ubuntu-latest
+    steps:
+      - name: "Check all linters result"
+        if: needs.linters.result != 'success'
+        run: exit 1
+
   test_go:
     needs:
       - setup
