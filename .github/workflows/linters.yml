@@ -52,18 +52,3 @@ jobs:
     uses: ./.github/workflows/codeql-reusable.yml
     with:
       golang_version: ${{ inputs.golang_version }}
-
-  # We use this job to aggregate the result of all the linters and being able to rely on just one status check in
-  # GH branch protections
-  linters-status-check:
-    needs:
-      - yaml-linter
-      - golang-linter
-      - license-headers-linter
-      - codeql-linter
-    runs-on: ubuntu-latest
-    if: always()
-    steps:
-      - name: "Check all linters result"
-        if: needs.yaml-linter.result != 'success' || needs.golang-linter.result != 'success' || needs.license-headers-linter.result != 'success' || needs.codeql-linter.result != 'success'
-        run: exit 1
