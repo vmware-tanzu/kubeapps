@@ -131,8 +131,8 @@ it("set default and deployed values", () => {
     <OperatorInstanceUpdateForm {...defaultProps} />,
   );
   expect(wrapper.find(OperatorInstanceFormBody).props()).toMatchObject({
-    defaultValues: "kind: Foo\napiVersion: v1\n",
-    deployedValues: "kind: Foo\napiVersion: v1\nmetadata:\n  name: my-foo\n",
+    defaultValues: 'kind: "Foo"\napiVersion: "v1"\n',
+    deployedValues: 'kind: "Foo"\napiVersion: "v1"\nmetadata:\n  name: "my-foo"aa\n',
   });
 });
 
