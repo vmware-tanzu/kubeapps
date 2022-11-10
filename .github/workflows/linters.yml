@@ -64,12 +64,6 @@ jobs:
     runs-on: ubuntu-latest
     if: always()
     steps:
-      - name: debug
-        run: |
-          echo "yaml-linter.status: ${{ needs.yaml-linter.status }}"
-          echo "golang-linter.status: ${{ needs.golang-linter.status }}"
-          echo "license-headers-linter.status: ${{ needs.license-headers-linter.status }}"
-          echo "codeql-linter.status: ${{ needs.codeql-linter.status }}"
-      - name: "Check all linters status"
-        if: ${{ needs.yaml-linter.status != 'success' && needs.golang-linter.status != 'success' && needs.license-headers-linter.status != 'success' && needs.codeql-linter.status != 'success' }}
+      - name: "Check all linters result"
+        if: needs.yaml-linter.result != 'success' || needs.golang-linter.result != 'success' || needs.license-headers-linter.result != 'success' || needs.codeql-linter.result != 'success'
         run: exit 1
