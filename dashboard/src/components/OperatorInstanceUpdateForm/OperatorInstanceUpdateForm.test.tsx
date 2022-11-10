@@ -132,7 +132,7 @@ it("set default and deployed values", () => {
   );
   expect(wrapper.find(OperatorInstanceFormBody).props()).toMatchObject({
     defaultValues: 'kind: "Foo"\napiVersion: "v1"\n',
-    deployedValues: 'kind: "Foo"\napiVersion: "v1"\nmetadata:\n  name: "my-foo"aa\n',
+    deployedValues: 'kind: "Foo"\napiVersion: "v1"\nmetadata:\n  name: "my-foo"\n',
   });
 });
 
