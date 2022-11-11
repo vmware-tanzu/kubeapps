@@ -47,8 +47,3 @@ jobs:
       - uses: actions/checkout@v3
       - name: Check license Headers
         uses: apache/skywalking-eyes/header@v0.4.0
-
-  codeql-linter:
-    uses: ./.github/workflows/codeql-reusable.yml
-    with:
-      golang_version: ${{ inputs.golang_version }}
