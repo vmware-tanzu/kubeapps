@@ -172,8 +172,8 @@ jobs:
     with:
       golang_version: ${{ needs.setup.outputs.golang_version }}
 
-  linters-result:
-    if: inputs.run_linters
+  linters_result:
+    if: inputs.run_linters && always()
     needs: linters
     runs-on: ubuntu-latest
     steps:
@@ -539,7 +539,7 @@ jobs:
   # GHA itself, but because in GH branch protection rules, we cannot check the status for a job matrix, and would have
   # require the status for each job in the matrix (eg. local_e2e_tests(carvel)).
   # See https://github.com/orgs/community/discussions/26822
-  local_e2e_tests_status_check:
+  local_e2e_tests_result:
     needs:
       - local_e2e_tests
     runs-on: ubuntu-latest
