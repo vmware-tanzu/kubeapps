@@ -6,8 +6,6 @@ const { KubeappsLogin } = require("../utils/kubeapps-login");
 const utils = require("../utils/util-functions");
 
 test("Deploys podinfo package with default values in main cluster", async ({ page }) => {
-  const podInfoTargetVersion = "6.2.3"
-
   // Log in
   const k = new KubeappsLogin(page);
   await k.doLogin("kubeapps-operator@example.com", "password", process.env.ADMIN_TOKEN);
@@ -25,19 +23,14 @@ test("Deploys podinfo package with default values in main cluster", async ({ pag
   await page.click('cds-button:has-text("Deploy") >> nth=0');
 
   // Deploy package
-  await page.waitForSelector('select[name="package-versions"]');
-  const versionSelector = await page.locator('select[name="package-versions"]');
-  await versionSelector?.selectOption(podInfoTargetVersion);
-  await expect(versionSelector).toHaveValue(podInfoTargetVersion, { timeout: 5000 });
-
   const releaseNameLocator = page.locator("#releaseName");
   await releaseNameLocator.waitFor();
   await expect(releaseNameLocator).toHaveText("");
   const releaseName = utils.getRandomName("test-04-release");
+  console.log(`Creating release "${releaseName}"`);
   await releaseNameLocator.fill(releaseName);
   await page.selectOption("#serviceaccount-selector select", "flux-reconciler");
   await page.locator('cds-button:has-text("Deploy")').click();
-  console.log(`Creating release "${releaseName}"`);
 
   // Assertions
   await page.waitForSelector("css=.application-status-pie-chart-number >> text=1", {
