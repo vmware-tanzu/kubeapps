@@ -124,7 +124,7 @@ jobs:
             echo "version=${GITHUB_REF_NAME}" >> $GITHUB_OUTPUT
           else
             echo "img_prod_tag=latest" >> $GITHUB_OUTPUT
-            echo "version=" >> $GITHUB_OUTPUT
+            echo "version=${GITHUB_SHA}" >> $GITHUB_OUTPUT
           fi;
 
           if [[ ${GITHUB_REF_NAME} == ${BRANCH_KUBEAPPS_REPO} ]]; then
@@ -601,6 +601,20 @@ jobs:
             echo "::notice ::Pushing image ${prod_image}"
             docker push $prod_image
           done
+
+  srp_report:
+    if: false # Deactivated until the new SRP UID for GHA is registered
+#    if: needs.setup.outputs.running_on_main == 'true' || needs.setup.outputs.running_on_tag == 'true'
+    needs:
+      - setup
+      - push_images
+    runs-on: ubuntu-latest
+    steps:
+      - uses: ./.github/actions/srp-source-provenance
+        with:
+          SRP_CLIENT_ID: ${{secrets.SRP_CLIENT_ID}}
+          SRP_CLIENT_SECRET: ${{secrets.SRP_CLIENT_SECRET}}
+          VERSION: ${{needs.setup.outputs.version}}
 
   sync_chart_from_bitnami:
     needs:
