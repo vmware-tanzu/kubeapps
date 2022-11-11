@@ -3,12 +3,12 @@
 
 ---
 on:
-  workflow_call:
-    inputs:
-      golang_version:
-        type: string
-        required: false
-        default: "1.19"
+  push:
+    branches: ["main"]
+  pull_request:
+    branches: ["main"]
+  schedule:
+    - cron: "0 5 * * *"
 
 jobs:
   analyze:
@@ -36,7 +36,7 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v3
         with:
-          go-version: ${{ inputs.golang_version }}
+          go-version: 1.19
         if: ${{ matrix.language == 'go' }}
 
       # Initializes the CodeQL tools for scanning.
