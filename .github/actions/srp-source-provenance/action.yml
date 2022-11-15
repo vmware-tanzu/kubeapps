@@ -1,3 +1,7 @@
+# Copyright 2018-2022 the Kubeapps contributors.
+# SPDX-License-Identifier: Apache-2.0
+
+---
 name: SRP Report
 description: Install SRP CLI and Submit Provenance
 inputs:
@@ -44,7 +48,7 @@ runs:
         echo "COMP_UID=$COMP_UID"
         mkdir -p /tmp/provenance
         sudo srp provenance source \
-        --verbose\ 
+        --verbose\
         --scm-type git \
         --name "kubeapps" \
         --path ./ \
@@ -64,7 +68,7 @@ runs:
         cat /tmp/provenance/source.json
         srp uid validate ${SRP_UID}
         srp metadata submit \
-        --verbose \ 
+        --verbose \
         --url https://apigw.vmware.com/v1/s1/api/helix-beta \
         --uid "${SRP_UID}" \
         --path /tmp/provenance/source.json
