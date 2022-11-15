@@ -16,6 +16,7 @@ header:
     - LICENSE
     - NOTICE
     - open_source_licenses.txt
+    - dashboard/src/setupProxy.js
     - "**/*.css"
     - "**/*.dccache"
     - "**/*.html"
