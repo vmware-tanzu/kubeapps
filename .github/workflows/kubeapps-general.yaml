@@ -71,6 +71,7 @@ env:
   GKE_ZONE: "us-east1-c"
   GKE_PROJECT: "vmware-kubeapps-ci"
   GKE_CLUSTER: "kubeapps-test"
+  SRP_CLI_VERSION: "0.2.20220825211752-571e676-57"
 
 jobs:
   setup:
@@ -124,7 +125,7 @@ jobs:
             echo "version=${GITHUB_REF_NAME}" >> $GITHUB_OUTPUT
           else
             echo "img_prod_tag=latest" >> $GITHUB_OUTPUT
-            echo "version=" >> $GITHUB_OUTPUT
+            echo "version=${GITHUB_SHA}" >> $GITHUB_OUTPUT
           fi;
 
           if [[ ${GITHUB_REF_NAME} == ${BRANCH_KUBEAPPS_REPO} ]]; then
@@ -601,6 +602,19 @@ jobs:
             echo "::notice ::Pushing image ${prod_image}"
             docker push $prod_image
           done
+
+  srp_report:
+    needs:
+      - setup
+      - push_images
+    runs-on: ubuntu-latest
+    steps:
+      - uses: ./.github/actions/srp-source-provenance
+        with:
+          SRP_CLI_VERSION: ${SRP_CLI_VERSION}
+          SRP_CLIENT_ID: ${{secrets.SRP_CLIENT_ID}}
+          SRP_CLIENT_SECRET: ${{secrets.SRP_CLIENT_SECRET}}
+          VERSION: ${{needs.setup.outputs.version}}
 
   sync_chart_from_bitnami:
     needs:
