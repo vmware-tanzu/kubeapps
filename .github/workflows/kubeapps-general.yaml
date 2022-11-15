@@ -603,8 +603,7 @@ jobs:
           done
 
   srp_report:
-    if: false # Deactivated until the new SRP UID for GHA is registered
-#    if: needs.setup.outputs.running_on_main == 'true' || needs.setup.outputs.running_on_tag == 'true'
+    if: needs.setup.outputs.running_on_main == 'true' || needs.setup.outputs.running_on_tag == 'true'
     needs:
       - setup
       - push_images
