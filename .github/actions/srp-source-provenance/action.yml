@@ -5,6 +5,10 @@
 name: SRP Report
 description: Install SRP CLI and Submit Provenance
 inputs:
+  SRP_CLI_VERSION:
+    description: Version of the SRP CLI tool
+    required: false
+    default: latest
   SRP_CLIENT_ID:
     description: ID for SRP API Credentials
     required: true
@@ -19,11 +23,17 @@ runs:
   steps:
     - name: Download SRP CLI
       shell: bash
+      env:
+        SRP_CLI_VERSION: ${{ inputs.SRP_CLI_VERSION }}
       run: |
         set -u
         mkdir -p /tmp/srp-cli
-        curl https://srp-cli.s3.amazonaws.com/srp-cli-latest.tgz -o /tmp/srp-cli/srp-cli-latest.tgz
-        tar xvzf /tmp/srp-cli/srp-cli-latest.tgz -C /tmp/srp-cli/
+        if [[ "${SRP_CLI_VERSION}" == "latest" ]]; then
+          curl https://srp-cli.s3.amazonaws.com/srp-cli-latest.tgz -o /tmp/srp-cli/srp-cli-latest.tgz
+          tar xvzf /tmp/srp-cli/srp-cli-latest.tgz -C /tmp/srp-cli/
+        else
+          wget "https://vmwaresaas.jfrog.io/artifactory/srp-tools/srpcli/${SRP_CLI_VERSION}/linux/srp" -O /tmp/srp-cli/srp
+        fi
         chmod +x /tmp/srp-cli/srp
         sudo mv /tmp/srp-cli/srp /usr/local/bin/.
         srp --version

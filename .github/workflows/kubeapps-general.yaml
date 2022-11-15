@@ -71,6 +71,7 @@ env:
   GKE_ZONE: "us-east1-c"
   GKE_PROJECT: "vmware-kubeapps-ci"
   GKE_CLUSTER: "kubeapps-test"
+  SRP_CLI_VERSION: "0.2.20220825211752-571e676-57"
 
 jobs:
   setup:
@@ -603,7 +604,6 @@ jobs:
           done
 
   srp_report:
-    if: needs.setup.outputs.running_on_main == 'true' || needs.setup.outputs.running_on_tag == 'true'
     needs:
       - setup
       - push_images
@@ -611,6 +611,7 @@ jobs:
     steps:
       - uses: ./.github/actions/srp-source-provenance
         with:
+          SRP_CLI_VERSION: ${SRP_CLI_VERSION}
           SRP_CLIENT_ID: ${{secrets.SRP_CLIENT_ID}}
           SRP_CLIENT_SECRET: ${{secrets.SRP_CLIENT_SECRET}}
           VERSION: ${{needs.setup.outputs.version}}
