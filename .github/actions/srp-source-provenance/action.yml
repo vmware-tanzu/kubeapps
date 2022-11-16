@@ -26,7 +26,7 @@ runs:
       env:
         SRP_CLI_VERSION: ${{ inputs.SRP_CLI_VERSION }}
       run: |
-        set -u
+        set -ux
         mkdir -p /tmp/srp-cli
         if [[ "${SRP_CLI_VERSION}" == "latest" ]]; then
           curl https://srp-cli.s3.amazonaws.com/srp-cli-latest.tgz -o /tmp/srp-cli/srp-cli-latest.tgz
