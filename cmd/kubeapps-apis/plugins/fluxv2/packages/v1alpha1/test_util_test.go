@@ -13,11 +13,14 @@ import (
 	"net/http"
 	"os"
 	"reflect"
+	"sort"
+	"strings"
 	"testing"
 
 	helmv2 "github.com/fluxcd/helm-controller/api/v2beta1"
 	sourcev1 "github.com/fluxcd/source-controller/api/v1beta2"
 	"github.com/google/go-cmp/cmp"
+	"github.com/google/go-cmp/cmp/cmpopts"
 	corev1 "github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
 	plugins "github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/core/plugins/v1alpha1"
 	apiv1 "k8s.io/api/core/v1"
@@ -108,11 +111,6 @@ func lessAvailablePackageFunc(p1, p2 *corev1.AvailablePackageSummary) bool {
 
 // these are helpers to compare slices ignoring order
 func lessInstalledPackageSummaryFunc(p1, p2 *corev1.InstalledPackageSummary) bool {
-	return p1.Name < p2.Name
-}
-
-// these are helpers to compare slices ignoring order
-func lessPackageRepositorySummaryFunc(p1, p2 *corev1.PackageRepositorySummary) bool {
 	return p1.Name < p2.Name
 }
 
@@ -390,6 +388,124 @@ func testYaml(name string) string {
 
 func testCert(name string) string {
 	return "./testdata/cert/" + name
+}
+
+func compareActualVsExpectedAvailablePackageDetail(t *testing.T, actual *corev1.AvailablePackageDetail, expected *corev1.AvailablePackageDetail) {
+	opt1 := cmpopts.IgnoreUnexported(
+		corev1.AvailablePackageDetail{},
+		corev1.AvailablePackageReference{},
+		corev1.Context{},
+		corev1.Maintainer{},
+		plugins.Plugin{},
+		corev1.PackageAppVersion{})
+	// these few fields a bit special in that they are all very long strings,
+	// so we'll do a 'Contains' check for these instead of 'Equals'
+	opt2 := cmpopts.IgnoreFields(corev1.AvailablePackageDetail{}, "Readme", "DefaultValues", "ValuesSchema")
+	if got, want := actual, expected; !cmp.Equal(got, want, opt1, opt2) {
+		t.Fatalf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opt1, opt2))
+	}
+	if !strings.Contains(actual.Readme, expected.Readme) {
+		t.Fatalf("substring mismatch (-want: %s\n+got: %s):\n", expected.Readme, actual.Readme)
+	}
+	if !strings.Contains(actual.DefaultValues, expected.DefaultValues) {
+		t.Fatalf("substring mismatch (-want: %s\n+got: %s):\n", expected.DefaultValues, actual.DefaultValues)
+	}
+	if !strings.Contains(actual.ValuesSchema, expected.ValuesSchema) {
+		t.Fatalf("substring mismatch (-want: %s\n+got: %s):\n", expected.ValuesSchema, actual.ValuesSchema)
+	}
+}
+
+func compareActualVsExpectedPackageRepositorySummaries(t *testing.T, actualSummaries *corev1.GetPackageRepositorySummariesResponse, expectedSummaries *corev1.GetPackageRepositorySummariesResponse) {
+	opts := cmpopts.IgnoreUnexported(
+		corev1.Context{},
+		corev1.PackageRepositoryReference{},
+		plugins.Plugin{},
+		corev1.PackageRepositoryStatus{},
+		corev1.GetPackageRepositorySummariesResponse{},
+		corev1.PackageRepositorySummary{},
+	)
+
+	// will compare this separately below
+	opts2 := cmpopts.IgnoreFields(corev1.PackageRepositoryStatus{}, "UserReason")
+
+	// cannot simply use cmpopts.SortSlices() due to doing a custom comparision of the UserReason field below.
+	// Also, we don't want side effects from in-line sorting so we make a copies and use it for comparison
+	// (same thing that cmp.Equal() does when you use cmpopts.SortSlices() option)
+	copyA := make([]*corev1.PackageRepositorySummary, len(actualSummaries.PackageRepositorySummaries))
+	copy(copyA, actualSummaries.PackageRepositorySummaries)
+	sort.Slice(copyA, func(i, j int) bool { return copyA[i].Name < copyA[j].Name })
+
+	copyE := make([]*corev1.PackageRepositorySummary, len(expectedSummaries.PackageRepositorySummaries))
+	copy(copyE, expectedSummaries.PackageRepositorySummaries)
+	sort.Slice(copyE, func(i, j int) bool { return copyE[i].Name < copyE[j].Name })
+
+	if got, want := copyA, copyE; !cmp.Equal(want, got, opts, opts2) {
+		t.Fatalf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opts, opts, opts2))
+	}
+
+	// now compare UserReasons, mindful of the sort order
+	for i, s := range copyA {
+		if !strings.HasPrefix(s.Status.UserReason, copyE[i].Status.UserReason) {
+			t.Fatalf("substring mismatch (-want: %s\n+got: %s):\n",
+				copyE[i].Status.UserReason,
+				s.Status.UserReason)
+		}
+	}
+}
+
+func compareActualVsExpectedPackageRepositoryDetail(t *testing.T, actualDetail *corev1.GetPackageRepositoryDetailResponse, expectedDetail *corev1.GetPackageRepositoryDetailResponse) {
+	opts1 := cmpopts.IgnoreUnexported(
+		corev1.Context{},
+		corev1.PackageRepositoryReference{},
+		plugins.Plugin{},
+		corev1.GetPackageRepositoryDetailResponse{},
+		corev1.PackageRepositoryDetail{},
+		corev1.PackageRepositoryStatus{},
+		corev1.PackageRepositoryAuth{},
+		corev1.PackageRepositoryTlsConfig{},
+		corev1.SecretKeyReference{},
+		corev1.UsernamePassword{},
+		corev1.TlsCertKey{},
+		corev1.DockerCredentials{},
+	)
+
+	opts2 := cmpopts.IgnoreFields(corev1.PackageRepositoryStatus{}, "UserReason")
+
+	if got, want := actualDetail, expectedDetail; !cmp.Equal(want, got, opts1, opts2) {
+		t.Fatalf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opts1, opts2))
+	}
+
+	if !strings.HasPrefix(actualDetail.GetDetail().Status.UserReason, expectedDetail.Detail.Status.UserReason) {
+		t.Fatalf("unexpected response (status.UserReason): (-want +got):\n- %s\n+ %s",
+			expectedDetail.Detail.Status.UserReason,
+			actualDetail.GetDetail().Status.UserReason)
+	}
+}
+
+func compareActualVsExpectedGetInstalledPackageDetailResponse(t *testing.T, actualResp *corev1.GetInstalledPackageDetailResponse, expectedResp *corev1.GetInstalledPackageDetailResponse) {
+	opts := cmpopts.IgnoreUnexported(
+		corev1.GetInstalledPackageDetailResponse{},
+		corev1.InstalledPackageDetail{},
+		corev1.InstalledPackageReference{},
+		corev1.Context{},
+		corev1.VersionReference{},
+		corev1.InstalledPackageStatus{},
+		corev1.PackageAppVersion{},
+		plugins.Plugin{},
+		corev1.ReconciliationOptions{},
+		corev1.AvailablePackageReference{})
+	// see comment in release_integration_test.go. Intermittently we get an inconsistent error message from flux
+	opts2 := cmpopts.IgnoreFields(corev1.InstalledPackageStatus{}, "UserReason")
+
+	// Values Applied are JSON string and need to be compared as such
+	opts3 := cmpopts.IgnoreFields(corev1.InstalledPackageDetail{}, "ValuesApplied")
+	if got, want := actualResp, expectedResp; !cmp.Equal(want, got, opts, opts2, opts3) {
+		t.Fatalf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opts, opts2, opts3))
+	}
+	if !strings.Contains(actualResp.InstalledPackageDetail.Status.UserReason, expectedResp.InstalledPackageDetail.Status.UserReason) {
+		t.Fatalf("substring mismatch (-want: %s\n+got: %s):\n", expectedResp.InstalledPackageDetail.Status.UserReason, actualResp.InstalledPackageDetail.Status.UserReason)
+	}
+	compareJSONStrings(t, expectedResp.InstalledPackageDetail.ValuesApplied, actualResp.InstalledPackageDetail.ValuesApplied)
 }
 
 // misc global vars that get re-used in multiple tests

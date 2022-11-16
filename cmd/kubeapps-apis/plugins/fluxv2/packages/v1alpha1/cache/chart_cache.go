@@ -259,10 +259,9 @@ func (c *ChartCache) processNextWorkItem(workerName string) bool {
 	return true
 }
 
-func (c *ChartCache) DeleteChartsForRepo(repo *types.NamespacedName) error {
-	log.Infof("+DeleteChartsForRepo(%s)", repo)
-	defer log.Infof("-DeleteChartsForRepo(%s)", repo)
-
+// will clear out the cache of charts for a given repo except the charts specified by
+// keepThese argument, which may be nil.
+func (c *ChartCache) deleteChartsHelper(repo *types.NamespacedName, keepThese sets.String) error {
 	// need to get a list of all charts/versions for this repo that are either:
 	//   a. already in the cache OR
 	//   b. being processed
@@ -287,6 +286,7 @@ func (c *ChartCache) DeleteChartsForRepo(repo *types.NamespacedName) error {
 		if err != nil {
 			return err
 		}
+		log.Infof("Redis [SCAN %d %s]: %d keys", cursor, match, len(keys))
 		for _, k := range keys {
 			redisKeysToDelete.Insert(k)
 		}
@@ -308,7 +308,7 @@ func (c *ChartCache) DeleteChartsForRepo(repo *types.NamespacedName) error {
 		}
 	}
 
-	for k := range redisKeysToDelete {
+	for k := range redisKeysToDelete.Difference(keepThese) {
 		if namespace, chartID, chartVersion, err := c.fromKey(k); err != nil {
 			log.Errorf("%+v", err)
 		} else {
@@ -324,6 +324,47 @@ func (c *ChartCache) DeleteChartsForRepo(repo *types.NamespacedName) error {
 			}
 			log.V(4).Infof("Marked key [%s] to be deleted", k)
 			c.queue.Add(k)
+		}
+	}
+	return nil
+}
+
+func (c *ChartCache) DeleteChartsForRepo(repo *types.NamespacedName) error {
+	log.Infof("+DeleteChartsForRepo(%s)", repo)
+	defer log.Infof("-DeleteChartsForRepo(%s)", repo)
+
+	return c.deleteChartsHelper(repo, sets.String{})
+}
+
+func (c *ChartCache) PurgeObsoleteChartVersions(keepThese []models.Chart) error {
+	log.Infof("+PurgeObsoleteChartVersions()")
+	defer log.Infof("-PurgeObsoleteChartVersions")
+
+	repos := map[types.NamespacedName]sets.String{}
+	for _, ch := range keepThese {
+		if ch.Repo == nil {
+			continue
+		}
+		n := types.NamespacedName{
+			Name:      ch.Repo.Name,
+			Namespace: ch.Repo.Namespace,
+		}
+		a, ok := repos[n]
+		if a == nil || !ok {
+			a = sets.String{}
+		}
+		for _, cv := range ch.ChartVersions {
+			if key, err := c.KeyFor(ch.Repo.Namespace, ch.ID, cv.Version); err != nil {
+				return err
+			} else {
+				repos[n] = a.Insert(key)
+			}
+		}
+	}
+
+	for repo, keep := range repos {
+		if err := c.deleteChartsHelper(&repo, keep); err != nil {
+			return err
 		}
 	}
 	return nil

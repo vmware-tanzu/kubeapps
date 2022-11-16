@@ -816,18 +816,7 @@ func TestKindClusterGetPackageRepositorySummaries(t *testing.T) {
 				return
 			}
 
-			opts := cmpopts.IgnoreUnexported(
-				corev1.Context{},
-				corev1.PackageRepositoryReference{},
-				plugins.Plugin{},
-				corev1.PackageRepositoryStatus{},
-				corev1.GetPackageRepositorySummariesResponse{},
-				corev1.PackageRepositorySummary{},
-			)
-
-			if got, want := resp, tc.expectedResponse; !cmp.Equal(want, got, opts) {
-				t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opts, opts))
-			}
+			compareActualVsExpectedPackageRepositorySummaries(t, resp, tc.expectedResponse)
 		})
 	}
 }
@@ -1517,34 +1506,6 @@ func TestKindClusterAddTagsToOciRepository(t *testing.T) {
 			t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opts))
 		}
 	})
-}
-
-func compareActualVsExpectedPackageRepositoryDetail(t *testing.T, actualDetail *corev1.GetPackageRepositoryDetailResponse, expectedDetail *corev1.GetPackageRepositoryDetailResponse) {
-	opts1 := cmpopts.IgnoreUnexported(
-		corev1.Context{},
-		corev1.PackageRepositoryReference{},
-		plugins.Plugin{},
-		corev1.GetPackageRepositoryDetailResponse{},
-		corev1.PackageRepositoryDetail{},
-		corev1.PackageRepositoryStatus{},
-		corev1.PackageRepositoryAuth{},
-		corev1.PackageRepositoryTlsConfig{},
-		corev1.SecretKeyReference{},
-		corev1.UsernamePassword{},
-		corev1.DockerCredentials{},
-	)
-
-	opts2 := cmpopts.IgnoreFields(corev1.PackageRepositoryStatus{}, "UserReason")
-
-	if got, want := actualDetail, expectedDetail; !cmp.Equal(want, got, opts1, opts2) {
-		t.Fatalf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opts1, opts2))
-	}
-
-	if !strings.HasPrefix(actualDetail.GetDetail().Status.UserReason, expectedDetail.Detail.Status.UserReason) {
-		t.Errorf("unexpected response (status.UserReason): (-want +got):\n- %s\n+ %s",
-			expectedDetail.Detail.Status.UserReason,
-			actualDetail.GetDetail().Status.UserReason)
-	}
 }
 
 func setUserManagedSecrets(t *testing.T, fluxPluginReposClient v1alpha1.FluxV2RepositoriesServiceClient, value bool) bool {

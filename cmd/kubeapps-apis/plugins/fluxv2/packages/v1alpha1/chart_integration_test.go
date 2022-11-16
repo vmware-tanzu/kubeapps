@@ -1040,3 +1040,130 @@ func TestKindClusterAvailablePackageEndpointsOCIRepo2Charts(t *testing.T) {
 		})
 	}
 }
+
+// The goal of this integration test is to ensure that when the contents of remote HTTP helm repo is changed,
+// that fact is recorded locally and processed properly (repo/chart cache is updated with latest, etc.)
+func TestKindClusterAddRemovePackageVersionsInHttpRepo(t *testing.T) {
+	fluxPluginPackagesClient, _, err := checkEnv(t)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	adminAcctName := types.NamespacedName{
+		Name:      "test-add-remove-versions-repo-admin-" + randSeq(4),
+		Namespace: "default",
+	}
+	grpcContext, err := newGrpcAdminContext(t, adminAcctName)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	repoName := types.NamespacedName{
+		Name:      "podinfo",
+		Namespace: "test-" + randSeq(4),
+	}
+	if err := kubeCreateNamespaceAndCleanup(t, repoName.Namespace); err != nil {
+		t.Fatal(err)
+	}
+
+	if err = kubeAddHelmRepositoryAndCleanup(t, repoName, "", podinfo_repo_url, "", 10*time.Second); err != nil {
+		t.Fatal(err)
+	}
+
+	pkgRef := availableRef(fmt.Sprintf("%s/%s", repoName.Name, "podinfo"), repoName.Namespace)
+
+	// need to wait until repo is indexed by flux plugin
+	const maxWait = 25
+	var pkgDetail *corev1.GetAvailablePackageDetailResponse
+	for i := 0; i <= maxWait; i++ {
+		grpcContext, cancel := context.WithTimeout(grpcContext, defaultContextTimeout)
+		defer cancel()
+
+		pkgDetail, err = fluxPluginPackagesClient.GetAvailablePackageDetail(
+			grpcContext,
+			&corev1.GetAvailablePackageDetailRequest{AvailablePackageRef: pkgRef})
+		if err == nil {
+			break
+		} else if i == maxWait {
+			if repo, err2 := kubeGetHelmRepository(t, repoName); err2 == nil && repo != nil {
+				t.Fatalf("Timed out waiting for available package [%s], last response: %v, last error: [%v],\nhelm repository:%s",
+					pkgRef, pkgDetail, err, common.PrettyPrint(repo))
+			} else {
+				t.Fatalf("Timed out waiting for available package [%s], last response: %v, last error: [%v]",
+					pkgRef, pkgDetail, err)
+			}
+		} else {
+			t.Logf("Waiting 1s for repository [%s] to be indexed, attempt [%d/%d]...", repoName, i+1, maxWait)
+			time.Sleep(1 * time.Second)
+		}
+	}
+	compareActualVsExpectedAvailablePackageDetail(
+		t,
+		pkgDetail.AvailablePackageDetail,
+		expected_detail_podinfo(repoName.Name, repoName.Namespace).AvailablePackageDetail)
+
+	podName, err := getFluxPluginTestdataPodName()
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Logf("podName = [%s]", podName)
+
+	if err = kubeCopyFileToPod(
+		t,
+		testTgz("podinfo-6.0.3.tgz"),
+		*podName,
+		"/usr/share/nginx/html/podinfo/podinfo-6.0.3.tgz"); err != nil {
+		t.Fatal(err)
+	}
+	if err = kubeCopyFileToPod(
+		t,
+		testYaml("podinfo-index-updated.yaml"),
+		*podName,
+		"/usr/share/nginx/html/podinfo/index.yaml"); err != nil {
+		t.Fatal(err)
+	}
+
+	SleepWithCountdown(t, 20)
+
+	pkgDetail, err = fluxPluginPackagesClient.GetAvailablePackageDetail(
+		grpcContext,
+		&corev1.GetAvailablePackageDetailRequest{AvailablePackageRef: pkgRef})
+	if err != nil {
+		t.Fatal(err)
+	}
+	compareActualVsExpectedAvailablePackageDetail(
+		t,
+		pkgDetail.AvailablePackageDetail,
+		expected_detail_podinfo_after_update_1(repoName.Name, repoName.Namespace).AvailablePackageDetail)
+
+	if err = kubeCopyFileToPod(
+		t,
+		testYaml("podinfo-index.yaml"),
+		*podName,
+		"/usr/share/nginx/html/podinfo/index.yaml"); err != nil {
+		t.Logf("Error reverting to previous podinfo index: %v", err)
+	}
+
+	SleepWithCountdown(t, 20)
+
+	pkgDetail, err = fluxPluginPackagesClient.GetAvailablePackageDetail(
+		grpcContext,
+		&corev1.GetAvailablePackageDetailRequest{AvailablePackageRef: pkgRef})
+	if err != nil {
+		t.Fatal(err)
+	}
+	compareActualVsExpectedAvailablePackageDetail(
+		t,
+		pkgDetail.AvailablePackageDetail,
+		expected_detail_podinfo(repoName.Name, repoName.Namespace).AvailablePackageDetail)
+
+	_, err = fluxPluginPackagesClient.GetAvailablePackageDetail(
+		grpcContext,
+		&corev1.GetAvailablePackageDetailRequest{
+			AvailablePackageRef: pkgRef,
+			PkgVersion:          "6.0.3",
+		})
+	if status.Code(err) != codes.Internal {
+		t.Fatalf("Expected Internal, got: %v", err)
+	}
+}

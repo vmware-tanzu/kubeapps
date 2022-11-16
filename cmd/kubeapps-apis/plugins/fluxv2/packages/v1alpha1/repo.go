@@ -840,7 +840,9 @@ func (s *repoEventSink) indexAndEncode(checksum string, repo sourcev1.HelmReposi
 			log.Errorf("Failed to read secret for repo due to: %+v", err)
 		} else {
 			fn := downloadHttpChartFn(opts)
-			if err = s.chartCache.SyncCharts(charts, fn); err != nil {
+			if err = s.chartCache.PurgeObsoleteChartVersions(charts); err != nil {
+				return nil, false, err
+			} else if err = s.chartCache.SyncCharts(charts, fn); err != nil {
 				return nil, false, err
 			}
 		}

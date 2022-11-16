@@ -19,7 +19,6 @@ import (
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
 	corev1 "github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
-	plugins "github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/core/plugins/v1alpha1"
 	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/fluxv2/packages/v1alpha1/cache"
 	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/fluxv2/packages/v1alpha1/common"
 	httpclient "github.com/vmware-tanzu/kubeapps/pkg/http-client"
@@ -860,6 +859,9 @@ func TestChartCacheResyncNotIdle(t *testing.T) {
 			redisMockSetValueForRepo(mock, repoKey, repoBytes, nil)
 		}
 
+		match := fmt.Sprintf("helmcharts:%s:%s/*:*", repoNamespace, repoName)
+		mock.ExpectScan(0, match, 0).SetVal([]string{}, 0)
+
 		opts := &common.HttpClientOptions{}
 		chartCacheKeys := []string{}
 		var chartBytes []byte
@@ -922,6 +924,7 @@ func TestChartCacheResyncNotIdle(t *testing.T) {
 			} else {
 				mock.ExpectFlushDB().SetVal("OK")
 				redisMockSetValueForRepo(mock, repoKey, repoBytes, nil)
+				mock.ExpectScan(0, match, 0).SetVal([]string{}, 0)
 				// now we can signal to the server it's ok to proceed
 				repoResyncCh <- 0
 
@@ -1273,23 +1276,4 @@ func fromRedisKeyForChart(key string) (namespace, chartID, chartVersion string, 
 		return "", "", "", status.Errorf(codes.Internal, "invalid key [%s]", key)
 	}
 	return parts[1], parts[2], parts[3], nil
-}
-
-func compareActualVsExpectedAvailablePackageDetail(t *testing.T, actual *corev1.AvailablePackageDetail, expected *corev1.AvailablePackageDetail) {
-	opt1 := cmpopts.IgnoreUnexported(corev1.AvailablePackageDetail{}, corev1.AvailablePackageReference{}, corev1.Context{}, corev1.Maintainer{}, plugins.Plugin{}, corev1.PackageAppVersion{})
-	// these few fields a bit special in that they are all very long strings,
-	// so we'll do a 'Contains' check for these instead of 'Equals'
-	opt2 := cmpopts.IgnoreFields(corev1.AvailablePackageDetail{}, "Readme", "DefaultValues", "ValuesSchema")
-	if got, want := actual, expected; !cmp.Equal(got, want, opt1, opt2) {
-		t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opt1, opt2))
-	}
-	if !strings.Contains(actual.Readme, expected.Readme) {
-		t.Errorf("substring mismatch (-want: %s\n+got: %s):\n", expected.Readme, actual.Readme)
-	}
-	if !strings.Contains(actual.DefaultValues, expected.DefaultValues) {
-		t.Errorf("substring mismatch (-want: %s\n+got: %s):\n", expected.DefaultValues, actual.DefaultValues)
-	}
-	if !strings.Contains(actual.ValuesSchema, expected.ValuesSchema) {
-		t.Errorf("substring mismatch (-want: %s\n+got: %s):\n", expected.ValuesSchema, actual.ValuesSchema)
-	}
 }

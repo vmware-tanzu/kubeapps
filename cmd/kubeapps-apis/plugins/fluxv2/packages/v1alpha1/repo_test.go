@@ -1728,22 +1728,7 @@ func TestGetPackageRepositoryDetail(t *testing.T) {
 				if actualResp == nil {
 					t.Fatalf("got: nil, want: response")
 				} else {
-					opt1 := cmpopts.IgnoreUnexported(
-						corev1.Context{},
-						corev1.PackageRepositoryReference{},
-						plugins.Plugin{},
-						corev1.GetPackageRepositoryDetailResponse{},
-						corev1.PackageRepositoryDetail{},
-						corev1.PackageRepositoryStatus{},
-						corev1.PackageRepositoryAuth{},
-						corev1.PackageRepositoryTlsConfig{},
-						corev1.SecretKeyReference{},
-						corev1.TlsCertKey{},
-						corev1.UsernamePassword{},
-					)
-					if got, want := actualResp, tc.expectedResponse; !cmp.Equal(got, want, opt1) {
-						t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opt1))
-					}
+					compareActualVsExpectedPackageRepositoryDetail(t, actualResp, tc.expectedResponse)
 				}
 			}
 		})
@@ -1908,18 +1893,7 @@ func TestGetPackageRepositorySummaries(t *testing.T) {
 				return
 			}
 
-			opts := cmpopts.IgnoreUnexported(
-				corev1.Context{},
-				plugins.Plugin{},
-				corev1.GetPackageRepositorySummariesResponse{},
-				corev1.PackageRepositorySummary{},
-				corev1.PackageRepositoryReference{},
-				corev1.PackageRepositoryStatus{},
-			)
-			opts2 := cmpopts.SortSlices(lessPackageRepositorySummaryFunc)
-			if got, want := response, tc.expectedResponse; !cmp.Equal(want, got, opts, opts2) {
-				t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opts, opts2))
-			}
+			compareActualVsExpectedPackageRepositorySummaries(t, response, tc.expectedResponse)
 
 			if err := mock.ExpectationsWereMet(); err != nil {
 				t.Errorf("there were unfulfilled expectations: %s", err)
@@ -2502,14 +2476,11 @@ func (s *Server) redisMockExpectGetFromRepoCache(mock redismock.ClientMock, filt
 }
 
 func (s *Server) redisMockSetValueForRepo(mock redismock.ClientMock, repo sourcev1.HelmRepository, oldValue []byte) (key string, bytes []byte, err error) {
-	backgroundClientGetter := &clientgetter.FixedClusterClientProvider{ClientsFunc: func(ctx context.Context) (*clientgetter.ClientGetter, error) {
+	bg := &clientgetter.FixedClusterClientProvider{ClientsFunc: func(ctx context.Context) (*clientgetter.ClientGetter, error) {
 		return s.clientGetter.GetClients(ctx, s.kubeappsCluster)
 	}}
-	sink := repoEventSink{
-		clientGetter: backgroundClientGetter,
-		chartCache:   nil,
-	}
-	return sink.redisMockSetValueForRepo(mock, repo, oldValue)
+	sinkNoCache := repoEventSink{clientGetter: bg}
+	return sinkNoCache.redisMockSetValueForRepo(mock, repo, oldValue)
 }
 
 func (sink *repoEventSink) redisMockSetValueForRepo(mock redismock.ClientMock, repo sourcev1.HelmRepository, oldValue []byte) (key string, newValue []byte, err error) {

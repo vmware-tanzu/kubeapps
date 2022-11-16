@@ -8,7 +8,6 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"os"
-	"strings"
 	"testing"
 	"time"
 
@@ -1230,31 +1229,6 @@ func newChartsAndReleases(t *testing.T, existingK8sObjs []testSpecGetInstalledPa
 		releases = append(releases, release)
 	}
 	return charts, releases, cleanup
-}
-
-func compareActualVsExpectedGetInstalledPackageDetailResponse(t *testing.T, actualResp *corev1.GetInstalledPackageDetailResponse, expectedResp *corev1.GetInstalledPackageDetailResponse) {
-	opts := cmpopts.IgnoreUnexported(
-		corev1.GetInstalledPackageDetailResponse{},
-		corev1.InstalledPackageDetail{},
-		corev1.InstalledPackageReference{},
-		corev1.Context{},
-		corev1.VersionReference{},
-		corev1.InstalledPackageStatus{},
-		corev1.PackageAppVersion{},
-		plugins.Plugin{},
-		corev1.ReconciliationOptions{},
-		corev1.AvailablePackageReference{})
-	// see comment in release_integration_test.go. Intermittently we get an inconsistent error message from flux
-	opts2 := cmpopts.IgnoreFields(corev1.InstalledPackageStatus{}, "UserReason")
-	// Values Applied are JSON string and need to be compared as such
-	opts3 := cmpopts.IgnoreFields(corev1.InstalledPackageDetail{}, "ValuesApplied")
-	if got, want := actualResp, expectedResp; !cmp.Equal(want, got, opts, opts2, opts3) {
-		t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opts, opts2, opts3))
-	}
-	if !strings.Contains(actualResp.InstalledPackageDetail.Status.UserReason, expectedResp.InstalledPackageDetail.Status.UserReason) {
-		t.Errorf("substring mismatch (-want: %s\n+got: %s):\n", expectedResp.InstalledPackageDetail.Status.UserReason, actualResp.InstalledPackageDetail.Status.UserReason)
-	}
-	compareJSONStrings(t, expectedResp.InstalledPackageDetail.ValuesApplied, actualResp.InstalledPackageDetail.ValuesApplied)
 }
 
 func newRelease(meta metav1.ObjectMeta, spec *helmv2.HelmReleaseSpec, status *helmv2.HelmReleaseStatus) helmv2.HelmRelease {
