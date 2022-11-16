@@ -1,4 +1,4 @@
-# Copyright 2022 VMware, Inc.
+# Copyright 2022 the Kubeapps contributors.
 # SPDX-License-Identifier: Apache-2.0
 
 ---
@@ -16,6 +16,7 @@ header:
     - LICENSE
     - NOTICE
     - open_source_licenses.txt
+    - dashboard/src/setupProxy.js
     - "**/*.css"
     - "**/*.dccache"
     - "**/*.html"
