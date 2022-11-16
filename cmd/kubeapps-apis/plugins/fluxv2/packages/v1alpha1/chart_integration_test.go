@@ -12,11 +12,8 @@ import (
 	"time"
 
 	sourcev1 "github.com/fluxcd/source-controller/api/v1beta2"
-	"github.com/google/go-cmp/cmp"
-	"github.com/google/go-cmp/cmp/cmpopts"
 	grpc_retry "github.com/grpc-ecosystem/go-grpc-middleware/retry"
 	corev1 "github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
-	plugins "github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/core/plugins/v1alpha1"
 	fluxplugin "github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/plugins/fluxv2/packages/v1alpha1"
 	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/fluxv2/packages/v1alpha1/common"
 	"golang.org/x/sync/semaphore"
@@ -854,22 +851,10 @@ func testKindClusterAvailablePackageEndpointsForOCIHelper(
 				t.Fatal(err)
 			}
 
-			opt1 := cmpopts.IgnoreUnexported(
-				corev1.GetAvailablePackageSummariesResponse{},
-				corev1.AvailablePackageSummary{},
-				corev1.AvailablePackageReference{},
-				corev1.Context{},
-				plugins.Plugin{},
-				corev1.PackageAppVersion{})
-			opt2 := cmpopts.SortSlices(lessAvailablePackageFunc)
 			if !tc.unauthenticated {
-				if got, want := resp, expected_oci_stefanprodan_podinfo_available_summaries(repoName.Name); !cmp.Equal(got, want, opt1, opt2) {
-					t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opt1, opt2))
-				}
+				compareAvailablePackageSummaries(t, resp, expected_oci_stefanprodan_podinfo_available_summaries(repoName.Name))
 			} else {
-				if got, want := resp, no_available_summaries(repoName.Name); !cmp.Equal(got, want, opt1, opt2) {
-					t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opt1, opt2))
-				}
+				compareAvailablePackageSummaries(t, resp, no_available_summaries(repoName.Name))
 				return // nothing more to check
 			}
 
@@ -889,12 +874,7 @@ func testKindClusterAvailablePackageEndpointsForOCIHelper(
 			if err != nil {
 				t.Fatal(err)
 			}
-			opts := cmpopts.IgnoreUnexported(
-				corev1.GetAvailablePackageVersionsResponse{},
-				corev1.PackageAppVersion{})
-			if got, want := resp2, expected_versions_stefanprodan_podinfo; !cmp.Equal(want, got, opts) {
-				t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opts))
-			}
+			compareAvailablePackageVersions(t, resp2, expected_versions_stefanprodan_podinfo)
 
 			hour, minute, second = time.Now().Clock()
 			t.Logf("[%d:%d:%d] Calling GetAvailablePackageDetail(latest version) blocking for up to [%s]...",
@@ -914,7 +894,7 @@ func testKindClusterAvailablePackageEndpointsForOCIHelper(
 				t.Fatal(err)
 			}
 
-			compareActualVsExpectedAvailablePackageDetail(
+			compareAvailablePackageDetail(
 				t,
 				resp3.AvailablePackageDetail,
 				expected_detail_oci_stefanprodan_podinfo(repoName.Name, tc.registryUrl).AvailablePackageDetail)
@@ -936,7 +916,7 @@ func testKindClusterAvailablePackageEndpointsForOCIHelper(
 				t.Fatal(err)
 			}
 
-			compareActualVsExpectedAvailablePackageDetail(
+			compareAvailablePackageDetail(
 				t,
 				resp4.AvailablePackageDetail,
 				expected_detail_oci_stefanprodan_podinfo_2(repoName.Name, tc.registryUrl).AvailablePackageDetail)
@@ -1026,17 +1006,7 @@ func TestKindClusterAvailablePackageEndpointsOCIRepo2Charts(t *testing.T) {
 				t.Fatal(err)
 			}
 
-			opt1 := cmpopts.IgnoreUnexported(
-				corev1.GetAvailablePackageSummariesResponse{},
-				corev1.AvailablePackageSummary{},
-				corev1.AvailablePackageReference{},
-				corev1.Context{},
-				plugins.Plugin{},
-				corev1.PackageAppVersion{})
-			opt2 := cmpopts.SortSlices(lessAvailablePackageFunc)
-			if got, want := resp, expected_oci_repo_with_2_charts_available_summaries(repoName.Name); !cmp.Equal(got, want, opt1, opt2) {
-				t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opt1, opt2))
-			}
+			compareAvailablePackageSummaries(t, resp, expected_oci_repo_with_2_charts_available_summaries(repoName.Name))
 		})
 	}
 }
@@ -1097,7 +1067,7 @@ func TestKindClusterAddRemovePackageVersionsInHttpRepo(t *testing.T) {
 			time.Sleep(1 * time.Second)
 		}
 	}
-	compareActualVsExpectedAvailablePackageDetail(
+	compareAvailablePackageDetail(
 		t,
 		pkgDetail.AvailablePackageDetail,
 		expected_detail_podinfo(repoName.Name, repoName.Namespace).AvailablePackageDetail)
@@ -1131,7 +1101,7 @@ func TestKindClusterAddRemovePackageVersionsInHttpRepo(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	compareActualVsExpectedAvailablePackageDetail(
+	compareAvailablePackageDetail(
 		t,
 		pkgDetail.AvailablePackageDetail,
 		expected_detail_podinfo_after_update_1(repoName.Name, repoName.Namespace).AvailablePackageDetail)
@@ -1152,7 +1122,7 @@ func TestKindClusterAddRemovePackageVersionsInHttpRepo(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	compareActualVsExpectedAvailablePackageDetail(
+	compareAvailablePackageDetail(
 		t,
 		pkgDetail.AvailablePackageDetail,
 		expected_detail_podinfo(repoName.Name, repoName.Namespace).AvailablePackageDetail)

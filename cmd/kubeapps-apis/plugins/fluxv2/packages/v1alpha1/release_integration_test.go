@@ -389,7 +389,7 @@ func TestKindClusterUpdateInstalledPackage(t *testing.T) {
 				InstalledPackageDetail: tc.expectedDetailAfterUpdate,
 			}
 
-			compareActualVsExpectedGetInstalledPackageDetailResponse(t, actualRespAfterUpdate, expectedResp)
+			compareInstalledPackageDetail(t, actualRespAfterUpdate, expectedResp)
 
 			if tc.expectedRefsAfterUpdate != nil {
 				expectedRefsCopy := []*corev1.ResourceRef{}
@@ -485,7 +485,7 @@ func TestKindClusterAutoUpdateInstalledPackageFromHttpRepo(t *testing.T) {
 		expected_detail_installed_package_auto_update_2.PostInstallationNotes,
 		"@TARGET_NS@",
 		spec.request.TargetContext.Namespace)
-	compareActualVsExpectedGetInstalledPackageDetailResponse(
+	compareInstalledPackageDetail(
 		t, resp, &corev1.GetInstalledPackageDetailResponse{
 			InstalledPackageDetail: expected_detail_installed_package_auto_update_2,
 		})
@@ -566,7 +566,7 @@ func TestKindClusterAutoUpdateInstalledPackageFromOciRepo(t *testing.T) {
 		expected_detail_installed_package_auto_update_oci_2.PostInstallationNotes,
 		"@TARGET_NS@",
 		spec.request.TargetContext.Namespace)
-	compareActualVsExpectedGetInstalledPackageDetailResponse(
+	compareInstalledPackageDetail(
 		t, resp, &corev1.GetInstalledPackageDetailResponse{
 			InstalledPackageDetail: expected_detail_installed_package_auto_update_oci_2,
 		})
@@ -871,7 +871,7 @@ func TestKindClusterRBAC_ReadRelease(t *testing.T) {
 			expected_detail_test_release_rbac_2.InstalledPackageDetail.PostInstallationNotes,
 			"@TARGET_NS@", ns2)
 		expected_detail_test_release_rbac_2.InstalledPackageDetail.AvailablePackageRef.Context.Namespace = ns1
-		compareActualVsExpectedGetInstalledPackageDetailResponse(t, resp2, expected_detail_test_release_rbac_2)
+		compareInstalledPackageDetail(t, resp2, expected_detail_test_release_rbac_2)
 	}
 
 	grpcCtx, cancel = context.WithTimeout(grpcCtxAdmin, defaultContextTimeout)
@@ -1001,24 +1001,12 @@ func TestKindClusterRBAC_ReadRelease(t *testing.T) {
 			},
 		})
 
-	opts2 := cmpopts.IgnoreUnexported(
-		corev1.GetInstalledPackageSummariesResponse{},
-		corev1.InstalledPackageSummary{},
-		corev1.InstalledPackageReference{},
-		corev1.InstalledPackageStatus{},
-		plugins.Plugin{},
-		corev1.VersionReference{},
-		corev1.PackageAppVersion{},
-		corev1.Context{})
-
 	if err != nil {
 		t.Fatal(err)
 	} else {
 		// should return installed package summaries without chart details
 		expected_summaries_test_release_rbac_1.InstalledPackageSummaries[0].InstalledPackageRef.Context.Namespace = ns2
-		if got, want := resp, expected_summaries_test_release_rbac_1; !cmp.Equal(want, got, opts2) {
-			t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opts2))
-		}
+		compareInstalledPackageSummaries(t, resp, expected_summaries_test_release_rbac_1)
 	}
 
 	grpcCtx, cancel = context.WithTimeout(grpcCtxReadHelmReleases, defaultContextTimeout)
@@ -1032,7 +1020,7 @@ func TestKindClusterRBAC_ReadRelease(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	} else {
-		compareActualVsExpectedGetInstalledPackageDetailResponse(t, resp2, expected_detail_test_release_rbac_2)
+		compareInstalledPackageDetail(t, resp2, expected_detail_test_release_rbac_2)
 	}
 
 	grpcCtx, cancel = context.WithTimeout(grpcCtxReadHelmReleases, defaultContextTimeout)
@@ -1108,9 +1096,7 @@ func TestKindClusterRBAC_ReadRelease(t *testing.T) {
 	} else {
 		// should return installed package summaries with chart details
 		expected_summaries_test_release_rbac_2.InstalledPackageSummaries[0].InstalledPackageRef.Context.Namespace = ns2
-		if got, want := resp, expected_summaries_test_release_rbac_2; !cmp.Equal(want, got, opts2) {
-			t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opts2))
-		}
+		compareInstalledPackageSummaries(t, resp, expected_summaries_test_release_rbac_2)
 	}
 
 	grpcCtx, cancel = context.WithTimeout(grpcCtxReadHelmReleasesAndCharts, defaultContextTimeout)
@@ -1124,7 +1110,7 @@ func TestKindClusterRBAC_ReadRelease(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	} else {
-		compareActualVsExpectedGetInstalledPackageDetailResponse(t, resp2, expected_detail_test_release_rbac_2)
+		compareInstalledPackageDetail(t, resp2, expected_detail_test_release_rbac_2)
 	}
 }
 
@@ -1688,7 +1674,7 @@ func createAndWaitForHelmRelease(
 		InstalledPackageDetail: tc.expectedDetail,
 	}
 
-	compareActualVsExpectedGetInstalledPackageDetailResponse(t, actualDetailResp, expectedResp)
+	compareInstalledPackageDetail(t, actualDetailResp, expectedResp)
 
 	if !tc.expectInstallFailure {
 		// check artifacts in target namespace:

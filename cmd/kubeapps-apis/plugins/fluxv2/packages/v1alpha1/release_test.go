@@ -245,20 +245,7 @@ func TestGetInstalledPackageSummariesWithoutPagination(t *testing.T) {
 			if tc.expectedStatusCode != codes.OK {
 				return
 			}
-
-			opts := cmpopts.IgnoreUnexported(
-				corev1.GetInstalledPackageSummariesResponse{},
-				corev1.InstalledPackageSummary{},
-				corev1.InstalledPackageReference{},
-				corev1.Context{},
-				corev1.VersionReference{},
-				corev1.InstalledPackageStatus{},
-				corev1.PackageAppVersion{},
-				plugins.Plugin{})
-			opts2 := cmpopts.SortSlices(lessInstalledPackageSummaryFunc)
-			if got, want := response, tc.expectedResponse; !cmp.Equal(want, got, opts, opts2) {
-				t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opts, opts2))
-			}
+			compareInstalledPackageSummaries(t, response, tc.expectedResponse)
 
 			if err := mock.ExpectationsWereMet(); err != nil {
 				t.Errorf("there were unfulfilled expectations: %s", err)
@@ -383,9 +370,8 @@ func TestGetInstalledPackageSummariesWithPagination(t *testing.T) {
 		if got, want := status.Code(err), codes.OK; got != want {
 			t.Fatalf("got: %+v, want: %+v, err: %+v", got, want, err)
 		}
-		if got, want := response3, nextExpectedResp; !cmp.Equal(want, got, opts, opts2) {
-			t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opts, opts2))
-		}
+
+		compareInstalledPackageSummaries(t, response3, nextExpectedResp)
 
 		if err := mock.ExpectationsWereMet(); err != nil {
 			t.Errorf("there were unfulfilled expectations: %s", err)
@@ -505,7 +491,7 @@ func TestGetInstalledPackageDetail(t *testing.T) {
 				InstalledPackageDetail: tc.expectedDetail,
 			}
 
-			compareActualVsExpectedGetInstalledPackageDetailResponse(t, response, expectedResp)
+			compareInstalledPackageDetail(t, response, expectedResp)
 
 			// we make sure that all expectations were met
 			if err := mock.ExpectationsWereMet(); err != nil {

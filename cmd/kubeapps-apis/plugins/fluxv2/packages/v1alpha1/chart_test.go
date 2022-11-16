@@ -16,8 +16,6 @@ import (
 	fluxmeta "github.com/fluxcd/pkg/apis/meta"
 	sourcev1 "github.com/fluxcd/source-controller/api/v1beta2"
 	redismock "github.com/go-redis/redismock/v8"
-	"github.com/google/go-cmp/cmp"
-	"github.com/google/go-cmp/cmp/cmpopts"
 	corev1 "github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
 	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/fluxv2/packages/v1alpha1/cache"
 	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/fluxv2/packages/v1alpha1/common"
@@ -232,7 +230,7 @@ func TestGetAvailablePackageDetail(t *testing.T) {
 				t.Fatalf("%+v", err)
 			}
 
-			compareActualVsExpectedAvailablePackageDetail(t, response.AvailablePackageDetail, tc.expectedPackageDetail)
+			compareAvailablePackageDetail(t, response.AvailablePackageDetail, tc.expectedPackageDetail)
 
 			if err = mock.ExpectationsWereMet(); err != nil {
 				t.Fatalf("%v", err)
@@ -327,7 +325,7 @@ func TestTransientHttpFailuresAreRetriedForChartCache(t *testing.T) {
 			t.Fatalf("%+v", err)
 		}
 
-		compareActualVsExpectedAvailablePackageDetail(t,
+		compareAvailablePackageDetail(t,
 			response.AvailablePackageDetail, expected_detail_redis_1)
 
 		if err = mock.ExpectationsWereMet(); err != nil {
@@ -574,11 +572,8 @@ func TestNegativeGetAvailablePackageVersions(t *testing.T) {
 			if tc.expectedStatusCode != codes.OK {
 				return
 			}
+			compareAvailablePackageVersions(t, response, tc.expectedResponse)
 
-			opts := cmpopts.IgnoreUnexported(corev1.GetAvailablePackageVersionsResponse{}, corev1.PackageAppVersion{})
-			if got, want := response, tc.expectedResponse; !cmp.Equal(want, got, opts) {
-				t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opts))
-			}
 			// we make sure that all expectations were met
 			if err := mock.ExpectationsWereMet(); err != nil {
 				t.Errorf("there were unfulfilled expectations: %s", err)
@@ -684,13 +679,7 @@ func TestGetAvailablePackageVersions(t *testing.T) {
 			if tc.expectedStatusCode != codes.OK {
 				return
 			}
-
-			opts := cmpopts.IgnoreUnexported(
-				corev1.GetAvailablePackageVersionsResponse{},
-				corev1.PackageAppVersion{})
-			if got, want := response, tc.expectedResponse; !cmp.Equal(want, got, opts) {
-				t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opts))
-			}
+			compareAvailablePackageVersions(t, response, tc.expectedResponse)
 		})
 	}
 }
@@ -778,13 +767,7 @@ func TestGetOciAvailablePackageVersions(t *testing.T) {
 			if tc.expectedStatusCode != codes.OK {
 				return
 			}
-
-			opts := cmpopts.IgnoreUnexported(
-				corev1.GetAvailablePackageVersionsResponse{},
-				corev1.PackageAppVersion{})
-			if got, want := response, tc.expectedResponse; !cmp.Equal(want, got, opts) {
-				t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opts))
-			}
+			compareAvailablePackageVersions(t, response, tc.expectedResponse)
 		})
 	}
 }
@@ -1046,13 +1029,8 @@ func TestChartWithRelativeURL(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	opts := cmpopts.IgnoreUnexported(
-		corev1.GetAvailablePackageVersionsResponse{},
-		corev1.PackageAppVersion{})
-	if got, want := response, expected_versions_airflow; !cmp.Equal(want, got, opts) {
-		t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opts))
-	}
 
+	compareAvailablePackageVersions(t, response, expected_versions_airflow)
 	if err = mock.ExpectationsWereMet(); err != nil {
 		t.Fatal(err)
 	}
@@ -1144,7 +1122,7 @@ func TestGetOciAvailablePackageDetail(t *testing.T) {
 				t.Fatal(err)
 			}
 
-			compareActualVsExpectedAvailablePackageDetail(t, response.AvailablePackageDetail, tc.expectedPackageDetail)
+			compareAvailablePackageDetail(t, response.AvailablePackageDetail, tc.expectedPackageDetail)
 
 			if err = mock.ExpectationsWereMet(); err != nil {
 				t.Fatal(err)

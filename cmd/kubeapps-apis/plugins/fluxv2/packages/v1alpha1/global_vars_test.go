@@ -844,35 +844,37 @@ var (
 		},
 	}
 
-	valid_index_available_package_summaries = []*corev1.AvailablePackageSummary{
-		{
-			Name:             "acs-engine-autoscaler",
-			DisplayName:      "acs-engine-autoscaler",
-			LatestVersion:    pkgAppVersion("2.1.1"),
-			IconUrl:          "https://github.com/kubernetes/kubernetes/blob/master/logo/logo.png",
-			ShortDescription: "Scales worker nodes within agent pools",
-			AvailablePackageRef: &corev1.AvailablePackageReference{
-				Identifier: "bitnami-1/acs-engine-autoscaler",
-				Context:    &corev1.Context{Namespace: "default", Cluster: KubeappsCluster},
-				Plugin:     fluxPlugin,
+	valid_index_available_package_summaries = &corev1.GetAvailablePackageSummariesResponse{
+		AvailablePackageSummaries: []*corev1.AvailablePackageSummary{
+			{
+				Name:             "acs-engine-autoscaler",
+				DisplayName:      "acs-engine-autoscaler",
+				LatestVersion:    pkgAppVersion("2.1.1"),
+				IconUrl:          "https://github.com/kubernetes/kubernetes/blob/master/logo/logo.png",
+				ShortDescription: "Scales worker nodes within agent pools",
+				AvailablePackageRef: &corev1.AvailablePackageReference{
+					Identifier: "bitnami-1/acs-engine-autoscaler",
+					Context:    &corev1.Context{Namespace: "default", Cluster: KubeappsCluster},
+					Plugin:     fluxPlugin,
+				},
+				Categories: []string{""},
 			},
-			Categories: []string{""},
-		},
-		{
-			Name:        "wordpress",
-			DisplayName: "wordpress",
-			LatestVersion: &corev1.PackageAppVersion{
-				PkgVersion: "0.7.5",
-				AppVersion: "4.9.1",
+			{
+				Name:        "wordpress",
+				DisplayName: "wordpress",
+				LatestVersion: &corev1.PackageAppVersion{
+					PkgVersion: "0.7.5",
+					AppVersion: "4.9.1",
+				},
+				IconUrl:          "https://bitnami.com/assets/stacks/wordpress/img/wordpress-stack-220x234.png",
+				ShortDescription: "new description!",
+				AvailablePackageRef: &corev1.AvailablePackageReference{
+					Identifier: "bitnami-1/wordpress",
+					Context:    &corev1.Context{Namespace: "default", Cluster: KubeappsCluster},
+					Plugin:     fluxPlugin,
+				},
+				Categories: []string{""},
 			},
-			IconUrl:          "https://bitnami.com/assets/stacks/wordpress/img/wordpress-stack-220x234.png",
-			ShortDescription: "new description!",
-			AvailablePackageRef: &corev1.AvailablePackageReference{
-				Identifier: "bitnami-1/wordpress",
-				Context:    &corev1.Context{Namespace: "default", Cluster: KubeappsCluster},
-				Plugin:     fluxPlugin,
-			},
-			Categories: []string{""},
 		},
 	}
 
@@ -929,70 +931,75 @@ var (
 		ghost_summary,
 	}
 
-	index_before_update_summaries = []*corev1.AvailablePackageSummary{
-		{
-			Name:        "alpine",
-			DisplayName: "alpine",
-			LatestVersion: &corev1.PackageAppVersion{
-				PkgVersion: "0.2.0",
+	index_before_update_summaries = &corev1.GetAvailablePackageSummariesResponse{
+		AvailablePackageSummaries: []*corev1.AvailablePackageSummary{
+			{
+				Name:        "alpine",
+				DisplayName: "alpine",
+				LatestVersion: &corev1.PackageAppVersion{
+					PkgVersion: "0.2.0",
+				},
+				IconUrl:          "",
+				ShortDescription: "Deploy a basic Alpine Linux pod",
+				AvailablePackageRef: &corev1.AvailablePackageReference{
+					Identifier: "testrepo/alpine",
+					Context:    &corev1.Context{Namespace: "ns2", Cluster: KubeappsCluster},
+					Plugin:     fluxPlugin,
+				},
+				Categories: []string{""},
 			},
-			IconUrl:          "",
-			ShortDescription: "Deploy a basic Alpine Linux pod",
-			AvailablePackageRef: &corev1.AvailablePackageReference{
-				Identifier: "testrepo/alpine",
-				Context:    &corev1.Context{Namespace: "ns2", Cluster: KubeappsCluster},
-				Plugin:     fluxPlugin,
+			{
+				Name:        "nginx",
+				DisplayName: "nginx",
+				LatestVersion: &corev1.PackageAppVersion{
+					PkgVersion: "1.1.0",
+				},
+				IconUrl:          "",
+				ShortDescription: "Create a basic nginx HTTP server",
+				AvailablePackageRef: &corev1.AvailablePackageReference{
+					Identifier: "testrepo/nginx",
+					Context:    &corev1.Context{Namespace: "ns2", Cluster: KubeappsCluster},
+					Plugin:     fluxPlugin,
+				},
+				Categories: []string{""},
 			},
-			Categories: []string{""},
-		},
-		{
-			Name:        "nginx",
-			DisplayName: "nginx",
-			LatestVersion: &corev1.PackageAppVersion{
-				PkgVersion: "1.1.0",
-			},
-			IconUrl:          "",
-			ShortDescription: "Create a basic nginx HTTP server",
-			AvailablePackageRef: &corev1.AvailablePackageReference{
-				Identifier: "testrepo/nginx",
-				Context:    &corev1.Context{Namespace: "ns2", Cluster: KubeappsCluster},
-				Plugin:     fluxPlugin,
-			},
-			Categories: []string{""},
 		},
 	}
 
-	index_after_update_summaries = []*corev1.AvailablePackageSummary{
-		{
-			Name:        "alpine",
-			DisplayName: "alpine",
-			LatestVersion: &corev1.PackageAppVersion{
-				PkgVersion: "0.3.0",
+	index_after_update_summaries = &corev1.GetAvailablePackageSummariesResponse{
+		AvailablePackageSummaries: []*corev1.AvailablePackageSummary{
+			{
+				Name:        "alpine",
+				DisplayName: "alpine",
+				LatestVersion: &corev1.PackageAppVersion{
+					PkgVersion: "0.3.0",
+				},
+				IconUrl:          "",
+				ShortDescription: "Deploy a basic Alpine Linux pod",
+				AvailablePackageRef: &corev1.AvailablePackageReference{
+					Identifier: "testrepo/alpine",
+					Context:    &corev1.Context{Namespace: "ns2", Cluster: KubeappsCluster},
+					Plugin:     fluxPlugin,
+				},
+				Categories: []string{""},
 			},
-			IconUrl:          "",
-			ShortDescription: "Deploy a basic Alpine Linux pod",
-			AvailablePackageRef: &corev1.AvailablePackageReference{
-				Identifier: "testrepo/alpine",
-				Context:    &corev1.Context{Namespace: "ns2", Cluster: KubeappsCluster},
-				Plugin:     fluxPlugin,
+			{
+				Name:        "nginx",
+				DisplayName: "nginx",
+				LatestVersion: &corev1.PackageAppVersion{
+					PkgVersion: "1.1.0",
+				},
+				IconUrl:          "",
+				ShortDescription: "Create a basic nginx HTTP server",
+				AvailablePackageRef: &corev1.AvailablePackageReference{
+					Identifier: "testrepo/nginx",
+					Context:    &corev1.Context{Namespace: "ns2", Cluster: KubeappsCluster},
+					Plugin:     fluxPlugin,
+				},
+				Categories: []string{""},
 			},
-			Categories: []string{""},
 		},
-		{
-			Name:        "nginx",
-			DisplayName: "nginx",
-			LatestVersion: &corev1.PackageAppVersion{
-				PkgVersion: "1.1.0",
-			},
-			IconUrl:          "",
-			ShortDescription: "Create a basic nginx HTTP server",
-			AvailablePackageRef: &corev1.AvailablePackageReference{
-				Identifier: "testrepo/nginx",
-				Context:    &corev1.Context{Namespace: "ns2", Cluster: KubeappsCluster},
-				Plugin:     fluxPlugin,
-			},
-			Categories: []string{""},
-		}}
+	}
 
 	add_repo_1 = sourcev1.HelmRepository{
 		TypeMeta: metav1.TypeMeta{
@@ -2703,7 +2710,7 @@ var (
 			Url:             "https://example.repo.com/charts",
 			Interval:        "1m",
 			Auth:            &corev1.PackageRepositoryAuth{PassCredentials: false},
-			Status:          podinfo_repo_status_2,
+			Status:          podinfo_repo_status_1,
 		},
 	}
 
@@ -2750,7 +2757,7 @@ var (
 					},
 				},
 			},
-			Status: podinfo_repo_status_2,
+			Status: podinfo_repo_status_1,
 		},
 	}
 
@@ -2770,7 +2777,7 @@ var (
 					CertAuthority: redactedString,
 				},
 			},
-			Status: podinfo_repo_status_2,
+			Status: podinfo_repo_status_1,
 		},
 	}
 
@@ -2828,7 +2835,7 @@ var (
 					},
 				},
 			},
-			Status: podinfo_repo_status_2,
+			Status: podinfo_repo_status_1,
 		},
 	}
 
@@ -2842,7 +2849,7 @@ var (
 			Url:             "https://example.repo.com/charts",
 			Interval:        "1m",
 			Auth:            tls_auth_redacted,
-			Status:          podinfo_repo_status_2,
+			Status:          podinfo_repo_status_1,
 		},
 	}
 
@@ -2860,7 +2867,7 @@ var (
 			Url:             "https://example.repo.com/charts",
 			Interval:        "1m",
 			Auth:            secret_1_auth,
-			Status:          podinfo_repo_status_2,
+			Status:          podinfo_repo_status_1,
 		},
 	}
 
@@ -2874,7 +2881,7 @@ var (
 			Url:             "https://example.repo.com/charts",
 			Interval:        "1m",
 			Auth:            foo_bar_auth_redacted,
-			Status:          podinfo_repo_status_2,
+			Status:          podinfo_repo_status_1,
 		},
 	}
 
@@ -2888,7 +2895,7 @@ var (
 			Url:             podinfo_repo_url,
 			Interval:        "10m",
 			Auth:            &corev1.PackageRepositoryAuth{PassCredentials: false},
-			Status:          podinfo_repo_status_3,
+			Status:          podinfo_repo_status_1,
 		},
 	}
 
@@ -3215,7 +3222,7 @@ var (
 		NamespaceScoped: false,
 		Type:            "helm",
 		Url:             "http://example.com",
-		Status:          podinfo_repo_status_2,
+		Status:          podinfo_repo_status_1,
 		RequiresAuth:    true,
 	}
 
@@ -3226,7 +3233,7 @@ var (
 		NamespaceScoped: false,
 		Type:            "helm",
 		Url:             "http://example.com",
-		Status:          podinfo_repo_status_2,
+		Status:          podinfo_repo_status_1,
 		RequiresAuth:    false,
 	}
 
@@ -3264,7 +3271,7 @@ var (
 			NamespaceScoped: false,
 			Type:            "helm",
 			Url:             podinfo_repo_url,
-			Status:          podinfo_repo_status_3,
+			Status:          podinfo_repo_status_1,
 			RequiresAuth:    false,
 		}
 	}
@@ -3747,18 +3754,6 @@ var (
 		// may change depending on environment, flux version,
 		// or even the order in which tests are run, we we'll ignore that for
 		// the purpose of the integration test
-		UserReason: "Succeeded: stored artifact for revision '",
-	}
-
-	podinfo_repo_status_2 = &corev1.PackageRepositoryStatus{
-		Ready:      true,
-		Reason:     corev1.PackageRepositoryStatus_STATUS_REASON_SUCCESS,
-		UserReason: "Succeeded: stored artifact for revision '",
-	}
-
-	podinfo_repo_status_3 = &corev1.PackageRepositoryStatus{
-		Ready:      true,
-		Reason:     corev1.PackageRepositoryStatus_STATUS_REASON_SUCCESS,
 		UserReason: "Succeeded: stored artifact for revision '",
 	}
 

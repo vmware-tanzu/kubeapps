@@ -126,17 +126,7 @@ func TestKindClusterRepoWithBasicAuth(t *testing.T) {
 				},
 			})
 		if err == nil {
-			opt1 := cmpopts.IgnoreUnexported(
-				corev1.GetAvailablePackageSummariesResponse{},
-				corev1.AvailablePackageSummary{},
-				corev1.AvailablePackageReference{},
-				corev1.Context{},
-				plugins.Plugin{},
-				corev1.PackageAppVersion{})
-			opt2 := cmpopts.SortSlices(lessAvailablePackageFunc)
-			if got, want := resp, available_package_summaries_podinfo_basic_auth(repoName.Name); !cmp.Equal(got, want, opt1, opt2) {
-				t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opt1, opt2))
-			}
+			compareAvailablePackageSummaries(t, resp, available_package_summaries_podinfo_basic_auth(repoName.Name))
 			break
 		} else if i == maxWait {
 			t.Fatalf("Timed out waiting for available package summaries, last response: %v, last error: [%v]", resp, err)
@@ -179,7 +169,7 @@ func TestKindClusterRepoWithBasicAuth(t *testing.T) {
 		t.Fatalf("%v", err)
 	}
 
-	compareActualVsExpectedAvailablePackageDetail(
+	compareAvailablePackageDetail(
 		t,
 		resp.AvailablePackageDetail,
 		expected_detail_podinfo_basic_auth(repoName.Name).AvailablePackageDetail)
@@ -614,7 +604,7 @@ func TestKindClusterGetPackageRepositoryDetail(t *testing.T) {
 					time.Sleep(2 * time.Second)
 				}
 			}
-			compareActualVsExpectedPackageRepositoryDetail(t, resp, tc.expectedResponse)
+			comparePackageRepositoryDetail(t, resp, tc.expectedResponse)
 		})
 	}
 }
@@ -816,7 +806,7 @@ func TestKindClusterGetPackageRepositorySummaries(t *testing.T) {
 				return
 			}
 
-			compareActualVsExpectedPackageRepositorySummaries(t, resp, tc.expectedResponse)
+			comparePackageRepositorySummaries(t, resp, tc.expectedResponse)
 		})
 	}
 }
@@ -1058,7 +1048,7 @@ func TestKindClusterUpdatePackageRepository(t *testing.T) {
 
 			actualDetail := waitForRepoToReconcileWithSuccess(
 				t, fluxPluginReposClient, grpcCtx, tc.repoName, repoNamespace)
-			compareActualVsExpectedPackageRepositoryDetail(t, actualDetail, tc.expectedDetail)
+			comparePackageRepositoryDetail(t, actualDetail, tc.expectedDetail)
 		})
 	}
 }
@@ -1397,7 +1387,7 @@ func TestKindClusterUpdatePackageRepoSecretUnchanged(t *testing.T) {
 
 	actualDetail := waitForRepoToReconcileWithSuccess(
 		t, fluxPluginReposClient, grpcAdmin, repoName, repoNamespace)
-	compareActualVsExpectedPackageRepositoryDetail(t, actualDetail, expectedDetail)
+	comparePackageRepositoryDetail(t, actualDetail, expectedDetail)
 }
 
 func TestKindClusterAddTagsToOciRepository(t *testing.T) {
@@ -1465,12 +1455,7 @@ func TestKindClusterAddTagsToOciRepository(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		opts := cmpopts.IgnoreUnexported(
-			corev1.GetAvailablePackageVersionsResponse{},
-			corev1.PackageAppVersion{})
-		if got, want := resp2, expected_versions_gfichtenholt_podinfo; !cmp.Equal(want, got, opts) {
-			t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opts))
-		}
+		compareAvailablePackageVersions(t, resp2, expected_versions_gfichtenholt_podinfo)
 
 		if err = helmPushChartToMyGithubRegistry(t, "6.1.6"); err != nil {
 			t.Fatal(err)
@@ -1502,9 +1487,7 @@ func TestKindClusterAddTagsToOciRepository(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		if got, want := resp3, expected_versions_gfichtenholt_podinfo_3; !cmp.Equal(want, got, opts) {
-			t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opts))
-		}
+		compareAvailablePackageVersions(t, resp3, expected_versions_gfichtenholt_podinfo_3)
 	})
 }
 

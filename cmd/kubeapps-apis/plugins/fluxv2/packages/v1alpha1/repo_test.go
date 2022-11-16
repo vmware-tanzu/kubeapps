@@ -57,10 +57,8 @@ func TestGetAvailablePackageSummariesWithoutPagination(t *testing.T) {
 					index:     testYaml("valid-index.yaml"),
 				},
 			},
-			request: &corev1.GetAvailablePackageSummariesRequest{Context: &corev1.Context{}},
-			expectedResponse: &corev1.GetAvailablePackageSummariesResponse{
-				AvailablePackageSummaries: valid_index_available_package_summaries,
-			},
+			request:          &corev1.GetAvailablePackageSummariesRequest{Context: &corev1.Context{}},
+			expectedResponse: valid_index_available_package_summaries,
 		},
 		{
 			name: "it returns a couple of fluxv2 packages from the cluster (when request namespace is specified)",
@@ -72,10 +70,8 @@ func TestGetAvailablePackageSummariesWithoutPagination(t *testing.T) {
 					index:     testYaml("valid-index.yaml"),
 				},
 			},
-			request: &corev1.GetAvailablePackageSummariesRequest{Context: &corev1.Context{Namespace: "default"}},
-			expectedResponse: &corev1.GetAvailablePackageSummariesResponse{
-				AvailablePackageSummaries: valid_index_available_package_summaries,
-			},
+			request:          &corev1.GetAvailablePackageSummariesRequest{Context: &corev1.Context{Namespace: "default"}},
+			expectedResponse: valid_index_available_package_summaries,
 		},
 		{
 			name: "it returns a couple of fluxv2 packages from the cluster (when request cluster is specified and matches the kubeapps cluster)",
@@ -91,9 +87,7 @@ func TestGetAvailablePackageSummariesWithoutPagination(t *testing.T) {
 				Cluster:   KubeappsCluster,
 				Namespace: "default",
 			}},
-			expectedResponse: &corev1.GetAvailablePackageSummariesResponse{
-				AvailablePackageSummaries: valid_index_available_package_summaries,
-			},
+			expectedResponse: valid_index_available_package_summaries,
 		},
 		{
 			name: "it returns all fluxv2 packages from the cluster (when request namespace is does not match repo namespace)",
@@ -111,10 +105,8 @@ func TestGetAvailablePackageSummariesWithoutPagination(t *testing.T) {
 					index:     testYaml("jetstack-index.yaml"),
 				},
 			},
-			request: &corev1.GetAvailablePackageSummariesRequest{Context: &corev1.Context{Namespace: "non-default"}},
-			expectedResponse: &corev1.GetAvailablePackageSummariesResponse{
-				AvailablePackageSummaries: append(valid_index_available_package_summaries, cert_manager_summary),
-			},
+			request:          &corev1.GetAvailablePackageSummariesRequest{Context: &corev1.Context{Namespace: "non-default"}},
+			expectedResponse: valid_index_available_package_summaries,
 		},
 		{
 			name: "uses a filter based on existing repo",
@@ -461,12 +453,7 @@ func TestGetAvailablePackageSummariesWithoutPagination(t *testing.T) {
 			if err = mock.ExpectationsWereMet(); err != nil {
 				t.Fatalf("%v", err)
 			}
-
-			opt1 := cmpopts.IgnoreUnexported(corev1.GetAvailablePackageSummariesResponse{}, corev1.AvailablePackageSummary{}, corev1.AvailablePackageReference{}, corev1.Context{}, plugins.Plugin{}, corev1.PackageAppVersion{})
-			opt2 := cmpopts.SortSlices(lessAvailablePackageFunc)
-			if got, want := response, tc.expectedResponse; !cmp.Equal(got, want, opt1, opt2) {
-				t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opt1, opt2))
-			}
+			compareAvailablePackageSummaries(t, response, tc.expectedResponse)
 		})
 	}
 }
@@ -571,9 +558,7 @@ func TestGetAvailablePackageSummariesWithPagination(t *testing.T) {
 		if got, want := status.Code(err), codes.OK; got != want {
 			t.Fatalf("got: %v, want: %v", err, want)
 		}
-		if got, want := response2, nextExpectedResp; !cmp.Equal(want, got, opts, opts2) {
-			t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opts, opts2))
-		}
+		compareAvailablePackageSummaries(t, response2, nextExpectedResp)
 
 		request3 := &corev1.GetAvailablePackageSummariesRequest{
 			Context: &corev1.Context{Namespace: "blah"},
@@ -593,9 +578,7 @@ func TestGetAvailablePackageSummariesWithPagination(t *testing.T) {
 		if got, want := status.Code(err), codes.OK; got != want {
 			t.Fatalf("got: %v, want: %v", err, want)
 		}
-		if got, want := response3, nextExpectedResp; !cmp.Equal(want, got, opts, opts2) {
-			t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opts, opts2))
-		}
+		compareAvailablePackageSummaries(t, response3, nextExpectedResp)
 
 		if err = mock.ExpectationsWereMet(); err != nil {
 			t.Fatalf("%v", err)
@@ -671,18 +654,7 @@ func TestGetAvailablePackageSummaryAfterRepoIndexUpdate(t *testing.T) {
 			t.Fatalf("%v", err)
 		}
 
-		opt1 := cmpopts.IgnoreUnexported(
-			corev1.AvailablePackageDetail{},
-			corev1.AvailablePackageSummary{},
-			corev1.AvailablePackageReference{},
-			corev1.Context{},
-			plugins.Plugin{},
-			corev1.Maintainer{},
-			corev1.PackageAppVersion{})
-		opt2 := cmpopts.SortSlices(lessAvailablePackageFunc)
-		if got, want := responseBeforeUpdate.AvailablePackageSummaries, index_before_update_summaries; !cmp.Equal(got, want, opt1, opt2) {
-			t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opt1, opt2))
-		}
+		compareAvailablePackageSummaries(t, responseBeforeUpdate, index_before_update_summaries)
 
 		// see below
 		key, oldValue, err := s.redisKeyValueForRepo(repo)
@@ -729,10 +701,7 @@ func TestGetAvailablePackageSummaryAfterRepoIndexUpdate(t *testing.T) {
 			if err != nil {
 				t.Fatalf("%v", err)
 			}
-
-			if got, want := responsePackagesAfterUpdate.AvailablePackageSummaries, index_after_update_summaries; !cmp.Equal(got, want, opt1, opt2) {
-				t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opt1, opt2))
-			}
+			compareAvailablePackageSummaries(t, responsePackagesAfterUpdate, index_after_update_summaries)
 
 			if err = mock.ExpectationsWereMet(); err != nil {
 				t.Fatalf("%v", err)
@@ -801,18 +770,7 @@ func TestGetAvailablePackageSummaryAfterFluxHelmRepoDelete(t *testing.T) {
 			t.Fatalf("%v", err)
 		}
 
-		opt1 := cmpopts.IgnoreUnexported(
-			corev1.AvailablePackageDetail{},
-			corev1.AvailablePackageSummary{},
-			corev1.AvailablePackageReference{},
-			corev1.Context{},
-			plugins.Plugin{},
-			corev1.Maintainer{},
-			corev1.PackageAppVersion{})
-		opt2 := cmpopts.SortSlices(lessAvailablePackageFunc)
-		if got, want := responseBeforeDelete.AvailablePackageSummaries, valid_index_available_package_summaries; !cmp.Equal(got, want, opt1, opt2) {
-			t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opt1, opt2))
-		}
+		compareAvailablePackageSummaries(t, responseBeforeDelete, valid_index_available_package_summaries)
 
 		// now we are going to simulate the user deleting a HelmRepository CR which, in turn,
 		// causes k8s server to fire a DELETE event
@@ -902,17 +860,7 @@ func TestGetAvailablePackageSummaryAfterCacheResync(t *testing.T) {
 			t.Fatalf("%v", err)
 		}
 
-		opt1 := cmpopts.IgnoreUnexported(
-			corev1.AvailablePackageDetail{},
-			corev1.AvailablePackageSummary{},
-			corev1.AvailablePackageReference{},
-			corev1.Context{}, plugins.Plugin{},
-			corev1.Maintainer{},
-			corev1.PackageAppVersion{})
-		opt2 := cmpopts.SortSlices(lessAvailablePackageFunc)
-		if got, want := responseBeforeResync.AvailablePackageSummaries, valid_index_available_package_summaries; !cmp.Equal(got, want, opt1, opt2) {
-			t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opt1, opt2))
-		}
+		compareAvailablePackageSummaries(t, responseBeforeResync, valid_index_available_package_summaries)
 
 		resyncCh, err := s.repoCache.ExpectResync()
 		if err != nil {
@@ -962,9 +910,7 @@ func TestGetAvailablePackageSummaryAfterCacheResync(t *testing.T) {
 			t.Fatalf("%v", err)
 		}
 
-		if got, want := responseAfterResync.AvailablePackageSummaries, valid_index_available_package_summaries; !cmp.Equal(got, want, opt1, opt2) {
-			t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opt1, opt2))
-		}
+		compareAvailablePackageSummaries(t, responseAfterResync, valid_index_available_package_summaries)
 	})
 }
 
@@ -1728,7 +1674,7 @@ func TestGetPackageRepositoryDetail(t *testing.T) {
 				if actualResp == nil {
 					t.Fatalf("got: nil, want: response")
 				} else {
-					compareActualVsExpectedPackageRepositoryDetail(t, actualResp, tc.expectedResponse)
+					comparePackageRepositoryDetail(t, actualResp, tc.expectedResponse)
 				}
 			}
 		})
@@ -1787,26 +1733,10 @@ func TestGetOciPackageRepositoryDetail(t *testing.T) {
 				if actualResp == nil {
 					t.Fatalf("got: nil, want: response")
 				} else {
-					opt1 := cmpopts.IgnoreUnexported(
-						corev1.Context{},
-						corev1.PackageRepositoryReference{},
-						plugins.Plugin{},
-						corev1.GetPackageRepositoryDetailResponse{},
-						corev1.PackageRepositoryDetail{},
-						corev1.PackageRepositoryStatus{},
-						corev1.PackageRepositoryAuth{},
-						corev1.PackageRepositoryTlsConfig{},
-						corev1.SecretKeyReference{},
-						corev1.TlsCertKey{},
-						corev1.UsernamePassword{},
-					)
-					if got, want := actualResp, tc.expectedResponse; !cmp.Equal(got, want, opt1) {
-						t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opt1))
-					}
+					comparePackageRepositoryDetail(t, actualResp, tc.expectedResponse)
 				}
 			}
 
-			// FWIW GetPackageRepositoryDetail currently does not use the redis cache
 			if err = mock.ExpectationsWereMet(); err != nil {
 				t.Fatalf("%v", err)
 			}
@@ -1893,7 +1823,7 @@ func TestGetPackageRepositorySummaries(t *testing.T) {
 				return
 			}
 
-			compareActualVsExpectedPackageRepositorySummaries(t, response, tc.expectedResponse)
+			comparePackageRepositorySummaries(t, response, tc.expectedResponse)
 
 			if err := mock.ExpectationsWereMet(); err != nil {
 				t.Errorf("there were unfulfilled expectations: %s", err)
@@ -2148,22 +2078,7 @@ func TestUpdatePackageRepository(t *testing.T) {
 			if actualDetail == nil {
 				t.Fatalf("got: nil, want: detail")
 			} else {
-				opt1 := cmpopts.IgnoreUnexported(
-					corev1.Context{},
-					corev1.PackageRepositoryReference{},
-					plugins.Plugin{},
-					corev1.GetPackageRepositoryDetailResponse{},
-					corev1.PackageRepositoryDetail{},
-					corev1.PackageRepositoryStatus{},
-					corev1.PackageRepositoryAuth{},
-					corev1.PackageRepositoryTlsConfig{},
-					corev1.SecretKeyReference{},
-					corev1.TlsCertKey{},
-					corev1.UsernamePassword{},
-				)
-				if got, want := actualDetail, tc.expectedDetail; !cmp.Equal(got, want, opt1) {
-					t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opt1))
-				}
+				comparePackageRepositoryDetail(t, actualDetail, tc.expectedDetail)
 			}
 
 			if !tc.userManagedSecrets && tc.oldRepoSecret != nil && actualDetail.Detail.Auth.Type == corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_UNSPECIFIED {
@@ -2384,12 +2299,7 @@ func TestGetOciAvailablePackageSummariesWithoutPagination(t *testing.T) {
 			if err = mock.ExpectationsWereMet(); err != nil {
 				t.Fatalf("%v", err)
 			}
-
-			opt1 := cmpopts.IgnoreUnexported(corev1.GetAvailablePackageSummariesResponse{}, corev1.AvailablePackageSummary{}, corev1.AvailablePackageReference{}, corev1.Context{}, plugins.Plugin{}, corev1.PackageAppVersion{})
-			opt2 := cmpopts.SortSlices(lessAvailablePackageFunc)
-			if got, want := response, tc.expectedResponse; !cmp.Equal(got, want, opt1, opt2) {
-				t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opt1, opt2))
-			}
+			compareAvailablePackageSummaries(t, response, tc.expectedResponse)
 		})
 	}
 }
