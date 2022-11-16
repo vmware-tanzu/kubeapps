@@ -609,6 +609,7 @@ jobs:
       - push_images
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v3
       - uses: ./.github/actions/srp-source-provenance
         with:
           SRP_CLI_VERSION: ${SRP_CLI_VERSION}
