@@ -58,7 +58,7 @@ func TestGetAvailablePackageSummariesWithoutPagination(t *testing.T) {
 				},
 			},
 			request:          &corev1.GetAvailablePackageSummariesRequest{Context: &corev1.Context{}},
-			expectedResponse: valid_index_available_package_summaries,
+			expectedResponse: valid_index_available_package_summaries_resp,
 		},
 		{
 			name: "it returns a couple of fluxv2 packages from the cluster (when request namespace is specified)",
@@ -71,7 +71,7 @@ func TestGetAvailablePackageSummariesWithoutPagination(t *testing.T) {
 				},
 			},
 			request:          &corev1.GetAvailablePackageSummariesRequest{Context: &corev1.Context{Namespace: "default"}},
-			expectedResponse: valid_index_available_package_summaries,
+			expectedResponse: valid_index_available_package_summaries_resp,
 		},
 		{
 			name: "it returns a couple of fluxv2 packages from the cluster (when request cluster is specified and matches the kubeapps cluster)",
@@ -87,7 +87,7 @@ func TestGetAvailablePackageSummariesWithoutPagination(t *testing.T) {
 				Cluster:   KubeappsCluster,
 				Namespace: "default",
 			}},
-			expectedResponse: valid_index_available_package_summaries,
+			expectedResponse: valid_index_available_package_summaries_resp,
 		},
 		{
 			name: "it returns all fluxv2 packages from the cluster (when request namespace is does not match repo namespace)",
@@ -105,8 +105,10 @@ func TestGetAvailablePackageSummariesWithoutPagination(t *testing.T) {
 					index:     testYaml("jetstack-index.yaml"),
 				},
 			},
-			request:          &corev1.GetAvailablePackageSummariesRequest{Context: &corev1.Context{Namespace: "non-default"}},
-			expectedResponse: valid_index_available_package_summaries,
+			request: &corev1.GetAvailablePackageSummariesRequest{Context: &corev1.Context{Namespace: "non-default"}},
+			expectedResponse: &corev1.GetAvailablePackageSummariesResponse{
+				AvailablePackageSummaries: append(valid_index_available_package_summaries, cert_manager_summary),
+			},
 		},
 		{
 			name: "uses a filter based on existing repo",
@@ -430,13 +432,13 @@ func TestGetAvailablePackageSummariesWithoutPagination(t *testing.T) {
 				for _, r := range repos {
 					if r.Namespace == tc.request.Context.Namespace {
 						if err = s.redisMockExpectGetFromRepoCache(mock, nil, r); err != nil {
-							t.Fatalf("%v", err)
+							t.Fatal(err)
 						}
 					}
 				}
 			} else {
 				if err = s.redisMockExpectGetFromRepoCache(mock, tc.request.FilterOptions, repos...); err != nil {
-					t.Fatalf("%v", err)
+					t.Fatal(err)
 				}
 			}
 
@@ -451,7 +453,7 @@ func TestGetAvailablePackageSummariesWithoutPagination(t *testing.T) {
 			}
 
 			if err = mock.ExpectationsWereMet(); err != nil {
-				t.Fatalf("%v", err)
+				t.Fatal(err)
 			}
 			compareAvailablePackageSummaries(t, response, tc.expectedResponse)
 		})
@@ -490,7 +492,7 @@ func TestGetAvailablePackageSummariesWithPagination(t *testing.T) {
 		}
 
 		if err = s.redisMockExpectGetFromRepoCache(mock, nil, repos...); err != nil {
-			t.Fatalf("%v", err)
+			t.Fatal(err)
 		}
 
 		request1 := &corev1.GetAvailablePackageSummariesRequest{
@@ -552,7 +554,7 @@ func TestGetAvailablePackageSummariesWithPagination(t *testing.T) {
 		}
 
 		if err = s.redisMockExpectGetFromRepoCache(mock, nil, repos...); err != nil {
-			t.Fatalf("%v", err)
+			t.Fatal(err)
 		}
 		response2, err := s.GetAvailablePackageSummaries(context.Background(), request2)
 		if got, want := status.Code(err), codes.OK; got != want {
@@ -572,7 +574,7 @@ func TestGetAvailablePackageSummariesWithPagination(t *testing.T) {
 			NextPageToken:             "",
 		}
 		if err = s.redisMockExpectGetFromRepoCache(mock, nil, repos...); err != nil {
-			t.Fatalf("%v", err)
+			t.Fatal(err)
 		}
 		response3, err := s.GetAvailablePackageSummaries(context.Background(), request3)
 		if got, want := status.Code(err), codes.OK; got != want {
@@ -581,7 +583,7 @@ func TestGetAvailablePackageSummariesWithPagination(t *testing.T) {
 		compareAvailablePackageSummaries(t, response3, nextExpectedResp)
 
 		if err = mock.ExpectationsWereMet(); err != nil {
-			t.Fatalf("%v", err)
+			t.Fatal(err)
 		}
 	})
 }
@@ -639,7 +641,7 @@ func TestGetAvailablePackageSummaryAfterRepoIndexUpdate(t *testing.T) {
 		}
 
 		if err = s.redisMockExpectGetFromRepoCache(mock, nil, repo); err != nil {
-			t.Fatalf("%v", err)
+			t.Fatal(err)
 		}
 
 		ctx := context.Background()
@@ -647,19 +649,19 @@ func TestGetAvailablePackageSummaryAfterRepoIndexUpdate(t *testing.T) {
 			ctx,
 			&corev1.GetAvailablePackageSummariesRequest{Context: &corev1.Context{}})
 		if err != nil {
-			t.Fatalf("%v", err)
+			t.Fatal(err)
 		}
 
 		if err = mock.ExpectationsWereMet(); err != nil {
-			t.Fatalf("%v", err)
+			t.Fatal(err)
 		}
 
-		compareAvailablePackageSummaries(t, responseBeforeUpdate, index_before_update_summaries)
+		compareAvailablePackageSummaries(t, responseBeforeUpdate, expected_summaries_before_update)
 
 		// see below
 		key, oldValue, err := s.redisKeyValueForRepo(repo)
 		if err != nil {
-			t.Fatalf("%v", err)
+			t.Fatal(err)
 		}
 
 		ctrlClient, _, err := ctrlClientAndWatcher(t, s)
@@ -690,7 +692,7 @@ func TestGetAvailablePackageSummaryAfterRepoIndexUpdate(t *testing.T) {
 			s.repoCache.WaitUntilForgotten(key)
 
 			if err = mock.ExpectationsWereMet(); err != nil {
-				t.Fatalf("%v", err)
+				t.Fatal(err)
 			}
 
 			mock.ExpectGet(key).SetVal(string(newValue))
@@ -699,12 +701,12 @@ func TestGetAvailablePackageSummaryAfterRepoIndexUpdate(t *testing.T) {
 				ctx,
 				&corev1.GetAvailablePackageSummariesRequest{Context: &corev1.Context{}})
 			if err != nil {
-				t.Fatalf("%v", err)
+				t.Fatal(err)
 			}
-			compareAvailablePackageSummaries(t, responsePackagesAfterUpdate, index_after_update_summaries)
+			compareAvailablePackageSummaries(t, responsePackagesAfterUpdate, expected_summaries_after_update)
 
 			if err = mock.ExpectationsWereMet(); err != nil {
-				t.Fatalf("%v", err)
+				t.Fatal(err)
 			}
 		}
 	})
@@ -756,21 +758,21 @@ func TestGetAvailablePackageSummaryAfterFluxHelmRepoDelete(t *testing.T) {
 		}
 
 		if err = s.redisMockExpectGetFromRepoCache(mock, nil, *repo); err != nil {
-			t.Fatalf("%v", err)
+			t.Fatal(err)
 		}
 
 		responseBeforeDelete, err := s.GetAvailablePackageSummaries(
 			context.Background(),
 			&corev1.GetAvailablePackageSummariesRequest{Context: &corev1.Context{}})
 		if err != nil {
-			t.Fatalf("%v", err)
+			t.Fatal(err)
 		}
 
 		if err = mock.ExpectationsWereMet(); err != nil {
-			t.Fatalf("%v", err)
+			t.Fatal(err)
 		}
 
-		compareAvailablePackageSummaries(t, responseBeforeDelete, valid_index_available_package_summaries)
+		compareAvailablePackageSummaries(t, responseBeforeDelete, valid_index_available_package_summaries_resp)
 
 		// now we are going to simulate the user deleting a HelmRepository CR which, in turn,
 		// causes k8s server to fire a DELETE event
@@ -781,11 +783,11 @@ func TestGetAvailablePackageSummaryAfterFluxHelmRepoDelete(t *testing.T) {
 
 		repoKey, err := redisKeyForRepoNamespacedName(repoName)
 		if err != nil {
-			t.Fatalf("%v", err)
+			t.Fatal(err)
 		}
 
 		if err = redisMockExpectDeleteRepoWithCharts(mock, repoName, chartsInCache); err != nil {
-			t.Fatalf("%v", err)
+			t.Fatal(err)
 		}
 
 		chartCacheKeys := []string{}
@@ -811,14 +813,14 @@ func TestGetAvailablePackageSummaryAfterFluxHelmRepoDelete(t *testing.T) {
 		}
 
 		if err = mock.ExpectationsWereMet(); err != nil {
-			t.Fatalf("%v", err)
+			t.Fatal(err)
 		}
 
 		responseAfterDelete, err := s.GetAvailablePackageSummaries(
 			context.Background(),
 			&corev1.GetAvailablePackageSummariesRequest{Context: &corev1.Context{}})
 		if err != nil {
-			t.Fatalf("%v", err)
+			t.Fatal(err)
 		}
 
 		if len(responseAfterDelete.AvailablePackageSummaries) != 0 {
@@ -826,7 +828,7 @@ func TestGetAvailablePackageSummaryAfterFluxHelmRepoDelete(t *testing.T) {
 		}
 
 		if err = mock.ExpectationsWereMet(); err != nil {
-			t.Fatalf("%v", err)
+			t.Fatal(err)
 		}
 	})
 }
@@ -846,25 +848,25 @@ func TestGetAvailablePackageSummaryAfterCacheResync(t *testing.T) {
 		}
 
 		if err = s.redisMockExpectGetFromRepoCache(mock, nil, *repo); err != nil {
-			t.Fatalf("%v", err)
+			t.Fatal(err)
 		}
 
 		responseBeforeResync, err := s.GetAvailablePackageSummaries(
 			context.Background(),
 			&corev1.GetAvailablePackageSummariesRequest{Context: &corev1.Context{}})
 		if err != nil {
-			t.Fatalf("%v", err)
+			t.Fatal(err)
 		}
 
 		if err = mock.ExpectationsWereMet(); err != nil {
-			t.Fatalf("%v", err)
+			t.Fatal(err)
 		}
 
-		compareAvailablePackageSummaries(t, responseBeforeResync, valid_index_available_package_summaries)
+		compareAvailablePackageSummaries(t, responseBeforeResync, valid_index_available_package_summaries_resp)
 
 		resyncCh, err := s.repoCache.ExpectResync()
 		if err != nil {
-			t.Fatalf("%v", err)
+			t.Fatal(err)
 		}
 
 		// now lets try to simulate HTTP 410 GONE exception which should force
@@ -892,25 +894,25 @@ func TestGetAvailablePackageSummaryAfterCacheResync(t *testing.T) {
 		s.repoCache.WaitUntilResyncComplete()
 
 		if err = mock.ExpectationsWereMet(); err != nil {
-			t.Fatalf("%v", err)
+			t.Fatal(err)
 		}
 
 		if err = s.redisMockExpectGetFromRepoCache(mock, nil, *repo); err != nil {
-			t.Fatalf("%v", err)
+			t.Fatal(err)
 		}
 
 		responseAfterResync, err := s.GetAvailablePackageSummaries(
 			context.Background(),
 			&corev1.GetAvailablePackageSummariesRequest{Context: &corev1.Context{}})
 		if err != nil {
-			t.Fatalf("%v", err)
+			t.Fatal(err)
 		}
 
 		if err = mock.ExpectationsWereMet(); err != nil {
-			t.Fatalf("%v", err)
+			t.Fatal(err)
 		}
 
-		compareAvailablePackageSummaries(t, responseAfterResync, valid_index_available_package_summaries)
+		compareAvailablePackageSummaries(t, responseAfterResync, valid_index_available_package_summaries_resp)
 	})
 }
 
@@ -1017,7 +1019,7 @@ func TestGetAvailablePackageSummariesAfterCacheResyncQueueNotIdle(t *testing.T) 
 		}
 
 		if err = mock.ExpectationsWereMet(); err != nil {
-			t.Fatalf("%v", err)
+			t.Fatal(err)
 		}
 
 		// at this point I'd like to make sure that GetAvailablePackageSummaries returns
@@ -1029,7 +1031,7 @@ func TestGetAvailablePackageSummariesAfterCacheResyncQueueNotIdle(t *testing.T) 
 		resp, err := s.GetAvailablePackageSummaries(context.TODO(),
 			&corev1.GetAvailablePackageSummariesRequest{})
 		if err != nil {
-			t.Fatalf("%v", err)
+			t.Fatal(err)
 		}
 
 		// we need to make sure that response contains packages from all existing repositories
@@ -1050,7 +1052,7 @@ func TestGetAvailablePackageSummariesAfterCacheResyncQueueNotIdle(t *testing.T) 
 		}
 
 		if err = mock.ExpectationsWereMet(); err != nil {
-			t.Fatalf("%v", err)
+			t.Fatal(err)
 		}
 	})
 }
@@ -1132,7 +1134,7 @@ func TestGetAvailablePackageSummariesAfterCacheResyncQueueIdle(t *testing.T) {
 		}
 
 		if err = mock.ExpectationsWereMet(); err != nil {
-			t.Fatalf("%v", err)
+			t.Fatal(err)
 		}
 
 		// at this point I'd like to make sure that GetAvailablePackageSummaries returns
@@ -1142,7 +1144,7 @@ func TestGetAvailablePackageSummariesAfterCacheResyncQueueIdle(t *testing.T) {
 		resp, err := s.GetAvailablePackageSummaries(context.TODO(),
 			&corev1.GetAvailablePackageSummariesRequest{})
 		if err != nil {
-			t.Fatalf("%v", err)
+			t.Fatal(err)
 		}
 
 		// we need to make sure that response contains packages from all existing repositories
@@ -1160,7 +1162,7 @@ func TestGetAvailablePackageSummariesAfterCacheResyncQueueIdle(t *testing.T) {
 		}
 
 		if err = mock.ExpectationsWereMet(); err != nil {
-			t.Fatalf("%v", err)
+			t.Fatal(err)
 		}
 	})
 }
@@ -1738,7 +1740,7 @@ func TestGetOciPackageRepositoryDetail(t *testing.T) {
 			}
 
 			if err = mock.ExpectationsWereMet(); err != nil {
-				t.Fatalf("%v", err)
+				t.Fatal(err)
 			}
 		})
 	}
@@ -2283,7 +2285,7 @@ func TestGetOciAvailablePackageSummariesWithoutPagination(t *testing.T) {
 			}
 
 			if err = s.redisMockExpectGetFromRepoCache(mock, tc.request.FilterOptions, repos...); err != nil {
-				t.Fatalf("%v", err)
+				t.Fatal(err)
 			}
 
 			response, err := s.GetAvailablePackageSummaries(context.Background(), tc.request)
@@ -2297,7 +2299,7 @@ func TestGetOciAvailablePackageSummariesWithoutPagination(t *testing.T) {
 			}
 
 			if err = mock.ExpectationsWereMet(); err != nil {
-				t.Fatalf("%v", err)
+				t.Fatal(err)
 			}
 			compareAvailablePackageSummaries(t, response, tc.expectedResponse)
 		})

@@ -844,38 +844,40 @@ var (
 		},
 	}
 
-	valid_index_available_package_summaries = &corev1.GetAvailablePackageSummariesResponse{
-		AvailablePackageSummaries: []*corev1.AvailablePackageSummary{
-			{
-				Name:             "acs-engine-autoscaler",
-				DisplayName:      "acs-engine-autoscaler",
-				LatestVersion:    pkgAppVersion("2.1.1"),
-				IconUrl:          "https://github.com/kubernetes/kubernetes/blob/master/logo/logo.png",
-				ShortDescription: "Scales worker nodes within agent pools",
-				AvailablePackageRef: &corev1.AvailablePackageReference{
-					Identifier: "bitnami-1/acs-engine-autoscaler",
-					Context:    &corev1.Context{Namespace: "default", Cluster: KubeappsCluster},
-					Plugin:     fluxPlugin,
-				},
-				Categories: []string{""},
+	valid_index_available_package_summaries = []*corev1.AvailablePackageSummary{
+		{
+			Name:             "acs-engine-autoscaler",
+			DisplayName:      "acs-engine-autoscaler",
+			LatestVersion:    pkgAppVersion("2.1.1"),
+			IconUrl:          "https://github.com/kubernetes/kubernetes/blob/master/logo/logo.png",
+			ShortDescription: "Scales worker nodes within agent pools",
+			AvailablePackageRef: &corev1.AvailablePackageReference{
+				Identifier: "bitnami-1/acs-engine-autoscaler",
+				Context:    &corev1.Context{Namespace: "default", Cluster: KubeappsCluster},
+				Plugin:     fluxPlugin,
 			},
-			{
-				Name:        "wordpress",
-				DisplayName: "wordpress",
-				LatestVersion: &corev1.PackageAppVersion{
-					PkgVersion: "0.7.5",
-					AppVersion: "4.9.1",
-				},
-				IconUrl:          "https://bitnami.com/assets/stacks/wordpress/img/wordpress-stack-220x234.png",
-				ShortDescription: "new description!",
-				AvailablePackageRef: &corev1.AvailablePackageReference{
-					Identifier: "bitnami-1/wordpress",
-					Context:    &corev1.Context{Namespace: "default", Cluster: KubeappsCluster},
-					Plugin:     fluxPlugin,
-				},
-				Categories: []string{""},
-			},
+			Categories: []string{""},
 		},
+		{
+			Name:        "wordpress",
+			DisplayName: "wordpress",
+			LatestVersion: &corev1.PackageAppVersion{
+				PkgVersion: "0.7.5",
+				AppVersion: "4.9.1",
+			},
+			IconUrl:          "https://bitnami.com/assets/stacks/wordpress/img/wordpress-stack-220x234.png",
+			ShortDescription: "new description!",
+			AvailablePackageRef: &corev1.AvailablePackageReference{
+				Identifier: "bitnami-1/wordpress",
+				Context:    &corev1.Context{Namespace: "default", Cluster: KubeappsCluster},
+				Plugin:     fluxPlugin,
+			},
+			Categories: []string{""},
+		},
+	}
+
+	valid_index_available_package_summaries_resp = &corev1.GetAvailablePackageSummariesResponse{
+		AvailablePackageSummaries: valid_index_available_package_summaries,
 	}
 
 	cert_manager_summary = &corev1.AvailablePackageSummary{
@@ -931,7 +933,7 @@ var (
 		ghost_summary,
 	}
 
-	index_before_update_summaries = &corev1.GetAvailablePackageSummariesResponse{
+	expected_summaries_before_update = &corev1.GetAvailablePackageSummariesResponse{
 		AvailablePackageSummaries: []*corev1.AvailablePackageSummary{
 			{
 				Name:        "alpine",
@@ -966,7 +968,7 @@ var (
 		},
 	}
 
-	index_after_update_summaries = &corev1.GetAvailablePackageSummariesResponse{
+	expected_summaries_after_update = &corev1.GetAvailablePackageSummariesResponse{
 		AvailablePackageSummaries: []*corev1.AvailablePackageSummary{
 			{
 				Name:        "alpine",

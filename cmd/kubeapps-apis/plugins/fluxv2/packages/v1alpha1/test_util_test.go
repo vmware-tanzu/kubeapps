@@ -528,7 +528,7 @@ func compareAvailablePackageVersions(t *testing.T, actual *corev1.GetAvailablePa
 		corev1.GetAvailablePackageVersionsResponse{},
 		corev1.PackageAppVersion{})
 	if !cmp.Equal(expected, actual, opts) {
-		t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(expected, actual, opts))
+		t.Fatalf("mismatch (-want +got):\n%s", cmp.Diff(expected, actual, opts))
 	}
 }
 
