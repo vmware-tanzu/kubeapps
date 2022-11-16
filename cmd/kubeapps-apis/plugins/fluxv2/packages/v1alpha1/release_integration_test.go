@@ -361,7 +361,7 @@ func TestKindClusterUpdateInstalledPackage(t *testing.T) {
 						t.Logf("Retrying update in [%d] sec due to %s...", waitTime, err.Error())
 						SleepWithCountdown(t, int(waitTime))
 					} else {
-						t.Fatalf("%+v", err)
+						t.Fatal(err)
 					}
 				} else {
 					break
@@ -682,7 +682,7 @@ func TestKindClusterDeleteInstalledPackage(t *testing.T) {
 				}
 				return // done, nothing more to check
 			} else if err != nil {
-				t.Fatalf("%+v", err)
+				t.Fatal(err)
 			}
 
 			const maxWait = 25
@@ -698,7 +698,7 @@ func TestKindClusterDeleteInstalledPackage(t *testing.T) {
 					if status.Code(err) == codes.NotFound {
 						break // this is the only way to break out of this loop successfully
 					} else {
-						t.Fatalf("%+v", err)
+						t.Fatal(err)
 					}
 				}
 				if i == maxWait {
@@ -716,7 +716,7 @@ func TestKindClusterDeleteInstalledPackage(t *testing.T) {
 			}
 			exists, err := kubeExistsHelmRelease(t, name)
 			if err != nil {
-				t.Fatalf("%+v", err)
+				t.Fatal(err)
 			} else if exists {
 				t.Fatalf("helmrelease [%s] still exists", installedRef)
 			}
@@ -727,7 +727,7 @@ func TestKindClusterDeleteInstalledPackage(t *testing.T) {
 			// from cluster (garbage collection)
 			for i := 0; i <= maxWait; i++ {
 				if pods, err := kubeGetPodNames(t, tc.request.TargetContext.Namespace); err != nil {
-					t.Fatalf("%+v", err)
+					t.Fatal(err)
 				} else if len(pods) == 0 {
 					break
 				} else if len(pods) != 1 {
@@ -1528,7 +1528,7 @@ func createAndWaitForHelmRelease(
 
 	err := kubeAddHelmRepositoryAndCleanup(t, name, tc.repoType, tc.repoUrl, secretName, tc.repoInterval)
 	if err != nil {
-		t.Fatalf("%+v", err)
+		t.Fatal(err)
 	}
 
 	// need to wait until repo is indexed by flux plugin
@@ -1579,7 +1579,7 @@ func createAndWaitForHelmRelease(
 		}
 		_, err = kubeCreateAdminServiceAccount(t, svcAcctName)
 		if err != nil {
-			t.Fatalf("%+v", err)
+			t.Fatal(err)
 		}
 		// it appears that if service account is deleted before the helmrelease object that uses it,
 		// when you try to delete the helmrelease, the "delete" operation gets stuck and the only
@@ -1682,7 +1682,7 @@ func createAndWaitForHelmRelease(
 			tc.expectedPodPrefix, "@TARGET_NS@", tc.request.TargetContext.Namespace)
 		pods, err := kubeGetPodNames(t, tc.request.TargetContext.Namespace)
 		if err != nil {
-			t.Fatalf("%+v", err)
+			t.Fatal(err)
 		}
 		if len(pods) != 1 {
 			t.Errorf("expected 1 pod, got: %s", pods)
@@ -1727,7 +1727,7 @@ func waitUntilInstallCompletes(
 			grpcContext,
 			&corev1.GetInstalledPackageDetailRequest{InstalledPackageRef: installedPackageRef})
 		if err != nil {
-			t.Fatalf("%+v", err)
+			t.Fatal(err)
 		}
 
 		if !expectInstallFailure {
@@ -1761,7 +1761,7 @@ func waitUntilInstallCompletes(
 			grpcContext,
 			&corev1.GetInstalledPackageResourceRefsRequest{InstalledPackageRef: installedPackageRef})
 		if err != nil {
-			t.Fatalf("%+v", err)
+			t.Fatal(err)
 		}
 	} else {
 		t.Logf("Install of [%s/%s] completed with [%s], userReason: [%s]",
