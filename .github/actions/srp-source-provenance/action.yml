@@ -58,7 +58,7 @@ runs:
         echo "COMP_UID=$COMP_UID"
         mkdir -p /tmp/provenance
         sudo srp provenance source \
-        --verbose\
+        --verbose \
         --scm-type git \
         --name "kubeapps" \
         --path ./ \
