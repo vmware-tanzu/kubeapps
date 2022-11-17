@@ -4134,14 +4134,6 @@
         }
       }
     },
-    "pluginshelmpackagesv1alpha1SetUserManagedSecretsResponse": {
-      "type": "object",
-      "properties": {
-        "value": {
-          "type": "boolean"
-        }
-      }
-    },
     "protobufAny": {
       "type": "object",
       "properties": {
