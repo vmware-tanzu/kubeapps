@@ -1913,6 +1913,166 @@ func (*DeletePackageRepositoryResponse) Descriptor() ([]byte, []int) {
 	return file_kubeappsapis_core_packages_v1alpha1_repositories_proto_rawDescGZIP(), []int{21}
 }
 
+type GetPackageRepositoryPermissionsRequest struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	// The context (cluster/namespace) for the request
+	Context *Context `protobuf:"bytes,1,opt,name=context,proto3" json:"context,omitempty"`
+}
+
+func (x *GetPackageRepositoryPermissionsRequest) Reset() {
+	*x = GetPackageRepositoryPermissionsRequest{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_kubeappsapis_core_packages_v1alpha1_repositories_proto_msgTypes[22]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *GetPackageRepositoryPermissionsRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetPackageRepositoryPermissionsRequest) ProtoMessage() {}
+
+func (x *GetPackageRepositoryPermissionsRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_kubeappsapis_core_packages_v1alpha1_repositories_proto_msgTypes[22]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetPackageRepositoryPermissionsRequest.ProtoReflect.Descriptor instead.
+func (*GetPackageRepositoryPermissionsRequest) Descriptor() ([]byte, []int) {
+	return file_kubeappsapis_core_packages_v1alpha1_repositories_proto_rawDescGZIP(), []int{22}
+}
+
+func (x *GetPackageRepositoryPermissionsRequest) GetContext() *Context {
+	if x != nil {
+		return x.Context
+	}
+	return nil
+}
+
+type PackageRepositoriesPermissions struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	Plugin *v1alpha1.Plugin `protobuf:"bytes,1,opt,name=plugin,proto3" json:"plugin,omitempty"`
+	// Permissions at the global namespace (if any)
+	Global map[string]bool `protobuf:"bytes,2,rep,name=global,proto3" json:"global,omitempty" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"varint,2,opt,name=value,proto3"`
+	// Permissions for the namespace
+	Namespace map[string]bool `protobuf:"bytes,3,rep,name=namespace,proto3" json:"namespace,omitempty" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"varint,2,opt,name=value,proto3"`
+}
+
+func (x *PackageRepositoriesPermissions) Reset() {
+	*x = PackageRepositoriesPermissions{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_kubeappsapis_core_packages_v1alpha1_repositories_proto_msgTypes[23]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *PackageRepositoriesPermissions) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*PackageRepositoriesPermissions) ProtoMessage() {}
+
+func (x *PackageRepositoriesPermissions) ProtoReflect() protoreflect.Message {
+	mi := &file_kubeappsapis_core_packages_v1alpha1_repositories_proto_msgTypes[23]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use PackageRepositoriesPermissions.ProtoReflect.Descriptor instead.
+func (*PackageRepositoriesPermissions) Descriptor() ([]byte, []int) {
+	return file_kubeappsapis_core_packages_v1alpha1_repositories_proto_rawDescGZIP(), []int{23}
+}
+
+func (x *PackageRepositoriesPermissions) GetPlugin() *v1alpha1.Plugin {
+	if x != nil {
+		return x.Plugin
+	}
+	return nil
+}
+
+func (x *PackageRepositoriesPermissions) GetGlobal() map[string]bool {
+	if x != nil {
+		return x.Global
+	}
+	return nil
+}
+
+func (x *PackageRepositoriesPermissions) GetNamespace() map[string]bool {
+	if x != nil {
+		return x.Namespace
+	}
+	return nil
+}
+
+type GetPackageRepositoryPermissionsResponse struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	Permissions []*PackageRepositoriesPermissions `protobuf:"bytes,1,rep,name=permissions,proto3" json:"permissions,omitempty"`
+}
+
+func (x *GetPackageRepositoryPermissionsResponse) Reset() {
+	*x = GetPackageRepositoryPermissionsResponse{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_kubeappsapis_core_packages_v1alpha1_repositories_proto_msgTypes[24]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *GetPackageRepositoryPermissionsResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetPackageRepositoryPermissionsResponse) ProtoMessage() {}
+
+func (x *GetPackageRepositoryPermissionsResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_kubeappsapis_core_packages_v1alpha1_repositories_proto_msgTypes[24]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetPackageRepositoryPermissionsResponse.ProtoReflect.Descriptor instead.
+func (*GetPackageRepositoryPermissionsResponse) Descriptor() ([]byte, []int) {
+	return file_kubeappsapis_core_packages_v1alpha1_repositories_proto_rawDescGZIP(), []int{24}
+}
+
+func (x *GetPackageRepositoryPermissionsResponse) GetPermissions() []*PackageRepositoriesPermissions {
+	if x != nil {
+		return x.Permissions
+	}
+	return nil
+}
+
 var File_kubeappsapis_core_packages_v1alpha1_repositories_proto protoreflect.FileDescriptor
 
 var file_kubeappsapis_core_packages_v1alpha1_repositories_proto_rawDesc = []byte{
@@ -2280,7 +2440,51 @@ var file_kubeappsapis_core_packages_v1alpha1_repositories_proto_rawDesc = []byte
 	0x65, 0x72, 0x65, 0x6e, 0x63, 0x65, 0x52, 0x0e, 0x70, 0x61, 0x63, 0x6b, 0x61, 0x67, 0x65, 0x52,
 	0x65, 0x70, 0x6f, 0x52, 0x65, 0x66, 0x22, 0x21, 0x0a, 0x1f, 0x44, 0x65, 0x6c, 0x65, 0x74, 0x65,
 	0x50, 0x61, 0x63, 0x6b, 0x61, 0x67, 0x65, 0x52, 0x65, 0x70, 0x6f, 0x73, 0x69, 0x74, 0x6f, 0x72,
-	0x79, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x32, 0x81, 0x0d, 0x0a, 0x13, 0x52, 0x65,
+	0x79, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0x70, 0x0a, 0x26, 0x47, 0x65, 0x74,
+	0x50, 0x61, 0x63, 0x6b, 0x61, 0x67, 0x65, 0x52, 0x65, 0x70, 0x6f, 0x73, 0x69, 0x74, 0x6f, 0x72,
+	0x79, 0x50, 0x65, 0x72, 0x6d, 0x69, 0x73, 0x73, 0x69, 0x6f, 0x6e, 0x73, 0x52, 0x65, 0x71, 0x75,
+	0x65, 0x73, 0x74, 0x12, 0x46, 0x0a, 0x07, 0x63, 0x6f, 0x6e, 0x74, 0x65, 0x78, 0x74, 0x18, 0x01,
+	0x20, 0x01, 0x28, 0x0b, 0x32, 0x2c, 0x2e, 0x6b, 0x75, 0x62, 0x65, 0x61, 0x70, 0x70, 0x73, 0x61,
+	0x70, 0x69, 0x73, 0x2e, 0x63, 0x6f, 0x72, 0x65, 0x2e, 0x70, 0x61, 0x63, 0x6b, 0x61, 0x67, 0x65,
+	0x73, 0x2e, 0x76, 0x31, 0x61, 0x6c, 0x70, 0x68, 0x61, 0x31, 0x2e, 0x43, 0x6f, 0x6e, 0x74, 0x65,
+	0x78, 0x74, 0x52, 0x07, 0x63, 0x6f, 0x6e, 0x74, 0x65, 0x78, 0x74, 0x22, 0xb8, 0x03, 0x0a, 0x1e,
+	0x50, 0x61, 0x63, 0x6b, 0x61, 0x67, 0x65, 0x52, 0x65, 0x70, 0x6f, 0x73, 0x69, 0x74, 0x6f, 0x72,
+	0x69, 0x65, 0x73, 0x50, 0x65, 0x72, 0x6d, 0x69, 0x73, 0x73, 0x69, 0x6f, 0x6e, 0x73, 0x12, 0x42,
+	0x0a, 0x06, 0x70, 0x6c, 0x75, 0x67, 0x69, 0x6e, 0x18, 0x01, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x2a,
+	0x2e, 0x6b, 0x75, 0x62, 0x65, 0x61, 0x70, 0x70, 0x73, 0x61, 0x70, 0x69, 0x73, 0x2e, 0x63, 0x6f,
+	0x72, 0x65, 0x2e, 0x70, 0x6c, 0x75, 0x67, 0x69, 0x6e, 0x73, 0x2e, 0x76, 0x31, 0x61, 0x6c, 0x70,
+	0x68, 0x61, 0x31, 0x2e, 0x50, 0x6c, 0x75, 0x67, 0x69, 0x6e, 0x52, 0x06, 0x70, 0x6c, 0x75, 0x67,
+	0x69, 0x6e, 0x12, 0x67, 0x0a, 0x06, 0x67, 0x6c, 0x6f, 0x62, 0x61, 0x6c, 0x18, 0x02, 0x20, 0x03,
+	0x28, 0x0b, 0x32, 0x4f, 0x2e, 0x6b, 0x75, 0x62, 0x65, 0x61, 0x70, 0x70, 0x73, 0x61, 0x70, 0x69,
+	0x73, 0x2e, 0x63, 0x6f, 0x72, 0x65, 0x2e, 0x70, 0x61, 0x63, 0x6b, 0x61, 0x67, 0x65, 0x73, 0x2e,
+	0x76, 0x31, 0x61, 0x6c, 0x70, 0x68, 0x61, 0x31, 0x2e, 0x50, 0x61, 0x63, 0x6b, 0x61, 0x67, 0x65,
+	0x52, 0x65, 0x70, 0x6f, 0x73, 0x69, 0x74, 0x6f, 0x72, 0x69, 0x65, 0x73, 0x50, 0x65, 0x72, 0x6d,
+	0x69, 0x73, 0x73, 0x69, 0x6f, 0x6e, 0x73, 0x2e, 0x47, 0x6c, 0x6f, 0x62, 0x61, 0x6c, 0x45, 0x6e,
+	0x74, 0x72, 0x79, 0x52, 0x06, 0x67, 0x6c, 0x6f, 0x62, 0x61, 0x6c, 0x12, 0x70, 0x0a, 0x09, 0x6e,
+	0x61, 0x6d, 0x65, 0x73, 0x70, 0x61, 0x63, 0x65, 0x18, 0x03, 0x20, 0x03, 0x28, 0x0b, 0x32, 0x52,
+	0x2e, 0x6b, 0x75, 0x62, 0x65, 0x61, 0x70, 0x70, 0x73, 0x61, 0x70, 0x69, 0x73, 0x2e, 0x63, 0x6f,
+	0x72, 0x65, 0x2e, 0x70, 0x61, 0x63, 0x6b, 0x61, 0x67, 0x65, 0x73, 0x2e, 0x76, 0x31, 0x61, 0x6c,
+	0x70, 0x68, 0x61, 0x31, 0x2e, 0x50, 0x61, 0x63, 0x6b, 0x61, 0x67, 0x65, 0x52, 0x65, 0x70, 0x6f,
+	0x73, 0x69, 0x74, 0x6f, 0x72, 0x69, 0x65, 0x73, 0x50, 0x65, 0x72, 0x6d, 0x69, 0x73, 0x73, 0x69,
+	0x6f, 0x6e, 0x73, 0x2e, 0x4e, 0x61, 0x6d, 0x65, 0x73, 0x70, 0x61, 0x63, 0x65, 0x45, 0x6e, 0x74,
+	0x72, 0x79, 0x52, 0x09, 0x6e, 0x61, 0x6d, 0x65, 0x73, 0x70, 0x61, 0x63, 0x65, 0x1a, 0x39, 0x0a,
+	0x0b, 0x47, 0x6c, 0x6f, 0x62, 0x61, 0x6c, 0x45, 0x6e, 0x74, 0x72, 0x79, 0x12, 0x10, 0x0a, 0x03,
+	0x6b, 0x65, 0x79, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x03, 0x6b, 0x65, 0x79, 0x12, 0x14,
+	0x0a, 0x05, 0x76, 0x61, 0x6c, 0x75, 0x65, 0x18, 0x02, 0x20, 0x01, 0x28, 0x08, 0x52, 0x05, 0x76,
+	0x61, 0x6c, 0x75, 0x65, 0x3a, 0x02, 0x38, 0x01, 0x1a, 0x3c, 0x0a, 0x0e, 0x4e, 0x61, 0x6d, 0x65,
+	0x73, 0x70, 0x61, 0x63, 0x65, 0x45, 0x6e, 0x74, 0x72, 0x79, 0x12, 0x10, 0x0a, 0x03, 0x6b, 0x65,
+	0x79, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x03, 0x6b, 0x65, 0x79, 0x12, 0x14, 0x0a, 0x05,
+	0x76, 0x61, 0x6c, 0x75, 0x65, 0x18, 0x02, 0x20, 0x01, 0x28, 0x08, 0x52, 0x05, 0x76, 0x61, 0x6c,
+	0x75, 0x65, 0x3a, 0x02, 0x38, 0x01, 0x22, 0x90, 0x01, 0x0a, 0x27, 0x47, 0x65, 0x74, 0x50, 0x61,
+	0x63, 0x6b, 0x61, 0x67, 0x65, 0x52, 0x65, 0x70, 0x6f, 0x73, 0x69, 0x74, 0x6f, 0x72, 0x79, 0x50,
+	0x65, 0x72, 0x6d, 0x69, 0x73, 0x73, 0x69, 0x6f, 0x6e, 0x73, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e,
+	0x73, 0x65, 0x12, 0x65, 0x0a, 0x0b, 0x70, 0x65, 0x72, 0x6d, 0x69, 0x73, 0x73, 0x69, 0x6f, 0x6e,
+	0x73, 0x18, 0x01, 0x20, 0x03, 0x28, 0x0b, 0x32, 0x43, 0x2e, 0x6b, 0x75, 0x62, 0x65, 0x61, 0x70,
+	0x70, 0x73, 0x61, 0x70, 0x69, 0x73, 0x2e, 0x63, 0x6f, 0x72, 0x65, 0x2e, 0x70, 0x61, 0x63, 0x6b,
+	0x61, 0x67, 0x65, 0x73, 0x2e, 0x76, 0x31, 0x61, 0x6c, 0x70, 0x68, 0x61, 0x31, 0x2e, 0x50, 0x61,
+	0x63, 0x6b, 0x61, 0x67, 0x65, 0x52, 0x65, 0x70, 0x6f, 0x73, 0x69, 0x74, 0x6f, 0x72, 0x69, 0x65,
+	0x73, 0x50, 0x65, 0x72, 0x6d, 0x69, 0x73, 0x73, 0x69, 0x6f, 0x6e, 0x73, 0x52, 0x0b, 0x70, 0x65,
+	0x72, 0x6d, 0x69, 0x73, 0x73, 0x69, 0x6f, 0x6e, 0x73, 0x32, 0x8e, 0x0f, 0x0a, 0x13, 0x52, 0x65,
 	0x70, 0x6f, 0x73, 0x69, 0x74, 0x6f, 0x72, 0x69, 0x65, 0x73, 0x53, 0x65, 0x72, 0x76, 0x69, 0x63,
 	0x65, 0x12, 0xcc, 0x01, 0x0a, 0x14, 0x41, 0x64, 0x64, 0x50, 0x61, 0x63, 0x6b, 0x61, 0x67, 0x65,
 	0x52, 0x65, 0x70, 0x6f, 0x73, 0x69, 0x74, 0x6f, 0x72, 0x79, 0x12, 0x40, 0x2e, 0x6b, 0x75, 0x62,
@@ -2384,13 +2588,30 @@ var file_kubeappsapis_core_packages_v1alpha1_repositories_proto_rawDesc = []byte
 	0x5f, 0x72, 0x65, 0x70, 0x6f, 0x5f, 0x72, 0x65, 0x66, 0x2e, 0x63, 0x6f, 0x6e, 0x74, 0x65, 0x78,
 	0x74, 0x2e, 0x6e, 0x61, 0x6d, 0x65, 0x73, 0x70, 0x61, 0x63, 0x65, 0x7d, 0x2f, 0x7b, 0x70, 0x61,
 	0x63, 0x6b, 0x61, 0x67, 0x65, 0x5f, 0x72, 0x65, 0x70, 0x6f, 0x5f, 0x72, 0x65, 0x66, 0x2e, 0x69,
-	0x64, 0x65, 0x6e, 0x74, 0x69, 0x66, 0x69, 0x65, 0x72, 0x3d, 0x2a, 0x2a, 0x7d, 0x42, 0x4f, 0x5a,
-	0x4d, 0x67, 0x69, 0x74, 0x68, 0x75, 0x62, 0x2e, 0x63, 0x6f, 0x6d, 0x2f, 0x76, 0x6d, 0x77, 0x61,
-	0x72, 0x65, 0x2d, 0x74, 0x61, 0x6e, 0x7a, 0x75, 0x2f, 0x6b, 0x75, 0x62, 0x65, 0x61, 0x70, 0x70,
-	0x73, 0x2f, 0x63, 0x6d, 0x64, 0x2f, 0x6b, 0x75, 0x62, 0x65, 0x61, 0x70, 0x70, 0x73, 0x2d, 0x61,
-	0x70, 0x69, 0x73, 0x2f, 0x67, 0x65, 0x6e, 0x2f, 0x63, 0x6f, 0x72, 0x65, 0x2f, 0x70, 0x61, 0x63,
-	0x6b, 0x61, 0x67, 0x65, 0x73, 0x2f, 0x76, 0x31, 0x61, 0x6c, 0x70, 0x68, 0x61, 0x31, 0x62, 0x06,
-	0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
+	0x64, 0x65, 0x6e, 0x74, 0x69, 0x66, 0x69, 0x65, 0x72, 0x3d, 0x2a, 0x2a, 0x7d, 0x12, 0x8a, 0x02,
+	0x0a, 0x1f, 0x47, 0x65, 0x74, 0x50, 0x61, 0x63, 0x6b, 0x61, 0x67, 0x65, 0x52, 0x65, 0x70, 0x6f,
+	0x73, 0x69, 0x74, 0x6f, 0x72, 0x79, 0x50, 0x65, 0x72, 0x6d, 0x69, 0x73, 0x73, 0x69, 0x6f, 0x6e,
+	0x73, 0x12, 0x4b, 0x2e, 0x6b, 0x75, 0x62, 0x65, 0x61, 0x70, 0x70, 0x73, 0x61, 0x70, 0x69, 0x73,
+	0x2e, 0x63, 0x6f, 0x72, 0x65, 0x2e, 0x70, 0x61, 0x63, 0x6b, 0x61, 0x67, 0x65, 0x73, 0x2e, 0x76,
+	0x31, 0x61, 0x6c, 0x70, 0x68, 0x61, 0x31, 0x2e, 0x47, 0x65, 0x74, 0x50, 0x61, 0x63, 0x6b, 0x61,
+	0x67, 0x65, 0x52, 0x65, 0x70, 0x6f, 0x73, 0x69, 0x74, 0x6f, 0x72, 0x79, 0x50, 0x65, 0x72, 0x6d,
+	0x69, 0x73, 0x73, 0x69, 0x6f, 0x6e, 0x73, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x4c,
+	0x2e, 0x6b, 0x75, 0x62, 0x65, 0x61, 0x70, 0x70, 0x73, 0x61, 0x70, 0x69, 0x73, 0x2e, 0x63, 0x6f,
+	0x72, 0x65, 0x2e, 0x70, 0x61, 0x63, 0x6b, 0x61, 0x67, 0x65, 0x73, 0x2e, 0x76, 0x31, 0x61, 0x6c,
+	0x70, 0x68, 0x61, 0x31, 0x2e, 0x47, 0x65, 0x74, 0x50, 0x61, 0x63, 0x6b, 0x61, 0x67, 0x65, 0x52,
+	0x65, 0x70, 0x6f, 0x73, 0x69, 0x74, 0x6f, 0x72, 0x79, 0x50, 0x65, 0x72, 0x6d, 0x69, 0x73, 0x73,
+	0x69, 0x6f, 0x6e, 0x73, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0x4c, 0x82, 0xd3,
+	0xe4, 0x93, 0x02, 0x46, 0x12, 0x44, 0x2f, 0x63, 0x6f, 0x72, 0x65, 0x2f, 0x70, 0x61, 0x63, 0x6b,
+	0x61, 0x67, 0x65, 0x73, 0x2f, 0x76, 0x31, 0x61, 0x6c, 0x70, 0x68, 0x61, 0x31, 0x2f, 0x72, 0x65,
+	0x70, 0x6f, 0x73, 0x69, 0x74, 0x6f, 0x72, 0x69, 0x65, 0x73, 0x2f, 0x63, 0x2f, 0x7b, 0x63, 0x6f,
+	0x6e, 0x74, 0x65, 0x78, 0x74, 0x2e, 0x63, 0x6c, 0x75, 0x73, 0x74, 0x65, 0x72, 0x7d, 0x2f, 0x70,
+	0x65, 0x72, 0x6d, 0x69, 0x73, 0x73, 0x69, 0x6f, 0x6e, 0x73, 0x42, 0x4f, 0x5a, 0x4d, 0x67, 0x69,
+	0x74, 0x68, 0x75, 0x62, 0x2e, 0x63, 0x6f, 0x6d, 0x2f, 0x76, 0x6d, 0x77, 0x61, 0x72, 0x65, 0x2d,
+	0x74, 0x61, 0x6e, 0x7a, 0x75, 0x2f, 0x6b, 0x75, 0x62, 0x65, 0x61, 0x70, 0x70, 0x73, 0x2f, 0x63,
+	0x6d, 0x64, 0x2f, 0x6b, 0x75, 0x62, 0x65, 0x61, 0x70, 0x70, 0x73, 0x2d, 0x61, 0x70, 0x69, 0x73,
+	0x2f, 0x67, 0x65, 0x6e, 0x2f, 0x63, 0x6f, 0x72, 0x65, 0x2f, 0x70, 0x61, 0x63, 0x6b, 0x61, 0x67,
+	0x65, 0x73, 0x2f, 0x76, 0x31, 0x61, 0x6c, 0x70, 0x68, 0x61, 0x31, 0x62, 0x06, 0x70, 0x72, 0x6f,
+	0x74, 0x6f, 0x33,
 }
 
 var (
@@ -2406,7 +2627,7 @@ func file_kubeappsapis_core_packages_v1alpha1_repositories_proto_rawDescGZIP() [
 }
 
 var file_kubeappsapis_core_packages_v1alpha1_repositories_proto_enumTypes = make([]protoimpl.EnumInfo, 2)
-var file_kubeappsapis_core_packages_v1alpha1_repositories_proto_msgTypes = make([]protoimpl.MessageInfo, 23)
+var file_kubeappsapis_core_packages_v1alpha1_repositories_proto_msgTypes = make([]protoimpl.MessageInfo, 28)
 var file_kubeappsapis_core_packages_v1alpha1_repositories_proto_goTypes = []interface{}{
 	(PackageRepositoryAuth_PackageRepositoryAuthType)(0), // 0: kubeappsapis.core.packages.v1alpha1.PackageRepositoryAuth.PackageRepositoryAuthType
 	(PackageRepositoryStatus_StatusReason)(0),            // 1: kubeappsapis.core.packages.v1alpha1.PackageRepositoryStatus.StatusReason
@@ -2432,17 +2653,22 @@ var file_kubeappsapis_core_packages_v1alpha1_repositories_proto_goTypes = []inte
 	(*GetPackageRepositorySummariesResponse)(nil),        // 21: kubeappsapis.core.packages.v1alpha1.GetPackageRepositorySummariesResponse
 	(*UpdatePackageRepositoryResponse)(nil),              // 22: kubeappsapis.core.packages.v1alpha1.UpdatePackageRepositoryResponse
 	(*DeletePackageRepositoryResponse)(nil),              // 23: kubeappsapis.core.packages.v1alpha1.DeletePackageRepositoryResponse
-	nil,                                                  // 24: kubeappsapis.core.packages.v1alpha1.OpaqueCredentials.DataEntry
-	(*Context)(nil),                                      // 25: kubeappsapis.core.packages.v1alpha1.Context
-	(*v1alpha1.Plugin)(nil),                              // 26: kubeappsapis.core.plugins.v1alpha1.Plugin
-	(*anypb.Any)(nil),                                    // 27: google.protobuf.Any
+	(*GetPackageRepositoryPermissionsRequest)(nil),       // 24: kubeappsapis.core.packages.v1alpha1.GetPackageRepositoryPermissionsRequest
+	(*PackageRepositoriesPermissions)(nil),               // 25: kubeappsapis.core.packages.v1alpha1.PackageRepositoriesPermissions
+	(*GetPackageRepositoryPermissionsResponse)(nil),      // 26: kubeappsapis.core.packages.v1alpha1.GetPackageRepositoryPermissionsResponse
+	nil,                     // 27: kubeappsapis.core.packages.v1alpha1.OpaqueCredentials.DataEntry
+	nil,                     // 28: kubeappsapis.core.packages.v1alpha1.PackageRepositoriesPermissions.GlobalEntry
+	nil,                     // 29: kubeappsapis.core.packages.v1alpha1.PackageRepositoriesPermissions.NamespaceEntry
+	(*Context)(nil),         // 30: kubeappsapis.core.packages.v1alpha1.Context
+	(*v1alpha1.Plugin)(nil), // 31: kubeappsapis.core.plugins.v1alpha1.Plugin
+	(*anypb.Any)(nil),       // 32: google.protobuf.Any
 }
 var file_kubeappsapis_core_packages_v1alpha1_repositories_proto_depIdxs = []int32{
-	25, // 0: kubeappsapis.core.packages.v1alpha1.AddPackageRepositoryRequest.context:type_name -> kubeappsapis.core.packages.v1alpha1.Context
+	30, // 0: kubeappsapis.core.packages.v1alpha1.AddPackageRepositoryRequest.context:type_name -> kubeappsapis.core.packages.v1alpha1.Context
 	3,  // 1: kubeappsapis.core.packages.v1alpha1.AddPackageRepositoryRequest.tls_config:type_name -> kubeappsapis.core.packages.v1alpha1.PackageRepositoryTlsConfig
 	4,  // 2: kubeappsapis.core.packages.v1alpha1.AddPackageRepositoryRequest.auth:type_name -> kubeappsapis.core.packages.v1alpha1.PackageRepositoryAuth
-	26, // 3: kubeappsapis.core.packages.v1alpha1.AddPackageRepositoryRequest.plugin:type_name -> kubeappsapis.core.plugins.v1alpha1.Plugin
-	27, // 4: kubeappsapis.core.packages.v1alpha1.AddPackageRepositoryRequest.custom_detail:type_name -> google.protobuf.Any
+	31, // 3: kubeappsapis.core.packages.v1alpha1.AddPackageRepositoryRequest.plugin:type_name -> kubeappsapis.core.plugins.v1alpha1.Plugin
+	32, // 4: kubeappsapis.core.packages.v1alpha1.AddPackageRepositoryRequest.custom_detail:type_name -> google.protobuf.Any
 	10, // 5: kubeappsapis.core.packages.v1alpha1.PackageRepositoryTlsConfig.secret_ref:type_name -> kubeappsapis.core.packages.v1alpha1.SecretKeyReference
 	0,  // 6: kubeappsapis.core.packages.v1alpha1.PackageRepositoryAuth.type:type_name -> kubeappsapis.core.packages.v1alpha1.PackageRepositoryAuth.PackageRepositoryAuthType
 	5,  // 7: kubeappsapis.core.packages.v1alpha1.PackageRepositoryAuth.username_password:type_name -> kubeappsapis.core.packages.v1alpha1.UsernamePassword
@@ -2451,43 +2677,50 @@ var file_kubeappsapis_core_packages_v1alpha1_repositories_proto_depIdxs = []int3
 	10, // 10: kubeappsapis.core.packages.v1alpha1.PackageRepositoryAuth.secret_ref:type_name -> kubeappsapis.core.packages.v1alpha1.SecretKeyReference
 	8,  // 11: kubeappsapis.core.packages.v1alpha1.PackageRepositoryAuth.ssh_creds:type_name -> kubeappsapis.core.packages.v1alpha1.SshCredentials
 	9,  // 12: kubeappsapis.core.packages.v1alpha1.PackageRepositoryAuth.opaque_creds:type_name -> kubeappsapis.core.packages.v1alpha1.OpaqueCredentials
-	24, // 13: kubeappsapis.core.packages.v1alpha1.OpaqueCredentials.data:type_name -> kubeappsapis.core.packages.v1alpha1.OpaqueCredentials.DataEntry
+	27, // 13: kubeappsapis.core.packages.v1alpha1.OpaqueCredentials.data:type_name -> kubeappsapis.core.packages.v1alpha1.OpaqueCredentials.DataEntry
 	15, // 14: kubeappsapis.core.packages.v1alpha1.GetPackageRepositoryDetailRequest.package_repo_ref:type_name -> kubeappsapis.core.packages.v1alpha1.PackageRepositoryReference
-	25, // 15: kubeappsapis.core.packages.v1alpha1.GetPackageRepositorySummariesRequest.context:type_name -> kubeappsapis.core.packages.v1alpha1.Context
+	30, // 15: kubeappsapis.core.packages.v1alpha1.GetPackageRepositorySummariesRequest.context:type_name -> kubeappsapis.core.packages.v1alpha1.Context
 	15, // 16: kubeappsapis.core.packages.v1alpha1.UpdatePackageRepositoryRequest.package_repo_ref:type_name -> kubeappsapis.core.packages.v1alpha1.PackageRepositoryReference
 	3,  // 17: kubeappsapis.core.packages.v1alpha1.UpdatePackageRepositoryRequest.tls_config:type_name -> kubeappsapis.core.packages.v1alpha1.PackageRepositoryTlsConfig
 	4,  // 18: kubeappsapis.core.packages.v1alpha1.UpdatePackageRepositoryRequest.auth:type_name -> kubeappsapis.core.packages.v1alpha1.PackageRepositoryAuth
-	27, // 19: kubeappsapis.core.packages.v1alpha1.UpdatePackageRepositoryRequest.custom_detail:type_name -> google.protobuf.Any
+	32, // 19: kubeappsapis.core.packages.v1alpha1.UpdatePackageRepositoryRequest.custom_detail:type_name -> google.protobuf.Any
 	15, // 20: kubeappsapis.core.packages.v1alpha1.DeletePackageRepositoryRequest.package_repo_ref:type_name -> kubeappsapis.core.packages.v1alpha1.PackageRepositoryReference
-	25, // 21: kubeappsapis.core.packages.v1alpha1.PackageRepositoryReference.context:type_name -> kubeappsapis.core.packages.v1alpha1.Context
-	26, // 22: kubeappsapis.core.packages.v1alpha1.PackageRepositoryReference.plugin:type_name -> kubeappsapis.core.plugins.v1alpha1.Plugin
+	30, // 21: kubeappsapis.core.packages.v1alpha1.PackageRepositoryReference.context:type_name -> kubeappsapis.core.packages.v1alpha1.Context
+	31, // 22: kubeappsapis.core.packages.v1alpha1.PackageRepositoryReference.plugin:type_name -> kubeappsapis.core.plugins.v1alpha1.Plugin
 	15, // 23: kubeappsapis.core.packages.v1alpha1.AddPackageRepositoryResponse.package_repo_ref:type_name -> kubeappsapis.core.packages.v1alpha1.PackageRepositoryReference
 	1,  // 24: kubeappsapis.core.packages.v1alpha1.PackageRepositoryStatus.reason:type_name -> kubeappsapis.core.packages.v1alpha1.PackageRepositoryStatus.StatusReason
 	15, // 25: kubeappsapis.core.packages.v1alpha1.PackageRepositoryDetail.package_repo_ref:type_name -> kubeappsapis.core.packages.v1alpha1.PackageRepositoryReference
 	3,  // 26: kubeappsapis.core.packages.v1alpha1.PackageRepositoryDetail.tls_config:type_name -> kubeappsapis.core.packages.v1alpha1.PackageRepositoryTlsConfig
 	4,  // 27: kubeappsapis.core.packages.v1alpha1.PackageRepositoryDetail.auth:type_name -> kubeappsapis.core.packages.v1alpha1.PackageRepositoryAuth
-	27, // 28: kubeappsapis.core.packages.v1alpha1.PackageRepositoryDetail.custom_detail:type_name -> google.protobuf.Any
+	32, // 28: kubeappsapis.core.packages.v1alpha1.PackageRepositoryDetail.custom_detail:type_name -> google.protobuf.Any
 	17, // 29: kubeappsapis.core.packages.v1alpha1.PackageRepositoryDetail.status:type_name -> kubeappsapis.core.packages.v1alpha1.PackageRepositoryStatus
 	18, // 30: kubeappsapis.core.packages.v1alpha1.GetPackageRepositoryDetailResponse.detail:type_name -> kubeappsapis.core.packages.v1alpha1.PackageRepositoryDetail
 	15, // 31: kubeappsapis.core.packages.v1alpha1.PackageRepositorySummary.package_repo_ref:type_name -> kubeappsapis.core.packages.v1alpha1.PackageRepositoryReference
 	17, // 32: kubeappsapis.core.packages.v1alpha1.PackageRepositorySummary.status:type_name -> kubeappsapis.core.packages.v1alpha1.PackageRepositoryStatus
 	20, // 33: kubeappsapis.core.packages.v1alpha1.GetPackageRepositorySummariesResponse.package_repository_summaries:type_name -> kubeappsapis.core.packages.v1alpha1.PackageRepositorySummary
 	15, // 34: kubeappsapis.core.packages.v1alpha1.UpdatePackageRepositoryResponse.package_repo_ref:type_name -> kubeappsapis.core.packages.v1alpha1.PackageRepositoryReference
-	2,  // 35: kubeappsapis.core.packages.v1alpha1.RepositoriesService.AddPackageRepository:input_type -> kubeappsapis.core.packages.v1alpha1.AddPackageRepositoryRequest
-	11, // 36: kubeappsapis.core.packages.v1alpha1.RepositoriesService.GetPackageRepositoryDetail:input_type -> kubeappsapis.core.packages.v1alpha1.GetPackageRepositoryDetailRequest
-	12, // 37: kubeappsapis.core.packages.v1alpha1.RepositoriesService.GetPackageRepositorySummaries:input_type -> kubeappsapis.core.packages.v1alpha1.GetPackageRepositorySummariesRequest
-	13, // 38: kubeappsapis.core.packages.v1alpha1.RepositoriesService.UpdatePackageRepository:input_type -> kubeappsapis.core.packages.v1alpha1.UpdatePackageRepositoryRequest
-	14, // 39: kubeappsapis.core.packages.v1alpha1.RepositoriesService.DeletePackageRepository:input_type -> kubeappsapis.core.packages.v1alpha1.DeletePackageRepositoryRequest
-	16, // 40: kubeappsapis.core.packages.v1alpha1.RepositoriesService.AddPackageRepository:output_type -> kubeappsapis.core.packages.v1alpha1.AddPackageRepositoryResponse
-	19, // 41: kubeappsapis.core.packages.v1alpha1.RepositoriesService.GetPackageRepositoryDetail:output_type -> kubeappsapis.core.packages.v1alpha1.GetPackageRepositoryDetailResponse
-	21, // 42: kubeappsapis.core.packages.v1alpha1.RepositoriesService.GetPackageRepositorySummaries:output_type -> kubeappsapis.core.packages.v1alpha1.GetPackageRepositorySummariesResponse
-	22, // 43: kubeappsapis.core.packages.v1alpha1.RepositoriesService.UpdatePackageRepository:output_type -> kubeappsapis.core.packages.v1alpha1.UpdatePackageRepositoryResponse
-	23, // 44: kubeappsapis.core.packages.v1alpha1.RepositoriesService.DeletePackageRepository:output_type -> kubeappsapis.core.packages.v1alpha1.DeletePackageRepositoryResponse
-	40, // [40:45] is the sub-list for method output_type
-	35, // [35:40] is the sub-list for method input_type
-	35, // [35:35] is the sub-list for extension type_name
-	35, // [35:35] is the sub-list for extension extendee
-	0,  // [0:35] is the sub-list for field type_name
+	30, // 35: kubeappsapis.core.packages.v1alpha1.GetPackageRepositoryPermissionsRequest.context:type_name -> kubeappsapis.core.packages.v1alpha1.Context
+	31, // 36: kubeappsapis.core.packages.v1alpha1.PackageRepositoriesPermissions.plugin:type_name -> kubeappsapis.core.plugins.v1alpha1.Plugin
+	28, // 37: kubeappsapis.core.packages.v1alpha1.PackageRepositoriesPermissions.global:type_name -> kubeappsapis.core.packages.v1alpha1.PackageRepositoriesPermissions.GlobalEntry
+	29, // 38: kubeappsapis.core.packages.v1alpha1.PackageRepositoriesPermissions.namespace:type_name -> kubeappsapis.core.packages.v1alpha1.PackageRepositoriesPermissions.NamespaceEntry
+	25, // 39: kubeappsapis.core.packages.v1alpha1.GetPackageRepositoryPermissionsResponse.permissions:type_name -> kubeappsapis.core.packages.v1alpha1.PackageRepositoriesPermissions
+	2,  // 40: kubeappsapis.core.packages.v1alpha1.RepositoriesService.AddPackageRepository:input_type -> kubeappsapis.core.packages.v1alpha1.AddPackageRepositoryRequest
+	11, // 41: kubeappsapis.core.packages.v1alpha1.RepositoriesService.GetPackageRepositoryDetail:input_type -> kubeappsapis.core.packages.v1alpha1.GetPackageRepositoryDetailRequest
+	12, // 42: kubeappsapis.core.packages.v1alpha1.RepositoriesService.GetPackageRepositorySummaries:input_type -> kubeappsapis.core.packages.v1alpha1.GetPackageRepositorySummariesRequest
+	13, // 43: kubeappsapis.core.packages.v1alpha1.RepositoriesService.UpdatePackageRepository:input_type -> kubeappsapis.core.packages.v1alpha1.UpdatePackageRepositoryRequest
+	14, // 44: kubeappsapis.core.packages.v1alpha1.RepositoriesService.DeletePackageRepository:input_type -> kubeappsapis.core.packages.v1alpha1.DeletePackageRepositoryRequest
+	24, // 45: kubeappsapis.core.packages.v1alpha1.RepositoriesService.GetPackageRepositoryPermissions:input_type -> kubeappsapis.core.packages.v1alpha1.GetPackageRepositoryPermissionsRequest
+	16, // 46: kubeappsapis.core.packages.v1alpha1.RepositoriesService.AddPackageRepository:output_type -> kubeappsapis.core.packages.v1alpha1.AddPackageRepositoryResponse
+	19, // 47: kubeappsapis.core.packages.v1alpha1.RepositoriesService.GetPackageRepositoryDetail:output_type -> kubeappsapis.core.packages.v1alpha1.GetPackageRepositoryDetailResponse
+	21, // 48: kubeappsapis.core.packages.v1alpha1.RepositoriesService.GetPackageRepositorySummaries:output_type -> kubeappsapis.core.packages.v1alpha1.GetPackageRepositorySummariesResponse
+	22, // 49: kubeappsapis.core.packages.v1alpha1.RepositoriesService.UpdatePackageRepository:output_type -> kubeappsapis.core.packages.v1alpha1.UpdatePackageRepositoryResponse
+	23, // 50: kubeappsapis.core.packages.v1alpha1.RepositoriesService.DeletePackageRepository:output_type -> kubeappsapis.core.packages.v1alpha1.DeletePackageRepositoryResponse
+	26, // 51: kubeappsapis.core.packages.v1alpha1.RepositoriesService.GetPackageRepositoryPermissions:output_type -> kubeappsapis.core.packages.v1alpha1.GetPackageRepositoryPermissionsResponse
+	46, // [46:52] is the sub-list for method output_type
+	40, // [40:46] is the sub-list for method input_type
+	40, // [40:40] is the sub-list for extension type_name
+	40, // [40:40] is the sub-list for extension extendee
+	0,  // [0:40] is the sub-list for field type_name
 }
 
 func init() { file_kubeappsapis_core_packages_v1alpha1_repositories_proto_init() }
@@ -2761,6 +2994,42 @@ func file_kubeappsapis_core_packages_v1alpha1_repositories_proto_init() {
 				return nil
 			}
 		}
+		file_kubeappsapis_core_packages_v1alpha1_repositories_proto_msgTypes[22].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*GetPackageRepositoryPermissionsRequest); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_kubeappsapis_core_packages_v1alpha1_repositories_proto_msgTypes[23].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*PackageRepositoriesPermissions); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_kubeappsapis_core_packages_v1alpha1_repositories_proto_msgTypes[24].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*GetPackageRepositoryPermissionsResponse); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
 	}
 	file_kubeappsapis_core_packages_v1alpha1_repositories_proto_msgTypes[1].OneofWrappers = []interface{}{
 		(*PackageRepositoryTlsConfig_CertAuthority)(nil),
@@ -2781,7 +3050,7 @@ func file_kubeappsapis_core_packages_v1alpha1_repositories_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: file_kubeappsapis_core_packages_v1alpha1_repositories_proto_rawDesc,
 			NumEnums:      2,
-			NumMessages:   23,
+			NumMessages:   28,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

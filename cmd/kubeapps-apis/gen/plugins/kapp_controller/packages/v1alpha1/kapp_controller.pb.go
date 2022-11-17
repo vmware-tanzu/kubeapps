@@ -1060,7 +1060,7 @@ var file_kubeappsapis_plugins_kapp_controller_packages_v1alpha1_kapp_controller_
 	0x6e, 0x61, 0x6d, 0x65, 0x73, 0x70, 0x61, 0x63, 0x65, 0x7d, 0x2f, 0x7b, 0x69, 0x6e, 0x73, 0x74,
 	0x61, 0x6c, 0x6c, 0x65, 0x64, 0x5f, 0x70, 0x61, 0x63, 0x6b, 0x61, 0x67, 0x65, 0x5f, 0x72, 0x65,
 	0x66, 0x2e, 0x69, 0x64, 0x65, 0x6e, 0x74, 0x69, 0x66, 0x69, 0x65, 0x72, 0x7d, 0x2f, 0x72, 0x65,
-	0x73, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x72, 0x65, 0x66, 0x73, 0x32, 0x96, 0x0c, 0x0a, 0x21, 0x4b,
+	0x73, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x72, 0x65, 0x66, 0x73, 0x32, 0xb6, 0x0e, 0x0a, 0x21, 0x4b,
 	0x61, 0x70, 0x70, 0x43, 0x6f, 0x6e, 0x74, 0x72, 0x6f, 0x6c, 0x6c, 0x65, 0x72, 0x52, 0x65, 0x70,
 	0x6f, 0x73, 0x69, 0x74, 0x6f, 0x72, 0x69, 0x65, 0x73, 0x53, 0x65, 0x72, 0x76, 0x69, 0x63, 0x65,
 	0x12, 0xdf, 0x01, 0x0a, 0x14, 0x41, 0x64, 0x64, 0x50, 0x61, 0x63, 0x6b, 0x61, 0x67, 0x65, 0x52,
@@ -1158,7 +1158,25 @@ var file_kubeappsapis_plugins_kapp_controller_packages_v1alpha1_kapp_controller_
 	0x63, 0x6f, 0x6e, 0x74, 0x65, 0x78, 0x74, 0x2e, 0x6e, 0x61, 0x6d, 0x65, 0x73, 0x70, 0x61, 0x63,
 	0x65, 0x7d, 0x2f, 0x7b, 0x70, 0x61, 0x63, 0x6b, 0x61, 0x67, 0x65, 0x5f, 0x72, 0x65, 0x70, 0x6f,
 	0x5f, 0x72, 0x65, 0x66, 0x2e, 0x69, 0x64, 0x65, 0x6e, 0x74, 0x69, 0x66, 0x69, 0x65, 0x72, 0x3d,
-	0x2a, 0x2a, 0x7d, 0x42, 0x62, 0x5a, 0x60, 0x67, 0x69, 0x74, 0x68, 0x75, 0x62, 0x2e, 0x63, 0x6f,
+	0x2a, 0x2a, 0x7d, 0x12, 0x9d, 0x02, 0x0a, 0x1f, 0x47, 0x65, 0x74, 0x50, 0x61, 0x63, 0x6b, 0x61,
+	0x67, 0x65, 0x52, 0x65, 0x70, 0x6f, 0x73, 0x69, 0x74, 0x6f, 0x72, 0x79, 0x50, 0x65, 0x72, 0x6d,
+	0x69, 0x73, 0x73, 0x69, 0x6f, 0x6e, 0x73, 0x12, 0x4b, 0x2e, 0x6b, 0x75, 0x62, 0x65, 0x61, 0x70,
+	0x70, 0x73, 0x61, 0x70, 0x69, 0x73, 0x2e, 0x63, 0x6f, 0x72, 0x65, 0x2e, 0x70, 0x61, 0x63, 0x6b,
+	0x61, 0x67, 0x65, 0x73, 0x2e, 0x76, 0x31, 0x61, 0x6c, 0x70, 0x68, 0x61, 0x31, 0x2e, 0x47, 0x65,
+	0x74, 0x50, 0x61, 0x63, 0x6b, 0x61, 0x67, 0x65, 0x52, 0x65, 0x70, 0x6f, 0x73, 0x69, 0x74, 0x6f,
+	0x72, 0x79, 0x50, 0x65, 0x72, 0x6d, 0x69, 0x73, 0x73, 0x69, 0x6f, 0x6e, 0x73, 0x52, 0x65, 0x71,
+	0x75, 0x65, 0x73, 0x74, 0x1a, 0x4c, 0x2e, 0x6b, 0x75, 0x62, 0x65, 0x61, 0x70, 0x70, 0x73, 0x61,
+	0x70, 0x69, 0x73, 0x2e, 0x63, 0x6f, 0x72, 0x65, 0x2e, 0x70, 0x61, 0x63, 0x6b, 0x61, 0x67, 0x65,
+	0x73, 0x2e, 0x76, 0x31, 0x61, 0x6c, 0x70, 0x68, 0x61, 0x31, 0x2e, 0x47, 0x65, 0x74, 0x50, 0x61,
+	0x63, 0x6b, 0x61, 0x67, 0x65, 0x52, 0x65, 0x70, 0x6f, 0x73, 0x69, 0x74, 0x6f, 0x72, 0x79, 0x50,
+	0x65, 0x72, 0x6d, 0x69, 0x73, 0x73, 0x69, 0x6f, 0x6e, 0x73, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e,
+	0x73, 0x65, 0x22, 0x5f, 0x82, 0xd3, 0xe4, 0x93, 0x02, 0x59, 0x12, 0x57, 0x2f, 0x70, 0x6c, 0x75,
+	0x67, 0x69, 0x6e, 0x73, 0x2f, 0x6b, 0x61, 0x70, 0x70, 0x5f, 0x63, 0x6f, 0x6e, 0x74, 0x72, 0x6f,
+	0x6c, 0x6c, 0x65, 0x72, 0x2f, 0x70, 0x61, 0x63, 0x6b, 0x61, 0x67, 0x65, 0x73, 0x2f, 0x76, 0x31,
+	0x61, 0x6c, 0x70, 0x68, 0x61, 0x31, 0x2f, 0x72, 0x65, 0x70, 0x6f, 0x73, 0x69, 0x74, 0x6f, 0x72,
+	0x69, 0x65, 0x73, 0x2f, 0x63, 0x2f, 0x7b, 0x63, 0x6f, 0x6e, 0x74, 0x65, 0x78, 0x74, 0x2e, 0x63,
+	0x6c, 0x75, 0x73, 0x74, 0x65, 0x72, 0x7d, 0x2f, 0x70, 0x65, 0x72, 0x6d, 0x69, 0x73, 0x73, 0x69,
+	0x6f, 0x6e, 0x73, 0x42, 0x62, 0x5a, 0x60, 0x67, 0x69, 0x74, 0x68, 0x75, 0x62, 0x2e, 0x63, 0x6f,
 	0x6d, 0x2f, 0x76, 0x6d, 0x77, 0x61, 0x72, 0x65, 0x2d, 0x74, 0x61, 0x6e, 0x7a, 0x75, 0x2f, 0x6b,
 	0x75, 0x62, 0x65, 0x61, 0x70, 0x70, 0x73, 0x2f, 0x63, 0x6d, 0x64, 0x2f, 0x6b, 0x75, 0x62, 0x65,
 	0x61, 0x70, 0x70, 0x73, 0x2d, 0x61, 0x70, 0x69, 0x73, 0x2f, 0x67, 0x65, 0x6e, 0x2f, 0x70, 0x6c,
@@ -1208,20 +1226,22 @@ var file_kubeappsapis_plugins_kapp_controller_packages_v1alpha1_kapp_controller_
 	(*v1alpha1.GetPackageRepositorySummariesRequest)(nil),    // 24: kubeappsapis.core.packages.v1alpha1.GetPackageRepositorySummariesRequest
 	(*v1alpha1.UpdatePackageRepositoryRequest)(nil),          // 25: kubeappsapis.core.packages.v1alpha1.UpdatePackageRepositoryRequest
 	(*v1alpha1.DeletePackageRepositoryRequest)(nil),          // 26: kubeappsapis.core.packages.v1alpha1.DeletePackageRepositoryRequest
-	(*v1alpha1.GetAvailablePackageSummariesResponse)(nil),    // 27: kubeappsapis.core.packages.v1alpha1.GetAvailablePackageSummariesResponse
-	(*v1alpha1.GetAvailablePackageDetailResponse)(nil),       // 28: kubeappsapis.core.packages.v1alpha1.GetAvailablePackageDetailResponse
-	(*v1alpha1.GetAvailablePackageVersionsResponse)(nil),     // 29: kubeappsapis.core.packages.v1alpha1.GetAvailablePackageVersionsResponse
-	(*v1alpha1.GetInstalledPackageSummariesResponse)(nil),    // 30: kubeappsapis.core.packages.v1alpha1.GetInstalledPackageSummariesResponse
-	(*v1alpha1.GetInstalledPackageDetailResponse)(nil),       // 31: kubeappsapis.core.packages.v1alpha1.GetInstalledPackageDetailResponse
-	(*v1alpha1.CreateInstalledPackageResponse)(nil),          // 32: kubeappsapis.core.packages.v1alpha1.CreateInstalledPackageResponse
-	(*v1alpha1.UpdateInstalledPackageResponse)(nil),          // 33: kubeappsapis.core.packages.v1alpha1.UpdateInstalledPackageResponse
-	(*v1alpha1.DeleteInstalledPackageResponse)(nil),          // 34: kubeappsapis.core.packages.v1alpha1.DeleteInstalledPackageResponse
-	(*v1alpha1.GetInstalledPackageResourceRefsResponse)(nil), // 35: kubeappsapis.core.packages.v1alpha1.GetInstalledPackageResourceRefsResponse
-	(*v1alpha1.AddPackageRepositoryResponse)(nil),            // 36: kubeappsapis.core.packages.v1alpha1.AddPackageRepositoryResponse
-	(*v1alpha1.GetPackageRepositoryDetailResponse)(nil),      // 37: kubeappsapis.core.packages.v1alpha1.GetPackageRepositoryDetailResponse
-	(*v1alpha1.GetPackageRepositorySummariesResponse)(nil),   // 38: kubeappsapis.core.packages.v1alpha1.GetPackageRepositorySummariesResponse
-	(*v1alpha1.UpdatePackageRepositoryResponse)(nil),         // 39: kubeappsapis.core.packages.v1alpha1.UpdatePackageRepositoryResponse
-	(*v1alpha1.DeletePackageRepositoryResponse)(nil),         // 40: kubeappsapis.core.packages.v1alpha1.DeletePackageRepositoryResponse
+	(*v1alpha1.GetPackageRepositoryPermissionsRequest)(nil),  // 27: kubeappsapis.core.packages.v1alpha1.GetPackageRepositoryPermissionsRequest
+	(*v1alpha1.GetAvailablePackageSummariesResponse)(nil),    // 28: kubeappsapis.core.packages.v1alpha1.GetAvailablePackageSummariesResponse
+	(*v1alpha1.GetAvailablePackageDetailResponse)(nil),       // 29: kubeappsapis.core.packages.v1alpha1.GetAvailablePackageDetailResponse
+	(*v1alpha1.GetAvailablePackageVersionsResponse)(nil),     // 30: kubeappsapis.core.packages.v1alpha1.GetAvailablePackageVersionsResponse
+	(*v1alpha1.GetInstalledPackageSummariesResponse)(nil),    // 31: kubeappsapis.core.packages.v1alpha1.GetInstalledPackageSummariesResponse
+	(*v1alpha1.GetInstalledPackageDetailResponse)(nil),       // 32: kubeappsapis.core.packages.v1alpha1.GetInstalledPackageDetailResponse
+	(*v1alpha1.CreateInstalledPackageResponse)(nil),          // 33: kubeappsapis.core.packages.v1alpha1.CreateInstalledPackageResponse
+	(*v1alpha1.UpdateInstalledPackageResponse)(nil),          // 34: kubeappsapis.core.packages.v1alpha1.UpdateInstalledPackageResponse
+	(*v1alpha1.DeleteInstalledPackageResponse)(nil),          // 35: kubeappsapis.core.packages.v1alpha1.DeleteInstalledPackageResponse
+	(*v1alpha1.GetInstalledPackageResourceRefsResponse)(nil), // 36: kubeappsapis.core.packages.v1alpha1.GetInstalledPackageResourceRefsResponse
+	(*v1alpha1.AddPackageRepositoryResponse)(nil),            // 37: kubeappsapis.core.packages.v1alpha1.AddPackageRepositoryResponse
+	(*v1alpha1.GetPackageRepositoryDetailResponse)(nil),      // 38: kubeappsapis.core.packages.v1alpha1.GetPackageRepositoryDetailResponse
+	(*v1alpha1.GetPackageRepositorySummariesResponse)(nil),   // 39: kubeappsapis.core.packages.v1alpha1.GetPackageRepositorySummariesResponse
+	(*v1alpha1.UpdatePackageRepositoryResponse)(nil),         // 40: kubeappsapis.core.packages.v1alpha1.UpdatePackageRepositoryResponse
+	(*v1alpha1.DeletePackageRepositoryResponse)(nil),         // 41: kubeappsapis.core.packages.v1alpha1.DeletePackageRepositoryResponse
+	(*v1alpha1.GetPackageRepositoryPermissionsResponse)(nil), // 42: kubeappsapis.core.packages.v1alpha1.GetPackageRepositoryPermissionsResponse
 }
 var file_kubeappsapis_plugins_kapp_controller_packages_v1alpha1_kapp_controller_proto_depIdxs = []int32{
 	1,  // 0: kubeappsapis.plugins.kapp_controller.packages.v1alpha1.KappControllerPackageRepositoryCustomDetail.fetch:type_name -> kubeappsapis.plugins.kapp_controller.packages.v1alpha1.PackageRepositoryFetch
@@ -1253,22 +1273,24 @@ var file_kubeappsapis_plugins_kapp_controller_packages_v1alpha1_kapp_controller_
 	24, // 26: kubeappsapis.plugins.kapp_controller.packages.v1alpha1.KappControllerRepositoriesService.GetPackageRepositorySummaries:input_type -> kubeappsapis.core.packages.v1alpha1.GetPackageRepositorySummariesRequest
 	25, // 27: kubeappsapis.plugins.kapp_controller.packages.v1alpha1.KappControllerRepositoriesService.UpdatePackageRepository:input_type -> kubeappsapis.core.packages.v1alpha1.UpdatePackageRepositoryRequest
 	26, // 28: kubeappsapis.plugins.kapp_controller.packages.v1alpha1.KappControllerRepositoriesService.DeletePackageRepository:input_type -> kubeappsapis.core.packages.v1alpha1.DeletePackageRepositoryRequest
-	27, // 29: kubeappsapis.plugins.kapp_controller.packages.v1alpha1.KappControllerPackagesService.GetAvailablePackageSummaries:output_type -> kubeappsapis.core.packages.v1alpha1.GetAvailablePackageSummariesResponse
-	28, // 30: kubeappsapis.plugins.kapp_controller.packages.v1alpha1.KappControllerPackagesService.GetAvailablePackageDetail:output_type -> kubeappsapis.core.packages.v1alpha1.GetAvailablePackageDetailResponse
-	29, // 31: kubeappsapis.plugins.kapp_controller.packages.v1alpha1.KappControllerPackagesService.GetAvailablePackageVersions:output_type -> kubeappsapis.core.packages.v1alpha1.GetAvailablePackageVersionsResponse
-	30, // 32: kubeappsapis.plugins.kapp_controller.packages.v1alpha1.KappControllerPackagesService.GetInstalledPackageSummaries:output_type -> kubeappsapis.core.packages.v1alpha1.GetInstalledPackageSummariesResponse
-	31, // 33: kubeappsapis.plugins.kapp_controller.packages.v1alpha1.KappControllerPackagesService.GetInstalledPackageDetail:output_type -> kubeappsapis.core.packages.v1alpha1.GetInstalledPackageDetailResponse
-	32, // 34: kubeappsapis.plugins.kapp_controller.packages.v1alpha1.KappControllerPackagesService.CreateInstalledPackage:output_type -> kubeappsapis.core.packages.v1alpha1.CreateInstalledPackageResponse
-	33, // 35: kubeappsapis.plugins.kapp_controller.packages.v1alpha1.KappControllerPackagesService.UpdateInstalledPackage:output_type -> kubeappsapis.core.packages.v1alpha1.UpdateInstalledPackageResponse
-	34, // 36: kubeappsapis.plugins.kapp_controller.packages.v1alpha1.KappControllerPackagesService.DeleteInstalledPackage:output_type -> kubeappsapis.core.packages.v1alpha1.DeleteInstalledPackageResponse
-	35, // 37: kubeappsapis.plugins.kapp_controller.packages.v1alpha1.KappControllerPackagesService.GetInstalledPackageResourceRefs:output_type -> kubeappsapis.core.packages.v1alpha1.GetInstalledPackageResourceRefsResponse
-	36, // 38: kubeappsapis.plugins.kapp_controller.packages.v1alpha1.KappControllerRepositoriesService.AddPackageRepository:output_type -> kubeappsapis.core.packages.v1alpha1.AddPackageRepositoryResponse
-	37, // 39: kubeappsapis.plugins.kapp_controller.packages.v1alpha1.KappControllerRepositoriesService.GetPackageRepositoryDetail:output_type -> kubeappsapis.core.packages.v1alpha1.GetPackageRepositoryDetailResponse
-	38, // 40: kubeappsapis.plugins.kapp_controller.packages.v1alpha1.KappControllerRepositoriesService.GetPackageRepositorySummaries:output_type -> kubeappsapis.core.packages.v1alpha1.GetPackageRepositorySummariesResponse
-	39, // 41: kubeappsapis.plugins.kapp_controller.packages.v1alpha1.KappControllerRepositoriesService.UpdatePackageRepository:output_type -> kubeappsapis.core.packages.v1alpha1.UpdatePackageRepositoryResponse
-	40, // 42: kubeappsapis.plugins.kapp_controller.packages.v1alpha1.KappControllerRepositoriesService.DeletePackageRepository:output_type -> kubeappsapis.core.packages.v1alpha1.DeletePackageRepositoryResponse
-	29, // [29:43] is the sub-list for method output_type
-	15, // [15:29] is the sub-list for method input_type
+	27, // 29: kubeappsapis.plugins.kapp_controller.packages.v1alpha1.KappControllerRepositoriesService.GetPackageRepositoryPermissions:input_type -> kubeappsapis.core.packages.v1alpha1.GetPackageRepositoryPermissionsRequest
+	28, // 30: kubeappsapis.plugins.kapp_controller.packages.v1alpha1.KappControllerPackagesService.GetAvailablePackageSummaries:output_type -> kubeappsapis.core.packages.v1alpha1.GetAvailablePackageSummariesResponse
+	29, // 31: kubeappsapis.plugins.kapp_controller.packages.v1alpha1.KappControllerPackagesService.GetAvailablePackageDetail:output_type -> kubeappsapis.core.packages.v1alpha1.GetAvailablePackageDetailResponse
+	30, // 32: kubeappsapis.plugins.kapp_controller.packages.v1alpha1.KappControllerPackagesService.GetAvailablePackageVersions:output_type -> kubeappsapis.core.packages.v1alpha1.GetAvailablePackageVersionsResponse
+	31, // 33: kubeappsapis.plugins.kapp_controller.packages.v1alpha1.KappControllerPackagesService.GetInstalledPackageSummaries:output_type -> kubeappsapis.core.packages.v1alpha1.GetInstalledPackageSummariesResponse
+	32, // 34: kubeappsapis.plugins.kapp_controller.packages.v1alpha1.KappControllerPackagesService.GetInstalledPackageDetail:output_type -> kubeappsapis.core.packages.v1alpha1.GetInstalledPackageDetailResponse
+	33, // 35: kubeappsapis.plugins.kapp_controller.packages.v1alpha1.KappControllerPackagesService.CreateInstalledPackage:output_type -> kubeappsapis.core.packages.v1alpha1.CreateInstalledPackageResponse
+	34, // 36: kubeappsapis.plugins.kapp_controller.packages.v1alpha1.KappControllerPackagesService.UpdateInstalledPackage:output_type -> kubeappsapis.core.packages.v1alpha1.UpdateInstalledPackageResponse
+	35, // 37: kubeappsapis.plugins.kapp_controller.packages.v1alpha1.KappControllerPackagesService.DeleteInstalledPackage:output_type -> kubeappsapis.core.packages.v1alpha1.DeleteInstalledPackageResponse
+	36, // 38: kubeappsapis.plugins.kapp_controller.packages.v1alpha1.KappControllerPackagesService.GetInstalledPackageResourceRefs:output_type -> kubeappsapis.core.packages.v1alpha1.GetInstalledPackageResourceRefsResponse
+	37, // 39: kubeappsapis.plugins.kapp_controller.packages.v1alpha1.KappControllerRepositoriesService.AddPackageRepository:output_type -> kubeappsapis.core.packages.v1alpha1.AddPackageRepositoryResponse
+	38, // 40: kubeappsapis.plugins.kapp_controller.packages.v1alpha1.KappControllerRepositoriesService.GetPackageRepositoryDetail:output_type -> kubeappsapis.core.packages.v1alpha1.GetPackageRepositoryDetailResponse
+	39, // 41: kubeappsapis.plugins.kapp_controller.packages.v1alpha1.KappControllerRepositoriesService.GetPackageRepositorySummaries:output_type -> kubeappsapis.core.packages.v1alpha1.GetPackageRepositorySummariesResponse
+	40, // 42: kubeappsapis.plugins.kapp_controller.packages.v1alpha1.KappControllerRepositoriesService.UpdatePackageRepository:output_type -> kubeappsapis.core.packages.v1alpha1.UpdatePackageRepositoryResponse
+	41, // 43: kubeappsapis.plugins.kapp_controller.packages.v1alpha1.KappControllerRepositoriesService.DeletePackageRepository:output_type -> kubeappsapis.core.packages.v1alpha1.DeletePackageRepositoryResponse
+	42, // 44: kubeappsapis.plugins.kapp_controller.packages.v1alpha1.KappControllerRepositoriesService.GetPackageRepositoryPermissions:output_type -> kubeappsapis.core.packages.v1alpha1.GetPackageRepositoryPermissionsResponse
+	30, // [30:45] is the sub-list for method output_type
+	15, // [15:30] is the sub-list for method input_type
 	15, // [15:15] is the sub-list for extension type_name
 	15, // [15:15] is the sub-list for extension extendee
 	0,  // [0:15] is the sub-list for field type_name

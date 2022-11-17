@@ -31,6 +31,8 @@ import {
   DockerCredentials,
   GetPackageRepositoryDetailRequest,
   GetPackageRepositoryDetailResponse,
+  GetPackageRepositoryPermissionsRequest,
+  GetPackageRepositoryPermissionsResponse,
   GetPackageRepositorySummariesRequest,
   GetPackageRepositorySummariesResponse,
   UpdatePackageRepositoryRequest,
@@ -1073,6 +1075,10 @@ export interface HelmRepositoriesService {
     request: DeepPartial<DeletePackageRepositoryRequest>,
     metadata?: grpc.Metadata,
   ): Promise<DeletePackageRepositoryResponse>;
+  GetPackageRepositoryPermissions(
+    request: DeepPartial<GetPackageRepositoryPermissionsRequest>,
+    metadata?: grpc.Metadata,
+  ): Promise<GetPackageRepositoryPermissionsResponse>;
 }
 
 export class HelmRepositoriesServiceClientImpl implements HelmRepositoriesService {
@@ -1085,6 +1091,7 @@ export class HelmRepositoriesServiceClientImpl implements HelmRepositoriesServic
     this.GetPackageRepositorySummaries = this.GetPackageRepositorySummaries.bind(this);
     this.UpdatePackageRepository = this.UpdatePackageRepository.bind(this);
     this.DeletePackageRepository = this.DeletePackageRepository.bind(this);
+    this.GetPackageRepositoryPermissions = this.GetPackageRepositoryPermissions.bind(this);
   }
 
   AddPackageRepository(
@@ -1138,6 +1145,17 @@ export class HelmRepositoriesServiceClientImpl implements HelmRepositoriesServic
     return this.rpc.unary(
       HelmRepositoriesServiceDeletePackageRepositoryDesc,
       DeletePackageRepositoryRequest.fromPartial(request),
+      metadata,
+    );
+  }
+
+  GetPackageRepositoryPermissions(
+    request: DeepPartial<GetPackageRepositoryPermissionsRequest>,
+    metadata?: grpc.Metadata,
+  ): Promise<GetPackageRepositoryPermissionsResponse> {
+    return this.rpc.unary(
+      HelmRepositoriesServiceGetPackageRepositoryPermissionsDesc,
+      GetPackageRepositoryPermissionsRequest.fromPartial(request),
       metadata,
     );
   }
@@ -1256,6 +1274,29 @@ export const HelmRepositoriesServiceDeletePackageRepositoryDesc: UnaryMethodDefi
     },
   } as any,
 };
+
+export const HelmRepositoriesServiceGetPackageRepositoryPermissionsDesc: UnaryMethodDefinitionish =
+  {
+    methodName: "GetPackageRepositoryPermissions",
+    service: HelmRepositoriesServiceDesc,
+    requestStream: false,
+    responseStream: false,
+    requestType: {
+      serializeBinary() {
+        return GetPackageRepositoryPermissionsRequest.encode(this).finish();
+      },
+    } as any,
+    responseType: {
+      deserializeBinary(data: Uint8Array) {
+        return {
+          ...GetPackageRepositoryPermissionsResponse.decode(data),
+          toObject() {
+            return this;
+          },
+        };
+      },
+    } as any,
+  };
 
 interface UnaryMethodDefinitionishR extends grpc.UnaryMethodDefinition<any, any> {
   requestStream: any;

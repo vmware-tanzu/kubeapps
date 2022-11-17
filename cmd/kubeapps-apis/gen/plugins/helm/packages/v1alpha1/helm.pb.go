@@ -720,7 +720,7 @@ var file_kubeappsapis_plugins_helm_packages_v1alpha1_helm_proto_rawDesc = []byte
 	0x74, 0x2e, 0x6e, 0x61, 0x6d, 0x65, 0x73, 0x70, 0x61, 0x63, 0x65, 0x7d, 0x2f, 0x7b, 0x69, 0x6e,
 	0x73, 0x74, 0x61, 0x6c, 0x6c, 0x65, 0x64, 0x5f, 0x70, 0x61, 0x63, 0x6b, 0x61, 0x67, 0x65, 0x5f,
 	0x72, 0x65, 0x66, 0x2e, 0x69, 0x64, 0x65, 0x6e, 0x74, 0x69, 0x66, 0x69, 0x65, 0x72, 0x7d, 0x2f,
-	0x72, 0x65, 0x73, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x72, 0x65, 0x66, 0x73, 0x32, 0xd5, 0x0b, 0x0a,
+	0x72, 0x65, 0x73, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x72, 0x65, 0x66, 0x73, 0x32, 0xea, 0x0d, 0x0a,
 	0x17, 0x48, 0x65, 0x6c, 0x6d, 0x52, 0x65, 0x70, 0x6f, 0x73, 0x69, 0x74, 0x6f, 0x72, 0x69, 0x65,
 	0x73, 0x53, 0x65, 0x72, 0x76, 0x69, 0x63, 0x65, 0x12, 0xd4, 0x01, 0x0a, 0x14, 0x41, 0x64, 0x64,
 	0x50, 0x61, 0x63, 0x6b, 0x61, 0x67, 0x65, 0x52, 0x65, 0x70, 0x6f, 0x73, 0x69, 0x74, 0x6f, 0x72,
@@ -814,13 +814,30 @@ var file_kubeappsapis_plugins_helm_packages_v1alpha1_helm_proto_rawDesc = []byte
 	0x2e, 0x63, 0x6f, 0x6e, 0x74, 0x65, 0x78, 0x74, 0x2e, 0x6e, 0x61, 0x6d, 0x65, 0x73, 0x70, 0x61,
 	0x63, 0x65, 0x7d, 0x2f, 0x7b, 0x70, 0x61, 0x63, 0x6b, 0x61, 0x67, 0x65, 0x5f, 0x72, 0x65, 0x70,
 	0x6f, 0x5f, 0x72, 0x65, 0x66, 0x2e, 0x69, 0x64, 0x65, 0x6e, 0x74, 0x69, 0x66, 0x69, 0x65, 0x72,
-	0x3d, 0x2a, 0x2a, 0x7d, 0x42, 0x57, 0x5a, 0x55, 0x67, 0x69, 0x74, 0x68, 0x75, 0x62, 0x2e, 0x63,
-	0x6f, 0x6d, 0x2f, 0x76, 0x6d, 0x77, 0x61, 0x72, 0x65, 0x2d, 0x74, 0x61, 0x6e, 0x7a, 0x75, 0x2f,
-	0x6b, 0x75, 0x62, 0x65, 0x61, 0x70, 0x70, 0x73, 0x2f, 0x63, 0x6d, 0x64, 0x2f, 0x6b, 0x75, 0x62,
-	0x65, 0x61, 0x70, 0x70, 0x73, 0x2d, 0x61, 0x70, 0x69, 0x73, 0x2f, 0x67, 0x65, 0x6e, 0x2f, 0x70,
-	0x6c, 0x75, 0x67, 0x69, 0x6e, 0x73, 0x2f, 0x68, 0x65, 0x6c, 0x6d, 0x2f, 0x70, 0x61, 0x63, 0x6b,
-	0x61, 0x67, 0x65, 0x73, 0x2f, 0x76, 0x31, 0x61, 0x6c, 0x70, 0x68, 0x61, 0x31, 0x62, 0x06, 0x70,
-	0x72, 0x6f, 0x74, 0x6f, 0x33,
+	0x3d, 0x2a, 0x2a, 0x7d, 0x12, 0x92, 0x02, 0x0a, 0x1f, 0x47, 0x65, 0x74, 0x50, 0x61, 0x63, 0x6b,
+	0x61, 0x67, 0x65, 0x52, 0x65, 0x70, 0x6f, 0x73, 0x69, 0x74, 0x6f, 0x72, 0x79, 0x50, 0x65, 0x72,
+	0x6d, 0x69, 0x73, 0x73, 0x69, 0x6f, 0x6e, 0x73, 0x12, 0x4b, 0x2e, 0x6b, 0x75, 0x62, 0x65, 0x61,
+	0x70, 0x70, 0x73, 0x61, 0x70, 0x69, 0x73, 0x2e, 0x63, 0x6f, 0x72, 0x65, 0x2e, 0x70, 0x61, 0x63,
+	0x6b, 0x61, 0x67, 0x65, 0x73, 0x2e, 0x76, 0x31, 0x61, 0x6c, 0x70, 0x68, 0x61, 0x31, 0x2e, 0x47,
+	0x65, 0x74, 0x50, 0x61, 0x63, 0x6b, 0x61, 0x67, 0x65, 0x52, 0x65, 0x70, 0x6f, 0x73, 0x69, 0x74,
+	0x6f, 0x72, 0x79, 0x50, 0x65, 0x72, 0x6d, 0x69, 0x73, 0x73, 0x69, 0x6f, 0x6e, 0x73, 0x52, 0x65,
+	0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x4c, 0x2e, 0x6b, 0x75, 0x62, 0x65, 0x61, 0x70, 0x70, 0x73,
+	0x61, 0x70, 0x69, 0x73, 0x2e, 0x63, 0x6f, 0x72, 0x65, 0x2e, 0x70, 0x61, 0x63, 0x6b, 0x61, 0x67,
+	0x65, 0x73, 0x2e, 0x76, 0x31, 0x61, 0x6c, 0x70, 0x68, 0x61, 0x31, 0x2e, 0x47, 0x65, 0x74, 0x50,
+	0x61, 0x63, 0x6b, 0x61, 0x67, 0x65, 0x52, 0x65, 0x70, 0x6f, 0x73, 0x69, 0x74, 0x6f, 0x72, 0x79,
+	0x50, 0x65, 0x72, 0x6d, 0x69, 0x73, 0x73, 0x69, 0x6f, 0x6e, 0x73, 0x52, 0x65, 0x73, 0x70, 0x6f,
+	0x6e, 0x73, 0x65, 0x22, 0x54, 0x82, 0xd3, 0xe4, 0x93, 0x02, 0x4e, 0x12, 0x4c, 0x2f, 0x70, 0x6c,
+	0x75, 0x67, 0x69, 0x6e, 0x73, 0x2f, 0x68, 0x65, 0x6c, 0x6d, 0x2f, 0x70, 0x61, 0x63, 0x6b, 0x61,
+	0x67, 0x65, 0x73, 0x2f, 0x76, 0x31, 0x61, 0x6c, 0x70, 0x68, 0x61, 0x31, 0x2f, 0x72, 0x65, 0x70,
+	0x6f, 0x73, 0x69, 0x74, 0x6f, 0x72, 0x69, 0x65, 0x73, 0x2f, 0x63, 0x2f, 0x7b, 0x63, 0x6f, 0x6e,
+	0x74, 0x65, 0x78, 0x74, 0x2e, 0x63, 0x6c, 0x75, 0x73, 0x74, 0x65, 0x72, 0x7d, 0x2f, 0x70, 0x65,
+	0x72, 0x6d, 0x69, 0x73, 0x73, 0x69, 0x6f, 0x6e, 0x73, 0x42, 0x57, 0x5a, 0x55, 0x67, 0x69, 0x74,
+	0x68, 0x75, 0x62, 0x2e, 0x63, 0x6f, 0x6d, 0x2f, 0x76, 0x6d, 0x77, 0x61, 0x72, 0x65, 0x2d, 0x74,
+	0x61, 0x6e, 0x7a, 0x75, 0x2f, 0x6b, 0x75, 0x62, 0x65, 0x61, 0x70, 0x70, 0x73, 0x2f, 0x63, 0x6d,
+	0x64, 0x2f, 0x6b, 0x75, 0x62, 0x65, 0x61, 0x70, 0x70, 0x73, 0x2d, 0x61, 0x70, 0x69, 0x73, 0x2f,
+	0x67, 0x65, 0x6e, 0x2f, 0x70, 0x6c, 0x75, 0x67, 0x69, 0x6e, 0x73, 0x2f, 0x68, 0x65, 0x6c, 0x6d,
+	0x2f, 0x70, 0x61, 0x63, 0x6b, 0x61, 0x67, 0x65, 0x73, 0x2f, 0x76, 0x31, 0x61, 0x6c, 0x70, 0x68,
+	0x61, 0x31, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
 }
 
 var (
@@ -860,20 +877,22 @@ var file_kubeappsapis_plugins_helm_packages_v1alpha1_helm_proto_goTypes = []inte
 	(*v1alpha1.GetPackageRepositorySummariesRequest)(nil),    // 20: kubeappsapis.core.packages.v1alpha1.GetPackageRepositorySummariesRequest
 	(*v1alpha1.UpdatePackageRepositoryRequest)(nil),          // 21: kubeappsapis.core.packages.v1alpha1.UpdatePackageRepositoryRequest
 	(*v1alpha1.DeletePackageRepositoryRequest)(nil),          // 22: kubeappsapis.core.packages.v1alpha1.DeletePackageRepositoryRequest
-	(*v1alpha1.GetAvailablePackageSummariesResponse)(nil),    // 23: kubeappsapis.core.packages.v1alpha1.GetAvailablePackageSummariesResponse
-	(*v1alpha1.GetAvailablePackageDetailResponse)(nil),       // 24: kubeappsapis.core.packages.v1alpha1.GetAvailablePackageDetailResponse
-	(*v1alpha1.GetAvailablePackageVersionsResponse)(nil),     // 25: kubeappsapis.core.packages.v1alpha1.GetAvailablePackageVersionsResponse
-	(*v1alpha1.GetInstalledPackageSummariesResponse)(nil),    // 26: kubeappsapis.core.packages.v1alpha1.GetInstalledPackageSummariesResponse
-	(*v1alpha1.GetInstalledPackageDetailResponse)(nil),       // 27: kubeappsapis.core.packages.v1alpha1.GetInstalledPackageDetailResponse
-	(*v1alpha1.CreateInstalledPackageResponse)(nil),          // 28: kubeappsapis.core.packages.v1alpha1.CreateInstalledPackageResponse
-	(*v1alpha1.UpdateInstalledPackageResponse)(nil),          // 29: kubeappsapis.core.packages.v1alpha1.UpdateInstalledPackageResponse
-	(*v1alpha1.DeleteInstalledPackageResponse)(nil),          // 30: kubeappsapis.core.packages.v1alpha1.DeleteInstalledPackageResponse
-	(*v1alpha1.GetInstalledPackageResourceRefsResponse)(nil), // 31: kubeappsapis.core.packages.v1alpha1.GetInstalledPackageResourceRefsResponse
-	(*v1alpha1.AddPackageRepositoryResponse)(nil),            // 32: kubeappsapis.core.packages.v1alpha1.AddPackageRepositoryResponse
-	(*v1alpha1.GetPackageRepositoryDetailResponse)(nil),      // 33: kubeappsapis.core.packages.v1alpha1.GetPackageRepositoryDetailResponse
-	(*v1alpha1.GetPackageRepositorySummariesResponse)(nil),   // 34: kubeappsapis.core.packages.v1alpha1.GetPackageRepositorySummariesResponse
-	(*v1alpha1.UpdatePackageRepositoryResponse)(nil),         // 35: kubeappsapis.core.packages.v1alpha1.UpdatePackageRepositoryResponse
-	(*v1alpha1.DeletePackageRepositoryResponse)(nil),         // 36: kubeappsapis.core.packages.v1alpha1.DeletePackageRepositoryResponse
+	(*v1alpha1.GetPackageRepositoryPermissionsRequest)(nil),  // 23: kubeappsapis.core.packages.v1alpha1.GetPackageRepositoryPermissionsRequest
+	(*v1alpha1.GetAvailablePackageSummariesResponse)(nil),    // 24: kubeappsapis.core.packages.v1alpha1.GetAvailablePackageSummariesResponse
+	(*v1alpha1.GetAvailablePackageDetailResponse)(nil),       // 25: kubeappsapis.core.packages.v1alpha1.GetAvailablePackageDetailResponse
+	(*v1alpha1.GetAvailablePackageVersionsResponse)(nil),     // 26: kubeappsapis.core.packages.v1alpha1.GetAvailablePackageVersionsResponse
+	(*v1alpha1.GetInstalledPackageSummariesResponse)(nil),    // 27: kubeappsapis.core.packages.v1alpha1.GetInstalledPackageSummariesResponse
+	(*v1alpha1.GetInstalledPackageDetailResponse)(nil),       // 28: kubeappsapis.core.packages.v1alpha1.GetInstalledPackageDetailResponse
+	(*v1alpha1.CreateInstalledPackageResponse)(nil),          // 29: kubeappsapis.core.packages.v1alpha1.CreateInstalledPackageResponse
+	(*v1alpha1.UpdateInstalledPackageResponse)(nil),          // 30: kubeappsapis.core.packages.v1alpha1.UpdateInstalledPackageResponse
+	(*v1alpha1.DeleteInstalledPackageResponse)(nil),          // 31: kubeappsapis.core.packages.v1alpha1.DeleteInstalledPackageResponse
+	(*v1alpha1.GetInstalledPackageResourceRefsResponse)(nil), // 32: kubeappsapis.core.packages.v1alpha1.GetInstalledPackageResourceRefsResponse
+	(*v1alpha1.AddPackageRepositoryResponse)(nil),            // 33: kubeappsapis.core.packages.v1alpha1.AddPackageRepositoryResponse
+	(*v1alpha1.GetPackageRepositoryDetailResponse)(nil),      // 34: kubeappsapis.core.packages.v1alpha1.GetPackageRepositoryDetailResponse
+	(*v1alpha1.GetPackageRepositorySummariesResponse)(nil),   // 35: kubeappsapis.core.packages.v1alpha1.GetPackageRepositorySummariesResponse
+	(*v1alpha1.UpdatePackageRepositoryResponse)(nil),         // 36: kubeappsapis.core.packages.v1alpha1.UpdatePackageRepositoryResponse
+	(*v1alpha1.DeletePackageRepositoryResponse)(nil),         // 37: kubeappsapis.core.packages.v1alpha1.DeletePackageRepositoryResponse
+	(*v1alpha1.GetPackageRepositoryPermissionsResponse)(nil), // 38: kubeappsapis.core.packages.v1alpha1.GetPackageRepositoryPermissionsResponse
 }
 var file_kubeappsapis_plugins_helm_packages_v1alpha1_helm_proto_depIdxs = []int32{
 	7,  // 0: kubeappsapis.plugins.helm.packages.v1alpha1.RollbackInstalledPackageRequest.installed_package_ref:type_name -> kubeappsapis.core.packages.v1alpha1.InstalledPackageReference
@@ -897,23 +916,25 @@ var file_kubeappsapis_plugins_helm_packages_v1alpha1_helm_proto_depIdxs = []int3
 	20, // 18: kubeappsapis.plugins.helm.packages.v1alpha1.HelmRepositoriesService.GetPackageRepositorySummaries:input_type -> kubeappsapis.core.packages.v1alpha1.GetPackageRepositorySummariesRequest
 	21, // 19: kubeappsapis.plugins.helm.packages.v1alpha1.HelmRepositoriesService.UpdatePackageRepository:input_type -> kubeappsapis.core.packages.v1alpha1.UpdatePackageRepositoryRequest
 	22, // 20: kubeappsapis.plugins.helm.packages.v1alpha1.HelmRepositoriesService.DeletePackageRepository:input_type -> kubeappsapis.core.packages.v1alpha1.DeletePackageRepositoryRequest
-	23, // 21: kubeappsapis.plugins.helm.packages.v1alpha1.HelmPackagesService.GetAvailablePackageSummaries:output_type -> kubeappsapis.core.packages.v1alpha1.GetAvailablePackageSummariesResponse
-	24, // 22: kubeappsapis.plugins.helm.packages.v1alpha1.HelmPackagesService.GetAvailablePackageDetail:output_type -> kubeappsapis.core.packages.v1alpha1.GetAvailablePackageDetailResponse
-	25, // 23: kubeappsapis.plugins.helm.packages.v1alpha1.HelmPackagesService.GetAvailablePackageVersions:output_type -> kubeappsapis.core.packages.v1alpha1.GetAvailablePackageVersionsResponse
-	26, // 24: kubeappsapis.plugins.helm.packages.v1alpha1.HelmPackagesService.GetInstalledPackageSummaries:output_type -> kubeappsapis.core.packages.v1alpha1.GetInstalledPackageSummariesResponse
-	27, // 25: kubeappsapis.plugins.helm.packages.v1alpha1.HelmPackagesService.GetInstalledPackageDetail:output_type -> kubeappsapis.core.packages.v1alpha1.GetInstalledPackageDetailResponse
-	28, // 26: kubeappsapis.plugins.helm.packages.v1alpha1.HelmPackagesService.CreateInstalledPackage:output_type -> kubeappsapis.core.packages.v1alpha1.CreateInstalledPackageResponse
-	29, // 27: kubeappsapis.plugins.helm.packages.v1alpha1.HelmPackagesService.UpdateInstalledPackage:output_type -> kubeappsapis.core.packages.v1alpha1.UpdateInstalledPackageResponse
-	30, // 28: kubeappsapis.plugins.helm.packages.v1alpha1.HelmPackagesService.DeleteInstalledPackage:output_type -> kubeappsapis.core.packages.v1alpha1.DeleteInstalledPackageResponse
-	2,  // 29: kubeappsapis.plugins.helm.packages.v1alpha1.HelmPackagesService.RollbackInstalledPackage:output_type -> kubeappsapis.plugins.helm.packages.v1alpha1.RollbackInstalledPackageResponse
-	31, // 30: kubeappsapis.plugins.helm.packages.v1alpha1.HelmPackagesService.GetInstalledPackageResourceRefs:output_type -> kubeappsapis.core.packages.v1alpha1.GetInstalledPackageResourceRefsResponse
-	32, // 31: kubeappsapis.plugins.helm.packages.v1alpha1.HelmRepositoriesService.AddPackageRepository:output_type -> kubeappsapis.core.packages.v1alpha1.AddPackageRepositoryResponse
-	33, // 32: kubeappsapis.plugins.helm.packages.v1alpha1.HelmRepositoriesService.GetPackageRepositoryDetail:output_type -> kubeappsapis.core.packages.v1alpha1.GetPackageRepositoryDetailResponse
-	34, // 33: kubeappsapis.plugins.helm.packages.v1alpha1.HelmRepositoriesService.GetPackageRepositorySummaries:output_type -> kubeappsapis.core.packages.v1alpha1.GetPackageRepositorySummariesResponse
-	35, // 34: kubeappsapis.plugins.helm.packages.v1alpha1.HelmRepositoriesService.UpdatePackageRepository:output_type -> kubeappsapis.core.packages.v1alpha1.UpdatePackageRepositoryResponse
-	36, // 35: kubeappsapis.plugins.helm.packages.v1alpha1.HelmRepositoriesService.DeletePackageRepository:output_type -> kubeappsapis.core.packages.v1alpha1.DeletePackageRepositoryResponse
-	21, // [21:36] is the sub-list for method output_type
-	6,  // [6:21] is the sub-list for method input_type
+	23, // 21: kubeappsapis.plugins.helm.packages.v1alpha1.HelmRepositoriesService.GetPackageRepositoryPermissions:input_type -> kubeappsapis.core.packages.v1alpha1.GetPackageRepositoryPermissionsRequest
+	24, // 22: kubeappsapis.plugins.helm.packages.v1alpha1.HelmPackagesService.GetAvailablePackageSummaries:output_type -> kubeappsapis.core.packages.v1alpha1.GetAvailablePackageSummariesResponse
+	25, // 23: kubeappsapis.plugins.helm.packages.v1alpha1.HelmPackagesService.GetAvailablePackageDetail:output_type -> kubeappsapis.core.packages.v1alpha1.GetAvailablePackageDetailResponse
+	26, // 24: kubeappsapis.plugins.helm.packages.v1alpha1.HelmPackagesService.GetAvailablePackageVersions:output_type -> kubeappsapis.core.packages.v1alpha1.GetAvailablePackageVersionsResponse
+	27, // 25: kubeappsapis.plugins.helm.packages.v1alpha1.HelmPackagesService.GetInstalledPackageSummaries:output_type -> kubeappsapis.core.packages.v1alpha1.GetInstalledPackageSummariesResponse
+	28, // 26: kubeappsapis.plugins.helm.packages.v1alpha1.HelmPackagesService.GetInstalledPackageDetail:output_type -> kubeappsapis.core.packages.v1alpha1.GetInstalledPackageDetailResponse
+	29, // 27: kubeappsapis.plugins.helm.packages.v1alpha1.HelmPackagesService.CreateInstalledPackage:output_type -> kubeappsapis.core.packages.v1alpha1.CreateInstalledPackageResponse
+	30, // 28: kubeappsapis.plugins.helm.packages.v1alpha1.HelmPackagesService.UpdateInstalledPackage:output_type -> kubeappsapis.core.packages.v1alpha1.UpdateInstalledPackageResponse
+	31, // 29: kubeappsapis.plugins.helm.packages.v1alpha1.HelmPackagesService.DeleteInstalledPackage:output_type -> kubeappsapis.core.packages.v1alpha1.DeleteInstalledPackageResponse
+	2,  // 30: kubeappsapis.plugins.helm.packages.v1alpha1.HelmPackagesService.RollbackInstalledPackage:output_type -> kubeappsapis.plugins.helm.packages.v1alpha1.RollbackInstalledPackageResponse
+	32, // 31: kubeappsapis.plugins.helm.packages.v1alpha1.HelmPackagesService.GetInstalledPackageResourceRefs:output_type -> kubeappsapis.core.packages.v1alpha1.GetInstalledPackageResourceRefsResponse
+	33, // 32: kubeappsapis.plugins.helm.packages.v1alpha1.HelmRepositoriesService.AddPackageRepository:output_type -> kubeappsapis.core.packages.v1alpha1.AddPackageRepositoryResponse
+	34, // 33: kubeappsapis.plugins.helm.packages.v1alpha1.HelmRepositoriesService.GetPackageRepositoryDetail:output_type -> kubeappsapis.core.packages.v1alpha1.GetPackageRepositoryDetailResponse
+	35, // 34: kubeappsapis.plugins.helm.packages.v1alpha1.HelmRepositoriesService.GetPackageRepositorySummaries:output_type -> kubeappsapis.core.packages.v1alpha1.GetPackageRepositorySummariesResponse
+	36, // 35: kubeappsapis.plugins.helm.packages.v1alpha1.HelmRepositoriesService.UpdatePackageRepository:output_type -> kubeappsapis.core.packages.v1alpha1.UpdatePackageRepositoryResponse
+	37, // 36: kubeappsapis.plugins.helm.packages.v1alpha1.HelmRepositoriesService.DeletePackageRepository:output_type -> kubeappsapis.core.packages.v1alpha1.DeletePackageRepositoryResponse
+	38, // 37: kubeappsapis.plugins.helm.packages.v1alpha1.HelmRepositoriesService.GetPackageRepositoryPermissions:output_type -> kubeappsapis.core.packages.v1alpha1.GetPackageRepositoryPermissionsResponse
+	22, // [22:38] is the sub-list for method output_type
+	6,  // [6:22] is the sub-list for method input_type
 	6,  // [6:6] is the sub-list for extension type_name
 	6,  // [6:6] is the sub-list for extension extendee
 	0,  // [0:6] is the sub-list for field type_name

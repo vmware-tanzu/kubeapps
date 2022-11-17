@@ -27,6 +27,7 @@ type RepositoriesServiceClient interface {
 	GetPackageRepositorySummaries(ctx context.Context, in *GetPackageRepositorySummariesRequest, opts ...grpc.CallOption) (*GetPackageRepositorySummariesResponse, error)
 	UpdatePackageRepository(ctx context.Context, in *UpdatePackageRepositoryRequest, opts ...grpc.CallOption) (*UpdatePackageRepositoryResponse, error)
 	DeletePackageRepository(ctx context.Context, in *DeletePackageRepositoryRequest, opts ...grpc.CallOption) (*DeletePackageRepositoryResponse, error)
+	GetPackageRepositoryPermissions(ctx context.Context, in *GetPackageRepositoryPermissionsRequest, opts ...grpc.CallOption) (*GetPackageRepositoryPermissionsResponse, error)
 }
 
 type repositoriesServiceClient struct {
@@ -82,6 +83,15 @@ func (c *repositoriesServiceClient) DeletePackageRepository(ctx context.Context,
 	return out, nil
 }
 
+func (c *repositoriesServiceClient) GetPackageRepositoryPermissions(ctx context.Context, in *GetPackageRepositoryPermissionsRequest, opts ...grpc.CallOption) (*GetPackageRepositoryPermissionsResponse, error) {
+	out := new(GetPackageRepositoryPermissionsResponse)
+	err := c.cc.Invoke(ctx, "/kubeappsapis.core.packages.v1alpha1.RepositoriesService/GetPackageRepositoryPermissions", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // RepositoriesServiceServer is the server API for RepositoriesService service.
 // All implementations should embed UnimplementedRepositoriesServiceServer
 // for forward compatibility
@@ -91,6 +101,7 @@ type RepositoriesServiceServer interface {
 	GetPackageRepositorySummaries(context.Context, *GetPackageRepositorySummariesRequest) (*GetPackageRepositorySummariesResponse, error)
 	UpdatePackageRepository(context.Context, *UpdatePackageRepositoryRequest) (*UpdatePackageRepositoryResponse, error)
 	DeletePackageRepository(context.Context, *DeletePackageRepositoryRequest) (*DeletePackageRepositoryResponse, error)
+	GetPackageRepositoryPermissions(context.Context, *GetPackageRepositoryPermissionsRequest) (*GetPackageRepositoryPermissionsResponse, error)
 }
 
 // UnimplementedRepositoriesServiceServer should be embedded to have forward compatible implementations.
@@ -111,6 +122,9 @@ func (UnimplementedRepositoriesServiceServer) UpdatePackageRepository(context.Co
 }
 func (UnimplementedRepositoriesServiceServer) DeletePackageRepository(context.Context, *DeletePackageRepositoryRequest) (*DeletePackageRepositoryResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method DeletePackageRepository not implemented")
+}
+func (UnimplementedRepositoriesServiceServer) GetPackageRepositoryPermissions(context.Context, *GetPackageRepositoryPermissionsRequest) (*GetPackageRepositoryPermissionsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetPackageRepositoryPermissions not implemented")
 }
 
 // UnsafeRepositoriesServiceServer may be embedded to opt out of forward compatibility for this service.
@@ -214,6 +228,24 @@ func _RepositoriesService_DeletePackageRepository_Handler(srv interface{}, ctx c
 	return interceptor(ctx, in, info, handler)
 }
 
+func _RepositoriesService_GetPackageRepositoryPermissions_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetPackageRepositoryPermissionsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(RepositoriesServiceServer).GetPackageRepositoryPermissions(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/kubeappsapis.core.packages.v1alpha1.RepositoriesService/GetPackageRepositoryPermissions",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(RepositoriesServiceServer).GetPackageRepositoryPermissions(ctx, req.(*GetPackageRepositoryPermissionsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // RepositoriesService_ServiceDesc is the grpc.ServiceDesc for RepositoriesService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -240,6 +272,10 @@ var RepositoriesService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "DeletePackageRepository",
 			Handler:    _RepositoriesService_DeletePackageRepository_Handler,
+		},
+		{
+			MethodName: "GetPackageRepositoryPermissions",
+			Handler:    _RepositoriesService_GetPackageRepositoryPermissions_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

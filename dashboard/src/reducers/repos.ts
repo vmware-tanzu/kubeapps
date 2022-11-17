@@ -3,6 +3,7 @@
 
 import { LocationChangeAction, LOCATION_CHANGE } from "connected-react-router";
 import {
+  PackageRepositoriesPermissions,
   PackageRepositoryDetail,
   PackageRepositorySummary,
 } from "gen/kubeappsapis/core/packages/v1alpha1/repositories";
@@ -27,6 +28,7 @@ export interface IPackageRepositoryState {
   isFetching: boolean;
   repoDetail: PackageRepositoryDetail;
   reposSummaries: PackageRepositorySummary[];
+  reposPermissions: PackageRepositoriesPermissions[];
 }
 
 export const initialState: IPackageRepositoryState = {
@@ -34,6 +36,7 @@ export const initialState: IPackageRepositoryState = {
   isFetching: false,
   repoDetail: {} as PackageRepositoryDetail,
   reposSummaries: [] as PackageRepositorySummary[],
+  reposPermissions: [] as PackageRepositoriesPermissions[],
 };
 
 const helmPackageRepositoryCustomDetail = {
@@ -143,6 +146,15 @@ const reposReducer = (
       );
       return { ...state, isFetching: false, reposSummaries: repos };
     }
+    case getType(actions.repos.requestReposPermissions):
+      return { ...state, isFetching: true };
+    case getType(actions.repos.receiveReposPermissions):
+      return {
+        ...state,
+        isFetching: false,
+        reposPermissions: action.payload,
+        errors: {},
+      };
     case getType(actions.repos.errorRepos):
       return {
         ...state,
