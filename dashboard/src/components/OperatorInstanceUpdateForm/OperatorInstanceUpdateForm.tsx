@@ -9,14 +9,14 @@ import { parseCSV } from "components/OperatorInstanceForm/OperatorInstanceForm";
 import OperatorSummary from "components/OperatorSummary/OperatorSummary";
 import OperatorHeader from "components/OperatorView/OperatorHeader";
 import { push } from "connected-react-router";
-import * as yaml from "js-yaml";
+import placeholder from "icons/placeholder.svg";
 import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { Action } from "redux";
 import { ThunkDispatch } from "redux-thunk";
 import { IClusterServiceVersionCRD, IResource, IStoreState } from "shared/types";
 import * as url from "shared/url";
-import placeholder from "icons/placeholder.svg";
+import { parseToString } from "shared/yamlUtils";
 import OperatorInstanceFormBody from "../OperatorInstanceFormBody/OperatorInstanceFormBody";
 
 export interface IOperatorInstanceUpgradeFormProps {
@@ -63,7 +63,7 @@ function OperatorInstanceUpdateForm({
 
   useEffect(() => {
     if (resource) {
-      setCurrentValues(yaml.dump(resource));
+      setCurrentValues(parseToString(resource));
     }
   }, [resource]);
 
