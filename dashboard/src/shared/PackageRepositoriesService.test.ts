@@ -5,7 +5,9 @@ import {
   AddPackageRepositoryResponse,
   DeletePackageRepositoryResponse,
   GetPackageRepositoryDetailResponse,
+  GetPackageRepositoryPermissionsResponse,
   GetPackageRepositorySummariesResponse,
+  PackageRepositoriesPermissions,
   PackageRepositoryAuth_PackageRepositoryAuthType,
   PackageRepositoryReference,
   UpdatePackageRepositoryResponse,
@@ -310,6 +312,42 @@ describe("buildEncodedCustomDetail encoding", () => {
     expect(
       KappControllerPackageRepositoryCustomDetail.decode(encodedCustomDetail?.value as any),
     ).toStrictEqual(kappCustomDetail);
+  });
+
+  it("getRepositoriesPermissions", async () => {
+    const mockGetRepositoriesPermissions = jest.fn().mockImplementation(() =>
+      Promise.resolve({
+        permissions: [
+          {
+            plugin: plugin,
+            global: {
+              create: true,
+            },
+            namespace: {
+              list: true,
+            },
+          },
+        ],
+      } as GetPackageRepositoryPermissionsResponse),
+    );
+    setMockCoreClient("GetPackageRepositoryPermissions", mockGetRepositoriesPermissions);
+
+    const getPackageRepositoryPermissionsResponse =
+      await PackageRepositoriesService.getRepositoriesPermissions(cluster, namespace);
+    expect(getPackageRepositoryPermissionsResponse).toStrictEqual([
+      {
+        plugin: plugin,
+        global: {
+          create: true,
+        },
+        namespace: {
+          list: true,
+        },
+      },
+    ] as PackageRepositoriesPermissions[]);
+    expect(mockGetRepositoriesPermissions).toHaveBeenCalledWith({
+      context: { cluster, namespace },
+    });
   });
 });
 

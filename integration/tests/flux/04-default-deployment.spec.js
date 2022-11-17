@@ -23,19 +23,14 @@ test("Deploys podinfo package with default values in main cluster", async ({ pag
   await page.click('cds-button:has-text("Deploy") >> nth=0');
 
   // Deploy package
-  await page.waitForSelector('select[name="package-versions"]');
-  const versionSelector = await page.locator('select[name="package-versions"]');
-  await versionSelector?.selectOption("6.2.0");
-  await expect(versionSelector).toHaveValue("6.2.0", { timeout: 5000 });
-
   const releaseNameLocator = page.locator("#releaseName");
   await releaseNameLocator.waitFor();
   await expect(releaseNameLocator).toHaveText("");
   const releaseName = utils.getRandomName("test-04-release");
+  console.log(`Creating release "${releaseName}"`);
   await releaseNameLocator.fill(releaseName);
   await page.selectOption("#serviceaccount-selector select", "flux-reconciler");
   await page.locator('cds-button:has-text("Deploy")').click();
-  console.log(`Creating release "${releaseName}"`);
 
   // Assertions
   await page.waitForSelector("css=.application-status-pie-chart-number >> text=1", {

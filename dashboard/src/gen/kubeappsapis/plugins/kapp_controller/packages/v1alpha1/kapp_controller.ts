@@ -29,6 +29,8 @@ import {
   DeletePackageRepositoryResponse,
   GetPackageRepositoryDetailRequest,
   GetPackageRepositoryDetailResponse,
+  GetPackageRepositoryPermissionsRequest,
+  GetPackageRepositoryPermissionsResponse,
   GetPackageRepositorySummariesRequest,
   GetPackageRepositorySummariesResponse,
   UpdatePackageRepositoryRequest,
@@ -1447,6 +1449,10 @@ export interface KappControllerRepositoriesService {
     request: DeepPartial<DeletePackageRepositoryRequest>,
     metadata?: grpc.Metadata,
   ): Promise<DeletePackageRepositoryResponse>;
+  GetPackageRepositoryPermissions(
+    request: DeepPartial<GetPackageRepositoryPermissionsRequest>,
+    metadata?: grpc.Metadata,
+  ): Promise<GetPackageRepositoryPermissionsResponse>;
 }
 
 export class KappControllerRepositoriesServiceClientImpl
@@ -1461,6 +1467,7 @@ export class KappControllerRepositoriesServiceClientImpl
     this.GetPackageRepositorySummaries = this.GetPackageRepositorySummaries.bind(this);
     this.UpdatePackageRepository = this.UpdatePackageRepository.bind(this);
     this.DeletePackageRepository = this.DeletePackageRepository.bind(this);
+    this.GetPackageRepositoryPermissions = this.GetPackageRepositoryPermissions.bind(this);
   }
 
   AddPackageRepository(
@@ -1514,6 +1521,17 @@ export class KappControllerRepositoriesServiceClientImpl
     return this.rpc.unary(
       KappControllerRepositoriesServiceDeletePackageRepositoryDesc,
       DeletePackageRepositoryRequest.fromPartial(request),
+      metadata,
+    );
+  }
+
+  GetPackageRepositoryPermissions(
+    request: DeepPartial<GetPackageRepositoryPermissionsRequest>,
+    metadata?: grpc.Metadata,
+  ): Promise<GetPackageRepositoryPermissionsResponse> {
+    return this.rpc.unary(
+      KappControllerRepositoriesServiceGetPackageRepositoryPermissionsDesc,
+      GetPackageRepositoryPermissionsRequest.fromPartial(request),
       metadata,
     );
   }
@@ -1630,6 +1648,29 @@ export const KappControllerRepositoriesServiceDeletePackageRepositoryDesc: Unary
       deserializeBinary(data: Uint8Array) {
         return {
           ...DeletePackageRepositoryResponse.decode(data),
+          toObject() {
+            return this;
+          },
+        };
+      },
+    } as any,
+  };
+
+export const KappControllerRepositoriesServiceGetPackageRepositoryPermissionsDesc: UnaryMethodDefinitionish =
+  {
+    methodName: "GetPackageRepositoryPermissions",
+    service: KappControllerRepositoriesServiceDesc,
+    requestStream: false,
+    responseStream: false,
+    requestType: {
+      serializeBinary() {
+        return GetPackageRepositoryPermissionsRequest.encode(this).finish();
+      },
+    } as any,
+    responseType: {
+      deserializeBinary(data: Uint8Array) {
+        return {
+          ...GetPackageRepositoryPermissionsResponse.decode(data),
           toObject() {
             return this;
           },

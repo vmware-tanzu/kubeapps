@@ -2,12 +2,16 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import {
+  PackageRepositoriesPermissions,
   PackageRepositoryDetail,
   PackageRepositorySummary,
 } from "gen/kubeappsapis/core/packages/v1alpha1/repositories";
 import { getType } from "typesafe-actions";
 import actions from "../actions";
 import reposReducer, { IPackageRepositoryState } from "./repos";
+import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins";
+import { PluginNames } from "shared/types";
+import { Context } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
 
 describe("reposReducer", () => {
   let initialState: IPackageRepositoryState;
@@ -18,6 +22,7 @@ describe("reposReducer", () => {
       isFetching: false,
       repoDetail: {} as PackageRepositoryDetail,
       reposSummaries: [] as PackageRepositorySummary[],
+      reposPermissions: [] as PackageRepositoriesPermissions[],
     } as IPackageRepositoryState;
   });
 
@@ -31,6 +36,8 @@ describe("reposReducer", () => {
       repoUpdated: getType(actions.repos.repoUpdated),
       requestRepo: getType(actions.repos.requestRepoDetail),
       requestRepos: getType(actions.repos.requestRepoSummaries),
+      requestReposPermissions: getType(actions.repos.requestReposPermissions),
+      receiveReposPermissions: getType(actions.repos.receiveReposPermissions),
     };
 
     describe("reducer actions", () => {
@@ -133,6 +140,46 @@ describe("reposReducer", () => {
       ).toEqual({
         ...initialState,
         reposSummaries: [{ ...repoSummary, url: "bar" }],
+      } as IPackageRepositoryState);
+    });
+
+    it("unsets isFetching and receive repos permissions", () => {
+      const plugin = { name: PluginNames.PACKAGES_HELM, version: "0.0.1" } as Plugin;
+      const reposPermissions = [
+        {
+          plugin: plugin,
+          global: {
+            create: true,
+            delete: true,
+            list: true,
+            update: true,
+          },
+          namespace: {
+            create: true,
+            delete: true,
+            list: true,
+            update: true,
+          },
+        },
+      ] as PackageRepositoriesPermissions[];
+      const state = reposReducer(undefined, {
+        type: actionTypes.requestReposPermissions,
+        payload: { cluster: "", namespace: "" } as Context,
+      });
+      expect(state).toEqual({
+        ...initialState,
+        reposPermissions: [],
+        isFetching: true,
+      });
+      expect(
+        reposReducer(state, {
+          type: actionTypes.receiveReposPermissions,
+          payload: reposPermissions,
+        }),
+      ).toEqual({
+        ...initialState,
+        reposPermissions: reposPermissions,
+        isFetching: false,
       } as IPackageRepositoryState);
     });
   });
