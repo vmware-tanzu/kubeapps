@@ -41,9 +41,12 @@ k8s_wait_for_deployment() {
     done
     if [ $retries == 0 ]; then
         info "Error while rolling out deployment ${deployment} in ns ${namespace}"
+        # these are all attempts to shed some light on why the deployment might have failed
         kubectl describe deployment --namespace "${namespace}" "${deployment}"
-        kubectl get pods --namespace "${namespace}"
         kubectl describe replicaset ${deployment} --namespace "${namespace}"
+        kubectl get pods --namespace "${namespace}"
+        POD=$(kubectl -n "${namespace}" get pods | grep ${deployment} | awk '{print $1}' | head -n 1)
+        kubectl logs pod/$POD --namespace "${namespace}"
         exit 1
     fi
     return $exit_code
