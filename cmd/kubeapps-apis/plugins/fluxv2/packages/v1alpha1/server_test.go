@@ -516,3 +516,23 @@ func seedChartCacheWithCharts(t *testing.T,
 
 	return chartCache, waitTilFn, err
 }
+
+func newServerWithReactors(t *testing.T, typedClientReactions []*ClientReaction) *Server {
+	typedClient := typfake.NewSimpleClientset()
+	for _, reaction := range typedClientReactions {
+		typedClient.PrependReactor(reaction.verb, reaction.resource, reaction.reaction)
+	}
+
+	apiExtClient := apiextfake.NewSimpleClientset(fluxHelmRepositoryCRD)
+	ctrlClient := newCtrlClient(nil, nil, nil)
+	clientGetter := clientgetter.NewBuilder().
+		WithApiExt(apiExtClient).
+		WithTyped(typedClient).
+		WithControllerRuntime(&ctrlClient).
+		Build()
+	server, _, err := newServer(t, clientGetter, nil, nil, nil)
+	if err != nil {
+		t.Fatalf("error instantiating the server: %v", err)
+	}
+	return server
+}

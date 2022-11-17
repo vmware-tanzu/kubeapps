@@ -6,6 +6,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/pkg/resources"
 
 	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/pkg/helm"
 
@@ -639,6 +640,43 @@ func (s *Server) DeletePackageRepository(ctx context.Context, request *corev1.De
 	} else {
 		return &corev1.DeletePackageRepositoryResponse{}, nil
 	}
+}
+
+func (s *Server) GetPackageRepositoryPermissions(ctx context.Context, request *corev1.GetPackageRepositoryPermissionsRequest) (*corev1.GetPackageRepositoryPermissionsResponse, error) {
+	log.Infof("+fluxv2 GetPackageRepositoryPermissions [%v]", request)
+
+	cluster := request.GetContext().GetCluster()
+	namespace := request.GetContext().GetNamespace()
+	if cluster == "" && namespace != "" {
+		return nil, status.Errorf(codes.InvalidArgument, "cluster must be specified when namespace is present: %s", namespace)
+	}
+	typedClient, err := s.clientGetter.Typed(ctx, cluster)
+	if err != nil {
+		return nil, err
+	}
+
+	resource := schema.GroupResource{
+		Group:    sourcev1.GroupVersion.Group,
+		Resource: fluxHelmRepositories,
+	}
+
+	permissions := &corev1.PackageRepositoriesPermissions{
+		Plugin: GetPluginDetail(),
+	}
+
+	// Flux does not really have a notion of global repositories
+
+	// Namespace permissions
+	if namespace != "" {
+		permissions.Namespace, err = resources.GetPermissionsOnResource(ctx, typedClient, resource, request.GetContext().GetNamespace())
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return &corev1.GetPackageRepositoryPermissionsResponse{
+		Permissions: []*corev1.PackageRepositoriesPermissions{permissions},
+	}, nil
 }
 
 // This endpoint exists only for integration unit tests

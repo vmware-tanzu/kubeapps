@@ -29,6 +29,8 @@ import {
   DeletePackageRepositoryResponse,
   GetPackageRepositoryDetailRequest,
   GetPackageRepositoryDetailResponse,
+  GetPackageRepositoryPermissionsRequest,
+  GetPackageRepositoryPermissionsResponse,
   GetPackageRepositorySummariesRequest,
   GetPackageRepositorySummariesResponse,
   UpdatePackageRepositoryRequest,
@@ -620,6 +622,10 @@ export interface FluxV2RepositoriesService {
     request: DeepPartial<SetUserManagedSecretsRequest>,
     metadata?: grpc.Metadata,
   ): Promise<SetUserManagedSecretsResponse>;
+  GetPackageRepositoryPermissions(
+    request: DeepPartial<GetPackageRepositoryPermissionsRequest>,
+    metadata?: grpc.Metadata,
+  ): Promise<GetPackageRepositoryPermissionsResponse>;
 }
 
 export class FluxV2RepositoriesServiceClientImpl implements FluxV2RepositoriesService {
@@ -633,6 +639,7 @@ export class FluxV2RepositoriesServiceClientImpl implements FluxV2RepositoriesSe
     this.UpdatePackageRepository = this.UpdatePackageRepository.bind(this);
     this.DeletePackageRepository = this.DeletePackageRepository.bind(this);
     this.SetUserManagedSecrets = this.SetUserManagedSecrets.bind(this);
+    this.GetPackageRepositoryPermissions = this.GetPackageRepositoryPermissions.bind(this);
   }
 
   AddPackageRepository(
@@ -697,6 +704,17 @@ export class FluxV2RepositoriesServiceClientImpl implements FluxV2RepositoriesSe
     return this.rpc.unary(
       FluxV2RepositoriesServiceSetUserManagedSecretsDesc,
       SetUserManagedSecretsRequest.fromPartial(request),
+      metadata,
+    );
+  }
+
+  GetPackageRepositoryPermissions(
+    request: DeepPartial<GetPackageRepositoryPermissionsRequest>,
+    metadata?: grpc.Metadata,
+  ): Promise<GetPackageRepositoryPermissionsResponse> {
+    return this.rpc.unary(
+      FluxV2RepositoriesServiceGetPackageRepositoryPermissionsDesc,
+      GetPackageRepositoryPermissionsRequest.fromPartial(request),
       metadata,
     );
   }
@@ -838,6 +856,29 @@ export const FluxV2RepositoriesServiceSetUserManagedSecretsDesc: UnaryMethodDefi
     },
   } as any,
 };
+
+export const FluxV2RepositoriesServiceGetPackageRepositoryPermissionsDesc: UnaryMethodDefinitionish =
+  {
+    methodName: "GetPackageRepositoryPermissions",
+    service: FluxV2RepositoriesServiceDesc,
+    requestStream: false,
+    responseStream: false,
+    requestType: {
+      serializeBinary() {
+        return GetPackageRepositoryPermissionsRequest.encode(this).finish();
+      },
+    } as any,
+    responseType: {
+      deserializeBinary(data: Uint8Array) {
+        return {
+          ...GetPackageRepositoryPermissionsResponse.decode(data),
+          toObject() {
+            return this;
+          },
+        };
+      },
+    } as any,
+  };
 
 interface UnaryMethodDefinitionishR extends grpc.UnaryMethodDefinition<any, any> {
   requestStream: any;

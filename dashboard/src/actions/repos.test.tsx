@@ -3,6 +3,7 @@
 
 import {
   AvailablePackageReference,
+  Context,
   InstalledPackageDetail,
 } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
 import {
@@ -10,6 +11,7 @@ import {
   DeletePackageRepositoryResponse,
   GetPackageRepositoryDetailResponse,
   GetPackageRepositorySummariesResponse,
+  PackageRepositoriesPermissions,
   PackageRepositoryAuth_PackageRepositoryAuthType,
   PackageRepositoryDetail,
   PackageRepositoryReference,
@@ -826,5 +828,39 @@ describe("findPackageInRepo", () => {
       identifier: "my-repo/my-package",
       plugin: plugin,
     } as AvailablePackageReference);
+  });
+
+  it("fetches repos permissions", async () => {
+    const permissions = [
+      {
+        plugin: plugin,
+        global: {
+          create: true,
+          delete: true,
+          list: true,
+          update: true,
+        },
+        namespace: {
+          create: true,
+          delete: true,
+          list: true,
+          update: true,
+        },
+      },
+    ] as PackageRepositoriesPermissions[];
+    PackageRepositoriesService.getRepositoriesPermissions = jest.fn().mockReturnValue(permissions);
+
+    const expectedActions = [
+      {
+        type: getType(repoActions.requestReposPermissions),
+        payload: { cluster: "default", namespace: "kubeapps" } as Context,
+      },
+      {
+        type: getType(repoActions.receiveReposPermissions),
+        payload: permissions,
+      },
+    ];
+    await store.dispatch(repoActions.fetchReposPermissions("default", "kubeapps"));
+    expect(store.getActions()).toEqual(expectedActions);
   });
 });

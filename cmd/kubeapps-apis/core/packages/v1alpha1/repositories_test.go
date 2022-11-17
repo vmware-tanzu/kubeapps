@@ -32,6 +32,8 @@ var ignoreUnexportedRepoOpts = cmpopts.IgnoreUnexported(
 	corev1.GetPackageRepositorySummariesResponse{},
 	corev1.PackageRepositorySummary{},
 	corev1.UpdatePackageRepositoryResponse{},
+	corev1.GetPackageRepositoryPermissionsResponse{},
+	corev1.PackageRepositoriesPermissions{},
 )
 
 func makeDefaultTestRepositoriesPlugin(pluginName string) repoPluginsWithServer {
@@ -431,6 +433,83 @@ func TestDeletePackageRepository(t *testing.T) {
 
 			if got, want := status.Code(err), tc.statusCode; got != want {
 				t.Fatalf("got: %+v, want: %+v, err: %+v", got, want, err)
+			}
+		})
+	}
+}
+
+func TestGetPackageRepositoryPermissions(t *testing.T) {
+
+	testCases := []struct {
+		name              string
+		configuredPlugins []*plugins.Plugin
+		statusCode        codes.Code
+		request           *corev1.GetPackageRepositoryPermissionsRequest
+		expectedResponse  *corev1.GetPackageRepositoryPermissionsResponse
+	}{
+		{
+			name: "returns permissions for all plugins",
+			configuredPlugins: []*plugins.Plugin{
+				{Name: "plugin-1", Version: "v1alpha1"},
+				{Name: "plugin-1", Version: "v1alpha2"},
+			},
+			statusCode: codes.OK,
+			request:    &corev1.GetPackageRepositoryPermissionsRequest{},
+			expectedResponse: &corev1.GetPackageRepositoryPermissionsResponse{
+				Permissions: []*corev1.PackageRepositoriesPermissions{
+					{
+						Plugin: &plugins.Plugin{Name: "plugin-1", Version: "v1alpha1"},
+						Namespace: map[string]bool{
+							"ns-verb": true,
+						},
+						Global: map[string]bool{
+							"global-verb": true,
+						},
+					},
+					{
+						Plugin: &plugins.Plugin{Name: "plugin-1", Version: "v1alpha2"},
+						Namespace: map[string]bool{
+							"ns-verb": true,
+						},
+						Global: map[string]bool{
+							"global-verb": true,
+						},
+					},
+				},
+			},
+		},
+		{
+			name:             "returns empty set when no plugins",
+			statusCode:       codes.OK,
+			request:          &corev1.GetPackageRepositoryPermissionsRequest{},
+			expectedResponse: &corev1.GetPackageRepositoryPermissionsResponse{},
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			var configuredPluginServers []repoPluginsWithServer
+			for _, p := range tc.configuredPlugins {
+				configuredPluginServers = append(configuredPluginServers, repoPluginsWithServer{
+					plugin: p,
+					server: plugin_test.TestRepositoriesPluginServer{Plugin: p},
+				})
+			}
+
+			server := &repositoriesServer{
+				pluginsWithServers: configuredPluginServers,
+			}
+
+			updatedRepoResponse, err := server.GetPackageRepositoryPermissions(context.Background(), tc.request)
+
+			if got, want := status.Code(err), tc.statusCode; got != want {
+				t.Fatalf("got: %+v, want: %+v, err: %+v", got, want, err)
+			}
+
+			if tc.statusCode == codes.OK {
+				if got, want := updatedRepoResponse, tc.expectedResponse; !cmp.Equal(got, want, ignoreUnexportedRepoOpts) {
+					t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, ignoreUnexportedRepoOpts))
+				}
 			}
 		})
 	}
