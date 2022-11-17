@@ -640,7 +640,7 @@ export function PkgRepoForm(props: IPkgRepoFormProps) {
   const handleIsUserManagedCASecretChange = (_e: React.ChangeEvent<HTMLInputElement>) => {
     setIsUserManagedCASecret(!isUserManagedCASecret);
   };
-  const handelUseSameAuthCredsChange = (_e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleUseSameAuthCredsChange = (_e: React.ChangeEvent<HTMLInputElement>) => {
     setUseSameAuthCreds(!useSameAuthCreds);
   };
   const handleFluxAuthProviderChange = (e: React.FormEvent<HTMLSelectElement>) => {
@@ -1740,7 +1740,7 @@ export function PkgRepoForm(props: IPkgRepoFormProps) {
                               </label>
                               <input
                                 type="checkbox"
-                                onChange={handelUseSameAuthCredsChange}
+                                onChange={handleUseSameAuthCredsChange}
                                 checked={useSameAuthCreds}
                                 disabled={
                                   !!(

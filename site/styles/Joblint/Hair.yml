@@ -1,3 +1,4 @@
+---
 extends: existence
 message: "Avoid using '%s'"
 description: "The use of '%s' indicates that you're only looking for male developers."

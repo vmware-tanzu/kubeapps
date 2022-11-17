@@ -1,0 +1,18 @@
+# Copyright 2022 VMware, Inc.
+# SPDX-License-Identifier: Apache-2.0
+
+---
+extends: default
+ignore: |
+  #  Ignore folders
+  **/chart/kubeapps/
+  **/integration/charts/simplechart/
+  **/dashboard/node_modules/
+  **/devel/
+  #  Ignore files
+  **/cmd/kubeapps-apis/plugins/fluxv2/packages/v1alpha1/testdata/charts/single-package-template.yaml
+rules:
+  line-length: disable
+  comments: disable
+  truthy:
+    check-keys: false

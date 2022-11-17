@@ -1,3 +1,4 @@
+---
 extends: existence
 message: "Don't start a sentence with '%s'."
 ignorecase: false

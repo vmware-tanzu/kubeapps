@@ -95,9 +95,11 @@ func NewPluginsServer(serveOpts core.ServeOptions, registrar grpc.ServiceRegistr
 
 // sortPlugins returns a consistently ordered slice.
 func sortPlugins(p []PluginWithServer) {
-	sort.Slice(p, func(i, j int) bool {
-		return p[i].Plugin.Name < p[j].Plugin.Name || (p[i].Plugin.Name == p[j].Plugin.Name && p[i].Plugin.Version < p[j].Plugin.Version)
-	})
+	sort.Slice(p, func(i, j int) bool { return ComparePlugin(p[i].Plugin, p[j].Plugin) })
+}
+
+func ComparePlugin(pluginA *plugins.Plugin, pluginB *plugins.Plugin) bool {
+	return pluginA.Name < pluginB.Name || (pluginA.Name == pluginB.Name && pluginA.Version < pluginB.Version)
 }
 
 // GetConfiguredPlugins returns details for each configured plugin.
@@ -302,13 +304,13 @@ func createConfigGetter(serveOpts core.ServeOptions, clustersConfig kube.Cluster
 		}
 	}
 
-	// return the closure fuction that takes the context, but preserving the required scope,
+	// return the closure function that takes the context, but preserving the required scope,
 	// 'inClusterConfig' and 'config'
 	return createConfigGetterWithParams(restConfig, serveOpts, clustersConfig)
 }
 
-// createClientGetter takes the required params and returns the closure fuction.
-// it's splitted for testing this fn separately
+// createClientGetter takes the required params and returns the closure function.
+// it's split for testing this fn separately
 func createConfigGetterWithParams(inClusterConfig *rest.Config, serveOpts core.ServeOptions, clustersConfig kube.ClustersConfig) (core.KubernetesConfigGetter, error) {
 	// return the closure function that takes the context, but preserving the required scope,
 	// 'inClusterConfig' and 'config'

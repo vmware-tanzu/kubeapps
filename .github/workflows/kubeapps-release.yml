@@ -1,0 +1,24 @@
+# Copyright 2022 the Kubeapps contributors
+# SPDX-License-Identifier: Apache-2.0
+
+---
+name: Release Pipeline
+
+on:
+  push:
+    tags:
+      - 'v[0-9]+.[0-9]+.[0-9]+'
+      # TODO(bjesus) Remove the following line once we have tested the release process
+      - 'test-.*'
+
+concurrency:
+  group: ${{ github.head_ref || github.ref_name }}_release
+  cancel-in-progress: true
+
+jobs:
+  CI:
+    uses: ./.github/workflows/kubeapps-general.yaml
+    secrets: inherit
+    with:
+      run_gke_tests: true
+      run_linters: false

@@ -6,6 +6,8 @@ package main
 import (
 	"context"
 	"fmt"
+	authorizationv1 "k8s.io/api/authorization/v1"
+	k8stesting "k8s.io/client-go/testing"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -40,11 +42,12 @@ type testSpecGetAvailablePackageSummaries struct {
 
 func TestGetAvailablePackageSummariesWithoutPagination(t *testing.T) {
 	testCases := []struct {
-		name              string
-		request           *corev1.GetAvailablePackageSummariesRequest
-		repos             []testSpecGetAvailablePackageSummaries
-		expectedResponse  *corev1.GetAvailablePackageSummariesResponse
-		expectedErrorCode codes.Code
+		name                 string
+		request              *corev1.GetAvailablePackageSummariesRequest
+		repos                []testSpecGetAvailablePackageSummaries
+		expectedResponse     *corev1.GetAvailablePackageSummariesResponse
+		expectedErrorCode    codes.Code
+		noCrossNamespaceRefs bool
 	}{
 		{
 			name: "it returns a couple of fluxv2 packages from the cluster (no request ns specified)",
@@ -386,6 +389,30 @@ func TestGetAvailablePackageSummariesWithoutPagination(t *testing.T) {
 			}},
 			expectedErrorCode: codes.Unimplemented,
 		},
+		{
+			name: "it returns expected fluxv2 packages when noCrossNamespaceRefs flag is set",
+			repos: []testSpecGetAvailablePackageSummaries{
+				{
+					name:      "bitnami-1",
+					namespace: "default",
+					url:       "https://example.repo.com/charts",
+					index:     testYaml("valid-index.yaml"),
+				},
+				{
+					name:      "jetstack-1",
+					namespace: "ns1",
+					url:       "https://charts.jetstack.io",
+					index:     testYaml("jetstack-index.yaml"),
+				},
+			},
+			request: &corev1.GetAvailablePackageSummariesRequest{Context: &corev1.Context{Namespace: "ns1"}},
+			expectedResponse: &corev1.GetAvailablePackageSummariesResponse{
+				AvailablePackageSummaries: []*corev1.AvailablePackageSummary{
+					cert_manager_summary,
+				},
+			},
+			noCrossNamespaceRefs: true,
+		},
 	}
 
 	for _, tc := range testCases {
@@ -408,8 +435,19 @@ func TestGetAvailablePackageSummariesWithoutPagination(t *testing.T) {
 				t.Fatalf("error instantiating the server: %v", err)
 			}
 
-			if err = s.redisMockExpectGetFromRepoCache(mock, tc.request.FilterOptions, repos...); err != nil {
-				t.Fatalf("%v", err)
+			if tc.noCrossNamespaceRefs {
+				s.pluginConfig.NoCrossNamespaceRefs = true
+				for _, r := range repos {
+					if r.Namespace == tc.request.Context.Namespace {
+						if err = s.redisMockExpectGetFromRepoCache(mock, nil, r); err != nil {
+							t.Fatalf("%v", err)
+						}
+					}
+				}
+			} else {
+				if err = s.redisMockExpectGetFromRepoCache(mock, tc.request.FilterOptions, repos...); err != nil {
+					t.Fatalf("%v", err)
+				}
 			}
 
 			response, err := s.GetAvailablePackageSummaries(context.Background(), tc.request)
@@ -1007,7 +1045,7 @@ func TestGetAvailablePackageSummariesAfterCacheResyncQueueNotIdle(t *testing.T) 
 			} else {
 				mock.ExpectFlushDB().SetVal("OK")
 				// *SOME* of the repos have already been cached into redis at this point
-				// via the repo cache backround worker triggered by the Add event in the
+				// via the repo cache background worker triggered by the Add event in the
 				// main goroutine. Those SET calls will need to be repeated due to
 				// populateWith() which will re-populate the cache from scratch based on
 				// the current state in k8s (all MAX_REPOS repos).
@@ -1263,7 +1301,7 @@ func TestAddPackageRepository(t *testing.T) {
 			userManagedSecrets: true,
 		},
 		{
-			name:               "failes when package repository links to non-existing secret",
+			name:               "fails when package repository links to non-existing secret",
 			request:            add_repo_req_7,
 			statusCode:         codes.NotFound,
 			userManagedSecrets: true,
@@ -1785,7 +1823,7 @@ func TestGetOciPackageRepositoryDetail(t *testing.T) {
 				}
 			}
 
-			// FWIW GetPackageRepositoryDetail curently does not use the redis cache
+			// FWIW GetPackageRepositoryDetail currently does not use the redis cache
 			if err = mock.ExpectationsWereMet(); err != nil {
 				t.Fatalf("%v", err)
 			}
@@ -2420,7 +2458,7 @@ func newRepo(name string, namespace string, spec *sourcev1.HelmRepositorySpec, s
 	return helmRepository
 }
 
-// these functiosn should affect only unit test, not production code
+// these functions should affect only unit test, not production code
 // does a series of mock.ExpectGet(...)
 func (s *Server) redisMockExpectGetFromRepoCache(mock redismock.ClientMock, filterOptions *corev1.FilterOptions, repos ...sourcev1.HelmRepository) error {
 	mapVals := make(map[string][]byte)
@@ -2627,4 +2665,150 @@ func newOciRepo(repoName, repoNamespace, repoUrl string) (*sourcev1.HelmReposito
 	}
 	repo := newRepo(repoName, repoNamespace, repoSpec, repoStatus)
 	return &repo, nil
+}
+
+func TestGetPackageRepositoryPermissions(t *testing.T) {
+
+	testCases := []struct {
+		name               string
+		request            *corev1.GetPackageRepositoryPermissionsRequest
+		expectedStatusCode codes.Code
+		expectedResponse   *corev1.GetPackageRepositoryPermissionsResponse
+		reactors           []*ClientReaction
+	}{
+		{
+			name: "returns permissions for global package repositories",
+			request: &corev1.GetPackageRepositoryPermissionsRequest{
+				Context: &corev1.Context{Cluster: KubeappsCluster},
+			},
+			reactors: []*ClientReaction{
+				{
+					verb:     "create",
+					resource: "selfsubjectaccessreviews",
+					reaction: func(action k8stesting.Action) (handled bool, ret runtime.Object, err error) {
+						createAction := action.(k8stesting.CreateActionImpl)
+						accessReview := createAction.Object.(*authorizationv1.SelfSubjectAccessReview)
+						if accessReview.Spec.ResourceAttributes.Namespace != "" {
+							return true, &authorizationv1.SelfSubjectAccessReview{Status: authorizationv1.SubjectAccessReviewStatus{Allowed: false}}, nil
+						}
+						switch accessReview.Spec.ResourceAttributes.Verb {
+						case "list", "delete":
+							return true, &authorizationv1.SelfSubjectAccessReview{Status: authorizationv1.SubjectAccessReviewStatus{Allowed: true}}, nil
+						default:
+							return true, &authorizationv1.SelfSubjectAccessReview{Status: authorizationv1.SubjectAccessReviewStatus{Allowed: false}}, nil
+						}
+					},
+				},
+			},
+			expectedStatusCode: codes.OK,
+			expectedResponse: &corev1.GetPackageRepositoryPermissionsResponse{
+				Permissions: []*corev1.PackageRepositoriesPermissions{
+					{
+						Plugin: GetPluginDetail(),
+						// Flux does not have the concept of "global"
+						Global:    nil,
+						Namespace: nil,
+					},
+				},
+			},
+		},
+		{
+			name:    "returns local permissions when no cluster specified",
+			request: &corev1.GetPackageRepositoryPermissionsRequest{},
+			reactors: []*ClientReaction{
+				{
+					verb:     "create",
+					resource: "selfsubjectaccessreviews",
+					reaction: func(action k8stesting.Action) (handled bool, ret runtime.Object, err error) {
+						return true, &authorizationv1.SelfSubjectAccessReview{Status: authorizationv1.SubjectAccessReviewStatus{Allowed: true}}, nil
+					},
+				},
+			},
+			expectedStatusCode: codes.OK,
+			expectedResponse: &corev1.GetPackageRepositoryPermissionsResponse{
+				Permissions: []*corev1.PackageRepositoriesPermissions{
+					{
+						Plugin:    GetPluginDetail(),
+						Global:    nil,
+						Namespace: nil,
+					},
+				},
+			},
+		},
+		{
+			name: "fails when namespace is specified but not the cluster",
+			request: &corev1.GetPackageRepositoryPermissionsRequest{
+				Context: &corev1.Context{Namespace: "my-ns"},
+			},
+			expectedStatusCode: codes.InvalidArgument,
+		},
+		{
+			name: "returns permissions for namespaced package repositories",
+			request: &corev1.GetPackageRepositoryPermissionsRequest{
+				Context: &corev1.Context{Cluster: KubeappsCluster, Namespace: "my-ns"},
+			},
+			reactors: []*ClientReaction{
+				{
+					verb:     "create",
+					resource: "selfsubjectaccessreviews",
+					reaction: func(action k8stesting.Action) (handled bool, ret runtime.Object, err error) {
+						createAction := action.(k8stesting.CreateActionImpl)
+						accessReview := createAction.Object.(*authorizationv1.SelfSubjectAccessReview)
+						if accessReview.Spec.ResourceAttributes.Namespace == "" {
+							return true, &authorizationv1.SelfSubjectAccessReview{Status: authorizationv1.SubjectAccessReviewStatus{Allowed: true}}, nil
+						}
+						switch accessReview.Spec.ResourceAttributes.Verb {
+						case "list", "delete":
+							return true, &authorizationv1.SelfSubjectAccessReview{Status: authorizationv1.SubjectAccessReviewStatus{Allowed: true}}, nil
+						default:
+							return true, &authorizationv1.SelfSubjectAccessReview{Status: authorizationv1.SubjectAccessReviewStatus{Allowed: false}}, nil
+						}
+					},
+				},
+			},
+			expectedStatusCode: codes.OK,
+			expectedResponse: &corev1.GetPackageRepositoryPermissionsResponse{
+				Permissions: []*corev1.PackageRepositoriesPermissions{
+					{
+						Plugin: GetPluginDetail(),
+						Namespace: map[string]bool{
+							"create": false,
+							"delete": true,
+							"get":    false,
+							"list":   true,
+							"update": false,
+							"watch":  false,
+						},
+					},
+				},
+			},
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			s := newServerWithReactors(t, tc.reactors)
+
+			response, err := s.GetPackageRepositoryPermissions(context.Background(), tc.request)
+
+			if got, want := status.Code(err), tc.expectedStatusCode; got != want {
+				t.Fatalf("got: %+v, want: %+v, err: %+v", got, want, err)
+			}
+
+			// We don't need to check anything else for non-OK codes.
+			if tc.expectedStatusCode != codes.OK {
+				return
+			}
+
+			opts := cmpopts.IgnoreUnexported(
+				corev1.Context{},
+				plugins.Plugin{},
+				corev1.GetPackageRepositoryPermissionsResponse{},
+				corev1.PackageRepositoriesPermissions{},
+			)
+			if got, want := response, tc.expectedResponse; !cmp.Equal(want, got, opts) {
+				t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opts))
+			}
+		})
+	}
 }

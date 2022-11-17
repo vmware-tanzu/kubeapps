@@ -154,7 +154,7 @@ If a logged in user tries to perform an unauthorized action within Kubeapps (e.g
 
 Currently, all list views (Apps, Functions, etc.) are not scoped by a namespace. To enable the ability to list and view application resources within specific namespaces without requiring cluster-wide permissions, the Dashboard will scope all operations by a namespace by default. The current namespace will be selectable in the top navigation bar.
 
-Kubeapps will try to fetch the list of namespaces from the API, but if this operation is not permitted (due to not having the relevant RBAC role), it will fallback to listing the namespaces in the _kubernetes_namespaces_ array stored in localStorage. By default, this will contain _default_. When in this fallback mode, there will be an option for the user to add namespaces to the _kuberetes_namespaces_ array.
+Kubeapps will try to fetch the list of namespaces from the API, but if this operation is not permitted (due to not having the relevant RBAC role), it will fallback to listing the namespaces in the _kubernetes_namespaces_ array stored in localStorage. By default, this will contain _default_. When in this fallback mode, there will be an option for the user to add namespaces to the _kubernetes_namespaces_ array.
 
 It will also be possible to list resources cluster-wide by selecting the _all_ option in the namespace selector.
 

@@ -108,7 +108,7 @@ Take an OCI registry URL like `"oci://ghcr.io/gfichtenholt/charts/podinfo:6.1.5"
 GitHub Container Registry WebPortal, CLI and API do not use the term _"OCI registry"_ and _"OCI repository"_. Instead, the following terms are used.
 
 - **Host** - always `ghcr.io`
-- **Owner** - may be an organization or a indiviual account,e.g. `stefanprodan`
+- **Owner** - may be an organization or a individual account,e.g. `stefanprodan`
 - **Package** - with package type `container`, e.g. `charts/podinfo`
 - **Package Version** - package version a.k.a. tag, e.g. `"6.1.5"`
 
@@ -118,7 +118,7 @@ The term `package` seems to correspond to be a concatenation of an last segment 
 - oci://ghcr.io/gfichtenholt/charts - charts/podinfo
 - oci://ghcr.io/gfichtenholt/charts/podinfo - charts/podinfo/podinfo
 
-A given owner may have mutiple packages, e.g. `"nginx/nginx"`, `"charts/podinfo"`, etc. A given package may have multiple versions. The use case with multiple charts in the same repository doesn't really apply (TODO double check if there is a workaround)
+A given owner may have multiple packages, e.g. `"nginx/nginx"`, `"charts/podinfo"`, etc. A given package may have multiple versions. The use case with multiple charts in the same repository doesn't really apply (TODO double check if there is a workaround)
 
 References:
 

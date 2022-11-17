@@ -65,4 +65,9 @@ fmt:
 vet:
 	$(GO) vet $(GO_PACKAGES)
 
-.PHONY: default all test-all test test-dashboard fmt vet
+lint:
+	./script/linters/license-linter.sh
+	./script/linters/yaml-linter.sh
+	./script/linters/golang-linter.sh
+
+.PHONY: default all test-all test test-dashboard fmt vet lint install-tools

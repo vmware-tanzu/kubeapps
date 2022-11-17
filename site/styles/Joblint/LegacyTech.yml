@@ -1,3 +1,4 @@
+---
 extends: existence
 message: "Avoid using '%s'"
 description: "Legacy technologies can reduce the number of people interested in a job."

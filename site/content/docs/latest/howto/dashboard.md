@@ -93,7 +93,7 @@ Once you have selected the application to update, click either the **Update** bu
 
 For the update case, the Visual Editor table displays the following columns:
 
-- `Defalut value`: including the default value for each parameter in the package.
+- `Default value`: including the default value for each parameter in the package.
 - `Deployed value`: including the value deployed in the cluster for each parameter.
 - `Current value`: to set the value for each parameter in the upgrade process.
 

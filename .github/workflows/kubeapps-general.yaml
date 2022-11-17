@@ -1,17 +1,18 @@
-# Copyright 2022 the Kubeapps contributors
+# Copyright 2022 the Kubeapps contributors.
 # SPDX-License-Identifier: Apache-2.0
 
-name: Main Pipeline
-
+---
 on:
-  push:
-  pull_request:
-    branches:
-      - main
-
-concurrency:
-  group: ${{ github.head_ref || github.ref_name }}
-  cancel-in-progress: true
+  workflow_call:
+    inputs:
+      run_gke_tests:
+        type: boolean
+        required: false
+        default: false
+      run_linters:
+        type: boolean
+        required: false
+        default: true
 
 env:
   CHARTMUSEUM_VERSION: "3.9.1"
@@ -24,7 +25,7 @@ env:
   CI_BOT_GPG: "80B6EB16B1328FB18DFF2A073EBA68F3347E319D"
   # DEBUG_MODE allows to activate some SSH debugging steps, and modify the verbosity level of some scripts (eg. e2e-tests.sh)
   DEBUG_MODE: "true"
-  # FIXME: DEV_MODE is used to enable dev mode, used to activate several hacks along the code:
+  # TODO(bjesus): DEV_MODE is used to enable dev mode, used to activate several hacks along the code:
   # - In sync_chart_from/to_bitnami jobs to file shadow PRs while we maintain
   # - To add a suffix to the tag of the generated docker images, to prevent collision and overwriting with those generated from CircleCI
   # - To add a suffix to the name of the generated GKE clusters to prevent collision with those generated and used from CircleCI
@@ -53,7 +54,7 @@ env:
   IMG_PREFIX: "kubeapps/"
   # We use IMG_PREFIX_FOR_FORKS for development purposes, it's used when the workflow is run from a fork of the kubeapps repo
   IMG_PREFIX_FOR_FORKS: "beni0888/"
-#  IMG_PLATFORMS: "linux/amd64, linux/arm64"
+  # IMG_PLATFORMS: "linux/amd64, linux/arm64"
   IMG_PLATFORMS: "linux/amd64"
   KAPP_CONTROLLER_VERSION: "v0.42.0"
   K8S_KIND_VERSION: "v1.22.15@sha256:bfd5eaae36849bfb3c1e3b9442f3da17d730718248939d9d547e86bbac5da586"
@@ -70,12 +71,14 @@ env:
   GKE_ZONE: "us-east1-c"
   GKE_PROJECT: "vmware-kubeapps-ci"
   GKE_CLUSTER: "kubeapps-test"
+  SRP_CLI_VERSION: "0.2.20220825211752-571e676-57"
 
 jobs:
   setup:
     runs-on: ubuntu-latest
     outputs:
       dev_mode: ${{ steps.set-outputs.outputs.dev_mode }}
+      golang_version: ${{ steps.set-outputs.outputs.golang_version }}
       img_modifier: ${{ steps.set-outputs.outputs.img_modifier }}
       img_prefix: ${{ steps.set-outputs.outputs.img_prefix }}
       img_dev_tag: ${{ steps.set-outputs.outputs.img_dev_tag }}
@@ -122,7 +125,7 @@ jobs:
             echo "version=${GITHUB_REF_NAME}" >> $GITHUB_OUTPUT
           else
             echo "img_prod_tag=latest" >> $GITHUB_OUTPUT
-            echo "version=" >> $GITHUB_OUTPUT
+            echo "version=${GITHUB_SHA}" >> $GITHUB_OUTPUT
           fi;
 
           if [[ ${GITHUB_REF_NAME} == ${BRANCH_KUBEAPPS_REPO} ]]; then
@@ -137,7 +140,15 @@ jobs:
             echo "running_on_tag=false" >> $GITHUB_OUTPUT
           fi
 
-          echo "dev_mode=${DEV_MODE}" >> $GITHUB_OUTPUT
+          # TODO(bjesus) Once we've properly tested the release job, we can/should remove this hack, just leave the content from the else branch
+          if [[ ${GITHUB_REF_TYPE} == "tag" &&  ${GITHUB_REF_NAME} == 'test-'* ]]; then
+            echo "DEV_MODE=true" >> $GITHUB_ENV
+            echo "dev_mode=true" >> $GITHUB_OUTPUT
+          else
+            echo "dev_mode=${DEV_MODE}" >> $GITHUB_OUTPUT
+          fi
+
+          echo "golang_version=${GOLANG_VERSION}" >> $GITHUB_OUTPUT
           echo "ssh_key_kubeapps_deploy_filename=${SSH_KEY_KUBEAPPS_DEPLOY_FILENAME}" >> $GITHUB_OUTPUT
           echo "ssh_key_forked_charts_deploy_filename=${SSH_KEY_FORKED_CHARTS_DEPLOY_FILENAME}" >> $GITHUB_OUTPUT
           echo "img_modifier=${IMG_MODIFIER}" >> $GITHUB_OUTPUT
@@ -147,6 +158,7 @@ jobs:
       - name: Show outputs
         run: |
           echo "DEV_MODE: ${{steps.set-outputs.outputs.dev_mode}}"
+          echo "GOLANG_VERSION: ${{steps.set-outputs.outputs.golang_version}}"
           echo "IMG_MODIFIER: ${{steps.set-outputs.outputs.img_modifier}}"
           echo "IMG_PREFIX: ${{steps.set-outputs.outputs.img_prefix}}"
           echo "IMG_DEV_TAG: ${{steps.set-outputs.outputs.img_dev_tag}}"
@@ -159,6 +171,23 @@ jobs:
           echo "SSH_KEY_FORKED_CHARTS_DEPLOY_FILENAME: ${{steps.set-outputs.outputs.ssh_key_forked_charts_deploy_filename}}"
           echo "TRIGGERED_FROM_FORK: ${{steps.set-outputs.outputs.triggered_from_fork}}"
           echo "VERSION: ${{steps.set-outputs.outputs.version}}"
+
+  linters:
+    if: inputs.run_linters
+    needs:
+      - setup
+    uses: ./.github/workflows/linters.yml
+    with:
+      golang_version: ${{ needs.setup.outputs.golang_version }}
+
+  linters_result:
+    if: inputs.run_linters && always()
+    needs: linters
+    runs-on: ubuntu-latest
+    steps:
+      - name: "Check all linters result"
+        if: needs.linters.result != 'success'
+        run: exit 1
 
   test_go:
     needs:
@@ -177,14 +206,14 @@ jobs:
         env:
           ALLOW_EMPTY_PASSWORD: "yes"
     steps:
-    - uses: actions/checkout@v3
-    - name: Set up Go
-      uses: actions/setup-go@v3
-      with:
-        go-version: ${{ env.GOLANG_VERSION }}
-    - name: Run go unit tests
-      run: make test
-    - run: make test-db
+      - uses: actions/checkout@v3
+      - name: Set up Go
+        uses: actions/setup-go@v3
+        with:
+          go-version: ${{ env.GOLANG_VERSION }}
+      - name: Run go unit tests
+        run: make test
+      - run: make test-db
 
   test_dashboard:
     runs-on: ubuntu-latest
@@ -415,15 +444,24 @@ jobs:
         tests_group:
           - main
           - multicluster
+          - multicluster-nokubeapps
           - carvel
           - operator
+        timeout_minutes:
+          - 4
+        include: # Override the default timeout for the operators group, to avoid flaky tests
+          - tests_group: operator
+            timeout_minutes: 6
+        exclude:
+          - tests_group: operator
+            timeout_minutes: 4
     env:
       DEFAULT_DEX_IP: "172.18.0.2"
       IMG_PREFIX: ${{ needs.setup.outputs.img_prefix }}
       TESTS_GROUP: ${{ matrix.tests_group }}
       TEST_OPERATORS: "1"
       TEST_UPGRADE: "1"
-      TEST_TIMEOUT_MINUTES: 4 # Timeout minutes for each test
+      TEST_TIMEOUT_MINUTES: ${{ matrix.timeout_minutes }}  # Timeout minutes for each test
       USE_MULTICLUSTER_OIDC_ENV: "true"
     steps:
       - uses: actions/checkout@v3
@@ -505,6 +543,20 @@ jobs:
           name: e2e_tests_${{ matrix.tests_group }}_reports
           path: integration/reports
 
+  # We need this job to aggregate the result of the local_e2e_tests matrix and summarize it. We don't need it because of
+  # GHA itself, but because in GH branch protection rules, we cannot check the status for a job matrix, and would have
+  # require the status for each job in the matrix (eg. local_e2e_tests(carvel)).
+  # See https://github.com/orgs/community/discussions/26822
+  local_e2e_tests_result:
+    needs:
+      - local_e2e_tests
+    runs-on: ubuntu-latest
+    if: always()
+    steps:
+      - name: "Check local_e2e_tests matrix status"
+        if: needs.local_e2e_tests.result != 'success'
+        run: exit 1
+
   push_images:
     if: needs.setup.outputs.running_on_main == 'true' || needs.setup.outputs.running_on_tag == 'true'
     runs-on: ubuntu-latest
@@ -550,6 +602,20 @@ jobs:
             echo "::notice ::Pushing image ${prod_image}"
             docker push $prod_image
           done
+
+  srp_report:
+    needs:
+      - setup
+      - push_images
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: ./.github/actions/srp-source-provenance
+        with:
+          SRP_CLI_VERSION: ${{env.SRP_CLI_VERSION}}
+          SRP_CLIENT_ID: ${{secrets.SRP_CLIENT_ID}}
+          SRP_CLIENT_SECRET: ${{secrets.SRP_CLIENT_SECRET}}
+          VERSION: ${{needs.setup.outputs.version}}
 
   sync_chart_from_bitnami:
     needs:
@@ -657,8 +723,30 @@ jobs:
               ${BRANCH_CHARTS_REPO_FORKED} \
               ${DEV_MODE}
 
-  gke_setup:
+  release:
     if: needs.setup.outputs.running_on_tag == 'true'
+    needs:
+      - setup
+      - sync_chart_to_bitnami
+      - local_e2e_tests
+      - GKE_REGULAR_VERSION
+      - GKE_STABLE_VERSION
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - run: |
+          set -eu
+          source ./script/lib/libcitools.sh
+          installGithubCLI ${GITHUB_VERSION}
+      - # Assuming there is a personal access token created in GitHub granted with the scopes
+        # "repo:status", "public_repo" and "read:org"
+        name: Run the create_release script
+        run: |
+          set -eu
+          ./script/create_release.sh "${GITHUB_REF_NAME}" "${KUBEAPPS_REPO}"
+
+  gke_setup:
+    if: needs.setup.outputs.running_on_tag == 'true' || inputs.run_gke_tests
     needs:
       - setup
       - test_go

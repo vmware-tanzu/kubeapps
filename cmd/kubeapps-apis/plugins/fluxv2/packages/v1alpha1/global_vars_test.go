@@ -349,7 +349,29 @@ var (
 		PostInstallationNotes: podinfo_notes("my-podinfo-17"),
 	}
 
+	expected_detail_installed_package_for_delete_oci = &corev1.InstalledPackageDetail{
+		PkgVersionReference: &corev1.VersionReference{
+			Version: "*",
+		},
+		CurrentVersion:        pkgAppVersion("6.1.5"),
+		Status:                status_installed,
+		PostInstallationNotes: podinfo_notes("my-podinfo-22"),
+	}
+
+	expected_detail_installed_package_for_update_oci = &corev1.InstalledPackageDetail{
+		PkgVersionReference: &corev1.VersionReference{
+			Version: "*",
+		},
+		CurrentVersion:        pkgAppVersion("6.1.5"),
+		Status:                status_installed,
+		PostInstallationNotes: podinfo_notes("my-podinfo-21"),
+	}
+
 	expected_resource_refs_oci = podinfo_installed_refs("my-podinfo-17")
+
+	expected_resource_refs_for_update_oci = podinfo_installed_refs("my-podinfo-21")
+
+	expected_resource_refs_for_delete_oci = podinfo_installed_refs("my-podinfo-22")
 
 	expected_detail_installed_package_oci_2 = &corev1.InstalledPackageDetail{
 		PkgVersionReference: &corev1.VersionReference{
@@ -415,6 +437,33 @@ var (
 			Version: "6.0.0",
 		},
 		Values: "{\"replicaCount\": 1 }",
+	}
+
+	update_request_8 = &corev1.UpdateInstalledPackageRequest{
+		// InstalledPackageRef will be filled in by the code below after a call to create(...) completes
+		Values: "{\"ui\": { \"message\": \"El Marginal\" } }",
+	}
+
+	/*
+		expected_detail_installed_package_podinfo_6_1_5 = &corev1.InstalledPackageDetail{
+			PkgVersionReference: &corev1.VersionReference{
+				Version: "*",
+			},
+			CurrentVersion:        pkgAppVersion("6.1.5"),
+			Status:                status_installed,
+			PostInstallationNotes: podinfo_notes("my-podinfo-17"),
+			ValuesApplied:         "{\"ui\":{\"message\":\"El Marginal\"}}",
+		}
+	*/
+
+	expected_detail_installed_package_podinfo_6_1_5_for_update = &corev1.InstalledPackageDetail{
+		PkgVersionReference: &corev1.VersionReference{
+			Version: "*",
+		},
+		CurrentVersion:        pkgAppVersion("6.1.5"),
+		Status:                status_installed,
+		PostInstallationNotes: podinfo_notes("my-podinfo-21"),
+		ValuesApplied:         "{\"ui\":{\"message\":\"El Marginal\"}}",
 	}
 
 	create_installed_package_request_podinfo_for_delete_1 = &corev1.CreateInstalledPackageRequest{
@@ -586,6 +635,48 @@ var (
 		Status:                status_installed,
 		PostInstallationNotes: podinfo_notes("my-podinfo"),
 	}
+
+	create_installed_package_request_for_update_oci = &corev1.CreateInstalledPackageRequest{
+		AvailablePackageRef: availableRef("podinfo-21/podinfo", "default"),
+		Name:                "my-podinfo-21",
+		TargetContext:       targetContext("test-21"),
+	}
+
+	create_installed_package_request_for_delete_oci = &corev1.CreateInstalledPackageRequest{
+		AvailablePackageRef: availableRef("podinfo-22/podinfo", "default"),
+		Name:                "my-podinfo-22",
+		TargetContext:       targetContext("test-22"),
+	}
+
+	/*
+		create_installed_package_request_podinfo_for_delete_3 = &corev1.CreateInstalledPackageRequest{
+			AvailablePackageRef: availableRef("podinfo-20/podinfo", "default"),
+			Name:                "my-podinfo-20",
+			TargetContext:       targetContext("test-20"),
+			PkgVersionReference: &corev1.VersionReference{
+				Version: "=5.2.1",
+			},
+			ReconciliationOptions: &corev1.ReconciliationOptions{
+				ServiceAccountName: "default",
+			},
+		}
+
+		expected_detail_installed_package_podinfo_for_delete_3 = &corev1.InstalledPackageDetail{
+			CurrentVersion: &corev1.PackageAppVersion{},
+			PkgVersionReference: &corev1.VersionReference{
+				Version: "=5.2.1",
+			},
+			ReconciliationOptions: &corev1.ReconciliationOptions{
+				Interval:           "1m",
+				ServiceAccountName: "default",
+			},
+			Status: &corev1.InstalledPackageStatus{
+				Ready:      false,
+				Reason:     corev1.InstalledPackageStatus_STATUS_REASON_FAILED,
+				UserReason: "GetLastReleaseFailed: failed to get last release revision",
+			},
+		}
+	*/
 
 	expected_summaries_test_release_rbac_1 = &corev1.GetInstalledPackageSummariesResponse{
 		InstalledPackageSummaries: []*corev1.InstalledPackageSummary{
@@ -1457,6 +1548,30 @@ var (
 		},
 	}
 
+	redis_summary_transient = &corev1.InstalledPackageSummary{
+		InstalledPackageRef: my_redis_ref,
+		Name:                "my-redis",
+		IconUrl:             "https://bitnami.com/assets/stacks/redis/img/redis-stack-220x234.png",
+		PkgVersionReference: &corev1.VersionReference{
+			Version: "14.4.0",
+		},
+		CurrentVersion: &corev1.PackageAppVersion{
+			PkgVersion: "14.4.0",
+			AppVersion: "6.2.4",
+		},
+		PkgDisplayName:   "redis",
+		ShortDescription: "Open source, advanced key-value store. It is often referred to as a data structure server since keys can contain strings, hashes, lists, sets and sorted sets.",
+		Status: &corev1.InstalledPackageStatus{
+			Ready:      false,
+			Reason:     corev1.InstalledPackageStatus_STATUS_REASON_UNSPECIFIED,
+			UserReason: "Flux HelmRelease resource is in a transient state",
+		},
+		LatestVersion: &corev1.PackageAppVersion{
+			PkgVersion: "14.4.0",
+			AppVersion: "6.2.4",
+		},
+	}
+
 	redis_summary_pending = &corev1.InstalledPackageSummary{
 		InstalledPackageRef: my_redis_ref,
 		Name:                "my-redis",
@@ -1576,8 +1691,11 @@ var (
 		chartTarGz:           testTgz("redis-14.4.0.tgz"),
 		chartSpecVersion:     "14.4.0",
 		chartArtifactVersion: "14.4.0",
-		releaseName:          "my-redis",
-		releaseNamespace:     "test",
+		releaseMeta: metav1.ObjectMeta{
+			Name:       "my-redis",
+			Namespace:  "test",
+			Generation: 1,
+		},
 		releaseStatus: helmv2.HelmReleaseStatus{
 			Conditions: []metav1.Condition{
 				{
@@ -1598,6 +1716,7 @@ var (
 			HelmChart:             "default/redis",
 			LastAppliedRevision:   "14.4.0",
 			LastAttemptedRevision: "14.4.0",
+			ObservedGeneration:    1,
 		},
 	}
 
@@ -1617,15 +1736,18 @@ var (
 			}})
 
 	redis_existing_spec_completed_with_values_and_reconciliation_options = testSpecGetInstalledPackages{
-		repoName:                  "bitnami-1",
-		repoNamespace:             "default",
-		repoIndex:                 testYaml("redis-many-versions.yaml"),
-		chartName:                 "redis",
-		chartTarGz:                testTgz("redis-14.4.0.tgz"),
-		chartSpecVersion:          "14.4.0",
-		chartArtifactVersion:      "14.4.0",
-		releaseName:               "my-redis",
-		releaseNamespace:          "test",
+		repoName:             "bitnami-1",
+		repoNamespace:        "default",
+		repoIndex:            testYaml("redis-many-versions.yaml"),
+		chartName:            "redis",
+		chartTarGz:           testTgz("redis-14.4.0.tgz"),
+		chartSpecVersion:     "14.4.0",
+		chartArtifactVersion: "14.4.0",
+		releaseMeta: metav1.ObjectMeta{
+			Name:       "my-redis",
+			Namespace:  "test",
+			Generation: 1,
+		},
 		releaseSuspend:            true,
 		releaseServiceAccountName: "foo",
 		releaseValues:             &v1.JSON{Raw: redis_existing_spec_completed_with_values_and_reconciliation_options_values_bytes},
@@ -1649,6 +1771,7 @@ var (
 			HelmChart:             "default/redis",
 			LastAppliedRevision:   "14.4.0",
 			LastAttemptedRevision: "14.4.0",
+			ObservedGeneration:    1,
 		},
 	}
 
@@ -1660,8 +1783,11 @@ var (
 		chartTarGz:           testTgz("redis-14.4.0.tgz"),
 		chartSpecVersion:     "14.4.0",
 		chartArtifactVersion: "14.4.0",
-		releaseName:          "my-redis",
-		releaseNamespace:     "test",
+		releaseMeta: metav1.ObjectMeta{
+			Name:       "my-redis",
+			Namespace:  "test",
+			Generation: 1,
+		},
 		releaseStatus: helmv2.HelmReleaseStatus{
 			Conditions: []metav1.Condition{
 				{
@@ -1683,6 +1809,7 @@ var (
 			Failures:              14,
 			InstallFailures:       1,
 			LastAttemptedRevision: "14.4.0",
+			ObservedGeneration:    1,
 		},
 	}
 
@@ -1694,8 +1821,11 @@ var (
 		chartTarGz:           testTgz("redis-14.4.0.tgz"),
 		chartSpecVersion:     "14.4.0",
 		chartArtifactVersion: "14.4.0",
-		releaseName:          "my-redis",
-		releaseNamespace:     "test",
+		releaseMeta: metav1.ObjectMeta{
+			Name:       "my-redis",
+			Namespace:  "test",
+			Generation: 1,
+		},
 		releaseStatus: helmv2.HelmReleaseStatus{
 			Conditions: []metav1.Condition{
 				{
@@ -1706,10 +1836,38 @@ var (
 					Message:            "failed to get last release revision",
 				},
 			},
-			HelmChart:             "default/redis",
-			Failures:              14,
-			InstallFailures:       1,
-			LastAttemptedRevision: "14.4.0",
+			HelmChart:          "default/redis",
+			Failures:           14,
+			ObservedGeneration: 1,
+		},
+	}
+
+	redis_existing_spec_transient = testSpecGetInstalledPackages{
+		repoName:             "bitnami-1",
+		repoNamespace:        "default",
+		repoIndex:            testYaml("redis-many-versions.yaml"),
+		chartName:            "redis",
+		chartTarGz:           testTgz("redis-14.4.0.tgz"),
+		chartSpecVersion:     "14.4.0",
+		chartArtifactVersion: "14.4.0",
+		releaseMeta: metav1.ObjectMeta{
+			Name:       "my-redis",
+			Namespace:  "test",
+			Generation: 2,
+		},
+		releaseStatus: helmv2.HelmReleaseStatus{
+			Conditions: []metav1.Condition{
+				{
+					LastTransitionTime: metav1.Time{Time: lastTransitionTime},
+					Type:               fluxmeta.ReadyCondition,
+					Status:             metav1.ConditionFalse,
+					Reason:             helmv2.GetLastReleaseFailedReason,
+					Message:            "failed to get last release revision",
+				},
+			},
+			HelmChart:          "default/redis",
+			Failures:           14,
+			ObservedGeneration: 1,
 		},
 	}
 
@@ -1729,8 +1887,11 @@ var (
 		chartTarGz:           testTgz("airflow-6.7.1.tgz"),
 		chartSpecVersion:     "6.7.1",
 		chartArtifactVersion: "6.7.1",
-		releaseName:          "my-airflow",
-		releaseNamespace:     "namespace-2",
+		releaseMeta: metav1.ObjectMeta{
+			Name:       "my-airflow",
+			Namespace:  "namespace-2",
+			Generation: 1,
+		},
 		releaseStatus: helmv2.HelmReleaseStatus{
 			Conditions: []metav1.Condition{
 				{
@@ -1751,6 +1912,7 @@ var (
 			HelmChart:             "default/airflow",
 			LastAppliedRevision:   "6.7.1",
 			LastAttemptedRevision: "6.7.1",
+			ObservedGeneration:    1,
 		},
 	}
 
@@ -1762,8 +1924,11 @@ var (
 		chartTarGz:           testTgz("airflow-6.7.1.tgz"),
 		chartSpecVersion:     "<=6.7.1",
 		chartArtifactVersion: "6.7.1",
-		releaseName:          "my-airflow",
-		releaseNamespace:     "namespace-2",
+		releaseMeta: metav1.ObjectMeta{
+			Name:       "my-airflow",
+			Namespace:  "namespace-2",
+			Generation: 1,
+		},
 		releaseStatus: helmv2.HelmReleaseStatus{
 			Conditions: []metav1.Condition{
 				{
@@ -1784,6 +1949,7 @@ var (
 			HelmChart:             "default/airflow",
 			LastAppliedRevision:   "6.7.1",
 			LastAttemptedRevision: "6.7.1",
+			ObservedGeneration:    1,
 		},
 	}
 
@@ -1795,8 +1961,11 @@ var (
 		chartTarGz:           testTgz("redis-14.4.0.tgz"),
 		chartSpecVersion:     "14.4.0",
 		chartArtifactVersion: "14.4.0",
-		releaseName:          "my-redis",
-		releaseNamespace:     "test",
+		releaseMeta: metav1.ObjectMeta{
+			Name:       "my-redis",
+			Namespace:  "test",
+			Generation: 1,
+		},
 		releaseStatus: helmv2.HelmReleaseStatus{
 			Conditions: []metav1.Condition{
 				{
@@ -1809,6 +1978,7 @@ var (
 			},
 			HelmChart:             "default/redis",
 			LastAttemptedRevision: "14.4.0",
+			ObservedGeneration:    1,
 		},
 	}
 
@@ -1820,8 +1990,11 @@ var (
 		chartTarGz:           testTgz("redis-14.4.0.tgz"),
 		chartSpecVersion:     "14.4.0",
 		chartArtifactVersion: "14.4.0",
-		releaseName:          "my-redis",
-		releaseNamespace:     "test",
+		releaseMeta: metav1.ObjectMeta{
+			Name:       "my-redis",
+			Namespace:  "test",
+			Generation: 1,
+		},
 		releaseStatus: helmv2.HelmReleaseStatus{
 			Conditions: []metav1.Condition{
 				{
@@ -1835,6 +2008,7 @@ var (
 			HelmChart:             "default/redis",
 			Failures:              2,
 			LastAttemptedRevision: "14.4.0",
+			ObservedGeneration:    1,
 		},
 	}
 
@@ -1854,8 +2028,11 @@ var (
 		chartTarGz:           testTgz("redis-14.4.0.tgz"),
 		chartSpecVersion:     "*",
 		chartArtifactVersion: "14.4.0",
-		releaseName:          "my-redis",
-		releaseNamespace:     "test",
+		releaseMeta: metav1.ObjectMeta{
+			Name:       "my-redis",
+			Namespace:  "test",
+			Generation: 1,
+		},
 		releaseStatus: helmv2.HelmReleaseStatus{
 			Conditions: []metav1.Condition{
 				{
@@ -1876,6 +2053,7 @@ var (
 			HelmChart:             "default/redis",
 			LastAppliedRevision:   "14.4.0",
 			LastAttemptedRevision: "14.4.0",
+			ObservedGeneration:    1,
 		},
 	}
 
@@ -2106,8 +2284,11 @@ var (
 		chartTarGz:           "testdata/charts/redis-14.4.0.tgz",
 		chartSpecVersion:     "14.4.0",
 		chartArtifactVersion: "14.4.0",
-		releaseName:          "my-redis",
-		releaseNamespace:     "test",
+		releaseMeta: metav1.ObjectMeta{
+			Name:       "my-redis",
+			Namespace:  "test",
+			Generation: 1,
+		},
 		releaseStatus: helmv2.HelmReleaseStatus{
 			Conditions: []metav1.Condition{
 				{
@@ -2128,6 +2309,7 @@ var (
 			HelmChart:             "default/redis",
 			LastAppliedRevision:   "14.4.0",
 			LastAttemptedRevision: "14.4.0",
+			ObservedGeneration:    1,
 		},
 		targetNamespace: "test2",
 	}
@@ -2503,7 +2685,7 @@ var (
 		PackageRepoRef: &corev1.PackageRepositoryReference{
 			Context: &corev1.Context{
 				Namespace: "namespace-1",
-				Cluster:   "this-is-not-the-cluster-youre-looking-for",
+				Cluster:   "this-is-not-the-cluster-your-are-looking-for",
 			},
 			Identifier: "repo-1",
 		},

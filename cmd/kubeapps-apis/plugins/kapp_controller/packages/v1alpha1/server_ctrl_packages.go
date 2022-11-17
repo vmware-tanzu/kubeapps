@@ -336,12 +336,12 @@ func (s *Server) GetInstalledPackageSummaries(ctx context.Context, request *core
 			meta     *datapackagingv1alpha1.PackageMetadata
 			versions map[string]*datapackagingv1alpha1.Package
 		}
-		pkgDatas := make(map[string]map[string]*pkgMetaAndVersionsData)
+		pkgData := make(map[string]map[string]*pkgMetaAndVersionsData)
 		for _, pkgInstall := range pkgInstalls {
-			pkgDataForNamespaces, ok := pkgDatas[pkgInstall.Spec.PackageRef.RefName]
+			pkgDataForNamespaces, ok := pkgData[pkgInstall.Spec.PackageRef.RefName]
 			if !ok {
 				pkgDataForNamespaces = map[string]*pkgMetaAndVersionsData{}
-				pkgDatas[pkgInstall.Spec.PackageRef.RefName] = pkgDataForNamespaces
+				pkgData[pkgInstall.Spec.PackageRef.RefName] = pkgDataForNamespaces
 			}
 			// As each package install could potentially be from a pkg in the same
 			// namespace or a package in the global namespace, we track both.
@@ -368,7 +368,7 @@ func (s *Server) GetInstalledPackageSummaries(ctx context.Context, request *core
 			return nil, statuserror.FromK8sError("get", "PackageMetadata", "", err)
 		}
 		for _, pm := range pkgMetadatas {
-			if pkgDataForNamespaces, ok := pkgDatas[pm.Name]; ok {
+			if pkgDataForNamespaces, ok := pkgData[pm.Name]; ok {
 				if pkgData, ok := pkgDataForNamespaces[pm.Namespace]; ok {
 					pkgData.meta = pm
 				}
@@ -388,7 +388,7 @@ func (s *Server) GetInstalledPackageSummaries(ctx context.Context, request *core
 		// package data.
 		pkgsForVersionMap := []*datapackagingv1alpha1.Package{}
 		for pkg := range getPkgsChannel {
-			pkgDataForNamespaces, ok := pkgDatas[pkg.Spec.RefName]
+			pkgDataForNamespaces, ok := pkgData[pkg.Spec.RefName]
 			if !ok {
 				continue
 			}
@@ -421,7 +421,7 @@ func (s *Server) GetInstalledPackageSummaries(ctx context.Context, request *core
 		// We now have all the data we need to return the result:
 		for _, pkgi := range pkgInstalls {
 			pkgName := pkgi.Spec.PackageRef.RefName
-			pkgDataForNamespaces := pkgDatas[pkgName]
+			pkgDataForNamespaces := pkgData[pkgName]
 			// Check if there was package metadata for the specific namespace.
 			pkgData := pkgDataForNamespaces[pkgi.Namespace]
 			var ok bool
@@ -719,9 +719,9 @@ func (s *Server) UpdateInstalledPackage(ctx context.Context, request *corev1.Upd
 	}
 
 	// Ensure the selected version can be, actually installed to let the user know before installing
-	elegibleVersion, err := versions.HighestConstrainedVersion([]string{pkgVersion}, vendirversions.VersionSelection{Semver: versionSelection})
-	if elegibleVersion == "" || err != nil {
-		return nil, status.Errorf(codes.InvalidArgument, "The selected version %q is not elegible to be installed: %v", pkgVersion, err)
+	eligibleVersion, err := versions.HighestConstrainedVersion([]string{pkgVersion}, vendirversions.VersionSelection{Semver: versionSelection})
+	if eligibleVersion == "" || err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "The selected version %q is not eligible to be installed: %v", pkgVersion, err)
 	}
 
 	// Set the versionSelection

@@ -10,6 +10,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	k8stesting "k8s.io/client-go/testing"
 	"net/http"
 	"os"
 	"reflect"
@@ -34,6 +35,12 @@ import (
 )
 
 const KubeappsCluster = "default"
+
+type ClientReaction struct {
+	verb     string
+	resource string
+	reaction k8stesting.ReactionFunc
+}
 
 type withWatchWrapper struct {
 	delegate client.WithWatch

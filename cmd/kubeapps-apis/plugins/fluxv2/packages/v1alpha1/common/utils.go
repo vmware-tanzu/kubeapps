@@ -453,6 +453,8 @@ type FluxPluginConfig struct {
 	// see comments in design spec under AddPackageRepository.
 	// false (i.e. kubeapps manages secrets) by default
 	UserManagedSecrets bool
+	// ref https://github.com/vmware-tanzu/kubeapps/issues/5541
+	NoCrossNamespaceRefs bool
 }
 
 // ParsePluginConfig parses the input plugin configuration json file and return the
@@ -476,6 +478,7 @@ func ParsePluginConfig(pluginConfigPath string) (*FluxPluginConfig, error) {
 				V1alpha1 struct {
 					DefaultUpgradePolicy string `json:"defaultUpgradePolicy"`
 					UserManagedSecrets   bool   `json:"userManagedSecrets"`
+					NoCrossNamespaceRefs bool   `json:"noCrossNamespaceRefs"`
 				} `json:"v1alpha1"`
 			} `json:"packages"`
 		} `json:"flux"`
@@ -502,6 +505,7 @@ func ParsePluginConfig(pluginConfigPath string) (*FluxPluginConfig, error) {
 			TimeoutSeconds:       config.Core.Packages.V1alpha1.TimeoutSeconds,
 			DefaultUpgradePolicy: defaultUpgradePolicy,
 			UserManagedSecrets:   config.Flux.Packages.V1alpha1.UserManagedSecrets,
+			NoCrossNamespaceRefs: config.Flux.Packages.V1alpha1.NoCrossNamespaceRefs,
 		}, nil
 	}
 }

@@ -207,3 +207,22 @@ func (s TestRepositoriesPluginServer) DeletePackageRepository(ctx context.Contex
 	}
 	return &corev1.DeletePackageRepositoryResponse{}, nil
 }
+
+func (s TestRepositoriesPluginServer) GetPackageRepositoryPermissions(ctx context.Context, request *corev1.GetPackageRepositoryPermissionsRequest) (*corev1.GetPackageRepositoryPermissionsResponse, error) {
+	if s.Status != codes.OK {
+		return nil, status.Errorf(s.Status, "Non-OK response")
+	}
+	return &corev1.GetPackageRepositoryPermissionsResponse{
+		Permissions: []*corev1.PackageRepositoriesPermissions{
+			{
+				Plugin: s.Plugin,
+				Namespace: map[string]bool{
+					"ns-verb": true,
+				},
+				Global: map[string]bool{
+					"global-verb": true,
+				},
+			},
+		},
+	}, nil
+}

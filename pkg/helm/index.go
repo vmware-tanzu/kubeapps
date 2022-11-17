@@ -61,7 +61,7 @@ func ChartsFromIndex(contents []byte, r *models.Repo, shallow bool) ([]models.Ch
 	}
 	for key, entry := range index.Entries {
 		// note that 'entry' itself is an array of chart versions
-		// after index.SortEntires() call, it looks like there is only one entry per package,
+		// after index.SortEntries() call, it looks like there is only one entry per package,
 		// and entry[0] should be the most recent chart version, e.g. Name: "mariadb" Version: "9.3.12"
 		// while the rest of the elements in the entry array keep track of previous chart versions, e.g.
 		// "mariadb" version "9.3.11", "9.3.10", etc. For entry "mariadb", bitnami catalog has

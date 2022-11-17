@@ -1854,7 +1854,7 @@ func TestGenerateJobName(t *testing.T) {
 		expect    string
 	}{
 		{
-			name:      "good patern",
+			name:      "good pattern",
 			namespace: "foo",
 			jobName:   "bar",
 			pattern:   "name: %s, namespace %s",
@@ -1862,7 +1862,7 @@ func TestGenerateJobName(t *testing.T) {
 			expect:    "name: foo, namespace bar",
 		},
 		{
-			name:      "good patern (with dash)",
+			name:      "good pattern (with dash)",
 			namespace: "foo",
 			jobName:   "bar",
 			pattern:   "name: %s, namespace %s",
