@@ -937,7 +937,7 @@ apprepository:
     httpProxy: ""
     httpsProxy: ""
     noProxy: ""
-  ## @param apprepository.crontab Schedule for syncing App repositories (default to 10 minutes)
+  ## @param apprepository.crontab Default schedule for syncing App repositories (defaults to every 10 minutes)
   ## e.g:
   ## crontab: "*/10 * * * *"
   ##

@@ -7,8 +7,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	authorizationv1 "k8s.io/api/authorization/v1"
-	k8stesting "k8s.io/client-go/testing"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -25,6 +23,7 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/anypb"
+	authorizationv1 "k8s.io/api/authorization/v1"
 	apiv1 "k8s.io/api/core/v1"
 	k8sErrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -32,6 +31,7 @@ import (
 	k8sruntime "k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/kubernetes"
+	k8stesting "k8s.io/client-go/testing"
 )
 
 var plugin = &plugins.Plugin{
@@ -226,16 +226,11 @@ func TestAddPackageRepository(t *testing.T) {
 			statusCode: codes.InvalidArgument,
 		},
 		{
-			name: "check that interval is not used",
-			request: &corev1.AddPackageRepositoryRequest{
-				Name:            "bar",
-				Context:         &corev1.Context{Namespace: "foo", Cluster: KubeappsCluster},
-				Type:            "helm",
-				Url:             "http://example.com",
-				NamespaceScoped: true,
-				Interval:        "1s",
-			},
-			statusCode: codes.InvalidArgument,
+			name:             "check that interval is used",
+			request:          addRepoReqWithInterval,
+			expectedResponse: addRepoExpectedResp,
+			expectedRepo:     &addRepoWithInterval,
+			statusCode:       codes.OK,
 		},
 		{
 			name:             "simple add package repository scenario (HELM)",
@@ -1186,12 +1181,22 @@ func TestUpdatePackageRepository(t *testing.T) {
 			expectedStatusCode: codes.InvalidArgument,
 		},
 		{
-			name: "check that interval is not used",
+			name: "check that interval is used",
 			requestCustomizer: func(request *corev1.UpdatePackageRepositoryRequest) *corev1.UpdatePackageRepositoryRequest {
-				request.Interval = "1s"
+				request.Interval = "15m"
 				return request
 			},
-			expectedStatusCode: codes.InvalidArgument,
+			expectedRepoCustomizer: func(repository appRepov1alpha1.AppRepository) *appRepov1alpha1.AppRepository {
+				repository.Spec.Interval = "15m"
+				// other changes inherent to how the customizer works
+				repository.ResourceVersion = "2"
+				repository.Spec.Description = ""
+				repository.Spec.URL = "https://new-repo-url"
+				return &repository
+			},
+
+			expectedRef:        defaultRef,
+			expectedStatusCode: codes.OK,
 		},
 		{
 			name: "update tls config",

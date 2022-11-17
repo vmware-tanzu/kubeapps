@@ -7,17 +7,20 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/vmware-tanzu/kubeapps/pkg/helm"
 	"hash/adler32"
+	"math"
+	"reflect"
 	"strconv"
 	"strings"
 	"time"
 
+	"github.com/adhocore/gronx"
 	apprepov1alpha1 "github.com/vmware-tanzu/kubeapps/cmd/apprepository-controller/pkg/apis/apprepository/v1alpha1"
 	clientset "github.com/vmware-tanzu/kubeapps/cmd/apprepository-controller/pkg/client/clientset/versioned"
 	appreposcheme "github.com/vmware-tanzu/kubeapps/cmd/apprepository-controller/pkg/client/clientset/versioned/scheme"
 	informers "github.com/vmware-tanzu/kubeapps/cmd/apprepository-controller/pkg/client/informers/externalversions"
 	listers "github.com/vmware-tanzu/kubeapps/cmd/apprepository-controller/pkg/client/listers/apprepository/v1alpha1"
+	"github.com/vmware-tanzu/kubeapps/pkg/helm"
 	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -136,7 +139,7 @@ func NewController(
 		UpdateFunc: func(oldObj, newObj interface{}) {
 			oldApp := oldObj.(*apprepov1alpha1.AppRepository)
 			newApp := newObj.(*apprepov1alpha1.AppRepository)
-			if oldApp.Spec.URL != newApp.Spec.URL || oldApp.Spec.ResyncRequests != newApp.Spec.ResyncRequests {
+			if !reflect.DeepEqual(oldApp.Spec, newApp.Spec) {
 				controller.enqueueAppRepo(newApp)
 			}
 		},
@@ -417,10 +420,77 @@ func ownerReferencesForAppRepo(apprepo *apprepov1alpha1.AppRepository, childName
 	return nil
 }
 
+// intervalToCron transforms string durations like "1m" or "1h" to cron expressions
+// Even if valid time units are "ns", "us", "ms", "s", "m", "h",
+// the result will get rounded up to minutes.
+// for durations over 24h, only durations below 1 year are supported
+func intervalToCron(duration string) (string, error) {
+	if duration == "" {
+		return "", fmt.Errorf("duration cannot be empty")
+	}
+
+	d, err := time.ParseDuration(duration)
+	if err != nil {
+		return "", fmt.Errorf("error while parsing the duration: %s", err)
+	}
+	cronMins := math.Ceil(d.Minutes()) // round up to nearest minute
+
+	if cronMins < 60 {
+		// https://kubernetes.io/docs/concepts/workloads/controllers/cron-jobs/#cron-schedule-syntax
+		// minute(0-59) hour(0-23) dayOfMonth(1-31) month(1-12) dayOfWeek(0-6)
+		return fmt.Sprintf("*/%v * * * *", cronMins), nil // every cronMins minutes
+	}
+
+	cronHours := math.Ceil(d.Hours()) // round up to nearest hour
+	if cronHours < 24 {
+		return fmt.Sprintf("0 */%v * * *", cronHours), nil // every cronHours hours
+	}
+
+	cronDays := math.Ceil(cronHours / 24) // get the days in cronHours, round up to nearest day
+	if cronDays < 32 {
+		return fmt.Sprintf("0 0 */%v * *", cronDays), nil // every cronDays days
+	}
+
+	cronMonths := math.Ceil(cronDays / 31) // get the months in cronDays, round up to nearest month
+	if cronMonths < 13 {
+		return fmt.Sprintf("0 0 1 */%v *", cronMonths), nil // every cronMonths months
+	}
+
+	return "", fmt.Errorf("not supported duration: %s", duration)
+
+}
+
 // newCronJob creates a new CronJob for a AppRepository resource. It also sets
 // the appropriate OwnerReferences on the resource so handleObject can discover
 // the AppRepository resource that 'owns' it.
 func newCronJob(apprepo *apprepov1alpha1.AppRepository, config Config) *batchv1.CronJob {
+	var err error
+	gron := gronx.New()
+	cronTime := config.Crontab
+
+	defaultValid := gron.IsValid(cronTime)
+	if !defaultValid {
+		// TODO(agamez): handle this situation
+		log.Errorf("Invalid crontab for apprepo %q: %s", apprepo.Name, cronTime)
+	}
+
+	// If the apprepo has its own interval,
+	// use that instead of the default global crontab.
+	if apprepo.Spec.Interval != "" {
+		// if the passed interval is indeed a cron expression, use it straight
+		if gron.IsValid(apprepo.Spec.Interval) {
+			cronTime = apprepo.Spec.Interval
+		} else {
+			// otherwise, convert it
+			cronTime, err = intervalToCron(apprepo.Spec.Interval)
+		}
+	}
+	// If the interval is invalid, use the default global crontab
+	if err != nil {
+		log.Errorf("Invalid interval for apprepo %q: %v", apprepo.Name, err)
+		cronTime = config.Crontab
+	}
+
 	return &batchv1.CronJob{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:            cronJobName(apprepo.Namespace, apprepo.Name, false),
@@ -429,11 +499,11 @@ func newCronJob(apprepo *apprepov1alpha1.AppRepository, config Config) *batchv1.
 			Annotations:     config.ParsedCustomAnnotations,
 		},
 		Spec: batchv1.CronJobSpec{
-			Schedule: config.Crontab,
+			Schedule: cronTime,
 			// Set to replace as short-circuit in k8s <1.12
 			// TODO re-evaluate ConcurrentPolicy when 1.12+ is mainstream (i.e 1.14)
 			// https://github.com/kubernetes/kubernetes/issues/54870
-			ConcurrencyPolicy: "Replace",
+			ConcurrencyPolicy: batchv1.ReplaceConcurrent,
 			JobTemplate: batchv1.JobTemplateSpec{
 				Spec: syncJobSpec(apprepo, config),
 			},
@@ -490,7 +560,7 @@ func syncJobSpec(apprepo *apprepov1alpha1.AppRepository, config Config) batchv1.
 	// If there's an issue, will restart pod until successful or replaced
 	// by another instance of the job scheduled by the cronjob
 	// see: cronJobSpec.concurrencyPolicy
-	podTemplateSpec.Spec.RestartPolicy = "OnFailure"
+	podTemplateSpec.Spec.RestartPolicy = corev1.RestartPolicyOnFailure
 	// Populate container spec
 	if len(podTemplateSpec.Spec.Containers) == 0 {
 		podTemplateSpec.Spec.Containers = []corev1.Container{{}}
@@ -500,7 +570,7 @@ func syncJobSpec(apprepo *apprepov1alpha1.AppRepository, config Config) batchv1.
 
 	podTemplateSpec.Spec.Containers[0].Name = "sync"
 	podTemplateSpec.Spec.Containers[0].Image = config.RepoSyncImage
-	podTemplateSpec.Spec.Containers[0].ImagePullPolicy = "IfNotPresent"
+	podTemplateSpec.Spec.Containers[0].ImagePullPolicy = corev1.PullIfNotPresent
 	podTemplateSpec.Spec.Containers[0].Command = []string{config.RepoSyncCommand}
 	podTemplateSpec.Spec.Containers[0].Args = apprepoSyncJobArgs(apprepo, config)
 	podTemplateSpec.Spec.Containers[0].Env = append(podTemplateSpec.Spec.Containers[0].Env, apprepoSyncJobEnvVars(apprepo, config)...)
@@ -535,13 +605,13 @@ func cleanupJobSpec(namespace, name string, config Config) batchv1.JobSpec {
 		Template: corev1.PodTemplateSpec{
 			Spec: corev1.PodSpec{
 				// If there's an issue, delay till the next cron
-				RestartPolicy:    "Never",
+				RestartPolicy:    corev1.RestartPolicyNever,
 				ImagePullSecrets: config.ImagePullSecretsRefs,
 				Containers: []corev1.Container{
 					{
 						Name:            "delete",
 						Image:           config.RepoSyncImage,
-						ImagePullPolicy: "IfNotPresent",
+						ImagePullPolicy: corev1.PullIfNotPresent,
 						Command:         []string{config.RepoSyncCommand},
 						Args:            apprepoCleanupJobArgs(namespace, name, config),
 						Env: []corev1.EnvVar{
@@ -634,7 +704,7 @@ func truncateAndHashString(name string, length int) string {
 		if length < 11 {
 			return name[:length]
 		}
-		log.Warningf("Name %q exceedes %d characters (got %d)", name, length, len(name))
+		log.Warningf("Name %q exceeds %d characters (got %d)", name, length, len(name))
 		// max length chars, minus 10 chars (the adler32 hash returns up to 10 digits), minus 1 for the '-'
 		splitPoint := length - 11
 		part1 := name[:splitPoint]
