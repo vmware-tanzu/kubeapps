@@ -41,7 +41,7 @@ k8s_wait_for_deployment() {
     done
     if [ $retries == 0 ]; then
         info "Error while rolling out deployment ${deployment} in ns ${namespace}"
-        kubectl describe deployment --namespace "${namespace}" "${deployment}" -oyaml
+        kubectl describe deployment --namespace "${namespace}" "${deployment}"
         exit 1
     fi
     return $exit_code
