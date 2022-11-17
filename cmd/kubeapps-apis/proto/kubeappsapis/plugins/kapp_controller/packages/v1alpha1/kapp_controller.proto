@@ -112,6 +112,12 @@ service KappControllerRepositoriesService {
       delete: "/plugins/kapp_controller/packages/v1alpha1/repositories/c/{package_repo_ref.context.cluster}/ns/{package_repo_ref.context.namespace}/{package_repo_ref.identifier=**}"
     };
   }
+
+  rpc GetPackageRepositoryPermissions(kubeappsapis.core.packages.v1alpha1.GetPackageRepositoryPermissionsRequest) returns (kubeappsapis.core.packages.v1alpha1.GetPackageRepositoryPermissionsResponse) {
+    option (google.api.http) = {
+      get: "/plugins/kapp_controller/packages/v1alpha1/repositories/c/{context.cluster}/permissions"
+    };
+  }
 }
 
 // KappControllerPackageRepositoryCustomDetail

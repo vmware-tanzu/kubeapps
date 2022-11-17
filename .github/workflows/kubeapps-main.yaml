@@ -6,6 +6,10 @@ name: Main Pipeline
 
 on:
   push:
+    branches:
+      - main
+    tags-ignore:
+      - '*'
   pull_request:
     branches:
       - main
@@ -15,6 +19,6 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  main:
+  CI:
     uses: ./.github/workflows/kubeapps-general.yaml
     secrets: inherit

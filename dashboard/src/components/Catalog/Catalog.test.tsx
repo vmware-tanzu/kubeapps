@@ -111,6 +111,7 @@ const defaultState = {
   operators: { csvs: [] } as Partial<IOperatorsState>,
   repos: {
     reposSummaries: [],
+    reposPermissions: [],
     isFetching: false,
     repoDetail: {} as PackageRepositoryDetail,
     errors: [],
