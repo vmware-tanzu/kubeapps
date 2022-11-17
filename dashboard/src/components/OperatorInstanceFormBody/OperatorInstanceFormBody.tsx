@@ -7,9 +7,9 @@ import ConfirmDialog from "components/ConfirmDialog";
 import Alert from "components/js/Alert";
 import LoadingWrapper from "components/LoadingWrapper";
 import Tabs from "components/Tabs";
-import * as yaml from "js-yaml";
 import { useEffect, useState } from "react";
 import { IResource } from "shared/types";
+import { parseToJS } from "shared/yamlUtils";
 import OperatorAdvancedDeploymentForm from "./OperatorAdvancedDeploymentForm/OperatorAdvancedDeploymentForm";
 
 export interface IOperatorInstanceFormProps {
@@ -57,7 +57,7 @@ function DeploymentFormBody({
     setParseError(undefined);
     let resource: any = {};
     try {
-      resource = yaml.load(values);
+      resource = parseToJS(values);
     } catch (e: any) {
       setParseError(new Error(`Unable to parse the given YAML. Got: ${e.message}`));
       return;

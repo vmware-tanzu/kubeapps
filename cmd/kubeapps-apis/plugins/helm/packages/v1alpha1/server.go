@@ -1150,6 +1150,18 @@ func (s *Server) UpdatePackageRepository(ctx context.Context, request *corev1.Up
 	}
 	log.Infof("+helm UpdatePackageRepository '%s' in context [%v]", repoRef.Identifier, repoRef.Context)
 
+	cluster := repoRef.GetContext().GetCluster()
+	namespace := repoRef.GetContext().GetNamespace()
+	name := repoRef.GetIdentifier()
+
+	log.InfoS("+helm UpdatePackageRepository", "cluster", cluster, "namespace", namespace, "name", name)
+
+	// Retrieve repository
+	appRepo, caCertSecret, authSecret, imagesPullSecret, err := s.getAppRepoAndRelatedSecrets(ctx, cluster, name, namespace)
+	if err != nil {
+		return nil, status.Errorf(codes.NotFound, "Unable to retrieve AppRepository '%s/%s' due to [%v]", namespace, name, err)
+	}
+
 	// Get Helm-specific values
 	var customDetail *helmv1.HelmPackageRepositoryCustomDetail
 	if request.CustomDetail != nil {
@@ -1161,10 +1173,10 @@ func (s *Server) UpdatePackageRepository(ctx context.Context, request *corev1.Up
 	}
 
 	helmRepo := &HelmRepository{
-		cluster: repoRef.GetContext().GetCluster(),
+		cluster: cluster,
 		name: types.NamespacedName{
-			Name:      repoRef.Identifier,
-			Namespace: repoRef.GetContext().GetNamespace(),
+			Name:      name,
+			Namespace: namespace,
 		},
 		url:          request.GetUrl(),
 		description:  request.GetDescription(),
@@ -1173,7 +1185,7 @@ func (s *Server) UpdatePackageRepository(ctx context.Context, request *corev1.Up
 		auth:         request.GetAuth(),
 		customDetail: customDetail,
 	}
-	if responseRef, err := s.updateRepo(ctx, helmRepo); err != nil {
+	if responseRef, err := s.updateRepo(ctx, appRepo, caCertSecret, authSecret, imagesPullSecret, helmRepo); err != nil {
 		return nil, err
 	} else {
 		return &corev1.UpdatePackageRepositoryResponse{
@@ -1199,14 +1211,4 @@ func (s *Server) DeletePackageRepository(ctx context.Context, request *corev1.De
 	} else {
 		return &corev1.DeletePackageRepositoryResponse{}, nil
 	}
-}
-
-// SetUserManagedSecrets This endpoint exists only for integration unit tests
-func (s *Server) SetUserManagedSecrets(ctx context.Context, request *helmv1.SetUserManagedSecretsRequest) (*helmv1.SetUserManagedSecretsResponse, error) {
-	log.Infof("+helm SetUserManagedSecrets [%t]", request.Value)
-	oldVal := s.pluginConfig.UserManagedSecrets
-	s.pluginConfig.UserManagedSecrets = request.Value
-	return &helmv1.SetUserManagedSecretsResponse{
-		Value: oldVal,
-	}, nil
 }

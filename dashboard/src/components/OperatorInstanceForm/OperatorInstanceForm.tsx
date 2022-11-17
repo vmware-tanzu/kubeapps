@@ -8,7 +8,7 @@ import Row from "components/js/Row";
 import OperatorSummary from "components/OperatorSummary/OperatorSummary";
 import OperatorHeader from "components/OperatorView/OperatorHeader";
 import { push } from "connected-react-router";
-import * as yaml from "js-yaml";
+import placeholder from "icons/placeholder.svg";
 import { get } from "lodash";
 import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
@@ -21,7 +21,7 @@ import {
   IStoreState,
 } from "shared/types";
 import * as url from "shared/url";
-import placeholder from "icons/placeholder.svg";
+import { parseToString } from "shared/yamlUtils";
 import OperatorInstanceFormBody from "../OperatorInstanceFormBody/OperatorInstanceFormBody";
 
 export interface IOperatorInstanceFormProps {
@@ -63,7 +63,7 @@ export function parseCSV(
         examples.forEach(example => {
           if (example.kind === kind) {
             // Found the example, set the default values
-            setDefaultValues(yaml.dump(example));
+            setDefaultValues(parseToString(example));
           }
         });
       }
