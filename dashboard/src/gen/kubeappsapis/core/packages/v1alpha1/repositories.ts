@@ -581,6 +581,33 @@ export interface UpdatePackageRepositoryResponse {
  */
 export interface DeletePackageRepositoryResponse {}
 
+export interface GetPackageRepositoryPermissionsRequest {
+  /** The context (cluster/namespace) for the request */
+  context?: Context;
+}
+
+export interface PackageRepositoriesPermissions {
+  plugin?: Plugin;
+  /** Permissions at the global namespace (if any) */
+  global: { [key: string]: boolean };
+  /** Permissions for the namespace */
+  namespace: { [key: string]: boolean };
+}
+
+export interface PackageRepositoriesPermissions_GlobalEntry {
+  key: string;
+  value: boolean;
+}
+
+export interface PackageRepositoriesPermissions_NamespaceEntry {
+  key: string;
+  value: boolean;
+}
+
+export interface GetPackageRepositoryPermissionsResponse {
+  permissions: PackageRepositoriesPermissions[];
+}
+
 function createBaseAddPackageRepositoryRequest(): AddPackageRepositoryRequest {
   return {
     context: undefined,
@@ -2540,6 +2567,387 @@ export const DeletePackageRepositoryResponse = {
   },
 };
 
+function createBaseGetPackageRepositoryPermissionsRequest(): GetPackageRepositoryPermissionsRequest {
+  return { context: undefined };
+}
+
+export const GetPackageRepositoryPermissionsRequest = {
+  encode(
+    message: GetPackageRepositoryPermissionsRequest,
+    writer: _m0.Writer = _m0.Writer.create(),
+  ): _m0.Writer {
+    if (message.context !== undefined) {
+      Context.encode(message.context, writer.uint32(10).fork()).ldelim();
+    }
+    return writer;
+  },
+
+  decode(input: _m0.Reader | Uint8Array, length?: number): GetPackageRepositoryPermissionsRequest {
+    const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseGetPackageRepositoryPermissionsRequest();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1:
+          message.context = Context.decode(reader, reader.uint32());
+          break;
+        default:
+          reader.skipType(tag & 7);
+          break;
+      }
+    }
+    return message;
+  },
+
+  fromJSON(object: any): GetPackageRepositoryPermissionsRequest {
+    return { context: isSet(object.context) ? Context.fromJSON(object.context) : undefined };
+  },
+
+  toJSON(message: GetPackageRepositoryPermissionsRequest): unknown {
+    const obj: any = {};
+    message.context !== undefined &&
+      (obj.context = message.context ? Context.toJSON(message.context) : undefined);
+    return obj;
+  },
+
+  fromPartial<I extends Exact<DeepPartial<GetPackageRepositoryPermissionsRequest>, I>>(
+    object: I,
+  ): GetPackageRepositoryPermissionsRequest {
+    const message = createBaseGetPackageRepositoryPermissionsRequest();
+    message.context =
+      object.context !== undefined && object.context !== null
+        ? Context.fromPartial(object.context)
+        : undefined;
+    return message;
+  },
+};
+
+function createBasePackageRepositoriesPermissions(): PackageRepositoriesPermissions {
+  return { plugin: undefined, global: {}, namespace: {} };
+}
+
+export const PackageRepositoriesPermissions = {
+  encode(
+    message: PackageRepositoriesPermissions,
+    writer: _m0.Writer = _m0.Writer.create(),
+  ): _m0.Writer {
+    if (message.plugin !== undefined) {
+      Plugin.encode(message.plugin, writer.uint32(10).fork()).ldelim();
+    }
+    Object.entries(message.global).forEach(([key, value]) => {
+      PackageRepositoriesPermissions_GlobalEntry.encode(
+        { key: key as any, value },
+        writer.uint32(18).fork(),
+      ).ldelim();
+    });
+    Object.entries(message.namespace).forEach(([key, value]) => {
+      PackageRepositoriesPermissions_NamespaceEntry.encode(
+        { key: key as any, value },
+        writer.uint32(26).fork(),
+      ).ldelim();
+    });
+    return writer;
+  },
+
+  decode(input: _m0.Reader | Uint8Array, length?: number): PackageRepositoriesPermissions {
+    const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBasePackageRepositoriesPermissions();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1:
+          message.plugin = Plugin.decode(reader, reader.uint32());
+          break;
+        case 2:
+          const entry2 = PackageRepositoriesPermissions_GlobalEntry.decode(reader, reader.uint32());
+          if (entry2.value !== undefined) {
+            message.global[entry2.key] = entry2.value;
+          }
+          break;
+        case 3:
+          const entry3 = PackageRepositoriesPermissions_NamespaceEntry.decode(
+            reader,
+            reader.uint32(),
+          );
+          if (entry3.value !== undefined) {
+            message.namespace[entry3.key] = entry3.value;
+          }
+          break;
+        default:
+          reader.skipType(tag & 7);
+          break;
+      }
+    }
+    return message;
+  },
+
+  fromJSON(object: any): PackageRepositoriesPermissions {
+    return {
+      plugin: isSet(object.plugin) ? Plugin.fromJSON(object.plugin) : undefined,
+      global: isObject(object.global)
+        ? Object.entries(object.global).reduce<{ [key: string]: boolean }>((acc, [key, value]) => {
+            acc[key] = Boolean(value);
+            return acc;
+          }, {})
+        : {},
+      namespace: isObject(object.namespace)
+        ? Object.entries(object.namespace).reduce<{ [key: string]: boolean }>(
+            (acc, [key, value]) => {
+              acc[key] = Boolean(value);
+              return acc;
+            },
+            {},
+          )
+        : {},
+    };
+  },
+
+  toJSON(message: PackageRepositoriesPermissions): unknown {
+    const obj: any = {};
+    message.plugin !== undefined &&
+      (obj.plugin = message.plugin ? Plugin.toJSON(message.plugin) : undefined);
+    obj.global = {};
+    if (message.global) {
+      Object.entries(message.global).forEach(([k, v]) => {
+        obj.global[k] = v;
+      });
+    }
+    obj.namespace = {};
+    if (message.namespace) {
+      Object.entries(message.namespace).forEach(([k, v]) => {
+        obj.namespace[k] = v;
+      });
+    }
+    return obj;
+  },
+
+  fromPartial<I extends Exact<DeepPartial<PackageRepositoriesPermissions>, I>>(
+    object: I,
+  ): PackageRepositoriesPermissions {
+    const message = createBasePackageRepositoriesPermissions();
+    message.plugin =
+      object.plugin !== undefined && object.plugin !== null
+        ? Plugin.fromPartial(object.plugin)
+        : undefined;
+    message.global = Object.entries(object.global ?? {}).reduce<{ [key: string]: boolean }>(
+      (acc, [key, value]) => {
+        if (value !== undefined) {
+          acc[key] = Boolean(value);
+        }
+        return acc;
+      },
+      {},
+    );
+    message.namespace = Object.entries(object.namespace ?? {}).reduce<{ [key: string]: boolean }>(
+      (acc, [key, value]) => {
+        if (value !== undefined) {
+          acc[key] = Boolean(value);
+        }
+        return acc;
+      },
+      {},
+    );
+    return message;
+  },
+};
+
+function createBasePackageRepositoriesPermissions_GlobalEntry(): PackageRepositoriesPermissions_GlobalEntry {
+  return { key: "", value: false };
+}
+
+export const PackageRepositoriesPermissions_GlobalEntry = {
+  encode(
+    message: PackageRepositoriesPermissions_GlobalEntry,
+    writer: _m0.Writer = _m0.Writer.create(),
+  ): _m0.Writer {
+    if (message.key !== "") {
+      writer.uint32(10).string(message.key);
+    }
+    if (message.value === true) {
+      writer.uint32(16).bool(message.value);
+    }
+    return writer;
+  },
+
+  decode(
+    input: _m0.Reader | Uint8Array,
+    length?: number,
+  ): PackageRepositoriesPermissions_GlobalEntry {
+    const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBasePackageRepositoriesPermissions_GlobalEntry();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1:
+          message.key = reader.string();
+          break;
+        case 2:
+          message.value = reader.bool();
+          break;
+        default:
+          reader.skipType(tag & 7);
+          break;
+      }
+    }
+    return message;
+  },
+
+  fromJSON(object: any): PackageRepositoriesPermissions_GlobalEntry {
+    return {
+      key: isSet(object.key) ? String(object.key) : "",
+      value: isSet(object.value) ? Boolean(object.value) : false,
+    };
+  },
+
+  toJSON(message: PackageRepositoriesPermissions_GlobalEntry): unknown {
+    const obj: any = {};
+    message.key !== undefined && (obj.key = message.key);
+    message.value !== undefined && (obj.value = message.value);
+    return obj;
+  },
+
+  fromPartial<I extends Exact<DeepPartial<PackageRepositoriesPermissions_GlobalEntry>, I>>(
+    object: I,
+  ): PackageRepositoriesPermissions_GlobalEntry {
+    const message = createBasePackageRepositoriesPermissions_GlobalEntry();
+    message.key = object.key ?? "";
+    message.value = object.value ?? false;
+    return message;
+  },
+};
+
+function createBasePackageRepositoriesPermissions_NamespaceEntry(): PackageRepositoriesPermissions_NamespaceEntry {
+  return { key: "", value: false };
+}
+
+export const PackageRepositoriesPermissions_NamespaceEntry = {
+  encode(
+    message: PackageRepositoriesPermissions_NamespaceEntry,
+    writer: _m0.Writer = _m0.Writer.create(),
+  ): _m0.Writer {
+    if (message.key !== "") {
+      writer.uint32(10).string(message.key);
+    }
+    if (message.value === true) {
+      writer.uint32(16).bool(message.value);
+    }
+    return writer;
+  },
+
+  decode(
+    input: _m0.Reader | Uint8Array,
+    length?: number,
+  ): PackageRepositoriesPermissions_NamespaceEntry {
+    const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBasePackageRepositoriesPermissions_NamespaceEntry();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1:
+          message.key = reader.string();
+          break;
+        case 2:
+          message.value = reader.bool();
+          break;
+        default:
+          reader.skipType(tag & 7);
+          break;
+      }
+    }
+    return message;
+  },
+
+  fromJSON(object: any): PackageRepositoriesPermissions_NamespaceEntry {
+    return {
+      key: isSet(object.key) ? String(object.key) : "",
+      value: isSet(object.value) ? Boolean(object.value) : false,
+    };
+  },
+
+  toJSON(message: PackageRepositoriesPermissions_NamespaceEntry): unknown {
+    const obj: any = {};
+    message.key !== undefined && (obj.key = message.key);
+    message.value !== undefined && (obj.value = message.value);
+    return obj;
+  },
+
+  fromPartial<I extends Exact<DeepPartial<PackageRepositoriesPermissions_NamespaceEntry>, I>>(
+    object: I,
+  ): PackageRepositoriesPermissions_NamespaceEntry {
+    const message = createBasePackageRepositoriesPermissions_NamespaceEntry();
+    message.key = object.key ?? "";
+    message.value = object.value ?? false;
+    return message;
+  },
+};
+
+function createBaseGetPackageRepositoryPermissionsResponse(): GetPackageRepositoryPermissionsResponse {
+  return { permissions: [] };
+}
+
+export const GetPackageRepositoryPermissionsResponse = {
+  encode(
+    message: GetPackageRepositoryPermissionsResponse,
+    writer: _m0.Writer = _m0.Writer.create(),
+  ): _m0.Writer {
+    for (const v of message.permissions) {
+      PackageRepositoriesPermissions.encode(v!, writer.uint32(10).fork()).ldelim();
+    }
+    return writer;
+  },
+
+  decode(input: _m0.Reader | Uint8Array, length?: number): GetPackageRepositoryPermissionsResponse {
+    const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseGetPackageRepositoryPermissionsResponse();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1:
+          message.permissions.push(PackageRepositoriesPermissions.decode(reader, reader.uint32()));
+          break;
+        default:
+          reader.skipType(tag & 7);
+          break;
+      }
+    }
+    return message;
+  },
+
+  fromJSON(object: any): GetPackageRepositoryPermissionsResponse {
+    return {
+      permissions: Array.isArray(object?.permissions)
+        ? object.permissions.map((e: any) => PackageRepositoriesPermissions.fromJSON(e))
+        : [],
+    };
+  },
+
+  toJSON(message: GetPackageRepositoryPermissionsResponse): unknown {
+    const obj: any = {};
+    if (message.permissions) {
+      obj.permissions = message.permissions.map(e =>
+        e ? PackageRepositoriesPermissions.toJSON(e) : undefined,
+      );
+    } else {
+      obj.permissions = [];
+    }
+    return obj;
+  },
+
+  fromPartial<I extends Exact<DeepPartial<GetPackageRepositoryPermissionsResponse>, I>>(
+    object: I,
+  ): GetPackageRepositoryPermissionsResponse {
+    const message = createBaseGetPackageRepositoryPermissionsResponse();
+    message.permissions =
+      object.permissions?.map(e => PackageRepositoriesPermissions.fromPartial(e)) || [];
+    return message;
+  },
+};
+
 /** Each repositories v1alpha1 plugin must implement at least the following rpcs: */
 export interface RepositoriesService {
   AddPackageRepository(
@@ -2562,6 +2970,10 @@ export interface RepositoriesService {
     request: DeepPartial<DeletePackageRepositoryRequest>,
     metadata?: grpc.Metadata,
   ): Promise<DeletePackageRepositoryResponse>;
+  GetPackageRepositoryPermissions(
+    request: DeepPartial<GetPackageRepositoryPermissionsRequest>,
+    metadata?: grpc.Metadata,
+  ): Promise<GetPackageRepositoryPermissionsResponse>;
 }
 
 export class RepositoriesServiceClientImpl implements RepositoriesService {
@@ -2574,6 +2986,7 @@ export class RepositoriesServiceClientImpl implements RepositoriesService {
     this.GetPackageRepositorySummaries = this.GetPackageRepositorySummaries.bind(this);
     this.UpdatePackageRepository = this.UpdatePackageRepository.bind(this);
     this.DeletePackageRepository = this.DeletePackageRepository.bind(this);
+    this.GetPackageRepositoryPermissions = this.GetPackageRepositoryPermissions.bind(this);
   }
 
   AddPackageRepository(
@@ -2627,6 +3040,17 @@ export class RepositoriesServiceClientImpl implements RepositoriesService {
     return this.rpc.unary(
       RepositoriesServiceDeletePackageRepositoryDesc,
       DeletePackageRepositoryRequest.fromPartial(request),
+      metadata,
+    );
+  }
+
+  GetPackageRepositoryPermissions(
+    request: DeepPartial<GetPackageRepositoryPermissionsRequest>,
+    metadata?: grpc.Metadata,
+  ): Promise<GetPackageRepositoryPermissionsResponse> {
+    return this.rpc.unary(
+      RepositoriesServiceGetPackageRepositoryPermissionsDesc,
+      GetPackageRepositoryPermissionsRequest.fromPartial(request),
       metadata,
     );
   }
@@ -2738,6 +3162,28 @@ export const RepositoriesServiceDeletePackageRepositoryDesc: UnaryMethodDefiniti
     deserializeBinary(data: Uint8Array) {
       return {
         ...DeletePackageRepositoryResponse.decode(data),
+        toObject() {
+          return this;
+        },
+      };
+    },
+  } as any,
+};
+
+export const RepositoriesServiceGetPackageRepositoryPermissionsDesc: UnaryMethodDefinitionish = {
+  methodName: "GetPackageRepositoryPermissions",
+  service: RepositoriesServiceDesc,
+  requestStream: false,
+  responseStream: false,
+  requestType: {
+    serializeBinary() {
+      return GetPackageRepositoryPermissionsRequest.encode(this).finish();
+    },
+  } as any,
+  responseType: {
+    deserializeBinary(data: Uint8Array) {
+      return {
+        ...GetPackageRepositoryPermissionsResponse.decode(data),
         toObject() {
           return this;
         },

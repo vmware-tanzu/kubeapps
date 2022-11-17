@@ -6,8 +6,9 @@ package v1alpha1
 import (
 	"context"
 	"fmt"
-
 	. "github.com/ahmetb/go-linq/v3"
+	"sort"
+	"sync"
 
 	pluginsv1alpha1 "github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/core/plugins/v1alpha1"
 	packages "github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
@@ -201,6 +202,42 @@ func (s repositoriesServer) DeletePackageRepository(ctx context.Context, request
 	}
 
 	return response, nil
+}
+
+func (s repositoriesServer) GetPackageRepositoryPermissions(ctx context.Context, request *packages.GetPackageRepositoryPermissionsRequest) (*packages.GetPackageRepositoryPermissionsResponse, error) {
+	log.InfoS("+core GetPackageRepositoryPermissions", "cluster", request.GetContext().GetCluster(), "namespace", request.GetContext().GetNamespace())
+	resultsChannel := make(chan *packages.GetPackageRepositoryPermissionsResponse, len(s.pluginsWithServers))
+	var wg sync.WaitGroup
+
+	for _, p := range s.pluginsWithServers {
+		wg.Add(1)
+		go func(repoPlugin repoPluginsWithServer) {
+			defer wg.Done()
+
+			response, err := repoPlugin.server.GetPackageRepositoryPermissions(ctx, request)
+			if err != nil {
+				log.Errorf("+core error finding repository permissions in plugin %s: [%v]", repoPlugin.plugin.Name, err)
+				return
+			}
+			resultsChannel <- response
+		}(p)
+	}
+	go func() {
+		wg.Wait()
+		close(resultsChannel)
+	}()
+
+	var permissions []*packages.PackageRepositoriesPermissions
+	for pluginResult := range resultsChannel {
+		permissions = append(permissions, pluginResult.Permissions...)
+	}
+	sort.Slice(permissions, func(i, j int) bool {
+		return pluginsv1alpha1.ComparePlugin(permissions[i].Plugin, permissions[j].Plugin)
+	})
+
+	return &packages.GetPackageRepositoryPermissionsResponse{
+		Permissions: permissions,
+	}, nil
 }
 
 // getPluginWithServer returns the *pkgPluginsWithServer from a given packagesServer

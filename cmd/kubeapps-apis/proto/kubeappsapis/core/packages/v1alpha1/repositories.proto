@@ -48,6 +48,12 @@ service RepositoriesService {
       delete: "/core/packages/v1alpha1/repositories/plugin/{package_repo_ref.plugin.name}/{package_repo_ref.plugin.version}/c/{package_repo_ref.context.cluster}/ns/{package_repo_ref.context.namespace}/{package_repo_ref.identifier=**}"
     };
   }
+
+  rpc GetPackageRepositoryPermissions(GetPackageRepositoryPermissionsRequest) returns (GetPackageRepositoryPermissionsResponse) {
+    option (google.api.http) = {
+      get: "/core/packages/v1alpha1/repositories/c/{context.cluster}/permissions"
+    };
+  }
 }
 
 // Standard request and response messages for each required function are defined
@@ -498,4 +504,21 @@ message UpdatePackageRepositoryResponse {
 // Response for DeletePackageRepository
 message DeletePackageRepositoryResponse {
   // For future extensibility only.
+ }
+
+ message GetPackageRepositoryPermissionsRequest {
+   // The context (cluster/namespace) for the request
+   Context context = 1;
+ }
+
+ message PackageRepositoriesPermissions {
+   kubeappsapis.core.plugins.v1alpha1.Plugin plugin = 1;
+   // Permissions at the global namespace (if any)
+   map<string, bool> global = 2;
+   // Permissions for the namespace
+   map<string, bool> namespace = 3;
+ }
+
+ message GetPackageRepositoryPermissionsResponse {
+   repeated PackageRepositoriesPermissions permissions = 1;
  }

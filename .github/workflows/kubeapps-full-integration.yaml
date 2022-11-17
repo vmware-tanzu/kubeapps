@@ -6,6 +6,9 @@ name: Full Integration Pipeline
 
 on:
   workflow_dispatch:
+  schedule:
+    # At 04:00 on Monday, Wednesday, and Saturday.
+    - cron: "0 4 * * 1,3,6"
 
 concurrency:
   group: ${{ github.head_ref || github.ref_name }}_full

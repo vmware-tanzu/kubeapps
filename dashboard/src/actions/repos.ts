@@ -3,9 +3,11 @@
 
 import {
   AvailablePackageReference,
+  Context,
   InstalledPackageDetail,
 } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
 import {
+  PackageRepositoriesPermissions,
   PackageRepositoryDetail,
   PackageRepositoryReference,
   PackageRepositorySummary,
@@ -48,6 +50,14 @@ export const requestRepoSummaries = createAction("REQUEST_REPOS", resolve => {
   return (namespace: string) => resolve(namespace);
 });
 
+export const requestReposPermissions = createAction("REQUEST_REPOS_PERMISSIONS", resolve => {
+  return (context: Context) => resolve(context);
+});
+
+export const receiveReposPermissions = createAction("RECEIVE_REPOS_PERMISSIONS", resolve => {
+  return (reposPermissions: PackageRepositoriesPermissions[]) => resolve(reposPermissions);
+});
+
 const allActions = [
   addOrUpdateRepo,
   addedRepo,
@@ -57,6 +67,8 @@ const allActions = [
   repoUpdated,
   requestRepoDetail,
   requestRepoSummaries,
+  requestReposPermissions,
+  receiveReposPermissions,
 ];
 
 export type PkgReposAction = ActionType<typeof allActions[number]>;
@@ -302,6 +314,26 @@ export const findPackageInRepo = (
           "fetch",
         ),
       );
+      return false;
+    }
+  };
+};
+
+export const fetchReposPermissions = (
+  cluster: string,
+  namespace: string,
+): ThunkAction<Promise<boolean>, IStoreState, null, PkgReposAction> => {
+  return async dispatch => {
+    try {
+      dispatch(requestReposPermissions({ cluster: cluster, namespace: namespace } as Context));
+      const permissions = await PackageRepositoriesService.getRepositoriesPermissions(
+        cluster,
+        namespace,
+      );
+      dispatch(receiveReposPermissions(permissions));
+      return true;
+    } catch (e: any) {
+      dispatch(handleErrorAction(e, errorRepos(e, "fetch")));
       return false;
     }
   };

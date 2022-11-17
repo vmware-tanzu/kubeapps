@@ -1761,6 +1761,173 @@ func TestDeletePackageRepository(t *testing.T) {
 	}
 }
 
+func TestGetPackageRepositoryPermissions(t *testing.T) {
+
+	testCases := []struct {
+		name               string
+		request            *corev1.GetPackageRepositoryPermissionsRequest
+		expectedStatusCode codes.Code
+		expectedResponse   *corev1.GetPackageRepositoryPermissionsResponse
+		reactors           []*ClientReaction
+	}{
+		{
+			name: "returns permissions for global package repositories",
+			request: &corev1.GetPackageRepositoryPermissionsRequest{
+				Context: &corev1.Context{Cluster: KubeappsCluster},
+			},
+			reactors: []*ClientReaction{
+				{
+					verb:     "create",
+					resource: "selfsubjectaccessreviews",
+					reaction: func(action k8stesting.Action) (handled bool, ret k8sruntime.Object, err error) {
+						createAction := action.(k8stesting.CreateActionImpl)
+						accessReview := createAction.Object.(*authorizationv1.SelfSubjectAccessReview)
+						if accessReview.Spec.ResourceAttributes.Namespace != globalPackagingNamespace {
+							return true, &authorizationv1.SelfSubjectAccessReview{Status: authorizationv1.SubjectAccessReviewStatus{Allowed: false}}, nil
+						}
+						switch accessReview.Spec.ResourceAttributes.Verb {
+						case "list", "delete":
+							return true, &authorizationv1.SelfSubjectAccessReview{Status: authorizationv1.SubjectAccessReviewStatus{Allowed: true}}, nil
+						default:
+							return true, &authorizationv1.SelfSubjectAccessReview{Status: authorizationv1.SubjectAccessReviewStatus{Allowed: false}}, nil
+						}
+					},
+				},
+			},
+			expectedStatusCode: codes.OK,
+			expectedResponse: &corev1.GetPackageRepositoryPermissionsResponse{
+				Permissions: []*corev1.PackageRepositoriesPermissions{
+					{
+						Plugin: GetPluginDetail(),
+						Global: map[string]bool{
+							"create": false,
+							"delete": true,
+							"get":    false,
+							"list":   true,
+							"update": false,
+							"watch":  false,
+						},
+						Namespace: nil,
+					},
+				},
+			},
+		},
+		{
+			name:    "returns local permissions when no cluster specified",
+			request: &corev1.GetPackageRepositoryPermissionsRequest{},
+			reactors: []*ClientReaction{
+				{
+					verb:     "create",
+					resource: "selfsubjectaccessreviews",
+					reaction: func(action k8stesting.Action) (handled bool, ret k8sruntime.Object, err error) {
+						return true, &authorizationv1.SelfSubjectAccessReview{Status: authorizationv1.SubjectAccessReviewStatus{Allowed: true}}, nil
+					},
+				},
+			},
+			expectedStatusCode: codes.OK,
+			expectedResponse: &corev1.GetPackageRepositoryPermissionsResponse{
+				Permissions: []*corev1.PackageRepositoriesPermissions{
+					{
+						Plugin: GetPluginDetail(),
+						Global: map[string]bool{
+							"create": true,
+							"delete": true,
+							"get":    true,
+							"list":   true,
+							"update": true,
+							"watch":  true,
+						},
+						Namespace: nil,
+					},
+				},
+			},
+		},
+		{
+			name: "fails when namespace is specified but not the cluster",
+			request: &corev1.GetPackageRepositoryPermissionsRequest{
+				Context: &corev1.Context{Namespace: "my-ns"},
+			},
+			expectedStatusCode: codes.InvalidArgument,
+		},
+		{
+			name: "returns permissions for namespaced package repositories",
+			request: &corev1.GetPackageRepositoryPermissionsRequest{
+				Context: &corev1.Context{Cluster: KubeappsCluster, Namespace: "my-ns"},
+			},
+			reactors: []*ClientReaction{
+				{
+					verb:     "create",
+					resource: "selfsubjectaccessreviews",
+					reaction: func(action k8stesting.Action) (handled bool, ret k8sruntime.Object, err error) {
+						createAction := action.(k8stesting.CreateActionImpl)
+						accessReview := createAction.Object.(*authorizationv1.SelfSubjectAccessReview)
+						if accessReview.Spec.ResourceAttributes.Namespace == globalPackagingNamespace {
+							return true, &authorizationv1.SelfSubjectAccessReview{Status: authorizationv1.SubjectAccessReviewStatus{Allowed: true}}, nil
+						}
+						switch accessReview.Spec.ResourceAttributes.Verb {
+						case "list", "delete":
+							return true, &authorizationv1.SelfSubjectAccessReview{Status: authorizationv1.SubjectAccessReviewStatus{Allowed: true}}, nil
+						default:
+							return true, &authorizationv1.SelfSubjectAccessReview{Status: authorizationv1.SubjectAccessReviewStatus{Allowed: false}}, nil
+						}
+					},
+				},
+			},
+			expectedStatusCode: codes.OK,
+			expectedResponse: &corev1.GetPackageRepositoryPermissionsResponse{
+				Permissions: []*corev1.PackageRepositoriesPermissions{
+					{
+						Plugin: GetPluginDetail(),
+						Global: map[string]bool{
+							"create": true,
+							"delete": true,
+							"get":    true,
+							"list":   true,
+							"update": true,
+							"watch":  true,
+						},
+						Namespace: map[string]bool{
+							"create": false,
+							"delete": true,
+							"get":    false,
+							"list":   true,
+							"update": false,
+							"watch":  false,
+						},
+					},
+				},
+			},
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			s := newServerWithAppRepoReactors(nil, nil, nil, tc.reactors, nil)
+
+			response, err := s.GetPackageRepositoryPermissions(context.Background(), tc.request)
+
+			if got, want := status.Code(err), tc.expectedStatusCode; got != want {
+				t.Fatalf("got: %+v, want: %+v, err: %+v", got, want, err)
+			}
+
+			// We don't need to check anything else for non-OK codes.
+			if tc.expectedStatusCode != codes.OK {
+				return
+			}
+
+			opts := cmpopts.IgnoreUnexported(
+				corev1.Context{},
+				plugins.Plugin{},
+				corev1.GetPackageRepositoryPermissionsResponse{},
+				corev1.PackageRepositoriesPermissions{},
+			)
+			if got, want := response, tc.expectedResponse; !cmp.Equal(want, got, opts) {
+				t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opts))
+			}
+		})
+	}
+}
+
 func checkRepoSecrets(s *Server, t *testing.T, userManagedSecrets bool,
 	actualRepo *appRepov1alpha1.AppRepository, expectedRepo *appRepov1alpha1.AppRepository,
 	expectedSecret *apiv1.Secret, expectedGlobalSecret *apiv1.Secret) {
