@@ -13,14 +13,13 @@ import PackageHeader from "components/PackageHeader/PackageHeader";
 import PackageVersionSelector from "components/PackageHeader/PackageVersionSelector";
 import { push } from "connected-react-router";
 import * as jsonpatch from "fast-json-patch";
-import * as yaml from "js-yaml";
 import { useEffect, useRef, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { Action } from "redux";
 import { ThunkDispatch } from "redux-thunk";
 import { IStoreState } from "shared/types";
-import { deleteValue, setValue } from "shared/yamlUtils";
 import * as url from "shared/url";
+import { deleteValue, parseToJS, setValue } from "shared/yamlUtils";
 
 export interface IUpgradeFormProps {
   version?: string;
@@ -107,10 +106,8 @@ function UpgradeForm(props: IUpgradeFormProps) {
   useEffect(() => {
     if (installedAppAvailablePackageDetail?.defaultValues && !modifications) {
       // Calculate modifications from the default values
-      //TODO(agamez): stop using this yaml.dump/load
-      const defaultValuesObj = yaml.load(installedAppAvailablePackageDetail?.defaultValues) || {};
-      const deployedValuesObj =
-        yaml.load(installedAppInstalledPackageDetail?.valuesApplied || "") || {};
+      const defaultValuesObj = parseToJS(installedAppAvailablePackageDetail?.defaultValues);
+      const deployedValuesObj = parseToJS(installedAppInstalledPackageDetail?.valuesApplied);
       const newModifications = jsonpatch.compare(defaultValuesObj as any, deployedValuesObj as any);
       const values = applyModifications(
         newModifications,

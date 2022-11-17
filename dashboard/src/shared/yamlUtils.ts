@@ -4,6 +4,7 @@
 import { unescapePathComponent } from "fast-json-patch";
 import { isEmpty, set } from "lodash";
 import YAML, { Scalar, ToStringOptions } from "yaml";
+import { getStringValue } from "./utils";
 
 const toStringOptions: ToStringOptions = {
   defaultKeyType: "PLAIN",
@@ -13,6 +14,18 @@ const toStringOptions: ToStringOptions = {
 
 export function parseToYamlNode(string: string) {
   return YAML.parseDocument(string, { toStringDefaults: toStringOptions });
+}
+
+export function parseObjectToYamlNode(object: object) {
+  return YAML.parseDocument(getStringValue(object), { toStringDefaults: toStringOptions });
+}
+
+export function parseToJS(string?: string) {
+  return parseToYamlNode(string || "{}").toJS();
+}
+
+export function parseToString(object?: object | string) {
+  return YAML.stringify(object, { toStringDefaults: toStringOptions });
 }
 
 export function toStringYamlNode(valuesNode: YAML.Document.Parsed<YAML.ParsedNode>) {
