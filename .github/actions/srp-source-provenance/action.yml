@@ -75,7 +75,9 @@ runs:
         export COMP_UID=${COMP_UID//\//\%2f}
         export SRP_UID="uid.mtd.provenance_2_5.fragment(obj_uid=$COMP_UID,revision='')"
         echo "SRP_UID: ${SRP_UID}"
+        echo "SOURCE PROVENANCE FILE CONTENT:"
         cat /tmp/provenance/source.json
+        echo ""
         srp uid validate ${SRP_UID}
         srp metadata submit \
         --verbose \
