@@ -7,22 +7,50 @@ set -o errexit
 set -o nounset
 set -o pipefail
 
+startTime=$(date +%s)
+
 # Constants
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." >/dev/null && pwd)"
-USE_MULTICLUSTER_OIDC_ENV=${1:-false}
-OLM_VERSION=${2:-"v0.18.2"}
-DEV_TAG=${3:?missing dev tag}
-IMG_MODIFIER=${4:-""}
-DOCKER_USERNAME=${5:-""}
-DOCKER_PASSWORD=${6:-""}
-TEST_TIMEOUT_MINUTES=${7:-4}
-DEX_IP=${8:-"172.18.0.2"}
-ADDITIONAL_CLUSTER_IP=${9:-"172.18.0.3"}
+ALL_TESTS="all"
+MAIN_TESTS="main"
+MULTICLUSTER_TESTS="multicluster"
+MULTICLUSTER_NOKUBEAPPS_TESTS="multicluster-nokubeapps"
+CARVEL_TESTS="carvel"
+FLUX_TESTS="flux"
+OPERATOR_TESTS="operator"
+SUPPORTED_TESTS_GROUPS=("${ALL_TESTS}" "${MAIN_TESTS}" "${MULTICLUSTER_TESTS}" "${CARVEL_TESTS}" "${FLUX_TESTS}" "${OPERATOR_TESTS}" "${MULTICLUSTER_NOKUBEAPPS_TESTS}")
+INTEGRATION_HOST=kubeapps-ci.kubeapps
+INTEGRATION_ENTRYPOINT="http://${INTEGRATION_HOST}"
+
+# Params
+USE_MULTICLUSTER_OIDC_ENV=${USE_MULTICLUSTER_OIDC_ENV:-"false"}
+OLM_VERSION=${OLM_VERSION:-"v0.18.2"}
+IMG_DEV_TAG=${IMG_DEV_TAG:?missing dev tag}
+IMG_MODIFIER=${IMG_MODIFIER:-""}
+TEST_TIMEOUT_MINUTES=${TEST_TIMEOUT_MINUTES:-"4"}
+DEX_IP=${DEX_IP:-"172.18.0.2"}
+ADDITIONAL_CLUSTER_IP=${ADDITIONAL_CLUSTER_IP:-"172.18.0.3"}
+KAPP_CONTROLLER_VERSION=${KAPP_CONTROLLER_VERSION:-"v0.42.0"}
+CHARTMUSEUM_VERSION=${CHARTMUSEUM_VERSION:-"3.9.1"}
+# check latest flux releases at https://github.com/fluxcd/flux2/releases
+FLUX_VERSION=${FLUX_VERSION:-"v0.36.0"}
+GKE_BRANCH=${GKE_BRANCH:-}
+IMG_PREFIX=${IMG_PREFIX:-"kubeapps/"}
+TESTS_GROUP=${TESTS_GROUP:-"${ALL_TESTS}"}
+DEBUG_MODE=${DEBUG_MODE:-false}
+TEST_LATEST_RELEASE=${TEST_LATEST_RELEASE:-false}
+
+# shellcheck disable=SC2076
+if [[ ! " ${SUPPORTED_TESTS_GROUPS[*]} " =~ " ${TESTS_GROUP} " ]]; then
+  # shellcheck disable=SC2046
+  echo $(IFS=','; echo "The provided TEST_GROUP [${TESTS_GROUP}] is not supported. Supported groups are: ${SUPPORTED_TESTS_GROUPS[*]}")
+  exit 1
+fi
 
 # TODO(andresmgot): While we work with beta releases, the Bitnami pipeline
 # removes the pre-release part of the tag
-if [[ -n "${TEST_LATEST_RELEASE:-}" ]]; then
-  DEV_TAG=${DEV_TAG/-beta.*/}
+if [[ -n "${TEST_LATEST_RELEASE}" && "${TEST_LATEST_RELEASE}" != "false" ]]; then
+  IMG_DEV_TAG=${IMG_DEV_TAG/-beta.*/}
 fi
 
 # Load Generic Libraries
@@ -33,60 +61,91 @@ fi
 # shellcheck disable=SC1090
 . "${ROOT_DIR}/script/lib/libutil.sh"
 
-info "Root dir: ${ROOT_DIR}"
-info "Use multicluster+OIDC: ${USE_MULTICLUSTER_OIDC_ENV}"
-info "OLM version: ${OLM_VERSION}"
-info "Image tag: ${DEV_TAG}"
-info "Image repo suffix: ${IMG_MODIFIER}"
-info "Dex IP: ${DEX_IP}"
-info "Additional cluster IP : ${ADDITIONAL_CLUSTER_IP}"
-info "Test timeout: ${TEST_TIMEOUT_MINUTES}"
-info "Cluster Version: $(kubectl version -o json | jq -r '.serverVersion.gitVersion')"
-info "Kubectl Version: $(kubectl version -o json | jq -r '.clientVersion.gitVersion')"
-echo ""
+# Get the load balancer IP
+if [[ -z "${GKE_BRANCH-}" ]]; then
+  LOAD_BALANCER_IP=$DEX_IP
+else
+  LOAD_BALANCER_IP=$(kubectl -n nginx-ingress get service nginx-ingress-ingress-nginx-controller -o jsonpath="{.status.loadBalancer.ingress[].ip}")
+fi
 
-# Auxiliar functions
+# Functions for local Docker registry mgmt
+. "${ROOT_DIR}/script/local-docker-registry.sh"
 
-########################
-# Test Helm
-# Globals:
-#   HELM_*
-# Arguments: None
-# Returns: None
-#########################
-testHelm() {
-  info "Running Helm tests..."
-  helm test -n kubeapps kubeapps-ci
+# Functions for handling Chart Museum
+. "${ROOT_DIR}/script/chart-museum.sh"
+
+info "###############################################################################################"
+info "DEBUG_MODE: ${DEBUG_MODE}"
+info "TESTS_GROUP: ${TESTS_GROUP}"
+info "GKE_BRANCH: ${GKE_BRANCH}"
+info "ROOT_DIR: ${ROOT_DIR}"
+info "USE_MULTICLUSTER_OIDC_ENV: ${USE_MULTICLUSTER_OIDC_ENV}"
+info "OLM_VERSION: ${OLM_VERSION}"
+info "CHARTMUSEUM_VERSION: ${CHARTMUSEUM_VERSION}"
+info "IMG_DEV_TAG: ${IMG_DEV_TAG}"
+info "IMG_MODIFIER: ${IMG_MODIFIER}"
+info "IMG_PREFIX: ${IMG_PREFIX}"
+info "DEX_IP: ${DEX_IP}"
+info "ADDITIONAL_CLUSTER_IP: ${ADDITIONAL_CLUSTER_IP}"
+info "LOAD_BALANCER_IP: ${LOAD_BALANCER_IP}"
+info "TEST_TIMEOUT_MINUTES: ${TEST_TIMEOUT_MINUTES}"
+info "KAPP_CONTROLLER_VERSION: ${KAPP_CONTROLLER_VERSION}"
+info "K8S SERVER VERSION: $(kubectl version -o json | jq -r '.serverVersion.gitVersion')"
+info "KUBECTL VERSION: $(kubectl version -o json | jq -r '.clientVersion.gitVersion')"
+info "###############################################################################################"
+
+# Auxiliary functions
+
+#
+# Install an authenticated Docker registry inside the cluster
+#
+setupLocalDockerRegistry() {
+    info "Installing local Docker registry with authentication"
+    installLocalRegistry "${ROOT_DIR}"
+
+    info "Pushing test container to local Docker registry"
+    pushContainerToLocalRegistry
 }
 
-########################
+#
+# Push a chart that uses container image from the local registry
+#
+pushLocalChart() {
+    info "Packaging local test chart"
+    helm package "${ROOT_DIR}/integration/charts/simplechart"
+
+    info "Pushing local test chart to ChartMuseum"
+    pushChartToChartMuseum "simplechart" "0.1.0" "simplechart-0.1.0.tgz"
+}
+
+########################################################################################################################
 # Check if the pod that populates de OperatorHub catalog is running
 # Globals: None
 # Arguments: None
 # Returns: None
-#########################
+########################################################################################################################
 isOperatorHubCatalogRunning() {
   kubectl get pod -n olm -l olm.catalogSource=operatorhubio-catalog -o jsonpath='{.items[0].status.phase}' | grep Running
   # Wait also for the catalog to be populated
   kubectl get packagemanifests.packages.operators.coreos.com | grep prometheus
 }
 
-########################
+########################################################################################################################
 # Install OLM
 # Globals: None
 # Arguments:
 #   $1: Version of OLM
 # Returns: None
-#########################
+########################################################################################################################
 installOLM() {
   local release=$1
   info "Installing OLM ${release} ..."
-  url=https://github.com/operator-framework/operator-lifecycle-manager/releases/download/${release}
+  url="https://github.com/operator-framework/operator-lifecycle-manager/releases/download/${release}"
   namespace=olm
 
-  kubectl apply -f "${url}/crds.yaml"
+  kubectl create -f "${url}/crds.yaml"
   kubectl wait --for=condition=Established -f "${url}/crds.yaml"
-  kubectl apply -f "${url}/olm.yaml"
+  kubectl create -f "${url}/olm.yaml"
 
   # wait for deployments to be ready
   kubectl rollout status -w deployment/olm-operator --namespace="${namespace}"
@@ -97,7 +156,7 @@ installOLM() {
     new_csv_phase=$(kubectl get csv -n "${namespace}" packageserver -o jsonpath='{.status.phase}' 2>/dev/null || echo "Waiting for CSV to appear")
     if [[ $new_csv_phase != "${csv_phase:-}" ]]; then
       csv_phase=$new_csv_phase
-      echo "CSV \"packageserver\" phase: $csv_phase"
+      echo "CSV \"packageserver\" phase: ${csv_phase}"
     fi
     if [[ "$new_csv_phase" == "Succeeded" ]]; then
       break
@@ -114,72 +173,123 @@ installOLM() {
   kubectl rollout status -w deployment/packageserver --namespace="${namespace}"
 }
 
-########################
-# Install chartmuseum
-# Globals: None
-# Arguments:
-#   $1: Username
-#   $2: Password
-# Returns: None
-#########################
-installChartmuseum() {
-  local user=$1
-  local password=$2
-  info "Installing ChartMuseum ..."
-  helm install chartmuseum --namespace kubeapps https://github.com/chartmuseum/charts/releases/download/chartmuseum-2.14.2/chartmuseum-2.14.2.tgz \
-    --set env.open.DISABLE_API=false \
-    --set persistence.enabled=true \
-    --set secret.AUTH_USER=$user \
-    --set secret.AUTH_PASS=$password
-  kubectl rollout status -w deployment/chartmuseum-chartmuseum --namespace=kubeapps
-}
-
-########################
+########################################################################################################################
 # Push a chart to chartmusem
 # Globals: None
 # Arguments:
 #   $1: chart
 #   $2: version
-#   $3: chartmuseum username
-#   $4: chartmuseum password
 # Returns: None
-#########################
+########################################################################################################################
 pushChart() {
   local chart=$1
   local version=$2
-  local user=$3
-  local password=$4
   prefix="kubeapps-"
   description="foo ${chart} chart for CI"
 
   info "Adding ${chart}-${version} to ChartMuseum ..."
-  curl -LO "https://charts.bitnami.com/bitnami/${chart}-${version}.tgz"
+  pullBitnamiChart "${chart}" "${version}"
 
   # Mutate the chart name and description, then re-package the tarball
   # For instance, the apache's Chart.yaml file becomes modified to:
   #   name: kubeapps-apache
   #   description: foo apache chart for CI
   # consequently, the new packaged chart is "${prefix}${chart}-${version}.tgz"
-  # This workaround should mitigate https://github.com/kubeapps/kubeapps/issues/3339
-  mkdir ./${chart}-${version}
-  tar zxf ${chart}-${version}.tgz -C ./${chart}-${version}
-  sed -i "s/name: ${chart}/name: ${prefix}${chart}/" ./${chart}-${version}/${chart}/Chart.yaml
-  sed -i "0,/^\([[:space:]]*description: *\).*/s//\1${description}/" ./${chart}-${version}/${chart}/Chart.yaml
-  helm package ./${chart}-${version}/${chart} -d .
+  # This workaround should mitigate https://github.com/vmware-tanzu/kubeapps/issues/3339
+  mkdir "./${chart}-${version}"
+  tar zxf "${chart}-${version}.tgz" -C "./${chart}-${version}"
+  # this relies on GNU sed, which is not the default on MacOS
+  # ref https://gist.github.com/andre3k1/e3a1a7133fded5de5a9ee99c87c6fa0d
+  sed -i "s/name: ${chart}/name: ${prefix}${chart}/" "./${chart}-${version}/${chart}/Chart.yaml"
+  sed -i "0,/^\([[:space:]]*description: *\).*/s//\1${description}/" "./${chart}-${version}/${chart}/Chart.yaml"
+  helm package "./${chart}-${version}/${chart}" -d .
 
-  local POD_NAME=$(kubectl get pods --namespace kubeapps -l "app=chartmuseum" -l "release=chartmuseum" -o jsonpath="{.items[0].metadata.name}")
-  /bin/sh -c "kubectl port-forward $POD_NAME 8080:8080 --namespace kubeapps &"
-  sleep 2
-  curl -u "${user}:${password}" --data-binary "@${prefix}${chart}-${version}.tgz" http://localhost:8080/api/charts
-  pkill -f "kubectl port-forward $POD_NAME 8080:8080 --namespace kubeapps"
+  pushChartToChartMuseum "${chart}" "${version}" "${prefix}${chart}-${version}.tgz"
 }
 
-########################
+########################################################################################################################
+# Install kapp-controller
+# Globals: None
+# Arguments:
+#   $1: Version of kapp-controller
+# Returns: None
+########################################################################################################################
+installKappController() {
+  local release=$1
+  info "Installing kapp-controller ${release} ..."
+  url="https://github.com/vmware-tanzu/carvel-kapp-controller/releases/download/${release}/release.yml"
+  namespace=kapp-controller
+
+  kubectl apply -f "${url}"
+
+  # wait for deployment to be ready
+  kubectl rollout status -w deployment/kapp-controller --namespace="${namespace}"
+
+  # Add test repository.
+	kubectl apply -f https://raw.githubusercontent.com/vmware-tanzu/carvel-kapp-controller/develop/examples/packaging-with-repo/package-repository.yml
+
+  # Add a carvel-reconciler service account to the kubeapps-user-namespace with
+  # cluster-admin.
+  kubectl create serviceaccount carvel-reconciler -n kubeapps-user-namespace
+  kubectl create clusterrolebinding carvel-reconciler --clusterrole=cluster-admin --serviceaccount kubeapps-user-namespace:carvel-reconciler
+}
+
+########################################################################################################################
+# Install flux
+# Globals: None
+# Arguments:
+#   $1: Version of flux
+# Returns: None
+########################################################################################################################
+installFlux() {
+  local release=$1
+  info "Installing flux ${release} ..."
+  url="https://github.com/fluxcd/flux2/releases/download/${release}/install.yaml"
+  namespace=flux-system
+
+  kubectl apply -f "${url}"
+
+  # wait for deployment to be ready
+  kubectl rollout status -w deployment/helm-controller --namespace="${namespace}"
+  kubectl rollout status -w deployment/source-controller --namespace="${namespace}"
+
+  # Add test repository.
+  kubectl apply -f https://raw.githubusercontent.com/fluxcd/source-controller/main/config/samples/source_v1beta2_helmrepository.yaml
+
+  # Add a flux-reconciler service account to the kubeapps-user-namespace with
+  # cluster-admin.
+  kubectl create serviceaccount flux-reconciler -n kubeapps-user-namespace
+  kubectl create clusterrolebinding flux-reconciler --clusterrole=cluster-admin --serviceaccount kubeapps-user-namespace:flux-reconciler
+}
+
+########################################################################################################################
+# Creates a Yaml file with additional values for the Helm chart
+# Arguments: None
+# Returns: Path to the newly created file with additional values
+########################################################################################################################
+generateAdditionalValuesFile() {
+  # Could be done better with $(cat <<EOF > ${ROOT_DIR}/additional_chart_values.yaml
+  # But it was breaking the formatting of the file
+  local valuesFile="${ROOT_DIR}/additional_chart_values.yaml"
+  echo "ingress:
+  enabled: true
+  hostname: localhost
+  tls: true
+  selfSigned: true
+  annotations:
+    kubernetes.io/ingress.class: nginx
+    nginx.ingress.kubernetes.io/proxy-buffer-size: \"8k\"
+    nginx.ingress.kubernetes.io/proxy-buffers: \"4.0\"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: \"600.0\"" > "${valuesFile}"
+  echo "${valuesFile}"
+}
+
+########################################################################################################################
 # Install Kubeapps or upgrades it if it's already installed
 # Arguments:
 #   $1: chart source
 # Returns: None
-#########################
+########################################################################################################################
 installOrUpgradeKubeapps() {
   local chartSource=$1
   # Install Kubeapps
@@ -189,19 +299,17 @@ installOrUpgradeKubeapps() {
   # See https://stackoverflow.com/a/36296000 for "${arr[@]+"${arr[@]}"}" notation.
   cmd=(helm upgrade --install kubeapps-ci --namespace kubeapps "${chartSource}"
     "${img_flags[@]}"
-    "${@:2}"
     "${multiclusterFlags[@]+"${multiclusterFlags[@]}"}"
+    "${@:2}"
     --set frontend.replicaCount=1
-    --set kubeops.replicaCount=1
     --set dashboard.replicaCount=1
     --set kubeappsapis.replicaCount=2
-    --set kubeops.enabled=true
     --set postgresql.architecture=standalone
     --set postgresql.primary.persistence.enabled=false
     --set postgresql.auth.password=password
     --set redis.auth.password=password
     --set apprepository.initialRepos[0].name=bitnami
-    --set apprepository.initialRepos[0].url=http://chartmuseum-chartmuseum.kubeapps:8080
+    --set apprepository.initialRepos[0].url=http://chartmuseum.chart-museum.svc.cluster.local:8080
     --set apprepository.initialRepos[0].basicAuth.user=admin
     --set apprepository.initialRepos[0].basicAuth.password=password
     --set apprepository.globalReposNamespaceSuffix=-repos-global
@@ -211,44 +319,71 @@ installOrUpgradeKubeapps() {
   "${cmd[@]}"
 }
 
+########################################################################################################################
+# Formats the provided time in seconds.
+# Arguments:
+#   $1: time in seconds
+# Returns: Time formatted as Xm Ys
+########################################################################################################################
+formattedElapsedTime() {
+  local time=$1
+
+  mins=$((time/60))
+  secs=$((time%60))
+  echo "${mins}m ${secs}s"
+}
+
+########################################################################################################################
+# Returns the elapsed time since the given starting point.
+# Arguments:
+#   $1: Starting point in seconds (eg. `date +%s`)
+# Returns: The elapsed time formatted as Xm Ys
+########################################################################################################################
+elapsedTimeSince() {
+  local start=${1?:Start time not provided}
+  local end
+
+  end=$(date +%s)
+  formattedElapsedTime $((end-start))
+}
+
+[[ "${DEBUG_MODE}" == "true" ]] && set -x;
+
+if [[ "${DEBUG_MODE}" == "true" && -z ${GKE_BRANCH} ]]; then
+  info "Docker images loaded in the cluster:"
+  docker exec kubeapps-ci-control-plane crictl images
+fi
+
 # Use dev images or Bitnami if testing the latest release
-image_prefix="kubeapps/"
 kubeapps_apis_image="kubeapps-apis"
-[[ -n "${TEST_LATEST_RELEASE:-}" ]] && image_prefix="bitnami/kubeapps-" && kubeapps_apis_image="apis"
+[[ -n "${TEST_LATEST_RELEASE}" && "${TEST_LATEST_RELEASE}" != "false" ]] && IMG_PREFIX="bitnami/kubeapps-" && kubeapps_apis_image="apis"
 images=(
   "apprepository-controller"
   "asset-syncer"
-  "assetsvc"
   "dashboard"
-  "kubeops"
   "pinniped-proxy"
   "${kubeapps_apis_image}"
 )
-images=("${images[@]/#/${image_prefix}}")
+images=("${images[@]/#/${IMG_PREFIX}}")
 images=("${images[@]/%/${IMG_MODIFIER}}")
 img_flags=(
-  "--set" "apprepository.image.tag=${DEV_TAG}"
+  "--set" "apprepository.image.tag=${IMG_DEV_TAG}"
   "--set" "apprepository.image.repository=${images[0]}"
-  "--set" "apprepository.syncImage.tag=${DEV_TAG}"
+  "--set" "apprepository.syncImage.tag=${IMG_DEV_TAG}"
   "--set" "apprepository.syncImage.repository=${images[1]}"
-  "--set" "assetsvc.image.tag=${DEV_TAG}"
-  "--set" "assetsvc.image.repository=${images[2]}"
-  "--set" "dashboard.image.tag=${DEV_TAG}"
-  "--set" "dashboard.image.repository=${images[3]}"
-  "--set" "kubeops.image.tag=${DEV_TAG}"
-  "--set" "kubeops.image.repository=${images[4]}"
-  "--set" "pinnipedProxy.image.tag=${DEV_TAG}"
-  "--set" "pinnipedProxy.image.repository=${images[5]}"
-  "--set" "kubeappsapis.image.tag=${DEV_TAG}"
-  "--set" "kubeappsapis.image.repository=${images[6]}"
+  "--set" "dashboard.image.tag=${IMG_DEV_TAG}"
+  "--set" "dashboard.image.repository=${images[2]}"
+  "--set" "pinnipedProxy.image.tag=${IMG_DEV_TAG}"
+  "--set" "pinnipedProxy.image.repository=${images[3]}"
+  "--set" "kubeappsapis.image.tag=${IMG_DEV_TAG}"
+  "--set" "kubeappsapis.image.repository=${images[4]}"
 )
 
+additional_flags_file=$(generateAdditionalValuesFile)
+
 if [ "$USE_MULTICLUSTER_OIDC_ENV" = true ]; then
-  multiclusterFlags=(
-    "--set" "ingress.enabled=true"
-    "--set" "ingress.hostname=localhost"
-    "--set" "ingress.tls=true"
-    "--set" "ingress.selfSigned=true"
+  basicAuthFlags=(
+    "--values" "${additional_flags_file}"
     "--set" "authProxy.enabled=true"
     "--set" "authProxy.provider=oidc"
     "--set" "authProxy.clientID=default"
@@ -257,17 +392,20 @@ if [ "$USE_MULTICLUSTER_OIDC_ENV" = true ]; then
     "--set" "authProxy.extraFlags[0]=\"--oidc-issuer-url=https://${DEX_IP}:32000\""
     "--set" "authProxy.extraFlags[1]=\"--scope=openid email groups audience:server:client_id:second-cluster audience:server:client_id:third-cluster\""
     "--set" "authProxy.extraFlags[2]=\"--ssl-insecure-skip-verify=true\""
-    "--set" "authProxy.extraFlags[3]=\"--redirect-url=http://kubeapps-ci.kubeapps/oauth2/callback\""
+    "--set" "authProxy.extraFlags[3]=\"--redirect-url=${INTEGRATION_ENTRYPOINT}/oauth2/callback\""
     "--set" "authProxy.extraFlags[4]=\"--cookie-secure=false\""
-    "--set" "authProxy.extraFlags[5]=\"--cookie-domain=kubeapps-ci.kubeapps\""
-    "--set" "authProxy.extraFlags[6]=\"--whitelist-domain=kubeapps-ci.kubeapps\""
+    "--set" "authProxy.extraFlags[5]=\"--cookie-domain=${INTEGRATION_HOST}\""
+    "--set" "authProxy.extraFlags[6]=\"--whitelist-domain=${INTEGRATION_HOST}\""
     "--set" "authProxy.extraFlags[7]=\"--set-authorization-header=true\""
+  )
+  multiclusterFlags=(
     "--set" "clusters[0].name=default"
     "--set" "clusters[1].name=second-cluster"
     "--set" "clusters[1].apiServiceURL=https://${ADDITIONAL_CLUSTER_IP}:6443"
     "--set" "clusters[1].insecure=true"
-    "--set" "clusters[1].serviceToken=ZXlKaGJHY2lPaUpTVXpJMU5pSXNJbXRwWkNJNklsbHpiSEp5TlZwM1QwaG9WSE5PYkhVdE5GQkRablY2TW0wd05rUmtMVmxFWVV4MlZEazNaeTEyUmxFaWZRLmV5SnBjM01pT2lKcmRXSmxjbTVsZEdWekwzTmxjblpwWTJWaFkyTnZkVzUwSWl3aWEzVmlaWEp1WlhSbGN5NXBieTl6WlhKMmFXTmxZV05qYjNWdWRDOXVZVzFsYzNCaFkyVWlPaUprWldaaGRXeDBJaXdpYTNWaVpYSnVaWFJsY3k1cGJ5OXpaWEoyYVdObFlXTmpiM1Z1ZEM5elpXTnlaWFF1Ym1GdFpTSTZJbXQxWW1WaGNIQnpMVzVoYldWemNHRmpaUzFrYVhOamIzWmxjbmt0ZEc5clpXNHRjV295Ym1naUxDSnJkV0psY201bGRHVnpMbWx2TDNObGNuWnBZMlZoWTJOdmRXNTBMM05sY25acFkyVXRZV05qYjNWdWRDNXVZVzFsSWpvaWEzVmlaV0Z3Y0hNdGJtRnRaWE53WVdObExXUnBjMk52ZG1WeWVTSXNJbXQxWW1WeWJtVjBaWE11YVc4dmMyVnlkbWxqWldGalkyOTFiblF2YzJWeWRtbGpaUzFoWTJOdmRXNTBMblZwWkNJNkltVXhaakE1WmpSakxUTTRNemt0TkRJME15MWhZbUptTFRKaU5HWm1OREZrWW1RMllTSXNJbk4xWWlJNkluTjVjM1JsYlRwelpYSjJhV05sWVdOamIzVnVkRHBrWldaaGRXeDBPbXQxWW1WaGNIQnpMVzVoYldWemNHRmpaUzFrYVhOamIzWmxjbmtpZlEuTnh6V2dsUGlrVWpROVQ1NkpWM2xJN1VWTUVSR3J2bklPSHJENkh4dUVwR0luLWFUUzV5Q0pDa3Z0cTF6S3Z3b05sc2MyX0YxaTdFOUxWRGFwbC1UQlhleUN5Rl92S1B1TDF4dTdqZFBMZ1dKT1pQX3JMcXppaDV4ZlkxalFoOHNhdTRZclFJLUtqb3U1UkRRZ0tOQS1BaS1lRlFOZVh2bmlUNlBKYWVkc184V0t3dHRMMC1wdHpYRnBnOFl5dkx6N0U1UWdTR2tjNWpDVXlsS0RvZVRUaVRSOEc2RHFHYkFQQUYwREt0b3MybU9Geno4SlJYNHhoQmdvaUcxVTVmR1g4Z3hnTU1SV0VHRE9kaGMyeXRvcFdRUkRpYmhvaldNS3VDZlNua09zMDRGYTBkYmEwQ0NTbld2a29LZ3Z4QVR5aVVrWm9wV3VpZ1JJNFd5dDkzbXhR"
+    "--set" "clusters[1].serviceToken=$(kubectl --context=kind-kubeapps-ci-additional --kubeconfig="${HOME}/.kube/kind-config-kubeapps-ci-additional" get secret kubeapps-namespace-discovery -o go-template='{{.data.token | base64decode}}')"
   )
+  multiclusterFlags+=("${basicAuthFlags[@]+"${basicAuthFlags[@]}"}")
 fi
 
 helm repo add bitnami https://charts.bitnami.com/bitnami
@@ -285,18 +423,27 @@ if [[ -n "${TEST_UPGRADE:-}" ]]; then
   k8s_wait_for_deployment kubeapps kubeapps-ci
 fi
 
+# Install ChartMuseum
+installChartMuseum "${CHARTMUSEUM_VERSION}"
+pushChart apache 8.6.2
+pushChart apache 8.6.3
+
+# Install Kubeapps
 installOrUpgradeKubeapps "${ROOT_DIR}/chart/kubeapps"
 info "Waiting for Kubeapps components to be ready (local chart)..."
 k8s_wait_for_deployment kubeapps kubeapps-ci
-installChartmuseum admin password
-pushChart apache 8.6.2 admin password
-pushChart apache 8.6.3 admin password
+
+# Setting up local Docker registry if not in GKE
+if [[ -z "${GKE_BRANCH-}" ]]; then
+  setupLocalDockerRegistry
+  pushLocalChart
+fi
 
 # Ensure that we are testing the correct image
 info ""
-k8s_ensure_image kubeapps kubeapps-ci-internal-apprepository-controller "$DEV_TAG"
-k8s_ensure_image kubeapps kubeapps-ci-internal-dashboard "$DEV_TAG"
-k8s_ensure_image kubeapps kubeapps-ci-internal-kubeappsapis "$DEV_TAG"
+k8s_ensure_image kubeapps kubeapps-ci-internal-apprepository-controller "$IMG_DEV_TAG"
+k8s_ensure_image kubeapps kubeapps-ci-internal-dashboard "$IMG_DEV_TAG"
+k8s_ensure_image kubeapps kubeapps-ci-internal-kubeappsapis "$IMG_DEV_TAG"
 
 # Wait for Kubeapps Pods
 info "Waiting for Kubeapps components to be ready..."
@@ -334,53 +481,20 @@ for svc in "${svcs[@]}"; do
   info "Endpoints for ${svc} available"
 done
 
-# Deactivate helm tests unless we are testing the latest release until
-# we have released the code with per-namespace tests (since the helm
-# tests for assetsvc needs to test the namespaced repo).
-if [[ -z "${TEST_LATEST_RELEASE:-}" ]]; then
-  # Run helm tests
-  # Retry once if tests fail to avoid temporary issue
-  if ! retry_while testHelm "2" "1"; then
-    warn "PODS status on failure"
-    kubectl get pods -n kubeapps
-    for pod in $(kubectl get po -l='app.kubernetes.io/managed-by=Helm,app.kubernetes.io/instance=kubeapps-ci' -oname -n kubeapps); do
-      warn "LOGS for pod $pod ------------"
-      if [[ "$pod" =~ .*internal.* ]]; then
-        kubectl logs -n kubeapps "$pod"
-      else
-        kubectl logs -n kubeapps "$pod" nginx
-        kubectl logs -n kubeapps "$pod" auth-proxy
-      fi
-    done
-    echo
-    warn "LOGS for dashboard tests --------"
-    kubectl logs kubeapps-ci-dashboard-test --namespace kubeapps
-    exit 1
-  fi
-  info "Helm tests succeeded!"
-fi
-
 # Browser tests
 cd "${ROOT_DIR}/integration"
-kubectl apply -f manifests/executor.yaml
-k8s_wait_for_deployment default integration
-pod=$(kubectl get po -l run=integration -o jsonpath="{.items[0].metadata.name}")
+info "Using E2E runner image '${IMG_PREFIX}integration-tests${IMG_MODIFIER}:${IMG_DEV_TAG}'"
+kubectl create deployment e2e-runner --image "${IMG_PREFIX}integration-tests${IMG_MODIFIER}:${IMG_DEV_TAG}"
+k8s_wait_for_deployment default e2e-runner
+pod=$(kubectl get po -l app=e2e-runner -o custom-columns=:metadata.name --no-headers)
 ## Copy config and latest tests
 for f in *.js; do
-  kubectl cp "./${f}" "${pod}:/app/"
+  kubectl cp "./${f}" "default/${pod}:/app/"
 done
 
-# Set tests to be run
-# Playwright does not allow to ignore tests on command line, only in config file
-testsToRun=("tests/main/")
-# Skip the multicluster scenario for GKE
-if [[ -z "${GKE_BRANCH-}" ]]; then
-  testsToRun+=("tests/multicluster/")
-fi
-testsArgs="$(printf "%s " "${testsToRun[@]}")"
+kubectl cp ./tests "default/${pod}:/app/"
+info "Copied tests to e2e-runner pod default/${pod}"
 
-kubectl cp ./tests "${pod}:/app/"
-info "Copied tests to integration pod ${pod}"
 ## Create admin user
 kubectl create serviceaccount kubeapps-operator -n kubeapps
 kubectl create clusterrolebinding kubeapps-operator-admin --clusterrole=cluster-admin --serviceaccount kubeapps:kubeapps-operator
@@ -395,54 +509,290 @@ kubectl create rolebinding kubeapps-view-user-apprepo-read -n kubeapps-user-name
 kubectl create rolebinding kubeapps-view-user -n kubeapps-user-namespace --clusterrole=edit --serviceaccount kubeapps:kubeapps-view
 ## Create edit user
 kubectl create serviceaccount kubeapps-edit -n kubeapps
+# TODO(minelson): Many of these roles/bindings need to be cleaned up. Some are
+# unnecessary (with chart changes), some should not be created (such as edit
+# here having the edit cluster role in the kubeapps namespace - should just be
+# default). See https://github.com/vmware-tanzu/kubeapps/issues/4435
 kubectl create rolebinding kubeapps-edit -n kubeapps --clusterrole=edit --serviceaccount kubeapps:kubeapps-edit
 kubectl create rolebinding kubeapps-edit -n default --clusterrole=edit --serviceaccount kubeapps:kubeapps-edit
-kubectl create rolebinding kubeapps-repositories-read -n kubeapps --clusterrole kubeapps:kubeapps:apprepositories-read --serviceaccount kubeapps:kubeapps-edit
+kubectl create clusterrolebinding kubeapps-repositories-read --clusterrole kubeapps:kubeapps:apprepositories-read --serviceaccount kubeapps:kubeapps-edit
+# TODO(minelson): Similar to the `global-repos-read` rolebinding that the chart
+# adds to the `kubeapps-repos-global` namespace for all authenticated users, we
+# should eventually consider adding a similar rolebinding for secrets in the
+# `kubeapps-repos-global` namespace also (but not if the global repos namespace
+# is configured to be the kubeapps namespace, of course.) For now, explicit
+# creation because CI tests with a repo with creds in the global repos ns.
+# See https://github.com/vmware-tanzu/kubeapps/issues/4435
+kubectl create role view-secrets -n ${GLOBAL_REPOS_NS} --verb=get,list,watch --resource=secrets
+kubectl create rolebinding global-repos-secrets-read -n ${GLOBAL_REPOS_NS} --role=view-secrets --serviceaccount kubeapps:kubeapps-edit
 
-## Give the cluster some time to avoid issues like
-## https://circleci.com/gh/kubeapps/kubeapps/16102
+## Give the cluster some time to avoid timeout issues
 retry_while "kubectl get -n kubeapps serviceaccount kubeapps-operator -o name" "5" "1"
 retry_while "kubectl get -n kubeapps serviceaccount kubeapps-view -o name" "5" "1"
 retry_while "kubectl get -n kubeapps serviceaccount kubeapps-edit -o name" "5" "1"
 ## Retrieve tokens
-admin_token="$(kubectl get -n kubeapps secret "$(kubectl get -n kubeapps serviceaccount kubeapps-operator -o jsonpath='{.secrets[].name}')" -o go-template='{{.data.token | base64decode}}' && echo)"
-view_token="$(kubectl get -n kubeapps secret "$(kubectl get -n kubeapps serviceaccount kubeapps-view -o jsonpath='{.secrets[].name}')" -o go-template='{{.data.token | base64decode}}' && echo)"
-edit_token="$(kubectl get -n kubeapps secret "$(kubectl get -n kubeapps serviceaccount kubeapps-edit -o jsonpath='{.secrets[].name}')" -o go-template='{{.data.token | base64decode}}' && echo)"
+admin_token="$(kubectl get -n kubeapps secret "$(kubectl get -n kubeapps serviceaccount kubeapps-operator -o jsonpath='{.secrets[].name}')" -o go-template='{{.data.token | base64decode}}')"
+view_token="$(kubectl get -n kubeapps secret "$(kubectl get -n kubeapps serviceaccount kubeapps-view -o jsonpath='{.secrets[].name}')" -o go-template='{{.data.token | base64decode}}')"
+edit_token="$(kubectl get -n kubeapps secret "$(kubectl get -n kubeapps serviceaccount kubeapps-edit -o jsonpath='{.secrets[].name}')" -o go-template='{{.data.token | base64decode}}')"
 
-info "Running main Integration tests without k8s API access..."
-if ! kubectl exec -it "$pod" -- /bin/sh -c "CI_TIMEOUT_MINUTES=40 DOCKER_USERNAME=${DOCKER_USERNAME} DOCKER_PASSWORD=${DOCKER_PASSWORD} TEST_TIMEOUT_MINUTES=${TEST_TIMEOUT_MINUTES} INTEGRATION_ENTRYPOINT=http://kubeapps-ci.kubeapps USE_MULTICLUSTER_OIDC_ENV=${USE_MULTICLUSTER_OIDC_ENV} ADMIN_TOKEN=${admin_token} VIEW_TOKEN=${view_token} EDIT_TOKEN=${edit_token} yarn test ${testsArgs}"; then
-  ## Integration tests failed, get report screenshot
-  warn "PODS status on failure"
-  kubectl cp "${pod}:/app/reports" ./reports
-  exit 1
-fi
-info "Main integration tests succeeded!!"
+info "Bootstrap time: $(elapsedTimeSince "$startTime")"
 
-## Upgrade and run operator test
-# Operators are not supported in GKE 1.14 and flaky in 1.15, skipping test
-if [[ -z "${GKE_BRANCH-}" ]] && [[ -n "${TEST_OPERATORS-}" ]]; then
-  installOLM "${OLM_VERSION}"
-
-  # Update Kubeapps settings to enable operators and hence proxying
-  # to k8s API server.
-  info "Installing latest Kubeapps chart available"
-  installOrUpgradeKubeapps "${ROOT_DIR}/chart/kubeapps" \
-    "--set" "featureFlags.operators=true"
-
-  info "Waiting for Kubeapps components to be ready (bitnami chart)..."
-  k8s_wait_for_deployment kubeapps kubeapps-ci
-
-  ## Wait for the Operator catalog to be populated
-  info "Waiting for the OperatorHub Catalog to be ready ..."
-  retry_while isOperatorHubCatalogRunning 24
-
-  info "Running operator integration test with k8s API access..."
-  if ! kubectl exec -it "$pod" -- /bin/sh -c "CI_TIMEOUT_MINUTES=20 TEST_TIMEOUT_MINUTES=${TEST_TIMEOUT_MINUTES} INTEGRATION_ENTRYPOINT=http://kubeapps-ci.kubeapps USE_MULTICLUSTER_OIDC_ENV=${USE_MULTICLUSTER_OIDC_ENV} ADMIN_TOKEN=${admin_token} VIEW_TOKEN=${view_token} EDIT_TOKEN=${edit_token} yarn test \"tests/operators/\""; then
+##################################
+######## Main tests group ########
+##################################
+if [[ "${TESTS_GROUP}" == "${ALL_TESTS}" || "${TESTS_GROUP}" == "${MAIN_TESTS}" ]]; then
+  sectionStartTime=$(date +%s)
+  info "Running main Integration tests without k8s API access..."
+  test_command="
+    CI_TIMEOUT_MINUTES=40 \
+    DOCKER_USERNAME=${DOCKER_USERNAME} \
+    DOCKER_PASSWORD=${DOCKER_PASSWORD} \
+    DOCKER_REGISTRY_URL=${DOCKER_REGISTRY_URL} \
+    TEST_TIMEOUT_MINUTES=${TEST_TIMEOUT_MINUTES} \
+    INTEGRATION_ENTRYPOINT=${INTEGRATION_ENTRYPOINT} \
+    USE_MULTICLUSTER_OIDC_ENV=${USE_MULTICLUSTER_OIDC_ENV} \
+    ADMIN_TOKEN=${admin_token} \
+    VIEW_TOKEN=${view_token} \
+    EDIT_TOKEN=${edit_token} \
+    yarn test \"tests/main/\"
+    "
+  info "${test_command}"
+  if ! kubectl exec -it "$pod" -- /bin/sh -c "${test_command}"; then
     ## Integration tests failed, get report screenshot
     warn "PODS status on failure"
     kubectl cp "${pod}:/app/reports" ./reports
     exit 1
   fi
-  info "Operator integration tests (with k8s API access) succeeded!!"
+  info "Main integration tests succeeded!!"
+
+  info "Main tests execution time: $(elapsedTimeSince "$sectionStartTime")"
 fi
+
+###########################################
+######## Multi-cluster tests group ########
+###########################################
+if [[ -z "${GKE_BRANCH-}" && ("${TESTS_GROUP}" == "${ALL_TESTS}" || "${TESTS_GROUP}" == "${MULTICLUSTER_TESTS}") ]]; then
+  sectionStartTime=$(date +%s)
+  info "Running multi-cluster integration tests..."
+  test_command="
+    CI_TIMEOUT_MINUTES=40 \
+    DOCKER_USERNAME=${DOCKER_USERNAME} \
+    DOCKER_PASSWORD=${DOCKER_PASSWORD} \
+    DOCKER_REGISTRY_URL=${DOCKER_REGISTRY_URL} \
+    TEST_TIMEOUT_MINUTES=${TEST_TIMEOUT_MINUTES} \
+    INTEGRATION_ENTRYPOINT=${INTEGRATION_ENTRYPOINT} \
+    USE_MULTICLUSTER_OIDC_ENV=${USE_MULTICLUSTER_OIDC_ENV} \
+    ADMIN_TOKEN=${admin_token} \
+    VIEW_TOKEN=${view_token} \
+    EDIT_TOKEN=${edit_token} \
+    yarn test \"tests/multicluster/\"
+    "
+  info "${test_command}"
+  if ! kubectl exec -it "$pod" -- /bin/sh -c "${test_command}"; then
+    ## Integration tests failed, get report screenshot
+    warn "PODS status on failure"
+    kubectl cp "${pod}:/app/reports" ./reports
+    exit 1
+  fi
+  info "Multi-cluster integration tests succeeded!!"
+  info "Multi-cluster tests execution time: $(elapsedTimeSince "$sectionStartTime")"
+fi
+
+####################################
+######## Carvel tests group ########
+####################################
+if [[ "${TESTS_GROUP}" == "${ALL_TESTS}" || "${TESTS_GROUP}" == "${CARVEL_TESTS}" ]]; then
+  sectionStartTime=$(date +%s)
+
+  ## Upgrade and run Carvel test
+  installKappController "${KAPP_CONTROLLER_VERSION}"
+  info "Updating Kubeapps with carvel support"
+  installOrUpgradeKubeapps "${ROOT_DIR}/chart/kubeapps" \
+    "--set" "packaging.helm.enabled=false" \
+    "--set" "packaging.carvel.enabled=true"
+
+  info "Waiting for updated Kubeapps components to be ready..."
+  k8s_wait_for_deployment kubeapps kubeapps-ci
+
+  info "Running carvel integration test..."
+  test_command="
+    CI_TIMEOUT_MINUTES=20 \
+    TEST_TIMEOUT_MINUTES=${TEST_TIMEOUT_MINUTES} \
+    INTEGRATION_ENTRYPOINT=${INTEGRATION_ENTRYPOINT} \
+    USE_MULTICLUSTER_OIDC_ENV=${USE_MULTICLUSTER_OIDC_ENV} \
+    ADMIN_TOKEN=${admin_token} \
+    VIEW_TOKEN=${view_token} \
+    EDIT_TOKEN=${edit_token} \
+    yarn test \"tests/carvel/\"
+    "
+  info "${test_command}"
+  if ! kubectl exec -it "$pod" -- /bin/sh -c "${test_command}"; then
+    ## Integration tests failed, get report screenshot
+    warn "PODS status on failure"
+    kubectl cp "${pod}:/app/reports" ./reports
+    exit 1
+  fi
+  info "Carvel integration tests succeeded!!"
+  info "Carvel tests execution time: $(elapsedTimeSince "$sectionStartTime")"
+fi
+
+####################################
+######## Flux tests group ########
+####################################
+if [[ "${TESTS_GROUP}" == "${ALL_TESTS}" || "${TESTS_GROUP}" == "${FLUX_TESTS}" ]]; then
+  sectionStartTime=$(date +%s)
+
+  ## Upgrade and run Flux test
+  installFlux "${FLUX_VERSION}"
+  info "Updating Kubeapps with flux support"
+  installOrUpgradeKubeapps "${ROOT_DIR}/chart/kubeapps" \
+    "--set" "packaging.flux.enabled=true" \
+    "--set" "packaging.helm.enabled=false" \
+    "--set" "packaging.carvel.enabled=false"
+
+  info "Waiting for updated Kubeapps components to be ready..."
+  k8s_wait_for_deployment kubeapps kubeapps-ci
+
+  info "Running flux integration test..."
+  test_command="
+    CI_TIMEOUT_MINUTES=20 \
+    TEST_TIMEOUT_MINUTES=${TEST_TIMEOUT_MINUTES} \
+    INTEGRATION_ENTRYPOINT=${INTEGRATION_ENTRYPOINT} \
+    USE_MULTICLUSTER_OIDC_ENV=${USE_MULTICLUSTER_OIDC_ENV} \
+    ADMIN_TOKEN=${admin_token} \
+    VIEW_TOKEN=${view_token} \
+    EDIT_TOKEN=${edit_token} \
+    yarn test \"tests/flux/\"
+    "
+  info "${test_command}"
+
+  if ! kubectl exec -it "$pod" -- /bin/sh -c "${test_command}"; then
+    ## Integration tests failed, get report screenshot
+    warn "PODS status on failure"
+    kubectl cp "${pod}:/app/reports" ./reports
+    exit 1
+  fi
+  info "Flux integration tests succeeded!"
+  info "Flux tests execution time: $(elapsedTimeSince "$sectionStartTime")"
+fi
+
+#######################################
+######## Operators tests group ########
+#######################################
+if [[ "${TESTS_GROUP}" == "${ALL_TESTS}" || "${TESTS_GROUP}" == "${OPERATOR_TESTS}" ]]; then
+  sectionStartTime=$(date +%s)
+  ## Upgrade and run operator test
+  # Operators are not supported in GKE 1.14 and flaky in 1.15, skipping test
+  if [[ -z "${GKE_BRANCH-}" ]] && [[ -n "${TEST_OPERATORS-}" ]]; then
+    installOLM "${OLM_VERSION}"
+
+    # Update Kubeapps settings to enable operators and hence proxying
+    # to k8s API server. Don't change the packaging setting to avoid
+    # re-installing postgres.
+    info "Installing latest Kubeapps chart available"
+    installOrUpgradeKubeapps "${ROOT_DIR}/chart/kubeapps" \
+      "--set" "packaging.helm.enabled=false" \
+      "--set" "packaging.carvel.enabled=true" \
+      "--set" "featureFlags.operators=true"
+
+    info "Waiting for Kubeapps components to be ready (bitnami chart)..."
+    k8s_wait_for_deployment kubeapps kubeapps-ci
+
+    ## Wait for the Operator catalog to be populated
+    info "Waiting for the OperatorHub Catalog to be ready ..."
+    retry_while isOperatorHubCatalogRunning 24
+
+    info "Running operator integration test with k8s API access..."
+    test_command="
+      CI_TIMEOUT_MINUTES=20 \
+      TEST_TIMEOUT_MINUTES=${TEST_TIMEOUT_MINUTES} \
+      INTEGRATION_ENTRYPOINT=${INTEGRATION_ENTRYPOINT} \
+      USE_MULTICLUSTER_OIDC_ENV=${USE_MULTICLUSTER_OIDC_ENV} \
+      ADMIN_TOKEN=${admin_token} \
+      VIEW_TOKEN=${view_token} \
+      EDIT_TOKEN=${edit_token} \
+      yarn test \"tests/operators/\"
+      "
+    if ! kubectl exec -it "$pod" -- /bin/sh -c "${test_command}"; then
+      ## Integration tests failed, get report screenshot
+      warn "PODS status on failure"
+      kubectl cp "${pod}:/app/reports" ./reports
+      exit 1
+    fi
+    info "Operator integration tests (with k8s API access) succeeded!!"
+    info "Operator tests execution time: $(elapsedTimeSince "$sectionStartTime")"
+  fi
+fi
+
+############################################################
+######## Multi-cluster without Kubeapps tests group ########
+############################################################
+if [[ -z "${GKE_BRANCH-}" && ("${TESTS_GROUP}" == "${ALL_TESTS}" || "${TESTS_GROUP}" == "${MULTICLUSTER_NOKUBEAPPS_TESTS}") ]]; then
+  sectionStartTime=$(date +%s)
+  info "Running multi-cluster (without Kubeapps cluster) integration tests..."
+
+  info "Updating Kubeapps to exclude Kubeapps cluster from the list of clusters"
+
+  # Update Kubeapps
+  kubeappsChartPath="${ROOT_DIR}/chart/kubeapps"
+  info "Installing Kubeapps from ${kubeappsChartPath}..."
+  kubectl -n kubeapps delete secret localhost-tls || true
+
+  # See https://stackoverflow.com/a/36296000 for "${arr[@]+"${arr[@]}"}" notation.
+  cmd=(helm upgrade --install kubeapps-ci --namespace kubeapps "${kubeappsChartPath}"
+    "${img_flags[@]}"
+    "${basicAuthFlags[@]+"${basicAuthFlags[@]}"}"
+    --set clusters[0].name=second-cluster
+    --set clusters[0].apiServiceURL=https://${ADDITIONAL_CLUSTER_IP}:6443
+    --set clusters[0].insecure=true
+    --set clusters[0].serviceToken=$(kubectl --context=kind-kubeapps-ci-additional --kubeconfig=${HOME}/.kube/kind-config-kubeapps-ci-additional get secret kubeapps-namespace-discovery -o go-template='{{.data.token | base64decode}}')
+    --set frontend.replicaCount=1
+    --set dashboard.replicaCount=1
+    --set kubeappsapis.replicaCount=2
+    --set postgresql.architecture=standalone
+    --set postgresql.primary.persistence.enabled=false
+    --set postgresql.auth.password=password
+    --set redis.auth.password=password
+    --set apprepository.initialRepos[0].name=bitnami
+    --set apprepository.initialRepos[0].url=http://chartmuseum.chart-museum.svc.cluster.local:8080
+    --set apprepository.initialRepos[0].basicAuth.user=admin
+    --set apprepository.initialRepos[0].basicAuth.password=password
+    --set apprepository.globalReposNamespaceSuffix=-repos-global
+    --set global.postgresql.auth.postgresPassword=password
+    --wait)
+
+  echo "${cmd[@]}"
+  "${cmd[@]}"
+
+  info "Waiting for updated Kubeapps components to be ready..."
+  k8s_wait_for_deployment kubeapps kubeapps-ci
+
+  test_command="
+    CI_TIMEOUT_MINUTES=40 \
+    DOCKER_USERNAME=${DOCKER_USERNAME} \
+    DOCKER_PASSWORD=${DOCKER_PASSWORD} \
+    DOCKER_REGISTRY_URL=${DOCKER_REGISTRY_URL} \
+    TEST_TIMEOUT_MINUTES=${TEST_TIMEOUT_MINUTES} \
+    INTEGRATION_ENTRYPOINT=${INTEGRATION_ENTRYPOINT} \
+    USE_MULTICLUSTER_OIDC_ENV=${USE_MULTICLUSTER_OIDC_ENV} \
+    ADMIN_TOKEN=${admin_token} \
+    VIEW_TOKEN=${view_token} \
+    EDIT_TOKEN=${edit_token} \
+    yarn test \"tests/multicluster-nokubeapps/\"
+    "
+  info "${test_command}"
+
+  if ! kubectl exec -it "$pod" -- /bin/sh -c "${test_command}"; then
+    ## Integration tests failed, get report screenshot
+    warn "PODS status on failure"
+    kubectl cp "${pod}:/app/reports" ./reports
+    exit 1
+  fi
+  info "Multi-cluster integration tests succeeded!!"
+
+  sectionEndTime=$(date +%s)
+  info "Multi-cluster tests execution time: $(formattedElapsedTime sectionEndTime-sectionStartTime)"
+fi
+
 info "Integration tests succeeded!"
+info "Total execution time: $(elapsedTimeSince "$startTime")"
