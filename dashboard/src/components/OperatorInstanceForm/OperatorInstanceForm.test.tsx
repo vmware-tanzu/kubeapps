@@ -136,7 +136,7 @@ it("retrieves the example values and the target CRD from the given CSV", () => {
     <OperatorInstanceForm {...defaultProps} />,
   );
   expect(wrapper.find(OperatorInstanceFormBody).props()).toMatchObject({
-    defaultValues: "kind: Foo\napiVersion: v1\n",
+    defaultValues: 'kind: "Foo"\napiVersion: "v1"\n',
   });
 });
 

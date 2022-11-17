@@ -137,7 +137,9 @@ it("should catch a syntax error in the form", () => {
   const form = wrapper.find("form");
   form.simulate("submit", { preventDefault: jest.fn() });
 
-  expect(wrapper.find(Alert)).toIncludeText("Unable to parse the given YAML. Got: bad indentation");
+  expect(wrapper.find(Alert)).toIncludeText(
+    "Unable parse the resource. Make sure it contains a valid apiVersion",
+  );
   expect(handleDeploy).not.toHaveBeenCalled();
 });
 

@@ -14,7 +14,7 @@ import { parseCSV } from "components/OperatorInstanceForm/OperatorInstanceForm";
 import OperatorSummary from "components/OperatorSummary/OperatorSummary";
 import OperatorHeader from "components/OperatorView/OperatorHeader";
 import { push } from "connected-react-router";
-import * as yaml from "js-yaml";
+import placeholder from "icons/placeholder.svg";
 import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { Action } from "redux";
@@ -22,8 +22,8 @@ import { ThunkDispatch } from "redux-thunk";
 import { fromCRD } from "shared/ResourceRef";
 import { IClusterServiceVersionCRD, IKind, IResource, IStoreState } from "shared/types";
 import { app } from "shared/url";
+import { parseToString } from "shared/yamlUtils";
 import ApplicationStatus from "../../containers/ApplicationStatusContainer";
-import placeholder from "icons/placeholder.svg";
 import AccessURLTable from "../AppView/AccessURLTable/AccessURLTable";
 import AppValues from "../AppView/AppValues/AppValues";
 import ResourceTabs from "../AppView/ResourceTabs";
@@ -229,7 +229,7 @@ function OperatorInstance({
                 </div>
                 {resource.status && (
                   <div className="appview-separator">
-                    <AppNotes title="Resource Status" notes={yaml.dump(resource.status)} />
+                    <AppNotes title="Resource Status" notes={parseToString(resource.status)} />
                   </div>
                 )}
                 <div className="appview-separator">
@@ -246,7 +246,7 @@ function OperatorInstance({
                 </div>
                 {resource.spec && (
                   <div className="appview-separator">
-                    <AppValues values={yaml.dump(resource.spec)} />
+                    <AppValues values={parseToString(resource.spec)} />
                   </div>
                 )}
               </Column>

@@ -16,7 +16,6 @@ import {
 } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
 import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins";
 import placeholder from "icons/placeholder.svg";
-import * as yaml from "js-yaml";
 import { useEffect, useMemo, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import * as ReactRouter from "react-router-dom";
@@ -33,6 +32,7 @@ import {
   NotFoundNetworkError,
 } from "shared/types";
 import { getPluginsSupportingRollback } from "shared/utils";
+import { parseToString } from "shared/yamlUtils";
 import ApplicationStatus from "../../containers/ApplicationStatusContainer";
 import * as url from "../../shared/url";
 import LoadingWrapper from "../LoadingWrapper/LoadingWrapper";
@@ -402,14 +402,7 @@ export default function AppView() {
                   />
                 </div>
                 <div className="appview-separator">
-                  <AppValues
-                    values={
-                      //TODO(agamez): check if using this yaml.dump/load is really needed
-                      selectedInstalledPkg?.valuesApplied
-                        ? yaml.dump(yaml.load(selectedInstalledPkg.valuesApplied))
-                        : ""
-                    }
-                  />
+                  <AppValues values={parseToString(selectedInstalledPkg.valuesApplied)} />
                 </div>
               </Column>
             </Row>
