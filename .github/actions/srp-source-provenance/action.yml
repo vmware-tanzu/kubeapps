@@ -79,7 +79,7 @@ runs:
         srp uid validate ${SRP_UID}
         srp metadata submit \
         --verbose \
-        --url https://apigw.vmware.com/v1/s1/api/helix-beta \
+        --srp-endpoint https://apigw.vmware.com/v1/s1/api/helix-beta \
         --uid "${SRP_UID}" \
         --path /tmp/provenance/source.json
     - name: Upload SRP file as a build artifact
