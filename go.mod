@@ -92,7 +92,7 @@ require (
 	k8s.io/kubernetes v1.24.7
 	k8s.io/utils v0.0.0-20221012122500-cfd413dd9e85
 	oras.land/oras-go v1.2.1
-	oras.land/oras-go/v2 v2.0.0-rc.3
+	oras.land/oras-go/v2 v2.0.0-rc.4
 	sigs.k8s.io/controller-runtime v0.13.0
 	sigs.k8s.io/yaml v1.3.0
 )
@@ -202,9 +202,7 @@ require (
 	github.com/monochromegane/go-gitignore v0.0.0-20200626010858-205db1a8cc00 // indirect
 	github.com/morikuni/aec v1.0.0 // indirect
 	github.com/munnerz/goautoneg v0.0.0-20191010083416-a7dc8b61c822 // indirect
-	github.com/opencontainers/distribution-spec/specs-go v0.0.0-20221017151708-f72e5010d844 // indirect
 	github.com/opencontainers/go-digest v1.0.0 // indirect
-	github.com/oras-project/artifacts-spec v1.0.0-rc.2 // indirect
 	github.com/pelletier/go-toml v1.9.5 // indirect
 	github.com/pelletier/go-toml/v2 v2.0.5 // indirect
 	github.com/peterbourgon/diskv v2.0.1+incompatible // indirect
