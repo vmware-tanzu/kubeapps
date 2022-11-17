@@ -184,7 +184,7 @@ func TestGetAvailablePackagesStatus(t *testing.T) {
 			}
 
 			if err = mock.ExpectationsWereMet(); err != nil {
-				t.Fatalf("%v", err)
+				t.Fatal(err)
 			}
 		})
 	}

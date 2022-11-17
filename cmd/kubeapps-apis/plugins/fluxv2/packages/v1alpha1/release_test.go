@@ -218,7 +218,7 @@ func TestGetInstalledPackageSummariesWithoutPagination(t *testing.T) {
 			charts, releases, cleanup := newChartsAndReleases(t, tc.existingObjs)
 			s, mock, err := newServerWithChartsAndReleases(t, nil, charts, releases)
 			if err != nil {
-				t.Fatalf("%+v", err)
+				t.Fatal(err)
 			}
 			defer cleanup()
 
@@ -226,7 +226,7 @@ func TestGetInstalledPackageSummariesWithoutPagination(t *testing.T) {
 				ts2, repo, err := newHttpRepoAndServeIndex(
 					existing.repoIndex, existing.repoName, existing.repoNamespace, nil, "")
 				if err != nil {
-					t.Fatalf("%+v", err)
+					t.Fatal(err)
 				}
 				defer ts2.Close()
 
@@ -266,7 +266,7 @@ func TestGetInstalledPackageSummariesWithPagination(t *testing.T) {
 		charts, releases, cleanup := newChartsAndReleases(t, existingObjs)
 		s, mock, err := newServerWithChartsAndReleases(t, nil, charts, releases)
 		if err != nil {
-			t.Fatalf("%+v", err)
+			t.Fatal(err)
 		}
 		defer cleanup()
 
@@ -274,7 +274,7 @@ func TestGetInstalledPackageSummariesWithPagination(t *testing.T) {
 			ts2, repo, err := newHttpRepoAndServeIndex(
 				existing.repoIndex, existing.repoName, existing.repoNamespace, nil, "")
 			if err != nil {
-				t.Fatalf("%+v", err)
+				t.Fatal(err)
 			}
 			defer ts2.Close()
 
@@ -473,7 +473,7 @@ func TestGetInstalledPackageDetail(t *testing.T) {
 				t, helmReleaseNamespace, []helmReleaseStub{tc.existingHelmStub})
 			s, mock, err := newServerWithChartsAndReleases(t, actionConfig, charts, repos)
 			if err != nil {
-				t.Fatalf("%+v", err)
+				t.Fatal(err)
 			}
 
 			response, err := s.GetInstalledPackageDetail(context.Background(), tc.request)
@@ -636,13 +636,13 @@ func TestCreateInstalledPackage(t *testing.T) {
 			ts, repo, err := newHttpRepoAndServeIndex(
 				tc.existingObjs.repoIndex, tc.existingObjs.repoName, tc.existingObjs.repoNamespace, nil, "")
 			if err != nil {
-				t.Fatalf("%+v", err)
+				t.Fatal(err)
 			}
 			defer ts.Close()
 
 			s, mock, err := newSimpleServerWithRepos(t, []sourcev1.HelmRepository{*repo})
 			if err != nil {
-				t.Fatalf("%+v", err)
+				t.Fatal(err)
 			}
 
 			if err = s.redisMockExpectGetFromRepoCache(mock, nil, *repo); err != nil {
@@ -856,7 +856,7 @@ func TestUpdateInstalledPackage(t *testing.T) {
 			defer cleanup()
 			s, mock, err := newServerWithChartsAndReleases(t, nil, charts, releases)
 			if err != nil {
-				t.Fatalf("%+v", err)
+				t.Fatal(err)
 			}
 
 			if tc.defaultUpgradePolicyStr != "" {
@@ -957,7 +957,7 @@ func TestDeleteInstalledPackage(t *testing.T) {
 			defer cleanup()
 			s, mock, err := newServerWithChartsAndReleases(t, nil, charts, repos)
 			if err != nil {
-				t.Fatalf("%+v", err)
+				t.Fatal(err)
 			}
 
 			response, err := s.DeleteInstalledPackage(context.Background(), tc.request)
@@ -1108,7 +1108,7 @@ func TestGetInstalledPackageResourceRefs(t *testing.T) {
 				toHelmReleaseStubs(tc.baseTestCase.ExistingReleases))
 			server, mock, err := newServerWithChartsAndReleases(t, actionConfig, charts, releases)
 			if err != nil {
-				t.Fatalf("%+v", err)
+				t.Fatal(err)
 			}
 
 			response, err := server.GetInstalledPackageResourceRefs(context.Background(), tc.request)
@@ -1142,7 +1142,7 @@ func newChartsAndReleases(t *testing.T, existingK8sObjs []testSpecGetInstalledPa
 	for _, existing := range existingK8sObjs {
 		tarGzBytes, err := os.ReadFile(existing.chartTarGz)
 		if err != nil {
-			t.Fatalf("%+v", err)
+			t.Fatal(err)
 		}
 
 		// stand up an http server just for the duration of this test
@@ -1150,7 +1150,7 @@ func newChartsAndReleases(t *testing.T, existingK8sObjs []testSpecGetInstalledPa
 			w.WriteHeader(200)
 			_, err = w.Write(tarGzBytes)
 			if err != nil {
-				t.Fatalf("%+v", err)
+				t.Fatal(err)
 			}
 		}))
 		httpServers = append(httpServers, ts)

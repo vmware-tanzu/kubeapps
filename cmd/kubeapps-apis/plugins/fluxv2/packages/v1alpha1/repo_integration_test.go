@@ -89,7 +89,7 @@ func TestKindClusterRepoWithBasicAuth(t *testing.T) {
 		Namespace: "default",
 	}
 	if err := kubeCreateSecretAndCleanup(t, newBasicAuthSecret(secretName, "foo", "bar")); err != nil {
-		t.Fatalf("%v", err)
+		t.Fatal(err)
 	}
 
 	repoName := types.NamespacedName{
@@ -97,12 +97,12 @@ func TestKindClusterRepoWithBasicAuth(t *testing.T) {
 		Namespace: "default",
 	}
 	if err := kubeAddHelmRepositoryAndCleanup(t, repoName, "", podinfo_basic_auth_repo_url, secretName.Name, 0); err != nil {
-		t.Fatalf("%v", err)
+		t.Fatal(err)
 	}
 
 	// wait until this repo reaches 'Ready'
 	if err := kubeWaitUntilHelmRepositoryIsReady(t, repoName); err != nil {
-		t.Fatalf("%v", err)
+		t.Fatal(err)
 	}
 
 	name := types.NamespacedName{
@@ -166,7 +166,7 @@ func TestKindClusterRepoWithBasicAuth(t *testing.T) {
 		grpcContext,
 		&corev1.GetAvailablePackageDetailRequest{AvailablePackageRef: availablePackageRef})
 	if err != nil {
-		t.Fatalf("%v", err)
+		t.Fatal(err)
 	}
 
 	compareAvailablePackageDetail(
@@ -332,7 +332,7 @@ func TestKindClusterAddPackageRepository(t *testing.T) {
 
 			if tc.existingSecret != nil {
 				if err := kubeCreateSecretAndCleanup(t, tc.existingSecret); err != nil {
-					t.Fatalf("%v", err)
+					t.Fatal(err)
 				}
 			}
 
@@ -557,7 +557,7 @@ func TestKindClusterGetPackageRepositoryDetail(t *testing.T) {
 			if tc.existingSecret != nil {
 				tc.existingSecret.Namespace = repoNamespace
 				if err := kubeCreateSecretAndCleanup(t, tc.existingSecret); err != nil {
-					t.Fatalf("%v", err)
+					t.Fatal(err)
 				}
 				secretName = tc.existingSecret.Name
 			}
@@ -943,7 +943,7 @@ func TestKindClusterUpdatePackageRepository(t *testing.T) {
 			if tc.oldSecret != nil {
 				tc.oldSecret.Namespace = repoNamespace
 				if err := kubeCreateSecret(t, tc.oldSecret); err != nil {
-					t.Fatalf("%v", err)
+					t.Fatal(err)
 				}
 				oldSecretName = tc.oldSecret.GetName()
 				if tc.userManagedSecrets {
@@ -961,7 +961,7 @@ func TestKindClusterUpdatePackageRepository(t *testing.T) {
 			if tc.newSecret != nil {
 				tc.newSecret.Namespace = repoNamespace
 				if err := kubeCreateSecretAndCleanup(t, tc.newSecret); err != nil {
-					t.Fatalf("%v", err)
+					t.Fatal(err)
 				}
 			}
 
@@ -977,11 +977,11 @@ func TestKindClusterUpdatePackageRepository(t *testing.T) {
 			err := kubeWaitUntilHelmRepositoryIsReady(t, name)
 			if err != nil {
 				if !tc.failed {
-					t.Fatalf("%v", err)
+					t.Fatal(err)
 				} else {
 					// sanity check : make sure repo is in failed state
 					if err.Error() != "Failed: failed to fetch Helm repository index: failed to cache index to temporary file: failed to fetch http://fluxv2plugin-testdata-svc.default.svc.cluster.local:80/podinfo-basic-auth/index.yaml : 401 Unauthorized" {
-						t.Fatalf("%v", err)
+						t.Fatal(err)
 					}
 				}
 			}
@@ -1136,11 +1136,11 @@ func TestKindClusterDeletePackageRepository(t *testing.T) {
 				tc.oldSecret.Namespace = repoNamespace
 				if tc.userManagedSecrets {
 					if err := kubeCreateSecretAndCleanup(t, tc.oldSecret); err != nil {
-						t.Fatalf("%v", err)
+						t.Fatal(err)
 					}
 				} else {
 					if err := kubeCreateSecret(t, tc.oldSecret); err != nil {
-						t.Fatalf("%v", err)
+						t.Fatal(err)
 					}
 				}
 				oldSecretName = tc.oldSecret.GetName()
@@ -1148,7 +1148,7 @@ func TestKindClusterDeletePackageRepository(t *testing.T) {
 			if tc.newSecret != nil {
 				tc.newSecret.Namespace = repoNamespace
 				if err := kubeCreateSecretAndCleanup(t, tc.newSecret); err != nil {
-					t.Fatalf("%v", err)
+					t.Fatal(err)
 				}
 			}
 
