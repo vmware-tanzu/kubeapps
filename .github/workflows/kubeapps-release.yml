@@ -8,13 +8,15 @@ on:
   push:
     tags:
       - 'v[0-9]+.[0-9]+.[0-9]+'
+      # TODO(bjesus) Remove the following line once we have tested the release process
+      - 'test-.*'
 
 concurrency:
-  group: ${{ github.head_ref || github.ref_name }}
+  group: ${{ github.head_ref || github.ref_name }}_release
   cancel-in-progress: true
 
 jobs:
-  main:
+  CI:
     uses: ./.github/workflows/kubeapps-general.yaml
     secrets: inherit
     with:
