@@ -26,7 +26,7 @@ k8s_wait_for_deployment() {
     namespace=${1:?namespace is missing}
     deployment=${2:?deployment name is missing}
     local -i exit_code=0
-    local retries=5
+    local retries=10
     local retriesWait=10
 
     info "Checking rollout status in deployment ${deployment} in ns ${namespace}"
@@ -42,6 +42,7 @@ k8s_wait_for_deployment() {
     if [ $retries == 0 ]; then
         info "Error while rolling out deployment ${deployment} in ns ${namespace}"
         kubectl describe deployment --namespace "${namespace}" "${deployment}"
+        kubectl get pods --namespace "${namespace}"
         exit 1
     fi
     return $exit_code
