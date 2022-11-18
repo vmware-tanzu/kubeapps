@@ -442,26 +442,19 @@ jobs:
       fail-fast: false
       matrix:
         tests_group:
+          - carvel
+          - flux
           - main
           - multicluster
           - multicluster-nokubeapps
-          - carvel
           - operator
-        timeout_minutes:
-          - 4
-        include: # Override the default timeout for the operators group, to avoid flaky tests
-          - tests_group: operator
-            timeout_minutes: 6
-        exclude:
-          - tests_group: operator
-            timeout_minutes: 4
     env:
       DEFAULT_DEX_IP: "172.18.0.2"
       IMG_PREFIX: ${{ needs.setup.outputs.img_prefix }}
       TESTS_GROUP: ${{ matrix.tests_group }}
       TEST_OPERATORS: "1"
       TEST_UPGRADE: "1"
-      TEST_TIMEOUT_MINUTES: ${{ matrix.timeout_minutes }}  # Timeout minutes for each test
+      TEST_TIMEOUT_MINUTES: 6  # Timeout minutes for each test
       USE_MULTICLUSTER_OIDC_ENV: "true"
     steps:
       - uses: actions/checkout@v3
@@ -609,10 +602,9 @@ jobs:
       - push_images
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
       - uses: ./.github/actions/srp-source-provenance
         with:
-          SRP_CLI_VERSION: ${{env.SRP_CLI_VERSION}}
+          SRP_CLI_VERSION: ${SRP_CLI_VERSION}
           SRP_CLIENT_ID: ${{secrets.SRP_CLIENT_ID}}
           SRP_CLIENT_SECRET: ${{secrets.SRP_CLIENT_SECRET}}
           VERSION: ${{needs.setup.outputs.version}}
