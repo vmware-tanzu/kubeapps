@@ -3,12 +3,10 @@
 use std::convert::TryFrom;
 use std::env;
 use std::hash::{Hash, Hasher};
+use std::sync::Arc;
 
+use crate::cache::PruningCache;
 use anyhow::{Context, Result};
-use cached::{
-    proc_macro::cached,
-    stores::{CanExpire, ExpiringValueCache},
-};
 use chrono::Utc;
 use http::Uri;
 use k8s_openapi::api::core::v1 as corev1;
@@ -46,7 +44,7 @@ pub enum PinnipedError {
 /// Request, Spec and the Status including the returned cluster credential
 /// are structs based on the corresponding structs in the pinniped code at:
 /// https://github.com/vmware-tanzu/pinniped/blob/main/generated/1.19/apis/concierge/login/v1alpha1/types_token.go#L11
-#[derive(Deserialize, Serialize, Clone, Debug, PartialEq, Eq)]
+#[derive(Default, Deserialize, Serialize, Clone, Debug, PartialEq, Eq)]
 pub struct TokenCredentialRequest {
     spec: TokenCredentialRequestSpec,
     status: Option<TokenCredentialRequestStatus>,
@@ -60,10 +58,10 @@ impl Hash for TokenCredentialRequest {
     }
 }
 
-// CanExpire is implemented for the request so that the cache can determine
-// if the request has expired.
-impl CanExpire for TokenCredentialRequest {
-    fn is_expired(&self) -> bool {
+// is_expired is implemented for the request so that the cache can determine if
+// the request has expired.
+impl TokenCredentialRequest {
+    pub fn is_expired(&self) -> bool {
         match self.status.clone() {
             Some(s) => match s.credential {
                 Some(c) => c.expiration_timestamp < metav1::Time(Utc::now()),
@@ -74,7 +72,7 @@ impl CanExpire for TokenCredentialRequest {
     }
 }
 
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Default, Deserialize, Serialize, Clone, Debug)]
 pub struct TokenCredentialRequestSpec {
     // Bearer token supplied with the credential request.
     token: Option<String>,
@@ -113,6 +111,18 @@ pub struct TokenCredentialRequestStatus {
     message: Option<String>,
 }
 
+/// A CredentialCache is an atomic-reference-counted cache of
+/// TokenCredentialRequests.
+///
+/// The cache takes care of pruning expired tokens whenever a write lock is
+/// acquired to set a new value.
+pub type CredentialCache = Arc<PruningCache<TokenCredentialRequest, TokenCredentialRequest>>;
+
+/// Return a new CredentialCache.
+pub fn new_credential_cache() -> CredentialCache {
+    Arc::new(PruningCache::new(|(_k, v)| !v.is_expired()))
+}
+
 #[derive(Deserialize, Serialize, Clone, Debug, PartialEq, Eq)]
 /// ClusterCredential is the cluster-specific credential returned on a
 /// successful credential request. It contains either a valid bearer token or a
@@ -141,11 +151,16 @@ pub async fn exchange_token_for_identity(
     authorization: &str,
     k8s_api_server_url: &str,
     k8s_api_ca_cert_data: &[u8],
+    credential_cache: CredentialCache,
 ) -> Result<Identity> {
-    let credential_request =
-        prepare_and_call_pinniped_exchange(authorization, k8s_api_server_url, k8s_api_ca_cert_data)
-            .await
-            .context("Failed to exchange credentials")?;
+    let credential_request = prepare_and_call_pinniped_exchange(
+        authorization,
+        k8s_api_server_url,
+        k8s_api_ca_cert_data,
+        credential_cache,
+    )
+    .await
+    .context("Failed to exchange credentials")?;
     match credential_request.status {
         Some(s) => {
             match s.credential {
@@ -211,8 +226,10 @@ async fn prepare_and_call_pinniped_exchange(
     authorization: &str,
     k8s_api_server_url: &str,
     k8s_api_ca_cert_data: &[u8],
+    credential_cache: CredentialCache,
 ) -> Result<TokenCredentialRequest> {
     // context data
+    let start = std::time::Instant::now();
     let pinniped_namespace: String = env::var(DEFAULT_PINNIPED_NAMESPACE)?;
     let pinniped_auth_type: String = env::var(DEFAULT_PINNIPED_AUTHENTICATOR_TYPE)?;
     let pinniped_auth_name: String = env::var(DEFAULT_PINNIPED_AUTHENTICATOR_NAME)?;
@@ -243,20 +260,30 @@ async fn prepare_and_call_pinniped_exchange(
         status: None,
     };
 
-    call_pinniped(pinniped_namespace, client, cred_data).await
+    // If the credential already exists in the cache (the cache handles expired
+    // creds), then return that.
+    let mut used_cache = false;
+    let res = match credential_cache.get(&cred_data) {
+        Some(cached_cred) => {
+            used_cache = true;
+            Ok(cached_cred)
+        }
+        None => {
+            let cred = call_pinniped(pinniped_namespace, client, cred_data.clone()).await?;
+            credential_cache.insert(cred_data, cred.clone());
+            Ok(cred)
+        }
+    };
+
+    let finished = std::time::Instant::now();
+    debug!(
+        "prepare_and_call_pinniped_exchange took {}ms. Used cache?: {}",
+        finished.duration_since(start).as_millis(),
+        used_cache
+    );
+    res
 }
 
-// More details about the cached macro options at
-// https://docs.rs/cached/latest/cached/proc_macro/index.html
-#[cached(
-    // Creates an ExpiringValueCache with key and value both being TokenCredentialRequests.
-    type = "ExpiringValueCache<TokenCredentialRequest, TokenCredentialRequest>",
-    create = "{ ExpiringValueCache::with_size(5) }",
-    key = "TokenCredentialRequest",
-    // We convert the arguments so that we're only using the cred_data as the key.
-    convert = r#"{ cred_data.clone() }"#,
-    result = true,
-)]
 async fn call_pinniped(
     pinniped_namespace: String,
     client: kube::Client,
@@ -272,7 +299,6 @@ async fn call_pinniped(
     let cred_request = DynamicObject::new("", &ar)
         .within(&pinniped_namespace)
         .data(serde_json::to_value(cred_data)?);
-    debug!("{}", serde_json::to_string(&cred_request).unwrap());
     // token credential request invocation
     // we start first as a cluster-based call. if this call fails with a NotFound
     // error, it is an indication we are on an old version which was
@@ -343,6 +369,7 @@ mod tests {
                 "authorization",
                 "https://example.com",
                 VALID_CERT_BASE64.as_bytes(),
+                new_credential_cache(),
             )) {
                 Ok(_) => anyhow::bail!("expected error"),
                 Err(e) => {
@@ -376,6 +403,7 @@ mod tests {
                 "authorization",
                 "not a url",
                 VALID_CERT_BASE64.as_bytes(),
+                new_credential_cache(),
             )) {
                 Ok(_) => anyhow::bail!("expected error"),
                 Err(e) => {
@@ -409,6 +437,7 @@ mod tests {
                 "authorization",
                 "https://example.com",
                 "not a cert".as_bytes(),
+                new_credential_cache(),
             )) {
                 Ok(_) => anyhow::bail!("expected error"),
                 Err(e) => {
@@ -670,5 +699,94 @@ mZu9A/ivt37pOQXm/HOX6tHB
 
         assert!(!cred_data.is_expired());
         Ok(())
+    }
+
+    #[test]
+    fn test_credential_cache_cannot_add_expired_token() {
+        let cc = new_credential_cache();
+
+        let key_tcr = make_token_credential_request();
+        assert!(key_tcr.is_expired());
+
+        cc.insert(key_tcr.clone(), key_tcr);
+
+        assert_eq!(cc.len(), 0);
+    }
+
+    #[test]
+    fn test_credential_cache_can_add_non_expired_token() {
+        let cc = new_credential_cache();
+
+        let key_tcr = make_token_credential_request();
+        let mut val_tcr = key_tcr.clone();
+        val_tcr.status = Some(TokenCredentialRequestStatus {
+            credential: Some(ClusterCredential {
+                expiration_timestamp: metav1::Time(Utc::now() + Duration::days(1)),
+                client_certificate_data: String::from("cert data"),
+                client_key_data: String::from("key data"),
+                token: Some(String::from("token")),
+            }),
+            message: None,
+        });
+        assert!(!val_tcr.is_expired());
+
+        cc.insert(key_tcr.clone(), val_tcr.clone());
+
+        assert_eq!(cc.len(), 1);
+        assert_eq!(cc.get(&key_tcr), Some(val_tcr));
+    }
+
+    #[test]
+    fn test_credential_cache_prunes_expired_tokens() {
+        let cc = new_credential_cache();
+
+        // Insert a credential that will expire in 1 millisecond.
+        let key_tcr = make_token_credential_request();
+        let mut val_tcr = key_tcr.clone();
+        val_tcr.status = Some(TokenCredentialRequestStatus {
+            credential: Some(ClusterCredential {
+                expiration_timestamp: metav1::Time(Utc::now() + Duration::milliseconds(1)),
+                client_certificate_data: String::from("cert data"),
+                client_key_data: String::from("key data"),
+                token: Some(String::from("token")),
+            }),
+            message: None,
+        });
+        cc.insert(key_tcr.clone(), val_tcr.clone());
+
+        assert!(!val_tcr.is_expired());
+        assert_eq!(cc.len(), 1);
+
+        std::thread::sleep(std::time::Duration::from_millis(1));
+
+        // Now the credential will still be present (as there hasn't been a write
+        // operation), but will not be returned as it has expired.
+        assert_eq!(cc.len(), 1);
+        assert_eq!(cc.get(&key_tcr), None);
+
+        // But if we update the cache (where a write lock will be used) the expired
+        // one will be removed.
+        let key_tcr_2 = TokenCredentialRequest {
+            spec: TokenCredentialRequestSpec {
+                token: Some(String::from("fake-token-2")),
+                ..key_tcr.spec.clone()
+            },
+            ..key_tcr.clone()
+        };
+        let mut val_tcr_2 = key_tcr_2.clone();
+        val_tcr_2.status = Some(TokenCredentialRequestStatus {
+            credential: Some(ClusterCredential {
+                expiration_timestamp: metav1::Time(Utc::now() + Duration::days(1)),
+                client_certificate_data: String::from("cert data"),
+                client_key_data: String::from("key data"),
+                token: Some(String::from("token")),
+            }),
+            message: None,
+        });
+        cc.insert(key_tcr_2.clone(), val_tcr_2.clone());
+
+        assert_eq!(cc.len(), 1);
+        assert_eq!(cc.get(&key_tcr), None);
+        assert_eq!(cc.get(&key_tcr_2), Some(val_tcr_2));
     }
 }
