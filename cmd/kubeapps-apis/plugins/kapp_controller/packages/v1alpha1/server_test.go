@@ -9310,8 +9310,10 @@ func TestGetPackageRepositorySummariesFiltering(t *testing.T) {
 			request: &corev1.GetPackageRepositorySummariesRequest{
 				Context: &corev1.Context{Namespace: "default"},
 			},
-			existingObjects:  repositories,
-			expectedResponse: []metav1.ObjectMeta{},
+			existingObjects: repositories,
+			expectedResponse: []metav1.ObjectMeta{
+				{Name: "globalrepo", Namespace: demoGlobalPackagingNamespace},
+			},
 		},
 		{
 			name: "returns repositories from given namespace",
@@ -9320,6 +9322,7 @@ func TestGetPackageRepositorySummariesFiltering(t *testing.T) {
 			},
 			existingObjects: repositories,
 			expectedResponse: []metav1.ObjectMeta{
+				{Name: "globalrepo", Namespace: demoGlobalPackagingNamespace},
 				{Name: "nsrepo", Namespace: "privatens"},
 			},
 		},

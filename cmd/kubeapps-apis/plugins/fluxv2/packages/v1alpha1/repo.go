@@ -232,8 +232,8 @@ func (s *Server) newRepo(ctx context.Context, request *corev1.AddPackageReposito
 		return nil, status.Errorf(codes.InvalidArgument, "no request Name provided")
 	}
 
-	if request.GetNamespaceScoped() {
-		return nil, status.Errorf(codes.Unimplemented, "namespaced-scoped repositories are not supported")
+	if !request.GetNamespaceScoped() {
+		return nil, status.Errorf(codes.Unimplemented, "global-scoped repositories are not supported")
 	}
 
 	typ := request.GetType()
@@ -378,7 +378,7 @@ func (s *Server) repoDetail(ctx context.Context, repoRef *corev1.PackageReposito
 		Name: repo.Name,
 		// TODO (gfichtenholt) Flux HelmRepository CR doesn't have a designated field for description
 		Description:     "",
-		NamespaceScoped: false,
+		NamespaceScoped: true,
 		Type:            typ,
 		Url:             repo.Spec.URL,
 		Interval:        pkgutils.FromDuration(&repo.Spec.Interval),
@@ -430,7 +430,7 @@ func (s *Server) repoSummaries(ctx context.Context, ns string) ([]*corev1.Packag
 			Name: repo.Name,
 			// TODO (gfichtenholt) Flux HelmRepository CR doesn't have a designated field for description
 			Description:     "",
-			NamespaceScoped: false,
+			NamespaceScoped: true,
 			Type:            typ,
 			Url:             repo.Spec.URL,
 			Status:          repoStatus(repo),
