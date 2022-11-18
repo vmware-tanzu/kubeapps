@@ -247,11 +247,15 @@ installFlux() {
   url="https://github.com/fluxcd/flux2/releases/download/${release}/install.yaml"
   namespace=flux-system
 
-  kubectl apply -f "${url}"
+  # this is a workaround for flux e2e tests failing when run by GitHub Action Runners 
+  # due to not being able to deploy source-controller pod error:
+  # Warning  FailedScheduling  19s (x7 over 6m)  default-scheduler  0/1 nodes are available: 1 Insufficient cpu.
+  curl -o /tmp/flux_install.yaml -LO "${url}" 
+  cat /tmp/flux_install.yaml | sed -e 's/cpu: 100m/cpu: 75m/g' | kubectl apply -f -
 
-  # wait for deployment to be ready
-  kubectl rollout status -w deployment/helm-controller --namespace="${namespace}"
-  kubectl rollout status -w deployment/source-controller --namespace="${namespace}"
+  # wait for deployments to be ready
+  k8s_wait_for_deployment ${namespace} helm-controller
+  k8s_wait_for_deployment ${namespace} source-controller
 
   # Add test repository.
   kubectl apply -f https://raw.githubusercontent.com/fluxcd/source-controller/main/config/samples/source_v1beta2_helmrepository.yaml
