@@ -43,6 +43,8 @@ type AppRepositorySpec struct {
 	Description string `json:"description,omitempty"`
 	// PassCredentials allows passing credentials with requests to other domains linked from the repository
 	PassCredentials bool `json:"passCredentials,omitempty"`
+	// Interval is the time between resyncs of the repository
+	Interval string `json:"interval,omitempty"`
 }
 
 // AppRepositoryAuth is the auth for an AppRepository resource
