@@ -56,7 +56,7 @@ const pkgRepoFormData = {
     },
     ociRepositories: [],
     performValidation: true,
-    filterRules: [],
+    filterRules: undefined,
   },
   description: "",
   dockerRegCreds: {
@@ -65,7 +65,7 @@ const pkgRepoFormData = {
     email: "",
     server: "",
   },
-  interval: "",
+  interval: "10m",
   name: "",
   passCredentials: false,
   secretAuthName: "",
@@ -284,7 +284,7 @@ it("should call the install method with OCI information", async () => {
       filterRule: undefined,
       performValidation: true,
     },
-    interval: "",
+    interval: "10m",
     description: undefined,
   } as unknown as IPkgRepoFormData);
 });
@@ -324,7 +324,7 @@ it("should call the install skipping TLS verification", async () => {
       performValidation: true,
     },
     skipTLS: true,
-    interval: "",
+    interval: "10m",
     description: undefined,
   } as unknown as IPkgRepoFormData);
 });
@@ -364,8 +364,38 @@ it("should call the install passing credentials", async () => {
       performValidation: true,
     },
     passCredentials: true,
-    interval: "",
+    interval: "10m",
     description: undefined,
+  } as unknown as IPkgRepoFormData);
+});
+
+it("should call the install using the interval", async () => {
+  const install = jest.fn().mockReturnValue(true);
+  actions.repos = {
+    ...actions.repos,
+  };
+  let wrapper: any;
+  await act(async () => {
+    wrapper = mountWrapper(defaultStore, <PkgRepoForm {...defaultProps} onSubmit={install} />);
+  });
+  wrapper.find("#kubeapps-plugin-helm").simulate("change");
+  wrapper.find("#kubeapps-repo-name").simulate("change", { target: { value: "helm-repo" } });
+  wrapper.find("#kubeapps-repo-url").simulate("change", { target: { value: "helm.repo" } });
+  wrapper.find("#kubeapps-repo-type-helm").simulate("change");
+  wrapper.find("#kubeapps-repo-interval").simulate("change", { target: { value: "15m" } });
+  const form = wrapper.find("form");
+  await act(async () => {
+    await (form.prop("onSubmit") as (e: any) => Promise<any>)({ preventDefault: jest.fn() });
+  });
+  wrapper.update();
+  expect(install).toHaveBeenCalledWith({
+    ...pkgRepoFormData,
+    name: "helm-repo",
+    type: "helm",
+    url: "https://helm.repo",
+    description: undefined,
+    plugin: { name: PluginNames.PACKAGES_HELM, version: "v1alpha1" },
+    interval: "15m",
   } as unknown as IPkgRepoFormData);
 });
 
@@ -406,7 +436,7 @@ describe("when using a filter", () => {
         },
         performValidation: true,
       },
-      interval: "",
+      interval: "10m",
       description: undefined,
     } as unknown as IPkgRepoFormData);
   });
@@ -450,7 +480,7 @@ describe("when using a filter", () => {
         },
         performValidation: true,
       },
-      interval: "",
+      interval: "10m",
       description: undefined,
     } as unknown as IPkgRepoFormData);
   });
@@ -495,7 +525,7 @@ describe("when using a filter", () => {
         filterRule: undefined,
         performValidation: true,
       },
-      interval: "",
+      interval: "10m",
       description: undefined,
     } as unknown as IPkgRepoFormData);
   });
@@ -532,7 +562,7 @@ it("should call the install method with a description", async () => {
       filterRule: undefined,
       performValidation: true,
     },
-    interval: "",
+    interval: "10m",
     description: "description test",
   } as unknown as IPkgRepoFormData);
 });
@@ -559,7 +589,7 @@ describe("when the repository info is already populated", () => {
   const repo = {
     name: "",
     description: "",
-    interval: "",
+    interval: "10m",
     packageRepoRef: packageRepoRef,
     namespaceScoped: false,
     type: "",
@@ -955,7 +985,7 @@ describe("auth provider selector for Flux repositories", () => {
   const repo = {
     name: "",
     description: "",
-    interval: "",
+    interval: "10m",
     packageRepoRef: packageRepoRef,
     namespaceScoped: false,
     type: "",
