@@ -232,6 +232,8 @@ func (s *Server) newRepo(ctx context.Context, request *corev1.AddPackageReposito
 		return nil, status.Errorf(codes.InvalidArgument, "no request Name provided")
 	}
 
+	// flux repositories are now considered to be namespaced, to support the most common cases.
+	// see discussion at https://github.com/vmware-tanzu/kubeapps/issues/5542
 	if !request.GetNamespaceScoped() {
 		return nil, status.Errorf(codes.Unimplemented, "global-scoped repositories are not supported")
 	}
@@ -377,7 +379,9 @@ func (s *Server) repoDetail(ctx context.Context, repoRef *corev1.PackageReposito
 		},
 		Name: repo.Name,
 		// TODO (gfichtenholt) Flux HelmRepository CR doesn't have a designated field for description
-		Description:     "",
+		Description: "",
+		// flux repositories are now considered to be namespaced, to support the most common cases.
+		// see discussion at https://github.com/vmware-tanzu/kubeapps/issues/5542
 		NamespaceScoped: true,
 		Type:            typ,
 		Url:             repo.Spec.URL,
@@ -429,7 +433,9 @@ func (s *Server) repoSummaries(ctx context.Context, ns string) ([]*corev1.Packag
 			},
 			Name: repo.Name,
 			// TODO (gfichtenholt) Flux HelmRepository CR doesn't have a designated field for description
-			Description:     "",
+			Description: "",
+			// flux repositories are now considered to be namespaced, to support the most common cases.
+			// see discussion at https://github.com/vmware-tanzu/kubeapps/issues/5542
 			NamespaceScoped: true,
 			Type:            typ,
 			Url:             repo.Spec.URL,
