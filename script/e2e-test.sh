@@ -248,7 +248,7 @@ installFlux() {
   namespace=flux-system
 
   curl -o /tmp/flux_install.yaml -LO "${url}" 
-  cat /tmp/flux_install.yaml | sed -e 's/cpu: 100m/cpu: 50m/g' | kubectl apply -f -
+  cat /tmp/flux_install.yaml | sed -e 's/cpu: 100m/cpu: 75m/g' | kubectl apply -f -
 
   # wait for deployments to be ready
   k8s_wait_for_deployment ${namespace} helm-controller
