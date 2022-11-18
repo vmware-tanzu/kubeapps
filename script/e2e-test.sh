@@ -247,7 +247,8 @@ installFlux() {
   url="https://github.com/fluxcd/flux2/releases/download/${release}/install.yaml"
   namespace=flux-system
 
-  kubectl apply -f "${url}"
+  curl -o /tmp/flux_install.yaml -LO "${url}" 
+  cat /tmp/flux_install.yaml | sed -e 's/            cpu: 50m//' | sed -e 's/            cpu: 100m//' | kubectl apply -f -
 
   # wait for deployments to be ready
   k8s_wait_for_deployment ${namespace} helm-controller
