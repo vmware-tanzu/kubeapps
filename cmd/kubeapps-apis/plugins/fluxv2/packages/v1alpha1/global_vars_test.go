@@ -1126,44 +1126,49 @@ var (
 	add_repo_req_1 = &corev1.AddPackageRepositoryRequest{
 		Name:            "bar",
 		Context:         &corev1.Context{Namespace: "foo"},
-		NamespaceScoped: true,
+		NamespaceScoped: false,
 	}
 
 	add_repo_req_2 = &corev1.AddPackageRepositoryRequest{
-		Name:    "bar",
-		Context: &corev1.Context{Namespace: "foo"},
-		Type:    "foobar",
+		Name:            "bar",
+		Context:         &corev1.Context{Namespace: "foo"},
+		Type:            "foobar",
+		NamespaceScoped: true,
 	}
 
 	add_repo_req_3 = &corev1.AddPackageRepositoryRequest{
-		Name:    "bar",
-		Context: &corev1.Context{Namespace: "foo"},
-		Type:    "helm",
+		Name:            "bar",
+		Context:         &corev1.Context{Namespace: "foo"},
+		Type:            "helm",
+		NamespaceScoped: true,
 	}
 
 	add_repo_req_4 = &corev1.AddPackageRepositoryRequest{
-		Name:    "bar",
-		Context: &corev1.Context{Namespace: "foo"},
-		Type:    "helm",
-		Url:     "http://example.com",
+		Name:            "bar",
+		Context:         &corev1.Context{Namespace: "foo"},
+		Type:            "helm",
+		NamespaceScoped: true,
+		Url:             "http://example.com",
 		TlsConfig: &corev1.PackageRepositoryTlsConfig{
 			InsecureSkipVerify: true,
 		},
 	}
 
 	add_repo_req_5 = &corev1.AddPackageRepositoryRequest{
-		Name:    "bar",
-		Context: &corev1.Context{Namespace: "foo"},
-		Type:    "helm",
-		Url:     "http://example.com",
+		Name:            "bar",
+		Context:         &corev1.Context{Namespace: "foo"},
+		Type:            "helm",
+		NamespaceScoped: true,
+		Url:             "http://example.com",
 	}
 
 	add_repo_req_6 = func(ca []byte) *corev1.AddPackageRepositoryRequest {
 		return &corev1.AddPackageRepositoryRequest{
-			Name:    "bar",
-			Context: &corev1.Context{Namespace: "foo"},
-			Type:    "helm",
-			Url:     "http://example.com",
+			Name:            "bar",
+			Context:         &corev1.Context{Namespace: "foo"},
+			NamespaceScoped: true,
+			Type:            "helm",
+			Url:             "http://example.com",
 			TlsConfig: &corev1.PackageRepositoryTlsConfig{
 				PackageRepoTlsConfigOneOf: &corev1.PackageRepositoryTlsConfig_CertAuthority{
 					CertAuthority: string(ca),
@@ -1173,10 +1178,11 @@ var (
 	}
 
 	add_repo_req_7 = &corev1.AddPackageRepositoryRequest{
-		Name:    "bar",
-		Context: &corev1.Context{Namespace: "foo"},
-		Type:    "helm",
-		Url:     "http://example.com",
+		Name:            "bar",
+		Context:         &corev1.Context{Namespace: "foo"},
+		Type:            "helm",
+		NamespaceScoped: true,
+		Url:             "http://example.com",
 		TlsConfig: &corev1.PackageRepositoryTlsConfig{
 			PackageRepoTlsConfigOneOf: &corev1.PackageRepositoryTlsConfig_SecretRef{
 				SecretRef: &corev1.SecretKeyReference{
@@ -1187,10 +1193,11 @@ var (
 	}
 
 	add_repo_req_8 = &corev1.AddPackageRepositoryRequest{
-		Name:    "bar",
-		Context: &corev1.Context{Namespace: "foo"},
-		Type:    "helm",
-		Url:     "http://example.com",
+		Name:            "bar",
+		Context:         &corev1.Context{Namespace: "foo"},
+		Type:            "helm",
+		NamespaceScoped: true,
+		Url:             "http://example.com",
 		Auth: &corev1.PackageRepositoryAuth{
 			Type: corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_BASIC_AUTH,
 			PackageRepoAuthOneOf: &corev1.PackageRepositoryAuth_UsernamePassword{
@@ -1205,19 +1212,21 @@ var (
 
 	add_repo_req_9 = func(pub, priv []byte) *corev1.AddPackageRepositoryRequest {
 		return &corev1.AddPackageRepositoryRequest{
-			Name:    "bar",
-			Context: &corev1.Context{Namespace: "foo"},
-			Type:    "helm",
-			Url:     "http://example.com",
-			Auth:    tls_auth(pub, priv),
+			Name:            "bar",
+			Context:         &corev1.Context{Namespace: "foo"},
+			Type:            "helm",
+			NamespaceScoped: true,
+			Url:             "http://example.com",
+			Auth:            tls_auth(pub, priv),
 		}
 	}
 
 	add_repo_req_10 = &corev1.AddPackageRepositoryRequest{
-		Name:    "bar",
-		Context: &corev1.Context{Namespace: "foo"},
-		Type:    "helm",
-		Url:     "http://example.com",
+		Name:            "bar",
+		Context:         &corev1.Context{Namespace: "foo"},
+		Type:            "helm",
+		NamespaceScoped: true,
+		Url:             "http://example.com",
 		Auth: &corev1.PackageRepositoryAuth{
 			Type: corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_BEARER,
 			PackageRepoAuthOneOf: &corev1.PackageRepositoryAuth_Header{
@@ -1227,10 +1236,11 @@ var (
 	}
 
 	add_repo_req_11 = &corev1.AddPackageRepositoryRequest{
-		Name:    "bar",
-		Context: &corev1.Context{Namespace: "foo"},
-		Type:    "helm",
-		Url:     "http://example.com",
+		Name:            "bar",
+		Context:         &corev1.Context{Namespace: "foo"},
+		Type:            "helm",
+		NamespaceScoped: true,
+		Url:             "http://example.com",
 		Auth: &corev1.PackageRepositoryAuth{
 			Type: corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_AUTHORIZATION_HEADER,
 			PackageRepoAuthOneOf: &corev1.PackageRepositoryAuth_Header{
@@ -1240,10 +1250,11 @@ var (
 	}
 
 	add_repo_req_12 = &corev1.AddPackageRepositoryRequest{
-		Name:    "bar",
-		Context: &corev1.Context{Namespace: "foo"},
-		Type:    "helm",
-		Url:     "http://example.com",
+		Name:            "bar",
+		Context:         &corev1.Context{Namespace: "foo"},
+		Type:            "helm",
+		NamespaceScoped: true,
+		Url:             "http://example.com",
 		Auth: &corev1.PackageRepositoryAuth{
 			Type: corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_DOCKER_CONFIG_JSON,
 			PackageRepoAuthOneOf: &corev1.PackageRepositoryAuth_DockerCreds{
@@ -1258,19 +1269,21 @@ var (
 	}
 
 	add_repo_req_13 = &corev1.AddPackageRepositoryRequest{
-		Name:    "bar",
-		Context: &corev1.Context{Namespace: "foo"},
-		Type:    "helm",
-		Url:     "http://example.com",
-		Auth:    secret_1_auth,
+		Name:            "bar",
+		Context:         &corev1.Context{Namespace: "foo"},
+		Type:            "helm",
+		NamespaceScoped: true,
+		Url:             "http://example.com",
+		Auth:            secret_1_auth,
 	}
 
 	add_repo_req_14 = &corev1.AddPackageRepositoryRequest{
-		Name:    "bar",
-		Context: &corev1.Context{Namespace: "foo"},
-		Type:    "helm",
-		Url:     "http://example.com",
-		Auth:    secret_1_auth,
+		Name:            "bar",
+		Context:         &corev1.Context{Namespace: "foo"},
+		Type:            "helm",
+		NamespaceScoped: true,
+		Url:             "http://example.com",
+		Auth:            secret_1_auth,
 		TlsConfig: &corev1.PackageRepositoryTlsConfig{
 			PackageRepoTlsConfigOneOf: &corev1.PackageRepositoryTlsConfig_SecretRef{
 				SecretRef: &corev1.SecretKeyReference{
@@ -1281,25 +1294,28 @@ var (
 	}
 
 	add_repo_req_15 = &corev1.AddPackageRepositoryRequest{
-		Name:    "my-podinfo",
-		Context: &corev1.Context{Namespace: "default"},
-		Type:    "helm",
-		Url:     podinfo_repo_url,
+		Name:            "my-podinfo",
+		Context:         &corev1.Context{Namespace: "default"},
+		Type:            "helm",
+		NamespaceScoped: true,
+		Url:             podinfo_repo_url,
 	}
 
 	add_repo_req_16 = &corev1.AddPackageRepositoryRequest{
-		Name:    "my-podinfo-2",
-		Context: &corev1.Context{Namespace: "default"},
-		Type:    "helm",
-		Url:     podinfo_basic_auth_repo_url,
-		Auth:    foo_bar_auth,
+		Name:            "my-podinfo-2",
+		Context:         &corev1.Context{Namespace: "default"},
+		Type:            "helm",
+		NamespaceScoped: true,
+		Url:             podinfo_basic_auth_repo_url,
+		Auth:            foo_bar_auth,
 	}
 
 	add_repo_req_17 = &corev1.AddPackageRepositoryRequest{
-		Name:    "my-podinfo-3",
-		Context: &corev1.Context{Namespace: "default"},
-		Type:    "helm",
-		Url:     podinfo_basic_auth_repo_url,
+		Name:            "my-podinfo-3",
+		Context:         &corev1.Context{Namespace: "default"},
+		Type:            "helm",
+		NamespaceScoped: true,
+		Url:             podinfo_basic_auth_repo_url,
 		Auth: &corev1.PackageRepositoryAuth{
 			Type: corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_BASIC_AUTH,
 			PackageRepoAuthOneOf: &corev1.PackageRepositoryAuth_UsernamePassword{
@@ -1312,18 +1328,20 @@ var (
 	}
 
 	add_repo_req_18 = &corev1.AddPackageRepositoryRequest{
-		Name:    "my-podinfo-4",
-		Context: &corev1.Context{Namespace: "default"},
-		Type:    "helm",
-		Url:     podinfo_basic_auth_repo_url,
-		Auth:    secret_1_auth,
+		Name:            "my-podinfo-4",
+		Context:         &corev1.Context{Namespace: "default"},
+		Type:            "helm",
+		NamespaceScoped: true,
+		Url:             podinfo_basic_auth_repo_url,
+		Auth:            secret_1_auth,
 	}
 
 	add_repo_req_19 = &corev1.AddPackageRepositoryRequest{
-		Name:    "my-podinfo-4",
-		Context: &corev1.Context{Namespace: "default"},
-		Type:    "helm",
-		Url:     podinfo_tls_repo_url,
+		Name:            "my-podinfo-4",
+		Context:         &corev1.Context{Namespace: "default"},
+		Type:            "helm",
+		NamespaceScoped: true,
+		Url:             podinfo_tls_repo_url,
 		Auth: &corev1.PackageRepositoryAuth{
 			Type: corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_TLS,
 			PackageRepoAuthOneOf: &corev1.PackageRepositoryAuth_SecretRef{
@@ -1335,20 +1353,22 @@ var (
 	}
 
 	add_repo_req_20 = &corev1.AddPackageRepositoryRequest{
-		Name:    "bar",
-		Context: &corev1.Context{Namespace: "foo"},
-		Type:    "helm",
-		Url:     "http://example.com",
+		Name:            "bar",
+		Context:         &corev1.Context{Namespace: "foo"},
+		Type:            "helm",
+		NamespaceScoped: true,
+		Url:             "http://example.com",
 		Auth: &corev1.PackageRepositoryAuth{
 			PassCredentials: true,
 		},
 	}
 
 	add_repo_req_21 = &corev1.AddPackageRepositoryRequest{
-		Name:    "my-podinfo-5",
-		Context: &corev1.Context{Namespace: "default"},
-		Type:    "oci",
-		Url:     github_stefanprodan_podinfo_oci_registry_url,
+		Name:            "my-podinfo-5",
+		Context:         &corev1.Context{Namespace: "default"},
+		Type:            "oci",
+		NamespaceScoped: true,
+		Url:             github_stefanprodan_podinfo_oci_registry_url,
 	}
 
 	add_repo_req_22 = func(user, password string) *corev1.AddPackageRepositoryRequest {
@@ -1404,10 +1424,11 @@ var (
 	}
 
 	add_repo_req_25 = &corev1.AddPackageRepositoryRequest{
-		Name:    "my-podinfo-9",
-		Context: &corev1.Context{Namespace: "default"},
-		Type:    "oci",
-		Url:     github_stefanprodan_podinfo_oci_registry_url,
+		Name:            "my-podinfo-9",
+		Context:         &corev1.Context{Namespace: "default"},
+		Type:            "oci",
+		NamespaceScoped: true,
+		Url:             github_stefanprodan_podinfo_oci_registry_url,
 		Auth: &corev1.PackageRepositoryAuth{
 			Type: corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_DOCKER_CONFIG_JSON,
 			PackageRepoAuthOneOf: &corev1.PackageRepositoryAuth_SecretRef{
@@ -1419,18 +1440,20 @@ var (
 	}
 
 	add_repo_req_26 = &corev1.AddPackageRepositoryRequest{
-		Name:    "bar",
-		Context: &corev1.Context{Namespace: "foo"},
-		Type:    "oci",
-		Url:     github_stefanprodan_podinfo_oci_registry_url,
+		Name:            "bar",
+		Context:         &corev1.Context{Namespace: "foo"},
+		Type:            "oci",
+		NamespaceScoped: true,
+		Url:             github_stefanprodan_podinfo_oci_registry_url,
 	}
 
 	add_repo_req_27 = func(server, user, password string) *corev1.AddPackageRepositoryRequest {
 		return &corev1.AddPackageRepositoryRequest{
-			Name:    "my-podinfo-10",
-			Context: &corev1.Context{Namespace: "default"},
-			Type:    "oci",
-			Url:     harbor_stefanprodan_podinfo_oci_registry_url,
+			Name:            "my-podinfo-10",
+			Context:         &corev1.Context{Namespace: "default"},
+			Type:            "oci",
+			NamespaceScoped: true,
+			Url:             harbor_stefanprodan_podinfo_oci_registry_url,
 			Auth: &corev1.PackageRepositoryAuth{
 				Type: corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_DOCKER_CONFIG_JSON,
 				PackageRepoAuthOneOf: &corev1.PackageRepositoryAuth_DockerCreds{
@@ -1446,10 +1469,11 @@ var (
 
 	add_repo_req_28 = func(server, user, password string) *corev1.AddPackageRepositoryRequest {
 		return &corev1.AddPackageRepositoryRequest{
-			Name:    "my-podinfo-10",
-			Context: &corev1.Context{Namespace: "default"},
-			Type:    "oci",
-			Url:     gcp_stefanprodan_podinfo_oci_registry_url,
+			Name:            "my-podinfo-10",
+			Context:         &corev1.Context{Namespace: "default"},
+			Type:            "oci",
+			NamespaceScoped: true,
+			Url:             gcp_stefanprodan_podinfo_oci_registry_url,
 			Auth: &corev1.PackageRepositoryAuth{
 				Type: corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_DOCKER_CONFIG_JSON,
 				PackageRepoAuthOneOf: &corev1.PackageRepositoryAuth_DockerCreds{
@@ -1469,11 +1493,12 @@ var (
 		})
 
 		return &corev1.AddPackageRepositoryRequest{
-			Name:         "bar",
-			Context:      &corev1.Context{Namespace: "foo"},
-			Type:         "oci",
-			Url:          github_stefanprodan_podinfo_oci_registry_url,
-			CustomDetail: customDetail,
+			Name:            "bar",
+			Context:         &corev1.Context{Namespace: "foo"},
+			Type:            "oci",
+			NamespaceScoped: true,
+			Url:             github_stefanprodan_podinfo_oci_registry_url,
+			CustomDetail:    customDetail,
 		}
 	}
 
@@ -2707,7 +2732,7 @@ var (
 			PackageRepoRef:  get_repo_detail_package_resp_ref,
 			Name:            "repo-1",
 			Description:     "",
-			NamespaceScoped: false,
+			NamespaceScoped: true,
 			Type:            "helm",
 			Url:             "https://example.repo.com/charts",
 			Interval:        "1m",
@@ -2745,7 +2770,7 @@ var (
 			PackageRepoRef:  get_repo_detail_package_resp_ref,
 			Name:            "repo-1",
 			Description:     "",
-			NamespaceScoped: false,
+			NamespaceScoped: true,
 			Type:            "helm",
 			Url:             "https://example.repo.com/charts",
 			Interval:        "1m",
@@ -2768,7 +2793,7 @@ var (
 			PackageRepoRef:  get_repo_detail_package_resp_ref,
 			Name:            "repo-1",
 			Description:     "",
-			NamespaceScoped: false,
+			NamespaceScoped: true,
 			Type:            "helm",
 			Url:             "https://example.repo.com/charts",
 			Interval:        "1m",
@@ -2788,7 +2813,7 @@ var (
 			PackageRepoRef:  get_repo_detail_package_resp_ref,
 			Name:            "repo-1",
 			Description:     "",
-			NamespaceScoped: false,
+			NamespaceScoped: true,
 			Type:            "helm",
 			Url:             "https://example.repo.com/charts",
 			Interval:        "1m",
@@ -2806,7 +2831,7 @@ var (
 			PackageRepoRef:  get_repo_detail_package_resp_ref,
 			Name:            "repo-1",
 			Description:     "",
-			NamespaceScoped: false,
+			NamespaceScoped: true,
 			Type:            "helm",
 			Url:             "https://example.repo.com/charts",
 			Interval:        "1m",
@@ -2824,7 +2849,7 @@ var (
 			PackageRepoRef:  get_repo_detail_package_resp_ref,
 			Name:            "repo-1",
 			Description:     "",
-			NamespaceScoped: false,
+			NamespaceScoped: true,
 			Type:            "helm",
 			Url:             "https://example.repo.com/charts",
 			Interval:        "1m",
@@ -2846,7 +2871,7 @@ var (
 			PackageRepoRef:  get_repo_detail_package_resp_ref,
 			Name:            "repo-1",
 			Description:     "",
-			NamespaceScoped: false,
+			NamespaceScoped: true,
 			Type:            "helm",
 			Url:             "https://example.repo.com/charts",
 			Interval:        "1m",
@@ -2864,7 +2889,7 @@ var (
 			PackageRepoRef:  get_repo_detail_package_resp_ref,
 			Name:            "repo-1",
 			Description:     "",
-			NamespaceScoped: false,
+			NamespaceScoped: true,
 			Type:            "helm",
 			Url:             "https://example.repo.com/charts",
 			Interval:        "1m",
@@ -2878,7 +2903,7 @@ var (
 			PackageRepoRef:  get_repo_detail_package_resp_ref,
 			Name:            "repo-1",
 			Description:     "",
-			NamespaceScoped: false,
+			NamespaceScoped: true,
 			Type:            "helm",
 			Url:             "https://example.repo.com/charts",
 			Interval:        "1m",
@@ -2892,7 +2917,7 @@ var (
 			PackageRepoRef:  repoRefWithId("my-podinfo"),
 			Name:            "my-podinfo",
 			Description:     "",
-			NamespaceScoped: false,
+			NamespaceScoped: true,
 			Type:            "helm",
 			Url:             podinfo_repo_url,
 			Interval:        "10m",
@@ -2910,7 +2935,7 @@ var (
 			PackageRepoRef:  repoRefWithId("my-bitnami"),
 			Name:            "my-bitnami",
 			Description:     "",
-			NamespaceScoped: false,
+			NamespaceScoped: true,
 			Type:            "helm",
 			Url:             "https://charts.bitnami.com/bitnami",
 			Interval:        "10m",
@@ -2928,7 +2953,7 @@ var (
 			PackageRepoRef:  repoRefWithId("my-podinfo-2"),
 			Name:            "my-podinfo-2",
 			Description:     "",
-			NamespaceScoped: false,
+			NamespaceScoped: true,
 			Type:            "helm",
 			Url:             podinfo_basic_auth_repo_url,
 			Interval:        "10m",
@@ -2946,7 +2971,7 @@ var (
 			PackageRepoRef:  repoRefWithId("my-podinfo-3"),
 			Name:            "my-podinfo-3",
 			Description:     "",
-			NamespaceScoped: false,
+			NamespaceScoped: true,
 			Type:            "helm",
 			Url:             podinfo_basic_auth_repo_url,
 			Interval:        "10m",
@@ -2960,7 +2985,7 @@ var (
 			PackageRepoRef:  repoRefWithId("my-podinfo-3"),
 			Name:            "my-podinfo-3",
 			Description:     "",
-			NamespaceScoped: false,
+			NamespaceScoped: true,
 			Type:            "helm",
 			Url:             podinfo_basic_auth_repo_url,
 			Interval:        "10m",
@@ -2996,7 +3021,7 @@ var (
 			PackageRepoRef:  repoRefWithId("my-podinfo-12"),
 			Name:            "my-podinfo-12",
 			Description:     "",
-			NamespaceScoped: false,
+			NamespaceScoped: true,
 			Type:            "helm",
 			Url:             github_stefanprodan_podinfo_oci_registry_url,
 			Interval:        "10m",
@@ -3034,7 +3059,7 @@ var (
 			PackageRepoRef:  repoRefWithId("my-podinfo-13"),
 			Name:            "my-podinfo-13",
 			Description:     "",
-			NamespaceScoped: false,
+			NamespaceScoped: true,
 			Type:            "oci",
 			Url:             github_stefanprodan_podinfo_oci_registry_url,
 			Interval:        "10m",
@@ -3052,7 +3077,7 @@ var (
 			PackageRepoRef:  repoRefWithId("my-podinfo-14"),
 			Name:            "my-podinfo-14",
 			Description:     "",
-			NamespaceScoped: false,
+			NamespaceScoped: true,
 			Type:            "oci",
 			Url:             github_stefanprodan_podinfo_oci_registry_url,
 			Interval:        "10m",
@@ -3078,7 +3103,7 @@ var (
 			PackageRepoRef:  repoRefWithId("my-podinfo-15"),
 			Name:            "my-podinfo-15",
 			Description:     "",
-			NamespaceScoped: false,
+			NamespaceScoped: true,
 			Type:            "oci",
 			Url:             github_stefanprodan_podinfo_oci_registry_url,
 			Interval:        "10m",
@@ -3105,7 +3130,7 @@ var (
 			PackageRepoRef:  get_repo_detail_package_resp_ref,
 			Name:            "repo-1",
 			Description:     "",
-			NamespaceScoped: false,
+			NamespaceScoped: true,
 			Type:            "oci",
 			Url:             "oci://localhost:54321/userX/charts",
 			Interval:        "1m",
@@ -3119,7 +3144,7 @@ var (
 			PackageRepoRef:  repoRefWithId("my-podinfo-16"),
 			Name:            "my-podinfo-16",
 			Description:     "",
-			NamespaceScoped: false,
+			NamespaceScoped: true,
 			Type:            "oci",
 			Url:             harbor_stefanprodan_podinfo_oci_registry_url,
 			Interval:        "10m",
@@ -3221,7 +3246,7 @@ var (
 		PackageRepoRef:  repoRef("bar", "foo"),
 		Name:            "bar",
 		Description:     "",
-		NamespaceScoped: false,
+		NamespaceScoped: true,
 		Type:            "helm",
 		Url:             "http://example.com",
 		Status:          podinfo_repo_status_1,
@@ -3232,7 +3257,7 @@ var (
 		PackageRepoRef:  repoRef("zot", "xyz"),
 		Name:            "zot",
 		Description:     "",
-		NamespaceScoped: false,
+		NamespaceScoped: true,
 		Type:            "helm",
 		Url:             "http://example.com",
 		Status:          podinfo_repo_status_1,
@@ -3243,7 +3268,7 @@ var (
 		PackageRepoRef:  repoRef("pending", "xyz"),
 		Name:            "pending",
 		Description:     "",
-		NamespaceScoped: false,
+		NamespaceScoped: true,
 		Type:            "helm",
 		Url:             "http://example.com",
 		Status:          repo_status_pending,
@@ -3254,7 +3279,7 @@ var (
 		PackageRepoRef:  repoRef("failed", "xyz"),
 		Name:            "failed",
 		Description:     "",
-		NamespaceScoped: false,
+		NamespaceScoped: true,
 		Type:            "helm",
 		Url:             "http://example.com",
 		Status: &corev1.PackageRepositoryStatus{
@@ -3270,7 +3295,7 @@ var (
 			PackageRepoRef:  repoRef(name.Name, name.Namespace),
 			Name:            name.Name,
 			Description:     "",
-			NamespaceScoped: false,
+			NamespaceScoped: true,
 			Type:            "helm",
 			Url:             podinfo_repo_url,
 			Status:          podinfo_repo_status_1,
@@ -3283,7 +3308,7 @@ var (
 			PackageRepoRef:  repoRef(name.Name, name.Namespace),
 			Name:            name.Name,
 			Description:     "",
-			NamespaceScoped: false,
+			NamespaceScoped: true,
 			Type:            "oci",
 			Url:             github_stefanprodan_podinfo_oci_registry_url,
 			Status:          podinfo_repo_status_4,
@@ -3296,7 +3321,7 @@ var (
 			PackageRepoRef:  repoRef(name.Name, name.Namespace),
 			Name:            name.Name,
 			Description:     "",
-			NamespaceScoped: false,
+			NamespaceScoped: true,
 			Type:            "oci",
 			Url:             harbor_stefanprodan_podinfo_oci_registry_url,
 			Status:          podinfo_repo_status_4,
@@ -3452,7 +3477,7 @@ var (
 			PackageRepoRef:  get_repo_detail_package_resp_ref,
 			Name:            "repo-1",
 			Description:     "",
-			NamespaceScoped: false,
+			NamespaceScoped: true,
 			Type:            "helm",
 			Url:             "http://newurl.com",
 			Interval:        "10m",
@@ -3466,7 +3491,7 @@ var (
 			PackageRepoRef:  get_repo_detail_package_resp_ref,
 			Name:            "repo-1",
 			Description:     "",
-			NamespaceScoped: false,
+			NamespaceScoped: true,
 			Type:            "helm",
 			Url:             "https://example.repo.com/charts",
 			Interval:        "5m45s",
@@ -3480,7 +3505,7 @@ var (
 			PackageRepoRef:  get_repo_detail_package_resp_ref,
 			Name:            "repo-1",
 			Description:     "",
-			NamespaceScoped: false,
+			NamespaceScoped: true,
 			Type:            "helm",
 			Url:             "https://example.repo.com/charts",
 			Interval:        "10m",
@@ -3494,7 +3519,7 @@ var (
 			PackageRepoRef:  get_repo_detail_package_resp_ref,
 			Name:            "repo-1",
 			Description:     "",
-			NamespaceScoped: false,
+			NamespaceScoped: true,
 			Type:            "helm",
 			Url:             "https://example.repo.com/charts",
 			Interval:        "10m",
@@ -3516,7 +3541,7 @@ var (
 			PackageRepoRef:  get_repo_detail_package_resp_ref,
 			Name:            "repo-1",
 			Description:     "",
-			NamespaceScoped: false,
+			NamespaceScoped: true,
 			Type:            "helm",
 			Url:             "https://example.repo.com/charts",
 			Interval:        "10m",
@@ -3530,7 +3555,7 @@ var (
 			PackageRepoRef:  get_repo_detail_package_resp_ref,
 			Name:            "repo-1",
 			Description:     "",
-			NamespaceScoped: false,
+			NamespaceScoped: true,
 			Type:            "helm",
 			Url:             "https://example.repo.com/charts",
 			Interval:        "10m",
@@ -3544,7 +3569,7 @@ var (
 			PackageRepoRef:  get_repo_detail_package_resp_ref,
 			Name:            "repo-1",
 			Description:     "",
-			NamespaceScoped: false,
+			NamespaceScoped: true,
 			Type:            "helm",
 			Url:             "https://example.repo.com/charts",
 			Interval:        "10m",
@@ -3558,7 +3583,7 @@ var (
 			PackageRepoRef:  get_repo_detail_package_resp_ref,
 			Name:            "repo-1",
 			Description:     "",
-			NamespaceScoped: false,
+			NamespaceScoped: true,
 			Type:            "helm",
 			Url:             "https://example.repo.com/charts",
 			Interval:        "10m",
@@ -3572,7 +3597,7 @@ var (
 			PackageRepoRef:  get_repo_detail_package_resp_ref,
 			Name:            "repo-1",
 			Description:     "",
-			NamespaceScoped: false,
+			NamespaceScoped: true,
 			Type:            "helm",
 			Url:             "https://example.repo.com/charts",
 			Interval:        "10m",
@@ -3586,7 +3611,7 @@ var (
 			PackageRepoRef:  get_repo_detail_package_resp_ref,
 			Name:            "repo-1",
 			Description:     "",
-			NamespaceScoped: false,
+			NamespaceScoped: true,
 			Type:            "helm",
 			Url:             "https://example.repo.com/charts",
 			Interval:        "10m",
@@ -3600,7 +3625,7 @@ var (
 			PackageRepoRef:  repoRefWithId("my-podinfo"),
 			Name:            "my-podinfo",
 			Description:     "",
-			NamespaceScoped: false,
+			NamespaceScoped: true,
 			Type:            "helm",
 			Url:             podinfo_basic_auth_repo_url,
 			Interval:        "10m",
@@ -3614,7 +3639,7 @@ var (
 			PackageRepoRef:  repoRefWithId("my-podinfo-2"),
 			Name:            "my-podinfo-2",
 			Description:     "",
-			NamespaceScoped: false,
+			NamespaceScoped: true,
 			Type:            "helm",
 			Url:             podinfo_basic_auth_repo_url,
 			Interval:        "10m",
@@ -3628,7 +3653,7 @@ var (
 			PackageRepoRef:  repoRefWithId("my-podinfo-4"),
 			Name:            "my-podinfo-4",
 			Description:     "",
-			NamespaceScoped: false,
+			NamespaceScoped: true,
 			Type:            "helm",
 			Url:             podinfo_basic_auth_repo_url,
 			Interval:        "10m",
@@ -3642,7 +3667,7 @@ var (
 			PackageRepoRef:  repoRefWithId("my-podinfo-5"),
 			Name:            "my-podinfo-5",
 			Description:     "",
-			NamespaceScoped: false,
+			NamespaceScoped: true,
 			Type:            "helm",
 			Url:             podinfo_basic_auth_repo_url,
 			Interval:        "10m",
@@ -3656,7 +3681,7 @@ var (
 			PackageRepoRef:  get_repo_detail_package_resp_ref,
 			Name:            "repo-1",
 			Description:     "",
-			NamespaceScoped: false,
+			NamespaceScoped: true,
 			Type:            "helm",
 			Url:             "http://newurl.com",
 			Interval:        "10m",
@@ -3670,7 +3695,7 @@ var (
 			PackageRepoRef:  repoRefWithId("my-podinfo-6"),
 			Name:            "my-podinfo-6",
 			Description:     "",
-			NamespaceScoped: false,
+			NamespaceScoped: true,
 			Type:            "helm",
 			Url:             podinfo_basic_auth_repo_url,
 			Interval:        "10m",
@@ -3684,7 +3709,7 @@ var (
 			PackageRepoRef:  repoRefWithId("my-podinfo-7"),
 			Name:            "my-podinfo-7",
 			Description:     "",
-			NamespaceScoped: false,
+			NamespaceScoped: true,
 			Type:            "oci",
 			Url:             github_stefanprodan_podinfo_oci_registry_url,
 			Interval:        "4m44s",

@@ -532,10 +532,8 @@ export function PkgRepoForm(props: IPkgRepoFormProps) {
           setType(RepositoryStorageTypes.PACKAGE_REPOSITORY_STORAGE_HELM);
         }
 
-        // update the isNampespaced field based on the plugin
-        setIsNamespaceScoped(
-          !isGlobalNamespace(namespace, PluginNames.PACKAGES_FLUX, currentNsConfig),
-        );
+        // flux is always namespace scoped
+        setIsNamespaceScoped(true);
         break;
       }
       case PluginNames.PACKAGES_KAPP:
@@ -849,7 +847,8 @@ export function PkgRepoForm(props: IPkgRepoFormProps) {
                           onChange={handleRepoScopeChange}
                           disabled={
                             !!repo.name ||
-                            isGlobalNamespace(namespace, plugin?.name, currentNsConfig)
+                            isGlobalNamespace(namespace, plugin?.name, currentNsConfig) ||
+                            plugin?.name === PluginNames.PACKAGES_FLUX
                           }
                           required={true}
                         />
@@ -870,7 +869,8 @@ export function PkgRepoForm(props: IPkgRepoFormProps) {
                           onChange={handleRepoScopeChange}
                           disabled={
                             !!repo.name ||
-                            isGlobalNamespace(namespace, plugin?.name, currentNsConfig)
+                            isGlobalNamespace(namespace, plugin?.name, currentNsConfig) ||
+                            plugin?.name === PluginNames.PACKAGES_FLUX
                           }
                           required={true}
                         />
