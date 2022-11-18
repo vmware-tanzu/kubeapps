@@ -43,6 +43,9 @@ export interface AddPackageRepositoryRequest {
   url: string;
   /**
    * The interval at which to check the upstream for updates (in time+unit)
+   * Some plugins may, addionally, support other formats, for instance,
+   * a cron expression.
+   * e.g., "* /10 * * * *" will be equivalent to "10m"
    * Optional. Defaults to 10m if not specified
    */
   interval: string;
@@ -328,6 +331,9 @@ export interface UpdatePackageRepositoryRequest {
   description: string;
   /**
    * The interval at which to check the upstream for updates (in time+unit)
+   * Some plugins may, addionally, support other formats, for instance,
+   * a cron expression.
+   * e.g., "* /10 * * * *" will be equivalent to "10m"
    * Optional. Defaults to 10m if not specified
    */
   interval: string;
@@ -495,7 +501,12 @@ export interface PackageRepositoryDetail {
   type: string;
   /** A URL identifying the package repository location. */
   url: string;
-  /** The interval at which to check the upstream for updates (in time+unit) */
+  /**
+   * The interval at which to check the upstream for updates (in time+unit)
+   * Some plugins may, addionally, support other formats, for instance,
+   * a cron expression.
+   * e.g., "* /10 * * * *" will be equivalent to "10m"
+   */
   interval: string;
   /**
    * TLS-specific parameters for connecting to a repository.

@@ -329,102 +329,120 @@ fn get_pinniped_login_api_group() -> String {
 mod tests {
     use super::*;
     use chrono::{Duration, TimeZone, Utc};
-    use serial_test::serial;
     use std::collections::hash_map::DefaultHasher;
+    use temp_env;
 
     const VALID_CERT_BASE64: &'static str = "LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSUN5RENDQWJDZ0F3SUJBZ0lCQURBTkJna3Foa2lHOXcwQkFRc0ZBREFWTVJNd0VRWURWUVFERXdwcmRXSmwKY201bGRHVnpNQjRYRFRJd01UQXlOakl6TXpBME5Wb1hEVE13TVRBeU5ESXpNekEwTlZvd0ZURVRNQkVHQTFVRQpBeE1LYTNWaVpYSnVaWFJsY3pDQ0FTSXdEUVlKS29aSWh2Y05BUUVCQlFBRGdnRVBBRENDQVFvQ2dnRUJBT1ZKCnFuOVBFZUp3UDRQYnI0cFo1ZjZKUmliOFZ5a2tOYjV2K1hzTVZER01aWGZLb293Y29IYjFwRWh5d0pzeDFiME4Kd2YvZ1JURi9maEgzT0drRnNQMlV2a0lHVytzNUlBd0sxMFRXYkN5VzAwT3lzVkdLcnl5bHNWcEhCWXBZRGJBcQpkdnQzc0FkcFJZaGlLZSs2NkVTL3dQNTdLV3g0SVdwZko0UGpyejh2NkJBWlptZ3o5ZzRCSFNMQkhpbTVFbTdYClBJTmpKL1RJTXFzVW1PR1ppUUNHR0ptRnQxZ21jQTd3eHZ0ZXg2ckkxSWdFNkh5NW10UzJ3NDZaMCtlVU1RSzgKSE9UdnI5aGFETnhJenVjbkduaFlCT2Z2U2VVaXNCR0pOUm5QbENydWx4b2NSZGI3N20rQUdzWW52QitNd2prVQpEbXNQTWZBelpSRHEwekhzcGEwQ0F3RUFBYU1qTUNFd0RnWURWUjBQQVFIL0JBUURBZ0trTUE4R0ExVWRFd0VCCi93UUZNQU1CQWY4d0RRWUpLb1pJaHZjTkFRRUxCUUFEZ2dFQkFBWndybXJLa3FVaDJUYld2VHdwSWlOd0o1NzAKaU9lTVl2WWhNakZxTmt6Tk9OUW55c3lPd1laRGJFMDRrV3AxclRLNHVZaUh3NTJUc0cyelJsZ0QzMzNKaEtvUQpIVloyV1hUT3Z5U2RJaWl5bVpKM2N3d0p2T0lhMW5zZnhYY1NJakJnYnNzYXowMndpRCtlazRPdmlRZktjcXJpCnFQbWZabDZDSkk0NU1rd3JwTExFaTZkNVhGbkhDb3d4eklxQjBrUDhwOFlOaGJYWTNYY2JaNElvY2lMemRBamUKQ1l6NXFVSlBlSDJCcHNaM0JXNXRDbjcycGZYazVQUjlYOFRUTHh6aTA4SU9yYjgvRDB4Tnk3emQyMnVjNXM1bwoveXZIeEt6cXBiczVuRXJkT0JFVXNGWnBpUEhaVGc1dExmWlZ4TG00VjNTZzQwRWUyNFd6d09zaDNIOD0KLS0tLS1FTkQgQ0VSVElGSUNBVEUtLS0tLQo=";
 
-    // By default cargo will run rust unit tests in parallel. The serial macro
-    // ensures that a specific test (or group of tests) runs serially.
     #[test]
-    #[serial(envtest)]
     fn test_call_pinniped_exchange_no_env() -> Result<()> {
-        env::remove_var(DEFAULT_PINNIPED_NAMESPACE);
-        match tokio_test::block_on(prepare_and_call_pinniped_exchange(
-            "authorization",
-            "https://example.com",
-            VALID_CERT_BASE64.as_bytes(),
-        )) {
-            Ok(_) => anyhow::bail!("expected error"),
-            Err(e) => {
-                assert!(
-                    e.is::<env::VarError>(),
-                    "got: {:#?}, want: {}",
-                    e,
-                    env::VarError::NotPresent
-                );
-                Ok(())
-            }
-        }
+        temp_env::with_var(
+            DEFAULT_PINNIPED_NAMESPACE,
+            None::<String>,
+            || match tokio_test::block_on(prepare_and_call_pinniped_exchange(
+                "authorization",
+                "https://example.com",
+                VALID_CERT_BASE64.as_bytes(),
+            )) {
+                Ok(_) => anyhow::bail!("expected error"),
+                Err(e) => {
+                    assert!(
+                        e.is::<env::VarError>(),
+                        "got: {:#?}, want: {}",
+                        e,
+                        env::VarError::NotPresent
+                    );
+                    Ok(())
+                }
+            },
+        )
     }
 
     #[test]
-    #[serial(envtest)]
     fn test_call_pinniped_exchange_bad_url() -> Result<()> {
-        env::set_var(DEFAULT_PINNIPED_NAMESPACE, "pinniped-concierge");
-        env::set_var(DEFAULT_PINNIPED_AUTHENTICATOR_TYPE, "JWTAuthenticator");
-        env::set_var(DEFAULT_PINNIPED_AUTHENTICATOR_NAME, "oidc-authenticator");
-        match tokio_test::block_on(prepare_and_call_pinniped_exchange(
-            "authorization",
-            "not a url",
-            VALID_CERT_BASE64.as_bytes(),
-        )) {
-            Ok(_) => anyhow::bail!("expected error"),
-            Err(e) => {
-                assert!(
-                    e.is::<http::uri::InvalidUri>(),
-                    "got: {:#?}, want: {}",
-                    e,
-                    "InvalidUri.InvalidUriChar"
-                );
-                Ok(())
-            }
-        }
+        temp_env::with_vars(
+            vec![
+                (DEFAULT_PINNIPED_NAMESPACE, Some("pinniped-concierge")),
+                (
+                    DEFAULT_PINNIPED_AUTHENTICATOR_TYPE,
+                    Some("JWTAuthenticator"),
+                ),
+                (
+                    DEFAULT_PINNIPED_AUTHENTICATOR_NAME,
+                    Some("oidc-authenticator"),
+                ),
+            ],
+            || match tokio_test::block_on(prepare_and_call_pinniped_exchange(
+                "authorization",
+                "not a url",
+                VALID_CERT_BASE64.as_bytes(),
+            )) {
+                Ok(_) => anyhow::bail!("expected error"),
+                Err(e) => {
+                    assert!(
+                        e.is::<http::uri::InvalidUri>(),
+                        "got: {:#?}, want: {}",
+                        e,
+                        "InvalidUri.InvalidUriChar"
+                    );
+                    Ok(())
+                }
+            },
+        )
     }
 
     #[test]
-    #[serial(envtest)]
     fn test_call_pinniped_exchange_bad_cert() -> Result<()> {
-        env::set_var(DEFAULT_PINNIPED_NAMESPACE, "pinniped-concierge");
-        env::set_var(DEFAULT_PINNIPED_AUTHENTICATOR_TYPE, "JWTAuthenticator");
-        env::set_var(DEFAULT_PINNIPED_AUTHENTICATOR_NAME, "oidc-authenticator");
-        match tokio_test::block_on(prepare_and_call_pinniped_exchange(
-            "authorization",
-            "https://example.com",
-            "not a cert".as_bytes(),
-        )) {
-            Ok(_) => anyhow::bail!("expected error"),
-            Err(e) => {
-                assert!(
-                    e.is::<openssl::error::ErrorStack>(),
-                    "got: {:#?}, want: openssl::error::ErrorStack",
-                    e
-                );
-                Ok(())
-            }
-        }
+        temp_env::with_vars(
+            vec![
+                (DEFAULT_PINNIPED_NAMESPACE, Some("pinniped-concierge")),
+                (
+                    DEFAULT_PINNIPED_AUTHENTICATOR_TYPE,
+                    Some("JWTAuthenticator"),
+                ),
+                (
+                    DEFAULT_PINNIPED_AUTHENTICATOR_NAME,
+                    Some("oidc-authenticator"),
+                ),
+            ],
+            || match tokio_test::block_on(prepare_and_call_pinniped_exchange(
+                "authorization",
+                "https://example.com",
+                "not a cert".as_bytes(),
+            )) {
+                Ok(_) => anyhow::bail!("expected error"),
+                Err(e) => {
+                    assert!(
+                        e.is::<openssl::error::ErrorStack>(),
+                        "got: {:#?}, want: openssl::error::ErrorStack",
+                        e
+                    );
+                    Ok(())
+                }
+            },
+        )
     }
 
     #[test]
-    #[serial(envtest)]
     fn test_get_api_group_getters() -> Result<()> {
-        env::remove_var("DEFAULT_PINNIPED_API_SUFFIX");
-        let authenticator_api_group = get_pinniped_authenticator_api_group();
-        assert_eq!(
-            authenticator_api_group,
-            "authentication.concierge.pinniped.dev"
-        );
+        temp_env::with_var(DEFAULT_PINNIPED_API_SUFFIX, None::<String>, || {
+            let authenticator_api_group = get_pinniped_authenticator_api_group();
+            assert_eq!(
+                authenticator_api_group,
+                "authentication.concierge.pinniped.dev"
+            );
 
-        let login_api_group = get_pinniped_login_api_group();
-        assert_eq!(login_api_group, "login.concierge.pinniped.dev");
+            let login_api_group = get_pinniped_login_api_group();
+            assert_eq!(login_api_group, "login.concierge.pinniped.dev");
 
-        env::set_var(DEFAULT_PINNIPED_API_SUFFIX, "foo.bar");
-        let authenticator_api_group = get_pinniped_authenticator_api_group();
-        assert_eq!(authenticator_api_group, "authentication.concierge.foo.bar");
+            env::set_var(DEFAULT_PINNIPED_API_SUFFIX, "foo.bar");
+            let authenticator_api_group = get_pinniped_authenticator_api_group();
+            assert_eq!(authenticator_api_group, "authentication.concierge.foo.bar");
 
-        let login_api_group = get_pinniped_login_api_group();
-        assert_eq!(login_api_group, "login.concierge.foo.bar");
-        Ok(())
+            let login_api_group = get_pinniped_login_api_group();
+            assert_eq!(login_api_group, "login.concierge.foo.bar");
+            Ok(())
+        })
     }
 
     // RSA cert and key generated using
@@ -533,65 +551,71 @@ mZu9A/ivt37pOQXm/HOX6tHB
         }
     }
 
-    // Disabling these hash tests as they occasionally fail with a specific
-    // other hash.
-    #[ignore]
     #[test]
     fn test_token_credential_request_hash_default() -> Result<()> {
-        let cred_data = make_token_credential_request();
+        temp_env::with_var(DEFAULT_PINNIPED_API_SUFFIX, None::<String>, || {
+            let cred_data = make_token_credential_request();
+            println!(
+                "api group is: {:#?}",
+                cred_data.spec.authenticator.api_group
+            );
 
-        let mut hasher = DefaultHasher::new();
-        cred_data.hash(&mut hasher);
+            let mut hasher = DefaultHasher::new();
+            cred_data.hash(&mut hasher);
 
-        assert_eq!(hasher.finish(), DEFAULT_TOKEN_CREDENTIAL_REQUEST_HASH);
-        Ok(())
+            assert_eq!(hasher.finish(), DEFAULT_TOKEN_CREDENTIAL_REQUEST_HASH);
+            Ok(())
+        })
     }
 
-    #[ignore]
     #[test]
     fn test_token_credential_request_hash_differs_with_token() -> Result<()> {
-        let mut cred_data = make_token_credential_request();
-        cred_data.spec.token = Some(String::from("another-token"));
+        temp_env::with_var(DEFAULT_PINNIPED_API_SUFFIX, None::<String>, || {
+            let mut cred_data = make_token_credential_request();
+            cred_data.spec.token = Some(String::from("another-token"));
 
-        let mut hasher = DefaultHasher::new();
-        cred_data.hash(&mut hasher);
+            let mut hasher = DefaultHasher::new();
+            cred_data.hash(&mut hasher);
 
-        assert!(hasher.finish() != DEFAULT_TOKEN_CREDENTIAL_REQUEST_HASH);
-        Ok(())
+            assert!(hasher.finish() != DEFAULT_TOKEN_CREDENTIAL_REQUEST_HASH);
+            Ok(())
+        })
     }
 
-    #[ignore]
     #[test]
     fn test_token_credential_request_hash_differs_with_authenticator() -> Result<()> {
-        let mut cred_data = make_token_credential_request();
-        cred_data.spec.authenticator.name = String::from("another-authenticator-name");
+        temp_env::with_var(DEFAULT_PINNIPED_API_SUFFIX, None::<String>, || {
+            let mut cred_data = make_token_credential_request();
+            cred_data.spec.authenticator.name = String::from("another-authenticator-name");
 
-        let mut hasher = DefaultHasher::new();
-        cred_data.hash(&mut hasher);
+            let mut hasher = DefaultHasher::new();
+            cred_data.hash(&mut hasher);
 
-        assert!(hasher.finish() != DEFAULT_TOKEN_CREDENTIAL_REQUEST_HASH);
-        Ok(())
+            assert!(hasher.finish() != DEFAULT_TOKEN_CREDENTIAL_REQUEST_HASH);
+            Ok(())
+        })
     }
 
-    #[ignore]
     #[test]
     fn test_token_credential_request_hash_identical_with_status_change() -> Result<()> {
-        let mut cred_data = make_token_credential_request();
-        cred_data.status = Some(TokenCredentialRequestStatus {
-            credential: Some(ClusterCredential {
-                token: Some(String::from("returned token")),
-                client_certificate_data: String::from("cert-data"),
-                client_key_data: String::from("key-data"),
-                expiration_timestamp: metav1::Time(Utc.timestamp(0, 0)),
-            }),
-            message: Some(String::from("some status message")),
-        });
+        temp_env::with_var(DEFAULT_PINNIPED_API_SUFFIX, None::<String>, || {
+            let mut cred_data = make_token_credential_request();
+            cred_data.status = Some(TokenCredentialRequestStatus {
+                credential: Some(ClusterCredential {
+                    token: Some(String::from("returned token")),
+                    client_certificate_data: String::from("cert-data"),
+                    client_key_data: String::from("key-data"),
+                    expiration_timestamp: metav1::Time(Utc.timestamp(0, 0)),
+                }),
+                message: Some(String::from("some status message")),
+            });
 
-        let mut hasher = DefaultHasher::new();
-        cred_data.hash(&mut hasher);
+            let mut hasher = DefaultHasher::new();
+            cred_data.hash(&mut hasher);
 
-        assert_eq!(hasher.finish(), DEFAULT_TOKEN_CREDENTIAL_REQUEST_HASH);
-        Ok(())
+            assert_eq!(hasher.finish(), DEFAULT_TOKEN_CREDENTIAL_REQUEST_HASH);
+            Ok(())
+        })
     }
 
     #[test]
