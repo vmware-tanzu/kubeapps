@@ -126,6 +126,11 @@ func setSecretOwnerRef(repoName string, secret *apiv1.Secret) *apiv1.Secret {
 	return secret
 }
 
+func setSecretAnnotations(secret *apiv1.Secret) *apiv1.Secret {
+	secret.ObjectMeta.Annotations = map[string]string{Annotation_ManagedBy_Key: Annotation_ManagedBy_Value}
+	return secret
+}
+
 // Note that according to https://kubernetes.io/docs/concepts/configuration/secret/#tls-secrets
 // TLS secrets need to look one way, but according to
 func newTlsSecret(name, namespace string, pub, priv, ca []byte) *apiv1.Secret {
