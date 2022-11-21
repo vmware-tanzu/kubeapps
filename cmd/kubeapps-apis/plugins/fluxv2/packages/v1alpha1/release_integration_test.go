@@ -1538,8 +1538,6 @@ func createAndWaitForHelmRelease(
 		}
 	}
 
-	setUserManagedSecretsAndCleanup(t, fluxPluginReposClient, true)
-
 	err := kubeAddHelmRepositoryAndCleanup(t, name, tc.repoType, tc.repoUrl, secretName, tc.repoInterval)
 	if err != nil {
 		t.Fatalf("%+v", err)

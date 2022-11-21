@@ -10,11 +10,12 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
-	k8stesting "k8s.io/client-go/testing"
 	"net/http"
 	"os"
 	"reflect"
 	"testing"
+
+	k8stesting "k8s.io/client-go/testing"
 
 	helmv2 "github.com/fluxcd/helm-controller/api/v2beta1"
 	sourcev1 "github.com/fluxcd/source-controller/api/v1beta2"
@@ -206,6 +207,15 @@ func newBasicAuthSecret(name types.NamespacedName, user, password string) *apiv1
 	}
 }
 
+// newManaged... means "kubeapps managed"
+func newManagedBasicAuthSecret(name types.NamespacedName, user, password string) *apiv1.Secret {
+	secret := newBasicAuthSecret(name, user, password)
+	secret.Annotations = map[string]string{
+		managedByAnnotationName: managedByAnnotationValue,
+	}
+	return secret
+}
+
 // Note that according to https://kubernetes.io/docs/concepts/configuration/secret/#tls-secrets
 // TLS secrets need to look one way, but according to
 // https://fluxcd.io/docs/components/source/helmrepositories/#spec-examples they expect TLS secrets
@@ -272,6 +282,14 @@ func newDockerConfigJsonSecret(name types.NamespacedName, server, user, password
 				server + `":{"` +
 				`auth":"` + base64.StdEncoding.EncodeToString([]byte(user+":"+password)) + `"}}}`),
 		},
+	}
+	return s
+}
+
+func newManagedDockerConfigJsonSecret(name types.NamespacedName, server, user, password string) *apiv1.Secret {
+	s := newDockerConfigJsonSecret(name, server, user, password)
+	s.Annotations = map[string]string{
+		managedByAnnotationName: managedByAnnotationValue,
 	}
 	return s
 }

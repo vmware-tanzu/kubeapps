@@ -6,14 +6,15 @@ package main
 import (
 	"context"
 	"fmt"
-	authorizationv1 "k8s.io/api/authorization/v1"
-	k8stesting "k8s.io/client-go/testing"
 	"net/http"
 	"net/http/httptest"
 	"os"
 	"strings"
 	"testing"
 	"time"
+
+	authorizationv1 "k8s.io/api/authorization/v1"
+	k8stesting "k8s.io/client-go/testing"
 
 	fluxmeta "github.com/fluxcd/pkg/apis/meta"
 	sourcev1 "github.com/fluxcd/source-controller/api/v1beta2"
@@ -1287,7 +1288,7 @@ func TestAddPackageRepository(t *testing.T) {
 		{
 			name:       "errors when package repository with secret key reference (kubeapps managed secrets)",
 			request:    add_repo_req_7,
-			statusCode: codes.InvalidArgument,
+			statusCode: codes.NotFound,
 		},
 		{
 			name:             "package repository with secret key reference",
@@ -1309,7 +1310,7 @@ func TestAddPackageRepository(t *testing.T) {
 		{
 			name:       "fails when package repository links to non-existing secret (kubeapps managed secrets)",
 			request:    add_repo_req_7,
-			statusCode: codes.InvalidArgument,
+			statusCode: codes.NotFound,
 		},
 		{
 			name:             "package repository with basic auth and pass_credentials flag",
@@ -1362,7 +1363,7 @@ func TestAddPackageRepository(t *testing.T) {
 		{
 			name:       "package repository with basic auth and existing secret (kubeapps managed secrets)",
 			request:    add_repo_req_13,
-			statusCode: codes.InvalidArgument,
+			statusCode: codes.NotFound,
 		},
 		{
 			name:       "errors when package repository with 1 secret for TLS CA and a different secret for basic auth (kubeapps managed secrets)",
@@ -1408,7 +1409,7 @@ func TestAddPackageRepository(t *testing.T) {
 			if err != nil {
 				t.Fatalf("error instantiating the server: %v", err)
 			}
-			s.pluginConfig.UserManagedSecrets = tc.userManagedSecrets
+			// TODO s.pluginConfig.UserManagedSecrets = tc.userManagedSecrets
 
 			nsname := types.NamespacedName{Namespace: tc.request.Context.Namespace, Name: tc.request.Name}
 			if tc.statusCode == codes.OK {
@@ -1718,7 +1719,7 @@ func TestGetPackageRepositoryDetail(t *testing.T) {
 			if err != nil {
 				t.Fatalf("error instantiating the server: %v", err)
 			}
-			s.pluginConfig.UserManagedSecrets = tc.userManagedSecrets
+			// TODO s.pluginConfig.UserManagedSecrets = tc.userManagedSecrets
 
 			ctx := context.Background()
 			actualResp, err := s.GetPackageRepositoryDetail(ctx, tc.request)
@@ -2139,7 +2140,7 @@ func TestUpdatePackageRepository(t *testing.T) {
 			if err != nil {
 				t.Fatalf("error instantiating the server: %v", err)
 			}
-			s.pluginConfig.UserManagedSecrets = tc.userManagedSecrets
+			// TODO s.pluginConfig.UserManagedSecrets = tc.userManagedSecrets
 
 			ctx := context.Background()
 			actualResp, err := s.UpdatePackageRepository(ctx, tc.request)
@@ -2284,7 +2285,7 @@ func TestDeletePackageRepository(t *testing.T) {
 			if err != nil {
 				t.Fatalf("error instantiating the server: %v", err)
 			}
-			s.pluginConfig.UserManagedSecrets = tc.userManagedSecrets
+			// TODO s.pluginConfig.UserManagedSecrets = tc.userManagedSecrets
 
 			ctx := context.Background()
 			ctrlClient, err := s.clientGetter.ControllerRuntime(ctx, s.kubeappsCluster)

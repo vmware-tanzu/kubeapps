@@ -1324,10 +1324,11 @@ var (
 
 	add_repo_req_22 = func(user, password string) *corev1.AddPackageRepositoryRequest {
 		return &corev1.AddPackageRepositoryRequest{
-			Name:    "my-podinfo-6",
-			Context: &corev1.Context{Namespace: "default"},
-			Type:    "oci",
-			Url:     github_stefanprodan_podinfo_oci_registry_url,
+			Name:            "my-podinfo-6",
+			Context:         &corev1.Context{Namespace: "default"},
+			Type:            "oci",
+			NamespaceScoped: true,
+			Url:             github_stefanprodan_podinfo_oci_registry_url,
 			Auth: &corev1.PackageRepositoryAuth{
 				Type: corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_BASIC_AUTH,
 				PackageRepoAuthOneOf: &corev1.PackageRepositoryAuth_UsernamePassword{
@@ -1341,10 +1342,11 @@ var (
 	}
 
 	add_repo_req_23 = &corev1.AddPackageRepositoryRequest{
-		Name:    "my-podinfo-7",
-		Context: &corev1.Context{Namespace: "default"},
-		Type:    "oci",
-		Url:     github_stefanprodan_podinfo_oci_registry_url,
+		Name:            "my-podinfo-7",
+		Context:         &corev1.Context{Namespace: "default"},
+		Type:            "oci",
+		NamespaceScoped: true,
+		Url:             github_stefanprodan_podinfo_oci_registry_url,
 		Auth: &corev1.PackageRepositoryAuth{
 			Type: corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_BASIC_AUTH,
 			PackageRepoAuthOneOf: &corev1.PackageRepositoryAuth_SecretRef{
@@ -1357,10 +1359,11 @@ var (
 
 	add_repo_req_24 = func(server, user, password string) *corev1.AddPackageRepositoryRequest {
 		return &corev1.AddPackageRepositoryRequest{
-			Name:    "my-podinfo-8",
-			Context: &corev1.Context{Namespace: "default"},
-			Type:    "oci",
-			Url:     github_stefanprodan_podinfo_oci_registry_url,
+			Name:            "my-podinfo-8",
+			Context:         &corev1.Context{Namespace: "default"},
+			Type:            "oci",
+			NamespaceScoped: true,
+			Url:             github_stefanprodan_podinfo_oci_registry_url,
 			Auth: &corev1.PackageRepositoryAuth{
 				Type: corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_DOCKER_CONFIG_JSON,
 				PackageRepoAuthOneOf: &corev1.PackageRepositoryAuth_DockerCreds{
@@ -3727,7 +3730,7 @@ var (
 	podinfo_repo_status_1 = &corev1.PackageRepositoryStatus{
 		Ready:      true,
 		Reason:     corev1.PackageRepositoryStatus_STATUS_REASON_SUCCESS,
-		UserReason: "Succeeded: stored artifact for revision '9d3ac1eb708dfaebae14d7c88fd46afce8b1e0f7aace790d91758575dc8ce518'",
+		UserReason: "Succeeded: stored artifact for revision 'd3c15ef95abac09b0fb786d48628a62a0d503e7a4fab63fbcde8965f8cc72da0'",
 	}
 
 	podinfo_repo_status_2 = &corev1.PackageRepositoryStatus{
@@ -3739,7 +3742,7 @@ var (
 	podinfo_repo_status_3 = &corev1.PackageRepositoryStatus{
 		Ready:      true,
 		Reason:     corev1.PackageRepositoryStatus_STATUS_REASON_SUCCESS,
-		UserReason: "Succeeded: stored artifact for revision '2867920fb8f56575f4bc95ed878ee2a0c8ae79cdd2bca210a72aa3ff04defa1b'",
+		UserReason: "Succeeded: stored artifact for revision '552fc7ab40d40adcd7adebad6d5b8185a5924bc2e2badee8468e20e6962d3c3e'",
 	}
 
 	podinfo_repo_status_4 = &corev1.PackageRepositoryStatus{
