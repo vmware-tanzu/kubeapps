@@ -12,10 +12,6 @@ on:
         type: boolean
         required: false
         default: false
-      DEV_MODE:
-        type: boolean
-        required: false
-        default: false
       # TODO(bjesus): right now it contains just the version number (eg. 1.22), rename to GKE_VERSION once CircleCI is decommissioned
       GKE_BRANCH:
         type: string
@@ -67,7 +63,6 @@ jobs:
     runs-on: ubuntu-latest
     env:
       CHARTMUSEUM_VERSION: ${{ inputs.CHARTMUSEUM_VERSION }}
-      DEV_MODE: ${{ inputs.DEV_MODE }}
       DEBUG_MODE: ${{ inputs.DEBUG_MODE }}
       GCLOUD_KEY: ${{ secrets.GCLOUD_KEY }}
       GKE_ADMIN: ${{ secrets.GKE_ADMIN }}
@@ -97,7 +92,7 @@ jobs:
           installKubectl "${KUBECTL_VERSION}"
           installHelm "${HELM_VERSION_MIN}"
           installHelm "${HELM_VERSION_STABLE}" helm-stable
-          exportEscapedGKEClusterName "${GKE_CLUSTER}" "${GKE_RELEASE_CHANNEL}" "${GITHUB_REF_NAME}" "${TEST_LATEST_RELEASE}" "${DEV_MODE}"
+          exportEscapedGKEClusterName "${GKE_CLUSTER}" "${GKE_RELEASE_CHANNEL}" "${GITHUB_REF_NAME}" "${TEST_LATEST_RELEASE}"
       - name: Start GKE environment
         run: |
           set -euo pipefail

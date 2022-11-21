@@ -255,7 +255,6 @@ function configureGCloud() {
 #   $2: GKE_RELEASE_CHANNEL
 #   $3: GITHUB_REF_NAME
 #   $4: TEST_LATEST_RELEASE
-#   $5: DEV_MODE Optional, default "false"
 # Returns: None
 ########################################################################################################################
 function exportEscapedGKEClusterName() {
@@ -263,14 +262,12 @@ function exportEscapedGKEClusterName() {
   GKE_RELEASE_CHANNEL=${2:?GKE_RELEASE_CHANNEL not provided}
   GITHUB_REF_NAME=${3:?GITHUB_REF_NAME not provided}
   TEST_LATEST_RELEASE=${4:?TEST_LATEST_RELEASE not provided}
-  DEV_MODE=${5:-false}
   # Max len for a GKE cluster is 40 characters at the time of this writing
   local MAX_LENGTH=40 LATEST_RELEASE=0 len offset
 
   info "Exporting scaped GKE cluster name"
   [[ "${TEST_LATEST_RELEASE}" == "true" ]] && LATEST_RELEASE=1
   ESCAPED_GKE_CLUSTER=$(echo "${GKE_CLUSTER}-${GITHUB_REF_NAME}-${LATEST_RELEASE}-${GKE_RELEASE_CHANNEL}-ci" | sed 's/[^a-z0-9-]//g')
-  [[ "${DEV_MODE}" == "true" ]] && ESCAPED_GKE_CLUSTER="${ESCAPED_GKE_CLUSTER}-gha"
 
   # In case the name exceeds the max length allowed, we take a substring of MAX_LENGTH chars from the beginning to avoid
   # the "-gha" suffix
