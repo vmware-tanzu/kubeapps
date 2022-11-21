@@ -361,7 +361,7 @@ func TestKindClusterUpdateInstalledPackage(t *testing.T) {
 						t.Logf("Retrying update in [%d] sec due to %s...", waitTime, err.Error())
 						SleepWithCountdown(t, int(waitTime))
 					} else {
-						t.Fatalf("%+v", err)
+						t.Fatal(err)
 					}
 				} else {
 					break
@@ -389,7 +389,7 @@ func TestKindClusterUpdateInstalledPackage(t *testing.T) {
 				InstalledPackageDetail: tc.expectedDetailAfterUpdate,
 			}
 
-			compareActualVsExpectedGetInstalledPackageDetailResponse(t, actualRespAfterUpdate, expectedResp)
+			compareInstalledPackageDetail(t, actualRespAfterUpdate, expectedResp)
 
 			if tc.expectedRefsAfterUpdate != nil {
 				expectedRefsCopy := []*corev1.ResourceRef{}
@@ -485,7 +485,7 @@ func TestKindClusterAutoUpdateInstalledPackageFromHttpRepo(t *testing.T) {
 		expected_detail_installed_package_auto_update_2.PostInstallationNotes,
 		"@TARGET_NS@",
 		spec.request.TargetContext.Namespace)
-	compareActualVsExpectedGetInstalledPackageDetailResponse(
+	compareInstalledPackageDetail(
 		t, resp, &corev1.GetInstalledPackageDetailResponse{
 			InstalledPackageDetail: expected_detail_installed_package_auto_update_2,
 		})
@@ -566,7 +566,7 @@ func TestKindClusterAutoUpdateInstalledPackageFromOciRepo(t *testing.T) {
 		expected_detail_installed_package_auto_update_oci_2.PostInstallationNotes,
 		"@TARGET_NS@",
 		spec.request.TargetContext.Namespace)
-	compareActualVsExpectedGetInstalledPackageDetailResponse(
+	compareInstalledPackageDetail(
 		t, resp, &corev1.GetInstalledPackageDetailResponse{
 			InstalledPackageDetail: expected_detail_installed_package_auto_update_oci_2,
 		})
@@ -682,7 +682,7 @@ func TestKindClusterDeleteInstalledPackage(t *testing.T) {
 				}
 				return // done, nothing more to check
 			} else if err != nil {
-				t.Fatalf("%+v", err)
+				t.Fatal(err)
 			}
 
 			const maxWait = 25
@@ -698,7 +698,7 @@ func TestKindClusterDeleteInstalledPackage(t *testing.T) {
 					if status.Code(err) == codes.NotFound {
 						break // this is the only way to break out of this loop successfully
 					} else {
-						t.Fatalf("%+v", err)
+						t.Fatal(err)
 					}
 				}
 				if i == maxWait {
@@ -716,7 +716,7 @@ func TestKindClusterDeleteInstalledPackage(t *testing.T) {
 			}
 			exists, err := kubeExistsHelmRelease(t, name)
 			if err != nil {
-				t.Fatalf("%+v", err)
+				t.Fatal(err)
 			} else if exists {
 				t.Fatalf("helmrelease [%s] still exists", installedRef)
 			}
@@ -727,7 +727,7 @@ func TestKindClusterDeleteInstalledPackage(t *testing.T) {
 			// from cluster (garbage collection)
 			for i := 0; i <= maxWait; i++ {
 				if pods, err := kubeGetPodNames(t, tc.request.TargetContext.Namespace); err != nil {
-					t.Fatalf("%+v", err)
+					t.Fatal(err)
 				} else if len(pods) == 0 {
 					break
 				} else if len(pods) != 1 {
@@ -871,7 +871,7 @@ func TestKindClusterRBAC_ReadRelease(t *testing.T) {
 			expected_detail_test_release_rbac_2.InstalledPackageDetail.PostInstallationNotes,
 			"@TARGET_NS@", ns2)
 		expected_detail_test_release_rbac_2.InstalledPackageDetail.AvailablePackageRef.Context.Namespace = ns1
-		compareActualVsExpectedGetInstalledPackageDetailResponse(t, resp2, expected_detail_test_release_rbac_2)
+		compareInstalledPackageDetail(t, resp2, expected_detail_test_release_rbac_2)
 	}
 
 	grpcCtx, cancel = context.WithTimeout(grpcCtxAdmin, defaultContextTimeout)
@@ -1001,24 +1001,12 @@ func TestKindClusterRBAC_ReadRelease(t *testing.T) {
 			},
 		})
 
-	opts2 := cmpopts.IgnoreUnexported(
-		corev1.GetInstalledPackageSummariesResponse{},
-		corev1.InstalledPackageSummary{},
-		corev1.InstalledPackageReference{},
-		corev1.InstalledPackageStatus{},
-		plugins.Plugin{},
-		corev1.VersionReference{},
-		corev1.PackageAppVersion{},
-		corev1.Context{})
-
 	if err != nil {
 		t.Fatal(err)
 	} else {
 		// should return installed package summaries without chart details
 		expected_summaries_test_release_rbac_1.InstalledPackageSummaries[0].InstalledPackageRef.Context.Namespace = ns2
-		if got, want := resp, expected_summaries_test_release_rbac_1; !cmp.Equal(want, got, opts2) {
-			t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opts2))
-		}
+		compareInstalledPackageSummaries(t, resp, expected_summaries_test_release_rbac_1)
 	}
 
 	grpcCtx, cancel = context.WithTimeout(grpcCtxReadHelmReleases, defaultContextTimeout)
@@ -1032,7 +1020,7 @@ func TestKindClusterRBAC_ReadRelease(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	} else {
-		compareActualVsExpectedGetInstalledPackageDetailResponse(t, resp2, expected_detail_test_release_rbac_2)
+		compareInstalledPackageDetail(t, resp2, expected_detail_test_release_rbac_2)
 	}
 
 	grpcCtx, cancel = context.WithTimeout(grpcCtxReadHelmReleases, defaultContextTimeout)
@@ -1108,9 +1096,7 @@ func TestKindClusterRBAC_ReadRelease(t *testing.T) {
 	} else {
 		// should return installed package summaries with chart details
 		expected_summaries_test_release_rbac_2.InstalledPackageSummaries[0].InstalledPackageRef.Context.Namespace = ns2
-		if got, want := resp, expected_summaries_test_release_rbac_2; !cmp.Equal(want, got, opts2) {
-			t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opts2))
-		}
+		compareInstalledPackageSummaries(t, resp, expected_summaries_test_release_rbac_2)
 	}
 
 	grpcCtx, cancel = context.WithTimeout(grpcCtxReadHelmReleasesAndCharts, defaultContextTimeout)
@@ -1124,7 +1110,7 @@ func TestKindClusterRBAC_ReadRelease(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	} else {
-		compareActualVsExpectedGetInstalledPackageDetailResponse(t, resp2, expected_detail_test_release_rbac_2)
+		compareInstalledPackageDetail(t, resp2, expected_detail_test_release_rbac_2)
 	}
 }
 
@@ -1542,7 +1528,7 @@ func createAndWaitForHelmRelease(
 
 	err := kubeAddHelmRepositoryAndCleanup(t, name, tc.repoType, tc.repoUrl, secretName, tc.repoInterval)
 	if err != nil {
-		t.Fatalf("%+v", err)
+		t.Fatal(err)
 	}
 
 	// need to wait until repo is indexed by flux plugin
@@ -1593,7 +1579,7 @@ func createAndWaitForHelmRelease(
 		}
 		_, err = kubeCreateAdminServiceAccount(t, svcAcctName)
 		if err != nil {
-			t.Fatalf("%+v", err)
+			t.Fatal(err)
 		}
 		// it appears that if service account is deleted before the helmrelease object that uses it,
 		// when you try to delete the helmrelease, the "delete" operation gets stuck and the only
@@ -1688,7 +1674,7 @@ func createAndWaitForHelmRelease(
 		InstalledPackageDetail: tc.expectedDetail,
 	}
 
-	compareActualVsExpectedGetInstalledPackageDetailResponse(t, actualDetailResp, expectedResp)
+	compareInstalledPackageDetail(t, actualDetailResp, expectedResp)
 
 	if !tc.expectInstallFailure {
 		// check artifacts in target namespace:
@@ -1696,7 +1682,7 @@ func createAndWaitForHelmRelease(
 			tc.expectedPodPrefix, "@TARGET_NS@", tc.request.TargetContext.Namespace)
 		pods, err := kubeGetPodNames(t, tc.request.TargetContext.Namespace)
 		if err != nil {
-			t.Fatalf("%+v", err)
+			t.Fatal(err)
 		}
 		if len(pods) != 1 {
 			t.Errorf("expected 1 pod, got: %s", pods)
@@ -1741,7 +1727,7 @@ func waitUntilInstallCompletes(
 			grpcContext,
 			&corev1.GetInstalledPackageDetailRequest{InstalledPackageRef: installedPackageRef})
 		if err != nil {
-			t.Fatalf("%+v", err)
+			t.Fatal(err)
 		}
 
 		if !expectInstallFailure {
@@ -1775,7 +1761,7 @@ func waitUntilInstallCompletes(
 			grpcContext,
 			&corev1.GetInstalledPackageResourceRefsRequest{InstalledPackageRef: installedPackageRef})
 		if err != nil {
-			t.Fatalf("%+v", err)
+			t.Fatal(err)
 		}
 	} else {
 		t.Logf("Install of [%s/%s] completed with [%s], userReason: [%s]",

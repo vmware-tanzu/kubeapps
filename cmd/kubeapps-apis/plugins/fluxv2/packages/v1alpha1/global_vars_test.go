@@ -766,6 +766,46 @@ var (
 		}
 	}
 
+	expected_detail_podinfo = func(name, namespace string) *corev1.GetAvailablePackageDetailResponse {
+		return &corev1.GetAvailablePackageDetailResponse{
+			AvailablePackageDetail: &corev1.AvailablePackageDetail{
+				AvailablePackageRef: availableRef(name+"/podinfo", namespace),
+				Name:                "podinfo",
+				Version:             pkgAppVersion("6.0.0"),
+				RepoUrl:             "http://fluxv2plugin-testdata-svc.default.svc.cluster.local:80/podinfo",
+				HomeUrl:             "https://github.com/stefanprodan/podinfo",
+				DisplayName:         "podinfo",
+				ShortDescription:    "Podinfo Helm chart for Kubernetes",
+				SourceUrls:          []string{"https://github.com/stefanprodan/podinfo"},
+				Maintainers: []*corev1.Maintainer{
+					{Name: "stefanprodan", Email: "stefanprodan@users.noreply.github.com"},
+				},
+				Readme:        "Podinfo is used by CNCF projects like [Flux](https://github.com/fluxcd/flux2)",
+				DefaultValues: "Default values for podinfo.\n\nreplicaCount: 1\n",
+			},
+		}
+	}
+
+	expected_detail_podinfo_after_update_1 = func(name, namespace string) *corev1.GetAvailablePackageDetailResponse {
+		return &corev1.GetAvailablePackageDetailResponse{
+			AvailablePackageDetail: &corev1.AvailablePackageDetail{
+				AvailablePackageRef: availableRef(name+"/podinfo", namespace),
+				Name:                "podinfo",
+				Version:             pkgAppVersion("6.0.3"),
+				RepoUrl:             "http://fluxv2plugin-testdata-svc.default.svc.cluster.local:80/podinfo",
+				HomeUrl:             "https://github.com/stefanprodan/podinfo",
+				DisplayName:         "podinfo",
+				ShortDescription:    "Podinfo Helm chart for Kubernetes",
+				SourceUrls:          []string{"https://github.com/stefanprodan/podinfo"},
+				Maintainers: []*corev1.Maintainer{
+					{Name: "stefanprodan", Email: "stefanprodan@users.noreply.github.com"},
+				},
+				Readme:        "Podinfo is used by CNCF projects like [Flux](https://github.com/fluxcd/flux2)",
+				DefaultValues: "Default values for podinfo.\n\nreplicaCount: 1\n",
+			},
+		}
+	}
+
 	expected_detail_podinfo_basic_auth = func(name string) *corev1.GetAvailablePackageDetailResponse {
 		return &corev1.GetAvailablePackageDetailResponse{
 			AvailablePackageDetail: &corev1.AvailablePackageDetail{
@@ -836,6 +876,10 @@ var (
 		},
 	}
 
+	valid_index_available_package_summaries_resp = &corev1.GetAvailablePackageSummariesResponse{
+		AvailablePackageSummaries: valid_index_available_package_summaries,
+	}
+
 	cert_manager_summary = &corev1.AvailablePackageSummary{
 		Name:             "cert-manager",
 		DisplayName:      "cert-manager",
@@ -889,70 +933,75 @@ var (
 		ghost_summary,
 	}
 
-	index_before_update_summaries = []*corev1.AvailablePackageSummary{
-		{
-			Name:        "alpine",
-			DisplayName: "alpine",
-			LatestVersion: &corev1.PackageAppVersion{
-				PkgVersion: "0.2.0",
+	expected_summaries_before_update = &corev1.GetAvailablePackageSummariesResponse{
+		AvailablePackageSummaries: []*corev1.AvailablePackageSummary{
+			{
+				Name:        "alpine",
+				DisplayName: "alpine",
+				LatestVersion: &corev1.PackageAppVersion{
+					PkgVersion: "0.2.0",
+				},
+				IconUrl:          "",
+				ShortDescription: "Deploy a basic Alpine Linux pod",
+				AvailablePackageRef: &corev1.AvailablePackageReference{
+					Identifier: "testrepo/alpine",
+					Context:    &corev1.Context{Namespace: "ns2", Cluster: KubeappsCluster},
+					Plugin:     fluxPlugin,
+				},
+				Categories: []string{""},
 			},
-			IconUrl:          "",
-			ShortDescription: "Deploy a basic Alpine Linux pod",
-			AvailablePackageRef: &corev1.AvailablePackageReference{
-				Identifier: "testrepo/alpine",
-				Context:    &corev1.Context{Namespace: "ns2", Cluster: KubeappsCluster},
-				Plugin:     fluxPlugin,
+			{
+				Name:        "nginx",
+				DisplayName: "nginx",
+				LatestVersion: &corev1.PackageAppVersion{
+					PkgVersion: "1.1.0",
+				},
+				IconUrl:          "",
+				ShortDescription: "Create a basic nginx HTTP server",
+				AvailablePackageRef: &corev1.AvailablePackageReference{
+					Identifier: "testrepo/nginx",
+					Context:    &corev1.Context{Namespace: "ns2", Cluster: KubeappsCluster},
+					Plugin:     fluxPlugin,
+				},
+				Categories: []string{""},
 			},
-			Categories: []string{""},
-		},
-		{
-			Name:        "nginx",
-			DisplayName: "nginx",
-			LatestVersion: &corev1.PackageAppVersion{
-				PkgVersion: "1.1.0",
-			},
-			IconUrl:          "",
-			ShortDescription: "Create a basic nginx HTTP server",
-			AvailablePackageRef: &corev1.AvailablePackageReference{
-				Identifier: "testrepo/nginx",
-				Context:    &corev1.Context{Namespace: "ns2", Cluster: KubeappsCluster},
-				Plugin:     fluxPlugin,
-			},
-			Categories: []string{""},
 		},
 	}
 
-	index_after_update_summaries = []*corev1.AvailablePackageSummary{
-		{
-			Name:        "alpine",
-			DisplayName: "alpine",
-			LatestVersion: &corev1.PackageAppVersion{
-				PkgVersion: "0.3.0",
+	expected_summaries_after_update = &corev1.GetAvailablePackageSummariesResponse{
+		AvailablePackageSummaries: []*corev1.AvailablePackageSummary{
+			{
+				Name:        "alpine",
+				DisplayName: "alpine",
+				LatestVersion: &corev1.PackageAppVersion{
+					PkgVersion: "0.3.0",
+				},
+				IconUrl:          "",
+				ShortDescription: "Deploy a basic Alpine Linux pod",
+				AvailablePackageRef: &corev1.AvailablePackageReference{
+					Identifier: "testrepo/alpine",
+					Context:    &corev1.Context{Namespace: "ns2", Cluster: KubeappsCluster},
+					Plugin:     fluxPlugin,
+				},
+				Categories: []string{""},
 			},
-			IconUrl:          "",
-			ShortDescription: "Deploy a basic Alpine Linux pod",
-			AvailablePackageRef: &corev1.AvailablePackageReference{
-				Identifier: "testrepo/alpine",
-				Context:    &corev1.Context{Namespace: "ns2", Cluster: KubeappsCluster},
-				Plugin:     fluxPlugin,
+			{
+				Name:        "nginx",
+				DisplayName: "nginx",
+				LatestVersion: &corev1.PackageAppVersion{
+					PkgVersion: "1.1.0",
+				},
+				IconUrl:          "",
+				ShortDescription: "Create a basic nginx HTTP server",
+				AvailablePackageRef: &corev1.AvailablePackageReference{
+					Identifier: "testrepo/nginx",
+					Context:    &corev1.Context{Namespace: "ns2", Cluster: KubeappsCluster},
+					Plugin:     fluxPlugin,
+				},
+				Categories: []string{""},
 			},
-			Categories: []string{""},
 		},
-		{
-			Name:        "nginx",
-			DisplayName: "nginx",
-			LatestVersion: &corev1.PackageAppVersion{
-				PkgVersion: "1.1.0",
-			},
-			IconUrl:          "",
-			ShortDescription: "Create a basic nginx HTTP server",
-			AvailablePackageRef: &corev1.AvailablePackageReference{
-				Identifier: "testrepo/nginx",
-				Context:    &corev1.Context{Namespace: "ns2", Cluster: KubeappsCluster},
-				Plugin:     fluxPlugin,
-			},
-			Categories: []string{""},
-		}}
+	}
 
 	add_repo_1 = sourcev1.HelmRepository{
 		TypeMeta: metav1.TypeMeta{
@@ -1077,44 +1126,49 @@ var (
 	add_repo_req_1 = &corev1.AddPackageRepositoryRequest{
 		Name:            "bar",
 		Context:         &corev1.Context{Namespace: "foo"},
-		NamespaceScoped: true,
+		NamespaceScoped: false,
 	}
 
 	add_repo_req_2 = &corev1.AddPackageRepositoryRequest{
-		Name:    "bar",
-		Context: &corev1.Context{Namespace: "foo"},
-		Type:    "foobar",
+		Name:            "bar",
+		Context:         &corev1.Context{Namespace: "foo"},
+		Type:            "foobar",
+		NamespaceScoped: true,
 	}
 
 	add_repo_req_3 = &corev1.AddPackageRepositoryRequest{
-		Name:    "bar",
-		Context: &corev1.Context{Namespace: "foo"},
-		Type:    "helm",
+		Name:            "bar",
+		Context:         &corev1.Context{Namespace: "foo"},
+		Type:            "helm",
+		NamespaceScoped: true,
 	}
 
 	add_repo_req_4 = &corev1.AddPackageRepositoryRequest{
-		Name:    "bar",
-		Context: &corev1.Context{Namespace: "foo"},
-		Type:    "helm",
-		Url:     "http://example.com",
+		Name:            "bar",
+		Context:         &corev1.Context{Namespace: "foo"},
+		Type:            "helm",
+		NamespaceScoped: true,
+		Url:             "http://example.com",
 		TlsConfig: &corev1.PackageRepositoryTlsConfig{
 			InsecureSkipVerify: true,
 		},
 	}
 
 	add_repo_req_5 = &corev1.AddPackageRepositoryRequest{
-		Name:    "bar",
-		Context: &corev1.Context{Namespace: "foo"},
-		Type:    "helm",
-		Url:     "http://example.com",
+		Name:            "bar",
+		Context:         &corev1.Context{Namespace: "foo"},
+		Type:            "helm",
+		NamespaceScoped: true,
+		Url:             "http://example.com",
 	}
 
 	add_repo_req_6 = func(ca []byte) *corev1.AddPackageRepositoryRequest {
 		return &corev1.AddPackageRepositoryRequest{
-			Name:    "bar",
-			Context: &corev1.Context{Namespace: "foo"},
-			Type:    "helm",
-			Url:     "http://example.com",
+			Name:            "bar",
+			Context:         &corev1.Context{Namespace: "foo"},
+			NamespaceScoped: true,
+			Type:            "helm",
+			Url:             "http://example.com",
 			TlsConfig: &corev1.PackageRepositoryTlsConfig{
 				PackageRepoTlsConfigOneOf: &corev1.PackageRepositoryTlsConfig_CertAuthority{
 					CertAuthority: string(ca),
@@ -1124,10 +1178,11 @@ var (
 	}
 
 	add_repo_req_7 = &corev1.AddPackageRepositoryRequest{
-		Name:    "bar",
-		Context: &corev1.Context{Namespace: "foo"},
-		Type:    "helm",
-		Url:     "http://example.com",
+		Name:            "bar",
+		Context:         &corev1.Context{Namespace: "foo"},
+		Type:            "helm",
+		NamespaceScoped: true,
+		Url:             "http://example.com",
 		TlsConfig: &corev1.PackageRepositoryTlsConfig{
 			PackageRepoTlsConfigOneOf: &corev1.PackageRepositoryTlsConfig_SecretRef{
 				SecretRef: &corev1.SecretKeyReference{
@@ -1138,10 +1193,11 @@ var (
 	}
 
 	add_repo_req_8 = &corev1.AddPackageRepositoryRequest{
-		Name:    "bar",
-		Context: &corev1.Context{Namespace: "foo"},
-		Type:    "helm",
-		Url:     "http://example.com",
+		Name:            "bar",
+		Context:         &corev1.Context{Namespace: "foo"},
+		Type:            "helm",
+		NamespaceScoped: true,
+		Url:             "http://example.com",
 		Auth: &corev1.PackageRepositoryAuth{
 			Type: corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_BASIC_AUTH,
 			PackageRepoAuthOneOf: &corev1.PackageRepositoryAuth_UsernamePassword{
@@ -1156,19 +1212,21 @@ var (
 
 	add_repo_req_9 = func(pub, priv []byte) *corev1.AddPackageRepositoryRequest {
 		return &corev1.AddPackageRepositoryRequest{
-			Name:    "bar",
-			Context: &corev1.Context{Namespace: "foo"},
-			Type:    "helm",
-			Url:     "http://example.com",
-			Auth:    tls_auth(pub, priv),
+			Name:            "bar",
+			Context:         &corev1.Context{Namespace: "foo"},
+			Type:            "helm",
+			NamespaceScoped: true,
+			Url:             "http://example.com",
+			Auth:            tls_auth(pub, priv),
 		}
 	}
 
 	add_repo_req_10 = &corev1.AddPackageRepositoryRequest{
-		Name:    "bar",
-		Context: &corev1.Context{Namespace: "foo"},
-		Type:    "helm",
-		Url:     "http://example.com",
+		Name:            "bar",
+		Context:         &corev1.Context{Namespace: "foo"},
+		Type:            "helm",
+		NamespaceScoped: true,
+		Url:             "http://example.com",
 		Auth: &corev1.PackageRepositoryAuth{
 			Type: corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_BEARER,
 			PackageRepoAuthOneOf: &corev1.PackageRepositoryAuth_Header{
@@ -1178,10 +1236,11 @@ var (
 	}
 
 	add_repo_req_11 = &corev1.AddPackageRepositoryRequest{
-		Name:    "bar",
-		Context: &corev1.Context{Namespace: "foo"},
-		Type:    "helm",
-		Url:     "http://example.com",
+		Name:            "bar",
+		Context:         &corev1.Context{Namespace: "foo"},
+		Type:            "helm",
+		NamespaceScoped: true,
+		Url:             "http://example.com",
 		Auth: &corev1.PackageRepositoryAuth{
 			Type: corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_AUTHORIZATION_HEADER,
 			PackageRepoAuthOneOf: &corev1.PackageRepositoryAuth_Header{
@@ -1191,10 +1250,11 @@ var (
 	}
 
 	add_repo_req_12 = &corev1.AddPackageRepositoryRequest{
-		Name:    "bar",
-		Context: &corev1.Context{Namespace: "foo"},
-		Type:    "helm",
-		Url:     "http://example.com",
+		Name:            "bar",
+		Context:         &corev1.Context{Namespace: "foo"},
+		Type:            "helm",
+		NamespaceScoped: true,
+		Url:             "http://example.com",
 		Auth: &corev1.PackageRepositoryAuth{
 			Type: corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_DOCKER_CONFIG_JSON,
 			PackageRepoAuthOneOf: &corev1.PackageRepositoryAuth_DockerCreds{
@@ -1209,19 +1269,21 @@ var (
 	}
 
 	add_repo_req_13 = &corev1.AddPackageRepositoryRequest{
-		Name:    "bar",
-		Context: &corev1.Context{Namespace: "foo"},
-		Type:    "helm",
-		Url:     "http://example.com",
-		Auth:    secret_1_auth,
+		Name:            "bar",
+		Context:         &corev1.Context{Namespace: "foo"},
+		Type:            "helm",
+		NamespaceScoped: true,
+		Url:             "http://example.com",
+		Auth:            secret_1_auth,
 	}
 
 	add_repo_req_14 = &corev1.AddPackageRepositoryRequest{
-		Name:    "bar",
-		Context: &corev1.Context{Namespace: "foo"},
-		Type:    "helm",
-		Url:     "http://example.com",
-		Auth:    secret_1_auth,
+		Name:            "bar",
+		Context:         &corev1.Context{Namespace: "foo"},
+		Type:            "helm",
+		NamespaceScoped: true,
+		Url:             "http://example.com",
+		Auth:            secret_1_auth,
 		TlsConfig: &corev1.PackageRepositoryTlsConfig{
 			PackageRepoTlsConfigOneOf: &corev1.PackageRepositoryTlsConfig_SecretRef{
 				SecretRef: &corev1.SecretKeyReference{
@@ -1232,25 +1294,28 @@ var (
 	}
 
 	add_repo_req_15 = &corev1.AddPackageRepositoryRequest{
-		Name:    "my-podinfo",
-		Context: &corev1.Context{Namespace: "default"},
-		Type:    "helm",
-		Url:     podinfo_repo_url,
+		Name:            "my-podinfo",
+		Context:         &corev1.Context{Namespace: "default"},
+		Type:            "helm",
+		NamespaceScoped: true,
+		Url:             podinfo_repo_url,
 	}
 
 	add_repo_req_16 = &corev1.AddPackageRepositoryRequest{
-		Name:    "my-podinfo-2",
-		Context: &corev1.Context{Namespace: "default"},
-		Type:    "helm",
-		Url:     podinfo_basic_auth_repo_url,
-		Auth:    foo_bar_auth,
+		Name:            "my-podinfo-2",
+		Context:         &corev1.Context{Namespace: "default"},
+		Type:            "helm",
+		NamespaceScoped: true,
+		Url:             podinfo_basic_auth_repo_url,
+		Auth:            foo_bar_auth,
 	}
 
 	add_repo_req_17 = &corev1.AddPackageRepositoryRequest{
-		Name:    "my-podinfo-3",
-		Context: &corev1.Context{Namespace: "default"},
-		Type:    "helm",
-		Url:     podinfo_basic_auth_repo_url,
+		Name:            "my-podinfo-3",
+		Context:         &corev1.Context{Namespace: "default"},
+		Type:            "helm",
+		NamespaceScoped: true,
+		Url:             podinfo_basic_auth_repo_url,
 		Auth: &corev1.PackageRepositoryAuth{
 			Type: corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_BASIC_AUTH,
 			PackageRepoAuthOneOf: &corev1.PackageRepositoryAuth_UsernamePassword{
@@ -1263,18 +1328,20 @@ var (
 	}
 
 	add_repo_req_18 = &corev1.AddPackageRepositoryRequest{
-		Name:    "my-podinfo-4",
-		Context: &corev1.Context{Namespace: "default"},
-		Type:    "helm",
-		Url:     podinfo_basic_auth_repo_url,
-		Auth:    secret_1_auth,
+		Name:            "my-podinfo-4",
+		Context:         &corev1.Context{Namespace: "default"},
+		Type:            "helm",
+		NamespaceScoped: true,
+		Url:             podinfo_basic_auth_repo_url,
+		Auth:            secret_1_auth,
 	}
 
 	add_repo_req_19 = &corev1.AddPackageRepositoryRequest{
-		Name:    "my-podinfo-4",
-		Context: &corev1.Context{Namespace: "default"},
-		Type:    "helm",
-		Url:     podinfo_tls_repo_url,
+		Name:            "my-podinfo-4",
+		Context:         &corev1.Context{Namespace: "default"},
+		Type:            "helm",
+		NamespaceScoped: true,
+		Url:             podinfo_tls_repo_url,
 		Auth: &corev1.PackageRepositoryAuth{
 			Type: corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_TLS,
 			PackageRepoAuthOneOf: &corev1.PackageRepositoryAuth_SecretRef{
@@ -1286,28 +1353,31 @@ var (
 	}
 
 	add_repo_req_20 = &corev1.AddPackageRepositoryRequest{
-		Name:    "bar",
-		Context: &corev1.Context{Namespace: "foo"},
-		Type:    "helm",
-		Url:     "http://example.com",
+		Name:            "bar",
+		Context:         &corev1.Context{Namespace: "foo"},
+		Type:            "helm",
+		NamespaceScoped: true,
+		Url:             "http://example.com",
 		Auth: &corev1.PackageRepositoryAuth{
 			PassCredentials: true,
 		},
 	}
 
 	add_repo_req_21 = &corev1.AddPackageRepositoryRequest{
-		Name:    "my-podinfo-5",
-		Context: &corev1.Context{Namespace: "default"},
-		Type:    "oci",
-		Url:     github_stefanprodan_podinfo_oci_registry_url,
+		Name:            "my-podinfo-5",
+		Context:         &corev1.Context{Namespace: "default"},
+		Type:            "oci",
+		NamespaceScoped: true,
+		Url:             github_stefanprodan_podinfo_oci_registry_url,
 	}
 
 	add_repo_req_22 = func(user, password string) *corev1.AddPackageRepositoryRequest {
 		return &corev1.AddPackageRepositoryRequest{
-			Name:    "my-podinfo-6",
-			Context: &corev1.Context{Namespace: "default"},
-			Type:    "oci",
-			Url:     github_stefanprodan_podinfo_oci_registry_url,
+			Name:            "my-podinfo-6",
+			Context:         &corev1.Context{Namespace: "default"},
+			Type:            "oci",
+			NamespaceScoped: true,
+			Url:             github_stefanprodan_podinfo_oci_registry_url,
 			Auth: &corev1.PackageRepositoryAuth{
 				Type: corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_BASIC_AUTH,
 				PackageRepoAuthOneOf: &corev1.PackageRepositoryAuth_UsernamePassword{
@@ -1321,10 +1391,11 @@ var (
 	}
 
 	add_repo_req_23 = &corev1.AddPackageRepositoryRequest{
-		Name:    "my-podinfo-7",
-		Context: &corev1.Context{Namespace: "default"},
-		Type:    "oci",
-		Url:     github_stefanprodan_podinfo_oci_registry_url,
+		Name:            "my-podinfo-7",
+		Context:         &corev1.Context{Namespace: "default"},
+		Type:            "oci",
+		NamespaceScoped: true,
+		Url:             github_stefanprodan_podinfo_oci_registry_url,
 		Auth: &corev1.PackageRepositoryAuth{
 			Type: corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_BASIC_AUTH,
 			PackageRepoAuthOneOf: &corev1.PackageRepositoryAuth_SecretRef{
@@ -1337,10 +1408,11 @@ var (
 
 	add_repo_req_24 = func(server, user, password string) *corev1.AddPackageRepositoryRequest {
 		return &corev1.AddPackageRepositoryRequest{
-			Name:    "my-podinfo-8",
-			Context: &corev1.Context{Namespace: "default"},
-			Type:    "oci",
-			Url:     github_stefanprodan_podinfo_oci_registry_url,
+			Name:            "my-podinfo-8",
+			Context:         &corev1.Context{Namespace: "default"},
+			Type:            "oci",
+			NamespaceScoped: true,
+			Url:             github_stefanprodan_podinfo_oci_registry_url,
 			Auth: &corev1.PackageRepositoryAuth{
 				Type: corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_DOCKER_CONFIG_JSON,
 				PackageRepoAuthOneOf: &corev1.PackageRepositoryAuth_DockerCreds{
@@ -1355,10 +1427,11 @@ var (
 	}
 
 	add_repo_req_25 = &corev1.AddPackageRepositoryRequest{
-		Name:    "my-podinfo-9",
-		Context: &corev1.Context{Namespace: "default"},
-		Type:    "oci",
-		Url:     github_stefanprodan_podinfo_oci_registry_url,
+		Name:            "my-podinfo-9",
+		Context:         &corev1.Context{Namespace: "default"},
+		Type:            "oci",
+		NamespaceScoped: true,
+		Url:             github_stefanprodan_podinfo_oci_registry_url,
 		Auth: &corev1.PackageRepositoryAuth{
 			Type: corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_DOCKER_CONFIG_JSON,
 			PackageRepoAuthOneOf: &corev1.PackageRepositoryAuth_SecretRef{
@@ -1370,18 +1443,20 @@ var (
 	}
 
 	add_repo_req_26 = &corev1.AddPackageRepositoryRequest{
-		Name:    "bar",
-		Context: &corev1.Context{Namespace: "foo"},
-		Type:    "oci",
-		Url:     github_stefanprodan_podinfo_oci_registry_url,
+		Name:            "bar",
+		Context:         &corev1.Context{Namespace: "foo"},
+		Type:            "oci",
+		NamespaceScoped: true,
+		Url:             github_stefanprodan_podinfo_oci_registry_url,
 	}
 
 	add_repo_req_27 = func(server, user, password string) *corev1.AddPackageRepositoryRequest {
 		return &corev1.AddPackageRepositoryRequest{
-			Name:    "my-podinfo-10",
-			Context: &corev1.Context{Namespace: "default"},
-			Type:    "oci",
-			Url:     harbor_stefanprodan_podinfo_oci_registry_url,
+			Name:            "my-podinfo-10",
+			Context:         &corev1.Context{Namespace: "default"},
+			Type:            "oci",
+			NamespaceScoped: true,
+			Url:             harbor_stefanprodan_podinfo_oci_registry_url,
 			Auth: &corev1.PackageRepositoryAuth{
 				Type: corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_DOCKER_CONFIG_JSON,
 				PackageRepoAuthOneOf: &corev1.PackageRepositoryAuth_DockerCreds{
@@ -1397,10 +1472,11 @@ var (
 
 	add_repo_req_28 = func(server, user, password string) *corev1.AddPackageRepositoryRequest {
 		return &corev1.AddPackageRepositoryRequest{
-			Name:    "my-podinfo-10",
-			Context: &corev1.Context{Namespace: "default"},
-			Type:    "oci",
-			Url:     gcp_stefanprodan_podinfo_oci_registry_url,
+			Name:            "my-podinfo-10",
+			Context:         &corev1.Context{Namespace: "default"},
+			Type:            "oci",
+			NamespaceScoped: true,
+			Url:             gcp_stefanprodan_podinfo_oci_registry_url,
 			Auth: &corev1.PackageRepositoryAuth{
 				Type: corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_DOCKER_CONFIG_JSON,
 				PackageRepoAuthOneOf: &corev1.PackageRepositoryAuth_DockerCreds{
@@ -1420,11 +1496,12 @@ var (
 		})
 
 		return &corev1.AddPackageRepositoryRequest{
-			Name:         "bar",
-			Context:      &corev1.Context{Namespace: "foo"},
-			Type:         "oci",
-			Url:          github_stefanprodan_podinfo_oci_registry_url,
-			CustomDetail: customDetail,
+			Name:            "bar",
+			Context:         &corev1.Context{Namespace: "foo"},
+			Type:            "oci",
+			NamespaceScoped: true,
+			Url:             github_stefanprodan_podinfo_oci_registry_url,
+			CustomDetail:    customDetail,
 		}
 	}
 
@@ -2658,12 +2735,12 @@ var (
 			PackageRepoRef:  get_repo_detail_package_resp_ref,
 			Name:            "repo-1",
 			Description:     "",
-			NamespaceScoped: false,
+			NamespaceScoped: true,
 			Type:            "helm",
 			Url:             "https://example.repo.com/charts",
 			Interval:        "1m",
 			Auth:            &corev1.PackageRepositoryAuth{PassCredentials: false},
-			Status:          podinfo_repo_status_2,
+			Status:          podinfo_repo_status_1,
 		},
 	}
 
@@ -2696,7 +2773,7 @@ var (
 			PackageRepoRef:  get_repo_detail_package_resp_ref,
 			Name:            "repo-1",
 			Description:     "",
-			NamespaceScoped: false,
+			NamespaceScoped: true,
 			Type:            "helm",
 			Url:             "https://example.repo.com/charts",
 			Interval:        "1m",
@@ -2710,7 +2787,7 @@ var (
 					},
 				},
 			},
-			Status: podinfo_repo_status_2,
+			Status: podinfo_repo_status_1,
 		},
 	}
 
@@ -2719,7 +2796,7 @@ var (
 			PackageRepoRef:  get_repo_detail_package_resp_ref,
 			Name:            "repo-1",
 			Description:     "",
-			NamespaceScoped: false,
+			NamespaceScoped: true,
 			Type:            "helm",
 			Url:             "https://example.repo.com/charts",
 			Interval:        "1m",
@@ -2730,7 +2807,7 @@ var (
 					CertAuthority: redactedString,
 				},
 			},
-			Status: podinfo_repo_status_2,
+			Status: podinfo_repo_status_1,
 		},
 	}
 
@@ -2739,7 +2816,7 @@ var (
 			PackageRepoRef:  get_repo_detail_package_resp_ref,
 			Name:            "repo-1",
 			Description:     "",
-			NamespaceScoped: false,
+			NamespaceScoped: true,
 			Type:            "helm",
 			Url:             "https://example.repo.com/charts",
 			Interval:        "1m",
@@ -2757,7 +2834,7 @@ var (
 			PackageRepoRef:  get_repo_detail_package_resp_ref,
 			Name:            "repo-1",
 			Description:     "",
-			NamespaceScoped: false,
+			NamespaceScoped: true,
 			Type:            "helm",
 			Url:             "https://example.repo.com/charts",
 			Interval:        "1m",
@@ -2775,7 +2852,7 @@ var (
 			PackageRepoRef:  get_repo_detail_package_resp_ref,
 			Name:            "repo-1",
 			Description:     "",
-			NamespaceScoped: false,
+			NamespaceScoped: true,
 			Type:            "helm",
 			Url:             "https://example.repo.com/charts",
 			Interval:        "1m",
@@ -2788,7 +2865,7 @@ var (
 					},
 				},
 			},
-			Status: podinfo_repo_status_2,
+			Status: podinfo_repo_status_1,
 		},
 	}
 
@@ -2797,12 +2874,12 @@ var (
 			PackageRepoRef:  get_repo_detail_package_resp_ref,
 			Name:            "repo-1",
 			Description:     "",
-			NamespaceScoped: false,
+			NamespaceScoped: true,
 			Type:            "helm",
 			Url:             "https://example.repo.com/charts",
 			Interval:        "1m",
 			Auth:            tls_auth_redacted,
-			Status:          podinfo_repo_status_2,
+			Status:          podinfo_repo_status_1,
 		},
 	}
 
@@ -2815,12 +2892,12 @@ var (
 			PackageRepoRef:  get_repo_detail_package_resp_ref,
 			Name:            "repo-1",
 			Description:     "",
-			NamespaceScoped: false,
+			NamespaceScoped: true,
 			Type:            "helm",
 			Url:             "https://example.repo.com/charts",
 			Interval:        "1m",
 			Auth:            secret_1_auth,
-			Status:          podinfo_repo_status_2,
+			Status:          podinfo_repo_status_1,
 		},
 	}
 
@@ -2829,12 +2906,12 @@ var (
 			PackageRepoRef:  get_repo_detail_package_resp_ref,
 			Name:            "repo-1",
 			Description:     "",
-			NamespaceScoped: false,
+			NamespaceScoped: true,
 			Type:            "helm",
 			Url:             "https://example.repo.com/charts",
 			Interval:        "1m",
 			Auth:            foo_bar_auth_redacted,
-			Status:          podinfo_repo_status_2,
+			Status:          podinfo_repo_status_1,
 		},
 	}
 
@@ -2843,12 +2920,12 @@ var (
 			PackageRepoRef:  repoRefWithId("my-podinfo"),
 			Name:            "my-podinfo",
 			Description:     "",
-			NamespaceScoped: false,
+			NamespaceScoped: true,
 			Type:            "helm",
 			Url:             podinfo_repo_url,
 			Interval:        "10m",
 			Auth:            &corev1.PackageRepositoryAuth{PassCredentials: false},
-			Status:          podinfo_repo_status_3,
+			Status:          podinfo_repo_status_1,
 		},
 	}
 
@@ -2861,7 +2938,7 @@ var (
 			PackageRepoRef:  repoRefWithId("my-bitnami"),
 			Name:            "my-bitnami",
 			Description:     "",
-			NamespaceScoped: false,
+			NamespaceScoped: true,
 			Type:            "helm",
 			Url:             "https://charts.bitnami.com/bitnami",
 			Interval:        "10m",
@@ -2879,7 +2956,7 @@ var (
 			PackageRepoRef:  repoRefWithId("my-podinfo-2"),
 			Name:            "my-podinfo-2",
 			Description:     "",
-			NamespaceScoped: false,
+			NamespaceScoped: true,
 			Type:            "helm",
 			Url:             podinfo_basic_auth_repo_url,
 			Interval:        "10m",
@@ -2897,7 +2974,7 @@ var (
 			PackageRepoRef:  repoRefWithId("my-podinfo-3"),
 			Name:            "my-podinfo-3",
 			Description:     "",
-			NamespaceScoped: false,
+			NamespaceScoped: true,
 			Type:            "helm",
 			Url:             podinfo_basic_auth_repo_url,
 			Interval:        "10m",
@@ -2911,7 +2988,7 @@ var (
 			PackageRepoRef:  repoRefWithId("my-podinfo-3"),
 			Name:            "my-podinfo-3",
 			Description:     "",
-			NamespaceScoped: false,
+			NamespaceScoped: true,
 			Type:            "helm",
 			Url:             podinfo_basic_auth_repo_url,
 			Interval:        "10m",
@@ -2947,7 +3024,7 @@ var (
 			PackageRepoRef:  repoRefWithId("my-podinfo-12"),
 			Name:            "my-podinfo-12",
 			Description:     "",
-			NamespaceScoped: false,
+			NamespaceScoped: true,
 			Type:            "helm",
 			Url:             github_stefanprodan_podinfo_oci_registry_url,
 			Interval:        "10m",
@@ -2985,7 +3062,7 @@ var (
 			PackageRepoRef:  repoRefWithId("my-podinfo-13"),
 			Name:            "my-podinfo-13",
 			Description:     "",
-			NamespaceScoped: false,
+			NamespaceScoped: true,
 			Type:            "oci",
 			Url:             github_stefanprodan_podinfo_oci_registry_url,
 			Interval:        "10m",
@@ -3003,7 +3080,7 @@ var (
 			PackageRepoRef:  repoRefWithId("my-podinfo-14"),
 			Name:            "my-podinfo-14",
 			Description:     "",
-			NamespaceScoped: false,
+			NamespaceScoped: true,
 			Type:            "oci",
 			Url:             github_stefanprodan_podinfo_oci_registry_url,
 			Interval:        "10m",
@@ -3029,7 +3106,7 @@ var (
 			PackageRepoRef:  repoRefWithId("my-podinfo-15"),
 			Name:            "my-podinfo-15",
 			Description:     "",
-			NamespaceScoped: false,
+			NamespaceScoped: true,
 			Type:            "oci",
 			Url:             github_stefanprodan_podinfo_oci_registry_url,
 			Interval:        "10m",
@@ -3056,7 +3133,7 @@ var (
 			PackageRepoRef:  get_repo_detail_package_resp_ref,
 			Name:            "repo-1",
 			Description:     "",
-			NamespaceScoped: false,
+			NamespaceScoped: true,
 			Type:            "oci",
 			Url:             "oci://localhost:54321/userX/charts",
 			Interval:        "1m",
@@ -3070,7 +3147,7 @@ var (
 			PackageRepoRef:  repoRefWithId("my-podinfo-16"),
 			Name:            "my-podinfo-16",
 			Description:     "",
-			NamespaceScoped: false,
+			NamespaceScoped: true,
 			Type:            "oci",
 			Url:             harbor_stefanprodan_podinfo_oci_registry_url,
 			Interval:        "10m",
@@ -3172,10 +3249,10 @@ var (
 		PackageRepoRef:  repoRef("bar", "foo"),
 		Name:            "bar",
 		Description:     "",
-		NamespaceScoped: false,
+		NamespaceScoped: true,
 		Type:            "helm",
 		Url:             "http://example.com",
-		Status:          podinfo_repo_status_2,
+		Status:          podinfo_repo_status_1,
 		RequiresAuth:    true,
 	}
 
@@ -3183,10 +3260,10 @@ var (
 		PackageRepoRef:  repoRef("zot", "xyz"),
 		Name:            "zot",
 		Description:     "",
-		NamespaceScoped: false,
+		NamespaceScoped: true,
 		Type:            "helm",
 		Url:             "http://example.com",
-		Status:          podinfo_repo_status_2,
+		Status:          podinfo_repo_status_1,
 		RequiresAuth:    false,
 	}
 
@@ -3194,7 +3271,7 @@ var (
 		PackageRepoRef:  repoRef("pending", "xyz"),
 		Name:            "pending",
 		Description:     "",
-		NamespaceScoped: false,
+		NamespaceScoped: true,
 		Type:            "helm",
 		Url:             "http://example.com",
 		Status:          repo_status_pending,
@@ -3205,7 +3282,7 @@ var (
 		PackageRepoRef:  repoRef("failed", "xyz"),
 		Name:            "failed",
 		Description:     "",
-		NamespaceScoped: false,
+		NamespaceScoped: true,
 		Type:            "helm",
 		Url:             "http://example.com",
 		Status: &corev1.PackageRepositoryStatus{
@@ -3221,10 +3298,10 @@ var (
 			PackageRepoRef:  repoRef(name.Name, name.Namespace),
 			Name:            name.Name,
 			Description:     "",
-			NamespaceScoped: false,
+			NamespaceScoped: true,
 			Type:            "helm",
 			Url:             podinfo_repo_url,
-			Status:          podinfo_repo_status_3,
+			Status:          podinfo_repo_status_1,
 			RequiresAuth:    false,
 		}
 	}
@@ -3234,7 +3311,7 @@ var (
 			PackageRepoRef:  repoRef(name.Name, name.Namespace),
 			Name:            name.Name,
 			Description:     "",
-			NamespaceScoped: false,
+			NamespaceScoped: true,
 			Type:            "oci",
 			Url:             github_stefanprodan_podinfo_oci_registry_url,
 			Status:          podinfo_repo_status_4,
@@ -3247,7 +3324,7 @@ var (
 			PackageRepoRef:  repoRef(name.Name, name.Namespace),
 			Name:            name.Name,
 			Description:     "",
-			NamespaceScoped: false,
+			NamespaceScoped: true,
 			Type:            "oci",
 			Url:             harbor_stefanprodan_podinfo_oci_registry_url,
 			Status:          podinfo_repo_status_4,
@@ -3403,7 +3480,7 @@ var (
 			PackageRepoRef:  get_repo_detail_package_resp_ref,
 			Name:            "repo-1",
 			Description:     "",
-			NamespaceScoped: false,
+			NamespaceScoped: true,
 			Type:            "helm",
 			Url:             "http://newurl.com",
 			Interval:        "10m",
@@ -3417,7 +3494,7 @@ var (
 			PackageRepoRef:  get_repo_detail_package_resp_ref,
 			Name:            "repo-1",
 			Description:     "",
-			NamespaceScoped: false,
+			NamespaceScoped: true,
 			Type:            "helm",
 			Url:             "https://example.repo.com/charts",
 			Interval:        "5m45s",
@@ -3431,7 +3508,7 @@ var (
 			PackageRepoRef:  get_repo_detail_package_resp_ref,
 			Name:            "repo-1",
 			Description:     "",
-			NamespaceScoped: false,
+			NamespaceScoped: true,
 			Type:            "helm",
 			Url:             "https://example.repo.com/charts",
 			Interval:        "10m",
@@ -3445,7 +3522,7 @@ var (
 			PackageRepoRef:  get_repo_detail_package_resp_ref,
 			Name:            "repo-1",
 			Description:     "",
-			NamespaceScoped: false,
+			NamespaceScoped: true,
 			Type:            "helm",
 			Url:             "https://example.repo.com/charts",
 			Interval:        "10m",
@@ -3467,7 +3544,7 @@ var (
 			PackageRepoRef:  get_repo_detail_package_resp_ref,
 			Name:            "repo-1",
 			Description:     "",
-			NamespaceScoped: false,
+			NamespaceScoped: true,
 			Type:            "helm",
 			Url:             "https://example.repo.com/charts",
 			Interval:        "10m",
@@ -3481,7 +3558,7 @@ var (
 			PackageRepoRef:  get_repo_detail_package_resp_ref,
 			Name:            "repo-1",
 			Description:     "",
-			NamespaceScoped: false,
+			NamespaceScoped: true,
 			Type:            "helm",
 			Url:             "https://example.repo.com/charts",
 			Interval:        "10m",
@@ -3495,7 +3572,7 @@ var (
 			PackageRepoRef:  get_repo_detail_package_resp_ref,
 			Name:            "repo-1",
 			Description:     "",
-			NamespaceScoped: false,
+			NamespaceScoped: true,
 			Type:            "helm",
 			Url:             "https://example.repo.com/charts",
 			Interval:        "10m",
@@ -3509,7 +3586,7 @@ var (
 			PackageRepoRef:  get_repo_detail_package_resp_ref,
 			Name:            "repo-1",
 			Description:     "",
-			NamespaceScoped: false,
+			NamespaceScoped: true,
 			Type:            "helm",
 			Url:             "https://example.repo.com/charts",
 			Interval:        "10m",
@@ -3523,7 +3600,7 @@ var (
 			PackageRepoRef:  get_repo_detail_package_resp_ref,
 			Name:            "repo-1",
 			Description:     "",
-			NamespaceScoped: false,
+			NamespaceScoped: true,
 			Type:            "helm",
 			Url:             "https://example.repo.com/charts",
 			Interval:        "10m",
@@ -3537,7 +3614,7 @@ var (
 			PackageRepoRef:  get_repo_detail_package_resp_ref,
 			Name:            "repo-1",
 			Description:     "",
-			NamespaceScoped: false,
+			NamespaceScoped: true,
 			Type:            "helm",
 			Url:             "https://example.repo.com/charts",
 			Interval:        "10m",
@@ -3551,7 +3628,7 @@ var (
 			PackageRepoRef:  repoRefWithId("my-podinfo"),
 			Name:            "my-podinfo",
 			Description:     "",
-			NamespaceScoped: false,
+			NamespaceScoped: true,
 			Type:            "helm",
 			Url:             podinfo_basic_auth_repo_url,
 			Interval:        "10m",
@@ -3565,7 +3642,7 @@ var (
 			PackageRepoRef:  repoRefWithId("my-podinfo-2"),
 			Name:            "my-podinfo-2",
 			Description:     "",
-			NamespaceScoped: false,
+			NamespaceScoped: true,
 			Type:            "helm",
 			Url:             podinfo_basic_auth_repo_url,
 			Interval:        "10m",
@@ -3579,7 +3656,7 @@ var (
 			PackageRepoRef:  repoRefWithId("my-podinfo-4"),
 			Name:            "my-podinfo-4",
 			Description:     "",
-			NamespaceScoped: false,
+			NamespaceScoped: true,
 			Type:            "helm",
 			Url:             podinfo_basic_auth_repo_url,
 			Interval:        "10m",
@@ -3593,7 +3670,7 @@ var (
 			PackageRepoRef:  repoRefWithId("my-podinfo-5"),
 			Name:            "my-podinfo-5",
 			Description:     "",
-			NamespaceScoped: false,
+			NamespaceScoped: true,
 			Type:            "helm",
 			Url:             podinfo_basic_auth_repo_url,
 			Interval:        "10m",
@@ -3607,7 +3684,7 @@ var (
 			PackageRepoRef:  get_repo_detail_package_resp_ref,
 			Name:            "repo-1",
 			Description:     "",
-			NamespaceScoped: false,
+			NamespaceScoped: true,
 			Type:            "helm",
 			Url:             "http://newurl.com",
 			Interval:        "10m",
@@ -3621,7 +3698,7 @@ var (
 			PackageRepoRef:  repoRefWithId("my-podinfo-6"),
 			Name:            "my-podinfo-6",
 			Description:     "",
-			NamespaceScoped: false,
+			NamespaceScoped: true,
 			Type:            "helm",
 			Url:             podinfo_basic_auth_repo_url,
 			Interval:        "10m",
@@ -3635,7 +3712,7 @@ var (
 			PackageRepoRef:  repoRefWithId("my-podinfo-7"),
 			Name:            "my-podinfo-7",
 			Description:     "",
-			NamespaceScoped: false,
+			NamespaceScoped: true,
 			Type:            "oci",
 			Url:             github_stefanprodan_podinfo_oci_registry_url,
 			Interval:        "4m44s",
@@ -3700,21 +3777,14 @@ var (
 	}
 
 	podinfo_repo_status_1 = &corev1.PackageRepositoryStatus{
-		Ready:      true,
-		Reason:     corev1.PackageRepositoryStatus_STATUS_REASON_SUCCESS,
-		UserReason: "Succeeded: stored artifact for revision '9d3ac1eb708dfaebae14d7c88fd46afce8b1e0f7aace790d91758575dc8ce518'",
-	}
-
-	podinfo_repo_status_2 = &corev1.PackageRepositoryStatus{
-		Ready:      true,
-		Reason:     corev1.PackageRepositoryStatus_STATUS_REASON_SUCCESS,
-		UserReason: "Succeeded: stored artifact for revision '651f952130ea96823711d08345b85e82be011dc6'",
-	}
-
-	podinfo_repo_status_3 = &corev1.PackageRepositoryStatus{
-		Ready:      true,
-		Reason:     corev1.PackageRepositoryStatus_STATUS_REASON_SUCCESS,
-		UserReason: "Succeeded: stored artifact for revision '2867920fb8f56575f4bc95ed878ee2a0c8ae79cdd2bca210a72aa3ff04defa1b'",
+		Ready:  true,
+		Reason: corev1.PackageRepositoryStatus_STATUS_REASON_SUCCESS,
+		// the actual revision # (SHA digest), like
+		// '552fc7ab40d40adcd7adebad6d5b8185a5924bc2e2badee8468e20e6962d3c3e'
+		// may change depending on environment, flux version,
+		// or even the order in which tests are run, we we'll ignore that for
+		// the purpose of the integration test
+		UserReason: "Succeeded: stored artifact for revision '",
 	}
 
 	podinfo_repo_status_4 = &corev1.PackageRepositoryStatus{

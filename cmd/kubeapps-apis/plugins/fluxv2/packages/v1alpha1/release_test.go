@@ -8,7 +8,6 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"os"
-	"strings"
 	"testing"
 	"time"
 
@@ -219,7 +218,7 @@ func TestGetInstalledPackageSummariesWithoutPagination(t *testing.T) {
 			charts, releases, cleanup := newChartsAndReleases(t, tc.existingObjs)
 			s, mock, err := newServerWithChartsAndReleases(t, nil, charts, releases)
 			if err != nil {
-				t.Fatalf("%+v", err)
+				t.Fatal(err)
 			}
 			defer cleanup()
 
@@ -227,7 +226,7 @@ func TestGetInstalledPackageSummariesWithoutPagination(t *testing.T) {
 				ts2, repo, err := newHttpRepoAndServeIndex(
 					existing.repoIndex, existing.repoName, existing.repoNamespace, nil, "")
 				if err != nil {
-					t.Fatalf("%+v", err)
+					t.Fatal(err)
 				}
 				defer ts2.Close()
 
@@ -246,20 +245,7 @@ func TestGetInstalledPackageSummariesWithoutPagination(t *testing.T) {
 			if tc.expectedStatusCode != codes.OK {
 				return
 			}
-
-			opts := cmpopts.IgnoreUnexported(
-				corev1.GetInstalledPackageSummariesResponse{},
-				corev1.InstalledPackageSummary{},
-				corev1.InstalledPackageReference{},
-				corev1.Context{},
-				corev1.VersionReference{},
-				corev1.InstalledPackageStatus{},
-				corev1.PackageAppVersion{},
-				plugins.Plugin{})
-			opts2 := cmpopts.SortSlices(lessInstalledPackageSummaryFunc)
-			if got, want := response, tc.expectedResponse; !cmp.Equal(want, got, opts, opts2) {
-				t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opts, opts2))
-			}
+			compareInstalledPackageSummaries(t, response, tc.expectedResponse)
 
 			if err := mock.ExpectationsWereMet(); err != nil {
 				t.Errorf("there were unfulfilled expectations: %s", err)
@@ -280,7 +266,7 @@ func TestGetInstalledPackageSummariesWithPagination(t *testing.T) {
 		charts, releases, cleanup := newChartsAndReleases(t, existingObjs)
 		s, mock, err := newServerWithChartsAndReleases(t, nil, charts, releases)
 		if err != nil {
-			t.Fatalf("%+v", err)
+			t.Fatal(err)
 		}
 		defer cleanup()
 
@@ -288,7 +274,7 @@ func TestGetInstalledPackageSummariesWithPagination(t *testing.T) {
 			ts2, repo, err := newHttpRepoAndServeIndex(
 				existing.repoIndex, existing.repoName, existing.repoNamespace, nil, "")
 			if err != nil {
-				t.Fatalf("%+v", err)
+				t.Fatal(err)
 			}
 			defer ts2.Close()
 
@@ -384,9 +370,8 @@ func TestGetInstalledPackageSummariesWithPagination(t *testing.T) {
 		if got, want := status.Code(err), codes.OK; got != want {
 			t.Fatalf("got: %+v, want: %+v, err: %+v", got, want, err)
 		}
-		if got, want := response3, nextExpectedResp; !cmp.Equal(want, got, opts, opts2) {
-			t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opts, opts2))
-		}
+
+		compareInstalledPackageSummaries(t, response3, nextExpectedResp)
 
 		if err := mock.ExpectationsWereMet(); err != nil {
 			t.Errorf("there were unfulfilled expectations: %s", err)
@@ -488,7 +473,7 @@ func TestGetInstalledPackageDetail(t *testing.T) {
 				t, helmReleaseNamespace, []helmReleaseStub{tc.existingHelmStub})
 			s, mock, err := newServerWithChartsAndReleases(t, actionConfig, charts, repos)
 			if err != nil {
-				t.Fatalf("%+v", err)
+				t.Fatal(err)
 			}
 
 			response, err := s.GetInstalledPackageDetail(context.Background(), tc.request)
@@ -506,7 +491,7 @@ func TestGetInstalledPackageDetail(t *testing.T) {
 				InstalledPackageDetail: tc.expectedDetail,
 			}
 
-			compareActualVsExpectedGetInstalledPackageDetailResponse(t, response, expectedResp)
+			compareInstalledPackageDetail(t, response, expectedResp)
 
 			// we make sure that all expectations were met
 			if err := mock.ExpectationsWereMet(); err != nil {
@@ -651,13 +636,13 @@ func TestCreateInstalledPackage(t *testing.T) {
 			ts, repo, err := newHttpRepoAndServeIndex(
 				tc.existingObjs.repoIndex, tc.existingObjs.repoName, tc.existingObjs.repoNamespace, nil, "")
 			if err != nil {
-				t.Fatalf("%+v", err)
+				t.Fatal(err)
 			}
 			defer ts.Close()
 
 			s, mock, err := newSimpleServerWithRepos(t, []sourcev1.HelmRepository{*repo})
 			if err != nil {
-				t.Fatalf("%+v", err)
+				t.Fatal(err)
 			}
 
 			if err = s.redisMockExpectGetFromRepoCache(mock, nil, *repo); err != nil {
@@ -871,7 +856,7 @@ func TestUpdateInstalledPackage(t *testing.T) {
 			defer cleanup()
 			s, mock, err := newServerWithChartsAndReleases(t, nil, charts, releases)
 			if err != nil {
-				t.Fatalf("%+v", err)
+				t.Fatal(err)
 			}
 
 			if tc.defaultUpgradePolicyStr != "" {
@@ -972,7 +957,7 @@ func TestDeleteInstalledPackage(t *testing.T) {
 			defer cleanup()
 			s, mock, err := newServerWithChartsAndReleases(t, nil, charts, repos)
 			if err != nil {
-				t.Fatalf("%+v", err)
+				t.Fatal(err)
 			}
 
 			response, err := s.DeleteInstalledPackage(context.Background(), tc.request)
@@ -1123,7 +1108,7 @@ func TestGetInstalledPackageResourceRefs(t *testing.T) {
 				toHelmReleaseStubs(tc.baseTestCase.ExistingReleases))
 			server, mock, err := newServerWithChartsAndReleases(t, actionConfig, charts, releases)
 			if err != nil {
-				t.Fatalf("%+v", err)
+				t.Fatal(err)
 			}
 
 			response, err := server.GetInstalledPackageResourceRefs(context.Background(), tc.request)
@@ -1157,7 +1142,7 @@ func newChartsAndReleases(t *testing.T, existingK8sObjs []testSpecGetInstalledPa
 	for _, existing := range existingK8sObjs {
 		tarGzBytes, err := os.ReadFile(existing.chartTarGz)
 		if err != nil {
-			t.Fatalf("%+v", err)
+			t.Fatal(err)
 		}
 
 		// stand up an http server just for the duration of this test
@@ -1165,7 +1150,7 @@ func newChartsAndReleases(t *testing.T, existingK8sObjs []testSpecGetInstalledPa
 			w.WriteHeader(200)
 			_, err = w.Write(tarGzBytes)
 			if err != nil {
-				t.Fatalf("%+v", err)
+				t.Fatal(err)
 			}
 		}))
 		httpServers = append(httpServers, ts)
@@ -1230,31 +1215,6 @@ func newChartsAndReleases(t *testing.T, existingK8sObjs []testSpecGetInstalledPa
 		releases = append(releases, release)
 	}
 	return charts, releases, cleanup
-}
-
-func compareActualVsExpectedGetInstalledPackageDetailResponse(t *testing.T, actualResp *corev1.GetInstalledPackageDetailResponse, expectedResp *corev1.GetInstalledPackageDetailResponse) {
-	opts := cmpopts.IgnoreUnexported(
-		corev1.GetInstalledPackageDetailResponse{},
-		corev1.InstalledPackageDetail{},
-		corev1.InstalledPackageReference{},
-		corev1.Context{},
-		corev1.VersionReference{},
-		corev1.InstalledPackageStatus{},
-		corev1.PackageAppVersion{},
-		plugins.Plugin{},
-		corev1.ReconciliationOptions{},
-		corev1.AvailablePackageReference{})
-	// see comment in release_integration_test.go. Intermittently we get an inconsistent error message from flux
-	opts2 := cmpopts.IgnoreFields(corev1.InstalledPackageStatus{}, "UserReason")
-	// Values Applied are JSON string and need to be compared as such
-	opts3 := cmpopts.IgnoreFields(corev1.InstalledPackageDetail{}, "ValuesApplied")
-	if got, want := actualResp, expectedResp; !cmp.Equal(want, got, opts, opts2, opts3) {
-		t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opts, opts2, opts3))
-	}
-	if !strings.Contains(actualResp.InstalledPackageDetail.Status.UserReason, expectedResp.InstalledPackageDetail.Status.UserReason) {
-		t.Errorf("substring mismatch (-want: %s\n+got: %s):\n", expectedResp.InstalledPackageDetail.Status.UserReason, actualResp.InstalledPackageDetail.Status.UserReason)
-	}
-	compareJSONStrings(t, expectedResp.InstalledPackageDetail.ValuesApplied, actualResp.InstalledPackageDetail.ValuesApplied)
 }
 
 func newRelease(meta metav1.ObjectMeta, spec *helmv2.HelmReleaseSpec, status *helmv2.HelmReleaseStatus) helmv2.HelmRelease {

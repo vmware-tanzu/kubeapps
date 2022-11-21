@@ -2,14 +2,11 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import Ajv, { ErrorObject, JSONSchemaType } from "ajv";
-// TODO(agamez): check if we can replace this package by js-yaml or vice-versa
-import * as yaml from "js-yaml";
 import { findIndex, isEmpty, set } from "lodash";
 import { DeploymentEvent, IAjvValidateResult, IBasicFormParam } from "shared/types";
-// TODO(agamez): check if we can replace this package by js-yaml or vice-versa
 import YAML from "yaml";
-import { getPathValueInYamlNode, getPathValueInYamlNodeWithDefault } from "./yamlUtils";
 import * as jsonpatch from "fast-json-patch";
+import { getPathValueInYamlNode, getPathValueInYamlNodeWithDefault, parseToJS } from "./yamlUtils";
 
 const ajv = new Ajv({ strict: false });
 
@@ -52,13 +49,13 @@ export function retrieveBasicFormParams(
         hasProperties: Boolean(schemaProperty?.properties),
         params: schemaProperty?.properties
           ? retrieveBasicFormParams(
-              currentValues,
-              packageValues,
-              schemaProperty,
-              deploymentEvent,
-              deployedValues,
-              `${itemPath}/`,
-            )
+            currentValues,
+            packageValues,
+            schemaProperty,
+            deploymentEvent,
+            deployedValues,
+            `${itemPath}/`,
+          )
           : undefined,
         // get the string values of the enum array
         enum: schemaProperty?.enum?.map((item: { toString: () => any }) => item?.toString() ?? ""),
@@ -156,22 +153,21 @@ export function schemaToObject(schema?: string): JSONSchemaType<any> {
   return schemaObject as JSONSchemaType<any>;
 }
 
-// TODO(agamez): stop loading the yaml values with the yaml.load function.
 export function validateValuesSchema(
   values: string,
   schema: JSONSchemaType<any> | any,
   defaultValues?: string,
 ): { valid: boolean; errors: ErrorObject[] | null | undefined } {
-  let valuesToCheck = yaml.load(values);
+  let valuesToCheck = YAML.parse(values);
   if (defaultValues) {
-    const defaultYAML = yaml.load(defaultValues);
+    const defaultYAML = YAML.parse(defaultValues);
     let patches = jsonpatch.compare(defaultYAML as any, valuesToCheck as any);
     patches = patches.filter(function (d) {
       return ["add", "replace"].includes(d.op);
     });
     valuesToCheck = jsonpatch.applyPatch(defaultYAML, patches).newDocument;
   }
-  const valid = ajv.validate(schema, valuesToCheck);
+  const valid = ajv.validate(schema, parseToJS(valuesToCheck));
   return { valid: !!valid, errors: ajv.errors } as IAjvValidateResult;
 }
 

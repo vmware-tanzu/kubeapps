@@ -6,6 +6,7 @@ package server
 import (
 	"testing"
 
+	"github.com/adhocore/gronx"
 	"github.com/google/go-cmp/cmp"
 	apprepov1alpha1 "github.com/vmware-tanzu/kubeapps/cmd/apprepository-controller/pkg/apis/apprepository/v1alpha1"
 	batchv1 "k8s.io/api/batch/v1"
@@ -68,7 +69,7 @@ func Test_newCronJob(t *testing.T) {
 				},
 				Spec: batchv1.CronJobSpec{
 					Schedule:          "*/10 * * * *",
-					ConcurrencyPolicy: "Replace",
+					ConcurrencyPolicy: batchv1.ReplaceConcurrent,
 					JobTemplate: batchv1.JobTemplateSpec{
 						Spec: batchv1.JobSpec{
 							TTLSecondsAfterFinished: &defaultTTL,
@@ -81,12 +82,12 @@ func Test_newCronJob(t *testing.T) {
 									Annotations: map[string]string{},
 								},
 								Spec: corev1.PodSpec{
-									RestartPolicy: "OnFailure",
+									RestartPolicy: corev1.RestartPolicyOnFailure,
 									Containers: []corev1.Container{
 										{
 											Name:            "sync",
 											Image:           repoSyncImage,
-											ImagePullPolicy: "IfNotPresent",
+											ImagePullPolicy: corev1.PullIfNotPresent,
 											Command:         []string{"/chart-repo"},
 											Args: []string{
 												"sync",
@@ -150,7 +151,7 @@ func Test_newCronJob(t *testing.T) {
 				},
 				Spec: batchv1.CronJobSpec{
 					Schedule:          "*/10 * * * *",
-					ConcurrencyPolicy: "Replace",
+					ConcurrencyPolicy: batchv1.ReplaceConcurrent,
 					JobTemplate: batchv1.JobTemplateSpec{
 						Spec: batchv1.JobSpec{
 							TTLSecondsAfterFinished: &defaultTTL,
@@ -163,12 +164,12 @@ func Test_newCronJob(t *testing.T) {
 									Annotations: map[string]string{},
 								},
 								Spec: corev1.PodSpec{
-									RestartPolicy: "OnFailure",
+									RestartPolicy: corev1.RestartPolicyOnFailure,
 									Containers: []corev1.Container{
 										{
 											Name:            "sync",
 											Image:           repoSyncImage,
-											ImagePullPolicy: "IfNotPresent",
+											ImagePullPolicy: corev1.PullIfNotPresent,
 											Command:         []string{"/chart-repo"},
 											Args: []string{
 												"sync",
@@ -245,7 +246,7 @@ func Test_newCronJob(t *testing.T) {
 				},
 				Spec: batchv1.CronJobSpec{
 					Schedule:          "*/20 * * * *",
-					ConcurrencyPolicy: "Replace",
+					ConcurrencyPolicy: batchv1.ReplaceConcurrent,
 					JobTemplate: batchv1.JobTemplateSpec{
 						Spec: batchv1.JobSpec{
 							TTLSecondsAfterFinished: &defaultTTL,
@@ -258,12 +259,12 @@ func Test_newCronJob(t *testing.T) {
 									Annotations: map[string]string{},
 								},
 								Spec: corev1.PodSpec{
-									RestartPolicy: "OnFailure",
+									RestartPolicy: corev1.RestartPolicyOnFailure,
 									Containers: []corev1.Container{
 										{
 											Name:            "sync",
 											Image:           repoSyncImage,
-											ImagePullPolicy: "IfNotPresent",
+											ImagePullPolicy: corev1.PullIfNotPresent,
 											Command:         []string{"/chart-repo"},
 											Args: []string{
 												"sync",
@@ -337,7 +338,7 @@ func Test_newCronJob(t *testing.T) {
 				},
 				Spec: batchv1.CronJobSpec{
 					Schedule:          "*/20 * * * *",
-					ConcurrencyPolicy: "Replace",
+					ConcurrencyPolicy: batchv1.ReplaceConcurrent,
 					JobTemplate: batchv1.JobTemplateSpec{
 						Spec: batchv1.JobSpec{
 							TTLSecondsAfterFinished: &defaultTTL,
@@ -350,12 +351,12 @@ func Test_newCronJob(t *testing.T) {
 									Annotations: map[string]string{},
 								},
 								Spec: corev1.PodSpec{
-									RestartPolicy: "OnFailure",
+									RestartPolicy: corev1.RestartPolicyOnFailure,
 									Containers: []corev1.Container{
 										{
 											Name:            "sync",
 											Image:           repoSyncImage,
-											ImagePullPolicy: "IfNotPresent",
+											ImagePullPolicy: corev1.PullIfNotPresent,
 											Command:         []string{"/chart-repo"},
 											Args: []string{
 												"sync",
@@ -379,6 +380,190 @@ func Test_newCronJob(t *testing.T) {
 													Name: "AUTHORIZATION_HEADER",
 													ValueFrom: &corev1.EnvVarSource{
 														SecretKeyRef: &corev1.SecretKeySelector{LocalObjectReference: corev1.LocalObjectReference{Name: "otherns-apprepo-my-charts-in-otherns"}, Key: "AuthorizationHeader"}},
+												},
+											},
+											VolumeMounts: nil,
+										},
+									},
+									Volumes: nil,
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			"my-charts with custom (good) interval",
+			"*/10 * * * *",
+			"",
+			&apprepov1alpha1.AppRepository{
+				TypeMeta: metav1.TypeMeta{
+					Kind:       "AppRepository",
+					APIVersion: "kubeapps.com/v1alpha1",
+				},
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "my-charts",
+					Namespace: "kubeapps",
+					Labels: map[string]string{
+						"name":       "my-charts",
+						"created-by": "kubeapps",
+					},
+				},
+				Spec: apprepov1alpha1.AppRepositorySpec{
+					Type:     "helm",
+					URL:      "https://charts.acme.com/my-charts",
+					Interval: "15m",
+				},
+			},
+			batchv1.CronJob{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "apprepo-kubeapps-sync-my-charts",
+					OwnerReferences: []metav1.OwnerReference{
+						*metav1.NewControllerRef(
+							&apprepov1alpha1.AppRepository{ObjectMeta: metav1.ObjectMeta{Name: "my-charts"}},
+							schema.GroupVersionKind{
+								Group:   apprepov1alpha1.SchemeGroupVersion.Group,
+								Version: apprepov1alpha1.SchemeGroupVersion.Version,
+								Kind:    "AppRepository",
+							}),
+					},
+					Labels: map[string]string{
+						LabelRepoName:      "my-charts",
+						LabelRepoNamespace: "kubeapps",
+					},
+					Annotations: map[string]string{},
+				},
+				Spec: batchv1.CronJobSpec{
+					Schedule:          "*/15 * * * *",
+					ConcurrencyPolicy: batchv1.ReplaceConcurrent,
+					JobTemplate: batchv1.JobTemplateSpec{
+						Spec: batchv1.JobSpec{
+							TTLSecondsAfterFinished: &defaultTTL,
+							Template: corev1.PodTemplateSpec{
+								ObjectMeta: metav1.ObjectMeta{
+									Labels: map[string]string{
+										LabelRepoName:      "my-charts",
+										LabelRepoNamespace: "kubeapps",
+									},
+									Annotations: map[string]string{},
+								},
+								Spec: corev1.PodSpec{
+									RestartPolicy: corev1.RestartPolicyOnFailure,
+									Containers: []corev1.Container{
+										{
+											Name:            "sync",
+											Image:           repoSyncImage,
+											ImagePullPolicy: corev1.PullIfNotPresent,
+											Command:         []string{"/chart-repo"},
+											Args: []string{
+												"sync",
+												"--database-url=postgresql.kubeapps",
+												"--database-user=admin",
+												"--database-name=assets",
+												"--global-repos-namespace=kubeapps-global",
+												"--namespace=kubeapps",
+												"my-charts",
+												"https://charts.acme.com/my-charts",
+												"helm",
+											},
+											Env: []corev1.EnvVar{
+												{
+													Name: "DB_PASSWORD",
+													ValueFrom: &corev1.EnvVarSource{
+														SecretKeyRef: &corev1.SecretKeySelector{LocalObjectReference: corev1.LocalObjectReference{Name: "postgresql"}, Key: "postgresql-root-password"}},
+												},
+											},
+											VolumeMounts: nil,
+										},
+									},
+									Volumes: nil,
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			"my-charts with custom (good) crontab",
+			"*/10 * * * *",
+			"",
+			&apprepov1alpha1.AppRepository{
+				TypeMeta: metav1.TypeMeta{
+					Kind:       "AppRepository",
+					APIVersion: "kubeapps.com/v1alpha1",
+				},
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "my-charts",
+					Namespace: "kubeapps",
+					Labels: map[string]string{
+						"name":       "my-charts",
+						"created-by": "kubeapps",
+					},
+				},
+				Spec: apprepov1alpha1.AppRepositorySpec{
+					Type:     "helm",
+					URL:      "https://charts.acme.com/my-charts",
+					Interval: "*/2 */2 */2 */2 1-5",
+				},
+			},
+			batchv1.CronJob{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "apprepo-kubeapps-sync-my-charts",
+					OwnerReferences: []metav1.OwnerReference{
+						*metav1.NewControllerRef(
+							&apprepov1alpha1.AppRepository{ObjectMeta: metav1.ObjectMeta{Name: "my-charts"}},
+							schema.GroupVersionKind{
+								Group:   apprepov1alpha1.SchemeGroupVersion.Group,
+								Version: apprepov1alpha1.SchemeGroupVersion.Version,
+								Kind:    "AppRepository",
+							}),
+					},
+					Labels: map[string]string{
+						LabelRepoName:      "my-charts",
+						LabelRepoNamespace: "kubeapps",
+					},
+					Annotations: map[string]string{},
+				},
+				Spec: batchv1.CronJobSpec{
+					Schedule:          "*/2 */2 */2 */2 1-5",
+					ConcurrencyPolicy: batchv1.ReplaceConcurrent,
+					JobTemplate: batchv1.JobTemplateSpec{
+						Spec: batchv1.JobSpec{
+							TTLSecondsAfterFinished: &defaultTTL,
+							Template: corev1.PodTemplateSpec{
+								ObjectMeta: metav1.ObjectMeta{
+									Labels: map[string]string{
+										LabelRepoName:      "my-charts",
+										LabelRepoNamespace: "kubeapps",
+									},
+									Annotations: map[string]string{},
+								},
+								Spec: corev1.PodSpec{
+									RestartPolicy: corev1.RestartPolicyOnFailure,
+									Containers: []corev1.Container{
+										{
+											Name:            "sync",
+											Image:           repoSyncImage,
+											ImagePullPolicy: corev1.PullIfNotPresent,
+											Command:         []string{"/chart-repo"},
+											Args: []string{
+												"sync",
+												"--database-url=postgresql.kubeapps",
+												"--database-user=admin",
+												"--database-name=assets",
+												"--global-repos-namespace=kubeapps-global",
+												"--namespace=kubeapps",
+												"my-charts",
+												"https://charts.acme.com/my-charts",
+												"helm",
+											},
+											Env: []corev1.EnvVar{
+												{
+													Name: "DB_PASSWORD",
+													ValueFrom: &corev1.EnvVarSource{
+														SecretKeyRef: &corev1.SecretKeySelector{LocalObjectReference: corev1.LocalObjectReference{Name: "postgresql"}, Key: "postgresql-root-password"}},
 												},
 											},
 											VolumeMounts: nil,
@@ -463,12 +648,12 @@ func Test_newSyncJob(t *testing.T) {
 							Annotations: map[string]string{},
 						},
 						Spec: corev1.PodSpec{
-							RestartPolicy: "OnFailure",
+							RestartPolicy: corev1.RestartPolicyOnFailure,
 							Containers: []corev1.Container{
 								{
 									Name:            "sync",
 									Image:           repoSyncImage,
-									ImagePullPolicy: "IfNotPresent",
+									ImagePullPolicy: corev1.PullIfNotPresent,
 									Command:         []string{"/chart-repo"},
 									Args: []string{
 										"sync",
@@ -535,12 +720,12 @@ func Test_newSyncJob(t *testing.T) {
 							Annotations: map[string]string{},
 						},
 						Spec: corev1.PodSpec{
-							RestartPolicy: "OnFailure",
+							RestartPolicy: corev1.RestartPolicyOnFailure,
 							Containers: []corev1.Container{
 								{
 									Name:            "sync",
 									Image:           repoSyncImage,
-									ImagePullPolicy: "IfNotPresent",
+									ImagePullPolicy: corev1.PullIfNotPresent,
 									Command:         []string{"/chart-repo"},
 									Args: []string{
 										"sync",
@@ -607,12 +792,12 @@ func Test_newSyncJob(t *testing.T) {
 							Annotations: map[string]string{},
 						},
 						Spec: corev1.PodSpec{
-							RestartPolicy: "OnFailure",
+							RestartPolicy: corev1.RestartPolicyOnFailure,
 							Containers: []corev1.Container{
 								{
 									Name:            "sync",
 									Image:           repoSyncImage,
-									ImagePullPolicy: "IfNotPresent",
+									ImagePullPolicy: corev1.PullIfNotPresent,
 									Command:         []string{"/chart-repo"},
 									Args: []string{
 										"sync",
@@ -693,12 +878,12 @@ func Test_newSyncJob(t *testing.T) {
 							Annotations: map[string]string{},
 						},
 						Spec: corev1.PodSpec{
-							RestartPolicy: "OnFailure",
+							RestartPolicy: corev1.RestartPolicyOnFailure,
 							Containers: []corev1.Container{
 								{
 									Name:            "sync",
 									Image:           repoSyncImage,
-									ImagePullPolicy: "IfNotPresent",
+									ImagePullPolicy: corev1.PullIfNotPresent,
 									Command:         []string{"/chart-repo"},
 									Args: []string{
 										"sync",
@@ -786,12 +971,12 @@ func Test_newSyncJob(t *testing.T) {
 							Annotations: map[string]string{},
 						},
 						Spec: corev1.PodSpec{
-							RestartPolicy: "OnFailure",
+							RestartPolicy: corev1.RestartPolicyOnFailure,
 							Containers: []corev1.Container{
 								{
 									Name:            "sync",
 									Image:           repoSyncImage,
-									ImagePullPolicy: "IfNotPresent",
+									ImagePullPolicy: corev1.PullIfNotPresent,
 									Command:         []string{"/chart-repo"},
 									Args: []string{
 										"sync",
@@ -890,12 +1075,12 @@ func Test_newSyncJob(t *testing.T) {
 							Annotations: map[string]string{},
 						},
 						Spec: corev1.PodSpec{
-							RestartPolicy: "OnFailure",
+							RestartPolicy: corev1.RestartPolicyOnFailure,
 							Containers: []corev1.Container{
 								{
 									Name:            "sync",
 									Image:           repoSyncImage,
-									ImagePullPolicy: "IfNotPresent",
+									ImagePullPolicy: corev1.PullIfNotPresent,
 									Command:         []string{"/chart-repo"},
 									Args: []string{
 										"sync",
@@ -996,12 +1181,12 @@ func Test_newSyncJob(t *testing.T) {
 							Annotations: map[string]string{},
 						},
 						Spec: corev1.PodSpec{
-							RestartPolicy: "OnFailure",
+							RestartPolicy: corev1.RestartPolicyOnFailure,
 							Containers: []corev1.Container{
 								{
 									Name:            "sync",
 									Image:           repoSyncImage,
-									ImagePullPolicy: "IfNotPresent",
+									ImagePullPolicy: corev1.PullIfNotPresent,
 									Command:         []string{"/chart-repo"},
 									Args: []string{
 										"sync",
@@ -1103,12 +1288,12 @@ func Test_newSyncJob(t *testing.T) {
 						},
 						Spec: corev1.PodSpec{
 							Affinity:      &corev1.Affinity{NodeAffinity: &corev1.NodeAffinity{RequiredDuringSchedulingIgnoredDuringExecution: &corev1.NodeSelector{}}},
-							RestartPolicy: "OnFailure",
+							RestartPolicy: corev1.RestartPolicyOnFailure,
 							Containers: []corev1.Container{
 								{
 									Name:            "sync",
 									Image:           repoSyncImage,
-									ImagePullPolicy: "IfNotPresent",
+									ImagePullPolicy: corev1.PullIfNotPresent,
 									Command:         []string{"/chart-repo"},
 									Args: []string{
 										"sync",
@@ -1187,12 +1372,12 @@ func Test_newSyncJob(t *testing.T) {
 							Annotations: map[string]string{},
 						},
 						Spec: corev1.PodSpec{
-							RestartPolicy: "OnFailure",
+							RestartPolicy: corev1.RestartPolicyOnFailure,
 							Containers: []corev1.Container{
 								{
 									Name:            "sync",
 									Image:           repoSyncImage,
-									ImagePullPolicy: "IfNotPresent",
+									ImagePullPolicy: corev1.PullIfNotPresent,
 									Command:         []string{"/chart-repo"},
 									Args: []string{
 										"sync",
@@ -1273,12 +1458,12 @@ func Test_newSyncJob(t *testing.T) {
 							Annotations: map[string]string{},
 						},
 						Spec: corev1.PodSpec{
-							RestartPolicy: "OnFailure",
+							RestartPolicy: corev1.RestartPolicyOnFailure,
 							Containers: []corev1.Container{
 								{
 									Name:            "sync",
 									Image:           repoSyncImage,
-									ImagePullPolicy: "IfNotPresent",
+									ImagePullPolicy: corev1.PullIfNotPresent,
 									Command:         []string{"/chart-repo"},
 									Args: []string{
 										"sync",
@@ -1360,12 +1545,12 @@ func Test_newSyncJob(t *testing.T) {
 							Annotations: map[string]string{},
 						},
 						Spec: corev1.PodSpec{
-							RestartPolicy: "OnFailure",
+							RestartPolicy: corev1.RestartPolicyOnFailure,
 							Containers: []corev1.Container{
 								{
 									Name:            "sync",
 									Image:           repoSyncImage,
-									ImagePullPolicy: "IfNotPresent",
+									ImagePullPolicy: corev1.PullIfNotPresent,
 									Command:         []string{"/chart-repo"},
 									Args: []string{
 										"sync",
@@ -1448,12 +1633,12 @@ func Test_newSyncJob(t *testing.T) {
 							Annotations: map[string]string{},
 						},
 						Spec: corev1.PodSpec{
-							RestartPolicy: "OnFailure",
+							RestartPolicy: corev1.RestartPolicyOnFailure,
 							Containers: []corev1.Container{
 								{
 									Name:            "sync",
 									Image:           repoSyncImage,
-									ImagePullPolicy: "IfNotPresent",
+									ImagePullPolicy: corev1.PullIfNotPresent,
 									Command:         []string{"/chart-repo"},
 									Args: []string{
 										"sync",
@@ -1523,12 +1708,12 @@ func Test_newCleanupJob(t *testing.T) {
 					TTLSecondsAfterFinished: &defaultTTL,
 					Template: corev1.PodTemplateSpec{
 						Spec: corev1.PodSpec{
-							RestartPolicy: "Never",
+							RestartPolicy: corev1.RestartPolicyNever,
 							Containers: []corev1.Container{
 								{
 									Name:            "delete",
 									Image:           repoSyncImage,
-									ImagePullPolicy: "IfNotPresent",
+									ImagePullPolicy: corev1.PullIfNotPresent,
 									Command:         []string{"/chart-repo"},
 									Args: []string{
 										"delete",
@@ -1568,12 +1753,12 @@ func Test_newCleanupJob(t *testing.T) {
 					TTLSecondsAfterFinished: &defaultTTL,
 					Template: corev1.PodTemplateSpec{
 						Spec: corev1.PodSpec{
-							RestartPolicy: "Never",
+							RestartPolicy: corev1.RestartPolicyNever,
 							Containers: []corev1.Container{
 								{
 									Name:            "delete",
 									Image:           repoSyncImage,
-									ImagePullPolicy: "IfNotPresent",
+									ImagePullPolicy: corev1.PullIfNotPresent,
 									Command:         []string{"/chart-repo"},
 									Args: []string{
 										"delete",
@@ -1877,6 +2062,81 @@ func TestGenerateJobName(t *testing.T) {
 				t.Errorf("expected length of truncated string to be <= %d, got %d", MAX_CRONJOB_CHARS, len(res))
 			}
 			if got, want := res, tc.expect; got != want {
+				t.Errorf("got: %s, want: %s", got, want)
+			}
+		})
+	}
+}
+
+func TestIntervalToCron(t *testing.T) {
+	testCases := []struct {
+		name         string
+		interval     string
+		expectedCron string
+	}{
+		{
+			name:         "good interval, every 2 nanoseconds",
+			interval:     "2ns",
+			expectedCron: "*/1 * * * *",
+		},
+		{
+			name:         "good interval, every 2 microseconds",
+			interval:     "2us",
+			expectedCron: "*/1 * * * *",
+		},
+		{
+			name:         "good interval, every 2 milliseconds",
+			interval:     "2ms",
+			expectedCron: "*/1 * * * *",
+		},
+		{
+			name:         "good interval, every 2 seconds",
+			interval:     "2s",
+			expectedCron: "*/1 * * * *",
+		},
+		{
+			name:         "good interval, every two minutes",
+			interval:     "2m",
+			expectedCron: "*/2 * * * *",
+		},
+		{
+			name:         "good interval, every two hours",
+			interval:     "2h",
+			expectedCron: "0 */2 * * *",
+		},
+		{
+			name:         "good interval, every three days",
+			interval:     "72h",
+			expectedCron: "0 0 */3 * *",
+		},
+		{
+			name:         "good interval, every 2 months",
+			interval:     "1460h",
+			expectedCron: "0 0 1 */2 *",
+		},
+		{
+			name:         "bad interval, unsupported duration (> 1y)",
+			interval:     "17532h",
+			expectedCron: "",
+		},
+		{
+			name:         "bad interval, unsupported unit (days)",
+			interval:     "1d",
+			expectedCron: "",
+		},
+	}
+
+	gron := gronx.New()
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			cron, _ := intervalToCron(tc.interval)
+
+			valid := gron.IsValid(cron)
+			if cron != "" && !valid {
+				t.Errorf("the generated cron is invalid: %s", cron)
+			}
+
+			if got, want := cron, tc.expectedCron; got != want {
 				t.Errorf("got: %s, want: %s", got, want)
 			}
 		})
