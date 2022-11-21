@@ -94,7 +94,6 @@ pub async fn proxy(
             return handle_error(e, StatusCode::INTERNAL_SERVER_ERROR, log_data);
         }
     };
-
     let client = match https::make_https_client(tls_builder) {
         Ok(c) => c,
         Err(e) => return handle_error(e, StatusCode::INTERNAL_SERVER_ERROR, log_data),
@@ -112,13 +111,11 @@ pub async fn proxy(
                 Ok(r)
             }
         }
-        Err(e) => {
-            return handle_error(
-                anyhow::anyhow!(e),
-                StatusCode::INTERNAL_SERVER_ERROR,
-                log_data,
-            )
-        }
+        Err(e) => handle_error(
+            anyhow::anyhow!(e),
+            StatusCode::INTERNAL_SERVER_ERROR,
+            log_data,
+        ),
     }
 }
 
