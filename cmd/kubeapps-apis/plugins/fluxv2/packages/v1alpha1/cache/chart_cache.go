@@ -134,7 +134,11 @@ func (c *ChartCache) SyncCharts(charts []models.Chart, downloadFn DownloadChartF
 			log.Warningf("Skipping chart [%s] due to empty version array", chart.ID)
 			continue
 		} else if len(chart.ChartVersions[0].URLs) == 0 {
-			log.Warningf("Chart: [%s], version: [%s] has no URLs", chart.ID, chart.ChartVersions[0].Version)
+			log.Warningf("Skipping chart [%s], version: [%s] has no URLs", chart.ID, chart.ChartVersions[0].Version)
+			continue
+		} else if chart.Repo == nil {
+			// shouldn't happen
+			log.Warningf("Skipping chart [%s] as it is not associated with any repo", chart.ID)
 			continue
 		}
 
@@ -336,6 +340,9 @@ func (c *ChartCache) DeleteChartsForRepo(repo *types.NamespacedName) error {
 	return c.deleteChartsHelper(repo, sets.String{})
 }
 
+// this function is called when re-importing charts after an update to the repo,
+// so keepThese is actually populated from the new data, meaning that if the new
+// data no longer includes a certain version, it'll get purged here
 func (c *ChartCache) PurgeObsoleteChartVersions(keepThese []models.Chart) error {
 	log.Infof("+PurgeObsoleteChartVersions()")
 	defer log.Infof("-PurgeObsoleteChartVersions")
@@ -343,6 +350,8 @@ func (c *ChartCache) PurgeObsoleteChartVersions(keepThese []models.Chart) error 
 	repos := map[types.NamespacedName]sets.String{}
 	for _, ch := range keepThese {
 		if ch.Repo == nil {
+			// shouldn't happen
+			log.Warningf("Skipping chart [%s] as it is not associated with any repo", ch.ID)
 			continue
 		}
 		n := types.NamespacedName{
@@ -661,7 +670,7 @@ func ChartCacheComputeValue(chartID, chartUrl, chartVersion string, downloadFn D
 		return nil, err
 	}
 
-	log.Infof("Successfully fetched details for chart: [%s], version: [%s], url: [%s], details: [%d] bytes",
+	log.V(4).Infof("Successfully fetched details for chart: [%s], version: [%s], url: [%s], details: [%d] bytes",
 		chartID, chartVersion, chartUrl, len(chartTgz))
 
 	cacheEntryValue := chartCacheEntryValue{
