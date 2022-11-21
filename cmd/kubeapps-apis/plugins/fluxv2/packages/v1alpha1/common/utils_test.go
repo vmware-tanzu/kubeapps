@@ -275,3 +275,63 @@ flux:
 		})
 	}
 }
+
+func TestParsePluginConfigNoCrossNamespaceRefs(t *testing.T) {
+	testCases := []struct {
+		name           string
+		pluginYAMLConf []byte
+		exp_flag       bool
+		exp_error_str  string
+	}{
+		{
+			name:           "no policy specified in plugin config",
+			pluginYAMLConf: nil,
+			exp_flag:       false,
+			exp_error_str:  "",
+		},
+		{
+			name: "specific policy in plugin config",
+			pluginYAMLConf: []byte(`
+flux:
+  packages:
+    v1alpha1:
+      noCrossNamespaceRefs: true
+      `),
+			exp_flag:      true,
+			exp_error_str: "",
+		},
+	}
+	opts := cmpopts.IgnoreUnexported(pkgutils.VersionsInSummary{})
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			filename := ""
+			if tc.pluginYAMLConf != nil {
+				pluginJSONConf, err := yaml.YAMLToJSON(tc.pluginYAMLConf)
+				if err != nil {
+					log.Fatalf("%s", err)
+				}
+				f, err := os.CreateTemp(".", "plugin_json_conf")
+				if err != nil {
+					log.Fatalf("%s", err)
+				}
+				defer os.Remove(f.Name()) // clean up
+				if _, err := f.Write(pluginJSONConf); err != nil {
+					log.Fatalf("%s", err)
+				}
+				if err := f.Close(); err != nil {
+					log.Fatalf("%s", err)
+				}
+				filename = f.Name()
+			}
+			config, err := ParsePluginConfig(filename)
+			if err != nil && !strings.Contains(err.Error(), tc.exp_error_str) {
+				t.Errorf("err got %q, want to find %q", err.Error(), tc.exp_error_str)
+			}
+			if err == nil {
+				if got, want := config.NoCrossNamespaceRefs, tc.exp_flag; !cmp.Equal(want, got, opts) {
+					t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opts))
+				}
+			}
+		})
+	}
+}

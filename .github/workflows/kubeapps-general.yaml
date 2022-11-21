@@ -1,4 +1,4 @@
-# Copyright 2022 the Kubeapps contributors
+# Copyright 2022 the Kubeapps contributors.
 # SPDX-License-Identifier: Apache-2.0
 
 ---
@@ -71,6 +71,7 @@ env:
   GKE_ZONE: "us-east1-c"
   GKE_PROJECT: "vmware-kubeapps-ci"
   GKE_CLUSTER: "kubeapps-test"
+  SRP_CLI_VERSION: "0.2.20220825211752-571e676-57"
 
 jobs:
   setup:
@@ -124,7 +125,7 @@ jobs:
             echo "version=${GITHUB_REF_NAME}" >> $GITHUB_OUTPUT
           else
             echo "img_prod_tag=latest" >> $GITHUB_OUTPUT
-            echo "version=" >> $GITHUB_OUTPUT
+            echo "version=${GITHUB_SHA}" >> $GITHUB_OUTPUT
           fi;
 
           if [[ ${GITHUB_REF_NAME} == ${BRANCH_KUBEAPPS_REPO} ]]; then
@@ -139,7 +140,14 @@ jobs:
             echo "running_on_tag=false" >> $GITHUB_OUTPUT
           fi
 
-          echo "dev_mode=${DEV_MODE}" >> $GITHUB_OUTPUT
+          # TODO(bjesus) Once we've properly tested the release job, we can/should remove this hack, just leave the content from the else branch
+          if [[ ${GITHUB_REF_TYPE} == "tag" &&  ${GITHUB_REF_NAME} == 'test-'* ]]; then
+            echo "DEV_MODE=true" >> $GITHUB_ENV
+            echo "dev_mode=true" >> $GITHUB_OUTPUT
+          else
+            echo "dev_mode=${DEV_MODE}" >> $GITHUB_OUTPUT
+          fi
+
           echo "golang_version=${GOLANG_VERSION}" >> $GITHUB_OUTPUT
           echo "ssh_key_kubeapps_deploy_filename=${SSH_KEY_KUBEAPPS_DEPLOY_FILENAME}" >> $GITHUB_OUTPUT
           echo "ssh_key_forked_charts_deploy_filename=${SSH_KEY_FORKED_CHARTS_DEPLOY_FILENAME}" >> $GITHUB_OUTPUT
@@ -171,6 +179,15 @@ jobs:
     uses: ./.github/workflows/linters.yml
     with:
       golang_version: ${{ needs.setup.outputs.golang_version }}
+
+  linters_result:
+    if: inputs.run_linters && always()
+    needs: linters
+    runs-on: ubuntu-latest
+    steps:
+      - name: "Check all linters result"
+        if: needs.linters.result != 'success'
+        run: exit 1
 
   test_go:
     needs:
@@ -425,10 +442,11 @@ jobs:
       fail-fast: false
       matrix:
         tests_group:
+          - carvel
+          - flux
           - main
           - multicluster
           - multicluster-nokubeapps
-          - carvel
           - operator
     env:
       DEFAULT_DEX_IP: "172.18.0.2"
@@ -436,7 +454,7 @@ jobs:
       TESTS_GROUP: ${{ matrix.tests_group }}
       TEST_OPERATORS: "1"
       TEST_UPGRADE: "1"
-      TEST_TIMEOUT_MINUTES: 4  # Timeout minutes for each test
+      TEST_TIMEOUT_MINUTES: 6  # Timeout minutes for each test
       USE_MULTICLUSTER_OIDC_ENV: "true"
     steps:
       - uses: actions/checkout@v3
@@ -518,6 +536,20 @@ jobs:
           name: e2e_tests_${{ matrix.tests_group }}_reports
           path: integration/reports
 
+  # We need this job to aggregate the result of the local_e2e_tests matrix and summarize it. We don't need it because of
+  # GHA itself, but because in GH branch protection rules, we cannot check the status for a job matrix, and would have
+  # require the status for each job in the matrix (eg. local_e2e_tests(carvel)).
+  # See https://github.com/orgs/community/discussions/26822
+  local_e2e_tests_result:
+    needs:
+      - local_e2e_tests
+    runs-on: ubuntu-latest
+    if: always()
+    steps:
+      - name: "Check local_e2e_tests matrix status"
+        if: needs.local_e2e_tests.result != 'success'
+        run: exit 1
+
   push_images:
     if: needs.setup.outputs.running_on_main == 'true' || needs.setup.outputs.running_on_tag == 'true'
     runs-on: ubuntu-latest
@@ -563,6 +595,20 @@ jobs:
             echo "::notice ::Pushing image ${prod_image}"
             docker push $prod_image
           done
+
+  srp_report:
+    needs:
+      - setup
+      - push_images
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: ./.github/actions/srp-source-provenance
+        with:
+          SRP_CLI_VERSION: ${{env.SRP_CLI_VERSION}}
+          SRP_CLIENT_ID: ${{secrets.SRP_CLIENT_ID}}
+          SRP_CLIENT_SECRET: ${{secrets.SRP_CLIENT_SECRET}}
+          VERSION: ${{needs.setup.outputs.version}}
 
   sync_chart_from_bitnami:
     needs:

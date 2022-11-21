@@ -67,8 +67,7 @@ func TestKindClusterAddThenDeleteRepo(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	t.Logf("Waiting up to 30 seconds...")
-	time.Sleep(30 * time.Second)
+	SleepWithCountdown(t, 30)
 
 	if keys, err := redisCli.Keys(redisCli.Context(), "*").Result(); err != nil {
 		t.Fatal(err)
@@ -90,7 +89,7 @@ func TestKindClusterRepoWithBasicAuth(t *testing.T) {
 		Namespace: "default",
 	}
 	if err := kubeCreateSecretAndCleanup(t, newBasicAuthSecret(secretName, "foo", "bar")); err != nil {
-		t.Fatalf("%v", err)
+		t.Fatal(err)
 	}
 
 	repoName := types.NamespacedName{
@@ -98,12 +97,12 @@ func TestKindClusterRepoWithBasicAuth(t *testing.T) {
 		Namespace: "default",
 	}
 	if err := kubeAddHelmRepositoryAndCleanup(t, repoName, "", podinfo_basic_auth_repo_url, secretName.Name, 0); err != nil {
-		t.Fatalf("%v", err)
+		t.Fatal(err)
 	}
 
 	// wait until this repo reaches 'Ready'
 	if err := kubeWaitUntilHelmRepositoryIsReady(t, repoName); err != nil {
-		t.Fatalf("%v", err)
+		t.Fatal(err)
 	}
 
 	name := types.NamespacedName{
@@ -127,17 +126,7 @@ func TestKindClusterRepoWithBasicAuth(t *testing.T) {
 				},
 			})
 		if err == nil {
-			opt1 := cmpopts.IgnoreUnexported(
-				corev1.GetAvailablePackageSummariesResponse{},
-				corev1.AvailablePackageSummary{},
-				corev1.AvailablePackageReference{},
-				corev1.Context{},
-				plugins.Plugin{},
-				corev1.PackageAppVersion{})
-			opt2 := cmpopts.SortSlices(lessAvailablePackageFunc)
-			if got, want := resp, available_package_summaries_podinfo_basic_auth(repoName.Name); !cmp.Equal(got, want, opt1, opt2) {
-				t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opt1, opt2))
-			}
+			compareAvailablePackageSummaries(t, resp, available_package_summaries_podinfo_basic_auth(repoName.Name))
 			break
 		} else if i == maxWait {
 			t.Fatalf("Timed out waiting for available package summaries, last response: %v, last error: [%v]", resp, err)
@@ -177,10 +166,10 @@ func TestKindClusterRepoWithBasicAuth(t *testing.T) {
 		grpcContext,
 		&corev1.GetAvailablePackageDetailRequest{AvailablePackageRef: availablePackageRef})
 	if err != nil {
-		t.Fatalf("%v", err)
+		t.Fatal(err)
 	}
 
-	compareActualVsExpectedAvailablePackageDetail(
+	compareAvailablePackageDetail(
 		t,
 		resp.AvailablePackageDetail,
 		expected_detail_podinfo_basic_auth(repoName.Name).AvailablePackageDetail)
@@ -343,7 +332,7 @@ func TestKindClusterAddPackageRepository(t *testing.T) {
 
 			if tc.existingSecret != nil {
 				if err := kubeCreateSecretAndCleanup(t, tc.existingSecret); err != nil {
-					t.Fatalf("%v", err)
+					t.Fatal(err)
 				}
 			}
 
@@ -568,7 +557,7 @@ func TestKindClusterGetPackageRepositoryDetail(t *testing.T) {
 			if tc.existingSecret != nil {
 				tc.existingSecret.Namespace = repoNamespace
 				if err := kubeCreateSecretAndCleanup(t, tc.existingSecret); err != nil {
-					t.Fatalf("%v", err)
+					t.Fatal(err)
 				}
 				secretName = tc.existingSecret.Name
 			}
@@ -615,7 +604,7 @@ func TestKindClusterGetPackageRepositoryDetail(t *testing.T) {
 					time.Sleep(2 * time.Second)
 				}
 			}
-			compareActualVsExpectedPackageRepositoryDetail(t, resp, tc.expectedResponse)
+			comparePackageRepositoryDetail(t, resp, tc.expectedResponse)
 		})
 	}
 }
@@ -817,18 +806,7 @@ func TestKindClusterGetPackageRepositorySummaries(t *testing.T) {
 				return
 			}
 
-			opts := cmpopts.IgnoreUnexported(
-				corev1.Context{},
-				corev1.PackageRepositoryReference{},
-				plugins.Plugin{},
-				corev1.PackageRepositoryStatus{},
-				corev1.GetPackageRepositorySummariesResponse{},
-				corev1.PackageRepositorySummary{},
-			)
-
-			if got, want := resp, tc.expectedResponse; !cmp.Equal(want, got, opts) {
-				t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opts, opts))
-			}
+			comparePackageRepositorySummaries(t, resp, tc.expectedResponse)
 		})
 	}
 }
@@ -965,7 +943,7 @@ func TestKindClusterUpdatePackageRepository(t *testing.T) {
 			if tc.oldSecret != nil {
 				tc.oldSecret.Namespace = repoNamespace
 				if err := kubeCreateSecret(t, tc.oldSecret); err != nil {
-					t.Fatalf("%v", err)
+					t.Fatal(err)
 				}
 				oldSecretName = tc.oldSecret.GetName()
 				if tc.userManagedSecrets {
@@ -983,7 +961,7 @@ func TestKindClusterUpdatePackageRepository(t *testing.T) {
 			if tc.newSecret != nil {
 				tc.newSecret.Namespace = repoNamespace
 				if err := kubeCreateSecretAndCleanup(t, tc.newSecret); err != nil {
-					t.Fatalf("%v", err)
+					t.Fatal(err)
 				}
 			}
 
@@ -999,11 +977,11 @@ func TestKindClusterUpdatePackageRepository(t *testing.T) {
 			err := kubeWaitUntilHelmRepositoryIsReady(t, name)
 			if err != nil {
 				if !tc.failed {
-					t.Fatalf("%v", err)
+					t.Fatal(err)
 				} else {
 					// sanity check : make sure repo is in failed state
 					if err.Error() != "Failed: failed to fetch Helm repository index: failed to cache index to temporary file: failed to fetch http://fluxv2plugin-testdata-svc.default.svc.cluster.local:80/podinfo-basic-auth/index.yaml : 401 Unauthorized" {
-						t.Fatalf("%v", err)
+						t.Fatal(err)
 					}
 				}
 			}
@@ -1041,7 +1019,7 @@ func TestKindClusterUpdatePackageRepository(t *testing.T) {
 				if err != nil && strings.Contains(err.Error(), " the object has been modified; please apply your changes to the latest version and try again") {
 					waitTime := int64(math.Pow(2, float64(i)))
 					t.Logf("Retrying update in [%d] sec due to %s...", waitTime, err.Error())
-					time.Sleep(time.Duration(waitTime) * time.Second)
+					SleepWithCountdown(t, int(waitTime))
 				} else {
 					break
 				}
@@ -1070,7 +1048,7 @@ func TestKindClusterUpdatePackageRepository(t *testing.T) {
 
 			actualDetail := waitForRepoToReconcileWithSuccess(
 				t, fluxPluginReposClient, grpcCtx, tc.repoName, repoNamespace)
-			compareActualVsExpectedPackageRepositoryDetail(t, actualDetail, tc.expectedDetail)
+			comparePackageRepositoryDetail(t, actualDetail, tc.expectedDetail)
 		})
 	}
 }
@@ -1158,11 +1136,11 @@ func TestKindClusterDeletePackageRepository(t *testing.T) {
 				tc.oldSecret.Namespace = repoNamespace
 				if tc.userManagedSecrets {
 					if err := kubeCreateSecretAndCleanup(t, tc.oldSecret); err != nil {
-						t.Fatalf("%v", err)
+						t.Fatal(err)
 					}
 				} else {
 					if err := kubeCreateSecret(t, tc.oldSecret); err != nil {
-						t.Fatalf("%v", err)
+						t.Fatal(err)
 					}
 				}
 				oldSecretName = tc.oldSecret.GetName()
@@ -1170,7 +1148,7 @@ func TestKindClusterDeletePackageRepository(t *testing.T) {
 			if tc.newSecret != nil {
 				tc.newSecret.Namespace = repoNamespace
 				if err := kubeCreateSecretAndCleanup(t, tc.newSecret); err != nil {
-					t.Fatalf("%v", err)
+					t.Fatal(err)
 				}
 			}
 
@@ -1359,7 +1337,7 @@ func TestKindClusterUpdatePackageRepoSecretUnchanged(t *testing.T) {
 		if err != nil && strings.Contains(err.Error(), " the object has been modified; please apply your changes to the latest version and try again") {
 			waitTime := int64(math.Pow(2, float64(i)))
 			t.Logf("Retrying update in [%d] sec due to %s...", waitTime, err.Error())
-			time.Sleep(time.Duration(waitTime) * time.Second)
+			SleepWithCountdown(t, int(waitTime))
 		} else {
 			break
 		}
@@ -1409,7 +1387,7 @@ func TestKindClusterUpdatePackageRepoSecretUnchanged(t *testing.T) {
 
 	actualDetail := waitForRepoToReconcileWithSuccess(
 		t, fluxPluginReposClient, grpcAdmin, repoName, repoNamespace)
-	compareActualVsExpectedPackageRepositoryDetail(t, actualDetail, expectedDetail)
+	comparePackageRepositoryDetail(t, actualDetail, expectedDetail)
 }
 
 func TestKindClusterAddTagsToOciRepository(t *testing.T) {
@@ -1477,12 +1455,7 @@ func TestKindClusterAddTagsToOciRepository(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		opts := cmpopts.IgnoreUnexported(
-			corev1.GetAvailablePackageVersionsResponse{},
-			corev1.PackageAppVersion{})
-		if got, want := resp2, expected_versions_gfichtenholt_podinfo; !cmp.Equal(want, got, opts) {
-			t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opts))
-		}
+		compareAvailablePackageVersions(t, resp2, expected_versions_gfichtenholt_podinfo)
 
 		if err = helmPushChartToMyGithubRegistry(t, "6.1.6"); err != nil {
 			t.Fatal(err)
@@ -1497,8 +1470,7 @@ func TestKindClusterAddTagsToOciRepository(t *testing.T) {
 		// there isn't really a whole lot of sense in waiting the way flux works today
 		// repo resync interval is kind of useless when it comes to refresh the contents based
 		// on changes on remote. Maybe in the future when they fix it.
-		t.Logf("Waiting 45 seconds...")
-		time.Sleep(45 * time.Second)
+		SleepWithCountdown(t, 45)
 
 		grpcContext3, cancel := context.WithTimeout(grpcContext, defaultContextTimeout)
 		defer cancel()
@@ -1515,38 +1487,8 @@ func TestKindClusterAddTagsToOciRepository(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		if got, want := resp3, expected_versions_gfichtenholt_podinfo_3; !cmp.Equal(want, got, opts) {
-			t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opts))
-		}
+		compareAvailablePackageVersions(t, resp3, expected_versions_gfichtenholt_podinfo_3)
 	})
-}
-
-func compareActualVsExpectedPackageRepositoryDetail(t *testing.T, actualDetail *corev1.GetPackageRepositoryDetailResponse, expectedDetail *corev1.GetPackageRepositoryDetailResponse) {
-	opts1 := cmpopts.IgnoreUnexported(
-		corev1.Context{},
-		corev1.PackageRepositoryReference{},
-		plugins.Plugin{},
-		corev1.GetPackageRepositoryDetailResponse{},
-		corev1.PackageRepositoryDetail{},
-		corev1.PackageRepositoryStatus{},
-		corev1.PackageRepositoryAuth{},
-		corev1.PackageRepositoryTlsConfig{},
-		corev1.SecretKeyReference{},
-		corev1.UsernamePassword{},
-		corev1.DockerCredentials{},
-	)
-
-	opts2 := cmpopts.IgnoreFields(corev1.PackageRepositoryStatus{}, "UserReason")
-
-	if got, want := actualDetail, expectedDetail; !cmp.Equal(want, got, opts1, opts2) {
-		t.Fatalf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opts1, opts2))
-	}
-
-	if !strings.HasPrefix(actualDetail.GetDetail().Status.UserReason, expectedDetail.Detail.Status.UserReason) {
-		t.Errorf("unexpected response (status.UserReason): (-want +got):\n- %s\n+ %s",
-			expectedDetail.Detail.Status.UserReason,
-			actualDetail.GetDetail().Status.UserReason)
-	}
 }
 
 func setUserManagedSecrets(t *testing.T, fluxPluginReposClient v1alpha1.FluxV2RepositoriesServiceClient, value bool) bool {

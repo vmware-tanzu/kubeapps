@@ -17,12 +17,8 @@ const (
 )
 
 type HelmPluginConfig struct {
-	VersionsInSummary pkgutils.VersionsInSummary
-	TimeoutSeconds    int32
-	// Whether secrets are fully managed by user or Kubeapps
-	// see comments in design spec under AddPackageRepository.
-	// false (i.e. Kubeapps manages secrets) by default
-	UserManagedSecrets       bool
+	VersionsInSummary        pkgutils.VersionsInSummary
+	TimeoutSeconds           int32
 	GlobalPackagingNamespace string
 }
 
@@ -32,7 +28,6 @@ func NewDefaultPluginConfig() *HelmPluginConfig {
 	return &HelmPluginConfig{
 		VersionsInSummary:        pkgutils.GetDefaultVersionsInSummary(),
 		TimeoutSeconds:           DefaultTimeoutSeconds,
-		UserManagedSecrets:       false,
 		GlobalPackagingNamespace: DefaultGlobalPackagingNamespace,
 	}
 }
@@ -60,7 +55,6 @@ func ParsePluginConfig(pluginConfigPath string) (*HelmPluginConfig, error) {
 				Packages struct {
 					V1alpha1 struct {
 						GlobalPackagingNamespace string `json:"globalPackagingNamespace"`
-						UserManagedSecrets       bool   `json:"userManagedSecrets"`
 					} `json:"v1alpha1"`
 				} `json:"packages"`
 			} `json:"helm"`
@@ -82,7 +76,6 @@ func ParsePluginConfig(pluginConfigPath string) (*HelmPluginConfig, error) {
 	return &HelmPluginConfig{
 		VersionsInSummary:        config.Core.Packages.V1alpha1.VersionsInSummary,
 		TimeoutSeconds:           config.Core.Packages.V1alpha1.TimeoutSeconds,
-		UserManagedSecrets:       config.Helm.Packages.V1alpha1.UserManagedSecrets,
 		GlobalPackagingNamespace: config.Helm.Packages.V1alpha1.GlobalPackagingNamespace,
 	}, nil
 }

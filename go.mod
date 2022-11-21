@@ -56,7 +56,7 @@ require (
 	github.com/google/go-cmp v0.5.9
 	github.com/google/go-containerregistry v0.12.0
 	github.com/grpc-ecosystem/go-grpc-middleware v1.3.0
-	github.com/grpc-ecosystem/grpc-gateway/v2 v2.12.0
+	github.com/grpc-ecosystem/grpc-gateway/v2 v2.14.0
 	github.com/improbable-eng/grpc-web v0.15.0
 	github.com/itchyny/gojq v0.12.9
 	github.com/jinzhu/copier v0.3.5
@@ -74,9 +74,9 @@ require (
 	github.com/vmware-tanzu/carvel-kapp v0.53.0
 	github.com/vmware-tanzu/carvel-kapp-controller v0.42.0
 	github.com/vmware-tanzu/carvel-vendir v0.32.0
-	golang.org/x/net v0.1.0
+	golang.org/x/net v0.2.0
 	golang.org/x/sync v0.1.0
-	google.golang.org/genproto v0.0.0-20221025140454-527a21cfbd71
+	google.golang.org/genproto v0.0.0-20221114212237-e4508ebdbee1
 	google.golang.org/grpc v1.50.1
 	google.golang.org/grpc/cmd/protoc-gen-go-grpc v1.2.0
 	google.golang.org/protobuf v1.28.1
@@ -93,7 +93,7 @@ require (
 	k8s.io/kubernetes v1.24.7
 	k8s.io/utils v0.0.0-20221012122500-cfd413dd9e85
 	oras.land/oras-go v1.2.1
-	oras.land/oras-go/v2 v2.0.0-rc.3
+	oras.land/oras-go/v2 v2.0.0-rc.5
 	sigs.k8s.io/controller-runtime v0.13.0
 	sigs.k8s.io/yaml v1.3.0
 )
@@ -203,9 +203,7 @@ require (
 	github.com/monochromegane/go-gitignore v0.0.0-20200626010858-205db1a8cc00 // indirect
 	github.com/morikuni/aec v1.0.0 // indirect
 	github.com/munnerz/goautoneg v0.0.0-20191010083416-a7dc8b61c822 // indirect
-	github.com/opencontainers/distribution-spec/specs-go v0.0.0-20221017151708-f72e5010d844 // indirect
 	github.com/opencontainers/go-digest v1.0.0 // indirect
-	github.com/oras-project/artifacts-spec v1.0.0-rc.2 // indirect
 	github.com/pelletier/go-toml v1.9.5 // indirect
 	github.com/pelletier/go-toml/v2 v2.0.5 // indirect
 	github.com/peterbourgon/diskv v2.0.1+incompatible // indirect
@@ -239,9 +237,9 @@ require (
 	go.uber.org/zap v1.23.0 // indirect
 	golang.org/x/crypto v0.1.0 // indirect
 	golang.org/x/image v0.1.0 // indirect
-	golang.org/x/oauth2 v0.1.0 // indirect
-	golang.org/x/sys v0.1.0 // indirect
-	golang.org/x/term v0.1.0 // indirect
+	golang.org/x/oauth2 v0.2.0 // indirect
+	golang.org/x/sys v0.2.0 // indirect
+	golang.org/x/term v0.2.0 // indirect
 	golang.org/x/text v0.4.0 // indirect
 	golang.org/x/time v0.1.0 // indirect
 	gomodules.xyz/jsonpatch/v2 v2.2.0 // indirect

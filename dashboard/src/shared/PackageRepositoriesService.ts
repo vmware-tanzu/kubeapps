@@ -19,10 +19,7 @@ import {
   UpdatePackageRepositoryRequest,
   UsernamePassword,
 } from "gen/kubeappsapis/core/packages/v1alpha1/repositories";
-import {
-  GetConfiguredPluginsResponse,
-  Plugin,
-} from "gen/kubeappsapis/core/plugins/v1alpha1/plugins";
+import { GetConfiguredPluginsResponse } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins";
 import {
   HelmPackageRepositoryCustomDetail,
   protobufPackage as helmProtobufPackage,
@@ -37,15 +34,8 @@ import {
   protobufPackage as fluxv2ProtobufPackage,
 } from "gen/kubeappsapis/plugins/fluxv2/packages/v1alpha1/fluxv2";
 import KubeappsGrpcClient from "./KubeappsGrpcClient";
-import {
-  IPkgRepoFormData,
-  PluginNames,
-  IResourcePermission,
-  IPackageRepositoryPermission,
-} from "./types";
+import { IPkgRepoFormData, PluginNames } from "./types";
 import { convertGrpcAuthError } from "./utils";
-import { Kube } from "./Kube";
-import { IConfig } from "./Config";
 
 export class PackageRepositoriesService {
   public static coreRepositoriesClient = () =>
@@ -309,83 +299,13 @@ export class PackageRepositoriesService {
       });
   }
 
-  public static getRepositoriesPermissions = (
-    namespace: string,
-    config: IConfig,
-    plugin: Plugin,
-  ): IPackageRepositoryPermission | undefined => {
-    switch (plugin.name) {
-      case PluginNames.PACKAGES_HELM:
-        return {
-          global: this.getResourcePermissions(
-            config.kubeappsCluster,
-            config.helmGlobalNamespace,
-            "kubeapps.com",
-            "apprepositories",
-          ),
-          namespaced: this.getResourcePermissions(
-            config.kubeappsCluster,
-            namespace,
-            "kubeapps.com",
-            "apprepositories",
-          ),
-          plugin: plugin,
-        };
-      case PluginNames.PACKAGES_KAPP:
-        return {
-          global: this.getResourcePermissions(
-            config.kubeappsCluster,
-            config.carvelGlobalNamespace,
-            "packaging.carvel.dev",
-            "packagerepositories",
-          ),
-          namespaced: this.getResourcePermissions(
-            config.kubeappsCluster,
-            namespace,
-            "packaging.carvel.dev",
-            "packagerepositories",
-          ),
-          plugin: plugin,
-        };
-      case PluginNames.PACKAGES_FLUX:
-        return {
-          namespaced: this.getResourcePermissions(
-            config.kubeappsCluster,
-            namespace,
-            "source.toolkit.fluxcd.io",
-            "helmrepositories",
-          ),
-          plugin: plugin,
-        };
-    }
-    return undefined;
-  };
-
-  // TODO(castelblanque) Provide the repository resource GVR from the backend plugin
-  // and make a single canI call that groups all verbs
-  private static getResourcePermissions = (
-    cluster: string,
-    namespace: string,
-    apiGroup: string,
-    resource: string,
-  ): IResourcePermission => {
-    const permissions = {
-      namespace: namespace,
-    } as IResourcePermission;
-    Promise.allSettled([
-      Kube.canI(cluster, apiGroup, resource, "list", namespace)
-        .then(allowed => (permissions.list = allowed))
-        ?.catch(() => (permissions.list = false)),
-      Kube.canI(cluster, apiGroup, resource, "update", namespace)
-        .then(allowed => (permissions.update = allowed))
-        ?.catch(() => (permissions.update = false)),
-      Kube.canI(cluster, apiGroup, resource, "create", namespace)
-        .then(allowed => (permissions.create = allowed))
-        ?.catch(() => (permissions.create = false)),
-      Kube.canI(cluster, apiGroup, resource, "delete", namespace)
-        .then(allowed => (permissions.delete = allowed))
-        ?.catch(() => (permissions.delete = false)),
-    ]);
-    return permissions;
-  };
+  public static async getRepositoriesPermissions(cluster: string, namespace: string) {
+    const resp = await this.coreRepositoriesClient().GetPackageRepositoryPermissions({
+      context: {
+        cluster: cluster,
+        namespace: namespace,
+      },
+    });
+    return resp.permissions;
+  }
 }

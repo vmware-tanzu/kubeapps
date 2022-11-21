@@ -6,16 +6,18 @@ import Alert from "components/js/Alert";
 import Table from "components/js/Table";
 import TableRow from "components/js/Table/components/TableRow";
 import Tooltip from "components/js/Tooltip";
-import { PackageRepositorySummary } from "gen/kubeappsapis/core/packages/v1alpha1/repositories";
+import {
+  PackageRepositoriesPermissions,
+  PackageRepositorySummary,
+} from "gen/kubeappsapis/core/packages/v1alpha1/repositories";
 import { act } from "react-dom/test-utils";
 import * as ReactRedux from "react-redux";
 import { Link } from "react-router-dom";
 import { IPackageRepositoryState } from "reducers/repos";
 import { Kube } from "shared/Kube";
 import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins";
-import { PackageRepositoriesService } from "shared/PackageRepositoriesService";
 import { defaultStore, getStore, initialState, mountWrapper } from "shared/specs/mountWrapper";
-import { IPackageRepositoryPermission, IStoreState, PluginNames } from "shared/types";
+import { IStoreState, PluginNames } from "shared/types";
 import { PkgRepoControl } from "./PkgRepoControl";
 import { PkgRepoDisabledControl } from "./PkgRepoDisabledControl";
 import PkgRepoList from "./PkgRepoList";
@@ -70,8 +72,23 @@ it("fetches repos only from the helmGlobalNamespace", () => {
   expect(actions.repos.fetchRepoSummaries).toHaveBeenCalledWith("");
 });
 
-it("fetches repos from all namespaces (without kubeappsNamespace)", () => {
-  const wrapper = mountWrapper(defaultStore, <PkgRepoList />);
+it("fetches repos from all namespaces", () => {
+  const wrapper = mountWrapper(
+    getStore({
+      ...initialState,
+      repos: {
+        reposPermissions: [
+          {
+            global: {
+              list: true,
+            },
+            namespace: {},
+          },
+        ] as PackageRepositoriesPermissions[],
+      },
+    } as Partial<IStoreState>),
+    <PkgRepoList />,
+  );
   act(() => {
     wrapper.find("input[type='checkbox']").simulate("change");
   });
@@ -196,24 +213,24 @@ describe("global and namespaced repositories", () => {
     ).toExist();
   });
 
-  it("shows the global repositories with the buttons enabled", async () => {
-    PackageRepositoriesService.getRepositoriesPermissions = jest.fn().mockReturnValue({
-      global: {
-        create: true,
-        delete: true,
-        list: true,
-        namespace: "",
-        update: true,
+  it("shows the global repositories with the buttons enabled based on permissions", async () => {
+    const permissions = [
+      {
+        plugin: plugin,
+        global: {
+          create: true,
+          delete: true,
+          list: true,
+          update: true,
+        },
+        namespace: {
+          create: true,
+          delete: true,
+          list: true,
+          update: true,
+        },
       },
-      namespaced: {
-        create: true,
-        delete: true,
-        list: true,
-        namespace: "",
-        update: true,
-      },
-      plugin: plugin,
-    } as IPackageRepositoryPermission);
+    ] as PackageRepositoriesPermissions[];
 
     let wrapper: any;
     await act(async () => {
@@ -230,6 +247,7 @@ describe("global and namespaced repositories", () => {
           },
           repos: {
             reposSummaries: [globalRepo],
+            reposPermissions: permissions,
           } as IPackageRepositoryState,
           config: {
             ...initialState.config,
@@ -253,7 +271,6 @@ describe("global and namespaced repositories", () => {
     ).not.toExist();
     // no tooltip for the global repo as it does not have a description.
     expect(wrapper.find(Tooltip)).not.toExist();
-    expect(PackageRepositoriesService.getRepositoriesPermissions).toHaveBeenCalled();
   });
 
   it("shows global and namespaced repositories", () => {
@@ -297,6 +314,14 @@ describe("global and namespaced repositories", () => {
       getStore({
         repos: {
           reposSummaries: [namespacedRepo],
+          reposPermissions: [
+            {
+              global: {
+                list: true,
+              },
+              namespace: {},
+            },
+          ] as PackageRepositoriesPermissions[],
         } as IPackageRepositoryState,
       } as Partial<IStoreState>),
       <PkgRepoList />,
@@ -313,6 +338,14 @@ describe("global and namespaced repositories", () => {
       getStore({
         repos: {
           reposSummaries: [namespacedRepo],
+          reposPermissions: [
+            {
+              global: {
+                list: true,
+              },
+              namespace: {},
+            },
+          ] as PackageRepositoriesPermissions[],
         } as IPackageRepositoryState,
       } as Partial<IStoreState>),
       <PkgRepoList />,

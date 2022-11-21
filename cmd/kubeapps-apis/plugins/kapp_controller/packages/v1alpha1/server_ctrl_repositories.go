@@ -5,7 +5,9 @@ package main
 
 import (
 	"context"
-	"k8s.io/apimachinery/pkg/api/errors"
+	packagingv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/packaging/v1alpha1"
+	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/pkg/resources"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	corev1 "github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
 	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/pkg/statuserror"
@@ -146,17 +148,33 @@ func (s *Server) GetPackageRepositorySummaries(ctx context.Context, request *cor
 	// trace logging
 	log.InfoS("+kapp-controller GetPackageRepositories", "cluster", cluster, "namespace", namespace)
 
-	// retrieve the list of installed packages
-	pkgRepositories, err := s.getPkgRepositories(ctx, cluster, namespace)
-	if err != nil {
-		if errors.IsForbidden(err) && namespace == "" {
+	// retrieve the list of repositories
+	var pkgRepositories []*packagingv1alpha1.PackageRepository
+	if namespace == "" {
+		// find globally, either via cluster access or by enumerating through namespaces
+		if repos, err := s.getPkgRepositories(ctx, cluster, ""); err == nil {
+			pkgRepositories = append(pkgRepositories, repos...)
+		} else {
 			log.Warningf("+kapp-controller unable to list package repositories at the cluster scope in '%s' due to [%v]", cluster, err)
-			pkgRepositories, err = s.getAccessiblePackageRepositories(ctx, cluster)
-			if err != nil {
+			if repos, err = s.getAccessiblePackageRepositories(ctx, cluster); err == nil {
+				pkgRepositories = append(pkgRepositories, repos...)
+			} else {
 				return nil, err
 			}
+		}
+	} else {
+		// include namespace specific  repositories
+		if repos, err := s.getPkgRepositories(ctx, cluster, namespace); err == nil {
+			pkgRepositories = append(pkgRepositories, repos...)
 		} else {
-			return nil, statuserror.FromK8sError("get", "PackageRepository", "", err)
+			return nil, err
+		}
+
+		// try to also include global repositories
+		if namespace != s.pluginConfig.globalPackagingNamespace {
+			if repos, err := s.getPkgRepositories(ctx, cluster, s.pluginConfig.globalPackagingNamespace); err == nil {
+				pkgRepositories = append(pkgRepositories, repos...)
+			}
 		}
 	}
 
@@ -318,4 +336,46 @@ func (s *Server) DeletePackageRepository(ctx context.Context, request *corev1.De
 
 	log.InfoS("-kapp-controller DeletePackageRepository", "cluster", cluster, "namespace", namespace, "name", name)
 	return response, nil
+}
+
+// GetPackageRepositoryPermissions provides permissions available to manage package repository by the 'kapp_controller' plugin
+func (s *Server) GetPackageRepositoryPermissions(ctx context.Context, request *corev1.GetPackageRepositoryPermissionsRequest) (*corev1.GetPackageRepositoryPermissionsResponse, error) {
+	log.Infof("+kapp-controller GetPackageRepositoryPermissions [%v]", request)
+
+	cluster := request.GetContext().GetCluster()
+	namespace := request.GetContext().GetNamespace()
+	if cluster == "" && namespace != "" {
+		return nil, status.Errorf(codes.InvalidArgument, "cluster must be specified when namespace is present: %s", namespace)
+	}
+	typedClient, err := s.clientGetter.Typed(ctx, cluster)
+	if err != nil {
+		return nil, err
+	}
+
+	resource := schema.GroupResource{
+		Group:    packagingv1alpha1.SchemeGroupVersion.Group,
+		Resource: pkgRepositoriesResource,
+	}
+
+	permissions := &corev1.PackageRepositoriesPermissions{
+		Plugin: GetPluginDetail(),
+	}
+
+	// Global permissions
+	permissions.Global, err = resources.GetPermissionsOnResource(ctx, typedClient, resource, s.pluginConfig.globalPackagingNamespace)
+	if err != nil {
+		return nil, err
+	}
+
+	// Namespace permissions
+	if namespace != "" {
+		permissions.Namespace, err = resources.GetPermissionsOnResource(ctx, typedClient, resource, request.GetContext().GetNamespace())
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return &corev1.GetPackageRepositoryPermissionsResponse{
+		Permissions: []*corev1.PackageRepositoriesPermissions{permissions},
+	}, nil
 }

@@ -157,17 +157,11 @@ service HelmRepositoriesService {
     };
   }
 
-  // this endpoint only exists for the purpose of integration tests
-  rpc SetUserManagedSecrets(SetUserManagedSecretsRequest) returns (SetUserManagedSecretsResponse) {
+  rpc GetPackageRepositoryPermissions(kubeappsapis.core.packages.v1alpha1.GetPackageRepositoryPermissionsRequest) returns (kubeappsapis.core.packages.v1alpha1.GetPackageRepositoryPermissionsResponse) {
+    option (google.api.http) = {
+      get: "/plugins/helm/packages/v1alpha1/repositories/c/{context.cluster}/permissions"
+    };
   }
-}
-
-message SetUserManagedSecretsRequest {
-  bool value = 1;
-}
-
-message SetUserManagedSecretsResponse {
-  bool value = 1;
 }
 
 message ImagesPullSecret {

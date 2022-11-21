@@ -108,7 +108,7 @@ func (s *Server) availableChartDetail(ctx context.Context, packageRef *corev1.Av
 		}
 
 		if byteArray == nil {
-			return nil, status.Errorf(codes.Internal, "failed to load details for chart [%s]", chartModel.ID)
+			return nil, status.Errorf(codes.Internal, "failed to load details for chart [%s], version [%s]", chartModel.ID, chartVersion)
 		}
 	}
 

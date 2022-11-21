@@ -358,15 +358,33 @@ func (s *Server) getAccessiblePackageRepositories(ctx context.Context, cluster s
 		return nil, err
 	}
 	namespaceList = resources.FilterActiveNamespaces(namespaceList)
+
 	var accessibleRepos []*packagingv1alpha1.PackageRepository
 	for _, ns := range namespaceList {
-		nsRepos, err := s.getPkgRepositories(ctx, cluster, ns.Name)
-		if err != nil {
+		if nsRepos, err := s.getPkgRepositories(ctx, cluster, ns.Name); err != nil {
 			log.Warningf("++kapp-controller could not list PackageRepository in namespace %s", ns.Name)
 			// Continue. Error in a single namespace should not block the whole list
+		} else {
+			accessibleRepos = append(accessibleRepos, nsRepos...)
 		}
-		accessibleRepos = append(accessibleRepos, nsRepos...)
 	}
+
+	// in general, the user will not have admin level access to the global namespace, so checking explicitly
+	var hasglobalns bool
+	for _, ns := range namespaceList {
+		if ns.Name == s.pluginConfig.globalPackagingNamespace {
+			hasglobalns = true
+			break
+		}
+	}
+	if !hasglobalns {
+		if nsRepos, err := s.getPkgRepositories(ctx, cluster, s.pluginConfig.globalPackagingNamespace); err != nil {
+			log.Warningf("++kapp-controller could not list PackageRepository in global namespace")
+		} else {
+			accessibleRepos = append(accessibleRepos, nsRepos...)
+		}
+	}
+
 	return accessibleRepos, nil
 }
 

@@ -1,0 +1,91 @@
+# Copyright 2018-2022 the Kubeapps contributors.
+# SPDX-License-Identifier: Apache-2.0
+
+---
+name: SRP Report
+description: Install SRP CLI and Submit Provenance
+inputs:
+  SRP_CLI_VERSION:
+    description: Version of the SRP CLI tool
+    required: false
+    default: latest
+  SRP_CLIENT_ID:
+    description: ID for SRP API Credentials
+    required: true
+  SRP_CLIENT_SECRET:
+    description: SECRET for SRP API Credentials
+    required: true
+  VERSION:
+    description: Release Version
+    required: true
+runs:
+  using: "composite"
+  steps:
+    - name: Download SRP CLI
+      shell: bash
+      env:
+        SRP_CLI_VERSION: ${{ inputs.SRP_CLI_VERSION }}
+      run: |
+        set -u
+        mkdir -p /tmp/srp-cli
+        if [[ "${SRP_CLI_VERSION}" == "latest" ]]; then
+          curl https://srp-cli.s3.amazonaws.com/srp-cli-latest.tgz -o /tmp/srp-cli/srp-cli-latest.tgz
+          tar xvzf /tmp/srp-cli/srp-cli-latest.tgz -C /tmp/srp-cli/
+        else
+          wget "https://vmwaresaas.jfrog.io/artifactory/srp-tools/srpcli/${SRP_CLI_VERSION}/linux/srp" -O /tmp/srp-cli/srp
+        fi
+        chmod +x /tmp/srp-cli/srp
+        sudo mv /tmp/srp-cli/srp /usr/local/bin/.
+        srp --version
+    - name: Configure SRP
+      env:
+        SRP_CLIENT_ID: ${{ inputs.SRP_CLIENT_ID }}
+        SRP_CLIENT_SECRET: ${{ inputs.SRP_CLIENT_SECRET }}
+      shell: bash
+      run: |
+        set -u
+        srp config auth --client-id=${SRP_CLIENT_ID} --client-secret=${SRP_CLIENT_SECRET}
+    - name: Create Source Provenance File
+      env:
+        VERSION: ${{ inputs.VERSION }}
+      shell: bash
+      run: |
+        set -eu
+        export GITHUB_FQDN=$(echo "${GITHUB_SERVER_URL}" | sed -e "s/^https:\/\///")
+        export BUILD_ID=${GITHUB_RUN_ID}_${GITHUB_RUN_ATTEMPT}
+        export COMP_UID="uid.obj.build.github(instance='${GITHUB_FQDN}',namespace='${GITHUB_REPOSITORY}',ref='${GITHUB_REF}',action='${GITHUB_ACTION}',build_id='$BUILD_ID')"
+        echo "COMP_UID=$COMP_UID" >> $GITHUB_ENV
+        echo "COMP_UID=$COMP_UID"
+        mkdir -p /tmp/provenance
+        sudo srp provenance source \
+        --verbose \
+        --scm-type git \
+        --name "kubeapps" \
+        --path ./ \
+        --saveto /tmp/provenance/source.json \
+        --comp-uid ${COMP_UID} \
+        --build-number ${BUILD_ID} \
+        --version ${VERSION} \
+        --all-ephemeral true \
+        --build-type release
+    - name: Validate and submit the source provenance files to the SRP Metadata service
+      shell: bash
+      run: |
+        echo "COMP_UID: $COMP_UID"
+        export COMP_UID=${COMP_UID//\//\%2f}
+        export SRP_UID="uid.mtd.provenance_2_5.fragment(obj_uid=$COMP_UID,revision='')"
+        echo "SRP_UID: ${SRP_UID}"
+        echo "SOURCE PROVENANCE FILE CONTENT:"
+        cat /tmp/provenance/source.json
+        echo ""
+        srp uid validate ${SRP_UID}
+        srp metadata submit \
+        --verbose \
+        --srp-endpoint https://apigw.vmware.com/v1/s1/api/helix-beta \
+        --uid "${SRP_UID}" \
+        --path /tmp/provenance/source.json
+    - name: Upload SRP file as a build artifact
+      uses: actions/upload-artifact@v3
+      with:
+        name: srp-source-provenance-file
+        path: /tmp/provenance/source.json

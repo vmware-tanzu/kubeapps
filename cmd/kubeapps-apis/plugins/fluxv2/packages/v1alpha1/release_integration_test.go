@@ -52,6 +52,7 @@ type integrationTestCreatePackageSpec struct {
 	expectInstallFailure bool
 	dontCreateNs         bool
 	noCleanup            bool
+	dontCreateReleaseSA  bool
 	expectedStatusCode   codes.Code
 	expectedResourceRefs []*corev1.ResourceRef
 }
@@ -194,6 +195,12 @@ func TestKindClusterUpdateInstalledPackage(t *testing.T) {
 		t.Fatal(err)
 	}
 
+	ghUser := os.Getenv("GITHUB_USER")
+	ghToken := os.Getenv("GITHUB_TOKEN")
+	if ghUser == "" || ghToken == "" {
+		t.Fatalf("Environment variables GITHUB_USER and GITHUB_TOKEN need to be set to run this test")
+	}
+
 	testCases := []struct {
 		integrationTestCreatePackageSpec
 		request *corev1.UpdateInstalledPackageRequest
@@ -291,7 +298,27 @@ func TestKindClusterUpdateInstalledPackage(t *testing.T) {
 			expectedDetailAfterUpdate: expected_detail_installed_package_podinfo_9,
 			expectedRefsAfterUpdate:   expected_resource_refs_podinfo_9,
 		},
-		// TODO (gfichtenholt) update OCI helmrelease
+		{
+			integrationTestCreatePackageSpec: integrationTestCreatePackageSpec{
+				testName: "update OCI helm release from [" + github_gfichtenholt_podinfo_oci_registry_url + "]",
+				repoType: "oci",
+				repoUrl:  github_gfichtenholt_podinfo_oci_registry_url,
+				repoSecret: newBasicAuthSecret(types.NamespacedName{
+					Name:      "oci-repo-secret-" + randSeq(4),
+					Namespace: "default"},
+					ghUser,
+					ghToken,
+				),
+				request:              create_installed_package_request_for_update_oci,
+				expectedDetail:       expected_detail_installed_package_for_update_oci,
+				expectedPodPrefix:    "my-podinfo-21",
+				expectedStatusCode:   codes.OK,
+				expectedResourceRefs: expected_resource_refs_for_update_oci,
+			},
+			request:                   update_request_8,
+			expectedDetailAfterUpdate: expected_detail_installed_package_podinfo_6_1_5_for_update,
+			expectedRefsAfterUpdate:   expected_resource_refs_for_update_oci,
+		},
 	}
 
 	name := types.NamespacedName{
@@ -332,9 +359,9 @@ func TestKindClusterUpdateInstalledPackage(t *testing.T) {
 					if strings.Contains(err.Error(), " the object has been modified; please apply your changes to the latest version and try again") {
 						waitTime := int64(math.Pow(2, float64(i)))
 						t.Logf("Retrying update in [%d] sec due to %s...", waitTime, err.Error())
-						time.Sleep(time.Duration(waitTime) * time.Second)
+						SleepWithCountdown(t, int(waitTime))
 					} else {
-						t.Fatalf("%+v", err)
+						t.Fatal(err)
 					}
 				} else {
 					break
@@ -362,7 +389,7 @@ func TestKindClusterUpdateInstalledPackage(t *testing.T) {
 				InstalledPackageDetail: tc.expectedDetailAfterUpdate,
 			}
 
-			compareActualVsExpectedGetInstalledPackageDetailResponse(t, actualRespAfterUpdate, expectedResp)
+			compareInstalledPackageDetail(t, actualRespAfterUpdate, expectedResp)
 
 			if tc.expectedRefsAfterUpdate != nil {
 				expectedRefsCopy := []*corev1.ResourceRef{}
@@ -444,8 +471,7 @@ func TestKindClusterAutoUpdateInstalledPackageFromHttpRepo(t *testing.T) {
 			t.Logf("Error reverting to previous podinfo index: %v", err)
 		}
 	})
-	t.Logf("Waiting 45 seconds...")
-	time.Sleep(45 * time.Second)
+	SleepWithCountdown(t, 45)
 
 	resp, err := fluxPluginPackagesClient.GetInstalledPackageDetail(
 		grpcContext, &corev1.GetInstalledPackageDetailRequest{
@@ -459,7 +485,7 @@ func TestKindClusterAutoUpdateInstalledPackageFromHttpRepo(t *testing.T) {
 		expected_detail_installed_package_auto_update_2.PostInstallationNotes,
 		"@TARGET_NS@",
 		spec.request.TargetContext.Namespace)
-	compareActualVsExpectedGetInstalledPackageDetailResponse(
+	compareInstalledPackageDetail(
 		t, resp, &corev1.GetInstalledPackageDetailResponse{
 			InstalledPackageDetail: expected_detail_installed_package_auto_update_2,
 		})
@@ -525,8 +551,7 @@ func TestKindClusterAutoUpdateInstalledPackageFromOciRepo(t *testing.T) {
 		}
 	})
 
-	t.Logf("Waiting 45 seconds...")
-	time.Sleep(45 * time.Second)
+	SleepWithCountdown(t, 45)
 
 	resp, err := fluxPluginPackagesClient.GetInstalledPackageDetail(
 		grpcContext, &corev1.GetInstalledPackageDetailRequest{
@@ -541,7 +566,7 @@ func TestKindClusterAutoUpdateInstalledPackageFromOciRepo(t *testing.T) {
 		expected_detail_installed_package_auto_update_oci_2.PostInstallationNotes,
 		"@TARGET_NS@",
 		spec.request.TargetContext.Namespace)
-	compareActualVsExpectedGetInstalledPackageDetailResponse(
+	compareInstalledPackageDetail(
 		t, resp, &corev1.GetInstalledPackageDetailResponse{
 			InstalledPackageDetail: expected_detail_installed_package_auto_update_oci_2,
 		})
@@ -551,6 +576,12 @@ func TestKindClusterDeleteInstalledPackage(t *testing.T) {
 	fluxPluginPackagesClient, fluxPluginReposClient, err := checkEnv(t)
 	if err != nil {
 		t.Fatal(err)
+	}
+
+	ghUser := os.Getenv("GITHUB_USER")
+	ghToken := os.Getenv("GITHUB_TOKEN")
+	if ghUser == "" || ghToken == "" {
+		t.Fatalf("Environment variables GITHUB_USER and GITHUB_TOKEN need to be set to run this test")
 	}
 
 	testCases := []struct {
@@ -580,7 +611,41 @@ func TestKindClusterDeleteInstalledPackage(t *testing.T) {
 			},
 			unauthorized: true,
 		},
-		// TODO (gifchtenholt) delete OCI helmrelease
+		{
+			integrationTestCreatePackageSpec: integrationTestCreatePackageSpec{
+				testName: "delete OCI helm release",
+				repoType: "oci",
+				repoUrl:  github_gfichtenholt_podinfo_oci_registry_url,
+				repoSecret: newBasicAuthSecret(types.NamespacedName{
+					Name:      "oci-repo-secret-" + randSeq(4),
+					Namespace: "default"},
+					ghUser,
+					ghToken,
+				),
+				request:              create_installed_package_request_for_delete_oci,
+				expectedDetail:       expected_detail_installed_package_for_delete_oci,
+				expectedPodPrefix:    "my-podinfo-22-",
+				expectedStatusCode:   codes.OK,
+				expectedResourceRefs: expected_resource_refs_for_delete_oci,
+				noCleanup:            true,
+			},
+		},
+		// this is the scenario from https://github.com/vmware-tanzu/kubeapps/issues/5577
+		// currently fails due to https://github.com/fluxcd/helm-controller/issues/554
+		// TODO (gfichtenholt) uncomment this if/when issue is resolved by flux
+		/*
+			{
+				integrationTestCreatePackageSpec: integrationTestCreatePackageSpec{
+					testName:             "delete after install fails",
+					repoUrl:              podinfo_repo_url,
+					request:              create_installed_package_request_podinfo_for_delete_3,
+					expectedDetail:       expected_detail_installed_package_podinfo_for_delete_3,
+					expectInstallFailure: true,
+					noCleanup:            true,
+					dontCreateReleaseSA:  true,
+				},
+			},
+		*/
 	}
 
 	name := types.NamespacedName{
@@ -617,7 +682,7 @@ func TestKindClusterDeleteInstalledPackage(t *testing.T) {
 				}
 				return // done, nothing more to check
 			} else if err != nil {
-				t.Fatalf("%+v", err)
+				t.Fatal(err)
 			}
 
 			const maxWait = 25
@@ -633,25 +698,25 @@ func TestKindClusterDeleteInstalledPackage(t *testing.T) {
 					if status.Code(err) == codes.NotFound {
 						break // this is the only way to break out of this loop successfully
 					} else {
-						t.Fatalf("%+v", err)
+						t.Fatal(err)
 					}
 				}
 				if i == maxWait {
-					t.Fatalf("Timed out waiting for delete of installed package [%s], last error: [%v]", installedRef, err)
+					t.Fatalf("Timed out waiting for deletion of installed package [%s], last error: [%v]", installedRef, err)
 				} else {
 					t.Logf("Waiting 1s for package [%s] to be deleted, attempt [%d/%d]...", installedRef, i+1, maxWait)
 					time.Sleep(1 * time.Second)
 				}
 			}
 
-			// confidence test
+			// sanity check
 			name := types.NamespacedName{
 				Name:      installedRef.Identifier,
 				Namespace: installedRef.Context.Namespace,
 			}
 			exists, err := kubeExistsHelmRelease(t, name)
 			if err != nil {
-				t.Fatalf("%+v", err)
+				t.Fatal(err)
 			} else if exists {
 				t.Fatalf("helmrelease [%s] still exists", installedRef)
 			}
@@ -662,7 +727,7 @@ func TestKindClusterDeleteInstalledPackage(t *testing.T) {
 			// from cluster (garbage collection)
 			for i := 0; i <= maxWait; i++ {
 				if pods, err := kubeGetPodNames(t, tc.request.TargetContext.Namespace); err != nil {
-					t.Fatalf("%+v", err)
+					t.Fatal(err)
 				} else if len(pods) == 0 {
 					break
 				} else if len(pods) != 1 {
@@ -682,29 +747,30 @@ func TestKindClusterDeleteInstalledPackage(t *testing.T) {
 }
 
 // scenario:
-// 1) create new namespace ns1
-// 2) add podinfo repo in ns1
-// 3) create new namespace ns2
-// 4) create these service-accounts in default namespace:
-//   a) - "...-admin", with cluster-wide access to everything
-//   b) - "...-loser", without cluster-wide access or any access to any of the namespaces
-//   c) - "...-helmreleases", with only permissions to 'get' HelmReleases in ns2
-//   d) - "...-helmreleases-and-charts", with only permissions to 'get' HelmCharts in ns1, HelmReleases in ns2
-// 5) as user 4a) install package podinfo in ns2
-// 6) verify GetInstalledPackageSummaries:
-//    a) as 4a) returns 1 result
-//    b) as 4b) raises PermissionDenied error
-//    c) as 4c) returns 1 result but without the corresponding chart details
-//    d) as 4d) returns 1 result with details from corresponding chart
-// 7) verify GetInstalledPackageDetail:
-//    a) as 4a) returns full detail
-//    b) as 4b) returns PermissionDenied error
-//    c) as 4c) returns full detail
-//    d) as 4d) returns full detail
-// 8) verify GetInstalledPackageResourceRefs:
-//    a) as 4a) returns all refs
-//    b) as 4b) returns PermissionDenied error
-//    c) as 4c) returns all refs
+//  1. create new namespace ns1
+//  2. add podinfo repo in ns1
+//  3. create new namespace ns2
+//  4. create these service-accounts in default namespace:
+//     a) - "...-admin", with cluster-wide access to everything
+//     b) - "...-loser", without cluster-wide access or any access to any of the namespaces
+//     c) - "...-helmreleases", with only permissions to 'get' HelmReleases in ns2
+//     d) - "...-helmreleases-and-charts", with only permissions to 'get' HelmCharts in ns1, HelmReleases in ns2
+//  5. as user 4a) install package podinfo in ns2
+//  6. verify GetInstalledPackageSummaries:
+//     a) as 4a) returns 1 result
+//     b) as 4b) raises PermissionDenied error
+//     c) as 4c) returns 1 result but without the corresponding chart details
+//     d) as 4d) returns 1 result with details from corresponding chart
+//  7. verify GetInstalledPackageDetail:
+//     a) as 4a) returns full detail
+//     b) as 4b) returns PermissionDenied error
+//     c) as 4c) returns full detail
+//     d) as 4d) returns full detail
+//  8. verify GetInstalledPackageResourceRefs:
+//     a) as 4a) returns all refs
+//     b) as 4b) returns PermissionDenied error
+//     c) as 4c) returns all refs
+//
 // ref https://github.com/vmware-tanzu/kubeapps/issues/4390
 func TestKindClusterRBAC_ReadRelease(t *testing.T) {
 	fluxPluginPackagesClient, fluxPluginReposClient, err := checkEnv(t)
@@ -805,7 +871,7 @@ func TestKindClusterRBAC_ReadRelease(t *testing.T) {
 			expected_detail_test_release_rbac_2.InstalledPackageDetail.PostInstallationNotes,
 			"@TARGET_NS@", ns2)
 		expected_detail_test_release_rbac_2.InstalledPackageDetail.AvailablePackageRef.Context.Namespace = ns1
-		compareActualVsExpectedGetInstalledPackageDetailResponse(t, resp2, expected_detail_test_release_rbac_2)
+		compareInstalledPackageDetail(t, resp2, expected_detail_test_release_rbac_2)
 	}
 
 	grpcCtx, cancel = context.WithTimeout(grpcCtxAdmin, defaultContextTimeout)
@@ -935,24 +1001,12 @@ func TestKindClusterRBAC_ReadRelease(t *testing.T) {
 			},
 		})
 
-	opts2 := cmpopts.IgnoreUnexported(
-		corev1.GetInstalledPackageSummariesResponse{},
-		corev1.InstalledPackageSummary{},
-		corev1.InstalledPackageReference{},
-		corev1.InstalledPackageStatus{},
-		plugins.Plugin{},
-		corev1.VersionReference{},
-		corev1.PackageAppVersion{},
-		corev1.Context{})
-
 	if err != nil {
 		t.Fatal(err)
 	} else {
 		// should return installed package summaries without chart details
 		expected_summaries_test_release_rbac_1.InstalledPackageSummaries[0].InstalledPackageRef.Context.Namespace = ns2
-		if got, want := resp, expected_summaries_test_release_rbac_1; !cmp.Equal(want, got, opts2) {
-			t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opts2))
-		}
+		compareInstalledPackageSummaries(t, resp, expected_summaries_test_release_rbac_1)
 	}
 
 	grpcCtx, cancel = context.WithTimeout(grpcCtxReadHelmReleases, defaultContextTimeout)
@@ -966,7 +1020,7 @@ func TestKindClusterRBAC_ReadRelease(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	} else {
-		compareActualVsExpectedGetInstalledPackageDetailResponse(t, resp2, expected_detail_test_release_rbac_2)
+		compareInstalledPackageDetail(t, resp2, expected_detail_test_release_rbac_2)
 	}
 
 	grpcCtx, cancel = context.WithTimeout(grpcCtxReadHelmReleases, defaultContextTimeout)
@@ -1042,9 +1096,7 @@ func TestKindClusterRBAC_ReadRelease(t *testing.T) {
 	} else {
 		// should return installed package summaries with chart details
 		expected_summaries_test_release_rbac_2.InstalledPackageSummaries[0].InstalledPackageRef.Context.Namespace = ns2
-		if got, want := resp, expected_summaries_test_release_rbac_2; !cmp.Equal(want, got, opts2) {
-			t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opts2))
-		}
+		compareInstalledPackageSummaries(t, resp, expected_summaries_test_release_rbac_2)
 	}
 
 	grpcCtx, cancel = context.WithTimeout(grpcCtxReadHelmReleasesAndCharts, defaultContextTimeout)
@@ -1058,7 +1110,7 @@ func TestKindClusterRBAC_ReadRelease(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	} else {
-		compareActualVsExpectedGetInstalledPackageDetailResponse(t, resp2, expected_detail_test_release_rbac_2)
+		compareInstalledPackageDetail(t, resp2, expected_detail_test_release_rbac_2)
 	}
 }
 
@@ -1476,7 +1528,7 @@ func createAndWaitForHelmRelease(
 
 	err := kubeAddHelmRepositoryAndCleanup(t, name, tc.repoType, tc.repoUrl, secretName, tc.repoInterval)
 	if err != nil {
-		t.Fatalf("%+v", err)
+		t.Fatal(err)
 	}
 
 	// need to wait until repo is indexed by flux plugin
@@ -1518,14 +1570,16 @@ func createAndWaitForHelmRelease(
 		}
 	}
 
-	if tc.request.ReconciliationOptions != nil && tc.request.ReconciliationOptions.ServiceAccountName != "" {
+	if tc.request.ReconciliationOptions != nil &&
+		tc.request.ReconciliationOptions.ServiceAccountName != "" &&
+		!tc.dontCreateReleaseSA {
 		svcAcctName := types.NamespacedName{
 			Name:      tc.request.ReconciliationOptions.ServiceAccountName,
 			Namespace: tc.request.TargetContext.Namespace,
 		}
 		_, err = kubeCreateAdminServiceAccount(t, svcAcctName)
 		if err != nil {
-			t.Fatalf("%+v", err)
+			t.Fatal(err)
 		}
 		// it appears that if service account is deleted before the helmrelease object that uses it,
 		// when you try to delete the helmrelease, the "delete" operation gets stuck and the only
@@ -1620,7 +1674,7 @@ func createAndWaitForHelmRelease(
 		InstalledPackageDetail: tc.expectedDetail,
 	}
 
-	compareActualVsExpectedGetInstalledPackageDetailResponse(t, actualDetailResp, expectedResp)
+	compareInstalledPackageDetail(t, actualDetailResp, expectedResp)
 
 	if !tc.expectInstallFailure {
 		// check artifacts in target namespace:
@@ -1628,7 +1682,7 @@ func createAndWaitForHelmRelease(
 			tc.expectedPodPrefix, "@TARGET_NS@", tc.request.TargetContext.Namespace)
 		pods, err := kubeGetPodNames(t, tc.request.TargetContext.Namespace)
 		if err != nil {
-			t.Fatalf("%+v", err)
+			t.Fatal(err)
 		}
 		if len(pods) != 1 {
 			t.Errorf("expected 1 pod, got: %s", pods)
@@ -1673,7 +1727,7 @@ func waitUntilInstallCompletes(
 			grpcContext,
 			&corev1.GetInstalledPackageDetailRequest{InstalledPackageRef: installedPackageRef})
 		if err != nil {
-			t.Fatalf("%+v", err)
+			t.Fatal(err)
 		}
 
 		if !expectInstallFailure {
@@ -1707,7 +1761,7 @@ func waitUntilInstallCompletes(
 			grpcContext,
 			&corev1.GetInstalledPackageResourceRefsRequest{InstalledPackageRef: installedPackageRef})
 		if err != nil {
-			t.Fatalf("%+v", err)
+			t.Fatal(err)
 		}
 	} else {
 		t.Logf("Install of [%s/%s] completed with [%s], userReason: [%s]",

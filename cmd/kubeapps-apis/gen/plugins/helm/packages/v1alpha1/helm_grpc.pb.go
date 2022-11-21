@@ -459,8 +459,7 @@ type HelmRepositoriesServiceClient interface {
 	GetPackageRepositorySummaries(ctx context.Context, in *v1alpha1.GetPackageRepositorySummariesRequest, opts ...grpc.CallOption) (*v1alpha1.GetPackageRepositorySummariesResponse, error)
 	UpdatePackageRepository(ctx context.Context, in *v1alpha1.UpdatePackageRepositoryRequest, opts ...grpc.CallOption) (*v1alpha1.UpdatePackageRepositoryResponse, error)
 	DeletePackageRepository(ctx context.Context, in *v1alpha1.DeletePackageRepositoryRequest, opts ...grpc.CallOption) (*v1alpha1.DeletePackageRepositoryResponse, error)
-	// this endpoint only exists for the purpose of integration tests
-	SetUserManagedSecrets(ctx context.Context, in *SetUserManagedSecretsRequest, opts ...grpc.CallOption) (*SetUserManagedSecretsResponse, error)
+	GetPackageRepositoryPermissions(ctx context.Context, in *v1alpha1.GetPackageRepositoryPermissionsRequest, opts ...grpc.CallOption) (*v1alpha1.GetPackageRepositoryPermissionsResponse, error)
 }
 
 type helmRepositoriesServiceClient struct {
@@ -516,9 +515,9 @@ func (c *helmRepositoriesServiceClient) DeletePackageRepository(ctx context.Cont
 	return out, nil
 }
 
-func (c *helmRepositoriesServiceClient) SetUserManagedSecrets(ctx context.Context, in *SetUserManagedSecretsRequest, opts ...grpc.CallOption) (*SetUserManagedSecretsResponse, error) {
-	out := new(SetUserManagedSecretsResponse)
-	err := c.cc.Invoke(ctx, "/kubeappsapis.plugins.helm.packages.v1alpha1.HelmRepositoriesService/SetUserManagedSecrets", in, out, opts...)
+func (c *helmRepositoriesServiceClient) GetPackageRepositoryPermissions(ctx context.Context, in *v1alpha1.GetPackageRepositoryPermissionsRequest, opts ...grpc.CallOption) (*v1alpha1.GetPackageRepositoryPermissionsResponse, error) {
+	out := new(v1alpha1.GetPackageRepositoryPermissionsResponse)
+	err := c.cc.Invoke(ctx, "/kubeappsapis.plugins.helm.packages.v1alpha1.HelmRepositoriesService/GetPackageRepositoryPermissions", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -535,8 +534,7 @@ type HelmRepositoriesServiceServer interface {
 	GetPackageRepositorySummaries(context.Context, *v1alpha1.GetPackageRepositorySummariesRequest) (*v1alpha1.GetPackageRepositorySummariesResponse, error)
 	UpdatePackageRepository(context.Context, *v1alpha1.UpdatePackageRepositoryRequest) (*v1alpha1.UpdatePackageRepositoryResponse, error)
 	DeletePackageRepository(context.Context, *v1alpha1.DeletePackageRepositoryRequest) (*v1alpha1.DeletePackageRepositoryResponse, error)
-	// this endpoint only exists for the purpose of integration tests
-	SetUserManagedSecrets(context.Context, *SetUserManagedSecretsRequest) (*SetUserManagedSecretsResponse, error)
+	GetPackageRepositoryPermissions(context.Context, *v1alpha1.GetPackageRepositoryPermissionsRequest) (*v1alpha1.GetPackageRepositoryPermissionsResponse, error)
 }
 
 // UnimplementedHelmRepositoriesServiceServer should be embedded to have forward compatible implementations.
@@ -558,8 +556,8 @@ func (UnimplementedHelmRepositoriesServiceServer) UpdatePackageRepository(contex
 func (UnimplementedHelmRepositoriesServiceServer) DeletePackageRepository(context.Context, *v1alpha1.DeletePackageRepositoryRequest) (*v1alpha1.DeletePackageRepositoryResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method DeletePackageRepository not implemented")
 }
-func (UnimplementedHelmRepositoriesServiceServer) SetUserManagedSecrets(context.Context, *SetUserManagedSecretsRequest) (*SetUserManagedSecretsResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method SetUserManagedSecrets not implemented")
+func (UnimplementedHelmRepositoriesServiceServer) GetPackageRepositoryPermissions(context.Context, *v1alpha1.GetPackageRepositoryPermissionsRequest) (*v1alpha1.GetPackageRepositoryPermissionsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetPackageRepositoryPermissions not implemented")
 }
 
 // UnsafeHelmRepositoriesServiceServer may be embedded to opt out of forward compatibility for this service.
@@ -663,20 +661,20 @@ func _HelmRepositoriesService_DeletePackageRepository_Handler(srv interface{}, c
 	return interceptor(ctx, in, info, handler)
 }
 
-func _HelmRepositoriesService_SetUserManagedSecrets_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(SetUserManagedSecretsRequest)
+func _HelmRepositoriesService_GetPackageRepositoryPermissions_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(v1alpha1.GetPackageRepositoryPermissionsRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(HelmRepositoriesServiceServer).SetUserManagedSecrets(ctx, in)
+		return srv.(HelmRepositoriesServiceServer).GetPackageRepositoryPermissions(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/kubeappsapis.plugins.helm.packages.v1alpha1.HelmRepositoriesService/SetUserManagedSecrets",
+		FullMethod: "/kubeappsapis.plugins.helm.packages.v1alpha1.HelmRepositoriesService/GetPackageRepositoryPermissions",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(HelmRepositoriesServiceServer).SetUserManagedSecrets(ctx, req.(*SetUserManagedSecretsRequest))
+		return srv.(HelmRepositoriesServiceServer).GetPackageRepositoryPermissions(ctx, req.(*v1alpha1.GetPackageRepositoryPermissionsRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -709,8 +707,8 @@ var HelmRepositoriesService_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _HelmRepositoriesService_DeletePackageRepository_Handler,
 		},
 		{
-			MethodName: "SetUserManagedSecrets",
-			Handler:    _HelmRepositoriesService_SetUserManagedSecrets_Handler,
+			MethodName: "GetPackageRepositoryPermissions",
+			Handler:    _HelmRepositoriesService_GetPackageRepositoryPermissions_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

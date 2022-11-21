@@ -32,6 +32,8 @@ import {
   DockerCredentials,
   GetPackageRepositoryDetailRequest,
   GetPackageRepositoryDetailResponse,
+  GetPackageRepositoryPermissionsRequest,
+  GetPackageRepositoryPermissionsResponse,
   GetPackageRepositorySummariesRequest,
   GetPackageRepositorySummariesResponse,
   UpdatePackageRepositoryRequest,
@@ -83,14 +85,6 @@ export interface RollbackInstalledPackageResponse {
    * };
    */
   installedPackageRef?: InstalledPackageReference;
-}
-
-export interface SetUserManagedSecretsRequest {
-  value: boolean;
-}
-
-export interface SetUserManagedSecretsResponse {
-  value: boolean;
 }
 
 export interface ImagesPullSecret {
@@ -379,110 +373,6 @@ export const RollbackInstalledPackageResponse = {
       object.installedPackageRef !== undefined && object.installedPackageRef !== null
         ? InstalledPackageReference.fromPartial(object.installedPackageRef)
         : undefined;
-    return message;
-  },
-};
-
-function createBaseSetUserManagedSecretsRequest(): SetUserManagedSecretsRequest {
-  return { value: false };
-}
-
-export const SetUserManagedSecretsRequest = {
-  encode(
-    message: SetUserManagedSecretsRequest,
-    writer: _m0.Writer = _m0.Writer.create(),
-  ): _m0.Writer {
-    if (message.value === true) {
-      writer.uint32(8).bool(message.value);
-    }
-    return writer;
-  },
-
-  decode(input: _m0.Reader | Uint8Array, length?: number): SetUserManagedSecretsRequest {
-    const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
-    let end = length === undefined ? reader.len : reader.pos + length;
-    const message = createBaseSetUserManagedSecretsRequest();
-    while (reader.pos < end) {
-      const tag = reader.uint32();
-      switch (tag >>> 3) {
-        case 1:
-          message.value = reader.bool();
-          break;
-        default:
-          reader.skipType(tag & 7);
-          break;
-      }
-    }
-    return message;
-  },
-
-  fromJSON(object: any): SetUserManagedSecretsRequest {
-    return { value: isSet(object.value) ? Boolean(object.value) : false };
-  },
-
-  toJSON(message: SetUserManagedSecretsRequest): unknown {
-    const obj: any = {};
-    message.value !== undefined && (obj.value = message.value);
-    return obj;
-  },
-
-  fromPartial<I extends Exact<DeepPartial<SetUserManagedSecretsRequest>, I>>(
-    object: I,
-  ): SetUserManagedSecretsRequest {
-    const message = createBaseSetUserManagedSecretsRequest();
-    message.value = object.value ?? false;
-    return message;
-  },
-};
-
-function createBaseSetUserManagedSecretsResponse(): SetUserManagedSecretsResponse {
-  return { value: false };
-}
-
-export const SetUserManagedSecretsResponse = {
-  encode(
-    message: SetUserManagedSecretsResponse,
-    writer: _m0.Writer = _m0.Writer.create(),
-  ): _m0.Writer {
-    if (message.value === true) {
-      writer.uint32(8).bool(message.value);
-    }
-    return writer;
-  },
-
-  decode(input: _m0.Reader | Uint8Array, length?: number): SetUserManagedSecretsResponse {
-    const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
-    let end = length === undefined ? reader.len : reader.pos + length;
-    const message = createBaseSetUserManagedSecretsResponse();
-    while (reader.pos < end) {
-      const tag = reader.uint32();
-      switch (tag >>> 3) {
-        case 1:
-          message.value = reader.bool();
-          break;
-        default:
-          reader.skipType(tag & 7);
-          break;
-      }
-    }
-    return message;
-  },
-
-  fromJSON(object: any): SetUserManagedSecretsResponse {
-    return { value: isSet(object.value) ? Boolean(object.value) : false };
-  },
-
-  toJSON(message: SetUserManagedSecretsResponse): unknown {
-    const obj: any = {};
-    message.value !== undefined && (obj.value = message.value);
-    return obj;
-  },
-
-  fromPartial<I extends Exact<DeepPartial<SetUserManagedSecretsResponse>, I>>(
-    object: I,
-  ): SetUserManagedSecretsResponse {
-    const message = createBaseSetUserManagedSecretsResponse();
-    message.value = object.value ?? false;
     return message;
   },
 };
@@ -1676,11 +1566,10 @@ export interface HelmRepositoriesService {
     request: DeepPartial<DeletePackageRepositoryRequest>,
     metadata?: grpc.Metadata,
   ): Promise<DeletePackageRepositoryResponse>;
-  /** this endpoint only exists for the purpose of integration tests */
-  SetUserManagedSecrets(
-    request: DeepPartial<SetUserManagedSecretsRequest>,
+  GetPackageRepositoryPermissions(
+    request: DeepPartial<GetPackageRepositoryPermissionsRequest>,
     metadata?: grpc.Metadata,
-  ): Promise<SetUserManagedSecretsResponse>;
+  ): Promise<GetPackageRepositoryPermissionsResponse>;
 }
 
 export class HelmRepositoriesServiceClientImpl implements HelmRepositoriesService {
@@ -1693,7 +1582,7 @@ export class HelmRepositoriesServiceClientImpl implements HelmRepositoriesServic
     this.GetPackageRepositorySummaries = this.GetPackageRepositorySummaries.bind(this);
     this.UpdatePackageRepository = this.UpdatePackageRepository.bind(this);
     this.DeletePackageRepository = this.DeletePackageRepository.bind(this);
-    this.SetUserManagedSecrets = this.SetUserManagedSecrets.bind(this);
+    this.GetPackageRepositoryPermissions = this.GetPackageRepositoryPermissions.bind(this);
   }
 
   AddPackageRepository(
@@ -1751,13 +1640,13 @@ export class HelmRepositoriesServiceClientImpl implements HelmRepositoriesServic
     );
   }
 
-  SetUserManagedSecrets(
-    request: DeepPartial<SetUserManagedSecretsRequest>,
+  GetPackageRepositoryPermissions(
+    request: DeepPartial<GetPackageRepositoryPermissionsRequest>,
     metadata?: grpc.Metadata,
-  ): Promise<SetUserManagedSecretsResponse> {
+  ): Promise<GetPackageRepositoryPermissionsResponse> {
     return this.rpc.unary(
-      HelmRepositoriesServiceSetUserManagedSecretsDesc,
-      SetUserManagedSecretsRequest.fromPartial(request),
+      HelmRepositoriesServiceGetPackageRepositoryPermissionsDesc,
+      GetPackageRepositoryPermissionsRequest.fromPartial(request),
       metadata,
     );
   }
@@ -1877,27 +1766,28 @@ export const HelmRepositoriesServiceDeletePackageRepositoryDesc: UnaryMethodDefi
   } as any,
 };
 
-export const HelmRepositoriesServiceSetUserManagedSecretsDesc: UnaryMethodDefinitionish = {
-  methodName: "SetUserManagedSecrets",
-  service: HelmRepositoriesServiceDesc,
-  requestStream: false,
-  responseStream: false,
-  requestType: {
-    serializeBinary() {
-      return SetUserManagedSecretsRequest.encode(this).finish();
-    },
-  } as any,
-  responseType: {
-    deserializeBinary(data: Uint8Array) {
-      return {
-        ...SetUserManagedSecretsResponse.decode(data),
-        toObject() {
-          return this;
-        },
-      };
-    },
-  } as any,
-};
+export const HelmRepositoriesServiceGetPackageRepositoryPermissionsDesc: UnaryMethodDefinitionish =
+  {
+    methodName: "GetPackageRepositoryPermissions",
+    service: HelmRepositoriesServiceDesc,
+    requestStream: false,
+    responseStream: false,
+    requestType: {
+      serializeBinary() {
+        return GetPackageRepositoryPermissionsRequest.encode(this).finish();
+      },
+    } as any,
+    responseType: {
+      deserializeBinary(data: Uint8Array) {
+        return {
+          ...GetPackageRepositoryPermissionsResponse.decode(data),
+          toObject() {
+            return this;
+          },
+        };
+      },
+    } as any,
+  };
 
 interface UnaryMethodDefinitionishR extends grpc.UnaryMethodDefinition<any, any> {
   requestStream: any;

@@ -376,6 +376,7 @@
         "parameters": [
           {
             "name": "body",
+            "description": "Request for CreateInstalledPackage",
             "in": "body",
             "required": true,
             "schema": {
@@ -743,11 +744,54 @@
         "parameters": [
           {
             "name": "body",
+            "description": "Request for AddPackageRepository",
             "in": "body",
             "required": true,
             "schema": {
               "$ref": "#/definitions/v1alpha1AddPackageRepositoryRequest"
             }
+          }
+        ],
+        "tags": [
+          "RepositoriesService"
+        ]
+      }
+    },
+    "/core/packages/v1alpha1/repositories/c/{context.cluster}/permissions": {
+      "get": {
+        "operationId": "RepositoriesService_GetPackageRepositoryPermissions",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1alpha1GetPackageRepositoryPermissionsResponse"
+            }
+          },
+          "401": {
+            "description": "Returned when the user does not have permission to access the resource.",
+            "schema": {}
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "context.cluster",
+            "description": "Cluster\n\nA cluster name can be provided to target a specific cluster if multiple\nclusters are configured, otherwise all clusters will be assumed.",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "context.namespace",
+            "description": "Namespace\n\nA namespace must be provided if the context of the operation is for a resource\nor resources in a particular namespace.\nFor requests to list items, not including a namespace here implies that the context\nfor the request is everything the requesting user can read, though the result can\nbe filtered by any filtering options of the request. Plugins may choose to return\nUnimplemented for some queries for which we do not yet have a need.",
+            "in": "query",
+            "required": false,
+            "type": "string"
           }
         ],
         "tags": [
@@ -1351,6 +1395,7 @@
         "parameters": [
           {
             "name": "body",
+            "description": "Request for CreateInstalledPackage",
             "in": "body",
             "required": true,
             "schema": {
@@ -1704,11 +1749,54 @@
         "parameters": [
           {
             "name": "body",
+            "description": "Request for AddPackageRepository",
             "in": "body",
             "required": true,
             "schema": {
               "$ref": "#/definitions/v1alpha1AddPackageRepositoryRequest"
             }
+          }
+        ],
+        "tags": [
+          "FluxV2RepositoriesService"
+        ]
+      }
+    },
+    "/plugins/fluxv2/packages/v1alpha1/repositories/c/{context.cluster}/permissions": {
+      "get": {
+        "operationId": "FluxV2RepositoriesService_GetPackageRepositoryPermissions",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1alpha1GetPackageRepositoryPermissionsResponse"
+            }
+          },
+          "401": {
+            "description": "Returned when the user does not have permission to access the resource.",
+            "schema": {}
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "context.cluster",
+            "description": "Cluster\n\nA cluster name can be provided to target a specific cluster if multiple\nclusters are configured, otherwise all clusters will be assumed.",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "context.namespace",
+            "description": "Namespace\n\nA namespace must be provided if the context of the operation is for a resource\nor resources in a particular namespace.\nFor requests to list items, not including a namespace here implies that the context\nfor the request is everything the requesting user can read, though the result can\nbe filtered by any filtering options of the request. Plugins may choose to return\nUnimplemented for some queries for which we do not yet have a need.",
+            "in": "query",
+            "required": false,
+            "type": "string"
           }
         ],
         "tags": [
@@ -2266,6 +2354,7 @@
         "parameters": [
           {
             "name": "body",
+            "description": "Request for CreateInstalledPackage",
             "in": "body",
             "required": true,
             "schema": {
@@ -2700,11 +2789,54 @@
         "parameters": [
           {
             "name": "body",
+            "description": "Request for AddPackageRepository",
             "in": "body",
             "required": true,
             "schema": {
               "$ref": "#/definitions/v1alpha1AddPackageRepositoryRequest"
             }
+          }
+        ],
+        "tags": [
+          "HelmRepositoriesService"
+        ]
+      }
+    },
+    "/plugins/helm/packages/v1alpha1/repositories/c/{context.cluster}/permissions": {
+      "get": {
+        "operationId": "HelmRepositoriesService_GetPackageRepositoryPermissions",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1alpha1GetPackageRepositoryPermissionsResponse"
+            }
+          },
+          "401": {
+            "description": "Returned when the user does not have permission to access the resource.",
+            "schema": {}
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "context.cluster",
+            "description": "Cluster\n\nA cluster name can be provided to target a specific cluster if multiple\nclusters are configured, otherwise all clusters will be assumed.",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "context.namespace",
+            "description": "Namespace\n\nA namespace must be provided if the context of the operation is for a resource\nor resources in a particular namespace.\nFor requests to list items, not including a namespace here implies that the context\nfor the request is everything the requesting user can read, though the result can\nbe filtered by any filtering options of the request. Plugins may choose to return\nUnimplemented for some queries for which we do not yet have a need.",
+            "in": "query",
+            "required": false,
+            "type": "string"
           }
         ],
         "tags": [
@@ -3262,6 +3394,7 @@
         "parameters": [
           {
             "name": "body",
+            "description": "Request for CreateInstalledPackage",
             "in": "body",
             "required": true,
             "schema": {
@@ -3615,11 +3748,54 @@
         "parameters": [
           {
             "name": "body",
+            "description": "Request for AddPackageRepository",
             "in": "body",
             "required": true,
             "schema": {
               "$ref": "#/definitions/v1alpha1AddPackageRepositoryRequest"
             }
+          }
+        ],
+        "tags": [
+          "KappControllerRepositoriesService"
+        ]
+      }
+    },
+    "/plugins/kapp_controller/packages/v1alpha1/repositories/c/{context.cluster}/permissions": {
+      "get": {
+        "operationId": "KappControllerRepositoriesService_GetPackageRepositoryPermissions",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1alpha1GetPackageRepositoryPermissionsResponse"
+            }
+          },
+          "401": {
+            "description": "Returned when the user does not have permission to access the resource.",
+            "schema": {}
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "context.cluster",
+            "description": "Cluster\n\nA cluster name can be provided to target a specific cluster if multiple\nclusters are configured, otherwise all clusters will be assumed.",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "context.namespace",
+            "description": "Namespace\n\nA namespace must be provided if the context of the operation is for a resource\nor resources in a particular namespace.\nFor requests to list items, not including a namespace here implies that the context\nfor the request is everything the requesting user can read, though the result can\nbe filtered by any filtering options of the request. Plugins may choose to return\nUnimplemented for some queries for which we do not yet have a need.",
+            "in": "query",
+            "required": false,
+            "type": "string"
           }
         ],
         "tags": [
@@ -4287,14 +4463,6 @@
         }
       }
     },
-    "pluginshelmpackagesv1alpha1SetUserManagedSecretsResponse": {
-      "type": "object",
-      "properties": {
-        "value": {
-          "type": "boolean"
-        }
-      }
-    },
     "protobufAny": {
       "type": "object",
       "properties": {
@@ -4328,8 +4496,7 @@
       "type": "object",
       "properties": {
         "context": {
-          "$ref": "#/definitions/v1alpha1Context",
-          "description": "The target context where the package repository is intended to be\ninstalled."
+          "$ref": "#/definitions/v1alpha1Context"
         },
         "name": {
           "type": "string",
@@ -4356,20 +4523,16 @@
           "title": "The interval at which to check the upstream for updates (in time+unit)\nSome plugins may, addionally, support other formats, for instance,\na cron expression.\ne.g., \"*/10 * * * *\" will be equivalent to \"10m\"\nOptional. Defaults to 10m if not specified"
         },
         "tlsConfig": {
-          "$ref": "#/definitions/v1alpha1PackageRepositoryTlsConfig",
-          "title": "TLS-specific parameters for connecting to a repository. Optional"
+          "$ref": "#/definitions/v1alpha1PackageRepositoryTlsConfig"
         },
         "auth": {
-          "$ref": "#/definitions/v1alpha1PackageRepositoryAuth",
-          "title": "authentication parameters for connecting to a repository. Optional"
+          "$ref": "#/definitions/v1alpha1PackageRepositoryAuth"
         },
         "plugin": {
-          "$ref": "#/definitions/v1alpha1Plugin",
-          "description": "The plugin used to interact with this package repository.\nThis field should be omitted when the request is in the context of a\nspecific plugin."
+          "$ref": "#/definitions/v1alpha1Plugin"
         },
         "customDetail": {
-          "$ref": "#/definitions/protobufAny",
-          "title": "Custom data added by the plugin\nA plugin can define custom details for data which is not yet, or\nnever will be specified in the core AddPackageRepositoryRequest\nfields. The use of an `Any` field means that each plugin can define\nthe structure of this message as required, while still satisfying the\ncore interface.\nSee https://developers.google.com/protocol-buffers/docs/proto3#any\nJust for reference, some of the examples that have been chosen not to\nbe part of the core API but rather plugin-specific details are:\n  direct-helm:\n     - image pull secrets\n     - list of oci repositories\n     - filter rules\n     - sync job pod template"
+          "$ref": "#/definitions/protobufAny"
         }
       },
       "title": "AddPackageRepositoryRequest\n\nRequest for AddPackageRepository"
@@ -4378,8 +4541,7 @@
       "type": "object",
       "properties": {
         "packageRepoRef": {
-          "$ref": "#/definitions/v1alpha1PackageRepositoryReference",
-          "title": "TODO: add example for API docs\noption (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {\n  example: '{\"package_repo_ref\": {}}'\n};"
+          "$ref": "#/definitions/v1alpha1PackageRepositoryReference"
         }
       },
       "title": "AddPackageRepositoryResponse\n\nResponse for AddPackageRepositoryRequest"
@@ -4554,28 +4716,24 @@
       "type": "object",
       "properties": {
         "availablePackageRef": {
-          "$ref": "#/definitions/v1alpha1AvailablePackageReference",
-          "description": "A reference uniquely identifying the package available for installation."
+          "$ref": "#/definitions/v1alpha1AvailablePackageReference"
         },
         "targetContext": {
-          "$ref": "#/definitions/v1alpha1Context",
-          "description": "The target context where the package is intended to be installed."
+          "$ref": "#/definitions/v1alpha1Context"
         },
         "name": {
           "type": "string",
           "title": "A user-provided name for the installed package (eg. project-x-db)"
         },
         "pkgVersionReference": {
-          "$ref": "#/definitions/v1alpha1VersionReference",
-          "description": "For helm this will be the exact version in VersionReference.version\nFor other plugins we can extend the VersionReference as needed."
+          "$ref": "#/definitions/v1alpha1VersionReference"
         },
         "values": {
           "type": "string",
           "description": "An optional serialized values string to be included when templating a package\nin the format expected by the plugin. Included when the backend format doesn't\nuse secrets or configmaps for values or supports both. These values are layered\non top of any values refs above, when relevant."
         },
         "reconciliationOptions": {
-          "$ref": "#/definitions/v1alpha1ReconciliationOptions",
-          "description": "An optional field for specifying data common to systems that reconcile\nthe package on the cluster."
+          "$ref": "#/definitions/v1alpha1ReconciliationOptions"
         }
       },
       "title": "CreateInstalledPackageRequest\n\nRequest for CreateInstalledPackage"
@@ -4786,11 +4944,21 @@
       "type": "object",
       "properties": {
         "detail": {
-          "$ref": "#/definitions/v1alpha1PackageRepositoryDetail",
-          "title": "package repository detail"
+          "$ref": "#/definitions/v1alpha1PackageRepositoryDetail"
         }
       },
       "title": "GetPackageRepositoryDetailResponse\n\nResponse for GetPackageRepositoryDetail"
+    },
+    "v1alpha1GetPackageRepositoryPermissionsResponse": {
+      "type": "object",
+      "properties": {
+        "permissions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/v1alpha1PackageRepositoriesPermissions"
+          }
+        }
+      }
     },
     "v1alpha1GetPackageRepositorySummariesResponse": {
       "type": "object",
@@ -4910,8 +5078,7 @@
           "description": "The fully qualified identifier for the installed package\n(ie. a unique name for the context)."
         },
         "plugin": {
-          "$ref": "#/definitions/v1alpha1Plugin",
-          "description": "The plugin used to identify and interact with the installed package.\nThis field can be omitted when the request is in the context of a specific plugin."
+          "$ref": "#/definitions/v1alpha1Plugin"
         }
       },
       "description": "InstalledPackageReference\n\nAn InstalledPackageReference has the minimum information required to uniquely\nidentify an installed package."
@@ -5033,6 +5200,28 @@
       },
       "description": "Package AppVersion\n\nPackageAppVersion conveys both the package version and the packaged app version."
     },
+    "v1alpha1PackageRepositoriesPermissions": {
+      "type": "object",
+      "properties": {
+        "plugin": {
+          "$ref": "#/definitions/v1alpha1Plugin"
+        },
+        "global": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "boolean"
+          },
+          "title": "Permissions at the global namespace (if any)"
+        },
+        "namespace": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "boolean"
+          },
+          "title": "Permissions for the namespace"
+        }
+      }
+    },
     "v1alpha1PackageRepositoryAuth": {
       "type": "object",
       "properties": {
@@ -5040,32 +5229,26 @@
           "$ref": "#/definitions/PackageRepositoryAuthPackageRepositoryAuthType"
         },
         "usernamePassword": {
-          "$ref": "#/definitions/v1alpha1UsernamePassword",
-          "title": "username and plain text password"
+          "$ref": "#/definitions/v1alpha1UsernamePassword"
         },
         "tlsCertKey": {
-          "$ref": "#/definitions/v1alpha1TlsCertKey",
-          "title": "certificate and key for TLS-based authentication"
+          "$ref": "#/definitions/v1alpha1TlsCertKey"
         },
         "dockerCreds": {
-          "$ref": "#/definitions/v1alpha1DockerCredentials",
-          "title": "docker credentials"
+          "$ref": "#/definitions/v1alpha1DockerCredentials"
         },
         "header": {
           "type": "string",
           "title": "for Bearer Auth token value\nfor Custom Auth, complete value of \"Authorization\" header"
         },
         "secretRef": {
-          "$ref": "#/definitions/v1alpha1SecretKeyReference",
-          "title": "a reference to an existing secret"
+          "$ref": "#/definitions/v1alpha1SecretKeyReference"
         },
         "sshCreds": {
-          "$ref": "#/definitions/v1alpha1SshCredentials",
-          "title": "SSH credentials"
+          "$ref": "#/definitions/v1alpha1SshCredentials"
         },
         "opaqueCreds": {
-          "$ref": "#/definitions/v1alpha1OpaqueCredentials",
-          "title": "opaque credentials"
+          "$ref": "#/definitions/v1alpha1OpaqueCredentials"
         },
         "passCredentials": {
           "type": "boolean",
@@ -5078,8 +5261,7 @@
       "type": "object",
       "properties": {
         "packageRepoRef": {
-          "$ref": "#/definitions/v1alpha1PackageRepositoryReference",
-          "description": "A reference uniquely identifying the package repository."
+          "$ref": "#/definitions/v1alpha1PackageRepositoryReference"
         },
         "name": {
           "type": "string",
@@ -5106,20 +5288,16 @@
           "title": "The interval at which to check the upstream for updates (in time+unit)\nSome plugins may, addionally, support other formats, for instance,\na cron expression.\ne.g., \"*/10 * * * *\" will be equivalent to \"10m\""
         },
         "tlsConfig": {
-          "$ref": "#/definitions/v1alpha1PackageRepositoryTlsConfig",
-          "title": "TLS-specific parameters for connecting to a repository.\nIf the cert authority was configured for this repository, then in the context\nof GetPackageRepositoryDetail() operation, the PackageRepositoryTlsConfig will ALWAYS\ncontain an existing SecretKeyReference, rather that cert_authority field"
+          "$ref": "#/definitions/v1alpha1PackageRepositoryTlsConfig"
         },
         "auth": {
-          "$ref": "#/definitions/v1alpha1PackageRepositoryAuth",
-          "title": "authentication parameters for connecting to a repository.\nIf Basic Auth or TLS or Docker Creds Auth was configured for this repository,\nthen in the context of GetPackageRepositoryDetail() operation, the\nPackageRepositoryAuth will ALWAYS contain an existing SecretKeyReference,\nrather that string values that may have been used when package repository was created\nfield"
+          "$ref": "#/definitions/v1alpha1PackageRepositoryAuth"
         },
         "customDetail": {
-          "$ref": "#/definitions/protobufAny",
-          "title": "Custom data added by the plugin"
+          "$ref": "#/definitions/protobufAny"
         },
         "status": {
-          "$ref": "#/definitions/v1alpha1PackageRepositoryStatus",
-          "description": "current status of the repository which can include reconciliation\nstatus, where relevant."
+          "$ref": "#/definitions/v1alpha1PackageRepositoryStatus"
         }
       },
       "title": "PackageRepositoryDetail"
@@ -5128,16 +5306,14 @@
       "type": "object",
       "properties": {
         "context": {
-          "$ref": "#/definitions/v1alpha1Context",
-          "description": "The context (cluster/namespace) for the repository."
+          "$ref": "#/definitions/v1alpha1Context"
         },
         "identifier": {
           "type": "string",
           "description": "The fully qualified identifier for the repository\n(i.e. a unique name for the context)."
         },
         "plugin": {
-          "$ref": "#/definitions/v1alpha1Plugin",
-          "description": "The plugin used to interact with this available package.\nThis field should be omitted when the request is in the context of a\nspecific plugin."
+          "$ref": "#/definitions/v1alpha1Plugin"
         }
       },
       "description": "PackageRepositoryReference\n\nA PackageRepositoryReference has the minimum information required to\nuniquely identify a package repository."
@@ -5175,8 +5351,7 @@
       "type": "object",
       "properties": {
         "packageRepoRef": {
-          "$ref": "#/definitions/v1alpha1PackageRepositoryReference",
-          "description": "A reference uniquely identifying the package repository."
+          "$ref": "#/definitions/v1alpha1PackageRepositoryReference"
         },
         "name": {
           "type": "string",
@@ -5199,8 +5374,7 @@
           "description": "URL identifying the package repository location."
         },
         "status": {
-          "$ref": "#/definitions/v1alpha1PackageRepositoryStatus",
-          "description": "current status of the repository which can include reconciliation\nstatus, where relevant."
+          "$ref": "#/definitions/v1alpha1PackageRepositoryStatus"
         },
         "requiresAuth": {
           "type": "boolean",
@@ -5221,8 +5395,7 @@
           "title": "certificate authority. Optional"
         },
         "secretRef": {
-          "$ref": "#/definitions/v1alpha1SecretKeyReference",
-          "title": "a reference to an existing secret that contains custom CA"
+          "$ref": "#/definitions/v1alpha1SecretKeyReference"
         }
       },
       "title": "PackageRepositoryTlsConfig"
@@ -5304,8 +5477,7 @@
       "type": "object",
       "properties": {
         "installedPackageRef": {
-          "$ref": "#/definitions/v1alpha1InstalledPackageReference",
-          "title": "TODO: add example for API docs\noption (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {\n  example: '{\"installed_package_ref\": {}}'\n};"
+          "$ref": "#/definitions/v1alpha1InstalledPackageReference"
         }
       },
       "title": "RollbackInstalledPackageResponse\n\nResponse for RollbackInstalledPackage"

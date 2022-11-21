@@ -6,6 +6,8 @@ package main
 import (
 	"context"
 	"fmt"
+	authorizationv1 "k8s.io/api/authorization/v1"
+	k8stesting "k8s.io/client-go/testing"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -40,11 +42,12 @@ type testSpecGetAvailablePackageSummaries struct {
 
 func TestGetAvailablePackageSummariesWithoutPagination(t *testing.T) {
 	testCases := []struct {
-		name              string
-		request           *corev1.GetAvailablePackageSummariesRequest
-		repos             []testSpecGetAvailablePackageSummaries
-		expectedResponse  *corev1.GetAvailablePackageSummariesResponse
-		expectedErrorCode codes.Code
+		name                 string
+		request              *corev1.GetAvailablePackageSummariesRequest
+		repos                []testSpecGetAvailablePackageSummaries
+		expectedResponse     *corev1.GetAvailablePackageSummariesResponse
+		expectedErrorCode    codes.Code
+		noCrossNamespaceRefs bool
 	}{
 		{
 			name: "it returns a couple of fluxv2 packages from the cluster (no request ns specified)",
@@ -56,10 +59,8 @@ func TestGetAvailablePackageSummariesWithoutPagination(t *testing.T) {
 					index:     testYaml("valid-index.yaml"),
 				},
 			},
-			request: &corev1.GetAvailablePackageSummariesRequest{Context: &corev1.Context{}},
-			expectedResponse: &corev1.GetAvailablePackageSummariesResponse{
-				AvailablePackageSummaries: valid_index_available_package_summaries,
-			},
+			request:          &corev1.GetAvailablePackageSummariesRequest{Context: &corev1.Context{}},
+			expectedResponse: valid_index_available_package_summaries_resp,
 		},
 		{
 			name: "it returns a couple of fluxv2 packages from the cluster (when request namespace is specified)",
@@ -71,10 +72,8 @@ func TestGetAvailablePackageSummariesWithoutPagination(t *testing.T) {
 					index:     testYaml("valid-index.yaml"),
 				},
 			},
-			request: &corev1.GetAvailablePackageSummariesRequest{Context: &corev1.Context{Namespace: "default"}},
-			expectedResponse: &corev1.GetAvailablePackageSummariesResponse{
-				AvailablePackageSummaries: valid_index_available_package_summaries,
-			},
+			request:          &corev1.GetAvailablePackageSummariesRequest{Context: &corev1.Context{Namespace: "default"}},
+			expectedResponse: valid_index_available_package_summaries_resp,
 		},
 		{
 			name: "it returns a couple of fluxv2 packages from the cluster (when request cluster is specified and matches the kubeapps cluster)",
@@ -90,9 +89,7 @@ func TestGetAvailablePackageSummariesWithoutPagination(t *testing.T) {
 				Cluster:   KubeappsCluster,
 				Namespace: "default",
 			}},
-			expectedResponse: &corev1.GetAvailablePackageSummariesResponse{
-				AvailablePackageSummaries: valid_index_available_package_summaries,
-			},
+			expectedResponse: valid_index_available_package_summaries_resp,
 		},
 		{
 			name: "it returns all fluxv2 packages from the cluster (when request namespace is does not match repo namespace)",
@@ -386,6 +383,30 @@ func TestGetAvailablePackageSummariesWithoutPagination(t *testing.T) {
 			}},
 			expectedErrorCode: codes.Unimplemented,
 		},
+		{
+			name: "it returns expected fluxv2 packages when noCrossNamespaceRefs flag is set",
+			repos: []testSpecGetAvailablePackageSummaries{
+				{
+					name:      "bitnami-1",
+					namespace: "default",
+					url:       "https://example.repo.com/charts",
+					index:     testYaml("valid-index.yaml"),
+				},
+				{
+					name:      "jetstack-1",
+					namespace: "ns1",
+					url:       "https://charts.jetstack.io",
+					index:     testYaml("jetstack-index.yaml"),
+				},
+			},
+			request: &corev1.GetAvailablePackageSummariesRequest{Context: &corev1.Context{Namespace: "ns1"}},
+			expectedResponse: &corev1.GetAvailablePackageSummariesResponse{
+				AvailablePackageSummaries: []*corev1.AvailablePackageSummary{
+					cert_manager_summary,
+				},
+			},
+			noCrossNamespaceRefs: true,
+		},
 	}
 
 	for _, tc := range testCases {
@@ -408,8 +429,19 @@ func TestGetAvailablePackageSummariesWithoutPagination(t *testing.T) {
 				t.Fatalf("error instantiating the server: %v", err)
 			}
 
-			if err = s.redisMockExpectGetFromRepoCache(mock, tc.request.FilterOptions, repos...); err != nil {
-				t.Fatalf("%v", err)
+			if tc.noCrossNamespaceRefs {
+				s.pluginConfig.NoCrossNamespaceRefs = true
+				for _, r := range repos {
+					if r.Namespace == tc.request.Context.Namespace {
+						if err = s.redisMockExpectGetFromRepoCache(mock, nil, r); err != nil {
+							t.Fatal(err)
+						}
+					}
+				}
+			} else {
+				if err = s.redisMockExpectGetFromRepoCache(mock, tc.request.FilterOptions, repos...); err != nil {
+					t.Fatal(err)
+				}
 			}
 
 			response, err := s.GetAvailablePackageSummaries(context.Background(), tc.request)
@@ -423,14 +455,9 @@ func TestGetAvailablePackageSummariesWithoutPagination(t *testing.T) {
 			}
 
 			if err = mock.ExpectationsWereMet(); err != nil {
-				t.Fatalf("%v", err)
+				t.Fatal(err)
 			}
-
-			opt1 := cmpopts.IgnoreUnexported(corev1.GetAvailablePackageSummariesResponse{}, corev1.AvailablePackageSummary{}, corev1.AvailablePackageReference{}, corev1.Context{}, plugins.Plugin{}, corev1.PackageAppVersion{})
-			opt2 := cmpopts.SortSlices(lessAvailablePackageFunc)
-			if got, want := response, tc.expectedResponse; !cmp.Equal(got, want, opt1, opt2) {
-				t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opt1, opt2))
-			}
+			compareAvailablePackageSummaries(t, response, tc.expectedResponse)
 		})
 	}
 }
@@ -467,7 +494,7 @@ func TestGetAvailablePackageSummariesWithPagination(t *testing.T) {
 		}
 
 		if err = s.redisMockExpectGetFromRepoCache(mock, nil, repos...); err != nil {
-			t.Fatalf("%v", err)
+			t.Fatal(err)
 		}
 
 		request1 := &corev1.GetAvailablePackageSummariesRequest{
@@ -529,15 +556,13 @@ func TestGetAvailablePackageSummariesWithPagination(t *testing.T) {
 		}
 
 		if err = s.redisMockExpectGetFromRepoCache(mock, nil, repos...); err != nil {
-			t.Fatalf("%v", err)
+			t.Fatal(err)
 		}
 		response2, err := s.GetAvailablePackageSummaries(context.Background(), request2)
 		if got, want := status.Code(err), codes.OK; got != want {
 			t.Fatalf("got: %v, want: %v", err, want)
 		}
-		if got, want := response2, nextExpectedResp; !cmp.Equal(want, got, opts, opts2) {
-			t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opts, opts2))
-		}
+		compareAvailablePackageSummaries(t, response2, nextExpectedResp)
 
 		request3 := &corev1.GetAvailablePackageSummariesRequest{
 			Context: &corev1.Context{Namespace: "blah"},
@@ -551,18 +576,16 @@ func TestGetAvailablePackageSummariesWithPagination(t *testing.T) {
 			NextPageToken:             "",
 		}
 		if err = s.redisMockExpectGetFromRepoCache(mock, nil, repos...); err != nil {
-			t.Fatalf("%v", err)
+			t.Fatal(err)
 		}
 		response3, err := s.GetAvailablePackageSummaries(context.Background(), request3)
 		if got, want := status.Code(err), codes.OK; got != want {
 			t.Fatalf("got: %v, want: %v", err, want)
 		}
-		if got, want := response3, nextExpectedResp; !cmp.Equal(want, got, opts, opts2) {
-			t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opts, opts2))
-		}
+		compareAvailablePackageSummaries(t, response3, nextExpectedResp)
 
 		if err = mock.ExpectationsWereMet(); err != nil {
-			t.Fatalf("%v", err)
+			t.Fatal(err)
 		}
 	})
 }
@@ -620,7 +643,7 @@ func TestGetAvailablePackageSummaryAfterRepoIndexUpdate(t *testing.T) {
 		}
 
 		if err = s.redisMockExpectGetFromRepoCache(mock, nil, repo); err != nil {
-			t.Fatalf("%v", err)
+			t.Fatal(err)
 		}
 
 		ctx := context.Background()
@@ -628,30 +651,19 @@ func TestGetAvailablePackageSummaryAfterRepoIndexUpdate(t *testing.T) {
 			ctx,
 			&corev1.GetAvailablePackageSummariesRequest{Context: &corev1.Context{}})
 		if err != nil {
-			t.Fatalf("%v", err)
+			t.Fatal(err)
 		}
 
 		if err = mock.ExpectationsWereMet(); err != nil {
-			t.Fatalf("%v", err)
+			t.Fatal(err)
 		}
 
-		opt1 := cmpopts.IgnoreUnexported(
-			corev1.AvailablePackageDetail{},
-			corev1.AvailablePackageSummary{},
-			corev1.AvailablePackageReference{},
-			corev1.Context{},
-			plugins.Plugin{},
-			corev1.Maintainer{},
-			corev1.PackageAppVersion{})
-		opt2 := cmpopts.SortSlices(lessAvailablePackageFunc)
-		if got, want := responseBeforeUpdate.AvailablePackageSummaries, index_before_update_summaries; !cmp.Equal(got, want, opt1, opt2) {
-			t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opt1, opt2))
-		}
+		compareAvailablePackageSummaries(t, responseBeforeUpdate, expected_summaries_before_update)
 
 		// see below
 		key, oldValue, err := s.redisKeyValueForRepo(repo)
 		if err != nil {
-			t.Fatalf("%v", err)
+			t.Fatal(err)
 		}
 
 		ctrlClient, _, err := ctrlClientAndWatcher(t, s)
@@ -682,7 +694,7 @@ func TestGetAvailablePackageSummaryAfterRepoIndexUpdate(t *testing.T) {
 			s.repoCache.WaitUntilForgotten(key)
 
 			if err = mock.ExpectationsWereMet(); err != nil {
-				t.Fatalf("%v", err)
+				t.Fatal(err)
 			}
 
 			mock.ExpectGet(key).SetVal(string(newValue))
@@ -691,15 +703,12 @@ func TestGetAvailablePackageSummaryAfterRepoIndexUpdate(t *testing.T) {
 				ctx,
 				&corev1.GetAvailablePackageSummariesRequest{Context: &corev1.Context{}})
 			if err != nil {
-				t.Fatalf("%v", err)
+				t.Fatal(err)
 			}
-
-			if got, want := responsePackagesAfterUpdate.AvailablePackageSummaries, index_after_update_summaries; !cmp.Equal(got, want, opt1, opt2) {
-				t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opt1, opt2))
-			}
+			compareAvailablePackageSummaries(t, responsePackagesAfterUpdate, expected_summaries_after_update)
 
 			if err = mock.ExpectationsWereMet(); err != nil {
-				t.Fatalf("%v", err)
+				t.Fatal(err)
 			}
 		}
 	})
@@ -751,32 +760,21 @@ func TestGetAvailablePackageSummaryAfterFluxHelmRepoDelete(t *testing.T) {
 		}
 
 		if err = s.redisMockExpectGetFromRepoCache(mock, nil, *repo); err != nil {
-			t.Fatalf("%v", err)
+			t.Fatal(err)
 		}
 
 		responseBeforeDelete, err := s.GetAvailablePackageSummaries(
 			context.Background(),
 			&corev1.GetAvailablePackageSummariesRequest{Context: &corev1.Context{}})
 		if err != nil {
-			t.Fatalf("%v", err)
+			t.Fatal(err)
 		}
 
 		if err = mock.ExpectationsWereMet(); err != nil {
-			t.Fatalf("%v", err)
+			t.Fatal(err)
 		}
 
-		opt1 := cmpopts.IgnoreUnexported(
-			corev1.AvailablePackageDetail{},
-			corev1.AvailablePackageSummary{},
-			corev1.AvailablePackageReference{},
-			corev1.Context{},
-			plugins.Plugin{},
-			corev1.Maintainer{},
-			corev1.PackageAppVersion{})
-		opt2 := cmpopts.SortSlices(lessAvailablePackageFunc)
-		if got, want := responseBeforeDelete.AvailablePackageSummaries, valid_index_available_package_summaries; !cmp.Equal(got, want, opt1, opt2) {
-			t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opt1, opt2))
-		}
+		compareAvailablePackageSummaries(t, responseBeforeDelete, valid_index_available_package_summaries_resp)
 
 		// now we are going to simulate the user deleting a HelmRepository CR which, in turn,
 		// causes k8s server to fire a DELETE event
@@ -787,11 +785,11 @@ func TestGetAvailablePackageSummaryAfterFluxHelmRepoDelete(t *testing.T) {
 
 		repoKey, err := redisKeyForRepoNamespacedName(repoName)
 		if err != nil {
-			t.Fatalf("%v", err)
+			t.Fatal(err)
 		}
 
 		if err = redisMockExpectDeleteRepoWithCharts(mock, repoName, chartsInCache); err != nil {
-			t.Fatalf("%v", err)
+			t.Fatal(err)
 		}
 
 		chartCacheKeys := []string{}
@@ -817,14 +815,14 @@ func TestGetAvailablePackageSummaryAfterFluxHelmRepoDelete(t *testing.T) {
 		}
 
 		if err = mock.ExpectationsWereMet(); err != nil {
-			t.Fatalf("%v", err)
+			t.Fatal(err)
 		}
 
 		responseAfterDelete, err := s.GetAvailablePackageSummaries(
 			context.Background(),
 			&corev1.GetAvailablePackageSummariesRequest{Context: &corev1.Context{}})
 		if err != nil {
-			t.Fatalf("%v", err)
+			t.Fatal(err)
 		}
 
 		if len(responseAfterDelete.AvailablePackageSummaries) != 0 {
@@ -832,7 +830,7 @@ func TestGetAvailablePackageSummaryAfterFluxHelmRepoDelete(t *testing.T) {
 		}
 
 		if err = mock.ExpectationsWereMet(); err != nil {
-			t.Fatalf("%v", err)
+			t.Fatal(err)
 		}
 	})
 }
@@ -852,35 +850,25 @@ func TestGetAvailablePackageSummaryAfterCacheResync(t *testing.T) {
 		}
 
 		if err = s.redisMockExpectGetFromRepoCache(mock, nil, *repo); err != nil {
-			t.Fatalf("%v", err)
+			t.Fatal(err)
 		}
 
 		responseBeforeResync, err := s.GetAvailablePackageSummaries(
 			context.Background(),
 			&corev1.GetAvailablePackageSummariesRequest{Context: &corev1.Context{}})
 		if err != nil {
-			t.Fatalf("%v", err)
+			t.Fatal(err)
 		}
 
 		if err = mock.ExpectationsWereMet(); err != nil {
-			t.Fatalf("%v", err)
+			t.Fatal(err)
 		}
 
-		opt1 := cmpopts.IgnoreUnexported(
-			corev1.AvailablePackageDetail{},
-			corev1.AvailablePackageSummary{},
-			corev1.AvailablePackageReference{},
-			corev1.Context{}, plugins.Plugin{},
-			corev1.Maintainer{},
-			corev1.PackageAppVersion{})
-		opt2 := cmpopts.SortSlices(lessAvailablePackageFunc)
-		if got, want := responseBeforeResync.AvailablePackageSummaries, valid_index_available_package_summaries; !cmp.Equal(got, want, opt1, opt2) {
-			t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opt1, opt2))
-		}
+		compareAvailablePackageSummaries(t, responseBeforeResync, valid_index_available_package_summaries_resp)
 
 		resyncCh, err := s.repoCache.ExpectResync()
 		if err != nil {
-			t.Fatalf("%v", err)
+			t.Fatal(err)
 		}
 
 		// now lets try to simulate HTTP 410 GONE exception which should force
@@ -908,27 +896,25 @@ func TestGetAvailablePackageSummaryAfterCacheResync(t *testing.T) {
 		s.repoCache.WaitUntilResyncComplete()
 
 		if err = mock.ExpectationsWereMet(); err != nil {
-			t.Fatalf("%v", err)
+			t.Fatal(err)
 		}
 
 		if err = s.redisMockExpectGetFromRepoCache(mock, nil, *repo); err != nil {
-			t.Fatalf("%v", err)
+			t.Fatal(err)
 		}
 
 		responseAfterResync, err := s.GetAvailablePackageSummaries(
 			context.Background(),
 			&corev1.GetAvailablePackageSummariesRequest{Context: &corev1.Context{}})
 		if err != nil {
-			t.Fatalf("%v", err)
+			t.Fatal(err)
 		}
 
 		if err = mock.ExpectationsWereMet(); err != nil {
-			t.Fatalf("%v", err)
+			t.Fatal(err)
 		}
 
-		if got, want := responseAfterResync.AvailablePackageSummaries, valid_index_available_package_summaries; !cmp.Equal(got, want, opt1, opt2) {
-			t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opt1, opt2))
-		}
+		compareAvailablePackageSummaries(t, responseAfterResync, valid_index_available_package_summaries_resp)
 	})
 }
 
@@ -1035,7 +1021,7 @@ func TestGetAvailablePackageSummariesAfterCacheResyncQueueNotIdle(t *testing.T) 
 		}
 
 		if err = mock.ExpectationsWereMet(); err != nil {
-			t.Fatalf("%v", err)
+			t.Fatal(err)
 		}
 
 		// at this point I'd like to make sure that GetAvailablePackageSummaries returns
@@ -1047,7 +1033,7 @@ func TestGetAvailablePackageSummariesAfterCacheResyncQueueNotIdle(t *testing.T) 
 		resp, err := s.GetAvailablePackageSummaries(context.TODO(),
 			&corev1.GetAvailablePackageSummariesRequest{})
 		if err != nil {
-			t.Fatalf("%v", err)
+			t.Fatal(err)
 		}
 
 		// we need to make sure that response contains packages from all existing repositories
@@ -1068,7 +1054,7 @@ func TestGetAvailablePackageSummariesAfterCacheResyncQueueNotIdle(t *testing.T) 
 		}
 
 		if err = mock.ExpectationsWereMet(); err != nil {
-			t.Fatalf("%v", err)
+			t.Fatal(err)
 		}
 	})
 }
@@ -1150,7 +1136,7 @@ func TestGetAvailablePackageSummariesAfterCacheResyncQueueIdle(t *testing.T) {
 		}
 
 		if err = mock.ExpectationsWereMet(); err != nil {
-			t.Fatalf("%v", err)
+			t.Fatal(err)
 		}
 
 		// at this point I'd like to make sure that GetAvailablePackageSummaries returns
@@ -1160,7 +1146,7 @@ func TestGetAvailablePackageSummariesAfterCacheResyncQueueIdle(t *testing.T) {
 		resp, err := s.GetAvailablePackageSummaries(context.TODO(),
 			&corev1.GetAvailablePackageSummariesRequest{})
 		if err != nil {
-			t.Fatalf("%v", err)
+			t.Fatal(err)
 		}
 
 		// we need to make sure that response contains packages from all existing repositories
@@ -1178,7 +1164,7 @@ func TestGetAvailablePackageSummariesAfterCacheResyncQueueIdle(t *testing.T) {
 		}
 
 		if err = mock.ExpectationsWereMet(); err != nil {
-			t.Fatalf("%v", err)
+			t.Fatal(err)
 		}
 	})
 }
@@ -1692,22 +1678,7 @@ func TestGetPackageRepositoryDetail(t *testing.T) {
 				if actualResp == nil {
 					t.Fatalf("got: nil, want: response")
 				} else {
-					opt1 := cmpopts.IgnoreUnexported(
-						corev1.Context{},
-						corev1.PackageRepositoryReference{},
-						plugins.Plugin{},
-						corev1.GetPackageRepositoryDetailResponse{},
-						corev1.PackageRepositoryDetail{},
-						corev1.PackageRepositoryStatus{},
-						corev1.PackageRepositoryAuth{},
-						corev1.PackageRepositoryTlsConfig{},
-						corev1.SecretKeyReference{},
-						corev1.TlsCertKey{},
-						corev1.UsernamePassword{},
-					)
-					if got, want := actualResp, tc.expectedResponse; !cmp.Equal(got, want, opt1) {
-						t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opt1))
-					}
+					comparePackageRepositoryDetail(t, actualResp, tc.expectedResponse)
 				}
 			}
 		})
@@ -1766,28 +1737,12 @@ func TestGetOciPackageRepositoryDetail(t *testing.T) {
 				if actualResp == nil {
 					t.Fatalf("got: nil, want: response")
 				} else {
-					opt1 := cmpopts.IgnoreUnexported(
-						corev1.Context{},
-						corev1.PackageRepositoryReference{},
-						plugins.Plugin{},
-						corev1.GetPackageRepositoryDetailResponse{},
-						corev1.PackageRepositoryDetail{},
-						corev1.PackageRepositoryStatus{},
-						corev1.PackageRepositoryAuth{},
-						corev1.PackageRepositoryTlsConfig{},
-						corev1.SecretKeyReference{},
-						corev1.TlsCertKey{},
-						corev1.UsernamePassword{},
-					)
-					if got, want := actualResp, tc.expectedResponse; !cmp.Equal(got, want, opt1) {
-						t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opt1))
-					}
+					comparePackageRepositoryDetail(t, actualResp, tc.expectedResponse)
 				}
 			}
 
-			// FWIW GetPackageRepositoryDetail currently does not use the redis cache
 			if err = mock.ExpectationsWereMet(); err != nil {
-				t.Fatalf("%v", err)
+				t.Fatal(err)
 			}
 		})
 	}
@@ -1872,18 +1827,7 @@ func TestGetPackageRepositorySummaries(t *testing.T) {
 				return
 			}
 
-			opts := cmpopts.IgnoreUnexported(
-				corev1.Context{},
-				plugins.Plugin{},
-				corev1.GetPackageRepositorySummariesResponse{},
-				corev1.PackageRepositorySummary{},
-				corev1.PackageRepositoryReference{},
-				corev1.PackageRepositoryStatus{},
-			)
-			opts2 := cmpopts.SortSlices(lessPackageRepositorySummaryFunc)
-			if got, want := response, tc.expectedResponse; !cmp.Equal(want, got, opts, opts2) {
-				t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opts, opts2))
-			}
+			comparePackageRepositorySummaries(t, response, tc.expectedResponse)
 
 			if err := mock.ExpectationsWereMet(); err != nil {
 				t.Errorf("there were unfulfilled expectations: %s", err)
@@ -2138,22 +2082,7 @@ func TestUpdatePackageRepository(t *testing.T) {
 			if actualDetail == nil {
 				t.Fatalf("got: nil, want: detail")
 			} else {
-				opt1 := cmpopts.IgnoreUnexported(
-					corev1.Context{},
-					corev1.PackageRepositoryReference{},
-					plugins.Plugin{},
-					corev1.GetPackageRepositoryDetailResponse{},
-					corev1.PackageRepositoryDetail{},
-					corev1.PackageRepositoryStatus{},
-					corev1.PackageRepositoryAuth{},
-					corev1.PackageRepositoryTlsConfig{},
-					corev1.SecretKeyReference{},
-					corev1.TlsCertKey{},
-					corev1.UsernamePassword{},
-				)
-				if got, want := actualDetail, tc.expectedDetail; !cmp.Equal(got, want, opt1) {
-					t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opt1))
-				}
+				comparePackageRepositoryDetail(t, actualDetail, tc.expectedDetail)
 			}
 
 			if !tc.userManagedSecrets && tc.oldRepoSecret != nil && actualDetail.Detail.Auth.Type == corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_UNSPECIFIED {
@@ -2358,7 +2287,7 @@ func TestGetOciAvailablePackageSummariesWithoutPagination(t *testing.T) {
 			}
 
 			if err = s.redisMockExpectGetFromRepoCache(mock, tc.request.FilterOptions, repos...); err != nil {
-				t.Fatalf("%v", err)
+				t.Fatal(err)
 			}
 
 			response, err := s.GetAvailablePackageSummaries(context.Background(), tc.request)
@@ -2372,14 +2301,9 @@ func TestGetOciAvailablePackageSummariesWithoutPagination(t *testing.T) {
 			}
 
 			if err = mock.ExpectationsWereMet(); err != nil {
-				t.Fatalf("%v", err)
+				t.Fatal(err)
 			}
-
-			opt1 := cmpopts.IgnoreUnexported(corev1.GetAvailablePackageSummariesResponse{}, corev1.AvailablePackageSummary{}, corev1.AvailablePackageReference{}, corev1.Context{}, plugins.Plugin{}, corev1.PackageAppVersion{})
-			opt2 := cmpopts.SortSlices(lessAvailablePackageFunc)
-			if got, want := response, tc.expectedResponse; !cmp.Equal(got, want, opt1, opt2) {
-				t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opt1, opt2))
-			}
+			compareAvailablePackageSummaries(t, response, tc.expectedResponse)
 		})
 	}
 }
@@ -2466,14 +2390,11 @@ func (s *Server) redisMockExpectGetFromRepoCache(mock redismock.ClientMock, filt
 }
 
 func (s *Server) redisMockSetValueForRepo(mock redismock.ClientMock, repo sourcev1.HelmRepository, oldValue []byte) (key string, bytes []byte, err error) {
-	backgroundClientGetter := &clientgetter.FixedClusterClientProvider{ClientsFunc: func(ctx context.Context) (*clientgetter.ClientGetter, error) {
+	bg := &clientgetter.FixedClusterClientProvider{ClientsFunc: func(ctx context.Context) (*clientgetter.ClientGetter, error) {
 		return s.clientGetter.GetClients(ctx, s.kubeappsCluster)
 	}}
-	sink := repoEventSink{
-		clientGetter: backgroundClientGetter,
-		chartCache:   nil,
-	}
-	return sink.redisMockSetValueForRepo(mock, repo, oldValue)
+	sinkNoCache := repoEventSink{clientGetter: bg}
+	return sinkNoCache.redisMockSetValueForRepo(mock, repo, oldValue)
 }
 
 func (sink *repoEventSink) redisMockSetValueForRepo(mock redismock.ClientMock, repo sourcev1.HelmRepository, oldValue []byte) (key string, newValue []byte, err error) {
@@ -2627,4 +2548,150 @@ func newOciRepo(repoName, repoNamespace, repoUrl string) (*sourcev1.HelmReposito
 	}
 	repo := newRepo(repoName, repoNamespace, repoSpec, repoStatus)
 	return &repo, nil
+}
+
+func TestGetPackageRepositoryPermissions(t *testing.T) {
+
+	testCases := []struct {
+		name               string
+		request            *corev1.GetPackageRepositoryPermissionsRequest
+		expectedStatusCode codes.Code
+		expectedResponse   *corev1.GetPackageRepositoryPermissionsResponse
+		reactors           []*ClientReaction
+	}{
+		{
+			name: "returns permissions for global package repositories",
+			request: &corev1.GetPackageRepositoryPermissionsRequest{
+				Context: &corev1.Context{Cluster: KubeappsCluster},
+			},
+			reactors: []*ClientReaction{
+				{
+					verb:     "create",
+					resource: "selfsubjectaccessreviews",
+					reaction: func(action k8stesting.Action) (handled bool, ret runtime.Object, err error) {
+						createAction := action.(k8stesting.CreateActionImpl)
+						accessReview := createAction.Object.(*authorizationv1.SelfSubjectAccessReview)
+						if accessReview.Spec.ResourceAttributes.Namespace != "" {
+							return true, &authorizationv1.SelfSubjectAccessReview{Status: authorizationv1.SubjectAccessReviewStatus{Allowed: false}}, nil
+						}
+						switch accessReview.Spec.ResourceAttributes.Verb {
+						case "list", "delete":
+							return true, &authorizationv1.SelfSubjectAccessReview{Status: authorizationv1.SubjectAccessReviewStatus{Allowed: true}}, nil
+						default:
+							return true, &authorizationv1.SelfSubjectAccessReview{Status: authorizationv1.SubjectAccessReviewStatus{Allowed: false}}, nil
+						}
+					},
+				},
+			},
+			expectedStatusCode: codes.OK,
+			expectedResponse: &corev1.GetPackageRepositoryPermissionsResponse{
+				Permissions: []*corev1.PackageRepositoriesPermissions{
+					{
+						Plugin: GetPluginDetail(),
+						// Flux does not have the concept of "global"
+						Global:    nil,
+						Namespace: nil,
+					},
+				},
+			},
+		},
+		{
+			name:    "returns local permissions when no cluster specified",
+			request: &corev1.GetPackageRepositoryPermissionsRequest{},
+			reactors: []*ClientReaction{
+				{
+					verb:     "create",
+					resource: "selfsubjectaccessreviews",
+					reaction: func(action k8stesting.Action) (handled bool, ret runtime.Object, err error) {
+						return true, &authorizationv1.SelfSubjectAccessReview{Status: authorizationv1.SubjectAccessReviewStatus{Allowed: true}}, nil
+					},
+				},
+			},
+			expectedStatusCode: codes.OK,
+			expectedResponse: &corev1.GetPackageRepositoryPermissionsResponse{
+				Permissions: []*corev1.PackageRepositoriesPermissions{
+					{
+						Plugin:    GetPluginDetail(),
+						Global:    nil,
+						Namespace: nil,
+					},
+				},
+			},
+		},
+		{
+			name: "fails when namespace is specified but not the cluster",
+			request: &corev1.GetPackageRepositoryPermissionsRequest{
+				Context: &corev1.Context{Namespace: "my-ns"},
+			},
+			expectedStatusCode: codes.InvalidArgument,
+		},
+		{
+			name: "returns permissions for namespaced package repositories",
+			request: &corev1.GetPackageRepositoryPermissionsRequest{
+				Context: &corev1.Context{Cluster: KubeappsCluster, Namespace: "my-ns"},
+			},
+			reactors: []*ClientReaction{
+				{
+					verb:     "create",
+					resource: "selfsubjectaccessreviews",
+					reaction: func(action k8stesting.Action) (handled bool, ret runtime.Object, err error) {
+						createAction := action.(k8stesting.CreateActionImpl)
+						accessReview := createAction.Object.(*authorizationv1.SelfSubjectAccessReview)
+						if accessReview.Spec.ResourceAttributes.Namespace == "" {
+							return true, &authorizationv1.SelfSubjectAccessReview{Status: authorizationv1.SubjectAccessReviewStatus{Allowed: true}}, nil
+						}
+						switch accessReview.Spec.ResourceAttributes.Verb {
+						case "list", "delete":
+							return true, &authorizationv1.SelfSubjectAccessReview{Status: authorizationv1.SubjectAccessReviewStatus{Allowed: true}}, nil
+						default:
+							return true, &authorizationv1.SelfSubjectAccessReview{Status: authorizationv1.SubjectAccessReviewStatus{Allowed: false}}, nil
+						}
+					},
+				},
+			},
+			expectedStatusCode: codes.OK,
+			expectedResponse: &corev1.GetPackageRepositoryPermissionsResponse{
+				Permissions: []*corev1.PackageRepositoriesPermissions{
+					{
+						Plugin: GetPluginDetail(),
+						Namespace: map[string]bool{
+							"create": false,
+							"delete": true,
+							"get":    false,
+							"list":   true,
+							"update": false,
+							"watch":  false,
+						},
+					},
+				},
+			},
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			s := newServerWithReactors(t, tc.reactors)
+
+			response, err := s.GetPackageRepositoryPermissions(context.Background(), tc.request)
+
+			if got, want := status.Code(err), tc.expectedStatusCode; got != want {
+				t.Fatalf("got: %+v, want: %+v, err: %+v", got, want, err)
+			}
+
+			// We don't need to check anything else for non-OK codes.
+			if tc.expectedStatusCode != codes.OK {
+				return
+			}
+
+			opts := cmpopts.IgnoreUnexported(
+				corev1.Context{},
+				plugins.Plugin{},
+				corev1.GetPackageRepositoryPermissionsResponse{},
+				corev1.PackageRepositoriesPermissions{},
+			)
+			if got, want := response, tc.expectedResponse; !cmp.Equal(want, got, opts) {
+				t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opts))
+			}
+		})
+	}
 }

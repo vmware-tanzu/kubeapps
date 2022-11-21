@@ -43,6 +43,155 @@ func newLocalOpaqueSecret(ownerRepo types.NamespacedName) *k8scorev1.Secret {
 	}
 }
 
+func handleAuthSecretForCreate(
+	ctx context.Context,
+	typedClient kubernetes.Interface,
+	repoName types.NamespacedName,
+	tlsConfig *corev1.PackageRepositoryTlsConfig,
+	auth *corev1.PackageRepositoryAuth) (*k8scorev1.Secret, bool, error) {
+
+	hasCaRef := tlsConfig != nil && tlsConfig.GetSecretRef() != nil
+	hasCaData := tlsConfig != nil && tlsConfig.GetCertAuthority() != ""
+	hasAuthRef := auth != nil && auth.GetSecretRef() != nil
+	hasAuthData := auth != nil && auth.GetSecretRef() == nil && auth.GetType() != corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_UNSPECIFIED
+
+	// if we have both ref config and data config, it is an invalid mixed configuration
+	if (hasCaRef || hasAuthRef) && (hasCaData || hasAuthData) {
+		return nil, false, status.Errorf(codes.InvalidArgument, "Package repository cannot mix referenced secrets and user provided secret data")
+	}
+
+	// create/get secret
+	if hasCaRef || hasAuthRef {
+		secret, err := validateUserManagedRepoSecret(ctx, typedClient, repoName, tlsConfig, auth)
+		return secret, false, err
+	} else if hasCaData || hasAuthData {
+		secret, _, err := newSecretFromTlsConfigAndAuth(repoName, tlsConfig, auth)
+		return secret, true, err
+	} else {
+		return nil, false, nil
+	}
+}
+
+func handleImagesPullSecretForCreate(
+	ctx context.Context,
+	typedClient kubernetes.Interface,
+	repo *HelmRepository) (*k8scorev1.Secret, bool, error) {
+
+	hasRef := repo.customDetail != nil && repo.customDetail.ImagesPullSecret != nil && repo.customDetail.ImagesPullSecret.GetSecretRef() != ""
+	hasData := repo.customDetail != nil && repo.customDetail.ImagesPullSecret != nil && repo.customDetail.ImagesPullSecret.GetCredentials() != nil
+
+	// create/get secret
+	if hasRef {
+		secret, err := validateDockerImagePullSecret(ctx, typedClient, repo.name, repo.customDetail.ImagesPullSecret.GetSecretRef())
+		return secret, false, err
+	} else if hasData {
+		secret, _, err := newDockerImagePullSecret(repo.name, repo.customDetail.ImagesPullSecret.GetCredentials())
+		return secret, true, err
+	} else {
+		return nil, false, nil
+	}
+}
+
+func handleAuthSecretForUpdate(
+	ctx context.Context,
+	typedClient kubernetes.Interface,
+	repoName types.NamespacedName,
+	tlsConfig *corev1.PackageRepositoryTlsConfig,
+	auth *corev1.PackageRepositoryAuth,
+	secret *k8scorev1.Secret) (updatedSecret *k8scorev1.Secret, secretIsKubeappsManaged bool, secretIsUpdated bool, err error) {
+
+	hasCaRef := tlsConfig != nil && tlsConfig.GetSecretRef() != nil
+	hasCaData := tlsConfig != nil && tlsConfig.GetCertAuthority() != ""
+	hasAuthRef := auth != nil && auth.GetSecretRef() != nil
+	hasAuthData := auth != nil && auth.GetSecretRef() == nil && auth.GetType() != corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_UNSPECIFIED
+
+	// if we have both ref config and data config, it is an invalid mixed configuration
+	if (hasCaRef || hasAuthRef) && (hasCaData || hasAuthData) {
+		return nil, false, false, status.Errorf(codes.InvalidArgument, "Package repository cannot mix referenced secrets and user provided secret data")
+	}
+
+	// check we cannot change mode (per design spec)
+	if secret != nil && (hasCaRef || hasCaData || hasAuthRef || hasAuthData) {
+		if isAuthSecretKubeappsManaged(repoName.Name, secret) != (hasAuthData || hasCaData) {
+			return nil, false, false, status.Errorf(codes.InvalidArgument, "Auth management mode cannot be changed")
+		}
+	}
+
+	// handle user managed secret
+	if hasCaRef || hasAuthRef {
+		updatedSecret, err := validateUserManagedRepoSecret(ctx, typedClient, repoName, tlsConfig, auth)
+		return updatedSecret, false, true, err
+	}
+
+	// handle kubeapps managed secret
+	updatedSecret, isSameSecret, err := newSecretFromTlsConfigAndAuth(repoName, tlsConfig, auth)
+	if err != nil {
+		return nil, true, false, err
+	} else if isSameSecret {
+		// Do nothing if repo auth data came redacted
+		return nil, true, false, nil
+	} else {
+		// either we have no secret, or it has changed. in both cases, we try to delete any existing secret
+		if secret != nil {
+			secretsInterface := typedClient.CoreV1().Secrets(secret.GetNamespace())
+			if err := deleteSecret(ctx, secretsInterface, secret.GetName()); err != nil {
+				log.Errorf("Error deleting existing secret: [%s] due to %v", err)
+			}
+		}
+
+		return updatedSecret, true, true, nil
+	}
+}
+
+func handleImagesPullSecretForUpdate(
+	ctx context.Context,
+	typedClient kubernetes.Interface,
+	repo *HelmRepository,
+	secret *k8scorev1.Secret) (updatedSecret *k8scorev1.Secret, secretIsKubeappsManaged bool, secretIsUpdated bool, err error) {
+
+	var imagesPullSecrets *v1alpha1.ImagesPullSecret
+	if repo.customDetail != nil && repo.customDetail.ImagesPullSecret != nil {
+		imagesPullSecrets = repo.customDetail.ImagesPullSecret
+	} else {
+		imagesPullSecrets = &v1alpha1.ImagesPullSecret{}
+	}
+
+	hasRef := imagesPullSecrets != nil && imagesPullSecrets.GetSecretRef() != ""
+	hasData := imagesPullSecrets != nil && imagesPullSecrets.GetCredentials() != nil
+
+	// check we are not changing mode
+	if secret != nil && (hasRef || hasData) {
+		if isImagesPullSecretKubeappsManaged(repo.name.Name, secret) != hasData {
+			return nil, false, false, status.Errorf(codes.InvalidArgument, "Auth management mode cannot be changed")
+		}
+	}
+
+	// handle user managed secret
+	if hasRef {
+		updatedSecret, err := validateDockerImagePullSecret(ctx, typedClient, repo.name, imagesPullSecrets.GetSecretRef())
+		return updatedSecret, false, true, err
+	}
+
+	// handle kubeapps managed secret
+	updatedSecret, isSameSecret, err := newDockerImagePullSecret(repo.name, imagesPullSecrets.GetCredentials())
+	if err != nil {
+		return nil, true, false, err
+	} else if isSameSecret {
+		// Do nothing if repo credential data came redacted
+		return nil, true, false, nil
+	} else {
+		// either we have no secret, or it has changed. in both cases, we try to delete any existing secret
+		if secret != nil {
+			secretsInterface := typedClient.CoreV1().Secrets(secret.GetNamespace())
+			if err := deleteSecret(ctx, secretsInterface, secret.GetName()); err != nil {
+				log.Errorf("Error deleting existing secret: [%s] due to %v", err)
+			}
+		}
+
+		return updatedSecret, true, true, nil
+	}
+}
+
 // this func is only used with kubeapps-managed secrets
 func newSecretFromTlsConfigAndAuth(repoName types.NamespacedName,
 	tlsConfig *corev1.PackageRepositoryTlsConfig,
@@ -202,28 +351,21 @@ func newAppRepositoryAuth(secret *k8scorev1.Secret,
 	return appRepoAuth, nil
 }
 
-func createKubeappsManagedRepoSecrets(
+func createKubeappsManagedRepoSecret(
 	ctx context.Context,
 	typedClient kubernetes.Interface,
 	namespace string,
-	secret *k8scorev1.Secret, imagesPullSecret *k8scorev1.Secret) (newSecret *k8scorev1.Secret, newImgPullSecret *k8scorev1.Secret, err error) {
+	secret *k8scorev1.Secret) (newSecret *k8scorev1.Secret, err error) {
 
 	if secret != nil {
 		// create a secret first, if applicable
 		secretName := secret.GetName()
 		newSecret, err = typedClient.CoreV1().Secrets(namespace).Create(ctx, secret, metav1.CreateOptions{})
 		if err != nil {
-			return nil, nil, statuserror.FromK8sError("create", "secret", secretName, err)
+			return nil, statuserror.FromK8sError("create", "secret", secretName, err)
 		}
 	}
-	if imagesPullSecret != nil {
-		secretName := imagesPullSecret.GetName()
-		newImgPullSecret, err = typedClient.CoreV1().Secrets(namespace).Create(ctx, imagesPullSecret, metav1.CreateOptions{})
-		if err != nil {
-			return nil, nil, statuserror.FromK8sError("create", "secret", secretName, err)
-		}
-	}
-	return newSecret, newImgPullSecret, nil
+	return newSecret, nil
 }
 
 func validateDockerImagePullSecret(ctx context.Context,
@@ -247,34 +389,38 @@ func imagesPullSecretName(repoName string) string {
 }
 
 func newDockerImagePullSecret(ownerRepo types.NamespacedName, credentials *corev1.DockerCredentials) (secret *k8scorev1.Secret, isSameSecret bool, err error) {
+	if credentials != nil {
+		if credentials.Server == "" || credentials.Username == "" || credentials.Password == "" || credentials.Email == "" {
+			return nil, false, status.Errorf(codes.InvalidArgument, "Images pull secret Docker credentials are wrong")
+		}
 
-	secret = &k8scorev1.Secret{
-		ObjectMeta: metav1.ObjectMeta{
-			Name: imagesPullSecretName(ownerRepo.Name),
-		},
-		Type: k8scorev1.SecretTypeDockerConfigJson,
-		Data: map[string][]byte{},
-	}
-
-	if credentials.Password == RedactedString {
-		isSameSecret = true
-	} else {
-		dockerConfig := &credentialprovider.DockerConfigJSON{
-			Auths: map[string]credentialprovider.DockerConfigEntry{
-				credentials.Server: {
-					Username: credentials.Username,
-					Password: credentials.Password,
-					Email:    credentials.Email,
-				},
+		secret = &k8scorev1.Secret{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: imagesPullSecretName(ownerRepo.Name),
 			},
+			Type: k8scorev1.SecretTypeDockerConfigJson,
+			Data: map[string][]byte{},
 		}
-		dockerConfigJson, err := json.Marshal(dockerConfig)
-		if err != nil {
-			return nil, false, status.Errorf(codes.InvalidArgument, "Docker credentials are malformed")
-		}
-		secret.Data[k8scorev1.DockerConfigJsonKey] = dockerConfigJson
-	}
 
+		if credentials.Password == RedactedString {
+			isSameSecret = true
+		} else {
+			dockerConfig := &credentialprovider.DockerConfigJSON{
+				Auths: map[string]credentialprovider.DockerConfigEntry{
+					credentials.Server: {
+						Username: credentials.Username,
+						Password: credentials.Password,
+						Email:    credentials.Email,
+					},
+				},
+			}
+			dockerConfigJson, err := json.Marshal(dockerConfig)
+			if err != nil {
+				return nil, false, status.Errorf(codes.InvalidArgument, "Docker credentials are malformed")
+			}
+			secret.Data[k8scorev1.DockerConfigJsonKey] = dockerConfigJson
+		}
+	}
 	return secret, isSameSecret, nil
 }
 
@@ -310,44 +456,6 @@ func (s *Server) deleteRepositorySecretFromNamespace(typedClient kubernetes.Inte
 		return deleteErr
 	}
 	return nil
-}
-
-func updateKubeappsManagedImagesPullSecret(ctx context.Context, typedClient kubernetes.Interface,
-	ownerRepo types.NamespacedName, credentials *corev1.DockerCredentials) (*k8scorev1.Secret, bool, error) {
-
-	secretsInterface := typedClient.CoreV1().Secrets(ownerRepo.Namespace)
-	secretName := imagesPullSecretName(ownerRepo.Name)
-	existingSecret, _ := secretsInterface.Get(ctx, secretName, metav1.GetOptions{})
-
-	// Check that the provided Docker credentials are ok
-	if credentials != nil && (credentials.Server == "" || credentials.Username == "" || credentials.Password == "" || credentials.Email == "") {
-		return nil, false, status.Errorf(codes.InvalidArgument, "Images pull secret Docker credentials are wrong")
-	}
-
-	// Remove any existing managed secret
-	if existingSecret != nil {
-		if err := deleteSecret(ctx, secretsInterface, secretName); err != nil {
-			return nil, false, err
-		}
-	}
-
-	if credentials != nil {
-		newSecret, isSameSecret, err := newDockerImagePullSecret(ownerRepo, credentials)
-		if err != nil {
-			return nil, false, err
-		}
-		if !isSameSecret {
-			createdSecret, err := secretsInterface.Create(ctx, newSecret, metav1.CreateOptions{})
-			if err != nil {
-				return nil, false, statuserror.FromK8sError("create", "secret", newSecret.GetGenerateName(), err)
-			}
-			return createdSecret, false, nil
-		} else {
-			return existingSecret, true, nil
-		}
-	}
-
-	return nil, false, nil
 }
 
 func validateUserManagedRepoSecret(
@@ -421,124 +529,34 @@ func validateUserManagedRepoSecret(
 	return secret, nil
 }
 
-func (s *Server) updateKubeappsManagedRepoSecret(ctx context.Context, repo *HelmRepository, existingSecretRef string) (secret *k8scorev1.Secret, updateRepo bool, err error) {
-	secret, isSameSecret, err := newSecretFromTlsConfigAndAuth(repo.name, repo.tlsConfig, repo.auth)
-	if err != nil {
-		return nil, false, err
-	} else if isSameSecret {
-		// Do nothing if repo auth data came redacted
-		return nil, false, nil
-	}
-
-	typedClient, err := s.clientGetter.Typed(ctx, repo.cluster)
-	if err != nil {
-		return nil, false, err
-	}
-	secretInterface := typedClient.CoreV1().Secrets(repo.name.Namespace)
-	if secret != nil {
-		if existingSecretRef == "" {
-			// create a secret first
-			newSecret, err := secretInterface.Create(ctx, secret, metav1.CreateOptions{})
-			if err != nil {
-				return nil, false, statuserror.FromK8sError("create", "secret", secret.GetGenerateName(), err)
-			}
-			return newSecret, true, nil
-		} else {
-			// TODO (gfichtenholt) we should optimize this to somehow tell if the existing secret
-			// is the same (data-wise) as the new one and if so skip all this
-			if err = secretInterface.Delete(ctx, existingSecretRef, metav1.DeleteOptions{}); err != nil {
-				return nil, false, statuserror.FromK8sError("get", "secret", existingSecretRef, err)
-			}
-			// create a new one
-			newSecret, err := secretInterface.Create(ctx, secret, metav1.CreateOptions{})
-			if err != nil {
-				return nil, false, statuserror.FromK8sError("update", "secret", secret.GetGenerateName(), err)
-			}
-			return newSecret, true, nil
+func getRepoImagesPullSecret(source *apprepov1alpha1.AppRepository, imagesPullSecret *k8scorev1.Secret) *v1alpha1.ImagesPullSecret {
+	if imagesPullSecret == nil {
+		return nil
+	} else if isImagesPullSecretKubeappsManaged(source.GetName(), imagesPullSecret) {
+		return &v1alpha1.ImagesPullSecret{
+			DockerRegistryCredentialOneOf: &v1alpha1.ImagesPullSecret_Credentials{
+				Credentials: &corev1.DockerCredentials{
+					Server:   RedactedString,
+					Username: RedactedString,
+					Password: RedactedString,
+					Email:    RedactedString,
+				},
+			},
 		}
-	} else if existingSecretRef != "" {
-		if err = secretInterface.Delete(ctx, existingSecretRef, metav1.DeleteOptions{}); err != nil {
-			log.Errorf("Error deleting existing secret: [%s] due to %v", err)
-		}
-	}
-	return secret, true, nil
-}
-
-func getRepoImagesPullSecretWithUserManagedSecrets(imagesPullSecret *k8scorev1.Secret) *v1alpha1.ImagesPullSecret_SecretRef {
-	if imagesPullSecret != nil {
-		return &v1alpha1.ImagesPullSecret_SecretRef{
-			SecretRef: imagesPullSecret.Name,
-		}
-	}
-	return nil
-}
-
-func getRepoImagesPullSecretWithKubeappsManagedSecrets(imagesPullSecret *k8scorev1.Secret) *v1alpha1.ImagesPullSecret_Credentials {
-	if imagesPullSecret != nil {
-		return &v1alpha1.ImagesPullSecret_Credentials{
-			Credentials: &corev1.DockerCredentials{
-				Server:   RedactedString,
-				Username: RedactedString,
-				Password: RedactedString,
-				Email:    RedactedString,
+	} else {
+		return &v1alpha1.ImagesPullSecret{
+			DockerRegistryCredentialOneOf: &v1alpha1.ImagesPullSecret_SecretRef{
+				SecretRef: imagesPullSecret.Name,
 			},
 		}
 	}
-	return nil
 }
 
-func getRepoTlsConfigAndAuthWithUserManagedSecrets(source *apprepov1alpha1.AppRepository,
-	caSecret *k8scorev1.Secret, authSecret *k8scorev1.Secret) (*corev1.PackageRepositoryTlsConfig, *corev1.PackageRepositoryAuth, error) {
-	tlsConfig := &corev1.PackageRepositoryTlsConfig{
-		InsecureSkipVerify: source.Spec.TLSInsecureSkipVerify,
-	}
-	auth := &corev1.PackageRepositoryAuth{
-		PassCredentials: source.Spec.PassCredentials,
-	}
+func getRepoTlsConfigAndAuth(
+	source *apprepov1alpha1.AppRepository,
+	caSecret *k8scorev1.Secret,
+	authSecret *k8scorev1.Secret) (*corev1.PackageRepositoryTlsConfig, *corev1.PackageRepositoryAuth, error) {
 
-	if caSecret != nil {
-		if _, ok := caSecret.Data[SecretCaKey]; ok {
-			tlsConfig.PackageRepoTlsConfigOneOf = &corev1.PackageRepositoryTlsConfig_SecretRef{
-				SecretRef: &corev1.SecretKeyReference{
-					Name: caSecret.Name,
-					Key:  SecretCaKey,
-				},
-			}
-		}
-	}
-	if authSecret != nil {
-		if authHeader, ok := authSecret.Data[SecretAuthHeaderKey]; ok {
-			if strings.HasPrefix(string(authHeader), "Basic") {
-				auth.Type = corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_BASIC_AUTH
-			} else if strings.HasPrefix(string(authHeader), "Bearer") {
-				auth.Type = corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_BEARER
-			} else {
-				auth.Type = corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_AUTHORIZATION_HEADER
-			}
-			auth.PackageRepoAuthOneOf = &corev1.PackageRepositoryAuth_SecretRef{
-				SecretRef: &corev1.SecretKeyReference{
-					Name: authSecret.Name,
-					Key:  SecretAuthHeaderKey,
-				},
-			}
-		} else if _, ok := authSecret.Data[DockerConfigJsonKey]; ok {
-			auth.Type = corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_DOCKER_CONFIG_JSON
-			auth.PackageRepoAuthOneOf = &corev1.PackageRepositoryAuth_SecretRef{
-				SecretRef: &corev1.SecretKeyReference{
-					Name: authSecret.Name,
-					Key:  DockerConfigJsonKey,
-				},
-			}
-		} else {
-			auth.Type = corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_UNSPECIFIED
-			log.Warning("Unrecognized type of secret for auth [%s]", authSecret.Name)
-		}
-	}
-	return tlsConfig, auth, nil
-}
-
-func getRepoTlsConfigAndAuthWithKubeappsManagedSecrets(source *apprepov1alpha1.AppRepository,
-	caSecret *k8scorev1.Secret, authSecret *k8scorev1.Secret) (*corev1.PackageRepositoryTlsConfig, *corev1.PackageRepositoryAuth, error) {
 	var tlsConfig *corev1.PackageRepositoryTlsConfig
 	var auth *corev1.PackageRepositoryAuth
 
@@ -558,8 +576,18 @@ func getRepoTlsConfigAndAuthWithKubeappsManagedSecrets(source *apprepov1alpha1.A
 			if tlsConfig == nil {
 				tlsConfig = &corev1.PackageRepositoryTlsConfig{}
 			}
-			tlsConfig.PackageRepoTlsConfigOneOf = &corev1.PackageRepositoryTlsConfig_CertAuthority{
-				CertAuthority: RedactedString,
+
+			if isAuthSecretKubeappsManaged(source.GetName(), caSecret) {
+				tlsConfig.PackageRepoTlsConfigOneOf = &corev1.PackageRepositoryTlsConfig_CertAuthority{
+					CertAuthority: RedactedString,
+				}
+			} else {
+				tlsConfig.PackageRepoTlsConfigOneOf = &corev1.PackageRepositoryTlsConfig_SecretRef{
+					SecretRef: &corev1.SecretKeyReference{
+						Name: caSecret.Name,
+						Key:  SecretCaKey,
+					},
+				}
 			}
 		}
 	}
@@ -568,41 +596,82 @@ func getRepoTlsConfigAndAuthWithKubeappsManagedSecrets(source *apprepov1alpha1.A
 		if auth == nil {
 			auth = &corev1.PackageRepositoryAuth{}
 		}
+
+		// find type
 		if authHeader, ok := authSecret.Data[SecretAuthHeaderKey]; ok {
 			if strings.HasPrefix(string(authHeader), "Basic") {
 				auth.Type = corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_BASIC_AUTH
+			} else if strings.HasPrefix(string(authHeader), "Bearer") {
+				auth.Type = corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_BEARER
+			} else {
+				auth.Type = corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_AUTHORIZATION_HEADER
+			}
+		} else if _, ok := authSecret.Data[DockerConfigJsonKey]; ok {
+			auth.Type = corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_DOCKER_CONFIG_JSON
+		} else {
+			auth.Type = corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_UNSPECIFIED
+			log.Warning("Unrecognized type of secret for auth [%s]", authSecret.Name)
+		}
+
+		// create data
+		if isAuthSecretKubeappsManaged(source.GetName(), authSecret) {
+			switch auth.Type {
+			case corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_BASIC_AUTH:
 				auth.PackageRepoAuthOneOf = &corev1.PackageRepositoryAuth_UsernamePassword{
 					UsernamePassword: &corev1.UsernamePassword{
 						Username: RedactedString,
 						Password: RedactedString,
 					},
 				}
-			} else if strings.HasPrefix(string(authHeader), "Bearer") {
-				auth.Type = corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_BEARER
+			case corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_BEARER:
 				auth.PackageRepoAuthOneOf = &corev1.PackageRepositoryAuth_Header{
 					Header: RedactedString,
 				}
-			} else {
-				auth.Type = corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_AUTHORIZATION_HEADER
+			case corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_AUTHORIZATION_HEADER:
 				auth.PackageRepoAuthOneOf = &corev1.PackageRepositoryAuth_Header{
 					Header: RedactedString,
 				}
-			}
-
-		} else if _, ok := authSecret.Data[DockerConfigJsonKey]; ok {
-			auth.Type = corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_DOCKER_CONFIG_JSON
-			auth.PackageRepoAuthOneOf = &corev1.PackageRepositoryAuth_DockerCreds{
-				DockerCreds: &corev1.DockerCredentials{
-					Username: RedactedString,
-					Password: RedactedString,
-					Email:    RedactedString,
-					Server:   RedactedString,
-				},
+			case corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_DOCKER_CONFIG_JSON:
+				auth.PackageRepoAuthOneOf = &corev1.PackageRepositoryAuth_DockerCreds{
+					DockerCreds: &corev1.DockerCredentials{
+						Username: RedactedString,
+						Password: RedactedString,
+						Email:    RedactedString,
+						Server:   RedactedString,
+					},
+				}
 			}
 		} else {
-			auth.Type = corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_UNSPECIFIED
-			log.Warning("Unrecognized type of secret for auth [%s]", authSecret.Name)
+			switch auth.Type {
+			case corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_BASIC_AUTH,
+				corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_BEARER,
+				corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_AUTHORIZATION_HEADER:
+				auth.PackageRepoAuthOneOf = &corev1.PackageRepositoryAuth_SecretRef{
+					SecretRef: &corev1.SecretKeyReference{
+						Name: authSecret.Name,
+						Key:  SecretAuthHeaderKey,
+					},
+				}
+			case corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_DOCKER_CONFIG_JSON:
+				auth.PackageRepoAuthOneOf = &corev1.PackageRepositoryAuth_SecretRef{
+					SecretRef: &corev1.SecretKeyReference{
+						Name: authSecret.Name,
+						Key:  DockerConfigJsonKey,
+					},
+				}
+			}
 		}
 	}
+
 	return tlsConfig, auth, nil
+}
+
+// note: for now, checking based on name pattern for backward compatibility
+func isAuthSecretKubeappsManaged(repoName string, secret *k8scorev1.Secret) bool {
+	return secret.GetName() == helm.SecretNameForRepo(repoName)
+}
+
+// note: for now, checking based on name pattern for backward compatibility
+func isImagesPullSecretKubeappsManaged(repoName string, secret *k8scorev1.Secret) bool {
+	return secret.GetName() == imagesPullSecretName(repoName)
 }
