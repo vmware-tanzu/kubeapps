@@ -50,6 +50,10 @@ type HelmRepository struct {
 
 var ValidRepoTypes = []string{HelmRepoType, OCIRepoType}
 
+const HTTP_PROXY = "HTTP_PROXY"
+const HTTPS_PROXY = "HTTPS_PROXY"
+const NO_PROXY = "NO_PROXY"
+
 func (s *Server) newRepo(ctx context.Context, repo *HelmRepository) (*corev1.PackageRepositoryReference, error) {
 	if repo.url == "" {
 		return nil, status.Errorf(codes.InvalidArgument, "repository url may not be empty")
@@ -214,19 +218,19 @@ func newHelmRepoCrd(repo *HelmRepository, secret *k8scorev1.Secret, imagePullSec
 
 			if repo.customDetail.ProxyOptions.HttpProxy != "" {
 				appRepoCrd.Spec.SyncJobPodTemplate.Spec.Containers[0].Env = append(appRepoCrd.Spec.SyncJobPodTemplate.Spec.Containers[0].Env, k8scorev1.EnvVar{
-					Name:  "http_proxy",
+					Name:  HTTP_PROXY,
 					Value: repo.customDetail.ProxyOptions.HttpProxy,
 				})
 			}
 			if repo.customDetail.ProxyOptions.HttpsProxy != "" {
 				appRepoCrd.Spec.SyncJobPodTemplate.Spec.Containers[0].Env = append(appRepoCrd.Spec.SyncJobPodTemplate.Spec.Containers[0].Env, k8scorev1.EnvVar{
-					Name:  "https_proxy",
+					Name:  HTTPS_PROXY,
 					Value: repo.customDetail.ProxyOptions.HttpsProxy,
 				})
 			}
 			if repo.customDetail.ProxyOptions.NoProxy != "" {
 				appRepoCrd.Spec.SyncJobPodTemplate.Spec.Containers[0].Env = append(appRepoCrd.Spec.SyncJobPodTemplate.Spec.Containers[0].Env, k8scorev1.EnvVar{
-					Name:  "no_proxy",
+					Name:  NO_PROXY,
 					Value: repo.customDetail.ProxyOptions.NoProxy,
 				})
 			}
