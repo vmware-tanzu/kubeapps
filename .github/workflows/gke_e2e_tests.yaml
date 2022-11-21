@@ -12,10 +12,8 @@ on:
         type: boolean
         required: false
         default: false
-      # TODO(bjesus): right now it contains just the version number (eg. 1.22), rename to GKE_VERSION once CircleCI is decommissioned
-      GKE_BRANCH:
+      GKE_VERSION:
         type: string
-        description: "The branch of the GKE environment in which we want to test."
       GKE_CLUSTER:
         type: string
       GKE_PROJECT:
@@ -66,7 +64,7 @@ jobs:
       DEBUG_MODE: ${{ inputs.DEBUG_MODE }}
       GCLOUD_KEY: ${{ secrets.GCLOUD_KEY }}
       GKE_ADMIN: ${{ secrets.GKE_ADMIN }}
-      GKE_BRANCH: ${{ inputs.GKE_BRANCH }}
+      GKE_VERSION: ${{ inputs.GKE_VERSION }}
       GKE_CLUSTER: ${{ inputs.GKE_CLUSTER }}
       GKE_PROJECT: ${{ inputs.GKE_PROJECT }}
       GKE_RELEASE_CHANNEL: ${{ inputs.GKE_RELEASE_CHANNEL }}
@@ -96,7 +94,7 @@ jobs:
       - name: Start GKE environment
         run: |
           set -euo pipefail
-          ./script/start-gke-env.sh "${ESCAPED_GKE_CLUSTER}" "${GKE_ZONE}" "${GKE_BRANCH}" "${GKE_ADMIN}" > /dev/null
+          ./script/start-gke-env.sh "${ESCAPED_GKE_CLUSTER}" "${GKE_ZONE}" "${GKE_VERSION}" "${GKE_ADMIN}" > /dev/null
       - # TODO(castelblanque) Unify shared resources with kubeapps-local-dev-users-rbac.yaml that only applies to Kind clusters
         name: Apply customizations to GKE cluster
         run: |

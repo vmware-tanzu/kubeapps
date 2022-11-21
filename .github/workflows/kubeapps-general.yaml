@@ -782,7 +782,7 @@ jobs:
       - gke_setup
     uses: ./.github/workflows/gke_e2e_tests.yaml
     with:
-      GKE_BRANCH: ${{ needs.gke_setup.outputs.GKE_REGULAR_VERSION }}
+      GKE_VERSION: ${{ needs.gke_setup.outputs.GKE_REGULAR_VERSION }}
       DEBUG_MODE: ${{ needs.gke_setup.outputs.DEBUG_MODE == 'true' }}
       CHARTMUSEUM_VERSION: ${{ needs.gke_setup.outputs.CHARTMUSEUM_VERSION }}
       GKE_CLUSTER: ${{ needs.gke_setup.outputs.GKE_CLUSTER }}
@@ -806,7 +806,7 @@ jobs:
       - gke_setup
     uses: ./.github/workflows/gke_e2e_tests.yaml
     with:
-      GKE_BRANCH: ${{ needs.gke_setup.outputs.GKE_STABLE_VERSION }}
+      GKE_VERSION: ${{ needs.gke_setup.outputs.GKE_STABLE_VERSION }}
       DEBUG_MODE: ${{ needs.gke_setup.outputs.DEBUG_MODE == 'true' }}
       CHARTMUSEUM_VERSION: ${{ needs.gke_setup.outputs.CHARTMUSEUM_VERSION }}
       GKE_CLUSTER: ${{ needs.gke_setup.outputs.GKE_CLUSTER }}
