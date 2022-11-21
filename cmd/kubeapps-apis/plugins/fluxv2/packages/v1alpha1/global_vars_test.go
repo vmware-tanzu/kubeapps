@@ -1373,10 +1373,11 @@ var (
 
 	add_repo_req_22 = func(user, password string) *corev1.AddPackageRepositoryRequest {
 		return &corev1.AddPackageRepositoryRequest{
-			Name:    "my-podinfo-6",
-			Context: &corev1.Context{Namespace: "default"},
-			Type:    "oci",
-			Url:     github_stefanprodan_podinfo_oci_registry_url,
+			Name:            "my-podinfo-6",
+			Context:         &corev1.Context{Namespace: "default"},
+			Type:            "oci",
+			NamespaceScoped: true,
+			Url:             github_stefanprodan_podinfo_oci_registry_url,
 			Auth: &corev1.PackageRepositoryAuth{
 				Type: corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_BASIC_AUTH,
 				PackageRepoAuthOneOf: &corev1.PackageRepositoryAuth_UsernamePassword{
@@ -1390,10 +1391,11 @@ var (
 	}
 
 	add_repo_req_23 = &corev1.AddPackageRepositoryRequest{
-		Name:    "my-podinfo-7",
-		Context: &corev1.Context{Namespace: "default"},
-		Type:    "oci",
-		Url:     github_stefanprodan_podinfo_oci_registry_url,
+		Name:            "my-podinfo-7",
+		Context:         &corev1.Context{Namespace: "default"},
+		Type:            "oci",
+		NamespaceScoped: true,
+		Url:             github_stefanprodan_podinfo_oci_registry_url,
 		Auth: &corev1.PackageRepositoryAuth{
 			Type: corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_BASIC_AUTH,
 			PackageRepoAuthOneOf: &corev1.PackageRepositoryAuth_SecretRef{
@@ -1406,10 +1408,11 @@ var (
 
 	add_repo_req_24 = func(server, user, password string) *corev1.AddPackageRepositoryRequest {
 		return &corev1.AddPackageRepositoryRequest{
-			Name:    "my-podinfo-8",
-			Context: &corev1.Context{Namespace: "default"},
-			Type:    "oci",
-			Url:     github_stefanprodan_podinfo_oci_registry_url,
+			Name:            "my-podinfo-8",
+			Context:         &corev1.Context{Namespace: "default"},
+			Type:            "oci",
+			NamespaceScoped: true,
+			Url:             github_stefanprodan_podinfo_oci_registry_url,
 			Auth: &corev1.PackageRepositoryAuth{
 				Type: corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_DOCKER_CONFIG_JSON,
 				PackageRepoAuthOneOf: &corev1.PackageRepositoryAuth_DockerCreds{
