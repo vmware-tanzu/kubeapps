@@ -766,6 +766,46 @@ var (
 		}
 	}
 
+	expected_detail_podinfo = func(name, namespace string) *corev1.GetAvailablePackageDetailResponse {
+		return &corev1.GetAvailablePackageDetailResponse{
+			AvailablePackageDetail: &corev1.AvailablePackageDetail{
+				AvailablePackageRef: availableRef(name+"/podinfo", namespace),
+				Name:                "podinfo",
+				Version:             pkgAppVersion("6.0.0"),
+				RepoUrl:             "http://fluxv2plugin-testdata-svc.default.svc.cluster.local:80/podinfo",
+				HomeUrl:             "https://github.com/stefanprodan/podinfo",
+				DisplayName:         "podinfo",
+				ShortDescription:    "Podinfo Helm chart for Kubernetes",
+				SourceUrls:          []string{"https://github.com/stefanprodan/podinfo"},
+				Maintainers: []*corev1.Maintainer{
+					{Name: "stefanprodan", Email: "stefanprodan@users.noreply.github.com"},
+				},
+				Readme:        "Podinfo is used by CNCF projects like [Flux](https://github.com/fluxcd/flux2)",
+				DefaultValues: "Default values for podinfo.\n\nreplicaCount: 1\n",
+			},
+		}
+	}
+
+	expected_detail_podinfo_after_update_1 = func(name, namespace string) *corev1.GetAvailablePackageDetailResponse {
+		return &corev1.GetAvailablePackageDetailResponse{
+			AvailablePackageDetail: &corev1.AvailablePackageDetail{
+				AvailablePackageRef: availableRef(name+"/podinfo", namespace),
+				Name:                "podinfo",
+				Version:             pkgAppVersion("6.0.3"),
+				RepoUrl:             "http://fluxv2plugin-testdata-svc.default.svc.cluster.local:80/podinfo",
+				HomeUrl:             "https://github.com/stefanprodan/podinfo",
+				DisplayName:         "podinfo",
+				ShortDescription:    "Podinfo Helm chart for Kubernetes",
+				SourceUrls:          []string{"https://github.com/stefanprodan/podinfo"},
+				Maintainers: []*corev1.Maintainer{
+					{Name: "stefanprodan", Email: "stefanprodan@users.noreply.github.com"},
+				},
+				Readme:        "Podinfo is used by CNCF projects like [Flux](https://github.com/fluxcd/flux2)",
+				DefaultValues: "Default values for podinfo.\n\nreplicaCount: 1\n",
+			},
+		}
+	}
+
 	expected_detail_podinfo_basic_auth = func(name string) *corev1.GetAvailablePackageDetailResponse {
 		return &corev1.GetAvailablePackageDetailResponse{
 			AvailablePackageDetail: &corev1.AvailablePackageDetail{
@@ -836,6 +876,10 @@ var (
 		},
 	}
 
+	valid_index_available_package_summaries_resp = &corev1.GetAvailablePackageSummariesResponse{
+		AvailablePackageSummaries: valid_index_available_package_summaries,
+	}
+
 	cert_manager_summary = &corev1.AvailablePackageSummary{
 		Name:             "cert-manager",
 		DisplayName:      "cert-manager",
@@ -889,70 +933,75 @@ var (
 		ghost_summary,
 	}
 
-	index_before_update_summaries = []*corev1.AvailablePackageSummary{
-		{
-			Name:        "alpine",
-			DisplayName: "alpine",
-			LatestVersion: &corev1.PackageAppVersion{
-				PkgVersion: "0.2.0",
+	expected_summaries_before_update = &corev1.GetAvailablePackageSummariesResponse{
+		AvailablePackageSummaries: []*corev1.AvailablePackageSummary{
+			{
+				Name:        "alpine",
+				DisplayName: "alpine",
+				LatestVersion: &corev1.PackageAppVersion{
+					PkgVersion: "0.2.0",
+				},
+				IconUrl:          "",
+				ShortDescription: "Deploy a basic Alpine Linux pod",
+				AvailablePackageRef: &corev1.AvailablePackageReference{
+					Identifier: "testrepo/alpine",
+					Context:    &corev1.Context{Namespace: "ns2", Cluster: KubeappsCluster},
+					Plugin:     fluxPlugin,
+				},
+				Categories: []string{""},
 			},
-			IconUrl:          "",
-			ShortDescription: "Deploy a basic Alpine Linux pod",
-			AvailablePackageRef: &corev1.AvailablePackageReference{
-				Identifier: "testrepo/alpine",
-				Context:    &corev1.Context{Namespace: "ns2", Cluster: KubeappsCluster},
-				Plugin:     fluxPlugin,
+			{
+				Name:        "nginx",
+				DisplayName: "nginx",
+				LatestVersion: &corev1.PackageAppVersion{
+					PkgVersion: "1.1.0",
+				},
+				IconUrl:          "",
+				ShortDescription: "Create a basic nginx HTTP server",
+				AvailablePackageRef: &corev1.AvailablePackageReference{
+					Identifier: "testrepo/nginx",
+					Context:    &corev1.Context{Namespace: "ns2", Cluster: KubeappsCluster},
+					Plugin:     fluxPlugin,
+				},
+				Categories: []string{""},
 			},
-			Categories: []string{""},
-		},
-		{
-			Name:        "nginx",
-			DisplayName: "nginx",
-			LatestVersion: &corev1.PackageAppVersion{
-				PkgVersion: "1.1.0",
-			},
-			IconUrl:          "",
-			ShortDescription: "Create a basic nginx HTTP server",
-			AvailablePackageRef: &corev1.AvailablePackageReference{
-				Identifier: "testrepo/nginx",
-				Context:    &corev1.Context{Namespace: "ns2", Cluster: KubeappsCluster},
-				Plugin:     fluxPlugin,
-			},
-			Categories: []string{""},
 		},
 	}
 
-	index_after_update_summaries = []*corev1.AvailablePackageSummary{
-		{
-			Name:        "alpine",
-			DisplayName: "alpine",
-			LatestVersion: &corev1.PackageAppVersion{
-				PkgVersion: "0.3.0",
+	expected_summaries_after_update = &corev1.GetAvailablePackageSummariesResponse{
+		AvailablePackageSummaries: []*corev1.AvailablePackageSummary{
+			{
+				Name:        "alpine",
+				DisplayName: "alpine",
+				LatestVersion: &corev1.PackageAppVersion{
+					PkgVersion: "0.3.0",
+				},
+				IconUrl:          "",
+				ShortDescription: "Deploy a basic Alpine Linux pod",
+				AvailablePackageRef: &corev1.AvailablePackageReference{
+					Identifier: "testrepo/alpine",
+					Context:    &corev1.Context{Namespace: "ns2", Cluster: KubeappsCluster},
+					Plugin:     fluxPlugin,
+				},
+				Categories: []string{""},
 			},
-			IconUrl:          "",
-			ShortDescription: "Deploy a basic Alpine Linux pod",
-			AvailablePackageRef: &corev1.AvailablePackageReference{
-				Identifier: "testrepo/alpine",
-				Context:    &corev1.Context{Namespace: "ns2", Cluster: KubeappsCluster},
-				Plugin:     fluxPlugin,
+			{
+				Name:        "nginx",
+				DisplayName: "nginx",
+				LatestVersion: &corev1.PackageAppVersion{
+					PkgVersion: "1.1.0",
+				},
+				IconUrl:          "",
+				ShortDescription: "Create a basic nginx HTTP server",
+				AvailablePackageRef: &corev1.AvailablePackageReference{
+					Identifier: "testrepo/nginx",
+					Context:    &corev1.Context{Namespace: "ns2", Cluster: KubeappsCluster},
+					Plugin:     fluxPlugin,
+				},
+				Categories: []string{""},
 			},
-			Categories: []string{""},
 		},
-		{
-			Name:        "nginx",
-			DisplayName: "nginx",
-			LatestVersion: &corev1.PackageAppVersion{
-				PkgVersion: "1.1.0",
-			},
-			IconUrl:          "",
-			ShortDescription: "Create a basic nginx HTTP server",
-			AvailablePackageRef: &corev1.AvailablePackageReference{
-				Identifier: "testrepo/nginx",
-				Context:    &corev1.Context{Namespace: "ns2", Cluster: KubeappsCluster},
-				Plugin:     fluxPlugin,
-			},
-			Categories: []string{""},
-		}}
+	}
 
 	add_repo_1 = sourcev1.HelmRepository{
 		TypeMeta: metav1.TypeMeta{
@@ -1324,10 +1373,11 @@ var (
 
 	add_repo_req_22 = func(user, password string) *corev1.AddPackageRepositoryRequest {
 		return &corev1.AddPackageRepositoryRequest{
-			Name:    "my-podinfo-6",
-			Context: &corev1.Context{Namespace: "default"},
-			Type:    "oci",
-			Url:     github_stefanprodan_podinfo_oci_registry_url,
+			Name:            "my-podinfo-6",
+			Context:         &corev1.Context{Namespace: "default"},
+			Type:            "oci",
+			NamespaceScoped: true,
+			Url:             github_stefanprodan_podinfo_oci_registry_url,
 			Auth: &corev1.PackageRepositoryAuth{
 				Type: corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_BASIC_AUTH,
 				PackageRepoAuthOneOf: &corev1.PackageRepositoryAuth_UsernamePassword{
@@ -1341,10 +1391,11 @@ var (
 	}
 
 	add_repo_req_23 = &corev1.AddPackageRepositoryRequest{
-		Name:    "my-podinfo-7",
-		Context: &corev1.Context{Namespace: "default"},
-		Type:    "oci",
-		Url:     github_stefanprodan_podinfo_oci_registry_url,
+		Name:            "my-podinfo-7",
+		Context:         &corev1.Context{Namespace: "default"},
+		Type:            "oci",
+		NamespaceScoped: true,
+		Url:             github_stefanprodan_podinfo_oci_registry_url,
 		Auth: &corev1.PackageRepositoryAuth{
 			Type: corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_BASIC_AUTH,
 			PackageRepoAuthOneOf: &corev1.PackageRepositoryAuth_SecretRef{
@@ -1357,10 +1408,11 @@ var (
 
 	add_repo_req_24 = func(server, user, password string) *corev1.AddPackageRepositoryRequest {
 		return &corev1.AddPackageRepositoryRequest{
-			Name:    "my-podinfo-8",
-			Context: &corev1.Context{Namespace: "default"},
-			Type:    "oci",
-			Url:     github_stefanprodan_podinfo_oci_registry_url,
+			Name:            "my-podinfo-8",
+			Context:         &corev1.Context{Namespace: "default"},
+			Type:            "oci",
+			NamespaceScoped: true,
+			Url:             github_stefanprodan_podinfo_oci_registry_url,
 			Auth: &corev1.PackageRepositoryAuth{
 				Type: corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_DOCKER_CONFIG_JSON,
 				PackageRepoAuthOneOf: &corev1.PackageRepositoryAuth_DockerCreds{
@@ -2688,7 +2740,7 @@ var (
 			Url:             "https://example.repo.com/charts",
 			Interval:        "1m",
 			Auth:            &corev1.PackageRepositoryAuth{PassCredentials: false},
-			Status:          podinfo_repo_status_2,
+			Status:          podinfo_repo_status_1,
 		},
 	}
 
@@ -2735,7 +2787,7 @@ var (
 					},
 				},
 			},
-			Status: podinfo_repo_status_2,
+			Status: podinfo_repo_status_1,
 		},
 	}
 
@@ -2755,7 +2807,7 @@ var (
 					CertAuthority: redactedString,
 				},
 			},
-			Status: podinfo_repo_status_2,
+			Status: podinfo_repo_status_1,
 		},
 	}
 
@@ -2813,7 +2865,7 @@ var (
 					},
 				},
 			},
-			Status: podinfo_repo_status_2,
+			Status: podinfo_repo_status_1,
 		},
 	}
 
@@ -2827,7 +2879,7 @@ var (
 			Url:             "https://example.repo.com/charts",
 			Interval:        "1m",
 			Auth:            tls_auth_redacted,
-			Status:          podinfo_repo_status_2,
+			Status:          podinfo_repo_status_1,
 		},
 	}
 
@@ -2845,7 +2897,7 @@ var (
 			Url:             "https://example.repo.com/charts",
 			Interval:        "1m",
 			Auth:            secret_1_auth,
-			Status:          podinfo_repo_status_2,
+			Status:          podinfo_repo_status_1,
 		},
 	}
 
@@ -2859,7 +2911,7 @@ var (
 			Url:             "https://example.repo.com/charts",
 			Interval:        "1m",
 			Auth:            foo_bar_auth_redacted,
-			Status:          podinfo_repo_status_2,
+			Status:          podinfo_repo_status_1,
 		},
 	}
 
@@ -2873,7 +2925,7 @@ var (
 			Url:             podinfo_repo_url,
 			Interval:        "10m",
 			Auth:            &corev1.PackageRepositoryAuth{PassCredentials: false},
-			Status:          podinfo_repo_status_3,
+			Status:          podinfo_repo_status_1,
 		},
 	}
 
@@ -3200,7 +3252,7 @@ var (
 		NamespaceScoped: true,
 		Type:            "helm",
 		Url:             "http://example.com",
-		Status:          podinfo_repo_status_2,
+		Status:          podinfo_repo_status_1,
 		RequiresAuth:    true,
 	}
 
@@ -3211,7 +3263,7 @@ var (
 		NamespaceScoped: true,
 		Type:            "helm",
 		Url:             "http://example.com",
-		Status:          podinfo_repo_status_2,
+		Status:          podinfo_repo_status_1,
 		RequiresAuth:    false,
 	}
 
@@ -3249,7 +3301,7 @@ var (
 			NamespaceScoped: true,
 			Type:            "helm",
 			Url:             podinfo_repo_url,
-			Status:          podinfo_repo_status_3,
+			Status:          podinfo_repo_status_1,
 			RequiresAuth:    false,
 		}
 	}
@@ -3725,21 +3777,14 @@ var (
 	}
 
 	podinfo_repo_status_1 = &corev1.PackageRepositoryStatus{
-		Ready:      true,
-		Reason:     corev1.PackageRepositoryStatus_STATUS_REASON_SUCCESS,
-		UserReason: "Succeeded: stored artifact for revision '9d3ac1eb708dfaebae14d7c88fd46afce8b1e0f7aace790d91758575dc8ce518'",
-	}
-
-	podinfo_repo_status_2 = &corev1.PackageRepositoryStatus{
-		Ready:      true,
-		Reason:     corev1.PackageRepositoryStatus_STATUS_REASON_SUCCESS,
-		UserReason: "Succeeded: stored artifact for revision '651f952130ea96823711d08345b85e82be011dc6'",
-	}
-
-	podinfo_repo_status_3 = &corev1.PackageRepositoryStatus{
-		Ready:      true,
-		Reason:     corev1.PackageRepositoryStatus_STATUS_REASON_SUCCESS,
-		UserReason: "Succeeded: stored artifact for revision '2867920fb8f56575f4bc95ed878ee2a0c8ae79cdd2bca210a72aa3ff04defa1b'",
+		Ready:  true,
+		Reason: corev1.PackageRepositoryStatus_STATUS_REASON_SUCCESS,
+		// the actual revision # (SHA digest), like
+		// '552fc7ab40d40adcd7adebad6d5b8185a5924bc2e2badee8468e20e6962d3c3e'
+		// may change depending on environment, flux version,
+		// or even the order in which tests are run, we we'll ignore that for
+		// the purpose of the integration test
+		UserReason: "Succeeded: stored artifact for revision '",
 	}
 
 	podinfo_repo_status_4 = &corev1.PackageRepositoryStatus{
