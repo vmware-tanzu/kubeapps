@@ -132,11 +132,10 @@ type FluxPackageRepositoryCustomDetail struct {
 
 	// optional field that allows specifying an OIDC provider used for authentication purposes
 	// Supported options are:
-	//   - generic
-	//   - aws
-	//   - azure
-	//   - gcp
-	//
+	//  - generic
+	//  - aws
+	//  - azure
+	//  - gcp
 	// The provider field is supported only for Helm OCI repositories. The repository type must
 	// be set to "oci"
 	// ref https://fluxcd.io/flux/components/source/helmrepositories/#provider

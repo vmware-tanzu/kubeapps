@@ -376,7 +376,6 @@
         "parameters": [
           {
             "name": "body",
-            "description": "Request for CreateInstalledPackage",
             "in": "body",
             "required": true,
             "schema": {
@@ -744,7 +743,6 @@
         "parameters": [
           {
             "name": "body",
-            "description": "Request for AddPackageRepository",
             "in": "body",
             "required": true,
             "schema": {
@@ -1395,7 +1393,6 @@
         "parameters": [
           {
             "name": "body",
-            "description": "Request for CreateInstalledPackage",
             "in": "body",
             "required": true,
             "schema": {
@@ -1749,7 +1746,6 @@
         "parameters": [
           {
             "name": "body",
-            "description": "Request for AddPackageRepository",
             "in": "body",
             "required": true,
             "schema": {
@@ -2354,7 +2350,6 @@
         "parameters": [
           {
             "name": "body",
-            "description": "Request for CreateInstalledPackage",
             "in": "body",
             "required": true,
             "schema": {
@@ -2789,7 +2784,6 @@
         "parameters": [
           {
             "name": "body",
-            "description": "Request for AddPackageRepository",
             "in": "body",
             "required": true,
             "schema": {
@@ -3394,7 +3388,6 @@
         "parameters": [
           {
             "name": "body",
-            "description": "Request for CreateInstalledPackage",
             "in": "body",
             "required": true,
             "schema": {
@@ -3748,7 +3741,6 @@
         "parameters": [
           {
             "name": "body",
-            "description": "Request for AddPackageRepository",
             "in": "body",
             "required": true,
             "schema": {
@@ -4453,15 +4445,8 @@
         "PACKAGE_REPOSITORY_AUTH_TYPE_SSH",
         "PACKAGE_REPOSITORY_AUTH_TYPE_OPAQUE"
       ],
-      "default": "PACKAGE_REPOSITORY_AUTH_TYPE_UNSPECIFIED"
-    },
-    "pluginsfluxv2packagesv1alpha1SetUserManagedSecretsResponse": {
-      "type": "object",
-      "properties": {
-        "value": {
-          "type": "boolean"
-        }
-      }
+      "default": "PACKAGE_REPOSITORY_AUTH_TYPE_UNSPECIFIED",
+      "title": "- PACKAGE_REPOSITORY_AUTH_TYPE_BASIC_AUTH: uses UsernamePassword\n - PACKAGE_REPOSITORY_AUTH_TYPE_TLS: uses TlsCertKey\n - PACKAGE_REPOSITORY_AUTH_TYPE_BEARER: uses header\n - PACKAGE_REPOSITORY_AUTH_TYPE_AUTHORIZATION_HEADER: uses header\n - PACKAGE_REPOSITORY_AUTH_TYPE_DOCKER_CONFIG_JSON: uses DockerCredentials\n - PACKAGE_REPOSITORY_AUTH_TYPE_SSH: uses SshCredentials\n - PACKAGE_REPOSITORY_AUTH_TYPE_OPAQUE: uses OpaqueCredentials"
     },
     "protobufAny": {
       "type": "object",
@@ -4496,7 +4481,8 @@
       "type": "object",
       "properties": {
         "context": {
-          "$ref": "#/definitions/v1alpha1Context"
+          "$ref": "#/definitions/v1alpha1Context",
+          "description": "The target context where the package repository is intended to be\ninstalled."
         },
         "name": {
           "type": "string",
@@ -4523,16 +4509,20 @@
           "title": "The interval at which to check the upstream for updates (in time+unit)\nSome plugins may, addionally, support other formats, for instance,\na cron expression.\ne.g., \"*/10 * * * *\" will be equivalent to \"10m\"\nOptional. Defaults to 10m if not specified"
         },
         "tlsConfig": {
-          "$ref": "#/definitions/v1alpha1PackageRepositoryTlsConfig"
+          "$ref": "#/definitions/v1alpha1PackageRepositoryTlsConfig",
+          "title": "TLS-specific parameters for connecting to a repository. Optional"
         },
         "auth": {
-          "$ref": "#/definitions/v1alpha1PackageRepositoryAuth"
+          "$ref": "#/definitions/v1alpha1PackageRepositoryAuth",
+          "title": "authentication parameters for connecting to a repository. Optional"
         },
         "plugin": {
-          "$ref": "#/definitions/v1alpha1Plugin"
+          "$ref": "#/definitions/v1alpha1Plugin",
+          "description": "The plugin used to interact with this package repository.\nThis field should be omitted when the request is in the context of a\nspecific plugin."
         },
         "customDetail": {
-          "$ref": "#/definitions/protobufAny"
+          "$ref": "#/definitions/protobufAny",
+          "title": "Custom data added by the plugin\nA plugin can define custom details for data which is not yet, or\nnever will be specified in the core AddPackageRepositoryRequest\nfields. The use of an `Any` field means that each plugin can define\nthe structure of this message as required, while still satisfying the\ncore interface.\nSee https://developers.google.com/protocol-buffers/docs/proto3#any\nJust for reference, some of the examples that have been chosen not to\nbe part of the core API but rather plugin-specific details are:\n  direct-helm:\n     - image pull secrets\n     - list of oci repositories\n     - filter rules\n     - sync job pod template"
         }
       },
       "title": "AddPackageRepositoryRequest\n\nRequest for AddPackageRepository"
@@ -4541,7 +4531,8 @@
       "type": "object",
       "properties": {
         "packageRepoRef": {
-          "$ref": "#/definitions/v1alpha1PackageRepositoryReference"
+          "$ref": "#/definitions/v1alpha1PackageRepositoryReference",
+          "title": "TODO: add example for API docs\noption (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {\n  example: '{\"package_repo_ref\": {}}'\n};"
         }
       },
       "title": "AddPackageRepositoryResponse\n\nResponse for AddPackageRepositoryRequest"
@@ -4622,7 +4613,7 @@
           "title": "Custom data added by the plugin\n\nA plugin can define custom details for data which is not yet, or never will\nbe specified in the core.packaging.CreateInstalledPackageRequest fields. The use\nof an `Any` field means that each plugin can define the structure of this\nmessage as required, while still satisfying the core interface.\nSee https://developers.google.com/protocol-buffers/docs/proto3#any"
         }
       },
-      "description": "AvailablePackageDetail\n\nAn AvailablePackageDetail provides additional details required when\ninspecting an individual package."
+      "description": "AvailablePackageDetail\n\nAn AvailablePackageDetail provides additional details required when\ninspecting an individual package.\n\nTODO: add example for API docs\n option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {\n   example: '{}'\n };"
     },
     "v1alpha1AvailablePackageReference": {
       "type": "object",
@@ -4640,7 +4631,7 @@
           "description": "Plugin for the available package\n\nThe plugin used to interact with this available package.\nThis field should be omitted when the request is in the context of a specific plugin."
         }
       },
-      "description": "AvailablePackageReference\n\nAn AvailablePackageReference has the minimum information required to uniquely\nidentify an available package. This is re-used on the summary and details of an\navailable package."
+      "description": "AvailablePackageReference\n\nAn AvailablePackageReference has the minimum information required to uniquely\nidentify an available package. This is re-used on the summary and details of an\navailable package.\n\nTODO: add example for API docs\n option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {\n   example: '{}'\n };"
     },
     "v1alpha1AvailablePackageSummary": {
       "type": "object",
@@ -4677,7 +4668,7 @@
           "title": "Available package categories\n\nA user-facing list of category names useful for creating richer user interfaces.\nPlugins can choose not to implement this"
         }
       },
-      "description": "AvailablePackageSummary\n\nAn AvailablePackageSummary provides a summary of a package available for installation\nuseful when aggregating many available packages."
+      "description": "AvailablePackageSummary\n\nAn AvailablePackageSummary provides a summary of a package available for installation\nuseful when aggregating many available packages.\n\nTODO: add example for API docs\n option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {\n   example: '{}'\n };"
     },
     "v1alpha1CanIResponse": {
       "type": "object",
@@ -4710,30 +4701,35 @@
           "description": "Namespace\n\nA namespace must be provided if the context of the operation is for a resource\nor resources in a particular namespace.\nFor requests to list items, not including a namespace here implies that the context\nfor the request is everything the requesting user can read, though the result can\nbe filtered by any filtering options of the request. Plugins may choose to return\nUnimplemented for some queries for which we do not yet have a need."
         }
       },
+      "description": "TODO: add example for API docs\n option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {\n   example: '{}'\n };",
       "title": "Context\n\nA Context specifies the context of the message"
     },
     "v1alpha1CreateInstalledPackageRequest": {
       "type": "object",
       "properties": {
         "availablePackageRef": {
-          "$ref": "#/definitions/v1alpha1AvailablePackageReference"
+          "$ref": "#/definitions/v1alpha1AvailablePackageReference",
+          "description": "A reference uniquely identifying the package available for installation."
         },
         "targetContext": {
-          "$ref": "#/definitions/v1alpha1Context"
+          "$ref": "#/definitions/v1alpha1Context",
+          "description": "The target context where the package is intended to be installed."
         },
         "name": {
           "type": "string",
           "title": "A user-provided name for the installed package (eg. project-x-db)"
         },
         "pkgVersionReference": {
-          "$ref": "#/definitions/v1alpha1VersionReference"
+          "$ref": "#/definitions/v1alpha1VersionReference",
+          "description": "For helm this will be the exact version in VersionReference.version\nFor other plugins we can extend the VersionReference as needed."
         },
         "values": {
           "type": "string",
           "description": "An optional serialized values string to be included when templating a package\nin the format expected by the plugin. Included when the backend format doesn't\nuse secrets or configmaps for values or supports both. These values are layered\non top of any values refs above, when relevant."
         },
         "reconciliationOptions": {
-          "$ref": "#/definitions/v1alpha1ReconciliationOptions"
+          "$ref": "#/definitions/v1alpha1ReconciliationOptions",
+          "description": "An optional field for specifying data common to systems that reconcile\nthe package on the cluster."
         }
       },
       "title": "CreateInstalledPackageRequest\n\nRequest for CreateInstalledPackage"
@@ -4745,6 +4741,7 @@
           "$ref": "#/definitions/v1alpha1InstalledPackageReference"
         }
       },
+      "description": "TODO: add example for API docs\n option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {\n   example: '{\"installed_package_ref\": {}}'\n };",
       "title": "CreateInstalledPackageResponse\n\nResponse for CreateInstalledPackage"
     },
     "v1alpha1CreateNamespaceResponse": {
@@ -4757,10 +4754,12 @@
     },
     "v1alpha1DeleteInstalledPackageResponse": {
       "type": "object",
+      "description": "For future extensibility only.",
       "title": "DeleteInstalledPackageResponse\n\nResponse for DeleteInstalledPackage"
     },
     "v1alpha1DeletePackageRepositoryResponse": {
       "type": "object",
+      "description": "For future extensibility only.",
       "title": "DeletePackageRepositoryResponse\n\nResponse for DeletePackageRepository"
     },
     "v1alpha1DockerCredentials": {
@@ -4815,6 +4814,7 @@
           "title": "App version\n\nPackaged app version for the request"
         }
       },
+      "description": "TODO: add example for API docs\n option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {\n   example: '{}'\n };",
       "title": "FilterOptions\n\nFilterOptions available when requesting summaries"
     },
     "v1alpha1GetAvailablePackageDetailResponse": {
@@ -4825,6 +4825,7 @@
           "title": "Available package detail\n\nThe requested AvailablePackageDetail"
         }
       },
+      "description": "TODO: add example for API docs\n option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {\n   example: '{\"available_package_detail\": [{}]}'\n };",
       "title": "GetAvailablePackageDetailResponse\n\nResponse for GetAvailablePackageDetail"
     },
     "v1alpha1GetAvailablePackageSummariesResponse": {
@@ -4849,6 +4850,7 @@
           "description": "Categories\n\nThis optional field contains the distinct category names considering the FilterOptions."
         }
       },
+      "description": "TODO: add example for API docs\n option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {\n   example: '{\"available_package_summaries\": [{}]}'\n };",
       "title": "GetAvailablePackageSummariesResponse\n\nResponse for GetAvailablePackageSummaries"
     },
     "v1alpha1GetAvailablePackageVersionsResponse": {
@@ -4862,6 +4864,7 @@
           "description": "Package app versions\n\nBy default (when version_query is empty or ignored) the response\nshould contain an ordered summary of versions including the most recent three\npatch versions of the most recent three minor versions of the most recent three\nmajor versions when available, something like:\n[\n  { pkg_version: \"10.3.19\", app_version: \"2.16.8\" },\n  { pkg_version: \"10.3.18\", app_version: \"2.16.8\" },\n  { pkg_version: \"10.3.17\", app_version: \"2.16.7\" },\n  { pkg_version: \"10.2.6\", app_version: \"2.15.3\" },\n  { pkg_version: \"10.2.5\", app_version: \"2.15.2\" },\n  { pkg_version: \"10.2.4\", app_version: \"2.15.2\" },\n  { pkg_version: \"10.1.8\", app_version: \"2.13.5\" },\n  { pkg_version: \"10.1.7\", app_version: \"2.13.5\" },\n  { pkg_version: \"10.1.6\", app_version: \"2.13.5\" },\n  { pkg_version: \"9.5.4\", app_version: \"2.8.9\" },\n  ...\n  { pkg_version: \"8.2.5\", app_version: \"1.19.5\" },\n  ...\n]\nIf a version_query is present and the plugin chooses to support it,\nthe full history of versions matching the version query should be returned."
         }
       },
+      "description": "TODO: add example for API docs\n option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {\n   example: '{\"package_app_versions\": [{}]}'\n };",
       "title": "GetAvailablePackageVersionsResponse\n\nResponse for GetAvailablePackageVersions"
     },
     "v1alpha1GetConfiguredPluginsResponse": {
@@ -4893,6 +4896,7 @@
           "title": "InstalledPackageDetail\n\nThe requested InstalledPackageDetail"
         }
       },
+      "description": "TODO: add example for API docs\n option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {\n   example: '{\"installed_package_detail\": [{}]}'\n };",
       "title": "GetInstalledPackageDetailResponse\n\nResponse for GetInstalledPackageDetail"
     },
     "v1alpha1GetInstalledPackageResourceRefsResponse": {
@@ -4944,7 +4948,8 @@
       "type": "object",
       "properties": {
         "detail": {
-          "$ref": "#/definitions/v1alpha1PackageRepositoryDetail"
+          "$ref": "#/definitions/v1alpha1PackageRepositoryDetail",
+          "title": "package repository detail"
         }
       },
       "title": "GetPackageRepositoryDetailResponse\n\nResponse for GetPackageRepositoryDetail"
@@ -5078,10 +5083,11 @@
           "description": "The fully qualified identifier for the installed package\n(ie. a unique name for the context)."
         },
         "plugin": {
-          "$ref": "#/definitions/v1alpha1Plugin"
+          "$ref": "#/definitions/v1alpha1Plugin",
+          "description": "The plugin used to identify and interact with the installed package.\nThis field can be omitted when the request is in the context of a specific plugin."
         }
       },
-      "description": "InstalledPackageReference\n\nAn InstalledPackageReference has the minimum information required to uniquely\nidentify an installed package."
+      "description": "InstalledPackageReference\n\nAn InstalledPackageReference has the minimum information required to uniquely\nidentify an installed package.\n\nTODO: add example for API docs\n option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {\n   example: '{}'\n };"
     },
     "v1alpha1InstalledPackageStatus": {
       "type": "object",
@@ -5157,7 +5163,7 @@
           "description": "Status\n\nThe current status of the installed package."
         }
       },
-      "description": "InstalledPackageSummary\n\nAn InstalledPackageSummary provides a summary of an installed package\nuseful when aggregating many installed packages."
+      "description": "InstalledPackageSummary\n\nAn InstalledPackageSummary provides a summary of an installed package\nuseful when aggregating many installed packages.\n\nTODO: add example for API docs\n option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {\n   example: '{}'\n };"
     },
     "v1alpha1Maintainer": {
       "type": "object",
@@ -5171,7 +5177,7 @@
           "title": "Maintainer email\n\nA maintainer email"
         }
       },
-      "description": "Maintainer\n\nMaintainers for the package."
+      "description": "Maintainer\n\nMaintainers for the package.\n\nTODO: add example for API docs\n option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {\n   example: '{}'\n };"
     },
     "v1alpha1OpaqueCredentials": {
       "type": "object",
@@ -5229,26 +5235,32 @@
           "$ref": "#/definitions/PackageRepositoryAuthPackageRepositoryAuthType"
         },
         "usernamePassword": {
-          "$ref": "#/definitions/v1alpha1UsernamePassword"
+          "$ref": "#/definitions/v1alpha1UsernamePassword",
+          "title": "username and plain text password"
         },
         "tlsCertKey": {
-          "$ref": "#/definitions/v1alpha1TlsCertKey"
+          "$ref": "#/definitions/v1alpha1TlsCertKey",
+          "title": "certificate and key for TLS-based authentication"
         },
         "dockerCreds": {
-          "$ref": "#/definitions/v1alpha1DockerCredentials"
+          "$ref": "#/definitions/v1alpha1DockerCredentials",
+          "title": "docker credentials"
         },
         "header": {
           "type": "string",
           "title": "for Bearer Auth token value\nfor Custom Auth, complete value of \"Authorization\" header"
         },
         "secretRef": {
-          "$ref": "#/definitions/v1alpha1SecretKeyReference"
+          "$ref": "#/definitions/v1alpha1SecretKeyReference",
+          "title": "a reference to an existing secret"
         },
         "sshCreds": {
-          "$ref": "#/definitions/v1alpha1SshCredentials"
+          "$ref": "#/definitions/v1alpha1SshCredentials",
+          "title": "SSH credentials"
         },
         "opaqueCreds": {
-          "$ref": "#/definitions/v1alpha1OpaqueCredentials"
+          "$ref": "#/definitions/v1alpha1OpaqueCredentials",
+          "title": "opaque credentials"
         },
         "passCredentials": {
           "type": "boolean",
@@ -5261,7 +5273,8 @@
       "type": "object",
       "properties": {
         "packageRepoRef": {
-          "$ref": "#/definitions/v1alpha1PackageRepositoryReference"
+          "$ref": "#/definitions/v1alpha1PackageRepositoryReference",
+          "description": "A reference uniquely identifying the package repository."
         },
         "name": {
           "type": "string",
@@ -5288,16 +5301,20 @@
           "title": "The interval at which to check the upstream for updates (in time+unit)\nSome plugins may, addionally, support other formats, for instance,\na cron expression.\ne.g., \"*/10 * * * *\" will be equivalent to \"10m\""
         },
         "tlsConfig": {
-          "$ref": "#/definitions/v1alpha1PackageRepositoryTlsConfig"
+          "$ref": "#/definitions/v1alpha1PackageRepositoryTlsConfig",
+          "title": "TLS-specific parameters for connecting to a repository.\nIf the cert authority was configured for this repository, then in the context\nof GetPackageRepositoryDetail() operation, the PackageRepositoryTlsConfig will ALWAYS\ncontain an existing SecretKeyReference, rather that cert_authority field"
         },
         "auth": {
-          "$ref": "#/definitions/v1alpha1PackageRepositoryAuth"
+          "$ref": "#/definitions/v1alpha1PackageRepositoryAuth",
+          "title": "authentication parameters for connecting to a repository.\nIf Basic Auth or TLS or Docker Creds Auth was configured for this repository,\nthen in the context of GetPackageRepositoryDetail() operation, the\nPackageRepositoryAuth will ALWAYS contain an existing SecretKeyReference,\nrather that string values that may have been used when package repository was created\nfield"
         },
         "customDetail": {
-          "$ref": "#/definitions/protobufAny"
+          "$ref": "#/definitions/protobufAny",
+          "title": "Custom data added by the plugin"
         },
         "status": {
-          "$ref": "#/definitions/v1alpha1PackageRepositoryStatus"
+          "$ref": "#/definitions/v1alpha1PackageRepositoryStatus",
+          "description": "current status of the repository which can include reconciliation\nstatus, where relevant."
         }
       },
       "title": "PackageRepositoryDetail"
@@ -5306,14 +5323,16 @@
       "type": "object",
       "properties": {
         "context": {
-          "$ref": "#/definitions/v1alpha1Context"
+          "$ref": "#/definitions/v1alpha1Context",
+          "description": "The context (cluster/namespace) for the repository."
         },
         "identifier": {
           "type": "string",
           "description": "The fully qualified identifier for the repository\n(i.e. a unique name for the context)."
         },
         "plugin": {
-          "$ref": "#/definitions/v1alpha1Plugin"
+          "$ref": "#/definitions/v1alpha1Plugin",
+          "description": "The plugin used to interact with this available package.\nThis field should be omitted when the request is in the context of a\nspecific plugin."
         }
       },
       "description": "PackageRepositoryReference\n\nA PackageRepositoryReference has the minimum information required to\nuniquely identify a package repository."
@@ -5351,7 +5370,8 @@
       "type": "object",
       "properties": {
         "packageRepoRef": {
-          "$ref": "#/definitions/v1alpha1PackageRepositoryReference"
+          "$ref": "#/definitions/v1alpha1PackageRepositoryReference",
+          "description": "A reference uniquely identifying the package repository."
         },
         "name": {
           "type": "string",
@@ -5374,7 +5394,8 @@
           "description": "URL identifying the package repository location."
         },
         "status": {
-          "$ref": "#/definitions/v1alpha1PackageRepositoryStatus"
+          "$ref": "#/definitions/v1alpha1PackageRepositoryStatus",
+          "description": "current status of the repository which can include reconciliation\nstatus, where relevant."
         },
         "requiresAuth": {
           "type": "boolean",
@@ -5395,7 +5416,8 @@
           "title": "certificate authority. Optional"
         },
         "secretRef": {
-          "$ref": "#/definitions/v1alpha1SecretKeyReference"
+          "$ref": "#/definitions/v1alpha1SecretKeyReference",
+          "title": "a reference to an existing secret that contains custom CA"
         }
       },
       "title": "PackageRepositoryTlsConfig"
@@ -5413,7 +5435,7 @@
           "description": "Page size\n\nClients use this field to specify the maximum number of results to be\nreturned by the server. The server may further constrain the maximum number\nof results returned in a single page. If the page_size is 0, the server\nwill decide the number of results to be returned."
         }
       },
-      "description": "PaginationOptions\n\nThe PaginationOptions based on the example proto at:\nhttps://cloud.google.com/apis/design/design_patterns#list_pagination\njust encapsulated in a message so it can be reused on different request messages."
+      "description": "PaginationOptions\n\nThe PaginationOptions based on the example proto at:\nhttps://cloud.google.com/apis/design/design_patterns#list_pagination\njust encapsulated in a message so it can be reused on different request messages.\n\nTODO: add example for API docs\n option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {\n   example: '{}'\n };"
     },
     "v1alpha1Plugin": {
       "type": "object",
@@ -5477,7 +5499,8 @@
       "type": "object",
       "properties": {
         "installedPackageRef": {
-          "$ref": "#/definitions/v1alpha1InstalledPackageReference"
+          "$ref": "#/definitions/v1alpha1InstalledPackageReference",
+          "title": "TODO: add example for API docs\noption (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {\n  example: '{\"installed_package_ref\": {}}'\n};"
         }
       },
       "title": "RollbackInstalledPackageResponse\n\nResponse for RollbackInstalledPackage"
@@ -5510,6 +5533,14 @@
       ],
       "default": "SECRET_TYPE_OPAQUE_UNSPECIFIED",
       "title": "SecretType\n\nThe type of secret. Currently Kubeapps itself only deals with OPAQUE\nand docker config json secrets, but we define all so we can correctly\nlist the secret names with their types.\nSee https://kubernetes.io/docs/concepts/configuration/secret/#secret-types"
+    },
+    "v1alpha1SetUserManagedSecretsResponse": {
+      "type": "object",
+      "properties": {
+        "value": {
+          "type": "boolean"
+        }
+      }
     },
     "v1alpha1SshCredentials": {
       "type": "object",
@@ -5546,6 +5577,7 @@
           "$ref": "#/definitions/v1alpha1InstalledPackageReference"
         }
       },
+      "description": "TODO: add example for API docs\n option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {\n   example: '{\"installed_package_ref\": {}}'\n };",
       "title": "UpdateInstalledPackageResponse\n\nResponse for UpdateInstalledPackage"
     },
     "v1alpha1UpdatePackageRepositoryResponse": {
