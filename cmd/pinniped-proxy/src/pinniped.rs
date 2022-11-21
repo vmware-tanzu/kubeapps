@@ -16,7 +16,6 @@ use kube::{
     core::GroupVersionKind,
     Client, Config,
 };
-use log::debug;
 use native_tls::Identity;
 use openssl::x509::X509;
 use serde::{Deserialize, Serialize};
@@ -201,6 +200,11 @@ fn identity_for_exchange(cred: &ClusterCredential) -> Result<Identity> {
     Ok(identity)
 }
 
+// Profiling shows that the call to Client::try_from below can take
+// anywhere from 4ms to 100ms every time for every connection. When
+// a go-lang rest mapper initialises, it requests ~50 different APIs
+// which leads to 3-5s of CPU just in this call. So we ensure this
+// is only called if we need it (ie. the token is not cached).
 fn get_client_config(
     k8s_api_server_url: &str,
     k8s_api_ca_cert_data: &[u8],
@@ -229,17 +233,9 @@ async fn prepare_and_call_pinniped_exchange(
     credential_cache: CredentialCache,
 ) -> Result<TokenCredentialRequest> {
     // context data
-    let start = std::time::Instant::now();
     let pinniped_namespace: String = env::var(DEFAULT_PINNIPED_NAMESPACE)?;
     let pinniped_auth_type: String = env::var(DEFAULT_PINNIPED_AUTHENTICATOR_TYPE)?;
     let pinniped_auth_name: String = env::var(DEFAULT_PINNIPED_AUTHENTICATOR_NAME)?;
-
-    // kube client
-    let client = get_client_config(
-        k8s_api_server_url,
-        k8s_api_ca_cert_data,
-        pinniped_namespace.clone(),
-    )?;
 
     // extract token
     let auth_token = match authorization.to_string().strip_prefix("Bearer ") {
@@ -262,26 +258,19 @@ async fn prepare_and_call_pinniped_exchange(
 
     // If the credential already exists in the cache (the cache handles expired
     // creds), then return that.
-    let mut used_cache = false;
-    let res = match credential_cache.get(&cred_data) {
-        Some(cached_cred) => {
-            used_cache = true;
-            Ok(cached_cred)
-        }
+    match credential_cache.get(&cred_data) {
+        Some(cached_cred) => Ok(cached_cred),
         None => {
+            let client = get_client_config(
+                k8s_api_server_url,
+                k8s_api_ca_cert_data,
+                pinniped_namespace.clone(),
+            )?;
             let cred = call_pinniped(pinniped_namespace, client, cred_data.clone()).await?;
             credential_cache.insert(cred_data, cred.clone());
             Ok(cred)
         }
-    };
-
-    let finished = std::time::Instant::now();
-    debug!(
-        "prepare_and_call_pinniped_exchange took {}ms. Used cache?: {}",
-        finished.duration_since(start).as_millis(),
-        used_cache
-    );
-    res
+    }
 }
 
 async fn call_pinniped(
