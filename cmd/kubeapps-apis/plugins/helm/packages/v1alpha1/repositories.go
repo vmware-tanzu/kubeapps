@@ -156,9 +156,7 @@ func newHelmRepoCrd(repo *HelmRepository, secret *k8scorev1.Secret, imagePullSec
 			// TODO(agamez): are more fields here if they're requested
 			// https://github.com/vmware-tanzu/kubeapps/issues/5128
 			SyncJobPodTemplate: k8scorev1.PodTemplateSpec{
-				Spec: k8scorev1.PodSpec{
-					Containers: []k8scorev1.Container{{Env: []k8scorev1.EnvVar{}}},
-				},
+				Spec: k8scorev1.PodSpec{},
 			},
 		},
 	}
@@ -210,6 +208,10 @@ func newHelmRepoCrd(repo *HelmRepository, secret *k8scorev1.Secret, imagePullSec
 		}
 
 		if repo.customDetail.ProxyOptions != nil && repo.customDetail.ProxyOptions.Enabled {
+			if appRepoCrd.Spec.SyncJobPodTemplate.Spec.Containers == nil {
+				appRepoCrd.Spec.SyncJobPodTemplate.Spec.Containers = []k8scorev1.Container{{Env: []k8scorev1.EnvVar{}}}
+			}
+
 			if repo.customDetail.ProxyOptions.HttpProxy != "" {
 				appRepoCrd.Spec.SyncJobPodTemplate.Spec.Containers[0].Env = append(appRepoCrd.Spec.SyncJobPodTemplate.Spec.Containers[0].Env, k8scorev1.EnvVar{
 					Name:  "http_proxy",
