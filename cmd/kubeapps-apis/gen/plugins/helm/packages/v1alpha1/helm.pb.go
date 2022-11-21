@@ -295,13 +295,13 @@ type HelmPackageRepositoryCustomDetail struct {
 	FilterRule *RepositoryFilterRule `protobuf:"bytes,3,opt,name=filter_rule,json=filterRule,proto3" json:"filter_rule,omitempty"`
 	// whether to perform validation on the repository
 	PerformValidation bool `protobuf:"varint,4,opt,name=perform_validation,json=performValidation,proto3" json:"perform_validation,omitempty"`
-	// TODO
+	// the query options for the proxy call
 	ProxyOptions *ProxyOptions `protobuf:"bytes,5,opt,name=proxy_options,json=proxyOptions,proto3" json:"proxy_options,omitempty"`
-	// TODO
+	// selector which must be true for the pod to fit on a node
 	NodeSelector map[string]string `protobuf:"bytes,6,rep,name=node_selector,json=nodeSelector,proto3" json:"node_selector,omitempty" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"bytes,2,opt,name=value,proto3"`
-	// TODO
+	// set of Pod's Tolerations
 	Tolerations []*Toleration `protobuf:"bytes,7,rep,name=tolerations,proto3" json:"tolerations,omitempty"`
-	// TODO
+	// defines the security options the container should be run with.
 	SecurityContext *PodSecurityContext `protobuf:"bytes,8,opt,name=security_context,json=securityContext,proto3" json:"security_context,omitempty"`
 }
 
@@ -455,19 +455,19 @@ func (x *RepositoryFilterRule) GetVariables() map[string]string {
 
 // ProxyOptions
 //
-// TODO
+// query options for a proxy call
 type ProxyOptions struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	// TODO
+	// if true, the proxy options will be taken into account
 	Enabled bool `protobuf:"varint,1,opt,name=enabled,proto3" json:"enabled,omitempty"`
-	// TODO
+	// value for the HTTP_PROXY env variable passed to the Pod
 	HttpProxy string `protobuf:"bytes,2,opt,name=http_proxy,json=httpProxy,proto3" json:"http_proxy,omitempty"`
-	// TODO
+	// value for the HTTPS_PROXY env variable passed to the Pod
 	HttpsProxy string `protobuf:"bytes,3,opt,name=https_proxy,json=httpsProxy,proto3" json:"https_proxy,omitempty"`
-	// TODO
+	// value for the NO_PROXY env variable passed to the Pod
 	NoProxy string `protobuf:"bytes,4,opt,name=no_proxy,json=noProxy,proto3" json:"no_proxy,omitempty"`
 }
 

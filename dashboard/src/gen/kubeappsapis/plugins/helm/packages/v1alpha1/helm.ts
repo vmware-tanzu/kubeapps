@@ -108,13 +108,13 @@ export interface HelmPackageRepositoryCustomDetail {
   filterRule?: RepositoryFilterRule;
   /** whether to perform validation on the repository */
   performValidation: boolean;
-  /** TODO */
+  /** the query options for the proxy call */
   proxyOptions?: ProxyOptions;
-  /** TODO */
+  /** selector which must be true for the pod to fit on a node */
   nodeSelector: { [key: string]: string };
-  /** TODO */
+  /** set of Pod's Tolerations */
   tolerations: Toleration[];
-  /** TODO */
+  /** defines the security options the container should be run with. */
   securityContext?: PodSecurityContext;
 }
 
@@ -143,16 +143,16 @@ export interface RepositoryFilterRule_VariablesEntry {
 /**
  * ProxyOptions
  *
- * TODO
+ * query options for a proxy call
  */
 export interface ProxyOptions {
-  /** TODO */
+  /** if true, the proxy options will be taken into account */
   enabled: boolean;
-  /** TODO */
+  /** value for the HTTP_PROXY env variable passed to the Pod */
   httpProxy: string;
-  /** TODO */
+  /** value for the HTTPS_PROXY env variable passed to the Pod */
   httpsProxy: string;
-  /** TODO */
+  /** value for the NO_PROXY env variable passed to the Pod */
   noProxy: string;
 }
 

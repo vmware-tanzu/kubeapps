@@ -190,16 +190,16 @@ message HelmPackageRepositoryCustomDetail {
   // whether to perform validation on the repository
   bool perform_validation = 4;
 
-  // TODO
+  // the query options for the proxy call
   ProxyOptions proxy_options = 5;
 
-  // TODO
+  // selector which must be true for the pod to fit on a node
   map<string, string> node_selector = 6;
 
-  // TODO
+  // set of Pod's Tolerations
   repeated Toleration tolerations = 7;
 
-  // TODO
+  // defines the security options the container should be run with.
   PodSecurityContext security_context = 8;
 }
 
@@ -216,18 +216,18 @@ message RepositoryFilterRule {
 
 // ProxyOptions
 //
-// TODO
+// query options for a proxy call
 message ProxyOptions {
-  // TODO
+  // if true, the proxy options will be taken into account
   bool enabled = 1;
 
-  // TODO
+  // value for the HTTP_PROXY env variable passed to the Pod
   string http_proxy = 2;
 
-  // TODO
+  // value for the HTTPS_PROXY env variable passed to the Pod
   string https_proxy = 3;
 
-  // TODO
+  // value for the NO_PROXY env variable passed to the Pod
   string no_proxy = 4;
 }
 
