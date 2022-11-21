@@ -23,7 +23,7 @@ import (
 const (
 	redactedString = "REDACTED"
 	// ref https://kubernetes.io/docs/concepts/overview/working-with-objects/common-labels/#labels
-	managedByAnnotationName  = "app.kubernetes.io/managed-by"
+	managedByAnnotationKey   = "app.kubernetes.io/managed-by"
 	managedByAnnotationValue = "kubeapps"
 )
 
@@ -534,8 +534,13 @@ func getRepoTlsConfigAndAuthWithKubeappsManagedSecrets(secret *apiv1.Secret) (*c
 }
 
 func isSecretKubeappsManaged(secret *apiv1.Secret) bool {
-	managedBy, ok := secret.Annotations[managedByAnnotationName]
-	return ok && managedBy == managedByAnnotationValue
+	if !metav1.IsControlledBy(secret, repo) {
+		return false
+	}
+	if managedby := secret.GetAnnotations()[Annotation_ManagedBy_Key]; managedby != Annotation_ManagedBy_Value {
+		return false
+	}
+	return true
 }
 
 // "Local" in the sense of no namespace is specified
@@ -544,7 +549,7 @@ func newLocalOpaqueSecret(ownerRepo types.NamespacedName) *apiv1.Secret {
 		ObjectMeta: metav1.ObjectMeta{
 			GenerateName: ownerRepo.Name + "-",
 			Annotations: map[string]string{
-				managedByAnnotationName: managedByAnnotationValue,
+				managedByAnnotationKey: managedByAnnotationValue,
 			},
 		},
 		Type: apiv1.SecretTypeOpaque,
@@ -558,7 +563,7 @@ func newLocalDockerConfigJsonSecret(ownerRepo types.NamespacedName) *apiv1.Secre
 		ObjectMeta: metav1.ObjectMeta{
 			GenerateName: ownerRepo.Name + "-",
 			Annotations: map[string]string{
-				managedByAnnotationName: managedByAnnotationValue,
+				managedByAnnotationKey: managedByAnnotationValue,
 			},
 		},
 		Type: apiv1.SecretTypeDockerConfigJson,

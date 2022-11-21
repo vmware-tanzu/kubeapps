@@ -211,7 +211,7 @@ func newBasicAuthSecret(name types.NamespacedName, user, password string) *apiv1
 func newManagedBasicAuthSecret(name types.NamespacedName, user, password string) *apiv1.Secret {
 	secret := newBasicAuthSecret(name, user, password)
 	secret.Annotations = map[string]string{
-		managedByAnnotationName: managedByAnnotationValue,
+		managedByAnnotationKey: managedByAnnotationValue,
 	}
 	return secret
 }
@@ -289,7 +289,7 @@ func newDockerConfigJsonSecret(name types.NamespacedName, server, user, password
 func newManagedDockerConfigJsonSecret(name types.NamespacedName, server, user, password string) *apiv1.Secret {
 	s := newDockerConfigJsonSecret(name, server, user, password)
 	s.Annotations = map[string]string{
-		managedByAnnotationName: managedByAnnotationValue,
+		managedByAnnotationKey: managedByAnnotationValue,
 	}
 	return s
 }
