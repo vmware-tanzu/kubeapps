@@ -419,6 +419,54 @@ func (s *Server) updateRepo(ctx context.Context,
 			appRepo.Spec.FilterRule = apprepov1alpha1.FilterRuleSpec{}
 		}
 		appRepo.Spec.OCIRepositories = repo.customDetail.OciRepositories
+		appRepo.Spec.SyncJobPodTemplate.Spec.NodeSelector = repo.customDetail.NodeSelector
+
+		if repo.customDetail.Tolerations != nil {
+			appRepo.Spec.SyncJobPodTemplate.Spec.Tolerations = make([]k8scorev1.Toleration, len(repo.customDetail.Tolerations))
+			for i, t := range repo.customDetail.Tolerations {
+				appRepo.Spec.SyncJobPodTemplate.Spec.Tolerations[i] = k8scorev1.Toleration{
+					Key:               *t.Key,
+					Operator:          k8scorev1.TolerationOperator(*t.Operator),
+					Value:             *t.Value,
+					Effect:            k8scorev1.TaintEffect(*t.Effect),
+					TolerationSeconds: t.TolerationSeconds,
+				}
+			}
+		}
+		if repo.customDetail.SecurityContext != nil {
+			appRepo.Spec.SyncJobPodTemplate.Spec.SecurityContext = &k8scorev1.PodSecurityContext{
+				RunAsUser:          repo.customDetail.SecurityContext.RunAsUser,
+				RunAsGroup:         repo.customDetail.SecurityContext.RunAsGroup,
+				RunAsNonRoot:       repo.customDetail.SecurityContext.RunAsNonRoot,
+				SupplementalGroups: repo.customDetail.SecurityContext.SupplementalGroups,
+				FSGroup:            repo.customDetail.SecurityContext.FSGroup,
+			}
+		}
+
+		if repo.customDetail.ProxyOptions != nil && repo.customDetail.ProxyOptions.Enabled {
+			if appRepo.Spec.SyncJobPodTemplate.Spec.Containers == nil {
+				appRepo.Spec.SyncJobPodTemplate.Spec.Containers = []k8scorev1.Container{{Env: []k8scorev1.EnvVar{}}}
+			}
+
+			if repo.customDetail.ProxyOptions.HttpProxy != "" {
+				appRepo.Spec.SyncJobPodTemplate.Spec.Containers[0].Env = append(appRepo.Spec.SyncJobPodTemplate.Spec.Containers[0].Env, k8scorev1.EnvVar{
+					Name:  HTTP_PROXY,
+					Value: repo.customDetail.ProxyOptions.HttpProxy,
+				})
+			}
+			if repo.customDetail.ProxyOptions.HttpsProxy != "" {
+				appRepo.Spec.SyncJobPodTemplate.Spec.Containers[0].Env = append(appRepo.Spec.SyncJobPodTemplate.Spec.Containers[0].Env, k8scorev1.EnvVar{
+					Name:  HTTPS_PROXY,
+					Value: repo.customDetail.ProxyOptions.HttpsProxy,
+				})
+			}
+			if repo.customDetail.ProxyOptions.NoProxy != "" {
+				appRepo.Spec.SyncJobPodTemplate.Spec.Containers[0].Env = append(appRepo.Spec.SyncJobPodTemplate.Spec.Containers[0].Env, k8scorev1.EnvVar{
+					Name:  NO_PROXY,
+					Value: repo.customDetail.ProxyOptions.NoProxy,
+				})
+			}
+		}
 	} else {
 		appRepo.Spec.DockerRegistrySecrets = nil
 		appRepo.Spec.OCIRepositories = nil
