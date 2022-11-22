@@ -47,10 +47,10 @@ require (
 	github.com/distribution/distribution v2.8.1+incompatible
 	github.com/docker/cli v20.10.21+incompatible
 	github.com/fluxcd/helm-controller/api v0.26.0
-	github.com/fluxcd/pkg/apis/meta v0.17.0
+	github.com/fluxcd/pkg/apis/meta v0.18.0
 	github.com/fluxcd/pkg/oci v0.14.0
 	github.com/fluxcd/pkg/version v0.2.0
-	github.com/fluxcd/source-controller/api v0.31.0
+	github.com/fluxcd/source-controller/api v0.32.1
 	github.com/go-redis/redis/v8 v8.11.5
 	github.com/go-redis/redismock/v8 v8.0.6
 	github.com/google/go-cmp v0.5.9
@@ -84,17 +84,17 @@ require (
 	helm.sh/helm/v3 v3.9.4
 	k8s.io/api v0.25.3
 	k8s.io/apiextensions-apiserver v0.25.3
-	k8s.io/apimachinery v0.25.3
+	k8s.io/apimachinery v0.25.4
 	k8s.io/apiserver v0.25.3
 	k8s.io/cli-runtime v0.25.3
 	k8s.io/client-go v0.25.3
 	k8s.io/klog/v2 v2.80.1
 	k8s.io/kubectl v0.25.3
 	k8s.io/kubernetes v1.24.7
-	k8s.io/utils v0.0.0-20221012122500-cfd413dd9e85
+	k8s.io/utils v0.0.0-20221108210102-8e77b1f39fe2
 	oras.land/oras-go v1.2.1
 	oras.land/oras-go/v2 v2.0.0-rc.5
-	sigs.k8s.io/controller-runtime v0.13.0
+	sigs.k8s.io/controller-runtime v0.13.1
 	sigs.k8s.io/yaml v1.3.0
 )
 
@@ -250,7 +250,7 @@ require (
 	k8s.io/component-base v0.25.3 // indirect
 	k8s.io/kube-openapi v0.0.0-20221012153701-172d655c2280 // indirect
 	nhooyr.io/websocket v1.8.7 // indirect
-	sigs.k8s.io/json v0.0.0-20220713155537-f223a00ba0e2 // indirect
+	sigs.k8s.io/json v0.0.0-20221116044647-bc3834ca7abd // indirect
 	sigs.k8s.io/kustomize/api v0.12.1 // indirect
 	sigs.k8s.io/kustomize/kyaml v0.13.9 // indirect
 	sigs.k8s.io/structured-merge-diff/v4 v4.2.3 // indirect
