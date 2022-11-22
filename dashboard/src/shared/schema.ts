@@ -49,13 +49,13 @@ export function retrieveBasicFormParams(
         hasProperties: Boolean(schemaProperty?.properties),
         params: schemaProperty?.properties
           ? retrieveBasicFormParams(
-            currentValues,
-            packageValues,
-            schemaProperty,
-            deploymentEvent,
-            deployedValues,
-            `${itemPath}/`,
-          )
+              currentValues,
+              packageValues,
+              schemaProperty,
+              deploymentEvent,
+              deployedValues,
+              `${itemPath}/`,
+            )
           : undefined,
         // get the string values of the enum array
         enum: schemaProperty?.enum?.map((item: { toString: () => any }) => item?.toString() ?? ""),
