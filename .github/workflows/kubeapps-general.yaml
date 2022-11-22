@@ -617,7 +617,7 @@ jobs:
   sync_chart_from_bitnami:
     needs:
       - setup
-    if: needs.setup.outputs.running_on_main == 'true'
+    if: needs.setup.outputs.running_on_main == 'true' || needs.setup.outputs.running_on_tag == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
