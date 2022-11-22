@@ -252,13 +252,15 @@ export class PackageRepositoriesService {
         // populate the imagesPullSecret if it's not empty
         if (
           detail?.imagesPullSecret?.secretRef ||
-          Object.values(detail?.imagesPullSecret?.credentials as DockerCredentials).some(e => !!e)
+          Object.values((detail?.imagesPullSecret?.credentials || {}) as DockerCredentials).some(
+            e => !!e,
+          )
         ) {
           helmCustomDetail.imagesPullSecret = detail.imagesPullSecret;
         }
 
         // populate the proxyOptions if it's not empty
-        if (Object.values(detail?.proxyOptions as ProxyOptions).some(e => !!e)) {
+        if (Object.values((detail?.proxyOptions || {}) as ProxyOptions).some(e => !!e)) {
           helmCustomDetail.proxyOptions = {
             enabled: detail.proxyOptions?.enabled || false,
             httpProxy: detail.proxyOptions?.httpProxy || "",
