@@ -6,7 +6,7 @@ import { findIndex, isEmpty, set } from "lodash";
 import { DeploymentEvent, IAjvValidateResult, IBasicFormParam } from "shared/types";
 import YAML from "yaml";
 import * as jsonpatch from "fast-json-patch";
-import { getPathValueInYamlNode, getPathValueInYamlNodeWithDefault, parseToJS } from "./yamlUtils";
+import { getPathValueInYamlNode, getPathValueInYamlNodeWithDefault } from "./yamlUtils";
 
 const ajv = new Ajv({ strict: false });
 
@@ -167,7 +167,7 @@ export function validateValuesSchema(
     });
     valuesToCheck = jsonpatch.applyPatch(defaultYAML, patches).newDocument;
   }
-  const valid = ajv.validate(schema, parseToJS(valuesToCheck));
+  const valid = ajv.validate(schema, valuesToCheck);
   return { valid: !!valid, errors: ajv.errors } as IAjvValidateResult;
 }
 
