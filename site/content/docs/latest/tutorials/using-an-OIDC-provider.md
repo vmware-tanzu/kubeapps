@@ -18,7 +18,7 @@ _OpenID Connect (OIDC)_ is a simple identity layer on top of the OAuth 2.0 proto
 
 In Kubernetes, one of the authentication strategies for incoming requests to the API server is using [OpenID Connect tokens](https://kubernetes.io/docs/reference/access-authn-authz/authentication/#openid-connect-tokens). The cluster can be configured to trust an external OIDC provider so that authenticated requests can be matched with defined RBAC. Additionally, some managed Kubernetes environments enable authenticating via plain OAuth2.
 
-However, for Kubernetes to be able to use OIDC-based authentication it is required to [enable certain flags in the API server](https://kubernetes.io/docs/reference/access-authn-authz/authentication/#configuring-the-api-server), which is not always possible on certain environments (such as managed Kubernetes distributions by a cloud provider). To work around this limitation, it is recommended having a look at the [Pinniped project](https://pinniped.dev/).
+However, for Kubernetes to be able to use OIDC-based authentication it requires you being able to [enable certain flags in the API server](https://kubernetes.io/docs/reference/access-authn-authz/authentication/#configuring-the-api-server), which is not always possible on certain environments (such as managed Kubernetes distributions by a cloud provider). If you are unable to configure your cluster's API server flags for OIDC, then it is recommended that you have a look at the [Pinniped project](https://pinniped.dev/), which enables dynamic OIDC authentication configuration of clusters.
 
 This tutorial describes how to use an existing OAuth2 provider, including OIDC, to authenticate users within Kubeapps.
 
@@ -74,7 +74,6 @@ The main difference in the authentication is that instead of accessing the Kubea
 > Read the [OAuth2 Proxy Auth configuration page](https://oauth2-proxy.github.io/oauth2-proxy/docs/configuration/overview) for detailed information.
 
 There are a number of available solutions for this use-case, like [keycloak-gatekeeper](https://github.com/keycloak/keycloak-gatekeeper) or [oauth2_proxy](https://github.com/oauth2-proxy/oauth2-proxy).
-
 
 The next sections explain how you can deploy this proxy either using the Kubeapps chart or manually:
 
