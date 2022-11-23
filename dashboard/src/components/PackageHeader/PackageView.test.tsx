@@ -56,6 +56,7 @@ const defaultAvailablePkgDetail: AvailablePackageDetail = {
   },
   valuesSchema: "test",
   defaultValues: "test",
+  customDefaultValues: {},
   maintainers: [{ name: "test", email: "test" }] as Maintainer[],
   readme: "test",
   version: {
