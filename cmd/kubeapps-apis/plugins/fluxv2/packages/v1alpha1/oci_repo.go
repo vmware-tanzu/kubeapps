@@ -441,7 +441,9 @@ func (s *repoEventSink) onAddOciRepo(repo sourcev1.HelmRepository) ([]byte, bool
 
 	if s.chartCache != nil {
 		fn := downloadOCIChartFn(ociChartRepo)
-		if err = s.chartCache.SyncCharts(charts, fn); err != nil {
+		if err = s.chartCache.PurgeObsoleteChartVersions(charts); err != nil {
+			return nil, false, err
+		} else if err = s.chartCache.SyncCharts(charts, fn); err != nil {
 			return nil, false, err
 		}
 	}
@@ -521,7 +523,9 @@ func (s *repoEventSink) onModifyOciRepo(key string, oldValue interface{}, repo s
 
 		if s.chartCache != nil {
 			fn := downloadOCIChartFn(ociChartRepo)
-			if err = s.chartCache.SyncCharts(charts, fn); err != nil {
+			if err = s.chartCache.PurgeObsoleteChartVersions(charts); err != nil {
+				return nil, false, err
+			} else if err = s.chartCache.SyncCharts(charts, fn); err != nil {
 				return nil, false, err
 			}
 		}

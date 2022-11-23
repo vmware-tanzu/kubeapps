@@ -252,17 +252,9 @@ func (s *Server) newRepo(ctx context.Context, request *corev1.AddPackageReposito
 	name := types.NamespacedName{Name: request.Name, Namespace: request.Context.Namespace}
 	auth := request.GetAuth()
 	// Get or validate secret resource for auth, not yet stored in K8s
-	secret, isSecretKubeappsManaged, err := s.handleAuthSecretForCreate(ctx, name, typ, tlsConfig, auth)
+	secret, isSecretKubeappsManaged, err := s.handleRepoSecretForCreate(ctx, name, typ, tlsConfig, auth)
 	if err != nil {
 		return nil, err
-	} else if isSecretKubeappsManaged {
-		// a bit of catch 22: I need to create a secret first, so that I can create a repo that references it
-		// but then I need to set the owner reference on this secret to the repo. In has to be done
-		// in that order because to set an owner ref you need object (i.e. repo) UID, which you only get
-		// once the object's been created
-		if secret, err = s.createKubeappsManagedRepoSecret(ctx, name, typ, tlsConfig, auth); err != nil {
-			return nil, err
-		}
 	}
 
 	passCredentials := auth != nil && auth.PassCredentials
@@ -276,7 +268,6 @@ func (s *Server) newRepo(ctx context.Context, request *corev1.AddPackageReposito
 		if err := request.CustomDetail.UnmarshalTo(customDetail); err != nil {
 			return nil, status.Errorf(codes.InvalidArgument, "customDetail could not be parsed due to: %v", err)
 		}
-		log.Infof("fluxv2 customDetail: [%v]", customDetail)
 		provider = customDetail.Provider
 	}
 
@@ -457,13 +448,13 @@ func (s *Server) updateRepo(ctx context.Context, repoRef *corev1.PackageReposito
 	}
 
 	// validate and get updated (or newly created) secret
-	secret, isKubeappsManagedSecret, updateRepoSecret, err := s.handleAuthSecretForUpdate(
-		ctx, key, repo.Spec.Type, tlsConfig, auth, repo.Spec.SecretRef)
+	secret, isKubeappsManagedSecret, isSecretUpdated, err :=
+		s.handleRepoSecretForUpdate(ctx, repo, tlsConfig, auth)
 	if err != nil {
 		return nil, err
 	}
 
-	if updateRepoSecret {
+	if isSecretUpdated {
 		if secret != nil {
 			repo.Spec.SecretRef = &fluxmeta.LocalObjectReference{Name: secret.Name}
 		} else {
@@ -483,23 +474,25 @@ func (s *Server) updateRepo(ctx context.Context, repoRef *corev1.PackageReposito
 		return nil, err
 	} else if err = client.Update(ctx, repo); err != nil {
 		return nil, statuserror.FromK8sError("update", "HelmRepository", key.String(), err)
-	} else if isKubeappsManagedSecret && updateRepoSecret && secret != nil {
-		// new secret => will need to set the owner
-		if err = s.setOwnerReferencesForRepoSecret(ctx, secret, repo); err != nil {
-			return nil, err
+	} else {
+
+		if isKubeappsManagedSecret && isSecretUpdated {
+			// new secret => will need to set the owner
+			if err = s.setOwnerReferencesForRepoSecret(ctx, secret, repo); err != nil {
+				return nil, err
+			}
 		}
+		log.V(4).Infof("Updated repository: %s", common.PrettyPrint(repo))
+
+		return &corev1.PackageRepositoryReference{
+			Context: &corev1.Context{
+				Namespace: key.Namespace,
+				Cluster:   s.kubeappsCluster,
+			},
+			Identifier: key.Name,
+			Plugin:     GetPluginDetail(),
+		}, nil
 	}
-
-	log.V(4).Infof("Updated repository: %s", common.PrettyPrint(repo))
-
-	return &corev1.PackageRepositoryReference{
-		Context: &corev1.Context{
-			Namespace: key.Namespace,
-			Cluster:   s.kubeappsCluster,
-		},
-		Identifier: key.Name,
-		Plugin:     GetPluginDetail(),
-	}, nil
 }
 
 func (s *Server) deleteRepo(ctx context.Context, repoRef *corev1.PackageRepositoryReference) error {
@@ -609,7 +602,9 @@ func (s *repoEventSink) indexAndEncode(checksum string, repo sourcev1.HelmReposi
 			log.Errorf("Failed to read secret for repo due to: %+v", err)
 		} else {
 			fn := downloadHttpChartFn(opts)
-			if err = s.chartCache.SyncCharts(charts, fn); err != nil {
+			if err = s.chartCache.PurgeObsoleteChartVersions(charts); err != nil {
+				return nil, false, err
+			} else if err = s.chartCache.SyncCharts(charts, fn); err != nil {
 				return nil, false, err
 			}
 		}

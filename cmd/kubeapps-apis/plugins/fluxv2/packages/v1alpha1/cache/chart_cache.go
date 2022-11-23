@@ -134,7 +134,11 @@ func (c *ChartCache) SyncCharts(charts []models.Chart, downloadFn DownloadChartF
 			log.Warningf("Skipping chart [%s] due to empty version array", chart.ID)
 			continue
 		} else if len(chart.ChartVersions[0].URLs) == 0 {
-			log.Warningf("Chart: [%s], version: [%s] has no URLs", chart.ID, chart.ChartVersions[0].Version)
+			log.Warningf("Skipping chart [%s], version: [%s] has no URLs", chart.ID, chart.ChartVersions[0].Version)
+			continue
+		} else if chart.Repo == nil {
+			// shouldn't happen
+			log.Warningf("Skipping chart [%s] as it is not associated with any repo", chart.ID)
 			continue
 		}
 
@@ -259,10 +263,9 @@ func (c *ChartCache) processNextWorkItem(workerName string) bool {
 	return true
 }
 
-func (c *ChartCache) DeleteChartsForRepo(repo *types.NamespacedName) error {
-	log.Infof("+DeleteChartsForRepo(%s)", repo)
-	defer log.Infof("-DeleteChartsForRepo(%s)", repo)
-
+// will clear out the cache of charts for a given repo except the charts specified by
+// keepThese argument, which may be nil.
+func (c *ChartCache) deleteChartsHelper(repo *types.NamespacedName, keepThese sets.String) error {
 	// need to get a list of all charts/versions for this repo that are either:
 	//   a. already in the cache OR
 	//   b. being processed
@@ -287,6 +290,7 @@ func (c *ChartCache) DeleteChartsForRepo(repo *types.NamespacedName) error {
 		if err != nil {
 			return err
 		}
+		log.Infof("Redis [SCAN %d %s]: %d keys", cursor, match, len(keys))
 		for _, k := range keys {
 			redisKeysToDelete.Insert(k)
 		}
@@ -308,7 +312,7 @@ func (c *ChartCache) DeleteChartsForRepo(repo *types.NamespacedName) error {
 		}
 	}
 
-	for k := range redisKeysToDelete {
+	for k := range redisKeysToDelete.Difference(keepThese) {
 		if namespace, chartID, chartVersion, err := c.fromKey(k); err != nil {
 			log.Errorf("%+v", err)
 		} else {
@@ -324,6 +328,52 @@ func (c *ChartCache) DeleteChartsForRepo(repo *types.NamespacedName) error {
 			}
 			log.V(4).Infof("Marked key [%s] to be deleted", k)
 			c.queue.Add(k)
+		}
+	}
+	return nil
+}
+
+func (c *ChartCache) DeleteChartsForRepo(repo *types.NamespacedName) error {
+	log.Infof("+DeleteChartsForRepo(%s)", repo)
+	defer log.Infof("-DeleteChartsForRepo(%s)", repo)
+
+	return c.deleteChartsHelper(repo, sets.String{})
+}
+
+// this function is called when re-importing charts after an update to the repo,
+// so keepThese is actually populated from the new data, meaning that if the new
+// data no longer includes a certain version, it'll get purged here
+func (c *ChartCache) PurgeObsoleteChartVersions(keepThese []models.Chart) error {
+	log.Infof("+PurgeObsoleteChartVersions()")
+	defer log.Infof("-PurgeObsoleteChartVersions")
+
+	repos := map[types.NamespacedName]sets.String{}
+	for _, ch := range keepThese {
+		if ch.Repo == nil {
+			// shouldn't happen
+			log.Warningf("Skipping chart [%s] as it is not associated with any repo", ch.ID)
+			continue
+		}
+		n := types.NamespacedName{
+			Name:      ch.Repo.Name,
+			Namespace: ch.Repo.Namespace,
+		}
+		a, ok := repos[n]
+		if a == nil || !ok {
+			a = sets.String{}
+		}
+		for _, cv := range ch.ChartVersions {
+			if key, err := c.KeyFor(ch.Repo.Namespace, ch.ID, cv.Version); err != nil {
+				return err
+			} else {
+				repos[n] = a.Insert(key)
+			}
+		}
+	}
+
+	for repo, keep := range repos {
+		if err := c.deleteChartsHelper(&repo, keep); err != nil {
+			return err
 		}
 	}
 	return nil
@@ -620,7 +670,7 @@ func ChartCacheComputeValue(chartID, chartUrl, chartVersion string, downloadFn D
 		return nil, err
 	}
 
-	log.Infof("Successfully fetched details for chart: [%s], version: [%s], url: [%s], details: [%d] bytes",
+	log.V(4).Infof("Successfully fetched details for chart: [%s], version: [%s], url: [%s], details: [%d] bytes",
 		chartID, chartVersion, chartUrl, len(chartTgz))
 
 	cacheEntryValue := chartCacheEntryValue{

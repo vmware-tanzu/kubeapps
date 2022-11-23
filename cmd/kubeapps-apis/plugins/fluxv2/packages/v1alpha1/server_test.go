@@ -5,6 +5,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"io"
 	"strings"
 	"testing"
@@ -183,7 +184,7 @@ func TestGetAvailablePackagesStatus(t *testing.T) {
 			}
 
 			if err = mock.ExpectationsWereMet(); err != nil {
-				t.Fatalf("%v", err)
+				t.Fatal(err)
 			}
 		})
 	}
@@ -404,7 +405,10 @@ func newServer(t *testing.T,
 	return s, mock, nil
 }
 
-func seedRepoCacheWithRepos(t *testing.T, mock redismock.ClientMock, sink repoEventSink, repos []sourcev1.HelmRepository) map[string]sourcev1.HelmRepository {
+func seedRepoCacheWithRepos(t *testing.T,
+	mock redismock.ClientMock,
+	sink repoEventSink,
+	repos []sourcev1.HelmRepository) map[string]sourcev1.HelmRepository {
 	okRepos := make(map[string]sourcev1.HelmRepository)
 	for _, r := range repos {
 		key, err := redisKeyForRepo(r)
@@ -430,7 +434,13 @@ func seedRepoCacheWithRepos(t *testing.T, mock redismock.ClientMock, sink repoEv
 	return okRepos
 }
 
-func seedChartCacheWithCharts(t *testing.T, redisCli *redis.Client, mock redismock.ClientMock, sink repoEventSink, stopCh <-chan struct{}, repos map[string]sourcev1.HelmRepository, charts []testSpecChartWithUrl) (*cache.ChartCache, func(), error) {
+func seedChartCacheWithCharts(t *testing.T,
+	redisCli *redis.Client,
+	mock redismock.ClientMock,
+	sink repoEventSink,
+	stopCh <-chan struct{},
+	repos map[string]sourcev1.HelmRepository,
+	charts []testSpecChartWithUrl) (*cache.ChartCache, func(), error) {
 	t.Logf("+seedChartCacheWithCharts(%v)", charts)
 
 	var chartCache *cache.ChartCache
@@ -445,6 +455,8 @@ func seedChartCacheWithCharts(t *testing.T, redisCli *redis.Client, mock redismo
 		}
 		t.Cleanup(func() { chartCache.Shutdown() })
 
+		uniqueRepoNames := map[types.NamespacedName]sets.Empty{}
+
 		// for now we only cache latest version of each chart
 		for _, c := range charts {
 			// very simple logic for now, relies on the order of elements in the array
@@ -458,6 +470,13 @@ func seedChartCacheWithCharts(t *testing.T, redisCli *redis.Client, mock redismo
 				repoName := types.NamespacedName{
 					Name:      strings.Split(c.chartID, "/")[0],
 					Namespace: c.repoNamespace}
+
+				_, ok := uniqueRepoNames[repoName]
+				if !ok {
+					uniqueRepoNames[repoName] = sets.Empty{}
+					match := fmt.Sprintf("helmcharts:%s:%s/*:*", repoName.Namespace, repoName.Name)
+					mock.ExpectScan(0, match, 0).SetVal([]string{}, 0)
+				}
 
 				repoKey, err := redisKeyForRepoNamespacedName(repoName)
 				if err == nil {

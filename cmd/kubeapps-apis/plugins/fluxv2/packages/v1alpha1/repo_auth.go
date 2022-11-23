@@ -7,7 +7,6 @@ import (
 	"context"
 	"encoding/base64"
 
-	fluxmeta "github.com/fluxcd/pkg/apis/meta"
 	sourcev1 "github.com/fluxcd/source-controller/api/v1beta2"
 	corev1 "github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
 	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/pkg/statuserror"
@@ -22,12 +21,12 @@ import (
 
 const (
 	redactedString = "REDACTED"
-	// ref https://kubernetes.io/docs/concepts/overview/working-with-objects/common-labels/#labels
-	managedByAnnotationKey   = "app.kubernetes.io/managed-by"
-	managedByAnnotationValue = "kubeapps"
+	// to be consistent with carvel and helm plug-in
+	annotationManagedByKey   = "kubeapps.dev/managed-by"
+	annotationManagedByValue = "plugin:flux"
 )
 
-func (s *Server) handleAuthSecretForCreate(
+func (s *Server) handleRepoSecretForCreate(
 	ctx context.Context,
 	repoName types.NamespacedName,
 	repoType string,
@@ -46,70 +45,100 @@ func (s *Server) handleAuthSecretForCreate(
 
 	// create/get secret
 	if hasCaRef || hasAuthRef {
+		// user-managed
 		secret, err := s.validateUserManagedRepoSecret(ctx, repoName, repoType, tlsConfig, auth)
 		return secret, false, err
 	} else if hasCaData || hasAuthData {
+		// kubeapps managed
 		secret, _, err := newSecretFromTlsConfigAndAuth(repoName, repoType, tlsConfig, auth)
-		return secret, true, err
+		if err != nil {
+			return nil, false, err
+		}
+		// a bit of catch 22: I need to create a secret first, so that I can create a repo that references it
+		// but then I need to set the owner reference on this secret to the repo. In has to be done
+		// in that order because to set an owner ref you need object (i.e. repo) UID, which you only get
+		// once the object's been created
+		// create a secret first, if applicable
+		if typedClient, err := s.clientGetter.Typed(ctx, s.kubeappsCluster); err != nil {
+			return nil, false, err
+		} else if secret, err = typedClient.CoreV1().Secrets(repoName.Namespace).Create(ctx, secret, metav1.CreateOptions{}); err != nil {
+			return nil, false, statuserror.FromK8sError("create", "secret", secret.GetGenerateName(), err)
+		} else {
+			return secret, true, err
+		}
 	} else {
 		return nil, false, nil
 	}
 }
 
-func (s *Server) handleAuthSecretForUpdate(
+// isSecretUpdated is a boolean indicating whether or not the secret ref for a repository
+// has been updated as a result of this call.
+func (s *Server) handleRepoSecretForUpdate(
 	ctx context.Context,
-	repoName types.NamespacedName,
-	repoType string,
-	tlsConfig *corev1.PackageRepositoryTlsConfig,
-	auth *corev1.PackageRepositoryAuth,
-	existingSecretRef *fluxmeta.LocalObjectReference) (secret *apiv1.Secret, isKubeappsManagedSecret bool, updateRepoSecret bool, err error) {
+	repo *sourcev1.HelmRepository,
+	newTlsConfig *corev1.PackageRepositoryTlsConfig,
+	newAuth *corev1.PackageRepositoryAuth) (updatedSecret *apiv1.Secret, isKubeappsManagedSecret bool, isSecretUpdated bool, err error) {
 
-	hasCaRef := tlsConfig != nil && tlsConfig.GetSecretRef() != nil
-	hasCaData := tlsConfig != nil && tlsConfig.GetCertAuthority() != ""
-	hasAuthRef := auth != nil && auth.GetSecretRef() != nil
-	hasAuthData := auth != nil && auth.GetSecretRef() == nil && auth.GetType() != corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_UNSPECIFIED
+	hasCaRef := newTlsConfig != nil && newTlsConfig.GetSecretRef() != nil
+	hasCaData := newTlsConfig != nil && newTlsConfig.GetCertAuthority() != ""
+	hasAuthRef := newAuth != nil && newAuth.GetSecretRef() != nil
+	hasAuthData := newAuth != nil && newAuth.GetSecretRef() == nil && newAuth.GetType() != corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_UNSPECIFIED
 
 	// if we have both ref config and data config, it is an invalid mixed configuration
 	if (hasCaRef || hasAuthRef) && (hasCaData || hasAuthData) {
 		return nil, false, false, status.Errorf(codes.InvalidArgument, "Package repository cannot mix referenced secrets and user provided secret data")
 	}
 
-	if existingSecretRef != nil {
-		typedClient, err := s.clientGetter.Typed(ctx, s.kubeappsCluster)
-		if err != nil {
-			return nil, false, false, err
-		}
-		secretInterface := typedClient.CoreV1().Secrets(repoName.Namespace)
-		if secret, err := secretInterface.Get(ctx, existingSecretRef.Name, metav1.GetOptions{}); err != nil {
-			return nil, false, false, statuserror.FromK8sError("get", "secret", existingSecretRef.Name, err)
-		} else {
-			isKubeappsManagedSecret = isSecretKubeappsManaged(secret)
-		}
+	typedClient, err := s.clientGetter.Typed(ctx, s.kubeappsCluster)
+	if err != nil {
+		return nil, false, false, err
+	}
+	secretInterface := typedClient.CoreV1().Secrets(repo.Namespace)
 
-		// check we cannot change mode (per design spec)
-		if isKubeappsManagedSecret {
-			if hasAuthRef || hasCaRef {
-				return nil, false, false, status.Errorf(codes.InvalidArgument, "Auth management mode cannot be changed")
-			}
-
-			if secret, updateRepoSecret, err = s.updateKubeappsManagedRepoSecret(
-				ctx, repoName, repoType, tlsConfig, auth, existingSecretRef); err != nil {
-				return nil, false, false, err
-			} else {
-				return secret, true, updateRepoSecret, nil
-			}
+	var existingSecret *apiv1.Secret
+	if repo.Spec.SecretRef != nil {
+		if existingSecret, err = secretInterface.Get(ctx, repo.Spec.SecretRef.Name, metav1.GetOptions{}); err != nil {
+			return nil, false, false, statuserror.FromK8sError("get", "secret", repo.Spec.SecretRef.Name, err)
 		}
 	}
 
-	// if we are here, then this is similar to create
+	// check we cannot change mode (per design spec)
+	if existingSecret != nil && (hasCaRef || hasCaData || hasAuthRef || hasAuthData) {
+		if isSecretKubeappsManaged(existingSecret, repo) != (hasAuthData || hasCaData) {
+			return nil, false, false, status.Errorf(codes.InvalidArgument, "Auth management mode cannot be changed")
+		}
+	}
+
+	repoName := types.NamespacedName{Name: repo.Name, Namespace: repo.Namespace}
+	repoType := repo.Spec.Type
+
+	// handle user managed secret
 	if hasCaRef || hasAuthRef {
-		secret, err := s.validateUserManagedRepoSecret(ctx, repoName, repoType, tlsConfig, auth)
-		return secret, false, true, err
-	} else if hasCaData || hasAuthData {
-		secret, _, err := newSecretFromTlsConfigAndAuth(repoName, repoType, tlsConfig, auth)
-		return secret, true, true, err
+		updatedSecret, err := s.validateUserManagedRepoSecret(ctx, repoName, repoType, newTlsConfig, newAuth)
+		return updatedSecret, false, true, err
+	}
+
+	// handle kubeapps managed secret
+	var isSameSecret bool
+	updatedSecret, isSameSecret, err = newSecretFromTlsConfigAndAuth(repoName, repoType, newTlsConfig, newAuth)
+	if err != nil {
+		return nil, true, false, err
+	} else if isSameSecret {
+		// Do nothing if repo auth data came redacted
+		return nil, true, false, nil
 	} else {
-		return nil, isKubeappsManagedSecret, false, nil
+		// either we have no secret, or it has changed. in both cases, we try to delete any existing secret
+		if existingSecret != nil {
+			if err = secretInterface.Delete(ctx, existingSecret.Name, metav1.DeleteOptions{}); err != nil {
+				log.Errorf("Error deleting existing secret: [%s] due to %v", err)
+			}
+		}
+		if updatedSecret != nil {
+			if updatedSecret, err = typedClient.CoreV1().Secrets(repoName.Namespace).Create(ctx, updatedSecret, metav1.CreateOptions{}); err != nil {
+				return nil, false, false, statuserror.FromK8sError("create", "secret", updatedSecret.GetGenerateName(), err)
+			}
+		}
+		return updatedSecret, true, true, nil
 	}
 }
 
@@ -199,29 +228,6 @@ func (s *Server) validateUserManagedRepoSecret(
 	return secret, nil
 }
 
-func (s *Server) createKubeappsManagedRepoSecret(
-	ctx context.Context,
-	repoName types.NamespacedName,
-	typ string,
-	tlsConfig *corev1.PackageRepositoryTlsConfig,
-	auth *corev1.PackageRepositoryAuth) (*apiv1.Secret, error) {
-
-	secret, _, err := newSecretFromTlsConfigAndAuth(repoName, typ, tlsConfig, auth)
-	if err != nil {
-		return nil, err
-	}
-
-	if secret != nil {
-		// create a secret first, if applicable
-		if typedClient, err := s.clientGetter.Typed(ctx, s.kubeappsCluster); err != nil {
-			return nil, err
-		} else if secret, err = typedClient.CoreV1().Secrets(repoName.Namespace).Create(ctx, secret, metav1.CreateOptions{}); err != nil {
-			return nil, statuserror.FromK8sError("create", "secret", secret.GetName(), err)
-		}
-	}
-	return secret, nil
-}
-
 // using owner references on the secret so that it can be
 // (1) cleaned up automatically and/or
 // (2) enable some control (ie. if I add a secret manually
@@ -250,66 +256,11 @@ func (s *Server) setOwnerReferencesForRepoSecret(
 					}),
 			}
 			if _, err := secretsInterface.Update(ctx, secret, metav1.UpdateOptions{}); err != nil {
-				return statuserror.FromK8sError("update", "secrets", secret.Name, err)
+				return statuserror.FromK8sError("update", "secret", secret.Name, err)
 			}
 		}
 	}
 	return nil
-}
-
-// returns 3 things:
-// secret     - either an existing or newly created secret, or nil if there should
-//              be no secret associated with a repository
-// updateRepo - boolean indicating whether or not a HelmRepository CRD needs to be updated
-// err        - when bad things happen
-
-func (s *Server) updateKubeappsManagedRepoSecret(
-	ctx context.Context,
-	repoName types.NamespacedName,
-	typ string,
-	tlsConfig *corev1.PackageRepositoryTlsConfig,
-	auth *corev1.PackageRepositoryAuth,
-	existingSecretRef *fluxmeta.LocalObjectReference) (secret *apiv1.Secret, updateRepo bool, err error) {
-
-	secret, isSameSecret, err := newSecretFromTlsConfigAndAuth(repoName, typ, tlsConfig, auth)
-	if err != nil {
-		return nil, false, err
-	} else if isSameSecret {
-		return nil, false, nil
-	}
-
-	typedClient, err := s.clientGetter.Typed(ctx, s.kubeappsCluster)
-	if err != nil {
-		return nil, false, err
-	}
-	secretInterface := typedClient.CoreV1().Secrets(repoName.Namespace)
-	if secret != nil {
-		if existingSecretRef == nil {
-			// create a secret first
-			newSecret, err := secretInterface.Create(ctx, secret, metav1.CreateOptions{})
-			if err != nil {
-				return nil, false, statuserror.FromK8sError("create", "secret", secret.GetGenerateName(), err)
-			}
-			return newSecret, true, nil
-		} else {
-			// TODO (gfichtenholt) we should optimize this to somehow tell if the existing secret
-			// is the same (data-wise) as the new one and if so skip all this
-			if err = secretInterface.Delete(ctx, existingSecretRef.Name, metav1.DeleteOptions{}); err != nil {
-				return nil, false, statuserror.FromK8sError("delete", "secret", existingSecretRef.Name, err)
-			}
-			// create a new one
-			newSecret, err := secretInterface.Create(ctx, secret, metav1.CreateOptions{})
-			if err != nil {
-				return nil, false, statuserror.FromK8sError("create", "secret", secret.GetGenerateName(), err)
-			}
-			return newSecret, true, nil
-		}
-	} else if existingSecretRef != nil {
-		if err = secretInterface.Delete(ctx, existingSecretRef.Name, metav1.DeleteOptions{}); err != nil {
-			log.Errorf("Error deleting existing secret: [%s] due to %v", err)
-		}
-	}
-	return secret, true, nil
 }
 
 func (s *Server) getRepoTlsConfigAndAuth(ctx context.Context, repo sourcev1.HelmRepository) (*corev1.PackageRepositoryTlsConfig, *corev1.PackageRepositoryAuth, error) {
@@ -330,7 +281,7 @@ func (s *Server) getRepoTlsConfigAndAuth(ctx context.Context, repo sourcev1.Helm
 			return nil, nil, statuserror.FromK8sError("get", "secret", secretName, err)
 		}
 
-		if isSecretKubeappsManaged(secret) {
+		if isSecretKubeappsManaged(secret, &repo) {
 			if tlsConfig, auth, err = getRepoTlsConfigAndAuthWithKubeappsManagedSecrets(secret); err != nil {
 				return nil, nil, err
 			}
@@ -533,11 +484,11 @@ func getRepoTlsConfigAndAuthWithKubeappsManagedSecrets(secret *apiv1.Secret) (*c
 	return tlsConfig, auth, nil
 }
 
-func isSecretKubeappsManaged(secret *apiv1.Secret) bool {
+func isSecretKubeappsManaged(secret *apiv1.Secret, repo *sourcev1.HelmRepository) bool {
 	if !metav1.IsControlledBy(secret, repo) {
 		return false
 	}
-	if managedby := secret.GetAnnotations()[Annotation_ManagedBy_Key]; managedby != Annotation_ManagedBy_Value {
+	if managedby := secret.GetAnnotations()[annotationManagedByKey]; managedby != annotationManagedByValue {
 		return false
 	}
 	return true
@@ -549,7 +500,7 @@ func newLocalOpaqueSecret(ownerRepo types.NamespacedName) *apiv1.Secret {
 		ObjectMeta: metav1.ObjectMeta{
 			GenerateName: ownerRepo.Name + "-",
 			Annotations: map[string]string{
-				managedByAnnotationKey: managedByAnnotationValue,
+				annotationManagedByKey: annotationManagedByValue,
 			},
 		},
 		Type: apiv1.SecretTypeOpaque,
@@ -563,7 +514,7 @@ func newLocalDockerConfigJsonSecret(ownerRepo types.NamespacedName) *apiv1.Secre
 		ObjectMeta: metav1.ObjectMeta{
 			GenerateName: ownerRepo.Name + "-",
 			Annotations: map[string]string{
-				managedByAnnotationKey: managedByAnnotationValue,
+				annotationManagedByKey: annotationManagedByValue,
 			},
 		},
 		Type: apiv1.SecretTypeDockerConfigJson,
