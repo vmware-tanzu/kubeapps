@@ -113,7 +113,7 @@
     "shx": "^0.3.4",
     "stylelint": "^14.14.0",
     "stylelint-config-idiomatic-order": "^9.0.0",
-    "stylelint-config-prettier": "^9.0.3",
+    "stylelint-config-prettier": "^9.0.4",
     "stylelint-config-standard-scss": "^6.0.0",
     "stylelint-scss": "^4.3.0",
     "ts-jest": "^29.0.3",
