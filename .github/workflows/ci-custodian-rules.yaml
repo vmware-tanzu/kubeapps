@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 ---
-name: Custodian rules for Kubeapps
+name: Kubeapps Custodian Rules
 on:
   schedule:
     - cron: "0 8 * * *"
