@@ -39,7 +39,7 @@ replace (
 require (
 	github.com/DATA-DOG/go-sqlmock v1.5.0
 	github.com/Masterminds/semver/v3 v3.1.1
-	github.com/adhocore/gronx v1.1.0
+	github.com/adhocore/gronx v1.1.2
 	github.com/ahmetb/go-linq/v3 v3.2.0
 	github.com/containerd/containerd v1.6.9
 	github.com/cppforlife/go-cli-ui v0.0.0-20220622150351-995494831c6c
