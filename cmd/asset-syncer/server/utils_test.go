@@ -531,7 +531,7 @@ func (r *fakeRepo) Charts(shallow bool) ([]models.Chart, error) {
 
 func (r *fakeRepo) FetchFiles(name string, cv models.ChartVersion, userAgent string, passCredentials bool) (map[string]string, error) {
 	return map[string]string{
-		models.ValuesKey: r.chartFiles.Values,
+		models.ValuesKey: r.chartFiles.DefaultValues,
 		models.ReadmeKey: r.chartFiles.Readme,
 		models.SchemaKey: r.chartFiles.Schema,
 	}, nil
@@ -544,12 +544,12 @@ func Test_fetchAndImportFiles(t *testing.T) {
 	chartID := fmt.Sprintf("%s/%s", charts[0].Repo.Name, charts[0].Name)
 	chartFilesID := fmt.Sprintf("%s-%s", chartID, chartVersion.Version)
 	chartFiles := models.ChartFiles{
-		ID:     chartFilesID,
-		Readme: testChartReadme,
-		Values: testChartValues,
-		Schema: testChartSchema,
-		Repo:   charts[0].Repo,
-		Digest: chartVersion.Digest,
+		ID:            chartFilesID,
+		Readme:        testChartReadme,
+		DefaultValues: testChartValues,
+		Schema:        testChartSchema,
+		Repo:          charts[0].Repo,
+		Digest:        chartVersion.Digest,
 	}
 	fRepo := &fakeRepo{
 		RepoInternal: repo,
@@ -579,12 +579,12 @@ func Test_fetchAndImportFiles(t *testing.T) {
 		defer cleanup()
 
 		files := models.ChartFiles{
-			ID:     chartFilesID,
-			Readme: "",
-			Values: "",
-			Schema: "",
-			Repo:   charts[0].Repo,
-			Digest: chartVersion.Digest,
+			ID:            chartFilesID,
+			Readme:        "",
+			DefaultValues: "",
+			Schema:        "",
+			Repo:          charts[0].Repo,
+			Digest:        chartVersion.Digest,
 		}
 
 		// file does not exist (no rows returned) so insertion goes ahead.
