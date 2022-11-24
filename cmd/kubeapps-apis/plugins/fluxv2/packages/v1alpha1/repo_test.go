@@ -1348,6 +1348,11 @@ func TestAddPackageRepository(t *testing.T) {
 			expectedRepo:     &add_repo_7,
 			statusCode:       codes.OK,
 		},
+		{
+			name:       "returns error when mix referenced secrets and user provided secret data",
+			request:    add_repo_req_30,
+			statusCode: codes.InvalidArgument,
+		},
 	}
 
 	for _, tc := range testCases {
@@ -2009,6 +2014,39 @@ func TestUpdatePackageRepository(t *testing.T) {
 			expectedStatusCode: codes.OK,
 			expectedResponse:   update_repo_resp_1,
 			expectedDetail:     update_repo_detail_15,
+		},
+		{
+			name:               "returns error when mix referenced secrets and user provided secret data",
+			repoIndex:          testYaml("valid-index.yaml"),
+			repoName:           "repo-1",
+			repoNamespace:      "namespace-1",
+			request:            update_repo_req_19,
+			expectedStatusCode: codes.InvalidArgument,
+		},
+		{
+			name:          "update repository change Auth management mode (user-managed secrets)",
+			repoIndex:     testYaml("valid-index.yaml"),
+			repoName:      "repo-1",
+			repoNamespace: "namespace-1",
+			oldRepoSecret: newBasicAuthSecret(types.NamespacedName{
+				Name:      "secret-1",
+				Namespace: "namespace-1"}, "foo", "bar"),
+			request:            update_repo_req_20,
+			expectedStatusCode: codes.InvalidArgument,
+			userManagedSecrets: true,
+		},
+		{
+			name:          "update repository change Auth management mode (kubeapps-managed secrets)",
+			repoIndex:     testYaml("valid-index.yaml"),
+			repoName:      "repo-1",
+			repoNamespace: "namespace-1",
+			oldRepoSecret: setSecretManagedByKubeapps(setSecretOwnerRef(
+				"repo-1",
+				newBasicAuthSecret(types.NamespacedName{
+					Name:      "secret-1",
+					Namespace: "namespace-1"}, "foo", "bar"))),
+			request:            update_repo_req_21,
+			expectedStatusCode: codes.InvalidArgument,
 		},
 	}
 

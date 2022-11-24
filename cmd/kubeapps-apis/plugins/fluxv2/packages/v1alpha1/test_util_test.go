@@ -285,6 +285,7 @@ func setSecretManagedByKubeapps(secret *apiv1.Secret) *apiv1.Secret {
 	return secret
 }
 
+// TODO rewrite this
 func setSecretOwnerRef(repoName string, secret *apiv1.Secret) *apiv1.Secret {
 	tRue := true
 	secret.OwnerReferences = []metav1.OwnerReference{
