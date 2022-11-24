@@ -31,12 +31,16 @@ const (
 	SecretCaKey         = "ca.crt"
 	SecretAuthHeaderKey = "authorizationHeader"
 	DockerConfigJsonKey = ".dockerconfigjson"
+
+	Annotation_ManagedBy_Key   = "kubeapps.dev/managed-by"
+	Annotation_ManagedBy_Value = "plugin:helm"
 )
 
-func newLocalOpaqueSecret(ownerRepo types.NamespacedName) *k8scorev1.Secret {
+func newLocalOpaqueSecret(repoName string) *k8scorev1.Secret {
 	return &k8scorev1.Secret{
 		ObjectMeta: metav1.ObjectMeta{
-			Name: helm.SecretNameForRepo(ownerRepo.Name),
+			Name:        helm.SecretNameForRepo(repoName),
+			Annotations: map[string]string{Annotation_ManagedBy_Key: Annotation_ManagedBy_Value},
 		},
 		Type: k8scorev1.SecretTypeOpaque,
 		Data: map[string][]byte{},
@@ -62,10 +66,10 @@ func handleAuthSecretForCreate(
 
 	// create/get secret
 	if hasCaRef || hasAuthRef {
-		secret, err := validateUserManagedRepoSecret(ctx, typedClient, repoName, tlsConfig, auth)
+		secret, err := validateUserManagedRepoSecret(ctx, typedClient, repoName.Namespace, tlsConfig, auth)
 		return secret, false, err
 	} else if hasCaData || hasAuthData {
-		secret, _, err := newSecretFromTlsConfigAndAuth(repoName, tlsConfig, auth)
+		secret, _, err := newSecretFromTlsConfigAndAuth(repoName.Name, tlsConfig, auth)
 		return secret, true, err
 	} else {
 		return nil, false, nil
@@ -75,17 +79,18 @@ func handleAuthSecretForCreate(
 func handleImagesPullSecretForCreate(
 	ctx context.Context,
 	typedClient kubernetes.Interface,
-	repo *HelmRepository) (*k8scorev1.Secret, bool, error) {
+	repoName types.NamespacedName,
+	customDetail *v1alpha1.HelmPackageRepositoryCustomDetail) (*k8scorev1.Secret, bool, error) {
 
-	hasRef := repo.customDetail != nil && repo.customDetail.ImagesPullSecret != nil && repo.customDetail.ImagesPullSecret.GetSecretRef() != ""
-	hasData := repo.customDetail != nil && repo.customDetail.ImagesPullSecret != nil && repo.customDetail.ImagesPullSecret.GetCredentials() != nil
+	hasRef := customDetail != nil && customDetail.ImagesPullSecret != nil && customDetail.ImagesPullSecret.GetSecretRef() != ""
+	hasData := customDetail != nil && customDetail.ImagesPullSecret != nil && customDetail.ImagesPullSecret.GetCredentials() != nil
 
 	// create/get secret
 	if hasRef {
-		secret, err := validateDockerImagePullSecret(ctx, typedClient, repo.name, repo.customDetail.ImagesPullSecret.GetSecretRef())
+		secret, err := validateDockerImagePullSecret(ctx, typedClient, repoName.Namespace, customDetail.ImagesPullSecret.GetSecretRef())
 		return secret, false, err
 	} else if hasData {
-		secret, _, err := newDockerImagePullSecret(repo.name, repo.customDetail.ImagesPullSecret.GetCredentials())
+		secret, _, err := newDockerImagePullSecret(repoName.Name, customDetail.ImagesPullSecret.GetCredentials())
 		return secret, true, err
 	} else {
 		return nil, false, nil
@@ -95,7 +100,7 @@ func handleImagesPullSecretForCreate(
 func handleAuthSecretForUpdate(
 	ctx context.Context,
 	typedClient kubernetes.Interface,
-	repoName types.NamespacedName,
+	repo *apprepov1alpha1.AppRepository,
 	tlsConfig *corev1.PackageRepositoryTlsConfig,
 	auth *corev1.PackageRepositoryAuth,
 	secret *k8scorev1.Secret) (updatedSecret *k8scorev1.Secret, secretIsKubeappsManaged bool, secretIsUpdated bool, err error) {
@@ -112,19 +117,19 @@ func handleAuthSecretForUpdate(
 
 	// check we cannot change mode (per design spec)
 	if secret != nil && (hasCaRef || hasCaData || hasAuthRef || hasAuthData) {
-		if isAuthSecretKubeappsManaged(repoName.Name, secret) != (hasAuthData || hasCaData) {
+		if isAuthSecretKubeappsManaged(repo, secret) != (hasAuthData || hasCaData) {
 			return nil, false, false, status.Errorf(codes.InvalidArgument, "Auth management mode cannot be changed")
 		}
 	}
 
 	// handle user managed secret
 	if hasCaRef || hasAuthRef {
-		updatedSecret, err := validateUserManagedRepoSecret(ctx, typedClient, repoName, tlsConfig, auth)
+		updatedSecret, err := validateUserManagedRepoSecret(ctx, typedClient, repo.GetNamespace(), tlsConfig, auth)
 		return updatedSecret, false, true, err
 	}
 
 	// handle kubeapps managed secret
-	updatedSecret, isSameSecret, err := newSecretFromTlsConfigAndAuth(repoName, tlsConfig, auth)
+	updatedSecret, isSameSecret, err := newSecretFromTlsConfigAndAuth(repo.GetName(), tlsConfig, auth)
 	if err != nil {
 		return nil, true, false, err
 	} else if isSameSecret {
@@ -146,12 +151,13 @@ func handleAuthSecretForUpdate(
 func handleImagesPullSecretForUpdate(
 	ctx context.Context,
 	typedClient kubernetes.Interface,
-	repo *HelmRepository,
+	repo *apprepov1alpha1.AppRepository,
+	customDetail *v1alpha1.HelmPackageRepositoryCustomDetail,
 	secret *k8scorev1.Secret) (updatedSecret *k8scorev1.Secret, secretIsKubeappsManaged bool, secretIsUpdated bool, err error) {
 
 	var imagesPullSecrets *v1alpha1.ImagesPullSecret
-	if repo.customDetail != nil && repo.customDetail.ImagesPullSecret != nil {
-		imagesPullSecrets = repo.customDetail.ImagesPullSecret
+	if customDetail != nil && customDetail.ImagesPullSecret != nil {
+		imagesPullSecrets = customDetail.ImagesPullSecret
 	} else {
 		imagesPullSecrets = &v1alpha1.ImagesPullSecret{}
 	}
@@ -161,19 +167,19 @@ func handleImagesPullSecretForUpdate(
 
 	// check we are not changing mode
 	if secret != nil && (hasRef || hasData) {
-		if isImagesPullSecretKubeappsManaged(repo.name.Name, secret) != hasData {
+		if isImagesPullSecretKubeappsManaged(repo, secret) != hasData {
 			return nil, false, false, status.Errorf(codes.InvalidArgument, "Auth management mode cannot be changed")
 		}
 	}
 
 	// handle user managed secret
 	if hasRef {
-		updatedSecret, err := validateDockerImagePullSecret(ctx, typedClient, repo.name, imagesPullSecrets.GetSecretRef())
+		updatedSecret, err := validateDockerImagePullSecret(ctx, typedClient, repo.GetNamespace(), imagesPullSecrets.GetSecretRef())
 		return updatedSecret, false, true, err
 	}
 
 	// handle kubeapps managed secret
-	updatedSecret, isSameSecret, err := newDockerImagePullSecret(repo.name, imagesPullSecrets.GetCredentials())
+	updatedSecret, isSameSecret, err := newDockerImagePullSecret(repo.GetName(), imagesPullSecrets.GetCredentials())
 	if err != nil {
 		return nil, true, false, err
 	} else if isSameSecret {
@@ -193,7 +199,7 @@ func handleImagesPullSecretForUpdate(
 }
 
 // this func is only used with kubeapps-managed secrets
-func newSecretFromTlsConfigAndAuth(repoName types.NamespacedName,
+func newSecretFromTlsConfigAndAuth(repoName string,
 	tlsConfig *corev1.PackageRepositoryTlsConfig,
 	auth *corev1.PackageRepositoryAuth) (secret *k8scorev1.Secret, isSameSecret bool, err error) {
 	if tlsConfig != nil {
@@ -370,10 +376,10 @@ func createKubeappsManagedRepoSecret(
 
 func validateDockerImagePullSecret(ctx context.Context,
 	typedClient kubernetes.Interface,
-	repoName types.NamespacedName,
+	namespace string,
 	secretName string) (*k8scorev1.Secret, error) {
 
-	if secret, err := typedClient.CoreV1().Secrets(repoName.Namespace).Get(ctx, secretName, metav1.GetOptions{}); err != nil {
+	if secret, err := typedClient.CoreV1().Secrets(namespace).Get(ctx, secretName, metav1.GetOptions{}); err != nil {
 		return nil, statuserror.FromK8sError("get", "secret", secretName, err)
 	} else if secret.Type != k8scorev1.SecretTypeDockerConfigJson {
 		return nil, status.Errorf(codes.InvalidArgument, "Images Docker pull secret %s does not have valid type", secretName)
@@ -388,7 +394,7 @@ func imagesPullSecretName(repoName string) string {
 	return fmt.Sprintf("pullsecret-%s", repoName)
 }
 
-func newDockerImagePullSecret(ownerRepo types.NamespacedName, credentials *corev1.DockerCredentials) (secret *k8scorev1.Secret, isSameSecret bool, err error) {
+func newDockerImagePullSecret(repoName string, credentials *corev1.DockerCredentials) (secret *k8scorev1.Secret, isSameSecret bool, err error) {
 	if credentials != nil {
 		if credentials.Server == "" || credentials.Username == "" || credentials.Password == "" || credentials.Email == "" {
 			return nil, false, status.Errorf(codes.InvalidArgument, "Images pull secret Docker credentials are wrong")
@@ -396,7 +402,8 @@ func newDockerImagePullSecret(ownerRepo types.NamespacedName, credentials *corev
 
 		secret = &k8scorev1.Secret{
 			ObjectMeta: metav1.ObjectMeta{
-				Name: imagesPullSecretName(ownerRepo.Name),
+				Name:        imagesPullSecretName(repoName),
+				Annotations: map[string]string{Annotation_ManagedBy_Key: Annotation_ManagedBy_Value},
 			},
 			Type: k8scorev1.SecretTypeDockerConfigJson,
 			Data: map[string][]byte{},
@@ -461,7 +468,7 @@ func (s *Server) deleteRepositorySecretFromNamespace(typedClient kubernetes.Inte
 func validateUserManagedRepoSecret(
 	ctx context.Context,
 	typedClient kubernetes.Interface,
-	repoName types.NamespacedName,
+	namespace string,
 	tlsConfig *corev1.PackageRepositoryTlsConfig,
 	auth *corev1.PackageRepositoryAuth) (*k8scorev1.Secret, error) {
 	var secretRefTls, secretRefAuth string
@@ -498,7 +505,7 @@ func validateUserManagedRepoSecret(
 	if secretRef != "" {
 		var err error
 		// check that the specified secret exists
-		if secret, err = typedClient.CoreV1().Secrets(repoName.Namespace).Get(ctx, secretRef, metav1.GetOptions{}); err != nil {
+		if secret, err = typedClient.CoreV1().Secrets(namespace).Get(ctx, secretRef, metav1.GetOptions{}); err != nil {
 			return nil, statuserror.FromK8sError("get", "secret", secretRef, err)
 		} else {
 			// also check that the data in the opaque secret corresponds
@@ -532,7 +539,7 @@ func validateUserManagedRepoSecret(
 func getRepoImagesPullSecret(source *apprepov1alpha1.AppRepository, imagesPullSecret *k8scorev1.Secret) *v1alpha1.ImagesPullSecret {
 	if imagesPullSecret == nil {
 		return nil
-	} else if isImagesPullSecretKubeappsManaged(source.GetName(), imagesPullSecret) {
+	} else if isImagesPullSecretKubeappsManaged(source, imagesPullSecret) {
 		return &v1alpha1.ImagesPullSecret{
 			DockerRegistryCredentialOneOf: &v1alpha1.ImagesPullSecret_Credentials{
 				Credentials: &corev1.DockerCredentials{
@@ -577,7 +584,7 @@ func getRepoTlsConfigAndAuth(
 				tlsConfig = &corev1.PackageRepositoryTlsConfig{}
 			}
 
-			if isAuthSecretKubeappsManaged(source.GetName(), caSecret) {
+			if isAuthSecretKubeappsManaged(source, caSecret) {
 				tlsConfig.PackageRepoTlsConfigOneOf = &corev1.PackageRepositoryTlsConfig_CertAuthority{
 					CertAuthority: RedactedString,
 				}
@@ -614,7 +621,7 @@ func getRepoTlsConfigAndAuth(
 		}
 
 		// create data
-		if isAuthSecretKubeappsManaged(source.GetName(), authSecret) {
+		if isAuthSecretKubeappsManaged(source, authSecret) {
 			switch auth.Type {
 			case corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_BASIC_AUTH:
 				auth.PackageRepoAuthOneOf = &corev1.PackageRepositoryAuth_UsernamePassword{
@@ -666,12 +673,30 @@ func getRepoTlsConfigAndAuth(
 	return tlsConfig, auth, nil
 }
 
-// note: for now, checking based on name pattern for backward compatibility
-func isAuthSecretKubeappsManaged(repoName string, secret *k8scorev1.Secret) bool {
-	return secret.GetName() == helm.SecretNameForRepo(repoName)
+func isAuthSecretKubeappsManaged(repo *apprepov1alpha1.AppRepository, secret *k8scorev1.Secret) bool {
+	if isSecretKubeappsManaged(repo, secret) {
+		return true
+	}
+
+	// note: until fully deprecated, we also check based on name pattern for backward compatibility
+	return secret.GetName() == helm.SecretNameForRepo(repo.GetName())
 }
 
-// note: for now, checking based on name pattern for backward compatibility
-func isImagesPullSecretKubeappsManaged(repoName string, secret *k8scorev1.Secret) bool {
-	return secret.GetName() == imagesPullSecretName(repoName)
+func isImagesPullSecretKubeappsManaged(repo *apprepov1alpha1.AppRepository, secret *k8scorev1.Secret) bool {
+	if isSecretKubeappsManaged(repo, secret) {
+		return true
+	}
+
+	// note: until fully deprecated, we also check based on name pattern for backward compatibility
+	return secret.GetName() == imagesPullSecretName(repo.GetName())
+}
+
+func isSecretKubeappsManaged(repo *apprepov1alpha1.AppRepository, secret *k8scorev1.Secret) bool {
+	if !metav1.IsControlledBy(secret, repo) {
+		return false
+	}
+	if managedby := secret.GetAnnotations()[Annotation_ManagedBy_Key]; managedby != Annotation_ManagedBy_Value {
+		return false
+	}
+	return true
 }

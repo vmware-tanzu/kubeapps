@@ -5,7 +5,8 @@ import Ajv, { ErrorObject, JSONSchemaType } from "ajv";
 import { findIndex, isEmpty, set } from "lodash";
 import { DeploymentEvent, IAjvValidateResult, IBasicFormParam } from "shared/types";
 import YAML from "yaml";
-import { getPathValueInYamlNode, getPathValueInYamlNodeWithDefault, parseToJS } from "./yamlUtils";
+import * as jsonpatch from "fast-json-patch";
+import { getPathValueInYamlNode, getPathValueInYamlNodeWithDefault } from "./yamlUtils";
 
 const ajv = new Ajv({ strict: false });
 
@@ -22,7 +23,6 @@ export function retrieveBasicFormParams(
   let params: IBasicFormParam[] = [];
   if (schema?.properties && !isEmpty(schema.properties)) {
     const properties = schema.properties;
-    const requiredProperties = schema.required;
     const schemaExamples = schema.examples;
     Object.keys(properties).forEach(propertyKey => {
       const schemaProperty = properties[propertyKey] as JSONSchemaType<any>;
@@ -59,8 +59,9 @@ export function retrieveBasicFormParams(
           : undefined,
         // get the string values of the enum array
         enum: schemaProperty?.enum?.map((item: { toString: () => any }) => item?.toString() ?? ""),
-        // check if the "required" array contains the current property
-        isRequired: requiredProperties?.includes(propertyKey),
+        // We leave the validation of user values to the Helm backend, since it will take
+        // into account default values (on install) and previously set values (on upgrade).
+        isRequired: false,
         examples: examples,
         // If exists, the value that is currently deployed
         deployedValue: isLeaf
@@ -155,8 +156,18 @@ export function schemaToObject(schema?: string): JSONSchemaType<any> {
 export function validateValuesSchema(
   values: string,
   schema: JSONSchemaType<any> | any,
+  defaultValues?: string,
 ): { valid: boolean; errors: ErrorObject[] | null | undefined } {
-  const valid = ajv.validate(schema, parseToJS(values));
+  let valuesToCheck = YAML.parse(values);
+  if (defaultValues) {
+    const defaultYAML = YAML.parse(defaultValues);
+    let patches = jsonpatch.compare(defaultYAML as any, valuesToCheck as any);
+    patches = patches.filter(function (d) {
+      return ["add", "replace"].includes(d.op);
+    });
+    valuesToCheck = jsonpatch.applyPatch(defaultYAML, patches).newDocument;
+  }
+  const valid = ajv.validate(schema, valuesToCheck);
   return { valid: !!valid, errors: ajv.errors } as IAjvValidateResult;
 }
 
