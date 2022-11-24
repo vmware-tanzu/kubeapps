@@ -1183,8 +1183,6 @@ func TestKindClusterDeletePackageRepository(t *testing.T) {
 				grpcCtx = grpcAdmin
 			}
 
-			// TODO setUserManagedSecretsAndCleanup(t, fluxPluginReposClient, tc.userManagedSecrets)
-
 			tc.request.PackageRepoRef.Context.Namespace = repoNamespace
 
 			grpcCtx, cancel := context.WithTimeout(grpcCtx, defaultContextTimeout)

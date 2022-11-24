@@ -2188,7 +2188,6 @@ func TestDeletePackageRepository(t *testing.T) {
 			if err != nil {
 				t.Fatalf("error instantiating the server: %v", err)
 			}
-			// TODO s.pluginConfig.UserManagedSecrets = tc.userManagedSecrets
 
 			ctx := context.Background()
 			ctrlClient, err := s.clientGetter.ControllerRuntime(ctx, s.kubeappsCluster)

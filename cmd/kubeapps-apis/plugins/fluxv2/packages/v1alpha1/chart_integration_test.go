@@ -782,8 +782,6 @@ func testKindClusterAvailablePackageEndpointsForOCIHelper(
 				}
 			}
 
-			// TODO			setUserManagedSecretsAndCleanup(t, fluxPluginReposClient, true)
-
 			if err := kubeAddHelmRepositoryAndCleanup(
 				t, repoName, "oci", tc.registryUrl, secretName, 0); err != nil {
 				t.Fatal(err)
@@ -965,8 +963,6 @@ func TestKindClusterAvailablePackageEndpointsOCIRepo2Charts(t *testing.T) {
 					t.Fatal(err)
 				}
 			}
-
-			// TODO			setUserManagedSecretsAndCleanup(t, fluxPluginReposClient, true)
 
 			if err := kubeAddHelmRepositoryAndCleanup(
 				t, repoName, "oci", tc.registryUrl, secretName, 0); err != nil {
