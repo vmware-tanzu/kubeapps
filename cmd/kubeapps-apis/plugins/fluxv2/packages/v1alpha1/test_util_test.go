@@ -285,7 +285,10 @@ func setSecretManagedByKubeapps(secret *apiv1.Secret) *apiv1.Secret {
 	return secret
 }
 
-// TODO rewrite this
+// TODO (gfichenholt) technically speaking this isn't quite right for a test case
+// that actually involves non-fake k8s environment.
+// In order for this to be 100% right, we need a repo object with a UID set up. But
+// its good enough for a fake k8s environment, which is where this is used
 func setSecretOwnerRef(repoName string, secret *apiv1.Secret) *apiv1.Secret {
 	tRue := true
 	secret.OwnerReferences = []metav1.OwnerReference{

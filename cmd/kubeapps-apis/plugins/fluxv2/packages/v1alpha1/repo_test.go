@@ -1227,7 +1227,6 @@ func TestAddPackageRepository(t *testing.T) {
 			request:          add_repo_req_6(ca),
 			expectedResponse: add_repo_expected_resp,
 			expectedRepo:     &add_repo_2,
-			// TODO: rewrite the way this works. make use of userManagedSecrets flag
 			expectedCreatedSecret: setSecretManagedByKubeapps(setSecretOwnerRef(
 				"bar",
 				newTlsSecret(types.NamespacedName{
