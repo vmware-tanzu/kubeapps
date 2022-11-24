@@ -6,7 +6,6 @@
 KUBE ?= ${HOME}/.kube
 CLUSTER_NAME ?= kubeapps
 ADDITIONAL_CLUSTER_NAME ?= kubeapps-additional
-IMAGE ?= kindest/node:v1.24.0@sha256:0866296e693efe1fed79d5e6c7af8df71fc73ae45e3679af05342239cdc5bc8e
 
 CLUSTER_CONFIG = ${KUBE}/kind-config-${CLUSTER_NAME}
 ADDITIONAL_CLUSTER_CONFIG = ${KUBE}/kind-config-${ADDITIONAL_CLUSTER_NAME}
@@ -15,14 +14,13 @@ ADDITIONAL_CLUSTER_CONFIG = ${KUBE}/kind-config-${ADDITIONAL_CLUSTER_NAME}
 # but is sufficient for the pod to be created so that we can copy the certs below.
 ${CLUSTER_CONFIG}:
 	kind create cluster \
-		--image ${IMAGE} \
 		--kubeconfig ${CLUSTER_CONFIG} \
 		--name ${CLUSTER_NAME} \
-		--config=./site/content/docs/latest/reference/manifests/kubeapps-local-dev-apiserver-config.yaml \
+		--config=./docs/howto/manifests/kubeapps-local-dev-apiserver-config.yaml \
 		--retain \
 		--wait 10s
-#	kubectl apply --kubeconfig=${CLUSTER_CONFIG} -f ./site/content/docs/latest/reference/manifests/kubeapps-local-dev-users-rbac.yaml
-	kubectl apply --kubeconfig=${CLUSTER_CONFIG} -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/main/deploy/static/provider/kind/deploy.yaml
+	kubectl apply --kubeconfig=${CLUSTER_CONFIG} -f ./docs/howto/manifests/kubeapps-local-dev-users-rbac.yaml
+	kubectl apply --kubeconfig=${CLUSTER_CONFIG} -f ./docs/howto/manifests/ingress-nginx-kind-with-large-proxy-buffers.yaml
 	# TODO: need to add wait for condition=exists or similar - https://github.com/kubernetes/kubernetes/issues/83242
 	sleep 5
 	kubectl wait --kubeconfig=${CLUSTER_CONFIG} --namespace ingress-nginx \
@@ -45,22 +43,13 @@ ${ADDITIONAL_CLUSTER_CONFIG}: devel/dex.crt
 	kind create cluster \
 		--kubeconfig ${ADDITIONAL_CLUSTER_CONFIG} \
 		--name ${ADDITIONAL_CLUSTER_NAME} \
-		--config=./site/content/docs/latest/reference/manifests/kubeapps-local-dev-additional-apiserver-config.yaml \
+		--config=./docs/howto/manifests/kubeapps-local-dev-additional-apiserver-config.yaml \
 		--retain \
 		--wait 10s
-	kubectl apply --kubeconfig=${ADDITIONAL_CLUSTER_CONFIG} -f ./site/content/docs/latest/reference/manifests/kubeapps-local-dev-users-rbac.yaml
-	kubectl apply --kubeconfig=${ADDITIONAL_CLUSTER_CONFIG} -f ./site/content/docs/latest/reference/manifests/kubeapps-local-dev-namespace-discovery-rbac.yaml
+	kubectl apply --kubeconfig=${ADDITIONAL_CLUSTER_CONFIG} -f ./docs/howto/manifests/kubeapps-local-dev-users-rbac.yaml
+	kubectl apply --kubeconfig=${ADDITIONAL_CLUSTER_CONFIG} -f ./docs/howto/manifests/kubeapps-local-dev-namespace-discovery-rbac.yaml
 
 additional-cluster-kind: ${ADDITIONAL_CLUSTER_CONFIG}
-
-devel/additional-nginx:
-	kubectl apply --kubeconfig=${ADDITIONAL_CLUSTER_CONFIG} -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/main/deploy/static/provider/kind/deploy.yaml
-	# TODO: need to add wait for condition=exists or similar - https://github.com/kubernetes/kubernetes/issues/83242
-	sleep 5
-	kubectl wait --kubeconfig=${ADDITIONAL_CLUSTER_CONFIG} --namespace ingress-nginx \
-		--for=condition=ready pod \
-		--selector=app.kubernetes.io/component=controller \
-		--timeout=120s
 
 multi-cluster-kind: cluster-kind additional-cluster-kind
 
@@ -71,4 +60,4 @@ delete-cluster-kind:
 	rm ${ADDITIONAL_CLUSTER_CONFIG} || true
 	rm devel/dex.* || true
 
-.PHONY: additional-cluster-kind cluster-kind cluster-kind-delete multi-cluster-kind pause devel/additional-nginx
+.PHONY: additional-cluster-kind cluster-kind cluster-kind-delete multi-cluster-kind pause
