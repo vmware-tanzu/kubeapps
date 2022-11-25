@@ -134,7 +134,7 @@ jobs:
             echo "running_on_main=false" >> $GITHUB_OUTPUT
           fi
 
-          if [[ ${GITHUB_REF_TYPE} == "tag" && ${GITHUB_REF_NAME} =~ ^v[0-9]+ ]]; then
+          if [[ ${GITHUB_REF_TYPE} == "tag" ]]; then
             echo "running_on_tag=true" >> $GITHUB_OUTPUT
           else
             echo "running_on_tag=false" >> $GITHUB_OUTPUT
