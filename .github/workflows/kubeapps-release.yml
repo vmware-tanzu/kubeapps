@@ -22,3 +22,4 @@ jobs:
     with:
       run_gke_tests: true
       run_linters: false
+      trigger_release: true
