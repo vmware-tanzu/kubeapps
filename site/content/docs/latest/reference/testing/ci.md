@@ -21,32 +21,32 @@ and there are mainly two types of actions:
   and usually published in the [GitHub Marketplace](https://github.com/marketplace?type=actions), so can just call and run them 
   (for example, `actions/checkout`).
   * **Custom actions:** are the actions we can create to define reusable tasks avoiding code duplication. They are defined in
-  yaml files located in `/.github/actions/action-name/action.yml` (see the [srp-source-provenance action](../../../../../../.github/actions/srp-source-provenance/action.yml).
+  yaml files located in `/.github/actions/action-name/action.yml` (see the [srp-source-provenance action](https://github.com/vmware-tanzu/kubeapps/blob/main/.github/actions/srp-source-provenance/action.yml).
 
 ## Workflows
 
 Currently, you can find the following top-level workflows:
 
-* **[Main Pipeline](../../../../../../.github/workflows/kubeapps-main.yaml):** it runs automatically when a new PR is filed and when a new commit is pushed to the `main` branch.
+* **[Main Pipeline](https://github.com/vmware-tanzu/kubeapps/blob/main/.github/workflows/kubeapps-main.yaml):** it runs automatically when a new PR is filed and when a new commit is pushed to the `main` branch.
 Internally calls the `Kubeapps general` reusable workflow.
-* **[Release Pipeline](../../../../../../.github/workflows/kubeapps-release.yml):** it runs automatically when a new tag matching the version pattern `vX.Y.Z` is pushed to the repository.
+* **[Release Pipeline](https://github.com/vmware-tanzu/kubeapps/blob/main/.github/workflows/kubeapps-release.yml):** it runs automatically when a new tag matching the version pattern `vX.Y.Z` is pushed to the repository.
 Internally calls the `Kubeapps general` reusable workflow.
-* **[Full Integration Pipeline](../../../../../../.github/workflows/kubeapps-full-integration.yaml):** it runs on-demand and can be manually triggered from 
+* **[Full Integration Pipeline](https://github.com/vmware-tanzu/kubeapps/blob/main/.github/workflows/kubeapps-full-integration.yaml):** it runs on-demand and can be manually triggered from 
 the [Actions section](https://github.com/vmware-tanzu/kubeapps/actions) of the GitHub repository. Internally calls the `Kubeapps general` reusable workflow passing the input argument `run_gke_tests` with value `true`, so the e2e tests are run on external GKE clusters.
-* **[CodeQL Analysis](../../../../../../.github/workflows/codeql-analysis.yml):** it executes the CodeQL security analysis, runs automatically depending on several conditions/events, 
+* **[CodeQL Analysis](https://github.com/vmware-tanzu/kubeapps/blob/main/.github/workflows/codeql-analysis.yml):** it executes the CodeQL security analysis, runs automatically depending on several conditions/events, 
 and is not part of the `Kubeapps General` workflow due to the big amount of time it takes to complete.
-* **[Kubeapps Custodian Rules](../../../../../../.github/workflows/ci-custodian-rules.yaml):** it executes some custodian rules for the project, runs automatically on-schedule.
-* **[Project automation](../../../../../../.github/workflows/add-issues-to-project.yaml):** it runs automatically when new issues are created in the Kubeapps repository and adds them to the Kubeapps project.
+* **[Kubeapps Custodian Rules](https://github.com/vmware-tanzu/kubeapps/blob/main/.github/workflows/ci-custodian-rules.yaml):** it executes some custodian rules for the project, runs automatically on-schedule.
+* **[Project automation](https://github.com/vmware-tanzu/kubeapps/blob/main/.github/workflows/add-issues-to-project.yaml):** it runs automatically when new issues are created in the Kubeapps repository and adds them to the Kubeapps project.
 
 Besides that, you have the following reusable workflows:
 
-* **[Kubeapps General](../../../../../../.github/workflows/kubeapps-general.yaml):** it contains the definition of the whole pipeline, containing multiple jobs that run depending on different conditions (like the event that triggered the workflow, or the repository or branch from which it was triggered), so it supports multiple flows/scenarios. It receives some input parameters that allow you to tune its behavior (for example, whether e2e tests should be run or not).
-* **[GKE e2e Tests](../../../../../../.github/workflows/gke_e2e_tests.yaml):** it contains the definition of the job that runs the e2e tests on a GKE cluster.
-* **[Linters](../../../../../../.github/workflows/linters.yml):** it contains the definition of the jobs that execute multiple linters for the project.
+* **[Kubeapps General](https://github.com/vmware-tanzu/kubeapps/blob/main/.github/workflows/kubeapps-general.yaml):** it contains the definition of the whole pipeline, containing multiple jobs that run depending on different conditions (like the event that triggered the workflow, or the repository or branch from which it was triggered), so it supports multiple flows/scenarios. It receives some input parameters that allow you to tune its behavior (for example, whether e2e tests should be run or not).
+* **[GKE e2e Tests](https://github.com/vmware-tanzu/kubeapps/blob/main/.github/workflows/gke_e2e_tests.yaml):** it contains the definition of the job that runs the e2e tests on a GKE cluster.
+* **[Linters](https://github.com/vmware-tanzu/kubeapps/blob/main/.github/workflows/linters.yml):** it contains the definition of the jobs that execute multiple linters for the project.
 
 ## Custom Actions
 
-Currently, we only have a custom action: [srp-source-provenance](../../../../../../.github/actions/srp-source-provenance/action.yml). This action contains the logic required for 
+Currently, we only have a custom action: [srp-source-provenance](https://github.com/vmware-tanzu/kubeapps/blob/main/.github/actions/srp-source-provenance/action.yml). This action contains the logic required for 
 generating and submitting the source provenance, so we comply with VMware SRP (Secure Release Pipeline) requirements.
 
 ## Jobs
@@ -58,8 +58,8 @@ The reason why you need this job is that GHA doesn't allow to directly use envir
 you cannot directly pass an environment variable in the `with` block of an action call, so we use this workaround to overcome
 that situation. Also, you cannot dynamically set the value of an environment variable declared in an `env` block, so we generate
 output variables for those cases.
-- `linters`: it simply calls the reusable workflow where all linters are declared ([linters.yml](../../../../../../.github/workflows/linters.yml)).
-- `linters_result`: even though all the linter jobs are defined in the [linters.yml](../../../../../../.github/workflows/linters.yml)
+- `linters`: it simply calls the reusable workflow where all linters are declared ([linters.yml](https://github.com/vmware-tanzu/kubeapps/blob/main/.github/workflows/linters.yml)).
+- `linters_result`: even though all the linter jobs are defined in the [linters.yml](https://github.com/vmware-tanzu/kubeapps/blob/main/.github/workflows/linters.yml)
   file, it is not practical to set each of them as a compulsory status check in the branch protection rules, so this job is
   intended to serve as a global status check for all linters.
 - `test_go`: it runs every unit test for those projects written in Golang (that is, it runs `make test`) as well as it runs some DB-dependent tests.
@@ -73,7 +73,7 @@ output variables for those cases.
 images generated from whatever commit from a feature branch. To avoid polluting the images with all the tags generated
 from every single commit, we add the suffix `-ci` to the corresponding image, for example, `kubeapps/dashboard-ci`.
 - `local_e2e_tests`: it runs locally (that is, inside the GHA environment) the e2e tests. Please refer to the [e2e tests documentation](./end-to-end-tests.md) 
-for further information. In this job, before running the script [e2e-test.sh](../../../../../../script/e2e-test.sh), 
+for further information. In this job, before running the script [e2e-test.sh](https://github.com/vmware-tanzu/kubeapps/blob/main/script/e2e-test.sh), 
 the proper environment is created. Namely:
   - Install the required binaries (kind, kubectl, mkcert, helm).
   - Spin up two Kind clusters.
@@ -106,10 +106,10 @@ This step involves:
   - Using `vX.X.X` as the `appVersion`.
   - Sending a draft PR to the Bitnami Charts repository with these changes (from the robot account's personal fork)
 - `release`: every time a new version tag is pushed to the repository, it creates a GitHub release based on the current
-tag by running the script [create_release.sh](../../../../../../script/create_release.sh).
+tag by running the script [create_release.sh](https://github.com/vmware-tanzu/kubeapps/blob/main/script/create_release.sh).
 - `gke_setup`: it serves as a gateway job for the e2e tests that are run in a external GKE clusters. The reason why this job 
-is needed is that we have a reusable workflow in [gke_e2e_tests.yaml](../../../../../../.github/workflows/gke_e2e_tests.yaml)
-that contains the definition of the job that executes those e2e tests in GKE, and in [kubeapps-general.yaml](../../../../../../.github/workflows/kubeapps-general.yaml)
+is needed is that we have a reusable workflow in [gke_e2e_tests.yaml](https://github.com/vmware-tanzu/kubeapps/blob/main/.github/workflows/gke_e2e_tests.yaml)
+that contains the definition of the job that executes those e2e tests in GKE, and in [kubeapps-general.yaml](https://github.com/vmware-tanzu/kubeapps/blob/main/.github/workflows/kubeapps-general.yaml)
 we call that workflow with different parameters, and because of GHA limitations, we cannot use environment variables to pass 
 those parameters, so this job turns the required env vars into output data. Besides that, by making those jobs depending on
 this one, we avoid rewriting the execution conditions (that is, the `if` statement) on each job.
