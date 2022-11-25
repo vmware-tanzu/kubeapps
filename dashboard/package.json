@@ -66,7 +66,7 @@
     "remark-breaks": "^3.0.2",
     "remark-gfm": "^3.0.1",
     "rxjs": "^7.5.7",
-    "swagger-ui-react": "^4.15.2",
+    "swagger-ui-react": "^4.15.5",
     "typesafe-actions": "^5.1.0",
     "yaml": "^2.1.3"
   },
