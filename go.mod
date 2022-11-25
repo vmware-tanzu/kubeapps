@@ -90,7 +90,7 @@ require (
 	k8s.io/client-go v0.25.4
 	k8s.io/klog/v2 v2.80.1
 	k8s.io/kubectl v0.25.3
-	k8s.io/kubernetes v1.24.7
+	k8s.io/kubernetes v1.25.4
 	k8s.io/utils v0.0.0-20221108210102-8e77b1f39fe2
 	oras.land/oras-go v1.2.1
 	oras.land/oras-go/v2 v2.0.0-rc.5
@@ -117,7 +117,6 @@ require (
 	github.com/bugsnag/panicwrap v1.3.4 // indirect
 	github.com/cenkalti/backoff/v4 v4.1.3 // indirect
 	github.com/cespare/xxhash/v2 v2.1.2 // indirect
-	github.com/chai2010/gettext-go v0.0.0-20160711120539-c6fed771bfd5 // indirect
 	github.com/cppforlife/cobrautil v0.0.0-20221021151949-d60711905d65 // indirect
 	github.com/cppforlife/color v1.9.1-0.20200716202919-6706ac40b835 // indirect
 	github.com/cppforlife/go-patch v0.2.0 // indirect
