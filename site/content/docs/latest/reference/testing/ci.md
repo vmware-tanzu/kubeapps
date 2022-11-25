@@ -4,8 +4,7 @@ Kubeapps leverages GitHub Actions (GHA) for its CI processes: running the tests 
 and syncing the Helm chart with the official [Bitnami chart](https://github.com/bitnami/charts/tree/main/bitnami/kubeapps). 
 The following image depicts how a successful workflow looks like after pushing a commit to the main branch.
 
-**TODO(bjesus) UPDATE THIS IMAGE BEFORE MERGING**
-![CircleCI workflow after pushing to the main branch](../../img/ci-workflow-main.png "CircleCI workflow after pushing to the main branch")
+![CI workflow after pushing to the main branch](../../img/ci-workflow-main.png "CI workflow after pushing to the main branch")
 
 The different parts involved in the GHA configuration are:
 * **Workflows:** they are what we commonly call `pipelines`. A workflow is a directed acyclic graph composed of several jobs, and it can be automatically
