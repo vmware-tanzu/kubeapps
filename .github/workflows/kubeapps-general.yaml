@@ -740,6 +740,8 @@ jobs:
       - # Assuming there is a personal access token created in GitHub granted with the scopes
         # "repo:status", "public_repo" and "read:org"
         name: Run the create_release script
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           set -eu
           ./script/create_release.sh "${GITHUB_REF_NAME}" "${KUBEAPPS_REPO}"
