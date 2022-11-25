@@ -32,8 +32,7 @@ Internally calls the `Kubeapps general` reusable workflow.
 * **[Release Pipeline](../../../../../../.github/workflows/kubeapps-release.yml):** it runs automatically when a new tag matching the version pattern `vX.Y.Z` is pushed to the repository.
 Internally calls the `Kubeapps general` reusable workflow.
 * **[Full Integration Pipeline](../../../../../../.github/workflows/kubeapps-full-integration.yaml):** it runs on-demand and can be manually triggered from 
-the [Actions section](https://github.com/vmware-tanzu/kubeapps/actions) of the GitHub repository. Internally calls the `Kubeapps general` reusable workflow passing the input argument
-`run_gke_tests` with value `true`, so the e2e tests are run on external GKE clusters.
+the [Actions section](https://github.com/vmware-tanzu/kubeapps/actions) of the GitHub repository. Internally calls the `Kubeapps general` reusable workflow passing the input argument `run_gke_tests` with value `true`, so the e2e tests are run on external GKE clusters.
 * **[CodeQL Analysis](../../../../../../.github/workflows/codeql-analysis.yml):** it executes the CodeQL security analysis, runs automatically depending on several conditions/events, 
 and is not part of the `Kubeapps General` workflow due to the big amount of time it takes to complete.
 * **[Kubeapps Custodian Rules](../../../../../../.github/workflows/ci-custodian-rules.yaml):** it executes some custodian rules for the project, runs automatically on-schedule.
@@ -41,9 +40,7 @@ and is not part of the `Kubeapps General` workflow due to the big amount of time
 
 Besides that, you have the following reusable workflows:
 
-* **[Kubeapps General](../../../../../../.github/workflows/kubeapps-general.yaml):** it contains the definition of the whole pipeline, containing multiple jobs that run depending on
-  different conditions (like the event that triggered the workflow, or the repository or branch from which it was triggered), so it supports multiple flows/scenarios. It receives some
-  input parameters that allow you to tune its behaviour (for example, whether e2e tests should be run or not).
+* **[Kubeapps General](../../../../../../.github/workflows/kubeapps-general.yaml):** it contains the definition of the whole pipeline, containing multiple jobs that run depending on different conditions (like the event that triggered the workflow, or the repository or branch from which it was triggered), so it supports multiple flows/scenarios. It receives some input parameters that allow you to tune its behavior (for example, whether e2e tests should be run or not).
 * **[GKE e2e Tests](../../../../../../.github/workflows/gke_e2e_tests.yaml):** it contains the definition of the job that runs the e2e tests on a GKE cluster.
 * **[Linters](../../../../../../.github/workflows/linters.yml):** it contains the definition of the jobs that execute multiple linters for the project.
 
