@@ -73,7 +73,7 @@ require (
 	github.com/stretchr/testify v1.8.1
 	github.com/vmware-tanzu/carvel-kapp v0.54.0
 	github.com/vmware-tanzu/carvel-kapp-controller v0.43.1
-	github.com/vmware-tanzu/carvel-vendir v0.32.0
+	github.com/vmware-tanzu/carvel-vendir v0.32.1
 	golang.org/x/net v0.2.0
 	golang.org/x/sync v0.1.0
 	google.golang.org/genproto v0.0.0-20221114212237-e4508ebdbee1
@@ -235,7 +235,7 @@ require (
 	github.com/yvasiyarov/newrelic_platform_go v0.0.0-20160601141957-9c099fbc30e9 // indirect
 	go.starlark.net v0.0.0-20221020143700-22309ac47eac // indirect
 	go.uber.org/zap v1.23.0 // indirect
-	golang.org/x/crypto v0.1.0 // indirect
+	golang.org/x/crypto v0.3.0 // indirect
 	golang.org/x/image v0.1.0 // indirect
 	golang.org/x/oauth2 v0.2.0 // indirect
 	golang.org/x/sys v0.2.0 // indirect
