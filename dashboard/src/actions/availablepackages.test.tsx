@@ -60,7 +60,7 @@ const defaultAvailablePackageDetail: AvailablePackageDetail = {
   },
   valuesSchema: "",
   defaultValues: "",
-  customDefaultValues: {},
+  additionalDefaultValues: {},
   maintainers: [],
   readme: "",
   version: {

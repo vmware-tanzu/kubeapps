@@ -94,9 +94,9 @@ func (a ChartFiles) Value() (driver.Value, error) {
 
 // some constant strings used as keys in maps in several modules
 const (
-	ReadmeKey              = "readme"
-	ValuesKey              = "values"
-	CustomDefaultValuesKey = "customDefaultValues"
-	SchemaKey              = "schema"
-	ChartYamlKey           = "chartYaml"
+	ReadmeKey                  = "readme"
+	ValuesKey                  = "values"
+	AdditionalDefaultValuesKey = "additionalDefaultValues"
+	SchemaKey                  = "schema"
+	ChartYamlKey               = "chartYaml"
 )
