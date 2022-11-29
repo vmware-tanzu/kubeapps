@@ -6,14 +6,15 @@ package main
 import (
 	"context"
 	"fmt"
-	authorizationv1 "k8s.io/api/authorization/v1"
-	k8stesting "k8s.io/client-go/testing"
 	"net/http"
 	"net/http/httptest"
 	"os"
 	"strings"
 	"testing"
 	"time"
+
+	authorizationv1 "k8s.io/api/authorization/v1"
+	k8stesting "k8s.io/client-go/testing"
 
 	fluxmeta "github.com/fluxcd/pkg/apis/meta"
 	sourcev1 "github.com/fluxcd/source-controller/api/v1beta2"
@@ -1226,16 +1227,17 @@ func TestAddPackageRepository(t *testing.T) {
 			request:          add_repo_req_6(ca),
 			expectedResponse: add_repo_expected_resp,
 			expectedRepo:     &add_repo_2,
-			expectedCreatedSecret: setSecretOwnerRef("bar",
+			expectedCreatedSecret: setSecretManagedByKubeapps(setSecretOwnerRef(
+				"bar",
 				newTlsSecret(types.NamespacedName{
 					Name:      "bar-",
-					Namespace: "foo"}, nil, nil, ca)),
+					Namespace: "foo"}, nil, nil, ca))),
 			statusCode: codes.OK,
 		},
 		{
 			name:       "errors when package repository with secret key reference (kubeapps managed secrets)",
 			request:    add_repo_req_7,
-			statusCode: codes.InvalidArgument,
+			statusCode: codes.NotFound,
 		},
 		{
 			name:             "package repository with secret key reference",
@@ -1257,17 +1259,18 @@ func TestAddPackageRepository(t *testing.T) {
 		{
 			name:       "fails when package repository links to non-existing secret (kubeapps managed secrets)",
 			request:    add_repo_req_7,
-			statusCode: codes.InvalidArgument,
+			statusCode: codes.NotFound,
 		},
 		{
 			name:             "package repository with basic auth and pass_credentials flag",
 			request:          add_repo_req_8,
 			expectedResponse: add_repo_expected_resp,
 			expectedRepo:     &add_repo_4,
-			expectedCreatedSecret: setSecretOwnerRef("bar",
+			expectedCreatedSecret: setSecretManagedByKubeapps(setSecretOwnerRef(
+				"bar",
 				newBasicAuthSecret(types.NamespacedName{
 					Name:      "bar-",
-					Namespace: "foo"}, "baz", "zot")),
+					Namespace: "foo"}, "baz", "zot"))),
 			statusCode: codes.OK,
 		},
 		{
@@ -1275,10 +1278,10 @@ func TestAddPackageRepository(t *testing.T) {
 			request:          add_repo_req_9(pub, priv),
 			expectedResponse: add_repo_expected_resp,
 			expectedRepo:     &add_repo_2,
-			expectedCreatedSecret: setSecretOwnerRef("bar",
+			expectedCreatedSecret: setSecretManagedByKubeapps(setSecretOwnerRef("bar",
 				newTlsSecret(types.NamespacedName{
 					Name:      "bar-",
-					Namespace: "foo"}, pub, priv, nil)),
+					Namespace: "foo"}, pub, priv, nil))),
 			statusCode: codes.OK,
 		},
 		{
@@ -1310,7 +1313,7 @@ func TestAddPackageRepository(t *testing.T) {
 		{
 			name:       "package repository with basic auth and existing secret (kubeapps managed secrets)",
 			request:    add_repo_req_13,
-			statusCode: codes.InvalidArgument,
+			statusCode: codes.NotFound,
 		},
 		{
 			name:       "errors when package repository with 1 secret for TLS CA and a different secret for basic auth (kubeapps managed secrets)",
@@ -1344,6 +1347,11 @@ func TestAddPackageRepository(t *testing.T) {
 			expectedRepo:     &add_repo_7,
 			statusCode:       codes.OK,
 		},
+		{
+			name:       "returns error when mix referenced secrets and user provided secret data",
+			request:    add_repo_req_30,
+			statusCode: codes.InvalidArgument,
+		},
 	}
 
 	for _, tc := range testCases {
@@ -1356,7 +1364,6 @@ func TestAddPackageRepository(t *testing.T) {
 			if err != nil {
 				t.Fatalf("error instantiating the server: %v", err)
 			}
-			s.pluginConfig.UserManagedSecrets = tc.userManagedSecrets
 
 			nsname := types.NamespacedName{Namespace: tc.request.Context.Namespace, Name: tc.request.Name}
 			if tc.statusCode == codes.OK {
@@ -1526,9 +1533,11 @@ func TestGetPackageRepositoryDetail(t *testing.T) {
 			repoIndex:     testYaml("valid-index.yaml"),
 			repoName:      "repo-1",
 			repoNamespace: "namespace-1",
-			repoSecret: newTlsSecret(types.NamespacedName{
-				Name:      "secret-1",
-				Namespace: "namespace-1"}, nil, nil, ca),
+			repoSecret: setSecretManagedByKubeapps(setSecretOwnerRef(
+				"repo1",
+				newTlsSecret(types.NamespacedName{
+					Name:      "secret-1",
+					Namespace: "namespace-1"}, nil, nil, ca))),
 			request:            get_repo_detail_req_1,
 			expectedStatusCode: codes.OK,
 			expectedResponse:   get_repo_detail_resp_6a,
@@ -1571,9 +1580,11 @@ func TestGetPackageRepositoryDetail(t *testing.T) {
 			repoIndex:     testYaml("valid-index.yaml"),
 			repoName:      "repo-1",
 			repoNamespace: "namespace-1",
-			repoSecret: newTlsSecret(types.NamespacedName{
-				Name:      "secret-1",
-				Namespace: "namespace-1"}, pub, priv, nil),
+			repoSecret: setSecretManagedByKubeapps(setSecretOwnerRef(
+				"repo-1",
+				newTlsSecret(types.NamespacedName{
+					Name:      "secret-1",
+					Namespace: "namespace-1"}, pub, priv, nil))),
 			request:            get_repo_detail_req_1,
 			expectedStatusCode: codes.OK,
 			expectedResponse:   get_repo_detail_resp_9a,
@@ -1596,9 +1607,11 @@ func TestGetPackageRepositoryDetail(t *testing.T) {
 			repoIndex:     testYaml("valid-index.yaml"),
 			repoName:      "repo-1",
 			repoNamespace: "namespace-1",
-			repoSecret: newBasicAuthSecret(types.NamespacedName{
-				Name:      "secret-1",
-				Namespace: "namespace-1"}, "foo", "bar"),
+			repoSecret: setSecretManagedByKubeapps(setSecretOwnerRef(
+				"repo-1",
+				newBasicAuthSecret(types.NamespacedName{
+					Name:      "secret-1",
+					Namespace: "namespace-1"}, "foo", "bar"))),
 			request:            get_repo_detail_req_1,
 			expectedStatusCode: codes.OK,
 			expectedResponse:   get_repo_detail_resp_10a,
@@ -1666,7 +1679,6 @@ func TestGetPackageRepositoryDetail(t *testing.T) {
 			if err != nil {
 				t.Fatalf("error instantiating the server: %v", err)
 			}
-			s.pluginConfig.UserManagedSecrets = tc.userManagedSecrets
 
 			ctx := context.Background()
 			actualResp, err := s.GetPackageRepositoryDetail(ctx, tc.request)
@@ -1953,9 +1965,11 @@ func TestUpdatePackageRepository(t *testing.T) {
 			repoIndex:     testYaml("valid-index.yaml"),
 			repoName:      "repo-1",
 			repoNamespace: "namespace-1",
-			oldRepoSecret: newTlsSecret(types.NamespacedName{
-				Name:      "secret-1",
-				Namespace: "namespace-1"}, pub, priv, nil),
+			oldRepoSecret: setSecretManagedByKubeapps(setSecretOwnerRef(
+				"repo-1",
+				newTlsSecret(types.NamespacedName{
+					Name:      "secret-1",
+					Namespace: "namespace-1"}, pub, priv, nil))),
 			request:            update_repo_req_9,
 			expectedStatusCode: codes.OK,
 			expectedResponse:   update_repo_resp_1,
@@ -1966,9 +1980,11 @@ func TestUpdatePackageRepository(t *testing.T) {
 			repoIndex:     testYaml("valid-index.yaml"),
 			repoName:      "repo-1",
 			repoNamespace: "namespace-1",
-			oldRepoSecret: newTlsSecret(types.NamespacedName{
-				Name:      "secret-1",
-				Namespace: "namespace-1"}, pub, priv, nil),
+			oldRepoSecret: setSecretManagedByKubeapps(setSecretOwnerRef(
+				"repo-1",
+				newTlsSecret(types.NamespacedName{
+					Name:      "secret-1",
+					Namespace: "namespace-1"}, pub, priv, nil))),
 			request:            update_repo_req_10,
 			expectedStatusCode: codes.OK,
 			expectedResponse:   update_repo_resp_1,
@@ -1988,13 +2004,48 @@ func TestUpdatePackageRepository(t *testing.T) {
 			repoIndex:     testYaml("valid-index.yaml"),
 			repoName:      "repo-1",
 			repoNamespace: "namespace-1",
-			oldRepoSecret: newBasicAuthSecret(types.NamespacedName{
-				Name:      "secret-1",
-				Namespace: "namespace-1"}, "foo", "bar"),
+			oldRepoSecret: setSecretManagedByKubeapps(setSecretOwnerRef(
+				"repo-1",
+				newBasicAuthSecret(types.NamespacedName{
+					Name:      "secret-1",
+					Namespace: "namespace-1"}, "foo", "bar"))),
 			request:            update_repo_req_16,
 			expectedStatusCode: codes.OK,
 			expectedResponse:   update_repo_resp_1,
 			expectedDetail:     update_repo_detail_15,
+		},
+		{
+			name:               "returns error when mix referenced secrets and user provided secret data",
+			repoIndex:          testYaml("valid-index.yaml"),
+			repoName:           "repo-1",
+			repoNamespace:      "namespace-1",
+			request:            update_repo_req_19,
+			expectedStatusCode: codes.InvalidArgument,
+		},
+		{
+			name:          "update repository change Auth management mode (user-managed secrets)",
+			repoIndex:     testYaml("valid-index.yaml"),
+			repoName:      "repo-1",
+			repoNamespace: "namespace-1",
+			oldRepoSecret: newBasicAuthSecret(types.NamespacedName{
+				Name:      "secret-1",
+				Namespace: "namespace-1"}, "foo", "bar"),
+			request:            update_repo_req_20,
+			expectedStatusCode: codes.InvalidArgument,
+			userManagedSecrets: true,
+		},
+		{
+			name:          "update repository change Auth management mode (kubeapps-managed secrets)",
+			repoIndex:     testYaml("valid-index.yaml"),
+			repoName:      "repo-1",
+			repoNamespace: "namespace-1",
+			oldRepoSecret: setSecretManagedByKubeapps(setSecretOwnerRef(
+				"repo-1",
+				newBasicAuthSecret(types.NamespacedName{
+					Name:      "secret-1",
+					Namespace: "namespace-1"}, "foo", "bar"))),
+			request:            update_repo_req_21,
+			expectedStatusCode: codes.InvalidArgument,
 		},
 	}
 
@@ -2045,7 +2096,6 @@ func TestUpdatePackageRepository(t *testing.T) {
 			if err != nil {
 				t.Fatalf("error instantiating the server: %v", err)
 			}
-			s.pluginConfig.UserManagedSecrets = tc.userManagedSecrets
 
 			ctx := context.Background()
 			actualResp, err := s.UpdatePackageRepository(ctx, tc.request)
@@ -2175,7 +2225,6 @@ func TestDeletePackageRepository(t *testing.T) {
 			if err != nil {
 				t.Fatalf("error instantiating the server: %v", err)
 			}
-			s.pluginConfig.UserManagedSecrets = tc.userManagedSecrets
 
 			ctx := context.Background()
 			ctrlClient, err := s.clientGetter.ControllerRuntime(ctx, s.kubeappsCluster)

@@ -1,51 +1,44 @@
 /* eslint-disable */
+import Long from "long";
 import { grpc } from "@improbable-eng/grpc-web";
-import { BrowserHeaders } from "browser-headers";
 import _m0 from "protobufjs/minimal";
 import {
-  CreateInstalledPackageRequest,
-  CreateInstalledPackageResponse,
-  DeleteInstalledPackageRequest,
-  DeleteInstalledPackageResponse,
-  GetAvailablePackageDetailRequest,
-  GetAvailablePackageDetailResponse,
   GetAvailablePackageSummariesRequest,
-  GetAvailablePackageSummariesResponse,
+  GetAvailablePackageDetailRequest,
   GetAvailablePackageVersionsRequest,
-  GetAvailablePackageVersionsResponse,
-  GetInstalledPackageDetailRequest,
-  GetInstalledPackageDetailResponse,
-  GetInstalledPackageResourceRefsRequest,
-  GetInstalledPackageResourceRefsResponse,
   GetInstalledPackageSummariesRequest,
-  GetInstalledPackageSummariesResponse,
+  GetInstalledPackageDetailRequest,
+  CreateInstalledPackageRequest,
   UpdateInstalledPackageRequest,
+  DeleteInstalledPackageRequest,
+  GetInstalledPackageResourceRefsRequest,
+  GetAvailablePackageSummariesResponse,
+  GetAvailablePackageDetailResponse,
+  GetAvailablePackageVersionsResponse,
+  GetInstalledPackageSummariesResponse,
+  GetInstalledPackageDetailResponse,
+  CreateInstalledPackageResponse,
   UpdateInstalledPackageResponse,
-} from "../../../../core/packages/v1alpha1/packages";
+  DeleteInstalledPackageResponse,
+  GetInstalledPackageResourceRefsResponse,
+} from "../../../../../kubeappsapis/core/packages/v1alpha1/packages";
 import {
   AddPackageRepositoryRequest,
-  AddPackageRepositoryResponse,
-  DeletePackageRepositoryRequest,
-  DeletePackageRepositoryResponse,
   GetPackageRepositoryDetailRequest,
-  GetPackageRepositoryDetailResponse,
-  GetPackageRepositoryPermissionsRequest,
-  GetPackageRepositoryPermissionsResponse,
   GetPackageRepositorySummariesRequest,
-  GetPackageRepositorySummariesResponse,
   UpdatePackageRepositoryRequest,
+  DeletePackageRepositoryRequest,
+  GetPackageRepositoryPermissionsRequest,
+  AddPackageRepositoryResponse,
+  GetPackageRepositoryDetailResponse,
+  GetPackageRepositorySummariesResponse,
   UpdatePackageRepositoryResponse,
-} from "../../../../core/packages/v1alpha1/repositories";
+  DeletePackageRepositoryResponse,
+  GetPackageRepositoryPermissionsResponse,
+} from "../../../../../kubeappsapis/core/packages/v1alpha1/repositories";
+import { BrowserHeaders } from "browser-headers";
 
 export const protobufPackage = "kubeappsapis.plugins.fluxv2.packages.v1alpha1";
-
-export interface SetUserManagedSecretsRequest {
-  value: boolean;
-}
-
-export interface SetUserManagedSecretsResponse {
-  value: boolean;
-}
 
 /**
  * Flux PackageRepositoryCustomDetail
@@ -67,113 +60,7 @@ export interface FluxPackageRepositoryCustomDetail {
   provider: string;
 }
 
-function createBaseSetUserManagedSecretsRequest(): SetUserManagedSecretsRequest {
-  return { value: false };
-}
-
-export const SetUserManagedSecretsRequest = {
-  encode(
-    message: SetUserManagedSecretsRequest,
-    writer: _m0.Writer = _m0.Writer.create(),
-  ): _m0.Writer {
-    if (message.value === true) {
-      writer.uint32(8).bool(message.value);
-    }
-    return writer;
-  },
-
-  decode(input: _m0.Reader | Uint8Array, length?: number): SetUserManagedSecretsRequest {
-    const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
-    let end = length === undefined ? reader.len : reader.pos + length;
-    const message = createBaseSetUserManagedSecretsRequest();
-    while (reader.pos < end) {
-      const tag = reader.uint32();
-      switch (tag >>> 3) {
-        case 1:
-          message.value = reader.bool();
-          break;
-        default:
-          reader.skipType(tag & 7);
-          break;
-      }
-    }
-    return message;
-  },
-
-  fromJSON(object: any): SetUserManagedSecretsRequest {
-    return { value: isSet(object.value) ? Boolean(object.value) : false };
-  },
-
-  toJSON(message: SetUserManagedSecretsRequest): unknown {
-    const obj: any = {};
-    message.value !== undefined && (obj.value = message.value);
-    return obj;
-  },
-
-  fromPartial<I extends Exact<DeepPartial<SetUserManagedSecretsRequest>, I>>(
-    object: I,
-  ): SetUserManagedSecretsRequest {
-    const message = createBaseSetUserManagedSecretsRequest();
-    message.value = object.value ?? false;
-    return message;
-  },
-};
-
-function createBaseSetUserManagedSecretsResponse(): SetUserManagedSecretsResponse {
-  return { value: false };
-}
-
-export const SetUserManagedSecretsResponse = {
-  encode(
-    message: SetUserManagedSecretsResponse,
-    writer: _m0.Writer = _m0.Writer.create(),
-  ): _m0.Writer {
-    if (message.value === true) {
-      writer.uint32(8).bool(message.value);
-    }
-    return writer;
-  },
-
-  decode(input: _m0.Reader | Uint8Array, length?: number): SetUserManagedSecretsResponse {
-    const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
-    let end = length === undefined ? reader.len : reader.pos + length;
-    const message = createBaseSetUserManagedSecretsResponse();
-    while (reader.pos < end) {
-      const tag = reader.uint32();
-      switch (tag >>> 3) {
-        case 1:
-          message.value = reader.bool();
-          break;
-        default:
-          reader.skipType(tag & 7);
-          break;
-      }
-    }
-    return message;
-  },
-
-  fromJSON(object: any): SetUserManagedSecretsResponse {
-    return { value: isSet(object.value) ? Boolean(object.value) : false };
-  },
-
-  toJSON(message: SetUserManagedSecretsResponse): unknown {
-    const obj: any = {};
-    message.value !== undefined && (obj.value = message.value);
-    return obj;
-  },
-
-  fromPartial<I extends Exact<DeepPartial<SetUserManagedSecretsResponse>, I>>(
-    object: I,
-  ): SetUserManagedSecretsResponse {
-    const message = createBaseSetUserManagedSecretsResponse();
-    message.value = object.value ?? false;
-    return message;
-  },
-};
-
-function createBaseFluxPackageRepositoryCustomDetail(): FluxPackageRepositoryCustomDetail {
-  return { provider: "" };
-}
+const baseFluxPackageRepositoryCustomDetail: object = { provider: "" };
 
 export const FluxPackageRepositoryCustomDetail = {
   encode(
@@ -189,7 +76,9 @@ export const FluxPackageRepositoryCustomDetail = {
   decode(input: _m0.Reader | Uint8Array, length?: number): FluxPackageRepositoryCustomDetail {
     const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
     let end = length === undefined ? reader.len : reader.pos + length;
-    const message = createBaseFluxPackageRepositoryCustomDetail();
+    const message = {
+      ...baseFluxPackageRepositoryCustomDetail,
+    } as FluxPackageRepositoryCustomDetail;
     while (reader.pos < end) {
       const tag = reader.uint32();
       switch (tag >>> 3) {
@@ -205,7 +94,15 @@ export const FluxPackageRepositoryCustomDetail = {
   },
 
   fromJSON(object: any): FluxPackageRepositoryCustomDetail {
-    return { provider: isSet(object.provider) ? String(object.provider) : "" };
+    const message = {
+      ...baseFluxPackageRepositoryCustomDetail,
+    } as FluxPackageRepositoryCustomDetail;
+    if (object.provider !== undefined && object.provider !== null) {
+      message.provider = String(object.provider);
+    } else {
+      message.provider = "";
+    }
+    return message;
   },
 
   toJSON(message: FluxPackageRepositoryCustomDetail): unknown {
@@ -214,11 +111,17 @@ export const FluxPackageRepositoryCustomDetail = {
     return obj;
   },
 
-  fromPartial<I extends Exact<DeepPartial<FluxPackageRepositoryCustomDetail>, I>>(
-    object: I,
+  fromPartial(
+    object: DeepPartial<FluxPackageRepositoryCustomDetail>,
   ): FluxPackageRepositoryCustomDetail {
-    const message = createBaseFluxPackageRepositoryCustomDetail();
-    message.provider = object.provider ?? "";
+    const message = {
+      ...baseFluxPackageRepositoryCustomDetail,
+    } as FluxPackageRepositoryCustomDetail;
+    if (object.provider !== undefined && object.provider !== null) {
+      message.provider = object.provider;
+    } else {
+      message.provider = "";
+    }
     return message;
   },
 };
@@ -617,11 +520,6 @@ export interface FluxV2RepositoriesService {
     request: DeepPartial<DeletePackageRepositoryRequest>,
     metadata?: grpc.Metadata,
   ): Promise<DeletePackageRepositoryResponse>;
-  /** this endpoint only exists for the purpose of integration tests */
-  SetUserManagedSecrets(
-    request: DeepPartial<SetUserManagedSecretsRequest>,
-    metadata?: grpc.Metadata,
-  ): Promise<SetUserManagedSecretsResponse>;
   GetPackageRepositoryPermissions(
     request: DeepPartial<GetPackageRepositoryPermissionsRequest>,
     metadata?: grpc.Metadata,
@@ -638,7 +536,6 @@ export class FluxV2RepositoriesServiceClientImpl implements FluxV2RepositoriesSe
     this.GetPackageRepositorySummaries = this.GetPackageRepositorySummaries.bind(this);
     this.UpdatePackageRepository = this.UpdatePackageRepository.bind(this);
     this.DeletePackageRepository = this.DeletePackageRepository.bind(this);
-    this.SetUserManagedSecrets = this.SetUserManagedSecrets.bind(this);
     this.GetPackageRepositoryPermissions = this.GetPackageRepositoryPermissions.bind(this);
   }
 
@@ -693,17 +590,6 @@ export class FluxV2RepositoriesServiceClientImpl implements FluxV2RepositoriesSe
     return this.rpc.unary(
       FluxV2RepositoriesServiceDeletePackageRepositoryDesc,
       DeletePackageRepositoryRequest.fromPartial(request),
-      metadata,
-    );
-  }
-
-  SetUserManagedSecrets(
-    request: DeepPartial<SetUserManagedSecretsRequest>,
-    metadata?: grpc.Metadata,
-  ): Promise<SetUserManagedSecretsResponse> {
-    return this.rpc.unary(
-      FluxV2RepositoriesServiceSetUserManagedSecretsDesc,
-      SetUserManagedSecretsRequest.fromPartial(request),
       metadata,
     );
   }
@@ -835,28 +721,6 @@ export const FluxV2RepositoriesServiceDeletePackageRepositoryDesc: UnaryMethodDe
   } as any,
 };
 
-export const FluxV2RepositoriesServiceSetUserManagedSecretsDesc: UnaryMethodDefinitionish = {
-  methodName: "SetUserManagedSecrets",
-  service: FluxV2RepositoriesServiceDesc,
-  requestStream: false,
-  responseStream: false,
-  requestType: {
-    serializeBinary() {
-      return SetUserManagedSecretsRequest.encode(this).finish();
-    },
-  } as any,
-  responseType: {
-    deserializeBinary(data: Uint8Array) {
-      return {
-        ...SetUserManagedSecretsResponse.decode(data),
-        toObject() {
-          return this;
-        },
-      };
-    },
-  } as any,
-};
-
 export const FluxV2RepositoriesServiceGetPackageRepositoryPermissionsDesc: UnaryMethodDefinitionish =
   {
     methodName: "GetPackageRepositoryPermissions",
@@ -902,7 +766,6 @@ export class GrpcWebImpl {
 
     debug?: boolean;
     metadata?: grpc.Metadata;
-    upStreamRetryCodes?: number[];
   };
 
   constructor(
@@ -912,7 +775,6 @@ export class GrpcWebImpl {
 
       debug?: boolean;
       metadata?: grpc.Metadata;
-      upStreamRetryCodes?: number[];
     },
   ) {
     this.host = host;
@@ -927,7 +789,10 @@ export class GrpcWebImpl {
     const request = { ..._request, ...methodDesc.requestType };
     const maybeCombinedMetadata =
       metadata && this.options.metadata
-        ? new BrowserHeaders({ ...this.options?.metadata.headersMap, ...metadata?.headersMap })
+        ? new BrowserHeaders({
+            ...this.options?.metadata.headersMap,
+            ...metadata?.headersMap,
+          })
         : metadata || this.options.metadata;
     return new Promise((resolve, reject) => {
       grpc.unary(methodDesc, {
@@ -940,11 +805,9 @@ export class GrpcWebImpl {
           if (response.status === grpc.Code.OK) {
             resolve(response.message);
           } else {
-            const err = new GrpcWebError(
-              response.statusMessage,
-              response.status,
-              response.trailers,
-            );
+            const err = new Error(response.statusMessage) as any;
+            err.code = response.status;
+            err.metadata = response.trailers;
             reject(err);
           }
         },
@@ -954,7 +817,6 @@ export class GrpcWebImpl {
 }
 
 type Builtin = Date | Function | Uint8Array | string | number | boolean | undefined;
-
 export type DeepPartial<T> = T extends Builtin
   ? T
   : T extends Array<infer U>
@@ -965,17 +827,7 @@ export type DeepPartial<T> = T extends Builtin
   ? { [K in keyof T]?: DeepPartial<T[K]> }
   : Partial<T>;
 
-type KeysOfUnion<T> = T extends T ? keyof T : never;
-export type Exact<P, I extends P> = P extends Builtin
-  ? P
-  : P & { [K in keyof P]: Exact<P[K], I[K]> } & { [K in Exclude<keyof I, KeysOfUnion<P>>]: never };
-
-function isSet(value: any): boolean {
-  return value !== null && value !== undefined;
-}
-
-export class GrpcWebError extends Error {
-  constructor(message: string, public code: grpc.Code, public metadata: grpc.Metadata) {
-    super(message);
-  }
+if (_m0.util.Long !== Long) {
+  _m0.util.Long = Long as any;
+  _m0.configure();
 }

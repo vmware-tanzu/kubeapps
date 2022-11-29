@@ -34,7 +34,6 @@ import (
 	"google.golang.org/grpc/status"
 	"helm.sh/helm/v3/pkg/getter"
 	apiv1 "k8s.io/api/core/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/wait"
@@ -95,7 +94,7 @@ func NewDefaultPluginConfig() *FluxPluginConfig {
 		VersionsInSummary:    pkgutils.GetDefaultVersionsInSummary(),
 		TimeoutSeconds:       int32(-1),
 		DefaultUpgradePolicy: pkgutils.UpgradePolicyNone,
-		UserManagedSecrets:   false,
+		NoCrossNamespaceRefs: false,
 	}
 }
 
@@ -129,28 +128,6 @@ func NamespacedName(obj ctrlclient.Object) (*types.NamespacedName, error) {
 			status.Errorf(codes.Internal,
 				"required fields 'metadata.name' and/or 'metadata.namespace' not found on resource: %v",
 				PrettyPrint(obj))
-	}
-}
-
-// "Local" in the sense of no namespace is specified
-func NewLocalOpaqueSecret(ownerRepo types.NamespacedName) *apiv1.Secret {
-	return &apiv1.Secret{
-		ObjectMeta: metav1.ObjectMeta{
-			GenerateName: ownerRepo.Name + "-",
-		},
-		Type: apiv1.SecretTypeOpaque,
-		Data: map[string][]byte{},
-	}
-}
-
-// "Local" in the sense of no namespace is specified
-func NewLocalDockerConfigJsonSecret(ownerRepo types.NamespacedName) *apiv1.Secret {
-	return &apiv1.Secret{
-		ObjectMeta: metav1.ObjectMeta{
-			GenerateName: ownerRepo.Name + "-",
-		},
-		Type: apiv1.SecretTypeDockerConfigJson,
-		Data: map[string][]byte{},
 	}
 }
 
@@ -449,10 +426,6 @@ type FluxPluginConfig struct {
 	VersionsInSummary    pkgutils.VersionsInSummary
 	TimeoutSeconds       int32
 	DefaultUpgradePolicy pkgutils.UpgradePolicy
-	// whether or not secrets are fully managed by user or kubeapps
-	// see comments in design spec under AddPackageRepository.
-	// false (i.e. kubeapps manages secrets) by default
-	UserManagedSecrets bool
 	// ref https://github.com/vmware-tanzu/kubeapps/issues/5541
 	NoCrossNamespaceRefs bool
 }
@@ -477,7 +450,6 @@ func ParsePluginConfig(pluginConfigPath string) (*FluxPluginConfig, error) {
 			Packages struct {
 				V1alpha1 struct {
 					DefaultUpgradePolicy string `json:"defaultUpgradePolicy"`
-					UserManagedSecrets   bool   `json:"userManagedSecrets"`
 					NoCrossNamespaceRefs bool   `json:"noCrossNamespaceRefs"`
 				} `json:"v1alpha1"`
 			} `json:"packages"`
@@ -504,7 +476,6 @@ func ParsePluginConfig(pluginConfigPath string) (*FluxPluginConfig, error) {
 			VersionsInSummary:    config.Core.Packages.V1alpha1.VersionsInSummary,
 			TimeoutSeconds:       config.Core.Packages.V1alpha1.TimeoutSeconds,
 			DefaultUpgradePolicy: defaultUpgradePolicy,
-			UserManagedSecrets:   config.Flux.Packages.V1alpha1.UserManagedSecrets,
 			NoCrossNamespaceRefs: config.Flux.Packages.V1alpha1.NoCrossNamespaceRefs,
 		}, nil
 	}

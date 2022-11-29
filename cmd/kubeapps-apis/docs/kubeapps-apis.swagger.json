@@ -4437,14 +4437,6 @@
       ],
       "default": "PACKAGE_REPOSITORY_AUTH_TYPE_UNSPECIFIED"
     },
-    "pluginsfluxv2packagesv1alpha1SetUserManagedSecretsResponse": {
-      "type": "object",
-      "properties": {
-        "value": {
-          "type": "boolean"
-        }
-      }
-    },
     "protobufAny": {
       "type": "object",
       "properties": {
