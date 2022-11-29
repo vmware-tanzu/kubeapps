@@ -189,7 +189,7 @@ the following steps:
 3. Click on the `Run Workflow` dropdown selector at the right-top of the list of workflow runs.
 4. Select `main` (the default one) in the list of branches.
 5. Click the `Run workflow` button.
-6. Check out the workflow run that has just been created.
+6. You can then interact with and watch the workflow run that has just been created.
 
 ## 1.2 - Perform a manual test
 

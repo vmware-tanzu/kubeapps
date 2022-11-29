@@ -7,19 +7,19 @@ The following image depicts how a successful workflow looks like after pushing a
 ![CI workflow after pushing to the main branch](../../img/ci-workflow-main.png "CI workflow after pushing to the main branch")
 
 The different parts involved in the GHA configuration are:
-* **Workflows:** they are what we commonly call `pipelines`. A workflow is a directed acyclic graph composed of several jobs, and it can be automatically
+* **Workflows:** these are what we commonly call `pipelines`. A workflow is a directed acyclic graph composed of several jobs, and it can be automatically
 triggered under different events and conditions (for example, upon a commit in the main branch, when a new PR is filed, etc). Some workflows can also run
 on-demand or on-schedule, and can be called from another top-level workflows, so they can be reused to avoid code duplication.
-* **Job:** it a logical unit consisting on a series of steps that are executed in sequence to perform a specific task (for example, run the unit tests). 
+* **Job:** a logical unit consisting on a series of steps that are executed in sequence to perform a specific task (for example, run the unit tests). 
 Each job runs in a isolated environment, usually a virtual machine or a container.
-* **Step:** it is the minimal unit of execution in GHA. An step can consist of a call to an action or the execution of one or 
+* **Step:** the minimal unit of execution in GHA. An step can consist of a call to an action or the execution of one or 
 multiple shell commands (including the execution of script files).
-* **Action:** it is reusable piece of code in charge of executing a specific task. It is usually composed by multiple steps, 
+* **Action:** a reusable piece of code in charge of executing a specific task. It is usually composed by multiple steps, 
 and there are mainly two types of actions:
-  * **Publicly available:** are those actions usually developed by a third party, that are publicly available on the internet 
+  * **Publicly available:** those actions usually developed by a third party, that are publicly available on the internet 
   and usually published in the [GitHub Marketplace](https://github.com/marketplace?type=actions), so can just call and run them 
   (for example, `actions/checkout`).
-  * **Custom actions:** are the actions we can create to define reusable tasks avoiding code duplication. They are defined in
+  * **Custom actions:** actions we can create to define reusable tasks avoiding code duplication. They are defined in
   yaml files located in `/.github/actions/action-name/action.yml` (see the [srp-source-provenance action](https://github.com/vmware-tanzu/kubeapps/blob/main/.github/actions/srp-source-provenance/action.yml).
 
 ## Workflows
