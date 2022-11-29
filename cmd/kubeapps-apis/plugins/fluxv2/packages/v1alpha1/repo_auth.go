@@ -5,7 +5,7 @@ package main
 
 import (
 	"context"
-	"encoding/base64"
+	"encoding/json"
 
 	sourcev1 "github.com/fluxcd/source-controller/api/v1beta2"
 	corev1 "github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
@@ -17,6 +17,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
 	log "k8s.io/klog/v2"
+	"k8s.io/kubernetes/pkg/credentialprovider"
 )
 
 const (
@@ -375,14 +376,24 @@ func newSecretFromTlsConfigAndAuth(repoName types.NamespacedName,
 		case corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_DOCKER_CONFIG_JSON:
 			if repoType == sourcev1.HelmRepositoryTypeOCI {
 				if dc := auth.GetDockerCreds(); dc != nil {
-					if dc.Username == redactedString && dc.Password == redactedString && dc.Server == redactedString {
+					if dc.Password == redactedString {
 						isSameSecret = true
 					} else {
-						secret.Data = map[string][]byte{
-							apiv1.DockerConfigJsonKey: []byte(`{"auths":{"` +
-								dc.Server + `":{"` +
-								`auth":"` + base64.StdEncoding.EncodeToString([]byte(dc.Username+":"+dc.Password)) + `"}}}`),
+						secret.Type = apiv1.SecretTypeDockerConfigJson
+						dockerConfig := &credentialprovider.DockerConfigJSON{
+							Auths: map[string]credentialprovider.DockerConfigEntry{
+								dc.Server: {
+									Username: dc.Username,
+									Password: dc.Password,
+									Email:    dc.Email,
+								},
+							},
 						}
+						dockerConfigJson, err := json.Marshal(dockerConfig)
+						if err != nil {
+							return nil, false, status.Errorf(codes.InvalidArgument, "Docker credentials are wrong")
+						}
+						secret.Data[apiv1.DockerConfigJsonKey] = dockerConfigJson
 					}
 				} else {
 					return nil, false, status.Errorf(codes.Internal, "Docker credentials configuration is missing")
@@ -489,6 +500,7 @@ func getRepoTlsConfigAndAuthWithKubeappsManagedSecrets(secret *apiv1.Secret) (*c
 				Username: redactedString,
 				Password: redactedString,
 				Server:   redactedString,
+				Email:    redactedString,
 			},
 		}
 	} else {
