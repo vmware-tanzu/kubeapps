@@ -82,7 +82,7 @@
     "@types/qs": "^6.9.7",
     "@types/react-copy-to-clipboard": "^5.0.4",
     "@types/react-dom": "^18.0.7",
-    "@types/react-helmet": "^6.1.5",
+    "@types/react-helmet": "^6.1.6",
     "@types/react-router-dom": "^5.3.3",
     "@types/react-router-hash-link": "^2.4.5",
     "@types/react-transition-group": "^4.4.5",
