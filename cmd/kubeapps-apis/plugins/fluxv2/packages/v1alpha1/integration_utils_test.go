@@ -824,8 +824,8 @@ func kubeCreateSecret(t *testing.T, secret *apiv1.Secret) error {
 	return err
 }
 
-func kubeSetSecretOwnerRef(t *testing.T, secretName types.NamespacedName, ownerRepo *sourcev1.HelmRepository) error {
-	t.Logf("+kubeSetSecretOwnerRef(%s, %s)", secretName, ownerRepo.Name)
+func kubeSetKubeappsManagedSecretOwnerRef(t *testing.T, secretName types.NamespacedName, ownerRepo *sourcev1.HelmRepository) error {
+	t.Logf("+kubeSetKubeappsManagedSecretOwnerRef(%s, %s)", secretName, ownerRepo.Name)
 	typedClient, err := kubeGetTypedClient()
 	if err != nil {
 		return err
@@ -842,6 +842,9 @@ func kubeSetSecretOwnerRef(t *testing.T, secretName types.NamespacedName, ownerR
 	if err != nil {
 		return err
 	}
+
+	// also sets managed-By annotation
+	setSecretManagedByKubeapps(secret)
 
 	secret.OwnerReferences = []metav1.OwnerReference{
 		*metav1.NewControllerRef(

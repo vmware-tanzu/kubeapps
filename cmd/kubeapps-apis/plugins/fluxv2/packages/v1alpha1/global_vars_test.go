@@ -1505,6 +1505,32 @@ var (
 		}
 	}
 
+	add_repo_req_30 = &corev1.AddPackageRepositoryRequest{
+		Name:            "bar",
+		Context:         &corev1.Context{Namespace: "foo"},
+		Type:            "helm",
+		NamespaceScoped: true,
+		Url:             "http://example.com",
+		Auth: &corev1.PackageRepositoryAuth{
+			Type: corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_BASIC_AUTH,
+			PackageRepoAuthOneOf: &corev1.PackageRepositoryAuth_UsernamePassword{
+				UsernamePassword: &corev1.UsernamePassword{
+					Username: "foo",
+					Password: "bar",
+				},
+			},
+		},
+		TlsConfig: &corev1.PackageRepositoryTlsConfig{
+			InsecureSkipVerify: false,
+			PackageRepoTlsConfigOneOf: &corev1.PackageRepositoryTlsConfig_SecretRef{
+				SecretRef: &corev1.SecretKeyReference{
+					Name: "secret-1",
+					Key:  "caFile",
+				},
+			},
+		},
+	}
+
 	add_repo_expected_resp = &corev1.AddPackageRepositoryResponse{
 		PackageRepoRef: repoRef("bar", "foo"),
 	}
@@ -3117,6 +3143,7 @@ var (
 						Username: redactedString,
 						Password: redactedString,
 						Server:   redactedString,
+						Email:    redactedString,
 					},
 				},
 			},
@@ -3158,6 +3185,7 @@ var (
 						Username: redactedString,
 						Password: redactedString,
 						Server:   redactedString,
+						Email:    redactedString,
 					},
 				},
 			},
@@ -3445,6 +3473,49 @@ var (
 			Auth:           github_auth(ghUser, ghPasswd),
 			Interval:       "4m44s",
 		}
+	}
+
+	update_repo_req_19 = &corev1.UpdatePackageRepositoryRequest{
+		PackageRepoRef: repoRefInReq("repo-1", "namespace-1"),
+		Url:            "http://newurl.com",
+		Auth: &corev1.PackageRepositoryAuth{
+			Type: corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_BASIC_AUTH,
+			PackageRepoAuthOneOf: &corev1.PackageRepositoryAuth_UsernamePassword{
+				UsernamePassword: &corev1.UsernamePassword{
+					Username: "foo",
+					Password: "bar",
+				},
+			},
+		},
+		TlsConfig: &corev1.PackageRepositoryTlsConfig{
+			InsecureSkipVerify: false,
+			PackageRepoTlsConfigOneOf: &corev1.PackageRepositoryTlsConfig_SecretRef{
+				SecretRef: &corev1.SecretKeyReference{
+					Name: "secret-1",
+					Key:  "caFile",
+				},
+			},
+		},
+	}
+
+	update_repo_req_20 = &corev1.UpdatePackageRepositoryRequest{
+		PackageRepoRef: repoRefInReq("repo-1", "namespace-1"),
+		Url:            "http://newurl.com",
+		Auth: &corev1.PackageRepositoryAuth{
+			Type: corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_BASIC_AUTH,
+			PackageRepoAuthOneOf: &corev1.PackageRepositoryAuth_UsernamePassword{
+				UsernamePassword: &corev1.UsernamePassword{
+					Username: "foo",
+					Password: "bar",
+				},
+			},
+		},
+	}
+
+	update_repo_req_21 = &corev1.UpdatePackageRepositoryRequest{
+		PackageRepoRef: repoRefInReq("repo-1", "namespace-1"),
+		Url:            "http://newurl.com",
+		Auth:           secret_1_auth,
 	}
 
 	update_repo_resp_1 = &corev1.UpdatePackageRepositoryResponse{
