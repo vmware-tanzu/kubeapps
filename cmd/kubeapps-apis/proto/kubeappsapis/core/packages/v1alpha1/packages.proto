@@ -476,11 +476,11 @@ message AvailablePackageDetail {
   // as documentation or a starting point for user customization.
   string default_values = 11;
 
-  // Available package custom default values
+  // Available package additional default values
   //
-  // A package may contain extra default value files for specific scenarios,
+  // A package may contain additional default value files for specific scenarios,
   // such as values_production.yaml or values_dev.yaml
-  map<string, string> custom_default_values = 17;
+  map<string, string> additional_default_values = 17;
 
   // Available package values schema
   //

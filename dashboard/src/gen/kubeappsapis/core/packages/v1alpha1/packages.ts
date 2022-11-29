@@ -441,12 +441,12 @@ export interface AvailablePackageDetail {
    */
   defaultValues: string;
   /**
-   * Available package custom default values
+   * Available package additional default values
    *
-   * A package may contain extra default value files for specific scenarios,
+   * A package may contain additional default value files for specific scenarios,
    * such as values_production.yaml or values_dev.yaml
    */
-  customDefaultValues: { [key: string]: string };
+  additionalDefaultValues: { [key: string]: string };
   valuesSchema: string;
   /** source urls for the package */
   sourceUrls: string[];
@@ -475,7 +475,7 @@ export interface AvailablePackageDetail {
   customDetail?: Any;
 }
 
-export interface AvailablePackageDetail_CustomDefaultValuesEntry {
+export interface AvailablePackageDetail_AdditionalDefaultValuesEntry {
   key: string;
   value: string;
 }
@@ -2530,7 +2530,7 @@ function createBaseAvailablePackageDetail(): AvailablePackageDetail {
     longDescription: "",
     readme: "",
     defaultValues: "",
-    customDefaultValues: {},
+    additionalDefaultValues: {},
     valuesSchema: "",
     sourceUrls: [],
     maintainers: [],
@@ -2577,8 +2577,8 @@ export const AvailablePackageDetail = {
     if (message.defaultValues !== "") {
       writer.uint32(90).string(message.defaultValues);
     }
-    Object.entries(message.customDefaultValues).forEach(([key, value]) => {
-      AvailablePackageDetail_CustomDefaultValuesEntry.encode(
+    Object.entries(message.additionalDefaultValues).forEach(([key, value]) => {
+      AvailablePackageDetail_AdditionalDefaultValuesEntry.encode(
         { key: key as any, value },
         writer.uint32(138).fork(),
       ).ldelim();
@@ -2642,12 +2642,12 @@ export const AvailablePackageDetail = {
           message.defaultValues = reader.string();
           break;
         case 17:
-          const entry17 = AvailablePackageDetail_CustomDefaultValuesEntry.decode(
+          const entry17 = AvailablePackageDetail_AdditionalDefaultValuesEntry.decode(
             reader,
             reader.uint32(),
           );
           if (entry17.value !== undefined) {
-            message.customDefaultValues[entry17.key] = entry17.value;
+            message.additionalDefaultValues[entry17.key] = entry17.value;
           }
           break;
         case 12:
@@ -2688,8 +2688,8 @@ export const AvailablePackageDetail = {
       longDescription: isSet(object.longDescription) ? String(object.longDescription) : "",
       readme: isSet(object.readme) ? String(object.readme) : "",
       defaultValues: isSet(object.defaultValues) ? String(object.defaultValues) : "",
-      customDefaultValues: isObject(object.customDefaultValues)
-        ? Object.entries(object.customDefaultValues).reduce<{ [key: string]: string }>(
+      additionalDefaultValues: isObject(object.additionalDefaultValues)
+        ? Object.entries(object.additionalDefaultValues).reduce<{ [key: string]: string }>(
             (acc, [key, value]) => {
               acc[key] = String(value);
               return acc;
@@ -2728,10 +2728,10 @@ export const AvailablePackageDetail = {
     message.longDescription !== undefined && (obj.longDescription = message.longDescription);
     message.readme !== undefined && (obj.readme = message.readme);
     message.defaultValues !== undefined && (obj.defaultValues = message.defaultValues);
-    obj.customDefaultValues = {};
-    if (message.customDefaultValues) {
-      Object.entries(message.customDefaultValues).forEach(([k, v]) => {
-        obj.customDefaultValues[k] = v;
+    obj.additionalDefaultValues = {};
+    if (message.additionalDefaultValues) {
+      Object.entries(message.additionalDefaultValues).forEach(([k, v]) => {
+        obj.additionalDefaultValues[k] = v;
       });
     }
     message.valuesSchema !== undefined && (obj.valuesSchema = message.valuesSchema);
@@ -2776,7 +2776,7 @@ export const AvailablePackageDetail = {
     message.longDescription = object.longDescription ?? "";
     message.readme = object.readme ?? "";
     message.defaultValues = object.defaultValues ?? "";
-    message.customDefaultValues = Object.entries(object.customDefaultValues ?? {}).reduce<{
+    message.additionalDefaultValues = Object.entries(object.additionalDefaultValues ?? {}).reduce<{
       [key: string]: string;
     }>((acc, [key, value]) => {
       if (value !== undefined) {
@@ -2796,13 +2796,13 @@ export const AvailablePackageDetail = {
   },
 };
 
-function createBaseAvailablePackageDetail_CustomDefaultValuesEntry(): AvailablePackageDetail_CustomDefaultValuesEntry {
+function createBaseAvailablePackageDetail_AdditionalDefaultValuesEntry(): AvailablePackageDetail_AdditionalDefaultValuesEntry {
   return { key: "", value: "" };
 }
 
-export const AvailablePackageDetail_CustomDefaultValuesEntry = {
+export const AvailablePackageDetail_AdditionalDefaultValuesEntry = {
   encode(
-    message: AvailablePackageDetail_CustomDefaultValuesEntry,
+    message: AvailablePackageDetail_AdditionalDefaultValuesEntry,
     writer: _m0.Writer = _m0.Writer.create(),
   ): _m0.Writer {
     if (message.key !== "") {
@@ -2817,10 +2817,10 @@ export const AvailablePackageDetail_CustomDefaultValuesEntry = {
   decode(
     input: _m0.Reader | Uint8Array,
     length?: number,
-  ): AvailablePackageDetail_CustomDefaultValuesEntry {
+  ): AvailablePackageDetail_AdditionalDefaultValuesEntry {
     const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
     let end = length === undefined ? reader.len : reader.pos + length;
-    const message = createBaseAvailablePackageDetail_CustomDefaultValuesEntry();
+    const message = createBaseAvailablePackageDetail_AdditionalDefaultValuesEntry();
     while (reader.pos < end) {
       const tag = reader.uint32();
       switch (tag >>> 3) {
@@ -2838,24 +2838,24 @@ export const AvailablePackageDetail_CustomDefaultValuesEntry = {
     return message;
   },
 
-  fromJSON(object: any): AvailablePackageDetail_CustomDefaultValuesEntry {
+  fromJSON(object: any): AvailablePackageDetail_AdditionalDefaultValuesEntry {
     return {
       key: isSet(object.key) ? String(object.key) : "",
       value: isSet(object.value) ? String(object.value) : "",
     };
   },
 
-  toJSON(message: AvailablePackageDetail_CustomDefaultValuesEntry): unknown {
+  toJSON(message: AvailablePackageDetail_AdditionalDefaultValuesEntry): unknown {
     const obj: any = {};
     message.key !== undefined && (obj.key = message.key);
     message.value !== undefined && (obj.value = message.value);
     return obj;
   },
 
-  fromPartial<I extends Exact<DeepPartial<AvailablePackageDetail_CustomDefaultValuesEntry>, I>>(
+  fromPartial<I extends Exact<DeepPartial<AvailablePackageDetail_AdditionalDefaultValuesEntry>, I>>(
     object: I,
-  ): AvailablePackageDetail_CustomDefaultValuesEntry {
-    const message = createBaseAvailablePackageDetail_CustomDefaultValuesEntry();
+  ): AvailablePackageDetail_AdditionalDefaultValuesEntry {
+    const message = createBaseAvailablePackageDetail_AdditionalDefaultValuesEntry();
     message.key = object.key ?? "";
     message.value = object.value ?? "";
     return message;
