@@ -38,7 +38,7 @@ replace (
 
 require (
 	github.com/DATA-DOG/go-sqlmock v1.5.0
-	github.com/Masterminds/semver/v3 v3.1.1
+	github.com/Masterminds/semver/v3 v3.2.0
 	github.com/adhocore/gronx v1.1.2
 	github.com/ahmetb/go-linq/v3 v3.2.0
 	github.com/containerd/containerd v1.6.10
@@ -72,7 +72,7 @@ require (
 	github.com/srwiley/rasterx v0.0.0-20220730225603-2ab79fcdd4ef
 	github.com/stretchr/testify v1.8.1
 	github.com/vmware-tanzu/carvel-kapp v0.54.0
-	github.com/vmware-tanzu/carvel-kapp-controller v0.43.1
+	github.com/vmware-tanzu/carvel-kapp-controller v0.43.2
 	github.com/vmware-tanzu/carvel-vendir v0.32.1
 	golang.org/x/net v0.2.0
 	golang.org/x/sync v0.1.0
