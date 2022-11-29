@@ -41,12 +41,12 @@ require (
 	github.com/Masterminds/semver/v3 v3.1.1
 	github.com/adhocore/gronx v1.1.2
 	github.com/ahmetb/go-linq/v3 v3.2.0
-	github.com/containerd/containerd v1.6.9
+	github.com/containerd/containerd v1.6.10
 	github.com/cppforlife/go-cli-ui v0.0.0-20220622150351-995494831c6c
 	github.com/disintegration/imaging v1.6.2
 	github.com/distribution/distribution v2.8.1+incompatible
 	github.com/docker/cli v20.10.21+incompatible
-	github.com/fluxcd/helm-controller/api v0.26.0
+	github.com/fluxcd/helm-controller/api v0.27.0
 	github.com/fluxcd/pkg/apis/meta v0.18.0
 	github.com/fluxcd/pkg/oci v0.15.0
 	github.com/fluxcd/pkg/version v0.2.0
@@ -67,27 +67,27 @@ require (
 	github.com/spf13/cobra v1.6.1
 	github.com/spf13/cobra-cli v1.3.0
 	github.com/spf13/pflag v1.0.5
-	github.com/spf13/viper v1.13.0
+	github.com/spf13/viper v1.14.0
 	github.com/srwiley/oksvg v0.0.0-20221011165216-be6e8873101c
 	github.com/srwiley/rasterx v0.0.0-20220730225603-2ab79fcdd4ef
 	github.com/stretchr/testify v1.8.1
-	github.com/vmware-tanzu/carvel-kapp v0.53.0
-	github.com/vmware-tanzu/carvel-kapp-controller v0.42.0
-	github.com/vmware-tanzu/carvel-vendir v0.32.0
+	github.com/vmware-tanzu/carvel-kapp v0.54.0
+	github.com/vmware-tanzu/carvel-kapp-controller v0.43.2
+	github.com/vmware-tanzu/carvel-vendir v0.32.1
 	golang.org/x/net v0.2.0
 	golang.org/x/sync v0.1.0
 	google.golang.org/genproto v0.0.0-20221114212237-e4508ebdbee1
-	google.golang.org/grpc v1.50.1
+	google.golang.org/grpc v1.51.0
 	google.golang.org/grpc/cmd/protoc-gen-go-grpc v1.2.0
 	google.golang.org/protobuf v1.28.1
 	gopkg.in/yaml.v3 v3.0.1
 	helm.sh/helm/v3 v3.9.4
-	k8s.io/api v0.25.3
-	k8s.io/apiextensions-apiserver v0.25.3
+	k8s.io/api v0.25.4
+	k8s.io/apiextensions-apiserver v0.25.4
 	k8s.io/apimachinery v0.25.4
 	k8s.io/apiserver v0.25.3
 	k8s.io/cli-runtime v0.25.3
-	k8s.io/client-go v0.25.3
+	k8s.io/client-go v0.25.4
 	k8s.io/klog/v2 v2.80.1
 	k8s.io/kubectl v0.25.3
 	k8s.io/kubernetes v1.24.7
@@ -140,7 +140,7 @@ require (
 	github.com/fatih/camelcase v1.0.0 // indirect
 	github.com/fatih/color v1.13.0 // indirect
 	github.com/fluxcd/pkg/apis/acl v0.1.0 // indirect
-	github.com/fluxcd/pkg/apis/kustomize v0.6.0 // indirect
+	github.com/fluxcd/pkg/apis/kustomize v0.7.0 // indirect
 	github.com/fsnotify/fsnotify v1.6.0 // indirect
 	github.com/fvbommel/sortorder v1.0.2 // indirect
 	github.com/ghodss/yaml v1.0.0 // indirect
@@ -235,7 +235,7 @@ require (
 	github.com/yvasiyarov/newrelic_platform_go v0.0.0-20160601141957-9c099fbc30e9 // indirect
 	go.starlark.net v0.0.0-20221020143700-22309ac47eac // indirect
 	go.uber.org/zap v1.23.0 // indirect
-	golang.org/x/crypto v0.1.0 // indirect
+	golang.org/x/crypto v0.3.0 // indirect
 	golang.org/x/image v0.1.0 // indirect
 	golang.org/x/oauth2 v0.2.0 // indirect
 	golang.org/x/sys v0.2.0 // indirect
