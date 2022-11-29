@@ -203,8 +203,14 @@ func (s *Server) validateUserManagedRepoSecret(
 						return nil, status.Errorf(codes.Internal, "Specified secret [%s] missing fields 'username' and/or 'password'", secretRef)
 					}
 				case corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_TLS:
-					if secret.Data["keyFile"] == nil || secret.Data["certFile"] == nil {
-						return nil, status.Errorf(codes.Internal, "Specified secret [%s] missing fields 'keyFile' and/or 'certFile'", secretRef)
+					if repoType == sourcev1.HelmRepositoryTypeOCI {
+						// ref https://fluxcd.io/flux/components/source/helmrepositories/#tls-authentication
+						// Note: TLS authentication is not yet supported by OCI Helm repositories.
+						return nil, status.Errorf(codes.Internal, "Package repository authentication type %q is not supported for OCI repositories", auth.Type)
+					} else {
+						if secret.Data["keyFile"] == nil || secret.Data["certFile"] == nil {
+							return nil, status.Errorf(codes.Internal, "Specified secret [%s] missing fields 'keyFile' and/or 'certFile'", secretRef)
+						}
 					}
 				case corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_DOCKER_CONFIG_JSON:
 					if repoType == sourcev1.HelmRepositoryTypeOCI {
@@ -310,7 +316,7 @@ func (s *Server) getRepoTlsConfigAndAuth(ctx context.Context, repo sourcev1.Helm
 
 // this func is only used with kubeapps-managed secrets
 func newSecretFromTlsConfigAndAuth(repoName types.NamespacedName,
-	typ string,
+	repoType string,
 	tlsConfig *corev1.PackageRepositoryTlsConfig,
 	auth *corev1.PackageRepositoryAuth) (secret *apiv1.Secret, isSameSecret bool, err error) {
 	if tlsConfig != nil {
@@ -349,18 +355,25 @@ func newSecretFromTlsConfigAndAuth(repoName types.NamespacedName,
 				return nil, false, status.Errorf(codes.Internal, "Username/Password configuration is missing")
 			}
 		case corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_TLS:
-			if ck := auth.GetTlsCertKey(); ck != nil {
-				if ck.Cert == redactedString && ck.Key == redactedString {
-					isSameSecret = true
-				} else {
-					secret.Data["certFile"] = []byte(ck.Cert)
-					secret.Data["keyFile"] = []byte(ck.Key)
-				}
+			if repoType == sourcev1.HelmRepositoryTypeOCI {
+				// ref https://fluxcd.io/flux/components/source/helmrepositories/#tls-authentication
+				// Note: TLS authentication is not yet supported by OCI Helm repositories.
+				return nil, false, status.Errorf(codes.Internal, "Package repository authentication type %q is not supported for OCI repositories", auth.Type)
 			} else {
-				return nil, false, status.Errorf(codes.Internal, "TLS Cert/Key configuration is missing")
+				if ck := auth.GetTlsCertKey(); ck != nil {
+					if ck.Cert == redactedString && ck.Key == redactedString {
+						isSameSecret = true
+					} else {
+						secret.Data["certFile"] = []byte(ck.Cert)
+						secret.Data["keyFile"] = []byte(ck.Key)
+					}
+				} else {
+					return nil, false, status.Errorf(codes.Internal, "TLS Cert/Key configuration is missing")
+				}
 			}
+
 		case corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_DOCKER_CONFIG_JSON:
-			if typ == sourcev1.HelmRepositoryTypeOCI {
+			if repoType == sourcev1.HelmRepositoryTypeOCI {
 				if dc := auth.GetDockerCreds(); dc != nil {
 					if dc.Username == redactedString && dc.Password == redactedString && dc.Server == redactedString {
 						isSameSecret = true
