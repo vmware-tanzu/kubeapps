@@ -5,6 +5,7 @@ package test
 
 import (
 	"archive/tar"
+	"compress/gzip"
 	"io"
 
 	log "k8s.io/klog/v2"
@@ -37,6 +38,16 @@ func CreateTestTarball(w io.Writer, files []TarballFile) {
 	}
 	// Make sure to check the error on Close.
 	if err := tarw.Close(); err != nil {
+		log.Fatal(err)
+	}
+}
+
+// CreateTestTgz creates a tgz file from a slice of filename/values.
+func CreateTestTgz(w io.Writer, files []TarballFile) {
+	gzf := gzip.NewWriter(w)
+	CreateTestTarball(gzf, files)
+
+	if err := gzf.Close(); err != nil {
 		log.Fatal(err)
 	}
 }
