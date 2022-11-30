@@ -49,7 +49,7 @@ env:
   IMG_MODIFIER: "-ci"
   IMG_PREFIX: "kubeapps/"
   # We use IMG_PREFIX_FOR_FORKS for development purposes, it's used when the workflow is run from a fork of the kubeapps repo
-  IMG_PREFIX_FOR_FORKS: "johndoe/"
+  IMG_PREFIX_FOR_FORKS: "your-dockerhub-username/"
   # Currently, we only build the images for linux/amd64 because building cross-platform images is extremely slow...
   IMG_PLATFORMS: "linux/amd64"
   KAPP_CONTROLLER_VERSION: "v0.42.0"
@@ -103,7 +103,7 @@ jobs:
             echo "img_prefix=${IMG_PREFIX}" >> $GITHUB_OUTPUT
           else
             # When running in forks (NOT triggered due to a PR from an external fork, but running the workflow in the
-            # external repo), we push the images to a personal namespace (if configured)
+            # external repo), we push the images to a personal dockerhub namespace (or whatever other registry) if configured
             echo "img_prefix=${IMG_PREFIX_FOR_FORKS}" >> $GITHUB_OUTPUT
           fi;
 
