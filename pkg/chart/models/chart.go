@@ -77,10 +77,9 @@ type ChartVersion struct {
 
 // ChartFiles holds the README and default values for a given chart version
 type ChartFiles struct {
-	ID     string `bson:"file_id"`
-	Readme string
-	// TODO(absoludity): Rename to DefaultValues in separate PR for easy review.
-	Values              string
+	ID                  string `bson:"file_id"`
+	Readme              string
+	DefaultValues       string
 	CustomDefaultValues map[string]string
 	Schema              string
 	Repo                *Repo
