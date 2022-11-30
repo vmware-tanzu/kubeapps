@@ -111,7 +111,7 @@
     "redux-mock-store": "^1.5.4",
     "sass": "^1.56.1",
     "shx": "^0.3.4",
-    "stylelint": "^14.14.0",
+    "stylelint": "^14.15.0",
     "stylelint-config-idiomatic-order": "^9.0.0",
     "stylelint-config-prettier": "^9.0.4",
     "stylelint-config-standard-scss": "^6.1.0",
