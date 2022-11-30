@@ -10,6 +10,7 @@ import (
 	"io"
 	"net/url"
 	"path"
+	"regexp"
 	"strings"
 
 	chart "github.com/vmware-tanzu/kubeapps/pkg/chart/models"
@@ -80,20 +81,22 @@ func FetchChartDetailFromTarball(reader io.Reader, name string) (map[string]stri
 		chart.ChartYamlKey: chartYamlFileName,
 	}
 
-	files, err := ExtractFilesFromTarball(filenames, tarf)
-	if err != nil {
-		return nil, err
+	// Optionally search for files matching a regular expression, using the
+	// template to provide the key.
+	regexes := map[string]*regexp.Regexp{
+		chart.ValuesKey + "-$valuesType": regexp.MustCompile(fixedName + `/values-(?P<valuesType>\w+)\.yaml`),
 	}
 
-	return map[string]string{
-		chart.ValuesKey:    files[chart.ValuesKey],
-		chart.ReadmeKey:    files[chart.ReadmeKey],
-		chart.SchemaKey:    files[chart.SchemaKey],
-		chart.ChartYamlKey: files[chart.ChartYamlKey],
-	}, nil
+	return ExtractFilesFromTarball(filenames, regexes, tarf)
 }
 
-func ExtractFilesFromTarball(filenames map[string]string, tarf *tar.Reader) (map[string]string, error) {
+// ExtractFilesFromTarball returns the content of extracted files in a map.
+//
+// Files can be extracted by exact matches on the filename, or by regular
+// expression matches. For exact matches, the key used in the resulting map
+// is simply the key of the filename. For regex matches, a regexp template
+// defines the key so that it can be expanded from the match.
+func ExtractFilesFromTarball(filenames map[string]string, regexes map[string]*regexp.Regexp, tarf *tar.Reader) (map[string]string, error) {
 	ret := make(map[string]string)
 	for {
 		header, err := tarf.Next()
@@ -104,17 +107,43 @@ func ExtractFilesFromTarball(filenames map[string]string, tarf *tar.Reader) (map
 			return ret, err
 		}
 
+		foundFile := false
 		for id, f := range filenames {
 			if strings.EqualFold(header.Name, f) {
-				var b bytes.Buffer
-				_, err := io.Copy(&b, tarf)
-				if err != nil {
+				if s, err := readTarFileContent(tarf); err != nil {
 					return ret, err
+				} else {
+					ret[id] = s
 				}
-				ret[id] = b.String()
+				foundFile = true
 				break
+			}
+		}
+		if foundFile {
+			continue
+		}
+
+		for template, pattern := range regexes {
+			match := pattern.FindSubmatchIndex([]byte(header.Name))
+			if match != nil {
+				result := []byte{}
+				result = pattern.ExpandString(result, template, header.Name, match)
+				if s, err := readTarFileContent(tarf); err != nil {
+					return ret, err
+				} else {
+					ret[string(result)] = s
+				}
 			}
 		}
 	}
 	return ret, nil
+}
+
+func readTarFileContent(tarf *tar.Reader) (string, error) {
+	var b bytes.Buffer
+	_, err := io.Copy(&b, tarf)
+	if err != nil {
+		return "", err
+	}
+	return b.String(), nil
 }

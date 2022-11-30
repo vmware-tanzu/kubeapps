@@ -440,6 +440,13 @@ export interface AvailablePackageDetail {
    * as documentation or a starting point for user customization.
    */
   defaultValues: string;
+  /**
+   * Available package additional default values
+   *
+   * A package may contain additional default value files for specific scenarios,
+   * such as values_production.yaml or values_dev.yaml
+   */
+  additionalDefaultValues: { [key: string]: string };
   valuesSchema: string;
   /** source urls for the package */
   sourceUrls: string[];
@@ -466,6 +473,11 @@ export interface AvailablePackageDetail {
    * See https://developers.google.com/protocol-buffers/docs/proto3#any
    */
   customDetail?: Any;
+}
+
+export interface AvailablePackageDetail_AdditionalDefaultValuesEntry {
+  key: string;
+  value: string;
 }
 
 /**
@@ -2518,6 +2530,7 @@ function createBaseAvailablePackageDetail(): AvailablePackageDetail {
     longDescription: "",
     readme: "",
     defaultValues: "",
+    additionalDefaultValues: {},
     valuesSchema: "",
     sourceUrls: [],
     maintainers: [],
@@ -2564,6 +2577,12 @@ export const AvailablePackageDetail = {
     if (message.defaultValues !== "") {
       writer.uint32(90).string(message.defaultValues);
     }
+    Object.entries(message.additionalDefaultValues).forEach(([key, value]) => {
+      AvailablePackageDetail_AdditionalDefaultValuesEntry.encode(
+        { key: key as any, value },
+        writer.uint32(138).fork(),
+      ).ldelim();
+    });
     if (message.valuesSchema !== "") {
       writer.uint32(98).string(message.valuesSchema);
     }
@@ -2622,6 +2641,15 @@ export const AvailablePackageDetail = {
         case 11:
           message.defaultValues = reader.string();
           break;
+        case 17:
+          const entry17 = AvailablePackageDetail_AdditionalDefaultValuesEntry.decode(
+            reader,
+            reader.uint32(),
+          );
+          if (entry17.value !== undefined) {
+            message.additionalDefaultValues[entry17.key] = entry17.value;
+          }
+          break;
         case 12:
           message.valuesSchema = reader.string();
           break;
@@ -2660,6 +2688,15 @@ export const AvailablePackageDetail = {
       longDescription: isSet(object.longDescription) ? String(object.longDescription) : "",
       readme: isSet(object.readme) ? String(object.readme) : "",
       defaultValues: isSet(object.defaultValues) ? String(object.defaultValues) : "",
+      additionalDefaultValues: isObject(object.additionalDefaultValues)
+        ? Object.entries(object.additionalDefaultValues).reduce<{ [key: string]: string }>(
+            (acc, [key, value]) => {
+              acc[key] = String(value);
+              return acc;
+            },
+            {},
+          )
+        : {},
       valuesSchema: isSet(object.valuesSchema) ? String(object.valuesSchema) : "",
       sourceUrls: Array.isArray(object?.sourceUrls)
         ? object.sourceUrls.map((e: any) => String(e))
@@ -2691,6 +2728,12 @@ export const AvailablePackageDetail = {
     message.longDescription !== undefined && (obj.longDescription = message.longDescription);
     message.readme !== undefined && (obj.readme = message.readme);
     message.defaultValues !== undefined && (obj.defaultValues = message.defaultValues);
+    obj.additionalDefaultValues = {};
+    if (message.additionalDefaultValues) {
+      Object.entries(message.additionalDefaultValues).forEach(([k, v]) => {
+        obj.additionalDefaultValues[k] = v;
+      });
+    }
     message.valuesSchema !== undefined && (obj.valuesSchema = message.valuesSchema);
     if (message.sourceUrls) {
       obj.sourceUrls = message.sourceUrls.map(e => e);
@@ -2733,6 +2776,14 @@ export const AvailablePackageDetail = {
     message.longDescription = object.longDescription ?? "";
     message.readme = object.readme ?? "";
     message.defaultValues = object.defaultValues ?? "";
+    message.additionalDefaultValues = Object.entries(object.additionalDefaultValues ?? {}).reduce<{
+      [key: string]: string;
+    }>((acc, [key, value]) => {
+      if (value !== undefined) {
+        acc[key] = String(value);
+      }
+      return acc;
+    }, {});
     message.valuesSchema = object.valuesSchema ?? "";
     message.sourceUrls = object.sourceUrls?.map(e => e) || [];
     message.maintainers = object.maintainers?.map(e => Maintainer.fromPartial(e)) || [];
@@ -2741,6 +2792,72 @@ export const AvailablePackageDetail = {
       object.customDetail !== undefined && object.customDetail !== null
         ? Any.fromPartial(object.customDetail)
         : undefined;
+    return message;
+  },
+};
+
+function createBaseAvailablePackageDetail_AdditionalDefaultValuesEntry(): AvailablePackageDetail_AdditionalDefaultValuesEntry {
+  return { key: "", value: "" };
+}
+
+export const AvailablePackageDetail_AdditionalDefaultValuesEntry = {
+  encode(
+    message: AvailablePackageDetail_AdditionalDefaultValuesEntry,
+    writer: _m0.Writer = _m0.Writer.create(),
+  ): _m0.Writer {
+    if (message.key !== "") {
+      writer.uint32(10).string(message.key);
+    }
+    if (message.value !== "") {
+      writer.uint32(18).string(message.value);
+    }
+    return writer;
+  },
+
+  decode(
+    input: _m0.Reader | Uint8Array,
+    length?: number,
+  ): AvailablePackageDetail_AdditionalDefaultValuesEntry {
+    const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseAvailablePackageDetail_AdditionalDefaultValuesEntry();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1:
+          message.key = reader.string();
+          break;
+        case 2:
+          message.value = reader.string();
+          break;
+        default:
+          reader.skipType(tag & 7);
+          break;
+      }
+    }
+    return message;
+  },
+
+  fromJSON(object: any): AvailablePackageDetail_AdditionalDefaultValuesEntry {
+    return {
+      key: isSet(object.key) ? String(object.key) : "",
+      value: isSet(object.value) ? String(object.value) : "",
+    };
+  },
+
+  toJSON(message: AvailablePackageDetail_AdditionalDefaultValuesEntry): unknown {
+    const obj: any = {};
+    message.key !== undefined && (obj.key = message.key);
+    message.value !== undefined && (obj.value = message.value);
+    return obj;
+  },
+
+  fromPartial<I extends Exact<DeepPartial<AvailablePackageDetail_AdditionalDefaultValuesEntry>, I>>(
+    object: I,
+  ): AvailablePackageDetail_AdditionalDefaultValuesEntry {
+    const message = createBaseAvailablePackageDetail_AdditionalDefaultValuesEntry();
+    message.key = object.key ?? "";
+    message.value = object.value ?? "";
     return message;
   },
 };
@@ -4367,6 +4484,10 @@ type KeysOfUnion<T> = T extends T ? keyof T : never;
 export type Exact<P, I extends P> = P extends Builtin
   ? P
   : P & { [K in keyof P]: Exact<P[K], I[K]> } & { [K in Exclude<keyof I, KeysOfUnion<P>>]: never };
+
+function isObject(value: any): boolean {
+  return typeof value === "object" && value !== null;
+}
 
 function isSet(value: any): boolean {
   return value !== null && value !== undefined;

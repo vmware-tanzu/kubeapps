@@ -13,11 +13,11 @@ toc:
         page: Get Started with Kubeapps
       - url: /tutorials/using-an-oidc-provider
         page: Using an OIDC provider
-      - url: /tutorials/managing-carvel-packages/
+      - url: /tutorials/managing-carvel-packages
         page: Managing Carvel packages
-      - url: /tutorials/managing-flux-packages/
+      - url: /tutorials/managing-flux-packages
         page: Managing Flux packages
-      - url: /tutorials/kubeapps-on-tkg/
+      - url: /tutorials/kubeapps-on-tkg
         page: Kubeapps on TKG
         subitems:
           - subpage: Introduction
@@ -32,7 +32,7 @@ toc:
             suburl: /tutorials/kubeapps-on-tkg/step-4
           - subpage: Conclusion
             suburl: /tutorials/kubeapps-on-tkg/conclusion
-      - url: /tutorials/kubeapps-on-tce/
+      - url: /tutorials/kubeapps-on-tce
         page: Kubeapps on TCE
         subitems:
           - subpage: Introduction
@@ -54,43 +54,47 @@ toc:
     subfolderitems:
       - url: /howto/dashboard
         page: Using the dashboard
-      - url: /howto/access-control/
+      - url: /howto/access-control
         page: Access Control
-      - url: /howto/basic-form-support/
+      - url: /howto/basic-form-support
         page: Basic Form Support
-      - url: /howto/custom-app-view-support/
+      - url: /howto/custom-app-view-support
         page: Custom App View Support
-      - url: /howto/custom-form-component-support/
+      - url: /howto/custom-form-component-support
         page: Custom Form Component Support
-      - url: /howto/deploying-to-multiple-clusters/
+      - url: /howto/deploying-to-multiple-clusters
         page: Multi-cluster Support
-      - url: /howto/offline-installation/
+      - url: /howto/offline-installation
         page: Offline installation
-      - url: /howto/private-app-repository/
+      - url: /howto/private-app-repository
         page: Private Package Repository
-      - url: /howto/syncing-apprepository-webhook/
+      - url: /howto/syncing-apprepository-webhook
         page: Syncing Package Repositories
       - url: /howto/oidc/using-an-oidc-provider-with-pinniped
         page: Using an OIDC provider with Pinniped
 
   - title: Background
     subfolderitems:
-      - url: /background/architecture/
+      - url: /background/architecture
         page: Architecture
-      - url: /background/update-api-docs/
+      - url: /background/update-api-docs
         page: Kubeapps API documentation
 
   - title: Reference
     subfolderitems:
-      - url: /reference/proposals/
+      - url: /reference/proposals
         page: Proposals
       - url: /reference/developer
         page: Developer guides
-      - url: /reference/testing/testing-environment/
+      - url: /reference/testing/testing-environment
+        page: Testing environment with Harbor
+      - url: /reference/testing/ci
         page: CI configuration
-      - url: /reference/testing/ci/
+      - url: /reference/testing/end-to-end-tests
         page: End-to-end testing configuration
-      - url: /reference/translations/translate-kubeapps/
+      - url: /reference/developer/release-process
+        page: Release process
+      - url: /reference/translations/translate-kubeapps
         page: Translations
 
   - title: About the project

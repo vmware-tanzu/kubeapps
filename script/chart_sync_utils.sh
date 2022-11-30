@@ -21,6 +21,7 @@ KUBEAPPS_CHART_DIR="${PROJECT_DIR}/chart/kubeapps"
 # Paths of the templates files, note they are also used elsewhere
 PR_INTERNAL_TEMPLATE_FILE="${PROJECT_DIR}/script/tpl/PR_internal_chart_template.md"
 PR_EXTERNAL_TEMPLATE_FILE="${PROJECT_DIR}/script/tpl/PR_external_chart_template.md"
+# shellcheck disable=SC2034
 RELEASE_NOTES_TEMPLATE_FILE="${PROJECT_DIR}/script/tpl/release_notes.md"
 
 
@@ -109,7 +110,8 @@ replaceImage_latestToProduction() {
     fi
 
     # Get the latest tag from the bitnami repository
-    local tag=$(curl "${curl_opts[@]}" "https://api.github.com/repos/bitnami/${repoName}/tags" | jq -r '.[0].name')
+    local tag
+    tag=$(curl "${curl_opts[@]}" "https://api.github.com/repos/bitnami/${repoName}/tags" | jq -r '.[0].name')
 
     if [[ $tag == "" ]]; then
         echo "ERROR: Unable to obtain latest tag for ${repoName}. Stopping..."
@@ -259,7 +261,7 @@ updateRepoWithRemoteChanges() {
     cp -R "${targetChartPath}" "${KUBEAPPS_CHART_DIR}"
 
     # Update Chart.yaml with new version
-    sed -i.bk "s/appVersion: "${targetTagWithoutV}"/appVersion: DEVEL/g" "${localChartYaml}"
+    sed -i.bk "s/appVersion: ${targetTagWithoutV}/appVersion: DEVEL/g" "${localChartYaml}"
     rm "${KUBEAPPS_CHART_DIR}/Chart.yaml.bk"
     info "New version ${targetTagWithoutV} applied to file ${localChartYaml}"
 
@@ -311,8 +313,6 @@ generateReadme() {
 #   $4 - CHARTS_REPO_UPSTREAM: Name of the upstream version of the bitnami/charts repo without the GitHub part (eg. bitnami/charts).
 #   $5 - CHARTS_REPO_UPSTREAM_BRANCH: Name of the main branch in the upstream of the charts repo.
 #   $6 - CHARTS_FORK_SSH_KEY_FILENAME: Name of the file with the SSH private key to connect with the upstream of the charts fork.
-#   $7 - DEV_MODE: Indicates if it should be run in development mode, in this case we add a disclaimer to the PR description
-#         alerting that it's a development PR and shouldn't be taken into account, between other customizations (branch name, etc).
 # Returns:
 #   0 - Success
 #   1 - Failure
@@ -324,7 +324,6 @@ commitAndSendExternalPR() {
     local CHARTS_REPO_UPSTREAM=${4:?}
     local CHARTS_REPO_UPSTREAM_BRANCH=${5:?}
     local CHARTS_FORK_SSH_KEY_FILENAME=${6:?}
-    local DEV_MODE=${7-false}
 
     local targetChartPath="${LOCAL_CHARTS_REPO_PATH}/${CHART_REPO_PATH}"
     local chartYaml="${targetChartPath}/Chart.yaml"
@@ -342,14 +341,6 @@ commitAndSendExternalPR() {
 
     PR_TITLE="[bitnami/kubeapps] Bump chart version to ${CHART_VERSION}"
 
-    if [[ "${DEV_MODE}" == "true" ]]; then
-      timestamp=$(date +%s)
-      TARGET_BRANCH="${TARGET_BRANCH}-DEV-${timestamp}"
-      PR_TITLE="DEV - ${PR_TITLE} - ${timestamp}"
-      tmpfile=$(mktemp)
-      echo "# :warning: THIS IS A DEVELOPMENT PR, DO NOT MERGE!"|cat - "${PR_EXTERNAL_TEMPLATE_FILE}" > "$tmpfile" && mv "$tmpfile" "${PR_EXTERNAL_TEMPLATE_FILE}"
-    fi
-
     sed -i.bk -e "s/<USER>/$(git config user.name)/g" "${PR_EXTERNAL_TEMPLATE_FILE}"
     sed -i.bk -e "s/<EMAIL>/$(git config user.email)/g" "${PR_EXTERNAL_TEMPLATE_FILE}"
     git checkout -b "${TARGET_BRANCH}"
@@ -358,11 +349,7 @@ commitAndSendExternalPR() {
     # NOTE: This expects to have a loaded SSH key
     if [[ $(GIT_SSH_COMMAND="ssh -i ~/.ssh/${CHARTS_FORK_SSH_KEY_FILENAME}" git ls-remote origin "${TARGET_BRANCH}" | wc -l) -eq 0 ]]; then
         GIT_SSH_COMMAND="ssh -i ~/.ssh/${CHARTS_FORK_SSH_KEY_FILENAME}" git push -u origin "${TARGET_BRANCH}"
-        if [[ "${DEV_MODE}" != "true" ]]; then
-          gh pr create -d -B "${CHARTS_REPO_UPSTREAM_BRANCH}" -R "${CHARTS_REPO_UPSTREAM}" -F "${PR_EXTERNAL_TEMPLATE_FILE}" --title "${PR_TITLE}"
-        else
-          echo "Skipping external PR because we are running in DEV_MODE"
-        fi
+        gh pr create -d -B "${CHARTS_REPO_UPSTREAM_BRANCH}" -R "${CHARTS_REPO_UPSTREAM}" -F "${PR_EXTERNAL_TEMPLATE_FILE}" --title "${PR_TITLE}"
     else
         echo "The remote branch '${TARGET_BRANCH}' already exists, please check if there is already an open PR at the repository '${CHARTS_REPO_UPSTREAM}'"
         return 1
@@ -380,8 +367,6 @@ commitAndSendExternalPR() {
 #   $3 - CHART_VERSION: New version for the chart.
 #   $4 - UPSTREAM_REPO: Name of the upstream version of the kubeapps repo without the GitHub part (eg. vmware-tanzu/kubeapps).
 #   $5 - UPSTREAM_MAIN_BRANCH: Name of the main branch in the upstream repo.
-#   $6 - DEV_MODE: Indicates if it should be run in development mode, in this case we add a disclaimer to the PR description
-#         alerting that it's a development PR and shouldn't be taken into account, between other customizations (branch name, etc).
 # Returns:
 #   0 - Success
 #   1 - Failure
@@ -392,7 +377,6 @@ commitAndSendInternalPR() {
     local CHART_VERSION=${3:?}
     local UPSTREAM_REPO=${4:?}
     local UPSTREAM_MAIN_BRANCH=${5:?}
-    local DEV_MODE=${6:-false}
 
     local targetChartPath="${KUBEAPPS_CHART_DIR}/Chart.yaml"
     local localChartYaml="${KUBEAPPS_CHART_DIR}/Chart.yaml"
@@ -410,14 +394,6 @@ commitAndSendInternalPR() {
     fi
 
     PR_TITLE="Sync chart with bitnami/kubeapps chart (version ${CHART_VERSION})"
-
-    if [[ "${DEV_MODE}" == "true" ]]; then
-        timestamp=$(date +%s)
-        TARGET_BRANCH="${TARGET_BRANCH}-DEV-${timestamp}"
-        PR_TITLE="DEV - ${PR_TITLE} - ${timestamp}"
-        tmpfile=$(mktemp)
-        echo "# :warning: THIS IS A DEVELOPMENT PR, DO NOT MERGE!"|cat - "${PR_INTERNAL_TEMPLATE_FILE}" > "$tmpfile" && mv "$tmpfile" "${PR_INTERNAL_TEMPLATE_FILE}"
-    fi
 
     git checkout -b "${TARGET_BRANCH}"
     git add --all .

@@ -422,7 +422,7 @@ func AvailablePackageDetailFromChart(chart *models.Chart, chartFiles *models.Cha
 			AppVersion: chart.ChartVersions[0].AppVersion,
 		}
 		pkg.Readme = chartFiles.Readme
-		pkg.DefaultValues = chartFiles.Values
+		pkg.DefaultValues = chartFiles.DefaultValues
 		pkg.ValuesSchema = chartFiles.Schema
 	}
 	return pkg, nil
