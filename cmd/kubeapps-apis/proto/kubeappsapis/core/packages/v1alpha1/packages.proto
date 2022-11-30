@@ -476,6 +476,12 @@ message AvailablePackageDetail {
   // as documentation or a starting point for user customization.
   string default_values = 11;
 
+  // Available package additional default values
+  //
+  // A package may contain additional default value files for specific scenarios,
+  // such as values_production.yaml or values_dev.yaml
+  map<string, string> additional_default_values = 17;
+
   // Available package values schema
   //
   // An optional openapi/json schema that can be used to validate a user-provided values.
