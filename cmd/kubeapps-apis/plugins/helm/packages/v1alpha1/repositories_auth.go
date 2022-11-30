@@ -69,7 +69,7 @@ func handleAuthSecretForCreate(
 		secret, err := validateUserManagedRepoSecret(ctx, typedClient, repoName.Namespace, tlsConfig, auth)
 		return secret, false, err
 	} else if hasCaData || hasAuthData {
-		secret, _, err := newSecretFromTlsConfigAndAuth(repoName.Name, tlsConfig, auth)
+		secret, _, err := newSecretFromTlsConfigAndAuth(repoName.Name, nil, tlsConfig, auth)
 		return secret, true, err
 	} else {
 		return nil, false, nil
@@ -90,7 +90,7 @@ func handleImagesPullSecretForCreate(
 		secret, err := validateDockerImagePullSecret(ctx, typedClient, repoName.Namespace, customDetail.ImagesPullSecret.GetSecretRef())
 		return secret, false, err
 	} else if hasData {
-		secret, _, err := newDockerImagePullSecret(repoName.Name, customDetail.ImagesPullSecret.GetCredentials())
+		secret, _, err := newDockerImagePullSecret(repoName.Name, nil, customDetail.ImagesPullSecret.GetCredentials())
 		return secret, true, err
 	} else {
 		return nil, false, nil
@@ -122,29 +122,40 @@ func handleAuthSecretForUpdate(
 		}
 	}
 
-	// handle user managed secret
+	// create/get secret
 	if hasCaRef || hasAuthRef {
+		// handle user managed secret
 		updatedSecret, err := validateUserManagedRepoSecret(ctx, typedClient, repo.GetNamespace(), tlsConfig, auth)
 		return updatedSecret, false, true, err
-	}
 
-	// handle kubeapps managed secret
-	updatedSecret, isSameSecret, err := newSecretFromTlsConfigAndAuth(repo.GetName(), tlsConfig, auth)
-	if err != nil {
-		return nil, true, false, err
-	} else if isSameSecret {
-		// Do nothing if repo auth data came redacted
-		return nil, true, false, nil
+	} else if hasCaData || hasAuthData {
+		// handle kubeapps managed secret
+		updatedSecret, isSameSecret, err := newSecretFromTlsConfigAndAuth(repo.GetName(), secret, tlsConfig, auth)
+		if err != nil {
+			return nil, true, false, err
+		} else if isSameSecret {
+			// Do nothing if repo auth data came fully redacted
+			return nil, true, false, nil
+		} else {
+			// secret has changed, we try to delete any existing secret
+			if secret != nil {
+				secretsInterface := typedClient.CoreV1().Secrets(secret.GetNamespace())
+				if err := deleteSecret(ctx, secretsInterface, secret.GetName()); err != nil {
+					log.Errorf("Error deleting existing secret: [%s] due to %v", err)
+				}
+			}
+			return updatedSecret, true, true, nil
+		}
+
 	} else {
-		// either we have no secret, or it has changed. in both cases, we try to delete any existing secret
+		// no auth, delete existing secret if necessary
 		if secret != nil {
 			secretsInterface := typedClient.CoreV1().Secrets(secret.GetNamespace())
 			if err := deleteSecret(ctx, secretsInterface, secret.GetName()); err != nil {
 				log.Errorf("Error deleting existing secret: [%s] due to %v", err)
 			}
 		}
-
-		return updatedSecret, true, true, nil
+		return nil, false, true, nil
 	}
 }
 
@@ -172,120 +183,190 @@ func handleImagesPullSecretForUpdate(
 		}
 	}
 
-	// handle user managed secret
+	// create/get secret
 	if hasRef {
+		// handle user managed secret
 		updatedSecret, err := validateDockerImagePullSecret(ctx, typedClient, repo.GetNamespace(), imagesPullSecrets.GetSecretRef())
 		return updatedSecret, false, true, err
-	}
 
-	// handle kubeapps managed secret
-	updatedSecret, isSameSecret, err := newDockerImagePullSecret(repo.GetName(), imagesPullSecrets.GetCredentials())
-	if err != nil {
-		return nil, true, false, err
-	} else if isSameSecret {
-		// Do nothing if repo credential data came redacted
-		return nil, true, false, nil
+	} else if hasData {
+		// handle kubeapps managed secret
+		updatedSecret, isSameSecret, err := newDockerImagePullSecret(repo.GetName(), secret, imagesPullSecrets.GetCredentials())
+		if err != nil {
+			return nil, true, false, err
+		} else if isSameSecret {
+			// Do nothing if repo auth data came fully redacted
+			return nil, true, false, nil
+		} else {
+			// secret has changed, we try to delete any existing secret
+			if secret != nil {
+				secretsInterface := typedClient.CoreV1().Secrets(secret.GetNamespace())
+				if err := deleteSecret(ctx, secretsInterface, secret.GetName()); err != nil {
+					log.Errorf("Error deleting existing secret: [%s] due to %v", err)
+				}
+			}
+			return updatedSecret, true, true, nil
+		}
+
 	} else {
-		// either we have no secret, or it has changed. in both cases, we try to delete any existing secret
+		// no image pull secret, delete existing secret if necessary
 		if secret != nil {
 			secretsInterface := typedClient.CoreV1().Secrets(secret.GetNamespace())
 			if err := deleteSecret(ctx, secretsInterface, secret.GetName()); err != nil {
 				log.Errorf("Error deleting existing secret: [%s] due to %v", err)
 			}
 		}
-
-		return updatedSecret, true, true, nil
+		return nil, false, true, nil
 	}
 }
 
 // this func is only used with kubeapps-managed secrets
 func newSecretFromTlsConfigAndAuth(repoName string,
+	existingSecret *k8scorev1.Secret,
 	tlsConfig *corev1.PackageRepositoryTlsConfig,
 	auth *corev1.PackageRepositoryAuth) (secret *k8scorev1.Secret, isSameSecret bool, err error) {
-	if tlsConfig != nil {
-		if tlsConfig.GetSecretRef() != nil {
-			return nil, false, status.Errorf(codes.InvalidArgument, "SecretRef may not be used with kubeapps managed secrets")
-		}
+
+	var hadSecretCa, hadSecretHeader, hadSecretDocker bool
+	if existingSecret != nil {
+		_, hadSecretCa = existingSecret.Data[SecretCaKey]
+		_, hadSecretHeader = existingSecret.Data[SecretAuthHeaderKey]
+		_, hadSecretDocker = existingSecret.Data[DockerConfigJsonKey]
+	}
+
+	isSameSecret = true
+	secret = newLocalOpaqueSecret(repoName)
+
+	if tlsConfig != nil && tlsConfig.GetCertAuthority() != "" {
 		caCert := tlsConfig.GetCertAuthority()
 		if caCert == RedactedString {
-			isSameSecret = true
-		} else if caCert != "" {
-			secret = newLocalOpaqueSecret(repoName)
+			if hadSecretCa {
+				secret.Data[SecretCaKey] = existingSecret.Data[SecretCaKey]
+			} else {
+				return nil, false, status.Errorf(codes.InvalidArgument, "Invalid configuration, unexpected REDACTED content")
+			}
+		} else {
 			secret.Data[SecretCaKey] = []byte(caCert)
+			isSameSecret = false
+		}
+	} else {
+		if hadSecretCa {
+			isSameSecret = false
 		}
 	}
+
 	if auth != nil {
-		if auth.GetSecretRef() != nil {
-			return nil, false, status.Errorf(codes.InvalidArgument, "SecretRef may not be used with kubeapps managed secrets")
-		}
-		if secret == nil {
-			secret = newLocalOpaqueSecret(repoName)
-		}
 		switch auth.Type {
 		case corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_BASIC_AUTH:
-			if unp := auth.GetUsernamePassword(); unp != nil {
-				if unp.Username == "" || unp.Password == "" {
-					return nil, false, status.Errorf(codes.InvalidArgument, "Wrong combination of username and password")
-				} else if unp.Username == RedactedString && unp.Password == RedactedString {
-					isSameSecret = true
-				} else {
-					authString := fmt.Sprintf("%s:%s", unp.Username, unp.Password)
-					authHeader := fmt.Sprintf("Basic %s", base64.StdEncoding.EncodeToString([]byte(authString)))
-					secret.Data[SecretAuthHeaderKey] = []byte(authHeader)
+			unp := auth.GetUsernamePassword()
+			if unp == nil || unp.GetUsername() == "" || unp.GetPassword() == "" {
+				return nil, false, status.Errorf(codes.InvalidArgument, "Username/Password configuration is missing")
+			}
+			if (unp.GetUsername() == RedactedString || unp.GetPassword() == RedactedString) && !hadSecretHeader {
+				return nil, false, status.Errorf(codes.InvalidArgument, "Invalid configuration, unexpected REDACTED content")
+			}
+
+			if unp.GetUsername() == RedactedString && unp.GetPassword() == RedactedString {
+				secret.Data[SecretAuthHeaderKey] = existingSecret.Data[SecretAuthHeaderKey]
+			} else if unp.GetUsername() == RedactedString || unp.GetPassword() == RedactedString {
+				username, password, ok := decodeBasicAuth(string(existingSecret.Data[SecretAuthHeaderKey]))
+				if !ok {
+					return nil, false, status.Errorf(codes.InvalidArgument, "Invalid configuration, the existing repository does not have username/password authentication")
 				}
+				if unp.GetUsername() != RedactedString {
+					username = unp.GetUsername()
+				}
+				if unp.GetPassword() != RedactedString {
+					password = unp.GetPassword()
+				}
+				isSameSecret = false
+				secret.Data[SecretAuthHeaderKey] = []byte(encodeBasicAuth(username, password))
 			} else {
-				return nil, false, status.Errorf(codes.Internal, "Username/Password configuration is missing")
+				isSameSecret = false
+				secret.Data[SecretAuthHeaderKey] = []byte(encodeBasicAuth(unp.GetUsername(), unp.GetPassword()))
 			}
 		case corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_BEARER:
-			if token := auth.GetHeader(); token != "" {
-				if token == RedactedString {
-					isSameSecret = true
-				} else {
-					secret.Data[SecretAuthHeaderKey] = []byte("Bearer " + strings.TrimPrefix(token, "Bearer "))
-				}
-			} else {
+			token := auth.GetHeader()
+			if token == "" {
 				return nil, false, status.Errorf(codes.InvalidArgument, "Bearer token is missing")
 			}
-		case corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_AUTHORIZATION_HEADER:
-			if authHeaderValue := auth.GetHeader(); authHeaderValue != "" {
-				if authHeaderValue == RedactedString {
-					isSameSecret = true
+
+			if token == RedactedString {
+				if hadSecretHeader {
+					secret.Data[SecretAuthHeaderKey] = existingSecret.Data[SecretAuthHeaderKey]
 				} else {
-					secret.Data[SecretAuthHeaderKey] = []byte(authHeaderValue)
+					return nil, false, status.Errorf(codes.InvalidArgument, "Invalid configuration, unexpected REDACTED content")
 				}
 			} else {
+				isSameSecret = false
+				secret.Data[SecretAuthHeaderKey] = []byte(encodeBearerAuth(token))
+			}
+		case corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_AUTHORIZATION_HEADER:
+			header := auth.GetHeader()
+			if header == "" {
 				return nil, false, status.Errorf(codes.InvalidArgument, "Authentication header value is missing")
 			}
-		case corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_DOCKER_CONFIG_JSON:
-			if dockerCreds := auth.GetDockerCreds(); dockerCreds != nil {
-				if dockerCreds.Password == RedactedString {
-					isSameSecret = true
+
+			if header == RedactedString {
+				if hadSecretHeader {
+					secret.Data[SecretAuthHeaderKey] = existingSecret.Data[SecretAuthHeaderKey]
 				} else {
-					secret.Type = k8scorev1.SecretTypeDockerConfigJson
-					dockerConfig := &credentialprovider.DockerConfigJSON{
-						Auths: map[string]credentialprovider.DockerConfigEntry{
-							dockerCreds.Server: {
-								Username: dockerCreds.Username,
-								Password: dockerCreds.Password,
-								Email:    dockerCreds.Email,
-							},
-						},
-					}
-					dockerConfigJson, err := json.Marshal(dockerConfig)
-					if err != nil {
-						return nil, false, status.Errorf(codes.InvalidArgument, "Docker credentials are wrong")
-					}
-					secret.Data[DockerConfigJsonKey] = dockerConfigJson
+					return nil, false, status.Errorf(codes.InvalidArgument, "Invalid configuration, unexpected REDACTED content")
 				}
 			} else {
+				isSameSecret = false
+				secret.Data[SecretAuthHeaderKey] = []byte(header)
+			}
+		case corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_DOCKER_CONFIG_JSON:
+			creds := auth.GetDockerCreds()
+			if creds == nil || creds.Server == "" || creds.Username == "" || creds.Password == "" {
 				return nil, false, status.Errorf(codes.InvalidArgument, "Docker credentials are missing")
 			}
-		case corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_TLS:
-			return nil, false, status.Errorf(codes.Unimplemented, "Package repository authentication type %q is not supported", auth.Type)
-		case corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_UNSPECIFIED:
-			return nil, true, nil
+			if (creds.Server == RedactedString || creds.Username == RedactedString || creds.Password == RedactedString || creds.Email == RedactedString) && !hadSecretDocker {
+				return nil, false, status.Errorf(codes.InvalidArgument, "Invalid configuration, unexpected REDACTED content")
+			}
+
+			secret.Type = k8scorev1.SecretTypeDockerConfigJson
+			if creds.Server == RedactedString && creds.Username == RedactedString && creds.Password == RedactedString && creds.Email == RedactedString {
+				secret.Data[DockerConfigJsonKey] = existingSecret.Data[DockerConfigJsonKey]
+			} else if creds.Server == RedactedString || creds.Username == RedactedString || creds.Password == RedactedString || creds.Email == RedactedString {
+				newcreds, err := decodeDockerAuth(existingSecret.Data[DockerConfigJsonKey])
+				if err != nil {
+					return nil, false, status.Errorf(codes.Internal, "Invalid configuration, the existing repository does not have valid docker authentication")
+				}
+
+				if creds.Server != RedactedString {
+					newcreds.Server = creds.Server
+				}
+				if creds.Username != RedactedString {
+					newcreds.Username = creds.Username
+				}
+				if creds.Password != RedactedString {
+					newcreds.Password = creds.Password
+				}
+				if creds.Email != RedactedString {
+					newcreds.Email = creds.Email
+				}
+
+				isSameSecret = false
+				if configjson, err := encodeDockerAuth(newcreds); err != nil {
+					return nil, false, status.Errorf(codes.InvalidArgument, "Invalid Docker credentials")
+				} else {
+					secret.Data[DockerConfigJsonKey] = configjson
+				}
+			} else {
+				isSameSecret = false
+				if configjson, err := encodeDockerAuth(creds); err != nil {
+					return nil, false, status.Errorf(codes.InvalidArgument, "Invalid Docker credentials")
+				} else {
+					secret.Data[DockerConfigJsonKey] = configjson
+				}
+			}
 		default:
-			return nil, false, status.Errorf(codes.Internal, "Unexpected package repository authentication type: %q", auth.Type)
+			return nil, false, status.Errorf(codes.InvalidArgument, "Package repository authentication type %q is not supported", auth.Type)
+		}
+	} else {
+		if hadSecretHeader || hadSecretDocker {
+			isSameSecret = false
 		}
 	}
 	return secret, isSameSecret, nil
@@ -394,41 +475,63 @@ func imagesPullSecretName(repoName string) string {
 	return fmt.Sprintf("pullsecret-%s", repoName)
 }
 
-func newDockerImagePullSecret(repoName string, credentials *corev1.DockerCredentials) (secret *k8scorev1.Secret, isSameSecret bool, err error) {
-	if credentials != nil {
-		if credentials.Server == "" || credentials.Username == "" || credentials.Password == "" || credentials.Email == "" {
-			return nil, false, status.Errorf(codes.InvalidArgument, "Images pull secret Docker credentials are wrong")
+func newDockerImagePullSecret(repoName string, existingSecret *k8scorev1.Secret, creds *corev1.DockerCredentials) (secret *k8scorev1.Secret, isSameSecret bool, err error) {
+	if creds.Server == "" || creds.Username == "" || creds.Password == "" {
+		return nil, false, status.Errorf(codes.InvalidArgument, "Docker credentials are missing")
+	}
+	if (creds.Server == RedactedString || creds.Username == RedactedString || creds.Password == RedactedString || creds.Email == RedactedString) && existingSecret == nil {
+		return nil, false, status.Errorf(codes.InvalidArgument, "Invalid configuration, unexpected REDACTED content")
+	}
+
+	secret = &k8scorev1.Secret{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:        imagesPullSecretName(repoName),
+			Annotations: map[string]string{Annotation_ManagedBy_Key: Annotation_ManagedBy_Value},
+		},
+		Type: k8scorev1.SecretTypeDockerConfigJson,
+		Data: map[string][]byte{},
+	}
+
+	if creds.Server == RedactedString && creds.Username == RedactedString && creds.Password == RedactedString && creds.Email == RedactedString {
+		// same
+		return nil, true, nil
+
+	} else if creds.Server == RedactedString || creds.Username == RedactedString || creds.Password == RedactedString || creds.Email == RedactedString {
+		// merge
+		newcreds, err := decodeDockerAuth(existingSecret.Data[DockerConfigJsonKey])
+		if err != nil {
+			return nil, false, status.Errorf(codes.Internal, "Invalid configuration, the existing repository does not have valid docker authentication")
 		}
 
-		secret = &k8scorev1.Secret{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:        imagesPullSecretName(repoName),
-				Annotations: map[string]string{Annotation_ManagedBy_Key: Annotation_ManagedBy_Value},
-			},
-			Type: k8scorev1.SecretTypeDockerConfigJson,
-			Data: map[string][]byte{},
+		if creds.Server != RedactedString {
+			newcreds.Server = creds.Server
+		}
+		if creds.Username != RedactedString {
+			newcreds.Username = creds.Username
+		}
+		if creds.Password != RedactedString {
+			newcreds.Password = creds.Password
+		}
+		if creds.Email != RedactedString {
+			newcreds.Email = creds.Email
 		}
 
-		if credentials.Password == RedactedString {
-			isSameSecret = true
+		if configjson, err := encodeDockerAuth(newcreds); err != nil {
+			return nil, false, status.Errorf(codes.InvalidArgument, "Invalid Docker credentials")
 		} else {
-			dockerConfig := &credentialprovider.DockerConfigJSON{
-				Auths: map[string]credentialprovider.DockerConfigEntry{
-					credentials.Server: {
-						Username: credentials.Username,
-						Password: credentials.Password,
-						Email:    credentials.Email,
-					},
-				},
-			}
-			dockerConfigJson, err := json.Marshal(dockerConfig)
-			if err != nil {
-				return nil, false, status.Errorf(codes.InvalidArgument, "Docker credentials are malformed")
-			}
-			secret.Data[k8scorev1.DockerConfigJsonKey] = dockerConfigJson
+			secret.Data[DockerConfigJsonKey] = configjson
+			return secret, false, nil
+		}
+
+	} else {
+		// new
+		if configjson, err := encodeDockerAuth(creds); err != nil {
+			return nil, false, status.Errorf(codes.InvalidArgument, "Invalid Docker credentials")
+		} else {
+			secret.Data[DockerConfigJsonKey] = configjson
+			return secret, false, nil
 		}
 	}
-	return secret, isSameSecret, nil
 }
 
 func deleteSecret(ctx context.Context, secretsInterface v1.SecretInterface, secretName string) error {
@@ -699,4 +802,60 @@ func isSecretKubeappsManaged(repo *apprepov1alpha1.AppRepository, secret *k8scor
 		return false
 	}
 	return true
+}
+
+// utilities for secrets encoding/decocing
+
+func encodeBasicAuth(username, password string) string {
+	auth := fmt.Sprintf("%s:%s", username, password)
+	auth = fmt.Sprintf("Basic %s", base64.StdEncoding.EncodeToString([]byte(auth)))
+	return auth
+}
+
+func decodeBasicAuth(auth string) (username string, password string, ok bool) {
+	if strings.HasPrefix(auth, "Basic ") {
+		auth = strings.TrimPrefix(auth, "Basic ")
+	} else {
+		return "", "", false
+	}
+	if bytes, err := base64.StdEncoding.DecodeString(auth); err != nil {
+		return "", "", false
+	} else {
+		auth = string(bytes)
+	}
+	return strings.Cut(auth, ":")
+}
+
+func encodeBearerAuth(token string) string {
+	return "Bearer " + strings.TrimPrefix(token, "Bearer ")
+}
+
+func encodeDockerAuth(credentials *corev1.DockerCredentials) ([]byte, error) {
+	config := &credentialprovider.DockerConfigJSON{
+		Auths: map[string]credentialprovider.DockerConfigEntry{
+			credentials.Server: {
+				Username: credentials.Username,
+				Password: credentials.Password,
+				Email:    credentials.Email,
+			},
+		},
+	}
+	return json.Marshal(config)
+}
+
+func decodeDockerAuth(dockerjson []byte) (*corev1.DockerCredentials, error) {
+	config := &credentialprovider.DockerConfigJSON{}
+	if err := json.Unmarshal(dockerjson, config); err != nil {
+		return nil, err
+	}
+	for server, entry := range config.Auths {
+		docker := &corev1.DockerCredentials{
+			Server:   server,
+			Username: entry.Username,
+			Password: entry.Password,
+			Email:    entry.Email,
+		}
+		return docker, nil
+	}
+	return nil, fmt.Errorf("invalid dockerconfig, no Auths entries were found")
 }

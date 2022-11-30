@@ -142,16 +142,20 @@ func newTlsSecret(name, namespace string, pub, priv, ca []byte) *apiv1.Secret {
 		Type: apiv1.SecretTypeOpaque,
 		Data: map[string][]byte{},
 	}
+	return addTlsToSecret(s, pub, priv, ca)
+}
+
+func addTlsToSecret(secret *apiv1.Secret, pub, priv, ca []byte) *apiv1.Secret {
 	if pub != nil {
-		s.Data["certFile"] = pub
+		secret.Data["certFile"] = pub
 	}
 	if priv != nil {
-		s.Data["keyFile"] = priv
+		secret.Data["keyFile"] = priv
 	}
 	if ca != nil {
-		s.Data["ca.crt"] = ca
+		secret.Data["ca.crt"] = ca
 	}
-	return s
+	return secret
 }
 
 func newRepoHttpClient(responses map[string]*http.Response) newRepoClient {
