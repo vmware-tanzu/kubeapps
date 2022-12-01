@@ -13270,10 +13270,10 @@ ts-node@^10.7.0:
     v8-compile-cache-lib "^3.0.1"
     yn "3.1.1"
 
-ts-poet@^6.1.0:
-  version "6.1.0"
-  resolved "https://registry.yarnpkg.com/ts-poet/-/ts-poet-6.1.0.tgz#c5c3d679dfce1fe39acb5f5415275c5d6a598cb7"
-  integrity sha512-PFwbNJjGrb44wzHUGQicG2/nhjR+3+k7zYLDTa8D61NVUitl7K/JgIc9/P+8oMNenntKzLc8tjLDOkPrxIhm6A==
+ts-poet@^6.2.0:
+  version "6.3.0"
+  resolved "https://registry.yarnpkg.com/ts-poet/-/ts-poet-6.3.0.tgz#954f2a6923ccaa2d4cdf55979f2e991d440e30a3"
+  integrity sha512-RjS37SnXMa9En8xvQf//+rvNNNCB7x2TKP/ZfsiQFidtfN3A6FYgPDESe4r7YA3F663XO2ozx+2buQItGOLMxg==
   dependencies:
     dprint-node "^1.0.7"
 
@@ -13285,16 +13285,16 @@ ts-proto-descriptors@1.7.1:
     long "^4.0.0"
     protobufjs "^6.8.8"
 
-ts-proto@^1.131.0:
-  version "1.131.0"
-  resolved "https://registry.yarnpkg.com/ts-proto/-/ts-proto-1.131.0.tgz#bc5906c9d35755a086d7e47e8357bc7b858f9fc6"
-  integrity sha512-oj/kWrDz3JkkPQwumQDKfwHroH9iNz2alvrbCYzNYJlb/2MAUzFNfh9T+SZUPDfoXXK6oJoW1hGCHznj67yHNg==
+ts-proto@^1.135.0:
+  version "1.135.0"
+  resolved "https://registry.yarnpkg.com/ts-proto/-/ts-proto-1.135.0.tgz#9e6ebb8fff42325d4ae475d2cd763068a8485846"
+  integrity sha512-NwK+PcSiWZBzO8GFVID2Ig71vIZRCApTG8XDZIlQ3WabbJlbUx9zsrHcYNojcUENtqkiYywTp3uTP6dketiCpw==
   dependencies:
     "@types/object-hash" "^1.3.0"
     dataloader "^1.4.0"
     object-hash "^1.3.1"
     protobufjs "^6.11.3"
-    ts-poet "^6.1.0"
+    ts-poet "^6.2.0"
     ts-proto-descriptors "1.7.1"
 
 tsconfig-paths@^3.14.1:
