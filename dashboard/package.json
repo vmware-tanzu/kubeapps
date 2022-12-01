@@ -26,6 +26,7 @@
     "watch-css": "yarn run build-css && yarn run compile-lang && sass src/ --watch --no-source-map"
   },
   "dependencies": {
+    "@babel/parser": "^7.18.4",
     "@cds/city": "^1.1.0",
     "@cds/core": "^6.2.0",
     "@cds/react": "^6.2.0",
@@ -34,6 +35,7 @@
     "@paciolan/remote-component": "^2.12.1",
     "@tanstack/match-sorter-utils": "^8.7.0",
     "@tanstack/react-table": "^8.7.0",
+    "@types/react": "^17.0.39",
     "ajv": "^8.11.2",
     "axios": "^1.2.0",
     "connected-react-router": "^6.9.3",
