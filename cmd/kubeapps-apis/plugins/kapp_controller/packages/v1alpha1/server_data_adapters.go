@@ -35,6 +35,8 @@ const (
 
 	Redacted = "REDACTED"
 
+	Annotation_Description_Key = "kubeapps.dev/description"
+
 	Annotation_ManagedBy_Key   = "kubeapps.dev/managed-by"
 	Annotation_ManagedBy_Value = "plugin:kapp-controller"
 
@@ -436,6 +438,7 @@ func (s *Server) buildPackageRepositorySummary(pkgRepository *packagingv1alpha1.
 			Identifier: pkgRepository.Name,
 		},
 		Name:            pkgRepository.Name,
+		Description:     getDescription(pkgRepository),
 		NamespaceScoped: s.pluginConfig.globalPackagingNamespace != pkgRepository.Namespace,
 		RequiresAuth:    repositorySecretRef(pkgRepository) != nil,
 	}
@@ -487,6 +490,7 @@ func (s *Server) buildPackageRepository(pkgRepository *packagingv1alpha1.Package
 			Identifier: pkgRepository.Name,
 		},
 		Name:            pkgRepository.Name,
+		Description:     getDescription(pkgRepository),
 		NamespaceScoped: s.pluginConfig.globalPackagingNamespace != pkgRepository.Namespace,
 	}
 
@@ -649,6 +653,9 @@ func (s *Server) buildPkgRepositoryCreate(request *corev1.AddPackageRepositoryRe
 	}
 	repository.Spec = s.buildPkgRepositorySpec(request.Type, request.Interval, request.Url, request.Auth, pkgSecret, details)
 
+	// description
+	setDescription(repository, request.Description)
+
 	return repository, nil
 }
 
@@ -676,6 +683,9 @@ func (s *Server) buildPkgRepositoryUpdate(request *corev1.UpdatePackageRepositor
 
 	// repository
 	repository.Spec = s.buildPkgRepositorySpec(rptype, request.Interval, request.Url, request.Auth, pkgSecret, details)
+
+	// description
+	setDescription(repository, request.Description)
 
 	return repository, nil
 }
@@ -758,9 +768,6 @@ func (s *Server) validatePackageRepositoryCreate(ctx context.Context, cluster st
 		namespace = s.pluginConfig.globalPackagingNamespace
 	}
 
-	if request.Description != "" {
-		return status.Errorf(codes.InvalidArgument, "Description is not supported")
-	}
 	if request.TlsConfig != nil {
 		return status.Errorf(codes.InvalidArgument, "TLS Config is not supported")
 	}
@@ -820,9 +827,6 @@ func (s *Server) validatePackageRepositoryUpdate(ctx context.Context, cluster st
 		return status.Errorf(codes.Internal, "the package repository has a fetch directive that is not supported")
 	}
 
-	if request.Description != "" {
-		return status.Errorf(codes.InvalidArgument, "Description is not supported")
-	}
 	if request.TlsConfig != nil {
 		return status.Errorf(codes.InvalidArgument, "TLS Config is not supported")
 	}

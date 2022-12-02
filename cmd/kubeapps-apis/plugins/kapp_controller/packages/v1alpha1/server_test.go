@@ -6575,14 +6575,6 @@ func TestAddPackageRepository(t *testing.T) {
 			expectedStatusCode: codes.InvalidArgument,
 		},
 		{
-			name: "validate desc",
-			requestCustomizer: func(request *corev1.AddPackageRepositoryRequest) *corev1.AddPackageRepositoryRequest {
-				request.Description = "some description"
-				return request
-			},
-			expectedStatusCode: codes.InvalidArgument,
-		},
-		{
 			name: "validate scope",
 			requestCustomizer: func(request *corev1.AddPackageRepositoryRequest) *corev1.AddPackageRepositoryRequest {
 				request.NamespaceScoped = true
@@ -6812,6 +6804,19 @@ func TestAddPackageRepository(t *testing.T) {
 			},
 			expectedStatusCode:   codes.InvalidArgument,
 			expectedStatusString: "unexpected REDACTED",
+		},
+		{
+			name: "create with description",
+			requestCustomizer: func(request *corev1.AddPackageRepositoryRequest) *corev1.AddPackageRepositoryRequest {
+				request.Description = "repository description"
+				return request
+			},
+			repositoryCustomizer: func(repository *packagingv1alpha1.PackageRepository) *packagingv1alpha1.PackageRepository {
+				repository.Annotations = map[string]string{Annotation_Description_Key: "repository description"}
+				return repository
+			},
+			expectedStatusCode: codes.OK,
+			expectedRef:        defaultRef,
 		},
 		{
 			name: "create with no interval",
@@ -7299,14 +7304,6 @@ func TestUpdatePackageRepository(t *testing.T) {
 			expectedStatusCode: codes.InvalidArgument,
 		},
 		{
-			name: "validate desc",
-			requestCustomizer: func(request *corev1.UpdatePackageRepositoryRequest) *corev1.UpdatePackageRepositoryRequest {
-				request.Description = "some description"
-				return request
-			},
-			expectedStatusCode: codes.InvalidArgument,
-		},
-		{
 			name: "validate url",
 			requestCustomizer: func(request *corev1.UpdatePackageRepositoryRequest) *corev1.UpdatePackageRepositoryRequest {
 				request.Url = ""
@@ -7478,6 +7475,40 @@ func TestUpdatePackageRepository(t *testing.T) {
 			},
 			expectedStatusCode:   codes.FailedPrecondition,
 			expectedStatusString: "not in a stable state",
+		},
+		{
+			name: "update with new description",
+			initialCustomizer: func(repository *packagingv1alpha1.PackageRepository) *packagingv1alpha1.PackageRepository {
+				repository.Annotations = map[string]string{Annotation_Description_Key: "initial description"}
+				return repository
+			},
+			requestCustomizer: func(request *corev1.UpdatePackageRepositoryRequest) *corev1.UpdatePackageRepositoryRequest {
+				request.Description = "updated description"
+				return request
+			},
+			repositoryCustomizer: func(repository *packagingv1alpha1.PackageRepository) *packagingv1alpha1.PackageRepository {
+				repository.Annotations = map[string]string{Annotation_Description_Key: "updated description"}
+				return repository
+			},
+			expectedStatusCode: codes.OK,
+			expectedRef:        defaultRef,
+		},
+		{
+			name: "update remove description",
+			initialCustomizer: func(repository *packagingv1alpha1.PackageRepository) *packagingv1alpha1.PackageRepository {
+				repository.Annotations = map[string]string{Annotation_Description_Key: "initial description"}
+				return repository
+			},
+			requestCustomizer: func(request *corev1.UpdatePackageRepositoryRequest) *corev1.UpdatePackageRepositoryRequest {
+				request.Description = ""
+				return request
+			},
+			repositoryCustomizer: func(repository *packagingv1alpha1.PackageRepository) *packagingv1alpha1.PackageRepository {
+				repository.Annotations = nil
+				return repository
+			},
+			expectedStatusCode: codes.OK,
+			expectedRef:        defaultRef,
 		},
 		{
 			name: "update with no interval",
@@ -8378,6 +8409,18 @@ func TestGetPackageRepositoryDetail(t *testing.T) {
 			expectedStatusCode: codes.OK,
 		},
 		{
+			name: "check description",
+			repositoryCustomizer: func(repository *packagingv1alpha1.PackageRepository) *packagingv1alpha1.PackageRepository {
+				repository.Annotations = map[string]string{Annotation_Description_Key: "repository description"}
+				return repository
+			},
+			responseCustomizer: func(response *corev1.GetPackageRepositoryDetailResponse) *corev1.GetPackageRepositoryDetailResponse {
+				response.Detail.Description = "repository description"
+				return response
+			},
+			expectedStatusCode: codes.OK,
+		},
+		{
 			name: "check interval (none)",
 			repositoryCustomizer: func(repository *packagingv1alpha1.PackageRepository) *packagingv1alpha1.PackageRepository {
 				repository.Spec.SyncPeriod = nil
@@ -9082,6 +9125,35 @@ func TestGetPackageRepositorySummaries(t *testing.T) {
 				Type:         Type_ImgPkgBundle,
 				Url:          "projects.registry.example.com/repo-1/main@sha256:abcd",
 				RequiresAuth: true,
+			},
+		},
+		{
+			name: "test with description",
+			existingObjects: []k8sruntime.Object{
+				&packagingv1alpha1.PackageRepository{
+					TypeMeta:   defaultTypeMeta,
+					ObjectMeta: metav1.ObjectMeta{Name: "globalrepo", Namespace: demoGlobalPackagingNamespace, Annotations: map[string]string{Annotation_Description_Key: "repository summary description"}},
+					Spec: packagingv1alpha1.PackageRepositorySpec{
+						Fetch: &packagingv1alpha1.PackageRepositoryFetch{
+							ImgpkgBundle: &kappctrlv1alpha1.AppFetchImgpkgBundle{
+								Image: "projects.registry.example.com/repo-1/main@sha256:abcd",
+							},
+						},
+					},
+					Status: packagingv1alpha1.PackageRepositoryStatus{},
+				},
+			},
+			expectedResponse: &corev1.PackageRepositorySummary{
+				PackageRepoRef: &corev1.PackageRepositoryReference{
+					Context:    defaultGlobalContext,
+					Plugin:     &pluginDetail,
+					Identifier: "globalrepo",
+				},
+				Name:         "globalrepo",
+				Description:  "repository summary description",
+				Type:         Type_ImgPkgBundle,
+				Url:          "projects.registry.example.com/repo-1/main@sha256:abcd",
+				RequiresAuth: false,
 			},
 		},
 	}
