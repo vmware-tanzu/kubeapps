@@ -78,6 +78,14 @@ RUN --mount=type=cache,target=/go/pkg/mod \
     -o /resources-v1alpha1-plugin.so -buildmode=plugin \
     ./cmd/kubeapps-apis/plugins/resources/v1alpha1/*.go
 
+## Build 'operators' plugin, version 'v1alpha1'
+RUN --mount=type=cache,target=/go/pkg/mod \
+    --mount=type=cache,target=/root/.cache/go-build \
+    go build \
+    -ldflags "-X github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/cmd.version=$VERSION" \
+    -o /operators-v1alpha1-plugin.so -buildmode=plugin \
+    ./cmd/kubeapps-apis/plugins/operators/packages/v1alpha1/*.go
+
 # Note: unlike the other docker images for go, we cannot use scratch as the plugins
 # are loaded using the dynamic linker.
 FROM bitnami/minideb:bullseye
@@ -87,6 +95,7 @@ COPY --from=builder /kapp-controller-packages-v1alpha1-plugin.so /plugins/kapp-c
 COPY --from=builder /fluxv2-packages-v1alpha1-plugin.so /plugins/fluxv2-packages/
 COPY --from=builder /helm-packages-v1alpha1-plugin.so /plugins/helm-packages/
 COPY --from=builder /resources-v1alpha1-plugin.so /plugins/resources/
+COPY --from=builder /operators-v1alpha1-plugin.so /plugins/operators/
 
 EXPOSE 50051
 USER 1001

@@ -1,0 +1,123 @@
+// Copyright 2021-2022 the Kubeapps contributors.
+// SPDX-License-Identifier: Apache-2.0
+
+syntax = "proto3";
+package kubeappsapis.plugins.operators.packages.v1alpha1;
+option go_package = "github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/plugins/operators/packages/v1alpha1";
+
+import "google/api/annotations.proto";
+import "google/protobuf/wrappers.proto";
+import "kubeappsapis/core/packages/v1alpha1/packages.proto";
+import "kubeappsapis/core/packages/v1alpha1/repositories.proto";
+import "kubeappsapis/core/plugins/v1alpha1/plugins.proto";
+import "protoc-gen-openapiv2/options/annotations.proto";
+
+service OperatorsPackagesService {
+  // GetAvailablePackageSummaries returns the available packages managed by the 'operators' plugin
+  rpc GetAvailablePackageSummaries(kubeappsapis.core.packages.v1alpha1.GetAvailablePackageSummariesRequest) returns (kubeappsapis.core.packages.v1alpha1.GetAvailablePackageSummariesResponse) {
+    option (google.api.http) = {
+      get: "/plugins/operators/packages/v1alpha1/availablepackages"
+    };
+  };
+
+  // GetAvailablePackageDetail returns the package metadata managed by the 'operators' plugin
+  rpc GetAvailablePackageDetail(kubeappsapis.core.packages.v1alpha1.GetAvailablePackageDetailRequest) returns (kubeappsapis.core.packages.v1alpha1.GetAvailablePackageDetailResponse) {
+    option (google.api.http) = {
+      get: "/plugins/operators/packages/v1alpha1/availablepackages/c/{available_package_ref.context.cluster}/ns/{available_package_ref.context.namespace}/{available_package_ref.identifier=**}"
+    };
+  };
+
+  // GetAvailablePackageVersions returns the package versions managed by the 'operators' plugin
+  rpc GetAvailablePackageVersions(kubeappsapis.core.packages.v1alpha1.GetAvailablePackageVersionsRequest) returns (kubeappsapis.core.packages.v1alpha1.GetAvailablePackageVersionsResponse) {
+    option (google.api.http) = {
+      get: "/plugins/operators/packages/v1alpha1/availablepackages/c/{available_package_ref.context.cluster}/ns/{available_package_ref.context.namespace}/{available_package_ref.identifier=**}/versions"
+    };
+  }
+
+  // GetInstalledPackageSummaries returns the installed packages managed by the 'operators' plugin
+  rpc GetInstalledPackageSummaries(kubeappsapis.core.packages.v1alpha1.GetInstalledPackageSummariesRequest) returns (kubeappsapis.core.packages.v1alpha1.GetInstalledPackageSummariesResponse) {
+    option (google.api.http) = {
+      get: "/plugins/operators/packages/v1alpha1/installedpackages"
+    };
+  }
+
+  // GetInstalledPackageDetail returns the requested installed package managed by the 'operators' plugin
+  rpc GetInstalledPackageDetail(kubeappsapis.core.packages.v1alpha1.GetInstalledPackageDetailRequest) returns (kubeappsapis.core.packages.v1alpha1.GetInstalledPackageDetailResponse) {
+    option (google.api.http) = {
+      get: "/plugins/operators/packages/v1alpha1/installedpackages/c/{installed_package_ref.context.cluster}/ns/{installed_package_ref.context.namespace}/{installed_package_ref.identifier}"
+    };
+  }
+
+  // CreateInstalledPackage creates an installed package based on the request.
+  rpc CreateInstalledPackage(kubeappsapis.core.packages.v1alpha1.CreateInstalledPackageRequest) returns (kubeappsapis.core.packages.v1alpha1.CreateInstalledPackageResponse) {
+    option (google.api.http) = {
+      post: "/plugins/operators/packages/v1alpha1/installedpackages"
+      body: "*"
+    };
+  }
+
+  // UpdateInstalledPackage updates an installed package based on the request.
+  rpc UpdateInstalledPackage(kubeappsapis.core.packages.v1alpha1.UpdateInstalledPackageRequest) returns (kubeappsapis.core.packages.v1alpha1.UpdateInstalledPackageResponse) {
+    option (google.api.http) = {
+      put: "/plugins/operators/packages/v1alpha1/installedpackages/c/{installed_package_ref.context.cluster}/ns/{installed_package_ref.context.namespace}/{installed_package_ref.identifier}"
+      body: "*"
+    };
+  }
+
+  // DeleteInstalledPackage deletes an installed package based on the request.
+  rpc DeleteInstalledPackage(kubeappsapis.core.packages.v1alpha1.DeleteInstalledPackageRequest) returns (kubeappsapis.core.packages.v1alpha1.DeleteInstalledPackageResponse) {
+    option (google.api.http) = {
+      delete: "/plugins/operators/packages/v1alpha1/installedpackages/c/{installed_package_ref.context.cluster}/ns/{installed_package_ref.context.namespace}/{installed_package_ref.identifier}"
+    };
+  }
+
+  // GetInstalledPackageResourceRefs returns the references for the Kubernetes
+  // resources created by an installed package.
+  rpc GetInstalledPackageResourceRefs(kubeappsapis.core.packages.v1alpha1.GetInstalledPackageResourceRefsRequest) returns (kubeappsapis.core.packages.v1alpha1.GetInstalledPackageResourceRefsResponse) {
+    option (google.api.http) = {
+      get: "/plugins/operators/packages/v1alpha1/installedpackages/c/{installed_package_ref.context.cluster}/ns/{installed_package_ref.context.namespace}/{installed_package_ref.identifier}/resourcerefs"
+    };
+  }
+}
+
+service OperatorsRepositoriesService {
+  // AddPackageRepository add an existing package repository to the set of ones already managed by the
+  // 'operators' plugin
+  rpc AddPackageRepository(kubeappsapis.core.packages.v1alpha1.AddPackageRepositoryRequest) returns (kubeappsapis.core.packages.v1alpha1.AddPackageRepositoryResponse) {
+    option (google.api.http) = {
+      post: "/plugins/operators/packages/v1alpha1/repositories"
+      body: "*"
+    };
+   }
+
+  rpc GetPackageRepositoryDetail(kubeappsapis.core.packages.v1alpha1.GetPackageRepositoryDetailRequest) returns (kubeappsapis.core.packages.v1alpha1.GetPackageRepositoryDetailResponse) {
+    option (google.api.http) = {
+      get: "/plugins/operators/packages/v1alpha1/repositories/c/{package_repo_ref.context.cluster}/ns/{package_repo_ref.context.namespace}/{package_repo_ref.identifier=**}"
+    };
+  }
+
+  rpc GetPackageRepositorySummaries(kubeappsapis.core.packages.v1alpha1.GetPackageRepositorySummariesRequest) returns (kubeappsapis.core.packages.v1alpha1.GetPackageRepositorySummariesResponse) {
+    option (google.api.http) = {
+      get: "/plugins/operators/packages/v1alpha1/repositories"
+    };
+  }
+
+  rpc UpdatePackageRepository(kubeappsapis.core.packages.v1alpha1.UpdatePackageRepositoryRequest) returns (kubeappsapis.core.packages.v1alpha1.UpdatePackageRepositoryResponse) {
+    option (google.api.http) = {
+      put: "/plugins/operators/packages/v1alpha1/repositories/c/{package_repo_ref.context.cluster}/ns/{package_repo_ref.context.namespace}/{package_repo_ref.identifier=**}"
+      body: "*"
+     };
+  }
+
+  rpc DeletePackageRepository(kubeappsapis.core.packages.v1alpha1.DeletePackageRepositoryRequest) returns (kubeappsapis.core.packages.v1alpha1.DeletePackageRepositoryResponse) {
+    option (google.api.http) = {
+      delete: "/plugins/operators/packages/v1alpha1/repositories/c/{package_repo_ref.context.cluster}/ns/{package_repo_ref.context.namespace}/{package_repo_ref.identifier=**}"
+    };
+  }
+
+  rpc GetPackageRepositoryPermissions(kubeappsapis.core.packages.v1alpha1.GetPackageRepositoryPermissionsRequest) returns (kubeappsapis.core.packages.v1alpha1.GetPackageRepositoryPermissionsResponse) {
+    option (google.api.http) = {
+      get: "/plugins/operators/packages/v1alpha1/repositories/c/{context.cluster}/permissions"
+    };
+  }
+}

@@ -70,6 +70,12 @@ deploy-kapp-controller-additional:
 deploy-flux-controllers:
 	kubectl --kubeconfig=${CLUSTER_CONFIG} apply -f https://github.com/fluxcd/flux2/releases/download/v0.37.0/install.yaml
 
+# Add Operator Lifecycle Manager used for testing the kubeapps-apis integration.
+deploy-olm:
+	curl -L https://github.com/operator-framework/operator-lifecycle-manager/releases/download/v0.22.0/install.sh -o install.sh
+	chmod +x install.sh
+	./install.sh v0.22.0
+
 reset-dev:
 	helm --kubeconfig=${CLUSTER_CONFIG} -n kubeapps delete kubeapps  || true
 	helm --kubeconfig=${CLUSTER_CONFIG} -n dex delete dex  || true
