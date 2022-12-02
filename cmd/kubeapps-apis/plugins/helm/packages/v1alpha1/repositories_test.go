@@ -183,11 +183,7 @@ var repo7 = &appRepov1alpha1.AppRepository{
 			Header: &appRepov1alpha1.AppRepositoryAuthHeader{
 				SecretKeyRef: apiv1.SecretKeySelector{LocalObjectReference: apiv1.LocalObjectReference{Name: helm.SecretNameForRepo("repo-7")}, Key: "authorizationHeader"},
 			},
-			CustomCA: &appRepov1alpha1.AppRepositoryCustomCA{
-				SecretKeyRef: apiv1.SecretKeySelector{LocalObjectReference: apiv1.LocalObjectReference{Name: helm.SecretNameForRepo("repo-7")}, Key: "ca.crt"},
-			},
 		},
-		DockerRegistrySecrets: []string{imagesPullSecretName("repo-7")},
 	},
 }
 
@@ -410,8 +406,8 @@ func TestAddPackageRepository(t *testing.T) {
 			request:                   addRepoReqBearerToken("the-token"),
 			expectedResponse:          addRepoExpectedResp,
 			expectedRepo:              addRepoAuthHeaderWithSecretRef("foo", "apprepo-bar"),
-			expectedAuthCreatedSecret: setSecretAnnotations(setSecretOwnerRef("bar", newAuthTokenSecret("apprepo-bar", "foo", "Bearer the-token"))),
-			expectedGlobalSecret:      newAuthTokenSecret("foo-apprepo-bar", kubeappsNamespace, "Bearer the-token"),
+			expectedAuthCreatedSecret: setSecretAnnotations(setSecretOwnerRef("bar", newBearerAuthSecret("apprepo-bar", "foo", "the-token"))),
+			expectedGlobalSecret:      newBearerAuthSecret("foo-apprepo-bar", kubeappsNamespace, "the-token"),
 			statusCode:                codes.OK,
 		},
 		{
@@ -423,10 +419,10 @@ func TestAddPackageRepository(t *testing.T) {
 			name:                 "package repository bearer token with secret (user managed secrets)",
 			request:              addRepoReqAuthWithSecret(corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_BEARER, "foo", "secret-bearer"),
 			userManagedSecrets:   true,
-			existingAuthSecret:   newAuthTokenSecret("secret-bearer", "foo", "Bearer the-token"),
+			existingAuthSecret:   newBearerAuthSecret("secret-bearer", "foo", "the-token"),
 			expectedResponse:     addRepoExpectedResp,
 			expectedRepo:         addRepoAuthHeaderWithSecretRef("foo", "secret-bearer"),
-			expectedGlobalSecret: newAuthTokenSecret("foo-apprepo-bar", kubeappsNamespace, "Bearer the-token"),
+			expectedGlobalSecret: newBearerAuthSecret("foo-apprepo-bar", kubeappsNamespace, "the-token"),
 			statusCode:           codes.OK,
 		},
 		// CUSTOM AUTH
@@ -435,8 +431,8 @@ func TestAddPackageRepository(t *testing.T) {
 			request:                   addRepoReqCustomAuth,
 			expectedResponse:          addRepoExpectedResp,
 			expectedRepo:              addRepoAuthHeaderWithSecretRef("foo", "apprepo-bar"),
-			expectedAuthCreatedSecret: setSecretAnnotations(setSecretOwnerRef("bar", newAuthTokenSecret("apprepo-bar", "foo", "foobarzot"))),
-			expectedGlobalSecret:      newAuthTokenSecret("foo-apprepo-bar", kubeappsNamespace, "foobarzot"),
+			expectedAuthCreatedSecret: setSecretAnnotations(setSecretOwnerRef("bar", newHeaderAuthSecret("apprepo-bar", "foo", "foobarzot"))),
+			expectedGlobalSecret:      newHeaderAuthSecret("foo-apprepo-bar", kubeappsNamespace, "foobarzot"),
 			statusCode:                codes.OK,
 		},
 		{
@@ -630,7 +626,7 @@ func TestAddPackageRepository(t *testing.T) {
 			}),
 			expectedResponse:   addRepoExpectedResp,
 			userManagedSecrets: true,
-			existingAuthSecret: newAuthTokenSecret("secret-docker", "foo", ""),
+			existingAuthSecret: newHeaderAuthSecret("secret-docker", "foo", ""),
 			statusCode:         codes.InvalidArgument,
 		},
 		{
@@ -1327,8 +1323,8 @@ func TestUpdatePackageRepository(t *testing.T) {
 				return &repository
 			},
 			expectedRef:          defaultRef,
-			expectedAuthSecret:   setSecretAnnotations(setSecretOwnerRef("repo-1", newAuthTokenSecret("apprepo-repo-1", "ns-1", "Bearer foobarzot"))),
-			expectedGlobalSecret: newAuthTokenSecret("ns-1-apprepo-repo-1", kubeappsNamespace, "Bearer foobarzot"),
+			expectedAuthSecret:   setSecretAnnotations(setSecretOwnerRef("repo-1", newBearerAuthSecret("apprepo-repo-1", "ns-1", "foobarzot"))),
+			expectedGlobalSecret: newBearerAuthSecret("ns-1-apprepo-repo-1", kubeappsNamespace, "foobarzot"),
 			expectedStatusCode:   codes.OK,
 		},
 		{
@@ -1345,7 +1341,7 @@ func TestUpdatePackageRepository(t *testing.T) {
 				return request
 			},
 			userManagedSecrets: true,
-			existingAuthSecret: newAuthTokenSecret("my-own-secret", "ns-1", "Bearer foobarzot"),
+			existingAuthSecret: newBearerAuthSecret("my-own-secret", "ns-1", "foobarzot"),
 			expectedRepoCustomizer: func(repository appRepov1alpha1.AppRepository) *appRepov1alpha1.AppRepository {
 				repository.ResourceVersion = "2"
 				repository.Spec.Auth = appRepov1alpha1.AppRepositoryAuth{
@@ -1361,12 +1357,12 @@ func TestUpdatePackageRepository(t *testing.T) {
 				return &repository
 			},
 			expectedRef:          defaultRef,
-			expectedGlobalSecret: newAuthTokenSecret("ns-1-apprepo-repo-1", kubeappsNamespace, "Bearer foobarzot"),
+			expectedGlobalSecret: newBearerAuthSecret("ns-1-apprepo-repo-1", kubeappsNamespace, "foobarzot"),
 			expectedStatusCode:   codes.OK,
 		},
 		{
 			name:               "update removing auth",
-			existingAuthSecret: newAuthTokenSecret(helm.SecretNameForRepo("repo-3"), globalPackagingNamespace, "token-value"),
+			existingAuthSecret: newBearerAuthSecret(helm.SecretNameForRepo("repo-3"), globalPackagingNamespace, "token-value"),
 			requestCustomizer: func(request *corev1.UpdatePackageRepositoryRequest) *corev1.UpdatePackageRepositoryRequest {
 				request.PackageRepoRef = &corev1.PackageRepositoryReference{
 					Plugin:     &pluginDetail,
@@ -1553,6 +1549,90 @@ func TestUpdatePackageRepository(t *testing.T) {
 				Context:    &corev1.Context{Namespace: "ns-5", Cluster: KubeappsCluster},
 				Identifier: "repo-5",
 			},
+		},
+		{
+			name: "[kubeapps managed secrets] update repo auth basic to token",
+			existingAuthSecret: setSecretAnnotations(setSecretOwnerRef("repo-7",
+				newBasicAuthSecret("apprepo-repo-7", "ns-7", "foo", "bar"))),
+
+			requestCustomizer: func(request *corev1.UpdatePackageRepositoryRequest) *corev1.UpdatePackageRepositoryRequest {
+				request.PackageRepoRef = &corev1.PackageRepositoryReference{
+					Plugin:     &pluginDetail,
+					Context:    &corev1.Context{Namespace: "ns-7", Cluster: KubeappsCluster},
+					Identifier: "repo-7",
+				}
+				request.Url = repo7.Spec.URL
+				request.Auth = &corev1.PackageRepositoryAuth{
+					Type: corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_BEARER,
+					PackageRepoAuthOneOf: &corev1.PackageRepositoryAuth_Header{
+						Header: "zot",
+					},
+				}
+				return request
+			},
+
+			expectedStatusCode: codes.OK,
+			expectedRepoCustomizer: func(repository appRepov1alpha1.AppRepository) *appRepov1alpha1.AppRepository {
+				repository.ResourceVersion = "2"
+				repository.Namespace = "ns-7"
+				repository.Name = "repo-7"
+				repository.Spec = repo7.Spec
+				return &repository
+			},
+			expectedRef: &corev1.PackageRepositoryReference{
+				Plugin:     &pluginDetail,
+				Context:    &corev1.Context{Namespace: "ns-7", Cluster: KubeappsCluster},
+				Identifier: "repo-7",
+			},
+			expectedAuthSecret: setSecretAnnotations(setSecretOwnerRef("repo-7",
+				newBearerAuthSecret("apprepo-repo-7", "ns-7", "zot"))),
+			expectedGlobalSecret: newBearerAuthSecret("ns-7-apprepo-repo-7", kubeappsNamespace, "zot"),
+		},
+		{
+			name: "[kubeapps managed secrets] update repo auth basic to docker",
+			existingAuthSecret: setSecretAnnotations(setSecretOwnerRef("repo-7",
+				newBasicAuthSecret("apprepo-repo-7", "ns-7", "foo", "bar"))),
+
+			requestCustomizer: func(request *corev1.UpdatePackageRepositoryRequest) *corev1.UpdatePackageRepositoryRequest {
+				request.PackageRepoRef = &corev1.PackageRepositoryReference{
+					Plugin:     &pluginDetail,
+					Context:    &corev1.Context{Namespace: "ns-7", Cluster: KubeappsCluster},
+					Identifier: "repo-7",
+				}
+				request.Url = repo7.Spec.URL
+				request.Auth = &corev1.PackageRepositoryAuth{
+					Type: corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_DOCKER_CONFIG_JSON,
+					PackageRepoAuthOneOf: &corev1.PackageRepositoryAuth_DockerCreds{
+						DockerCreds: &corev1.DockerCredentials{
+							Server:   "sample.com",
+							Username: "foo",
+							Password: "bar",
+							Email:    "user@sample.com",
+						},
+					},
+				}
+				return request
+			},
+
+			expectedStatusCode: codes.OK,
+			expectedRepoCustomizer: func(repository appRepov1alpha1.AppRepository) *appRepov1alpha1.AppRepository {
+				repository.ResourceVersion = "2"
+				repository.Namespace = "ns-7"
+				repository.Name = "repo-7"
+				repository.Spec = repo7.Spec
+				repository.Spec.Auth.Header.SecretKeyRef.Key = DockerConfigJsonKey
+				return &repository
+			},
+			expectedRef: &corev1.PackageRepositoryReference{
+				Plugin:     &pluginDetail,
+				Context:    &corev1.Context{Namespace: "ns-7", Cluster: KubeappsCluster},
+				Identifier: "repo-7",
+			},
+			expectedAuthSecret: setSecretAnnotations(setSecretOwnerRef("repo-7",
+				newAuthDockerSecret("apprepo-repo-7", "ns-7",
+					dockerAuthJson("sample.com", "foo", "bar", "user@sample.com", "Zm9vOmJhcg==")))),
+			expectedGlobalSecret: newAuthDockerSecret("ns-7-apprepo-repo-7", kubeappsNamespace,
+				dockerAuthJson("sample.com", "foo", "bar", "user@sample.com", "Zm9vOmJhcg==")),
 		},
 		{
 			name: "[issue 5746] secret updates ignored if not all credentials are provided - auth updates",

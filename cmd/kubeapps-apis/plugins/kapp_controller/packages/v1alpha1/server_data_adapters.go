@@ -915,28 +915,6 @@ func (s *Server) validatePackageRepositoryAuth(ctx context.Context, cluster, nam
 		}
 	}
 
-	// validate the type is not changed
-	if pkgRepository != nil && pkgSecret != nil && isPluginManaged(pkgRepository, pkgSecret) {
-		switch auth.Type {
-		case corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_BASIC_AUTH:
-			if !isBasicAuth(pkgSecret) {
-				return status.Errorf(codes.InvalidArgument, "auth type cannot be changed")
-			}
-		case corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_SSH:
-			if !isSshAuth(pkgSecret) {
-				return status.Errorf(codes.InvalidArgument, "auth type cannot be changed")
-			}
-		case corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_DOCKER_CONFIG_JSON:
-			if !isDockerAuth(pkgSecret) {
-				return status.Errorf(codes.InvalidArgument, "auth type cannot be changed")
-			}
-		case corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_BEARER:
-			if !isBearerAuth(pkgSecret) {
-				return status.Errorf(codes.InvalidArgument, "auth type cannot be changed")
-			}
-		}
-	}
-
 	// validate referenced secret matches type
 	if auth.GetSecretRef() != nil {
 		name := auth.GetSecretRef().Name
@@ -974,14 +952,14 @@ func (s *Server) validatePackageRepositoryAuth(ctx context.Context, cluster, nam
 
 	// validate auth data
 	//    ensures the expected credential struct is provided
-	//    for new auth, credentials can't have Redacted content
+	//    for new auth or new auth type, credentials can't have Redacted content
 	switch auth.Type {
 	case corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_BASIC_AUTH:
 		up := auth.GetUsernamePassword()
 		if up == nil || up.Username == "" || up.Password == "" {
 			return status.Errorf(codes.InvalidArgument, "missing basic auth credentials")
 		}
-		if pkgSecret == nil {
+		if pkgSecret == nil || !isBasicAuth(pkgSecret) {
 			if up.Username == Redacted || up.Password == Redacted {
 				return status.Errorf(codes.InvalidArgument, "invalid auth, unexpected REDACTED content")
 			}
@@ -991,7 +969,7 @@ func (s *Server) validatePackageRepositoryAuth(ctx context.Context, cluster, nam
 		if ssh == nil || ssh.PrivateKey == "" {
 			return status.Errorf(codes.InvalidArgument, "missing SSH auth credentials")
 		}
-		if pkgSecret == nil {
+		if pkgSecret == nil || !isSshAuth(pkgSecret) {
 			if ssh.PrivateKey == Redacted || ssh.KnownHosts == Redacted {
 				return status.Errorf(codes.InvalidArgument, "invalid auth, unexpected REDACTED content")
 			}
@@ -1001,7 +979,7 @@ func (s *Server) validatePackageRepositoryAuth(ctx context.Context, cluster, nam
 		if docker == nil || docker.Username == "" || docker.Password == "" || docker.Server == "" {
 			return status.Errorf(codes.InvalidArgument, "missing Docker Config auth credentials")
 		}
-		if pkgSecret == nil {
+		if pkgSecret == nil || !isDockerAuth(pkgSecret) {
 			if docker.Username == Redacted || docker.Password == Redacted || docker.Server == Redacted || docker.Email == Redacted {
 				return status.Errorf(codes.InvalidArgument, "invalid auth, unexpected REDACTED content")
 			}
@@ -1011,7 +989,7 @@ func (s *Server) validatePackageRepositoryAuth(ctx context.Context, cluster, nam
 		if token == "" {
 			return status.Errorf(codes.InvalidArgument, "missing Token auth credentials")
 		}
-		if pkgSecret == nil {
+		if pkgSecret == nil || !isBearerAuth(pkgSecret) {
 			if token == Redacted {
 				return status.Errorf(codes.InvalidArgument, "invalid auth, unexpected REDACTED content")
 			}
@@ -1059,11 +1037,9 @@ func (s *Server) buildPkgRepositorySecretCreate(namespace, name string, auth *co
 
 	case corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_BEARER:
 		pkgSecret.Type = k8scorev1.SecretTypeOpaque
-		if token := auth.GetHeader(); token != "" {
-			pkgSecret.StringData[BearerAuthToken] = "Bearer " + strings.TrimPrefix(token, "Bearer ")
-		} else {
-			return nil, status.Errorf(codes.InvalidArgument, "Bearer token is missing")
-		}
+
+		token := auth.GetHeader()
+		pkgSecret.StringData[BearerAuthToken] = token
 	}
 
 	return pkgSecret, nil
@@ -1098,8 +1074,10 @@ func (s *Server) buildPkgRepositorySecretUpdate(pkgSecret *k8scorev1.Secret, aut
 			if ssh.PrivateKey == Redacted && ssh.KnownHosts == Redacted {
 				return false, nil
 			}
-			if ssh.KnownHosts != Redacted {
+			if ssh.PrivateKey != Redacted {
 				pkgSecret.StringData[k8scorev1.SSHAuthPrivateKey] = ssh.PrivateKey
+			}
+			if ssh.KnownHosts != Redacted {
 				pkgSecret.StringData[SSHAuthKnownHosts] = ssh.KnownHosts
 			}
 		} else {
@@ -1154,12 +1132,12 @@ func (s *Server) buildPkgRepositorySecretUpdate(pkgSecret *k8scorev1.Secret, aut
 			if token == Redacted {
 				return false, nil
 			} else {
-				pkgSecret.StringData[BearerAuthToken] = "Bearer " + strings.TrimPrefix(token, "Bearer ")
+				pkgSecret.StringData[BearerAuthToken] = token
 			}
 		} else {
 			pkgSecret.Type = k8scorev1.SecretTypeOpaque
 			pkgSecret.Data = nil
-			pkgSecret.StringData[BearerAuthToken] = "Bearer " + strings.TrimPrefix(token, "Bearer ")
+			pkgSecret.StringData[BearerAuthToken] = token
 		}
 	}
 

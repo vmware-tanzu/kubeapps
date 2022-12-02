@@ -3531,13 +3531,7 @@ var (
 		Auth:           basic_auth("john", "doe"),
 	}
 
-	update_repo_req_24 = &corev1.UpdatePackageRepositoryRequest{
-		PackageRepoRef: repoRefInReq("repo-1", "namespace-1"),
-		Url:            "http://url.com",
-		Auth:           basic_auth("john", "doe"),
-	}
-
-	update_repo_req_25 = func(ca []byte) *corev1.UpdatePackageRepositoryRequest {
+	update_repo_req_24 = func(ca []byte) *corev1.UpdatePackageRepositoryRequest {
 		return &corev1.UpdatePackageRepositoryRequest{
 			PackageRepoRef: repoRefInReq("repo-1", "namespace-1"),
 			Url:            "http://url.com",

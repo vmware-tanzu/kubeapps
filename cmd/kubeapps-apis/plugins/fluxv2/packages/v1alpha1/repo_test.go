@@ -2098,7 +2098,7 @@ func TestUpdatePackageRepository(t *testing.T) {
 			repoIndex:          testYaml("valid-index.yaml"),
 			repoName:           "repo-1",
 			repoNamespace:      "namespace-1",
-			request:            update_repo_req_25(ca),
+			request:            update_repo_req_24(ca),
 			expectedStatusCode: codes.OK,
 			expectedResponse:   update_repo_resp_1,
 			expectedDetail:     update_repo_detail_20,

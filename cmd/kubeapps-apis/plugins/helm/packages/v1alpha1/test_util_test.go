@@ -73,15 +73,17 @@ func lessPackageRepositorySummaryFunc(p1, p2 *corev1.PackageRepositorySummary) b
 	return p1.Name < p2.Name
 }
 
-// ref: https://kubernetes.io/docs/concepts/configuration/secret/#basic-authentication-secret
 func newBasicAuthSecret(name, namespace, username, password string) *apiv1.Secret {
 	authString := fmt.Sprintf("%s:%s", username, password)
 	authHeader := fmt.Sprintf("Basic %s", base64.StdEncoding.EncodeToString([]byte(authString)))
-	return newAuthTokenSecret(name, namespace, authHeader)
+	return newHeaderAuthSecret(name, namespace, authHeader)
 }
 
-// ref: https://kubernetes.io/docs/concepts/configuration/secret/#basic-authentication-secret
-func newAuthTokenSecret(name, namespace, token string) *apiv1.Secret {
+func newBearerAuthSecret(name, namespace, token string) *apiv1.Secret {
+	return newHeaderAuthSecret(name, namespace, "Bearer "+token)
+}
+
+func newHeaderAuthSecret(name, namespace, header string) *apiv1.Secret {
 	return &apiv1.Secret{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      name,
@@ -89,7 +91,7 @@ func newAuthTokenSecret(name, namespace, token string) *apiv1.Secret {
 		},
 		Type: apiv1.SecretTypeOpaque,
 		Data: map[string][]byte{
-			"authorizationHeader": []byte(token),
+			"authorizationHeader": []byte(header),
 		},
 	}
 }
