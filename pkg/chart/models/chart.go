@@ -77,13 +77,13 @@ type ChartVersion struct {
 
 // ChartFiles holds the README and default values for a given chart version
 type ChartFiles struct {
-	ID                  string `bson:"file_id"`
-	Readme              string
-	DefaultValues       string
-	CustomDefaultValues map[string]string
-	Schema              string
-	Repo                *Repo
-	Digest              string
+	ID                      string `bson:"file_id"`
+	Readme                  string
+	DefaultValues           string
+	AdditionalDefaultValues map[string]string
+	Schema                  string
+	Repo                    *Repo
+	Digest                  string
 }
 
 // Allow to convert ChartFiles to a sql JSON
@@ -94,8 +94,8 @@ func (a ChartFiles) Value() (driver.Value, error) {
 // some constant strings used as keys in maps in several modules
 const (
 	ReadmeKey                  = "readme"
-	ValuesKey                  = "values"
-	AdditionalDefaultValuesKey = "additionalDefaultValues"
+	DefaultValuesKey           = "values"
+	AdditionalDefaultValuesKey = "additional-values"
 	SchemaKey                  = "schema"
 	ChartYamlKey               = "chartYaml"
 )

@@ -531,9 +531,9 @@ func (r *fakeRepo) Charts(shallow bool) ([]models.Chart, error) {
 
 func (r *fakeRepo) FetchFiles(name string, cv models.ChartVersion, userAgent string, passCredentials bool) (map[string]string, error) {
 	return map[string]string{
-		models.ValuesKey: r.chartFiles.DefaultValues,
-		models.ReadmeKey: r.chartFiles.Readme,
-		models.SchemaKey: r.chartFiles.Schema,
+		models.DefaultValuesKey: r.chartFiles.DefaultValues,
+		models.ReadmeKey:        r.chartFiles.Readme,
+		models.SchemaKey:        r.chartFiles.Schema,
 	}, nil
 }
 
@@ -1077,103 +1077,26 @@ version: 1.0.0
 			charts, err := chartsRepo.Charts(tt.shallow)
 			assert.NoError(t, err)
 			if !cmp.Equal(charts, tt.expected) {
-				t.Errorf("Unexpected result %v", cmp.Diff(charts, tt.expected))
+				t.Errorf("Unexpected result %v", cmp.Diff(tt.expected, charts))
 			}
 		})
 	}
 
 	t.Run("FetchFiles - It returns the stored files", func(t *testing.T) {
 		files := map[string]string{
-			models.ValuesKey: "values text",
-			models.ReadmeKey: "readme text",
-			models.SchemaKey: "schema text",
+			models.DefaultValuesKey: "values text",
+			models.ReadmeKey:        "readme text",
+			models.SchemaKey:        "schema text",
 		}
 		repo := OCIRegistry{}
 		result, err := repo.FetchFiles("", models.ChartVersion{
-			Values: files["values"],
-			Readme: files["readme"],
-			Schema: files["schema"],
+			Values: files[models.DefaultValuesKey],
+			Readme: files[models.ReadmeKey],
+			Schema: files[models.SchemaKey],
 		}, "my-user-agent", false)
 		assert.NoError(t, err)
 		assert.Equal(t, result, files, "expected files")
 	})
-}
-
-func Test_extractFilesFromBuffer(t *testing.T) {
-	tests := []struct {
-		description string
-		files       []tartest.TarballFile
-		expected    *artifactFiles
-	}{
-		{
-			"It should extract the important files",
-			[]tartest.TarballFile{
-				{Name: "Chart.yaml", Body: "chart yaml"},
-				{Name: "README.md", Body: "chart readme"},
-				{Name: "values.yaml", Body: "chart values"},
-				{Name: "values.schema.json", Body: "chart schema"},
-			},
-			&artifactFiles{
-				Metadata: "chart yaml",
-				Readme:   "chart readme",
-				Values:   "chart values",
-				Schema:   "chart schema",
-			},
-		},
-		{
-			"It should ignore letter case",
-			[]tartest.TarballFile{
-				{Name: "Readme.md", Body: "chart readme"},
-			},
-			&artifactFiles{
-				Readme: "chart readme",
-			},
-		},
-		{
-			"It should ignore other files",
-			[]tartest.TarballFile{
-				{Name: "README.md", Body: "chart readme"},
-				{Name: "other.yaml", Body: "other content"},
-			},
-			&artifactFiles{
-				Readme: "chart readme",
-			},
-		},
-		{
-			"It should handle large files",
-			[]tartest.TarballFile{
-				// 1MB file
-				{Name: "README.md", Body: string(make([]byte, 1048577))},
-			},
-			&artifactFiles{
-				Readme: string(make([]byte, 1048577)),
-			},
-		},
-		{
-			"It should ignore nested files",
-			[]tartest.TarballFile{
-				{Name: "other/README.md", Body: "bad"},
-				{Name: "README.md", Body: "good"},
-			},
-			&artifactFiles{
-				Readme: "good",
-			},
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.description, func(t *testing.T) {
-			w := httptest.NewRecorder()
-			gzw := gzip.NewWriter(w)
-			tartest.CreateTestTarball(gzw, tt.files)
-			gzw.Flush()
-
-			r, err := extractFilesFromBuffer(w.Body)
-			assert.NoError(t, err)
-			if !cmp.Equal(r, tt.expected) {
-				t.Errorf("Unexpected result %v", cmp.Diff(r, tt.expected))
-			}
-		})
-	}
 }
 
 func Test_filterCharts(t *testing.T) {

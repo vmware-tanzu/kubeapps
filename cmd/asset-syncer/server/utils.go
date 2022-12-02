@@ -4,9 +4,7 @@
 package server
 
 import (
-	"archive/tar"
 	"bytes"
-	"compress/gzip"
 	"crypto/sha256"
 	"encoding/json"
 	"fmt"
@@ -396,70 +394,6 @@ func (r *OCIRegistry) Repo() *models.RepoInternal {
 	return r.RepoInternal
 }
 
-type artifactFiles struct {
-	Metadata string
-	Readme   string
-	Values   string
-	Schema   string
-}
-
-func extractFilesFromBuffer(buf *bytes.Buffer) (*artifactFiles, error) {
-	result := &artifactFiles{}
-	gzf, err := gzip.NewReader(buf)
-	if err != nil {
-		return nil, err
-	}
-	tarReader := tar.NewReader(gzf)
-	importantFiles := map[string]bool{
-		"chart.yaml":         true,
-		"readme.md":          true,
-		"values.yaml":        true,
-		"values.schema.json": true,
-	}
-	for {
-		header, err := tarReader.Next()
-		if err == io.EOF {
-			break
-		}
-		if err != nil {
-			return nil, err
-		}
-
-		compressedFileName := header.Name
-		if len(strings.Split(compressedFileName, "/")) > 2 {
-			// We are only interested on files within the root directory
-			continue
-		}
-
-		switch header.Typeflag {
-		case tar.TypeDir:
-			// Ignore directories
-		case tar.TypeReg:
-			filename := strings.ToLower(path.Base(compressedFileName))
-			if importantFiles[filename] {
-				// Read content
-				data, err := io.ReadAll(tarReader)
-				if err != nil {
-					return nil, err
-				}
-				switch filename {
-				case "chart.yaml":
-					result.Metadata = string(data)
-				case "readme.md":
-					result.Readme = string(data)
-				case "values.yaml":
-					result.Values = string(data)
-				case "values.schema.json":
-					result.Schema = string(data)
-				}
-			}
-		default:
-			// Unknown type, ignore
-		}
-	}
-	return result, nil
-}
-
 func pullAndExtract(repoURL *url.URL, appName, tag string, puller helm.ChartPuller, r *OCIRegistry) (*models.Chart, error) {
 	ref := path.Join(repoURL.Host, repoURL.Path, fmt.Sprintf("%s:%s", appName, tag))
 
@@ -468,13 +402,15 @@ func pullAndExtract(repoURL *url.URL, appName, tag string, puller helm.ChartPull
 		return nil, err
 	}
 
-	// Extract
-	files, err := extractFilesFromBuffer(chartBuffer)
+	// OCI tarballs do not have a root directory with files under that, but rather
+	// have the files at the top-level.
+	tarballRootDir := ""
+	files, err := tarutil.FetchChartDetailFromTarball(chartBuffer, tarballRootDir)
 	if err != nil {
 		return nil, err
 	}
 	chartMetadata := chart.Metadata{}
-	err = yaml.Unmarshal([]byte(files.Metadata), &chartMetadata)
+	err = yaml.Unmarshal([]byte(files[models.ChartYamlKey]), &chartMetadata)
 	if err != nil {
 		return nil, err
 	}
@@ -485,9 +421,9 @@ func pullAndExtract(repoURL *url.URL, appName, tag string, puller helm.ChartPull
 		AppVersion: chartMetadata.AppVersion,
 		Digest:     digest,
 		URLs:       chartMetadata.Sources,
-		Readme:     files.Readme,
-		Values:     files.Values,
-		Schema:     files.Schema,
+		Readme:     files[models.ReadmeKey],
+		Values:     files[models.DefaultValuesKey],
+		Schema:     files[models.SchemaKey],
 	}
 
 	maintainers := []chart.Maintainer{}
@@ -656,9 +592,9 @@ func (r *OCIRegistry) Charts(fetchLatestOnly bool) ([]models.Chart, error) {
 // FetchFiles do nothing for the OCI case since they have been already fetched in the Charts() method
 func (r *OCIRegistry) FetchFiles(name string, cv models.ChartVersion, userAgent string, passCredentials bool) (map[string]string, error) {
 	return map[string]string{
-		models.ValuesKey: cv.Values,
-		models.ReadmeKey: cv.Readme,
-		models.SchemaKey: cv.Schema,
+		models.DefaultValuesKey: cv.Values,
+		models.ReadmeKey:        cv.Readme,
+		models.SchemaKey:        cv.Schema,
 	}, nil
 }
 
@@ -888,7 +824,7 @@ func (f *fileImporter) fetchAndImportFiles(name string, repo Repo, cv models.Cha
 	} else {
 		log.Info("README.md not found, name=%s, version=%s", name, cv.Version)
 	}
-	if v, ok := files[models.ValuesKey]; ok {
+	if v, ok := files[models.DefaultValuesKey]; ok {
 		chartFiles.DefaultValues = v
 	} else {
 		log.Info("values.yaml not found, name=%s, version=%s", name, cv.Version)

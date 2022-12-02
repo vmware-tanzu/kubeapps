@@ -293,7 +293,7 @@ func availablePackageDetailFromChartDetail(chartID string, chartDetail map[strin
 		ShortDescription: chartMetadata.Description,
 		Categories:       categories,
 		Readme:           chartDetail[models.ReadmeKey],
-		DefaultValues:    chartDetail[models.ValuesKey],
+		DefaultValues:    chartDetail[models.DefaultValuesKey],
 		ValuesSchema:     chartDetail[models.SchemaKey],
 		SourceUrls:       chartMetadata.Sources,
 		Maintainers:      maintainers,

@@ -145,7 +145,7 @@ func Test_FetchChartDetailFromTarball(t *testing.T) {
 				{Name: path.Join(pkgName, "values.yaml"), Body: "foo: bar"},
 			},
 			want: map[string]string{
-				chart.ValuesKey: "foo: bar",
+				chart.DefaultValuesKey: "foo: bar",
 			},
 		},
 		{
@@ -157,14 +157,14 @@ func Test_FetchChartDetailFromTarball(t *testing.T) {
 				{Name: path.Join(pkgName, "Chart.yaml"), Body: "Name: wordpress"},
 			},
 			want: map[string]string{
-				chart.ChartYamlKey: "Name: wordpress",
-				chart.ReadmeKey:    "readme text",
-				chart.SchemaKey:    "{}",
-				chart.ValuesKey:    "foo: bar",
+				chart.ChartYamlKey:     "Name: wordpress",
+				chart.ReadmeKey:        "readme text",
+				chart.SchemaKey:        "{}",
+				chart.DefaultValuesKey: "foo: bar",
 			},
 		},
 		{
-			name: "package with custom default values",
+			name: "package with additional default values",
 			pkg: []test.TarballFile{
 				{Name: path.Join(pkgName, "values.yaml"), Body: "foo: bar"},
 				{Name: path.Join(pkgName, "README.md"), Body: "readme text"},
@@ -173,11 +173,11 @@ func Test_FetchChartDetailFromTarball(t *testing.T) {
 				{Name: path.Join(pkgName, "values-production.yaml"), Body: "foo: prod-bar"},
 			},
 			want: map[string]string{
-				chart.ChartYamlKey:  "Name: wordpress",
-				chart.ReadmeKey:     "readme text",
-				chart.SchemaKey:     "{}",
-				chart.ValuesKey:     "foo: bar",
-				"values-production": "foo: prod-bar",
+				chart.ChartYamlKey:     "Name: wordpress",
+				chart.ReadmeKey:        "readme text",
+				chart.SchemaKey:        "{}",
+				chart.DefaultValuesKey: "foo: bar",
+				"values-production":    "foo: prod-bar",
 			},
 		},
 	}
