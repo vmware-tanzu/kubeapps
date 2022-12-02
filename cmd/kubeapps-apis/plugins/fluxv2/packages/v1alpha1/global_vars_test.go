@@ -3518,6 +3518,36 @@ var (
 		Auth:           secret_1_auth,
 	}
 
+	update_repo_req_22 = &corev1.UpdatePackageRepositoryRequest{
+		PackageRepoRef: repoRefInReq("repo-1", "namespace-1"),
+		Url:            "http://url.com",
+		Auth:           basic_auth(redactedString, "doe"),
+	}
+
+	update_repo_req_23 = &corev1.UpdatePackageRepositoryRequest{
+		PackageRepoRef: repoRefInReq("repo-1", "namespace-1"),
+		Url:            "http://url.com",
+		TlsConfig:      tls_config_redacted,
+		Auth:           basic_auth("john", "doe"),
+	}
+
+	update_repo_req_24 = &corev1.UpdatePackageRepositoryRequest{
+		PackageRepoRef: repoRefInReq("repo-1", "namespace-1"),
+		Url:            "http://url.com",
+		Auth:           basic_auth("john", "doe"),
+	}
+
+	update_repo_req_25 = func(ca []byte) *corev1.UpdatePackageRepositoryRequest {
+		return &corev1.UpdatePackageRepositoryRequest{
+			PackageRepoRef: repoRefInReq("repo-1", "namespace-1"),
+			Url:            "http://url.com",
+			TlsConfig:      tls_config(ca),
+			Auth: &corev1.PackageRepositoryAuth{
+				Type: corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_UNSPECIFIED,
+			},
+		}
+	}
+
 	update_repo_resp_1 = &corev1.UpdatePackageRepositoryResponse{
 		PackageRepoRef: repoRef("repo-1", "namespace-1"),
 	}
@@ -3792,25 +3822,65 @@ var (
 		},
 	}
 
-	foo_bar_auth = &corev1.PackageRepositoryAuth{
-		Type: corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_BASIC_AUTH,
-		PackageRepoAuthOneOf: &corev1.PackageRepositoryAuth_UsernamePassword{
-			UsernamePassword: &corev1.UsernamePassword{
-				Username: "foo",
-				Password: "bar",
-			},
+	update_repo_detail_18 = &corev1.GetPackageRepositoryDetailResponse{
+		Detail: &corev1.PackageRepositoryDetail{
+			PackageRepoRef:  get_repo_detail_package_resp_ref,
+			Name:            "repo-1",
+			Description:     "",
+			NamespaceScoped: true,
+			Type:            "helm",
+			Url:             "http://url.com",
+			Interval:        "10m",
+			Auth:            foo_bar_auth_redacted,
+			Status:          repo_status_pending,
 		},
 	}
 
-	foo_bar_auth_redacted = &corev1.PackageRepositoryAuth{
-		Type: corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_BASIC_AUTH,
-		PackageRepoAuthOneOf: &corev1.PackageRepositoryAuth_UsernamePassword{
-			UsernamePassword: &corev1.UsernamePassword{
-				Username: redactedString,
-				Password: redactedString,
-			},
+	update_repo_detail_19 = &corev1.GetPackageRepositoryDetailResponse{
+		Detail: &corev1.PackageRepositoryDetail{
+			PackageRepoRef:  get_repo_detail_package_resp_ref,
+			Name:            "repo-1",
+			Description:     "",
+			NamespaceScoped: true,
+			Type:            "helm",
+			Url:             "http://url.com",
+			Interval:        "10m",
+			TlsConfig:       tls_config_redacted,
+			Auth:            foo_bar_auth_redacted,
+			Status:          repo_status_pending,
 		},
 	}
+
+	update_repo_detail_20 = &corev1.GetPackageRepositoryDetailResponse{
+		Detail: &corev1.PackageRepositoryDetail{
+			PackageRepoRef:  get_repo_detail_package_resp_ref,
+			Name:            "repo-1",
+			Description:     "",
+			NamespaceScoped: true,
+			Type:            "helm",
+			Url:             "http://url.com",
+			Interval:        "10m",
+			TlsConfig:       tls_config_redacted,
+			Auth:            &corev1.PackageRepositoryAuth{PassCredentials: false},
+			Status:          repo_status_pending,
+		},
+	}
+
+	basic_auth = func(username, password string) *corev1.PackageRepositoryAuth {
+		return &corev1.PackageRepositoryAuth{
+			Type: corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_BASIC_AUTH,
+			PackageRepoAuthOneOf: &corev1.PackageRepositoryAuth_UsernamePassword{
+				UsernamePassword: &corev1.UsernamePassword{
+					Username: username,
+					Password: password,
+				},
+			},
+		}
+	}
+
+	foo_bar_auth = basic_auth("foo", "bar")
+
+	foo_bar_auth_redacted = basic_auth(redactedString, redactedString)
 
 	github_auth = func(ghUser, ghToken string) *corev1.PackageRepositoryAuth {
 		return &corev1.PackageRepositoryAuth{
@@ -3837,6 +3907,17 @@ var (
 	}
 
 	tls_auth_redacted = tls_auth([]byte(redactedString), []byte(redactedString))
+
+	tls_config = func(ca []byte) *corev1.PackageRepositoryTlsConfig {
+		return &corev1.PackageRepositoryTlsConfig{
+			InsecureSkipVerify: false,
+			PackageRepoTlsConfigOneOf: &corev1.PackageRepositoryTlsConfig_CertAuthority{
+				CertAuthority: string(ca),
+			},
+		}
+	}
+
+	tls_config_redacted = tls_config([]byte(redactedString))
 
 	secret_1_auth = &corev1.PackageRepositoryAuth{
 		Type: corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_BASIC_AUTH,

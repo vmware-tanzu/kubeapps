@@ -1287,12 +1287,12 @@ func TestAddPackageRepository(t *testing.T) {
 		{
 			name:       "errors for package repository with bearer token",
 			request:    add_repo_req_10,
-			statusCode: codes.Internal,
+			statusCode: codes.InvalidArgument,
 		},
 		{
 			name:       "errors for package repository with custom auth token",
 			request:    add_repo_req_11,
-			statusCode: codes.Internal,
+			statusCode: codes.InvalidArgument,
 		},
 		{
 			name:       "package repository with docker config JSON authentication",
@@ -1851,18 +1851,19 @@ func TestGetPackageRepositorySummaries(t *testing.T) {
 func TestUpdatePackageRepository(t *testing.T) {
 	ca, pub, priv := getCertsForTesting(t)
 	testCases := []struct {
-		name               string
-		request            *corev1.UpdatePackageRepositoryRequest
-		repoIndex          string
-		repoName           string
-		repoNamespace      string
-		oldRepoSecret      *apiv1.Secret
-		newRepoSecret      *apiv1.Secret
-		pending            bool
-		expectedStatusCode codes.Code
-		expectedResponse   *corev1.UpdatePackageRepositoryResponse
-		expectedDetail     *corev1.GetPackageRepositoryDetailResponse
-		userManagedSecrets bool
+		name                  string
+		request               *corev1.UpdatePackageRepositoryRequest
+		repoIndex             string
+		repoName              string
+		repoNamespace         string
+		oldRepoSecret         *apiv1.Secret
+		newRepoSecret         *apiv1.Secret
+		expectedCreatedSecret *apiv1.Secret
+		pending               bool
+		expectedStatusCode    codes.Code
+		expectedResponse      *corev1.UpdatePackageRepositoryResponse
+		expectedDetail        *corev1.GetPackageRepositoryDetailResponse
+		userManagedSecrets    bool
 	}{
 		{
 			name:               "update repository url",
@@ -2007,12 +2008,17 @@ func TestUpdatePackageRepository(t *testing.T) {
 			oldRepoSecret: setSecretManagedByKubeapps(setSecretOwnerRef(
 				"repo-1",
 				newBasicAuthSecret(types.NamespacedName{
-					Name:      "secret-1",
+					Name:      "repo-1",
 					Namespace: "namespace-1"}, "foo", "bar"))),
 			request:            update_repo_req_16,
 			expectedStatusCode: codes.OK,
 			expectedResponse:   update_repo_resp_1,
 			expectedDetail:     update_repo_detail_15,
+			expectedCreatedSecret: setSecretManagedByKubeapps(setSecretOwnerRef(
+				"repo-1",
+				newBasicAuthSecret(types.NamespacedName{
+					Name:      "repo-1",
+					Namespace: "namespace-1"}, "foo", "bar"))),
 		},
 		{
 			name:               "returns error when mix referenced secrets and user provided secret data",
@@ -2046,6 +2052,61 @@ func TestUpdatePackageRepository(t *testing.T) {
 					Namespace: "namespace-1"}, "foo", "bar"))),
 			request:            update_repo_req_21,
 			expectedStatusCode: codes.InvalidArgument,
+		},
+		{
+			name:          "issue5747 - update auth password: username was incorrectly overriden to redacted string",
+			repoIndex:     testYaml("valid-index.yaml"),
+			repoName:      "repo-1",
+			repoNamespace: "namespace-1",
+			oldRepoSecret: setSecretManagedByKubeapps(setSecretOwnerRef(
+				"repo-1",
+				newBasicAuthSecret(types.NamespacedName{
+					Name:      "repo-1",
+					Namespace: "namespace-1"}, "foo", "bar"))),
+			request:            update_repo_req_22,
+			expectedStatusCode: codes.OK,
+			expectedResponse:   update_repo_resp_1,
+			expectedDetail:     update_repo_detail_18,
+			expectedCreatedSecret: setSecretManagedByKubeapps(setSecretOwnerRef(
+				"repo-1",
+				newBasicAuthSecret(types.NamespacedName{
+					Name:      "repo-1",
+					Namespace: "namespace-1"}, "foo", "doe"))),
+		},
+		{
+			name:          "issue5747 - update basic auth but not tls ca: basic auth updates are ignored",
+			repoIndex:     testYaml("valid-index.yaml"),
+			repoName:      "repo-1",
+			repoNamespace: "namespace-1",
+			oldRepoSecret: setSecretManagedByKubeapps(setSecretOwnerRef(
+				"repo-1",
+				newBasicAuthTlsSecret(types.NamespacedName{
+					Name:      "repo-1",
+					Namespace: "namespace-1"}, "foo", "bar", nil, nil, ca))),
+			request:            update_repo_req_23,
+			expectedStatusCode: codes.OK,
+			expectedResponse:   update_repo_resp_1,
+			expectedDetail:     update_repo_detail_19,
+			expectedCreatedSecret: setSecretManagedByKubeapps(setSecretOwnerRef(
+				"repo-1",
+				newBasicAuthTlsSecret(types.NamespacedName{
+					Name:      "repo-1",
+					Namespace: "namespace-1"}, "john", "doe", nil, nil, ca))),
+		},
+		{
+			name:               "issue5747 - starts with no auth/tls, adding tls is being ignored",
+			repoIndex:          testYaml("valid-index.yaml"),
+			repoName:           "repo-1",
+			repoNamespace:      "namespace-1",
+			request:            update_repo_req_25(ca),
+			expectedStatusCode: codes.OK,
+			expectedResponse:   update_repo_resp_1,
+			expectedDetail:     update_repo_detail_20,
+			expectedCreatedSecret: setSecretManagedByKubeapps(setSecretOwnerRef(
+				"repo-1",
+				newTlsSecret(types.NamespacedName{
+					Name:      "repo-1",
+					Namespace: "namespace-1"}, nil, nil, ca))),
 		},
 	}
 
@@ -2135,12 +2196,43 @@ func TestUpdatePackageRepository(t *testing.T) {
 				comparePackageRepositoryDetail(t, actualDetail, tc.expectedDetail)
 			}
 
-			if !tc.userManagedSecrets && tc.oldRepoSecret != nil && actualDetail.Detail.Auth.Type == corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_UNSPECIFIED {
-				// check the secret's been deleted
-				if typedClient, err := s.clientGetter.Typed(ctx, s.kubeappsCluster); err != nil {
+			// ensures the secret has been created/updated correctly
+			if !tc.userManagedSecrets && (tc.oldRepoSecret != nil || tc.expectedCreatedSecret != nil) {
+				typedClient, err := s.clientGetter.Typed(ctx, s.kubeappsCluster)
+				if err != nil {
 					t.Fatal(err)
-				} else if _, err = typedClient.CoreV1().Secrets(tc.repoNamespace).Get(ctx, tc.oldRepoSecret.Name, metav1.GetOptions{}); err == nil {
-					t.Fatalf("Expected secret [%q] to have been deleted", tc.oldRepoSecret.Name)
+				}
+				ctrlClient, err := s.clientGetter.ControllerRuntime(ctx, s.kubeappsCluster)
+				if err != nil {
+					t.Fatal(err)
+				}
+
+				// check the secret has been deleted
+				if tc.oldRepoSecret != nil && tc.expectedCreatedSecret == nil {
+					if _, err = typedClient.CoreV1().Secrets(tc.repoNamespace).Get(ctx, tc.oldRepoSecret.Name, metav1.GetOptions{}); err == nil {
+						t.Fatalf("Expected secret [%q] to have been deleted", tc.oldRepoSecret.Name)
+					}
+				}
+
+				// check the created/updated secret
+				if tc.expectedCreatedSecret != nil {
+					var actualRepo sourcev1.HelmRepository
+					if err = ctrlClient.Get(ctx, types.NamespacedName{Namespace: tc.repoNamespace, Name: tc.repoName}, &actualRepo); err != nil {
+						t.Fatal(err)
+					}
+					if actualRepo.Spec.SecretRef == nil {
+						t.Fatalf("Expected repo to have a secret ref, none found")
+					}
+
+					opt2 := cmpopts.IgnoreFields(metav1.ObjectMeta{}, "Name", "GenerateName")
+					if secret, err := typedClient.CoreV1().Secrets(tc.repoNamespace).Get(ctx, actualRepo.Spec.SecretRef.Name, metav1.GetOptions{}); err != nil {
+						t.Fatal(err)
+					} else if got, want := secret, tc.expectedCreatedSecret; !cmp.Equal(want, got, opt2) {
+						t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, opt2))
+					} else if !strings.HasPrefix(secret.Name, tc.expectedCreatedSecret.Name) {
+						t.Errorf("Secret Name [%s] was expected to start with [%s]", secret.Name, tc.expectedCreatedSecret.Name)
+					}
+
 				}
 			}
 		})

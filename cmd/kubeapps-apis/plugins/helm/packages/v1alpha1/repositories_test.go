@@ -406,17 +406,8 @@ func TestAddPackageRepository(t *testing.T) {
 		},
 		// BEARER TOKEN
 		{
-			name:                      "package repository with bearer token w/o prefix",
-			request:                   addRepoReqBearerToken("the-token", false),
-			expectedResponse:          addRepoExpectedResp,
-			expectedRepo:              addRepoAuthHeaderWithSecretRef("foo", "apprepo-bar"),
-			expectedAuthCreatedSecret: setSecretAnnotations(setSecretOwnerRef("bar", newAuthTokenSecret("apprepo-bar", "foo", "Bearer the-token"))),
-			expectedGlobalSecret:      newAuthTokenSecret("foo-apprepo-bar", kubeappsNamespace, "Bearer the-token"),
-			statusCode:                codes.OK,
-		},
-		{
-			name:                      "package repository with bearer token w/ prefix",
-			request:                   addRepoReqBearerToken("the-token", true),
+			name:                      "package repository with bearer token",
+			request:                   addRepoReqBearerToken("the-token"),
 			expectedResponse:          addRepoExpectedResp,
 			expectedRepo:              addRepoAuthHeaderWithSecretRef("foo", "apprepo-bar"),
 			expectedAuthCreatedSecret: setSecretAnnotations(setSecretOwnerRef("bar", newAuthTokenSecret("apprepo-bar", "foo", "Bearer the-token"))),
@@ -425,7 +416,7 @@ func TestAddPackageRepository(t *testing.T) {
 		},
 		{
 			name:       "package repository with no bearer token",
-			request:    addRepoReqBearerToken("", false),
+			request:    addRepoReqBearerToken(""),
 			statusCode: codes.InvalidArgument,
 		},
 		{

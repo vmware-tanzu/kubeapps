@@ -254,7 +254,7 @@ func newSecretFromTlsConfigAndAuth(repoName string,
 		}
 	}
 
-	if auth != nil {
+	if auth != nil && auth.Type != corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_UNSPECIFIED {
 		switch auth.Type {
 		case corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_BASIC_AUTH:
 			unp := auth.GetUsernamePassword()
@@ -365,6 +365,7 @@ func newSecretFromTlsConfigAndAuth(repoName string,
 			return nil, false, status.Errorf(codes.InvalidArgument, "Package repository authentication type %q is not supported", auth.Type)
 		}
 	} else {
+		// no authentication, check if it was removed
 		if hadSecretHeader || hadSecretDocker {
 			isSameSecret = false
 		}
@@ -575,23 +576,12 @@ func validateUserManagedRepoSecret(
 	tlsConfig *corev1.PackageRepositoryTlsConfig,
 	auth *corev1.PackageRepositoryAuth) (*k8scorev1.Secret, error) {
 	var secretRefTls, secretRefAuth string
-	if tlsConfig != nil {
-		if tlsConfig.GetCertAuthority() != "" {
-			return nil, status.Errorf(codes.InvalidArgument, "Secret Ref must be used with user managed secrets")
-		} else if tlsConfig.GetSecretRef().GetName() != "" {
-			secretRefTls = tlsConfig.GetSecretRef().GetName()
-		}
-	}
 
-	if auth != nil {
-		if auth.GetDockerCreds() != nil ||
-			auth.GetHeader() != "" ||
-			auth.GetTlsCertKey() != nil ||
-			auth.GetUsernamePassword() != nil {
-			return nil, status.Errorf(codes.InvalidArgument, "Secret Ref must be used with user managed secrets")
-		} else if auth.GetSecretRef().GetName() != "" {
-			secretRefAuth = auth.GetSecretRef().GetName()
-		}
+	if tlsConfig != nil && tlsConfig.GetSecretRef() != nil {
+		secretRefTls = tlsConfig.GetSecretRef().GetName()
+	}
+	if auth != nil && auth.GetSecretRef() != nil {
+		secretRefAuth = auth.GetSecretRef().GetName()
 	}
 
 	var secretRef string
@@ -620,18 +610,30 @@ func validateUserManagedRepoSecret(
 			}
 			if secretRefAuth != "" {
 				switch auth.Type {
-				case corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_BEARER,
-					corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_AUTHORIZATION_HEADER,
-					corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_BASIC_AUTH:
-					if secret.Data[SecretAuthHeaderKey] == nil {
+				case corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_BASIC_AUTH:
+					if data := secret.Data[SecretAuthHeaderKey]; data == nil {
+						return nil, status.Errorf(codes.Internal, "Specified secret [%s] missing key '%s'", secretRef, SecretAuthHeaderKey)
+					} else if _, _, ok := decodeBasicAuth(string(data)); !ok {
+						return nil, status.Errorf(codes.Internal, "Specified secret [%s] does not represent a valid Basic Auth secret'", secretRef)
+					}
+				case corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_BEARER:
+					if data := secret.Data[SecretAuthHeaderKey]; data == nil {
+						return nil, status.Errorf(codes.Internal, "Specified secret [%s] missing key '%s'", secretRef, SecretAuthHeaderKey)
+					} else if _, ok := decodeBearerAuth(string(data)); !ok {
+						return nil, status.Errorf(codes.Internal, "Specified secret [%s] does not represent a valid Bearer Auth secret'", secretRef)
+					}
+				case corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_AUTHORIZATION_HEADER:
+					if data := secret.Data[SecretAuthHeaderKey]; data == nil {
 						return nil, status.Errorf(codes.Internal, "Specified secret [%s] missing key '%s'", secretRef, SecretAuthHeaderKey)
 					}
 				case corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_DOCKER_CONFIG_JSON:
-					if secret.Data[DockerConfigJsonKey] == nil {
+					if secret.Type != k8scorev1.SecretTypeDockerConfigJson {
+						return nil, status.Errorf(codes.Internal, "Specified secret [%s] does not have expected dockerconfig type", secretRef)
+					} else if _, ok := secret.Data[k8scorev1.DockerConfigJsonKey]; !ok {
 						return nil, status.Errorf(codes.Internal, "Specified secret [%s] missing key '%s'", secretRef, DockerConfigJsonKey)
 					}
 				default:
-					return nil, status.Errorf(codes.Internal, "Package repository authentication type %q is not supported", auth.Type)
+					return nil, status.Errorf(codes.InvalidArgument, "Package repository authentication type %q is not supported", auth.Type)
 				}
 			}
 		}
@@ -827,7 +829,15 @@ func decodeBasicAuth(auth string) (username string, password string, ok bool) {
 }
 
 func encodeBearerAuth(token string) string {
-	return "Bearer " + strings.TrimPrefix(token, "Bearer ")
+	return "Bearer " + token
+}
+
+func decodeBearerAuth(auth string) (token string, ok bool) {
+	if strings.HasPrefix(auth, "Bearer ") {
+		return strings.TrimPrefix(auth, "Bearer "), true
+	} else {
+		return "", false
+	}
 }
 
 func encodeDockerAuth(credentials *corev1.DockerCredentials) ([]byte, error) {
