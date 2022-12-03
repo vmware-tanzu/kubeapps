@@ -5,27 +5,26 @@ package main
 
 import (
 	"context"
-	"os"
 
+	apimanifests "github.com/operator-framework/operator-lifecycle-manager/pkg/package-server/apis/operators/v1"
 	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/pkg/clientgetter"
+	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/pkg/paginate"
+	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/pkg/statuserror"
 	"github.com/vmware-tanzu/kubeapps/pkg/kube"
 
-	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/status"
-	"k8s.io/apimachinery/pkg/api/meta"
-	"k8s.io/apimachinery/pkg/runtime/schema"
-	"k8s.io/apimachinery/pkg/runtime/serializer"
-	"k8s.io/client-go/discovery"
 	"k8s.io/client-go/rest"
-	"k8s.io/client-go/restmapper"
 	log "k8s.io/klog/v2"
+	ctrlruntime "sigs.k8s.io/controller-runtime/pkg/client"
 
-	"github.com/vmware-tanzu/kubeapps/cmd/apprepository-controller/pkg/client/clientset/versioned/scheme"
 	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/core"
-	pkgsGRPCv1alpha1 "github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
+	corev1 "github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
 	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/plugins/operators/packages/v1alpha1"
+)
+
+const (
+	packageManifestResource = "PackageManifest"
 )
 
 type Server struct {
@@ -35,75 +34,17 @@ type Server struct {
 	// non-test implementation.
 	clientGetter clientgetter.ClientProviderInterface
 
-	// clusterServiceAccountClientGetter gets a client getter with service account for additional clusters
-	clusterServiceAccountClientGetter clientgetter.ClientProviderInterface
-
-	// for interactions with k8s API server in the context of
-	// kubeapps-internal-kubeappsapis service account
-	localServiceAccountClientGetter clientgetter.FixedClusterClientProviderInterface
-
-	// corePackagesClientGetter holds a function to obtain the core.packages.v1alpha1
-	// client. It is similarly initialised in NewServer() below.
-	corePackagesClientGetter func() (pkgsGRPCv1alpha1.PackagesServiceClient, error)
-
-	// We keep a restmapper to cache discovery of REST mappings from GVK->GVR.
-	restMapper meta.RESTMapper
-
-	// kindToResource is a function to convert a GVK to GVR with
-	// namespace/cluster scope information. Can be replaced in tests with a
-	// stub version using the unsafe helpers while the real implementation
-	// queries the k8s API for a REST mapper.
-	kindToResource func(meta.RESTMapper, schema.GroupVersionKind) (schema.GroupVersionResource, meta.RESTScopeName, error)
-
 	// pluginConfig Operators plugin configuration values
 	pluginConfig *OperatorsPluginConfig
-
-	clientQPS float32
 
 	kubeappsCluster string
 }
 
-// createRESTMapper returns a rest mapper configured with the APIs of the
-// local k8s API server. This is used to convert between the GroupVersionKinds
-// of the resource references to the GroupVersionResource used by the API server.
-func createRESTMapper(clientQPS float32, clientBurst int) (meta.RESTMapper, error) {
-	config, err := rest.InClusterConfig()
-	if err != nil {
-		return nil, err
-	}
-	// To use the config with RESTClientFor, extra fields are required.
-	// See https://github.com/kubernetes/client-go/issues/657#issuecomment-842960258
-	config.GroupVersion = &schema.GroupVersion{Group: "", Version: "v1"}
-	config.NegotiatedSerializer = serializer.WithoutConversionCodecFactory{CodecFactory: scheme.Codecs}
-
-	// Avoid client-side throttling while the rest mapper discovers the
-	// available APIs on the K8s api server.  Note that this is only used for
-	// the discovery client below to return the rest mapper. The configured
-	// values for QPS and Burst are used for the client used for user requests.
-	config.QPS = clientQPS
-	config.Burst = clientBurst
-
-	client, err := rest.RESTClientFor(config)
-	if err != nil {
-		return nil, err
-	}
-	discoveryClient := discovery.NewDiscoveryClient(client)
-	groupResources, err := restmapper.GetAPIGroupResources(discoveryClient)
-	if err != nil {
-		return nil, err
-	}
-	return restmapper.NewDiscoveryRESTMapper(groupResources), nil
-}
-
 func NewServer(configGetter core.KubernetesConfigGetter, clientQPS float32, clientBurst int, pluginConfigPath string, clustersConfig kube.ClustersConfig) (*Server, error) {
-	mapper, err := createRESTMapper(clientQPS, clientBurst)
-	if err != nil {
-		return nil, err
-	}
-
 	// If no config is provided, we default to the existing values for backwards compatibility.
 	pluginConfig := NewDefaultPluginConfig()
 	if pluginConfigPath != "" {
+		var err error
 		pluginConfig, err = ParsePluginConfig(pluginConfigPath)
 		if err != nil {
 			log.Fatalf("%s", err)
@@ -118,38 +59,75 @@ func NewServer(configGetter core.KubernetesConfigGetter, clientQPS float32, clie
 		log.Fatalf("%s", err)
 	}
 
-	clusterServiceAccountClientGetter, err := newClientGetter(configGetter, true, clustersConfig)
-	if err != nil {
-		log.Fatalf("%s", err)
-	}
-
 	return &Server{
 		// Get the client getter with context auth
-		clientGetter: clientGetter,
-		// Get the additional cluster client getter with service account
-		clusterServiceAccountClientGetter: clusterServiceAccountClientGetter,
-		// Get the "in-cluster" client getter
-		localServiceAccountClientGetter: clientgetter.NewBackgroundClientProvider(clientgetter.Options{}, clientQPS, clientBurst),
-		corePackagesClientGetter: func() (pkgsGRPCv1alpha1.PackagesServiceClient, error) {
-			port := os.Getenv("PORT")
-			conn, err := grpc.Dial("localhost:"+port, grpc.WithTransportCredentials(insecure.NewCredentials()))
-			if err != nil {
-				return nil, status.Errorf(codes.Internal, "unable to dial to localhost grpc service: %s", err.Error())
-			}
-			return pkgsGRPCv1alpha1.NewPackagesServiceClient(conn), nil
-		},
-		restMapper: mapper,
-		kindToResource: func(mapper meta.RESTMapper, gvk schema.GroupVersionKind) (schema.GroupVersionResource, meta.RESTScopeName, error) {
-			mapping, err := mapper.RESTMapping(gvk.GroupKind())
-			if err != nil {
-				return schema.GroupVersionResource{}, "", err
-			}
-			return mapping.Resource, mapping.Scope.Name(), nil
-		},
-		clientQPS:       clientQPS,
+		clientGetter:    clientGetter,
 		pluginConfig:    pluginConfig,
 		kubeappsCluster: clustersConfig.KubeappsClusterName,
 	}, nil
+}
+
+func (s *Server) GetAvailablePackageSummaries(ctx context.Context, request *corev1.GetAvailablePackageSummariesRequest) (*corev1.GetAvailablePackageSummariesResponse, error) {
+	log.Infof("+operators GetAvailablePackageSummaries(request: [%v])", request)
+	defer log.Info("-operators GetAvailablePackageSummaries")
+
+	// grpc compiles in getters for you which automatically return a default (empty) struct
+	// if the pointer was nil
+	cluster := request.GetContext().GetCluster()
+	if request != nil && cluster != "" && cluster != s.kubeappsCluster {
+		return nil, status.Errorf(
+			codes.Unimplemented,
+			"not supported yet: request.Context.Cluster: [%v]",
+			request.Context.Cluster)
+	}
+
+	_, err := paginate.ItemOffsetFromPageToken(request.GetPaginationOptions().GetPageToken())
+	if err != nil {
+		return nil, err
+	}
+
+	// Retrieve parameters from the request
+	namespace := request.GetContext().GetNamespace()
+	client, err := s.clientGetter.ControllerRuntime(ctx, cluster)
+	if err != nil {
+		return nil, err
+	}
+	var manifestList apimanifests.PackageManifestList
+	if err := client.List(ctx, &manifestList, &ctrlruntime.ListOptions{Namespace: namespace}); err != nil {
+		return nil, statuserror.FromK8sError("list", packageManifestResource, "", err)
+	}
+
+	summaries := []*corev1.AvailablePackageSummary{}
+	for _, item := range manifestList.Items {
+		summary, err := s.availablePackageSummaryFromPackageManifest(item)
+		if err != nil {
+			return nil, err
+		}
+		summaries = append(summaries, summary)
+	}
+
+	return &corev1.GetAvailablePackageSummariesResponse{
+		AvailablePackageSummaries: summaries,
+		NextPageToken:             "0", // TODO
+	}, nil
+}
+
+func (s *Server) availablePackageSummaryFromPackageManifest(manifest apimanifests.PackageManifest) (*corev1.AvailablePackageSummary, error) {
+	summary := corev1.AvailablePackageSummary{}
+	// TODO: add catalog prefix to identifier, e.g. "operatorhubio-catalog"
+	// a little mute at the moment since there is only one catalog we care about
+	// (that of operatorhub.io) but for the future. Maybe we'll want to support multiple
+	// catalogs one day
+	pkgIdentifier := manifest.Name
+	summary.AvailablePackageRef = &corev1.AvailablePackageReference{
+		Identifier: pkgIdentifier,
+		Plugin:     &pluginDetail,
+		Context: &corev1.Context{
+			Namespace: manifest.Namespace,
+			Cluster:   s.kubeappsCluster,
+		},
+	}
+	return &summary, nil
 }
 
 func newClientGetter(configGetter core.KubernetesConfigGetter, useServiceAccount bool, clustersConfig kube.ClustersConfig) (clientgetter.ClientProviderInterface, error) {

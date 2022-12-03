@@ -5,7 +5,6 @@ package main
 
 import (
 	apimanifests "github.com/operator-framework/operator-lifecycle-manager/pkg/package-server/apis/operators/v1"
-	plugins "github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/core/plugins/v1alpha1"
 	apiextv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	apimeta "k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -41,11 +40,7 @@ func newCtrlClient(manifests []apimanifests.PackageManifest) client.WithWatch {
 	ctrlClientBuilder := ctrlfake.NewClientBuilder().WithScheme(scheme).WithRESTMapper(rm)
 	var initLists []client.ObjectList
 	if len(manifests) > 0 {
-		manifestInst := make([]apimanifests.PackageManifest, len(manifests))
-		for i, m := range manifests {
-			manifestInst[i] = m
-		}
-		initLists = append(initLists, &apimanifests.PackageManifestList{Items: manifestInst})
+		initLists = append(initLists, &apimanifests.PackageManifestList{Items: manifests})
 	}
 	if len(initLists) > 0 {
 		ctrlClientBuilder = ctrlClientBuilder.WithLists(initLists...)
@@ -55,7 +50,6 @@ func newCtrlClient(manifests []apimanifests.PackageManifest) client.WithWatch {
 
 // misc global vars that get re-used in multiple tests
 var (
-	operatorsPlugin    = &plugins.Plugin{Name: "operators.packages", Version: "v1alpha1"}
 	packageManifestCRD = &apiextv1.CustomResourceDefinition{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "CustomResourceDefinition",
