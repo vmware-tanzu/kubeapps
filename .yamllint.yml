@@ -9,9 +9,9 @@ ignore: |
   **/integration/charts/simplechart/
   **/dashboard/node_modules/
   **/devel/
-  **/cmd/kubeapps-apis/plugins/operators/packages/v1alpha1/testdata/
   #  Ignore files
   **/cmd/kubeapps-apis/plugins/fluxv2/packages/v1alpha1/testdata/charts/single-package-template.yaml
+  **/cmd/kubeapps-apis/plugins/operators/packages/v1alpha1/testdata/etcd.yaml
 rules:
   line-length: disable
   comments: disable
