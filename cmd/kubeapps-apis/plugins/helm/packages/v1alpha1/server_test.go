@@ -7,8 +7,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/helm/packages/v1alpha1/utils/fake"
-	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/pkg/helm/agent"
 	"io"
 	"net/url"
 	"os"
@@ -17,6 +15,9 @@ import (
 	"sort"
 	"strings"
 	"testing"
+
+	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/helm/packages/v1alpha1/utils/fake"
+	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/pkg/helm/agent"
 
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/google/go-cmp/cmp"
@@ -858,9 +859,9 @@ func TestAvailablePackageDetailFromChart(t *testing.T) {
 			name:  "it returns AvailablePackageDetail if the chart is correct",
 			chart: makeChart("foo", "repo-1", "http://foo", "my-ns", []string{"3.0.0"}, DefaultChartCategory),
 			chartFiles: &models.ChartFiles{
-				Readme: "chart readme",
-				Values: "chart values",
-				Schema: "chart schema",
+				Readme:        "chart readme",
+				DefaultValues: "chart values",
+				Schema:        "chart schema",
 			},
 			expected: &corev1.AvailablePackageDetail{
 				Name:             "foo",
@@ -1089,9 +1090,9 @@ func TestGetAvailablePackageDetail(t *testing.T) {
 					WillReturnRows(rows)
 				fileID := fileIDForChart(chartIDUnescaped, tc.expectedPackage.Version.PkgVersion)
 				fileJSON, err := json.Marshal(models.ChartFiles{
-					Readme: tc.expectedPackage.Readme,
-					Values: tc.expectedPackage.DefaultValues,
-					Schema: tc.expectedPackage.ValuesSchema,
+					Readme:        tc.expectedPackage.Readme,
+					DefaultValues: tc.expectedPackage.DefaultValues,
+					Schema:        tc.expectedPackage.ValuesSchema,
 				})
 				if err != nil {
 					t.Fatalf("%+v", err)

@@ -5460,6 +5460,14 @@
           "description": "An example of default values used during package templating that can serve\nas documentation or a starting point for user customization.",
           "title": "Available package default values"
         },
+        "additionalDefaultValues": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          },
+          "description": "A package may contain additional default value files for specific scenarios,\nsuch as values_production.yaml or values_dev.yaml",
+          "title": "Available package additional default values"
+        },
         "valuesSchema": {
           "type": "string"
         },
@@ -6442,6 +6450,14 @@
       "default": "SECRET_TYPE_OPAQUE_UNSPECIFIED",
       "description": "The type of secret. Currently Kubeapps itself only deals with OPAQUE\nand docker config json secrets, but we define all so we can correctly\nlist the secret names with their types.\nSee https://kubernetes.io/docs/concepts/configuration/secret/#secret-types",
       "title": "SecretType"
+    },
+    "v1alpha1SetUserManagedSecretsResponse": {
+      "type": "object",
+      "properties": {
+        "value": {
+          "type": "boolean"
+        }
+      }
     },
     "v1alpha1SshCredentials": {
       "type": "object",
