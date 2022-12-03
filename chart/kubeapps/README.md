@@ -112,6 +112,7 @@ Once you have installed Kubeapps follow the [Getting Started Guide](https://gith
 | `packaging.helm.enabled`   | Enable the standard Helm packaging.                        | `true`  |
 | `packaging.carvel.enabled` | Enable support for the Carvel (kapp-controller) packaging. | `false` |
 | `packaging.flux.enabled`   | Enable support for Flux (v2) packaging.                    | `false` |
+| `packaging.operators.enabled` | Enable support for Operators packaging.                 | `false` |
 
 
 ### Frontend parameters

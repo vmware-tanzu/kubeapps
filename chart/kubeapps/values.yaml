@@ -186,6 +186,10 @@ packaging:
   ## @param packaging.flux.enabled Enable support for Flux (v2) packaging.
   flux:
     enabled: false
+  ## Operators packaging
+  ## @param packaging.operators.enabled Enable support for Operators packaging.
+  operators:
+    enabled: false
 
 ## @section Frontend parameters
 
