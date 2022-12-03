@@ -30,7 +30,6 @@ import (
 
 type Server struct {
 	v1alpha1.UnimplementedOperatorsPackagesServiceServer
-	v1alpha1.UnimplementedOperatorsRepositoriesServiceServer
 	// clientGetter is a field so that it can be switched in tests for
 	// a fake client. NewServer() below sets this automatically with the
 	// non-test implementation.

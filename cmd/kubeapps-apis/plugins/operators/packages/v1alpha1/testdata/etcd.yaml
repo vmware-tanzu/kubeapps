@@ -1,0 +1,385 @@
+apiVersion: packages.operators.coreos.com/v1
+kind: PackageManifest
+metadata:
+  creationTimestamp: "2022-12-01T09:59:20Z"
+  labels:
+    catalog: operatorhubio-catalog
+    catalog-namespace: olm
+    operatorframework.io/arch.amd64: supported
+    operatorframework.io/os.linux: supported
+    provider: CNCF
+    provider-url: ""
+  name: etcd
+  namespace: default
+spec: {}
+status:
+  catalogSource: operatorhubio-catalog
+  catalogSourceDisplayName: Community Operators
+  catalogSourceNamespace: olm
+  catalogSourcePublisher: OperatorHub.io
+  channels:
+  - currentCSV: etcdoperator-community.v0.6.1
+    currentCSVDesc:
+      annotations:
+        capabilities: Full Lifecycle
+        description: etcd is a distributed key value store providing a reliable way
+          to store data across a cluster of machines.
+        operatorhub.io/ui-metadata-max-k8s-version: "1.21"
+        tectonic-visibility: ocs
+      apiservicedefinitions: {}
+      customresourcedefinitions:
+        owned:
+        - description: Represents a cluster of etcd nodes.
+          displayName: etcd Cluster
+          kind: EtcdCluster
+          name: etcdclusters.etcd.database.coreos.com
+          version: v1beta2
+      description: |
+        etcd is a distributed key value store that provides a reliable way to store data across a cluster of machines. Itâ€™s open-source and available on GitHub. etcd gracefully handles leader elections during network partitions and will tolerate machine failure, including the leader. Your applications can read and write data into etcd.
+        A simple use-case is to store database connection details or feature flags within etcd as key value pairs. These values can be watched, allowing your app to reconfigure itself when they change. Advanced uses take advantage of the consistency guarantees to implement database leader elections or do distributed locking across a cluster of workers.
+
+        _The etcd Open Cloud Service is Public Alpha. The goal before Beta is to fully implement backup features._
+
+        ### Reading and writing to etcd
+
+        Communicate with etcd though its command line utility `etcdctl` or with the API using the automatically generated Kubernetes Service.
+
+        [Read the complete guide to using the etcd Open Cloud Service](https://coreos.com/tectonic/docs/latest/alm/etcd-ocs.html)
+
+        ### Supported Features
+        **High availability**
+        Multiple instances of etcd are networked together and secured. Individual failures or networking issues are transparently handled to keep your cluster up and running.
+        **Automated updates**
+        Rolling out a new etcd version works like all Kubernetes rolling updates. Simply declare the desired version, and the etcd service starts a safe rolling update to the new version automatically.
+        **Backups included**
+        Coming soon, the ability to schedule backups to happen on or off cluster.
+      displayName: etcd
+      installModes:
+      - supported: true
+        type: OwnNamespace
+      - supported: true
+        type: SingleNamespace
+      - supported: false
+        type: MultiNamespace
+      - supported: true
+        type: AllNamespaces
+      keywords:
+      - etcd
+      - key value
+      - database
+      - coreos
+      - open source
+      links:
+      - name: Blog
+        url: https://coreos.com/etcd
+      - name: Documentation
+        url: https://coreos.com/operators/etcd/docs/latest/
+      - name: etcd Operator Source Code
+        url: https://github.com/coreos/etcd-operator
+      maintainers:
+      - email: support@coreos.com
+        name: CoreOS, Inc
+      maturity: alpha
+      provider:
+        name: CoreOS, Inc
+      relatedImages:
+      - quay.io/coreos/etcd-operator@sha256:bd944a211eaf8f31da5e6d69e8541e7cada8f16a9f7a5a570b22478997819943
+      version: 0.6.1
+    name: alpha
+  - currentCSV: etcdoperator.v0.9.4-clusterwide
+    currentCSVDesc:
+      annotations:
+        alm-examples: |
+          [
+            {
+              "apiVersion": "etcd.database.coreos.com/v1beta2",
+              "kind": "EtcdCluster",
+              "metadata": {
+                "name": "example",
+                "annotations": {
+                  "etcd.database.coreos.com/scope": "clusterwide"
+                }
+              },
+              "spec": {
+                "size": 3,
+                "version": "3.2.13"
+              }
+            },
+            {
+              "apiVersion": "etcd.database.coreos.com/v1beta2",
+              "kind": "EtcdRestore",
+              "metadata": {
+                "name": "example-etcd-cluster-restore"
+              },
+              "spec": {
+                "etcdCluster": {
+                  "name": "example-etcd-cluster"
+                },
+                "backupStorageType": "S3",
+                "s3": {
+                  "path": "<full-s3-path>",
+                  "awsSecret": "<aws-secret>"
+                }
+              }
+            },
+            {
+              "apiVersion": "etcd.database.coreos.com/v1beta2",
+              "kind": "EtcdBackup",
+              "metadata": {
+                "name": "example-etcd-cluster-backup"
+              },
+              "spec": {
+                "etcdEndpoints": ["<etcd-cluster-endpoints>"],
+                "storageType":"S3",
+                "s3": {
+                  "path": "<full-s3-path>",
+                  "awsSecret": "<aws-secret>"
+                }
+              }
+            }
+          ]
+        capabilities: Full Lifecycle
+        categories: Database
+        containerImage: quay.io/coreos/etcd-operator@sha256:66a37fd61a06a43969854ee6d3e21087a98b93838e284a6086b13917f96b0d9b
+        createdAt: "2019-02-28 01:03:00"
+        description: Create and maintain highly-available etcd clusters on Kubernetes
+        operatorhub.io/ui-metadata-max-k8s-version: "1.21"
+        repository: https://github.com/coreos/etcd-operator
+        tectonic-visibility: ocs
+      apiservicedefinitions: {}
+      customresourcedefinitions:
+        owned:
+        - description: Represents a cluster of etcd nodes.
+          displayName: etcd Cluster
+          kind: EtcdCluster
+          name: etcdclusters.etcd.database.coreos.com
+          version: v1beta2
+        - description: Represents the intent to backup an etcd cluster.
+          displayName: etcd Backup
+          kind: EtcdBackup
+          name: etcdbackups.etcd.database.coreos.com
+          version: v1beta2
+        - description: Represents the intent to restore an etcd cluster from a backup.
+          displayName: etcd Restore
+          kind: EtcdRestore
+          name: etcdrestores.etcd.database.coreos.com
+          version: v1beta2
+      description: |
+        The etcd Operater creates and maintains highly-available etcd clusters on Kubernetes, allowing engineers to easily deploy and manage etcd clusters for their applications.
+
+        etcd is a distributed key value store that provides a reliable way to store data across a cluster of machines. Itâ€™s open-source and available on GitHub. etcd gracefully handles leader elections during network partitions and will tolerate machine failure, including the leader.
+
+
+        ### Reading and writing to etcd
+
+        Communicate with etcd though its command line utility `etcdctl` via port forwarding:
+
+            $ kubectl --namespace default port-forward service/example-client 2379:2379
+            $ etcdctl --endpoints http://127.0.0.1:2379 get /
+
+        Or directly to the API using the automatically generated Kubernetes Service:
+
+            $ etcdctl --endpoints http://example-client.default.svc:2379 get /
+
+        Be sure to secure your etcd cluster (see Common Configurations) before exposing it outside of the namespace or cluster.
+
+
+        ### Supported Features
+
+        * **High availability** - Multiple instances of etcd are networked together and secured. Individual failures or networking issues are transparently handled to keep your cluster up and running.
+
+        * **Automated updates** - Rolling out a new etcd version works like all Kubernetes rolling updates. Simply declare the desired version, and the etcd service starts a safe rolling update to the new version automatically.
+
+        * **Backups included** - Create etcd backups and restore them through the etcd Operator.
+
+        ### Common Configurations
+
+        * **Configure TLS** - Specify [static TLS certs](https://github.com/coreos/etcd-operator/blob/master/doc/user/cluster_tls.md) as Kubernetes secrets.
+
+        * **Set Node Selector and Affinity** - [Spread your etcd Pods](https://github.com/coreos/etcd-operator/blob/master/doc/user/spec_examples.md#three-member-cluster-with-node-selector-and-anti-affinity-across-nodes) across Nodes and availability zones.
+
+        * **Set Resource Limits** - [Set the Kubernetes limit and request](https://github.com/coreos/etcd-operator/blob/master/doc/user/spec_examples.md#three-member-cluster-with-resource-requirement) values for your etcd Pods.
+
+        * **Customize Storage** - [Set a custom StorageClass](https://github.com/coreos/etcd-operator/blob/master/doc/user/spec_examples.md#custom-persistentvolumeclaim-definition) that you would like to use.
+      displayName: etcd
+      installModes:
+      - supported: true
+        type: OwnNamespace
+      - supported: false
+        type: SingleNamespace
+      - supported: false
+        type: MultiNamespace
+      - supported: true
+        type: AllNamespaces
+      keywords:
+      - etcd
+      - key value
+      - database
+      - coreos
+      - open source
+      links:
+      - name: Blog
+        url: https://coreos.com/etcd
+      - name: Documentation
+        url: https://coreos.com/operators/etcd/docs/latest/
+      - name: etcd Operator Source Code
+        url: https://github.com/coreos/etcd-operator
+      maintainers:
+      - email: etcd-dev@googlegroups.com
+        name: etcd Community
+      maturity: alpha
+      provider:
+        name: CNCF
+      relatedImages:
+      - quay.io/coreos/etcd-operator@sha256:66a37fd61a06a43969854ee6d3e21087a98b93838e284a6086b13917f96b0d9b
+      version: 0.9.4-clusterwide
+    name: clusterwide-alpha
+  - currentCSV: etcdoperator.v0.9.4
+    currentCSVDesc:
+      annotations:
+        alm-examples: |
+          [
+            {
+              "apiVersion": "etcd.database.coreos.com/v1beta2",
+              "kind": "EtcdCluster",
+              "metadata": {
+                "name": "example"
+              },
+              "spec": {
+                "size": 3,
+                "version": "3.2.13"
+              }
+            },
+            {
+              "apiVersion": "etcd.database.coreos.com/v1beta2",
+              "kind": "EtcdRestore",
+              "metadata": {
+                "name": "example-etcd-cluster-restore"
+              },
+              "spec": {
+                "etcdCluster": {
+                  "name": "example-etcd-cluster"
+                },
+                "backupStorageType": "S3",
+                "s3": {
+                  "path": "<full-s3-path>",
+                  "awsSecret": "<aws-secret>"
+                }
+              }
+            },
+            {
+              "apiVersion": "etcd.database.coreos.com/v1beta2",
+              "kind": "EtcdBackup",
+              "metadata": {
+                "name": "example-etcd-cluster-backup"
+              },
+              "spec": {
+                "etcdEndpoints": ["<etcd-cluster-endpoints>"],
+                "storageType":"S3",
+                "s3": {
+                  "path": "<full-s3-path>",
+                  "awsSecret": "<aws-secret>"
+                }
+              }
+            }
+          ]
+        capabilities: Full Lifecycle
+        categories: Database
+        containerImage: quay.io/coreos/etcd-operator@sha256:66a37fd61a06a43969854ee6d3e21087a98b93838e284a6086b13917f96b0d9b
+        createdAt: "2019-02-28 01:03:00"
+        description: Create and maintain highly-available etcd clusters on Kubernetes
+        operatorhub.io/ui-metadata-max-k8s-version: "1.21"
+        repository: https://github.com/coreos/etcd-operator
+        tectonic-visibility: ocs
+      apiservicedefinitions: {}
+      customresourcedefinitions:
+        owned:
+        - description: Represents a cluster of etcd nodes.
+          displayName: etcd Cluster
+          kind: EtcdCluster
+          name: etcdclusters.etcd.database.coreos.com
+          version: v1beta2
+        - description: Represents the intent to backup an etcd cluster.
+          displayName: etcd Backup
+          kind: EtcdBackup
+          name: etcdbackups.etcd.database.coreos.com
+          version: v1beta2
+        - description: Represents the intent to restore an etcd cluster from a backup.
+          displayName: etcd Restore
+          kind: EtcdRestore
+          name: etcdrestores.etcd.database.coreos.com
+          version: v1beta2
+      description: |
+        The etcd Operater creates and maintains highly-available etcd clusters on Kubernetes, allowing engineers to easily deploy and manage etcd clusters for their applications.
+
+        etcd is a distributed key value store that provides a reliable way to store data across a cluster of machines. Itâ€™s open-source and available on GitHub. etcd gracefully handles leader elections during network partitions and will tolerate machine failure, including the leader.
+
+
+        ### Reading and writing to etcd
+
+        Communicate with etcd though its command line utility `etcdctl` via port forwarding:
+
+            $ kubectl --namespace default port-forward service/example-client 2379:2379
+            $ etcdctl --endpoints http://127.0.0.1:2379 get /
+
+        Or directly to the API using the automatically generated Kubernetes Service:
+
+            $ etcdctl --endpoints http://example-client.default.svc:2379 get /
+
+        Be sure to secure your etcd cluster (see Common Configurations) before exposing it outside of the namespace or cluster.
+
+
+        ### Supported Features
+
+        * **High availability** - Multiple instances of etcd are networked together and secured. Individual failures or networking issues are transparently handled to keep your cluster up and running.
+
+        * **Automated updates** - Rolling out a new etcd version works like all Kubernetes rolling updates. Simply declare the desired version, and the etcd service starts a safe rolling update to the new version automatically.
+
+        * **Backups included** - Create etcd backups and restore them through the etcd Operator.
+
+        ### Common Configurations
+
+        * **Configure TLS** - Specify [static TLS certs](https://github.com/coreos/etcd-operator/blob/master/doc/user/cluster_tls.md) as Kubernetes secrets.
+
+        * **Set Node Selector and Affinity** - [Spread your etcd Pods](https://github.com/coreos/etcd-operator/blob/master/doc/user/spec_examples.md#three-member-cluster-with-node-selector-and-anti-affinity-across-nodes) across Nodes and availability zones.
+
+        * **Set Resource Limits** - [Set the Kubernetes limit and request](https://github.com/coreos/etcd-operator/blob/master/doc/user/spec_examples.md#three-member-cluster-with-resource-requirement) values for your etcd Pods.
+
+        * **Customize Storage** - [Set a custom StorageClass](https://github.com/coreos/etcd-operator/blob/master/doc/user/spec_examples.md#custom-persistentvolumeclaim-definition) that you would like to use.
+      displayName: etcd
+      installModes:
+      - supported: true
+        type: OwnNamespace
+      - supported: true
+        type: SingleNamespace
+      - supported: false
+        type: MultiNamespace
+      - supported: false
+        type: AllNamespaces
+      keywords:
+      - etcd
+      - key value
+      - database
+      - coreos
+      - open source
+      links:
+      - name: Blog
+        url: https://coreos.com/etcd
+      - name: Documentation
+        url: https://coreos.com/operators/etcd/docs/latest/
+      - name: etcd Operator Source Code
+        url: https://github.com/coreos/etcd-operator
+      maintainers:
+      - email: etcd-dev@googlegroups.com
+        name: etcd Community
+      maturity: alpha
+      provider:
+        name: CNCF
+      relatedImages:
+      - quay.io/coreos/etcd-operator@sha256:66a37fd61a06a43969854ee6d3e21087a98b93838e284a6086b13917f96b0d9b
+      version: 0.9.4
+    name: singlenamespace-alpha
+  defaultChannel: singlenamespace-alpha
+  packageName: etcd
+  provider:
+    name: CNCF

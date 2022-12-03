@@ -35,7 +35,6 @@ func RegisterWithGRPCServer(opts pluginsv1alpha1.GRPCPluginRegistrationOptions) 
 		return nil, err
 	}
 	v1alpha1.RegisterOperatorsPackagesServiceServer(opts.Registrar, svr)
-	v1alpha1.RegisterOperatorsRepositoriesServiceServer(opts.Registrar, svr)
 	return svr, nil
 }
 
@@ -44,12 +43,7 @@ func RegisterWithGRPCServer(opts pluginsv1alpha1.GRPCPluginRegistrationOptions) 
 //
 //nolint:deadcode
 func RegisterHTTPHandlerFromEndpoint(ctx context.Context, mux *runtime.ServeMux, endpoint string, opts []grpc.DialOption) error {
-	err := v1alpha1.RegisterOperatorsPackagesServiceHandlerFromEndpoint(ctx, mux, endpoint, opts)
-	if err != nil {
-		return err
-	} else {
-		return v1alpha1.RegisterOperatorsRepositoriesServiceHandlerFromEndpoint(ctx, mux, endpoint, opts)
-	}
+	return v1alpha1.RegisterOperatorsPackagesServiceHandlerFromEndpoint(ctx, mux, endpoint, opts)
 }
 
 // GetPluginDetail returns a core.plugins.Plugin describing itself.
