@@ -127,6 +127,8 @@ func (s *Server) availablePackageSummaryFromPackageManifest(manifest apimanifest
 			Cluster:   s.kubeappsCluster,
 		},
 	}
+	summary.Name = manifest.Status.PackageName
+	summary.DisplayName = manifest.Status.Channels[0].CurrentCSVDesc.DisplayName
 	return &summary, nil
 }
 
