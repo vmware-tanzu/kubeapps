@@ -646,9 +646,8 @@ func (s *Server) buildPkgRepositoryCreate(request *corev1.AddPackageRepositoryRe
 			APIVersion: fmt.Sprintf("%s/%s", packagingv1alpha1.SchemeGroupVersion.Group, packagingv1alpha1.SchemeGroupVersion.Version),
 		},
 		ObjectMeta: metav1.ObjectMeta{
-			Name:        name,
-			Namespace:   namespace,
-			Annotations: map[string]string{},
+			Name:      name,
+			Namespace: namespace,
 		},
 	}
 	repository.Spec = s.buildPkgRepositorySpec(request.Type, request.Interval, request.Url, request.Auth, pkgSecret, details)
@@ -893,7 +892,16 @@ func (s *Server) validatePackageRepositoryDetails(rptype string, any *anypb.Any)
 }
 
 func (s *Server) validatePackageRepositoryAuth(ctx context.Context, cluster, namespace string, rptype string, auth *corev1.PackageRepositoryAuth, pkgRepository *packagingv1alpha1.PackageRepository, pkgSecret *k8scorev1.Secret) error {
+	// ignore auth if type is not specified
+	if auth.Type == corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_UNSPECIFIED {
+		if auth.GetPackageRepoAuthOneOf() != nil {
+			return status.Errorf(codes.InvalidArgument, "Auth Type is not specified but auth configuration data were provided")
+		}
+		return nil
+	}
+
 	// validate type compatibility
+	// see https://carvel.dev/kapp-controller/docs/v0.43.2/app-overview/#specfetch
 	switch rptype {
 	case Type_ImgPkgBundle, Type_Image:
 		if auth.Type != corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_BASIC_AUTH &&
@@ -1005,102 +1013,109 @@ func (s *Server) validatePackageRepositoryAuth(ctx context.Context, cluster, nam
 // package repositories secrets
 
 func (s *Server) buildPkgRepositorySecretCreate(namespace, name string, auth *corev1.PackageRepositoryAuth) (*k8scorev1.Secret, error) {
-	pkgSecret := &k8scorev1.Secret{
+	secret := &k8scorev1.Secret{
 		ObjectMeta: metav1.ObjectMeta{
 			Namespace:    namespace,
 			GenerateName: name + "-",
 			Annotations:  map[string]string{Annotation_ManagedBy_Key: Annotation_ManagedBy_Value},
 		},
+		Type:       k8scorev1.SecretTypeOpaque,
 		StringData: map[string]string{},
 	}
 
 	switch auth.Type {
 	case corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_BASIC_AUTH:
-		pkgSecret.Type = k8scorev1.SecretTypeBasicAuth
-
 		up := auth.GetUsernamePassword()
-		pkgSecret.StringData[k8scorev1.BasicAuthUsernameKey] = up.Username
-		pkgSecret.StringData[k8scorev1.BasicAuthPasswordKey] = up.Password
+		secret.StringData[k8scorev1.BasicAuthUsernameKey] = up.Username
+		secret.StringData[k8scorev1.BasicAuthPasswordKey] = up.Password
 
 	case corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_SSH:
-		pkgSecret.Type = k8scorev1.SecretTypeSSHAuth
-
 		ssh := auth.GetSshCreds()
-		pkgSecret.StringData[k8scorev1.SSHAuthPrivateKey] = ssh.PrivateKey
-		pkgSecret.StringData[SSHAuthKnownHosts] = ssh.KnownHosts
+		secret.StringData[k8scorev1.SSHAuthPrivateKey] = ssh.PrivateKey
+		secret.StringData[SSHAuthKnownHosts] = ssh.KnownHosts
 
 	case corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_DOCKER_CONFIG_JSON:
-		pkgSecret.Type = k8scorev1.SecretTypeDockerConfigJson
-
+		secret.Type = k8scorev1.SecretTypeDockerConfigJson
 		docker := auth.GetDockerCreds()
 		if dockerjson, err := toDockerConfig(docker); err != nil {
 			return nil, err
 		} else {
-			pkgSecret.StringData[k8scorev1.DockerConfigJsonKey] = string(dockerjson)
+			secret.StringData[k8scorev1.DockerConfigJsonKey] = string(dockerjson)
 		}
 
 	case corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_BEARER:
-		pkgSecret.Type = k8scorev1.SecretTypeOpaque
-
 		token := auth.GetHeader()
-		pkgSecret.StringData[BearerAuthToken] = token
+		secret.StringData[BearerAuthToken] = token
 	}
 
-	return pkgSecret, nil
+	return secret, nil
 }
 
-func (s *Server) buildPkgRepositorySecretUpdate(pkgSecret *k8scorev1.Secret, auth *corev1.PackageRepositoryAuth) (bool, error) {
-	pkgSecret.StringData = map[string]string{}
+func (s *Server) buildPkgRepositorySecretUpdate(pkgSecret *k8scorev1.Secret, namespace, name string, auth *corev1.PackageRepositoryAuth) (*k8scorev1.Secret, error) {
+	secret := &k8scorev1.Secret{
+		ObjectMeta: metav1.ObjectMeta{
+			Namespace:    namespace,
+			GenerateName: name + "-",
+			Annotations:  map[string]string{Annotation_ManagedBy_Key: Annotation_ManagedBy_Value},
+		},
+		Type:       k8scorev1.SecretTypeOpaque,
+		StringData: map[string]string{},
+	}
 
 	switch auth.Type {
 	case corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_BASIC_AUTH:
 		up := auth.GetUsernamePassword()
 		if isBasicAuth(pkgSecret) {
 			if up.Username == Redacted && up.Password == Redacted {
-				return false, nil
+				return nil, nil
 			}
 			if up.Username != Redacted {
-				pkgSecret.StringData[k8scorev1.BasicAuthUsernameKey] = up.Username
+				secret.StringData[k8scorev1.BasicAuthUsernameKey] = up.Username
+			} else {
+				secret.StringData[k8scorev1.BasicAuthUsernameKey] = string(pkgSecret.Data[k8scorev1.BasicAuthUsernameKey])
 			}
 			if up.Password != Redacted {
-				pkgSecret.StringData[k8scorev1.BasicAuthPasswordKey] = up.Password
+				secret.StringData[k8scorev1.BasicAuthPasswordKey] = up.Password
+			} else {
+				secret.StringData[k8scorev1.BasicAuthPasswordKey] = string(pkgSecret.Data[k8scorev1.BasicAuthPasswordKey])
 			}
 		} else {
-			pkgSecret.Type = k8scorev1.SecretTypeBasicAuth
-			pkgSecret.Data = nil
-			pkgSecret.StringData[k8scorev1.BasicAuthUsernameKey] = up.Username
-			pkgSecret.StringData[k8scorev1.BasicAuthPasswordKey] = up.Password
+			secret.StringData[k8scorev1.BasicAuthUsernameKey] = up.Username
+			secret.StringData[k8scorev1.BasicAuthPasswordKey] = up.Password
 		}
 
 	case corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_SSH:
 		ssh := auth.GetSshCreds()
 		if isSshAuth(pkgSecret) {
 			if ssh.PrivateKey == Redacted && ssh.KnownHosts == Redacted {
-				return false, nil
+				return nil, nil
 			}
 			if ssh.PrivateKey != Redacted {
-				pkgSecret.StringData[k8scorev1.SSHAuthPrivateKey] = ssh.PrivateKey
+				secret.StringData[k8scorev1.SSHAuthPrivateKey] = ssh.PrivateKey
+			} else {
+				secret.StringData[k8scorev1.SSHAuthPrivateKey] = string(pkgSecret.Data[k8scorev1.SSHAuthPrivateKey])
 			}
 			if ssh.KnownHosts != Redacted {
-				pkgSecret.StringData[SSHAuthKnownHosts] = ssh.KnownHosts
+				secret.StringData[SSHAuthKnownHosts] = ssh.KnownHosts
+			} else {
+				secret.StringData[SSHAuthKnownHosts] = string(pkgSecret.Data[SSHAuthKnownHosts])
 			}
 		} else {
-			pkgSecret.Type = k8scorev1.SecretTypeSSHAuth
-			pkgSecret.Data = nil
-			pkgSecret.StringData[k8scorev1.SSHAuthPrivateKey] = ssh.PrivateKey
-			pkgSecret.StringData[SSHAuthKnownHosts] = ssh.KnownHosts
+			secret.StringData[k8scorev1.SSHAuthPrivateKey] = ssh.PrivateKey
+			secret.StringData[SSHAuthKnownHosts] = ssh.KnownHosts
 		}
 
 	case corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_DOCKER_CONFIG_JSON:
+		secret.Type = k8scorev1.SecretTypeDockerConfigJson
 		docker := auth.GetDockerCreds()
 		if isDockerAuth(pkgSecret) {
 			if docker.Username == Redacted && docker.Password == Redacted && docker.Server == Redacted && docker.Email == Redacted {
-				return false, nil
+				return nil, nil
 			}
 
 			pkgdocker, err := fromDockerConfig(pkgSecret.Data[k8scorev1.DockerConfigJsonKey])
 			if err != nil {
-				return false, err
+				return nil, err
 			}
 			if docker.Username != Redacted {
 				pkgdocker.Username = docker.Username
@@ -1116,17 +1131,15 @@ func (s *Server) buildPkgRepositorySecretUpdate(pkgSecret *k8scorev1.Secret, aut
 			}
 
 			if dockerjson, err := toDockerConfig(pkgdocker); err != nil {
-				return false, err
+				return nil, err
 			} else {
-				pkgSecret.StringData[k8scorev1.DockerConfigJsonKey] = string(dockerjson)
+				secret.StringData[k8scorev1.DockerConfigJsonKey] = string(dockerjson)
 			}
 		} else {
-			pkgSecret.Type = k8scorev1.SecretTypeDockerConfigJson
-			pkgSecret.Data = nil
 			if dockerjson, err := toDockerConfig(docker); err != nil {
-				return false, err
+				return nil, err
 			} else {
-				pkgSecret.StringData[k8scorev1.DockerConfigJsonKey] = string(dockerjson)
+				secret.StringData[k8scorev1.DockerConfigJsonKey] = string(dockerjson)
 			}
 		}
 
@@ -1134,18 +1147,16 @@ func (s *Server) buildPkgRepositorySecretUpdate(pkgSecret *k8scorev1.Secret, aut
 		token := auth.GetHeader()
 		if isBearerAuth(pkgSecret) {
 			if token == Redacted {
-				return false, nil
+				return nil, nil
 			} else {
-				pkgSecret.StringData[BearerAuthToken] = token
+				secret.StringData[BearerAuthToken] = token
 			}
 		} else {
-			pkgSecret.Type = k8scorev1.SecretTypeOpaque
-			pkgSecret.Data = nil
-			pkgSecret.StringData[BearerAuthToken] = token
+			secret.StringData[BearerAuthToken] = token
 		}
 	}
 
-	return true, nil
+	return secret, nil
 }
 
 // status utils

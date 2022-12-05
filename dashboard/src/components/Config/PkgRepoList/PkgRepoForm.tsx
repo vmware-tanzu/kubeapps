@@ -549,9 +549,6 @@ export function PkgRepoForm(props: IPkgRepoFormProps) {
           setType(RepositoryStorageTypes.PACKAGE_REPOSITORY_STORAGE_CARVEL_IMGPKGBUNDLE);
         }
 
-        // carvel plugin doesn't allow description
-        setDescription("");
-
         // update the isNampespaced field based on the plugin
         setIsNamespaceScoped(
           !isGlobalNamespace(namespace, PluginNames.PACKAGES_KAPP, currentNsConfig),

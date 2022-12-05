@@ -208,7 +208,11 @@ export class PackageRepositoriesService {
           } as SecretKeyReference,
         } as PackageRepositoryTlsConfig;
       }
-      if (request.secretAuthName) {
+      if (
+        request.authMethod !==
+          PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_UNSPECIFIED &&
+        request.secretAuthName
+      ) {
         addPackageRepositoryRequest.auth = {
           ...addPackageRepositoryRequest.auth,
           secretRef: {
