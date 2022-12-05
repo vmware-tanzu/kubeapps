@@ -1,42 +1,41 @@
 /* eslint-disable */
-import Long from "long";
 import { grpc } from "@improbable-eng/grpc-web";
+import { BrowserHeaders } from "browser-headers";
 import _m0 from "protobufjs/minimal";
 import {
-  GetAvailablePackageSummariesRequest,
-  GetAvailablePackageDetailRequest,
-  GetAvailablePackageVersionsRequest,
-  GetInstalledPackageSummariesRequest,
-  GetInstalledPackageDetailRequest,
   CreateInstalledPackageRequest,
-  UpdateInstalledPackageRequest,
-  DeleteInstalledPackageRequest,
-  GetInstalledPackageResourceRefsRequest,
-  GetAvailablePackageSummariesResponse,
-  GetAvailablePackageDetailResponse,
-  GetAvailablePackageVersionsResponse,
-  GetInstalledPackageSummariesResponse,
-  GetInstalledPackageDetailResponse,
   CreateInstalledPackageResponse,
-  UpdateInstalledPackageResponse,
+  DeleteInstalledPackageRequest,
   DeleteInstalledPackageResponse,
+  GetAvailablePackageDetailRequest,
+  GetAvailablePackageDetailResponse,
+  GetAvailablePackageSummariesRequest,
+  GetAvailablePackageSummariesResponse,
+  GetAvailablePackageVersionsRequest,
+  GetAvailablePackageVersionsResponse,
+  GetInstalledPackageDetailRequest,
+  GetInstalledPackageDetailResponse,
+  GetInstalledPackageResourceRefsRequest,
   GetInstalledPackageResourceRefsResponse,
-} from "../../../../../kubeappsapis/core/packages/v1alpha1/packages";
+  GetInstalledPackageSummariesRequest,
+  GetInstalledPackageSummariesResponse,
+  UpdateInstalledPackageRequest,
+  UpdateInstalledPackageResponse,
+} from "../../../../core/packages/v1alpha1/packages";
 import {
   AddPackageRepositoryRequest,
-  GetPackageRepositoryDetailRequest,
-  GetPackageRepositorySummariesRequest,
-  UpdatePackageRepositoryRequest,
-  DeletePackageRepositoryRequest,
-  GetPackageRepositoryPermissionsRequest,
   AddPackageRepositoryResponse,
-  GetPackageRepositoryDetailResponse,
-  GetPackageRepositorySummariesResponse,
-  UpdatePackageRepositoryResponse,
+  DeletePackageRepositoryRequest,
   DeletePackageRepositoryResponse,
+  GetPackageRepositoryDetailRequest,
+  GetPackageRepositoryDetailResponse,
+  GetPackageRepositoryPermissionsRequest,
   GetPackageRepositoryPermissionsResponse,
-} from "../../../../../kubeappsapis/core/packages/v1alpha1/repositories";
-import { BrowserHeaders } from "browser-headers";
+  GetPackageRepositorySummariesRequest,
+  GetPackageRepositorySummariesResponse,
+  UpdatePackageRepositoryRequest,
+  UpdatePackageRepositoryResponse,
+} from "../../../../core/packages/v1alpha1/repositories";
 
 export const protobufPackage = "kubeappsapis.plugins.fluxv2.packages.v1alpha1";
 
@@ -60,7 +59,9 @@ export interface FluxPackageRepositoryCustomDetail {
   provider: string;
 }
 
-const baseFluxPackageRepositoryCustomDetail: object = { provider: "" };
+function createBaseFluxPackageRepositoryCustomDetail(): FluxPackageRepositoryCustomDetail {
+  return { provider: "" };
+}
 
 export const FluxPackageRepositoryCustomDetail = {
   encode(
@@ -76,9 +77,7 @@ export const FluxPackageRepositoryCustomDetail = {
   decode(input: _m0.Reader | Uint8Array, length?: number): FluxPackageRepositoryCustomDetail {
     const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
     let end = length === undefined ? reader.len : reader.pos + length;
-    const message = {
-      ...baseFluxPackageRepositoryCustomDetail,
-    } as FluxPackageRepositoryCustomDetail;
+    const message = createBaseFluxPackageRepositoryCustomDetail();
     while (reader.pos < end) {
       const tag = reader.uint32();
       switch (tag >>> 3) {
@@ -94,15 +93,7 @@ export const FluxPackageRepositoryCustomDetail = {
   },
 
   fromJSON(object: any): FluxPackageRepositoryCustomDetail {
-    const message = {
-      ...baseFluxPackageRepositoryCustomDetail,
-    } as FluxPackageRepositoryCustomDetail;
-    if (object.provider !== undefined && object.provider !== null) {
-      message.provider = String(object.provider);
-    } else {
-      message.provider = "";
-    }
-    return message;
+    return { provider: isSet(object.provider) ? String(object.provider) : "" };
   },
 
   toJSON(message: FluxPackageRepositoryCustomDetail): unknown {
@@ -111,17 +102,11 @@ export const FluxPackageRepositoryCustomDetail = {
     return obj;
   },
 
-  fromPartial(
-    object: DeepPartial<FluxPackageRepositoryCustomDetail>,
+  fromPartial<I extends Exact<DeepPartial<FluxPackageRepositoryCustomDetail>, I>>(
+    object: I,
   ): FluxPackageRepositoryCustomDetail {
-    const message = {
-      ...baseFluxPackageRepositoryCustomDetail,
-    } as FluxPackageRepositoryCustomDetail;
-    if (object.provider !== undefined && object.provider !== null) {
-      message.provider = object.provider;
-    } else {
-      message.provider = "";
-    }
+    const message = createBaseFluxPackageRepositoryCustomDetail();
+    message.provider = object.provider ?? "";
     return message;
   },
 };
@@ -766,6 +751,7 @@ export class GrpcWebImpl {
 
     debug?: boolean;
     metadata?: grpc.Metadata;
+    upStreamRetryCodes?: number[];
   };
 
   constructor(
@@ -775,6 +761,7 @@ export class GrpcWebImpl {
 
       debug?: boolean;
       metadata?: grpc.Metadata;
+      upStreamRetryCodes?: number[];
     },
   ) {
     this.host = host;
@@ -789,10 +776,7 @@ export class GrpcWebImpl {
     const request = { ..._request, ...methodDesc.requestType };
     const maybeCombinedMetadata =
       metadata && this.options.metadata
-        ? new BrowserHeaders({
-            ...this.options?.metadata.headersMap,
-            ...metadata?.headersMap,
-          })
+        ? new BrowserHeaders({ ...this.options?.metadata.headersMap, ...metadata?.headersMap })
         : metadata || this.options.metadata;
     return new Promise((resolve, reject) => {
       grpc.unary(methodDesc, {
@@ -805,9 +789,11 @@ export class GrpcWebImpl {
           if (response.status === grpc.Code.OK) {
             resolve(response.message);
           } else {
-            const err = new Error(response.statusMessage) as any;
-            err.code = response.status;
-            err.metadata = response.trailers;
+            const err = new GrpcWebError(
+              response.statusMessage,
+              response.status,
+              response.trailers,
+            );
             reject(err);
           }
         },
@@ -817,6 +803,7 @@ export class GrpcWebImpl {
 }
 
 type Builtin = Date | Function | Uint8Array | string | number | boolean | undefined;
+
 export type DeepPartial<T> = T extends Builtin
   ? T
   : T extends Array<infer U>
@@ -827,7 +814,17 @@ export type DeepPartial<T> = T extends Builtin
   ? { [K in keyof T]?: DeepPartial<T[K]> }
   : Partial<T>;
 
-if (_m0.util.Long !== Long) {
-  _m0.util.Long = Long as any;
-  _m0.configure();
+type KeysOfUnion<T> = T extends T ? keyof T : never;
+export type Exact<P, I extends P> = P extends Builtin
+  ? P
+  : P & { [K in keyof P]: Exact<P[K], I[K]> } & { [K in Exclude<keyof I, KeysOfUnion<P>>]: never };
+
+function isSet(value: any): boolean {
+  return value !== null && value !== undefined;
+}
+
+export class GrpcWebError extends Error {
+  constructor(message: string, public code: grpc.Code, public metadata: grpc.Metadata) {
+    super(message);
+  }
 }

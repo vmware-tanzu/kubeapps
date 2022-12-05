@@ -5565,14 +5565,6 @@
       "description": "The type of secret. Currently Kubeapps itself only deals with OPAQUE\nand docker config json secrets, but we define all so we can correctly\nlist the secret names with their types.\nSee https://kubernetes.io/docs/concepts/configuration/secret/#secret-types",
       "title": "SecretType"
     },
-    "v1alpha1SetUserManagedSecretsResponse": {
-      "type": "object",
-      "properties": {
-        "value": {
-          "type": "boolean"
-        }
-      }
-    },
     "v1alpha1SshCredentials": {
       "type": "object",
       "properties": {
