@@ -1123,6 +1123,23 @@ var (
 		},
 	}
 
+	add_repo_8 = sourcev1.HelmRepository{
+		TypeMeta: metav1.TypeMeta{
+			Kind:       sourcev1.HelmRepositoryKind,
+			APIVersion: sourcev1.GroupVersion.String(),
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:            "bar",
+			Namespace:       "foo",
+			ResourceVersion: "1",
+			Annotations:     map[string]string{Annotation_Description_Key: "repo desc"},
+		},
+		Spec: sourcev1.HelmRepositorySpec{
+			URL:      "http://example.com",
+			Interval: metav1.Duration{Duration: 10 * time.Minute},
+		},
+	}
+
 	add_repo_req_1 = &corev1.AddPackageRepositoryRequest{
 		Name:            "bar",
 		Context:         &corev1.Context{Namespace: "foo"},
@@ -1529,6 +1546,15 @@ var (
 				},
 			},
 		},
+	}
+
+	add_repo_req_31 = &corev1.AddPackageRepositoryRequest{
+		Name:            "bar",
+		Context:         &corev1.Context{Namespace: "foo"},
+		Type:            "helm",
+		NamespaceScoped: true,
+		Url:             "http://example.com",
+		Description:     "repo desc",
 	}
 
 	add_repo_expected_resp = &corev1.AddPackageRepositoryResponse{
@@ -3542,6 +3568,12 @@ var (
 		}
 	}
 
+	update_repo_req_25 = &corev1.UpdatePackageRepositoryRequest{
+		PackageRepoRef: repoRefInReq("repo-1", "namespace-1"),
+		Url:            "http://url.com",
+		Description:    "test desc",
+	}
+
 	update_repo_resp_1 = &corev1.UpdatePackageRepositoryResponse{
 		PackageRepoRef: repoRef("repo-1", "namespace-1"),
 	}
@@ -3855,6 +3887,20 @@ var (
 			Url:             "http://url.com",
 			Interval:        "10m",
 			TlsConfig:       tls_config_redacted,
+			Auth:            &corev1.PackageRepositoryAuth{PassCredentials: false},
+			Status:          repo_status_pending,
+		},
+	}
+
+	update_repo_detail_21 = &corev1.GetPackageRepositoryDetailResponse{
+		Detail: &corev1.PackageRepositoryDetail{
+			PackageRepoRef:  get_repo_detail_package_resp_ref,
+			Name:            "repo-1",
+			Description:     "test desc",
+			NamespaceScoped: true,
+			Type:            "helm",
+			Url:             "http://url.com",
+			Interval:        "10m",
 			Auth:            &corev1.PackageRepositoryAuth{PassCredentials: false},
 			Status:          repo_status_pending,
 		},

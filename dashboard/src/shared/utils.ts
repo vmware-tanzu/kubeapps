@@ -254,13 +254,20 @@ export function getSupportedPackageRepositoryAuthTypes(
         PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_DOCKER_CONFIG_JSON,
       ];
     case PluginNames.PACKAGES_FLUX:
-      return [
-        PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_BASIC_AUTH,
-        PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_OPAQUE,
-        PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_SSH,
-        PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_TLS,
-        PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_DOCKER_CONFIG_JSON,
-      ];
+      switch (type) {
+        case RepositoryStorageTypes.PACKAGE_REPOSITORY_STORAGE_HELM:
+          return [
+            PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_BASIC_AUTH,
+            PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_TLS,
+          ];
+        case RepositoryStorageTypes.PACKAGE_REPOSITORY_STORAGE_OCI:
+          return [
+            PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_BASIC_AUTH,
+            PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_DOCKER_CONFIG_JSON,
+          ];
+        default:
+          return [];
+      }
     case PluginNames.PACKAGES_KAPP:
       // the available auth options in Carvel are type-specific
       // extracted from https://github.com/vmware-tanzu/carvel-kapp-controller/blob/v0.40.0/pkg/apis/kappctrl/v1alpha1/types_fetch.go

@@ -1352,6 +1352,13 @@ func TestAddPackageRepository(t *testing.T) {
 			request:    add_repo_req_30,
 			statusCode: codes.InvalidArgument,
 		},
+		{
+			name:             "simple repo with description",
+			request:          add_repo_req_31,
+			expectedResponse: add_repo_expected_resp,
+			expectedRepo:     &add_repo_8,
+			statusCode:       codes.OK,
+		},
 	}
 
 	for _, tc := range testCases {
@@ -1615,6 +1622,15 @@ func TestGetPackageRepositoryDetail(t *testing.T) {
 			request:            get_repo_detail_req_1,
 			expectedStatusCode: codes.OK,
 			expectedResponse:   get_repo_detail_resp_10a,
+		},
+		{
+			name:               "get package repository detail description",
+			repoIndex:          testYaml("valid-index.yaml"),
+			repoName:           "repo-1",
+			repoNamespace:      "namespace-1",
+			request:            get_repo_detail_req_1,
+			expectedStatusCode: codes.OK,
+			expectedResponse:   get_repo_detail_resp_1,
 		},
 	}
 
@@ -2107,6 +2123,16 @@ func TestUpdatePackageRepository(t *testing.T) {
 				newTlsSecret(types.NamespacedName{
 					Name:      "repo-1",
 					Namespace: "namespace-1"}, nil, nil, ca))),
+		},
+		{
+			name:               "update description",
+			repoIndex:          testYaml("valid-index.yaml"),
+			repoName:           "repo-1",
+			repoNamespace:      "namespace-1",
+			request:            update_repo_req_25,
+			expectedStatusCode: codes.OK,
+			expectedResponse:   update_repo_resp_1,
+			expectedDetail:     update_repo_detail_21,
 		},
 	}
 

@@ -44,6 +44,7 @@ const pkgRepoFormData = {
   authHeader: "",
   authMethod:
     PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_UNSPECIFIED,
+  isUserManaged: false,
   basicAuth: {
     password: "",
     username: "",

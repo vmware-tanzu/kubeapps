@@ -40,6 +40,9 @@ const (
 	// see docs at https://fluxcd.io/docs/components/source/ and
 	// https://fluxcd.io/docs/components/helm/api/
 	fluxHelmRepositories = "helmrepositories"
+
+	// description support
+	Annotation_Description_Key = "kubeapps.dev/description"
 )
 
 var (
@@ -240,6 +243,7 @@ func (s *Server) newRepo(ctx context.Context, request *corev1.AddPackageReposito
 		return nil, status.Errorf(codes.Unimplemented, "repository type [%s] not supported", typ)
 	}
 
+	description := request.GetDescription()
 	url := request.GetUrl()
 	tlsConfig := request.GetTlsConfig()
 	if url == "" {
@@ -251,7 +255,8 @@ func (s *Server) newRepo(ctx context.Context, request *corev1.AddPackageReposito
 
 	name := types.NamespacedName{Name: request.Name, Namespace: request.Context.Namespace}
 	auth := request.GetAuth()
-	// Get or validate secret resource for auth, not yet stored in K8s
+
+	// Get or validate secret resource for auth (stored in K8s in this method)
 	secret, isSecretKubeappsManaged, err := s.handleRepoSecretForCreate(ctx, name, typ, tlsConfig, auth)
 	if err != nil {
 		return nil, err
@@ -269,9 +274,15 @@ func (s *Server) newRepo(ctx context.Context, request *corev1.AddPackageReposito
 			return nil, status.Errorf(codes.InvalidArgument, "customDetail could not be parsed due to: %v", err)
 		}
 		provider = customDetail.Provider
+
+		if provider != "" && provider != "generic" {
+			if auth != nil && auth.Type != corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_UNSPECIFIED {
+				return nil, status.Errorf(codes.InvalidArgument, "Auth provider cannot be configured in combination with another auth method")
+			}
+		}
 	}
 
-	if fluxRepo, err := newFluxHelmRepo(name, typ, url, interval, secret, passCredentials, provider); err != nil {
+	if fluxRepo, err := newFluxHelmRepo(name, description, typ, url, interval, secret, passCredentials, provider); err != nil {
 		return nil, err
 	} else if client, err := s.getClient(ctx, name.Namespace); err != nil {
 		return nil, err
@@ -336,9 +347,8 @@ func (s *Server) repoDetail(ctx context.Context, repoRef *corev1.PackageReposito
 			Identifier: repo.Name,
 			Plugin:     GetPluginDetail(),
 		},
-		Name: repo.Name,
-		// TODO (gfichtenholt) Flux HelmRepository CR doesn't have a designated field for description
-		Description: "",
+		Name:        repo.Name,
+		Description: getDescription(repo),
 		// flux repositories are now considered to be namespaced, to support the most common cases.
 		// see discussion at https://github.com/vmware-tanzu/kubeapps/issues/5542
 		NamespaceScoped: true,
@@ -390,9 +400,8 @@ func (s *Server) repoSummaries(ctx context.Context, ns string) ([]*corev1.Packag
 				Identifier: repo.Name,
 				Plugin:     GetPluginDetail(),
 			},
-			Name: repo.Name,
-			// TODO (gfichtenholt) Flux HelmRepository CR doesn't have a designated field for description
-			Description: "",
+			Name:        repo.Name,
+			Description: getDescription(&repo),
 			// flux repositories are now considered to be namespaced, to support the most common cases.
 			// see discussion at https://github.com/vmware-tanzu/kubeapps/issues/5542
 			NamespaceScoped: true,
@@ -406,7 +415,7 @@ func (s *Server) repoSummaries(ctx context.Context, ns string) ([]*corev1.Packag
 	return summaries, nil
 }
 
-func (s *Server) updateRepo(ctx context.Context, repoRef *corev1.PackageRepositoryReference, url string, interval string, tlsConfig *corev1.PackageRepositoryTlsConfig, auth *corev1.PackageRepositoryAuth) (*corev1.PackageRepositoryReference, error) {
+func (s *Server) updateRepo(ctx context.Context, repoRef *corev1.PackageRepositoryReference, request *corev1.UpdatePackageRepositoryRequest) (*corev1.PackageRepositoryReference, error) {
 	key := types.NamespacedName{Namespace: repoRef.GetContext().GetNamespace(), Name: repoRef.GetIdentifier()}
 	repo, err := s.getRepoInCluster(ctx, key)
 	if err != nil {
@@ -421,18 +430,16 @@ func (s *Server) updateRepo(ctx context.Context, repoRef *corev1.PackageReposito
 		return nil, status.Errorf(codes.Internal, "updates to repositories pending reconciliation are not supported")
 	}
 
-	if url == "" {
+	if request.Url == "" {
 		return nil, status.Errorf(codes.InvalidArgument, "repository url may not be empty")
 	}
-	repo.Spec.URL = url
+	repo.Spec.URL = request.Url
 
-	// flux does not grok repository description yet
-	// the only field in customDetail is "provider" and I don't see the need to
-	// have the user update that. Its not like one repository is going to move from
-	// GCP to AWS.
+	// description now supported via annotation
+	setDescription(repo, request.Description)
 
-	if interval != "" {
-		if duration, err := pkgutils.ToDuration(interval); err != nil {
+	if request.Interval != "" {
+		if duration, err := pkgutils.ToDuration(request.Interval); err != nil {
 			return nil, status.Errorf(codes.InvalidArgument, "interval is invalid: %v", err)
 		} else {
 			repo.Spec.Interval = *duration
@@ -442,14 +449,13 @@ func (s *Server) updateRepo(ctx context.Context, repoRef *corev1.PackageReposito
 		repo.Spec.Interval = defaultPollInterval
 	}
 
-	if tlsConfig != nil && tlsConfig.InsecureSkipVerify {
+	if request.TlsConfig != nil && request.TlsConfig.InsecureSkipVerify {
 		// ref https://github.com/fluxcd/source-controller/issues/807
 		return nil, status.Errorf(codes.InvalidArgument, "TLS flag insecureSkipVerify is not supported")
 	}
 
 	// validate and get updated (or newly created) secret
-	secret, isKubeappsManagedSecret, isSecretUpdated, err :=
-		s.handleRepoSecretForUpdate(ctx, repo, tlsConfig, auth)
+	secret, isKubeappsManagedSecret, isSecretUpdated, err := s.handleRepoSecretForUpdate(ctx, repo, request.TlsConfig, request.Auth)
 	if err != nil {
 		return nil, err
 	}
@@ -462,7 +468,29 @@ func (s *Server) updateRepo(ctx context.Context, repoRef *corev1.PackageReposito
 		}
 	}
 
-	repo.Spec.PassCredentials = auth != nil && auth.PassCredentials
+	repo.Spec.PassCredentials = request.Auth != nil && request.Auth.PassCredentials
+
+	// Get Flux-specific values
+	if request.CustomDetail != nil {
+		customDetail := &v1alpha1.FluxPackageRepositoryCustomDetail{}
+		if err := request.CustomDetail.UnmarshalTo(customDetail); err != nil {
+			return nil, status.Errorf(codes.InvalidArgument, "customDetail could not be parsed due to: %v", err)
+		}
+		provider := customDetail.Provider
+
+		// following fixes for issue5746, the provider is allowed to be configured on update if not previously configured
+		if provider != "" && provider != "generic" {
+			if request.Auth != nil && request.Auth.Type != corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_UNSPECIFIED {
+				return nil, status.Errorf(codes.InvalidArgument, "Auth provider cannot be configured in combination with another auth method")
+			}
+			if repo.Spec.Provider != "" && repo.Spec.Provider != "generic" && repo.Spec.Provider != provider {
+				return nil, status.Errorf(codes.InvalidArgument, "Auth provider cannot be changed.")
+			}
+			repo.Spec.Provider = provider
+		} else {
+			repo.Spec.Provider = ""
+		}
+	}
 
 	// get rid of the status field, since now there will be a new reconciliation
 	// process and the current status no longer applies. metadata and spec I want
@@ -887,6 +915,7 @@ func checkRepoGeneration(repo sourcev1.HelmRepository) bool {
 // ref https://fluxcd.io/docs/components/source/helmrepositories/
 func newFluxHelmRepo(
 	targetName types.NamespacedName,
+	desc string,
 	typ string,
 	url string,
 	interval string,
@@ -914,6 +943,9 @@ func newFluxHelmRepo(
 	if typ == sourcev1.HelmRepositoryTypeOCI {
 		fluxRepo.Spec.Type = sourcev1.HelmRepositoryTypeOCI
 	}
+	if desc != "" {
+		setDescription(fluxRepo, desc)
+	}
 	if secret != nil {
 		fluxRepo.Spec.SecretRef = &fluxmeta.LocalObjectReference{
 			Name: secret.Name,
@@ -926,4 +958,20 @@ func newFluxHelmRepo(
 		fluxRepo.Spec.Provider = provider
 	}
 	return fluxRepo, nil
+}
+
+// description
+func setDescription(fluxRepo *sourcev1.HelmRepository, description string) {
+	if description != "" {
+		if fluxRepo.Annotations == nil {
+			fluxRepo.Annotations = make(map[string]string)
+		}
+		fluxRepo.Annotations[Annotation_Description_Key] = description
+	} else {
+		delete(fluxRepo.Annotations, Annotation_Description_Key)
+	}
+}
+
+func getDescription(fluxRepo *sourcev1.HelmRepository) string {
+	return fluxRepo.Annotations[Annotation_Description_Key]
 }
