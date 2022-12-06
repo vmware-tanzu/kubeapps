@@ -266,7 +266,10 @@ export function getSupportedPackageRepositoryAuthTypes(
             PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_DOCKER_CONFIG_JSON,
           ];
         default:
-          return [];
+          return [
+            PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_BASIC_AUTH,
+            PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_TLS,
+          ];
       }
     case PluginNames.PACKAGES_KAPP:
       // the available auth options in Carvel are type-specific
