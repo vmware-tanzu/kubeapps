@@ -7,6 +7,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/pkg/k8sutils"
 	authorizationv1 "k8s.io/api/authorization/v1"
 	k8sErrors "k8s.io/apimachinery/pkg/api/errors"
 	k8stesting "k8s.io/client-go/testing"
@@ -6812,7 +6813,7 @@ func TestAddPackageRepository(t *testing.T) {
 				return request
 			},
 			repositoryCustomizer: func(repository *packagingv1alpha1.PackageRepository) *packagingv1alpha1.PackageRepository {
-				repository.Annotations = map[string]string{Annotation_Description_Key: "repository description"}
+				repository.Annotations = map[string]string{k8sutils.AnnotationDescriptionKey: "repository description"}
 				return repository
 			},
 			expectedStatusCode: codes.OK,
@@ -7496,7 +7497,7 @@ func TestUpdatePackageRepository(t *testing.T) {
 		{
 			name: "update with new description",
 			initialCustomizer: func(repository *packagingv1alpha1.PackageRepository) *packagingv1alpha1.PackageRepository {
-				repository.Annotations = map[string]string{Annotation_Description_Key: "initial description"}
+				repository.Annotations = map[string]string{k8sutils.AnnotationDescriptionKey: "initial description"}
 				return repository
 			},
 			requestCustomizer: func(request *corev1.UpdatePackageRepositoryRequest) *corev1.UpdatePackageRepositoryRequest {
@@ -7504,7 +7505,7 @@ func TestUpdatePackageRepository(t *testing.T) {
 				return request
 			},
 			repositoryCustomizer: func(repository *packagingv1alpha1.PackageRepository) *packagingv1alpha1.PackageRepository {
-				repository.Annotations = map[string]string{Annotation_Description_Key: "updated description"}
+				repository.Annotations = map[string]string{k8sutils.AnnotationDescriptionKey: "updated description"}
 				return repository
 			},
 			expectedStatusCode: codes.OK,
@@ -7513,7 +7514,7 @@ func TestUpdatePackageRepository(t *testing.T) {
 		{
 			name: "update remove description",
 			initialCustomizer: func(repository *packagingv1alpha1.PackageRepository) *packagingv1alpha1.PackageRepository {
-				repository.Annotations = map[string]string{Annotation_Description_Key: "initial description"}
+				repository.Annotations = map[string]string{k8sutils.AnnotationDescriptionKey: "initial description"}
 				return repository
 			},
 			requestCustomizer: func(request *corev1.UpdatePackageRepositoryRequest) *corev1.UpdatePackageRepositoryRequest {
@@ -8440,7 +8441,7 @@ func TestGetPackageRepositoryDetail(t *testing.T) {
 		{
 			name: "check description",
 			repositoryCustomizer: func(repository *packagingv1alpha1.PackageRepository) *packagingv1alpha1.PackageRepository {
-				repository.Annotations = map[string]string{Annotation_Description_Key: "repository description"}
+				repository.Annotations = map[string]string{k8sutils.AnnotationDescriptionKey: "repository description"}
 				return repository
 			},
 			responseCustomizer: func(response *corev1.GetPackageRepositoryDetailResponse) *corev1.GetPackageRepositoryDetailResponse {
@@ -9161,7 +9162,7 @@ func TestGetPackageRepositorySummaries(t *testing.T) {
 			existingObjects: []k8sruntime.Object{
 				&packagingv1alpha1.PackageRepository{
 					TypeMeta:   defaultTypeMeta,
-					ObjectMeta: metav1.ObjectMeta{Name: "globalrepo", Namespace: demoGlobalPackagingNamespace, Annotations: map[string]string{Annotation_Description_Key: "repository summary description"}},
+					ObjectMeta: metav1.ObjectMeta{Name: "globalrepo", Namespace: demoGlobalPackagingNamespace, Annotations: map[string]string{k8sutils.AnnotationDescriptionKey: "repository summary description"}},
 					Spec: packagingv1alpha1.PackageRepositorySpec{
 						Fetch: &packagingv1alpha1.PackageRepositoryFetch{
 							ImgpkgBundle: &kappctrlv1alpha1.AppFetchImgpkgBundle{

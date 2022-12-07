@@ -605,6 +605,7 @@ func decodeDockerAuth(dockerjson []byte) (*corev1.DockerCredentials, error) {
 	if err := json.Unmarshal(dockerjson, config); err != nil {
 		return nil, err
 	}
+	// note: by design, this method is used when the secret is kubeapps managed, hence we expect only one item in the map
 	for server, entry := range config.Auths {
 		docker := &corev1.DockerCredentials{
 			Server:   server,

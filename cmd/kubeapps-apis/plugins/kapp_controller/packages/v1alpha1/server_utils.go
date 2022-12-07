@@ -490,22 +490,6 @@ func toPkgVersionSelection(version *kappcorev1.VersionSelection) *vendirversions
 	return pkgversion
 }
 
-// description
-func setDescription(pkgRepository *packagingv1alpha1.PackageRepository, description string) {
-	if description != "" {
-		if pkgRepository.Annotations == nil {
-			pkgRepository.Annotations = make(map[string]string)
-		}
-		pkgRepository.Annotations[Annotation_Description_Key] = description
-	} else {
-		delete(pkgRepository.Annotations, Annotation_Description_Key)
-	}
-}
-
-func getDescription(pkgRepository *packagingv1alpha1.PackageRepository) string {
-	return pkgRepository.Annotations[Annotation_Description_Key]
-}
-
 // secret state
 
 func repositorySecretRef(pkgRepository *packagingv1alpha1.PackageRepository) *kappctrlv1alpha1.AppFetchLocalRef {

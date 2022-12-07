@@ -5,6 +5,7 @@ package main
 
 import (
 	"encoding/json"
+	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/pkg/k8sutils"
 	"os"
 	"time"
 
@@ -1132,7 +1133,7 @@ var (
 			Name:            "bar",
 			Namespace:       "foo",
 			ResourceVersion: "1",
-			Annotations:     map[string]string{Annotation_Description_Key: "repo desc"},
+			Annotations:     map[string]string{k8sutils.AnnotationDescriptionKey: "repo desc"},
 		},
 		Spec: sourcev1.HelmRepositorySpec{
 			URL:      "http://example.com",

@@ -6,6 +6,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/pkg/k8sutils"
 	"strings"
 
 	kappctrlv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
@@ -34,8 +35,6 @@ const (
 	Type_GIT          = "git"
 
 	Redacted = "REDACTED"
-
-	Annotation_Description_Key = "kubeapps.dev/description"
 
 	Annotation_ManagedBy_Key   = "kubeapps.dev/managed-by"
 	Annotation_ManagedBy_Value = "plugin:kapp-controller"
@@ -438,7 +437,7 @@ func (s *Server) buildPackageRepositorySummary(pkgRepository *packagingv1alpha1.
 			Identifier: pkgRepository.Name,
 		},
 		Name:            pkgRepository.Name,
-		Description:     getDescription(pkgRepository),
+		Description:     k8sutils.GetDescription(&pkgRepository.ObjectMeta),
 		NamespaceScoped: s.pluginConfig.globalPackagingNamespace != pkgRepository.Namespace,
 		RequiresAuth:    repositorySecretRef(pkgRepository) != nil,
 	}
@@ -490,7 +489,7 @@ func (s *Server) buildPackageRepository(pkgRepository *packagingv1alpha1.Package
 			Identifier: pkgRepository.Name,
 		},
 		Name:            pkgRepository.Name,
-		Description:     getDescription(pkgRepository),
+		Description:     k8sutils.GetDescription(&pkgRepository.ObjectMeta),
 		NamespaceScoped: s.pluginConfig.globalPackagingNamespace != pkgRepository.Namespace,
 	}
 
@@ -653,7 +652,7 @@ func (s *Server) buildPkgRepositoryCreate(request *corev1.AddPackageRepositoryRe
 	repository.Spec = s.buildPkgRepositorySpec(request.Type, request.Interval, request.Url, request.Auth, pkgSecret, details)
 
 	// description
-	setDescription(repository, request.Description)
+	k8sutils.SetDescription(&repository.ObjectMeta, request.Description)
 
 	return repository, nil
 }
@@ -684,7 +683,7 @@ func (s *Server) buildPkgRepositoryUpdate(request *corev1.UpdatePackageRepositor
 	repository.Spec = s.buildPkgRepositorySpec(rptype, request.Interval, request.Url, request.Auth, pkgSecret, details)
 
 	// description
-	setDescription(repository, request.Description)
+	k8sutils.SetDescription(&repository.ObjectMeta, request.Description)
 
 	return repository, nil
 }

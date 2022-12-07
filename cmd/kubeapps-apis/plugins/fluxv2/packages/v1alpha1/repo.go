@@ -8,6 +8,7 @@ import (
 	"context"
 	"encoding/gob"
 	"fmt"
+	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/pkg/k8sutils"
 	"regexp"
 	"strings"
 	"time"
@@ -40,9 +41,6 @@ const (
 	// see docs at https://fluxcd.io/docs/components/source/ and
 	// https://fluxcd.io/docs/components/helm/api/
 	fluxHelmRepositories = "helmrepositories"
-
-	// description support
-	Annotation_Description_Key = "kubeapps.dev/description"
 )
 
 var (
@@ -348,7 +346,7 @@ func (s *Server) repoDetail(ctx context.Context, repoRef *corev1.PackageReposito
 			Plugin:     GetPluginDetail(),
 		},
 		Name:        repo.Name,
-		Description: getDescription(repo),
+		Description: k8sutils.GetDescription(&repo.ObjectMeta),
 		// flux repositories are now considered to be namespaced, to support the most common cases.
 		// see discussion at https://github.com/vmware-tanzu/kubeapps/issues/5542
 		NamespaceScoped: true,
@@ -401,7 +399,7 @@ func (s *Server) repoSummaries(ctx context.Context, ns string) ([]*corev1.Packag
 				Plugin:     GetPluginDetail(),
 			},
 			Name:        repo.Name,
-			Description: getDescription(&repo),
+			Description: k8sutils.GetDescription(&repo.ObjectMeta),
 			// flux repositories are now considered to be namespaced, to support the most common cases.
 			// see discussion at https://github.com/vmware-tanzu/kubeapps/issues/5542
 			NamespaceScoped: true,
@@ -436,7 +434,7 @@ func (s *Server) updateRepo(ctx context.Context, repoRef *corev1.PackageReposito
 	repo.Spec.URL = request.Url
 
 	// description now supported via annotation
-	setDescription(repo, request.Description)
+	k8sutils.SetDescription(&repo.ObjectMeta, request.Description)
 
 	if request.Interval != "" {
 		if duration, err := pkgutils.ToDuration(request.Interval); err != nil {
@@ -944,7 +942,7 @@ func newFluxHelmRepo(
 		fluxRepo.Spec.Type = sourcev1.HelmRepositoryTypeOCI
 	}
 	if desc != "" {
-		setDescription(fluxRepo, desc)
+		k8sutils.SetDescription(&fluxRepo.ObjectMeta, desc)
 	}
 	if secret != nil {
 		fluxRepo.Spec.SecretRef = &fluxmeta.LocalObjectReference{
@@ -958,20 +956,4 @@ func newFluxHelmRepo(
 		fluxRepo.Spec.Provider = provider
 	}
 	return fluxRepo, nil
-}
-
-// description
-func setDescription(fluxRepo *sourcev1.HelmRepository, description string) {
-	if description != "" {
-		if fluxRepo.Annotations == nil {
-			fluxRepo.Annotations = make(map[string]string)
-		}
-		fluxRepo.Annotations[Annotation_Description_Key] = description
-	} else {
-		delete(fluxRepo.Annotations, Annotation_Description_Key)
-	}
-}
-
-func getDescription(fluxRepo *sourcev1.HelmRepository) string {
-	return fluxRepo.Annotations[Annotation_Description_Key]
 }
