@@ -28,19 +28,19 @@ import (
 )
 
 const (
-	Type_Inline       = "inline"
-	Type_Image        = "image"
-	Type_ImgPkgBundle = "imgpkgBundle"
-	Type_HTTP         = "http"
-	Type_GIT          = "git"
+	typeInline       = "inline"
+	typeImage        = "image"
+	typeImgPkgBundle = "imgpkgBundle"
+	typeHTTP         = "http"
+	typeGIT          = "git"
 
-	Redacted = "REDACTED"
+	redacted = "REDACTED"
 
-	Annotation_ManagedBy_Key   = "kubeapps.dev/managed-by"
-	Annotation_ManagedBy_Value = "plugin:kapp-controller"
+	annotationManagedByKey   = "kubeapps.dev/managed-by"
+	annotationManagedByValue = "plugin:kapp-controller"
 
-	SSHAuthKnownHosts = "ssh-knownhosts"
-	BearerAuthToken   = "token"
+	sshAuthKnownHosts = "ssh-knownhosts"
+	bearerAuthToken   = "token"
 )
 
 // available packages
@@ -446,19 +446,19 @@ func (s *Server) buildPackageRepositorySummary(pkgRepository *packagingv1alpha1.
 	fetch := pkgRepository.Spec.Fetch
 	switch {
 	case fetch.ImgpkgBundle != nil:
-		repository.Type = Type_ImgPkgBundle
+		repository.Type = typeImgPkgBundle
 		repository.Url = fetch.ImgpkgBundle.Image
 	case fetch.Image != nil:
-		repository.Type = Type_Image
+		repository.Type = typeImage
 		repository.Url = fetch.Image.URL
 	case fetch.Git != nil:
-		repository.Type = Type_GIT
+		repository.Type = typeGIT
 		repository.Url = fetch.Git.URL
 	case fetch.HTTP != nil:
-		repository.Type = Type_HTTP
+		repository.Type = typeHTTP
 		repository.Url = fetch.HTTP.URL
 	case fetch.Inline != nil:
-		repository.Type = Type_Inline
+		repository.Type = typeInline
 	default:
 		return nil, fmt.Errorf("the package repository has a fetch directive that is not supported")
 	}
@@ -503,35 +503,35 @@ func (s *Server) buildPackageRepository(pkgRepository *packagingv1alpha1.Package
 	switch {
 	case fetch.ImgpkgBundle != nil:
 		{
-			repository.Type = Type_ImgPkgBundle
+			repository.Type = typeImgPkgBundle
 			repository.Url = fetch.ImgpkgBundle.Image
 
 			customFetch = toFetchImgpkg(fetch.ImgpkgBundle)
 		}
 	case fetch.Image != nil:
 		{
-			repository.Type = Type_Image
+			repository.Type = typeImage
 			repository.Url = fetch.Image.URL
 
 			customFetch = toFetchImage(fetch.Image)
 		}
 	case fetch.Git != nil:
 		{
-			repository.Type = Type_GIT
+			repository.Type = typeGIT
 			repository.Url = fetch.Git.URL
 
 			customFetch = toFetchGit(fetch.Git)
 		}
 	case fetch.HTTP != nil:
 		{
-			repository.Type = Type_HTTP
+			repository.Type = typeHTTP
 			repository.Url = fetch.HTTP.URL
 
 			customFetch = toFetchHttp(fetch.HTTP)
 		}
 	case fetch.Inline != nil:
 		{
-			repository.Type = Type_Inline
+			repository.Type = typeInline
 			customFetch = toFetchInline(fetch.Inline)
 		}
 	default:
@@ -557,32 +557,32 @@ func (s *Server) buildPackageRepository(pkgRepository *packagingv1alpha1.Package
 				auth.Type = corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_BASIC_AUTH
 				auth.PackageRepoAuthOneOf = &corev1.PackageRepositoryAuth_UsernamePassword{
 					UsernamePassword: &corev1.UsernamePassword{
-						Username: Redacted,
-						Password: Redacted,
+						Username: redacted,
+						Password: redacted,
 					},
 				}
 			case isSshAuth(pkgSecret):
 				auth.Type = corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_SSH
 				auth.PackageRepoAuthOneOf = &corev1.PackageRepositoryAuth_SshCreds{
 					SshCreds: &corev1.SshCredentials{
-						PrivateKey: Redacted,
-						KnownHosts: Redacted,
+						PrivateKey: redacted,
+						KnownHosts: redacted,
 					},
 				}
 			case isDockerAuth(pkgSecret):
 				auth.Type = corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_DOCKER_CONFIG_JSON
 				auth.PackageRepoAuthOneOf = &corev1.PackageRepositoryAuth_DockerCreds{
 					DockerCreds: &corev1.DockerCredentials{
-						Username: Redacted,
-						Password: Redacted,
-						Server:   Redacted,
-						Email:    Redacted,
+						Username: redacted,
+						Password: redacted,
+						Server:   redacted,
+						Email:    redacted,
 					},
 				}
 			case isBearerAuth(pkgSecret):
 				auth.Type = corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_BEARER
 				auth.PackageRepoAuthOneOf = &corev1.PackageRepositoryAuth_Header{
-					Header: Redacted,
+					Header: redacted,
 				}
 			default:
 				auth.Type = corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_UNSPECIFIED
@@ -662,13 +662,13 @@ func (s *Server) buildPkgRepositoryUpdate(request *corev1.UpdatePackageRepositor
 	var rptype string
 	switch {
 	case repository.Spec.Fetch.ImgpkgBundle != nil:
-		rptype = Type_ImgPkgBundle
+		rptype = typeImgPkgBundle
 	case repository.Spec.Fetch.Image != nil:
-		rptype = Type_Image
+		rptype = typeImage
 	case repository.Spec.Fetch.Git != nil:
-		rptype = Type_GIT
+		rptype = typeGIT
 	case repository.Spec.Fetch.HTTP != nil:
-		rptype = Type_HTTP
+		rptype = typeHTTP
 	}
 
 	// custom details
@@ -709,7 +709,7 @@ func (s *Server) buildPkgRepositorySpec(rptype string, interval string, url stri
 
 	// fetch
 	switch rptype {
-	case Type_ImgPkgBundle:
+	case typeImgPkgBundle:
 		{
 			imgpkg := &kappctrlv1alpha1.AppFetchImgpkgBundle{
 				Image:     url,
@@ -720,7 +720,7 @@ func (s *Server) buildPkgRepositorySpec(rptype string, interval string, url stri
 			}
 			spec.Fetch.ImgpkgBundle = imgpkg
 		}
-	case Type_Image:
+	case typeImage:
 		{
 			image := &kappctrlv1alpha1.AppFetchImage{
 				URL:       url,
@@ -731,7 +731,7 @@ func (s *Server) buildPkgRepositorySpec(rptype string, interval string, url stri
 			}
 			spec.Fetch.Image = image
 		}
-	case Type_GIT:
+	case typeGIT:
 		{
 			git := &kappctrlv1alpha1.AppFetchGit{
 				URL:       url,
@@ -742,7 +742,7 @@ func (s *Server) buildPkgRepositorySpec(rptype string, interval string, url stri
 			}
 			spec.Fetch.Git = git
 		}
-	case Type_HTTP:
+	case typeHTTP:
 		{
 			http := &kappctrlv1alpha1.AppFetchHTTP{
 				URL:       url,
@@ -778,9 +778,9 @@ func (s *Server) validatePackageRepositoryCreate(ctx context.Context, cluster st
 	}
 
 	switch request.Type {
-	case Type_ImgPkgBundle, Type_Image, Type_GIT, Type_HTTP:
+	case typeImgPkgBundle, typeImage, typeGIT, typeHTTP:
 		// valid types
-	case Type_Inline:
+	case typeInline:
 		return status.Errorf(codes.InvalidArgument, "inline repositories are not supported")
 	case "":
 		return status.Errorf(codes.InvalidArgument, "no repository Type provided")
@@ -812,13 +812,13 @@ func (s *Server) validatePackageRepositoryUpdate(ctx context.Context, cluster st
 	var rptype string
 	switch {
 	case pkgRepository.Spec.Fetch.ImgpkgBundle != nil:
-		rptype = Type_ImgPkgBundle
+		rptype = typeImgPkgBundle
 	case pkgRepository.Spec.Fetch.Image != nil:
-		rptype = Type_Image
+		rptype = typeImage
 	case pkgRepository.Spec.Fetch.Git != nil:
-		rptype = Type_GIT
+		rptype = typeGIT
 	case pkgRepository.Spec.Fetch.HTTP != nil:
-		rptype = Type_HTTP
+		rptype = typeHTTP
 	case pkgRepository.Spec.Fetch.Inline != nil:
 		return status.Errorf(codes.FailedPrecondition, "inline repositories are not supported")
 	default:
@@ -866,23 +866,23 @@ func (s *Server) validatePackageRepositoryDetails(rptype string, any *anypb.Any)
 	if fetch := details.Fetch; fetch != nil {
 		switch {
 		case fetch.ImgpkgBundle != nil:
-			if rptype != Type_ImgPkgBundle {
+			if rptype != typeImgPkgBundle {
 				return status.Errorf(codes.InvalidArgument, "custom details do not match the expected type %s", rptype)
 			}
 		case fetch.Image != nil:
-			if rptype != Type_Image {
+			if rptype != typeImage {
 				return status.Errorf(codes.InvalidArgument, "custom details do not match the expected type %s", rptype)
 			}
 		case fetch.Git != nil:
-			if rptype != Type_GIT {
+			if rptype != typeGIT {
 				return status.Errorf(codes.InvalidArgument, "custom details do not match the expected type %s", rptype)
 			}
 		case fetch.Http != nil:
-			if rptype != Type_HTTP {
+			if rptype != typeHTTP {
 				return status.Errorf(codes.InvalidArgument, "custom details do not match the expected type %s", rptype)
 			}
 		case fetch.Inline != nil:
-			if rptype != Type_Inline {
+			if rptype != typeInline {
 				return status.Errorf(codes.InvalidArgument, "custom details do not match the expected type %s", rptype)
 			}
 		}
@@ -902,18 +902,18 @@ func (s *Server) validatePackageRepositoryAuth(ctx context.Context, cluster, nam
 	// validate type compatibility
 	// see https://carvel.dev/kapp-controller/docs/v0.43.2/app-overview/#specfetch
 	switch rptype {
-	case Type_ImgPkgBundle, Type_Image:
+	case typeImgPkgBundle, typeImage:
 		if auth.Type != corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_BASIC_AUTH &&
 			auth.Type != corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_DOCKER_CONFIG_JSON &&
 			auth.Type != corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_BEARER {
 			return status.Errorf(codes.InvalidArgument, "Auth Type is incompatible with the repository Type")
 		}
-	case Type_GIT:
+	case typeGIT:
 		if auth.Type != corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_BASIC_AUTH &&
 			auth.Type != corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_SSH {
 			return status.Errorf(codes.InvalidArgument, "Auth Type is incompatible with the repository Type")
 		}
-	case Type_HTTP:
+	case typeHTTP:
 		if auth.Type != corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_BASIC_AUTH {
 			return status.Errorf(codes.InvalidArgument, "Auth Type is incompatible with the repository Type")
 		}
@@ -963,7 +963,7 @@ func (s *Server) validatePackageRepositoryAuth(ctx context.Context, cluster, nam
 
 	// validate auth data
 	//    ensures the expected credential struct is provided
-	//    for new auth or new auth type, credentials can't have Redacted content
+	//    for new auth or new auth type, credentials can't have redacted content
 	switch auth.Type {
 	case corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_BASIC_AUTH:
 		up := auth.GetUsernamePassword()
@@ -971,7 +971,7 @@ func (s *Server) validatePackageRepositoryAuth(ctx context.Context, cluster, nam
 			return status.Errorf(codes.InvalidArgument, "missing basic auth credentials")
 		}
 		if pkgSecret == nil || !isBasicAuth(pkgSecret) {
-			if up.Username == Redacted || up.Password == Redacted {
+			if up.Username == redacted || up.Password == redacted {
 				return status.Errorf(codes.InvalidArgument, "invalid auth, unexpected REDACTED content")
 			}
 		}
@@ -981,7 +981,7 @@ func (s *Server) validatePackageRepositoryAuth(ctx context.Context, cluster, nam
 			return status.Errorf(codes.InvalidArgument, "missing SSH auth credentials")
 		}
 		if pkgSecret == nil || !isSshAuth(pkgSecret) {
-			if ssh.PrivateKey == Redacted || ssh.KnownHosts == Redacted {
+			if ssh.PrivateKey == redacted || ssh.KnownHosts == redacted {
 				return status.Errorf(codes.InvalidArgument, "invalid auth, unexpected REDACTED content")
 			}
 		}
@@ -991,7 +991,7 @@ func (s *Server) validatePackageRepositoryAuth(ctx context.Context, cluster, nam
 			return status.Errorf(codes.InvalidArgument, "missing Docker Config auth credentials")
 		}
 		if pkgSecret == nil || !isDockerAuth(pkgSecret) {
-			if docker.Username == Redacted || docker.Password == Redacted || docker.Server == Redacted || docker.Email == Redacted {
+			if docker.Username == redacted || docker.Password == redacted || docker.Server == redacted || docker.Email == redacted {
 				return status.Errorf(codes.InvalidArgument, "invalid auth, unexpected REDACTED content")
 			}
 		}
@@ -1001,7 +1001,7 @@ func (s *Server) validatePackageRepositoryAuth(ctx context.Context, cluster, nam
 			return status.Errorf(codes.InvalidArgument, "missing Token auth credentials")
 		}
 		if pkgSecret == nil || !isBearerAuth(pkgSecret) {
-			if token == Redacted {
+			if token == redacted {
 				return status.Errorf(codes.InvalidArgument, "invalid auth, unexpected REDACTED content")
 			}
 		}
@@ -1016,7 +1016,7 @@ func (s *Server) buildPkgRepositorySecretCreate(namespace, name string, auth *co
 		ObjectMeta: metav1.ObjectMeta{
 			Namespace:    namespace,
 			GenerateName: name + "-",
-			Annotations:  map[string]string{Annotation_ManagedBy_Key: Annotation_ManagedBy_Value},
+			Annotations:  map[string]string{annotationManagedByKey: annotationManagedByValue},
 		},
 		Type:       k8scorev1.SecretTypeOpaque,
 		StringData: map[string]string{},
@@ -1031,7 +1031,7 @@ func (s *Server) buildPkgRepositorySecretCreate(namespace, name string, auth *co
 	case corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_SSH:
 		ssh := auth.GetSshCreds()
 		secret.StringData[k8scorev1.SSHAuthPrivateKey] = ssh.PrivateKey
-		secret.StringData[SSHAuthKnownHosts] = ssh.KnownHosts
+		secret.StringData[sshAuthKnownHosts] = ssh.KnownHosts
 
 	case corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_DOCKER_CONFIG_JSON:
 		secret.Type = k8scorev1.SecretTypeDockerConfigJson
@@ -1044,7 +1044,7 @@ func (s *Server) buildPkgRepositorySecretCreate(namespace, name string, auth *co
 
 	case corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_BEARER:
 		token := auth.GetHeader()
-		secret.StringData[BearerAuthToken] = token
+		secret.StringData[bearerAuthToken] = token
 	}
 
 	return secret, nil
@@ -1055,7 +1055,7 @@ func (s *Server) buildPkgRepositorySecretUpdate(pkgSecret *k8scorev1.Secret, nam
 		ObjectMeta: metav1.ObjectMeta{
 			Namespace:    namespace,
 			GenerateName: name + "-",
-			Annotations:  map[string]string{Annotation_ManagedBy_Key: Annotation_ManagedBy_Value},
+			Annotations:  map[string]string{annotationManagedByKey: annotationManagedByValue},
 		},
 		Type:       k8scorev1.SecretTypeOpaque,
 		StringData: map[string]string{},
@@ -1065,15 +1065,15 @@ func (s *Server) buildPkgRepositorySecretUpdate(pkgSecret *k8scorev1.Secret, nam
 	case corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_BASIC_AUTH:
 		up := auth.GetUsernamePassword()
 		if isBasicAuth(pkgSecret) {
-			if up.Username == Redacted && up.Password == Redacted {
+			if up.Username == redacted && up.Password == redacted {
 				return nil, nil
 			}
-			if up.Username != Redacted {
+			if up.Username != redacted {
 				secret.StringData[k8scorev1.BasicAuthUsernameKey] = up.Username
 			} else {
 				secret.StringData[k8scorev1.BasicAuthUsernameKey] = string(pkgSecret.Data[k8scorev1.BasicAuthUsernameKey])
 			}
-			if up.Password != Redacted {
+			if up.Password != redacted {
 				secret.StringData[k8scorev1.BasicAuthPasswordKey] = up.Password
 			} else {
 				secret.StringData[k8scorev1.BasicAuthPasswordKey] = string(pkgSecret.Data[k8scorev1.BasicAuthPasswordKey])
@@ -1086,29 +1086,29 @@ func (s *Server) buildPkgRepositorySecretUpdate(pkgSecret *k8scorev1.Secret, nam
 	case corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_SSH:
 		ssh := auth.GetSshCreds()
 		if isSshAuth(pkgSecret) {
-			if ssh.PrivateKey == Redacted && ssh.KnownHosts == Redacted {
+			if ssh.PrivateKey == redacted && ssh.KnownHosts == redacted {
 				return nil, nil
 			}
-			if ssh.PrivateKey != Redacted {
+			if ssh.PrivateKey != redacted {
 				secret.StringData[k8scorev1.SSHAuthPrivateKey] = ssh.PrivateKey
 			} else {
 				secret.StringData[k8scorev1.SSHAuthPrivateKey] = string(pkgSecret.Data[k8scorev1.SSHAuthPrivateKey])
 			}
-			if ssh.KnownHosts != Redacted {
-				secret.StringData[SSHAuthKnownHosts] = ssh.KnownHosts
+			if ssh.KnownHosts != redacted {
+				secret.StringData[sshAuthKnownHosts] = ssh.KnownHosts
 			} else {
-				secret.StringData[SSHAuthKnownHosts] = string(pkgSecret.Data[SSHAuthKnownHosts])
+				secret.StringData[sshAuthKnownHosts] = string(pkgSecret.Data[sshAuthKnownHosts])
 			}
 		} else {
 			secret.StringData[k8scorev1.SSHAuthPrivateKey] = ssh.PrivateKey
-			secret.StringData[SSHAuthKnownHosts] = ssh.KnownHosts
+			secret.StringData[sshAuthKnownHosts] = ssh.KnownHosts
 		}
 
 	case corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_DOCKER_CONFIG_JSON:
 		secret.Type = k8scorev1.SecretTypeDockerConfigJson
 		docker := auth.GetDockerCreds()
 		if isDockerAuth(pkgSecret) {
-			if docker.Username == Redacted && docker.Password == Redacted && docker.Server == Redacted && docker.Email == Redacted {
+			if docker.Username == redacted && docker.Password == redacted && docker.Server == redacted && docker.Email == redacted {
 				return nil, nil
 			}
 
@@ -1116,16 +1116,16 @@ func (s *Server) buildPkgRepositorySecretUpdate(pkgSecret *k8scorev1.Secret, nam
 			if err != nil {
 				return nil, err
 			}
-			if docker.Username != Redacted {
+			if docker.Username != redacted {
 				pkgdocker.Username = docker.Username
 			}
-			if docker.Password != Redacted {
+			if docker.Password != redacted {
 				pkgdocker.Password = docker.Password
 			}
-			if docker.Server != Redacted {
+			if docker.Server != redacted {
 				pkgdocker.Server = docker.Server
 			}
-			if docker.Email != Redacted {
+			if docker.Email != redacted {
 				pkgdocker.Email = docker.Email
 			}
 
@@ -1145,13 +1145,13 @@ func (s *Server) buildPkgRepositorySecretUpdate(pkgSecret *k8scorev1.Secret, nam
 	case corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_BEARER:
 		token := auth.GetHeader()
 		if isBearerAuth(pkgSecret) {
-			if token == Redacted {
+			if token == redacted {
 				return nil, nil
 			} else {
-				secret.StringData[BearerAuthToken] = token
+				secret.StringData[bearerAuthToken] = token
 			}
 		} else {
-			secret.StringData[BearerAuthToken] = token
+			secret.StringData[bearerAuthToken] = token
 		}
 	}
 

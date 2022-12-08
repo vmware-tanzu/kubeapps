@@ -6526,7 +6526,7 @@ func TestAddPackageRepository(t *testing.T) {
 		return &corev1.AddPackageRepositoryRequest{
 			Context:  defaultGlobalContext,
 			Name:     "globalrepo",
-			Type:     Type_ImgPkgBundle,
+			Type:     typeImgPkgBundle,
 			Url:      "projects.registry.example.com/repo-1/main@sha256:abcd",
 			Interval: "24h",
 			Plugin:   &pluginDetail,
@@ -6672,7 +6672,7 @@ func TestAddPackageRepository(t *testing.T) {
 		{
 			name: "validate type (inline)",
 			requestCustomizer: func(request *corev1.AddPackageRepositoryRequest) *corev1.AddPackageRepositoryRequest {
-				request.Type = Type_Inline
+				request.Type = typeInline
 				return request
 			},
 			expectedStatusCode: codes.InvalidArgument,
@@ -6791,13 +6791,13 @@ func TestAddPackageRepository(t *testing.T) {
 		{
 			name: "validate auth (plugin managed, invalid config, ssh auth)",
 			requestCustomizer: func(request *corev1.AddPackageRepositoryRequest) *corev1.AddPackageRepositoryRequest {
-				request.Type = Type_GIT
+				request.Type = typeGIT
 				request.Auth = &corev1.PackageRepositoryAuth{
 					Type: corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_SSH,
 					PackageRepoAuthOneOf: &corev1.PackageRepositoryAuth_SshCreds{
 						SshCreds: &corev1.SshCredentials{
-							PrivateKey: Redacted,
-							KnownHosts: Redacted,
+							PrivateKey: redacted,
+							KnownHosts: redacted,
 						},
 					},
 				}
@@ -6861,7 +6861,7 @@ func TestAddPackageRepository(t *testing.T) {
 		{
 			name: "create with details (imgpkg)",
 			requestCustomizer: func(request *corev1.AddPackageRepositoryRequest) *corev1.AddPackageRepositoryRequest {
-				request.Type = Type_ImgPkgBundle
+				request.Type = typeImgPkgBundle
 				request.Url = "projects.registry.example.com/repo-1/main@sha256:abcd"
 				request.CustomDetail, _ = anypb.New(&kappcorev1.KappControllerPackageRepositoryCustomDetail{
 					Fetch: &kappcorev1.PackageRepositoryFetch{
@@ -6901,7 +6901,7 @@ func TestAddPackageRepository(t *testing.T) {
 		{
 			name: "create with details (image)",
 			requestCustomizer: func(request *corev1.AddPackageRepositoryRequest) *corev1.AddPackageRepositoryRequest {
-				request.Type = Type_Image
+				request.Type = typeImage
 				request.Url = "projects.registry.example.com/repo-1/main@sha256:abcd"
 				request.CustomDetail, _ = anypb.New(&kappcorev1.KappControllerPackageRepositoryCustomDetail{
 					Fetch: &kappcorev1.PackageRepositoryFetch{
@@ -6943,7 +6943,7 @@ func TestAddPackageRepository(t *testing.T) {
 		{
 			name: "create with details (git)",
 			requestCustomizer: func(request *corev1.AddPackageRepositoryRequest) *corev1.AddPackageRepositoryRequest {
-				request.Type = Type_GIT
+				request.Type = typeGIT
 				request.Url = "https://github.com/projects.registry.vmware.com/tce/main"
 				request.CustomDetail, _ = anypb.New(&kappcorev1.KappControllerPackageRepositoryCustomDetail{
 					Fetch: &kappcorev1.PackageRepositoryFetch{
@@ -6989,7 +6989,7 @@ func TestAddPackageRepository(t *testing.T) {
 		{
 			name: "create with details (http)",
 			requestCustomizer: func(request *corev1.AddPackageRepositoryRequest) *corev1.AddPackageRepositoryRequest {
-				request.Type = Type_HTTP
+				request.Type = typeHTTP
 				request.Url = "https://projects.registry.vmware.com/tce/main"
 				request.CustomDetail, _ = anypb.New(&kappcorev1.KappControllerPackageRepositoryCustomDetail{
 					Fetch: &kappcorev1.PackageRepositoryFetch{
@@ -7100,7 +7100,7 @@ func TestAddPackageRepository(t *testing.T) {
 				if !isPluginManaged(defaultRepository(), secret) {
 					t.Errorf("annotations and ownership was not properly set: %+v", secret)
 				}
-				if secret.Type != k8scorev1.SecretTypeOpaque || secret.StringData[BearerAuthToken] != "foo" {
+				if secret.Type != k8scorev1.SecretTypeOpaque || secret.StringData[bearerAuthToken] != "foo" {
 					t.Errorf("secret data was not properly constructed: %+v", secret)
 				}
 			},
@@ -7248,7 +7248,7 @@ func TestUpdatePackageRepository(t *testing.T) {
 			Data: map[string][]byte{},
 		}
 		if managed {
-			secret.ObjectMeta.Annotations = map[string]string{Annotation_ManagedBy_Key: Annotation_ManagedBy_Value}
+			secret.ObjectMeta.Annotations = map[string]string{annotationManagedByKey: annotationManagedByValue}
 			secret.ObjectMeta.OwnerReferences = []metav1.OwnerReference{
 				{
 					APIVersion: defaultTypeMeta.APIVersion,
@@ -7268,7 +7268,7 @@ func TestUpdatePackageRepository(t *testing.T) {
 	}
 	tokenAuthSecret := func(secret *k8scorev1.Secret, token string) *k8scorev1.Secret {
 		secret.Type = k8scorev1.SecretTypeOpaque
-		secret.Data = map[string][]byte{BearerAuthToken: []byte(token)}
+		secret.Data = map[string][]byte{bearerAuthToken: []byte(token)}
 		return secret
 	}
 	dockerAuthSecret := func(secret *k8scorev1.Secret, dockerconfig string) *k8scorev1.Secret {
@@ -7437,7 +7437,7 @@ func TestUpdatePackageRepository(t *testing.T) {
 						DockerCreds: &corev1.DockerCredentials{
 							Username: "foo",
 							Password: "bar",
-							Server:   Redacted,
+							Server:   redacted,
 						},
 					},
 				}
@@ -7884,7 +7884,7 @@ func TestUpdatePackageRepository(t *testing.T) {
 				if !isPluginManaged(defaultRepository(), secret) {
 					t.Errorf("annotations and ownership was not properly set: %+v", secret)
 				}
-				if secret.Type != k8scorev1.SecretTypeOpaque || secret.StringData[BearerAuthToken] != "foo" {
+				if secret.Type != k8scorev1.SecretTypeOpaque || secret.StringData[bearerAuthToken] != "foo" {
 					t.Errorf("secret data was not properly constructed: %+v", secret)
 				}
 			},
@@ -7929,8 +7929,8 @@ func TestUpdatePackageRepository(t *testing.T) {
 					Type: corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_BASIC_AUTH,
 					PackageRepoAuthOneOf: &corev1.PackageRepositoryAuth_UsernamePassword{
 						UsernamePassword: &corev1.UsernamePassword{
-							Username: Redacted,
-							Password: Redacted,
+							Username: redacted,
+							Password: redacted,
 						},
 					},
 				}
@@ -7965,7 +7965,7 @@ func TestUpdatePackageRepository(t *testing.T) {
 					Type: corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_BASIC_AUTH,
 					PackageRepoAuthOneOf: &corev1.PackageRepositoryAuth_UsernamePassword{
 						UsernamePassword: &corev1.UsernamePassword{
-							Username: Redacted,
+							Username: redacted,
 							Password: "bar2",
 						},
 					},
@@ -8019,7 +8019,7 @@ func TestUpdatePackageRepository(t *testing.T) {
 				if err != nil {
 					t.Fatalf("error fetching secret:%+v", err)
 				}
-				if secret.Type != k8scorev1.SecretTypeOpaque || secret.StringData[BearerAuthToken] != "zot" {
+				if secret.Type != k8scorev1.SecretTypeOpaque || secret.StringData[bearerAuthToken] != "zot" {
 					t.Errorf("secret data not as expected: %+v", secret)
 				}
 			},
@@ -8040,7 +8040,7 @@ func TestUpdatePackageRepository(t *testing.T) {
 					Type: corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_BASIC_AUTH,
 					PackageRepoAuthOneOf: &corev1.PackageRepositoryAuth_UsernamePassword{
 						UsernamePassword: &corev1.UsernamePassword{
-							Username: Redacted,
+							Username: redacted,
 							Password: "bar",
 						},
 					},
@@ -8340,7 +8340,7 @@ func TestGetPackageRepositoryDetail(t *testing.T) {
 				},
 				Name:            "globalrepo",
 				NamespaceScoped: false,
-				Type:            Type_ImgPkgBundle,
+				Type:            typeImgPkgBundle,
 				Url:             "projects.registry.example.com/repo-1/main@sha256:abcd",
 				Interval:        "24h",
 			},
@@ -8352,7 +8352,7 @@ func TestGetPackageRepositoryDetail(t *testing.T) {
 			ObjectMeta: metav1.ObjectMeta{
 				Namespace:   defaultGlobalContext.Namespace,
 				Name:        "my-secret",
-				Annotations: map[string]string{Annotation_ManagedBy_Key: Annotation_ManagedBy_Value},
+				Annotations: map[string]string{annotationManagedByKey: annotationManagedByValue},
 				OwnerReferences: []metav1.OwnerReference{
 					{
 						APIVersion: defaultTypeMeta.APIVersion,
@@ -8493,7 +8493,7 @@ func TestGetPackageRepositoryDetail(t *testing.T) {
 				return repository
 			},
 			responseCustomizer: func(response *corev1.GetPackageRepositoryDetailResponse) *corev1.GetPackageRepositoryDetailResponse {
-				response.Detail.Type = Type_ImgPkgBundle
+				response.Detail.Type = typeImgPkgBundle
 				response.Detail.Url = "projects.registry.example.com/repo-1/main@sha256:abcd"
 				response.Detail.CustomDetail, _ = anypb.New(&kappcorev1.KappControllerPackageRepositoryCustomDetail{
 					Fetch: &kappcorev1.PackageRepositoryFetch{
@@ -8533,7 +8533,7 @@ func TestGetPackageRepositoryDetail(t *testing.T) {
 				return repository
 			},
 			responseCustomizer: func(response *corev1.GetPackageRepositoryDetailResponse) *corev1.GetPackageRepositoryDetailResponse {
-				response.Detail.Type = Type_Image
+				response.Detail.Type = typeImage
 				response.Detail.Url = "projects.registry.example.com/repo-1/main@sha256:abcd"
 				response.Detail.CustomDetail, _ = anypb.New(&kappcorev1.KappControllerPackageRepositoryCustomDetail{
 					Fetch: &kappcorev1.PackageRepositoryFetch{
@@ -8576,7 +8576,7 @@ func TestGetPackageRepositoryDetail(t *testing.T) {
 				return repository
 			},
 			responseCustomizer: func(response *corev1.GetPackageRepositoryDetailResponse) *corev1.GetPackageRepositoryDetailResponse {
-				response.Detail.Type = Type_GIT
+				response.Detail.Type = typeGIT
 				response.Detail.Url = "https://github.com/projects.registry.vmware.com/tce/main"
 				response.Detail.CustomDetail, _ = anypb.New(&kappcorev1.KappControllerPackageRepositoryCustomDetail{
 					Fetch: &kappcorev1.PackageRepositoryFetch{
@@ -8612,7 +8612,7 @@ func TestGetPackageRepositoryDetail(t *testing.T) {
 				return repository
 			},
 			responseCustomizer: func(response *corev1.GetPackageRepositoryDetailResponse) *corev1.GetPackageRepositoryDetailResponse {
-				response.Detail.Type = Type_HTTP
+				response.Detail.Type = typeHTTP
 				response.Detail.Url = "https://projects.registry.vmware.com/tce/main"
 				response.Detail.CustomDetail, _ = anypb.New(&kappcorev1.KappControllerPackageRepositoryCustomDetail{
 					Fetch: &kappcorev1.PackageRepositoryFetch{
@@ -8648,7 +8648,7 @@ func TestGetPackageRepositoryDetail(t *testing.T) {
 				return repository
 			},
 			responseCustomizer: func(response *corev1.GetPackageRepositoryDetailResponse) *corev1.GetPackageRepositoryDetailResponse {
-				response.Detail.Type = Type_Inline
+				response.Detail.Type = typeInline
 				response.Detail.Url = ""
 				response.Detail.CustomDetail, _ = anypb.New(&kappcorev1.KappControllerPackageRepositoryCustomDetail{
 					Fetch: &kappcorev1.PackageRepositoryFetch{
@@ -8730,8 +8730,8 @@ func TestGetPackageRepositoryDetail(t *testing.T) {
 					Type: corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_BASIC_AUTH,
 					PackageRepoAuthOneOf: &corev1.PackageRepositoryAuth_UsernamePassword{
 						UsernamePassword: &corev1.UsernamePassword{
-							Username: Redacted,
-							Password: Redacted,
+							Username: redacted,
+							Password: redacted,
 						},
 					},
 				}
@@ -8759,8 +8759,8 @@ func TestGetPackageRepositoryDetail(t *testing.T) {
 					Type: corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_SSH,
 					PackageRepoAuthOneOf: &corev1.PackageRepositoryAuth_SshCreds{
 						SshCreds: &corev1.SshCredentials{
-							PrivateKey: Redacted,
-							KnownHosts: Redacted,
+							PrivateKey: redacted,
+							KnownHosts: redacted,
 						},
 					},
 				}
@@ -8773,7 +8773,7 @@ func TestGetPackageRepositoryDetail(t *testing.T) {
 			existingTypedObjects: []k8sruntime.Object{
 				func() *k8scorev1.Secret {
 					s := defaultSecret()
-					s.Data[BearerAuthToken] = []byte("foo")
+					s.Data[bearerAuthToken] = []byte("foo")
 					return s
 				}(),
 			},
@@ -8787,7 +8787,7 @@ func TestGetPackageRepositoryDetail(t *testing.T) {
 				response.Detail.Auth = &corev1.PackageRepositoryAuth{
 					Type: corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_BEARER,
 					PackageRepoAuthOneOf: &corev1.PackageRepositoryAuth_Header{
-						Header: Redacted,
+						Header: redacted,
 					},
 				}
 				return response
@@ -8814,10 +8814,10 @@ func TestGetPackageRepositoryDetail(t *testing.T) {
 					Type: corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_DOCKER_CONFIG_JSON,
 					PackageRepoAuthOneOf: &corev1.PackageRepositoryAuth_DockerCreds{
 						DockerCreds: &corev1.DockerCredentials{
-							Server:   Redacted,
-							Username: Redacted,
-							Password: Redacted,
-							Email:    Redacted,
+							Server:   redacted,
+							Username: redacted,
+							Password: redacted,
+							Email:    redacted,
 						},
 					},
 				}
@@ -8919,7 +8919,7 @@ func TestGetPackageRepositorySummaries(t *testing.T) {
 				},
 				Name:            "nsrepo",
 				NamespaceScoped: true,
-				Type:            Type_ImgPkgBundle,
+				Type:            typeImgPkgBundle,
 				Url:             "projects.registry.example.com/repo-1/main@sha256:abcd",
 				RequiresAuth:    false,
 			},
@@ -8948,7 +8948,7 @@ func TestGetPackageRepositorySummaries(t *testing.T) {
 				},
 				Name:            "globalrepo",
 				NamespaceScoped: false,
-				Type:            Type_ImgPkgBundle,
+				Type:            typeImgPkgBundle,
 				Url:             "projects.registry.example.com/repo-1/main@sha256:abcd",
 				RequiresAuth:    false,
 			},
@@ -8976,7 +8976,7 @@ func TestGetPackageRepositorySummaries(t *testing.T) {
 					Identifier: "globalrepo",
 				},
 				Name:         "globalrepo",
-				Type:         Type_ImgPkgBundle,
+				Type:         typeImgPkgBundle,
 				Url:          "projects.registry.example.com/repo-1/main@sha256:abcd",
 				RequiresAuth: false,
 			},
@@ -9004,7 +9004,7 @@ func TestGetPackageRepositorySummaries(t *testing.T) {
 					Identifier: "globalrepo",
 				},
 				Name:         "globalrepo",
-				Type:         Type_Image,
+				Type:         typeImage,
 				Url:          "projects.registry.example.com/repo-1/main@sha256:abcd",
 				RequiresAuth: false,
 			},
@@ -9032,7 +9032,7 @@ func TestGetPackageRepositorySummaries(t *testing.T) {
 					Identifier: "globalrepo",
 				},
 				Name:         "globalrepo",
-				Type:         Type_GIT,
+				Type:         typeGIT,
 				Url:          "https://github.com/projects.registry.vmware.com/tce/main",
 				RequiresAuth: false,
 			},
@@ -9060,7 +9060,7 @@ func TestGetPackageRepositorySummaries(t *testing.T) {
 					Identifier: "globalrepo",
 				},
 				Name:         "globalrepo",
-				Type:         Type_HTTP,
+				Type:         typeHTTP,
 				Url:          "https://projects.registry.vmware.com/tce/main",
 				RequiresAuth: false,
 			},
@@ -9086,7 +9086,7 @@ func TestGetPackageRepositorySummaries(t *testing.T) {
 					Identifier: "globalrepo",
 				},
 				Name:         "globalrepo",
-				Type:         Type_Inline,
+				Type:         typeInline,
 				RequiresAuth: false,
 			},
 		},
@@ -9121,7 +9121,7 @@ func TestGetPackageRepositorySummaries(t *testing.T) {
 					Identifier: "globalrepo",
 				},
 				Name:         "globalrepo",
-				Type:         Type_ImgPkgBundle,
+				Type:         typeImgPkgBundle,
 				Url:          "projects.registry.example.com/repo-1/main@sha256:abcd",
 				RequiresAuth: false,
 			},
@@ -9152,7 +9152,7 @@ func TestGetPackageRepositorySummaries(t *testing.T) {
 					Identifier: "globalrepo",
 				},
 				Name:         "globalrepo",
-				Type:         Type_ImgPkgBundle,
+				Type:         typeImgPkgBundle,
 				Url:          "projects.registry.example.com/repo-1/main@sha256:abcd",
 				RequiresAuth: true,
 			},
@@ -9181,7 +9181,7 @@ func TestGetPackageRepositorySummaries(t *testing.T) {
 				},
 				Name:         "globalrepo",
 				Description:  "repository summary description",
-				Type:         Type_ImgPkgBundle,
+				Type:         typeImgPkgBundle,
 				Url:          "projects.registry.example.com/repo-1/main@sha256:abcd",
 				RequiresAuth: false,
 			},

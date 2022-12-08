@@ -511,7 +511,7 @@ func isPluginManaged(pkgRepository *packagingv1alpha1.PackageRepository, pkgSecr
 	if !metav1.IsControlledBy(pkgSecret, pkgRepository) {
 		return false
 	}
-	if managedby := pkgSecret.GetAnnotations()[Annotation_ManagedBy_Key]; managedby != Annotation_ManagedBy_Value {
+	if managedby := pkgSecret.GetAnnotations()[annotationManagedByKey]; managedby != annotationManagedByValue {
 		return false
 	}
 	return true
@@ -522,7 +522,7 @@ func isBasicAuth(secret *k8scorev1.Secret) bool {
 }
 
 func isBearerAuth(secret *k8scorev1.Secret) bool {
-	return secret.Data != nil && secret.Data[BearerAuthToken] != nil
+	return secret.Data != nil && secret.Data[bearerAuthToken] != nil
 }
 
 func isSshAuth(secret *k8scorev1.Secret) bool {
