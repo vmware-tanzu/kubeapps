@@ -70,9 +70,10 @@ type ChartVersion struct {
 	// The following three fields get set with the URL paths to the respective
 	// chart files (as opposed to the similar fields on ChartFiles which
 	// contain the actual content).
-	Readme string `json:"readme" bson:"-"`
-	Values string `json:"values" bson:"-"`
-	Schema string `json:"schema" bson:"-"`
+	Readme                  string            `json:"readme" bson:"-"`
+	DefaultValues           string            `json:"values" bson:"-"`
+	AdditionalDefaultValues map[string]string `json:"additional_values" bson:"-"`
+	Schema                  string            `json:"schema" bson:"-"`
 }
 
 // ChartFiles holds the README and default values for a given chart version

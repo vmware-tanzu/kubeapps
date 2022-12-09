@@ -182,11 +182,11 @@ func makeChart(chartName, repoName, repoUrl, namespace string, chartVersions []s
 	var versions []models.ChartVersion
 	for _, v := range chartVersions {
 		versions = append(versions, models.ChartVersion{
-			Version:    v,
-			AppVersion: DefaultAppVersion,
-			Readme:     "not-used",
-			Values:     "not-used",
-			Schema:     "not-used",
+			Version:       v,
+			AppVersion:    DefaultAppVersion,
+			Readme:        "not-used",
+			DefaultValues: "not-used",
+			Schema:        "not-used",
 		})
 	}
 	ch.ChartVersions = versions
