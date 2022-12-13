@@ -73,7 +73,7 @@ require (
 	github.com/stretchr/testify v1.8.1
 	github.com/vmware-tanzu/carvel-kapp v0.54.0
 	github.com/vmware-tanzu/carvel-kapp-controller v0.43.2
-	github.com/vmware-tanzu/carvel-vendir v0.32.1
+	github.com/vmware-tanzu/carvel-vendir v0.32.2
 	golang.org/x/net v0.4.0
 	golang.org/x/sync v0.1.0
 	google.golang.org/genproto v0.0.0-20221114212237-e4508ebdbee1
