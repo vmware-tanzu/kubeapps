@@ -890,6 +890,48 @@ func TestAvailablePackageDetailFromChart(t *testing.T) {
 			statusCode: codes.OK,
 		},
 		{
+			name:  "it includes additional values files in AvailablePackageDetail when available",
+			chart: makeChart("foo", "repo-1", "http://foo", "my-ns", []string{"3.0.0"}, DefaultChartCategory),
+			chartFiles: &models.ChartFiles{
+				Readme:        "chart readme",
+				DefaultValues: "chart values",
+				AdditionalDefaultValues: map[string]string{
+					"values-production": "chart production values",
+					"values-staging":    "chart staging values",
+				},
+				Schema: "chart schema",
+			},
+			expected: &corev1.AvailablePackageDetail{
+				Name:             "foo",
+				DisplayName:      "foo",
+				RepoUrl:          "http://foo",
+				HomeUrl:          DefaultChartHomeURL,
+				IconUrl:          DefaultChartIconURL,
+				Categories:       []string{DefaultChartCategory},
+				ShortDescription: DefaultChartDescription,
+				LongDescription:  "",
+				Version: &corev1.PackageAppVersion{
+					PkgVersion: "3.0.0",
+					AppVersion: DefaultAppVersion,
+				},
+				Readme:        "chart readme",
+				DefaultValues: "chart values",
+				AdditionalDefaultValues: map[string]string{
+					"values-production": "chart production values",
+					"values-staging":    "chart staging values",
+				},
+				ValuesSchema: "chart schema",
+				SourceUrls:   []string{"http://source-1"},
+				Maintainers:  []*corev1.Maintainer{{Name: "me", Email: "me@me.me"}},
+				AvailablePackageRef: &corev1.AvailablePackageReference{
+					Context:    &corev1.Context{Namespace: "my-ns"},
+					Identifier: "repo-1/foo",
+					Plugin:     &plugins.Plugin{Name: "helm.packages", Version: "v1alpha1"},
+				},
+			},
+			statusCode: codes.OK,
+		},
+		{
 			name:       "it returns internal error if empty chart",
 			chart:      &models.Chart{},
 			statusCode: codes.Internal,
