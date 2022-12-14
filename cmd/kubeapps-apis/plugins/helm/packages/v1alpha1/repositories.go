@@ -157,7 +157,7 @@ func newHelmRepoCrd(repo *HelmRepository, secret *k8scorev1.Secret, imagePullSec
 			Description:           repo.description,
 			PassCredentials:       repo.auth != nil && repo.auth.PassCredentials,
 			Interval:              repo.interval,
-			// TODO(agamez): are more fields here if they're requested
+			// TODO(agamez): add more fields here if they're requested
 			// https://github.com/vmware-tanzu/kubeapps/issues/5128
 			SyncJobPodTemplate: k8scorev1.PodTemplateSpec{
 				Spec: k8scorev1.PodSpec{},
