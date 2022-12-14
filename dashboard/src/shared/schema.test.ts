@@ -434,6 +434,7 @@ describe("validateValuesSchema", () => {
     {
       description: "Should validate a valid object",
       values: "foo: bar\n",
+      defaultValues: "foo: default\n",
       schema: {
         properties: { foo: { type: "string" } },
       },
@@ -441,8 +442,59 @@ describe("validateValuesSchema", () => {
       errors: null,
     },
     {
+      description: "Should error if required value not provided",
+      values: "foo: bar\n",
+      defaultValues: "foo: default\n",
+      schema: {
+        required: ["bar"],
+        properties: {
+          foo: { type: "string" },
+          bar: { type: "string" },
+        },
+      },
+      valid: false,
+      errors: [
+        {
+          keyword: "required",
+          instancePath: "",
+          message: "must have required property 'bar'",
+          params: { missingProperty: "bar" },
+          schemaPath: "#/required",
+        },
+      ],
+    },
+    {
+      description: "Should not error if required value has a default",
+      values: "foo: bar\n",
+      defaultValues: "foo: default\nbar: default\n",
+      schema: {
+        required: ["bar"],
+        properties: {
+          foo: { type: "string" },
+          bar: { type: "string" },
+        },
+      },
+      valid: true,
+      errors: null,
+    },
+    {
+      description: "Should not error if extra value not present in defaults is included",
+      values: "foo: bar\nelsewhere: bang",
+      defaultValues: "foo: default\nbar: default\n",
+      schema: {
+        required: ["bar"],
+        properties: {
+          foo: { type: "string" },
+          bar: { type: "string" },
+        },
+      },
+      valid: true,
+      errors: null,
+    },
+    {
       description: "Should validate an invalid object",
       values: "foo: bar\n",
+      defaultValues: "foo: 1\n",
       schema: { properties: { foo: { type: "integer" } } },
       valid: false,
       errors: [
@@ -459,7 +511,7 @@ describe("validateValuesSchema", () => {
     },
   ].forEach(t => {
     it(t.description, () => {
-      const res = validateValuesSchema(t.values, t.schema);
+      const res = validateValuesSchema(t.values, t.schema, t.defaultValues);
       expect(res.valid).toBe(t.valid);
       expect(res.errors).toEqual(t.errors);
     });

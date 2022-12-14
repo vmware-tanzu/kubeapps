@@ -13,9 +13,13 @@ on:
         type: boolean
         required: false
         default: true
+      trigger_release:
+        type: boolean
+        required: false
+        default: false
 
 env:
-  CHARTMUSEUM_VERSION: "3.9.1"
+  CHARTMUSEUM_VERSION: "3.9.2"
   CHARTS_REPO_ORIGINAL: "bitnami/charts"
   BRANCH_CHARTS_REPO_ORIGINAL: "main"
   CHARTS_REPO_FORKED: "kubeapps-bot/charts"
@@ -24,48 +28,39 @@ env:
   CI_BOT_EMAIL: "tanzu-kubeapps-team@vmware.com"
   CI_BOT_GPG: "80B6EB16B1328FB18DFF2A073EBA68F3347E319D"
   # DEBUG_MODE allows to activate some SSH debugging steps, and modify the verbosity level of some scripts (eg. e2e-tests.sh)
-  DEBUG_MODE: "true"
-  # TODO(bjesus): DEV_MODE is used to enable dev mode, used to activate several hacks along the code:
-  # - In sync_chart_from/to_bitnami jobs to file shadow PRs while we maintain
-  # - To add a suffix to the tag of the generated docker images, to prevent collision and overwriting with those generated from CircleCI
-  # - To add a suffix to the name of the generated GKE clusters to prevent collision with those generated and used from CircleCI
-  # - Probably some other things I don't remember right now :)
-  #
-  # CircleCI and GHA pipelines are running in parallel. This should be removed once the CircleCI pipeline is decommissioned.
-  DEV_MODE: true
+  DEBUG_MODE: "false"
   SSH_KEY_KUBEAPPS_DEPLOY_FILENAME: "id_rsa_kubeapps_deploy_key"
   SSH_KEY_FORKED_CHARTS_DEPLOY_FILENAME: "id_rsa_forked_charts_deploy_key"
   KUBEAPPS_REPO: "vmware-tanzu/kubeapps"
   BRANCH_KUBEAPPS_REPO: "main"
   README_GENERATOR_REPO: "bitnami-labs/readme-generator-for-helm"
-  DOCKER_VERSION: "20.10.18"
   DOCKER_REGISTRY_VERSION: "2.8.1"
-  GOLANG_VERSION: "1.19.2"
+  GOLANG_VERSION: "1.19.3"
   HELM_VERSION_MIN: "v3.2.0"
-  HELM_VERSION_STABLE: "v3.10.1"
-  GITHUB_VERSION: "2.18.1"
+  HELM_VERSION_STABLE: "v3.10.2"
+  GITHUB_VERSION: "2.20.2"
   IMAGES_TO_PUSH: "apprepository-controller dashboard asset-syncer pinniped-proxy kubeapps-apis"
   # IMG_DEV_TAG is the tags used for the Kubeapps docker images. Ideally there should be an IMG_PROD_TAG
   # but its value is dynamic and GitHub actions doesn't support it in the `env` block, so it is generated
   # as an output of the `setup` job.
   IMG_DEV_TAG: "build-${{ github.sha }}"
   # Apart from using a dev tag we use a different image ID to avoid polluting the tag history of the production tag
-  IMG_MODIFIER: "-ci-gha"
+  IMG_MODIFIER: "-ci"
   IMG_PREFIX: "kubeapps/"
   # We use IMG_PREFIX_FOR_FORKS for development purposes, it's used when the workflow is run from a fork of the kubeapps repo
-  IMG_PREFIX_FOR_FORKS: "beni0888/"
-  # IMG_PLATFORMS: "linux/amd64, linux/arm64"
+  IMG_PREFIX_FOR_FORKS: "your-dockerhub-username/"
+  # Currently, we only build the images for linux/amd64 because building cross-platform images is extremely slow...
   IMG_PLATFORMS: "linux/amd64"
-  KAPP_CONTROLLER_VERSION: "v0.42.0"
+  KAPP_CONTROLLER_VERSION: "v0.43.2"
   K8S_KIND_VERSION: "v1.22.15@sha256:bfd5eaae36849bfb3c1e3b9442f3da17d730718248939d9d547e86bbac5da586"
-  KIND_VERSION: "v0.16.0"
+  KIND_VERSION: "v0.17.0"
   KUBECTL_VERSION: "v1.24.7"
   MKCERT_VERSION: "v1.4.4"
-  NODE_VERSION: "16.18.0"
+  NODE_VERSION: "16.18.1"
   OLM_VERSION: "v0.22.0"
-  POSTGRESQL_VERSION: "14.5.0-debian-11-r31"
-  RUST_VERSION: "1.64.0"
-  SEMVER_VERSION: "3.3.0"
+  POSTGRESQL_VERSION: "15.1.0-debian-11-r6"
+  RUST_VERSION: "1.65.0"
+  SEMVER_VERSION: "3.4.0"
   GKE_STABLE_VERSION: "1.22"
   GKE_REGULAR_VERSION: "1.23"
   GKE_ZONE: "us-east1-c"
@@ -77,7 +72,6 @@ jobs:
   setup:
     runs-on: ubuntu-latest
     outputs:
-      dev_mode: ${{ steps.set-outputs.outputs.dev_mode }}
       golang_version: ${{ steps.set-outputs.outputs.golang_version }}
       img_modifier: ${{ steps.set-outputs.outputs.img_modifier }}
       img_prefix: ${{ steps.set-outputs.outputs.img_prefix }}
@@ -86,7 +80,6 @@ jobs:
       postgresql_version: ${{ steps.set-outputs.outputs.postgresql_version }}
       rust_version: ${{ steps.set-outputs.outputs.rust_version }}
       running_on_main: ${{ steps.set-outputs.outputs.running_on_main }}
-      running_on_tag: ${{ steps.set-outputs.outputs.running_on_tag }}
       ssh_key_kubeapps_deploy_filename: ${{ steps.set-outputs.outputs.ssh_key_kubeapps_deploy_filename }}
       ssh_key_forked_charts_deploy_filename: ${{ steps.set-outputs.outputs.ssh_key_forked_charts_deploy_filename }}
       triggered_from_fork: ${{ steps.set-outputs.outputs.triggered_from_fork }}
@@ -109,7 +102,7 @@ jobs:
             echo "img_prefix=${IMG_PREFIX}" >> $GITHUB_OUTPUT
           else
             # When running in forks (NOT triggered due to a PR from an external fork, but running the workflow in the
-            # external repo), we push the images to a personal namespace (if configured)
+            # external repo), we push the images to a personal dockerhub namespace (or whatever other registry) if configured
             echo "img_prefix=${IMG_PREFIX_FOR_FORKS}" >> $GITHUB_OUTPUT
           fi;
 
@@ -134,19 +127,6 @@ jobs:
             echo "running_on_main=false" >> $GITHUB_OUTPUT
           fi
 
-          if [[ ${GITHUB_REF_TYPE} == "tag" && ${GITHUB_REF_NAME} =~ ^v[0-9]+ ]]; then
-            echo "running_on_tag=true" >> $GITHUB_OUTPUT
-          else
-            echo "running_on_tag=false" >> $GITHUB_OUTPUT
-          fi
-
-          # TODO(bjesus) Once we've properly tested the release job, we can/should remove this hack, just leave the content from the else branch
-          if [[ ${GITHUB_REF_TYPE} == "tag" &&  ${GITHUB_REF_NAME} == 'test-'* ]]; then
-            echo "dev_mode=true" >> $GITHUB_OUTPUT
-          else
-            echo "dev_mode=${DEV_MODE}" >> $GITHUB_OUTPUT
-          fi
-
           echo "golang_version=${GOLANG_VERSION}" >> $GITHUB_OUTPUT
           echo "ssh_key_kubeapps_deploy_filename=${SSH_KEY_KUBEAPPS_DEPLOY_FILENAME}" >> $GITHUB_OUTPUT
           echo "ssh_key_forked_charts_deploy_filename=${SSH_KEY_FORKED_CHARTS_DEPLOY_FILENAME}" >> $GITHUB_OUTPUT
@@ -156,7 +136,6 @@ jobs:
           echo "rust_version=${RUST_VERSION}" >> $GITHUB_OUTPUT
       - name: Show outputs
         run: |
-          echo "DEV_MODE: ${{steps.set-outputs.outputs.dev_mode}}"
           echo "GOLANG_VERSION: ${{steps.set-outputs.outputs.golang_version}}"
           echo "IMG_MODIFIER: ${{steps.set-outputs.outputs.img_modifier}}"
           echo "IMG_PREFIX: ${{steps.set-outputs.outputs.img_prefix}}"
@@ -165,7 +144,6 @@ jobs:
           echo "POSTGRESQL_VERSION: ${{steps.set-outputs.outputs.postgresql_version}}"
           echo "RUST_VERSION: ${{steps.set-outputs.outputs.rust_version}}"
           echo "RUNNING_ON_MAIN: ${{steps.set-outputs.outputs.running_on_main}}"
-          echo "RUNNING_ON_TAG: ${{steps.set-outputs.outputs.running_on_tag}}"
           echo "SSH_KEY_KUBEAPPS_DEPLOY_FILENAME: ${{steps.set-outputs.outputs.ssh_key_kubeapps_deploy_filename}}"
           echo "SSH_KEY_FORKED_CHARTS_DEPLOY_FILENAME: ${{steps.set-outputs.outputs.ssh_key_forked_charts_deploy_filename}}"
           echo "TRIGGERED_FROM_FORK: ${{steps.set-outputs.outputs.triggered_from_fork}}"
@@ -554,7 +532,7 @@ jobs:
         run: exit 1
 
   push_images:
-    if: needs.setup.outputs.running_on_main == 'true' || needs.setup.outputs.running_on_tag == 'true'
+    if: needs.setup.outputs.running_on_main == 'true' || inputs.trigger_release
     runs-on: ubuntu-latest
     needs:
       - setup
@@ -571,10 +549,6 @@ jobs:
       - uses: actions/download-artifact@v3
       - run: |
           set -eu
-          if [[ "${DEV_MODE}" == true ]]; then
-            IMG_PROD_TAG="${IMG_PROD_TAG}-gha"
-          fi
-
           for artifact in *; do
             echo "::debug::Processing artifact '${artifact}'"
 
@@ -617,7 +591,7 @@ jobs:
   sync_chart_from_bitnami:
     needs:
       - setup
-    if: needs.setup.outputs.running_on_main == 'true'
+    if: needs.setup.outputs.running_on_main == 'true' || inputs.trigger_release
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -668,7 +642,6 @@ jobs:
               ${KUBEAPPS_REPO} \
               ${BRANCH_KUBEAPPS_REPO} \
               ${README_GENERATOR_REPO} \
-              ${DEV_MODE}
 
   sync_chart_to_bitnami:
     needs:
@@ -676,7 +649,7 @@ jobs:
       - local_e2e_tests
       - GKE_REGULAR_VERSION
       - GKE_STABLE_VERSION
-    if: needs.setup.outputs.running_on_tag == 'true'
+    if: inputs.trigger_release
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -724,10 +697,9 @@ jobs:
               ${BRANCH_CHARTS_REPO_ORIGINAL} \
               ${CHARTS_REPO_FORKED} \
               ${BRANCH_CHARTS_REPO_FORKED} \
-              ${DEV_MODE}
 
   release:
-    if: needs.setup.outputs.running_on_tag == 'true'
+    if: inputs.trigger_release
     needs:
       - setup
       - sync_chart_to_bitnami
@@ -744,12 +716,14 @@ jobs:
       - # Assuming there is a personal access token created in GitHub granted with the scopes
         # "repo:status", "public_repo" and "read:org"
         name: Run the create_release script
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           set -eu
           ./script/create_release.sh "${GITHUB_REF_NAME}" "${KUBEAPPS_REPO}"
 
   gke_setup:
-    if: needs.setup.outputs.running_on_tag == 'true' || inputs.run_gke_tests
+    if: inputs.run_gke_tests
     needs:
       - setup
       - test_go
@@ -764,7 +738,6 @@ jobs:
     outputs:
       CHARTMUSEUM_VERSION: ${{ steps.set-outputs.outputs.CHARTMUSEUM_VERSION }}
       DEBUG_MODE: ${{ steps.set-outputs.outputs.DEBUG_MODE }}
-      DEV_MODE: ${{ steps.set-outputs.outputs.DEV_MODE }}
       GKE_STABLE_VERSION: ${{ steps.set-outputs.outputs.GKE_STABLE_VERSION }}
       GKE_REGULAR_VERSION: ${{ steps.set-outputs.outputs.GKE_REGULAR_VERSION }}
       GKE_CLUSTER: ${{ steps.set-outputs.outputs.GKE_CLUSTER }}
@@ -783,7 +756,6 @@ jobs:
         run: |
           echo "CHARTMUSEUM_VERSION=${CHARTMUSEUM_VERSION}" >> $GITHUB_OUTPUT
           echo "DEBUG_MODE=${DEBUG_MODE}" >> $GITHUB_OUTPUT
-          echo "DEV_MODE=${DEV_MODE}" >> $GITHUB_OUTPUT
           echo "GKE_STABLE_VERSION=${GKE_STABLE_VERSION}" >> $GITHUB_OUTPUT
           echo "GKE_REGULAR_VERSION=${GKE_REGULAR_VERSION}" >> $GITHUB_OUTPUT
           echo "GKE_CLUSTER=${GKE_CLUSTER}" >> $GITHUB_OUTPUT
@@ -803,9 +775,8 @@ jobs:
       - gke_setup
     uses: ./.github/workflows/gke_e2e_tests.yaml
     with:
-      GKE_BRANCH: ${{ needs.gke_setup.outputs.GKE_REGULAR_VERSION }}
+      GKE_VERSION: ${{ needs.gke_setup.outputs.GKE_REGULAR_VERSION }}
       DEBUG_MODE: ${{ needs.gke_setup.outputs.DEBUG_MODE == 'true' }}
-      DEV_MODE: ${{ needs.gke_setup.outputs.DEV_MODE == 'true' }}
       CHARTMUSEUM_VERSION: ${{ needs.gke_setup.outputs.CHARTMUSEUM_VERSION }}
       GKE_CLUSTER: ${{ needs.gke_setup.outputs.GKE_CLUSTER }}
       GKE_PROJECT: ${{ needs.gke_setup.outputs.GKE_PROJECT }}
@@ -828,9 +799,8 @@ jobs:
       - gke_setup
     uses: ./.github/workflows/gke_e2e_tests.yaml
     with:
-      GKE_BRANCH: ${{ needs.gke_setup.outputs.GKE_STABLE_VERSION }}
+      GKE_VERSION: ${{ needs.gke_setup.outputs.GKE_STABLE_VERSION }}
       DEBUG_MODE: ${{ needs.gke_setup.outputs.DEBUG_MODE == 'true' }}
-      DEV_MODE: ${{ needs.gke_setup.outputs.DEV_MODE == 'true' }}
       CHARTMUSEUM_VERSION: ${{ needs.gke_setup.outputs.CHARTMUSEUM_VERSION }}
       GKE_CLUSTER: ${{ needs.gke_setup.outputs.GKE_CLUSTER }}
       GKE_PROJECT: ${{ needs.gke_setup.outputs.GKE_PROJECT }}

@@ -27,6 +27,7 @@ const testProps: IPackageHeaderProps = {
     },
     valuesSchema: "",
     defaultValues: "",
+    additionalDefaultValues: {},
     maintainers: [],
     readme: "",
     version: {

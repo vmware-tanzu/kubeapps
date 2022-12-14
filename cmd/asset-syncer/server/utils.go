@@ -889,7 +889,7 @@ func (f *fileImporter) fetchAndImportFiles(name string, repo Repo, cv models.Cha
 		log.Info("README.md not found, name=%s, version=%s", name, cv.Version)
 	}
 	if v, ok := files[models.ValuesKey]; ok {
-		chartFiles.Values = v
+		chartFiles.DefaultValues = v
 	} else {
 		log.Info("values.yaml not found, name=%s, version=%s", name, cv.Version)
 	}

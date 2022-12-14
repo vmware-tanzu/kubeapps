@@ -4584,6 +4584,14 @@
           "type": "string",
           "description": "Available package default values\n\nAn example of default values used during package templating that can serve\nas documentation or a starting point for user customization."
         },
+        "additionalDefaultValues": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          },
+          "description": "A package may contain additional default value files for specific scenarios,\nsuch as values_production.yaml or values_dev.yaml",
+          "title": "Available package additional default values"
+        },
         "valuesSchema": {
           "type": "string"
         },

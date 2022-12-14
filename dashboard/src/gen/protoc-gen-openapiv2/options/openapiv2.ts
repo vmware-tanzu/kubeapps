@@ -79,7 +79,7 @@ export function schemeToJSON(object: Scheme): string {
  *      };
  *      license: {
  *        name: "BSD 3-Clause License";
- *        url: "https://github.com/grpc-ecosystem/grpc-gateway/blob/master/LICENSE.txt";
+ *        url: "https://github.com/grpc-ecosystem/grpc-gateway/blob/main/LICENSE.txt";
  *      };
  *    };
  *    schemes: HTTPS;
@@ -269,6 +269,12 @@ export interface Operation {
    * See: https://swagger.io/docs/specification/2-0/swagger-extensions/
    */
   extensions: { [key: string]: any };
+  /**
+   * Custom parameters such as HTTP request headers.
+   * See: https://swagger.io/docs/specification/2-0/describing-parameters/
+   * and https://swagger.io/specification/v2/#parameter-object.
+   */
+  parameters?: Parameters;
 }
 
 export interface Operation_ResponsesEntry {
@@ -279,6 +285,96 @@ export interface Operation_ResponsesEntry {
 export interface Operation_ExtensionsEntry {
   key: string;
   value?: any;
+}
+
+/**
+ * `Parameters` is a representation of OpenAPI v2 specification's parameters object.
+ * Note: This technically breaks compatibility with the OpenAPI 2 definition structure as we only
+ * allow header parameters to be set here since we do not want users specifying custom non-header
+ * parameters beyond those inferred from the Protobuf schema.
+ * See: https://swagger.io/specification/v2/#parameter-object
+ */
+export interface Parameters {
+  /**
+   * `Headers` is one or more HTTP header parameter.
+   * See: https://swagger.io/docs/specification/2-0/describing-parameters/#header-parameters
+   */
+  headers: HeaderParameter[];
+}
+
+/**
+ * `HeaderParameter` a HTTP header parameter.
+ * See: https://swagger.io/specification/v2/#parameter-object
+ */
+export interface HeaderParameter {
+  /** `Name` is the header name. */
+  name: string;
+  /** `Description` is a short description of the header. */
+  description: string;
+  /**
+   * `Type` is the type of the object. The value MUST be one of "string", "number", "integer", or "boolean". The "array" type is not supported.
+   * See: https://swagger.io/specification/v2/#parameterType.
+   */
+  type: HeaderParameter_Type;
+  /** `Format` The extending format for the previously mentioned type. */
+  format: string;
+  /** `Required` indicates if the header is optional */
+  required: boolean;
+}
+
+/**
+ * `Type` is a a supported HTTP header type.
+ * See https://swagger.io/specification/v2/#parameterType.
+ */
+export enum HeaderParameter_Type {
+  UNKNOWN = 0,
+  STRING = 1,
+  NUMBER = 2,
+  INTEGER = 3,
+  BOOLEAN = 4,
+  UNRECOGNIZED = -1,
+}
+
+export function headerParameter_TypeFromJSON(object: any): HeaderParameter_Type {
+  switch (object) {
+    case 0:
+    case "UNKNOWN":
+      return HeaderParameter_Type.UNKNOWN;
+    case 1:
+    case "STRING":
+      return HeaderParameter_Type.STRING;
+    case 2:
+    case "NUMBER":
+      return HeaderParameter_Type.NUMBER;
+    case 3:
+    case "INTEGER":
+      return HeaderParameter_Type.INTEGER;
+    case 4:
+    case "BOOLEAN":
+      return HeaderParameter_Type.BOOLEAN;
+    case -1:
+    case "UNRECOGNIZED":
+    default:
+      return HeaderParameter_Type.UNRECOGNIZED;
+  }
+}
+
+export function headerParameter_TypeToJSON(object: HeaderParameter_Type): string {
+  switch (object) {
+    case HeaderParameter_Type.UNKNOWN:
+      return "UNKNOWN";
+    case HeaderParameter_Type.STRING:
+      return "STRING";
+    case HeaderParameter_Type.NUMBER:
+      return "NUMBER";
+    case HeaderParameter_Type.INTEGER:
+      return "INTEGER";
+    case HeaderParameter_Type.BOOLEAN:
+      return "BOOLEAN";
+    case HeaderParameter_Type.UNRECOGNIZED:
+    default:
+      return "UNRECOGNIZED";
+  }
 }
 
 /**
@@ -372,7 +468,7 @@ export interface Response_ExtensionsEntry {
  *      };
  *      license: {
  *        name: "BSD 3-Clause License";
- *        url: "https://github.com/grpc-ecosystem/grpc-gateway/blob/master/LICENSE.txt";
+ *        url: "https://github.com/grpc-ecosystem/grpc-gateway/blob/main/LICENSE.txt";
  *      };
  *    };
  *    ...
@@ -457,7 +553,7 @@ export interface Contact {
  *      ...
  *      license: {
  *        name: "BSD 3-Clause License";
- *        url: "https://github.com/grpc-ecosystem/grpc-gateway/blob/master/LICENSE.txt";
+ *        url: "https://github.com/grpc-ecosystem/grpc-gateway/blob/main/LICENSE.txt";
  *      };
  *      ...
  *    };
@@ -1446,6 +1542,7 @@ function createBaseOperation(): Operation {
     deprecated: false,
     security: [],
     extensions: {},
+    parameters: undefined,
   };
 }
 
@@ -1497,6 +1594,9 @@ export const Operation = {
         ).ldelim();
       }
     });
+    if (message.parameters !== undefined) {
+      Parameters.encode(message.parameters, writer.uint32(114).fork()).ldelim();
+    }
     return writer;
   },
 
@@ -1556,6 +1656,9 @@ export const Operation = {
             message.extensions[entry13.key] = entry13.value;
           }
           break;
+        case 14:
+          message.parameters = Parameters.decode(reader, reader.uint32());
+          break;
         default:
           reader.skipType(tag & 7);
           break;
@@ -1597,6 +1700,7 @@ export const Operation = {
             return acc;
           }, {})
         : {},
+      parameters: isSet(object.parameters) ? Parameters.fromJSON(object.parameters) : undefined,
     };
   },
 
@@ -1647,6 +1751,8 @@ export const Operation = {
         obj.extensions[k] = v;
       });
     }
+    message.parameters !== undefined &&
+      (obj.parameters = message.parameters ? Parameters.toJSON(message.parameters) : undefined);
     return obj;
   },
 
@@ -1683,6 +1789,10 @@ export const Operation = {
       },
       {},
     );
+    message.parameters =
+      object.parameters !== undefined && object.parameters !== null
+        ? Parameters.fromPartial(object.parameters)
+        : undefined;
     return message;
   },
 };
@@ -1807,6 +1917,146 @@ export const Operation_ExtensionsEntry = {
     const message = createBaseOperation_ExtensionsEntry();
     message.key = object.key ?? "";
     message.value = object.value ?? undefined;
+    return message;
+  },
+};
+
+function createBaseParameters(): Parameters {
+  return { headers: [] };
+}
+
+export const Parameters = {
+  encode(message: Parameters, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
+    for (const v of message.headers) {
+      HeaderParameter.encode(v!, writer.uint32(10).fork()).ldelim();
+    }
+    return writer;
+  },
+
+  decode(input: _m0.Reader | Uint8Array, length?: number): Parameters {
+    const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseParameters();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1:
+          message.headers.push(HeaderParameter.decode(reader, reader.uint32()));
+          break;
+        default:
+          reader.skipType(tag & 7);
+          break;
+      }
+    }
+    return message;
+  },
+
+  fromJSON(object: any): Parameters {
+    return {
+      headers: Array.isArray(object?.headers)
+        ? object.headers.map((e: any) => HeaderParameter.fromJSON(e))
+        : [],
+    };
+  },
+
+  toJSON(message: Parameters): unknown {
+    const obj: any = {};
+    if (message.headers) {
+      obj.headers = message.headers.map(e => (e ? HeaderParameter.toJSON(e) : undefined));
+    } else {
+      obj.headers = [];
+    }
+    return obj;
+  },
+
+  fromPartial<I extends Exact<DeepPartial<Parameters>, I>>(object: I): Parameters {
+    const message = createBaseParameters();
+    message.headers = object.headers?.map(e => HeaderParameter.fromPartial(e)) || [];
+    return message;
+  },
+};
+
+function createBaseHeaderParameter(): HeaderParameter {
+  return { name: "", description: "", type: 0, format: "", required: false };
+}
+
+export const HeaderParameter = {
+  encode(message: HeaderParameter, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
+    if (message.name !== "") {
+      writer.uint32(10).string(message.name);
+    }
+    if (message.description !== "") {
+      writer.uint32(18).string(message.description);
+    }
+    if (message.type !== 0) {
+      writer.uint32(24).int32(message.type);
+    }
+    if (message.format !== "") {
+      writer.uint32(34).string(message.format);
+    }
+    if (message.required === true) {
+      writer.uint32(40).bool(message.required);
+    }
+    return writer;
+  },
+
+  decode(input: _m0.Reader | Uint8Array, length?: number): HeaderParameter {
+    const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseHeaderParameter();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1:
+          message.name = reader.string();
+          break;
+        case 2:
+          message.description = reader.string();
+          break;
+        case 3:
+          message.type = reader.int32() as any;
+          break;
+        case 4:
+          message.format = reader.string();
+          break;
+        case 5:
+          message.required = reader.bool();
+          break;
+        default:
+          reader.skipType(tag & 7);
+          break;
+      }
+    }
+    return message;
+  },
+
+  fromJSON(object: any): HeaderParameter {
+    return {
+      name: isSet(object.name) ? String(object.name) : "",
+      description: isSet(object.description) ? String(object.description) : "",
+      type: isSet(object.type) ? headerParameter_TypeFromJSON(object.type) : 0,
+      format: isSet(object.format) ? String(object.format) : "",
+      required: isSet(object.required) ? Boolean(object.required) : false,
+    };
+  },
+
+  toJSON(message: HeaderParameter): unknown {
+    const obj: any = {};
+    message.name !== undefined && (obj.name = message.name);
+    message.description !== undefined && (obj.description = message.description);
+    message.type !== undefined && (obj.type = headerParameter_TypeToJSON(message.type));
+    message.format !== undefined && (obj.format = message.format);
+    message.required !== undefined && (obj.required = message.required);
+    return obj;
+  },
+
+  fromPartial<I extends Exact<DeepPartial<HeaderParameter>, I>>(object: I): HeaderParameter {
+    const message = createBaseHeaderParameter();
+    message.name = object.name ?? "";
+    message.description = object.description ?? "";
+    message.type = object.type ?? 0;
+    message.format = object.format ?? "";
+    message.required = object.required ?? false;
     return message;
   },
 };

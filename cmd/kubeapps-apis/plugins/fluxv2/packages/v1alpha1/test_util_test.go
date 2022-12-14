@@ -10,13 +10,14 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
-	k8stesting "k8s.io/client-go/testing"
 	"net/http"
 	"os"
 	"reflect"
 	"sort"
 	"strings"
 	"testing"
+
+	k8stesting "k8s.io/client-go/testing"
 
 	helmv2 "github.com/fluxcd/helm-controller/api/v2beta1"
 	sourcev1 "github.com/fluxcd/source-controller/api/v1beta2"
@@ -274,6 +275,20 @@ func newDockerConfigJsonSecret(name types.NamespacedName, server, user, password
 	return s
 }
 
+func setSecretManagedByKubeapps(secret *apiv1.Secret) *apiv1.Secret {
+	m := secret.GetAnnotations()
+	if m == nil {
+		m = make(map[string]string)
+		secret.SetAnnotations(m)
+	}
+	m[annotationManagedByKey] = annotationManagedByValue
+	return secret
+}
+
+// TODO (gfichenholt) technically speaking this isn't quite right for a test case
+// that actually involves non-fake k8s environment.
+// In order for this to be 100% right, we need a repo object with a UID set up. But
+// its good enough for a fake k8s environment, which is where this is used
 func setSecretOwnerRef(repoName string, secret *apiv1.Secret) *apiv1.Secret {
 	tRue := true
 	secret.OwnerReferences = []metav1.OwnerReference{

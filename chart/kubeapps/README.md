@@ -1,12 +1,9 @@
-
 # Kubeapps packaged by Bitnami
 
 Kubeapps is a web-based UI for launching and managing applications on Kubernetes. It allows users to deploy trusted applications and operators to control users access to the cluster.
 
 [Overview of Kubeapps](https://github.com/vmware-tanzu/kubeapps)
 
-
-                           
 ## TL;DR
 
 ```bash
@@ -471,7 +468,6 @@ Once you have installed Kubeapps follow the [Getting Started Guide](https://gith
 | `kubeappsapis.pluginConfig.kappController.packages.v1alpha1.defaultAllowDowngrades`             | Default policy for allowing applications to be downgraded to previous versions                                                                                             | `false`                            |
 | `kubeappsapis.pluginConfig.kappController.packages.v1alpha1.globalPackagingNamespace`           | Default global packaging namespace                                                                                                                                         | `kapp-controller-packaging-global` |
 | `kubeappsapis.pluginConfig.flux.packages.v1alpha1.defaultUpgradePolicy`                         | Default upgrade policy generating version constraints                                                                                                                      | `none`                             |
-| `kubeappsapis.pluginConfig.flux.packages.v1alpha1.userManagedSecrets`                           | Default policy for handling repository secrets, either managed by the user or by kubeapps-apis                                                                             | `false`                            |
 | `kubeappsapis.pluginConfig.flux.packages.v1alpha1.noCrossNamespaceRefs`                         | Enable this flag to disallow cross-namespace references, useful when running Flux on multi-tenant clusters                                                                 | `false`                            |
 | `kubeappsapis.pluginConfig.resources.packages.v1alpha1.trustedNamespaces.headerName`            | Optional header name for trusted namespaces                                                                                                                                | `""`                               |
 | `kubeappsapis.pluginConfig.resources.packages.v1alpha1.trustedNamespaces.headerPattern`         | Optional header pattern for trusted namespaces                                                                                                                             | `""`                               |

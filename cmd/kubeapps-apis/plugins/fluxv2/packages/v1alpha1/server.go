@@ -6,6 +6,7 @@ package main
 import (
 	"context"
 	"fmt"
+
 	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/pkg/resources"
 
 	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/pkg/helm"
@@ -676,16 +677,6 @@ func (s *Server) GetPackageRepositoryPermissions(ctx context.Context, request *c
 
 	return &corev1.GetPackageRepositoryPermissionsResponse{
 		Permissions: []*corev1.PackageRepositoriesPermissions{permissions},
-	}, nil
-}
-
-// This endpoint exists only for integration unit tests
-func (s *Server) SetUserManagedSecrets(ctx context.Context, request *v1alpha1.SetUserManagedSecretsRequest) (*v1alpha1.SetUserManagedSecretsResponse, error) {
-	log.Infof("+fluxv2 SetUserManagedSecrets [%t]", request.Value)
-	oldVal := s.pluginConfig.UserManagedSecrets
-	s.pluginConfig.UserManagedSecrets = request.Value
-	return &v1alpha1.SetUserManagedSecretsResponse{
-		Value: oldVal,
 	}, nil
 }
 

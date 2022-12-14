@@ -83,7 +83,7 @@ func (s *Server) newRepo(ctx context.Context, repo *HelmRepository) (*corev1.Pac
 	}
 
 	// Handle imagesPullSecret if any
-	imagePullSecret, imagePullSecretIsKubeappsManaged, err := handleImagesPullSecretForCreate(ctx, typedClient, repo)
+	imagePullSecret, imagePullSecretIsKubeappsManaged, err := handleImagesPullSecretForCreate(ctx, typedClient, repo.name, repo.customDetail)
 	if err != nil {
 		return nil, err
 	}
@@ -362,7 +362,7 @@ func (s *Server) updateRepo(ctx context.Context,
 	appRepo.Spec.TLSInsecureSkipVerify = repo.tlsConfig != nil && repo.tlsConfig.InsecureSkipVerify
 
 	// validate and get updated (or newly created) secret
-	secret, secretIsKubeappsManaged, secretIsUpdated, err := handleAuthSecretForUpdate(ctx, typedClient, repo.name, repo.tlsConfig, repo.auth, secret)
+	secret, secretIsKubeappsManaged, secretIsUpdated, err := handleAuthSecretForUpdate(ctx, typedClient, appRepo, repo.tlsConfig, repo.auth, secret)
 	if err != nil {
 		return nil, err
 	}
@@ -377,7 +377,7 @@ func (s *Server) updateRepo(ctx context.Context,
 	}
 
 	// Handle imagesPullSecret if any
-	imagePullSecret, imagePullSecretIsKubeappsManaged, imagePullSecretIsUpdated, err := handleImagesPullSecretForUpdate(ctx, typedClient, repo, imagePullSecret)
+	imagePullSecret, imagePullSecretIsKubeappsManaged, imagePullSecretIsUpdated, err := handleImagesPullSecretForUpdate(ctx, typedClient, appRepo, repo.customDetail, imagePullSecret)
 	if err != nil {
 		return nil, err
 	}

@@ -33,8 +33,8 @@ ADDITIONAL_CLUSTER_IP=${ADDITIONAL_CLUSTER_IP:-"172.18.0.3"}
 KAPP_CONTROLLER_VERSION=${KAPP_CONTROLLER_VERSION:-"v0.42.0"}
 CHARTMUSEUM_VERSION=${CHARTMUSEUM_VERSION:-"3.9.1"}
 # check latest flux releases at https://github.com/fluxcd/flux2/releases
-FLUX_VERSION=${FLUX_VERSION:-"v0.36.0"}
-GKE_BRANCH=${GKE_BRANCH:-}
+FLUX_VERSION=${FLUX_VERSION:-"v0.37.0"}
+GKE_VERSION=${GKE_VERSION:-}
 IMG_PREFIX=${IMG_PREFIX:-"kubeapps/"}
 TESTS_GROUP=${TESTS_GROUP:-"${ALL_TESTS}"}
 DEBUG_MODE=${DEBUG_MODE:-false}
@@ -62,7 +62,7 @@ fi
 . "${ROOT_DIR}/script/lib/libutil.sh"
 
 # Get the load balancer IP
-if [[ -z "${GKE_BRANCH-}" ]]; then
+if [[ -z "${GKE_VERSION-}" ]]; then
   LOAD_BALANCER_IP=$DEX_IP
 else
   LOAD_BALANCER_IP=$(kubectl -n nginx-ingress get service nginx-ingress-ingress-nginx-controller -o jsonpath="{.status.loadBalancer.ingress[].ip}")
@@ -77,7 +77,7 @@ fi
 info "###############################################################################################"
 info "DEBUG_MODE: ${DEBUG_MODE}"
 info "TESTS_GROUP: ${TESTS_GROUP}"
-info "GKE_BRANCH: ${GKE_BRANCH}"
+info "GKE_VERSION: ${GKE_VERSION}"
 info "ROOT_DIR: ${ROOT_DIR}"
 info "USE_MULTICLUSTER_OIDC_ENV: ${USE_MULTICLUSTER_OIDC_ENV}"
 info "OLM_VERSION: ${OLM_VERSION}"
@@ -247,10 +247,10 @@ installFlux() {
   url="https://github.com/fluxcd/flux2/releases/download/${release}/install.yaml"
   namespace=flux-system
 
-  # this is a workaround for flux e2e tests failing when run by GitHub Action Runners 
+  # this is a workaround for flux e2e tests failing when run by GitHub Action Runners
   # due to not being able to deploy source-controller pod error:
   # Warning  FailedScheduling  19s (x7 over 6m)  default-scheduler  0/1 nodes are available: 1 Insufficient cpu.
-  curl -o /tmp/flux_install.yaml -LO "${url}" 
+  curl -o /tmp/flux_install.yaml -LO "${url}"
   cat /tmp/flux_install.yaml | sed -e 's/cpu: 100m/cpu: 75m/g' | kubectl apply -f -
 
   # wait for deployments to be ready
@@ -353,7 +353,7 @@ elapsedTimeSince() {
 
 [[ "${DEBUG_MODE}" == "true" ]] && set -x;
 
-if [[ "${DEBUG_MODE}" == "true" && -z ${GKE_BRANCH} ]]; then
+if [[ "${DEBUG_MODE}" == "true" && -z ${GKE_VERSION} ]]; then
   info "Docker images loaded in the cluster:"
   docker exec kubeapps-ci-control-plane crictl images
 fi
@@ -438,7 +438,7 @@ info "Waiting for Kubeapps components to be ready (local chart)..."
 k8s_wait_for_deployment kubeapps kubeapps-ci
 
 # Setting up local Docker registry if not in GKE
-if [[ -z "${GKE_BRANCH-}" ]]; then
+if [[ -z "${GKE_VERSION-}" ]]; then
   setupLocalDockerRegistry
   pushLocalChart
 fi
@@ -575,7 +575,7 @@ fi
 ###########################################
 ######## Multi-cluster tests group ########
 ###########################################
-if [[ -z "${GKE_BRANCH-}" && ("${TESTS_GROUP}" == "${ALL_TESTS}" || "${TESTS_GROUP}" == "${MULTICLUSTER_TESTS}") ]]; then
+if [[ -z "${GKE_VERSION-}" && ("${TESTS_GROUP}" == "${ALL_TESTS}" || "${TESTS_GROUP}" == "${MULTICLUSTER_TESTS}") ]]; then
   sectionStartTime=$(date +%s)
   info "Running multi-cluster integration tests..."
   test_command="
@@ -687,7 +687,7 @@ if [[ "${TESTS_GROUP}" == "${ALL_TESTS}" || "${TESTS_GROUP}" == "${OPERATOR_TEST
   sectionStartTime=$(date +%s)
   ## Upgrade and run operator test
   # Operators are not supported in GKE 1.14 and flaky in 1.15, skipping test
-  if [[ -z "${GKE_BRANCH-}" ]] && [[ -n "${TEST_OPERATORS-}" ]]; then
+  if [[ -z "${GKE_VERSION-}" ]] && [[ -n "${TEST_OPERATORS-}" ]]; then
     installOLM "${OLM_VERSION}"
 
     # Update Kubeapps settings to enable operators and hence proxying
@@ -731,7 +731,7 @@ fi
 ############################################################
 ######## Multi-cluster without Kubeapps tests group ########
 ############################################################
-if [[ -z "${GKE_BRANCH-}" && ("${TESTS_GROUP}" == "${ALL_TESTS}" || "${TESTS_GROUP}" == "${MULTICLUSTER_NOKUBEAPPS_TESTS}") ]]; then
+if [[ -z "${GKE_VERSION-}" && ("${TESTS_GROUP}" == "${ALL_TESTS}" || "${TESTS_GROUP}" == "${MULTICLUSTER_NOKUBEAPPS_TESTS}") ]]; then
   sectionStartTime=$(date +%s)
   info "Running multi-cluster (without Kubeapps cluster) integration tests..."
 

@@ -22,7 +22,6 @@ CHARTS_REPO_FORK_BRANCH=${8:?Missing forked chart repository}
 KUBEAPPS_REPO_UPSTREAM=${9:?Missing kubeapps repository}
 KUBEAPPS_REPO_UPSTREAM_BRANCH=${10:?Missing kubeapps repository branch}
 README_GENERATOR_REPO=${11:?Missing readme generator repository}
-DEV_MODE=${12:-false}
 LOCAL_KUBEAPPS_REPO_PATH=${PROJECT_DIR:?PROJECT_DIR not defined}
 
 info "LOCAL_KUBEAPPS_REPO_PATH: ${LOCAL_KUBEAPPS_REPO_PATH}"
@@ -37,11 +36,6 @@ info "CHARTS_REPO_FORK_BRANCH: ${CHARTS_REPO_FORK_BRANCH}"
 info "KUBEAPPS_REPO_UPSTREAM: ${KUBEAPPS_REPO_UPSTREAM}"
 info "KUBEAPPS_REPO_UPSTREAM_BRANCH: ${KUBEAPPS_REPO_UPSTREAM_BRANCH}"
 info "README_GENERATOR_REPO: ${README_GENERATOR_REPO}"
-info "DEV_MODE: ${DEV_MODE}"
-
-if [[ "${DEV_MODE}" == "true" ]]; then
-  set -x
-fi
 
 currentVersion=$(grep -oP '(?<=^version: ).*' <"${KUBEAPPS_CHART_DIR}/Chart.yaml")
 externalVersion=$(curl -s "https://raw.githubusercontent.com/${CHARTS_REPO_UPSTREAM}/${CHARTS_REPO_UPSTREAM_BRANCH}/${CHART_REPO_PATH}/Chart.yaml" | grep -oP '(?<=^version: ).*')
@@ -63,13 +57,9 @@ if [[ ${semverCompare} -lt 0 ]]; then
     latestVersion=$(latestReleaseTag "${LOCAL_KUBEAPPS_REPO_PATH}")
     prBranchName="sync-chart-changes-${externalVersion}"
 
-    if [[ "${DEV_MODE}" == "true" ]]; then
-      prBranchName="${prBranchName}-DEV"
-    fi
-
     updateRepoWithRemoteChanges "${LOCAL_CHARTS_REPO_FORK}" "${latestVersion}" "${FORKED_SSH_KEY_FILENAME}" "${CHARTS_REPO_UPSTREAM}" "${CHARTS_REPO_UPSTREAM_BRANCH}" "${CHARTS_REPO_FORK_BRANCH}"
     generateReadme "${README_GENERATOR_REPO}" "${KUBEAPPS_CHART_DIR}"
-    commitAndSendInternalPR "${LOCAL_KUBEAPPS_REPO_PATH}" "${prBranchName}" "${externalVersion}" "${KUBEAPPS_REPO_UPSTREAM}" "${KUBEAPPS_REPO_UPSTREAM_BRANCH}" "${DEV_MODE}"
+    commitAndSendInternalPR "${LOCAL_KUBEAPPS_REPO_PATH}" "${prBranchName}" "${externalVersion}" "${KUBEAPPS_REPO_UPSTREAM}" "${KUBEAPPS_REPO_UPSTREAM_BRANCH}"
 elif [[ ${semverCompare} -gt 0 ]]; then
     echo "Skipping Chart sync. WARNING Current chart version (${currentVersion}) is greater than the chart external version (${externalVersion})"
 else
