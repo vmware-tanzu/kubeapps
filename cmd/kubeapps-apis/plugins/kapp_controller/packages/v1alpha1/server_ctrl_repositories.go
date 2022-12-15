@@ -43,7 +43,7 @@ func (s *Server) AddPackageRepository(ctx context.Context, request *corev1.AddPa
 	// create secret (must be done first, to get the name)
 	var err error
 	var pkgSecret *k8scorev1.Secret
-	if request.Auth != nil && request.Auth.GetSecretRef() == nil {
+	if request.Auth != nil && request.Auth.Type != corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_UNSPECIFIED && request.Auth.GetSecretRef() == nil {
 		pkgSecret, err = s.buildPkgRepositorySecretCreate(namespace, request.Name, request.Auth)
 		if err != nil {
 			return nil, status.Errorf(codes.Internal, "unable to build the associated secret: %v", err)
@@ -242,11 +242,11 @@ func (s *Server) UpdatePackageRepository(ctx context.Context, request *corev1.Up
 		return nil, err
 	}
 
-	// handle managed secret, there 3 cases to consider:
+	// handle managed secret, there are 3 cases to consider:
 	//    create the secret if auth was not previously configured
 	//    update the secret if auth has been updated
 	//    delete the secret if auth has been removed
-	if request.Auth == nil {
+	if request.Auth == nil || request.Auth.Type == corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_UNSPECIFIED {
 		// delete existing secret, if plugin managed
 		if pkgSecret != nil && isPluginManaged(pkgRepository, pkgSecret) {
 			if err := s.deleteSecret(ctx, cluster, pkgSecret.GetNamespace(), pkgSecret.GetName()); err != nil {
@@ -255,30 +255,32 @@ func (s *Server) UpdatePackageRepository(ctx context.Context, request *corev1.Up
 		}
 		pkgSecret = nil
 	} else if request.Auth.GetSecretRef() == nil {
+		// build new secret
+		var newSecret *k8scorev1.Secret
 		if pkgSecret == nil {
-			// create
-			pkgSecret, err = s.buildPkgRepositorySecretCreate(namespace, pkgRepository.GetName(), request.Auth)
-			if err != nil {
+			if newSecret, err = s.buildPkgRepositorySecretCreate(namespace, name, request.Auth); err != nil {
 				return nil, status.Errorf(codes.Internal, "unable to build the associated secret: %v", err)
-			}
-			// repository already exist, we can set the owner reference as part of creation
-			setOwnerReference(pkgSecret, pkgRepository)
-
-			pkgSecret, err = s.createSecret(ctx, cluster, pkgSecret)
-			if err != nil {
-				return nil, statuserror.FromK8sError("create", "Secret", pkgRepository.GetName(), err)
 			}
 		} else {
-			// update
-			updated, err := s.buildPkgRepositorySecretUpdate(pkgSecret, request.Auth)
-			if err != nil {
+			if newSecret, err = s.buildPkgRepositorySecretUpdate(pkgSecret, namespace, name, request.Auth); err != nil {
 				return nil, status.Errorf(codes.Internal, "unable to build the associated secret: %v", err)
 			}
-			if updated {
-				pkgSecret, err = s.updateSecret(ctx, cluster, pkgSecret)
-				if err != nil {
-					return nil, statuserror.FromK8sError("update", "Secret", pkgRepository.GetName(), err)
+		}
+
+		// secret was updated, perform update via delete+create
+		if newSecret != nil {
+			// delete old one
+			if pkgSecret != nil {
+				if err := s.deleteSecret(ctx, cluster, pkgSecret.GetNamespace(), pkgSecret.GetName()); err != nil {
+					log.Errorf("Error deleting existing secret: [%s] due to %v", err)
 				}
+				pkgSecret = nil
+			}
+
+			// create new one
+			setOwnerReference(newSecret, pkgRepository)
+			if pkgSecret, err = s.createSecret(ctx, cluster, newSecret); err != nil {
+				return nil, statuserror.FromK8sError("create", "Secret", name, err)
 			}
 		}
 	}

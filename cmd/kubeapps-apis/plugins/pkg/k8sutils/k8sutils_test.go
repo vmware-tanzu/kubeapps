@@ -96,3 +96,75 @@ func TestWaitForResource(t *testing.T) {
 		})
 	}
 }
+
+func TestSetDescription(t *testing.T) {
+	// with no prior annotations
+	{
+		metadata := metav1.ObjectMeta{
+			Name:      "foo",
+			Namespace: "bar",
+		}
+		SetDescription(&metadata, "description")
+
+		if metadata.Annotations[AnnotationDescriptionKey] != "description" {
+			t.Errorf("description was not set when annotations were empty")
+		}
+	}
+
+	// test with existing annotations
+	{
+		metadata := metav1.ObjectMeta{
+			Name:        "foo",
+			Namespace:   "bar",
+			Annotations: map[string]string{"hello": "world"},
+		}
+		SetDescription(&metadata, "description")
+
+		if metadata.Annotations[AnnotationDescriptionKey] != "description" {
+			t.Errorf("description was not set when annotations existed")
+		}
+		if metadata.Annotations["hello"] != "world" {
+			t.Errorf("existing annotation was removed")
+		}
+	}
+
+	// test unsetting annotations
+	{
+		metadata := metav1.ObjectMeta{
+			Name:        "foo",
+			Namespace:   "bar",
+			Annotations: map[string]string{AnnotationDescriptionKey: "description"},
+		}
+		SetDescription(&metadata, "")
+		if _, ok := metadata.Annotations[AnnotationDescriptionKey]; ok {
+			t.Errorf("the description annotation was not deleted as expeted when setting to empty string")
+		}
+	}
+}
+
+func TestGetDescription(t *testing.T) {
+	// with no annotations
+	{
+		metadata := metav1.ObjectMeta{
+			Name:      "foo",
+			Namespace: "bar",
+		}
+
+		if desc := GetDescription(&metadata); desc != "" {
+			t.Errorf("unexpected result calling get description with no annotations")
+		}
+	}
+
+	// test with existing annotations
+	{
+		metadata := metav1.ObjectMeta{
+			Name:        "foo",
+			Namespace:   "bar",
+			Annotations: map[string]string{"hello": "world", AnnotationDescriptionKey: "description"},
+		}
+
+		if desc := GetDescription(&metadata); desc != "description" {
+			t.Errorf("unable to get the description")
+		}
+	}
+}
