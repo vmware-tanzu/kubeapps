@@ -19,7 +19,7 @@ hyper = { version = "0.14", features = ["server"] }
 hyper-tls = "0.5"
 kube = { version = "0.76.0" }
 kube-derive = { version = "0.76.0"}
-kube-runtime = "0.76.0"
+kube-runtime = "0.77.0"
 k8s-openapi = { version = "0.16.0", default-features = false}
 log = "0.4"
 native-tls = "0.2"
