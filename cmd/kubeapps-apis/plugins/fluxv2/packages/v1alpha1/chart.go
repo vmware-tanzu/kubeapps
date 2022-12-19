@@ -112,7 +112,7 @@ func (s *Server) availableChartDetail(ctx context.Context, packageRef *corev1.Av
 		}
 	}
 
-	chartDetail, err := tarutil.FetchChartDetailFromTarball(bytes.NewReader(byteArray), chartID)
+	chartDetail, err := tarutil.FetchChartDetailFromTarball(bytes.NewReader(byteArray), chartName)
 	if err != nil {
 		return nil, err
 	}
