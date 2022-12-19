@@ -8,20 +8,17 @@ import (
 	"bytes"
 	"compress/gzip"
 	"io"
-	"net/url"
-	"path"
 	"regexp"
 	"strings"
 
+	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/pkg/pkgutils"
 	chart "github.com/vmware-tanzu/kubeapps/pkg/chart/models"
 	httpclient "github.com/vmware-tanzu/kubeapps/pkg/http-client"
 )
 
-//
 // Fetches helm chart details from a gzipped tarball
 //
 // name is expected in format "foo/bar" or "foo%2Fbar" if url-escaped
-//
 func FetchChartDetailFromTarballUrl(name string, chartTarballURL string, userAgent string, authz string, netClient httpclient.Client) (map[string]string, error) {
 	reqHeaders := make(map[string]string)
 	if len(userAgent) > 0 {
@@ -41,25 +38,17 @@ func FetchChartDetailFromTarballUrl(name string, chartTarballURL string, userAge
 		return nil, err
 	}
 
-	// decode escaped characters
-	// ie., "foo%2Fbar" should return "foo/bar"
-	decodedName, err := url.PathUnescape(name)
+	_, fixedName, err := pkgutils.SplitPackageIdentifier(name)
 	if err != nil {
 		return nil, err
 	}
 
-	// get last part of the name
-	// ie., "foo/bar" should return "bar"
-	fixedName := path.Base(decodedName)
-
 	return FetchChartDetailFromTarball(reader, fixedName)
 }
 
-//
 // Fetches helm chart details from a gzipped tarball
 //
 // name is expected in format "foo/bar" or "foo%2Fbar" if url-escaped
-//
 func FetchChartDetailFromTarball(reader io.Reader, tarballRootDir string) (map[string]string, error) {
 	// We read the whole chart into memory, this should be okay since the chart
 	// tarball needs to be small enough to fit into a GRPC call
