@@ -544,12 +544,13 @@ func Test_fetchAndImportFiles(t *testing.T) {
 	chartID := fmt.Sprintf("%s/%s", charts[0].Repo.Name, charts[0].Name)
 	chartFilesID := fmt.Sprintf("%s-%s", chartID, chartVersion.Version)
 	chartFiles := models.ChartFiles{
-		ID:            chartFilesID,
-		Readme:        testChartReadme,
-		DefaultValues: testChartValues,
-		Schema:        testChartSchema,
-		Repo:          charts[0].Repo,
-		Digest:        chartVersion.Digest,
+		ID:                      chartFilesID,
+		Readme:                  testChartReadme,
+		DefaultValues:           testChartValues,
+		AdditionalDefaultValues: map[string]string{},
+		Schema:                  testChartSchema,
+		Repo:                    charts[0].Repo,
+		Digest:                  chartVersion.Digest,
 	}
 	fRepo := &fakeRepo{
 		RepoInternal: repo,
@@ -579,12 +580,13 @@ func Test_fetchAndImportFiles(t *testing.T) {
 		defer cleanup()
 
 		files := models.ChartFiles{
-			ID:            chartFilesID,
-			Readme:        "",
-			DefaultValues: "",
-			Schema:        "",
-			Repo:          charts[0].Repo,
-			Digest:        chartVersion.Digest,
+			ID:                      chartFilesID,
+			Readme:                  "",
+			DefaultValues:           "",
+			AdditionalDefaultValues: map[string]string{},
+			Schema:                  "",
+			Repo:                    charts[0].Repo,
+			Digest:                  chartVersion.Digest,
 		}
 
 		// file does not exist (no rows returned) so insertion goes ahead.
@@ -914,10 +916,11 @@ version: 1.0.0
 					Category:    "Infrastructure",
 					ChartVersions: []models.ChartVersion{
 						{
-							Version:    "1.0.0",
-							AppVersion: "2.0.0",
-							Digest:     "123",
-							URLs:       []string{"https://github.com/vmware-tanzu/kubeapps"},
+							Version:                 "1.0.0",
+							AppVersion:              "2.0.0",
+							Digest:                  "123",
+							URLs:                    []string{"https://github.com/vmware-tanzu/kubeapps"},
+							AdditionalDefaultValues: map[string]string{},
 						},
 					},
 				},
@@ -925,7 +928,7 @@ version: 1.0.0
 			false,
 		},
 		{
-			"Retrieve other files",
+			"Retrieve standard files",
 			"kubeapps",
 			[]tartest.TarballFile{
 				{Name: "README.md", Body: "chart readme"},
@@ -941,10 +944,44 @@ version: 1.0.0
 					Maintainers: []chart.Maintainer{},
 					ChartVersions: []models.ChartVersion{
 						{
-							Digest: "123",
-							Readme: "chart readme",
-							Values: "chart values",
-							Schema: "chart schema",
+							Digest:                  "123",
+							Readme:                  "chart readme",
+							DefaultValues:           "chart values",
+							AdditionalDefaultValues: map[string]string{},
+							Schema:                  "chart schema",
+						},
+					},
+				},
+			},
+			false,
+		},
+		{
+			"Retrieve additional values files",
+			"kubeapps",
+			[]tartest.TarballFile{
+				{Name: "README.md", Body: "chart readme"},
+				{Name: "values.yaml", Body: "chart values"},
+				{Name: "values-production.yaml", Body: "chart prod values"},
+				{Name: "values-staging.yaml", Body: "chart staging values"},
+				{Name: "values.schema.json", Body: "chart schema"},
+			},
+			[]string{"1.0.0"},
+			[]models.Chart{
+				{
+					ID:          "test/kubeapps",
+					Name:        "kubeapps",
+					Repo:        &models.Repo{Name: "test", URL: "http://oci-test/test"},
+					Maintainers: []chart.Maintainer{},
+					ChartVersions: []models.ChartVersion{
+						{
+							Digest:        "123",
+							Readme:        "chart readme",
+							DefaultValues: "chart values",
+							Schema:        "chart schema",
+							AdditionalDefaultValues: map[string]string{
+								"values-production": "chart prod values",
+								"values-staging":    "chart staging values",
+							},
 						},
 					},
 				},
@@ -968,10 +1005,11 @@ version: 1.0.0
 					Maintainers: []chart.Maintainer{},
 					ChartVersions: []models.ChartVersion{
 						{
-							Digest: "123",
-							Readme: "chart readme",
-							Values: "chart values",
-							Schema: "chart schema",
+							Digest:                  "123",
+							Readme:                  "chart readme",
+							DefaultValues:           "chart values",
+							AdditionalDefaultValues: map[string]string{},
+							Schema:                  "chart schema",
 						},
 					},
 				},
@@ -995,16 +1033,18 @@ version: 1.0.0
 					Maintainers: []chart.Maintainer{},
 					ChartVersions: []models.ChartVersion{
 						{
-							Digest: "123",
-							Readme: "chart readme",
-							Values: "chart values",
-							Schema: "chart schema",
+							Digest:                  "123",
+							Readme:                  "chart readme",
+							DefaultValues:           "chart values",
+							AdditionalDefaultValues: map[string]string{},
+							Schema:                  "chart schema",
 						},
 						{
-							Digest: "123",
-							Readme: "chart readme",
-							Values: "chart values",
-							Schema: "chart schema",
+							Digest:                  "123",
+							Readme:                  "chart readme",
+							DefaultValues:           "chart values",
+							AdditionalDefaultValues: map[string]string{},
+							Schema:                  "chart schema",
 						},
 					},
 				},
@@ -1028,10 +1068,11 @@ version: 1.0.0
 					Maintainers: []chart.Maintainer{},
 					ChartVersions: []models.ChartVersion{
 						{
-							Digest: "123",
-							Readme: "chart readme",
-							Values: "chart values",
-							Schema: "chart schema",
+							Digest:                  "123",
+							Readme:                  "chart readme",
+							DefaultValues:           "chart values",
+							AdditionalDefaultValues: map[string]string{},
+							Schema:                  "chart schema",
 						},
 					},
 				},
@@ -1090,9 +1131,9 @@ version: 1.0.0
 		}
 		repo := OCIRegistry{}
 		result, err := repo.FetchFiles("", models.ChartVersion{
-			Values: files[models.DefaultValuesKey],
-			Readme: files[models.ReadmeKey],
-			Schema: files[models.SchemaKey],
+			DefaultValues: files[models.DefaultValuesKey],
+			Readme:        files[models.ReadmeKey],
+			Schema:        files[models.SchemaKey],
 		}, "my-user-agent", false)
 		assert.NoError(t, err)
 		assert.Equal(t, result, files, "expected files")

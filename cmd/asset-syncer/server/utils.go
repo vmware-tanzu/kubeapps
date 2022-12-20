@@ -414,13 +414,14 @@ func pullAndExtract(repoURL *url.URL, appName, tag string, puller helm.ChartPull
 
 	// Format Data
 	chartVersion := models.ChartVersion{
-		Version:    chartMetadata.Version,
-		AppVersion: chartMetadata.AppVersion,
-		Digest:     digest,
-		URLs:       chartMetadata.Sources,
-		Readme:     files[models.ReadmeKey],
-		Values:     files[models.DefaultValuesKey],
-		Schema:     files[models.SchemaKey],
+		Version:                 chartMetadata.Version,
+		AppVersion:              chartMetadata.AppVersion,
+		Digest:                  digest,
+		URLs:                    chartMetadata.Sources,
+		Readme:                  files[models.ReadmeKey],
+		DefaultValues:           files[models.DefaultValuesKey],
+		AdditionalDefaultValues: additional_default_values_from_files(files),
+		Schema:                  files[models.SchemaKey],
 	}
 
 	maintainers := []chart.Maintainer{}
@@ -589,7 +590,7 @@ func (r *OCIRegistry) Charts(fetchLatestOnly bool) ([]models.Chart, error) {
 // FetchFiles do nothing for the OCI case since they have been already fetched in the Charts() method
 func (r *OCIRegistry) FetchFiles(name string, cv models.ChartVersion, userAgent string, passCredentials bool) (map[string]string, error) {
 	return map[string]string{
-		models.DefaultValuesKey: cv.Values,
+		models.DefaultValuesKey: cv.DefaultValues,
 		models.ReadmeKey:        cv.Readme,
 		models.SchemaKey:        cv.Schema,
 	}, nil
@@ -831,6 +832,7 @@ func (f *fileImporter) fetchAndImportFiles(name string, repo Repo, cv models.Cha
 	} else {
 		log.Info("values.schema.json not found, name=%s, version=%s", name, cv.Version)
 	}
+	chartFiles.AdditionalDefaultValues = additional_default_values_from_files(files)
 
 	// inserts the chart files if not already indexed, or updates the existing
 	// entry if digest has changed
@@ -867,4 +869,18 @@ func GetUserAgent(version, userAgentComment string) string {
 		ua = fmt.Sprintf("%s (%s)", ua, userAgentComment)
 	}
 	return ua
+}
+func additional_default_values_from_files(files map[string]string) map[string]string {
+	additional_filenames := []string{}
+	for f := range files {
+		if strings.HasPrefix(f, models.DefaultValuesKey+"-") {
+			additional_filenames = append(additional_filenames, f)
+		}
+	}
+
+	additional_defaults := map[string]string{}
+	for _, f := range additional_filenames {
+		additional_defaults[f] = files[f]
+	}
+	return additional_defaults
 }

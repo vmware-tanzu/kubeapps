@@ -424,6 +424,7 @@ func AvailablePackageDetailFromChart(chart *models.Chart, chartFiles *models.Cha
 		pkg.Readme = chartFiles.Readme
 		pkg.DefaultValues = chartFiles.DefaultValues
 		pkg.ValuesSchema = chartFiles.Schema
+		pkg.AdditionalDefaultValues = chartFiles.AdditionalDefaultValues
 	}
 	return pkg, nil
 }
