@@ -8,10 +8,10 @@ import (
 	"bytes"
 	"compress/gzip"
 	"io"
+	"path"
 	"regexp"
 	"strings"
 
-	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/pkg/pkgutils"
 	chart "github.com/vmware-tanzu/kubeapps/pkg/chart/models"
 	httpclient "github.com/vmware-tanzu/kubeapps/pkg/http-client"
 )
@@ -38,18 +38,13 @@ func FetchChartDetailFromTarballUrl(name string, chartTarballURL string, userAge
 		return nil, err
 	}
 
-	_, fixedName, err := pkgutils.SplitPackageIdentifier(name)
-	if err != nil {
-		return nil, err
-	}
-
-	return FetchChartDetailFromTarball(reader, fixedName)
+	return FetchChartDetailFromTarball(reader)
 }
 
 // Fetches helm chart details from a gzipped tarball
 //
 // name is expected in format "foo/bar" or "foo%2Fbar" if url-escaped
-func FetchChartDetailFromTarball(reader io.Reader, tarballRootDir string) (map[string]string, error) {
+func FetchChartDetailFromTarball(reader io.Reader) (map[string]string, error) {
 	// We read the whole chart into memory, this should be okay since the chart
 	// tarball needs to be small enough to fit into a GRPC call
 	gzf, err := gzip.NewReader(reader)
@@ -60,26 +55,17 @@ func FetchChartDetailFromTarball(reader io.Reader, tarballRootDir string) (map[s
 
 	tarf := tar.NewReader(gzf)
 
-	prefix := ""
-	if tarballRootDir != "" {
-		prefix = tarballRootDir + "/"
-	}
-
-	readmeFileName := prefix + "README.md"
-	valuesFileName := prefix + "values.yaml"
-	schemaFileName := prefix + "values.schema.json"
-	chartYamlFileName := prefix + "Chart.yaml"
 	filenames := map[string]string{
-		chart.DefaultValuesKey: valuesFileName,
-		chart.ReadmeKey:        readmeFileName,
-		chart.SchemaKey:        schemaFileName,
-		chart.ChartYamlKey:     chartYamlFileName,
+		chart.DefaultValuesKey: "values.yaml",
+		chart.ReadmeKey:        "README.md",
+		chart.SchemaKey:        "values.schema.json",
+		chart.ChartYamlKey:     "Chart.yaml",
 	}
 
 	// Optionally search for files matching a regular expression, using the
 	// template to provide the key.
 	regexes := map[string]*regexp.Regexp{
-		chart.DefaultValuesKey + "-$valuesType": regexp.MustCompile(prefix + `values-(?P<valuesType>\w+)\.yaml`),
+		chart.DefaultValuesKey + "-$valuesType": regexp.MustCompile(`values-(?P<valuesType>\w+)\.yaml`),
 	}
 
 	return ExtractFilesFromTarball(filenames, regexes, tarf)
@@ -102,33 +88,50 @@ func ExtractFilesFromTarball(filenames map[string]string, regexes map[string]*re
 			return ret, err
 		}
 
-		foundFile := false
-		for id, f := range filenames {
-			if strings.EqualFold(header.Name, f) {
-				if s, err := readTarFileContent(tarf); err != nil {
-					return ret, err
-				} else {
-					ret[id] = s
-				}
-				foundFile = true
-				break
-			}
-		}
-		if foundFile {
+		compressedFileName := header.Name
+		if len(strings.Split(compressedFileName, "/")) > 2 {
+			// We are only interested on files directly under the named directory
 			continue
 		}
 
-		for template, pattern := range regexes {
-			match := pattern.FindSubmatchIndex([]byte(header.Name))
-			if match != nil {
-				result := []byte{}
-				result = pattern.ExpandString(result, template, header.Name, match)
-				if s, err := readTarFileContent(tarf); err != nil {
-					return ret, err
-				} else {
-					ret[string(result)] = s
+		switch header.Typeflag {
+		case tar.TypeDir:
+			// Ignore directories
+		case tar.TypeReg:
+			foundFile := false
+			for id, f := range filenames {
+				if strings.EqualFold(path.Base(header.Name), path.Base(f)) {
+					// If the expected directory is set, we use it in the comparison.
+					if path.Dir(f) != "." && (path.Dir(f) != path.Dir(header.Name)) {
+						continue
+					}
+					if s, err := readTarFileContent(tarf); err != nil {
+						return ret, err
+					} else {
+						ret[id] = s
+					}
+					foundFile = true
+					break
 				}
 			}
+			if foundFile {
+				continue
+			}
+
+			for template, pattern := range regexes {
+				match := pattern.FindSubmatchIndex([]byte(header.Name))
+				if match != nil {
+					result := []byte{}
+					result = pattern.ExpandString(result, template, header.Name, match)
+					if s, err := readTarFileContent(tarf); err != nil {
+						return ret, err
+					} else {
+						ret[string(result)] = s
+					}
+				}
+			}
+		default:
+			// Unknown type, ignore
 		}
 	}
 	return ret, nil

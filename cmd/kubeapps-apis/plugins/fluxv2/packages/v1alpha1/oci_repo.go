@@ -844,7 +844,7 @@ func getOCIChartMetadata(ociRepo *OCIChartRepository, chartID string, chartVersi
 	}
 
 	// not sure yet why flux untars into a temp directory
-	files, err := tarutil.FetchChartDetailFromTarball(bytes.NewReader(chartTarball), chartID)
+	files, err := tarutil.FetchChartDetailFromTarball(bytes.NewReader(chartTarball))
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "%v", err)
 	}

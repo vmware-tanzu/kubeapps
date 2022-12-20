@@ -402,10 +402,7 @@ func pullAndExtract(repoURL *url.URL, appName, tag string, puller helm.ChartPull
 		return nil, err
 	}
 
-	// OCI tarballs do not have a root directory with files under that, but rather
-	// have the files at the top-level.
-	tarballRootDir := ""
-	files, err := tarutil.FetchChartDetailFromTarball(chartBuffer, tarballRootDir)
+	files, err := tarutil.FetchChartDetailFromTarball(chartBuffer)
 	if err != nil {
 		return nil, err
 	}
