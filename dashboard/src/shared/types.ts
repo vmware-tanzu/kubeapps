@@ -449,6 +449,7 @@ export enum PluginNames {
 // type holding the data used in the package repository form
 export interface IPkgRepoFormData {
   authMethod: PackageRepositoryAuth_PackageRepositoryAuthType;
+  isUserManaged: boolean;
   // kubeapps-managed secrets
   authHeader: string; // used if type == PACKAGE_REPOSITORY_AUTH_TYPE_BEARER || type == PACKAGE_REPOSITORY_AUTH_TYPE_AUTHORIZATION_HEADER
   basicAuth: UsernamePassword; // used if type == PACKAGE_REPOSITORY_AUTH_TYPE_BASIC_AUTH

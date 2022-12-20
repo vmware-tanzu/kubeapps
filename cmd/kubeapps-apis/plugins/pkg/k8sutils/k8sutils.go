@@ -14,6 +14,11 @@ import (
 	"k8s.io/client-go/dynamic"
 )
 
+const (
+	// description as annotation
+	AnnotationDescriptionKey = "kubeapps.dev/description"
+)
+
 func WaitForResource(ctx context.Context, ri dynamic.ResourceInterface, name string, interval, timeout time.Duration) error {
 	err := wait.PollImmediateWithContext(ctx, interval, timeout, func(ctx context.Context) (bool, error) {
 		_, err := ri.Get(ctx, name, metav1.GetOptions{})
@@ -30,4 +35,20 @@ func WaitForResource(ctx context.Context, ri dynamic.ResourceInterface, name str
 		return true, nil
 	})
 	return err
+}
+
+// description
+func SetDescription(metadata *metav1.ObjectMeta, description string) {
+	if description != "" {
+		if metadata.Annotations == nil {
+			metadata.Annotations = make(map[string]string)
+		}
+		metadata.Annotations[AnnotationDescriptionKey] = description
+	} else {
+		delete(metadata.Annotations, AnnotationDescriptionKey)
+	}
+}
+
+func GetDescription(metadata *metav1.ObjectMeta) string {
+	return metadata.Annotations[AnnotationDescriptionKey]
 }

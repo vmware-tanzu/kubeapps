@@ -44,6 +44,7 @@ const pkgRepoFormData = {
   authHeader: "",
   authMethod:
     PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_UNSPECIFIED,
+  isUserManaged: false,
   basicAuth: {
     password: "",
     username: "",
@@ -52,7 +53,7 @@ const pkgRepoFormData = {
   customDetail: {
     imagesPullSecret: {
       secretRef: "",
-      credentials: { server: "", username: "", password: "", email: "" },
+      credentials: undefined,
     },
     ociRepositories: [],
     performValidation: true,
@@ -279,7 +280,7 @@ it("should call the install method with OCI information", async () => {
       ociRepositories: ["apache", "jenkins"],
       imagesPullSecret: {
         secretRef: "",
-        credentials: { server: "", username: "", password: "", email: "" },
+        credentials: undefined,
       },
       filterRule: undefined,
       performValidation: true,
@@ -318,7 +319,7 @@ it("should call the install skipping TLS verification", async () => {
       ociRepositories: [],
       imagesPullSecret: {
         secretRef: "",
-        credentials: { server: "", username: "", password: "", email: "" },
+        credentials: undefined,
       },
       filterRule: undefined,
       performValidation: true,
@@ -358,7 +359,7 @@ it("should call the install passing credentials", async () => {
       ociRepositories: [],
       imagesPullSecret: {
         secretRef: "",
-        credentials: { server: "", username: "", password: "", email: "" },
+        credentials: undefined,
       },
       filterRule: undefined,
       performValidation: true,
@@ -428,7 +429,7 @@ describe("when using a filter", () => {
         ociRepositories: [],
         imagesPullSecret: {
           secretRef: "",
-          credentials: { server: "", username: "", password: "", email: "" },
+          credentials: undefined,
         },
         filterRule: {
           jq: ".name == $var0 or .name == $var1",
@@ -472,7 +473,7 @@ describe("when using a filter", () => {
         ociRepositories: [],
         imagesPullSecret: {
           secretRef: "",
-          credentials: { server: "", username: "", password: "", email: "" },
+          credentials: undefined,
         },
         filterRule: {
           jq: ".name | test($var) | not",
@@ -520,7 +521,7 @@ describe("when using a filter", () => {
         ociRepositories: ["apache", "jenkins"],
         imagesPullSecret: {
           secretRef: "",
-          credentials: { server: "", username: "", password: "", email: "" },
+          credentials: undefined,
         },
         filterRule: undefined,
         performValidation: true,
@@ -557,7 +558,7 @@ it("should call the install method with a description", async () => {
       ociRepositories: [],
       imagesPullSecret: {
         secretRef: "",
-        credentials: { server: "", username: "", password: "", email: "" },
+        credentials: undefined,
       },
       filterRule: undefined,
       performValidation: true,

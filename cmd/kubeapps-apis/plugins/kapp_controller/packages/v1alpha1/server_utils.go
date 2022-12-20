@@ -18,10 +18,10 @@ import (
 	"k8s.io/client-go/rest"
 
 	"github.com/Masterminds/semver/v3"
-	kappcmdcore "github.com/vmware-tanzu/carvel-kapp/pkg/kapp/cmd/core"
 	kappctrlv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
 	packagingv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/packaging/v1alpha1"
 	datapackagingv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apiserver/apis/datapackaging/v1alpha1"
+	kappcmdcore "github.com/vmware-tanzu/carvel-kapp/pkg/kapp/cmd/core"
 	vendirversions "github.com/vmware-tanzu/carvel-vendir/pkg/vendir/versions/v1alpha1"
 	corev1 "github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
 	kappcorev1 "github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/plugins/kapp_controller/packages/v1alpha1"
@@ -511,7 +511,7 @@ func isPluginManaged(pkgRepository *packagingv1alpha1.PackageRepository, pkgSecr
 	if !metav1.IsControlledBy(pkgSecret, pkgRepository) {
 		return false
 	}
-	if managedby := pkgSecret.GetAnnotations()[Annotation_ManagedBy_Key]; managedby != Annotation_ManagedBy_Value {
+	if managedby := pkgSecret.GetAnnotations()[annotationManagedByKey]; managedby != annotationManagedByValue {
 		return false
 	}
 	return true
@@ -522,7 +522,7 @@ func isBasicAuth(secret *k8scorev1.Secret) bool {
 }
 
 func isBearerAuth(secret *k8scorev1.Secret) bool {
-	return secret.Data != nil && secret.Data[BearerAuthToken] != nil
+	return secret.Data != nil && secret.Data[bearerAuthToken] != nil
 }
 
 func isSshAuth(secret *k8scorev1.Secret) bool {

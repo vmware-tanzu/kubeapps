@@ -254,17 +254,28 @@ export function getSupportedPackageRepositoryAuthTypes(
         PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_DOCKER_CONFIG_JSON,
       ];
     case PluginNames.PACKAGES_FLUX:
-      return [
-        PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_BASIC_AUTH,
-        PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_OPAQUE,
-        PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_SSH,
-        PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_TLS,
-        PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_DOCKER_CONFIG_JSON,
-      ];
+      switch (type) {
+        case RepositoryStorageTypes.PACKAGE_REPOSITORY_STORAGE_HELM:
+          return [
+            PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_BASIC_AUTH,
+            PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_TLS,
+          ];
+        case RepositoryStorageTypes.PACKAGE_REPOSITORY_STORAGE_OCI:
+          return [
+            PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_BASIC_AUTH,
+            PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_DOCKER_CONFIG_JSON,
+          ];
+        default:
+          return [
+            PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_BASIC_AUTH,
+            PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_TLS,
+          ];
+      }
     case PluginNames.PACKAGES_KAPP:
       // the available auth options in Carvel are type-specific
       // extracted from https://github.com/vmware-tanzu/carvel-kapp-controller/blob/v0.40.0/pkg/apis/kappctrl/v1alpha1/types_fetch.go
       // by looking for "Secret may include one"
+      // also see https://carvel.dev/kapp-controller/docs/v0.43.2/app-overview/#specfetch
       switch (type) {
         // "Secret with auth details. allowed keys: ssh-privatekey, ssh-knownhosts, username, password"
         case RepositoryStorageTypes.PACKAGE_REPOSITORY_STORAGE_CARVEL_GIT:
@@ -282,14 +293,16 @@ export function getSupportedPackageRepositoryAuthTypes(
           return [
             PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_BASIC_AUTH,
             PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_BEARER,
+            PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_DOCKER_CONFIG_JSON,
           ];
         // "Secret may include one or more keys: username, password, token"
         case RepositoryStorageTypes.PACKAGE_REPOSITORY_STORAGE_CARVEL_IMGPKGBUNDLE:
           return [
             PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_BASIC_AUTH,
             PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_BEARER,
+            PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_DOCKER_CONFIG_JSON,
           ];
-        // TODO(agamez): populate it back once the API supports it
+        // inline is not supported for write
         case RepositoryStorageTypes.PACKAGE_REPOSITORY_STORAGE_CARVEL_INLINE:
           return [];
         default:

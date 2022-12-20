@@ -6,6 +6,7 @@ package main
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 
 	sourcev1 "github.com/fluxcd/source-controller/api/v1beta2"
 	corev1 "github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
@@ -51,7 +52,7 @@ func (s *Server) handleRepoSecretForCreate(
 		return secret, false, err
 	} else if hasCaData || hasAuthData {
 		// kubeapps managed
-		secret, _, err := newSecretFromTlsConfigAndAuth(repoName, repoType, tlsConfig, auth)
+		secret, _, err := newSecretFromTlsConfigAndAuth(repoName, repoType, nil, tlsConfig, auth)
 		if err != nil {
 			return nil, false, err
 		}
@@ -113,33 +114,44 @@ func (s *Server) handleRepoSecretForUpdate(
 	repoName := types.NamespacedName{Name: repo.Name, Namespace: repo.Namespace}
 	repoType := repo.Spec.Type
 
-	// handle user managed secret
+	// create/get secret
 	if hasCaRef || hasAuthRef {
+		// handle user managed secret
 		updatedSecret, err := s.validateUserManagedRepoSecret(ctx, repoName, repoType, newTlsConfig, newAuth)
 		return updatedSecret, false, true, err
-	}
 
-	// handle kubeapps managed secret
-	var isSameSecret bool
-	updatedSecret, isSameSecret, err = newSecretFromTlsConfigAndAuth(repoName, repoType, newTlsConfig, newAuth)
-	if err != nil {
-		return nil, true, false, err
-	} else if isSameSecret {
-		// Do nothing if repo auth data came redacted
-		return nil, true, false, nil
+	} else if hasCaData || hasAuthData {
+		// handle kubeapps managed secret
+		updatedSecret, isSameSecret, err := newSecretFromTlsConfigAndAuth(repoName, repoType, existingSecret, newTlsConfig, newAuth)
+		if err != nil {
+			return nil, true, false, err
+		} else if isSameSecret {
+			// Do nothing if repo auth data came fully redacted
+			return nil, true, false, nil
+		} else {
+			// secret has changed, we try to delete any existing secret
+			if existingSecret != nil {
+				if err = secretInterface.Delete(ctx, existingSecret.Name, metav1.DeleteOptions{}); err != nil {
+					log.Errorf("Error deleting existing secret: [%s] due to %v", err)
+				}
+			}
+			// and we recreate the updated one
+			if updatedSecret != nil {
+				if updatedSecret, err = typedClient.CoreV1().Secrets(repoName.Namespace).Create(ctx, updatedSecret, metav1.CreateOptions{}); err != nil {
+					return nil, false, false, statuserror.FromK8sError("create", "secret", updatedSecret.GetGenerateName(), err)
+				}
+			}
+			return updatedSecret, true, true, nil
+		}
+
 	} else {
-		// either we have no secret, or it has changed. in both cases, we try to delete any existing secret
+		// no auth, delete existing secret if necessary
 		if existingSecret != nil {
 			if err = secretInterface.Delete(ctx, existingSecret.Name, metav1.DeleteOptions{}); err != nil {
 				log.Errorf("Error deleting existing secret: [%s] due to %v", err)
 			}
 		}
-		if updatedSecret != nil {
-			if updatedSecret, err = typedClient.CoreV1().Secrets(repoName.Namespace).Create(ctx, updatedSecret, metav1.CreateOptions{}); err != nil {
-				return nil, false, false, statuserror.FromK8sError("create", "secret", updatedSecret.GetGenerateName(), err)
-			}
-		}
-		return updatedSecret, true, true, nil
+		return nil, false, true, nil
 	}
 }
 
@@ -150,23 +162,12 @@ func (s *Server) validateUserManagedRepoSecret(
 	tlsConfig *corev1.PackageRepositoryTlsConfig,
 	auth *corev1.PackageRepositoryAuth) (*apiv1.Secret, error) {
 	var secretRefTls, secretRefAuth string
-	if tlsConfig != nil {
-		if tlsConfig.GetCertAuthority() != "" {
-			return nil, status.Errorf(codes.InvalidArgument, "Secret Ref must be used with user managed secrets")
-		} else if tlsConfig.GetSecretRef().GetName() != "" {
-			secretRefTls = tlsConfig.GetSecretRef().GetName()
-		}
-	}
 
-	if auth != nil {
-		if auth.GetDockerCreds() != nil ||
-			auth.GetHeader() != "" ||
-			auth.GetTlsCertKey() != nil ||
-			auth.GetUsernamePassword() != nil {
-			return nil, status.Errorf(codes.InvalidArgument, "Secret Ref must be used with user managed secrets")
-		} else if auth.GetSecretRef().GetName() != "" {
-			secretRefAuth = auth.GetSecretRef().GetName()
-		}
+	if tlsConfig != nil && tlsConfig.GetSecretRef() != nil {
+		secretRefTls = tlsConfig.GetSecretRef().GetName()
+	}
+	if auth != nil && auth.GetSecretRef() != nil {
+		secretRefAuth = auth.GetSecretRef().GetName()
 	}
 
 	var secretRef string
@@ -318,96 +319,149 @@ func (s *Server) getRepoTlsConfigAndAuth(ctx context.Context, repo sourcev1.Helm
 // this func is only used with kubeapps-managed secrets
 func newSecretFromTlsConfigAndAuth(repoName types.NamespacedName,
 	repoType string,
+	existingSecret *apiv1.Secret,
 	tlsConfig *corev1.PackageRepositoryTlsConfig,
 	auth *corev1.PackageRepositoryAuth) (secret *apiv1.Secret, isSameSecret bool, err error) {
-	if tlsConfig != nil {
-		if tlsConfig.GetSecretRef() != nil {
-			return nil, false, status.Errorf(codes.InvalidArgument, "SecretRef may not be used with kubeapps managed secrets")
-		}
+
+	var hadSecretTlsCa, hadSecretTlsCert, hadSecretTlsKey, hadSecretUsername, hadSecretPassword, hadSecretDocker bool
+	if existingSecret != nil {
+		_, hadSecretTlsCa = existingSecret.Data["caFile"]
+		_, hadSecretTlsCert = existingSecret.Data["certFile"]
+		_, hadSecretTlsKey = existingSecret.Data["keyFile"]
+		_, hadSecretUsername = existingSecret.Data["username"]
+		_, hadSecretPassword = existingSecret.Data["password"]
+		_, hadSecretDocker = existingSecret.Data[apiv1.DockerConfigJsonKey]
+	}
+
+	isSameSecret = true
+	secret = newLocalOpaqueSecret(repoName)
+
+	if tlsConfig != nil && tlsConfig.GetCertAuthority() != "" {
 		caCert := tlsConfig.GetCertAuthority()
 		if caCert == redactedString {
-			isSameSecret = true
-		} else if caCert != "" {
-			secret = newLocalOpaqueSecret(repoName)
+			if hadSecretTlsCa {
+				secret.Data["caFile"] = existingSecret.Data["caFile"]
+			} else {
+				return nil, false, status.Errorf(codes.InvalidArgument, "Invalid configuration, unexpected REDACTED content")
+			}
+		} else {
 			secret.Data["caFile"] = []byte(caCert)
+			isSameSecret = false
+		}
+	} else {
+		if hadSecretTlsCa {
+			isSameSecret = false
 		}
 	}
-	if auth != nil {
-		if auth.GetSecretRef() != nil {
-			return nil, false, status.Errorf(codes.InvalidArgument, "SecretRef may not be used with kubeapps managed secrets")
-		}
-		if secret == nil {
-			if auth.Type == corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_DOCKER_CONFIG_JSON {
-				secret = newLocalDockerConfigJsonSecret(repoName)
-			} else {
-				secret = newLocalOpaqueSecret(repoName)
-			}
-		}
+
+	if auth != nil && auth.Type != corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_UNSPECIFIED {
 		switch auth.Type {
 		case corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_BASIC_AUTH:
-			if unp := auth.GetUsernamePassword(); unp != nil {
-				if unp.Username == redactedString && unp.Password == redactedString {
-					isSameSecret = true
-				} else {
+			unp := auth.GetUsernamePassword()
+			if unp == nil || unp.Username == "" || unp.Password == "" {
+				return nil, false, status.Errorf(codes.InvalidArgument, "Username/Password configuration is missing")
+			}
+			if (unp.Username == redactedString && !hadSecretUsername) || (unp.Password == redactedString && !hadSecretPassword) {
+				return nil, false, status.Errorf(codes.InvalidArgument, "Invalid configuration, unexpected REDACTED content")
+			}
+
+			if existingSecret != nil {
+				secret.Data["username"] = existingSecret.Data["username"]
+				secret.Data["password"] = existingSecret.Data["password"]
+			}
+			if unp.Username != redactedString || unp.Password != redactedString {
+				isSameSecret = false
+				if unp.Username != redactedString {
 					secret.Data["username"] = []byte(unp.Username)
+				}
+				if unp.Password != redactedString {
 					secret.Data["password"] = []byte(unp.Password)
 				}
-			} else {
-				return nil, false, status.Errorf(codes.Internal, "Username/Password configuration is missing")
 			}
 		case corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_TLS:
 			if repoType == sourcev1.HelmRepositoryTypeOCI {
 				// ref https://fluxcd.io/flux/components/source/helmrepositories/#tls-authentication
 				// Note: TLS authentication is not yet supported by OCI Helm repositories.
 				return nil, false, status.Errorf(codes.Internal, "Package repository authentication type %q is not supported for OCI repositories", auth.Type)
-			} else {
-				if ck := auth.GetTlsCertKey(); ck != nil {
-					if ck.Cert == redactedString && ck.Key == redactedString {
-						isSameSecret = true
-					} else {
-						secret.Data["certFile"] = []byte(ck.Cert)
-						secret.Data["keyFile"] = []byte(ck.Key)
-					}
-				} else {
-					return nil, false, status.Errorf(codes.Internal, "TLS Cert/Key configuration is missing")
-				}
 			}
 
-		case corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_DOCKER_CONFIG_JSON:
-			if repoType == sourcev1.HelmRepositoryTypeOCI {
-				if dc := auth.GetDockerCreds(); dc != nil {
-					if dc.Password == redactedString {
-						isSameSecret = true
-					} else {
-						secret.Type = apiv1.SecretTypeDockerConfigJson
-						dockerConfig := &credentialprovider.DockerConfigJSON{
-							Auths: map[string]credentialprovider.DockerConfigEntry{
-								dc.Server: {
-									Username: dc.Username,
-									Password: dc.Password,
-									Email:    dc.Email,
-								},
-							},
-						}
-						dockerConfigJson, err := json.Marshal(dockerConfig)
-						if err != nil {
-							return nil, false, status.Errorf(codes.InvalidArgument, "Docker credentials are wrong")
-						}
-						secret.Data[apiv1.DockerConfigJsonKey] = dockerConfigJson
-					}
-				} else {
-					return nil, false, status.Errorf(codes.Internal, "Docker credentials configuration is missing")
+			ck := auth.GetTlsCertKey()
+			if ck == nil || ck.Cert == "" || ck.Key == "" {
+				return nil, false, status.Errorf(codes.InvalidArgument, "TLS Cert/Key configuration is missing")
+			}
+			if (ck.Cert == redactedString && !hadSecretTlsCert) || (ck.Key == redactedString && !hadSecretTlsKey) {
+				return nil, false, status.Errorf(codes.InvalidArgument, "Invalid configuration, unexpected REDACTED content")
+			}
+
+			if existingSecret != nil {
+				secret.Data["certFile"] = existingSecret.Data["certFile"]
+				secret.Data["keyFile"] = existingSecret.Data["keyFile"]
+			}
+			if ck.Cert != redactedString || ck.Key != redactedString {
+				isSameSecret = false
+				if ck.Cert != redactedString {
+					secret.Data["certFile"] = []byte(ck.Cert)
 				}
-			} else {
+				if ck.Key != redactedString {
+					secret.Data["keyFile"] = []byte(ck.Key)
+				}
+			}
+		case corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_DOCKER_CONFIG_JSON:
+			if repoType != sourcev1.HelmRepositoryTypeOCI {
 				return nil, false, status.Errorf(codes.Internal, "Unsupported package repository authentication type: %q", auth.Type)
 			}
-		case corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_BEARER,
-			corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_AUTHORIZATION_HEADER:
-			return nil, false, status.Errorf(codes.Internal, "Package repository authentication type %q is not supported", auth.Type)
-		case corev1.PackageRepositoryAuth_PACKAGE_REPOSITORY_AUTH_TYPE_UNSPECIFIED:
-			return nil, true, nil
+
+			creds := auth.GetDockerCreds()
+			if creds == nil || creds.Server == "" || creds.Username == "" || creds.Password == "" {
+				return nil, false, status.Errorf(codes.InvalidArgument, "Docker credentials are missing")
+			}
+			if (creds.Server == redactedString || creds.Username == redactedString || creds.Password == redactedString || creds.Email == redactedString) && !hadSecretDocker {
+				return nil, false, status.Errorf(codes.InvalidArgument, "Invalid configuration, unexpected REDACTED content")
+			}
+
+			secret.Type = apiv1.SecretTypeDockerConfigJson
+			if creds.Server == redactedString && creds.Username == redactedString && creds.Password == redactedString && creds.Email == redactedString {
+				secret.Data[apiv1.DockerConfigJsonKey] = existingSecret.Data[apiv1.DockerConfigJsonKey]
+			} else if creds.Server == redactedString || creds.Username == redactedString || creds.Password == redactedString || creds.Email == redactedString {
+				newcreds, err := decodeDockerAuth(existingSecret.Data[apiv1.DockerConfigJsonKey])
+				if err != nil {
+					return nil, false, status.Errorf(codes.Internal, "Invalid configuration, the existing repository does not have valid docker authentication")
+				}
+
+				if creds.Server != redactedString {
+					newcreds.Server = creds.Server
+				}
+				if creds.Username != redactedString {
+					newcreds.Username = creds.Username
+				}
+				if creds.Password != redactedString {
+					newcreds.Password = creds.Password
+				}
+				if creds.Email != redactedString {
+					newcreds.Email = creds.Email
+				}
+
+				isSameSecret = false
+				if configjson, err := encodeDockerAuth(newcreds); err != nil {
+					return nil, false, status.Errorf(codes.InvalidArgument, "Invalid Docker credentials")
+				} else {
+					secret.Data[apiv1.DockerConfigJsonKey] = configjson
+				}
+			} else {
+				isSameSecret = false
+				if configjson, err := encodeDockerAuth(creds); err != nil {
+					return nil, false, status.Errorf(codes.InvalidArgument, "Invalid Docker credentials")
+				} else {
+					secret.Data[apiv1.DockerConfigJsonKey] = configjson
+				}
+			}
 		default:
-			return nil, false, status.Errorf(codes.Internal, "Unsupported package repository authentication type: %q", auth.Type)
+			return nil, false, status.Errorf(codes.InvalidArgument, "Package repository authentication type %q is not supported", auth.Type)
+		}
+	} else {
+		// no authentication, check if it was removed
+		if hadSecretTlsCert || hadSecretTlsKey || hadSecretUsername || hadSecretPassword || hadSecretDocker {
+			isSameSecret = false
 		}
 	}
 	return secret, isSameSecret, nil
@@ -533,16 +587,33 @@ func newLocalOpaqueSecret(ownerRepo types.NamespacedName) *apiv1.Secret {
 	}
 }
 
-// "Local" in the sense of no namespace is specified
-func newLocalDockerConfigJsonSecret(ownerRepo types.NamespacedName) *apiv1.Secret {
-	return &apiv1.Secret{
-		ObjectMeta: metav1.ObjectMeta{
-			GenerateName: ownerRepo.Name + "-",
-			Annotations: map[string]string{
-				annotationManagedByKey: annotationManagedByValue,
+func encodeDockerAuth(credentials *corev1.DockerCredentials) ([]byte, error) {
+	config := &credentialprovider.DockerConfigJSON{
+		Auths: map[string]credentialprovider.DockerConfigEntry{
+			credentials.Server: {
+				Username: credentials.Username,
+				Password: credentials.Password,
+				Email:    credentials.Email,
 			},
 		},
-		Type: apiv1.SecretTypeDockerConfigJson,
-		Data: map[string][]byte{},
 	}
+	return json.Marshal(config)
+}
+
+func decodeDockerAuth(dockerjson []byte) (*corev1.DockerCredentials, error) {
+	config := &credentialprovider.DockerConfigJSON{}
+	if err := json.Unmarshal(dockerjson, config); err != nil {
+		return nil, err
+	}
+	// note: by design, this method is used when the secret is kubeapps managed, hence we expect only one item in the map
+	for server, entry := range config.Auths {
+		docker := &corev1.DockerCredentials{
+			Server:   server,
+			Username: entry.Username,
+			Password: entry.Password,
+			Email:    entry.Email,
+		}
+		return docker, nil
+	}
+	return nil, fmt.Errorf("invalid dockerconfig, no Auths entries were found")
 }

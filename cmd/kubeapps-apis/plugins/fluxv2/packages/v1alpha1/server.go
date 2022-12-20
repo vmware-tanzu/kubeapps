@@ -611,7 +611,7 @@ func (s *Server) UpdatePackageRepository(ctx context.Context, request *corev1.Up
 			cluster)
 	}
 
-	if responseRef, err := s.updateRepo(ctx, repoRef, request.Url, request.Interval, request.TlsConfig, request.Auth); err != nil {
+	if responseRef, err := s.updateRepo(ctx, repoRef, request); err != nil {
 		return nil, err
 	} else {
 		return &corev1.UpdatePackageRepositoryResponse{

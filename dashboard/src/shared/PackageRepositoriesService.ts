@@ -11,6 +11,7 @@ import {
   GetPackageRepositorySummariesResponse,
   OpaqueCredentials,
   PackageRepositoryAuth,
+  PackageRepositoryAuth_PackageRepositoryAuthType,
   PackageRepositoryReference,
   PackageRepositoryTlsConfig,
   SecretKeyReference,
@@ -123,87 +124,117 @@ export class PackageRepositoriesService {
       customDetail: pluginCustomDetail,
     } as AddPackageRepositoryRequest;
 
-    // add optional fields if present in the request
-    if (request.authHeader) {
-      addPackageRepositoryRequest.auth = {
-        ...addPackageRepositoryRequest.auth,
-        header: request.authHeader,
-      } as PackageRepositoryAuth;
-    }
-    if (request.passCredentials) {
-      addPackageRepositoryRequest.auth = {
-        ...addPackageRepositoryRequest.auth,
-        passCredentials: request.passCredentials,
-      } as PackageRepositoryAuth;
-    }
+    // auth type
     if (request.authMethod) {
       addPackageRepositoryRequest.auth = {
         ...addPackageRepositoryRequest.auth,
         type: request.authMethod,
       } as PackageRepositoryAuth;
     }
-    if (Object.values(request.basicAuth).some(e => !!e)) {
+
+    // auth/tls - user entered
+    if (!request.isUserManaged) {
+      switch (request.authMethod) {
+        case (PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_AUTHORIZATION_HEADER,
+          PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_BEARER):
+          if (request.authHeader) {
+            addPackageRepositoryRequest.auth = {
+              ...addPackageRepositoryRequest.auth,
+              header: request.authHeader,
+            } as PackageRepositoryAuth;
+          }
+          break;
+        case PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_BASIC_AUTH:
+          if (Object.values(request.basicAuth).some(e => !!e)) {
+            addPackageRepositoryRequest.auth = {
+              ...addPackageRepositoryRequest.auth,
+              usernamePassword: {
+                username: request.basicAuth.username,
+                password: request.basicAuth.password,
+              } as UsernamePassword,
+            } as PackageRepositoryAuth;
+          }
+          break;
+        case PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_DOCKER_CONFIG_JSON:
+          if (Object.values(request.dockerRegCreds).some(e => !!e)) {
+            addPackageRepositoryRequest.auth = {
+              ...addPackageRepositoryRequest.auth,
+              dockerCreds: { ...request.dockerRegCreds } as DockerCredentials,
+            } as PackageRepositoryAuth;
+          }
+          break;
+        case PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_SSH:
+          if (Object.values(request.sshCreds).some(e => !!e)) {
+            addPackageRepositoryRequest.auth = {
+              ...addPackageRepositoryRequest.auth,
+              sshCreds: {
+                ...request.sshCreds,
+              } as SshCredentials,
+            } as PackageRepositoryAuth;
+          }
+          break;
+        case PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_TLS:
+          if (Object.values(request.tlsCertKey).some(e => !!e)) {
+            addPackageRepositoryRequest.auth = {
+              ...addPackageRepositoryRequest.auth,
+              tlsCertKey: { ...request.tlsCertKey } as TlsCertKey,
+            } as PackageRepositoryAuth;
+          }
+          break;
+        case PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_OPAQUE:
+          if (Object.values(request.opaqueCreds.data).some(e => !!e)) {
+            addPackageRepositoryRequest.auth = {
+              ...addPackageRepositoryRequest.auth,
+              opaqueCreds: { ...request.opaqueCreds } as OpaqueCredentials,
+            } as PackageRepositoryAuth;
+          }
+          break;
+      }
+
+      if (request.customCA) {
+        addPackageRepositoryRequest.tlsConfig = {
+          ...addPackageRepositoryRequest.tlsConfig,
+          certAuthority: request.customCA,
+        } as PackageRepositoryTlsConfig;
+      }
+    }
+
+    // auth/tls - user managed
+    if (request.isUserManaged) {
+      if (request.secretTLSName) {
+        addPackageRepositoryRequest.tlsConfig = {
+          ...addPackageRepositoryRequest.tlsConfig,
+          secretRef: {
+            name: request.secretTLSName,
+          } as SecretKeyReference,
+        } as PackageRepositoryTlsConfig;
+      }
+      if (
+        request.authMethod !==
+        PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_UNSPECIFIED &&
+        request.secretAuthName
+      ) {
+        addPackageRepositoryRequest.auth = {
+          ...addPackageRepositoryRequest.auth,
+          secretRef: {
+            name: request.secretAuthName,
+          } as SecretKeyReference,
+        } as PackageRepositoryAuth;
+      }
+    }
+
+    // misc fields
+    if (request.passCredentials) {
       addPackageRepositoryRequest.auth = {
         ...addPackageRepositoryRequest.auth,
-        usernamePassword: {
-          username: request.basicAuth.username,
-          password: request.basicAuth.password,
-        } as UsernamePassword,
+        passCredentials: request.passCredentials,
       } as PackageRepositoryAuth;
-    }
-    if (Object.values(request.dockerRegCreds).some(e => !!e)) {
-      addPackageRepositoryRequest.auth = {
-        ...addPackageRepositoryRequest.auth,
-        dockerCreds: { ...request.dockerRegCreds } as DockerCredentials,
-      } as PackageRepositoryAuth;
-    }
-    if (Object.values(request.sshCreds).some(e => !!e)) {
-      addPackageRepositoryRequest.auth = {
-        ...addPackageRepositoryRequest.auth,
-        sshCreds: {
-          ...request.sshCreds,
-        } as SshCredentials,
-      } as PackageRepositoryAuth;
-    }
-    if (Object.values(request.tlsCertKey).some(e => !!e)) {
-      addPackageRepositoryRequest.auth = {
-        ...addPackageRepositoryRequest.auth,
-        tlsCertKey: { ...request.tlsCertKey } as TlsCertKey,
-      } as PackageRepositoryAuth;
-    }
-    if (Object.values(request.opaqueCreds.data).some(e => !!e)) {
-      addPackageRepositoryRequest.auth = {
-        ...addPackageRepositoryRequest.auth,
-        opaqueCreds: { ...request.opaqueCreds } as OpaqueCredentials,
-      } as PackageRepositoryAuth;
-    }
-    if (request.customCA) {
-      addPackageRepositoryRequest.tlsConfig = {
-        ...addPackageRepositoryRequest.tlsConfig,
-        certAuthority: request.customCA,
-      } as PackageRepositoryTlsConfig;
     }
     if (request.skipTLS) {
       addPackageRepositoryRequest.tlsConfig = {
         ...addPackageRepositoryRequest.tlsConfig,
         insecureSkipVerify: request.skipTLS,
       } as PackageRepositoryTlsConfig;
-    }
-    if (request.secretTLSName) {
-      addPackageRepositoryRequest.tlsConfig = {
-        ...addPackageRepositoryRequest.tlsConfig,
-        secretRef: {
-          name: request.secretTLSName,
-        } as SecretKeyReference,
-      } as PackageRepositoryTlsConfig;
-    }
-    if (request.secretAuthName) {
-      addPackageRepositoryRequest.auth = {
-        ...addPackageRepositoryRequest.auth,
-        secretRef: {
-          name: request.secretAuthName,
-        } as SecretKeyReference,
-      } as PackageRepositoryAuth;
     }
 
     if (isUpdate) {
@@ -252,9 +283,10 @@ export class PackageRepositoriesService {
         // populate the imagesPullSecret if it's not empty
         if (
           detail?.imagesPullSecret?.secretRef ||
-          Object.values((detail?.imagesPullSecret?.credentials || {}) as DockerCredentials).some(
-            e => !!e,
-          )
+          (detail?.imagesPullSecret?.credentials &&
+            Object.values((detail?.imagesPullSecret?.credentials || {}) as DockerCredentials).some(
+              e => !!e,
+            ))
         ) {
           helmCustomDetail.imagesPullSecret = detail.imagesPullSecret;
         }
