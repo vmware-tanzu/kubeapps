@@ -129,6 +129,8 @@ func (s *Server) availablePackageSummaryFromPackageManifest(manifest apimanifest
 	}
 	summary.Name = manifest.Status.PackageName
 	summary.DisplayName = manifest.Status.Channels[0].CurrentCSVDesc.DisplayName
+	summary.ShortDescription = manifest.Status.Channels[0].CurrentCSVDesc.Annotations["description"]
+	summary.IconUrl = ""
 	return &summary, nil
 }
 

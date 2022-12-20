@@ -11,7 +11,7 @@ ignore: |
   **/devel/
   #  Ignore files
   **/cmd/kubeapps-apis/plugins/fluxv2/packages/v1alpha1/testdata/charts/single-package-template.yaml
-  **/cmd/kubeapps-apis/plugins/operators/packages/v1alpha1/testdata/etcd.yaml
+  **/cmd/kubeapps-apis/plugins/operators/packages/v1alpha1/testdata/*.yaml
 rules:
   line-length: disable
   comments: disable

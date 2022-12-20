@@ -186,10 +186,6 @@ packaging:
   ## @param packaging.flux.enabled Enable support for Flux (v2) packaging.
   flux:
     enabled: false
-  ## Operators packaging
-  ## @param packaging.operators.enabled Enable support for Operators packaging.
-  operators:
-    enabled: false
 
 ## @section Frontend parameters
 
@@ -1443,10 +1439,16 @@ featureFlags:
   ## @param featureFlags.operators Enable support for Operators in Kubeapps
   ##
   operators: false
+  ## Operators packaging plugin
+  operatorsPluginDev:
+    ## @param packaging.operatorsPluginDev.enabled Enable support for Operators packaging 
+    ## (under development, will eventually replace featureFlags.operators)
+    enabled: false
   schemaEditor:
     ## @param featureFlags.schemaEditor.enabled Enable a visual editor for customizing the package schemas
     ##
     enabled: false
+
 
 ## @section Database Parameters
 

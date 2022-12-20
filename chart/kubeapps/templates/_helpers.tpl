@@ -321,13 +321,14 @@ kubeapps: ingress.tls
             {{- $enabledPlugins = append $enabledPlugins "fluxv2-packages" }}
           {{- else if eq $plugin "helm" }}
             {{- $enabledPlugins = append $enabledPlugins "helm-packages" }}
-          {{- else if eq $plugin "operators" }}
-            {{- $enabledPlugins = append $enabledPlugins "operators-packages" }}
           {{- else }}
             {{ $msg := printf "packaging: Unsupported packaging option: %s" $plugin }}
             {{- fail $msg }}
           {{- end }}
         {{- end }}
+      {{- end }}
+      {{- if .Values.featureFlags.operatorsPluginDev.enabled }}
+          {{- $enabledPlugins = append $enabledPlugins "operators-packages" }}
       {{- end }}
       {{- if not $enabledPlugins }}
         {{- fail "packaging: Please enable at least one of the packaging plugins." }}
