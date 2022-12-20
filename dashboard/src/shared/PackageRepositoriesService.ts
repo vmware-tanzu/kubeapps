@@ -136,7 +136,7 @@ export class PackageRepositoriesService {
     if (!request.isUserManaged) {
       switch (request.authMethod) {
         case (PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_AUTHORIZATION_HEADER,
-          PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_BEARER):
+        PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_BEARER):
           if (request.authHeader) {
             addPackageRepositoryRequest.auth = {
               ...addPackageRepositoryRequest.auth,
@@ -211,7 +211,7 @@ export class PackageRepositoriesService {
       }
       if (
         request.authMethod !==
-        PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_UNSPECIFIED &&
+          PackageRepositoryAuth_PackageRepositoryAuthType.PACKAGE_REPOSITORY_AUTH_TYPE_UNSPECIFIED &&
         request.secretAuthName
       ) {
         addPackageRepositoryRequest.auth = {
