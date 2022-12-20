@@ -189,6 +189,18 @@ message HelmPackageRepositoryCustomDetail {
 
   // whether to perform validation on the repository
   bool perform_validation = 4;
+
+  // the query options for the proxy call
+  ProxyOptions proxy_options = 5;
+
+  // selector which must be true for the pod to fit on a node
+  map<string, string> node_selector = 6;
+
+  // set of Pod's Tolerations
+  repeated Toleration tolerations = 7;
+
+  // defines the security options the container should be run with.
+  PodSecurityContext security_context = 8;
 }
 
 // RepositoryFilterRule
@@ -200,4 +212,55 @@ message RepositoryFilterRule {
 
   // map of variables
   map<string, string> variables = 4;
+}
+
+// ProxyOptions
+//
+// query options for a proxy call
+message ProxyOptions {
+  // if true, the proxy options will be taken into account
+  bool enabled = 1;
+
+  // value for the HTTP_PROXY env variable passed to the Pod
+  string http_proxy = 2;
+
+  // value for the HTTPS_PROXY env variable passed to the Pod
+  string https_proxy = 3;
+
+  // value for the NO_PROXY env variable passed to the Pod
+  string no_proxy = 4;
+}
+
+
+
+// Toleration
+//
+// Extracted from the K8s API to avoid a dependency on the K8s API
+// https://github.com/kubernetes/api/blob/master/core/v1/generated.proto
+message Toleration {
+	optional string key = 1;
+	optional string operator = 2;
+	optional string value = 3;
+	optional string effect = 4;
+	optional int64 toleration_seconds = 5;
+}
+
+
+// PodSecurityContext
+//
+// Extracted from the K8s API to avoid a dependency on the K8s API
+// https://github.com/kubernetes/api/blob/master/core/v1/generated.proto
+message PodSecurityContext {
+  optional int64 run_as_user = 1;
+  optional int64 run_as_group = 6;
+  optional bool run_as_non_root = 3;
+  repeated int64 supplemental_groups = 4;
+  optional int64 f_s_group = 5;
+
+  // TODO(agamez): more complex fields are not supported yet
+  // optional SELinuxOptions seLinuxOptions = 1;
+  // optional WindowsSecurityContextOptions windowsOptions = 8;
+  // repeated Sysctl sysctls = 7;
+  // optional string fsGroupChangePolicy = 9;
+  // optional SeccompProfile seccompProfile = 10;
 }

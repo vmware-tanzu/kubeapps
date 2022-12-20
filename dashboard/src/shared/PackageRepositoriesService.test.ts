@@ -34,6 +34,22 @@ const helmCustomDetail: HelmPackageRepositoryCustomDetail = {
     jq: ".name == $var0 or .name == $var1",
     variables: { $var0: "nginx", $var1: "wordpress" },
   },
+  proxyOptions: {
+    enabled: true,
+    httpProxy: "http://proxy",
+    httpsProxy: "https://proxy",
+    noProxy: "localhost",
+  },
+  // these options are not used by the UI
+  tolerations: [],
+  nodeSelector: {},
+  securityContext: {
+    supplementalGroups: [],
+    fSGroup: undefined,
+    runAsGroup: undefined,
+    runAsNonRoot: undefined,
+    runAsUser: undefined,
+  },
 };
 
 const kappCustomDetail: KappControllerPackageRepositoryCustomDetail = {
@@ -293,7 +309,7 @@ describe("buildEncodedCustomDetail encoding", () => {
     expect(encodedCustomDetail?.typeUrl).toBe(
       "kubeappsapis.plugins.helm.packages.v1alpha1.HelmPackageRepositoryCustomDetail",
     );
-    expect(encodedCustomDetail?.value.byteLength).toBe(101);
+    expect(encodedCustomDetail?.value.byteLength).toBe(149);
     expect(
       HelmPackageRepositoryCustomDetail.decode(encodedCustomDetail?.value as any),
     ).toStrictEqual(helmCustomDetail);

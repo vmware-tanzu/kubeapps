@@ -24,6 +24,7 @@ import { GetConfiguredPluginsResponse } from "gen/kubeappsapis/core/plugins/v1al
 import {
   HelmPackageRepositoryCustomDetail,
   protobufPackage as helmProtobufPackage,
+  ProxyOptions,
 } from "gen/kubeappsapis/plugins/helm/packages/v1alpha1/helm";
 import {
   KappControllerPackageRepositoryCustomDetail,
@@ -272,17 +273,32 @@ export class PackageRepositoriesService {
           ociRepositories: detail?.ociRepositories || [],
           performValidation: !!detail?.performValidation,
           filterRule: detail?.filterRule,
+          nodeSelector: {},
+          tolerations: [],
+          securityContext: {
+            supplementalGroups: [],
+          },
         } as HelmPackageRepositoryCustomDetail;
 
         // populate the imagesPullSecret if it's not empty
         if (
           detail?.imagesPullSecret?.secretRef ||
           (detail?.imagesPullSecret?.credentials &&
-            Object.values(detail?.imagesPullSecret?.credentials as DockerCredentials).some(
+            Object.values((detail?.imagesPullSecret?.credentials || {}) as DockerCredentials).some(
               e => !!e,
             ))
         ) {
           helmCustomDetail.imagesPullSecret = detail.imagesPullSecret;
+        }
+
+        // populate the proxyOptions if it's not empty
+        if (Object.values((detail?.proxyOptions || {}) as ProxyOptions).some(e => !!e)) {
+          helmCustomDetail.proxyOptions = {
+            enabled: detail.proxyOptions?.enabled || false,
+            httpProxy: detail.proxyOptions?.httpProxy || "",
+            httpsProxy: detail.proxyOptions?.httpsProxy || "",
+            noProxy: detail.proxyOptions?.noProxy || "",
+          };
         }
 
         return {

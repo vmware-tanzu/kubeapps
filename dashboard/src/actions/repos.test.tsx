@@ -152,6 +152,17 @@ const pkgRepoFormData = {
     ociRepositories: [],
     performValidation: false,
     filterRules: [],
+    tolerations: [],
+    nodeSelector: {},
+    securityContext: {
+      supplementalGroups: [],
+    },
+    proxyOptions: {
+      enabled: false,
+      httpProxy: "",
+      httpsProxy: "",
+      noProxy: "",
+    },
   } as HelmPackageRepositoryCustomDetail,
   description: "",
   dockerRegCreds: {

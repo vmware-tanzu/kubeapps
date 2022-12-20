@@ -1,6 +1,7 @@
 /* eslint-disable */
 import { grpc } from "@improbable-eng/grpc-web";
 import { BrowserHeaders } from "browser-headers";
+import Long from "long";
 import _m0 from "protobufjs/minimal";
 import {
   CreateInstalledPackageRequest,
@@ -107,6 +108,19 @@ export interface HelmPackageRepositoryCustomDetail {
   filterRule?: RepositoryFilterRule;
   /** whether to perform validation on the repository */
   performValidation: boolean;
+  /** the query options for the proxy call */
+  proxyOptions?: ProxyOptions;
+  /** selector which must be true for the pod to fit on a node */
+  nodeSelector: { [key: string]: string };
+  /** set of Pod's Tolerations */
+  tolerations: Toleration[];
+  /** defines the security options the container should be run with. */
+  securityContext?: PodSecurityContext;
+}
+
+export interface HelmPackageRepositoryCustomDetail_NodeSelectorEntry {
+  key: string;
+  value: string;
 }
 
 /**
@@ -124,6 +138,50 @@ export interface RepositoryFilterRule {
 export interface RepositoryFilterRule_VariablesEntry {
   key: string;
   value: string;
+}
+
+/**
+ * ProxyOptions
+ *
+ * query options for a proxy call
+ */
+export interface ProxyOptions {
+  /** if true, the proxy options will be taken into account */
+  enabled: boolean;
+  /** value for the HTTP_PROXY env variable passed to the Pod */
+  httpProxy: string;
+  /** value for the HTTPS_PROXY env variable passed to the Pod */
+  httpsProxy: string;
+  /** value for the NO_PROXY env variable passed to the Pod */
+  noProxy: string;
+}
+
+/**
+ * Toleration
+ *
+ * Extracted from the K8s API to avoid a dependency on the K8s API
+ * https://github.com/kubernetes/api/blob/master/core/v1/generated.proto
+ */
+export interface Toleration {
+  key?: string | undefined;
+  operator?: string | undefined;
+  value?: string | undefined;
+  effect?: string | undefined;
+  tolerationSeconds?: number | undefined;
+}
+
+/**
+ * PodSecurityContext
+ *
+ * Extracted from the K8s API to avoid a dependency on the K8s API
+ * https://github.com/kubernetes/api/blob/master/core/v1/generated.proto
+ */
+export interface PodSecurityContext {
+  runAsUser?: number | undefined;
+  runAsGroup?: number | undefined;
+  runAsNonRoot?: boolean | undefined;
+  supplementalGroups: number[];
+  fSGroup?: number | undefined;
 }
 
 function createBaseInstalledPackageDetailCustomDataHelm(): InstalledPackageDetailCustomDataHelm {
@@ -391,6 +449,10 @@ function createBaseHelmPackageRepositoryCustomDetail(): HelmPackageRepositoryCus
     ociRepositories: [],
     filterRule: undefined,
     performValidation: false,
+    proxyOptions: undefined,
+    nodeSelector: {},
+    tolerations: [],
+    securityContext: undefined,
   };
 }
 
@@ -410,6 +472,21 @@ export const HelmPackageRepositoryCustomDetail = {
     }
     if (message.performValidation === true) {
       writer.uint32(32).bool(message.performValidation);
+    }
+    if (message.proxyOptions !== undefined) {
+      ProxyOptions.encode(message.proxyOptions, writer.uint32(42).fork()).ldelim();
+    }
+    Object.entries(message.nodeSelector).forEach(([key, value]) => {
+      HelmPackageRepositoryCustomDetail_NodeSelectorEntry.encode(
+        { key: key as any, value },
+        writer.uint32(50).fork(),
+      ).ldelim();
+    });
+    for (const v of message.tolerations) {
+      Toleration.encode(v!, writer.uint32(58).fork()).ldelim();
+    }
+    if (message.securityContext !== undefined) {
+      PodSecurityContext.encode(message.securityContext, writer.uint32(66).fork()).ldelim();
     }
     return writer;
   },
@@ -433,6 +510,24 @@ export const HelmPackageRepositoryCustomDetail = {
         case 4:
           message.performValidation = reader.bool();
           break;
+        case 5:
+          message.proxyOptions = ProxyOptions.decode(reader, reader.uint32());
+          break;
+        case 6:
+          const entry6 = HelmPackageRepositoryCustomDetail_NodeSelectorEntry.decode(
+            reader,
+            reader.uint32(),
+          );
+          if (entry6.value !== undefined) {
+            message.nodeSelector[entry6.key] = entry6.value;
+          }
+          break;
+        case 7:
+          message.tolerations.push(Toleration.decode(reader, reader.uint32()));
+          break;
+        case 8:
+          message.securityContext = PodSecurityContext.decode(reader, reader.uint32());
+          break;
         default:
           reader.skipType(tag & 7);
           break;
@@ -455,6 +550,24 @@ export const HelmPackageRepositoryCustomDetail = {
       performValidation: isSet(object.performValidation)
         ? Boolean(object.performValidation)
         : false,
+      proxyOptions: isSet(object.proxyOptions)
+        ? ProxyOptions.fromJSON(object.proxyOptions)
+        : undefined,
+      nodeSelector: isObject(object.nodeSelector)
+        ? Object.entries(object.nodeSelector).reduce<{ [key: string]: string }>(
+            (acc, [key, value]) => {
+              acc[key] = String(value);
+              return acc;
+            },
+            {},
+          )
+        : {},
+      tolerations: Array.isArray(object?.tolerations)
+        ? object.tolerations.map((e: any) => Toleration.fromJSON(e))
+        : [],
+      securityContext: isSet(object.securityContext)
+        ? PodSecurityContext.fromJSON(object.securityContext)
+        : undefined,
     };
   },
 
@@ -474,6 +587,25 @@ export const HelmPackageRepositoryCustomDetail = {
         ? RepositoryFilterRule.toJSON(message.filterRule)
         : undefined);
     message.performValidation !== undefined && (obj.performValidation = message.performValidation);
+    message.proxyOptions !== undefined &&
+      (obj.proxyOptions = message.proxyOptions
+        ? ProxyOptions.toJSON(message.proxyOptions)
+        : undefined);
+    obj.nodeSelector = {};
+    if (message.nodeSelector) {
+      Object.entries(message.nodeSelector).forEach(([k, v]) => {
+        obj.nodeSelector[k] = v;
+      });
+    }
+    if (message.tolerations) {
+      obj.tolerations = message.tolerations.map(e => (e ? Toleration.toJSON(e) : undefined));
+    } else {
+      obj.tolerations = [];
+    }
+    message.securityContext !== undefined &&
+      (obj.securityContext = message.securityContext
+        ? PodSecurityContext.toJSON(message.securityContext)
+        : undefined);
     return obj;
   },
 
@@ -491,6 +623,89 @@ export const HelmPackageRepositoryCustomDetail = {
         ? RepositoryFilterRule.fromPartial(object.filterRule)
         : undefined;
     message.performValidation = object.performValidation ?? false;
+    message.proxyOptions =
+      object.proxyOptions !== undefined && object.proxyOptions !== null
+        ? ProxyOptions.fromPartial(object.proxyOptions)
+        : undefined;
+    message.nodeSelector = Object.entries(object.nodeSelector ?? {}).reduce<{
+      [key: string]: string;
+    }>((acc, [key, value]) => {
+      if (value !== undefined) {
+        acc[key] = String(value);
+      }
+      return acc;
+    }, {});
+    message.tolerations = object.tolerations?.map(e => Toleration.fromPartial(e)) || [];
+    message.securityContext =
+      object.securityContext !== undefined && object.securityContext !== null
+        ? PodSecurityContext.fromPartial(object.securityContext)
+        : undefined;
+    return message;
+  },
+};
+
+function createBaseHelmPackageRepositoryCustomDetail_NodeSelectorEntry(): HelmPackageRepositoryCustomDetail_NodeSelectorEntry {
+  return { key: "", value: "" };
+}
+
+export const HelmPackageRepositoryCustomDetail_NodeSelectorEntry = {
+  encode(
+    message: HelmPackageRepositoryCustomDetail_NodeSelectorEntry,
+    writer: _m0.Writer = _m0.Writer.create(),
+  ): _m0.Writer {
+    if (message.key !== "") {
+      writer.uint32(10).string(message.key);
+    }
+    if (message.value !== "") {
+      writer.uint32(18).string(message.value);
+    }
+    return writer;
+  },
+
+  decode(
+    input: _m0.Reader | Uint8Array,
+    length?: number,
+  ): HelmPackageRepositoryCustomDetail_NodeSelectorEntry {
+    const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseHelmPackageRepositoryCustomDetail_NodeSelectorEntry();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1:
+          message.key = reader.string();
+          break;
+        case 2:
+          message.value = reader.string();
+          break;
+        default:
+          reader.skipType(tag & 7);
+          break;
+      }
+    }
+    return message;
+  },
+
+  fromJSON(object: any): HelmPackageRepositoryCustomDetail_NodeSelectorEntry {
+    return {
+      key: isSet(object.key) ? String(object.key) : "",
+      value: isSet(object.value) ? String(object.value) : "",
+    };
+  },
+
+  toJSON(message: HelmPackageRepositoryCustomDetail_NodeSelectorEntry): unknown {
+    const obj: any = {};
+    message.key !== undefined && (obj.key = message.key);
+    message.value !== undefined && (obj.value = message.value);
+    return obj;
+  },
+
+  fromPartial<I extends Exact<DeepPartial<HelmPackageRepositoryCustomDetail_NodeSelectorEntry>, I>>(
+    object: I,
+  ): HelmPackageRepositoryCustomDetail_NodeSelectorEntry {
+    const message = createBaseHelmPackageRepositoryCustomDetail_NodeSelectorEntry();
+    message.key = object.key ?? "";
+    message.value = object.value ?? "";
     return message;
   },
 };
@@ -641,6 +856,282 @@ export const RepositoryFilterRule_VariablesEntry = {
     const message = createBaseRepositoryFilterRule_VariablesEntry();
     message.key = object.key ?? "";
     message.value = object.value ?? "";
+    return message;
+  },
+};
+
+function createBaseProxyOptions(): ProxyOptions {
+  return { enabled: false, httpProxy: "", httpsProxy: "", noProxy: "" };
+}
+
+export const ProxyOptions = {
+  encode(message: ProxyOptions, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
+    if (message.enabled === true) {
+      writer.uint32(8).bool(message.enabled);
+    }
+    if (message.httpProxy !== "") {
+      writer.uint32(18).string(message.httpProxy);
+    }
+    if (message.httpsProxy !== "") {
+      writer.uint32(26).string(message.httpsProxy);
+    }
+    if (message.noProxy !== "") {
+      writer.uint32(34).string(message.noProxy);
+    }
+    return writer;
+  },
+
+  decode(input: _m0.Reader | Uint8Array, length?: number): ProxyOptions {
+    const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseProxyOptions();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1:
+          message.enabled = reader.bool();
+          break;
+        case 2:
+          message.httpProxy = reader.string();
+          break;
+        case 3:
+          message.httpsProxy = reader.string();
+          break;
+        case 4:
+          message.noProxy = reader.string();
+          break;
+        default:
+          reader.skipType(tag & 7);
+          break;
+      }
+    }
+    return message;
+  },
+
+  fromJSON(object: any): ProxyOptions {
+    return {
+      enabled: isSet(object.enabled) ? Boolean(object.enabled) : false,
+      httpProxy: isSet(object.httpProxy) ? String(object.httpProxy) : "",
+      httpsProxy: isSet(object.httpsProxy) ? String(object.httpsProxy) : "",
+      noProxy: isSet(object.noProxy) ? String(object.noProxy) : "",
+    };
+  },
+
+  toJSON(message: ProxyOptions): unknown {
+    const obj: any = {};
+    message.enabled !== undefined && (obj.enabled = message.enabled);
+    message.httpProxy !== undefined && (obj.httpProxy = message.httpProxy);
+    message.httpsProxy !== undefined && (obj.httpsProxy = message.httpsProxy);
+    message.noProxy !== undefined && (obj.noProxy = message.noProxy);
+    return obj;
+  },
+
+  fromPartial<I extends Exact<DeepPartial<ProxyOptions>, I>>(object: I): ProxyOptions {
+    const message = createBaseProxyOptions();
+    message.enabled = object.enabled ?? false;
+    message.httpProxy = object.httpProxy ?? "";
+    message.httpsProxy = object.httpsProxy ?? "";
+    message.noProxy = object.noProxy ?? "";
+    return message;
+  },
+};
+
+function createBaseToleration(): Toleration {
+  return {
+    key: undefined,
+    operator: undefined,
+    value: undefined,
+    effect: undefined,
+    tolerationSeconds: undefined,
+  };
+}
+
+export const Toleration = {
+  encode(message: Toleration, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
+    if (message.key !== undefined) {
+      writer.uint32(10).string(message.key);
+    }
+    if (message.operator !== undefined) {
+      writer.uint32(18).string(message.operator);
+    }
+    if (message.value !== undefined) {
+      writer.uint32(26).string(message.value);
+    }
+    if (message.effect !== undefined) {
+      writer.uint32(34).string(message.effect);
+    }
+    if (message.tolerationSeconds !== undefined) {
+      writer.uint32(40).int64(message.tolerationSeconds);
+    }
+    return writer;
+  },
+
+  decode(input: _m0.Reader | Uint8Array, length?: number): Toleration {
+    const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseToleration();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1:
+          message.key = reader.string();
+          break;
+        case 2:
+          message.operator = reader.string();
+          break;
+        case 3:
+          message.value = reader.string();
+          break;
+        case 4:
+          message.effect = reader.string();
+          break;
+        case 5:
+          message.tolerationSeconds = longToNumber(reader.int64() as Long);
+          break;
+        default:
+          reader.skipType(tag & 7);
+          break;
+      }
+    }
+    return message;
+  },
+
+  fromJSON(object: any): Toleration {
+    return {
+      key: isSet(object.key) ? String(object.key) : undefined,
+      operator: isSet(object.operator) ? String(object.operator) : undefined,
+      value: isSet(object.value) ? String(object.value) : undefined,
+      effect: isSet(object.effect) ? String(object.effect) : undefined,
+      tolerationSeconds: isSet(object.tolerationSeconds)
+        ? Number(object.tolerationSeconds)
+        : undefined,
+    };
+  },
+
+  toJSON(message: Toleration): unknown {
+    const obj: any = {};
+    message.key !== undefined && (obj.key = message.key);
+    message.operator !== undefined && (obj.operator = message.operator);
+    message.value !== undefined && (obj.value = message.value);
+    message.effect !== undefined && (obj.effect = message.effect);
+    message.tolerationSeconds !== undefined &&
+      (obj.tolerationSeconds = Math.round(message.tolerationSeconds));
+    return obj;
+  },
+
+  fromPartial<I extends Exact<DeepPartial<Toleration>, I>>(object: I): Toleration {
+    const message = createBaseToleration();
+    message.key = object.key ?? undefined;
+    message.operator = object.operator ?? undefined;
+    message.value = object.value ?? undefined;
+    message.effect = object.effect ?? undefined;
+    message.tolerationSeconds = object.tolerationSeconds ?? undefined;
+    return message;
+  },
+};
+
+function createBasePodSecurityContext(): PodSecurityContext {
+  return {
+    runAsUser: undefined,
+    runAsGroup: undefined,
+    runAsNonRoot: undefined,
+    supplementalGroups: [],
+    fSGroup: undefined,
+  };
+}
+
+export const PodSecurityContext = {
+  encode(message: PodSecurityContext, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
+    if (message.runAsUser !== undefined) {
+      writer.uint32(8).int64(message.runAsUser);
+    }
+    if (message.runAsGroup !== undefined) {
+      writer.uint32(48).int64(message.runAsGroup);
+    }
+    if (message.runAsNonRoot !== undefined) {
+      writer.uint32(24).bool(message.runAsNonRoot);
+    }
+    writer.uint32(34).fork();
+    for (const v of message.supplementalGroups) {
+      writer.int64(v);
+    }
+    writer.ldelim();
+    if (message.fSGroup !== undefined) {
+      writer.uint32(40).int64(message.fSGroup);
+    }
+    return writer;
+  },
+
+  decode(input: _m0.Reader | Uint8Array, length?: number): PodSecurityContext {
+    const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBasePodSecurityContext();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1:
+          message.runAsUser = longToNumber(reader.int64() as Long);
+          break;
+        case 6:
+          message.runAsGroup = longToNumber(reader.int64() as Long);
+          break;
+        case 3:
+          message.runAsNonRoot = reader.bool();
+          break;
+        case 4:
+          if ((tag & 7) === 2) {
+            const end2 = reader.uint32() + reader.pos;
+            while (reader.pos < end2) {
+              message.supplementalGroups.push(longToNumber(reader.int64() as Long));
+            }
+          } else {
+            message.supplementalGroups.push(longToNumber(reader.int64() as Long));
+          }
+          break;
+        case 5:
+          message.fSGroup = longToNumber(reader.int64() as Long);
+          break;
+        default:
+          reader.skipType(tag & 7);
+          break;
+      }
+    }
+    return message;
+  },
+
+  fromJSON(object: any): PodSecurityContext {
+    return {
+      runAsUser: isSet(object.runAsUser) ? Number(object.runAsUser) : undefined,
+      runAsGroup: isSet(object.runAsGroup) ? Number(object.runAsGroup) : undefined,
+      runAsNonRoot: isSet(object.runAsNonRoot) ? Boolean(object.runAsNonRoot) : undefined,
+      supplementalGroups: Array.isArray(object?.supplementalGroups)
+        ? object.supplementalGroups.map((e: any) => Number(e))
+        : [],
+      fSGroup: isSet(object.fSGroup) ? Number(object.fSGroup) : undefined,
+    };
+  },
+
+  toJSON(message: PodSecurityContext): unknown {
+    const obj: any = {};
+    message.runAsUser !== undefined && (obj.runAsUser = Math.round(message.runAsUser));
+    message.runAsGroup !== undefined && (obj.runAsGroup = Math.round(message.runAsGroup));
+    message.runAsNonRoot !== undefined && (obj.runAsNonRoot = message.runAsNonRoot);
+    if (message.supplementalGroups) {
+      obj.supplementalGroups = message.supplementalGroups.map(e => Math.round(e));
+    } else {
+      obj.supplementalGroups = [];
+    }
+    message.fSGroup !== undefined && (obj.fSGroup = Math.round(message.fSGroup));
+    return obj;
+  },
+
+  fromPartial<I extends Exact<DeepPartial<PodSecurityContext>, I>>(object: I): PodSecurityContext {
+    const message = createBasePodSecurityContext();
+    message.runAsUser = object.runAsUser ?? undefined;
+    message.runAsGroup = object.runAsGroup ?? undefined;
+    message.runAsNonRoot = object.runAsNonRoot ?? undefined;
+    message.supplementalGroups = object.supplementalGroups?.map(e => e) || [];
+    message.fSGroup = object.fSGroup ?? undefined;
     return message;
   },
 };
@@ -1371,6 +1862,25 @@ export class GrpcWebImpl {
   }
 }
 
+declare var self: any | undefined;
+declare var window: any | undefined;
+declare var global: any | undefined;
+var globalThis: any = (() => {
+  if (typeof globalThis !== "undefined") {
+    return globalThis;
+  }
+  if (typeof self !== "undefined") {
+    return self;
+  }
+  if (typeof window !== "undefined") {
+    return window;
+  }
+  if (typeof global !== "undefined") {
+    return global;
+  }
+  throw "Unable to locate global object";
+})();
+
 type Builtin = Date | Function | Uint8Array | string | number | boolean | undefined;
 
 export type DeepPartial<T> = T extends Builtin
@@ -1387,6 +1897,18 @@ type KeysOfUnion<T> = T extends T ? keyof T : never;
 export type Exact<P, I extends P> = P extends Builtin
   ? P
   : P & { [K in keyof P]: Exact<P[K], I[K]> } & { [K in Exclude<keyof I, KeysOfUnion<P>>]: never };
+
+function longToNumber(long: Long): number {
+  if (long.gt(Number.MAX_SAFE_INTEGER)) {
+    throw new globalThis.Error("Value is larger than Number.MAX_SAFE_INTEGER");
+  }
+  return long.toNumber();
+}
+
+if (_m0.util.Long !== Long) {
+  _m0.util.Long = Long as any;
+  _m0.configure();
+}
 
 function isObject(value: any): boolean {
   return typeof value === "object" && value !== null;

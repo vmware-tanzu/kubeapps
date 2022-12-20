@@ -708,6 +708,120 @@ func TestAddPackageRepository(t *testing.T) {
 				dockerAuthJson("https://myfooserver.com", "username", "password", "foo@bar.com", "dXNlcm5hbWU6cGFzc3dvcmQ=")),
 			statusCode: codes.AlreadyExists,
 		},
+		{
+			name: "[custom details] repository is created with proxy options",
+			request: newPackageRepoRequestWithDetails(&v1alpha1.HelmPackageRepositoryCustomDetail{
+				ProxyOptions: &v1alpha1.ProxyOptions{
+					Enabled:    true,
+					HttpProxy:  "http://proxy.com",
+					HttpsProxy: "https://proxy.com",
+					NoProxy:    "no-proxy.com",
+				},
+			}),
+			expectedResponse: addRepoExpectedResp,
+			expectedRepo: &appRepov1alpha1.AppRepository{
+				TypeMeta: metav1.TypeMeta{
+					Kind:       AppRepositoryKind,
+					APIVersion: AppRepositoryApi,
+				},
+				ObjectMeta: metav1.ObjectMeta{
+					Name:            "bar",
+					Namespace:       "foo",
+					ResourceVersion: "1",
+				},
+				Spec: appRepov1alpha1.AppRepositorySpec{
+					URL:  "https://example.com",
+					Type: "helm",
+					SyncJobPodTemplate: apiv1.PodTemplateSpec{
+						Spec: apiv1.PodSpec{
+							Containers: []apiv1.Container{
+								{
+									Env: []apiv1.EnvVar{
+										{
+											Name:  "HTTP_PROXY",
+											Value: "http://proxy.com",
+										},
+										{
+											Name:  "HTTPS_PROXY",
+											Value: "https://proxy.com",
+										},
+										{
+											Name:  "NO_PROXY",
+											Value: "no-proxy.com",
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			statusCode: codes.OK,
+		},
+		{
+			name: "[custom details] repository is created with pod template options",
+			request: newPackageRepoRequestWithDetails(&v1alpha1.HelmPackageRepositoryCustomDetail{
+				NodeSelector: map[string]string{
+					"node": "node-1",
+				},
+				Tolerations: []*v1alpha1.Toleration{
+					{
+						Key:               Ptr("key"),
+						Value:             Ptr("value"),
+						Effect:            Ptr("NoSchedule"),
+						Operator:          Ptr("Equal"),
+						TolerationSeconds: Ptr(int64(3600)),
+					},
+				},
+				SecurityContext: &v1alpha1.PodSecurityContext{
+					RunAsUser:          Ptr(int64(1001)),
+					RunAsGroup:         Ptr(int64(1002)),
+					FSGroup:            Ptr(int64(1003)),
+					RunAsNonRoot:       Ptr(true),
+					SupplementalGroups: []int64{1004},
+				},
+			}),
+			expectedResponse: addRepoExpectedResp,
+			expectedRepo: &appRepov1alpha1.AppRepository{
+				TypeMeta: metav1.TypeMeta{
+					Kind:       AppRepositoryKind,
+					APIVersion: AppRepositoryApi,
+				},
+				ObjectMeta: metav1.ObjectMeta{
+					Name:            "bar",
+					Namespace:       "foo",
+					ResourceVersion: "1",
+				},
+				Spec: appRepov1alpha1.AppRepositorySpec{
+					URL:  "https://example.com",
+					Type: "helm",
+					SyncJobPodTemplate: apiv1.PodTemplateSpec{
+						Spec: apiv1.PodSpec{
+							NodeSelector: map[string]string{
+								"node": "node-1",
+							},
+							Tolerations: []apiv1.Toleration{
+								{
+									Key:               "key",
+									Value:             "value",
+									Effect:            "NoSchedule",
+									Operator:          "Equal",
+									TolerationSeconds: &[]int64{3600}[0],
+								},
+							},
+							SecurityContext: &apiv1.PodSecurityContext{
+								RunAsUser:          &[]int64{1001}[0],
+								RunAsGroup:         &[]int64{1002}[0],
+								FSGroup:            &[]int64{1003}[0],
+								RunAsNonRoot:       &[]bool{true}[0],
+								SupplementalGroups: []int64{1004},
+							},
+						},
+					},
+				},
+			},
+			statusCode: codes.OK,
+		},
 	}
 
 	for _, tc := range testCases {
@@ -1239,6 +1353,94 @@ func TestUpdatePackageRepository(t *testing.T) {
 				return &repository
 			},
 
+			expectedRef:        defaultRef,
+			expectedStatusCode: codes.OK,
+		},
+		{
+			name: "update the proxy options",
+			requestCustomizer: func(request *corev1.UpdatePackageRepositoryRequest) *corev1.UpdatePackageRepositoryRequest {
+				request.CustomDetail = toProtoBufAny(&v1alpha1.HelmPackageRepositoryCustomDetail{
+					ProxyOptions: &v1alpha1.ProxyOptions{
+						Enabled:    true,
+						HttpProxy:  "http://proxy",
+						HttpsProxy: "https://proxy",
+						NoProxy:    "no-proxy",
+					},
+				})
+				return request
+			},
+			expectedRepoCustomizer: func(repository appRepov1alpha1.AppRepository) *appRepov1alpha1.AppRepository {
+				repository.Spec.SyncJobPodTemplate.Spec.Containers = []apiv1.Container{
+					{
+						Env: []apiv1.EnvVar{
+							{Name: "HTTP_PROXY", Value: "http://proxy"},
+							{Name: "HTTPS_PROXY", Value: "https://proxy"},
+							{Name: "NO_PROXY", Value: "no-proxy"},
+						},
+					},
+				}
+				// other changes inherent to how the customizer works
+				repository.ResourceVersion = "2"
+				repository.Spec.Description = ""
+				repository.Spec.URL = "https://new-repo-url"
+				return &repository
+			},
+
+			expectedRef:        defaultRef,
+			expectedStatusCode: codes.OK,
+		},
+		{
+			name: "update the pod template options",
+			requestCustomizer: func(request *corev1.UpdatePackageRepositoryRequest) *corev1.UpdatePackageRepositoryRequest {
+				request.CustomDetail = toProtoBufAny(&v1alpha1.HelmPackageRepositoryCustomDetail{
+					NodeSelector: map[string]string{
+						"node": "node-1",
+					},
+					Tolerations: []*v1alpha1.Toleration{
+						{
+							Key:               Ptr("key"),
+							Value:             Ptr("value"),
+							Effect:            Ptr("NoSchedule"),
+							Operator:          Ptr("Equal"),
+							TolerationSeconds: Ptr(int64(3600)),
+						},
+					},
+					SecurityContext: &v1alpha1.PodSecurityContext{
+						RunAsUser:          Ptr(int64(1001)),
+						RunAsGroup:         Ptr(int64(1002)),
+						FSGroup:            Ptr(int64(1003)),
+						RunAsNonRoot:       Ptr(true),
+						SupplementalGroups: []int64{1004},
+					},
+				})
+				return request
+			},
+			expectedRepoCustomizer: func(repository appRepov1alpha1.AppRepository) *appRepov1alpha1.AppRepository {
+				repository.Spec.SyncJobPodTemplate.Spec.NodeSelector = map[string]string{
+					"node": "node-1",
+				}
+				repository.Spec.SyncJobPodTemplate.Spec.Tolerations = []apiv1.Toleration{
+					{
+						Key:               "key",
+						Value:             "value",
+						Effect:            "NoSchedule",
+						Operator:          "Equal",
+						TolerationSeconds: &[]int64{3600}[0],
+					},
+				}
+				repository.Spec.SyncJobPodTemplate.Spec.SecurityContext = &apiv1.PodSecurityContext{
+					RunAsUser:          &[]int64{1001}[0],
+					RunAsGroup:         &[]int64{1002}[0],
+					FSGroup:            &[]int64{1003}[0],
+					RunAsNonRoot:       &[]bool{true}[0],
+					SupplementalGroups: []int64{1004},
+				}
+				// other changes inherent to how the customizer works
+				repository.ResourceVersion = "2"
+				repository.Spec.Description = ""
+				repository.Spec.URL = "https://new-repo-url"
+				return &repository
+			},
 			expectedRef:        defaultRef,
 			expectedStatusCode: codes.OK,
 		},
@@ -2213,4 +2415,9 @@ func checkSecrets(t *testing.T, ctx context.Context, typedClient kubernetes.Inte
 		t.Errorf("Secret Name [%s] was expected to start with [%s]",
 			secret.Name, expectedSecret.Name)
 	}
+}
+
+// see https://stackoverflow.com/a/30716481
+func Ptr[T any](v T) *T {
+	return &v
 }
