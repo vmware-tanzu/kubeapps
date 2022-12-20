@@ -24,10 +24,42 @@ func Test_extractFilesFromTarball(t *testing.T) {
 		filename string
 		want     string
 	}{
-		{"file", []test.TarballFile{{Name: "file.txt", Body: "best file ever"}}, "file.txt", "best file ever"},
-		{"multiple file tarball", []test.TarballFile{{Name: "file.txt", Body: "best file ever"}, {Name: "file2.txt", Body: "worst file ever"}}, "file2.txt", "worst file ever"},
-		{"file in dir", []test.TarballFile{{Name: "file.txt", Body: "best file ever"}, {Name: "test/file2.txt", Body: "worst file ever"}}, "test/file2.txt", "worst file ever"},
-		{"filename ignore case", []test.TarballFile{{Name: "Readme.md", Body: "# readme for chart"}, {Name: "values.yaml", Body: "key: value"}}, "README.md", "# readme for chart"},
+		{
+			name:     "file",
+			files:    []test.TarballFile{{Name: "file.txt", Body: "best file ever"}},
+			filename: "file.txt",
+			want:     "best file ever",
+		},
+		{
+			name:     "multiple file tarball",
+			files:    []test.TarballFile{{Name: "file.txt", Body: "best file ever"}, {Name: "file2.txt", Body: "worst file ever"}},
+			filename: "file2.txt",
+			want:     "worst file ever",
+		},
+		{
+			name:     "file in dir with parent dir specified",
+			files:    []test.TarballFile{{Name: "file.txt", Body: "best file ever"}, {Name: "test/file2.txt", Body: "worst file ever"}},
+			filename: "test/file2.txt",
+			want:     "worst file ever",
+		},
+		{
+			name:     "file in dir without parent dir specified",
+			files:    []test.TarballFile{{Name: "file.txt", Body: "best file ever"}, {Name: "test/file2.txt", Body: "worst file ever"}},
+			filename: "file2.txt",
+			want:     "worst file ever",
+		},
+		{
+			name:     "filename ignore case",
+			files:    []test.TarballFile{{Name: "Readme.md", Body: "# readme for chart"}, {Name: "values.yaml", Body: "key: value"}},
+			filename: "README.md",
+			want:     "# readme for chart",
+		},
+		{
+			name:     "different paths to same base filename",
+			files:    []test.TarballFile{{Name: "test/readme.md", Body: "# readme for chart"}},
+			filename: "other/readme.md",
+			want:     "",
+		},
 	}
 
 	for _, tt := range tests {
@@ -38,7 +70,7 @@ func Test_extractFilesFromTarball(t *testing.T) {
 			tarf := tar.NewReader(r)
 			files, err := ExtractFilesFromTarball(map[string]string{tt.filename: tt.filename}, map[string]*regexp.Regexp{}, tarf)
 			assert.NoError(t, err)
-			assert.Equal(t, files[tt.filename], tt.want, "file body")
+			assert.Equal(t, tt.want, files[tt.filename], "file body")
 		})
 	}
 
@@ -145,7 +177,7 @@ func Test_FetchChartDetailFromTarball(t *testing.T) {
 				{Name: path.Join(pkgName, "values.yaml"), Body: "foo: bar"},
 			},
 			want: map[string]string{
-				chart.ValuesKey: "foo: bar",
+				chart.DefaultValuesKey: "foo: bar",
 			},
 		},
 		{
@@ -157,14 +189,14 @@ func Test_FetchChartDetailFromTarball(t *testing.T) {
 				{Name: path.Join(pkgName, "Chart.yaml"), Body: "Name: wordpress"},
 			},
 			want: map[string]string{
-				chart.ChartYamlKey: "Name: wordpress",
-				chart.ReadmeKey:    "readme text",
-				chart.SchemaKey:    "{}",
-				chart.ValuesKey:    "foo: bar",
+				chart.ChartYamlKey:     "Name: wordpress",
+				chart.ReadmeKey:        "readme text",
+				chart.SchemaKey:        "{}",
+				chart.DefaultValuesKey: "foo: bar",
 			},
 		},
 		{
-			name: "package with custom default values",
+			name: "package with additional default values",
 			pkg: []test.TarballFile{
 				{Name: path.Join(pkgName, "values.yaml"), Body: "foo: bar"},
 				{Name: path.Join(pkgName, "README.md"), Body: "readme text"},
@@ -173,11 +205,11 @@ func Test_FetchChartDetailFromTarball(t *testing.T) {
 				{Name: path.Join(pkgName, "values-production.yaml"), Body: "foo: prod-bar"},
 			},
 			want: map[string]string{
-				chart.ChartYamlKey:  "Name: wordpress",
-				chart.ReadmeKey:     "readme text",
-				chart.SchemaKey:     "{}",
-				chart.ValuesKey:     "foo: bar",
-				"values-production": "foo: prod-bar",
+				chart.ChartYamlKey:     "Name: wordpress",
+				chart.ReadmeKey:        "readme text",
+				chart.SchemaKey:        "{}",
+				chart.DefaultValuesKey: "foo: bar",
+				"values-production":    "foo: prod-bar",
 			},
 		},
 	}
@@ -189,10 +221,10 @@ func Test_FetchChartDetailFromTarball(t *testing.T) {
 
 			r := bytes.NewReader(b.Bytes())
 
-			files, err := FetchChartDetailFromTarball(r, pkgName)
+			files, err := FetchChartDetailFromTarball(r)
 
 			assert.NoError(t, err)
-			assert.Equal(t, files, tt.want)
+			assert.Equal(t, tt.want, files)
 		})
 	}
 }
