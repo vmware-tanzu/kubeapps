@@ -1186,6 +1186,11 @@ authProxy:
   ## @param authProxy.cookieRefresh Duration after which to refresh the cookie
   ##
   cookieRefresh: 2m
+  ## @param authProxy.existingSecret Secret used by oauth2-proxy to get clientID, clientSecret and cookieSecret parameters from existing secret
+  ##
+  existingSecret:
+    enabled: false
+    name: ""
   ## @param authProxy.scope OAuth scope specification
   ##
   scope: "openid email groups"
