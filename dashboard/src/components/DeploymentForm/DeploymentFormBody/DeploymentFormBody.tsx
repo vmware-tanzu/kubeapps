@@ -1,6 +1,7 @@
 // Copyright 2019-2022 the Kubeapps contributors.
 // SPDX-License-Identifier: Apache-2.0
 
+import { convertStringPropValuePairsToTuple } from "@cds/core/internal";
 import { CdsButton } from "@cds/react/button";
 import { CdsControlMessage } from "@cds/react/forms";
 import { CdsIcon } from "@cds/react/icon";
@@ -336,8 +337,7 @@ function DeploymentFormBody({
       key="advanced-deployment-form"
     ></AdvancedDeploymentForm>,
   );
-
-  if (featureFlags.schemaEditor.enabled) {
+  if (featureFlags?.schemaEditor?.enabled) {
     // Schema editor creation, if the feature flag is enabled
     tabColumns.push(
       <div role="presentation" onClick={saveAllChanges}>
