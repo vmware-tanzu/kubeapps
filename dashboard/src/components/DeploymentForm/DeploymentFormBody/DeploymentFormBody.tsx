@@ -1,7 +1,6 @@
 // Copyright 2019-2022 the Kubeapps contributors.
 // SPDX-License-Identifier: Apache-2.0
 
-import { convertStringPropValuePairsToTuple } from "@cds/core/internal";
 import { CdsButton } from "@cds/react/button";
 import { CdsControlMessage } from "@cds/react/forms";
 import { CdsIcon } from "@cds/react/icon";
