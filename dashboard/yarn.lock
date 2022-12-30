@@ -3910,6 +3910,11 @@ capture-exit@^2.0.0:
   dependencies:
     rsvp "^4.8.4"
 
+case-anything@^2.1.10:
+  version "2.1.10"
+  resolved "https://registry.yarnpkg.com/case-anything/-/case-anything-2.1.10.tgz#d18a6ca968d54ec3421df71e3e190f3bced23410"
+  integrity sha512-JczJwVrCP0jPKh05McyVsuOg6AYosrB9XWZKbQzXeDAm2ClE/PJE/BcrrQrVyGYH7Jg8V/LDupmyL4kFlVsVFQ==
+
 case-sensitive-paths-webpack-plugin@^2.4.0:
   version "2.4.0"
   resolved "https://registry.yarnpkg.com/case-sensitive-paths-webpack-plugin/-/case-sensitive-paths-webpack-plugin-2.4.0.tgz#db64066c6422eed2e08cc14b986ca43796dbc6d4"
@@ -13320,12 +13325,13 @@ ts-proto-descriptors@1.7.1:
     long "^4.0.0"
     protobufjs "^6.8.8"
 
-ts-proto@^1.135.0:
-  version "1.135.0"
-  resolved "https://registry.yarnpkg.com/ts-proto/-/ts-proto-1.135.0.tgz#9e6ebb8fff42325d4ae475d2cd763068a8485846"
-  integrity sha512-NwK+PcSiWZBzO8GFVID2Ig71vIZRCApTG8XDZIlQ3WabbJlbUx9zsrHcYNojcUENtqkiYywTp3uTP6dketiCpw==
+ts-proto@^1.137.0:
+  version "1.137.0"
+  resolved "https://registry.yarnpkg.com/ts-proto/-/ts-proto-1.137.0.tgz#505d8df002a6898c7ed1d80ca51e3b47a5af31f8"
+  integrity sha512-9+j/Z8DdnVGIyFHxg35nmVYx1dnY8Ig5zYKpvRRQphjTch7i2sPYDEmITkPC2KFNTFCezLX0xzKTelomrek9xw==
   dependencies:
     "@types/object-hash" "^1.3.0"
+    case-anything "^2.1.10"
     dataloader "^1.4.0"
     object-hash "^1.3.1"
     protobufjs "^6.11.3"
