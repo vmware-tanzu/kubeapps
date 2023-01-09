@@ -64,13 +64,13 @@ You can install a set of preset Roles and ClusterRoles in your cluster that you 
 This documentation describes the roles that should be applied to a user in order to perform operations within Kubeapps configured with `Helm` plugin.
 
 > More info for Kubeapps configured with Flux and Carvel plugins:
+>
 > - [Managing Flux packages in Kubeapps](../tutorials/managing-flux-packages.md#creating-a-service-account)
 > - [Managing Carvel packages in Kubeapps](../tutorials/managing-carvel-packages.md#creating-a-service-account)
 >
-> Additional info for Carvel Security Model: 
+> Additional info for Carvel Security Model:
+>
 > - [kapp-controller Security Model](https://carvel.dev/kapp-controller/docs/v0.32.0/security-model/)
-
-
 
 ### Applications
 

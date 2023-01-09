@@ -33,7 +33,7 @@ Whereas this value usually is the same as the one used in the `Docker Registry, 
 
   ![Package repositories modal part 3](../../img/kubeapps-on-tkg/apprepository-authentication.png)
 
-- For OCI registries, when using the Helm plugin, it is necessary to also manually specify the list of OCI artifacts to fetch in the **List of Repositories** field (as there is no standard index yet). 
+- For OCI registries, when using the Helm plugin, it is necessary to also manually specify the list of OCI artifacts to fetch in the **List of Repositories** field (as there is no standard index yet).
 Additionally, artifacts can be excluded using regular expressions if required.
 
   ![Package repositories modal part 3](../../img/kubeapps-on-tkg/apprepository-filtering.png)

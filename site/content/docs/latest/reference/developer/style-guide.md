@@ -258,8 +258,6 @@ Website navigation links can also be marked up as list items.
 
 The semantic purpose of a data table is to present tabular data. Sighted users can quickly scan the table but a screen reader goes through line by line. A table caption is used to create a descriptive title for a data table. Assistive technologies (AT) use the HTML table caption element to identify the table contents to the user within the page structure. If you need to create a table, create the table in markdown and (optionally) use the table [Hugo shortcode](https://gohugo.io/content-management/shortcodes/) to include a caption.
 
-
-
 | Parameter  | Description                  | Default |
 | :--------- | :--------------------------- | :------ |
 | `timeout`  | The timeout for requests     | `30s`   |
