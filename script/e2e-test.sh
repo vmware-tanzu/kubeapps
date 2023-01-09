@@ -252,6 +252,7 @@ installFlux() {
   # Warning  FailedScheduling  19s (x7 over 6m)  default-scheduler  0/1 nodes are available: 1 Insufficient cpu.
   curl -o /tmp/flux_install.yaml -LO "${url}"
   cat /tmp/flux_install.yaml | sed -e 's/cpu: 100m/cpu: 75m/g' | kubectl apply -f -
+  kubectl --namespace ${namespace} scale --replicas=0 deployment/image-automation-controller deployment/image-reflector-controller deployment/kustomize-controller
 
   # wait for deployments to be ready
   k8s_wait_for_deployment ${namespace} helm-controller
