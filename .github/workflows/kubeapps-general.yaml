@@ -507,7 +507,7 @@ jobs:
       - name: "Run e2e tests script"
         run: ./script/run_e2e_tests.sh
       - name: "Print k8s KubeappsAPIs logs if the tests fail"
-        run: kubectl --context kind-kubeapps-ci --kubeconfig ${HOME}/.kube/kind-config-kubeapps-ci logs -n kubeapps deploy/kubeapps-internal-kubeappsapis
+        run: kubectl --context kind-kubeapps-ci --kubeconfig ${HOME}/.kube/kind-config-kubeapps-ci logs -n kubeapps deploy/kubeapps-ci-internal-kubeappsapis
         if: failure() && env.TEST_RESULT == 1
         continue-on-error: true
       - name: 'Upload Artifacts'
