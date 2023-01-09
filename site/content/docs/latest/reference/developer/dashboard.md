@@ -11,8 +11,7 @@ The dashboard is the main UI component of the Kubeapps project. Written in JavaS
 - [kubectl](https://kubernetes.io/docs/tasks/tools/install-kubectl/)
 - [Docker CE](https://www.docker.com/community-edition)
 - [Telepresence](https://telepresence.io)
-
-_Telepresence is not a hard requirement, but is recommended for a better developer experience_
+  - _Telepresence is not a hard requirement, but is recommended for a better developer experience_
 
 ## Download the kubeapps source code
 

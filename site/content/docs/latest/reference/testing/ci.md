@@ -1,4 +1,8 @@
-# Understanding CI configuration
+# CI configuration
+
+This document describes the CI configuration for the Kubeapps project. The [Understanding CI configuration](#understanding-ci-configuration) section provides a high-level overview of the CI configuration, while the [Credentials](#credentials) section describes how to configure the credentials needed to run the CI.
+
+## Understanding CI configuration
 
 Kubeapps leverages GitHub Actions (GHA) for its CI processes: running the tests (both unit and integration tests), building and pushing the images,
 and syncing the Helm chart with the official [Bitnami chart](https://github.com/bitnami/charts/tree/main/bitnami/kubeapps).
@@ -23,7 +27,7 @@ and there are mainly two types of actions:
   * **Custom actions:** actions we can create to define reusable tasks avoiding code duplication. They are defined in
   yaml files located in `/.github/actions/action-name/action.yml` (see the [srp-source-provenance action](https://github.com/vmware-tanzu/kubeapps/blob/main/.github/actions/srp-source-provenance/action.yml).
 
-## Workflows
+### Workflows
 
 Currently, you can find the following top-level workflows:
 
@@ -44,12 +48,12 @@ Besides that, you have the following reusable workflows:
 * **[GKE e2e Tests](https://github.com/vmware-tanzu/kubeapps/blob/main/.github/workflows/gke_e2e_tests.yaml):** it contains the definition of the job that runs the e2e tests on a GKE cluster.
 * **[Linters](https://github.com/vmware-tanzu/kubeapps/blob/main/.github/workflows/linters.yml):** it contains the definition of the jobs that execute multiple linters for the project.
 
-## Custom Actions
+### Custom Actions
 
 Currently, we only have a custom action: [srp-source-provenance](https://github.com/vmware-tanzu/kubeapps/blob/main/.github/actions/srp-source-provenance/action.yml). This action contains the logic required for
 generating and submitting the source provenance, so we comply with VMware SRP (Secure Release Pipeline) requirements.
 
-## Jobs
+### Jobs
 
 The jobs you can find in the `Kubeapps General` workflow are mainly:
 
@@ -124,7 +128,7 @@ Also, note it is the Kubeapps team that is responsible for sending a PR to the [
 each time a new chart version is to be released. Even this process is automatic (using the `sync_chart_to_bitnami` workflow),
 Kubeapps maintainers must manually review the draft PR and convert it into a normal one once it is ready for review.
 
-# Credentials
+## Credentials
 
 Besides other usual credentials or secrets passed via the GHA user interface, it is important to highlight how we grant
 commit and PR access to our robot account `kubeapps-bot <tanzu-kubeapps-team@vmware.com>`. The process is threefold:
@@ -144,7 +148,7 @@ Besides that, you need to add the secrets `DOCKER_PASSWORD` and `DOCKER_USERNAME
 You need to add those secrets there to make them available for the workflows triggered from PRs filed by `Dependabot`.
 Otherwise, the secrets won't be available and GHA won't be able to push the Docker images to Dockerhub.
 
-## Generating and configuring the deployment keys
+### Generating and configuring the deployment keys
 
 This step is only run once, and it is very unlikely to change. However, it is important to know it in case of secret rotations
 or further events.
@@ -173,7 +177,7 @@ echo "Charts deployment key (private)"
 cat charts-deploymentkey
 ```
 
-## Debugging the CI errors
+### Debugging the CI errors
 
 One of the best ways to troubleshoot problems is to SSH into a job and inspect things like log files, running processes,
 and directory paths. Unfortunately, GHA doesn't provide a well known/official way that, but you can use any of the available

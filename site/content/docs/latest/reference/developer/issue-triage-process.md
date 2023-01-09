@@ -22,7 +22,7 @@ Kubeapps keeps a backlog of issues on GitHub submitted both by maintainers and c
 
 Kubeapps maintainers team operates with 4 groups of labels:
 
-### `kind/*`:
+### `kind/*`
 
 The type of issue. kind powers our filtering to understand what qualifies as a bug, proposal, feature, enhancement, question or documentation.
 
@@ -35,7 +35,7 @@ The type of issue. kind powers our filtering to understand what qualifies as a b
 | `kind/proposal`      | An issue that reports a new feature proposal to be discussed      |
 | `kind/question`      | An issue that request for feedback or support to maintainers team |
 
-### `component/*`:
+### `component/*`
 
 The relevant component(s) for the issue. Components are high level areas of the Kubeapps architecture. They are used to group issues together with other related issues.
 
@@ -58,7 +58,7 @@ The relevant component(s) for the issue. Components are high level areas of the 
 | `component/ui`               | An issue related to kubeapps UI                                                                   |
 | `component/website`          | An issue related to kubeapps website                                                              |
 
-### `contribution labels`:
+### `contribution labels`
 
 Specific labels for contributors. Contribution labels help to identify a relevant attribute of the issue.
 
@@ -137,8 +137,8 @@ This process mainly consists on checking issues in the **Backlog** and moving to
 1. Issues marked as `P0` → Add to the iteration (**To Do**).
 2. Review issues to complete those milestones planned for the current quarter and add issues to be completed during next iteration by priority. To be considered for the capacity:
 
-- At least 1 issue labeled as `kind/bug` must be included for every single iteration.
-- At least 1 issue **requested** from the Kubeapps community must be included for every single iteration.
-- At least 1 issue labeled as `component/ci` must be included quarterly to make improvements in ci system.
+    - At least 1 issue labeled as `kind/bug` must be included for every single iteration.
+    - At least 1 issue **requested** from the Kubeapps community must be included for every single iteration.
+    - At least 1 issue labeled as `component/ci` must be included quarterly to make improvements in ci system.
 
 3. Then review issues labeled as `next-iteration` and discuss what issues should be included according to the maintainers team capacity, issues already added to the **To Do** column and uncompleted issues from previous iterations (**In progress**).

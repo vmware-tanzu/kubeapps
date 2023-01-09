@@ -19,35 +19,28 @@ The general procedure to add any repository is described below:
 
 5. Fill the _Add a Package Repository_ form using the guidelines below:
 
-- `Name` field is a friendly display name for the repository.
-- `URL` field specifies the endpoint of the repository. This endpoint might require different forms of authentication, such as `None`, `Basic Auth` (username and password), `Bearer Token` (a token) or another `Custom` mechanism.
-- `Description` field (optional) is a brief summary for the repository.
-- `Packaging format` field specifies the format of the packages available in the repository.
-- `Scope` field specifies where the packages from the repository could be installed in the cluster (globally on any namespace or limited to an specific namespace in the cluster).
-- `Package Storage Type` field specifies the type of repository. Currently, Kubeapps supports both Helm repositories and OCI registries.
+   - `Name` field is a friendly display name for the repository.
+   - `URL` field specifies the endpoint of the repository. This endpoint might require different forms of authentication, such as `None`, `Basic Auth` (username and password), `Bearer Token` (a token) or another `Custom` mechanism.
+   - `Description` field (optional) is a brief summary for the repository.
+   - `Packaging format` field specifies the format of the packages available in the repository.
+   - `Scope` field specifies where the packages from the repository could be installed in the cluster (globally on any namespace or limited to an specific namespace in the cluster).
+   - `Package Storage Type` field specifies the type of repository. Currently, Kubeapps supports both Helm repositories and OCI registries.
 
-  ![Package repositories modal part 1](../../img/kubeapps-on-tkg/apprepository-detail-general.png)
+   ![Package repositories modal part 1](../../img/kubeapps-on-tkg/apprepository-detail-general.png)
 
-- `Repository Authorization` field provides additional credentials for pulling the container images from a registry. When selecting the `Docker Registry` as the `Repository Authorization`, this field is required.
-Whereas this value usually is the same as the one used in the `Docker Registry, it is possible to create a fresh secret or choose an existing one.
+   - `Repository Authorization` field provides additional credentials for pulling the container images from a registry. When selecting the `Docker Registry` as the `Repository Authorization`, this field is required.
+   Whereas this value usually is the same as the one used in the `Docker Registry, it is possible to create a fresh secret or choose an existing one.
 
-  ![Package repositories modal part 3](../../img/kubeapps-on-tkg/apprepository-authentication.png)
+   ![Package repositories modal part 3](../../img/kubeapps-on-tkg/apprepository-authentication.png)
 
-- For OCI registries, when using the Helm plugin, it is necessary to also manually specify the list of OCI artifacts to fetch in the **List of Repositories** field (as there is no standard index yet).
-Additionally, artifacts can be excluded using regular expressions if required.
-
-  ![Package repositories modal part 3](../../img/kubeapps-on-tkg/apprepository-filtering.png)
-
-- `Synchronization Interval` field specifies the synchronization template to use when periodically pulling the latest changes from the application repository.
-- `Custom CA Certificate` field specifies a CA certificate to use (with an option to skip the TLS verification if required).
-
-  ![Package repositories modal part 3](../../img/kubeapps-on-tkg/apprepository-advanced.png)
+   - For OCI registries, when using the Helm plugin, it is necessary to also manually specify the list of OCI artifacts to fetch in the **List of Repositories** field (as there is no standard index yet).
+   Additionally, artifacts can be excluded using regular expressions if required.
 
 6. Click the **Install Repository** button to finish the process and add the repository to Kubeapps.
 
-Retrieving the catalog from the repository takes a few minutes. Once complete, the contents of the repository become available in Kubeapps.
+   Retrieving the catalog from the repository takes a few minutes. Once complete, the contents of the repository become available in Kubeapps.
 
-The following sections demonstrate the process of filling the **Add a Package Repository** form for two specific examples: VMware Marketplace™ and VMware Tanzu™ Application Catalog™ for Tanzu™ Advanced.
+   The following sections demonstrate the process of filling the **Add a Package Repository** form for two specific examples: VMware Marketplace™ and VMware Tanzu™ Application Catalog™ for Tanzu™ Advanced.
 
 ### Add the VMware Marketplace™
 
@@ -124,13 +117,13 @@ To grant a user permission to create `AppRepository` objects in a specific names
 ```bash
 # Grant the user USERNAME read apprepositories permissions on the CUSTOM-NAMESPACE namespace
 kubectl -n CUSTOM-NAMESPACE create rolebinding USERNAME-apprepositories-read \
-    --user USERNAME
-    --clusterrole kubeapps:$KUBEAPPS_NAMESPACE:apprepositories-read
+   --user USERNAME
+   --clusterrole kubeapps:$KUBEAPPS_NAMESPACE:apprepositories-read
 ```
 
 ```bash
 # Grant the user USERNAME write apprepositories permissions on the CUSTOM-NAMESPACE namespace
 kubectl -n CUSTOM-NAMESPACE create rolebinding USERNAME-apprepositories-write \
-    --user USERNAME \
-    --clusterrole kubeapps:$KUBEAPPS_NAMESPACE:apprepositories-write
+   --user USERNAME \
+   --clusterrole kubeapps:$KUBEAPPS_NAMESPACE:apprepositories-write
 ```

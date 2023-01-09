@@ -57,7 +57,7 @@ To upgrade an application with new values, follow the steps below:
 
 5. Click the **Deploy** button.
 
-The application is upgraded with the new values. The status of the deployment can be tracked directly from the browser.
+   The application is upgraded with the new values. The status of the deployment can be tracked directly from the browser.
 
 ### Rollback an Application (only for Helm)
 
@@ -76,7 +76,7 @@ To rollback an application to a previous version, follow the steps below:
 
    ![MariaDB installation](../../img/kubeapps-on-tkg/kubeapps-chart-mariadb-rollback.png)
 
-The application is rolled back to the desired version. The status of the deployment can be tracked directly from the browser.
+   The application is rolled back to the desired version. The status of the deployment can be tracked directly from the browser.
 
 ### Delete an Application
 

@@ -76,7 +76,7 @@ Avoid jargon and idioms.
 
 Avoid making promises or giving hints about the future. If you need to talk about a beta feature, put the text under a heading that identifies it as beta information.
 
-Also avoid words like “recently”, "currently" and "new." A feature that is new today might not be considered new in a few months.
+Also avoid words like "recently", "currently" and "new." A feature that is new today might not be considered new in a few months.
 
 | Do                                  | Don't                                   |
 | ----------------------------------- | --------------------------------------- |
@@ -149,8 +149,8 @@ Exception: When the quoted word is a user input.
 
 Example:
 
-- My user ID is “IM47g”.
-- Did you try the password “mycatisawesome”?
+- My user ID is "IM47g".
+- Did you try the password "mycatisawesome"?
 
 ## Inline code formatting
 
@@ -232,7 +232,7 @@ People accessing this documentation may use a screen reader or other assistive t
 
 | Do                                                                                                                                                                                                                          | Don't                                                                                                                                               |
 | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Write hyperlinks that give you context for the content they link to. For example: Certain ports are open on your machines. See [check required ports](#check-required-ports) for more details.                              | Use ambiguous terms such as “click here”. For example: Certain ports are open on your machines. See [here](#check-required-ports) for more details. |
+| Write hyperlinks that give you context for the content they link to. For example: Certain ports are open on your machines. See [check required ports](#check-required-ports) for more details.                              | Use ambiguous terms such as "click here". For example: Certain ports are open on your machines. See [here](#check-required-ports) for more details. |
 | Write Markdown-style links: `[link text](URL)`. For example: `[community meeting agenda](https://hackmd.io/Jq6F5zqZR7S80CeDWUklkA)` and the output is [community meeting agenda](https://hackmd.io/Jq6F5zqZR7S80CeDWUklkA). | Write HTML-style links: `Visit our tutorial!`                                                                                                       |
 
 ### Lists

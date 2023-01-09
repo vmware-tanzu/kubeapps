@@ -10,7 +10,7 @@ This site uses [Hugo](https://github.com/gohugoio/hugo) for rendering. It is rec
 
 ### Local Hugo Rendering
 
-Hugo is available for many platforms. It can be installed using:
+Hugo is available on many platforms. It can be installed using:
 
 - Linux: Most native package managers
 - macOS: `brew install hugo`
@@ -25,14 +25,14 @@ hugo server --disableFastRender
 
 Access the site at [http://localhost:1313](http://localhost:1313). Press `Ctrl-C` when done viewing.
 
-The [site/content/docs/latest](./content/docs/latest) directory holds the project documentation whereas [site/themes/template/static../img/docs](./themes/template/static../img/docs) contains the images used in the documentation. Note they have to be under that folder to be properly served.
+The [site/content/docs/latest](./content/docs/latest) directory holds the project documentation whereas the [site/themes/template/static../img/docs](./themes/template/static../img/docs) directory contains the images used in the documentation. Note they have to be under that folder to be properly served.
 
 #### Run Hugo with Docker
 
 To ease the local development and prevent you from polluting your local environment with tools that rarely use,
 it is possible to run the `Hugo` server via `Docker` through a `Make` target.
 
-```
+```bash
 make site-server
 ```
 
@@ -60,9 +60,9 @@ hugo
 npx check-html-links ./public/
 ```
 
-## Check formatting
+## Check format
 
-Also, another tool for checking the markdown syntax are [markdownlint-cli](https://github.com/igorshubovych/markdownlint-cli) and [prettier](https://github.com/prettier/prettier). To use them, run:
+Also, another tool for checking the markdown syntax is [markdownlint-cli](https://github.com/igorshubovych/markdownlint-cli) and [prettier](https://github.com/prettier/prettier). To use them, run:
 
 ```bash
 cd site
