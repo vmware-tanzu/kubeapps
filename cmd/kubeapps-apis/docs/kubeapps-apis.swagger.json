@@ -4558,7 +4558,7 @@
         },
         "homeUrl": {
           "type": "string",
-          "title": "the url of the “home” for the package"
+          "title": "the url of the "home" for the package"
         },
         "iconUrl": {
           "type": "string",
