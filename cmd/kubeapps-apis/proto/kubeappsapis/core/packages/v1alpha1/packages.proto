@@ -442,7 +442,7 @@ message AvailablePackageDetail {
   // the url of the package repository that contains this package
   string repo_url = 4;
 
-  // the url of the “home” for the package
+  // the url of the "home" for the package
   string home_url = 5;
 
   // Available package icon URL

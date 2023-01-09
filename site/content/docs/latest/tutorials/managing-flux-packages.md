@@ -5,7 +5,7 @@
 1. [Introduction](#introduction)
 2. [Installing Flux in your Cluster](#installing-the-flux-controllers-in-your-cluster)
    1. [Quick overview of the Flux CRs](#quick-overview-of-the-relevant-flux-custom-resources)
-3. [Using Kubeapps for Managing Flux Packages](#using-kubeapps-to-manage-flux-helm-releases)
+3. [Using Kubeapps to manage Helm Charts with Flux](#using-kubeapps-to-manage-helm-charts-with-flux)
    1. [Configuring Kubeapps to Support Flux Packages](#configuring-kubeapps-to-support-flux-helm-releases)
    2. [Installing a Package Repository](#installing-a-helm-repository)
    3. [Installing a Package](#installing-a-package)

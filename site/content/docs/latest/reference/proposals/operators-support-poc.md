@@ -26,43 +26,43 @@ _NOTE_: There are several steps in the management of Operators that require clus
 
 1. The user goes to the Configuration > Operators section. Since they don't have the OLM installed, they get an error:
 
-![OLM not installed](../../img/design-proposals/olm-not-installed.png)
+    ![OLM not installed](../../img/design-proposals/olm-not-installed.png)
 
 2. Clicking in the "Show Instructions" buttons show the list of commands required to install the OLM:
 
-```bash
-curl -sL https://github.com/operator-framework/operator-lifecycle-manager/releases/download/0.14.1/install.sh | bash -s 0.14.1
-```
+    ```bash
+    curl -sL https://github.com/operator-framework/operator-lifecycle-manager/releases/download/0.14.1/install.sh | bash -s 0.14.1
+    ```
 
-4. Once the OLM has been installed, Kubeapps will show the list of Operators available in the Operator Hub. Similar to the list that can be found here: <https://operatorhub.io/>
+3. Once the OLM has been installed, Kubeapps will show the list of Operators available in the Operator Hub. Similar to the list that can be found here: <https://operatorhub.io/>
 
-5. When clicking in an Operator, it will display the information for the specific Operator. Again, this will be similar to the chart view and the Operator view from the hub: <https://operatorhub.io/operator/etcd>
+4. When clicking in an Operator, it will display the information for the specific Operator. Again, this will be similar to the chart view and the Operator view from the hub: <https://operatorhub.io/operator/etcd>
 
-6. When attempting to install an Operator, for this PoC, Kubeapps will just show the `kubectl` command that can be used to install it:
+5. When attempting to install an Operator, for this PoC, Kubeapps will just show the `kubectl` command that can be used to install it:
 
-```bash
-kubectl create -f https://operatorhub.io/install/etcd.yaml
-```
+    ```bash
+    kubectl create -f https://operatorhub.io/install/etcd.yaml
+    ```
 
-_NOTE:_ Some Operators are namespaced. This means that it will be available just in one namespace.
+    _NOTE:_ Some Operators are namespaced. This means that it will be available just in one namespace.
 
-7. After this point, Operators in a namespace will be listed. Selecting "All Namespaces" will show all the Operators in the different namespaces (showing if they are globally available or not). Clicking in one of those Operators would take the user to the Operator view (step 5).
+6. After this point, Operators in a namespace will be listed. Selecting "All Namespaces" will show all the Operators in the different namespaces (showing if they are globally available or not). Clicking in one of those Operators would take the user to the Operator view (step 5).
 
-8. Once Operators are available in a namespace, these would expose different "operator instance"s types. These are the instances that can be created using the Operator. For example, in the case of the `etcd` Operator, it will expose three different instance types: `etcd Cluster`, `etcd Backup` and `etcd Restore`. These types will be listed in the Catalog view, along with the different charts but with a tag that identifies them. Also, it should be possible to filter them to be easily discoverable:
+7. Once Operators are available in a namespace, these would expose different "operator instance"s types. These are the instances that can be created using the Operator. For example, in the case of the `etcd` Operator, it will expose three different instance types: `etcd Cluster`, `etcd Backup` and `etcd Restore`. These types will be listed in the Catalog view, along with the different charts but with a tag that identifies them. Also, it should be possible to filter them to be easily discoverable:
 
-![Operator catalog](../../img/design-proposals/operator-catalog.png)
+    ![Operator catalog](../../img/design-proposals/operator-catalog.png)
 
-_NOTE:_ Another option would be to create a self-contained view for the instance types catalog, similar to what Kubeapps has with Service Classes (Open Service Broker).
+    _NOTE:_ Another option would be to create a self-contained view for the instance types catalog, similar to what Kubeapps has with Service Classes (Open Service Broker).
 
-9. When clicking in a Operator instance type, the form to create the instance will be rendered. Here is where the user can modify the given example with any other specification:
+8. When clicking in a Operator instance type, the form to create the instance will be rendered. Here is where the user can modify the given example with any other specification:
 
-![Operator instance](../../img/design-proposals/operator-instance.png)
+    ![Operator instance](../../img/design-proposals/operator-instance.png)
 
-10. Once there are Operator instances running, they will be shown in the Operators section:
+9. Once there are Operator instances running, they will be shown in the Operators section:
 
-![Operator instance list](../../img/design-proposals/operator-instance-list.png)
+    ![Operator instance list](../../img/design-proposals/operator-instance-list.png)
 
-11. When clicking in an Operator instance, Kubeapps will render a view similar to the application view, with information related to the instance. For the first version Kubeapps can show just the YAML used to deploy that instance.
+10. When clicking in an Operator instance, Kubeapps will render a view similar to the application view, with information related to the instance. For the first version Kubeapps can show just the YAML used to deploy that instance.
 
 ## Implementation Design
 

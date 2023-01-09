@@ -5,9 +5,9 @@ It covers the installation and documentation for Kubeapps interacting with two K
 
 The installation used the [bitnami chart for Keycloak](https://github.com/bitnami/charts/tree/main/bitnami/keycloak) (version 12.0.4/2.4.8) and [bitnami chart for Kubeapps](https://github.com/bitnami/charts/tree/main/bitnami/kubeapps) (version 7.0.0/2.3.2)
 
-# Keycloak Installation
+## Keycloak Installation
 
-## SSL
+### SSL
 
 In order to support OIDC or OAuth, most servers and proxies require HTTPS. By default, the certificate created by the helm chart / Keycloak server is both invalid (error with `notBefore` attribute) and also based on a deprecated certificate version making it incompatible to use (i.e. is it based on Common Name instead of SAN and is rejected).
 
@@ -82,7 +82,7 @@ Note that the names of the keystore and truststore matters and must be exactly a
 kubectl create secret generic keycloak-tls --from-file=./keycloak-0.keystore.jks  --from-file=./keycloak.truststore.jks
 ```
 
-## Helm Install
+### Keycloak Helm Install
 
 To provide a default install, not many values must be provided in the values file - the values are mostly default passwords and the name of the secret created in Step 3 above.
 
@@ -131,13 +131,13 @@ Then just deploy Keycloak either using Kubeapps UI or helm cli as follows:
 helm install keycloak bitnami/keycloak --values my-values.yaml
 ```
 
-# Keycloak Configuration
+## Keycloak Configuration
 
 Follow the [Keycloak documentation](https://www.keycloak.org/documentation) to create and configure a new Realm to work with.
 
 This section will focus on a few aspects to configure for the SSO scenario to work.
 
-## Groups Claim
+### Groups Claim
 
 By default, there is no "groups" scope/claim. We will create a global client scope for groups.
 
@@ -161,7 +161,7 @@ Once the client scope is created, you should be redirected to a page with severa
 
 Note: if you navigate to "Client Scopes" and then select the tab "Default Client Scopes" you should be able to see the newly created "groups" scope in the "available client scopes" lists.
 
-## Clients
+### Clients
 
 In probably a very simplified view, Clients represent the application to be protected and accessed via SSO and OIDC. Here, the environment consisted of the Kubeapps web app and two Kubernetes clusters. So we need to create three clients.
 
@@ -201,7 +201,7 @@ Once created, configure the authentication as follows:
 - Configure the "Access Type" to be "confidential". This will add a new "Credentials" tab from which you can get the client secret
 - Ensure "Standard Flow Enabled" is enabled, this is required for the login screen.
 - "Direct Access Grants Enabled" can be disabled.
-- In the "Valid Redirect URIs" field, enter "http://localhost:8000/\*" as a placeholder. We will need to revisit this field once we know the public hostname of kubeapps
+- In the "Valid Redirect URIs" field, enter `http://localhost:8000/\*` as a placeholder. We will need to revisit this field once we know the public hostname of kubeapps
 - Save
 
 As for the cluster clients, we need to configure the client scopes:
@@ -252,7 +252,7 @@ In this option, the claim is statically defined via a mapper similar to the one 
 
 The two client ids will be injected in the audience claim automatically.
 
-## Users
+### Users in Keycloak
 
 Users are intuitive to create. But they must be configured with a "verified" email address.
 
@@ -260,9 +260,9 @@ The oauth proxy used in kubeapps requires email as the username. Furthermore, if
 
 In order to test multiple users with different levels of authorization, it is useful to create them with multiple dummy email addresses. This can be done by ensuring that when the user is created, the field "email verified" is ON (skipping an actual email verification workflow).
 
-# Kubeapps Installation
+## Kubeapps Installation
 
-## Helm Install
+### Kubeapps Helm Install
 
 Few changes are required to values.yaml for the helm installation:
 
@@ -314,13 +314,13 @@ authProxy:
     - --oidc-issuer-url=https://<xxx>.us-east-2.elb.amazonaws.com/auth/realms/AWS
 ```
 
-## Configuration
+### Configuration
 
 Once Kubeapps is installed and the load balancer is ready, we need to go back to Keycloak to configure the callback URL:
 
 - Navigate to the `kubeapps` Client
 - In the "Valid Redirect URIs" enter the callback URL for Kubeapps. It will be of the form "http://`<hostname>`/oauth2/callback" (where `<hostname>` is the load balancer hostname)
 
-## Users
+### Users
 
 Users created in Keycloak will be authenticated but they will not have access to the cluster resources by default. Make sure to create role bindings to users and/or groups in both clusters.

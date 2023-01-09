@@ -40,9 +40,9 @@ To install a Harbor registry in the cluster:
 
 2. Update the following parameter in the deployment values:
 
-- `service.tls.enabled`: Set to `false` to deactivate the TLS settings. Alternatively, you can provide a valid TSL certificate (check [Bitnami Harbor Helm chart documentation](https://github.com/bitnami/charts/tree/main/bitnami/harbor#parameters) for more information).
+   - `service.tls.enabled`: Set to `false` to deactivate the TLS settings. Alternatively, you can provide a valid TSL certificate (check [Bitnami Harbor Helm chart documentation](https://github.com/bitnami/charts/tree/main/bitnami/harbor#parameters) for more information).
 
-  ![Harbor Deploy Form](../img/harbor-deploy-form.png)
+   ![Harbor Deploy Form](../img/harbor-deploy-form.png)
 
 3. Deploy the chart and wait for it to be ready.
 
@@ -56,40 +56,40 @@ To install a Harbor registry in the cluster:
 
 1. First, create a Helm chart package:
 
-```console
-$ helm package /path/to/my/chart
-Successfully packaged chart and saved it to: /path/to/my/chart/my-chart-1.0.0.tgz
-```
+   ```console
+   $ helm package /path/to/my/chart
+   Successfully packaged chart and saved it to: /path/to/my/chart/my-chart-1.0.0.tgz
+   ```
 
 2. Second, login into Harbor admin portal following the instructions in the chart notes:
 
-```console
-1. Get the Harbor URL:
+   ```console
+   1. Get the Harbor URL:
 
-  echo "Harbor URL: https://127.0.0.1:8080/"
-  kubectl port-forward --namespace default svc/my-harbor 8080:80 &
+     echo "Harbor URL: https://127.0.0.1:8080/"
+     kubectl port-forward --namespace default svc/my-harbor 8080:80 &
 
-2. Login with the following credentials to see your Harbor application
+   2. Login with the following credentials to see your Harbor application
 
-  echo Username: "admin"
-  echo Password: $(kubectl get secret --namespace default my-harbor-core-envvars -o jsonpath="{.data.HARBOR_ADMIN_PASSWORD}" | base64 --decode)
-```
+     echo Username: "admin"
+     echo Password: $(kubectl get secret --namespace default my-harbor-core-envvars -o jsonpath="{.data.HARBOR_ADMIN_PASSWORD}" | base64 --decode)
+   ```
 
 3. Create a new Project named **my-helm-repo**. Each project will serve as a Package repository (in this example, a Helm chart repository).
 
-![Harbor new project](../img/harbor-new-project.png)
+   ![Harbor new project](../img/harbor-new-project.png)
 
-- It is possible to configure Harbor to use HTTP basic authentication if you set the `Access Level` of the project to `non public`. This enforces authentication to access the packages in the repository from an external client (Helm CLI, Kubeapps or any other).
+   - It is possible to configure Harbor to use HTTP basic authentication if you set the `Access Level` of the project to `non public`. This enforces authentication to access the packages in the repository from an external client (Helm CLI, Kubeapps or any other).
 
 4. Click the project name to view the project details page, then click **Helm Charts** tab to list all helm charts.
 
-![Harbor list charts](../img/harbor-list-charts.png)
+   ![Harbor list charts](../img/harbor-list-charts.png)
 
 5. Click **Upload** button to upload the Helm chart you previously created. You can also use the `helm` command to upload the chart too.
 
-![Harbor upload chart](../img/harbor-upload-chart.png)
+   ![Harbor upload chart](../img/harbor-upload-chart.png)
 
-> Please refer to ['Manage Helm Charts in Harbor'](https://goharbor.io/docs/2.6.0/working-with-projects/working-with-images/managing-helm-charts) for more details.
+   > Please refer to ['Manage Helm Charts in Harbor'](https://goharbor.io/docs/2.6.0/working-with-projects/working-with-images/managing-helm-charts) for more details.
 
 ### Harbor: Configure the repository in Kubeapps
 
@@ -156,16 +156,16 @@ To use ChartMuseum with Kubeapps:
 
 1. First configure a public repo in Kubeapps to deploy its Helm chart from the `stable` repository:
 
-![ChartMuseum chart](../img/chartmuseum-chart.png)
+   ![ChartMuseum chart](../img/chartmuseum-chart.png)
 
 2. Deploy last version by using Kubeapps. Update the following parameters in the deployment values:
 
-- `env.open.DISABLE_API`: Set to `false` to use the ChartMuseum API to push new charts.
-- `persistence.enabled`: Set to `true` to enable persistence for the stored charts.
+   - `env.open.DISABLE_API`: Set to `false` to use the ChartMuseum API to push new charts.
+   - `persistence.enabled`: Set to `true` to enable persistence for the stored charts.
 
-  > Note that this will create a [Kubernetes Persistent Volume Claim](https://kubernetes.io/docs/concepts/storage/persistent-volumes/#lifecycle-of-a-volume-and-claim) so depending on your Kubernetes provider you may need to manually allocate the required Persistent Volume to satisfy the claim. Some Kubernetes providers will automatically create PVs for you so setting this value to `true` will be enough.
+   > Note that this will create a [Kubernetes Persistent Volume Claim](https://kubernetes.io/docs/concepts/storage/persistent-volumes/#lifecycle-of-a-volume-and-claim) so depending on your Kubernetes provider you may need to manually allocate the required Persistent Volume to satisfy the claim. Some Kubernetes providers will automatically create PVs for you so setting this value to `true` will be enough.
 
-![ChartMuseum Deploy Form](../img/chartmuseum-deploy-form.png)
+   ![ChartMuseum Deploy Form](../img/chartmuseum-deploy-form.png)
 
 ### ChartMuseum: Upload a chart
 
@@ -175,21 +175,21 @@ Once ChartMuseum is deployed you will be able to upload a chart.
 
 1. In one terminal open a port-forward tunnel to the application:
 
-```console
-$ export POD_NAME=$(kubectl get pods --namespace default -l "app=chartmuseum" -l "release=my-chartrepo" -o jsonpath="{.items[0].metadata.name}")
-$ kubectl port-forward $POD_NAME 8080:8080 --namespace default
-Forwarding from 127.0.0.1:8080 -> 8080
-Forwarding from [::1]:8080 -> 8080
-```
+   ```console
+   $ export POD_NAME=$(kubectl get pods --namespace default -l "app=chartmuseum" -l "release=my-chartrepo" -o jsonpath="{.items[0].metadata.name}")
+   $ kubectl port-forward $POD_NAME 8080:8080 --namespace default
+   Forwarding from 127.0.0.1:8080 -> 8080
+   Forwarding from [::1]:8080 -> 8080
+   ```
 
 2. In a different terminal you can push your chart:
 
-```console
-$ helm package /path/to/my/chart
-Successfully packaged chart and saved it to: /path/to/my/chart/my-chart-1.0.0.tgz
-curl --data-binary "@my-chart-1.0.0.tgz" http://localhost:8080/api/charts
-{"saved":true}
-```
+   ```console
+   $ helm package /path/to/my/chart
+   Successfully packaged chart and saved it to: /path/to/my/chart/my-chart-1.0.0.tgz
+   curl --data-binary "@my-chart-1.0.0.tgz" http://localhost:8080/api/charts
+   {"saved":true}
+   ```
 
 ### ChartMuseum: Authentication/Authorization
 
