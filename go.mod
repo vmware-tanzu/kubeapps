@@ -58,7 +58,7 @@ require (
 	github.com/grpc-ecosystem/go-grpc-middleware v1.3.0
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.14.0
 	github.com/improbable-eng/grpc-web v0.15.0
-	github.com/itchyny/gojq v0.12.10
+	github.com/itchyny/gojq v0.12.11
 	github.com/jinzhu/copier v0.3.5
 	github.com/lib/pq v1.10.7
 	github.com/mitchellh/go-homedir v1.1.0
