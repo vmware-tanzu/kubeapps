@@ -42,7 +42,7 @@
     "fast-json-patch": "^3.1.1",
     "google-protobuf": "^3.21.2",
     "history": "^4.10.1",
-    "jsonwebtoken": "^8.5.1",
+    "jsonwebtoken": "^9.0.0",
     "lodash": "^4.17.21",
     "lodash-es": "^4.17.21",
     "modern-normalize": "^1.1.0",
