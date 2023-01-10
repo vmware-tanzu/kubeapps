@@ -13,6 +13,8 @@ import { defaultStore, getStore, initialState, mountWrapper } from "shared/specs
 import { IPackageState } from "shared/types";
 import BasicDeploymentForm from "./BasicDeploymentForm";
 import DeploymentFormBody, { IDeploymentFormBodyProps } from "./DeploymentFormBody";
+import configureMockStore from "redux-mock-store";
+import thunk from "redux-thunk";
 
 beforeEach(() => {
   // mock the window.matchMedia for selecting the theme
@@ -190,6 +192,26 @@ it("should not render a schema editor if the feature flag is disabled", () => {
   ).not.toExist();
 });
 
+// Reproduce https://github.com/vmware-tanzu/kubeapps/issues/5805
+it("should not render a schema editor if the feature flag is not set", () => {
+  const { schemaEditor, ...featureFlagsWithout } = initialState.config.featureFlags;
+  const state = {
+    ...initialState,
+    config: {
+      ...initialState.config,
+      featureFlags: featureFlagsWithout,
+    },
+  };
+  const mockStore = configureMockStore([thunk]);
+  const wrapper = mountWrapper(
+    mockStore(state),
+    <DeploymentFormBody {...defaultProps} selected={{ ...selected, schema: defaultSchema }} />,
+  );
+
+  expect(
+    wrapper.find(MonacoDiffEditor).filterWhere(p => p.prop("language") === "json"),
+  ).not.toExist();
+});
 it("should render a schema editor if the feature flag is enabled", () => {
   const state = {
     ...initialState,

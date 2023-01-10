@@ -336,8 +336,7 @@ function DeploymentFormBody({
       key="advanced-deployment-form"
     ></AdvancedDeploymentForm>,
   );
-
-  if (featureFlags.schemaEditor.enabled) {
+  if (featureFlags?.schemaEditor?.enabled) {
     // Schema editor creation, if the feature flag is enabled
     tabColumns.push(
       <div role="presentation" onClick={saveAllChanges}>
