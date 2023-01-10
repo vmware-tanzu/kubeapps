@@ -52,7 +52,7 @@ env:
   # Currently, we only build the images for linux/amd64 because building cross-platform images is extremely slow...
   IMG_PLATFORMS: "linux/amd64"
   KAPP_CONTROLLER_VERSION: "v0.43.2"
-  K8S_KIND_VERSION: "v1.22.15@sha256:bfd5eaae36849bfb3c1e3b9442f3da17d730718248939d9d547e86bbac5da586"
+  K8S_KIND_VERSION: "v1.24.7@sha256:5c015142d9b60a0f6c45573f809957076514e38ec973565e2b2fe828b91597f5"
   KIND_VERSION: "v0.17.0"
   KUBECTL_VERSION: "v1.24.7"
   MKCERT_VERSION: "v1.4.4"
