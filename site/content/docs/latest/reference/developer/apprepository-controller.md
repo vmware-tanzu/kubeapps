@@ -29,8 +29,7 @@ Based off the [Kubernetes Sample Controller](https://github.com/kubernetes/sampl
 - [Kubernetes cluster (v1.8+)](https://kubernetes.io/docs/setup/)
 - [kubectl](https://kubernetes.io/docs/tasks/tools/install-kubectl/)
 - [Telepresence](https://telepresence.io)
-
-_Telepresence is not a hard requirement, but is recommended for a better developer experience_
+  - _Telepresence is not a hard requirement, but is recommended for a better developer experience_
 
 ## Download the kubeapps source code
 

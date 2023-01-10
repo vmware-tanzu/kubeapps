@@ -11,6 +11,7 @@ The `asset-syncer` component is a tool that scans a Helm chart repository and po
 - [Kubernetes cluster (v1.8+)](https://kubernetes.io/docs/setup/). [Minikube](https://github.com/kubernetes/minikube) is recommended.
 - [kubectl](https://kubernetes.io/docs/tasks/tools/install-kubectl/)
 - [Telepresence](https://telepresence.io)
+  - _Telepresence is not a hard requirement, but is recommended for a better developer experience_
 
 ## Download the Kubeapps source code
 
