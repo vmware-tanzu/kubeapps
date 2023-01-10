@@ -9,31 +9,31 @@ replace (
 	// k8s.io/kubernetes is not intended to be used as a module, so versions are not being properly resolved.
 	// This replacement is requiredƒ, see https://github.com/kubernetes/kubernetes/issues/79384
 	// As we support new k8s versions, this replacements should be also updated accordingly.
-	k8s.io/api => k8s.io/api v0.24.7
-	k8s.io/apiextensions-apiserver => k8s.io/apiextensions-apiserver v0.24.7
-	k8s.io/apimachinery => k8s.io/apimachinery v0.24.7
-	k8s.io/apiserver => k8s.io/apiserver v0.24.7
-	k8s.io/cli-runtime => k8s.io/cli-runtime v0.24.7
-	k8s.io/client-go => k8s.io/client-go v0.24.7
-	k8s.io/cloud-provider => k8s.io/cloud-provider v0.24.7
-	k8s.io/cluster-bootstrap => k8s.io/cluster-bootstrap v0.24.7
-	k8s.io/code-generator => k8s.io/code-generator v0.24.7
-	k8s.io/component-base => k8s.io/component-base v0.24.7
-	k8s.io/component-helpers => k8s.io/component-helpers v0.24.7
-	k8s.io/controller-manager => k8s.io/controller-manager v0.24.7
-	k8s.io/cri-api => k8s.io/cri-api v0.24.7
-	k8s.io/csi-translation-lib => k8s.io/csi-translation-lib v0.24.7
-	k8s.io/kube-aggregator => k8s.io/kube-aggregator v0.24.7
-	k8s.io/kube-controller-manager => k8s.io/kube-controller-manager v0.24.7
-	k8s.io/kube-proxy => k8s.io/kube-proxy v0.24.7
-	k8s.io/kube-scheduler => k8s.io/kube-scheduler v0.24.7
-	k8s.io/kubectl => k8s.io/kubectl v0.24.7
-	k8s.io/kubelet => k8s.io/kubelet v0.24.7
-	k8s.io/legacy-cloud-providers => k8s.io/legacy-cloud-providers v0.24.7
-	k8s.io/metrics => k8s.io/metrics v0.24.7
-	k8s.io/mount-utils => k8s.io/mount-utils v0.24.7
-	k8s.io/pod-security-admission => k8s.io/pod-security-admission v0.24.7
-	k8s.io/sample-apiserver => k8s.io/sample-apiserver v0.24.7
+	k8s.io/api => k8s.io/api v0.25.5
+	k8s.io/apiextensions-apiserver => k8s.io/apiextensions-apiserver v0.25.5
+	k8s.io/apimachinery => k8s.io/apimachinery v0.25.5
+	k8s.io/apiserver => k8s.io/apiserver v0.25.5
+	k8s.io/cli-runtime => k8s.io/cli-runtime v0.25.5
+	k8s.io/client-go => k8s.io/client-go v0.25.5
+	k8s.io/cloud-provider => k8s.io/cloud-provider v0.25.5
+	k8s.io/cluster-bootstrap => k8s.io/cluster-bootstrap v0.25.5
+	k8s.io/code-generator => k8s.io/code-generator v0.25.5
+	k8s.io/component-base => k8s.io/component-base v0.25.5
+	k8s.io/component-helpers => k8s.io/component-helpers v0.25.5
+	k8s.io/controller-manager => k8s.io/controller-manager v0.25.5
+	k8s.io/cri-api => k8s.io/cri-api v0.25.5
+	k8s.io/csi-translation-lib => k8s.io/csi-translation-lib v0.25.5
+	k8s.io/kube-aggregator => k8s.io/kube-aggregator v0.25.5
+	k8s.io/kube-controller-manager => k8s.io/kube-controller-manager v0.25.5
+	k8s.io/kube-proxy => k8s.io/kube-proxy v0.25.5
+	k8s.io/kube-scheduler => k8s.io/kube-scheduler v0.25.5
+	k8s.io/kubectl => k8s.io/kubectl v0.25.5
+	k8s.io/kubelet => k8s.io/kubelet v0.25.5
+	k8s.io/legacy-cloud-providers => k8s.io/legacy-cloud-providers v0.25.5
+	k8s.io/metrics => k8s.io/metrics v0.25.5
+	k8s.io/mount-utils => k8s.io/mount-utils v0.25.5
+	k8s.io/pod-security-admission => k8s.io/pod-security-admission v0.25.5
+	k8s.io/sample-apiserver => k8s.io/sample-apiserver v0.25.5
 )
 
 require (
@@ -81,18 +81,18 @@ require (
 	google.golang.org/grpc/cmd/protoc-gen-go-grpc v1.2.0
 	google.golang.org/protobuf v1.28.1
 	gopkg.in/yaml.v3 v3.0.1
-	helm.sh/helm/v3 v3.9.4
+	helm.sh/helm/v3 v3.10.3
 	k8s.io/api v0.25.5
-	k8s.io/apiextensions-apiserver v0.25.4
+	k8s.io/apiextensions-apiserver v0.25.5
 	k8s.io/apimachinery v0.25.5
-	k8s.io/apiserver v0.25.3
-	k8s.io/cli-runtime v0.25.3
+	k8s.io/apiserver v0.25.5
+	k8s.io/cli-runtime v0.25.5
 	k8s.io/client-go v0.25.5
 	k8s.io/klog/v2 v2.80.1
-	k8s.io/kubectl v0.25.3
-	k8s.io/kubernetes v1.24.7
+	k8s.io/kubectl v0.25.5
+	k8s.io/kubernetes v1.25.5
 	k8s.io/utils v0.0.0-20221108210102-8e77b1f39fe2
-	oras.land/oras-go v1.2.1
+	oras.land/oras-go v1.2.2
 	oras.land/oras-go/v2 v2.0.0-rc.5
 	sigs.k8s.io/controller-runtime v0.13.1
 	sigs.k8s.io/yaml v1.3.0
@@ -117,7 +117,7 @@ require (
 	github.com/bugsnag/panicwrap v1.3.4 // indirect
 	github.com/cenkalti/backoff/v4 v4.1.3 // indirect
 	github.com/cespare/xxhash/v2 v2.1.2 // indirect
-	github.com/chai2010/gettext-go v0.0.0-20160711120539-c6fed771bfd5 // indirect
+	github.com/chai2010/gettext-go v1.0.2 // indirect
 	github.com/cppforlife/cobrautil v0.0.0-20221021151949-d60711905d65 // indirect
 	github.com/cppforlife/color v1.9.1-0.20200716202919-6706ac40b835 // indirect
 	github.com/cppforlife/go-patch v0.2.0 // indirect
@@ -126,7 +126,7 @@ require (
 	github.com/desertbit/timer v0.0.0-20180107155436-c41aec40b27f // indirect
 	github.com/dgryski/go-rendezvous v0.0.0-20200823014737-9f7001d12a5f // indirect
 	github.com/docker/distribution v2.8.1+incompatible // indirect
-	github.com/docker/docker v20.10.20+incompatible // indirect
+	github.com/docker/docker v20.10.21+incompatible // indirect
 	github.com/docker/docker-credential-helpers v0.7.0 // indirect
 	github.com/docker/go-connections v0.4.0 // indirect
 	github.com/docker/go-metrics v0.0.1 // indirect
@@ -197,7 +197,7 @@ require (
 	github.com/mitchellh/reflectwalk v1.0.2 // indirect
 	github.com/moby/locker v1.0.1 // indirect
 	github.com/moby/spdystream v0.2.0 // indirect
-	github.com/moby/term v0.0.0-20220808134915-39b0c02b01ae // indirect
+	github.com/moby/term v0.0.0-20221205130635-1aeaba878587 // indirect
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
 	github.com/modern-go/reflect2 v1.0.2 // indirect
 	github.com/monochromegane/go-gitignore v0.0.0-20200626010858-205db1a8cc00 // indirect
@@ -233,9 +233,10 @@ require (
 	github.com/yvasiyarov/go-metrics v0.0.0-20150112132944-c25f46c4b940 // indirect
 	github.com/yvasiyarov/gorelic v0.0.7 // indirect
 	github.com/yvasiyarov/newrelic_platform_go v0.0.0-20160601141957-9c099fbc30e9 // indirect
+	go.etcd.io/etcd/api/v3 v3.5.5 // indirect
 	go.starlark.net v0.0.0-20221020143700-22309ac47eac // indirect
 	go.uber.org/zap v1.23.0 // indirect
-	golang.org/x/crypto v0.3.0 // indirect
+	golang.org/x/crypto v0.4.0 // indirect
 	golang.org/x/image v0.1.0 // indirect
 	golang.org/x/oauth2 v0.2.0 // indirect
 	golang.org/x/sys v0.3.0 // indirect

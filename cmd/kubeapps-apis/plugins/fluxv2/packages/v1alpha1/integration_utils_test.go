@@ -49,6 +49,7 @@ import (
 	"k8s.io/client-go/tools/portforward"
 	"k8s.io/client-go/transport/spdy"
 	"k8s.io/kubectl/pkg/cmd/cp"
+	cmdtesting "k8s.io/kubectl/pkg/cmd/testing"
 	ctrlclient "sigs.k8s.io/controller-runtime/pkg/client"
 )
 
@@ -1006,7 +1007,13 @@ func kubeCopyFileToPod(t *testing.T, srcFile string, podName types.NamespacedNam
 	}
 	copyOptions.Clientset = typedcli
 	destSpec := fmt.Sprintf("%s/%s:%s", podName.Namespace, podName.Name, destFile)
-	err = copyOptions.Run([]string{srcFile, destSpec})
+	tf := cmdtesting.NewTestFactory().WithNamespace("test")
+	cmd := cp.NewCmdCp(tf, ioStreams)
+	err = copyOptions.Complete(tf, cmd, []string{srcFile, destSpec})
+	if err != nil {
+		return fmt.Errorf("Could not prepare copy operation: %v", err)
+	}
+	err = copyOptions.Run()
 	if err != nil {
 		return fmt.Errorf("Could not run copy operation: %v", err)
 	}
