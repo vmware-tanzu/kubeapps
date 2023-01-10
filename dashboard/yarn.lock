@@ -2074,17 +2074,17 @@
   dependencies:
     remove-accents "0.4.2"
 
-"@tanstack/react-table@^8.7.0":
-  version "8.7.0"
-  resolved "https://registry.yarnpkg.com/@tanstack/react-table/-/react-table-8.7.0.tgz#853fae74db6bf49738d0f18e4d507b00262fc09c"
-  integrity sha512-VJ+9rsymDLaSU35rWOfX0bwNXnpW1i+T14wi+sHx8lxwAsfg6IY1Yw7FPfGADvUFP5eQn2t4nlohAJd+IoEj/Q==
+"@tanstack/react-table@^8.7.6":
+  version "8.7.6"
+  resolved "https://registry.yarnpkg.com/@tanstack/react-table/-/react-table-8.7.6.tgz#1420d69da458fe13c08af73b6f3c98d5e49e63f6"
+  integrity sha512-/QijmMFeP7wDLBnr0MQ/5MlbXePbIL/1nOtkxBC9zvmBu4gDKJEDBqipUyM7Wc/iBpSd0IFyqBlvZvTPD9FYDA==
   dependencies:
-    "@tanstack/table-core" "8.7.0"
+    "@tanstack/table-core" "8.7.6"
 
-"@tanstack/table-core@8.7.0":
-  version "8.7.0"
-  resolved "https://registry.yarnpkg.com/@tanstack/table-core/-/table-core-8.7.0.tgz#046e376cd536cd53727a91a880345f92d3ec5859"
-  integrity sha512-DRiRbOAmDHapzUBd4/C4Yy+FTug4fdGp5sdZWWfCq4wxRoaXQraQgbzmK23a3QcbwLFtLeNezPkZrqbJWuX+VA==
+"@tanstack/table-core@8.7.6":
+  version "8.7.6"
+  resolved "https://registry.yarnpkg.com/@tanstack/table-core/-/table-core-8.7.6.tgz#5ad8a67ef6312c56c4a075326afcb2813c030a22"
+  integrity sha512-sqiNTMzB6cpyL8DFH6/VqW48SwiflLqxQqYpo2wNock7rdVGvlm0BLNI8vZUJbr1+fmmWmHwBvi5OMgZw8n1DA==
 
 "@testing-library/dom@^8.0.0":
   version "8.19.0"
@@ -3909,6 +3909,11 @@ capture-exit@^2.0.0:
   integrity sha512-PiT/hQmTonHhl/HFGN+Lx3JJUznrVYJ3+AQsnthneZbvW7x+f08Tk7yLJTLEOUvBTbduLeeBkxEaYXUOUrRq6g==
   dependencies:
     rsvp "^4.8.4"
+
+case-anything@^2.1.10:
+  version "2.1.10"
+  resolved "https://registry.yarnpkg.com/case-anything/-/case-anything-2.1.10.tgz#d18a6ca968d54ec3421df71e3e190f3bced23410"
+  integrity sha512-JczJwVrCP0jPKh05McyVsuOg6AYosrB9XWZKbQzXeDAm2ClE/PJE/BcrrQrVyGYH7Jg8V/LDupmyL4kFlVsVFQ==
 
 case-sensitive-paths-webpack-plugin@^2.4.0:
   version "2.4.0"
@@ -13320,12 +13325,13 @@ ts-proto-descriptors@1.7.1:
     long "^4.0.0"
     protobufjs "^6.8.8"
 
-ts-proto@^1.135.0:
-  version "1.135.0"
-  resolved "https://registry.yarnpkg.com/ts-proto/-/ts-proto-1.135.0.tgz#9e6ebb8fff42325d4ae475d2cd763068a8485846"
-  integrity sha512-NwK+PcSiWZBzO8GFVID2Ig71vIZRCApTG8XDZIlQ3WabbJlbUx9zsrHcYNojcUENtqkiYywTp3uTP6dketiCpw==
+ts-proto@^1.137.2:
+  version "1.137.2"
+  resolved "https://registry.yarnpkg.com/ts-proto/-/ts-proto-1.137.2.tgz#780809a110d45392abc43bf4a2634fe171852163"
+  integrity sha512-PZaskF56AChHBCcbT1iLp7PN9LasG8BZeEAGn0elAwn7elEGmc3p007coJPf233FVOpE2RO7k32WA7U6RiEdaQ==
   dependencies:
     "@types/object-hash" "^1.3.0"
+    case-anything "^2.1.10"
     dataloader "^1.4.0"
     object-hash "^1.3.1"
     protobufjs "^6.11.3"
