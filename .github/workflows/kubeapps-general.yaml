@@ -518,6 +518,10 @@ jobs:
         run: kubectl --context kind-kubeapps-ci --kubeconfig ${HOME}/.kube/kind-config-kubeapps-ci logs -n flux-system deploy/helm-controller
         if: failure() && env.TEST_RESULT == 1
         continue-on-error: true
+      - name: "Print flux helm release"
+        run: kubectl --context kind-kubeapps-ci --kubeconfig ${HOME}/.kube/kind-config-kubeapps-ci get -n kubeapps-user-namespace helmrelease -o yaml
+        if: failure() && env.TEST_RESULT == 1
+        continue-on-error: true
       - name: 'Upload Artifacts'
         if: failure()
         uses: actions/upload-artifact@v3
