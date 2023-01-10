@@ -6,9 +6,10 @@ package resourcerefs
 import (
 	"context"
 	goerrs "errors"
-	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/pkg/helm"
 	"io"
 	"strings"
+
+	"github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/plugins/pkg/helm"
 
 	corev1 "github.com/vmware-tanzu/kubeapps/cmd/kubeapps-apis/gen/core/packages/v1alpha1"
 	"google.golang.org/grpc/codes"
@@ -17,6 +18,7 @@ import (
 	"helm.sh/helm/v3/pkg/storage/driver"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/yaml"
+	log "k8s.io/klog/v2"
 )
 
 type yamlMetadata struct {
@@ -91,6 +93,7 @@ func GetInstalledPackageResourceRefs(
 	ctx context.Context,
 	helmReleaseName types.NamespacedName,
 	actionConfigGetter helm.HelmActionConfigGetterFunc) ([]*corev1.ResourceRef, error) {
+	log.InfoS("+resourcerefs GetInstalledPackageResourceRefs", "helmReleaseName", helmReleaseName)
 	namespace := helmReleaseName.Namespace
 
 	actionConfig, err := actionConfigGetter(ctx, namespace)
@@ -109,6 +112,7 @@ func GetInstalledPackageResourceRefs(
 	release, err := getcmd.Run(helmReleaseName.Name)
 	if err != nil {
 		if err == driver.ErrReleaseNotFound {
+			log.ErrorS(err, "resourcerefs GetInstalledPackageResourceRefs")
 			return nil, status.Errorf(codes.NotFound, "Unable to find Helm release %q in namespace %q: %+v", helmReleaseName, namespace, err)
 		}
 		return nil, status.Errorf(codes.Internal, "Unable to run Helm get action: %v", err)

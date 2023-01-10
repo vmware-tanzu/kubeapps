@@ -39,7 +39,7 @@ Begin by creating an OAuth2 application to retrieve the information required by 
 
    ![OpenID and create](../../img/kubeapps-on-tkg/csp-oauth-new-details-scopes.png)
 
-The CSP Console displays a success screen with an auto-generated application ID and secret. Click the **Download JSON** link to download these values.
+   The CSP Console displays a success screen with an auto-generated application ID and secret. Click the **Download JSON** link to download these values.
 
 ![Retrieve app id and secret](../../img/kubeapps-on-tkg/csp-oauth-new-secrets.png)
 
@@ -57,41 +57,41 @@ Since Pinniped manages this process, the only requirement is to have a _JWTAuthe
 
 1. Create a file named `kubeapps-jwt-authenticator.yaml` with the following content. Replace the placeholders as follows:
 
-- Replace the `OIDC-ISSUER-URL` with the _issuer_ URL of the OIDC provider. For CSP it is `https://gaz.csp-vidm-prod.com`.
-- Replace `CLIENT-ID` with the application ID obtained from the JSON file in the previous step.
+   - Replace the `OIDC-ISSUER-URL` with the _issuer_ URL of the OIDC provider. For CSP it is `https://gaz.csp-vidm-prod.com`.
+   - Replace `CLIENT-ID` with the application ID obtained from the JSON file in the previous step.
 
-```yaml
----
-apiVersion: authentication.concierge.pinniped.dev/v1alpha1
-kind: JWTAuthenticator
-metadata:
-  name: kubeapps-jwt-authenticator
-  namespace: pinniped-concierge
-spec:
-  issuer: OIDC-ISSUER-URL
-  audience: CLIENT-ID
-  claims:
-    username: email
-    groups: groups
-#   tls:
-#     certificateAuthorityData: LS0t... # optional base64 CA data if using a self-signed certificate
-```
+   ```yaml
+   ---
+   apiVersion: authentication.concierge.pinniped.dev/v1alpha1
+   kind: JWTAuthenticator
+   metadata:
+   name: kubeapps-jwt-authenticator
+   namespace: pinniped-concierge
+   spec:
+   issuer: OIDC-ISSUER-URL
+   audience: CLIENT-ID
+   claims:
+      username: email
+      groups: groups
+   #   tls:
+   #     certificateAuthorityData: LS0t... # optional base64 CA data if using a self-signed certificate
+   ```
 
-The `name` field specifies the name of the _JWTAuthenticator_ resource, which is required in the next step.
+   The `name` field specifies the name of the _JWTAuthenticator_ resource, which is required in the next step.
 
-> **NOTE**: Ignore the `tls` section of the configuration shown above unless the OIDC uses a self-signed certificate. If it does, follow [these additional steps](https://github.com/vmware-tanzu/kubeapps/blob/main/site/content/docs/latest/howto/OIDC/using-an-OIDC-provider-with-pinniped.md#pinniped-not-trusting-your-oidc-provider).
+   > **NOTE**: Ignore the `tls` section of the configuration shown above unless the OIDC uses a self-signed certificate. If it does, follow [these additional steps](https://github.com/vmware-tanzu/kubeapps/blob/main/site/content/docs/latest/howto/OIDC/using-an-OIDC-provider-with-pinniped.md#pinniped-not-trusting-your-oidc-provider).
 
-> **NOTE**: Just if you are using the Pinniped version provided by TMC (instead of the one already provided by TKG), the line `namespace: pinniped-concierge` must be removed.
+   > **NOTE**: Just if you are using the Pinniped version provided by TMC (instead of the one already provided by TKG), the line `namespace: pinniped-concierge` must be removed.
 
 2. Install the _JWTAuthenticator_ resource in your cluster:
 
-```bash
-kubectl apply -f kubeapps-jwt-authenticator.yaml
-```
+   ```bash
+   kubectl apply -f kubeapps-jwt-authenticator.yaml
+   ```
 
-> **TIP**: When using more than one workload cluster, apply this _JWTAuthenticator_ resource in every cluster.
+   > **TIP**: When using more than one workload cluster, apply this _JWTAuthenticator_ resource in every cluster.
 
-At the end of this step, an identity management provider has been configured in the cluster. The next step is to [install Kubeapps](./step-2.md).
+   At the end of this step, an identity management provider has been configured in the cluster. The next step is to [install Kubeapps](./step-2.md).
 
 ## Tutorial index
 

@@ -8,7 +8,7 @@
 4. [OIDC provider configuration](#oidc-provider-configuration)
    1. [OIDC parameters](#configure-parameters)
    2. [Redirection](#configure-redirection)
-5. [Troubleshooting](#troubleshoothing)
+5. [Troubleshooting](#troubleshooting)
 
 ---
 

@@ -252,6 +252,7 @@ installFlux() {
   # Warning  FailedScheduling  19s (x7 over 6m)  default-scheduler  0/1 nodes are available: 1 Insufficient cpu.
   curl -o /tmp/flux_install.yaml -LO "${url}"
   cat /tmp/flux_install.yaml | sed -e 's/cpu: 100m/cpu: 75m/g' | kubectl apply -f -
+  kubectl --namespace ${namespace} scale --replicas=0 deployment/image-automation-controller deployment/image-reflector-controller deployment/kustomize-controller
 
   # wait for deployments to be ready
   k8s_wait_for_deployment ${namespace} helm-controller
@@ -499,13 +500,33 @@ done
 kubectl cp ./tests "default/${pod}:/app/"
 info "Copied tests to e2e-runner pod default/${pod}"
 
-## Create admin user
+## Create admin user with manual token
 kubectl create serviceaccount kubeapps-operator -n kubeapps
+cat <<EOF | kubectl apply -f -
+apiVersion: v1
+kind: Secret
+metadata:
+  name: kubeapps-operator-token
+  namespace: kubeapps
+  annotations:
+    kubernetes.io/service-account.name: kubeapps-operator
+type: kubernetes.io/service-account-token
+EOF
 kubectl create clusterrolebinding kubeapps-operator-admin --clusterrole=cluster-admin --serviceaccount kubeapps:kubeapps-operator
 kubectl create clusterrolebinding kubeapps-repositories-write --clusterrole kubeapps:kubeapps:apprepositories-write --serviceaccount kubeapps:kubeapps-operator
 kubectl create rolebinding kubeapps-sa-operator-apprepositories-write -n kubeapps-user-namespace --clusterrole=kubeapps:kubeapps:apprepositories-write --serviceaccount kubeapps:kubeapps-operator
 ## Create view user
 kubectl create serviceaccount kubeapps-view -n kubeapps
+cat <<EOF | kubectl apply -f -
+apiVersion: v1
+kind: Secret
+metadata:
+  name: kubeapps-view-token
+  namespace: kubeapps
+  annotations:
+    kubernetes.io/service-account.name: kubeapps-view
+type: kubernetes.io/service-account-token
+EOF
 kubectl create role view-secrets --verb=get,list,watch --resource=secrets
 kubectl create rolebinding kubeapps-view-secret --role view-secrets --serviceaccount kubeapps:kubeapps-view
 kubectl create clusterrolebinding kubeapps-view --clusterrole=view --serviceaccount kubeapps:kubeapps-view
@@ -513,6 +534,16 @@ kubectl create rolebinding kubeapps-view-user-apprepo-read -n kubeapps-user-name
 kubectl create rolebinding kubeapps-view-user -n kubeapps-user-namespace --clusterrole=edit --serviceaccount kubeapps:kubeapps-view
 ## Create edit user
 kubectl create serviceaccount kubeapps-edit -n kubeapps
+cat <<EOF | kubectl apply -f -
+apiVersion: v1
+kind: Secret
+metadata:
+  name: kubeapps-edit-token
+  namespace: kubeapps
+  annotations:
+    kubernetes.io/service-account.name: kubeapps-edit
+type: kubernetes.io/service-account-token
+EOF
 # TODO(minelson): Many of these roles/bindings need to be cleaned up. Some are
 # unnecessary (with chart changes), some should not be created (such as edit
 # here having the edit cluster role in the kubeapps namespace - should just be
@@ -535,9 +566,9 @@ retry_while "kubectl get -n kubeapps serviceaccount kubeapps-operator -o name" "
 retry_while "kubectl get -n kubeapps serviceaccount kubeapps-view -o name" "5" "1"
 retry_while "kubectl get -n kubeapps serviceaccount kubeapps-edit -o name" "5" "1"
 ## Retrieve tokens
-admin_token="$(kubectl get -n kubeapps secret "$(kubectl get -n kubeapps serviceaccount kubeapps-operator -o jsonpath='{.secrets[].name}')" -o go-template='{{.data.token | base64decode}}')"
-view_token="$(kubectl get -n kubeapps secret "$(kubectl get -n kubeapps serviceaccount kubeapps-view -o jsonpath='{.secrets[].name}')" -o go-template='{{.data.token | base64decode}}')"
-edit_token="$(kubectl get -n kubeapps secret "$(kubectl get -n kubeapps serviceaccount kubeapps-edit -o jsonpath='{.secrets[].name}')" -o go-template='{{.data.token | base64decode}}')"
+admin_token="$(kubectl get -n kubeapps secret kubeapps-operator-token -o go-template='{{.data.token | base64decode}}')"
+view_token="$(kubectl get -n kubeapps secret kubeapps-view-token -o go-template='{{.data.token | base64decode}}')"
+edit_token="$(kubectl get -n kubeapps secret kubeapps-edit-token -o go-template='{{.data.token | base64decode}}')"
 
 info "Bootstrap time: $(elapsedTimeSince "$startTime")"
 
