@@ -3,7 +3,7 @@
 
 import { grpc } from "@improbable-eng/grpc-web";
 import { AxiosResponse } from "axios";
-import * as jwt from "jsonwebtoken";
+import jwt from "jsonwebtoken";
 import { get } from "lodash";
 import { IConfig } from "./Config";
 import { KubeappsGrpcClient } from "./KubeappsGrpcClient";

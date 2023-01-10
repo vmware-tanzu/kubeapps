@@ -4,7 +4,7 @@
 import { grpc } from "@improbable-eng/grpc-web";
 import { AxiosResponse } from "axios";
 import { CheckNamespaceExistsRequest } from "gen/kubeappsapis/plugins/resources/v1alpha1/resources";
-import * as jwt from "jsonwebtoken";
+import jwt from "jsonwebtoken";
 import { Auth } from "./Auth";
 import { SupportedThemes } from "./Config";
 import { KubeappsGrpcClient } from "./KubeappsGrpcClient";
