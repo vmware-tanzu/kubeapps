@@ -45,7 +45,7 @@ function defaultValues(pkg: AvailablePackageDetail) {
   if (additionalValues.length === 1) {
     return additionalValues[0];
   }
-  return pkg.defaultValues || ""
+  return pkg.defaultValues || "";
 }
 
 export default function DeploymentForm() {
@@ -67,7 +67,9 @@ export default function DeploymentForm() {
 
   const [isDeploying, setDeploying] = useState(false);
   const [releaseName, setReleaseName] = useState("");
-  const [appValues, setAppValues] = useState(defaultValues(selectedPackage.availablePackageDetail || {} as AvailablePackageDetail));
+  const [appValues, setAppValues] = useState(
+    defaultValues(selectedPackage.availablePackageDetail || ({} as AvailablePackageDetail)),
+  );
   const [valuesModified, setValuesModified] = useState(false);
   const [serviceAccountList, setServiceAccountList] = useState([] as string[]);
   const [reconciliationOptions, setReconciliationOptions] = useState({} as ReconciliationOptions);
@@ -103,7 +105,7 @@ export default function DeploymentForm() {
     );
     // Populate the rest of packages versions
     dispatch(actions.availablepackages.fetchAvailablePackageVersions(packageReference));
-    return () => { };
+    return () => {};
   }, [dispatch, packageReference, packageVersion]);
 
   useEffect(() => {
@@ -116,14 +118,16 @@ export default function DeploymentForm() {
           dispatch(handleErrorAction(e));
         });
     }
-    return () => { };
+    return () => {};
   }, [dispatch, targetCluster, targetNamespace, pluginObj.name]);
 
   useEffect(() => {
     if (!valuesModified) {
-      setAppValues(defaultValues(selectedPackage.availablePackageDetail || {} as AvailablePackageDetail));
+      setAppValues(
+        defaultValues(selectedPackage.availablePackageDetail || ({} as AvailablePackageDetail)),
+      );
     }
-    return () => { };
+    return () => {};
   }, [selectedPackage.availablePackageDetail?.defaultValues, valuesModified]);
 
   const handleValuesChange = (value: string) => {
