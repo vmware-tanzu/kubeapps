@@ -14,6 +14,7 @@ import LoadingWrapper from "components/LoadingWrapper";
 import PackageHeader from "components/PackageHeader/PackageHeader";
 import { push } from "connected-react-router";
 import {
+  AvailablePackageDetail,
   AvailablePackageReference,
   ReconciliationOptions,
 } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
@@ -39,6 +40,14 @@ interface IRouteParams {
   packageVersion?: string;
 }
 
+function defaultValues(pkg: AvailablePackageDetail) {
+  const additionalValues = Object.values(pkg.additionalDefaultValues || []);
+  if (additionalValues.length === 1) {
+    return additionalValues[0];
+  }
+  return pkg.defaultValues || ""
+}
+
 export default function DeploymentForm() {
   const dispatch: ThunkDispatch<IStoreState, null, Action> = useDispatch();
   const {
@@ -58,7 +67,7 @@ export default function DeploymentForm() {
 
   const [isDeploying, setDeploying] = useState(false);
   const [releaseName, setReleaseName] = useState("");
-  const [appValues, setAppValues] = useState(selectedPackage.values || "");
+  const [appValues, setAppValues] = useState(defaultValues(selectedPackage.availablePackageDetail || {} as AvailablePackageDetail));
   const [valuesModified, setValuesModified] = useState(false);
   const [serviceAccountList, setServiceAccountList] = useState([] as string[]);
   const [reconciliationOptions, setReconciliationOptions] = useState({} as ReconciliationOptions);
@@ -94,7 +103,7 @@ export default function DeploymentForm() {
     );
     // Populate the rest of packages versions
     dispatch(actions.availablepackages.fetchAvailablePackageVersions(packageReference));
-    return () => {};
+    return () => { };
   }, [dispatch, packageReference, packageVersion]);
 
   useEffect(() => {
@@ -107,15 +116,15 @@ export default function DeploymentForm() {
           dispatch(handleErrorAction(e));
         });
     }
-    return () => {};
+    return () => { };
   }, [dispatch, targetCluster, targetNamespace, pluginObj.name]);
 
   useEffect(() => {
     if (!valuesModified) {
-      setAppValues(selectedPackage.values || "");
+      setAppValues(defaultValues(selectedPackage.availablePackageDetail || {} as AvailablePackageDetail));
     }
-    return () => {};
-  }, [selectedPackage.values, valuesModified]);
+    return () => { };
+  }, [selectedPackage.availablePackageDetail?.defaultValues, valuesModified]);
 
   const handleValuesChange = (value: string) => {
     setAppValues(value);
