@@ -52,7 +52,7 @@ require (
 	github.com/fluxcd/pkg/version v0.2.0
 	github.com/fluxcd/source-controller/api v0.32.1
 	github.com/go-redis/redis/v8 v8.11.5
-	github.com/go-redis/redismock/v8 v8.0.6
+	github.com/go-redis/redismock/v8 v8.11.5
 	github.com/google/go-cmp v0.5.9
 	github.com/google/go-containerregistry v0.12.1
 	github.com/grpc-ecosystem/go-grpc-middleware v1.3.0
