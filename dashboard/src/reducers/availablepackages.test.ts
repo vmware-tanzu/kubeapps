@@ -1,7 +1,11 @@
 // Copyright 2021-2022 the Kubeapps contributors.
 // SPDX-License-Identifier: Apache-2.0
 
-import { AvailablePackageSummary, Context } from "gen/kubeappsapis/core/packages/v1alpha1/packages";
+import {
+  AvailablePackageDetail,
+  AvailablePackageSummary,
+  Context,
+} from "gen/kubeappsapis/core/packages/v1alpha1/packages";
 import { Plugin } from "gen/kubeappsapis/core/plugins/v1alpha1/plugins";
 import { getType } from "typesafe-actions";
 import actions from "../actions";
@@ -496,6 +500,58 @@ describe("packageReducer", () => {
     });
     expect(state).toEqual({
       ...initialState,
+    });
+  });
+
+  describe("receiveSelectedAvailablePackageDetail", () => {
+    const packageDetail = {
+      name: "test-package",
+      defaultValues: "default: values",
+      valuesSchema: "",
+    } as AvailablePackageDetail;
+
+    it("uses the package default values by default", () => {
+      const state = packageReducer(initialState, {
+        type: getType(actions.availablepackages.receiveSelectedAvailablePackageDetail) as any,
+        payload: {
+          selectedPackage: packageDetail,
+        },
+      });
+
+      expect(state.selected.values).toEqual("default: values");
+    });
+
+    it("uses the package custom default values if only one custom default values", () => {
+      const state = packageReducer(initialState, {
+        type: getType(actions.availablepackages.receiveSelectedAvailablePackageDetail) as any,
+        payload: {
+          selectedPackage: {
+            ...packageDetail,
+            additionalDefaultValues: {
+              "values-custom": "custom: values",
+            },
+          } as AvailablePackageDetail,
+        },
+      });
+
+      expect(state.selected.values).toEqual("custom: values");
+    });
+
+    it("uses the package default values if more than one custom default values present", () => {
+      const state = packageReducer(initialState, {
+        type: getType(actions.availablepackages.receiveSelectedAvailablePackageDetail) as any,
+        payload: {
+          selectedPackage: {
+            ...packageDetail,
+            additionalDefaultValues: {
+              "values-custom": "custom: values",
+              "values-other": "more: customdefaultvalues",
+            },
+          } as AvailablePackageDetail,
+        },
+      });
+
+      expect(state.selected.values).toEqual("default: values");
     });
   });
 });

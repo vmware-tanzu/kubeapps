@@ -21,7 +21,7 @@ import * as ReactRouter from "react-router";
 import { MemoryRouter, Route, Router } from "react-router-dom";
 import { Kube } from "shared/Kube";
 import { getStore, mountWrapper } from "shared/specs/mountWrapper";
-import { FetchError, IStoreState, IPackageState, PluginNames } from "shared/types";
+import { FetchError, IStoreState, PluginNames } from "shared/types";
 import DeploymentForm from "./DeploymentForm";
 import DeploymentFormBody from "./DeploymentFormBody";
 
@@ -47,7 +47,7 @@ const defaultSelectedPkg = {
     defaultValues: "package: defaults",
   } as AvailablePackageDetail,
   pkgVersion: "1.2.4",
-  values: "not: used",
+  values: "package: defaults",
 };
 
 const routePathParam = `/c/${defaultProps.cluster}/ns/${defaultProps.namespace}/apps/new/${defaultProps.plugin.name}/${defaultProps.plugin.version}/${defaultProps.packageCluster}/${defaultProps.packageNamespace}/${defaultProps.pkgName}/versions/${defaultProps.version}`;
@@ -130,7 +130,7 @@ it("fetches the available versions", () => {
 });
 
 describe("default values", () => {
-  it("uses the available package detail default values", () => {
+  it("uses the selected package default values", () => {
     const wrapper = mountWrapper(
       getStore({ packages: { selected: defaultSelectedPkg } } as IStoreState),
       <Router history={history}>
@@ -141,31 +141,6 @@ describe("default values", () => {
     );
 
     expect(wrapper.find(DeploymentFormBody).prop("appValues")).toBe("package: defaults");
-  });
-
-  it("uses a custom default values file if there is only one", () => {
-    const wrapper = mountWrapper(
-      getStore({
-        packages: {
-          selected: {
-            ...defaultSelectedPkg,
-            availablePackageDetail: {
-              ...defaultSelectedPkg.availablePackageDetail,
-              additionalDefaultValues: {
-                "values-custom": "custom: defaults",
-              },
-            },
-          },
-        } as Partial<IPackageState>,
-      } as Partial<IStoreState>),
-      <Router history={history}>
-        <Route path={routePath}>
-          <DeploymentForm />
-        </Route>
-      </Router>,
-    );
-
-    expect(wrapper.find(DeploymentFormBody).prop("appValues")).toBe("custom: defaults");
   });
 });
 
