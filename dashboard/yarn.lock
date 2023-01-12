@@ -5583,12 +5583,12 @@ eslint-plugin-react@^7.27.1:
     semver "^6.3.0"
     string.prototype.matchall "^4.0.8"
 
-eslint-plugin-redos@^4.4.1:
-  version "4.4.1"
-  resolved "https://registry.yarnpkg.com/eslint-plugin-redos/-/eslint-plugin-redos-4.4.1.tgz#dfa0260d6fb1412fe22c989fb6ed31253897e2bc"
-  integrity sha512-vbnexgMCEzwuU0zHfG5i/R2+Y13rDUEGAjIcLeS8aIhIEXVQ2g9WxiUGAAgcjLJeSvqsaf2NNctgPwAaagqw/w==
+eslint-plugin-redos@^4.4.2:
+  version "4.4.2"
+  resolved "https://registry.yarnpkg.com/eslint-plugin-redos/-/eslint-plugin-redos-4.4.2.tgz#616d832dbb4c4aeaaf99dbc2cf39c19eca7550db"
+  integrity sha512-Dh2s8/lTHgaz/24Qipm1QRBCBwG6/jVOctSjr4gz5Q4MHbD3/PiqNkdvLEzvbKJ/S/VX6fQI2WjUg7IsLJA4eA==
   dependencies:
-    recheck "4.4.1"
+    recheck "4.4.2"
 
 eslint-plugin-testing-library@^5.0.1:
   version "5.9.1"
@@ -11450,35 +11450,35 @@ realpath-native@^1.1.0:
   dependencies:
     util.promisify "^1.0.0"
 
-recheck-jar@4.4.1:
-  version "4.4.1"
-  resolved "https://registry.yarnpkg.com/recheck-jar/-/recheck-jar-4.4.1.tgz#a16edf25e0e8c873f7b4a39de282624b2126a62b"
-  integrity sha512-lKMkdT+EFkmcxW3suJZP5YiieAIkI47wWxR17X1nQjiJ8zUl5Uml56wdHy5duVEVQt0kh2RmOU3SkaBQte5wfA==
+recheck-jar@4.4.2:
+  version "4.4.2"
+  resolved "https://registry.yarnpkg.com/recheck-jar/-/recheck-jar-4.4.2.tgz#9d758fbdf0766c3b66d164272b8eeb658acb4d91"
+  integrity sha512-RmlG75x6Fwxk8sKX1E5Rd/5UeBFVB2dZQGzcdMjhYcA7xdpFLaw4Ha3Nc8Bbn5THbFE+58iX+VSMTCofJ8J+ng==
 
-recheck-linux-x64@4.4.1:
-  version "4.4.1"
-  resolved "https://registry.yarnpkg.com/recheck-linux-x64/-/recheck-linux-x64-4.4.1.tgz#09fbd581de114f67ebc19e4f2cb3cb3540de8923"
-  integrity sha512-7FIHeCemRqfUXy/A/+VQkhh8A6Bjwx1M41LZjCWjEF0B+kT5tRwOJDfY2099AEJ1uOVEFKutMtlgQ9boS/udDQ==
+recheck-linux-x64@4.4.2:
+  version "4.4.2"
+  resolved "https://registry.yarnpkg.com/recheck-linux-x64/-/recheck-linux-x64-4.4.2.tgz#872065722f99d90ebb653cd78451525f8f8be86c"
+  integrity sha512-U/1NhC+NTYEdkxez01gAqlJ3nAcbQq97S9cVRu3+kBQihFAUZwuQlua0jm/TdIpmcOiKzA7I3S08Pqs5GjIjpQ==
 
-recheck-macos-x64@4.4.1:
-  version "4.4.1"
-  resolved "https://registry.yarnpkg.com/recheck-macos-x64/-/recheck-macos-x64-4.4.1.tgz#c47fb564588c340d35584f2371408f898dde05c2"
-  integrity sha512-F5XfSB18D4DlT/VjjbBWfsCZP82IIavJTTfTfCCDh4n5wDeis+TIj1IdEnT6IUekZ3opvKHGBpUasc31ulkoDg==
+recheck-macos-x64@4.4.2:
+  version "4.4.2"
+  resolved "https://registry.yarnpkg.com/recheck-macos-x64/-/recheck-macos-x64-4.4.2.tgz#6bc29b37f80cbb08f798119a9522b34bcb7de7b4"
+  integrity sha512-ouO1OhS1rZFwYUDC5Q+NDS9vDQYGOPuEUBj4eFYfBtVs9HF30uQTgfneIbAGpVOonMkhvTPzpaz11J0x3lCNDw==
 
-recheck-windows-x64@4.4.1:
-  version "4.4.1"
-  resolved "https://registry.yarnpkg.com/recheck-windows-x64/-/recheck-windows-x64-4.4.1.tgz#4d89834658bdc71a6c6d1d1b0b48612125d5b528"
-  integrity sha512-pAONuC429u7tDDN2sJG93HSx6bkzVqGEA9i6XnwmzDE/FPe5rInOuj9isWuYTKBJCG0/jug63hE/5Xb7aoCBwg==
+recheck-windows-x64@4.4.2:
+  version "4.4.2"
+  resolved "https://registry.yarnpkg.com/recheck-windows-x64/-/recheck-windows-x64-4.4.2.tgz#5ba0200037c73a21a525e227745bf88c9103e7fd"
+  integrity sha512-8qztWxeGGMtQILx8m2ggpkxjg1VOojCNd+ArhXVgJjhsx1tjImY3NiFMccajmPKhQYDg9m80Ao3PQYzqEKT/mQ==
 
-recheck@4.4.1:
-  version "4.4.1"
-  resolved "https://registry.yarnpkg.com/recheck/-/recheck-4.4.1.tgz#bd5b5f34704906f5e12ef2778d19aabd4cbe633e"
-  integrity sha512-v/G4Iy9IpPUzuBvSllRffhKpPnxAbAGXT/mwaiNkV6Xz9oGAgw3b/AoHUEIgC9v2djz7JTNiCr5NajxN+mf/IA==
+recheck@4.4.2:
+  version "4.4.2"
+  resolved "https://registry.yarnpkg.com/recheck/-/recheck-4.4.2.tgz#8f3cb94c874fc3d99956e84f4fb3ba3cbffbddb8"
+  integrity sha512-BepDoP4G7Vn67SeWrndfAm6iRbKwWd0actNOjT0ki2M6U0JUmsFfdBxSArw67bSRu/RHvMYu2NEQwGgvRzs61g==
   optionalDependencies:
-    recheck-jar "4.4.1"
-    recheck-linux-x64 "4.4.1"
-    recheck-macos-x64 "4.4.1"
-    recheck-windows-x64 "4.4.1"
+    recheck-jar "4.4.2"
+    recheck-linux-x64 "4.4.2"
+    recheck-macos-x64 "4.4.2"
+    recheck-windows-x64 "4.4.2"
 
 rechoir@^0.6.2:
   version "0.6.2"
