@@ -140,7 +140,7 @@ const actions = [
   errorSubscriptionList,
 ];
 
-export type OperatorAction = ActionType<typeof actions[number]>;
+export type OperatorAction = ActionType<(typeof actions)[number]>;
 
 export function checkOLMInstalled(
   cluster: string,

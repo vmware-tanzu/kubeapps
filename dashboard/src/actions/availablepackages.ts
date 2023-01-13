@@ -98,7 +98,7 @@ const allActions = [
   clearErrorPackage,
 ];
 
-export type PackagesAction = ActionType<typeof allActions[number]>;
+export type PackagesAction = ActionType<(typeof allActions)[number]>;
 
 export function fetchAvailablePackageSummaries(
   cluster: string,
