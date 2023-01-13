@@ -104,7 +104,7 @@ installChartMuseum() {
     --set persistence.enabled=true \
     --set env.secret.BASIC_AUTH_USER=$CHARTMUSEUM_USER \
     --set env.secret.BASIC_AUTH_PASS=$CHARTMUSEUM_PWD
-  info "Waiting for ChartMuseum to be ready..."
+  echo "Waiting for ChartMuseum to be ready..."
   kubectl rollout status -w deployment/chartmuseum --namespace="${CHARTMUSEUM_NS}"
 
   echo "Installing Ingress for ChartMuseum with access through host ${CHARTMUSEUM_HOSTNAME}"
