@@ -33,7 +33,7 @@
     "@clr/ui": "^13.11.0",
     "@improbable-eng/grpc-web": "^0.15.0",
     "@paciolan/remote-component": "^2.12.1",
-    "@tanstack/match-sorter-utils": "^8.7.2",
+    "@tanstack/match-sorter-utils": "^8.7.6",
     "@tanstack/react-table": "^8.7.6",
     "@types/react": "^17.0.39",
     "ajv": "^8.12.0",
