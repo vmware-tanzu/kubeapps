@@ -26,7 +26,7 @@ env:
   BRANCH_CHARTS_REPO_FORKED: "main"
   CI_BOT_USERNAME: "kubeapps-bot"
   CI_BOT_EMAIL: "tanzu-kubeapps-team@vmware.com"
-  CI_BOT_GPG: "80B6EB16B1328FB18DFF2A073EBA68F3347E319D"
+  CI_BOT_GPG: "3BC1973CE3AC2BD2B5A2E7D06A7635AE8F48F448"
   # DEBUG_MODE allows to activate some SSH debugging steps, and modify the verbosity level of some scripts (eg. e2e-tests.sh)
   DEBUG_MODE: "false"
   SSH_KEY_KUBEAPPS_DEPLOY_FILENAME: "id_rsa_kubeapps_deploy_key"
