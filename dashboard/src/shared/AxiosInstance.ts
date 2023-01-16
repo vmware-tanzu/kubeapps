@@ -1,7 +1,13 @@
 // Copyright 2018-2022 the Kubeapps contributors.
 // SPDX-License-Identifier: Apache-2.0
 
-import Axios, { AxiosError, AxiosInstance, AxiosRequestConfig, AxiosResponse } from "axios";
+import Axios, {
+  AxiosError,
+  AxiosInstance,
+  AxiosRequestConfig,
+  AxiosRequestHeaders,
+  AxiosResponse,
+} from "axios";
 import { Action, Store } from "redux";
 import { ThunkDispatch } from "redux-thunk";
 import actions from "../actions";
@@ -21,7 +27,7 @@ export function addAuthHeaders(axiosInstance: AxiosInstance) {
   axiosInstance.interceptors.request.use((config: AxiosRequestConfig) => {
     const authToken = Auth.getAuthToken();
     if (authToken && config?.headers) {
-      config.headers.Authorization = `Bearer ${authToken}`;
+      (config.headers as AxiosRequestHeaders).Authorization = `Bearer ${authToken}`;
     }
     return config;
   });
