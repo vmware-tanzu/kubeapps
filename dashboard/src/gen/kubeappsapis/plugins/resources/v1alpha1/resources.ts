@@ -445,6 +445,10 @@ export const GetResourcesRequest = {
     return obj;
   },
 
+  create<I extends Exact<DeepPartial<GetResourcesRequest>, I>>(base?: I): GetResourcesRequest {
+    return GetResourcesRequest.fromPartial(base ?? {});
+  },
+
   fromPartial<I extends Exact<DeepPartial<GetResourcesRequest>, I>>(
     object: I,
   ): GetResourcesRequest {
@@ -510,6 +514,10 @@ export const GetResourcesResponse = {
     return obj;
   },
 
+  create<I extends Exact<DeepPartial<GetResourcesResponse>, I>>(base?: I): GetResourcesResponse {
+    return GetResourcesResponse.fromPartial(base ?? {});
+  },
+
   fromPartial<I extends Exact<DeepPartial<GetResourcesResponse>, I>>(
     object: I,
   ): GetResourcesResponse {
@@ -565,6 +573,12 @@ export const GetServiceAccountNamesRequest = {
     message.context !== undefined &&
       (obj.context = message.context ? Context.toJSON(message.context) : undefined);
     return obj;
+  },
+
+  create<I extends Exact<DeepPartial<GetServiceAccountNamesRequest>, I>>(
+    base?: I,
+  ): GetServiceAccountNamesRequest {
+    return GetServiceAccountNamesRequest.fromPartial(base ?? {});
   },
 
   fromPartial<I extends Exact<DeepPartial<GetServiceAccountNamesRequest>, I>>(
@@ -630,6 +644,12 @@ export const GetServiceAccountNamesResponse = {
     return obj;
   },
 
+  create<I extends Exact<DeepPartial<GetServiceAccountNamesResponse>, I>>(
+    base?: I,
+  ): GetServiceAccountNamesResponse {
+    return GetServiceAccountNamesResponse.fromPartial(base ?? {});
+  },
+
   fromPartial<I extends Exact<DeepPartial<GetServiceAccountNamesResponse>, I>>(
     object: I,
   ): GetServiceAccountNamesResponse {
@@ -677,6 +697,12 @@ export const GetNamespaceNamesRequest = {
     const obj: any = {};
     message.cluster !== undefined && (obj.cluster = message.cluster);
     return obj;
+  },
+
+  create<I extends Exact<DeepPartial<GetNamespaceNamesRequest>, I>>(
+    base?: I,
+  ): GetNamespaceNamesRequest {
+    return GetNamespaceNamesRequest.fromPartial(base ?? {});
   },
 
   fromPartial<I extends Exact<DeepPartial<GetNamespaceNamesRequest>, I>>(
@@ -734,6 +760,12 @@ export const GetNamespaceNamesResponse = {
       obj.namespaceNames = [];
     }
     return obj;
+  },
+
+  create<I extends Exact<DeepPartial<GetNamespaceNamesResponse>, I>>(
+    base?: I,
+  ): GetNamespaceNamesResponse {
+    return GetNamespaceNamesResponse.fromPartial(base ?? {});
   },
 
   fromPartial<I extends Exact<DeepPartial<GetNamespaceNamesResponse>, I>>(
@@ -812,6 +844,12 @@ export const CreateNamespaceRequest = {
     return obj;
   },
 
+  create<I extends Exact<DeepPartial<CreateNamespaceRequest>, I>>(
+    base?: I,
+  ): CreateNamespaceRequest {
+    return CreateNamespaceRequest.fromPartial(base ?? {});
+  },
+
   fromPartial<I extends Exact<DeepPartial<CreateNamespaceRequest>, I>>(
     object: I,
   ): CreateNamespaceRequest {
@@ -886,6 +924,12 @@ export const CreateNamespaceRequest_LabelsEntry = {
     return obj;
   },
 
+  create<I extends Exact<DeepPartial<CreateNamespaceRequest_LabelsEntry>, I>>(
+    base?: I,
+  ): CreateNamespaceRequest_LabelsEntry {
+    return CreateNamespaceRequest_LabelsEntry.fromPartial(base ?? {});
+  },
+
   fromPartial<I extends Exact<DeepPartial<CreateNamespaceRequest_LabelsEntry>, I>>(
     object: I,
   ): CreateNamespaceRequest_LabelsEntry {
@@ -927,6 +971,12 @@ export const CreateNamespaceResponse = {
   toJSON(_: CreateNamespaceResponse): unknown {
     const obj: any = {};
     return obj;
+  },
+
+  create<I extends Exact<DeepPartial<CreateNamespaceResponse>, I>>(
+    base?: I,
+  ): CreateNamespaceResponse {
+    return CreateNamespaceResponse.fromPartial(base ?? {});
   },
 
   fromPartial<I extends Exact<DeepPartial<CreateNamespaceResponse>, I>>(
@@ -979,6 +1029,12 @@ export const CheckNamespaceExistsRequest = {
     message.context !== undefined &&
       (obj.context = message.context ? Context.toJSON(message.context) : undefined);
     return obj;
+  },
+
+  create<I extends Exact<DeepPartial<CheckNamespaceExistsRequest>, I>>(
+    base?: I,
+  ): CheckNamespaceExistsRequest {
+    return CheckNamespaceExistsRequest.fromPartial(base ?? {});
   },
 
   fromPartial<I extends Exact<DeepPartial<CheckNamespaceExistsRequest>, I>>(
@@ -1034,6 +1090,12 @@ export const CheckNamespaceExistsResponse = {
     const obj: any = {};
     message.exists !== undefined && (obj.exists = message.exists);
     return obj;
+  },
+
+  create<I extends Exact<DeepPartial<CheckNamespaceExistsResponse>, I>>(
+    base?: I,
+  ): CheckNamespaceExistsResponse {
+    return CheckNamespaceExistsResponse.fromPartial(base ?? {});
   },
 
   fromPartial<I extends Exact<DeepPartial<CheckNamespaceExistsResponse>, I>>(
@@ -1131,6 +1193,10 @@ export const CreateSecretRequest = {
     return obj;
   },
 
+  create<I extends Exact<DeepPartial<CreateSecretRequest>, I>>(base?: I): CreateSecretRequest {
+    return CreateSecretRequest.fromPartial(base ?? {});
+  },
+
   fromPartial<I extends Exact<DeepPartial<CreateSecretRequest>, I>>(
     object: I,
   ): CreateSecretRequest {
@@ -1207,6 +1273,12 @@ export const CreateSecretRequest_StringDataEntry = {
     return obj;
   },
 
+  create<I extends Exact<DeepPartial<CreateSecretRequest_StringDataEntry>, I>>(
+    base?: I,
+  ): CreateSecretRequest_StringDataEntry {
+    return CreateSecretRequest_StringDataEntry.fromPartial(base ?? {});
+  },
+
   fromPartial<I extends Exact<DeepPartial<CreateSecretRequest_StringDataEntry>, I>>(
     object: I,
   ): CreateSecretRequest_StringDataEntry {
@@ -1248,6 +1320,10 @@ export const CreateSecretResponse = {
   toJSON(_: CreateSecretResponse): unknown {
     const obj: any = {};
     return obj;
+  },
+
+  create<I extends Exact<DeepPartial<CreateSecretResponse>, I>>(base?: I): CreateSecretResponse {
+    return CreateSecretResponse.fromPartial(base ?? {});
   },
 
   fromPartial<I extends Exact<DeepPartial<CreateSecretResponse>, I>>(_: I): CreateSecretResponse {
@@ -1295,6 +1371,10 @@ export const GetSecretNamesRequest = {
     message.context !== undefined &&
       (obj.context = message.context ? Context.toJSON(message.context) : undefined);
     return obj;
+  },
+
+  create<I extends Exact<DeepPartial<GetSecretNamesRequest>, I>>(base?: I): GetSecretNamesRequest {
+    return GetSecretNamesRequest.fromPartial(base ?? {});
   },
 
   fromPartial<I extends Exact<DeepPartial<GetSecretNamesRequest>, I>>(
@@ -1370,6 +1450,12 @@ export const GetSecretNamesResponse = {
     return obj;
   },
 
+  create<I extends Exact<DeepPartial<GetSecretNamesResponse>, I>>(
+    base?: I,
+  ): GetSecretNamesResponse {
+    return GetSecretNamesResponse.fromPartial(base ?? {});
+  },
+
   fromPartial<I extends Exact<DeepPartial<GetSecretNamesResponse>, I>>(
     object: I,
   ): GetSecretNamesResponse {
@@ -1437,6 +1523,12 @@ export const GetSecretNamesResponse_SecretNamesEntry = {
     message.key !== undefined && (obj.key = message.key);
     message.value !== undefined && (obj.value = secretTypeToJSON(message.value));
     return obj;
+  },
+
+  create<I extends Exact<DeepPartial<GetSecretNamesResponse_SecretNamesEntry>, I>>(
+    base?: I,
+  ): GetSecretNamesResponse_SecretNamesEntry {
+    return GetSecretNamesResponse_SecretNamesEntry.fromPartial(base ?? {});
   },
 
   fromPartial<I extends Exact<DeepPartial<GetSecretNamesResponse_SecretNamesEntry>, I>>(
@@ -1516,6 +1608,10 @@ export const CanIRequest = {
     return obj;
   },
 
+  create<I extends Exact<DeepPartial<CanIRequest>, I>>(base?: I): CanIRequest {
+    return CanIRequest.fromPartial(base ?? {});
+  },
+
   fromPartial<I extends Exact<DeepPartial<CanIRequest>, I>>(object: I): CanIRequest {
     const message = createBaseCanIRequest();
     message.context =
@@ -1567,6 +1663,10 @@ export const CanIResponse = {
     const obj: any = {};
     message.allowed !== undefined && (obj.allowed = message.allowed);
     return obj;
+  },
+
+  create<I extends Exact<DeepPartial<CanIResponse>, I>>(base?: I): CanIResponse {
+    return CanIResponse.fromPartial(base ?? {});
   },
 
   fromPartial<I extends Exact<DeepPartial<CanIResponse>, I>>(object: I): CanIResponse {
@@ -1727,10 +1827,11 @@ export const ResourcesServiceGetResourcesDesc: UnaryMethodDefinitionish = {
   } as any,
   responseType: {
     deserializeBinary(data: Uint8Array) {
+      const value = GetResourcesResponse.decode(data);
       return {
-        ...GetResourcesResponse.decode(data),
+        ...value,
         toObject() {
-          return this;
+          return value;
         },
       };
     },
@@ -1749,10 +1850,11 @@ export const ResourcesServiceGetServiceAccountNamesDesc: UnaryMethodDefinitionis
   } as any,
   responseType: {
     deserializeBinary(data: Uint8Array) {
+      const value = GetServiceAccountNamesResponse.decode(data);
       return {
-        ...GetServiceAccountNamesResponse.decode(data),
+        ...value,
         toObject() {
-          return this;
+          return value;
         },
       };
     },
@@ -1771,10 +1873,11 @@ export const ResourcesServiceGetNamespaceNamesDesc: UnaryMethodDefinitionish = {
   } as any,
   responseType: {
     deserializeBinary(data: Uint8Array) {
+      const value = GetNamespaceNamesResponse.decode(data);
       return {
-        ...GetNamespaceNamesResponse.decode(data),
+        ...value,
         toObject() {
-          return this;
+          return value;
         },
       };
     },
@@ -1793,10 +1896,11 @@ export const ResourcesServiceCreateNamespaceDesc: UnaryMethodDefinitionish = {
   } as any,
   responseType: {
     deserializeBinary(data: Uint8Array) {
+      const value = CreateNamespaceResponse.decode(data);
       return {
-        ...CreateNamespaceResponse.decode(data),
+        ...value,
         toObject() {
-          return this;
+          return value;
         },
       };
     },
@@ -1815,10 +1919,11 @@ export const ResourcesServiceCheckNamespaceExistsDesc: UnaryMethodDefinitionish 
   } as any,
   responseType: {
     deserializeBinary(data: Uint8Array) {
+      const value = CheckNamespaceExistsResponse.decode(data);
       return {
-        ...CheckNamespaceExistsResponse.decode(data),
+        ...value,
         toObject() {
-          return this;
+          return value;
         },
       };
     },
@@ -1837,10 +1942,11 @@ export const ResourcesServiceGetSecretNamesDesc: UnaryMethodDefinitionish = {
   } as any,
   responseType: {
     deserializeBinary(data: Uint8Array) {
+      const value = GetSecretNamesResponse.decode(data);
       return {
-        ...GetSecretNamesResponse.decode(data),
+        ...value,
         toObject() {
-          return this;
+          return value;
         },
       };
     },
@@ -1859,10 +1965,11 @@ export const ResourcesServiceCreateSecretDesc: UnaryMethodDefinitionish = {
   } as any,
   responseType: {
     deserializeBinary(data: Uint8Array) {
+      const value = CreateSecretResponse.decode(data);
       return {
-        ...CreateSecretResponse.decode(data),
+        ...value,
         toObject() {
-          return this;
+          return value;
         },
       };
     },
@@ -1881,10 +1988,11 @@ export const ResourcesServiceCanIDesc: UnaryMethodDefinitionish = {
   } as any,
   responseType: {
     deserializeBinary(data: Uint8Array) {
+      const value = CanIResponse.decode(data);
       return {
-        ...CanIResponse.decode(data),
+        ...value,
         toObject() {
-          return this;
+          return value;
         },
       };
     },
@@ -1954,7 +2062,7 @@ export class GrpcWebImpl {
         debug: this.options.debug,
         onEnd: function (response) {
           if (response.status === grpc.Code.OK) {
-            resolve(response.message);
+            resolve(response.message!.toObject());
           } else {
             const err = new GrpcWebError(
               response.statusMessage,
@@ -2009,6 +2117,25 @@ export class GrpcWebImpl {
   }
 }
 
+declare var self: any | undefined;
+declare var window: any | undefined;
+declare var global: any | undefined;
+var tsProtoGlobalThis: any = (() => {
+  if (typeof globalThis !== "undefined") {
+    return globalThis;
+  }
+  if (typeof self !== "undefined") {
+    return self;
+  }
+  if (typeof window !== "undefined") {
+    return window;
+  }
+  if (typeof global !== "undefined") {
+    return global;
+  }
+  throw "Unable to locate global object";
+})();
+
 type Builtin = Date | Function | Uint8Array | string | number | boolean | undefined;
 
 export type DeepPartial<T> = T extends Builtin
@@ -2034,7 +2161,7 @@ function isSet(value: any): boolean {
   return value !== null && value !== undefined;
 }
 
-export class GrpcWebError extends Error {
+export class GrpcWebError extends tsProtoGlobalThis.Error {
   constructor(message: string, public code: grpc.Code, public metadata: grpc.Metadata) {
     super(message);
   }

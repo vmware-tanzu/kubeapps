@@ -307,15 +307,15 @@ export interface HttpRule {
    * Maps to HTTP GET. Used for listing and getting information about
    * resources.
    */
-  get: string | undefined;
+  get?: string | undefined;
   /** Maps to HTTP PUT. Used for replacing a resource. */
-  put: string | undefined;
+  put?: string | undefined;
   /** Maps to HTTP POST. Used for creating a resource or performing an action. */
-  post: string | undefined;
+  post?: string | undefined;
   /** Maps to HTTP DELETE. Used for deleting a resource. */
-  delete: string | undefined;
+  delete?: string | undefined;
   /** Maps to HTTP PATCH. Used for updating a resource. */
-  patch: string | undefined;
+  patch?: string | undefined;
   /**
    * The custom pattern is used for specifying an HTTP method that is not
    * included in the `pattern` field, such as HEAD, or "*" to leave the
@@ -412,6 +412,10 @@ export const Http = {
     message.fullyDecodeReservedExpansion !== undefined &&
       (obj.fullyDecodeReservedExpansion = message.fullyDecodeReservedExpansion);
     return obj;
+  },
+
+  create<I extends Exact<DeepPartial<Http>, I>>(base?: I): Http {
+    return Http.fromPartial(base ?? {});
   },
 
   fromPartial<I extends Exact<DeepPartial<Http>, I>>(object: I): Http {
@@ -556,6 +560,10 @@ export const HttpRule = {
     return obj;
   },
 
+  create<I extends Exact<DeepPartial<HttpRule>, I>>(base?: I): HttpRule {
+    return HttpRule.fromPartial(base ?? {});
+  },
+
   fromPartial<I extends Exact<DeepPartial<HttpRule>, I>>(object: I): HttpRule {
     const message = createBaseHttpRule();
     message.selector = object.selector ?? "";
@@ -623,6 +631,10 @@ export const CustomHttpPattern = {
     message.kind !== undefined && (obj.kind = message.kind);
     message.path !== undefined && (obj.path = message.path);
     return obj;
+  },
+
+  create<I extends Exact<DeepPartial<CustomHttpPattern>, I>>(base?: I): CustomHttpPattern {
+    return CustomHttpPattern.fromPartial(base ?? {});
   },
 
   fromPartial<I extends Exact<DeepPartial<CustomHttpPattern>, I>>(object: I): CustomHttpPattern {

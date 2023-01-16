@@ -79,6 +79,12 @@ export const GetConfiguredPluginsRequest = {
     return obj;
   },
 
+  create<I extends Exact<DeepPartial<GetConfiguredPluginsRequest>, I>>(
+    base?: I,
+  ): GetConfiguredPluginsRequest {
+    return GetConfiguredPluginsRequest.fromPartial(base ?? {});
+  },
+
   fromPartial<I extends Exact<DeepPartial<GetConfiguredPluginsRequest>, I>>(
     _: I,
   ): GetConfiguredPluginsRequest {
@@ -136,6 +142,12 @@ export const GetConfiguredPluginsResponse = {
       obj.plugins = [];
     }
     return obj;
+  },
+
+  create<I extends Exact<DeepPartial<GetConfiguredPluginsResponse>, I>>(
+    base?: I,
+  ): GetConfiguredPluginsResponse {
+    return GetConfiguredPluginsResponse.fromPartial(base ?? {});
   },
 
   fromPartial<I extends Exact<DeepPartial<GetConfiguredPluginsResponse>, I>>(
@@ -197,6 +209,10 @@ export const Plugin = {
     return obj;
   },
 
+  create<I extends Exact<DeepPartial<Plugin>, I>>(base?: I): Plugin {
+    return Plugin.fromPartial(base ?? {});
+  },
+
   fromPartial<I extends Exact<DeepPartial<Plugin>, I>>(object: I): Plugin {
     const message = createBasePlugin();
     message.name = object.name ?? "";
@@ -249,10 +265,11 @@ export const PluginsServiceGetConfiguredPluginsDesc: UnaryMethodDefinitionish = 
   } as any,
   responseType: {
     deserializeBinary(data: Uint8Array) {
+      const value = GetConfiguredPluginsResponse.decode(data);
       return {
-        ...GetConfiguredPluginsResponse.decode(data),
+        ...value,
         toObject() {
-          return this;
+          return value;
         },
       };
     },
@@ -317,7 +334,7 @@ export class GrpcWebImpl {
         debug: this.options.debug,
         onEnd: function (response) {
           if (response.status === grpc.Code.OK) {
-            resolve(response.message);
+            resolve(response.message!.toObject());
           } else {
             const err = new GrpcWebError(
               response.statusMessage,
@@ -331,6 +348,25 @@ export class GrpcWebImpl {
     });
   }
 }
+
+declare var self: any | undefined;
+declare var window: any | undefined;
+declare var global: any | undefined;
+var tsProtoGlobalThis: any = (() => {
+  if (typeof globalThis !== "undefined") {
+    return globalThis;
+  }
+  if (typeof self !== "undefined") {
+    return self;
+  }
+  if (typeof window !== "undefined") {
+    return window;
+  }
+  if (typeof global !== "undefined") {
+    return global;
+  }
+  throw "Unable to locate global object";
+})();
 
 type Builtin = Date | Function | Uint8Array | string | number | boolean | undefined;
 
@@ -353,7 +389,7 @@ function isSet(value: any): boolean {
   return value !== null && value !== undefined;
 }
 
-export class GrpcWebError extends Error {
+export class GrpcWebError extends tsProtoGlobalThis.Error {
   constructor(message: string, public code: grpc.Code, public metadata: grpc.Metadata) {
     super(message);
   }

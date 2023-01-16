@@ -67,13 +67,13 @@ export interface Struct_FieldsEntry {
  */
 export interface Value {
   /** Represents a null value. */
-  nullValue: NullValue | undefined;
+  nullValue?: NullValue | undefined;
   /** Represents a double value. */
-  numberValue: number | undefined;
+  numberValue?: number | undefined;
   /** Represents a string value. */
-  stringValue: string | undefined;
+  stringValue?: string | undefined;
   /** Represents a boolean value. */
-  boolValue: boolean | undefined;
+  boolValue?: boolean | undefined;
   /** Represents a structured value. */
   structValue?: { [key: string]: any };
   /** Represents a repeated `Value`. */
@@ -145,6 +145,10 @@ export const Struct = {
       });
     }
     return obj;
+  },
+
+  create<I extends Exact<DeepPartial<Struct>, I>>(base?: I): Struct {
+    return Struct.fromPartial(base ?? {});
   },
 
   fromPartial<I extends Exact<DeepPartial<Struct>, I>>(object: I): Struct {
@@ -228,6 +232,10 @@ export const Struct_FieldsEntry = {
     message.key !== undefined && (obj.key = message.key);
     message.value !== undefined && (obj.value = message.value);
     return obj;
+  },
+
+  create<I extends Exact<DeepPartial<Struct_FieldsEntry>, I>>(base?: I): Struct_FieldsEntry {
+    return Struct_FieldsEntry.fromPartial(base ?? {});
   },
 
   fromPartial<I extends Exact<DeepPartial<Struct_FieldsEntry>, I>>(object: I): Struct_FieldsEntry {
@@ -329,6 +337,10 @@ export const Value = {
     return obj;
   },
 
+  create<I extends Exact<DeepPartial<Value>, I>>(base?: I): Value {
+    return Value.fromPartial(base ?? {});
+  },
+
   fromPartial<I extends Exact<DeepPartial<Value>, I>>(object: I): Value {
     const message = createBaseValue();
     message.nullValue = object.nullValue ?? undefined;
@@ -422,6 +434,10 @@ export const ListValue = {
       obj.values = [];
     }
     return obj;
+  },
+
+  create<I extends Exact<DeepPartial<ListValue>, I>>(base?: I): ListValue {
+    return ListValue.fromPartial(base ?? {});
   },
 
   fromPartial<I extends Exact<DeepPartial<ListValue>, I>>(object: I): ListValue {
