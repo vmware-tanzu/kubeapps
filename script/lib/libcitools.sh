@@ -76,6 +76,7 @@ function installGPGKey() {
   gpg --import /tmp/public.key
   gpg --import --no-tty --batch --yes /tmp/private.key
 
+  info "Trusting the CI BOT GPG KEY ${CI_BOT_GPG}"
   # Trusting the imported GPG private key
   (echo 5; echo y; echo save) |  gpg --command-fd 0 --no-tty --no-greeting -q --edit-key "${CI_BOT_GPG}" trust
 
