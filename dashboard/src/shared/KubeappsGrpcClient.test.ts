@@ -71,11 +71,11 @@ describe("kubeapps grpc core plugin service", () => {
     await expect(getConfiguredPlugins).rejects.toThrowError("you shall not pass");
   });
 
-  it("it returns null when the server sends no messages", async () => {
+  it("it fails when the server sends no messages", async () => {
     const kubeappsGrpcClient = new KubeappsGrpcClient(fakeEmptyTransport);
     const getPluginsServiceClientImpl = kubeappsGrpcClient.getPluginsServiceClientImpl();
-    const res = await getPluginsServiceClientImpl.GetConfiguredPlugins({});
-    expect(res).toBeNull();
+    const getConfiguredPlugins = getPluginsServiceClientImpl.GetConfiguredPlugins({});
+    await expect(getConfiguredPlugins).rejects.toThrowError();
   });
 
   it("it set the metadata if using token auth", async () => {
@@ -97,7 +97,7 @@ describe("kubeapps grpc core plugin service", () => {
     expect(getClientMetadataMock.mock.results[0].value).toBeUndefined();
   });
 
-  // TODO(agamez): try to also mock the messages ussing the new FakeTransportBuilder().withMessages([])
+  // TODO(agamez): try to also mock the messages using the new FakeTransportBuilder().withMessages([])
   // More details: https://github.com/vmware-tanzu/kubeapps/issues/3165#issuecomment-882944035
 });
 
