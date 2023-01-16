@@ -49,7 +49,7 @@ const allActions = [
   postNamespace,
   setAllowCreate,
 ];
-export type NamespaceAction = ActionType<(typeof allActions)[number]>;
+export type NamespaceAction = ActionType<typeof allActions[number]>;
 
 export function fetchNamespaces(
   cluster: string,

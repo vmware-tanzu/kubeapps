@@ -71,7 +71,7 @@ const allActions = [
   receiveReposPermissions,
 ];
 
-export type PkgReposAction = ActionType<(typeof allActions)[number]>;
+export type PkgReposAction = ActionType<typeof allActions[number]>;
 
 // fetchRepos fetches the PackageRepositories in a specified namespace.
 export const fetchRepoSummaries = (

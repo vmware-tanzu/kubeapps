@@ -20,7 +20,7 @@ export const errorConfig = createAction("ERROR_CONFIG", resolve => {
 });
 
 const allActions = [requestConfig, receiveConfig, receiveTheme, errorConfig];
-export type ConfigAction = ActionType<(typeof allActions)[number]>;
+export type ConfigAction = ActionType<typeof allActions[number]>;
 
 export function getConfig(): ThunkAction<Promise<void>, IStoreState, null, ConfigAction> {
   return async dispatch => {

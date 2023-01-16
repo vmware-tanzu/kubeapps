@@ -105,7 +105,7 @@ const allActions = [
   selectInstalledPackage,
 ];
 
-export type InstalledPackagesAction = ActionType<(typeof allActions)[number]>;
+export type InstalledPackagesAction = ActionType<typeof allActions[number]>;
 
 export function getInstalledPackage(
   installedPackageRef?: InstalledPackageReference,
