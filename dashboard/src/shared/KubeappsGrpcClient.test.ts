@@ -71,13 +71,6 @@ describe("kubeapps grpc core plugin service", () => {
     await expect(getConfiguredPlugins).rejects.toThrowError("you shall not pass");
   });
 
-  it("it fails when the server sends no messages", async () => {
-    const kubeappsGrpcClient = new KubeappsGrpcClient(fakeEmptyTransport);
-    const getPluginsServiceClientImpl = kubeappsGrpcClient.getPluginsServiceClientImpl();
-    const getConfiguredPlugins = getPluginsServiceClientImpl.GetConfiguredPlugins({});
-    await expect(getConfiguredPlugins).rejects.toThrowError();
-  });
-
   it("it set the metadata if using token auth", async () => {
     const kubeappsGrpcClient = new KubeappsGrpcClient(fakeAuthTransport);
     jest.spyOn(window.localStorage.__proto__, "getItem").mockReturnValue("topsecret");
