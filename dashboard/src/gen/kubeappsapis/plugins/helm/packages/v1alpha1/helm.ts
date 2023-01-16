@@ -89,7 +89,7 @@ export interface RollbackInstalledPackageResponse {
 
 export interface ImagesPullSecret {
   /** docker credentials secret reference */
-  secretRef: string | undefined;
+  secretRef?: string | undefined;
   /** docker credentials data */
   credentials?: DockerCredentials | undefined;
 }
@@ -228,6 +228,12 @@ export const InstalledPackageDetailCustomDataHelm = {
     return obj;
   },
 
+  create<I extends Exact<DeepPartial<InstalledPackageDetailCustomDataHelm>, I>>(
+    base?: I,
+  ): InstalledPackageDetailCustomDataHelm {
+    return InstalledPackageDetailCustomDataHelm.fromPartial(base ?? {});
+  },
+
   fromPartial<I extends Exact<DeepPartial<InstalledPackageDetailCustomDataHelm>, I>>(
     object: I,
   ): InstalledPackageDetailCustomDataHelm {
@@ -299,6 +305,12 @@ export const RollbackInstalledPackageRequest = {
     return obj;
   },
 
+  create<I extends Exact<DeepPartial<RollbackInstalledPackageRequest>, I>>(
+    base?: I,
+  ): RollbackInstalledPackageRequest {
+    return RollbackInstalledPackageRequest.fromPartial(base ?? {});
+  },
+
   fromPartial<I extends Exact<DeepPartial<RollbackInstalledPackageRequest>, I>>(
     object: I,
   ): RollbackInstalledPackageRequest {
@@ -363,6 +375,12 @@ export const RollbackInstalledPackageResponse = {
         ? InstalledPackageReference.toJSON(message.installedPackageRef)
         : undefined);
     return obj;
+  },
+
+  create<I extends Exact<DeepPartial<RollbackInstalledPackageResponse>, I>>(
+    base?: I,
+  ): RollbackInstalledPackageResponse {
+    return RollbackInstalledPackageResponse.fromPartial(base ?? {});
   },
 
   fromPartial<I extends Exact<DeepPartial<RollbackInstalledPackageResponse>, I>>(
@@ -430,6 +448,10 @@ export const ImagesPullSecret = {
         ? DockerCredentials.toJSON(message.credentials)
         : undefined);
     return obj;
+  },
+
+  create<I extends Exact<DeepPartial<ImagesPullSecret>, I>>(base?: I): ImagesPullSecret {
+    return ImagesPullSecret.fromPartial(base ?? {});
   },
 
   fromPartial<I extends Exact<DeepPartial<ImagesPullSecret>, I>>(object: I): ImagesPullSecret {
@@ -609,6 +631,12 @@ export const HelmPackageRepositoryCustomDetail = {
     return obj;
   },
 
+  create<I extends Exact<DeepPartial<HelmPackageRepositoryCustomDetail>, I>>(
+    base?: I,
+  ): HelmPackageRepositoryCustomDetail {
+    return HelmPackageRepositoryCustomDetail.fromPartial(base ?? {});
+  },
+
   fromPartial<I extends Exact<DeepPartial<HelmPackageRepositoryCustomDetail>, I>>(
     object: I,
   ): HelmPackageRepositoryCustomDetail {
@@ -700,6 +728,12 @@ export const HelmPackageRepositoryCustomDetail_NodeSelectorEntry = {
     return obj;
   },
 
+  create<I extends Exact<DeepPartial<HelmPackageRepositoryCustomDetail_NodeSelectorEntry>, I>>(
+    base?: I,
+  ): HelmPackageRepositoryCustomDetail_NodeSelectorEntry {
+    return HelmPackageRepositoryCustomDetail_NodeSelectorEntry.fromPartial(base ?? {});
+  },
+
   fromPartial<I extends Exact<DeepPartial<HelmPackageRepositoryCustomDetail_NodeSelectorEntry>, I>>(
     object: I,
   ): HelmPackageRepositoryCustomDetail_NodeSelectorEntry {
@@ -779,6 +813,10 @@ export const RepositoryFilterRule = {
     return obj;
   },
 
+  create<I extends Exact<DeepPartial<RepositoryFilterRule>, I>>(base?: I): RepositoryFilterRule {
+    return RepositoryFilterRule.fromPartial(base ?? {});
+  },
+
   fromPartial<I extends Exact<DeepPartial<RepositoryFilterRule>, I>>(
     object: I,
   ): RepositoryFilterRule {
@@ -848,6 +886,12 @@ export const RepositoryFilterRule_VariablesEntry = {
     message.key !== undefined && (obj.key = message.key);
     message.value !== undefined && (obj.value = message.value);
     return obj;
+  },
+
+  create<I extends Exact<DeepPartial<RepositoryFilterRule_VariablesEntry>, I>>(
+    base?: I,
+  ): RepositoryFilterRule_VariablesEntry {
+    return RepositoryFilterRule_VariablesEntry.fromPartial(base ?? {});
   },
 
   fromPartial<I extends Exact<DeepPartial<RepositoryFilterRule_VariablesEntry>, I>>(
@@ -924,6 +968,10 @@ export const ProxyOptions = {
     message.httpsProxy !== undefined && (obj.httpsProxy = message.httpsProxy);
     message.noProxy !== undefined && (obj.noProxy = message.noProxy);
     return obj;
+  },
+
+  create<I extends Exact<DeepPartial<ProxyOptions>, I>>(base?: I): ProxyOptions {
+    return ProxyOptions.fromPartial(base ?? {});
   },
 
   fromPartial<I extends Exact<DeepPartial<ProxyOptions>, I>>(object: I): ProxyOptions {
@@ -1017,6 +1065,10 @@ export const Toleration = {
     message.tolerationSeconds !== undefined &&
       (obj.tolerationSeconds = Math.round(message.tolerationSeconds));
     return obj;
+  },
+
+  create<I extends Exact<DeepPartial<Toleration>, I>>(base?: I): Toleration {
+    return Toleration.fromPartial(base ?? {});
   },
 
   fromPartial<I extends Exact<DeepPartial<Toleration>, I>>(object: I): Toleration {
@@ -1123,6 +1175,10 @@ export const PodSecurityContext = {
     }
     message.fSGroup !== undefined && (obj.fSGroup = Math.round(message.fSGroup));
     return obj;
+  },
+
+  create<I extends Exact<DeepPartial<PodSecurityContext>, I>>(base?: I): PodSecurityContext {
+    return PodSecurityContext.fromPartial(base ?? {});
   },
 
   fromPartial<I extends Exact<DeepPartial<PodSecurityContext>, I>>(object: I): PodSecurityContext {
@@ -1336,10 +1392,11 @@ export const HelmPackagesServiceGetAvailablePackageSummariesDesc: UnaryMethodDef
   } as any,
   responseType: {
     deserializeBinary(data: Uint8Array) {
+      const value = GetAvailablePackageSummariesResponse.decode(data);
       return {
-        ...GetAvailablePackageSummariesResponse.decode(data),
+        ...value,
         toObject() {
-          return this;
+          return value;
         },
       };
     },
@@ -1358,10 +1415,11 @@ export const HelmPackagesServiceGetAvailablePackageDetailDesc: UnaryMethodDefini
   } as any,
   responseType: {
     deserializeBinary(data: Uint8Array) {
+      const value = GetAvailablePackageDetailResponse.decode(data);
       return {
-        ...GetAvailablePackageDetailResponse.decode(data),
+        ...value,
         toObject() {
-          return this;
+          return value;
         },
       };
     },
@@ -1380,10 +1438,11 @@ export const HelmPackagesServiceGetAvailablePackageVersionsDesc: UnaryMethodDefi
   } as any,
   responseType: {
     deserializeBinary(data: Uint8Array) {
+      const value = GetAvailablePackageVersionsResponse.decode(data);
       return {
-        ...GetAvailablePackageVersionsResponse.decode(data),
+        ...value,
         toObject() {
-          return this;
+          return value;
         },
       };
     },
@@ -1402,10 +1461,11 @@ export const HelmPackagesServiceGetInstalledPackageSummariesDesc: UnaryMethodDef
   } as any,
   responseType: {
     deserializeBinary(data: Uint8Array) {
+      const value = GetInstalledPackageSummariesResponse.decode(data);
       return {
-        ...GetInstalledPackageSummariesResponse.decode(data),
+        ...value,
         toObject() {
-          return this;
+          return value;
         },
       };
     },
@@ -1424,10 +1484,11 @@ export const HelmPackagesServiceGetInstalledPackageDetailDesc: UnaryMethodDefini
   } as any,
   responseType: {
     deserializeBinary(data: Uint8Array) {
+      const value = GetInstalledPackageDetailResponse.decode(data);
       return {
-        ...GetInstalledPackageDetailResponse.decode(data),
+        ...value,
         toObject() {
-          return this;
+          return value;
         },
       };
     },
@@ -1446,10 +1507,11 @@ export const HelmPackagesServiceCreateInstalledPackageDesc: UnaryMethodDefinitio
   } as any,
   responseType: {
     deserializeBinary(data: Uint8Array) {
+      const value = CreateInstalledPackageResponse.decode(data);
       return {
-        ...CreateInstalledPackageResponse.decode(data),
+        ...value,
         toObject() {
-          return this;
+          return value;
         },
       };
     },
@@ -1468,10 +1530,11 @@ export const HelmPackagesServiceUpdateInstalledPackageDesc: UnaryMethodDefinitio
   } as any,
   responseType: {
     deserializeBinary(data: Uint8Array) {
+      const value = UpdateInstalledPackageResponse.decode(data);
       return {
-        ...UpdateInstalledPackageResponse.decode(data),
+        ...value,
         toObject() {
-          return this;
+          return value;
         },
       };
     },
@@ -1490,10 +1553,11 @@ export const HelmPackagesServiceDeleteInstalledPackageDesc: UnaryMethodDefinitio
   } as any,
   responseType: {
     deserializeBinary(data: Uint8Array) {
+      const value = DeleteInstalledPackageResponse.decode(data);
       return {
-        ...DeleteInstalledPackageResponse.decode(data),
+        ...value,
         toObject() {
-          return this;
+          return value;
         },
       };
     },
@@ -1512,10 +1576,11 @@ export const HelmPackagesServiceRollbackInstalledPackageDesc: UnaryMethodDefinit
   } as any,
   responseType: {
     deserializeBinary(data: Uint8Array) {
+      const value = RollbackInstalledPackageResponse.decode(data);
       return {
-        ...RollbackInstalledPackageResponse.decode(data),
+        ...value,
         toObject() {
-          return this;
+          return value;
         },
       };
     },
@@ -1534,10 +1599,11 @@ export const HelmPackagesServiceGetInstalledPackageResourceRefsDesc: UnaryMethod
   } as any,
   responseType: {
     deserializeBinary(data: Uint8Array) {
+      const value = GetInstalledPackageResourceRefsResponse.decode(data);
       return {
-        ...GetInstalledPackageResourceRefsResponse.decode(data),
+        ...value,
         toObject() {
-          return this;
+          return value;
         },
       };
     },
@@ -1668,10 +1734,11 @@ export const HelmRepositoriesServiceAddPackageRepositoryDesc: UnaryMethodDefinit
   } as any,
   responseType: {
     deserializeBinary(data: Uint8Array) {
+      const value = AddPackageRepositoryResponse.decode(data);
       return {
-        ...AddPackageRepositoryResponse.decode(data),
+        ...value,
         toObject() {
-          return this;
+          return value;
         },
       };
     },
@@ -1690,10 +1757,11 @@ export const HelmRepositoriesServiceGetPackageRepositoryDetailDesc: UnaryMethodD
   } as any,
   responseType: {
     deserializeBinary(data: Uint8Array) {
+      const value = GetPackageRepositoryDetailResponse.decode(data);
       return {
-        ...GetPackageRepositoryDetailResponse.decode(data),
+        ...value,
         toObject() {
-          return this;
+          return value;
         },
       };
     },
@@ -1712,10 +1780,11 @@ export const HelmRepositoriesServiceGetPackageRepositorySummariesDesc: UnaryMeth
   } as any,
   responseType: {
     deserializeBinary(data: Uint8Array) {
+      const value = GetPackageRepositorySummariesResponse.decode(data);
       return {
-        ...GetPackageRepositorySummariesResponse.decode(data),
+        ...value,
         toObject() {
-          return this;
+          return value;
         },
       };
     },
@@ -1734,10 +1803,11 @@ export const HelmRepositoriesServiceUpdatePackageRepositoryDesc: UnaryMethodDefi
   } as any,
   responseType: {
     deserializeBinary(data: Uint8Array) {
+      const value = UpdatePackageRepositoryResponse.decode(data);
       return {
-        ...UpdatePackageRepositoryResponse.decode(data),
+        ...value,
         toObject() {
-          return this;
+          return value;
         },
       };
     },
@@ -1756,10 +1826,11 @@ export const HelmRepositoriesServiceDeletePackageRepositoryDesc: UnaryMethodDefi
   } as any,
   responseType: {
     deserializeBinary(data: Uint8Array) {
+      const value = DeletePackageRepositoryResponse.decode(data);
       return {
-        ...DeletePackageRepositoryResponse.decode(data),
+        ...value,
         toObject() {
-          return this;
+          return value;
         },
       };
     },
@@ -1779,10 +1850,11 @@ export const HelmRepositoriesServiceGetPackageRepositoryPermissionsDesc: UnaryMe
     } as any,
     responseType: {
       deserializeBinary(data: Uint8Array) {
+        const value = GetPackageRepositoryPermissionsResponse.decode(data);
         return {
-          ...GetPackageRepositoryPermissionsResponse.decode(data),
+          ...value,
           toObject() {
-            return this;
+            return value;
           },
         };
       },
@@ -1847,7 +1919,7 @@ export class GrpcWebImpl {
         debug: this.options.debug,
         onEnd: function (response) {
           if (response.status === grpc.Code.OK) {
-            resolve(response.message);
+            resolve(response.message!.toObject());
           } else {
             const err = new GrpcWebError(
               response.statusMessage,
@@ -1865,7 +1937,7 @@ export class GrpcWebImpl {
 declare var self: any | undefined;
 declare var window: any | undefined;
 declare var global: any | undefined;
-var globalThis: any = (() => {
+var tsProtoGlobalThis: any = (() => {
   if (typeof globalThis !== "undefined") {
     return globalThis;
   }
@@ -1900,7 +1972,7 @@ export type Exact<P, I extends P> = P extends Builtin
 
 function longToNumber(long: Long): number {
   if (long.gt(Number.MAX_SAFE_INTEGER)) {
-    throw new globalThis.Error("Value is larger than Number.MAX_SAFE_INTEGER");
+    throw new tsProtoGlobalThis.Error("Value is larger than Number.MAX_SAFE_INTEGER");
   }
   return long.toNumber();
 }
@@ -1918,7 +1990,7 @@ function isSet(value: any): boolean {
   return value !== null && value !== undefined;
 }
 
-export class GrpcWebError extends Error {
+export class GrpcWebError extends tsProtoGlobalThis.Error {
   constructor(message: string, public code: grpc.Code, public metadata: grpc.Metadata) {
     super(message);
   }

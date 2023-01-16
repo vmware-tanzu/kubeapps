@@ -102,6 +102,12 @@ export const FluxPackageRepositoryCustomDetail = {
     return obj;
   },
 
+  create<I extends Exact<DeepPartial<FluxPackageRepositoryCustomDetail>, I>>(
+    base?: I,
+  ): FluxPackageRepositoryCustomDetail {
+    return FluxPackageRepositoryCustomDetail.fromPartial(base ?? {});
+  },
+
   fromPartial<I extends Exact<DeepPartial<FluxPackageRepositoryCustomDetail>, I>>(
     object: I,
   ): FluxPackageRepositoryCustomDetail {
@@ -294,10 +300,11 @@ export const FluxV2PackagesServiceGetAvailablePackageSummariesDesc: UnaryMethodD
   } as any,
   responseType: {
     deserializeBinary(data: Uint8Array) {
+      const value = GetAvailablePackageSummariesResponse.decode(data);
       return {
-        ...GetAvailablePackageSummariesResponse.decode(data),
+        ...value,
         toObject() {
-          return this;
+          return value;
         },
       };
     },
@@ -316,10 +323,11 @@ export const FluxV2PackagesServiceGetAvailablePackageDetailDesc: UnaryMethodDefi
   } as any,
   responseType: {
     deserializeBinary(data: Uint8Array) {
+      const value = GetAvailablePackageDetailResponse.decode(data);
       return {
-        ...GetAvailablePackageDetailResponse.decode(data),
+        ...value,
         toObject() {
-          return this;
+          return value;
         },
       };
     },
@@ -338,10 +346,11 @@ export const FluxV2PackagesServiceGetAvailablePackageVersionsDesc: UnaryMethodDe
   } as any,
   responseType: {
     deserializeBinary(data: Uint8Array) {
+      const value = GetAvailablePackageVersionsResponse.decode(data);
       return {
-        ...GetAvailablePackageVersionsResponse.decode(data),
+        ...value,
         toObject() {
-          return this;
+          return value;
         },
       };
     },
@@ -360,10 +369,11 @@ export const FluxV2PackagesServiceGetInstalledPackageSummariesDesc: UnaryMethodD
   } as any,
   responseType: {
     deserializeBinary(data: Uint8Array) {
+      const value = GetInstalledPackageSummariesResponse.decode(data);
       return {
-        ...GetInstalledPackageSummariesResponse.decode(data),
+        ...value,
         toObject() {
-          return this;
+          return value;
         },
       };
     },
@@ -382,10 +392,11 @@ export const FluxV2PackagesServiceGetInstalledPackageDetailDesc: UnaryMethodDefi
   } as any,
   responseType: {
     deserializeBinary(data: Uint8Array) {
+      const value = GetInstalledPackageDetailResponse.decode(data);
       return {
-        ...GetInstalledPackageDetailResponse.decode(data),
+        ...value,
         toObject() {
-          return this;
+          return value;
         },
       };
     },
@@ -404,10 +415,11 @@ export const FluxV2PackagesServiceCreateInstalledPackageDesc: UnaryMethodDefinit
   } as any,
   responseType: {
     deserializeBinary(data: Uint8Array) {
+      const value = CreateInstalledPackageResponse.decode(data);
       return {
-        ...CreateInstalledPackageResponse.decode(data),
+        ...value,
         toObject() {
-          return this;
+          return value;
         },
       };
     },
@@ -426,10 +438,11 @@ export const FluxV2PackagesServiceUpdateInstalledPackageDesc: UnaryMethodDefinit
   } as any,
   responseType: {
     deserializeBinary(data: Uint8Array) {
+      const value = UpdateInstalledPackageResponse.decode(data);
       return {
-        ...UpdateInstalledPackageResponse.decode(data),
+        ...value,
         toObject() {
-          return this;
+          return value;
         },
       };
     },
@@ -448,10 +461,11 @@ export const FluxV2PackagesServiceDeleteInstalledPackageDesc: UnaryMethodDefinit
   } as any,
   responseType: {
     deserializeBinary(data: Uint8Array) {
+      const value = DeleteInstalledPackageResponse.decode(data);
       return {
-        ...DeleteInstalledPackageResponse.decode(data),
+        ...value,
         toObject() {
-          return this;
+          return value;
         },
       };
     },
@@ -470,10 +484,11 @@ export const FluxV2PackagesServiceGetInstalledPackageResourceRefsDesc: UnaryMeth
   } as any,
   responseType: {
     deserializeBinary(data: Uint8Array) {
+      const value = GetInstalledPackageResourceRefsResponse.decode(data);
       return {
-        ...GetInstalledPackageResourceRefsResponse.decode(data),
+        ...value,
         toObject() {
-          return this;
+          return value;
         },
       };
     },
@@ -607,10 +622,11 @@ export const FluxV2RepositoriesServiceAddPackageRepositoryDesc: UnaryMethodDefin
   } as any,
   responseType: {
     deserializeBinary(data: Uint8Array) {
+      const value = AddPackageRepositoryResponse.decode(data);
       return {
-        ...AddPackageRepositoryResponse.decode(data),
+        ...value,
         toObject() {
-          return this;
+          return value;
         },
       };
     },
@@ -629,10 +645,11 @@ export const FluxV2RepositoriesServiceGetPackageRepositoryDetailDesc: UnaryMetho
   } as any,
   responseType: {
     deserializeBinary(data: Uint8Array) {
+      const value = GetPackageRepositoryDetailResponse.decode(data);
       return {
-        ...GetPackageRepositoryDetailResponse.decode(data),
+        ...value,
         toObject() {
-          return this;
+          return value;
         },
       };
     },
@@ -652,10 +669,11 @@ export const FluxV2RepositoriesServiceGetPackageRepositorySummariesDesc: UnaryMe
     } as any,
     responseType: {
       deserializeBinary(data: Uint8Array) {
+        const value = GetPackageRepositorySummariesResponse.decode(data);
         return {
-          ...GetPackageRepositorySummariesResponse.decode(data),
+          ...value,
           toObject() {
-            return this;
+            return value;
           },
         };
       },
@@ -674,10 +692,11 @@ export const FluxV2RepositoriesServiceUpdatePackageRepositoryDesc: UnaryMethodDe
   } as any,
   responseType: {
     deserializeBinary(data: Uint8Array) {
+      const value = UpdatePackageRepositoryResponse.decode(data);
       return {
-        ...UpdatePackageRepositoryResponse.decode(data),
+        ...value,
         toObject() {
-          return this;
+          return value;
         },
       };
     },
@@ -696,10 +715,11 @@ export const FluxV2RepositoriesServiceDeletePackageRepositoryDesc: UnaryMethodDe
   } as any,
   responseType: {
     deserializeBinary(data: Uint8Array) {
+      const value = DeletePackageRepositoryResponse.decode(data);
       return {
-        ...DeletePackageRepositoryResponse.decode(data),
+        ...value,
         toObject() {
-          return this;
+          return value;
         },
       };
     },
@@ -719,10 +739,11 @@ export const FluxV2RepositoriesServiceGetPackageRepositoryPermissionsDesc: Unary
     } as any,
     responseType: {
       deserializeBinary(data: Uint8Array) {
+        const value = GetPackageRepositoryPermissionsResponse.decode(data);
         return {
-          ...GetPackageRepositoryPermissionsResponse.decode(data),
+          ...value,
           toObject() {
-            return this;
+            return value;
           },
         };
       },
@@ -787,7 +808,7 @@ export class GrpcWebImpl {
         debug: this.options.debug,
         onEnd: function (response) {
           if (response.status === grpc.Code.OK) {
-            resolve(response.message);
+            resolve(response.message!.toObject());
           } else {
             const err = new GrpcWebError(
               response.statusMessage,
@@ -801,6 +822,25 @@ export class GrpcWebImpl {
     });
   }
 }
+
+declare var self: any | undefined;
+declare var window: any | undefined;
+declare var global: any | undefined;
+var tsProtoGlobalThis: any = (() => {
+  if (typeof globalThis !== "undefined") {
+    return globalThis;
+  }
+  if (typeof self !== "undefined") {
+    return self;
+  }
+  if (typeof window !== "undefined") {
+    return window;
+  }
+  if (typeof global !== "undefined") {
+    return global;
+  }
+  throw "Unable to locate global object";
+})();
 
 type Builtin = Date | Function | Uint8Array | string | number | boolean | undefined;
 
@@ -823,7 +863,7 @@ function isSet(value: any): boolean {
   return value !== null && value !== undefined;
 }
 
-export class GrpcWebError extends Error {
+export class GrpcWebError extends tsProtoGlobalThis.Error {
   constructor(message: string, public code: grpc.Code, public metadata: grpc.Metadata) {
     super(message);
   }

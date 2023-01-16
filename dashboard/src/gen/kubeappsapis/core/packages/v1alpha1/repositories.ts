@@ -87,7 +87,7 @@ export interface PackageRepositoryTlsConfig {
    */
   insecureSkipVerify: boolean;
   /** certificate authority. Optional */
-  certAuthority: string | undefined;
+  certAuthority?: string | undefined;
   /** a reference to an existing secret that contains custom CA */
   secretRef?: SecretKeyReference | undefined;
 }
@@ -126,7 +126,7 @@ export interface PackageRepositoryAuth {
    * for Bearer Auth token value
    * for Custom Auth, complete value of "Authorization" header
    */
-  header: string | undefined;
+  header?: string | undefined;
   /** a reference to an existing secret */
   secretRef?: SecretKeyReference | undefined;
   /** SSH credentials */
@@ -765,6 +765,12 @@ export const AddPackageRepositoryRequest = {
     return obj;
   },
 
+  create<I extends Exact<DeepPartial<AddPackageRepositoryRequest>, I>>(
+    base?: I,
+  ): AddPackageRepositoryRequest {
+    return AddPackageRepositoryRequest.fromPartial(base ?? {});
+  },
+
   fromPartial<I extends Exact<DeepPartial<AddPackageRepositoryRequest>, I>>(
     object: I,
   ): AddPackageRepositoryRequest {
@@ -866,6 +872,12 @@ export const PackageRepositoryTlsConfig = {
         ? SecretKeyReference.toJSON(message.secretRef)
         : undefined);
     return obj;
+  },
+
+  create<I extends Exact<DeepPartial<PackageRepositoryTlsConfig>, I>>(
+    base?: I,
+  ): PackageRepositoryTlsConfig {
+    return PackageRepositoryTlsConfig.fromPartial(base ?? {});
   },
 
   fromPartial<I extends Exact<DeepPartial<PackageRepositoryTlsConfig>, I>>(
@@ -1023,6 +1035,10 @@ export const PackageRepositoryAuth = {
     return obj;
   },
 
+  create<I extends Exact<DeepPartial<PackageRepositoryAuth>, I>>(base?: I): PackageRepositoryAuth {
+    return PackageRepositoryAuth.fromPartial(base ?? {});
+  },
+
   fromPartial<I extends Exact<DeepPartial<PackageRepositoryAuth>, I>>(
     object: I,
   ): PackageRepositoryAuth {
@@ -1108,6 +1124,10 @@ export const UsernamePassword = {
     return obj;
   },
 
+  create<I extends Exact<DeepPartial<UsernamePassword>, I>>(base?: I): UsernamePassword {
+    return UsernamePassword.fromPartial(base ?? {});
+  },
+
   fromPartial<I extends Exact<DeepPartial<UsernamePassword>, I>>(object: I): UsernamePassword {
     const message = createBaseUsernamePassword();
     message.username = object.username ?? "";
@@ -1164,6 +1184,10 @@ export const TlsCertKey = {
     message.cert !== undefined && (obj.cert = message.cert);
     message.key !== undefined && (obj.key = message.key);
     return obj;
+  },
+
+  create<I extends Exact<DeepPartial<TlsCertKey>, I>>(base?: I): TlsCertKey {
+    return TlsCertKey.fromPartial(base ?? {});
   },
 
   fromPartial<I extends Exact<DeepPartial<TlsCertKey>, I>>(object: I): TlsCertKey {
@@ -1240,6 +1264,10 @@ export const DockerCredentials = {
     return obj;
   },
 
+  create<I extends Exact<DeepPartial<DockerCredentials>, I>>(base?: I): DockerCredentials {
+    return DockerCredentials.fromPartial(base ?? {});
+  },
+
   fromPartial<I extends Exact<DeepPartial<DockerCredentials>, I>>(object: I): DockerCredentials {
     const message = createBaseDockerCredentials();
     message.server = object.server ?? "";
@@ -1298,6 +1326,10 @@ export const SshCredentials = {
     message.privateKey !== undefined && (obj.privateKey = message.privateKey);
     message.knownHosts !== undefined && (obj.knownHosts = message.knownHosts);
     return obj;
+  },
+
+  create<I extends Exact<DeepPartial<SshCredentials>, I>>(base?: I): SshCredentials {
+    return SshCredentials.fromPartial(base ?? {});
   },
 
   fromPartial<I extends Exact<DeepPartial<SshCredentials>, I>>(object: I): SshCredentials {
@@ -1364,6 +1396,10 @@ export const OpaqueCredentials = {
       });
     }
     return obj;
+  },
+
+  create<I extends Exact<DeepPartial<OpaqueCredentials>, I>>(base?: I): OpaqueCredentials {
+    return OpaqueCredentials.fromPartial(base ?? {});
   },
 
   fromPartial<I extends Exact<DeepPartial<OpaqueCredentials>, I>>(object: I): OpaqueCredentials {
@@ -1434,6 +1470,12 @@ export const OpaqueCredentials_DataEntry = {
     return obj;
   },
 
+  create<I extends Exact<DeepPartial<OpaqueCredentials_DataEntry>, I>>(
+    base?: I,
+  ): OpaqueCredentials_DataEntry {
+    return OpaqueCredentials_DataEntry.fromPartial(base ?? {});
+  },
+
   fromPartial<I extends Exact<DeepPartial<OpaqueCredentials_DataEntry>, I>>(
     object: I,
   ): OpaqueCredentials_DataEntry {
@@ -1494,6 +1536,10 @@ export const SecretKeyReference = {
     return obj;
   },
 
+  create<I extends Exact<DeepPartial<SecretKeyReference>, I>>(base?: I): SecretKeyReference {
+    return SecretKeyReference.fromPartial(base ?? {});
+  },
+
   fromPartial<I extends Exact<DeepPartial<SecretKeyReference>, I>>(object: I): SecretKeyReference {
     const message = createBaseSecretKeyReference();
     message.name = object.name ?? "";
@@ -1552,6 +1598,12 @@ export const GetPackageRepositoryDetailRequest = {
     return obj;
   },
 
+  create<I extends Exact<DeepPartial<GetPackageRepositoryDetailRequest>, I>>(
+    base?: I,
+  ): GetPackageRepositoryDetailRequest {
+    return GetPackageRepositoryDetailRequest.fromPartial(base ?? {});
+  },
+
   fromPartial<I extends Exact<DeepPartial<GetPackageRepositoryDetailRequest>, I>>(
     object: I,
   ): GetPackageRepositoryDetailRequest {
@@ -1606,6 +1658,12 @@ export const GetPackageRepositorySummariesRequest = {
     message.context !== undefined &&
       (obj.context = message.context ? Context.toJSON(message.context) : undefined);
     return obj;
+  },
+
+  create<I extends Exact<DeepPartial<GetPackageRepositorySummariesRequest>, I>>(
+    base?: I,
+  ): GetPackageRepositorySummariesRequest {
+    return GetPackageRepositorySummariesRequest.fromPartial(base ?? {});
   },
 
   fromPartial<I extends Exact<DeepPartial<GetPackageRepositorySummariesRequest>, I>>(
@@ -1733,6 +1791,12 @@ export const UpdatePackageRepositoryRequest = {
     return obj;
   },
 
+  create<I extends Exact<DeepPartial<UpdatePackageRepositoryRequest>, I>>(
+    base?: I,
+  ): UpdatePackageRepositoryRequest {
+    return UpdatePackageRepositoryRequest.fromPartial(base ?? {});
+  },
+
   fromPartial<I extends Exact<DeepPartial<UpdatePackageRepositoryRequest>, I>>(
     object: I,
   ): UpdatePackageRepositoryRequest {
@@ -1810,6 +1874,12 @@ export const DeletePackageRepositoryRequest = {
     return obj;
   },
 
+  create<I extends Exact<DeepPartial<DeletePackageRepositoryRequest>, I>>(
+    base?: I,
+  ): DeletePackageRepositoryRequest {
+    return DeletePackageRepositoryRequest.fromPartial(base ?? {});
+  },
+
   fromPartial<I extends Exact<DeepPartial<DeletePackageRepositoryRequest>, I>>(
     object: I,
   ): DeletePackageRepositoryRequest {
@@ -1885,6 +1955,12 @@ export const PackageRepositoryReference = {
     return obj;
   },
 
+  create<I extends Exact<DeepPartial<PackageRepositoryReference>, I>>(
+    base?: I,
+  ): PackageRepositoryReference {
+    return PackageRepositoryReference.fromPartial(base ?? {});
+  },
+
   fromPartial<I extends Exact<DeepPartial<PackageRepositoryReference>, I>>(
     object: I,
   ): PackageRepositoryReference {
@@ -1950,6 +2026,12 @@ export const AddPackageRepositoryResponse = {
         ? PackageRepositoryReference.toJSON(message.packageRepoRef)
         : undefined);
     return obj;
+  },
+
+  create<I extends Exact<DeepPartial<AddPackageRepositoryResponse>, I>>(
+    base?: I,
+  ): AddPackageRepositoryResponse {
+    return AddPackageRepositoryResponse.fromPartial(base ?? {});
   },
 
   fromPartial<I extends Exact<DeepPartial<AddPackageRepositoryResponse>, I>>(
@@ -2023,6 +2105,12 @@ export const PackageRepositoryStatus = {
       (obj.reason = packageRepositoryStatus_StatusReasonToJSON(message.reason));
     message.userReason !== undefined && (obj.userReason = message.userReason);
     return obj;
+  },
+
+  create<I extends Exact<DeepPartial<PackageRepositoryStatus>, I>>(
+    base?: I,
+  ): PackageRepositoryStatus {
+    return PackageRepositoryStatus.fromPartial(base ?? {});
   },
 
   fromPartial<I extends Exact<DeepPartial<PackageRepositoryStatus>, I>>(
@@ -2183,6 +2271,12 @@ export const PackageRepositoryDetail = {
     return obj;
   },
 
+  create<I extends Exact<DeepPartial<PackageRepositoryDetail>, I>>(
+    base?: I,
+  ): PackageRepositoryDetail {
+    return PackageRepositoryDetail.fromPartial(base ?? {});
+  },
+
   fromPartial<I extends Exact<DeepPartial<PackageRepositoryDetail>, I>>(
     object: I,
   ): PackageRepositoryDetail {
@@ -2261,6 +2355,12 @@ export const GetPackageRepositoryDetailResponse = {
     message.detail !== undefined &&
       (obj.detail = message.detail ? PackageRepositoryDetail.toJSON(message.detail) : undefined);
     return obj;
+  },
+
+  create<I extends Exact<DeepPartial<GetPackageRepositoryDetailResponse>, I>>(
+    base?: I,
+  ): GetPackageRepositoryDetailResponse {
+    return GetPackageRepositoryDetailResponse.fromPartial(base ?? {});
   },
 
   fromPartial<I extends Exact<DeepPartial<GetPackageRepositoryDetailResponse>, I>>(
@@ -2388,6 +2488,12 @@ export const PackageRepositorySummary = {
     return obj;
   },
 
+  create<I extends Exact<DeepPartial<PackageRepositorySummary>, I>>(
+    base?: I,
+  ): PackageRepositorySummary {
+    return PackageRepositorySummary.fromPartial(base ?? {});
+  },
+
   fromPartial<I extends Exact<DeepPartial<PackageRepositorySummary>, I>>(
     object: I,
   ): PackageRepositorySummary {
@@ -2465,6 +2571,12 @@ export const GetPackageRepositorySummariesResponse = {
     return obj;
   },
 
+  create<I extends Exact<DeepPartial<GetPackageRepositorySummariesResponse>, I>>(
+    base?: I,
+  ): GetPackageRepositorySummariesResponse {
+    return GetPackageRepositorySummariesResponse.fromPartial(base ?? {});
+  },
+
   fromPartial<I extends Exact<DeepPartial<GetPackageRepositorySummariesResponse>, I>>(
     object: I,
   ): GetPackageRepositorySummariesResponse {
@@ -2525,6 +2637,12 @@ export const UpdatePackageRepositoryResponse = {
     return obj;
   },
 
+  create<I extends Exact<DeepPartial<UpdatePackageRepositoryResponse>, I>>(
+    base?: I,
+  ): UpdatePackageRepositoryResponse {
+    return UpdatePackageRepositoryResponse.fromPartial(base ?? {});
+  },
+
   fromPartial<I extends Exact<DeepPartial<UpdatePackageRepositoryResponse>, I>>(
     object: I,
   ): UpdatePackageRepositoryResponse {
@@ -2568,6 +2686,12 @@ export const DeletePackageRepositoryResponse = {
   toJSON(_: DeletePackageRepositoryResponse): unknown {
     const obj: any = {};
     return obj;
+  },
+
+  create<I extends Exact<DeepPartial<DeletePackageRepositoryResponse>, I>>(
+    base?: I,
+  ): DeletePackageRepositoryResponse {
+    return DeletePackageRepositoryResponse.fromPartial(base ?? {});
   },
 
   fromPartial<I extends Exact<DeepPartial<DeletePackageRepositoryResponse>, I>>(
@@ -2620,6 +2744,12 @@ export const GetPackageRepositoryPermissionsRequest = {
     message.context !== undefined &&
       (obj.context = message.context ? Context.toJSON(message.context) : undefined);
     return obj;
+  },
+
+  create<I extends Exact<DeepPartial<GetPackageRepositoryPermissionsRequest>, I>>(
+    base?: I,
+  ): GetPackageRepositoryPermissionsRequest {
+    return GetPackageRepositoryPermissionsRequest.fromPartial(base ?? {});
   },
 
   fromPartial<I extends Exact<DeepPartial<GetPackageRepositoryPermissionsRequest>, I>>(
@@ -2734,6 +2864,12 @@ export const PackageRepositoriesPermissions = {
     return obj;
   },
 
+  create<I extends Exact<DeepPartial<PackageRepositoriesPermissions>, I>>(
+    base?: I,
+  ): PackageRepositoriesPermissions {
+    return PackageRepositoriesPermissions.fromPartial(base ?? {});
+  },
+
   fromPartial<I extends Exact<DeepPartial<PackageRepositoriesPermissions>, I>>(
     object: I,
   ): PackageRepositoriesPermissions {
@@ -2820,6 +2956,12 @@ export const PackageRepositoriesPermissions_GlobalEntry = {
     return obj;
   },
 
+  create<I extends Exact<DeepPartial<PackageRepositoriesPermissions_GlobalEntry>, I>>(
+    base?: I,
+  ): PackageRepositoriesPermissions_GlobalEntry {
+    return PackageRepositoriesPermissions_GlobalEntry.fromPartial(base ?? {});
+  },
+
   fromPartial<I extends Exact<DeepPartial<PackageRepositoriesPermissions_GlobalEntry>, I>>(
     object: I,
   ): PackageRepositoriesPermissions_GlobalEntry {
@@ -2886,6 +3028,12 @@ export const PackageRepositoriesPermissions_NamespaceEntry = {
     return obj;
   },
 
+  create<I extends Exact<DeepPartial<PackageRepositoriesPermissions_NamespaceEntry>, I>>(
+    base?: I,
+  ): PackageRepositoriesPermissions_NamespaceEntry {
+    return PackageRepositoriesPermissions_NamespaceEntry.fromPartial(base ?? {});
+  },
+
   fromPartial<I extends Exact<DeepPartial<PackageRepositoriesPermissions_NamespaceEntry>, I>>(
     object: I,
   ): PackageRepositoriesPermissions_NamespaceEntry {
@@ -2947,6 +3095,12 @@ export const GetPackageRepositoryPermissionsResponse = {
       obj.permissions = [];
     }
     return obj;
+  },
+
+  create<I extends Exact<DeepPartial<GetPackageRepositoryPermissionsResponse>, I>>(
+    base?: I,
+  ): GetPackageRepositoryPermissionsResponse {
+    return GetPackageRepositoryPermissionsResponse.fromPartial(base ?? {});
   },
 
   fromPartial<I extends Exact<DeepPartial<GetPackageRepositoryPermissionsResponse>, I>>(
@@ -3083,10 +3237,11 @@ export const RepositoriesServiceAddPackageRepositoryDesc: UnaryMethodDefinitioni
   } as any,
   responseType: {
     deserializeBinary(data: Uint8Array) {
+      const value = AddPackageRepositoryResponse.decode(data);
       return {
-        ...AddPackageRepositoryResponse.decode(data),
+        ...value,
         toObject() {
-          return this;
+          return value;
         },
       };
     },
@@ -3105,10 +3260,11 @@ export const RepositoriesServiceGetPackageRepositoryDetailDesc: UnaryMethodDefin
   } as any,
   responseType: {
     deserializeBinary(data: Uint8Array) {
+      const value = GetPackageRepositoryDetailResponse.decode(data);
       return {
-        ...GetPackageRepositoryDetailResponse.decode(data),
+        ...value,
         toObject() {
-          return this;
+          return value;
         },
       };
     },
@@ -3127,10 +3283,11 @@ export const RepositoriesServiceGetPackageRepositorySummariesDesc: UnaryMethodDe
   } as any,
   responseType: {
     deserializeBinary(data: Uint8Array) {
+      const value = GetPackageRepositorySummariesResponse.decode(data);
       return {
-        ...GetPackageRepositorySummariesResponse.decode(data),
+        ...value,
         toObject() {
-          return this;
+          return value;
         },
       };
     },
@@ -3149,10 +3306,11 @@ export const RepositoriesServiceUpdatePackageRepositoryDesc: UnaryMethodDefiniti
   } as any,
   responseType: {
     deserializeBinary(data: Uint8Array) {
+      const value = UpdatePackageRepositoryResponse.decode(data);
       return {
-        ...UpdatePackageRepositoryResponse.decode(data),
+        ...value,
         toObject() {
-          return this;
+          return value;
         },
       };
     },
@@ -3171,10 +3329,11 @@ export const RepositoriesServiceDeletePackageRepositoryDesc: UnaryMethodDefiniti
   } as any,
   responseType: {
     deserializeBinary(data: Uint8Array) {
+      const value = DeletePackageRepositoryResponse.decode(data);
       return {
-        ...DeletePackageRepositoryResponse.decode(data),
+        ...value,
         toObject() {
-          return this;
+          return value;
         },
       };
     },
@@ -3193,10 +3352,11 @@ export const RepositoriesServiceGetPackageRepositoryPermissionsDesc: UnaryMethod
   } as any,
   responseType: {
     deserializeBinary(data: Uint8Array) {
+      const value = GetPackageRepositoryPermissionsResponse.decode(data);
       return {
-        ...GetPackageRepositoryPermissionsResponse.decode(data),
+        ...value,
         toObject() {
-          return this;
+          return value;
         },
       };
     },
@@ -3261,7 +3421,7 @@ export class GrpcWebImpl {
         debug: this.options.debug,
         onEnd: function (response) {
           if (response.status === grpc.Code.OK) {
-            resolve(response.message);
+            resolve(response.message!.toObject());
           } else {
             const err = new GrpcWebError(
               response.statusMessage,
@@ -3275,6 +3435,25 @@ export class GrpcWebImpl {
     });
   }
 }
+
+declare var self: any | undefined;
+declare var window: any | undefined;
+declare var global: any | undefined;
+var tsProtoGlobalThis: any = (() => {
+  if (typeof globalThis !== "undefined") {
+    return globalThis;
+  }
+  if (typeof self !== "undefined") {
+    return self;
+  }
+  if (typeof window !== "undefined") {
+    return window;
+  }
+  if (typeof global !== "undefined") {
+    return global;
+  }
+  throw "Unable to locate global object";
+})();
 
 type Builtin = Date | Function | Uint8Array | string | number | boolean | undefined;
 
@@ -3301,7 +3480,7 @@ function isSet(value: any): boolean {
   return value !== null && value !== undefined;
 }
 
-export class GrpcWebError extends Error {
+export class GrpcWebError extends tsProtoGlobalThis.Error {
   constructor(message: string, public code: grpc.Code, public metadata: grpc.Metadata) {
     super(message);
   }
